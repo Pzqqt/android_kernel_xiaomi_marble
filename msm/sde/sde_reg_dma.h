@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_REG_DMA_H
@@ -232,6 +232,7 @@ enum sde_reg_dma_last_cmd_mode {
  * @vaddr: cpu address
  * @next_op_allowed: operation allowed on the buffer
  * @ops_completed: operations completed on buffer
+ * @abs_write_cnt: count of mdss absolute addr writes in the current buffer
  */
 struct sde_reg_dma_buffer {
 	struct drm_gem_object *buf;
@@ -242,6 +243,7 @@ struct sde_reg_dma_buffer {
 	void *vaddr;
 	u32 next_op_allowed;
 	u32 ops_completed;
+	u32 abs_write_cnt;
 };
 
 /**
