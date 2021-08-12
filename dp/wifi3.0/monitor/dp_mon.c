@@ -94,10 +94,19 @@ static void dp_mon_dest_rings_deinit(struct dp_pdev *pdev, int lmac_id)
 static void dp_mon_rings_deinit(struct dp_pdev *pdev)
 {
 	int mac_id = 0;
-	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
 	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_soc *mon_soc;
 
-	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
+	mon_soc = soc->monitor_soc;
+
+	if(!mon_soc) {
+		dp_mon_err("%pK: monitor SOC not initialized",
+			   soc);
+		return;
+	}
+
+	if (mon_soc->monitor_mode_v2)
+		return;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id,
@@ -137,10 +146,19 @@ static void dp_mon_dest_rings_free(struct dp_pdev *pdev, int lmac_id)
 static void dp_mon_rings_free(struct dp_pdev *pdev)
 {
 	int mac_id = 0;
-	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
 	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_soc *mon_soc;
 
-	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
+	mon_soc = soc->monitor_soc;
+
+	if(!mon_soc) {
+		dp_mon_err("%pK: monitor SOC not initialized",
+			   soc);
+		return;
+	}
+
+	if (soc->monitor_soc->monitor_mode_v2)
+		return;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id,
@@ -203,9 +221,18 @@ static
 QDF_STATUS dp_mon_rings_init(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	int mac_id = 0;
-	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
+	struct dp_mon_soc *mon_soc;
 
-	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
+	mon_soc = soc->monitor_soc;
+
+	if(!mon_soc) {
+		dp_mon_err("%pK: monitor SOC not initialized",
+			   soc);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (soc->monitor_soc->monitor_mode_v2)
+		return QDF_STATUS_SUCCESS;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id,
@@ -285,6 +312,18 @@ QDF_STATUS dp_mon_rings_alloc(struct dp_soc *soc, struct dp_pdev *pdev)
 	int mac_id = 0;
 	int entries;
 	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
+	struct dp_mon_soc *mon_soc;
+
+	mon_soc = soc->monitor_soc;
+
+	if(!mon_soc) {
+		dp_mon_err("%pK: monitor SOC not initialized",
+			   soc);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (mon_soc->monitor_mode_v2)
+		return QDF_STATUS_SUCCESS;
 
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 
@@ -1028,6 +1067,17 @@ QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
 				 int mac_for_pdev)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct dp_mon_soc *mon_soc;
+
+	mon_soc = soc->monitor_soc;
+	if(!mon_soc) {
+		dp_mon_err("%pK: monitor SOC not initialized",
+			   soc);
+		return status;
+	}
+
+	if (mon_soc->monitor_mode_v2)
+		return status;
 
 	if (wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx)) {
 		status = dp_mon_htt_dest_srng_setup(soc, pdev,
@@ -5426,6 +5476,7 @@ QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
 		wlan_cfg_set_mon_delayed_replenish_entries(soc->wlan_cfg_ctx,
 							   MON_BUF_MIN_ENTRIES);
 		mon_soc->hw_nac_monitor_support = 1;
+		mon_soc->monitor_mode_v2 = 1;
 		break;
 	default:
 		dp_mon_info("%s: Unknown tgt type %d\n", __func__, target_type);

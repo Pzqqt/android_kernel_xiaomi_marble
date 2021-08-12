@@ -2099,6 +2099,7 @@ struct dp_soc {
 #ifdef WIFI_MONITOR_SUPPORT
 	struct dp_mon_soc *monitor_soc;
 #endif
+	bool rxdma2sw_rings_not_supported;
 };
 
 #ifdef IPA_OFFLOAD

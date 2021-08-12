@@ -195,6 +195,7 @@ struct dp_mon_soc {
 	uint8_t mon_vdev_timer_state;
 
 	struct dp_mon_ops *mon_ops;
+	bool monitor_mode_v2;
 };
 
 struct  dp_mon_pdev {

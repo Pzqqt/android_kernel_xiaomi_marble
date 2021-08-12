@@ -5481,9 +5481,10 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 		dp_monitor_htt_srng_setup(soc, pdev,
 					  lmac_id,
 					  mac_for_pdev);
-		htt_srng_setup(soc->htt_handle, mac_for_pdev,
-			       soc->rxdma_err_dst_ring[lmac_id].hal_srng,
-			       RXDMA_DST);
+		if (!soc->rxdma2sw_rings_not_supported)
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				       soc->rxdma_err_dst_ring[lmac_id].hal_srng,
+				       RXDMA_DST);
 	}
 
 	/* Configure LMAC rings in Polled mode */
@@ -12336,17 +12337,24 @@ static void dp_pdev_srng_deinit(struct dp_pdev *pdev)
 		dp_ipa_deinit_alt_tx_ring(soc);
 	}
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
-		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i, pdev->pdev_id);
+	if (!soc->rxdma2sw_rings_not_supported) {
+		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
+								 pdev->pdev_id);
 
-		wlan_minidump_remove(soc->rxdma_err_dst_ring[lmac_id].base_vaddr_unaligned,
-				     soc->rxdma_err_dst_ring[lmac_id].alloc_size,
-				     soc->ctrl_psoc,
-				     WLAN_MD_DP_SRNG_RXDMA_ERR_DST,
-				     "rxdma_err_dst");
-		dp_srng_deinit(soc, &soc->rxdma_err_dst_ring[lmac_id],
-			       RXDMA_DST, lmac_id);
+			wlan_minidump_remove(soc->rxdma_err_dst_ring[lmac_id].
+							base_vaddr_unaligned,
+					     soc->rxdma_err_dst_ring[lmac_id].
+								alloc_size,
+					     soc->ctrl_psoc,
+					     WLAN_MD_DP_SRNG_RXDMA_ERR_DST,
+					     "rxdma_err_dst");
+			dp_srng_deinit(soc, &soc->rxdma_err_dst_ring[lmac_id],
+				       RXDMA_DST, lmac_id);
+		}
 	}
+
+
 }
 
 /**
@@ -12384,22 +12392,29 @@ static QDF_STATUS dp_pdev_srng_init(struct dp_pdev *pdev)
 		/* Only valid for MCL */
 		pdev = soc->pdev_list[0];
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
-		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i, pdev->pdev_id);
-		struct dp_srng *srng = &soc->rxdma_err_dst_ring[lmac_id];
+	if (!soc->rxdma2sw_rings_not_supported) {
+		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
+								 pdev->pdev_id);
+			struct dp_srng *srng =
+				&soc->rxdma_err_dst_ring[lmac_id];
 
-		if (srng->hal_srng)
-			continue;
+			if (srng->hal_srng)
+				continue;
 
-		if (dp_srng_init(soc, srng, RXDMA_DST, 0, lmac_id)) {
-			dp_init_err("%pK: " RNG_ERR "rxdma_err_dst_ring", soc);
-			goto fail1;
+			if (dp_srng_init(soc, srng, RXDMA_DST, 0, lmac_id)) {
+				dp_init_err("%pK:" RNG_ERR "rxdma_err_dst_ring",
+					    soc);
+				goto fail1;
+			}
+			wlan_minidump_log(soc->rxdma_err_dst_ring[lmac_id].
+						base_vaddr_unaligned,
+					  soc->rxdma_err_dst_ring[lmac_id].
+						alloc_size,
+					  soc->ctrl_psoc,
+					  WLAN_MD_DP_SRNG_RXDMA_ERR_DST,
+					  "rxdma_err_dst");
 		}
-		wlan_minidump_log(soc->rxdma_err_dst_ring[lmac_id].base_vaddr_unaligned,
-				  soc->rxdma_err_dst_ring[lmac_id].alloc_size,
-				  soc->ctrl_psoc,
-				  WLAN_MD_DP_SRNG_RXDMA_ERR_DST,
-				  "rxdma_err_dst");
 	}
 	return QDF_STATUS_SUCCESS;
 
@@ -12425,10 +12440,13 @@ static void dp_pdev_srng_free(struct dp_pdev *pdev)
 		dp_ipa_free_alt_tx_ring(soc);
 	}
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
-		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i, pdev->pdev_id);
+	if (!soc->rxdma2sw_rings_not_supported) {
+		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
+								 pdev->pdev_id);
 
-		dp_srng_free(soc, &soc->rxdma_err_dst_ring[lmac_id]);
+			dp_srng_free(soc, &soc->rxdma_err_dst_ring[lmac_id]);
+		}
 	}
 }
 
@@ -12470,16 +12488,21 @@ static QDF_STATUS dp_pdev_srng_alloc(struct dp_pdev *pdev)
 		/* Only valid for MCL */
 		pdev = soc->pdev_list[0];
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
-		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i, pdev->pdev_id);
-		struct dp_srng *srng = &soc->rxdma_err_dst_ring[lmac_id];
+	if (!soc->rxdma2sw_rings_not_supported) {
+		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
+								 pdev->pdev_id);
+			struct dp_srng *srng =
+				&soc->rxdma_err_dst_ring[lmac_id];
 
-		if (srng->base_vaddr_unaligned)
-			continue;
+			if (srng->base_vaddr_unaligned)
+				continue;
 
-		if (dp_srng_alloc(soc, srng, RXDMA_DST, ring_size, 0)) {
-			dp_init_err("%pK: " RNG_ERR "rxdma_err_dst_ring", soc);
-			goto fail1;
+			if (dp_srng_alloc(soc, srng, RXDMA_DST, ring_size, 0)) {
+				dp_init_err("%pK:" RNG_ERR "rxdma_err_dst_ring",
+					    soc);
+				goto fail1;
+			}
 		}
 	}
 
@@ -13001,6 +13024,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
 		soc->per_tid_basize_max_tid = 8;
 		soc->wbm_release_desc_rx_sg_support = 1;
+		soc->rxdma2sw_rings_not_supported = 1;
 
 		break;
 	default:
