@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
@@ -122,6 +123,39 @@ struct sde_hw_vbif {
 	 * must be take by client before using any ops
 	 */
 	struct mutex mutex;
+};
+
+struct sde_vbif_clk_ops {
+	/**
+	 * setup_clk_force_ctrl - set clock force control
+	 * @hw:		hw block object
+	 * @clk_ctrl:	clock to be controlled
+	 * @enable:	force on enable
+	 * @return:	if the clock is forced-on by this function
+	 */
+	bool (*setup_clk_force_ctrl)(struct sde_hw_blk_reg_map *hw,
+			enum sde_clk_ctrl_type clk_ctrl, bool enable);
+
+	/**
+	 * get_clk_ctrl_status - get clock control status
+	 * @hw:		hw block object
+	 * @clk_ctrl:	clock to be controlled
+	 * @return:	0 if success, otherwise return error code
+	 */
+	int (*get_clk_ctrl_status)(struct sde_hw_blk_reg_map *hw,
+			enum sde_clk_ctrl_type clk_ctrl);
+};
+
+/**
+ * sde_vbif_clk_client - vbif client info
+ * @hw:		hw block object
+ * @clk_ctrl:	clock to be controlled
+ * @ops:	VBIF client ops
+ */
+struct sde_vbif_clk_client {
+	struct sde_hw_blk_reg_map *hw;
+	enum sde_clk_ctrl_type clk_ctrl;
+	struct sde_vbif_clk_ops ops;
 };
 
 /**
