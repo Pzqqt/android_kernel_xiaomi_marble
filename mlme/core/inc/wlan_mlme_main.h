@@ -72,6 +72,13 @@ enum size_of_len_field {
 	TWO_BYTE = 2
 };
 
+enum medium_access_type {
+	MEDIUM_ACCESS_AUTO = 0,
+	MEDIUM_ACCESS_DCF,
+	MEDIUM_ACCESS_11E_EDCF,
+	MEDIUM_ACCESS_WMM_EDCF_DSCP,
+};
+
 struct pwr_channel_info {
 	uint32_t first_freq;
 	uint8_t num_chan;
@@ -313,6 +320,7 @@ struct ft_context {
  * derived from JOIN_REQ and REASSOC_REQ. If a particular AC bit is set, it
  * means the AC is both trigger enabled and delivery enabled.
  * @qos_enabled: is qos enabled
+ * @qos_type: qos type calculated from bss
  * @ft_info: ft related info
  * @hlp_ie: hldp ie
  * @hlp_ie_len: hlp ie length
@@ -330,6 +338,7 @@ struct mlme_connect_info {
 #endif
 	uint8_t uapsd_per_ac_bitmask;
 	bool qos_enabled;
+	enum medium_access_type qos_type;
 	struct ft_context ft_info;
 #ifdef WLAN_FEATURE_FILS_SK
 	uint8_t *hlp_ie;
