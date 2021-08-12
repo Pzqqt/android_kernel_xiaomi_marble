@@ -5332,6 +5332,7 @@ static void dp_mon_neighbour_peer_add_ast(struct dp_pdev *pdev,
 }
 
 #ifdef WDI_EVENT_ENABLE
+#ifndef REMOVE_PKT_LOG
 static void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
@@ -5342,6 +5343,12 @@ static void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 
 	return pdev->monitor_pdev->pl_dev;
 }
+#else
+static void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	return NULL;
+}
+#endif
 #endif
 
 QDF_STATUS dp_rx_populate_cbf_hdr(struct dp_soc *soc,
