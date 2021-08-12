@@ -655,6 +655,8 @@ static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_AP_LINK_MONITOR_TIMEOUT);
 	timeouts->wmi_wq_watchdog_timeout =
 			cfg_get(psoc, CFG_WMI_WQ_WATCHDOG);
+	timeouts->sae_auth_failure_timeout =
+			cfg_get(psoc, CFG_SAE_AUTH_FAILURE_TIMEOUT);
 }
 
 static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
