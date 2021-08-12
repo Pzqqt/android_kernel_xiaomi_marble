@@ -2970,6 +2970,7 @@ static void sde_encoder_off_work(struct kthread_work *work)
 static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
+	bool has_master_enc = false;
 	int i, ret = 0;
 	struct sde_connector_state *c_state;
 	struct drm_display_mode *cur_mode = NULL;
@@ -2994,18 +2995,19 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	SDE_DEBUG_ENC(sde_enc, "\n");
 	SDE_EVT32(DRMID(drm_enc), cur_mode->hdisplay, cur_mode->vdisplay);
 
-	sde_enc->cur_master = NULL;
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
 		if (phys && phys->ops.is_master && phys->ops.is_master(phys)) {
 			SDE_DEBUG_ENC(sde_enc, "master is now idx %d\n", i);
 			sde_enc->cur_master = phys;
+			has_master_enc = true;
 			break;
 		}
 	}
 
-	if (!sde_enc->cur_master) {
+	if (!has_master_enc) {
+		sde_enc->cur_master = NULL;
 		SDE_ERROR("virt encoder has no master! num_phys %d\n", i);
 		return;
 	}
