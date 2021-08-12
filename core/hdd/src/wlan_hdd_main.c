@@ -212,6 +212,9 @@
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_ap.h>
 #endif
+#include <wlan_objmgr_psoc_obj_i.h>
+#include <wlan_objmgr_vdev_obj_i.h>
+
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
 #else
@@ -3902,9 +3905,68 @@ static void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
 
 #define hdd_debug_domain_set(domain) qdf_debug_domain_set(domain)
 #else
-static inline void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
-{ }
+static void hdd_check_for_objmgr_peer_leaks(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t vdev_id;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_peer *peer;
 
+	/* get module id which cause the leak and release ref */
+	wlan_objmgr_for_each_psoc_vdev(psoc, vdev_id, vdev) {
+		wlan_objmgr_for_each_vdev_peer(vdev, peer) {
+			qdf_atomic_t *ref_id_dbg;
+			int ref_id;
+			int32_t refs;
+
+			ref_id_dbg = vdev->vdev_objmgr.ref_id_dbg;
+			wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs)
+				wlan_objmgr_peer_release_ref(peer, ref_id);
+		}
+	}
+}
+
+static void hdd_check_for_objmgr_leaks(struct hdd_context *hdd_ctx)
+{
+	uint32_t vdev_id, pdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	/*
+	 * leak detection is disabled, force release the references for the wlan
+	 * to recover cleanly.
+	 */
+	psoc = hdd_ctx->psoc;
+	if (!psoc)
+		return;
+
+	hdd_check_for_objmgr_peer_leaks(psoc);
+
+	wlan_objmgr_for_each_psoc_vdev(psoc, vdev_id, vdev) {
+		qdf_atomic_t *ref_id_dbg;
+		int ref_id;
+		int32_t refs;
+
+		ref_id_dbg = vdev->vdev_objmgr.ref_id_dbg;
+		wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs) {
+			wlan_objmgr_vdev_release_ref(vdev, ref_id);
+		}
+	}
+
+	wlan_objmgr_for_each_psoc_pdev(psoc, pdev_id, pdev) {
+		qdf_atomic_t *ref_id_dbg;
+		int ref_id;
+		int32_t refs;
+
+		ref_id_dbg = pdev->pdev_objmgr.ref_id_dbg;
+		wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs)
+			wlan_objmgr_pdev_release_ref(pdev, ref_id);
+	}
+}
+
+static void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
+{
+	hdd_check_for_objmgr_leaks(hdd_ctx);
+}
 #define hdd_debug_domain_set(domain)
 #endif /* CONFIG_LEAK_DETECTION */
 
