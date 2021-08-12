@@ -1300,19 +1300,8 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	/* tx */
 	hal_soc->ops->hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_7850;
 	hal_soc->ops->hal_tx_update_dscp_tid = hal_tx_update_dscp_tid_7850;
-	hal_soc->ops->hal_tx_desc_set_lmac_id = hal_tx_desc_set_lmac_id_7850;
-	hal_soc->ops->hal_tx_desc_set_buf_addr =
-					hal_tx_desc_set_buf_addr_generic_be;
-	hal_soc->ops->hal_tx_desc_set_search_index =
-					hal_tx_desc_set_search_index_generic_be;
-	hal_soc->ops->hal_tx_desc_set_cache_set_num =
-				hal_tx_desc_set_cache_set_num_generic_be;
 	hal_soc->ops->hal_tx_comp_get_status =
 					hal_tx_comp_get_status_generic_be;
-	hal_soc->ops->hal_tx_comp_get_release_reason =
-				hal_tx_comp_get_release_reason_generic_be;
-	hal_soc->ops->hal_get_wbm_internal_error =
-					hal_get_wbm_internal_error_generic_be;
 	hal_soc->ops->hal_tx_init_cmd_credit_ring =
 					hal_tx_init_cmd_credit_ring_7850;
 

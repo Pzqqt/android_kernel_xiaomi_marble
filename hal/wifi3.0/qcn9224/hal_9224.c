@@ -1228,6 +1228,18 @@ static void hal_rx_dump_pkt_tlvs_9224(hal_soc_handle_t hal_soc_hdl,
 }
 #endif
 
+#define HAL_NUM_TCL_BANKS_9224 48
+
+/**
+ * hal_tx_get_num_tcl_banks_9224() - Get number of banks in target
+ *
+ * Returns: number of bank
+ */
+static uint8_t hal_tx_get_num_tcl_banks_9224(void)
+{
+	return HAL_NUM_TCL_BANKS_9224;
+}
+
 static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -1239,21 +1251,8 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	/* tx */
 	hal_soc->ops->hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_9224;
 	hal_soc->ops->hal_tx_update_dscp_tid = hal_tx_update_dscp_tid_9224;
-	hal_soc->ops->hal_tx_desc_set_lmac_id = hal_tx_desc_set_lmac_id_9224;
-	hal_soc->ops->hal_tx_desc_set_buf_addr =
-				hal_tx_desc_set_buf_addr_generic_be;
-	hal_soc->ops->hal_tx_desc_set_search_type =
-				hal_tx_desc_set_search_type_generic_be;
-	hal_soc->ops->hal_tx_desc_set_search_index =
-				hal_tx_desc_set_search_index_generic_be;
-	hal_soc->ops->hal_tx_desc_set_cache_set_num =
-				hal_tx_desc_set_cache_set_num_generic_be;
 	hal_soc->ops->hal_tx_comp_get_status =
 					hal_tx_comp_get_status_generic_be;
-	hal_soc->ops->hal_tx_comp_get_release_reason =
-				hal_tx_comp_get_release_reason_generic_be;
-	hal_soc->ops->hal_get_wbm_internal_error =
-					hal_get_wbm_internal_error_generic_be;
 	hal_soc->ops->hal_tx_init_cmd_credit_ring =
 					hal_tx_init_cmd_credit_ring_9224;
 
@@ -1394,6 +1393,7 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_get_tlv_size = hal_rx_get_tlv_size_generic_be;
 	hal_soc->ops->hal_rx_msdu_is_wlan_mcast =
 					hal_rx_msdu_is_wlan_mcast_generic_be;
+	hal_soc->ops->hal_tx_get_num_tcl_banks = hal_tx_get_num_tcl_banks_9224;
 	hal_soc->ops->hal_rx_tlv_decap_format_get =
 					hal_rx_tlv_decap_format_get_be;
 #ifdef RECEIVE_OFFLOAD

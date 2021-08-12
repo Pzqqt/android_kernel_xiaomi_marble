@@ -38,6 +38,107 @@ enum hal_li_tx_ret_buf_manager {
  */
 
 /**
+ * hal_tx_desc_set_buf_addr - Fill Buffer Address information in Tx Descriptor
+ * @desc: Handle to Tx Descriptor
+ * @paddr: Physical Address
+ * @pool_id: Return Buffer Manager ID
+ * @desc_id: Descriptor ID
+ * @type: 0 - Address points to a MSDU buffer
+ *		1 - Address points to MSDU extension descriptor
+ *
+ * Return: void
+ */
+static inline
+void hal_tx_desc_set_buf_addr(hal_soc_handle_t hal_soc_hdl, void *desc,
+			      dma_addr_t paddr,
+			      uint8_t pool_id, uint32_t desc_id,
+			      uint8_t type)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_tx_desc_set_buf_addr(desc, paddr, pool_id,
+						desc_id, type);
+}
+
+/**
+ * hal_tx_desc_set_lmac_id_li - Set the lmac_id value
+ * @desc: Handle to Tx Descriptor
+ * @lmac_id: mac Id to ast matching
+ *                     b00 – mac 0
+ *                     b01 – mac 1
+ *                     b10 – mac 2
+ *                     b11 – all macs (legacy HK way)
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_lmac_id_li(hal_soc_handle_t hal_soc_hdl,
+					      void *desc, uint8_t lmac_id)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_tx_desc_set_lmac_id(desc, lmac_id);
+}
+
+/**
+ * hal_tx_desc_set_search_type_li - Set the search type value
+ * @desc: Handle to Tx Descriptor
+ * @search_type: search type
+ *		     0 – Normal search
+ *		     1 – Index based address search
+ *		     2 – Index based flow search
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_search_type_li(hal_soc_handle_t hal_soc_hdl,
+						  void *desc,
+						  uint8_t search_type)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_tx_desc_set_search_type(desc, search_type);
+}
+
+/**
+ * hal_tx_desc_set_search_index_li - Set the search index value
+ * @desc: Handle to Tx Descriptor
+ * @search_index: The index that will be used for index based address or
+ *                flow search. The field is valid when 'search_type' is
+ *                1 0r 2
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_search_index_li(hal_soc_handle_t hal_soc_hdl,
+						   void *desc,
+						   uint32_t search_index)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_tx_desc_set_search_index(desc, search_index);
+}
+
+/**
+ * hal_tx_desc_set_cache_set_num - Set the cache-set-num value
+ * @desc: Handle to Tx Descriptor
+ * @cache_num: Cache set number that should be used to cache the index
+ *                based search results, for address and flow search.
+ *                This value should be equal to LSB four bits of the hash value
+ *                of match data, in case of search index points to an entry
+ *                which may be used in content based search also. The value can
+ *                be anything when the entry pointed by search index will not be
+ *                used for content based search.
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_cache_set_num(hal_soc_handle_t hal_soc_hdl,
+						 void *desc,
+						 uint8_t cache_num)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_tx_desc_set_cache_set_num(desc, cache_num);
+}
+
+/**
  * hal_tx_desc_set_buf_length - Set Data length in bytes in Tx Descriptor
  * @desc: Handle to Tx Descriptor
  * @data_length: MSDU length in case of direct descriptor.

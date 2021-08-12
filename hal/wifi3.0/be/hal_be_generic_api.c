@@ -188,30 +188,6 @@ void *hal_rx_msdu_ext_desc_info_get_ptr_be(void *msdu_details_ptr)
 	return HAL_RX_MSDU_EXT_DESC_INFO_GET(msdu_details_ptr);
 }
 
-#ifdef TCL_DATA_CMD_SEARCH_INDEX_OFFSET
-void hal_tx_desc_set_search_index_generic_be(void *desc, uint32_t search_index)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD, SEARCH_INDEX) |=
-		HAL_TX_SM(TCL_DATA_CMD, SEARCH_INDEX, search_index);
-}
-#else
-void hal_tx_desc_set_search_index_generic_be(void *desc, uint32_t search_index)
-{
-}
-#endif
-
-#ifdef TCL_DATA_CMD_CACHE_SET_NUM_OFFSET
-void hal_tx_desc_set_cache_set_num_generic_be(void *desc, uint8_t cache_num)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD, CACHE_SET_NUM) |=
-		HAL_TX_SM(TCL_DATA_CMD, CACHE_SET_NUM, cache_num);
-}
-#else
-void hal_tx_desc_set_cache_set_num_generic_be(void *desc, uint8_t cache_num)
-{
-}
-#endif
-
 #if defined(QCA_WIFI_WCN7850) || defined(CONFIG_WIFI_EMULATION_WIFI_3_0)
 static inline uint32_t
 hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
@@ -260,6 +236,46 @@ uint32_t hal_tx_comp_get_buffer_source_generic_be(void *hal_desc)
 {
 	return hal_wbm2sw_release_source_get(hal_desc,
 					     HAL_BE_WBM_RELEASE_DIR_TX);
+}
+
+/**
+ * hal_tx_comp_get_release_reason_generic_be() - TQM Release reason
+ * @hal_desc: completion ring descriptor pointer
+ *
+ * This function will return the type of pointer - buffer or descriptor
+ *
+ * Return: buffer type
+ */
+uint8_t hal_tx_comp_get_release_reason_generic_be(void *hal_desc)
+{
+	uint32_t comp_desc = *(uint32_t *)(((uint8_t *)hal_desc) +
+			WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_OFFSET);
+
+	return (comp_desc &
+		WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_MASK) >>
+		WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_LSB;
+}
+
+/**
+ * hal_get_wbm_internal_error_generic_be() - is WBM internal error
+ * @hal_desc: completion ring descriptor pointer
+ *
+ * This function will return 0 or 1  - is it WBM internal error or not
+ *
+ * Return: uint8_t
+ */
+uint8_t hal_get_wbm_internal_error_generic_be(void *hal_desc)
+{
+	/*
+	 * TODO -  This func is called by tx comp and wbm error handler
+	 * Check if one needs to use WBM2SW-TX and other WBM2SW-RX
+	 */
+	uint32_t comp_desc =
+		*(uint32_t *)(((uint8_t *)hal_desc) +
+			      HAL_WBM_INTERNAL_ERROR_OFFSET);
+
+	return (comp_desc & HAL_WBM_INTERNAL_ERROR_MASK) >>
+		HAL_WBM_INTERNAL_ERROR_LSB;
 }
 
 /**
@@ -886,6 +902,10 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 				hal_gen_reo_remap_val_generic_be;
 	hal_soc->ops->hal_tx_comp_get_buffer_source =
 				hal_tx_comp_get_buffer_source_generic_be;
+	hal_soc->ops->hal_tx_comp_get_release_reason =
+				hal_tx_comp_get_release_reason_generic_be;
+	hal_soc->ops->hal_get_wbm_internal_error =
+					hal_get_wbm_internal_error_generic_be;
 	hal_soc->ops->hal_rx_mpdu_desc_info_get =
 				hal_rx_mpdu_desc_info_get_be;
 	hal_soc->ops->hal_rx_err_status_get = hal_rx_err_status_get_be;

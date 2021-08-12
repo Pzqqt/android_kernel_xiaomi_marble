@@ -199,23 +199,83 @@ static inline void hal_tx_desc_sync(void *hal_tx_desc_cached,
 	qdf_mem_copy(hw_desc, hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
 }
 
+/**
+ * hal_tx_desc_set_vdev_id - set vdev id to the descriptor to Hardware
+ * @hal_tx_des_cached: Cached descriptor that software maintains
+ * @vdev_id: vdev id
+ */
 static inline void hal_tx_desc_set_vdev_id(void *desc, uint8_t vdev_id)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD, VDEV_ID) |=
 		HAL_TX_SM(TCL_DATA_CMD, VDEV_ID, vdev_id);
 }
 
+/**
+ * hal_tx_desc_set_bank_id - set bank id to the descriptor to Hardware
+ * @hal_tx_des_cached: Cached descriptor that software maintains
+ * @bank_id: bank id
+ */
 static inline void hal_tx_desc_set_bank_id(void *desc, uint8_t bank_id)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD, BANK_ID) |=
 		HAL_TX_SM(TCL_DATA_CMD, BANK_ID, bank_id);
 }
 
+/**
+ * hal_tx_desc_set_tcl_cmd_type - set tcl command type to the descriptor
+ * to Hardware
+ * @hal_tx_des_cached: Cached descriptor that software maintains
+ * @tcl_cmd_type: tcl command type
+ */
 static inline void
 hal_tx_desc_set_tcl_cmd_type(void *desc, uint8_t tcl_cmd_type)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD, TCL_CMD_TYPE) |=
 		HAL_TX_SM(TCL_DATA_CMD, TCL_CMD_TYPE, tcl_cmd_type);
+}
+
+/**
+ * hal_tx_desc_set_lmac_id_be - set lmac id to the descriptor to Hardware
+ * @hal_soc_hdl: hal soc handle
+ * @hal_tx_des_cached: Cached descriptor that software maintains
+ * @lmac_id: lmac id
+ */
+static inline void
+hal_tx_desc_set_lmac_id_be(hal_soc_handle_t hal_soc_hdl, void *desc,
+			   uint8_t lmac_id)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD, PMAC_ID) |=
+		HAL_TX_SM(TCL_DATA_CMD, PMAC_ID, lmac_id);
+}
+
+/**
+ * hal_tx_desc_set_search_index_be - set search index to the
+ * descriptor to Hardware
+ * @hal_soc_hdl: hal soc handle
+ * @hal_tx_des_cached: Cached descriptor that software maintains
+ * @search_index: search index
+ */
+static inline void
+hal_tx_desc_set_search_index_be(hal_soc_handle_t hal_soc_hdl, void *desc,
+				uint32_t search_index)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD, SEARCH_INDEX) |=
+		HAL_TX_SM(TCL_DATA_CMD, SEARCH_INDEX, search_index);
+}
+
+/**
+ * hal_tx_desc_set_cache_set_num - set cache set num to the
+ * descriptor to Hardware
+ * @hal_soc_hdl: hal soc handle
+ * @hal_tx_des_cached: Cached descriptor that software maintains
+ * @cache_num: cache number
+ */
+static inline void
+hal_tx_desc_set_cache_set_num(hal_soc_handle_t hal_soc_hdl, void *desc,
+			      uint8_t cache_num)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD, CACHE_SET_NUM) |=
+		HAL_TX_SM(TCL_DATA_CMD, CACHE_SET_NUM, cache_num);
 }
 
 /*---------------------------------------------------------------------------
@@ -390,6 +450,103 @@ hal_tx_populate_bank_register(hal_soc_handle_t hal_soc_hdl,
 			HWIO_TCL_R0_SW_CONFIG_BANK_n_MCAST_PACKET_CTRL_SHFT);
 
 	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
+}
+
+#define RBM_MAPPING_BMSK HWIO_TCL_R0_RBM_MAPPING0_SW2TCL1_RING_BMSK
+#define RBM_MAPPING_SHFT HWIO_TCL_R0_RBM_MAPPING0_SW2TCL2_RING_SHFT
+
+#define RBM_PPE2TCL_OFFSET \
+			(HWIO_TCL_R0_RBM_MAPPING0_PPE2TCL1_RING_SHFT >> 2)
+#define RBM_TCL_CMD_CREDIT_OFFSET \
+			(HWIO_TCL_R0_RBM_MAPPING0_SW2TCL_CREDIT_RING_SHFT >> 2)
+
+/**
+ * hal_tx_config_rbm_mapping_be() - Update return buffer manager ring id
+ * @hal_soc: HAL SoC context
+ * @hal_ring_hdl: Source ring pointer
+ * @rbm_id: return buffer manager ring id
+ *
+ * Return: void
+ */
+static inline void
+hal_tx_config_rbm_mapping_be(struct hal_soc *hal_soc,
+			     hal_ring_handle_t hal_ring_hdl,
+			     uint8_t rbm_id)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	uint32_t reg_addr = 0;
+	uint32_t reg_val = 0;
+	uint32_t val = 0;
+	uint8_t ring_num;
+	enum hal_ring_type ring_type;
+
+	ring_type = srng->ring_type;
+	ring_num = hal_soc->hw_srng_table[ring_type].start_ring_id;
+	ring_num = ring_num - srng->ring_id;
+
+	reg_addr = HWIO_TCL_R0_RBM_MAPPING0_ADDR(MAC_TCL_REG_REG_BASE);
+
+	if (ring_type == PPE2TCL)
+		ring_num = ring_num + RBM_PPE2TCL_OFFSET;
+	else if (ring_type == TCL_CMD_CREDIT)
+		ring_num = ring_num + RBM_TCL_CMD_CREDIT_OFFSET;
+
+	/* get current value stored in register address */
+	val = HAL_REG_READ(hal_soc, reg_addr);
+
+	/* mask out other stored value */
+	val &= (~(RBM_MAPPING_BMSK << (RBM_MAPPING_SHFT * ring_num)));
+
+	reg_val = val | ((RBM_MAPPING_BMSK & rbm_id) <<
+			 (RBM_MAPPING_SHFT * ring_num));
+
+	/* write rbm mapped value to register address */
+	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
+}
+
+/**
+ * hal_tx_desc_set_buf_addr_be - Fill Buffer Address information in Tx Desc
+ * @desc: Handle to Tx Descriptor
+ * @paddr: Physical Address
+ * @pool_id: Return Buffer Manager ID
+ * @desc_id: Descriptor ID
+ * @type: 0 - Address points to a MSDU buffer
+ *		1 - Address points to MSDU extension descriptor
+ *
+ * Return: void
+ */
+static inline void
+hal_tx_desc_set_buf_addr_be(hal_soc_handle_t hal_soc_hdl, void *desc,
+			    dma_addr_t paddr, uint8_t rbm_id,
+			    uint32_t desc_id, uint8_t type)
+{
+	/* Set buffer_addr_info.buffer_addr_31_0 */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_ADDR_INFO_BUFFER_ADDR_31_0) =
+		HAL_TX_SM(TCL_DATA_CMD, BUF_ADDR_INFO_BUFFER_ADDR_31_0, paddr);
+
+	/* Set buffer_addr_info.buffer_addr_39_32 */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_ADDR_INFO_BUFFER_ADDR_39_32) |=
+		HAL_TX_SM(TCL_DATA_CMD, BUF_ADDR_INFO_BUFFER_ADDR_39_32,
+			  (((uint64_t)paddr) >> 32));
+
+	/* Set buffer_addr_info.return_buffer_manager = rbm id */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_ADDR_INFO_RETURN_BUFFER_MANAGER) |=
+		HAL_TX_SM(TCL_DATA_CMD,
+			  BUF_ADDR_INFO_RETURN_BUFFER_MANAGER, rbm_id);
+
+	/* Set buffer_addr_info.sw_buffer_cookie = desc_id */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_ADDR_INFO_SW_BUFFER_COOKIE) |=
+		HAL_TX_SM(TCL_DATA_CMD, BUF_ADDR_INFO_SW_BUFFER_COOKIE,
+			  desc_id);
+
+	/* Set  Buffer or Ext Descriptor Type */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_OR_EXT_DESC_TYPE) |=
+		HAL_TX_SM(TCL_DATA_CMD, BUF_OR_EXT_DESC_TYPE, type);
 }
 
 #endif /* _HAL_BE_TX_H_ */

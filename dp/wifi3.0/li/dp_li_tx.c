@@ -146,12 +146,12 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_buf_addr(soc->hal_soc, hal_tx_desc_cached,
 				 tx_desc->dma_addr, bm_id, tx_desc->id,
 				 (tx_desc->flags & DP_TX_DESC_FLAG_FRAG));
-	hal_tx_desc_set_lmac_id(soc->hal_soc, hal_tx_desc_cached,
-				vdev->lmac_id);
-	hal_tx_desc_set_search_type(soc->hal_soc, hal_tx_desc_cached,
-				    vdev->search_type);
-	hal_tx_desc_set_search_index(soc->hal_soc, hal_tx_desc_cached,
-				     vdev->bss_ast_idx);
+	hal_tx_desc_set_lmac_id_li(soc->hal_soc, hal_tx_desc_cached,
+				   vdev->lmac_id);
+	hal_tx_desc_set_search_type_li(soc->hal_soc, hal_tx_desc_cached,
+				       vdev->search_type);
+	hal_tx_desc_set_search_index_li(soc->hal_soc, hal_tx_desc_cached,
+					vdev->bss_ast_idx);
 	hal_tx_desc_set_dscp_tid_table_id(soc->hal_soc, hal_tx_desc_cached,
 					  vdev->dscp_tid_map_id);
 

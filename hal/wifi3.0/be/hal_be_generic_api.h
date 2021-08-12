@@ -34,7 +34,6 @@
  *
  * Return: none
  */
-static inline
 void hal_tx_comp_get_status_generic_be(void *desc, void *ts1,
 				       struct hal_soc *hal)
 {
@@ -97,51 +96,6 @@ void hal_tx_comp_get_status_generic_be(void *desc, void *ts1,
 
 	ts->tsf = HAL_TX_DESC_GET(desc, UNIFIED_WBM_RELEASE_RING_6,
 			TX_RATE_STATS_INFO_TX_RATE_STATS);
-}
-
-/**
- * hal_tx_desc_set_buf_addr - Fill Buffer Address information in Tx Descriptor
- * @desc: Handle to Tx Descriptor
- * @paddr: Physical Address
- * @pool_id: Return Buffer Manager ID
- * @desc_id: Descriptor ID
- * @type: 0 - Address points to a MSDU buffer
- *		1 - Address points to MSDU extension descriptor
- *
- * Return: void
- */
-static inline void
-hal_tx_desc_set_buf_addr_generic_be(void *desc, dma_addr_t paddr,
-				    uint8_t rbm_id, uint32_t desc_id,
-				    uint8_t type)
-{
-	/* Set buffer_addr_info.buffer_addr_31_0 */
-	HAL_SET_FLD(desc, UNIFIED_TCL_DATA_CMD_0,
-		    BUFFER_ADDR_INFO_BUF_ADDR_INFO) =
-		HAL_TX_SM(UNIFIED_BUFFER_ADDR_INFO_0, BUFFER_ADDR_31_0, paddr);
-
-	/* Set buffer_addr_info.buffer_addr_39_32 */
-	HAL_SET_FLD(desc, UNIFIED_TCL_DATA_CMD_1,
-			 BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
-		HAL_TX_SM(UNIFIED_BUFFER_ADDR_INFO_1, BUFFER_ADDR_39_32,
-		       (((uint64_t)paddr) >> 32));
-
-	/* Set buffer_addr_info.return_buffer_manager = rbm id */
-	HAL_SET_FLD(desc, UNIFIED_TCL_DATA_CMD_1,
-			 BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
-		HAL_TX_SM(UNIFIED_BUFFER_ADDR_INFO_1,
-		       RETURN_BUFFER_MANAGER, rbm_id);
-
-	/* Set buffer_addr_info.sw_buffer_cookie = desc_id */
-	HAL_SET_FLD(desc, UNIFIED_TCL_DATA_CMD_1,
-		    BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
-		HAL_TX_SM(UNIFIED_BUFFER_ADDR_INFO_1, SW_BUFFER_COOKIE,
-			  desc_id);
-
-	/* Set  Buffer or Ext Descriptor Type */
-	HAL_SET_FLD(desc, UNIFIED_TCL_DATA_CMD_2,
-			BUF_OR_EXT_DESC_TYPE) |=
-		HAL_TX_SM(UNIFIED_TCL_DATA_CMD_2, BUF_OR_EXT_DESC_TYPE, type);
 }
 
 #if defined(QCA_WIFI_QCA6290_11AX_MU_UL) && defined(QCA_WIFI_QCA6290_11AX)
@@ -1562,44 +1516,6 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				rx_tlv, tlv_len);
 
 	return HAL_TLV_STATUS_PPDU_NOT_DONE;
-}
-
-/**
- * hal_tx_comp_get_release_reason_generic_be() - TQM Release reason
- * @hal_desc: completion ring descriptor pointer
- *
- * This function will return the type of pointer - buffer or descriptor
- *
- * Return: buffer type
- */
-static inline uint8_t hal_tx_comp_get_release_reason_generic_be(void *hal_desc)
-{
-	uint32_t comp_desc =
-		*(uint32_t *)(((uint8_t *)hal_desc) +
-			      WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_OFFSET);
-
-	return (comp_desc & WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_MASK) >>
-		WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_LSB;
-}
-
-/**
- * hal_get_wbm_internal_error_generic_be() - is WBM internal error
- * @hal_desc: completion ring descriptor pointer
- *
- * This function will return 0 or 1  - is it WBM internal error or not
- *
- * Return: uint8_t
- */
-static inline uint8_t hal_get_wbm_internal_error_generic_be(void *hal_desc)
-{
-	//TODO -  This func is called by tx comp and wbm error handler
-	//Check if one needs to use WBM2SW-TX and other WBM2SW-RX
-	uint32_t comp_desc =
-		*(uint32_t *)(((uint8_t *)hal_desc) +
-			      HAL_WBM_INTERNAL_ERROR_OFFSET);
-
-	return (comp_desc & HAL_WBM_INTERNAL_ERROR_MASK) >>
-		HAL_WBM_INTERNAL_ERROR_LSB;
 }
 
 /**

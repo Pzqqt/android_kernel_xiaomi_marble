@@ -23,6 +23,7 @@
 #include "dp_tx_desc.h"
 #include "hal_tx.h"
 #include <hal_be_api.h>
+#include <hal_be_tx.h>
 
 extern uint8_t sec_type_map[MAX_CDP_SEC_TYPE];
 
@@ -137,14 +138,14 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	hal_tx_desc_cached = (void *)cached_desc;
 
-	hal_tx_desc_set_buf_addr(soc->hal_soc, hal_tx_desc_cached,
-				 tx_desc->dma_addr, bm_id, tx_desc->id,
-				 (tx_desc->flags & DP_TX_DESC_FLAG_FRAG));
-	hal_tx_desc_set_lmac_id(soc->hal_soc, hal_tx_desc_cached,
-				vdev->lmac_id);
+	hal_tx_desc_set_buf_addr_be(soc->hal_soc, hal_tx_desc_cached,
+				    tx_desc->dma_addr, bm_id, tx_desc->id,
+				    (tx_desc->flags & DP_TX_DESC_FLAG_FRAG));
+	hal_tx_desc_set_lmac_id_be(soc->hal_soc, hal_tx_desc_cached,
+				   vdev->lmac_id);
 
-	hal_tx_desc_set_search_index(soc->hal_soc, hal_tx_desc_cached,
-				     vdev->bss_ast_idx);
+	hal_tx_desc_set_search_index_be(soc->hal_soc, hal_tx_desc_cached,
+					vdev->bss_ast_idx);
 	/*
 	 * Bank_ID is used as DSCP_TABLE number in beryllium
 	 * So there is no explicit field used for DSCP_TID_TABLE_NUM.
