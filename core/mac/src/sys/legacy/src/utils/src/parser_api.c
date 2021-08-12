@@ -8933,7 +8933,6 @@ mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
 				       tpSirMultiLink_IE pMloIe)
 
 {
-	tDot11fIEmlo_ie *mlo_ie;
 	tDot11fIEsta_profile *sta_prof = NULL, *pStaProf = NULL;
 	uint8_t sta_index, num_sta_prof;
 
@@ -8944,10 +8943,6 @@ mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
 		pe_err("mlo ie not present");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
-	mlo_ie = qdf_mem_malloc(sizeof(tDot11fIEmlo_ie));
-	if (!mlo_ie)
-		return QDF_STATUS_E_FAILURE;
 
 	/* Zero-init our [out] parameter, */
 
