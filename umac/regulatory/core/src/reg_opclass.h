@@ -25,6 +25,10 @@
 #ifndef __REG_OPCLASS_H__
 #define __REG_OPCLASS_H__
 
+#ifdef CONFIG_AFC_SUPPORT
+#include <wlan_reg_afc.h>
+#endif
+
 #ifdef HOST_OPCLASS
 /**
  * reg_dmn_get_chanwidth_from_opclass() - Get channel width from opclass.
@@ -449,6 +453,7 @@ uint16_t reg_dmn_get_chanwidth_from_opclass_auto(uint8_t *country,
  * reg_dmn_get_6g_opclasses_and_channels()- Get the following from the
  * operating class table for 6Ghz band: number of operating classes, list of
  * opclasses, list channel sizes, list of channel lists.
+ * @p_frange_lst: Pointer to frequencey range list (AFC)
  * @pdev: Pointer to pdev.
  * @num_opclasses: Pointer to number of operating classes. This is the number
  * of elements in the list array arguments
@@ -463,6 +468,7 @@ uint16_t reg_dmn_get_chanwidth_from_opclass_auto(uint8_t *country,
  */
 
 QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
+						 struct wlan_afc_frange_list *p_frange_lst,
 						 uint8_t *num_opclasses,
 						 uint8_t **opclass_lst,
 						 uint8_t **chansize_lst,

@@ -160,6 +160,16 @@ struct afc_cb_handler {
 	afc_req_rx_evt_handler func;
 	void *arg;
 };
+
+/**
+ * reg_init_freq_range() - Initialize a freq_range object
+ * @left: The left frequency range
+ * @right: The right frequency range
+ *
+ * Return: The initialized freq_range object
+ */
+struct freq_range
+reg_init_freq_range(qdf_freq_t left, qdf_freq_t right);
 #endif
 /**
  * get_next_lower_bandwidth() - Get next lower bandwidth

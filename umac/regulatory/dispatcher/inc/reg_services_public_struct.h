@@ -617,6 +617,17 @@ enum ctl_value {
 };
 
 /**
+ * struct freq_range: The range/band of frequencies, indicated by left and right
+ * edge frequencies.
+ * @left: Left edge freqency(inclusive)
+ * @right: Right edge freqency(inclusive)
+ */
+struct freq_range {
+	qdf_freq_t left;
+	qdf_freq_t right;
+};
+
+/**
  * struct ch_params
  * @ch_width: channel width
  * @sec_ch_offset: secondary channel offset
