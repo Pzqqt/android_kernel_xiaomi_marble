@@ -467,6 +467,11 @@ static QDF_STATUS dp_vdev_attach_be(struct dp_soc *soc, struct dp_vdev *vdev)
 		QDF_BUG(0);
 		return QDF_STATUS_E_FAULT;
 	}
+
+	if (vdev->opmode == wlan_op_mode_sta)
+		hal_tx_vdev_mcast_ctrl_set(soc->hal_soc, vdev->vdev_id,
+					   HAL_TX_MCAST_CTRL_MEC_NOTIFY);
+
 	return QDF_STATUS_SUCCESS;
 }
 

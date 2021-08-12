@@ -188,7 +188,7 @@ void *hal_rx_msdu_ext_desc_info_get_ptr_be(void *msdu_details_ptr)
 	return HAL_RX_MSDU_EXT_DESC_INFO_GET(msdu_details_ptr);
 }
 
-#if defined(QCA_WIFI_WCN7850) || defined(CONFIG_WIFI_EMULATION_WIFI_3_0)
+#ifdef QCA_WIFI_WCN7850
 static inline uint32_t
 hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
 {

@@ -276,10 +276,10 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 
 	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta) {
 		bank_config->index_lookup_enable = 1;
-		bank_config->mcast_pkt_ctrl = 2;
+		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_MEC_NOTIFY;
 	} else {
 		bank_config->index_lookup_enable = 0;
-		bank_config->mcast_pkt_ctrl = 0;
+		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_FW_EXCEPTION;
 	}
 
 	bank_config->addrx_en =
@@ -290,6 +290,8 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 		1 : 0;
 
 	bank_config->mesh_enable = vdev->mesh_vdev ? 1 : 0;
+
+	bank_config->dscp_tid_map_id = vdev->dscp_tid_map_id;
 
 	/* Disabling vdev id check for now. Needs revist. */
 	bank_config->vdev_id_check_en = be_vdev->vdev_id_check_en;

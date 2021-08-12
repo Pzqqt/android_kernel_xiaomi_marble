@@ -32,6 +32,23 @@ enum hal_be_tx_ret_buf_manager {
 	HAL_BE_WBM_SW6_BM_ID = 11,
 };
 
+enum hal_tx_mcast_ctrl {
+	/* mcast traffic exceptioned to FW
+	 * valid only for AP VAP default for AP
+	 */
+	HAL_TX_MCAST_CTRL_FW_EXCEPTION = 0,
+	/* mcast traffic dropped in TCL*/
+	HAL_TX_MCAST_CTRL_DROP,
+	/* MEC notification are enabled
+	 * valid only for client VAP
+	 */
+	HAL_TX_MCAST_CTRL_MEC_NOTIFY,
+	/* no special routing for mcast
+	 * valid for client vap when index search is enabled
+	 */
+	HAL_TX_MCAST_CTRL_NO_SPECIAL,
+};
+
 /*---------------------------------------------------------------------------
  * Structures
  * ---------------------------------------------------------------------------
@@ -66,7 +83,8 @@ union hal_tx_bank_config {
 			 vdev_id_check_en:1,
 			 pmac_id:2,
 			 mcast_pkt_ctrl:2,
-			 reserved:13;
+			 dscp_tid_map_id:6,
+			 reserved:7;
 	};
 	uint32_t val;
 };
@@ -414,6 +432,7 @@ hal_tx_get_num_tcl_banks(hal_soc_handle_t hal_soc_hdl)
  *
  * Returns: None
  */
+#ifdef HWIO_TCL_R0_SW_CONFIG_BANK_n_MCAST_PACKET_CTRL_SHFT
 static inline void
 hal_tx_populate_bank_register(hal_soc_handle_t hal_soc_hdl,
 			      union hal_tx_bank_config *config,
@@ -451,6 +470,45 @@ hal_tx_populate_bank_register(hal_soc_handle_t hal_soc_hdl,
 
 	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
 }
+#else
+static inline void
+hal_tx_populate_bank_register(hal_soc_handle_t hal_soc_hdl,
+			      union hal_tx_bank_config *config,
+			      uint8_t bank_id)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+	uint32_t reg_addr, reg_val = 0;
+
+	reg_addr = HWIO_TCL_R0_SW_CONFIG_BANK_n_ADDR(MAC_TCL_REG_REG_BASE,
+						     bank_id);
+
+	reg_val |= (config->epd << HWIO_TCL_R0_SW_CONFIG_BANK_n_EPD_SHFT);
+	reg_val |= (config->encap_type <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_ENCAP_TYPE_SHFT);
+	reg_val |= (config->encrypt_type <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_ENCRYPT_TYPE_SHFT);
+	reg_val |= (config->src_buffer_swap <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_SRC_BUFFER_SWAP_SHFT);
+	reg_val |= (config->link_meta_swap <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_LINK_META_SWAP_SHFT);
+	reg_val |= (config->index_lookup_enable <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_INDEX_LOOKUP_ENABLE_SHFT);
+	reg_val |= (config->addrx_en <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_ADDRX_EN_SHFT);
+	reg_val |= (config->addry_en <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_ADDRY_EN_SHFT);
+	reg_val |= (config->mesh_enable <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_MESH_ENABLE_SHFT);
+	reg_val |= (config->vdev_id_check_en <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_VDEV_ID_CHECK_EN_SHFT);
+	reg_val |= (config->pmac_id <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_PMAC_ID_SHFT);
+	reg_val |= (config->mcast_pkt_ctrl <<
+			HWIO_TCL_R0_SW_CONFIG_BANK_n_DSCP_TID_TABLE_NUM_SHFT);
+
+	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
+}
+#endif
 
 #define RBM_MAPPING_BMSK HWIO_TCL_R0_RBM_MAPPING0_SW2TCL1_RING_BMSK
 #define RBM_MAPPING_SHFT HWIO_TCL_R0_RBM_MAPPING0_SW2TCL2_RING_SHFT
@@ -549,4 +607,54 @@ hal_tx_desc_set_buf_addr_be(hal_soc_handle_t hal_soc_hdl, void *desc,
 		HAL_TX_SM(TCL_DATA_CMD, BUF_OR_EXT_DESC_TYPE, type);
 }
 
+#ifdef HWIO_TCL_R0_VDEV_MCAST_PACKET_CTRL_MAP_n_VAL_SHFT
+
+#define HAL_TCL_VDEV_MCAST_PACKET_CTRL_REG_ID(vdev_id) (vdev_id >> 0x4)
+#define HAL_TCL_VDEV_MCAST_PACKET_CTRL_INDEX_IN_REG(vdev_id) (vdev_id & 0xF)
+#define HAL_TCL_VDEV_MCAST_PACKET_CTRL_MASK 0x3
+#define HAL_TCL_VDEV_MCAST_PACKET_CTRL_SHIFT 0x2
+
+/**
+ * hal_tx_vdev_mcast_ctrl_set - set mcast_ctrl value
+ * @hal_soc: HAL SoC context
+ * @mcast_ctrl_val: mcast ctrl value for this VAP
+ *
+ * Return: void
+ */
+static inline void
+hal_tx_vdev_mcast_ctrl_set(hal_soc_handle_t hal_soc_hdl,
+			   uint8_t vdev_id,
+			   uint8_t mcast_ctrl_val)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+	uint32_t reg_addr, reg_val = 0;
+	uint32_t val;
+	uint8_t reg_idx = HAL_TCL_VDEV_MCAST_PACKET_CTRL_REG_ID(vdev_id);
+	uint8_t index_in_reg =
+		HAL_TCL_VDEV_MCAST_PACKET_CTRL_INDEX_IN_REG(vdev_id);
+
+	reg_addr =
+	HWIO_TCL_R0_VDEV_MCAST_PACKET_CTRL_MAP_n_ADDR(MAC_TCL_REG_REG_BASE,
+						      reg_idx);
+
+	val = HAL_REG_READ(hal_soc, reg_addr);
+
+	/* mask out other stored value */
+	val &= (~(HAL_TCL_VDEV_MCAST_PACKET_CTRL_MASK <<
+		  (HAL_TCL_VDEV_MCAST_PACKET_CTRL_SHIFT * index_in_reg)));
+
+	reg_val = val |
+		((HAL_TCL_VDEV_MCAST_PACKET_CTRL_MASK & mcast_ctrl_val) <<
+		 (HAL_TCL_VDEV_MCAST_PACKET_CTRL_SHIFT * index_in_reg));
+
+	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
+}
+#else
+static inline void
+hal_tx_vdev_mcast_ctrl_set(hal_soc_handle_t hal_soc_hdl,
+			   uint8_t vdev_id,
+			   uint8_t mcast_ctrl_val)
+{
+}
+#endif
 #endif /* _HAL_BE_TX_H_ */
