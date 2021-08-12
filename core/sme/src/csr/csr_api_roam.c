@@ -2347,9 +2347,9 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 	     qAPisEnabled) ||
 	    ((eCSR_CFG_DOT11_MODE_11N == pBssConfig->uCfgDot11Mode &&
 	      qAPisEnabled))) {
-		pBssConfig->qosType = eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP;
+		pBssConfig->qosType = MEDIUM_ACCESS_WMM_EDCF_DSCP;
 	} else {
-		pBssConfig->qosType = eCSR_MEDIUM_ACCESS_DCF;
+		pBssConfig->qosType = MEDIUM_ACCESS_DCF;
 	}
 
 	/* short slot time */
@@ -2364,7 +2364,7 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 }
 
 static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId,
-				     eCsrMediaAccessType qosType)
+				     enum medium_access_type qosType)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t QoSEnabled;
@@ -2373,28 +2373,16 @@ static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId
 	 * qosType being configured.
 	 */
 	switch (qosType) {
-	case eCSR_MEDIUM_ACCESS_WMM_eDCF_802dot1p:
+	case MEDIUM_ACCESS_WMM_EDCF_DSCP:
 		QoSEnabled = false;
 		WmeEnabled = true;
 		break;
-	case eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP:
-		QoSEnabled = false;
-		WmeEnabled = true;
-		break;
-	case eCSR_MEDIUM_ACCESS_WMM_eDCF_NoClassify:
-		QoSEnabled = false;
-		WmeEnabled = true;
-		break;
-	case eCSR_MEDIUM_ACCESS_11e_eDCF:
-		QoSEnabled = true;
-		WmeEnabled = false;
-		break;
-	case eCSR_MEDIUM_ACCESS_11e_HCF:
+	case MEDIUM_ACCESS_11E_EDCF:
 		QoSEnabled = true;
 		WmeEnabled = false;
 		break;
 	default:
-	case eCSR_MEDIUM_ACCESS_DCF:
+	case MEDIUM_ACCESS_DCF:
 		QoSEnabled = false;
 		WmeEnabled = false;
 		break;
@@ -5970,6 +5958,7 @@ QDF_STATUS cm_csr_handle_join_req(struct wlan_objmgr_vdev *vdev,
 	tDot11fBeaconIEs *ie_struct;
 	struct bss_description *bss_desc;
 	uint32_t ie_len, bss_len;
+	struct mlme_legacy_priv *mlme_priv;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -6018,9 +6007,10 @@ QDF_STATUS cm_csr_handle_join_req(struct wlan_objmgr_vdev *vdev,
 				      SME_QOS_CSR_JOIN_REQ, NULL);
 	}
 
-	csr_set_qos_to_cfg(mac_ctx, vdev_id,
-			   csr_get_qos_from_bss_desc(mac_ctx, bss_desc,
-						     ie_struct));
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (mlme_priv)
+		mlme_priv->connect_info.qos_type =
+			csr_get_qos_from_bss_desc(mac_ctx, bss_desc, ie_struct);
 
 	if ((wlan_reg_11d_enabled_on_host(mac_ctx->psoc)) &&
 	     !ie_struct->Country.present)

@@ -381,21 +381,6 @@ typedef enum {
 	eCSR_CONNECT_STATE_TYPE_NDI_STARTED,
 } eCsrConnectState;
 
-/*
- * This parameter is no longer supported in the Profile.
- * Need to set this in the global properties for the adapter.
- */
-typedef enum eCSR_MEDIUM_ACCESS {
-	eCSR_MEDIUM_ACCESS_AUTO = 0,
-	eCSR_MEDIUM_ACCESS_DCF,
-	eCSR_MEDIUM_ACCESS_11e_eDCF,
-	eCSR_MEDIUM_ACCESS_11e_HCF,
-
-	eCSR_MEDIUM_ACCESS_WMM_eDCF_802dot1p,
-	eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP,
-	eCSR_MEDIUM_ACCESS_WMM_eDCF_NoClassify,
-} eCsrMediaAccessType;
-
 typedef enum {
 	eCSR_OPERATING_CHANNEL_ALL = 0,
 	eCSR_OPERATING_CHANNEL_AUTO = eCSR_OPERATING_CHANNEL_ALL,

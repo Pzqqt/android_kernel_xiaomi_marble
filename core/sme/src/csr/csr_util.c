@@ -869,12 +869,12 @@ static bool csr_is_bss_description_wme(struct mac_context *mac,
 	return fWme;
 }
 
-eCsrMediaAccessType
+enum medium_access_type
 csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 			  struct bss_description *pSirBssDesc,
 			  tDot11fBeaconIEs *pIes)
 {
-	eCsrMediaAccessType qosType = eCSR_MEDIUM_ACCESS_DCF;
+	enum medium_access_type qosType = MEDIUM_ACCESS_DCF;
 
 	if (!pIes) {
 		QDF_ASSERT(pIes);
@@ -886,22 +886,22 @@ csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 		 * override and use WMM.
 		 */
 		if (csr_is_bss_description_wme(mac_ctx, pSirBssDesc, pIes))
-			qosType = eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP;
+			qosType = MEDIUM_ACCESS_WMM_EDCF_DSCP;
 		else {
 			/* If the QoS bit is on, then the AP is
 			 * advertising 11E QoS.
 			 */
 			if (csr_is_qos_bss_desc(pSirBssDesc))
-				qosType = eCSR_MEDIUM_ACCESS_11e_eDCF;
+				qosType = MEDIUM_ACCESS_11E_EDCF;
 			else
-				qosType = eCSR_MEDIUM_ACCESS_DCF;
+				qosType = MEDIUM_ACCESS_DCF;
 
 			/* Scale back based on the types turned on
 			 * for the adapter.
 			 */
-			if (eCSR_MEDIUM_ACCESS_11e_eDCF == qosType
+			if (qosType == MEDIUM_ACCESS_11E_EDCF
 			    && !csr_is11e_supported(mac_ctx))
-				qosType = eCSR_MEDIUM_ACCESS_DCF;
+				qosType = MEDIUM_ACCESS_DCF;
 		}
 
 	} while (0);

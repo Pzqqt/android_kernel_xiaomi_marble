@@ -122,7 +122,7 @@ struct csr_channel {
 };
 
 struct bss_config_param {
-	eCsrMediaAccessType qosType;
+	enum medium_access_type qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	tSirMacCapabilityInfo BssCap;

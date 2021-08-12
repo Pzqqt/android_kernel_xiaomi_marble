@@ -6087,12 +6087,6 @@ sme_qos_is_acm(struct mac_context *mac, struct bss_description *pSirBssDesc,
 	bool ret_val = false;
 	tDot11fBeaconIEs *pIesLocal;
 
-	if (!pSirBssDesc) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d: pSirBssDesc is NULL", __func__, __LINE__);
-		return false;
-	}
-
 	if (pIes)
 		/* IEs were provided so use them locally */
 		pIesLocal = pIes;

@@ -2680,6 +2680,70 @@ static QDF_STATUS lim_iterate_triplets(tDot11fIECountry country_ie)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void lim_set_qos_to_cfg(struct pe_session *session,
+			       enum medium_access_type qos_type)
+{
+	bool qos_enabled;
+	bool wme_enabled;
+
+	switch (qos_type) {
+	case MEDIUM_ACCESS_WMM_EDCF_DSCP:
+		qos_enabled = false;
+		wme_enabled = true;
+		break;
+	case MEDIUM_ACCESS_11E_EDCF:
+		qos_enabled = true;
+		wme_enabled = false;
+		break;
+	default:
+	case MEDIUM_ACCESS_DCF:
+		qos_enabled = false;
+		wme_enabled = false;
+		break;
+	}
+
+	session->limWmeEnabled = wme_enabled;
+	session->limQosEnabled = qos_enabled;
+}
+
+static void lim_update_qos(struct mac_context *mac_ctx,
+			   struct pe_session *session)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (!mlme_priv)
+		return;
+
+	if ((session->dot11mode != MLME_DOT11_MODE_11N) &&
+	    (mac_ctx->roam.configParam.WMMSupportMode == eCsrRoamWmmNoQos)) {
+		/*
+		 * Joining BSS is not 11n capable and WMM is disabled on client.
+		 * Disable QoS and WMM
+		 */
+		mlme_priv->connect_info.qos_type = MEDIUM_ACCESS_DCF;
+	}
+
+	if ((session->dot11mode == MLME_DOT11_MODE_11N ||
+	     session->dot11mode == MLME_DOT11_MODE_11AC) &&
+	      (mlme_priv->connect_info.qos_type !=
+		MEDIUM_ACCESS_WMM_EDCF_DSCP &&
+	       mlme_priv->connect_info.qos_type !=
+		MEDIUM_ACCESS_11E_EDCF)) {
+		/*
+		 * Joining BSS is 11n capable and WMM is disabled on AP.
+		 * Assume all HT AP's are QOS AP's and enable WMM
+		 */
+		mlme_priv->connect_info.qos_type =
+					MEDIUM_ACCESS_WMM_EDCF_DSCP;
+	}
+
+	lim_set_qos_to_cfg(session, mlme_priv->connect_info.qos_type);
+	mlme_priv->connect_info.qos_enabled = session->limWmeEnabled;
+	pe_debug("QOS %d WMM %d", session->limQosEnabled,
+		 session->limWmeEnabled);
+}
+
 static QDF_STATUS
 lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		    struct bss_description *bss_desc)
@@ -2827,15 +2891,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 
 	session->statypeForBss = STA_ENTRY_PEER;
 
-	if (mac_ctx->roam.roamSession[session->vdev_id].fWMMConnection)
-		session->limWmeEnabled = true;
-	else
-		session->limWmeEnabled = false;
-
-	if (mac_ctx->roam.roamSession[session->vdev_id].fQOSConnection)
-		session->limQosEnabled = true;
-	else
-		session->limQosEnabled = false;
+	lim_update_qos(mac_ctx, session);
 
 	if (session->lim_join_req->bssDescription.adaptive_11r_ap)
 		session->is_adaptive_11r_connection =
