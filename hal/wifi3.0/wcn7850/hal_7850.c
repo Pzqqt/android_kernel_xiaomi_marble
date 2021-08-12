@@ -1291,7 +1291,6 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_srng_dst_hw_init = hal_srng_dst_hw_init_generic;
 	hal_soc->ops->hal_srng_src_hw_init = hal_srng_src_hw_init_generic;
 	hal_soc->ops->hal_get_hw_hptp = hal_get_hw_hptp_generic;
-	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_be;
 	hal_soc->ops->hal_get_window_address = hal_get_window_address_7850;
 	hal_soc->ops->hal_reo_set_err_dst_remap =
 						hal_reo_set_err_dst_remap_7850;
@@ -1915,6 +1914,12 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 #endif
+	{ /* REO2PPE */ 0},
+	{ /* PPE2TCL */ 0},
+	{ /* PPE_RELEASE */ 0},
+	{ /* TX_MONITOR_BUF */ 0},
+	{ /* TX_MONITOR_DST */ 0},
+	{ /* SW2RXDMA_NEW */ 0},
 };
 
 /**

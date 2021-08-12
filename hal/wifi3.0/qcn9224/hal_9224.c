@@ -132,10 +132,280 @@
 		 (UMAC_WINDOW_ADDRESS_9224 << 12) | \
 		 WINDOW_ENABLE_BIT)
 
+/* For Berryllium sw2rxdma ring size increased to 20 bits */
+#define HAL_RXDMA_MAX_RING_SIZE_BE 0xFFFFF
+
+#ifdef CONFIG_WORD_BASED_TLV
+struct rx_msdu_end_compact_qca9224 {
+	uint32_t rxpcu_mpdu_filter_in_category		:  2, // [1:0]
+		 sw_frame_group_id			:  7, // [8:2]
+		 reserved_0				:  7, // [15:9]
+		 phy_ppdu_id				: 16; // [31:16]
+	uint32_t ip_hdr_chksum				: 16, // [15:0]
+		 reported_mpdu_length			: 14, // [29:16]
+		 reserved_1a				:  2; // [31:30]
+	uint32_t key_id_octet				:  8, // [7:0]
+		 cce_super_rule				:  6, // [13:8]
+		 cce_classify_not_done_truncate		:  1, // [14:14]
+		 cce_classify_not_done_cce_dis		:  1, // [15:15]
+		 cumulative_l3_checksum			: 16; // [31:16]
+	uint32_t rule_indication_31_0			: 32; // [31:0]
+	uint32_t rule_indication_63_32			: 32; // [31:0]
+	uint32_t da_offset				:  6, // [5:0]
+		 sa_offset				:  6, // [11:6]
+		 da_offset_valid			:  1, // [12:12]
+		 sa_offset_valid			:  1, // [13:13]
+		 reserved_5a				:  2, // [15:14]
+		 l3_type				: 16; // [31:16]
+	uint32_t ipv6_options_crc			: 32; // [31:0]
+	uint32_t tcp_seq_number				: 32; // [31:0]
+	uint32_t tcp_ack_number				: 32; // [31:0]
+	uint32_t tcp_flag				:  9, // [8:0]
+		 lro_eligible				:  1, // [9:9]
+		 reserved_9a				:  6, // [15:10]
+		 window_size				: 16; // [31:16]
+	uint32_t tcp_udp_chksum				: 16, // [15:0]
+		 sa_idx_timeout				:  1, // [16:16]
+		 da_idx_timeout				:  1, // [17:17]
+		 msdu_limit_error			:  1, // [18:18]
+		 flow_idx_timeout			:  1, // [19:19]
+		 flow_idx_invalid			:  1, // [20:20]
+		 wifi_parser_error			:  1, // [21:21]
+		 amsdu_parser_error			:  1, // [22:22]
+		 sa_is_valid				:  1, // [23:23]
+		 da_is_valid				:  1, // [24:24]
+		 da_is_mcbc				:  1, // [25:25]
+		 l3_header_padding			:  2, // [27:26]
+		 first_msdu				:  1, // [28:28]
+		 last_msdu				:  1, // [29:29]
+		 tcp_udp_chksum_fail_copy		:  1, // [30:30]
+		 ip_chksum_fail_copy			:  1; // [31:31]
+	uint32_t sa_idx					: 16, // [15:0]
+		 da_idx_or_sw_peer_id			: 16; // [31:16]
+	uint32_t msdu_drop				:  1, // [0:0]
+		 reo_destination_indication		:  5, // [5:1]
+		 flow_idx				: 20, // [25:6]
+		 use_ppe				:  1, // [26:26]
+		 reserved_12a				:  5; // [31:27]
+	uint32_t fse_metadata				: 32; // [31:0]
+	uint32_t cce_metadata				: 16, // [15:0]
+		 sa_sw_peer_id				: 16; // [31:16]
+	uint32_t aggregation_count			:  8, // [7:0]
+		 flow_aggregation_continuation		:  1, // [8:8]
+		 fisa_timeout				:  1, // [9:9]
+		 reserved_15a				: 22; // [31:10]
+	uint32_t cumulative_l4_checksum			: 16, // [15:0]
+		 cumulative_ip_length			: 16; // [31:16]
+	uint32_t reserved_17a				:  6, // [5:0]
+		 service_code				:  9, // [14:6]
+		 priority_valid				:  1, // [15:15]
+		 intra_bss				:  1, // [16:16]
+		 dest_chip_id				:  2, // [18:17]
+		 multicast_echo				:  1, // [19:19]
+		 wds_learning_event			:  1, // [20:20]
+		 wds_roaming_event			:  1, // [21:21]
+		 wds_keep_alive_event			:  1, // [22:22]
+		 reserved_17b				:  9; // [31:23]
+	uint32_t msdu_length				: 14, // [13:0]
+		 stbc					:  1, // [14:14]
+		 ipsec_esp				:  1, // [15:15]
+		 l3_offset				:  7, // [22:16]
+		 ipsec_ah				:  1, // [23:23]
+		 l4_offset				:  8; // [31:24]
+	uint32_t msdu_number				:  8, // [7:0]
+		 decap_format				:  2, // [9:8]
+		 ipv4_proto				:  1, // [10:10]
+		 ipv6_proto				:  1, // [11:11]
+		 tcp_proto				:  1, // [12:12]
+		 udp_proto				:  1, // [13:13]
+		 ip_frag				:  1, // [14:14]
+		 tcp_only_ack				:  1, // [15:15]
+		 da_is_bcast_mcast			:  1, // [16:16]
+		 toeplitz_hash_sel			:  2, // [18:17]
+		 ip_fixed_header_valid			:  1, // [19:19]
+		 ip_extn_header_valid			:  1, // [20:20]
+		 tcp_udp_header_valid			:  1, // [21:21]
+		 mesh_control_present			:  1, // [22:22]
+		 ldpc					:  1, // [23:23]
+		 ip4_protocol_ip6_next_header		:  8; // [31:24]
+	uint32_t toeplitz_hash_2_or_4			: 32; // [31:0]
+	uint32_t flow_id_toeplitz			: 32; // [31:0]
+	uint32_t user_rssi				:  8, // [7:0]
+		 pkt_type				:  4, // [11:8]
+		 sgi					:  2, // [13:12]
+		 rate_mcs				:  4, // [17:14]
+		 receive_bandwidth			:  3, // [20:18]
+		 reception_type				:  3, // [23:21]
+		 mimo_ss_bitmap				:  8; // [31:24]
+	uint32_t ppdu_start_timestamp_31_0		: 32; // [31:0]
+	uint32_t ppdu_start_timestamp_63_32		: 32; // [31:0]
+	uint32_t sw_phy_meta_data			: 32; // [31:0]
+	uint32_t vlan_ctag_ci				: 16, // [15:0]
+		 vlan_stag_ci				: 16; // [31:16]
+	uint32_t reserved_27a				: 32; // [31:0]
+	uint32_t reserved_28a				: 32; // [31:0]
+	uint32_t reserved_29a				: 32; // [31:0]
+	uint32_t first_mpdu				:  1, // [0:0]
+		 reserved_30a				:  1, // [1:1]
+		 mcast_bcast				:  1, // [2:2]
+		 ast_index_not_found			:  1, // [3:3]
+		 ast_index_timeout			:  1, // [4:4]
+		 power_mgmt				:  1, // [5:5]
+		 non_qos				:  1, // [6:6]
+		 null_data				:  1, // [7:7]
+		 mgmt_type				:  1, // [8:8]
+		 ctrl_type				:  1, // [9:9]
+		 more_data				:  1, // [10:10]
+		 eosp					:  1, // [11:11]
+		 a_msdu_error				:  1, // [12:12]
+		 fragment_flag				:  1, // [13:13]
+		 order					:  1, // [14:14]
+		 cce_match				:  1, // [15:15]
+		 overflow_err				:  1, // [16:16]
+		 msdu_length_err			:  1, // [17:17]
+		 tcp_udp_chksum_fail			:  1, // [18:18]
+		 ip_chksum_fail				:  1, // [19:19]
+		 sa_idx_invalid				:  1, // [20:20]
+		 da_idx_invalid				:  1, // [21:21]
+		 reserved_30b				:  1, // [22:22]
+		 rx_in_tx_decrypt_byp			:  1, // [23:23]
+		 encrypt_required			:  1, // [24:24]
+		 directed				:  1, // [25:25]
+		 buffer_fragment			:  1, // [26:26]
+		 mpdu_length_err			:  1, // [27:27]
+		 tkip_mic_err				:  1, // [28:28]
+		 decrypt_err				:  1, // [29:29]
+		 unencrypted_frame_err			:  1, // [30:30]
+		 fcs_err				:  1; // [31:31]
+	uint32_t reserved_31a				: 10, // [9:0]
+		 decrypt_status_code			:  3, // [12:10]
+		 rx_bitmap_not_updated			:  1, // [13:13]
+		 reserved_31b				: 17, // [30:14]
+		 msdu_done				:  1; // [31:31]
+
+};
+
+struct rx_mpdu_start_compact_qca9224 {
+	struct rxpt_classify_info rxpt_classify_info_details;
+	uint32_t rx_reo_queue_desc_addr_31_0		: 32; // [31:0]
+	uint32_t rx_reo_queue_desc_addr_39_32		:  8, // [7:0]
+		 receive_queue_number			: 16, // [23:8]
+		 pre_delim_err_warning			:  1, // [24:24]
+		 first_delim_err			:  1, // [25:25]
+		 reserved_2a				:  6; // [31:26]
+	uint32_t pn_31_0				: 32; // [31:0]
+	uint32_t pn_63_32				: 32; // [31:0]
+	uint32_t pn_95_64				: 32; // [31:0]
+	uint32_t pn_127_96				: 32; // [31:0]
+	uint32_t epd_en					:  1, // [0:0]
+		 all_frames_shall_be_encrypted		:  1, // [1:1]
+		 encrypt_type				:  4, // [5:2]
+		 wep_key_width_for_variable_key		:  2, // [7:6]
+		 mesh_sta				:  2, // [9:8]
+		 bssid_hit				:  1, // [10:10]
+		 bssid_number				:  4, // [14:11]
+		 tid					:  4, // [18:15]
+		 reserved_7a				: 13; // [31:19]
+	uint32_t peer_meta_data				: 32; // [31:0]
+	uint32_t rxpcu_mpdu_filter_in_category		:  2, // [1:0]
+		 sw_frame_group_id			:  7, // [8:2]
+		 ndp_frame				:  1, // [9:9]
+		 phy_err				:  1, // [10:10]
+		 phy_err_during_mpdu_header		:  1, // [11:11]
+		 protocol_version_err			:  1, // [12:12]
+		 ast_based_lookup_valid			:  1, // [13:13]
+		 ranging				:  1, // [14:14]
+		 reserved_9a				:  1, // [15:15]
+		 phy_ppdu_id				: 16; // [31:16]
+	uint32_t ast_index				: 16, // [15:0]
+		 sw_peer_id				: 16; // [31:16]
+	uint32_t mpdu_frame_control_valid		:  1, // [0:0]
+		 mpdu_duration_valid			:  1, // [1:1]
+		 mac_addr_ad1_valid			:  1, // [2:2]
+		 mac_addr_ad2_valid			:  1, // [3:3]
+		 mac_addr_ad3_valid			:  1, // [4:4]
+		 mac_addr_ad4_valid			:  1, // [5:5]
+		 mpdu_sequence_control_valid		:  1, // [6:6]
+		 mpdu_qos_control_valid			:  1, // [7:7]
+		 mpdu_ht_control_valid			:  1, // [8:8]
+		 frame_encryption_info_valid		:  1, // [9:9]
+		 mpdu_fragment_number			:  4, // [13:10]
+		 more_fragment_flag			:  1, // [14:14]
+		 reserved_11a				:  1, // [15:15]
+		 fr_ds					:  1, // [16:16]
+		 to_ds					:  1, // [17:17]
+		 encrypted				:  1, // [18:18]
+		 mpdu_retry				:  1, // [19:19]
+		 mpdu_sequence_number			: 12; // [31:20]
+	uint32_t key_id_octet				:  8, // [7:0]
+		 new_peer_entry				:  1, // [8:8]
+		 decrypt_needed				:  1, // [9:9]
+		 decap_type				:  2, // [11:10]
+		 rx_insert_vlan_c_tag_padding		:  1, // [12:12]
+		 rx_insert_vlan_s_tag_padding		:  1, // [13:13]
+		 strip_vlan_c_tag_decap			:  1, // [14:14]
+		 strip_vlan_s_tag_decap			:  1, // [15:15]
+		 pre_delim_count			: 12, // [27:16]
+		 ampdu_flag				:  1, // [28:28]
+		 bar_frame				:  1, // [29:29]
+		 raw_mpdu				:  1, // [30:30]
+		 reserved_12				:  1; // [31:31]
+	uint32_t mpdu_length				: 14, // [13:0]
+		 first_mpdu				:  1, // [14:14]
+		 mcast_bcast				:  1, // [15:15]
+		 ast_index_not_found			:  1, // [16:16]
+		 ast_index_timeout			:  1, // [17:17]
+		 power_mgmt				:  1, // [18:18]
+		 non_qos				:  1, // [19:19]
+		 null_data				:  1, // [20:20]
+		 mgmt_type				:  1, // [21:21]
+		 ctrl_type				:  1, // [22:22]
+		 more_data				:  1, // [23:23]
+		 eosp					:  1, // [24:24]
+		 fragment_flag				:  1, // [25:25]
+		 order					:  1, // [26:26]
+		 u_apsd_trigger				:  1, // [27:27]
+		 encrypt_required			:  1, // [28:28]
+		 directed				:  1, // [29:29]
+		 amsdu_present				:  1, // [30:30]
+		 reserved_13				:  1; // [31:31]
+	uint32_t mpdu_frame_control_field		: 16, // [15:0]
+		 mpdu_duration_field			: 16; // [31:16]
+	uint32_t mac_addr_ad1_31_0			: 32; // [31:0]
+	uint32_t mac_addr_ad1_47_32			: 16, // [15:0]
+		 mac_addr_ad2_15_0			: 16; // [31:16]
+	uint32_t mac_addr_ad2_47_16			: 32; // [31:0]
+	uint32_t mac_addr_ad3_31_0			: 32; // [31:0]
+	uint32_t mac_addr_ad3_47_32			: 16, // [15:0]
+		 mpdu_sequence_control_field		: 16; // [31:16]
+	uint32_t mac_addr_ad4_31_0			: 32; // [31:0]
+	uint32_t mac_addr_ad4_47_32			: 16, // [15:0]
+		 mpdu_qos_control_field			: 16; // [31:16]
+	uint32_t mpdu_ht_control_field			: 32; // [31:0]
+	uint32_t vdev_id				:  8, // [7:0]
+		 service_code				:  9, // [16:8]
+		 priority_valid				:  1, // [17:17]
+		 src_info				: 12, // [29:18]
+		 reserved_23a				:  1, // [30:30]
+		 multi_link_addr_ad1_ad2_valid		:  1; // [31:31]
+	uint32_t multi_link_addr_ad1_31_0		: 32; // [31:0]
+	uint32_t multi_link_addr_ad1_47_32		: 16, // [15:0]
+		 multi_link_addr_ad2_15_0		: 16; // [31:16]
+	uint32_t multi_link_addr_ad2_47_16		: 32; // [31:0]
+	uint32_t reserved_27a				: 32; // [31:0]
+	uint32_t reserved_28a				: 32; // [31:0]
+	uint32_t reserved_29a				: 32; // [31:0]
+};
+
+/* TLV struct for word based Tlv */
+typedef struct rx_mpdu_start_compact_qca9224 hal_rx_mpdu_start_t;
+typedef struct rx_msdu_end_compact_qca9224 hal_rx_msdu_end_t;
+#endif /* CONFIG_WORD_BASED_TLV */
+
 #include "hal_9224_rx.h"
-#include <hal_be_generic_api.h>
 #include "hal_9224_tx.h"
 #include "hal_be_rx_tlv.h"
+#include <hal_be_generic_api.h>
 
 #define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
 /**
@@ -295,9 +565,14 @@ void hal_rx_get_rtt_info_9224(void *rx_tlv, void *ppdu_info_hdl)
 static inline void hal_rx_dump_mpdu_start_tlv_9224(void *mpdustart,
 						   uint8_t dbg_level)
 {
-	struct rx_mpdu_start_compact *mpdu_info =
-			(struct rx_mpdu_start_compact *)mpdustart;
-
+#ifdef CONFIG_WORD_BASED_TLV
+	struct rx_mpdu_start_compact_qca9224 *mpdu_info =
+		(struct rx_mpdu_start_compact_qca9224 *)mpdustart;
+#else
+	struct rx_mpdu_start *mpdu_start = (struct rx_mpdu_start *)mpdustart;
+	struct rx_mpdu_info *mpdu_info =
+		(struct rx_mpdu_info *)&mpdu_start->rx_mpdu_info_details;
+#endif
 	QDF_TRACE(dbg_level, QDF_MODULE_ID_HAL,
 		  "rx_mpdu_start tlv (1/5) - "
 		  "rx_reo_queue_desc_addr_39_32 :%x"
@@ -425,9 +700,13 @@ static inline void hal_rx_dump_mpdu_start_tlv_9224(void *mpdustart,
 static void hal_rx_dump_msdu_end_tlv_9224(void *msduend,
 					  uint8_t dbg_level)
 {
-	struct rx_msdu_end_compact *msdu_end =
-					(struct rx_msdu_end_compact *)msduend;
-
+#ifdef CONFIG_WORD_BASED_TLV
+	struct rx_msdu_end_compact_qca9224 *msdu_end =
+		(struct rx_msdu_end_compact_qca9224 *)msduend;
+#else
+	struct rx_msdu_end *msdu_end =
+		(struct rx_msdu_end *)msduend;
+#endif
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
 		  "rx_msdu_end tlv - "
 		  "key_id_octet: %d "
@@ -920,19 +1199,34 @@ static inline void hal_rx_dump_pkt_hdr_tlv_9224(struct rx_pkt_tlvs *pkt_tlvs,
  *
  * Return: void
  */
+#ifdef CONFIG_WORD_BASED_TLV
 static void hal_rx_dump_pkt_tlvs_9224(hal_soc_handle_t hal_soc_hdl,
 				      uint8_t *buf, uint8_t dbg_level)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end_compact *msdu_end =
-				&pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	struct rx_mpdu_start_compact *mpdu_start =
+	struct rx_msdu_end_compact_qca9224 *msdu_end =
+					&pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct rx_mpdu_start_compact_qca9224 *mpdu_start =
 				&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
 
 	hal_rx_dump_msdu_end_tlv_9224(msdu_end, dbg_level);
 	hal_rx_dump_mpdu_start_tlv_9224(mpdu_start, dbg_level);
 	hal_rx_dump_pkt_hdr_tlv_9224(pkt_tlvs, dbg_level);
 }
+#else
+static void hal_rx_dump_pkt_tlvs_9224(hal_soc_handle_t hal_soc_hdl,
+				      uint8_t *buf, uint8_t dbg_level)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct rx_mpdu_start *mpdu_start =
+				&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	hal_rx_dump_msdu_end_tlv_9224(msdu_end, dbg_level);
+	hal_rx_dump_mpdu_start_tlv_9224(mpdu_start, dbg_level);
+	hal_rx_dump_pkt_hdr_tlv_9224(pkt_tlvs, dbg_level);
+}
+#endif
 
 static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 {
@@ -940,7 +1234,6 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_srng_dst_hw_init = hal_srng_dst_hw_init_generic;
 	hal_soc->ops->hal_srng_src_hw_init = hal_srng_src_hw_init_generic;
 	hal_soc->ops->hal_get_hw_hptp = hal_get_hw_hptp_generic;
-	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_be;
 	hal_soc->ops->hal_get_window_address = hal_get_window_address_9224;
 
 	/* tx */
@@ -966,12 +1259,8 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 
 	/* rx */
 	hal_soc->ops->hal_rx_msdu_start_nss_get = hal_rx_tlv_nss_get_be;
-	hal_soc->ops->hal_rx_mon_hw_desc_get_mpdu_status = NULL;
-	/*
-	 * TODO:
-	 * In below API, stbc is accessed but is not part of
-	 * compact struct hal_rx_mon_hw_desc_get_mpdu_status_be;
-	 */
+	hal_soc->ops->hal_rx_mon_hw_desc_get_mpdu_status =
+		hal_rx_mon_hw_desc_get_mpdu_status_be;
 	hal_soc->ops->hal_rx_get_tlv = hal_rx_get_tlv_9224;
 	hal_soc->ops->hal_rx_proc_phyrx_other_receive_info_tlv =
 				hal_rx_proc_phyrx_other_receive_info_tlv_9224;
@@ -1012,7 +1301,7 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_msdu_end_sa_idx_get = hal_rx_tlv_sa_idx_get_be;
 	hal_soc->ops->hal_rx_desc_is_first_msdu = hal_rx_desc_is_first_msdu_be;
 	hal_soc->ops->hal_rx_msdu_end_l3_hdr_padding_get =
-					hal_rx_tlv_l3_hdr_padding_get_be;
+		hal_rx_tlv_l3_hdr_padding_get_be;
 	hal_soc->ops->hal_rx_encryption_info_valid =
 					hal_rx_encryption_info_valid_be;
 	hal_soc->ops->hal_rx_print_pn = hal_rx_print_pn_be;
@@ -1036,15 +1325,10 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_mpdu_get_addr4 = hal_rx_mpdu_get_addr4_be;
 	hal_soc->ops->hal_rx_get_mpdu_sequence_control_valid =
 		hal_rx_get_mpdu_sequence_control_valid_be;
-	/* TODO: sw_frame_group_id not in compact struct */
-	hal_soc->ops->hal_rx_is_unicast = NULL;
+	hal_soc->ops->hal_rx_is_unicast = hal_rx_is_unicast_be;
 	hal_soc->ops->hal_rx_tid_get = hal_rx_tid_get_be;
-	hal_soc->ops->hal_rx_hw_desc_get_ppduid_get = NULL;
-	/*
-	 * TODO:
-	 * Ppdu_id not present in compact, to be added for monitor mode
-	 * hal_rx_hw_desc_get_ppduid_get_be;
-	 */
+	hal_soc->ops->hal_rx_hw_desc_get_ppduid_get =
+		hal_rx_hw_desc_get_ppduid_get_be;
 	hal_soc->ops->hal_rx_mpdu_start_mpdu_qos_control_valid_get =
 		hal_rx_mpdu_start_mpdu_qos_control_valid_get_be;
 	hal_soc->ops->hal_rx_msdu_end_sa_sw_peer_id_get =
@@ -1058,14 +1342,10 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_get_fc_valid = hal_rx_get_fc_valid_be;
 	hal_soc->ops->hal_rx_get_to_ds_flag = hal_rx_get_to_ds_flag_be;
 	hal_soc->ops->hal_rx_get_mac_addr2_valid =
-					hal_rx_get_mac_addr2_valid_be;
-	hal_soc->ops->hal_rx_get_filter_category = NULL;
-	/*
-	 * TODO:
-	 * Field not present in compact struct - hal_rx_get_filter_category_be;
-	 */
-	hal_soc->ops->hal_rx_get_ppdu_id = NULL;
-	/* TODO: Field not present in compact struct - hal_rx_get_ppdu_id_be; */
+						hal_rx_get_mac_addr2_valid_be;
+	hal_soc->ops->hal_rx_get_filter_category =
+						hal_rx_get_filter_category_be;
+	hal_soc->ops->hal_rx_get_ppdu_id = hal_rx_get_ppdu_id_be;
 	hal_soc->ops->hal_reo_config = hal_reo_config_9224;
 	hal_soc->ops->hal_rx_msdu_flow_idx_get = hal_rx_msdu_flow_idx_get_be;
 	hal_soc->ops->hal_rx_msdu_flow_idx_invalid =
@@ -1110,51 +1390,30 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 					hal_compute_reo_remap_ix2_ix3_9224;
 
 	hal_soc->ops->hal_rx_msdu_get_reo_destination_indication =
-		hal_rx_msdu_get_reo_destination_indication_be;
+				hal_rx_msdu_get_reo_destination_indication_be;
 	hal_soc->ops->hal_rx_get_tlv_size = hal_rx_get_tlv_size_generic_be;
 	hal_soc->ops->hal_rx_msdu_is_wlan_mcast =
 					hal_rx_msdu_is_wlan_mcast_generic_be;
-	hal_soc->ops->hal_rx_tlv_decap_format_get = NULL;
-	/*
-	 * TODO:
-	 * Decap format not present in
-	 * compact struct hal_rx_tlv_decap_format_get_be;
-	 */
-	hal_soc->ops->hal_rx_tlv_get_offload_info = NULL;
-	/*
-	 * TODO:
-	 * Some fields not present in
-	 * compact struct - hal_rx_tlv_get_offload_info_be;
-	 */
-	hal_soc->ops->hal_rx_tlv_phy_ppdu_id_get = NULL;
-	/*
-	 * TODO:
-	 * No Phy ppdu id in compact hal_rx_attn_phy_ppdu_id_get_be;
-	 */
+	hal_soc->ops->hal_rx_tlv_decap_format_get =
+					hal_rx_tlv_decap_format_get_be;
+#ifdef RECEIVE_OFFLOAD
+	hal_soc->ops->hal_rx_tlv_get_offload_info =
+					hal_rx_tlv_get_offload_info_be;
+	hal_soc->ops->hal_rx_get_proto_params = hal_rx_get_proto_params_be;
+	hal_soc->ops->hal_rx_get_l3_l4_offsets = hal_rx_get_l3_l4_offsets_be;
+#endif
+	hal_soc->ops->hal_rx_tlv_phy_ppdu_id_get =
+					hal_rx_attn_phy_ppdu_id_get_be;
 	hal_soc->ops->hal_rx_tlv_msdu_done_get = hal_rx_tlv_msdu_done_get_be;
-	hal_soc->ops->hal_rx_tlv_msdu_len_get = NULL;
-	/*
-	 * TODO:
-	 * msdu_len is not present in compact
-	 * struct hal_rx_msdu_start_msdu_len_get_be;
-	 */
+	hal_soc->ops->hal_rx_tlv_msdu_len_get =
+					hal_rx_msdu_start_msdu_len_get_be;
 	hal_soc->ops->hal_rx_get_frame_ctrl_field =
 					hal_rx_get_frame_ctrl_field_be;
-	hal_soc->ops->hal_rx_get_proto_params = NULL;
-	/* TODO: Not present in compact struct - hal_rx_get_proto_params_be; */
-	hal_soc->ops->hal_rx_get_l3_l4_offsets = NULL;
-	/* TODO: Not present in compact struct - hal_rx_get_l3_l4_offsets_be;*/
 	hal_soc->ops->hal_rx_tlv_csum_err_get = hal_rx_tlv_csum_err_get_be;
-	hal_soc->ops->hal_rx_mpdu_info_ampdu_flag_get = NULL;
-	/*
-	 * TODO:
-	 * Not present in compact struct - hal_rx_mpdu_info_ampdu_flag_get_be;
-	 */
-	hal_soc->ops->hal_rx_tlv_msdu_len_set = NULL;
-	/*
-	 * TODO:
-	 * Not present in compact struct - hal_rx_msdu_start_msdu_len_set_be;
-	 */
+	hal_soc->ops->hal_rx_mpdu_info_ampdu_flag_get =
+					hal_rx_mpdu_info_ampdu_flag_get_be;
+	hal_soc->ops->hal_rx_tlv_msdu_len_set =
+					hal_rx_msdu_start_msdu_len_set_be;
 	hal_soc->ops->hal_rx_tlv_sgi_get = hal_rx_tlv_sgi_get_be;
 	hal_soc->ops->hal_rx_tlv_rate_mcs_get = hal_rx_tlv_rate_mcs_get_be;
 	hal_soc->ops->hal_rx_tlv_bw_get = hal_rx_tlv_bw_get_be;
@@ -1167,6 +1426,11 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 					hal_rx_tlv_get_is_decrypted_be;
 	hal_soc->ops->hal_rx_msdu_get_keyid = hal_rx_msdu_get_keyid_be;
 	hal_soc->ops->hal_rx_tlv_get_freq = hal_rx_tlv_get_freq_be;
+	hal_soc->ops->hal_rx_priv_info_set_in_tlv =
+			hal_rx_priv_info_set_in_tlv_be;
+	hal_soc->ops->hal_rx_priv_info_get_from_tlv =
+			hal_rx_priv_info_get_from_tlv_be;
+	hal_soc->ops->hal_rx_pkt_hdr_get = hal_rx_pkt_hdr_get_be;
 };
 
 struct hal_hw_srng_config hw_srng_table_9224[] = {

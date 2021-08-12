@@ -270,45 +270,6 @@ static int hal_rx_get_l3_l4_offsets_li(uint8_t *buf, uint32_t *l3_hdr_offset,
 }
 
 /**
- * hal_rx_mpdu_end_mic_err_get_li(): API to get the MIC ERR
- * from rx_mpdu_end TLV
- *
- * @buf: pointer to the start of RX PKT TLV headers
- * Return: uint32_t(mic_err)
- */
-static inline uint32_t hal_rx_mpdu_end_mic_err_get_li(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_end *mpdu_end =
-		&pkt_tlvs->mpdu_end_tlv.rx_mpdu_end;
-	uint32_t mic_err;
-
-	mic_err = HAL_RX_MPDU_END_MIC_ERR_GET(mpdu_end);
-
-	return mic_err;
-}
-
-/*
- * hal_rx_msdu_start_get_pkt_type_li(): API to get the pkt type
- * from rx_msdu_start
- *
- * @buf: pointer to the start of RX PKT TLV header
- * Return: uint32_t(pkt type)
- */
-
-static inline uint32_t hal_rx_msdu_start_get_pkt_type_li(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_start *msdu_start =
-				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
-	uint32_t pkt_type;
-
-	pkt_type = HAL_RX_MSDU_START_PKT_TYPE_GET(msdu_start);
-
-	return pkt_type;
-}
-
-/**
  * hal_rx_tlv_get_pn_num_li() - Get packet number from RX TLV
  * @buf: rx tlv address
  * @pn_num: buffer to store packet number
@@ -349,25 +310,6 @@ static inline uint8_t *hal_rx_pkt_hdr_get_li(uint8_t *buf)
 	return pkt_tlvs->pkt_hdr_tlv.rx_pkt_hdr;
 }
 #endif
-
-/*
- * hal_rx_msdu_start_bw_get_li(): API to get the Bandwidth
- * Interval from rx_msdu_start
- *
- * @buf: pointer to the start of RX PKT TLV header
- * Return: uint32_t(bw)
- */
-static inline uint32_t hal_rx_bw_bw_get_li(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_start *msdu_start =
-		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
-	uint32_t bw;
-
-	bw = HAL_RX_MSDU_START_BW_GET(msdu_start);
-
-	return bw;
-}
 
 /**
  * hal_rx_priv_info_set_in_tlv_li(): Save the private info to

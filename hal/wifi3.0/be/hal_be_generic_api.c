@@ -22,7 +22,6 @@
 #include "hal_be_reo.h"
 #include "hal_tx.h"	//HAL_SET_FLD
 #include "hal_be_rx.h"	//HAL_RX_BUF_RBM_GET
-#include "hal_be_rx_tlv.h"
 
 #if defined(QDF_BIG_ENDIAN_MACHINE)
 /**
@@ -826,6 +825,34 @@ void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
 qdf_export_symbol(hal_cookie_conversion_reg_cfg_be);
 
 /**
+ * hal_rx_msdu_reo_dst_ind_get: Gets the REO
+ * destination ring ID from the msdu desc info
+ *
+ * @msdu_link_desc : Opaque cookie pointer used by HAL to get to
+ * the current descriptor
+ *
+ * Return: dst_ind (REO destination ring ID)
+ */
+static inline
+uint32_t hal_rx_msdu_reo_dst_ind_get_be(hal_soc_handle_t hal_soc_hdl,
+					void *msdu_link_desc)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+	struct rx_msdu_details *msdu_details;
+	struct rx_msdu_desc_info *msdu_desc_info;
+	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
+	uint32_t dst_ind;
+
+	msdu_details = hal_rx_link_desc_msdu0_ptr(msdu_link, hal_soc);
+
+	/* The first msdu in the link should exsist */
+	msdu_desc_info = hal_rx_msdu_ext_desc_info_get_ptr(&msdu_details[0],
+							   hal_soc);
+	dst_ind = HAL_RX_MSDU_REO_DST_IND_GET(msdu_desc_info);
+	return dst_ind;
+}
+
+/**
  * hal_hw_txrx_default_ops_attach_be() - Attach the default hal ops for
  *		beryllium chipsets.
  * @hal_soc_hdl: HAL soc handle
@@ -843,6 +870,7 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 					hal_get_reo_reg_base_offset_be;
 	hal_soc->ops->hal_setup_link_idle_list =
 				hal_setup_link_idle_list_generic_be;
+	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_be;
 
 	hal_soc->ops->hal_rx_reo_buf_paddr_get = hal_rx_reo_buf_paddr_get_be;
 	hal_soc->ops->hal_rx_msdu_link_desc_set = hal_rx_msdu_link_desc_set_be;
@@ -863,8 +891,11 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_err_status_get = hal_rx_err_status_get_be;
 	hal_soc->ops->hal_rx_reo_buf_type_get = hal_rx_reo_buf_type_get_be;
 	hal_soc->ops->hal_rx_wbm_err_src_get = hal_rx_wbm_err_src_get_be;
+
 	hal_soc->ops->hal_reo_send_cmd = hal_reo_send_cmd_be;
 	hal_soc->ops->hal_reo_qdesc_setup = hal_reo_qdesc_setup_be;
 	hal_soc->ops->hal_reo_status_update = hal_reo_status_update_be;
 	hal_soc->ops->hal_get_tlv_hdr_size = hal_get_tlv_hdr_size_be;
+	hal_soc->ops->hal_rx_msdu_reo_dst_ind_get =
+						hal_rx_msdu_reo_dst_ind_get_be;
 }
