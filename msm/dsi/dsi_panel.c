@@ -904,6 +904,13 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		       rc);
 		goto error;
 	}
+
+	rc = utils->read_u32(utils->data, "qcom,qsync-mode-min-refresh-rate", &mode->qsync_min_fps);
+	if (rc) {
+		DSI_DEBUG("qsync min fps not defined in timing node\n");
+		rc = 0;
+	}
+
 	DSI_DEBUG("panel vert active:%d front_portch:%d back_porch:%d pulse_width:%d\n",
 		mode->v_active, mode->v_front_porch, mode->v_back_porch,
 		mode->v_sync_width);
@@ -1301,6 +1308,12 @@ static int dsi_panel_parse_qsync_caps(struct dsi_panel *panel,
 	struct dsi_parser_utils *utils = &panel->utils;
 	const char *name = panel->name;
 
+	qsync_caps->qsync_support = utils->read_bool(utils->data, "qcom,qsync-enable");
+	if (!qsync_caps->qsync_support) {
+		DSI_DEBUG("qsync feature not enabled\n");
+		goto error;
+	}
+
 	/**
 	 * "mdss-dsi-qsync-min-refresh-rate" is defined in cmd mode and
 	 *  video mode when there is only one qsync min fps present.
@@ -1373,8 +1386,10 @@ static int dsi_panel_parse_qsync_caps(struct dsi_panel *panel,
 qsync_support:
 	/* allow qsync support only if DFPS is with VFP approach */
 	if ((panel->dfps_caps.dfps_support) &&
-	    !(panel->dfps_caps.type == DSI_DFPS_IMMEDIATE_VFP))
-		panel->qsync_caps.qsync_min_fps = 0;
+	    !(panel->dfps_caps.type == DSI_DFPS_IMMEDIATE_VFP)) {
+		qsync_caps->qsync_support = false;
+		qsync_caps->qsync_min_fps = 0;
+	}
 
 error:
 	if (rc < 0) {
