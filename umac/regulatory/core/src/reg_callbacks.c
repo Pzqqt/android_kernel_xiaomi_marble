@@ -37,9 +37,13 @@
  * change.
  * @psoc: Pointer to global psoc structure.
  * @pdev: Pointer to global pdev structure.
+ * @ch_avoid_ind: if chan avoid indicated
+ * @avoid_info: chan avoid info if @ch_avoid_ind is true
  */
 static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
-				      struct wlan_objmgr_pdev *pdev)
+				      struct wlan_objmgr_pdev *pdev,
+				      bool ch_avoid_ind,
+				      struct avoid_freq_ind_data *avoid_info)
 {
 	struct chan_change_cbk_entry *cbk_list;
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
@@ -70,21 +74,9 @@ static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 		     NUM_CHANNELS *
 		     sizeof(struct regulatory_channel));
 
-	if (psoc_priv_obj->ch_avoid_ind) {
-		avoid_freq_ind = qdf_mem_malloc(sizeof(*avoid_freq_ind));
-		if (!avoid_freq_ind)
-			goto skip_ch_avoid_ind;
+	if (ch_avoid_ind)
+		avoid_freq_ind = avoid_info;
 
-		qdf_mem_copy(&avoid_freq_ind->freq_list,
-			     &psoc_priv_obj->avoid_freq_list,
-				sizeof(struct ch_avoid_ind_type));
-		qdf_mem_copy(&avoid_freq_ind->chan_list,
-			     &psoc_priv_obj->unsafe_chan_list,
-				sizeof(struct unsafe_ch_list));
-		psoc_priv_obj->ch_avoid_ind = false;
-	}
-
-skip_ch_avoid_ind:
 	cbk_list = psoc_priv_obj->cbk_list;
 
 	for (ctr = 0; ctr < REG_MAX_CHAN_CHANGE_CBKS; ctr++) {
@@ -98,8 +90,6 @@ skip_ch_avoid_ind:
 				 cbk_list[ctr].arg);
 	}
 	qdf_mem_free(cur_chan_list);
-	if (avoid_freq_ind)
-		qdf_mem_free(avoid_freq_ind);
 }
 
 /**
@@ -111,10 +101,28 @@ static void reg_alloc_and_fill_payload(struct wlan_objmgr_psoc *psoc,
 				       struct wlan_objmgr_pdev *pdev,
 				       struct reg_sched_payload **payload)
 {
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		*payload = NULL;
+		return;
+	}
+
 	*payload = qdf_mem_malloc(sizeof(**payload));
 	if (*payload) {
 		(*payload)->psoc = psoc;
 		(*payload)->pdev = pdev;
+		(*payload)->ch_avoid_ind = !!psoc_priv_obj->ch_avoid_ind;
+		qdf_mem_copy(&(*payload)->avoid_info.freq_list,
+			     &psoc_priv_obj->avoid_freq_list,
+			     sizeof(psoc_priv_obj->avoid_freq_list));
+		qdf_mem_copy(&(*payload)->avoid_info.chan_list,
+			     &psoc_priv_obj->unsafe_chan_list,
+			     sizeof(psoc_priv_obj->unsafe_chan_list));
+
+		psoc_priv_obj->ch_avoid_ind = false;
 	}
 }
 
@@ -146,7 +154,8 @@ static QDF_STATUS reg_sched_chan_change_cbks_sb(struct scheduler_msg *msg)
 	struct wlan_objmgr_psoc *psoc = load->psoc;
 	struct wlan_objmgr_pdev *pdev = load->pdev;
 
-	reg_call_chan_change_cbks(psoc, pdev);
+	reg_call_chan_change_cbks(psoc, pdev, load->ch_avoid_ind,
+				  &load->avoid_info);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_REGULATORY_SB_ID);
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_SB_ID);
@@ -183,7 +192,8 @@ static QDF_STATUS reg_sched_chan_change_cbks_nb(struct scheduler_msg *msg)
 	struct wlan_objmgr_psoc *psoc = load->psoc;
 	struct wlan_objmgr_pdev *pdev = load->pdev;
 
-	reg_call_chan_change_cbks(psoc, pdev);
+	reg_call_chan_change_cbks(psoc, pdev, load->ch_avoid_ind,
+				  &load->avoid_info);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_REGULATORY_NB_ID);
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_NB_ID);

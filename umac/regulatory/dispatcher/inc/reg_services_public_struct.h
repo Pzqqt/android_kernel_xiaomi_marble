@@ -1253,16 +1253,6 @@ struct reg_freq_range {
 };
 
 /**
- * struct reg_sched_payload
- * @psoc: psoc ptr
- * @pdev: pdev ptr
- */
-struct reg_sched_payload {
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_objmgr_pdev *pdev;
-};
-
-/**
  * enum direction
  * @NORTHBOUND: northbound
  * @SOUTHBOUND: southbound
@@ -1406,6 +1396,20 @@ struct unsafe_ch_list {
 struct avoid_freq_ind_data {
 	struct ch_avoid_ind_type freq_list;
 	struct unsafe_ch_list chan_list;
+};
+
+/**
+ * struct reg_sched_payload
+ * @psoc: psoc ptr
+ * @pdev: pdev ptr
+ * @ch_avoid_ind: if avoidance event indicated
+ * @avoid_info: chan avoid info if @ch_avoid_ind is true
+ */
+struct reg_sched_payload {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	bool ch_avoid_ind;
+	struct avoid_freq_ind_data avoid_info;
 };
 
 #define FIVEG_STARTING_FREQ        5000
