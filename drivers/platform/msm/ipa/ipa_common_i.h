@@ -14,7 +14,9 @@
 #include <linux/ipa_wdi3.h>
 #include <linux/ipa_wigig.h>
 #include <linux/ipa_eth.h>
+#include <linux/ipa_usb.h>
 #include <linux/ratelimit.h>
+#include "ipa_stats.h"
 #include "gsi.h"
 
 #define WARNON_RATELIMIT_BURST 1
@@ -703,6 +705,8 @@ int ipa3_add_hdr_hpc(struct ipa_ioc_add_hdr *hdrs);
 
 int ipa3_add_hdr_hpc_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only);
 
+int ipa3_del_hdr_hpc(struct ipa_ioc_del_hdr *hdrs);
+
 int ipa3_add_hdr(struct ipa_ioc_add_hdr *hdrs);
 
 int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls);
@@ -887,7 +891,14 @@ bool ipa3_is_ulso_supported(void);
 
 /* IPA_PACKET_INIT_EX IC to pipe API */
 int ipa_set_pkt_init_ex_hdr_ofst(
-	struct ipa_pkt_init_ex_hdr_ofst_set *lookup, bool proc_ctx);
+  struct ipa_pkt_init_ex_hdr_ofst_set *lookup, bool proc_ctx);
+
+/* IPA stats pm functions */
+int ipa_pm_get_aggregated_throughput(void);
+int ipa_pm_get_current_clk_vote(void);
+bool ipa_get_pm_client_stats_filled(struct pm_client_stats *pm_stats_ptr,
+	int pm_client_index);
+int ipa_pm_get_pm_clnt_throughput(enum ipa_client_type client_type);
 
 struct sk_buff* qmap_encapsulate_skb(struct sk_buff *skb, const struct qmap_hdr *qh);
 

@@ -1559,9 +1559,6 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 	if (gsi_ctx->per.ver >= GSI_VER_1_2)
 		gsihal_write_reg_n(GSI_EE_n_ERROR_LOG, gsi_ctx->per.ee, 0);
 
-	/* Reset to zero scratch_1 register*/
-	gsihal_write_reg_n(GSI_EE_n_CNTXT_SCRATCH_1, gsi_ctx->per.ee, 0);
-
 	if (running_emulation) {
 		/*
 		 * Set up the emulator's interrupt controller...
@@ -5257,6 +5254,132 @@ int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr)
         return 0;
 }
 EXPORT_SYMBOL(gsi_query_msi_addr);
+
+uint64_t gsi_read_event_ring_wp(int evtr_id, int ee)
+{
+	uint64_t wp;
+
+	wp = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_6,
+			ee, evtr_id);
+	wp |= ((uint64_t)gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_7,
+			ee, evtr_id)) << 32;
+
+	return wp;
+}
+EXPORT_SYMBOL(gsi_read_event_ring_wp);
+
+uint64_t gsi_read_event_ring_bp(int evt_hdl)
+{
+	return gsi_ctx->evtr[evt_hdl].ring.base;
+}
+EXPORT_SYMBOL(gsi_read_event_ring_bp);
+
+uint64_t gsi_get_evt_ring_rp(int evt_hdl)
+{
+	return gsi_ctx->evtr[evt_hdl].props.gsi_read_event_ring_rp(
+		&gsi_ctx->evtr[evt_hdl].props, evt_hdl, gsi_ctx->per.ee);
+}
+EXPORT_SYMBOL(gsi_get_evt_ring_rp);
+
+uint64_t gsi_read_chan_ring_rp(int chan_id, int ee)
+{
+	uint64_t rp;
+
+	rp = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_4,
+			ee, chan_id);
+	rp |= ((uint64_t)gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_5,
+			ee, chan_id)) << 32;
+
+	return rp;
+}
+EXPORT_SYMBOL(gsi_read_chan_ring_rp);
+
+uint64_t gsi_read_chan_ring_wp(int chan_id, int ee)
+{
+	uint64_t wp;
+
+	wp = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_6,
+			ee, chan_id);
+	wp |= ((uint64_t)gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_7,
+			ee, chan_id)) << 32;
+
+	return wp;
+}
+EXPORT_SYMBOL(gsi_read_chan_ring_wp);
+
+uint64_t gsi_read_chan_ring_bp(int chan_hdl)
+{
+	return gsi_ctx->chan[chan_hdl].ring.base;
+}
+EXPORT_SYMBOL(gsi_read_chan_ring_bp);
+
+uint64_t gsi_read_chan_ring_re_fetch_wp(int chan_id, int ee)
+{
+	uint64_t wp;
+
+	wp = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_RE_FETCH_WRITE_PTR,
+			ee, chan_id);
+
+	return wp;
+}
+EXPORT_SYMBOL(gsi_read_chan_ring_re_fetch_wp);
+
+enum gsi_chan_prot gsi_get_chan_prot_type(int chan_hdl)
+{
+	return gsi_ctx->chan[chan_hdl].props.prot;
+}
+EXPORT_SYMBOL(gsi_get_chan_prot_type);
+
+enum gsi_chan_state gsi_get_chan_state(int chan_hdl)
+{
+	return gsi_ctx->chan[chan_hdl].state;
+}
+EXPORT_SYMBOL(gsi_get_chan_state);
+
+int gsi_get_chan_poll_mode(int chan_hdl)
+{
+	return atomic_read(&gsi_ctx->chan[chan_hdl].poll_mode);
+}
+EXPORT_SYMBOL(gsi_get_chan_poll_mode);
+
+uint32_t gsi_get_ring_len(int chan_hdl)
+{
+	return gsi_ctx->chan[chan_hdl].ring.len;
+}
+EXPORT_SYMBOL(gsi_get_ring_len);
+
+uint8_t gsi_get_chan_props_db_in_bytes(int chan_hdl)
+{
+	return gsi_ctx->chan[chan_hdl].props.db_in_bytes;
+}
+EXPORT_SYMBOL(gsi_get_chan_props_db_in_bytes);
+
+int gsi_get_peripheral_ee(void)
+{
+	return gsi_ctx->per.ee;
+}
+EXPORT_SYMBOL(gsi_get_peripheral_ee);
+
+uint32_t gsi_get_chan_stop_stm(int chan_id, int ee)
+{
+	uint32_t ch_scratch;
+	ch_scratch = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_4, ee, chan_id);
+	/* Only bits 28 - 31 for STM */
+	return ((ch_scratch & 0xF0000000) >> 24);
+}
+EXPORT_SYMBOL(gsi_get_chan_stop_stm);
+
+enum gsi_evt_ring_elem_size gsi_get_evt_ring_re_size(int evt_hdl)
+{
+	return gsi_ctx->evtr[evt_hdl].props.re_size;
+}
+EXPORT_SYMBOL(gsi_get_evt_ring_re_size);
+
+uint32_t gsi_get_evt_ring_len(int evt_hdl)
+{
+	return gsi_ctx->evtr[evt_hdl].ring.len;
+}
+EXPORT_SYMBOL(gsi_get_evt_ring_len);
 
 static union __packed gsi_channel_scratch __gsi_update_mhi_channel_scratch(
 	unsigned long chan_hdl, struct __packed gsi_mhi_channel_scratch mscr)

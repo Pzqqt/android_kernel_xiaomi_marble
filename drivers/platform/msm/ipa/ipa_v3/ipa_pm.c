@@ -5,6 +5,7 @@
 
 #include <linux/debugfs.h>
 #include "ipa_pm.h"
+#include "ipa_stats.h"
 #include "ipa_i.h"
 
 
@@ -1452,4 +1453,62 @@ int ipa_pm_exceptions_stat(char *buf, int size)
 	mutex_unlock(&ipa_pm_ctx->client_mutex);
 
 	return cnt;
+}
+
+int ipa_pm_get_aggregated_throughput(void)
+{
+	if (ipa_pm_ctx)
+		return ipa_pm_ctx->aggregated_tput;
+	else return 0;
+}
+
+int ipa_pm_get_current_clk_vote(void)
+{
+	if (ipa_pm_ctx)
+		return ipa_pm_ctx->clk_scaling.cur_vote;
+	else
+		return ipa3_ctx->app_clock_vote.cnt;
+}
+
+bool ipa_get_pm_client_stats_filled(struct pm_client_stats *pm_stats_ptr,
+	int pm_client_index)
+{
+	struct ipa_pm_client *client;
+	unsigned long flags;
+
+	client = ipa_pm_ctx->clients[pm_client_index];
+	mutex_lock(&ipa_pm_ctx->client_mutex);
+	if (client == NULL) {
+		mutex_unlock(&ipa_pm_ctx->client_mutex);
+		return false;
+	}
+	spin_lock_irqsave(&client->state_lock, flags);
+	pm_stats_ptr->pm_client_group = client->group;
+	pm_stats_ptr->pm_client_state = client->state;
+	pm_stats_ptr->pm_client_hdl = pm_client_index;
+	if (client->group == IPA_PM_GROUP_DEFAULT)
+		pm_stats_ptr->pm_client_bw = client->throughput;
+	else {
+		pm_stats_ptr->pm_client_bw = ipa_pm_ctx->group_tput[client->group];
+	}
+
+	spin_unlock_irqrestore(&client->state_lock, flags);
+	mutex_unlock(&ipa_pm_ctx->client_mutex);
+	return true;
+}
+
+int ipa_pm_get_pm_clnt_throughput(enum ipa_client_type client_type)
+{
+	int idx = ipa3_get_ep_mapping(client_type);
+	int throughput;
+
+	mutex_lock(&ipa_pm_ctx->client_mutex);
+	if (ipa_pm_ctx && (idx >= 0) && ipa_pm_ctx->clients_by_pipe[idx]) {
+		throughput = ipa_pm_ctx->clients_by_pipe[idx]->throughput;
+		mutex_unlock(&ipa_pm_ctx->client_mutex);
+		return throughput;
+	} else {
+		mutex_unlock(&ipa_pm_ctx->client_mutex);
+		return 0;
+	}
 }

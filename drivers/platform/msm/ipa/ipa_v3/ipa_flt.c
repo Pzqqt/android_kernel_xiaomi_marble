@@ -670,7 +670,8 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 	}
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
-	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
+	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1
+		&& !ipa3_ctx->ulso_wa) {
 		u32 offset = 0;
 
 		i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
@@ -1197,7 +1198,7 @@ static int __ipa_del_flt_rule(u32 rule_hdl)
 
 	list_del(&entry->link);
 	entry->tbl->rule_cnt--;
-	if (entry->rt_tbl)
+	if (entry->rt_tbl && !ipa3_check_idr_if_freed(entry->rt_tbl))
 		entry->rt_tbl->ref_cnt--;
 	IPADBG("del flt rule rule_cnt=%d rule_id=%d\n",
 		entry->tbl->rule_cnt, entry->rule_id);

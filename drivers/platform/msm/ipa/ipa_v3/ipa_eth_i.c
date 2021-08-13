@@ -806,10 +806,7 @@ static int ipa_eth_setup_ntn_gsi_channel(
 		gsi_channel_props.ch_id = gsi_ep_info->ipa_gsi_chan_num;
 	gsi_channel_props.evt_ring_hdl = ep->gsi_evt_ring_hdl;
 	gsi_channel_props.re_size = GSI_CHAN_RE_SIZE_16B;
-	if (pipe->dir == IPA_ETH_PIPE_DIR_TX)
-		gsi_channel_props.use_db_eng = GSI_CHAN_DB_MODE;
-	else
-		gsi_channel_props.use_db_eng = GSI_CHAN_DIRECT_MODE;
+	gsi_channel_props.use_db_eng = GSI_CHAN_DB_MODE;
 	gsi_channel_props.db_in_bytes = 1;
 	gsi_channel_props.max_prefetch = GSI_ONE_PREFETCH_SEG;
 	gsi_channel_props.prefetch_mode =
@@ -1068,29 +1065,23 @@ int ipa3_eth_connect(
 			}
 			break;
 		case IPA_HW_PROTOCOL_NTN3:
-			pipe->info.db_pa = gsi_db_addr_low;
+			if (gsi_query_msi_addr(ep->gsi_chan_hdl, &pipe->info.db_pa)) {
+				result = -EFAULT;
+				goto query_msi_fail;
+			}
 			pipe->info.db_val = 0;
 
-			/* only 32 bit lsb is used */
-			db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
-			if (!db_addr) {
-				IPAERR("ioremap failed\n");
-				result = -EFAULT;
-				goto ioremap_fail;
+			if (IPA_CLIENT_IS_CONS(client_type)) {
+				db_addr = ioremap((phys_addr_t)(pipe->info.db_pa), 4);
+				if (!db_addr) {
+					IPAERR("ioremap failed\n");
+					result = -EFAULT;
+					goto ioremap_fail;
+				}
+				/* Any value is good to write here, so writing as is */
+				iowrite32(db_val, db_addr);
+				iounmap(db_addr);
 			}
-			if (IPA_CLIENT_IS_PROD(client_type)) {
-				/* Rx: Initialize to ring base (i.e point 6) */
-				db_val =
-				(u32)ep->gsi_mem_info.chan_ring_base_addr;
-			} else {
-				/* TX: Initialize to end of ring */
-				db_val =
-				(u32)ep->gsi_mem_info.chan_ring_base_addr;
-				db_val +=
-				(u32)ep->gsi_mem_info.chan_ring_len;
-			}
-			iowrite32(db_val, db_addr);
-			iounmap(db_addr);
 			break;
 		default:
 			/* we can't really get here as we checked prot before */

@@ -1026,6 +1026,56 @@ static int ipa_eth_client_disconn_evt_internal(struct ipa_ecm_msg *msg)
 	return ret;
 }
 
+enum ipa_client_type ipa_eth_get_ipa_client_type_from_eth_type_internal(
+	enum ipa_eth_client_type eth_client_type, enum ipa_eth_pipe_direction dir)
+{
+	int ipa_client_type = IPA_CLIENT_MAX;
+
+	switch (eth_client_type) {
+	case IPA_ETH_CLIENT_AQC107:
+	case IPA_ETH_CLIENT_AQC113:
+		if (dir == IPA_ETH_PIPE_DIR_TX) {
+			ipa_client_type =
+				IPA_CLIENT_AQC_ETHERNET_CONS;
+		} else {
+			ipa_client_type =
+				IPA_CLIENT_AQC_ETHERNET_PROD;
+		}
+		break;
+	case IPA_ETH_CLIENT_RTK8111K:
+	case IPA_ETH_CLIENT_RTK8125B:
+			if (dir == IPA_ETH_PIPE_DIR_TX) {
+				ipa_client_type =
+					IPA_CLIENT_RTK_ETHERNET_CONS;
+			} else {
+				ipa_client_type =
+					IPA_CLIENT_RTK_ETHERNET_PROD;
+			}
+		break;
+	case IPA_ETH_CLIENT_NTN:
+	case IPA_ETH_CLIENT_EMAC:
+			if (dir == IPA_ETH_PIPE_DIR_TX) {
+				ipa_client_type =
+					IPA_CLIENT_ETHERNET_CONS;
+			} else {
+				ipa_client_type =
+					IPA_CLIENT_ETHERNET_PROD;
+			}
+		break;
+	default:
+		IPA_ETH_ERR("invalid client type%d\n",
+			eth_client_type);
+	}
+	return ipa_client_type;
+}
+
+bool ipa_eth_client_exist_internal(enum ipa_eth_client_type eth_client_type, int inst_id)
+{
+	if (ipa_eth_ctx)
+		return ipa_eth_ctx->client[eth_client_type][inst_id].existed;
+	else return false;
+}
+
 void ipa_eth_register(void)
 {
 	struct ipa_eth_data funcs;
@@ -1042,6 +1092,9 @@ void ipa_eth_register(void)
 		ipa_eth_client_set_perf_profile_internal;
 	funcs.ipa_eth_client_conn_evt = ipa_eth_client_conn_evt_internal;
 	funcs.ipa_eth_client_disconn_evt = ipa_eth_client_disconn_evt_internal;
+	funcs.ipa_eth_get_ipa_client_type_from_eth_type =
+		ipa_eth_get_ipa_client_type_from_eth_type_internal;
+	funcs.ipa_eth_client_exist = ipa_eth_client_exist_internal;
 
 	if (ipa_fmwk_register_ipa_eth(&funcs))
 		pr_err("failed to register ipa_eth APIs\n");

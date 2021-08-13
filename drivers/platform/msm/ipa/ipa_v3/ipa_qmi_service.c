@@ -1021,7 +1021,10 @@ int ipa3_qmi_add_offload_request_send(
 	}
 
 	/* check if the filter rules from IPACM is valid */
-	if (req->filter_spec_ex2_list_len == 0) {
+	if (req->filter_spec_ex2_list_len < 0) {
+		IPAWANERR("IPACM pass invalid num of rules\n");
+		return -EINVAL;
+	} else if (req->filter_spec_ex2_list_len == 0) {
 		IPAWANDBG("IPACM pass zero rules to Q6\n");
 	} else {
 		IPAWANDBG("IPACM pass %u rules to Q6\n",
@@ -1029,9 +1032,10 @@ int ipa3_qmi_add_offload_request_send(
 	}
 
 	/* currently set total max to 64 */
-	if (req->filter_spec_ex2_list_len +
-		ipa3_qmi_ctx->num_ipa_offload_connection
-		>= QMI_IPA_MAX_FILTERS_V01) {
+	if ((ipa3_qmi_ctx->num_ipa_offload_connection < 0) ||
+		(req->filter_spec_ex2_list_len >=
+		(QMI_IPA_MAX_FILTERS_V01 -
+			ipa3_qmi_ctx->num_ipa_offload_connection))) {
 		IPAWANDBG(
 		"cur(%d), req(%d), exceed limit (%d)\n",
 			ipa3_qmi_ctx->num_ipa_offload_connection,
@@ -1927,6 +1931,7 @@ static struct qmi_msg_handler server_handlers[] = {
 		.decoded_size = sizeof(struct ipa_move_nat_req_msg_v01),
 		.fn = ipa3_handle_move_nat_req,
 	},
+	{},
 
 };
 
@@ -1960,6 +1965,7 @@ static struct qmi_msg_handler client_handlers[] = {
 		.decoded_size = IPA_BW_CHANGE_IND_MSG_V01_MAX_MSG_LEN,
 		.fn = ipa3_q6_clnt_bw_change_ind_cb,
 	},
+	{},
 };
 
 

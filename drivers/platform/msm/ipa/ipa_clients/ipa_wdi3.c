@@ -130,6 +130,13 @@ static int ipa_get_wdi_version_internal(void)
 	return IPA_WDI_3;
 }
 
+static bool ipa_wdi_is_tx1_used_internal(void)
+{
+	if (ipa_wdi_ctx)
+		return ipa_wdi_ctx->is_tx1_used;
+	return 0;
+}
+
 static int ipa_wdi_cleanup_internal(void)
 {
 	struct ipa_wdi_intf_info *entry;
@@ -598,6 +605,12 @@ static int ipa_wdi_conn_pipes_internal(struct ipa_wdi_conn_in_params *in,
 			}
 			ipa_wdi_ctx->tx_pipe_hdl = out_tx.clnt_hdl;
 			out->tx_uc_db_pa = out_tx.uc_door_bell_pa;
+			ret = ipa_pm_associate_ipa_cons_to_client(ipa_wdi_ctx->ipa_pm_hdl,
+					in_tx.sys.client);
+			if (ret) {
+				IPA_WDI_ERR("fail to associate cons with PM %d\n", ret);
+				goto fail;
+			}
 			IPA_WDI_DBG("tx uc db pa: 0x%pad\n", &out->tx_uc_db_pa);
 		}
 	}
@@ -834,6 +847,7 @@ void ipa_wdi3_register(void)
 	funcs.ipa_wdi_set_perf_profile = ipa_wdi_set_perf_profile_internal;
 	funcs.ipa_wdi_sw_stats = ipa3_set_wlan_tx_info;
 	funcs.ipa_get_wdi_version = ipa_get_wdi_version_internal;
+	funcs.ipa_wdi_is_tx1_used = ipa_wdi_is_tx1_used_internal;
 
 	if (ipa_fmwk_register_ipa_wdi3(&funcs))
 		pr_err("failed to register ipa_wdi3 APIs\n");

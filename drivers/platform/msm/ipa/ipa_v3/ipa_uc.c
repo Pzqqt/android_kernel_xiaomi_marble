@@ -1606,25 +1606,15 @@ cleanup:
 int ipa3_uc_debug_stats_dealloc(uint32_t prot_id)
 {
 	int result;
-	struct ipa_mem_buffer cmd;
 	enum ipa_cpu_2_hw_offload_commands command;
-	struct IpaHwOffloadStatsDeAllocCmdData_t *cmd_data;
 
-	cmd.size = sizeof(*cmd_data);
-	cmd.base = dma_alloc_coherent(ipa3_ctx->uc_pdev, cmd.size,
-		&cmd.phys_base, GFP_KERNEL);
-	if (cmd.base == NULL) {
-		result = -ENOMEM;
-		return result;
-	}
-	cmd_data = (struct IpaHwOffloadStatsDeAllocCmdData_t *)
-		cmd.base;
-	cmd_data->protocol = prot_id;
+	IPADBG("protocol %d\n", prot_id);
 	command = IPA_CPU_2_HW_CMD_OFFLOAD_STATS_DEALLOC;
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 
-	result = ipa3_uc_send_cmd((u32)(cmd.phys_base),
+	/* instead of giving pointer, directly give prot_id */
+	result = ipa3_uc_send_cmd(prot_id,
 		command,
 		IPA_HW_2_CPU_OFFLOAD_CMD_STATUS_SUCCESS,
 		false, 10 * HZ);
@@ -1658,8 +1648,6 @@ int ipa3_uc_debug_stats_dealloc(uint32_t prot_id)
 	}
 	result = 0;
 cleanup:
-	dma_free_coherent(ipa3_ctx->uc_pdev, cmd.size,
-		cmd.base, cmd.phys_base);
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	IPADBG("exit\n");
 	return result;

@@ -2664,6 +2664,14 @@ bad_params:
 	return result;
 }
 
+static bool ipa_usb_is_teth_prot_connected_internal(enum ipa_usb_teth_prot usb_teth_prot)
+{
+	if (ipa3_usb_ctx)
+		if (ipa3_usb_ctx->teth_prot_ctx[usb_teth_prot].state == IPA_USB_TETH_PROT_CONNECTED)
+			return true;
+	return false;
+}
+
 int ipa3_usb_init(void)
 {
 	int i;
@@ -2726,6 +2734,8 @@ int ipa3_usb_init(void)
 	funcs.ipa_usb_deinit_teth_prot = ipa_usb_deinit_teth_prot_internal;
 	funcs.ipa_usb_xdci_suspend = ipa_usb_xdci_suspend_internal;
 	funcs.ipa_usb_xdci_resume = ipa_usb_xdci_resume_internal;
+	funcs.ipa_usb_is_teth_prot_connected =
+		ipa_usb_is_teth_prot_connected_internal;
 	if (ipa_fmwk_register_ipa_usb(&funcs)) {
 		pr_err("failed to register ipa_usb APIs\n");
 	}

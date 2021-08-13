@@ -464,6 +464,25 @@ struct ipa_imm_cmd_hw_register_write_v_4_0 {
 };
 
 /*
+ * struct ipa_imm_cmd_hw_register_read - REGISTER_READ command payload
+ *  in H/W format.
+ * Read value from register. Allows reg changes to be synced with data packet
+ *  and other immediate command. Can be used to access the sram
+ * @sw_rsvd: Ignored by H/W. May be used by S/W
+ * @offset_high: high bits of the Offset field - bits 17-20
+ * @rsvd: reserved - should be set to zero
+ * @offset: offset from IPA base address - Lower 16bit of the IPA reg addr
+ * @sys_addr: Address in system memory for storing register value
+ */
+struct ipa_imm_cmd_hw_register_read {
+	u64 sw_rsvd:11;
+	u64 offset_high:4;
+	u64 rsvd:1;
+	u64 offset:16;
+	u64 sys_addr:32;
+};
+
+/*
  * struct ipa_imm_cmd_hw_dma_shared_mem - DMA_SHARED_MEM command payload
  *  in H/W format.
  * Perform mem copy into or out of the SW area of IPA local mem
