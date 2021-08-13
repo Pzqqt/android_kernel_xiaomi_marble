@@ -2179,7 +2179,6 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		 * events may be spoofed. Drop all of them and report error.
 		 */
 		wma_err("Invalid following WMI_RADIO_LINK_STATS_EVENTID. Discarding this set");
-		wma_unified_radio_tx_mem_free(handle);
 		return -EINVAL;
 	}
 
@@ -2236,10 +2235,8 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		channels_in_this_event = qdf_mem_malloc(
 					radio_stats->num_channels *
 					chan_stats_size);
-		if (!channels_in_this_event) {
-			wma_unified_radio_tx_mem_free(handle);
+		if (!channels_in_this_event)
 			return -ENOMEM;
-		}
 
 		chn_results =
 			(struct wifi_channel_stats *)&channels_in_this_event[0];
@@ -2273,7 +2270,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 					     channels_in_this_event,
 					     rs_results);
 		if (status) {
-			wma_unified_radio_tx_mem_free(handle);
+			wma_err("Failed to copy channel stats");
 			return status;
 		}
 	}
