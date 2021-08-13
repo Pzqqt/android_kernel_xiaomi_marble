@@ -972,12 +972,19 @@ typedef struct {
      * is_buffer_addr_info_valid : This will be set whenever a MSDU is sent as
      * a singleton (single-MSDU PPDU) for FW use-cases or as indicated by host
      * via send_as_standalone in TCL_DATA_CMD.
+     *
+     * The fields is_sw_rts_enabled, is_hw_rts_enabled, is_sfm_war_enabled
+     * indicate whether SW RTS, HW RTS, SFM WAR are enabled for the
+     * current Tx-sequence respectively.
      */
     A_UINT32 host_opaque_cookie:        16,
              is_host_opaque_valid:       1,
              is_standalone:              1,
              is_buffer_addr_info_valid:  1,
-             reserved1:                 13;
+             is_sw_rts_enabled:          1,
+             is_hw_rts_enabled:          1,
+             is_sfm_war_enabled:         1,
+             reserved1:                 10;
 
     /* qdepth bytes : Contains Number of bytes of TIDQ depth */
     A_UINT32 qdepth_bytes;
@@ -988,6 +995,12 @@ typedef struct {
      * Note - this is valid in case delayed BA processing specifically for
      * BAR frames*/
     A_UINT32 data_frm_ppdu_id;
+
+    /* sw_rts_prot_dur_us:
+     * SW RTS protection duration in micro sec.
+     * Note - this is valid if SW RTS was used instead of HW RTS.
+     */
+    A_UINT32 sw_rts_prot_dur_us;
 } htt_ppdu_stats_user_common_tlv;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_M     0x000000ff
@@ -1926,8 +1939,8 @@ typedef struct {
      * BIT [ 8 :   8]   :- is_ampdu
      * BIT [ 12:   9]   :- resp_type
      * BIT [ 15:  13]   :- medium protection type
-     * BIT [ 16:  16]   :- rts_success
-     * BIT [ 17:  17]   :- rts_failure
+     * BIT [ 16:  16]   :- rts_success (HW RTS)
+     * BIT [ 17:  17]   :- rts_failure (HW RTS)
      * BIT [ 18:  18]   :- pream_punc_tx
      * BIT [ 31:  19]   :- reserved
      */
@@ -1979,6 +1992,20 @@ typedef struct {
 
     /* PER of the last transmission to the peer-TID (in percent) */
     A_UINT32 current_rate_per;
+
+    /*
+     * For SW RTS
+     * BIT [0]    :- Whether SW RTS successfully sent OTA.
+     * BIT [1]    :- Whether SW RTS successful completion.
+     * BIT [2]    :- Whether SW RTS failed completion.
+     * BIT [3]    :- Whether SW RTS response with different BW.
+     * BIT [31:4] :- reserved2
+     */
+    A_UINT32 sw_rts_tried:      1,
+             sw_rts_success:    1,
+             sw_rts_failure:    1,
+             cts_rcvd_diff_bw:  1,
+             reserved2:        28;
 } htt_ppdu_stats_user_cmpltn_common_tlv;
 
 #define HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_TID_NUM_M     0x000000ff
