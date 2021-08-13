@@ -175,11 +175,10 @@ int msm_cvp_scale_clocks(struct iris_hfi_device *device)
 	return rc;
 }
 
-int msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
-		const char *name)
+int msm_cvp_prepare_enable_clks(struct iris_hfi_device *device)
 {
-	struct clock_info *cl = NULL;
-	int rc = 0;
+	struct clock_info *cl = NULL, *cl_fail = NULL;
+	int rc = 0, c = 0;
 
 	if (!device) {
 		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
@@ -187,8 +186,6 @@ int msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
 	}
 
 	iris_hfi_for_each_clock(device, cl) {
-		if (strcmp(cl->name, name))
-                        continue;
 		/*
 		* For the clocks we control, set the rate prior to preparing
 		* them.  Since we don't really have a load at this point,
@@ -214,47 +211,42 @@ int msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
 		}
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
-			dprintk(CVP_ERR, "Failed to enable clock %s\n",
-				cl->name);
-			return rc;
-		}
-		if (!__clk_is_enabled(cl->clk)) {
-			dprintk(CVP_ERR, "%s: clock %s not enabled\n",
-					__func__, cl->name);
-			clk_disable_unprepare(cl->clk);
-			return -EINVAL;
+			dprintk(CVP_ERR, "Failed to enable clocks\n");
+			cl_fail = cl;
+			goto fail_clk_enable;
 		}
 
+		c++;
 		dprintk(CVP_PWR, "Clock: %s prepared and enabled\n",
 				cl->name);
-		return 0;
 	}
 
-	dprintk(CVP_ERR, "%s clock %s not found\n", __func__, name);
-	return -EINVAL;
+	return rc;
+
+fail_clk_enable:
+	iris_hfi_for_each_clock_reverse_continue(device, cl, c) {
+		dprintk(CVP_ERR, "Clock: %s disable and unprepare\n",
+			cl->name);
+		clk_disable_unprepare(cl->clk);
+	}
+
+	return rc;
 }
 
-int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
-		const char *name)
+void msm_cvp_disable_unprepare_clks(struct iris_hfi_device *device)
 {
 	struct clock_info *cl;
 
 	if (!device) {
 		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
-		return -EINVAL;
+		return;
 	}
 
 	iris_hfi_for_each_clock_reverse(device, cl) {
-		if (strcmp(cl->name, name))
-			continue;
-		clk_disable_unprepare(cl->clk);
 		dprintk(CVP_PWR, "Clock: %s disable and unprepare\n",
 			cl->name);
-		return 0;
+		clk_disable_unprepare(cl->clk);
 	}
-
-	dprintk(CVP_ERR, "%s clock %s not found\n", __func__, name);
-	return -EINVAL;
 }
 
 int msm_cvp_init_clocks(struct iris_hfi_device *device)
