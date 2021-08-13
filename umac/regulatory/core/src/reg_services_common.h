@@ -138,6 +138,13 @@
 #define DEFAULT_HIGH_6GFREQ   7125
 #endif
 
+#define SIXG_CHAN_2           2
+#ifdef CONFIG_BAND_6GHZ
+#define CHAN_ENUM_SIXG_2      CHAN_ENUM_5935
+#else
+#define CHAN_ENUM_SIXG_2      INVALID_CHANNEL
+#endif
+
 extern const struct chan_map *channel_map;
 extern const struct chan_map channel_map_us[];
 extern const struct chan_map channel_map_eu[];

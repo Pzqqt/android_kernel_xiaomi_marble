@@ -2300,7 +2300,28 @@ qdf_freq_t reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
 				return 0;
 		}
 
-		min_chan = MIN_6GHZ_CHANNEL;
+		/* Handle 6G channel 2 as a special case as it does not follow
+		 * the regular increasing order of channel numbers
+		 */
+		if (chan_num == SIXG_CHAN_2) {
+			struct regulatory_channel *mas_chan_list;
+
+			mas_chan_list = pdev_priv_obj->mas_chan_list;
+			/* Check if chan 2 is in the master list */
+			if ((mas_chan_list[CHAN_ENUM_SIXG_2].state !=
+			     CHANNEL_STATE_DISABLE) &&
+			    !(mas_chan_list[CHAN_ENUM_SIXG_2].chan_flags &
+			     REGULATORY_CHAN_DISABLED))
+				return mas_chan_list[CHAN_ENUM_SIXG_2].
+								center_freq;
+			else
+				return 0;
+		}
+
+		/* MIN_6GHZ_CHANNEL corresponds to CHAN_ENUM_5935
+		 * ( a.k.a SIXG_CHAN_2). Skip it from the search space
+		 */
+		min_chan = MIN_6GHZ_CHANNEL + 1;
 		max_chan = MAX_6GHZ_CHANNEL;
 		return reg_compute_chan_to_freq(pdev, chan_num,
 						min_chan,
