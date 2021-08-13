@@ -61,6 +61,8 @@ struct rmnet_port_priv_stats {
 	u64 dl_trl_count;
 	struct rmnet_agg_stats agg;
 	u64 dl_chain_stat[7];
+	u64 dl_frag_stat_1;
+	u64 dl_frag_stat[5];
 };
 
 struct rmnet_egress_agg_params {

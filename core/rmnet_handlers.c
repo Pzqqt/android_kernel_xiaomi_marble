@@ -18,6 +18,7 @@
 #include <linux/if_arp.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
+#include <linux/inet.h>
 #include <net/sock.h>
 #include <linux/tracepoint.h>
 #include "rmnet_private.h"

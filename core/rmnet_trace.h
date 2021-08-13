@@ -200,6 +200,116 @@ DEFINE_EVENT
 	TP_ARGS(skb, ip_proto, type, sequence, saddr, daddr)
 );
 
+DECLARE_EVENT_CLASS(print_tcp,
+
+	TP_PROTO(struct sk_buff *skb, const char *saddr, const char *daddr,
+		 struct tcphdr *tp),
+
+	TP_ARGS(skb, saddr, daddr, tp),
+
+	TP_STRUCT__entry(
+		__field(void *, skbaddr)
+		__field(int, len)
+		__string(saddr, saddr)
+		__string(daddr, daddr)
+		__field(__be16, source)
+		__field(__be16, dest)
+		__field(__be32, seq)
+		__field(__be32, ack_seq)
+		__field(u8, syn)
+		__field(u8, ack)
+		__field(u8, fin)
+	),
+
+	TP_fast_assign(
+		__entry->skbaddr = skb;
+		__entry->len = skb->len;
+		__assign_str(saddr, saddr);
+		__assign_str(daddr, daddr);
+		__entry->source = tp->source;
+		__entry->dest = tp->dest;
+		__entry->seq = tp->seq;
+		__entry->ack_seq = tp->ack_seq;
+		__entry->syn = tp->syn;
+		__entry->ack = tp->ack;
+		__entry->fin = tp->fin;
+	),
+
+	TP_printk("TCP: skbaddr=%pK, len=%d source=%s %u dest=%s %u seq=%u ack_seq=%u syn=%u ack=%u fin=%u",
+		__entry->skbaddr, __entry->len,
+		__get_str(saddr), be16_to_cpu(__entry->source),
+		__get_str(daddr), be16_to_cpu(__entry->dest),
+		be32_to_cpu(__entry->seq), be32_to_cpu(__entry->ack_seq),
+		!!__entry->syn, !!__entry->ack, !!__entry->fin)
+);
+
+DEFINE_EVENT
+	(print_tcp, print_tcp_tx,
+
+	TP_PROTO(struct sk_buff *skb, const char *saddr, const char *daddr,
+		 struct tcphdr *tp),
+
+	TP_ARGS(skb, saddr, daddr, tp)
+);
+
+DEFINE_EVENT
+	(print_tcp, print_tcp_rx,
+
+	TP_PROTO(struct sk_buff *skb, const char *saddr, const char *daddr,
+		 struct tcphdr *tp),
+
+	TP_ARGS(skb, saddr, daddr, tp)
+);
+
+DECLARE_EVENT_CLASS(print_udp,
+
+	TP_PROTO(struct sk_buff *skb, const char *saddr, const char *daddr,
+		 struct udphdr *uh),
+
+	TP_ARGS(skb, saddr, daddr, uh),
+
+	TP_STRUCT__entry(
+		__field(void *, skbaddr)
+		__field(int, len)
+		__string(saddr, saddr)
+		__string(daddr, daddr)
+		__field(__be16, source)
+		__field(__be16, dest)
+	),
+
+	TP_fast_assign(
+		__entry->skbaddr = skb;
+		__entry->len = skb->len;
+		__assign_str(saddr, saddr);
+		__assign_str(daddr, daddr);
+		__entry->source = uh->source;
+		__entry->dest = uh->dest;
+	),
+
+	TP_printk("UDP: skbaddr=%pK, len=%d source=%s %u dest=%s %u",
+		__entry->skbaddr, __entry->len,
+		__get_str(saddr), be16_to_cpu(__entry->source),
+		__get_str(daddr), be16_to_cpu(__entry->dest))
+);
+
+DEFINE_EVENT
+	(print_udp, print_udp_tx,
+
+	TP_PROTO(struct sk_buff *skb, const char *saddr, const char *daddr,
+		 struct udphdr *uh),
+
+	TP_ARGS(skb, saddr, daddr, uh)
+);
+
+DEFINE_EVENT
+	(print_udp, print_udp_rx,
+
+	TP_PROTO(struct sk_buff *skb, const char *saddr, const char *daddr,
+		 struct udphdr *uh),
+
+	TP_ARGS(skb, saddr, daddr, uh)
+);
+
 /*****************************************************************************/
 /* Trace events for rmnet_perf module */
 /*****************************************************************************/

@@ -15,6 +15,7 @@
 
 #include <linux/ip.h>
 #include <linux/ipv6.h>
+#include <linux/inet.h>
 #include <net/ipv6.h>
 #include <net/ip6_checksum.h>
 #include "rmnet_config.h"
@@ -23,6 +24,7 @@
 #include "rmnet_private.h"
 #include "rmnet_vnd.h"
 #include "rmnet_qmi.h"
+#include "rmnet_trace.h"
 #include "qmi_rmnet.h"
 
 #define RMNET_FRAG_DESCRIPTOR_POOL_SIZE 64
@@ -977,6 +979,65 @@ skip_frags:
 
 	/* Propagate original priority value */
 	head_skb->priority = frag_desc->priority;
+
+	if (trace_print_tcp_rx_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+
+		if (!frag_desc->hdrs_valid && !frag_desc->trans_len)
+			goto skip_trace_print_tcp_rx;
+
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
+
+		if (head_skb->protocol == htons(ETH_P_IP)) {
+			if (ip_hdr(head_skb)->protocol != IPPROTO_TCP)
+				goto skip_trace_print_tcp_rx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(head_skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(head_skb)->daddr);
+		}
+
+		if (head_skb->protocol == htons(ETH_P_IPV6)) {
+			if (ipv6_hdr(head_skb)->nexthdr != IPPROTO_TCP)
+				goto skip_trace_print_tcp_rx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(head_skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(head_skb)->daddr);
+		}
+
+		trace_print_tcp_rx(head_skb, saddr, daddr, tcp_hdr(head_skb));
+	}
+skip_trace_print_tcp_rx:
+
+	if (trace_print_udp_rx_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+
+		if (!frag_desc->hdrs_valid && !frag_desc->trans_len)
+			goto skip_trace_print_udp_rx;
+
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
+
+		if (head_skb->protocol == htons(ETH_P_IP)) {
+			if (ip_hdr(head_skb)->protocol != IPPROTO_UDP)
+				goto skip_trace_print_udp_rx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(head_skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(head_skb)->daddr);
+		}
+
+		if (head_skb->protocol == htons(ETH_P_IPV6)) {
+			if (ipv6_hdr(head_skb)->nexthdr != IPPROTO_UDP)
+				goto skip_trace_print_udp_rx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(head_skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(head_skb)->daddr);
+		}
+
+		trace_print_udp_rx(head_skb, saddr, daddr, udp_hdr(head_skb));
+	}
+skip_trace_print_udp_rx:
+
 	return head_skb;
 }
 
@@ -1771,6 +1832,26 @@ void rmnet_descriptor_classify_chain_count(u64 chain_count,
 	port->stats.dl_chain_stat[index] += chain_count;
 }
 
+void rmnet_descriptor_classify_frag_count(u64 frag_count,
+					  struct rmnet_port *port)
+{
+	u64 index;
+
+	if (frag_count <= 1) {
+		port->stats.dl_frag_stat_1 += frag_count;
+		return;
+	}
+
+	if (frag_count >= 16) {
+		port->stats.dl_frag_stat[4] += frag_count;
+		return;
+	}
+
+	index = frag_count;
+	do_div(index, 4);
+	port->stats.dl_frag_stat[index] += frag_count;
+}
+
 void rmnet_frag_ingress_handler(struct sk_buff *skb,
 				struct rmnet_port *port)
 {
@@ -1786,6 +1867,8 @@ void rmnet_frag_ingress_handler(struct sk_buff *skb,
 		struct sk_buff *skb_frag;
 
 		chain_count++;
+		rmnet_descriptor_classify_frag_count(skb_shinfo(skb)->nr_frags,
+						     port);
 
 		rmnet_frag_deaggregate(skb, port, &desc_list, skb->priority);
 		if (!list_empty(&desc_list)) {
