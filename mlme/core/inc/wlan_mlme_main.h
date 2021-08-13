@@ -968,6 +968,26 @@ mlme_set_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 void
 mlme_clear_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
 
+/**
+ * mlme_get_cfg_wlm_level() - Get the WLM level value
+ * @psoc: pointer to psoc object
+ * @level: level that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS mlme_get_cfg_wlm_level(struct wlan_objmgr_psoc *psoc,
+				  uint8_t *level);
+
+/**
+ * mlme_get_cfg_wlm_reset() - Get the WLM reset flag
+ * @psoc: pointer to psoc object
+ * @reset: reset that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS mlme_get_cfg_wlm_reset(struct wlan_objmgr_psoc *psoc,
+				  bool *reset);
+
 #define MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id) \
 	(mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAM_RSO_ENABLED)
 

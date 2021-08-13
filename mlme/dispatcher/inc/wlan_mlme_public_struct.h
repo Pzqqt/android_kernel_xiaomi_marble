@@ -2342,12 +2342,14 @@ struct wlan_mlme_btm {
 /**
  * struct wlan_mlme_fe_wlm - WLM related configs
  * @latency_enable: Flag to check if latency is enabled
+ * @latency_reset: Flag to check if latency reset is enabled
  * @latency_level: WLM latency level
  * @latency_flags: WLM latency flags setting
  * @latency_host_flags: WLM latency host flags setting
  */
 struct wlan_mlme_fe_wlm {
 	bool latency_enable;
+	bool latency_reset;
 	uint8_t latency_level;
 	uint32_t latency_flags[MLME_NUM_WLM_LATENCY_LEVEL];
 	uint32_t latency_host_flags[MLME_NUM_WLM_LATENCY_LEVEL];
