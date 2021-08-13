@@ -1185,9 +1185,6 @@ static int lpass_cdc_wsa_macro_enable_swr(struct snd_soc_dapm_widget *w,
 			swrm_wcd_notify(
 				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
 				SWR_DEVICE_UP, NULL);
-			swrm_wcd_notify(
-				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
-				SWR_SET_NUM_RX_CH, &ch_cnt);
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -1199,10 +1196,6 @@ static int lpass_cdc_wsa_macro_enable_swr(struct snd_soc_dapm_widget *w,
 			wsa_priv->rx_1_count--;
 		ch_cnt = wsa_priv->rx_0_count + wsa_priv->rx_1_count;
 
-		if (wsa_priv->swr_ctrl_data)
-			swrm_wcd_notify(
-				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
-				SWR_SET_NUM_RX_CH, &ch_cnt);
 		break;
 	}
 	dev_dbg(wsa_priv->dev, "%s: current swr ch cnt: %d\n",

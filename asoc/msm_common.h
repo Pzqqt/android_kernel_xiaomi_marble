@@ -38,6 +38,7 @@ struct msm_common_pdata {
 	uint32_t num_aud_devs;
 	struct device_node *mi2s_gpio_p[MI2S_TDM_AUXPCM_MAX];
 	struct mutex lock[MI2S_TDM_AUXPCM_MAX];
+	u32 tdm_max_slots; /* Max TDM slots used */
 	atomic_t mi2s_gpio_ref_cnt[MI2S_TDM_AUXPCM_MAX];
 };
 
@@ -48,6 +49,9 @@ void msm_common_set_pdata(struct snd_soc_card *card,
 			  struct msm_common_pdata *pdata);
 
 int snd_card_sysfs_init(void);
+
+int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
+			struct snd_pcm_hw_params *params);
 
 int msm_common_snd_startup(struct snd_pcm_substream *substream);
 

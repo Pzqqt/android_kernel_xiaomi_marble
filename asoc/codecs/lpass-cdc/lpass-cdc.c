@@ -105,14 +105,18 @@ static int __lpass_cdc_reg_read(struct lpass_cdc_priv *priv,
 
 	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
-		if (!lpass_cdc_check_core_votes(priv->macro_params[VA_MACRO].dev))
+		mutex_lock(&priv->vote_lock);
+		if (((priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
+			(priv->lpass_audio_hw_vote && !priv->core_audio_vote_count))) {
+			mutex_unlock(&priv->vote_lock);
 			goto ssr_err;
+		}
 	}
-
 	lpass_cdc_ahb_read_device(
 		priv->macro_params[macro_id].io_base, reg, val);
 
 	if (priv->macro_params[VA_MACRO].dev) {
+		mutex_unlock(&priv->vote_lock);
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
 		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
 	}
@@ -135,14 +139,18 @@ static int __lpass_cdc_reg_write(struct lpass_cdc_priv *priv,
 	}
 	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
-		if (!lpass_cdc_check_core_votes(priv->macro_params[VA_MACRO].dev))
+		mutex_lock(&priv->vote_lock);
+		if (((priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
+			(priv->lpass_audio_hw_vote && !priv->core_audio_vote_count))) {
+			mutex_unlock(&priv->vote_lock);
 			goto ssr_err;
+		}
 	}
-
 	lpass_cdc_ahb_write_device(
-			priv->macro_params[macro_id].io_base, reg, val);
+		priv->macro_params[macro_id].io_base, reg, val);
 
 	if (priv->macro_params[VA_MACRO].dev) {
+		mutex_unlock(&priv->vote_lock);
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
 		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
 	}
@@ -464,7 +472,7 @@ static u8 lpass_cdc_dmic_clk_div_get(struct snd_soc_component *component,
 
 	if (priv->macro_params[macro].clk_div_get) {
 		ret = priv->macro_params[macro].clk_div_get(component);
-		if (ret > 0)
+		if (ret >= 0)
 			return ret;
 	}
 
@@ -1353,6 +1361,7 @@ int lpass_cdc_runtime_resume(struct device *dev)
 	struct lpass_cdc_priv *priv = dev_get_drvdata(dev->parent);
 	int ret = 0;
 
+	trace_printk("%s, enter\n", __func__);
 	mutex_lock(&priv->vote_lock);
 	if (priv->lpass_core_hw_vote == NULL) {
 		dev_dbg(dev, "%s: Invalid lpass core hw node\n", __func__);
@@ -1391,6 +1400,7 @@ audio_vote:
 
 done:
 	mutex_unlock(&priv->vote_lock);
+	trace_printk("%s, leave\n", __func__);
 	pm_runtime_set_autosuspend_delay(priv->dev, LPASS_CDC_AUTO_SUSPEND_DELAY);
 	return 0;
 }
@@ -1400,6 +1410,7 @@ int lpass_cdc_runtime_suspend(struct device *dev)
 {
 	struct lpass_cdc_priv *priv = dev_get_drvdata(dev->parent);
 
+	trace_printk("%s, enter\n", __func__);
 	mutex_lock(&priv->vote_lock);
 	if (priv->lpass_core_hw_vote != NULL) {
 		if (--priv->core_hw_vote_count == 0)
@@ -1428,6 +1439,7 @@ int lpass_cdc_runtime_suspend(struct device *dev)
 		__func__, priv->core_audio_vote_count);
 
 	mutex_unlock(&priv->vote_lock);
+	trace_printk("%s, leave\n", __func__);
 	return 0;
 }
 EXPORT_SYMBOL(lpass_cdc_runtime_suspend);
@@ -1437,12 +1449,14 @@ bool lpass_cdc_check_core_votes(struct device *dev)
 {
 	struct lpass_cdc_priv *priv = dev_get_drvdata(dev->parent);
 	bool ret = true;
-
+	trace_printk("%s, enter\n", __func__);
 	mutex_lock(&priv->vote_lock);
-	if ((priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
+	if (!priv->dev_up ||
+		(priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
 		(priv->lpass_audio_hw_vote && !priv->core_audio_vote_count))
 		ret = false;
 	mutex_unlock(&priv->vote_lock);
+	trace_printk("%s, leave\n", __func__);
 
 	return ret;
 }

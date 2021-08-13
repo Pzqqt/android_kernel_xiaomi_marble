@@ -173,6 +173,8 @@ struct lpass_cdc_va_macro_priv {
 	int dec_mode[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
 	int pcm_rate[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
 	bool wcd_dmic_enabled;
+	int dapm_tx_clk_status;
+	u16 current_clk_id;
 };
 
 static bool lpass_cdc_va_macro_get_data(struct snd_soc_component *component,
@@ -271,7 +273,6 @@ static int lpass_cdc_va_macro_mclk_enable(
 			dev_err(va_priv->dev,
 				"%s: va request core vote failed\n",
 				__func__);
-			goto exit;
 		}
 		lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
@@ -421,7 +422,14 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		if (va_priv->default_clk_id != VA_CORE_CLK) {
+		dev_dbg(component->dev,
+			"%s: va_swr_clk_cnt %d, tx_swr_clk_cnt %d, tx_clk_status %d\n",
+			__func__, va_priv->va_swr_clk_cnt,
+			va_priv->tx_swr_clk_cnt, va_priv->tx_clk_status);
+		if (va_priv->current_clk_id == VA_CORE_CLK) {
+			 return 0;
+		} else if ( va_priv->va_swr_clk_cnt != 0 &&
+				va_priv->tx_clk_status)  {
 			ret = lpass_cdc_va_macro_core_vote(va_priv, true);
 			if (ret < 0) {
 				dev_err(va_priv->dev,
@@ -454,10 +462,13 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					false);
 				break;
 			}
+			va_priv->current_clk_id = VA_CORE_CLK;
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (va_priv->default_clk_id == TX_CORE_CLK) {
+		if (va_priv->current_clk_id == VA_CORE_CLK &&
+			va_priv->va_swr_clk_cnt != 0 &&
+			va_priv->tx_clk_status) {
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					TX_CORE_CLK,
@@ -490,6 +501,7 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					false);
 				break;
 			}
+			va_priv->current_clk_id = TX_CORE_CLK;
 		}
 		break;
 	default:
@@ -541,7 +553,7 @@ static int lpass_cdc_va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 						   TX_CORE_CLK,
 						   true);
 		if (!ret)
-			va_priv->tx_clk_status++;
+			va_priv->dapm_tx_clk_status++;
 
 		if (va_priv->lpi_enable)
 			ret = lpass_cdc_va_macro_mclk_enable(va_priv, 1, true);
@@ -554,12 +566,12 @@ static int lpass_cdc_va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 		else
 			lpass_cdc_tx_mclk_enable(component, 0);
 
-		if (va_priv->tx_clk_status > 0) {
+		if (va_priv->dapm_tx_clk_status > 0) {
 			lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					   va_priv->default_clk_id,
 					   TX_CORE_CLK,
 					   false);
-			va_priv->tx_clk_status--;
+			va_priv->dapm_tx_clk_status--;
 		}
 		break;
 	default:
@@ -709,6 +721,7 @@ static int lpass_cdc_va_macro_core_vote(void *handle, bool enable)
 		pr_err("%s: va priv data is NULL\n", __func__);
 		return -EINVAL;
 	}
+	trace_printk("%s, enter: enable %d\n", __func__, enable);
 	if (enable) {
 		pm_runtime_get_sync(va_priv->dev);
 		if (lpass_cdc_check_core_votes(va_priv->dev)) {
@@ -722,6 +735,7 @@ static int lpass_cdc_va_macro_core_vote(void *handle, bool enable)
 		pm_runtime_put_autosuspend(va_priv->dev);
 		pm_runtime_mark_last_busy(va_priv->dev);
 	}
+	trace_printk("%s, leave\n", __func__);
 	return rc;
 }
 
@@ -1307,12 +1321,12 @@ static int lpass_cdc_va_macro_enable_tx(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		if (va_priv->tx_clk_status > 0) {
+		if (va_priv->dapm_tx_clk_status > 0) {
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
 						   TX_CORE_CLK,
 						   false);
-			va_priv->tx_clk_status--;
+			va_priv->dapm_tx_clk_status--;
 		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
@@ -1321,7 +1335,7 @@ static int lpass_cdc_va_macro_enable_tx(struct snd_soc_dapm_widget *w,
 						   TX_CORE_CLK,
 						   true);
 		if (!ret)
-			va_priv->tx_clk_status++;
+			va_priv->dapm_tx_clk_status++;
 		break;
 	default:
 		dev_err(va_priv->dev,
@@ -1969,9 +1983,7 @@ static const struct snd_soc_dapm_route va_audio_map[] = {
 
 	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
 
-	{"VA_AIF1 CAP", NULL, "VA_SWR_CLK"},
-	{"VA_AIF2 CAP", NULL, "VA_SWR_CLK"},
-	{"VA_AIF3 CAP", NULL, "VA_SWR_CLK"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_CLK"},
 };
 
 static const char * const dec_mode_mux_text[] = {
@@ -2462,6 +2474,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	}
 	va_priv->clk_id = VA_CORE_CLK;
 	va_priv->default_clk_id = default_clk_id;
+	va_priv->current_clk_id = TX_CORE_CLK;
 
 	if (is_used_va_swr_gpio) {
 		va_priv->reset_swr = true;

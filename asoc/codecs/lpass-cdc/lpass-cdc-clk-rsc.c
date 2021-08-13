@@ -510,10 +510,12 @@ int lpass_cdc_clk_rsc_request_clock(struct device *dev,
 		mux_switch = true;
 
 	if (mux_switch) {
-		ret = lpass_cdc_clk_rsc_mux1_clk_request(priv, clk_id_req,
+		if (clk_id_req != VA_CORE_CLK) {
+			ret = lpass_cdc_clk_rsc_mux1_clk_request(priv, clk_id_req,
 							enable);
-		if (ret < 0)
-			goto err;
+			if (ret < 0)
+				goto err;
+		}
 	} else {
 		ret = lpass_cdc_clk_rsc_mux0_clk_request(priv, clk_id_req, enable);
 		if (ret < 0)

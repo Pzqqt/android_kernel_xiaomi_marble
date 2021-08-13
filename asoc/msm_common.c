@@ -18,10 +18,13 @@
 #include <sound/control.h>
 #include <sound/core.h>
 #include <sound/soc.h>
+#include <sound/pcm_params.h>
 #include <asoc/msm-cdc-pinctrl.h>
 #include <dsp/spf-core.h>
 #include <dsp/msm_audio_ion.h>
 #include <sound/info.h>
+#include <dsp/apr_audio-v2.h>
+#include <dsp/audio_prm.h>
 
 #include "msm_common.h"
 
@@ -41,6 +44,8 @@ struct snd_card_pdata {
 #define DIR_SZ 10
 
 #define MAX_CODEC_DAI 8
+#define TDM_SLOT_WIDTH_BITS 32
+#define TDM_MAX_SLOTS 8
 
 static struct attribute device_state_attr = {
 	.name = "state",
@@ -239,6 +244,95 @@ static int get_intf_index(const char *stream_name)
 	return -EINVAL;
 }
 
+static int get_intf_clk_id(int index)
+{
+	int clk_id;
+
+	switch(index) {
+	case PRI_MI2S_TDM_AUXPCM:
+		clk_id = Q6AFE_LPASS_CLK_ID_PRI_TDM_IBIT;
+		break;
+	case SEC_MI2S_TDM_AUXPCM:
+		clk_id = Q6AFE_LPASS_CLK_ID_SEC_TDM_IBIT;
+		break;
+	case TER_MI2S_TDM_AUXPCM:
+		clk_id = Q6AFE_LPASS_CLK_ID_TER_TDM_IBIT;
+		break;
+	case QUAT_MI2S_TDM_AUXPCM:
+		clk_id = Q6AFE_LPASS_CLK_ID_QUAD_TDM_IBIT;
+		break;
+	case QUIN_MI2S_TDM_AUXPCM:
+		clk_id = Q6AFE_LPASS_CLK_ID_QUIN_TDM_IBIT;
+		break;
+	case SEN_MI2S_TDM_AUXPCM:
+		clk_id = Q6AFE_LPASS_CLK_ID_SEN_TDM_IBIT;
+		break;
+	default:
+		pr_err("%s: Invalid interface index: %d\n", __func__, index);
+		clk_id = -EINVAL;
+	}
+	pr_debug("%s: clk id: %d\n", __func__, clk_id);
+	return clk_id;
+}
+
+int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params)
+{
+	int ret = 0;
+	int slot_width = TDM_SLOT_WIDTH_BITS;
+	int slots;
+	unsigned int rate;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	const char *stream_name = rtd->dai_link->stream_name;
+	struct snd_soc_card *card = rtd->card;
+	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
+	int index = get_intf_index(stream_name);
+	struct clk_cfg tdm_clk_cfg;
+
+	dev_dbg(rtd->card->dev,
+		"%s: substream = %s  stream = %d\n",
+		__func__, substream->name, substream->stream);
+
+	if (!pdata) {
+		dev_err(rtd->card->dev, "%s: pdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (index >= 0) {
+		mutex_lock(&pdata->lock[index]);
+		if (pdata->mi2s_gpio_p[index]) {
+			if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
+				slots = pdata->tdm_max_slots;
+				rate = params_rate(params);
+
+				tdm_clk_cfg.clk_id =  get_intf_clk_id(index);
+				if (tdm_clk_cfg.clk_id < 0) {
+					ret = -EINVAL;
+					pr_err("%s: Invalid clk id %d", __func__,
+						tdm_clk_cfg.clk_id);
+					goto done;
+				}
+
+				tdm_clk_cfg.clk_freq_in_hz = rate * slot_width * slots;
+				tdm_clk_cfg.clk_attri = Q6AFE_LPASS_CLK_ATTRIBUTE_COUPLE_NO;
+				tdm_clk_cfg.clk_root = 0;
+
+				pr_debug("%s: clk_id :%d clk freq %d\n", __func__,
+					tdm_clk_cfg.clk_id, tdm_clk_cfg.clk_freq_in_hz);
+				ret = audio_prm_set_lpass_clk_cfg(&tdm_clk_cfg, 1);
+				if (ret < 0) {
+					pr_err("%s: prm lpass clk cfg set failed ret %d\n",
+						__func__, ret);
+					goto done;
+				}
+			}
+		}
+done:
+		mutex_unlock(&pdata->lock[index]);
+	}
+	return ret;
+}
+
 int msm_common_snd_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
@@ -285,7 +379,9 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
 	const char *stream_name = rtd->dai_link->stream_name;
 	int index = get_intf_index(stream_name);
+	struct clk_cfg tdm_clk_cfg;
 
+	memset(&tdm_clk_cfg, 0, sizeof(struct clk_cfg));
 	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
 			substream->name, substream->stream);
 
@@ -301,6 +397,13 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 		if (pdata->mi2s_gpio_p[index]) {
 			atomic_dec(&pdata->mi2s_gpio_ref_cnt[index]);
 			if (atomic_read(&pdata->mi2s_gpio_ref_cnt[index]) == 0) {
+				if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
+					tdm_clk_cfg.clk_id = get_intf_clk_id(index);
+					ret = audio_prm_set_lpass_clk_cfg(&tdm_clk_cfg, 0);
+					if (ret < 0)
+						pr_err("%s: prm clk cfg set failed ret %d\n",
+						__func__, ret);
+				}
 				ret = msm_cdc_pinctrl_select_sleep_state(
 						pdata->mi2s_gpio_p[index]);
 				if (ret)
@@ -316,7 +419,7 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 {
 	struct msm_common_pdata *common_pdata = NULL;
-	int count;
+	int count, ret = 0;
 
 	common_pdata = kcalloc(1, sizeof(struct msm_common_pdata), GFP_KERNEL);
 	if (!common_pdata)
@@ -325,6 +428,19 @@ int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 	for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
 		mutex_init(&common_pdata->lock[count]);
 		atomic_set(&common_pdata->mi2s_gpio_ref_cnt[count], 0);
+	}
+
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,tdm-max-slots",
+				&common_pdata->tdm_max_slots);
+	if (ret) {
+		dev_info(&pdev->dev, "%s: No DT match for tdm max slots\n",
+			__func__);
+	}
+	if ((common_pdata->tdm_max_slots <= 0) || (common_pdata->tdm_max_slots >
+			TDM_MAX_SLOTS)) {
+		common_pdata->tdm_max_slots = TDM_MAX_SLOTS;
+		dev_info(&pdev->dev, "%s: Using default tdm max slot: %d\n",
+			__func__, common_pdata->tdm_max_slots);
 	}
 
 	common_pdata->mi2s_gpio_p[PRI_MI2S_TDM_AUXPCM] = of_parse_phandle(pdev->dev.of_node,
