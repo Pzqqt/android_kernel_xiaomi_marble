@@ -239,7 +239,7 @@ static int dp_mst_calc_pbn_mode(struct dp_display_mode *dp_mode)
 	bool dsc_en;
 	s64 pbn_fp;
 
-	dsc_en = (dp_mode->timing.comp_info.comp_ratio > 1) ? true : false;
+	dsc_en = dp_mode->timing.comp_info.enabled;
 	bpp = dsc_en ?
 		DSC_BPP(dp_mode->timing.comp_info.dsc_info.config)
 		: dp_mode->timing.bpp;
@@ -614,7 +614,7 @@ static void dp_mst_bridge_pre_enable(struct drm_bridge *drm_bridge)
 	DP_MST_INFO("conn:%d mode:%s fps:%d dsc:%d vcpi:%d slots:%d to %d\n",
 			DP_MST_CONN_ID(bridge), bridge->drm_mode.name,
 			drm_mode_vrefresh(&bridge->drm_mode),
-			bridge->dp_mode.timing.comp_info.comp_ratio,
+			bridge->dp_mode.timing.comp_info.enabled,
 			bridge->vcpi, bridge->start_slot,
 			bridge->start_slot + bridge->num_slots);
 end:
