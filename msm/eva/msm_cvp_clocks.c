@@ -8,6 +8,34 @@
 #include "msm_cvp_debug.h"
 #include "msm_cvp_clocks.h"
 
+int msm_cvp_mmrm_notifier_cb(
+	struct mmrm_client_notifier_data *notifier_data)
+{
+	if (!notifier_data) {
+		dprintk(CVP_WARN, "%s Invalid notifier data: %pK\n",
+			__func__, notifier_data);
+		return -EINVAL;
+	}
+
+	if (notifier_data->cb_type == MMRM_CLIENT_RESOURCE_VALUE_CHANGE) {
+		struct iris_hfi_device *dev = notifier_data->pvt_data;
+
+		dprintk(CVP_PWR,
+			"%s: Clock %s throttled from %ld to %ld \n",
+			__func__, dev->mmrm_desc.client_info.desc.name,
+			notifier_data->cb_data.val_chng.old_val,
+			notifier_data->cb_data.val_chng.new_val);
+
+		/*TODO: if need further handling to notify eva client */
+	} else {
+		dprintk(CVP_WARN, "%s Invalid cb type: %d\n",
+			__func__, notifier_data->cb_type);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 int msm_cvp_set_clocks(struct msm_cvp_core *core)
 {
 	struct cvp_hfi_device *hdev;
@@ -28,16 +56,19 @@ int msm_cvp_mmrm_register(struct iris_hfi_device *device)
 {
 	int rc = 0;
 	struct clock_info *cl = NULL;
-	char *name = (char *)device->mmrm_desc.client_info.desc.name;
+	char *name;
 
 	if (!device) {
 		dprintk(CVP_ERR, "%s invalid device\n", __func__);
 		return -EINVAL;
 	}
 
+	name = (char *)device->mmrm_desc.client_info.desc.name;
 	device->mmrm_cvp=NULL;
 	device->mmrm_desc.client_type=MMRM_CLIENT_CLOCK;
 	device->mmrm_desc.priority=MMRM_CLIENT_PRIOR_LOW;
+	device->mmrm_desc.pvt_data = device;
+	device->mmrm_desc.notifier_callback_fn = msm_cvp_mmrm_notifier_cb;
 	device->mmrm_desc.client_info.desc.client_domain=MMRM_CLIENT_DOMAIN_CVP;
 
 	iris_hfi_for_each_clock(device, cl) {
@@ -175,10 +206,11 @@ int msm_cvp_scale_clocks(struct iris_hfi_device *device)
 	return rc;
 }
 
-int msm_cvp_prepare_enable_clks(struct iris_hfi_device *device)
+int msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
+		const char *name)
 {
-	struct clock_info *cl = NULL, *cl_fail = NULL;
-	int rc = 0, c = 0;
+	struct clock_info *cl = NULL;
+	int rc = 0;
 
 	if (!device) {
 		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
@@ -186,6 +218,8 @@ int msm_cvp_prepare_enable_clks(struct iris_hfi_device *device)
 	}
 
 	iris_hfi_for_each_clock(device, cl) {
+		if (strcmp(cl->name, name))
+                        continue;
 		/*
 		* For the clocks we control, set the rate prior to preparing
 		* them.  Since we don't really have a load at this point,
@@ -211,42 +245,47 @@ int msm_cvp_prepare_enable_clks(struct iris_hfi_device *device)
 		}
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
-			dprintk(CVP_ERR, "Failed to enable clocks\n");
-			cl_fail = cl;
-			goto fail_clk_enable;
+			dprintk(CVP_ERR, "Failed to enable clock %s\n",
+				cl->name);
+			return rc;
+		}
+		if (!__clk_is_enabled(cl->clk)) {
+			dprintk(CVP_ERR, "%s: clock %s not enabled\n",
+					__func__, cl->name);
+			clk_disable_unprepare(cl->clk);
+			return -EINVAL;
 		}
 
-		c++;
 		dprintk(CVP_PWR, "Clock: %s prepared and enabled\n",
 				cl->name);
+		return 0;
 	}
 
-	return rc;
-
-fail_clk_enable:
-	iris_hfi_for_each_clock_reverse_continue(device, cl, c) {
-		dprintk(CVP_ERR, "Clock: %s disable and unprepare\n",
-			cl->name);
-		clk_disable_unprepare(cl->clk);
-	}
-
-	return rc;
+	dprintk(CVP_ERR, "%s clock %s not found\n", __func__, name);
+	return -EINVAL;
 }
 
-void msm_cvp_disable_unprepare_clks(struct iris_hfi_device *device)
+int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
+		const char *name)
 {
 	struct clock_info *cl;
 
 	if (!device) {
 		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
-		return;
+		return -EINVAL;
 	}
 
 	iris_hfi_for_each_clock_reverse(device, cl) {
+		if (strcmp(cl->name, name))
+			continue;
+		clk_disable_unprepare(cl->clk);
 		dprintk(CVP_PWR, "Clock: %s disable and unprepare\n",
 			cl->name);
-		clk_disable_unprepare(cl->clk);
+		return 0;
 	}
+
+	dprintk(CVP_ERR, "%s clock %s not found\n", __func__, name);
+	return -EINVAL;
 }
 
 int msm_cvp_init_clocks(struct iris_hfi_device *device)

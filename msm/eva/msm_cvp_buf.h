@@ -35,7 +35,8 @@ enum smem_prop {
 	SMEM_ADSP = 0x8,
 	SMEM_NON_PIXEL = 0x10,
 	SMEM_PIXEL = 0x20,
-	SMEM_CAMERA = 0x40
+	SMEM_CAMERA = 0x40,
+	SMEM_PERSIST = 0x100,
 };
 
 struct msm_cvp_list {

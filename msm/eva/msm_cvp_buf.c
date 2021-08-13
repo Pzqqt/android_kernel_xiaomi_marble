@@ -484,6 +484,7 @@ static u32 msm_cvp_map_user_persist_buf(struct msm_cvp_inst *inst,
 	if (!smem)
 		goto exit;
 
+	smem->flags |= SMEM_PERSIST;
 	pbuf->smem = smem;
 	pbuf->fd = buf->fd;
 	pbuf->size = buf->size;
@@ -819,7 +820,7 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 		smem = inst->dma_cache.entries[i];
 		if (atomic_read(&smem->refcount) == 0) {
 			print_smem(CVP_MEM, "free", inst, smem);
-		} else {
+		} else if (!(smem->flags & SMEM_PERSIST)) {
 			print_smem(CVP_WARN, "in use", inst, smem);
 		}
 		msm_cvp_unmap_smem(inst, smem, "unmap cpu");

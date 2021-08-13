@@ -202,7 +202,9 @@ void *msm_cvp_open(int core_id, int session_type)
 	msm_cvp_session_init(inst);
 
 	mutex_lock(&core->lock);
+	mutex_lock(&core->clk_lock);
 	list_add_tail(&inst->list, &core->instances);
+	mutex_unlock(&core->clk_lock);
 	mutex_unlock(&core->lock);
 
 	__init_fence_queue(inst);
@@ -321,9 +323,12 @@ int msm_cvp_destroy(struct msm_cvp_inst *inst)
 
 	core = inst->core;
 
+	/* Ensure no path has core->clk_lock and core->lock sequence */
 	mutex_lock(&core->lock);
+	mutex_lock(&core->clk_lock);
 	/* inst->list lives in core->instances */
 	list_del(&inst->list);
+	mutex_unlock(&core->clk_lock);
 	mutex_unlock(&core->lock);
 
 	DEINIT_MSM_CVP_LIST(&inst->persistbufs);
