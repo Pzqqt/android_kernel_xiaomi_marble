@@ -1853,6 +1853,27 @@ hal_srng_set_nf_thresholds(struct hal_srng *srng,
 }
 #endif
 
+#if defined(CLEAR_SW2TCL_CONSUMED_DESC)
+/**
+ * hal_srng_last_desc_cleared_init - Initialize SRNG last_desc_cleared ptr
+ *
+ * @srng: Source ring pointer
+ *
+ * Return: None
+ */
+static inline
+void hal_srng_last_desc_cleared_init(struct hal_srng *srng)
+{
+	srng->last_desc_cleared = srng->ring_size - srng->entry_size;
+}
+
+#else
+static inline
+void hal_srng_last_desc_cleared_init(struct hal_srng *srng)
+{
+}
+#endif /* CLEAR_SW2TCL_CONSUMED_DESC */
+
 /**
  * hal_srng_setup - Initialize HW SRNG ring.
  * @hal_soc: Opaque HAL SOC handle
@@ -1931,6 +1952,8 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	srng->flags |= HAL_SRNG_MSI_SWAP;
 	srng->flags |= HAL_SRNG_RING_PTR_SWAP;
 #endif
+
+	hal_srng_last_desc_cleared_init(srng);
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 		srng->u.src_ring.hp = 0;

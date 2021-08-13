@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,9 @@
 #else
 #include <linux/sched/signal.h>
 #endif /* KERNEL_VERSION(4, 11, 0) */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+#include <linux/sched/walt.h>
+#endif
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/kthread.h>
@@ -106,7 +109,7 @@ void qdf_busy_wait(uint32_t us_interval)
 }
 qdf_export_symbol(qdf_busy_wait);
 
-#ifdef PF_WAKE_UP_IDLE
+#if defined(PF_WAKE_UP_IDLE) || IS_ENABLED(CONFIG_SCHED_WALT)
 void qdf_set_wake_up_idle(bool idle)
 {
 	set_wake_up_idle(idle);
@@ -269,8 +272,14 @@ void qdf_cpumask_set_cpu(unsigned int cpu, qdf_cpu_mask *dstp)
 {
 	cpumask_set_cpu(cpu, dstp);
 }
-
 qdf_export_symbol(qdf_cpumask_set_cpu);
+
+void qdf_cpumask_clear_cpu(unsigned int cpu, qdf_cpu_mask *dstp)
+{
+	cpumask_clear_cpu(cpu, dstp);
+}
+
+qdf_export_symbol(qdf_cpumask_clear_cpu);
 
 void qdf_cpumask_setall(qdf_cpu_mask *dstp)
 {

@@ -183,7 +183,7 @@ more_data:
 					   ring_desc, rx_desc);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			if (qdf_unlikely(rx_desc && rx_desc->nbuf)) {
-				qdf_assert_always(rx_desc->unmapped);
+				qdf_assert_always(!rx_desc->unmapped);
 				dp_ipa_reo_ctx_buf_mapping_lock(
 							soc,
 							reo_ring_num);
@@ -625,7 +625,8 @@ done:
 		/*
 		 * Drop non-EAPOL frames from unauthorized peer.
 		 */
-		if (qdf_likely(peer) && qdf_unlikely(!peer->authorize)) {
+		if (qdf_likely(peer) && qdf_unlikely(!peer->authorize) &&
+		    !qdf_nbuf_is_raw_frame(nbuf)) {
 			bool is_eapol = qdf_nbuf_is_ipv4_eapol_pkt(nbuf) ||
 					qdf_nbuf_is_ipv4_wapi_pkt(nbuf);
 
@@ -901,6 +902,11 @@ dp_rx_desc_pool_deinit_be_cc(struct dp_soc *soc,
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
 	page_desc_list = &be_soc->rx_spt_page_desc[pool_id];
+
+	if (!page_desc_list->num_spt_pages) {
+		dp_warn("page_desc_list is empty for pool_id %d", pool_id);
+		return;
+	}
 
 	/* cleanup for each page */
 	page_desc = page_desc_list->spt_page_list_head;

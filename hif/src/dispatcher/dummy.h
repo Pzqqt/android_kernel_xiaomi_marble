@@ -93,3 +93,5 @@ bool hif_dummy_log_bus_info(struct hif_softc *scn, uint8_t *data,
 			    unsigned int *offset);
 int hif_dummy_enable_grp_irqs(struct hif_softc *scn);
 int hif_dummy_disable_grp_irqs(struct hif_softc *scn);
+void hif_dummy_config_irq_clear_cpu_affinity(struct hif_softc *scn,
+					     int intr_ctxt_id, int cpu);

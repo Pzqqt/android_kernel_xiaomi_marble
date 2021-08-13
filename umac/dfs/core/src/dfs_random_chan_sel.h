@@ -126,6 +126,29 @@
 #define DFS_IS_CHAN_JAPAN_INDOOR_FREQ(_ch)(((_ch) >= 5180)  && ((_ch) <= 5320))
 #define DFS_IS_CHAN_JAPAN_OUTDOOR_FREQ(_ch)(((_ch) >= 5500) && ((_ch) <= 5720))
 #define DFS_IS_CHAN_JAPAN_W53_FREQ(_ch)    (((_ch) >= 5260)  && ((_ch) <= 5320))
+/*
+ * Spur or leakage transmissions is observed in Spruce HW in
+ * frequencies from 5260MHz to 5320MHz when one of the following
+ * conditions is true,
+ * i) The AP is transmitting in 52/56/60/64 in 80MHz mode and then the  AP
+ * moves to the adjacent channel 36/44/48 in 80MHz mode and starts
+ * transmitting.
+ * ii) The AP is transmitting in 36/44/48/52/56/60/64 in 160MHz mode and then
+ * the  AP moves to the adjacent channel 36/44/48 in 80MHz mode and starts
+ * transmitting.
+ * Hence, center frequencies from 5260MHz to 5320MHz in Spruce HW are called
+ * Spruce Spur 80MHz Frequencies and, center frequencies from 5180MHz and
+ * 5320MHz except 5200MHz are called Spruce Spur 160MHz Frequencies.
+ */
+/* Channels 52/56/60/64 in 80MHz */
+#define DFS_IS_CHAN_SPRUCE_SPUR_FREQ_80MHZ(_ch) \
+		(((_ch) >= 5260) && ((_ch) <= 5320))
+/* 36/44/48/52/56/60/64 in 160MHz mode */
+#define DFS_IS_CHAN_SPRUCE_SPUR_FREQ_160MHZ(_ch) \
+		(((_ch) >= 5180) && ((_ch) <= 5320) && ((_ch) != 5200))
+/* Avoid channels 36/44/48 */
+#define DFS_IS_SPRUCE_SPUR_AVOID_FREQS(_ch) \
+		(((_ch) >= 5180) && ((_ch) <= 5240) && ((_ch) != 5200))
 #endif
 
 /**

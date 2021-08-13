@@ -86,6 +86,8 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 		&hif_dummy_config_irq_affinity;
 #endif
 	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
+	bus_ops->hif_config_irq_clear_cpu_affinity =
+		&hif_ipci_config_irq_clear_cpu_affinity;
 	bus_ops->hif_log_bus_info = &hif_dummy_log_bus_info;
 	bus_ops->hif_enable_grp_irqs = hif_ipci_enable_grp_irqs;
 	bus_ops->hif_disable_grp_irqs = hif_ipci_disable_grp_irqs;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -81,4 +81,175 @@ QDF_STATUS
 if_mgr_ap_stop_bss_complete(struct wlan_objmgr_vdev *vdev,
 			    struct if_mgr_event_data *event_data);
 
-#endif
+#if defined WLAN_MBSS
+/**
+ * if_mgr_ap_start_acs() - ACS start event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the ACS start event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_start_acs(struct wlan_objmgr_vdev *vdev,
+			    struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_stop_acs() - ACS stop event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the ACS stop event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_stop_acs(struct wlan_objmgr_vdev *vdev,
+			      struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_done_acs() - ACS done event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the ACS stop event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_done_acs(struct wlan_objmgr_vdev *vdev,
+			      struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_cancel_acs() - ACS cancel event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the ACS cancel event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_cancel_acs(struct wlan_objmgr_vdev *vdev,
+				struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_start_ht40() - HT40 scan start event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the HT40 scan start event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_start_ht40(struct wlan_objmgr_vdev *vdev,
+				struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_stop_ht40() - HT40 scan stop event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the HT40 scan stop event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_stop_ht40(struct wlan_objmgr_vdev *vdev,
+			       struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_done_ht40() - HT40 scan done event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the HT40 scan done event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_done_ht40(struct wlan_objmgr_vdev *vdev,
+			       struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_cancel_ht40() - HT40 scan cancel event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the HT40 scan cancel event for interface
+ * manager
+ *
+ * Context: It can run in process/tasklet context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_ap_cancel_ht40(struct wlan_objmgr_vdev *vdev,
+				 struct if_mgr_event_data *event_data);
+#else
+static inline QDF_STATUS
+if_mgr_ap_start_acs(struct wlan_objmgr_vdev *vdev,
+		    struct if_mgr_event_data *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+if_mgr_ap_stop_acs(struct wlan_objmgr_vdev *vdev,
+		   struct if_mgr_event_data *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+if_mgr_ap_cancel_acs(struct wlan_objmgr_vdev *vdev,
+		     struct if_mgr_event_data *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+if_mgr_ap_start_ht40(struct wlan_objmgr_vdev *vdev,
+		     struct if_mgr_event_data *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+if_mgr_ap_stop_ht40(struct wlan_objmgr_vdev *vdev,
+		    struct if_mgr_event_data *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+if_mgr_ap_done_ht40(struct wlan_objmgr_vdev *vdev,
+		    struct if_mgr_event_data *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+if_mgr_ap_cancel_ht40(struct wlan_objmgr_vdev *vdev,
+		      struct if_mgr_event_data *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_MBSS */
+#endif /* _WLAN_IF_MGR_AP_H_ */
+

@@ -155,6 +155,9 @@ struct dp_soc_be {
 	struct dp_spt_page_desc_list rx_spt_page_desc[MAX_RXDESC_POOLS];
 };
 
+/* convert struct dp_soc_be pointer to struct dp_soc pointer */
+#define DP_SOC_BE_GET_SOC(be_soc) ((struct dp_soc *)be_soc)
+
 /**
  * struct dp_pdev_be - Extended DP pdev for BE targets
  * @pdev: dp pdev structure

@@ -1457,6 +1457,7 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 	uint16_t *leakage_adjusted_lst;
 	uint16_t final_lst[NUM_CHANNELS] = {0};
 	uint8_t *chan_wd = (uint8_t *)&chan_params->ch_width;
+	bool flag_no_spur_leakage_adj_chans = false;
 
 	if (!chan_list || !chan_cnt) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
@@ -1481,6 +1482,8 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 				 dfs_region, acs_info);
 	flag_no_weather = (dfs_region == DFS_ETSI_REGION) ?
 		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
+	flag_no_spur_leakage_adj_chans =
+	    flags & DFS_RANDOM_CH_FLAG_NO_SPRUCE_SPUR_ADJ_CH;
 
 	/* list adjusted after leakage has been marked */
 	leakage_adjusted_lst = qdf_mem_malloc(random_chan_cnt *
@@ -1562,6 +1565,29 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 		    (*chan_wd == DFS_CH_WIDTH_40MHZ)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				  "skip weather adjacent ch freq =%d\n",
+				  target_freq);
+			continue;
+		}
+
+		/*
+		 * Spur or leakage transmissions is observed in Spruce HW in
+		 * frequencies from 5260MHz to 5320MHz when one of the following
+		 * conditions is true,
+		 * i) The AP is transmitting in 52/56/60/64 in 80MHz mode and
+		 * then the AP moves to the adjacent channel 36/44/48 in 80MHz
+		 * mode and starts transmitting.
+		 * ii) The AP is transmitting in 36/44/48/52/56/60/64 in 160MHz
+		 * mode and then the  AP moves to the adjacent channel 36/44/48
+		 * in 80MHz mode and starts transmitting.
+		 *
+		 * The random channel selection algorithm prevents the channel
+		 * movement mentioned above, thereby eliminating the leakage.
+		 */
+		if (flag_no_spur_leakage_adj_chans &&
+		    DFS_IS_SPRUCE_SPUR_AVOID_FREQS(target_freq) &&
+		    *chan_wd == DFS_CH_WIDTH_80MHZ) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+				  "skip spruce spur causing (adjacent) channel=%hu",
 				  target_freq);
 			continue;
 		}

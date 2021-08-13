@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,16 @@
  * @oce_ap_tx_pwr_weightage: OCE AP tx power weigtage
  * @oce_subnet_id_weightage: OCE subnet id weigtage
  * @sae_pk_ap_weightage: SAE-PK AP weigtage
+ * @eht_caps_weightage: EHT caps weightage
+ * @mlo_weightage: MLO weightage
+ * @joint_rssi_alpha: Joint RSSI alpha value
+ * @joint_esp_alpha: Joint ESP alpha value
+ * @joint_oce_alpha: Joint OCE alpha value
+ * @low_band_rssi_boost: Flag to assign higher alpha weightage low band RSSI
+ * @low_band_esp_boost: Flag to assign higher alpha weightage low band esp
+ * @low_band_oce_boost: Flag to assign higher alpha weightage low band oce
+ * @wlm_indication_weightage: WLM indication weightage
+ * @emlsr_weightage: eMLSR weightage
  */
 struct weight_cfg {
 	uint8_t rssi_weightage;
@@ -56,6 +66,19 @@ struct weight_cfg {
 	uint8_t oce_ap_tx_pwr_weightage;
 	uint8_t oce_subnet_id_weightage;
 	uint8_t sae_pk_ap_weightage;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t eht_caps_weightage;
+	uint8_t mlo_weightage;
+	uint8_t joint_rssi_alpha;
+	uint8_t joint_esp_alpha;
+	uint8_t joint_oce_alpha;
+	uint8_t low_band_rssi_boost:1,
+		low_band_esp_boost:1,
+		low_band_oce_boost:1,
+		reserved:5;
+	uint8_t wlm_indication_weightage;
+	uint8_t emlsr_weightage;
+#endif
 };
 
 /**
@@ -116,6 +139,49 @@ struct per_slot_score {
 	uint32_t score_pcnt15_to_12;
 };
 
+#ifndef WLAN_FEATURE_11BE_MLO
+#define CM_20MHZ_BW_INDEX                  0
+#define CM_40MHZ_BW_INDEX                  1
+#define CM_80MHZ_BW_INDEX                  2
+#define CM_160MHZ_BW_INDEX                 3
+#define CM_MAX_BW_INDEX                    4
+
+#define CM_NSS_1x1_INDEX                   0
+#define CM_NSS_2x2_INDEX                   1
+#define CM_NSS_3x3_INDEX                   2
+#define CM_NSS_4x4_INDEX                   3
+#define CM_MAX_NSS_INDEX                   4
+#else
+enum cm_bw_idx {
+	CM_20MHZ_BW_INDEX,
+	CM_40MHZ_BW_INDEX,
+	CM_80MHZ_BW_INDEX,
+	CM_160MHZ_BW_INDEX,
+	CM_MLO_20_PLUS_20MHZ_BW_INDEX,
+	CM_MLO_20_PLUS_40MHZ_BW_INDEX,
+	CM_MLO_40_PLUS_40MHZ_BW_INDEX,
+	CM_MLO_20_PLUS_80MHZ_BW_INDEX,
+	CM_MLO_40_PLUS_80MHZ_BW_INDEX,
+	CM_MLO_80_PLUS_80MHZ_BW_INDEX,
+	CM_MLO_20_PLUS_160HZ_BW_INDEX,
+	CM_MLO_40_PLUS_160HZ_BW_INDEX,
+	CM_MLO_80_PLUS_160HZ_BW_INDEX,
+	CM_MLO_160_PLUS_160HZ_BW_INDEX,
+	CM_320MHZ_BW_INDEX,
+	CM_MAX_BW_INDEX
+};
+
+enum cm_nss_idx {
+	CM_NSS_1x1_INDEX,
+	CM_NSS_2x2_INDEX,
+	CM_NSS_3x3_INDEX,
+	CM_NSS_4x4_INDEX,
+	CM_NSS_2x2_PLUS_2x2_INDEX,
+	CM_NSS_4x4_PLUS_4x4_INDEX,
+	CM_MAX_NSS_INDEX
+};
+#endif
+
 /**
  * struct scoring_cfg - Scoring related configuration
  * @weight_cfg: weigtage config for config
@@ -130,20 +196,24 @@ struct per_slot_score {
  * @vendor_roam_score_algorithm: Preferred ETP vendor roam score algorithm
  * @check_6ghz_security: check security for 6Ghz candidate
  * @key_mgmt_mask_6ghz: user configurable mask for 6ghz AKM
+ * @mlsr_link_selection: MLSR link selection config
  */
 struct scoring_cfg {
 	struct weight_cfg weight_config;
 	struct rssi_config_score rssi_score;
 	struct per_slot_score esp_qbss_scoring;
 	struct per_slot_score oce_wan_scoring;
-	uint32_t bandwidth_weight_per_index;
-	uint32_t nss_weight_per_index;
+	uint32_t bandwidth_weight_per_index[qdf_ceil(CM_MAX_BW_INDEX, 4)];
+	uint32_t nss_weight_per_index[qdf_ceil(CM_MAX_NSS_INDEX, 4)];
 	uint32_t band_weight_per_index;
 	uint8_t is_bssid_hint_priority:1,
 		 check_assoc_disallowed:1,
 		 vendor_roam_score_algorithm:1,
 		 check_6ghz_security:1;
 	uint32_t key_mgmt_mask_6ghz;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t mlsr_link_selection;
+#endif
 };
 
 /**

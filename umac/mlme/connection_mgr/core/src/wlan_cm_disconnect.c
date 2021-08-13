@@ -27,6 +27,7 @@
 #ifdef CONN_MGR_ADV_FEATURE
 #include "wlan_blm_api.h"
 #endif
+#include <wlan_mlo_mgr_sta.h>
 
 void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
@@ -186,7 +187,7 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
 		mlme_err(CM_PREFIX_FMT "Active command timeout",
 			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id));
-		QDF_ASSERT(0);
+		cm_trigger_panic_on_cmd_timeout(cm_ctx->vdev);
 		cm_send_disconnect_resp(cm_ctx, cmd->cmd_id);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
@@ -402,6 +403,8 @@ QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req->req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	req->req.source = cm_req->discon_req.req.source;
 	req->req.reason_code = cm_req->discon_req.req.reason_code;
+	req->req.is_no_disassoc_disconnect =
+			cm_req->discon_req.req.is_no_disassoc_disconnect;
 
 	cm_update_scan_mlme_on_disconnect(cm_ctx->vdev,
 					  &cm_req->discon_req);
@@ -457,6 +460,7 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_SUCCESS;
 
 	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
+	mlo_sta_link_disconn_notify(cm_ctx->vdev, resp);
 	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
 	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
@@ -613,6 +617,10 @@ QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 	if (!cm_req)
 		return QDF_STATUS_E_NOMEM;
 
+	if (wlan_vdev_mlme_is_mlo_vdev(vdev) &&
+	    !wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		req->is_no_disassoc_disconnect = 1;
+
 	disconnect_req = &cm_req->discon_req;
 	disconnect_req->req = *req;
 
@@ -634,6 +642,10 @@ QDF_STATUS cm_disconnect_start_req_sync(struct wlan_objmgr_vdev *vdev,
 	cm_ctx = cm_get_cm_ctx(vdev);
 	if (!cm_ctx)
 		return QDF_STATUS_E_INVAL;
+
+	if (wlan_vdev_mlme_is_mlo_vdev(vdev) &&
+	    !wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		req->is_no_disassoc_disconnect = 1;
 
 	qdf_event_reset(&cm_ctx->disconnect_complete);
 	status = cm_disconnect_start_req(vdev, req);

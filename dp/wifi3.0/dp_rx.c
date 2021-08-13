@@ -28,13 +28,16 @@
 #include "if_meta_hdr.h"
 #endif
 #include "dp_internal.h"
-#include "dp_rx_mon.h"
 #include "dp_ipa.h"
+#include "dp_hist.h"
+#include "dp_rx_buffer_pool.h"
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_htt.h"
+#include <dp_mon.h>
+#endif
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
-#include "dp_hist.h"
-#include "dp_rx_buffer_pool.h"
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
@@ -470,6 +473,8 @@ free_descs:
 	return QDF_STATUS_SUCCESS;
 }
 
+qdf_export_symbol(__dp_rx_buffers_replenish);
+
 /*
  * dp_rx_deliver_raw() - process RAW mode pkts and hand over the
  *				pkts to RAW mode simulation to
@@ -861,50 +866,6 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 #ifdef FEATURE_NAC_RSSI
 /**
- * dp_rx_nac_filter(): Function to perform filtering of non-associated
- * clients
- * @pdev: DP pdev handle
- * @rx_pkt_hdr: Rx packet Header
- *
- * return: dp_vdev*
- */
-static
-struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
-		uint8_t *rx_pkt_hdr)
-{
-	struct ieee80211_frame *wh;
-	struct dp_neighbour_peer *peer = NULL;
-
-	wh = (struct ieee80211_frame *)rx_pkt_hdr;
-
-	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) != IEEE80211_FC1_DIR_TODS)
-		return NULL;
-
-	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
-	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
-				neighbour_peer_list_elem) {
-		if (qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
-				wh->i_addr2, QDF_MAC_ADDR_SIZE) == 0) {
-			dp_rx_debug("%pK: NAC configuration matched for mac-%2x:%2x:%2x:%2x:%2x:%2x",
-				    pdev->soc,
-				    peer->neighbour_peers_macaddr.raw[0],
-				    peer->neighbour_peers_macaddr.raw[1],
-				    peer->neighbour_peers_macaddr.raw[2],
-				    peer->neighbour_peers_macaddr.raw[3],
-				    peer->neighbour_peers_macaddr.raw[4],
-				    peer->neighbour_peers_macaddr.raw[5]);
-
-				qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
-
-			return pdev->monitor_vdev;
-		}
-	}
-	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
-
-	return NULL;
-}
-
-/**
  * dp_rx_process_invalid_peer(): Function to pass invalid peer list to umac
  * @soc: DP SOC handle
  * @mpdu: mpdu for which peer is invalid
@@ -948,23 +909,11 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 		goto free;
 	}
 
-	if (pdev->filter_neighbour_peers) {
-		/* Next Hop scenario not yet handle */
-		vdev = dp_rx_nac_filter(pdev, rx_pkt_hdr);
-		if (vdev) {
-			dp_rx_mon_deliver(soc, pdev->pdev_id,
-					  pdev->invalid_peer_head_msdu,
-					  pdev->invalid_peer_tail_msdu);
-
-			pdev->invalid_peer_head_msdu = NULL;
-			pdev->invalid_peer_tail_msdu = NULL;
-
-			return 0;
-		}
-	}
+	if (monitor_filter_neighbour_peer(pdev, rx_pkt_hdr) ==
+	    QDF_STATUS_SUCCESS)
+		return 0;
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-
 		if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
 				QDF_MAC_ADDR_SIZE) == 0) {
 			goto out;
@@ -990,13 +939,9 @@ out:
 	 * in order to avoid HM_WDS false addition.
 	 */
 	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer) {
-		if (!soc->hw_nac_monitor_support &&
-		    pdev->filter_neighbour_peers &&
-		    vdev->opmode == wlan_op_mode_sta) {
-			dp_rx_warn("%pK: Drop inv peer pkts with STA RA:%pm",
-				   soc, wh->i_addr1);
+		if (monitor_drop_inv_peer_pkts(vdev, wh) == QDF_STATUS_SUCCESS)
 			goto free;
-		}
+
 		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
 				(struct cdp_ctrl_objmgr_psoc *)soc->ctrl_psoc,
 				pdev->pdev_id, &msg);
@@ -2130,7 +2075,6 @@ void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	uint16_t peer_id, vdev_id;
 	uint32_t pkt_len = 0;
 	uint8_t *rx_tlv_hdr;
-	uint32_t l2_hdr_offset = 0;
 	struct hal_rx_msdu_metadata msdu_metadata;
 
 	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
@@ -2140,14 +2084,15 @@ void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 	pkt_len = msdu_len + msdu_metadata.l3_hdr_pad +
 		  soc->rx_pkt_tlv_size;
-	l2_hdr_offset =
-		hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc, rx_tlv_hdr);
 
 	qdf_nbuf_set_pktlen(nbuf, pkt_len);
 	dp_rx_skip_tlvs(soc, nbuf, msdu_metadata.l3_hdr_pad);
 
 	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, nbuf,
 			     HTT_INVALID_VDEV, is_offload, 0);
+
+	qdf_nbuf_push_head(nbuf, msdu_metadata.l3_hdr_pad +
+			   soc->rx_pkt_tlv_size);
 }
 
 #endif
@@ -2409,6 +2354,8 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+qdf_export_symbol(dp_pdev_rx_buffers_attach);
+
 /**
  * dp_rx_enable_mon_dest_frag() - Enable frag processing for
  *              monitor destination ring via frag.
@@ -2441,6 +2388,8 @@ void dp_rx_enable_mon_dest_frag(struct rx_desc_pool *rx_desc_pool,
 		dp_alert("Feature DP_RX_MON_MEM_FRAG for mon_dest is disabled");
 }
 #endif
+
+qdf_export_symbol(dp_rx_enable_mon_dest_frag);
 
 /*
  * dp_rx_pdev_desc_pool_alloc() -  allocate memory for software rx descriptor

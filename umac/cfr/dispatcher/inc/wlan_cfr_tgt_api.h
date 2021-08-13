@@ -122,6 +122,16 @@ QDF_STATUS
 tgt_cfr_mo_marking_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value);
 
 /**
+ * tgt_cfr_aoa_for_rcc_support_set() - API to set AoA for RCC support
+ * @psoc: pointer to psoc_object
+ * @value: value to be set
+ *
+ * Return: success/failure
+ */
+QDF_STATUS
+tgt_cfr_aoa_for_rcc_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value);
+
+/**
  * tgt_cfr_info_send() - API to send cfr info
  * @pdev: pointer to pdev_object
  * @head: pointer to cfr info head

@@ -19,18 +19,13 @@
 
 #include "dp_internal.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_htt.h"
+#include <dp_mon.h>
+#endif
+#include <qdf_module.h>
 
 #ifdef WDI_EVENT_ENABLE
-void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
-{
-	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
-
-	if (!pdev)
-		return NULL;
-
-	return pdev->pl_dev;
-}
 /*
  * dp_wdi_event_next_sub() - Return handle for Next WDI event
  * @wdi_sub: WDI Event handle
@@ -151,6 +146,7 @@ dp_wdi_event_handler(
 			peer_id, status);
 }
 
+qdf_export_symbol(dp_wdi_event_handler);
 
 /*
  * dp_wdi_event_sub() - Subscribe WDI event
@@ -192,7 +188,7 @@ dp_wdi_event_sub(
 		return -EINVAL;
 	}
 
-	dp_set_pktlog_wifi3(txrx_pdev, event, true);
+	monitor_set_pktlog_wifi3(txrx_pdev, event, true);
 	event_index = event - WDI_EVENT_BASE;
 	wdi_sub = txrx_pdev->wdi_event_list[event_index];
 
@@ -254,7 +250,7 @@ dp_wdi_event_unsub(
 		return -EINVAL;
 	}
 
-	dp_set_pktlog_wifi3(txrx_pdev, event, false);
+	monitor_set_pktlog_wifi3(txrx_pdev, event, false);
 
 	if (!event_cb_sub->priv.prev) {
 		txrx_pdev->wdi_event_list[event_index] = event_cb_sub->priv.next;

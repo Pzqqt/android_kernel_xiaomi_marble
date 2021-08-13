@@ -31,6 +31,7 @@
 #include "wlan_cm_roam_api.h"
 #endif
 #include <wlan_utility.h>
+#include <wlan_mlo_mgr_sta.h>
 
 static void
 cm_fill_failure_resp_from_cm_id(struct cnx_mgr *cm_ctx,
@@ -203,8 +204,7 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
 		mlme_err(CM_PREFIX_FMT "Active command timeout",
 			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id));
-		QDF_ASSERT(0);
-
+		cm_trigger_panic_on_cmd_timeout(cm_ctx->vdev);
 		cm_connect_cmd_timeout(cm_ctx, cmd->cmd_id);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
@@ -438,6 +438,65 @@ cm_set_pmf_caps(struct wlan_cm_connect_req *req, struct scan_filter *filter)
 		filter->pmf_cap = WLAN_PMF_DISABLED;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+static inline
+void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
+			 struct cm_connect_req *req)
+{
+	uint8_t link_id;
+	uint8_t i;
+
+	for (i = 0; i < req->cur_candidate->entry->ml_info->num_links; i++) {
+		if (qdf_mem_cmp(req->cur_candidate->entry->ml_info->link_info[i].link_addr.bytes,
+				req->cur_candidate->entry->mac_addr.bytes, QDF_MAC_ADDR_SIZE))
+			continue;
+		link_id = req->cur_candidate->entry->ml_info->link_info[i].link_id;
+		if (cm_ctx->vdev) {
+			mlme_debug("setting link ID to %d", link_id);
+			wlan_vdev_set_link_id(cm_ctx->vdev, link_id);
+		}
+	}
+}
+
+static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *req)
+{
+	wlan_vdev_obj_lock(cm_ctx->vdev);
+	if (req->cur_candidate->entry->ie_list.multi_link) {
+		/* Use link address for ML connection */
+		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
+					   cm_ctx->vdev->vdev_mlme.linkaddr);
+	} else {
+		/* Use net_dev address for non-ML connection */
+		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
+					   cm_ctx->vdev->vdev_mlme.mldaddr);
+	}
+	wlan_vdev_obj_unlock(cm_ctx->vdev);
+}
+#else
+static inline
+void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
+			 struct cm_connect_req *req)
+{ }
+
+static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *req)
+{
+}
+#endif
+#else
+static inline
+void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
+			 struct cm_connect_req *req)
+{ }
+
+static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *req)
+{
+}
+#endif
+
 static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 			       struct cm_connect_req *req)
 {
@@ -445,6 +504,7 @@ static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 	struct qdf_mac_addr *bssid;
 
 	bssid = &req->cur_candidate->entry->bssid;
+	cm_set_vdev_link_id(cm_ctx, req);
 	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		struct wlan_cm_connect_resp *resp;
@@ -814,6 +874,9 @@ cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
 
+	/* Update vdev mlme mac address based on connection type */
+	cm_update_vdev_mlme_macaddr(cm_ctx, &cm_req->connect_req);
+
 	cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
 
 	return QDF_STATUS_SUCCESS;
@@ -906,9 +969,37 @@ static void cm_connect_prepare_scan_filter(struct wlan_objmgr_pdev *pdev,
 	if (!security_valid_for_6ghz)
 		filter->ignore_6ghz_channel = true;
 
+	if (cm_req->req.is_non_assoc_link)
+		filter->ignore_6ghz_channel = false;
+
 	cm_update_security_filter(filter, &cm_req->req);
 	cm_update_advance_filter(pdev, cm_ctx, filter, cm_req);
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+static QDF_STATUS cm_is_scan_support(struct cm_connect_req *cm_req)
+{
+	if (cm_req->req.is_non_assoc_link)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS cm_is_scan_support(struct cm_connect_req *cm_req)
+{
+	if (cm_req->req.ml_parnter_info.num_partner_links)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+#else
+static QDF_STATUS cm_is_scan_support(struct cm_connect_req *cm_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 					    struct cnx_mgr *cm_ctx,
@@ -958,7 +1049,8 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	}
 
 	op_mode = wlan_vdev_mlme_get_opmode(cm_ctx->vdev);
-	if (num_bss && op_mode == QDF_STA_MODE)
+	if (num_bss && op_mode == QDF_STA_MODE &&
+	    !cm_req->req.is_non_assoc_link)
 		cm_calculate_scores(cm_ctx, pdev, filter, candidate_list);
 	qdf_mem_free(filter);
 
@@ -973,9 +1065,11 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 
 		/*
 		 * If connect scan was already done OR candidate were found
-		 * but none of them were valid return QDF_STATUS_E_EMPTY.
+		 * but none of them were valid OR if ML link connection
+		 * return QDF_STATUS_E_EMPTY.
 		 */
-		if (cm_req->scan_id || num_bss)
+		if (cm_req->scan_id || num_bss ||
+		    QDF_IS_STATUS_ERROR(cm_is_scan_support(cm_req)))
 			return QDF_STATUS_E_EMPTY;
 
 		/* Try connect scan to search for any valid candidate */
@@ -1383,14 +1477,19 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 	cm_update_ser_timer_for_new_candidate(cm_ctx, resp->cm_id);
 
 	status = cm_send_bss_select_ind(cm_ctx, &cm_req->connect_req);
+
 	/*
 	 * If candidate select indication is not supported continue with bss
 	 * peer create, else peer will be created after resp.
 	 */
-	if (status == QDF_STATUS_E_NOSUPPORT)
+	if (status == QDF_STATUS_E_NOSUPPORT) {
+		/* Update vdev mlme mac address based on connection type */
+		cm_update_vdev_mlme_macaddr(cm_ctx, &cm_req->connect_req);
+
 		cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
-	else if (QDF_IS_STATUS_ERROR(status))
+	} else if (QDF_IS_STATUS_ERROR(status)) {
 		goto connect_err;
+	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1453,10 +1552,14 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	 * If candidate select indication is not supported continue with bss
 	 * peer create, else peer will be created after resp.
 	 */
-	if (status == QDF_STATUS_E_NOSUPPORT)
+	if (status == QDF_STATUS_E_NOSUPPORT) {
+		/* Update vdev mlme mac address based on connection type */
+		cm_update_vdev_mlme_macaddr(cm_ctx, &cm_req->connect_req);
+
 		cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
-	else if (QDF_IS_STATUS_ERROR(status))
+	} else if (QDF_IS_STATUS_ERROR(status)) {
 		goto connect_err;
+	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1502,6 +1605,24 @@ static inline void cm_copy_fils_info(struct wlan_cm_vdev_connect_req *req,
 
 static inline void cm_set_fils_connection(struct cnx_mgr *cm_ctx,
 					  struct wlan_cm_connect_resp *resp)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline
+void cm_update_ml_partner_info(struct wlan_cm_connect_req *req,
+			       struct wlan_cm_vdev_connect_req *connect_req)
+{
+	if (req->ml_parnter_info.num_partner_links)
+		qdf_mem_copy(&connect_req->ml_parnter_info,
+			     &req->ml_parnter_info,
+			     sizeof(struct mlo_partner_info));
+}
+#else
+static inline
+void cm_update_ml_partner_info(struct wlan_cm_connect_req *req,
+			       struct wlan_cm_vdev_connect_req *connect_req)
 {
 }
 #endif
@@ -1558,6 +1679,8 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req.ht_caps_mask = cm_req->connect_req.req.ht_caps_mask;
 	req.vht_caps = cm_req->connect_req.req.vht_caps;
 	req.vht_caps_mask = cm_req->connect_req.req.vht_caps_mask;
+	req.is_non_assoc_link = cm_req->connect_req.req.is_non_assoc_link;
+	cm_update_ml_partner_info(&cm_req->connect_req.req, &req);
 
 	wlan_reg_get_cc_and_src(psoc, country_code);
 	mlme_nofl_info(CM_PREFIX_FMT "Connecting to %.*s " QDF_MAC_ADDR_FMT " rssi: %d freq: %d akm 0x%x cipher: uc 0x%x mc 0x%x, wps %d osen %d force RSN %d CC: %c%c",
@@ -1670,6 +1793,7 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 
 	if (send_ind) {
 		mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
+		mlo_sta_link_connect_notify(cm_ctx->vdev, resp);
 		mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
 		cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
 						  resp->connect_status);
@@ -1991,6 +2115,10 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 	cm_req = qdf_mem_malloc(sizeof(*cm_req));
 	if (!cm_req)
 		return QDF_STATUS_E_NOMEM;
+
+	if (wlan_vdev_mlme_is_mlo_vdev(vdev) &&
+	    wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		req->is_non_assoc_link = 1;
 
 	connect_req = &cm_req->connect_req;
 	connect_req->req = *req;

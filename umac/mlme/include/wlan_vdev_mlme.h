@@ -161,6 +161,104 @@ struct vdev_mlme_he_ops_info {
 };
 
 #ifdef WLAN_FEATURE_11BE
+
+/**
+ * struct vdev_mlme_eht_caps_info - vdev mlme EHT capability information
+ * @eht_maccap_nseppriaccess_support : NSEP Priority Access Supported
+ * @eht_maccap_ehtomctrl_support     : EHT OM Control Support
+ * @eht_maccap_trigtxop_support      : Triggered TXOP Sharing Support
+ * @eht_phycap_reserved              : Reserved
+ * @eht_phycap_320mhzin6ghz          : Support For 320 MHz In 6 GHz
+ * @eht_phycap_242tonerubwlt20mhz    : Support for 242-tone RU In BW Wider Than
+ *                                     20 MHz
+ * @eht_phycap_ndp4xehtltfand320nsgi : NDP With 4. EHT-LTF And 3.2 .s GI
+ * @eht_phycap_partialbwulmu         : Partial Bandwidth UL MU-MIMO
+ * @eht_phycap_subfmr                : SU Beamformer
+ * @eht_phycap_subfme                : SU Beamformee
+ * @eht_phycap_bfmesslt80mhz         : Beamformee SS (<= 80 MHz)
+ * @eht_phycap_bfmess160mhz          : Beamformee SS (= 160 MHz)
+ * @eht_phycap_bfmess320mhz          : Beamformee SS (= 320 MHz)
+ * @eht_phycap_numsoundlt80mhz       : Number Of Sounding Dimensions (<=80 MHz)
+ * @eht_phycap_numsound160mhz        : Number Of Sounding Dimensions (=160 MHz)
+ * @eht_phycap_numsound320mhz        : Number Of Sounding Dimensions (=320 MHz)
+ * @eht_phycap_ng16sufb              : Ng = 16 SU Feedback
+ * @eht_phycap_ng16mufb              : Ng = 16 MU Feedback
+ * @eht_phycap_codbk42sufb           : Codebook Size {4,2} SU Feedback
+ * @eht_phycap_codbk75mufb           : Codebook Size {4,2} MU Feedback
+ * @eht_phycap_trigsubffb            : Triggered SU Beamforming Feedback
+ * @eht_phycap_trigmubfpartbwfb      : Triggered MU Beamforming Partial B
+ *                                     Feedback
+ * @eht_phycap_trigcqifb             : Triggered CQI Feedback
+ * @eht_phycap_partbwdlmumimo        : Partial Bandwidth DL MU-MIMO
+ * @eht_phycap_psrsr                 : PSR-Based SR Support
+ * @eht_phycap_pwrbstfactor          : Power Boost Factor Support
+ * @eht_phycap_4xehtltfand800nsgi    : EHT MU PPDU With 4xEHT-LTF And 0.8 .s GI
+ * @eht_phycap_maxnc                 : Max Nc
+ * @eht_phycap_nontrigcqifb          : Non-Triggered CQI Feedback
+ * @eht_phycap_tx1024and4096qamls242toneru : Tx 1024-QAM And 4096-QAM <
+ *                                           242-tone RU Support
+ * @eht_phycap_rx1024and4096qamls242toneru : Rx 1024-QAM And 4096-QAM <
+ *                                           242-tone RU Support
+ * @eht_phycap_ppethrespresent       : PPE Thresholds Present
+ * @eht_phycap_cmnnompktpad          : Common Nominal Packet Padding
+ * @eht_phycap_maxnumehtltf          : Maximum Number Of Supported EHT-LTFs
+ * @eht_phycap_supmcs15              : Support of MCS 15
+ * @eht_phycap_ehtdupin6ghz          : Support Of EHT DUP In 6 GHz
+ * @eht_phycap_20mhzopstarxndpwiderbw : Support For 20 MHz Operating STA
+ *                                      Receiving NDP With Wider Bandwidth
+ * @eht_phycap_nonofdmaulmumimolt80mhz : Non-OFDMA UL MU-MIMO (BW <= 80 MHz)
+ * @eht_phycap_nonofdmaulmumimo160mhz : Non-OFDMA UL MU-MIMO (BW = 160 MHz)
+ * @eht_phycap_nonofdmaulmumimo320mhz : Non-OFDMA UL MU-MIMO (BW = 320 MHz)
+ * @eht_phycap_mubfmrlt80mhz         : MU Beamformer (BW <= 80 MHz)
+ * @eht_phycap_mubfmr160mhz          : MU Beamformer (BW = 160 MHz)
+ * @eht_phycap_mubfmr320mhz          : MU Beamformer (BW = 320 MHz)
+ */
+struct vdev_mlme_eht_caps_info {
+	uint32_t eht_maccap_nseppriaccess_support :1,
+		 eht_maccap_ehtomctrl_support     :1,
+		 eht_maccap_trigtxop_support      :1;
+	uint32_t eht_phycap_reserved                    :1,
+		 eht_phycap_320mhzin6ghz                :1,
+		 eht_phycap_242tonerubwlt20mhz          :1,
+		 eht_phycap_ndp4xehtltfand320nsgi       :1,
+		 eht_phycap_partialbwulmu               :1,
+		 eht_phycap_subfmr                      :1,
+		 eht_phycap_subfme                      :1,
+		 eht_phycap_bfmesslt80mhz               :3,
+		 eht_phycap_bfmess160mhz                :3,
+		 eht_phycap_bfmess320mhz                :3,
+		 eht_phycap_numsoundlt80mhz             :3,
+		 eht_phycap_numsound160mhz              :3,
+		 eht_phycap_numsound320mhz              :3,
+		 eht_phycap_ng16sufb                    :1,
+		 eht_phycap_ng16mufb                    :1,
+		 eht_phycap_codbk42sufb                 :1,
+		 eht_phycap_codbk75mufb                 :1,
+		 eht_phycap_trigsubffb                  :1,
+		 eht_phycap_trigmubfpartbwfb            :1,
+		 eht_phycap_trigcqifb                   :1;
+	uint32_t eht_phycap_partbwdlmumimo              :1,
+		 eht_phycap_psrsr                       :1,
+		 eht_phycap_pwrbstfactor                :1,
+		 eht_phycap_4xehtltfand800nsgi          :1,
+		 eht_phycap_maxnc                       :4,
+		 eht_phycap_nontrigcqifb                :1,
+		 eht_phycap_tx1024and4096qamls242toneru :1,
+		 eht_phycap_rx1024and4096qamls242toneru :1,
+		 eht_phycap_ppethrespresent             :1,
+		 eht_phycap_cmnnompktpad                :2,
+		 eht_phycap_maxnumehtltf                :5,
+		 eht_phycap_supmcs15                    :4,
+		 eht_phycap_ehtdupin6ghz                :1,
+		 eht_phycap_20mhzopstarxndpwiderbw      :1,
+		 eht_phycap_nonofdmaulmumimolt80mhz     :1,
+		 eht_phycap_nonofdmaulmumimo160mhz      :1,
+		 eht_phycap_nonofdmaulmumimo320mhz      :1,
+		 eht_phycap_mubfmrlt80mhz               :1,
+		 eht_phycap_mubfmr160mhz                :1,
+		 eht_phycap_mubfmr320mhz                :1;
+};
+
 /**
  * struct vdev_mlme_eht_ops_info - vdev mlme EHTOPS information
  * @eht_ops: eht ops
@@ -179,6 +277,8 @@ struct vdev_mlme_eht_ops_info {
  * @vht_info: vht information
  * @ht_info: ht capabilities information
  * @he_ops_info: he ops information
+ * @eht_cap_info: EHT capability information
+ * @eht_ops_info: EHT operation information
  * @bss_color: 11ax HE BSS Color information
  */
 struct vdev_mlme_proto {
@@ -189,6 +289,7 @@ struct vdev_mlme_proto {
 	struct vdev_mlme_ht_info ht_info;
 	struct vdev_mlme_he_ops_info he_ops_info;
 #ifdef WLAN_FEATURE_11BE
+	struct vdev_mlme_eht_caps_info eht_cap_info;
 	struct vdev_mlme_eht_ops_info eht_ops_info;
 #endif
 	struct vdev_mlme_proto_bss_color bss_color;

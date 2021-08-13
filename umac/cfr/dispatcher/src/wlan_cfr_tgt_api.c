@@ -429,6 +429,31 @@ tgt_cfr_mo_marking_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+tgt_cfr_aoa_for_rcc_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value)
+{
+	struct psoc_cfr *cfr_sc;
+
+	if (!psoc) {
+		cfr_err("CFR: NULL PSOC!!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cfr_sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						       WLAN_UMAC_COMP_CFR);
+
+	if (!cfr_sc) {
+		cfr_err("Failed to get CFR component priv obj!!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cfr_sc->is_aoa_for_rcc_support = !!value;
+	cfr_debug("CFR: aoa_for_rcc_support is %s\n",
+		  (cfr_sc->is_aoa_for_rcc_support) ? "enabled" : "disabled");
+
+	return QDF_STATUS_SUCCESS;
+}
 #else
 QDF_STATUS
 tgt_cfr_capture_count_support_set(struct wlan_objmgr_psoc *psoc,
@@ -440,6 +465,12 @@ tgt_cfr_capture_count_support_set(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 tgt_cfr_mo_marking_support_set(struct wlan_objmgr_psoc *psoc,
 			       uint32_t value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+QDF_STATUS
+tgt_cfr_aoa_for_rcc_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

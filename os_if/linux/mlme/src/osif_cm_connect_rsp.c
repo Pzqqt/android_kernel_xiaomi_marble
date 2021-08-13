@@ -28,6 +28,7 @@
 #include "osif_cm_util.h"
 #include "wlan_cfg80211.h"
 #include "wlan_cfg80211_scan.h"
+#include "wlan_mlo_mgr_sta.h"
 
 #ifdef CONN_MGR_ADV_FEATURE
 void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
@@ -192,7 +193,7 @@ osif_connect_timeout(struct net_device *dev, const u8 *bssid,
 
 	osif_debug("nl_timeout_reason %d", nl_timeout_reason);
 
-	cfg80211_connect_timeout(dev, bssid, NULL, 0, GFP_KERNEL,
+	cfg80211_connect_timeout(dev, bssid, NULL, 0, qdf_mem_malloc_flags(),
 				 nl_timeout_reason);
 }
 
@@ -227,7 +228,7 @@ static void __osif_connect_bss(struct net_device *dev,
 
 	cfg80211_connect_bss(dev, rsp->bssid.bytes, bss,
 			     req_ptr, req_len, rsp_ptr, rsp_len, status,
-			     GFP_KERNEL, nl_timeout_reason);
+			     qdf_mem_malloc_flags(), nl_timeout_reason);
 }
 #else /* CFG80211_CONNECT_TIMEOUT_REASON_CODE */
 
@@ -238,7 +239,7 @@ static void osif_connect_timeout(
 			const u8 *bssid,
 			enum wlan_cm_connect_fail_reason reason)
 {
-	cfg80211_connect_timeout(dev, bssid, NULL, 0, GFP_KERNEL);
+	cfg80211_connect_timeout(dev, bssid, NULL, 0, qdf_mem_malloc_flags());
 }
 #endif
 
@@ -259,7 +260,7 @@ static void __osif_connect_bss(struct net_device *dev,
 
 	cfg80211_connect_bss(dev, rsp->bssid.bytes, bss,
 			     req_ptr, req_len, rsp_ptr, rsp_len,
-			     status, GFP_KERNEL);
+			     status, qdf_mem_malloc_flags());
 }
 #endif /* CFG80211_CONNECT_TIMEOUT_REASON_CODE */
 
@@ -419,7 +420,7 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 	}
 
 	osif_debug("Connect resp status  %d", conn_rsp_params.status);
-	cfg80211_connect_done(dev, &conn_rsp_params, GFP_KERNEL);
+	cfg80211_connect_done(dev, &conn_rsp_params, qdf_mem_malloc_flags());
 	if (rsp->connect_ies.fils_ie && rsp->connect_ies.fils_ie->hlp_data_len)
 		osif_cm_set_hlp_data(dev, vdev, rsp);
 }
@@ -472,6 +473,108 @@ static inline int osif_update_connect_results(struct net_device *dev,
 }
 #endif /* WLAN_FEATURE_FILS_SK && CFG80211_CONNECT_DONE */
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
+					 struct vdev_osif_priv *osif_priv,
+					 struct wlan_cm_connect_resp *rsp)
+{
+	struct cfg80211_bss *bss = NULL;
+	struct ieee80211_channel *chan;
+
+	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status)) {
+		chan = ieee80211_get_channel(osif_priv->wdev->wiphy,
+					     rsp->freq);
+		bss = wlan_cfg80211_get_bss(osif_priv->wdev->wiphy, chan,
+					    rsp->bssid.bytes,
+					    rsp->ssid.ssid,
+					    rsp->ssid.length);
+	}
+
+	if (!wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+		if (osif_update_connect_results(osif_priv->wdev->netdev, bss,
+						rsp, vdev))
+			osif_connect_bss(osif_priv->wdev->netdev, bss, rsp);
+		return;
+	}
+
+	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
+		if (osif_update_connect_results(
+				osif_priv->wdev->netdev, bss,
+				rsp, vdev))
+			osif_connect_bss(osif_priv->wdev->netdev,
+					 bss, rsp);
+	}
+
+}
+#else /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */
+static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
+					 struct vdev_osif_priv *osif_priv,
+					 struct wlan_cm_connect_resp *rsp)
+{
+	struct cfg80211_bss *bss = NULL;
+	struct ieee80211_channel *chan;
+	struct wlan_objmgr_vdev *assoc_vdev = NULL;
+	struct vdev_osif_priv *tmp_osif_priv = NULL;
+	qdf_freq_t freq;
+	struct qdf_mac_addr macaddr = {0};
+	struct wlan_cm_connect_resp resp = {0};
+
+	if (!wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+		if (QDF_IS_STATUS_SUCCESS(rsp->connect_status)) {
+			chan = ieee80211_get_channel(osif_priv->wdev->wiphy,
+						     rsp->freq);
+			bss = wlan_cfg80211_get_bss(osif_priv->wdev->wiphy,
+						    chan,
+						    rsp->bssid.bytes,
+						    rsp->ssid.ssid,
+						    rsp->ssid.length);
+		}
+		if (osif_update_connect_results(osif_priv->wdev->netdev, bss,
+						rsp, vdev))
+			osif_connect_bss(osif_priv->wdev->netdev, bss, rsp);
+		return;
+	}
+
+	if ((QDF_IS_STATUS_SUCCESS(rsp->connect_status) &&
+	    ucfg_mlo_is_mld_connected(vdev)) ||
+	    (QDF_IS_STATUS_ERROR(rsp->connect_status) &&
+	    ucfg_mlo_is_mld_disconnected(vdev))) {
+		assoc_vdev = ucfg_mlo_get_assoc_link_vdev(vdev);
+		if (!assoc_vdev)
+			return;
+		tmp_osif_priv  = wlan_vdev_get_ospriv(assoc_vdev);
+		freq = vdev->vdev_mlme.bss_chan->ch_freq;
+		wlan_vdev_get_bss_peer_mac(assoc_vdev, &macaddr);
+		if (QDF_IS_STATUS_SUCCESS(rsp->connect_status)) {
+			chan = ieee80211_get_channel(tmp_osif_priv->wdev->wiphy,
+						     freq);
+			bss = wlan_cfg80211_get_bss(tmp_osif_priv->wdev->wiphy,
+						    chan,
+						    macaddr.bytes,
+						    rsp->ssid.ssid,
+						    rsp->ssid.length);
+		}
+		qdf_mem_copy(resp.bssid.bytes, macaddr.bytes,
+			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(resp.ssid.ssid, rsp->ssid.ssid,
+			     rsp->ssid.length);
+		resp.ssid.length = rsp->ssid.length;
+		resp.freq = freq;
+		resp.connect_status = rsp->connect_status;
+		resp.reason = rsp->reason;
+		resp.status_code = rsp->status_code;
+		resp.connect_ies.assoc_req.ptr = rsp->connect_ies.assoc_req.ptr;
+		resp.connect_ies.assoc_req.len = rsp->connect_ies.assoc_req.len;
+		resp.connect_ies.assoc_rsp.ptr = rsp->connect_ies.assoc_rsp.ptr;
+		resp.connect_ies.assoc_rsp.len = rsp->connect_ies.assoc_rsp.len;
+		if (osif_update_connect_results(tmp_osif_priv->wdev->netdev, bss,
+						&resp, vdev))
+			osif_connect_bss(tmp_osif_priv->wdev->netdev, bss, &resp);
+	}
+}
+#endif /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */
+#else /* WLAN_FEATURE_11BE_MLO */
 static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					 struct vdev_osif_priv *osif_priv,
 					 struct wlan_cm_connect_resp *rsp)
@@ -492,7 +595,81 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					rsp, vdev))
 		osif_connect_bss(osif_priv->wdev->netdev, bss, rsp);
 }
+#endif /* WLAN_FEATURE_11BE_MLO */
 #else  /* CFG80211_CONNECT_BSS */
+#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
+					 struct vdev_osif_priv *osif_priv,
+					 struct wlan_cm_connect_resp *rsp)
+{
+	enum ieee80211_statuscode status;
+	size_t req_len = 0;
+	const uint8_t *req_ptr = NULL;
+	size_t rsp_len = 0;
+	const uint8_t *rsp_ptr = NULL;
+	struct wlan_objmgr_vdev *assoc_vdev = NULL;
+	struct vdev_osif_priv *tmp_osif_priv = NULL;
+
+	status = osif_get_connect_status_code(rsp);
+	osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
+				      &req_len, &req_ptr);
+	osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
+				      &rsp_len, &rsp_ptr);
+	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+		if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+			cfg80211_connect_result(
+				osif_priv->wdev->netdev,
+				rsp->bssid.bytes, req_ptr, req_len,
+				rsp_ptr, rsp_len, status, GFP_KERNEL);
+	} else {
+		cfg80211_connect_result(osif_priv->wdev->netdev,
+					rsp->bssid.bytes, req_ptr, req_len,
+					rsp_ptr, rsp_len, status, GFP_KERNEL);
+	}
+}
+#else /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */
+static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
+					 struct vdev_osif_priv *osif_priv,
+					 struct wlan_cm_connect_resp *rsp)
+{
+	enum ieee80211_statuscode status;
+	size_t req_len = 0;
+	const uint8_t *req_ptr = NULL;
+	size_t rsp_len = 0;
+	const uint8_t *rsp_ptr = NULL;
+	struct wlan_objmgr_vdev *assoc_vdev = NULL;
+	struct vdev_osif_priv *tmp_osif_priv = NULL;
+	struct qdf_mac_addr macaddr = {0};
+
+	status = osif_get_connect_status_code(rsp);
+	osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
+				      &req_len, &req_ptr);
+	osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
+				      &rsp_len, &rsp_ptr);
+	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+		if ((QDF_IS_STATUS_SUCCESS(rsp->connect_status) &&
+		    ucfg_mlo_is_mld_connected(vdev)) ||
+		    (QDF_IS_STATUS_ERROR(rsp->connect_status) &&
+		    ucfg_mlo_is_mld_disconnected(vdev))) {
+			assoc_vdev = ucfg_mlo_get_assoc_link_vdev(vdev);
+			if (!assoc_vdev)
+				return;
+			tmp_osif_priv  = wlan_vdev_get_ospriv(assoc_vdev);
+			wlan_vdev_get_bss_peer_mac(assoc_vdev, &macaddr);
+			cfg80211_connect_result(tmp_osif_priv->wdev->netdev,
+						macaddr.bytes, req_ptr,
+						req_len, rsp_ptr, rsp_len,
+						status, GFP_KERNEL);
+		}
+	} else {
+		cfg80211_connect_result(osif_priv->wdev->netdev,
+					rsp->bssid.bytes, req_ptr, req_len,
+					rsp_ptr, rsp_len, status, GFP_KERNEL);
+	}
+}
+#endif /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */
+#else /* WLAN_FEATURE_11BE_MLO */
 static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					 struct vdev_osif_priv *osif_priv,
 					 struct wlan_cm_connect_resp *rsp)
@@ -510,8 +687,10 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 				      &rsp_len, &rsp_ptr);
 	cfg80211_connect_result(osif_priv->wdev->netdev,
 				rsp->bssid.bytes, req_ptr, req_len,
-				rsp_ptr, rsp_len, status, GFP_KERNEL);
+				rsp_ptr, rsp_len, status,
+				qdf_mem_malloc_flags());
 }
+#endif /* WLAN_FEATURE_11BE_MLO */
 #endif /* CFG80211_CONNECT_BSS */
 
 #ifdef CONN_MGR_ADV_FEATURE

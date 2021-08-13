@@ -47,6 +47,28 @@ struct cfg_value_store {
 	struct cfg_values values;
 };
 
+/**
+ * enum cfg_type - Enum for CFG/INI types
+ * @CFG_INT_ITEM: Integer CFG/INI
+ * @CFG_UINT_ITEM: Unsigned integer CFG/INI
+ * @CFG_BOOL_ITEM: Boolean CFG/INI
+ * @CFG_STRING_ITEM: String CFG/INI
+ * @CFG_MAC_ITEM: Mac address CFG/INI
+ * @CFG_IPV4_ITEM: IPV4 address CFG/INI
+ * @CFG_IPV6_ITEM: IPV6 address CFG/INI
+ * @CFG_MAX_ITEM: Max CFG type
+ */
+enum cfg_type {
+	CFG_INT_ITEM,
+	CFG_UINT_ITEM,
+	CFG_BOOL_ITEM,
+	CFG_STRING_ITEM,
+	CFG_MAC_ITEM,
+	CFG_IPV4_ITEM,
+	CFG_IPV6_ITEM,
+	CFG_MAX_ITEM,
+};
+
 /* define/populate dynamic metadata lookup table */
 
 /**
@@ -60,6 +82,7 @@ struct cfg_value_store {
 struct cfg_meta {
 	const char *name;
 	const uint32_t field_offset;
+	const enum cfg_type cfg_type;
 	void (*const item_handler)(struct cfg_value_store *store,
 				   const struct cfg_meta *meta,
 				   const char *value);
@@ -278,6 +301,7 @@ cfg_ipv6_item_handler(struct cfg_value_store *store,
 { \
 	.name = _name, \
 	.field_offset = qdf_offsetof(struct cfg_values, _id##_internal), \
+	.cfg_type = CFG_ ##_mtype ## _ITEM, \
 	.item_handler = cfg_ ## _mtype ## _item_handler, \
 	.min = _min, \
 	.max = _max, \
@@ -520,12 +544,13 @@ QDF_STATUS cfg_parse_to_global_store(const char *path)
 
 qdf_export_symbol(cfg_parse_to_global_store);
 
-
 static QDF_STATUS
 cfg_store_print(struct wlan_objmgr_psoc *psoc)
 {
 	struct cfg_value_store *store;
 	struct cfg_psoc_ctx *psoc_ctx;
+	void *offset;
+	uint32_t i;
 
 	cfg_enter();
 
@@ -537,34 +562,47 @@ cfg_store_print(struct wlan_objmgr_psoc *psoc)
 	if (!store)
 		return QDF_STATUS_E_FAILURE;
 
-#undef __CFG_INI_MAC
-#define __CFG_INI_MAC(id, mtype, ctype, name, desc, def...) \
-	cfg_nofl_debug("%s "QDF_MAC_ADDR_FMT, name, \
-	QDF_MAC_ADDR_REF((&store->values.id##_internal)->bytes));
+	for (i = 0; i < QDF_ARRAY_SIZE(cfg_meta_lookup_table); i++) {
+		const struct cfg_meta *meta = &cfg_meta_lookup_table[i];
 
-#undef __CFG_INI_IPV4
-#define __CFG_INI_IPV4(id, mtype, ctype, name, desc, def...) \
-	cfg_nofl_debug("%s %pI4", name, (&store->values.id##_internal)->bytes);
+		offset = cfg_value_ptr(store, meta);
 
-#undef __CFG_INI_IPV6
-#define __CFG_INI_IPV6(id, mtype, ctype, name, desc, def...) \
-	cfg_nofl_debug("%s %pI6c", name, (&store->values.id##_internal)->bytes);
-
-#undef __CFG_INI
-#define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
-	cfg_nofl_debug("%s %d", name, *(ctype *)&store->values.id##_internal);
-
-#undef __CFG_INI_STRING
-#define __CFG_INI_STRING(id, mtype, ctype, name, min_len, max_len, ...) \
-	cfg_nofl_debug("%s %s", name, (char *)&store->values.id##_internal);
-
-	CFG_ALL
-
-#undef __CFG_INI_MAC
-#undef __CFG_INI_IPV4
-#undef __CFG_INI_IPV6
-#undef __CFG_INI
-#undef __CFG_INI_STRING
+		switch (meta->cfg_type) {
+		case CFG_INT_ITEM:
+			cfg_nofl_debug("%pK %s %d", offset, meta->name,
+				       *((int32_t *)offset));
+			break;
+		case CFG_UINT_ITEM:
+			cfg_nofl_debug("%pK %s %d", offset, meta->name,
+				       *((uint32_t *)offset));
+			break;
+		case CFG_BOOL_ITEM:
+			cfg_nofl_debug("%pK %s %d", offset, meta->name,
+				       *((bool *)offset));
+			break;
+		case CFG_STRING_ITEM:
+			cfg_nofl_debug("%pK %s %s", offset, meta->name,
+				       (char *)offset);
+			break;
+		case CFG_MAC_ITEM:
+			cfg_nofl_debug("%pK %s " QDF_MAC_ADDR_FMT,
+				       offset, meta->name,
+				       QDF_MAC_ADDR_REF(offset));
+			break;
+		case CFG_IPV4_ITEM:
+			cfg_nofl_debug("%pK %s %pI4",
+				       offset, meta->name,
+				       offset);
+			break;
+		case CFG_IPV6_ITEM:
+			cfg_nofl_debug("%pK %s %pI6c",
+				       offset, meta->name,
+				       offset);
+			break;
+		default:
+			continue;
+		}
+	}
 
 	cfg_exit();
 	return QDF_STATUS_SUCCESS;
@@ -578,6 +616,8 @@ cfg_ini_config_print(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
 	struct cfg_psoc_ctx *psoc_ctx;
 	ssize_t len;
 	ssize_t total_len = buflen;
+	uint32_t i;
+	void *offset;
 
 	cfg_enter();
 
@@ -589,59 +629,61 @@ cfg_ini_config_print(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
 	if (!store)
 		return QDF_STATUS_E_FAILURE;
 
-#undef __CFG_INI_MAC
-#define __CFG_INI_MAC(id, mtype, ctype, name, desc, def...) \
-	do { \
-		len = qdf_scnprintf(buf, buflen, "%s "QDF_MAC_ADDR_FMT"\n", \
-			name, \
-			QDF_MAC_ADDR_REF((&store->values.id##_internal)->bytes)); \
-		buf += len; \
-		buflen -= len; \
-	} while (0);
+	for (i = 0; i < QDF_ARRAY_SIZE(cfg_meta_lookup_table); i++) {
+		const struct cfg_meta *meta = &cfg_meta_lookup_table[i];
 
-#undef __CFG_INI_IPV4
-#define __CFG_INI_IPV4(id, mtype, ctype, name, desc, def...) \
-	do { \
-		len = qdf_scnprintf(buf, buflen, "%s %pI4\n", name, \
-				    (&store->values.id##_internal)->bytes); \
-		buf += len; \
-		buflen -= len; \
-	} while (0);
+		offset = cfg_value_ptr(store, meta);
 
-#undef __CFG_INI_IPV6
-#define __CFG_INI_IPV6(id, mtype, ctype, name, desc, def...) \
-	do { \
-		len = qdf_scnprintf(buf, buflen, "%s %pI6c\n", name, \
-				    (&store->values.id##_internal)->bytes); \
-		buf += len; \
-		buflen -= len; \
-	} while (0);
-
-#undef __CFG_INI
-#define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
-	do { \
-		len = qdf_scnprintf(buf, buflen, "%s %d\n", name, \
-				    *(ctype *)&store->values.id##_internal); \
-		buf += len; \
-		buflen -= len; \
-	} while (0);
-
-#undef __CFG_INI_STRING
-#define __CFG_INI_STRING(id, mtype, ctype, name, min_len, max_len, ...) \
-	do { \
-		len = qdf_scnprintf(buf, buflen, "%s %s\n", name, \
-				    (char *)&store->values.id##_internal); \
-		buf += len; \
-		buflen -= len; \
-	} while (0);
-
-	CFG_ALL
-
-#undef __CFG_INI_MAC
-#undef __CFG_INI_IPV4
-#undef __CFG_INI_IPV6
-#undef __CFG_INI
-#undef __CFG_INI_STRING
+		switch (meta->cfg_type) {
+		case CFG_INT_ITEM:
+			len = qdf_scnprintf(buf, buflen, "%s %d\n", meta->name,
+					    *((int32_t *)offset));
+			buf += len;
+			break;
+		case CFG_UINT_ITEM:
+			len = qdf_scnprintf(buf, buflen, "%s %d\n", meta->name,
+					    *((uint32_t *)offset));
+			buf += len;
+			buflen -= len;
+			break;
+		case CFG_BOOL_ITEM:
+			len = qdf_scnprintf(buf, buflen, "%s %d\n", meta->name,
+					    *((bool *)offset));
+			buf += len;
+			buflen -= len;
+			break;
+		case CFG_STRING_ITEM:
+			len = qdf_scnprintf(buf, buflen, "%s %s\n", meta->name,
+					    (char *)offset);
+			buf += len;
+			buflen -= len;
+			break;
+		case CFG_MAC_ITEM:
+			len = qdf_scnprintf(buf, buflen,
+					    "%s " QDF_MAC_ADDR_FMT "\n",
+					    meta->name,
+					    QDF_MAC_ADDR_REF(offset));
+			buf += len;
+			buflen -= len;
+			break;
+		case CFG_IPV4_ITEM:
+			len = qdf_scnprintf(buf, buflen, "%s %pI4\n",
+					    meta->name,
+					    offset);
+			buf += len;
+			buflen -= len;
+			break;
+		case CFG_IPV6_ITEM:
+			len = qdf_scnprintf(buf, buflen, "%s %pI6c\n",
+					    meta->name,
+					    offset);
+			buf += len;
+			buflen -= len;
+			break;
+		default:
+			continue;
+		}
+	}
 
 	*plen = total_len - buflen;
 	cfg_exit();
@@ -653,6 +695,8 @@ QDF_STATUS ucfg_cfg_store_print(struct wlan_objmgr_psoc *psoc)
 {
 	return cfg_store_print(psoc);
 }
+
+qdf_export_symbol(ucfg_cfg_store_print);
 
 QDF_STATUS ucfg_cfg_ini_config_print(struct wlan_objmgr_psoc *psoc,
 				     uint8_t *buf, ssize_t *plen,

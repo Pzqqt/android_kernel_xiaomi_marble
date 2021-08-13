@@ -442,6 +442,11 @@ void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
 	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
 
+	if (!page_desc_list->num_spt_pages) {
+		dp_warn("page_desc_list is empty for pool_id %d", pool_id);
+		return;
+	}
+
 	/* cleanup for each page */
 	page_desc = page_desc_list->spt_page_list_head;
 	while (page_desc) {

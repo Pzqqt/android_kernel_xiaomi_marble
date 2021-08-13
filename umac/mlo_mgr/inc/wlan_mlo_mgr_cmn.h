@@ -101,4 +101,101 @@ void mlo_get_link_information(struct qdf_mac_addr *mld_addr,
  */
 void is_mlo_all_links_up(struct wlan_mlo_dev_context *ml_dev);
 
+/**
+ * mlo_get_vdev_by_link_id() - get vdev by link id
+ * @vdev: vdev pointer
+ * @link_id: link id
+ *
+ * Caller should make sure to release the reference of thus obtained vdev
+ * by calling mlo_release_vdev_ref() after usage of vdev.
+ *
+ * Return: vdev object pointer to link id
+ */
+struct wlan_objmgr_vdev *mlo_get_vdev_by_link_id(
+			struct wlan_objmgr_vdev *vdev,
+			uint8_t link_id);
+
+/**
+ * mlo_release_vdev_ref() - release vdev reference
+ * @vdev: vdev pointer
+ *
+ * Return: void
+ */
+void mlo_release_vdev_ref(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_reg_mlme_ext_cb() - Function to register mlme extended callbacks
+ * @ctx: Pointer to mlo manager global context
+ * @ops: Pointer to the struct containing the callbacks
+ *
+ * Return: QDF_STATUS_SUCCESS on successful registration else failure
+ */
+QDF_STATUS mlo_reg_mlme_ext_cb(struct mlo_mgr_context *ctx,
+			       struct mlo_mlme_ext_ops *ops);
+
+/**
+ * mlo_unreg_mlme_ext_cb() - Function to unregister mlme extended callbacks
+ * @ctx: Pointer to mlo manager global context
+ *
+ * Return: QDF_STATUS_SUCCESS on success else failure
+ */
+QDF_STATUS mlo_unreg_mlme_ext_cb(struct mlo_mgr_context *ctx);
+
+/**
+ * mlo_mlme_validate_conn_req() - Validate connect request
+ * @vdev: Object manager vdev
+ * @ext_data: Data object to be passed to callback
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_mlme_validate_conn_req(struct wlan_objmgr_vdev *vdev,
+				      void *ext_data);
+
+/**
+ * mlo_mlme_ext_create_link_vdev() - Create link vdev for ML STA
+ * @vdev: Object manager vdev
+ * @ext_data: Data object to be passed to callback
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_mlme_create_link_vdev(struct wlan_objmgr_vdev *vdev,
+				     void *ext_data);
+
+/**
+ * mlo_mlme_peer_create() - Create mlo peer
+ * @vdev: Object manager vdev
+ * @ml_peer: MLO peer context
+ * @addr: Peer addr
+ * @frm_buf: Frame buffer for IE processing
+ *
+ * Return: void
+ */
+void mlo_mlme_peer_create(struct wlan_objmgr_vdev *vdev,
+			  struct wlan_mlo_peer_context *ml_peer,
+			  struct qdf_mac_addr addr,
+			  qdf_nbuf_t frm_buf);
+
+/**
+ * mlo_mlme_peer_assoc() - Send ML Peer assoc
+ * @peer: Object manager peer
+ *
+ * Return: void
+ */
+void mlo_mlme_peer_assoc(struct wlan_objmgr_peer *peer);
+
+/**
+ * mlo_mlme_peer_assoc_fail() - Send ML Peer assoc fail
+ * @peer: Object manager peer
+ *
+ * Return: void
+ */
+void mlo_mlme_peer_assoc_fail(struct wlan_objmgr_peer *peer);
+
+/**
+ * mlo_mlme_peer_delete() - Send ML Peer delete
+ * @peer: Object manager peer
+ *
+ * Return: void
+ */
+void mlo_mlme_peer_delete(struct wlan_objmgr_peer *peer);
 #endif

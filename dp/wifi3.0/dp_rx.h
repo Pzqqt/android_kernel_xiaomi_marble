@@ -633,7 +633,6 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 			  uint32_t pool_size,
 			  struct rx_desc_pool *rx_desc_pool);
-void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
 
 void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 				union dp_rx_desc_list_elem_t **local_desc_list,
@@ -1081,40 +1080,6 @@ void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
 	return link_desc_va;
 }
 
-/**
- * dp_rx_cookie_2_mon_link_desc_va() - Converts cookie to a virtual address of
- *				   the MSDU Link Descriptor
- * @pdev: core txrx pdev context
- * @buf_info: buf_info includes cookie that used to lookup virtual address of
- * link descriptor. Normally this is just an index into a per pdev array.
- *
- * This is the VA of the link descriptor in monitor mode destination ring,
- * that HAL layer later uses to retrieve the list of MSDU's for a given MPDU.
- *
- * Return: void *: Virtual Address of the Rx descriptor
- */
-static inline
-void *dp_rx_cookie_2_mon_link_desc_va(struct dp_pdev *pdev,
-				  struct hal_buf_info *buf_info,
-				  int mac_id)
-{
-	void *link_desc_va;
-	struct qdf_mem_multi_page_t *pages;
-	uint16_t page_id = LINK_DESC_COOKIE_PAGE_ID(buf_info->sw_cookie);
-
-	pages = &pdev->soc->mon_link_desc_pages[mac_id];
-	if (!pages)
-		return NULL;
-
-	if (qdf_unlikely(page_id >= pages->num_pages))
-		return NULL;
-
-	link_desc_va = pages->dma_pages[page_id].page_v_addr_start +
-		(buf_info->paddr - pages->dma_pages[page_id].page_p_addr);
-
-	return link_desc_va;
-}
-
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 /*
  * dp_rx_intrabss_fwd() - API for intrabss fwd. For EAPOL
@@ -1348,25 +1313,6 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 {
 }
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
-
-#if !defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) &&\
-	!defined(WLAN_SUPPORT_RX_FLOW_TAG)
-/**
- * dp_rx_mon_update_protocol_flow_tag() - Performs necessary checks for monitor
- *                                       mode and then tags appropriate packets
- * @soc: core txrx main context
- * @vdev: pdev on which packet is received
- * @msdu: QDF packet buffer on which the protocol tag should be set
- * @rx_desc: base address where the RX TLVs start
- * Return: void
- */
-static inline
-void dp_rx_mon_update_protocol_flow_tag(struct dp_soc *soc,
-					struct dp_pdev *dp_pdev,
-					qdf_nbuf_t msdu, void *rx_desc)
-{
-}
-#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG || WLAN_SUPPORT_RX_FLOW_TAG */
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs

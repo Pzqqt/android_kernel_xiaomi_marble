@@ -227,6 +227,57 @@ static QDF_STATUS send_cfr_rcc_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return status;
 }
+
+#ifdef REPORT_AOA_FOR_RCC
+static QDF_STATUS
+extract_cfr_phase_param_tlv(wmi_unified_t wmi_handle,
+			    void *evt_buf,
+			    struct wmi_cfr_phase_delta_param *param)
+{
+	WMI_PDEV_AOA_PHASEDELTA_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_aoa_phasedelta_evt_fixed_param *phase_event;
+
+	param_buf = (WMI_PDEV_AOA_PHASEDELTA_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("Invalid cfr aoa phase delta buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	phase_event = param_buf->fixed_param;
+	if (!phase_event) {
+		wmi_err("CFR phase AoA delta buffer is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	param->freq = phase_event->freq;
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host
+				(wmi_handle, phase_event->pdev_id);
+
+	param->max_chains = phase_event->chainInfo & 0xFFFF;
+
+	param->chain_phase_mask = (phase_event->chainInfo >> 16) & 0xFFFF;
+
+	qdf_mem_copy(param->ibf_cal_val,
+		     phase_event->perChainIbfCalVal,
+		     (sizeof(uint32_t) * WMI_MAX_CHAINS_FOR_AOA_RCC));
+
+	qdf_mem_copy(param->phase_delta,
+		     phase_event->phasedelta,
+		     (sizeof(uint32_t) *
+		      WMI_MAX_CHAINS_FOR_AOA_RCC *
+		      MAX_AOA_PHASEDELTA));
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+extract_cfr_phase_param_tlv(wmi_unified_t wmi_handle,
+			    void *evt_buf,
+			    struct wmi_cfr_phase_delta_param *param)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* REPORT_AOA_FOR_RCC */
 #endif
 
 static QDF_STATUS send_peer_cfr_capture_cmd_tlv(wmi_unified_t wmi_handle,
@@ -286,6 +337,7 @@ void wmi_cfr_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_peer_cfr_capture_cmd = send_peer_cfr_capture_cmd_tlv;
 	ops->extract_cfr_peer_tx_event_param =
 		extract_cfr_peer_tx_event_param_tlv;
+	ops->extract_cfr_phase_param = extract_cfr_phase_param_tlv;
 	wmi_enh_cfr_attach_tlv(wmi_handle);
 }
 #endif /* WLAN_CFR_ENABLE */

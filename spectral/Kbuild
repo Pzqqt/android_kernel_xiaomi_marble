@@ -108,6 +108,7 @@ INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
         -I$(obj)/$(DEPTH)/cmn_dev/global_lmac_if/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/regulatory/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/target_if/core/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc \
         -I$(obj)/$(DEPTH)/umac/scan \
@@ -196,14 +197,19 @@ endif
 
 obj-m += qca_spectral.o
 
-ccflags-y+= $(INCS) $(COPTS) -DSPECTRAL_USE_NETLINK_SOCKETS=1 -DWLAN_SPECTRAL_ENABLE=1
+INCS += -I$(obj)/$(DEPTH)/spectral/dispatcher/inc
+
+inc_file := $(obj)/$(DEPTH)/spectral_inc_opts
+inc_var := $(shell echo $(INCS) > $(inc_file))
+var := "@$(inc_file)"
+
+ccflags-y+= $(var) $(COPTS) -DSPECTRAL_USE_NETLINK_SOCKETS=1 -DWLAN_SPECTRAL_ENABLE=1
 ccflags-y+= -DSPECTRAL_USE_NL_BCAST=1
 
 ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qca_spectral.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qca_spectral)"
 endif
 
-INCS += -I$(obj)/$(DEPTH)/spectral/dispatcher/inc
 
 SPECTRAL_TIF_OBJS +=  $(DEPTH)/cmn_dev/target_if/spectral/target_if_spectral.o \
                       $(DEPTH)/cmn_dev/target_if/spectral/target_if_spectral_netlink.o \

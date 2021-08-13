@@ -68,6 +68,22 @@ void hal_rx_wbm_err_info_get_generic_li(void *wbm_desc,
 	wbm_er_info->rxdma_err_code = HAL_RX_WBM_RXDMA_ERROR_CODE_GET(wbm_desc);
 }
 
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+static inline void
+hal_tx_comp_get_buffer_timestamp(void *desc,
+				 struct hal_tx_completion_status *ts)
+{
+	ts->buffer_timestamp = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
+					       BUFFER_TIMESTAMP);
+}
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline void
+hal_tx_comp_get_buffer_timestamp(void *desc,
+				 struct hal_tx_completion_status *ts)
+{
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 /**
  * hal_tx_comp_get_status() - TQM Release reason
  * @hal_desc: completion ring Tx status
@@ -135,6 +151,8 @@ hal_tx_comp_get_status_generic_li(void *desc, void *ts1,
 
 	ts->tsf = HAL_TX_DESC_GET(desc, UNIFIED_WBM_RELEASE_RING_6,
 			TX_RATE_STATS_INFO_TX_RATE_STATS);
+
+	hal_tx_comp_get_buffer_timestamp(desc, ts);
 }
 
 /**

@@ -79,7 +79,7 @@ struct hif_pci_pm_stats {
 	u32 prevent_suspend_timeout;
 	u32 allow_suspend_timeout;
 	u32 runtime_get_err;
-	void *last_resume_caller;
+	wlan_rtpm_dbgid last_resume_rtpm_dbgid;
 	void *last_busy_marker;
 	qdf_time_t last_busy_timestamp;
 	unsigned long suspend_jiffies;

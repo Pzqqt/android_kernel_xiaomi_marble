@@ -27,6 +27,7 @@
 #include <wlan_policy_mgr_api.h>
 #endif
 #include "wlan_cm_roam.h"
+#include <qdf_platform.h>
 
 static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 	switch (source) {
@@ -236,6 +237,26 @@ void cm_store_wep_key(struct cnx_mgr *cm_ctx,
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
 		   crypto_key->cipher_type, wep_keys->key_len,
 		   wep_keys->seq_len);
+}
+
+void cm_trigger_panic_on_cmd_timeout(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return;
+
+	if (qdf_is_recovering() || qdf_is_fw_down())
+		return;
+
+	qdf_trigger_self_recovery(psoc, QDF_ACTIVE_LIST_TIMEOUT);
+}
+
+#else
+void cm_trigger_panic_on_cmd_timeout(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_ASSERT(0);
 }
 #endif
 

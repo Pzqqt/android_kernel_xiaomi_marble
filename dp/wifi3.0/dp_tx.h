@@ -533,8 +533,6 @@ static inline void dp_tx_hal_ring_access_end_reap(struct dp_soc *soc,
 }
 #endif
 
-void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl);
-
 #ifdef ATH_TX_PRI_OVERRIDE
 #define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf) \
 	((_msdu_info)->tid = qdf_nbuf_get_priority(_nbuf))
@@ -634,16 +632,6 @@ void dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 			    uint16_t peer_id, uint32_t ppdu_id,
 			    qdf_nbuf_t netbuf)
 {
-}
-#endif
-
-#ifndef WLAN_TX_PKT_CAPTURE_ENH
-static inline
-QDF_STATUS dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
-					  struct dp_peer *peer_handle,
-					  uint8_t value, uint8_t *peer_mac)
-{
-	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -770,5 +758,40 @@ dp_tx_hw_desc_update_evt(uint8_t *hal_tx_desc_cached,
 {
 }
 #endif
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+/**
+ * dp_set_delta_tsf() - Set delta_tsf to dp_soc structure
+ * @soc_hdl: cdp soc pointer
+ * @vdev_id: vdev id
+ * @delta_tsf: difference between TSF clock and qtimer
+ *
+ * Return: None
+ */
+void dp_set_delta_tsf(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		      uint32_t delta_tsf);
+
+/**
+ * dp_set_tsf_report_ul_delay() - Enable or disable reporting uplink delay
+ * @soc_hdl: cdp soc pointer
+ * @vdev_id: vdev id
+ * @enable: true to enable and false to disable
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_set_tsf_ul_delay_report(struct cdp_soc_t *soc_hdl,
+				      uint8_t vdev_id, bool enable);
+
+/**
+ * dp_get_uplink_delay() - Get uplink delay value
+ * @soc_hdl: cdp soc pointer
+ * @vdev_id: vdev id
+ * @val: pointer to save uplink delay value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_get_uplink_delay(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			       uint32_t *val);
+#endif /* WLAN_FEATURE_TSF_UPLINK_TSF */
 
 #endif

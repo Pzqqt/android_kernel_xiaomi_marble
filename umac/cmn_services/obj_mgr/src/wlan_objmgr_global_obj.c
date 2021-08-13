@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,8 @@
 
 /* Global object, it is declared globally */
 struct wlan_objmgr_global *g_umac_glb_obj;
+
+qdf_export_symbol(g_umac_glb_obj);
 
 /*
 ** APIs to Create/Delete Global object APIs
@@ -863,3 +865,14 @@ QDF_STATUS wlan_objmgr_iterate_psoc_list(
 
 qdf_export_symbol(wlan_objmgr_iterate_psoc_list);
 
+#ifdef WLAN_FEATURE_11BE_MLO
+struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void)
+{
+	return g_umac_glb_obj->mlo_ctx;
+}
+
+void wlan_objmgr_set_mlo_ctx(struct mlo_mgr_context *ctx)
+{
+	g_umac_glb_obj->mlo_ctx = ctx;
+}
+#endif

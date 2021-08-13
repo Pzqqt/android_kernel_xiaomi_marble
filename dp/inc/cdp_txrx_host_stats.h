@@ -490,6 +490,29 @@ cdp_txrx_get_peer_stats_param(ol_txrx_soc_handle soc, uint8_t vdev_id,
 }
 
 /**
+ * @brief Call to get soc stats
+ *
+ * @param soc - soc handle
+ * @soc_stats - buffer for cdp soc stats
+ * @return - QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_host_get_soc_stats(ol_txrx_soc_handle soc, struct cdp_soc_stats *soc_stats)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_soc_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->txrx_get_soc_stats(soc, soc_stats);
+}
+
+/**
  * @brief Call to get peer stats
  *
  * @param soc - soc handle

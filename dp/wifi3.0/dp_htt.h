@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -133,6 +133,7 @@ void htt_htc_pkt_pool_free(struct htt_soc *soc);
 #define HTT_PPDU_STATS_COMMON_TLV_TXFRM_DELTA_TIME_US_OFFSET 12
 #define HTT_PPDU_STATS_COMMON_TLV_RESV_NUM_UL_BEAM_OFFSET 13
 #define HTT_PPDU_STATS_COMMON_TLV_START_TSTMP_U32_US_OFFSET 14
+#define HTT_PPDU_STATS_COMMON_TLV_BSSCOLOR_OBSS_PSR_OFFSET 15
 
 /* get index for field in htt_ppdu_stats_common_tlv */
 #define HTT_GET_STATS_CMN_INDEX(index) \
@@ -452,20 +453,6 @@ struct htt_stats_context {
 	qdf_nbuf_queue_t msg;
 	uint32_t msg_len;
 };
-
-int
-dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap);
-
-/**
- * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
- * @pdev: DP pdev handle
- * @ppdu_info: per PPDU TLV descriptor
- *
- * return: void
- */
-void
-dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
-			       struct ppdu_info *ppdu_info);
 
 /**
  * dp_htt_rx_flow_fst_setup(): Send HTT Rx FST setup message to FW

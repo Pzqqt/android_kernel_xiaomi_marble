@@ -270,6 +270,25 @@ int hif_ipci_enable_grp_irqs(struct hif_softc *scn);
 void hif_ipci_config_irq_affinity(struct hif_softc *scn);
 #endif
 
+#ifdef HIF_CPU_CLEAR_AFFINITY
+/**
+ * hif_ipci_config_irq_clear_cpu_affinity() - Remove cpu affinity of IRQ
+ * @scn: HIF handle
+ * @intr_ctxt_id: interrupt group index
+ * @cpu: CPU core to clear
+ *
+ * Return: None
+ */
+void hif_ipci_config_irq_clear_cpu_affinity(struct hif_softc *scn,
+					    int intr_ctxt_id, int cpu);
+#else
+static inline
+void hif_ipci_config_irq_clear_cpu_affinity(struct hif_softc *scn,
+					    int intr_ctxt_id, int cpu)
+{
+}
+#endif
+
 /**
  * hif_ipci_disable_grp_irqs(): disable grp IRQs
  * @scn: struct hif_softc

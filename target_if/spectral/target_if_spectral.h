@@ -24,6 +24,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
+#include <wlan_reg_services_api.h>
 #include <qdf_lock.h>
 #include <wlan_spectral_public_structs.h>
 #include <reg_services_public_struct.h>
@@ -128,6 +129,25 @@
 #define TLV_TAG_SEARCH_FFT_REPORT_GEN2           0xFB
 
 /**
+ * The Maximum number of detector informations to be filled in the SAMP msg
+ * is 3, only for 165MHz case. For all other cases this value will be 1.
+ */
+#define MAX_NUM_DEST_DETECTOR_INFO    (3)
+#define MAX_DETECTORS_PER_PDEV        (3)
+#define FFT_BIN_SIZE_1BYTE            (1)
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * enum spectral_160mhz_report_delivery_state - 160 MHz state machine states
+ * @SPECTRAL_REPORT_WAIT_PRIMARY80:   Wait for primary80 report
+ * @SPECTRAL_REPORT_WAIT_SECONDARY80: Wait for secondory 80 report
+ */
+enum spectral_160mhz_report_delivery_state {
+	SPECTRAL_REPORT_WAIT_PRIMARY80,
+	SPECTRAL_REPORT_WAIT_SECONDARY80,
+};
+#else
+/**
  * enum spectral_160mhz_report_delivery_state - 160 MHz state machine states
  * @SPECTRAL_REPORT_WAIT_PRIMARY80:   Wait for primary80 report
  * @SPECTRAL_REPORT_RX_PRIMARY80:     Receive primary 80 report
@@ -139,6 +159,19 @@ enum spectral_160mhz_report_delivery_state {
 	SPECTRAL_REPORT_RX_PRIMARY80,
 	SPECTRAL_REPORT_WAIT_SECONDARY80,
 	SPECTRAL_REPORT_RX_SECONDARY80,
+};
+#endif /* OPTIMIZED_SAMP_MESSAGE */
+
+/**
+ * enum spectral_freq_span_id - Spectral frequency span id
+ * @SPECTRAL_FREQ_SPAN_ID_0: Frequency span 0
+ * @SPECTRAL_FREQ_SPAN_ID_1: Frequency span 1
+ * @SPECTRAL_FREQ_SPAN_ID_2: Frequency span 2
+ */
+enum spectral_freq_span_id {
+	SPECTRAL_FREQ_SPAN_ID_0,
+	SPECTRAL_FREQ_SPAN_ID_1,
+	SPECTRAL_FREQ_SPAN_ID_2,
 };
 
 /**
@@ -241,6 +274,26 @@ typedef uint32_t SPECTRAL_SEGID_INFO;
 struct spectral_phyerr_fft_gen2 {
 	uint8_t buf[0];
 };
+
+/**
+ * struct spectral_process_phyerr_info_gen2 - Processed phyerr info structures
+ * needed to fill SAMP params for gen2
+ * @p_rfqual: Pointer to RF quality info
+ * @p_sfft: Pointer to Search fft report info
+ * @pfft: Pointer to FFT info in Phyerr event
+ * @acs_stats: Pointer to ACS stats struct
+ * @tsf64: 64 bit TSF value
+ * @seg_d : Segment ID
+ */
+struct spectral_process_phyerr_info_gen2 {
+	struct target_if_spectral_rfqual_info *p_rfqual;
+	struct spectral_search_fft_info_gen2 *p_sfft;
+	struct spectral_phyerr_fft_gen2 *pfft;
+	struct target_if_spectral_acs_stats *acs_stats;
+	uint64_t tsf64;
+	uint8_t seg_id;
+};
+
 /* END of spectral GEN II HW specific details */
 
 /* START of spectral GEN III HW specific details */
@@ -269,6 +322,38 @@ struct spectral_phyerr_fft_gen2 {
 #define SPECTRAL_REPORT_LTS_TAG_SIZE_GEN3                       (8)
 #define SPECTRAL_REPORT_LTS_SIGNATURE_POS_GEN3                  (24)
 #define SPECTRAL_REPORT_LTS_SIGNATURE_SIZE_GEN3                 (8)
+#define FFT_REPORT_HDR_A_DETECTOR_ID_POS_GEN3                   (0)
+#define FFT_REPORT_HDR_A_DETECTOR_ID_SIZE_GEN3                  (2)
+#define FFT_REPORT_HDR_A_FFT_NUM_POS_GEN3                       (2)
+#define FFT_REPORT_HDR_A_FFT_NUM_SIZE_GEN3                      (3)
+#define FFT_REPORT_HDR_A_RADAR_CHECK_POS_GEN3_V1                (5)
+#define FFT_REPORT_HDR_A_RADAR_CHECK_SIZE_GEN3_V1               (12)
+#define FFT_REPORT_HDR_A_RADAR_CHECK_POS_GEN3_V2                (5)
+#define FFT_REPORT_HDR_A_RADAR_CHECK_SIZE_GEN3_V2               (14)
+#define FFT_REPORT_HDR_A_PEAK_INDEX_POS_GEN3_V1                 (17)
+#define FFT_REPORT_HDR_A_PEAK_INDEX_SIZE_GEN3_V1                (11)
+#define FFT_REPORT_HDR_A_PEAK_INDEX_POS_GEN3_V2                 (19)
+#define FFT_REPORT_HDR_A_PEAK_INDEX_SIZE_GEN3_V2                (11)
+#define FFT_REPORT_HDR_A_CHAIN_INDEX_POS_GEN3_V1                (28)
+#define FFT_REPORT_HDR_A_CHAIN_INDEX_SIZE_GEN3_V1               (3)
+#define FFT_REPORT_HDR_B_CHAIN_INDEX_POS_GEN3_V2                (0)
+#define FFT_REPORT_HDR_B_CHAIN_INDEX_SIZE_GEN3_V2               (3)
+#define FFT_REPORT_HDR_B_BASE_PWR_POS_GEN3_V1                   (0)
+#define FFT_REPORT_HDR_B_BASE_PWR_SIZE_GEN3_V1                  (9)
+#define FFT_REPORT_HDR_B_BASE_PWR_POS_GEN3_V2                   (3)
+#define FFT_REPORT_HDR_B_BASE_PWR_SIZE_GEN3_V2                  (9)
+#define FFT_REPORT_HDR_B_TOTAL_GAIN_POS_GEN3_V1                 (9)
+#define FFT_REPORT_HDR_B_TOTAL_GAIN_SIZE_GEN3_V1                (8)
+#define FFT_REPORT_HDR_B_TOTAL_GAIN_POS_GEN3_V2                 (12)
+#define FFT_REPORT_HDR_B_TOTAL_GAIN_SIZE_GEN3_V2                (8)
+#define FFT_REPORT_HDR_C_NUM_STRONG_BINS_POS_GEN3               (0)
+#define FFT_REPORT_HDR_C_NUM_STRONG_BINS_SIZE_GEN3              (8)
+#define FFT_REPORT_HDR_C_PEAK_MAGNITUDE_POS_GEN3                (8)
+#define FFT_REPORT_HDR_C_PEAK_MAGNITUDE_SIZE_GEN3               (10)
+#define FFT_REPORT_HDR_C_AVG_PWR_POS_GEN3                       (18)
+#define FFT_REPORT_HDR_C_AVG_PWR_SIZE_GEN3                      (7)
+#define FFT_REPORT_HDR_C_RELATIVE_PWR_POS_GEN3                  (25)
+#define FFT_REPORT_HDR_C_RELATIVE_PWR_SIZE_GEN3                 (7)
 
 #define SPECTRAL_PHYERR_SIGNATURE_GEN3                          (0xFA)
 #define TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3                    (0x02)
@@ -308,6 +393,8 @@ struct phyerr_info {
 /**
  * struct spectral_search_fft_info_gen3 - spectral search fft report for gen3
  * @timestamp:           Timestamp at which fft report was generated
+ * @last_raw_timestamp:  Previous FFT report's raw timestamp
+ * @adjusted_timestamp:  Adjusted timestamp to account for target reset
  * @fft_detector_id:     Which radio generated this report
  * @fft_num:             The FFT count number. Set to 0 for short FFT.
  * @fft_radar_check:     NA for spectral
@@ -319,9 +406,14 @@ struct phyerr_info {
  * @fft_peak_mag:        Peak magnitude
  * @fft_avgpwr_db:       Average power in dB
  * @fft_relpwr_db:       Relative power in dB
+ * @fft_bin_count:       Number of FFT bins in the FFT report
+ * @fft_bin_size:        Size of one FFT bin in bytes
+ * @bin_pwr_data:        Contains FFT bins extracted from the report
  */
 struct spectral_search_fft_info_gen3 {
 	uint32_t timestamp;
+	uint32_t last_raw_timestamp;
+	uint32_t adjusted_timestamp;
 	uint32_t fft_detector_id;
 	uint32_t fft_num;
 	uint32_t fft_radar_check;
@@ -333,6 +425,9 @@ struct spectral_search_fft_info_gen3 {
 	int32_t  fft_peak_mag;
 	uint32_t fft_avgpwr_db;
 	uint32_t fft_relpwr_db;
+	uint32_t fft_bin_count;
+	uint8_t  fft_bin_size;
+	uint8_t  *bin_pwr_data;
 };
 
 /**
@@ -366,12 +461,14 @@ struct spectral_phyerr_fft_report_gen3 {
  *                 performed on the pri80 segment. Software may choose to
  *                 disregard the FFT sample if this is set to 1 but detector ID
  *                 does not correspond to the ID for the pri80 segment.
+ * @sscan_detector_id: Detector ID in Spectral scan report
  */
 struct sscan_report_fields_gen3 {
 	uint8_t sscan_agc_total_gain;
 	int16_t inband_pwr_db;
 	uint8_t sscan_gainchange;
 	uint8_t sscan_pri80;
+	uint8_t sscan_detector_id;
 };
 
 /**
@@ -891,6 +988,99 @@ struct target_if_finite_spectral_scan_params {
 };
 
 /**
+ * struct per_session_dest_det_info - Per-session Detector information to be
+ * filled to samp_detector_info
+ * @freq_span_id: Contiguous frequency span ID within the SAMP message
+ * @is_sec80: Indicates pri80/sec80 segment for 160/80p80 BW
+ * @det_id: Detector ID within samp_freq_span_info corresponding to
+ * freq_span_id
+ * @dest_start_bin_idx: Start index of FFT bins within SAMP msg's bin_pwr array
+ * @dest_end_bin_idx: End index of FFT bins within SAMP msg's bin_pwr array
+ * @lb_extrabins_start_idx: Left band edge extra bins start index
+ * @lb_extrabins_num: Number of left band edge extra bins
+ * @rb_extrabins_start_idx: Right band edge extra bins start index
+ * @rb_extrabins_num: Number of right band edge extra bins
+ * @start_freq: Indicates start frequency per-detector (in MHz)
+ * @end_freq: Indicates last frequency per-detector (in MHz)
+ * @src_start_bin_idx: Start index within the Spectral report's bin_pwr array,
+ * where the FFT bins corresponding to this dest_det_id start
+ */
+struct per_session_dest_det_info {
+	uint8_t freq_span_id;
+	bool is_sec80;
+	uint8_t det_id;
+	uint16_t dest_start_bin_idx;
+	uint16_t dest_end_bin_idx;
+	uint16_t lb_extrabins_start_idx;
+	uint16_t lb_extrabins_num;
+	uint16_t rb_extrabins_start_idx;
+	uint16_t rb_extrabins_num;
+	uint32_t start_freq;
+	uint32_t end_freq;
+	uint16_t src_start_bin_idx;
+};
+
+/**
+ * struct per_session_det_map - A map of per-session detector information,
+ * keyed by the detector id obtained from the Spectral FFT report, mapping to
+ * detination detector info in SAMP message.
+ * @dest_det_info: Struct containing per-session detector information
+ * @num_dest_det_info: Number of destination detectors to which information
+ * of this detector is to be filled
+ * @spectral_msg_buf_type: Spectral message buffer type
+ * @send_to_upper_layers: Indicates whether to send SAMP msg to upper layers
+ */
+struct per_session_det_map {
+	struct per_session_dest_det_info
+			dest_det_info[MAX_NUM_DEST_DETECTOR_INFO];
+	uint8_t num_dest_det_info;
+	enum spectral_msg_buf_type buf_type;
+	bool send_to_upper_layers;
+};
+
+/**
+ * struct per_session_report_info - Consists of per-session Spectral report
+ * information to be filled at report level in SAMP message.
+ * @pri20_freq: Primary 20MHz operating frequency in MHz
+ * @cfreq1: Centre frequency of the frequency span for 20/40/80 MHz BW.
+ * Segment 1 centre frequency in MHz for 80p80/160 BW.
+ * @cfreq2: For 80p80, indicates segment 2 centre frequency in MHz. For 160MHz,
+ * indicates the center frequency of 160MHz span.
+ * @operating_bw: Device's operating bandwidth.Valid values = enum phy_ch_width
+ * @sscan_cfreq1: Normal/Agile scan Centre frequency of the frequency span for
+ * 20/40/80 MHz BW. Center frequency of Primary Segment in MHz for 80p80/160 BW
+ * Based on Spectral scan mode.
+ * @sscan_cfreq2: For 80p80, Normal/Agile scan Center frequency for Sec80
+ * segment. For 160MHz, indicates the center frequency of 160MHz span. Based on
+ * spectral scan mode
+ * @sscan_bw: Normal/Agile Scan BW based on Spectral scan mode.
+ * Valid values = enum phy_ch_width
+ * @num_spans: Number of frequency spans
+ */
+struct per_session_report_info {
+	uint32_t pri20_freq;
+	uint32_t cfreq1;
+	uint32_t cfreq2;
+	enum phy_ch_width operating_bw;
+	uint32_t sscan_cfreq1;
+	uint32_t sscan_cfreq2;
+	enum phy_ch_width sscan_bw;
+	uint8_t num_spans;
+};
+
+/**
+ * struct sscan_detector_list - Spectral scan Detector list, for given Spectral
+ * scan mode and operating BW
+ * @detectors: List of detectors
+ * @num_detectors: Number of detectors for given spectral scan mode, BW
+ *                 and target type
+ */
+struct sscan_detector_list {
+	uint8_t detectors[SPECTRAL_DETECTOR_ID_MAX];
+	uint8_t num_detectors;
+};
+
+/**
  * struct target_if_spectral - main spectral structure
  * @pdev: Pointer to pdev
  * @spectral_ops: Target if internal Spectral low level operations table
@@ -985,6 +1175,11 @@ struct target_if_finite_spectral_scan_params {
  * @rparams: Parameters related to Spectral report structure
  * @param_min_max: Spectral parameter's minimum and maximum values
  * @finite_scan: Parameters for finite Spectral scan
+ * @detector_list: Detector list for a given Spectral scan mode and channel
+ * width, based on the target type.
+ * @det_map: Map of per-session detector information keyed by the Spectral HW
+ * detector id.
+ * @report_info: Per session info to be filled at report level in SAMP message
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -1097,11 +1292,19 @@ struct target_if_spectral {
 	bool dbr_ring_debug;
 	bool dbr_buff_debug;
 	bool direct_dma_support;
+#ifdef OPTIMIZED_SAMP_MESSAGE
+	uint32_t prev_tstamp[MAX_DETECTORS_PER_PDEV];
+#else
 	uint32_t prev_tstamp;
+#endif
 	struct spectral_report_params rparams;
 	struct spectral_param_min_max param_min_max;
 	struct target_if_finite_spectral_scan_params
 					finite_scan[SPECTRAL_SCAN_MODE_MAX];
+	struct sscan_detector_list
+			detector_list[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
+	struct per_session_det_map det_map[MAX_DETECTORS_PER_PDEV];
+	struct per_session_report_info report_info[SPECTRAL_SCAN_MODE_MAX];
 };
 
 /**
@@ -1114,6 +1317,52 @@ struct target_if_psoc_spectral {
 	struct spectral_wmi_ops wmi_ops;
 };
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * struct target_if_samp_msg_params - Spectral Analysis Messaging Protocol
+ * data format
+ * @hw_detector_id: Spectral HW detector ID
+ * @rssi: Spectral RSSI
+ * @lower_rssi: RSSI of lower band
+ * @upper_rssi: RSSI of upper band
+ * @chain_ctl_rssi: RSSI for control channel, for all antennas
+ * @chain_ext_rssi: RSSI for extension channel, for all antennas
+ * @last_raw_timestamp: Previous FFT report's raw timestamp.
+ * @raw_timestamp: FFT timestamp reported by HW on primary segment.
+ * @timestamp: timestamp
+ * @reset_delay: Time gap between the last spectral report before reset and the
+ *               end of reset.
+ * @max_mag: maximum magnitude
+ * @max_index: index of max magnitude
+ * @noise_floor: current noise floor
+ * @pri80ind: Indication from hardware that the sample was received on the
+ *            primary 80 MHz segment. If this is set when smode =
+ *            SPECTRAL_SCAN_MODE_AGILE, it indicates that Spectral was carried
+ *            out on pri80 instead of the Agile frequency due to a channel
+ *            switch - Software may choose to ignore the sample in this case.
+ * @bin_pwr_data: Contains FFT magnitudes
+ */
+struct target_if_samp_msg_params {
+	uint8_t hw_detector_id;
+	int8_t rssi;
+	int8_t lower_rssi;
+	int8_t upper_rssi;
+	int8_t chain_ctl_rssi[HOST_MAX_ANTENNA];
+	int8_t chain_ext_rssi[HOST_MAX_ANTENNA];
+	uint32_t last_raw_timestamp;
+	uint32_t raw_timestamp;
+	uint32_t timestamp;
+	uint32_t reset_delay;
+	uint16_t max_mag;
+	uint16_t max_index;
+	int16_t noise_floor;
+	uint8_t agc_total_gain;
+	uint8_t gainchange;
+	uint8_t pri80ind;
+	uint8_t *bin_pwr_data;
+};
+
+#else
 /**
  * struct target_if_samp_msg_params - Spectral Analysis Messaging Protocol
  * data format
@@ -1238,6 +1487,7 @@ struct target_if_samp_msg_params {
 	uint32_t reset_delay;
 	uint32_t target_reset_count;
 };
+#endif
 
 /**
  * struct target_if_spectral_agile_mode_cap - Structure to hold agile
@@ -1287,6 +1537,7 @@ uint32_t target_if_get_offset_swar_sec80(uint32_t channel_width);
  */
 void target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 
+#ifndef OPTIMIZED_SAMP_MESSAGE
 /**
  * target_if_spectral_create_samp_msg() - Create the spectral samp message
  * @spectral : Pointer to spectral internal structure
@@ -1299,6 +1550,22 @@ void target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 void target_if_spectral_create_samp_msg(
 	struct target_if_spectral *spectral,
 	struct target_if_samp_msg_params *params);
+#endif
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_spectral_fill_samp_msg() - Fill the Spectral SAMP message
+ * @spectral : Pointer to spectral internal structure
+ * @params: Spectral SAMP message fields
+ *
+ * Fill the spectral SAMP message fields using params and detector map.
+ *
+ * Return: Success/Failure
+ */
+QDF_STATUS target_if_spectral_fill_samp_msg(
+			struct target_if_spectral *spectral,
+			struct target_if_samp_msg_params *params);
+#endif
 
 /**
  * target_if_spectral_process_phyerr_gen3() - Process phyerror event for gen3
@@ -1815,6 +2082,38 @@ is_ch_width_160_or_80p80(enum phy_ch_width ch_width)
 }
 
 /**
+ * free_samp_msg_skb() - Free SAMP message skb
+ * @spectral: Pointer to Spectral
+ * @smode: Spectral Scan mode
+ *
+ * Free SAMP message skb, if error in report processing
+ *
+ * Return: void
+ */
+static inline void
+free_samp_msg_skb(struct target_if_spectral *spectral,
+		  enum spectral_scan_mode smode)
+{
+	enum spectral_msg_type smsg_type;
+	QDF_STATUS ret;
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("Invalid Spectral mode %d", smode);
+		return;
+	}
+
+	if (is_ch_width_160_or_80p80(spectral->ch_width[smode])) {
+		ret = target_if_get_spectral_msg_type(smode, &smsg_type);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err("Failed to get spectral message type");
+			return;
+		}
+		spectral->nl_cb.free_sbuff(spectral->pdev_obj,
+					   smsg_type);
+	}
+}
+
+/**
  * init_160mhz_delivery_state_machine() - Initialize 160MHz Spectral
  *                                        state machine
  * @spectral: Pointer to Spectral
@@ -1846,26 +2145,16 @@ static inline void
 reset_160mhz_delivery_state_machine(struct target_if_spectral *spectral,
 				    enum spectral_scan_mode smode)
 {
-	enum spectral_msg_type smsg_type;
-	QDF_STATUS ret;
-
 	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
 		spectral_err_rl("Invalid Spectral mode %d", smode);
 		return;
 	}
 
+	free_samp_msg_skb(spectral, smode);
+
 	if (is_ch_width_160_or_80p80(spectral->ch_width[smode])) {
 		spectral->state_160mhz_delivery[smode] =
 			SPECTRAL_REPORT_WAIT_PRIMARY80;
-
-		ret = target_if_get_spectral_msg_type(smode, &smsg_type);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			spectral_err("Failed to get spectral message type");
-			return;
-		}
-
-		spectral->nl_cb.free_sbuff(spectral->pdev_obj,
-					   smsg_type);
 	}
 }
 
@@ -1910,6 +2199,7 @@ bool is_primaryseg_expected(struct target_if_spectral *spectral,
 	  SPECTRAL_REPORT_WAIT_PRIMARY80));
 }
 
+#ifndef OPTIMIZED_SAMP_MESSAGE
 /**
  * is_primaryseg_rx_inprog() - Is primary 80 report processing is in progress
  * @spectral: Pointer to Spectral
@@ -1953,6 +2243,7 @@ bool is_secondaryseg_rx_inprog(struct target_if_spectral *spectral,
 	    spectral->state_160mhz_delivery[smode] ==
 	    SPECTRAL_REPORT_RX_SECONDARY80))));
 }
+#endif
 
 /**
  * target_if_160mhz_delivery_state_change() - State transition for 160Mhz
@@ -2317,6 +2608,86 @@ QDF_STATUS
 target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
 				       enum spectral_scan_mode smode,
 				       uint8_t detector_id);
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_spectral_get_num_fft_bins() - Get number of FFT bins from FFT size
+ * according to the Spectral report mode.
+ * @fft_size: FFT length
+ * @report_mode: Spectral report mode
+ *
+ * Get number of FFT bins from FFT size according to the Spectral
+ * report mode.
+ *
+ * Return: Number of FFT bins
+ */
+static inline uint32_t
+target_if_spectral_get_num_fft_bins(uint32_t fft_size,
+				    enum spectral_report_mode report_mode)
+{
+	switch (report_mode) {
+	case SPECTRAL_REPORT_MODE_0:
+	case SPECTRAL_REPORT_MODE_1:
+		return 0;
+	case SPECTRAL_REPORT_MODE_2:
+		return (1 << (fft_size - 1));
+	case SPECTRAL_REPORT_MODE_3:
+		return (1 << fft_size);
+	default:
+		return -EINVAL;
+	}
+}
+#endif /* OPTIMIZED_SAMP_MESSAGE */
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_get_detector_chwidth() - Get per-detector bandwidth
+ * based on channel width and fragmentation.
+ * @ch_width: Spectral scan channel width
+ * @fragmentation_160: Target type has fragmentation or not
+ *
+ * Get per-detector BW.
+ *
+ * Return: detector BW
+ */
+static inline
+enum phy_ch_width target_if_get_detector_chwidth(enum phy_ch_width ch_width,
+						 bool fragmentation_160)
+{
+	return ((ch_width == CH_WIDTH_160MHZ && fragmentation_160) ?
+		CH_WIDTH_80MHZ : ((ch_width == CH_WIDTH_80P80MHZ) ?
+		CH_WIDTH_80MHZ : ch_width));
+}
+
+/**
+ * target_if_spectral_set_start_end_freq() - Set start and end frequencies for
+ * a given center frequency
+ * @cfreq: Center frequency for which start and end freq need to be set
+ * @ch_width: Spectral scan Channel width
+ * @fragmentation_160: Target type has fragmentation or not
+ * @start_end_freq: Array containing start and end frequency of detector
+ *
+ * Set the start and end frequencies for given center frequency in destination
+ * detector info struct
+ *
+ * Return: void
+ */
+static inline
+void target_if_spectral_set_start_end_freq(uint32_t cfreq,
+					   enum phy_ch_width ch_width,
+					   bool fragmentation_160,
+					   uint32_t *start_end_freq)
+{
+	enum phy_ch_width det_ch_width;
+
+	det_ch_width = target_if_get_detector_chwidth(ch_width,
+						      fragmentation_160);
+
+	start_end_freq[0] = cfreq - (wlan_reg_get_bw_value(det_ch_width) >> 1);
+	start_end_freq[1] = cfreq + (wlan_reg_get_bw_value(det_ch_width) >> 1);
+}
+#endif /* OPTIMIZED_SAMP_MESSAGE */
+
 #ifdef DIRECT_BUF_RX_ENABLE
 /**
  * target_if_consume_sfft_report_gen3() -  Process fft report for gen3

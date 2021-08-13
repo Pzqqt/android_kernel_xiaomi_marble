@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -303,6 +303,31 @@ int init_deinit_populate_mac_phy_cap_ext2(wmi_unified_t handle, uint8_t *event,
 int init_deinit_populate_scan_radio_cap_ext2(wmi_unified_t handle,
 					     uint8_t *event,
 					     struct tgt_info *info);
+
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * init_deinit_populate_twt_cap_ext2() - populate twt capabilities from service
+ * ready ext2 event
+ * @psoc: PSOC object
+ * @handle: WMI handle pointer
+ * @event: event buffer received from FW
+ * @info: tgt_info object
+ *
+ * API to populate twt capability from service ready ext2 event.
+ * Return: zero on successful population of twt capability or failure
+ */
+int init_deinit_populate_twt_cap_ext2(struct wlan_objmgr_psoc *psoc,
+				      wmi_unified_t handle, uint8_t *event,
+				      struct tgt_info *info);
+#else
+static inline
+int init_deinit_populate_twt_cap_ext2(struct wlan_objmgr_psoc *psoc,
+				      wmi_unified_t handle, uint8_t *event,
+				      struct tgt_info *info)
+{
+	return 0;
+}
+#endif
 
 /**
  * init_deinit_validate_160_80p80_fw_caps() - validate 160 80p80 fw caps

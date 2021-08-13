@@ -125,12 +125,16 @@ struct wlan_objmgr_psoc;
  * @chan_freq: channel frequency
  * @cfreq0: channel frequency index0
  * @cfreq1: channel frequency index1
+ * @puncture_bitmap: puncture bitmap advertised in beacon
  * @priv: channel private information
  */
 struct channel_info {
 	uint32_t chan_freq;
 	uint32_t cfreq0;
 	uint32_t cfreq1;
+#ifdef WLAN_FEATURE_11BE
+	uint16_t puncture_bitmap;
+#endif
 	void *priv;
 };
 
@@ -184,6 +188,7 @@ struct channel_info {
  * @rsnxe: Pointer to rsnxe IE
  * @ehtcap: pointer to ehtcap ie
  * @ehtop: pointer to eht op ie
+ * @multi_link: pointer to multi lik IE
  */
 struct ie_list {
 	uint8_t *tim;
@@ -241,6 +246,9 @@ struct ie_list {
 #ifdef WLAN_FEATURE_11BE
 	uint8_t *ehtcap;
 	uint8_t *ehtop;
+#endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t *multi_link;
 #endif
 };
 
@@ -373,6 +381,20 @@ struct non_inheritance_ie {
 	bool non_inh_ie_found;
 };
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * struct rnr_mld_info - Reduced Neighbor Report MLD information
+ * @mld_id: MLD ID
+ * @link_id: Link ID
+ * @bss_param_change_cnt: BSS parameters change count
+ */
+struct rnr_mld_info {
+	uint8_t mld_id;
+	uint16_t link_id: 4,
+		 bss_param_change_cnt: 8,
+		 reserved: 4;
+};
+#endif
 /**
  * struct rnr_bss_info - Reduced Neighbor Report BSS information
  * @neighbor_ap_tbtt_offset: Neighbor AP TBTT offset
@@ -382,6 +404,7 @@ struct non_inheritance_ie {
  * @short_ssid: short ssid
  * @bss_params: BSS parameters
  * @psd_20mhz: 20MHz power spectral density
+ * @mld_info: MLD information
  */
 struct rnr_bss_info {
 	uint8_t neighbor_ap_tbtt_offset;
@@ -391,6 +414,9 @@ struct rnr_bss_info {
 	uint32_t short_ssid;
 	uint8_t bss_params;
 	uint8_t psd_20mhz;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct rnr_mld_info mld_info;
+#endif
 };
 
 /**
@@ -424,29 +450,36 @@ struct neighbor_ap_info_field {
  * enum tbtt_information_field - TBTT information field
  * @TBTT_NEIGHBOR_AP_OFFSET_ONLY: TBTT information field type
  * @TBTT_NEIGHBOR_AP_BSS_PARAM: neighbor AP and bss param
+ * @TBTT_NEIGHBOR_AP_MLD_PARAM: neighbor AP and MLD param
  * @TBTT_NEIGHBOR_AP_SHORTSSID: neighbor AP and Short ssid
  * @TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM: neighbor AP, short ssid and bss param
  * @TBTT_NEIGHBOR_AP_BSSID: neighbor AP and bssid
  * @TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM: neighbor AP, bssid and bss param
  * @TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD: neighbor AP, bssid and bss
  * param and 20MHz PSD
+ * @TBTT_NEIGHBOR_AP_BSSID_MLD_PARAM:  neighbor AP, bssid and MLD param
  * @TBTT_NEIGHBOR_AP_BSSSID_S_SSID: neighbor AP, bssid and short ssid
  * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM: neighbor AP, bssid, short ssid
  * and bss params
  * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD: neighbor AP, bssid,
  * short ssid, bss params and 20MHz PSD
+ * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM: neighbor AP,
+ * bssid, short ssid, bss params, 20MHz PSD and MLD param
  */
 enum tbtt_information_field {
 	TBTT_NEIGHBOR_AP_OFFSET_ONLY = 1,
 	TBTT_NEIGHBOR_AP_BSS_PARAM = 2,
+	TBTT_NEIGHBOR_AP_MLD_PARAM = 4,
 	TBTT_NEIGHBOR_AP_SHORTSSID = 5,
 	TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM = 6,
 	TBTT_NEIGHBOR_AP_BSSID = 7,
 	TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM = 8,
 	TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD = 9,
+	TBTT_NEIGHBOR_AP_BSSID_MLD_PARAM = 10,
 	TBTT_NEIGHBOR_AP_BSSSID_S_SSID = 11,
 	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM = 12,
-	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD = 13
+	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD = 13,
+	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM = 16
 };
 
 /**
@@ -483,12 +516,14 @@ struct partner_link_info {
  * struct ml_info: Multi link formation of a 11be beacon
  * @mld_mac_addr: MLD mac address
  * @num_links: Number of links supported by ML AP
+ * @self_link_id: Link id of the scan entry
  * @link_info: Array containing partner links information
  * @ml_bss_score: Multi link BSS score
  */
 struct ml_info {
 	struct qdf_mac_addr mld_mac_addr;
 	uint8_t num_links;
+	uint8_t self_link_id;
 	struct partner_link_info link_info[MLD_MAX_LINKS - 1];
 	uint16_t ml_bss_score;
 };

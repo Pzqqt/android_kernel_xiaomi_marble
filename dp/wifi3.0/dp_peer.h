@@ -798,25 +798,6 @@ void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
 		    struct dp_ast_flow_override_info *ast_info);
 #endif
 
-/**
- * dp_peer_update_pkt_capture_params: Set Rx & Tx Capture flags for a peer
- * @soc: DP SOC handle
- * @pdev_id: id of DP pdev handle
- * @is_rx_pkt_cap_enable: enable/disable Rx packet capture in monitor mode
- * @is_tx_pkt_cap_enable: enable/disable/delete/print
- * Tx packet capture in monitor mode
- * Tx packet capture in monitor mode
- * @peer_mac: MAC address for which the above need to be enabled/disabled
- *
- * Return: Success if Rx & Tx capture is enabled for peer, false otherwise
- */
-QDF_STATUS
-dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
-				  uint8_t pdev_id,
-				  bool is_rx_pkt_cap_enable,
-				  uint8_t is_tx_pkt_cap_enable,
-				  uint8_t *peer_mac);
-
 /*
  * dp_rx_tid_delete_cb() - Callback to flush reo descriptor HW cache
  * after deleting the entries (ie., setting valid=0)
@@ -828,48 +809,6 @@ dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
 void dp_rx_tid_delete_cb(struct dp_soc *soc,
 			 void *cb_ctxt,
 			 union hal_reo_status *reo_status);
-
-#ifndef WLAN_TX_PKT_CAPTURE_ENH
-/**
- * dp_peer_tid_queue_init() – Initialize ppdu stats queue per TID
- * @peer: Datapath peer
- *
- */
-static inline void dp_peer_tid_queue_init(struct dp_peer *peer)
-{
-}
-
-/**
- * dp_peer_tid_peer_id_update() – update peer_id to tid structure
- * @peer: Datapath peer
- * @peer_id: peer_id
- *
- */
-static inline
-void dp_peer_tid_peer_id_update(struct dp_peer *peer, uint16_t peer_id)
-{
-}
-
-/**
- * dp_peer_tid_queue_cleanup() – remove ppdu stats queue per TID
- * @peer: Datapath peer
- *
- */
-static inline void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
-{
-}
-
-/**
- * dp_peer_update_80211_hdr() – dp peer update 80211 hdr
- * @vdev: Datapath vdev
- * @peer: Datapath peer
- *
- */
-static inline void
-dp_peer_update_80211_hdr(struct dp_vdev *vdev, struct dp_peer *peer)
-{
-}
-#endif
 
 #ifdef QCA_PEER_EXT_STATS
 QDF_STATUS dp_peer_ext_stats_ctx_alloc(struct dp_soc *soc,

@@ -39,6 +39,14 @@
  * @WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE:Event to handle start bss complete
  * @WLAN_IF_MGR_EV_AP_STOP_BSS:Event to handle stop bss request
  * @WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE:Event to stop bss complete
+ * WLAN_IF_MGR_EV_AP_START_ACS: Event to handle ACS start
+ * WLAN_IF_MGR_EV_AP_STOP_ACS: Event to handle ACS stop
+ * WLAN_IF_MGR_EV_AP_DONE_ACS: Event to handle ACS completion
+ * WLAN_IF_MGR_EV_AP_CANCEL_ACS: Event to handle ACS cancel
+ * WLAN_IF_MGR_EV_AP_START_HT40: Event to handle HT40 scan start
+ * WLAN_IF_MGR_EV_AP_STOP_HT40: Event to handle HT40 scan stop
+ * WLAN_IF_MGR_EV_AP_DONE_HT40: Event to handle HT40 scan completion
+ * WLAN_IF_MGR_EV_AP_CANCEL_HT40: Event to handle HT40 scan cancel
  */
 enum wlan_if_mgr_evt {
 	WLAN_IF_MGR_EV_CONNECT_START = 0,
@@ -50,7 +58,15 @@ enum wlan_if_mgr_evt {
 	WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE = 6,
 	WLAN_IF_MGR_EV_AP_STOP_BSS = 7,
 	WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE = 8,
-	WLAN_IF_MGR_EV_MAX = 9,
+	WLAN_IF_MGR_EV_AP_START_ACS = 9,
+	WLAN_IF_MGR_EV_AP_STOP_ACS = 10,
+	WLAN_IF_MGR_EV_AP_DONE_ACS = 11,
+	WLAN_IF_MGR_EV_AP_CANCEL_ACS = 12,
+	WLAN_IF_MGR_EV_AP_START_HT40 = 13,
+	WLAN_IF_MGR_EV_AP_STOP_HT40 = 14,
+	WLAN_IF_MGR_EV_AP_DONE_HT40 = 15,
+	WLAN_IF_MGR_EV_AP_CANCEL_HT40 = 16,
+	WLAN_IF_MGR_EV_MAX = 17,
 };
 
 /**
@@ -70,10 +86,12 @@ struct validate_bss_data {
  * @status: qdf status used to indicate if connect,disconnect,
  *	    start bss,stop bss event is success/failure.
  * @validate_bss_info: struct to hold the validate candidate information
+ * @data: event data
  */
 struct if_mgr_event_data {
 	QDF_STATUS status;
 	struct validate_bss_data validate_bss_info;
+	void *data;
 };
 
 #endif

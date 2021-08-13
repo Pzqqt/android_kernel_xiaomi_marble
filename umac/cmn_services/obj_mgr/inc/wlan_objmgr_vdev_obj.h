@@ -266,6 +266,7 @@ struct wlan_vdev_create_params {
  * @ch_cfreq2:    channel center frequency for secondary
  * @ch_width:     Channel width.
  * @ch_phymode:   Channel phymode.
+ * @puncture_bitmap:   Puncture bitmap per 20MHz.
  */
 struct wlan_channel {
 	uint16_t     ch_freq;
@@ -279,6 +280,9 @@ struct wlan_channel {
 	uint32_t     ch_cfreq2;
 	enum phy_ch_width ch_width;
 	enum wlan_phymode ch_phymode;
+#ifdef WLAN_FEATURE_11BE
+	uint16_t     puncture_bitmap;
+#endif
 };
 
 /**
@@ -294,8 +298,10 @@ struct wlan_channel {
  * @vdev_feat_ext2_caps: More VDEV Extended feature caps
  * @vdev_op_flags:      Operation flags
  * @mataddr[]:          MAT address
- * @macaddr[]:          VDEV self MAC address
+ * @macaddr[]:          Contains link MAC address for ML connection and
+ *                      net dev address for non-ML connection
  * @mldaddr[]:          MLD address
+ * @linkaddr[]:         Link MAC address
  * @link_id:            link id for mlo connection
  */
 struct wlan_objmgr_vdev_mlme {
@@ -312,6 +318,7 @@ struct wlan_objmgr_vdev_mlme {
 	uint8_t  mataddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  mldaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t  linkaddr[QDF_MAC_ADDR_SIZE];
 #ifdef WLAN_FEATURE_11BE_MLO
 	uint8_t  mlo_link_id;
 #endif
@@ -779,6 +786,43 @@ static inline void wlan_vdev_mlme_set_mldaddr(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
+ * wlan_vdev_mlme_get_linkaddr() - get vdev linkaddr
+ * @vdev: VDEV object
+ *
+ * API to get link MAC address from vdev object
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return:
+ * @linkaddr: Link MAC address
+ */
+static inline
+uint8_t *wlan_vdev_mlme_get_linkaddr(struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return vdev->vdev_mlme.linkaddr;
+}
+
+/**
+ * wlan_vdev_mlme_set_linkaddr() - set vdev linkaddr
+ * @vdev: VDEV object
+ * @linkaddr: Link address
+ *
+ * API to set link addr in vdev object
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_set_linkaddr(struct wlan_objmgr_vdev *vdev,
+					       uint8_t *linkaddr)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	qdf_copy_macaddr((struct qdf_mac_addr *)vdev->vdev_mlme.linkaddr,
+			 (struct qdf_mac_addr *)linkaddr);
+}
+
+/**
  * wlan_vdev_mlme_get_mataddr() - get mataddr
  * @vdev: VDEV object
  *
@@ -813,6 +857,21 @@ static inline uint8_t wlan_vdev_get_id(struct wlan_objmgr_vdev *vdev)
 static inline uint8_t wlan_vdev_get_link_id(struct wlan_objmgr_vdev *vdev)
 {
 	return vdev->vdev_mlme.mlo_link_id;
+}
+
+/**
+ * wlan_vdev_set_link_id() - set vdev mlo link id
+ * @vdev: VDEV object
+ * @link_id: link id
+ *
+ * API to set vdev mlo link id
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_set_link_id(struct wlan_objmgr_vdev *vdev,
+					 uint8_t link_id)
+{
+	vdev->vdev_mlme.mlo_link_id = link_id;
 }
 #else
 static inline uint8_t wlan_vdev_get_link_id(struct wlan_objmgr_vdev *vdev)

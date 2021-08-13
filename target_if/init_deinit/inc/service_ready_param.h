@@ -265,12 +265,12 @@ struct wlan_psoc_host_mac_phy_caps_ext2 {
 	uint32_t phy_id;
 	uint64_t wireless_modes_ext;
 #ifdef WLAN_FEATURE_11BE
-	uint32_t eht_cap_info_2G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_cap_info_2G[PSOC_HOST_MAX_EHT_MAC_SIZE];
 	uint32_t eht_supp_mcs_2G;
-	uint32_t eht_cap_info_5G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_cap_info_5G[PSOC_HOST_MAX_EHT_MAC_SIZE];
 	uint32_t eht_supp_mcs_5G;
-	uint32_t eht_cap_phy_info_2G[PSOC_HOST_MAX_PHY_SIZE];
-	uint32_t eht_cap_phy_info_5G[PSOC_HOST_MAX_PHY_SIZE];
+	uint32_t eht_cap_phy_info_2G[PSOC_HOST_MAX_EHT_PHY_SIZE];
+	uint32_t eht_cap_phy_info_5G[PSOC_HOST_MAX_EHT_PHY_SIZE];
 	uint32_t eht_cap_info_internal;
 #endif
 };
@@ -427,6 +427,7 @@ struct wlan_psoc_host_service_ext_param {
  * @max_users_ul_ofdma: Max number of users per-PPDU for Uplink OFDMA
  * @max_users_dl_mumimo: Max number of users per-PPDU for Downlink MU-MIMO
  * @max_users_ul_mumimo: Max number of users per-PPDU for Uplink MU-MIMO
+ * @twt_ack_support_cap: TWT ack capability support
  */
 struct wlan_psoc_host_service_ext2_param {
 	uint8_t reg_db_version_major;
@@ -442,6 +443,7 @@ struct wlan_psoc_host_service_ext2_param {
 	uint16_t max_users_ul_ofdma;
 	uint16_t max_users_dl_mumimo;
 	uint16_t max_users_ul_mumimo;
+	uint32_t twt_ack_support_cap:1;
 };
 
 #endif /* _SERVICE_READY_PARAM_H_*/

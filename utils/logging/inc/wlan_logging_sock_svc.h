@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,12 +69,23 @@ int wlan_logging_notifier_init(bool dump_at_kernel_enable);
 int wlan_logging_notifier_deinit(bool dump_at_kernel_enable);
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+/**
+ * wlan_logging_wait_for_flush_log_completion() -  Wait for flush log completion
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_logging_wait_for_flush_log_completion(void);
+
 void wlan_logging_set_per_pkt_stats(void);
 void wlan_logging_set_fw_flush_complete(void);
 void wlan_flush_host_logs_for_fatal(void);
 void wlan_logging_set_active(bool active);
 void wlan_set_console_log_levels(uint32_t console_log_levels);
 #else
+static inline QDF_STATUS wlan_logging_wait_for_flush_log_completion(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
 static inline void wlan_flush_host_logs_for_fatal(void) {}
 static inline void wlan_logging_set_per_pkt_stats(void) {}
 static inline void wlan_logging_set_fw_flush_complete(void) {}

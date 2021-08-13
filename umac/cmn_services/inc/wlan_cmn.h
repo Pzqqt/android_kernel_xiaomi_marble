@@ -286,6 +286,7 @@
  * @WLAN_UMAC_COMP_GPIO:          GPIO Configuration
  * @WLAN_UMAC_COMP_MLO_MGR:       MLO manager
  * @WLAN_UMAC_COMP_REPEATER:      Repeater component
+ * @WLAN_UMAC_COMP_MBSS:          MBSS Framework
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -334,6 +335,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_GPIO               = 39,
 	WLAN_UMAC_COMP_MLO_MGR            = 40,
 	WLAN_UMAC_COMP_REPEATER           = 41,
+	WLAN_UMAC_COMP_MBSS               = 42,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
@@ -684,5 +686,9 @@ struct wlan_ssid {
 #define PSOC_MAX_PHY_REG_CAP (3)
 #define PSOC_MAX_CHAINMASK_TABLES (5)
 
+#ifdef WLAN_FEATURE_11BE
+#define PSOC_HOST_MAX_EHT_MAC_SIZE 1
+#define PSOC_HOST_MAX_EHT_PHY_SIZE 2
+#endif
 
 #endif /* _WLAN_OBJMGR_CMN_H_*/

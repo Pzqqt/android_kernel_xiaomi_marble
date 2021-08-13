@@ -106,10 +106,12 @@ struct dp_mon_filter {
  * @DP_MON_FILTER_PKT_LOG_LITE_MODE: Packet log lite mode
  */
 enum dp_mon_filter_mode {
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_ENHANCED_STATS_SUPPORT
 	DP_MON_FILTER_ENHACHED_STATS_MODE,
+#endif /* QCA_ENHANCED_STATS_SUPPORT */
+#ifdef QCA_MCOPY_SUPPORT
 	DP_MON_FILTER_MCOPY_MODE,
-#endif /* FEATURE_PERPKT_INFO */
+#endif /* QCA_MCOPY_SUPPORT */
 #if defined(ATH_SUPPORT_NAC_RSSI) || defined(ATH_SUPPORT_NAC)
 	DP_MON_FILTER_SMART_MONITOR_MODE,
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
@@ -152,19 +154,21 @@ enum dp_mon_filter_action {
 	DP_MON_FILTER_SET,
 };
 
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_ENHANCED_STATS_SUPPORT
 /**
  * dp_mon_filter_setup_enhanced_stats() - Setup the enhanced stats filter
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  */
-void dp_mon_filter_setup_enhanced_stats(struct dp_pdev *pdev);
+void dp_mon_filter_setup_enhanced_stats(struct dp_mon_pdev *mon_pdev);
 
 /***
  * dp_mon_filter_reset_enhanced_stats() - Reset the enhanced stats filter
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  */
-void dp_mon_filter_reset_enhanced_stats(struct dp_pdev *pdev);
+void dp_mon_filter_reset_enhanced_stats(struct dp_mon_pdev *mon_pdev);
+#endif /* QCA_ENHANCED_STATS_SUPPORT */
 
+#ifdef QCA_MCOPY_SUPPORT
 /**
  * dp_mon_filter_setup_mcopy_mode() - Setup the m_copy mode filter
  * @pdev: DP pdev handle
@@ -176,7 +180,7 @@ void dp_mon_filter_setup_mcopy_mode(struct dp_pdev *pdev);
  * @pdev: DP pdev handle
  */
 void dp_mon_filter_reset_mcopy_mode(struct dp_pdev *pdev);
-#endif /* FEATURE_PERPKT_INFO */
+#endif /* QCA_MCOPY_SUPPORT */
 
 #if defined(ATH_SUPPORT_NAC_RSSI) || defined(ATH_SUPPORT_NAC)
 /**
@@ -270,14 +274,14 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev);
 /**
  * dp_mon_filter_dealloc() - Deallocate the filter objects to be stored in
  * the radio object.
- * @pdev: DP pdev handle
+ * @mon_pdev: monitor pdev handle
  */
-void dp_mon_filter_dealloc(struct dp_pdev *pdev);
+void dp_mon_filter_dealloc(struct dp_mon_pdev *mon_pdev);
 
 /**
  * dp_mon_filter_alloc() - Allocate the filter objects to be stored in
  * the radio object.
- * @pdev: DP pdev handle
+ * @mon_pdev: monitor pdev handle
  */
-struct dp_mon_filter  **dp_mon_filter_alloc(struct dp_pdev *pdev);
+struct dp_mon_filter  **dp_mon_filter_alloc(struct dp_mon_pdev *mon_pdev);
 #endif /* #ifndef _DP_MON_FILTER_H_ */

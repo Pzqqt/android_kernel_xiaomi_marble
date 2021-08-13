@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -108,6 +108,27 @@ static void wlan_iot_sim_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+/* Function pointer for son rx_ops registration function */
+void (*wlan_lmac_if_son_rx_ops)(struct wlan_lmac_if_rx_ops *rx_ops);
+
+QDF_STATUS wlan_lmac_if_son_set_rx_ops_register_cb(void (*handler)
+				(struct wlan_lmac_if_rx_ops *))
+{
+	wlan_lmac_if_son_rx_ops = handler;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(wlan_lmac_if_son_set_rx_ops_register_cb);
+
+static void wlan_son_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	if (wlan_lmac_if_son_rx_ops)
+		wlan_lmac_if_son_rx_ops(rx_ops);
+	else
+		qdf_info("\n***** SON MODULE NOT LOADED *****\n");
+}
+
 /**
  * wlan_global_lmac_if_rx_ops_register() - Global lmac_if
  * rx handler register
@@ -137,6 +158,9 @@ wlan_global_lmac_if_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* iot_sim rx_ops registration*/
 	wlan_iot_sim_register_rx_ops(rx_ops);
+
+	/* son rx_ops registration*/
+	wlan_son_register_rx_ops(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

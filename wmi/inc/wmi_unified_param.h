@@ -401,6 +401,9 @@
 #define WMI_CONFIG_MSDU_AST_INDEX_2         0x2
 #define WMI_CONFIG_MSDU_AST_INDEX_3         0x3
 
+#define WMI_MAX_AOA_PHASE_DELTA 31
+#define WMI_MAX_CHAINS_PHASE 2
+
 #include "qdf_atomic.h"
 
 #ifdef BIG_ENDIAN_HOST
@@ -1054,7 +1057,6 @@ struct ml_partner_info {
 	uint32_t hw_mld_link_id;
 };
 
-#define WMI_MAX_ML_PARTNER_LINKS 4
 /**
  * struct peer_assoc_ml_partner_links - ML partner links
  * @num_links: Number of links
@@ -1062,7 +1064,7 @@ struct ml_partner_info {
  */
 struct peer_assoc_ml_partner_links {
 	uint8_t num_links;
-	struct ml_partner_info partner_info[WMI_MAX_ML_PARTNER_LINKS];
+	struct ml_partner_info partner_info[WLAN_UMAC_MLO_MAX_VDEVS];
 };
 #endif
 /**
@@ -1207,6 +1209,7 @@ struct peer_assoc_params {
 	uint32_t peer_eht_mcs_count;
 	uint32_t peer_eht_rx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];
 	uint32_t peer_eht_tx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];
+	uint16_t puncture_pattern;
 #endif
 	struct wmi_host_ppe_threshold peer_ppet;
 	u_int8_t peer_bsscolor_rept_info;
@@ -1404,6 +1407,8 @@ struct seg_hdr_info {
  *	        Data:1 Mgmt:0
  * @cfr_enable: flag to enable CFR capture
  *              0:disable 1:enable
+ * @en_beamforming: flag to enable tx beamforming
+ *              0:disable 1:enable
  */
 struct tx_send_params {
 	uint32_t pwr:8,
@@ -1415,7 +1420,8 @@ struct tx_send_params {
 		 preamble_type:5,
 		 frame_type:1,
 		 cfr_enable:1,
-		 reserved:10;
+		 en_beamforming:1,
+		 reserved:9;
 };
 
 /**
@@ -4620,6 +4626,7 @@ typedef enum {
 	wmi_twt_nudge_dialog_complete_event_id,
 	wmi_twt_session_stats_event_id,
 	wmi_twt_notify_event_id,
+	wmi_twt_ack_complete_event_id,
 #endif
 	wmi_apf_get_vdev_work_memory_resp_event_id,
 	wmi_roam_scan_stats_event_id,
@@ -4675,6 +4682,8 @@ typedef enum {
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 	wmi_vdev_smart_monitor_event_id,
 #endif
+	wmi_pdev_get_halphy_cal_status_event_id,
+	wmi_pdev_aoa_phasedelta_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5262,7 +5271,13 @@ typedef enum {
 #endif
 	wmi_service_sae_eapol_offload_support,
 	wmi_service_ampdu_tx_buf_size_256_support,
-
+	wmi_service_halphy_cal_status,
+	wmi_service_rtt_ap_initiator_staggered_mode_supported,
+	wmi_service_rtt_ap_initiator_bursted_mode_supported,
+	wmi_service_aoa_for_rcc_supported,
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+	wmi_service_p2p_p2p_cc_support,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5411,6 +5426,7 @@ struct wmi_host_fw_abi_ver {
  * @carrier_vow_optmization: configure vow-optimization for carrier-usecase
  * @is_sap_connected_d3wow_enabled: is sap d3wow with connected client supported
  * @is_go_connected_d3wow_enabled: is go d3wow with connected client supported
+ * @dynamic_pcie_gen_speed_change: is dynamic pcie gen speed change enabled
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5520,6 +5536,9 @@ typedef struct {
 	uint32_t is_sap_connected_d3wow_enabled;
 	uint32_t is_go_connected_d3wow_enabled;
 	bool sae_eapol_offload;
+	bool dynamic_pcie_gen_speed_change;
+	bool twt_ack_support_cap;
+	uint32_t ema_init_config;
 } target_resource_config;
 
 /**
@@ -7819,6 +7838,25 @@ typedef struct {
 } wmi_cfr_peer_tx_event_param;
 
 /**
+ * struct wmi_cfr_phase_delta_param - AoA phase delta params
+ * @pdev_id: pdev id
+ * @freq: primary 20 MHz channel frequency in mhz
+ * @max_chains: indicates max chains for which AoA will be reported
+ * @chain_phase_mask: indicates the chains to which phase values are
+ * reported by target
+ * @phase_delta: phase delta associated with reported chain's each gain value
+ * ibf_cal_val: IBF values to be added with phase delta of chains reported
+ */
+struct wmi_cfr_phase_delta_param {
+	uint32_t pdev_id;
+	uint32_t freq;
+	uint32_t max_chains;
+	uint32_t chain_phase_mask;
+	uint32_t phase_delta[WMI_MAX_CHAINS_PHASE][WMI_MAX_AOA_PHASE_DELTA];
+	uint32_t ibf_cal_val[WMI_MAX_CHAINS_PHASE];
+};
+
+/**
  * struct wmi_host_oem_indirect_data - Indirect OEM data
  * @pdev_id: pdev id
  * @len: length of data in bytes
@@ -8029,6 +8067,12 @@ enum wmi_host_dpd_status {
 struct wmi_host_pdev_get_dpd_status_event {
 	uint32_t pdev_id;
 	enum wmi_host_dpd_status dpd_status;
+};
+
+struct wmi_host_pdev_get_halphy_cal_status_event {
+	uint32_t pdev_id;
+	uint32_t halphy_cal_valid_bmap;
+	uint32_t halphy_cal_status;
 };
 
 /**

@@ -643,7 +643,7 @@ cm_ser_reassoc_cb(struct wlan_serialization_command *cmd,
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
 		mlme_err(CM_PREFIX_FMT "Active command timeout",
 			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id));
-		QDF_ASSERT(0);
+		cm_trigger_panic_on_cmd_timeout(cm_ctx->vdev);
 		cm_reassoc_cmd_timeout(cm_ctx, cmd->cmd_id);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
@@ -972,7 +972,7 @@ QDF_STATUS cm_roam_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 	}
 	qdf_status =
 		cm_sm_deliver_event(vdev,
-				    WLAN_CM_SM_EV_DISCONNECT_DONE,
+				    WLAN_CM_SM_EV_HO_ROAM_DISCONNECT_DONE,
 				    sizeof(*resp), resp);
 	if (QDF_IS_STATUS_SUCCESS(qdf_status))
 		return qdf_status;

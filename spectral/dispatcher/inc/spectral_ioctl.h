@@ -24,6 +24,10 @@
 #define AH_MAX_CHAINS 3
 #endif
 
+/* Compile time Assert */
+#define SPECTRAL_COMPILE_TIME_ASSERT(assertion_name, predicate) \
+	typedef char assertion_name[(predicate) ? 1 : -1]
+
 /*
  * ioctl defines
  */
@@ -359,6 +363,10 @@ struct spectral_caps {
 #define MAX_NUM_BINS_5MHZ             (32)
 /* 5 categories x (lower + upper) bands */
 #define MAX_INTERF                   10
+#define SPECTRAL_MAC_ADDR_SIZE        (6)
+#define MAX_NUM_FREQ_SPANS            (3)
+#define MAX_NUM_DETECTORS             (2)
+#define MAX_SPECTRAL_PAYLOAD          (2004)
 
 /**
  * enum dcs_int_type - Interference type indicated by DCS
@@ -413,6 +421,173 @@ struct spectral_classifier_params {
 	int lower_chan_in_mhz;
 } __packed;
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * struct samp_edge_extra_bin_info - Spectral edge extra bins Information
+ * For 11ac chipsets prior to AR900B version 2.0, a max of 512 bins are
+ * delivered.  However, there can be additional bins reported for
+ * AR900B version 2.0 and QCA9984 as described next:
+ * AR900B version 2.0: An additional tone is processed on the right
+ * hand side in order to facilitate detection of radar pulses out to
+ * the extreme band-edge of the channel frequency.
+ * Since the HW design processes four tones at a time,
+ * this requires one additional Dword to be added to the
+ * search FFT report.
+ * QCA9984: When spectral_scan_rpt_mode=2, i.e 2-dword summary +
+ * 1x-oversampled bins (in-band) per FFT,
+ * then 8 more bins (4 more on left side and 4 more on right side)
+ * are added.
+ *
+ * @num_bins: Number of edge extra bins
+ * @start_bin_idx: Indicates the start index of extra bins
+ */
+struct samp_edge_extra_bin_info {
+	uint16_t num_bins;
+	uint16_t start_bin_idx;
+} __packed;
+
+/* Compile time assert to check struct size is divisible by 4 Bytes */
+SPECTRAL_COMPILE_TIME_ASSERT(struct_size_4byte_assertion,
+			     (sizeof(struct samp_edge_extra_bin_info) % 4)
+			     == 0);
+
+/**
+ * struct samp_detector_info - SAMP per-detector information
+ * A detector here refers to the HW carrying out the Spectral scan, to
+ * detect the presence of interferences.
+ * @start_frequency: Indicates start frequency per-detector (in MHz)
+ * @end_frequency: Indicates last frequency per-detector (in MHz)
+ * @timestamp: Indicates Spectral HW timestamp (usec)
+ * @last_tstamp: Indicates the last time stamp
+ * @last_raw_timestamp: Previous FFT report's raw timestamp. In case of
+ * 160Mhz it will be primary 80 segment's timestamp as both primary & secondary
+ * segment's timestamp are expected to be almost equal.
+ * @timestamp_war_offset: Offset calculated based on reset_delay and
+ * last_raw_timestamp. It will be added to raw_timestamp to get timestamp.
+ * @raw_timestamp: Actual FFT timestamp reported by HW
+ * @reset_delay: Time gap between the last spectral report before reset and the
+ * end of reset. It is provided by FW via direct DMA framework.
+ * @left_edge_bins: Number of extra bins on left band edge
+ * @right_edge_bins: Number of extra bins on right band edge
+ * @start_bin_idx: Indicates the first bin index per-detector
+ * @end_bin_idx: Indicates the last bin index per-detector
+ * @max_index: Indicates the index of max magnitude
+ * @max_magnitude: Indicates the maximum magnitude
+ * @noise_floor: Indicates the current noise floor
+ * @rssi: Indicates RSSI
+ * @pri80ind: Indication from hardware that the sample was received on the
+ * primary 80 MHz segment. If this is set for smode = SPECTRAL_SCAN_MODE_AGILE,
+ * it indicates that Spectral scan was carried out on pri80 instead of the
+ * Agile frequency due to a channel switch - Software may choose to ignore
+ * the sample in this case.
+ * @is_sec80: Indicates whether the frequency span corresponds to pri80 or
+ * sec80 (only applicable for 160/80p80 operating_bw for
+ * smode SPECTRAL_SCAN_MODE_NORMAL)
+ */
+struct samp_detector_info {
+	uint32_t start_frequency;
+	uint32_t end_frequency;
+	uint32_t timestamp;
+	uint32_t last_tstamp;
+	uint32_t last_raw_timestamp;
+	uint32_t timestamp_war_offset;
+	uint32_t raw_timestamp;
+	uint32_t reset_delay;
+	struct samp_edge_extra_bin_info left_edge_bins;
+	struct samp_edge_extra_bin_info right_edge_bins;
+	uint16_t start_bin_idx;
+	uint16_t end_bin_idx;
+	uint16_t max_index;
+	uint16_t max_magnitude;
+	int16_t noise_floor;
+	int8_t rssi;
+	uint8_t agc_total_gain;
+	uint8_t gainchange;
+	uint8_t pri80ind;
+	uint8_t is_sec80;
+	/* Padding bits to make struct size multiple of 4 bytes */
+	uint8_t padding_detector_info[1];
+} __packed;
+
+/* Compile time assert to check struct size is divisible by 4 Bytes */
+SPECTRAL_COMPILE_TIME_ASSERT(struct_size_4byte_assertion,
+			     (sizeof(struct samp_detector_info) % 4) == 0);
+
+/**
+ * struct samp_freq_span_info - SAMP per-frequency span information
+ * A frequency span here refers to a contiguous span of frequencies in which
+ * Spectral scan and interference detection is carried out.
+ * @detector_info: Per-detector Spectral information
+ * @num_detectors: Number of detectors per span
+ */
+struct samp_freq_span_info {
+	struct samp_detector_info detector_info[MAX_NUM_DETECTORS];
+	uint8_t num_detectors;
+	/* Padding bits to make struct size multiple of 4 bytes */
+	uint8_t padding_span_info[3];
+} __packed;
+
+/* Compile time assert to check struct size is divisible by 4 Bytes */
+SPECTRAL_COMPILE_TIME_ASSERT(struct_size_4byte_assertion,
+			     (sizeof(struct samp_freq_span_info) % 4) == 0);
+
+/**
+ * struct spectral_samp_msg - Spectral SAMP message
+ * @signature: Validates the SAMP message
+ * @target_reset_count: Indicates the number of times target went through
+ * reset routine after spectral was enabled.
+ * @pri20_freq: Primary 20MHz operating frequency in MHz
+ * @cfreq1: Segment 1 centre frequency in MHz
+ * @cfreq2: For 80p80, indicates segment 2 centre frequency in MHz. For 160MHz,
+ * indicates the center frequency of 160MHz span.
+ * @sscan_cfreq1: Normal/Agile scan Center frequency for Segment 1
+ * based on Spectral Scan mode.
+ * @sscan_cfreq2: Normal/Agile scan Center frequency for Segment 2 in case of
+ * 80p80, and for 160MHz center frequency of the 160MHz span based on Spectral
+ * Scan mode.
+ * @bin_pwr_count: Indicates the number of FFT bins
+ * @freq_span_info: Spectral per-contiguous frequency span information
+ * @spectral_upper_rssi: Indicates RSSI of upper band
+ * @spectral_lower_rssi: Indicates RSSI of lower band
+ * @spectral_chain_ctl_rssi: RSSI for control channel, for all antennas
+ * @spectral_chain_ext_rssi: RSSI for extension channel, for all antennas
+ * @macaddr: Indicates the device interface
+ * @spectral_mode: Spectral scan mode
+ * @operating_bw: Device's operating bandwidth. Values = enum phy_ch_width
+ * @sscan_bw: Normal/Agile Scan BW based on Spectral scan mode.
+ * Values = enum phy_ch_width
+ * @fft_width: Indicates the number of bits representing an FFT bin
+ * @dcs_enabled: Whether DCS is enabled
+ * @int_type: Interference type indicated by DCS. Values = enum dcs_int_type
+ * @num_freq_spans: Number of contiguous frequency spans in operating bandwidth
+ * @bin_pwr: Contains FFT magnitudes
+ */
+struct spectral_samp_msg {
+	uint32_t signature;
+	uint32_t target_reset_count;
+	uint32_t pri20_freq;
+	uint32_t cfreq1;
+	uint32_t cfreq2;
+	uint32_t sscan_cfreq1;
+	uint32_t sscan_cfreq2;
+	uint32_t bin_pwr_count;
+	struct samp_freq_span_info freq_span_info[MAX_NUM_FREQ_SPANS];
+	int8_t spectral_lower_rssi;
+	int8_t spectral_upper_rssi;
+	int8_t spectral_chain_ctl_rssi[MAX_SPECTRAL_CHAINS];
+	int8_t spectral_chain_ext_rssi[MAX_SPECTRAL_CHAINS];
+	uint8_t macaddr[SPECTRAL_MAC_ADDR_SIZE];
+	uint8_t spectral_mode;
+	uint8_t operating_bw;
+	uint8_t sscan_bw;
+	uint8_t fft_width;
+	uint8_t dcs_enabled;
+	uint8_t int_type;
+	uint8_t num_freq_spans;
+	uint8_t bin_pwr[0];  /*This should be the last item in the structure*/
+} __packed;
+
+#else
 /**
  * struct spectral_samp_data - Spectral Analysis Messaging Protocol Data format
  * @spectral_data_len:        Indicates the bin size
@@ -591,4 +766,5 @@ struct spectral_samp_msg {
 	struct spectral_samp_data samp_data;
 } __packed;
 
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 #endif

@@ -30,6 +30,7 @@
 #ifdef WLAN_FEATURE_FILS_SK
 #include <wlan_mlme_ucfg_api.h>
 #endif
+#include <wlan_mlo_mgr_sta.h>
 
 static void osif_cm_free_wep_key_params(struct wlan_cm_connect_req *connect_req)
 {
@@ -431,6 +432,21 @@ static void osif_cm_free_connect_req(struct wlan_cm_connect_req *connect_req)
 	qdf_mem_free(connect_req);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline
+void osif_update_mlo_partner_info(struct wlan_cm_connect_req *connect_req,
+				  const struct cfg80211_connect_params *req)
+{
+	//Update ml partner info in connect_req
+}
+#else
+static inline
+void osif_update_mlo_partner_info(struct wlan_cm_connect_req *connect_req,
+				  const struct cfg80211_connect_params *req)
+{
+}
+#endif
+
 int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 		    const struct cfg80211_connect_params *req,
 		    const struct osif_connect_params *params)
@@ -526,7 +542,9 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 
 	osif_cm_fill_connect_params(connect_req, params);
 
-	status = ucfg_cm_start_connect(vdev, connect_req);
+	osif_update_mlo_partner_info(connect_req, req);
+
+	status = mlo_connect(vdev, connect_req);
 	if (QDF_IS_STATUS_ERROR(status))
 		osif_err("Connect failed with status %d", status);
 
@@ -540,21 +558,12 @@ static QDF_STATUS osif_cm_send_disconnect(struct wlan_objmgr_vdev *vdev,
 					  uint16_t reason)
 {
 	QDF_STATUS status;
-	struct wlan_cm_disconnect_req *req;
 
 	status = osif_cm_reset_id_and_src(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);
 
-	req = qdf_mem_malloc(sizeof(*req));
-	if (!req)
-		return QDF_STATUS_E_NOMEM;
-
-	req->vdev_id = wlan_vdev_get_id(vdev);
-	req->source = CM_OSIF_DISCONNECT;
-	req->reason_code = reason;
-	status = ucfg_cm_start_disconnect(vdev, req);
-	qdf_mem_free(req);
+	status = mlo_disconnect(vdev, CM_OSIF_DISCONNECT, reason, NULL);
 
 	return status;
 }
@@ -584,7 +593,7 @@ int osif_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev, uint16_t reason)
 	osif_info("vdevid-%d: Received Disconnect reason:%d %s",
 		  vdev_id, reason, ucfg_cm_reason_code_to_str(reason));
 
-	status = ucfg_cm_disconnect_sync(vdev, CM_OSIF_DISCONNECT, reason);
+	status = mlo_sync_disconnect(vdev, CM_OSIF_DISCONNECT, reason, NULL);
 
 	return qdf_status_to_os_return(status);
 }

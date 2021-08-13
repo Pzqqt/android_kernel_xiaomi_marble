@@ -40,6 +40,42 @@ qdf_size_t dp_get_context_size_be(enum dp_context_type context_type)
 }
 
 #ifdef DP_FEATURE_HW_COOKIE_CONVERSION
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+/**
+ * dp_cc_wbm_sw_en_cfg() - configure HW cookie conversion enablement
+			   per wbm2sw ring
+ * @cc_cfg: HAL HW cookie conversion configuration structure pointer
+ *
+ * Return: None
+ */
+static inline
+void dp_cc_wbm_sw_en_cfg(struct hal_hw_cc_config *cc_cfg)
+{
+	cc_cfg->wbm2sw6_cc_en = 1;
+	cc_cfg->wbm2sw5_cc_en = 1;
+	cc_cfg->wbm2sw4_cc_en = 1;
+	cc_cfg->wbm2sw3_cc_en = 1;
+	cc_cfg->wbm2sw2_cc_en = 1;
+	/* disable wbm2sw1 hw cc as it's for FW */
+	cc_cfg->wbm2sw1_cc_en = 0;
+	cc_cfg->wbm2sw0_cc_en = 1;
+	cc_cfg->wbm2fw_cc_en = 0;
+}
+#else
+static inline
+void dp_cc_wbm_sw_en_cfg(struct hal_hw_cc_config *cc_cfg)
+{
+	cc_cfg->wbm2sw6_cc_en = 1;
+	cc_cfg->wbm2sw5_cc_en = 1;
+	cc_cfg->wbm2sw4_cc_en = 1;
+	cc_cfg->wbm2sw3_cc_en = 1;
+	cc_cfg->wbm2sw2_cc_en = 1;
+	cc_cfg->wbm2sw1_cc_en = 1;
+	cc_cfg->wbm2sw0_cc_en = 1;
+	cc_cfg->wbm2fw_cc_en = 0;
+}
+#endif
+
 /**
  * dp_cc_reg_cfg_init() - initialize and configure HW cookie
 			  conversion register
@@ -55,22 +91,20 @@ static void dp_cc_reg_cfg_init(struct dp_soc *soc,
 {
 	struct hal_hw_cc_config cc_cfg = { 0 };
 
+	if (!soc->wlan_cfg_ctx->hw_cc_enabled) {
+		dp_info("INI skip HW CC register setting");
+		return;
+	}
+
 	cc_cfg.lut_base_addr_31_0 = cc_ctx->cmem_base;
-	cc_cfg.cc_global_en = soc->wlan_cfg_ctx->hw_cc_enabled;
+	cc_cfg.cc_global_en = true;
 	cc_cfg.page_4k_align = is_4k_align;
 	cc_cfg.cookie_offset_msb = DP_CC_DESC_ID_SPT_VA_OS_MSB;
 	cc_cfg.cookie_page_msb = DP_CC_DESC_ID_PPT_PAGE_OS_MSB;
 	/* 36th bit should be 1 then HW know this is CMEM address */
 	cc_cfg.lut_base_addr_39_32 = 0x10;
 
-	cc_cfg.wbm2sw6_cc_en = 1;
-	cc_cfg.wbm2sw5_cc_en = 1;
-	cc_cfg.wbm2sw4_cc_en = 1;
-	cc_cfg.wbm2sw3_cc_en = 1;
-	cc_cfg.wbm2sw2_cc_en = 1;
-	cc_cfg.wbm2sw1_cc_en = 1;
-	cc_cfg.wbm2sw0_cc_en = 1;
-	cc_cfg.wbm2fw_cc_en = 0;
+	dp_cc_wbm_sw_en_cfg(&cc_cfg);
 
 	hal_cookie_conversion_reg_cfg_be(soc->hal_soc, &cc_cfg);
 }
@@ -134,12 +168,16 @@ static inline QDF_STATUS dp_hw_cc_cmem_addr_init(
 
 static QDF_STATUS dp_hw_cookie_conversion_attach(struct dp_soc_be *be_soc)
 {
-	struct dp_soc *soc = &be_soc->soc;
+	struct dp_soc *soc = DP_SOC_BE_GET_SOC(be_soc);
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
 	uint32_t max_tx_rx_desc_num, num_spt_pages, i = 0;
 	struct dp_spt_page_desc *spt_desc;
 	struct qdf_mem_dma_page_t *dma_page;
 	QDF_STATUS qdf_status;
+
+	if (soc->cdp_soc.ol_ops->get_con_mode &&
+	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
+		return QDF_STATUS_SUCCESS;
 
 	qdf_status = dp_hw_cc_cmem_addr_init(soc, cc_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -200,8 +238,12 @@ fail_0:
 
 static QDF_STATUS dp_hw_cookie_conversion_detach(struct dp_soc_be *be_soc)
 {
-	struct dp_soc *soc = &be_soc->soc;
+	struct dp_soc *soc = DP_SOC_BE_GET_SOC(be_soc);
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
+
+	if (soc->cdp_soc.ol_ops->get_con_mode &&
+	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
+		return QDF_STATUS_SUCCESS;
 
 	qdf_mem_free(cc_ctx->page_desc_base);
 	dp_desc_multi_pages_mem_free(soc, DP_HW_CC_SPT_PAGE_TYPE,
@@ -213,10 +255,14 @@ static QDF_STATUS dp_hw_cookie_conversion_detach(struct dp_soc_be *be_soc)
 
 static QDF_STATUS dp_hw_cookie_conversion_init(struct dp_soc_be *be_soc)
 {
-	struct dp_soc *soc = &be_soc->soc;
+	struct dp_soc *soc = DP_SOC_BE_GET_SOC(be_soc);
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
 	uint32_t i = 0;
 	struct dp_spt_page_desc *spt_desc;
+
+	if (soc->cdp_soc.ol_ops->get_con_mode &&
+	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
+		return QDF_STATUS_SUCCESS;
 
 	if (!cc_ctx->total_page_num) {
 		dp_err("total page num is 0");
@@ -253,7 +299,12 @@ static QDF_STATUS dp_hw_cookie_conversion_init(struct dp_soc_be *be_soc)
 
 static QDF_STATUS dp_hw_cookie_conversion_deinit(struct dp_soc_be *be_soc)
 {
+	struct dp_soc *soc = DP_SOC_BE_GET_SOC(be_soc);
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
+
+	if (soc->cdp_soc.ol_ops->get_con_mode &&
+	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
+		return QDF_STATUS_SUCCESS;
 
 	cc_ctx->page_desc_freelist = NULL;
 	cc_ctx->free_page_num = 0;

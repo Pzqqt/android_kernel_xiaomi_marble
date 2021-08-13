@@ -64,6 +64,8 @@ static void hif_initialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
 	bus_ops->hif_enable_grp_irqs = &hif_dummy_enable_grp_irqs;
 	bus_ops->hif_disable_grp_irqs = &hif_dummy_enable_grp_irqs;
+	bus_ops->hif_config_irq_clear_cpu_affinity =
+		&hif_dummy_config_irq_clear_cpu_affinity;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
@@ -622,6 +624,19 @@ int hif_config_irq_by_ceid(struct hif_softc *hif_sc, int ce_id)
 {
 	return hif_sc->bus_ops.hif_config_irq_by_ceid(hif_sc, ce_id);
 }
+
+#ifdef HIF_CPU_CLEAR_AFFINITY
+void hif_config_irq_clear_cpu_affinity(struct hif_opaque_softc *scn,
+				       int intr_ctxt_id, int cpu)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+
+	hif_sc->bus_ops.hif_config_irq_clear_cpu_affinity(hif_sc,
+							  intr_ctxt_id, cpu);
+}
+
+qdf_export_symbol(hif_config_irq_clear_affinity);
+#endif
 
 #ifdef HIF_BUS_LOG_INFO
 bool hif_log_bus_info(struct hif_softc *hif_sc, uint8_t *data,

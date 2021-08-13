@@ -41,54 +41,81 @@ static struct reg_dmn_supp_op_classes reg_dmn_curr_supp_opp_classes = { 0 };
 
 static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	{81, 25, BW20, BIT(BEHAV_NONE), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	 {0} },
 	{82, 25, BW20, BIT(BEHAV_NONE), 2414,
-	 {14} },
+	 {14},
+	 {0} },
 	{83, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9},
+	 {0} },
 	{84, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 2407,
-	 {5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	 {5, 6, 7, 8, 9, 10, 11, 12, 13},
+	 {0} },
 	{115, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {36, 40, 44, 48} },
+	 {36, 40, 44, 48},
+	 {0} },
 	{116, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {36, 44} },
+	 {36, 44},
+	 {0} },
 	{117, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {40, 48} },
+	 {40, 48},
+	 {0} },
 	{118, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {52, 56, 60, 64} },
+	 {52, 56, 60, 64},
+	 {0} },
 	{119, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {52, 60} },
+	 {52, 60},
+	 {0} },
 	{120, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {56, 64} },
+	 {56, 64},
+	 {0} },
 	{121, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144} },
+	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144},
+	 {0} },
 	{122, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {100, 108, 116, 124, 132, 140} },
+	 {100, 108, 116, 124, 132, 140},
+	 {0} },
 	{123, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {104, 112, 120, 128, 136, 144} },
+	 {104, 112, 120, 128, 136, 144},
+	 {0} },
 	{125, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {149, 153, 157, 161, 165, 169, 173, 177} },
+	 {149, 153, 157, 161, 165, 169, 173, 177},
+	 {0} },
 	{126, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {149, 157, 165, 173} },
+	 {149, 157, 165, 173},
+	 {0} },
 	{127, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {153, 161, 169, 177} },
+	 {153, 161, 169, 177},
+	 {0} },
 	{128, 80, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64,
 	  100, 104, 108, 112, 116, 120, 124, 128,
 	  132, 136, 140, 144, 149, 153, 157, 161,
-	  165, 169, 173, 177} },
+	  165, 169, 173, 177},
+	  {0} },
 	{129, 160, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64,
 	  100, 104, 108, 112, 116, 120, 124, 128,
-	  149, 153, 157, 161, 165, 169, 173, 177} },
+	  149, 153, 157, 161, 165, 169, 173, 177},
+	 {0} },
 	{130, 80, BW80, BIT(BEHAV_BW80_PLUS), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64,
 	  100, 104, 108, 112, 116, 120, 124, 128,
 	  132, 136, 140, 144, 149, 153, 157, 161,
-	  165, 169, 173, 177} },
+	  165, 169, 173, 177},
+	 {0} },
 
 #ifdef CONFIG_BAND_6GHZ
 	{131, 20, BW20, BIT(BEHAV_NONE), 5950,
+	 {1, 5, 9, 13, 17, 21, 25, 29, 33,
+	  37, 41, 45, 49, 53, 57, 61, 65, 69,
+	  73, 77, 81, 85, 89, 93, 97,
+	  101, 105, 109, 113, 117, 121, 125,
+	  129, 133, 137, 141, 145, 149, 153,
+	  157, 161, 165, 169, 173, 177, 181,
+	  185, 189, 193, 197, 201, 205, 209,
+	  213, 217, 221, 225, 229, 233},
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33,
 	  37, 41, 45, 49, 53, 57, 61, 65, 69,
 	  73, 77, 81, 85, 89, 93, 97,
@@ -104,7 +131,10 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  101, 105, 109, 113, 117, 121, 125, 129, 133, 137,
 	  141, 145, 149, 153, 157, 161, 165, 169, 173, 177,
 	  181, 185, 189, 193, 197, 201, 205, 209, 213, 217,
-	  221, 225, 229, 233} },
+	  221, 225, 229, 233},
+	 {3, 11, 19, 27, 35, 43, 51, 59, 67, 75,
+	  83, 91, 99, 107, 115, 123, 131, 139, 147, 155,
+	  163, 171, 179, 187, 195, 203, 211, 219, 227} },
 
 	{133, 80, BW80, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49,
@@ -112,7 +142,9 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  101, 105, 109, 113, 117, 121, 125, 129, 133, 137,
 	  141, 145, 149, 153, 157, 161, 165, 169, 173,
 	  177, 181, 185, 189, 193, 197, 201, 205, 209, 213,
-	  217, 221, 225, 229, 233} },
+	  217, 221, 225, 229, 233},
+	 {7, 23, 39, 55, 71, 87, 103, 119, 135, 151, 167, 183,
+	  199, 215} },
 
 	{134, 160, BW80, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45,
@@ -120,7 +152,8 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  93, 97, 101, 105, 109, 113, 117, 121, 125,
 	  129, 133, 137, 141, 145, 149, 153, 157, 161,
 	  165, 169, 173, 177, 181, 185, 189, 193, 197,
-	  201, 205, 209, 213, 217, 221, 225, 229, 233} },
+	     201, 205, 209, 213, 217, 221, 225, 229, 233},
+	 {15, 47, 79, 111, 143, 175, 207} },
 
 	{135, 80, BW80, BIT(BEHAV_BW80_PLUS), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41,
@@ -129,10 +162,13 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  121, 125, 129, 133, 137, 141, 145, 149,
 	  153, 157, 161, 165, 169, 173, 177, 181,
 	  185, 189, 193, 197, 201, 205, 209, 213,
-	  217, 221, 225, 229, 233} },
+	  217, 221, 225, 229, 233},
+	 {7, 23, 39, 55, 71, 87, 103, 119, 135, 151, 167, 183,
+	  199, 215} },
 
 	{136, 20, BW20, BIT(BEHAV_NONE), 5925,
-	 {2} },
+	 {2},
+	 {0} },
 #ifdef WLAN_FEATURE_11BE
 	{137, 320, BW20, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41,
@@ -141,10 +177,12 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  121, 125, 129, 133, 137, 141, 145, 149,
 	  153, 157, 161, 165, 169, 173, 177, 181,
 	  185, 189, 193, 197, 201, 205, 209, 213,
-	  217, 221, 225, 229, 233} },
+	  217, 221, 225, 229, 233},
+	 {31, 63, 95, 127, 159, 191} },
 #endif
 #endif
-	{0, 0, 0, 0, 0, {0} },
+	{0, 0, 0, 0, 0, {0},
+	{0} },
 };
 
 static const struct reg_dmn_op_class_map_t us_op_class[] = {
@@ -346,6 +384,202 @@ static const struct reg_dmn_op_class_map_t
 	}
 	return class;
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+void reg_dmn_free_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
+					    uint8_t num_opclasses,
+					    uint8_t *opclass_lst,
+					    uint8_t *chansize_lst,
+					    uint8_t *channel_lists[])
+{
+	/*
+	 * All the elements of channel_lists were allocated as a single
+	 * allocation with 'channel_lists[0]' holding the first location of the
+	 * allocation. Therefore, freeing only 'channel_lists[0]' is enough.
+	 * Freeing any other 'channel_lists[i]' will result in error of freeing
+	 * unallocated memory.
+
+	 */
+
+	qdf_mem_free(channel_lists[0]);
+
+	/*
+	 * opclass_lst, chansize_lst and channel_lists were allocated as a
+	 * single allocation with 'opclass_lst' holding the first location of
+	 * allocation. Therefore, freeing only 'opclass_lst' is enough.
+	 * Freeing chansize_lst, channel_lists will result in error of freeing
+	 * unallocated memory.
+	 */
+	qdf_mem_free(opclass_lst);
+}
+
+/**
+ * reg_dmn_get_num_6g_opclasses() - Calculate the number of opclasses in the
+ * 6GHz band.
+ * Return: The number of opclasses
+ */
+static uint8_t reg_dmn_get_num_6g_opclasses(struct wlan_objmgr_pdev *pdev)
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl;
+	uint8_t count;
+
+	op_class_tbl = global_op_class;
+
+	count = 0;
+	while (op_class_tbl && op_class_tbl->op_class) {
+		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class))
+			count++;
+
+		op_class_tbl++;
+	}
+
+	return count;
+}
+
+/**
+ * reg_dmn_get_num_6g_opcls_chans() - Calculate the number of channels given
+ * the pointer to the (operating class) channel array.
+ *
+ * Return: The number of channels
+ */
+static uint8_t reg_dmn_get_num_6g_opcls_chans(const uint8_t *p_chans)
+{
+	uint8_t i = 0;
+
+	while (p_chans[i])
+		i++;
+
+	return i;
+}
+
+/**
+ * reg_dmn_fill_6g_opcls_chan_lists() - Copy the channel lists for 6g opclasses
+ * to the output argument list ('channel_lists')
+ * @pdev: Pointer to pdev.
+ * @chansize_lst: Array of sizes of channel lists
+ * @channel_lists: The array list pointers where the channel lists are to be
+ *                 copied.
+ *
+ * Return: Void
+ */
+static void reg_dmn_fill_6g_opcls_chan_lists(struct wlan_objmgr_pdev *pdev,
+					     uint8_t chansize_lst[],
+					     uint8_t *channel_lists[])
+{
+	uint8_t i = 0;
+	const struct reg_dmn_op_class_map_t *op_class_tbl;
+
+	op_class_tbl = global_op_class;
+
+	while (op_class_tbl && op_class_tbl->op_class) {
+		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
+			uint8_t *dst = channel_lists[i];
+			const uint8_t *src = op_class_tbl->cfis;
+			uint8_t len = chansize_lst[i] * sizeof(*dst);
+
+			qdf_mem_copy(dst, src, len);
+			i++;
+		}
+		op_class_tbl++;
+	}
+}
+
+QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
+						 uint8_t *num_opclasses,
+						 uint8_t **opclass_lst,
+						 uint8_t **chansize_lst,
+						 uint8_t **channel_lists[])
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl;
+	uint8_t *l_opcls_lst;
+	uint8_t *l_chansize_lst;
+	uint8_t count;
+	uint8_t i;
+	uint8_t **arr_chan_lists;
+	uint16_t total_alloc_size;
+	uint16_t opcls_lst_size;
+	uint16_t chansize_lst_size;
+	uint16_t arr_chan_lists_size;
+	uint8_t *p_total_alloc1;
+	uint8_t *p_total_alloc2;
+	uint8_t *p_temp_alloc;
+
+	op_class_tbl = global_op_class;
+
+	*num_opclasses = reg_dmn_get_num_6g_opclasses(pdev);
+	opcls_lst_size = *num_opclasses * sizeof(uint8_t);
+	chansize_lst_size = *num_opclasses * sizeof(uint8_t);
+	arr_chan_lists_size =  *num_opclasses * sizeof(uint8_t *);
+
+	total_alloc_size = 0;
+	total_alloc_size += opcls_lst_size
+		+ chansize_lst_size
+		+ arr_chan_lists_size;
+
+	p_total_alloc1 = qdf_mem_malloc(total_alloc_size);
+	if (!p_total_alloc1) {
+		reg_err("out-of-memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	 /* Assign memory locations to each pointers */
+	p_temp_alloc = p_total_alloc1;
+
+	l_opcls_lst = p_temp_alloc;
+	p_temp_alloc += opcls_lst_size;
+
+	l_chansize_lst = p_temp_alloc;
+	p_temp_alloc += chansize_lst_size;
+
+	arr_chan_lists  = (uint8_t **)p_temp_alloc;
+
+	/* Fill arrays with  opclasses and chanlist sizes */
+	count = 0;
+	while (op_class_tbl && op_class_tbl->op_class) {
+		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
+			const uint8_t *pcfis = op_class_tbl->cfis;
+
+			l_opcls_lst[count] = op_class_tbl->op_class;
+			l_chansize_lst[count]
+				= reg_dmn_get_num_6g_opcls_chans(pcfis);
+			count++;
+		}
+		op_class_tbl++;
+	}
+
+	/* Calculate total alloction size for the array */
+	total_alloc_size = 0;
+	for (i = 0; i < *num_opclasses; i++)
+		total_alloc_size += l_chansize_lst[i] * sizeof(uint8_t *);
+
+	p_total_alloc2 = qdf_mem_malloc(total_alloc_size);
+	if (!p_total_alloc2) {
+		reg_err("out-of-memory");
+		qdf_mem_free(p_total_alloc1);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* Assign memory locations to each list pointers */
+	p_temp_alloc = p_total_alloc2;
+	for (i = 0; i < *num_opclasses; i++) {
+		if (!l_chansize_lst[i])
+			arr_chan_lists[i] = NULL;
+		else
+			arr_chan_lists[i] = p_temp_alloc;
+
+		p_temp_alloc += l_chansize_lst[i] * sizeof(uint8_t *);
+	}
+
+	/* Fill the array with channl lists */
+	reg_dmn_fill_6g_opcls_chan_lists(pdev, l_chansize_lst, arr_chan_lists);
+
+	*opclass_lst = l_opcls_lst;
+	*chansize_lst = l_chansize_lst;
+	*channel_lists = arr_chan_lists;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* CONFIG_AFC_SUPPORT */
 
 uint16_t reg_dmn_get_chanwidth_from_opclass(uint8_t *country, uint8_t channel,
 					    uint8_t opclass)

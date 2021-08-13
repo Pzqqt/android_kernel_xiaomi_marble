@@ -531,6 +531,46 @@ QDF_STATUS wlan_reg_get_secondary_current_chan_list(
 					struct regulatory_channel *chan_list);
 #endif
 
+#if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
+/**
+ * wlan_reg_get_6g_ap_master_chan_list() - provide  the appropriate ap master
+ * channel list
+ * @pdev: pdev pointer
+ * @ap_pwr_type: The ap power type (LPI/VLP/SP)
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
+					       enum reg_6g_ap_type ap_pwr_type,
+					       struct regulatory_channel *chan_list);
+
+/**
+ * wlan_reg_get_6g_afc_chan_list() - provide the pdev afc channel list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
+					 struct regulatory_channel *chan_list);
+
+/**
+ * wlan_reg_psd_2_eirp() - Calculate EIRP from PSD and bandwidth
+ * channel list
+ * @pdev: pdev pointer
+ * @psd: Power Spectral Density in dBm/MHz
+ * @ch_bw: Bandwidth of a channel in MHz (20/40/80/160/320 etc)
+ * @eirp:  EIRP power  in dBm
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
+			       int16_t psd,
+			       uint16_t ch_bw,
+			       int16_t *eirp);
+#endif
+
 /**
  * wlan_reg_get_bonded_channel_state_for_freq() - Get bonded channel freq state
  * @freq: channel frequency

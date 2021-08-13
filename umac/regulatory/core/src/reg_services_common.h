@@ -26,6 +26,10 @@
 #ifndef __REG_SERVICES_COMMON_H_
 #define __REG_SERVICES_COMMON_H_
 
+#ifdef CONFIG_AFC_SUPPORT
+#include <wlan_reg_afc.h>
+#endif
+
 #define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (psoc_priv_obj)
 #define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (pdev_priv_obj)
 #define FREQ_TO_CHAN_SCALE     5
@@ -71,6 +75,9 @@
  */
 #define HALF_5MHZ_BW     2
 #define HALF_20MHZ_BW    10
+#define HALF_40MHZ_BW    20
+#define HALF_80MHZ_BW    40
+#define HALF_160MHZ_BW   80
 
 #define TWO_GIG_STARTING_EDGE_FREQ (channel_map_global[MIN_24GHZ_CHANNEL]. \
 				  center_freq - HALF_20MHZ_BW)
@@ -120,6 +127,17 @@
 #define MIN_6GHZ_OPER_CLASS 131
 #define MAX_6GHZ_OPER_CLASS 136
 
+#ifdef CONFIG_AFC_SUPPORT
+#define DEFAULT_REQ_ID 11235813
+/* default minimum power in dBm units */
+#define DEFAULT_MIN_POWER    (-10)
+#define DEFAULT_NUM_FREQS       1
+
+/* Have the entire 6Ghz band as single range */
+#define DEFAULT_LOW_6GFREQ    5925
+#define DEFAULT_HIGH_6GFREQ   7125
+#endif
+
 extern const struct chan_map *channel_map;
 extern const struct chan_map channel_map_us[];
 extern const struct chan_map channel_map_eu[];
@@ -129,6 +147,19 @@ extern const struct chan_map channel_map_global[];
 
 #ifdef WLAN_FEATURE_11BE
 #define ALL_SCHANS_PUNC 0x0000 /* all subchannels punctured */
+#endif
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * struct afc_cb_handler - defines structure for afc request received  event
+ * handler call back function and argument
+ * @func: handler function pointer
+ * @arg: argument to handler function
+ */
+struct afc_cb_handler {
+	afc_req_rx_evt_handler func;
+	void *arg;
+};
 #endif
 /**
  * get_next_lower_bandwidth() - Get next lower bandwidth
@@ -1201,6 +1232,67 @@ reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 			   enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type);
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * reg_afc_start() -  Start the AFC request from regulatory. This finally
+ *                    send the request to MLME(UMAC)
+ * @pdev: Pointer to pdev
+ * @req_id: The AFC request ID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
+
+/**
+ * reg_get_partial_afc_req_info() - Get the AFC partial request information
+ * @pdev: Pointer to pdev
+ * @afc_req: Address of AFC request pointer
+ *
+ * NOTE:- The memory  for AFC request is allocated by the function must be
+ *        freed by the caller.
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+			     struct wlan_afc_host_partial_request **afc_req);
+
+/**
+ * reg_print_partial_afc_req_info() -  Print the  AFC partial request
+ *                                     information
+ * @pdev: Pointer to pdev
+ * @afc_req: Pointer to AFC request
+ *
+ * Return: Void
+ */
+void
+reg_print_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+			       struct wlan_afc_host_partial_request *afc_req);
+
+/**
+ * reg_register_afc_req_rx_callback () - add AFC request received callback
+ * @pdev: Pointer to pdev
+ * @cbf: Pointer to callback handler
+ * @arg: Pointer to opaque argument
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_register_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+					    afc_req_rx_evt_handler cbf,
+					    void *arg);
+
+/**
+ * reg_unregister_afc_req_rx_callback () - remove AFC request received
+ * callback
+ * @pdev: Pointer to pdev
+ * @cbf: Pointer to callback handler
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+					      afc_req_rx_evt_handler cbf);
+#endif
+
 /**
  * reg_get_cur_6g_client_type() - Get the current 6G regulatory client Type.
  * @pdev: Pointer to PDEV object.
@@ -1570,5 +1662,39 @@ bool reg_is_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc);
  * Return: true if edge channels are supported, else false
  */
 bool reg_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc);
+#endif
+
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+/**
+ * reg_process_ch_avoid_ext_event() - Process channel avoid extended event
+ * @psoc: psoc for country information
+ * @ch_avoid_event: channel avoid extended event buffer
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS
+reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
+			       struct ch_avoid_ind_type *ch_avoid_event);
+#else
+static inline QDF_STATUS
+reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
+			       struct ch_avoid_ind_type *ch_avoid_event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * reg_send_afc_cmd() - Send AFC cmd to the FW
+ * @pdev: pdev ptr
+ * @afc_ind_obj: Pointer to hold AFC indication
+ *
+ * Return: QDF_STATUS_SUCCESS if the WMI command is sent or QDF_STATUS_E_FAILURE
+ * otherwise
+ */
+QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
+			    struct reg_afc_resp_rx_ind_info *afc_ind_obj);
 #endif
 #endif

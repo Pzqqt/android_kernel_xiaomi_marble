@@ -509,6 +509,7 @@ struct qdf_radiotap_vendor_ns_ath {
 #define IPV4_DST_PORT_OFFSET          36
 
 /* IPV4 ICMP Related Mask */
+#define ICMP_ID_OFFSET                38
 #define ICMP_SEQ_NUM_OFFSET           40
 #define ICMP_SUBTYPE_OFFSET           34
 #define ICMP_REQUEST                  0x08

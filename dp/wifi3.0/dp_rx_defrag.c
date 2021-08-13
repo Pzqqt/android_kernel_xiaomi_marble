@@ -917,13 +917,17 @@ dp_rx_construct_fraglist(struct dp_peer *peer, int tid, qdf_nbuf_t head,
 	int out_of_order = 0;
 	int index;
 	int needs_pn_check = 0;
+	enum cdp_sec_type sec_type;
 
 	prev_pn128[0] = rx_tid->pn128[0];
 	prev_pn128[1] = rx_tid->pn128[1];
 
 	index = hal_rx_msdu_is_wlan_mcast(soc->hal_soc, msdu) ? dp_sec_mcast :
 				dp_sec_ucast;
-	if (qdf_likely(peer->security[index].sec_type != cdp_sec_type_none))
+	sec_type = peer->security[index].sec_type;
+
+	if (!(sec_type == cdp_sec_type_none || sec_type == cdp_sec_type_wep128 ||
+	      sec_type == cdp_sec_type_wep104 || sec_type == cdp_sec_type_wep40))
 		needs_pn_check = 1;
 
 	while (msdu) {
@@ -1453,6 +1457,9 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	struct dp_soc *soc = vdev->pdev->soc;
 	uint8_t status = 0;
 
+	if (!cur)
+		return QDF_STATUS_E_DEFRAG_ERROR;
+
 	hdr_space = dp_rx_defrag_hdrsize(soc, cur);
 	index = hal_rx_msdu_is_wlan_mcast(soc->hal_soc, cur) ?
 		dp_sec_mcast : dp_sec_ucast;
@@ -1824,9 +1831,11 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	 * If the earlier sequence was dropped, this will be the fresh start.
 	 * Else, continue with next fragment in a given sequence
 	 */
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	status = dp_rx_defrag_fraglist_insert(peer, tid, &rx_reorder_array_elem->head,
 			&rx_reorder_array_elem->tail, frag,
 			&all_frag_present);
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 
 	/*
 	 * Currently, we can have only 6 MSDUs per-MPDU, if the current
@@ -1880,6 +1889,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 		  "All fragments received for sequence: %d", rxseq);
 
 	/* Process the fragments */
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	status = dp_rx_defrag(peer, tid, rx_reorder_array_elem->head,
 		rx_reorder_array_elem->tail);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1898,12 +1908,14 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 					"%s: Failed to return link desc",
 					__func__);
 		dp_rx_defrag_cleanup(peer, tid);
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		goto end;
 	}
 
 	/* Re-inject the fragments back to REO for further processing */
 	status = dp_rx_defrag_reo_reinject(peer, tid,
 			rx_reorder_array_elem->head);
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		rx_reorder_array_elem->head = NULL;
 		rx_reorder_array_elem->tail = NULL;

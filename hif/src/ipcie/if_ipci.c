@@ -374,6 +374,22 @@ fail:
 
 int hif_ipci_bus_suspend_noirq(struct hif_softc *scn)
 {
+	/*
+	 * If it is system suspend case and wake-IRQ received
+	 * just before Kernel issuing suspend_noirq, that must
+	 * have scheduled CE2 tasklet, so suspend activity can
+	 * be aborted.
+	 * Similar scenario for runtime suspend case, would be
+	 * handled by hif_pm_runtime_check_and_request_resume
+	 * in hif_ce_interrupt_handler.
+	 *
+	 */
+	if (!hif_pm_runtime_get_monitor_wake_intr(GET_HIF_OPAQUE_HDL(scn)) &&
+	    hif_get_num_active_tasklets(scn)) {
+		hif_err("Tasklets are pending, abort sys suspend_noirq");
+		return -EBUSY;
+	}
+
 	return 0;
 }
 
@@ -619,6 +635,43 @@ void hif_ipci_config_irq_affinity(struct hif_softc *scn)
 	hif_ipci_ce_irq_set_affinity_hint(scn);
 }
 #endif /* #ifdef HIF_CPU_PERF_AFFINE_MASK */
+
+#ifdef HIF_CPU_CLEAR_AFFINITY
+void hif_ipci_config_irq_clear_cpu_affinity(struct hif_softc *scn,
+					    int intr_ctxt_id, int cpu)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+	int i, ret;
+
+	if (intr_ctxt_id < hif_state->hif_num_extgroup) {
+		hif_ext_group = hif_state->hif_ext_group[intr_ctxt_id];
+		for (i = 0; i < hif_ext_group->numirq; i++) {
+			qdf_cpumask_setall(&hif_ext_group->new_cpu_mask[i]);
+			qdf_cpumask_clear_cpu(cpu,
+					      &hif_ext_group->new_cpu_mask[i]);
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  IRQ_NO_BALANCING, 0);
+			ret = qdf_dev_set_irq_affinity(hif_ext_group->os_irq[i],
+						       (struct qdf_cpu_mask *)
+						       &hif_ext_group->
+						       new_cpu_mask[i]);
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  0, IRQ_NO_BALANCING);
+			if (ret)
+				hif_err("Set affinity %*pbl fails for IRQ %d ",
+					qdf_cpumask_pr_args(&hif_ext_group->
+							    new_cpu_mask[i]),
+					hif_ext_group->os_irq[i]);
+			else
+				hif_debug("Set affinity %*pbl for IRQ: %d",
+					  qdf_cpumask_pr_args(&hif_ext_group->
+							      new_cpu_mask[i]),
+					  hif_ext_group->os_irq[0]);
+		}
+	}
+}
+#endif
 
 int hif_ipci_configure_grp_irq(struct hif_softc *scn,
 			       struct hif_exec_context *hif_ext_group)
@@ -881,16 +934,24 @@ int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif);
 	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
-	uint32_t timeout = 0;
+	uint32_t start_time = 0, curr_time = 0;
+	uint32_t count = 0;
 
 	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
 		return 0;
 
+	start_time = curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	while (pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
-	       timeout <= EP_WAKE_RESET_DELAY_TIMEOUT_US) {
-		qdf_sleep_us(EP_WAKE_RESET_DELAY_US);
-		timeout += EP_WAKE_RESET_DELAY_US;
+	       curr_time <= start_time + EP_WAKE_RESET_DELAY_TIMEOUT_MS) {
+		if (count < EP_VOTE_POLL_TIME_CNT) {
+			qdf_udelay(EP_VOTE_POLL_TIME_US);
+			count++;
+		} else {
+			qdf_sleep_us(EP_WAKE_RESET_DELAY_US);
+		}
+		curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	}
+
 
 	if (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
 		hif_err_rl(" EP state reset is not done to prevent l1");
@@ -904,12 +965,19 @@ int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
 		return 0;
 	}
 
+	count = 0;
 	ipci_scn->prevent_l1 = true;
-	timeout = 0;
+	start_time = curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	while (!pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
-	       timeout <= EP_WAKE_DELAY_TIMEOUT_US) {
-		qdf_sleep_us(EP_WAKE_DELAY_US);
-		timeout += EP_WAKE_DELAY_US;
+	       curr_time <= start_time + EP_WAKE_DELAY_TIMEOUT_MS) {
+		if (count < EP_VOTE_POLL_TIME_CNT) {
+			qdf_udelay(EP_WAKE_RESET_DELAY_US);
+			count++;
+		} else {
+			qdf_sleep_us(EP_WAKE_DELAY_US);
+		}
+
+		curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	}
 
 	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) <= 0) {

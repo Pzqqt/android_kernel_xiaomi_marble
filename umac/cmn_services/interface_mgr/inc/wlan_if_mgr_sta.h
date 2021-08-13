@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -77,5 +77,20 @@ QDF_STATUS if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 				      struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_validate_candidate() - Validate the selected candidate
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles candidate validation as part of connection
+ * manager
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_validate_candidate(struct wlan_objmgr_vdev *vdev,
+				     struct if_mgr_event_data *event_data);
 
 #endif

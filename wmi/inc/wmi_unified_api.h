@@ -4305,6 +4305,21 @@ QDF_STATUS wmi_extract_pdev_csa_switch_count_status(
         __wmi_validate_handle(wmi_handle, __func__)
 int __wmi_validate_handle(wmi_unified_t wmi_handle, const char *func);
 
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * wmi_unified_send_afc_cmd() - send afc indication info
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev id
+ * @param: regulatory AFC indication info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_unified_send_afc_cmd(wmi_unified_t wmi_handle,
+			 uint8_t pdev_id,
+			 struct reg_afc_resp_rx_ind_info *param);
+#endif
+
 /**
  * wmi_unified_send_set_tpc_power_cmd() - send set transmit power info
  * @wmi_handle: wmi handle
@@ -4328,4 +4343,17 @@ QDF_STATUS wmi_unified_send_set_tpc_power_cmd(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_extract_dpd_status_ev_param(wmi_unified_t wmi_handle,
 					   void *evt_buf,
 					   struct wmi_host_pdev_get_dpd_status_event *param);
+
+/**
+ * wmi_extract_halphy_cal_status_ev_param() - extract halphy cal status from FW event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buf
+ * @param: halphy cal status info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_halphy_cal_status_ev_param(wmi_unified_t wmi_handle,
+				       void *evt_buf,
+				       struct wmi_host_pdev_get_halphy_cal_status_event *param);
 #endif /* _WMI_UNIFIED_API_H_ */

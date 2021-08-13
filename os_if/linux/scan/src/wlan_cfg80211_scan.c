@@ -1553,6 +1553,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 			     WLAN_REG_IS_24GHZ_CH_FREQ(c_freq)) ||
 			    (req->scan_req.scan_f_5ghz &&
 			     (WLAN_REG_IS_5GHZ_CH_FREQ(c_freq) ||
+			      WLAN_REG_IS_49GHZ_FREQ(c_freq) ||
 			      WLAN_REG_IS_6GHZ_CHAN_FREQ(c_freq)))) {
 				req->scan_req.chan_list.chan[num_chan].freq =
 									c_freq;
@@ -1845,7 +1846,7 @@ wlan_get_ieee80211_channel(struct wiphy *wiphy,
 
 	chan = ieee80211_get_channel(wiphy, chan_freq);
 	if (!chan)
-		osif_err("chan is NULL, freq: %d", chan_freq);
+		osif_err_rl("chan is NULL, freq: %d", chan_freq);
 
 	return chan;
 }
@@ -2019,10 +2020,10 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	bss_data.chan = wlan_get_ieee80211_channel(wiphy, pdev,
 		scan_params->channel.chan_freq);
 	if (!bss_data.chan) {
-		osif_err("Channel not found for bss "QDF_MAC_ADDR_FMT" seq %d chan_freq %d",
-			 QDF_MAC_ADDR_REF(bss_data.mgmt->bssid),
-			 scan_params->seq_num,
-			 scan_params->channel.chan_freq);
+		osif_err_rl("Channel not found for bss " QDF_MAC_ADDR_FMT " seq %d chan_freq %d",
+			    QDF_MAC_ADDR_REF(bss_data.mgmt->bssid),
+			    scan_params->seq_num,
+			    scan_params->channel.chan_freq);
 		qdf_mem_free(bss_data.mgmt);
 		return;
 	}

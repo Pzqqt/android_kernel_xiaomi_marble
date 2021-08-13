@@ -152,6 +152,9 @@ static bool cm_handle_connect_disconnect_in_roam(struct cnx_mgr *cm_ctx,
 		cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_DISCONNECT_START,
 					 data_len, data);
 		break;
+	case WLAN_CM_SM_EV_DISCONNECT_ACTIVE:
+		cm_disconnect_active(cm_ctx, data);
+		break;
 	default:
 		return false;
 		break;
@@ -227,6 +230,7 @@ bool cm_subst_preauth_event(void *ctx, uint16_t event,
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_REQ:
 	case WLAN_CM_SM_EV_DISCONNECT_REQ:
+	case WLAN_CM_SM_EV_DISCONNECT_ACTIVE:
 		event_handled =
 			cm_handle_connect_disconnect_in_roam(cm_ctx, event,
 							     data_len, data);
@@ -304,6 +308,7 @@ bool cm_subst_reassoc_event(void *ctx, uint16_t event,
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_REQ:
 	case WLAN_CM_SM_EV_DISCONNECT_REQ:
+	case WLAN_CM_SM_EV_DISCONNECT_ACTIVE:
 		event_handled =
 			cm_handle_connect_disconnect_in_roam(cm_ctx, event,
 							     data_len, data);
@@ -318,7 +323,7 @@ bool cm_subst_reassoc_event(void *ctx, uint16_t event,
 		}
 		cm_reassoc_active(cm_ctx, data);
 		break;
-	case WLAN_CM_SM_EV_DISCONNECT_DONE:
+	case WLAN_CM_SM_EV_HO_ROAM_DISCONNECT_DONE:
 		cm_reassoc_disconnect_complete(cm_ctx, data);
 		break;
 	case WLAN_CM_SM_EV_BSS_CREATE_PEER_SUCCESS:
@@ -383,6 +388,7 @@ bool cm_subst_roam_start_event(void *ctx, uint16_t event,
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_REQ:
 	case WLAN_CM_SM_EV_DISCONNECT_REQ:
+	case WLAN_CM_SM_EV_DISCONNECT_ACTIVE:
 		event_handled =
 			cm_handle_connect_disconnect_in_roam(cm_ctx, event,
 							     data_len, data);
@@ -436,6 +442,7 @@ bool cm_subst_roam_sync_event(void *ctx, uint16_t event,
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_REQ:
 	case WLAN_CM_SM_EV_DISCONNECT_REQ:
+	case WLAN_CM_SM_EV_DISCONNECT_ACTIVE:
 		event_handled =
 			cm_handle_connect_disconnect_in_roam(cm_ctx, event,
 							     data_len, data);

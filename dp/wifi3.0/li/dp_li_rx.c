@@ -31,8 +31,10 @@
 #include "if_meta_hdr.h"
 #endif
 #include "dp_internal.h"
-#include "dp_rx_mon.h"
 #include "dp_ipa.h"
+#ifdef WIFI_MONITOR_SUPPORT
+#include <dp_mon.h>
+#endif
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
@@ -188,7 +190,7 @@ more_data:
 					   ring_desc, rx_desc);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			if (qdf_unlikely(rx_desc && rx_desc->nbuf)) {
-				qdf_assert_always(rx_desc->unmapped);
+				qdf_assert_always(!rx_desc->unmapped);
 				dp_ipa_reo_ctx_buf_mapping_lock(soc,
 								reo_ring_num);
 				dp_ipa_handle_rx_buf_smmu_mapping(
@@ -634,7 +636,8 @@ done:
 		/*
 		 * Drop non-EAPOL frames from unauthorized peer.
 		 */
-		if (qdf_likely(peer) && qdf_unlikely(!peer->authorize)) {
+		if (qdf_likely(peer) && qdf_unlikely(!peer->authorize) &&
+		    !qdf_nbuf_is_raw_frame(nbuf)) {
 			bool is_eapol = qdf_nbuf_is_ipv4_eapol_pkt(nbuf) ||
 					qdf_nbuf_is_ipv4_wapi_pkt(nbuf);
 

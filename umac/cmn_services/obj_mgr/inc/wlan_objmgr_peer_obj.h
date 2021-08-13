@@ -127,6 +127,7 @@ enum wlan_peer_state {
  * @state:           State of the peer
  * @seq_num:         Sequence number
  * @rssi:            Last received RSSI value
+ * @assoc_peer:      assoc req/response is handled in this peer
  */
 struct wlan_objmgr_peer_mlme {
 	uint32_t peer_capinfo;
@@ -138,6 +139,9 @@ struct wlan_objmgr_peer_mlme {
 	uint16_t seq_num;
 	int8_t rssi;
 	bool is_authenticated;
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool assoc_peer;
+#endif
 };
 
 /**
@@ -173,6 +177,7 @@ struct wlan_objmgr_peer_objmgr {
  * @pdev_id:          Pdev ID
  * @peer_lock:        Lock for access/update peer contents
  * @mlo_peer_ctx:     Reference to MLO Peer context
+ * @mldaddr:          Peer MLD MAC address
  */
 struct wlan_objmgr_peer {
 	qdf_list_node_t psoc_peer;
@@ -187,6 +192,7 @@ struct wlan_objmgr_peer {
 	qdf_spinlock_t peer_lock;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct mlo_peer_ctx *mlo_peer_ctx;
+	uint8_t mldaddr[QDF_MAC_ADDR_SIZE];
 #endif
 };
 
@@ -960,6 +966,89 @@ static inline void wlan_peer_mlme_set_state(
 {
 	peer->peer_mlme.state = state;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_peer_mlme_get_mldaddr() - get peer mldaddr
+ * @peer: PEER object
+ *
+ * API to get MLD address from peer object
+ *
+ * Return: mld address
+ */
+static inline uint8_t *wlan_peer_mlme_get_mldaddr(struct wlan_objmgr_peer *peer)
+{
+	return peer->mldaddr;
+}
+
+/**
+ * wlan_peer_mlme_set_mldaddr() - set peer mldaddr
+ * @peer: PEER object
+ * @mldaddr: MLD address
+ *
+ * API to set MLD addr in peer object
+ *
+ * Return: void
+ */
+static inline void wlan_peer_mlme_set_mldaddr(struct wlan_objmgr_peer *peer,
+					      uint8_t *mldaddr)
+{
+	WLAN_ADDR_COPY(peer->mldaddr, mldaddr);
+}
+
+/**
+ * wlan_peer_mlme_set_assoc_peer() - assoc frames is received on this peer
+ * @peer: PEER object
+ * @is_assoc_link: whether assoc frames is received on this peer or not
+ *
+ * API to update assoc peer
+ *
+ * Return: void
+ */
+static inline void wlan_peer_mlme_set_assoc_peer(
+				struct wlan_objmgr_peer *peer,
+				bool is_assoc_link)
+{
+	peer->peer_mlme.assoc_peer = is_assoc_link;
+}
+
+/**
+ * wlan_peer_mlme_is_assoc_peer() - check peer is assoc peer or not
+ * @peer: PEER object
+ *
+ * API to get assoc peer info
+ *
+ * Return: whether assoc frames is received on this peer or not
+ */
+static inline bool wlan_peer_mlme_is_assoc_peer(
+				struct wlan_objmgr_peer *peer)
+{
+	return peer->peer_mlme.assoc_peer;
+}
+#else
+
+static inline uint8_t *wlan_peer_mlme_get_mldaddr(struct wlan_objmgr_peer *peer)
+{
+	return NULL;
+}
+
+static inline void wlan_peer_mlme_set_mldaddr(struct wlan_objmgr_peer *peer,
+					      uint8_t *mldaddr)
+{
+}
+
+static inline void wlan_peer_mlme_set_assoc_peer(
+				struct wlan_objmgr_peer *peer,
+				bool is_assoc_link)
+{
+}
+
+static inline bool wlan_peer_mlme_is_assoc_peer(
+				struct wlan_objmgr_peer *peer)
+{
+	return false;
+}
+#endif
 
 /**
  * wlan_peer_mlme_set_auth_state() - peer mlme auth state

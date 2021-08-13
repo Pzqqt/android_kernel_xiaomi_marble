@@ -2652,4 +2652,40 @@ static inline enum QDF_GLOBAL_MODE target_psoc_get_device_mode
  */
 void target_if_set_reg_cc_ext_supp(struct target_psoc_info *tgt_hdl,
 				   struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_psoc_set_twt_ack_cap() - Set twt ack capability
+ *
+ * @psoc_info: Pointer to struct target_psoc_info.
+ * @val: twt ack cap value
+ *
+ * Return: None
+ *
+ */
+static inline
+void target_psoc_set_twt_ack_cap(struct target_psoc_info *psoc_info, bool val)
+{
+	if (!psoc_info)
+		return;
+
+	psoc_info->info.service_ext2_param.twt_ack_support_cap = val;
+}
+
+/**
+ * target_psoc_get_twt_ack_cap() - Get twt ack capability
+ *
+ * @psoc_info: Pointer to struct target_psoc_info.
+ * @val: twt ack cap value
+ *
+ * Return: None
+ *
+ */
+static inline
+void target_psoc_get_twt_ack_cap(struct target_psoc_info *psoc_info, bool *val)
+{
+	if (!psoc_info)
+		return;
+
+	*val = psoc_info->info.service_ext2_param.twt_ack_support_cap;
+}
 #endif

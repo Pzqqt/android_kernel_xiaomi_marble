@@ -319,6 +319,62 @@ QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev, uint16_t *usenol)
 }
 qdf_export_symbol(utils_dfs_get_usenol);
 
+bool utils_dfs_is_spruce_spur_war_applicable(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	uint32_t target_type;
+	struct wlan_lmac_if_target_tx_ops *tgt_tx_ops;
+	qdf_freq_t cur_freq;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs)
+		return false;
+
+	psoc = dfs->dfs_soc_obj->psoc;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "tx_ops is NULL");
+		return false;
+	}
+
+	tgt_tx_ops = &tx_ops->target_tx_ops;
+	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
+
+	/* Is the target Spruce? */
+	if (!tgt_tx_ops->tgt_is_tgt_type_qcn6122)
+		return false;
+
+	if (!tgt_tx_ops->tgt_is_tgt_type_qcn6122(target_type))
+		return false;
+
+	cur_freq = dfs->dfs_curchan->dfs_ch_freq;
+
+	/* Is the current channel width 80MHz? */
+	if (WLAN_IS_CHAN_MODE_80(dfs->dfs_curchan)) {
+		/* is the primary channel 52/56/60/64? */
+		bool is_chan_spur_80mhzfreq =
+		    DFS_IS_CHAN_SPRUCE_SPUR_FREQ_80MHZ(cur_freq);
+		if (is_chan_spur_80mhzfreq)
+			return true;
+		return false;
+	}
+
+	/* If the current channel width is not 80, is it 160MHz? */
+	if (WLAN_IS_CHAN_MODE_160(dfs->dfs_curchan)) {
+		/* is the primary channel 36/44/48/52/56/60/64? */
+		bool is_chan_spur_160mhz_freq =
+		    DFS_IS_CHAN_SPRUCE_SPUR_FREQ_160MHZ(cur_freq);
+		if (is_chan_spur_160mhz_freq)
+			return true;
+		return false;
+	}
+
+	return false;
+}
+
 QDF_STATUS utils_dfs_radar_disable(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;

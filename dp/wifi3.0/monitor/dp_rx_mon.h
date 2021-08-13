@@ -19,6 +19,8 @@
 #ifndef _DP_RX_MON_H_
 #define _DP_RX_MON_H_
 
+#include "dp_mon.h"
+
 /*
  * MON_BUF_MIN_ENTRIES macro defines minimum number of network buffers
  * to be refilled in the RXDMA monitor buffer ring at init, remaining
@@ -112,16 +114,54 @@ dp_rx_mon_status_process(struct dp_soc *soc, struct dp_intr *int_ctx,
  *
  * Return: none
  */
-void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
-			    uint32_t mac_id, uint32_t quota);
-
 QDF_STATUS dp_rx_pdev_mon_desc_pool_alloc(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev);
 void dp_rx_pdev_mon_buffers_free(struct dp_pdev *pdev);
 void dp_rx_pdev_mon_desc_pool_init(struct dp_pdev *pdev);
 void dp_rx_pdev_mon_desc_pool_deinit(struct dp_pdev *pdev);
 void dp_rx_pdev_mon_desc_pool_free(struct dp_pdev *pdev);
+#ifdef QCA_MONITOR_PKT_SUPPORT
+void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			    uint32_t mac_id, uint32_t quota);
+
 void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
+QDF_STATUS
+dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
+				 bool delayed_replenish);
+QDF_STATUS
+dp_rx_pdev_mon_buf_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id);
+void
+dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id);
+#else
+static inline
+void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			    uint32_t mac_id, uint32_t quota)
+{
+}
+
+static inline
+void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id)
+{
+}
+
+static inline QDF_STATUS
+dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
+				 bool delayed_replenish)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+dp_rx_pdev_mon_buf_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
+{
+}
+#endif
 
 QDF_STATUS dp_rx_pdev_mon_status_buffers_alloc(struct dp_pdev *pdev,
 					       uint32_t mac_id);
@@ -134,13 +174,6 @@ void dp_rx_pdev_mon_status_desc_pool_deinit(struct dp_pdev *pdev,
 void dp_rx_pdev_mon_status_desc_pool_free(struct dp_pdev *pdev,
 					  uint32_t mac_id);
 void dp_rx_pdev_mon_status_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
-QDF_STATUS
-dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
-				 bool delayed_replenish);
-QDF_STATUS
-dp_rx_pdev_mon_buf_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id);
-void
-dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id);
 
 /*
  * dp_rx_populate_cbf_hdr - Send CBF frame with htt header
@@ -315,6 +348,7 @@ uint32_t dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
  */
 void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev);
 
+#ifdef QCA_MONITOR_PKT_SUPPORT
 /**
  * dp_rx_mon_link_desc_return() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
@@ -327,6 +361,15 @@ QDF_STATUS
 dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
 			   hal_buff_addrinfo_t buf_addr_info,
 			   int mac_id);
+#else
+static inline QDF_STATUS
+dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
+			   hal_buff_addrinfo_t buf_addr_info,
+			   int mac_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * dp_mon_adjust_frag_len() - MPDU and MSDU may spread across

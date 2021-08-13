@@ -121,14 +121,17 @@ static inline bool vdev_mgr_is_49G_5G_6G_chan_freq(uint16_t chan_freq)
 #ifdef WLAN_FEATURE_11BE
 static void
 vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *mlme_obj,
-				 struct vdev_start_params *param)
+				 struct vdev_start_params *param,
+				 struct wlan_channel *des_chan)
 {
 	param->eht_ops = mlme_obj->proto.eht_ops_info.eht_ops;
+	param->channel.puncture_pattern = des_chan->puncture_bitmap;
 }
 #else
 static void
 vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *mlme_obj,
-				 struct vdev_start_params *param)
+				 struct vdev_start_params *param,
+				 struct wlan_channel *des_chan)
 {
 }
 #endif
@@ -206,7 +209,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	param->regdomain = dfs_reg;
 	param->he_ops = mlme_obj->proto.he_ops_info.he_ops;
 
-	vdev_mgr_start_param_update_11be(mlme_obj, param);
+	vdev_mgr_start_param_update_11be(mlme_obj, param, des_chan);
 
 	param->channel.chan_id = des_chan->ch_ieee;
 	param->channel.pwr = mlme_obj->mgmt.generic.tx_power;

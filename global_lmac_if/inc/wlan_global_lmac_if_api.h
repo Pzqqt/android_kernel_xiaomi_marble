@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -97,4 +97,16 @@ QDF_STATUS wlan_lmac_if_sptrl_set_rx_ops_register_cb(void (*handler)
 QDF_STATUS wlan_lmac_if_iot_sim_set_rx_ops_register_cb(void (*handler)
 				(struct wlan_lmac_if_rx_ops *));
 #endif
+
+/**
+ * wlan_lmac_if_son_set_rx_ops_register_cb ()- SON Rx ops
+ * registration callback assignment
+ * @handler: Handler to be called for SON rx ops registration
+ *
+ * API to assign appropriate SON rx ops registration callback handler
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_lmac_if_son_set_rx_ops_register_cb(void (*handler)
+				(struct wlan_lmac_if_rx_ops *));
 #endif /* _WLAN_LMAC_IF_API_H */

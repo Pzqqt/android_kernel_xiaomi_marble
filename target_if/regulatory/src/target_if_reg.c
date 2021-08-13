@@ -707,6 +707,41 @@ tgt_if_regulatory_set_tpc_power(struct wlan_objmgr_psoc *psoc,
 	return wmi_unified_send_set_tpc_power_cmd(wmi_handle, vdev_id, param);
 }
 
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * tgt_if_regulatory_send_afc_cmd() - Send AFC command to the FW
+ *
+ * @psoc: Pointer to psoc
+ * @pdev_id: Pdev id
+ * @param: Pointer to hold AFC indication.
+ *
+ * Return: QDF_STATUS_SUCCESS if WMI_AFC_CMD is sent, else QDF_STATUS_E_FAILURE
+ */
+static QDF_STATUS
+tgt_if_regulatory_send_afc_cmd(struct wlan_objmgr_psoc *psoc,
+			       uint8_t pdev_id,
+			       struct reg_afc_resp_rx_ind_info *param)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_send_afc_cmd(wmi_handle, pdev_id, param);
+}
+
+static void
+tgt_if_register_afc_callback(struct wlan_lmac_if_reg_tx_ops *reg_ops)
+{
+	reg_ops->send_afc_ind = tgt_if_regulatory_send_afc_cmd;
+}
+#else
+static void
+tgt_if_register_afc_callback(struct wlan_lmac_if_reg_tx_ops *reg_ops)
+{
+}
+#endif
+
 /**
  * tgt_if_regulatory_is_ext_tpc_supported() - Check if FW supports new
  * WMI command for TPC power
@@ -885,6 +920,8 @@ QDF_STATUS target_if_register_regulatory_tx_ops(
 			tgt_if_regulatory_get_pdev_id_from_phy_id;
 
 	reg_ops->set_tpc_power = tgt_if_regulatory_set_tpc_power;
+
+	tgt_if_register_afc_callback(reg_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

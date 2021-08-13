@@ -536,6 +536,8 @@ struct ce_ops {
 	int (*ce_ring_setup)(struct hif_softc *scn, uint8_t ring_type,
 		uint32_t ce_id, struct CE_ring_state *ring,
 		struct CE_attr *attr);
+	void (*ce_srng_cleanup)(struct hif_softc *scn,
+				struct CE_state *CE_state, uint8_t ring_type);
 	QDF_STATUS (*ce_send_nolock)(struct CE_handle *copyeng,
 				     void *per_transfer_context,
 				     qdf_dma_addr_t buffer,
