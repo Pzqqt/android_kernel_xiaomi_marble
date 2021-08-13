@@ -53,6 +53,16 @@ enum hal_tx_mcast_ctrl {
 	HAL_TX_MCAST_CTRL_NO_SPECIAL,
 };
 
+/**
+ * enum hal_tx_vdev_mismatch_notify
+ * @HAL_TX_VDEV_MISMATCH_TQM_NOTIFY: vdev mismatch exception routed to TQM
+ * @HAL_TX_VDEV_MISMATCH_FW_NOTIFY: vdev mismatch exception routed to FW
+ */
+enum hal_tx_vdev_mismatch_notify {
+	HAL_TX_VDEV_MISMATCH_TQM_NOTIFY = 0,
+	HAL_TX_VDEV_MISMATCH_FW_NOTIFY,
+};
+
 /*---------------------------------------------------------------------------
  * Structures
  * ---------------------------------------------------------------------------
@@ -676,4 +686,34 @@ hal_tx_vdev_mcast_ctrl_set(hal_soc_handle_t hal_soc_hdl,
 {
 }
 #endif
+
+/**
+ * hal_tx_vdev_mismatch_routing_set - set vdev mismatch exception routing
+ * @hal_soc: HAL SoC context
+ * @config: HAL_TX_VDEV_MISMATCH_TQM_NOTIFY - route via TQM
+ *          HAL_TX_VDEV_MISMATCH_FW_NOTIFY - route via FW
+ *
+ * Return: void
+ */
+static inline void
+hal_tx_vdev_mismatch_routing_set(hal_soc_handle_t hal_soc_hdl,
+				 enum hal_tx_vdev_mismatch_notify config)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+	uint32_t reg_addr, reg_val = 0;
+	uint32_t val = 0;
+
+	reg_addr = HWIO_TCL_R0_CMN_CONFIG_ADDR(MAC_TCL_REG_REG_BASE);
+
+	val = HAL_REG_READ(hal_soc, reg_addr);
+
+	/* reset the corresponding bits in register */
+	val &= (~(HWIO_TCL_R0_CMN_CONFIG_VDEVID_MISMATCH_EXCEPTION_BMSK));
+
+	/* set config value */
+	reg_val = val | (config <<
+			HWIO_TCL_R0_CMN_CONFIG_VDEVID_MISMATCH_EXCEPTION_SHFT);
+
+	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
+}
 #endif /* _HAL_BE_TX_H_ */

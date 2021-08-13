@@ -4490,12 +4490,23 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 		dp_tx_inspect_handler(soc, vdev, tx_desc, status);
 		break;
 	}
+	case HTT_TX_FW2WBM_TX_STATUS_VDEVID_MISMATCH:
+	{
+		DP_STATS_INC(vdev, tx_i.dropped.fail_per_pkt_vdev_id_check, 1);
+		goto release_tx_desc;
+	}
 	default:
-		dp_tx_comp_debug("Invalid HTT tx_status %d\n",
+		dp_tx_comp_alert("Invalid HTT tx_status %d\n",
 				 tx_status);
-		break;
+		goto release_tx_desc;
 	}
 
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
+	return;
+
+release_tx_desc:
+	dp_tx_comp_free_buf(soc, tx_desc);
+	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
 }
 

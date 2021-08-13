@@ -28,6 +28,8 @@
 #define DP_AST_AGING_TIMER_DEFAULT_MS	5000
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+#define DP_TX_VDEV_ID_CHECK_ENABLE 0
+
 static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
 	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_BE_WBM_SW0_BM_ID, .for_ipa = 0},
 	{1, 4, HAL_BE_WBM_SW4_BM_ID, 0},
@@ -37,6 +39,7 @@ static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RIN
 };
 
 #else
+#define DP_TX_VDEV_ID_CHECK_ENABLE 1
 
 static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
 	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_BE_WBM_SW0_BM_ID, .for_ipa = 0},
@@ -436,6 +439,9 @@ static QDF_STATUS dp_soc_init_be(struct dp_soc *soc)
 
 	qdf_status = dp_hw_cookie_conversion_init(be_soc);
 
+	/* route vdev_id mismatch notification via FW completion */
+	hal_tx_vdev_mismatch_routing_set(soc->hal_soc,
+					 HAL_TX_VDEV_MISMATCH_FW_NOTIFY);
 	return qdf_status;
 }
 
@@ -463,10 +469,9 @@ static QDF_STATUS dp_vdev_attach_be(struct dp_soc *soc, struct dp_vdev *vdev)
 	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
 	struct dp_vdev_be *be_vdev = dp_get_be_vdev_from_dp_vdev(vdev);
 
-	be_vdev->bank_id = dp_tx_get_bank_profile(be_soc, be_vdev);
+	be_vdev->vdev_id_check_en = DP_TX_VDEV_ID_CHECK_ENABLE;
 
-	/* Needs to be enabled after bring-up*/
-	be_vdev->vdev_id_check_en = false;
+	be_vdev->bank_id = dp_tx_get_bank_profile(be_soc, be_vdev);
 
 	if (be_vdev->bank_id == DP_BE_INVALID_BANK_ID) {
 		QDF_BUG(0);

@@ -1640,6 +1640,8 @@ struct dp_arch_ops {
 	uint32_t (*dp_service_near_full_srngs)(struct dp_soc *soc,
 					       struct dp_intr *int_ctx,
 					       uint32_t dp_budget);
+	void (*tx_implicit_rbm_set)(struct dp_soc *soc, uint8_t tx_ring_id,
+				    uint8_t bm_id);
 
 	/* Control Arch Ops */
 	QDF_STATUS (*txrx_set_vdev_param)(struct dp_soc *soc,
@@ -1652,8 +1654,6 @@ struct dp_arch_ops {
 	int (*dp_srng_test_and_update_nf_params)(struct dp_soc *soc,
 						 struct dp_srng *dp_srng,
 						 int *max_reap_limit);
-	void (*tx_implicit_rbm_set)(struct dp_soc *soc, uint8_t tx_ring_id,
-				    uint8_t bm_id);
 };
 
 /**
