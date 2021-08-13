@@ -117,6 +117,7 @@ const EID_OPERATING_MODE             =  199;
 const EID_WIDER_BW_CHANNEL_SWITCH_ANN=  194;
 const EID_TRANSMIT_POWER_ENVELOPE    = 195;
 const EID_CHANNEL_SWITCH_WRAPPER     = 196;
+const EID_RNR_IE                     = 201;
 const EID_VENDOR_SPECIFIC            = 221;
 const EID_FILS_INDICATION            = 240;
 const EID_FRAGMENT_IE                = 242;
@@ -2478,6 +2479,119 @@ IE ChannelSwitchWrapper (EID_CHANNEL_SWITCH_WRAPPER)
     OPTIE IE  WiderBWChanSwitchAnn;
     OPTIE IE  transmit_power_env;
 }
+
+IE reduced_neighbor_report (EID_RNR_IE)
+{
+    // TBTT Information Header
+    {
+	tbtt_type:              2;
+	filtered_neighbor_ap:   1;
+	reserved:               1;
+	tbtt_info_count:        4;
+	tbtt_info_len:          8;
+    }
+    op_class, 1;
+    channel_num, 1;
+    // TBTT information field
+    UNION tbtt_info (DISCRIMINATOR tbtt_info_len)
+    {
+	tbtt_info_1 (tbtt_info_len IS 1)
+	{
+		tbtt_offset, 1;
+	}
+	tbtt_info_2 (tbtt_info_len IS 2)
+	{
+		tbtt_offset, 1;
+		bss_params, 1;
+	}
+	tbtt_info_4 (tbtt_info_len IS 4)
+	{
+		tbtt_offset, 1;
+		{
+		     mld_id:                    8;
+		     link_id:                   4;
+		     bss_param_change_cnt:      8;
+		     reserved:                  12;
+		}
+	}
+	tbtt_info_5 (tbtt_info_len IS 5)
+	{
+		tbtt_offset, 1;
+		short_ssid, 4;
+	}
+	tbtt_info_6 (tbtt_info_len IS 6)
+	{
+		tbtt_offset, 1;
+		short_ssid, 4;
+		bss_params, 1;
+	}
+	tbtt_info_7 (tbtt_info_len IS 7)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+	}
+	tbtt_info_8 (tbtt_info_len IS 8)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		bss_params, 1;
+	}
+	tbtt_info_9 (tbtt_info_len IS 9)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		bss_params, 1;
+		psd_20mhz, 1;
+	}
+	tbtt_info_10 (tbtt_info_len IS 10)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		{
+		     mld_id:                    8;
+		     link_id:                   4;
+		     bss_param_change_cnt:      8;
+		     reserved:                  12;
+		}
+	}
+	tbtt_info_11 (tbtt_info_len IS 11)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+	}
+	tbtt_info_12 (tbtt_info_len IS 12)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+		bss_params, 1;
+	}
+	tbtt_info_13 (tbtt_info_len IS 13)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+		bss_params, 1;
+		psd_20mhz, 1;
+	}
+	tbtt_info_16 (tbtt_info_len IS 16)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+		bss_params, 1;
+		psd_20mhz, 1;
+		{
+		     mld_id:                    8;
+		     link_id:                   4;
+		     bss_param_change_cnt:      8;
+		     reserved:                  12;
+		}
+	}
+    };
+}
+
 IE ExtCap (EID_EXT_CAP)
 {
     bytes[1..15];
@@ -3157,14 +3271,68 @@ IE he_6ghz_band_cap (EID_EXTN_ID_ELEMENT) OUI (0x3B)
 
 IE eht_cap (EID_EXTN_ID_ELEMENT) OUI (0xFD)
 {
-    eht_mac_cap[6];
-    phy_cap_bytes[11];
     {
-        reserved: 1;
-        supported_ch_width_set: 7;
+	nsep_pri_access: 1;
+	eht_om_ctl: 1;
+	triggered_txop_sharing: 1;
+	reserved: 13;
     }
-    rx_mcs_map, 2;
-    tx_mcs_map, 2;
+    {
+	reserved2: 1;
+	support_320mhz_6ghz: 1;
+	ru_242tone_wt_20mhz: 1;
+	ndp_4x_eht_ltf_3dot2_us_gi: 1;
+	partial_bw_mu_mimo: 1;
+	su_beamformer: 1;
+	su_beamformee: 1;
+	bfee_ss_le_80mhz: 3;
+	bfee_ss_160mhz: 3;
+	bfee_ss_320mhz: 3;
+	num_sounding_dim_le_80mhz: 3;
+	num_sounding_dim_160mhz: 3;
+	num_sounding_dim_320mhz: 3;
+	ng_16_su_feedback: 1;
+	ng_16_mu_feedback: 1;
+	cb_sz_4_2_su_feedback: 1;
+	cb_sz_7_5_su_feedback: 1;
+	trig_su_bforming_feedback: 1;
+	trig_mu_bforming_partial_bw_feedback: 1;
+	triggered_cqi_feedback: 1;
+    }
+    {
+	partial_bw_dl_mu_mimo: 1;
+	psr_based_sr: 1;
+	power_boost_factor: 1;
+	eht_mu_ppdu_4x_ltf_0_8_us_gi: 1;
+	max_nc: 4;
+	non_trig_cqi_feedback: 1;
+	tx_1024_4096_qam_lt_242_tone_ru: 1;
+	rx_1024_4096_qam_lt_242_tone_ru: 1;
+	ppet_present: 1;
+	common_nominal_pkt_padding: 2;
+	max_num_eht_ltf: 5;
+	mcs_15: 4;
+	eht_dup_6ghz: 1;
+	op_sta_rx_ndp_wider_bw_20mhz: 1;
+	non_ofdma_ul_mu_mimo_le_80mhz: 1;
+	non_ofdma_ul_mu_mimo_160mhz: 1;
+	non_ofdma_ul_mu_mimo_320mhz: 1;
+	mu_bformer_le_80mhz: 1;
+	mu_bformer_160mhz: 1;
+	mu_bformer_320mhz: 1;
+	reserved3: 1;
+    }
+    eht_mcs_map_20[0..4];
+    eht_mcs_map_le_80[0..3];
+    eht_mcs_map_160[0..3];
+    eht_mcs_map_320[3][0..1] COUNTIS support_320mhz_6ghz;
+    OPTIONAL UNION ppet (DISCRIMINATOR ppet_present)
+    {
+        ppe_threshold (ppet_present IS 1)
+        {
+            ppe_th[2..62];
+        }
+    };
 }
 
 IE eht_op (EID_EXTN_ID_ELEMENT) OUI (0xFE)
@@ -3663,6 +3831,7 @@ IE sta_profile (0)
   OPTIE IE HTInfo;
   OPTIE IE WMMParams;
   OPTIE IE WMMCaps;
+  OPTIE IE WMMInfoStation;
   OPTIE IE VHTCaps;
   OPTIE IE VHTOperation;
   OPTIE IE ExtCap;
@@ -3779,8 +3948,6 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  FHPattTable;
     OPTIE  PowerConstraints;
     OPTIE  ChanSwitchAnn;
-    OPTIE  ext_chan_switch_ann;
-    OPTIE  SuppOperatingClasses;
     OPTIE  Quiet;
     OPTIE  TPCReport;
     OPTIE  ERPInfo;
@@ -3792,48 +3959,52 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  APChannelReport;
     OPTIE  RRMEnabledCap;
     OPTIE  MobilityDomain;
-    OPTIE  WPA;
+    OPTIE  ext_chan_switch_ann;
+    OPTIE  SuppOperatingClasses;
     OPTIE  HTCaps;
     OPTIE  HTInfo;
-    OPTIE  sec_chan_offset_ele;
-    OPTIE  WMMInfoAp;
-    OPTIE  WMMParams;
-    OPTIE  WMMCaps;
-    OPTIE  WAPI;
-    OPTIE  ESERadMgmtCap;
-    OPTIE  ESETrafStrmMet;
-    OPTIE  ESETxmitPower;
-
-    OPTIE  WscBeacon;
-    OPTIE  P2PBeacon;
+    OPTIE  OBSSScanParameters;
+    OPTIE  ExtCap;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
     OPTIE  transmit_power_env[0..8];
+    OPTIE  ChannelSwitchWrapper;
     OPTIE  VHTExtBssLoad;
-    OPTIE  ExtCap;
     OPTIE  OperatingMode;
-    OPTIE  WiderBWChanSwitchAnn;
-    OPTIE  OBSSScanParameters;
     OPTIE  fils_indication;
+    OPTIE  max_chan_switch_time;
+    OPTIE  esp_information;
+    OPTIE  he_cap;
+    OPTIE  he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  sec_chan_offset_ele;
+    OPTIE  WAPI;
+    OPTIE  ESETxmitPower;
+    OPTIE  WiderBWChanSwitchAnn;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
+    OPTIE  mlo_ie;
+
+    OPTIE  WPA;
+    OPTIE  WMMInfoAp;
+    OPTIE  WMMParams;
+    OPTIE  WMMCaps;
+    OPTIE  ESEVersion;
+    OPTIE  ESERadMgmtCap;
+    OPTIE  ESETrafStrmMet;
+    OPTIE  WscBeacon;
+    OPTIE  P2PBeacon;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
-    OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
-    OPTIE  ESEVersion;
     OPTIE  MBO_IE;
     OPTIE  qcn_ie;
-    OPTIE  he_cap;
-    OPTIE  he_op;
-    OPTIE  he_6ghz_band_cap;
-    OPTIE  bss_color_change;
-    OPTIE  mu_edca_param_set;
-    OPTIE  esp_information;
-    OPTIE  eht_cap;
-    OPTIE  eht_op;
-    OPTIE  max_chan_switch_time;
-    OPTIE  mlo_ie;
+    OPTIE  reduced_neighbor_report;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3883,8 +4054,6 @@ FRAME Beacon2
     OPTIE  Country;
     OPTIE  PowerConstraints;
     OPTIE  ChanSwitchAnn;
-    OPTIE  ext_chan_switch_ann;
-    OPTIE  SuppOperatingClasses;
     OPTIE  Quiet;
     OPTIE  TPCReport;
     OPTIE  ERPInfo;
@@ -3894,29 +4063,43 @@ FRAME Beacon2
     OPTIE  APChannelReport;
     OPTIE  RRMEnabledCap;
     OPTIE  MobilityDomain;
-    OPTIE  WPA;
+    OPTIE  ext_chan_switch_ann;
+    OPTIE  SuppOperatingClasses;
     OPTIE  HTCaps;
     OPTIE  HTInfo;
-    OPTIE  sec_chan_offset_ele;
-    OPTIE  WMMInfoAp;
-    OPTIE  WMMParams;
-    OPTIE  WMMCaps;
-    OPTIE  WscBeacon;
-    OPTIE  WAPI;
-    OPTIE  ESERadMgmtCap;
-    OPTIE  ESETrafStrmMet;
-    OPTIE  ESETxmitPower;
-    OPTIE  P2PBeacon;
+    OPTIE  OBSSScanParameters;
+    OPTIE  ExtCap;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
     OPTIE  transmit_power_env[0..8];
     OPTIE  ChannelSwitchWrapper;
     OPTIE  VHTExtBssLoad;
-    OPTIE  ExtCap;
     OPTIE  OperatingMode;
-    OPTIE  WiderBWChanSwitchAnn;
-    OPTIE  OBSSScanParameters;
     OPTIE  fils_indication;
+    OPTIE  max_chan_switch_time;
+    OPTIE  esp_information;
+    OPTIE  he_cap;
+    OPTIE  he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  sec_chan_offset_ele;
+    OPTIE  WAPI;
+    OPTIE  ESETxmitPower;
+    OPTIE  WiderBWChanSwitchAnn;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
+    OPTIE  mlo_ie;
+
+    OPTIE  WPA;
+    OPTIE  WMMInfoAp;
+    OPTIE  WMMParams;
+    OPTIE  WMMCaps;
+    OPTIE  ESERadMgmtCap;
+    OPTIE  ESETrafStrmMet;
+    OPTIE  WscBeacon;
+    OPTIE  P2PBeacon;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
@@ -3924,16 +4107,7 @@ FRAME Beacon2
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
     OPTIE  qcn_ie;
-    OPTIE  he_cap;
-    OPTIE  he_op;
-    OPTIE  he_6ghz_band_cap;
-    OPTIE  bss_color_change;
-    OPTIE  mu_edca_param_set;
-    OPTIE  esp_information;
-    OPTIE  eht_cap;
-    OPTIE  eht_op;
-    OPTIE  max_chan_switch_time;
-    OPTIE  mlo_ie;
+    OPTIE  reduced_neighbor_report;
 }
 
 // This frame is just Beacon with its Fixed Fields stripped out.  It's handy
@@ -3956,8 +4130,6 @@ FRAME BeaconIEs
     OPTIE  FHPattTable;
     OPTIE  PowerConstraints;
     OPTIE  ChanSwitchAnn;
-    OPTIE  ext_chan_switch_ann;
-    OPTIE  SuppOperatingClasses;
     OPTIE  Quiet;
     OPTIE  TPCReport;
     OPTIE  ERPInfo;
@@ -3969,48 +4141,52 @@ FRAME BeaconIEs
     OPTIE  APChannelReport;
     OPTIE  RRMEnabledCap;
     OPTIE  MobilityDomain;
-    OPTIE  WPA;
+    OPTIE  ext_chan_switch_ann;
+    OPTIE  SuppOperatingClasses;
     OPTIE  HTCaps;
     OPTIE  HTInfo;
-    OPTIE  sec_chan_offset_ele;
-    OPTIE  WMMInfoAp;
-    OPTIE  WMMParams;
-    OPTIE  WMMCaps;
-    OPTIE  WAPI;
-    OPTIE  ESEVersion;
-    OPTIE  ESERadMgmtCap;
-    OPTIE  ESETrafStrmMet;
-    OPTIE  ESETxmitPower;
-
-    OPTIE  WscBeaconProbeRes;
-    OPTIE  P2PBeaconProbeRes;
+    OPTIE  OBSSScanParameters;
+    OPTIE  ExtCap;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
     OPTIE  transmit_power_env[0..8];
+    OPTIE  ChannelSwitchWrapper;
     OPTIE  VHTExtBssLoad;
-    OPTIE  ExtCap;
     OPTIE  OperatingMode;
-    OPTIE  WiderBWChanSwitchAnn;
-    OPTIE  OBSSScanParameters;
     OPTIE  fils_indication;
+    OPTIE  max_chan_switch_time;
+    OPTIE  esp_information;
+    OPTIE  he_cap;
+    OPTIE  he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  sec_chan_offset_ele;
+    OPTIE  WAPI;
+    OPTIE  ESETxmitPower;
+    OPTIE  WiderBWChanSwitchAnn;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
+    OPTIE  mlo_ie;
+
+    OPTIE  WPA;
+    OPTIE  WMMInfoAp;
+    OPTIE  WMMParams;
+    OPTIE  WMMCaps;
+    OPTIE  ESEVersion;
+    OPTIE  ESERadMgmtCap;
+    OPTIE  ESETrafStrmMet;
+    OPTIE  WscBeaconProbeRes;
+    OPTIE  P2PBeaconProbeRes;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
-    OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
     OPTIE  MBO_IE;
     OPTIE  qcn_ie;
-    OPTIE  he_cap;
-    OPTIE  he_op;
-    OPTIE  he_6ghz_band_cap;
-    OPTIE  bss_color_change;
-    OPTIE  mu_edca_param_set;
-    OPTIE  esp_information;
-    OPTIE  eht_cap;
-    OPTIE  eht_op;
-    OPTIE  max_chan_switch_time;
-    OPTIE  mlo_ie;
+    OPTIE  reduced_neighbor_report;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -4025,29 +4201,35 @@ FRAME AssocRequest                        // 7.2.3.4
     FF     ListenInterval;
     MANDIE SSID;
     MANDIE SuppRates;
-    OPTIE  OperatingMode;
+    OPTIE  ExtSuppRates;
     OPTIE  PowerCaps;
     OPTIE  SuppChannels;
-    OPTIE  HTCaps;
-    OPTIE  QOSCapsStation;
     OPTIE  RSNOpaque;
-    OPTIE  ExtSuppRates;
-    OPTIE  MobilityDomain;
-    OPTIE  FTInfo;
-    OPTIE  SuppOperatingClasses;
-    OPTIE  WAPIOpaque;
-    OPTIE  WAPI;
+    OPTIE  QOSCapsStation;
     OPTIE  RRMEnabledCap;
-    OPTIE  bss_max_idle_period;
-    OPTIE  QosMapSet;
+    OPTIE  MobilityDomain;
+    OPTIE  SuppOperatingClasses;
+    OPTIE  HTCaps;
     OPTIE  ExtCap;
     OPTIE  VHTCaps;
+    OPTIE  OperatingMode;
     OPTIE  fils_session;
     OPTIE  fils_public_key;
     OPTIE  fils_key_confirmation;
     OPTIE  fils_hlp_container;
+    OPTIE  bss_max_idle_period;
+    OPTIE  FTInfo;
+    OPTIE  he_cap;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  WAPIOpaque;
+    OPTIE  WAPI;
+    OPTIE  QosMapSet;
     OPTIE  fragment_ie;
     OPTIE  dh_parameter_element;
+    OPTIE  eht_cap;
+    OPTIE  mlo_ie;
+
     OPTIE  WPAOpaque;
     OPTIE  WMMCaps;
     OPTIE  WMMInfoStation;
@@ -4059,12 +4241,8 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
     OPTIE  qcn_ie;
-    OPTIE  he_cap;
-    OPTIE  he_6ghz_band_cap;
     OPTIE  osen_ie;
-    OPTIE roaming_consortium_sel;
-    OPTIE  eht_cap;
-    OPTIE  mlo_ie;
+    OPTIE  roaming_consortium_sel;
 } // End frame AssocRequest.
 
 FRAME AssocResponse                       // 7.2.3.5
@@ -4080,42 +4258,45 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  RRMEnabledCap;
     OPTIE  MobilityDomain;
     OPTIE  FTInfo;
-    OPTIE  RICDataDesc[2];
-    OPTIE  bss_max_idle_period;
-    OPTIE  WPA;
     OPTIE  TimeoutInterval;
     OPTIE  HTCaps;
     OPTIE  HTInfo;
-    OPTIE  WMMParams;
-    OPTIE  WMMCaps;
-    OPTIE  ESERadMgmtCap;
-    OPTIE  ESETrafStrmMet;
-    OPTIE  ESETxmitPower;
-    OPTIE  WMMTSPEC[0..4];
-    OPTIE  WscAssocRes;
-    OPTIE  P2PAssocRes;
+    OPTIE  OBSSScanParameters;
+    OPTIE  ExtCap;
+    OPTIE  bss_max_idle_period;
+    OPTIE  QosMapSet;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
-    OPTIE  ExtCap;
-    OPTIE  OBSSScanParameters;
-    OPTIE  QosMapSet;
     OPTIE  fils_session;
     OPTIE  fils_public_key;
     OPTIE  fils_key_confirmation;
     OPTIE  fils_hlp_container;
-    OPTIE  fragment_ie;
-    OPTIE  fils_kde;
-    OPTIE  vendor_vht_ie;
-    OPTIE  qcn_ie;
     OPTIE  he_cap;
     OPTIE  he_op;
-    OPTIE  he_6ghz_band_cap;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
-    OPTIE  MBO_IE;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  RICDataDesc[2];
+    OPTIE  ESETxmitPower;
+    OPTIE  fragment_ie;
+    OPTIE  fils_kde;
     OPTIE  eht_cap;
     OPTIE  eht_op;
     OPTIE  mlo_ie;
+
+    OPTIE  WPA;
+    OPTIE  WMMParams;
+    OPTIE  WMMCaps;
+    OPTIE  ESERadMgmtCap;
+    OPTIE  ESETrafStrmMet;
+    OPTIE  WMMTSPEC[0..4];
+    OPTIE  WscAssocRes;
+    OPTIE  P2PAssocRes;
+    OPTIE  vendor_vht_ie;
+    OPTIE  qcn_ie;
+    OPTIE  MBO_IE;
+    OPTIE  reduced_neighbor_report;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -4134,32 +4315,34 @@ FRAME ReAssocRequest                      // 7.2.3.6
     OPTIE  MobilityDomain;
     OPTIE  FTInfo;
     OPTIE  RICDataDesc[2];
-    OPTIE  bss_max_idle_period;
     OPTIE  SuppOperatingClasses;
-    OPTIE  WPAOpaque;
     OPTIE  HTCaps;
+    OPTIE  ExtCap;
+    OPTIE  VHTCaps;
+    OPTIE  OperatingMode;
+    OPTIE  bss_max_idle_period;
+    OPTIE  he_cap;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  WAPIOpaque;
+    OPTIE  WAPI;
+    OPTIE  QosMapSet;
+    OPTIE  ESECckmOpaque;
+    OPTIE  eht_cap;
+    OPTIE  mlo_ie;
+
+    OPTIE  WPAOpaque;
     OPTIE  WMMCaps;
     OPTIE  WMMInfoStation;
     OPTIE  WscIEOpaque;
-    OPTIE  WAPIOpaque;
-    OPTIE  WAPI;
     OPTIE  ESERadMgmtCap;
     OPTIE  ESEVersion;
-    OPTIE  ESECckmOpaque;
     OPTIE  WMMTSPEC[0..4];
     OPTIE  ESETrafStrmRateSet;
     OPTIE  P2PIEOpaque;
     OPTIE  WFDIEOpaque;
-    OPTIE  VHTCaps;
-    OPTIE  ExtCap;
-    OPTIE  OperatingMode;
-    OPTIE  QosMapSet;
     OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
-    OPTIE  he_cap;
-    OPTIE  he_6ghz_band_cap;
-    OPTIE  eht_cap;
-    OPTIE  mlo_ie;
 } // End frame ReAssocRequest.
 
 FRAME ReAssocResponse                     // 7.2.3.7
@@ -4177,34 +4360,37 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  MobilityDomain;
     OPTIE  FTInfo;
     OPTIE  RICDataDesc[2];
-    OPTIE  bss_max_idle_period;
-    OPTIE  WPA;
     OPTIE  TimeoutInterval;
     OPTIE  HTCaps;
     OPTIE  HTInfo;
+    OPTIE  OBSSScanParameters;
+    OPTIE  ExtCap;
+    OPTIE  bss_max_idle_period;
+    OPTIE  VHTCaps;
+    OPTIE  VHTOperation;
+    OPTIE  he_cap;
+    OPTIE  he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  QosMapSet;
+    OPTIE  ESETxmitPower;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
+    OPTIE  mlo_ie;
+
+    OPTIE  WPA;
     OPTIE  WMMParams;
     OPTIE  ESERadMgmtCap;
     OPTIE  ESETrafStrmMet;
-    OPTIE  ESETxmitPower;
     OPTIE  WMMTSPEC[0..4];
     OPTIE  ESETrafStrmRateSet;
     OPTIE  WscReassocRes;
     OPTIE  P2PAssocRes;
-    OPTIE  VHTCaps;
-    OPTIE  VHTOperation;
-    OPTIE  ExtCap;
-    OPTIE  OBSSScanParameters;
-    OPTIE  QosMapSet;
     OPTIE  vendor_vht_ie;
-    OPTIE  he_cap;
-    OPTIE  he_op;
-    OPTIE  he_6ghz_band_cap;
-    OPTIE  bss_color_change;
-    OPTIE  mu_edca_param_set;
     OPTIE  MBO_IE;
-    OPTIE  eht_cap;
-    OPTIE  eht_op;
-    OPTIE  mlo_ie;
+    OPTIE  reduced_neighbor_report;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8
@@ -4215,16 +4401,18 @@ FRAME ProbeRequest                        // 7.2.3.8
     OPTIE  ExtSuppRates;
     OPTIE  DSParams;
     OPTIE  HTCaps;
+    OPTIE  ExtCap;
+    OPTIE  VHTCaps;
+    OPTIE  he_cap;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  eht_cap;
+    OPTIE  mlo_ie;
+
     OPTIE  WscProbeReq;
     OPTIE  WFATPC;
     OPTIE  P2PProbeReq;
-    OPTIE  VHTCaps;
-    OPTIE  ExtCap;
     OPTIE  qcn_ie;
-    OPTIE  he_cap;
-    OPTIE  he_6ghz_band_cap;
-    OPTIE  eht_cap;
-    OPTIE  mlo_ie;
 } // End frame ProbeRequest.
 
 FRAME ProbeResponse                       // 7.2.3.9
@@ -4242,8 +4430,6 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  FHPattTable;
     OPTIE  PowerConstraints;
     OPTIE  ChanSwitchAnn;
-    OPTIE  ext_chan_switch_ann;
-    OPTIE  SuppOperatingClasses;
     OPTIE  Quiet;
     OPTIE  TPCReport;
     OPTIE  ERPInfo;
@@ -4254,47 +4440,50 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  RRMEnabledCap;
     OPTIE  APChannelReport;
     OPTIE  MobilityDomain;
-    OPTIE  WPA;
+    OPTIE  ext_chan_switch_ann;
+    OPTIE  SuppOperatingClasses;
     OPTIE  HTCaps;
     OPTIE  HTInfo;
-    OPTIE  sec_chan_offset_ele;
-    OPTIE  WMMInfoAp;
-    OPTIE  WMMParams;
-    OPTIE  WMMCaps;
-    OPTIE  WAPI;
-    OPTIE  ESERadMgmtCap;
-    OPTIE  ESETrafStrmMet;
-    OPTIE  ESETxmitPower;
-
-    OPTIE  WscProbeRes;
-    OPTIE  P2PProbeRes;
-
+    OPTIE  OBSSScanParameters;
+    OPTIE  ExtCap;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
     OPTIE  transmit_power_env[0..8];
     OPTIE  ChannelSwitchWrapper;
     OPTIE  VHTExtBssLoad;
-    OPTIE  ExtCap;
-    OPTIE  OBSSScanParameters;
     OPTIE  fils_indication;
+    OPTIE  max_chan_switch_time;
+    OPTIE  esp_information;
+    OPTIE  he_cap;
+    OPTIE  he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
+    OPTIE  he_6ghz_band_cap;
+
+    OPTIE  sec_chan_offset_ele;
+    OPTIE  WAPI;
+    OPTIE  ESETxmitPower;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
+    OPTIE  mlo_ie;
+
+    OPTIE  WPA;
+    OPTIE  WMMInfoAp;
+    OPTIE  WMMParams;
+    OPTIE  WMMCaps;
+    OPTIE  ESEVersion;
+    OPTIE  ESERadMgmtCap;
+    OPTIE  ESETrafStrmMet;
+    OPTIE  WscProbeRes;
+    OPTIE  P2PProbeRes;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
     OPTIE  QComVendorIE;
-    OPTIE  ESEVersion;
     OPTIE  MBO_IE;
     OPTIE  qcn_ie;
-    OPTIE  he_cap;
-    OPTIE  he_op;
-    OPTIE  he_6ghz_band_cap;
-    OPTIE  bss_color_change;
-    OPTIE  mu_edca_param_set;
-    OPTIE  esp_information;
-    OPTIE  eht_cap;
-    OPTIE  eht_op;
-    OPTIE  max_chan_switch_time;
-    OPTIE  mlo_ie;
+    OPTIE  reduced_neighbor_report;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10
@@ -4576,6 +4765,7 @@ FRAME TDLSSetupReq
     OPTIE  AID;
     OPTIE  VHTCaps;
     OPTIE  he_cap;
+    OPTIE  he_6ghz_band_cap;
 }
 
 FRAME TDLSSetupRsp
@@ -4604,6 +4794,7 @@ FRAME TDLSSetupRsp
     OPTIE  VHTCaps;
     OPTIE  OperatingMode;
     OPTIE  he_cap;
+    OPTIE  he_6ghz_band_cap;
 }
 
 FRAME TDLSSetupCnf

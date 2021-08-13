@@ -1453,6 +1453,7 @@ struct wlan_mlme_acs {
  * 2.4Ghz
  * @req_flag: requestor flag enable/disable
  * @res_flag: responder flag enable/disable
+ * @twt_res_svc_cap: responder service capability
  */
 struct wlan_mlme_cfg_twt {
 	bool is_twt_enabled;
@@ -1468,6 +1469,7 @@ struct wlan_mlme_cfg_twt {
 	bool enable_twt_24ghz;
 	bool req_flag;
 	bool res_flag;
+	bool twt_res_svc_cap;
 };
 
 /**
@@ -1905,6 +1907,7 @@ struct wlan_mlme_lfr_cfg {
 	bool sae_single_pmk_feature_enabled;
 #endif
 	struct rso_config_params rso_user_config;
+	bool enable_ft_over_ds;
 };
 
 /**

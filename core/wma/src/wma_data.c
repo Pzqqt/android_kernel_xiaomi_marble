@@ -79,6 +79,7 @@
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_crypto_global_api.h>
 #include <wlan_mlme_main.h>
+#include <wlan_cm_api.h>
 #include "wlan_pkt_capture_ucfg_api.h"
 
 struct wma_search_rate {
@@ -3099,8 +3100,42 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 	return 0;
 }
 
+static bool
+wma_drop_delba(tp_wma_handle wma, uint8_t vdev_id,
+	       enum cdp_delba_rcode cdp_reason_code)
+{
+	struct wlan_objmgr_vdev *vdev;
+	qdf_time_t last_ts, ts = qdf_mc_timer_get_system_time();
+	bool drop = false;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		wma_err("vdev is NULL");
+		return drop;
+	}
+	if (!wlan_mlme_is_ba_2k_jump_iot_ap(vdev))
+		goto done;
+
+	last_ts = wlan_mlme_get_last_delba_sent_time(vdev);
+	if ((last_ts && cdp_reason_code == CDP_DELBA_2K_JUMP) &&
+	    (ts - last_ts) < CDP_DELBA_INTERVAL_MS) {
+		wma_debug("Drop DELBA, last sent ts: %lu current ts: %lu",
+			  last_ts, ts);
+		drop = true;
+	}
+
+	wlan_mlme_set_last_delba_sent_time(vdev, ts);
+
+done:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return drop;
+}
+
 int wma_dp_send_delba_ind(uint8_t vdev_id, uint8_t *peer_macaddr,
-			  uint8_t tid, uint8_t reason_code)
+			  uint8_t tid, uint8_t reason_code,
+			  enum cdp_delba_rcode cdp_reason_code)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct lim_delba_req_info *req;
@@ -3109,6 +3144,10 @@ int wma_dp_send_delba_ind(uint8_t vdev_id, uint8_t *peer_macaddr,
 		wma_err("wma handle or mac addr is NULL");
 		return -EINVAL;
 	}
+
+	if (wma_drop_delba(wma, vdev_id, cdp_reason_code))
+		return 0;
+
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req)
 		return -ENOMEM;
@@ -3128,8 +3167,8 @@ bool wma_is_roam_in_progress(uint32_t vdev_id)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma)
+	if (!wma || !wma->interfaces[vdev_id].vdev)
 		return false;
 
-	return wma->interfaces[vdev_id].roaming_in_progress;
+	return wlan_cm_is_vdev_roaming(wma->interfaces[vdev_id].vdev);
 }

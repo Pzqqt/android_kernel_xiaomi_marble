@@ -3436,31 +3436,42 @@ void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
  * sme_roam_set_psk_pmk() - a wrapper function to request CSR to save PSK/PMK
  * This is a synchronous call.
  * @mac_handle:  Global structure
- * @sessionId:   SME sessionId
- * @pPSK_PMK:    pointer to an array of Psk[]/Pmk
- * @pmk_len:     Length could be only 16 bytes in case if LEAP
- *               connections. Need to pass this information to
- *               firmware.
+ * @vdev_id:  vdev id
+ * @pmksa : PMK entry
  * @update_to_fw: True - send RSO update to firmware after updating
  *                       session->psk_pmk.
  *                False - Copy the pmk to session->psk_pmk and return
  *
- * Return: QDF_STATUS -status whether PSK/PMK is set or not
+ * Return: QDF_STATUS - status whether PSK/PMK is set or not
  */
-QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
-				uint8_t *psk_pmk, size_t pmk_len,
-				bool update_to_fw)
+QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
+				struct wlan_crypto_pmksa *pmksa,
+				uint8_t vdev_id, bool update_to_fw)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_set_psk_pmk(mac, sessionId, psk_pmk,
-						      pmk_len, update_to_fw);
+		if (CSR_IS_SESSION_VALID(mac, vdev_id))
+			status = csr_roam_set_psk_pmk(mac, pmksa, vdev_id,
+						      update_to_fw);
 		else
 			status = QDF_STATUS_E_INVAL;
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
+
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+				struct wlan_crypto_pmksa *pmk_cache)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = csr_set_pmk_cache_ft(mac, session_id, pmk_cache);
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -5580,8 +5591,8 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 	qdf_mem_copy(request_buf, pMulticastAddrs,
 		     sizeof(tSirRcvFltMcAddrList));
 
-	qdf_copy_macaddr(&request_buf->self_macaddr, &pSession->self_mac_addr);
-
+	wlan_mlme_get_mac_vdev_id(mac->pdev, sessionId,
+				  &request_buf->self_macaddr);
 	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId, &request_buf->bssid);
 
 	msg.type = WMA_8023_MULTICAST_LIST_REQ;
@@ -8370,19 +8381,9 @@ QDF_STATUS sme_set_mas(uint32_t val)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_roam_channel_change_req() - Channel change to new target channel
- * @mac_handle: handle returned by mac_open
- * @bssid: mac address of BSS
- * @ch_params: target channel information
- * @profile: CSR profile
- *
- * API to Indicate Channel change to new target channel
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS sme_roam_channel_change_req(mac_handle_t mac_handle,
 				       struct qdf_mac_addr bssid,
+				       uint8_t vdev_id,
 				       struct ch_params *ch_params,
 				       struct csr_roam_profile *profile)
 {
@@ -8392,8 +8393,8 @@ QDF_STATUS sme_roam_channel_change_req(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 
-		status = csr_roam_channel_change_req(mac, bssid, ch_params,
-				profile);
+		status = csr_roam_channel_change_req(mac, bssid, vdev_id,
+						     ch_params, profile);
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -13410,6 +13411,7 @@ QDF_STATUS sme_clear_twt_complete_cb(mac_handle_t mac_handle)
 		mac->sme.twt_resume_dialog_cb = NULL;
 		mac->sme.twt_notify_cb = NULL;
 		mac->sme.twt_nudge_dialog_cb = NULL;
+		mac->sme.twt_ack_comp_cb = NULL;
 		sme_release_global_lock(&mac->sme);
 
 		sme_debug("TWT: callbacks Initialized");
@@ -13434,6 +13436,7 @@ QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
 		mac->sme.twt_disable_cb = twt_cb->twt_disable_cb;
 		mac->sme.twt_notify_cb = twt_cb->twt_notify_cb;
 		mac->sme.twt_nudge_dialog_cb = twt_cb->twt_nudge_dialog_cb;
+		mac->sme.twt_ack_comp_cb = twt_cb->twt_ack_comp_cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("TWT: callbacks registered");
 	}
@@ -13443,7 +13446,8 @@ QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
 
 QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 			      twt_add_dialog_cb twt_add_dialog_cb,
-			      struct wmi_twt_add_dialog_param *twt_params)
+			      struct wmi_twt_add_dialog_param *twt_params,
+			      void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg twt_msg = {0};
@@ -13504,6 +13508,7 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 
 	/* Serialize the req through MC thread */
 	mac->sme.twt_add_dialog_cb = twt_add_dialog_cb;
+	mac->sme.twt_ack_context_cb = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_ADD_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
@@ -13530,7 +13535,8 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			      twt_del_dialog_cb del_dialog_cb,
-			      struct wmi_twt_del_dialog_param *twt_params)
+			      struct wmi_twt_del_dialog_param *twt_params,
+			      void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg twt_msg = {0};
@@ -13581,6 +13587,7 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 
 	/* Serialize the req through MC thread */
 	mac->sme.twt_del_dialog_cb = del_dialog_cb;
+	mac->sme.twt_ack_context_cb = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_DEL_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
@@ -13687,7 +13694,8 @@ QDF_STATUS sme_sap_del_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS
 sme_pause_dialog_cmd(mac_handle_t mac_handle,
-		     struct wmi_twt_pause_dialog_cmd_param *twt_params)
+		     struct wmi_twt_pause_dialog_cmd_param *twt_params,
+		     void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct wmi_twt_pause_dialog_cmd_param *cmd_params;
@@ -13731,6 +13739,7 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 				twt_params->dialog_id, WLAN_TWT_SUSPEND);
 
 	/* Serialize the req through MC thread */
+	mac->sme.twt_ack_context_cb = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_PAUSE_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
@@ -13755,7 +13764,8 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS
 sme_nudge_dialog_cmd(mac_handle_t mac_handle,
-		     struct wmi_twt_nudge_dialog_cmd_param *twt_params)
+		     struct wmi_twt_nudge_dialog_cmd_param *twt_params,
+		     void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct wmi_twt_nudge_dialog_cmd_param *cmd_params;
@@ -13801,6 +13811,7 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
 				twt_params->dialog_id, WLAN_TWT_NUDGE);
 
 	/* Serialize the req through MC thread */
+	mac->sme.twt_ack_context_cb = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_NUDGE_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
@@ -13825,7 +13836,8 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS
 sme_resume_dialog_cmd(mac_handle_t mac_handle,
-		      struct wmi_twt_resume_dialog_cmd_param *twt_params)
+		      struct wmi_twt_resume_dialog_cmd_param *twt_params,
+		      void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct wmi_twt_resume_dialog_cmd_param *cmd_params;
@@ -13869,6 +13881,7 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 				twt_params->dialog_id, WLAN_TWT_RESUME);
 
 	/* Serialize the req through MC thread */
+	mac->sme.twt_ack_context_cb = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_RESUME_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);

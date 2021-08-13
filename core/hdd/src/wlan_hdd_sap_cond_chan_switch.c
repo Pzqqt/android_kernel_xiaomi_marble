@@ -33,6 +33,9 @@
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_sap_cond_chan_switch.h>
 
+/* default pre cac channel bandwidth */
+#define DEFAULT_PRE_CAC_BANDWIDTH CH_WIDTH_80MHZ
+
 /**
  * wlan_hdd_set_pre_cac_status() - Set the pre cac status
  * @pre_cac_adapter: AP adapter used for pre cac
@@ -152,6 +155,67 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
+static int wlan_set_def_pre_cac_chan(struct hdd_context *hdd_ctx,
+				     uint32_t pre_cac_ch_freq,
+				     struct cfg80211_chan_def *chandef,
+				     enum nl80211_channel_type *chantype,
+				     enum phy_ch_width *ch_width)
+{
+	enum nl80211_channel_type channel_type;
+	struct ieee80211_channel *ieee_chan;
+	struct ch_params ch_params = {0};
+
+	ieee_chan = ieee80211_get_channel(hdd_ctx->wiphy,
+					  pre_cac_ch_freq);
+	if (!ieee_chan) {
+		hdd_err("channel converion failed %d", pre_cac_ch_freq);
+		return -EINVAL;
+	}
+	ch_params.ch_width = *ch_width;
+	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev,
+					     pre_cac_ch_freq, 0,
+					     &ch_params);
+	switch (ch_params.sec_ch_offset) {
+	case HIGH_PRIMARY_CH:
+		channel_type = NL80211_CHAN_HT40MINUS;
+		break;
+	case LOW_PRIMARY_CH:
+		channel_type = NL80211_CHAN_HT40PLUS;
+		break;
+	default:
+		channel_type = NL80211_CHAN_HT20;
+		break;
+	}
+	cfg80211_chandef_create(chandef, ieee_chan, channel_type);
+	switch (ch_params.ch_width) {
+	case CH_WIDTH_80MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_80;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_80P80;
+		if (ch_params.mhz_freq_seg1)
+			chandef->center_freq2 = ch_params.mhz_freq_seg1;
+		break;
+	case CH_WIDTH_160MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_160;
+		break;
+	default:
+		break;
+	}
+	if (ch_params.ch_width == CH_WIDTH_80MHZ ||
+	    ch_params.ch_width == CH_WIDTH_80P80MHZ ||
+	    ch_params.ch_width == CH_WIDTH_160MHZ) {
+		if (ch_params.mhz_freq_seg0)
+			chandef->center_freq1 = ch_params.mhz_freq_seg0;
+	}
+	*chantype = channel_type;
+	*ch_width = ch_params.ch_width;
+	hdd_debug("pre cac ch def: chan:%d width:%d freq1:%d freq2:%d",
+		  chandef->chan->center_freq, chandef->width,
+		  chandef->center_freq1, chandef->center_freq2);
+
+	return 0;
+}
 /**
  * __wlan_hdd_request_pre_cac() - Start pre CAC in the driver
  * @hdd_ctx: the HDD context to operate against
@@ -177,9 +241,9 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	struct net_device *dev;
 	struct cfg80211_chan_def chandef;
 	enum nl80211_channel_type channel_type;
-	struct ieee80211_channel *chan;
 	mac_handle_t mac_handle;
 	bool val;
+	enum phy_ch_width cac_ch_width;
 
 	if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc)) {
 		hdd_debug("Pre CAC is not supported on non-dbs platforms");
@@ -318,36 +382,30 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	pre_cac_adapter->session.ap.sap_config.authType =
 			ap_adapter->session.ap.sap_config.authType;
 
-	/* Premise is that on moving from 2.4GHz to 5GHz, the SAP will continue
-	 * to operate on the same bandwidth as that of the 2.4GHz operations.
-	 * Only bandwidths 20MHz/40MHz are possible on 2.4GHz band.
+	/* The orginal premise is that on moving from 2.4GHz to 5GHz, the SAP
+	 * will continue to operate on the same bandwidth as that of the 2.4GHz
+	 * operations. Only bandwidths 20MHz/40MHz are possible on 2.4GHz band.
+	 * Now some customer request to start AP on higher BW such as 80Mhz.
+	 * Hence use max possible supported BW based on phymode configurated
+	 * on SAP.
 	 */
-	switch (ap_adapter->session.ap.sap_config.ch_width_orig) {
-	case CH_WIDTH_20MHZ:
-		channel_type = NL80211_CHAN_HT20;
-		break;
-	case CH_WIDTH_40MHZ:
-		if (ap_adapter->session.ap.sap_config.sec_ch_freq >
-				ap_adapter->session.ap.sap_config.chan_freq)
-			channel_type = NL80211_CHAN_HT40PLUS;
-		else
-			channel_type = NL80211_CHAN_HT40MINUS;
-		break;
-	default:
-		channel_type = NL80211_CHAN_NO_HT;
-		break;
-	}
+	cac_ch_width = wlansap_get_max_bw_by_phymode(
+			WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter));
+	if (cac_ch_width > DEFAULT_PRE_CAC_BANDWIDTH)
+		cac_ch_width = DEFAULT_PRE_CAC_BANDWIDTH;
 
-	chan = ieee80211_get_channel(wiphy, pre_cac_chan_freq);
-	if (!chan) {
-		hdd_err("channel converion failed");
-		goto stop_close_pre_cac_adapter;
+	qdf_mem_zero(&chandef, sizeof(struct cfg80211_chan_def));
+	if (wlan_set_def_pre_cac_chan(hdd_ctx, pre_cac_chan_freq,
+				      &chandef, &channel_type,
+				      &cac_ch_width)) {
+		hdd_err("error set pre_cac channel %d", pre_cac_chan_freq);
+		goto close_pre_cac_adapter;
 	}
-	cfg80211_chandef_create(&chandef, chan, channel_type);
+	pre_cac_adapter->session.ap.sap_config.ch_width_orig = chandef.width;
 
-	hdd_debug("orig width:%d channel_type:%d freq:%d",
-		  ap_adapter->session.ap.sap_config.ch_width_orig,
-		  channel_type, pre_cac_chan_freq);
+	hdd_debug("existing ap phymode:%d pre cac ch_width:%d freq:%d",
+		  ap_adapter->session.ap.sap_config.SapHw_mode,
+		  cac_ch_width, pre_cac_chan_freq);
 	/*
 	 * Doing update after opening and starting pre-cac adapter will make
 	 * sure that driver won't do hardware mode change if there are any

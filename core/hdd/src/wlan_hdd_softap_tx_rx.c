@@ -1496,6 +1496,13 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 			hdd_err("WLAN_AP_DISCONNECT event failed");
 	}
 
+	/* Setting the RTS profile to original value */
+	if (sme_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_ENABLE_RTSCTS,
+				cfg_get(hdd_ctx->psoc,
+					CFG_ENABLE_FW_RTS_PROFILE),
+				VDEV_CMD))
+		hdd_debug("Failed to set RTS_PROFILE");
+
 	return status;
 }
 

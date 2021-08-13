@@ -182,25 +182,6 @@ typedef enum {
 } eIniChanBondState;
 
 #define CSR_RSN_MAX_PMK_LEN         48
-#define CSR_MAX_PMKID_ALLOWED       32
-#define CSR_TKIP_KEY_LEN            32
-#define CSR_AES_KEY_LEN             16
-#define CSR_AES_GCMP_KEY_LEN        16
-#define CSR_AES_GCMP_256_KEY_LEN    32
-#define CSR_AES_GMAC_128_KEY_LEN    16
-#define CSR_AES_GMAC_256_KEY_LEN    32
-#define CSR_MAX_TX_POWER        (WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMAX)
-#ifdef FEATURE_WLAN_WAPI
-#define CSR_WAPI_BKID_SIZE          16
-#define CSR_MAX_BKID_ALLOWED        16
-#define CSR_WAPI_KEY_LEN            32
-#define CSR_MAX_KEY_LEN         (CSR_WAPI_KEY_LEN) /* longest one is for WAPI */
-#else
-#define CSR_MAX_KEY_LEN         (CSR_TKIP_KEY_LEN) /* longest one is for TKIP */
-#endif /* FEATURE_WLAN_WAPI */
-#ifdef FEATURE_WLAN_ESE
-#define CSR_KRK_KEY_LEN             16
-#endif
 
 typedef struct tagCsrChannelInfo {
 	uint8_t numOfChannels;
@@ -242,13 +223,6 @@ typedef struct tagCsrScanResultInfo {
 	 * array with nonknown size at this time */
 	struct bss_description BssDescriptor;
 } tCsrScanResultInfo;
-
-typedef struct tagCsrEncryptionList {
-
-	uint32_t numEntries;
-	eCsrEncryptionType encryptionType[eCSR_NUM_OF_ENCRYPT_TYPE];
-
-} tCsrEncryptionList, *tpCsrEncryptionList;
 
 typedef struct tagCsrAuthList {
 	uint32_t numEntries;
@@ -428,42 +402,6 @@ typedef enum {
 	eCSR_OPERATING_CHANNEL_ANY = eCSR_OPERATING_CHANNEL_ALL,
 } eOperationChannel;
 
-/*
- * For channel bonding, the channel number gap is 4, either up or down.
- * For both 11a and 11g mode.
- */
-#define CSR_CB_CHANNEL_GAP 4
-/* Considering 5 MHz Channel BW */
-#define CSR_CB_CENTER_CHANNEL_OFFSET    10
-#define CSR_SEC_CHANNEL_OFFSET    20
-
-
-/* WEP keysize (in bits) */
-typedef enum {
-	/* 40 bit key + 24bit IV = 64bit WEP */
-	eCSR_SECURITY_WEP_KEYSIZE_40 = 40,
-	/* 104bit key + 24bit IV = 128bit WEP */
-	eCSR_SECURITY_WEP_KEYSIZE_104 = 104,
-	eCSR_SECURITY_WEP_KEYSIZE_MIN = eCSR_SECURITY_WEP_KEYSIZE_40,
-	eCSR_SECURITY_WEP_KEYSIZE_MAX = eCSR_SECURITY_WEP_KEYSIZE_104,
-	eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES =
-		(eCSR_SECURITY_WEP_KEYSIZE_MAX / 8),
-} eCsrWEPKeySize;
-
-/* Possible values for the WEP static key ID */
-typedef enum {
-
-	eCSR_SECURITY_WEP_STATIC_KEY_ID_MIN = 0,
-	eCSR_SECURITY_WEP_STATIC_KEY_ID_MAX = 3,
-	eCSR_SECURITY_WEP_STATIC_KEY_ID_DEFAULT = 0,
-
-	eCSR_SECURITY_WEP_STATIC_KEY_ID_INVALID = -1,
-
-} eCsrWEPStaticKeyID;
-
-/* Two extra key indicies are used for the IGTK, two for BIGTK */
-#define CSR_MAX_NUM_KEY     (eCSR_SECURITY_WEP_STATIC_KEY_ID_MAX + 2 + 1 + 2)
-
 typedef enum {
 	/*
 	 * Roaming because HDD requested for reassoc by changing one of the
@@ -492,27 +430,9 @@ typedef enum {
 
 } eCsrRoamWmmUserModeType;
 
-#ifdef FEATURE_WLAN_WAPI
-typedef struct tagBkidCandidateInfo {
-	struct qdf_mac_addr BSSID;
-	bool preAuthSupported;
-} tBkidCandidateInfo;
-
-typedef struct tagBkidCacheInfo {
-	struct qdf_mac_addr BSSID;
-	uint8_t BKID[CSR_WAPI_BKID_SIZE];
-} tBkidCacheInfo;
-#endif /* FEATURE_WLAN_WAPI */
-
-typedef struct tagCsrKeys {
-	/* Also use to indicate whether the key index is set */
-	uint8_t KeyLength[CSR_MAX_NUM_KEY];
-	uint8_t KeyMaterial[CSR_MAX_NUM_KEY][CSR_MAX_KEY_LEN];
-} tCsrKeys;
-
 /*
- * Following fields which're part of tCsrRoamConnectedProfile might need
- * modification dynamically once STA is up & running & this'd trigger reassoc
+ * Following fields might need modification dynamically once STA is up
+ * & running & this'd trigger reassoc.
  */
 typedef struct tagCsrRoamModifyProfileFields {
 	/*
@@ -531,19 +451,6 @@ struct csr_roam_profile {
 	/* this is bit mask of all the needed phy mode defined in eCsrPhyMode */
 	uint32_t phyMode;
 	eCsrRoamBssType BSSType;
-	tCsrAuthList AuthType;
-	enum csr_akm_type negotiatedAuthType;
-	tCsrEncryptionList EncryptionType;
-	/* This field is for output only, not for input */
-	eCsrEncryptionType negotiatedUCEncryptionType;
-	/*
-	 * eCSR_ENCRYPT_TYPE_ANY cannot be set in multicast encryption type.
-	 * If caller doesn't case, put all supported encryption types in here
-	 */
-	tCsrEncryptionList mcEncryptionType;
-	/* Management Frame Protection */
-	uint8_t MFPRequired;
-	uint8_t MFPCapable;
 	tCsrChannelInfo ChannelInfo;
 	uint32_t op_freq;
 	struct ch_params ch_params;
@@ -557,7 +464,6 @@ struct csr_roam_profile {
 	uint8_t uapsd_mask;
 	uint32_t nRSNReqIELength; /* The byte count in the pRSNReqIE */
 	uint8_t *pRSNReqIE;       /* If not null,it's IE byte stream for RSN */
-	uint8_t ieee80211d;
 	uint8_t privacy;
 	bool fwdWPSPBCProbeReq;
 	tAniAuthType csr80211AuthType;
@@ -577,11 +483,6 @@ struct csr_roam_profile {
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 };
-
-typedef struct tagCsrRoamConnectedProfile {
-	eCsrRoamBssType BSSType;
-	tCsrRoamModifyProfileFields modifyProfileFields;
-} tCsrRoamConnectedProfile;
 
 struct csr_config_params {
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
@@ -662,7 +563,6 @@ struct csr_roam_info {
 	uint8_t *paddIE;
 	union {
 		tSirMicFailureInfo *pMICFailureInfo;
-		tCsrRoamConnectedProfile *pConnectedProfile;
 		tSirWPSPBCProbeReq *pWPSPBCProbeReq;
 	} u;
 	bool wmmEnabledSta;  /* set to true if WMM enabled STA */
@@ -875,8 +775,7 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 #else
 #define CSR_IS_NDI(profile)  (false)
 #endif
-#define CSR_IS_CONN_INFRA_AP(pProfile)  (eCSR_BSS_TYPE_INFRA_AP == \
-					 (pProfile)->BSSType)
+
 #ifdef WLAN_FEATURE_NAN
 #define CSR_IS_CONN_NDI(profile)  (eCSR_BSS_TYPE_NDI == (profile)->BSSType)
 #else

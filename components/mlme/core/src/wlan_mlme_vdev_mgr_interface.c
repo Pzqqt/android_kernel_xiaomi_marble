@@ -34,11 +34,21 @@
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include "csr_api.h"
 #include <cm_utf.h>
+#include "target_if_cm_roam_event.h"
+
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_public_structs.h>
+#include <wlan_mlo_mgr_cmn.h>
+#include <lim_mlo.h>
+#endif
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
 static struct vdev_mlme_ops mon_mlme_ops;
 static struct mlme_ext_ops ext_ops;
+#ifdef WLAN_FEATURE_11BE_MLO
+static struct mlo_mlme_ext_ops mlo_ext_ops;
+#endif
 
 bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
 {
@@ -72,6 +82,37 @@ QDF_STATUS mlme_register_mlme_ext_ops(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS mlme_register_mlo_ext_ops(void)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (mlo_ctx)
+		mlo_reg_mlme_ext_cb(mlo_ctx, &mlo_ext_ops);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlme_unregister_mlo_ext_ops(void)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (mlo_ctx)
+		mlo_unreg_mlme_ext_cb(mlo_ctx);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS mlme_register_mlo_ext_ops(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlme_unregister_mlo_ext_ops(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * mlme_register_vdev_mgr_ops() - Register vdev mgr ops
  * @vdev_mlme: vdev mlme object
@@ -1487,6 +1528,8 @@ QDF_STATUS psoc_mlme_ext_hdl_create(struct psoc_mlme_obj *psoc_mlme)
 
 	target_if_wfatestcmd_register_tx_ops(
 			&psoc_mlme->ext_psoc_ptr->wfa_testcmd.tx_ops);
+	target_if_cm_roam_register_rx_ops(
+			&psoc_mlme->ext_psoc_ptr->rso_rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1816,3 +1859,12 @@ static struct mlme_ext_ops ext_ops = {
 	.mlme_cm_ext_reassoc_req_cb = cm_handle_reassoc_req,
 	.mlme_cm_ext_roam_start_ind_cb = cm_handle_roam_start,
 };
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static struct mlo_mlme_ext_ops mlo_ext_ops = {
+	.mlo_mlme_ext_peer_create = lim_mlo_proc_assoc_req_frm,
+	.mlo_mlme_ext_peer_delete = lim_mlo_cleanup_partner_peer,
+	.mlo_mlme_ext_peer_assoc_fail = lim_mlo_ap_sta_assoc_fail,
+	.mlo_mlme_ext_assoc_resp = lim_mlo_ap_sta_assoc_suc,
+};
+#endif

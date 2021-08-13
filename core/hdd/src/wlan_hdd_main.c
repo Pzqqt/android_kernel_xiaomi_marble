@@ -941,6 +941,29 @@ uint32_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 	return home_chan_freq;
 }
 
+enum phy_ch_width hdd_get_adapter_width(struct hdd_adapter *adapter)
+{
+	enum phy_ch_width width = CH_WIDTH_20MHZ;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return 0;
+	}
+
+	if ((adapter->device_mode == QDF_SAP_MODE ||
+	     adapter->device_mode == QDF_P2P_GO_MODE) &&
+	    test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+		width = adapter->session.ap.sap_config.ch_params.ch_width;
+	} else if ((adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+		   hdd_cm_is_vdev_associated(adapter)) {
+		width = adapter->session.station.conn_info.ch_width;
+	}
+	return width;
+}
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 static inline struct net_device *hdd_net_dev_from_notifier(void *context)
 {
@@ -2709,7 +2732,7 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	}
 	hdd_update_tgt_twt_cap(hdd_ctx, cfg);
 	hdd_update_tgt_eht_cap(hdd_ctx, cfg);
-	hdd_update_wiphy_eht_cap(hdd_ctx, cfg);
+	hdd_update_wiphy_eht_cap(hdd_ctx);
 
 	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++) {
 		sme_modify_nss_chains_tgt_cfg(hdd_ctx->mac_handle,
@@ -8030,7 +8053,8 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 	adapter->monitor_mode_vdev_up_in_progress = true;
 
 	status = sme_roam_channel_change_req(hdd_ctx->mac_handle,
-					     bssid, &roam_profile.ch_params,
+					     bssid, adapter->vdev_id,
+					     &roam_profile.ch_params,
 					     &roam_profile);
 	if (status) {
 		hdd_err("Status: %d Failed to set sme_roam Channel for monitor mode",
@@ -9240,24 +9264,26 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 		return ret_val;
 	}
 
+	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_WOW) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
-	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_WOW)
 		wiphy->wowlan = &wowlan_support_reg_init;
 #else
-	wiphy->wowlan.flags = WIPHY_WOWLAN_ANY |
-			      WIPHY_WOWLAN_MAGIC_PKT |
-			      WIPHY_WOWLAN_DISCONNECT |
-			      WIPHY_WOWLAN_SUPPORTS_GTK_REKEY |
-			      WIPHY_WOWLAN_GTK_REKEY_FAILURE |
-			      WIPHY_WOWLAN_EAP_IDENTITY_REQ |
-			      WIPHY_WOWLAN_4WAY_HANDSHAKE |
-			      WIPHY_WOWLAN_RFKILL_RELEASE;
+		wiphy->wowlan.flags = WIPHY_WOWLAN_ANY |
+				      WIPHY_WOWLAN_MAGIC_PKT |
+				      WIPHY_WOWLAN_DISCONNECT |
+				      WIPHY_WOWLAN_SUPPORTS_GTK_REKEY |
+				      WIPHY_WOWLAN_GTK_REKEY_FAILURE |
+				      WIPHY_WOWLAN_EAP_IDENTITY_REQ |
+				      WIPHY_WOWLAN_4WAY_HANDSHAKE |
+				      WIPHY_WOWLAN_RFKILL_RELEASE;
 
-	wiphy->wowlan.n_patterns = (WOW_MAX_FILTER_LISTS *
+		wiphy->wowlan.n_patterns = (WOW_MAX_FILTER_LISTS *
 				    WOW_MAX_FILTERS_PER_LIST);
-	wiphy->wowlan.pattern_min_len = WOW_MIN_PATTERN_SIZE;
-	wiphy->wowlan.pattern_max_len = WOW_MAX_PATTERN_SIZE;
+		wiphy->wowlan.pattern_min_len = WOW_MIN_PATTERN_SIZE;
+		wiphy->wowlan.pattern_max_len = WOW_MAX_PATTERN_SIZE;
 #endif
+	}
+
 	ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
 					    &channel_bonding_mode);
 	if (hdd_ctx->obss_scan_offload) {
@@ -10063,12 +10089,22 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 	uint32_t ipa_tx_packets = 0, ipa_rx_packets = 0;
 	uint64_t sta_tx_bytes = 0, sap_tx_bytes = 0;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_BUS_BW_WORK_HANDLER;
+	uint64_t diff_us;
+	uint64_t curr_time_us;
+	uint32_t bw_interval_us;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		goto stop_work;
 
 	if (hdd_ctx->is_wiphy_suspended)
 		return;
+
+	bw_interval_us = hdd_ctx->config->bus_bw_compute_interval * 1000;
+
+	curr_time_us = qdf_get_log_timestamp();
+	diff_us = qdf_log_timestamp_to_usecs(
+			curr_time_us - hdd_ctx->bw_vote_time);
+	hdd_ctx->bw_vote_time = curr_time_us;
 
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
 					   dbgid) {
@@ -10170,6 +10206,12 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 		con_sap_adapter->stats.tx_packets += ipa_tx_packets;
 		con_sap_adapter->stats.rx_packets += ipa_rx_packets;
 	}
+
+	tx_packets = tx_packets * bw_interval_us;
+	tx_packets = qdf_do_div(tx_packets, (uint32_t)diff_us);
+
+	rx_packets = rx_packets * bw_interval_us;
+	rx_packets = qdf_do_div(rx_packets, (uint32_t)diff_us);
 
 	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
 
@@ -12241,8 +12283,7 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	if (ret)
 		goto err_hdd_objmgr_destroy;
 
-	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
-	    hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
+	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
 		goto skip_multicast_logging;
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
@@ -15551,6 +15592,7 @@ static void __hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 {
 	qdf_periodic_work_start(&hdd_ctx->bus_bw_work,
 				hdd_ctx->config->bus_bw_compute_interval);
+	hdd_ctx->bw_vote_time = qdf_get_log_timestamp();
 }
 
 void hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
@@ -15575,16 +15617,22 @@ void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
 	struct bbm_params param = {0};
+	bool is_any_adapter_conn = hdd_is_any_adapter_connected(hdd_ctx);
+
 	if (!qdf_periodic_work_stop_sync(&hdd_ctx->bus_bw_work))
 		goto exit;
 
 	ucfg_ipa_set_perf_level(hdd_ctx->pdev, 0, 0);
 	hdd_reset_tcp_delack(hdd_ctx);
-	hdd_reset_tcp_adv_win_scale(hdd_ctx);
+
+	if (!is_any_adapter_conn)
+		hdd_reset_tcp_adv_win_scale(hdd_ctx);
+
 	cdp_pdev_reset_driver_del_ack(cds_get_context(QDF_MODULE_ID_SOC),
 				      OL_TXRX_PDEV_ID);
 	cdp_pdev_reset_bundle_require_flag(cds_get_context(QDF_MODULE_ID_SOC),
 					   OL_TXRX_PDEV_ID);
+	hdd_ctx->bw_vote_time = 0;
 
 exit:
 	/**
@@ -15596,7 +15644,7 @@ exit:
 	param.policy_info.tput_level = TPUT_LEVEL_NONE;
 	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
-	if (!hdd_is_any_adapter_connected(hdd_ctx))
+	if (!is_any_adapter_conn)
 		qdf_atomic_set(&hdd_ctx->num_latency_critical_clients, 0);
 }
 
@@ -17099,7 +17147,7 @@ void hdd_driver_unload(void)
 		 * Trigger runtime sync resume before setting unload in progress
 		 * such that resume can happen successfully
 		 */
-		hif_pm_runtime_sync_resume(hif_ctx);
+		hif_pm_runtime_sync_resume(hif_ctx, RTPM_ID_DRIVER_UNLOAD);
 	}
 
 	cds_set_driver_loaded(false);
@@ -17909,6 +17957,7 @@ bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx)
 					   dbgid) {
 		vdev_id = adapter->vdev_id;
 		if (adapter->device_mode == QDF_STA_MODE &&
+		    test_bit(SME_SESSION_OPENED, &adapter->event_flags) &&
 		    sme_roaming_in_progress(hdd_ctx->mac_handle, vdev_id)) {
 			hdd_debug("Roaming is in progress on:vdev_id:%d",
 				  adapter->vdev_id);
@@ -17964,6 +18013,13 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 		return QDF_STATUS_E_ABORTED;
 
 	mac_handle = hdd_ctx->mac_handle;
+	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags) &&
+	    (adapter->device_mode == QDF_STA_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	     adapter->device_mode == QDF_P2P_DEVICE_MODE ||
+	     adapter->device_mode == QDF_P2P_GO_MODE ||
+	     adapter->device_mode == QDF_SAP_MODE))
+		return QDF_STATUS_SUCCESS;
 
 	if (((QDF_STA_MODE == adapter->device_mode)
 		|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)

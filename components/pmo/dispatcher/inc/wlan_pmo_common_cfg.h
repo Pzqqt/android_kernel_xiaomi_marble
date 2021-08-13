@@ -484,7 +484,8 @@
  * connected
  * 1: PCIe Bus suspend is supported in SAP mode with one or more clients
  * connected
- * Related: None
+ * Related: SAP clients connected bus suspend(D3 WoW) is only supported
+ *          when IPA is disabled
  *
  * Supported Feature: Power Save
  *
@@ -512,7 +513,8 @@
  * connected
  * 1: PCIe Bus suspend is supported in P2PGO mode with one or more clients
  * connected
- * Related: None
+ * Related: P2P GO clients connected bus suspend(D3 WoW) is only supported
+ *          when IPA is disabled
  *
  * Supported Feature: Power Save
  *
@@ -524,6 +526,27 @@
 		"enable_bus_suspend_in_go_mode", \
 		0, \
 		"This ini is used to enable bus suspend in P2PGO mode")
+
+/*
+ * <ini>
+ * enable_dynamic_pcie_gen_speed_switch - enable dynamic PCIe gen speed change
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable dynamic PCIe gen speed change
+ *
+ * 0: Dynamic PCIe gen speed change is not enabled
+ * 1: Dynamic PCIe gen speed change is enabled
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH CFG_INI_BOOL( \
+		"enable_dynamic_pcie_gen_speed_switch", \
+		0, \
+		"This ini is used to enable dynamic PCIe gen speed change")
 
 /*
  * <ini>
@@ -591,7 +614,8 @@
 	CFG(CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)\
-	CFG(CFG_IGMP_VERSION_SUPPORT) \
-	CFG(CFG_DISCONNECT_SAP_TDLS_IN_WOW)
+	CFG(CFG_DISCONNECT_SAP_TDLS_IN_WOW) \
+	CFG(CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH) \
+	CFG(CFG_IGMP_VERSION_SUPPORT)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */

@@ -162,4 +162,75 @@ ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+void ucfg_cm_ft_reset(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_cm_set_ft_ies() - to set FT IEs
+ * @pdev: pdev ctx
+ * @vdev_id: vdev identifier
+ * @ft_ies: pointer to FT IEs
+ * @ft_ies_length: length of FT IEs
+ *
+ * Each time the supplicant sends down the FT IEs to the driver. This function
+ * is called in SME. This function packages and sends the FT IEs to PE.
+ *
+ * Return: none
+ */
+void ucfg_cm_set_ft_ies(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			const uint8_t *ft_ies, uint16_t ft_ies_length);
+
+/**
+ * ucfg_cm_check_ft_status() - Check for key wait status in FT mode
+ * @pdev: pdev ctx
+ * @vdev_id: vdev identifier
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_cm_check_ft_status(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id);
+
+/**
+ * ucfg_cm_ft_key_ready_for_install() - API to check ft key ready for install
+ * @vdev: pdev handle
+ *
+ * It is only applicable for LFR2.0 enabled
+ *
+ * Return: true when ft key is ready otherwise false
+ */
+bool ucfg_cm_ft_key_ready_for_install(struct wlan_objmgr_vdev *vdev);
+void ucfg_cm_set_ft_pre_auth_state(struct wlan_objmgr_vdev *vdev, bool state);
+
+#else /* WLAN_FEATURE_HOST_ROAM */
+
+static inline void ucfg_cm_ft_reset(struct wlan_objmgr_vdev *vdev) {}
+static inline
+void ucfg_cm_set_ft_ies(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			const uint8_t *ft_ies, uint16_t ft_ies_length) {}
+
+static inline
+QDF_STATUS ucfg_cm_check_ft_status(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline void ucfg_cm_set_ft_pre_auth_state(struct wlan_objmgr_vdev *vdev,
+						 bool state) {}
+#endif /* WLAN_FEATURE_HOST_ROAM */
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * ucfg_cm_reset_key() -Reset key information
+ * @pdev: pdev handle
+ * @vdev_id: vdev identifier
+ *
+ * Return: None
+ */
+void ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+#else
+static inline void
+ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id) {}
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
 #endif /* _WLAN_CM_ROAM_UCFG_API_H_ */

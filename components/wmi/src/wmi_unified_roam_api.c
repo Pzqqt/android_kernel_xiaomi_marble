@@ -337,4 +337,81 @@ QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS wmi_extract_roam_sync_event(wmi_unified_t wmi_handle, void *evt_buf,
+				       uint32_t len,
+				       uint8_t *vdev_id)
+{
+	if (wmi_handle->ops->extract_roam_sync_event)
+		return wmi_handle->ops->extract_roam_sync_event(wmi_handle,
+								evt_buf,
+								len,
+								vdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_roam_sync_frame_event(wmi_unified_t wmi_handle, void *event,
+				  uint32_t len,
+				  struct roam_synch_frame_ind *frame_ptr)
+{
+	if (wmi_handle->ops->extract_roam_sync_frame_event)
+		return wmi_handle->ops->extract_roam_sync_frame_event(wmi_handle,
+								      event,
+								      len,
+								      frame_ptr);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_roam_event(wmi_unified_t wmi_handle, uint8_t *event,
+		       uint32_t data_len,
+		       struct roam_offload_roam_event *roam_event)
+{
+	if (wmi_handle->ops->extract_roam_event)
+		return wmi_handle->ops->extract_roam_event(wmi_handle, event,
+							   data_len,
+							   roam_event);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_btm_blacklist_event(wmi_unified_t wmi_handle,
+				uint8_t *event, uint32_t data_len,
+				struct roam_blacklist_event **dst_list)
+{
+	if (wmi_handle->ops->extract_btm_bl_event)
+		return wmi_handle->ops->extract_btm_bl_event(wmi_handle,
+							     event,
+							     data_len,
+							     dst_list);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_vdev_disconnect_event(wmi_unified_t wmi_handle,
+				  uint8_t *event, uint32_t data_len,
+				  struct vdev_disconnect_event_data *data)
+{
+	if (wmi_handle->ops->extract_vdev_disconnect_event)
+		return wmi_handle->ops->extract_vdev_disconnect_event(
+				wmi_handle, event, data_len, data);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_roam_scan_chan_list(wmi_unified_t wmi_handle,
+				uint8_t *event, uint32_t data_len,
+				struct cm_roam_scan_ch_resp **data)
+{
+	if (wmi_handle->ops->extract_roam_scan_chan_list)
+		return wmi_handle->ops->extract_roam_scan_chan_list(
+				wmi_handle, event, data_len, data);
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif

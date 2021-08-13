@@ -162,7 +162,7 @@ ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
 	CONFIG_PLD_SNOC_ICNSS_FLAG := y
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(findstring y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 	CONFIG_ROME_IF = ipci
 	CONFIG_PLD_IPCI_ICNSS_FLAG := y
@@ -225,7 +225,7 @@ ifeq ($(CONFIG_ARCH_SDX20), y)
 CONFIG_MOBILE_ROUTER := y
 endif
 
-ifeq (y, $(filter y, $(CONFIG_ARCH_SDXPRAIRIE), $(CONFIG_ARCH_SA515)))
+ifeq (y, $(filter y, $(CONFIG_ARCH_SDXPRAIRIE), $(CONFIG_ARCH_SA515), $(CONFIG_ARCH_SDXPOORWILLS)))
 CONFIG_MOBILE_ROUTER := y
 endif
 
@@ -257,6 +257,12 @@ ifeq (y,$(findstring y,$(CONFIG_HELIUMPLUS) $(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM
 	CONFIG_QCACLD_WLAN_LFR3 := y
 else
 	CONFIG_QCACLD_WLAN_LFR2 := y
+endif
+
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
+CONFIG_WIFI_MONITOR_SUPPORT := y
+CONFIG_QCA_MONITOR_PKT_SUPPORT := y
+CONFIG_MONITOR_MODULARIZED_ENABLE := n
 endif
 
 #SDX65 attach HSP but enable LFR2
@@ -302,6 +308,7 @@ endif
 	CONFIG_WLAN_SYSFS_TEMPERATURE := y
 	CONFIG_WLAN_THERMAL_CFG := y
 	CONFIG_WLAN_DL_MODES := y
+	CONFIG_WLAN_DUMP_IN_PROGRESS := y
 endif
 
 CONFIG_WLAN_POWER_DEBUG := y
@@ -533,7 +540,7 @@ endif
 endif
 
 # Enable fw stats version 2
-ifeq (y,$(findstring y,$(CONFIG_HELIUMPLUS) $(CONFIG_LITHIUM)) $(CONFIG_BERYLLIUM))
+ifeq (y,$(findstring y,$(CONFIG_HELIUMPLUS) $(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 CONFIG_AR900B := y
 endif
 
@@ -972,12 +979,21 @@ ifeq ($(CONFIG_IPA_OFFLOAD), y)
 CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 CONFIG_SMMU_S1_UNMAP := y
 endif
+CONFIG_WLAN_TSF_UPLINK_DELAY := y
 endif
 
 ifeq ($(CONFIG_ARCH_SDX20), y)
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
 ifeq ($(CONFIG_WCNSS_SKB_PRE_ALLOC), y)
 CONFIG_FEATURE_SKB_PRE_ALLOC := y
+endif
+endif
+endif
+
+ifeq ($(CONFIG_CNSS_QCA6490), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+ifneq ($(CONFIG_SLUB_DEBUG_ON), y)
+CONFIG_HIF_CPU_CLEAR_AFFINITY := y
 endif
 endif
 endif
@@ -1318,9 +1334,7 @@ ifeq ($(CONFIG_CNSS_QCA6490), y)
 
 #Enable 6 GHz Band
 CONFIG_BAND_6GHZ := y
-ifneq ($(CONFIG_PCIE_FW_SIM), y)
 CONFIG_RX_FISA := y
-endif
 CONFIG_MORE_TX_DESC := y
 
 endif
@@ -1330,12 +1344,6 @@ ifeq ($(CONFIG_CNSS_WCN7850), y)
 CONFIG_BAND_6GHZ := y
 CONFIG_RX_FISA := n
 CONFIG_MORE_TX_DESC := y
-endif
-
-ifeq ($(CONFIG_RX_FISA), y)
-	 ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
-	 	CONFIG_RX_FISA_HISTORY := y
-	 endif
 endif
 
 CONFIG_HANDLE_BC_EAP_TX_FRM := y

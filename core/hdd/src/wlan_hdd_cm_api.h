@@ -26,6 +26,7 @@
 #include <net/cfg80211.h>
 #include "wlan_cm_public_struct.h"
 #include "osif_cm_util.h"
+#include "wlan_cm_roam_ucfg_api.h"
 
 /**
  * wlan_hdd_cm_connect() - cfg80211 connect api
@@ -191,10 +192,13 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter);
  * __hdd_cm_disconnect_handler_post_user_update() - Handle disconnect indication
  * after updating to user space
  * @adapter: Pointer to adapter
+ * @vdev: vdev ptr
  *
  * Return: None
  */
-void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter);
+void
+__hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter,
+					     struct wlan_objmgr_vdev *vdev);
 
 /**
  * hdd_cm_set_peer_authenticate() - set peer as authenticated

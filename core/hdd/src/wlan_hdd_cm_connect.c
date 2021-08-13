@@ -480,7 +480,7 @@ hdd_cm_connect_failure_post_user_update(struct wlan_objmgr_vdev *vdev,
 	}
 
 	hdd_clear_roam_profile_ie(adapter);
-	sme_reset_key(hdd_ctx->mac_handle, adapter->vdev_id);
+	ucfg_cm_reset_key(hdd_ctx->pdev, adapter->vdev_id);
 	hdd_wmm_dscp_initial_state(adapter);
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
@@ -848,7 +848,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 
-	wlan_hdd_ft_set_key_delay(mac_handle, adapter);
+	wlan_hdd_ft_set_key_delay(vdev);
 	hdd_cm_update_rssi_snr_by_bssid(adapter);
 	hdd_cm_save_connect_status(adapter, rsp->status_code);
 
@@ -1352,7 +1352,7 @@ QDF_STATUS hdd_cm_ft_preauth_complete(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sme_set_ft_pre_auth_state(mac_handle, wlan_vdev_get_id(vdev), true);
+	ucfg_cm_set_ft_pre_auth_state(vdev, true);
 
 	ft_event.target_ap = ft_ie;
 	ft_event.ies = (u8 *)(ft_ie + QDF_MAC_ADDR_SIZE);

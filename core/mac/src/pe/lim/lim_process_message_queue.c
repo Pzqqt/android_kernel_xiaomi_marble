@@ -169,12 +169,13 @@ static void lim_process_sae_msg_ap(struct mac_context *mac,
 		assoc_ind_sent =
 			lim_send_assoc_ind_to_sme(mac, session,
 						  assoc_req->sub_type,
-						  &assoc_req->hdr,
+						  assoc_req->sa,
 						  assoc_req->assoc_req,
 						  ANI_AKM_TYPE_SAE,
 						  assoc_req->pmf_connection,
 						  &assoc_req_copied,
-						  assoc_req->dup_entry, false);
+						  assoc_req->dup_entry, false,
+						  assoc_req->partner_peer_idx);
 		if (!assoc_ind_sent)
 			lim_process_assoc_cleanup(mac, session,
 						  assoc_req->assoc_req,
@@ -1558,25 +1559,15 @@ static void lim_process_sme_obss_scan_ind(struct mac_context *mac_ctx,
 	session = pe_find_session_by_bssid(mac_ctx,
 			ht40_scanind->mac_addr.bytes, &session_id);
 	if (!session) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"OBSS Scan not started: session id is NULL");
+		pe_err("OBSS Scan not started: session id is NULL");
 		return;
 	}
+	pe_debug("OBSS Scan Req: vdev %d (pe session %d) htSupportedChannelWidthSet %d",
+		 session->vdev_id, session->peSessionId,
+		 session->htSupportedChannelWidthSet);
 	if (session->htSupportedChannelWidthSet ==
-			WNI_CFG_CHANNEL_BONDING_MODE_ENABLE) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"OBSS Scan Start Req: session id %d"
-			"htSupportedChannelWidthSet %d",
-			session->peSessionId,
-			session->htSupportedChannelWidthSet);
+	    WNI_CFG_CHANNEL_BONDING_MODE_ENABLE)
 		lim_send_ht40_obss_scanind(mac_ctx, session);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"OBSS Scan not started: channel width - %d session %d",
-			session->htSupportedChannelWidthSet,
-			session->peSessionId);
-	}
-	return;
 }
 
 /**
@@ -2085,6 +2076,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 	case WMA_ROAM_BLACKLIST_MSG:
 		lim_add_roam_blacklist_ap(mac_ctx,
 					  (struct roam_blacklist_event *)
@@ -2092,6 +2084,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+#endif
 	case SIR_LIM_PROCESS_DEFERRED_QUEUE:
 		break;
 	case CM_BSS_PEER_CREATE_REQ:

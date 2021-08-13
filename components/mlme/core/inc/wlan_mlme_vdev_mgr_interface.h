@@ -35,6 +35,25 @@
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_register_mlme_ext_ops(void);
+
+/**
+ * mlme_register_mlo_ext_ops() - Register mlme mlo ext ops
+ *
+ * This function is called to register mlme mlo ext operations
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_register_mlo_ext_ops(void);
+
+/**
+ * mlme_unregister_mlo_ext_ops() - Unregister mlme mlo ext ops
+ *
+ * This function is called to unregister mlme mlo ext operations
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_unregister_mlo_ext_ops(void);
+
 /**
  * mlme_register_vdev_mgr_ops() - Register vdev mgr ops
  * @vdev_mlme: vdev mlme object

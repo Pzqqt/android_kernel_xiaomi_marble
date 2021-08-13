@@ -189,9 +189,13 @@ static void pkt_capture_tx_get_phy_info(
 		tx_status->he_flags = 1;
 		tx_status->he_data1 |=
 			IEEE80211_RADIOTAP_HE_DATA1_DATA_MCS_KNOWN |
-			IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN;
+			IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN |
+			IEEE80211_RADIOTAP_HE_DATA1_CODING_KNOWN |
+			IEEE80211_RADIOTAP_HE_DATA1_STBC_KNOWN;
 		tx_status->he_data2 |= IEEE80211_RADIOTAP_HE_DATA2_GI_KNOWN;
-		tx_status->he_data3 |= pktcapture_hdr->mcs << 0x8;
+		tx_status->he_data3 |= (pktcapture_hdr->mcs << 0x8) |
+					(pktcapture_hdr->ldpc << 0xd) |
+					(pktcapture_hdr->stbc << 0xf);
 		tx_status->he_data5 |=
 			(pktcapture_hdr->bw | (pktcapture_hdr->sgi << 0x4));
 		tx_status->he_data6 |= pktcapture_hdr->nss;
@@ -415,6 +419,7 @@ pkt_capture_rx_convert8023to80211(hal_soc_handle_t hal_soc_hdl,
 	uint8_t *pwh;
 	uint8_t hdsize, new_hdsize;
 	struct ieee80211_qoscntl *qos_cntl;
+	static uint8_t first_msdu_hdr[sizeof(struct ieee80211_frame)];
 	uint8_t localbuf[sizeof(struct ieee80211_qosframe_htc_addr4) +
 			sizeof(struct llc_snap_hdr_t)];
 	const uint8_t ethernet_II_llc_snap_header_prefix[] = {
@@ -425,13 +430,29 @@ pkt_capture_rx_convert8023to80211(hal_soc_handle_t hal_soc_hdl,
 
 	eth_hdr = (struct ethernet_hdr_t *)qdf_nbuf_data(msdu);
 	hdsize = sizeof(struct ethernet_hdr_t);
-	pwh = hal_rx_desc_get_80211_hdr(hal_soc_hdl, desc);
 
 	wh = (struct ieee80211_frame *)localbuf;
 
 	new_hdsize = sizeof(struct ieee80211_frame);
 
-	qdf_mem_copy(localbuf, pwh, new_hdsize);
+	/*
+	 * Only first msdu in mpdu has rx_tlv_hdr(802.11 hdr) filled by HW, so
+	 * copy the 802.11 hdr to all other msdu's which are received in
+	 * single mpdu from first msdu.
+	 */
+	if (qdf_nbuf_is_rx_chfrag_start(msdu)) {
+		pwh = hal_rx_desc_get_80211_hdr(hal_soc_hdl, desc);
+		qdf_mem_copy(first_msdu_hdr, pwh,
+			     sizeof(struct ieee80211_frame));
+	}
+
+	qdf_mem_copy(localbuf, first_msdu_hdr, new_hdsize);
+
+	/* Flush the cached 802.11 hdr once last msdu in mpdu is received */
+	if (qdf_nbuf_is_rx_chfrag_end(msdu))
+		qdf_mem_zero(first_msdu_hdr, sizeof(struct ieee80211_frame));
+
+	wh->i_fc[0] |= IEEE80211_FC0_TYPE_DATA;
 	wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 
 	if (wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
@@ -733,13 +754,19 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	uint8_t *rx_tlv_hdr = desc;
 	struct dp_soc *soc = dp_soc;
 	struct hal_rx_pkt_capture_flags flags = {0};
-	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev = context;
 	struct pkt_capture_vdev_priv *vdev_priv;
-	uint32_t conn_count;
-	uint8_t vdev_id;
-	int i;
+	uint8_t primary_chan_num;
+	uint32_t center_chan_freq;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	enum reg_wifi_band band;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		pkt_capture_err("Failed to get psoc");
+		return;
+	}
 
 	hal_rx_tlv_get_pkt_capture_flags(soc->hal_soc, (uint8_t *)rx_tlv_hdr,
 					 &flags);
@@ -748,30 +775,26 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	rx_status->ant_signal_db = flags.rssi_comb;
 	rx_status->rssi_comb = flags.rssi_comb;
 	rx_status->tsft = flags.tsft;
+	primary_chan_num = flags.chan_freq;
+	center_chan_freq = flags.chan_freq >> 16;
+	rx_status->chan_num = primary_chan_num;
+	band = wlan_reg_freq_to_band(center_chan_freq);
 
-	vdev_id = wlan_vdev_get_id(vdev);
-
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pkt_capture_err("Failed to get psoc");
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_PKT_CAPTURE_ID);
+	if (!pdev) {
+		pkt_capture_err("Failed to get pdev");
 		return;
 	}
+
+	rx_status->chan_freq =
+		wlan_reg_chan_band_to_freq(pdev, primary_chan_num, BIT(band));
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_PKT_CAPTURE_ID);
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (qdf_unlikely(!vdev))
 		return;
 
 	rx_status->rssi_comb = vdev_priv->rx_avg_rssi;
-
-	/* Update the connected channel info from policy manager */
-	conn_count = policy_mgr_get_connection_info(psoc, info);
-	for (i = 0; i < conn_count; i++) {
-		if (info[i].vdev_id == vdev_id) {
-			rx_status->chan_freq = info[0].ch_freq;
-			rx_status->chan_num = info[0].channel;
-			break;
-		}
-	}
 
 	if (rx_status->chan_freq > CHANNEL_FREQ_5150)
 		rx_status->ofdm_flag = 1;

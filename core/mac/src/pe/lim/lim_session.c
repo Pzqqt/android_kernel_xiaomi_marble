@@ -38,6 +38,7 @@
 #include "sch_api.h"
 #include "lim_send_messages.h"
 #include "cfg_ucfg_api.h"
+#include <lim_assoc_utils.h>
 
 #ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
 static struct sDphHashNode *g_dph_node_array;
@@ -567,15 +568,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 					pe_get_session_dph_node_array(i);
 	session_ptr->dph.dphHashTable.size = numSta + 1;
 	dph_hash_table_init(mac, &session_ptr->dph.dphHashTable);
-	session_ptr->gpLimPeerIdxpool = qdf_mem_malloc(
-		sizeof(*(session_ptr->gpLimPeerIdxpool)) *
-		lim_get_peer_idxpool_size(numSta, bssType));
-	if (!session_ptr->gpLimPeerIdxpool)
-		goto free_dp_hash_table;
 
-	session_ptr->freePeerIdxHead = 0;
-	session_ptr->freePeerIdxTail = 0;
-	session_ptr->gLimNumOfCurrentSTAs = 0;
 	/* Copy the BSSID to the session table */
 	sir_copy_mac_addr(session_ptr->bssId, bssid);
 	if (bssType == eSIR_MONITOR_MODE)
@@ -645,6 +638,11 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 		 *sessionId, session_ptr->opmode, vdev_id,
 		 QDF_MAC_ADDR_REF(bssid), numSta);
 
+	if (!lim_create_peer_idxpool(
+		session_ptr,
+		lim_get_peer_idxpool_size(numSta, bssType)))
+		goto free_session_attrs;
+
 	if (eSIR_INFRASTRUCTURE_MODE == bssType)
 		lim_ft_open(mac, &mac->lim.gpSession[i]);
 
@@ -689,17 +687,15 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	return &mac->lim.gpSession[i];
 
 free_session_attrs:
-	qdf_mem_free(session_ptr->gpLimPeerIdxpool);
+	lim_free_peer_idxpool(session_ptr);
 	qdf_mem_free(session_ptr->pSchProbeRspTemplate);
 	qdf_mem_free(session_ptr->pSchBeaconFrameBegin);
 	qdf_mem_free(session_ptr->pSchBeaconFrameEnd);
 
-	session_ptr->gpLimPeerIdxpool = NULL;
 	session_ptr->pSchProbeRspTemplate = NULL;
 	session_ptr->pSchBeaconFrameBegin = NULL;
 	session_ptr->pSchBeaconFrameEnd = NULL;
 
-free_dp_hash_table:
 	qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
 	qdf_mem_zero(session_ptr->dph.dphHashTable.pDphNodeArray,
 		     sizeof(struct sDphHashNode) * (SIR_SAP_MAX_NUM_PEERS + 1));
@@ -912,10 +908,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 		session->dph.dphHashTable.pDphNodeArray = NULL;
 	}
 
-	if (session->gpLimPeerIdxpool) {
-		qdf_mem_free(session->gpLimPeerIdxpool);
-		session->gpLimPeerIdxpool = NULL;
-	}
+	lim_free_peer_idxpool(session);
 
 	if (session->beacon) {
 		qdf_mem_free(session->beacon);
@@ -943,11 +936,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 				continue;
 			tmp_ptr = ((tpSirAssocReq)
 				  (session->parsedAssocReq[i]));
-			if (tmp_ptr->assocReqFrame) {
-				qdf_mem_free(tmp_ptr->assocReqFrame);
-				tmp_ptr->assocReqFrame = NULL;
-				tmp_ptr->assocReqFrameLength = 0;
-			}
+			lim_free_assoc_req_frm_buf(tmp_ptr);
 			qdf_mem_free(session->parsedAssocReq[i]);
 			session->parsedAssocReq[i] = NULL;
 		}

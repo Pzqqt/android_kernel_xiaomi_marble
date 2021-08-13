@@ -124,6 +124,74 @@ struct obss_detection_cfg {
 #define ADAPTIVE_11R_DATA_LEN      0x04
 #define ADAPTIVE_11R_OUI_DATA     "\x00\x00\x00\x01"
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * struct mlo_link_ie - IE per link to populate mlo ie
+ * @link_ds: DS IE
+ * @link_edca: ecsa IE
+ * @link_wmm_params: wmm params IE
+ * @link_wmm_caps: wmm caps IE
+ * @link_csa: csa IE
+ * @link_ecsa:ecsa IE
+ * @link_swt_time: switch time IE
+ * @link_quiet: quiet IE
+ * @link_ht_cap: ht cap IE
+ * @link_ht_info: ht info IE
+ * @link_cap: link caps IE
+ * @link_ext_cap: link extend cap IE
+ * @link_vht_cap: vht cap IE
+ * @link_vht_op: vht op IE
+ * @link_qcn_ie: qcn IE
+ * @link_he_cap: he cap IE
+ * @link_he_op: he op IE
+ * @link_he_6ghz_band_cap: 6G band cap IE
+ * @link_eht_cap: eht cap IE
+ * @link_eht_op: eht op IE
+ * @max_chan_swt_time: MLOTD
+ * @bss_param_change_cnt: bss param change count
+ */
+struct mlo_link_ie {
+	tDot11fIEDSParams                    link_ds;
+	tDot11fIEEDCAParamSet                link_edca;
+	tDot11fIEWMMParams                   link_wmm_params;
+	tDot11fIEWMMCaps                     link_wmm_caps;
+	tDot11fIEChanSwitchAnn               link_csa;
+	tDot11fIEext_chan_switch_ann         link_ecsa;
+	tDot11fIEmax_chan_switch_time        link_swt_time;
+	tDot11fIEQuiet                       link_quiet;
+	tDot11fIEHTCaps                      link_ht_cap;
+	tDot11fIEHTInfo                      link_ht_info;
+	tDot11fFfCapabilities                link_cap;
+	tDot11fIEExtCap                      link_ext_cap;
+	tDot11fIEVHTCaps                     link_vht_cap;
+	tDot11fIEVHTOperation                link_vht_op;
+	tDot11fIEqcn_ie                      link_qcn_ie;
+	tDot11fIEhe_cap                      link_he_cap;
+	tDot11fIEhe_op                       link_he_op;
+	tDot11fIEhe_6ghz_band_cap            link_he_6ghz_band_cap;
+	tDot11fIEeht_cap                     link_eht_cap;
+	tDot11fIEeht_op                      link_eht_op;
+	uint32_t                             max_chan_swt_time;
+	uint8_t                              bss_param_change_cnt;
+};
+
+/**
+ * struct mlo_link_ie_info - information per link to populate mlo ie
+ * @upt_bcn_mlo_ie: notify partner links to update their mlo ie of bcn temp
+ * @mlo_rnr_updated: link already notified partner link to update rnr
+ * @bss_param_change: bss param changed
+ * @bcn_tmpl_exist: bcn template is generated or not
+ * @link_ie: IEs which will be used for generating partner mlo IE
+ */
+struct mlo_link_ie_info {
+	bool upt_bcn_mlo_ie;
+	bool mlo_rnr_updated;
+	bool bss_param_change;
+	bool bcn_tmpl_exist;
+	struct mlo_link_ie link_ie;
+};
+#endif
+
 /**
  * struct pe_session - per-vdev PE context
  * @available: true if the entry is available, false if it is in use
@@ -583,6 +651,10 @@ struct pe_session {
 	bool eht_capable;
 	tDot11fIEeht_cap eht_config;
 	tDot11fIEeht_op eht_op;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_link_ie_info mlo_link_info;
+	struct mlo_partner_info ml_partner_info;
+#endif
 #endif /* WLAN_FEATURE_11BE */
 };
 

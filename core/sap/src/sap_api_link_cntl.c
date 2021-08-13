@@ -51,7 +51,6 @@
 #include "wlan_reg_services_api.h"
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_scan_utils_api.h>
-#include <wlan_mlme_ucfg_api.h>
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -593,9 +592,6 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 	    policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) ||
 	    sap_ctx->csa_reason == CSA_REASON_DCS ||
 	    !sap_scc_dfs) {
-		sap_get_cac_dur_dfs_region(sap_ctx,
-			&sap_ctx->csr_roamProfile.cac_duration_ms,
-			&sap_ctx->csr_roamProfile.dfs_regdomain);
 		/*
 		 * Most likely, radar has been detected and SAP wants to
 		 * change the channel
@@ -641,9 +637,6 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 		sap_context = mac_ctx->sap.sapCtxList[intf].sap_context;
 		sap_debug("sapdfs:issue chnl change for sapctx[%pK]",
 			  sap_context);
-		sap_get_cac_dur_dfs_region(sap_context,
-			&sap_context->csr_roamProfile.cac_duration_ms,
-			&sap_context->csr_roamProfile.dfs_regdomain);
 		/*
 		 * Most likely, radar has been detected and SAP wants to
 		 * change the channel
@@ -860,7 +853,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 	mac_handle_t mac_handle;
 	struct mac_context *mac_ctx;
 	uint8_t intf;
-	bool dfs_disable_channel_switch = false;
 
 	if (QDF_IS_STATUS_ERROR(wlansap_context_get(sap_ctx)))
 		return QDF_STATUS_E_FAILURE;
@@ -965,12 +957,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		sap_debug("sapdfs: Indicate eSAP_DFS_RADAR_DETECT to HDD");
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_RADAR_DETECT,
 				     (void *) eSAP_STATUS_SUCCESS);
-
-		ucfg_mlme_get_dfs_disable_channel_switch(mac_ctx->psoc,
-						&dfs_disable_channel_switch);
-		if (dfs_disable_channel_switch)
-			goto EXIT;
-
 		mac_ctx->sap.SapDfsInfo.target_chan_freq =
 			sap_indicate_radar(sap_ctx);
 
@@ -996,7 +982,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		/* Issue stopbss for each sapctx */
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 			struct sap_context *sap_context;
-			struct csr_roam_profile *profile;
 
 			if (((QDF_SAP_MODE ==
 			    mac_ctx->sap.sapCtxList[intf].sapPersona) ||
@@ -1006,10 +991,9 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 			    NULL) {
 				sap_context =
 				    mac_ctx->sap.sapCtxList[intf].sap_context;
-				profile = &sap_context->csr_roamProfile;
 				if (!wlan_reg_is_passive_or_disable_for_freq(
 						mac_ctx->pdev,
-						profile->op_freq))
+						sap_context->chan_freq))
 					continue;
 				sap_debug("Vdev %d no channel available , stop bss",
 					  sap_context->sessionId);
@@ -1176,11 +1160,8 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 
 		break;
 	case eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND:
-		ucfg_mlme_get_dfs_disable_channel_switch(mac_ctx->psoc,
-						&dfs_disable_channel_switch);
 		if (!policy_mgr_get_dfs_master_dynamic_enabled(
-				mac_ctx->psoc, sap_ctx->sessionId) ||
-		    dfs_disable_channel_switch)
+				mac_ctx->psoc, sap_ctx->sessionId))
 			break;
 		wlansap_roam_process_dfs_radar_found(mac_ctx, sap_ctx,
 						&qdf_ret_status);

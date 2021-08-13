@@ -56,6 +56,7 @@
 #include <wlan_mlme_api.h>
 #include <wlan_mlme_main.h>
 #include "wlan_crypto_global_api.h"
+#include "lim_mlo.h"
 
 /**
  *
@@ -328,9 +329,11 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_he_6ghz_cap(mac_ctx, pesession,
 				    &pr->he_6ghz_band_cap);
 
-	if (IS_DOT11_MODE_EHT(dot11mode) && pesession)
+	if (IS_DOT11_MODE_EHT(dot11mode) && pesession) {
 		lim_update_session_eht_capable(mac_ctx, pesession);
-
+		populate_dot11f_probe_req_mlo_ie(mac_ctx, pesession,
+						 &pr->mlo_ie);
+	}
 	populate_dot11f_eht_caps(mac_ctx, pesession, &pr->eht_cap);
 
 	if (addn_ielen && additional_ie) {
@@ -1357,10 +1360,7 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	qdf_mem_free(lim_assoc_ind);
 
 free_buffers:
-	if (assoc_req->assocReqFrame) {
-		qdf_mem_free(assoc_req->assocReqFrame);
-		assoc_req->assocReqFrame = NULL;
-	}
+	lim_free_assoc_req_frm_buf(assoc_req);
 	qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
 	session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
 	qdf_nbuf_free(buf);
@@ -1370,10 +1370,7 @@ free_buffers:
 lim_assoc_ind:
 	qdf_mem_free(lim_assoc_ind);
 free_assoc_req:
-	if (assoc_req->assocReqFrame) {
-		qdf_mem_free(assoc_req->assocReqFrame);
-		assoc_req->assocReqFrame = NULL;
-	}
+	lim_free_assoc_req_frm_buf(assoc_req);
 	qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
 	session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
 end:
@@ -1414,6 +1411,13 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
+		return;
+	}
+	if (sta && lim_is_mlo_conn(pe_session, sta) &&
+	    !lim_is_mlo_recv_assoc(sta)) {
+		pe_err("Do not send assoc rsp in mlo partner peer "
+		       QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(sta->staAddr));
 		return;
 	}
 
@@ -2325,6 +2329,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_eht_caps(mac_ctx, pe_session, &frm->eht_cap);
 	}
 
+#ifdef WLAN_FEATURE_11BE_MLO
+	populate_dot11f_assoc_req_mlo_ie(mac_ctx, pe_session, frm);
+#endif
 	if (pe_session->is11Rconnection) {
 		struct bss_description *bssdescr;
 
@@ -3195,6 +3202,7 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 	tLimMlmDeauthCnf deauth_cnf;
 	struct pe_session *session_entry;
 	QDF_STATUS qdf_status;
+	uint32_t i;
 
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if (deauth_req) {
@@ -3213,6 +3221,22 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 		}
 		if (qdf_is_macaddr_broadcast(&deauth_req->peer_macaddr) &&
 		    mac_ctx->mlme_cfg->sap_cfg.is_sap_bcast_deauth_enabled) {
+			if (wlan_vdev_mlme_is_mlo_ap(session_entry->vdev)) {
+				for (i = 1;
+				     i < session_entry->dph.dphHashTable.size;
+				     i++) {
+					sta_ds = dph_get_hash_entry(
+					    mac_ctx, i,
+					    &session_entry->dph.dphHashTable);
+					if (!sta_ds)
+						continue;
+					if (lim_is_mlo_conn(session_entry,
+							    sta_ds))
+						lim_mlo_notify_peer_disconn(
+								session_entry,
+								sta_ds);
+				}
+			}
 			qdf_status = lim_del_sta_all(mac_ctx, session_entry);
 			qdf_mem_free(deauth_req);
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq =
@@ -3230,6 +3254,8 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 			deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
+
+		lim_mlo_notify_peer_disconn(session_entry, sta_ds);
 
 		/* / Receive path cleanup with dummy packet */
 		lim_ft_cleanup_pre_auth_info(mac_ctx, session_entry);
@@ -3335,6 +3361,9 @@ QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 			disassoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
+
+		lim_mlo_notify_peer_disconn(pe_session, sta_ds);
+
 		/* Receive path cleanup with dummy packet */
 		if (QDF_STATUS_SUCCESS !=
 		    lim_cleanup_rx_path(mac_ctx, sta_ds, pe_session, true)) {

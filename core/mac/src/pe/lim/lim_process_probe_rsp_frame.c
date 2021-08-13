@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -244,6 +244,9 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 				session_entry) != QDF_STATUS_SUCCESS) {
 				pe_err("EDCA param process error");
 			} else if (sta_ds) {
+				qdf_mem_copy(&sta_ds->qos.peer_edca_params,
+					     &probe_rsp->edcaParams,
+					     sizeof(probe_rsp->edcaParams));
 				/*
 				 * If needed, downgrade the
 				 * EDCA parameters
@@ -255,6 +258,7 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 				lim_send_edca_params(mac_ctx,
 					session_entry->gLimEdcaParamsActive,
 					session_entry->vdev_id, false);
+				sch_qos_concurrency_update();
 			} else {
 				pe_err("SelfEntry missing in Hash");
 			}

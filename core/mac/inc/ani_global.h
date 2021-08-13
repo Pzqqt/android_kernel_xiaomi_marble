@@ -30,7 +30,6 @@
 #include "sir_api.h"
 
 #include "csr_api.h"
-#include "sme_ft_api.h"
 #include "csr_support.h"
 #include "sme_internal.h"
 #include "sap_api.h"

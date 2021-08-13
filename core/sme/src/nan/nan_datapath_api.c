@@ -44,6 +44,7 @@ QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session,
 
 	/* Build BSS configuration from profile */
 	status = csr_roam_prepare_bss_config_from_profile(mac_ctx, profile,
+							  session,
 							  &bss_cfg);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac_ctx->roam.roamSession[session].bssParams.uCfgDot11Mode

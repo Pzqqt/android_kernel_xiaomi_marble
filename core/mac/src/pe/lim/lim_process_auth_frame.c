@@ -1829,12 +1829,13 @@ QDF_STATUS lim_process_auth_frame_no_session(struct mac_context *mac,
 		qdf_mem_free(rx_auth_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
+	pe_info("Pre-Auth RX: type: %d seqnum: %d status: %d %d from " QDF_MAC_ADDR_FMT,
+		(uint32_t)rx_auth_frame->authAlgoNumber,
+		(uint32_t)rx_auth_frame->authTransactionSeqNumber,
+		(uint32_t)rx_auth_frame->authStatusCode,
+		(uint32_t)mac->lim.gLimNumPreAuthContexts,
+		QDF_MAC_ADDR_REF(pHdr->sa));
 
-	pe_debug("Received Auth frame with type: %d seqnum: %d status: %d %d",
-		       (uint32_t)rx_auth_frame->authAlgoNumber,
-		       (uint32_t)rx_auth_frame->authTransactionSeqNumber,
-		       (uint32_t)rx_auth_frame->authStatusCode,
-		       (uint32_t)mac->lim.gLimNumPreAuthContexts);
 	switch (rx_auth_frame->authTransactionSeqNumber) {
 	case SIR_MAC_AUTH_FRAME_2:
 		if (rx_auth_frame->authStatusCode != STATUS_SUCCESS) {

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011-2015, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2019, 2021 The Linux Foundation. All rights
+ * reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +44,9 @@ void sch_set_default_edca_params(struct mac_context *mac, struct pe_session *pe_
 
 /* update only local qos params */
 void sch_qos_update_local(struct mac_context *mac, struct pe_session *pe_session);
+
+/* update the edca profile parameters based on STA-SAP concurrency */
+void sch_qos_concurrency_update(void);
 
 /* update the edca profile parameters */
 void sch_edca_profile_update(struct mac_context *mac,

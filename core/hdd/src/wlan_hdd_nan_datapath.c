@@ -260,11 +260,6 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 		&adapter->mac_addr.bytes[0],
 		QDF_MAC_ADDR_SIZE);
 
-	roam_profile->AuthType.numEntries = 1;
-	roam_profile->AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-	roam_profile->EncryptionType.numEntries = 1;
-	roam_profile->EncryptionType.encryptionType[0] = eCSR_ENCRYPT_TYPE_NONE;
-
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	status = sme_bss_start(mac_handle, adapter->vdev_id,
 			       roam_profile, &roam_id);

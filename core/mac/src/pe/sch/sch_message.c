@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,7 @@
 #include "sch_api.h"
 #include "wlan_mlme_api.h"
 #include <wlan_reg_services_api.h>
+#include "lim_utils.h"
 
 /* / Minimum beacon interval allowed (in Kus) */
 #define SCH_BEACON_INTERVAL_MIN  10
@@ -356,9 +357,10 @@ void sch_qos_update_local(struct mac_context *mac, struct pe_session *pe_session
 	}
 
 	set_sch_edca_params(mac, params, pe_session);
+	lim_set_active_edca_params(mac, pe_session->gLimEdcaParams, pe_session);
 
 	/* For AP, the bssID is stored in LIM Global context. */
-	lim_send_edca_params(mac, pe_session->gLimEdcaParams,
+	lim_send_edca_params(mac, pe_session->gLimEdcaParamsActive,
 			     pe_session->vdev_id, false);
 }
 
@@ -485,6 +487,19 @@ get_wmm_local_params(struct mac_context *mac_ctx,
 }
 
 /**
+ * sch_qos_concurrency_update() - This function updates the local and
+ *                                broadcast based on STA and SAP
+ *                                concurrency. It also updates the
+ * edcaParamSetCount, if Broadcast EDCA params are updated based on Concurrency.
+ *
+ * Return  none
+ */
+void sch_qos_concurrency_update(void)
+{
+	lim_send_conc_params_update();
+}
+
+/**
  * sch_edca_profile_update() - This function updates the local and broadcast
  * EDCA params in the gLimEdcaParams structure. It also updates the
  * edcaParamSetCount.
@@ -498,6 +513,7 @@ void sch_edca_profile_update(struct mac_context *mac, struct pe_session *pe_sess
 	if (LIM_IS_AP_ROLE(pe_session)) {
 		sch_qos_update_local(mac, pe_session);
 		sch_qos_update_broadcast(mac, pe_session);
+		sch_qos_concurrency_update();
 	}
 }
 

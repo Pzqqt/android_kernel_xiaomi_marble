@@ -240,6 +240,8 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE);
 	psoc_cfg->is_bus_suspend_enabled_in_go_mode =
 		cfg_get(psoc, CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE);
+	psoc_cfg->is_dynamic_pcie_gen_speed_change_enabled =
+		cfg_get(psoc, CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH);
 	psoc_cfg->default_power_save_mode = psoc_cfg->power_save_mode;
 	psoc_cfg->max_ps_poll = cfg_get(psoc, CFG_PMO_MAX_PS_POLL);
 

@@ -68,8 +68,10 @@
 #include "target_if_nan.h"
 #endif
 #include "wlan_scan_api.h"
+#include "wlan_cm_api.h"
 #include <wlan_crypto_global_api.h>
 #include "cdp_txrx_host_stats.h"
+#include "target_if_cm_roam_event.h"
 
 /**
  * WMA_SET_VDEV_IE_SOURCE_HOST - Flag to identify the source of VDEV SET IE
@@ -309,6 +311,24 @@ end:
 }
 
 #ifdef WLAN_FEATURE_TSF
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+static void wma_vdev_tsf_set_mac_id(struct stsf *ptsf, uint32_t mac_id,
+				    uint32_t mac_id_valid)
+{
+	ptsf->mac_id = mac_id;
+	ptsf->mac_id_valid = mac_id_valid;
+
+	wma_nofl_debug("mac_id %d mac_id_valid %d", ptsf->mac_id,
+		       ptsf->mac_id_valid);
+}
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline void wma_vdev_tsf_set_mac_id(struct stsf *ptsf, uint32_t mac_id,
+					   uint32_t mac_id_valid)
+{
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 /**
  * wma_vdev_tsf_handler() - handle tsf event indicated by FW
  * @handle: wma context
@@ -348,6 +368,10 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	wma_nofl_debug("g_tsf: %d %d; soc_timer: %d %d",
 		       ptsf->global_tsf_low, ptsf->global_tsf_high,
 			   ptsf->soc_timer_low, ptsf->soc_timer_high);
+
+	wma_vdev_tsf_set_mac_id(ptsf, tsf_event->mac_id,
+				tsf_event->mac_id_valid);
+
 	tsf_msg.type = eWNI_SME_TSF_EVENT;
 	tsf_msg.bodyptr = ptsf;
 	tsf_msg.bodyval = 0;
@@ -476,6 +500,53 @@ QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+QDF_STATUS wma_set_tsf_auto_report(WMA_HANDLE handle, uint32_t vdev_id,
+				   uint32_t param_id, bool ena)
+{
+	wmi_vdev_tsf_tstamp_action_cmd_fixed_param *cmd;
+	tp_wma_handle wma = (tp_wma_handle)handle;
+	struct wmi_unified *wmi_handle;
+	int len = sizeof(*cmd);
+	QDF_STATUS status;
+	uint8_t *buf_ptr;
+	wmi_buf_t buf;
+
+	if (param_id != GEN_PARAM_TSF_AUTO_REPORT_ENABLE &&
+	    param_id != GEN_PARAM_TSF_AUTO_REPORT_DISABLE)
+		return QDF_STATUS_E_FAILURE;
+
+	wmi_handle = wma->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
+		return QDF_STATUS_E_INVAL;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_vdev_tsf_tstamp_action_cmd_fixed_param *)buf_ptr;
+	cmd->vdev_id = vdev_id;
+	cmd->tsf_action = ena ? TSF_TSTAMP_AUTO_REPORT_ENABLE :
+			  TSF_TSTAMP_AUTO_REPORT_DISABLE;
+
+	wma_debug("vdev_id %u tsf_action %d", cmd->vdev_id, cmd->tsf_action);
+
+	WMITLV_SET_HDR(
+		&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_tsf_tstamp_action_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+				wmi_vdev_tsf_tstamp_action_cmd_fixed_param));
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_buf_free(buf);
+
+	return status;
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
 #endif
 
 /**
@@ -1164,8 +1235,8 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	if (!csa_offload_event)
 		return -EINVAL;
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) ||
-	    wma->interfaces[vdev_id].roaming_in_progress) {
+	if (intr[vdev_id].vdev &&
+	    wlan_cm_is_vdev_roaming(intr[vdev_id].vdev)) {
 		wma_err("Roaming in progress for vdev %d, ignore csa event",
 			 vdev_id);
 		qdf_mem_free(csa_offload_event);
@@ -2665,8 +2736,13 @@ static int wma_wake_event_piggybacked(
 				    NULL, NULL, wake_reason,
 				    pb_event_len);
 		if (pb_event_len > 0) {
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+			errno = target_if_cm_roam_event(wma, pb_event,
+							pb_event_len);
+#else
 			errno = wma_roam_event_callback(wma, pb_event,
 							pb_event_len);
+#endif
 		} else {
 			/*
 			 * No wow_packet_buffer means a better AP beacon
@@ -2734,8 +2810,13 @@ static int wma_wake_event_piggybacked(
 		break;
 	case WOW_REASON_VDEV_DISCONNECT:
 		wma_debug("Host woken up because of vdev disconnect event");
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 		errno = wma_roam_vdev_disconnect_event_handler(wma, pb_event,
 							       pb_event_len);
+#else
+		errno = target_if_cm_roam_vdev_disconnect_event_handler(wma,
+					pb_event, pb_event_len);
+#endif
 		break;
 	default:
 		wma_err("Wake reason %s(%u) is not a piggybacked event",

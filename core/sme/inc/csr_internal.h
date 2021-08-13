@@ -35,8 +35,6 @@
 #include "sir_types.h"
 #include "wlan_mlme_public_struct.h"
 
-#define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
-
 /* No of sessions to be supported, and a session is for Infra, BT-AMP */
 #define CSR_IS_SESSION_VALID(mac, sessionId) \
 	((sessionId) < WLAN_MAX_VDEVS && \
@@ -54,18 +52,11 @@
 	  ((((mac_ctx)->mlme_cfg->lfr.roaming_dfs_channel) != \
 	    ROAMING_DFS_CHANNEL_DISABLED) ? true : false) \
 	)
-#define CSR_IS_SELECT_5GHZ_MARGIN(mac) \
-	( \
-	  (((mac)->roam.configParam.nSelect5GHzMargin) ? true : false) \
-	)
 #define CSR_IS_ROAM_PREFER_5GHZ(mac)	\
 	( \
 	  ((mac)->mlme_cfg->lfr.roam_prefer_5ghz) \
 	)
-#define CSR_IS_FASTROAM_IN_CONCURRENCY_INI_FEATURE_ENABLED(mac) \
-	( \
-	  ((mac)->mlme_cfg->lfr.enable_fast_roam_in_concurrency) \
-	)
+
 #define CSR_IS_CHANNEL_24GHZ(chnNum) \
 	(((chnNum) > 0) && ((chnNum) <= 14))
 
@@ -134,7 +125,6 @@ struct bss_config_param {
 	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
-	tAniAuthType authType;
 	tSirMacCapabilityInfo BssCap;
 	ePhyChanBondState cbMode;
 };
@@ -170,8 +160,6 @@ struct csr_roamstart_bssparams {
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
 	bool updatebeaconInterval;
-	bool mfpCapable;
-	bool mfpRequired;
 	struct add_ie_params add_ie_params;
 	uint8_t sap_dot11mc;
 	uint16_t beacon_tx_rate;
@@ -299,13 +287,9 @@ struct csr_roam_session {
 	uint8_t vdev_id;
 	bool sessionActive;     /* true if it is used */
 
-	/* For BT-AMP station, this serve as BSSID for self-BSS. */
-	struct qdf_mac_addr self_mac_addr;
-
 	eCsrConnectState connectState;
-	tCsrRoamConnectedProfile connectedProfile;
 	struct csr_roam_connectedinfo connectedInfo;
-	struct csr_roam_profile *pCurRoamProfile;
+	tCsrRoamModifyProfileFields modifyProfileFields;
 	/*
 	 * to remember some parameters needed for START_BSS.
 	 * All member must be set every time we try to join
@@ -378,16 +362,6 @@ struct csr_roamstruct {
 #define CSR_IS_ROAM_SUBSTATE_WAITFORKEY(mac, sessionId) \
 		CSR_IS_ROAM_SUBSTATE((mac), \
 			eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY, sessionId)
-#define CSR_IS_PHY_MODE_B_ONLY(mac) \
-	((eCSR_DOT11_MODE_11b == (mac)->roam.configParam.phyMode) || \
-	 (eCSR_DOT11_MODE_11b_ONLY == (mac)->roam.configParam.phyMode))
-
-#define CSR_IS_PHY_MODE_G_ONLY(mac) \
-	(eCSR_DOT11_MODE_11g == (mac)->roam.configParam.phyMode \
-		|| eCSR_DOT11_MODE_11g_ONLY == (mac)->roam.configParam.phyMode)
-
-#define CSR_IS_PHY_MODE_A_ONLY(mac) \
-	(eCSR_DOT11_MODE_11a == (mac)->roam.configParam.phyMode)
 
 #define CSR_IS_PHY_MODE_DUAL_BAND(phyMode) \
 	((eCSR_DOT11_MODE_abg & (phyMode)) || \
@@ -396,16 +370,6 @@ struct csr_roamstruct {
 	 (eCSR_DOT11_MODE_11ax & (phyMode)) || \
 	 (eCSR_DOT11_MODE_11be & (phyMode)) || \
 	 (eCSR_DOT11_MODE_AUTO & (phyMode)))
-
-#define CSR_IS_PHY_MODE_11n(phy_mode) \
-	((eCSR_DOT11_MODE_11n == phy_mode) || \
-	 (eCSR_DOT11_MODE_11n_ONLY == phy_mode) || \
-	 (eCSR_DOT11_MODE_11ac == phy_mode) || \
-	 (eCSR_DOT11_MODE_11ac_ONLY == phy_mode))
-
-#define CSR_IS_PHY_MODE_11ac(phy_mode) \
-	((eCSR_DOT11_MODE_11ac == phy_mode) || \
-	 (eCSR_DOT11_MODE_11ac_ONLY == phy_mode))
 
 #define CSR_IS_DOT11_MODE_11N(dot11mode) \
 	((dot11mode == eCSR_CFG_DOT11_MODE_AUTO) || \
@@ -535,7 +499,6 @@ bool csr_is_conn_state_disconnected_wds(struct mac_context *mac,
 bool csr_is_any_session_in_connect_state(struct mac_context *mac);
 bool csr_is_all_session_disconnected(struct mac_context *mac);
 
-bool csr_is_concurrent_session_running(struct mac_context *mac);
 bool csr_is_infra_ap_started(struct mac_context *mac);
 bool csr_is_conn_state_connected_infra_ap(struct mac_context *mac,
 		uint32_t sessionId);
@@ -552,13 +515,6 @@ QDF_STATUS csr_close(struct mac_context *mac);
 QDF_STATUS csr_start(struct mac_context *mac);
 QDF_STATUS csr_stop(struct mac_context *mac);
 QDF_STATUS csr_ready(struct mac_context *mac);
-
-#ifdef FEATURE_WLAN_WAPI
-uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
-		struct csr_roam_profile *pProfile,
-		struct bss_description *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
-#endif /* FEATURE_WLAN_WAPI */
 
 /**
  * csr_get_concurrent_operation_freq() - To get concurrent operating freq
@@ -607,15 +563,22 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 		void *pContext, uint8_t tid);
 #endif
 
-/* Returns whether "Legacy Fast Roaming" is enabled...or not */
-bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,  uint8_t vdev_id);
-bool csr_roam_is_roam_offload_scan_enabled(
-	struct mac_context *mac);
-
-/* Post Channel Change Indication */
+/**
+ * csr_roam_channel_change_req() - Post channel change request to LIM
+ * @mac: mac context
+ * @bssid: SAP bssid
+ * @vdev_id: vdev_id
+ * @ch_params: channel information
+ * @profile: CSR profile
+ *
+ * This API is primarily used to post Channel Change Req for SAP
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
-					struct qdf_mac_addr
-				       bssid, struct ch_params *ch_params,
+				       struct qdf_mac_addr bssid,
+				       uint8_t vdev_id,
+				       struct ch_params *ch_params,
 				       struct csr_roam_profile *profile);
 
 /* Post Beacon Tx Start Indication */
@@ -634,8 +597,6 @@ QDF_STATUS
 csr_roam_update_add_ies(struct mac_context *mac,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
 
-QDF_STATUS csr_get_channels_and_power(struct mac_context *mac);
-
 bool csr_nonscan_active_ll_remove_entry(
 			struct mac_context *mac_ctx,
 			tListElem *pEntryToRemove, bool inter_locked);
@@ -650,28 +611,6 @@ tListElem *csr_nonscan_pending_ll_next(
 		tListElem *entry, bool inter_locked);
 
 /**
- * csr_purge_vdev_pending_ser_cmd_list() - purge all scan and non-scan
- * pending cmds for the vdev id
- * @mac_ctx: pointer to global MAC context
- * @vdev_id : vdev id for which the pending cmds need to be purged
- *
- * Return : none
- */
-void csr_purge_vdev_pending_ser_cmd_list(struct mac_context *mac_ctx,
-					 uint32_t vdev_id);
-
-/**
- * csr_purge_vdev_all_scan_ser_cmd_list() - purge all scan active and pending
- * cmds for the vdev id
- * @mac_ctx: pointer to global MAC context
- * @vdev_id : vdev id for which cmds need to be purged
- *
- * Return : none
- */
-void csr_purge_vdev_all_scan_ser_cmd_list(struct mac_context *mac_ctx,
-					  uint32_t vdev_id);
-
-/**
  * csr_purge_pdev_all_ser_cmd_list() - purge all scan and non-scan
  * active and pending cmds for all vdevs in pdev
  * @mac_ctx: pointer to global MAC context
@@ -679,9 +618,6 @@ void csr_purge_vdev_all_scan_ser_cmd_list(struct mac_context *mac_ctx,
  * Return : none
  */
 void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx);
-
-bool csr_wait_for_connection_update(struct mac_context *mac,
-		bool do_release_reacquire_lock);
 
 void csr_roam_substate_change(
 			struct mac_context *mac, enum csr_roam_substate

@@ -1370,6 +1370,10 @@ struct hdd_adapter {
 	qdf_work_t gpio_tsf_sync_work;
 #endif
 #endif /* WLAN_FEATURE_TSF_PLUS */
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+	/* to indicate if TSF auto report is enabled or not */
+	qdf_atomic_t tsf_auto_report;
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
 #endif
 
 	struct hdd_multicast_addr_list mc_addr_list;
@@ -1721,7 +1725,7 @@ enum RX_OFFLOAD {
 /**
  * struct hdd_cache_channel_info - Structure of the channel info
  * which needs to be cached
- * @channel_num: channel number
+ * @freq: frequency
  * @reg_status: Current regulatory status of the channel
  * Enable
  * Disable
@@ -1730,7 +1734,7 @@ enum RX_OFFLOAD {
  * @wiphy_status: Current wiphy status
  */
 struct hdd_cache_channel_info {
-	uint32_t channel_num;
+	qdf_freq_t freq;
 	enum channel_state reg_status;
 	uint32_t wiphy_status;
 };
@@ -2205,6 +2209,7 @@ struct hdd_context {
 #endif
 	bool is_wifi3_0_target;
 	bool dump_in_progress;
+	qdf_time_t bw_vote_time;
 };
 
 /**
@@ -2677,6 +2682,17 @@ struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
  * Return: home channel if connected/started or invalid channel 0
  */
 uint32_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter);
+
+/**
+ * hdd_get_adapter_width() - return current bandwidth of adapter
+ * @adapter: hdd adapter of vdev
+ *
+ * This function returns current bandwidth of station/p2p-cli if
+ * connected, returns current bandwidth of sap/p2p-go if started.
+ *
+ * Return: bandwidth if connected/started or invalid bandwidth 0
+ */
+enum phy_ch_width hdd_get_adapter_width(struct hdd_adapter *adapter);
 
 /*
  * hdd_get_adapter_by_rand_macaddr() - find Random mac adapter

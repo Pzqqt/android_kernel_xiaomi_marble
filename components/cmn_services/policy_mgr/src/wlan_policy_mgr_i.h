@@ -26,12 +26,10 @@
 #include "qdf_defer.h"
 #include "wlan_reg_services_api.h"
 #include "cds_ieee80211_common_i.h"
-
+#include "qdf_delayed_work.h"
 #define DBS_OPPORTUNISTIC_TIME   5
 
 #define POLICY_MGR_SER_CMD_TIMEOUT 4000
-
-#define SAP_MANDATORY_5G_CH_FREQ 5745
 
 #ifdef QCA_WIFI_3_0_EMU
 #define CONNECTION_UPDATE_TIMEOUT (POLICY_MGR_SER_CMD_TIMEOUT + 3000)
@@ -42,6 +40,7 @@
 #define PM_24_GHZ_CH_FREQ_6   (2437)
 #define PM_5_GHZ_CH_FREQ_36   (5180)
 #define CHANNEL_SWITCH_COMPLETE_TIMEOUT   (2000)
+#define MAX_NOA_TIME (3000)
 
 /**
  * Policy Mgr hardware mode list bit-mask definitions.
@@ -237,7 +236,6 @@ extern enum policy_mgr_conc_next_action
  * @conc_rule1: concurrency rule1
  * @conc_rule2: concurrency rule2
  * @allow_mcc_go_diff_bi: Allow GO and STA diff beacon interval in MCC
- * @enable_overlap_chnl: Enable overlap channels for SAP's channel selection
  * @dual_mac_feature: To enable/disable dual mac features
  * @is_force_1x1_enable: Is 1x1 forced for connection
  * @sta_sap_scc_on_dfs_chnl: STA-SAP SCC on DFS channel
@@ -261,7 +259,6 @@ struct policy_mgr_cfg {
 	uint8_t conc_rule2;
 	bool enable_mcc_adaptive_sch;
 	uint8_t allow_mcc_go_diff_bi;
-	uint8_t enable_overlap_chnl;
 	uint8_t dual_mac_feature;
 	enum force_1x1_type is_force_1x1_enable;
 	uint8_t sta_sap_scc_on_dfs_chnl;
@@ -295,6 +292,8 @@ struct policy_mgr_cfg {
  * @tdls_cbacks: callbacks to be registered by SME for
  * interaction with Policy Manager
  * @cdp_cbacks: callbacks to be registered by SME for
+ * interaction with Policy Manager
+ * @conc_cbacks: callbacks to be registered by lim for
  * interaction with Policy Manager
  * @sap_mandatory_channels: The user preferred master list on
  *                        which SAP can be brought up. This
@@ -342,13 +341,14 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_tdls_cbacks tdls_cbacks;
 	struct policy_mgr_cdp_cbacks cdp_cbacks;
 	struct policy_mgr_dp_cbacks dp_cbacks;
+	struct policy_mgr_conc_cbacks conc_cbacks;
 	uint32_t sap_mandatory_channels[NUM_CHANNELS];
 	uint32_t sap_mandatory_channels_len;
 	bool do_sap_unsafe_ch_check;
 	uint32_t concurrency_mode;
 	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
 	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];
-	qdf_work_t sta_ap_intf_check_work;
+	struct qdf_delayed_work sta_ap_intf_check_work;
 	qdf_work_t nan_sap_conc_work;
 	uint32_t num_dbs_hw_modes;
 	struct dbs_hw_mode_info hw_mode;
@@ -725,28 +725,4 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint32_t ch_freq,
 				       enum hw_mode_bandwidth bw);
-
-#ifdef WLAN_FEATURE_11BE_MLO
-/**
- * policy_mgr_is_mlo_sap_concurrency_allowed() - Check for mlo sap allowed
- *                                               concurrency combination
- * @psoc: PSOC object information
- *
- * When a new connection is about to come up check if current
- * concurrency combination including the new connection is
- * allowed or not. Currently no concurrency support for mlo sap
- *
- * Return: True if concurrency is supported, otherwise false.
- */
-bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
-					       bool is_new_vdev_mlo);
-#else
-
-static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
-			struct wlan_objmgr_psoc *psoc,
-			bool is_new_vdev_mlo)
-{
-	return true;
-}
-#endif
 #endif

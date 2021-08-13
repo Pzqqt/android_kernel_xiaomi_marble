@@ -82,11 +82,13 @@ struct pwr_channel_info {
  * struct wlan_mlme_psoc_ext_obj -MLME ext psoc priv object
  * @cfg:     cfg items
  * @rso_tx_ops: Roam Tx ops to send roam offload commands to firmware
+ * @rso_rx_ops: Roam Rx ops to receive roam offload events from firmware
  * @wfa_testcmd: WFA config tx ops to send to FW
  */
 struct wlan_mlme_psoc_ext_obj {
 	struct wlan_mlme_cfg cfg;
 	struct wlan_cm_roam_tx_ops rso_tx_ops;
+	struct wlan_cm_roam_rx_ops rso_rx_ops;
 	struct wlan_mlme_wfa_cmd wfa_testcmd;
 };
 
@@ -385,6 +387,9 @@ struct wait_for_key_timer {
  * @connect_info: mlme connect information
  * @wait_key_timer: wait key timer
  * @eht_config: Eht capability configuration
+ * @last_delba_sent_time: Last delba sent time to handle back to back delba
+ *			  requests from some IOT APs
+ * @ba_2k_jump_iot_ap: This is set to true if connected to the ba 2k jump IOT AP
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -421,6 +426,8 @@ struct mlme_legacy_priv {
 #ifdef WLAN_FEATURE_11BE
 	tDot11fIEeht_cap eht_config;
 #endif
+	qdf_time_t last_delba_sent_time;
+	bool ba_2k_jump_iot_ap;
 };
 
 /**
@@ -699,7 +706,7 @@ QDF_STATUS wlan_mlme_get_ssid_vdev_id(struct wlan_objmgr_pdev *pdev,
 				      uint8_t *ssid, uint8_t *ssid_len);
 
 /**
- * wlan_vdev_get_bss_peer_mac() - get bss peer mac address(BSSID) using vdev id
+ * wlan_mlme_get_bssid_vdev_id() - get bss peer mac address(BSSID) using vdev id
  * @pdev: pdev
  * @vdev_id: vdev_id
  * @bss_peer_mac: pointer to bss_peer_mac_address
@@ -733,6 +740,60 @@ qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev);
  */
 qdf_freq_t wlan_get_operation_chan_freq_vdev_id(struct wlan_objmgr_pdev *pdev,
 						uint8_t vdev_id);
+
+/**
+ * wlan_get_opmode_vdev_id() - get operating mode of given vdev id
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: opmode
+ */
+enum QDF_OPMODE wlan_get_opmode_vdev_id(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id);
+
+/**
+ * wlan_is_open_wep_cipher() - check if cipher is open or WEP
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: if cipher is open or WEP
+ */
+bool wlan_is_open_wep_cipher(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * wlan_vdev_id_is_open_cipher() - check if cipher is open
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: if cipher is open
+ */
+bool wlan_vdev_id_is_open_cipher(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * wlan_vdev_is_open_mode() - check if cipher is open
+ * @vdev: Pointer to vdev
+ *
+ * Return: if cipher is open
+ */
+bool wlan_vdev_is_open_mode(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_id_is_11n_allowed() - check if 11n allowed
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: false if cipher is TKIP or WEP
+ */
+bool wlan_vdev_id_is_11n_allowed(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * wlan_is_vdev_id_up() - check if vdev id is in UP state
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: if vdev is up
+ */
+bool wlan_is_vdev_id_up(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 
 QDF_STATUS
 wlan_get_op_chan_freq_info_vdev_id(struct wlan_objmgr_pdev *pdev,
@@ -938,4 +999,20 @@ mlme_clear_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
  */
 void mlme_reinit_control_config_lfr_params(struct wlan_objmgr_psoc *psoc,
 					   struct wlan_mlme_lfr_cfg *lfr);
+
+/**
+ * wlan_mlme_get_mac_vdev_id() - get vdev self mac address using vdev id
+ * @pdev: pdev
+ * @vdev_id: vdev_id
+ * @self_mac: pointer to self_mac_address
+ *
+ * This API is used to get self mac address.
+ *
+ * Context: Any context.
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS wlan_mlme_get_mac_vdev_id(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id,
+				     struct qdf_mac_addr *self_mac);
 #endif

@@ -947,6 +947,14 @@ ucfg_pmo_get_suspend_mode(struct wlan_objmgr_psoc *psoc)
 	return pmo_psoc_ctx->psoc_cfg.suspend_mode;
 }
 
+bool
+ucfg_pmo_get_dynamic_pcie_gen_switch_cfg(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.is_dynamic_pcie_gen_speed_change_enabled;
+}
+
 QDF_STATUS ucfg_pmo_core_txrx_suspend(struct wlan_objmgr_psoc *psoc)
 {
 	return pmo_core_txrx_suspend(psoc);

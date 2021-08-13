@@ -338,9 +338,9 @@ QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 	if (req && req->pbssDescription) {
 		lim_fill_ft_session(mac,
 				    req->pbssDescription, ft_session,
-				    pe_session, WLAN_PHYMODE_AUTO);
+				    pe_session, WLAN_PHYMODE_AUTO, NULL);
 		lim_ft_prepare_add_bss_req(mac, ft_session,
-					   req->pbssDescription);
+					   req->pbssDescription, NULL);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -484,16 +484,19 @@ send_rsp:
 	if ((pe_session->curr_op_freq !=
 	     pe_session->ftPEContext.pFTPreAuthReq->pre_auth_channel_freq) ||
 	    lim_is_in_mcc(mac)) {
+		pe_debug("Pre auth on diff freq as connected AP freq %d or mcc pe sessions exist, so abort scan",
+			 pe_session->ftPEContext.pFTPreAuthReq->pre_auth_channel_freq);
+
 		/* Need to move to the original AP channel */
 		lim_process_abort_scan_ind(mac, pe_session->smeSessionId,
 			pe_session->ftPEContext.pFTPreAuthReq->scan_id,
 			mac->lim.req_id | PREAUTH_REQUESTOR_ID);
-	} else {
-		pe_debug("Pre auth on same freq as connected AP freq %d and no mcc pe sessions exist",
-			 pe_session->ftPEContext.pFTPreAuthReq->
-			 pre_auth_channel_freq);
-		lim_ft_process_pre_auth_result(mac, pe_session);
 	}
+	/*
+	 * Send resp to connection manager, even in case scan needs abort,
+	 * scan complete will be no-op.
+	 */
+	lim_ft_process_pre_auth_result(mac, pe_session);
 }
 
 /*
@@ -785,8 +788,9 @@ void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
 		 * Scan either completed successfully or or got terminated
 		 * after successful auth, or timed out. Either way, STA
 		 * is back to home channel. Data traffic can continue.
+		 * Don't do anything as preauth timer/auth resp will take care
+		 * of the sending resp to the connection manager.
 		 */
-		lim_ft_process_pre_auth_result(mac_ctx, session_entry);
 		break;
 
 	case SIR_SCAN_EVENT_FOREIGN_CHANNEL:

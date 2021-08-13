@@ -262,6 +262,7 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 					 uint32_t len);
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 /**
  * wma_roam_synch_frame_event_handler() - roam synch frame event handler
  * @handle: wma handle
@@ -274,7 +275,7 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
  */
 int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 					uint32_t len);
-
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 /**
  * wma_roam_vdev_disconnect_event_handler() - Handles roam vdev disconnect event
  * @handle: wma_handle
@@ -1112,13 +1113,14 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 
 /**
  * wma_rso_cmd_status_event_handler() - RSO Command status event handler
- * @wmi_event: WMI event
+ * @vdev_id: VDEV id
+ * @notif: roam notification
  *
  * This function is used to send RSO command status to upper layer
  *
  * Return: 0 for success
  */
-int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event);
+int wma_rso_cmd_status_event_handler(uint8_t vdev_id, uint32_t notif);
 
 int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 			    uint32_t len);
@@ -1292,6 +1294,28 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len);
 QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id);
 QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id);
 QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin);
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+/**
+ * wma_set_tsf_auto_report() - Set TSF auto report in firmware
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ * @param_id: enum GEN_PARAM
+ * @ena: true for enable, and false for disable
+ *
+ * Return: QDF_STATUS_SUCCESS for success, otherwise for failure
+ */
+QDF_STATUS wma_set_tsf_auto_report(WMA_HANDLE handle, uint32_t vdev_id,
+				   uint32_t param_id, bool ena);
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline QDF_STATUS wma_set_tsf_auto_report(WMA_HANDLE handle,
+						 uint32_t vdev_id,
+						 uint32_t param_id, bool ena)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 #else
 static inline QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle,
 					uint32_t vdev_id)

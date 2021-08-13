@@ -1,1 +1,3 @@
+CONFIG_CNSS_WCN7850 := y
+
 include $(WLAN_ROOT)/configs/default_defconfig

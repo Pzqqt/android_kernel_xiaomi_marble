@@ -47,8 +47,6 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_ENABLE_STA_CONNECTION_IN_5GHZ);
 	cfg->allow_mcc_go_diff_bi =
 		cfg_get(psoc, CFG_ALLOW_MCC_GO_DIFF_BI);
-	cfg->enable_overlap_chnl =
-		cfg_get(psoc, CFG_ENABLE_OVERLAP_CH);
 	cfg->dual_mac_feature =
 		cfg_get(psoc, CFG_DUAL_MAC_FEATURE_DISABLE);
 	cfg->is_force_1x1_enable =
@@ -186,13 +184,6 @@ ucfg_policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
 					 uint8_t *allow_mcc_go_diff_bi)
 {
 	return policy_mgr_get_allow_mcc_go_diff_bi(psoc, allow_mcc_go_diff_bi);
-}
-
-QDF_STATUS
-ucfg_policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
-					uint8_t *enable_overlap_chnl)
-{
-	return policy_mgr_get_enable_overlap_chnl(psoc, enable_overlap_chnl);
 }
 
 QDF_STATUS ucfg_policy_mgr_get_dual_mac_feature(struct wlan_objmgr_psoc *psoc,

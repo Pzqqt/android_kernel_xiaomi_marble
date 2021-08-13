@@ -2619,7 +2619,7 @@
  * sae_single_pmk_feature_enabled - Enable/disable sae single pmk feature.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This INI is to enable/disable SAE Roaming with same PMK/PMKID feature support
  *
@@ -2633,7 +2633,7 @@
  */
 #define CFG_SAE_SINGLE_PMK CFG_INI_BOOL( \
 		"sae_single_pmk_feature_enabled", \
-		false, \
+		true, \
 		"Enable/disable SAE Roaming with single PMK/PMKID")
 
 #define SAE_SINGLE_PMK_ALL CFG(CFG_SAE_SINGLE_PMK)

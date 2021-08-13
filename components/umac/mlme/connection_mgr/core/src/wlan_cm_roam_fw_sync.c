@@ -335,6 +335,49 @@ cm_copy_tspec_ie(struct cm_vdev_join_rsp *rsp,
 }
 #endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+static void
+cm_fils_update_erp_seq_num(struct wlan_objmgr_vdev *vdev,
+			   uint16_t next_erp_seq_num,
+			   wlan_cm_id cm_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_fils_connection_info *fils_info;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return;
+	}
+
+	fils_info = wlan_cm_get_fils_connection_info(psoc, vdev_id);
+	if (!fils_info)
+		return;
+
+	/*
+	 * update the erp sequence number to the vdev level
+	 * FILS cache. This will be sent in the next RSO
+	 * command.
+	 */
+	fils_info->erp_sequence_number = next_erp_seq_num;
+}
+#else
+static inline void
+cm_fils_update_erp_seq_num(struct wlan_objmgr_vdev *vdev,
+			   uint16_t next_erp_seq_num, wlan_cm_id cm_id)
+{}
+#endif
+
 static QDF_STATUS
 cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
 		  struct roam_offload_synch_ind *roam_synch_data,
@@ -407,6 +450,8 @@ cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
 	roaming_info->update_erp_next_seq_num =
 			roam_synch_data->update_erp_next_seq_num;
 	roaming_info->next_erp_seq_num = roam_synch_data->next_erp_seq_num;
+
+	cm_fils_update_erp_seq_num(vdev, roaming_info->next_erp_seq_num, cm_id);
 
 	return status;
 }
@@ -856,16 +901,18 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 	if (ucfg_pkt_capture_get_pktcap_mode(psoc))
 		ucfg_pkt_capture_record_channel(cm_ctx->vdev);
 
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(roam_synch_data->chan_freq)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(roam_synch_data->chan_freq)) {
+		wlan_cm_set_disable_hi_rssi(pdev,
+					    vdev_id, false);
+	} else {
 		wlan_cm_set_disable_hi_rssi(pdev,
 					    vdev_id, true);
 		mlme_debug("Disabling HI_RSSI, AP freq=%d rssi %d",
 			   roam_synch_data->chan_freq, roam_synch_data->rssi);
-	} else {
-		wlan_cm_set_disable_hi_rssi(pdev,
-					    vdev_id, false);
 	}
+	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
+	policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
 	if (roam_synch_data->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED)
 		wlan_cm_roam_state_change(pdev, vdev_id,
 					  WLAN_ROAM_RSO_ENABLED,
@@ -1110,3 +1157,33 @@ rel_ref:
 	return status;
 }
 #endif /* WLAN_FEATURE_FIPS */
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
+{
+	struct roam_synch_frame_ind *frame_ind;
+
+	if (!rso_cfg)
+		return QDF_STATUS_E_FAILURE;
+
+	frame_ind = &rso_cfg->roam_sync_frame_ind;
+
+	if (frame_ind->bcn_probe_rsp) {
+		qdf_mem_free(frame_ind->bcn_probe_rsp);
+		frame_ind->bcn_probe_rsp_len = 0;
+		frame_ind->bcn_probe_rsp = NULL;
+	}
+	if (frame_ind->reassoc_req) {
+		qdf_mem_free(frame_ind->reassoc_req);
+		frame_ind->reassoc_req_len = 0;
+		frame_ind->reassoc_req = NULL;
+	}
+	if (frame_ind->reassoc_rsp) {
+		qdf_mem_free(frame_ind->reassoc_rsp);
+		frame_ind->reassoc_rsp_len = 0;
+		frame_ind->reassoc_rsp = NULL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */

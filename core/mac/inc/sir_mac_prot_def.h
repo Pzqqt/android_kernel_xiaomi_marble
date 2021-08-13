@@ -339,6 +339,9 @@
 #define SIR_MAC_VENDOR_AP_4_OUI             "\x8C\xFD\xF0"
 #define SIR_MAC_VENDOR_AP_4_OUI_LEN         3
 
+#define SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI             "\x00\x14\x6C"
+#define SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI_LEN         3
+
 /* Maximum allowable size of a beacon and probe rsp frame */
 #define SIR_MAX_BEACON_SIZE    512
 #define SIR_MAX_PROBE_RESP_SIZE 512
@@ -1713,6 +1716,19 @@ struct he_capability_info {
 	uint16_t rx_he_mcs_map_80_80;
 	uint16_t tx_he_mcs_map_80_80;
 #endif
+} qdf_packed;
+
+struct he_6ghz_capability_info {
+	uint16_t min_mpdu_start_spacing:3;
+	uint16_t    max_ampdu_len_exp:3;
+	uint16_t         max_mpdu_len:2;
+
+	uint16_t             reserved:1;
+	uint16_t          sm_pow_save:2;
+	uint16_t         rd_responder:1;
+	uint16_t rx_ant_pattern_consistency:1;
+	uint16_t tx_ant_pattern_consistency:1;
+	uint16_t             reserved2:2;
 } qdf_packed;
 #endif
 

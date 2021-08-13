@@ -30,6 +30,9 @@
 #include <wlan_hdd_softap_tx_rx.h>
 #include <linux/inetdevice.h>
 #include <qdf_trace.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+#include <linux/sched/walt.h>
+#endif
 
 void hdd_ipa_set_tx_flow_info(void)
 {
@@ -321,7 +324,8 @@ void hdd_ipa_set_tx_flow_info(void)
 	}
 }
 
-#if defined(QCA_CONFIG_SMP) && defined(PF_WAKE_UP_IDLE)
+#if (defined(QCA_CONFIG_SMP) && defined(PF_WAKE_UP_IDLE)) ||\
+	IS_ENABLED(CONFIG_SCHED_WALT)
 /**
  * hdd_ipa_get_wake_up_idle() - Get PF_WAKE_UP_IDLE flag in the task structure
  *

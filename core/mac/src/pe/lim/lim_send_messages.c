@@ -478,9 +478,6 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	ht40_obss_scanind = qdf_mem_malloc(sizeof(struct obss_ht40_scanind));
 	if (!ht40_obss_scanind)
 		return QDF_STATUS_E_FAILURE;
-	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-		  "OBSS Scan Indication bssid " QDF_MAC_ADDR_FMT,
-		  QDF_MAC_ADDR_REF(session->bssId));
 
 	ht40_obss_scanind->cmd = HT40_OBSS_SCAN_PARAM_START;
 	ht40_obss_scanind->scan_type = eSIR_ACTIVE_SCAN;
@@ -527,10 +524,10 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	msg.reserved = 0;
 	msg.bodyptr = (void *)ht40_obss_scanind;
 	msg.bodyval = 0;
-	pe_debug("Sending WDA_HT40_OBSS_SCAN_IND to WDA"
-		"Obss Scan trigger width: %d, delay factor: %d",
-		ht40_obss_scanind->obss_width_trigger_interval,
-		ht40_obss_scanind->bsswidth_ch_trans_delay);
+	pe_debug("Obss Scan trigger width: %d, delay factor: %d bssid " QDF_MAC_ADDR_FMT,
+		 ht40_obss_scanind->obss_width_trigger_interval,
+		 ht40_obss_scanind->bsswidth_ch_trans_delay,
+		 QDF_MAC_ADDR_REF(session->bssId));
 	ret = wma_post_ctrl_msg(mac_ctx, &msg);
 	if (QDF_STATUS_SUCCESS != ret) {
 		pe_err("WDA_HT40_OBSS_SCAN_IND msg failed, reason=%X",

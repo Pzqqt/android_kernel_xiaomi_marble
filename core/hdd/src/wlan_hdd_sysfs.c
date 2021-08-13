@@ -76,7 +76,9 @@
 #include <wlan_hdd_sysfs_dp_aggregation.h>
 #include <wlan_hdd_sysfs_dl_modes.h>
 #include <wlan_hdd_sysfs_swlm.h>
+#include <wlan_hdd_sysfs_dump_in_progress.h>
 #include "wma_api.h"
+#include "wlan_hdd_eht.h"
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -493,109 +495,6 @@ static DEVICE_ATTR(beacon_stats, 0444,
 		   show_beacon_reception_stats, NULL);
 #endif
 
-static ssize_t
-__hdd_sysfs_dump_in_progress_store(struct hdd_context *hdd_ctx,
-				   struct kobj_attribute *attr,
-				   char const *buf, size_t count)
-{
-	char buf_local[MAX_SYSFS_USER_COMMAND_SIZE_LENGTH + 1];
-	char *sptr, *token;
-	int value, ret;
-
-	if (!wlan_hdd_validate_modules_state(hdd_ctx))
-		return -EINVAL;
-
-	ret = hdd_sysfs_validate_and_copy_buf(buf_local, sizeof(buf_local),
-					      buf, count);
-	if (ret) {
-		hdd_err_rl("invalid input");
-		return ret;
-	}
-
-	sptr = buf_local;
-	/* Get value */
-	token = strsep(&sptr, " ");
-	if (!token)
-		return -EINVAL;
-	if (kstrtou32(token, 0, &value))
-		return -EINVAL;
-
-	hdd_debug_rl("dump in progress %d", value);
-	if (value < 0 || value > 1)
-		return -EINVAL;
-
-	hdd_ctx->dump_in_progress = value;
-
-	return count;
-}
-
-static ssize_t hdd_sysfs_dump_in_progress_store(struct kobject *kobj,
-						struct kobj_attribute *attr,
-						char const *buf, size_t count)
-{
-	struct osif_psoc_sync *psoc_sync;
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	ssize_t errno_size;
-	int ret;
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret != 0)
-		return ret;
-
-	errno_size = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy),
-					     &psoc_sync);
-	if (errno_size)
-		return errno_size;
-
-	errno_size = __hdd_sysfs_dump_in_progress_store(hdd_ctx, attr,
-							buf, count);
-
-	osif_psoc_sync_op_stop(psoc_sync);
-
-	return errno_size;
-}
-
-static ssize_t  __hdd_sysfs_dump_in_progress_show(struct hdd_context *hdd_ctx,
-						  struct kobj_attribute *attr,
-						  char *buf)
-{
-	ssize_t ret_val;
-
-	hdd_debug_rl("dump in progress %d", hdd_ctx->dump_in_progress);
-	ret_val = scnprintf(buf, PAGE_SIZE, "%d\n", hdd_ctx->dump_in_progress);
-
-	return ret_val;
-}
-
-static ssize_t hdd_sysfs_dump_in_progress_show(struct kobject *kobj,
-					       struct kobj_attribute *attr,
-					       char *buf)
-{
-	struct osif_psoc_sync *psoc_sync;
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	ssize_t errno_size;
-	int ret;
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret != 0)
-		return ret;
-
-	errno_size = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy),
-					     &psoc_sync);
-	if (errno_size)
-		return errno_size;
-
-	errno_size = __hdd_sysfs_dump_in_progress_show(hdd_ctx, attr, buf);
-
-	osif_psoc_sync_op_stop(psoc_sync);
-
-	return errno_size;
-}
-
-static struct kobj_attribute dump_in_progress_attribute =
-	__ATTR(dump_in_progress, 0660, hdd_sysfs_dump_in_progress_show,
-	       hdd_sysfs_dump_in_progress_store);
-
 static struct kobj_attribute dr_ver_attribute =
 	__ATTR(driver_version, 0440, show_driver_version, NULL);
 static struct kobj_attribute fw_ver_attribute =
@@ -679,31 +578,6 @@ static void hdd_sysfs_destroy_wifi_root_obj(void)
 	}
 	kobject_put(wifi_kobject);
 	wifi_kobject = NULL;
-}
-
-static void hdd_sysfs_create_dump_in_progress_interface(void)
-{
-	int error;
-
-	if (!wifi_kobject) {
-		hdd_err("could not get wifi kobject!");
-		return;
-	}
-	error = sysfs_create_file(wifi_kobject,
-				  &dump_in_progress_attribute.attr);
-	if (error)
-		hdd_err("could not create dump in progress sysfs file");
-}
-
-static void hdd_sysfs_destroy_dump_in_progress_interface(void)
-{
-	if (!wifi_kobject) {
-		hdd_err("could not get wifi kobject!");
-		return;
-	}
-
-	sysfs_remove_file(wifi_kobject,
-			  &dump_in_progress_attribute.attr);
 }
 
 #ifdef WLAN_POWER_DEBUG
@@ -871,11 +745,13 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_motion_detection_create(adapter);
 	hdd_sysfs_range_ext_create(adapter);
 	hdd_sysfs_dl_modes_create(adapter);
+	hdd_sysfs_11be_rate_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_11be_rate_destroy(adapter);
 	hdd_sysfs_dl_modes_destroy(adapter);
 	hdd_sysfs_range_ext_destroy(adapter);
 	hdd_sysfs_motion_detection_destroy(adapter);
@@ -925,11 +801,13 @@ hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_range_ext_create(adapter);
 	hdd_sysfs_ipa_create(adapter);
 	hdd_sysfs_dl_modes_create(adapter);
+	hdd_sysfs_11be_rate_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_11be_rate_destroy(adapter);
 	hdd_sysfs_dl_modes_destroy(adapter);
 	hdd_sysfs_ipa_destroy(adapter);
 	hdd_sysfs_range_ext_destroy(adapter);
@@ -974,7 +852,7 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 	hdd_sysfs_create_wifi_root_obj();
 	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
 		hdd_sysfs_create_powerstats_interface();
-		hdd_sysfs_create_dump_in_progress_interface();
+		hdd_sysfs_create_dump_in_progress_interface(wifi_kobject);
 		hdd_sysfs_fw_mode_config_create(driver_kobject);
 		hdd_sysfs_scan_disable_create(driver_kobject);
 		hdd_sysfs_wow_ito_create(driver_kobject);
@@ -1009,7 +887,7 @@ void hdd_destroy_sysfs_files(void)
 		hdd_sysfs_wow_ito_destroy(driver_kobject);
 		hdd_sysfs_scan_disable_destroy(driver_kobject);
 		hdd_sysfs_fw_mode_config_destroy(driver_kobject);
-		hdd_sysfs_destroy_dump_in_progress_interface();
+		hdd_sysfs_destroy_dump_in_progress_interface(wifi_kobject);
 		hdd_sysfs_destroy_powerstats_interface();
 	}
 	hdd_sysfs_destroy_wifi_root_obj();

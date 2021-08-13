@@ -46,6 +46,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_napi.h"
 #include "wlan_roam_debug.h"
+#include "wma_api.h"
 
 void hdd_handle_disassociation_event(struct hdd_adapter *adapter,
 				     struct qdf_mac_addr *peer_macaddr)
@@ -140,32 +141,27 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter)
 	hdd_place_marker(adapter, "DISCONNECTED", NULL);
 }
 
-void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
+void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter,
+						  struct wlan_objmgr_vdev *vdev)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	mac_handle_t mac_handle;
-	struct wlan_objmgr_vdev *vdev;
+
+	mac_handle = hdd_ctx->mac_handle;
 
 	/* update P2P connection status */
-	ucfg_p2p_status_disconnect(adapter->vdev);
+	ucfg_p2p_status_disconnect(vdev);
 
 	hdd_wmm_adapter_clear(adapter);
-	mac_handle = hdd_ctx->mac_handle;
-	sme_ft_reset(mac_handle, adapter->vdev_id);
-	sme_reset_key(mac_handle, adapter->vdev_id);
+	ucfg_cm_ft_reset(vdev);
+	ucfg_cm_reset_key(hdd_ctx->pdev, adapter->vdev_id);
 	hdd_clear_roam_profile_ie(adapter);
 
-	if (adapter->device_mode == QDF_STA_MODE) {
-		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
-		if (vdev) {
-			wlan_crypto_reset_vdev_params(vdev);
-			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
-		}
-	}
+	if (adapter->device_mode == QDF_STA_MODE)
+		wlan_crypto_reset_vdev_params(vdev);
 
 	hdd_remove_beacon_filter(adapter);
-
 	if (sme_is_beacon_report_started(mac_handle, adapter->vdev_id)) {
 		hdd_debug("Sending beacon pause indication to userspace");
 		hdd_beacon_recv_pause_indication((hdd_handle_t)hdd_ctx,
@@ -176,8 +172,15 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(sta_ctx);
 
+	/* Setting the RTS profile to original value */
+	if (sme_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_ENABLE_RTSCTS,
+				cfg_get(hdd_ctx->psoc,
+					CFG_ENABLE_FW_RTS_PROFILE),
+				VDEV_CMD))
+		hdd_debug("Failed to set RTS_PROFILE");
+
 	hdd_init_scan_reject_params(hdd_ctx);
-	ucfg_pmo_flush_gtk_offload_req(adapter->vdev);
+	ucfg_pmo_flush_gtk_offload_req(vdev);
 
 	if ((QDF_STA_MODE == adapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
@@ -226,7 +229,7 @@ QDF_STATUS wlan_hdd_cm_issue_disconnect(struct hdd_adapter *adapter,
 		/*
 		 * Trigger runtime sync resume before sending disconneciton
 		 */
-		hif_pm_runtime_sync_resume(hif_ctx);
+		hif_pm_runtime_sync_resume(hif_ctx, RTPM_ID_CONN_DISCONNECT);
 
 	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_DISCONNECT,
 			   sta_ctx->conn_info.bssid.bytes, 0, reason);
@@ -344,7 +347,7 @@ hdd_cm_disconnect_complete_post_user_update(struct wlan_objmgr_vdev *vdev,
 				adapter, FTM_TIME_SYNC_STA_DISCONNECTED);
 	}
 
-	__hdd_cm_disconnect_handler_post_user_update(adapter);
+	__hdd_cm_disconnect_handler_post_user_update(adapter, vdev);
 	wlan_twt_concurrency_update(hdd_ctx);
 
 	return QDF_STATUS_SUCCESS;

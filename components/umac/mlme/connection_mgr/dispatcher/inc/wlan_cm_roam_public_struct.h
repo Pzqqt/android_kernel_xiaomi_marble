@@ -164,6 +164,7 @@
 #define DEAUTH_MIN_RSSI 0
 #define BMISS_MIN_RSSI  1
 #define MIN_RSSI_2G_TO_5G_ROAM 2
+#define CM_CFG_VALID_CHANNEL_LIST_LEN 100
 
 /**
  * struct cm_roam_neighbor_report_offload_params - neighbor report offload
@@ -275,6 +276,17 @@ struct reassoc_timer_ctx {
 };
 #endif
 
+struct roam_synch_frame_ind {
+	uint32_t bcn_probe_rsp_len;
+	uint8_t *bcn_probe_rsp;
+	uint8_t is_beacon;
+	uint32_t reassoc_req_len;
+	uint8_t *reassoc_req;
+	uint32_t reassoc_rsp_len;
+	uint8_t *reassoc_rsp;
+	uint8_t vdev_id;
+};
+
 /**
  * struct rso_config - connect config to be used to send info in
  * RSO. This is the info we dont have in VDEV or CM ctx
@@ -322,6 +334,7 @@ struct reassoc_timer_ctx {
  * @roam_invoke_fail_reason: One of reason id from enum
  * wmi_roam_invoke_status_error in case of forced roam
  * @lost_link_rssi: lost link RSSI
+ * @roam_sync_frame_ind: roam sync frame ind
  */
 struct rso_config {
 #ifdef WLAN_FEATURE_HOST_ROAM
@@ -364,6 +377,7 @@ struct rso_config {
 	uint32_t roam_trigger_reason;
 	uint32_t roam_invoke_fail_reason;
 	int32_t lost_link_rssi;
+	struct roam_synch_frame_ind roam_sync_frame_ind;
 };
 
 /**
@@ -393,6 +407,7 @@ struct rso_roam_policy_params {
 };
 
 #define DEFAULT_RSSI_DB_GAP     30  /* every 30 dbm for one category */
+#define ENABLE_FT_OVER_DS      1   /* enable ft_over_ds */
 
 /**
  * struct rso_params - global RSO params
@@ -1228,6 +1243,7 @@ struct wlan_rso_11i_params {
  * @rokh_id_length: r0kh id length
  * @rokh_id: r0kh id
  * @mdid: mobility domain info
+ * @enable_ft_over_ds: Flag to enable/disable FT-over-DS
  */
 struct wlan_rso_11r_params {
 	bool is_11r_assoc;
@@ -1238,6 +1254,7 @@ struct wlan_rso_11r_params {
 	uint32_t r0kh_id_length;
 	uint8_t r0kh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
 	struct mobility_domain_info mdid;
+	bool enable_ft_over_ds;
 };
 
 /**
@@ -1692,6 +1709,171 @@ struct roam_invoke_req {
 };
 
 /**
+ * enum cm_roam_notif: roaming notification
+ * @CM_ROAM_NOTIF_INVALID: invalid notification. Do not interpret notif field
+ * @CM_ROAM_NOTIF_ROAM_START: indicate that roaming is started. sent only in
+			      non WOW state
+ * @CM_ROAM_NOTIF_ROAM_ABORT: indicate that roaming is aborted. sent only in
+			      non WOW state
+ * @CM_ROAM_NOTIF_ROAM_REASSOC: indicate that reassociation is done. sent only
+				in non WOW state
+ * @CM_ROAM_NOTIF_SCAN_MODE_SUCCESS: indicate that roaming scan mode is
+				     successful
+ * @CM_ROAM_NOTIF_SCAN_MODE_FAIL: indicate that roaming scan mode is failed due
+				  to internal roaming state
+ * @CM_ROAM_NOTIF_DISCONNECT: indicate that roaming not allowed due BTM req
+ * @CM_ROAM_NOTIF_SUBNET_CHANGED: indicate that subnet has changed
+ * @CM_ROAM_NOTIF_SCAN_START: indicate roam scan start, notif_params to be sent
+			      as WMI_ROAM_TRIGGER_REASON_ID
+ * @CM_ROAM_NOTIF_DEAUTH_RECV: indicate deauth received, notif_params to be sent
+			       as reason code, notif_params1 to be sent as
+			       frame length
+ * @CM_ROAM_NOTIF_DISASSOC_RECV: indicate disassoc received, notif_params to be
+				 sent as reason code, notif_params1 to be sent
+				 as frame length
+ */
+enum cm_roam_notif {
+	CM_ROAM_NOTIF_INVALID = 0,
+	CM_ROAM_NOTIF_ROAM_START,
+	CM_ROAM_NOTIF_ROAM_ABORT,
+	CM_ROAM_NOTIF_ROAM_REASSOC,
+	CM_ROAM_NOTIF_SCAN_MODE_SUCCESS,
+	CM_ROAM_NOTIF_SCAN_MODE_FAIL,
+	CM_ROAM_NOTIF_DISCONNECT,
+	CM_ROAM_NOTIF_SUBNET_CHANGED,
+	CM_ROAM_NOTIF_SCAN_START,
+	CM_ROAM_NOTIF_DEAUTH_RECV,
+	CM_ROAM_NOTIF_DISASSOC_RECV,
+};
+
+/**
+ * enum roam_reason: Roam reason
+ * @ROAM_REASON_INVALID: invalid reason. Do not interpret reason field
+ * @ROAM_REASON_BETTER_AP: found a better AP
+ * @ROAM_REASON_BMISS: beacon miss detected
+ * @ROAM_REASON_LOW_RSSI: connected AP's low rssi condition detected
+ * @ROAM_REASON_SUITABLE_AP: found another AP that matches SSID and Security
+ *  profile in WMI_ROAM_AP_PROFILE, found during scan triggered upon FINAL_BMISS
+ * @ROAM_REASON_HO_FAILED: LFR3.0 roaming failed, indicate the disconnection
+ *			   to host
+ * @ROAM_REASON_INVOKE_ROAM_FAIL: Result code of WMI_ROAM_INVOKE_CMDID. Any
+ *  roaming failure before reassociation will be indicated to host with this
+ *  reason. Any roaming failure after reassociation will be indicated to host
+ *  with WMI_ROAM_REASON_HO_FAILED no matter WMI_ROAM_INVOKE_CMDID is
+ *  called or not.
+ * @ROAM_REASON_RSO_STATUS
+ * @ROAM_REASON_BTM: Roaming because of BTM request received
+ * @ROAM_REASON_DEAUTH: deauth/disassoc received
+ */
+enum roam_reason {
+	ROAM_REASON_INVALID,
+	ROAM_REASON_BETTER_AP,
+	ROAM_REASON_BMISS,
+	ROAM_REASON_LOW_RSSI,
+	ROAM_REASON_SUITABLE_AP,
+	ROAM_REASON_HO_FAILED,
+	ROAM_REASON_INVOKE_ROAM_FAIL,
+	ROAM_REASON_RSO_STATUS,
+	ROAM_REASON_BTM,
+	ROAM_REASON_DEAUTH,
+};
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+/*
+ * struct roam_blacklist_timeout - BTM blacklist entry
+ * @bssid: bssid that is to be blacklisted
+ * @timeout: time duration for which the bssid is blacklisted
+ * @received_time: boot timestamp at which the firmware event was received
+ * @rssi: rssi value for which the bssid is blacklisted
+ * @reject_reason: reason to add the BSSID to BLM
+ * @original_timeout: original timeout sent by the AP
+ * @source: Source of adding the BSSID to BLM
+ */
+struct roam_blacklist_timeout {
+	struct qdf_mac_addr bssid;
+	uint32_t timeout;
+	qdf_time_t received_time;
+	int32_t rssi;
+	enum blm_reject_ap_reason reject_reason;
+	uint32_t original_timeout;
+	enum blm_reject_ap_source source;
+};
+
+/*
+ * struct roam_blacklist_event - Blacklist event entries destination structure
+ * @vdev_id: vdev id
+ * @num_entries: total entries sent over the event
+ * @roam_blacklist: blacklist details
+ */
+struct roam_blacklist_event {
+	uint8_t vdev_id;
+	uint32_t num_entries;
+	struct roam_blacklist_timeout roam_blacklist[];
+};
+
+/*
+ * enum cm_vdev_disconnect_reason - Roam disconnect reason
+ * @CM_DISCONNECT_REASON_CSA_SA_QUERY_TIMEOUT: Disconnect due to SA query
+ *  timeout after moving to new channel due to CSA in OCV enabled case.
+ * @CM_DISCONNECT_REASON_MOVE_TO_CELLULAR: Disconnect from WiFi to move
+ *  to cellular
+ */
+enum cm_vdev_disconnect_reason {
+	CM_DISCONNECT_REASON_CSA_SA_QUERY_TIMEOUT = 1,
+	CM_DISCONNECT_REASON_MOVE_TO_CELLULAR,
+};
+
+/*
+ * struct vdev_disconnect_event_data - Roam disconnect event data
+ * @vdev_id: vdev id
+ * @reason: roam reason of type @enum cm_vdev_disconnect_reason
+ */
+struct vdev_disconnect_event_data {
+	uint8_t vdev_id;
+	enum cm_vdev_disconnect_reason reason;
+};
+
+/**
+ * struct roam_scan_ch_resp - roam scan chan list response to userspace
+ * @vdev_id: vdev id
+ * @num_channels: number of roam scan channels
+ * @command_resp: command response or async event
+ * @chan_list: list of roam scan channels
+ */
+struct cm_roam_scan_ch_resp {
+	uint16_t vdev_id;
+	uint16_t num_channels;
+	uint32_t command_resp;
+	uint32_t *chan_list;
+};
+#endif
+
+/**
+ * struct roam_offload_roam_event: Data carried by roam event
+ * @vdev_id: vdev id
+ * @reason: reason for roam event of type @enum roam_reason
+ * @rssi: associated AP's rssi calculated by FW when reason code
+ *	  is WMI_ROAM_REASON_LOW_RSSI
+ * @notif: roam notification
+ * @notif_params: Contains roam invoke fail reason from wmi_roam_invoke_error_t
+ *		  if reason is WMI_ROAM_REASON_INVOKE_ROAM_FAIL.
+ * @notif_params1: notif_params1 is exact frame length of deauth or disassoc if
+ *		   reason is WMI_ROAM_REASON_DEAUTH.
+ * @hw_mode_trans_ind: HW mode transition indication
+ * @deauth_disassoc_frame: Deauth/disassoc frame received from AP
+ */
+struct roam_offload_roam_event {
+	uint8_t vdev_id;
+	enum roam_reason reason;
+	uint32_t rssi;
+	enum cm_roam_notif notif;
+	uint32_t notif_params;
+	uint32_t notif_params1;
+	struct cm_hw_mode_trans_ind *hw_mode_trans_ind;
+	uint8_t *deauth_disassoc_frame;
+};
+
+/**
  * wlan_cm_roam_tx_ops  - structure of tx function pointers for
  * roaming related commands
  * @send_vdev_set_pcl_cmd: TX ops function pointer to send set vdev PCL
@@ -1732,12 +1914,31 @@ struct wlan_cm_roam_tx_ops {
 };
 
 /**
- * wlan_cm_roam_rx_ops  - structure of tx function pointers for
+ * wlan_cm_roam_rx_ops  - structure of rx function pointers for
  * roaming related commands
- * @roam_sync_event_rx: RX ops function pointer for roam sync event
+ * @roam_sync_event: RX ops function pointer for roam sync event
+ * @roam_sync_frame_event: Rx ops function pointer for roam sync frame event
+ * @roam_event_rx: Rx ops function pointer for roam info event
+ * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
+ * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
+ * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
  */
 struct wlan_cm_roam_rx_ops {
-	QDF_STATUS (*roam_sync_event_rx)(struct wlan_objmgr_vdev *vdev);
+	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *event,
+				      uint32_t len,
+				      uint8_t vdev_id);
+	QDF_STATUS (*roam_sync_frame_event)(struct wlan_objmgr_psoc *psoc,
+					    struct roam_synch_frame_ind *frm);
+	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event roam_event);
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
+					  struct roam_blacklist_event *list);
+	QDF_STATUS
+	(*vdev_disconnect_event)(struct vdev_disconnect_event_data *data);
+	QDF_STATUS
+	(*roam_scan_chan_list_event)(struct cm_roam_scan_ch_resp *data);
+#endif
 };
 
 /**

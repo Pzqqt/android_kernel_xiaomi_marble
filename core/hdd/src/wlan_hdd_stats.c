@@ -978,6 +978,33 @@ hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 }
 
 /**
+ * put_channel_stats_chload - put chload of channel stats
+ * @vendor_event: vendor event
+ * @channel_stats: Pointer to channel stats
+ *
+ * Return: bool
+ */
+static bool put_channel_stats_chload(struct sk_buff *vendor_event,
+				     struct wifi_channel_stats *channel_stats)
+{
+	uint64_t txrx_time;
+	uint32_t chload;
+
+	if (!channel_stats->on_time)
+		return true;
+
+	txrx_time = (channel_stats->tx_time + channel_stats->rx_time) * 100;
+	chload = qdf_do_div(txrx_time, channel_stats->on_time);
+
+	if (nla_put_u8(vendor_event,
+		       QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_LOAD_PERCENTAGE,
+		       chload))
+		return false;
+
+	return true;
+}
+
+/**
  * hdd_llstats_radio_fill_channels() - radio stats fill channels
  * @adapter: Pointer to device adapter
  * @radiostat: Pointer to stats data
@@ -1048,6 +1075,13 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_RX_TIME,
 				channel_stats->rx_time)) {
 				hdd_err("nla_put failed for tx time (%u, %d)",
+					radiostat->num_channels, i);
+				return -EINVAL;
+			}
+
+			if (!put_channel_stats_chload(vendor_event,
+						      channel_stats)) {
+				hdd_err("nla_put failed for chload (%u, %d)",
 					radiostat->num_channels, i);
 				return -EINVAL;
 			}

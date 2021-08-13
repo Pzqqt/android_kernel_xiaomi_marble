@@ -135,19 +135,6 @@ QDF_STATUS
 policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *allow_mcc_go_diff_bi);
 /**
- * policy_mgr_get_enable_overlap_chnl() - to find out if overlap channels
- *					  are enabled for SAP
- * @psoc: pointer to psoc
- * @enable_overlap_chnl: value to be filled
- *
- * This API is used to find out whether overlap channels are enabled for SAP
- *
- * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
- */
-QDF_STATUS
-policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
-				   uint8_t *enable_overlap_chnl);
-/**
  * policy_mgr_get_dual_mac_feature() - to find out if DUAL MAC feature is
  *				       enabled
  * @psoc: pointer to psoc
@@ -1491,6 +1478,18 @@ struct policy_mgr_hdd_cbacks {
 			struct ch_params *ch_params);
 };
 
+/**
+ * struct policy_mgr_conc_cbacks - lim Callbacks to be invoked
+ * from policy manager
+ * @connection_info_update: check and update params based on STA/SAP
+ *                          concurrency.such as EDCA params and RTS threshold.
+ *                          If updated, it will also send the updated parameters
+ *                          to FW.
+ */
+
+struct policy_mgr_conc_cbacks {
+	void (*connection_info_update)(void);
+};
 
 /**
  * struct policy_mgr_tdls_cbacks - TDLS Callbacks to be invoked
@@ -2365,6 +2364,21 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_hdd_cbacks *hdd_cbacks);
+
+/**
+ * policy_mgr_register_conc_cb() - register Lim callbacks
+ * @psoc: PSOC object information
+ * @hdd_cbacks: function pointers from lim
+ *
+ * API, allows Lim to register callbacks to be invoked by policy
+ * mgr
+ *
+ * Return: SUCCESS,
+ *         Failure (if registration fails)
+ */
+
+QDF_STATUS policy_mgr_register_conc_cb(struct wlan_objmgr_psoc *psoc,
+				struct policy_mgr_conc_cbacks *conc_cbacks);
 
 /**
  * policy_mgr_deregister_hdd_cb() - Deregister HDD callbacks
@@ -3681,4 +3695,29 @@ QDF_STATUS policy_mgr_check_mon_concurrency(struct wlan_objmgr_psoc *psoc);
  */
 void policy_mgr_get_hw_dbs_max_bw(struct wlan_objmgr_psoc *psoc,
 				  struct dbs_bw *bw_dbs);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * policy_mgr_is_mlo_sap_concurrency_allowed() - Check for mlo sap allowed
+ *                                               concurrency combination
+ * @psoc: PSOC object information
+ * @is_new_vdev_mlo: Is new vdev a mlo device or not
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * allowed or not. Currently no concurrency support for mlo sap
+ *
+ * Return: True if concurrency is supported, otherwise false.
+ */
+bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+					       bool is_new_vdev_mlo);
+#else
+
+static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
+			struct wlan_objmgr_psoc *psoc,
+			bool is_new_vdev_mlo)
+{
+	return true;
+}
+#endif
 #endif /* __WLAN_POLICY_MGR_API_H */

@@ -36,7 +36,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_tsf.h"
 #include <linux/vmalloc.h>
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)) && defined(MSM_PLATFORM)
 #include <linux/qcom-iommu-util.h>
 #endif
 #include <scheduler_core.h>
@@ -109,9 +109,11 @@ struct cds_hang_event_fixed_param {
 static inline int
 cds_send_delba(struct cdp_ctrl_objmgr_psoc *psoc,
 	       uint8_t vdev_id, uint8_t *peer_macaddr,
-	       uint8_t tid, uint8_t reason_code)
+	       uint8_t tid, uint8_t reason_code,
+	       uint8_t cdp_reason_code)
 {
-	return wma_dp_send_delba_ind(vdev_id, peer_macaddr, tid, reason_code);
+	return wma_dp_send_delba_ind(vdev_id, peer_macaddr, tid,
+				     reason_code, cdp_reason_code);
 }
 
 static struct ol_if_ops  dp_ol_if_ops = {
@@ -1038,7 +1040,8 @@ static bool cds_should_suspend_target(void)
 	if (target_type == TARGET_TYPE_AR6320 ||
 	    target_type == TARGET_TYPE_AR6320V1 ||
 	    target_type == TARGET_TYPE_AR6320V2 ||
-	    target_type == TARGET_TYPE_AR6320V3)
+	    target_type == TARGET_TYPE_AR6320V3 ||
+	    target_type == TARGET_TYPE_QCN7605)
 		return false;
 
 	/* target should support suspend in FTM mode */

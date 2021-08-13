@@ -2376,6 +2376,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint32_t cc_count = 0;
+	uint32_t timeout_ms = 0;
 	bool restart_sap = false;
 	uint32_t sap_freq;
 	/*
@@ -2455,10 +2456,21 @@ sap_restart:
 	if (restart_sap ||
 	    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 	    (sta_check || gc_check))) {
-		if (pm_ctx->sta_ap_intf_check_work_info) {
-			qdf_sched_work(0, &pm_ctx->sta_ap_intf_check_work);
-			policy_mgr_debug(
-				"Checking for Concurrent Change interference");
+		if (!pm_ctx->sta_ap_intf_check_work_info) {
+			policy_mgr_err("invalid sta_ap_intf_check_work_info");
+			return;
+		}
+
+		policy_mgr_debug("Checking for Concurrent Change interference");
+
+		if (policy_mgr_mode_specific_connection_count(
+					psoc, PM_P2P_GO_MODE, NULL))
+			timeout_ms = MAX_NOA_TIME;
+
+		if (!qdf_delayed_work_start(&pm_ctx->sta_ap_intf_check_work,
+					    timeout_ms)) {
+			policy_mgr_err("change interface request failure");
+			return;
 		}
 	}
 }
@@ -2491,6 +2503,7 @@ void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 	if (pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params) {
+		ch_params.ch_width = ch_width;
 		status = pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params(
 			psoc, vdev_id, ch_freq, &ch_params);
 		if (QDF_IS_STATUS_SUCCESS(status) &&

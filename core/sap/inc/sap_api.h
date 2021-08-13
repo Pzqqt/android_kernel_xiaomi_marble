@@ -474,23 +474,17 @@ struct sap_config {
 	eCsrPhyMode SapHw_mode;         /* Wireless Mode */
 	eSapMacAddrACL SapMacaddr_acl;
 	struct qdf_mac_addr accept_mac[MAX_ACL_MAC_ADDRESS]; /* MAC filtering */
-	bool ieee80211d;      /* Specify if 11D is enabled or disabled */
 	struct qdf_mac_addr deny_mac[MAX_ACL_MAC_ADDRESS];  /* MAC filtering */
 	struct qdf_mac_addr self_macaddr;       /* self macaddress or BSSID */
 	uint32_t chan_freq;          /* Operation channel frequency */
 	uint32_t sec_ch_freq;
 	struct ch_params ch_params;
 	uint32_t ch_width_orig;
-	uint8_t max_num_sta;      /* maximum number of STAs in station table */
 	uint8_t dtim_period;      /* dtim interval */
 	uint16_t num_accept_mac;
 	uint16_t num_deny_mac;
 	/* Max ie length 255 * 2(WPA+RSN) + 2 bytes(vendor specific ID) * 2 */
 	uint8_t RSNWPAReqIE[(WLAN_MAX_IE_LEN * 2) + 4];
-	/* it is ignored if [0] is 0. */
-	uint8_t countryCode[REG_ALPHA2_LEN + 1];
-	uint8_t RSNEncryptType;
-	uint8_t mcRSNEncryptType;
 	eSapAuthType authType;
 	tCsrAuthList akm_list;
 	bool privacy;
@@ -501,8 +495,6 @@ struct sap_config {
 	uint32_t beacon_int;            /* Beacon Interval */
 	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
 	bool enOverLapCh;
-	bool mfpRequired;
-	bool mfpCapable;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
@@ -518,10 +510,6 @@ struct sap_config {
 	void *pProbeRespBcnIEsBuffer;
 	uint16_t beacon_tx_rate;
 	uint8_t *vendor_ie;
-	uint16_t sta_inactivity_timeout;
-	uint16_t tx_pkt_fail_cnt_threshold;
-	uint8_t short_retry_limit;
-	uint8_t long_retry_limit;
 	tSirMacRateSet supported_rates;
 	tSirMacRateSet extended_rates;
 	enum sap_acs_dfs_mode acs_dfs_mode;
@@ -1252,16 +1240,6 @@ QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 				       uint32_t target_chan_freq);
 
 /**
- * wlan_sap_get_roam_profile() - Returns sap roam profile.
- * @sap_ctx:	Pointer to Sap Context.
- *
- * This function provides the SAP roam profile.
- *
- * Return: SAP RoamProfile
- */
-struct csr_roam_profile *wlan_sap_get_roam_profile(struct sap_context *sap_ctx);
-
-/**
  * wlan_sap_get_phymode() - Returns sap phymode.
  * @sap_ctx:	Pointer to Sap Context.
  *
@@ -1440,6 +1418,17 @@ void sap_undo_acs(struct sap_context *sap_context, struct sap_config *sap_cfg);
  * Return: sap channel width
  */
 uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
+
+/**
+ * wlansap_get_max_bw_by_phymode() - get max channel width based on phymode
+ * @sap_ctx: pointer to the SAP context
+ *
+ * This function get max channel width of sap based on phymode.
+ *
+ * Return: channel width
+ */
+enum phy_ch_width
+wlansap_get_max_bw_by_phymode(struct sap_context *sap_ctx);
 
 /*
  * wlansap_set_invalid_session() - set session ID to invalid

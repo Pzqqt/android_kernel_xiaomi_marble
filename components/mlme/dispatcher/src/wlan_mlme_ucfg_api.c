@@ -63,6 +63,7 @@ QDF_STATUS ucfg_mlme_init(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	mlme_register_mlo_ext_ops();
 	return status;
 }
 
@@ -70,6 +71,7 @@ QDF_STATUS ucfg_mlme_deinit(void)
 {
 	QDF_STATUS status;
 
+	mlme_unregister_mlo_ext_ops();
 	status = wlan_objmgr_unregister_peer_destroy_handler(
 			WLAN_UMAC_COMP_MLME,
 			mlme_peer_object_destroyed_notification,
@@ -814,6 +816,25 @@ ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val)
 {
 	return wlan_mlme_get_roam_bmiss_final_bcnt(psoc, val);
+}
+
+bool
+ucfg_mlme_validate_roam_bmiss_final_bcnt(uint32_t bmiss_final_bcnt)
+{
+	bool is_valid = true;
+	uint32_t min, max;
+
+	if (!cfg_in_range(CFG_LFR_ROAM_BMISS_FINAL_BCNT,
+			  bmiss_final_bcnt)) {
+		min = (cfg_min(CFG_LFR_ROAM_BMISS_FINAL_BCNT));
+		max = (cfg_max(CFG_LFR_ROAM_BMISS_FINAL_BCNT));
+		mlme_legacy_err("bmiss final bcnt %d is out of range "
+				"(Min: %d Max: %d)",
+				bmiss_final_bcnt, min, max);
+		is_valid = false;
+	}
+
+	return is_valid;
 }
 
 bool ucfg_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc)

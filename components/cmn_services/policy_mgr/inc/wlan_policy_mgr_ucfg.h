@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -189,19 +189,6 @@ QDF_STATUS ucfg_policy_mgr_get_sta_cxn_5g_band(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
 					 uint8_t *allow_mcc_go_diff_bi);
-/**
- * ucfg_policy_mgr_get_enable_overlap_chnl() - to find out if overlap channels
- *						are enabled for SAP
- * @psoc: pointer to psoc
- * @enable_overlap_chnl: value to be filled
- *
- * This API is used to find out whether overlap channels are enabled for SAP
- *
- * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
- */
-QDF_STATUS
-ucfg_policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
-					uint8_t *enable_overlap_chnl);
 /**
  * ucfg_policy_mgr_get_dual_mac_feature() - to find out if DUAL MAC feature is
  *					    enabled

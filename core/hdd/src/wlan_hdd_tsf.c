@@ -33,6 +33,9 @@
 #endif
 
 #include "ol_txrx_api.h"
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+#include <cdp_txrx_ctrl.h>
+#endif
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 #if !defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) && \
@@ -2239,6 +2242,115 @@ hdd_convert_qtime_to_us(uint64_t time)
 }
 #endif
 
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+static int hdd_set_tsf_auto_report(struct hdd_adapter *adapter, bool ena)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	int ret;
+
+	if (QDF_IS_STATUS_ERROR(cdp_set_tsf_ul_delay_report(soc,
+							    adapter->vdev_id,
+							    ena))) {
+		hdd_err_rl("Set tsf report uplink delay failed");
+		return -EPERM;
+	}
+
+	ret = wma_cli_set_command((int)adapter->vdev_id,
+				  ena ? (int)GEN_PARAM_TSF_AUTO_REPORT_ENABLE :
+				  (int)GEN_PARAM_TSF_AUTO_REPORT_DISABLE,
+				  ena, GEN_CMD);
+	if (ret) {
+		hdd_err_rl("tsf auto report %d failed", ena);
+		return -EINPROGRESS;
+	}
+
+	qdf_atomic_set(&adapter->tsf_auto_report, ena);
+
+	return 0;
+}
+
+/**
+ * hdd_handle_tsf_auto_report(): Handle TSF auto report enable or disable
+ * @adapter: pointer of struct hdd_adapter
+ * @tsf_cmd: TSF command from user space
+ *
+ * Return: 0 for success, -EINVAL to continue to handle other TSF commands and
+ *	   else errors
+ */
+static int hdd_handle_tsf_auto_report(struct hdd_adapter *adapter,
+				      uint32_t tsf_cmd)
+{
+	bool ena;
+
+	if (tsf_cmd != QCA_TSF_AUTO_REPORT_ENABLE &&
+	    tsf_cmd != QCA_TSF_AUTO_REPORT_DISABLE) {
+		hdd_debug_rl("tsf_cmd %d not for uplink delay", tsf_cmd);
+		return -EINVAL;
+	}
+
+	/* uplink delay feature is only required for STA mode */
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_debug_rl("tsf_cmd %d not allowed for device mode %d",
+			     tsf_cmd, adapter->device_mode);
+		return -EPERM;
+	}
+
+	ena = (tsf_cmd == QCA_TSF_AUTO_REPORT_ENABLE) ? true : false;
+
+	return hdd_set_tsf_auto_report(adapter, ena);
+}
+
+static QDF_STATUS hdd_set_delta_tsf(struct hdd_adapter *adapter,
+				    struct stsf *ptsf)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint32_t delta_tsf;
+
+	/* If TSF report is for uplink delay, mac_id_valid will be set to
+	 * 1 by target. If not, the report is not for uplink delay feature
+	 * and return failure here so that legacy BSS TSF logic can be
+	 * continued.
+	 */
+	if (!ptsf->mac_id_valid) {
+		hdd_debug_rl("TSF report not for uplink delay");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* For uplink delay feature, TSF auto report needs to be enabled
+	 * first. Otherwise TSF event will not be posted by target.
+	 */
+	if (!qdf_atomic_read(&adapter->tsf_auto_report)) {
+		hdd_debug_rl("adapter %u tsf_auto_report disabled",
+			     adapter->vdev_id);
+		goto exit_with_success;
+	}
+
+	delta_tsf = ptsf->tsf_low - ptsf->soc_timer_low;
+	hdd_debug("vdev %u tsf_low %u qtimer_low %u delta_tsf %u",
+		  ptsf->vdev_id, ptsf->tsf_low, ptsf->soc_timer_low, delta_tsf);
+
+	/* Pass delta_tsf to DP layer to report uplink delay
+	 * on a per vdev basis
+	 */
+	cdp_set_delta_tsf(soc, adapter->vdev_id, delta_tsf);
+
+exit_with_success:
+	return QDF_STATUS_SUCCESS;
+}
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline int hdd_handle_tsf_auto_report(struct hdd_adapter *adapter,
+					     uint32_t tsf_cmd)
+{
+	return -EINVAL;
+}
+
+static inline QDF_STATUS hdd_set_delta_tsf(struct hdd_adapter *adapter,
+					   struct stsf *ptsf)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 /**
  * hdd_get_tsf_cb() - handle tsf callback
  * @pcb_cxt: pointer to the hdd_contex
@@ -2277,6 +2389,14 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 		hdd_err("failed to find adapter");
 		return -EINVAL;
 	}
+
+	/* Intercept tsf report and check if it is for uplink delay.
+	 * If yes, return in advance and skip the legacy BSS TSF
+	 * report. Otherwise continue on to the legacy BSS TSF
+	 * report logic.
+	 */
+	if (QDF_IS_STATUS_SUCCESS(hdd_set_delta_tsf(adapter, ptsf)))
+		return 0;
 
 	if (!hdd_tsf_is_initialized(adapter)) {
 		hdd_err("tsf is not init, ignore tsf event");
@@ -2362,6 +2482,14 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	tsf_cmd = nla_get_u32(tb_vendor[QCA_WLAN_VENDOR_ATTR_TSF_CMD]);
+
+	/* Intercept tsf_cmd for TSF auto report enable or disable subcmds.
+	 * If status is -EINVAL, it means tsf_cmd is not for auto report and
+	 * need to continue to handle other tsf cmds.
+	 */
+	status = hdd_handle_tsf_auto_report(adapter, tsf_cmd);
+	if (status != -EINVAL)
+		goto end;
 
 	if (tsf_cmd == QCA_TSF_CAPTURE || tsf_cmd == QCA_TSF_SYNC_GET) {
 		hdd_capture_tsf(adapter, tsf_op_resp, 1);

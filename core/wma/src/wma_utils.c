@@ -3036,7 +3036,7 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
-int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
+int wma_rso_cmd_status_event_handler(uint8_t vdev_id, enum cm_roam_notif notif)
 {
 	struct rso_cmd_status *rso_status;
 	struct scheduler_msg sme_msg = {0};
@@ -3046,10 +3046,10 @@ int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
 	if (!rso_status)
 		return -ENOMEM;
 
-	rso_status->vdev_id = wmi_event->vdev_id;
-	if (WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS == wmi_event->notif)
+	rso_status->vdev_id = vdev_id;
+	if (notif == CM_ROAM_NOTIF_SCAN_MODE_SUCCESS)
 		rso_status->status = true;
-	else if (WMI_ROAM_NOTIF_SCAN_MODE_FAIL == wmi_event->notif)
+	else if (notif == CM_ROAM_NOTIF_SCAN_MODE_FAIL)
 		rso_status->status = false;
 	sme_msg.type = eWNI_SME_RSO_CMD_STATUS_IND;
 	sme_msg.bodyptr = rso_status;
@@ -3788,20 +3788,12 @@ bool wma_capability_enhanced_mcast_filter(void)
 
 bool wma_is_vdev_up(uint8_t vdev_id)
 {
-	struct wlan_objmgr_vdev *vdev;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	bool is_up = false;
 
 	if (!wma)
-		return is_up;
+		return false;
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
-			WLAN_LEGACY_WMA_ID);
-	if (vdev) {
-		is_up = QDF_IS_STATUS_SUCCESS(wlan_vdev_is_up(vdev));
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-	}
-	return is_up;
+	return wlan_is_vdev_id_up(wma->pdev, vdev_id);
 }
 
 void wma_acquire_wakelock(qdf_wake_lock_t *wl, uint32_t msec)
@@ -3968,8 +3960,6 @@ QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 		wma_err("Failed to get vdev mlme obj for vdev id %d", vdev_id);
 		return status;
 	}
-
-	wma->interfaces[vdev_id].roaming_in_progress = false;
 
 	status = vdev_mgr_down_send(vdev_mlme);
 

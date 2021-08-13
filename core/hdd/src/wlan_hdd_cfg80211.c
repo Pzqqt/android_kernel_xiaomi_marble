@@ -169,6 +169,8 @@
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_hdd_cm_api.h"
 #include "wlan_roam_debug.h"
+#include "wlan_hdd_avoid_freq_ext.h"
+
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 
@@ -6275,10 +6277,12 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 					       struct wireless_dev *wdev,
 					       const void *data, int data_len)
 {
-	uint8_t local_pmk[ROAM_SCAN_PSK_SIZE];
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *hdd_adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
+	struct hdd_station_ctx *sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(hdd_adapter);
+	struct wlan_crypto_pmksa pmksa;
 	int status;
 	mac_handle_t mac_handle;
 
@@ -6306,11 +6310,15 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 		return status;
 
 	mac_handle = hdd_ctx->mac_handle;
-	qdf_mem_zero(&local_pmk, ROAM_SCAN_PSK_SIZE);
-	qdf_mem_copy(local_pmk, data, data_len);
-	sme_roam_set_psk_pmk(mac_handle, hdd_adapter->vdev_id,
-			     local_pmk, data_len, true);
-	qdf_mem_zero(&local_pmk, ROAM_SCAN_PSK_SIZE);
+	qdf_mem_zero(&pmksa, sizeof(pmksa));
+	pmksa.pmk_len = data_len;
+	qdf_mem_copy(pmksa.pmk, data, data_len);
+
+	qdf_mem_copy(&pmksa.bssid, &sta_ctx->conn_info.bssid,
+		     QDF_MAC_ADDR_SIZE);
+
+	sme_roam_set_psk_pmk(mac_handle, &pmksa, hdd_adapter->vdev_id, true);
+	qdf_mem_zero(&pmksa, sizeof(pmksa));
 	return 0;
 }
 
@@ -6899,6 +6907,7 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_NSS] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY] = {
 							.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_FT_OVER_DS] = {.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -7339,6 +7348,35 @@ static int hdd_set_roam_reason_vsie_status(struct hdd_adapter *adapter,
 	return -ENOTSUPP;
 }
 #endif
+
+static int hdd_set_ft_over_ds(struct hdd_adapter *adapter,
+			      const struct nlattr *attr)
+{
+	uint8_t ft_over_ds_enable;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct hdd_context *hdd_ctx = NULL;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx failure");
+		return -EINVAL;
+	}
+
+	ft_over_ds_enable = nla_get_u8(attr);
+
+	if (ft_over_ds_enable != 0 && ft_over_ds_enable != 1) {
+		hdd_err_rl("Invalid ft_over_ds_enable: %d", ft_over_ds_enable);
+		return -EINVAL;
+	}
+
+	status = ucfg_mlme_set_ft_over_ds(hdd_ctx->psoc, ft_over_ds_enable);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("set ft_over_ds failed");
+		return -EINVAL;
+	}
+
+	return status;
+}
 
 static int hdd_config_ldpc(struct hdd_adapter *adapter,
 			   const struct nlattr *attr)
@@ -8289,6 +8327,11 @@ static int hdd_config_total_beacon_miss_count(struct hdd_adapter *adapter,
 	uint8_t total_miss_count;
 	QDF_STATUS status;
 
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_err("Only supported in sta mode");
+		return -EINVAL;
+	}
+
 	total_miss_count = nla_get_u8(attr);
 	ucfg_mlme_get_roam_bmiss_first_bcnt(hdd_ctx->psoc,
 					    &first_miss_count);
@@ -8300,14 +8343,14 @@ static int hdd_config_total_beacon_miss_count(struct hdd_adapter *adapter,
 
 	final_miss_count = total_miss_count - first_miss_count;
 
+	if (!ucfg_mlme_validate_roam_bmiss_final_bcnt(final_miss_count))
+		return -EINVAL;
+
 	hdd_debug("First count %u, final count %u",
 		  first_miss_count, final_miss_count);
 
-	/*****
-	 * TODO: research why is 0 being passed for vdev id???
-	 */
 	status = sme_set_roam_bmiss_final_bcnt(hdd_ctx->mac_handle,
-					       0,
+					       adapter->vdev_id,
 					       final_miss_count);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set final count, status %u", status);
@@ -8869,6 +8912,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_udp_qos_upgrade_threshold},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY,
 	 hdd_set_primary_interface},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_FT_OVER_DS,
+	 hdd_set_ft_over_ds},
 };
 
 #ifdef WLAN_FEATURE_ELNA
@@ -10785,6 +10830,11 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("Failed to trigger bug report");
 			return -EINVAL;
+		}
+		status = wlan_logging_wait_for_flush_log_completion();
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("wait for flush log timed out");
+			return qdf_status_to_os_return(status);
 		}
 	} else {
 		wlan_report_log_completion(WLAN_LOG_TYPE_NON_FATAL,
@@ -16494,6 +16544,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_GPIO_CFG_VENDOR_COMMANDS
 	FEATURE_MEDIUM_ASSESS_VENDOR_COMMANDS
 	FEATURE_RADAR_HISTORY_VENDOR_COMMANDS
+	FEATURE_AVOID_FREQ_EXT_VENDOR_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
@@ -16964,14 +17015,16 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif
 			| WIPHY_FLAG_OFFCHAN_TX;
 
+	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_WOW) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
-	wiphy->wowlan = &wowlan_support_cfg80211_init;
+		wiphy->wowlan = &wowlan_support_cfg80211_init;
 #else
-	wiphy->wowlan.flags = WIPHY_WOWLAN_MAGIC_PKT;
-	wiphy->wowlan.n_patterns = WOWL_MAX_PTRNS_ALLOWED;
-	wiphy->wowlan.pattern_min_len = 1;
-	wiphy->wowlan.pattern_max_len = WOWL_PTRN_MAX_SIZE;
+		wiphy->wowlan.flags = WIPHY_WOWLAN_MAGIC_PKT;
+		wiphy->wowlan.n_patterns = WOWL_MAX_PTRNS_ALLOWED;
+		wiphy->wowlan.pattern_min_len = 1;
+		wiphy->wowlan.pattern_max_len = WOWL_PTRN_MAX_SIZE;
 #endif
+	}
 
 #ifdef FEATURE_WLAN_TDLS
 	wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS
@@ -18358,9 +18411,9 @@ static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
 	return errno;
 }
 
-static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
-				bool pairwise, u8 key_index,
-				mac_handle_t mac_handle, bool *ft_mode)
+static int wlan_hdd_add_key_sta(struct wlan_objmgr_pdev *pdev,
+				struct hdd_adapter *adapter,
+				bool pairwise, u8 key_index, bool *ft_mode)
 {
 	struct wlan_objmgr_vdev *vdev;
 	int errno;
@@ -18370,7 +18423,7 @@ static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
 	 * pre-authentication is done. Save the key in the
 	 * UMAC and install it after association
 	 */
-	status = sme_check_ft_status(mac_handle, adapter->vdev_id);
+	status = ucfg_cm_check_ft_status(pdev, adapter->vdev_id);
 	if (status == QDF_STATUS_SUCCESS) {
 		*ft_mode = true;
 		return 0;
@@ -18477,8 +18530,8 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		break;
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-		errno = wlan_hdd_add_key_sta(adapter, pairwise, key_index,
-					     mac_handle, &ft_mode);
+		errno = wlan_hdd_add_key_sta(hdd_ctx->pdev, adapter, pairwise,
+					     key_index, &ft_mode);
 		if (ft_mode)
 			return 0;
 		break;
@@ -18527,10 +18580,9 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 				       )
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	struct csr_roam_profile *roam_profile;
 	struct key_params params;
 	eCsrEncryptionType enc_type;
-	struct hdd_station_ctx *sta_ctx;
+	int32_t ucast_cipher = 0;
 
 	hdd_enter();
 
@@ -18547,34 +18599,16 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 
 	memset(&params, 0, sizeof(params));
 
-	if (CSR_MAX_NUM_KEY <= key_index) {
+	if (key_index >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX +
+			  WLAN_CRYPTO_MAXBIGTKKEYIDX)) {
 		hdd_err("Invalid key index: %d", key_index);
 		return -EINVAL;
 	}
+	if (adapter->vdev)
+		ucast_cipher = wlan_crypto_get_param(adapter->vdev,
+						WLAN_CRYPTO_PARAM_UCAST_CIPHER);
 
-	if ((adapter->device_mode == QDF_SAP_MODE) ||
-	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
-		struct hdd_ap_ctx *ap_ctx =
-			WLAN_HDD_GET_AP_CTX_PTR(adapter);
-
-		roam_profile =
-			wlan_sap_get_roam_profile(ap_ctx->sap_context);
-		if (!roam_profile) {
-			hdd_err("Get roam profile failed!");
-			return -EINVAL;
-		}
-		enc_type = roam_profile->EncryptionType.encryptionType[0];
-	} else if (adapter->device_mode == QDF_NDI_MODE) {
-		roam_profile = hdd_roam_profile(adapter);
-		if (!roam_profile) {
-			hdd_err("Get roam profile failed!");
-			return -EINVAL;
-		}
-		enc_type = roam_profile->EncryptionType.encryptionType[0];
-	} else {
-		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		enc_type = sta_ctx->conn_info.uc_encrypt_type;
-	}
+	sme_fill_enc_type(&enc_type, ucast_cipher);
 
 	switch (enc_type) {
 	case eCSR_ENCRYPT_TYPE_NONE:
@@ -18739,7 +18773,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		  qdf_opmode_str(adapter->device_mode),
 		  adapter->device_mode, key_index);
 
-	if (CSR_MAX_NUM_KEY <= key_index) {
+	if (key_index >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX +
+			  WLAN_CRYPTO_MAXBIGTKKEYIDX)) {
 		hdd_err("Invalid key index: %d", key_index);
 		return -EINVAL;
 	}
@@ -19712,10 +19747,11 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 		qdf_mem_free(pmksa);
 	}
 
-	if (result == QDF_STATUS_SUCCESS && pmk_cache->pmk_len)
-		sme_roam_set_psk_pmk(mac_handle, adapter->vdev_id,
-				     pmk_cache->pmk, pmk_cache->pmk_len,
+	if (result == QDF_STATUS_SUCCESS && pmk_cache->pmk_len) {
+		sme_roam_set_psk_pmk(mac_handle, pmksa, adapter->vdev_id,
 				     false);
+		sme_set_pmk_cache_ft(mac_handle, adapter->vdev_id, pmk_cache);
+	}
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	return result;
@@ -20156,7 +20192,6 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int status;
-	mac_handle_t mac_handle;
 
 	hdd_enter();
 
@@ -20184,10 +20219,8 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 	}
 	hdd_debug("called with Ie of length = %zu", ftie->ie_len);
 
-	/* Pass the received FT IEs to SME */
-	mac_handle = hdd_ctx->mac_handle;
-	sme_set_ft_ies(mac_handle, adapter->vdev_id,
-		       (const u8 *)ftie->ie, ftie->ie_len);
+	ucfg_cm_set_ft_ies(hdd_ctx->pdev, adapter->vdev_id,
+			   (const u8 *)ftie->ie, ftie->ie_len);
 	hdd_exit();
 	return 0;
 }
@@ -21163,6 +21196,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	adapter->monitor_mode_vdev_up_in_progress = true;
 
 	status = sme_roam_channel_change_req(mac_handle, bssid,
+					     adapter->vdev_id,
 					     &roam_profile.ch_params,
 					     &roam_profile);
 	if (status) {

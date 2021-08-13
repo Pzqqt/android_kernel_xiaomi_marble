@@ -53,6 +53,8 @@ typedef struct sDphQosParams {
 	uint8_t addtsPresent;
 	tSirAddtsReqInfo addts;
 	tSirMacQosCapabilityStaIE capability;
+	/*AP EDCA params, extracted from assoc resp*/
+	tSirMacEdcaParamSetIE peer_edca_params;
 } tDphQosParams;
 
 /**
@@ -185,6 +187,7 @@ typedef struct sDphHashNode {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_config;
 	uint16_t he_mcs_12_13_map;
+	tDot11fIEhe_6ghz_band_cap he_6g_band_cap;
 #endif
 
 #ifdef WLAN_FEATURE_11BE
@@ -200,6 +203,10 @@ typedef struct sDphHashNode {
 	 * end of the structure.
 	 */
 	struct sDphHashNode *next;
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool recv_assoc_frm;
+	uint8_t mld_addr[QDF_MAC_ADDR_SIZE];
+#endif
 } tDphHashNode, *tpDphHashNode;
 
 #include "dph_hash_table.h"

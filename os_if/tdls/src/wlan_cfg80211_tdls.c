@@ -238,6 +238,27 @@ tdls_calc_channels_from_staparams(struct tdls_update_peer_params *req_info,
 }
 
 #ifdef WLAN_FEATURE_11AX
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+static void
+wlan_cfg80211_tdls_extract_6ghz_params(struct tdls_update_peer_params *req_info,
+				       struct station_parameters *params)
+{
+	if (!params->he_6ghz_capa) {
+		osif_debug("6 Ghz he_capa not present");
+		return;
+	}
+
+	qdf_mem_copy(&req_info->he_6ghz_cap, params->he_6ghz_capa,
+		     sizeof(params->he_6ghz_capa));
+}
+#else
+static void
+wlan_cfg80211_tdls_extract_6ghz_params(struct tdls_update_peer_params *req_info,
+				       struct station_parameters *params)
+{
+	osif_debug("kernel don't support tdls 6 ghz band");
+}
+#endif
 
 static void
 wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
@@ -260,6 +281,8 @@ wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
 
 	qdf_mem_copy(&req_info->he_cap, params->he_capa,
 		     req_info->he_cap_len);
+
+	wlan_cfg80211_tdls_extract_6ghz_params(req_info, params);
 
 	return;
 }

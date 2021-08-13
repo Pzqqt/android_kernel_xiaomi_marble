@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,6 +55,7 @@
  * @session_id: PE session
  * @tsf_delta: Delta between tsf in frame and local value of tsf
  * @rssi_raw: rssi based on actual noise floor in hardware.
+ * @pkt_buf: Pointer to Packet
  */
 typedef struct {
 	uint32_t frequency;
@@ -73,6 +74,7 @@ typedef struct {
 	uint8_t session_id;
 	uint32_t tsf_delta;
 	uint32_t rssi_raw;
+	void *pkt_qdf_buf;
 } t_packetmeta, *tp_packetmeta;
 
 /* implementation specific cds packet type */

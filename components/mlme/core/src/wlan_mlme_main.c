@@ -412,7 +412,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_init_wds_config_cfg(psoc, gen);
 }
 
-static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
+static void mlme_init_edca_ani_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_edca_params *edca_params)
 {
 	/* initialize the max allowed array length for read/write */
 	edca_params->ani_acbe_l.max_len = CFG_EDCA_DATA_LEN;
@@ -426,42 +427,42 @@ static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
 	edca_params->ani_acvo_b.max_len = CFG_EDCA_DATA_LEN;
 
 	/* parse the ETSI edca parameters from cfg string for BK,BE,VI,VO ac */
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBK_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACBK_LOCAL),
 			      edca_params->ani_acbk_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acbk_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBE_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACBE_LOCAL),
 			      edca_params->ani_acbe_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acbe_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVI_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACVI_LOCAL),
 			      edca_params->ani_acvi_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acvi_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVO_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACVO_LOCAL),
 			      edca_params->ani_acvo_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acvo_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBK),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACBK),
 			      edca_params->ani_acbk_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acbk_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBE),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACBE),
 			      edca_params->ani_acbe_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acbe_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVI),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACVI),
 			      edca_params->ani_acvi_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acvi_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVO),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ANI_ACVO),
 			      edca_params->ani_acvo_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->ani_acvo_b.len);
@@ -502,22 +503,22 @@ static void mlme_init_edca_wme_cfg(struct wlan_objmgr_psoc *psoc,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acvo_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBK),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACBK),
 			      edca_params->wme_acbk_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acbk_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBE),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACBE),
 			      edca_params->wme_acbe_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acbe_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVI),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACVI),
 			      edca_params->wme_acvi_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acvi_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVO),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACVO),
 			      edca_params->wme_acvo_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acvo_b.len);
@@ -558,22 +559,22 @@ static void mlme_init_edca_etsi_cfg(struct wlan_objmgr_psoc *psoc,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acvo_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBK),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACBK),
 			      edca_params->etsi_acbk_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acbk_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBE),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACBE),
 			      edca_params->etsi_acbe_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acbe_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVI),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACVI),
 			      edca_params->etsi_acvi_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acvi_b.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVO),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACVO),
 			      edca_params->etsi_acvo_b.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acvo_b.len);
@@ -620,7 +621,7 @@ mlme_init_qos_edca_params(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_edca_params(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_edca_params *edca_params)
 {
-	mlme_init_edca_ani_cfg(edca_params);
+	mlme_init_edca_ani_cfg(psoc, edca_params);
 	mlme_init_edca_wme_cfg(psoc, edca_params);
 	mlme_init_edca_etsi_cfg(psoc, edca_params);
 	mlme_init_qos_edca_params(psoc, edca_params);
@@ -1815,6 +1816,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_POST_INACTIVITY_ROAM_SCAN_PERIOD);
 	lfr->fw_akm_bitmap = 0;
 	lfr->enable_ft_im_roaming = cfg_get(psoc, CFG_FT_IM_ROAMING);
+	lfr->enable_ft_over_ds = !ENABLE_FT_OVER_DS;
 
 	mlme_init_roam_offload_cfg(psoc, lfr);
 	mlme_init_ese_cfg(psoc, lfr);
@@ -2859,6 +2861,134 @@ qdf_freq_t wlan_get_operation_chan_freq_vdev_id(struct wlan_objmgr_pdev *pdev,
 	return chan_freq;
 }
 
+enum QDF_OPMODE wlan_get_opmode_vdev_id(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id)
+{
+	enum QDF_OPMODE opmode = QDF_MAX_NO_OF_MODE;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!pdev)
+		return opmode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return opmode;
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return opmode;
+}
+
+bool wlan_is_open_wep_cipher(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	int32_t ucast_cipher;
+	bool is_open_wep = false;
+
+	if (!pdev)
+		return is_open_wep;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return is_open_wep;
+	ucast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	if (!ucast_cipher ||
+	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
+	      ucast_cipher)) ||
+	      QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP) ||
+	      QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
+	      QDF_HAS_PARAM(ucast_cipher,  WLAN_CRYPTO_CIPHER_WEP_104))
+		is_open_wep = true;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return is_open_wep;
+}
+
+bool wlan_vdev_is_open_mode(struct wlan_objmgr_vdev *vdev)
+{
+	int32_t ucast_cipher;
+
+	ucast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	if (!ucast_cipher ||
+	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
+	      ucast_cipher)))
+		return true;
+
+	return false;
+}
+
+bool wlan_vdev_id_is_open_cipher(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_open = false;
+
+	if (!pdev)
+		return is_open;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return is_open;
+	is_open = wlan_vdev_is_open_mode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return is_open;
+}
+
+bool wlan_vdev_id_is_11n_allowed(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_11n_allowed = true;
+	int32_t ucast_cipher;
+
+	if (!pdev)
+		return is_11n_allowed;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return is_11n_allowed;
+	ucast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	if (ucast_cipher == -1)
+		goto err;
+	if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP) ||
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP) ||
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104))
+		is_11n_allowed = false;
+
+err:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return is_11n_allowed;
+}
+
+
+bool wlan_is_vdev_id_up(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_up = false;
+
+	if (!pdev)
+		return is_up;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (vdev) {
+		is_up = QDF_IS_STATUS_SUCCESS(wlan_vdev_is_up(vdev));
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+	}
+
+	return is_up;
+}
+
+
 QDF_STATUS
 wlan_get_op_chan_freq_info_vdev_id(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id, qdf_freq_t *op_freq,
@@ -3416,3 +3546,24 @@ QDF_STATUS mlme_get_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+QDF_STATUS wlan_mlme_get_mac_vdev_id(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id,
+				     struct qdf_mac_addr *self_mac)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_mem_copy(self_mac->bytes,
+		     wlan_vdev_mlme_get_macaddr(vdev), QDF_MAC_ADDR_SIZE);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return QDF_STATUS_SUCCESS;
+}

@@ -357,10 +357,6 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 	}
 
 	iface = &wma_handle->interfaces[vdev_id];
-	if (mlme_get_max_reg_power(iface->vdev) == tx_pwr_params->power) {
-		ret = QDF_STATUS_SUCCESS;
-		goto end;
-	}
 	prev_max_power = mlme_get_max_reg_power(iface->vdev);
 
 	mlme_set_max_reg_power(iface->vdev, tx_pwr_params->power);

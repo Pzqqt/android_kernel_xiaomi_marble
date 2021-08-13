@@ -260,3 +260,216 @@ ucfg_wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 {
 	return wlan_cm_roam_invoke(pdev, vdev_id, bssid, ch_freq, source);
 }
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+void ucfg_cm_set_ft_pre_auth_state(struct wlan_objmgr_vdev *vdev, bool state)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	mlme_priv->connect_info.ft_info.set_ft_preauth_state = state;
+}
+
+static bool ucfg_cm_get_ft_pre_auth_state(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return false;
+
+	return mlme_priv->connect_info.ft_info.set_ft_preauth_state;
+}
+
+void ucfg_cm_set_ft_ies(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			const uint8_t *ft_ies, uint16_t ft_ies_length)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!ft_ies) {
+		mlme_err("ft ies is NULL");
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev)
+		return;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		goto end;
+
+	status = cm_roam_acquire_lock(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto end;
+
+	mlme_debug("FT IEs Req is received in state %d",
+		  mlme_priv->connect_info.ft_info.ft_state);
+
+	/* Global Station FT State */
+	switch (mlme_priv->connect_info.ft_info.ft_state) {
+	case FT_START_READY:
+	case FT_AUTH_REQ_READY:
+		mlme_debug("ft_ies_length: %d", ft_ies_length);
+		ft_ies_length = QDF_MIN(ft_ies_length, MAX_FTIE_SIZE);
+		mlme_priv->connect_info.ft_info.auth_ie_len = ft_ies_length;
+		qdf_mem_copy(mlme_priv->connect_info.ft_info.auth_ft_ie,
+			     ft_ies, ft_ies_length);
+		mlme_priv->connect_info.ft_info.ft_state = FT_AUTH_REQ_READY;
+		break;
+
+	case FT_REASSOC_REQ_WAIT:
+		/*
+		 * We are done with pre-auth, hence now waiting for
+		 * reassoc req. This is the new FT Roaming in place At
+		 * this juncture we'r ready to start sending Reassoc req
+		 */
+
+		ft_ies_length = QDF_MIN(ft_ies_length, MAX_FTIE_SIZE);
+
+		mlme_debug("New Reassoc Req: %pK in state %d",
+			   ft_ies, mlme_priv->connect_info.ft_info.ft_state);
+		mlme_priv->connect_info.ft_info.reassoc_ie_len =
+							ft_ies_length;
+		qdf_mem_copy(mlme_priv->connect_info.ft_info.reassoc_ft_ie,
+				ft_ies, ft_ies_length);
+
+		mlme_priv->connect_info.ft_info.ft_state = FT_SET_KEY_WAIT;
+		mlme_debug("ft_ies_length: %d state: %d", ft_ies_length,
+			   mlme_priv->connect_info.ft_info.ft_state);
+		break;
+
+	default:
+		mlme_warn("Unhandled state: %d",
+			  mlme_priv->connect_info.ft_info.ft_state);
+		break;
+	}
+	cm_roam_release_lock(vdev);
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+QDF_STATUS ucfg_cm_check_ft_status(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev)
+		return status;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		goto end;
+
+	status = cm_roam_acquire_lock(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto end;
+
+	mlme_debug("FT update key is received in state %d",
+		   mlme_priv->connect_info.ft_info.ft_state);
+
+	/* Global Station FT State */
+	switch (mlme_priv->connect_info.ft_info.ft_state) {
+	case FT_SET_KEY_WAIT:
+		if (ucfg_cm_get_ft_pre_auth_state(vdev)) {
+			mlme_priv->connect_info.ft_info.ft_state = FT_START_READY;
+			mlme_debug("state changed to %d",
+				   mlme_priv->connect_info.ft_info.ft_state);
+			break;
+		}
+		/* fallthrough */
+	default:
+		mlme_debug("Unhandled state:%d",
+			   mlme_priv->connect_info.ft_info.ft_state);
+		status = QDF_STATUS_E_FAILURE;
+		break;
+	}
+	cm_roam_release_lock(vdev);
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return status;
+}
+
+bool ucfg_cm_ft_key_ready_for_install(struct wlan_objmgr_vdev *vdev)
+{
+	bool ret = false;
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return ret;
+
+	if (ucfg_cm_get_ft_pre_auth_state(vdev) &&
+	    mlme_priv->connect_info.ft_info.ft_state == FT_START_READY) {
+		ret = true;
+		ucfg_cm_set_ft_pre_auth_state(vdev, false);
+	}
+
+	return ret;
+}
+
+void ucfg_cm_ft_reset(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	qdf_mem_zero(&mlme_priv->connect_info.ft_info,
+		     sizeof(struct ft_context));
+
+	mlme_priv->connect_info.ft_info.ft_state = FT_START_READY;
+}
+#endif /* WLAN_FEATURE_HOST_ROAM */
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifdef FEATURE_WLAN_ESE
+static void
+ucfg_cm_reset_esecckm_info(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
+	qdf_mem_zero(rso_cfg->krk, WMI_KRK_KEY_LEN);
+	qdf_mem_zero(rso_cfg->btk, WMI_BTK_KEY_LEN);
+	rso_cfg->is_ese_assoc = false;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+}
+#else
+static inline
+void ucfg_cm_reset_esecckm_info(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+}
+#endif
+
+void ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	wlan_cm_set_psk_pmk(pdev, vdev_id, NULL, 0);
+	ucfg_cm_reset_esecckm_info(pdev, vdev_id);
+}
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD */

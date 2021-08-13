@@ -525,16 +525,14 @@ bool hdd_is_roam_sync_in_progress(struct hdd_context *hdd_ctx, uint8_t vdev_id);
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * wlan_hdd_ft_set_key_delay() - hdd set key delayed for FT mode
- * @mac_handle: mac handler
- * @adapter: pointer to adapter context
+ * @vdev: vdev
  *
  * Return: void
  */
-void
-wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter);
+void wlan_hdd_ft_set_key_delay(struct wlan_objmgr_vdev *vdev);
 #else
 static inline void
-wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
+wlan_hdd_ft_set_key_delay(struct wlan_objmgr_vdev *vdev)
 {
 }
 #endif
