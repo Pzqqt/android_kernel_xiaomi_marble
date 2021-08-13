@@ -5175,10 +5175,6 @@ static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 
 	core_lock(core, __func__);
 	list_for_each_entry(instance, &core->instances, list) {
-		/* ignore invalid/error session */
-		if (is_session_error(instance))
-			continue;
-
 		/* ignore thumbnail session */
 		if (is_thumbnail_session(instance))
 			continue;
