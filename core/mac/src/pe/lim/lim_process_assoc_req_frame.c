@@ -2191,8 +2191,10 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 	 * 1 - cfg_item(WNI_CFG_ASSOC_STA_LIMIT)
 	 */
 
-	if (assoc_req->eht_cap.present &&
-	    IS_DOT11_MODE_EHT(session->dot11mode))
+	if (wlan_vdev_mlme_is_mlo_ap(session->vdev) &&
+	    assoc_req->eht_cap.present &&
+	    IS_DOT11_MODE_EHT(session->dot11mode) &&
+	    (partner_peer_idx || assoc_req->mlo_info.num_partner_links))
 		peer_idx = lim_assign_mlo_conn_idx(mac_ctx, session,
 						   partner_peer_idx);
 	else
@@ -2224,8 +2226,10 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 			   QDF_MAC_ADDR_FMT, peer_idx, QDF_MAC_ADDR_REF(sa));
 
 		/* Release AID */
-		if (assoc_req->eht_cap.present &&
-		    IS_DOT11_MODE_EHT(session->dot11mode))
+		if (wlan_vdev_mlme_is_mlo_ap(session->vdev) &&
+		    assoc_req->eht_cap.present &&
+		    IS_DOT11_MODE_EHT(session->dot11mode) &&
+		    (partner_peer_idx || assoc_req->mlo_info.num_partner_links))
 			lim_release_mlo_conn_idx(mac_ctx, peer_idx, session,
 						 true);
 		else
