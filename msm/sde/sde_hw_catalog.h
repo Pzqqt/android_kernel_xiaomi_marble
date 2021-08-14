@@ -778,6 +778,7 @@ enum sde_creq_lut_types {
  * @fp16_csc_blk: FP16 CSC block array
  * @num_fp16_unmult_blk: number of FP16 UNMULT blocks
  * @fp16_unmult_blk: FP16 UNMULT block array
+ * @unmult_offset: Unmult register offset
  * @format_list: Pointer to list of supported formats
  * @virt_format_list: Pointer to list of supported formats for virtual planes
  * @in_rot_format_list: Pointer to list of supported formats for inline rotation
@@ -829,6 +830,7 @@ struct sde_sspp_sub_blks {
 	struct sde_pp_blk fp16_csc_blk[SSPP_SUBBLK_COUNT_MAX];
 	u32 num_fp16_unmult_blk;
 	struct sde_pp_blk fp16_unmult_blk[SSPP_SUBBLK_COUNT_MAX];
+	u32 unmult_offset[SSPP_SUBBLK_COUNT_MAX];
 
 	const struct sde_format_extended *format_list;
 	const struct sde_format_extended *virt_format_list;
