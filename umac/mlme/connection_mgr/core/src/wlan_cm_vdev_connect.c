@@ -1260,7 +1260,7 @@ static void cm_set_peer_mld_info(struct cm_peer_create_req *req,
 				 struct qdf_mac_addr *mld_mac,
 				 bool is_assoc_peer)
 {
-	if (!req) {
+	if (req) {
 		qdf_copy_macaddr(&req->mld_mac, mld_mac);
 		req->is_assoc_peer = is_assoc_peer;
 	}
