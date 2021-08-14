@@ -51,6 +51,9 @@
 #define IDLE_POWERCOLLAPSE_DURATION	(66 - 16/2)
 #define IDLE_POWERCOLLAPSE_IN_EARLY_WAKEUP (200 - 16/2)
 
+/* below this fps limit, timeouts are adjusted based on fps */
+#define DEFAULT_TIMEOUT_FPS_THRESHOLD            24
+
 /**
  * Encoder functions and data types
  * @intfs:	Interfaces this encoder is using, INTF_MODE_NONE if unused

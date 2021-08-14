@@ -2681,6 +2681,25 @@ u32 sde_crtc_get_dfps_maxfps(struct drm_crtc *crtc)
 	return 0;
 }
 
+struct drm_encoder *sde_crtc_get_src_encoder_of_clone(struct drm_crtc *crtc)
+{
+	struct drm_encoder *enc;
+	struct sde_crtc *sde_crtc;
+
+	if (!crtc || !crtc->dev)
+		return NULL;
+
+	sde_crtc = to_sde_crtc(crtc);
+	drm_for_each_encoder_mask(enc, crtc->dev, sde_crtc->cached_encoder_mask) {
+		if (sde_encoder_in_clone_mode(enc))
+			continue;
+
+		return enc;
+	}
+
+	return NULL;
+}
+
 static void sde_crtc_vblank_cb(void *data, ktime_t ts)
 {
 	struct drm_crtc *crtc = (struct drm_crtc *)data;

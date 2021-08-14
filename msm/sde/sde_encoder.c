@@ -61,7 +61,7 @@
 		(p) ? ((p)->hw_pp ? (p)->hw_pp->idx - PINGPONG_0 : -1) : -1, \
 		##__VA_ARGS__)
 
-
+#define SEC_TO_MILLI_SEC		1000
 
 #define MISR_BUFF_SIZE			256
 
@@ -4480,6 +4480,32 @@ void sde_encoder_get_transfer_time(struct drm_encoder *drm_enc,
 	info = &sde_enc->mode_info;
 
 	*transfer_time_us = info->mdp_transfer_time_us;
+}
+
+u32 sde_encoder_helper_get_kickoff_timeout_ms(struct drm_encoder *drm_enc)
+{
+	struct drm_encoder *src_enc = drm_enc;
+	struct sde_encoder_virt *sde_enc;
+	u32 fps;
+
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
+		return DEFAULT_KICKOFF_TIMEOUT_MS;
+	}
+
+	if (sde_encoder_in_clone_mode(drm_enc))
+		src_enc = sde_crtc_get_src_encoder_of_clone(drm_enc->crtc);
+
+	if (!src_enc)
+		return DEFAULT_KICKOFF_TIMEOUT_MS;
+
+	sde_enc = to_sde_encoder_virt(src_enc);
+	fps = sde_enc->mode_info.frame_rate;
+
+	if (!fps || fps >= DEFAULT_TIMEOUT_FPS_THRESHOLD)
+		return DEFAULT_KICKOFF_TIMEOUT_MS;
+	else
+		return (SEC_TO_MILLI_SEC / fps) * 2;
 }
 
 int sde_encoder_get_avr_status(struct drm_encoder *drm_enc)
