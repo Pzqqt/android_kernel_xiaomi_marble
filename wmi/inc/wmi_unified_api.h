@@ -3017,6 +3017,9 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
  * @evt_buf: Pointer to event buffer
  * @temp: Pointer to hold extracted temperature
  * @level: Pointer to hold extracted level in host enum
+ * @therm_throt_levels: Pointer to hold extracted number of level in thermal
+ *                      stats
+ * @tt_lvl_stats_event: Pointer to hold extracted thermal stats for each level
  * @pdev_id: Pointer to hold extracted pdev_id
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
@@ -3024,6 +3027,8 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
 				     uint32_t *temp,
 				     enum thermal_throttle_level *level,
+				     uint32_t *therm_throt_levels,
+				     struct thermal_throt_level_stats *tt_stats,
 				     uint32_t *pdev_id);
 
 /**

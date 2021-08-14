@@ -2282,11 +2282,14 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
 				     uint32_t *temp,
 				     enum thermal_throttle_level *level,
+				     uint32_t *therm_throt_levels,
+				     struct thermal_throt_level_stats *tt_stats,
 				     uint32_t *pdev_id)
 {
 	if (wmi_handle->ops->extract_thermal_stats)
 		return wmi_handle->ops->extract_thermal_stats(wmi_handle,
-			evt_buf, temp, level, pdev_id);
+			evt_buf, temp, level, therm_throt_levels,
+			tt_stats, pdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }

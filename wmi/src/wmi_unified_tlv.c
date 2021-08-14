@@ -12078,19 +12078,76 @@ wmi_tgt_thermal_level_to_host(uint32_t level)
 	}
 }
 
+#ifdef THERMAL_STATS_SUPPORT
+static void
+populate_thermal_stats(WMI_THERM_THROT_STATS_EVENTID_param_tlvs *param_buf,
+		       uint32_t *therm_throt_levels,
+		       struct thermal_throt_level_stats *tt_temp_range_stats)
+{
+	uint8_t lvl_idx;
+	wmi_therm_throt_stats_event_fixed_param *tt_stats_event;
+	wmi_thermal_throt_temp_range_stats *wmi_tt_stats;
+
+	tt_stats_event = param_buf->fixed_param;
+	*therm_throt_levels = (tt_stats_event->therm_throt_levels >
+			       WMI_THERMAL_STATS_TEMP_THRESH_LEVEL_MAX) ?
+			       WMI_THERMAL_STATS_TEMP_THRESH_LEVEL_MAX :
+			       tt_stats_event->therm_throt_levels;
+
+	wmi_tt_stats = param_buf->temp_range_stats;
+	if (!wmi_tt_stats) {
+		wmi_err("wmi_tt_stats Null");
+		return;
+	}
+
+	for (lvl_idx = 0; lvl_idx < *therm_throt_levels; lvl_idx++) {
+		tt_temp_range_stats[lvl_idx].start_temp_level =
+					wmi_tt_stats[lvl_idx].start_temp_level;
+		tt_temp_range_stats[lvl_idx].end_temp_level =
+					wmi_tt_stats[lvl_idx].end_temp_level;
+		tt_temp_range_stats[lvl_idx].total_time_ms_lo =
+					wmi_tt_stats[lvl_idx].total_time_ms_lo;
+		tt_temp_range_stats[lvl_idx].total_time_ms_hi =
+					wmi_tt_stats[lvl_idx].total_time_ms_hi;
+		tt_temp_range_stats[lvl_idx].num_entry =
+					wmi_tt_stats[lvl_idx].num_entry;
+		wmi_debug("level %d, start temp %d, end temp %d, total time low %d, total time high %d, counter %d",
+			  lvl_idx, wmi_tt_stats[lvl_idx].start_temp_level,
+			  wmi_tt_stats[lvl_idx].end_temp_level,
+			  wmi_tt_stats[lvl_idx].total_time_ms_lo,
+			  wmi_tt_stats[lvl_idx].total_time_ms_hi,
+			  wmi_tt_stats[lvl_idx].num_entry);
+	}
+}
+#else
+static void
+populate_thermal_stats(WMI_THERM_THROT_STATS_EVENTID_param_tlvs *param_buf,
+		       uint32_t *therm_throt_levels,
+		       struct thermal_throt_level_stats *tt_temp_range_stats)
+{
+}
+#endif
+
 /**
  * extract_thermal_stats_tlv() - extract thermal stats from event
  * @wmi_handle: wmi handle
  * @param evt_buf: Pointer to event buffer
  * @param temp: Pointer to hold extracted temperature
  * @param level: Pointer to hold extracted level in host enum
+ * @param therm_throt_levels: Pointer to hold extracted thermal throttle temp
+ *        range
+ * @param tt_temp_range_stats_event: Pointer to hold extracted thermal stats for
+ *                                   every level
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS
 extract_thermal_stats_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf, uint32_t *temp,
-		enum thermal_throttle_level *level, uint32_t *pdev_id)
+		enum thermal_throttle_level *level,
+		uint32_t *therm_throt_levels,
+		struct thermal_throt_level_stats *tt_temp_range_stats_event,
+		uint32_t *pdev_id)
 {
 	WMI_THERM_THROT_STATS_EVENTID_param_tlvs *param_buf;
 	wmi_therm_throt_stats_event_fixed_param *tt_stats_event;
@@ -12108,6 +12165,10 @@ extract_thermal_stats_tlv(wmi_unified_t wmi_handle,
 						tt_stats_event->pdev_id);
 	*temp = tt_stats_event->temp;
 	*level = wmi_tgt_thermal_level_to_host(tt_stats_event->level);
+
+	if (tt_stats_event->therm_throt_levels)
+		populate_thermal_stats(param_buf, therm_throt_levels,
+				       tt_temp_range_stats_event);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17122,6 +17183,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #ifdef WLAN_FEATURE_P2P_P2P_STA
 	wmi_service[wmi_service_p2p_p2p_cc_support] =
 			WMI_SERVICE_P2P_P2P_CONCURRENCY_SUPPORT;
+#endif
+#ifdef THERMAL_STATS_SUPPORT
+	wmi_service[wmi_service_thermal_stats_temp_range_supported] =
+			WMI_SERVICE_THERMAL_THROT_STATS_TEMP_RANGE_SUPPORT;
 #endif
 }
 

@@ -84,3 +84,18 @@ wmi_unified_send_set_mdns_config_cmd(struct wmi_unified *wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
+#ifdef THERMAL_STATS_SUPPORT
+QDF_STATUS
+wmi_unified_send_get_thermal_stats_cmd(struct wmi_unified *wmi_handle,
+				       enum thermal_stats_request_type req_type,
+				       uint8_t temp_offset)
+{
+	if (wmi_handle->ops->send_get_thermal_stats_cmd)
+		return wmi_handle->ops->send_get_thermal_stats_cmd(wmi_handle,
+								   req_type,
+								   temp_offset);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* THERMAL_STATS_SUPPORT */

@@ -5288,6 +5288,9 @@ typedef enum {
 #ifdef WLAN_FEATURE_P2P_P2P_STA
 	wmi_service_p2p_p2p_cc_support,
 #endif
+#ifdef THERMAL_STATS_SUPPORT
+	wmi_service_thermal_stats_temp_range_supported,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

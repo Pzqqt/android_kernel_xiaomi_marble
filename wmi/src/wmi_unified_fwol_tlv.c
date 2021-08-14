@@ -427,6 +427,60 @@ static void wmi_fwol_attach_mdns_tlv(struct wmi_ops *ops)
 }
 #endif /* WLAN_FEATURE_MDNS_OFFLOAD */
 
+#ifdef THERMAL_STATS_SUPPORT
+/**
+ * send_get_thermal_stats_cmd_tlv() - send get thermal stats cmd to fw
+ * @wmi_handle: wmi handle
+ * @req_type: req type
+ * @temp_offset: temperature offset
+ *
+ * Send WMI_REQUEST_THERMAL_STATS_CMDID to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+send_get_thermal_stats_cmd_tlv(wmi_unified_t wmi_handle,
+			       enum thermal_stats_request_type req_type,
+			       uint8_t temp_offset)
+{
+	wmi_buf_t buf;
+	wmi_thermal_stats_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	QDF_STATUS ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err("Failed to allocate wmi buffer");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_thermal_stats_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_thermal_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_thermal_stats_cmd_fixed_param));
+	cmd->thermal_action = req_type;
+	cmd->thermal_offset = temp_offset;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_REQUEST_THERMAL_STATS_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send get thermal stats cmd = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+static void wmi_fwol_attach_thermal_stats_tlv(struct wmi_ops *ops)
+{
+	ops->send_get_thermal_stats_cmd = send_get_thermal_stats_cmd_tlv;
+}
+#else
+static void wmi_fwol_attach_thermal_stats_tlv(struct wmi_ops *ops)
+{
+}
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
+
 void wmi_fwol_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -434,5 +488,5 @@ void wmi_fwol_attach_tlv(wmi_unified_t wmi_handle)
 	wmi_fwol_attach_elna_tlv(ops);
 	wmi_fwol_attach_dscp_tid_tlv(ops);
 	wmi_fwol_attach_mdns_tlv(ops);
-
+	wmi_fwol_attach_thermal_stats_tlv(ops);
 }
