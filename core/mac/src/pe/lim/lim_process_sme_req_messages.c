@@ -3948,23 +3948,23 @@ QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
  * Return: void
  */
 static void wma_get_mld_info_sta(struct cm_peer_create_req *req,
-				 uint8_t *peer_mld_addr,
+				 uint8_t **peer_mld_addr,
 				 bool *is_assoc_peer)
 {
 	if (req) {
-		peer_mld_addr = req->mld_mac.bytes;
+		*peer_mld_addr = req->mld_mac.bytes;
 		*is_assoc_peer = req->is_assoc_peer;
 	} else {
-		peer_mld_addr = NULL;
+		*peer_mld_addr = NULL;
 		*is_assoc_peer = false;
 	}
 }
 #else
 static void wma_get_mld_info_sta(struct cm_peer_create_req *req,
-				 uint8_t *peer_mld_addr,
+				 uint8_t **peer_mld_addr,
 				 bool *is_assoc_peer)
 {
-	peer_mld_addr = NULL;
+	*peer_mld_addr = NULL;
 	*is_assoc_peer = false;
 }
 #endif
@@ -3983,7 +3983,7 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 
 	req = msg->bodyptr;
 
-	wma_get_mld_info_sta(req, peer_mld_addr, &is_assoc_peer);
+	wma_get_mld_info_sta(req, &peer_mld_addr, &is_assoc_peer);
 	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes, true,
 				      peer_mld_addr, is_assoc_peer);
 

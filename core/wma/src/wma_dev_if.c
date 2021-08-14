@@ -4108,11 +4108,11 @@ send_resp:
  * Return: void
  */
 static void wma_get_mld_info_ap(tpAddStaParams add_sta,
-				uint8_t *peer_mld_addr,
+				uint8_t **peer_mld_addr,
 				bool *is_assoc_peer)
 {
 	if (add_sta) {
-		peer_mld_addr = add_sta->mld_mac_addr;
+		*peer_mld_addr = add_sta->mld_mac_addr;
 		*is_assoc_peer = add_sta->is_assoc_peer;
 	} else {
 		peer_mld_addr = NULL;
@@ -4121,10 +4121,10 @@ static void wma_get_mld_info_ap(tpAddStaParams add_sta,
 }
 #else
 static void wma_get_mld_info_ap(tpAddStaParams add_sta,
-				uint8_t *peer_mld_addr,
+				uint8_t **peer_mld_addr,
 				bool *is_assoc_peer)
 {
-	peer_mld_addr = NULL;
+	*peer_mld_addr = NULL;
 	*is_assoc_peer = false;
 }
 #endif
@@ -4191,7 +4191,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	wma_delete_invalid_peer_entries(add_sta->smesessionId, add_sta->staMac);
 
-	wma_get_mld_info_ap(add_sta, peer_mld_addr, &is_assoc_peer);
+	wma_get_mld_info_ap(add_sta, &peer_mld_addr, &is_assoc_peer);
 	status = wma_create_peer(wma, add_sta->staMac, WMI_PEER_TYPE_DEFAULT,
 				 add_sta->smesessionId, peer_mld_addr,
 				 is_assoc_peer);
