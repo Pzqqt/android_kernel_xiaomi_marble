@@ -4164,6 +4164,56 @@ void hdd_set_qmi_stats_enabled(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef CONFIG_FW_LOGS_BASED_ON_INI
+/**
+ * hdd_set_fw_log_params() - Set log parameters to FW
+ * @hdd_ctx: HDD Context
+ * @vdev_id: vdev_id
+ *
+ * This function set the FW Debug log level based on the INI.
+ *
+ * Return: None
+ */
+static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
+				  uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	uint16_t enable_fw_log_level, enable_fw_log_type;
+	int ret;
+
+	if (!hdd_ctx->config->enable_fw_log) {
+		hdd_debug("enable_fw_log not enabled in INI");
+		return;
+	}
+
+	/* Enable FW logs based on INI configuration */
+	status = ucfg_fwol_get_enable_fw_log_type(hdd_ctx->psoc,
+						  &enable_fw_log_type);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	ret = sme_cli_set_command(vdev_id, WMI_DBGLOG_TYPE,
+				  enable_fw_log_type, DBG_CMD);
+	if (ret != 0)
+		hdd_err("Failed to enable FW log type ret %d", ret);
+
+	status = ucfg_fwol_get_enable_fw_log_level(hdd_ctx->psoc,
+						   &enable_fw_log_level);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	ret = sme_cli_set_command(vdev_id, WMI_DBGLOG_LOG_LEVEL,
+				  enable_fw_log_level, DBG_CMD);
+	if (ret != 0)
+		hdd_err("Failed to enable FW log level ret %d", ret);
+
+	sme_enable_fw_module_log_level(hdd_ctx->mac_handle, vdev_id);
+}
+#else
+static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx, uint8_t vdev_id)
+{
+}
+
+#endif
+
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 {
 	int ret = 0;
@@ -4363,6 +4413,12 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			hdd_enable_power_management(hdd_ctx);
 			hdd_err("in ftm mode, no need to configure cds modules");
+			hdd_info("Enable FW log in ftm mode");
+			/*
+			 * Since vdev is not created for FTM mode,
+			 * in FW use vdev_id = 0.
+			 */
+			hdd_set_fw_log_params(hdd_ctx, 0);
 			ret = -EINVAL;
 			break;
 		}
@@ -6339,65 +6395,6 @@ static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_FW_LOGS_BASED_ON_INI
-/**
- * hdd_set_fw_log_params() - Set log parameters to FW
- * @hdd_ctx: HDD Context
- * @adapter: HDD Adapter
- *
- * This function set the FW Debug log level based on the INI.
- *
- * Return: None
- */
-static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
-				  struct hdd_adapter *adapter)
-{
-	QDF_STATUS status;
-	uint16_t enable_fw_log_level, enable_fw_log_type;
-	int ret;
-
-	if (QDF_GLOBAL_FTM_MODE == cds_get_conparam() ||
-	    (!hdd_ctx->config->enable_fw_log)) {
-		hdd_debug("enable_fw_log not enabled in INI or in FTM mode return");
-		return;
-	}
-
-	/* Enable FW logs based on INI configuration */
-	status = ucfg_fwol_get_enable_fw_log_type(hdd_ctx->psoc,
-						  &enable_fw_log_type);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-	ret = sme_cli_set_command(adapter->vdev_id,
-			WMI_DBGLOG_TYPE,
-			enable_fw_log_type,
-			DBG_CMD);
-	if (ret != 0)
-		hdd_err("Failed to enable FW log type ret %d",
-			ret);
-
-	status = ucfg_fwol_get_enable_fw_log_level(hdd_ctx->psoc,
-						   &enable_fw_log_level);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-	ret = sme_cli_set_command(adapter->vdev_id,
-			WMI_DBGLOG_LOG_LEVEL,
-			enable_fw_log_level,
-			DBG_CMD);
-	if (ret != 0)
-		hdd_err("Failed to enable FW log level ret %d",
-			ret);
-
-	sme_enable_fw_module_log_level(hdd_ctx->mac_handle,
-				       adapter->vdev_id);
-}
-#else
-static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
-				  struct hdd_adapter *adapter)
-{
-}
-
-#endif
-
 /**
  * hdd_configure_chain_mask() - programs chain mask to firmware
  * @adapter: HDD adapter
@@ -6760,7 +6757,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	}
 
 	if (!hdd_ctx->is_fw_dbg_log_levels_configured) {
-		hdd_set_fw_log_params(hdd_ctx, adapter);
+		hdd_set_fw_log_params(hdd_ctx, adapter->vdev_id);
 		hdd_ctx->is_fw_dbg_log_levels_configured = true;
 	}
 
