@@ -108,13 +108,13 @@ static int __lpass_cdc_reg_read(struct lpass_cdc_priv *priv,
 		mutex_lock(&priv->vote_lock);
 		if (((priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
 			(priv->lpass_audio_hw_vote && !priv->core_audio_vote_count))) {
-			mutex_unlock(&priv->vote_lock);
-			goto ssr_err;
+			goto vote_err;
 		}
 	}
 	lpass_cdc_ahb_read_device(
 		priv->macro_params[macro_id].io_base, reg, val);
 
+vote_err:
 	if (priv->macro_params[VA_MACRO].dev) {
 		mutex_unlock(&priv->vote_lock);
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
@@ -142,13 +142,13 @@ static int __lpass_cdc_reg_write(struct lpass_cdc_priv *priv,
 		mutex_lock(&priv->vote_lock);
 		if (((priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
 			(priv->lpass_audio_hw_vote && !priv->core_audio_vote_count))) {
-			mutex_unlock(&priv->vote_lock);
-			goto ssr_err;
+			goto vote_err;
 		}
 	}
 	lpass_cdc_ahb_write_device(
 		priv->macro_params[macro_id].io_base, reg, val);
 
+vote_err:
 	if (priv->macro_params[VA_MACRO].dev) {
 		mutex_unlock(&priv->vote_lock);
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
@@ -848,6 +848,10 @@ static int lpass_cdc_ssr_enable(struct device *dev, void *data)
 	}
 	trace_printk("%s: clk count reset\n", __func__);
 
+	mutex_lock(&priv->clk_lock);
+	priv->pre_dev_up = true;
+	mutex_unlock(&priv->clk_lock);
+
 	if (priv->rsc_clk_cb)
 		priv->rsc_clk_cb(priv->clk_dev, LPASS_CDC_MACRO_EVT_SSR_GFMUX_UP);
 
@@ -899,6 +903,7 @@ static void lpass_cdc_ssr_disable(struct device *dev, void *data)
 
 	mutex_lock(&priv->clk_lock);
 	priv->dev_up = false;
+	priv->pre_dev_up = false;
 	mutex_unlock(&priv->clk_lock);
 	if (priv->rsc_clk_cb)
 		priv->rsc_clk_cb(priv->clk_dev, LPASS_CDC_MACRO_EVT_SSR_DOWN);
@@ -1288,6 +1293,7 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 	BLOCKING_INIT_NOTIFIER_HEAD(&priv->notifier);
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
+	priv->pre_dev_up = true;
 	priv->initial_boot = true;
 	priv->regmap = lpass_cdc_regmap_init(priv->dev,
 					  &lpass_cdc_regmap_config);
@@ -1451,7 +1457,7 @@ bool lpass_cdc_check_core_votes(struct device *dev)
 	bool ret = true;
 	trace_printk("%s, enter\n", __func__);
 	mutex_lock(&priv->vote_lock);
-	if (!priv->dev_up ||
+	if (!priv->pre_dev_up ||
 		(priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
 		(priv->lpass_audio_hw_vote && !priv->core_audio_vote_count))
 		ret = false;
