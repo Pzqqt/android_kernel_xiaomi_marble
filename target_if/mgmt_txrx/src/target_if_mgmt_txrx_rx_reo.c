@@ -340,9 +340,26 @@ target_if_mgmt_rx_reo_extract_reo_params(
 	wmi_unified_t wmi_handle, void *evt_buf,
 	struct mgmt_rx_event_params *params)
 {
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!wmi_handle) {
+		mgmt_rx_reo_err("wmi_handle is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(wmi_handle->scn_handle);
+	if (!psoc) {
+		mgmt_rx_reo_err("null psoc");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/* If REO feature is not enabled, no need to extract REO params */
+	if (!wlan_mgmt_rx_reo_is_feature_enabled_at_psoc(psoc))
+		return QDF_STATUS_SUCCESS;
+
 	if (!params) {
 		mgmt_rx_reo_err("MGMT Rx event parameters is NULL");
-		return QDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	return wmi_extract_mgmt_rx_reo_params(wmi_handle, evt_buf,

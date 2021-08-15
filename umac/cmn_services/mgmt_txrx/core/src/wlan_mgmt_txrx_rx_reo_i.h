@@ -55,6 +55,58 @@
 	(mgmt_rx_reo_compare_global_timestamps_gte(                            \
 	 (ts)->global_ts, mgmt_rx_reo_get_global_ts((entry)->rx_params)))
 
+/*
+ * struct mgmt_rx_reo_pdev_info - Pdev information required by the Management
+ * Rx REO module
+ * @host_snapshot: Latest snapshot seen at the Host.
+ * It considers both MGMT Rx and MGMT FW consumed.
+ * @last_valid_shared_snapshot: Array of last valid snapshots(for snapshots
+ * shared between host and target)
+ * @host_target_shared_snapshot: Array of snapshot addresses(for snapshots
+ * shared between host and target)
+ * @filter: MGMT Rx REO filter
+ */
+struct mgmt_rx_reo_pdev_info {
+	struct mgmt_rx_reo_snapshot_params host_snapshot;
+	struct mgmt_rx_reo_snapshot_params last_valid_shared_snapshot
+				[MGMT_RX_REO_SHARED_SNAPSHOT_MAX];
+	struct mgmt_rx_reo_snapshot *host_target_shared_snapshot
+				[MGMT_RX_REO_SHARED_SNAPSHOT_MAX];
+	struct mgmt_rx_reo_filter filter;
+};
+
+/**
+ * mgmt_rx_reo_pdev_obj_create_notification() - pdev create handler for
+ * management rx-reorder module
+ * @pdev: pointer to pdev object
+ * @mgmt_txrx_pdev_ctx: pdev private object of mgmt txrx module
+ *
+ * This function gets called from object manager when pdev is being created and
+ * creates management rx-reorder pdev context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_pdev_obj_create_notification(
+	struct wlan_objmgr_pdev *pdev,
+	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
+
+/**
+ * mgmt_rx_reo_pdev_obj_destroy_notification() - pdev destroy handler for
+ * management rx-reorder feature
+ * @pdev: pointer to pdev object
+ * @mgmt_txrx_pdev_ctx: pdev private object of mgmt txrx module
+ *
+ * This function gets called from object manager when pdev is being destroyed
+ * and destroys management rx-reorder pdev context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_pdev_obj_destroy_notification(
+	struct wlan_objmgr_pdev *pdev,
+	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
+
 /**
  * enum mgmt_rx_reo_frame_descriptor_type - Enumeration for management frame
  * descriptor type.
@@ -260,10 +312,11 @@ static inline bool is_mgmt_rx_reo_required(
 			struct mgmt_rx_reo_frame_descriptor *desc)
 {
 	/**
-	 * TODO: Need to implement the actual policy based on WMI service bit.
-	 * For now, returning false so that algorithm won't kick in on mainline.
+	 * NOTE: Implementing a simple policy based on INI and WMI serive bit
+	 * for now. Finer policies like checking whether this pdev has
+	 * any MLO VAPs or checking the frame type can be implemented later.
 	 */
-	return false;
+	return wlan_mgmt_rx_reo_is_feature_enabled_at_pdev(pdev);
 }
 
 /**

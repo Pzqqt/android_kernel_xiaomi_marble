@@ -17320,6 +17320,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #endif
 	wmi_service[wmi_service_hw_mode_policy_offload_support] =
 			WMI_SERVICE_HW_MODE_POLICY_OFFLOAD_SUPPORT;
+	wmi_service[wmi_service_mgmt_rx_reo_supported] =
+			WMI_SERVICE_MGMT_RX_REO_SUPPORTED;
 }
 
 /**

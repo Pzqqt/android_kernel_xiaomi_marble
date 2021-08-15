@@ -218,7 +218,8 @@
 #define WLAN_SOC_F_PEER_CREATE_RESP    0x10000000
 /* Strict channel mode */
 #define WLAN_SOC_F_STRICT_CHANNEL      0x20000000
-
+/* MGMT Rx REO feature capability */
+#define WLAN_SOC_F_MGMT_RX_REO_CAPABLE  0x40000000
 
 /* PSOC op flags */
 

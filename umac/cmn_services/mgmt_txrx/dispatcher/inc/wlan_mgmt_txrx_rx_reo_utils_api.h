@@ -85,6 +85,7 @@ wlan_mgmt_rx_reo_deinit(void);
  * wlan_mgmt_rx_reo_pdev_obj_create_notification() - pdev create handler for
  * management rx-reorder module
  * @pdev: pointer to pdev object
+ * @mgmt_txrx_pdev_ctx: pdev private object of mgmt txrx module
  *
  * This function gets called from object manager when pdev is being created and
  * creates management rx-reorder pdev context
@@ -100,6 +101,7 @@ wlan_mgmt_rx_reo_pdev_obj_create_notification(
  * wlan_mgmt_rx_reo_pdev_obj_destroy_notification() - pdev destroy handler for
  * management rx-reorder feature
  * @pdev: pointer to pdev object
+ * @mgmt_txrx_pdev_ctx: pdev private object of mgmt txrx module
  *
  * This function gets called from object manager when pdev is being destroyed
  * and destroys management rx-reorder pdev context
@@ -112,19 +114,30 @@ wlan_mgmt_rx_reo_pdev_obj_destroy_notification(
 			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
 
 /**
- * wlan_mgmt_rx_reo_get_priv_object() - Get the pdev private object of
- * MGMT Rx REO module
- * @pdev: pointer to pdev object
- * Return: Pointer to pdev private object of MGMT Rx REO module on success,
- * else NULL
+ * wlan_mgmt_rx_reo_is_feature_enabled_at_psoc() - Check if MGMT Rx REO feature
+ * is enabled on a given psoc
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if the feature is enabled, else false
  */
-struct mgmt_rx_reo_pdev_info *
-wlan_mgmt_rx_reo_get_priv_object(struct wlan_objmgr_pdev *pdev);
+bool
+wlan_mgmt_rx_reo_is_feature_enabled_at_psoc(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mgmt_rx_reo_is_feature_enabled_at_pdev() - Check if MGMT Rx REO feature
+ * is enabled on a given pdev
+ * @psoc: pointer to pdev object
+ *
+ * Return: true if the feature is enabled, else false
+ */
+bool
+wlan_mgmt_rx_reo_is_feature_enabled_at_pdev(struct wlan_objmgr_pdev *pdev);
 #else
 /**
  * wlan_mgmt_rx_reo_pdev_obj_create_notification() - pdev create handler for
  * management rx-reorder feature
  * @pdev: pointer to pdev object
+ * @mgmt_txrx_pdev_ctx: pdev private object of mgmt txrx module
  *
  * This function gets called from object manager when pdev is being created and
  * creates management rx-reorder pdev context
@@ -143,6 +156,7 @@ wlan_mgmt_rx_reo_pdev_obj_create_notification(
  * wlan_mgmt_rx_reo_pdev_obj_destroy_notification() - pdev destroy handler for
  * management rx-reorder feature
  * @pdev: pointer to pdev object
+ * @mgmt_txrx_pdev_ctx: pdev private object of mgmt txrx module
  *
  * This function gets called from object manager when pdev is being destroyed
  * and destroys management rx-reorder pdev context
