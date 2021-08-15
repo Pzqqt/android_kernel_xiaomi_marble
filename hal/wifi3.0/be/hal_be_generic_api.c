@@ -246,7 +246,7 @@ uint32_t hal_tx_comp_get_buffer_source_generic_be(void *hal_desc)
  *
  * Return: buffer type
  */
-uint8_t hal_tx_comp_get_release_reason_generic_be(void *hal_desc)
+static uint8_t hal_tx_comp_get_release_reason_generic_be(void *hal_desc)
 {
 	uint32_t comp_desc = *(uint32_t *)(((uint8_t *)hal_desc) +
 			WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_OFFSET);
@@ -264,7 +264,7 @@ uint8_t hal_tx_comp_get_release_reason_generic_be(void *hal_desc)
  *
  * Return: uint8_t
  */
-uint8_t hal_get_wbm_internal_error_generic_be(void *hal_desc)
+static uint8_t hal_get_wbm_internal_error_generic_be(void *hal_desc)
 {
 	/*
 	 * TODO -  This func is called by tx comp and wbm error handler

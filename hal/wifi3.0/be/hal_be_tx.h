@@ -510,6 +510,8 @@ hal_tx_populate_bank_register(hal_soc_handle_t hal_soc_hdl,
 }
 #endif
 
+#ifdef DP_TX_IMPLICIT_RBM_MAPPING
+
 #define RBM_MAPPING_BMSK HWIO_TCL_R0_RBM_MAPPING0_SW2TCL1_RING_BMSK
 #define RBM_MAPPING_SHFT HWIO_TCL_R0_RBM_MAPPING0_SW2TCL2_RING_SHFT
 
@@ -561,6 +563,14 @@ hal_tx_config_rbm_mapping_be(struct hal_soc *hal_soc,
 	/* write rbm mapped value to register address */
 	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
 }
+#else
+static inline void
+hal_tx_config_rbm_mapping_be(struct hal_soc *hal_soc,
+			     hal_ring_handle_t hal_ring_hdl,
+			     uint8_t rbm_id)
+{
+}
+#endif
 
 /**
  * hal_tx_desc_set_buf_addr_be - Fill Buffer Address information in Tx Desc

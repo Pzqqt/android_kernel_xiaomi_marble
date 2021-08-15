@@ -34,8 +34,9 @@
  *
  * Return: none
  */
-void hal_tx_comp_get_status_generic_be(void *desc, void *ts1,
-				       struct hal_soc *hal)
+static inline void
+hal_tx_comp_get_status_generic_be(void *desc, void *ts1,
+				  struct hal_soc *hal)
 {
 	uint8_t rate_stats_valid = 0;
 	uint32_t rate_stats = 0;
