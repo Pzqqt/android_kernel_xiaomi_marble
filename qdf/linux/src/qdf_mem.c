@@ -2208,6 +2208,8 @@ int qdf_mem_multi_page_link(qdf_device_t osdev,
 		c_elem = (void **)page_info;
 		for (i_int = 0; i_int < pages->num_element_per_page; i_int++) {
 			if (i_int == (pages->num_element_per_page - 1)) {
+				if ((i + 1) == pages->num_pages)
+					break;
 				if (cacheable)
 					*c_elem = pages->
 						cacheable_pages[i + 1];
