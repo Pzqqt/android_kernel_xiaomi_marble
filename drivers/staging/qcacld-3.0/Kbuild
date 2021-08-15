@@ -3032,8 +3032,7 @@ INCS +=		$(COAP_WMI_INC)
 
 ccflags-y += $(INCS)
 
-cppflags-y +=	-Wall\
-		-Werror
+cppflags-y +=	-Wall
 
 cppflags-$(CONFIG_THERMAL_STATS_SUPPORT) += -DTHERMAL_STATS_SUPPORT
 cppflags-$(CONFIG_PTT_SOCK_SVC_ENABLE) += -DPTT_SOCK_SVC_ENABLE
