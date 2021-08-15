@@ -1525,7 +1525,6 @@ int wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle,
 
 	return 0;
 }
-#endif
 
 /**
  * wma_get_trigger_detail_str  - Return roam trigger string from the
@@ -2278,6 +2277,7 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 err:
 	return -EINVAL;
 }
+#endif
 #endif
 
 /**

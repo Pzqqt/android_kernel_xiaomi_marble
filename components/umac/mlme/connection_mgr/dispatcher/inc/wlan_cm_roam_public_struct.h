@@ -1877,6 +1877,32 @@ struct roam_offload_roam_event {
 };
 
 /**
+ * struct roam_stats_event - Data carried by stats event
+ * @vdev_id: vdev id
+ * @num_tlv: Number of roam scans triggered
+ * @num_roam_msg_info: Number of roam_msg_info present in event
+ * @trigger: Roam trigger related details
+ * @scan: Roam scan event details
+ * @result: Roam result related info
+ * @data_11kv: Neighbor report/BTM request related data
+ * @btm_rsp: BTM response related data
+ * @roam_init_info: Roam initial related data
+ * @roam_msg_info: Roam message related information
+ */
+struct roam_stats_event {
+	uint8_t vdev_id;
+	uint8_t num_tlv;
+	uint8_t num_roam_msg_info;
+	struct wmi_roam_trigger_info trigger[MAX_ROAM_SCAN_STATS_TLV];
+	struct wmi_roam_scan_data scan[MAX_ROAM_SCAN_STATS_TLV];
+	struct wmi_roam_result result[MAX_ROAM_SCAN_STATS_TLV];
+	struct wmi_neighbor_report_data data_11kv[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_btm_response_data btm_rsp[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_initial_data roam_init_info[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_msg_info *roam_msg_info;
+};
+
+/**
  * wlan_cm_roam_tx_ops  - structure of tx function pointers for
  * roaming related commands
  * @send_vdev_set_pcl_cmd: TX ops function pointer to send set vdev PCL
@@ -2067,6 +2093,7 @@ struct roam_offload_synch_ind {
  * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
  * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
  * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
+ * @roam_stats_event_rx: Rx ops function pointer for roam stats event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -2083,6 +2110,9 @@ struct wlan_cm_roam_rx_ops {
 	(*vdev_disconnect_event)(struct vdev_disconnect_event_data *data);
 	QDF_STATUS
 	(*roam_scan_chan_list_event)(struct cm_roam_scan_ch_resp *data);
+	QDF_STATUS
+	(*roam_stats_event_rx)(struct wlan_objmgr_psoc *psoc,
+			       struct roam_stats_event *stats_info);
 #endif
 };
 #endif
