@@ -14591,6 +14591,54 @@ convert_wtc_scan_mode(WMI_ROAM_TRIGGER_SCAN_MODE scan_mode)
 	}
 }
 
+static uint32_t wmi_convert_fw_to_cm_trig_reason(uint32_t fw_trig_reason)
+{
+	switch (fw_trig_reason) {
+	case WMI_ROAM_TRIGGER_REASON_NONE:
+		return ROAM_TRIGGER_REASON_NONE;
+	case WMI_ROAM_TRIGGER_REASON_PER:
+		return ROAM_TRIGGER_REASON_PER;
+	case WMI_ROAM_TRIGGER_REASON_BMISS:
+		return ROAM_TRIGGER_REASON_BMISS;
+	case WMI_ROAM_TRIGGER_REASON_LOW_RSSI:
+		return ROAM_TRIGGER_REASON_LOW_RSSI;
+	case WMI_ROAM_TRIGGER_REASON_HIGH_RSSI:
+		return ROAM_TRIGGER_REASON_HIGH_RSSI;
+	case WMI_ROAM_TRIGGER_REASON_PERIODIC:
+		return ROAM_TRIGGER_REASON_PERIODIC;
+	case WMI_ROAM_TRIGGER_REASON_MAWC:
+		return ROAM_TRIGGER_REASON_MAWC;
+	case WMI_ROAM_TRIGGER_REASON_DENSE:
+		return ROAM_TRIGGER_REASON_DENSE;
+	case WMI_ROAM_TRIGGER_REASON_BACKGROUND:
+		return ROAM_TRIGGER_REASON_BACKGROUND;
+	case WMI_ROAM_TRIGGER_REASON_FORCED:
+		return ROAM_TRIGGER_REASON_FORCED;
+	case WMI_ROAM_TRIGGER_REASON_BTM:
+		return ROAM_TRIGGER_REASON_BTM;
+	case WMI_ROAM_TRIGGER_REASON_UNIT_TEST:
+		return ROAM_TRIGGER_REASON_UNIT_TEST;
+	case WMI_ROAM_TRIGGER_REASON_BSS_LOAD:
+		return ROAM_TRIGGER_REASON_BSS_LOAD;
+	case WMI_ROAM_TRIGGER_REASON_DEAUTH:
+		return ROAM_TRIGGER_REASON_DEAUTH;
+	case WMI_ROAM_TRIGGER_REASON_IDLE:
+		return ROAM_TRIGGER_REASON_IDLE;
+	case WMI_ROAM_TRIGGER_REASON_STA_KICKOUT:
+		return ROAM_TRIGGER_REASON_STA_KICKOUT;
+	case WMI_ROAM_TRIGGER_REASON_ESS_RSSI:
+		return ROAM_TRIGGER_REASON_ESS_RSSI;
+	case WMI_ROAM_TRIGGER_REASON_WTC_BTM:
+		return ROAM_TRIGGER_REASON_WTC_BTM;
+	case WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT:
+		return ROAM_TRIGGER_REASON_PMK_TIMEOUT;
+	case WMI_ROAM_TRIGGER_EXT_REASON_MAX:
+		return ROAM_TRIGGER_REASON_MAX;
+	default:
+		return ROAM_TRIGGER_REASON_NONE;
+	}
+}
+
 /**
  * extract_roam_trigger_stats_tlv() - Extract the Roam trigger stats
  * from the WMI_ROAM_STATS_EVENTID
@@ -14605,6 +14653,7 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 {
 	WMI_ROAM_STATS_EVENTID_param_tlvs *param_buf;
 	wmi_roam_trigger_reason *src_data = NULL;
+	uint32_t trig_reason;
 
 	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf || !param_buf->roam_trigger_reason)
@@ -14613,12 +14662,13 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	src_data = &param_buf->roam_trigger_reason[idx];
 
 	trig->present = true;
-	trig->trigger_reason = src_data->trigger_reason;
+	trig_reason = src_data->trigger_reason;
+	trig->trigger_reason = wmi_convert_fw_to_cm_trig_reason(trig_reason);
 	trig->trigger_sub_reason = src_data->trigger_sub_reason;
 	trig->current_rssi = src_data->current_rssi;
 	trig->timestamp = src_data->timestamp;
 
-	switch (trig->trigger_reason) {
+	switch (trig_reason) {
 	case WMI_ROAM_TRIGGER_REASON_PER:
 	case WMI_ROAM_TRIGGER_REASON_BMISS:
 	case WMI_ROAM_TRIGGER_REASON_HIGH_RSSI:
