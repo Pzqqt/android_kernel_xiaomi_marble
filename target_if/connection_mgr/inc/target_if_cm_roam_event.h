@@ -67,6 +67,17 @@ target_if_cm_roam_sync_frame_event(ol_scn_t scn,
 int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len);
 
 /**
+ * target_if_cm_roam_stats_event() - Target IF handler for roam stats event
+ * @scn: target handle
+ * @event: event buffer
+ * @len: event buffer length
+ *
+ * Return: int for success or error code
+ */
+int
+target_if_cm_roam_stats_event(ol_scn_t scn, uint8_t *event, uint32_t len);
+
+/**
  * target_if_roam_offload_register_events() - register roam events
  * @psoc: pointer to psoc object
  *

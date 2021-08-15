@@ -1310,6 +1310,17 @@ QDF_STATUS
 cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data);
 
 /**
+ * cm_roam_stats_event_handler() - Carries extracted roam stats info
+ * @psoc: PSOC pointer
+ * @stats_info: stats data carried by roam_stats_event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
+			    struct roam_stats_event *stats_info);
+
+/**
  * cm_roam_update_vdev() - Update the STA and BSS
  * @sync_ind: Information needed for roam sync propagation
  *

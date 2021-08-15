@@ -2306,4 +2306,530 @@ cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data)
 {
 	return cm_handle_scan_ch_list_data(data);
 }
+
+/**
+ * cm_roam_stats_get_trigger_detail_str - Return roam trigger string from the
+ * enum roam_trigger_reason
+ * @ptr: Pointer to the roam trigger info
+ * @buf: Destination buffer to write the reason string
+ *
+ * Return: None
+ */
+static void
+cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
+				     char *buf)
+{
+	uint16_t buf_cons, buf_left = MAX_ROAM_DEBUG_BUF_SIZE;
+	char *temp = buf;
+
+	buf_cons = qdf_snprint(temp, buf_left, "Reason: \"%s\" ",
+			       mlme_get_roam_trigger_str(ptr->trigger_reason));
+	temp += buf_cons;
+	buf_left -= buf_cons;
+
+	if (ptr->trigger_sub_reason) {
+		buf_cons = qdf_snprint(temp, buf_left, "Sub-Reason: %s",
+			      mlme_get_sub_reason_str(ptr->trigger_sub_reason));
+		temp += buf_cons;
+		buf_left -= buf_cons;
+	}
+
+	switch (ptr->trigger_reason) {
+	case ROAM_TRIGGER_REASON_PER:
+	case ROAM_TRIGGER_REASON_BMISS:
+	case ROAM_TRIGGER_REASON_HIGH_RSSI:
+	case ROAM_TRIGGER_REASON_MAWC:
+	case ROAM_TRIGGER_REASON_DENSE:
+	case ROAM_TRIGGER_REASON_BACKGROUND:
+	case ROAM_TRIGGER_REASON_IDLE:
+	case ROAM_TRIGGER_REASON_FORCED:
+	case ROAM_TRIGGER_REASON_UNIT_TEST:
+		break;
+	case ROAM_TRIGGER_REASON_BTM:
+		buf_cons = qdf_snprint(temp, buf_left,
+				       "Req_mode: %d Disassoc_timer: %d",
+				       ptr->btm_trig_data.btm_request_mode,
+				       ptr->btm_trig_data.disassoc_timer);
+		temp += buf_cons;
+		buf_left -= buf_cons;
+
+		buf_cons = qdf_snprint(temp, buf_left,
+				"validity_interval: %d candidate_list_cnt: %d resp_status: %d, bss_termination_timeout: %d, mbo_assoc_retry_timeout: %d",
+				ptr->btm_trig_data.validity_interval,
+				ptr->btm_trig_data.candidate_list_count,
+				ptr->btm_trig_data.btm_resp_status,
+				ptr->btm_trig_data.btm_bss_termination_timeout,
+				ptr->btm_trig_data.btm_mbo_assoc_retry_timeout);
+		buf_left -= buf_cons;
+		temp += buf_cons;
+		break;
+	case ROAM_TRIGGER_REASON_BSS_LOAD:
+		buf_cons = qdf_snprint(temp, buf_left, "CU: %d %% ",
+				       ptr->cu_trig_data.cu_load);
+		temp += buf_cons;
+		buf_left -= buf_cons;
+		break;
+	case ROAM_TRIGGER_REASON_DEAUTH:
+		buf_cons = qdf_snprint(temp, buf_left, "Type: %d Reason: %d ",
+				       ptr->deauth_trig_data.type,
+				       ptr->deauth_trig_data.reason);
+		temp += buf_cons;
+		buf_left -= buf_cons;
+		break;
+	case ROAM_TRIGGER_REASON_LOW_RSSI:
+	case ROAM_TRIGGER_REASON_PERIODIC:
+		/*
+		 * Use ptr->current_rssi get the RSSI of current AP after
+		 * roam scan is triggered. This avoids discrepency with the
+		 * next rssi threshold value printed in roam scan details.
+		 * ptr->rssi_trig_data.threshold gives the rssi threshold
+		 * for the Low Rssi/Periodic scan trigger.
+		 */
+		buf_cons = qdf_snprint(temp, buf_left,
+				       "Cur_Rssi threshold:%d Current AP RSSI: %d",
+				       ptr->rssi_trig_data.threshold,
+				       ptr->current_rssi);
+		temp += buf_cons;
+		buf_left -= buf_cons;
+		break;
+	case ROAM_TRIGGER_REASON_WTC_BTM:
+		if (ptr->wtc_btm_trig_data.wtc_candi_rssi_ext_present) {
+			buf_cons = qdf_snprint(temp, buf_left,
+				   "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th_2g:%d, wtc_candi_rssi_th_5g:%d, wtc_candi_rssi_th_6g:%d",
+				   ptr->wtc_btm_trig_data.roaming_mode,
+				   ptr->wtc_btm_trig_data.vsie_trigger_reason,
+				   ptr->wtc_btm_trig_data.sub_code,
+				   ptr->wtc_btm_trig_data.wtc_mode,
+				   ptr->wtc_btm_trig_data.wtc_scan_mode,
+				   ptr->wtc_btm_trig_data.wtc_rssi_th,
+				   ptr->wtc_btm_trig_data.wtc_candi_rssi_th,
+				   ptr->wtc_btm_trig_data.wtc_candi_rssi_th_5g,
+				   ptr->wtc_btm_trig_data.wtc_candi_rssi_th_6g);
+		} else {
+			buf_cons = qdf_snprint(temp, buf_left,
+				   "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
+				   ptr->wtc_btm_trig_data.roaming_mode,
+				   ptr->wtc_btm_trig_data.vsie_trigger_reason,
+				   ptr->wtc_btm_trig_data.sub_code,
+				   ptr->wtc_btm_trig_data.wtc_mode,
+				   ptr->wtc_btm_trig_data.wtc_scan_mode,
+				   ptr->wtc_btm_trig_data.wtc_rssi_th,
+				   ptr->wtc_btm_trig_data.wtc_candi_rssi_th);
+		}
+
+		temp += buf_cons;
+		buf_left -= buf_cons;
+		break;
+	default:
+		break;
+	}
+}
+
+/**
+ * cm_roam_stats_print_trigger_info  - Roam trigger related details
+ * @data:    Pointer to the roam trigger data
+ * @vdev_id: Vdev ID
+ *
+ * Prints the vdev, roam trigger reason, time of the day at which roaming
+ * was triggered.
+ *
+ * Return: None
+ */
+static void
+cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
+				 uint8_t vdev_id)
+{
+	char *buf;
+	char time[TIME_STRING_LEN];
+
+	buf = qdf_mem_malloc(MAX_ROAM_DEBUG_BUF_SIZE);
+	if (!buf)
+		return;
+
+	cm_roam_stats_get_trigger_detail_str(data, buf);
+	mlme_get_converted_timestamp(data->timestamp, time);
+	mlme_nofl_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
+
+	qdf_mem_free(buf);
+}
+
+/**
+ * cm_roam_stats_print_btm_rsp_info - BTM RSP related details
+ * @data:    Pointer to the btm rsp data
+ * @vdev_id: vdev id
+ *
+ * Prints the vdev, btm status, target_bssid and vsie reason
+ *
+ * Return: None
+ */
+static void
+cm_roam_stats_print_btm_rsp_info(struct roam_btm_response_data *data,
+				 uint8_t vdev_id)
+{
+	char time[TIME_STRING_LEN];
+
+	mlme_get_converted_timestamp(data->timestamp, time);
+	mlme_nofl_info("%s [BTM RSP]:VDEV[%d], Status:%d, VSIE reason:%d, BSSID: "
+		       QDF_MAC_ADDR_FMT, time, vdev_id, data->btm_status,
+		       data->vsie_reason,
+		       QDF_MAC_ADDR_REF(data->target_bssid.bytes));
+}
+
+/**
+ * cm_roam_stats_print_roam_initial_info - Roaming related initial details
+ * @data:    Pointer to the btm rsp data
+ * @vdev_id: vdev id
+ *
+ * Prints the vdev, roam_full_scan_count, channel and rssi
+ * utilization threhold and timer
+ *
+ * Return: None
+ */
+static void
+cm_roam_stats_print_roam_initial_info(struct roam_initial_data *data,
+				      uint8_t vdev_id)
+{
+	mlme_nofl_info("[ROAM INIT INFO]: VDEV[%d], roam_full_scan_count: %d, rssi_th: %d, cu_th: %d, fw_cancel_timer_bitmap: %d",
+		       vdev_id, data->roam_full_scan_count, data->rssi_th,
+		       data->cu_th, data->fw_cancel_timer_bitmap);
+}
+
+/**
+ * cm_roam_stats_print_roam_msg_info - Roaming related message details
+ * @data:    Pointer to the btm rsp data
+ * @vdev_id: vdev id
+ *
+ * Prints the vdev, msg_id, msg_param1, msg_param2 and timer
+ *
+ * Return: None
+ */
+static void cm_roam_stats_print_roam_msg_info(struct roam_msg_info *data,
+					      uint8_t vdev_id)
+{
+	char time[TIME_STRING_LEN];
+	static const char msg_id1_str[] = "Roam RSSI TH Reset";
+
+	if (data->msg_id == WMI_ROAM_MSG_RSSI_RECOVERED) {
+		mlme_get_converted_timestamp(data->timestamp, time);
+		mlme_nofl_info("%s [ROAM MSG INFO]: VDEV[%d] %s, Current rssi: %d dbm, next_rssi_threshold: %d dbm",
+			       time, vdev_id, msg_id1_str, data->msg_param1,
+			       data->msg_param2);
+	}
+}
+
+/**
+ * cm_stats_log_roam_scan_candidates  - Print roam scan candidate AP info
+ * @ap:           Pointer to the candidate AP list
+ * @num_entries:  Number of candidate APs
+ *
+ * Print the RSSI, CU load, Cu score, RSSI score, total score, BSSID
+ * and time stamp at which the candidate was found details.
+ *
+ * Return: None
+ */
+static void
+cm_stats_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
+				  uint8_t num_entries)
+{
+	uint16_t i;
+	char time[TIME_STRING_LEN], time2[TIME_STRING_LEN];
+
+	mlme_nofl_info("%62s%62s", LINE_STR, LINE_STR);
+	mlme_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s %7s %6s %12s %20s",
+		       "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
+		       "SCR", "CU%", "SCR", "TOT_SCR", "BL_RSN", "BL_SRC",
+		       "BL_TSTAMP", "BL_TIMEOUT(ms)");
+	mlme_nofl_info("%62s%62s", LINE_STR, LINE_STR);
+
+	if (num_entries > MAX_ROAM_CANDIDATE_AP)
+		num_entries = MAX_ROAM_CANDIDATE_AP;
+
+	for (i = 0; i < num_entries; i++) {
+		mlme_get_converted_timestamp(ap->timestamp, time);
+		mlme_get_converted_timestamp(ap->bl_timestamp, time2);
+		mlme_nofl_info(QDF_MAC_ADDR_FMT " %17s %4d %-4s %4d %3d/%-4d %2d/%-4d %5d %7d %7d %17s %9d",
+			       QDF_MAC_ADDR_REF(ap->bssid.bytes), time,
+			  ap->freq,
+			  ((ap->type == 0) ? "C_AP" :
+			  ((ap->type == 2) ? "R_AP" : "P_AP")),
+			  ap->etp, ap->rssi, ap->rssi_score, ap->cu_load,
+			  ap->cu_score, ap->total_score, ap->bl_reason,
+			  ap->bl_source, time2, ap->bl_original_timeout);
+		ap++;
+	}
+}
+
+/**
+ * cm_roam_stats_print_scan_info  - Print the roam scan details and candidate AP
+ * details
+ * @scan:      Pointer to the received tlv after sanitization
+ * @vdev_id:   Vdev ID
+ * @trigger:   Roam scan trigger reason
+ * @timestamp: Host timestamp in millisecs
+ *
+ * Prinst the roam scan details with time of the day when the scan was
+ * triggered and roam candidate AP with score details
+ *
+ * Return: None
+ */
+static void
+cm_roam_stats_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
+			      uint32_t trigger, uint32_t timestamp)
+{
+	uint16_t num_ch = scan->num_chan;
+	uint16_t buf_cons = 0, buf_left = ROAM_CHANNEL_BUF_SIZE;
+	uint8_t i;
+	char *buf, *buf1, *tmp;
+	char time[TIME_STRING_LEN];
+
+	buf = qdf_mem_malloc(ROAM_CHANNEL_BUF_SIZE);
+	if (!buf)
+		return;
+
+	tmp = buf;
+	/* For partial scans, print the channel info */
+	if (!scan->type) {
+		buf_cons = qdf_snprint(tmp, buf_left, "{");
+		buf_left -= buf_cons;
+		tmp += buf_cons;
+
+		for (i = 0; i < num_ch; i++) {
+			buf_cons = qdf_snprint(tmp, buf_left, "%d ",
+					       scan->chan_freq[i]);
+			buf_left -= buf_cons;
+			tmp += buf_cons;
+		}
+		buf_cons = qdf_snprint(tmp, buf_left, "}");
+		buf_left -= buf_cons;
+		tmp += buf_cons;
+	}
+
+	buf1 = qdf_mem_malloc(ROAM_FAILURE_BUF_SIZE);
+	if (!buf1) {
+		qdf_mem_free(buf);
+		return;
+	}
+
+	if (trigger == ROAM_TRIGGER_REASON_LOW_RSSI ||
+	    trigger == ROAM_TRIGGER_REASON_PERIODIC)
+		qdf_snprint(buf1, ROAM_FAILURE_BUF_SIZE,
+			    "next_rssi_threshold: %d dBm",
+			    scan->next_rssi_threshold);
+
+	mlme_get_converted_timestamp(timestamp, time);
+	mlme_nofl_info("%s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
+		       time, vdev_id, mlme_get_roam_scan_type_str(scan->type),
+		       buf1, buf);
+	cm_stats_log_roam_scan_candidates(scan->ap, scan->num_ap);
+
+	qdf_mem_free(buf);
+	qdf_mem_free(buf1);
+}
+
+/**
+ * cm_roam_stats_print_roam_result()  - Print roam result related info
+ * @res:     Roam result strucure pointer
+ * @vdev_id: Vdev id
+ *
+ * Print roam result and failure reason if roaming failed.
+ *
+ * Return: None
+ */
+static void
+cm_roam_stats_print_roam_result(struct wmi_roam_result *res,
+				uint8_t vdev_id)
+{
+	char *buf;
+	char time[TIME_STRING_LEN];
+
+	buf = qdf_mem_malloc(ROAM_FAILURE_BUF_SIZE);
+	if (!buf)
+		return;
+
+	if (res->status == 1)
+		qdf_snprint(buf, ROAM_FAILURE_BUF_SIZE, "Reason: %s",
+			    mlme_get_roam_fail_reason_str(res->fail_reason));
+
+	mlme_get_converted_timestamp(res->timestamp, time);
+	mlme_nofl_info("%s [ROAM_RESULT]: VDEV[%d] %s %s",
+		       time, vdev_id, mlme_get_roam_status_str(res->status),
+		       buf);
+
+	qdf_mem_free(buf);
+}
+
+/**
+ * cm_roam_stats_print_11kv_info  - Print neighbor report/BTM related data
+ * @neigh_rpt: Pointer to the extracted TLV structure
+ * @vdev_id:   Vdev ID
+ *
+ * Print BTM/neighbor report info that is sent by firmware after
+ * connection/roaming to an AP.
+ *
+ * Return: none
+ */
+static void
+cm_roam_stats_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
+			      uint8_t vdev_id)
+{
+	char time[TIME_STRING_LEN], time1[TIME_STRING_LEN];
+	char *buf, *tmp;
+	uint8_t type = neigh_rpt->req_type, i;
+	uint16_t buf_left = ROAM_CHANNEL_BUF_SIZE, buf_cons;
+	uint8_t num_ch = neigh_rpt->num_freq;
+
+	if (!type)
+		return;
+
+	buf = qdf_mem_malloc(ROAM_CHANNEL_BUF_SIZE);
+	if (!buf)
+		return;
+
+	tmp = buf;
+	if (num_ch) {
+		buf_cons = qdf_snprint(tmp, buf_left, "{ ");
+		buf_left -= buf_cons;
+		tmp += buf_cons;
+
+		for (i = 0; i < num_ch; i++) {
+			buf_cons = qdf_snprint(tmp, buf_left, "%d ",
+					       neigh_rpt->freq[i]);
+			buf_left -= buf_cons;
+			tmp += buf_cons;
+		}
+
+		buf_cons = qdf_snprint(tmp, buf_left, "}");
+		buf_left -= buf_cons;
+		tmp += buf_cons;
+	}
+
+	mlme_get_converted_timestamp(neigh_rpt->req_time, time);
+	mlme_nofl_info("%s [%s] VDEV[%d]", time,
+		       (type == 1) ? "BTM_QUERY" : "NEIGH_RPT_REQ", vdev_id);
+
+	if (neigh_rpt->resp_time) {
+		mlme_get_converted_timestamp(neigh_rpt->resp_time, time1);
+		mlme_nofl_info("%s [%s] VDEV[%d] %s", time1,
+			       (type == 1) ? "BTM_REQ" : "NEIGH_RPT_RSP",
+			       vdev_id,
+			       (num_ch > 0) ? buf : "NO Ch update");
+	} else {
+		mlme_nofl_info("%s No response received from AP",
+			       (type == 1) ? "BTM" : "NEIGH_RPT");
+	}
+	qdf_mem_free(buf);
+}
+
+QDF_STATUS
+cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
+			    struct roam_stats_event *stats_info)
+{
+	uint8_t i, rem_tlv = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!stats_info)
+		return QDF_STATUS_E_FAILURE;
+	for (i = 0; i < stats_info->num_tlv; i++) {
+		if (stats_info->trigger[i].present) {
+			cm_roam_stats_print_trigger_info(
+							&stats_info->trigger[i],
+							stats_info->vdev_id);
+		       status = wlan_cm_update_roam_states(psoc,
+					stats_info->vdev_id,
+					stats_info->trigger[i].trigger_reason,
+					ROAM_TRIGGER_REASON);
+			if (QDF_IS_STATUS_ERROR(status))
+				goto err;
+		}
+
+		if (stats_info->scan[i].present &&
+		    stats_info->trigger[i].present)
+			cm_roam_stats_print_scan_info(&stats_info->scan[i],
+					  stats_info->vdev_id,
+					  stats_info->trigger[i].trigger_reason,
+					  stats_info->trigger[i].timestamp);
+
+		if (stats_info->result[i].present) {
+			cm_roam_stats_print_roam_result(&stats_info->result[i],
+							stats_info->vdev_id);
+			status = wlan_cm_update_roam_states(psoc,
+					      stats_info->vdev_id,
+					      stats_info->result[i].fail_reason,
+					      ROAM_FAIL_REASON);
+			if (QDF_IS_STATUS_ERROR(status))
+				goto err;
+		}
+
+		/*
+		 * Print BTM resp TLV info (wmi_roam_btm_response_info) only
+		 * when trigger reason is BTM or WTC_BTM. As for other roam
+		 * triggers this TLV contains zeros, so host should not print.
+		 */
+		if (stats_info->btm_rsp[i].present &&
+		    (stats_info->trigger[i].present &&
+		    (stats_info->trigger[i].trigger_reason ==
+		     ROAM_TRIGGER_REASON_WTC_BTM ||
+		     stats_info->trigger[i].trigger_reason ==
+		     ROAM_TRIGGER_REASON_BTM)))
+			cm_roam_stats_print_btm_rsp_info(
+							&stats_info->btm_rsp[i],
+							stats_info->vdev_id);
+
+		if (stats_info->roam_init_info[i].present)
+			cm_roam_stats_print_roam_initial_info(
+						 &stats_info->roam_init_info[i],
+						 stats_info->vdev_id);
+
+		if (stats_info->roam_msg_info &&
+		    i < stats_info->num_roam_msg_info &&
+		    stats_info->roam_msg_info[i].present) {
+			rem_tlv++;
+			cm_roam_stats_print_roam_msg_info(
+						  &stats_info->roam_msg_info[i],
+						  stats_info->vdev_id);
+			if (stats_info->data_11kv[i].present)
+				cm_roam_stats_print_11kv_info(
+						      &stats_info->data_11kv[i],
+						      stats_info->vdev_id);
+		}
+	}
+
+	if (!stats_info->num_tlv) {
+		if (stats_info->data_11kv[0].present)
+			cm_roam_stats_print_11kv_info(&stats_info->data_11kv[0],
+						      stats_info->vdev_id);
+
+		if (stats_info->trigger[0].present)
+			cm_roam_stats_print_trigger_info(
+							&stats_info->trigger[0],
+							stats_info->vdev_id);
+
+		if (stats_info->scan[0].present &&
+		    stats_info->trigger[0].present)
+			cm_roam_stats_print_scan_info(&stats_info->scan[0],
+					  stats_info->vdev_id,
+					  stats_info->trigger[0].trigger_reason,
+					  stats_info->trigger[0].timestamp);
+
+		if (stats_info->btm_rsp[0].present)
+			cm_roam_stats_print_btm_rsp_info(
+							&stats_info->btm_rsp[0],
+							stats_info->vdev_id);
+	}
+	if (stats_info->roam_msg_info && stats_info->num_roam_msg_info &&
+	    stats_info->num_roam_msg_info - rem_tlv) {
+		for (i = 0; i < (stats_info->num_roam_msg_info-rem_tlv); i++) {
+			if (stats_info->roam_msg_info[rem_tlv + i].present)
+				cm_roam_stats_print_roam_msg_info(
+					&stats_info->roam_msg_info[rem_tlv + i],
+					stats_info->vdev_id);
+		}
+	}
+
+err:
+	if (stats_info->roam_msg_info)
+		qdf_mem_free(stats_info->roam_msg_info);
+	qdf_mem_free(stats_info);
+	return status;
+}
 #endif
