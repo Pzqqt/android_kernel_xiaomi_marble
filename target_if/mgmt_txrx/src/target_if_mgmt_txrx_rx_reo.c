@@ -145,6 +145,7 @@ target_if_mgmt_rx_reo_unregister_event_handlers(struct wlan_objmgr_psoc *psoc)
 
 /**
  * target_if_mgmt_rx_reo_read_snapshot() - Read management rx-reorder snapshot
+ * @pdev: pdev pointer
  * @snapshot_address: Snapshot address
  * @id: Snapshot ID
  * @snapshot_value: Pointer to snapshot value
@@ -155,6 +156,7 @@ target_if_mgmt_rx_reo_unregister_event_handlers(struct wlan_objmgr_psoc *psoc)
  */
 static QDF_STATUS
 target_if_mgmt_rx_reo_read_snapshot(
+			struct wlan_objmgr_pdev *pdev,
 			struct mgmt_rx_reo_snapshot *snapshot_address,
 			enum mgmt_rx_reo_shared_snapshot_id id,
 			struct mgmt_rx_reo_snapshot_params *snapshot_value)
@@ -167,6 +169,7 @@ target_if_mgmt_rx_reo_read_snapshot(
 	uint32_t mgmt_rx_reo_snapshot_high;
 	uint8_t retry_count;
 	QDF_STATUS status;
+	struct wlan_lmac_if_mgmt_rx_reo_low_level_ops *low_level_ops;
 
 	if (!snapshot_address) {
 		mgmt_rx_reo_err("Mgmt Rx REO snapshot address null");
@@ -177,6 +180,17 @@ target_if_mgmt_rx_reo_read_snapshot(
 		mgmt_rx_reo_err("Mgmt Rx REO snapshot null");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	low_level_ops = target_if_get_mgmt_rx_reo_low_level_ops(
+				wlan_pdev_get_psoc(pdev));
+
+	if (!low_level_ops) {
+		mgmt_rx_reo_err("Low level ops of MGMT Rx REO is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Make sure that function pointers are populated */
+	qdf_assert_always(low_level_ops->implemented);
 
 	switch (id) {
 	case MGMT_RX_REO_SHARED_SNAPSHOT_MAC_HW:
@@ -190,7 +204,7 @@ target_if_mgmt_rx_reo_read_snapshot(
 			mgmt_rx_reo_snapshot_high =
 				snapshot_address->mgmt_rx_reo_snapshot_high;
 
-			snapshot_valid = REO_SNAPSHOT_GET_VALID(
+			snapshot_valid = low_level_ops->snapshot_is_valid(
 						mgmt_rx_reo_snapshot_low);
 			if (!snapshot_valid) {
 				mgmt_rx_reo_debug("Invalid REO snapshot value");
@@ -198,16 +212,20 @@ target_if_mgmt_rx_reo_read_snapshot(
 				return QDF_STATUS_SUCCESS;
 			}
 
-			global_timestamp = REO_SNAPSHOT_GET_GLOBAL_TIMESTAMP(
-						mgmt_rx_reo_snapshot_low,
-						mgmt_rx_reo_snapshot_high);
-			mgmt_pkt_ctr = REO_SNAPSHOT_GET_MGMT_PKT_CTR(
-						mgmt_rx_reo_snapshot_low);
-			redundant_mgmt_pkt_ctr =
-					REO_SNAPSHOT_GET_REDUNDANT_MGMT_PKT_CTR(
+			global_timestamp =
+				low_level_ops->snapshot_get_global_timestamp(
+					mgmt_rx_reo_snapshot_low,
 					mgmt_rx_reo_snapshot_high);
-			if (REO_SNAPSHOT_IS_CONSISTENT(
-			    mgmt_pkt_ctr, redundant_mgmt_pkt_ctr))
+			mgmt_pkt_ctr =
+				low_level_ops->snapshot_get_mgmt_pkt_ctr(
+					mgmt_rx_reo_snapshot_low);
+
+			redundant_mgmt_pkt_ctr =
+			     low_level_ops->snapshot_get_redundant_mgmt_pkt_ctr(
+					mgmt_rx_reo_snapshot_high);
+
+			if (low_level_ops->snapshot_is_consistent(
+					mgmt_pkt_ctr, redundant_mgmt_pkt_ctr))
 				break;
 
 			mgmt_rx_reo_info("Inconsistent snapshot value low=0x%x high=0x%x",
@@ -252,6 +270,9 @@ target_if_mgmt_rx_reo_get_snapshot_address(
 			enum mgmt_rx_reo_shared_snapshot_id id,
 			struct mgmt_rx_reo_snapshot **snapshot_address)
 {
+	struct wlan_lmac_if_mgmt_rx_reo_low_level_ops *low_level_ops;
+	uint8_t link_id;
+
 	if (!pdev) {
 		mgmt_rx_reo_err("pdev is null");
 		return QDF_STATUS_E_NULL_VALUE;
@@ -267,7 +288,18 @@ target_if_mgmt_rx_reo_get_snapshot_address(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	/* Get address here */
+	low_level_ops = target_if_get_mgmt_rx_reo_low_level_ops(
+				wlan_pdev_get_psoc(pdev));
+
+	if (!low_level_ops) {
+		mgmt_rx_reo_err("Low level ops of MGMT Rx REO is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_assert_always(low_level_ops->implemented);
+
+	link_id = wlan_get_mlo_link_id_from_pdev(pdev);
+	*snapshot_address = low_level_ops->get_snapshot_address(link_id, id);
 
 	return QDF_STATUS_SUCCESS;
 }

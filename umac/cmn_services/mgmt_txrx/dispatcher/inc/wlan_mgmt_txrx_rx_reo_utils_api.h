@@ -29,6 +29,28 @@
 
 struct mgmt_txrx_priv_pdev_context;
 
+/**
+ * TODO: Dummy function to get the MLO link ID from the pdev.
+ * This is added only as a place holder for the time being.
+ * Remove this once this API is implemented in MLO manager.
+ */
+static inline uint8_t
+wlan_get_mlo_link_id_from_pdev(struct wlan_objmgr_pdev *pdev)
+{
+	return 0;
+}
+
+/**
+ * TODO: Dummy function to get pdev handle from MLO link ID.
+ * This is added only as a place holder for the time being.
+ * Remove this once this API is implemented in MLO manager.
+ */
+static inline struct wlan_objmgr_pdev *
+wlan_get_pdev_from_mlo_link_id(uint8_t mlo_link_id)
+{
+	return NULL;
+}
+
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 #define mgmt_rx_reo_alert mgmt_txrx_alert
 #define mgmt_rx_reo_err mgmt_txrx_err

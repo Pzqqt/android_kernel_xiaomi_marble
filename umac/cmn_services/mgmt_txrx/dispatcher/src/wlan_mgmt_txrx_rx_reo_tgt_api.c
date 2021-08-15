@@ -42,7 +42,8 @@ tgt_mgmt_rx_reo_read_snapshot(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	return mgmt_rx_reo_txops->read_mgmt_rx_reo_snapshot(address, id, value);
+	return mgmt_rx_reo_txops->read_mgmt_rx_reo_snapshot(pdev, address, id,
+							    value);
 }
 
 /**

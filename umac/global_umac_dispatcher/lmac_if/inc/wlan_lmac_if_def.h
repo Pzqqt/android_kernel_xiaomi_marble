@@ -212,15 +212,50 @@ struct wlan_target_if_dcs_rx_ops {
 
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 /**
+ * struct wlan_lmac_if_mgmt_rx_reo_low_level_ops - Low level function pointer
+ * table of MGMT Rx REO module
+ * @implemented: Whether functions pointers are implemented
+ * @init_shmem_arena_ctx: Initialize shmem arena context
+ * @deinit_shmem_arena_ctx: De-initialize shmem arena context
+ * @get_num_links: Get number of links to be used by MGMT Rx REO module
+ * @get_snapshot_address: Get address of an MGMT Rx REO snapshot
+ * @snapshot_is_valid: Check if a snapshot is valid
+ * @snapshot_get_mgmt_pkt_ctr: Get management packet counter from snapshot
+ * @snapshot_get_redundant_mgmt_pkt_ctr: Get redundant management packet counter
+ * from snapshot
+ * @snapshot_is_consistent: Check if a snapshot is consistent
+ * @snapshot_get_global_timestamp: Get global timestamp from snapshot
+ */
+struct wlan_lmac_if_mgmt_rx_reo_low_level_ops {
+	bool implemented;
+	QDF_STATUS (*init_shmem_arena_ctx)(void *arena_vaddr,
+					   size_t arena_len);
+	QDF_STATUS (*deinit_shmem_arena_ctx)(void);
+	int (*get_num_links)(void);
+	void* (*get_snapshot_address)(
+			uint8_t link_id,
+			enum mgmt_rx_reo_shared_snapshot_id snapshot_id);
+	bool (*snapshot_is_valid)(uint32_t snapshot_low);
+	uint16_t (*snapshot_get_mgmt_pkt_ctr)(uint32_t snapshot_low);
+	uint16_t (*snapshot_get_redundant_mgmt_pkt_ctr)(uint32_t snapshot_high);
+	bool (*snapshot_is_consistent)(uint16_t mgmt_pkt_ctr,
+				       uint16_t redundant_mgmt_pkt_ctr);
+	uint32_t (*snapshot_get_global_timestamp)(uint32_t snapshot_low,
+						  uint32_t snapshot_high);
+};
+
+/**
  * struct wlan_lmac_if_mgmt_txrx_tx_ops - structure of tx function
  * pointers for mgmt rx reo
  * @read_mgmt_rx_reo_snapshot: Read rx-reorder snapshots
  * @get_mgmt_rx_reo_snapshot_address: Get rx-reorder snapshot address
  * @mgmt_rx_reo_filter_config:  Configure MGMT Rx REO filter
+ * @low_level_ops:  Low level operations of MGMT Rx REO module
  */
 struct wlan_lmac_if_mgmt_rx_reo_tx_ops {
 	QDF_STATUS (*read_mgmt_rx_reo_snapshot)
-			(struct mgmt_rx_reo_snapshot *address,
+			(struct wlan_objmgr_pdev *pdev,
+			 struct mgmt_rx_reo_snapshot *address,
 			 enum mgmt_rx_reo_shared_snapshot_id id,
 			 struct mgmt_rx_reo_snapshot_params *value);
 	QDF_STATUS (*get_mgmt_rx_reo_snapshot_address)
@@ -230,6 +265,7 @@ struct wlan_lmac_if_mgmt_rx_reo_tx_ops {
 	QDF_STATUS (*mgmt_rx_reo_filter_config)(
 					struct wlan_objmgr_pdev *pdev,
 					struct mgmt_rx_reo_filter *filter);
+	struct wlan_lmac_if_mgmt_rx_reo_low_level_ops low_level_ops;
 };
 
 /**

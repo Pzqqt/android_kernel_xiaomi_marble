@@ -70,10 +70,12 @@ struct wlan_host_mlo_glb_rx_reo_snapshot_info {
  * wlan_host_mlo_glb_h_shmem_arena_ctx - MLO Global shared memory arena context
  * @shmem_params: shared memory parameters
  * @rx_reo_snapshot_info: MGMT Rx REO snapshot information
+ * @init_count: Number of init calls
  */
 struct wlan_host_mlo_glb_h_shmem_arena_ctx {
 	struct wlan_host_mlo_glb_h_shmem_params shmem_params;
 	struct wlan_host_mlo_glb_rx_reo_snapshot_info rx_reo_snapshot_info;
+	qdf_atomic_t init_count;
 };
 
 /**
@@ -94,4 +96,21 @@ QDF_STATUS mlo_glb_h_shmem_arena_ctx_init(void *arena_vaddr,
  * Return: QDF_STATUS of operation
  */
 QDF_STATUS mlo_glb_h_shmem_arena_ctx_deinit(void);
+
+/**
+ * mgmt_rx_reo_get_num_links() - Get number of links to be used by MGMT Rx REO
+ *
+ * Return: number of links in case of success, else -1
+ */
+int mgmt_rx_reo_get_num_links(void);
+
+/**
+ * mgmt_rx_reo_get_snapshot_address() - Get the address of MGMT Rx REO snapshot
+ * @link_id: Link ID of the radio to which this snapshot belongs
+ * @snapshot_id: ID of the snapshot
+ *
+ * Return: virtual address of the snapshot on success, else NULL
+ */
+void *mgmt_rx_reo_get_snapshot_address(
+	uint8_t link_id, enum mgmt_rx_reo_shared_snapshot_id snapshot_id);
 #endif

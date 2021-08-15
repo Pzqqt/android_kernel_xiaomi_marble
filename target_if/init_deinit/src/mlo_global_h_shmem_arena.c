@@ -447,6 +447,10 @@ QDF_STATUS mlo_glb_h_shmem_arena_ctx_init(uint8_t *arena_vaddr,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	/* We need to initialize only for the first invocation */
+	if (qdf_atomic_read(&shmem_arena_ctx->init_count))
+		goto success;
+
 	if (parse_mlo_glb_h_shmem_arena(arena_vaddr, arena_len,
 					shmem_arena_ctx) < 0) {
 		free_mlo_glb_rx_reo_per_link_info(
@@ -454,6 +458,8 @@ QDF_STATUS mlo_glb_h_shmem_arena_ctx_init(uint8_t *arena_vaddr,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+success:
+	qdf_atomic_inc(&shmem_arena_ctx->init_count);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -467,8 +473,82 @@ QDF_STATUS mlo_glb_h_shmem_arena_deinit(void)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	if (!qdf_atomic_read(&shmem_arena_ctx->init_count)) {
+		target_if_fatal("shmem_arena_ctx ref cnt is 0");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* We need to de-initialize only for the last invocation */
+	if (qdf_atomic_dec_and_test(&shmem_arena_ctx->init_count))
+		goto success;
+
 	free_mlo_glb_rx_reo_per_link_info(
 		&shmem_arena_ctx->rx_reo_snapshot_info);
 
+success:
 	return QDF_STATUS_SUCCESS;
+}
+
+int mgmt_rx_reo_get_num_links(void)
+{
+	struct wlan_host_mlo_glb_h_shmem_arena_ctx *shmem_arena_ctx;
+
+	shmem_arena_ctx = get_shmem_arena_ctx();
+	if (!shmem_arena_ctx) {
+		target_if_err("mlo_glb_h_shmem_arena context is NULL");
+		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
+	}
+
+	return shmem_arena_ctx->rx_reo_snapshot_info.num_links;
+}
+
+void *mgmt_rx_reo_get_snapshot_address(
+	uint8_t link_id, enum mgmt_rx_reo_shared_snapshot_id snapshot_id)
+{
+	struct wlan_host_mlo_glb_h_shmem_arena_ctx *shmem_arena_ctx;
+	struct wlan_host_mlo_glb_rx_reo_snapshot_info *snapshot_info;
+	struct wlan_host_mlo_glb_rx_reo_per_link_info *snapshot_link_info;
+	uint8_t link;
+
+	if (snapshot_id >= MGMT_RX_REO_SHARED_SNAPSHOT_MAX) {
+		target_if_err("Invalid snapshot ID: %d", snapshot_id);
+		return NULL;
+	}
+
+	shmem_arena_ctx = get_shmem_arena_ctx();
+	if (!shmem_arena_ctx) {
+		target_if_err("mlo_glb_h_shmem_arena context is NULL");
+		return NULL;
+	}
+
+	snapshot_info = &shmem_arena_ctx->rx_reo_snapshot_info;
+
+	for (link = 0; link < snapshot_info->num_links; ++link) {
+		snapshot_link_info = &snapshot_info->link_info[link];
+
+		if (link_id == snapshot_link_info->link_id)
+			break;
+	}
+
+	if (link == snapshot_info->num_links) {
+		target_if_err("Couldn't find the snapshot link info"
+			      "corresponding to the link %d", link_id);
+		return NULL;
+	}
+
+	switch (snapshot_id) {
+	case MGMT_RX_REO_SHARED_SNAPSHOT_MAC_HW:
+		return snapshot_link_info->hw_forwarded;
+
+	case MGMT_RX_REO_SHARED_SNAPSHOT_FW_CONSUMED:
+		return snapshot_link_info->fw_consumed;
+
+	case MGMT_RX_REO_SHARED_SNAPSHOT_FW_FORWADED:
+		return snapshot_link_info->fw_forwarded;
+
+	default:
+		qdf_assert_always(0);
+	}
+
+	return NULL;
 }

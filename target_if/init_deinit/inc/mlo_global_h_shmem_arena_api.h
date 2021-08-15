@@ -20,27 +20,22 @@
  *  global shared memory arena.
  */
 
-#include<qdf_types.h>
-
 #ifndef _MLO_GLOBAL_H_SHMEM_ARENA_API_H_
 #define _MLO_GLOBAL_H_SHMEM_ARENA_API_H_
-/**
- * wlan_host_mlo_glb_h_shmem_arena_ctx_init() - Initialize MLO Global shared
- * memory arena context on Host
- * @arena_vaddr: Virtual address of the MLO Global shared memory arena
- * @arena_len: Length (in bytes) of the MLO Global shared memory arena
- *
- * Return: QDF_STATUS of operation
- */
-QDF_STATUS
-wlan_host_mlo_glb_h_shmem_arena_ctx_init(void *arena_vaddr,
-					 size_t arena_len);
+
+#include<qdf_types.h>
+#include<wlan_lmac_if_def.h>
 
 /**
- * wlan_host_mlo_glb_h_shmem_arena_deinit() - De-initialize MLO Global shared
- * memory arena context on Host
+ * mgmt_rx_reo_register_wifi3_0_ops() - Register wifi3.0 operations of MGMT Rx
+ * REO module
+ * @reo_low_level_ops: Pointer to low level ops table of MGMT Rx REO module.
+ *
+ * This API fills @reo_low_level_ops table with the wifi3.0 layer functions of
+ * MGMT Rx REO module.
  *
  * Return: QDF_STATUS of operation
  */
-QDF_STATUS wlan_host_mlo_glb_h_shmem_arena_ctx_deinit(void);
+QDF_STATUS mgmt_rx_reo_register_wifi3_0_ops(
+	struct wlan_lmac_if_mgmt_rx_reo_low_level_ops *reo_low_level_ops);
 #endif

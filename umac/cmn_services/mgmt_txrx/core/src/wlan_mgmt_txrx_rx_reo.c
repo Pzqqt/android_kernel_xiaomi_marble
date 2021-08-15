@@ -101,28 +101,6 @@ mgmt_rx_reo_compare_global_timestamps_gte(uint32_t ts1, uint32_t ts2)
 }
 
 /**
- * TODO: Dummy function to get the MLO link ID from the pdev.
- * This is added only as a place holder for the time being.
- * Remove this once this API is implemented in MLO manager.
- */
-static inline uint8_t
-wlan_get_mlo_link_id_from_pdev(struct wlan_objmgr_pdev *pdev)
-{
-	return 0;
-}
-
-/**
- * TODO: Dummy function to get pdev handle from MLO link ID.
- * This is added only as a place holder for the time being.
- * Remove this once this API is implemented in MLO manager.
- */
-static inline struct wlan_objmgr_pdev *
-wlan_get_pdev_from_mlo_link_id(uint8_t mlo_lin_id)
-{
-	return NULL;
-}
-
-/**
  * wlan_mgmt_rx_reo_algo_calculate_wait_count() - Calculates the number of
  * frames an incoming frame should wait for before it gets delivered.
  * @in_frame_pdev: pdev on which this frame is received
