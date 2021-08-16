@@ -1122,6 +1122,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 		cmds = set->cmds;
 		dsi_display->tx_cmd_buf_ndx = 0;
 
+		dsi_panel_acquire_panel_lock(dsi_display->panel);
 		for (i = 0; i < cnt; i++) {
 			rc = dsi_host_transfer_sub(&dsi_display->host, cmds);
 			if (rc < 0) {
@@ -1133,6 +1134,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 						((cmds->post_wait_ms*1000)+10));
 			cmds++;
 		}
+		dsi_panel_release_panel_lock(dsi_display->panel);
 
 		memset(dbgfs_tx_cmd_buf, 0, SZ_4K);
 		dsi_panel_destroy_cmd_packets(set);
