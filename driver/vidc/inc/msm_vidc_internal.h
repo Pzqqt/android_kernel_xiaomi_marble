@@ -217,6 +217,7 @@ enum msm_vidc_port_type {
 	OUTPUT_PORT,
 	INPUT_META_PORT,
 	OUTPUT_META_PORT,
+	PORT_NONE,
 	MAX_PORT,
 };
 

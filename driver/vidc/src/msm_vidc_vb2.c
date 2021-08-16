@@ -249,6 +249,13 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	if (rc)
 		goto error;
 
+	if ((q->type == INPUT_MPLANE && inst->vb2q[OUTPUT_PORT].streaming) ||
+		(q->type == OUTPUT_MPLANE && inst->vb2q[INPUT_PORT].streaming)) {
+		rc = msm_vidc_get_properties(inst);
+		if (rc)
+			goto error;
+	}
+
 	i_vpr_h(inst, "Streamon: %s successful\n", v4l2_type_name(q->type));
 
 	return rc;

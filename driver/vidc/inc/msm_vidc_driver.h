@@ -432,5 +432,6 @@ bool res_is_less_than(u32 width, u32 height,
 	u32 ref_width, u32 ref_height);
 bool res_is_less_than_or_equal_to(u32 width, u32 height,
 	u32 ref_width, u32 ref_height);
+int msm_vidc_get_properties(struct msm_vidc_inst *inst);
 #endif // _MSM_VIDC_DRIVER_H_
 

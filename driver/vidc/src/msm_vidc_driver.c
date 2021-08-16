@@ -5504,3 +5504,49 @@ int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+struct msm_vidc_fw_query_params {
+	u32 hfi_prop_name;
+	u32 port;
+};
+
+int msm_vidc_get_properties(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	int i;
+
+	static const struct msm_vidc_fw_query_params fw_query_params[] = {
+		{HFI_PROP_STAGE, HFI_PORT_NONE},
+		{HFI_PROP_PIPE, HFI_PORT_NONE},
+		{HFI_PROP_QUALITY_MODE, HFI_PORT_BITSTREAM}
+	};
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(fw_query_params); i++) {
+
+		if (is_decode_session(inst)) {
+			if (fw_query_params[i].hfi_prop_name == HFI_PROP_QUALITY_MODE)
+				continue;
+		}
+
+		i_vpr_l(inst, "%s: querying fw for property %#x\n", __func__,
+				fw_query_params[i].hfi_prop_name);
+
+		rc = venus_hfi_session_property(inst,
+				fw_query_params[i].hfi_prop_name,
+				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+				HFI_HOST_FLAGS_INTR_REQUIRED |
+				HFI_HOST_FLAGS_GET_PROPERTY),
+				fw_query_params[i].port,
+				HFI_PAYLOAD_NONE,
+				NULL,
+				0);
+		if (rc)
+			return rc;
+	}
+
+	return 0;
+}
