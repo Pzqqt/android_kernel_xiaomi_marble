@@ -2744,11 +2744,7 @@ TARGET_INC +=	-I$(WLAN_FW_API)/hw/qca6750/v1
 endif
 
 ifeq ($(CONFIG_CNSS_WCN7850), y)
-ifeq ($(CONFIG_EMULATION_2_0), y)
-TARGET_INC +=	-I$(WLAN_FW_API)/hw/wcn7850/v1/E2.0/
-else
-TARGET_INC +=	-I$(WLAN_FW_API)/hw/wcn7850/v1/E1.5/
-endif
+TARGET_INC +=   -I$(WLAN_FW_API)/hw/kiwi/v1/
 endif
 
 LINUX_INC :=	-Iinclude
