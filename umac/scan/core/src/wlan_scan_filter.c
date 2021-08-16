@@ -750,6 +750,13 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
+	if (!util_is_bss_type_match(filter->bss_type, db_entry->cap_info)) {
+		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as bss type didn't match cap_info %x bss_type %d",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  db_entry->cap_info.value, filter->bss_type);
+		return false;
+	}
+
 	/* Match realm */
 	if (!scm_is_fils_config_match(filter, db_entry)) {
 		scm_debug(QDF_MAC_ADDR_FMT" :Ignore as fils config didn't match",

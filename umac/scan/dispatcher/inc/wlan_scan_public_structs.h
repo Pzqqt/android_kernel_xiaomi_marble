@@ -687,6 +687,7 @@ enum dot11_mode_filter {
  * @num_of_bssid: number of bssid passed
  * @num_of_ssid: number of ssid
  * @num_of_channels: number of  channels
+ * @bss_type: bss type IBSS or BSS or ANY
  * @pmf_cap: Pmf capability
  * @dot11mode: Filter APs based upon dot11mode
  * @band: to get specific band 2.4G, 5G or 4.9 G
@@ -719,6 +720,7 @@ struct scan_filter {
 	uint8_t num_of_bssid;
 	uint8_t num_of_ssid;
 	uint16_t num_of_channels;
+	enum wlan_bss_type bss_type;
 	enum wlan_pmf_cap pmf_cap;
 	enum dot11_mode_filter dot11mode;
 	enum wlan_band band;

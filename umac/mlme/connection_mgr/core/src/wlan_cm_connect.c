@@ -805,6 +805,8 @@ static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
+	/* Select only ESS type */
+	filter->bss_type = WLAN_TYPE_BSS;
 	filter->enable_adaptive_11r =
 		wlan_mlme_adaptive_11r_enabled(psoc);
 	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) != QDF_STA_MODE)
