@@ -101,6 +101,8 @@ static const char *ipareg_name_to_str[IPA_REG_MAX] = {
 	__stringify(IPA_DST_RSRC_GRP_23_RSRC_TYPE_n),
 	__stringify(IPA_DST_RSRC_GRP_45_RSRC_TYPE_n),
 	__stringify(IPA_DST_RSRC_GRP_67_RSRC_TYPE_n),
+	__stringify(IPA_RSRC_GRP_CFG),
+	__stringify(IPA_RSRC_GRP_CFG_EXT),
 	__stringify(IPA_RX_HPS_CLIENTS_MIN_DEPTH_0),
 	__stringify(IPA_RX_HPS_CLIENTS_MIN_DEPTH_1),
 	__stringify(IPA_RX_HPS_CLIENTS_MAX_DEPTH_0),
@@ -275,8 +277,8 @@ static void ipareg_construct_rx_hps_clients_depth0_v4_5(
 static void ipareg_construct_rsrg_grp_xy(
 	enum ipahal_reg_name reg, const void *fields, u32 *val)
 {
-	struct ipahal_reg_rsrc_grp_cfg *grp =
-		(struct ipahal_reg_rsrc_grp_cfg *)fields;
+	struct ipahal_reg_rsrc_grp_xy_cfg *grp =
+		(struct ipahal_reg_rsrc_grp_xy_cfg *)fields;
 
 	IPA_SETFIELD_IN_REG(*val, grp->x_min,
 		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MIN_LIM_SHFT,
@@ -295,8 +297,8 @@ static void ipareg_construct_rsrg_grp_xy(
 static void ipareg_construct_rsrg_grp_xy_v3_5(
 	enum ipahal_reg_name reg, const void *fields, u32 *val)
 {
-	struct ipahal_reg_rsrc_grp_cfg *grp =
-		(struct ipahal_reg_rsrc_grp_cfg *)fields;
+	struct ipahal_reg_rsrc_grp_xy_cfg *grp =
+		(struct ipahal_reg_rsrc_grp_xy_cfg *)fields;
 
 	IPA_SETFIELD_IN_REG(*val, grp->x_min,
 		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MIN_LIM_SHFT_V3_5,
@@ -320,8 +322,8 @@ static void ipareg_construct_rsrg_grp_xy_v3_5(
 static void ipareg_construct_rsrg_grp_xy_v4_5(
 	enum ipahal_reg_name reg, const void *fields, u32 *val)
 {
-	struct ipahal_reg_rsrc_grp_cfg *grp =
-		(struct ipahal_reg_rsrc_grp_cfg *)fields;
+	struct ipahal_reg_rsrc_grp_xy_cfg *grp =
+		(struct ipahal_reg_rsrc_grp_xy_cfg *)fields;
 
 	IPA_SETFIELD_IN_REG(*val, grp->x_min,
 		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MIN_LIM_SHFT_V3_5,
@@ -346,8 +348,8 @@ static void ipareg_construct_rsrg_grp_xy_v4_5(
 static void ipareg_construct_rsrg_grp_xy_v5_0(
 	enum ipahal_reg_name reg, const void *fields, u32 *val)
 {
-	struct ipahal_reg_rsrc_grp_cfg *grp =
-		(struct ipahal_reg_rsrc_grp_cfg *)fields;
+	struct ipahal_reg_rsrc_grp_xy_cfg *grp =
+		(struct ipahal_reg_rsrc_grp_xy_cfg *)fields;
 
 	IPA_SETFIELD_IN_REG(*val, grp->x_min,
 		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MIN_LIM_SHFT_V3_5,
@@ -362,6 +364,47 @@ static void ipareg_construct_rsrg_grp_xy_v5_0(
 	IPA_SETFIELD_IN_REG(*val, grp->y_max,
 		IPA_RSRC_GRP_XY_RSRC_TYPE_n_Y_MAX_LIM_SHFT_V3_5,
 		IPA_RSRC_GRP_XY_RSRC_TYPE_n_Y_MAX_LIM_BMSK_V3_5);
+}
+
+static void ipareg_construct_rsrg_grp_cfg(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipahal_reg_rsrc_grp_cfg *cfg =
+		(struct ipahal_reg_rsrc_grp_cfg *)fields;
+
+
+	IPA_SETFIELD_IN_REG(*val, cfg->src_grp_index,
+		IPA_RSRC_GRP_CFG_SRC_GRP_SPECIAL_INDEX_SHFT,
+		IPA_RSRC_GRP_CFG_SRC_GRP_SPECIAL_INDEX_BMSK);
+	IPA_SETFIELD_IN_REG(*val, cfg->src_grp_valid,
+		IPA_RSRC_GRP_CFG_SRC_GRP_SPECIAL_VALID_SHFT,
+		IPA_RSRC_GRP_CFG_SRC_GRP_SPECIAL_VALID_BMSK);
+	IPA_SETFIELD_IN_REG(*val, cfg->dst_pipe_index,
+		IPA_RSRC_GRP_CFG_DST_PIPE_SPECIAL_INDEX_SHFT,
+		IPA_RSRC_GRP_CFG_DST_PIPE_SPECIAL_INDEX_BMSK);
+	IPA_SETFIELD_IN_REG(*val, cfg->dst_pipe_valid,
+		IPA_RSRC_GRP_CFG_DST_PIPE_SPECIAL_VALID_SHFT,
+		IPA_RSRC_GRP_CFG_DST_PIPE_SPECIAL_VALID_BMSK);
+	IPA_SETFIELD_IN_REG(*val, cfg->dst_grp_index,
+		IPA_RSRC_GRP_CFG_DST_GRP_SPECIAL_INDEX_SHFT,
+		IPA_RSRC_GRP_CFG_DST_GRP_SPECIAL_INDEX_BMSK);
+	IPA_SETFIELD_IN_REG(*val, cfg->dst_grp_valid,
+		IPA_RSRC_GRP_CFG_DST_GRP_SPECIAL_VALID_SHFT,
+		IPA_RSRC_GRP_CFG_DST_GRP_SPECIAL_VALID_BMSK);
+}
+
+static void ipareg_construct_rsrg_grp_cfg_ext(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipahal_reg_rsrc_grp_cfg_ext *cfg =
+		(struct ipahal_reg_rsrc_grp_cfg_ext *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, cfg->index,
+		IPA_RSRC_GRP_CFG_EXT_SRC_GRP_2ND_PRIORITY_SPECIAL_INDEX_SHFT,
+		IPA_RSRC_GRP_CFG_EXT_SRC_GRP_2ND_PRIORITY_SPECIAL_INDEX_BMSK);
+	IPA_SETFIELD_IN_REG(*val, cfg->valid,
+		IPA_RSRC_GRP_CFG_EXT_SRC_GRP_2ND_PRIORITY_SPECIAL_VALID_SHFT,
+		IPA_RSRC_GRP_CFG_EXT_SRC_GRP_2ND_PRIORITY_SPECIAL_VALID_BMSK);
 }
 
 static void ipareg_construct_hash_cfg_n(
@@ -4363,6 +4406,12 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 	[IPA_HW_v5_0][IPA_DST_RSRC_GRP_67_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
 		0x0000060C, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_RSRC_GRP_CFG] = {
+		ipareg_construct_rsrg_grp_cfg, ipareg_parse_dummy,
+		0x000006A0, 0x0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_RSRC_GRP_CFG_EXT] = {
+		ipareg_construct_rsrg_grp_cfg_ext, ipareg_parse_dummy,
+		0x000006A4, 0x0, 0, 0, 0, 0},
 	[IPA_HW_v5_0][IPA_STAT_QUOTA_BASE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
 		0x000006D0, 0x4, 0, 0, 0, 0},
