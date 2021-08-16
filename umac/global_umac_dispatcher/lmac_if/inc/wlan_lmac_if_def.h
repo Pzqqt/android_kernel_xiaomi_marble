@@ -302,6 +302,7 @@ enum wlan_mlme_cfg_id;
  * @vdev_config_ratemask_cmd_send: function to send ratemask
  * @peer_flush_tids_send: function to flush peer tids
  * @multiple_vdev_restart_req_cmd: function to send multiple vdev restart
+ * @multiple_vdev_set_param_cmd: function to send multiple vdev param
  * @beacon_send_cmd: function to send beacon
  * @beacon_tmpl_send: function to send beacon template
  * @vdev_bcn_miss_offload_send: function to send beacon miss offload
@@ -358,6 +359,9 @@ struct wlan_lmac_if_mlme_tx_ops {
 	QDF_STATUS (*multiple_vdev_restart_req_cmd)(
 				struct wlan_objmgr_pdev *pdev,
 				struct multiple_vdev_restart_params *param);
+	QDF_STATUS (*multiple_vdev_set_param_cmd)(
+				struct wlan_objmgr_pdev *pdev,
+				struct multiple_vdev_set_param *param);
 	QDF_STATUS (*beacon_cmd_send)(struct wlan_objmgr_vdev *vdev,
 				      struct beacon_params *param);
 	QDF_STATUS (*beacon_tmpl_send)(struct wlan_objmgr_vdev *vdev,

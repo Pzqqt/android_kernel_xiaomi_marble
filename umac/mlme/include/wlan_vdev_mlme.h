@@ -56,6 +56,7 @@ struct cnx_mgr;
 #define WLAN_VDEV_MLME_FLAGS_TRANSMIT_AP        0x00000002
 #define WLAN_VDEV_MLME_FLAGS_NON_TRANSMIT_AP    0x00000004
 #define WLAN_VDEV_MLME_FLAGS_EMA_MODE           0x00000008
+#define WLAN_VDEV_MLME_FLAGS_MBSS_CMN_PARAM     0x00000010
 
 /**
  * struct vdev_mlme_proto_generic - generic mlme proto structure
@@ -481,6 +482,8 @@ struct vdev_mlme_beacon_info {
  *              0 means non-MBSS AP.
  * @mbssid-flags: MBSS IE flags indicating vdev type
  * @vdevid_trans: id of transmitting vdev for MBSS IE
+ * @vdev_bmap: vdev bitmap of VAPs in MBSS group
+ * @is_cmn_param: flag to check mbss common param
  * @trans_bssid: bssid of transmitted AP (MBSS IE case)
  */
 struct vdev_mlme_mbss_11ax {
@@ -488,6 +491,8 @@ struct vdev_mlme_mbss_11ax {
 	uint32_t profile_num;
 	uint32_t mbssid_flags;
 	uint8_t vdevid_trans;
+	unsigned long vdev_bmap;
+	bool is_cmn_param;
 	uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
 };
 

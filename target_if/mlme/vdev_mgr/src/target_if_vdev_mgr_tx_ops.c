@@ -1024,6 +1024,43 @@ static QDF_STATUS target_if_vdev_mgr_multiple_vdev_restart_req_cmd(
 	return status;
 }
 
+static QDF_STATUS target_if_vdev_mgr_multiple_vdev_set_param_cmd(
+				struct wlan_objmgr_pdev *pdev,
+				struct multiple_vdev_set_param *param)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!pdev || !param) {
+		mlme_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_pdev(pdev);
+	if (!wmi_handle) {
+		mlme_err("PDEV WMI Handle is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (param->num_vdevs > WLAN_UMAC_PDEV_MAX_VDEVS) {
+		mlme_err("param->num_vdevs: %u exceed the limit",
+			 param->num_vdevs);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_send_multiple_vdev_set_param_cmd(wmi_handle,
+							      param);
+
+	return status;
+}
+
 static QDF_STATUS target_if_vdev_mgr_beacon_send(
 					struct wlan_objmgr_vdev *vdev,
 					struct beacon_params *param)
@@ -1204,6 +1241,8 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_vdev_mgr_peer_flush_tids_send;
 	mlme_tx_ops->multiple_vdev_restart_req_cmd =
 			target_if_vdev_mgr_multiple_vdev_restart_req_cmd;
+	mlme_tx_ops->multiple_vdev_set_param_cmd =
+			target_if_vdev_mgr_multiple_vdev_set_param_cmd;
 	mlme_tx_ops->beacon_cmd_send = target_if_vdev_mgr_beacon_send;
 	mlme_tx_ops->beacon_tmpl_send = target_if_vdev_mgr_beacon_tmpl_send;
 	mlme_tx_ops->vdev_set_param_send =
