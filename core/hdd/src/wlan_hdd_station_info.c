@@ -2239,7 +2239,7 @@ static int hdd_get_station_remote_ex(struct hdd_context *hdd_ctx,
 	if (!stainfo) {
 		hdd_err_rl("Failed to get peer STA " QDF_MAC_ADDR_FMT,
 			   QDF_MAC_ADDR_REF(mac_addr.bytes));
-		return -EINVAL;
+		return -ENXIO;
 	}
 
 	is_associated = hdd_is_peer_associated(adapter, &mac_addr);
