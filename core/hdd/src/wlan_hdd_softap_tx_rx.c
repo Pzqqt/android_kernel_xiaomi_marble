@@ -1106,6 +1106,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 	struct hdd_context *hdd_ctx = NULL;
 	struct qdf_mac_addr *src_mac;
 	struct hdd_station_info *sta_info;
+	bool is_eapol = false;
 
 	/* Sanity check on inputs */
 	if (unlikely((!adapter_context) || (!rx_buf))) {
@@ -1173,7 +1174,10 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 					     STA_INFO_SOFTAP_RX_PACKET_CBK);
 		}
 
-		if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(skb) &&
+		if (qdf_nbuf_is_ipv4_eapol_pkt(skb))
+			is_eapol = true;
+
+		if (qdf_unlikely(is_eapol &&
 				 qdf_mem_cmp(qdf_nbuf_data(skb) +
 					     QDF_NBUF_DEST_MAC_OFFSET,
 					     adapter->mac_addr.bytes,
@@ -1215,7 +1219,15 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 
 		hdd_softap_tsf_timestamp_rx(hdd_ctx, skb);
 
-		qdf_status = hdd_rx_deliver_to_stack(adapter, skb);
+		if (is_eapol && SEND_EAPOL_OVER_NL) {
+			if(cfg80211_rx_control_port(adapter->dev, skb, false))
+				qdf_status = QDF_STATUS_SUCCESS;
+			else
+				qdf_status = QDF_STATUS_E_INVAL;
+			dev_kfree_skb(skb);
+		} else {
+			qdf_status = hdd_rx_deliver_to_stack(adapter, skb);
+		}
 
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];

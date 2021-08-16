@@ -82,6 +82,12 @@ struct hdd_context;
 #define SME_QOS_UAPSD_CFG_VI_CHANGED_MASK     0xF4
 #define SME_QOS_UAPSD_CFG_VO_CHANGED_MASK     0xF8
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#define SEND_EAPOL_OVER_NL true
+#else
+#define SEND_EAPOL_OVER_NL  false
+#endif
+
 netdev_tx_t hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev);
 
 /**
