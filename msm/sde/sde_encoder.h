@@ -658,4 +658,6 @@ static inline bool sde_encoder_is_widebus_enabled(struct drm_encoder *drm_enc)
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	return sde_enc->mode_info.wide_bus_en;
 }
+
+void sde_encoder_add_data_to_minidump_va(struct drm_encoder *drm_enc);
 #endif /* __SDE_ENCODER_H__ */

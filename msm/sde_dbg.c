@@ -18,6 +18,7 @@
 
 #include "sde_dbg.h"
 #include "sde/sde_hw_catalog.h"
+#include "sde/sde_kms.h"
 
 #define SDE_DBG_BASE_MAX		10
 
@@ -576,6 +577,95 @@ static u32 _sde_dbg_get_reg_dump_size(void)
 
 	return size;
 }
+
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+static void sde_dbg_add_dbg_buses_to_minidump_va(void)
+{
+	static struct sde_dbg_base *dbg = &sde_dbg_base;
+
+	sde_mini_dump_add_va_region("sde_dbgbus", dbg->dbgbus_sde.cmn.content_size*sizeof(u32),
+			dbg->dbgbus_sde.cmn.dumped_content);
+
+	sde_mini_dump_add_va_region("vbif_dbgbus", dbg->dbgbus_vbif_rt.cmn.content_size*sizeof(u32),
+			dbg->dbgbus_vbif_rt.cmn.dumped_content);
+
+	sde_mini_dump_add_va_region("dsi_dbgbus", dbg->dbgbus_dsi.cmn.content_size*sizeof(u32),
+			dbg->dbgbus_dsi.cmn.dumped_content);
+
+	sde_mini_dump_add_va_region("lutdma_dbgbus",
+			dbg->dbgbus_lutdma.cmn.content_size*sizeof(u32),
+			dbg->dbgbus_lutdma.cmn.dumped_content);
+
+	sde_mini_dump_add_va_region("rsc_dbgbus", dbg->dbgbus_rsc.cmn.content_size*sizeof(u32),
+			dbg->dbgbus_rsc.cmn.dumped_content);
+
+	sde_mini_dump_add_va_region("dp_dbgbus", dbg->dbgbus_dp.cmn.content_size*sizeof(u32),
+			dbg->dbgbus_dp.cmn.dumped_content);
+}
+
+static int sde_md_notify_handler(struct notifier_block *this,
+				unsigned long event, void *ptr)
+{
+	struct device *dev = sde_dbg_base.dev;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct drm_device *ddev = platform_get_drvdata(pdev);
+	struct msm_drm_private *priv = ddev->dev_private;
+	struct sde_kms *sde_kms = to_sde_kms(priv->kms);
+	struct sde_dbg_base *dbg_base = &sde_dbg_base;
+	u32 reg_dump_size = _sde_dbg_get_reg_dump_size();
+
+	sde_mini_dump_add_va_region("msm_drm_priv", sizeof(*priv), priv);
+	sde_mini_dump_add_va_region("sde_evtlog",
+			sizeof(*sde_dbg_base_evtlog), sde_dbg_base_evtlog);
+	sde_mini_dump_add_va_region("sde_reglog",
+			sizeof(*sde_dbg_base_reglog), sde_dbg_base_reglog);
+
+	sde_mini_dump_add_va_region("sde_reg_dump", reg_dump_size, dbg_base->reg_dump_base);
+
+	sde_dbg_add_dbg_buses_to_minidump_va();
+	sde_kms_add_data_to_minidump_va(sde_kms);
+
+	return 0;
+}
+
+static struct notifier_block sde_md_notify_blk = {
+	.notifier_call = sde_md_notify_handler,
+	.priority = INT_MAX,
+};
+
+static int sde_register_md_panic_notifer()
+{
+	qcom_va_md_register("display", &sde_md_notify_blk);
+	return 0;
+}
+
+void sde_mini_dump_add_va_region(const char *name, u32 size, void *virt_addr)
+{
+	struct va_md_entry md_entry;
+	int ret;
+
+	strlcpy(md_entry.owner, name, sizeof(md_entry.owner));
+	md_entry.vaddr = (uintptr_t)virt_addr;
+	md_entry.size = size;
+
+	ret = qcom_va_md_add_region(&md_entry);
+	if (ret < 0)
+		SDE_ERROR("va minudmp add entry failed for %s, returned %d\n",
+			name, ret);
+
+	return;
+}
+#else
+static int sde_register_md_panic_notifer()
+{
+	return 0;
+}
+
+void sde_mini_dump_add_va_region(const char *name, u32 size, void *virt_addr)
+{
+	return;
+}
+#endif
 
 static int _sde_dump_reg_range_cmp(void *priv, struct list_head *a,
 		struct list_head *b)
@@ -2310,6 +2400,7 @@ int sde_dbg_init(struct device *dev)
 	sde_dbg_base.enable_dbgbus_dump = SDE_DBG_DEFAULT_DUMP_MODE;
 	sde_dbg_base.dump_blk_mask = SDE_DBG_BUILT_IN_ALL;
 	memset(&sde_dbg_base.regbuf, 0, sizeof(sde_dbg_base.regbuf));
+	sde_register_md_panic_notifer();
 
 	pr_info("evtlog_status: enable:%d, panic:%d, dump:%d\n",
 		sde_dbg_base.evtlog->enable, sde_dbg_base.panic_on_err,

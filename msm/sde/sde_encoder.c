@@ -5746,3 +5746,26 @@ bool sde_encoder_needs_dsc_disable(struct drm_encoder *drm_enc)
 	conn_state = to_sde_connector_state(conn->state);
 	return TOPOLOGY_DSC_MODE(conn_state->old_topology_name);
 }
+
+void sde_encoder_add_data_to_minidump_va(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct sde_encoder_phys *phys_enc;
+	u32 i;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	for( i = 0; i < MAX_PHYS_ENCODERS_PER_VIRTUAL; i++)
+	{
+		phys_enc = sde_enc->phys_encs[i];
+		if(phys_enc && phys_enc->ops.add_to_minidump)
+			phys_enc->ops.add_to_minidump(phys_enc);
+
+		phys_enc = sde_enc->phys_cmd_encs[i];
+		if(phys_enc && phys_enc->ops.add_to_minidump)
+			phys_enc->ops.add_to_minidump(phys_enc);
+
+		phys_enc = sde_enc->phys_vid_encs[i];
+		if(phys_enc && phys_enc->ops.add_to_minidump)
+			phys_enc->ops.add_to_minidump(phys_enc);
+	}
+}

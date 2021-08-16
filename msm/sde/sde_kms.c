@@ -5107,3 +5107,37 @@ int sde_kms_handle_recovery(struct drm_encoder *encoder)
 	SDE_EVT32(DRMID(encoder), MSM_ENC_ACTIVE_REGION);
 	return sde_encoder_wait_for_event(encoder, MSM_ENC_ACTIVE_REGION);
 }
+
+void sde_kms_add_data_to_minidump_va(struct sde_kms *sde_kms)
+{
+	struct msm_drm_private *priv;
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *cstate;
+	struct sde_connector *sde_conn;
+	struct sde_connector_state *conn_state;
+	u32 i;
+
+	priv = sde_kms->dev->dev_private;
+
+	sde_mini_dump_add_va_region("sde_kms", sizeof(*sde_kms), sde_kms);
+
+	for (i = 0; i < priv->num_crtcs; i++) {
+		sde_crtc = to_sde_crtc(priv->crtcs[i]);
+		cstate = to_sde_crtc_state(priv->crtcs[i]->state);
+		sde_mini_dump_add_va_region("sde_crtc", sizeof(*sde_crtc), sde_crtc);
+		sde_mini_dump_add_va_region("crtc_state", sizeof(*cstate), cstate);
+	}
+
+	for (i = 0; i < priv->num_planes; i++)
+		sde_plane_add_data_to_minidump_va(priv->planes[i]);
+
+	for (i = 0; i < priv->num_encoders; i++)
+		sde_encoder_add_data_to_minidump_va(priv->encoders[i]);
+
+	for (i = 0; i < priv->num_connectors; i++) {
+		sde_conn = to_sde_connector(priv->connectors[i]);
+		conn_state = to_sde_connector_state(priv->connectors[i]->state);
+		sde_mini_dump_add_va_region("sde_conn", sizeof(*sde_conn), sde_conn);
+		sde_mini_dump_add_va_region("conn_state", sizeof(*conn_state), conn_state);
+	}
+}

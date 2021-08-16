@@ -1881,6 +1881,14 @@ static void sde_encoder_phys_cmd_setup_vsync_source(struct sde_encoder_phys *phy
 				vsync_source);
 }
 
+void sde_encoder_phys_cmd_add_enc_to_minidump(struct sde_encoder_phys *phys_enc)
+{
+	struct sde_encoder_phys_cmd *cmd_enc;
+	cmd_enc =  to_sde_encoder_phys_cmd(phys_enc);
+
+	sde_mini_dump_add_va_region("sde_enc_phys_cmd", sizeof(*cmd_enc), cmd_enc);
+}
+
 static void sde_encoder_phys_cmd_init_ops(struct sde_encoder_phys_ops *ops)
 {
 	ops->prepare_commit = sde_encoder_phys_cmd_prepare_commit;
@@ -1912,6 +1920,7 @@ static void sde_encoder_phys_cmd_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->setup_vsync_source = sde_encoder_phys_cmd_setup_vsync_source;
 	ops->setup_misr = sde_encoder_helper_setup_misr;
 	ops->collect_misr = sde_encoder_helper_collect_misr;
+	ops->add_to_minidump = sde_encoder_phys_cmd_add_enc_to_minidump;
 }
 
 static inline bool sde_encoder_phys_cmd_intf_te_supported(

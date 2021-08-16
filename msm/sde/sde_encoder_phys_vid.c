@@ -1291,6 +1291,14 @@ static int sde_encoder_phys_vid_wait_for_active(
 	return -EINVAL;
 }
 
+void sde_encoder_phys_vid_add_enc_to_minidump(struct sde_encoder_phys *phys_enc)
+{
+	struct sde_encoder_phys_vid *vid_enc;
+	vid_enc =  to_sde_encoder_phys_vid(phys_enc);
+
+	sde_mini_dump_add_va_region("sde_enc_phys_vid", sizeof(*vid_enc), vid_enc);
+}
+
 static void sde_encoder_phys_vid_init_ops(struct sde_encoder_phys_ops *ops)
 {
 	ops->is_master = sde_encoder_phys_vid_is_master;
@@ -1319,6 +1327,7 @@ static void sde_encoder_phys_vid_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->prepare_commit = sde_encoder_phys_vid_prepare_for_commit;
 	ops->get_underrun_line_count =
 		sde_encoder_phys_vid_get_underrun_line_count;
+	ops->add_to_minidump = sde_encoder_phys_vid_add_enc_to_minidump;
 }
 
 struct sde_encoder_phys *sde_encoder_phys_vid_init(
