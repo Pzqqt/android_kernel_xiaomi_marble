@@ -25,6 +25,7 @@
 #include "msm_vidc_debug.h"
 #include "hfi_packet.h"
 #include "venus_hfi_response.h"
+#include "msm_vidc_events.h"
 
 #define MIN_PAYLOAD_SIZE 3
 
@@ -1302,6 +1303,10 @@ static int __protect_cp_mem(struct msm_vidc_core *core)
 
 	if (rc)
 		d_vpr_e("Failed to protect memory(%d)\n", rc);
+
+	trace_venus_hfi_var_done(
+		memprot.cp_start, memprot.cp_size,
+		memprot.cp_nonpixel_start, memprot.cp_nonpixel_size);
 
 	return rc;
 }
@@ -2614,6 +2619,7 @@ int __load_fw(struct msm_vidc_core *core)
 	core->handoff_done = false;
 	core->hw_power_control = false;
 
+	trace_msm_v4l2_vidc_fw_load("START");
 	rc = __init_resources(core);
 	if (rc) {
 		d_vpr_e("%s: Failed to init resources: %d\n", __func__, rc);
@@ -2651,6 +2657,7 @@ int __load_fw(struct msm_vidc_core *core)
 	* present.
 	*/
 	__hand_off_regulators(core);
+	trace_msm_v4l2_vidc_fw_load("END");
 
 	return rc;
 fail_protect_mem:
@@ -2662,6 +2669,7 @@ fail_load_fw:
 fail_venus_power_on:
 	__deinit_resources(core);
 fail_init_res:
+	trace_msm_v4l2_vidc_fw_load("END");
 	return rc;
 }
 

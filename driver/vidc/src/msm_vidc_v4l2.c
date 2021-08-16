@@ -10,6 +10,7 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_driver.h"
 #include "msm_vidc.h"
+#include "msm_vidc_events.h"
 
 extern struct msm_vidc_core *g_core;
 
@@ -36,14 +37,17 @@ int msm_v4l2_open(struct file *filp)
 	struct msm_vidc_core *core = video_drvdata(filp);
 	struct msm_vidc_inst *inst;
 
+	trace_msm_v4l2_vidc_open("START", NULL);
 	inst = msm_vidc_open(core, vid_dev->type);
 	if (!inst) {
 		d_vpr_e("Failed to create instance, type = %d\n",
 			vid_dev->type);
+		trace_msm_v4l2_vidc_open("END", NULL);
 		return -ENOMEM;
 	}
 	clear_bit(V4L2_FL_USES_V4L2_FH, &vdev->flags);
 	filp->private_data = &(inst->event_handler);
+	trace_msm_v4l2_vidc_open("END", inst);
 	return 0;
 }
 
@@ -53,9 +57,11 @@ int msm_v4l2_close(struct file *filp)
 	struct msm_vidc_inst *inst;
 
 	inst = get_vidc_inst(filp, NULL);
+	trace_msm_v4l2_vidc_close("START", inst);
 
 	rc = msm_vidc_close(inst);
 	filp->private_data = NULL;
+	trace_msm_v4l2_vidc_close("END", NULL);
 	return rc;
 }
 
