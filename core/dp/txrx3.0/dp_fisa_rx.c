@@ -875,6 +875,7 @@ static void dp_fisa_rx_fst_update(struct dp_rx_fst *fisa_hdl,
 	 * reflect the flow update
 	 */
 	if (is_fst_updated &&
+	    fisa_hdl->fse_cache_flush_allow &&
 	    (qdf_atomic_inc_return(&fisa_hdl->fse_cache_flush_posted) == 1)) {
 		/* return 1 after increment implies FSE cache flush message
 		 * already posted. so start restart the timer
