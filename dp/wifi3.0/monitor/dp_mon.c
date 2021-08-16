@@ -5690,7 +5690,10 @@ static QDF_STATUS dp_mon_vdev_detach(struct dp_vdev *vdev)
 
 	qdf_mem_free(mon_vdev);
 	vdev->monitor_vdev = NULL;
-	pdev->monitor_pdev->mvdev = NULL;
+	/* set mvdev to NULL only if detach is called for monitor/special vap
+	 */
+	if (pdev->monitor_pdev->mvdev == vdev)
+		pdev->monitor_pdev->mvdev = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }
