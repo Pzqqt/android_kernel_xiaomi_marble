@@ -16,6 +16,7 @@
  * @init: initializes the regulators/core clocks/GPIOs/pinctrl
  * @deinit: turns off the regulators/core clocks/GPIOs/pinctrl
  * @clk_enable: enable/disable the DP clocks
+ * @clk_status: check for clock status
  * @set_pixel_clk_parent: set the parent of DP pixel clock
  * @clk_get_rate: get the current rate for provided clk_name
  * @power_client_init: configures clocks and regulators
@@ -29,6 +30,7 @@ struct dp_power {
 	int (*deinit)(struct dp_power *power);
 	int (*clk_enable)(struct dp_power *power, enum dp_pm_type pm_type,
 				bool enable);
+	bool (*clk_status)(struct dp_power *power, enum dp_pm_type pm_type);
 	int (*set_pixel_clk_parent)(struct dp_power *power, u32 stream_id);
 	u64 (*clk_get_rate)(struct dp_power *power, char *clk_name);
 	int (*power_client_init)(struct dp_power *power,
