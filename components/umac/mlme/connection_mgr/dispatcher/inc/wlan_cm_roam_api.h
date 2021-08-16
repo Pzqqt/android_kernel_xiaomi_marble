@@ -1321,6 +1321,24 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 			    struct roam_stats_event *stats_info);
 
 /**
+ * cm_handle_auth_offload() - auth offload evt wrapper for wma
+ * @auth_event: auth offload event data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_auth_offload(struct auth_offload_event *auth_event);
+
+/**
+ * cm_roam_auth_offload_event_handler() - Handler for auth offload event
+ * @auth_event: Authentication event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_auth_offload_event_handler(struct auth_offload_event *auth_event);
+
+/**
  * cm_roam_update_vdev() - Update the STA and BSS
  * @sync_ind: Information needed for roam sync propagation
  *

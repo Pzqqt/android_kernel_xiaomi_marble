@@ -2991,6 +2991,44 @@ err:
 	}
 	return status;
 }
+static QDF_STATUS
+extract_auth_offload_event_tlv(wmi_unified_t wmi_handle,
+			       uint8_t *event, uint32_t len,
+			       struct auth_offload_event *auth_event)
+{
+	wmi_roam_preauth_start_event_fixed_param *rso_auth_start_ev;
+	WMI_ROAM_PREAUTH_START_EVENTID_param_tlvs *param_buf;
+
+	param_buf = (WMI_ROAM_PREAUTH_START_EVENTID_param_tlvs *) event;
+
+	rso_auth_start_ev = param_buf->fixed_param;
+	if (!rso_auth_start_ev) {
+		wmi_debug("received null event data from target");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (rso_auth_start_ev->vdev_id > WLAN_MAX_VDEVS) {
+		wmi_debug("received invalid vdev_id %d",
+			  rso_auth_start_ev->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	auth_event->vdev_id = rso_auth_start_ev->vdev_id;
+
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&rso_auth_start_ev->candidate_ap_bssid,
+				   auth_event->ap_bssid.bytes);
+	if (qdf_is_macaddr_zero(&auth_event->ap_bssid) ||
+	    qdf_is_macaddr_broadcast(&auth_event->ap_bssid) ||
+	    qdf_is_macaddr_group(&auth_event->ap_bssid)) {
+		wmi_debug("Invalid bssid");
+		return -EINVAL;
+	}
+
+	wmi_debug("Received Roam auth offload event for bss:"QDF_MAC_ADDR_FMT" vdev_id:%d",
+		  QDF_MAC_ADDR_REF(auth_event->ap_bssid.bytes), auth_event->vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
@@ -3009,6 +3047,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_vdev_disconnect_event = extract_vdev_disconnect_event_tlv;
 	ops->extract_roam_scan_chan_list = extract_roam_scan_chan_list_tlv;
 	ops->extract_roam_stats_event = extract_roam_stats_event_tlv;
+	ops->extract_auth_offload_event = extract_auth_offload_event_tlv;
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =

@@ -268,6 +268,37 @@ static void wma_handle_disconnect_reason(tp_wma_handle wma_handle,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS
+cm_handle_auth_offload(struct auth_offload_event *auth_event)
+{
+	QDF_STATUS status;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct mac_context *mac_ctx;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx || !wma) {
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cds_host_diag_log_work(&wma->roam_preauth_wl,
+			       WMA_ROAM_PREAUTH_WAKE_LOCK_DURATION,
+			       WIFI_POWER_EVENT_WAKELOCK_WOW);
+
+	qdf_wake_lock_timeout_acquire(&wma->roam_ho_wl,
+			       WMA_ROAM_HO_WAKE_LOCK_DURATION);
+
+	lim_sae_auth_cleanup_retry(mac_ctx, auth_event->vdev_id);
+
+	status = wma->csr_roam_auth_event_handle_cb(mac_ctx, auth_event->vdev_id,
+						    auth_event->ap_bssid);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err_rl("Trigger pre-auth failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 cm_handle_disconnect_reason(struct vdev_disconnect_event_data *data)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
