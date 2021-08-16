@@ -8812,6 +8812,8 @@ void lim_process_ap_ecsa_timeout(void *data)
 		}
 	} else {
 		lim_send_csa_tx_complete(session->vdev_id);
+		/* Clear CSA IE count and update beacon */
+		lim_send_dfs_chan_sw_ie_update(mac_ctx, session);
 	}
 }
 
