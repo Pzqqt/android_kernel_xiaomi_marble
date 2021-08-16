@@ -461,5 +461,18 @@ wmi_extract_roam_stats_event(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_extract_auth_offload_event(wmi_unified_t wmi_handle,
+			       uint8_t *event, uint32_t data_len,
+			       struct auth_offload_event *auth_event)
+{
+	if (wmi_handle->ops->extract_auth_offload_event)
+		return wmi_handle->ops->extract_auth_offload_event(wmi_handle,
+								   event,
+								   data_len,
+								   auth_event);
+	return QDF_STATUS_E_FAILURE;
+}
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif

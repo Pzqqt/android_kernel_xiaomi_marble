@@ -1908,6 +1908,16 @@ struct roam_stats_event {
 	struct roam_msg_info *roam_msg_info;
 };
 
+/*
+ * struct auth_offload_event - offload data carried by roam event
+ * @vdev_id: vdev id
+ * @ap_bssid: SAE authentication offload MAC Addess
+ */
+struct auth_offload_event {
+	uint8_t vdev_id;
+	struct qdf_mac_addr ap_bssid;
+};
+
 /**
  * wlan_cm_roam_tx_ops  - structure of tx function pointers for
  * roaming related commands
@@ -2139,6 +2149,7 @@ struct roam_offload_synch_ind {
  * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
  * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
  * @roam_stats_event_rx: Rx ops function pointer for roam stats event
+ * @roam_auth_offload_event: Rx ops function pointer for auth offload event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -2158,6 +2169,8 @@ struct wlan_cm_roam_rx_ops {
 	QDF_STATUS
 	(*roam_stats_event_rx)(struct wlan_objmgr_psoc *psoc,
 			       struct roam_stats_event *stats_info);
+	QDF_STATUS
+	(*roam_auth_offload_event)(struct auth_offload_event *auth_event);
 #endif
 };
 #endif

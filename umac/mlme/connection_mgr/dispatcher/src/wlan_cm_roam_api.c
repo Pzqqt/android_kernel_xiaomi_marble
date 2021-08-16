@@ -2165,6 +2165,12 @@ cm_vdev_disconnect_event_handler(struct vdev_disconnect_event_data *data)
 {
 	return cm_handle_disconnect_reason(data);
 }
+
+QDF_STATUS
+cm_roam_auth_offload_event_handler(struct auth_offload_event *auth_event)
+{
+	return cm_handle_auth_offload(auth_event);
+}
 #else
 static void
 cm_handle_roam_offload_events(struct roam_offload_roam_event roam_event)
