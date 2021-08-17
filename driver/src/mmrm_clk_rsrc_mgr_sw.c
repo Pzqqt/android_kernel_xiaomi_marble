@@ -14,7 +14,7 @@
 #define Q16_INT(q) ((q) >> 16)
 #define Q16_FRAC(q) ((((q) & 0xFFFF) * 100) >> 16)
 #define CLK_RATE_STEP 1000000
-#define CLIENT_CB_TIMEOUT msecs_to_jiffies(100)
+#define NOTIFY_TIMEOUT 100000000
 
 static int mmrm_sw_update_freq(
 	struct mmrm_sw_clk_mgr_info *sinfo, struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
@@ -493,6 +493,7 @@ static int mmrm_sw_throttle_low_priority_client(
 	struct mmrm_sw_clk_mgr_info *sinfo, int *delta_cur)
 {
 	int rc = 0, i;
+	u64 start_ts = 0, end_ts = 0;
 	bool found_client_throttle = false;
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry_throttle_client;
 	struct mmrm_client_notifier_data notifier_data;
@@ -545,16 +546,25 @@ static int mmrm_sw_throttle_low_priority_client(
 		notifier_data.cb_data.val_chng.new_val =
 			tbl_entry_throttle_client->freq[clk_min_level];
 		notifier_data.pvt_data = tbl_entry_throttle_client->pvt_data;
+		start_ts = ktime_get_ns();
 
 		if (tbl_entry_throttle_client->notifier_cb_fn)
 			rc = tbl_entry_throttle_client->notifier_cb_fn(&notifier_data);
 
+		end_ts = ktime_get_ns();
+		d_mpr_h("%s: Client notifier cbk processing time %llu ns\n",
+			__func__, (end_ts - start_ts));
+
 		if (rc) {
 			d_mpr_e("%s: Client failed to send SUCCESS in callback(%d)\n",
-					__func__, tbl_entry_throttle_client->clk_src_id);
+				__func__, tbl_entry_throttle_client->clk_src_id);
 			rc = -EINVAL;
 			goto err_clk_set_fail;
 		}
+
+		if ((end_ts - start_ts) > NOTIFY_TIMEOUT)
+			d_mpr_e("%s:Client notifier cbk took %llu ns more than timeout %llu ns\n",
+				__func__, (end_ts - start_ts), NOTIFY_TIMEOUT);
 
 		if (tbl_entry_throttle_client->reserve == false) {
 			rc = clk_set_rate(tbl_entry_throttle_client->clk,
@@ -627,6 +637,8 @@ static int mmrm_reinstate_throttled_client(struct mmrm_sw_clk_mgr_info *sinfo) {
 	struct mmrm_sw_throttled_clients_data *iter, *safe_iter = NULL;
 	struct mmrm_client_notifier_data notifier_data;
 	struct mmrm_sw_clk_client_tbl_entry *re_entry_throttle_client;
+	int rc =  0;
+	u64 start_ts = 0, end_ts = 0;
 
 	list_for_each_entry_safe(iter, safe_iter, &sinfo->throttled_clients, list) {
 		if (!IS_ERR_OR_NULL(iter) && peak_data->aggreg_val +
@@ -642,21 +654,36 @@ static int mmrm_reinstate_throttled_client(struct mmrm_sw_clk_mgr_info *sinfo) {
 				d_mpr_h("%s:found throttled client name(%s) clsid (0x%x)\n",
 					__func__, re_entry_throttle_client->name,
 					re_entry_throttle_client->clk_src_id);
-			notifier_data.cb_type = MMRM_CLIENT_RESOURCE_VALUE_CHANGE;
-			notifier_data.cb_data.val_chng.old_val =
-				re_entry_throttle_client->freq[MMRM_VDD_LEVEL_LOW_SVS];
+				notifier_data.cb_type = MMRM_CLIENT_RESOURCE_VALUE_CHANGE;
+				notifier_data.cb_data.val_chng.old_val =
+					re_entry_throttle_client->freq[MMRM_VDD_LEVEL_LOW_SVS];
 
-			notifier_data.cb_data.val_chng.new_val =
-				re_entry_throttle_client->freq[iter->prev_vdd_level];
+				notifier_data.cb_data.val_chng.new_val =
+					re_entry_throttle_client->freq[iter->prev_vdd_level];
 
-			notifier_data.pvt_data = re_entry_throttle_client->pvt_data;
+				notifier_data.pvt_data = re_entry_throttle_client->pvt_data;
+				start_ts = ktime_get_ns();
 
-			if (re_entry_throttle_client->notifier_cb_fn)
-				re_entry_throttle_client->notifier_cb_fn(&notifier_data);
+				if (re_entry_throttle_client->notifier_cb_fn) {
+					rc = re_entry_throttle_client->notifier_cb_fn
+								(&notifier_data);
+					end_ts = ktime_get_ns();
+					d_mpr_h("%s: Client notifier cbk processing time(%llu)ns\n",
+						__func__, end_ts - start_ts);
+
+					if (rc) {
+						d_mpr_e("%s: Client notifier callback failed(%d)\n",
+							__func__,
+							re_entry_throttle_client->clk_src_id);
+					}
+					if ((end_ts - start_ts) > NOTIFY_TIMEOUT)
+						d_mpr_e("%s: Client notifier took %llu ns\n",
+							__func__, (end_ts - start_ts));
+				}
+				list_del(&iter->list);
+				kfree(iter);
 			}
 		}
-		list_del(&iter->list);
-		kfree(iter);
 	}
 	return 0;
 }
