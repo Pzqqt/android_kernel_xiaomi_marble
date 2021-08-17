@@ -1767,7 +1767,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		for (count = 0; count < peer_stats->num_rates; count++) {
 			mcs_index = RATE_STAT_GET_MCS_INDEX(rate_stats->rate);
 			if (QDF_IS_STATUS_SUCCESS(status)) {
-				if (rate_stats->rate && mcs_index < MAX_MCS)
+				if (mcs_index < MAX_MCS)
 					rate_stats->rx_mpdu =
 					    dp_stats->rx.rx_mpdu_cnt[mcs_index];
 				else
