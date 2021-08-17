@@ -122,7 +122,6 @@ struct csr_channel {
 };
 
 struct bss_config_param {
-	enum medium_access_type qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	tSirMacCapabilityInfo BssCap;
@@ -299,8 +298,6 @@ struct csr_roam_session {
 	bool is_bcn_recv_start;
 	bool beacon_report_do_not_resume;
 #endif
-	bool fWMMConnection;
-	bool fQOSConnection;
 #ifdef FEATURE_WLAN_ESE
 	bool isPrevApInfoValid;
 	uint32_t roamTS1;

@@ -2302,7 +2302,6 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t bss_op_ch_freq = 0;
-	uint8_t qAPisEnabled = false;
 	enum reg_wifi_band band;
 
 	/* SSID */
@@ -2330,28 +2329,6 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 						mac, vdev_id, pProfile,
 						bss_op_ch_freq,
 						&band);
-	/* QOS */
-	/* Is this correct to always set to this // *** */
-	if (pBssConfig->BssCap.ess == 1) {
-		/*For Softap case enable WMM */
-		if (CSR_IS_INFRA_AP(pProfile)
-		    && (eCsrRoamWmmNoQos !=
-			mac->roam.configParam.WMMSupportMode)) {
-			qAPisEnabled = true;
-		} else {
-			qAPisEnabled = false;
-		}
-	} else {
-		qAPisEnabled = true;
-	}
-	if ((eCsrRoamWmmNoQos != mac->roam.configParam.WMMSupportMode &&
-	     qAPisEnabled) ||
-	    ((eCSR_CFG_DOT11_MODE_11N == pBssConfig->uCfgDot11Mode &&
-	      qAPisEnabled))) {
-		pBssConfig->qosType = MEDIUM_ACCESS_WMM_EDCF_DSCP;
-	} else {
-		pBssConfig->qosType = MEDIUM_ACCESS_DCF;
-	}
 
 	/* short slot time */
 	if (WNI_CFG_PHY_MODE_11B != pBssConfig->uCfgDot11Mode) {
@@ -2361,36 +2338,6 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 		mac->mlme_cfg->feature_flags.enable_short_slot_time_11g = 0;
 	}
 
-	return status;
-}
-
-static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId,
-				     enum medium_access_type qosType)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t QoSEnabled;
-	uint32_t WmeEnabled;
-	/* set the CFG enable/disable variables based on the
-	 * qosType being configured.
-	 */
-	switch (qosType) {
-	case MEDIUM_ACCESS_WMM_EDCF_DSCP:
-		QoSEnabled = false;
-		WmeEnabled = true;
-		break;
-	case MEDIUM_ACCESS_11E_EDCF:
-		QoSEnabled = true;
-		WmeEnabled = false;
-		break;
-	default:
-	case MEDIUM_ACCESS_DCF:
-		QoSEnabled = false;
-		WmeEnabled = false;
-		break;
-	}
-	/* save the WMM setting for later use */
-	mac->roam.roamSession[sessionId].fWMMConnection = (bool) WmeEnabled;
-	mac->roam.roamSession[sessionId].fQOSConnection = (bool) QoSEnabled;
 	return status;
 }
 
@@ -2526,8 +2473,6 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* Qos */
-	csr_set_qos_to_cfg(mac, sessionId, pBssConfig->qosType);
 	/* CB */
 	if (CSR_IS_INFRA_AP(pProfile))
 		chan_freq = pProfile->op_freq;
