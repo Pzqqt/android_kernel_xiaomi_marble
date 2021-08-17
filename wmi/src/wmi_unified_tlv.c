@@ -7566,6 +7566,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->ema_max_profile_period =
 			tgt_res_cfg->ema_max_profile_period;
 	resource_cfg->ema_init_config = tgt_res_cfg->ema_init_config;
+	resource_cfg->carrier_config = tgt_res_cfg->carrier_profile_config;
 
 	if (tgt_res_cfg->max_ndp_sessions)
 		resource_cfg->max_ndp_sessions =
