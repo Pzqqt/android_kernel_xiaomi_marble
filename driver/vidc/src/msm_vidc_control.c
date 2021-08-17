@@ -693,6 +693,44 @@ static int msm_vidc_update_buffer_count_if_needed(struct msm_vidc_inst* inst,
 	return rc;
 }
 
+static int msm_vidc_allow_secure_session(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_inst *i;
+	struct msm_vidc_core *core;
+	u32 count = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	if (!core->capabilities) {
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	core_lock(core, __func__);
+	list_for_each_entry(i, &core->instances, list) {
+		if (i->capabilities) {
+			if (i->capabilities->cap[SECURE_MODE].value)
+				count++;
+		}
+	}
+
+	if (count > core->capabilities[MAX_SECURE_SESSION_COUNT].value) {
+		i_vpr_e(inst,
+			"%s: total secure sessions %d exceeded max limit %d\n",
+			__func__, count,
+			core->capabilities[MAX_SECURE_SESSION_COUNT].value);
+		rc = -EINVAL;
+	}
+	core_unlock(core, __func__);
+
+	return rc;
+}
+
 int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
@@ -730,6 +768,14 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	/* Static setting */
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
 		msm_vidc_update_cap_value(inst, cap_id, ctrl->val, __func__);
+
+		if (ctrl->id == V4L2_CID_MPEG_VIDC_SECURE) {
+			if (ctrl->val) {
+				rc = msm_vidc_allow_secure_session(inst);
+				if (rc)
+					return rc;
+			}
+		}
 
 		if (ctrl->id == V4L2_CID_ROTATE) {
 			if (ctrl->val == 90 || ctrl->val == 270) {
