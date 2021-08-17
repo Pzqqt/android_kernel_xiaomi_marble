@@ -8079,8 +8079,16 @@ struct wmi_host_pdev_get_dpd_status_event {
 
 struct wmi_host_pdev_get_halphy_cal_status_event {
 	uint32_t pdev_id;
-	uint32_t halphy_cal_valid_bmap;
-	uint32_t halphy_cal_status;
+	uint32_t halphy_cal_adc_status:1,
+		 halphy_cal_bwfilter_status:1,
+		 halphy_cal_pdet_and_pal_status:1,
+		 halphy_cal_rxdco_status:1,
+		 halphy_cal_comb_txiq_rxiq_status:1,
+		 halphy_cal_ibf_status:1,
+		 halphy_cal_pa_droop_status:1,
+		 halphy_cal_dac_status:1,
+		 halphy_cal_ani_status:1,
+		 halphy_cal_noise_floor_status:1;
 };
 
 /**

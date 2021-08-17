@@ -15387,6 +15387,16 @@ extract_dpd_status_ev_param_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static int
+convert_halphy_status(wmi_pdev_get_halphy_cal_status_evt_fixed_param *status,
+		      WMI_HALPHY_CAL_VALID_BITMAP_STATUS valid_bit)
+{
+	if (status->halphy_cal_valid_bmap && valid_bit)
+		return (status->halphy_cal_status && valid_bit);
+
+	return 0;
+}
+
 static QDF_STATUS
 extract_halphy_cal_status_ev_param_tlv(wmi_unified_t wmi_handle,
 				       void *evt_buf,
@@ -15404,8 +15414,36 @@ extract_halphy_cal_status_ev_param_tlv(wmi_unified_t wmi_handle,
 	halphy_cal_status = param_buf->fixed_param;
 	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host
 		(wmi_handle, halphy_cal_status->pdev_id);
-	param->halphy_cal_valid_bmap = halphy_cal_status->halphy_cal_valid_bmap;
-	param->halphy_cal_status = halphy_cal_status->halphy_cal_status;
+	param->halphy_cal_adc_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_ADC_BMAP);
+	param->halphy_cal_bwfilter_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_BWFILTER_BMAP);
+	param->halphy_cal_pdet_and_pal_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_PDET_AND_PAL_BMAP);
+	param->halphy_cal_rxdco_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_RXDCO_BMAP);
+	param->halphy_cal_comb_txiq_rxiq_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_COMB_TXLO_TXIQ_RXIQ_BMAP);
+	param->halphy_cal_ibf_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_IBF_BMAP);
+	param->halphy_cal_pa_droop_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_PA_DROOP_BMAP);
+	param->halphy_cal_dac_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_DAC_BMAP);
+	param->halphy_cal_ani_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_ANI_BMAP);
+	param->halphy_cal_noise_floor_status =
+		convert_halphy_status(halphy_cal_status,
+				      WMI_HALPHY_CAL_NOISE_FLOOR_BMAP);
 
 	return QDF_STATUS_SUCCESS;
 }
