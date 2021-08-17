@@ -1058,10 +1058,11 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 		if (wlan_cm_get_check_6ghz_security(psoc) &&
 		    wlan_reg_is_6ghz_chan_freq(scan_entry->channel.chan_freq)) {
 			if (!util_scan_entry_rsn(scan_entry)) {
-				scm_info("Drop frame from "QDF_MAC_ADDR_FMT
-					 ": No RSN IE for 6GHz AP",
-					 QDF_MAC_ADDR_REF(
-						 scan_entry->bssid.bytes));
+				scm_info_rl(
+					"Drop frame from "QDF_MAC_ADDR_FMT
+					": No RSN IE for 6GHz AP",
+					QDF_MAC_ADDR_REF(
+						scan_entry->bssid.bytes));
 				util_scan_free_cache_entry(scan_entry);
 				qdf_mem_free(scan_node);
 				continue;
@@ -1069,12 +1070,13 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 			status = wlan_crypto_rsnie_check(&sec_params,
 					util_scan_entry_rsn(scan_entry));
 			if (QDF_IS_STATUS_ERROR(status)) {
-				scm_info("Drop frame from 6GHz AP "
-					 QDF_MAC_ADDR_FMT
-					 ": RSN IE parse failed, status %d",
-					 QDF_MAC_ADDR_REF(
-						 scan_entry->bssid.bytes),
-					 status);
+				scm_info_rl(
+					"Drop frame from 6GHz AP "
+					QDF_MAC_ADDR_FMT
+					": RSN IE parse failed, status %d",
+					QDF_MAC_ADDR_REF(
+						scan_entry->bssid.bytes),
+					status);
 				util_scan_free_cache_entry(scan_entry);
 				qdf_mem_free(scan_node);
 				continue;
@@ -1087,11 +1089,14 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 					   WLAN_CRYPTO_CIPHER_WEP_40)) ||
 			    (QDF_HAS_PARAM(sec_params.ucastcipherset,
 					   WLAN_CRYPTO_CIPHER_WEP_104))) {
-				scm_info("Drop frame from "QDF_MAC_ADDR_FMT
-					 ": Invalid sec type %0X for 6GHz AP",
-					 QDF_MAC_ADDR_REF(
-						 scan_entry->bssid.bytes),
-					 sec_params.ucastcipherset);
+				scm_info_rl(
+					"Drop frame from "QDF_MAC_ADDR_FMT
+					": Invalid sec type %0X for 6GHz AP",
+					QDF_MAC_ADDR_REF(
+						scan_entry->bssid.bytes),
+					sec_params.ucastcipherset);
+				util_scan_free_cache_entry(scan_entry);
+				qdf_mem_free(scan_node);
 				continue;
 			}
 			if (!wlan_cm_6ghz_allowed_for_akm(psoc,
@@ -1099,11 +1104,12 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 					sec_params.rsn_caps,
 					util_scan_entry_rsnxe(scan_entry),
 					0, false)) {
-				scm_info("Drop frame from "QDF_MAC_ADDR_FMT
-					 ": Invalid AKM suite %0X for 6GHz AP",
-					 QDF_MAC_ADDR_REF(
+				scm_info_rl(
+					"Drop frame from "QDF_MAC_ADDR_FMT
+					": Invalid AKM suite %0X for 6GHz AP",
+					QDF_MAC_ADDR_REF(
 						scan_entry->bssid.bytes),
-					 sec_params.key_mgmt);
+					sec_params.key_mgmt);
 				util_scan_free_cache_entry(scan_entry);
 				qdf_mem_free(scan_node);
 				continue;
@@ -1113,9 +1119,10 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 			scan_obj->cb.update_beacon(pdev, scan_entry);
 
 		if (!scm_is_bss_allowed_for_country(psoc, scan_entry)) {
-			scm_info("Drop frame from "QDF_MAC_ADDR_FMT
-				 ": AP in VLP mode not supported for US",
-				 QDF_MAC_ADDR_REF(scan_entry->bssid.bytes));
+			scm_info_rl(
+				"Drop frame from "QDF_MAC_ADDR_FMT
+				": AP in VLP mode not supported for US",
+				QDF_MAC_ADDR_REF(scan_entry->bssid.bytes));
 			util_scan_free_cache_entry(scan_entry);
 			qdf_mem_free(scan_node);
 			continue;
