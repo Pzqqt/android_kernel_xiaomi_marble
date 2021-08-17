@@ -4491,7 +4491,13 @@ lim_fill_preauth_req_dot11_mode(struct mac_context *mac_ctx,
 	enum mlme_dot11_mode intersected_mode;
 	struct bss_description *bss_desc = req->pbssDescription;
 
-	wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc, &ie_struct);
+	status = wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc,
+						     &ie_struct);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("IE parsing failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	self_dot11_mode = lim_get_self_dot11_mode(mac_ctx, QDF_STA_MODE);
 	bss_dot11_mode = lim_get_bss_dot11_mode(bss_desc, ie_struct);
 
@@ -4499,8 +4505,10 @@ lim_fill_preauth_req_dot11_mode(struct mac_context *mac_ctx,
 						       bss_dot11_mode,
 						       &intersected_mode,
 						       ie_struct, bss_desc);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(ie_struct);
 		return status;
+	}
 
 	req->dot11mode = intersected_mode;
 	pe_debug("self dot11mode %d bss_dot11 mode %d intersected_mode %d",
