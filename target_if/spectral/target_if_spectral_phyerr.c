@@ -1428,11 +1428,21 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 	uint8_t segid_sec80;
 	enum phy_ch_width ch_width;
 	QDF_STATUS ret;
+	struct target_if_spectral_ops *p_sops;
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
 		goto fail;
 	}
+
+	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+	/* Drop the sample if Spectral is not active */
+	if (!p_sops->is_spectral_active(spectral,
+					SPECTRAL_SCAN_MODE_NORMAL)) {
+		spectral_info_rl("Spectral scan is not active");
+		goto fail_no_print;
+	}
+
 	if (!data) {
 		spectral_err_rl("Phyerror event buffer is null");
 		goto fail;
@@ -1616,10 +1626,12 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 	return 0;
 
 fail:
+	spectral_err_rl("Error while processing Spectral report");
+
+fail_no_print:
 	if (spectral_debug_level & DEBUG_SPECTRAL4)
 		spectral_debug_level = DEBUG_SPECTRAL;
 
-	spectral_err_rl("Error while processing Spectral report");
 	free_samp_msg_skb(spectral, SPECTRAL_SCAN_MODE_NORMAL);
 	return -EPERM;
 }
