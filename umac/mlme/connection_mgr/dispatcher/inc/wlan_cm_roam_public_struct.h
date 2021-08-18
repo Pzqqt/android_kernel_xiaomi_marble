@@ -344,7 +344,7 @@ struct rso_config {
 	struct reassoc_timer_ctx ctx;
 #endif
 	qdf_mutex_t cm_rso_lock;
-	uint8_t rsn_cap;
+	uint16_t rsn_cap;
 	uint8_t country_code[REG_ALPHA2_LEN + 1];
 	bool disable_hi_rssi;
 	bool roam_control_enable;
