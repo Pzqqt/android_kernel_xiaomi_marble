@@ -485,21 +485,26 @@ static int cvp_fence_proc(struct msm_cvp_inst *inst,
 
 	/* Only FD support dcvs at certain FW */
 	if (!msm_cvp_dcvs_disable &&
-		(hdr.size == sizeof(struct cvp_hfi_msg_session_hdr_ext)
-			+ sizeof(struct cvp_hfi_buf_type))) {
-		struct cvp_hfi_msg_session_hdr_ext *fhdr =
-			(struct cvp_hfi_msg_session_hdr_ext *)&hdr;
-		struct msm_cvp_core *core = inst->core;
-		dprintk(CVP_PWR, "busy cycle %d, total %d\n",
-			fhdr->busy_cycles, fhdr->total_cycles);
+		hdr.packet_type == HFI_MSG_SESSION_CVP_FD) {
+		if (hdr.size == sizeof(struct cvp_hfi_msg_session_hdr_ext)
+			+ sizeof(struct cvp_hfi_buf_type)) {
+			struct cvp_hfi_msg_session_hdr_ext *fhdr =
+				(struct cvp_hfi_msg_session_hdr_ext *)&hdr;
+			struct msm_cvp_core *core = inst->core;
 
-		if (core &&
-			(core->dyn_clk.sum_fps[HFI_HW_FDU] ||
-			core->dyn_clk.sum_fps[HFI_HW_MPU] ||
-			core->dyn_clk.sum_fps[HFI_HW_OD] ||
-			core->dyn_clk.sum_fps[HFI_HW_ICA]))
-		{
-			clock_check = true;
+			dprintk(CVP_PWR, "busy cycle %d, total %d\n",
+				fhdr->busy_cycles, fhdr->total_cycles);
+
+			if (core && (core->dyn_clk.sum_fps[HFI_HW_FDU] ||
+				core->dyn_clk.sum_fps[HFI_HW_MPU] ||
+				core->dyn_clk.sum_fps[HFI_HW_OD] ||
+				core->dyn_clk.sum_fps[HFI_HW_ICA])) {
+				clock_check = true;
+			}
+		} else {
+			dprintk(CVP_WARN, "dcvs is disabled, %d != %d + %d\n",
+				hdr.size, sizeof(struct cvp_hfi_msg_session_hdr_ext),
+				sizeof(struct cvp_hfi_buf_type));
 		}
 	}
 	hfi_err = hdr.error_type;
