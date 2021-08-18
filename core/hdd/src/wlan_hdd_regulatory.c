@@ -938,6 +938,8 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	char country[REG_ALPHA2_LEN + 1] = {0};
+	bool update_already_in_progress =
+		hdd_ctx->is_regulatory_update_in_progress;
 
 	hdd_debug("country: %c%c, initiator %d, dfs_region: %d",
 		  request->alpha2[0],
@@ -968,7 +970,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		break;
 	}
 
-	if (QDF_IS_STATUS_ERROR(status)) {
+	if (QDF_IS_STATUS_ERROR(status) && !update_already_in_progress) {
 		hdd_err("Failed to set country");
 		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
 		hdd_ctx->is_regulatory_update_in_progress = false;
