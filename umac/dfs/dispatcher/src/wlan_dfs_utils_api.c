@@ -840,6 +840,8 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 		chan_list[i].dfs_ch_ieee  =
 			wlan_reg_freq_to_chan(pdev, pcl_ch[i]);
 		chan_list[i].dfs_ch_freq  = pcl_ch[i];
+		if (wlan_reg_is_dfs_for_freq(pdev, pcl_ch[i]))
+			chan_list[i].dfs_ch_flagext |= WLAN_CHAN_DFS;
 	}
 	*num_chan = i;
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "num channels %d", i);
