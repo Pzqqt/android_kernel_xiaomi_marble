@@ -3759,7 +3759,8 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 	 * targets. */
 #if !IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
 	IPAWANINFO("rmnet_ipa unregister_netdev\n");
-	unregister_netdev(IPA_NETDEV());
+	if (IPA_NETDEV())
+		unregister_netdev(IPA_NETDEV());
 	ipa3_wwan_deregister_netdev_pm_client();
 #endif
 	cancel_work_sync(&ipa3_tx_wakequeue_work);
@@ -3989,7 +3990,8 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 		 * enabled targets. */
 #if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
 		IPAWANINFO("rmnet_ipa unregister_netdev\n");
-		unregister_netdev(IPA_NETDEV());
+		if (IPA_NETDEV())
+			unregister_netdev(IPA_NETDEV());
 		ipa3_wwan_deregister_netdev_pm_client();
 		if (IPA_NETDEV())
 			free_netdev(IPA_NETDEV());
