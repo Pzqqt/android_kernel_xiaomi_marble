@@ -26,6 +26,7 @@
 
 #include <htt_deps.h> /* A_UINT32 */
 #include <htt_common.h>
+#include <htt.h> /* HTT stats TLV struct def and tag defs */
 
 /*
  * htt_dbg_ext_stats_type -
@@ -1237,6 +1238,7 @@ typedef enum {
 #define HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS 4
 #define HTT_TX_PEER_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_TX_PEER_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
+#define HTT_TX_PEER_STATS_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
 
 typedef struct _htt_tx_peer_rate_stats_tlv {
     htt_tlv_hdr_t tlv_hdr;
@@ -1268,6 +1270,7 @@ typedef struct _htt_tx_peer_rate_stats_tlv {
     A_UINT32 tx_mu_mcs_ext[HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 tx_stbc_ext[HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 tx_gi_ext[HTT_TX_PEER_STATS_NUM_GI_COUNTERS][HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
+    A_UINT32 reduced_tx_bw[HTT_TX_PEER_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PEER_STATS_NUM_BW_COUNTERS];
 } htt_tx_peer_rate_stats_tlv;
 
 #define HTT_RX_PEER_STATS_NUM_MCS_COUNTERS 12 /* 0-11 */
@@ -1277,6 +1280,7 @@ typedef struct _htt_tx_peer_rate_stats_tlv {
 #define HTT_RX_PEER_STATS_NUM_BW_COUNTERS 4
 #define HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_RX_PEER_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
+#define HTT_RX_PEER_STATS_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
 
 typedef struct _htt_rx_peer_rate_stats_tlv {
     htt_tlv_hdr_t tlv_hdr;
@@ -1328,6 +1332,7 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     A_UINT32 rx_mcs_ext[HTT_RX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 rx_stbc_ext[HTT_RX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 rx_gi_ext[HTT_RX_PEER_STATS_NUM_GI_COUNTERS][HTT_RX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
+    A_UINT32 reduced_rx_bw[HTT_RX_PEER_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PEER_STATS_NUM_BW_COUNTERS];
 } htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
@@ -3439,6 +3444,8 @@ typedef enum {
     HTT_TX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS = 5
 } HTT_TX_PDEV_STATS_NUM_PUNCTURED_MODE_TYPE;
 
+#define HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -3545,6 +3552,13 @@ typedef struct {
     A_UINT32 tx_bw_320mhz;
     A_UINT32 tx_gi_ext_2[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
     A_UINT32 tx_su_punctured_mode[HTT_TX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
+    A_UINT32 reduced_tx_bw[HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    /* 11AC VHT DL MU MIMO TX BW stats at reduced channel config */
+    A_UINT32 reduced_ac_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    /* 11AX HE DL MU MIMO TX BW stats at reduced channel config */
+    A_UINT32 reduced_ax_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    /* 11AX HE DL MU OFDMA TX BW stats at reduced channel config */
+    A_UINT32 reduced_ax_mu_ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
 } htt_tx_pdev_rate_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
@@ -3621,6 +3635,8 @@ typedef enum {
     HTT_RX_PDEV_STATS_PUNCTURED_120 = 4,
     HTT_RX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS = 5
 } HTT_RX_PDEV_STATS_NUM_PUNCTURED_MODE_TYPE;
+
+#define HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3771,6 +3787,7 @@ typedef struct {
     A_UINT32 rx_bw_ext[HTT_RX_PDEV_STATS_NUM_BW_EXT2_COUNTERS];
     A_UINT32 rx_gi_ext_2[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
     A_UINT32 rx_su_punctured_mode[HTT_RX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
+    A_UINT32 reduced_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
 } htt_rx_pdev_rate_ext_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT
@@ -3849,6 +3866,7 @@ typedef struct {
      * Trig power headroom for STA AID in same idx - UNIT(dB)
      */
     A_UINT32 uplink_sta_power_headroom[HTT_RX_UL_MAX_UPLINK_RSSI_TRACK];
+    A_UINT32 reduced_ul_ofdma_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
 } htt_rx_pdev_ul_trigger_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
@@ -3930,6 +3948,7 @@ typedef struct {
     A_INT8 rx_ul_mumimo_fd_rssi[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
     /* Average pilot EVM measued for RX UL TB PPDU */
     A_INT8 rx_ulmumimo_pilot_evm_dB_mean[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+    A_UINT32 reduced_ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
 } htt_rx_pdev_ul_mumimo_trig_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS
@@ -4984,6 +5003,8 @@ typedef struct {
 #define HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS 14
 #define HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS 5 /* 20, 40, 80, 160, 320 */
 
+#define HTT_TX_TXBF_RATE_STATS_NUM_REDUCED_CHAN_TYPES 2/* 0: Half, 1: Quarter */
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* SU TxBF TX MCS stats */
@@ -5006,6 +5027,12 @@ typedef struct {
     A_UINT32 tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
     /* Legacy and OFDM TX rate stats */
     A_UINT32 tx_legacy_ofdm_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
+    /* SU TxBF TX BW stats */
+    A_UINT32 reduced_tx_su_txbf_bw[HTT_TX_TXBF_RATE_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    /* Implicit BF TX BW stats */
+    A_UINT32 reduced_tx_su_ibf_bw[HTT_TX_TXBF_RATE_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    /* Open loop TX BW stats */
+    A_UINT32 reduced_tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
 } htt_tx_pdev_txbf_rate_stats_tlv;
 
 /* NOTE:
@@ -5055,6 +5082,7 @@ typedef enum {
 #define HTT_STA_UL_OFDMA_NUM_MCS_COUNTERS 14
 /* Counters BW 20,40,80,160,320 */
 #define HTT_STA_UL_OFDMA_NUM_BW_COUNTERS 5
+#define HTT_STA_UL_OFDMA_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
 
 /* STATS_TYPE : HTT_DBG_EXT_STA_11AX_UL_STATS
  * TLV_TAGS:
@@ -5108,7 +5136,7 @@ typedef struct {
     A_UINT32 current_cw_max[HTT_NUM_AC_WMM];
     /* AIFS value - 0 -255 */
     A_UINT32 current_aifs[HTT_NUM_AC_WMM];
-
+    A_UINT32 reduced_ul_ofdma_tx_bw[HTT_STA_UL_OFDMA_NUM_REDUCED_CHAN_TYPES][HTT_STA_UL_OFDMA_NUM_BW_COUNTERS];
 } htt_sta_ul_ofdma_stats_tlv;
 
 /* NOTE:
