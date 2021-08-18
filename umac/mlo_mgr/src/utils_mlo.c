@@ -115,7 +115,7 @@ uint8_t *util_parse_multi_link_ctrl_ie(uint8_t *subelement,
 
 	if (link_info_ie_len) {
 		*link_info_ie_len = len - sub_ie_len;
-		mlo_debug("link_info_ie_len:%lu, sub_ie_len:%lu",
+		mlo_debug("link_info_ie_len:%zu, sub_ie_len:%zu",
 			  *link_info_ie_len, sub_ie_len);
 	}
 
@@ -173,7 +173,7 @@ uint8_t *util_parse_sta_profile_ie(uint8_t *subelement,
 		tmp_len = tmp_len + TAG_LEN_POS;
 
 	if (len <= tmp_len) {
-		mlo_err("len %lu <= tmp_len %lu, return", len, tmp_len);
+		mlo_err("len %zu <= tmp_len %zu, return", len, tmp_len);
 		return NULL;
 	}
 	*per_sta_prof_ie_len = len - tmp_len;
