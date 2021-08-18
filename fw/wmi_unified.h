@@ -3938,7 +3938,36 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_CC_EXT_SUPPORT_GET
      *      and _SET macros.
-     *  Bits 31:5 - Reserved
+     *  Bit 5
+     *      This bit will be set when the host supports NAN channels.
+     *      Refer to WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_CHANNEL_SUPPORT_GET/SET
+     *  Bit 6
+     *      This bit will be set when the host supports synchronous TWT events.
+     *      Refer to WMI_RSRC_CFG_HOST_SERVICE_FLAG_STA_TWT_SYNC_EVT_SUPPORT_GET
+     *      and _SET.
+     *  Bit 7
+     *      This bit will be set when host supports both LPI and SP mode.
+     *      when this bit is set to 0 - Indicate LPI only mode
+     *                  when set to 1 - Indicate both SP mode and LPI mode
+     *                                  both are supported
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_LPI_SP_MODE_SUPPORT_GET
+     *      and _SET macros.
+     *  Bit 8
+     *      This bit will be set when host wants to disable timer check in
+     *      reg for AFC.
+     *      when set to 1 - Disable timer check
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_TIMER_CHECK_GET
+     *      and _SET macros.
+     *  Bit 9
+     *      This bit will be set when host host wants to disable request id
+     *      check in reg for AFC.
+     *      when set to 1 - Disable Request ID check
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_REQ_ID_CHECK_GET
+     *      and _SET macros.
+     *  Bits 31:10 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4256,6 +4285,21 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 6, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_STA_TWT_SYNC_EVT_SUPPORT_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 6, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_LPI_SP_MODE_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 7, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_LPI_SP_MODE_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 7, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_TIMER_CHECK_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 8, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_TIMER_CHECK_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 8, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_REQ_ID_CHECK_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 9, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_REQ_ID_CHECK_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 9, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
