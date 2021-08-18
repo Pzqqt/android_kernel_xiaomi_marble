@@ -919,7 +919,7 @@ static int __boot_firmware_iris2(struct msm_vidc_core *vidc_core)
 
 	if (count >= max_tries) {
 		d_vpr_e("Error booting up vidc firmware\n");
-		rc = -ETIME;
+		return -ETIME;
 	}
 
 	/* Enable interrupt before sending commands to venus */
