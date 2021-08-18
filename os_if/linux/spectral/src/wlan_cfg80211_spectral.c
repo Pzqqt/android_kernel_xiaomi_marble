@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,6 +91,15 @@ const struct nla_policy spectral_scan_policy[
 							.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_BUFFER_DEBUG] = {
 							.type = NLA_U8},
+};
+
+const struct nla_policy spectral_scan_get_status_policy[
+		QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_STATUS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_STATUS_IS_ENABLED] = {
+							.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_STATUS_IS_ACTIVE] = {
+							.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_STATUS_MODE] = { .type = NLA_U32 },
 };
 
 static void wlan_spectral_intit_config(struct spectral_config *config_req)
@@ -909,7 +918,7 @@ int wlan_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_STATUS_MAX,
 			data,
 			data_len,
-			NULL)) {
+			spectral_scan_get_status_policy)) {
 		osif_err("Invalid Spectral Scan config ATTR");
 		return -EINVAL;
 	}
