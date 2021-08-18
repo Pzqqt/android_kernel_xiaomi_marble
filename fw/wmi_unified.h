@@ -5160,6 +5160,7 @@ typedef struct {
      * link flags: refer WMI_ROAM_LINK_FLAG_XXX.
      */
     A_UINT32 flags;
+    wmi_mac_addr link_addr; /* link address */
 } wmi_roam_ml_setup_links_param;
 
 /*
