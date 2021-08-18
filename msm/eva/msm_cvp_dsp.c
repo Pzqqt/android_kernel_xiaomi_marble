@@ -248,6 +248,35 @@ static int delete_dsp_session(struct msm_cvp_inst *inst,
 	return rc;
 }
 
+static int eva_fastrpc_driver_get_name(
+		struct cvp_dsp_fastrpc_driver_entry *frpc_node)
+{
+    int i = 0;
+    struct cvp_dsp_apps *me = &gfa_cv;
+    for (i = 0; i < MAX_FASTRPC_DRIVER_NUM; i++) {
+        if (me->cvp_fastrpc_name[i].status == DRIVER_NAME_AVAILABLE) {
+            frpc_node->driver_name_idx = i;
+            frpc_node->cvp_fastrpc_driver.driver.name =
+			me->cvp_fastrpc_name[i].name;
+            me->cvp_fastrpc_name[i].status = DRIVER_NAME_USED;
+            dprintk(CVP_DSP, "%s -> handle 0x%x get name %s\n",
+			__func__, frpc_node->cvp_fastrpc_driver.handle,
+                frpc_node->cvp_fastrpc_driver.driver.name);
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
+static void eva_fastrpc_driver_release_name(
+		struct cvp_dsp_fastrpc_driver_entry *frpc_node)
+{
+    struct cvp_dsp_apps *me = &gfa_cv;
+    me->cvp_fastrpc_name[frpc_node->driver_name_idx].status =
+		DRIVER_NAME_AVAILABLE;
+}
+
 static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
@@ -291,6 +320,9 @@ static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 			dprintk(CVP_DSP,
 				"%s Unregistered fastrpc handle 0x%x\n",
 				__func__, frpc_node->handle);
+			mutex_lock(&me->driver_name_lock);
+			eva_fastrpc_driver_release_name(frpc_node);
+			mutex_unlock(&me->driver_name_lock);
 			kfree(frpc_node);
 			frpc_node = NULL;
 		}
@@ -814,9 +846,6 @@ static int cvp_fastrpc_callback(struct fastrpc_device *rpc_dev,
 static struct fastrpc_driver cvp_fastrpc_client = {
 	.probe = cvp_fastrpc_probe,
 	.callback = cvp_fastrpc_callback,
-	.driver = {
-		.name = "qcom,fastcv",
-	},
 };
 
 
@@ -970,6 +999,19 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 
 		memset(frpc_node, 0, sizeof(*frpc_node));
 
+		/* Setup fastrpc_node */
+		frpc_node->handle = handle;
+		frpc_node->cvp_fastrpc_driver = cvp_fastrpc_client;
+		frpc_node->cvp_fastrpc_driver.handle = handle;
+		mutex_lock(&me->driver_name_lock);
+		rc = eva_fastrpc_driver_get_name(frpc_node);
+		mutex_unlock(&me->driver_name_lock);
+		if (rc) {
+			dprintk(CVP_ERR, "%s fastrpc get name fail err %d\n",
+				__func__, rc);
+			goto fail_fastrpc_driver_get_name;
+		}
+
 		/* Init completion */
 		init_completion(&frpc_node->fastrpc_probe_completion);
 
@@ -980,9 +1022,6 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 		INIT_MSM_CVP_LIST(&frpc_node->dsp_sessions);
 
 		/* register fastrpc device to this session */
-		frpc_node->handle = handle;
-		frpc_node->cvp_fastrpc_driver = cvp_fastrpc_client;
-		frpc_node->cvp_fastrpc_driver.handle = handle;
 		rc = fastrpc_driver_register(&frpc_node->cvp_fastrpc_driver);
 		if (rc) {
 			dprintk(CVP_ERR, "%s fastrpc driver reg fail err %d\n",
@@ -1012,6 +1051,11 @@ fail_fastrpc_driver_register:
 	mutex_lock(&me->fastrpc_driver_list.lock);
 	list_del(&frpc_node->list);
 	mutex_unlock(&me->fastrpc_driver_list.lock);
+
+	mutex_lock(&me->driver_name_lock);
+	eva_fastrpc_driver_release_name(frpc_node);
+	mutex_unlock(&me->driver_name_lock);
+fail_fastrpc_driver_get_name:
 	kfree(frpc_node);
 	return -EINVAL;
 }
@@ -1046,6 +1090,9 @@ static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit)
 		mutex_unlock(&me->fastrpc_driver_list.lock);
 
 		fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
+		mutex_lock(&me->driver_name_lock);
+		eva_fastrpc_driver_release_name(frpc_node);
+		mutex_unlock(&me->driver_name_lock);
 		kfree(frpc_node);
 	}
 }
@@ -1839,6 +1886,7 @@ int cvp_dsp_device_init(void)
 	char tname[16];
 	int rc;
 	int i;
+	char name[CVP_FASTRPC_DRIVER_NAME_SIZE] = "qcom,fastcv0\0";
 
 	mutex_init(&me->tx_lock);
 	mutex_init(&me->rx_lock);
@@ -1852,6 +1900,13 @@ int cvp_dsp_device_init(void)
 	me->pending_dsp2cpu_rsp.type = CVP_INVALID_RPMSG_TYPE;
 
 	INIT_MSM_CVP_LIST(&me->fastrpc_driver_list);
+
+	mutex_init(&me->driver_name_lock);
+	for (i = 0; i < MAX_FASTRPC_DRIVER_NUM; i++) {
+		me->cvp_fastrpc_name[i].status = DRIVER_NAME_AVAILABLE;
+		snprintf(me->cvp_fastrpc_name[i].name, sizeof(name), name);
+		name[11]++;
+	}
 
 	rc = register_rpmsg_driver(&cvp_dsp_rpmsg_client);
 	if (rc) {
@@ -1891,5 +1946,6 @@ void cvp_dsp_device_exit(void)
 
 	mutex_destroy(&me->tx_lock);
 	mutex_destroy(&me->rx_lock);
+	mutex_destroy(&me->driver_name_lock);
 	unregister_rpmsg_driver(&cvp_dsp_rpmsg_client);
 }

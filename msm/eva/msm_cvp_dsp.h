@@ -31,10 +31,11 @@
 #define HIGH32                      (0xFFFFFFFF00000000LL)
 #define LOW32                       (0xFFFFFFFFLL)
 
+#define CVP_FASTRPC_DRIVER_NAME_SIZE    16
 
-/* Supports up to 8 DSP sessions in 4 processes */
-#define MAX_FASTRPC_DRIVER_NUM			(4)
+/* Supports up to 8 DSP sessions in 8 processes */
 #define MAX_DSP_SESSION_NUM			(8)
+#define MAX_FASTRPC_DRIVER_NUM		(MAX_DSP_SESSION_NUM)
 
 int cvp_dsp_device_init(void);
 void cvp_dsp_device_exit(void);
@@ -164,10 +165,22 @@ struct cvp_dsp2cpu_cmd_msg {
 	uint32_t data[CVP_DSP2CPU_RESERVED];
 };
 
+struct driver_name {
+    uint32_t status;
+    char name[CVP_FASTRPC_DRIVER_NAME_SIZE];
+};
+
+enum DRIVER_NAME_STATUS {
+	DRIVER_NAME_INVALID = 0,
+	DRIVER_NAME_AVAILABLE = 1,
+	DRIVER_NAME_USED = 2,
+};
+
 struct cvp_dsp_fastrpc_driver_entry {
 	struct list_head list;
 	uint32_t handle;
 	uint32_t session_cnt;
+	uint32_t driver_name_idx;
 	struct fastrpc_driver cvp_fastrpc_driver;
 	struct fastrpc_device *cvp_fastrpc_device;
 	struct completion fastrpc_probe_completion;
@@ -183,6 +196,7 @@ struct cvp_dsp_apps {
 	struct mutex tx_lock;
 	/* rx_lock for receiving DSP2CPU cmds or msgs */
 	struct mutex rx_lock;
+	struct mutex driver_name_lock;
 	struct rpmsg_device *chan;
 	uint32_t state;
 	uint32_t debug_mask;
@@ -197,6 +211,7 @@ struct cvp_dsp_apps {
 	const struct file_operations *dmabuf_f_op;
 	uint32_t buf_num;
 	struct msm_cvp_list fastrpc_driver_list;
+	struct driver_name cvp_fastrpc_name[MAX_FASTRPC_DRIVER_NUM];
 };
 
 extern struct cvp_dsp_apps gfa_cv;
