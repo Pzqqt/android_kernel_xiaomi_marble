@@ -355,7 +355,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		      QDF_MAC_ADDR_REF(macaddr), QDF_MAC_ADDR_REF(addr),
 		      vdev_id, kickout_event->reason);
 
-	if (wlan_cm_is_vdev_roaming(vdev)) {
+	if (wma_is_roam_in_progress(vdev_id)) {
 		wma_err("vdev_id %d: Ignore STA kick out since roaming is in progress",
 			vdev_id);
 		return -EINVAL;

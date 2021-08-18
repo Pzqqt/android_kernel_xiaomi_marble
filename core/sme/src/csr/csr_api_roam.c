@@ -6359,12 +6359,17 @@ cm_update_rsn_ocv_cap(int32_t *rsn_cap,
 	uint32_t ie_len;
 	QDF_STATUS status;
 
+	/* no need to do anything if OCV is not set */
+	if (!(*rsn_cap & WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED))
+		return;
+
 	if (!rsp->connect_ies.bcn_probe_rsp.ptr ||
 	    !rsp->connect_ies.bcn_probe_rsp.len ||
 	    (rsp->connect_ies.bcn_probe_rsp.len <
 		(sizeof(struct wlan_frame_hdr) +
 		offsetof(struct wlan_bcn_frame, ie)))) {
-		sme_err("invalid beacon probe rsp");
+		sme_err("invalid beacon probe rsp len %d",
+			rsp->connect_ies.bcn_probe_rsp.len);
 		return;
 	}
 
@@ -6377,10 +6382,9 @@ cm_update_rsn_ocv_cap(int32_t *rsn_cap,
 
 	status = wlan_get_crypto_params_from_rsn_ie(&crypto_params, ie_ptr,
 						    ie_len);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("get crypto prarams from RSN IE failed");
+	if (QDF_IS_STATUS_ERROR(status))
 		return;
-	}
+
 	if (!(crypto_params.rsn_caps & WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED))
 		*rsn_cap &= ~WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED;
 }

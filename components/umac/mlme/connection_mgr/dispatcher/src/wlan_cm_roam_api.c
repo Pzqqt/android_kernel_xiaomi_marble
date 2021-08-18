@@ -300,16 +300,20 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	bool roaming_in_progress = false;
 	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE opmode;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
 						    WLAN_MLME_CM_ID);
-	if (!vdev) {
-		mlme_err("vdev object is NULL");
+	if (!vdev)
 		return roaming_in_progress;
-	}
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE)
+		goto exit;
 
 	roaming_in_progress = wlan_cm_is_vdev_roaming(vdev);
 
+exit:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return roaming_in_progress;
