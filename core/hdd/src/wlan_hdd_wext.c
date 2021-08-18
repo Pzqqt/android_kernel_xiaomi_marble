@@ -3607,7 +3607,7 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 	switch (value) {
 	case 1:
 		/* Enable PowerSave */
-		sme_save_usr_ps_cfg(mac_handle, true);
+		ucfg_mlme_set_user_ps(hdd_ctx->psoc, adapter->vdev_id, true);
 		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_ENABLE);
 		return 0;
@@ -3615,7 +3615,7 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 		/* Disable PowerSave */
 		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_DISABLE);
-		sme_save_usr_ps_cfg(mac_handle, false);
+		ucfg_mlme_set_user_ps(hdd_ctx->psoc, adapter->vdev_id, false);
 		return 0;
 	case 3:
 		/* Enable UASPD */

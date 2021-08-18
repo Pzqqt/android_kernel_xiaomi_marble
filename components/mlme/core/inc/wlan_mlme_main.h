@@ -404,6 +404,7 @@ struct wait_for_key_timer {
  * @last_delba_sent_time: Last delba sent time to handle back to back delba
  *			  requests from some IOT APs
  * @ba_2k_jump_iot_ap: This is set to true if connected to the ba 2k jump IOT AP
+ * @is_usr_ps_enabled: Is Power save enabled
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -442,6 +443,7 @@ struct mlme_legacy_priv {
 #endif
 	qdf_time_t last_delba_sent_time;
 	bool ba_2k_jump_iot_ap;
+	bool is_usr_ps_enabled;
 };
 
 /**

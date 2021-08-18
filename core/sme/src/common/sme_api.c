@@ -2225,7 +2225,7 @@ sme_process_sta_twt_del_dialog_event(
 		struct wmi_twt_del_dialog_complete_event_param *param)
 {
 	twt_del_dialog_cb callback;
-	bool is_evt_allowed;
+	bool is_evt_allowed, usr_cfg_ps_enable;
 	enum wlan_twt_commands active_cmd = WLAN_TWT_NONE;
 
 	is_evt_allowed = mlme_twt_is_command_in_progress(
@@ -2244,7 +2244,8 @@ sme_process_sta_twt_del_dialog_event(
 		return;
 	}
 
-	if (!mac->usr_cfg_ps_enable &&
+	usr_cfg_ps_enable = mlme_get_user_ps(mac->psoc, param->vdev_id);
+	if (!usr_cfg_ps_enable &&
 	    param->status == WMI_HOST_DEL_TWT_STATUS_OK)
 		param->status = WMI_HOST_DEL_TWT_STATUS_PS_DISABLE_TEARDOWN;
 
@@ -13538,6 +13539,7 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg twt_msg = {0};
 	bool is_twt_cmd_in_progress, is_twt_notify_in_progress;
+	bool usr_cfg_ps_enable;
 	QDF_STATUS status;
 	void *wma_handle;
 	struct wmi_twt_add_dialog_param *cmd_params;
@@ -13545,7 +13547,8 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 
 	SME_ENTER();
 
-	if (!mac->usr_cfg_ps_enable) {
+	usr_cfg_ps_enable = mlme_get_user_ps(mac->psoc, twt_params->vdev_id);
+	if (!usr_cfg_ps_enable) {
 		sme_debug("Power save mode disable");
 		return QDF_STATUS_E_INVAL;
 	}
