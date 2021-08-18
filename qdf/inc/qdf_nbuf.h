@@ -95,13 +95,28 @@
 /* EAPOL Related MASK */
 #define EAPOL_PACKET_TYPE_OFFSET		15
 #define EAPOL_KEY_INFO_OFFSET			19
-#define EAPOL_PKT_LEN_OFFSET            16
-#define EAPOL_KEY_LEN_OFFSET            21
+#define EAPOL_PKT_LEN_OFFSET			16
+#define EAPOL_KEY_LEN_OFFSET			21
+#define EAPOL_PACKET_TYPE_KEY			3
 #define EAPOL_MASK				0x8013
 #define EAPOL_M1_BIT_MASK			0x8000
 #define EAPOL_M2_BIT_MASK			0x0001
 #define EAPOL_M3_BIT_MASK			0x8013
 #define EAPOL_M4_BIT_MASK			0x0003
+#define EAPOL_KEY_TYPE_MASK			0x0800
+#define EAPOL_KEY_ENCRYPTED_MASK		0x0010
+
+/* EAP Related Mask */
+
+#define EAP_CODE_OFFSET				18
+#define EAP_LENGTH_OFFSET			20
+#define EAP_TYPE_OFFSET				22
+#define QDF_EAP_REQUEST				1
+#define QDF_EAP_RESPONE				2
+#define QDF_EAP_SUCCESS				3
+#define QDF_EAP_FAILURE				4
+#define QDF_EAP_INITIATE			5
+#define QDF_EAP_FINISH				6
 
 /* ARP Related MASK */
 #define QDF_NBUF_PKT_ARP_OPCODE_OFFSET	20
