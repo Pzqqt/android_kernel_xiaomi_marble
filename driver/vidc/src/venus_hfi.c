@@ -308,12 +308,12 @@ int __write_register_masked(struct msm_vidc_core *core,
 	return rc;
 }
 
-int __read_register(struct msm_vidc_core *core, u32 reg)
+int __read_register(struct msm_vidc_core *core, u32 reg, u32 *value)
 {
 	int rc = 0;
 	u8 *base_addr;
 
-	if (!core) {
+	if (!core || !value) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -325,13 +325,13 @@ int __read_register(struct msm_vidc_core *core, u32 reg)
 
 	base_addr = core->register_base_addr;
 
-	rc = readl_relaxed(base_addr + reg);
+	*value = readl_relaxed(base_addr + reg);
 	/*
 	 * Memory barrier to make sure value is read correctly from the
 	 * register.
 	 */
 	rmb();
-	d_vpr_l("regread(%pK + %#x) = %#x\n", base_addr, reg, rc);
+	d_vpr_l("regread(%pK + %#x) = %#x\n", base_addr, reg, *value);
 
 	return rc;
 }

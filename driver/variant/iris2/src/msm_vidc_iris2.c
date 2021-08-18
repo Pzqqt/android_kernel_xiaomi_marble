@@ -366,7 +366,9 @@ static int __interrupt_init_iris2(struct msm_vidc_core *vidc_core)
 	}
 
 	/* All interrupts should be disabled initially 0x1F6 : Reset value */
-	mask_val = __read_register(core, WRAPPER_INTR_MASK_IRIS2);
+	rc = __read_register(core, WRAPPER_INTR_MASK_IRIS2, &mask_val);
+	if (rc)
+		return rc;
 
 	/* Write 0 to unmask CPU and WD interrupts */
 	mask_val &= ~(WRAPPER_INTR_MASK_A2HWD_BMSK_IRIS2|
@@ -443,10 +445,12 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 	 * check to make sure core clock branch enabled else
 	 * we cannot read vcodec top idle register
 	 */
-	value = __read_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2);
+	rc = __read_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2, &value);
+	if (rc)
+		return rc;
+
 	if (value) {
-		d_vpr_h(
-			"%s: core clock config not enabled, enabling it to read vcodec registers\n",
+		d_vpr_h("%s: core clock config not enabled, enabling it to read vcodec registers\n",
 			__func__);
 		rc = __write_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2, 0);
 		if (rc)
@@ -729,7 +733,10 @@ static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
 		return -EINVAL;
 	}
 
-	ctrl_status = __read_register(core, CTRL_STATUS_IRIS2);
+	rc = __read_register(core, CTRL_STATUS_IRIS2, &ctrl_status);
+	if (rc)
+		return rc;
+
 	pc_ready = ctrl_status & CTRL_STATUS_PC_READY_IRIS2;
 	idle_status = ctrl_status & BIT(30);
 
@@ -737,8 +744,11 @@ static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
 		d_vpr_h("Already in pc_ready state\n");
 		return 0;
 	}
+	rc = __read_register(core, WRAPPER_TZ_CPU_STATUS, &wfi_status);
+	if (rc)
+		return rc;
 
-	wfi_status = BIT(0) & __read_register(core, WRAPPER_TZ_CPU_STATUS);
+	wfi_status &= BIT(0);
 	if (!wfi_status || !idle_status) {
 		d_vpr_e("Skipping PC, wfi status not set\n");
 		goto skip_power_off;
@@ -766,9 +776,13 @@ static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
 	return rc;
 
 skip_power_off:
-	wfi_status = BIT(0) & __read_register(core, WRAPPER_TZ_CPU_STATUS);
-	ctrl_status = __read_register(core, CTRL_STATUS_IRIS2);
-
+	rc = __read_register(core, CTRL_STATUS_IRIS2, &ctrl_status);
+	if (rc)
+		return rc;
+	rc = __read_register(core, WRAPPER_TZ_CPU_STATUS, &wfi_status);
+	if (rc)
+		return rc;
+	wfi_status &= BIT(0);
 	d_vpr_e("Skip PC, wfi=%#x, idle=%#x, pcr=%#x, ctrl=%#x)\n",
 		wfi_status, idle_status, pc_ready, ctrl_status);
 	return -EAGAIN;
@@ -868,7 +882,10 @@ static int __clear_interrupt_iris2(struct msm_vidc_core *vidc_core)
 		return 0;
 	}
 
-	intr_status = __read_register(core, WRAPPER_INTR_STATUS_IRIS2);
+	rc = __read_register(core, WRAPPER_INTR_STATUS_IRIS2, &intr_status);
+	if (rc)
+		return rc;
+
 	mask = (WRAPPER_INTR_STATUS_A2H_BMSK_IRIS2|
 		WRAPPER_INTR_STATUS_A2HWD_BMSK_IRIS2|
 		CTRL_INIT_IDLE_MSG_BMSK_IRIS2);
@@ -907,7 +924,10 @@ static int __boot_firmware_iris2(struct msm_vidc_core *vidc_core)
 		return rc;
 
 	while (!ctrl_status && count < max_tries) {
-		ctrl_status = __read_register(core, CTRL_STATUS_IRIS2);
+		rc = __read_register(core, CTRL_STATUS_IRIS2, &ctrl_status);
+		if (rc)
+			return rc;
+
 		if ((ctrl_status & CTRL_ERROR_STATUS__M_IRIS2) == 0x4) {
 			d_vpr_e("invalid setting for UC_REGION\n");
 			break;
