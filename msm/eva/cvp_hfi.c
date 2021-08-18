@@ -3702,6 +3702,14 @@ static int __power_on_core(struct iris_hfi_device *device)
 		return rc;
 	}
 
+	rc = msm_cvp_prepare_enable_clk(device, "video_cc_mvs1_clk_src");
+	if (rc) {
+		dprintk(CVP_ERR, "Failed to enable video_cc_mvs1_clk_src:%d\n",
+			rc);
+		__disable_regulator(device, "cvp-core");
+		return rc;
+	}
+
 	rc = msm_cvp_prepare_enable_clk(device, "core_clk");
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to enable core_clk: %d\n", rc);
@@ -3939,6 +3947,7 @@ static int __power_off_core(struct iris_hfi_device *device)
 		}
 		__disable_regulator(device, "cvp-core");
 		msm_cvp_disable_unprepare_clk(device, "core_clk");
+		msm_cvp_disable_unprepare_clk(device, "video_cc_mvs1_clk_src");
 		return 0;
 	}
 
@@ -4019,6 +4028,7 @@ static int __power_off_core(struct iris_hfi_device *device)
 
 	__disable_regulator(device, "cvp-core");
 	msm_cvp_disable_unprepare_clk(device, "core_clk");
+	msm_cvp_disable_unprepare_clk(device, "video_cc_mvs1_clk_src");
 	return 0;
 }
 
