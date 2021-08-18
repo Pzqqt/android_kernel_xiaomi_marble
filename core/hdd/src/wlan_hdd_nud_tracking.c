@@ -317,6 +317,11 @@ static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 		return;
 	}
 
+	if (hdd_ctx->hdd_wlan_suspended) {
+		hdd_debug("wlan is suspended, ignore NUD failure event");
+		return;
+	}
+
 	if (soc && cdp_cfg_get(soc, cfg_dp_enable_data_stall)) {
 		hdd_dp_err("Data stall due to NUD failure");
 		cdp_post_data_stall_event
@@ -456,6 +461,11 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 	if (!qdf_is_macaddr_equal(&adapter->nud_tracking.gw_mac_addr,
 				  (struct qdf_mac_addr *)&neigh->ha[0]))
 		return;
+
+	if (hdd_ctx->hdd_wlan_suspended) {
+		hdd_debug("wlan is suspended, ignore NUD event");
+		return;
+	}
 
 	switch (neigh->nud_state) {
 	case NUD_PROBE:
