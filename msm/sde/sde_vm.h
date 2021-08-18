@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_VM_H__
@@ -285,6 +285,23 @@ static inline struct sde_vm_ops *sde_vm_get_ops(struct sde_kms *sde_kms)
 
 	return &sde_kms->vm->vm_ops;
 }
+
+/**
+ * sde_vm_owns_hw - checks if the executing VM currently has HW ownership (caller must be holding
+ *                  the sde_vm_lock)
+ * @sde_kms - pointer to sde_kms
+ * @return - true if this VM currently owns the HW
+ */
+static inline bool sde_vm_owns_hw(struct sde_kms *sde_kms)
+{
+	struct sde_vm_ops *vm_ops = sde_kms ? sde_vm_get_ops(sde_kms) : NULL;
+
+	if (vm_ops && vm_ops->vm_owns_hw)
+		return vm_ops->vm_owns_hw(sde_kms);
+
+	return true;
+}
+
 #else
 static inline int sde_vm_primary_init(struct sde_kms *kms)
 {
@@ -312,6 +329,11 @@ static inline void sde_vm_unlock(struct sde_kms *sde_kms)
 static inline struct sde_vm_ops *sde_vm_get_ops(struct sde_kms *sde_kms)
 {
 	return NULL;
+}
+
+static inline bool sde_vm_owns_hw(struct sde_kms *sde_kms)
+{
+	return true;
 }
 
 #endif /* IS_ENABLED(CONFIG_DRM_SDE_VM) */

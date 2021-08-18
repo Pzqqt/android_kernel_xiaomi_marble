@@ -296,16 +296,13 @@ int sde_vm_request_valid(struct sde_kms *sde_kms,
 			  enum sde_crtc_vm_req old_state,
 			  enum sde_crtc_vm_req new_state)
 {
-	struct sde_vm_ops *vm_ops;
 	int rc = 0;
-
-	vm_ops = &sde_kms->vm->vm_ops;
+	bool vm_owns_hw = sde_vm_owns_hw(sde_kms);
 
 	switch (new_state) {
 	case VM_REQ_RELEASE:
 	case VM_REQ_NONE:
-		if ((old_state == VM_REQ_RELEASE) ||
-			!vm_ops->vm_owns_hw(sde_kms))
+		if ((old_state == VM_REQ_RELEASE) || !vm_owns_hw)
 			rc = -EINVAL;
 		break;
 	case VM_REQ_ACQUIRE:
@@ -318,9 +315,8 @@ int sde_vm_request_valid(struct sde_kms *sde_kms,
 	};
 
 	SDE_DEBUG("old req: %d new req: %d owns_hw: %d, rc: %d\n",
-			old_state, new_state,
-			vm_ops->vm_owns_hw(sde_kms), rc);
-	SDE_EVT32(old_state, new_state, vm_ops->vm_owns_hw(sde_kms), rc);
+			old_state, new_state, vm_owns_hw, rc);
+	SDE_EVT32(old_state, new_state, vm_owns_hw, rc);
 
 	return rc;
 }
