@@ -17225,6 +17225,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_thermal_stats_temp_range_supported] =
 			WMI_SERVICE_THERMAL_THROT_STATS_TEMP_RANGE_SUPPORT;
 #endif
+	wmi_service[wmi_service_hw_mode_policy_offload_support] =
+			WMI_SERVICE_HW_MODE_POLICY_OFFLOAD_SUPPORT;
 }
 
 /**
