@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde-hdcp1x] %s: " fmt, __func__
@@ -219,6 +219,7 @@ struct sde_hdcp_1x {
 	struct sde_hdcp_int_set int_set;
 	struct sde_hdcp_sink_addr_map sink_addr;
 	struct workqueue_struct *workq;
+	struct hdcp1_topology *tz_ops;
 	void *hdcp1_handle;
 };
 
@@ -986,6 +987,32 @@ error:
 	return rc;
 }
 
+static void sde_hdcp_1x_authentication_ops_notify(struct sde_hdcp_1x *hdcp,
+		enum sde_hdcp_state state)
+{
+	struct hdcp1_topology *topology = hdcp->tz_ops;
+
+	if (state == HDCP_STATE_AUTHENTICATED) {
+		topology->depth = hdcp->current_tp.depth;
+		topology->device_count = hdcp->current_tp.dev_count;
+		topology->max_devices_exceeded = hdcp->current_tp.max_dev_exceeded;
+		topology->max_cascade_exceeded = hdcp->current_tp.max_cascade_exceeded;
+		topology->hdcp2LegacyDeviceDownstream = 0;
+		topology->hdcp1DeviceDownstream = 0;
+		hdcp1_ops_notify(hdcp->hdcp1_handle, topology, true);
+	} else {
+		topology->depth = 0;
+		topology->device_count = 0;
+		topology->max_devices_exceeded = 0;
+		topology->max_cascade_exceeded = 0;
+		topology->hdcp2LegacyDeviceDownstream = 0;
+		topology->hdcp1DeviceDownstream = 0;
+		hdcp1_ops_notify(hdcp->hdcp1_handle, topology, false);
+	}
+
+	pr_debug("OPS is notified with state = %d\n", state);
+}
+
 static int sde_hdcp_1x_authentication_part2(struct sde_hdcp_1x *hdcp)
 {
 	int rc;
@@ -1030,6 +1057,8 @@ static void sde_hdcp_1x_update_auth_status(struct sde_hdcp_1x *hdcp)
 						&hdcp->current_tp);
 		msm_hdcp_notify_topology(hdcp->init_data.msm_hdcp_dev);
 	}
+
+	sde_hdcp_1x_authentication_ops_notify(hdcp, hdcp->hdcp_state);
 
 	if (hdcp->init_data.notify_status &&
 	    !sde_hdcp_1x_state(HDCP_STATE_INACTIVE)) {
@@ -1248,6 +1277,7 @@ static void sde_hdcp_1x_off(void *input)
 
 	hdcp->sink_r0_ready = false;
 
+	sde_hdcp_1x_authentication_ops_notify(hdcp, hdcp->hdcp_state);
 	hdcp1_stop(hdcp->hdcp1_handle);
 
 	pr_debug("%s: HDCP: Off\n", SDE_HDCP_STATE_NAME);
@@ -1396,6 +1426,7 @@ void sde_hdcp_1x_deinit(void *input)
 
 	hdcp1_deinit(hdcp->hdcp1_handle);
 
+	kfree(hdcp->tz_ops);
 	kfree(hdcp);
 } /* hdcp_1x_deinit */
 
@@ -1535,13 +1566,17 @@ void *sde_hdcp_1x_init(struct sde_hdcp_init_data *init_data)
 	hdcp->init_data = *init_data;
 	hdcp->ops = &ops;
 
+	hdcp->tz_ops = kzalloc(sizeof(struct hdcp1_topology), GFP_KERNEL);
+	if (!hdcp->tz_ops)
+		goto mem_error;
+
 	snprintf(name, sizeof(name), "hdcp_1x_%d",
 		hdcp->init_data.client_id);
 
 	hdcp->workq = create_workqueue(name);
 	if (!hdcp->workq) {
 		pr_err("Error creating workqueue\n");
-		goto workqueue_error;
+		goto mem_error;
 	}
 
 	hdcp->hdcp1_handle = hdcp1_init();
@@ -1565,7 +1600,8 @@ void *sde_hdcp_1x_init(struct sde_hdcp_init_data *init_data)
 	return (void *)hdcp;
 hdcp1_handle_error:
 	destroy_workqueue(hdcp->workq);
-workqueue_error:
+mem_error:
+	kfree(hdcp->tz_ops);
 	kfree(hdcp);
 error:
 	return NULL;
