@@ -2030,25 +2030,27 @@ static int _sde_sspp_setup_cmn(struct device_node *np,
 		sblk->src_blk.len = PROP_VALUE_ACCESS(props->values, SSPP_SIZE,
 				0);
 
-		for (j = 0; j < sde_cfg->mdp_count; j++) {
-			sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].reg_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_CTRL, i, 0);
-			sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].bit_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_CTRL, i, 1);
-			sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].reg_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_STATUS, i, 0);
-			sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].bit_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_STATUS, i, 1);
-		}
+		if (!sde_cfg->has_vbif_clk_split) {
+			for (j = 0; j < sde_cfg->mdp_count; j++) {
+				sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].reg_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_CTRL, i, 0);
+				sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].bit_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_CTRL, i, 1);
+				sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].reg_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_STATUS, i, 0);
+				sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].bit_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_STATUS, i, 1);
+			}
 
-		SDE_DEBUG("xin:%d ram:%d clk%d:%x/%d\n",
-			sspp->xin_id, sblk->pixel_ram_size, sspp->clk_ctrl,
-			sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].reg_off,
-			sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].bit_off);
+			SDE_DEBUG("xin:%d ram:%d clk%d:%x/%d\n",
+					sspp->xin_id, sblk->pixel_ram_size, sspp->clk_ctrl,
+					sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].reg_off,
+					sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].bit_off);
+		}
 	}
 
 end:

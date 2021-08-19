@@ -4804,6 +4804,7 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 	struct msm_drm_private *priv;
 	struct sde_kms *kms;
 	enum drm_plane_type type;
+	struct sde_vbif_clk_client clk_client;
 	int ret = -EINVAL;
 
 	if (!dev) {
@@ -4849,8 +4850,8 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 	}
 
 	/* initialize underlying h/w driver */
-	psde->pipe_hw = sde_hw_sspp_init(pipe, kms->mmio, kms->catalog,
-							psde->is_virtual);
+	psde->pipe_hw = sde_hw_sspp_init(pipe, kms->mmio, kms->catalog, psde->is_virtual,
+			&clk_client);
 	if (IS_ERR(psde->pipe_hw)) {
 		SDE_ERROR("[%u]SSPP init failed\n", pipe);
 		ret = PTR_ERR(psde->pipe_hw);
@@ -4858,6 +4859,15 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 	} else if (!psde->pipe_hw->cap || !psde->pipe_hw->cap->sblk) {
 		SDE_ERROR("[%u]SSPP init returned invalid cfg\n", pipe);
 		goto clean_sspp;
+	}
+
+	if (kms->catalog->has_vbif_clk_split) {
+		ret = sde_vbif_clk_register(kms, &clk_client);
+		if (ret) {
+			SDE_ERROR("failed to register vbif client %d\n",
+					clk_client.clk_ctrl);
+			goto clean_sspp;
+		}
 	}
 
 	/* cache features mask for later */
