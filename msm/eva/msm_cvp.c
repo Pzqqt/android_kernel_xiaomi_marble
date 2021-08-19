@@ -333,6 +333,14 @@ static int cvp_readjust_clock(struct msm_cvp_core *core,
 		lo_freq = tbl[j-1].clock_rate;
 	}
 
+	if (core->orig_core_sum > core->curr_freq) {
+		dprintk(CVP_PWR,
+			"%s - %d - Cancel readjust, core %u, freq %u\n",
+			__func__, i, core->orig_core_sum, core->curr_freq);
+		core->curr_freq = tmp;
+		return rc;
+	}
+
 	dprintk(CVP_PWR,
 			"%s:%d - %d - Readjust to %u\n",
 			__func__, __LINE__, i, core->curr_freq);
@@ -957,6 +965,7 @@ static int adjust_bw_freqs(void)
 
 	tmp = core->curr_freq;
 	core->curr_freq = core_sum;
+	core->orig_core_sum = core_sum;
 	rc = msm_cvp_set_clocks(core);
 	if (rc) {
 		dprintk(CVP_ERR,
