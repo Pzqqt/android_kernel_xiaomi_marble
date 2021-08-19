@@ -375,6 +375,13 @@ enum HTT_STATS_FTYPE {
     HTT_STATS_FTYPE_TIDQ_DATA_MU,
     HTT_STATS_FTYPE_SGEN_UL_BSR_RESP,
     HTT_STATS_FTYPE_SGEN_QOS_NULL,
+    HTT_STATS_FTYPE_SGEN_BE_NDPA,
+    HTT_STATS_FTYPE_SGEN_BE_NDP,
+    HTT_STATS_FTYPE_SGEN_BE_MU_TRIG,
+    HTT_STATS_FTYPE_SGEN_BE_MU_BAR,
+    HTT_STATS_FTYPE_SGEN_BE_MU_BRP,
+    HTT_STATS_FTYPE_SGEN_BE_MU_RTS,
+    HTT_STATS_FTYPE_SGEN_BE_MU_BSRP,
     HTT_STATS_FTYPE_MAX,
 };
 typedef enum HTT_STATS_FTYPE HTT_STATS_FTYPE;
@@ -1527,6 +1534,24 @@ typedef enum HTT_PPDU_STATS_RESP_PPDU_TYPE HTT_PPDU_STATS_RESP_PPDU_TYPE;
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_RESP_PPDU_TYPE_S)); \
      } while (0)
 
+typedef enum HTT_PPDU_STATS_RU_SIZE {
+    HTT_PPDU_STATS_RU_26,
+    HTT_PPDU_STATS_RU_52,
+    HTT_PPDU_STATS_RU_52_26,
+    HTT_PPDU_STATS_RU_106,
+    HTT_PPDU_STATS_RU_106_26,
+    HTT_PPDU_STATS_RU_242,
+    HTT_PPDU_STATS_RU_484,
+    HTT_PPDU_STATS_RU_484_242,
+    HTT_PPDU_STATS_RU_996,
+    HTT_PPDU_STATS_RU_996_484,
+    HTT_PPDU_STATS_RU_996_484_242,
+    HTT_PPDU_STATS_RU_996x2,
+    HTT_PPDU_STATS_RU_996x2_484,
+    HTT_PPDU_STATS_RU_996x3,
+    HTT_PPDU_STATS_RU_996x3_484,
+    HTT_PPDU_STATS_RU_996x4,
+} HTT_PPDU_STATS_RU_SIZE;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1546,36 +1571,68 @@ typedef struct {
 
     /* BIT [ 3 :   0]   :- user_pos
      * BIT [ 11:   4]   :- mu_group_id
-     * BIT [ 31:  12]   :- reserved1
+     * BIT [ 15:  12]   :- ru_format
+     * BIT [ 31:  16]   :- reserved1
      */
     union {
         A_UINT32 mu_group_id__user_pos;
         struct {
             A_UINT32 user_pos:           4,
                      mu_group_id:        8,
-                     reserved1:         20;
+                     ru_format:          4,
+                     reserved1:         16;
         };
     };
 
-    /* BIT [ 15 :   0]   :- ru_end
-     * BIT [ 31 :  16]   :- ru_start
+    /* BIT [ 15 :   0]   :- ru_end or ru_index
+     * BIT [ 31 :  16]   :- ru_start or ru_size
+     *
+     * Discriminant is field ru_format:
+     *     - ru_format = 0: ru_end, ru_start
+     *     - ru_format = 1: ru_index, ru_size
+     *     - ru_format = other: reserved for future expansion
+     *
+     * ru_start and ru_end are RU 26 indices
+     *
+     * ru_size is an HTT_PPDU_STATS_RU_SIZE, ru_index is a size
+     * specific index for the given ru_size.
      */
     union {
         A_UINT32 ru_start__ru_end;
+        A_UINT32 ru_size__ru_index;
         struct {
-            A_UINT32 ru_end:            16,
-                     ru_start:          16;
+            A_UINT32 ru_end:   16,
+                     ru_start: 16;
+        };
+        struct {
+            A_UINT32 ru_index: 16,
+                     ru_size:  16;
         };
     };
 
-    /* BIT [ 15 :   0]   :- ru_end
-     * BIT [ 31 :  16]   :- ru_start
+    /* BIT [ 15 :   0]   :- resp_ru_end or resp_ru_index
+     * BIT [ 31 :  16]   :- resp_ru_start or resp_ru_size
+     *
+     * Discriminant is field ru_format:
+     *     - ru_format = 0: resp_ru_end, resp_ru_start
+     *     - ru_format = 1: resp_ru_index, resp_ru_size
+     *     - ru_format = other: reserved for future expansion
+     *
+     * resp_ru_start and resp_ru_end are RU 26 indices
+     *
+     * resp_ru_size is an HTT_PPDU_STATS_RU_SIZE, resp_ru_index
+     * is a size specific index for the given ru_size.
      */
     union {
         A_UINT32 resp_ru_start__ru_end;
+        A_UINT32 resp_ru_size__ru_index;
         struct {
-            A_UINT32 resp_ru_end:       16,
-                     resp_ru_start:     16;
+            A_UINT32 resp_ru_end:   16,
+                     resp_ru_start: 16;
+        };
+        struct {
+            A_UINT32 resp_ru_index: 16,
+                     resp_ru_size:  16;
         };
     };
 
