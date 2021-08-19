@@ -1242,7 +1242,7 @@ static void init_config_param(struct mac_context *mac)
 	mac->roam.configParam.uCfgDot11Mode = eCSR_CFG_DOT11_MODE_AUTO;
 	mac->roam.configParam.HeartbeatThresh50 = 40;
 	mac->roam.configParam.Is11eSupportEnabled = true;
-	mac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
+	mac->roam.configParam.WMMSupportMode = WMM_USER_MODE_AUTO;
 	mac->roam.configParam.ProprietaryRatesEnabled = true;
 
 	mac->roam.configParam.nVhtChannelWidth =
@@ -1644,7 +1644,7 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->is_force_1x1;
 		mac->roam.configParam.WMMSupportMode = pParam->WMMSupportMode;
 		mac->mlme_cfg->wmm_params.wme_enabled =
-			(pParam->WMMSupportMode == eCsrRoamWmmNoQos) ? 0 : 1;
+			(pParam->WMMSupportMode == WMM_USER_MODE_NO_QOS) ? 0 : 1;
 		mac->roam.configParam.Is11eSupportEnabled =
 			pParam->Is11eSupportEnabled;
 
@@ -5904,7 +5904,6 @@ QDF_STATUS cm_csr_handle_join_req(struct wlan_objmgr_vdev *vdev,
 	tDot11fBeaconIEs *ie_struct;
 	struct bss_description *bss_desc;
 	uint32_t ie_len, bss_len;
-	struct mlme_legacy_priv *mlme_priv;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -5952,11 +5951,6 @@ QDF_STATUS cm_csr_handle_join_req(struct wlan_objmgr_vdev *vdev,
 		sme_qos_csr_event_ind(mac_ctx, vdev_id,
 				      SME_QOS_CSR_JOIN_REQ, NULL);
 	}
-
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (mlme_priv)
-		mlme_priv->connect_info.qos_type =
-			csr_get_qos_from_bss_desc(mac_ctx, bss_desc, ie_struct);
 
 	if ((wlan_reg_11d_enabled_on_host(mac_ctx->psoc)) &&
 	     !ie_struct->Country.present)

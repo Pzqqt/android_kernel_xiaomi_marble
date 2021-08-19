@@ -190,7 +190,7 @@ struct csr_config {
 	eCsrPhyMode phyMode;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	uint32_t HeartbeatThresh50;
-	eCsrRoamWmmUserModeType WMMSupportMode;
+	enum wmm_user_mode WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
 	bool fenableMCCMode;

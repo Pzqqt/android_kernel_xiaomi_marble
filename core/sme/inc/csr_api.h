@@ -30,6 +30,7 @@
 #include "csr_link_list.h"
 #include "wlan_scan_public_structs.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_main.h"
 
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
 
@@ -408,13 +409,6 @@ typedef enum {
 
 } eCsrRoamReasonCodes;
 
-typedef enum {
-	eCsrRoamWmmAuto = 0,
-	eCsrRoamWmmQbssOnly = 1,
-	eCsrRoamWmmNoQos = 2,
-
-} eCsrRoamWmmUserModeType;
-
 /*
  * Following fields might need modification dynamically once STA is up
  * & running & this'd trigger reassoc.
@@ -475,7 +469,7 @@ struct csr_config_params {
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
 	uint32_t HeartbeatThresh50;
-	eCsrRoamWmmUserModeType WMMSupportMode;
+	enum wmm_user_mode WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
 	/* to set MCC Enable/Disable mode */

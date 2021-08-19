@@ -5791,13 +5791,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	 * may not be good with non QOS 11N AP
 	 * Default: enable QOS for SAP unless WMM IE not present for 11bga
 	 */
-	sme_config->csr_config.WMMSupportMode = eCsrRoamWmmAuto;
+	sme_config->csr_config.WMMSupportMode = WMM_USER_MODE_AUTO;
 	ie = wlan_get_vendor_ie_ptr_from_oui(WMM_OUI_TYPE, WMM_OUI_TYPE_SIZE,
 					     beacon->tail, beacon->tail_len);
 	if (!ie && (config->SapHw_mode == eCSR_DOT11_MODE_11a ||
 		config->SapHw_mode == eCSR_DOT11_MODE_11g ||
 		config->SapHw_mode == eCSR_DOT11_MODE_11b))
-		sme_config->csr_config.WMMSupportMode = eCsrRoamWmmNoQos;
+		sme_config->csr_config.WMMSupportMode = WMM_USER_MODE_NO_QOS;
 	sme_update_config(mac_handle, sme_config);
 
 	if (!((adapter->device_mode == QDF_SAP_MODE) &&

@@ -276,7 +276,7 @@ struct hdd_config {
  *
  * Return: CSR WMM mode
  */
-eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(uint8_t mode);
+enum wmm_user_mode hdd_to_csr_wmm_mode(uint8_t mode);
 
 QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx);

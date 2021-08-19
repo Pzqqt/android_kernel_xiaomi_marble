@@ -2680,6 +2680,46 @@ static QDF_STATUS lim_iterate_triplets(tDot11fIECountry country_ie)
 	return QDF_STATUS_SUCCESS;
 }
 
+static bool lim_is_bss_description_wme(struct mac_context *mac,
+				       tDot11fBeaconIEs *ie_struct)
+{
+
+	if (!(ie_struct->WMMParams.present || ie_struct->WMMInfoAp.present))
+		return false;
+	if (mac->roam.configParam.WMMSupportMode == WMM_USER_MODE_NO_QOS &&
+	    !ie_struct->HTCaps.present)
+		return false;
+
+	return true;
+}
+
+static enum medium_access_type
+lim_get_qos_from_bss_desc(struct mac_context *mac_ctx,
+			  struct bss_description *bss_desc,
+			  tDot11fBeaconIEs *ie_struct)
+{
+	enum medium_access_type qos_type = MEDIUM_ACCESS_DCF;
+	tSirMacCapabilityInfo *ap_cap_info;
+
+	/*
+	 * If we find WMM in the Bss Description, then we let this
+	 * override and use WMM.
+	 */
+	if (lim_is_bss_description_wme(mac_ctx, ie_struct))
+		return MEDIUM_ACCESS_WMM_EDCF_DSCP;
+
+	ap_cap_info = (tSirMacCapabilityInfo *)&bss_desc->capabilityInfo;
+	/* If the QoS bit is on, then the AP is advertising 11E QoS. */
+	if (ap_cap_info->qos)
+		qos_type = MEDIUM_ACCESS_11E_EDCF;
+
+	if (qos_type == MEDIUM_ACCESS_11E_EDCF &&
+	    !mac_ctx->roam.configParam.Is11eSupportEnabled)
+		qos_type = MEDIUM_ACCESS_DCF;
+
+	return qos_type;
+}
+
 static void lim_set_qos_to_cfg(struct pe_session *session,
 			       enum medium_access_type qos_type)
 {
@@ -2707,40 +2747,44 @@ static void lim_set_qos_to_cfg(struct pe_session *session,
 }
 
 static void lim_update_qos(struct mac_context *mac_ctx,
-			   struct pe_session *session)
+			   struct pe_session *session,
+			   struct bss_description *bss_desc,
+			   tDot11fBeaconIEs *ie_struct)
 {
 	struct mlme_legacy_priv *mlme_priv;
+	enum medium_access_type qos_type;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
 	if (!mlme_priv)
 		return;
 
+	qos_type = lim_get_qos_from_bss_desc(mac_ctx, bss_desc, ie_struct);
+
 	if ((session->dot11mode != MLME_DOT11_MODE_11N) &&
-	    (mac_ctx->roam.configParam.WMMSupportMode == eCsrRoamWmmNoQos)) {
+	    (mac_ctx->roam.configParam.WMMSupportMode ==
+	     WMM_USER_MODE_NO_QOS)) {
 		/*
 		 * Joining BSS is not 11n capable and WMM is disabled on client.
 		 * Disable QoS and WMM
 		 */
-		mlme_priv->connect_info.qos_type = MEDIUM_ACCESS_DCF;
+		qos_type = MEDIUM_ACCESS_DCF;
 	}
 
 	if ((session->dot11mode == MLME_DOT11_MODE_11N ||
 	     session->dot11mode == MLME_DOT11_MODE_11AC) &&
-	      (mlme_priv->connect_info.qos_type !=
-		MEDIUM_ACCESS_WMM_EDCF_DSCP &&
-	       mlme_priv->connect_info.qos_type !=
-		MEDIUM_ACCESS_11E_EDCF)) {
+	     (qos_type != MEDIUM_ACCESS_WMM_EDCF_DSCP &&
+	      qos_type != MEDIUM_ACCESS_11E_EDCF)) {
 		/*
 		 * Joining BSS is 11n capable and WMM is disabled on AP.
 		 * Assume all HT AP's are QOS AP's and enable WMM
 		 */
-		mlme_priv->connect_info.qos_type =
-					MEDIUM_ACCESS_WMM_EDCF_DSCP;
+		qos_type = MEDIUM_ACCESS_WMM_EDCF_DSCP;
 	}
 
-	lim_set_qos_to_cfg(session, mlme_priv->connect_info.qos_type);
+	lim_set_qos_to_cfg(session, qos_type);
 	mlme_priv->connect_info.qos_enabled = session->limWmeEnabled;
-	pe_debug("QOS %d WMM %d", session->limQosEnabled,
+	pe_debug("qos_type %d QOS %d WMM %d", qos_type,
+		 session->limQosEnabled,
 		 session->limWmeEnabled);
 }
 
@@ -2883,15 +2927,15 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	lim_check_oui_and_update_session(mac_ctx, session, ie_struct);
 	ese_ver_present = ie_struct->ESEVersion.present;
 
-	qdf_mem_free(ie_struct);
-
 	/* Copying of bssId is already done, while creating session */
 	sir_copy_mac_addr(session->self_mac_addr,
 			  wlan_vdev_mlme_get_macaddr(session->vdev));
 
 	session->statypeForBss = STA_ENTRY_PEER;
 
-	lim_update_qos(mac_ctx, session);
+	lim_update_qos(mac_ctx, session, bss_desc, ie_struct);
+	qdf_mem_free(ie_struct);
+	ie_struct = NULL;
 
 	if (session->lim_join_req->bssDescription.adaptive_11r_ap)
 		session->is_adaptive_11r_connection =
@@ -3000,10 +3044,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	session->limCurrentBssCaps = bss_desc->capabilityInfo;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
-	if (!mlme_obj) {
-		qdf_mem_free(ie_struct);
+	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	lim_extract_ap_capability(mac_ctx,
 		(uint8_t *)bss_desc->ieFields,
