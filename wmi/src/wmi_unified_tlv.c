@@ -7586,6 +7586,18 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		resource_cfg->host_service_flags,
 		tgt_res_cfg->is_reg_cc_ext_event_supported);
 
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_LPI_SP_MODE_SUPPORT_SET(
+		resource_cfg->host_service_flags,
+		tgt_res_cfg->lpi_only_mode);
+
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_TIMER_CHECK_SET(
+		resource_cfg->host_service_flags,
+		tgt_res_cfg->afc_timer_check_disable);
+
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_REQ_ID_CHECK_SET(
+		resource_cfg->host_service_flags,
+		tgt_res_cfg->afc_req_id_check_disable);
+
 	wmi_set_nan_channel_support(resource_cfg);
 
 	wmi_info("Enable dynamic PCIe gen speed: %d",

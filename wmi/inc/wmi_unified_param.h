@@ -5444,6 +5444,10 @@ struct wmi_host_fw_abi_ver {
  * @is_sap_connected_d3wow_enabled: is sap d3wow with connected client supported
  * @is_go_connected_d3wow_enabled: is go d3wow with connected client supported
  * @dynamic_pcie_gen_speed_change: is dynamic pcie gen speed change enabled
+ * @lpi_only_mode: Indicates whether AP is capable of operating in LPI only
+ *                 mode or both LPI/SP mode
+ * @afc_timer_check_disable: Disables AFC Timer related checks in FW
+ * @afc_req_id_check_disable: Disables AFC Request ID check in FW
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5557,6 +5561,9 @@ typedef struct {
 	bool twt_ack_support_cap;
 	uint32_t ema_init_config;
 	uint32_t target_cap_flags;
+	bool lpi_only_mode;
+	bool afc_timer_check_disable;
+	bool afc_req_id_check_disable;
 } target_resource_config;
 
 /**
