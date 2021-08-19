@@ -167,7 +167,7 @@ mlo_cm_handle_connect_in_disconnection_state(struct wlan_objmgr_vdev *vdev,
 		qdf_mem_copy(sta_ctx->connect_req, req,
 			     sizeof(struct wlan_cm_connect_req));
 	else
-		qdf_err("Failed to allocate connect req");
+		mlo_err("Failed to allocate connect req");
 }
 
 static void
@@ -221,12 +221,33 @@ QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
 		       struct wlan_cm_connect_req *req)
 {
 	struct wlan_mlo_dev_context *mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	if (qdf_mem_cmp(vdev->vdev_mlme.macaddr,
+			vdev->vdev_mlme.linkaddr,
+			QDF_MAC_ADDR_SIZE))
+		return wlan_cm_start_connect(vdev, req);
+
 	mlo_dev_ctx = vdev->mlo_dev_ctx;
+	sta_ctx = mlo_dev_ctx->sta_ctx;
 	if (mlo_dev_ctx && wlan_vdev_mlme_is_mlo_vdev(vdev)) {
 		mlo_dev_lock_acquire(mlo_dev_ctx);
 		status = mlo_validate_connect_req(mlo_dev_ctx, req);
+
+		if (!sta_ctx->orig_conn_req)
+			sta_ctx->orig_conn_req = qdf_mem_malloc(
+					sizeof(struct wlan_cm_connect_req));
+
+		mlo_debug("storing orig connect req");
+		if (sta_ctx->orig_conn_req) {
+			qdf_mem_copy(sta_ctx->orig_conn_req, req,
+				     sizeof(struct wlan_cm_connect_req));
+		} else {
+			mlo_err("Failed to allocate orig connect req");
+			return QDF_STATUS_E_NOMEM;
+		}
+
 		if (QDF_IS_STATUS_SUCCESS(status))
 			status = wlan_cm_start_connect(vdev, req);
 
@@ -255,10 +276,16 @@ mlo_prepare_and_send_connect(struct wlan_objmgr_vdev *vdev,
 			     struct wlan_ssid ssid)
 {
 	struct wlan_cm_connect_req req = {0};
+	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx = mlo_dev_ctx->sta_ctx;
 
 	mlo_debug("Partner link connect mac:" QDF_MAC_ADDR_FMT "vdev_id:%d",
 		  QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
 		  wlan_vdev_get_id(vdev));
+
+	qdf_mem_copy(&req, sta_ctx->orig_conn_req,
+		     sizeof(struct wlan_cm_connect_req));
+
 	qdf_mem_copy(req.bssid.bytes,
 		     link_info.link_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
@@ -268,10 +295,25 @@ mlo_prepare_and_send_connect(struct wlan_objmgr_vdev *vdev,
 		     sizeof(struct mlo_partner_info));
 
 	req.ssid.length = ssid.length;
-	qdf_mem_copy(&req.ssid.ssid, &ssid.ssid,
-		     ssid.length);
+	qdf_mem_copy(&req.ssid.ssid, &ssid.ssid, ssid.length);
+
+	req.assoc_ie.len = sta_ctx->orig_conn_req->assoc_ie.len;
+	req.assoc_ie.ptr = qdf_mem_malloc(req.assoc_ie.len);
+	if (req.assoc_ie.ptr) {
+		qdf_mem_copy(req.assoc_ie.ptr,
+			     sta_ctx->orig_conn_req->assoc_ie.ptr,
+			     req.assoc_ie.len);
+	} else {
+		req.assoc_ie.len = 0;
+		mlo_err("Failed to allocate assoc IE");
+	}
 
 	wlan_cm_start_connect(vdev, &req);
+	if (req.assoc_ie.ptr) {
+		qdf_mem_free(req.assoc_ie.ptr);
+		req.assoc_ie.ptr = NULL;
+		req.assoc_ie.len = 0;
+	}
 }
 
 /**
@@ -587,6 +629,11 @@ static QDF_STATUS mlo_disconnect_no_lock(struct wlan_objmgr_vdev *vdev,
 			sta_ctx->connect_req = NULL;
 		}
 
+		if (sta_ctx->orig_conn_req) {
+			qdf_mem_free(sta_ctx->orig_conn_req);
+			sta_ctx->orig_conn_req = NULL;
+		}
+
 		status = mlo_send_link_disconnect(mlo_dev_ctx, source,
 						  reason_code, bssid);
 
@@ -626,6 +673,11 @@ QDF_STATUS mlo_disconnect(struct wlan_objmgr_vdev *vdev,
 		if (sta_ctx->connect_req) {
 			qdf_mem_free(sta_ctx->connect_req);
 			sta_ctx->connect_req = NULL;
+		}
+
+		if (sta_ctx->orig_conn_req) {
+			qdf_mem_free(sta_ctx->orig_conn_req);
+			sta_ctx->orig_conn_req = NULL;
 		}
 
 		status = mlo_send_link_disconnect(mlo_dev_ctx, source,
@@ -672,6 +724,11 @@ QDF_STATUS mlo_sync_disconnect(struct wlan_objmgr_vdev *vdev,
 		if (sta_ctx->connect_req) {
 			qdf_mem_free(sta_ctx->connect_req);
 			sta_ctx->connect_req = NULL;
+		}
+
+		if (sta_ctx->orig_conn_req) {
+			qdf_mem_free(sta_ctx->orig_conn_req);
+			sta_ctx->orig_conn_req = NULL;
 		}
 
 		status = mlo_send_link_disconnect_sync(mlo_dev_ctx, source,

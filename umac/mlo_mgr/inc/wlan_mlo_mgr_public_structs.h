@@ -127,6 +127,7 @@ struct wlan_mlo_key_mgmt {
  * @wlan_connect_req_links: list of vdevs selected for connection with the MLAP
  * @wlan_connected_links: list of vdevs associated with this MLO connection
  * @connect req: connect params
+ * @orig_conn_req: original connect req
  * @assoc_rsp: Raw assoc response frame
  */
 struct wlan_mlo_sta {
@@ -134,6 +135,7 @@ struct wlan_mlo_sta {
 	qdf_bitmap(wlan_connected_links, WLAN_UMAC_MLO_MAX_VDEVS);
 	struct wlan_mlo_key_mgmt key_mgmt[WLAN_UMAC_MLO_MAX_VDEVS - 1];
 	struct wlan_cm_connect_req *connect_req;
+	struct wlan_cm_connect_req *orig_conn_req;
 	struct element_info assoc_rsp;
 };
 
