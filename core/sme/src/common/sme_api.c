@@ -4593,7 +4593,7 @@ static void sme_update_bfer_he_cap(struct wma_tgt_cfg *cfg)
 #endif
 
 #ifdef WLAN_FEATURE_11BE
-void sme_update_bfer_eht_cap(struct wma_tgt_cfg *cfg)
+static void sme_update_bfer_eht_cap(struct wma_tgt_cfg *cfg)
 {
 	cfg->eht_cap_5g.su_beamformer = 0;
 }
