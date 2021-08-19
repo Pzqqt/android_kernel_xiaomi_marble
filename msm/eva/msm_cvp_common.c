@@ -691,6 +691,7 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 	mutex_unlock(&core->lock);
 
 	dprintk(CVP_WARN, "SYS_ERROR handled.\n");
+	BUG_ON(core->resources.fatal_ssr);
 }
 
 void msm_cvp_comm_session_clean(struct msm_cvp_inst *inst)

@@ -176,6 +176,7 @@ struct msm_cvp_platform_resources {
 	int msm_cvp_firmware_unload_delay;
 	uint32_t msm_cvp_pwr_collapse_delay;
 	bool non_fatal_pagefaults;
+	bool fatal_ssr;
 	struct msm_cvp_mem_cdsp mem_cdsp;
 	uint32_t vpu_ver;
 	uint32_t fw_cycles;

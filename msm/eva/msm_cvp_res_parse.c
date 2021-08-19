@@ -804,6 +804,7 @@ int cvp_read_platform_resources_from_drv_data(
 
 	res->vpu_ver = platform_data->vpu_ver;
 	res->ubwc_config = platform_data->ubwc_config;
+	res->fatal_ssr = false;
 	return rc;
 
 }
