@@ -386,6 +386,29 @@ static int _max_ssr_get(void *data, u64 *val)
 
 DEFINE_DEBUGFS_ATTRIBUTE(max_ssr_fops, _max_ssr_get, _max_ssr_set, "%llu\n");
 
+static int _ssr_stall_set(void *data, u64 val)
+{
+	struct msm_cvp_core *core;
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	if (core)
+		core->resources.fatal_ssr = (val >= 1) ? true : false;
+
+	return 0;
+}
+
+static int _ssr_stall_get(void *data, u64 *val)
+{
+	struct msm_cvp_core *core;
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	if (core)
+		*val = core->resources.fatal_ssr ? 1 : 0;
+
+	return 0;
+}
+
+DEFINE_DEBUGFS_ATTRIBUTE(ssr_stall_fops, _ssr_stall_get, _ssr_stall_set, "%llu\n");
+
+
 struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 		struct dentry *parent)
 {
@@ -430,6 +453,11 @@ struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 		goto failed_create_dir;
 	}
 
+	if (!debugfs_create_file("ssr_stall", 0644, dir,
+			NULL, &ssr_stall_fops)) {
+		dprintk(CVP_ERR, "debugfs_create: ssr_stall fail\n");
+		goto failed_create_dir;
+	}
 failed_create_dir:
 	return dir;
 }
