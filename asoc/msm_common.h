@@ -31,6 +31,11 @@ enum {
 	MI2S_TDM_AUXPCM_MAX,
 };
 
+typedef enum snd_card_status_t {
+	SND_CARD_STATUS_OFFLINE = 0,
+	SND_CARD_STATUS_ONLINE  = 1,
+} snd_card_status_t;
+
 struct msm_common_pdata {
 	uint8_t *aud_dev_state;
 	struct kobject aud_dev_kobj;
@@ -46,7 +51,8 @@ struct msm_common_pdata {
 	uint32_t is_audio_hw_vote_required[MI2S_TDM_AUXPCM_MAX];
 };
 
-int snd_card_notify_user(int card_status);
+int snd_card_notify_user(snd_card_status_t card_status);
+int snd_card_set_card_status(snd_card_status_t card_status);
 struct msm_common_pdata *msm_common_get_pdata(struct snd_soc_card *card);
 
 void msm_common_set_pdata(struct snd_soc_card *card,
