@@ -472,12 +472,15 @@ cm_handle_connect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 	resp->connect_status = QDF_STATUS_E_FAILURE;
 	resp->cm_id = cm_req->cm_id;
 	resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
-	resp->reason = CM_ABORT_DUE_TO_NEW_REQ_RECVD;
+	if (cm_req->failed_req)
+		resp->reason = CM_GENERIC_FAILURE;
+	else
+		resp->reason = CM_ABORT_DUE_TO_NEW_REQ_RECVD;
 
 	/* Get bssid and ssid and freq for the cm id from the req list */
 	cm_fill_connect_resp_from_req(resp, cm_req);
 
-	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
+	cm_notify_connect_complete(cm_ctx, resp);
 	qdf_mem_free(resp);
 }
 
@@ -500,7 +503,7 @@ cm_handle_disconnect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 	resp.req.cm_id = cm_req->cm_id;
 	resp.req.req = cm_req->discon_req.req;
 
-	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, &resp);
+	cm_notify_disconnect_complete(cm_ctx, &resp);
 }
 
 static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
