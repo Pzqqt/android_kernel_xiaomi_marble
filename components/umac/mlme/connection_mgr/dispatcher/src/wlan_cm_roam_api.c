@@ -803,6 +803,8 @@ void wlan_cm_set_country_code(struct wlan_objmgr_pdev *pdev,
 	if (!rso_cfg || !cc)
 		goto release_vdev_ref;
 
+	mlme_debug("Country info from bcn IE:%c%c 0x%x", cc[0], cc[1], cc[2]);
+
 	qdf_mem_copy(rso_cfg->country_code, cc, REG_ALPHA2_LEN + 1);
 
 release_vdev_ref:
