@@ -285,6 +285,17 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 				(dfs_radars[p].rp_maxdur ==
 				 dfs->dfs_radarf[n]->ft_maxdur)) {
 				ft = dfs->dfs_radarf[n];
+				/* ft_rssithresh means the minimum rp_rssithresh
+				 * among the same radar type.
+				 * min_rssithresh means the minimum
+				 * rp_rssithresh among all radar type.
+				 */
+				if (ft->ft_rssithresh >
+				    dfs_radars[p].rp_rssithresh)
+					ft->ft_rssithresh =
+						dfs_radars[p].rp_rssithresh;
+				if (min_rssithresh > ft->ft_rssithresh)
+					min_rssithresh = ft->ft_rssithresh;
 				break;
 			}
 		}
