@@ -337,7 +337,7 @@ DEFINE_DEBUGFS_ATTRIBUTE(clk_rate_fops, _clk_rate_get, _clk_rate_set, "%llu\n");
 static int _dsp_dbg_set(void *data, u64 val)
 {
 
-	if (val == 0 || val > (1 << EVA_MEM_DEBUG_ON)) {
+	if (val == 0 || val >= (1 << (EVA_MEM_DEBUG_ON + 1))) {
 		dprintk(CVP_WARN, "DSP debug mask cannot be %llx\n", val);
 		return 0;
 	}
