@@ -343,7 +343,7 @@ enum htt_dbg_ext_stats_type {
      * PARAMS:
      *   - No Params
      * RESP MSG:
-     *   - htt_tx_pdev_rate_txbf_stats_t
+     *   - htt_tx_pdev_txbf_rate_stats_t
      */
     HTT_DBG_EXT_STATS_PDEV_TX_RATE_TXBF   = 31,
 
@@ -402,6 +402,14 @@ enum htt_dbg_ext_stats_type {
     HTT_DBG_EXT_VDEVS_TXRX_STATS = 38,
 
     HTT_DBG_EXT_VDEV_RTT_INITIATOR_STATS = 39,
+
+    /* HTT_DBG_EXT_PDEV_PER_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_tx_pdev_per_stats_t
+     */
+    HTT_DBG_EXT_PDEV_PER_STATS = 40,
 
 
     /* keep this last */
@@ -633,7 +641,7 @@ typedef struct {
     A_UINT32 next_seq_cancel;
     /* Num of times fes offset was misaligned */
     A_UINT32 fes_offsets_err_cnt;
-    /* Num of times peer blacklisted for MU-MIMO transmission */
+    /* Num of times peer denylisted for MU-MIMO transmission */
     A_UINT32 num_mu_peer_blacklisted;
     /* Num of times mu_ofdma seq posted */
     A_UINT32 mu_ofdma_seq_posted;
@@ -659,6 +667,10 @@ typedef struct {
      * 3 -> Tx Abort Module
      */
     A_UINT32 last_suspend_reason;
+    /* Num of dynamic mimo ps dlmumimo sequences posted */
+    A_UINT32 num_dyn_mimo_ps_dlmumimo_sequences;
+    /* Num of times su bf sequences are denylisted */
+    A_UINT32 num_su_txbf_denylisted;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -705,6 +717,49 @@ typedef struct {
     A_UINT32      num_data_ppdus_ax_su_txbf;
 } htt_tx_pdev_stats_tx_ppdu_stats_tlv_v;
 
+typedef enum {
+    HTT_TX_WAL_ISR_SCHED_SUCCESS,
+    HTT_TX_WAL_ISR_SCHED_FILTER,
+    HTT_TX_WAL_ISR_SCHED_RESP_TIMEOUT,
+    HTT_TX_WAL_ISR_SCHED_RATES_EXHAUSTED,
+    HTT_TX_WAL_ISR_SCHED_DATA_EXHAUSTED,
+    HTT_TX_WAL_ISR_SCHED_SEQ_ABORT,
+    HTT_TX_WAL_ISR_SCHED_NOTIFY_FRAME_ENCOUNTERED,
+    HTT_TX_WAL_ISR_SCHED_COMPLETION,
+    HTT_TX_WAL_ISR_SCHED_IN_PROGRESS,
+} htt_tx_wal_tx_isr_sched_status;
+
+/* [0]- nr4 , [1]- nr8 */
+#define HTT_STATS_NUM_NR_BINS 2
+/* Termination status stated in htt_tx_wal_tx_isr_sched_status */
+#define HTT_STATS_MAX_NUM_SCHED_STATUS  9
+#define HTT_STATS_MAX_NUM_MU_PPDU_PER_BURST 10
+#define HTT_STATS_MAX_NUM_SCHED_STATUS_WORDS \
+    (HTT_STATS_NUM_NR_BINS * HTT_STATS_MAX_NUM_SCHED_STATUS)
+#define HTT_STATS_MAX_NUM_MU_PPDU_PER_BURST_WORDS \
+    (HTT_STATS_NUM_NR_BINS * HTT_STATS_MAX_NUM_MU_PPDU_PER_BURST)
+
+typedef enum {
+    HTT_STATS_HWMODE_AC = 0,
+    HTT_STATS_HWMODE_AX = 1,
+    HTT_STATS_HWMODE_BE = 2,
+} htt_stats_hw_mode;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 hw_mode; /* HTT_STATS_HWMODE_xx */
+
+    A_UINT32 mu_mimo_num_seq_term_status[HTT_STATS_MAX_NUM_SCHED_STATUS_WORDS];
+
+    A_UINT32 mu_mimo_num_ppdu_completed_per_burst[HTT_STATS_MAX_NUM_MU_PPDU_PER_BURST_WORDS];
+
+    A_UINT32 mu_mimo_num_seq_posted[HTT_STATS_NUM_NR_BINS];
+
+    A_UINT32 mu_mimo_num_ppdu_posted_per_burst[HTT_STATS_MAX_NUM_MU_PPDU_PER_BURST_WORDS];
+
+} htt_pdev_mu_ppdu_dist_tlv_v;
+
 #define HTT_TX_PDEV_STATS_TRIED_MPDU_CNT_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size .
  *
@@ -742,6 +797,7 @@ typedef struct {
  *      - HTT_STATS_TX_PDEV_TX_PPDU_STATS_TAG
  *      - HTT_STATS_TX_PDEV_TRIED_MPDU_CNT_HIST_TAG
  *      - HTT_STATS_PDEV_CTRL_PATH_TX_STATS_TAG
+ *      - HTT_STATS_MU_PPDU_DIST_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -757,6 +813,7 @@ typedef struct _htt_tx_pdev_stats {
     htt_tx_pdev_stats_tx_ppdu_stats_tlv_v       tx_su_tlv;
     htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v tried_mpdu_cnt_hist_tlv;
     htt_pdev_ctrl_path_tx_stats_tlv_v           ctrl_path_tx_tlv;
+    htt_pdev_mu_ppdu_dist_tlv_v                 mu_ppdu_dist_tlv;
 } htt_tx_pdev_stats_t;
 
 /* == SOC ERROR STATS == */
@@ -1760,10 +1817,36 @@ typedef enum {
     HTT_TX_SELFGEN_SCH_TSFLAG_ERROR_STATS_VALID = 8
 } htt_tx_selfgen_sch_tsflag_error_stats;
 
+typedef enum {
+    HTT_TX_MUMIMO_GRP_VALID,
+    HTT_TX_MUMIMO_GRP_INVALID_NUM_MU_USERS_EXCEEDED_MU_MAX_USERS,
+    HTT_TX_MUMIMO_GRP_INVALID_SCHED_ALGO_NOT_MU_COMPATIBLE_GID,
+    HTT_TX_MUMIMO_GRP_INVALID_NON_PRIMARY_GRP,
+    HTT_TX_MUMIMO_GRP_INVALID_ZERO_CANDIDATES,
+    HTT_TX_MUMIMO_GRP_INVALID_MORE_CANDIDATES,
+    HTT_TX_MUMIMO_GRP_INVALID_GROUP_SIZE_EXCEED_NSS,
+    HTT_TX_MUMIMO_GRP_INVALID_GROUP_INELIGIBLE,
+    HTT_TX_MUMIMO_GRP_INVALID,
+    HTT_TX_MUMIMO_GRP_INVALID_GROUP_EFF_MU_TPUT_OMBPS,
+    HTT_TX_MUMIMO_GRP_INVALID_MAX_REASON_CODE,
+} htt_tx_mumimo_grp_invalid_reason_code_stats;
+
 #define HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS 4
 #define HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS 8
 #define HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS 74
 #define HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS 8
+#define HTT_STATS_MAX_MUMIMO_GRP_SZ 8
+/*
+ * Each bin represents a 300 mbps throughput
+ *  [0] - 0-300mbps;     [1] - 300-600mbps    [2] - 600-900mbps;    [3] - 900-1200mbps;  [4] - 1200-1500mbps
+ *  [5] - 1500-1800mbps; [6] - 1800-2100mbps; [7] - 2100-2400mbps;  [8] - 2400-2700mbps; [9] - >=2700mbps
+ */
+#define HTT_STATS_MUMIMO_TPUT_NUM_BINS 10
+#define HTT_STATS_MAX_INVALID_REASON_CODE \
+    HTT_TX_MUMIMO_GRP_INVALID_MAX_REASON_CODE
+/* Reasons stated in htt_tx_mumimo_grp_invalid_reason_code_stats */
+#define HTT_TX_NUM_MUMIMO_GRP_INVALID_WORDS \
+    (HTT_STATS_MAX_MUMIMO_GRP_SZ * HTT_STATS_MAX_INVALID_REASON_CODE)
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -2118,6 +2201,28 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 dl_mumimo_grp_best_grp_size[HTT_STATS_MAX_MUMIMO_GRP_SZ];
+
+    A_UINT32 dl_mumimo_grp_best_num_usrs[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+
+    A_UINT32 dl_mumimo_grp_eligible[HTT_STATS_MAX_MUMIMO_GRP_SZ];
+
+    A_UINT32 dl_mumimo_grp_ineligible[HTT_STATS_MAX_MUMIMO_GRP_SZ];
+
+    A_UINT32 dl_mumimo_grp_invalid[HTT_TX_NUM_MUMIMO_GRP_INVALID_WORDS];
+
+    A_UINT32 dl_mumimo_grp_tputs[HTT_STATS_MUMIMO_TPUT_NUM_BINS];
+
+    A_UINT32 ul_mumimo_grp_best_grp_size[HTT_STATS_MAX_MUMIMO_GRP_SZ];
+
+    A_UINT32 ul_mumimo_grp_best_num_usrs[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+
+    A_UINT32 ul_mumimo_grp_tputs[HTT_STATS_MUMIMO_TPUT_NUM_BINS];
+
+} htt_tx_pdev_mumimo_grp_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
     A_UINT32 mu_mimo_sch_posted;  /* Number of MU MIMO schedules posted to HW */
     A_UINT32 mu_mimo_sch_failed;  /* Number of MU MIMO schedules failed to post */
     A_UINT32 mu_mimo_ppdu_posted; /* Number of MU MIMO PPDUs posted to HW */
@@ -2233,6 +2338,7 @@ typedef struct {
      * it can also hold MU-OFDMA stats.
      */
     htt_tx_pdev_mpdu_stats_tlv mu_mimo_mpdu_stats_tlv[1]; /* WAL_TX_STATS_MAX_NUM_USERS */
+    htt_tx_pdev_mumimo_grp_stats_tlv mumimo_grp_stats_tlv;
 } htt_tx_pdev_mu_mimo_stats_t;
 
 /* == TX SCHED STATS == */
@@ -4640,6 +4746,34 @@ typedef struct {
      * ... where max_bw == 4 for 160mhz
      */
     A_UINT32 sounding[HTT_TX_NUM_OF_SOUNDING_STATS_WORDS];
+
+    /* cv upload handler stats */
+    A_UINT32 cv_nc_mismatch_err;
+    A_UINT32 cv_fcs_err;
+    A_UINT32 cv_frag_idx_mismatch;
+    A_UINT32 cv_invalid_peer_id;
+    A_UINT32 cv_no_txbf_setup;
+    A_UINT32 cv_expiry_in_update;
+    A_UINT32 cv_pkt_bw_exceed;
+    A_UINT32 cv_dma_not_done_err;
+    A_UINT32 cv_update_failed;
+    /* cv query stats */
+    A_UINT32 cv_total_query;
+    A_UINT32 cv_total_pattern_query;
+    A_UINT32 cv_total_bw_query;
+    A_UINT32 cv_invalid_bw_coding;
+    A_UINT32 cv_forced_sounding;
+    A_UINT32 cv_standalone_sounding;
+    A_UINT32 cv_nc_mismatch;
+    A_UINT32 cv_fb_type_mismatch;
+    A_UINT32 cv_ofdma_bw_mismatch;
+    A_UINT32 cv_bw_mismatch;
+    A_UINT32 cv_pattern_mismatch;
+    A_UINT32 cv_preamble_mismatch;
+    A_UINT32 cv_nr_mismatch;
+    A_UINT32 cv_in_use_cnt_exceeded;
+    A_UINT32 cv_found;
+    A_UINT32 cv_not_found;
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
@@ -5035,6 +5169,37 @@ typedef struct {
     A_UINT32 reduced_tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
 } htt_tx_pdev_txbf_rate_stats_tlv;
 
+typedef enum {
+    HTT_STATS_RC_MODE_DLSU     = 0,
+    HTT_STATS_RC_MODE_DLMUMIMO = 1,
+} htt_stats_rc_mode;
+
+typedef struct {
+    A_UINT32 ppdus_tried;
+    A_UINT32 ppdus_ack_failed;
+    A_UINT32 mpdus_tried;
+    A_UINT32 mpdus_failed;
+} htt_tx_rate_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 rc_mode; /* HTT_STATS_RC_MODE_XX */
+
+    A_UINT32 last_probed_mcs;
+
+    A_UINT32 last_probed_nss;
+
+    A_UINT32 last_probed_bw;
+
+    htt_tx_rate_stats_t per_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+
+    htt_tx_rate_stats_t per_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+
+    htt_tx_rate_stats_t per_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+
+} htt_tx_rate_stats_per_tlv;
+
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
@@ -5042,6 +5207,10 @@ typedef struct {
 typedef struct {
     htt_tx_pdev_txbf_rate_stats_tlv txbf_rate_stats;
 } htt_pdev_txbf_rate_stats_t;
+
+typedef struct {
+    htt_tx_rate_stats_per_tlv per_stats;
+} htt_tx_pdev_per_stats_t;
 
 typedef enum {
   HTT_ULTRIG_QBOOST_TRIGGER = 0,
