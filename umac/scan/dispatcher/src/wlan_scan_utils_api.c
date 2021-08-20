@@ -2541,6 +2541,12 @@ util_handle_nontx_prof(uint8_t *mbssid_elem, uint8_t *subelement,
 				   mbssid_index_ie[BSS_INDEX_POS],
 				   new_bssid);
 	}
+	/* In single MBSS IE, there could be subelement holding
+	 * remaining vendor IEs of non tx profile from last MBSS IE
+	 * [split profile] and new non tx profile, hence reset
+	 * skip_bssid_copy flag after each subelement processing
+	 */
+	mbssid_info->skip_bssid_copy = false;
 	return VALID_NONTX_PROF;
 }
 
@@ -2651,7 +2657,6 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 		mbssid_info.split_profile =
 			util_scan_is_split_prof_found(next_elem, ie, ielen);
 
-		mbssid_info.skip_bssid_copy = false;
 		for (subelement = mbssid_elem + SUBELEMENT_START_POS;
 		     subelement < (next_elem - 1);
 		     subelement += MIN_IE_LEN + subelement[TAG_LEN_POS]) {
