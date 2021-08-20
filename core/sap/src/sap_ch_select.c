@@ -2457,6 +2457,18 @@ static bool sap_is_ch_non_overlap(struct sap_context *sap_ctx, uint16_t ch)
 	return false;
 }
 
+static enum phy_ch_width
+sap_acs_next_lower_bandwidth(enum phy_ch_width ch_width)
+{
+	if (ch_width <= CH_WIDTH_20MHZ ||
+	    ch_width == CH_WIDTH_5MHZ ||
+	    ch_width == CH_WIDTH_10MHZ ||
+	    ch_width >= CH_WIDTH_INVALID)
+		return CH_WIDTH_INVALID;
+
+	return wlan_reg_get_next_lower_bandwidth(ch_width);
+}
+
 uint32_t sap_select_channel(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
 			   qdf_list_t *scan_list)
@@ -2547,7 +2559,13 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 	 */
 	if (!ch_in_pcl(sap_ctx, best_chan_freq)) {
 		uint32_t cal_chan_freq, cal_chan_weight;
+
+		enum phy_ch_width pref_bw = sap_ctx->acs_cfg->ch_width;
+next_bw:
+		sap_debug("check bw %d", pref_bw);
 		for (count = 0; count < spect_info->numSpectChans; count++) {
+			struct ch_params ch_params = {0};
+
 			cal_chan_freq = spect_info->pSpectCh[count].chan_freq;
 			cal_chan_weight = spect_info->pSpectCh[count].weight;
 			/* skip pcl channel whose weight is bigger than best */
@@ -2563,12 +2581,20 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 				spect_info)
 				== SAP_CHANNEL_NOT_SELECTED)
 				continue;
-
+			ch_params.ch_width = pref_bw;
+			wlan_reg_set_channel_params_for_freq(
+				mac_ctx->pdev, cal_chan_freq, 0, &ch_params);
+			if (ch_params.ch_width != pref_bw)
+				continue;
 			best_chan_freq = cal_chan_freq;
-			sap_debug("Changed best freq to %d Preferred freq",
-				  best_chan_freq);
-
+			sap_debug("Changed best freq to %d Preferred freq bw %d",
+				  best_chan_freq, pref_bw);
 			break;
+		}
+		if (count == spect_info->numSpectChans) {
+			pref_bw = sap_acs_next_lower_bandwidth(pref_bw);
+			if (pref_bw != CH_WIDTH_INVALID)
+				goto next_bw;
 		}
 	}
 
