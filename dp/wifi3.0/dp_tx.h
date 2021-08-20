@@ -396,8 +396,9 @@ static inline enum qdf_dp_tx_rx_status dp_tx_hw_to_qdf(uint16_t status)
 	switch (status) {
 	case HAL_TX_TQM_RR_FRAME_ACKED:
 		return QDF_TX_RX_STATUS_OK;
-	case HAL_TX_TQM_RR_REM_CMD_REM:
 	case HAL_TX_TQM_RR_REM_CMD_TX:
+		return QDF_TX_RX_STATUS_NO_ACK;
+	case HAL_TX_TQM_RR_REM_CMD_REM:
 	case HAL_TX_TQM_RR_REM_CMD_NOTX:
 	case HAL_TX_TQM_RR_REM_CMD_AGED:
 		return QDF_TX_RX_STATUS_FW_DISCARD;
