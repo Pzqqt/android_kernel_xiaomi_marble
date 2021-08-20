@@ -382,6 +382,29 @@ error:
 	return rc;
 }
 
+static bool dp_power_clk_status(struct dp_power *dp_power, enum dp_pm_type pm_type)
+{
+	struct dp_power_private *power;
+
+	if (!dp_power) {
+		DP_ERR("invalid power data\n");
+		return false;
+	}
+
+	power = container_of(dp_power, struct dp_power_private, dp_power);
+
+	if (pm_type == DP_LINK_PM)
+		return power->link_clks_on;
+	else if (pm_type == DP_CORE_PM)
+		return power->core_clks_on;
+	else if (pm_type == DP_STREAM0_PM)
+		return power->strm0_clks_on;
+	else if (pm_type == DP_STREAM1_PM)
+		return power->strm1_clks_on;
+	else
+		return false;
+}
+
 static int dp_power_request_gpios(struct dp_power_private *power)
 {
 	int rc = 0, i;
@@ -739,6 +762,7 @@ struct dp_power *dp_power_get(struct dp_parser *parser, struct dp_pll *pll)
 	dp_power->init = dp_power_init;
 	dp_power->deinit = dp_power_deinit;
 	dp_power->clk_enable = dp_power_clk_enable;
+	dp_power->clk_status = dp_power_clk_status;
 	dp_power->set_pixel_clk_parent = dp_power_set_pixel_clk_parent;
 	dp_power->clk_get_rate = dp_power_clk_get_rate;
 	dp_power->power_client_init = dp_power_client_init;

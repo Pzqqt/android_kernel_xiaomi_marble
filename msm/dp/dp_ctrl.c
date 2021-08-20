@@ -165,6 +165,16 @@ trigger_idle:
 static void dp_ctrl_configure_source_link_params(struct dp_ctrl_private *ctrl,
 		bool enable)
 {
+	if (!ctrl->power->clk_status(ctrl->power, DP_LINK_PM)) {
+		DP_WARN("DP link clocks are off\n");
+		return;
+	}
+
+	if (!ctrl->power->clk_status(ctrl->power, DP_CORE_PM)) {
+		DP_WARN("DP core clocks are off\n");
+		return;
+	}
+
 	if (enable) {
 		ctrl->catalog->lane_mapping(ctrl->catalog, ctrl->orientation,
 						ctrl->parser->l_map);
