@@ -313,6 +313,7 @@ int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
 		const char *name)
 {
 	struct clock_info *cl;
+	int rc = 0;
 
 	if (!device) {
 		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
@@ -325,6 +326,18 @@ int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
 		clk_disable_unprepare(cl->clk);
 		dprintk(CVP_PWR, "Clock: %s disable and unprepare\n",
 			cl->name);
+
+		if (cl->has_scaling) {
+			if (device->mmrm_cvp != NULL) {
+				// set min freq and cur freq to 0;
+				rc = msm_cvp_mmrm_set_value_in_range(device,
+					0, 0);
+				if (rc)
+					dprintk(CVP_ERR,
+						"%s Failed set clock %s: %d\n",
+						__func__, cl->name, rc);
+			}
+		}
 		return 0;
 	}
 
