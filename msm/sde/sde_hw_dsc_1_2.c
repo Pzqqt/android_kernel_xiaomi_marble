@@ -129,7 +129,7 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 	struct sde_hw_blk_reg_map *dsc_c;
 	u32 idx;
 	u32 data = 0;
-	u32 slice_count_per_enc;
+	u32 bpp;
 
 	if (!hw_dsc || !dsc)
 		return;
@@ -138,7 +138,6 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 		return;
 
 	dsc_c = &hw_dsc->hw;
-	slice_count_per_enc = dsc->config.slice_count;
 
 	if (mode & DSC_MODE_SPLIT_PANEL)
 		data |= BIT(0);
@@ -146,19 +145,14 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 	if (mode & DSC_MODE_MULTIPLEX)
 		data |= BIT(1);
 
-	if (dsc->dsc_4hsmerge_en)
-		slice_count_per_enc = dsc->config.slice_count >> 2;
-	else if ((mode & DSC_MODE_MULTIPLEX) || (dsc->half_panel_pu))
-		slice_count_per_enc = dsc->config.slice_count >> 1;
-
-	data |= (slice_count_per_enc & 0x3) << 7;
+	data |= (dsc->num_active_ss_per_enc & 0x3) << 7;
 	SDE_REG_WRITE(dsc_c, DSC_CMN_MAIN_CNF, data);
 
 	data = (dsc->initial_lines & 0xff);
 	data |= ((mode & DSC_MODE_VIDEO) ? 1 : 0) << 9;
 	if (ich_reset_override)
 		data |= 0xC00; // set bit 10 and 11
-	data |= (_dsc_calc_ob_max_addr(hw_dsc, slice_count_per_enc) << 18);
+	data |= (_dsc_calc_ob_max_addr(hw_dsc, dsc->num_active_ss_per_enc) << 18);
 
 	SDE_REG_WRITE(dsc_c, ENC_DF_CTRL + idx, data);
 
@@ -170,8 +164,14 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 			data |= BIT(21);
 	}
 
+	bpp = dsc->config.bits_per_pixel;
+	/* as per hw requirement bpp should be programmed
+	 * twice the actual value in case of 420 or 422 encoding
+	 */
+	if (dsc->config.native_422 || dsc->config.native_420)
+		bpp = 2 * bpp;
 	data |= (dsc->config.block_pred_enable ? 1 : 0) << 20;
-	data |= (dsc->config.bits_per_pixel << 10);
+	data |= (bpp << 10);
 	data |= (dsc->config.line_buf_depth & 0xf) << 6;
 	data |= dsc->config.convert_rgb << 4;
 	data |= dsc->config.bits_per_component & 0xf;

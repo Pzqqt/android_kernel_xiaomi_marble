@@ -47,9 +47,9 @@ static char sde_dsc_rc_range_min_qp[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{0, 4, 5, 5, 7, 7, 7, 7, 7, 7, 9, 9, 9, 13, 16},
 	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
 	/* DSC v1.2 YUV422 */
-	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
-	{0, 4, 5, 5, 7, 7, 7, 7, 7, 7, 9, 9, 9, 13, 16},
-	{0, 4, 9, 9, 11, 11, 11, 11, 11, 11, 13, 13, 13, 17, 20},
+	{0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 11},
+	{0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
+	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
 	{0, 2, 3, 4, 5, 5, 5, 6, 6, 7, 8, 8, 9, 11, 12},
 	/* DSC v1.2 YUV420 */
 	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
@@ -241,6 +241,7 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	int data;
 	int final_value, final_scale;
 	struct sde_dsc_rc_init_params_lut *rc_param_lut;
+	u32 slice_width_mod;
 	int i, ratio_idx;
 
 	dsc->rc_model_size = 8192;
@@ -259,7 +260,7 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	dsc->rc_tgt_offset_high = 3;
 	dsc->rc_tgt_offset_low = 3;
 	dsc->simple_422 = 0;
-	dsc->convert_rgb = 1;
+	dsc->convert_rgb = !(dsc->native_422 | dsc->native_420);
 	dsc->vbr_enable = 0;
 
 	bpp = DSC_BPP(*dsc);
@@ -291,6 +292,12 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	dsc->flatness_min_qp = rc_param_lut->flatness_min_qp;
 	dsc->flatness_max_qp = rc_param_lut->flatness_max_qp;
 
+	slice_width_mod = dsc->slice_width;
+	if (dsc->native_422 || dsc->native_420) {
+		slice_width_mod = dsc->slice_width / 2;
+		bpp = bpp * 2;
+	}
+
 	dsc->line_buf_depth = bpc + 1;
 	dsc->mux_word_size = bpc > 10 ? DSC_MUX_WORD_SIZE_12_BPC: DSC_MUX_WORD_SIZE_8_10_BPC;
 
@@ -298,10 +305,10 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 		dsc->nsl_bpg_offset = (2048 * (DIV_ROUND_UP(dsc->second_line_bpg_offset,
 				(dsc->slice_height - 1))));
 
-	groups_per_line = DIV_ROUND_UP(dsc->slice_width, 3);
+	groups_per_line = DIV_ROUND_UP(slice_width_mod, 3);
 
-	dsc->slice_chunk_size = dsc->slice_width * bpp / 8;
-	if ((dsc->slice_width * bpp) % 8)
+	dsc->slice_chunk_size = slice_width_mod * bpp / 8;
+	if ((slice_width_mod * bpp) % 8)
 		dsc->slice_chunk_size++;
 
 	/* rbs-min */
@@ -324,7 +331,12 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 
 	dsc->nfl_bpg_offset = DIV_ROUND_UP(data, (dsc->slice_height - 1));
 
-	pre_num_extra_mux_bits = 3 * (dsc->mux_word_size + (4 * bpc + 4) - 2);
+	if (dsc->native_422)
+		pre_num_extra_mux_bits = 4 * dsc->mux_word_size + (4 * bpc + 4) + (3 * 4 * bpc) - 2;
+	else if (dsc->native_420)
+		pre_num_extra_mux_bits = 3 * dsc->mux_word_size + (4 * bpc + 4) + (2 * 4 * bpc) - 2;
+	else
+		pre_num_extra_mux_bits = 3 * (dsc->mux_word_size + (4 * bpc + 4) - 2);
 
 	num_extra_mux_bits = pre_num_extra_mux_bits - (dsc->mux_word_size -
 		((slice_bits - pre_num_extra_mux_bits) % dsc->mux_word_size));
@@ -447,6 +459,8 @@ int sde_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc_info,
 	*bp++ = data;				/* pps3 */
 
 	bpp = dsc->bits_per_pixel;
+	if (dsc->native_422 || dsc->native_420)
+		bpp = 2 * bpp;
 	data = (bpp >> DSC_PPS_MSB_SHIFT);
 	data &= 0x03;				/* upper two bits */
 	data |= ((dsc->block_pred_enable & 0x1) << 5);
