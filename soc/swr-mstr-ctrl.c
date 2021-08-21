@@ -2937,8 +2937,14 @@ static int swrm_probe(struct platform_device *pdev)
 	if (ret)
 		dev_dbg(swrm->dev, "%s: swrm irq wakeup capable not defined\n",
 			__func__);
-	if (swrm->swr_irq_wakeup_capable)
+	if (swrm->swr_irq_wakeup_capable) {
 		irq_set_irq_wake(swrm->irq, 1);
+		ret = device_init_wakeup(swrm->dev, true);
+		if (ret)
+			dev_info(swrm->dev,
+				 "%s: Device wakeup init failed: %d\n",
+				 __func__, ret);
+	}
 	ret = swr_register_master(&swrm->master);
 	if (ret) {
 		dev_err(&pdev->dev, "%s: error adding swr master\n", __func__);
@@ -3022,12 +3028,6 @@ static int swrm_probe(struct platform_device *pdev)
 				   &swrm_debug_dump_ops);
 	}
 #endif
-	ret = device_init_wakeup(swrm->dev, true);
-	if (ret) {
-		dev_err(swrm->dev, "Device wakeup init failed: %d\n", ret);
-		goto err_irq_wakeup_fail;
-	}
-
 	pm_runtime_set_autosuspend_delay(&pdev->dev, auto_suspend_timer);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_active(&pdev->dev);
@@ -3039,11 +3039,10 @@ static int swrm_probe(struct platform_device *pdev)
 	//msm_aud_evt_register_client(&swrm->event_notifier);
 
 	return 0;
-err_irq_wakeup_fail:
-	device_init_wakeup(swrm->dev, false);
 err_parse_num_dev:
 err_mstr_init_fail:
 	swr_unregister_master(&swrm->master);
+	device_init_wakeup(swrm->dev, false);
 err_mstr_fail:
 	if (swrm->reg_irq) {
 		swrm->reg_irq(swrm->handle, swr_mstr_interrupt,
@@ -3085,8 +3084,10 @@ static int swrm_remove(struct platform_device *pdev)
 			irqd_set_trigger_type(
 				irq_get_irq_data(swrm->irq),
 				IRQ_TYPE_NONE);
-		if (swrm->swr_irq_wakeup_capable)
+		if (swrm->swr_irq_wakeup_capable) {
 			irq_set_irq_wake(swrm->irq, 0);
+			device_init_wakeup(swrm->dev, false);
+		}
 		free_irq(swrm->irq, swrm);
 	} else if (swrm->wake_irq > 0) {
 		free_irq(swrm->wake_irq, swrm);
@@ -3096,7 +3097,6 @@ static int swrm_remove(struct platform_device *pdev)
 	pm_runtime_set_suspended(&pdev->dev);
 	swr_unregister_master(&swrm->master);
 	//msm_aud_evt_unregister_client(&swrm->event_notifier);
-	device_init_wakeup(swrm->dev, false);
 	mutex_destroy(&swrm->irq_lock);
 	mutex_destroy(&swrm->mlock);
 	mutex_destroy(&swrm->reslock);
