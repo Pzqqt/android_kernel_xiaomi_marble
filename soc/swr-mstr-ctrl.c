@@ -2498,6 +2498,10 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	u32 temp = 0;
 	int len = 0;
 
+	/* Change no of retry counts to 1 for wsa to avoid underflow */
+	if (swrm->master_id == MASTER_ID_WSA)
+		retry_cmd_num = 1;
+
 	/* SW workaround to gate hw_ctl for SWR version >=1.6 */
 	if (swrm->version >= SWRM_VERSION_1_6) {
 		if (swrm->swrm_hctl_reg) {
