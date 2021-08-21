@@ -3286,6 +3286,7 @@ static int swrm_runtime_suspend(struct device *dev)
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
 	int current_state = 0;
+	struct irq_data *irq_data = NULL;
 
 	trace_printk("%s: pm_runtime: suspend state: %d\n",
 		__func__, swrm->state);
@@ -3371,10 +3372,10 @@ static int swrm_runtime_suspend(struct device *dev)
 		}
 
 		if (swrm->clk_stop_mode0_supp) {
-			if ((swrm->wake_irq > 0) &&
-			    (irqd_irq_disabled(
-			    irq_get_irq_data(swrm->wake_irq)))) {
-				enable_irq(swrm->wake_irq);
+			if (swrm->wake_irq > 0) {
+				irq_data = irq_get_irq_data(swrm->wake_irq);
+				if (irq_data && irqd_irq_disabled(irq_data))
+					enable_irq(swrm->wake_irq);
 			} else if (swrm->ipc_wakeup) {
 				//msm_aud_evt_blocking_notifier_call_chain(
 				//	SWR_WAKE_IRQ_REGISTER, (void *)swrm);
