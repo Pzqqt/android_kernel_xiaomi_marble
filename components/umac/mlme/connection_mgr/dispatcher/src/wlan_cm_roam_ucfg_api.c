@@ -139,6 +139,18 @@ release_ref:
 	return status;
 }
 
+QDF_STATUS ucfg_cm_get_roam_band(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				 uint32_t *roam_band)
+{
+	struct cm_roam_values_copy temp;
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_BAND, &temp);
+
+	*roam_band = temp.uint_value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS ucfg_cm_set_ese_roam_scan_channel_list(struct wlan_objmgr_pdev *pdev,
 						  uint8_t vdev_id,

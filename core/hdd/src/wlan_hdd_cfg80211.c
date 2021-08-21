@@ -5409,7 +5409,32 @@ hdd_roam_control_config_buf_size(struct hdd_context *hdd_ctx,
 			(nla_total_size(sizeof(uint32_t)) *
 			NUM_CHANNELS);
 
+	if (tb[QCA_ATTR_ROAM_CONTROL_BAND_MASK])
+		skb_len += NLA_HDRLEN + sizeof(uint32_t);
+
 	return skb_len;
+}
+
+/**
+ * wlan_reg_wifi_band_bitmap_to_vendor_bitmap() - Convert enum reg_wifi_band
+ * to enum qca_set_band
+ * @reg_wifi_band_bitmap: enum reg_wifi_band
+ *
+ * Return: qca_set_band value
+ */
+static uint32_t
+wlan_reg_wifi_band_bitmap_to_vendor_bitmap(uint32_t reg_wifi_band_bitmap)
+{
+	uint32_t vendor_mask = 0;
+
+	if (reg_wifi_band_bitmap & BIT(REG_BAND_2G))
+		vendor_mask |= QCA_SETBAND_2G;
+	if (reg_wifi_band_bitmap & BIT(REG_BAND_5G))
+		vendor_mask |= QCA_SETBAND_5G;
+	if (reg_wifi_band_bitmap & BIT(REG_BAND_6G))
+		vendor_mask |= QCA_SETBAND_6G;
+
+	return vendor_mask;
 }
 
 /**
@@ -5431,7 +5456,7 @@ hdd_roam_control_config_fill_data(struct hdd_context *hdd_ctx, uint8_t vdev_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t roam_control;
 	struct nlattr *config, *get_freq_scheme, *get_freq;
-	uint32_t full_roam_scan_period;
+	uint32_t full_roam_scan_period, roam_band, vendor_band_mask;
 	uint8_t num_channels = 0;
 	uint32_t i = 0, freq_list[NUM_CHANNELS] = { 0 };
 	struct hdd_adapter *hdd_adapter = NULL;
@@ -5518,6 +5543,23 @@ hdd_roam_control_config_fill_data(struct hdd_context *hdd_ctx, uint8_t vdev_id,
 		nla_nest_end(skb, get_freq);
 		nla_nest_end(skb, get_freq_scheme);
 	}
+
+	if (tb[QCA_ATTR_ROAM_CONTROL_BAND_MASK]) {
+		status = ucfg_cm_get_roam_band(hdd_ctx->psoc, vdev_id,
+					       &roam_band);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto out;
+		vendor_band_mask =
+			wlan_reg_wifi_band_bitmap_to_vendor_bitmap(roam_band);
+		if (nla_put_u32(skb, QCA_ATTR_ROAM_CONTROL_BAND_MASK,
+				vendor_band_mask)) {
+			hdd_info("failed to put roam_band");
+			return -EINVAL;
+		}
+		hdd_debug("sending vendor_band_mask: %d reg band:%d",
+			  vendor_band_mask, roam_band);
+	}
+
 	nla_nest_end(skb, config);
 
 out:
@@ -13685,21 +13727,6 @@ static int wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 	osif_vdev_sync_op_stop(vdev_sync);
 
 	return errno;
-}
-
-static uint32_t
-wlan_reg_wifi_band_bitmap_to_vendor_bitmap(uint32_t reg_wifi_band_bitmap)
-{
-	uint32_t vendor_mask = 0;
-
-	if (reg_wifi_band_bitmap & BIT(REG_BAND_2G))
-		vendor_mask |= QCA_SETBAND_2G;
-	if (reg_wifi_band_bitmap & BIT(REG_BAND_5G))
-		vendor_mask |= QCA_SETBAND_5G;
-	if (reg_wifi_band_bitmap & BIT(REG_BAND_6G))
-		vendor_mask |= QCA_SETBAND_6G;
-
-	return vendor_mask;
 }
 
 /**
