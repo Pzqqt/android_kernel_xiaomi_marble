@@ -1582,13 +1582,23 @@ static void dp_rx_check_delivery_to_stack(struct dp_soc *soc,
 }
 #endif /* ifdef DELIVERY_TO_STACK_STATUS_CHECK */
 
-void dp_rx_deliver_to_stack(struct dp_soc *soc,
+/*
+ * dp_rx_validate_rx_callbacks() - validate rx callbacks
+ * @soc DP soc
+ * @vdev: DP vdev handle
+ * @peer: pointer to the peer object
+ * nbuf_head: skb list head
+ *
+ * Return: QDF_STATUS - QDF_STATUS_SUCCESS
+ *			QDF_STATUS_E_FAILURE
+ */
+static inline QDF_STATUS
+dp_rx_validate_rx_callbacks(struct dp_soc *soc,
 			    struct dp_vdev *vdev,
 			    struct dp_peer *peer,
-			    qdf_nbuf_t nbuf_head,
-			    qdf_nbuf_t nbuf_tail)
+			    qdf_nbuf_t nbuf_head)
 {
-	int num_nbuf = 0;
+	int num_nbuf;
 
 	if (qdf_unlikely(!vdev || vdev->delete.pending)) {
 		num_nbuf = dp_rx_drop_nbuf_list(NULL, nbuf_head);
@@ -1598,7 +1608,7 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 		 * belonged. Hence we update the soc rx error stats.
 		 */
 		DP_STATS_INC(soc, rx.err.invalid_vdev, num_nbuf);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*
@@ -1613,8 +1623,21 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 							nbuf_head);
 			DP_STATS_DEC(peer, rx.to_stack.num, num_nbuf);
 		}
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_rx_deliver_to_stack(struct dp_soc *soc,
+				  struct dp_vdev *vdev,
+				  struct dp_peer *peer,
+				  qdf_nbuf_t nbuf_head,
+				  qdf_nbuf_t nbuf_tail)
+{
+	if (dp_rx_validate_rx_callbacks(soc, vdev, peer, nbuf_head) !=
+					QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
 
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw) ||
 			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi)) {
@@ -1623,7 +1646,26 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 	}
 
 	dp_rx_check_delivery_to_stack(soc, vdev, peer, nbuf_head);
+
+	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+QDF_STATUS dp_rx_eapol_deliver_to_stack(struct dp_soc *soc,
+					struct dp_vdev *vdev,
+					struct dp_peer *peer,
+					qdf_nbuf_t nbuf_head,
+					qdf_nbuf_t nbuf_tail)
+{
+	if (dp_rx_validate_rx_callbacks(soc, vdev, peer, nbuf_head) !=
+					QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev->osif_rx_eapol(vdev->osif_vdev, nbuf_head);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 #ifdef VDEV_PEER_PROTOCOL_COUNT

@@ -1358,6 +1358,8 @@ __qdf_nbuf_data_get_eapol_subtype(uint8_t *data)
 	return subtype;
 }
 
+qdf_export_symbol(__qdf_nbuf_data_get_eapol_subtype);
+
 /**
  * __qdf_nbuf_data_get_arp_subtype() - get the subtype
  *            of ARP packet.

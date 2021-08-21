@@ -1913,6 +1913,7 @@ struct dp_soc {
 	uint8_t wds_ast_aging_timer_cnt;
 	bool pending_ageout;
 	uint32_t max_ast_ageout_count;
+	uint8_t eapol_over_control_port;
 
 	qdf_timer_t lmac_reap_timer;
 	uint8_t lmac_timer_init;
@@ -2706,6 +2707,10 @@ struct dp_vdev {
 	ol_txrx_rx_gro_flush_ind_fp osif_gro_flush;
 	/* default RX call back function called by dp */
 	ol_txrx_rx_fp osif_rx;
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+	/* callback to receive eapol frames */
+	ol_txrx_rx_fp osif_rx_eapol;
+#endif
 	/* callback to deliver rx frames to the OS */
 	ol_txrx_rx_fp osif_rx_stack;
 	/* Callback to handle rx fisa frames */

@@ -5763,6 +5763,41 @@ static void dp_vdev_pdev_list_remove(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 }
 
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+/*
+ * dp_vdev_init_rx_eapol() - initializing osif_rx_eapol
+ * @vdev: Datapath VDEV handle
+ *
+ * Return: None
+ */
+static inline void dp_vdev_init_rx_eapol(struct dp_vdev *vdev)
+{
+	vdev->osif_rx_eapol = NULL;
+}
+
+/*
+ * dp_vdev_register_rx_eapol() - Register VDEV operations for rx_eapol
+ * @vdev: DP vdev handle
+ * @txrx_ops: Tx and Rx operations
+ *
+ * Return: None
+ */
+static inline void dp_vdev_register_rx_eapol(struct dp_vdev *vdev,
+					     struct ol_txrx_ops *txrx_ops)
+{
+	vdev->osif_rx_eapol = txrx_ops->rx.rx_eapol;
+}
+#else
+static inline void dp_vdev_init_rx_eapol(struct dp_vdev *vdev)
+{
+}
+
+static inline void dp_vdev_register_rx_eapol(struct dp_vdev *vdev,
+					     struct ol_txrx_ops *txrx_ops)
+{
+}
+#endif
+
 /*
 * dp_vdev_attach_wifi3() - attach txrx vdev
 * @txrx_pdev: Datapath PDEV handle
@@ -5825,6 +5860,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	vdev->drop_unenc = 1;
 	vdev->sec_type = cdp_sec_type_none;
 	vdev->multipass_en = false;
+	dp_vdev_init_rx_eapol(vdev);
 	qdf_atomic_init(&vdev->ref_cnt);
 	for (i = 0; i < DP_MOD_ID_MAX; i++)
 		qdf_atomic_init(&vdev->mod_refs[i]);
@@ -5997,6 +6033,8 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
 	vdev->me_convert = txrx_ops->me_convert;
+
+	dp_vdev_register_rx_eapol(vdev, txrx_ops);
 
 	dp_vdev_register_tx_handler(vdev, soc, txrx_ops);
 
@@ -10257,6 +10295,11 @@ static QDF_STATUS dp_soc_set_param(struct cdp_soc_t  *soc_hdl,
 	case DP_SOC_PARAM_MAX_AST_AGEOUT:
 		soc->max_ast_ageout_count = value;
 		dp_info("Max ast ageout count %u", soc->max_ast_ageout_count);
+		break;
+	case DP_SOC_PARAM_EAPOL_OVER_CONTROL_PORT:
+		soc->eapol_over_control_port = value;
+		dp_info("Eapol over control_port:%d",
+			soc->eapol_over_control_port);
 		break;
 	default:
 		dp_info("not handled param %d ", param);
