@@ -4927,19 +4927,36 @@ reg_intersect_ranges(struct freq_range *first_range,
 }
 
 /**
- * reg_get_num_sp_freq_ranges() - Find the number of reg rules from the Standard
- * power regulatory rules
- * @pdev: Pointer to pdev
+ * reg_act_sp_rule_cb -  A function pointer type that calculate something
+ * from the input frequency range
+ * @rule_fr: Pointer to frequencey range
+ * @arg: Pointer to generic argument (a.k.a. context)
  *
- * Return: number of frequency ranges
+ * Return: Void
  */
-static uint8_t reg_get_num_sp_freq_ranges(struct wlan_objmgr_pdev *pdev,
-					  struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+typedef void (*reg_act_sp_rule_cb)(struct freq_range *rule_fr,
+				   void *arg);
+
+/**
+ * reg_iterate_sp_rules() - Iterate through the Standard Power reg rules, for
+ * every reg rule call the call back function to take some action or calculate
+ * something
+ * @pdev: Pointer to pdev
+ * @pdev_priv_obj: Pointer to pdev private object
+ * @action_on_sp_rule: A function pointer to take some action or calculate
+ * something for every sp rule
+ * @arg: Pointer to opque object (argument/context)
+ *
+ * Return: Void
+ */
+static void reg_iterate_sp_rules(struct wlan_objmgr_pdev *pdev,
+				 struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj,
+				 reg_act_sp_rule_cb sp_rule_action,
+				 void *arg)
 {
 	struct cur_reg_rule *p_sp_reg_rule;
 	struct reg_rule_info *psoc_reg_rules;
 	uint8_t n_6g_sp_ap_reg_rules;
-	uint8_t num_freq_ranges;
 	qdf_freq_t low_5g;
 	qdf_freq_t high_5g;
 	uint8_t i;
@@ -4957,7 +4974,6 @@ static uint8_t reg_get_num_sp_freq_ranges(struct wlan_objmgr_pdev *pdev,
 	reg_debug("chip_range = [%u, %u]", low_5g, high_5g);
 	reg_debug("Num_6g_rules = %u", n_6g_sp_ap_reg_rules);
 
-	num_freq_ranges = 0;
 	for (i = 0; i < n_6g_sp_ap_reg_rules; i++) {
 		struct freq_range sp_range;
 		struct freq_range out_range;
@@ -4967,23 +4983,87 @@ static uint8_t reg_get_num_sp_freq_ranges(struct wlan_objmgr_pdev *pdev,
 		reg_debug("Rule:[%u, %u]",
 			  p_sp_reg_rule->start_freq,
 			  p_sp_reg_rule->end_freq);
-
 		out_range = reg_intersect_ranges(&chip_range, &sp_range);
-		if (reg_is_empty_range(&out_range))
-			continue;
+
+		if (sp_rule_action)
+			sp_rule_action(&out_range, arg);
 
 		p_sp_reg_rule++;
-		num_freq_ranges++;
 	}
+}
+
+/**
+ * reg_afc_incr_num_ranges() - Increment the number of frequency ranges
+ * @p_range: Pointer to frequency range
+ * @num_freq_ranges: Pointer to number of frequency ranges. This needs to be
+ * (Actual type: uint8_t *num_freq_ranges)
+ * incremented by the function
+ *
+ * Return: Void
+ */
+static void reg_afc_incr_num_ranges(struct freq_range *p_range,
+				    void *num_freq_ranges)
+{
+	if (!reg_is_empty_range(p_range))
+		(*(uint8_t *)num_freq_ranges)++;
+}
+
+/**
+ * reg_get_num_sp_freq_ranges() - Find the number of reg rules from the Standard
+ * power regulatory rules
+ * @pdev: Pointer to pdev
+ *
+ * Return: number of frequency ranges
+ */
+static uint8_t reg_get_num_sp_freq_ranges(struct wlan_objmgr_pdev *pdev,
+					  struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	uint8_t num_freq_ranges;
+
+	num_freq_ranges = 0;
+	reg_iterate_sp_rules(pdev,
+			     pdev_priv_obj,
+			     reg_afc_incr_num_ranges,
+			     &num_freq_ranges);
 
 	reg_debug("Num_freq_ranges=%u", num_freq_ranges);
 	return num_freq_ranges;
 }
 
 /**
+ * reg_afc_get_intersected_ranges() - Get the intersected range into range obj
+ * @rule_fr: Pointer to the rule for frequency range
+ * @arg: Pointer to opaque object (argument/context)
+ * (Actual type: struct wlan_afc_freq_range_obj **p_range_obj)
+ * incremented by the function
+ *
+ * Return: Void
+ */
+static void reg_afc_get_intersected_ranges(struct freq_range *rule_fr,
+					   void *arg)
+{
+	struct wlan_afc_freq_range_obj *p_range;
+	struct wlan_afc_freq_range_obj **pp_range;
+
+	pp_range = (struct wlan_afc_freq_range_obj **)arg;
+	p_range = *pp_range;
+
+	if (!reg_is_empty_range(rule_fr)) {
+		reg_assign_vars_with_range_vals(rule_fr,
+						&p_range->lowfreq,
+						&p_range->highfreq);
+		reg_debug("Range = [%u, %u]", p_range->lowfreq, p_range->highfreq);
+		(*pp_range)++;
+	}
+}
+
+/**
  * reg_cp_freq_ranges() - Copy frequency ranges  from the Standard power
  * regulatory rules
  * @pdev: Pointer to pdev
+ * @pdev_priv_obj: Pointer to pdev private object
+ * @num_freq_ranges: Number of frequency ranges
+ * @p_range_obj: Pointer to range object
  *
  * Return: void
  */
@@ -4992,38 +5072,15 @@ static void reg_cp_freq_ranges(struct wlan_objmgr_pdev *pdev,
 			       uint8_t num_freq_ranges,
 			       struct wlan_afc_freq_range_obj *p_range_obj)
 {
-	struct cur_reg_rule *p_sp_reg_rule;
-	struct reg_rule_info *psoc_reg_rules;
-	uint8_t i;
-	qdf_freq_t low_5g;
-	qdf_freq_t high_5g;
-	struct freq_range chip_range;
+	struct wlan_afc_freq_range_obj *p_range;
 
-	psoc_reg_rules = reg_get_reg_rules_for_pdev(pdev);
-	p_sp_reg_rule = psoc_reg_rules->reg_rules_6g_ap[REG_STANDARD_POWER_AP];
+	reg_debug("Num freq ranges = %u", num_freq_ranges);
 
-	low_5g = pdev_priv_obj->range_5g_low;
-	high_5g = pdev_priv_obj->range_5g_high;
-
-	chip_range = reg_init_freq_range(low_5g, high_5g);
-
-	for (i = 0; i < num_freq_ranges; i++) {
-		struct freq_range sp_range;
-		struct freq_range out_range;
-
-		sp_range = reg_init_freq_range(p_sp_reg_rule->start_freq,
-					       p_sp_reg_rule->end_freq);
-
-		out_range = reg_intersect_ranges(&chip_range, &sp_range);
-		if (reg_is_empty_range(&out_range))
-			continue;
-
-		reg_assign_vars_with_range_vals(&out_range,
-						&p_range_obj->lowfreq,
-						&p_range_obj->highfreq);
-		p_range_obj++;
-		p_sp_reg_rule++;
-	}
+	p_range = p_range_obj;
+	reg_iterate_sp_rules(pdev,
+			     pdev_priv_obj,
+			     reg_afc_get_intersected_ranges,
+			     &p_range);
 }
 
 /**
@@ -5363,6 +5420,7 @@ reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
 		status = QDF_STATUS_E_NOMEM;
 		goto handle_invalid_priv_object;
 	}
+
 	status = reg_dmn_get_6g_opclasses_and_channels(pdev,
 						       p_frange_lst_local,
 						       &num_opclasses,
@@ -5381,7 +5439,6 @@ reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
 					     chansize_lst);
 
 	temp_afc_req = qdf_mem_malloc(afc_req_len);
-
 	if (!temp_afc_req) {
 		reg_err("AFC request not allocated");
 		status = QDF_STATUS_E_NOMEM;

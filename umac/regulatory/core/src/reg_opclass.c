@@ -593,9 +593,9 @@ static bool reg_is_subrange(struct freq_range *range_first,
 /**
  * reg_is_cfi_freq_in_ranges() - Check if the given 'cfi' in the any of the
  * frequency ranges
- * @cfi_freq: The ceter frequency index frequency
+ * @cfi_freq: The center frequency index frequency
  * @bw: bandwidth of the band with center freq cfi_freq
- * @p_frange_lst: Pointer to frequencey range list (AFC)
+ * @p_frange_lst: Pointer to frequency range list (AFC)
  *
  * return: True if the cfi is in the ranges, else false
  */
