@@ -1161,6 +1161,9 @@ convert_control_roam_trigger_reason_bitmap(uint32_t trigger_reason_bitmap)
 	if (trigger_reason_bitmap & BIT(ROAM_TRIGGER_REASON_PMK_TIMEOUT))
 		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT);
 
+	if (trigger_reason_bitmap & BIT(ROAM_TRIGGER_REASON_BTC))
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_BTC);
+
 	return fw_trigger_bitmap;
 }
 
