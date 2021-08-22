@@ -345,8 +345,13 @@ QDF_STATUS mlo_peer_allocate_aid(
 {
 	uint16_t assoc_id = (uint16_t)-1;
 	struct wlan_ml_vdev_aid_mgr *ml_aid_mgr;
+	struct wlan_mlo_ap *ap_ctx;
 
-	ml_aid_mgr = ml_dev->ap_ctx->ml_aid_mgr;
+	ap_ctx = ml_dev->ap_ctx;
+	if (!ap_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	ml_aid_mgr = ap_ctx->ml_aid_mgr;
 	if (!ml_aid_mgr)
 		return QDF_STATUS_E_INVAL;
 
@@ -389,13 +394,18 @@ uint16_t mlo_get_aid(struct wlan_objmgr_vdev *vdev)
 	struct wlan_mlo_dev_context *ml_dev;
 	uint16_t assoc_id = (uint16_t)-1;
 	struct wlan_ml_vdev_aid_mgr *ml_aid_mgr;
+	struct wlan_mlo_ap *ap_ctx;
 
 	ml_dev = vdev->mlo_dev_ctx;
 
 	if (!ml_dev)
 		return assoc_id;
 
-	ml_aid_mgr = ml_dev->ap_ctx->ml_aid_mgr;
+	ap_ctx = ml_dev->ap_ctx;
+	if (!ap_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	ml_aid_mgr = ap_ctx->ml_aid_mgr;
 	if (!ml_aid_mgr)
 		return assoc_id;
 
