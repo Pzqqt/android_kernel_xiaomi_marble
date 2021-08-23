@@ -21,7 +21,6 @@
  */
 
 #include "wlan_pkt_capture_mon_thread.h"
-#include <linux/kthread.h>
 #include "cds_ieee80211_common.h"
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "cdp_txrx_ctrl.h"
