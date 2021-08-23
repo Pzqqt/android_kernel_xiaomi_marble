@@ -264,6 +264,14 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx);
 
 /**
+ * hdd_is_any_sta_connected() - check if any sta in connected state
+ * @hdd_ctx: hdd context
+ *
+ * Return: true if any connected sta
+ */
+bool hdd_is_any_sta_connected(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_sme_roam_callback() - hdd sme roam callback
  * @context: pointer to adapter context
  * @roam_info: pointer to roam info
