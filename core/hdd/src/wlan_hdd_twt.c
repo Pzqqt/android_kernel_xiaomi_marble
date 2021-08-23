@@ -470,10 +470,12 @@ QDF_STATUS hdd_twt_check_all_twt_support(struct wlan_objmgr_psoc *psoc,
 /**
  * hdd_twt_get_params_resp_len() - Calculates the length
  * of twt get_params nl response
+ * @params twt session stats parameters
  *
  * Return: Length of get params nl response
  */
-static uint32_t hdd_twt_get_params_resp_len(void)
+static uint32_t
+hdd_twt_get_params_resp_len(struct wmi_host_twt_session_stats_info *params)
 {
 	uint32_t len = nla_total_size(0);
 
@@ -518,6 +520,10 @@ static uint32_t hdd_twt_get_params_resp_len(void)
 
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL2_MANTISSA */
 	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESPONDER_PM_MODE */
+	if (params->pm_responder_bit_valid)
+		len += nla_total_size(sizeof(u8));
 
 	return len;
 }
@@ -633,6 +639,15 @@ hdd_twt_pack_get_params_resp_nlmsg(
 			}
 		}
 
+		if (params[i].pm_responder_bit_valid) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESPONDER_PM_MODE;
+			if (nla_put_u8(reply_skb, attr,
+				       params[i].pm_responder_bit)) {
+				hdd_err("TWT: fail to put pm responder mode");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
 		if (!params[i].info_frame_disabled) {
 			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED;
 			if (nla_put_flag(reply_skb, attr)) {
@@ -726,7 +741,7 @@ hdd_twt_pack_get_params_resp(struct hdd_context *hdd_ctx,
 	for (i = 0; i < num_twt_session; i++) {
 		if (params[i].event_type == HOST_TWT_SESSION_SETUP ||
 		    params[i].event_type == HOST_TWT_SESSION_UPDATE)
-			skb_len += hdd_twt_get_params_resp_len();
+			skb_len += hdd_twt_get_params_resp_len(params + i);
 	}
 
 	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
@@ -1004,14 +1019,13 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 /**
  * hdd_get_twt_setup_event_len() - Calculates the length of twt
  * setup nl response
- * @additional_params_present: if true, then length required for
- * fixed and additional parameters is returned. if false,
- * then length required for fixed parameters is returned.
+ * @ev_params: event parameters, contains info that what parameters need
+ * to send in twt setup response.
  *
  * Return: Length of twt setup nl response
  */
-static
-uint32_t hdd_get_twt_setup_event_len(bool additional_params_present)
+static uint32_t
+hdd_get_twt_setup_event_len(struct twt_add_dialog_complete_event *ev_params)
 {
 	uint32_t len = 0;
 
@@ -1028,7 +1042,7 @@ uint32_t hdd_get_twt_setup_event_len(bool additional_params_present)
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS */
 	len += nla_total_size(sizeof(u8));
 
-	if (!additional_params_present)
+	if (!ev_params->params.num_additional_twt_params)
 		return len;
 
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESP_TYPE */
@@ -1055,6 +1069,9 @@ uint32_t hdd_get_twt_setup_event_len(bool additional_params_present)
 	len += nla_total_size(sizeof(u8));
 	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR*/
 	len += nla_total_size(QDF_MAC_ADDR_SIZE);
+	if (ev_params->additional_params.pm_responder_bit_valid)
+		/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESPONDER_PM_MODE */
+		len += nla_total_size(sizeof(u8));
 
 	return len;
 }
@@ -1440,6 +1457,14 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
+	if (event->additional_params.pm_responder_bit_valid) {
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESPONDER_PM_MODE;
+		if (nla_put_u8(reply_skb, attr,
+			       event->additional_params.pm_responder_bit)) {
+			hdd_err("Failed to put pm responder mode");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
 
 	if (!event->additional_params.info_frame_disabled) {
 		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED;
@@ -1480,17 +1505,13 @@ static QDF_STATUS hdd_send_twt_setup_response(
 	struct wireless_dev *wdev = adapter->dev->ieee80211_ptr;
 	size_t data_len;
 	QDF_STATUS status;
-	bool additional_params_present = false;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	if (add_dialog_comp_ev_params->params.num_additional_twt_params != 0)
-		additional_params_present = true;
-
-	data_len = hdd_get_twt_setup_event_len(additional_params_present);
+	data_len = hdd_get_twt_setup_event_len(add_dialog_comp_ev_params);
 	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
 				hdd_ctx->wiphy, wdev, data_len,
 				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
