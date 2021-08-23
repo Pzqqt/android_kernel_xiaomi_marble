@@ -8010,9 +8010,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = bandwidth;
-	hdd_select_cbmode(adapter, freq,
-			  &roam_profile.ch_params);
-
+	hdd_select_cbmode(adapter, freq, 0, &roam_profile.ch_params);
 	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 

@@ -19211,16 +19211,8 @@ void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
 }
 #endif
 
-/**
- * hdd_select_cbmode() - select channel bonding mode
- * @adapter: Pointer to adapter
- * @oper_freq: Operating frequency (MHz)
- * @ch_params: channel info struct to populate
- *
- * Return: none
- */
 void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
-		       struct ch_params *ch_params)
+		       qdf_freq_t sec_ch_2g_freq, struct ch_params *ch_params)
 {
 	uint32_t sec_ch_freq = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -19229,12 +19221,16 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
 	 * CDS api expects secondary channel for calculating
 	 * the channel params
 	 */
-	if ((ch_params->ch_width == CH_WIDTH_40MHZ) &&
-	    (WLAN_REG_IS_24GHZ_CH_FREQ(oper_freq))) {
-		if (oper_freq >= 2412 && oper_freq <= 2432)
-			sec_ch_freq = oper_freq + 20;
-		else if (oper_freq >= 2437 && oper_freq <= 2472)
-			sec_ch_freq = oper_freq - 20;
+	if (ch_params->ch_width == CH_WIDTH_40MHZ &&
+	    WLAN_REG_IS_24GHZ_CH_FREQ(oper_freq)) {
+		if (sec_ch_2g_freq) {
+			sec_ch_freq = sec_ch_2g_freq;
+		} else {
+			if (oper_freq >= 2412 && oper_freq <= 2432)
+				sec_ch_freq = oper_freq + 20;
+			else if (oper_freq >= 2437 && oper_freq <= 2472)
+				sec_ch_freq = oper_freq - 20;
+		}
 	}
 
 	/* This call decides required channel bonding mode */
@@ -21380,11 +21376,12 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	mac_handle_t mac_handle;
 	struct qdf_mac_addr bssid;
 	struct csr_roam_profile roam_profile;
-	struct ch_params ch_params;
+	struct ch_params ch_params = {0};
 	int ret;
 	enum channel_state chan_freq_state;
 	uint8_t max_fw_bw;
 	enum phy_ch_width ch_width;
+	qdf_freq_t sec_ch_2g_freq = 0;
 
 	hdd_enter();
 
@@ -21436,17 +21433,25 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = ch_width;
-	hdd_select_cbmode(adapter, chandef->chan->center_freq,
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(chandef->chan->center_freq) &&
+	    chandef->width == NL80211_CHAN_WIDTH_40 &&
+	    chandef->center_freq1) {
+		if (chandef->center_freq1 > chandef->chan->center_freq)
+			sec_ch_2g_freq = chandef->chan->center_freq + 20;
+		else if (chandef->center_freq1 < chandef->chan->center_freq)
+			sec_ch_2g_freq = chandef->chan->center_freq - 20;
+	}
+	hdd_debug("set mon ch:width=%d, freq %d sec_ch_2g_freq=%d",
+		  chandef->width, chandef->chan->center_freq, sec_ch_2g_freq);
+	hdd_select_cbmode(adapter, chandef->chan->center_freq, sec_ch_2g_freq,
 			  &roam_profile.ch_params);
-
 	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
 	ch_params.ch_width = ch_width;
 	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev,
 					     chandef->chan->center_freq,
-					     0, &ch_params);
-
+					     sec_ch_2g_freq, &ch_params);
 	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter,
 						   chandef->chan->center_freq,
 						   POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
