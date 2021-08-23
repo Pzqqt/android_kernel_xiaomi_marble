@@ -752,7 +752,7 @@ done:
 
 			/* Intrabss-fwd */
 			if (dp_rx_check_ap_bridge(vdev))
-				if (DP_RX_INTRABSS_FWD(soc, peer, rx_tlv_hdr,
+				if (dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr,
 						       nbuf, msdu_metadata)) {
 					nbuf = next;
 					tid_stats->intrabss_cnt++;

@@ -39,28 +39,6 @@
 #include "dp_txrx_wds.h"
 #endif
 
-#ifndef QCA_HOST_MODE_WIFI_DISABLED
-
-#ifdef DP_RX_DISABLE_NDI_MDNS_FORWARDING
-static inline
-bool dp_rx_check_ndi_mdns_fwding(struct dp_peer *ta_peer, qdf_nbuf_t nbuf)
-{
-	if (ta_peer->vdev->opmode == wlan_op_mode_ndi &&
-	    qdf_nbuf_is_ipv6_mdns_pkt(nbuf)) {
-		DP_STATS_INC(ta_peer, rx.intra_bss.mdns_no_fwd, 1);
-		return false;
-	}
-		return true;
-}
-#else
-static inline
-bool dp_rx_check_ndi_mdns_fwding(struct dp_peer *ta_peer, qdf_nbuf_t nbuf)
-{
-	return true;
-}
-#endif
-#endif /* QCA_HOST_MODE_WIFI_DISABLED */
-
 #ifdef DUP_RX_DESC_WAR
 void dp_rx_dump_info_and_assert(struct dp_soc *soc,
 				hal_ring_handle_t hal_ring,
@@ -566,6 +544,9 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	 */
 
 	if ((qdf_nbuf_is_da_valid(nbuf) && !qdf_nbuf_is_da_mcbc(nbuf))) {
+		if (dp_rx_intrabss_eapol_drop_check(soc, ta_peer, rx_tlv_hdr,
+						    nbuf))
+			return true;
 
 		ast_entry = soc->ast_table[msdu_metadata.da_idx];
 		if (!ast_entry)
@@ -594,6 +575,16 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 						DP_MOD_ID_RX);
 		if (!da_peer)
 			return false;
+
+		/* If the source or destination peer in the isolation
+		 * list then dont forward instead push to bridge stack.
+		 */
+		if (dp_get_peer_isolation(ta_peer) ||
+		    dp_get_peer_isolation(da_peer)) {
+			dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+			return false;
+		}
+
 		is_da_bss_peer = da_peer->bss_peer;
 		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
 
@@ -601,13 +592,6 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 			is_frag = qdf_nbuf_is_frag(nbuf);
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
-
-			/* If the source or destination peer in the isolation
-			 * list then dont forward instead push to bridge stack.
-			 */
-			if (dp_get_peer_isolation(ta_peer) ||
-			    dp_get_peer_isolation(da_peer))
-				return false;
 
 			/* linearize the nbuf just before we send to
 			 * dp_tx_send()
@@ -655,6 +639,10 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	 */
 	else if (qdf_unlikely((qdf_nbuf_is_da_mcbc(nbuf) &&
 			       !ta_peer->bss_peer))) {
+		if (dp_rx_intrabss_eapol_drop_check(soc, ta_peer, rx_tlv_hdr,
+						    nbuf))
+			return true;
+
 		if (!dp_rx_check_ndi_mdns_fwding(ta_peer, nbuf))
 			goto end;
 
@@ -669,10 +657,6 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			goto end;
 
 		len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
-		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
-
-		/* Set cb->ftype to intrabss FWD */
-		qdf_nbuf_set_tx_ftype(nbuf_copy, CB_FTYPE_INTRABSS_FWD);
 		if (dp_tx_send((struct cdp_soc_t *)soc,
 			       ta_peer->vdev->vdev_id, nbuf_copy)) {
 			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);

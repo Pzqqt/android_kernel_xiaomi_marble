@@ -22,6 +22,27 @@
 #include <dp_types.h>
 #include "dp_be.h"
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
+/*
+ * dp_rx_intrabss_fwd_be() - API for intrabss fwd. For EAPOL
+ *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
+ * @soc: core txrx main context
+ * @ta_peer: source peer entry
+ * @rx_tlv_hdr: start address of rx tlvs
+ * @nbuf: nbuf that has to be intrabss forwarded
+ * @msdu_metadata: msdu metadata
+ *
+ * Return: true if it is forwarded else false
+ */
+
+bool dp_rx_intrabss_fwd_be(struct dp_soc *soc,
+			   struct dp_peer *ta_peer,
+			   uint8_t *rx_tlv_hdr,
+			   qdf_nbuf_t nbuf,
+			   struct hal_rx_msdu_metadata msdu_metadata);
+#endif
+
 uint32_t dp_rx_process_be(struct dp_intr *int_ctx,
 			  hal_ring_handle_t hal_ring_hdl, uint8_t reo_ring_num,
 			  uint32_t quota);

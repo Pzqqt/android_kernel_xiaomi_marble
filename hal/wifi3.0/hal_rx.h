@@ -193,6 +193,7 @@ struct hal_rx_msdu_desc_info {
  * @ HAL_MSDU_F_DA_IS_VALID: Found match for DA in AST
  * @ HAL_MSDU_F_DA_IS_MCBC: DA is MC/BC address
  * @ HAL_MSDU_F_DA_IDX_TIMEOUT: AST search for DA timed out
+ * @ HAL_MSDU_F_INTRA_BSS: This is an intrabss packet
  */
 enum hal_rx_msdu_desc_flags {
 	HAL_MSDU_F_FIRST_MSDU_IN_MPDU = (0x1 << 0),
@@ -202,7 +203,8 @@ enum hal_rx_msdu_desc_flags {
 	HAL_MSDU_F_SA_IDX_TIMEOUT = (0x1 << 24),
 	HAL_MSDU_F_DA_IS_VALID = (0x1 << 25),
 	HAL_MSDU_F_DA_IS_MCBC = (0x1 << 26),
-	HAL_MSDU_F_DA_IDX_TIMEOUT = (0x1 << 27)
+	HAL_MSDU_F_DA_IDX_TIMEOUT = (0x1 << 27),
+	HAL_MSDU_F_INTRA_BSS = (0x1 << 28),
 };
 
 /*
