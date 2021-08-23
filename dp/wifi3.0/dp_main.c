@@ -242,8 +242,6 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 #define MON_VDEV_TIMER_INIT 0x1
 #define MON_VDEV_TIMER_RUNNING 0x2
 
-/* Generic AST entry aging timer value */
-#define DP_AST_AGING_TIMER_DEFAULT_MS	1000
 #define DP_MCS_LENGTH (6*MAX_MCS)
 
 #define DP_CURR_FW_STATS_AVAIL 19
@@ -13124,7 +13122,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		soc->wbm_release_desc_rx_sg_support = 1;
 		soc->rxdma2sw_rings_not_supported = 1;
 		soc->ast_offload_support = AST_OFFLOAD_ENABLE_STATUS;
-
+		soc->mec_fw_offload = FW_MEC_FW_OFFLOAD_ENABLED;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);

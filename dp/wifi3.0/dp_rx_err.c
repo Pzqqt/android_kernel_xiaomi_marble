@@ -1342,9 +1342,11 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		}
 	}
 
-	if (dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf)) {
+	if ((!soc->mec_fw_offload) &&
+	    dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf)) {
 		/* this is a looped back MCBC pkt, drop it */
-		DP_STATS_INC_PKT(peer, rx.mec_drop, 1, qdf_nbuf_len(nbuf));
+		DP_STATS_INC_PKT(peer, rx.mec_drop, 1,
+				 qdf_nbuf_len(nbuf));
 		goto drop_nbuf;
 	}
 
@@ -2847,7 +2849,11 @@ done:
 								err_code,
 								pool_id);
 					break;
-
+				case HAL_RXDMA_MULTICAST_ECHO:
+					DP_STATS_INC_PKT(peer, rx.mec_drop, 1,
+							 qdf_nbuf_len(nbuf));
+					qdf_nbuf_free(nbuf);
+					break;
 				default:
 					qdf_nbuf_free(nbuf);
 					dp_err_rl("RXDMA error %d",

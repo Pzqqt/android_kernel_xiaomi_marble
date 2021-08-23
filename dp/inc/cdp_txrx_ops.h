@@ -1127,6 +1127,9 @@ struct ol_if_ops {
 	uint8_t (*freq_to_band)(struct cdp_ctrl_objmgr_psoc *psoc,
 				uint8_t pdev_id, uint16_t freq);
 
+	QDF_STATUS(*set_mec_timer)(struct cdp_ctrl_objmgr_psoc *psoc,
+				   uint8_t vdev_id, uint16_t mec_timer_val);
+
 #ifdef ATH_SUPPORT_NAC_RSSI
 	int (*config_fw_for_nac_rssi)(struct cdp_ctrl_objmgr_psoc *psoc,
 				      uint8_t pdev_id,

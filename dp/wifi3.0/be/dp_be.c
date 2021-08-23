@@ -24,6 +24,9 @@
 #include "dp_be_rx.h"
 #include <hal_be_api.h>
 
+/* Generic AST entry aging timer value */
+#define DP_AST_AGING_TIMER_DEFAULT_MS	5000
+
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
 	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_BE_WBM_SW0_BM_ID, .for_ipa = 0},
@@ -470,9 +473,16 @@ static QDF_STATUS dp_vdev_attach_be(struct dp_soc *soc, struct dp_vdev *vdev)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	if (vdev->opmode == wlan_op_mode_sta)
+	if (vdev->opmode == wlan_op_mode_sta) {
+		if (soc->cdp_soc.ol_ops->set_mec_timer)
+			soc->cdp_soc.ol_ops->set_mec_timer(
+					soc->ctrl_psoc,
+					vdev->vdev_id,
+					DP_AST_AGING_TIMER_DEFAULT_MS);
+
 		hal_tx_vdev_mcast_ctrl_set(soc->hal_soc, vdev->vdev_id,
 					   HAL_TX_MCAST_CTRL_MEC_NOTIFY);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

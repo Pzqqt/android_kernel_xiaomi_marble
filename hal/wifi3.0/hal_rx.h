@@ -574,6 +574,9 @@ enum hal_reo_error_code {
  * @ HAL_RXDMA_ERR_DA_TIMEOUT    : Destination Address  search timeout
  * @ HAL_RXDMA_ERR_FLOW_TIMEOUT  : Flow Search Timeout
  * @ HAL_RXDMA_ERR_FLUSH_REQUEST : RxDMA FIFO Flush request
+ * @ HAL_RXDMA_AMSDU_FRAGMENT    : Rx PCU reported A-MSDU
+ *                                 present as well as a fragmented MPDU
+ * @ HAL_RXDMA_MULTICAST_ECHO    : RX OLE reported a multicast echo
  * @ HAL_RXDMA_ERR_WAR           : RxDMA WAR dummy errors
  */
 enum hal_rxdma_error_code {
@@ -591,6 +594,8 @@ enum hal_rxdma_error_code {
 	HAL_RXDMA_ERR_DA_TIMEOUT,
 	HAL_RXDMA_ERR_FLOW_TIMEOUT,
 	HAL_RXDMA_ERR_FLUSH_REQUEST,
+	HAL_RXDMA_AMSDU_FRAGMENT,
+	HAL_RXDMA_MULTICAST_ECHO,
 	HAL_RXDMA_ERR_WAR = 31,
 	HAL_RXDMA_ERR_MAX
 };

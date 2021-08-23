@@ -126,6 +126,12 @@
 #define AST_OFFLOAD_ENABLE_STATUS 0
 #endif
 
+#ifdef FEATURE_MEC_OFFLOAD
+#define FW_MEC_FW_OFFLOAD_ENABLED 1
+#else
+#define FW_MEC_FW_OFFLOAD_ENABLED 0
+#endif
+
 #define PCP_TID_MAP_MAX 8
 #define MAX_MU_USERS 37
 
@@ -2124,7 +2130,8 @@ struct dp_soc {
 #ifdef WIFI_MONITOR_SUPPORT
 	struct dp_mon_soc *monitor_soc;
 #endif
-	bool rxdma2sw_rings_not_supported;
+	uint8_t rxdma2sw_rings_not_supported:1,
+		mec_fw_offload:1;
 };
 
 #ifdef IPA_OFFLOAD
