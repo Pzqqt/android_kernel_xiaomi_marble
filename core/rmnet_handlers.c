@@ -427,6 +427,7 @@ rx_handler_result_t rmnet_rx_handler(struct sk_buff **pskb)
 	struct sk_buff *skb = *pskb;
 	struct rmnet_port *port;
 	struct net_device *dev;
+	struct rmnet_skb_cb *cb;
 	int (*rmnet_core_shs_switch)(struct sk_buff *skb,
 				     struct rmnet_shs_clnt_s *cfg);
 
@@ -451,9 +452,10 @@ rx_handler_result_t rmnet_rx_handler(struct sk_buff **pskb)
 
 		rcu_read_lock();
 		rmnet_core_shs_switch = rcu_dereference(rmnet_shs_switch);
-		if (rmnet_core_shs_switch && !skb->cb[1] &&
+		cb = RMNET_SKB_CB(skb);
+		if (rmnet_core_shs_switch && !cb->qmap_steer &&
 		    skb->priority != 0xda1a) {
-			skb->cb[1] = 1;
+			cb->qmap_steer = 1;
 			rmnet_core_shs_switch(skb, &port->phy_shs_cfg);
 			rcu_read_unlock();
 			return RX_HANDLER_CONSUMED;
