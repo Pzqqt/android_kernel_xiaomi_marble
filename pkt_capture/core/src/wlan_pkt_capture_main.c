@@ -114,25 +114,25 @@ static void pkt_capture_wdi_event_unsubscribe(struct wlan_objmgr_psoc *psoc)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 
-	/* unsubscribing for tx data packets */
-	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_TX_SUBSCRIBER,
-			    WDI_EVENT_PKT_CAPTURE_TX_DATA);
-
-	/* unsubscribing for rx data packets */
-	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
-			    WDI_EVENT_PKT_CAPTURE_RX_DATA);
-
-	/* unsubscribe for rx data no peer packets */
-	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_RX_NO_PEER_SUBSCRIBER,
-			  WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER);
+	/* unsubscribe ppdu smu stats */
+	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_PPDU_STATS_SUBSCRIBER,
+			    WDI_EVENT_PKT_CAPTURE_PPDU_STATS);
 
 	/* unsubscribing for offload tx data packets */
 	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER,
 			    WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA);
 
-	/* unsubscribe ppdu smu stats */
-	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_PPDU_STATS_SUBSCRIBER,
-			    WDI_EVENT_PKT_CAPTURE_PPDU_STATS);
+	/* unsubscribe for rx data no peer packets */
+	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_RX_NO_PEER_SUBSCRIBER,
+			  WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER);
+
+	/* unsubscribing for rx data packets */
+	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
+			    WDI_EVENT_PKT_CAPTURE_RX_DATA);
+
+	/* unsubscribing for tx data packets */
+	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_TX_SUBSCRIBER,
+			    WDI_EVENT_PKT_CAPTURE_TX_DATA);
 }
 
 enum pkt_capture_mode
