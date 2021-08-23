@@ -438,30 +438,24 @@ static
 bool sap_operating_on_dfs(struct mac_context *mac_ctx,
 			  struct sap_context *sap_ctx)
 {
-	uint8_t is_dfs = false;
-	uint32_t chan_freq = sap_ctx->chan_freq;
+	struct wlan_channel *chan;
 
-	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq) ||
-	    WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
+	if (!sap_ctx->vdev) {
+		sap_debug("vdev invalid");
 		return false;
-	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
-		is_dfs = true;
-	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
-		if (wlan_reg_is_passive_or_disable_for_freq(
-						mac_ctx->pdev,
-						chan_freq) ||
-		    wlan_reg_is_passive_or_disable_for_freq(
-					mac_ctx->pdev,
-					sap_ctx->ch_params.mhz_freq_seg1 - 10))
-			is_dfs = true;
-	} else {
-		if (wlan_reg_is_passive_or_disable_for_freq(
-						mac_ctx->pdev,
-						chan_freq))
-			is_dfs = true;
 	}
 
-	return is_dfs;
+	chan = wlan_vdev_get_active_channel(sap_ctx->vdev);
+	if (!chan) {
+		sap_debug("Couldn't get vdev active channel");
+		return false;
+	}
+
+	if (chan->ch_flagext & (IEEE80211_CHAN_DFS |
+				IEEE80211_CHAN_DFS_CFREQ2))
+		return true;
+
+	return false;
 }
 
 void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
