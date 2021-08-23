@@ -306,6 +306,7 @@ enum msm_vidc_core_capability_type {
 	MAX_SESSION_COUNT,
 	MAX_SECURE_SESSION_COUNT,
 	MAX_LOAD,
+	MAX_RT_MBPF,
 	MAX_MBPF,
 	MAX_MBPS,
 	MAX_IMAGE_MBPF,

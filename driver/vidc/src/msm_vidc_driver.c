@@ -5164,7 +5164,7 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 
 static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 {
-	u32 video_mbpf = 0, image_mbpf = 0;
+	u32 video_mbpf = 0, image_mbpf = 0, video_rt_mbpf = 0;
 	struct msm_vidc_core *core;
 	struct msm_vidc_inst *instance;
 
@@ -5196,6 +5196,24 @@ static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 	if (image_mbpf > core->capabilities[MAX_IMAGE_MBPF].value) {
 		i_vpr_e(inst, "%s: image overloaded. needed %u, max %u", __func__,
 			image_mbpf, core->capabilities[MAX_IMAGE_MBPF].value);
+		return -ENOMEM;
+	}
+
+	core_lock(core, __func__);
+	/* check real-time video sessions max limit */
+	list_for_each_entry(instance, &core->instances, list) {
+		if (is_thumbnail_session(instance) ||
+			is_image_session(instance) ||
+			!is_realtime_session(instance))
+			continue;
+
+		video_rt_mbpf += msm_vidc_get_mbs_per_frame(instance);
+	}
+	core_unlock(core, __func__);
+
+	if (video_rt_mbpf > core->capabilities[MAX_RT_MBPF].value) {
+		i_vpr_e(inst, "%s: real-time video overloaded. needed %u, max %u",
+			__func__, video_rt_mbpf, core->capabilities[MAX_RT_MBPF].value);
 		return -ENOMEM;
 	}
 
