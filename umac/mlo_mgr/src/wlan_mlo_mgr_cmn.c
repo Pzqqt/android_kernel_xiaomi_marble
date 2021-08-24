@@ -53,9 +53,12 @@ struct wlan_objmgr_vdev *mlo_get_vdev_by_link_id(
 		    wlan_vdev_mlme_is_mlo_vdev(dev_ctx->wlan_vdev_list[i]) &&
 		    dev_ctx->wlan_vdev_list[i]->vdev_mlme.mlo_link_id ==
 		    link_id) {
-			wlan_objmgr_vdev_try_get_ref(dev_ctx->wlan_vdev_list[i],
-						     WLAN_MLO_MGR_ID);
-			partner_vdev = dev_ctx->wlan_vdev_list[i];
+			if (wlan_objmgr_vdev_try_get_ref(
+						dev_ctx->wlan_vdev_list[i],
+						WLAN_MLO_MGR_ID) ==
+							QDF_STATUS_SUCCESS)
+				partner_vdev = dev_ctx->wlan_vdev_list[i];
+
 			break;
 		}
 	}
@@ -132,7 +135,7 @@ QDF_STATUS mlo_mlme_create_link_vdev(struct wlan_objmgr_vdev *vdev,
 
 void mlo_mlme_peer_create(struct wlan_objmgr_vdev *vdev,
 			  struct wlan_mlo_peer_context *ml_peer,
-			  struct qdf_mac_addr addr,
+			  struct qdf_mac_addr *addr,
 			  qdf_nbuf_t frm_buf)
 {
 	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
@@ -176,4 +179,32 @@ void mlo_mlme_peer_delete(struct wlan_objmgr_peer *peer)
 		return;
 
 	mlo_ctx->mlme_ops->mlo_mlme_ext_peer_delete(peer);
+}
+
+void mlo_mlme_peer_assoc_resp(struct wlan_objmgr_peer *peer)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (!mlo_ctx || !mlo_ctx->mlme_ops ||
+	    !mlo_ctx->mlme_ops->mlo_mlme_ext_assoc_resp)
+		return;
+
+	mlo_ctx->mlme_ops->mlo_mlme_ext_assoc_resp(peer);
+}
+
+uint8_t mlo_get_link_vdev_ix(struct wlan_mlo_dev_context *ml_dev,
+			     struct wlan_objmgr_vdev *vdev)
+{
+	uint8_t i;
+
+	mlo_dev_lock_acquire(ml_dev);
+	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
+		if (vdev == ml_dev->wlan_vdev_list[i]) {
+			mlo_dev_lock_release(ml_dev);
+			return i;
+		}
+	}
+	mlo_dev_lock_release(ml_dev);
+
+	return (uint8_t)-1;
 }

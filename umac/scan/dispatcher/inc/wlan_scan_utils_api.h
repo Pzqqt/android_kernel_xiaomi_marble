@@ -618,18 +618,6 @@ util_scan_entry_copy_ie_data(struct scan_cache_entry *scan_entry,
 	return QDF_STATUS_E_NOMEM;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
-static inline void util_scan_free_ml_info(struct scan_cache_entry *scan_entry)
-{
-	if (scan_entry->ml_info)
-		qdf_mem_free(scan_entry->ml_info);
-}
-#else
-static inline void util_scan_free_ml_info(struct scan_cache_entry *scan_entry)
-{
-}
-#endif
-
 /**
  * util_scan_free_cache_entry() - function to free scan
  * cache entry
@@ -649,7 +637,6 @@ util_scan_free_cache_entry(struct scan_cache_entry *scan_entry)
 	if (scan_entry->raw_frame.ptr)
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 
-	util_scan_free_ml_info(scan_entry);
 	qdf_mem_free(scan_entry);
 }
 
@@ -772,14 +759,14 @@ util_scan_get_ml_partner_info(struct scan_cache_entry *scan_entry)
 
 	partner_info.num_partner_links =
 			qdf_min((uint8_t)WLAN_UMAC_MLO_MAX_VDEVS - 1,
-				scan_entry->ml_info->num_links - 1);
+				scan_entry->ml_info.num_links - 1);
 	/* TODO: Make sure that scan_entry->ml_info->link_info is a sorted
 	 * list */
 	for (i = 0; i < partner_info.num_partner_links; i++) {
 		partner_info.partner_link_info[i].link_addr =
-				scan_entry->ml_info->link_info[i].link_addr;
+				scan_entry->ml_info.link_info[i].link_addr;
 		partner_info.partner_link_info[i].link_id =
-				scan_entry->ml_info->link_info[i].link_id;
+				scan_entry->ml_info.link_info[i].link_id;
 	}
 
 	return partner_info;

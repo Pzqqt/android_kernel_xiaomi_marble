@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,7 +132,17 @@ static QDF_STATUS extract_dbr_buf_release_fixed_tlv(wmi_unified_t wmi_handle,
 								wmi_handle,
 								ev->pdev_id);
 	param->mod_id = ev->mod_id;
+	if ((!param_buf->num_entries) ||
+	    param_buf->num_entries < ev->num_buf_release_entry){
+		wmi_err("actual num of buf release entries less than provided entries");
+		return QDF_STATUS_E_INVAL;
+	}
 	param->num_buf_release_entry = ev->num_buf_release_entry;
+	if ((!param_buf->num_meta_data) ||
+	    param_buf->num_meta_data < ev->num_meta_data_entry) {
+		wmi_err("actual num of meta data entries less than provided entries");
+		return QDF_STATUS_E_INVAL;
+	}
 	param->num_meta_data_entry = ev->num_meta_data_entry;
 	wmi_debug("pdev id %d mod id %d num buf release entry %d",
 		 param->pdev_id, param->mod_id, param->num_buf_release_entry);

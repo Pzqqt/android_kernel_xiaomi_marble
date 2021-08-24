@@ -75,6 +75,8 @@ do {                                                           \
 #endif /* TX_PER_PDEV_DESC_POOL */
 #define DP_TX_QUEUE_MASK 0x3
 
+#define MAX_CDP_SEC_TYPE 12
+
 /* number of dwords for htt_tx_msdu_desc_ext2_t */
 #define DP_TX_MSDU_INFO_META_DATA_DWORDS 7
 

@@ -23,6 +23,10 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_scan_api.h"
 #include "../../core/src/wlan_scan_manager.h"
+#ifdef WLAN_POLICY_MGR_ENABLE
+#include <wlan_policy_mgr_api.h>
+#include "wlan_policy_mgr_public_struct.h"
+#endif
 
 void wlan_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *dwell_time)
@@ -146,6 +150,36 @@ QDF_STATUS wlan_scan_cfg_set_passive_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.passive_dwell_6g = dwell_time;
 
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_POLICY_MGR_ENABLE
+void wlan_scan_update_pno_dwell_time(struct wlan_objmgr_vdev *vdev,
+				     struct pno_scan_req_params *req,
+				     struct scan_default_params *scan_def)
+{
+	bool sap_or_p2p_present;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc)
+		return;
+
+	sap_or_p2p_present = policy_mgr_mode_specific_connection_count
+			       (psoc,
+				PM_SAP_MODE, NULL) ||
+				policy_mgr_mode_specific_connection_count
+			       (psoc,
+				PM_P2P_GO_MODE, NULL) ||
+				policy_mgr_mode_specific_connection_count
+			       (psoc,
+				PM_P2P_CLIENT_MODE, NULL);
+
+	if (sap_or_p2p_present) {
+		req->active_dwell_time = scan_def->conc_active_dwell;
+		req->passive_dwell_time = scan_def->conc_passive_dwell;
+	}
 }
 #endif
 
@@ -493,6 +527,7 @@ wlan_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	req->scan_req.scan_priority = def->scan_priority;
 	req->scan_req.dwell_time_active = def->active_dwell;
 	req->scan_req.dwell_time_active_2g = def->active_dwell_2g;
+	req->scan_req.min_dwell_time_6g = def->min_dwell_time_6g;
 	req->scan_req.dwell_time_active_6g = def->active_dwell_6g;
 	req->scan_req.dwell_time_passive_6g = def->passive_dwell_6g;
 	req->scan_req.dwell_time_passive = def->passive_dwell;

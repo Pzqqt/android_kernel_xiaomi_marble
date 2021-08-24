@@ -153,6 +153,11 @@ struct dp_soc_be {
 	struct dp_hw_cookie_conversion_t hw_cc_ctx;
 	struct dp_spt_page_desc_list tx_spt_page_desc[MAX_TXDESC_POOLS];
 	struct dp_spt_page_desc_list rx_spt_page_desc[MAX_RXDESC_POOLS];
+#ifdef WLAN_SUPPORT_PPEDS
+	struct dp_srng reo2ppe_ring;
+	struct dp_srng ppe2tcl_ring;
+	struct dp_srng ppe_release_ring;
+#endif
 };
 
 /* convert struct dp_soc_be pointer to struct dp_soc pointer */

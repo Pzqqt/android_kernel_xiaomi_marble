@@ -133,23 +133,6 @@ static void hal_tx_update_dscp_tid_7850(struct hal_soc *hal_soc, uint8_t tid,
 }
 
 /**
- * hal_tx_desc_set_lmac_id - Set the lmac_id value
- * @desc: Handle to Tx Descriptor
- * @lmac_id: mac Id to ast matching
- *		     b00 – mac 0
- *		     b01 – mac 1
- *		     b10 – mac 2
- *		     b11 – all macs (legacy HK way)
- *
- * Return: void
- */
-static void hal_tx_desc_set_lmac_id_7850(void *desc, uint8_t lmac_id)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD, PMAC_ID) |=
-		HAL_TX_SM(TCL_DATA_CMD, PMAC_ID, lmac_id);
-}
-
-/**
  * hal_tx_init_cmd_credit_ring_7850() - Initialize command/credit SRNG
  * @hal_soc_hdl: Handle to HAL SoC structure
  * @hal_srng: Handle to HAL SRNG structure

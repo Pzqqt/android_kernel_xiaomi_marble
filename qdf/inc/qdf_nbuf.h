@@ -403,6 +403,7 @@ struct mon_rx_status {
  * @mpdu_fcs_ok_bitmap: mpdu with fcs ok bitmap
  * @mpdu_ok_byte_count: mpdu byte count with fcs ok
  * @mpdu_err_byte_count: mpdu byte count with fcs err
+ * @sw_peer_id: software peer id
  */
 struct mon_rx_user_status {
 	uint32_t mcs:4,
@@ -433,6 +434,7 @@ struct mon_rx_user_status {
 	uint32_t mpdu_fcs_ok_bitmap[QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS];
 	uint32_t mpdu_ok_byte_count;
 	uint32_t mpdu_err_byte_count;
+	uint16_t sw_peer_id;
 };
 
 /**
@@ -862,6 +864,16 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 	qdf_nbuf_unmap_nbytes_single_debug(osdev, buf, dir, nbytes, \
 					   __func__, __LINE__)
 
+void qdf_nbuf_unmap_nbytes_single_paddr_debug(qdf_device_t osdev,
+					      qdf_nbuf_t buf,
+					      qdf_dma_addr_t phy_addr,
+					      qdf_dma_dir_t dir, int nbytes,
+					      const char *func, uint32_t line);
+
+#define qdf_nbuf_unmap_nbytes_single_paddr(osdev, buf, phy_addr, dir, nbytes) \
+	qdf_nbuf_unmap_nbytes_single_paddr_debug(osdev, buf, phy_addr, \
+						 dir, nbytes, __func__, \
+						 __LINE__)
 #else /* NBUF_MAP_UNMAP_DEBUG */
 
 static inline void qdf_nbuf_map_check_for_leaks(void) {}
@@ -916,6 +928,14 @@ qdf_nbuf_unmap_nbytes_single(
 	qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir, int nbytes)
 {
 	return __qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
+}
+
+static inline void
+qdf_nbuf_unmap_nbytes_single_paddr(qdf_device_t osdev, qdf_nbuf_t buf,
+				   qdf_dma_addr_t phy_addr, qdf_dma_dir_t dir,
+				   int nbytes)
+{
+	__qdf_mem_unmap_nbytes_single(osdev, phy_addr, dir, nbytes);
 }
 #endif /* NBUF_MAP_UNMAP_DEBUG */
 

@@ -154,6 +154,9 @@ struct qdf_mem_header {
 	uint64_t time;
 };
 
+/* align the qdf_mem_header to 8 bytes */
+#define QDF_DMA_MEM_HEADER_ALIGN 8
+
 static uint64_t WLAN_MEM_HEADER = 0x6162636465666768;
 static uint64_t WLAN_MEM_TRAILER = 0x8081828384858687;
 
@@ -162,10 +165,13 @@ static inline struct qdf_mem_header *qdf_mem_get_header(void *ptr)
 	return (struct qdf_mem_header *)ptr - 1;
 }
 
+/* make sure the header pointer is 8bytes aligned */
 static inline struct qdf_mem_header *qdf_mem_dma_get_header(void *ptr,
 							    qdf_size_t size)
 {
-	return (struct qdf_mem_header *) ((uint8_t *) ptr + size);
+	return (struct qdf_mem_header *)
+				qdf_roundup((size_t)((uint8_t *)ptr + size),
+					    QDF_DMA_MEM_HEADER_ALIGN);
 }
 
 static inline uint64_t *qdf_mem_get_trailer(struct qdf_mem_header *header)
@@ -184,7 +190,7 @@ static inline void *qdf_mem_get_ptr(struct qdf_mem_header *header)
 
 /* number of bytes needed for the qdf dma memory debug information */
 #define QDF_DMA_MEM_DEBUG_SIZE \
-	(sizeof(struct qdf_mem_header))
+	(sizeof(struct qdf_mem_header) + QDF_DMA_MEM_HEADER_ALIGN)
 
 static void qdf_mem_trailer_init(struct qdf_mem_header *header)
 {
@@ -2202,6 +2208,8 @@ int qdf_mem_multi_page_link(qdf_device_t osdev,
 		c_elem = (void **)page_info;
 		for (i_int = 0; i_int < pages->num_element_per_page; i_int++) {
 			if (i_int == (pages->num_element_per_page - 1)) {
+				if ((i + 1) == pages->num_pages)
+					break;
 				if (cacheable)
 					*c_elem = pages->
 						cacheable_pages[i + 1];

@@ -886,6 +886,9 @@ enum wlan_status_code {
 #define MAX_KCK_LEN 32
 #define REPLAY_CTR_LEN 8
 #define KCK_KEY_LEN 16
+#define KEK_KEY_LEN 16
+#define KCK_192BIT_KEY_LEN 24
+#define KEK_256BIT_KEY_LEN 32
 
 #define WLAN_WPA_OUI 0xf25000
 #define WLAN_WPA_OUI_TYPE 0x01

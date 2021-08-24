@@ -450,7 +450,7 @@ uint16_t reg_dmn_get_chanwidth_from_opclass_auto(uint8_t *country,
  * operating class table for 6Ghz band: number of operating classes, list of
  * opclasses, list channel sizes, list of channel lists.
  * @pdev: Pointer to pdev.
- * @num_opclasses:  Pointer to number of operating classes. This is the number
+ * @num_opclasses: Pointer to number of operating classes. This is the number
  * of elements in the list array arguments
  * @opclas_lst: Pointer to pointer to memory of list of opclasses
  * @chansize_lst: Pointer to pointer to memory of list of channel sizes

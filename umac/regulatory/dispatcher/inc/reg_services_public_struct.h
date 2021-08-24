@@ -701,6 +701,18 @@ enum behav_limit {
 };
 
 /**
+ * struct c_freq_lst: The list data strucuture for the center frequencies
+ * @num_cfis: Number of center frequencies
+ * @p_cfis_arr: Start address of the array of center frequency indices. Center
+ *              for 40/80/160/320MHz band channel opclasses. For 20MHz the list
+ *              is empty as it is already available in @channels variable.
+ */
+struct c_freq_lst {
+	uint8_t num_cfis;
+	const uint8_t *p_cfis_arr;
+};
+
+/**
  * struct reg_dmn_op_class_map_t: operating class
  * @op_class: operating class number
  * @chan_spacing: channel spacing
@@ -708,9 +720,7 @@ enum behav_limit {
  * @behav_limit: OR of bitmaps of enum behav_limit
  * @start_freq: starting frequency
  * @channels: channel set
- * @cfis: Set of center frequency indices. Center for 40/80/160/320MHz band
- *         channel opclasses. For 20MHz the list is empty as it is  already
- *         available in @channels variable.
+ * @p_cfi_lst_obj: Pointer to center frequency indices list
  */
 struct reg_dmn_op_class_map_t {
 	uint8_t op_class;
@@ -719,7 +729,7 @@ struct reg_dmn_op_class_map_t {
 	uint16_t behav_limit;
 	qdf_freq_t start_freq;
 	uint8_t channels[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
-	uint8_t cfis[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
+	const struct c_freq_lst *p_cfi_lst_obj;
 };
 
 /**
@@ -1243,16 +1253,6 @@ struct reg_freq_range {
 };
 
 /**
- * struct reg_sched_payload
- * @psoc: psoc ptr
- * @pdev: pdev ptr
- */
-struct reg_sched_payload {
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_objmgr_pdev *pdev;
-};
-
-/**
  * enum direction
  * @NORTHBOUND: northbound
  * @SOUTHBOUND: southbound
@@ -1396,6 +1396,20 @@ struct unsafe_ch_list {
 struct avoid_freq_ind_data {
 	struct ch_avoid_ind_type freq_list;
 	struct unsafe_ch_list chan_list;
+};
+
+/**
+ * struct reg_sched_payload
+ * @psoc: psoc ptr
+ * @pdev: pdev ptr
+ * @ch_avoid_ind: if avoidance event indicated
+ * @avoid_info: chan avoid info if @ch_avoid_ind is true
+ */
+struct reg_sched_payload {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	bool ch_avoid_ind;
+	struct avoid_freq_ind_data avoid_info;
 };
 
 #define FIVEG_STARTING_FREQ        5000

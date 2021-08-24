@@ -184,290 +184,303 @@ static inline QDF_STATUS dp_mon_soc_detach_wrapper(struct dp_soc *soc)
 #ifndef WIFI_MONITOR_SUPPORT
 #define MON_BUF_MIN_ENTRIES 64
 
-static inline QDF_STATUS monitor_pdev_attach(struct dp_pdev *pdev)
+static inline QDF_STATUS dp_monitor_pdev_attach(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS monitor_pdev_detach(struct dp_pdev *pdev)
+static inline QDF_STATUS dp_monitor_pdev_detach(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS monitor_vdev_attach(struct dp_vdev *vdev)
+static inline QDF_STATUS dp_monitor_vdev_attach(struct dp_vdev *vdev)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline QDF_STATUS monitor_vdev_detach(struct dp_vdev *vdev)
+static inline QDF_STATUS dp_monitor_vdev_detach(struct dp_vdev *vdev)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline QDF_STATUS monitor_peer_attach(struct dp_soc *soc,
-					     struct dp_peer *peer)
+static inline QDF_STATUS dp_monitor_peer_attach(struct dp_soc *soc,
+						struct dp_peer *peer)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS monitor_peer_detach(struct dp_soc *soc,
-					     struct dp_peer *peer)
+static inline QDF_STATUS dp_monitor_peer_detach(struct dp_soc *soc,
+						struct dp_peer *peer)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline QDF_STATUS monitor_pdev_init(struct dp_pdev *pdev)
+static inline QDF_STATUS dp_monitor_pdev_init(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS monitor_pdev_deinit(struct dp_pdev *pdev)
+static inline QDF_STATUS dp_monitor_pdev_deinit(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS monitor_soc_cfg_init(struct dp_soc *soc)
+static inline QDF_STATUS dp_monitor_soc_cfg_init(struct dp_soc *soc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS monitor_config_debug_sniffer(struct dp_pdev *pdev,
-						      int val)
+static inline QDF_STATUS dp_monitor_config_debug_sniffer(struct dp_pdev *pdev,
+							 int val)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline void monitor_flush_rings(struct dp_soc *soc)
+static inline void dp_monitor_flush_rings(struct dp_soc *soc)
 {
 }
 
-static inline QDF_STATUS monitor_htt_srng_setup(struct dp_soc *soc,
-						struct dp_pdev *pdev,
-						int mac_id,
-						int mac_for_pdev)
+static inline QDF_STATUS dp_monitor_htt_srng_setup(struct dp_soc *soc,
+						   struct dp_pdev *pdev,
+						   int mac_id,
+						   int mac_for_pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void monitor_service_mon_rings(struct dp_soc *soc, uint32_t quota)
+static inline void dp_monitor_service_mon_rings(struct dp_soc *soc,
+						uint32_t quota)
 {
 }
 
 static inline
-uint32_t monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
-			 uint32_t mac_id, uint32_t quota)
+uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			    uint32_t mac_id, uint32_t quota)
 {
 	return 0;
 }
 
 static inline
-uint32_t monitor_drop_packets_for_mac(struct dp_pdev *pdev,
-				      uint32_t mac_id, uint32_t quota)
+uint32_t dp_monitor_drop_packets_for_mac(struct dp_pdev *pdev,
+					 uint32_t mac_id, uint32_t quota)
 {
 	return 0;
 }
 
-static inline void monitor_peer_tx_init(struct dp_pdev *pdev,
-					struct dp_peer *peer)
-{
-}
-
-static inline void monitor_peer_tx_cleanup(struct dp_vdev *vdev,
+static inline void dp_monitor_peer_tx_init(struct dp_pdev *pdev,
 					   struct dp_peer *peer)
 {
 }
 
+static inline void dp_monitor_peer_tx_cleanup(struct dp_vdev *vdev,
+					      struct dp_peer *peer)
+{
+}
+
 static inline
-void monitor_peer_tid_peer_id_update(struct dp_soc *soc,
-				     struct dp_peer *peer,
-				     uint16_t peer_id)
+void dp_monitor_peer_tid_peer_id_update(struct dp_soc *soc,
+					struct dp_peer *peer,
+					uint16_t peer_id)
 {
 }
 
-static inline void monitor_tx_ppdu_stats_attach(struct dp_pdev *pdev)
+static inline void dp_monitor_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 {
 }
 
-static inline void monitor_tx_ppdu_stats_detach(struct dp_pdev *pdev)
+static inline void dp_monitor_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 {
 }
 
-static inline QDF_STATUS monitor_tx_capture_debugfs_init(struct dp_pdev *pdev)
+static inline
+QDF_STATUS dp_monitor_tx_capture_debugfs_init(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
-							struct dp_peer *peer)
+static inline void dp_monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+							   struct dp_peer *peer)
 {
 }
 
 static inline
-QDF_STATUS monitor_tx_add_to_comp_queue(struct dp_soc *soc,
-					struct dp_tx_desc_s *desc,
-					struct hal_tx_completion_status *ts,
-					struct dp_peer *peer)
+QDF_STATUS dp_monitor_tx_add_to_comp_queue(struct dp_soc *soc,
+					   struct dp_tx_desc_s *desc,
+					   struct hal_tx_completion_status *ts,
+					   struct dp_peer *peer)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline bool monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
-						  uint32_t *msg_word,
-						  qdf_nbuf_t htt_t2h_msg)
+static inline
+QDF_STATUS monitor_update_msdu_to_list(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline bool dp_monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
+						     uint32_t *msg_word,
+						     qdf_nbuf_t htt_t2h_msg)
 {
 	return true;
 }
 
-static inline QDF_STATUS monitor_htt_ppdu_stats_attach(struct dp_pdev *pdev)
+static inline QDF_STATUS dp_monitor_htt_ppdu_stats_attach(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void monitor_htt_ppdu_stats_detach(struct dp_pdev *pdev)
+static inline void dp_monitor_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 {
 }
 
-static inline void monitor_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
+static inline void dp_monitor_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
 {
 }
 
-static inline QDF_STATUS monitor_config_enh_tx_capture(struct dp_pdev *pdev,
-						       uint32_t val)
-{
-	return QDF_STATUS_E_INVAL;
-}
-
-static inline QDF_STATUS monitor_config_enh_rx_capture(struct dp_pdev *pdev,
-						       uint32_t val)
+static inline QDF_STATUS dp_monitor_config_enh_tx_capture(struct dp_pdev *pdev,
+							  uint32_t val)
 {
 	return QDF_STATUS_E_INVAL;
 }
 
-static inline QDF_STATUS monitor_set_bpr_enable(struct dp_pdev *pdev,
-						uint32_t val)
+static inline QDF_STATUS dp_monitor_config_enh_rx_capture(struct dp_pdev *pdev,
+							  uint32_t val)
+{
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline
+QDF_STATUS dp_monitor_set_bpr_enable(struct dp_pdev *pdev, uint32_t val)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline int monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
+static inline
+int dp_monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
 {
 	return 0;
 }
 
 static inline
-void monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
+void dp_monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
 {
 }
 
 static inline
-void monitor_set_bsscolor(struct dp_pdev *pdev, uint8_t bsscolor)
+void dp_monitor_set_bsscolor(struct dp_pdev *pdev, uint8_t bsscolor)
 {
 }
 
 static inline
-bool monitor_pdev_get_filter_mcast_data(struct cdp_pdev *pdev_handle)
-{
-	return false;
-}
-
-static inline
-bool monitor_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
+bool dp_monitor_pdev_get_filter_mcast_data(struct cdp_pdev *pdev_handle)
 {
 	return false;
 }
 
 static inline
-bool monitor_pdev_get_filter_ucast_data(struct cdp_pdev *pdev_handle)
+bool dp_monitor_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
 {
 	return false;
 }
 
 static inline
-int monitor_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event, bool enable)
+bool dp_monitor_pdev_get_filter_ucast_data(struct cdp_pdev *pdev_handle)
+{
+	return false;
+}
+
+static inline
+int dp_monitor_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
+				bool enable)
 {
 	return 0;
 }
 
-static inline void monitor_pktlogmod_exit(struct dp_pdev *pdev)
+static inline void dp_monitor_pktlogmod_exit(struct dp_pdev *pdev)
 {
 }
 
 static inline
-void monitor_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
+void dp_monitor_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
 {
 }
 
 static inline
-void monitor_neighbour_peers_detach(struct dp_pdev *pdev)
+void dp_monitor_neighbour_peers_detach(struct dp_pdev *pdev)
 {
 }
 
-static inline QDF_STATUS monitor_filter_neighbour_peer(struct dp_pdev *pdev,
-						       uint8_t *rx_pkt_hdr)
+static inline QDF_STATUS dp_monitor_filter_neighbour_peer(struct dp_pdev *pdev,
+							  uint8_t *rx_pkt_hdr)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline void monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
+static inline void dp_monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 {
 }
 
 static inline
-void monitor_reap_timer_init(struct dp_soc *soc)
+void dp_monitor_reap_timer_init(struct dp_soc *soc)
 {
 }
 
 static inline
-void monitor_reap_timer_deinit(struct dp_soc *soc)
+void dp_monitor_reap_timer_deinit(struct dp_soc *soc)
 {
 }
 
 static inline
-void monitor_reap_timer_start(struct dp_soc *soc)
+void dp_monitor_reap_timer_start(struct dp_soc *soc)
 {
 }
 
 static inline
-bool monitor_reap_timer_stop(struct dp_soc *soc)
+bool dp_monitor_reap_timer_stop(struct dp_soc *soc)
 {
 	return false;
 }
 
 static inline
-void monitor_vdev_timer_init(struct dp_soc *soc)
+void dp_monitor_vdev_timer_init(struct dp_soc *soc)
 {
 }
 
 static inline
-void monitor_vdev_timer_deinit(struct dp_soc *soc)
+void dp_monitor_vdev_timer_deinit(struct dp_soc *soc)
 {
 }
 
 static inline
-void monitor_vdev_timer_start(struct dp_soc *soc)
+void dp_monitor_vdev_timer_start(struct dp_soc *soc)
 {
 }
 
 static inline
-bool monitor_vdev_timer_stop(struct dp_soc *soc)
+bool dp_monitor_vdev_timer_stop(struct dp_soc *soc)
 {
 	return false;
 }
 
 static inline struct qdf_mem_multi_page_t*
-monitor_get_link_desc_pages(struct dp_soc *soc, uint32_t mac_id)
+dp_monitor_get_link_desc_pages(struct dp_soc *soc, uint32_t mac_id)
 {
 	return NULL;
 }
 
 static inline uint32_t *
-monitor_get_total_link_descs(struct dp_soc *soc, uint32_t mac_id)
+dp_monitor_get_total_link_descs(struct dp_soc *soc, uint32_t mac_id)
 {
 	return NULL;
 }
 
-static inline QDF_STATUS monitor_drop_inv_peer_pkts(struct dp_vdev *vdev,
-						    struct ieee80211_frame *wh)
+static inline QDF_STATUS dp_monitor_drop_inv_peer_pkts(struct dp_vdev *vdev)
 {
 	return QDF_STATUS_E_FAILURE;
 }
@@ -477,22 +490,23 @@ static inline bool dp_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev)
 	return false;
 }
 
-static inline void monitor_vdev_register_osif(struct dp_vdev *vdev,
-					      struct ol_txrx_ops *txrx_ops)
+static inline void dp_monitor_vdev_register_osif(struct dp_vdev *vdev,
+						 struct ol_txrx_ops *txrx_ops)
 {
 }
 
-static inline bool monitor_is_vdev_timer_running(struct dp_soc *soc)
+static inline bool dp_monitor_is_vdev_timer_running(struct dp_soc *soc)
 {
 	return false;
 }
 
 static inline
-void monitor_pdev_set_mon_vdev(struct dp_vdev *vdev)
+void dp_monitor_pdev_set_mon_vdev(struct dp_pdev *pdev)
 {
 }
 
-static inline void monitor_vdev_delete(struct dp_soc *soc, struct dp_vdev *vdev)
+static inline void dp_monitor_vdev_delete(struct dp_soc *soc,
+					  struct dp_vdev *vdev)
 {
 }
 
@@ -500,95 +514,106 @@ static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
 {
 }
 
-static inline void monitor_neighbour_peer_add_ast(struct dp_pdev *pdev,
-						  struct dp_peer *ta_peer,
-						  uint8_t *mac_addr,
-						  qdf_nbuf_t nbuf,
-						  uint32_t flags)
+static inline void dp_monitor_neighbour_peer_add_ast(struct dp_pdev *pdev,
+						     struct dp_peer *ta_peer,
+						     uint8_t *mac_addr,
+						     qdf_nbuf_t nbuf,
+						     uint32_t flags)
 {
 }
 
 static inline void
-monitor_set_chan_band(struct dp_pdev *pdev, enum reg_wifi_band chan_band)
+dp_monitor_set_chan_band(struct dp_pdev *pdev, enum reg_wifi_band chan_band)
 {
 }
 
 static inline void
-monitor_set_chan_freq(struct dp_pdev *pdev, qdf_freq_t chan_freq)
+dp_monitor_set_chan_freq(struct dp_pdev *pdev, qdf_freq_t chan_freq)
 {
 }
 
-static inline void monitor_set_chan_num(struct dp_pdev *pdev, int chan_num)
+static inline void dp_monitor_set_chan_num(struct dp_pdev *pdev, int chan_num)
 {
 }
 
-static inline bool monitor_is_enable_mcopy_mode(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_enable_mcopy_mode(struct dp_pdev *pdev)
 {
 	return false;
 }
 
 static inline
-void monitor_neighbour_peer_list_remove(struct dp_pdev *pdev,
-					struct dp_vdev *vdev,
-					struct dp_neighbour_peer *peer)
+void dp_monitor_neighbour_peer_list_remove(struct dp_pdev *pdev,
+					   struct dp_vdev *vdev,
+					   struct dp_neighbour_peer *peer)
 {
 }
 
-static inline bool monitor_is_chan_band_known(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_chan_band_known(struct dp_pdev *pdev)
 {
 	return false;
 }
 
 static inline enum reg_wifi_band
-monitor_get_chan_band(struct dp_pdev *pdev)
+dp_monitor_get_chan_band(struct dp_pdev *pdev)
 {
 	return 0;
 }
 
-static inline void monitor_get_mpdu_status(struct dp_pdev *pdev,
-					   struct dp_soc *soc,
-					   uint8_t *rx_tlv_hdr)
+static inline void dp_monitor_get_mpdu_status(struct dp_pdev *pdev,
+					      struct dp_soc *soc,
+					      uint8_t *rx_tlv_hdr)
 {
 }
 
-static inline void monitor_print_tx_stats(struct dp_pdev *pdev)
+static inline void dp_monitor_print_tx_stats(struct dp_pdev *pdev)
 {
 }
 
 static inline
-QDF_STATUS monitor_mcopy_check_deliver(struct dp_pdev *pdev,
-				       uint16_t peer_id, uint32_t ppdu_id,
-				       uint8_t first_msdu)
+QDF_STATUS dp_monitor_mcopy_check_deliver(struct dp_pdev *pdev,
+					  uint16_t peer_id, uint32_t ppdu_id,
+					  uint8_t first_msdu)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline bool monitor_is_enable_tx_sniffer(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_enable_tx_sniffer(struct dp_pdev *pdev)
 {
 	return false;
 }
 
 static inline struct dp_vdev*
-monitor_get_monitor_vdev_from_pdev(struct dp_pdev *pdev)
+dp_monitor_get_monitor_vdev_from_pdev(struct dp_pdev *pdev)
 {
 	return NULL;
 }
 
-static inline QDF_STATUS monitor_check_com_info_ppdu_id(struct dp_pdev *pdev,
-							void *rx_desc)
+static inline QDF_STATUS dp_monitor_check_com_info_ppdu_id(struct dp_pdev *pdev,
+							   void *rx_desc)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
 static inline struct mon_rx_status*
-monitor_get_rx_status(struct dp_pdev *pdev)
+dp_monitor_get_rx_status(struct dp_pdev *pdev)
 {
 	return NULL;
 }
 
-static inline bool monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
 {
 	return false;
+}
+
+static inline
+void dp_monitor_pdev_config_scan_spcl_vap(struct dp_pdev *pdev)
+{
+}
+
+static inline
+void dp_monitor_pdev_reset_scan_spcl_vap_stats_enable(struct dp_pdev *pdev,
+						      bool val)
+{
 }
 #endif
 
@@ -3050,4 +3075,12 @@ QDF_STATUS dp_pdev_bkp_stats_attach(struct dp_pdev *pdev);
  */
 void dp_peer_flush_frags(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			 uint8_t *peer_mac);
+
+/**
+ * dp_soc_reset_mon_intr_mask() - reset mon intr mask
+ * @soc: pointer to dp_soc handle
+ *
+ * Return:
+ */
+void dp_soc_reset_mon_intr_mask(struct dp_soc *soc);
 #endif /* #ifndef _DP_INTERNAL_H_ */

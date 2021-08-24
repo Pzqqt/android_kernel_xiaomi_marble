@@ -27,6 +27,7 @@
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
 #include "qdf_net_types.h"
+#include "qdf_module.h"
 #include <wlan_cfg.h>
 #include "dp_ipa.h"
 #if defined(MESH_MODE_SUPPORT) || defined(FEATURE_PERPKT_INFO)
@@ -60,6 +61,21 @@
 
 /* invalid peer id for reinject*/
 #define DP_INVALID_PEER 0XFFFE
+
+/*mapping between hal encrypt type and cdp_sec_type*/
+uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {HAL_TX_ENCRYPT_TYPE_NO_CIPHER,
+					  HAL_TX_ENCRYPT_TYPE_WEP_128,
+					  HAL_TX_ENCRYPT_TYPE_WEP_104,
+					  HAL_TX_ENCRYPT_TYPE_WEP_40,
+					  HAL_TX_ENCRYPT_TYPE_TKIP_WITH_MIC,
+					  HAL_TX_ENCRYPT_TYPE_TKIP_NO_MIC,
+					  HAL_TX_ENCRYPT_TYPE_AES_CCMP_128,
+					  HAL_TX_ENCRYPT_TYPE_WAPI,
+					  HAL_TX_ENCRYPT_TYPE_AES_CCMP_256,
+					  HAL_TX_ENCRYPT_TYPE_AES_GCMP_128,
+					  HAL_TX_ENCRYPT_TYPE_AES_GCMP_256,
+					  HAL_TX_ENCRYPT_TYPE_WAPI_GCM_SM4};
+qdf_export_symbol(sec_type_map);
 
 #ifdef CONFIG_WLAN_SYSFS_MEM_STATS
 /**
@@ -1994,7 +2010,7 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
 
 	dp_tx_desc_update_fast_comp_flag(soc, tx_desc,
-					 !monitor_is_enable_enhanced_stats(pdev));
+					 !dp_monitor_is_enable_enhanced_stats(pdev));
 
 	dp_tx_update_mesh_flags(soc, vdev, tx_desc);
 
@@ -2284,6 +2300,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				} else
 					break;
 				i++;
+				dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 				continue;
 			}
 
@@ -2300,6 +2317,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				 */
 				dp_tx_comp_free_buf(soc, tx_desc);
 				i++;
+				dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 				continue;
 			}
 
@@ -3837,7 +3855,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 	uint64_t delta_ms;
 	struct cdp_tx_sojourn_stats *sojourn_stats;
 
-	if (qdf_unlikely(!monitor_is_enable_enhanced_stats(pdev)))
+	if (qdf_unlikely(!dp_monitor_is_enable_enhanced_stats(pdev)))
 		return;
 
 	if (qdf_unlikely(tid == HTT_INVALID_TID ||
@@ -3927,7 +3945,7 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 		dp_tx_enh_unmap(soc, desc);
 
 		if (QDF_STATUS_SUCCESS ==
-		    monitor_tx_add_to_comp_queue(soc, desc, ts, peer)) {
+		    dp_monitor_tx_add_to_comp_queue(soc, desc, ts, peer)) {
 			return;
 		}
 
@@ -4308,10 +4326,11 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 			next = desc->next;
 			dp_tx_desc_history_add(soc, desc->dma_addr, desc->nbuf,
 					       desc->id, DP_TX_COMP_UNMAP);
-			qdf_mem_unmap_nbytes_single(soc->osdev,
-						    desc->dma_addr,
-						    QDF_DMA_TO_DEVICE,
-						    desc->length);
+			qdf_nbuf_unmap_nbytes_single_paddr(soc->osdev,
+							   desc->nbuf,
+							   desc->dma_addr,
+							   QDF_DMA_TO_DEVICE,
+							   desc->length);
 			qdf_nbuf_free(desc->nbuf);
 			dp_tx_desc_free(soc, desc, desc->pool_id);
 			desc = next;

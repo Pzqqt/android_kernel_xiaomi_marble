@@ -657,6 +657,46 @@ static inline bool dfs_is_agile_precac_enabled(struct wlan_dfs *dfs)
 }
 #endif
 
+/**
+ * dfs_is_precac_domain() - Check if current DFS domain supports preCAC.
+ * @dfs: Pointer to the wlan_dfs object.
+ *
+ * Return: True if current DFS domain supports preCAC, else false.
+ *
+ * preCAC is currently supported in,
+ * 1. ETSI domain.
+ *
+ */
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
+bool dfs_is_precac_domain(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_is_precac_domain(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
+
+/**
+ * dfs_is_rcac_domain() - Check if current DFS domain supports agile RCAC.
+ * @dfs: Pointer to the wlan_dfs object.
+ *
+ * Return: True if current DFS domain supports RCAC, else false.
+ *
+ * preCAC is currently supported in,
+ * 1. FCC domain.
+ * 2. MKK domain.
+ * 3. MKKN domain.
+ *
+ */
+#if defined(QCA_SUPPORT_ADFS_RCAC)
+bool dfs_is_rcac_domain(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_is_rcac_domain(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
+
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 /**
  * dfs_set_precac_intermediate_chan() - Set intermediate chan to be used while

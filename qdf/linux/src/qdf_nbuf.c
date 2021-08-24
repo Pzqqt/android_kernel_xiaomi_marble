@@ -996,6 +996,19 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 
 qdf_export_symbol(qdf_nbuf_unmap_nbytes_single_debug);
 
+void qdf_nbuf_unmap_nbytes_single_paddr_debug(qdf_device_t osdev,
+					      qdf_nbuf_t buf,
+					      qdf_dma_addr_t phy_addr,
+					      qdf_dma_dir_t dir, int nbytes,
+					      const char *func, uint32_t line)
+{
+	qdf_nbuf_untrack_map(buf, func, line);
+	__qdf_mem_unmap_nbytes_single(osdev, phy_addr, dir, nbytes);
+	qdf_net_buf_debug_update_unmap_node(buf, func, line);
+}
+
+qdf_export_symbol(qdf_nbuf_unmap_nbytes_single_paddr_debug);
+
 static void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf,
 					     const char *func,
 					     uint32_t line)

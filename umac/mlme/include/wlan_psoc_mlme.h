@@ -54,6 +54,7 @@ struct wlan_6ghz_rnr_global_cache {
  * @beamformee_cap:If dev is configured as BF capable
  * @bw_above_20_5ghz: BW greater than 20Mhz supprted for 5Ghz
  * @bw_above_20_24ghz: BW greater than 20Mhz supprted for 2.4Ghz
+ * @max_chan_switch_ie: If max channel switch IE is supported
  */
 struct psoc_phy_config {
 	uint8_t vdev_nss_24g;
@@ -65,7 +66,8 @@ struct psoc_phy_config {
 		 vht_24G_cap:1,
 		 beamformee_cap:1,
 		 bw_above_20_5ghz:1,
-		 bw_above_20_24ghz:1;
+		 bw_above_20_24ghz:1,
+		 max_chan_switch_ie:1;
 };
 
 /**

@@ -78,6 +78,7 @@ QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
 				break;
 
 			case '#':
+			case '[':
 				/*
 				 * We don't process comments, so we can null-
 				 * terminate unconditionally here (unlike '=').

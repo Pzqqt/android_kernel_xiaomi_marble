@@ -349,6 +349,8 @@ static const uint32_t pdev_param_tlv[] = {
 	[wmi_pdev_param_mpd_userpd_ssr] = WMI_PDEV_PARAM_MPD_USERPD_SSR,
 	[wmi_pdev_param_low_latency_mode] =
 			WMI_PDEV_PARAM_LOW_LATENCY_SCHED_MODE,
+	[wmi_pdev_param_scan_radio_tx_on_dfs] =
+					WMI_PDEV_PARAM_SCAN_RADIO_TX_ON_DFS,
 };
 
 /**
@@ -523,6 +525,7 @@ static const uint32_t vdev_param_tlv[] = {
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
 	[wmi_vdev_param_enable_disable_rtt_initiator_role] =
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_ROLE,
+	[wmi_vdev_param_mcast_steer] = WMI_VDEV_PARAM_MCAST_STEERING,
 };
 #endif
 
@@ -3158,6 +3161,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->dwell_time_active = params->dwell_time_active;
 	cmd->dwell_time_active_2g = params->dwell_time_active_2g;
 	cmd->dwell_time_passive = params->dwell_time_passive;
+	cmd->min_dwell_time_6ghz = params->min_dwell_time_6g;
 	cmd->dwell_time_active_6ghz = params->dwell_time_active_6g;
 	cmd->dwell_time_passive_6ghz = params->dwell_time_passive_6g;
 	cmd->scan_start_offset = params->scan_offset_time;
@@ -7591,6 +7595,9 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	if (tgt_res_cfg->twt_ack_support_cap)
 		WMI_RSRC_CFG_HOST_SERVICE_FLAG_STA_TWT_SYNC_EVT_SUPPORT_SET(
 			resource_cfg->host_service_flags, 1);
+
+	WMI_TARGET_CAP_FLAGS_RX_PEER_METADATA_VERSION_SET(resource_cfg->flags2,
+						 tgt_res_cfg->target_cap_flags);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
@@ -11414,7 +11421,8 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 						ev->max_user_per_ppdu_mumimo);
 	param->max_users_ul_mumimo = WMI_MAX_USER_PER_PPDU_UL_MUMIMO_GET(
 						ev->max_user_per_ppdu_mumimo);
-
+	param->target_cap_flags = ev->target_cap_flags;
+	wmi_debug("htt peer data :%d", ev->target_cap_flags);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -16081,10 +16089,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #endif
 	event_ids[wmi_pdev_get_halphy_cal_status_event_id] =
 			WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID;
-#ifdef REPORT_AOA_FOR_RCC
 	event_ids[wmi_pdev_aoa_phasedelta_event_id] =
 			WMI_PDEV_AOA_PHASEDELTA_EVENTID;
-#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -16499,10 +16505,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED;
 	wmi_service[wmi_service_rtt_ap_initiator_bursted_mode_supported] =
 			WMI_SERVICE_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED;
-#ifdef REPORT_AOA_FOR_RCC
 	wmi_service[wmi_service_aoa_for_rcc_supported] =
 			WMI_SERVICE_AOA_FOR_RCC_SUPPORTED;
-#endif
 #ifdef WLAN_FEATURE_P2P_P2P_STA
 	wmi_service[wmi_service_p2p_p2p_cc_support] =
 			WMI_SERVICE_P2P_P2P_CONCURRENCY_SUPPORT;

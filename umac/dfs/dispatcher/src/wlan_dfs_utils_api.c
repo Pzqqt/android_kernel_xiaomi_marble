@@ -1583,3 +1583,8 @@ QDF_STATUS utils_dfs_update_chan_state_array(struct wlan_objmgr_pdev *pdev,
 	return utils_dfs_update_chan_state_array_element(dfs, freq, state);
 }
 #endif /* WLAN_DISP_CHAN_INFO */
+
+QDF_STATUS utils_dfs_radar_enable(struct wlan_objmgr_pdev *pdev)
+{
+	return tgt_dfs_radar_enable(pdev, 0, 0, true);
+}

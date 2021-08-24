@@ -19,6 +19,7 @@
 #define _HAL_GENERIC_API_H_
 
 #include <hal_rx.h>
+#include "hal_api_mon.h"
 
 /**
  * hal_get_radiotap_he_gi_ltf() - Convert HE ltf and GI value

@@ -284,44 +284,6 @@ wlan_pno_global_deinit(struct wlan_scan_obj *scan_obj)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_POLICY_MGR_ENABLE
-/*
- * ucfg_scan_update_pno_dwell_time() - update active and passive dwell time
- * depending on active concurrency modes
- * @vdev: vdev object pointer
- * @req: scan request
- *
- * Return: void
- */
-static void ucfg_scan_update_pno_dwell_time(struct wlan_objmgr_vdev *vdev,
-	struct pno_scan_req_params *req, struct scan_default_params *scan_def)
-{
-	bool sap_or_p2p_present;
-	struct wlan_objmgr_psoc *psoc;
-
-	psoc = wlan_vdev_get_psoc(vdev);
-
-	if (!psoc)
-		return;
-
-	sap_or_p2p_present = policy_mgr_mode_specific_connection_count(
-				psoc, PM_SAP_MODE, NULL) ||
-				policy_mgr_mode_specific_connection_count(
-				psoc, PM_P2P_GO_MODE, NULL) ||
-				policy_mgr_mode_specific_connection_count(
-				psoc, PM_P2P_CLIENT_MODE, NULL);
-
-	if (sap_or_p2p_present) {
-		req->active_dwell_time = scan_def->conc_active_dwell;
-		req->passive_dwell_time = scan_def->conc_passive_dwell;
-	}
-
-}
-#else
-static inline void ucfg_scan_update_pno_dwell_time(struct wlan_objmgr_vdev *vdev,
-	struct pno_scan_req_params *req, struct scan_default_params *scan_def){}
-#endif
-
 QDF_STATUS
 ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	struct pno_scan_req_params *req)
@@ -356,7 +318,7 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	 *  Update active and passive dwell time depending
 	 *  upon the present active concurrency mode
 	 */
-	ucfg_scan_update_pno_dwell_time(vdev, req, scan_def);
+	wlan_scan_update_pno_dwell_time(vdev, req, scan_def);
 	req->adaptive_dwell_mode = pno_def->adaptive_dwell_mode;
 	req->pno_channel_prediction = pno_def->channel_prediction;
 	req->top_k_num_of_channels = pno_def->top_k_num_of_channels;
@@ -619,7 +581,7 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 		cancel_vdev = true;
 
 	vdev = req->vdev;
-	status = ucfg_scan_cancel(req);
+	status = wlan_scan_cancel(req);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -769,6 +731,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_ENABLE_WAKE_LOCK_IN_SCAN);
 	scan_obj->scan_def.active_dwell_2g =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_2G_CHANNEL_TIME);
+	scan_obj->scan_def.min_dwell_time_6g =
+			cfg_get(psoc, CFG_MIN_6G_CHANNEL_TIME);
 	scan_obj->scan_def.active_dwell_6g =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_6G_CHANNEL_TIME);
 	scan_obj->scan_def.passive_dwell_6g =
@@ -1099,7 +1063,7 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
-		status = ucfg_reg_get_current_chan_list(pdev, reg_chan_list);
+		status = wlan_reg_get_current_chan_list(pdev, reg_chan_list);
 		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
 

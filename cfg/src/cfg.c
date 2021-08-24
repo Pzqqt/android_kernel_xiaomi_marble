@@ -69,6 +69,9 @@ enum cfg_type {
 	CFG_MAX_ITEM,
 };
 
+#define CFG_META_NAME_LENGTH_MAX 256
+#define CFG_INI_LENGTH_MAX 128
+
 /* define/populate dynamic metadata lookup table */
 
 /**
@@ -344,6 +347,9 @@ static void cfg_store_set_defaults(struct cfg_value_store *store)
 static const struct cfg_meta *cfg_lookup_meta(const char *name)
 {
 	int i;
+	char *param1;
+	char param[CFG_META_NAME_LENGTH_MAX];
+	uint8_t ini_name[CFG_INI_LENGTH_MAX];
 
 	QDF_BUG(name);
 	if (!name)
@@ -353,10 +359,36 @@ static const struct cfg_meta *cfg_lookup_meta(const char *name)
 	for (i = 0; i < QDF_ARRAY_SIZE(cfg_meta_lookup_table); i++) {
 		const struct cfg_meta *meta = &cfg_meta_lookup_table[i];
 
-		if (qdf_str_eq(name, meta->name))
-			return meta;
-	}
+		qdf_mem_zero(ini_name, CFG_INI_LENGTH_MAX);
 
+		qdf_mem_zero(param, CFG_META_NAME_LENGTH_MAX);
+		if (strlen(meta->name) >= CFG_META_NAME_LENGTH_MAX) {
+			cfg_err("Invalid meta name %s", meta->name);
+			continue;
+		}
+
+		qdf_mem_copy(param, meta->name, strlen(meta->name));
+		param[strlen(meta->name)] = '\0';
+		param1 = param;
+		if (!sscanf(param1, "%s", ini_name)) {
+			cfg_err("Cannot get ini name %s", param1);
+			return NULL;
+		}
+		if (qdf_str_eq(name, ini_name))
+			return meta;
+
+		param1 = strpbrk(param, " ");
+		while (param1) {
+			param1++;
+			if (!sscanf(param1, "%s ", ini_name)) {
+				cfg_err("Invalid ini name %s", meta->name);
+				return NULL;
+			}
+			if (qdf_str_eq(name, ini_name))
+				return meta;
+			param1 = strpbrk(param1, " ");
+		}
+	}
 	return NULL;
 }
 
@@ -815,23 +847,22 @@ QDF_STATUS cfg_parse(const char *path)
 
 	cfg_enter();
 
-	QDF_BUG(!__cfg_global_store);
-	if (__cfg_global_store)
-		return QDF_STATUS_E_INVAL;
+	if (!__cfg_global_store) {
+		status = cfg_store_alloc(path, &store);
+		if (QDF_IS_STATUS_ERROR(status))
+			return status;
 
-	status = cfg_store_alloc(path, &store);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
+		cfg_store_set_defaults(store);
+		status = cfg_ini_parse_to_store(path, store);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto free_store;
+		__cfg_global_store = store;
 
-	cfg_store_set_defaults(store);
-
+		return QDF_STATUS_SUCCESS;
+	}
+	store = __cfg_global_store;
 	status = cfg_ini_parse_to_store(path, store);
-	if (QDF_IS_STATUS_ERROR(status))
-		goto free_store;
-
-	__cfg_global_store = store;
-
-	return QDF_STATUS_SUCCESS;
+	return status;
 
 free_store:
 	cfg_store_free(store);

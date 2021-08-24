@@ -1324,13 +1324,6 @@ target_if_pdev_aoa_phasedaelta_event_handler(ol_scn_t sc,
 		return -EINVAL;
 	}
 
-	retval = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_CFR_ID);
-	if (retval != QDF_STATUS_SUCCESS) {
-		cfr_err("failed to get pdev reference");
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
-		return -EINVAL;
-	}
-
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (!pcfr) {
 		cfr_err("pdev object for CFR is NULL");

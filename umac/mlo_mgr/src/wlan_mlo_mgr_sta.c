@@ -179,12 +179,6 @@ mlo_cm_handle_connect_in_connection_state(struct wlan_objmgr_vdev *vdev,
 	mlo_cm_handle_connect_in_disconnection_state(vdev, req);
 }
 
-static QDF_STATUS mlo_osif_validate_connect_req(struct wlan_objmgr_vdev *vdev)
-{
-	//mlo_connect: add osif CB to perform operation
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS
 mlo_validate_connect_req(struct wlan_mlo_dev_context *mlo_dev_ctx,
 			 struct wlan_cm_connect_req *req)
@@ -213,7 +207,8 @@ mlo_validate_connect_req(struct wlan_mlo_dev_context *mlo_dev_ctx,
 		 * Validate pre checks for connection
 		 */
 		if (qdf_test_bit(i, mlo_dev_ctx->sta_ctx->wlan_connect_req_links)) {
-			status = mlo_osif_validate_connect_req(mlo_dev_ctx->wlan_vdev_list[i]);
+			status = mlo_mlme_validate_conn_req(
+					mlo_dev_ctx->wlan_vdev_list[i], NULL);
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
 		}

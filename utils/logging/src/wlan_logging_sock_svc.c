@@ -35,6 +35,7 @@
 #include "host_diag_core_log.h"
 #include <qdf_event.h>
 #include <qdf_module.h>
+#include <qdf_str.h>
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -104,7 +105,7 @@
 /* default rate limit period - 2sec */
 #define PANIC_WIFILOG_PRINT_RATE_LIMIT_PERIOD (2*HZ)
 /* default burst for rate limit */
-#define PANIC_WIFILOG_PRINT_RATE_LIMIT_BURST_DEFAULT 250
+#define PANIC_WIFILOG_PRINT_RATE_LIMIT_BURST_DEFAULT 500
 DEFINE_RATELIMIT_STATE(panic_wifilog_ratelimit,
 		       PANIC_WIFILOG_PRINT_RATE_LIMIT_PERIOD,
 		       PANIC_WIFILOG_PRINT_RATE_LIMIT_BURST_DEFAULT);
@@ -946,7 +947,7 @@ static int panic_wifilog_ratelimit_print(void)
 /**
  * wlan_logging_dump_last_logs() - Panic notifier callback's helper function
  *
- * This function prints buffered logs in chunks of MAX_LOG_LINE.
+ * This function prints buffered logs one line at a time.
  */
 static void wlan_logging_dump_last_logs(void)
 {
@@ -966,11 +967,16 @@ static void wlan_logging_dump_last_logs(void)
 		log = &plog_msg->logbuf[sizeof(tAniHdr)];
 		filled_length = plog_msg->filled_length;
 		while (filled_length) {
-			text_len = scnprintf(textbuf,
-					     sizeof(textbuf),
-					     "%s", log);
+			text_len = qdf_str_copy_all_before_char(log, filled_length,
+								textbuf,
+								sizeof(textbuf) - 1,
+								'\n');
+			textbuf[text_len] = '\0';
 			if (panic_wifilog_ratelimit_print())
 				pr_err("%s\n", textbuf);
+
+			if (log[text_len] == '\n')
+				text_len += 1; /* skip newline */
 			log += text_len;
 			filled_length -= text_len;
 		}

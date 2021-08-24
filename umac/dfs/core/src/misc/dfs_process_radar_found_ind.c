@@ -758,11 +758,11 @@ bool dfs_radar_found_event_basic_sanity(struct wlan_dfs *dfs,
 
 void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs)
 {
-	qdf_timer_stop(&dfs->wlan_dfstesttimer);
 	dfs->wlan_dfstest = 1;
 	dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
 	dfs->wlan_dfstesttime = 1;   /* 1ms */
-	qdf_timer_mod(&dfs->wlan_dfstesttimer, dfs->wlan_dfstesttime);
+	qdf_timer_sync_cancel(&dfs->wlan_dfstesttimer);
+	qdf_timer_start(&dfs->wlan_dfstesttimer, dfs->wlan_dfstesttime);
 }
 
 int dfs_second_segment_radar_disable(struct wlan_dfs *dfs)
@@ -1022,6 +1022,11 @@ dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
 				WLAN_EV_RADAR_DETECTED);
 
 	if (!dfs->dfs_use_nol) {
+		if (!dfs->dfs_is_offload_enabled) {
+			dfs_radar_disable(dfs);
+			dfs_second_segment_radar_disable(dfs);
+			dfs_flush_additional_pulses(dfs);
+		}
 		dfs_reset_bangradar(dfs);
 		dfs_send_csa_to_current_chan(dfs);
 		status = QDF_STATUS_SUCCESS;

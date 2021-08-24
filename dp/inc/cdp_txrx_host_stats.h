@@ -733,4 +733,26 @@ cdp_host_get_radio_stats(ol_txrx_soc_handle soc,
 	return soc->ops->host_stats_ops->txrx_get_radio_stats(soc, pdev_id,
 							      buf);
 }
+
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
+static inline int
+cdp_get_scan_spcl_vap_stats(ol_txrx_soc_handle soc,
+			    uint8_t vdev_id,
+			    struct cdp_scan_spcl_vap_stats *stats)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_scan_spcl_vap_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->txrx_get_scan_spcl_vap_stats(soc,
+								      vdev_id,
+								      stats);
+}
+#endif
 #endif /* _CDP_TXRX_HOST_STATS_H_ */

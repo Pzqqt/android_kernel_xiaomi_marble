@@ -204,3 +204,38 @@ void mlo_ap_link_down_cmpl_notify(struct wlan_objmgr_vdev *vdev)
 {
 	mlo_ap_vdev_detach(vdev);
 }
+
+uint16_t mlo_ap_ml_peerid_alloc(void)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+	uint16_t i;
+
+	ml_peerid_lock_acquire(mlo_ctx);
+	for (i = 0; i < mlo_ctx->max_mlo_peer_id; i++) {
+		if (qdf_test_bit(i, mlo_ctx->mlo_peer_id_bmap))
+			continue;
+
+		qdf_set_bit(i, mlo_ctx->mlo_peer_id_bmap);
+		break;
+	}
+	ml_peerid_lock_release(mlo_ctx);
+
+	if (i == mlo_ctx->max_mlo_peer_id)
+		return MLO_INVALID_PEER_ID;
+
+	return i + 1;
+}
+
+void mlo_ap_ml_peerid_free(uint16_t mlo_peer_id)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (mlo_peer_id == MLO_INVALID_PEER_ID)
+		return;
+
+	ml_peerid_lock_acquire(mlo_ctx);
+	if (qdf_test_bit(mlo_peer_id - 1, mlo_ctx->mlo_peer_id_bmap))
+		qdf_clear_bit(mlo_peer_id - 1, mlo_ctx->mlo_peer_id_bmap);
+
+	ml_peerid_lock_release(mlo_ctx);
+}

@@ -1366,6 +1366,11 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
+	if (soc->monitor_soc->monitor_mode_v2) {
+		dp_mon_filter_err(" Mon ring not supported for this arch");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/*
 	 * Setup the filters for the monitor destination ring.
 	 */

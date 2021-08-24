@@ -304,6 +304,7 @@ struct extscan_def_config {
  * @skip_dfs_chan_in_p2p_search: Skip DFS channels in p2p search.
  * @use_wake_lock_in_user_scan: if wake lock will be acquired during user scan
  * @active_dwell_2g: default active dwell time for 2G channels, if it's not zero
+ * @min_dwell_time_6g: default min dwell time for 6G channels
  * @active_dwell_6g: default active dwell time for 6G channels
  * @passive_dwell_6g: default passive dwell time for 6G channels
  * @active_dwell_time_6g_conc: default concurrent active dwell time for 6G
@@ -393,6 +394,7 @@ struct scan_default_params {
 	bool skip_dfs_chan_in_p2p_search;
 	bool use_wake_lock_in_user_scan;
 	uint32_t active_dwell_2g;
+	uint32_t min_dwell_time_6g;
 	uint32_t active_dwell_6g;
 	uint32_t passive_dwell_6g;
 	uint32_t active_dwell_time_6g_conc;

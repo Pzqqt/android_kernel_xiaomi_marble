@@ -23,7 +23,8 @@
 
 /*
  * <ini>
- * rssi_weightage - RSSI Weightage to calculate best candidate
+ * rssi_weightage/RoamAPScore_RSSIWeight - RSSI Weightage to calculate best
+ * candidate
  * @Min: 0
  * @Max: 100
  * @Default: 20
@@ -40,7 +41,7 @@
  * </ini>
  */
 #define CFG_SCORING_RSSI_WEIGHTAGE CFG_INI_UINT( \
-	"rssi_weightage", \
+	"rssi_weightage RoamAPScore_RSSIWeight", \
 	0, \
 	100, \
 	20, \
@@ -267,7 +268,8 @@
 
 /*
  * <ini>
- * channel_congestion_weightage - channel Congestion Weightage to
+ * channel_congestion_weightage/RoamAPScore_CUWeight - channel Congestion
+ * Weightage to
  * calculate best candidate
  * @Min: 0
  * @Max: 100
@@ -285,7 +287,7 @@
  * </ini>
  */
 #define CFG_SCORING_CHAN_CONGESTION_WEIGHTAGE CFG_INI_UINT( \
-	"channel_congestion_weightage", \
+	"channel_congestion_weightage RoamAPScore_CUWeight", \
 	0, \
 	100, \
 	25, \
@@ -1112,7 +1114,7 @@
  * BSSID.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: non AP 1, AP 0
  *
  * This ini is used to Enable check for 6Ghz allowed security. If enabled
  * only WPA3 and other allowed security will be allowed for 6Ghz connection
@@ -1126,7 +1128,7 @@
  * </ini>
  */
 #define CFG_CHECK_6GHZ_SECURITY CFG_INI_BOOL(\
-				"check_6ghz_security", 0, \
+				"check_6ghz_security", PLATFORM_VALUE(1, 0), \
 				"Enable check for 6Ghz allowed security")
 /*
  * <ini>

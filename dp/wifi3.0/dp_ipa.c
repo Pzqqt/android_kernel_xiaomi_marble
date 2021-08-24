@@ -143,7 +143,7 @@ QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 
 	for (i = 0; i < soc->pdev_count; i++) {
 		pdev = soc->pdev_list[i];
-		if (pdev && monitor_is_configured(pdev))
+		if (pdev && dp_monitor_is_configured(pdev))
 			return QDF_STATUS_SUCCESS;
 	}
 

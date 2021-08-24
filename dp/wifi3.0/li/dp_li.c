@@ -23,6 +23,24 @@
 #include "dp_li_tx.h"
 #include "dp_li_rx.h"
 
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
+	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_LI_WBM_SW0_BM_ID, .for_ipa = 0},
+	{1, 4, HAL_LI_WBM_SW4_BM_ID, 1}, /* For IPA */
+	{2, 2, HAL_LI_WBM_SW2_BM_ID, 1} /* For IPA */};
+#else
+static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
+	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_LI_WBM_SW0_BM_ID, .for_ipa = 0},
+	{1, 1, HAL_LI_WBM_SW1_BM_ID, 0},
+	{2, 2, HAL_LI_WBM_SW2_BM_ID, 0}
+};
+#endif
+
+static void dp_soc_cfg_attach_li(struct dp_soc *soc)
+{
+	soc->wlan_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
+}
+
 qdf_size_t dp_get_context_size_li(enum dp_context_type context_type)
 {
 	switch (context_type) {
@@ -255,6 +273,24 @@ dp_rxdma_ring_sel_cfg_li(struct dp_soc *soc)
 }
 #endif
 
+static void dp_soc_srng_deinit_li(struct dp_soc *soc)
+{
+}
+
+static void dp_soc_srng_free_li(struct dp_soc *soc)
+{
+}
+
+static QDF_STATUS dp_soc_srng_alloc_li(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_soc_srng_init_li(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -277,13 +313,17 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_soc_detach = dp_soc_detach_li;
 	arch_ops->txrx_soc_init = dp_soc_init_li;
 	arch_ops->txrx_soc_deinit = dp_soc_deinit_li;
+	arch_ops->txrx_soc_srng_alloc = dp_soc_srng_alloc_li;
+	arch_ops->txrx_soc_srng_init = dp_soc_srng_init_li;
+	arch_ops->txrx_soc_srng_deinit = dp_soc_srng_deinit_li;
+	arch_ops->txrx_soc_srng_free = dp_soc_srng_free_li;
 	arch_ops->txrx_pdev_attach = dp_pdev_attach_li;
 	arch_ops->txrx_pdev_detach = dp_pdev_detach_li;
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_li;
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_li;
 	arch_ops->dp_rx_desc_cookie_2_va =
 			dp_rx_desc_cookie_2_va_li;
-
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_li;
+	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_li;
 }
 

@@ -968,4 +968,15 @@ QDF_STATUS dfs_init_chan_state_array(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif /* WLAN_DISP_CHAN_INFO */
+
+/**
+ * utils_dfs_radar_enable() - Enables the radar.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * This is called each time for eCSA occurs but don't change channel due
+ * to channel switch disabled in dfs test mode.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS utils_dfs_radar_enable(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_UTILS_API_H_ */

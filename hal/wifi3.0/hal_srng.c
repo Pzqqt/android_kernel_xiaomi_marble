@@ -42,6 +42,9 @@ void hal_qca6490_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCN9000
 void hal_qcn9000_attach(struct hal_soc *hal);
 #endif
+#ifdef QCA_WIFI_QCN9224
+void hal_qcn9224_attach(struct hal_soc *hal);
+#endif
 #ifdef QCA_WIFI_QCN6122
 void hal_qcn6122_attach(struct hal_soc *hal);
 #endif
@@ -121,9 +124,15 @@ static int hal_get_srng_ring_id(struct hal_soc *hal, int ring_type,
 		return -EINVAL;
 	}
 
-	if (ring_config->lmac_ring) {
-		ring_id = ring_config->start_ring_id + ring_num +
-			(mac_id * HAL_MAX_RINGS_PER_LMAC);
+	/*
+	 * For BE, dmac_cmn_src_rxbuf_ring is set. If this is set
+	 * and ring is dst and also lmac ring then provide ring id per lmac
+	 */
+	if (ring_config->lmac_ring &&
+	    (!hal->dmac_cmn_src_rxbuf_ring ||
+	     ring_config->ring_dir == HAL_SRNG_DST_RING)) {
+		ring_id = (ring_config->start_ring_id + ring_num +
+			   (mac_id * HAL_MAX_RINGS_PER_LMAC));
 	} else {
 		ring_id = ring_config->start_ring_id + ring_num;
 	}
@@ -137,6 +146,7 @@ static struct hal_srng *hal_get_srng(struct hal_soc *hal, int ring_id)
 	return &(hal->srng_list[ring_id]);
 }
 
+#ifndef SHADOW_REG_CONFIG_DISABLED
 #define HP_OFFSET_IN_REG_START 1
 #define OFFSET_FROM_HP_TO_TP 4
 static void hal_update_srng_hp_tp_address(struct hal_soc *hal_soc,
@@ -170,6 +180,7 @@ static void hal_update_srng_hp_tp_address(struct hal_soc *hal_soc,
 	}
 
 }
+#endif
 
 #ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
 void hal_set_one_target_reg_config(struct hal_soc *hal,
@@ -246,6 +257,8 @@ QDF_STATUS hal_construct_shadow_regs(void *hal_soc)
 qdf_export_symbol(hal_construct_shadow_regs);
 #endif
 
+#ifndef SHADOW_REG_CONFIG_DISABLED
+
 QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
 				     int ring_type,
 				     int ring_num)
@@ -313,6 +326,22 @@ QDF_STATUS hal_construct_srng_shadow_regs(void *hal_soc)
 }
 
 qdf_export_symbol(hal_construct_srng_shadow_regs);
+#else
+
+QDF_STATUS hal_construct_srng_shadow_regs(void *hal_soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(hal_construct_srng_shadow_regs);
+
+QDF_STATUS hal_set_one_shadow_config(void *hal_soc, int ring_type,
+				     int ring_num)
+{
+	return QDF_STATUS_SUCCESS;
+}
+qdf_export_symbol(hal_set_one_shadow_config);
+#endif
 
 void hal_get_shadow_config(void *hal_soc,
 	struct pld_shadow_reg_v2_cfg **shadow_config,
@@ -326,7 +355,6 @@ void hal_get_shadow_config(void *hal_soc,
 }
 
 qdf_export_symbol(hal_get_shadow_config);
-
 
 static bool hal_validate_shadow_register(struct hal_soc *hal,
 					 uint32_t *destination,
@@ -452,6 +480,13 @@ static void hal_target_based_configure(struct hal_soc *hal)
 		hal->use_register_windowing = true;
 		hal->static_window_map = true;
 		hal_qca5018_attach(hal);
+	break;
+#endif
+#ifdef QCA_WIFI_QCN9224
+	case TARGET_TYPE_QCN9224:
+		hal->use_register_windowing = true;
+		hal->static_window_map = true;
+		hal_qcn9224_attach(hal);
 	break;
 #endif
 	default:

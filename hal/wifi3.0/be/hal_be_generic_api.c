@@ -22,7 +22,6 @@
 #include "hal_be_reo.h"
 #include "hal_tx.h"	//HAL_SET_FLD
 #include "hal_be_rx.h"	//HAL_RX_BUF_RBM_GET
-#include "hal_be_rx_tlv.h"
 
 #if defined(QDF_BIG_ENDIAN_MACHINE)
 /**
@@ -189,30 +188,7 @@ void *hal_rx_msdu_ext_desc_info_get_ptr_be(void *msdu_details_ptr)
 	return HAL_RX_MSDU_EXT_DESC_INFO_GET(msdu_details_ptr);
 }
 
-#ifdef TCL_DATA_CMD_SEARCH_INDEX_OFFSET
-void hal_tx_desc_set_search_index_generic_be(void *desc, uint32_t search_index)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD, SEARCH_INDEX) |=
-		HAL_TX_SM(TCL_DATA_CMD, SEARCH_INDEX, search_index);
-}
-#else
-void hal_tx_desc_set_search_index_generic_be(void *desc, uint32_t search_index)
-{
-}
-#endif
-
-#ifdef TCL_DATA_CMD_CACHE_SET_NUM_OFFSET
-void hal_tx_desc_set_cache_set_num_generic_be(void *desc, uint8_t cache_num)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD, CACHE_SET_NUM) |=
-		HAL_TX_SM(TCL_DATA_CMD, CACHE_SET_NUM, cache_num);
-}
-#else
-void hal_tx_desc_set_cache_set_num_generic_be(void *desc, uint8_t cache_num)
-{
-}
-#endif
-
+#ifdef QCA_WIFI_WCN7850
 static inline uint32_t
 hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
 {
@@ -248,11 +224,58 @@ hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
 
 	return buf_src;
 }
+#else
+static inline uint32_t
+hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
+{
+	return HAL_WBM2SW_RELEASE_SRC_GET(hal_desc);
+}
+#endif
 
 uint32_t hal_tx_comp_get_buffer_source_generic_be(void *hal_desc)
 {
 	return hal_wbm2sw_release_source_get(hal_desc,
 					     HAL_BE_WBM_RELEASE_DIR_TX);
+}
+
+/**
+ * hal_tx_comp_get_release_reason_generic_be() - TQM Release reason
+ * @hal_desc: completion ring descriptor pointer
+ *
+ * This function will return the type of pointer - buffer or descriptor
+ *
+ * Return: buffer type
+ */
+static uint8_t hal_tx_comp_get_release_reason_generic_be(void *hal_desc)
+{
+	uint32_t comp_desc = *(uint32_t *)(((uint8_t *)hal_desc) +
+			WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_OFFSET);
+
+	return (comp_desc &
+		WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_MASK) >>
+		WBM2SW_COMPLETION_RING_TX_TQM_RELEASE_REASON_LSB;
+}
+
+/**
+ * hal_get_wbm_internal_error_generic_be() - is WBM internal error
+ * @hal_desc: completion ring descriptor pointer
+ *
+ * This function will return 0 or 1  - is it WBM internal error or not
+ *
+ * Return: uint8_t
+ */
+static uint8_t hal_get_wbm_internal_error_generic_be(void *hal_desc)
+{
+	/*
+	 * TODO -  This func is called by tx comp and wbm error handler
+	 * Check if one needs to use WBM2SW-TX and other WBM2SW-RX
+	 */
+	uint32_t comp_desc =
+		*(uint32_t *)(((uint8_t *)hal_desc) +
+			      HAL_WBM_INTERNAL_ERROR_OFFSET);
+
+	return (comp_desc & HAL_WBM_INTERNAL_ERROR_MASK) >>
+		HAL_WBM_INTERNAL_ERROR_LSB;
 }
 
 /**
@@ -801,6 +824,27 @@ void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
 			  cc_cfg->wbm2fw_cc_en);
 	HAL_REG_WRITE(soc, reg_addr, reg_val);
 
+#ifdef HWIO_WBM_R0_WBM_CFG_2_COOKIE_DEBUG_SEL_BMSK
+	reg_addr = HWIO_WBM_R0_WBM_CFG_2_ADDR(WBM_REG_REG_BASE);
+	reg_val = 0;
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  COOKIE_DEBUG_SEL,
+			  cc_cfg->cc_global_en);
+
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  COOKIE_CONV_INDICATION_EN,
+			  cc_cfg->cc_global_en);
+
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  ERROR_PATH_COOKIE_CONV_EN,
+			  cc_cfg->error_path_cookie_conv_en);
+
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  RELEASE_PATH_COOKIE_CONV_EN,
+			  cc_cfg->release_path_cookie_conv_en);
+
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+#endif
 #ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
 	/*
 	 * To enable indication for HW cookie conversion done or not for
@@ -816,6 +860,34 @@ void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
 #endif
 }
 qdf_export_symbol(hal_cookie_conversion_reg_cfg_be);
+
+/**
+ * hal_rx_msdu_reo_dst_ind_get: Gets the REO
+ * destination ring ID from the msdu desc info
+ *
+ * @msdu_link_desc : Opaque cookie pointer used by HAL to get to
+ * the current descriptor
+ *
+ * Return: dst_ind (REO destination ring ID)
+ */
+static inline
+uint32_t hal_rx_msdu_reo_dst_ind_get_be(hal_soc_handle_t hal_soc_hdl,
+					void *msdu_link_desc)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+	struct rx_msdu_details *msdu_details;
+	struct rx_msdu_desc_info *msdu_desc_info;
+	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
+	uint32_t dst_ind;
+
+	msdu_details = hal_rx_link_desc_msdu0_ptr(msdu_link, hal_soc);
+
+	/* The first msdu in the link should exsist */
+	msdu_desc_info = hal_rx_msdu_ext_desc_info_get_ptr(&msdu_details[0],
+							   hal_soc);
+	dst_ind = HAL_RX_MSDU_REO_DST_IND_GET(msdu_desc_info);
+	return dst_ind;
+}
 
 /**
  * hal_hw_txrx_default_ops_attach_be() - Attach the default hal ops for
@@ -835,6 +907,7 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 					hal_get_reo_reg_base_offset_be;
 	hal_soc->ops->hal_setup_link_idle_list =
 				hal_setup_link_idle_list_generic_be;
+	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_be;
 
 	hal_soc->ops->hal_rx_reo_buf_paddr_get = hal_rx_reo_buf_paddr_get_be;
 	hal_soc->ops->hal_rx_msdu_link_desc_set = hal_rx_msdu_link_desc_set_be;
@@ -850,13 +923,20 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 				hal_gen_reo_remap_val_generic_be;
 	hal_soc->ops->hal_tx_comp_get_buffer_source =
 				hal_tx_comp_get_buffer_source_generic_be;
+	hal_soc->ops->hal_tx_comp_get_release_reason =
+				hal_tx_comp_get_release_reason_generic_be;
+	hal_soc->ops->hal_get_wbm_internal_error =
+					hal_get_wbm_internal_error_generic_be;
 	hal_soc->ops->hal_rx_mpdu_desc_info_get =
 				hal_rx_mpdu_desc_info_get_be;
 	hal_soc->ops->hal_rx_err_status_get = hal_rx_err_status_get_be;
 	hal_soc->ops->hal_rx_reo_buf_type_get = hal_rx_reo_buf_type_get_be;
 	hal_soc->ops->hal_rx_wbm_err_src_get = hal_rx_wbm_err_src_get_be;
+
 	hal_soc->ops->hal_reo_send_cmd = hal_reo_send_cmd_be;
 	hal_soc->ops->hal_reo_qdesc_setup = hal_reo_qdesc_setup_be;
 	hal_soc->ops->hal_reo_status_update = hal_reo_status_update_be;
 	hal_soc->ops->hal_get_tlv_hdr_size = hal_get_tlv_hdr_size_be;
+	hal_soc->ops->hal_rx_msdu_reo_dst_ind_get =
+						hal_rx_msdu_reo_dst_ind_get_be;
 }

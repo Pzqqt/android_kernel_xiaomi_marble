@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -530,6 +530,41 @@ QDF_STATUS tgt_vdev_mgr_multiple_vdev_restart_send(
 		}
 
 		status = txops->multiple_vdev_restart_req_cmd(pdev, param);
+		if (QDF_IS_STATUS_ERROR(status))
+			mlme_err("Tx Ops Error: %d", status);
+
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+	}
+
+	return status;
+}
+
+QDF_STATUS tgt_vdev_mgr_multiple_vdev_set_param(
+				struct wlan_objmgr_pdev *pdev,
+				struct multiple_vdev_set_param *param)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_mlme_tx_ops *txops;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!param) {
+		mlme_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev,
+						    param->vdev_ids[0],
+						    WLAN_VDEV_TARGET_IF_ID);
+	if (vdev) {
+		txops = wlan_vdev_mlme_get_lmac_txops(vdev);
+		if (!txops || !txops->multiple_vdev_set_param_cmd) {
+			mlme_err("VDEV_%d: No Tx Ops", wlan_vdev_get_id(vdev));
+			wlan_objmgr_vdev_release_ref(vdev,
+						     WLAN_VDEV_TARGET_IF_ID);
+			return QDF_STATUS_E_INVAL;
+		}
+
+		status = txops->multiple_vdev_set_param_cmd(pdev, param);
 		if (QDF_IS_STATUS_ERROR(status))
 			mlme_err("Tx Ops Error: %d", status);
 

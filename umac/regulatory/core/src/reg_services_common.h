@@ -1235,8 +1235,8 @@ reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 
 #ifdef CONFIG_AFC_SUPPORT
 /**
- * reg_afc_start() -  Start the AFC request from regulatory. This finally
- *                    send the request to MLME(UMAC)
+ * reg_afc_start() - Start the AFC request from regulatory. This finally
+ *                   sends the request to registered callbacks
  * @pdev: Pointer to pdev
  * @req_id: The AFC request ID
  *
@@ -1249,7 +1249,7 @@ QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
  * @pdev: Pointer to pdev
  * @afc_req: Address of AFC request pointer
  *
- * NOTE:- The memory  for AFC request is allocated by the function must be
+ * NOTE:- The memory for AFC request is allocated by the function must be
  *        freed by the caller.
  * Return: QDF_STATUS
  */
@@ -1258,8 +1258,8 @@ reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
 			     struct wlan_afc_host_partial_request **afc_req);
 
 /**
- * reg_print_partial_afc_req_info() -  Print the  AFC partial request
- *                                     information
+ * reg_print_partial_afc_req_info() - Print the AFC partial request
+ *                                    information
  * @pdev: Pointer to pdev
  * @afc_req: Pointer to AFC request
  *

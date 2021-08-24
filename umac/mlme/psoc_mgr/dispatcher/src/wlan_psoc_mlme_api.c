@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <include/wlan_psoc_mlme.h>
 #include <wlan_psoc_mlme_api.h>
 #include <qdf_module.h>
+#include "cfg_ucfg_api.h"
 
 struct psoc_mlme_obj *wlan_psoc_mlme_get_cmpt_obj(struct wlan_objmgr_psoc *psoc)
 {
@@ -88,6 +89,8 @@ static void mlme_init_cfg(struct wlan_objmgr_psoc *psoc)
 		return;
 
 	wlan_cm_init_score_config(psoc, &mlme_psoc_obj->psoc_cfg.score_config);
+	mlme_psoc_obj->psoc_cfg.phy_config.max_chan_switch_ie =
+		cfg_get(psoc, CFG_MLME_MAX_CHAN_SWITCH_IE_ENABLE);
 }
 
 QDF_STATUS mlme_psoc_open(struct wlan_objmgr_psoc *psoc)

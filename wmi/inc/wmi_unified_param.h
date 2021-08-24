@@ -4857,6 +4857,7 @@ typedef enum {
 	wmi_pdev_param_set_mesh_params,
 	wmi_pdev_param_mpd_userpd_ssr,
 	wmi_pdev_param_low_latency_mode,
+	wmi_pdev_param_scan_radio_tx_on_dfs,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
@@ -4999,6 +5000,7 @@ typedef enum {
 	wmi_vdev_param_nan_config_features,
 	wmi_vdev_param_enable_disable_rtt_responder_role,
 	wmi_vdev_param_enable_disable_rtt_initiator_role,
+	wmi_vdev_param_mcast_steer,
 #ifdef WLAN_FEATURE_11BE
 	wmi_vdev_param_set_ehtop,
 #endif
@@ -5539,6 +5541,7 @@ typedef struct {
 	bool dynamic_pcie_gen_speed_change;
 	bool twt_ack_support_cap;
 	uint32_t ema_init_config;
+	uint32_t target_cap_flags;
 } target_resource_config;
 
 /**

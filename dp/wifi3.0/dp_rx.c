@@ -909,7 +909,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 		goto free;
 	}
 
-	if (monitor_filter_neighbour_peer(pdev, rx_pkt_hdr) ==
+	if (dp_monitor_filter_neighbour_peer(pdev, rx_pkt_hdr) ==
 	    QDF_STATUS_SUCCESS)
 		return 0;
 
@@ -939,9 +939,11 @@ out:
 	 * in order to avoid HM_WDS false addition.
 	 */
 	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer) {
-		if (monitor_drop_inv_peer_pkts(vdev, wh) == QDF_STATUS_SUCCESS)
+		if (dp_monitor_drop_inv_peer_pkts(vdev) == QDF_STATUS_SUCCESS) {
+			dp_rx_warn("%pK: Drop inv peer pkts with STA RA:%pm",
+				   soc, wh->i_addr1);
 			goto free;
-
+		}
 		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
 				(struct cdp_ctrl_objmgr_psoc *)soc->ctrl_psoc,
 				pdev->pdev_id, &msg);
@@ -2097,32 +2099,6 @@ void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 #endif
 
-#if defined(FEATURE_MCL_REPEATER) && defined(FEATURE_MEC)
-/**
- * dp_rx_mec_check_wrapper() - wrapper to dp_rx_mcast_echo_check
- * @soc: core DP main context
- * @peer: dp peer handler
- * @rx_tlv_hdr: start of the rx TLV header
- * @nbuf: pkt buffer
- *
- * Return: bool (true if it is a looped back pkt else false)
- */
-static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
-					   struct dp_peer *peer,
-					   uint8_t *rx_tlv_hdr,
-					   qdf_nbuf_t nbuf)
-{
-	return dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf);
-}
-#else
-static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
-					   struct dp_peer *peer,
-					   uint8_t *rx_tlv_hdr,
-					   qdf_nbuf_t nbuf)
-{
-	return false;
-}
-#endif
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 QDF_STATUS dp_rx_vdev_detach(struct dp_vdev *vdev)

@@ -6216,7 +6216,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("BA not received for delayed_ba: %d",
 		       pdev->stats.cdp_delayed_ba_not_recev);
 
-	monitor_print_tx_stats(pdev);
+	dp_monitor_print_tx_stats(pdev);
 
 	DP_PRINT_STATS("tx_ppdu_proc: %llu",
 		       pdev->stats.tx_ppdu_proc);
@@ -6233,7 +6233,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 				       i, pdev->stats.wdi_event[i]);
 	}
 
-	monitor_print_pdev_tx_capture_stats(pdev);
+	dp_monitor_print_pdev_tx_capture_stats(pdev);
 }
 
 void

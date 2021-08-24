@@ -384,10 +384,23 @@ QDF_STATUS
 (*extract_roam_msg_info)(wmi_unified_t wmi_handle, void *evt_buf,
 			 struct roam_msg_info *dst, uint8_t idx);
 #ifdef ROAM_TARGET_IF_CONVERGENCE
+/**
+ * extract_roam_sync_event  - Extract roam sync event func ptr
+ * @wmi_handle: WMI handle
+ * @evt_buf: Event buffer
+ * @len: evt buffer data len
+ * @synd_ind: roam sync ptr
+ *
+ * This api will allocate memory for roam sync info, extract
+ * the information sent by FW and pass to CM.The memory will be
+ * freed by target_if_cm_roam_sync_event.
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS
 (*extract_roam_sync_event)(wmi_unified_t wmi_handle, void *evt_buf,
 			   uint32_t len,
-			   uint8_t *vdev_id);
+			   struct roam_offload_synch_ind **sync_ind);
 
 QDF_STATUS
 (*extract_roam_sync_frame_event)(wmi_unified_t wmi_handle, void *event,

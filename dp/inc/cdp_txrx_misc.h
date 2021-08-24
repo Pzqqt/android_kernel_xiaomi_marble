@@ -568,6 +568,27 @@ static inline void cdp_pkt_log_con_service(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_pkt_log_exit() - API to cleanup packet log info
+ * @soc: data path soc handle
+ * @pdev_id: id of data path pdev handle
+ *
+ * Return: void
+ */
+static inline void cdp_pkt_log_exit(ol_txrx_soc_handle soc, uint8_t pdev_id)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->misc_ops->pkt_log_exit)
+		return soc->ops->misc_ops->pkt_log_exit(soc, pdev_id);
+
+	return;
+}
+
+/**
  * cdp_get_num_rx_contexts() - API to get the number of RX contexts
  * @soc: soc handle
  *

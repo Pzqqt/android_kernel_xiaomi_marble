@@ -127,6 +127,10 @@ void hif_vote_link_down(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	QDF_BUG(scn);
+	if (scn->linkstate_vote == 0)
+		QDF_DEBUG_PANIC("linkstate_vote(%d) has already been 0",
+				scn->linkstate_vote);
+
 	scn->linkstate_vote--;
 	hif_info("Down_linkstate_vote %d", scn->linkstate_vote);
 	if (scn->linkstate_vote == 0)

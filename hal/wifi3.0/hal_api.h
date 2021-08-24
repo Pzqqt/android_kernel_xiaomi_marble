@@ -2950,12 +2950,15 @@ uint32_t hal_get_ring_usage(
  *
  * Return: None.
  */
-static inline void hal_cmem_write(hal_soc_handle_t hal_soc_hdl,
-				  uint32_t offset,
-				  uint32_t value)
+static inline void
+hal_cmem_write(hal_soc_handle_t hal_soc_hdl, uint32_t offset,
+	       uint32_t value)
 {
-	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_write32_mb(hal, offset, value);
+	if (hal_soc->ops->hal_cmem_write)
+		hal_soc->ops->hal_cmem_write(hal_soc_hdl, offset, value);
+
+	return;
 }
 #endif /* _HAL_APIH_ */

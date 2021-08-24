@@ -2431,6 +2431,12 @@ struct hal_hw_srng_config hw_srng_table_6750[] = {
 		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 #endif
+	{ /* REO2PPE */ 0},
+	{ /* PPE2TCL */ 0},
+	{ /* PPE_RELEASE */ 0},
+	{ /* TX_MONITOR_BUF */ 0},
+	{ /* TX_MONITOR_DST */ 0},
+	{ /* SW2RXDMA_NEW */ 0},
 };
 
 /**

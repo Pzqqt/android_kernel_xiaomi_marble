@@ -151,6 +151,7 @@ enum mgmt_encrypt_type {
  * @BW_80P80MHZ: 80 + 80 MHz of channel bonding
  * @BW_5MHZ: 5 MHz of channel bonding
  * @BW_10MHZ: 10 MHz of channel bonding
+ * @BW_320MHZ: 320 MHz of channel bonding
  */
 enum mgmt_ch_width {
 	BW_20MHZ = 0x00,
@@ -160,6 +161,7 @@ enum mgmt_ch_width {
 	BW_80P80MHZ = 0x04,
 	BW_5MHZ = 0x05,
 	BW_10MHZ = 0x06,
+	BW_320MHZ = 0x07,
 	BW_MAX = 0xff,
 };
 
@@ -178,6 +180,8 @@ enum mgmt_ch_width {
  * @DOT11_MODE_AUTO: 802.11 auto mode
  * @DOT11_MODE_11AX: 802.11-AX mode
  * @DOT11_MODE_11AX_ONLY: 802.11-AX only mode
+ * @DOT11_MODE_11BE: 802.11-BE mode
+ * @DOT11_MODE_11BE_ONLY: 802.11-BE only mode
  */
 enum mgmt_dot11_mode {
 	DOT11_MODE_ABG = 0x00,
@@ -192,10 +196,8 @@ enum mgmt_dot11_mode {
 	DOT11_MODE_AUTO = 0x09,
 	DOT11_MODE_11AX = 0x0a,
 	DOT11_MODE_11AX_ONLY = 0x0b,
-#ifdef WLAN_FEATURE_11BE
 	DOT11_MODE_11BE = 0x0c,
 	DOT11_MODE_11BE_ONLY = 0x0d,
-#endif
 	DOT11_MODE_MAX = 0xff,
 };
 

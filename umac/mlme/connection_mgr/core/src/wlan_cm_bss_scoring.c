@@ -1412,7 +1412,7 @@ static int8_t cm_get_joint_rssi(struct scan_cache_entry *entry,
 	uint8_t alpha = weight_config->joint_rssi_alpha;
 
 	if (entry->channel.chan_freq <
-				entry->ml_info->link_info[link_idx].freq) {
+				entry->ml_info.link_info[link_idx].freq) {
 		low_band_rssi = entry->rssi_raw;
 		high_band_rssi = cm_get_partner_link_rssi(entry, link_idx);
 	} else {
@@ -1473,12 +1473,12 @@ static int cm_calculate_eht_score(struct scan_cache_entry *entry,
 			 joint_esp_score, joint_oce_score, wlm_indication_score,
 			 mlsr_score, emlsr_score);
 
-	entry->ml_info->ml_bss_score = eht_caps_score + mlo_score +
+	entry->ml_info.ml_bss_score = eht_caps_score + mlo_score +
 				      joint_rssi_score + joint_esp_score +
 				      joint_oce_score + wlm_indication_score +
 				      mlsr_score + emlsr_score;
 
-	return entry->ml_info->ml_bss_score;
+	return entry->ml_info.ml_bss_score;
 }
 
 static int32_t

@@ -1285,13 +1285,29 @@ static void hal_rx_reo_prev_pn_get_7850(void *ring_desc,
 	*prev_pn |= ((uint64_t)reo_desc->prev_pn_55_24 << 24);
 }
 
+/**
+ * hal_cmem_write_7850() - function for CMEM buffer writing
+ * @hal_soc_hdl: HAL SOC handle
+ * @offset: CMEM address
+ * @value: value to write
+ *
+ * Return: None.
+ */
+static inline void hal_cmem_write_7850(hal_soc_handle_t hal_soc_hdl,
+				       uint32_t offset,
+				       uint32_t value)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+
+	hal_write32_mb(hal, offset, value);
+}
+
 static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 {
 	/* init and setup */
 	hal_soc->ops->hal_srng_dst_hw_init = hal_srng_dst_hw_init_generic;
 	hal_soc->ops->hal_srng_src_hw_init = hal_srng_src_hw_init_generic;
 	hal_soc->ops->hal_get_hw_hptp = hal_get_hw_hptp_generic;
-	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_be;
 	hal_soc->ops->hal_get_window_address = hal_get_window_address_7850;
 	hal_soc->ops->hal_reo_set_err_dst_remap =
 						hal_reo_set_err_dst_remap_7850;
@@ -1301,19 +1317,8 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	/* tx */
 	hal_soc->ops->hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_7850;
 	hal_soc->ops->hal_tx_update_dscp_tid = hal_tx_update_dscp_tid_7850;
-	hal_soc->ops->hal_tx_desc_set_lmac_id = hal_tx_desc_set_lmac_id_7850;
-	hal_soc->ops->hal_tx_desc_set_buf_addr =
-					hal_tx_desc_set_buf_addr_generic_be;
-	hal_soc->ops->hal_tx_desc_set_search_index =
-					hal_tx_desc_set_search_index_generic_be;
-	hal_soc->ops->hal_tx_desc_set_cache_set_num =
-				hal_tx_desc_set_cache_set_num_generic_be;
 	hal_soc->ops->hal_tx_comp_get_status =
 					hal_tx_comp_get_status_generic_be;
-	hal_soc->ops->hal_tx_comp_get_release_reason =
-				hal_tx_comp_get_release_reason_generic_be;
-	hal_soc->ops->hal_get_wbm_internal_error =
-					hal_get_wbm_internal_error_generic_be;
 	hal_soc->ops->hal_tx_init_cmd_credit_ring =
 					hal_tx_init_cmd_credit_ring_7850;
 
@@ -1462,6 +1467,7 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_flow_setup_cmem_fse = NULL;
 	hal_soc->ops->hal_rx_flow_get_cmem_fse_ts = NULL;
 	hal_soc->ops->hal_rx_flow_get_cmem_fse = NULL;
+	hal_soc->ops->hal_cmem_write = hal_cmem_write_7850;
 	hal_soc->ops->hal_rx_msdu_get_reo_destination_indication =
 		hal_rx_msdu_get_reo_destination_indication_be;
 	hal_soc->ops->hal_tx_get_num_tcl_banks = hal_tx_get_num_tcl_banks_7850;
@@ -1782,7 +1788,7 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-		.max_rings = 7,
+		.max_rings = 8,
 		.entry_size = sizeof(struct wbm_release_ring) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_DST_RING,
@@ -1915,6 +1921,12 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 #endif
+	{ /* REO2PPE */ 0},
+	{ /* PPE2TCL */ 0},
+	{ /* PPE_RELEASE */ 0},
+	{ /* TX_MONITOR_BUF */ 0},
+	{ /* TX_MONITOR_DST */ 0},
+	{ /* SW2RXDMA_NEW */ 0},
 };
 
 /**

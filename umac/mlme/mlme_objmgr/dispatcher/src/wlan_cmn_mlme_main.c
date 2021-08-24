@@ -26,6 +26,7 @@
 #include <wlan_psoc_mlme_main.h>
 #include <wlan_pdev_mlme_main.h>
 #include <wlan_vdev_mlme_main.h>
+#include <wlan_psoc_mlme_api.h>
 
 struct mlme_ext_ops *glbl_ops;
 mlme_get_global_ops_cb glbl_ops_cb;
@@ -281,13 +282,15 @@ QDF_STATUS mlme_cm_bss_select_ind(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS mlme_cm_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
-				       struct qdf_mac_addr *peer_mac)
+				       struct qdf_mac_addr *peer_mac,
+				       struct qdf_mac_addr *mld_mac,
+				       bool is_assoc_link)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((glbl_ops) && glbl_ops->mlme_cm_ext_bss_peer_create_req_cb)
-		ret = glbl_ops->mlme_cm_ext_bss_peer_create_req_cb(vdev,
-								   peer_mac);
+		ret = glbl_ops->mlme_cm_ext_bss_peer_create_req_cb(
+				vdev, peer_mac, mld_mac, is_assoc_link);
 
 	return ret;
 }
@@ -551,4 +554,22 @@ void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb osif_cm_ops)
 void mlme_set_ops_register_cb(mlme_get_global_ops_cb ops_cb)
 {
 	glbl_ops_cb = ops_cb;
+}
+
+bool mlme_max_chan_switch_is_set(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	struct psoc_mlme_obj *mlme_psoc_obj;
+	struct psoc_phy_config *phy_config;
+
+	if (!psoc)
+		return false;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return false;
+
+	phy_config = &mlme_psoc_obj->psoc_cfg.phy_config;
+
+	return phy_config->max_chan_switch_ie;
 }

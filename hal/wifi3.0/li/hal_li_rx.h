@@ -389,24 +389,6 @@ static inline void hal_rx_mon_dest_get_buffer_info_from_tlv(
 		RX_ATTENTION_1_FIRST_MPDU_MASK,		\
 		RX_ATTENTION_1_FIRST_MPDU_LSB))
 
-/*
- * hal_rx_attn_first_mpdu_get(): get fist_mpdu bit from rx attention
- * @buf: pointer to rx_pkt_tlvs
- *
- * reutm: uint32_t(first_msdu)
- */
-static inline uint32_t
-hal_rx_attn_first_mpdu_get(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
-	uint32_t first_mpdu;
-
-	first_mpdu = HAL_RX_ATTN_FIRST_MPDU_GET(rx_attn);
-
-	return first_mpdu;
-}
-
 #define HAL_RX_ATTN_TCP_UDP_CKSUM_FAIL_GET(_rx_attn)		\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,		\
 		RX_ATTENTION_1_TCP_UDP_CHKSUM_FAIL_OFFSET)),	\
@@ -672,80 +654,18 @@ hal_rx_msdu_start_toeplitz_get(uint8_t *buf)
 		RX_MSDU_START_5_SGI_OFFSET)),		\
 		RX_MSDU_START_5_SGI_MASK,		\
 		RX_MSDU_START_5_SGI_LSB))
-/**
- * hal_rx_msdu_start_msdu_sgi_get(): API to get the Short Gaurd
- * Interval from rx_msdu_start TLV
- *
- * @buf: pointer to the start of RX PKT TLV headers
- * Return: uint32_t(sgi)
- */
-static inline uint32_t
-hal_rx_msdu_start_sgi_get(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_start *msdu_start =
-		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
-	uint32_t sgi;
-
-	sgi = HAL_RX_MSDU_START_SGI_GET(msdu_start);
-
-	return sgi;
-}
 
 #define HAL_RX_MSDU_START_RATE_MCS_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
 		RX_MSDU_START_5_RATE_MCS_OFFSET)),	\
 		RX_MSDU_START_5_RATE_MCS_MASK,		\
 		RX_MSDU_START_5_RATE_MCS_LSB))
-/**
- * hal_rx_msdu_start_msdu_rate_mcs_get(): API to get the MCS rate
- * from rx_msdu_start TLV
- *
- * @buf: pointer to the start of RX PKT TLV headers
- * Return: uint32_t(rate_mcs)
- */
-static inline uint32_t
-hal_rx_msdu_start_rate_mcs_get(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_start *msdu_start =
-		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
-	uint32_t rate_mcs;
-
-	rate_mcs = HAL_RX_MSDU_START_RATE_MCS_GET(msdu_start);
-
-	return rate_mcs;
-}
 
 #define HAL_RX_ATTN_DECRYPT_STATUS_GET(_rx_attn)		\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,		\
 		RX_ATTENTION_2_DECRYPT_STATUS_CODE_OFFSET)),	\
 		RX_ATTENTION_2_DECRYPT_STATUS_CODE_MASK,	\
 		RX_ATTENTION_2_DECRYPT_STATUS_CODE_LSB))
-
-/*
- * hal_rx_attn_msdu_get_is_decrypted(): API to get the decrypt status of the
- *  packet from rx_attention
- *
- * @buf: pointer to the start of RX PKT TLV header
- * Return: uint32_t(decryt status)
- */
-
-static inline uint32_t
-hal_rx_attn_msdu_get_is_decrypted(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
-	uint32_t is_decrypt = 0;
-	uint32_t decrypt_status;
-
-	decrypt_status = HAL_RX_ATTN_DECRYPT_STATUS_GET(rx_attn);
-
-	if (!decrypt_status)
-		is_decrypt = 1;
-
-	return is_decrypt;
-}
 
 /*
  * Get key index from RX_MSDU_END
@@ -787,27 +707,6 @@ hal_rx_msdu_start_get_rssi(uint8_t *buf)
 		RX_MSDU_START_7_SW_PHY_META_DATA_MASK,		\
 		RX_MSDU_START_7_SW_PHY_META_DATA_LSB))
 
-/*
- * hal_rx_msdu_start_get_freq(): API to get the frequency of operating channel
- * from rx_msdu_start
- *
- * @buf: pointer to the start of RX PKT TLV header
- * Return: uint32_t(frequency)
- */
-
-static inline uint32_t
-hal_rx_msdu_start_get_freq(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_start *msdu_start =
-		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
-	uint32_t freq;
-
-	freq = HAL_RX_MSDU_START_FREQ_GET(msdu_start);
-
-	return freq;
-}
-
 #define HAL_RX_MSDU_START_PKT_TYPE_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  \
 		RX_MSDU_START_5_PKT_TYPE_OFFSET)),      \
@@ -836,51 +735,12 @@ hal_rx_msdu_start_get_freq(uint8_t *buf)
 		RX_MPDU_END_1_RX_IN_TX_DECRYPT_BYP_MASK,	\
 		RX_MPDU_END_1_RX_IN_TX_DECRYPT_BYP_LSB))
 
-/**
- * hal_rx_mpdu_end_decrypt_err_get(): API to get the Decrypt ERR
- * from rx_mpdu_end TLV
- *
- * @buf: pointer to the start of RX PKT TLV headers
- * Return: uint32_t(decrypt_err)
- */
-static inline uint32_t
-hal_rx_mpdu_end_decrypt_err_get(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_end *mpdu_end =
-		&pkt_tlvs->mpdu_end_tlv.rx_mpdu_end;
-	uint32_t decrypt_err;
-
-	decrypt_err = HAL_RX_MPDU_END_DECRYPT_ERR_GET(mpdu_end);
-
-	return decrypt_err;
-}
-
 #define HAL_RX_MPDU_END_MIC_ERR_GET(_rx_mpdu_end)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_end),\
 		RX_MPDU_END_1_TKIP_MIC_ERR_OFFSET)),	\
 		RX_MPDU_END_1_TKIP_MIC_ERR_MASK,	\
 		RX_MPDU_END_1_TKIP_MIC_ERR_LSB))
 
-/**
- * hal_rx_mpdu_end_mic_err_get(): API to get the MIC ERR
- * from rx_mpdu_end TLV
- *
- * @buf: pointer to the start of RX PKT TLV headers
- * Return: uint32_t(mic_err)
- */
-static inline uint32_t
-hal_rx_mpdu_end_mic_err_get(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_end *mpdu_end =
-		&pkt_tlvs->mpdu_end_tlv.rx_mpdu_end;
-	uint32_t mic_err;
-
-	mic_err = HAL_RX_MPDU_END_MIC_ERR_GET(mpdu_end);
-
-	return mic_err;
-}
 
 /*******************************************************************************
  * RX REO ERROR APIS

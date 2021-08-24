@@ -986,6 +986,12 @@ struct cdp_host_stats_ops {
 				  uint8_t *peer_mac, void *stats,
 				  uint32_t last_tx_rate_mcs,
 				  uint32_t stats_id);
+
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
+	QDF_STATUS
+	(*txrx_get_scan_spcl_vap_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+					struct cdp_scan_spcl_vap_stats *stats);
+#endif
 };
 
 struct cdp_wds_ops {
@@ -1308,6 +1314,7 @@ struct cdp_misc_ops {
 			     void *scn);
 	void (*pkt_log_con_service)(struct cdp_soc_t *soc_hdl,
 				    uint8_t pdev_id, void *scn);
+	void (*pkt_log_exit)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 	int (*get_num_rx_contexts)(struct cdp_soc_t *soc_hdl);
 	void (*register_pktdump_cb)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 				    ol_txrx_pktdump_cb tx_cb,

@@ -162,6 +162,13 @@
 /* Max pilot count */
 #define HAL_RX_MAX_SU_EVM_COUNT 32
 
+#define HAL_RX_FRAMECTRL_TYPE_MASK 0x0C
+#define HAL_RX_GET_FRAME_CTRL_TYPE(fc)\
+		(((fc) & HAL_RX_FRAMECTRL_TYPE_MASK) >> 2)
+#define HAL_RX_FRAME_CTRL_TYPE_MGMT 0x0
+#define HAL_RX_FRAME_CTRL_TYPE_CTRL 0x1
+#define HAL_RX_FRAME_CTRL_TYPE_DATA 0x2
+
 /**
  * struct hal_rx_mon_desc_info () - HAL Rx Monitor descriptor info
  *
@@ -656,6 +663,16 @@ struct mon_rx_user_info {
 	uint8_t qos_control_info_valid;
 };
 
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
+struct hal_rx_frm_type_info {
+	uint32_t rx_mgmt_cnt;
+	uint32_t rx_ctrl_cnt;
+	uint32_t rx_data_cnt;
+};
+#else
+struct hal_rx_frm_type_info {};
+#endif
+
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
 	struct mon_rx_status rx_status;
@@ -693,6 +710,8 @@ struct hal_rx_ppdu_info {
 	 * and for CFR correlation as well
 	 */
 	struct hal_rx_ppdu_cfr_info cfr_info;
+	/* per frame type counts */
+	struct hal_rx_frm_type_info frm_type_info;
 };
 
 static inline uint32_t
