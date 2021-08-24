@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,37 +26,51 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef NETWORK_TRAFFIC_ETHERNET2HEADER_H
+#define NETWORK_TRAFFIC_ETHERNET2HEADER_H
 
-#ifndef INTERFACE_ABSTRACTION_H_
-#define INTERFACE_ABSTRACTION_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
+#include "Header.h"
 
-typedef unsigned char Byte;
+#define ETHER_TYPE 16
 
-using namespace std;
-
-class InterfaceAbstraction
-{
+class Ethernet2Header: public Header {
 
 public:
-	~InterfaceAbstraction();
-	bool Open(const char *toIPAPath, const char *fromIPAPath);
-	void Close();
-	long SendData(unsigned char *buffer, size_t size);
-	int ReceiveData(unsigned char *buf, size_t size);
-	int ReceiveSingleDataChunk(unsigned char *buf, size_t size);
-	int setReadNoBlock();
-	int clearReadNoBlock();
 
-	string m_toChannelName;
-	string m_fromChannelName;
+    const static unsigned int mSize {14};
 
-private:
-	int m_toIPADescriptor;
-	int m_fromIPADescriptor;
+    DECLARE_BITSET(DestMac, 48, 0x54E1ADB47F9F);
+    DECLARE_BITSET(SourceMac, 48, 0xA0E0AF89A93F);
+    DECLARE_BITSET(EtherType, ETHER_TYPE, 0x0800);
+
+    vector<bool> asVector() const override {
+        vector<bool> outVec;
+        auto inserter = [](vector<bool>& vec, auto val){
+            vector<bool> valAsVector = bitsetToVector<val.size()>(val);
+            toggleLsbMsb(valAsVector, CHAR_BIT);
+            vec.insert(vec.end(), valAsVector.begin(), valAsVector.end());};
+
+        inserter(outVec, mDestMac);
+        inserter(outVec, mSourceMac);
+        inserter(outVec, mEtherType);
+        return outVec;
+    }
+
+    size_t size() const override {
+        return mSize;
+    }
+
+    string name() const override {
+        return string("Ethernet 2");
+    }
+
+    void streamFields(std::ostream &out) const override {
+        out << "mDestAddress: " << mDestMac.to_ullong() << ", "
+            << "SourceMac: " << mSourceMac.to_ullong() << ", "
+            << "mEtherType: " << mEtherType.to_ulong() << "\n";
+    }
 };
 
-#endif
+
+#endif //NETWORK_TRAFFIC_ETHERNET2HEADER_H

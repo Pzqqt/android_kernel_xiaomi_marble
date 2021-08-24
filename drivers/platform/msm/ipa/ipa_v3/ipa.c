@@ -1099,7 +1099,7 @@ static void ipa3_get_usb_ep_info(
 			pair_info[ep_info->num_ep_pairs].producer_pipe_num =
 				ep_index;
 			pair_info[ep_info->num_ep_pairs].ep_id =
-				IPA_USB1_EP_ID;
+				IPA_v4_USB1_EP_ID;
 
 			IPADBG("ep_pair_info consumer_pipe_num %d",
 			pair_info[ep_info->num_ep_pairs].consumer_pipe_num);
@@ -1126,7 +1126,7 @@ static void ipa3_get_usb_ep_info(
 			pair_info[ep_info->num_ep_pairs].producer_pipe_num =
 				ep_index;
 			pair_info[ep_info->num_ep_pairs].ep_id =
-				IPA_USB0_EP_ID;
+				IPA_v4_USB0_EP_ID;
 
 			IPADBG("ep_pair_info consumer_pipe_num %d",
 			pair_info[ep_info->num_ep_pairs].consumer_pipe_num);
@@ -1159,30 +1159,35 @@ static void ipa3_get_pcie_ep_info(
 		pair_info[i].ep_id = -1;
 	}
 
-	ep_index = ipa3_get_ep_mapping(IPA_CLIENT_MHI2_PROD);
+	/*
+	 * Legacy codes for ipa4.X version
+	 */
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
+		ep_index = ipa3_get_ep_mapping(IPA_CLIENT_MHI2_PROD);
 
-	if ((ep_index != -1) && ipa3_ctx->ep[ep_index].valid) {
-		pair_info[ep_info->num_ep_pairs].consumer_pipe_num = ep_index;
-		ep_index = ipa3_get_ep_mapping(IPA_CLIENT_MHI2_CONS);
-		if ((ep_index != -1) && (ipa3_ctx->ep[ep_index].valid)) {
-			pair_info[ep_info->num_ep_pairs].producer_pipe_num =
+		if ((ep_index != -1) && ipa3_ctx->ep[ep_index].valid) {
+			pair_info[ep_info->num_ep_pairs].consumer_pipe_num = ep_index;
+			ep_index = ipa3_get_ep_mapping(IPA_CLIENT_MHI2_CONS);
+			if ((ep_index != -1) && (ipa3_ctx->ep[ep_index].valid)) {
+				pair_info[ep_info->num_ep_pairs].producer_pipe_num =
 				ep_index;
-			pair_info[ep_info->num_ep_pairs].ep_id =
-				IPA_PCIE1_EP_ID;
+				pair_info[ep_info->num_ep_pairs].ep_id =
+				IPA_v4_PCIE1_EP_ID;
 
-			IPADBG("ep_pair_info consumer_pipe_num %d",
-			pair_info[ep_info->num_ep_pairs].consumer_pipe_num);
-			IPADBG(" producer_pipe_num %d ep_id %d\n",
-			pair_info[ep_info->num_ep_pairs].producer_pipe_num,
-				pair_info[ep_info->num_ep_pairs].ep_id);
-			ep_info->num_ep_pairs++;
-		} else {
-			pair_info[ep_info->num_ep_pairs].consumer_pipe_num = -1;
-			IPADBG("ep_pair_info consumer_pipe_num %d",
-			pair_info[ep_info->num_ep_pairs].consumer_pipe_num);
-			IPADBG(" producer_pipe_num %d ep_id %d\n",
-			pair_info[ep_info->num_ep_pairs].producer_pipe_num,
-				pair_info[ep_info->num_ep_pairs].ep_id);
+				IPADBG("ep_pair_info consumer_pipe_num %d",
+					pair_info[ep_info->num_ep_pairs].consumer_pipe_num);
+				IPADBG(" producer_pipe_num %d ep_id %d\n",
+					pair_info[ep_info->num_ep_pairs].producer_pipe_num,
+					pair_info[ep_info->num_ep_pairs].ep_id);
+				ep_info->num_ep_pairs++;
+			} else {
+				pair_info[ep_info->num_ep_pairs].consumer_pipe_num = -1;
+				IPADBG("ep_pair_info consumer_pipe_num %d",
+					pair_info[ep_info->num_ep_pairs].consumer_pipe_num);
+				IPADBG(" producer_pipe_num %d ep_id %d\n",
+				pair_info[ep_info->num_ep_pairs].producer_pipe_num,
+					pair_info[ep_info->num_ep_pairs].ep_id);
+			}
 		}
 	}
 
@@ -1194,8 +1199,12 @@ static void ipa3_get_pcie_ep_info(
 		if ((ep_index != -1) && (ipa3_ctx->ep[ep_index].valid)) {
 			pair_info[ep_info->num_ep_pairs].producer_pipe_num =
 				ep_index;
-			pair_info[ep_info->num_ep_pairs].ep_id =
-				IPA_PCIE0_EP_ID;
+			if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+				pair_info[ep_info->num_ep_pairs].ep_id =
+					IPA_v4_PCIE0_EP_ID;
+			else
+				pair_info[ep_info->num_ep_pairs].ep_id =
+					IPA_v5_PCIE0_EP_ID;
 
 			IPADBG("ep_pair_info consumer_pipe_num %d",
 			pair_info[ep_info->num_ep_pairs].consumer_pipe_num);
@@ -1488,7 +1497,7 @@ static int ipa3_ioctl_add_rt_rule_ext_v2(unsigned long arg)
 	((struct ipa_ioc_add_rt_rule_ext_v2 *)header)->rules =
 		(u64)kptr;
 	if (ipa3_add_rt_rule_ext_v2(
-		(struct ipa_ioc_add_rt_rule_ext_v2 *)header)) {
+		(struct ipa_ioc_add_rt_rule_ext_v2 *)header, true)) {
 		IPAERR_RL("ipa3_add_rt_rule_ext_v2 fails\n");
 		retval = -EPERM;
 		goto free_param_kptr;
@@ -3788,11 +3797,7 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 	case IPA_IOC_GET_PHERIPHERAL_EP_INFO:
 		IPADBG("Got IPA_IOC_GET_EP_INFO\n");
-		if (ipa3_ctx->ipa_config_is_auto == false) {
-			IPADBG("not an auto config: returning error\n");
-			retval = -ENOTTY;
-			break;
-		}
+		/* used in IPA4.X AUTO and IPA5.0 MDM onwards */
 		if (copy_from_user(&ep_info, (const void __user *)arg,
 			sizeof(struct ipa_ioc_get_ep_info))) {
 			IPAERR_RL("copy_from_user fails\n");
@@ -8820,6 +8825,13 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		result = -ENOMEM;
 		goto fail_hdr_offset_cache;
 	}
+	ipa3_ctx->fnr_stats_cache = kmem_cache_create("IPA_FNR_STATS",
+		sizeof(struct ipa_ioc_flt_rt_counter_alloc), 0, 0, NULL);
+	if (!ipa3_ctx->fnr_stats_cache) {
+		IPAERR(":ipa fnr stats cache create failed\n");
+		result = -ENOMEM;
+		goto fail_fnr_stats_cache;
+	}
 	ipa3_ctx->hdr_proc_ctx_cache = kmem_cache_create("IPA_HDR_PROC_CTX",
 		sizeof(struct ipa3_hdr_proc_ctx_entry), 0, 0, NULL);
 	if (!ipa3_ctx->hdr_proc_ctx_cache) {
@@ -9086,6 +9098,8 @@ fail_rt_tbl_cache:
 fail_hdr_proc_ctx_offset_cache:
 	kmem_cache_destroy(ipa3_ctx->hdr_proc_ctx_cache);
 fail_hdr_proc_ctx_cache:
+	kmem_cache_destroy(ipa3_ctx->fnr_stats_cache);
+fail_fnr_stats_cache:
 	kmem_cache_destroy(ipa3_ctx->hdr_offset_cache);
 fail_hdr_offset_cache:
 	kmem_cache_destroy(ipa3_ctx->hdr_cache);

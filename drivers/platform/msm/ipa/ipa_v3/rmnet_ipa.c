@@ -485,7 +485,8 @@ static int ipa3_setup_dflt_wan_rt_tables(void)
 			(uint8_t)IPPROTO_ICMP;
 	}
 
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add dflt_wan v4 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;
@@ -509,7 +510,8 @@ static int ipa3_setup_dflt_wan_rt_tables(void)
 		rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v6.next_hdr =
 			(uint8_t)NEXTHDR_ICMP;
 	}
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add dflt_wan v6 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;
@@ -596,7 +598,8 @@ static int ipa3_setup_low_lat_rt_rules(void)
 	rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v4.protocol =
 		(uint8_t)IPPROTO_ICMP;
 
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add low lat v4 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;
@@ -616,7 +619,8 @@ static int ipa3_setup_low_lat_rt_rules(void)
 		IPA_FLT_META_DATA | IPA_FLT_NEXT_HDR;
 	rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v6.next_hdr =
 		(uint8_t)IPPROTO_ICMP;
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add low lat v6 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;
@@ -3025,6 +3029,8 @@ static int ipa3_wwan_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		/* Get MTU */
 		case RMNET_IOCTL_GET_MTU:
 			mux_channel = rmnet_ipa3_ctx->mux_channel;
+			ext_ioctl_data.u.mtu_params.if_name
+				[IFNAMSIZ-1] = '\0';
 			rmnet_index =
 				find_vchannel_name_index(ext_ioctl_data.u.mtu_params.if_name);
 
@@ -3045,6 +3051,8 @@ static int ipa3_wwan_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		/* Set MTU */
 		case RMNET_IOCTL_SET_MTU:
 			mux_channel = rmnet_ipa3_ctx->mux_channel;
+			ext_ioctl_data.u.mtu_params.if_name
+				[IFNAMSIZ-1] = '\0';
 			rmnet_index =
 				find_vchannel_name_index(ext_ioctl_data.u.mtu_params.if_name);
 
@@ -3751,7 +3759,8 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 	 * targets. */
 #if !IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
 	IPAWANINFO("rmnet_ipa unregister_netdev\n");
-	unregister_netdev(IPA_NETDEV());
+	if (IPA_NETDEV())
+		unregister_netdev(IPA_NETDEV());
 	ipa3_wwan_deregister_netdev_pm_client();
 #endif
 	cancel_work_sync(&ipa3_tx_wakequeue_work);
@@ -3981,7 +3990,8 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 		 * enabled targets. */
 #if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
 		IPAWANINFO("rmnet_ipa unregister_netdev\n");
-		unregister_netdev(IPA_NETDEV());
+		if (IPA_NETDEV())
+			unregister_netdev(IPA_NETDEV());
 		ipa3_wwan_deregister_netdev_pm_client();
 		if (IPA_NETDEV())
 			free_netdev(IPA_NETDEV());

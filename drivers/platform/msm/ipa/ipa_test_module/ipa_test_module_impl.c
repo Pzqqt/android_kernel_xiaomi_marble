@@ -57,7 +57,10 @@
 
 #define RX_NUM_BUFFS 16
 #define RX_SZ 32768
-#define RX_BUFF_SIZE ((RX_SZ)/(RX_NUM_BUFFS))
+/* Lowest power of 2 that is bigger than what is used in Ulso test */
+#define MAX_ULSO_SEGMENT_SZ 16384
+#define RX_SZ_ULSO ((MAX_ULSO_SEGMENT_SZ) * (RX_NUM_BUFFS))
+#define RX_BUFF_SIZE ((rx_size)/(RX_NUM_BUFFS))
 
 #define IPA_TEST_DMUX_HEADER_LENGTH           8
 #define IPA_TEST_META_DATA_IS_VALID           1
@@ -110,6 +113,7 @@ struct device *ipa_get_pdev(void);
 enum fops_type {
 	IPA_TEST_REG_CHANNEL,
 	IPA_TEST_DATA_PATH_TEST_CHANNEL,
+	IPA_TEST_ULSO_DATA_PATH_TEST_CHANNEL,
 	MAX_FOPS
 };
 
@@ -224,6 +228,8 @@ struct ipa_tx_suspend_private_data {
 };
 
 static struct test_context *ipa_test;
+
+static size_t rx_size;
 
 
 /**
@@ -472,13 +478,22 @@ static ssize_t set_skb_for_user(struct file *filp, char __user *buf,
 static ssize_t get_skb_from_user(struct file *filp, const char __user *buf,
 		       size_t size, loff_t *f_pos);
 
+static ssize_t get_ulso_skb_from_user(struct file *filp, const char __user *buf,
+		       size_t size, loff_t *f_pos);
+
 static const struct file_operations data_path_fops = {
 	.owner = THIS_MODULE,
 	.open = channel_open,
-	.read =	set_skb_for_user,
+	.read = set_skb_for_user,
 	.write = get_skb_from_user,
 };
 
+static const struct file_operations ulso_data_path_fops = {
+	.owner = THIS_MODULE,
+	.open = channel_open,
+	.read = set_skb_for_user,
+	.write = get_ulso_skb_from_user,
+};
 
 /*
  * This will create the char device named
@@ -566,6 +581,9 @@ int create_channel_device_by_type(
 	case IPA_TEST_DATA_PATH_TEST_CHANNEL:
 		cdev_init(&channel_dev->cdev, &data_path_fops);
 		break;
+	case IPA_TEST_ULSO_DATA_PATH_TEST_CHANNEL:
+		cdev_init(&channel_dev->cdev, &ulso_data_path_fops);
+		break;
 	default:
 		IPATEST_ERR("Wrong fops type");
 		ret = -EINVAL;
@@ -632,6 +650,8 @@ struct datapath_ctx {
 
 struct datapath_ctx *p_data_path_ctx;
 
+bool init_write_done_completion;
+
 
 /*
  * Inits the kfifo needed for the
@@ -640,6 +660,7 @@ struct datapath_ctx *p_data_path_ctx;
 int datapath_ds_init(void)
 {
 	int res = 0;
+	rx_size = RX_SZ;
 
 	p_data_path_ctx = kzalloc(sizeof(struct datapath_ctx), GFP_KERNEL);
 	if (!p_data_path_ctx) {
@@ -691,6 +712,24 @@ static struct sk_buff *datapath_create_skb(const char *buf, size_t size)
 	}
 	IPATEST_DBG("The following packet was created:\n");
 	print_buff(skb->data, size);
+	IPATEST_DBG("Exiting\n");
+
+	return skb;
+}
+
+static struct sk_buff *ulso_create_skb(const char *buf, size_t size)
+{
+	struct sk_buff *skb;
+
+	IPATEST_DBG("Entering\n");
+
+	skb = datapath_create_skb(buf, size);
+	if (unlikely(!skb))
+		return NULL;
+
+	/* Mark the skb as gso skb */
+	skb_increase_gso_size(skb_shinfo(skb), 1);
+
 	IPATEST_DBG("Exiting\n");
 
 	return skb;
@@ -788,6 +827,45 @@ static ssize_t get_skb_from_user(struct file *filp, const char __user *buf,
 	res = wait_for_completion_timeout(
 			&p_data_path_ctx->write_done_completion,
 			msecs_to_jiffies(TIME_OUT_TIME));
+	IPATEST_DBG("timeout result = %d", res);
+	if (!res)
+		return -EINVAL;
+	IPATEST_DBG("-----Exiting-----\n");
+
+	return size;
+}
+
+/*
+ * Receives from the user space the buff,
+ * create an SKB, and send it through
+ * ipa_tx_dp that was received in the system
+ */
+static ssize_t get_ulso_skb_from_user(struct file *filp,
+const char __user *buf, size_t size, loff_t *f_pos) {
+	int res = 0;
+	struct sk_buff *skb;
+
+	IPATEST_DBG("Entering\n");
+	/* Copy the data from the user and transmit */
+	IPATEST_DBG("-----Copy the data from the user-----\n");
+	IPATEST_DBG("Creating SKB\n");
+	skb = ulso_create_skb(buf, size);
+	if (!skb)
+		return -EINVAL;
+
+	if (!init_write_done_completion) {
+		init_completion(&p_data_path_ctx->write_done_completion);
+		init_write_done_completion = true;
+	} else {
+		reinit_completion(&p_data_path_ctx->write_done_completion);
+	}
+
+	IPATEST_DBG("Starting transfer through ipa_tx_dp\n");
+	res = ipa_tx_dp(IPA_CLIENT_TEST_CONS, skb, NULL);
+	IPATEST_DBG("ipa_tx_dp res = %d.\n", res);
+	res = wait_for_completion_timeout(
+		&p_data_path_ctx->write_done_completion,
+		msecs_to_jiffies(TIME_OUT_TIME));
 	IPATEST_DBG("timeout result = %d", res);
 	if (!res)
 		return -EINVAL;
@@ -2806,19 +2884,14 @@ void destroy_channel_devices(void)
 {
 	IPATEST_DBG("-----Tear Down----\n");
 	while (ipa_test->num_tx_channels > 0) {
-		IPATEST_DBG("-- num_tx_channels = %d --\n",
-			ipa_test->num_tx_channels);
-
-		destroy_channel_device(
-			ipa_test->tx_channels[--ipa_test->num_tx_channels]);
+		IPATEST_DBG("-- num_tx_channels = %d --\n", ipa_test->num_tx_channels);
+		destroy_channel_device(ipa_test->tx_channels[--ipa_test->num_tx_channels]);
 		ipa_test->tx_channels[ipa_test->num_tx_channels] = NULL;
 	}
 
 	while (ipa_test->num_rx_channels > 0) {
-		IPATEST_DBG("-- num_rx_channels = %d --\n",
-			ipa_test->num_rx_channels);
-		destroy_channel_device
-			(from_ipa_devs[--ipa_test->num_rx_channels]);
+		IPATEST_DBG("-- num_rx_channels = %d --\n", ipa_test->num_rx_channels);
+		destroy_channel_device(from_ipa_devs[--ipa_test->num_rx_channels]);
 		from_ipa_devs[ipa_test->num_rx_channels] = NULL;
 	}
 }
@@ -4069,7 +4142,8 @@ static ssize_t ipa_test_read(struct file *filp,
 static struct class *ipa_test_class;
 
 //TODO make only one configuration function
-static int configure_app_to_ipa_path(struct ipa_channel_config __user *to_ipa_user)
+static int configure_app_to_ipa_path(struct ipa_channel_config __user *to_ipa_user,
+	bool isUlso)
 {
 	int retval;
 	struct ipa_channel_config to_ipa_channel_config = {0};
@@ -4106,14 +4180,12 @@ static int configure_app_to_ipa_path(struct ipa_channel_config __user *to_ipa_us
 	IPATEST_DBG("to_ipa tail_marker value is 0x%x\n",
 		to_ipa_channel_config.tail_marker);
 
-	if (to_ipa_channel_config.head_marker !=
-		IPA_TEST_CHANNEL_CONFIG_MARKER) {
+	if (to_ipa_channel_config.head_marker != IPA_TEST_CHANNEL_CONFIG_MARKER) {
 		IPATEST_ERR("bad head_marker - possible memory corruption\n");
 		return -EFAULT;
 	}
 
-	if (to_ipa_channel_config.tail_marker !=
-		IPA_TEST_CHANNEL_CONFIG_MARKER) {
+	if (to_ipa_channel_config.tail_marker != IPA_TEST_CHANNEL_CONFIG_MARKER) {
 		IPATEST_ERR("bad tail_marker - possible memory corruption\n");
 		return -EFAULT;
 	}
@@ -4126,39 +4198,37 @@ static int configure_app_to_ipa_path(struct ipa_channel_config __user *to_ipa_us
 	}
 
 	/* Channel from which the userspace shall communicate to this pipe */
-	retval = create_channel_device(index, "to_ipa",
-				&to_ipa_devs[index], TX_SZ);
+	if(isUlso){
+		retval = create_channel_device_by_type(index, "to_ipa", &to_ipa_devs[index], TX_SZ,
+		IPA_TEST_ULSO_DATA_PATH_TEST_CHANNEL);
+	} else {
+		retval = create_channel_device(index, "to_ipa", &to_ipa_devs[index], TX_SZ);
+	}
 	if (retval) {
 		IPATEST_ERR("channel device creation error\n");
 		return -1;
 	}
-	ipa_test->tx_channels[ipa_test->num_tx_channels++] =
-				to_ipa_devs[index];
+	ipa_test->tx_channels[ipa_test->num_tx_channels++] = to_ipa_devs[index];
+	if (isUlso)
+	    return 0;
 
 	/* Connect IPA --> Apps */
 	memset(&sys_in, 0, sizeof(sys_in));
 	sys_in.client = to_ipa_channel_config.client;
 	IPATEST_DBG("copying from 0x%px\n", to_ipa_channel_config.cfg);
-	retval = copy_from_user(
-		&sys_in.ipa_ep_cfg,
-		to_ipa_channel_config.cfg,
-		to_ipa_channel_config.config_size);
+	retval = copy_from_user(&sys_in.ipa_ep_cfg, to_ipa_channel_config.cfg, to_ipa_channel_config.config_size);
 	if (retval) {
 		IPATEST_ERR("fail to copy cfg - from_ipa_user\n");
 		return -1;
 	}
-	if (ipa3_sys_setup(&sys_in, &ipa_gsi_hdl, &ipa_pipe_num,
-			&to_ipa_devs[index]->ipa_client_hdl, false)) {
+	if (ipa3_sys_setup(&sys_in, &ipa_gsi_hdl, &ipa_pipe_num, &to_ipa_devs[index]->ipa_client_hdl, false)) {
 		IPATEST_ERR("setup sys pipe failed\n");
 		return -1;
 	}
 
 	/* Connect APPS MEM --> Tx IPA */
-	retval = connect_apps_to_ipa(&to_ipa_devs[index]->ep,
-				to_ipa_channel_config.client,
-				ipa_pipe_num,
-				&to_ipa_devs[index]->mem,
-				ipa_gsi_hdl);
+	retval = connect_apps_to_ipa(&to_ipa_devs[index]->ep, to_ipa_channel_config.client, ipa_pipe_num,
+				&to_ipa_devs[index]->mem, ipa_gsi_hdl);
 	if (retval) {
 		IPATEST_ERR("fail to connect ipa to apps\n");
 		return -1;
@@ -4167,7 +4237,7 @@ static int configure_app_to_ipa_path(struct ipa_channel_config __user *to_ipa_us
 	return 0;
 }
 
-static int configure_app_from_ipa_path(struct ipa_channel_config __user *from_ipa_user)
+static int configure_app_from_ipa_path(struct ipa_channel_config __user *from_ipa_user, bool isUlso)
 {
 	int retval;
 	struct ipa_channel_config from_ipa_channel_config = {0};
@@ -4227,7 +4297,7 @@ static int configure_app_from_ipa_path(struct ipa_channel_config __user *from_ip
 
 	/* Channel from which the userspace shall communicate to this pipe */
 	retval = create_channel_device(index, "from_ipa",
-			&from_ipa_devs[index], RX_SZ);
+			&from_ipa_devs[index], rx_size);
 	if (retval) {
 		IPATEST_ERR("channel device creation error\n");
 		return -1;
@@ -4238,6 +4308,9 @@ static int configure_app_from_ipa_path(struct ipa_channel_config __user *from_ip
 	/* Connect IPA --> Apps */
 	IPATEST_DBG("copying from 0x%px\n", from_ipa_channel_config.cfg);
 	memset(&sys_in, 0, sizeof(sys_in));
+	if (isUlso) {
+		sys_in.notify = notify_ipa_write_done;
+	}
 	sys_in.client = from_ipa_channel_config.client;
 	retval = copy_from_user(
 		&sys_in.ipa_ep_cfg,
@@ -4269,7 +4342,8 @@ static int configure_app_from_ipa_path(struct ipa_channel_config __user *from_ip
 static int configure_test_scenario(
 		struct ipa_test_config_header *ipa_test_config_header,
 		struct ipa_channel_config **from_ipa_channel_config_array,
-		struct ipa_channel_config **to_ipa_channel_config_array)
+		struct ipa_channel_config **to_ipa_channel_config_array,
+		bool isUlso)
 {
 	int retval;
 	int i;
@@ -4307,12 +4381,17 @@ static int configure_test_scenario(
 
 	for (i = 0 ; i < ipa_test_config_header->from_ipa_channels_num ; i++) {
 		IPATEST_DBG("starting configuration of from_ipa_%d\n", i);
-		retval = configure_app_from_ipa_path(
-			from_ipa_channel_config_array[i]);
+		retval = configure_app_from_ipa_path(from_ipa_channel_config_array[i], isUlso);
 		if (retval) {
 			IPATEST_ERR("fail to configure from_ipa_%d", i);
 			goto fail;
 		}
+	}
+
+	if (isUlso) {
+		rx_size = RX_SZ_ULSO;
+	} else {
+		rx_size = RX_SZ;
 	}
 
 	retval = insert_descriptors_into_rx_endpoints(RX_BUFF_SIZE);
@@ -4323,8 +4402,7 @@ static int configure_test_scenario(
 	IPATEST_DBG("RX descriptors were added to RX pipes\n");
 
 	for (i = 0 ; i < ipa_test_config_header->to_ipa_channels_num ; i++) {
-		retval = configure_app_to_ipa_path(
-			to_ipa_channel_config_array[i]);
+		retval = configure_app_to_ipa_path(to_ipa_channel_config_array[i], isUlso);
 		if (retval) {
 			IPATEST_ERR("fail to configure to_ipa_%d", i);
 			goto fail;
@@ -4346,7 +4424,55 @@ fail:
 	return retval;
 }
 
-static int handle_configuration_ioctl(unsigned long ioctl_arg)
+static int handle_add_hdr_hpc(unsigned long ioctl_arg)
+{
+    struct ipa_ioc_add_hdr hdrs;
+    struct ipa_hdr_add *hdr;
+    int retval;
+
+	IPATEST_ERR("copying from 0x%px\n", (u8 *)ioctl_arg);
+	retval = copy_from_user(&hdrs, (u8 *)ioctl_arg, sizeof(hdrs) + sizeof(*hdr));
+	if (retval) {
+			IPATEST_ERR("failing copying header from user\n");
+			return retval;
+	}
+    retval = ipa3_add_hdr_hpc(&hdrs);
+    if (retval) {
+        IPATEST_ERR("ipa3_add_hdr_hpc failed\n");
+        return retval;
+    }
+	IPATEST_ERR("ELIAD: \n");
+	hdr = &hdrs.hdr[0];
+    if (hdr->status) {
+        IPATEST_ERR("ipa3_add_hdr_hpc failed\n");
+        return hdr->status;
+    }
+	IPATEST_ERR("ELIAD: \n");
+    if (copy_to_user((void __user *)ioctl_arg, &hdrs, sizeof(hdrs) + sizeof(*hdr))) {
+        retval = -EFAULT;
+    }
+	IPATEST_ERR("ELIAD: \n");
+
+    return 0;
+}
+
+static int handle_pkt_init_ex_set_hdr_ofst_ioctl(unsigned long ioctl_arg)
+{
+	struct ipa_pkt_init_ex_hdr_ofst_set hdr_ofst;
+	int retval;
+
+	IPATEST_DBG("copying from 0x%px\n", (u8 *)ioctl_arg);
+	retval = copy_from_user(&hdr_ofst, (u8 *)ioctl_arg, sizeof(hdr_ofst));
+	if (retval) {
+			IPATEST_ERR("failing copying header from user\n");
+			return retval;
+	}
+
+	return ipa_set_pkt_init_ex_hdr_ofst(&hdr_ofst, true);
+}
+
+static int handle_configuration_ioctl(unsigned long ioctl_arg,
+	bool isUlso)
 {
 	int retval;
 	int needed_bytes;
@@ -4405,10 +4531,10 @@ static int handle_configuration_ioctl(unsigned long ioctl_arg)
 		goto fail_copy_to;
 	}
 
-	retval = configure_test_scenario(
-			&test_header,
+	retval = configure_test_scenario(&test_header,
 			from_ipa_channel_config_array,
-			to_ipa_channel_config_array);
+			to_ipa_channel_config_array,
+			isUlso);
 	if (retval)
 		IPATEST_ERR("fail to configure the system\n");
 
@@ -4569,7 +4695,7 @@ static long ipa_test_ioctl(struct file *filp,
 
 	switch (cmd) {
 	case IPA_TEST_IOC_CONFIGURE:
-		retval = handle_configuration_ioctl(arg);
+		retval = handle_configuration_ioctl(arg, false);
 		break;
 
 	case IPA_TEST_IOC_CLEAN:
@@ -4592,6 +4718,15 @@ static long ipa_test_ioctl(struct file *filp,
 		retval = ipa_is_test_prod_flt_in_sram_internal(arg);
 	case IPA_TEST_IOC_GET_MEM_PART:
 		retval = ipa_test_get_mem_part(arg);
+		break;
+	case IPA_TEST_IOC_ULSO_CONFIGURE:
+		retval = handle_configuration_ioctl(arg, true);
+		break;
+    case IPA_TEST_IOC_ADD_HDR_HPC:
+		retval = handle_add_hdr_hpc(arg);
+		break;
+	case IPA_TEST_IOC_PKT_INIT_EX_SET_HDR_OFST:
+		retval = handle_pkt_init_ex_set_hdr_ofst_ioctl(arg);
 		break;
 	default:
 		IPATEST_ERR("ioctl is not supported (%d)\n", cmd);

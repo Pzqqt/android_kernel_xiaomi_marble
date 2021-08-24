@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,37 +26,18 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef NETWORK_TRAFFIC_TRANSPORTHEADER_H
+#define NETWORK_TRAFFIC_TRANSPORTHEADER_H
 
-#ifndef INTERFACE_ABSTRACTION_H_
-#define INTERFACE_ABSTRACTION_H_
+#include "Header.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
 
-typedef unsigned char Byte;
-
-using namespace std;
-
-class InterfaceAbstraction
-{
-
-public:
-	~InterfaceAbstraction();
-	bool Open(const char *toIPAPath, const char *fromIPAPath);
-	void Close();
-	long SendData(unsigned char *buffer, size_t size);
-	int ReceiveData(unsigned char *buf, size_t size);
-	int ReceiveSingleDataChunk(unsigned char *buf, size_t size);
-	int setReadNoBlock();
-	int clearReadNoBlock();
-
-	string m_toChannelName;
-	string m_fromChannelName;
-
-private:
-	int m_toIPADescriptor;
-	int m_fromIPADescriptor;
+class TransportHeader: public Header {
+/**
+ * class TransportHeader is an abstract class that inherits from class Header. It provides identification for all
+ * transport layer protocol headers. Every transport layer protocol header must inherit from it directly or indirectly.
+ */
 };
 
-#endif
+
+#endif //NETWORK_TRAFFIC_TRANSPORTHEADER_H

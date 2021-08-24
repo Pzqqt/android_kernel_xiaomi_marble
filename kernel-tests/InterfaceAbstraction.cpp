@@ -30,9 +30,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <iostream>
 #include "InterfaceAbstraction.h"
 
 #define MAX_OPEN_RETRY 10000
+
+using std::cout;
+using std::endl;
 
 bool InterfaceAbstraction::Open(const char * toIPAPath, const char * fromIPAPath)
 {
@@ -95,9 +99,9 @@ void InterfaceAbstraction::Close()
 	close(m_fromIPADescriptor);
 }
 
-bool InterfaceAbstraction::SendData(unsigned char *buf, size_t size)
+long InterfaceAbstraction::SendData(unsigned char *buf, size_t size)
 {
-	int bytesWritten = 0;
+	long bytesWritten = 0;
 
 	printf("Trying to write %zu bytes to %d.\n", size, m_toIPADescriptor);
 
@@ -118,7 +122,7 @@ bool InterfaceAbstraction::SendData(unsigned char *buf, size_t size)
 		exit(-1);
 	}
 
-	printf("bytesWritten = %d.\n", bytesWritten);
+	cout << "bytesWritten = " << bytesWritten << endl;
 
 	return bytesWritten;
 }
@@ -143,6 +147,30 @@ int InterfaceAbstraction::ReceiveData(unsigned char *buf, size_t size)
 	} while (continueRead);
 
 	return totalBytesRead;
+}
+
+int InterfaceAbstraction::ReceiveSingleDataChunk(unsigned char *buf, size_t size){
+	size_t bytesRead = 0;
+	printf("Trying to read %zu bytes from %d.\n", size, m_fromIPADescriptor);
+	bytesRead = read(m_fromIPADescriptor, (void*)buf, size);
+	printf("Read %zu bytes.\n", bytesRead);
+	return bytesRead;
+}
+
+int InterfaceAbstraction::setReadNoBlock(){
+	int flags = fcntl(m_fromIPADescriptor, F_GETFL, 0);
+	if(flags == -1){
+		return -1;
+	}
+	return fcntl(m_fromIPADescriptor, F_SETFL, flags | O_NONBLOCK);
+}
+
+int InterfaceAbstraction::clearReadNoBlock(){
+	int flags = fcntl(m_fromIPADescriptor, F_GETFL, 0);
+	if(flags == -1){
+		return -1;
+	}
+	return fcntl(m_fromIPADescriptor, F_SETFL, flags & ~O_NONBLOCK);
 }
 
 InterfaceAbstraction::~InterfaceAbstraction()

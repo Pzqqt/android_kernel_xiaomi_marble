@@ -44,6 +44,14 @@
 #define IPA_DEV_NAME_MAX_LEN 15
 #define DRV_NAME "ipa"
 
+#define IPA_v4_USB0_EP_ID		11
+#define IPA_v4_USB1_EP_ID		12
+
+#define IPA_v4_PCIE0_EP_ID		21
+#define IPA_v4_PCIE1_EP_ID		22
+
+#define IPA_v5_PCIE0_EP_ID		4
+
 #define IPA_COOKIE 0x57831603
 #define IPA_RT_RULE_COOKIE 0x57831604
 #define IPA_RT_TBL_COOKIE 0x57831605
@@ -1998,6 +2006,7 @@ struct ipa3_eth_error_stats {
  * @rt_rule_cache: routing rule cache
  * @hdr_cache: header cache
  * @hdr_offset_cache: header offset cache
+ * @fnr_stats_cache: FnR stats cache
  * @hdr_proc_ctx_cache: processing context cache
  * @hdr_proc_ctx_offset_cache: processing context offset cache
  * @rt_tbl_cache: routing table cache
@@ -2121,6 +2130,7 @@ struct ipa3_context {
 	struct kmem_cache *rt_rule_cache;
 	struct kmem_cache *hdr_cache;
 	struct kmem_cache *hdr_offset_cache;
+	struct kmem_cache *fnr_stats_cache;
 	struct kmem_cache *hdr_proc_ctx_cache;
 	struct kmem_cache *hdr_proc_ctx_offset_cache;
 	struct kmem_cache *rt_tbl_cache;
@@ -2785,7 +2795,8 @@ int ipa3_add_rt_rule(struct ipa_ioc_add_rt_rule *rules);
 
 int ipa3_add_rt_rule_ext(struct ipa_ioc_add_rt_rule_ext *rules);
 
-int ipa3_add_rt_rule_ext_v2(struct ipa_ioc_add_rt_rule_ext_v2 *rules);
+int ipa3_add_rt_rule_ext_v2(struct ipa_ioc_add_rt_rule_ext_v2 *rules,
+	bool user);
 
 int ipa3_add_rt_rule_after(struct ipa_ioc_add_rt_rule_after *rules);
 
