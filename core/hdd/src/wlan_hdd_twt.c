@@ -1714,7 +1714,11 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 	ack_priv = osif_request_priv(request);
 	if (ack_priv->status) {
 		hdd_err("Received TWT ack error. Reset twt command");
-		ucfg_mlme_reset_twt_init_context(
+		ucfg_mlme_reset_twt_active_cmd(
+				hdd_ctx->psoc,
+				(struct qdf_mac_addr *)twt_params->peer_macaddr,
+				twt_params->dialog_id);
+		 ucfg_mlme_init_twt_context(
 				hdd_ctx->psoc,
 				(struct qdf_mac_addr *)twt_params->peer_macaddr,
 				twt_params->dialog_id);
@@ -2102,7 +2106,7 @@ int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
 	ack_priv = osif_request_priv(request);
 	if (ack_priv->status) {
 		hdd_err("Received TWT ack error. Reset twt command");
-		ucfg_mlme_reset_twt_init_context(
+		ucfg_mlme_reset_twt_active_cmd(
 				hdd_ctx->psoc,
 				(struct qdf_mac_addr *)twt_params->peer_macaddr,
 				twt_params->dialog_id);
@@ -2647,7 +2651,7 @@ int hdd_send_twt_pause_dialog_cmd(struct hdd_context *hdd_ctx,
 	ack_priv = osif_request_priv(request);
 	if (ack_priv->status) {
 		hdd_err("Received TWT ack error. Reset twt command");
-		ucfg_mlme_reset_twt_init_context(
+		ucfg_mlme_reset_twt_active_cmd(
 				hdd_ctx->psoc,
 				(struct qdf_mac_addr *)twt_params->peer_macaddr,
 				twt_params->dialog_id);
@@ -2806,7 +2810,7 @@ int hdd_send_twt_nudge_dialog_cmd(struct hdd_context *hdd_ctx,
 	ack_priv = osif_request_priv(request);
 	if (ack_priv->status) {
 		hdd_err("Received TWT ack error. Reset twt command");
-		ucfg_mlme_reset_twt_init_context(
+		ucfg_mlme_reset_twt_active_cmd(
 				hdd_ctx->psoc,
 				(struct qdf_mac_addr *)twt_params->peer_macaddr,
 				twt_params->dialog_id);
@@ -3107,7 +3111,7 @@ hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 	ack_priv = osif_request_priv(request);
 	if (ack_priv->status) {
 		hdd_err("Received TWT ack error. Reset twt command");
-		ucfg_mlme_reset_twt_init_context(
+		ucfg_mlme_reset_twt_active_cmd(
 				hdd_ctx->psoc,
 				(struct qdf_mac_addr *)twt_params->peer_macaddr,
 				twt_params->dialog_id);

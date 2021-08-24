@@ -717,6 +717,8 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 				   crypto_params->authmodeset,
 				   crypto_params->key_mgmt,
 				   crypto_params->ucastcipherset);
+		sta_ctx->conn_info.last_auth_type =
+					sta_ctx->conn_info.auth_type;
 	}
 	des_chan = wlan_vdev_mlme_get_des_chan(adapter->vdev);
 

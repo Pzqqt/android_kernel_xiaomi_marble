@@ -136,7 +136,6 @@ enum eLimDisassocTrigger {
 	eLIM_JOIN_FAILURE,
 	eLIM_REASSOC_REJECT,
 	eLIM_DUPLICATE_ENTRY,
-	eLIM_MLO_PARTNER_PEER
 };
 
 /**

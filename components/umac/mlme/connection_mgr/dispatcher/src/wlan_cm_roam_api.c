@@ -31,6 +31,8 @@
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "wlan_cm_roam_api.h"
 #include "wlan_blm_api.h"
+#include <../../core/src/wlan_cm_roam_i.h>
+
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
@@ -320,6 +322,12 @@ QDF_STATUS wlan_cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+wlan_cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return cm_fw_roam_abort_req(psoc, vdev_id);
+}
+
 QDF_STATUS
 wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
 				  struct roam_btm_response_data *dst,
@@ -775,6 +783,54 @@ void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
+void wlan_cm_set_country_code(struct wlan_objmgr_pdev *pdev,
+			      uint8_t vdev_id, uint8_t  *cc)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg || !cc)
+		goto release_vdev_ref;
+
+	qdf_mem_copy(rso_cfg->country_code, cc, REG_ALPHA2_LEN + 1);
+
+release_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+QDF_STATUS wlan_cm_get_country_code(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id, uint8_t *cc)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg || !cc) {
+		status = QDF_STATUS_E_INVAL;
+		goto release_vdev_ref;
+	}
+
+	qdf_mem_copy(cc, rso_cfg->country_code, REG_ALPHA2_LEN + 1);
+
+release_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	return status;
+}
+
 #ifdef FEATURE_WLAN_ESE
 void wlan_cm_set_ese_assoc(struct wlan_objmgr_pdev *pdev,
 			   uint8_t vdev_id, bool value)
@@ -1039,6 +1095,7 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	case ROAM_PREFERRED_CHAN:
 		if (dst_cfg->specific_chan_info.num_chan) {
 			mlme_err("Specific channel list is already configured");
+			status = QDF_STATUS_E_INVAL;
 			break;
 		}
 		status = cm_update_roam_scan_channel_list(vdev_id,
@@ -1968,6 +2025,104 @@ uint32_t wlan_cm_get_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return roam_states;
+}
+#endif
+
+QDF_STATUS wlan_get_chan_by_bssid_from_rnr(struct wlan_objmgr_vdev *vdev,
+					   wlan_cm_id cm_id,
+					   struct qdf_mac_addr *link_addr,
+					   uint8_t *chan, uint8_t *op_class)
+{
+	struct reduced_neighbor_report rnr;
+	QDF_STATUS status;
+	int i;
+
+	*chan = 0;
+
+	qdf_mem_zero(&rnr, sizeof(rnr));
+
+	status = wlan_cm_get_rnr(vdev, cm_id, &rnr);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("fals to get rnr IE");
+		return status;
+	}
+
+	for (i = 0; i < MAX_RNR_BSS; i++) {
+		if (!rnr.bss_info[i].channel_number)
+			continue;
+		if (qdf_is_macaddr_equal(link_addr, &rnr.bss_info[i].bssid)) {
+			*chan = rnr.bss_info[i].channel_number;
+			*op_class = rnr.bss_info[i].operating_class;
+			break;
+		}
+	}
+
+	return status;
+}
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * mlo_rnr_link_id_cmp() - compare given link id with link id in rnr
+ * @rnr_bss_info: rnr bss info
+ * @link_id: link id
+ *
+ * Return: true if given link id is the same with link id in rnr
+ */
+static bool mlo_rnr_link_id_cmp(struct rnr_bss_info *rnr_bss_info,
+				uint8_t link_id)
+{
+	if (rnr_bss_info)
+		return link_id == rnr_bss_info->mld_info.link_id;
+
+	return false;
+}
+
+QDF_STATUS wlan_get_chan_by_link_id_from_rnr(struct wlan_objmgr_vdev *vdev,
+					     wlan_cm_id cm_id,
+					     uint8_t link_id,
+					     uint8_t *chan, uint8_t *op_class)
+{
+	struct reduced_neighbor_report rnr;
+	QDF_STATUS status;
+	int i;
+
+	*chan = 0;
+
+	qdf_mem_zero(&rnr, sizeof(rnr));
+
+	status = wlan_cm_get_rnr(vdev, cm_id, &rnr);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_debug("fals to get rnr IE");
+		return status;
+	}
+
+	for (i = 0; i < MAX_RNR_BSS; i++) {
+		if (!rnr.bss_info[i].channel_number)
+			continue;
+		if (mlo_rnr_link_id_cmp(&rnr.bss_info[i], link_id)) {
+			*chan = rnr.bss_info[i].channel_number;
+			*op_class = rnr.bss_info[i].operating_class;
+			break;
+		}
+	}
+
+	return status;
+}
+#endif
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
+					     uint16_t data_len, void *data)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	status = cm_roam_sync_event_handler_cb(vdev_mlme->vdev, data, data_len);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("Failed to process roam synch event");
+#endif
+	return status;
 }
 #endif
 

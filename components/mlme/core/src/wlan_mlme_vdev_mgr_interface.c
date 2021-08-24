@@ -35,7 +35,7 @@
 #include "csr_api.h"
 #include <cm_utf.h>
 #include "target_if_cm_roam_event.h"
-
+#include "wlan_cm_roam_api.h"
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_public_structs.h>
 #include <wlan_mlo_mgr_cmn.h>
@@ -303,8 +303,13 @@ QDF_STATUS sta_mlme_vdev_notify_roam_start(struct vdev_mlme_obj *vdev_mlme,
 {
 	mlme_legacy_debug("vdev id = %d ",
 			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+	return wlan_cm_sta_mlme_vdev_roam_notify(vdev_mlme, event_data_len,
+						 event_data);
+#else
 	return wma_sta_mlme_vdev_roam_notify(vdev_mlme, event_data_len,
 					     event_data);
+#endif
 }
 
 /**

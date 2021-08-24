@@ -785,6 +785,7 @@ struct mac_context {
 	uint32_t rx_mc_bc_cnt;
 	/* 11k Offload Support */
 	bool is_11k_offload_supported;
+	uint8_t reject_addba_req;
 	bool usr_cfg_ps_enable;
 	uint16_t usr_cfg_ba_buff_size;
 	bool is_usr_cfg_amsdu_enabled;

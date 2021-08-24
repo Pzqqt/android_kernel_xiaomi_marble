@@ -123,10 +123,16 @@ struct cm_vdev_join_rsp {
  * struct cm_peer_create_req - bss peer create req
  * @vdev_id: vdev_id
  * @peer_mac: peer mac to create
+ * @mld_mac: peer mld mac
+ * @is_assoc_peer: is assoc peer or not
  */
 struct cm_peer_create_req {
 	uint8_t vdev_id;
 	struct qdf_mac_addr peer_mac;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct qdf_mac_addr mld_mac;
+	bool is_assoc_peer;
+#endif
 };
 
 /**
@@ -341,12 +347,16 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
  * request
  * @vdev: VDEV object
  * @peer_mac: Peer mac address
+ * @mld_mac: peer mld mac address
+ * @is_assoc_peer: is assoc peer or not
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
-			    struct qdf_mac_addr *peer_mac);
+			    struct qdf_mac_addr *peer_mac,
+			    struct qdf_mac_addr *mld_mac,
+			    bool is_assoc_peer);
 
 /**
  * cm_csr_connect_rsp() - Connection manager ext connect resp indication

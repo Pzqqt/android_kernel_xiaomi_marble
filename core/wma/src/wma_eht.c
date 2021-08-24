@@ -199,83 +199,83 @@ void wma_print_eht_cap(tDot11fIEeht_cap *eht_cap)
 	/* EHT MAC Capabilities */
 	wma_nofl_debug("\tNSEP Priority Access: 0x%01x",
 		       eht_cap->nsep_pri_access);
-	wma_nofl_debug("\tOM Control: 0x%1x", eht_cap->eht_om_ctl);
-	wma_nofl_debug("\tTriggered TXOP Sharing: 0x%1x",
+	wma_nofl_debug("\tOM Control: 0x%01x", eht_cap->eht_om_ctl);
+	wma_nofl_debug("\tTriggered TXOP Sharing: 0x%01x",
 		       eht_cap->triggered_txop_sharing);
 
 	/* EHT PHY Capabilities */
-	wma_nofl_debug("\t320 MHz In 6 GHz: 0x%0x1x",
+	wma_nofl_debug("\t320 MHz In 6 GHz: 0x%01x",
 		       eht_cap->support_320mhz_6ghz);
-	wma_nofl_debug("\t242-tone RU In BW Wider Than 20 MHz: 0x%1x",
+	wma_nofl_debug("\t242-tone RU In BW Wider Than 20 MHz: 0x%01x",
 		       eht_cap->ru_242tone_wt_20mhz);
-	wma_nofl_debug("\tNDP With 4x EHT-LTF And 3.2 us GI: 0x%1x",
+	wma_nofl_debug("\tNDP With 4x EHT-LTF And 3.2 us GI: 0x%01x",
 		       eht_cap->ndp_4x_eht_ltf_3dot2_us_gi);
-	wma_nofl_debug("\tPartial Bandwidth UL MU-MIMO: 0x%1x",
+	wma_nofl_debug("\tPartial Bandwidth UL MU-MIMO: 0x%01x",
 		       eht_cap->partial_bw_mu_mimo);
-	wma_nofl_debug("\tSU Beamformer: 0x%1x", eht_cap->su_beamformer);
-	wma_nofl_debug("\tSU Beamformee: 0x%1x", eht_cap->su_beamformee);
-	wma_nofl_debug("\tBeamformee SS <= 80 MHz: 0x%3x",
+	wma_nofl_debug("\tSU Beamformer: 0x%01x", eht_cap->su_beamformer);
+	wma_nofl_debug("\tSU Beamformee: 0x%01x", eht_cap->su_beamformee);
+	wma_nofl_debug("\tBeamformee SS <= 80 MHz: 0x%03x",
 		       eht_cap->bfee_ss_le_80mhz);
-	wma_nofl_debug("\tBeamformee SS = 160 MHz: 0x%3x",
+	wma_nofl_debug("\tBeamformee SS = 160 MHz: 0x%03x",
 		       eht_cap->bfee_ss_160mhz);
-	wma_nofl_debug("\tBeamformee SS = 320 MHz: 0x%3x",
+	wma_nofl_debug("\tBeamformee SS = 320 MHz: 0x%03x",
 		       eht_cap->bfee_ss_320mhz);
-	wma_nofl_debug("\tNumber Of Sounding Dimensions <= 80 MHz: 0x%3x",
+	wma_nofl_debug("\tNumber Of Sounding Dimensions <= 80 MHz: 0x%03x",
 		       eht_cap->num_sounding_dim_le_80mhz);
-	wma_nofl_debug("\tNumber Of Sounding Dimensions = 160 MHz: 0x%3x",
+	wma_nofl_debug("\tNumber Of Sounding Dimensions = 160 MHz: 0x%03x",
 		       eht_cap->num_sounding_dim_160mhz);
-	wma_nofl_debug("\tNumber Of Sounding Dimensions = 320 MHz: 0x%3x",
+	wma_nofl_debug("\tNumber Of Sounding Dimensions = 320 MHz: 0x%03x",
 		       eht_cap->num_sounding_dim_320mhz);
-	wma_nofl_debug("\tNg = 16 SU Feedback: 0x%1x",
+	wma_nofl_debug("\tNg = 16 SU Feedback: 0x%01x",
 		       eht_cap->ng_16_su_feedback);
-	wma_nofl_debug("\tNg = 16 MU Feedback: 0x%1x",
+	wma_nofl_debug("\tNg = 16 MU Feedback: 0x%01x",
 		       eht_cap->ng_16_mu_feedback);
-	wma_nofl_debug("\tCodebook Size 4 2 SU Feedback: 0x%1x",
+	wma_nofl_debug("\tCodebook Size 4 2 SU Feedback: 0x%01x",
 		       eht_cap->cb_sz_4_2_su_feedback);
-	wma_nofl_debug("\tCodebook Size 7 5 MU Feedback: 0x%1x",
+	wma_nofl_debug("\tCodebook Size 7 5 MU Feedback: 0x%01x",
 		       eht_cap->cb_sz_7_5_su_feedback);
-	wma_nofl_debug("\tTriggered SU Beamforming Feedback: 0x%1x",
+	wma_nofl_debug("\tTriggered SU Beamforming Feedback: 0x%01x",
 		       eht_cap->trig_su_bforming_feedback);
-	wma_nofl_debug("\tTriggered MU Beamforming Partial BW Feedback: 0x%1x",
+	wma_nofl_debug("\tTriggered MU Beamforming Partial BW Feedback: 0x%01x",
 		       eht_cap->trig_mu_bforming_partial_bw_feedback);
-	wma_nofl_debug("\tTriggered CQI Feedback: 0x%1x",
+	wma_nofl_debug("\tTriggered CQI Feedback: 0x%01x",
 		       eht_cap->triggered_cqi_feedback);
-	wma_nofl_debug("\tPartial Bandwidth DL MU-MIMO: 0x%1x",
+	wma_nofl_debug("\tPartial Bandwidth DL MU-MIMO: 0x%01x",
 		       eht_cap->partial_bw_dl_mu_mimo);
-	wma_nofl_debug("\tPSR-Based SR: 0x%1x", eht_cap->psr_based_sr);
-	wma_nofl_debug("\tPower Boost Factor: 0x%1x",
+	wma_nofl_debug("\tPSR-Based SR: 0x%01x", eht_cap->psr_based_sr);
+	wma_nofl_debug("\tPower Boost Factor: 0x%01x",
 		       eht_cap->power_boost_factor);
-	wma_nofl_debug("\tMU PPDU With 4x EHT-LTF 0.8 us GI: 0x%1x",
+	wma_nofl_debug("\tMU PPDU With 4x EHT-LTF 0.8 us GI: 0x%01x",
 		       eht_cap->eht_mu_ppdu_4x_ltf_0_8_us_gi);
-	wma_nofl_debug("\tMax Nc: 0x%4x", eht_cap->max_nc);
-	wma_nofl_debug("\tNon-Triggered CQI Feedback: 0x%1x",
+	wma_nofl_debug("\tMax Nc: 0x%04x", eht_cap->max_nc);
+	wma_nofl_debug("\tNon-Triggered CQI Feedback: 0x%01x",
 		       eht_cap->non_trig_cqi_feedback);
-	wma_nofl_debug("\tTx 1024-QAM 4096-QAM < 242-tone RU: 0x%1x",
+	wma_nofl_debug("\tTx 1024-QAM 4096-QAM < 242-tone RU: 0x%01x",
 		       eht_cap->tx_1024_4096_qam_lt_242_tone_ru);
-	wma_nofl_debug("\tRx 1024-QAM 4096-QAM < 242-tone RU: 0x%1x",
+	wma_nofl_debug("\tRx 1024-QAM 4096-QAM < 242-tone RU: 0x%01x",
 		       eht_cap->rx_1024_4096_qam_lt_242_tone_ru);
-	wma_nofl_debug("\tPPE Thresholds Present: 0x%1x",
+	wma_nofl_debug("\tPPE Thresholds Present: 0x%01x",
 		       eht_cap->ppet_present);
-	wma_nofl_debug("\tCommon Nominal Packet Padding: 0x%2x",
+	wma_nofl_debug("\tCommon Nominal Packet Padding: 0x%02x",
 		       eht_cap->common_nominal_pkt_padding);
-	wma_nofl_debug("\tMaximum Number Of Supported EHT-LTFs: 0x%5x",
+	wma_nofl_debug("\tMaximum Number Of Supported EHT-LTFs: 0x%05x",
 		       eht_cap->max_num_eht_ltf);
-	wma_nofl_debug("\tSupport of MCS 15: 0x%4x", eht_cap->mcs_15);
-	wma_nofl_debug("\tSupport Of EHT DUP In 6 GHz: 0x%1x",
+	wma_nofl_debug("\tSupport of MCS 15: 0x%04x", eht_cap->mcs_15);
+	wma_nofl_debug("\tSupport Of EHT DUP In 6 GHz: 0x%01x",
 		       eht_cap->eht_dup_6ghz);
-	wma_nofl_debug("\t20 MHz STA RX NDP With Wider BW: 0x%1x",
+	wma_nofl_debug("\t20 MHz STA RX NDP With Wider BW: 0x%01x",
 		       eht_cap->op_sta_rx_ndp_wider_bw_20mhz);
-	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW <= 80 MHz: 0x%1x",
+	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW <= 80 MHz: 0x%01x",
 		       eht_cap->non_ofdma_ul_mu_mimo_le_80mhz);
-	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 160 MHz: 0x%1x",
+	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 160 MHz: 0x%01x",
 		       eht_cap->non_ofdma_ul_mu_mimo_160mhz);
-	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 320 MHz: 0x%1x",
+	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 320 MHz: 0x%01x",
 		       eht_cap->non_ofdma_ul_mu_mimo_320mhz);
-	wma_nofl_debug("\tMU Beamformer BW <= 80 MHz: 0x%1x",
+	wma_nofl_debug("\tMU Beamformer BW <= 80 MHz: 0x%01x",
 		       eht_cap->mu_bformer_le_80mhz);
-	wma_nofl_debug("\tMU Beamformer BW = 160 MHz: 0x%1x",
+	wma_nofl_debug("\tMU Beamformer BW = 160 MHz: 0x%01x",
 		       eht_cap->mu_bformer_160mhz);
-	wma_nofl_debug("\tMU Beamformer BW = 320 MHz: 0x%1x",
+	wma_nofl_debug("\tMU Beamformer BW = 320 MHz: 0x%01x",
 		       eht_cap->mu_bformer_320mhz);
 }
 
@@ -283,82 +283,82 @@ void wma_print_eht_phy_cap(uint32_t *phy_cap)
 {
 	wma_debug("EHT PHY Capabilities:");
 
-	wma_nofl_debug("\t320 MHz In 6 GHz: 0x%0x1x",
+	wma_nofl_debug("\t320 MHz In 6 GHz: 0x%01x",
 		       WMI_EHTCAP_PHY_320MHZIN6GHZ_GET(phy_cap));
-	wma_nofl_debug("\t242-tone RU In BW Wider Than 20 MHz: 0x%1x",
+	wma_nofl_debug("\t242-tone RU In BW Wider Than 20 MHz: 0x%01x",
 		       WMI_EHTCAP_PHY_242TONERUBWLT20MHZ_GET(phy_cap));
-	wma_nofl_debug("\tNDP With 4x EHT-LTF And 3.2 us GI: 0x%1x",
+	wma_nofl_debug("\tNDP With 4x EHT-LTF And 3.2 us GI: 0x%01x",
 		       WMI_EHTCAP_PHY_NDP4XEHTLTFAND320NSGI_GET(phy_cap));
-	wma_nofl_debug("\tPartial Bandwidth UL MU-MIMO: 0x%1x",
+	wma_nofl_debug("\tPartial Bandwidth UL MU-MIMO: 0x%01x",
 		       WMI_EHTCAP_PHY_PARTIALBWULMU_GET(phy_cap));
-	wma_nofl_debug("\tSU Beamformer: 0x%1x",
+	wma_nofl_debug("\tSU Beamformer: 0x%01x",
 		       WMI_EHTCAP_PHY_SUBFMR_GET(phy_cap));
-	wma_nofl_debug("\tSU Beamformee: 0x%1x",
+	wma_nofl_debug("\tSU Beamformee: 0x%01x",
 		       WMI_EHTCAP_PHY_SUBFME_GET(phy_cap));
-	wma_nofl_debug("\tBeamformee SS <= 80 MHz: 0x%3x",
+	wma_nofl_debug("\tBeamformee SS <= 80 MHz: 0x%03x",
 		       WMI_EHTCAP_PHY_BFMESSLT80MHZ_GET(phy_cap));
-	wma_nofl_debug("\tBeamformee SS = 160 MHz: 0x%3x",
+	wma_nofl_debug("\tBeamformee SS = 160 MHz: 0x%03x",
 		       WMI_EHTCAP_PHY_BFMESS160MHZ_GET(phy_cap));
-	wma_nofl_debug("\tBeamformee SS = 320 MHz: 0x%3x",
+	wma_nofl_debug("\tBeamformee SS = 320 MHz: 0x%03x",
 		       WMI_EHTCAP_PHY_BFMESS320MHZ_GET(phy_cap));
-	wma_nofl_debug("\tNumber Of Sounding Dimensions <= 80 MHz: 0x%3x",
+	wma_nofl_debug("\tNumber Of Sounding Dimensions <= 80 MHz: 0x%03x",
 		       WMI_EHTCAP_PHY_NUMSOUNDLT80MHZ_GET(phy_cap));
-	wma_nofl_debug("\tNumber Of Sounding Dimensions = 160 MHz: 0x%3x",
+	wma_nofl_debug("\tNumber Of Sounding Dimensions = 160 MHz: 0x%03x",
 		       WMI_EHTCAP_PHY_NUMSOUND160MHZ_GET(phy_cap));
-	wma_nofl_debug("\tNumber Of Sounding Dimensions = 320 MHz: 0x%3x",
+	wma_nofl_debug("\tNumber Of Sounding Dimensions = 320 MHz: 0x%03x",
 		       WMI_EHTCAP_PHY_NUMSOUND320MHZ_GET(phy_cap));
-	wma_nofl_debug("\tNg = 16 SU Feedback: 0x%1x",
+	wma_nofl_debug("\tNg = 16 SU Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_NG16SUFB_GET(phy_cap));
-	wma_nofl_debug("\tNg = 16 MU Feedback: 0x%1x",
+	wma_nofl_debug("\tNg = 16 MU Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_NG16MUFB_GET(phy_cap));
-	wma_nofl_debug("\tCodebook Size 4 2 SU Feedback: 0x%1x",
+	wma_nofl_debug("\tCodebook Size 4 2 SU Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_CODBK42SUFB_GET(phy_cap));
-	wma_nofl_debug("\tCodebook Size 7 5 MU Feedback: 0x%1x",
+	wma_nofl_debug("\tCodebook Size 7 5 MU Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_CODBK75MUFB_GET(phy_cap));
-	wma_nofl_debug("\tTriggered SU Beamforming Feedback: 0x%1x",
+	wma_nofl_debug("\tTriggered SU Beamforming Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_TRIGSUBFFB_GET(phy_cap));
-	wma_nofl_debug("\tTriggered MU Beamforming Partial BW Feedback: 0x%1x",
+	wma_nofl_debug("\tTriggered MU Beamforming Partial BW Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_TRIGMUBFPARTBWFB_GET(phy_cap));
-	wma_nofl_debug("\tTriggered CQI Feedback: 0x%1x",
+	wma_nofl_debug("\tTriggered CQI Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_TRIGCQIFB_GET(phy_cap));
-	wma_nofl_debug("\tPartial Bandwidth DL MU-MIMO: 0x%1x",
+	wma_nofl_debug("\tPartial Bandwidth DL MU-MIMO: 0x%01x",
 		       WMI_EHTCAP_PHY_TRIGMUBFPARTBWFB_GET(phy_cap));
-	wma_nofl_debug("\tPSR-Based SR: 0x%1x",
+	wma_nofl_debug("\tPSR-Based SR: 0x%01x",
 		       WMI_EHTCAP_PHY_PSRSR_GET(phy_cap));
-	wma_nofl_debug("\tPower Boost Factor: 0x%1x",
+	wma_nofl_debug("\tPower Boost Factor: 0x%01x",
 		       WMI_EHTCAP_PHY_PWRBSTFACTOR_GET(phy_cap));
-	wma_nofl_debug("\tMU PPDU With 4x EHT-LTF 0.8 us GI: 0x%1x",
+	wma_nofl_debug("\tMU PPDU With 4x EHT-LTF 0.8 us GI: 0x%01x",
 		       WMI_EHTCAP_PHY_4XEHTLTFAND800NSGI_GET(phy_cap));
-	wma_nofl_debug("\tMax Nc: 0x%4x", WMI_EHTCAP_PHY_MAXNC_GET(phy_cap));
-	wma_nofl_debug("\tNon-Triggered CQI Feedback: 0x%1x",
+	wma_nofl_debug("\tMax Nc: 0x%04x", WMI_EHTCAP_PHY_MAXNC_GET(phy_cap));
+	wma_nofl_debug("\tNon-Triggered CQI Feedback: 0x%01x",
 		       WMI_EHTCAP_PHY_NONTRIGCQIFB_GET(phy_cap));
-	wma_nofl_debug("\tTx 1024-QAM 4096-QAM < 242-tone RU: 0x%1x",
+	wma_nofl_debug("\tTx 1024-QAM 4096-QAM < 242-tone RU: 0x%01x",
 		       WMI_EHTCAP_PHY_TX1024AND4096QAMLS242TONERU_GET(phy_cap));
-	wma_nofl_debug("\tRx 1024-QAM 4096-QAM < 242-tone RU: 0x%1x",
+	wma_nofl_debug("\tRx 1024-QAM 4096-QAM < 242-tone RU: 0x%01x",
 		       WMI_EHTCAP_PHY_RX1024AND4096QAMLS242TONERU_GET(phy_cap));
-	wma_nofl_debug("\tPPE Thresholds Present: 0x%1x",
+	wma_nofl_debug("\tPPE Thresholds Present: 0x%01x",
 		       WMI_EHTCAP_PHY_PPETHRESPRESENT_GET(phy_cap));
-	wma_nofl_debug("\tCommon Nominal Packet Padding: 0x%2x",
+	wma_nofl_debug("\tCommon Nominal Packet Padding: 0x%02x",
 		       WMI_EHTCAP_PHY_CMNNOMPKTPAD_GET(phy_cap));
-	wma_nofl_debug("\tMaximum Number Of Supported EHT-LTFs: 0x%5x",
+	wma_nofl_debug("\tMaximum Number Of Supported EHT-LTFs: 0x%05x",
 		       WMI_EHTCAP_PHY_MAXNUMEHTLTF_GET(phy_cap));
-	wma_nofl_debug("\tSupport of MCS 15: 0x%4x",
+	wma_nofl_debug("\tSupport of MCS 15: 0x%04x",
 		       WMI_EHTCAP_PHY_SUPMCS15_GET(phy_cap));
-	wma_nofl_debug("\tSupport Of EHT DUP In 6 GHz: 0x%1x",
+	wma_nofl_debug("\tSupport Of EHT DUP In 6 GHz: 0x%01x",
 		       WMI_EHTCAP_PHY_EHTDUPIN6GHZ_GET(phy_cap));
-	wma_nofl_debug("\t20 MHz STA RX NDP With Wider BW: 0x%1x",
+	wma_nofl_debug("\t20 MHz STA RX NDP With Wider BW: 0x%01x",
 		       WMI_EHTCAP_PHY_20MHZOPSTARXNDPWIDERBW_GET(phy_cap));
-	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW <= 80 MHz: 0x%1x",
+	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW <= 80 MHz: 0x%01x",
 		       WMI_EHTCAP_PHY_NONOFDMAULMUMIMOLT80MHZ_GET(phy_cap));
-	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 160 MHz: 0x%1x",
+	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 160 MHz: 0x%01x",
 		       WMI_EHTCAP_PHY_NONOFDMAULMUMIMO160MHZ_GET(phy_cap));
-	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 320 MHz: 0x%1x",
+	wma_nofl_debug("\tNon-OFDMA UL MU-MIMO BW = 320 MHz: 0x%01x",
 		       WMI_EHTCAP_PHY_NONOFDMAULMUMIMO320MHZ_GET(phy_cap));
-	wma_nofl_debug("\tMU Beamformer BW <= 80 MHz: 0x%1x",
+	wma_nofl_debug("\tMU Beamformer BW <= 80 MHz: 0x%01x",
 		       WMI_EHTCAP_PHY_MUBFMRLT80MHZ_GET(phy_cap));
-	wma_nofl_debug("\tMU Beamformer BW = 160 MHz: 0x%1x",
+	wma_nofl_debug("\tMU Beamformer BW = 160 MHz: 0x%01x",
 		       WMI_EHTCAP_PHY_MUBFMR160MHZ_GET(phy_cap));
-	wma_nofl_debug("\tMU Beamformer BW = 320 MHz: 0x%1x",
+	wma_nofl_debug("\tMU Beamformer BW = 320 MHz: 0x%01x",
 		       WMI_EHTCAP_PHY_MUBFMR320MHZ_GET(phy_cap));
 }
 
@@ -368,9 +368,9 @@ void wma_print_eht_mac_cap(uint32_t *mac_cap)
 
 	wma_nofl_debug("\tNSEP Priority Access: 0x%01x",
 		       WMI_EHTCAP_MAC_NSEPPRIACCESS_GET(mac_cap));
-	wma_nofl_debug("\tOM Control: 0x%1x",
+	wma_nofl_debug("\tOM Control: 0x%01x",
 		       WMI_EHTCAP_MAC_EHTOMCTRL_GET(mac_cap));
-	wma_nofl_debug("\tTriggered TXOP Sharing: 0x%1x",
+	wma_nofl_debug("\tTriggered TXOP Sharing: 0x%01x",
 		       WMI_EHTCAP_MAC_TRIGTXOP_GET(mac_cap));
 }
 

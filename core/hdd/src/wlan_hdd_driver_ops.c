@@ -608,17 +608,17 @@ static int __hdd_soc_probe(struct device *dev,
 	if (errno)
 		goto unlock;
 
-	status = dp_prealloc_init();
-
-	if (status != QDF_STATUS_SUCCESS) {
-		errno = qdf_status_to_os_return(status);
-		goto unlock;
-	}
-
 	hdd_ctx = hdd_context_create(dev);
 	if (IS_ERR(hdd_ctx)) {
 		errno = PTR_ERR(hdd_ctx);
 		goto assert_fail_count;
+	}
+
+	status = dp_prealloc_init((struct cdp_ctrl_objmgr_psoc *)hdd_ctx->psoc);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		errno = qdf_status_to_os_return(status);
+		goto dp_prealloc_fail;
 	}
 
 	errno = hdd_wlan_startup(hdd_ctx);
@@ -645,10 +645,12 @@ wlan_exit:
 	hdd_wlan_exit(hdd_ctx);
 
 hdd_context_destroy:
+	dp_prealloc_deinit();
+
+dp_prealloc_fail:
 	hdd_context_destroy(hdd_ctx);
 
 assert_fail_count:
-	dp_prealloc_deinit();
 	probe_fail_cnt++;
 	hdd_err("consecutive probe failures:%u", probe_fail_cnt);
 	QDF_BUG(probe_fail_cnt < SSR_MAX_FAIL_CNT);

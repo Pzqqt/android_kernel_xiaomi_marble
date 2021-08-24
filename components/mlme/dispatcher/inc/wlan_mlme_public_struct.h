@@ -995,7 +995,6 @@ struct wlan_vht_config {
  * @sap_max_inactivity_override: Override updating ap_sta_inactivity from
  * hostapd.conf
  * @sap_uapsd_enabled: Flag to enable/disable UAPSD for SAP
- * @reject_addba_req: Flag to decline ADDBA Req from SAP
  */
 struct wlan_mlme_qos {
 	uint32_t tx_aggregation_size;
@@ -1016,7 +1015,6 @@ struct wlan_mlme_qos {
 	uint32_t tx_non_aggr_sw_retry_threshold;
 	bool sap_max_inactivity_override;
 	bool sap_uapsd_enabled;
-	bool reject_addba_req;
 };
 
 #ifdef WLAN_FEATURE_11AX
@@ -1557,6 +1555,7 @@ enum station_keepalive_method {
 /**
  * struct wlan_mlme_sta_cfg - MLME STA configuration items
  * @sta_keep_alive_period:          Sends NULL frame to AP period
+ * @bss_max_idle_period:            BSS max idle period
  * @tgt_gtx_usr_cfg:                Target gtx user config
  * @pmkid_modes:                    Enable PMKID modes
  * @wait_cnf_timeout:               Wait assoc cnf timeout
@@ -1578,6 +1577,7 @@ enum station_keepalive_method {
  */
 struct wlan_mlme_sta_cfg {
 	uint32_t sta_keep_alive_period;
+	uint32_t bss_max_idle_period;
 	uint32_t tgt_gtx_usr_cfg;
 	uint32_t pmkid_modes;
 	uint32_t wait_cnf_timeout;
@@ -2223,6 +2223,7 @@ struct wlan_mlme_power {
  * @ap_keep_alive_timeout: AP keep alive timeout value
  * @ap_link_monitor_timeout: AP link monitor timeout value
  * @wmi_wq_watchdog_timeout: timeout period for wmi watchdog bite
+ * @sae_auth_failure_timeout: SAE authentication failure timeout
  */
 struct wlan_mlme_timeout {
 	uint32_t join_failure_timeout;
@@ -2238,6 +2239,7 @@ struct wlan_mlme_timeout {
 	uint32_t ap_keep_alive_timeout;
 	uint32_t ap_link_monitor_timeout;
 	uint32_t wmi_wq_watchdog_timeout;
+	uint32_t sae_auth_failure_timeout;
 };
 
 /**

@@ -1574,9 +1574,35 @@ lim_update_he_caps_mcs(struct mac_context *mac, struct pe_session *session)
 	mlme_priv->he_config.tx_he_mcs_map_lt_80 = tx_mcs_map;
 	mlme_priv->he_config.rx_he_mcs_map_lt_80 = rx_mcs_map;
 }
+
+/**
+ * lim_update_he_caps_htc() - Update htc in he caps
+ * @session: Pointer to PE session
+ * @val: htc he enabled status
+ *
+ * Return: void
+ */
+static void
+lim_update_he_caps_htc(struct pe_session *session, bool val)
+{
+	struct wlan_objmgr_vdev *vdev = session->vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	pe_debug("new htc he: %d", val);
+	mlme_priv->he_config.htc_he = val;
+}
 #else
 static void
 lim_update_he_caps_mcs(struct mac_context *mac, struct pe_session *session)
+{
+}
+
+static void
+lim_update_he_caps_htc(struct pe_session *session,  bool val)
 {
 }
 #endif
@@ -1752,6 +1778,23 @@ static void lim_check_oui_and_update_session(struct mac_context *mac_ctx,
 				SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI_LEN,
 				vendor_ap_search_attr.ie_data, ie_len);
 	wlan_mlme_set_ba_2k_jump_iot_ap(session->vdev, is_vendor_ap_present);
+
+	is_vendor_ap_present = wlan_get_vendor_ie_ptr_from_oui
+				(SIR_MAC_BAD_HTC_HE_VENDOR_OUI1,
+				 SIR_MAC_BAD_HTC_HE_VENDOR_OUI_LEN,
+				 vendor_ap_search_attr.ie_data, ie_len) &&
+			       wlan_get_vendor_ie_ptr_from_oui
+				(SIR_MAC_BAD_HTC_HE_VENDOR_OUI2,
+				 SIR_MAC_BAD_HTC_HE_VENDOR_OUI_LEN,
+				 vendor_ap_search_attr.ie_data, ie_len);
+
+	/*
+	 * For SAP with special OUI, if DUT STA connect with 11ax mode with ht
+	 * control enabled, SAP can't decode unicast pkt from DUT.
+	 * Fix it by clearing ht control bit in he cap when send peer assoc cmd
+	 * to firmware when connect such IOT AP with 11ax mode.
+	 */
+	lim_update_he_caps_htc(session, !is_vendor_ap_present);
 }
 
 static enum mlme_dot11_mode
@@ -3895,10 +3938,43 @@ QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
 	return status;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wma_get_mld_info_sta() - get peer_mld_addr and assoc peer flag for sta
+ * @req: cm_peer_create_req
+ * @peer_mld_addr: peer mld mac addr
+ * @is_assoc_peer: is assoc peer
+ *
+ * Return: void
+ */
+static void wma_get_mld_info_sta(struct cm_peer_create_req *req,
+				 uint8_t **peer_mld_addr,
+				 bool *is_assoc_peer)
+{
+	if (req) {
+		*peer_mld_addr = req->mld_mac.bytes;
+		*is_assoc_peer = req->is_assoc_peer;
+	} else {
+		*peer_mld_addr = NULL;
+		*is_assoc_peer = false;
+	}
+}
+#else
+static void wma_get_mld_info_sta(struct cm_peer_create_req *req,
+				 uint8_t **peer_mld_addr,
+				 bool *is_assoc_peer)
+{
+	*peer_mld_addr = NULL;
+	*is_assoc_peer = false;
+}
+#endif
+
 QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 {
 	struct cm_peer_create_req *req;
 	QDF_STATUS status;
+	uint8_t *peer_mld_addr = NULL;
+	bool is_assoc_peer = false;
 
 	if (!msg || !msg->bodyptr) {
 		mlme_err("msg or msg->bodyptr is NULL");
@@ -3907,7 +3983,9 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 
 	req = msg->bodyptr;
 
-	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes, true);
+	wma_get_mld_info_sta(req, &peer_mld_addr, &is_assoc_peer);
+	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes, true,
+				      peer_mld_addr, is_assoc_peer);
 
 	qdf_mem_free(req);
 
@@ -6230,9 +6308,9 @@ static void lim_process_sme_set_addba_accept(struct mac_context *mac_ctx,
 		return;
 	}
 	if (!msg->addba_accept)
-		mac_ctx->mlme_cfg->qos_mlme_params.reject_addba_req = 1;
+		mac_ctx->reject_addba_req = 1;
 	else
-		mac_ctx->mlme_cfg->qos_mlme_params.reject_addba_req = 0;
+		mac_ctx->reject_addba_req = 0;
 }
 
 static void lim_process_sme_update_edca_params(struct mac_context *mac_ctx,

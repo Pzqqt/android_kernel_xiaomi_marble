@@ -247,7 +247,7 @@ int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
  */
 int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 				 uint32_t len);
-
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 /**
  * wma_mlme_roam_synch_event_handler_cb() - roam synch event handler
  * @handle: wma handle
@@ -262,7 +262,6 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 					 uint32_t len);
 
-#ifndef ROAM_TARGET_IF_CONVERGENCE
 /**
  * wma_roam_synch_frame_event_handler() - roam synch frame event handler
  * @handle: wma handle

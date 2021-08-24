@@ -6992,6 +6992,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISABLE_DATA_MGMT_RSP_TX]
 			= {.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BSS_MAX_IDLE_PERIOD] = {
+			.type = NLA_U16},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX] = {
 			.type = NLA_FLAG},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FT_REASSOCREQ_RSNXE_USED] = {
@@ -8532,12 +8534,19 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	/* After SSR, the dual sta configuration is lost. As SSR is hidden from
+	 * userland, this command will not come from userspace after a SSR. To
+	 * restore this configuration, save this in hdd context and restore
+	 * after re-init.
+	 */
+	hdd_ctx->dual_sta_policy.primary_vdev_id = primary_vdev_id;
+
 	count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
 							  PM_STA_MODE, NULL);
 
 	if (count != 2) {
 		hdd_debug("STA + STA concurrency not present, count:%d", count);
-		return -EINVAL;
+		return 0;
 	}
 
 	/* if dual sta roaming enabled and both sta in DBS then no need
@@ -8565,7 +8574,7 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 	 */
 	if (!policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
 		hdd_debug("STA + STA concurrency not in MCC");
-		return -EINVAL;
+		return 0;
 	}
 
 	status = ucfg_mlme_get_dual_sta_policy(hdd_ctx->psoc, &dual_sta_policy);
@@ -10389,6 +10398,13 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		cfg_val = nla_get_u8(tb[cmd_id]);
 		hdd_debug("pmf cfg: val %d", cfg_val);
 		sme_set_pmf_wep_cfg(hdd_ctx->mac_handle, cfg_val);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BSS_MAX_IDLE_PERIOD;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u16(tb[cmd_id]);
+		hdd_debug("bss max idle period %d", cfg_val);
+		sme_set_bss_max_idle_period(hdd_ctx->mac_handle, cfg_val);
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX;
@@ -12364,6 +12380,13 @@ static int __wlan_hdd_cfg80211_dual_sta_policy(struct wiphy *wiphy,
 		hdd_err("failed to set MLME dual sta config");
 		return -EINVAL;
 	}
+
+	/* After SSR, the dual sta configuration is lost. As SSR is hidden from
+	 * userland, this command will not come from userspace after a SSR. To
+	 * restore this configuration, save this in hdd context and restore
+	 * after re-init.
+	 */
+	hdd_ctx->dual_sta_policy.dual_sta_policy = dual_sta_config;
 
 	return 0;
 }

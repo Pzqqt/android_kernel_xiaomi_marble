@@ -77,7 +77,8 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	}
 
 	status = wma_create_peer(wma, add_sta->staMac,
-				 WMI_PEER_TYPE_NAN_DATA, add_sta->smesessionId);
+				 WMI_PEER_TYPE_NAN_DATA, add_sta->smesessionId,
+				 NULL, false);
 	if (status != QDF_STATUS_SUCCESS) {
 		wma_err("Failed to create peer for "QDF_MAC_ADDR_FMT,
 			 QDF_MAC_ADDR_REF(add_sta->staMac));

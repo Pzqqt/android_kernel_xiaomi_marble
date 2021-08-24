@@ -157,7 +157,8 @@
 
 /*
  * <ini>
- * gEnableModulatedDTIM - Enable/Disable modulated DTIM feature
+ * gEnableModulatedDTIM/ConDTIMSkipping_Number - Enable/Disable modulated DTIM
+ * feature
  * @Min: 0
  * @Max: 10
  * @Default: 0
@@ -179,7 +180,7 @@
  * </ini>
  */
 #define CFG_PMO_ENABLE_MODULATED_DTIM CFG_INI_UINT( \
-	"gEnableModulatedDTIM", \
+	"gEnableModulatedDTIM ConDTIMSkipping_Number", \
 	0, \
 	10, \
 	0, \

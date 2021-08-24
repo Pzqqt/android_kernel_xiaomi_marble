@@ -315,6 +315,28 @@ struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
 void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
 				 uint8_t vdev_id, bool value);
 
+/**
+ * wlan_cm_set_country_code - set country code to vdev rso config
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cc: country code
+ *
+ * Return: void
+ */
+void wlan_cm_set_country_code(struct wlan_objmgr_pdev *pdev,
+			      uint8_t vdev_id, uint8_t  *cc);
+
+/**
+ * wlan_cm_get_country_code - get country code from vdev rso config
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cc: country code
+ *
+ * Return: qdf status
+ */
+QDF_STATUS wlan_cm_get_country_code(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id, uint8_t *cc);
+
 #ifdef FEATURE_WLAN_ESE
 /**
  * wlan_cm_set_ese_assoc  - set ese assoc
@@ -680,6 +702,16 @@ static inline QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
+ * wlan_cm_fw_roam_abort_req() - roam abort request handling
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+
+/**
  * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
  * @wmi:       wmi handle
  * @evt_buf:   Pointer to the event buffer
@@ -905,7 +937,6 @@ cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
 		    struct wlan_objmgr_vdev *vdev);
 
 #ifdef ROAM_TARGET_IF_CONVERGENCE
-
 /**
  * cm_invalid_roam_reason_handler() - Handler for invalid roam reason
  * @vdev_id: vdev id
@@ -935,7 +966,71 @@ cm_handle_roam_reason_ho_failed(uint8_t vdev_id, struct qdf_mac_addr bssid,
  */
 QDF_STATUS
 cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data);
-#endif
+
+/**
+ * wlan_cm_free_roam_synch_frame_ind() - Free the bcn_probe_rsp, reassoc_req,
+ * reassoc_rsp received as part of the ROAM_SYNC_FRAME event
+ *
+ * @vdev - vdev obj mgr ptr
+ *
+ * This API is used to free the buffer allocated during the ROAM_SYNC_FRAME
+ * event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg);
+
+/**
+ * cm_roam_sync_event_handler() - CM handler for roam sync event
+ *
+ * @psoc - psoc objmgr ptr
+ * @event - event ptr
+ * @len - event buff length
+ * @vdev_id - vdev id
+ *
+ * This API is used to handle the buffer allocated during the ROAM_SYNC_EVENT
+ * event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_roam_sync_event_handler(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *event,
+				      uint32_t len,
+				      struct roam_offload_synch_ind *sync_ind);
+
+/**
+ * cm_roam_sync_frame_event_handler() - CM handler for roam sync frame event
+ *
+ * @psoc - psoc objmgr ptr
+ * @frame_ind - ptr to roam sync frame struct
+ *
+ * This API is used to handle the buffer allocated during the ROAM_SYNC_FRAME
+ * event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
+				 struct roam_synch_frame_ind *frame_ind);
+
+/**
+ * cm_roam_sync_event_handler_cb() - CM callback handler for roam
+ * sync event
+ *
+ * @vdev - vdev objmgr ptr
+ * @event - event ptr
+ * @len - event data len
+ *
+ * This API is used to handle the buffer allocated during the ROAM_SYNC
+ * event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
+					 uint8_t *event,
+					 uint32_t len);
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
+
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1063,7 +1158,39 @@ cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-#endif  /* FEATURE_ROAM_OFFLOAD */
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+/**
+ * wlan_get_chan_by_bssid_from_rnr: get chan from rnr through bssid
+ * @vdev: vdev
+ * @cm_id: connect manager id
+ * @link_addr: bssid of given link
+ * @chan: chan to get
+ * @op_class: operation class
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_get_chan_by_bssid_from_rnr(struct wlan_objmgr_vdev *vdev,
+					   wlan_cm_id cm_id,
+					   struct qdf_mac_addr *link_addr,
+					   uint8_t *chan, uint8_t *op_class);
+
+/**
+ * wlan_get_chan_by_link_id_from_rnr: get chan from rnr through link id
+ * @vdev: vdev
+ * @cm_id: connect manager id
+ * @link_id: link id of given link
+ * @chan: chan to get
+ * @op_class: operation class
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS wlan_get_chan_by_link_id_from_rnr(struct wlan_objmgr_vdev *vdev,
+					     wlan_cm_id cm_id,
+					     uint8_t link_id,
+					     uint8_t *chan, uint8_t *op_class);
+#endif
 
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
@@ -1181,5 +1308,79 @@ cm_handle_disconnect_reason(struct vdev_disconnect_event_data *data);
  */
 QDF_STATUS
 cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data);
-#endif
+
+/**
+ * cm_roam_update_vdev() - Update the STA and BSS
+ * @sync_ind: Information needed for roam sync propagation
+ *
+ * This function will perform all the vdev related operations with
+ * respect to the self sta and the peer after roaming and completes
+ * the roam synch propagation with respect to WMA layer.
+ *
+ * Return: None
+ */
+void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind);
+
+/**
+ * cm_roam_pe_sync_callback() - Callback registered at pe, gets invoked when
+ * ROAM SYNCH event is received from firmware
+ * @sync_ind: Structure with roam synch parameters
+ * @len: length for bss_description
+ *
+ * This is a PE level callback called from CM to complete the roam synch
+ * propagation at PE level and also fill the BSS descriptor which will be
+ * helpful further to complete the roam synch propagation.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_pe_sync_callback(struct roam_offload_synch_ind *sync_ind,
+			 uint16_t len);
+
+/**
+ * cm_update_phymode_on_roam() - Update new phymode after
+ * ROAM SYNCH event is received from firmware
+ * @vdev_id: roamed vdev id
+ * @bssid: bssid
+ * @chan: wmi channel
+ *
+ * This api will update the phy mode after roam sync is received.
+ *
+ * Return: none
+ */
+void cm_update_phymode_on_roam(uint8_t vdev_id, uint8_t *bssid,
+			       wmi_channel *chan);
+
+/**
+ * wlan_cm_fw_to_host_phymode() - Convert fw phymode to host
+ * @phymode: wmi phymode
+ *
+ * This api will convert the phy mode from fw to host type.
+ *
+ * Return: wlan phymode
+ */
+enum wlan_phymode
+wlan_cm_fw_to_host_phymode(WMI_HOST_WLAN_PHY_MODE phymode);
+
+/**
+ * wlan_cm_sta_mlme_vdev_roam_notify() - STA mlme vdev roam nottify
+ *
+ * @sync_ind: Information needed for roam sync propagation
+ *
+ * This function will invokes CM roam callback api to continue
+ * the roam synch propagation.
+ *
+ * Return: None
+ */
+QDF_STATUS
+wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
+				  uint16_t data_len, void *data);
+#else
+static inline QDF_STATUS
+wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
+				  uint16_t data_len, void *data)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif  /* WLAN_CM_ROAM_API_H__ */

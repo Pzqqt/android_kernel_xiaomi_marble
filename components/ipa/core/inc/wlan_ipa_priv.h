@@ -714,7 +714,7 @@ struct wlan_ipa_priv {
 	ipa_uc_offload_control_req ipa_tx_op;
 	ipa_intrabss_control_req ipa_intrabss_op;
 
-#ifdef IPA_LAN_RX_NAPI_SUPPORT
+#ifdef QCA_CONFIG_RPS
 	/*Callback to enable RPS for STA in STA+SAP scenario*/
 	wlan_ipa_rps_enable rps_enable;
 #endif

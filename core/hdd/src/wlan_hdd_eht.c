@@ -199,7 +199,7 @@ void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx)
 	hdd_exit();
 }
 
-int hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint8_t rate_code)
+int hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint16_t rate_code)
 {
 	uint8_t preamble = 0, nss = 0, rix = 0;
 	int ret;
@@ -220,11 +220,14 @@ int hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint8_t rate_code)
 		return -EIO;
 	}
 
-	rix = RC_2_RATE_IDX_11BE(rate_code);
-	preamble = WMI_RATE_PREAMBLE_EHT;
-	nss = HT_RC_2_STREAMS_11BE(rate_code);
+	if ((rate_code >> 8) != WMI_RATE_PREAMBLE_EHT) {
+		hdd_err_rl("Invalid input: %x", rate_code);
+		return -EIO;
+	}
 
-	rate_code = hdd_assemble_rate_code(preamble, nss, rix);
+	rix = RC_2_RATE_IDX_11BE(rate_code);
+	preamble = rate_code >> 8;
+	nss = HT_RC_2_STREAMS_11BE(rate_code) + 1;
 
 	hdd_debug("SET_11BE_RATE rate_code %d rix %d preamble %x nss %d",
 		  rate_code, rix, preamble, nss);
@@ -244,7 +247,7 @@ __hdd_sysfs_set_11be_fixed_rate(struct net_device *net_dev, char const *buf,
 	struct hdd_context *hdd_ctx;
 	char buf_local[MAX_SYSFS_USER_COMMAND_SIZE_LENGTH + 1];
 	int ret;
-	uint8_t rate_code;
+	uint16_t rate_code;
 	char *sptr, *token;
 
 	if (hdd_validate_adapter(adapter)) {
@@ -273,7 +276,7 @@ __hdd_sysfs_set_11be_fixed_rate(struct net_device *net_dev, char const *buf,
 
 	sptr = buf_local;
 	token = strsep(&sptr, " ");
-	if (!token || kstrtou8(token, 0, &rate_code)) {
+	if (!token || kstrtou16(token, 0, &rate_code)) {
 		hdd_err_rl("invalid input");
 		return -EINVAL;
 	}

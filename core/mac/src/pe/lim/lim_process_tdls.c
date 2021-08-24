@@ -922,15 +922,40 @@ static void lim_tdls_fill_setup_rsp_he_cap(struct mac_context *mac,
 					pe_session);
 }
 
+static void lim_tdls_populate_he_operations(struct mac_context *mac,
+					    struct pe_session *pe_session,
+					    tDot11fIEhe_op *he_op)
+{
+	struct wlan_mlme_he_caps *he_cap_info;
+	uint16_t mcs_set = 0;
+
+	he_cap_info = &mac->mlme_cfg->he_caps;
+	he_op->co_located_bss = 0;
+	he_op->bss_color = pe_session->he_bss_color_change.new_color;
+	if (!he_op->bss_color)
+		he_op->bss_col_disabled = 1;
+
+	mcs_set = (uint16_t)he_cap_info->he_ops_basic_mcs_nss;
+	if (pe_session->nss == NSS_1x1_MODE)
+		mcs_set |= 0xFFFC;
+	else
+		mcs_set |= 0xFFF0;
+
+	*((uint16_t *)he_op->basic_mcs_nss) = mcs_set;
+	populate_dot11f_he_operation(mac,
+				     pe_session,
+				     he_op);
+}
+
 static void lim_tdls_fill_setup_cnf_he_op(struct mac_context *mac,
 					  uint32_t peer_capability,
 					  tDot11fTDLSSetupCnf *tdls_setup_cnf,
 					  struct pe_session *pe_session)
 {
 	if (CHECK_BIT(peer_capability, TDLS_PEER_HE_CAP))
-		populate_dot11f_he_operation(mac,
-					     pe_session,
-					     &tdls_setup_cnf->he_op);
+		lim_tdls_populate_he_operations(mac,
+						pe_session,
+						&tdls_setup_cnf->he_op);
 }
 
 static void lim_tdls_populate_he_matching_rate_set(struct mac_context *mac_ctx,
@@ -1102,14 +1127,21 @@ static void lim_tdls_update_node_he_caps(struct mac_context *mac,
 	if (sta->he_config.present)
 		sta->mlmStaContext.he_capable = 1;
 
-	if (pe_session && sta->he_config.present)
+	if (sta->he_config.present)
 		lim_tdls_set_he_chan_width(&sta->he_config, pe_session);
 
 	lim_log_he_cap(mac, &sta->he_config);
 
-	if (lim_is_he_6ghz_band(pe_session))
+	if (lim_is_he_6ghz_band(pe_session)) {
 		lim_tdls_populate_dot11f_6hgz_he_caps(mac, add_sta_req,
 						      &sta->he_6g_band_cap);
+		/*
+		 * In 6Ghz, vht and ht ie may not present, peer channel width
+		 * is populated while extracting HT and VHT cap itself. So,
+		 * incase of 6ghz fill the chan_width.
+		 */
+		lim_update_stads_he_6ghz_op(pe_session, sta);
+	}
 }
 
 #else

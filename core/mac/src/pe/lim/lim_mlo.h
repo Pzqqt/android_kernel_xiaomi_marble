@@ -43,15 +43,6 @@
 QDF_STATUS lim_partner_link_info_change(struct wlan_objmgr_vdev *vdev);
 
 /**
- * lim_get_max_simultaneous_link_num() - Get max simultaneous link num
- *                                       It is max vdev number for sap
- * @session: pe session
- *
- * Return: max simultaneous link num
- */
-uint8_t lim_get_max_simultaneous_link_num(struct pe_session *session);
-
-/**
  * lim_mlo_free_vdev_ref() - release vdev reference
  * @vdev: vdev obj
  *
@@ -214,6 +205,20 @@ void lim_mlo_ap_sta_assoc_fail(struct wlan_objmgr_peer *peer);
 void lim_mlo_delete_link_peer(struct pe_session *pe_session,
 			      tpDphHashNode sta_ds);
 
+/**
+ * lim_mlo_assoc_ind_upper_layer() - indicate assoc confirm to upper layer
+ *                                   for mlo partner link
+ * @mac: pointer to mac_context
+ * @pe_session: pe session
+ * @mlo_info: mlo partner information
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
+					 struct pe_session *pe_session,
+					 struct mlo_partner_info *mlo_info);
+void lim_mlo_save_mlo_info(tpDphHashNode sta_ds,
+			   struct mlo_partner_info *mlo_info);
 #else
 
 static inline void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
@@ -264,6 +269,19 @@ static inline void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
 
 static inline void lim_mlo_delete_link_peer(struct pe_session *pe_session,
 					    tpDphHashNode sta_ds)
+{
+}
+
+static inline QDF_STATUS lim_mlo_assoc_ind_upper_layer(
+					struct mac_context *mac,
+					struct pe_session *pe_session,
+					struct mlo_partner_info *mlo_info)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void lim_mlo_save_mlo_info(tpDphHashNode sta_ds,
+					 struct mlo_partner_info *mlo_info)
 {
 }
 #endif

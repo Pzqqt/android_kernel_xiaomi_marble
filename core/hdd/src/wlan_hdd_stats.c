@@ -1612,7 +1612,9 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
 
-	if (adapter->device_mode != QDF_STA_MODE) {
+	if (adapter->device_mode != QDF_STA_MODE &&
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE &&
+	    adapter->device_mode != QDF_P2P_GO_MODE) {
 		hdd_debug("Cannot set LL_STATS for device mode %d",
 			  adapter->device_mode);
 		return -EINVAL;

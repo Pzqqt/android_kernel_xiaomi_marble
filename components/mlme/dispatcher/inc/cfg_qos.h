@@ -194,27 +194,6 @@
 
 /*
  * <ini>
- * reject_addba_req - Configure Rx ADDBA Req reject for PEER AP
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * reject_addba_req gives an option to reject ADDBA Req from PEER AP
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_REJECT_ADDBA_REQ CFG_INI_BOOL( \
-			"reject_addba_req", \
-			0, \
-			"Addba Req Reject")
-/*
- * <ini>
  * gTxAggSwRetryBE - Configure Tx aggregation sw retry for BE
  * @Min: 0
  * @Max: 64
@@ -583,7 +562,6 @@
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_VO) \
 	CFG(CFG_TX_NON_AGGR_SW_RETRY) \
 	CFG(CFG_SAP_QOS_UAPSD) \
-	CFG(CFG_TX_IOT_AGGR) \
-	CFG(CFG_REJECT_ADDBA_REQ)
+	CFG(CFG_TX_IOT_AGGR)
 
 #endif /* __CFG_MLME_QOS_H */

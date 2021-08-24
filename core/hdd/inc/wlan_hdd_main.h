@@ -119,6 +119,7 @@
 #include "wlan_hdd_sta_info.h"
 #include "wlan_hdd_bus_bandwidth.h"
 #include <wlan_hdd_cm_api.h>
+#include "wlan_hdd_mlo.h"
 
 /*
  * Preprocessor definitions and constants
@@ -442,6 +443,8 @@ enum hdd_nb_cmd_id {
 #define NUM_TX_RX_HISTOGRAM_MASK (NUM_TX_RX_HISTOGRAM - 1)
 
 #define HDD_NOISE_FLOOR_DBM (-96)
+
+#define INTF_MACADDR_MASK       0x7
 
 /**
  * enum hdd_auth_key_mgmt - auth key mgmt protocols
@@ -1827,6 +1830,18 @@ struct hdd_adapter_ops_history {
 };
 
 /**
+ * struct hdd_dual_sta_policy - Concurrent STA policy configuration
+ * @dual_sta_policy: Possible values are defined in enum
+ * qca_wlan_concurrent_sta_policy_config
+ * @primary_vdev_id: specified iface is the primary STA iface, say 0 means
+ * vdev 0 is acting as primary interface
+ */
+struct hdd_dual_sta_policy {
+	uint8_t dual_sta_policy;
+	uint8_t primary_vdev_id;
+};
+
+/**
  * struct hdd_context - hdd shared driver and psoc/device context
  * @psoc: object manager psoc context
  * @pdev: object manager pdev context
@@ -1852,6 +1867,7 @@ struct hdd_adapter_ops_history {
  * @is_dual_mac_cfg_updated: indicate whether dual mac cfg has been updated
  * @twt_en_dis_work: work to send twt enable/disable cmd on MCC/SCC concurrency
  * @dump_in_progress: Stores value of dump in progress
+ * @hdd_dual_sta_policy: Concurrent STA policy configuration
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -1968,7 +1984,6 @@ struct hdd_context {
 #endif /* FEATURE_WLAN_CH_AVOID */
 
 	uint8_t max_intf_count;
-	uint8_t current_intf_count;
 #ifdef WLAN_FEATURE_LPSS
 	uint8_t lpss_support;
 #endif
@@ -2210,6 +2225,10 @@ struct hdd_context {
 	bool is_wifi3_0_target;
 	bool dump_in_progress;
 	qdf_time_t bw_vote_time;
+	struct hdd_dual_sta_policy dual_sta_policy;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct hdd_mld_mac_info mld_mac_info;
+#endif
 };
 
 /**

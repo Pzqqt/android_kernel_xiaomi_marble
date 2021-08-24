@@ -1540,7 +1540,7 @@ void lim_process_abort_scan_ind(struct mac_context *mac_ctx,
 	req->cancel_req.vdev_id = vdev_id;
 	req->cancel_req.req_type = WLAN_SCAN_CANCEL_SINGLE;
 
-	status = ucfg_scan_cancel(req);
+	status = wlan_scan_cancel(req);
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("Cancel scan request failed");
 

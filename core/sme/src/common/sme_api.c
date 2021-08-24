@@ -4692,7 +4692,7 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	uint8_t *self_peer_macaddr, vdev_id = wlan_vdev_get_id(vdev);
 	struct scheduler_msg self_peer_delete_msg = {0};
 	struct del_vdev_params *del_self_peer;
 
@@ -4732,10 +4732,14 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
 	if (!del_self_peer)
 		return QDF_STATUS_E_NOMEM;
 
+	self_peer_macaddr = wlan_vdev_mlme_get_mldaddr(vdev);
+	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)self_peer_macaddr))
+		self_peer_macaddr = wlan_vdev_mlme_get_macaddr(vdev);
+
 	del_self_peer->vdev = vdev;
 	del_self_peer->vdev_id = wlan_vdev_get_id(vdev);
-	qdf_mem_copy(del_self_peer->self_mac_addr,
-		     wlan_vdev_mlme_get_macaddr(vdev), sizeof(tSirMacAddr));
+	qdf_mem_copy(del_self_peer->self_mac_addr, self_peer_macaddr,
+		     sizeof(tSirMacAddr));
 
 	self_peer_delete_msg.bodyptr = del_self_peer;
 	self_peer_delete_msg.callback = mlme_vdev_self_peer_delete;
@@ -14639,6 +14643,12 @@ void sme_set_amsdu(mac_handle_t mac_handle, bool enable)
 	mac_ctx->is_usr_cfg_amsdu_enabled = enable;
 }
 
+void sme_set_bss_max_idle_period(mac_handle_t mac_handle, uint16_t cfg_val)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	mac_ctx->mlme_cfg->sta.bss_max_idle_period = cfg_val;
+}
+
 #ifdef WLAN_FEATURE_11AX
 void sme_check_enable_ru_242_tx(mac_handle_t mac_handle, uint8_t vdev_id)
 {
@@ -14723,7 +14733,6 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_pream_puncturing = 0;
 	csr_update_session_he_cap(mac_ctx, session);
 
-	wlan_cm_set_check_6ghz_security(mac_ctx->psoc, true);
 	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, false);
 	if (QDF_IS_STATUS_ERROR(status))
 		sme_err("Failed not set enable bcast probe resp info, %d",
@@ -14737,6 +14746,7 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 			status);
 
 	mac_ctx->mlme_cfg->sta.usr_disabled_roaming = true;
+	mac_ctx->mlme_cfg->sta.bss_max_idle_period = 0;
 }
 
 void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
@@ -14756,7 +14766,7 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 		mac_ctx->mlme_cfg->he_caps.he_cap_orig;
 	csr_update_session_he_cap(mac_ctx, session);
 
-	wlan_cm_reset_check_6ghz_security(mac_ctx->psoc);
+	wlan_cm_set_check_6ghz_security(mac_ctx->psoc, true);
 	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, true);
 	if (QDF_IS_STATUS_ERROR(status))
 		sme_err("Failed not set enable bcast probe resp info, %d",
@@ -14769,6 +14779,8 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 		sme_err("Failed to set enable bcast probe resp in FW, %d",
 			status);
 	mac_ctx->is_usr_cfg_pmf_wep = PMF_CORRECT_KEY;
+	mac_ctx->mlme_cfg->sta.bss_max_idle_period =
+			mac_ctx->mlme_cfg->sta.sta_keep_alive_period;
 
 	if (mac_ctx->usr_cfg_disable_rsp_tx)
 		sme_set_cfg_disable_tx(mac_handle, vdev_id, 0);

@@ -2543,7 +2543,8 @@ wma_send_ll_stats_get_cmd(tp_wma_handle wma_handle,
 {
 	if (!(cfg_get(wma_handle->psoc, CFG_CLUB_LL_STA_AND_GET_STATION) &&
 	      wmi_service_enabled(wma_handle->wmi_handle,
-				  wmi_service_get_station_in_ll_stats_req)))
+				  wmi_service_get_station_in_ll_stats_req) &&
+	      wma_handle->interfaces[cmd->vdev_id].type == WMI_VDEV_TYPE_STA))
 		return wmi_unified_process_ll_stats_get_cmd(
 						wma_handle->wmi_handle, cmd);
 
@@ -4285,6 +4286,7 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS wma_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 					 uint16_t data_len, void *data)
 {
@@ -4304,6 +4306,7 @@ QDF_STATUS wma_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 
 	return status;
 }
+#endif
 
 QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t data_len, void *data)

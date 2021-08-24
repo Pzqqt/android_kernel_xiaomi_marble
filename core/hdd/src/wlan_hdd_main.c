@@ -204,6 +204,7 @@
 #include "wlan_hdd_medium_assess.h"
 #include "wlan_hdd_eht.h"
 #include <linux/bitfield.h>
+#include "wlan_hdd_mlo.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -1614,6 +1615,7 @@ void hdd_update_macaddr(struct hdd_context *hdd_ctx,
 			QDF_MAC_ADDR_REF(hdd_ctx->derived_mac_addr[i].bytes));
 		hdd_ctx->num_derived_addr++;
 	}
+	hdd_update_mld_mac_addr(hdd_ctx, hw_macaddr);
 }
 
 #ifdef FEATURE_WLAN_TDLS
@@ -4162,6 +4164,56 @@ void hdd_set_qmi_stats_enabled(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef CONFIG_FW_LOGS_BASED_ON_INI
+/**
+ * hdd_set_fw_log_params() - Set log parameters to FW
+ * @hdd_ctx: HDD Context
+ * @vdev_id: vdev_id
+ *
+ * This function set the FW Debug log level based on the INI.
+ *
+ * Return: None
+ */
+static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
+				  uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	uint16_t enable_fw_log_level, enable_fw_log_type;
+	int ret;
+
+	if (!hdd_ctx->config->enable_fw_log) {
+		hdd_debug("enable_fw_log not enabled in INI");
+		return;
+	}
+
+	/* Enable FW logs based on INI configuration */
+	status = ucfg_fwol_get_enable_fw_log_type(hdd_ctx->psoc,
+						  &enable_fw_log_type);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	ret = sme_cli_set_command(vdev_id, WMI_DBGLOG_TYPE,
+				  enable_fw_log_type, DBG_CMD);
+	if (ret != 0)
+		hdd_err("Failed to enable FW log type ret %d", ret);
+
+	status = ucfg_fwol_get_enable_fw_log_level(hdd_ctx->psoc,
+						   &enable_fw_log_level);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	ret = sme_cli_set_command(vdev_id, WMI_DBGLOG_LOG_LEVEL,
+				  enable_fw_log_level, DBG_CMD);
+	if (ret != 0)
+		hdd_err("Failed to enable FW log level ret %d", ret);
+
+	sme_enable_fw_module_log_level(hdd_ctx->mac_handle, vdev_id);
+}
+#else
+static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx, uint8_t vdev_id)
+{
+}
+
+#endif
+
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 {
 	int ret = 0;
@@ -4361,6 +4413,12 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			hdd_enable_power_management(hdd_ctx);
 			hdd_err("in ftm mode, no need to configure cds modules");
+			hdd_info("Enable FW log in ftm mode");
+			/*
+			 * Since vdev is not created for FTM mode,
+			 * in FW use vdev_id = 0.
+			 */
+			hdd_set_fw_log_params(hdd_ctx, 0);
 			ret = -EINVAL;
 			break;
 		}
@@ -6337,65 +6395,6 @@ static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_FW_LOGS_BASED_ON_INI
-/**
- * hdd_set_fw_log_params() - Set log parameters to FW
- * @hdd_ctx: HDD Context
- * @adapter: HDD Adapter
- *
- * This function set the FW Debug log level based on the INI.
- *
- * Return: None
- */
-static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
-				  struct hdd_adapter *adapter)
-{
-	QDF_STATUS status;
-	uint16_t enable_fw_log_level, enable_fw_log_type;
-	int ret;
-
-	if (QDF_GLOBAL_FTM_MODE == cds_get_conparam() ||
-	    (!hdd_ctx->config->enable_fw_log)) {
-		hdd_debug("enable_fw_log not enabled in INI or in FTM mode return");
-		return;
-	}
-
-	/* Enable FW logs based on INI configuration */
-	status = ucfg_fwol_get_enable_fw_log_type(hdd_ctx->psoc,
-						  &enable_fw_log_type);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-	ret = sme_cli_set_command(adapter->vdev_id,
-			WMI_DBGLOG_TYPE,
-			enable_fw_log_type,
-			DBG_CMD);
-	if (ret != 0)
-		hdd_err("Failed to enable FW log type ret %d",
-			ret);
-
-	status = ucfg_fwol_get_enable_fw_log_level(hdd_ctx->psoc,
-						   &enable_fw_log_level);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-	ret = sme_cli_set_command(adapter->vdev_id,
-			WMI_DBGLOG_LOG_LEVEL,
-			enable_fw_log_level,
-			DBG_CMD);
-	if (ret != 0)
-		hdd_err("Failed to enable FW log level ret %d",
-			ret);
-
-	sme_enable_fw_module_log_level(hdd_ctx->mac_handle,
-				       adapter->vdev_id);
-}
-#else
-static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
-				  struct hdd_adapter *adapter)
-{
-}
-
-#endif
-
 /**
  * hdd_configure_chain_mask() - programs chain mask to firmware
  * @adapter: HDD adapter
@@ -6758,7 +6757,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	}
 
 	if (!hdd_ctx->is_fw_dbg_log_levels_configured) {
-		hdd_set_fw_log_params(hdd_ctx, adapter);
+		hdd_set_fw_log_params(hdd_ctx, adapter->vdev_id);
 		hdd_ctx->is_fw_dbg_log_levels_configured = true;
 	}
 
@@ -6863,16 +6862,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	struct hdd_adapter *adapter = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t i;
-
-	if (hdd_ctx->current_intf_count >= WLAN_MAX_VDEVS) {
-		/*
-		 * Max limit reached on the number of vdevs configured by the
-		 * host. Return error
-		 */
-		hdd_err("Unable to add virtual intf: currentVdevCnt=%d,hostConfiguredVdevCnt=%d",
-			hdd_ctx->current_intf_count, hdd_ctx->max_intf_count);
-		return NULL;
-	}
 
 	status = wlan_hdd_validate_mac_address((struct qdf_mac_addr *)mac_addr);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -7084,11 +7073,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	policy_mgr_set_concurrency_mode(hdd_ctx->psoc, session_type);
 
-	/* Adapter successfully added. Increment the vdev count */
-	hdd_ctx->current_intf_count++;
-
-	hdd_debug("current_intf_count=%d", hdd_ctx->current_intf_count);
-
 	hdd_check_and_restart_sap_with_non_dfs_acs();
 
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
@@ -7134,9 +7118,6 @@ static void __hdd_close_adapter(struct hdd_context *hdd_ctx,
 	qdf_event_destroy(&adapter->peer_cleanup_done);
 	hdd_adapter_feature_update_work_deinit(adapter);
 	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
-
-	if (hdd_ctx->current_intf_count != 0)
-		hdd_ctx->current_intf_count--;
 }
 
 void hdd_close_adapter(struct hdd_context *hdd_ctx,
@@ -12259,6 +12240,10 @@ struct hdd_context *hdd_context_create(struct device *dev)
 		goto err_free_config;
 	}
 
+	status = cfg_parse(WLAN_CONNECTION_ROAMING_INI_FILE);
+	if (QDF_IS_STATUS_ERROR(status))
+		status = cfg_parse(WLAN_CONNECTION_ROAMING_BACKUP_INI_FILE);
+
 	ret = hdd_objmgr_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
 	if (ret) {
 		QDF_DEBUG_PANIC("Psoc creation fails!");
@@ -15994,6 +15979,9 @@ static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_GET_ADAPTER;
 	int ret;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+		return;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret != 0)

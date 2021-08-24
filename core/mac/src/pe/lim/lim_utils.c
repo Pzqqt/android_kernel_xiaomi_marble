@@ -72,6 +72,9 @@
 #ifdef WLAN_FEATURE_11BE
 #include "wma_eht.h"
 #endif
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <lim_mlo.h>
+#endif
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -6296,6 +6299,10 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 	if (!src->present)
 		return;
 
+	pe_debug("source extended capabilities length:%d", src->num_bytes);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   src, src->num_bytes);
+
 	/* Return if strip the capabilities from @dst which not present */
 	if (!dst->present && !add)
 		return;
@@ -6310,10 +6317,15 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 		tempsrc++;
 	}
 	dst->num_bytes = lim_compute_ext_cap_ie_length(dst);
-	if (dst->num_bytes == 0)
+	if (dst->num_bytes == 0) {
 		dst->present = 0;
-	else
+	} else {
 		dst->present = 1;
+		pe_debug("destination extended capabilities length: %d",
+			 dst->num_bytes);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   dst, dst->num_bytes);
+	}
 }
 
 /**
@@ -6901,6 +6913,12 @@ static void lim_intersect_he_caps(tDot11fIEhe_cap *rcvd_he,
 		peer_he->tb_ppdu_tx_stbc_gt_80mhz = 1;
 	else
 		peer_he->tb_ppdu_tx_stbc_gt_80mhz = 0;
+
+	if (session_he->htc_he && peer_he->htc_he)
+		peer_he->htc_he = 1;
+	else
+		peer_he->htc_he = 0;
+	pe_debug("intersected htc he is: %d", peer_he->htc_he);
 
 	/* Tx Doppler is first bit and Rx Doppler is second bit */
 	if (session_he->doppler) {
@@ -7957,6 +7975,21 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		 rates->rx_he_mcs_map_80_80, rates->tx_he_mcs_map_80_80);
 
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+			     tpDphHashNode sta_ds)
+{
+	if (add_sta_params->eht_capable) {
+		WLAN_ADDR_COPY(add_sta_params->mld_mac_addr, sta_ds->mld_addr);
+		add_sta_params->is_assoc_peer = lim_is_mlo_recv_assoc(sta_ds);
+	}
+	pe_debug("eht_capable: %d mld mac " QDF_MAC_ADDR_FMT " assoc peer %d",
+		 add_sta_params->eht_capable,
+		 QDF_MAC_ADDR_REF(add_sta_params->mld_mac_addr),
+		 add_sta_params->is_assoc_peer);
 }
 #endif
 

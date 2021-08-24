@@ -251,6 +251,16 @@ uint16_t lim_assign_mlo_conn_idx(struct mac_context *mac,
 void
 lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
 			 struct pe_session *pe_session, bool free_aid);
+
+/**
+ * lim_update_sta_mlo_info() - update sta mlo information
+ * @add_sta_params: pointer to tpAddStaParams
+ * @sta_ds: pointer tpDphHashNode
+ *
+ * Return: Void
+ */
+void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+			     tpDphHashNode sta_ds);
 #else
 static inline uint16_t lim_assign_mlo_conn_idx(struct mac_context *mac,
 					       struct pe_session *pe_session,
@@ -262,6 +272,11 @@ static inline uint16_t lim_assign_mlo_conn_idx(struct mac_context *mac,
 static inline void
 lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
 			 struct pe_session *pe_session, bool free_aid)
+{
+}
+
+static inline void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+					   tpDphHashNode sta_ds)
 {
 }
 #endif

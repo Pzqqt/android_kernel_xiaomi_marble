@@ -1792,6 +1792,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tSirMacAddr sa,
 
 	lim_mlo_set_mld_mac_peer(sta_ds, assoc_req->mld_mac);
 
+	lim_mlo_save_mlo_info(sta_ds, &assoc_req->mlo_info);
+
 	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,
 			&(assoc_req->supportedRates),
 			&(assoc_req->extendedRates),
@@ -2122,8 +2124,8 @@ static void lim_defer_sme_indication(struct mac_context *mac_ctx,
 
 	sta_pre_auth_ctx->assoc_req.present = true;
 	sta_pre_auth_ctx->assoc_req.sub_type = sub_type;
-	qdf_mem_copy(&sta_pre_auth_ctx->assoc_req.sa, sa,
-		     sizeof(tSirMacMgmtHdr));
+	qdf_mem_copy(sta_pre_auth_ctx->assoc_req.sa, sa,
+		     sizeof(sta_pre_auth_ctx->assoc_req.sa));
 	sta_pre_auth_ctx->assoc_req.assoc_req = assoc_req;
 	sta_pre_auth_ctx->assoc_req.pmf_connection = pmf_connection;
 	sta_pre_auth_ctx->assoc_req.assoc_req_copied = assoc_req_copied;
@@ -2189,8 +2191,10 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 	 * 1 - cfg_item(WNI_CFG_ASSOC_STA_LIMIT)
 	 */
 
-	if (assoc_req->eht_cap.present &&
-	    IS_DOT11_MODE_EHT(session->dot11mode))
+	if (wlan_vdev_mlme_is_mlo_ap(session->vdev) &&
+	    assoc_req->eht_cap.present &&
+	    IS_DOT11_MODE_EHT(session->dot11mode) &&
+	    (partner_peer_idx || assoc_req->mlo_info.num_partner_links))
 		peer_idx = lim_assign_mlo_conn_idx(mac_ctx, session,
 						   partner_peer_idx);
 	else
@@ -2222,8 +2226,10 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 			   QDF_MAC_ADDR_FMT, peer_idx, QDF_MAC_ADDR_REF(sa));
 
 		/* Release AID */
-		if (assoc_req->eht_cap.present &&
-		    IS_DOT11_MODE_EHT(session->dot11mode))
+		if (wlan_vdev_mlme_is_mlo_ap(session->vdev) &&
+		    assoc_req->eht_cap.present &&
+		    IS_DOT11_MODE_EHT(session->dot11mode) &&
+		    (partner_peer_idx || assoc_req->mlo_info.num_partner_links))
 			lim_release_mlo_conn_idx(mac_ctx, peer_idx, session,
 						 true);
 		else

@@ -288,6 +288,27 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"timeout period for wmi watchdog bite")
 
+/*
+ * <ini>
+ * sae_auth_failure_timeout - SAE Auth failure timeout value in msec
+ * @Min: 500
+ * @Max: 1000
+ * @Default: 1000
+ *
+ * This cfg is used to configure the SAE auth failure timeout.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SAE_AUTH_FAILURE_TIMEOUT CFG_INI_UINT( \
+		"sae_auth_failure_timeout", \
+		500, \
+		1000, \
+		1000, \
+		CFG_VALUE_OR_DEFAULT, \
+		"SAE auth failure timeout")
+
 #define CFG_TIMEOUT_ALL \
 	CFG(CFG_JOIN_FAILURE_TIMEOUT) \
 	CFG(CFG_AUTH_FAILURE_TIMEOUT) \
@@ -300,6 +321,7 @@
 	CFG(CFG_HEART_BEAT_THRESHOLD) \
 	CFG(CFG_AP_KEEP_ALIVE_TIMEOUT) \
 	CFG(CFG_AP_LINK_MONITOR_TIMEOUT) \
-	CFG(CFG_WMI_WQ_WATCHDOG)
+	CFG(CFG_WMI_WQ_WATCHDOG) \
+	CFG(CFG_SAE_AUTH_FAILURE_TIMEOUT)
 
 #endif /* __CFG_MLME_TIMEOUT_H */

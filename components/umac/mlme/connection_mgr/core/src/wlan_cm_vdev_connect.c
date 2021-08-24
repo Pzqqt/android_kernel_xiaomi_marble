@@ -287,21 +287,6 @@ error:
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-static const char *cm_diag_get_ch_width_str(uint8_t ch_width)
-{
-	switch (ch_width) {
-	CASE_RETURN_STRING(BW_20MHZ);
-	CASE_RETURN_STRING(BW_40MHZ);
-	CASE_RETURN_STRING(BW_80MHZ);
-	CASE_RETURN_STRING(BW_160MHZ);
-	CASE_RETURN_STRING(BW_80P80MHZ);
-	CASE_RETURN_STRING(BW_5MHZ);
-	CASE_RETURN_STRING(BW_10MHZ);
-	default:
-		return "Unknown";
-	}
-}
-
 #ifdef WLAN_FEATURE_11BE
 static const
 char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
@@ -314,13 +299,42 @@ char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 		return "Unknown";
 	}
 }
+
+static const char *cm_diag_get_320_ch_width_str(uint8_t ch_width)
+{
+	switch (ch_width) {
+	CASE_RETURN_STRING(BW_320MHZ);
+	default:
+		return "Unknown";
+	}
+}
 #else
 static const
 char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 {
 	return "Unknown";
 }
+
+static const char *cm_diag_get_320_ch_width_str(uint8_t ch_width)
+{
+	return "Unknown";
+}
 #endif
+
+static const char *cm_diag_get_ch_width_str(uint8_t ch_width)
+{
+	switch (ch_width) {
+	CASE_RETURN_STRING(BW_20MHZ);
+	CASE_RETURN_STRING(BW_40MHZ);
+	CASE_RETURN_STRING(BW_80MHZ);
+	CASE_RETURN_STRING(BW_160MHZ);
+	CASE_RETURN_STRING(BW_80P80MHZ);
+	CASE_RETURN_STRING(BW_5MHZ);
+	CASE_RETURN_STRING(BW_10MHZ);
+	default:
+		return cm_diag_get_320_ch_width_str(ch_width);
+	}
+}
 
 static const char *cm_diag_get_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 {
@@ -428,11 +442,26 @@ cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 	else
 		return DOT11_MODE_MAX;
 }
+
+static enum mgmt_ch_width
+cm_get_diag_eht_320_ch_width(enum phy_ch_width ch_width)
+{
+	if (ch_width == CH_WIDTH_320MHZ)
+		return BW_320MHZ;
+	else
+		return BW_MAX;
+}
 #else
 static enum mgmt_dot11_mode
 cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 {
 	return DOT11_MODE_MAX;
+}
+
+static enum mgmt_ch_width
+cm_get_diag_eht_320_ch_width(enum phy_ch_width ch_width)
+{
+	return BW_MAX;
 }
 #endif
 
@@ -480,7 +509,7 @@ static enum mgmt_ch_width cm_get_diag_ch_width(enum phy_ch_width ch_width)
 	case CH_WIDTH_10MHZ:
 		return BW_10MHZ;
 	default:
-		return BW_MAX;
+		return cm_get_diag_eht_320_ch_width(ch_width);
 	}
 }
 
@@ -1218,9 +1247,37 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * cm_set_peer_mld_info() - set mld_mac and is_assoc_peer flag
+ * @req: cm_peer_create_req
+ * @mld_mac: mld mac addr
+ * @is_assoc_peer: is assoc peer
+ *
+ * Return: void
+ */
+static void cm_set_peer_mld_info(struct cm_peer_create_req *req,
+				 struct qdf_mac_addr *mld_mac,
+				 bool is_assoc_peer)
+{
+	if (req) {
+		qdf_copy_macaddr(&req->mld_mac, mld_mac);
+		req->is_assoc_peer = is_assoc_peer;
+	}
+}
+#else
+static void cm_set_peer_mld_info(struct cm_peer_create_req *req,
+				 struct qdf_mac_addr *mld_mac,
+				 bool is_assoc_peer)
+{
+}
+#endif
+
 QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
-			    struct qdf_mac_addr *peer_mac)
+			    struct qdf_mac_addr *peer_mac,
+			    struct qdf_mac_addr *mld_mac,
+			    bool is_assoc_peer)
 {
 	struct scheduler_msg msg;
 	QDF_STATUS status;
@@ -1237,7 +1294,7 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 
 	req->vdev_id = wlan_vdev_get_id(vdev);
 	qdf_copy_macaddr(&req->peer_mac, peer_mac);
-
+	cm_set_peer_mld_info(req, mld_mac, is_assoc_peer);
 	msg.bodyptr = req;
 	msg.type = CM_BSS_PEER_CREATE_REQ;
 

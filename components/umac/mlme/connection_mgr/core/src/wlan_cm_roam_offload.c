@@ -3141,7 +3141,8 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 								  PM_STA_MODE,
 								  NULL);
 		if (dual_sta_roam_active && (count == 2 &&
-		    !policy_mgr_current_concurrency_is_mcc(psoc))) {
+		    !(policy_mgr_current_concurrency_is_mcc(psoc) ||
+		      policy_mgr_current_concurrency_is_scc(psoc)))) {
 			mlme_info("STA + STA concurrency is in DBS");
 			break;
 		}
@@ -3971,16 +3972,14 @@ void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	wlan_vdev_mlme_get_ssid(vdev, pmksa.ssid, &pmksa.ssid_len);
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
 				   MOBILITY_DOMAIN, &src_cfg);
-	mlme_debug("copied the BSSID/SSID from session to PMKSA mdie %d",
-		  src_cfg.bool_value);
 	if (src_cfg.bool_value) {
 		pmksa.mdid.mdie_present = 1;
 		pmksa.mdid.mobility_domain = src_cfg.uint_value;
-		mlme_debug("copied the MDID to PMKSA");
+		mlme_debug("MDID:0x%x copied to PMKSA", src_cfg.uint_value);
 
 		status = wlan_crypto_update_pmk_cache_ft(vdev, &pmksa);
-		if (status == QDF_STATUS_SUCCESS)
-			mlme_debug("Updated the crypto cache table");
+		if (QDF_IS_STATUS_ERROR(status))
+			mlme_debug("Failed to update the crypto table");
 	}
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);

@@ -992,7 +992,7 @@ typedef struct {
 						    struct qdf_mac_addr bssid);
 	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 		struct roam_offload_synch_ind *roam_synch_data,
-		struct bss_description *bss_desc_ptr,
+		uint16_t ie_len,
 		enum sir_roam_op_code reason);
 	QDF_STATUS (*pe_disconnect_cb) (struct mac_context *mac,
 					uint8_t vdev_id,
@@ -1645,12 +1645,16 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
  * @peer_addr: peer mac address
  * @peer_type: peer type
  * @vdev_id: vdev id
+ * @peer_mld_addr: peer mld address
+ * @is_assoc_peer: is assoc peer or not
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS wma_create_peer(tp_wma_handle wma,
 			   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
-			   u_int32_t peer_type, u_int8_t vdev_id);
+			   u_int32_t peer_type, u_int8_t vdev_id,
+			   uint8_t peer_mld_addr[QDF_MAC_ADDR_SIZE],
+			   bool is_assoc_peer);
 
 QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,
 				  uint32_t peer_id_cnt,
@@ -2391,11 +2395,14 @@ int wma_motion_det_base_line_host_event_handler(void *handle, u_int8_t *event,
  * @is_resp_required: Peer create response is expected from firmware.
  * This flag will be set to true for initial connection and false for
  * LFR2 case.
+ * @mld_mac: peer mld mac address
+ * @is_assoc_peer: is assoc peer or not
  *
  * Return: 0 on success, else error on failure
  */
 QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
-				bool is_resp_required);
+				bool is_resp_required, uint8_t *mld_mac,
+				bool is_assoc_peer);
 
 /**
  * wma_send_vdev_stop() - WMA api to send vdev stop to fw

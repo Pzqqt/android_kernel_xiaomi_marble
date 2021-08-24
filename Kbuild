@@ -477,6 +477,10 @@ ifeq ($(CONFIG_FEATURE_WLAN_CH_AVOID_EXT),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_avoid_freq_ext.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_11BE_MLO), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mlo.o
+endif
+
 $(call add-wlan-objs,hdd,$(HDD_OBJS))
 
 ###### OSIF_SYNC ########
@@ -1255,7 +1259,12 @@ UMAC_MLO_MGR_OBJS := $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_main.o \
 			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_cmn.o \
 			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_sta.o \
 			  $(UMAC_MLO_MGR_CMN_DIR)/src/utils_mlo.o \
-			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_ap.o
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_ap.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_peer_list.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_aid.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_peer.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_msgq.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_primary_umac.o
 
 $(call add-wlan-objs,umac_ifmgr,$(UMAC_MLO_MGR_OBJS))
 endif
@@ -3064,6 +3073,7 @@ cppflags-y += -DCONN_MGR_ADV_FEATURE
 cppflags-$(CONFIG_QCACLD_WLAN_LFR3) += -DWLAN_FEATURE_ROAM_OFFLOAD
 
 cppflags-$(CONFIG_WLAN_FEATURE_MBSSID) += -DWLAN_FEATURE_MBSSID
+cppflags-$(CONFIG_WLAN_FEATURE_P2P_P2P_STA) += -DWLAN_FEATURE_P2P_P2P_STA
 
 ifeq (y,$(findstring y, $(CONFIG_CNSS_GENL) $(CONFIG_CNSS_GENL_MODULE)))
 cppflags-y += -DCNSS_GENL
@@ -3352,6 +3362,9 @@ cppflags-$(CONFIG_EXT_WOW) += -DWLAN_FEATURE_EXTWOW_SUPPORT
 #Mark it as SMP Kernel
 cppflags-$(CONFIG_SMP) += -DQCA_CONFIG_SMP
 
+#CONFIG_RPS default Y, but depend on CONFIG_SMP
+cppflags-$(CONFIG_RPS) += -DQCA_CONFIG_RPS
+
 cppflags-$(CONFIG_CHNL_MATRIX_RESTRICTION) += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 
 #Enable ICMP packet disable powersave feature
@@ -3576,7 +3589,7 @@ cppflags-$(CONFIG_DELIVERY_TO_STACK_STATUS_CHECK) += -DDELIVERY_TO_STACK_STATUS_
 cppflags-$(CONFIG_WLAN_TRACE_HIDE_MAC_ADDRESS) += -DWLAN_TRACE_HIDE_MAC_ADDRESS
 cppflags-$(CONFIG_WLAN_FEATURE_11BE) += -DWLAN_FEATURE_11BE
 cppflags-$(CONFIG_WLAN_FEATURE_11BE_MLO) += -DWLAN_FEATURE_11BE_MLO
-
+cppflags-$(CONFIG_WLAN_FEATURE_11BE_MLO) += -DWLAN_FEATURE_11BE_MLO_ADV_FEATURE
 cppflags-$(CONFIG_FIX_TXDMA_LIMITATION) += -DFIX_TXDMA_LIMITATION
 cppflags-$(CONFIG_FEATURE_AST) += -DFEATURE_AST
 cppflags-$(CONFIG_PEER_PROTECTED_ACCESS) += -DPEER_PROTECTED_ACCESS
@@ -3865,6 +3878,11 @@ ccflags-y += -DWLAN_MAX_PDEVS=$(CONFIG_WLAN_MAX_PDEVS)
 
 CONFIG_WLAN_MAX_VDEVS ?= 6
 ccflags-y += -DWLAN_MAX_VDEVS=$(CONFIG_WLAN_MAX_VDEVS)
+
+ifdef CONFIG_WLAN_FEATURE_11BE_MLO
+CONFIG_WLAN_MAX_MLD ?= 2
+ccflags-y += -DWLAN_MAX_MLD=$(CONFIG_WLAN_MAX_MLD)
+endif
 
 #Maximum pending commands for a vdev is calculated in vdev create handler
 #by WLAN_SER_MAX_PENDING_CMDS/WLAN_SER_MAX_VDEVS. For SAP case, we will need

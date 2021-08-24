@@ -1328,6 +1328,13 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 		goto free_buffers;
 	}
 
+	if (lim_is_mlo_conn(session_entry, sta_ds) &&
+	    QDF_IS_STATUS_ERROR(lim_mlo_assoc_ind_upper_layer(
+				mac_ctx, session_entry,
+				&assoc_req->mlo_info))) {
+		pe_err("partner link indicate upper layer error");
+		goto free_assoc_req;
+	}
 	lim_assoc_ind = qdf_mem_malloc(sizeof(tLimMlmAssocInd));
 	if (!lim_assoc_ind)
 		goto free_assoc_req;
@@ -2310,6 +2317,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	populate_dot11f_qcn_ie(mac_ctx, pe_session,
 			       &frm->qcn_ie, QCN_IE_ATTR_ID_ALL);
+
+	populate_dot11f_bss_max_idle(mac_ctx, pe_session,
+				     &frm->bss_max_idle_period);
 
 	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");
@@ -5393,22 +5403,20 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	tpDphHashNode sta_ds;
 	uint16_t aid;
 	bool he_cap = false;
-	struct wlan_mlme_qos *qos_aggr;
 
 	vdev_id = session->vdev_id;
 
 	cdp_addba_responsesetup(soc, peer_mac, vdev_id, tid,
 				&dialog_token, &status_code, &buff_size,
 				&batimeout);
-	qos_aggr = &mac_ctx->mlme_cfg->qos_mlme_params;
+
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 	frm.Category.category = ACTION_CATEGORY_BACK;
 	frm.Action.action = ADDBA_RESPONSE;
 
 	frm.DialogToken.token = dialog_token;
 	frm.Status.status = status_code;
-
-	if (qos_aggr->reject_addba_req) {
+	if (mac_ctx->reject_addba_req) {
 		frm.Status.status = STATUS_REQUEST_DECLINED;
 		pe_err("refused addba req");
 	}
@@ -5725,8 +5733,6 @@ error_delba:
 	return qdf_status;
 }
 
-#define WLAN_SAE_AUTH_TIMEOUT 1000
-
 /**
  * lim_tx_mgmt_frame() - Transmits Auth mgmt frame
  * @mac_ctx Pointer to Global MAC structure
@@ -5786,6 +5792,7 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 	struct pe_session *session;
 	struct sae_auth_retry *sae_retry;
 	uint8_t retry_count = 0;
+	uint32_t val = 0;
 
 	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
@@ -5822,16 +5829,18 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 		return;
 
 	pe_debug("SAE auth frame queued vdev_id %d seq_num %d",
-		 vdev_id, mac_ctx->mgmtSeqNum);
+		 vdev_id, mac_ctx->mgmtSeqNum + 1);
 	qdf_mem_copy(sae_retry->sae_auth.ptr, frame, frame_len);
 	mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId =
 					session->peSessionId;
 	sae_retry->sae_auth.len = frame_len;
 	sae_retry->sae_auth_max_retry = retry_count;
 
+	val = mac_ctx->mlme_cfg->timeouts.sae_auth_failure_timeout;
+
 	tx_timer_change(
 		&mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer,
-		SYS_MS_TO_TICKS(WLAN_SAE_AUTH_TIMEOUT), 0);
+		SYS_MS_TO_TICKS(val), 0);
 	/* Activate Auth Retry timer */
 	if (tx_timer_activate(
 	    &mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer) !=

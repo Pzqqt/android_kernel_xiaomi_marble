@@ -1571,21 +1571,6 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 }
 
 #ifdef WLAN_FEATURE_11AX
-/**
- * lim_calculate_he_nss() - function to calculate new nss from he rates
- * @rates: supported rtes struct object
- * @session: pe session entry
- * This function calculates nss from rx_he_mcs_map_lt_80 within rates struct
- * object and assigns new value to nss within pe_session
- *
- * Return: None
- */
-static void lim_calculate_he_nss(struct supported_rates *rates,
-				 struct pe_session *session)
-{
-	HE_GET_NSS(rates->rx_he_mcs_map_lt_80, session->nss);
-}
-
 static bool lim_check_valid_mcs_for_nss(struct pe_session *session,
 					tDot11fIEhe_cap *he_caps)
 {
@@ -1611,11 +1596,6 @@ static bool lim_check_valid_mcs_for_nss(struct pe_session *session,
 
 }
 #else
-static void lim_calculate_he_nss(struct supported_rates *rates,
-				 struct pe_session *session)
-{
-}
-
 static bool lim_check_valid_mcs_for_nss(struct pe_session *session,
 					tDot11fIEhe_cap *he_caps)
 {
@@ -1788,18 +1768,6 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	lim_populate_eht_mcs_set(mac, pRates, eht_caps,
 				 pe_session, pe_session->nss);
 
-	if (IS_DOT11_MODE_HE(pe_session->dot11mode) && he_caps) {
-		lim_calculate_he_nss(pRates, pe_session);
-	} else if (pe_session->vhtCapability) {
-		/*
-		 * pRates->vhtTxMCSMap is intersection of self tx and peer rx
-		 * mcs so update nss as per peer rx mcs
-		 */
-		if ((pRates->vhtTxMCSMap & MCSMAPMASK2x2) == MCSMAPMASK2x2)
-			pe_session->nss = NSS_1x1_MODE;
-	} else if (pRates->supportedMCSSet[1] == 0) {
-		pe_session->nss = NSS_1x1_MODE;
-	}
 	pe_debug("nss 1x1 %d nss %d", pe_session->supported_nss_1x1,
 		 pe_session->nss);
 
@@ -2153,9 +2121,24 @@ static void lim_add_tdls_sta_he_config(tpAddStaParams add_sta_params,
 	qdf_mem_copy(&add_sta_params->he_config, &sta_ds->he_config,
 		     sizeof(add_sta_params->he_config));
 }
+
+static void lim_add_tdls_sta_6ghz_he_cap(struct mac_context *mac_ctx,
+					 tpAddStaParams add_sta_params,
+					 tpDphHashNode sta_ds)
+{
+	lim_update_he_6ghz_band_caps(mac_ctx, &sta_ds->he_6g_band_cap,
+				     add_sta_params);
+}
+
 #else
 static void lim_add_tdls_sta_he_config(tpAddStaParams add_sta_params,
 				       tpDphHashNode sta_ds)
+{
+}
+
+static void lim_add_tdls_sta_6ghz_he_cap(struct mac_context *mac_ctx,
+					 tpAddStaParams add_sta_params,
+					 tpDphHashNode sta_ds)
 {
 }
 #endif /* WLAN_FEATURE_11AX */
@@ -2315,6 +2298,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 	lim_update_sta_eht_capable(mac_ctx, add_sta_params, sta_ds,
 				   session_entry);
+	lim_update_sta_mlo_info(add_sta_params, sta_ds);
 
 	add_sta_params->maxAmpduDensity = sta_ds->htAMpduDensity;
 	add_sta_params->maxAmpduSize = sta_ds->htMaxRxAMpduFactor;
@@ -2458,6 +2442,10 @@ lim_add_sta(struct mac_context *mac_ctx,
 			  add_sta_params->ht_caps,
 			  add_sta_params->vht_caps);
 		lim_add_tdls_sta_he_config(add_sta_params, sta_ds);
+
+		if (lim_is_he_6ghz_band(session_entry))
+			lim_add_tdls_sta_6ghz_he_cap(mac_ctx, add_sta_params,
+						     sta_ds);
 	}
 #endif
 

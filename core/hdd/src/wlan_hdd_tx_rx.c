@@ -3331,7 +3331,7 @@ void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
 	cds_cfg->rps_enabled = false;
 }
 
-#ifdef IPA_LAN_RX_NAPI_SUPPORT
+#ifdef QCA_CONFIG_RPS
 void hdd_adapter_set_rps(uint8_t vdev_id, bool enable)
 {
 	struct hdd_context *hdd_ctx;
