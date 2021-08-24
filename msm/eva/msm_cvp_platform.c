@@ -72,12 +72,9 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 					 */
 	},
 	{
-		.key = "qcom,max-hw-load",
-		.value = 3916800,       /*
-					 * 1920x1088/256 MBs@480fps. It is less
-					 * any other usecases (ex:
-					 * 3840x2160@120fps, 4096x2160@96ps,
-					 * 7680x4320@30fps)
+		.key = "qcom,max-ssr-allowed",
+		.value = 1,		/*
+					 * Maxinum number of SSR before BUG_ON
 					 */
 	},
 	{

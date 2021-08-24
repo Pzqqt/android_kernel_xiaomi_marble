@@ -670,7 +670,7 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 		}
 
 		if (!core->trigger_ssr)
-			msm_cvp_print_inst_bufs(inst);
+			msm_cvp_print_inst_bufs(inst, false);
 	}
 
 	/* handle the hw error before core released to get full debug info */
@@ -691,6 +691,7 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 	mutex_unlock(&core->lock);
 
 	dprintk(CVP_WARN, "SYS_ERROR handled.\n");
+	BUG_ON(core->resources.fatal_ssr);
 }
 
 void msm_cvp_comm_session_clean(struct msm_cvp_inst *inst)
@@ -1036,7 +1037,6 @@ static int msm_comm_init_core(struct msm_cvp_inst *inst)
 		goto fail_core_init;
 	}
 	core->state = CVP_CORE_INIT;
-	core->smmu_fault_handled = false;
 	core->trigger_ssr = false;
 
 core_already_inited:
@@ -1304,6 +1304,7 @@ int msm_cvp_comm_try_state(struct msm_cvp_inst *inst, int state)
 int msm_cvp_noc_error_info(struct msm_cvp_core *core)
 {
 	struct cvp_hfi_device *hdev;
+	static u32 last_fault_count = 0;
 
 	if (!core || !core->device) {
 		dprintk(CVP_WARN, "%s: Invalid parameters: %pK\n",
@@ -1311,13 +1312,20 @@ int msm_cvp_noc_error_info(struct msm_cvp_core *core)
 		return -EINVAL;
 	}
 
-	if (!core->smmu_fault_handled)
+	if (!core->smmu_fault_count ||
+			core->smmu_fault_count == last_fault_count)
 		return 0;
 
+	last_fault_count = core->smmu_fault_count;
+	core->ssr_count++;
+	dprintk(CVP_ERR, "cvp ssr count %d %d\n", core->ssr_count,
+			core->resources.max_ssr_allowed);
 	hdev = core->device;
 	call_hfi_op(hdev, noc_error_info, hdev->hfi_device_data);
 
-	BUG_ON(!core->resources.non_fatal_pagefaults);
+	if (core->ssr_count >= core->resources.max_ssr_allowed)
+		BUG_ON(!core->resources.non_fatal_pagefaults);
+
 	return 0;
 }
 

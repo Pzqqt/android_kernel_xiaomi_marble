@@ -74,6 +74,51 @@ void print_cvp_buffer(u32 tag, const char *str, struct msm_cvp_inst *inst,
 			cbuf->smem->device_addr, cbuf->size);
 }
 
+static void _log_smem(struct inst_snapshot *snapshot, struct msm_cvp_inst *inst,
+		struct msm_cvp_smem *smem, bool logging)
+{
+	print_smem(CVP_ERR, "bufdump", inst, smem);
+	if (!logging || !snapshot)
+		return;
+	if (snapshot && snapshot->smem_index < MAX_ENTRIES) {
+		struct smem_data *s;
+		s = &snapshot->smem_log[snapshot->smem_index];
+		snapshot->smem_index++;
+		s->size = smem->size;
+		s->flags = smem->flags;
+		s->device_addr = smem->device_addr;
+		s->bitmap_index = smem->bitmap_index;
+		s->refcount = atomic_read(&smem->refcount);
+	}
+}
+
+static void _log_buf(struct inst_snapshot *snapshot, enum smem_prop prop,
+		struct msm_cvp_inst *inst, struct cvp_internal_buf *cbuf,
+		bool logging)
+{
+	struct cvp_buf_data *buf = NULL;
+	u32 index;
+	print_cvp_buffer(CVP_ERR, "bufdump", inst, cbuf);
+	if (!logging)
+		return;
+	if (snapshot) {
+		if (prop == SMEM_ADSP && snapshot->dsp_index < MAX_ENTRIES) {
+			index = snapshot->dsp_index;
+			buf = &snapshot->dsp_buf_log[index];
+			snapshot->dsp_index++;
+		} else if (prop == SMEM_PERSIST &&
+				snapshot->persist_index < MAX_ENTRIES) {
+			index = snapshot->persist_index;
+			buf = &snapshot->persist_buf_log[index];
+			snapshot->persist_index++;
+		}
+		if (buf) {
+			buf->device_addr = cbuf->smem->device_addr;
+			buf->size = cbuf->size;
+		}
+	}
+}
+
 void print_client_buffer(u32 tag, const char *str,
 		struct msm_cvp_inst *inst, struct eva_kmd_buffer *cbuf)
 {
@@ -214,7 +259,6 @@ int msm_cvp_map_buf_dsp(struct msm_cvp_inst *inst, struct eva_kmd_buffer *buf)
 	}
 
 	smem->dma_buf = dma_buf;
-	smem->file = file;
 	smem->bitmap_index = MAX_DMABUF_NUMS;
 	dprintk(CVP_MEM, "%s: dma_buf = %llx\n", __func__, dma_buf);
 	rc = msm_cvp_map_smem(inst, smem, "map dsp");
@@ -287,7 +331,6 @@ int msm_cvp_unmap_buf_dsp(struct msm_cvp_inst *inst, struct eva_kmd_buffer *buf)
 	if (cbuf->smem->device_addr) {
 		msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
 		msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
-		fput(cbuf->smem->file);
 	}
 
 	mutex_lock(&inst->cvpdspbufs.lock);
@@ -865,10 +908,19 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 	return rc;
 }
 
-void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst)
+void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst, bool log)
 {
 	struct cvp_internal_buf *buf;
+	struct msm_cvp_core *core;
+	struct inst_snapshot *snap = NULL;
 	int i;
+
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	if (log && core->log.snapshot_index < 16) {
+		snap = &core->log.snapshot[core->log.snapshot_index];
+		snap->session = inst->session;
+		core->log.snapshot_index++;
+	}
 
 	if (!inst) {
 		dprintk(CVP_ERR, "%s - invalid param %pK\n",
@@ -884,20 +936,19 @@ void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst)
 	dprintk(CVP_ERR, "dma cache:\n");
 	if (inst->dma_cache.nr <= MAX_DMABUF_NUMS)
 		for (i = 0; i < inst->dma_cache.nr; i++)
-			print_smem(CVP_ERR, "bufdump", inst,
-					inst->dma_cache.entries[i]);
+			_log_smem(snap, inst, inst->dma_cache.entries[i], log);
 	mutex_unlock(&inst->dma_cache.lock);
 
 	mutex_lock(&inst->cvpdspbufs.lock);
 	dprintk(CVP_ERR, "dsp buffer list:\n");
 	list_for_each_entry(buf, &inst->cvpdspbufs.list, list)
-		print_cvp_buffer(CVP_ERR, "bufdump", inst, buf);
+		_log_buf(snap, SMEM_ADSP, inst, buf, log);
 	mutex_unlock(&inst->cvpdspbufs.lock);
 
 	mutex_lock(&inst->persistbufs.lock);
 	dprintk(CVP_ERR, "persist buffer list:\n");
 	list_for_each_entry(buf, &inst->persistbufs.list, list)
-		print_cvp_buffer(CVP_ERR, "bufdump", inst, buf);
+		_log_buf(snap, SMEM_PERSIST, inst, buf, log);
 	mutex_unlock(&inst->persistbufs.lock);
 }
 

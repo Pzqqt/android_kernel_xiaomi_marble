@@ -152,7 +152,7 @@ struct msm_cvp_platform_resources {
 	struct subcache_set subcache_set;
 	struct reg_set reg_set;
 	struct addr_set qdss_addr_set;
-	uint32_t max_load;
+	uint32_t max_ssr_allowed;
 	struct platform_device *pdev;
 	struct regulator_set regulator_set;
 	struct clock_set clock_set;
@@ -176,6 +176,7 @@ struct msm_cvp_platform_resources {
 	int msm_cvp_firmware_unload_delay;
 	uint32_t msm_cvp_pwr_collapse_delay;
 	bool non_fatal_pagefaults;
+	bool fatal_ssr;
 	struct msm_cvp_mem_cdsp mem_cdsp;
 	uint32_t vpu_ver;
 	uint32_t fw_cycles;

@@ -68,7 +68,6 @@ struct msm_cvp_smem {
 	struct list_head list;
 	atomic_t refcount;
 	struct dma_buf *dma_buf;
-	struct file *file;
 	void *kvaddr;
 	u32 device_addr;
 	dma_addr_t dma_handle;
@@ -210,7 +209,7 @@ int msm_cvp_register_buffer(struct msm_cvp_inst *inst,
 int msm_cvp_unregister_buffer(struct msm_cvp_inst *inst,
 		struct eva_kmd_buffer *buf);
 int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst);
-void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst);
+void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst, bool log);
 int cvp_allocate_dsp_bufs(struct msm_cvp_inst *inst,
 			struct cvp_internal_buf *buf,
 			u32 buffer_size,
