@@ -597,7 +597,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 		return -EINVAL;
 
 	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
-	rc = dsi_display_find_mode(dsi_display, &partial_dsi_mode, NULL, &dsi_mode);
+	rc = dsi_display_find_mode(dsi_display, &partial_dsi_mode, sub_mode, &dsi_mode);
 	if (rc || !dsi_mode->priv_info)
 		return -EINVAL;
 
