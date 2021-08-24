@@ -400,6 +400,8 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_VDEVS_TXRX_STATS = 38,
 
+    HTT_DBG_EXT_VDEV_RTT_INITIATOR_STATS = 39,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -638,6 +640,24 @@ typedef struct {
     A_UINT32 ul_mumimo_seq_posted;
     /* Num of times UL OFDMA seq posted */
     A_UINT32 ul_ofdma_seq_posted;
+    /* Num of times Thermal module suspended scheduler */
+    A_UINT32 thermal_suspend_cnt;
+    /* Num of times DFS module suspended scheduler */
+    A_UINT32 dfs_suspend_cnt;
+    /* Num of times TX abort module suspended scheduler */
+    A_UINT32 tx_abort_suspend_cnt;
+    /* tgt_specific_opaque_txq_suspend_info:
+     * This field is a target-specifc bit mask of suspended PPDU tx queues.
+     * Since the bit mask definition is different for different targets,
+     * this field is not meant for general use, but rather for debugging use.
+     */
+    A_UINT32 tgt_specific_opaque_txq_suspend_info;
+    /* Last SCHEDULER suspend reason
+     * 1 -> Thermal Module
+     * 2 -> DFS Module
+     * 3 -> Tx Abort Module
+     */
+    A_UINT32 last_suspend_reason;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -5115,11 +5135,36 @@ typedef struct {
     A_UINT32 rx_iftmr_cnt;
     /* No of duplicate initial Fine Timing Measurement Request frames received */
     A_UINT32 rx_iftmr_dup_cnt;
+    /* No of responder sessions rejected when initiator was active */
+    A_UINT32 initiator_active_responder_rejected_cnt;
+    /* Responder terminate count */
+    A_UINT32 responder_terminate_cnt;
+    A_UINT32 vdev_id;
 } htt_vdev_rtt_resp_stats_tlv;
 
 typedef struct {
     htt_vdev_rtt_resp_stats_tlv vdev_rtt_resp_stats;
 } htt_vdev_rtt_resp_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 vdev_id;
+    /* No of Fine Timing Measurement request frames transmitted successfully */
+    A_UINT32 tx_ftmr_cnt;
+    /* No of Fine Timing Measurement request frames not transmitted successfully */
+    A_UINT32 tx_ftmr_fail;
+    /* No of Fine Timing Measurement request frames transmitted successfully after retry */
+    A_UINT32 tx_ftmr_suc_retry;
+    /* No of Fine Timing Measurement frames received, including initial, non-initial, and duplicates */
+    A_UINT32 rx_ftm_cnt;
+    /* Initiator Terminate count */
+    A_UINT32 initiator_terminate_cnt;
+} htt_vdev_rtt_init_stats_tlv;
+
+typedef struct {
+    htt_vdev_rtt_init_stats_tlv vdev_rtt_init_stats;
+} htt_vdev_rtt_init_stats_t;
 
 /* STATS_TYPE : HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS
  * TLV_TAGS:
