@@ -1867,6 +1867,10 @@ WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_gpio_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_gpio_tlv.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_11BE_MLO), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_11be_tlv.o
+endif
+
 $(call add-wlan-objs,wmi,$(WMI_OBJS))
 
 ########### FWLOG ###########
