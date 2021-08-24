@@ -3346,52 +3346,6 @@ hdd_get_roam_scan_freq(struct hdd_adapter *adapter, mac_handle_t mac_handle,
 }
 #endif
 
-static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
-					  struct hdd_context *hdd_ctx,
-					  uint8_t *command,
-					  uint8_t command_len,
-					  struct hdd_priv_data *priv_data)
-{
-	int ret = 0;
-	uint32_t freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t num_channels = 0;
-	uint8_t j = 0;
-	char extra[128] = { 0 };
-	int len;
-	uint8_t chan;
-
-	ret = hdd_get_roam_scan_freq(adapter, hdd_ctx->mac_handle, freq_list,
-				     &num_channels);
-	if (ret != QDF_STATUS_SUCCESS)
-		goto exit;
-
-	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
-		   TRACE_CODE_HDD_GETROAMSCANCHANNELS_IOCTL,
-		   adapter->vdev_id, num_channels);
-
-	/*
-	 * output channel list is of the format
-	 * [Number of roam scan channels][Channel1][Channel2]...
-	 * copy the number of channels in the 0th index
-	 */
-	len = scnprintf(extra, sizeof(extra), "%s %d", command,
-			num_channels);
-	for (j = 0; (j < num_channels) && len <= sizeof(extra); j++) {
-		chan = wlan_reg_freq_to_chan(hdd_ctx->pdev, freq_list[j]);
-		len += scnprintf(extra + len, sizeof(extra) - len,
-				 " %d", chan);
-	}
-	len = QDF_MIN(priv_data->total_len, len + 1);
-	if (copy_to_user(priv_data->buf, &extra, len)) {
-		hdd_err("failed to copy data to user buffer");
-		ret = -EFAULT;
-		goto exit;
-	}
-
-exit:
-	return ret;
-}
-
 static int drv_cmd_get_ccx_mode(struct hdd_adapter *adapter,
 				struct hdd_context *hdd_ctx,
 				uint8_t *command,
@@ -6851,7 +6805,6 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"SETROAMDELTA",              drv_cmd_set_roam_delta, true},
 	{"GETROAMDELTA",              drv_cmd_get_roam_delta, false},
 	{"GETBAND",                   drv_cmd_get_band, false},
-	{"GETROAMSCANCHANNELS",       drv_cmd_get_roam_scan_channels, false},
 	{"GETCCXMODE",                drv_cmd_get_ccx_mode, false},
 	{"GETOKCMODE",                drv_cmd_get_okc_mode, false},
 	{"GETFASTROAM",               drv_cmd_get_fast_roam, false},
