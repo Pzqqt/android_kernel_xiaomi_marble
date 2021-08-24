@@ -139,6 +139,8 @@
 		"NV12/5/1/1.25 AB24/5/1/1.25 XB24/5/1/1.25"
 #define DEFAULT_MAX_PER_PIPE_BW			2400000
 #define DEFAULT_AMORTIZABLE_THRESHOLD		25
+#define DEFAULT_NUM_DDR_CHANNELS		4
+#define DEFAULT_DRAM_EFFICIENCY			64
 #define DEFAULT_MNOC_PORTS			2
 #define DEFAULT_AXI_BUS_WIDTH			32
 #define DEFAULT_CPU_MASK			0
@@ -236,6 +238,8 @@ enum {
 	PERF_LINEAR_PREFILL_LINES,
 	PERF_DOWNSCALING_PREFILL_LINES,
 	PERF_XTRA_PREFILL_LINES,
+	PERF_NUM_DDR_CHANNELS,
+	PERF_DRAM_EFFICIENCY,
 	PERF_AMORTIZABLE_THRESHOLD,
 	PERF_NUM_MNOC_PORTS,
 	PERF_AXI_BUS_WIDTH,
@@ -633,6 +637,8 @@ static struct sde_prop_type sde_perf_prop[] = {
 			false, PROP_TYPE_U32},
 	{PERF_XTRA_PREFILL_LINES, "qcom,sde-xtra-prefill-lines",
 			false, PROP_TYPE_U32},
+	{PERF_NUM_DDR_CHANNELS, "qcom,sde-num-ddr-channels", false, PROP_TYPE_U32},
+	{PERF_DRAM_EFFICIENCY, "qcom,sde-dram-efficiency", false, PROP_TYPE_U32},
 	{PERF_AMORTIZABLE_THRESHOLD, "qcom,sde-amortizable-threshold",
 			false, PROP_TYPE_U32},
 	{PERF_NUM_MNOC_PORTS, "qcom,sde-num-mnoc-ports",
@@ -4342,6 +4348,12 @@ static void _sde_perf_parse_dt_cfg_populate(struct sde_mdss_cfg *cfg,
 			PROP_VALUE_ACCESS(prop_value,
 					PERF_AMORTIZABLE_THRESHOLD, 0) :
 			DEFAULT_AMORTIZABLE_THRESHOLD;
+	cfg->perf.num_ddr_channels = prop_exists[PERF_NUM_DDR_CHANNELS] ?
+			PROP_VALUE_ACCESS(prop_value, PERF_NUM_DDR_CHANNELS, 0) :
+			DEFAULT_NUM_DDR_CHANNELS;
+	cfg->perf.dram_efficiency = prop_exists[PERF_DRAM_EFFICIENCY] ?
+			PROP_VALUE_ACCESS(prop_value, PERF_DRAM_EFFICIENCY, 0) :
+			DEFAULT_DRAM_EFFICIENCY;
 	cfg->perf.num_mnoc_ports =
 			prop_exists[PERF_NUM_MNOC_PORTS] ?
 			PROP_VALUE_ACCESS(prop_value,

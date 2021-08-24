@@ -713,6 +713,12 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 	bus_ab_quota = min(bus_ab_quota,
 			kms->catalog->perf.max_bw_high*1000ULL);
 
+	if (kms->catalog->perf.num_ddr_channels && kms->catalog->perf.dram_efficiency) {
+		bus_ib_quota = div_u64(div_u64(bus_ab_quota,
+			kms->catalog->perf.num_ddr_channels) * 100,
+			kms->catalog->perf.dram_efficiency);
+	}
+
 	if (kms->perf.perf_tune.mode == SDE_PERF_MODE_FIXED) {
 		bus_ab_quota = max(kms->perf.fix_core_ab_vote,
 					bus_ab_quota);
