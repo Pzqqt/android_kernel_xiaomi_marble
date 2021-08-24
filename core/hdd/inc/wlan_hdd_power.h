@@ -435,6 +435,23 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
  */
 int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 			   void *context);
+
+/**
+ * wlan_hdd_is_cpu_pm_qos_in_progress() - WLAN HDD PM QoS Status Function
+ *
+ * This function check for PM QoS global vote.
+ *
+ * Return: true if there is PM QoS global vote,
+ *	   or an false otherwise
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+bool wlan_hdd_is_cpu_pm_qos_in_progress(void);
+#else
+static inline bool wlan_hdd_is_cpu_pm_qos_in_progress(void)
+{
+	return false;
+}
+#endif
 #endif
 /**
  * wlan_hdd_ipv6_changed() - IPv6 change notifier callback

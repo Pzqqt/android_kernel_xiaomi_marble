@@ -87,6 +87,7 @@
 #include "wlan_hdd_object_manager.h"
 #include <linux/igmp.h>
 #include "qdf_types.h"
+#include <linux/cpuidle.h>
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_EMULATION
 #define HDD_SSR_BRING_UP_TIME 3000000
@@ -1211,6 +1212,28 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 
 	return NOTIFY_DONE;
 }
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+bool wlan_hdd_is_cpu_pm_qos_in_progress(void)
+{
+	unsigned long pm_qos_cpu_latency;
+	long long curr_val;
+	int max_cpu_num;
+
+	max_cpu_num  = nr_cpu_ids - 1;
+	pm_qos_cpu_latency = wlan_hdd_get_pm_qos_cpu_latency() * NSEC_PER_USEC;
+
+	/* Get PM QoS vote from last cpu, as no device votes on that cpu
+	 * so by default we get global PM QoS vote from last cpu.
+	 */
+	curr_val = cpuidle_governor_latency_req(max_cpu_num);
+	if (curr_val != pm_qos_cpu_latency) {
+		hdd_debug("PM QoS current value: %lld", curr_val);
+		return true;
+	}
+	return false;
+}
+#endif
 #endif
 
 /**
