@@ -1721,7 +1721,7 @@ static int lpass_cdc_wsa_macro_enable_vbat(struct snd_soc_dapm_widget *w,
                         LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL1, 0x01, 0x01);
                 /* Enable BCL path */
                 snd_soc_component_update_bits(component,
-                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL3, 0x01, 0x01);
+                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL2, 0x01, 0x01);
                 /* Request for BCL data */
                 snd_soc_component_update_bits(component,
                         LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL3, 0x01, 0x01);
