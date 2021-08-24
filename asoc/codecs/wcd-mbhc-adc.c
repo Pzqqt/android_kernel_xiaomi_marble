@@ -1001,6 +1001,11 @@ static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)
 		  msecs_to_jiffies(WCD_FAKE_REMOVAL_MIN_PERIOD_MS);
 	adc_threshold = wcd_mbhc_adc_get_hs_thres(mbhc);
 
+	/* Enable MICBIAS before checking for ADC Voltage */
+	if (mbhc->mbhc_cb->mbhc_micbias_control)
+		mbhc->mbhc_cb->mbhc_micbias_control(mbhc->component,
+			MIC_BIAS_2, MICB_ENABLE);
+
 	do {
 		retry++;
 		/*
@@ -1016,9 +1021,17 @@ static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)
 		    retry > FAKE_REM_RETRY_ATTEMPTS) {
 			pr_debug("%s: headset is NOT actually removed\n",
 				 __func__);
+			if (mbhc->mbhc_cb->mbhc_micbias_control)
+				mbhc->mbhc_cb->mbhc_micbias_control(
+					mbhc->component, MIC_BIAS_2,
+					MICB_DISABLE);
 			goto exit;
 		}
 	} while (!time_after(jiffies, timeout));
+
+	if (mbhc->mbhc_cb->mbhc_micbias_control)
+		mbhc->mbhc_cb->mbhc_micbias_control(mbhc->component, MIC_BIAS_2,
+				MICB_DISABLE);
 
 	if (wcd_swch_level_remove(mbhc)) {
 		pr_debug("%s: Switch level is low ", __func__);
