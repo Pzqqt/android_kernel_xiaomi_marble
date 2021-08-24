@@ -525,6 +525,12 @@ void dsi_phy_hw_v4_0_disable(struct dsi_phy_hw *phy,
 
 	dsi_phy_hw_v4_0_config_lpcdrx(phy, cfg, false);
 
+	/* Turn off REFGEN Vote */
+	DSI_W32(phy, DSIPHY_CMN_GLBL_DIGTOP_SPARE10, 0x0);
+	wmb();
+	/* Delay to ensure HW removes vote before PHY shut down */
+	udelay(2);
+
 	data = DSI_R32(phy, DSIPHY_CMN_CTRL_0);
 	/* disable all lanes and splitlink clk lane*/
 	data &= ~0x9F;
