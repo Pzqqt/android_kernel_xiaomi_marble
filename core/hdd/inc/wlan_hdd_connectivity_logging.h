@@ -15,15 +15,27 @@
  */
 
 /*
- * DOC: wlan_hdd_connectivity_logging.c
+ * DOC: wlan_hdd_connectivity_logging.h
  *
  * Implementation for the Common connectivity logging api.
  */
 
+#ifndef __WLAN_HDD_CONNECTIVITY_LOGGING_H__
+#define __WLAN_HDD_CONNECTIVITY_LOGGING_H__
+
+#include <qdf_types.h>
+#include <wlan_cfg80211.h>
 #include <wlan_connectivity_logging.h>
 #include "wlan_hdd_main.h"
 
 #ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+
+#define FEATURE_CONNECTIVITY_LOGGING_EVENT                  \
+[QCA_NL80211_VENDOR_SUBCMD_DIAG_EVENT_INDEX] = {            \
+	.vendor_id = QCA_NL80211_VENDOR_ID,                 \
+	.subcmd = QCA_NL80211_VENDOR_SUBCMD_DIAG_DATA,      \
+},
+
 /**
  * wlan_hdd_start_connectivity_logging()  - Initialize logging callbacks
  * and allocate global buffers
@@ -68,3 +80,4 @@ void wlan_hdd_connectivity_fail_event(struct wlan_objmgr_vdev *vdev,
 				      struct wlan_cm_connect_resp *rsp)
 {}
 #endif
+#endif /* __WLAN_HDD_CONNECTIVITY_LOGGING_H__ */

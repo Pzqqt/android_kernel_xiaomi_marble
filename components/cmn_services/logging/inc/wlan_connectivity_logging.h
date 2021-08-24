@@ -113,7 +113,8 @@ enum wlan_main_tag {
 	WLAN_EAP_SUCCESS,
 	WLAN_EAP_FAILURE,
 	WLAN_CUSTOM_LOG,
-	WLAN_TAG_MAX = 0xFF,
+	/* Keep at last */
+	WLAN_TAG_MAX,
 };
 
 /**
@@ -166,6 +167,8 @@ struct wlan_roam_result_info {
  * @is_full_scan: True if the scan is Full scan. False if the roam scan is
  * partial channel map scan
  * @trigger_reason: Roam trigger reason
+ * @trigger_sub_reason: Roam trigger sub reason defined by enum
+ * roam_trigger_sub_reason
  * @cu_load:  Current connected channel load in percentage
  * @current_rssi: Connected AP RSSI
  * @rssi_threshold: Roam scan trigger threshold
@@ -173,7 +176,7 @@ struct wlan_roam_result_info {
 struct wlan_roam_trigger_info {
 	bool is_full_scan;
 	uint8_t trigger_reason;
-	uint8_t trigger_sub_reason;
+	enum roam_trigger_sub_reason trigger_sub_reason;
 	uint8_t cu_load;
 	int32_t current_rssi;
 	int32_t rssi_threshold;
@@ -195,6 +198,8 @@ struct wlan_btm_cand_info {
  * @mode: BTM Request Mode field
  * @sub_reason: WTC sub reason
  * @candidate_list_count: Candidates list in the BTM frame
+ * @btm_status_code: BSS Transition management status codes defined in
+ * 802.11‐2020 Table 9-428—BTM status code definitions
  * @btm_delay: BSS Termination Delay field
  * @is_disassoc_imminent: Disassociation imminent bit
  * @token: dialog token. Dialog Token is a nonzero value chosen by the STA

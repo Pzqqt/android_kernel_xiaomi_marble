@@ -142,6 +142,7 @@
 #include "wlan_scan_ucfg_api.h"
 #include "wlan_hdd_coex_config.h"
 #include "wlan_hdd_bcn_recv.h"
+#include "wlan_hdd_connectivity_logging.h"
 #include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_hw_capability.h"
 #include "wlan_hdd_oemdata.h"
@@ -1727,6 +1728,9 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 	FEATURE_TWT_VENDOR_EVENTS
 #endif
 	FEATURE_CFR_DATA_VENDOR_EVENTS
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+	FEATURE_CONNECTIVITY_LOGGING_EVENT
+#endif
 };
 
 /**
