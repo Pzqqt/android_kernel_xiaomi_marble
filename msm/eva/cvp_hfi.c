@@ -3862,6 +3862,7 @@ exit:
 static int __power_off_controller(struct iris_hfi_device *device)
 {
 	u32 lpi_status, reg_status = 0, count = 0, max_count = 1000;
+	u32 sbm_ln0_low;
 
 	/* HPG 6.2.2 Step 1  */
 	__write_register(device, CVP_CPU_CS_X2RPMh, 0x3);
@@ -3873,12 +3874,12 @@ static int __power_off_controller(struct iris_hfi_device *device)
 			 __read_register(device,
 				CVP_AON_WRAPPER_MVP_NOC_LPI_STATUS);
 		reg_status = lpi_status & BIT(0);
-		/* Wait for noc lpi status to be set */
+		/* Wait for Core noc lpi status to be set */
 		usleep_range(50, 100);
 		count++;
 	}
 	dprintk(CVP_PWR,
-		"Noc: lpi_status %x noc_status %x (count %d)\n",
+		"Core Noc: lpi_status %x noc_status %x (count %d)\n",
 		lpi_status, reg_status, count);
 	if (count == max_count) {
 		u32 pc_ready, wfi_status;
@@ -3887,11 +3888,42 @@ static int __power_off_controller(struct iris_hfi_device *device)
 		pc_ready = __read_register(device, CVP_CTRL_STATUS);
 
 		dprintk(CVP_WARN,
-			"NOC not in qaccept status %x %x %x %x\n",
+			"Core NOC not in qaccept status %x %x %x %x\n",
 			reg_status, lpi_status, wfi_status, pc_ready);
 
 		__print_sidebandmanager_regs(device);
 	}
+
+	/* New addition to put CPU/Tensilica to low power */
+	reg_status = 0;
+	count = 0;
+	__write_register(device, CVP_WRAPPER_CPU_NOC_LPI_CONTROL, 0x1);
+	while (!reg_status && count < max_count) {
+		lpi_status =
+			 __read_register(device,
+				CVP_WRAPPER_CPU_NOC_LPI_STATUS);
+		reg_status = lpi_status & BIT(0);
+		/* Wait for CPU noc lpi status to be set */
+		usleep_range(50, 100);
+		count++;
+	}
+	sbm_ln0_low = __read_register(device, CVP_NOC_SBM_SENSELN0_LOW);
+	dprintk(CVP_PWR,
+		"CPU Noc: lpi_status %x noc_status %x (count %d) 0x%x\n",
+		lpi_status, reg_status, count, sbm_ln0_low);
+	if (count == max_count) {
+		u32 pc_ready, wfi_status;
+
+		wfi_status = __read_register(device, CVP_WRAPPER_CPU_STATUS);
+		pc_ready = __read_register(device, CVP_CTRL_STATUS);
+
+		dprintk(CVP_WARN,
+			"CPU NOC not in qaccept status %x %x %x %x\n",
+			reg_status, lpi_status, wfi_status, pc_ready);
+
+		__print_sidebandmanager_regs(device);
+	}
+
 
 	/* HPG 6.2.2 Step 3, debug bridge to low power BYPASSED */
 
