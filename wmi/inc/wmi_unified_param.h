@@ -59,7 +59,7 @@
 #define WMI_MCC_MIN_NON_ZERO_CHANNEL_LATENCY  30
 
 #ifdef WMI_AP_SUPPORT
-#define WMI_BEACON_TX_BUFFER_SIZE             (1500)
+#define WMI_BEACON_TX_BUFFER_SIZE             (2500)
 #else
 #define WMI_BEACON_TX_BUFFER_SIZE             (512)
 #endif
