@@ -7089,35 +7089,6 @@ static bool sme_validate_freq_list(mac_handle_t mac_handle,
 	return true;
 }
 
-/**
- * sme_change_roam_scan_channel_list() - to change scan channel list
- * @mac_handle: Opaque handle to the global MAC context
- * @sessionId: sme session id
- * @channel_freq_list: Output channel list
- * @numChannels: Output number of channels
- *
- * This routine is called to Change roam scan channel list.
- * This is a synchronous call
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
-					     uint8_t sessionId,
-					     uint32_t *channel_freq_list,
-					     uint8_t numChannels)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct cm_roam_values_copy src_config;
-
-	src_config.chan_info.freq_list = channel_freq_list;
-	src_config.chan_info.num_chan = numChannels;
-
-	mac->mlme_cfg->lfr.rso_user_config.roam_scan_control = true;
-	return wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
-					  ROAM_SPECIFIC_CHAN,
-					  &src_config);
-}
-
 QDF_STATUS
 sme_update_roam_scan_freq_list(mac_handle_t mac_handle, uint8_t vdev_id,
 			       uint32_t *freq_list, uint8_t num_chan,

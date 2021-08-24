@@ -982,6 +982,7 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_ESE
 /**
  * hdd_parse_channellist() - HDD Parse channel list
  * @hdd_ctx: hdd context
@@ -1098,211 +1099,6 @@ cnt_mismatch:
 
 }
 
-/**
- * hdd_parse_set_roam_scan_channels_v1() - parse version 1 of the
- * SETROAMSCANCHANNELS command
- * @adapter:	Adapter upon which the command was received
- * @command:	ASCII text command that was received
- *
- * This function parses the v1 SETROAMSCANCHANNELS command with the format
- *
- *    SETROAMSCANCHANNELS N C1 C2 ... Cn
- *
- * Where "N" is the ASCII representation of the number of channels and
- * C1 thru Cn is the ASCII representation of the channels.  For example
- *
- *    SETROAMSCANCHANNELS 4 36 40 44 48
- *
- * Return: 0 for success non-zero for failure
- */
-static int
-hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
-				    const char *command)
-{
-	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t num_chan = 0;
-	QDF_STATUS status;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	int ret;
-	mac_handle_t mac_handle;
-
-	if (!hdd_ctx) {
-		hdd_err("invalid hdd ctx");
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	ret = hdd_parse_channellist(hdd_ctx, command, channel_freq_list,
-				    &num_chan);
-	if (ret) {
-		hdd_err("Failed to parse channel list information");
-		goto exit;
-	}
-
-	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
-		   TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL,
-		   adapter->vdev_id, num_chan);
-
-	if (num_chan > CFG_VALID_CHANNEL_LIST_LEN) {
-		hdd_err("number of channels (%d) supported exceeded max (%d)",
-			 num_chan, CFG_VALID_CHANNEL_LIST_LEN);
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	mac_handle = hdd_ctx->mac_handle;
-	if (!sme_validate_channel_list(mac_handle,
-				       channel_freq_list, num_chan)) {
-		hdd_err("List contains invalid channel(s)");
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	status = sme_change_roam_scan_channel_list(mac_handle,
-						   adapter->vdev_id,
-						   channel_freq_list,
-						   num_chan);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Failed to update channel list information");
-		ret = -EINVAL;
-		goto exit;
-	}
-exit:
-	return ret;
-}
-
-/**
- * hdd_parse_set_roam_scan_channels_v2() - parse version 2 of the
- * SETROAMSCANCHANNELS command
- * @adapter:	Adapter upon which the command was received
- * @command:	Command that was received, ASCII command
- *		followed by binary data
- *
- * This function parses the v2 SETROAMSCANCHANNELS command with the format
- *
- *    SETROAMSCANCHANNELS [N][C1][C2][Cn]
- *
- * The command begins with SETROAMSCANCHANNELS followed by a space, but
- * what follows the space is an array of u08 parameters.  For example
- *
- *    SETROAMSCANCHANNELS [0x04 0x24 0x28 0x2c 0x30]
- *
- * Return: 0 for success non-zero for failure
- */
-static int
-hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
-				    const char *command)
-{
-	const uint8_t *value;
-	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t channel;
-	uint8_t num_chan;
-	int i;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	QDF_STATUS status;
-	int ret = 0;
-	mac_handle_t mac_handle;
-
-	/* array of values begins after "SETROAMSCANCHANNELS " */
-	value = command + 20;
-
-	num_chan = *value++;
-	if (num_chan > CFG_VALID_CHANNEL_LIST_LEN) {
-		hdd_err("number of channels (%d) supported exceeded max (%d)",
-			  num_chan, CFG_VALID_CHANNEL_LIST_LEN);
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
-		   TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL,
-		   adapter->vdev_id, num_chan);
-
-
-	for (i = 0; i < num_chan; i++) {
-		channel = *value++;
-		if (!channel) {
-			hdd_err("Channels end at index %d, expected %d",
-				i, num_chan);
-			ret = -EINVAL;
-			goto exit;
-		}
-
-		if (channel > WNI_CFG_CURRENT_CHANNEL_STAMAX) {
-			hdd_err("index %d invalid channel %d",
-				  i, channel);
-			ret = -EINVAL;
-			goto exit;
-		}
-		channel_freq_list[i] = wlan_reg_legacy_chan_to_freq(
-							     hdd_ctx->pdev,
-							     channel);
-	}
-
-	mac_handle = hdd_ctx->mac_handle;
-	if (!sme_validate_channel_list(mac_handle, channel_freq_list,
-				       num_chan)) {
-		hdd_err("List contains invalid channel(s)");
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	status = sme_change_roam_scan_channel_list(mac_handle,
-						   adapter->vdev_id,
-						   channel_freq_list, num_chan);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Failed to update channel list information");
-		ret = -EINVAL;
-		goto exit;
-	}
-exit:
-	return ret;
-}
-
-/**
- * hdd_parse_set_roam_scan_channels() - parse the
- * SETROAMSCANCHANNELS command
- * @adapter:	Adapter upon which the command was received
- * @command:	Command that was received
- *
- * There are two different versions of the SETROAMSCANCHANNELS command.
- * Version 1 of the command contains a parameter list that is ASCII
- * characters whereas version 2 contains a binary payload.  Determine
- * if a version 1 or a version 2 command is being parsed by examining
- * the parameters, and then dispatch the parser that is appropriate for
- * the command.
- *
- * Return: 0 for success non-zero for failure
- */
-static int
-hdd_parse_set_roam_scan_channels(struct hdd_adapter *adapter, const char *command)
-{
-	const char *cursor;
-	char ch;
-	bool v1;
-	int ret;
-
-	/* start after "SETROAMSCANCHANNELS " */
-	cursor = command + 20;
-
-	/* assume we have a version 1 command until proven otherwise */
-	v1 = true;
-
-	/* v1 params will only contain ASCII digits and space */
-	while ((ch = *cursor++) && v1) {
-		if (!(isdigit(ch) || isspace(ch)))
-			v1 = false;
-	}
-
-	if (v1)
-		ret = hdd_parse_set_roam_scan_channels_v1(adapter, command);
-	else
-		ret = hdd_parse_set_roam_scan_channels_v2(adapter, command);
-
-	return ret;
-}
-
-#ifdef FEATURE_WLAN_ESE
 /**
  * hdd_parse_plm_cmd() - HDD Parse Plm command
  * @command: Pointer to input data
@@ -3394,15 +3190,6 @@ static int drv_cmd_get_band(struct hdd_adapter *adapter,
 	}
 
 	return ret;
-}
-
-static int drv_cmd_set_roam_scan_channels(struct hdd_adapter *adapter,
-					  struct hdd_context *hdd_ctx,
-					  uint8_t *command,
-					  uint8_t command_len,
-					  struct hdd_priv_data *priv_data)
-{
-	return hdd_parse_set_roam_scan_channels(adapter, command);
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -7064,7 +6851,6 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"SETROAMDELTA",              drv_cmd_set_roam_delta, true},
 	{"GETROAMDELTA",              drv_cmd_get_roam_delta, false},
 	{"GETBAND",                   drv_cmd_get_band, false},
-	{"SETROAMSCANCHANNELS",       drv_cmd_set_roam_scan_channels, true},
 	{"GETROAMSCANCHANNELS",       drv_cmd_get_roam_scan_channels, false},
 	{"GETCCXMODE",                drv_cmd_get_ccx_mode, false},
 	{"GETOKCMODE",                drv_cmd_get_okc_mode, false},
