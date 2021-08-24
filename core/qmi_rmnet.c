@@ -907,28 +907,10 @@ bool qmi_rmnet_all_flows_enabled(struct net_device *dev)
 EXPORT_SYMBOL(qmi_rmnet_all_flows_enabled);
 
 /**
- * qmi_rmnet_lock_unlock_all_flows - lock or unlock all bearers
+ * rmnet_prepare_ps_bearers - get disabled bearers and
+ * reset enabled bearers
  */
-void qmi_rmnet_lock_unlock_all_flows(struct net_device *dev, bool lock)
-{
-	struct qos_info *qos;
-
-	qos = (struct qos_info *)rmnet_get_qos_pt(dev);
-	if (!qos)
-		return;
-
-	if (lock)
-		spin_lock_bh(&qos->qos_lock);
-	else
-		spin_unlock_bh(&qos->qos_lock);
-}
-EXPORT_SYMBOL(qmi_rmnet_lock_unlock_all_flows);
-
-/**
- * qmi_rmnet_get_disabled_flows - get disabled bearers
- * Needs to be called with qos_lock
- */
-void qmi_rmnet_get_disabled_flows(struct net_device *dev, u8 *num_bearers,
+void qmi_rmnet_prepare_ps_bearers(struct net_device *dev, u8 *num_bearers,
 				  u8 *bearer_id)
 {
 	struct qos_info *qos;
@@ -940,34 +922,9 @@ void qmi_rmnet_get_disabled_flows(struct net_device *dev, u8 *num_bearers,
 	if (!qos || !num_bearers)
 		return;
 
+	spin_lock_bh(&qos->qos_lock);
+
 	num_bearers_left = *num_bearers;
-
-	list_for_each_entry(bearer, &qos->bearer_head, list) {
-		if (!bearer->grant_size && num_bearers_left) {
-			if (bearer_id)
-				bearer_id[current_num_bearers] =
-					bearer->bearer_id;
-			current_num_bearers++;
-			num_bearers_left--;
-		}
-	}
-
-	*num_bearers = current_num_bearers;
-}
-EXPORT_SYMBOL(qmi_rmnet_get_disabled_flows);
-
-/**
- * qmi_rmnet_reset_enabled_flows - reset enabled bearers for powersave
- * Needs to be called with qos_lock
- */
-void qmi_rmnet_reset_enabled_flows(struct net_device *dev)
-{
-	struct qos_info *qos;
-	struct rmnet_bearer_map *bearer;
-
-	qos = (struct qos_info *)rmnet_get_qos_pt(dev);
-	if (!qos)
-		return;
 
 	list_for_each_entry(bearer, &qos->bearer_head, list) {
 		if (bearer->grant_size) {
@@ -980,10 +937,22 @@ void qmi_rmnet_reset_enabled_flows(struct net_device *dev)
 			bearer->grant_size = DEFAULT_GRANT;
 			bearer->grant_thresh =
 				qmi_rmnet_grant_per(DEFAULT_GRANT);
+		} else if (num_bearers_left) {
+			if (bearer_id)
+				bearer_id[current_num_bearers] =
+					bearer->bearer_id;
+			current_num_bearers++;
+			num_bearers_left--;
+		} else {
+			pr_err("DFC: no bearer space\n");
 		}
 	}
+
+	*num_bearers = current_num_bearers;
+
+	spin_unlock_bh(&qos->qos_lock);
 }
-EXPORT_SYMBOL(qmi_rmnet_reset_enabled_flows);
+EXPORT_SYMBOL(qmi_rmnet_prepare_ps_bearers);
 
 #ifdef CONFIG_QTI_QMI_DFC
 bool qmi_rmnet_flow_is_low_latency(struct net_device *dev,
@@ -1438,25 +1407,19 @@ static void qmi_rmnet_check_stats_2(struct work_struct *work)
 	}
 
 	if (!rxd && !txd) {
-		rmnet_lock_unlock_all_flows(real_work->port, true);
-
-		num_bearers = sizeof(ps_bearer_id);
-		memset(ps_bearer_id, 0, sizeof(ps_bearer_id));
-		rmnet_get_disabled_flows(real_work->port, &num_bearers,
-					 ps_bearer_id);
-
-		/* Enter powersave */
-		if (dfc_qmap_set_powersave(1, num_bearers, ps_bearer_id)) {
-			rmnet_lock_unlock_all_flows(real_work->port, false);
-			goto end;
-		}
-
-		rmnet_reset_enabled_flows(real_work->port);
 		qmi->ps_ignore_grant = true;
 		qmi->ps_enabled = true;
 		clear_bit(PS_WORK_ACTIVE_BIT, &qmi->ps_work_active);
 
-		rmnet_lock_unlock_all_flows(real_work->port, false);
+		smp_mb();
+
+		num_bearers = sizeof(ps_bearer_id);
+		memset(ps_bearer_id, 0, sizeof(ps_bearer_id));
+		rmnet_prepare_ps_bearers(real_work->port, &num_bearers,
+					 ps_bearer_id);
+
+		/* Enter powersave */
+		dfc_qmap_set_powersave(1, num_bearers, ps_bearer_id);
 
 		if (rmnet_get_powersave_notif(real_work->port))
 			qmi_rmnet_ps_on_notify(real_work->port);

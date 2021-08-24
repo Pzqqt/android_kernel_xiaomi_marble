@@ -755,24 +755,7 @@ out:
 }
 EXPORT_SYMBOL(rmnet_all_flows_enabled);
 
-void rmnet_lock_unlock_all_flows(void *port, bool lock)
-{
-	struct rmnet_endpoint *ep;
-	unsigned long bkt;
-
-	if (unlikely(!port))
-		return;
-
-	rcu_read_lock();
-	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
-			  bkt, ep, hlnode) {
-		qmi_rmnet_lock_unlock_all_flows(ep->egress_dev, lock);
-	}
-	rcu_read_unlock();
-}
-EXPORT_SYMBOL(rmnet_lock_unlock_all_flows);
-
-void rmnet_get_disabled_flows(void *port, u8 *num_bearers, u8 *bearer_id)
+void rmnet_prepare_ps_bearers(void *port, u8 *num_bearers, u8 *bearer_id)
 {
 	struct rmnet_endpoint *ep;
 	unsigned long bkt;
@@ -789,7 +772,7 @@ void rmnet_get_disabled_flows(void *port, u8 *num_bearers, u8 *bearer_id)
 	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
 			  bkt, ep, hlnode) {
 		num_bearers_in_out = number_bearers_left;
-		qmi_rmnet_get_disabled_flows(ep->egress_dev,
+		qmi_rmnet_prepare_ps_bearers(ep->egress_dev,
 					     &num_bearers_in_out,
 					     bearer_id ? bearer_id +
 						current_num_bearers : NULL);
@@ -800,24 +783,7 @@ void rmnet_get_disabled_flows(void *port, u8 *num_bearers, u8 *bearer_id)
 
 	*num_bearers = current_num_bearers;
 }
-EXPORT_SYMBOL(rmnet_get_disabled_flows);
-
-void rmnet_reset_enabled_flows(void *port)
-{
-	struct rmnet_endpoint *ep;
-	unsigned long bkt;
-
-	if (unlikely(!port))
-		return;
-
-	rcu_read_lock();
-	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
-			  bkt, ep, hlnode) {
-		qmi_rmnet_reset_enabled_flows(ep->egress_dev);
-	}
-	rcu_read_unlock();
-}
-EXPORT_SYMBOL(rmnet_reset_enabled_flows);
+EXPORT_SYMBOL(rmnet_prepare_ps_bearers);
 
 int rmnet_get_powersave_notif(void *port)
 {

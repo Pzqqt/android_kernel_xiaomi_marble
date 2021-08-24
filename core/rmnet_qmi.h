@@ -35,9 +35,7 @@ void rmnet_get_packets(void *port, u64 *rx, u64 *tx);
 int rmnet_get_powersave_notif(void *port);
 struct net_device *rmnet_get_real_dev(void *port);
 int rmnet_get_dlmarker_info(void *port);
-void rmnet_lock_unlock_all_flows(void *port, bool lock);
-void rmnet_get_disabled_flows(void *port, u8 *num_bearers, u8 *bearer_id);
-void rmnet_reset_enabled_flows(void *port);
+void rmnet_prepare_ps_bearers(void *port, u8 *num_bearers, u8 *bearer_id);
 #else
 static inline void *rmnet_get_qmi_pt(void *port)
 {
