@@ -131,6 +131,17 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 {
 	struct wlan_log_record *write_block;
 
+	if (!new_record) {
+		logging_debug("NULL entry");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (new_record->log_subtype >= WLAN_TAG_MAX) {
+		logging_debug("Enqueue failed subtype:%d",
+			      new_record->log_subtype);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/*
 	 * This API writes to the logging buffer if the buffer is empty.
 	 * 1. Acquire the write spinlock.
