@@ -30593,6 +30593,18 @@ typedef enum _WMI_TWT_COMMAND_T {
 #define TWT_FLAGS_GET_TWT_INFO_FRAME_DISABLED(flag)      WMI_GET_BITS(flag, 13, 1)
 #define TWT_FLAGS_SET_TWT_INFO_FRAME_DISABLED(flag, val) WMI_SET_BITS(flag, 13, 1, val)
 
+/*
+ * 1 means PM_RESPONDER_MODE information sent in BIT15 is valid, 0 means it is not valid.
+ * Will be used for backward compatibility if host uses older FW versions
+ * then value will be 0 so host will not consider the BIT15 value.
+ */
+#define TWT_FLAGS_GET_PM_RESPONDER_MODE_VALID(flag)      WMI_GET_BITS(flag, 14, 1)
+#define TWT_FLAGS_SET_PM_RESPONDER_MODE_VALID(flag, val) WMI_SET_BITS(flag, 14, 1, val)
+
+/* 1 means PM_RESPONDER_MODE supported, 0 means not supported */
+#define TWT_FLAGS_GET_PM_RESPONDER_MODE(flag)      WMI_GET_BITS(flag, 15, 1)
+#define TWT_FLAGS_SET_PM_RESPONDER_MODE(flag, val) WMI_SET_BITS(flag, 15, 1, val)
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_ack_event_fixed_param */
     A_UINT32 vdev_id;       /* VDEV identifier */
@@ -35406,6 +35418,12 @@ typedef struct {
 
 #define WMI_TWT_SESSION_FLAG_TWT_INFO_FRAME_DISABLED_GET(_var) WMI_GET_BITS(_var, 20, 1)
 #define WMI_TWT_SESSION_FLAG_TWT_INFO_FRAME_DISABLED_SET(_var, _val) WMI_SET_BITS(_var, 20, 1, _val)
+
+#define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_VALID_GET(_var) WMI_GET_BITS(_var, 21, 1)
+#define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_VALID_SET(_var, _val) WMI_SET_BITS(_var, 21, 1, _val)
+
+#define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_GET(_var) WMI_GET_BITS(_var, 22, 1)
+#define WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_SET(_var, _val) WMI_SET_BITS(_var, 22, 1, _val)
 
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_session_stats_info */
