@@ -617,7 +617,7 @@ static void mmrm_sw_dump_enabled_client_info(struct mmrm_sw_clk_mgr_info *sinfo)
 	for (c = 0; c < sinfo->tot_clk_clients; c++) {
 		tbl_entry = &sinfo->clk_client_tbl[c];
 		if (tbl_entry->clk_rate) {
-			d_mpr_p("%s: csid(0x%x) clk_rate(%zu) vdd_level(%zu) cur_ma(%zu)\n",
+			d_mpr_e("%s: csid(0x%x) clk_rate(%zu) vdd_level(%zu) cur_ma(%zu)\n",
 				__func__,
 				tbl_entry->clk_src_id,
 				tbl_entry->clk_rate,
@@ -627,7 +627,7 @@ static void mmrm_sw_dump_enabled_client_info(struct mmrm_sw_clk_mgr_info *sinfo)
 		}
 	}
 	if (peak_data) {
-		d_mpr_p("%s: aggreg_val(%zu) aggreg_level(%zu)\n", __func__,
+		d_mpr_e("%s: aggreg_val(%zu) aggreg_level(%zu)\n", __func__,
 			peak_data->aggreg_val, peak_data->aggreg_level);
 	}
 }
@@ -866,14 +866,15 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 			rc = -EINVAL;
 			goto err_invalid_clk_val;
 		}
+
+		if (!mmrm_sw_is_valid_num_hw_block(tbl_entry, client_data)) {
+			d_mpr_e("%s: csid(0x%x) num_hw_block:%d\n",
+				__func__, tbl_entry->clk_src_id, client_data->num_hw_blocks);
+			rc = -EINVAL;
+			goto err_invalid_client_data;
+		}
 	} else {
 		req_level = 0;
-	}
-	if (!mmrm_sw_is_valid_num_hw_block(tbl_entry, client_data)) {
-		d_mpr_e("%s: csid(0x%x) num_hw_block:%d\n",
-			__func__, tbl_entry->clk_src_id, client_data->num_hw_blocks);
-		rc = -EINVAL;
-		goto err_invalid_client_data;
 	}
 
 	mutex_lock(&sw_clk_mgr->lock);
