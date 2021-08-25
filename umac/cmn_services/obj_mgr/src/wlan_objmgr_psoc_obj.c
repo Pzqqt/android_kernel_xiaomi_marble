@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1994,7 +1995,8 @@ QDF_STATUS wlan_objmgr_psoc_peer_attach(struct wlan_objmgr_psoc *psoc,
 	wlan_psoc_obj_lock(psoc);
 	objmgr = &psoc->soc_objmgr;
 	/* Max temporary peer limit is reached, return failure */
-	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP) {
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP ||
+	    peer->peer_mlme.peer_type == WLAN_PEER_MLO_TEMP) {
 		if (objmgr->temp_peer_count >= WLAN_MAX_PSOC_TEMP_PEERS) {
 			wlan_psoc_obj_unlock(psoc);
 			return QDF_STATUS_E_FAILURE;
@@ -2019,7 +2021,8 @@ QDF_STATUS wlan_objmgr_psoc_peer_attach(struct wlan_objmgr_psoc *psoc,
 							peer);
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 	/* Increment peer count */
-	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP ||
+	    peer->peer_mlme.peer_type == WLAN_PEER_MLO_TEMP)
 		objmgr->temp_peer_count++;
 	else
 		objmgr->wlan_peer_count++;
@@ -2060,7 +2063,8 @@ QDF_STATUS wlan_objmgr_psoc_peer_detach(struct wlan_objmgr_psoc *psoc,
 	}
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 	/* Decrement peer count */
-	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP ||
+	    peer->peer_mlme.peer_type == WLAN_PEER_MLO_TEMP)
 		objmgr->temp_peer_count--;
 	else
 		objmgr->wlan_peer_count--;
