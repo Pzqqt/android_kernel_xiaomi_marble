@@ -681,17 +681,22 @@ struct msm_display_vdc_info {
 
 /**
  * struct msm_compression_info - defined panel compression
+ * @enabled:          enabled/disabled
  * @comp_type:        type of compression supported
  * @comp_ratio:       compression ratio
+ * @src_bpp:          bits per pixel before compression
+ * @tgt_bpp:          bits per pixel after compression
  * @dsc_info:         dsc configuration if the compression
  *                    supported is DSC
  * @vdc_info:         vdc configuration if the compression
  *                    supported is VDC
  */
 struct msm_compression_info {
+	bool enabled;
 	enum msm_display_compression_type comp_type;
 	u32 comp_ratio;
-
+	u32 src_bpp;
+	u32 tgt_bpp;
 	union{
 		struct msm_display_dsc_info dsc_info;
 		struct msm_display_vdc_info vdc_info;
@@ -747,6 +752,7 @@ struct msm_dyn_clk_list {
  * @allowed_mode_switches: bit mask to indicate supported mode switch.
  * @disable_rsc_solver: Dynamically disable RSC solver for the timing mode due to lower bitclk rate.
  * @dyn_clk_list: List of dynamic clock rates for RFI.
+ * @qsync_min_fps: qsync min fps rate
  */
 struct msm_mode_info {
 	uint32_t frame_rate;
@@ -765,6 +771,7 @@ struct msm_mode_info {
 	u32 allowed_mode_switches;
 	bool disable_rsc_solver;
 	struct msm_dyn_clk_list dyn_clk_list;
+	u32 qsync_min_fps;
 };
 
 /**

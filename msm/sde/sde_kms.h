@@ -765,4 +765,6 @@ int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
  */
 int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
 					   struct drm_atomic_state *state);
+
+void sde_kms_add_data_to_minidump_va(struct sde_kms *sde_kms);
 #endif /* __sde_kms_H__ */

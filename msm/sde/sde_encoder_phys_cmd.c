@@ -37,11 +37,13 @@
 #define AUTOREFRESH_SEQ2_POLL_TIMEOUT	1000000
 
 static inline int _sde_encoder_phys_cmd_get_idle_timeout(
-		struct sde_encoder_phys_cmd *cmd_enc)
+		struct sde_encoder_phys *phys_enc)
 {
+	u32 timeout = phys_enc->kickoff_timeout_ms;
+	struct sde_encoder_phys_cmd *cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
+
 	return cmd_enc->autorefresh.cfg.frame_count ?
-			cmd_enc->autorefresh.cfg.frame_count *
-			KICKOFF_TIMEOUT_MS : KICKOFF_TIMEOUT_MS;
+			cmd_enc->autorefresh.cfg.frame_count * timeout : timeout;
 }
 
 static inline bool sde_encoder_phys_cmd_is_master(
@@ -450,6 +452,9 @@ static void sde_encoder_phys_cmd_mode_set(
 	}
 
 	_sde_encoder_phys_cmd_setup_irq_hw_idx(phys_enc);
+
+	phys_enc->kickoff_timeout_ms =
+		sde_encoder_helper_get_kickoff_timeout_ms(phys_enc->parent);
 }
 
 static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
@@ -708,7 +713,7 @@ static int _sde_encoder_phys_cmd_wait_for_idle(
 
 	wait_info.wq = &phys_enc->pending_kickoff_wq;
 	wait_info.atomic_cnt = &phys_enc->pending_kickoff_cnt;
-	wait_info.timeout_ms = KICKOFF_TIMEOUT_MS;
+	wait_info.timeout_ms = phys_enc->kickoff_timeout_ms;
 
 	/* slave encoder doesn't enable for ppsplit */
 	if (_sde_encoder_phys_is_ppsplit_slave(phys_enc))
@@ -748,7 +753,7 @@ static int _sde_encoder_phys_cmd_wait_for_autorefresh_done(
 
 	wait_info.wq = &cmd_enc->autorefresh.kickoff_wq;
 	wait_info.atomic_cnt = &cmd_enc->autorefresh.kickoff_cnt;
-	wait_info.timeout_ms = _sde_encoder_phys_cmd_get_idle_timeout(cmd_enc);
+	wait_info.timeout_ms = _sde_encoder_phys_cmd_get_idle_timeout(phys_enc);
 
 	/* wait for autorefresh kickoff to start */
 	ret = sde_encoder_helper_wait_for_irq(phys_enc,
@@ -896,7 +901,7 @@ static int _get_tearcheck_threshold(struct sde_encoder_phys *phys_enc)
 
 		if (phys_enc->parent_ops.get_qsync_fps)
 			phys_enc->parent_ops.get_qsync_fps(
-				phys_enc->parent, &qsync_min_fps, 0);
+				phys_enc->parent, &qsync_min_fps, conn->state);
 
 		if (!qsync_min_fps || !default_fps || !yres) {
 			SDE_ERROR_CMDENC(cmd_enc,
@@ -1427,11 +1432,11 @@ static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 	}
 	ctl = phys_enc->hw_ctl;
 	c_conn = to_sde_connector(phys_enc->connector);
-	timeout_ms = KICKOFF_TIMEOUT_MS;
+	timeout_ms = phys_enc->kickoff_timeout_ms;
 
 	if (c_conn->lp_mode == SDE_MODE_DPMS_LP1 ||
 		c_conn->lp_mode == SDE_MODE_DPMS_LP2)
-		timeout_ms = (KICKOFF_TIMEOUT_MS) * 2;
+		timeout_ms = timeout_ms * 2;
 
 	wait_info.wq = &phys_enc->pending_kickoff_wq;
 	wait_info.atomic_cnt = &phys_enc->pending_retire_fence_cnt;
@@ -1649,7 +1654,7 @@ static int sde_encoder_phys_cmd_wait_for_vblank(
 
 	wait_info.wq = &cmd_enc->pending_vblank_wq;
 	wait_info.atomic_cnt = &cmd_enc->pending_vblank_cnt;
-	wait_info.timeout_ms = _sde_encoder_phys_cmd_get_idle_timeout(cmd_enc);
+	wait_info.timeout_ms = _sde_encoder_phys_cmd_get_idle_timeout(phys_enc);
 
 	atomic_inc(&cmd_enc->pending_vblank_cnt);
 
@@ -1696,6 +1701,7 @@ static void _sde_encoder_autorefresh_disable_seq1(
 		struct sde_encoder_phys *phys_enc)
 {
 	int trial = 0;
+	u32 timeout_ms = phys_enc->kickoff_timeout_ms;
 	struct sde_encoder_phys_cmd *cmd_enc =
 				to_sde_encoder_phys_cmd(phys_enc);
 
@@ -1712,7 +1718,7 @@ static void _sde_encoder_autorefresh_disable_seq1(
 	do {
 		udelay(AUTOREFRESH_SEQ1_POLL_TIME);
 		if ((trial * AUTOREFRESH_SEQ1_POLL_TIME)
-				> (KICKOFF_TIMEOUT_MS * USEC_PER_MSEC)) {
+				> (timeout_ms * USEC_PER_MSEC)) {
 			SDE_ERROR_CMDENC(cmd_enc,
 					"disable autorefresh failed\n");
 
@@ -1875,6 +1881,14 @@ static void sde_encoder_phys_cmd_setup_vsync_source(struct sde_encoder_phys *phy
 				vsync_source);
 }
 
+void sde_encoder_phys_cmd_add_enc_to_minidump(struct sde_encoder_phys *phys_enc)
+{
+	struct sde_encoder_phys_cmd *cmd_enc;
+	cmd_enc =  to_sde_encoder_phys_cmd(phys_enc);
+
+	sde_mini_dump_add_va_region("sde_enc_phys_cmd", sizeof(*cmd_enc), cmd_enc);
+}
+
 static void sde_encoder_phys_cmd_init_ops(struct sde_encoder_phys_ops *ops)
 {
 	ops->prepare_commit = sde_encoder_phys_cmd_prepare_commit;
@@ -1906,6 +1920,7 @@ static void sde_encoder_phys_cmd_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->setup_vsync_source = sde_encoder_phys_cmd_setup_vsync_source;
 	ops->setup_misr = sde_encoder_helper_setup_misr;
 	ops->collect_misr = sde_encoder_helper_collect_misr;
+	ops->add_to_minidump = sde_encoder_phys_cmd_add_enc_to_minidump;
 }
 
 static inline bool sde_encoder_phys_cmd_intf_te_supported(
@@ -1954,6 +1969,7 @@ struct sde_encoder_phys *sde_encoder_phys_cmd_init(
 	phys_enc->vblank_ctl_lock = p->vblank_ctl_lock;
 	cmd_enc->stream_sel = 0;
 	phys_enc->enable_state = SDE_ENC_DISABLED;
+	phys_enc->kickoff_timeout_ms = DEFAULT_KICKOFF_TIMEOUT_MS;
 	sde_encoder_phys_cmd_init_ops(&phys_enc->ops);
 	phys_enc->comp_type = p->comp_type;
 

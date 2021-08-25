@@ -61,7 +61,7 @@
 		(p) ? ((p)->hw_pp ? (p)->hw_pp->idx - PINGPONG_0 : -1) : -1, \
 		##__VA_ARGS__)
 
-
+#define SEC_TO_MILLI_SEC		1000
 
 #define MISR_BUFF_SIZE			256
 
@@ -1028,10 +1028,9 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 	return ret;
 }
 
-static void _sde_encoder_get_qsync_fps_callback(
-		struct drm_encoder *drm_enc, u32 *qsync_fps, u32 vrr_fps)
+static void _sde_encoder_get_qsync_fps_callback(struct drm_encoder *drm_enc,
+			u32 *qsync_fps, struct drm_connector_state *conn_state)
 {
-	struct msm_display_info *disp_info;
 	struct sde_encoder_virt *sde_enc;
 	int rc = 0;
 	struct sde_connector *sde_conn;
@@ -1046,25 +1045,17 @@ static void _sde_encoder_get_qsync_fps_callback(
 	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
-	disp_info = &sde_enc->disp_info;
-	*qsync_fps = disp_info->qsync_min_fps;
 
-	if (!disp_info->has_qsync_min_fps_list) {
-		return;
-	} else if (!sde_enc->cur_master || !(disp_info->capabilities & MSM_DISPLAY_CAP_VID_MODE)) {
+	if (!sde_enc->cur_master) {
 		SDE_ERROR("invalid qsync settings %d\n", !sde_enc->cur_master);
 		return;
 	}
 
-	/*
-	 * If "dsi-supported-qsync-min-fps-list" is defined, get
-	 * the qsync min fps corresponding to the fps in dfps list
-	 */
 	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
 	if (sde_conn->ops.get_qsync_min_fps)
-		rc = sde_conn->ops.get_qsync_min_fps(sde_conn->display, vrr_fps);
+		rc = sde_conn->ops.get_qsync_min_fps(sde_conn->display, conn_state);
 
-	if (rc <= 0) {
+	if (rc < 0) {
 		SDE_ERROR("invalid qsync min fps %d\n", rc);
 		return;
 	}
@@ -1101,7 +1092,8 @@ static int _sde_encoder_avr_step_check(struct sde_connector *sde_conn,
 	if (!step)
 		return 0;
 
-	_sde_encoder_get_qsync_fps_callback(sde_conn_state->base.best_encoder, &min_fps, nom_fps);
+	_sde_encoder_get_qsync_fps_callback(sde_conn_state->base.best_encoder, &min_fps,
+		&sde_conn_state->base);
 	if (!min_fps || !nom_fps || step % nom_fps || step % min_fps || step < nom_fps ||
 			(vtotal * nom_fps) % step) {
 		SDE_ERROR("invalid avr_step rate! nom:%u min:%u step:%u vtotal:%u\n", nom_fps,
@@ -2970,6 +2962,7 @@ static void sde_encoder_off_work(struct kthread_work *work)
 static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
+	bool has_master_enc = false;
 	int i, ret = 0;
 	struct sde_connector_state *c_state;
 	struct drm_display_mode *cur_mode = NULL;
@@ -2994,18 +2987,19 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	SDE_DEBUG_ENC(sde_enc, "\n");
 	SDE_EVT32(DRMID(drm_enc), cur_mode->hdisplay, cur_mode->vdisplay);
 
-	sde_enc->cur_master = NULL;
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
 		if (phys && phys->ops.is_master && phys->ops.is_master(phys)) {
 			SDE_DEBUG_ENC(sde_enc, "master is now idx %d\n", i);
 			sde_enc->cur_master = phys;
+			has_master_enc = true;
 			break;
 		}
 	}
 
-	if (!sde_enc->cur_master) {
+	if (!has_master_enc) {
+		sde_enc->cur_master = NULL;
 		SDE_ERROR("virt encoder has no master! num_phys %d\n", i);
 		return;
 	}
@@ -4488,6 +4482,32 @@ void sde_encoder_get_transfer_time(struct drm_encoder *drm_enc,
 	*transfer_time_us = info->mdp_transfer_time_us;
 }
 
+u32 sde_encoder_helper_get_kickoff_timeout_ms(struct drm_encoder *drm_enc)
+{
+	struct drm_encoder *src_enc = drm_enc;
+	struct sde_encoder_virt *sde_enc;
+	u32 fps;
+
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
+		return DEFAULT_KICKOFF_TIMEOUT_MS;
+	}
+
+	if (sde_encoder_in_clone_mode(drm_enc))
+		src_enc = sde_crtc_get_src_encoder_of_clone(drm_enc->crtc);
+
+	if (!src_enc)
+		return DEFAULT_KICKOFF_TIMEOUT_MS;
+
+	sde_enc = to_sde_encoder_virt(src_enc);
+	fps = sde_enc->mode_info.frame_rate;
+
+	if (!fps || fps >= DEFAULT_TIMEOUT_FPS_THRESHOLD)
+		return DEFAULT_KICKOFF_TIMEOUT_MS;
+	else
+		return (SEC_TO_MILLI_SEC / fps) * 2;
+}
+
 int sde_encoder_get_avr_status(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc;
@@ -5725,4 +5745,27 @@ bool sde_encoder_needs_dsc_disable(struct drm_encoder *drm_enc)
 
 	conn_state = to_sde_connector_state(conn->state);
 	return TOPOLOGY_DSC_MODE(conn_state->old_topology_name);
+}
+
+void sde_encoder_add_data_to_minidump_va(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct sde_encoder_phys *phys_enc;
+	u32 i;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	for( i = 0; i < MAX_PHYS_ENCODERS_PER_VIRTUAL; i++)
+	{
+		phys_enc = sde_enc->phys_encs[i];
+		if(phys_enc && phys_enc->ops.add_to_minidump)
+			phys_enc->ops.add_to_minidump(phys_enc);
+
+		phys_enc = sde_enc->phys_cmd_encs[i];
+		if(phys_enc && phys_enc->ops.add_to_minidump)
+			phys_enc->ops.add_to_minidump(phys_enc);
+
+		phys_enc = sde_enc->phys_vid_encs[i];
+		if(phys_enc && phys_enc->ops.add_to_minidump)
+			phys_enc->ops.add_to_minidump(phys_enc);
+	}
 }

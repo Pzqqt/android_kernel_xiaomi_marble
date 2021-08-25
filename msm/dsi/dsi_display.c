@@ -279,8 +279,7 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
 
-	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
-				DSI_CTRL_ENGINE_ON, skip_op);
+	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_ON);
 	if (rc) {
 		DSI_ERR("[%s] enable mcmd engine failed, skip_op:%d rc:%d\n",
 		       display->name, skip_op, rc);
@@ -292,8 +291,7 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 		if (!ctrl->ctrl || (ctrl == m_ctrl))
 			continue;
 
-		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl,
-					DSI_CTRL_ENGINE_ON, skip_op);
+		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl, DSI_CTRL_ENGINE_ON);
 		if (rc) {
 			DSI_ERR(
 			    "[%s] enable cmd engine failed, skip_op:%d rc:%d\n",
@@ -304,8 +302,7 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 
 	goto done;
 error_disable_master:
-	(void)dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
-				DSI_CTRL_ENGINE_OFF, skip_op);
+	(void)dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
 done:
 	mutex_unlock(&m_ctrl->ctrl->ctrl_lock);
 	return rc;
@@ -326,16 +323,14 @@ static int dsi_display_cmd_engine_disable(struct dsi_display *display)
 		if (!ctrl->ctrl || (ctrl == m_ctrl))
 			continue;
 
-		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl,
-					DSI_CTRL_ENGINE_OFF, skip_op);
+		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
 		if (rc)
 			DSI_ERR(
 			   "[%s] disable cmd engine failed, skip_op:%d rc:%d\n",
 				display->name, skip_op, rc);
 	}
 
-	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
-				DSI_CTRL_ENGINE_OFF, skip_op);
+	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
 	if (rc)
 		DSI_ERR("[%s] disable mcmd engine failed, skip_op:%d rc:%d\n",
 			display->name, skip_op, rc);
@@ -1127,6 +1122,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 		cmds = set->cmds;
 		dsi_display->tx_cmd_buf_ndx = 0;
 
+		dsi_panel_acquire_panel_lock(dsi_display->panel);
 		for (i = 0; i < cnt; i++) {
 			rc = dsi_host_transfer_sub(&dsi_display->host, cmds);
 			if (rc < 0) {
@@ -1138,6 +1134,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 						((cmds->post_wait_ms*1000)+10));
 			cmds++;
 		}
+		dsi_panel_release_panel_lock(dsi_display->panel);
 
 		memset(dbgfs_tx_cmd_buf, 0, SZ_4K);
 		dsi_panel_destroy_cmd_packets(set);
@@ -6838,6 +6835,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
 	int i, start, end, rc = -EINVAL;
 	int dsc_modes = 0, nondsc_modes = 0;
+	struct dsi_qsync_capabilities *qsync_caps;
 
 	if (!display || !out_modes) {
 		DSI_ERR("Invalid params\n");
@@ -6868,6 +6866,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 		goto error;
 	}
 
+	qsync_caps = &(display->panel->qsync_caps);
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
 
 	timing_mode_count = display->panel->num_timing_nodes;
@@ -6963,12 +6962,24 @@ int dsi_display_get_modes(struct dsi_display *display,
 			memcpy(sub_mode, &display_mode, sizeof(display_mode));
 			array_idx++;
 
+			/*
+			 * Populate mode qsync min fps from panel min qsync fps dt property
+			 * in video mode & in command mode where per mode qsync min fps is
+			 * not defined.
+			 */
+			if (!sub_mode->timing.qsync_min_fps && qsync_caps->qsync_min_fps)
+				sub_mode->timing.qsync_min_fps = qsync_caps->qsync_min_fps;
+
 			if (!dfps_caps.dfps_support || !support_video_mode)
 				continue;
 
 			sub_mode->mode_idx += (array_idx - 1);
 			curr_refresh_rate = sub_mode->timing.refresh_rate;
 			sub_mode->timing.refresh_rate = dfps_caps.dfps_list[i];
+
+			/* Override with qsync min fps list in dfps usecases */
+			if (qsync_caps->qsync_min_fps && qsync_caps->qsync_min_fps_list_len)
+				sub_mode->timing.qsync_min_fps = qsync_caps->qsync_min_fps_list[i];
 
 			dsi_display_get_dfps_timing(display, sub_mode,
 					curr_refresh_rate);
@@ -7078,25 +7089,6 @@ int dsi_display_get_default_lms(void *dsi_display, u32 *num_lm)
 	mutex_unlock(&display->display_lock);
 
 	return rc;
-}
-
-int dsi_display_get_qsync_min_fps(void *display_dsi, u32 mode_fps)
-{
-	struct dsi_display *display = (struct dsi_display *)display_dsi;
-	struct dsi_panel *panel;
-	u32 i;
-
-	if (display == NULL || display->panel == NULL)
-		return -EINVAL;
-
-	panel = display->panel;
-	for (i = 0; i < panel->dfps_caps.dfps_list_len; i++) {
-		if (panel->dfps_caps.dfps_list[i] == mode_fps)
-			return panel->qsync_caps.qsync_min_fps_list[i];
-	}
-	SDE_EVT32(mode_fps);
-	DSI_DEBUG("Invalid mode_fps %d\n", mode_fps);
-	return -EINVAL;
 }
 
 int dsi_display_get_avr_step_req_fps(void *display_dsi, u32 mode_fps)
@@ -8060,11 +8052,6 @@ static int dsi_display_qsync(struct dsi_display *display, bool enable)
 {
 	int i;
 	int rc = 0;
-
-	if (!display->panel->qsync_caps.qsync_min_fps) {
-		DSI_ERR("%s:ERROR: qsync set, but no fps\n", __func__);
-		return 0;
-	}
 
 	mutex_lock(&display->display_lock);
 

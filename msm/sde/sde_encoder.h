@@ -51,6 +51,9 @@
 #define IDLE_POWERCOLLAPSE_DURATION	(66 - 16/2)
 #define IDLE_POWERCOLLAPSE_IN_EARLY_WAKEUP (200 - 16/2)
 
+/* below this fps limit, timeouts are adjusted based on fps */
+#define DEFAULT_TIMEOUT_FPS_THRESHOLD            24
+
 /**
  * Encoder functions and data types
  * @intfs:	Interfaces this encoder is using, INTF_MODE_NONE if unused
@@ -655,4 +658,6 @@ static inline bool sde_encoder_is_widebus_enabled(struct drm_encoder *drm_enc)
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	return sde_enc->mode_info.wide_bus_en;
 }
+
+void sde_encoder_add_data_to_minidump_va(struct drm_encoder *drm_enc);
 #endif /* __SDE_ENCODER_H__ */

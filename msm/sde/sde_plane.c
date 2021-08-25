@@ -4852,3 +4852,14 @@ clean_plane:
 exit:
 	return ERR_PTR(ret);
 }
+
+void sde_plane_add_data_to_minidump_va(struct drm_plane *plane)
+{
+	struct sde_plane *sde_plane;
+	struct sde_plane_state *pstate;
+
+	sde_plane = to_sde_plane(plane);
+	pstate = to_sde_plane_state(plane->state);
+	sde_mini_dump_add_va_region("sde_plane", sizeof(*sde_plane), sde_plane);
+	sde_mini_dump_add_va_region("plane_state", sizeof(*pstate), pstate);
+}

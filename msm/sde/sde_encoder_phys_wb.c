@@ -1402,6 +1402,9 @@ static void sde_encoder_phys_wb_mode_set(
 			PTR_ERR(phys_enc->hw_cdm));
 		phys_enc->hw_cdm = NULL;
 	}
+
+	phys_enc->kickoff_timeout_ms =
+		sde_encoder_helper_get_kickoff_timeout_ms(phys_enc->parent);
 }
 
 static int sde_encoder_phys_wb_frame_timeout(struct sde_encoder_phys *phys_enc)
@@ -1508,7 +1511,7 @@ static int _sde_encoder_phys_wb_wait_for_commit_done(
 	wait_info.wq = &phys_enc->pending_kickoff_wq;
 	wait_info.atomic_cnt = &phys_enc->pending_retire_fence_cnt;
 	wait_info.timeout_ms = max_t(u32, wb_enc->wbdone_timeout,
-		KICKOFF_TIMEOUT_MS);
+			phys_enc->kickoff_timeout_ms);
 	rc = sde_encoder_helper_wait_for_irq(phys_enc, INTR_IDX_WB_DONE,
 		&wait_info);
 	if (rc == -ETIMEDOUT && _sde_encoder_phys_wb_is_idle(phys_enc)) {
@@ -1985,6 +1988,14 @@ static void sde_encoder_phys_wb_destroy(struct sde_encoder_phys *phys_enc)
 	kfree(wb_enc);
 }
 
+void sde_encoder_phys_wb_add_enc_to_minidump(struct sde_encoder_phys *phys_enc)
+{
+	struct sde_encoder_phys_wb *wb_enc;
+	wb_enc =  to_sde_encoder_phys_wb(phys_enc);
+
+	sde_mini_dump_add_va_region("sde_enc_phys_wb", sizeof(*wb_enc), wb_enc);
+}
+
 /**
  * sde_encoder_phys_wb_init_ops - initialize writeback operations
  * @ops:	Pointer to encoder operation table
@@ -2007,6 +2018,7 @@ static void sde_encoder_phys_wb_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->trigger_start = sde_encoder_helper_trigger_start;
 	ops->hw_reset = sde_encoder_helper_hw_reset;
 	ops->irq_control = sde_encoder_phys_wb_irq_ctrl;
+	ops->add_to_minidump = sde_encoder_phys_wb_add_enc_to_minidump;
 }
 
 /**
@@ -2037,9 +2049,9 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 		ret = -ENOMEM;
 		goto fail_alloc;
 	}
-	wb_enc->wbdone_timeout = KICKOFF_TIMEOUT_MS;
 
 	phys_enc = &wb_enc->base;
+	phys_enc->kickoff_timeout_ms = DEFAULT_KICKOFF_TIMEOUT_MS;
 
 	if (p->sde_kms->vbif[VBIF_NRT]) {
 		wb_enc->aspace[SDE_IOMMU_DOMAIN_UNSECURE] =

@@ -397,7 +397,7 @@ static void sde_encoder_phys_vid_setup_timing_engine(
 	bool is_split_link = false;
 
 	if (!phys_enc || !phys_enc->sde_kms || !phys_enc->hw_ctl ||
-					!phys_enc->hw_intf) {
+			!phys_enc->hw_intf || !phys_enc->connector) {
 		SDE_ERROR("invalid encoder %d\n", !phys_enc);
 		return;
 	}
@@ -470,8 +470,7 @@ static void sde_encoder_phys_vid_setup_timing_engine(
 exit:
 	if (phys_enc->parent_ops.get_qsync_fps)
 		phys_enc->parent_ops.get_qsync_fps(
-			phys_enc->parent, &qsync_min_fps,
-			drm_mode_vrefresh(&phys_enc->cached_mode));
+			phys_enc->parent, &qsync_min_fps, phys_enc->connector->state);
 
 	/* only panels which support qsync will have a non-zero min fps */
 	if (qsync_min_fps) {
@@ -657,6 +656,9 @@ static void sde_encoder_phys_vid_mode_set(
 	}
 
 	_sde_encoder_phys_vid_setup_irq_hw_idx(phys_enc);
+
+	phys_enc->kickoff_timeout_ms =
+		sde_encoder_helper_get_kickoff_timeout_ms(phys_enc->parent);
 }
 
 static int sde_encoder_phys_vid_control_vblank_irq(
@@ -889,7 +891,7 @@ static int _sde_encoder_phys_vid_wait_for_vblank(
 
 	wait_info.wq = &phys_enc->pending_kickoff_wq;
 	wait_info.atomic_cnt = &phys_enc->pending_kickoff_cnt;
-	wait_info.timeout_ms = KICKOFF_TIMEOUT_MS;
+	wait_info.timeout_ms = phys_enc->kickoff_timeout_ms;
 
 	/* Wait for kickoff to complete */
 	ret = sde_encoder_helper_wait_for_irq(phys_enc, INTR_IDX_VSYNC,
@@ -1289,6 +1291,14 @@ static int sde_encoder_phys_vid_wait_for_active(
 	return -EINVAL;
 }
 
+void sde_encoder_phys_vid_add_enc_to_minidump(struct sde_encoder_phys *phys_enc)
+{
+	struct sde_encoder_phys_vid *vid_enc;
+	vid_enc =  to_sde_encoder_phys_vid(phys_enc);
+
+	sde_mini_dump_add_va_region("sde_enc_phys_vid", sizeof(*vid_enc), vid_enc);
+}
+
 static void sde_encoder_phys_vid_init_ops(struct sde_encoder_phys_ops *ops)
 {
 	ops->is_master = sde_encoder_phys_vid_is_master;
@@ -1317,6 +1327,7 @@ static void sde_encoder_phys_vid_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->prepare_commit = sde_encoder_phys_vid_prepare_for_commit;
 	ops->get_underrun_line_count =
 		sde_encoder_phys_vid_get_underrun_line_count;
+	ops->add_to_minidump = sde_encoder_phys_vid_add_enc_to_minidump;
 }
 
 struct sde_encoder_phys *sde_encoder_phys_vid_init(
@@ -1361,6 +1372,7 @@ struct sde_encoder_phys *sde_encoder_phys_vid_init(
 	phys_enc->enc_spinlock = p->enc_spinlock;
 	phys_enc->vblank_ctl_lock = p->vblank_ctl_lock;
 	phys_enc->comp_type = p->comp_type;
+	phys_enc->kickoff_timeout_ms = DEFAULT_KICKOFF_TIMEOUT_MS;
 	for (i = 0; i < INTR_IDX_MAX; i++) {
 		irq = &phys_enc->irq[i];
 		INIT_LIST_HEAD(&irq->cb.list);
