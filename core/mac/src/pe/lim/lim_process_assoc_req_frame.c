@@ -2951,6 +2951,10 @@ bool lim_fill_lim_assoc_ind_params(
 
 	qdf_mem_copy((uint8_t *)assoc_ind->peerMacAddr,
 		     (uint8_t *)sta_ds->staAddr, sizeof(tSirMacAddr));
+#ifdef WLAN_FEATURE_11BE_MLO
+	qdf_mem_copy((uint8_t *)assoc_ind->peer_mld_addr,
+		     (uint8_t *)sta_ds->mld_addr, sizeof(tSirMacAddr));
+#endif
 	assoc_ind->aid = sta_ds->assocId;
 	qdf_mem_copy((uint8_t *)&assoc_ind->ssId,
 		     (uint8_t *)&assoc_req->ssId,

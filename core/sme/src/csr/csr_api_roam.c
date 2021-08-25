@@ -3661,6 +3661,11 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *msg_buf)
 		qdf_mem_copy(roam_info->peerMac.bytes,
 			     pUpperLayerAssocCnf->peerMacAddr,
 			     sizeof(tSirMacAddr));
+#ifdef WLAN_FEATURE_11BE_MLO
+		qdf_mem_copy(roam_info->peer_mld.bytes,
+			     pUpperLayerAssocCnf->peer_mld_addr,
+			     sizeof(tSirMacAddr));
+#endif
 		qdf_mem_copy(&roam_info->bssid,
 			     pUpperLayerAssocCnf->bssId,
 			     sizeof(struct qdf_mac_addr));
@@ -4190,6 +4195,10 @@ csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 	qdf_mem_copy(&cnf->bssId, &ind->bssId, sizeof(cnf->bssId));
 	qdf_mem_copy(&cnf->peerMacAddr, &ind->peerMacAddr,
 		     sizeof(cnf->peerMacAddr));
+#ifdef WLAN_FEATURE_11BE_MLO
+	qdf_mem_copy(&cnf->peer_mld_addr, &ind->peer_mld_addr,
+		     sizeof(cnf->peer_mld_addr));
+#endif
 	cnf->aid = ind->staId;
 	cnf->wmmEnabledSta = ind->wmmEnabledSta;
 	cnf->rsnIE = ind->rsnIE;

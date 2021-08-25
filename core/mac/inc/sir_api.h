@@ -1077,6 +1077,7 @@ struct assoc_ind {
 	uint32_t owe_ie_len;
 	uint16_t owe_status;
 	bool need_assoc_rsp_tx_cb;
+	tSirMacAddr peer_mld_addr;
 };
 
 /**

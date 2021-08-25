@@ -724,7 +724,10 @@ lim_fill_sme_assoc_ind_params(
 	/* Fill in peerMacAddr */
 	qdf_mem_copy(sme_assoc_ind->peerMacAddr, assoc_ind->peerMacAddr,
 		sizeof(tSirMacAddr));
-
+#ifdef WLAN_FEATURE_11BE_MLO
+	qdf_mem_copy(sme_assoc_ind->peer_mld_addr, assoc_ind->peer_mld_addr,
+		     sizeof(tSirMacAddr));
+#endif
 	/* Fill in aid */
 	sme_assoc_ind->aid = assoc_ind->aid;
 	/* Fill in bssId */

@@ -591,6 +591,7 @@ struct csr_roam_info {
 	struct sir_sae_info *sae_info;
 #endif
 	struct assoc_ind *owe_pending_assoc_ind;
+	struct qdf_mac_addr peer_mld;
 };
 
 typedef struct sSirSmeAssocIndToUpperLayerCnf {
@@ -630,6 +631,9 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	tDot11fIEVHTCaps vht_caps;
 	tSirMacCapabilityInfo capability_info;
 	bool he_caps_present;
+#ifdef WLAN_FEATURE_11BE_MLO
+	tSirMacAddr peer_mld_addr;
+#endif
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {

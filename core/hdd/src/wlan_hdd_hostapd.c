@@ -2348,6 +2348,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
+#ifdef WLAN_FEATURE_11BE_MLO
+			hdd_debug("Registering STA MLD :" QDF_MAC_ADDR_FMT,
+				  QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+			qdf_status = hdd_softap_register_sta(
+						adapter,
+						true,
+						ap_ctx->privacy,
+						(struct qdf_mac_addr *)
+						&event->sta_mld,
+						event);
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+				hdd_err("Failed to register STA MLD %d "
+					QDF_MAC_ADDR_FMT, qdf_status,
+					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+#endif
 		} else {
 			qdf_status = hdd_softap_register_sta(
 						adapter,
@@ -2360,6 +2375,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
+#ifdef WLAN_FEATURE_11BE_MLO
+			hdd_debug("Registering STA MLD :" QDF_MAC_ADDR_FMT,
+				  QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+			qdf_status = hdd_softap_register_sta(
+						adapter,
+						false,
+						ap_ctx->privacy,
+						(struct qdf_mac_addr *)
+						&event->sta_mld,
+						event);
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+				hdd_err("Failed to register STA MLD %d "
+					QDF_MAC_ADDR_FMT, qdf_status,
+					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+#endif
 		}
 
 		sta_id = event->staId;

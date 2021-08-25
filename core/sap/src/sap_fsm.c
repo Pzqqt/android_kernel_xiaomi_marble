@@ -1805,6 +1805,12 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		qdf_copy_macaddr(&reassoc_complete->staMac,
 				 &csr_roaminfo->peerMac);
+#ifdef WLAN_FEATURE_11BE_MLO
+		qdf_copy_macaddr(&reassoc_complete->sta_mld,
+				 &csr_roaminfo->peer_mld);
+		sap_debug("reassoc_complete->staMld: " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(reassoc_complete->sta_mld.bytes));
+#endif
 		reassoc_complete->staId = csr_roaminfo->staId;
 		reassoc_complete->status_code = csr_roaminfo->status_code;
 
