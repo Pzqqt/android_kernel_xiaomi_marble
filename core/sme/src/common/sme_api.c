@@ -6264,8 +6264,7 @@ QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
 	sme_debug("LFR runtime successfully set roam scan control to %d - old value is %d",
 		  roamScanControl,
 		  mac->mlme_cfg->lfr.rso_user_config.roam_scan_control);
-	if (!roamScanControl &&
-	    mac->mlme_cfg->lfr.rso_user_config.roam_scan_control) {
+	if (!roamScanControl) {
 		/**
 		 * Clear the specific channel info cache when roamScanControl
 		 * is set to 0. If any preffered channel list is configured,
@@ -7105,11 +7104,11 @@ sme_update_roam_scan_freq_list(mac_handle_t mac_handle, uint8_t vdev_id,
 	src_config.chan_info.freq_list = freq_list;
 	src_config.chan_info.num_chan = num_chan;
 	if (freq_list_type == QCA_PREFERRED_SCAN_FREQ_LIST) {
+		sme_set_roam_scan_control(mac_handle, vdev_id, false);
 		return wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
 						  ROAM_PREFERRED_CHAN,
 						  &src_config);
 	} else {
-		mac->mlme_cfg->lfr.rso_user_config.roam_scan_control = true;
 		return wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
 						  ROAM_SPECIFIC_CHAN,
 						  &src_config);
