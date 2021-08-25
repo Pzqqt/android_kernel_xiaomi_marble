@@ -1356,6 +1356,7 @@ void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 	void *event_data;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return;
@@ -1369,6 +1370,8 @@ void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 	if (!dfs_is_agile_cac_enabled(dfs))
 		return;
 
+	dfs_soc_obj = dfs->dfs_soc_obj;
+	dfs_soc_obj->dfs_priv[dfs->dfs_psoc_idx].agile_precac_active = true;
 	event_data = (void *)dfs;
 
 	dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
