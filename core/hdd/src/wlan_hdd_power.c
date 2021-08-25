@@ -1916,6 +1916,9 @@ QDF_STATUS hdd_wlan_re_init(void)
 	if (hdd_ctx->is_wiphy_suspended)
 		hdd_ctx->is_wiphy_suspended = false;
 
+	if (hdd_ctx->hdd_wlan_suspended)
+		hdd_ctx->hdd_wlan_suspended = false;
+
 	return QDF_STATUS_SUCCESS;
 
 err_re_init:
