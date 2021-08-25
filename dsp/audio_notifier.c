@@ -676,5 +676,6 @@ static void __exit audio_notifier_exit(void)
 }
 module_exit(audio_notifier_exit);
 
+MODULE_SOFTDEP("pre: qcom_q6v5_pas");
 MODULE_DESCRIPTION("Audio notifier driver");
 MODULE_LICENSE("GPL v2");
