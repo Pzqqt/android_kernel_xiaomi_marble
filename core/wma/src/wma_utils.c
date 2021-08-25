@@ -2777,6 +2777,8 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 
 	/* Copy roaming state */
 	iface_stat->info.roaming = link_stats->roam_state;
+	/* Copy time slicing duty cycle */
+	iface_stat->info.time_slice_duty_cycle = 100;
 
 	iface_ac_stats = &iface_stat->ac_stats[0];
 	for (count = 0; count < link_stats->num_ac; count++) {
