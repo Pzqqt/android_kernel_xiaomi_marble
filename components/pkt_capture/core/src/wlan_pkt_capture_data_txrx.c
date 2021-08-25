@@ -792,7 +792,6 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	struct dp_soc *soc = dp_soc;
 	struct hal_rx_pkt_capture_flags flags = {0};
 	struct wlan_objmgr_vdev *vdev = context;
-	struct pkt_capture_vdev_priv *vdev_priv;
 	uint8_t primary_chan_num;
 	uint32_t center_chan_freq;
 	struct wlan_objmgr_psoc *psoc;
@@ -826,12 +825,6 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	rx_status->chan_freq =
 		wlan_reg_chan_band_to_freq(pdev, primary_chan_num, BIT(band));
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_PKT_CAPTURE_ID);
-
-	vdev_priv = pkt_capture_vdev_get_priv(vdev);
-	if (qdf_unlikely(!vdev))
-		return;
-
-	rx_status->rssi_comb = vdev_priv->rx_avg_rssi;
 
 	if (rx_status->chan_freq > CHANNEL_FREQ_5150)
 		rx_status->ofdm_flag = 1;
