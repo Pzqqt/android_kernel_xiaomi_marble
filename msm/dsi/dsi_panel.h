@@ -13,6 +13,7 @@
 #include <linux/backlight.h>
 #include <drm/drm_panel.h>
 #include <drm/msm_drm.h>
+#include <drm/msm_drm_pp.h>
 
 #include "dsi_defs.h"
 #include "dsi_ctrl_hw.h"
@@ -134,6 +135,9 @@ struct dsi_backlight_config {
 	bool bl_inverted_dbv;
 	/* digital dimming backlight LUT */
 	struct drm_msm_dimming_bl_lut *dimming_bl_lut;
+	u32 dimming_min_bl;
+	u32 dimming_status;
+	bool user_disable_notification;
 
 	int en_gpio;
 	/* PWM params */
