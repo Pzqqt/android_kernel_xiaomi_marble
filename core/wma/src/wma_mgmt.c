@@ -344,6 +344,10 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 			 QDF_MAC_ADDR_REF(macaddr));
 		return -EINVAL;
 	}
+
+	if (!wma_is_vdev_valid(vdev_id))
+		return -EINVAL;
+
 	vdev = wma->interfaces[vdev_id].vdev;
 	if (!vdev) {
 		wma_err("Not able to find vdev for VDEV_%d", vdev_id);
