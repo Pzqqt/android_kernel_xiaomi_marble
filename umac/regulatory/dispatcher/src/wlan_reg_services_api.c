@@ -697,6 +697,12 @@ bool wlan_reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 	return reg_is_freq_indoor(pdev, freq);
 }
 
+enum phy_ch_width
+wlan_reg_get_next_lower_bandwidth(enum phy_ch_width ch_width)
+{
+	return get_next_lower_bandwidth(ch_width);
+}
+
 #ifdef CONFIG_REG_CLIENT
 bool wlan_reg_is_freq_indoor_in_secondary_list(struct wlan_objmgr_pdev *pdev,
 					       qdf_freq_t freq)

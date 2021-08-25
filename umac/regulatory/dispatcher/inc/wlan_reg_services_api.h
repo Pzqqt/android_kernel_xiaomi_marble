@@ -121,6 +121,15 @@ bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq);
  */
 bool wlan_reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
+/**
+ * wlan_reg_get_next_lower_bandwidth() - Get next lower bandwdith
+ * @ch_width: channel bandwdith
+ *
+ * Return: Return next lower bandwidth of input channel bandwidth
+ */
+enum phy_ch_width
+wlan_reg_get_next_lower_bandwidth(enum phy_ch_width ch_width);
+
 #ifdef CONFIG_REG_CLIENT
 /**
  * wlan_reg_is_freq_indoor_in_secondary_list() - Check if the input frequency is
