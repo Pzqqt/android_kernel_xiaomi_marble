@@ -778,10 +778,21 @@ static bool mmrm_sw_is_valid_num_hw_block(struct mmrm_sw_clk_client_tbl_entry *t
 
 	if (num_hw_blocks == 1) {
 		rc = true;
-	} else if  (tbl_entry->clk_src_id == 0x10025) { // CAM_CC_IFE_CSID_CLK_SRC
-		if (num_hw_blocks >= 1 && num_hw_blocks <= 3)
+	} else if (tbl_entry->clk_src_id == 0x10025) { // CAM_CC_IFE_CSID_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 3)
+			rc = true;
+	} else if ((tbl_entry->clk_src_id == 0x10040) || // CAM_CC_IFE_LITE_CLK_SRC 
+		 (tbl_entry->clk_src_id == 0x10043)) { // CAM_CC_IFE_LITE_CSID_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 5)
+			rc = true;
+	} else if (tbl_entry->clk_src_id == 0x1004B) { // CAM_CC_JPEG_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 2)
+			rc = true;
+	} else if (tbl_entry->clk_src_id == 0x10017) { // CAM_CC_CPHY_RX_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 9)
 			rc = true;
 	}
+
 	return rc;
 }
 
