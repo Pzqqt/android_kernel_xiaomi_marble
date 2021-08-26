@@ -38,7 +38,6 @@ int rmnet_qmap_send(struct sk_buff *skb, u8 ch, bool flush)
 
 	if (rmnet_ctl->send(rmnet_ctl_handle, skb)) {
 		pr_err("Failed to send to rmnet ctl\n");
-		kfree_skb(skb);
 		return -ECOMM;
 	}
 
