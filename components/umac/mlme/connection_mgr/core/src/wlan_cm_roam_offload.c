@@ -4401,6 +4401,7 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 	struct cm_req *cm_req;
 	QDF_STATUS status;
 	uint8_t roam_control_bitmap;
+	struct qdf_mac_addr connected_bssid;
 	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
 	bool roam_offload_enabled = cm_roam_offload_enabled(psoc);
 
@@ -4430,6 +4431,12 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 		cm_req->roam_req.req.forced_roaming = true;
 		source = CM_ROAMING_NUD_FAILURE;
 		goto send_evt;
+	}
+
+	wlan_vdev_get_bss_peer_mac(vdev, &connected_bssid);
+	if (qdf_is_macaddr_equal(bssid, &connected_bssid)) {
+		mlme_debug("Reassoc BSSID is same as currently associated AP");
+		chan_freq = wlan_get_operation_chan_freq(vdev);
 	}
 
 	if (!chan_freq || qdf_is_macaddr_zero(bssid)) {
