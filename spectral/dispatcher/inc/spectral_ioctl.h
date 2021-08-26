@@ -171,6 +171,34 @@ enum spectral_scan_mode {
 	SPECTRAL_SCAN_MODE_INVALID = 0xff,
 };
 
+/**
+ * enum spectral_chan_width - Spectral-specific channel width enum
+ * @SPECTRAL_CH_WIDTH_20MHZ: 20 mhz width
+ * @SPECTRAL_CH_WIDTH_40MHZ: 40 mhz width
+ * @SPECTRAL_CH_WIDTH_80MHZ: 80 mhz width
+ * @SPECTRAL_CH_WIDTH_160MHZ: 160 mhz width
+ * @SPECTRAL_CH_WIDTH_80P80MHZ: 80+80 mhz width
+ * @SPECTRAL_CH_WIDTH_5MHZ: 5 mhz width
+ * @SPECTRAL_CH_WIDTH_10MHZ: 10 mhz width
+ * @SPECTRAL_CH_WIDTH_320MHZ: 320 mhz width
+ * @SPECTRAL_CH_WIDTH_MAX: Max possible width
+ * @SPECTRAL_CH_WIDTH_INVALID: invalid width
+ */
+enum spectral_chan_width {
+	SPECTRAL_CH_WIDTH_20MHZ,
+	SPECTRAL_CH_WIDTH_40MHZ,
+	SPECTRAL_CH_WIDTH_80MHZ,
+	SPECTRAL_CH_WIDTH_160MHZ,
+	SPECTRAL_CH_WIDTH_80P80MHZ,
+	SPECTRAL_CH_WIDTH_5MHZ,
+	SPECTRAL_CH_WIDTH_10MHZ,
+#ifdef WLAN_FEATURE_11BE
+	SPECTRAL_CH_WIDTH_320MHZ,
+#endif
+	SPECTRAL_CH_WIDTH_MAX,
+	SPECTRAL_CH_WIDTH_INVALID,
+};
+
 struct spectral_ioctl_params {
 	int16_t   spectral_fft_period;
 	int16_t   pectral_period;
@@ -357,7 +385,7 @@ struct spectral_caps {
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)
 
 #define MAX_SPECTRAL_CHAINS           (3)
-#define MAX_NUM_BINS                  (1024)
+#define MAX_NUM_BINS                  (2048)
 #define MAX_NUM_BINS_PRI80            (1024)
 #define MAX_NUM_BINS_SEC80            (520)
 #define MAX_NUM_BINS_5MHZ             (32)
