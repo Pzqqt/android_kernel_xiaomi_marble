@@ -8,6 +8,36 @@
 #include "msm_cvp_debug.h"
 #include "msm_cvp_clocks.h"
 
+static struct mmrm_client *__mmrm_client_register(
+				struct mmrm_client_desc *client)
+{
+#ifdef CVP_MMRM_ENABLED
+	return mmrm_client_register(client);
+#else
+	return NULL;
+#endif
+}
+
+static int __mmrm_client_deregister(struct mmrm_client *client)
+{
+#ifdef CVP_MMRM_ENABLED
+	return mmrm_client_deregister(client);
+#else
+	return -ENODEV;
+#endif
+}
+
+static int __mmrm_client_set_value_in_range(struct mmrm_client *client,
+					struct mmrm_client_data *data,
+					struct mmrm_client_res_value *val)
+{
+#ifdef CVP_MMRM_ENABLED
+	return mmrm_client_set_value_in_range(client, data, val);
+#else
+	return -ENODEV;
+#endif
+}
+
 int msm_cvp_mmrm_notifier_cb(
 	struct mmrm_client_notifier_data *notifier_data)
 {
@@ -85,7 +115,7 @@ int msm_cvp_mmrm_register(struct iris_hfi_device *device)
 		__func__, device->mmrm_desc.client_info.desc.name,
 		device->mmrm_desc.client_info.desc.client_id);
 
-	device->mmrm_cvp = mmrm_client_register(&(device->mmrm_desc));
+	device->mmrm_cvp = __mmrm_client_register(&(device->mmrm_desc));
 	if (device->mmrm_cvp == NULL) {
 		dprintk(CVP_ERR,
 			"%s: Failed mmrm_client_register with mmrm_cvp: %pK\n",
@@ -128,7 +158,7 @@ int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
 		}
 	}
 
-	rc = mmrm_client_deregister(device->mmrm_cvp);
+	rc = __mmrm_client_deregister(device->mmrm_cvp);
 	if (rc) {
 		dprintk(CVP_ERR,
 			"%s: Failed mmrm_client_deregister with rc: %d\n",
@@ -166,7 +196,7 @@ int msm_cvp_mmrm_set_value_in_range(struct iris_hfi_device *device,
 		"%s: set clock rate to min %u cur %u: %d\n",
 		__func__, val.min, val.cur, rc);
 
-	rc = mmrm_client_set_value_in_range(device->mmrm_cvp, &data, &val);
+	rc = __mmrm_client_set_value_in_range(device->mmrm_cvp, &data, &val);
 	if (rc) {
 		dprintk(CVP_ERR,
 			"%s: Failed to set clock rate to min %u cur %u: %d\n",

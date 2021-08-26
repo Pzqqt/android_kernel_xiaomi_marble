@@ -8,9 +8,6 @@
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/bitops.h>
-#ifndef CVP_MDT_ENABLED
-#include <soc/qcom/subsystem_restart.h>
-#endif
 #include <asm/div64.h>
 #include "msm_cvp_common.h"
 #include "cvp_hfi_api.h"

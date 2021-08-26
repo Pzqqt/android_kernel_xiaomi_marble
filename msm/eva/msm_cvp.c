@@ -1028,7 +1028,6 @@ int msm_cvp_session_delete(struct msm_cvp_inst *inst)
 int msm_cvp_session_create(struct msm_cvp_inst *inst)
 {
 	int rc = 0;
-	struct synx_initialization_params params;
 	struct cvp_session_queue *sq;
 
 	if (!inst || !inst->core)
@@ -1059,12 +1058,7 @@ int msm_cvp_session_create(struct msm_cvp_inst *inst)
 		goto fail_init;
 	}
 
-	params.name = "cvp-kernel-client";
-	if (synx_initialize(&inst->synx_session_id, &params)) {
-		dprintk(CVP_ERR, "%s synx_initialize failed\n", __func__);
-		rc = -EFAULT;
-	}
-
+	cvp_sess_init_synx(inst);
 	sq = &inst->session_queue;
 	spin_lock(&sq->lock);
 	sq->state = QUEUE_ACTIVE;

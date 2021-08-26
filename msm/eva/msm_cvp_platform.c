@@ -99,6 +99,62 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 	}
 };
 
+static struct msm_cvp_common_data sm8550_common_data[] = {
+	{
+		.key = "qcom,auto-pil",
+		.value = 0,
+	},
+	{
+		.key = "qcom,never-unload-fw",
+		.value = 1,
+	},
+	{
+		.key = "qcom,sw-power-collapse",
+		.value = 0,
+	},
+	{
+		.key = "qcom,domain-attr-non-fatal-faults",
+		.value = 0,
+	},
+	{
+		.key = "qcom,max-secure-instances",
+		.value = 2,             /*
+					 * As per design driver allows 3rd
+					 * instance as well since the secure
+					 * flags were updated later for the
+					 * current instance. Hence total
+					 * secure sessions would be
+					 * max-secure-instances + 1.
+					 */
+	},
+	{
+		.key = "qcom,max-ssr-allowed",
+		.value = 1,		/*
+					 * Maxinum number of SSR before BUG_ON
+					 */
+	},
+	{
+		.key = "qcom,power-collapse-delay",
+		.value = 3000,
+	},
+	{
+		.key = "qcom,hw-resp-timeout",
+		.value = 2000,
+	},
+	{
+		.key = "qcom,dsp-resp-timeout",
+		.value = 1000,
+	},
+	{
+		.key = "qcom,debug-timeout",
+		.value = 0,
+	},
+	{
+		.key = "qcom,dsp-enabled",
+		.value = 0,
+	}
+};
+
 
 
 /* Default UBWC config for LPDDR5 */
@@ -123,12 +179,24 @@ static struct msm_cvp_platform_data sm8450_data = {
 	.ubwc_config = kona_ubwc_data,
 };
 
+static struct msm_cvp_platform_data sm8550_data = {
+	.common_data = sm8550_common_data,
+	.common_data_length =  ARRAY_SIZE(sm8550_common_data),
+	.sku_version = 0,
+	.vpu_ver = VPU_VERSION_5,
+	.ubwc_config = kona_ubwc_data,
+};
 
 static const struct of_device_id msm_cvp_dt_match[] = {
 	{
 		.compatible = "qcom,waipio-cvp",
 		.data = &sm8450_data,
 	},
+	{
+		.compatible = "qcom,kailua-cvp",
+		.data = &sm8550_data,
+	},
+
 	{},
 };
 
@@ -394,6 +462,16 @@ int get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr)
 
 MODULE_DEVICE_TABLE(of, msm_cvp_dt_match);
 
+int cvp_of_fdt_get_ddrtype(void)
+{
+#ifdef FIXED_DDR_TYPE
+	/* of_fdt_get_ddrtype() is usually unavailable during pre-sil */
+	return DDR_TYPE_LPDDR5;
+#else
+	return of_fdt_get_ddrtype();
+#endif
+}
+
 void *cvp_get_drv_data(struct device *dev)
 {
 	struct msm_cvp_platform_data *driver_data;
@@ -413,7 +491,7 @@ void *cvp_get_drv_data(struct device *dev)
 	driver_data = (struct msm_cvp_platform_data *)match->data;
 
 	if (!strcmp(match->compatible, "qcom,waipio-cvp")) {
-		ddr_type = of_fdt_get_ddrtype();
+		ddr_type = cvp_of_fdt_get_ddrtype();
 		if (ddr_type == -ENOENT) {
 			dprintk(CVP_ERR,
 				"Failed to get ddr type, use LPDDR5\n");

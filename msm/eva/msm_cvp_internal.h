@@ -20,7 +20,6 @@
 #include <linux/kthread.h>
 #include <linux/dma-mapping.h>
 #include "msm_cvp_core.h"
-#include <media/msm_media_info.h>
 #include <media/msm_eva_private.h>
 #include "cvp_hfi_api.h"
 #include "cvp_hfi_helper.h"

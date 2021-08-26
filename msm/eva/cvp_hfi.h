@@ -6,7 +6,6 @@
 #ifndef __H_CVP_HFI_H__
 #define __H_CVP_HFI_H__
 
-#include <media/msm_media_info.h>
 #include "cvp_hfi_helper.h"
 #include "cvp_hfi_api.h"
 #include "cvp_comm_def.h"

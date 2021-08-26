@@ -20,6 +20,33 @@ static int hlosVMperm[HLOS_VM_NUM] = { PERM_READ | PERM_WRITE | PERM_EXEC };
 
 static int cvp_reinit_dsp(void);
 
+static int __fastrpc_driver_register(struct fastrpc_driver *driver)
+{
+#ifdef CVP_FASTRPC_ENABLED
+	return fastrpc_driver_register(driver);
+#else
+	return -ENODEV;
+#endif
+}
+
+static void __fastrpc_driver_unregister(struct fastrpc_driver *driver)
+{
+#ifdef CVP_FASTRPC_ENABLED
+	return fastrpc_driver_unregister(driver);
+#endif
+}
+
+static int __fastrpc_driver_invoke(struct fastrpc_device *dev,
+				enum fastrpc_driver_invoke_nums invoke_num,
+				unsigned long invoke_param)
+{
+#ifdef CVP_FASTRPC_ENABLED
+	return fastrpc_driver_invoke(dev, invoke_num, invoke_param);
+#else
+	return -ENODEV;
+#endif
+}
+
 static int cvp_dsp_send_cmd(struct cvp_dsp_cmd_msg *cmd, uint32_t len)
 {
 	int rc = 0;
@@ -83,7 +110,7 @@ static int cvp_dsp_send_cmd_hfi_queue(phys_addr_t *phys_addr,
 	cmd.type = CPU2DSP_SEND_HFI_QUEUE;
 	cmd.msg_ptr = (uint64_t)phys_addr;
 	cmd.msg_ptr_len = size_in_bytes;
-	cmd.ddr_type = of_fdt_get_ddrtype();
+	cmd.ddr_type = cvp_of_fdt_get_ddrtype();
 	if (cmd.ddr_type < 0) {
 		dprintk(CVP_WARN,
 			"%s: Incorrect DDR type value %d, use default %d\n",
@@ -315,7 +342,7 @@ static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 			dprintk(CVP_DSP, "%s list_del fastrpc node 0x%x\n",
 					__func__, frpc_node);
 			list_del(&frpc_node->list);
-			fastrpc_driver_unregister(
+			__fastrpc_driver_unregister(
 				&frpc_node->cvp_fastrpc_driver);
 			dprintk(CVP_DSP,
 				"%s Unregistered fastrpc handle 0x%x\n",
@@ -866,7 +893,7 @@ static int eva_fastrpc_dev_map_dma(struct fastrpc_device *frpc_device,
 			"%s frpc_map_buf size %d, dma_buf %pK, map %pK, 0x%x\n",
 			__func__, frpc_map_buf.size, frpc_map_buf.buf,
 			&frpc_map_buf, (unsigned long)&frpc_map_buf);
-		rc = fastrpc_driver_invoke(frpc_device, FASTRPC_DEV_MAP_DMA,
+		rc = __fastrpc_driver_invoke(frpc_device, FASTRPC_DEV_MAP_DMA,
 			(unsigned long)(&frpc_map_buf));
 		if (rc) {
 			dprintk(CVP_ERR,
@@ -892,7 +919,7 @@ static int eva_fastrpc_dev_unmap_dma(struct fastrpc_device *frpc_device,
 	/* Only if buffer is mapped to dsp */
 	if (buf->fd != 0) {
 		frpc_unmap_buf.buf = buf->smem->dma_buf;
-		rc = fastrpc_driver_invoke(frpc_device, FASTRPC_DEV_UNMAP_DMA,
+		rc = __fastrpc_driver_invoke(frpc_device, FASTRPC_DEV_UNMAP_DMA,
 				(unsigned long)(&frpc_unmap_buf));
 		if (rc) {
 			dprintk(CVP_ERR, "%s Failed to unmap buffer 0x%x\n",
@@ -1022,7 +1049,7 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 		INIT_MSM_CVP_LIST(&frpc_node->dsp_sessions);
 
 		/* register fastrpc device to this session */
-		rc = fastrpc_driver_register(&frpc_node->cvp_fastrpc_driver);
+		rc = __fastrpc_driver_register(&frpc_node->cvp_fastrpc_driver);
 		if (rc) {
 			dprintk(CVP_ERR, "%s fastrpc driver reg fail err %d\n",
 				__func__, rc);
@@ -1045,7 +1072,7 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 	return rc;
 
 fail_fastrpc_driver_timeout:
-	fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
+	__fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
 fail_fastrpc_driver_register:
 	/* remove list if this is the last session */
 	mutex_lock(&me->fastrpc_driver_list.lock);
@@ -1089,7 +1116,7 @@ static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit)
 		list_del(&frpc_node->list);
 		mutex_unlock(&me->fastrpc_driver_list.lock);
 
-		fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
+		__fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
 		mutex_lock(&me->driver_name_lock);
 		eva_fastrpc_driver_release_name(frpc_node);
 		mutex_unlock(&me->driver_name_lock);
