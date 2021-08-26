@@ -3029,6 +3029,90 @@ extract_auth_offload_event_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * extract_roam_pmkid_request_tlv() - Extract the roam pmkid request event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer to the event buffer
+ * @len: Data length
+ * @list: Extract the data and fill in list
+ */
+static QDF_STATUS
+extract_roam_pmkid_request_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
+			       uint32_t len,
+			       struct roam_pmkid_req_event **list)
+{
+	WMI_ROAM_PMKID_REQUEST_EVENTID_param_tlvs *param_buf;
+	wmi_roam_pmkid_request_event_fixed_param *roam_pmkid_req_ev;
+	wmi_roam_pmkid_request_tlv_param *src_list;
+	struct qdf_mac_addr *roam_bsslist;
+	uint32_t num_entries, i;
+	struct roam_pmkid_req_event *dst_list;
+
+	if (!evt_buf || !len) {
+		wmi_err("received null event from target");
+		return -EINVAL;
+	}
+
+	param_buf = (WMI_ROAM_PMKID_REQUEST_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("received null buf from target");
+		return -EINVAL;
+	}
+
+	roam_pmkid_req_ev = param_buf->fixed_param;
+	if (!roam_pmkid_req_ev) {
+		wmi_err("received null event data from target");
+		return -EINVAL;
+	}
+
+	if (roam_pmkid_req_ev->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_err_rl("Invalid vdev_id %d", roam_pmkid_req_ev->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	num_entries = param_buf->num_pmkid_request;
+	if (num_entries > MAX_RSSI_AVOID_BSSID_LIST) {
+		wmi_err("num bssid entries:%d exceeds maximum value",
+			num_entries);
+		return -EINVAL;
+	}
+
+	src_list = param_buf->pmkid_request;
+	if (len < (sizeof(*roam_pmkid_req_ev) +
+		(num_entries * sizeof(*src_list)))) {
+		wmi_err("Invalid length: %d", len);
+		return -EINVAL;
+	}
+
+	dst_list = qdf_mem_malloc(sizeof(struct roam_pmkid_req_event) +
+				  (sizeof(struct qdf_mac_addr) * num_entries));
+	if (!dst_list)
+		return -ENOMEM;
+
+	dst_list->vdev_id = roam_pmkid_req_ev->vdev_id;
+
+	for (i = 0; i < num_entries; i++) {
+		roam_bsslist = &dst_list->ap_bssid[i];
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_list->bssid,
+					   roam_bsslist->bytes);
+		if (qdf_is_macaddr_zero(roam_bsslist) ||
+		    qdf_is_macaddr_broadcast(roam_bsslist) ||
+		    qdf_is_macaddr_group(roam_bsslist)) {
+			wmi_err("Invalid bssid");
+			qdf_mem_free(dst_list);
+			return -EINVAL;
+		}
+		wmi_debug("Received pmkid fallback for bssid: " QDF_MAC_ADDR_FMT" vdev_id:%d",
+			  QDF_MAC_ADDR_REF(roam_bsslist->bytes),
+			  roam_pmkid_req_ev->vdev_id);
+		src_list++;
+	}
+	dst_list->num_entries = num_entries;
+	*list = dst_list;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
@@ -3048,6 +3132,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_roam_scan_chan_list = extract_roam_scan_chan_list_tlv;
 	ops->extract_roam_stats_event = extract_roam_stats_event_tlv;
 	ops->extract_auth_offload_event = extract_auth_offload_event_tlv;
+	ops->extract_roam_pmkid_request = extract_roam_pmkid_request_tlv;
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =

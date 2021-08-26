@@ -62,6 +62,7 @@ target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops)
 	rx_ops->roam_scan_chan_list_event = cm_roam_scan_ch_list_event_handler;
 	rx_ops->roam_stats_event_rx = cm_roam_stats_event_handler;
 	rx_ops->roam_auth_offload_event = cm_roam_auth_offload_event_handler;
+	rx_ops->roam_pmkid_request_event_rx = cm_roam_pmkid_request_handler;
 #endif
 }
 
@@ -177,14 +178,111 @@ err:
 	return status;
 }
 
+static QDF_STATUS target_if_roam_event_dispatcher(struct scheduler_msg *msg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_cm_roam_rx_ops *roam_rx_ops;
+
+	switch (msg->type) {
+	case ROAM_PMKID_REQ_EVENT:
+	{
+		struct roam_pmkid_req_event *data = msg->bodyptr;
+
+		if (!data->psoc) {
+			target_if_err("psoc is null");
+			status = QDF_STATUS_E_NULL_VALUE;
+			goto done;
+		}
+		roam_rx_ops = target_if_cm_get_roam_rx_ops(data->psoc);
+		if (!roam_rx_ops || !roam_rx_ops->roam_pmkid_request_event_rx) {
+			target_if_err("No valid roam rx ops");
+			status = QDF_STATUS_E_INVAL;
+			goto done;
+		}
+
+		status = roam_rx_ops->roam_pmkid_request_event_rx(data);
+	}
+	break;
+	case ROAM_EVENT:
+	{
+		struct roam_offload_roam_event *data = msg->bodyptr;
+
+		if (!data->psoc) {
+			target_if_err("psoc is null");
+			status = QDF_STATUS_E_NULL_VALUE;
+			goto done;
+		}
+		roam_rx_ops = target_if_cm_get_roam_rx_ops(data->psoc);
+		if (!roam_rx_ops || !roam_rx_ops->roam_event_rx) {
+			target_if_err("No valid roam rx ops");
+			status = QDF_STATUS_E_INVAL;
+			goto done;
+		}
+
+		status = roam_rx_ops->roam_event_rx(data);
+	}
+	break;
+	case ROAM_VDEV_DISCONNECT_EVENT:
+	{
+		struct vdev_disconnect_event_data *data = msg->bodyptr;
+
+		if (!data->psoc) {
+			target_if_err("psoc is null");
+			status = QDF_STATUS_E_NULL_VALUE;
+			goto done;
+		}
+
+		roam_rx_ops = target_if_cm_get_roam_rx_ops(data->psoc);
+		if (!roam_rx_ops || !roam_rx_ops->vdev_disconnect_event) {
+			target_if_err("No valid roam rx ops");
+			status = -EINVAL;
+			goto done;
+		}
+		status = roam_rx_ops->vdev_disconnect_event(data);
+	}
+	break;
+	default:
+		target_if_err("invalid msg type %d", msg->type);
+		status = QDF_STATUS_E_INVAL;
+	}
+
+done:
+	qdf_mem_free(msg->bodyptr);
+	msg->bodyptr = NULL;
+	return status;
+}
+
+static QDF_STATUS target_if_roam_event_flush_cb(struct scheduler_msg *msg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	switch (msg->type) {
+	case ROAM_PMKID_REQ_EVENT:
+	case ROAM_EVENT:
+	case ROAM_VDEV_DISCONNECT_EVENT:
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
+	default:
+		target_if_err("invalid msg type %d", msg->type);
+		status = QDF_STATUS_E_INVAL;
+		goto free_res;
+	}
+	return status;
+
+free_res:
+	qdf_mem_free(msg->bodyptr);
+	msg->bodyptr = NULL;
+	return status;
+}
+
 int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 {
 	QDF_STATUS qdf_status;
-	int status = 0;
 	struct wmi_unified *wmi_handle;
-	struct roam_offload_roam_event roam_event = {0};
+	struct roam_offload_roam_event *roam_event = NULL;
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_cm_roam_rx_ops *roam_rx_ops;
+	struct scheduler_msg msg = {0};
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -198,25 +296,29 @@ int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 		return -EINVAL;
 	}
 
-	qdf_status = wmi_extract_roam_event(wmi_handle, event, len,
-					    &roam_event);
+	roam_event = qdf_mem_malloc(sizeof(*roam_event));
+	if (!roam_event)
+		return -ENOMEM;
+
+	qdf_status = wmi_extract_roam_event(wmi_handle, event, len, roam_event);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		target_if_err("parsing of event failed, %d", qdf_status);
+		qdf_mem_free(roam_event);
 		return -EINVAL;
 	}
 
-	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
-	if (!roam_rx_ops || !roam_rx_ops->roam_event_rx) {
-		target_if_err("No valid roam rx ops");
-		status = -EINVAL;
-		goto err;
-	}
-	qdf_status = roam_rx_ops->roam_event_rx(roam_event);
+	msg.bodyptr = roam_event;
+	msg.type = ROAM_EVENT;
+	msg.callback = target_if_roam_event_dispatcher;
+	msg.flush_callback = target_if_roam_event_flush_cb;
+	target_if_debug("ROAM_EVENT sent: %d", msg.type);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					    QDF_MODULE_ID_TARGET_IF,
+					    QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
-		status = -EINVAL;
+		target_if_roam_event_flush_cb(&msg);
 
-err:
-	return status;
+	return qdf_status_to_os_return(qdf_status);
 }
 
 static int
@@ -251,13 +353,15 @@ target_if_cm_btm_blacklist_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
 	if (!roam_rx_ops || !roam_rx_ops->btm_blacklist_event) {
 		target_if_err("No valid roam rx ops");
-		qdf_mem_free(dst_list);
-		return -EINVAL;
+		status = -EINVAL;
+		goto done;
 	}
 	qdf_status = roam_rx_ops->btm_blacklist_event(psoc, dst_list);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		status = -EINVAL;
 
+done:
+	qdf_mem_free(dst_list);
 	return status;
 }
 
@@ -266,11 +370,10 @@ target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
 						uint32_t len)
 {
 	QDF_STATUS qdf_status;
-	int status = 0;
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_cm_roam_rx_ops *roam_rx_ops;
-	struct vdev_disconnect_event_data data = {0};
+	struct vdev_disconnect_event_data *data;
+	struct scheduler_msg msg = {0};
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -284,25 +387,29 @@ target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
 		return -EINVAL;
 	}
 
+	data = qdf_mem_malloc(sizeof(*data));
+	if (!data)
+		return -ENOMEM;
 	qdf_status = wmi_extract_vdev_disconnect_event(wmi_handle, event, len,
-						       &data);
+						       data);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		target_if_err("parsing of event failed, %d", qdf_status);
+		qdf_mem_free(data);
 		return -EINVAL;
 	}
 
-	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
-	if (!roam_rx_ops || !roam_rx_ops->vdev_disconnect_event) {
-		target_if_err("No valid roam rx ops");
-		status = -EINVAL;
-		goto err;
-	}
-	qdf_status = roam_rx_ops->vdev_disconnect_event(&data);
+	msg.bodyptr = data;
+	msg.type = ROAM_VDEV_DISCONNECT_EVENT;
+	msg.callback = target_if_roam_event_dispatcher;
+	msg.flush_callback = target_if_roam_event_flush_cb;
+	target_if_debug("ROAM_VDEV_DISCONNECT_EVENT sent: %d", msg.type);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					    QDF_MODULE_ID_TARGET_IF,
+					    QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
-		status = -EINVAL;
+		target_if_roam_event_flush_cb(&msg);
 
-err:
-	return status;
+	return qdf_status_to_os_return(qdf_status);
 }
 
 int
@@ -438,6 +545,50 @@ target_if_cm_roam_auth_offload_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 	return status;
 }
 
+int
+target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
+				      uint32_t len)
+{
+	QDF_STATUS qdf_status;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	struct roam_pmkid_req_event *data = NULL;
+	struct scheduler_msg msg = {0};
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	qdf_status = wmi_extract_roam_pmkid_request(wmi_handle, event, len,
+						    &data);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		target_if_err("parsing of event failed, %d", qdf_status);
+		qdf_mem_free(data);
+		return -EINVAL;
+	}
+
+	msg.bodyptr = data;
+	msg.type = ROAM_PMKID_REQ_EVENT;
+	msg.callback = target_if_roam_event_dispatcher;
+	msg.flush_callback = target_if_roam_event_flush_cb;
+	target_if_debug("ROAM_PMKID_REQ_EVENT sent: %d", msg.type);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					    QDF_MODULE_ID_TARGET_IF,
+					    QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		target_if_roam_event_flush_cb(&msg);
+
+	return qdf_status_to_os_return(qdf_status);
+}
+
 QDF_STATUS
 target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
 {
@@ -525,7 +676,16 @@ target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ret = wmi_unified_register_event_handler(handle,
+				wmi_roam_pmkid_request_event_id,
+				target_if_pmkid_request_event_handler,
+				WMI_RX_SERIALIZER_CTX);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		target_if_err("wmi event(%u) registration failed, ret: %d",
+			      wmi_roam_stats_event_id, ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
-
 #endif
