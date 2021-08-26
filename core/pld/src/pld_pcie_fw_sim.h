@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -147,6 +147,12 @@ static inline int pld_pcie_fw_sim_get_thermal_state(struct device *dev,
 {
 	return 0;
 }
+
+static inline int pld_pcie_fw_sim_exit_power_save(struct device *dev)
+{
+	return 0;
+}
+
 #else
 #include <net/cnss2.h>
 
@@ -245,6 +251,11 @@ static inline int pld_pcie_fw_sim_get_thermal_state(struct device *dev,
 {
 	return cnss_fw_sim_get_curr_therm_cdev_state(dev, therm_state,
 						     mon_id);
+}
+
+static inline int pld_pcie_fw_sim_exit_power_save(struct device *dev)
+{
+	return cnss_fw_sim_exit_power_save(dev);
 }
 
 #endif
