@@ -441,6 +441,7 @@ int ipa_hw_stats_init(void)
 fail_free_stats_ctx:
 	kfree(teth_stats_init);
 	kfree(ipa3_ctx->hw_stats);
+	ipa3_ctx->hw_stats = NULL;
 	return ret;
 }
 
