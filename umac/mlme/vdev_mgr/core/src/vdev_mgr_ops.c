@@ -100,11 +100,10 @@ static bool vdev_mgr_is_opmode_sap_or_p2p_go(enum QDF_OPMODE op_mode)
 	return (op_mode == QDF_SAP_MODE || op_mode == QDF_P2P_GO_MODE);
 }
 
-static bool vdev_mgr_is_49G_5G_6G_chan_freq(uint16_t chan_freq)
+static bool vdev_mgr_is_49G_5G_chan_freq(uint16_t chan_freq)
 {
 	return WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq) ||
-		WLAN_REG_IS_49GHZ_FREQ(chan_freq) ||
-		WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq);
+		WLAN_REG_IS_49GHZ_FREQ(chan_freq);
 }
 #else
 static inline bool vdev_mgr_is_opmode_sap_or_p2p_go(enum QDF_OPMODE op_mode)
@@ -112,7 +111,7 @@ static inline bool vdev_mgr_is_opmode_sap_or_p2p_go(enum QDF_OPMODE op_mode)
 	return true;
 }
 
-static inline bool vdev_mgr_is_49G_5G_6G_chan_freq(uint16_t chan_freq)
+static inline bool vdev_mgr_is_49G_5G_chan_freq(uint16_t chan_freq)
 {
 	return true;
 }
@@ -172,7 +171,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	if (vdev_mgr_is_opmode_sap_or_p2p_go(op_mode) &&
-	    vdev_mgr_is_49G_5G_6G_chan_freq(des_chan->ch_freq)) {
+	    vdev_mgr_is_49G_5G_chan_freq(des_chan->ch_freq)) {
 		tgt_dfs_set_current_channel_for_freq(pdev, des_chan->ch_freq,
 						     des_chan->ch_flags,
 						     des_chan->ch_flagext,
