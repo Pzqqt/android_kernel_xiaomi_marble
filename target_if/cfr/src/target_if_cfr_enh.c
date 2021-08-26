@@ -42,6 +42,14 @@ static u_int32_t end_magic = 0xBEAFDEAD;
  *
  * Return: signal strength in dBm
  */
+#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_WCN7850)
+static inline
+u_int32_t snr_to_signal_strength(uint8_t snr)
+{
+	/* target onverts snr to dBm */
+	return snr;
+}
+#else
 static inline
 u_int32_t snr_to_signal_strength(uint8_t snr)
 {
@@ -50,6 +58,7 @@ u_int32_t snr_to_signal_strength(uint8_t snr)
 		(((int8_t)snr) + CMN_NOISE_FLOOR) :
 		((int8_t)snr);
 }
+#endif
 
 /**
  * get_lut_entry() - Retrieve LUT entry using cookie number
