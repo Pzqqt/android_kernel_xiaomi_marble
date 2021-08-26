@@ -546,6 +546,40 @@ dp_rx_err_nbuf_pn_check(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+/**
+ * dp_rx_skip_bar_frame() - Check whether BAR update need to be skipped
+ *
+ * @vdev: vdev reference
+ *
+ * Function to check whether BAR update need to be skipped
+ *
+ * Return: none
+ */
+static bool dp_rx_skip_bar_frame(struct dp_vdev *vdev)
+{
+	unsigned long cur_ts, prev_ts;
+
+	if (vdev->skip_bar_update) {
+		prev_ts = vdev->skip_bar_update_last_ts;
+		cur_ts = qdf_get_system_timestamp();
+		vdev->skip_bar_update_last_ts = cur_ts;
+		if ((cur_ts - prev_ts) < DP_SKIP_BAR_UPDATE_TIMEOUT) {
+			dp_info_rl("Skipping BAR update for vdev_id:%u",
+				   vdev->vdev_id);
+			return true;
+		}
+	}
+
+	return false;
+}
+#else
+static bool dp_rx_skip_bar_frame(struct dp_vdev *vdev)
+{
+	return false;
+}
+#endif
+
 static
 void dp_rx_err_handle_bar(struct dp_soc *soc,
 			  struct dp_peer *peer,
@@ -557,6 +591,9 @@ void dp_rx_err_handle_bar(struct dp_soc *soc,
 	uint32_t tid;
 	QDF_STATUS status;
 	struct ieee80211_frame_bar *bar;
+
+	if (dp_rx_skip_bar_frame(peer->vdev))
+		return;
 
 	/*
 	 * 1. Is this a BAR frame. If not Discard it.

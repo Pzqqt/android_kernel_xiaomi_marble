@@ -8804,6 +8804,14 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 				= val.cdp_vdev_param_mesh_tid;
 		break;
 #endif
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+	case CDP_SKIP_BAR_UPDATE_AP:
+		dp_info("vdev_id %d skip BAR update: %u", vdev_id,
+			val.cdp_skip_bar_update);
+		vdev->skip_bar_update = val.cdp_skip_bar_update;
+		vdev->skip_bar_update_last_ts = 0;
+		break;
+#endif
 	default:
 		break;
 	}

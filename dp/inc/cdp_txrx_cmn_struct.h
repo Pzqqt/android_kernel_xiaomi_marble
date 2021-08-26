@@ -1290,6 +1290,8 @@ typedef union cdp_config_param_t {
 	bool cdp_psoc_param_pext_stats;
 
 	bool cdp_enable_tx_checksum;
+
+	bool cdp_skip_bar_update;
 } cdp_config_param_type;
 
 /**
@@ -1400,6 +1402,9 @@ enum cdp_vdev_param_type {
 #ifdef WLAN_SUPPORT_MESH_LATENCY
 	CDP_ENABLE_PEER_TID_LATENCY,
 	CDP_SET_VAP_MESH_TID,
+#endif
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+	CDP_SKIP_BAR_UPDATE_AP,
 #endif
 };
 

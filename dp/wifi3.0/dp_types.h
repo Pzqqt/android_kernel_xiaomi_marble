@@ -140,6 +140,10 @@
 #define DP_RX_REFILL_THRD_THRESHOLD  512
 #endif
 
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+#define DP_SKIP_BAR_UPDATE_TIMEOUT 5000
+#endif
+
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
@@ -2626,6 +2630,10 @@ struct dp_vdev {
 	bool wds_ext_enabled;
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+	bool skip_bar_update;
+	unsigned long skip_bar_update_last_ts;
+#endif
 	/* WDS Aging timer period */
 	uint32_t wds_aging_timer_val;
 
