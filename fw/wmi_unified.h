@@ -3895,8 +3895,13 @@ typedef struct {
      *      1-> enable the feature
      *      Refer to the WMI_RSRC_CFG_FLAGS2_IS_DYNAMIC_PCIE_GEN_SPEED_SWITCH_ENABLED
      *      GET/SET macros.
+     *  Bit 9 - calc_next_dtim_count
+     *      0 -> disable calculation of DTIM count for MBSSID_NON_TX_VAP
+     *      1 -> Used by some hosts to indicate calculation of DTIM count
+     *           for MBSSID_NON_TX_VAP
+     *      Refer to WMI_RSRC_CFG_FLAGS2_CALC_NEXT_DTIM_COUNT_GET/SET macros.
      *
-     *  Bits 31:9 - Reserved
+     *  Bits 31:10 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4250,6 +4255,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 8, 1)
 #define WMI_RSRC_CFG_FLAGS2_IS_DYNAMIC_PCIE_GEN_SPEED_SWITCH_ENABLED_SET(flags2, value) \
     WMI_SET_BITS(flags2, 8, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_CALC_NEXT_DTIM_COUNT_GET(flags2) \
+    WMI_GET_BITS(flags2, 9, 1)
+#define WMI_RSRC_CFG_FLAGS2_CALC_NEXT_DTIM_COUNT_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 9, 1, value)
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
