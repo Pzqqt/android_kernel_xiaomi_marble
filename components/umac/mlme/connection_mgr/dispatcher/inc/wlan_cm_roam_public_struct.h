@@ -1835,10 +1835,12 @@ enum cm_vdev_disconnect_reason {
 /*
  * struct vdev_disconnect_event_data - Roam disconnect event data
  * @vdev_id: vdev id
+ * @psoc: psoc object
  * @reason: roam reason of type @enum cm_vdev_disconnect_reason
  */
 struct vdev_disconnect_event_data {
 	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
 	enum cm_vdev_disconnect_reason reason;
 };
 
@@ -1855,11 +1857,26 @@ struct cm_roam_scan_ch_resp {
 	uint32_t command_resp;
 	uint32_t *chan_list;
 };
+
+/**
+ * enum roam_dispatcher_events - Roam events to post to scheduler thread
+ * @ROAM_EVENT_INVALID: Invalid event
+ * @ROAM_PMKID_REQ_EVENT: Roam pmkid request event
+ * @ROAM_EVENT: Roam event
+ * @ROAM_VDEV_DISCONNECT_EVENT: Roam disconnect event
+ */
+enum roam_dispatcher_events {
+	ROAM_EVENT_INVALID,
+	ROAM_PMKID_REQ_EVENT,
+	ROAM_EVENT,
+	ROAM_VDEV_DISCONNECT_EVENT,
+};
 #endif
 
 /**
  * struct roam_offload_roam_event: Data carried by roam event
  * @vdev_id: vdev id
+ * @psoc: psoc object
  * @reason: reason for roam event of type @enum roam_reason
  * @rssi: associated AP's rssi calculated by FW when reason code
  *	  is WMI_ROAM_REASON_LOW_RSSI
@@ -1873,6 +1890,7 @@ struct cm_roam_scan_ch_resp {
  */
 struct roam_offload_roam_event {
 	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
 	enum roam_reason reason;
 	uint32_t rssi;
 	enum cm_roam_notif notif;
@@ -1916,6 +1934,20 @@ struct roam_stats_event {
 struct auth_offload_event {
 	uint8_t vdev_id;
 	struct qdf_mac_addr ap_bssid;
+};
+
+/*
+ * struct roam_pmkid_req_event - Pmkid event with entries destination structure
+ * @vdev_id: VDEV id
+ * @psoc: psoc object
+ * @num_entries: total entries sent over the event
+ * @ap_bssid: bssid list
+ */
+struct roam_pmkid_req_event {
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t num_entries;
+	struct qdf_mac_addr ap_bssid[];
 };
 
 /**
@@ -2047,16 +2079,6 @@ struct cm_hw_mode_trans_ind {
 };
 
 /*
- * struct roam_pmkid_req_event - Pmkid event with entries destination structure
- * @num_entries: total entries sent over the event
- * @ap_bssid: bssid list
- */
-struct roam_pmkid_req_event {
-	uint32_t num_entries;
-	struct qdf_mac_addr ap_bssid[];
-};
-
-/*
  * struct ml_setup_link_param - MLO setup link param
  * @vdev_id: vdev id of the link
  * @link_id: link id of the link
@@ -2150,6 +2172,7 @@ struct roam_offload_synch_ind {
  * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
  * @roam_stats_event_rx: Rx ops function pointer for roam stats event
  * @roam_auth_offload_event: Rx ops function pointer for auth offload event
+ * @roam_pmkid_request_event_rx: Rx ops function pointer for roam pmkid event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -2158,7 +2181,7 @@ struct wlan_cm_roam_rx_ops {
 				      struct roam_offload_synch_ind *sync_ind);
 	QDF_STATUS (*roam_sync_frame_event)(struct wlan_objmgr_psoc *psoc,
 					    struct roam_synch_frame_ind *frm);
-	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event roam_event);
+	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event *roam_event);
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
 					  struct roam_blacklist_event *list);
@@ -2171,6 +2194,8 @@ struct wlan_cm_roam_rx_ops {
 			       struct roam_stats_event *stats_info);
 	QDF_STATUS
 	(*roam_auth_offload_event)(struct auth_offload_event *auth_event);
+	QDF_STATUS
+	(*roam_pmkid_request_event_rx)(struct roam_pmkid_req_event *list);
 #endif
 };
 #endif

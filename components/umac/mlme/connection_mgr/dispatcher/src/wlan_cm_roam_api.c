@@ -2135,25 +2135,25 @@ QDF_STATUS wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void
-cm_handle_roam_offload_events(struct roam_offload_roam_event roam_event)
+cm_handle_roam_offload_events(struct roam_offload_roam_event *roam_event)
 {
-	switch (roam_event.reason) {
+	switch (roam_event->reason) {
 	case ROAM_REASON_HO_FAILED: {
 		struct qdf_mac_addr bssid;
 
-		bssid.bytes[0] = roam_event.notif_params >> 0 & 0xFF;
-		bssid.bytes[1] = roam_event.notif_params >> 8 & 0xFF;
-		bssid.bytes[2] = roam_event.notif_params >> 16 & 0xFF;
-		bssid.bytes[3] = roam_event.notif_params >> 24 & 0xFF;
-		bssid.bytes[4] = roam_event.notif_params1 >> 0 & 0xFF;
-		bssid.bytes[5] = roam_event.notif_params1 >> 8 & 0xFF;
-		cm_handle_roam_reason_ho_failed(roam_event.vdev_id, bssid,
-						roam_event.hw_mode_trans_ind);
+		bssid.bytes[0] = roam_event->notif_params >> 0 & 0xFF;
+		bssid.bytes[1] = roam_event->notif_params >> 8 & 0xFF;
+		bssid.bytes[2] = roam_event->notif_params >> 16 & 0xFF;
+		bssid.bytes[3] = roam_event->notif_params >> 24 & 0xFF;
+		bssid.bytes[4] = roam_event->notif_params1 >> 0 & 0xFF;
+		bssid.bytes[5] = roam_event->notif_params1 >> 8 & 0xFF;
+		cm_handle_roam_reason_ho_failed(roam_event->vdev_id, bssid,
+						roam_event->hw_mode_trans_ind);
 	}
 	break;
 	case ROAM_REASON_INVALID:
-		cm_invalid_roam_reason_handler(roam_event.vdev_id,
-					       roam_event.notif);
+		cm_invalid_roam_reason_handler(roam_event->vdev_id,
+					       roam_event->notif);
 		break;
 	default:
 		break;
@@ -2171,12 +2171,27 @@ cm_roam_auth_offload_event_handler(struct auth_offload_event *auth_event)
 {
 	return cm_handle_auth_offload(auth_event);
 }
+
+QDF_STATUS
+cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data)
+{
+	QDF_STATUS status;
+
+	status = cm_roam_pmkid_req_ind(data->psoc, data->vdev_id, data);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Pmkid request failed");
+		qdf_mem_free(data);
+		return status;
+	}
+
+	return status;
+}
 #else
 static void
-cm_handle_roam_offload_events(struct roam_offload_roam_event roam_event)
+cm_handle_roam_offload_events(struct roam_offload_roam_event *roam_event)
 {
 	mlme_debug("Unhandled roam event with reason 0x%x for vdev_id %u",
-		   roam_event.reason, roam_event.vdev_id);
+		   roam_event->reason, roam_event->vdev_id);
 }
 
 QDF_STATUS
@@ -2184,49 +2199,55 @@ cm_vdev_disconnect_event_handler(struct vdev_disconnect_event_data *data)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 QDF_STATUS
-cm_roam_event_handler(struct roam_offload_roam_event roam_event)
+cm_roam_event_handler(struct roam_offload_roam_event *roam_event)
 {
-	switch (roam_event.reason) {
+	switch (roam_event->reason) {
 	case ROAM_REASON_BTM:
-		cm_handle_roam_reason_btm(roam_event.vdev_id);
+		cm_handle_roam_reason_btm(roam_event->vdev_id);
 		break;
 	case ROAM_REASON_BMISS:
-		cm_handle_roam_reason_bmiss(roam_event.vdev_id,
-					    roam_event.rssi);
+		cm_handle_roam_reason_bmiss(roam_event->vdev_id,
+					    roam_event->rssi);
 		break;
 	case ROAM_REASON_BETTER_AP:
-		cm_handle_roam_reason_better_ap(roam_event.vdev_id,
-						roam_event.rssi);
+		cm_handle_roam_reason_better_ap(roam_event->vdev_id,
+						roam_event->rssi);
 		break;
 	case ROAM_REASON_SUITABLE_AP:
-		cm_handle_roam_reason_suitable_ap(roam_event.vdev_id,
-						  roam_event.rssi);
+		cm_handle_roam_reason_suitable_ap(roam_event->vdev_id,
+						  roam_event->rssi);
 		break;
 	case ROAM_REASON_HO_FAILED:
 	case ROAM_REASON_INVALID:
 		cm_handle_roam_offload_events(roam_event);
 		break;
 	case ROAM_REASON_RSO_STATUS:
-		cm_rso_cmd_status_event_handler(roam_event.vdev_id,
-						roam_event.notif);
+		cm_rso_cmd_status_event_handler(roam_event->vdev_id,
+						roam_event->notif);
 		break;
 	case ROAM_REASON_INVOKE_ROAM_FAIL:
-		cm_handle_roam_reason_invoke_roam_fail(roam_event.vdev_id,
-						roam_event.notif_params,
-						roam_event.hw_mode_trans_ind);
+		cm_handle_roam_reason_invoke_roam_fail(roam_event->vdev_id,
+						roam_event->notif_params,
+						roam_event->hw_mode_trans_ind);
 		break;
 	case ROAM_REASON_DEAUTH:
-		cm_handle_roam_reason_deauth(roam_event.vdev_id,
-					     roam_event.notif_params,
-					     roam_event.deauth_disassoc_frame,
-					     roam_event.notif_params1);
+		cm_handle_roam_reason_deauth(roam_event->vdev_id,
+					     roam_event->notif_params,
+					     roam_event->deauth_disassoc_frame,
+					     roam_event->notif_params1);
 		break;
 	default:
 		mlme_debug("Unhandled roam event with reason 0x%x for vdev_id %u",
-			   roam_event.reason, roam_event.vdev_id);
+			   roam_event->reason, roam_event->vdev_id);
 		break;
 	}
 
@@ -2838,4 +2859,41 @@ err:
 	qdf_mem_free(stats_info);
 	return status;
 }
-#endif
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
+
+#ifdef WLAN_FEATURE_FIPS
+QDF_STATUS cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 struct roam_pmkid_req_event *src_lst)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr *dst_list;
+	uint32_t num_entries, i;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_SB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	num_entries = src_lst->num_entries;
+	mlme_debug("Num entries %d", num_entries);
+	for (i = 0; i < num_entries; i++) {
+		dst_list = &src_lst->ap_bssid[i];
+		status = mlme_cm_osif_pmksa_candidate_notify(vdev, dst_list,
+							     1, false);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			mlme_err("Number %d Notify failed for " QDF_MAC_ADDR_FMT,
+				 i, QDF_MAC_ADDR_REF(dst_list->bytes));
+			goto rel_ref;
+		}
+	}
+
+rel_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+
+	return status;
+}
+#endif /* WLAN_FEATURE_FIPS */

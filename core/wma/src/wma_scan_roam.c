@@ -4861,6 +4861,7 @@ int wma_handle_btm_blacklist_event(void *handle, uint8_t *cmd_param_info,
 #endif
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_FIPS)
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 void wma_register_pmkid_req_event_handler(tp_wma_handle wma_handle)
 {
 	if (wma_validate_handle(wma_handle))
@@ -4954,6 +4955,7 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 	qdf_mem_free(dst_list);
 	return 0;
 }
+#endif
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

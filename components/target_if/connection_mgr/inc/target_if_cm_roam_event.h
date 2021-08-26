@@ -121,6 +121,18 @@ target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
 int
 target_if_cm_roam_scan_chan_list_event_handler(ol_scn_t scn, uint8_t *event,
 					       uint32_t len);
+
+/**
+ * target_if_pmkid_request_event_handler - pmkid request event handler
+ * @scn: target handle
+ * @event: event buffer
+ * @len: event buffer length
+ *
+ * Return: int for success or error code
+ */
+int
+target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
+				      uint32_t len);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 
 /**
@@ -163,6 +175,13 @@ target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
 static inline int
 target_if_cm_roam_scan_chan_list_event_handler(ol_scn_t scn, uint8_t *event,
 					       uint32_t len)
+{
+	return 0;
+}
+
+static inline int
+target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
+				      uint32_t len)
 {
 	return 0;
 }

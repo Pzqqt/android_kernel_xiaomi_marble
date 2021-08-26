@@ -167,26 +167,6 @@ void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id);
-
-#ifdef WLAN_FEATURE_FIPS
-/**
- * cm_roam_pmkid_req_ind() - Function to handle
- * roam event from firmware for pmkid generation.
- * @psoc: psoc pointer
- * @vdev_id: Vdev id
- * @bss_list: candidate AP bssid list
- */
-QDF_STATUS
-cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
-		      uint8_t vdev_id, struct roam_pmkid_req_event *bss_list);
-#else /* WLAN_FEATURE_FIPS */
-static inline QDF_STATUS
-cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
-		      uint8_t vdev_id, struct roam_pmkid_req_event *bss_list)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_FEATURE_FIPS */
 #else /*WLAN_FEATURE_ROAM_OFFLOAD */
 static inline
 QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,

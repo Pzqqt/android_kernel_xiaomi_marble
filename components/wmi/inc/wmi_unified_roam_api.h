@@ -395,6 +395,20 @@ QDF_STATUS
 wmi_extract_auth_offload_event(wmi_unified_t wmi_handle,
 			       uint8_t *event, uint32_t data_len,
 			       struct auth_offload_event *auth_event);
+
+/**
+ * wmi_extract_roam_pmkid_request - Extract roam pmkid list
+ * @wmi_handle: WMI handle
+ * @event: Event data received from firmware
+ * @data_len: Event data length received from firmware
+ * @data: Extract the event and fill in data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_extract_roam_pmkid_request(wmi_unified_t wmi_handle,
+			       uint8_t *event, uint32_t data_len,
+			       struct roam_pmkid_req_event **data);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

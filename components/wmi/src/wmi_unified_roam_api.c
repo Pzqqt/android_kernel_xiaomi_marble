@@ -474,5 +474,19 @@ wmi_extract_auth_offload_event(wmi_unified_t wmi_handle,
 								   auth_event);
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_extract_roam_pmkid_request(wmi_unified_t wmi_handle,
+			       uint8_t *event, uint32_t data_len,
+			       struct roam_pmkid_req_event **list)
+{
+	if (wmi_handle->ops->extract_roam_pmkid_request)
+		return wmi_handle->ops->extract_roam_pmkid_request(wmi_handle,
+								   event,
+								   data_len,
+								   list);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif
