@@ -279,7 +279,8 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
 
-	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_ON);
+	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
+				DSI_CTRL_ENGINE_ON, skip_op);
 	if (rc) {
 		DSI_ERR("[%s] enable mcmd engine failed, skip_op:%d rc:%d\n",
 		       display->name, skip_op, rc);
@@ -291,7 +292,8 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 		if (!ctrl->ctrl || (ctrl == m_ctrl))
 			continue;
 
-		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl, DSI_CTRL_ENGINE_ON);
+		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl,
+					DSI_CTRL_ENGINE_ON, skip_op);
 		if (rc) {
 			DSI_ERR(
 			    "[%s] enable cmd engine failed, skip_op:%d rc:%d\n",
@@ -302,7 +304,8 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 
 	goto done;
 error_disable_master:
-	(void)dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
+	(void)dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
+				DSI_CTRL_ENGINE_OFF, skip_op);
 done:
 	mutex_unlock(&m_ctrl->ctrl->ctrl_lock);
 	return rc;
@@ -323,14 +326,16 @@ static int dsi_display_cmd_engine_disable(struct dsi_display *display)
 		if (!ctrl->ctrl || (ctrl == m_ctrl))
 			continue;
 
-		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
+		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl,
+					DSI_CTRL_ENGINE_OFF, skip_op);
 		if (rc)
 			DSI_ERR(
 			   "[%s] disable cmd engine failed, skip_op:%d rc:%d\n",
 				display->name, skip_op, rc);
 	}
 
-	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
+	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
+				DSI_CTRL_ENGINE_OFF, skip_op);
 	if (rc)
 		DSI_ERR("[%s] disable mcmd engine failed, skip_op:%d rc:%d\n",
 			display->name, skip_op, rc);
