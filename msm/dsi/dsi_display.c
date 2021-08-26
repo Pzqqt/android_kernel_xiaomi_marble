@@ -274,7 +274,7 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 	int rc = 0;
 	int i;
 	struct dsi_display_ctrl *m_ctrl, *ctrl;
-	bool skip_op = is_skip_op_required(display);
+	bool skip_op = display->trusted_vm_env;
 
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
@@ -316,7 +316,7 @@ static int dsi_display_cmd_engine_disable(struct dsi_display *display)
 	int rc = 0;
 	int i;
 	struct dsi_display_ctrl *m_ctrl, *ctrl;
-	bool skip_op = is_skip_op_required(display);
+	bool skip_op = display->trusted_vm_env;
 
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
