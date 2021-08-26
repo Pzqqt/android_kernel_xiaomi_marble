@@ -1612,6 +1612,37 @@ bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst)
 	return false;
 }
 
+static int msm_vidc_discard_pending_ipsc(struct msm_vidc_inst *inst)
+{
+	struct response_work *resp_work, *dummy = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (list_empty(&inst->response_works))
+		return 0;
+
+	/* discard pending port settings change if any */
+	list_for_each_entry_safe(resp_work, dummy,
+			&inst->response_works, list) {
+		if (resp_work->type == RESP_WORK_INPUT_PSC) {
+			i_vpr_h(inst,
+				"%s: discard pending input psc\n", __func__);
+
+			/* override the psc properties again if ipsc discarded */
+			inst->ipsc_properties_set = false;
+
+			list_del(&resp_work->list);
+			kfree(resp_work->data);
+			kfree(resp_work);
+		}
+	}
+
+	return 0;
+}
+
 static int msm_vidc_process_pending_ipsc(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_state *new_state)
 {
@@ -1697,7 +1728,6 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 {
 	int rc = 0;
 	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
-	struct response_work *resp_work, *dummy;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1720,17 +1750,6 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 				   inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG ||
 				   inst->state == MSM_VIDC_DRAIN_START_INPUT) {
 			new_state = MSM_VIDC_START_OUTPUT;
-			/* discard pending port settings change if any */
-			list_for_each_entry_safe(resp_work, dummy,
-						&inst->response_works, list) {
-				if (resp_work->type == RESP_WORK_INPUT_PSC) {
-					i_vpr_h(inst,
-						"%s: discard pending input psc\n", __func__);
-					list_del(&resp_work->list);
-					kfree(resp_work->data);
-					kfree(resp_work);
-				}
-			}
 		}
 	} else if (type == OUTPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_START_OUTPUT) {
@@ -3818,6 +3837,9 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		rc = -EINVAL;
 		goto error;
 	}
+
+	/* discard pending port settings change if any */
+	msm_vidc_discard_pending_ipsc(inst);
 
 	/* flush deferred buffers */
 	msm_vidc_flush_buffers(inst, buffer_type);
