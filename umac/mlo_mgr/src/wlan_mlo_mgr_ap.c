@@ -21,6 +21,7 @@
 #include "wlan_mlo_mgr_ap.h"
 #include <wlan_mlo_mgr_cmn.h>
 #include <wlan_mlo_mgr_main.h>
+#include <wlan_utility.h>
 
 bool mlo_ap_vdev_attach(struct wlan_objmgr_vdev *vdev,
 			uint8_t link_id,
@@ -238,4 +239,56 @@ void mlo_ap_ml_peerid_free(uint16_t mlo_peer_id)
 		qdf_clear_bit(mlo_peer_id - 1, mlo_ctx->mlo_peer_id_bmap);
 
 	ml_peerid_lock_release(mlo_ctx);
+}
+
+void mlo_ap_vdev_quiet_set(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_dev_context *mld_ctx = vdev->mlo_dev_ctx;
+	uint8_t idx;
+
+	if (!mld_ctx || !wlan_vdev_mlme_is_mlo_ap(vdev))
+		return;
+
+	idx = mlo_get_link_vdev_ix(mld_ctx, vdev);
+	if (idx == MLO_INVALID_LINK_IDX)
+		return;
+
+	mlo_debug("Quiet set for PSOC:%d vdev:%d",
+		  wlan_psoc_get_id(wlan_vdev_get_psoc(vdev)),
+		  wlan_vdev_get_id(vdev));
+
+	wlan_util_change_map_index(mld_ctx->ap_ctx->mlo_vdev_quiet_bmap,
+				   idx, 1);
+}
+
+void mlo_ap_vdev_quiet_clear(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_dev_context *mld_ctx = vdev->mlo_dev_ctx;
+	uint8_t idx;
+
+	if (!mld_ctx || !wlan_vdev_mlme_is_mlo_ap(vdev))
+		return;
+
+	idx = mlo_get_link_vdev_ix(mld_ctx, vdev);
+	if (idx == MLO_INVALID_LINK_IDX)
+		return;
+
+	mlo_debug("Quiet clear for PSOC:%d vdev:%d",
+		  wlan_psoc_get_id(wlan_vdev_get_psoc(vdev)),
+		  wlan_vdev_get_id(vdev));
+
+	wlan_util_change_map_index(mld_ctx->ap_ctx->mlo_vdev_quiet_bmap,
+				   idx, 0);
+}
+
+bool mlo_ap_vdev_quiet_is_any_idx_set(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_dev_context *mld_ctx = vdev->mlo_dev_ctx;
+
+	if (!mld_ctx || !wlan_vdev_mlme_is_mlo_ap(vdev))
+		return false;
+
+	return wlan_util_map_is_any_index_set(
+			mld_ctx->ap_ctx->mlo_vdev_quiet_bmap,
+			sizeof(mld_ctx->ap_ctx->mlo_vdev_quiet_bmap));
 }

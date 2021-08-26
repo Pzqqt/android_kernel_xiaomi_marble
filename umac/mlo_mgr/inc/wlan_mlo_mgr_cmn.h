@@ -84,6 +84,7 @@
 #define mlo_nofl_debug_rl(format, args...) \
 		QDF_TRACE_DEBUG_RL_NO_FL(QDF_MODULE_ID_MLO, format, ## args)
 
+#define MLO_INVALID_LINK_IDX 0xFF
 /**
  * mlo_get_link_information() - get partner link information
  * @mld_addr : MLD address

@@ -49,7 +49,7 @@ static uint16_t wlan_mlo_peer_alloc_aid(
 	if (!mlo_mgr_ctx)
 		return assoc_id;
 
-	if (!is_mlo_peer && link_ix == 0xff)
+	if (!is_mlo_peer && link_ix == MLO_INVALID_LINK_IDX)
 		return assoc_id;
 	/* TODO check locking strategy */
 	ml_aid_lock_acquire(mlo_mgr_ctx);

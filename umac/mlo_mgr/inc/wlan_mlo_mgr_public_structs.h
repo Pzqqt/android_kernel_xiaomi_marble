@@ -141,10 +141,12 @@ struct wlan_mlo_sta {
  * struct wlan_mlo_ap - MLO AP related info
  * @num_ml_vdevs: number of vdevs to form MLD
  * @ml_aid_mgr: ML AID mgr
+ * @mlo_vdev_quiet_bmap: Bitmap of vdevs for which quiet ie needs to enabled
  */
 struct wlan_mlo_ap {
 	uint8_t num_ml_vdevs;
 	struct wlan_ml_vdev_aid_mgr *ml_aid_mgr;
+	qdf_bitmap(mlo_vdev_quiet_bmap, WLAN_UMAC_MLO_MAX_VDEVS);
 };
 
 /*
