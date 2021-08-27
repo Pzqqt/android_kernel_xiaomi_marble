@@ -58,7 +58,8 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{MAX_NUM_4K_SESSIONS, 4},
 	{MAX_NUM_8K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
-	{MAX_MBPF, 173056},	/* (8192x4320)/256 + (4096x2176)/256*/
+	{MAX_RT_MBPF, 173056},	/* (8192x4320)/256 + (4096x2176)/256*/
+	{MAX_MBPF, 276480}, /* ((8192x4320)/256) * 2 */
 	{MAX_MBPS, 7833600},	/* max_load
 					 * 7680x4320@60fps or 3840x2176@240fps
 					 * which is greater than 4096x2176@120fps,
