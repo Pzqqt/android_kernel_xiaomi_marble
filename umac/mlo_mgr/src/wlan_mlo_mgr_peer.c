@@ -436,7 +436,6 @@ static QDF_STATUS mlo_dev_get_link_vdevs(
 	}
 
 	mlo_debug("num_partner_links %d", ml_info->num_partner_links);
-	mlo_dev_lock_acquire(ml_dev);
 	for (i = 0; i < ml_info->num_partner_links; i++) {
 		link_id = ml_info->partner_link_info[i].link_id;
 		vdev_link = mlo_get_vdev_by_link_id(vdev, link_id);
@@ -452,11 +451,9 @@ static QDF_STATUS mlo_dev_get_link_vdevs(
 				wlan_objmgr_vdev_release_ref(vdev_link,
 							     WLAN_MLO_MGR_ID);
 			}
-			mlo_dev_lock_release(ml_dev);
 			return QDF_STATUS_E_INVAL;
 		}
 	}
-	mlo_dev_lock_release(ml_dev);
 
 	return QDF_STATUS_SUCCESS;
 }
