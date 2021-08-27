@@ -1829,7 +1829,6 @@ static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
 	uint8_t offset;
 
 	if (!scan_entry->ie_list.multi_link) {
-		scm_err("scan_entry->ie_list.multi_link is null");
 		return;
 	}
 
