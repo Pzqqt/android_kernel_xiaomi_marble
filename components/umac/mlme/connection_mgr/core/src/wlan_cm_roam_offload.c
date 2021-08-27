@@ -1092,6 +1092,99 @@ cm_update_mlo_score_params(struct scoring_param *req_score_params,
 }
 #endif
 
+void cm_update_owe_info(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp, uint8_t vdev_id)
+{
+	struct rso_config *rso_cfg;
+	struct owe_transition_mode_info *owe_info;
+	uint8_t *ie_ptr;
+	uint32_t ie_len, akm;
+	const uint8_t *owe_transition_ie = NULL;
+	uint8_t length;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return;
+	owe_info = &rso_cfg->owe_info;
+
+	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (!QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE))
+		goto reset;
+
+	mlme_debug("[OWE_TRANSITION]:Update the owe open bss's ssid");
+
+	if (!rsp->connect_ies.bcn_probe_rsp.ptr ||
+	    !rsp->connect_ies.bcn_probe_rsp.len ||
+	    (rsp->connect_ies.bcn_probe_rsp.len <=
+		(sizeof(struct wlan_frame_hdr) +
+		offsetof(struct wlan_bcn_frame, ie)))) {
+		mlme_debug("invalid beacon probe rsp len %d",
+			   rsp->connect_ies.bcn_probe_rsp.len);
+		goto reset;
+	}
+
+	ie_len = (rsp->connect_ies.bcn_probe_rsp.len -
+			sizeof(struct wlan_frame_hdr) -
+			offsetof(struct wlan_bcn_frame, ie));
+	ie_ptr = (uint8_t *)(rsp->connect_ies.bcn_probe_rsp.ptr +
+			     sizeof(struct wlan_frame_hdr) +
+			     offsetof(struct wlan_bcn_frame, ie));
+
+	owe_transition_ie = wlan_get_vendor_ie_ptr_from_oui(
+				OWE_TRANSITION_OUI_TYPE,
+				OWE_TRANSITION_OUI_SIZE, ie_ptr, ie_len);
+	if (!owe_transition_ie || owe_transition_ie[1] <= OWE_SSID_OFFSET) {
+		mlme_debug("[OWE_TRANSITION]: Invalid owe transition ie");
+		goto reset;
+	}
+
+	owe_info->is_owe_transition_conn = true;
+
+	length = *(owe_transition_ie + OWE_SSID_LEN_OFFSET);
+	if (length > WLAN_SSID_MAX_LEN) {
+		mlme_debug("[OWE_TRANSITION] Invalid ssid len %d", length);
+		goto reset;
+	}
+	owe_info->ssid.length = length;
+	qdf_mem_copy(owe_info->ssid.ssid, owe_transition_ie + OWE_SSID_OFFSET,
+		     owe_info->ssid.length);
+
+	mlme_debug("[OWE_TRANSITION] open bss ssid: \"%.*s\"",
+		   owe_info->ssid.length, owe_info->ssid.ssid);
+	return;
+
+reset:
+	if (owe_info->is_owe_transition_conn)
+		owe_info->is_owe_transition_conn = false;
+
+	return;
+}
+
+/**
+ * cm_update_owe_ap_profile() - set owe ap profile
+ * @params:  roam offload scan period related parameters
+ * @rso_cfg: rso config
+ *
+ * This function is used to set OPEN SSID value when STA is connected to OWE
+ * transition AP in OWE security
+ *
+ * Return: None
+ */
+static void cm_update_owe_ap_profile(struct ap_profile_params *params,
+				     struct rso_config *rso_cfg)
+{
+	struct owe_transition_mode_info *owe_ap_profile;
+	bool is_owe_transition_conn;
+
+	owe_ap_profile = &params->owe_ap_profile;
+	is_owe_transition_conn = rso_cfg->owe_info.is_owe_transition_conn;
+	mlme_debug("set owe ap profile:%d", is_owe_transition_conn);
+	owe_ap_profile->is_owe_transition_conn = is_owe_transition_conn;
+	owe_ap_profile->ssid.length = rso_cfg->owe_info.ssid.length;
+	qdf_mem_copy(owe_ap_profile->ssid.ssid, rso_cfg->owe_info.ssid.ssid,
+		     rso_cfg->owe_info.ssid.length);
+}
+
 static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_mlme_psoc_ext_obj *mlme_obj,
 				   struct scoring_param *req_score_params,
@@ -1377,6 +1470,9 @@ cm_roam_scan_offload_ap_profile(struct wlan_objmgr_psoc *psoc,
 
 	profile->rssi_abs_thresh =
 			mlme_obj->cfg.lfr.roam_rssi_abs_threshold;
+
+	if (rso_cfg->owe_info.is_owe_transition_conn)
+		cm_update_owe_ap_profile(params, rso_cfg);
 
 	cm_update_score_params(psoc, mlme_obj, &params->param, rso_cfg);
 

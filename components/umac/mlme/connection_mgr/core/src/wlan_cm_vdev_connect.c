@@ -1344,6 +1344,7 @@ static void cm_process_connect_complete(struct wlan_objmgr_psoc *psoc,
 		cm_update_pmk_cache_ft(psoc, vdev_id);
 	}
 
+	cm_update_owe_info(vdev, rsp, vdev_id);
 	cm_csr_set_joined(vdev_id);
 	cm_csr_send_set_ie(vdev);
 

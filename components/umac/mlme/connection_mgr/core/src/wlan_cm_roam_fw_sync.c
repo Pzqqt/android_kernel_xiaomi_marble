@@ -798,6 +798,7 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
 					  connect_rsp->connect_status);
 	cm_inform_blm_connect_complete(cm_ctx->vdev, connect_rsp);
+	cm_update_owe_info(vdev, connect_rsp, vdev_id);
 	cm_connect_info(vdev, true, &connect_rsp->bssid, &connect_rsp->ssid,
 			connect_rsp->freq);
 	wlan_tdls_notify_sta_connect(vdev_id,

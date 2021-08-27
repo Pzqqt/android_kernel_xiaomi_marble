@@ -243,4 +243,16 @@ cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
 bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 			 struct wlan_objmgr_vdev *vdev,
 			 bool mdie_present);
+
+/**
+ * cm_update_owe_info() - Update owe transition mode element info
+ * @vdev: Object manager VDEV
+ * @rsp: connect resp from VDEV mgr
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+void cm_update_owe_info(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp, uint8_t vdev_id);
+
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */
