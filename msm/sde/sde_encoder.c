@@ -4040,9 +4040,13 @@ static void sde_encoder_early_wakeup_work_handler(struct kthread_work *work)
 {
 	struct sde_encoder_virt *sde_enc = container_of(work,
 			struct sde_encoder_virt, early_wakeup_work);
+	struct sde_kms *sde_kms = to_sde_kms(ddev_to_msm_kms(sde_enc->base.dev));
 
-	if (!sde_enc) {
-		SDE_ERROR("invalid sde encoder\n");
+	sde_vm_lock(sde_kms);
+	if (!sde_vm_owns_hw(sde_kms)) {
+		sde_vm_unlock(sde_kms);
+		SDE_DEBUG("skip early wakeup for ENC-%d, HW is owned by other VM\n",
+				DRMID(&sde_enc->base));
 		return;
 	}
 
@@ -4050,6 +4054,7 @@ static void sde_encoder_early_wakeup_work_handler(struct kthread_work *work)
 	sde_encoder_resource_control(&sde_enc->base,
 			SDE_ENC_RC_EVENT_EARLY_WAKEUP);
 	SDE_ATRACE_END("encoder_early_wakeup");
+	sde_vm_unlock(sde_kms);
 }
 
 void sde_encoder_early_wakeup(struct drm_encoder *drm_enc)
@@ -4764,7 +4769,6 @@ static ssize_t _sde_encoder_misr_read(struct file *file,
 	struct sde_encoder_virt *sde_enc;
 	struct sde_kms *sde_kms = NULL;
 	struct drm_encoder *drm_enc;
-	struct sde_vm_ops *vm_ops;
 	int i = 0, len = 0;
 	char buf[MISR_BUFF_SIZE + 1] = {'\0'};
 	int rc;
@@ -4790,9 +4794,8 @@ static ssize_t _sde_encoder_misr_read(struct file *file,
 	if (rc < 0)
 		return rc;
 
-	vm_ops = sde_vm_get_ops(sde_kms);
 	sde_vm_lock(sde_kms);
-	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
+	if (!sde_vm_owns_hw(sde_kms)) {
 		SDE_DEBUG("op not supported due to HW unavailablity\n");
 		rc = -EOPNOTSUPP;
 		goto end;

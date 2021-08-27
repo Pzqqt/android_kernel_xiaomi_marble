@@ -47,9 +47,9 @@ static char sde_dsc_rc_range_min_qp[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{0, 4, 5, 5, 7, 7, 7, 7, 7, 7, 9, 9, 9, 13, 16},
 	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
 	/* DSC v1.2 YUV422 */
-	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
-	{0, 4, 5, 5, 7, 7, 7, 7, 7, 7, 9, 9, 9, 13, 16},
-	{0, 4, 9, 9, 11, 11, 11, 11, 11, 11, 13, 13, 13, 17, 20},
+	{0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 11},
+	{0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
+	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
 	{0, 2, 3, 4, 5, 5, 5, 6, 6, 7, 8, 8, 9, 11, 12},
 	/* DSC v1.2 YUV420 */
 	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
@@ -103,41 +103,68 @@ static char sde_dsc_rc_range_bpg[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{10, 8, 6, 4, 2, 0, -2, -4, -6, -8, -10, -10, -12, -12, -12},
 };
 
+static struct sde_dsc_rc_init_params_lut {
+	u32 rc_quant_incr_limit0;
+	u32 rc_quant_incr_limit1;
+	u32 initial_fullness_offset;
+	u32 initial_xmit_delay;
+	u32 second_line_bpg_offset;
+	u32 second_line_offset_adj;
+	u32 flatness_min_qp;
+	u32 flatness_max_qp;
+}  sde_dsc_rc_init_param_lut[] = {
+	/* DSC v1.1 */
+	{11, 11, 6144, 512, 0, 0, 3, 12}, /* DSC_V11_8BPC_8BPP */
+	{15, 15, 6144, 512, 0, 0, 7, 16}, /* DSC_V11_10BPC_8BPP */
+	{15, 15, 5632, 410, 0, 0, 7, 16}, /* DSC_V11_10BPC_10BPP */
+	/* DSC v1.1 SCR and DSC v1.2 RGB 444 */
+	{11, 11, 6144, 512, 0, 0, 3, 12}, /* DSC_V12_444_8BPC_8BPP or DSC_V11_SCR1_8BPC_8BPP */
+	{15, 15, 6144, 512, 0, 0, 7, 16}, /* DSC_V12_444_10BPC_8BPP or DSC_V11_SCR1_10BPC_8BPP */
+	{15, 15, 5632, 410, 0, 0, 7, 16}, /* DSC_V12_444_10BPC_10BPP or DSC_V11_SCR1_10BPC_10BPP */
+	/* DSC v1.2 YUV422 */
+	{11, 11, 5632, 410, 0, 0, 3, 12}, /* DSC_V12_422_8BPC_7BPP */
+	{11, 11, 2048, 341, 0, 0, 3, 12}, /* DSC_V12_422_8BPC_8BPP */
+	{15, 15, 5632, 410, 0, 0, 7, 16}, /* DSC_V12_422_10BPC_7BPP */
+	{15, 15, 2048, 273, 0, 0, 7, 16}, /* DSC_V12_422_10BPC_10BPP */
+	/* DSC v1.2 YUV420 */
+	{11, 11, 5632, 410, 0, 0, 3, 12},    /* DSC_V12_422_8BPC_7BPP */
+	{11, 11, 2048, 341, 12, 512, 3, 12}, /* DSC_V12_420_8BPC_6BPP */
+	{15, 15, 2048, 341, 12, 512, 7, 16}, /* DSC_V12_420_10BPC_6BPP */
+	{15, 15, 2048, 256, 12, 512, 7, 16}, /* DSC_V12_420_10BPC_7_5BPP */
+};
+
 /**
  * Maps to lookup the sde_dsc_ratio_type index used in rate control tables
  */
-static struct sde_dsc_v1_1_table_index_lut {
-	int scr_ver;
-	u32 bpc;
-	u32 bpp;
-	u32 type;
-} sde_dsc_v1_1_index_map[] = {
-	{0, 8, 8, DSC_V11_8BPC_8BPP},
-	{0, 10, 8, DSC_V11_10BPC_8BPP},
-	{0, 10, 10, DSC_V11_10BPC_10BPP},
-
-	{1, 8, 8, DSC_V11_SCR1_8BPC_8BPP},
-	{1, 10, 8, DSC_V11_SCR1_10BPC_8BPP},
-	{1, 10, 10, DSC_V11_SCR1_10BPC_10BPP},
-};
-
-static struct sde_dsc_v1_2_table_index_lut {
+static struct sde_dsc_table_index_lut {
 	u32 fmt;
+	u32 scr_ver;
+	u32 minor_ver;
 	u32 bpc;
 	u32 bpp;
 	u32 type;
-} sde_dsc_v1_2_index_map[] = {
-	{MSM_CHROMA_444, 8, 8, DSC_V12_444_8BPC_8BPP},
-	{MSM_CHROMA_444, 10, 8, DSC_V12_444_10BPC_8BPP},
-	{MSM_CHROMA_444, 10, 10, DSC_V12_444_10BPC_10BPP},
+} sde_dsc_index_map[] = {
+	/* DSC 1.1 formats - scr version is considered */
+	{MSM_CHROMA_444, 0, 1, 8, 8, DSC_V11_8BPC_8BPP},
+	{MSM_CHROMA_444, 0, 1, 10, 8, DSC_V11_10BPC_8BPP},
+	{MSM_CHROMA_444, 0, 1, 10, 10, DSC_V11_10BPC_10BPP},
 
-	{MSM_CHROMA_422, 8, 7, DSC_V12_422_8BPC_7BPP},
-	{MSM_CHROMA_422, 8, 8, DSC_V12_422_8BPC_8BPP},
-	{MSM_CHROMA_422, 10, 7, DSC_V12_422_10BPC_7BPP},
-	{MSM_CHROMA_422, 10, 10, DSC_V12_422_10BPC_10BPP},
+	{MSM_CHROMA_444, 1, 1, 8, 8, DSC_V11_SCR1_8BPC_8BPP},
+	{MSM_CHROMA_444, 1, 1, 10, 8, DSC_V11_SCR1_10BPC_8BPP},
+	{MSM_CHROMA_444, 1, 1, 10, 10, DSC_V11_SCR1_10BPC_10BPP},
 
-	{MSM_CHROMA_420, 8, 6, DSC_V12_420_8BPC_6BPP},
-	{MSM_CHROMA_420, 10, 6, DSC_V12_420_10BPC_6BPP},
+	/* DSC 1.2 formats - scr version is no-op */
+	{MSM_CHROMA_444, -1, 2, 8, 8, DSC_V12_444_8BPC_8BPP},
+	{MSM_CHROMA_444, -1, 2, 10, 8, DSC_V12_444_10BPC_8BPP},
+	{MSM_CHROMA_444, -1, 2, 10, 10, DSC_V12_444_10BPC_10BPP},
+
+	{MSM_CHROMA_422, -1, 2, 8, 7, DSC_V12_422_8BPC_7BPP},
+	{MSM_CHROMA_422, -1, 2, 8, 8, DSC_V12_422_8BPC_8BPP},
+	{MSM_CHROMA_422, -1, 2, 10, 7, DSC_V12_422_10BPC_7BPP},
+	{MSM_CHROMA_422, -1, 2, 10, 10, DSC_V12_422_10BPC_10BPP},
+
+	{MSM_CHROMA_420, -1, 2, 8, 6, DSC_V12_420_8BPC_6BPP},
+	{MSM_CHROMA_420, -1, 2, 10, 6, DSC_V12_420_10BPC_6BPP},
 };
 
 static int _get_rc_table_index(struct drm_dsc_config *dsc, int scr_ver)
@@ -158,20 +185,14 @@ static int _get_rc_table_index(struct drm_dsc_config *dsc, int scr_ver)
 	else if (dsc->native_420)
 		fmt = MSM_CHROMA_420;
 
-	if (dsc->dsc_version_minor == 0x1) {
-		for (i = 0; i < ARRAY_SIZE(sde_dsc_v1_1_index_map); i++) {
-			if (bpc == sde_dsc_v1_1_index_map[i].bpc &&
-			    bpp == sde_dsc_v1_1_index_map[i].bpp &&
-			    scr_ver == sde_dsc_v1_1_index_map[i].scr_ver)
-				return sde_dsc_v1_1_index_map[i].type;
-		}
-	} else if (dsc->dsc_version_minor == 0x2) {
-		for (i = 0; i < ARRAY_SIZE(sde_dsc_v1_2_index_map); i++) {
-			if (bpc == sde_dsc_v1_2_index_map[i].bpc &&
-			    bpp == sde_dsc_v1_2_index_map[i].bpp &&
-			    fmt == sde_dsc_v1_2_index_map[i].fmt)
-				return sde_dsc_v1_2_index_map[i].type;
-		}
+	for (i = 0; i < ARRAY_SIZE(sde_dsc_index_map); i++) {
+		if (dsc->dsc_version_minor == sde_dsc_index_map[i].minor_ver &&
+				fmt ==  sde_dsc_index_map[i].fmt &&
+				bpc == sde_dsc_index_map[i].bpc &&
+				bpp == sde_dsc_index_map[i].bpp &&
+				(dsc->dsc_version_minor != 0x1 ||
+					scr_ver == sde_dsc_index_map[i].scr_ver))
+			return sde_dsc_index_map[i].type;
 	}
 
 	SDE_ERROR("unsupported DSC v%d.%dr%d, bpc:%d, bpp:%d, fmt:0x%x\n",
@@ -219,6 +240,8 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	int slice_bits;
 	int data;
 	int final_value, final_scale;
+	struct sde_dsc_rc_init_params_lut *rc_param_lut;
+	u32 slice_width_mod;
 	int i, ratio_idx;
 
 	dsc->rc_model_size = 8192;
@@ -237,15 +260,15 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	dsc->rc_tgt_offset_high = 3;
 	dsc->rc_tgt_offset_low = 3;
 	dsc->simple_422 = 0;
-	dsc->convert_rgb = 1;
+	dsc->convert_rgb = !(dsc->native_422 | dsc->native_420);
 	dsc->vbr_enable = 0;
 
 	bpp = DSC_BPP(*dsc);
 	bpc = dsc->bits_per_component;
 
 	ratio_idx = _get_rc_table_index(dsc, scr_ver);
-	if (ratio_idx == -EINVAL)
-		return ratio_idx;
+	if ((ratio_idx < 0) || (ratio_idx >= DSC_RATIO_TYPE_MAX))
+		return -EINVAL;
 
 	for (i = 0; i < DSC_NUM_BUF_RANGES - 1; i++)
 		dsc->rc_buf_thresh[i] = sde_dsc_rc_buf_thresh[i];
@@ -259,50 +282,33 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 			sde_dsc_rc_range_bpg[ratio_idx][i];
 	}
 
-	if (bpp == 8) {
-		dsc->initial_offset = 6144;
-		dsc->initial_xmit_delay = 512;
-	} else if (bpp == 10) {
-		dsc->initial_offset = 5632;
-		dsc->initial_xmit_delay = 410;
-	} else {
-		dsc->initial_offset = 2048;
-		dsc->initial_xmit_delay = 341;
+	rc_param_lut = &sde_dsc_rc_init_param_lut[ratio_idx];
+	dsc->rc_quant_incr_limit0 = rc_param_lut->rc_quant_incr_limit0;
+	dsc->rc_quant_incr_limit1 = rc_param_lut->rc_quant_incr_limit1;
+	dsc->initial_offset = rc_param_lut->initial_fullness_offset;
+	dsc->initial_xmit_delay = rc_param_lut->initial_xmit_delay;
+	dsc->second_line_bpg_offset = rc_param_lut->second_line_bpg_offset;
+	dsc->second_line_offset_adj = rc_param_lut->second_line_offset_adj;
+	dsc->flatness_min_qp = rc_param_lut->flatness_min_qp;
+	dsc->flatness_max_qp = rc_param_lut->flatness_max_qp;
+
+	slice_width_mod = dsc->slice_width;
+	if (dsc->native_422 || dsc->native_420) {
+		slice_width_mod = dsc->slice_width / 2;
+		bpp = bpp * 2;
 	}
 
 	dsc->line_buf_depth = bpc + 1;
+	dsc->mux_word_size = bpc > 10 ? DSC_MUX_WORD_SIZE_12_BPC: DSC_MUX_WORD_SIZE_8_10_BPC;
 
-	if (bpc == 8) {
-		dsc->flatness_min_qp = 3;
-		dsc->flatness_max_qp = 12;
-		dsc->rc_quant_incr_limit0 = 11;
-		dsc->rc_quant_incr_limit1 = 11;
-		dsc->mux_word_size = DSC_MUX_WORD_SIZE_8_10_BPC;
-	} else if (bpc == 10) { /* 10bpc */
-		dsc->flatness_min_qp = 7;
-		dsc->flatness_max_qp = 16;
-		dsc->rc_quant_incr_limit0 = 15;
-		dsc->rc_quant_incr_limit1 = 15;
-		dsc->mux_word_size = DSC_MUX_WORD_SIZE_8_10_BPC;
-	} else { /* 12 bpc */
-		dsc->flatness_min_qp = 11;
-		dsc->flatness_max_qp = 20;
-		dsc->rc_quant_incr_limit0 = 19;
-		dsc->rc_quant_incr_limit1 = 19;
-		dsc->mux_word_size = DSC_MUX_WORD_SIZE_12_BPC;
-	}
-	if ((dsc->dsc_version_minor == 0x2) && (dsc->native_420)) {
-		dsc->second_line_bpg_offset = 12;
-		dsc->second_line_offset_adj = 512;
-		dsc->nsl_bpg_offset = 2048 *
-			(DIV_ROUND_UP(dsc->second_line_bpg_offset,
-				(dsc->slice_height - 1)));
-	}
+	if ((dsc->dsc_version_minor == 0x2) && (dsc->native_420))
+		dsc->nsl_bpg_offset = (2048 * (DIV_ROUND_UP(dsc->second_line_bpg_offset,
+				(dsc->slice_height - 1))));
 
-	groups_per_line = DIV_ROUND_UP(dsc->slice_width, 3);
+	groups_per_line = DIV_ROUND_UP(slice_width_mod, 3);
 
-	dsc->slice_chunk_size = dsc->slice_width * bpp / 8;
-	if ((dsc->slice_width * bpp) % 8)
+	dsc->slice_chunk_size = slice_width_mod * bpp / 8;
+	if ((slice_width_mod * bpp) % 8)
 		dsc->slice_chunk_size++;
 
 	/* rbs-min */
@@ -325,7 +331,12 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 
 	dsc->nfl_bpg_offset = DIV_ROUND_UP(data, (dsc->slice_height - 1));
 
-	pre_num_extra_mux_bits = 3 * (dsc->mux_word_size + (4 * bpc + 4) - 2);
+	if (dsc->native_422)
+		pre_num_extra_mux_bits = 4 * dsc->mux_word_size + (4 * bpc + 4) + (3 * 4 * bpc) - 2;
+	else if (dsc->native_420)
+		pre_num_extra_mux_bits = 3 * dsc->mux_word_size + (4 * bpc + 4) + (2 * 4 * bpc) - 2;
+	else
+		pre_num_extra_mux_bits = 3 * (dsc->mux_word_size + (4 * bpc + 4) - 2);
 
 	num_extra_mux_bits = pre_num_extra_mux_bits - (dsc->mux_word_size -
 		((slice_bits - pre_num_extra_mux_bits) % dsc->mux_word_size));
@@ -448,6 +459,8 @@ int sde_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc_info,
 	*bp++ = data;				/* pps3 */
 
 	bpp = dsc->bits_per_pixel;
+	if (dsc->native_422 || dsc->native_420)
+		bpp = 2 * bpp;
 	data = (bpp >> DSC_PPS_MSB_SHIFT);
 	data &= 0x03;				/* upper two bits */
 	data |= ((dsc->block_pred_enable & 0x1) << 5);

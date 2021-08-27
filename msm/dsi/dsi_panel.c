@@ -2693,6 +2693,10 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		DSI_DEBUG("failed to parse qcom,src-chroma-format\n");
 		rc = 0;
 		data = MSM_CHROMA_444;
+	} else if (data == MSM_CHROMA_422) {
+		priv_info->dsc.config.native_422 = 1;
+	} else if (data == MSM_CHROMA_420) {
+		priv_info->dsc.config.native_420 = 1;
 	}
 
 	priv_info->dsc.chroma_format = data;

@@ -94,7 +94,6 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 	struct sg_table *sgt = NULL;
 	struct drm_gem_object *obj;
 	struct device *attach_dev = NULL;
-	unsigned long flags = 0;
 	struct msm_drm_private *priv;
 	struct msm_kms *kms;
 	int ret;
@@ -126,14 +125,9 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 
 	get_dma_buf(dma_buf);
 
-	ret = dma_buf_get_flags(dma_buf, &flags);
-	if (ret) {
-		DRM_ERROR("dma_buf_get_flags failure, err=%d\n", ret);
-		goto fail_put;
-	}
-
 	if (!kms || !kms->funcs->get_address_space_device) {
 		DRM_ERROR("invalid kms ops\n");
+		ret = -EINVAL;
 		goto fail_put;
 	}
 
@@ -143,14 +137,11 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 	 * - avoid using lazying unmap feature as it doesn't add
 	 * any value without nested translations
 	 */
-	if ((!iommu_present(&platform_bus_type))
-			|| (flags & ION_FLAG_CP_SEC_DISPLAY)
-			|| (flags & ION_FLAG_CP_CAMERA_PREVIEW)) {
+	if (!iommu_present(&platform_bus_type)) {
 		attach_dev = dev->dev;
 		lazy_unmap = false;
 	} else {
-		domain = (flags & ION_FLAG_CP_PIXEL) ?
-			    MSM_SMMU_DOMAIN_SECURE : MSM_SMMU_DOMAIN_UNSECURE;
+		domain = MSM_SMMU_DOMAIN_UNSECURE;
 		attach_dev = kms->funcs->get_address_space_device(kms, domain);
 	}
 
@@ -172,23 +163,19 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 		return ERR_CAST(attach);
 	}
 
-	attach->dma_map_attrs |= DMA_ATTR_IOMMU_USE_LLC_NWA;
-
 	/*
 	 * For cached buffers where CPU access is required, dma_map_attachment
 	 * must be called now to allow user-space to perform cpu sync begin/end
 	 * otherwise do delayed mapping during the commit.
 	 */
-	if (flags & ION_FLAG_CACHED) {
-		if (lazy_unmap)
-			attach->dma_map_attrs |= DMA_ATTR_DELAYED_UNMAP;
-		sgt = dma_buf_map_attachment(attach, DMA_BIDIRECTIONAL);
-		if (IS_ERR(sgt)) {
-			ret = PTR_ERR(sgt);
-			DRM_ERROR(
-			"dma_buf_map_attachment failure, err=%d\n", ret);
-			goto fail_detach;
-		}
+	if (lazy_unmap)
+		attach->dma_map_attrs |= DMA_ATTR_DELAYED_UNMAP;
+	sgt = dma_buf_map_attachment(attach, DMA_BIDIRECTIONAL);
+	if (IS_ERR(sgt)) {
+		ret = PTR_ERR(sgt);
+		DRM_ERROR(
+		"dma_buf_map_attachment failure, err=%d\n", ret);
+		goto fail_detach;
 	}
 
 	/*
