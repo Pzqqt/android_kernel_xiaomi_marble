@@ -309,6 +309,13 @@ ucfg_pkt_capture_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
+QDF_STATUS
+ucfg_pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+			    struct wlan_objmgr_vdev *vdev)
+{
+	return pkt_capture_set_filter(frame_filter, vdev);
+}
+
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 QDF_STATUS ucfg_pkt_capture_send_config
 				(struct wlan_objmgr_vdev *vdev,

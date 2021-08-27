@@ -201,6 +201,16 @@ void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
 void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 		     struct wlan_objmgr_vdev *vdev, uint16_t ch_freq);
 
+/**
+ * pkt_capture_set_filter - Set packet capture frame filter
+ * @frame_filter: pkt capture frame filter data
+ * @vdev: pointer to vdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+				  struct wlan_objmgr_vdev *vdev);
+
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_get_pktcap_mode_v2 - Get packet capture mode

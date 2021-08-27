@@ -267,6 +267,17 @@ int
 ucfg_pkt_capture_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 					struct pkt_capture_callbacks *cb_obj);
 
+/**
+ * ucfg_pkt_capture_set_filter ucfg API to set frame filter
+ * @frame_filter: pkt capture frame filter data
+ * @vdev: pointer to vdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+			    struct wlan_objmgr_vdev *vdev);
+
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * ucfg_pkt_capture_send_config - send packet capture config
@@ -425,5 +436,13 @@ QDF_STATUS ucfg_pkt_capture_send_config
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline QDF_STATUS
+ucfg_pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+			    struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 #endif /* _WLAN_PKT_CAPTURE_UCFG_API_H_ */

@@ -58,6 +58,7 @@ struct pkt_capture_cb_context {
  * @cb_ctx: pointer to packet capture mon callback context
  * @rx_ops: rx ops
  * @tx_ops: tx ops
+ * @frame_filter: config filter set by vendor command
  * @rx_avg_rssi: avg rssi of rx data packets
  * @ppdu_stats_q: list used for storing smu related ppdu stats
  * @lock_q: spinlock for ppdu_stats q
@@ -71,6 +72,7 @@ struct pkt_capture_vdev_priv {
 	struct pkt_capture_cb_context *cb_ctx;
 	struct wlan_pkt_capture_rx_ops rx_ops;
 	struct wlan_pkt_capture_tx_ops tx_ops;
+	struct pkt_capture_frame_filter frame_filter;
 	int32_t rx_avg_rssi;
 	qdf_list_t ppdu_stats_q;
 	qdf_spinlock_t lock_q;
