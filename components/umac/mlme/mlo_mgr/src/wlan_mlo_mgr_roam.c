@@ -92,7 +92,7 @@ mlo_cleanup_link(struct wlan_objmgr_vdev *tmp_vdev,
 					   WLAN_VDEV_FEXT2_MLO);
 
 	if (wlan_vdev_mlme_is_mlo_link_vdev(tmp_vdev)) {
-		//cm_cleanup_mlo_link(tmp_vdev);
+		cm_cleanup_mlo_link(tmp_vdev);
 		wlan_vdev_mlme_feat_ext2_cap_clear(tmp_vdev,
 				WLAN_VDEV_FEXT2_MLO_STA_LINK);
 	}

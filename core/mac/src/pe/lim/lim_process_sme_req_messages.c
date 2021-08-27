@@ -4127,7 +4127,8 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 		break;
 	default:
 		/* Set reason REASON_UNSPEC_FAILURE for prop disassoc */
-		if (reason_code >= REASON_PROP_START)
+		if (reason_code >= REASON_PROP_START &&
+		    reason_code != REASON_FW_TRIGGERED_ROAM_FAILURE)
 			req->req.reason_code = REASON_UNSPEC_FAILURE;
 		lim_prepare_and_send_disassoc(mac_ctx, pe_session, req);
 	}

@@ -3313,5 +3313,18 @@ rel_ref:
 QDF_STATUS
 cm_cleanup_mlo_link(struct wlan_objmgr_vdev *vdev)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+
+	/* Use internal disconnect as this is for cleanup and no need
+	 * to inform OSIF, and REASON_FW_TRIGGERED_ROAM_FAILURE will
+	 * cleanup host without informing the FW
+	 */
+	status = wlan_cm_disconnect(vdev,
+				    CM_INTERNAL_DISCONNECT,
+				    REASON_FW_TRIGGERED_ROAM_FAILURE,
+				    NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("Failed to post disconnect for link vdev");
+
+	return status;
 }
