@@ -45,6 +45,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include <wlan_cm_api.h>
 #include <lim_mlo.h>
+#include "wlan_mlo_mgr_peer.h"
 
 static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
 static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
@@ -389,7 +390,7 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 {
 	struct wlan_objmgr_vdev *vdev;
 #ifdef WLAN_FEATURE_11BE_MLO
-	struct wlan_objmgr_peer *link_peer;
+	struct wlan_objmgr_peer *link_peer = NULL;
 	uint8_t link_id;
 	struct mlo_partner_info partner_info;
 #endif
@@ -411,6 +412,9 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 		     vdev->vdev_mlme.macaddr,
 		     QDF_MAC_ADDR_SIZE);
 	partner_info.partner_link_info[0].link_id = link_id;
+	pe_debug("link_addr " QDF_MAC_ADDR_FMT,
+		 QDF_MAC_ADDR_REF(
+			partner_info.partner_link_info[0].link_addr.bytes));
 
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Get the bss peer obj */
@@ -428,9 +432,10 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 
 		if (QDF_IS_STATUS_ERROR(status))
 			pe_err("Peer creation failed");
+
+		wlan_objmgr_peer_release_ref(link_peer, WLAN_LEGACY_MAC_ID);
 	}
 end:
-	wlan_objmgr_peer_release_ref(link_peer, WLAN_LEGACY_MAC_ID);
 #endif
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }

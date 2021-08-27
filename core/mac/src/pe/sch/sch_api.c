@@ -73,7 +73,7 @@ static void lim_notify_link_info(struct pe_session *pe_session)
 	for (link = 0; link < vdev_count; link++) {
 		if (!wlan_vdev_list[link])
 			continue;
-		if (wlan_vdev_list[link] == session->vdev) {
+		if (wlan_vdev_list[link] == pe_session->vdev) {
 			lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
 			continue;
 		}

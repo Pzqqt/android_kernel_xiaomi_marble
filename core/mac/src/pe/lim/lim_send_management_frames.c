@@ -437,6 +437,8 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		      vdev_id, mac_ctx->mgmtSeqNum,
 		      QDF_MAC_ADDR_REF(bssid),
 		      (int)sizeof(tSirMacMgmtHdr) + payload);
+	qdf_trace_hex_dump(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG, frame,
+			   sizeof(tSirMacMgmtHdr) + payload);
 
 	/* If this probe request is sent during P2P Search State, then we need
 	 * to send it at OFDM rate.
@@ -1584,6 +1586,11 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			populate_dot11f_eht_operation(mac_ctx, pe_session,
 						      &frm.eht_op);
 		}
+
+#ifdef WLAN_FEATURE_11BE_MLO
+		populate_dot11f_assoc_rsp_mlo_ie(mac_ctx, pe_session,
+						 sta, &frm);
+ #endif
 
 		if (status_code == STATUS_ASSOC_REJECTED_TEMPORARILY) {
 			max_retries =

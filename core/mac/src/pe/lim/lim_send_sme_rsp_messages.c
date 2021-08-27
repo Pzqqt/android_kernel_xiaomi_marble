@@ -388,19 +388,20 @@ static void lim_copy_ml_partner_info(struct cm_vdev_join_rsp *rsp,
 				     struct pe_session *pe_session)
 {
 	int i;
-	struct mlo_partner_info partner_info;
-	struct mlo_partner_info rsp_partner_info;
+	struct mlo_partner_info *partner_info;
+	struct mlo_partner_info *rsp_partner_info;
 
-	partner_info = pe_session->ml_partner_info;
-	rsp_partner_info = rsp->connect_rsp.ml_parnter_info;
+	partner_info = &pe_session->ml_partner_info;
+	rsp_partner_info = &rsp->connect_rsp.ml_parnter_info;
 
-	rsp_partner_info.num_partner_links = partner_info.num_partner_links;
+	rsp_partner_info->num_partner_links = partner_info->num_partner_links;
 
-	for (i = 0; i < rsp_partner_info.num_partner_links; i++) {
-		rsp_partner_info.partner_link_info[i].link_id =
-			partner_info.partner_link_info[i].link_id;
-		qdf_copy_macaddr(&rsp_partner_info.partner_link_info[i].link_addr,
-				 &partner_info.partner_link_info[i].link_addr);
+	for (i = 0; i < rsp_partner_info->num_partner_links; i++) {
+		rsp_partner_info->partner_link_info[i].link_id =
+			partner_info->partner_link_info[i].link_id;
+		qdf_copy_macaddr(
+			&rsp_partner_info->partner_link_info[i].link_addr,
+			&partner_info->partner_link_info[i].link_addr);
 	}
 }
 #endif

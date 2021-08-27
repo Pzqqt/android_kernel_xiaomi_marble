@@ -752,10 +752,12 @@ static void lim_update_ml_partner_info(struct pe_session *session_entry,
 	if (!assoc_rsp || !session_entry)
 		return;
 
+	session_entry->ml_partner_info.num_partner_links =
+				     assoc_rsp->mlo_ie.mlo_ie.num_sta_profile;
 	ie = assoc_rsp->mlo_ie.mlo_ie;
 	partner_info = session_entry->ml_partner_info;
 
-	partner_info.num_partner_links = mlo_ie.num_sta_profile;
+	partner_info.num_partner_links = ie.num_sta_profile;
 	pe_err("copying partner info from join req to join rsp, num_partner_links %d",
 	       partner_info.num_partner_links);
 
@@ -1289,13 +1291,6 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			beacon,
 			&session_entry->lim_join_req->bssDescription, true,
 			 session_entry)) {
-#ifdef WLAN_FEATURE_11BE_MLO
-		if (wlan_vdev_mlme_is_mlo_link_vdev(session_entry->vdev)) {
-			pe_err("sending assoc cnf for MLO link vdev");
-			lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
-					     (uint32_t *)&assoc_cnf);
-		}
-#endif
 		clean_up_ft_sha384(assoc_rsp, sha384_akm);
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);

@@ -7095,8 +7095,8 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 
 	qdf_mem_zero(non_inher_ie_lists, 255);
 	qdf_mem_zero(non_inher_ext_ie_lists, 255);
-	qdf_mem_zero(supp_rates, sizeof(tDot11fIESuppRates));
-	qdf_mem_zero(ext_supp_rates, sizeof(tDot11fIEExtSuppRates));
+	qdf_mem_zero(&supp_rates, sizeof(tDot11fIESuppRates));
+	qdf_mem_zero(&ext_supp_rates, sizeof(tDot11fIEExtSuppRates));
 	mlo_ie->present = 1;
 	mlo_ie->mld_mac_addr_present = 1;
 	mlo_ie->type = 0;
@@ -7142,7 +7142,7 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 		qdf_mem_copy(
 			sta_pro->sta_mac_addr.info.sta_mac_addr,
 			link_session->self_mac_addr,
-			sizeof(sta_pro->sta_mac_addr.info.sta_mac_addr));
+			QDF_MAC_ADDR_SIZE);
 
 		/* Capabilities */
 		sta_pro->mlo_capabilities.present = true;
@@ -7549,6 +7549,7 @@ QDF_STATUS populate_dot11f_bcn_mlo_ie(struct mac_context *mac_ctx,
 
 	lim_get_mlo_vdev_list(session, &vdev_count, wlan_vdev_list);
 	for (link = 0; link < vdev_count; link++) {
+		pe_err("on link %d", link);
 		if (!wlan_vdev_list[link])
 			continue;
 		if (wlan_vdev_list[link] == session->vdev) {
@@ -7598,6 +7599,7 @@ QDF_STATUS populate_dot11f_bcn_mlo_ie(struct mac_context *mac_ctx,
 				     sizeof(tSirMacAddr));
 			num_sta_pro++;
 		}
+		pe_err("copied data for link %d", link);
 		lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
 	}
 	mlo_ie->num_sta_profile = num_sta_pro;
@@ -7689,12 +7691,6 @@ populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 				 struct pe_session *session,
 				 tDot11fIEmlo_ie *mlo_ie)
 {
-	int link = 0, num_sta_pro = 0;
-	tDot11fIEsta_profile *sta_pro;
-	struct mlo_partner_info *link_info;
-	uint16_t vdev_count;
-	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_MLO_MAX_VDEVS];
-	struct pe_session *link_session;
 	uint8_t *mld_addr;
 
 	mlo_ie->present = 1;
@@ -7704,23 +7700,6 @@ populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 	qdf_mem_copy(&mlo_ie->mld_mac_addr.info.mld_mac_addr, mld_addr,
 		     sizeof(mlo_ie->mld_mac_addr.info.mld_mac_addr));
 	mlo_ie->link_id_info_present = 1;
-
-
-	lim_get_mlo_vdev_list(session, &vdev_count, wlan_vdev_list);
-	link_session = pe_find_session_by_vdev_id(
-			mac_ctx, wlan_vdev_list[link]->vdev_objmgr.vdev_id);
-	sta_pro = &mlo_ie->sta_profile[num_sta_pro];
-	link_info = &link_session->lim_join_req->partner_info;
-	sta_pro->present = 1;
-	sta_pro->complete_profile = 1;
-	sta_pro->sta_mac_addr_present = 1;
-	qdf_mem_copy(&sta_pro->sta_mac_addr.info.sta_mac_addr,
-		     &link_info->partner_link_info[0].link_addr.bytes,
-		     QDF_MAC_ADDR_SIZE);
-	mlo_ie->link_id_info.info.link_id =
-			link_info->partner_link_info[0].link_id;
-
-	mlo_ie->num_sta_profile = num_sta_pro;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7827,7 +7806,7 @@ sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* WLAN_FEATURE_11BE_MLO */
+#endif
 
 #if defined(WLAN_FEATURE_11AX) && defined(WLAN_SUPPORT_TWT)
 QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
@@ -8715,8 +8694,6 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 		     mld_addr,
 		     QDF_MAC_ADDR_SIZE);
 	mlo_ie->link_id_info_present = 0;
-	mlo_ie->link_id_info.info.link_id =
-				pe_session->lim_join_req->assoc_link_id;
 
 	mlo_ie->bss_param_change_cnt_present = 0;
 	mlo_ie->medium_sync_delay_info_present = 0;
@@ -8724,7 +8701,7 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 	mlo_ie->mld_capab_present = 0;
 
 	/* find out number of links from bcn or prb rsp */
-	total_sta_prof = 2;
+	total_sta_prof = 1;
 	partner_info = &pe_session->lim_join_req->partner_info;
 
 	mlo_dev_ctx = pe_session->vdev->mlo_dev_ctx;
@@ -8797,8 +8774,9 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 			       QDF_MAC_ADDR_REF(link_info->link_addr.bytes));
 			continue;
 		}
-		chan_freq = wlan_reg_chan_opclass_to_freq(chan, op_class,
-							  false);
+		//chan_freq = wlan_reg_chan_opclass_to_freq(chan, op_class,
+		//					  false);
+		chan_freq = wlan_reg_legacy_chan_to_freq(mac_ctx->pdev, chan);
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 			wlan_populate_basic_rates(&b_rates, false, true);
 			wlan_populate_basic_rates(&e_rates, true, false);
@@ -8974,6 +8952,7 @@ mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
 	pMloIe->mlo_ie.link_id_info_present = ar->mlo_ie.link_id_info_present;
 	pMloIe->mlo_ie.link_id_info.info.link_id =
 		ar->mlo_ie.link_id_info.info.link_id;
+	pe_debug("ar->mlo_ie.num_sta_profile:%d", ar->mlo_ie.num_sta_profile);
 	pMloIe->mlo_ie.num_sta_profile = ar->mlo_ie.num_sta_profile;
 	for (sta_index = 0, num_sta_prof = 0;
 	     sta_index < ar->mlo_ie.num_sta_profile;
