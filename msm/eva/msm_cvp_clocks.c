@@ -134,14 +134,6 @@ int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
 			"%s: Failed mmrm_client_deregister with rc: %d\n",
 			__func__, rc);
 	}
-	else {
-		dprintk(CVP_PWR,
-			"%s: mmrm_client_deregister done:%pK,type:%d,uid:%ld\n",
-			__func__, device->mmrm_cvp,
-			device->mmrm_cvp->client_type,
-			device->mmrm_cvp->client_uid);
-		device->mmrm_cvp = NULL;
-	}
 
 	return rc;
 }
