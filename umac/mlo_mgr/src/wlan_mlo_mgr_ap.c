@@ -156,30 +156,33 @@ static bool mlo_pre_link_up(struct wlan_objmgr_vdev *vdev)
  */
 static void mlo_handle_link_ready(struct wlan_objmgr_vdev *vdev)
 {
-	struct wlan_mlo_dev_context *dev_ctx;
-	int i;
+	struct wlan_objmgr_vdev *vdev_list[WLAN_UMAC_MLO_MAX_VDEVS] = {NULL};
+	uint16_t num_links = 0;
+	uint8_t i;
 
 	if (!vdev || !vdev->mlo_dev_ctx) {
 		mlo_err("Invalid input");
 		return;
 	}
 
-	dev_ctx = vdev->mlo_dev_ctx;
-
 	if (!mlo_is_ap_vdev_up_allowed(vdev))
 		return;
 
-	mlo_dev_lock_acquire(dev_ctx);
-	for (i = 0; i < QDF_ARRAY_SIZE(dev_ctx->wlan_vdev_list); i++) {
-		if (dev_ctx->wlan_vdev_list[i] &&
-		    wlan_vdev_mlme_is_mlo_ap(dev_ctx->wlan_vdev_list[i]) &&
-		    mlo_pre_link_up(dev_ctx->wlan_vdev_list[i]))
-			wlan_vdev_mlme_sm_deliver_evt_sync(
-				dev_ctx->wlan_vdev_list[i],
-				WLAN_VDEV_SM_EV_MLO_SYNC_COMPLETE,
-				0, NULL);
+	mlo_ap_get_vdev_list(vdev, &num_links, vdev_list);
+	if (!num_links || (num_links > QDF_ARRAY_SIZE(vdev_list))) {
+		mlo_err("Invalid number of VDEVs under AP-MLD");
+		return;
 	}
-	mlo_dev_lock_release(dev_ctx);
+
+	for (i = 0; i < num_links; i++) {
+		if (mlo_pre_link_up(vdev_list[i]))
+			wlan_vdev_mlme_sm_deliver_evt_sync(
+					vdev_list[i],
+					WLAN_VDEV_SM_EV_MLO_SYNC_COMPLETE,
+					0, NULL);
+		/* Release ref taken as part of mlo_ap_get_vdev_list */
+		mlo_release_vdev_ref(vdev_list[i]);
+	}
 }
 
 void mlo_ap_link_sync_wait_notify(struct wlan_objmgr_vdev *vdev)
