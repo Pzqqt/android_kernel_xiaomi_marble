@@ -4032,6 +4032,13 @@ typedef struct {
      *  default beacon size (1500) is used.
      */
     A_UINT32 ema_init_config;
+
+    /** @brief carrier_config
+     * Carrier profile configuration
+     * BIT 0 -> enable/disable charter configurations
+     * BIT 1 : 31 Reserved
+     */
+    A_UINT32 carrier_config;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -4310,6 +4317,11 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 9, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_REQ_ID_CHECK_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 9, 1, val)
+
+#define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
+    WMI_GET_BITS(carrier_config, 0, 1)
+#define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_SET(carrier_config, val) \
+    WMI_SET_BITS(carrier_config, 0, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
