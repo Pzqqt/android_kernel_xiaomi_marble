@@ -1169,6 +1169,20 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 }
 
 #ifdef FEATURE_RUNTIME_PM
+/* For CPU, the enter & exit latency of the deepest LPM mode(CXPC)
+ * is about ~10ms. so long as required QoS latency is longer than 10ms,
+ * CPU can enter CXPC mode.
+ * The vote value is in microseconds.
+ */
+#define HDD_CPU_CXPC_THRESHOLD (10000)
+static bool wlan_hdd_is_cpu_cxpc_allowed(unsigned long vote)
+{
+	if (vote >= HDD_CPU_CXPC_THRESHOLD)
+		return true;
+	else
+		return false;
+}
+
 int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 			   void *context)
 {
@@ -1195,11 +1209,11 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 
 	if (!hdd_ctx->runtime_pm_prevented &&
 	    is_any_sta_connected &&
-	    curr_val != wlan_hdd_get_pm_qos_cpu_latency()) {
+	    !wlan_hdd_is_cpu_cxpc_allowed(curr_val)) {
 		hif_pm_runtime_get_noresume(hif_ctx, RTPM_ID_QOS_NOTIFY);
 		hdd_ctx->runtime_pm_prevented = true;
 	} else if (hdd_ctx->runtime_pm_prevented &&
-		   curr_val == wlan_hdd_get_pm_qos_cpu_latency()) {
+		   wlan_hdd_is_cpu_cxpc_allowed(curr_val)) {
 		hif_pm_runtime_put(hif_ctx, RTPM_ID_QOS_NOTIFY);
 		hdd_ctx->runtime_pm_prevented = false;
 	}
@@ -1210,24 +1224,29 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
-bool wlan_hdd_is_cpu_pm_qos_in_progress(void)
+bool wlan_hdd_is_cpu_pm_qos_in_progress(struct hdd_context *hdd_ctx)
 {
-	unsigned long pm_qos_cpu_latency;
-	long long curr_val;
+	long long curr_val_ns;
+	long long curr_val_us;
 	int max_cpu_num;
 
+	if (!hdd_is_any_sta_connected(hdd_ctx)) {
+		hdd_debug("No active wifi connections. Ignore PM QOS vote");
+		return false;
+	}
+
 	max_cpu_num  = nr_cpu_ids - 1;
-	pm_qos_cpu_latency = wlan_hdd_get_pm_qos_cpu_latency() * NSEC_PER_USEC;
 
 	/* Get PM QoS vote from last cpu, as no device votes on that cpu
 	 * so by default we get global PM QoS vote from last cpu.
 	 */
-	curr_val = cpuidle_governor_latency_req(max_cpu_num);
-	if (curr_val != pm_qos_cpu_latency) {
-		hdd_debug("PM QoS current value: %lld", curr_val);
+	curr_val_ns = cpuidle_governor_latency_req(max_cpu_num);
+	curr_val_us = curr_val_ns / NSEC_PER_USEC;
+	hdd_debug("PM QoS current value: %lld", curr_val_us);
+	if (!wlan_hdd_is_cpu_cxpc_allowed(curr_val_us))
 		return true;
-	}
-	return false;
+	else
+		return false;
 }
 #endif
 #endif
