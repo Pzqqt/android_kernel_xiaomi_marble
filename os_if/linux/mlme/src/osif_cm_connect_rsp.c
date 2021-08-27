@@ -29,6 +29,7 @@
 #include "wlan_cfg80211.h"
 #include "wlan_cfg80211_scan.h"
 #include "wlan_mlo_mgr_sta.h"
+#include "wlan_mlo_mgr_cmn.h"
 
 #ifdef CONN_MGR_ADV_FEATURE
 void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
@@ -301,89 +302,193 @@ static void osif_connect_bss(struct net_device *dev, struct cfg80211_bss *bss,
 }
 #endif /* CFG80211_CONNECT_TIMEOUT */
 
-#if defined(WLAN_FEATURE_FILS_SK)
+#if defined(CFG80211_CONNECT_DONE) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
 
-#if (defined(CFG80211_CONNECT_DONE) || \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))) && \
-	(LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0))
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0))
 
-#if defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
-		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+#if defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
 /**
  * osif_populate_fils_params() - Populate FILS keys to connect response
  * @conn_rsp_params: connect response to supplicant
- * @fils_ie: Fils ie information from connection manager
+ * @connect_ies: Connect response IEs
  *
  * Context: Any context.
  * Return: None
  */
 static void
 osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
-			  struct fils_connect_rsp_params *fils_ie)
+			  struct wlan_connect_rsp_ies *connect_ies)
 {
+	if (!connect_ies->fils_ie)
+		return;
+
 	/*  Increment seq number to be used for next FILS */
-	rsp_params->fils_erp_next_seq_num = fils_ie->fils_seq_num + 1;
+	rsp_params->fils_erp_next_seq_num =
+				connect_ies->fils_ie->fils_seq_num + 1;
 	rsp_params->update_erp_next_seq_num = true;
-	rsp_params->fils_kek = fils_ie->kek;
-	rsp_params->fils_kek_len = fils_ie->kek_len;
-	rsp_params->pmk = fils_ie->fils_pmk;
-	rsp_params->pmk_len = fils_ie->fils_pmk_len;
-	rsp_params->pmkid = fils_ie->fils_pmkid;
+	rsp_params->fils_kek = connect_ies->fils_ie->kek;
+	rsp_params->fils_kek_len = connect_ies->fils_ie->kek_len;
+	rsp_params->pmk = connect_ies->fils_ie->fils_pmk;
+	rsp_params->pmk_len = connect_ies->fils_ie->fils_pmk_len;
+	rsp_params->pmkid = connect_ies->fils_ie->fils_pmkid;
 	osif_debug("erp_next_seq_num:%d", rsp_params->fils_erp_next_seq_num);
 }
 #else /* CFG80211_FILS_SK_OFFLOAD_SUPPORT */
 static inline void
 osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
-			  struct fils_connect_rsp_params *fils_ie)
-
+			  struct wlan_connect_rsp_ies *connect_ies)
 { }
 #endif /* CFG80211_FILS_SK_OFFLOAD_SUPPORT */
 
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+#if defined(WLAN_FEATURE_FILS_SK)
 /**
  * osif_populate_fils_params() - Populate FILS keys to connect response
  * @conn_rsp_params: connect response to supplicant
- * @fils_ie: Fils ie information from connection manager
+ * @connect_ies: Connect response IEs
  *
  * Context: Any context.
  * Return: None
  */
 static void
 osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
-			  struct fils_connect_rsp_params *fils_ie)
+			  struct wlan_connect_rsp_ies *connect_ies)
 
 {
+	if (!connect_ies->fils_ie)
+		return;
+
 	/* Increament seq number to be used for next FILS */
-	rsp_params->fils.erp_next_seq_num = fils_ie->fils_seq_num + 1;
+	rsp_params->fils.erp_next_seq_num =
+					connect_ies->fils_ie->fils_seq_num + 1;
 	rsp_params->fils.update_erp_next_seq_num = true;
-	rsp_params->fils.kek = fils_ie->kek;
-	rsp_params->fils.kek_len = fils_ie->kek_len;
-	rsp_params->fils.pmk = fils_ie->fils_pmk;
-	rsp_params->fils.pmk_len = fils_ie->fils_pmk_len;
-	rsp_params->fils.pmkid = fils_ie->fils_pmkid;
+	rsp_params->fils.kek = connect_ies->fils_ie->kek;
+	rsp_params->fils.kek_len = connect_ies->fils_ie->kek_len;
+	rsp_params->fils.pmk = connect_ies->fils_ie->fils_pmk;
+	rsp_params->fils.pmk_len = connect_ies->fils_ie->fils_pmk_len;
+	rsp_params->fils.pmkid = connect_ies->fils_ie->fils_pmkid;
 	osif_debug("erp_next_seq_num:%d", rsp_params->fils.erp_next_seq_num);
 }
-#endif /* CFG80211_CONNECT_DONE */
+#else /* WLAN_FEATURE_FILS_SK */
+static inline void
+osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
+			  struct wlan_connect_rsp_ies *connect_ies)
+{ }
+#endif /* WLAN_FEATURE_FILS_SK */
+#endif
 
-#if defined(CFG80211_CONNECT_DONE) || \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+#if defined(CFG80211_IFTYPE_MLO_LINK_SUPPORT) && defined(WLAN_FEATURE_11BE_MLO)
+static void osif_fill_connect_resp_mlo_params(
+			struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp,
+			struct cfg80211_bss *bss,
+			struct cfg80211_connect_resp_params *conn_rsp_params)
+{
+	uint8_t i, num_mlo_links = rsp->ml_parnter_info.num_partner_links + 1;
+	struct wlan_objmgr_vdev *ml_vdev = vdev;
+	struct vdev_osif_priv *osif_priv;
+	struct ieee80211_channel *chan;
+	struct cfg80211_mlo_link_params *ml_link_params;
+	struct mlo_link_info *rsp_partner_info;
+
+	if (num_mlo_links == 1)
+		return;
+
+	ml_link_params = qdf_mem_malloc(
+				num_mlo_links * sizeof(*ml_link_params));
+	if (!ml_link_params)
+		return;
+
+	rsp_partner_info = rsp->ml_parnter_info.partner_link_info;
+	if (rsp->ml_parnter_info.num_partner_links) {
+		conn_rsp_params->n_mlo_links = num_mlo_links;
+		osif_priv = wlan_vdev_get_ospriv(ml_vdev);
+		for (i = 0; i < conn_rsp_params->n_mlo_links; i++) {
+			ml_link_params[i].wdev = osif_priv->wdev;
+
+			if (i != 0) {
+				chan = ieee80211_get_channel(
+					   osif_priv->wdev->wiphy,
+					   rsp_partner_info[i - 1].chan_freq);
+				if (!chan) {
+					osif_err("Invalid partner channel");
+					goto end;
+				}
+
+				bss = wlan_cfg80211_get_bss(
+					osif_priv->wdev->wiphy, chan,
+					rsp_partner_info[i - 1].link_addr.bytes,
+					rsp->ssid.ssid, rsp->ssid.length);
+				if (!bss) {
+					osif_err("Partner bss is null");
+					goto end;
+				}
+			}
+			ml_link_params[i].bss = bss;
+
+			if (i == rsp->ml_parnter_info.num_partner_links)
+				break;
+
+			ml_vdev = mlo_get_vdev_by_link_id(
+					ml_vdev, rsp_partner_info[i].link_id);
+
+			if (ml_vdev) {
+				osif_priv = wlan_vdev_get_ospriv(ml_vdev);
+				wlan_objmgr_vdev_release_ref(ml_vdev,
+							     WLAN_MLO_MGR_ID);
+			} else {
+				osif_err("Partner vdev not found");
+				goto end;
+			}
+		}
+	}
+end:
+	conn_rsp_params->mlo_links = ml_link_params;
+}
+
+static void
+osif_free_ml_link_params(struct cfg80211_connect_resp_params *conn_rsp_params)
+{
+	struct cfg80211_mlo_link_params *ml_links;
+
+	ml_links =
+		(struct cfg80211_mlo_link_params *)conn_rsp_params->mlo_links;
+	if (ml_links)
+		qdf_mem_free(ml_links);
+}
+
+#else
+static void osif_fill_connect_resp_mlo_params(
+			struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp,
+			struct cfg80211_bss *bss,
+			struct cfg80211_connect_resp_params *conn_rsp_params)
+{
+}
+
+static void
+osif_free_ml_link_params(struct cfg80211_connect_resp_params *conn_rsp_params)
+{
+}
+#endif
 
 /**
  * osif_connect_done() - Wrapper API to call cfg80211_connect_done
  * @dev: network device
  * @bss: bss info
- * @connect_rsp: Connection manager connect response
+ * @rsp: Connection manager connect response
  * @vdev: pointer to vdev
  *
- * This API is used as wrapper to send FILS key/sequence number
- * params etc. to supplicant in case of FILS connection
+ * This API is used as wrapper to send connect status and params to
+ * supplicant.
  *
  * Context: Any context.
- * Return: None
+ * Return: 0 if success. Error code for failure
  */
-static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
-			      struct wlan_cm_connect_resp *rsp,
-			      struct wlan_objmgr_vdev *vdev)
+static int osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
+			     struct wlan_cm_connect_resp *rsp,
+			     struct wlan_objmgr_vdev *vdev)
 {
 	struct cfg80211_connect_resp_params conn_rsp_params;
 	enum ieee80211_statuscode status;
@@ -393,44 +498,44 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 	status = osif_get_connect_status_code(rsp);
 	qdf_mem_zero(&conn_rsp_params, sizeof(conn_rsp_params));
 
-	if (!rsp->connect_ies.fils_ie) {
-		conn_rsp_params.status = WLAN_STATUS_UNSPECIFIED_FAILURE;
-	} else {
-		conn_rsp_params.status = status;
-		conn_rsp_params.bssid = rsp->bssid.bytes;
-		conn_rsp_params.timeout_reason =
+	conn_rsp_params.status = status;
+	conn_rsp_params.bssid = rsp->bssid.bytes;
+	conn_rsp_params.timeout_reason =
 			osif_convert_timeout_reason(rsp->reason);
-		osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
-					      &conn_rsp_params.req_ie_len,
-					      &conn_rsp_params.req_ie);
-		osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
-					      &conn_rsp_params.resp_ie_len,
-					      &conn_rsp_params.resp_ie);
-		conn_rsp_params.bss = bss;
-		osif_populate_fils_params(&conn_rsp_params,
-					  rsp->connect_ies.fils_ie);
-		osif_cm_save_gtk(vdev, rsp);
-	}
+	osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
+				      &conn_rsp_params.req_ie_len,
+				      &conn_rsp_params.req_ie);
+	osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
+				      &conn_rsp_params.resp_ie_len,
+				      &conn_rsp_params.resp_ie);
+	conn_rsp_params.bss = bss;
+	osif_populate_fils_params(&conn_rsp_params, &rsp->connect_ies);
+	osif_cm_save_gtk(vdev, rsp);
+
+	osif_fill_connect_resp_mlo_params(vdev, rsp, bss, &conn_rsp_params);
 
 	osif_debug("Connect resp status  %d", conn_rsp_params.status);
 	cfg80211_connect_done(dev, &conn_rsp_params, qdf_mem_malloc_flags());
-	if (rsp->connect_ies.fils_ie && rsp->connect_ies.fils_ie->hlp_data_len)
-		osif_cm_set_hlp_data(dev, vdev, rsp);
+	osif_cm_set_hlp_data(dev, vdev, rsp);
+
+	osif_free_ml_link_params(&conn_rsp_params);
+
+	return 0;
 }
 #else /* CFG80211_CONNECT_DONE */
-static inline void
+static inline int
 osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 		  struct wlan_cm_connect_resp *rsp,
 		  struct wlan_objmgr_vdev *vdev)
-{ }
-#endif /* CFG80211_CONNECT_DONE */
-#endif /* WLAN_FEATURE_FILS_SK */
+{
+	return -EINVAL;
+}
+#endif
 
-#if defined(WLAN_FEATURE_FILS_SK) && \
-	(defined(CFG80211_CONNECT_DONE) || \
+#if (defined(CFG80211_CONNECT_DONE) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)))
 /**
- * osif_fils_update_connect_results() - API to send fils connection status to
+ * osif_update_connect_results() - API to send connection status to
  * supplicant.
  * @dev: network device
  * @bss: bss info
@@ -447,15 +552,9 @@ static int osif_update_connect_results(struct net_device *dev,
 				       struct wlan_cm_connect_resp *rsp,
 				       struct wlan_objmgr_vdev *vdev)
 {
-	if (!rsp->is_fils_connection) {
-		osif_debug("fils IE is NULL");
-		return -EINVAL;
-	}
-	osif_connect_done(dev, bss, rsp, vdev);
-
-	return 0;
+	return osif_connect_done(dev, bss, rsp, vdev);
 }
-#else /* WLAN_FEATURE_FILS_SK && CFG80211_CONNECT_DONE */
+#else /* CFG80211_CONNECT_DONE */
 
 static inline int osif_update_connect_results(struct net_device *dev,
 					      struct cfg80211_bss *bss,
@@ -464,7 +563,7 @@ static inline int osif_update_connect_results(struct net_device *dev,
 {
 	return -EINVAL;
 }
-#endif /* WLAN_FEATURE_FILS_SK && CFG80211_CONNECT_DONE */
+#endif /* CFG80211_CONNECT_DONE */
 
 #ifdef WLAN_FEATURE_11BE_MLO
 #ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE

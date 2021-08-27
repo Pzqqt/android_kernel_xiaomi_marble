@@ -268,10 +268,12 @@ struct wlan_mlo_peer_context {
  * struct mlo_link_info – ML link info
  * @link_addr: link mac address
  * @link_id: link index
+ * @chan_freq: Operating channel frequency
  */
 struct mlo_link_info {
 	struct qdf_mac_addr link_addr;
 	uint8_t link_id;
+	uint16_t chan_freq;
 };
 
 /*
