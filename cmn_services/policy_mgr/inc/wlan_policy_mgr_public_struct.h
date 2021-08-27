@@ -1299,11 +1299,29 @@ struct connection_info {
 };
 
 /**
+ * struct go_plus_go_force_scc - structure to hold p2p go
+ * params for forcescc restart
+ *
+ * @vdev_id: vdev id of first p2p go which needs to do csa
+ * @ch_freq: ch freq of curr p2p go
+ * @ch_width: ch width of curr p2p go
+ */
+struct go_plus_go_force_scc {
+	uint8_t vdev_id;
+	uint32_t ch_freq;
+	uint32_t ch_width;
+};
+
+/**
  * struct sta_ap_intf_check_work_ctx - sta_ap_intf_check_work
  * related info
  * @psoc: pointer to PSOC object information
+ * @go_plus_go_force_scc: structure to hold params of
+ *			  curr and first p2p go ctx
  */
 struct sta_ap_intf_check_work_ctx {
 	struct wlan_objmgr_psoc *psoc;
+	struct go_plus_go_force_scc go_plus_go_force_scc;
 };
+
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */
