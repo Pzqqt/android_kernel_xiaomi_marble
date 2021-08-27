@@ -1256,7 +1256,8 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
 #include "dp_rx_tag.h"
 #endif
 
-#ifndef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+#if !defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) &&\
+	!defined(WLAN_SUPPORT_RX_FLOW_TAG)
 /**
  * dp_rx_update_protocol_tag() - Reads CCE metadata from the RX MSDU end TLV
  *                              and set the corresponding tag in QDF packet
@@ -1276,7 +1277,9 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 			  bool is_reo_exception, bool is_update_stats)
 {
 }
+#endif
 
+#ifndef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /**
  * dp_rx_err_cce_drop() - Reads CCE metadata from the RX MSDU end TLV
  *                        and returns whether cce metadata matches
