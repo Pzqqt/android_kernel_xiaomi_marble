@@ -31,7 +31,9 @@
 #else
 #include <linux/sched/signal.h>
 #endif /* KERNEL_VERSION(4, 11, 0) */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+/* Test against msm kernel version */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) && \
+	IS_ENABLED(CONFIG_SCHED_WALT)
 #include <linux/sched/walt.h>
 #endif
 #include <linux/delay.h>
