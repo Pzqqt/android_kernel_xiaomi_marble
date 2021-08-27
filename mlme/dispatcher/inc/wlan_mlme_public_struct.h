@@ -35,6 +35,13 @@
 #define OWE_TRANSITION_OUI_TYPE "\x50\x6f\x9a\x1c"
 #define OWE_TRANSITION_OUI_SIZE 4
 
+/**
+ * EID_VENDOR| IE_LEN | OUI |OUI_TYPE| OWE transition BSSID|SSID_LEN|   SSID   |
+ *   (1)     |  (1)   | (3) |   (1)  |         (6)         |   (1)  |(SSID_LEN)|
+*/
+#define OWE_SSID_LEN_OFFSET 12
+#define OWE_SSID_OFFSET     13
+
 #define CFG_PMKID_MODES_OKC                        (0x1)
 #define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
 

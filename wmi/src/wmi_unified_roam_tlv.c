@@ -4013,10 +4013,11 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_ap_profile *profile;
 	wmi_roam_score_delta_param *score_delta_param;
 	wmi_roam_cnd_min_rssi_param *min_rssi_param;
+	wmi_owe_ap_profile *owe_ap_profile;
 	enum roam_trigger_reason trig_reason;
 
 	len = sizeof(wmi_roam_ap_profile_fixed_param) + sizeof(wmi_ap_profile);
-	len += sizeof(*score_param);
+	len += sizeof(*score_param) + WMI_TLV_HDR_SIZE;
 
 	if (!wmi_service_enabled(wmi_handle,
 			wmi_service_configure_roam_trigger_param_support)) {
@@ -4024,7 +4025,15 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 		len += NUM_OF_ROAM_TRIGGERS * sizeof(*score_delta_param);
 		len += WMI_TLV_HDR_SIZE;
 		len += NUM_OF_ROAM_MIN_RSSI * sizeof(*min_rssi_param);
+	} else {
+		len += 2 * WMI_TLV_HDR_SIZE;
 	}
+
+	if (ap_profile->owe_ap_profile.is_owe_transition_conn) {
+		len += WMI_TLV_HDR_SIZE;
+		len += sizeof(*owe_ap_profile);
+	}
+
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
 		return QDF_STATUS_E_NOMEM;
@@ -4268,7 +4277,52 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 			convert_roam_trigger_reason(trig_reason);
 		min_rssi_param->candidate_min_rssi =
 			ap_profile->min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM].min_rssi;
+
+		buf_ptr += sizeof(*min_rssi_param);
+	} else {
+		/* set zero TLV's for roam_score_delta_param_list */
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       WMITLV_GET_STRUCT_TLVLEN(0));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+
+		/* set zero TLV's for roam_cnd_min_rssi_param_list */
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       WMITLV_GET_STRUCT_TLVLEN(0));
+		buf_ptr += WMI_TLV_HDR_SIZE;
 	}
+
+	/* set zero TLV's for roam_cnd_vendor_scoring_param */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       WMITLV_GET_STRUCT_TLVLEN(0));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	if (ap_profile->owe_ap_profile.is_owe_transition_conn) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       sizeof(*owe_ap_profile));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+
+		owe_ap_profile = (wmi_owe_ap_profile *)buf_ptr;
+		WMITLV_SET_HDR(&owe_ap_profile->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_owe_ap_profile,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_owe_ap_profile));
+
+		owe_ap_profile->open_ssid_for_owe_transition.ssid_len =
+					ap_profile->owe_ap_profile.ssid.length;
+		qdf_mem_copy(owe_ap_profile->open_ssid_for_owe_transition.ssid,
+			     ap_profile->owe_ap_profile.ssid.ssid,
+			     ap_profile->owe_ap_profile.ssid.length);
+		wmi_debug("[OWE_TRANSITION]: open ssid:%.*s",
+		      owe_ap_profile->open_ssid_for_owe_transition.ssid_len,
+		     (char *)owe_ap_profile->open_ssid_for_owe_transition.ssid);
+
+		buf_ptr += sizeof(*owe_ap_profile);
+	} else {
+		/* set zero TLV's for owe_ap_profile */
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       WMITLV_GET_STRUCT_TLVLEN(0));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
 	wmi_mtrace(WMI_ROAM_AP_PROFILE, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_AP_PROFILE);

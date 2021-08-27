@@ -288,6 +288,16 @@ struct roam_synch_frame_ind {
 	uint8_t vdev_id;
 };
 
+/* struct owe_transition_mode_info - structure containing owe transition mode
+ * element info
+ * @is_owe_transition_conn: Current connection is in owe transition mode or not
+ * @ssid: ssid
+ */
+struct owe_transition_mode_info {
+	bool is_owe_transition_conn;
+	struct wlan_ssid  ssid;
+};
+
 /**
  * struct rso_config - connect config to be used to send info in
  * RSO. This is the info we dont have in VDEV or CM ctx
@@ -324,6 +334,7 @@ struct roam_synch_frame_ind {
  * @btk: btk data
  * @psk_pmk: pmk
  * @pmk_len: length of pmk
+ * @owe_info: owe ap profile info
  * @mdid: mdid info
  * @is_11r_assoc: is 11r assoc
  * @is_adaptive_11r_connection: is adaptive 11r connection
@@ -370,6 +381,7 @@ struct rso_config {
 	uint8_t psk_pmk[ROAM_SCAN_PSK_SIZE];
 	uint8_t pmk_len;
 #endif
+	struct owe_transition_mode_info owe_info;
 	struct mobility_domain_info mdid;
 	bool is_11r_assoc;
 	bool is_adaptive_11r_connection;
@@ -800,6 +812,7 @@ struct wlan_roam_triggers {
  * @param: scoring params to short candidate
  * @min_rssi_params: Min RSSI values for different roam triggers
  * @score_delta_params: Roam score delta values for different triggers
+ * @owe_ap_profile: owe ap profile info
  */
 struct ap_profile_params {
 	uint8_t vdev_id;
@@ -807,6 +820,7 @@ struct ap_profile_params {
 	struct scoring_param param;
 	struct roam_trigger_min_rssi min_rssi_params[NUM_OF_ROAM_MIN_RSSI];
 	struct roam_trigger_score_delta score_delta_param[NUM_OF_ROAM_TRIGGERS];
+	struct owe_transition_mode_info owe_ap_profile;
 };
 
 /**
