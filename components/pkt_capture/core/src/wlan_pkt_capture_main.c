@@ -979,3 +979,57 @@ void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev)
 	cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
 				CDP_MONITOR_FREQUENCY, val);
 }
+
+QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+				  struct wlan_objmgr_vdev *vdev)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("vdev_priv is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (frame_filter.vendor_attr_to_set &
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_DATA_TX_FRAME_TYPE))
+		vdev_priv->frame_filter.data_tx_frame_filter =
+			frame_filter.data_tx_frame_filter;
+
+	if (frame_filter.vendor_attr_to_set &
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_DATA_RX_FRAME_TYPE))
+		vdev_priv->frame_filter.data_rx_frame_filter =
+			frame_filter.data_rx_frame_filter;
+
+	if (frame_filter.vendor_attr_to_set &
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_MGMT_TX_FRAME_TYPE))
+		vdev_priv->frame_filter.mgmt_tx_frame_filter =
+			frame_filter.mgmt_tx_frame_filter;
+
+	if (frame_filter.vendor_attr_to_set &
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_MGMT_RX_FRAME_TYPE))
+		vdev_priv->frame_filter.mgmt_rx_frame_filter =
+			frame_filter.mgmt_rx_frame_filter;
+
+	if (frame_filter.vendor_attr_to_set &
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_CTRL_TX_FRAME_TYPE))
+		vdev_priv->frame_filter.ctrl_tx_frame_filter =
+			frame_filter.ctrl_tx_frame_filter;
+
+	if (frame_filter.vendor_attr_to_set &
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_CTRL_RX_FRAME_TYPE))
+		vdev_priv->frame_filter.ctrl_rx_frame_filter =
+			frame_filter.ctrl_rx_frame_filter;
+
+	if (frame_filter.vendor_attr_to_set &
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_CONNECTED_BEACON_INTERVAL))
+		vdev_priv->frame_filter.connected_beacon_interval =
+			frame_filter.connected_beacon_interval;
+
+	return QDF_STATUS_SUCCESS;
+}
