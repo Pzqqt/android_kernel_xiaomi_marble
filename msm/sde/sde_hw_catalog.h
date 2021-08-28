@@ -1353,6 +1353,7 @@ struct sde_reg_dma_blk_info {
  * @broadcast_disabled flag indicating if broadcast usage should be avoided
  * @xin_id             VBIF xin client-id for LUTDMA
  * @vbif_idx           VBIF id (RT/NRT)
+ * @base_off           Base offset of LUTDMA from the MDSS root
  * @clk_ctrl           VBIF xin client clk-ctrl
  */
 struct sde_reg_dma_cfg {
@@ -1362,6 +1363,7 @@ struct sde_reg_dma_cfg {
 	u32 broadcast_disabled;
 	u32 xin_id;
 	u32 vbif_idx;
+	u32 base_off;
 	enum sde_clk_ctrl_type clk_ctrl;
 };
 

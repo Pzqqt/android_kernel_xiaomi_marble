@@ -4557,7 +4557,9 @@ static int _sde_kms_hw_init_ioremap(struct sde_kms *sde_kms,
 		sde_kms->reg_dma = NULL;
 		SDE_DEBUG("REG_DMA is not defined");
 	} else {
+		unsigned long mdp_addr = msm_get_phys_addr(platformdev, "mdp_phys");
 		sde_kms->reg_dma_len = msm_iomap_size(platformdev, "regdma_phys");
+		sde_kms->reg_dma_off = msm_get_phys_addr(platformdev, "regdma_phys") - mdp_addr;
 		rc =  sde_dbg_reg_register_base("reg_dma", sde_kms->reg_dma,
 				sde_kms->reg_dma_len,
 				msm_get_phys_addr(platformdev, "regdma_phys"),
@@ -4651,6 +4653,7 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	}
 
 	/* Initialize reg dma block which is a singleton */
+	sde_kms->catalog->dma_cfg.base_off = sde_kms->reg_dma_off;
 	rc = sde_reg_dma_init(sde_kms->reg_dma, sde_kms->catalog,
 			sde_kms->dev);
 	if (rc) {
