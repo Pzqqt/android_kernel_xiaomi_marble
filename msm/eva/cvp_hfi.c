@@ -1796,7 +1796,7 @@ static int iris_hfi_core_init(void *device)
 	if (rc) {
 		dprintk(CVP_ERR, "failed to init queues\n");
 		rc = -ENOMEM;
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
 
 	rc = msm_cvp_map_ipcc_regs(&ipcc_iova);
@@ -1809,7 +1809,7 @@ static int iris_hfi_core_init(void *device)
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to start core\n");
 		rc = -ENODEV;
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
 
 	dev->version = __read_register(dev, CVP_VERSION_INFO);
@@ -1817,12 +1817,12 @@ static int iris_hfi_core_init(void *device)
 	rc =  call_hfi_pkt_op(dev, sys_init, &pkt, 0);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to create sys init pkt\n");
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
 
 	if (__iface_cmdq_write(dev, &pkt)) {
 		rc = -ENOTEMPTY;
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
 
 	rc = call_hfi_pkt_op(dev, sys_image_version, &version_pkt);
@@ -1848,11 +1848,14 @@ static int iris_hfi_core_init(void *device)
 	dprintk(CVP_CORE, "Core inited successfully\n");
 
 	return 0;
-err_mmrm_dereg:
-	msm_cvp_mmrm_deregister(dev);
+
 err_core_init:
 	__set_state(dev, IRIS_STATE_DEINIT);
 	__unload_fw(dev);
+	if (dev->mmrm_cvp)
+	{
+		msm_cvp_mmrm_deregister(dev);
+	}
 err_load_fw:
 err_no_mem:
 	dprintk(CVP_ERR, "Core init failed\n");
@@ -1882,6 +1885,9 @@ static int iris_hfi_core_release(void *dev)
 
 	__dsp_shutdown(device, 0);
 
+	__disable_subcaches(device);
+	__unload_fw(device);
+
 	if (msm_cvp_mmrm_enabled) {
 		rc = msm_cvp_mmrm_deregister(device);
 		if (rc) {
@@ -1890,9 +1896,6 @@ static int iris_hfi_core_release(void *dev)
 				__func__, rc);
 		}
 	}
-
-	__disable_subcaches(device);
-	__unload_fw(device);
 
 	/* unlink all sessions from device */
 	list_for_each_entry_safe(session, next, &device->sess_head, list) {

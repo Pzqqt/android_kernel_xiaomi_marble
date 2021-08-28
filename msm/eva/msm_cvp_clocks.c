@@ -116,7 +116,7 @@ int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
 
 	/* set clk value to 0 before deregister	*/
 	iris_hfi_for_each_clock(device, cl) {
-		if (cl->has_scaling) {
+		if ((cl->has_scaling) && (__clk_is_enabled(cl->clk))){
 			// set min freq and cur freq to 0;
 			rc = msm_cvp_mmrm_set_value_in_range(device,
 				0, 0);
@@ -134,6 +134,8 @@ int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
 			"%s: Failed mmrm_client_deregister with rc: %d\n",
 			__func__, rc);
 	}
+
+	device->mmrm_cvp = NULL;
 
 	return rc;
 }
