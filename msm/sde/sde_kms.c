@@ -2559,7 +2559,10 @@ error:
 		list_for_each_entry_safe(fb, tfb, &fbs, filp_head)
 			list_move_tail(&fb->filp_head, &file->fbs);
 
-		SDE_ERROR("atomic commit failed in preclose, ret:%d\n", ret);
+		if (ret == -EDEADLK || ret == -ERESTARTSYS)
+			SDE_DEBUG("atomic commit failed in preclose, ret:%d\n", ret);
+		else
+			SDE_ERROR("atomic commit failed in preclose, ret:%d\n", ret);
 		goto end;
 	}
 
@@ -2608,7 +2611,7 @@ retry:
 
 	for (i = 0; i < TEARDOWN_DEADLOCK_RETRY_MAX; i++) {
 		ret = _sde_kms_remove_fbs(sde_kms, file, state);
-		if (ret != -EDEADLK)
+		if (ret != -EDEADLK && ret != -ERESTARTSYS)
 			break;
 		drm_atomic_state_clear(state);
 		drm_modeset_backoff(&ctx);
