@@ -51,6 +51,7 @@ struct mmrm_sw_clk_client_tbl_entry {
 	bool pass_through;
 	u32 min_level;
 	u32 max_level;
+	u32 max_num_hw_blocks;
 	u64 freq[MMRM_VDD_LEVEL_MAX];
 	u32 dyn_pwr[MMRM_VDD_LEVEL_MAX];
 	u32 leak_pwr[MMRM_VDD_LEVEL_MAX];

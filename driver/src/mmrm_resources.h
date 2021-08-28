@@ -26,6 +26,7 @@ struct nom_clk_src_info {
 	u32 clk_src_id;
 	u32 nom_dyn_pwr;
 	u32 nom_leak_pwr;
+	u32 num_hw_block;
 };
 
 struct nom_clk_src_set {
