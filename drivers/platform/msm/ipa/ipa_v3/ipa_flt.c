@@ -1259,15 +1259,15 @@ error:
 static int __ipa_add_flt_get_ep_idx(enum ipa_client_type ep, int *ipa_ep_idx)
 {
 	*ipa_ep_idx = ipa3_get_ep_mapping(ep);
-	if (*ipa_ep_idx < 0) {
+	if (*ipa_ep_idx < 0 || *ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR_RL("ep not valid ep=%d\n", ep);
 		return -EINVAL;
 	}
 	if (ipa3_ctx->ep[*ipa_ep_idx].valid == 0)
-		IPADBG("ep not connected ep_idx=%d\n", *ipa_ep_idx);
+		IPAERR_RL("ep not connected ep_idx=%d\n", *ipa_ep_idx);
 
 	if (!ipa_is_ep_support_flt(*ipa_ep_idx)) {
-		IPAERR("ep do not support filtering ep=%d\n", ep);
+		IPAERR_RL("ep do not support filtering ep=%d\n", ep);
 		return -EINVAL;
 	}
 
