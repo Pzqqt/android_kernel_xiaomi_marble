@@ -132,15 +132,31 @@ static int swr_dmic_tx_master_port_get(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct swr_dmic_priv *swr_dmic = snd_soc_component_get_drvdata(component);
+	struct swr_dmic_priv *swr_dmic = NULL;
 	int ret = 0;
-	int slave_port_idx;
+	unsigned int slave_port_idx = SWR_DMIC_MAX_PORTS;
+
+	if (NULL == component) {
+		pr_err("%s: swr dmic component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	swr_dmic = snd_soc_component_get_drvdata(component);
+	if (NULL == swr_dmic) {
+		pr_err("%s: swr_dmic_priv is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	ret = swr_dmic_tx_get_slave_port_type_idx(kcontrol->id.name,
 							&slave_port_idx);
 	if (ret) {
 		dev_dbg(component->dev, "%s: invalid port string\n", __func__);
 		return ret;
+	}
+
+	if (slave_port_idx >= SWR_DMIC_MAX_PORTS) {
+		pr_err("%s: invalid slave port id\n", __func__);
+		return -EINVAL;
 	}
 
 	ucontrol->value.integer.value[0] =
@@ -158,15 +174,32 @@ static int swr_dmic_tx_master_port_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct swr_dmic_priv *swr_dmic = snd_soc_component_get_drvdata(component);
+	struct swr_dmic_priv *swr_dmic = NULL;
 	int ret = 0;
-	unsigned int slave_port_idx = SWR_DMIC_MAX_PORTS, idx = 0;
+	unsigned int slave_port_idx = SWR_DMIC_MAX_PORTS;
+	unsigned int idx = 0;
+
+	if (NULL == component) {
+		pr_err("%s: swr dmic component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	swr_dmic = snd_soc_component_get_drvdata(component);
+	if (NULL == swr_dmic) {
+		pr_err("%s: swr_dmic_priv is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	ret  = swr_dmic_tx_get_slave_port_type_idx(kcontrol->id.name,
 							&slave_port_idx);
 	if (ret) {
 		dev_dbg(component->dev, "%s: invalid port string\n", __func__);
 		return ret;
+	}
+
+	if (slave_port_idx >= SWR_DMIC_MAX_PORTS) {
+		pr_err("%s: invalid slave port id\n", __func__);
+		return -EINVAL;
 	}
 
 	idx = ucontrol->value.enumerated.item[0];
