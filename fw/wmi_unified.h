@@ -10244,6 +10244,77 @@ typedef struct {
 #define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_GET(cal_info)              WMI_GET_BITS(cal_info, 13, 1)
 #define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_SET(cal_info, is_periodic) WMI_SET_BITS(cal_info, 13, 1, is_periodic)
 
+/* 0=20MHz, 1=40MHz, 2=80MHz, 3=160MHz, 4=240MHz, 5=320MHz */
+#define WMI_AWGN_MAX_BW 6
+
+typedef struct {
+    /* TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_ctrl_path_awgn_stats_struct
+     * For 6G FCC test we have to monitor channel interference and switch
+     * to non-interference channel.
+     * Additive White Gaussian Noise (AWGN) interference detection logic
+     * is used to detect interference based upon CCA / BW drop / packet drop.
+     * Once AWGN interference is detected, the target sends
+     * WMI_DCS_INTERFERENCE_EVENTID to host for channel change/BW change.
+     * This stats struct is used to get info about how many times these
+     * CCA_Interference/BW_Drop/Pkt_Drop indicators of AWGN occur.
+     */
+    A_UINT32 tlv_header;
+    /*
+     * AWGN WMI event sent count
+     * This is used to inform how many WMI_DCS_INTERFERENCE_EVENTID have been
+     * sent to the host.
+     * WMI_DCS_INTERFERENCE_EVENTID is sent whenever one or more of
+     * CCA_Int/BW_Drop/Channel_Change(Pkt_Drop) happen.
+     */
+    A_UINT32 awgn_send_evt_cnt;
+    /* AWGN primary int count */
+    A_UINT32 awgn_pri_int_cnt;
+    /* AWGN secondary int count */
+    A_UINT32 awgn_sec_int_cnt;
+    /*
+     * AWGN pkt drop trigger count
+     * This shows how many times the presence of interference on the
+     * primary BW has been inferred due to pkt drops.
+     * WMI_DCS_INTERFERENCE_EVENTID wil be sent whenever there is
+     * interference on Primary Channel.
+     */
+    A_UINT32 awgn_pkt_drop_trigger_cnt;
+    /* awgn pkt drop trigger reset count */
+    A_UINT32 awgn_pkt_drop_trigger_reset_cnt;
+    /*
+     * AWGN bandwidth drop count
+     * This is used to inform count for any frame transmitted on lower BW
+     * than configured BW.
+     * WMI_DCS_INTERFERENCE_EVENTID wil be sent whenever there is BW drop.
+     */
+    A_UINT32 awgn_bw_drop_cnt;
+    /* AWGN bandwidth drop reset count */
+    A_UINT32 awgn_bw_drop_reset_cnt;
+    /*
+     * AWGN CCA int count
+     * This is used to inform the interference based on CCA registers.
+     * WMI_DCS_INTERFERENCE_EVENTID wil be sent whenever there is CCA
+     * interference.
+     */
+    A_UINT32 awgn_cca_int_cnt;
+    /* AWGN cca int reset count */
+    A_UINT32 awgn_cca_int_reset_cnt;
+    /* AWGN cca ack blk count */
+    A_UINT32 awgn_cca_ack_blk_cnt;
+    /* AWGN cca ack blk reset count */
+    A_UINT32 awgn_cca_ack_reset_cnt;
+    /*
+     * AWGN int BW cnt used to store interference occured at 20/40/80/160MHz
+     * bw_cnt[0] counts interference detections in 20 MHz BW,
+     * bw_cnt[1] counts interference detections in 40 MHz BW,
+     * bw_cnt[2] counts interference detections in 80 MHz BW,
+     * bw_cnt[3] counts interference detections in 160 MHz BW,
+     * bw_cnt[4] and bw_cnt[6] are reserved for 240 MHz and 320 MHz.
+     */
+    A_UINT32 awgn_int_bw_cnt[WMI_AWGN_MAX_BW];
+} wmi_ctrl_path_awgn_stats_struct;
+
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_path_dfs_channel_stats_struct*/
     A_UINT32 tlv_header;
@@ -27474,6 +27545,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_TWT_STAT          = 4,
     WMI_REQUEST_CTRL_PATH_CALIBRATION_STAT  = 5,
     WMI_REQUEST_CTRL_PATH_DFS_CHANNEL_STAT  = 6,
+    WMI_REQUEST_CTRL_PATH_AWGN_STAT         = 7,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
