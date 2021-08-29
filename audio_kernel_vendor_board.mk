@@ -1,4 +1,5 @@
 # Build audio kernel driver
+ifneq ($(TARGET_USES_QMAA),true)
 ifneq ($(TARGET_BOARD_AUTO),true)
 ifeq ($(call is-board-platform-in-list,$(TARGET_BOARD_PLATFORM)),true)
 BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/q6_notifier_dlkm.ko\
@@ -31,5 +32,6 @@ BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/q6_notifier_dlkm.ko\
 	$(KERNEL_MODULES_OUT)/wcd938x_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/wcd938x_slave_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/hdmi_dlkm.ko
+endif
 endif
 endif

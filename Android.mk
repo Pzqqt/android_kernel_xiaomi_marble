@@ -7,7 +7,7 @@ AUDIO_SELECT  := CONFIG_SND_SOC_WAIPIO=m
 endif
 
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,taro), true)
+ifeq ($(call is-board-platform-in-list,taro kalama), true)
 
 LOCAL_PATH := $(call my-dir)
 
