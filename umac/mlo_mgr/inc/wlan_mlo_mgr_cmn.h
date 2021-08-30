@@ -218,4 +218,56 @@ void mlo_mlme_peer_assoc_resp(struct wlan_objmgr_peer *peer);
 
 uint8_t mlo_get_link_vdev_ix(struct wlan_mlo_dev_context *mldev,
 			     struct wlan_objmgr_vdev *vdev);
+
+#define INVALID_HW_LINK_ID 0xFFFF
+#ifdef WLAN_MLO_MULTI_CHIP
+/**
+ * wlan_mlo_get_pdev_hw_link_id() - Get hw_link_id of pdev
+ * @pdev: pdev object
+ *
+ * Return: hw_link_id of the pdev.
+ */
+uint16_t wlan_mlo_get_pdev_hw_link_id(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * struct hw_link_id_iterator: Argument passed in psoc/pdev iterator to
+ *                             find pdev from hw_link_id
+ * @hw_link_id: HW link id of pdev to find
+ * @dbgid: Module ref id used in iterator
+ * @pdev: Pointer to pdev. This will be set inside itertor callback
+ *        if hw_link_id match is found.
+ */
+struct hw_link_id_iterator {
+	uint16_t hw_link_id;
+	wlan_objmgr_ref_dbgid dbgid;
+	struct wlan_objmgr_pdev *pdev;
+};
+
+/**
+ * wlan_objmgr_get_pdev_by_hw_link_id() - Get pdev object from hw_link_id
+ * @hw_link_id: HW link id of the pdev
+ * @refdbgid: dbgid of module used for taking reference to pdev object
+ *
+ * Return: Pointer to pdev object if hw_link_id is valid. Else, NULL
+ *         Reference will be held with refdgid if return is non-NULL.
+ *         Caller should free this reference.
+ */
+struct wlan_objmgr_pdev *
+wlan_mlo_get_pdev_by_hw_link_id(uint16_t hw_link_id,
+				wlan_objmgr_ref_dbgid refdbgid);
+#else
+static inline struct wlan_objmgr_pdev *
+wlan_mlo_get_pdev_by_hw_link_id(uint16_t hw_link_id,
+				wlan_objmgr_ref_dbgid refdbgid)
+{
+	return NULL;
+}
+
+static inline
+uint16_t wlan_mlo_get_pdev_hw_link_id(struct wlan_objmgr_pdev *pdev)
+{
+	return INVALID_HW_LINK_ID;
+}
+#endif/*WLAN_MLO_MULTI_CHIP*/
+
 #endif

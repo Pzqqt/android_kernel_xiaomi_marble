@@ -19,6 +19,9 @@
  */
 #include "wlan_mlo_mgr_cmn.h"
 #include "wlan_mlo_mgr_main.h"
+#ifdef WLAN_MLO_MULTI_CHIP
+#include "wlan_lmac_if_def.h"
+#endif
 
 void mlo_get_link_information(struct qdf_mac_addr *mld_addr,
 			      struct mlo_link_info *info)
@@ -208,3 +211,66 @@ uint8_t mlo_get_link_vdev_ix(struct wlan_mlo_dev_context *ml_dev,
 
 	return (uint8_t)-1;
 }
+
+#ifdef WLAN_MLO_MULTI_CHIP
+uint16_t wlan_mlo_get_pdev_hw_link_id(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	uint16_t hw_link_id = INVALID_HW_LINK_ID;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (psoc) {
+		tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+		if (tx_ops && tx_ops->mops.get_hw_link_id)
+			hw_link_id = tx_ops->mops.get_hw_link_id(pdev);
+	}
+
+	return hw_link_id;
+}
+
+static void wlan_pdev_hw_link_iterator(struct wlan_objmgr_psoc *psoc,
+				       void *obj, void *arg)
+{
+	struct hw_link_id_iterator *itr = (struct hw_link_id_iterator *)arg;
+	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)obj;
+	uint16_t hw_link_id;
+
+	if (itr->pdev)
+		return;
+
+	hw_link_id = wlan_mlo_get_pdev_hw_link_id(pdev);
+	if (hw_link_id == itr->hw_link_id) {
+		if (wlan_objmgr_pdev_try_get_ref(pdev, itr->dbgid) ==
+							QDF_STATUS_SUCCESS)
+			itr->pdev = pdev;
+	}
+}
+
+static void wlan_mlo_find_hw_link_id(struct wlan_objmgr_psoc *psoc,
+				     void *arg,
+				     uint8_t index)
+{
+	struct hw_link_id_iterator *itr = (struct hw_link_id_iterator *)arg;
+
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
+				     wlan_pdev_hw_link_iterator,
+				     arg, false, itr->dbgid);
+}
+
+struct wlan_objmgr_pdev *
+wlan_mlo_get_pdev_by_hw_link_id(uint16_t hw_link_id,
+				wlan_objmgr_ref_dbgid refdbgid)
+{
+	struct hw_link_id_iterator itr;
+
+	itr.hw_link_id = hw_link_id;
+	itr.pdev = NULL;
+	itr.dbgid = refdbgid;
+
+	wlan_objmgr_iterate_psoc_list(wlan_mlo_find_hw_link_id,
+				      &itr, refdbgid);
+
+	return itr.pdev;
+}
+#endif /*WLAN_MLO_MULTI_CHIP*/
