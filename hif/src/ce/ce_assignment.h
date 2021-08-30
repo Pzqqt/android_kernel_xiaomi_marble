@@ -1580,9 +1580,9 @@ static struct CE_pipe_config target_ce_config_wlan_qcn9224[] = {
 	{ /* CE8 */ 8, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 	/* CV prefetch */
-	{ /* CE12 */ 12, PIPEDIR_OUT, 32, 2048, 8192, 0,},
+	{ /* CE12 */ 12, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* CV prefetch */
-	{ /* CE13 */ 13, PIPEDIR_OUT, 32, 2048, 8192, 0,},
+	{ /* CE13 */ 13, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host WMI logging + DirectDMA events */
 	{ /* CE14 */ 14, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/*CE 15 - Reserved for customer use */
