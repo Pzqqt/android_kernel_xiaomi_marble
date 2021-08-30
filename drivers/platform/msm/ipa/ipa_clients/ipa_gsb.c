@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -49,6 +49,16 @@
 #define IPA_GSB_ERR(fmt, args...) \
 	do { \
 		pr_err(IPA_GSB_DRV_NAME " %s:%d " fmt, \
+			__func__, __LINE__, ## args); \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
+			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
+			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
+	} while (0)
+
+#define IPA_GSB_ERR_RL(fmt, args...) \
+	do { \
+		pr_err_ratelimited_ipa(IPA_GSB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
 		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
@@ -1184,7 +1194,7 @@ static int ipa_bridge_tx_dp_internal(u32 hdl, struct sk_buff *skb,
 	}
 
 	if (unlikely(!ipa_gsb_ctx->iface[hdl]->is_resumed)) {
-		IPA_GSB_ERR("iface %d was suspended\n", hdl);
+		IPA_GSB_ERR_RL("iface %d was suspended\n", hdl);
 		return -EFAULT;
 	}
 
