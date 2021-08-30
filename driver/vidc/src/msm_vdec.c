@@ -1692,16 +1692,26 @@ static int msm_vdec_update_max_map_output_count(struct msm_vidc_inst *inst)
 int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	struct msm_vidc_inst_capability *capability;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	capability = inst->capabilities;
 
 	if (is_output_meta_enabled(inst) &&
 		!inst->vb2q[OUTPUT_META_PORT].streaming) {
 		i_vpr_e(inst,
 			"%s: Meta port must be streamed on before data port\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	if (capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE &&
+		!is_ubwc_colorformat(capability->cap[PIX_FMTS].value)) {
+		i_vpr_e(inst,
+			"%s: interlace with non-ubwc color format is unsupported\n",
 			__func__);
 		return -EINVAL;
 	}
@@ -2054,11 +2064,13 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	int rc = 0;
 	enum msm_vidc_allow allow = MSM_VIDC_DISALLOW;
 	enum msm_vidc_port_type port;
+	struct msm_vidc_inst_capability *capability;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	capability = inst->capabilities;
 
 	if (cmd == V4L2_DEC_CMD_STOP) {
 		i_vpr_h(inst, "received cmd: drain\n");
@@ -2082,6 +2094,15 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 			return rc;
 	} else if (cmd == V4L2_DEC_CMD_START) {
 		i_vpr_h(inst, "received cmd: resume\n");
+
+		if (capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE &&
+			!is_ubwc_colorformat(capability->cap[PIX_FMTS].value)) {
+			i_vpr_e(inst,
+				"%s: interlace with non-ubwc color format is unsupported\n",
+				__func__);
+			return -EINVAL;
+		}
+
 		if (!msm_vidc_allow_start(inst))
 			return -EBUSY;
 		port = (inst->state == MSM_VIDC_DRAIN_LAST_FLAG) ? INPUT_PORT : OUTPUT_PORT;

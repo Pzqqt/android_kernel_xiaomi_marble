@@ -2056,7 +2056,7 @@ int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp)
 	struct msm_vidc_timestamp *ts;
 	struct msm_vidc_timestamp *prev = NULL;
 	u32 counter = 0, prev_fr = 0, curr_fr = 0;
-	u64 time_ms = 0;
+	u64 time_us = 0;
 	int rc = 0;
 
 	if (!inst || !inst->core || !inst->capabilities) {
@@ -2075,9 +2075,9 @@ int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp)
 
 	list_for_each_entry(ts, &inst->timestamps.list, sort.list) {
 		if (prev) {
-			time_ms = div_u64(ts->sort.val - prev->sort.val, 1000);
+			time_us = ts->sort.val - prev->sort.val;
 			prev_fr = curr_fr;
-			curr_fr = time_ms ? div_u64(MSEC_PER_SEC, time_ms) << 16 :
+			curr_fr = time_us ? DIV64_U64_ROUND_CLOSEST(USEC_PER_SEC, time_us) << 16 :
 					inst->auto_framerate;
 			if (curr_fr > inst->capabilities->cap[FRAME_RATE].max)
 				curr_fr = inst->capabilities->cap[FRAME_RATE].max;
@@ -2091,7 +2091,8 @@ int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp)
 
 	/* if framerate changed and stable for 2 frames, set to firmware */
 	if (curr_fr == prev_fr && curr_fr != inst->auto_framerate) {
-		i_vpr_l(inst, "%s: updated fps to %u\n", __func__, curr_fr >> 16);
+		i_vpr_l(inst, "%s: updated fps:  %u -> %u\n", __func__,
+				inst->auto_framerate >> 16, curr_fr >> 16);
 		rc = venus_hfi_session_property(inst,
 				HFI_PROP_FRAME_RATE,
 				HFI_HOST_FLAGS_NONE,
@@ -3568,7 +3569,7 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	list_for_each_entry(i, &core->instances, list)
 		count++;
 
-	if (count < core->capabilities[MAX_SESSION_COUNT].value) {
+	if (count <= core->capabilities[MAX_SESSION_COUNT].value) {
 		list_add_tail(&inst->list, &core->instances);
 	} else {
 		i_vpr_e(inst, "%s: total sessions %d exceeded max limit %d\n",
@@ -5175,10 +5176,6 @@ static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 
 	core_lock(core, __func__);
 	list_for_each_entry(instance, &core->instances, list) {
-		/* ignore invalid/error session */
-		if (is_session_error(instance))
-			continue;
-
 		/* ignore thumbnail session */
 		if (is_thumbnail_session(instance))
 			continue;
@@ -5504,3 +5501,49 @@ int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+struct msm_vidc_fw_query_params {
+	u32 hfi_prop_name;
+	u32 port;
+};
+
+int msm_vidc_get_properties(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	int i;
+
+	static const struct msm_vidc_fw_query_params fw_query_params[] = {
+		{HFI_PROP_STAGE, HFI_PORT_NONE},
+		{HFI_PROP_PIPE, HFI_PORT_NONE},
+		{HFI_PROP_QUALITY_MODE, HFI_PORT_BITSTREAM}
+	};
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(fw_query_params); i++) {
+
+		if (is_decode_session(inst)) {
+			if (fw_query_params[i].hfi_prop_name == HFI_PROP_QUALITY_MODE)
+				continue;
+		}
+
+		i_vpr_l(inst, "%s: querying fw for property %#x\n", __func__,
+				fw_query_params[i].hfi_prop_name);
+
+		rc = venus_hfi_session_property(inst,
+				fw_query_params[i].hfi_prop_name,
+				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+				HFI_HOST_FLAGS_INTR_REQUIRED |
+				HFI_HOST_FLAGS_GET_PROPERTY),
+				fw_query_params[i].port,
+				HFI_PAYLOAD_NONE,
+				NULL,
+				0);
+		if (rc)
+			return rc;
+	}
+
+	return 0;
+}

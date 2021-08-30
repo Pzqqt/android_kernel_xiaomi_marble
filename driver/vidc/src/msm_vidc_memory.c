@@ -172,6 +172,11 @@ void msm_vidc_memory_put_dmabuf_completely(struct msm_vidc_inst *inst,
 	}
 }
 
+static bool is_non_secure_buffer(struct dma_buf *dmabuf)
+{
+	return mem_buf_dma_buf_exclusive_owner(dmabuf);
+}
+
 int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
 {
 	int rc = 0;
@@ -187,6 +192,21 @@ int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
 	if (map->refcount) {
 		map->refcount++;
 		goto exit;
+	}
+
+	/* reject non-secure mapping request for a secure buffer(or vice versa) */
+	if (map->region == MSM_VIDC_NON_SECURE || map->region == MSM_VIDC_NON_SECURE_PIXEL) {
+		if (!is_non_secure_buffer(map->dmabuf)) {
+			d_vpr_e("%s: secure buffer mapping to non-secure region %d not allowed\n",
+				__func__, map->region);
+			return -EINVAL;
+		}
+	} else {
+		if (is_non_secure_buffer(map->dmabuf)) {
+			d_vpr_e("%s: non-secure buffer mapping to secure region %d not allowed\n",
+				__func__, map->region);
+			return -EINVAL;
+		}
 	}
 
 	cb = get_context_bank(core, map->region);

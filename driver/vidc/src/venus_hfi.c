@@ -14,6 +14,7 @@
 #include <linux/firmware.h>
 #include <linux/qcom_scm.h>
 #include <linux/soc/qcom/mdt_loader.h>
+#include <linux/iopoll.h>
 
 #include "venus_hfi.h"
 #include "msm_vidc_core.h"
@@ -307,12 +308,12 @@ int __write_register_masked(struct msm_vidc_core *core,
 	return rc;
 }
 
-int __read_register(struct msm_vidc_core *core, u32 reg)
+int __read_register(struct msm_vidc_core *core, u32 reg, u32 *value)
 {
 	int rc = 0;
 	u8 *base_addr;
 
-	if (!core) {
+	if (!core || !value) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -324,13 +325,46 @@ int __read_register(struct msm_vidc_core *core, u32 reg)
 
 	base_addr = core->register_base_addr;
 
-	rc = readl_relaxed(base_addr + reg);
+	*value = readl_relaxed(base_addr + reg);
 	/*
 	 * Memory barrier to make sure value is read correctly from the
 	 * register.
 	 */
 	rmb();
-	d_vpr_l("regread(%pK + %#x) = %#x\n", base_addr, reg, rc);
+	d_vpr_l("regread(%pK + %#x) = %#x\n", base_addr, reg, *value);
+
+	return rc;
+}
+
+int __read_register_with_poll_timeout(struct msm_vidc_core *core,
+	u32 reg, u32 mask, u32 exp_val, u32 sleep_us, u32 timeout_us)
+{
+	int rc = 0;
+	u32 val = 0;
+	u8 *addr;
+
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!core->power_enabled) {
+		d_vpr_e("%s failed: Power is OFF\n", __func__);
+		return -EINVAL;
+	}
+
+	addr = (u8 *)core->register_base_addr + reg;
+
+	rc = readl_relaxed_poll_timeout(addr, val, ((val & mask) == exp_val), sleep_us, timeout_us);
+	/*
+	 * Memory barrier to make sure value is read correctly from the
+	 * register.
+	 */
+	rmb();
+	d_vpr_l(
+		"regread(%pK + %#x) = %#x. rc %d, mask %#x, exp_val %#x, cond %u, sleep %u, timeout %u\n",
+		core->register_base_addr, reg, val, rc, mask, exp_val,
+		((val & mask) == exp_val), sleep_us, timeout_us);
 
 	return rc;
 }

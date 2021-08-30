@@ -93,6 +93,9 @@ u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
 		case HFI_PORT_RAW:
 			port = OUTPUT_PORT;
 			break;
+		case HFI_PORT_NONE:
+			port = PORT_NONE;
+			break;
 		default:
 			i_vpr_e(inst, "%s: invalid hfi port type %d\n",
 				__func__, hfi_port);
@@ -105,6 +108,9 @@ u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
 			break;
 		case HFI_PORT_BITSTREAM:
 			port = OUTPUT_PORT;
+			break;
+		case HFI_PORT_NONE:
+			port = PORT_NONE;
 			break;
 		default:
 			i_vpr_e(inst, "%s: invalid hfi port type %d\n",
@@ -1403,6 +1409,25 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				__func__, pkt->type, is_decode_session(inst) ? "decode" : "encode",
 				port, inst->capabilities->cap[DPB_LIST].value);
 		}
+		break;
+	case HFI_PROP_QUALITY_MODE:
+		if (inst->capabilities->cap[QUALITY_MODE].value !=  payload_ptr[0])
+			i_vpr_e(inst,
+				"%s: fw quality mode(%d) not matching the capability value(%d)\n",
+				__func__,  payload_ptr[0],
+				inst->capabilities->cap[QUALITY_MODE].value);
+		break;
+	case HFI_PROP_STAGE:
+		if (inst->capabilities->cap[STAGE].value !=  payload_ptr[0])
+			i_vpr_e(inst,
+				"%s: fw stage mode(%d) not matching the capability value(%d)\n",
+				__func__,  payload_ptr[0], inst->capabilities->cap[STAGE].value);
+		break;
+	case HFI_PROP_PIPE:
+		if (inst->capabilities->cap[PIPE].value !=  payload_ptr[0])
+			i_vpr_e(inst,
+				"%s: fw pipe mode(%d) not matching the capability value(%d)\n",
+				__func__,  payload_ptr[0], inst->capabilities->cap[PIPE].value);
 		break;
 	default:
 		i_vpr_e(inst, "%s: invalid property %#x\n",

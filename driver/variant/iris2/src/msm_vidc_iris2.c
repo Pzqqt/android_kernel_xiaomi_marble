@@ -366,7 +366,9 @@ static int __interrupt_init_iris2(struct msm_vidc_core *vidc_core)
 	}
 
 	/* All interrupts should be disabled initially 0x1F6 : Reset value */
-	mask_val = __read_register(core, WRAPPER_INTR_MASK_IRIS2);
+	rc = __read_register(core, WRAPPER_INTR_MASK_IRIS2, &mask_val);
+	if (rc)
+		return rc;
 
 	/* Write 0 to unmask CPU and WD interrupts */
 	mask_val &= ~(WRAPPER_INTR_MASK_A2HWD_BMSK_IRIS2|
@@ -432,8 +434,7 @@ static int __setup_ucregion_memory_map_iris2(struct msm_vidc_core *vidc_core)
 static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 {
 	int rc = 0, i;
-	u32 value = 0, count = 0;
-	const u32 max_count = 10;
+	u32 value = 0;
 
 	if (core->hw_power_control) {
 		d_vpr_h("%s: hardware power control enabled\n", __func__);
@@ -444,10 +445,12 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 	 * check to make sure core clock branch enabled else
 	 * we cannot read vcodec top idle register
 	 */
-	value = __read_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2);
+	rc = __read_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2, &value);
+	if (rc)
+		return rc;
+
 	if (value) {
-		d_vpr_h(
-			"%s: core clock config not enabled, enabling it to read vcodec registers\n",
+		d_vpr_h("%s: core clock config not enabled, enabling it to read vcodec registers\n",
 			__func__);
 		rc = __write_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2, 0);
 		if (rc)
@@ -459,18 +462,9 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 	 * poll for NoC DMA idle -> HPG 6.1.1
 	 */
 	for (i = 0; i < core->capabilities[NUM_VPP_PIPE].value; i++) {
-		count = 0;
-		do {
-			value = __read_register(core,
-				VCODEC_SS_IDLE_STATUSn + 4*i);
-			if (value & 0x400000)
-				break;
-			else
-				usleep_range(1000, 2000);
-			count++;
-		} while (count < max_count);
-
-		if (count == max_count)
+		rc = __read_register_with_poll_timeout(core, VCODEC_SS_IDLE_STATUSn + 4*i,
+				0x400000, 0x400000, 2000, 20000);
+		if (rc)
 			d_vpr_h("%s: VCODEC_SS_IDLE_STATUSn (%d) is not idle (%#x)\n",
 				__func__, i, value);
 	}
@@ -479,32 +473,20 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 	rc = __write_register(core, AON_WRAPPER_MVP_NOC_RESET_REQ, 0x3);
 	if (rc)
 		return rc;
-	count = 0;
-	do {
-		value = __read_register(core, AON_WRAPPER_MVP_NOC_RESET_ACK);
-		if ((value & 0x3) == 0x3)
-			break;
-		else
-			usleep_range(100, 200);
-		count++;
-	} while (count < max_count);
-	if (count == max_count)
+
+	rc = __read_register_with_poll_timeout(core, AON_WRAPPER_MVP_NOC_RESET_ACK,
+			0x3, 0x3, 200, 2000);
+	if (rc)
 		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_RESET assert failed\n", __func__);
 
 	/* De-assert partial reset on MSF interface and wait for ACK */
 	rc = __write_register(core, AON_WRAPPER_MVP_NOC_RESET_REQ, 0x0);
 	if (rc)
 		return rc;
-	count = 0;
-	do {
-		value = __read_register(core, AON_WRAPPER_MVP_NOC_RESET_ACK);
-		if ((value & 0x3) == 0x0)
-			break;
-		else
-			usleep_range(100, 200);
-		count++;
-	} while (count < max_count);
-	if (count == max_count)
+
+	rc = __read_register_with_poll_timeout(core, AON_WRAPPER_MVP_NOC_RESET_ACK,
+			0x3, 0x0, 200, 2000);
+	if (rc)
 		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_RESET de-assert failed\n", __func__);
 
 	/*
@@ -540,8 +522,6 @@ disable_power:
 static int __power_off_iris2_controller(struct msm_vidc_core *core)
 {
 	int rc = 0;
-	u32 value = 0, count = 0;
-	const u32 max_count = 10;
 
 	/*
 	 * mask fal10_veto QLPAC error since fal10_veto can go 1
@@ -556,33 +536,20 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 			0x1, BIT(0));
 	if (rc)
 		return rc;
-	count = 0;
-	do {
-		value = __read_register(core, AON_WRAPPER_MVP_NOC_LPI_STATUS);
-		if ((value & 0x1) == 0x1)
-			break;
-		else
-			usleep_range(100, 200);
-		count++;
-	} while (count < max_count);
-	if (count == max_count)
+
+	rc = __read_register_with_poll_timeout(core, AON_WRAPPER_MVP_NOC_LPI_STATUS,
+			0x1, 0x1, 200, 2000);
+	if (rc)
 		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_LPI_CONTROL failed\n", __func__);
 
 	/* Set Debug bridge Low power */
 	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x7);
 	if (rc)
 		return rc;
-	count = 0;
-	do {
-		value = __read_register(core,
-			WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
-		if ((value & 0x7) == 0x7)
-			break;
-		else
-			usleep_range(100, 200);
-		count++;
-	} while (count < max_count);
-	if (count == max_count)
+
+	rc = __read_register_with_poll_timeout(core, WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2,
+			0x7, 0x7, 200, 2000);
+	if (rc)
 		d_vpr_h("%s: debug bridge low power failed\n", __func__);
 
 	/* Debug bridge LPI release */
@@ -590,17 +557,9 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		return rc;
 
-	count = 0;
-	do {
-		value = __read_register(core,
-			WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
-		if (value == 0x0)
-			break;
-		else
-			usleep_range(100, 200);
-		count++;
-	} while (count < max_count);
-	if (count == max_count)
+	rc = __read_register_with_poll_timeout(core, WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2,
+			0xffffffff, 0x0, 200, 2000);
+	if (rc)
 		d_vpr_h("%s: debug bridge release failed\n", __func__);
 
 	/* power down process */
@@ -767,8 +726,6 @@ static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
 	int rc = 0;
 	u32 wfi_status = 0, idle_status = 0, pc_ready = 0;
 	u32 ctrl_status = 0;
-	int count = 0;
-	const int max_tries = 10;
 	struct msm_vidc_core *core = vidc_core;
 
 	if (!core) {
@@ -776,7 +733,10 @@ static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
 		return -EINVAL;
 	}
 
-	ctrl_status = __read_register(core, CTRL_STATUS_IRIS2);
+	rc = __read_register(core, CTRL_STATUS_IRIS2, &ctrl_status);
+	if (rc)
+		return rc;
+
 	pc_ready = ctrl_status & CTRL_STATUS_PC_READY_IRIS2;
 	idle_status = ctrl_status & BIT(30);
 
@@ -784,8 +744,11 @@ static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
 		d_vpr_h("Already in pc_ready state\n");
 		return 0;
 	}
+	rc = __read_register(core, WRAPPER_TZ_CPU_STATUS, &wfi_status);
+	if (rc)
+		return rc;
 
-	wfi_status = BIT(0) & __read_register(core, WRAPPER_TZ_CPU_STATUS);
+	wfi_status &= BIT(0);
 	if (!wfi_status || !idle_status) {
 		d_vpr_e("Skipping PC, wfi status not set\n");
 		goto skip_power_off;
@@ -797,25 +760,29 @@ static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
 		goto skip_power_off;
 	}
 
-	while (count < max_tries) {
-		wfi_status = BIT(0) & __read_register(core,
-				WRAPPER_TZ_CPU_STATUS);
-		ctrl_status = __read_register(core,
-				CTRL_STATUS_IRIS2);
-		if (wfi_status && (ctrl_status & CTRL_STATUS_PC_READY_IRIS2))
-			break;
-		usleep_range(150, 250);
-		count++;
-	}
-
-	if (count == max_tries) {
-		d_vpr_e("Skip PC. Core is not in right state\n");
+	rc = __read_register_with_poll_timeout(core, CTRL_STATUS_IRIS2,
+			CTRL_STATUS_PC_READY_IRIS2, CTRL_STATUS_PC_READY_IRIS2, 250, 2500);
+	if (rc) {
+		d_vpr_e("%s: Skip PC. Ctrl status not set\n", __func__);
 		goto skip_power_off;
 	}
 
+	rc = __read_register_with_poll_timeout(core, WRAPPER_TZ_CPU_STATUS,
+			BIT(0), 0x1, 250, 2500);
+	if (rc) {
+		d_vpr_e("%s: Skip PC. Wfi status not set\n", __func__);
+		goto skip_power_off;
+	}
 	return rc;
 
 skip_power_off:
+	rc = __read_register(core, CTRL_STATUS_IRIS2, &ctrl_status);
+	if (rc)
+		return rc;
+	rc = __read_register(core, WRAPPER_TZ_CPU_STATUS, &wfi_status);
+	if (rc)
+		return rc;
+	wfi_status &= BIT(0);
 	d_vpr_e("Skip PC, wfi=%#x, idle=%#x, pcr=%#x, ctrl=%#x)\n",
 		wfi_status, idle_status, pc_ready, ctrl_status);
 	return -EAGAIN;
@@ -915,7 +882,10 @@ static int __clear_interrupt_iris2(struct msm_vidc_core *vidc_core)
 		return 0;
 	}
 
-	intr_status = __read_register(core, WRAPPER_INTR_STATUS_IRIS2);
+	rc = __read_register(core, WRAPPER_INTR_STATUS_IRIS2, &intr_status);
+	if (rc)
+		return rc;
+
 	mask = (WRAPPER_INTR_STATUS_A2H_BMSK_IRIS2|
 		WRAPPER_INTR_STATUS_A2HWD_BMSK_IRIS2|
 		CTRL_INIT_IDLE_MSG_BMSK_IRIS2);
@@ -954,7 +924,10 @@ static int __boot_firmware_iris2(struct msm_vidc_core *vidc_core)
 		return rc;
 
 	while (!ctrl_status && count < max_tries) {
-		ctrl_status = __read_register(core, CTRL_STATUS_IRIS2);
+		rc = __read_register(core, CTRL_STATUS_IRIS2, &ctrl_status);
+		if (rc)
+			return rc;
+
 		if ((ctrl_status & CTRL_ERROR_STATUS__M_IRIS2) == 0x4) {
 			d_vpr_e("invalid setting for UC_REGION\n");
 			break;
@@ -966,7 +939,7 @@ static int __boot_firmware_iris2(struct msm_vidc_core *vidc_core)
 
 	if (count >= max_tries) {
 		d_vpr_e("Error booting up vidc firmware\n");
-		rc = -ETIME;
+		return -ETIME;
 	}
 
 	/* Enable interrupt before sending commands to venus */
