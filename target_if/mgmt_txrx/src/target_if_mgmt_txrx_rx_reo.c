@@ -273,7 +273,7 @@ target_if_mgmt_rx_reo_get_snapshot_address(
 			struct mgmt_rx_reo_snapshot **snapshot_address)
 {
 	struct wlan_lmac_if_mgmt_rx_reo_low_level_ops *low_level_ops;
-	uint8_t link_id;
+	int8_t link_id;
 
 	if (!pdev) {
 		mgmt_rx_reo_err("pdev is null");
@@ -301,6 +301,8 @@ target_if_mgmt_rx_reo_get_snapshot_address(
 	qdf_assert_always(low_level_ops->implemented);
 
 	link_id = wlan_get_mlo_link_id_from_pdev(pdev);
+	qdf_assert_always(link_id >= 0);
+
 	*snapshot_address = low_level_ops->get_snapshot_address(link_id, id);
 
 	return QDF_STATUS_SUCCESS;

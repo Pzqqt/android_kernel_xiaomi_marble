@@ -131,7 +131,8 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 	struct mgmt_rx_reo_wait_count *wait_count)
 {
 	QDF_STATUS status;
-	uint8_t link, in_frame_link;
+	uint8_t link;
+	int8_t in_frame_link;
 	int frames_pending, delta_fwd_host;
 	uint8_t snapshot_id;
 	struct wlan_objmgr_pdev *pdev;
@@ -157,10 +158,12 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	qdf_assert(num_mlo_links <= MAX_MLO_LINKS);
+	qdf_assert_always(num_mlo_links >= 1);
+	qdf_assert_always(num_mlo_links <= MGMT_RX_REO_MAX_LINKS);
 
 	/* Get the MLO link ID of incoming frame */
 	in_frame_link = wlan_get_mlo_link_id_from_pdev(in_frame_pdev);
+	qdf_assert_always(in_frame_link >= 0);
 
 	/* Iterate over all the MLO links */
 	for (link = 0; link < num_mlo_links; link++) {
@@ -174,12 +177,16 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 
 		rx_reo_pdev_ctx = wlan_mgmt_rx_reo_get_priv_object(pdev);
 		if (!rx_reo_pdev_ctx) {
-			mgmt_rx_reo_err("Mgmt Rx REO context empty for pdev %pK",
+			mgmt_rx_reo_err("Mgmt reo context empty for pdev %pK",
 					pdev);
 			return QDF_STATUS_E_FAILURE;
 		}
 
 		host_ss = &rx_reo_pdev_ctx->host_snapshot;
+
+		mgmt_rx_reo_debug("link_id = %u HOST SS: valid = %u, ctr = %u, ts = %u",
+				  link, host_ss->valid, host_ss->mgmt_pkt_ctr,
+				  host_ss->global_timestamp);
 
 		/**
 		 * Ideally, the incoming frame has to wait for only those frames
@@ -202,7 +209,8 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 		 * whether to deliver such a frame to upper layers is handled
 		 * separately.
 		 */
-		if (mgmt_rx_reo_compare_global_timestamps_gte(
+		if (host_ss->valid &&
+		    mgmt_rx_reo_compare_global_timestamps_gte(
 				host_ss->global_timestamp,
 				in_frame_params->global_timestamp)) {
 			frames_pending = 0;
@@ -246,6 +254,19 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 		fw_consumed_ss = &snapshot_params
 				[MGMT_RX_REO_SHARED_SNAPSHOT_FW_CONSUMED];
 
+		mgmt_rx_reo_debug("link_id = %u HW SS: valid = %u, ctr = %u, ts = %u",
+				  link, mac_hw_ss->valid,
+				  mac_hw_ss->mgmt_pkt_ctr,
+				  mac_hw_ss->global_timestamp);
+		mgmt_rx_reo_debug("link_id = %u FW forwarded SS: valid = %u, ctr = %u, ts = %u",
+				  link, fw_forwarded_ss->valid,
+				  fw_forwarded_ss->mgmt_pkt_ctr,
+				  fw_forwarded_ss->global_timestamp);
+		mgmt_rx_reo_debug("link_id = %u FW consumed SS: valid = %u, ctr = %u, ts = %u",
+				  link, fw_consumed_ss->valid,
+				  fw_consumed_ss->mgmt_pkt_ctr,
+				  fw_consumed_ss->global_timestamp);
+
 		/**
 		 * If MAC HW snapshot is invalid, we need to assume the worst
 		 * and wait for UINT_MAX frames, but this should not be a
@@ -259,7 +280,11 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 		 */
 		if (!mac_hw_ss->valid) {
 			wait_count->per_link_count[link] = UINT_MAX;
-			wait_count->total_count = UINT_MAX;
+			wait_count->total_count += UINT_MAX;
+			mgmt_rx_reo_debug("link_id = %u wait count: per link = 0x%x, total = 0x%llx",
+					  link,
+					  wait_count->per_link_count[link],
+					  wait_count->total_count);
 			continue;
 		}
 
@@ -389,8 +414,15 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 		}
 
 update_pending_frames:
+			qdf_assert_always(frames_pending >= 0);
+
 			wait_count->per_link_count[link] = frames_pending;
 			wait_count->total_count += frames_pending;
+
+			mgmt_rx_reo_debug("link_id = %u wait count: per link = 0x%x, total = 0x%llx",
+					  link,
+					  wait_count->per_link_count[link],
+					  wait_count->total_count);
 	}
 
 	return QDF_STATUS_SUCCESS;
