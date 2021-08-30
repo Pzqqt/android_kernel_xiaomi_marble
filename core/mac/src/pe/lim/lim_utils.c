@@ -7261,9 +7261,18 @@ lim_revise_req_he_cap_per_band(struct mlme_legacy_priv *mlme_priv,
 	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq)) {
 		he_config->bfee_sts_lt_80 =
 			mac->he_cap_2g.bfee_sts_lt_80;
+		he_config->tx_he_mcs_map_lt_80 =
+			mac->he_cap_2g.tx_he_mcs_map_lt_80;
+		he_config->rx_he_mcs_map_lt_80 =
+			mac->he_cap_2g.rx_he_mcs_map_lt_80;
+
 	} else {
 		he_config->bfee_sts_lt_80 =
 			mac->he_cap_5g.bfee_sts_lt_80;
+		he_config->tx_he_mcs_map_lt_80 =
+			mac->he_cap_5g.tx_he_mcs_map_lt_80;
+		he_config->rx_he_mcs_map_lt_80 =
+			mac->he_cap_5g.rx_he_mcs_map_lt_80;
 
 		he_config->num_sounding_lt_80 =
 			mac->he_cap_5g.num_sounding_lt_80;
@@ -7923,12 +7932,22 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		}
 	}
 
-	lim_populate_he_mcs_per_bw(mac_ctx,
-		&rates->rx_he_mcs_map_lt_80, &rates->tx_he_mcs_map_lt_80,
-		peer_he_caps->rx_he_mcs_map_lt_80,
-		peer_he_caps->tx_he_mcs_map_lt_80, nss,
-		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80,
-		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80);
+	if (wlan_reg_is_24ghz_ch_freq(session_entry->curr_op_freq))
+		lim_populate_he_mcs_per_bw(mac_ctx,
+			&rates->rx_he_mcs_map_lt_80,
+			&rates->tx_he_mcs_map_lt_80,
+			peer_he_caps->rx_he_mcs_map_lt_80,
+			peer_he_caps->tx_he_mcs_map_lt_80, nss,
+			mac_ctx->he_cap_2g.rx_he_mcs_map_lt_80,
+			mac_ctx->he_cap_2g.tx_he_mcs_map_lt_80);
+	else
+		lim_populate_he_mcs_per_bw(mac_ctx,
+			&rates->rx_he_mcs_map_lt_80,
+			&rates->tx_he_mcs_map_lt_80,
+			peer_he_caps->rx_he_mcs_map_lt_80,
+			peer_he_caps->tx_he_mcs_map_lt_80, nss,
+			mac_ctx->he_cap_5g.rx_he_mcs_map_lt_80,
+			mac_ctx->he_cap_5g.tx_he_mcs_map_lt_80);
 
 	if (session_entry->ch_width == CH_WIDTH_160MHZ) {
 		lim_populate_he_mcs_per_bw(
