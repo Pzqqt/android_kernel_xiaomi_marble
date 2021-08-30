@@ -216,6 +216,9 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 			address = rx_reo_pdev_ctx->
 				   host_target_shared_snapshot[snapshot_id],
 
+			qdf_mem_zero(&snapshot_params[snapshot_id],
+				     sizeof(snapshot_params[snapshot_id]));
+
 			status = tgt_mgmt_rx_reo_read_snapshot(
 						pdev, address, snapshot_id,
 						&snapshot_params[snapshot_id]);
@@ -227,7 +230,7 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 				return status;
 			}
 
-			/* If snpashot is valid, save it in the pdev context */
+			/* If snapshot is valid, save it in the pdev context */
 			if (snapshot_params[snapshot_id].valid) {
 				rx_reo_pdev_ctx->
 				   last_valid_shared_snapshot[snapshot_id] =

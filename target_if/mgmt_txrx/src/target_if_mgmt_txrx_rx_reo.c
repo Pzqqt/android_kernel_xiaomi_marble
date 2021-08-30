@@ -181,6 +181,8 @@ target_if_mgmt_rx_reo_read_snapshot(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	qdf_mem_zero(snapshot_value, sizeof(*snapshot_value));
+
 	low_level_ops = target_if_get_mgmt_rx_reo_low_level_ops(
 				wlan_pdev_get_psoc(pdev));
 
