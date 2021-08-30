@@ -52,12 +52,32 @@ wlan_get_pdev_from_mlo_link_id(uint8_t mlo_link_id)
 }
 
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
-#define mgmt_rx_reo_alert mgmt_txrx_alert
-#define mgmt_rx_reo_err mgmt_txrx_err
-#define mgmt_rx_reo_warn mgmt_txrx_warn
-#define mgmt_rx_reo_notice mgmt_txrx_notice
-#define mgmt_rx_reo_info mgmt_txrx_info
-#define mgmt_rx_reo_debug mgmt_txrx_debug
+
+#define mgmt_rx_reo_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_MGMT_RX_REO, params)
+
+#define mgmt_rx_reo_alert_rl(params...) \
+	QDF_TRACE_FATAL_RL(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_err_rl(params...) \
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_warn_rl(params...) \
+	QDF_TRACE_WARN_RL(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_notice_rl(params...) \
+	QDF_TRACE_INFO_RL(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_info_rl(params...) \
+	QDF_TRACE_INFO_RL(QDF_MODULE_ID_MGMT_RX_REO, params)
+#define mgmt_rx_reo_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_MGMT_RX_REO, params)
 
 /**
  * wlan_mgmt_rx_reo_init() - Initializes the management rx-reorder module
