@@ -722,12 +722,17 @@ dp_get_scan_spcl_vap_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
 						     DP_MOD_ID_CDP);
 
-	if (!vdev || !stats)
+	if (!vdev || !stats) {
+		if (vdev)
+			dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_INVAL;
+	}
 
 	mon_vdev = vdev->monitor_vdev;
-	if (!mon_vdev || !mon_vdev->scan_spcl_vap_stats)
+	if (!mon_vdev || !mon_vdev->scan_spcl_vap_stats) {
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_INVAL;
+	}
 
 	qdf_mem_copy(stats, mon_vdev->scan_spcl_vap_stats,
 		     sizeof(struct cdp_scan_spcl_vap_stats));
