@@ -275,6 +275,8 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	wlan_pmo_get_igmp_offload_enable_cfg(psoc, psoc_cfg);
 	psoc_cfg->disconnect_sap_tdls_in_wow =
 			cfg_get(psoc, CFG_DISCONNECT_SAP_TDLS_IN_WOW);
+	psoc_cfg->is_icmp_offload_enable =
+			cfg_get(psoc, CFG_ENABLE_ICMP_OFFLOAD);
 }
 
 QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
