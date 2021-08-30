@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -405,7 +405,7 @@ static inline void ol_txrx_ipa_wdi_tx_smmu_params(
 				bool over_gsi)
 {
 	QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(tx_smmu) =
-		IPA_CLIENT_WLAN1_CONS;
+		QDF_IPA_CLIENT_WLAN_WDI2_CONS;
 	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_BASE(
 				tx_smmu),
 		     &ipa_res->tx_comp_ring->sgtable,
@@ -440,7 +440,7 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 				bool over_gsi)
 {
 	QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(rx_smmu) =
-		IPA_CLIENT_WLAN1_PROD;
+		QDF_IPA_CLIENT_WLAN_WDI2_PROD;
 	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_BASE(
 				rx_smmu),
 		     &ipa_res->rx_rdy_ring->sgtable,
