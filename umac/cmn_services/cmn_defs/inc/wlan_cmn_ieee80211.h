@@ -25,12 +25,36 @@
 #include <qdf_types.h>
 #include <osdep.h>
 
-/* Assoc resp IE offset Capability(2) + AID(2) + Status Code(2) */
-#define WLAN_ASSOC_RSP_IES_OFFSET 6
+/* Length of Timestamp field */
+#define WLAN_TIMESTAMP_LEN         8
+
+/* Length of Beacon Interval field */
+#define WLAN_BEACONINTERVAL_LEN    2
+
+/* Length of Capability Information field */
+#define WLAN_CAPABILITYINFO_LEN    2
+
+/* Length of Listen Interval field */
+#define WLAN_LISTENINTERVAL_LEN    2
+
+/* Length of Status code field */
+#define WLAN_STATUSCODE_LEN        2
+
+/* Length of AID field */
+#define WLAN_AID_LEN               2
+
+/* Assoc resp IE offset Capability(2) + Status Code(2) + AID(2) */
+#define WLAN_ASSOC_RSP_IES_OFFSET \
+	(WLAN_CAPABILITYINFO_LEN  + WLAN_STATUSCODE_LEN + WLAN_AID_LEN)
+
 /* Assoc req IE offset - Capability(2) + LI(2) */
-#define WLAN_ASSOC_REQ_IES_OFFSET 4
-/* Assoc req IE offset - Capability(2) + LI(2) + current AP address(6) */
-#define WLAN_REASSOC_REQ_IES_OFFSET 10
+#define WLAN_ASSOC_REQ_IES_OFFSET \
+	(WLAN_CAPABILITYINFO_LEN + WLAN_LISTENINTERVAL_LEN)
+
+/* Reassoc req IE offset - Capability(2) + LI(2) + current AP address(6) */
+#define WLAN_REASSOC_REQ_IES_OFFSET \
+	(WLAN_CAPABILITYINFO_LEN + WLAN_LISTENINTERVAL_LEN + QDF_MAC_ADDR_SIZE)
+
 /* Length (in bytes) of MAC header in 3 address format */
 #define WLAN_MAC_HDR_LEN_3A 24
 
@@ -385,6 +409,7 @@ enum ext_chan_offset {
  * @WLAN_ELEMID_QUIET_CHANNEL: Quiet Channel
  * @WLAN_ELEMID_OP_MODE_NOTIFY: Operating Mode Notification
  * @WLAN_ELEMID_VENDOR: vendor private
+ * @WLAN_ELEMID_FRAGMENT: Fragment
  * @WLAN_ELEMID_EXTN_ELEM: extended IE
  */
 enum element_ie {
@@ -463,6 +488,7 @@ enum element_ie {
 	WLAN_ELEMID_REDUCED_NEIGHBOR_REPORT = 201,
 	WLAN_ELEMID_VENDOR           = 221,
 	WLAN_ELEMID_FILS_INDICATION  = 240,
+	WLAN_ELEMID_FRAGMENT         = 242,
 	WLAN_ELEMID_RSNXE            = 244,
 	WLAN_ELEMID_EXTN_ELEM        = 255,
 };
@@ -1569,6 +1595,11 @@ enum wlan_ml_variant {
 /* Link ID */
 #define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_IDX                      0
 #define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_BITS                     4
+
+/* Size in octets of Link ID Info subfield in Basic variant Multi-Link element
+ * Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_LINKIDINFO_SIZE                            1
 
 /* Definitions for sub-sub fields in Medium Synchronization Delay Information
  * subfield in Basic variant Multi-Link element Common Info field.

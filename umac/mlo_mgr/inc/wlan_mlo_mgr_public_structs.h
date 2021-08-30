@@ -49,6 +49,7 @@ struct vdev_mlme_obj;
 /* IE nomenclature */
 #define ID_POS 0
 #define TAG_LEN_POS 1
+#define IDEXT_POS 2
 #define MIN_IE_LEN 2
 #define MULTI_LINK_CTRL_1 3
 #define MULTI_LINK_CTRL_2 4
