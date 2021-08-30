@@ -2310,11 +2310,15 @@ policy_mgr_add_24g_to_pcl(uint32_t *pcl_freqs, uint8_t *pcl_weights,
 {
 	uint32_t num_to_add, i;
 
+	if (*index >= NUM_CHANNELS || *index >= pcl_sz)
+		return;
 	num_to_add = QDF_MIN((*index + chlist_24g_len), pcl_sz) - *index;
-	qdf_mem_copy(&pcl_freqs[*index], chlist_24g,
-		     num_to_add * sizeof(*chlist_24g));
-	for (i = *index; i < *index + num_to_add; i++)
-		pcl_weights[i] = weight;
+	for (i = 0; i < num_to_add; i++) {
+		if ((i + *index) >= NUM_CHANNELS || (i + *index) >= pcl_sz)
+			break;
+		pcl_weights[i + *index] = weight;
+		pcl_freqs[i + *index] = chlist_24g[i];
+	}
 
 	*index = i;
 	policy_mgr_debug("Add 24g chlist len %d len %d index %d",
