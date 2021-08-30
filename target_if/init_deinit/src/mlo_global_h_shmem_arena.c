@@ -463,7 +463,9 @@ success:
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlo_glb_h_shmem_arena_deinit(void)
+qdf_export_symbol(mlo_glb_h_shmem_arena_ctx_init);
+
+QDF_STATUS mlo_glb_h_shmem_arena_ctx_deinit(void)
 {
 	struct wlan_host_mlo_glb_h_shmem_arena_ctx *shmem_arena_ctx;
 
@@ -488,6 +490,8 @@ QDF_STATUS mlo_glb_h_shmem_arena_deinit(void)
 success:
 	return QDF_STATUS_SUCCESS;
 }
+
+qdf_export_symbol(mlo_glb_h_shmem_arena_ctx_deinit);
 
 int mgmt_rx_reo_get_num_links(void)
 {
