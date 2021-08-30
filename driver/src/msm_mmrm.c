@@ -8,6 +8,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/soc/qcom/msm_mmrm.h>
+#include <linux/fs.h>
 
 #include "mmrm_internal.h"
 #include "mmrm_debug.h"
@@ -28,6 +29,9 @@
 	drv_data = (void *) -EPROBE_DEFER; \
 }
 
+extern int msm_mmrm_debug;
+extern u8 msm_mmrm_enable_throttle_feature;
+extern u8 msm_mmrm_allow_multiple_register;
 
 struct mmrm_driver_data *drv_data = (void *) -EPROBE_DEFER;
 
@@ -226,6 +230,119 @@ err_exit:
 }
 EXPORT_SYMBOL(mmrm_client_get_value);
 
+#define		MMRM_SYSFS_ENTRY_MAX_LEN		64
+
+static int sysfs_get_param(const char *buf, u32 *param)
+{
+	int base;
+
+	if (buf) {
+		if ((buf[1] == 'x') || (buf[1] == 'X'))
+			base = 16;
+		else
+			base = 10;
+
+		if (kstrtou32(buf, base, param) != 0)
+			return -EINVAL;
+	}
+	return 0;
+}
+
+static ssize_t mmrm_sysfs_debug_get(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	int ret;
+
+	ret = scnprintf(buf, MMRM_SYSFS_ENTRY_MAX_LEN, "0x%x\n", msm_mmrm_debug);
+	pr_info("%s: 0x%04X\n", __func__, msm_mmrm_debug);
+
+	return ret;
+}
+
+static ssize_t mmrm_sysfs_debug_set(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int ret;
+	u32 reg_addr;
+
+	ret = sysfs_get_param(buf, &reg_addr);
+	if (ret == 0)
+		msm_mmrm_debug = reg_addr;
+
+	return count;
+}
+
+static ssize_t mmrm_sysfs_enable_throttle_get(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	int ret;
+
+	ret = scnprintf(buf, MMRM_SYSFS_ENTRY_MAX_LEN, "0x%x\n", msm_mmrm_enable_throttle_feature);
+	pr_info("%s: 0x%04X\n", __func__, msm_mmrm_enable_throttle_feature);
+
+	return ret;
+}
+
+static ssize_t mmrm_sysfs_enable_throttle_set(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	u32 reg_addr;
+	int ret;
+
+	ret = sysfs_get_param(buf, &reg_addr);
+	if (ret == 0)
+		msm_mmrm_enable_throttle_feature = (u8)reg_addr;
+
+	return count;
+}
+
+static ssize_t mmrm_sysfs_allow_multiple_get(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	int ret;
+
+	ret = scnprintf(buf, MMRM_SYSFS_ENTRY_MAX_LEN, "0x%x\n", msm_mmrm_allow_multiple_register);
+	pr_info("%s: 0x%04X\n", __func__, msm_mmrm_allow_multiple_register);
+
+	return ret;
+}
+
+static ssize_t mmrm_sysfs_allow_multiple_set(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	u32 reg_addr;
+	int ret;
+
+	ret = sysfs_get_param(buf, &reg_addr);
+	if (ret == 0)
+		msm_mmrm_allow_multiple_register = (u8)reg_addr;
+
+	return count;
+}
+
+static DEVICE_ATTR(debug, 0644,
+		mmrm_sysfs_debug_get,
+		mmrm_sysfs_debug_set);
+
+static DEVICE_ATTR(enable_throttle_feature, 0644,
+		mmrm_sysfs_enable_throttle_get,
+		mmrm_sysfs_enable_throttle_set);
+
+static DEVICE_ATTR(allow_multiple_register, 0644,
+		mmrm_sysfs_allow_multiple_get,
+		mmrm_sysfs_allow_multiple_set);
+
+static struct attribute *mmrm_fs_attrs[] = {
+		&dev_attr_debug.attr,
+		&dev_attr_enable_throttle_feature.attr,
+		&dev_attr_allow_multiple_register.attr,
+		NULL,
+};
+
+static struct attribute_group mmrm_fs_attrs_group = {
+		.attrs = mmrm_fs_attrs,
+};
+
 static int msm_mmrm_probe_init(struct platform_device *pdev)
 {
 	int rc = 0;
@@ -264,6 +381,11 @@ static int msm_mmrm_probe_init(struct platform_device *pdev)
 		d_mpr_e("%s: failed to init mmrm\n",
 			__func__);
 		goto err_mmrm_init;
+	}
+
+	if (sysfs_create_group(&pdev->dev.kobj, &mmrm_fs_attrs_group)) {
+		d_mpr_e("%s: failed to create sysfs\n",
+			__func__);
 	}
 
 	return rc;
@@ -310,6 +432,7 @@ static int msm_mmrm_remove(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
+	sysfs_remove_group(&pdev->dev.kobj, &mmrm_fs_attrs_group);
 	msm_mmrm_debugfs_deinit(drv_data->debugfs_root);
 	mmrm_deinit(drv_data);
 	mmrm_free_platform_resources(drv_data);

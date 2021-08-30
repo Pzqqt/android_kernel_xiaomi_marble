@@ -14,8 +14,7 @@
 #define Q16_INT(q) ((q) >> 16)
 #define Q16_FRAC(q) ((((q) & 0xFFFF) * 100) >> 16)
 #define CLK_RATE_STEP 1000000
-#define CLIENT_CB_TIMEOUT msecs_to_jiffies(100)
-
+#define NOTIFY_TIMEOUT 100000000
 
 static int mmrm_sw_update_freq(
 	struct mmrm_sw_clk_mgr_info *sinfo, struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
@@ -491,9 +490,10 @@ err_invalid_level:
 }
 
 static int mmrm_sw_throttle_low_priority_client(
-	struct mmrm_sw_clk_mgr_info *sinfo, u32 *delta_cur)
+	struct mmrm_sw_clk_mgr_info *sinfo, int *delta_cur)
 {
 	int rc = 0, i;
+	u64 start_ts = 0, end_ts = 0;
 	bool found_client_throttle = false;
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry_throttle_client;
 	struct mmrm_client_notifier_data notifier_data;
@@ -519,21 +519,20 @@ static int mmrm_sw_throttle_low_priority_client(
 			d_mpr_h("%s:csid(0x%x) name(%s)\n",
 				__func__, tbl_entry_throttle_client->clk_src_id,
 				tbl_entry_throttle_client->name);
-		}
-		d_mpr_h("%s:now_cur_ma(%llu) min_cur_ma(%llu) delta_cur(%d)\n",
-			__func__, now_cur_ma, min_cur_ma, *delta_cur);
-
-		if (!IS_ERR_OR_NULL(tbl_entry_throttle_client)
-			&& (now_cur_ma > min_cur_ma)
-			&& (now_cur_ma - min_cur_ma > *delta_cur)) {
-			found_client_throttle = true;
-			d_mpr_h("%s: Throttle client csid(0x%x) name(%s)\n",
-				__func__, tbl_entry_throttle_client->clk_src_id,
-				tbl_entry_throttle_client->name);
-			d_mpr_h("%s:now_cur_ma %llu-min_cur_ma %llu>delta_cur %d\n",
+			d_mpr_h("%s:now_cur_ma(%llu) min_cur_ma(%llu) delta_cur(%d)\n",
 				__func__, now_cur_ma, min_cur_ma, *delta_cur);
-			/* found client to throttle, break from here. */
-			break;
+
+			if ((now_cur_ma > min_cur_ma)
+				&& (now_cur_ma - min_cur_ma > *delta_cur)) {
+				found_client_throttle = true;
+				d_mpr_h("%s: Throttle client csid(0x%x) name(%s)\n",
+					__func__, tbl_entry_throttle_client->clk_src_id,
+					tbl_entry_throttle_client->name);
+				d_mpr_h("%s:now_cur_ma %llu-min_cur_ma %llu>delta_cur %d\n",
+					__func__, now_cur_ma, min_cur_ma, *delta_cur);
+				/* found client to throttle, break from here. */
+				break;
+			}
 		}
 	}
 
@@ -547,42 +546,54 @@ static int mmrm_sw_throttle_low_priority_client(
 		notifier_data.cb_data.val_chng.new_val =
 			tbl_entry_throttle_client->freq[clk_min_level];
 		notifier_data.pvt_data = tbl_entry_throttle_client->pvt_data;
+		start_ts = ktime_get_ns();
 
 		if (tbl_entry_throttle_client->notifier_cb_fn)
 			rc = tbl_entry_throttle_client->notifier_cb_fn(&notifier_data);
 
+		end_ts = ktime_get_ns();
+		d_mpr_h("%s: Client notifier cbk processing time %llu ns\n",
+			__func__, (end_ts - start_ts));
+
 		if (rc) {
 			d_mpr_e("%s: Client failed to send SUCCESS in callback(%d)\n",
-					__func__, tbl_entry_throttle_client->clk_src_id);
+				__func__, tbl_entry_throttle_client->clk_src_id);
 			rc = -EINVAL;
 			goto err_clk_set_fail;
 		}
 
-		rc = clk_set_rate(tbl_entry_throttle_client->clk,
-					tbl_entry_throttle_client->freq[clk_min_level]);
-		if (rc) {
-			d_mpr_e("%s: Failed to throttle the clk csid(%d)\n",
+		if ((end_ts - start_ts) > NOTIFY_TIMEOUT)
+			d_mpr_e("%s:Client notifier cbk took %llu ns more than timeout %llu ns\n",
+				__func__, (end_ts - start_ts), NOTIFY_TIMEOUT);
+
+		if (tbl_entry_throttle_client->reserve == false) {
+			rc = clk_set_rate(tbl_entry_throttle_client->clk,
+						tbl_entry_throttle_client->freq[clk_min_level]);
+			if (rc) {
+				d_mpr_e("%s: Failed to throttle the clk csid(%d)\n",
 					__func__, tbl_entry_throttle_client->clk_src_id);
-			rc = -EINVAL;
-			goto err_clk_set_fail;
-		} else {
-			d_mpr_h("%s: %s throttled to %llu\n",
+				rc = -EINVAL;
+				goto err_clk_set_fail;
+			}
+		}
+
+		d_mpr_h("%s: %s throttled to %llu\n",
 			__func__, tbl_entry_throttle_client->name,
 			tbl_entry_throttle_client->freq[clk_min_level]);
-			*delta_cur = now_cur_ma - min_cur_ma;
+		*delta_cur -= now_cur_ma - min_cur_ma;
 
-			/* Store this client for bookkeeping */
-			tc_data = kzalloc(sizeof(*tc_data), GFP_KERNEL);
-			if (IS_ERR_OR_NULL(tc_data)) {
-				d_mpr_e("%s: Failed to allocate memory\n", __func__);
-				return -ENOMEM;
-			}
-			tc_data->table_id = i;
-			tc_data->delta_cu_ma = now_cur_ma - min_cur_ma;
-			tc_data->prev_vdd_level = tbl_entry_throttle_client->vdd_level;
-			// Add throttled client to list to access it later
-			list_add_tail(&tc_data->list, &sinfo->throttled_clients);
+		/* Store this client for bookkeeping */
+		tc_data = kzalloc(sizeof(*tc_data), GFP_KERNEL);
+		if (IS_ERR_OR_NULL(tc_data)) {
+			d_mpr_e("%s: Failed to allocate memory\n", __func__);
+			return -ENOMEM;
 		}
+		tc_data->table_id = i;
+		tc_data->delta_cu_ma = now_cur_ma - min_cur_ma;
+		tc_data->prev_vdd_level = tbl_entry_throttle_client->vdd_level;
+		// Add throttled client to list to access it later
+		list_add_tail(&tc_data->list, &sinfo->throttled_clients);
+
 		/* Store the throttled clock rate of client */
 		tbl_entry_throttle_client->clk_rate =
 					tbl_entry_throttle_client->freq[clk_min_level];
@@ -591,7 +602,7 @@ static int mmrm_sw_throttle_low_priority_client(
 		tbl_entry_throttle_client->vdd_level = clk_min_level;
 
 		/* Clearing the reserve flag */
-		tbl_entry_throttle_client->reserve = tbl_entry_throttle_client->reserve & 0;
+		tbl_entry_throttle_client->reserve = false;
 	}
 err_clk_set_fail:
 	return rc;
@@ -626,6 +637,8 @@ static int mmrm_reinstate_throttled_client(struct mmrm_sw_clk_mgr_info *sinfo) {
 	struct mmrm_sw_throttled_clients_data *iter, *safe_iter = NULL;
 	struct mmrm_client_notifier_data notifier_data;
 	struct mmrm_sw_clk_client_tbl_entry *re_entry_throttle_client;
+	int rc =  0;
+	u64 start_ts = 0, end_ts = 0;
 
 	list_for_each_entry_safe(iter, safe_iter, &sinfo->throttled_clients, list) {
 		if (!IS_ERR_OR_NULL(iter) && peak_data->aggreg_val +
@@ -641,28 +654,43 @@ static int mmrm_reinstate_throttled_client(struct mmrm_sw_clk_mgr_info *sinfo) {
 				d_mpr_h("%s:found throttled client name(%s) clsid (0x%x)\n",
 					__func__, re_entry_throttle_client->name,
 					re_entry_throttle_client->clk_src_id);
-			notifier_data.cb_type = MMRM_CLIENT_RESOURCE_VALUE_CHANGE;
-			notifier_data.cb_data.val_chng.old_val =
-				re_entry_throttle_client->freq[MMRM_VDD_LEVEL_LOW_SVS];
+				notifier_data.cb_type = MMRM_CLIENT_RESOURCE_VALUE_CHANGE;
+				notifier_data.cb_data.val_chng.old_val =
+					re_entry_throttle_client->freq[MMRM_VDD_LEVEL_LOW_SVS];
 
-			notifier_data.cb_data.val_chng.new_val =
-				re_entry_throttle_client->freq[iter->prev_vdd_level];
+				notifier_data.cb_data.val_chng.new_val =
+					re_entry_throttle_client->freq[iter->prev_vdd_level];
 
-			notifier_data.pvt_data = re_entry_throttle_client->pvt_data;
+				notifier_data.pvt_data = re_entry_throttle_client->pvt_data;
+				start_ts = ktime_get_ns();
 
-			if (re_entry_throttle_client->notifier_cb_fn)
-				re_entry_throttle_client->notifier_cb_fn(&notifier_data);
+				if (re_entry_throttle_client->notifier_cb_fn) {
+					rc = re_entry_throttle_client->notifier_cb_fn
+								(&notifier_data);
+					end_ts = ktime_get_ns();
+					d_mpr_h("%s: Client notifier cbk processing time(%llu)ns\n",
+						__func__, end_ts - start_ts);
+
+					if (rc) {
+						d_mpr_e("%s: Client notifier callback failed(%d)\n",
+							__func__,
+							re_entry_throttle_client->clk_src_id);
+					}
+					if ((end_ts - start_ts) > NOTIFY_TIMEOUT)
+						d_mpr_e("%s: Client notifier took %llu ns\n",
+							__func__, (end_ts - start_ts));
+				}
+				list_del(&iter->list);
+				kfree(iter);
 			}
 		}
-		list_del(&iter->list);
-		kfree(iter);
 	}
 	return 0;
 }
 
 static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
-	u32 req_level, u32 clk_val)
+	u32 req_level, u32 clk_val, u32 num_hw_blocks)
 {
 	int rc = 0;
 	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
@@ -692,7 +720,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	}
 
 	if (clk_val) {
-		new_cur = tbl_entry->current_ma[req_level][adj_level];
+		new_cur = tbl_entry->current_ma[req_level][adj_level] * num_hw_blocks;
 	}
 
 	delta_cur = (signed)new_cur - old_cur;
@@ -739,6 +767,21 @@ exit_no_err:
 
 err_invalid_level:
 err_peak_overshoot:
+	return rc;
+}
+
+static bool mmrm_sw_is_valid_num_hw_block(struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
+	struct mmrm_client_data *client_data)
+{
+	bool rc = false;
+	u32 num_hw_blocks = client_data->num_hw_blocks;
+
+	if (num_hw_blocks == 1) {
+		rc = true;
+	} else if  (tbl_entry->clk_src_id == 0x10025) { // CAM_CC_IFE_CSID_CLK_SRC
+		if (num_hw_blocks >= 1 && num_hw_blocks <= 3)
+			rc = true;
+	}
 	return rc;
 }
 
@@ -793,7 +836,8 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	 * d.  reserve  && !req_reserve:  set clk rate
 	 */
 	req_reserve = client_data->flags & MMRM_CLIENT_DATA_FLAG_RESERVE_ONLY;
-	if (tbl_entry->clk_rate == clk_val) {
+	if (tbl_entry->clk_rate == clk_val &&
+				tbl_entry->num_hw_blocks == client_data->num_hw_blocks) {
 		d_mpr_h("%s: csid(0x%x) same as previous clk rate %llu\n",
 			__func__, tbl_entry->clk_src_id, clk_val);
 
@@ -825,11 +869,18 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	} else {
 		req_level = 0;
 	}
+	if (!mmrm_sw_is_valid_num_hw_block(tbl_entry, client_data)) {
+		d_mpr_e("%s: csid(0x%x) num_hw_block:%d\n",
+			__func__, tbl_entry->clk_src_id, client_data->num_hw_blocks);
+		rc = -EINVAL;
+		goto err_invalid_client_data;
+	}
 
 	mutex_lock(&sw_clk_mgr->lock);
 
 	/* check and update for peak current */
-	rc = mmrm_sw_check_peak_current(sinfo, tbl_entry, req_level, clk_val);
+	rc = mmrm_sw_check_peak_current(sinfo, tbl_entry,
+		req_level, clk_val, client_data->num_hw_blocks);
 	if (rc) {
 		d_mpr_e("%s: csid (0x%x) peak overshoot peak_cur(%lu)\n",
 			__func__, tbl_entry->clk_src_id,
@@ -842,6 +893,7 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	tbl_entry->clk_rate = clk_val;
 	tbl_entry->vdd_level = req_level;
 	tbl_entry->reserve = req_reserve;
+	tbl_entry->num_hw_blocks = client_data->num_hw_blocks;
 
 	mutex_unlock(&sw_clk_mgr->lock);
 
@@ -866,7 +918,7 @@ set_clk_rate:
 	}
 
 exit_no_err:
-	d_mpr_h("%s: clk rate %llu set successfully for %s\n",
+	d_mpr_h("%s: clk rate %lu set successfully for %s\n",
 			__func__, clk_val, tbl_entry->name);
 	return rc;
 

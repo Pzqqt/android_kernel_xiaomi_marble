@@ -35,7 +35,7 @@ static int mmrm_sw_vdd_corner[] = {
 };
 
 #define MMRM_SW_CLIENTS_NUM_MAX 35
-extern msm_mmrm_enable_throttle_feature;
+extern u8 msm_mmrm_enable_throttle_feature;
 typedef int (*notifier_callback_fn_t)(
 	struct mmrm_client_notifier_data *notifier_data);
 
@@ -64,6 +64,7 @@ struct mmrm_sw_clk_client_tbl_entry {
 	u32 vdd_level;
 	bool reserve;
 	u32 ref_count;
+	u32 num_hw_blocks;
 };
 
 struct mmrm_sw_throttled_clients_data {
