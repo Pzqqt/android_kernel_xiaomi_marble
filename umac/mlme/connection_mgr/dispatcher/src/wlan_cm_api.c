@@ -344,30 +344,29 @@ void wlan_cm_set_candidate_custom_sort_cb(
 
 #endif
 
-QDF_STATUS wlan_cm_get_rnr(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id,
-			   struct reduced_neighbor_report *rnr)
+struct reduced_neighbor_report *wlan_cm_get_rnr(struct wlan_objmgr_vdev *vdev,
+						wlan_cm_id cm_id)
 {
 	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	struct cm_req *cm_req;
 	struct cnx_mgr *cm_ctx;
 
-	rnr = NULL;
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE) {
 		mlme_err("vdev %d Invalid mode %d",
 			 wlan_vdev_get_id(vdev), op_mode);
-		return QDF_STATUS_E_NOSUPPORT;
+		return NULL;
 	}
 
 	cm_ctx = cm_get_cm_ctx(vdev);
 	if (!cm_ctx)
-		return QDF_STATUS_E_FAILURE;
+		return NULL;
 	cm_req = cm_get_req_by_cm_id(cm_ctx, cm_id);
 	if (!cm_req)
-		return QDF_STATUS_E_FAILURE;
+		return NULL;
 
 	if (cm_req->connect_req.cur_candidate &&
 	    cm_req->connect_req.cur_candidate->entry)
-		rnr = &cm_req->connect_req.cur_candidate->entry->rnr;
+		return &cm_req->connect_req.cur_candidate->entry->rnr;
 
-	return QDF_STATUS_SUCCESS;
+	return NULL;
 }
