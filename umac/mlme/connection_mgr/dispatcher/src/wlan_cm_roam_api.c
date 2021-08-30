@@ -2039,32 +2039,29 @@ QDF_STATUS wlan_get_chan_by_bssid_from_rnr(struct wlan_objmgr_vdev *vdev,
 					   struct qdf_mac_addr *link_addr,
 					   uint8_t *chan, uint8_t *op_class)
 {
-	struct reduced_neighbor_report rnr;
-	QDF_STATUS status;
+	struct reduced_neighbor_report *rnr;
 	int i;
 
 	*chan = 0;
 
-	qdf_mem_zero(&rnr, sizeof(rnr));
+	rnr = wlan_cm_get_rnr(vdev, cm_id);
 
-	status = wlan_cm_get_rnr(vdev, cm_id, &rnr);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("fals to get rnr IE");
-		return status;
+	if (!rnr) {
+		mlme_err("no rnr IE is gotten");
+		return QDF_STATUS_E_EMPTY;
 	}
 
 	for (i = 0; i < MAX_RNR_BSS; i++) {
-		if (!rnr.bss_info[i].channel_number)
+		if (!rnr->bss_info[i].channel_number)
 			continue;
-		if (qdf_is_macaddr_equal(link_addr, &rnr.bss_info[i].bssid)) {
-			*chan = rnr.bss_info[i].channel_number;
-			*op_class = rnr.bss_info[i].operating_class;
+		if (qdf_is_macaddr_equal(link_addr, &rnr->bss_info[i].bssid)) {
+			*chan = rnr->bss_info[i].channel_number;
+			*op_class = rnr->bss_info[i].operating_class;
 			break;
 		}
 	}
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
@@ -2089,32 +2086,29 @@ QDF_STATUS wlan_get_chan_by_link_id_from_rnr(struct wlan_objmgr_vdev *vdev,
 					     uint8_t link_id,
 					     uint8_t *chan, uint8_t *op_class)
 {
-	struct reduced_neighbor_report rnr;
-	QDF_STATUS status;
+	struct reduced_neighbor_report *rnr;
 	int i;
 
 	*chan = 0;
 
-	qdf_mem_zero(&rnr, sizeof(rnr));
+	rnr = wlan_cm_get_rnr(vdev, cm_id);
 
-	status = wlan_cm_get_rnr(vdev, cm_id, &rnr);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_debug("fals to get rnr IE");
-		return status;
+	if (!rnr) {
+		mlme_err("no rnr IE is gotten");
+		return QDF_STATUS_E_EMPTY;
 	}
 
 	for (i = 0; i < MAX_RNR_BSS; i++) {
-		if (!rnr.bss_info[i].channel_number)
+		if (!rnr->bss_info[i].channel_number)
 			continue;
-		if (mlo_rnr_link_id_cmp(&rnr.bss_info[i], link_id)) {
-			*chan = rnr.bss_info[i].channel_number;
-			*op_class = rnr.bss_info[i].operating_class;
+		if (mlo_rnr_link_id_cmp(&rnr->bss_info[i], link_id)) {
+			*chan = rnr->bss_info[i].channel_number;
+			*op_class = rnr->bss_info[i].operating_class;
 			break;
 		}
 	}
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
