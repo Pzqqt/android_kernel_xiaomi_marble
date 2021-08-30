@@ -3205,6 +3205,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		goto err_event_init;
 	}
 
+	qdf_status = qdf_mutex_create(&wma_handle->radio_stats_lock);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		wma_err("Failed to create radio stats mutex");
+		goto err_event_init;
+	}
+
 	qdf_list_create(&wma_handle->wma_hold_req_queue,
 		      MAX_ENTRY_HOLD_REQ_QUEUE);
 	qdf_spinlock_create(&wma_handle->wma_hold_req_q_lock);
@@ -3493,6 +3499,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 
 err_dbglog_init:
+	qdf_status = qdf_mutex_destroy(&wma_handle->radio_stats_lock);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		wma_err("Failed to destroy radio stats mutex");
+
 	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
 	qdf_runtime_lock_deinit(&wma_handle->sap_prevent_runtime_pm_lock);
 	qdf_runtime_lock_deinit(&wma_handle->wmi_cmd_rsp_runtime_lock);
@@ -4542,6 +4552,10 @@ QDF_STATUS wma_close(void)
 	}
 
 	wma_unified_radio_tx_mem_free(wma_handle);
+
+	qdf_status = qdf_mutex_destroy(&wma_handle->radio_stats_lock);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		wma_err("Failed to destroy radio stats mutex");
 
 	if (wma_handle->pdev) {
 		wlan_objmgr_pdev_release_ref(wma_handle->pdev,

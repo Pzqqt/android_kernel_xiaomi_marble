@@ -1830,19 +1830,9 @@ void wma_unified_link_stats_results_mem_free(
 	}
 }
 
-/**
- * wma_unified_radio_tx_mem_free() - Free radio tx power stats memory
- * @handle: WMI handle
- *
- * Return: 0 on success, error number otherwise.
- */
-int wma_unified_radio_tx_mem_free(void *handle)
+
+static int __wma_unified_radio_tx_mem_free(tp_wma_handle wma_handle)
 {
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-
-	if (!wma_handle->link_stats_results)
-		return 0;
-
 	wma_unified_link_stats_results_mem_free(wma_handle->link_stats_results);
 
 	qdf_mem_free(wma_handle->link_stats_results);
@@ -1852,20 +1842,30 @@ int wma_unified_radio_tx_mem_free(void *handle)
 }
 
 /**
- * wma_unified_radio_tx_power_level_stats_event_handler() - tx power level stats
+ * wma_unified_radio_tx_mem_free() - Free radio tx power stats memory
  * @handle: WMI handle
- * @cmd_param_info: command param info
- * @len: Length of @cmd_param_info
- *
- * This is the WMI event handler function to receive radio stats tx
- * power level stats.
  *
  * Return: 0 on success, error number otherwise.
  */
-static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
-			u_int8_t *cmd_param_info, u_int32_t len)
+int wma_unified_radio_tx_mem_free(void *handle)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	int ret;
+
+	if (!wma_handle->link_stats_results)
+		return 0;
+	qdf_mutex_acquire(&wma_handle->radio_stats_lock);
+	ret = __wma_unified_radio_tx_mem_free(wma_handle);
+	qdf_mutex_release(&wma_handle->radio_stats_lock);
+
+	return ret;
+}
+
+static int __wma_unified_radio_tx_power_level_stats_event_handler(
+						tp_wma_handle wma_handle,
+						u_int8_t *cmd_param_info,
+						u_int32_t len)
+{
 	WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID_param_tlvs *param_tlvs;
 	wmi_tx_power_level_stats_evt_fixed_param *fixed_param;
 	uint8_t *tx_power_level_values;
@@ -2012,6 +2012,35 @@ post_stats:
 	return 0;
 }
 
+/**
+ * wma_unified_radio_tx_power_level_stats_event_handler() - tx power level stats
+ * @handle: WMI handle
+ * @cmd_param_info: command param info
+ * @len: Length of @cmd_param_info
+ *
+ * This is the WMI event handler function to receive radio stats tx
+ * power level stats.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+static int wma_unified_radio_tx_power_level_stats_event_handler(
+						void *handle,
+						u_int8_t *cmd_param_info,
+						u_int32_t len)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+	int ret;
+
+	qdf_mutex_acquire(&wma_handle->radio_stats_lock);
+	ret = __wma_unified_radio_tx_power_level_stats_event_handler(
+								wma_handle,
+								cmd_param_info,
+								len);
+	qdf_mutex_release(&wma_handle->radio_stats_lock);
+
+	return ret;
+}
+
 static int wma_copy_chan_stats(uint32_t num_chan,
 			       struct wifi_channel_stats *channels,
 			       struct wifi_radio_stats *rs_results)
@@ -2020,6 +2049,7 @@ static int wma_copy_chan_stats(uint32_t num_chan,
 	struct wifi_channel_stats *channels_in_prev_event =
 							rs_results->channels;
 	if (!rs_results->channels) {
+		wma_debug("Num of channels in first event %d", num_chan);
 		/* It means this is the first event for this radio */
 		rs_results->num_channels = num_chan;
 		rs_results->channels = channels;
@@ -2033,6 +2063,7 @@ static int wma_copy_chan_stats(uint32_t num_chan,
 		return 0;
 	}
 
+	wma_debug("Num of channels in Second event %d", num_chan);
 	rs_results->num_channels += num_chan;
 	rs_results->channels = qdf_mem_malloc(rs_results->num_channels *
 					      sizeof(*channels));
@@ -2055,19 +2086,11 @@ static int wma_copy_chan_stats(uint32_t num_chan,
 	return 0;
 }
 
-/**
- * wma_unified_link_radio_stats_event_handler() - radio link stats event handler
- * @handle:          wma handle
- * @cmd_param_info:  data received with event from fw
- * @len:             length of data
- *
- * Return: 0 for success or error code
- */
-static int wma_unified_link_radio_stats_event_handler(void *handle,
-						      uint8_t *cmd_param_info,
-						      uint32_t len)
+static int
+__wma_unified_link_radio_stats_event_handler(tp_wma_handle wma_handle,
+					     uint8_t *cmd_param_info,
+					     uint32_t len)
 {
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	WMI_RADIO_LINK_STATS_EVENTID_param_tlvs *param_tlvs;
 	wmi_radio_link_stats_event_fixed_param *fixed_param;
 	wmi_radio_link_stats *radio_stats;
@@ -2312,6 +2335,29 @@ link_radio_stats_cb:
 				     mac->sme.ll_stats_context);
 
 	return 0;
+}
+
+/**
+ * wma_unified_link_radio_stats_event_handler() - radio link stats event handler
+ * @handle:          wma handle
+ * @cmd_param_info:  data received with event from fw
+ * @len:             length of data
+ *
+ * Return: 0 for success or error code
+ */
+static int wma_unified_link_radio_stats_event_handler(void *handle,
+						      uint8_t *cmd_param_info,
+						      uint32_t len)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+	int ret;
+
+	qdf_mutex_acquire(&wma_handle->radio_stats_lock);
+	ret = __wma_unified_link_radio_stats_event_handler(wma_handle,
+							   cmd_param_info, len);
+	qdf_mutex_release(&wma_handle->radio_stats_lock);
+
+	return ret;
 }
 
 #ifdef WLAN_PEER_PS_NOTIFICATION
