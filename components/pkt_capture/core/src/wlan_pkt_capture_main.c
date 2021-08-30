@@ -33,6 +33,7 @@
 #include "cdp_txrx_ctrl.h"
 #include "wlan_pkt_capture_tgt_api.h"
 #include <cds_ieee80211_common.h>
+#include "wlan_vdev_mgr_utils_api.h"
 
 static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
 
@@ -1024,7 +1025,9 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	ol_txrx_soc_handle soc;
 	QDF_STATUS status;
 	enum pkt_capture_config config = 0;
-	bool check_enable_beacon = 0;
+	bool check_enable_beacon = 0, send_bcn = 0;
+	struct vdev_mlme_obj *vdev_mlme;
+	uint32_t bcn_interval, nth_beacon_value;
 
 	if (!vdev) {
 		pkt_capture_err("vdev is NULL");
@@ -1080,9 +1083,14 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 			frame_filter.ctrl_rx_frame_filter;
 
 	if (frame_filter.vendor_attr_to_set &
-	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_CONNECTED_BEACON_INTERVAL))
-		vdev_priv->frame_filter.connected_beacon_interval =
-			frame_filter.connected_beacon_interval;
+	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_CONNECTED_BEACON_INTERVAL)) {
+		if (frame_filter.connected_beacon_interval !=
+		    vdev_priv->frame_filter.connected_beacon_interval) {
+			vdev_priv->frame_filter.connected_beacon_interval =
+				frame_filter.connected_beacon_interval;
+			send_bcn = 1;
+		}
+	}
 
 	if (vdev_priv->frame_filter.mgmt_tx_frame_filter)
 		mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
@@ -1144,5 +1152,33 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 		}
 	}
 
+	if (send_bcn) {
+		vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(
+							vdev,
+							WLAN_UMAC_COMP_MLME);
+
+		if (!vdev_mlme)
+			return QDF_STATUS_E_FAILURE;
+
+		wlan_util_vdev_mlme_get_param(vdev_mlme,
+					      WLAN_MLME_CFG_BEACON_INTERVAL,
+					      &bcn_interval);
+
+		if (bcn_interval) {
+			nth_beacon_value =
+				vdev_priv->
+				frame_filter.connected_beacon_interval /
+				bcn_interval;
+
+			status = tgt_pkt_capture_send_beacon_interval(
+							vdev,
+							nth_beacon_value);
+
+			if (QDF_IS_STATUS_ERROR(status)) {
+				pkt_capture_err("send beacon interval fail");
+				return status;
+			}
+		}
+	}
 	return QDF_STATUS_SUCCESS;
 }

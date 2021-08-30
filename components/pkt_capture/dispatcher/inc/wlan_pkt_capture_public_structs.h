@@ -110,6 +110,10 @@ struct wlan_pkt_capture_tx_ops {
 				(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id,
 				 enum pkt_capture_config config);
+	QDF_STATUS (*pkt_capture_send_beacon_interval)
+				(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 uint32_t nth_value);
 };
 
 /**
