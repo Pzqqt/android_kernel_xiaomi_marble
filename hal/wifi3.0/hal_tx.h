@@ -553,7 +553,7 @@ static inline uint32_t hal_tx_comp_get_buffer_type(void *hal_desc)
 		HAL_TX_COMP_BUFFER_OR_DESC_TYPE_LSB;
 }
 
-#if defined(QCA_WIFI_WCN7850) || defined(CONFIG_WIFI_EMULATION_WIFI_3_0)
+#ifdef QCA_WIFI_WCN7850
 /**
  * hal_tx_comp_get_buffer_source() - Get buffer release source value
  * @hal_desc: completion ring descriptor pointer
