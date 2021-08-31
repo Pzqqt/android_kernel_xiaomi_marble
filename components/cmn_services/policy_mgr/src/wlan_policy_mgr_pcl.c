@@ -2739,3 +2739,87 @@ QDF_STATUS policy_mgr_filter_passive_ch(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+bool policy_mgr_is_3rd_conn_on_same_band_allowed(struct wlan_objmgr_psoc *psoc,
+						 enum policy_mgr_con_mode mode)
+{
+	enum policy_mgr_pcl_type pcl = PM_NONE;
+	enum policy_mgr_conc_priority_mode conc_system_pref = 0;
+	enum policy_mgr_two_connection_mode third_index = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool ret = false;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("context is NULL");
+			return false;
+	}
+
+	policy_mgr_debug("pref:%d requested mode:%d",
+			 pm_ctx->cur_conc_system_pref, mode);
+
+	switch (pm_ctx->cur_conc_system_pref) {
+	case 0:
+		conc_system_pref = PM_THROUGHPUT;
+		break;
+	case 1:
+		conc_system_pref = PM_POWERSAVE;
+		break;
+	case 2:
+		conc_system_pref = PM_LATENCY;
+		break;
+	default:
+		policy_mgr_err("unknown cur_conc_system_pref value %d",
+			       pm_ctx->cur_conc_system_pref);
+		break;
+	}
+
+	third_index = policy_mgr_get_third_connection_pcl_table_index(psoc);
+	if (PM_MAX_TWO_CONNECTION_MODE == third_index) {
+		policy_mgr_err(
+			"couldn't find index for 3rd connection pcl table");
+			return false;
+	}
+	if (policy_mgr_is_hw_dbs_capable(psoc) == true) {
+		pcl = (*third_connection_pcl_dbs_table)
+			[third_index][mode][conc_system_pref];
+	} else {
+		pcl = (*third_connection_pcl_non_dbs_table)
+			[third_index][mode][conc_system_pref];
+	}
+
+	policy_mgr_debug("pcl for third connection is %d", pcl);
+	switch (pcl) {
+	case PM_SCC_CH:
+	case PM_SCC_CH_24G:
+	case PM_SCC_CH_5G:
+	case PM_24G_SCC_CH:
+	case PM_5G_SCC_CH:
+	case PM_SCC_ON_5_SCC_ON_24_24G:
+	case PM_SCC_ON_5_SCC_ON_24_5G:
+	case PM_SCC_ON_24_SCC_ON_5_24G:
+	case PM_SCC_ON_24_SCC_ON_5_5G:
+	case PM_SCC_ON_5_SCC_ON_24:
+	case PM_SCC_ON_24_SCC_ON_5:
+	case PM_24G_SCC_CH_SBS_CH:
+	case PM_24G_SCC_CH_SBS_CH_5G:
+	case PM_SBS_CH_24G_SCC_CH:
+	case PM_SBS_CH_SCC_CH_24G:
+	case PM_SCC_CH_SBS_CH_24G:
+	case PM_SBS_CH_SCC_CH_5G_24G:
+	case PM_SCC_CH_MCC_CH_SBS_CH_24G:
+	case PM_MCC_CH:
+	case PM_MCC_CH_24G:
+	case PM_MCC_CH_5G:
+	case PM_24G_MCC_CH:
+	case PM_5G_MCC_CH:
+	case PM_24G_SBS_CH_MCC_CH:
+		ret = true;
+		break;
+	default:
+		policy_mgr_debug("Not in SCC case");
+		ret = false;
+		break;
+	}
+	return ret;
+}
