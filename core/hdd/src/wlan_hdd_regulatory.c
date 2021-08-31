@@ -1603,9 +1603,8 @@ static void hdd_restart_sap_with_new_phymode(struct hdd_context *hdd_ctx,
 		hdd_err("SAP Stop Bss fail");
 		return;
 	}
-	status = qdf_wait_for_event_completion(
-					&hostapd_state->qdf_stop_bss_event,
-					SME_CMD_STOP_BSS_TIMEOUT);
+	status = qdf_wait_single_event(&hostapd_state->qdf_stop_bss_event,
+				       SME_CMD_STOP_BSS_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("SAP Stop timeout");
 		return;

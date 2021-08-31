@@ -7570,7 +7570,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 				qdf_event_reset(&hostapd_state->
 						qdf_stop_bss_event);
-				status = qdf_wait_for_event_completion(
+				status = qdf_wait_single_event(
 					&hostapd_state->qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 				if (QDF_IS_STATUS_ERROR(status)) {
@@ -15790,7 +15790,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(hdd_ap_ctx->
 							sap_context)) {
-			qdf_status = qdf_wait_for_event_completion(&hostapd_state->
+			qdf_status = qdf_wait_single_event(&hostapd_state->
 					qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -18200,9 +18200,8 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
-			qdf_status =
-				qdf_wait_for_event_completion(&hostapd_state->
-					qdf_stop_bss_event,
+			qdf_status = qdf_wait_single_event(
+					&hostapd_state->qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
