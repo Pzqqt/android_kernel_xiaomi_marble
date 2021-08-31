@@ -7101,6 +7101,8 @@ wlan_hdd_wifi_test_config_policy[
 			= {.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BSS_MAX_IDLE_PERIOD] = {
 			.type = NLA_U16},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ER_SU_PPDU_TYPE] = {
+			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_PUNCTURED_PREAMBLE_RX] = {
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX] = {
@@ -10608,6 +10610,54 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		cfg_val = nla_get_u8(tb[cmd_id]);
 		hdd_info("RU 242 tone Tx enable: %d", cfg_val);
 		sme_set_ru_242_tone_tx_cfg(hdd_ctx->mac_handle, cfg_val);
+		if (cfg_val)
+			hdd_update_channel_width(
+					adapter, eHT_CHANNEL_WIDTH_20MHZ,
+					WNI_CFG_CHANNEL_BONDING_MODE_DISABLE);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ER_SU_PPDU_TYPE;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("EU SU PPDU type Tx enable: %d", cfg_val);
+		if (cfg_val) {
+			hdd_update_channel_width(
+					adapter, eHT_CHANNEL_WIDTH_20MHZ,
+					WNI_CFG_CHANNEL_BONDING_MODE_DISABLE);
+			hdd_set_tx_stbc(adapter, 0);
+			hdd_set_11ax_rate(adapter, 0x400, NULL);
+			status = wma_cli_set_command(adapter->vdev_id,
+					WMI_VDEV_PARAM_HE_RANGE_EXT,
+					1, VDEV_CMD);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_err("failed to set HE_RANGE_EXT, %d",
+					status);
+			status = wma_cli_set_command(adapter->vdev_id,
+					WMI_VDEV_PARAM_NON_DATA_HE_RANGE_EXT,
+					1, VDEV_CMD);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_err("fail to set NON_DATA_HE_RANGE_EXT %d",
+					status);
+		} else {
+			hdd_update_channel_width(
+					adapter, eHT_CHANNEL_WIDTH_80MHZ,
+					WNI_CFG_CHANNEL_BONDING_MODE_ENABLE);
+			hdd_set_tx_stbc(adapter, 1);
+			hdd_set_11ax_rate(adapter, 0xFFFF, NULL);
+			status = wma_cli_set_command(adapter->vdev_id,
+					WMI_VDEV_PARAM_HE_RANGE_EXT,
+					0, VDEV_CMD);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_err("failed to set HE_RANGE_EXT, %d",
+					status);
+			status = wma_cli_set_command(adapter->vdev_id,
+					WMI_VDEV_PARAM_NON_DATA_HE_RANGE_EXT,
+					0, VDEV_CMD);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_err("fail to set NON_DATA_HE_RANGE_EXT %d",
+					status);
+		}
+
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FT_REASSOCREQ_RSNXE_USED;
