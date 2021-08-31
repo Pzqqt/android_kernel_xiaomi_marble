@@ -7095,6 +7095,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_NESTED},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TWT_REQ_SUPPORT] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BSS_MAX_IDLE_PERIOD_ENABLE] = {
+			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_PMF_PROTECTION] = {
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISABLE_DATA_MGMT_RSP_TX]
@@ -9996,6 +9998,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	bool bval = false;
 	uint8_t value = 0;
 	uint8_t wmm_mode = 0;
+	uint32_t bss_max_idle_period = 0;
 	uint32_t cmd_id;
 	struct keep_alive_req keep_alive_req = {0};
 	struct set_wfatest_params wfa_param = {0};
@@ -10596,6 +10599,18 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		sme_set_bss_max_idle_period(hdd_ctx->mac_handle, cfg_val);
 	}
 
+	cmd_id =
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BSS_MAX_IDLE_PERIOD_ENABLE;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		if (cfg_val)
+			ucfg_mlme_get_sta_keep_alive_period(
+							hdd_ctx->psoc,
+							&bss_max_idle_period);
+		hdd_debug("bss max idle period %d", bss_max_idle_period);
+		sme_set_bss_max_idle_period(hdd_ctx->mac_handle,
+					    bss_max_idle_period);
+	}
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX;
 	if (tb[cmd_id]) {
 		hdd_info("Send disassoc mgmt frame");
