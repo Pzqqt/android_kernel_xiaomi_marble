@@ -643,7 +643,8 @@ void lim_fill_ft_session(struct mac_context *mac,
 	}
 	ft_session->htSupportedChannelWidthSet =
 	    (pBeaconStruct->HTInfo.present) ?
-	    (cbEnabledMode && pBeaconStruct->HTInfo.recommendedTxWidthSet) : 0;
+	    (cbEnabledMode && pBeaconStruct->HTInfo.recommendedTxWidthSet &&
+	     pBeaconStruct->HTCaps.supportedChannelWidthSet) : 0;
 	ft_session->htRecommendedTxWidthSet =
 		ft_session->htSupportedChannelWidthSet;
 
