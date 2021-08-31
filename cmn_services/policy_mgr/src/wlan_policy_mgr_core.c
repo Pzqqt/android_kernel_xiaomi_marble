@@ -2993,35 +2993,37 @@ bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * policy_mgr_is_multi_ap_plus_sta_3vif_conc() - Check multiple AP plus STA
- * concurrency
- * @mode1: policy_mgr_con_mode of connection 1
- * @mode2: policy_mgr_con_mode of connection 2
- * @mode2: policy_mgr_con_mode of connection 3
+ * policy_mgr_is_3rd_conn_on_same_band() - Check whether 3rd connection is on
+ * same band or not
+ * @ch_freq: channel frequency
  *
- * Check the 3vif concurrency is SAP(GO)+SAP(GO)+STA or not based on
- * connection mode.
+ * Check the existing two connection are in same band or not. If it is in
+ * same band then check the 3rd connection is also in same band or not
  *
  * Return: True/False
  */
-static bool policy_mgr_is_multi_ap_plus_sta_3vif_conc(
-	enum policy_mgr_con_mode mode1, enum policy_mgr_con_mode mode2,
-	enum policy_mgr_con_mode mode3)
+static bool policy_mgr_is_3rd_conn_on_same_band(uint32_t ch_freq)
 {
-	if (mode1 == PM_STA_MODE &&
-	    (mode2 == PM_SAP_MODE || mode2 == PM_P2P_GO_MODE) &&
-	    (mode3 == PM_SAP_MODE || mode3 == PM_P2P_GO_MODE))
-		return true;
-	if (mode2 == PM_STA_MODE &&
-	    (mode1 == PM_SAP_MODE || mode1 == PM_P2P_GO_MODE) &&
-	    (mode3 == PM_SAP_MODE || mode3 == PM_P2P_GO_MODE))
-		return true;
-	if (mode3 == PM_STA_MODE &&
-	    (mode1 == PM_SAP_MODE || mode1 == PM_P2P_GO_MODE) &&
-	    (mode2 == PM_SAP_MODE || mode2 == PM_P2P_GO_MODE))
-		return true;
+	bool ret = false;
 
-	return false;
+	if (((WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) &&
+	    (WLAN_REG_IS_24GHZ_CH_FREQ
+	    (pm_conc_connection_list[0].freq)) &&
+	    (WLAN_REG_IS_24GHZ_CH_FREQ
+	    (pm_conc_connection_list[1].freq))) ||
+	    (((WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) ||
+	    (WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq))) &&
+	    ((WLAN_REG_IS_5GHZ_CH_FREQ
+	    (pm_conc_connection_list[0].freq)) ||
+	    (WLAN_REG_IS_6GHZ_CHAN_FREQ
+	    (pm_conc_connection_list[0].freq))) &&
+	    ((WLAN_REG_IS_5GHZ_CH_FREQ
+	    (pm_conc_connection_list[1].freq)) ||
+	    (WLAN_REG_IS_6GHZ_CHAN_FREQ
+	    (pm_conc_connection_list[1].freq))))) {
+		ret = true;
+	}
+	return ret;
 }
 
 /**
@@ -3097,16 +3099,8 @@ bool policy_mgr_allow_new_home_channel(
 					policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
 					status = false;
 				}
-			} else if (((WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) &&
-				   (WLAN_REG_IS_24GHZ_CH_FREQ
-				   (pm_conc_connection_list[0].freq)) &&
-				   (WLAN_REG_IS_24GHZ_CH_FREQ
-				   (pm_conc_connection_list[1].freq))) ||
-				   ((WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) &&
-				   (WLAN_REG_IS_5GHZ_CH_FREQ
-				   (pm_conc_connection_list[0].freq)) &&
-				   (WLAN_REG_IS_5GHZ_CH_FREQ
-				   (pm_conc_connection_list[1].freq)))) {
+			} else if (policy_mgr_is_3rd_conn_on_same_band(
+				   ch_freq)) {
 				policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
 				status = false;
 			}
@@ -3132,12 +3126,10 @@ bool policy_mgr_allow_new_home_channel(
 				 * and therefore a 3rd connection with the
 				 * same MAC is possible.
 				 */
-			} else if (wlan_reg_is_same_band_freqs(ch_freq,
-					pm_conc_connection_list[0].freq) &&
-				   policy_mgr_is_multi_ap_plus_sta_3vif_conc(
-					pm_conc_connection_list[0].mode,
-					pm_conc_connection_list[1].mode,
-					mode)) {
+			} else if (policy_mgr_is_3rd_conn_on_same_band(
+				   ch_freq) &&
+				   !(policy_mgr_is_3rd_conn_on_same_band_allowed(
+				   psoc, mode))) {
 				policy_mgr_rl_debug("don't allow 3rd home channel on same MAC - sta existing");
 				status = false;
 			}
