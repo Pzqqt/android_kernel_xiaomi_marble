@@ -3858,7 +3858,7 @@ QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
 	QDF_STATUS status;
 
 	if (!msg || !msg->bodyptr) {
-		mlme_err("msg or msg->bodyptr is NULL");
+		pe_err("msg or msg->bodyptr is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3871,7 +3871,22 @@ QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
 	return status;
 }
 
+static void lim_process_disconnect_sta(struct pe_session *session,
+				       struct scheduler_msg *msg)
+{
+	if (QDF_IS_STATUS_SUCCESS(
+	    wlan_vdev_is_restart_progress(session->vdev)))
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_RESTART_REQ_FAIL,
+					      sizeof(*msg), msg);
+	else
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_DOWN,
+					      sizeof(*msg), msg);
+}
+
 static void lim_prepare_and_send_deauth(struct mac_context *mac_ctx,
+					struct pe_session *pe_session,
 					struct wlan_cm_vdev_discon_req *req)
 {
 	struct scheduler_msg msg = {0};
@@ -3880,13 +3895,15 @@ static void lim_prepare_and_send_deauth(struct mac_context *mac_ctx,
 	deauth_req.messageType = eWNI_SME_DEAUTH_REQ;
 	deauth_req.length = sizeof(deauth_req);
 	deauth_req.vdev_id = req->req.vdev_id;
-	deauth_req.bssid = req->req.bssid;
+	qdf_mem_copy(deauth_req.bssid.bytes, pe_session->bssId,
+		     QDF_MAC_ADDR_SIZE);
+	deauth_req.bssid = deauth_req.bssid;
 	deauth_req.peer_macaddr = req->req.bssid;
 	deauth_req.reasonCode = req->req.reason_code;
 
 	msg.bodyptr = &deauth_req;
 	msg.type = eWNI_SME_DEAUTH_REQ;
-	lim_process_sme_deauth_req(mac_ctx, &msg);
+	lim_process_disconnect_sta(pe_session, &msg);
 }
 
 static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
@@ -3899,8 +3916,9 @@ static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
 	disassoc_req.messageType = eWNI_SME_DISASSOC_REQ;
 	disassoc_req.length = sizeof(disassoc_req);
 	disassoc_req.sessionId = req->req.vdev_id;
-	disassoc_req.bssid = req->req.bssid;
-	disassoc_req.peer_macaddr = req->req.bssid;
+	qdf_mem_copy(disassoc_req.bssid.bytes, pe_session->bssId,
+		     QDF_MAC_ADDR_SIZE);
+	disassoc_req.peer_macaddr = disassoc_req.bssid;
 	disassoc_req.reasonCode = req->req.reason_code;
 	if (req->req.reason_code == REASON_FW_TRIGGERED_ROAM_FAILURE) {
 		disassoc_req.process_ho_fail = true;
@@ -3913,7 +3931,7 @@ static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
 
 	msg.bodyptr = &disassoc_req;
 	msg.type = eWNI_SME_DISASSOC_REQ;
-	lim_process_sme_disassoc_req(mac_ctx, &msg);
+	lim_process_disconnect_sta(pe_session, &msg);
 }
 
 static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
@@ -3938,7 +3956,7 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 		/* fallthrough */
 	case REASON_PREV_AUTH_NOT_VALID:
 	case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
-		lim_prepare_and_send_deauth(mac_ctx, req);
+		lim_prepare_and_send_deauth(mac_ctx, pe_session, req);
 		break;
 	case REASON_DEAUTH_NETWORK_LEAVING:
 		wlan_mlme_get_enable_deauth_to_disassoc_map(
@@ -3949,7 +3967,7 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 			return lim_prepare_and_send_disassoc(mac_ctx,
 							     pe_session, req);
 		}
-		lim_prepare_and_send_deauth(mac_ctx, req);
+		lim_prepare_and_send_deauth(mac_ctx, pe_session, req);
 		break;
 	default:
 		/* Set reason REASON_UNSPEC_FAILURE for prop disassoc */
@@ -3968,24 +3986,66 @@ static void lim_process_sb_disconnect_req(struct mac_context *mac_ctx,
 
 	if (pe_session->limSmeState == eLIM_SME_WT_DEAUTH_STATE)
 		disassoc_cnf.messageType = eWNI_SME_DEAUTH_CNF;
-	else if (pe_session->limSmeState == eLIM_SME_WT_DISASSOC_STATE)
+	else
 		disassoc_cnf.messageType = eWNI_SME_DISASSOC_CNF;
 	disassoc_cnf.vdev_id = req->req.vdev_id;
-	disassoc_cnf.bssid = req->req.bssid;
+	qdf_mem_copy(disassoc_cnf.bssid.bytes, pe_session->bssId,
+		     QDF_MAC_ADDR_SIZE);
 	disassoc_cnf.length = sizeof(disassoc_cnf);
-	disassoc_cnf.peer_macaddr = req->req.bssid;
+	disassoc_cnf.peer_macaddr = disassoc_cnf.bssid;
 
 	msg.bodyptr = &disassoc_cnf;
 	msg.type = disassoc_cnf.messageType;
-	lim_process_sme_disassoc_cnf(mac_ctx, &msg);
+	lim_process_disconnect_sta(pe_session, &msg);
 }
 
+static
+struct pe_session *lim_get_disconnect_session(struct mac_context *mac_ctx,
+					struct wlan_cm_vdev_discon_req *req)
+{
+	struct pe_session *session;
+	uint8_t pe_session_id;
+
+	/* Try to find pe session with bssid */
+	session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
+					   &pe_session_id);
+	/*
+	 * If bssid search fail try to find by vdev id, this can happen if
+	 * Roaming change the BSSID during disconnect was getting processed.
+	 */
+	if (!session) {
+		session = pe_find_session_by_vdev_id(mac_ctx, req->req.vdev_id);
+		if (session)
+			pe_info("vdev_id %d cm_id 0x%x: using vdev id, session (%d) found for bssid " QDF_MAC_ADDR_FMT " [bssid in req " QDF_MAC_ADDR_FMT "] sme state %d mlm state %d",
+				req->req.vdev_id, req->cm_id, session->peSessionId,
+				QDF_MAC_ADDR_REF(session->bssId),
+				QDF_MAC_ADDR_REF(req->req.bssid.bytes),
+				session->limSmeState, session->limMlmState);
+	}
+
+	/*
+	 * In LFR2.0 roaming scenario, if HO disconnect is completed but
+	 * NB disconnect is received before reassoc can start OR reassoc failure
+	 * lead to disconnect, new AP's session will be idle in wait reassoc
+	 * state and vdev in INIT state, so cleanup the session and send
+	 * responce of disconnect complete.
+	 */
+	if (session &&
+	    QDF_IS_STATUS_SUCCESS(wlan_vdev_mlme_is_init_state(session->vdev))) {
+		pe_err("vdev_id %d cm_id 0x%x: sme state %d mlm state %d: vdev is in INIT state. Delete session",
+		       req->req.vdev_id, req->cm_id, session->limSmeState,
+		       session->limMlmState);
+		pe_delete_session(mac_ctx, session);
+		session = NULL;
+	}
+
+	return session;
+}
 static QDF_STATUS
 lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 {
 	struct mac_context *mac_ctx;
 	struct pe_session *pe_session;
-	uint8_t pe_session_id;
 
 	if (!req)
 		return QDF_STATUS_E_INVAL;
@@ -3994,24 +4054,11 @@ lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
 
-	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
-					      &pe_session_id);
+	pe_session = lim_get_disconnect_session(mac_ctx, req);
 	if (!pe_session) {
-		pe_err("vdev_id %d cm_id 0x%x: Session not found for bssid "
-		       QDF_MAC_ADDR_FMT, req->req.vdev_id, req->cm_id,
+		pe_err("vdev_id %d cm_id 0x%x: bssid " QDF_MAC_ADDR_FMT " : no session found",
+		       req->req.vdev_id, req->cm_id,
 		       QDF_MAC_ADDR_REF(req->req.bssid.bytes));
-		/* Check for preauth node to cleanup */
-		pe_session =
-			pe_find_session_by_vdev_id(mac_ctx, req->req.vdev_id);
-		if (pe_session &&
-		    pe_session->limSmeState == eLIM_SME_WT_REASSOC_STATE) {
-			pe_err("Deleting Preauth session(%d) vdev %d bssid "
-			       QDF_MAC_ADDR_FMT, pe_session->peSessionId,
-			       pe_session->vdev_id,
-			       QDF_MAC_ADDR_REF(pe_session->bssId));
-			pe_delete_session(mac_ctx, pe_session);
-			pe_session = NULL;
-		}
 		lim_cm_send_disconnect_rsp(mac_ctx, req->req.vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -5126,20 +5173,20 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 				smeDisassocReq.bssid.bytes,
 				&sessionId);
 	if (!pe_session) {
-		pe_err("session does not exist for given bssId "
-			   QDF_MAC_ADDR_FMT,
-			QDF_MAC_ADDR_REF(smeDisassocReq.bssid.bytes));
+		pe_err("session does not exist for bssid " QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(smeDisassocReq.bssid.bytes));
 		retCode = eSIR_SME_INVALID_PARAMETERS;
 		disassocTrigger = eLIM_HOST_DISASSOC;
 		goto sendDisassoc;
 	}
-	pe_debug("vdev %d (session %d) Systemrole %d Reason: %u SmeState: %d limMlmState %d ho fail %d  send OTA %d from: "
-		 QDF_MAC_ADDR_FMT, pe_session->vdev_id, pe_session->peSessionId,
-		 GET_LIM_SYSTEM_ROLE(pe_session), smeDisassocReq.reasonCode,
+	pe_debug("vdev %d (%d) opmode %d Reason: %u SmeState: %d limMlmState %d ho fail %d send OTA %d to: " QDF_MAC_ADDR_FMT " bssid " QDF_MAC_ADDR_FMT,
+		 pe_session->vdev_id, pe_session->peSessionId,
+		 pe_session->opmode, smeDisassocReq.reasonCode,
 		 pe_session->limSmeState, pe_session->limMlmState,
 		 smeDisassocReq.process_ho_fail,
 		 smeDisassocReq.doNotSendOverTheAir,
-		 QDF_MAC_ADDR_REF(smeDisassocReq.peer_macaddr.bytes));
+		 QDF_MAC_ADDR_REF(smeDisassocReq.peer_macaddr.bytes),
+		 QDF_MAC_ADDR_REF(smeDisassocReq.bssid.bytes));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_REQ_EVENT, pe_session,
@@ -5303,7 +5350,8 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 				smeDisassocCnf.bssid.bytes,
 				&sessionId);
 	if (!pe_session) {
-		pe_err("session does not exist for given bssId");
+		pe_err("session does not exist for bssid " QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(smeDisassocCnf.bssid.bytes));
 		status = lim_prepare_disconnect_done_ind(mac, &msg,
 						smeDisassocCnf.vdev_id,
 						eSIR_SME_INVALID_SESSION,
@@ -5337,6 +5385,12 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 				      pe_session,
 				      (uint16_t)smeDisassocCnf.status_code, 0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+	pe_debug("vdev %d (%d) opmode %d SmeState: %d limMlmState %d from: " QDF_MAC_ADDR_FMT " bssid " QDF_MAC_ADDR_FMT,
+		 pe_session->vdev_id, pe_session->peSessionId,
+		 pe_session->opmode, pe_session->limSmeState,
+		 pe_session->limMlmState,
+		 QDF_MAC_ADDR_REF(smeDisassocCnf.peer_macaddr.bytes),
+		 QDF_MAC_ADDR_REF(smeDisassocCnf.bssid.bytes));
 
 	switch (GET_LIM_SYSTEM_ROLE(pe_session)) {
 	case eLIM_STA_ROLE:
@@ -5462,7 +5516,8 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 					sme_deauth_req.bssid.bytes,
 					&session_id);
 	if (!session_entry) {
-		pe_err("session does not exist for given bssId");
+		pe_err("session does not exist for bssid " QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(sme_deauth_req.bssid.bytes));
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
 		deauth_trigger = eLIM_HOST_DEAUTH;
 		goto send_deauth;
@@ -5477,11 +5532,13 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 		deauth_trigger = eLIM_HOST_DEAUTH;
 		goto send_deauth;
 	}
-	pe_debug("vdev %d (session %d) Systemrole %d reasoncode %u limSmestate %d limMlmState %d from "
-		 QDF_MAC_ADDR_FMT, vdev_id, session_entry->peSessionId,
-		 GET_LIM_SYSTEM_ROLE(session_entry), sme_deauth_req.reasonCode,
+	pe_debug("vdev %d (%d) opmode %d reasoncode %u limSmestate %d limMlmState %d to " QDF_MAC_ADDR_FMT " bssid " QDF_MAC_ADDR_FMT,
+		 vdev_id, session_entry->peSessionId,
+		 session_entry->opmode, sme_deauth_req.reasonCode,
 		 session_entry->limSmeState, session_entry->limMlmState,
-		 QDF_MAC_ADDR_REF(sme_deauth_req.peer_macaddr.bytes));
+		 QDF_MAC_ADDR_REF(sme_deauth_req.peer_macaddr.bytes),
+		 QDF_MAC_ADDR_REF(sme_deauth_req.bssid.bytes));
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_DEAUTH_REQ_EVENT,
 			session_entry, 0, sme_deauth_req.reasonCode);
@@ -7375,7 +7432,8 @@ QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 			qdf_mem_free(data);
 		return QDF_STATUS_E_INVAL;
 	}
-	pe_debug("VDEV Manager disconnect bss callback type:(%d)", msg->type);
+	pe_debug("Vdev %d: disconnect bss callback type:(%d)",
+		 wlan_vdev_get_id(vdev_mlme->vdev), msg->type);
 
 	switch (msg->type) {
 	case eWNI_SME_DEAUTH_REQ:
@@ -7392,23 +7450,10 @@ QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 					       (uint32_t *)msg->bodyptr);
 		break;
 	default:
-		pe_debug("Wrong message type received %d", msg->type);
+		pe_err("Vdev %d Wrong message type received %d",
+		       wlan_vdev_get_id(vdev_mlme->vdev), msg->type);
 	}
 	return QDF_STATUS_SUCCESS;
-}
-
-static void lim_process_disconnect_sta(struct pe_session *session,
-				       struct scheduler_msg *msg)
-{
-	if (QDF_IS_STATUS_SUCCESS(
-	    wlan_vdev_is_restart_progress(session->vdev)))
-		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-					      WLAN_VDEV_SM_EV_RESTART_REQ_FAIL,
-					      sizeof(*msg), msg);
-	else
-		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-					      WLAN_VDEV_SM_EV_DOWN,
-					      sizeof(*msg), msg);
 }
 
 static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
@@ -7441,11 +7486,7 @@ static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (LIM_IS_STA_ROLE(session))
-		lim_process_disconnect_sta(session, msg);
-	else
-		__lim_process_sme_disassoc_cnf(mac_ctx,
-					       (uint32_t *)msg->bodyptr);
+	__lim_process_sme_disassoc_cnf(mac_ctx, (uint32_t *)msg->bodyptr);
 }
 
 static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
@@ -7472,28 +7513,7 @@ static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 		return;
 	}
 
-	/* In LFR2.0 roaming scenario, if association is not completed with
-	 * new AP, there is possibality of trying to send disassoc in
-	 * failure handling. So, if vdev is in INIT state send
-	 * disassoc failure and cleanup session.
-	 */
-	if (QDF_IS_STATUS_SUCCESS(
-		wlan_vdev_mlme_is_init_state(session->vdev))) {
-		pe_err("vdev is in INIT state. Send failure.");
-		lim_send_sme_disassoc_ntf(mac_ctx,
-					  disassoc_req.peer_macaddr.bytes,
-					  eSIR_SME_INVALID_PARAMETERS,
-					  eLIM_HOST_DISASSOC, 1,
-					  disassoc_req.sessionId, session);
-
-		return;
-	}
-
-	if (LIM_IS_STA_ROLE(session))
-		lim_process_disconnect_sta(session, msg);
-	else
-		__lim_process_sme_disassoc_req(mac_ctx,
-					       (uint32_t *)msg->bodyptr);
+	__lim_process_sme_disassoc_req(mac_ctx, (uint32_t *)msg->bodyptr);
 }
 
 static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
@@ -7520,22 +7540,7 @@ static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (QDF_IS_STATUS_SUCCESS(
-		wlan_vdev_mlme_is_init_state(session->vdev))) {
-		pe_err("vdev is in INIT state. Send failure.");
-		lim_send_sme_deauth_ntf(mac_ctx,
-					sme_deauth_req.peer_macaddr.bytes,
-					eSIR_SME_INVALID_PARAMETERS,
-					eLIM_HOST_DEAUTH, 1,
-					sme_deauth_req.vdev_id);
-		return;
-	}
-
-	if (LIM_IS_STA_ROLE(session))
-		lim_process_disconnect_sta(session, msg);
-	else
-		__lim_process_sme_deauth_req(mac_ctx,
-					     (uint32_t *)msg->bodyptr);
+	__lim_process_sme_deauth_req(mac_ctx, (uint32_t *)msg->bodyptr);
 }
 
 /**
