@@ -2274,6 +2274,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 wma_tx_dwnld_comp_callback tx_frm_download_comp_cb,
 			 void *pData,
 			 wma_tx_ota_comp_callback tx_frm_ota_comp_cb,
+			 struct mgmt_frame_data *ota_comp_data,
 			 uint8_t tx_flag, uint8_t vdev_id, bool tdls_flag,
 			 uint16_t channel_freq, enum rateid rid,
 			 int8_t peer_rssi)
@@ -2604,6 +2605,13 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		} else {
 			tx_frm_index =
 				GENERIC_NODOWNLD_NOACK_COMP_INDEX;
+		}
+
+		if (ota_comp_data) {
+			wma_handle->is_mgmt_data_valid = true;
+			wma_handle->mgmt_data = *ota_comp_data;
+		} else {
+			wma_handle->is_mgmt_data_valid = false;
 		}
 	}
 

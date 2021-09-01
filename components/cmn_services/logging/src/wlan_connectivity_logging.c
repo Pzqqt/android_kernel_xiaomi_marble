@@ -24,7 +24,6 @@
 #include "wlan_mlme_main.h"
 #include "wlan_connectivity_logging.h"
 
-#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
 static struct wlan_connectivity_log_buf_data global_cl;
 
 static void
@@ -72,7 +71,42 @@ void wlan_connectivity_logging_stop(void)
 	vfree(global_cl.head);
 	global_cl.head = NULL;
 }
-#endif
+
+void
+wlan_connectivity_mgmt_event(struct wlan_frame_hdr *mac_hdr,
+			     uint8_t vdev_id, uint16_t status_code,
+			     enum qdf_dp_tx_rx_status tx_status,
+			     int8_t peer_rssi,
+			     uint8_t auth_algo, uint8_t auth_type,
+			     uint8_t auth_seq, enum wlan_main_tag tag)
+{
+	struct wlan_log_record *new_rec;
+
+	new_rec = qdf_mem_malloc(sizeof(*new_rec));
+	if (!new_rec)
+		return;
+
+	new_rec->timestamp_us = qdf_get_time_of_the_day_us();
+	new_rec->vdev_id = vdev_id;
+	new_rec->log_subtype = tag;
+	qdf_copy_macaddr(&new_rec->bssid,
+			 (struct qdf_mac_addr *)&mac_hdr->i_addr3[0]);
+
+	new_rec->pkt_info.tx_status = tx_status;
+	new_rec->pkt_info.rssi = peer_rssi;
+	new_rec->pkt_info.seq_num =
+		(le16toh(*(uint16_t *)mac_hdr->i_seq) >> WLAN_SEQ_SEQ_SHIFT);
+	new_rec->pkt_info.frame_status_code = status_code;
+	new_rec->pkt_info.auth_algo = auth_algo;
+	new_rec->pkt_info.auth_type = auth_type;
+	new_rec->pkt_info.auth_seq_num = auth_seq;
+	new_rec->pkt_info.is_retry_frame =
+		(mac_hdr->i_fc[1] & IEEE80211_FC1_RETRY);
+
+	wlan_connectivity_log_enqueue(new_rec);
+
+	qdf_mem_free(new_rec);
+}
 
 static bool wlan_logging_is_queue_empty(void)
 {

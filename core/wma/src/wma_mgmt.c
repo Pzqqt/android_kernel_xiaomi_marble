@@ -2642,6 +2642,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 					  uint32_t desc_id, uint32_t status)
 {
 	struct wlan_objmgr_pdev *pdev;
+	void *frame_data;
 	qdf_nbuf_t buf = NULL;
 	QDF_STATUS ret;
 #if !defined(REMOVE_PKT_LOG)
@@ -2680,8 +2681,13 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 			      buf, pktdump_status, TX_MGMT_PKT);
 #endif
 
+	if (wma_handle->is_mgmt_data_valid)
+		frame_data = &wma_handle->mgmt_data;
+	else
+		frame_data = &mgmt_params;
+
 	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status,
-					      &mgmt_params);
+					      frame_data);
 
 	if (ret != QDF_STATUS_SUCCESS) {
 		wma_err("Failed to process mgmt tx completion");
