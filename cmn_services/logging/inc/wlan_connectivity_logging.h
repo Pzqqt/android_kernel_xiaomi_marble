@@ -231,6 +231,7 @@ struct wlan_roam_btm_info {
  * @frame_status_code: Frame status code/reason code
  * @seq_num: Frame sequence number
  * @rssi: Peer rssi
+ * @is_retry_frame: is frame retried
  */
 struct wlan_packet_info {
 	uint8_t tx_status;
@@ -242,6 +243,7 @@ struct wlan_packet_info {
 	uint16_t frame_status_code;
 	uint16_t seq_num;
 	int32_t rssi;
+	bool is_retry_frame;
 };
 
 /**
@@ -256,6 +258,8 @@ struct wlan_packet_info {
  * @group: Group cipher suite
  * @group_mgmt: Group manangement cipher suite
  * @auth_type: Authentication Algo
+ * @conn_status: Connection failure status defined by enum
+ * wlan_cm_connect_fail_reason
  * @is_bt_coex_active: Is there active bluetooth connection
  */
 struct wlan_connect_info {
@@ -269,6 +273,7 @@ struct wlan_connect_info {
 	uint32_t group;
 	uint32_t group_mgmt;
 	uint8_t auth_type;
+	enum wlan_cm_connect_fail_reason conn_status;
 	bool is_bt_coex_active;
 };
 
@@ -398,6 +403,35 @@ QDF_STATUS wlan_connectivity_log_dequeue(void);
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_connectivity_log_enqueue(struct wlan_log_record *new_record);
+
+/**
+ * wlan_connectivity_mgmt_event()  - Fill and enqueue a new record
+ * for management frame information.
+ * @mac_hdr: 802.11 management frame header
+ * @vdev_id: Vdev id
+ * @status_code: Frame status code as defined in IEEE 802.11 - 2020 standard
+ * section 9.4.1.9
+ * @tx_status: Frame TX status defined by enum qdf_dp_tx_rx_status
+ * @peer_rssi: Peer RSSI in dBm
+ * @auth_algo: Authentication algorithm number field as defined in IEEE 802.11 -
+ * 2020 standard section 9.4.1.1
+ * @auth_type: indicates SAE authentication frame type. Possible values are:
+ * 1 - SAE commit frame
+ * 2 - SAE confirm frame
+ * @auth_seq: Authentication frame transaction sequence number as defined in
+ * IEEE 802.11 - 2020 standard section 9.4.1.2
+ * @tag: Record type main tag
+ *
+ * Return: QDF_STATUS
+ */
+void
+wlan_connectivity_mgmt_event(struct wlan_frame_hdr *mac_hdr,
+			     uint8_t vdev_id, uint16_t status_code,
+			     enum qdf_dp_tx_rx_status tx_status,
+			     int8_t peer_rssi,
+			     uint8_t auth_algo, uint8_t auth_type,
+			     uint8_t auth_seq,
+			     enum wlan_main_tag tag);
 #else
 static inline void wlan_connectivity_logging_start(void)
 {}
@@ -415,5 +449,15 @@ QDF_STATUS wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
+
+static inline void
+wlan_connectivity_mgmt_event(struct wlan_frame_hdr *mac_hdr,
+			     uint8_t vdev_id, uint16_t status_code,
+			     enum qdf_dp_tx_rx_status tx_status,
+			     int8_t peer_rssi,
+			     uint8_t auth_algo, uint8_t auth_type,
+			     uint8_t auth_seq,
+			     enum wlan_main_tag tag)
+{}
 #endif
 #endif /* _WLAN_CONNECTIVITY_LOGGING_H_ */
