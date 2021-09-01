@@ -32,6 +32,21 @@
 #include "wni_api.h"
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 
+static void cm_abort_connect_request_timers(struct wlan_objmgr_vdev *vdev)
+{
+	struct scheduler_msg msg;
+	QDF_STATUS status;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	msg.bodyval = wlan_vdev_get_id(vdev);
+	msg.type = CM_ABORT_CONN_TIMER;
+	status = scheduler_post_message(QDF_MODULE_ID_MLME,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("msg CM_ABORT_CONN_TIMER post fail");
+}
+
 QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req)
 {
@@ -69,6 +84,7 @@ QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 		cm_roam_state_change(pdev, req->vdev_id, WLAN_ROAM_RSO_STOPPED,
 				     REASON_DRIVER_DISABLED);
 	}
+	cm_abort_connect_request_timers(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }
