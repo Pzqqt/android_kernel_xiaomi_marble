@@ -1050,7 +1050,7 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
  *
  * Return: None
  */
-#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 static inline void hdd_softap_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 					       qdf_nbuf_t netbuf)
 {

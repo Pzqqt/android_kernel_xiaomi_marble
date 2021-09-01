@@ -785,7 +785,7 @@ struct ol_txrx_pdev_t {
 	ol_txrx_pktdump_cb ol_tx_packetdump_cb;
 	ol_txrx_pktdump_cb ol_rx_packetdump_cb;
 
-#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 	tp_ol_timestamp_cb ol_tx_timestamp_cb;
 #endif
 

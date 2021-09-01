@@ -456,7 +456,7 @@ void cds_get_and_reset_log_completion(uint32_t *is_fatal,
 bool cds_is_log_report_in_progress(void);
 bool cds_is_fatal_event_enabled(void);
 
-#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 bool cds_is_ptp_rx_opt_enabled(void);
 bool cds_is_ptp_tx_opt_enabled(void);
 #else

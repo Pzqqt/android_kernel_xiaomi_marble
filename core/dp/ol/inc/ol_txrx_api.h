@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014,2016-2017,2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014,2016-2017,2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -51,7 +51,7 @@ enum ol_sec_type {
 	ol_sec_type_types
 };
 
-#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 typedef int (*tp_ol_timestamp_cb)(qdf_nbuf_t netbuf, uint64_t target_time);
 
 /**

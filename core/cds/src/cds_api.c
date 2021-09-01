@@ -2355,7 +2355,7 @@ bool cds_is_fatal_event_enabled(void)
 	return p_cds_context->enable_fatal_event;
 }
 
-#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 bool cds_is_ptp_rx_opt_enabled(void)
 {
 	struct hdd_context *hdd_ctx;

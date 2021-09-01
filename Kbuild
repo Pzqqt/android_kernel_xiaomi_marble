@@ -3484,7 +3484,16 @@ cppflags-$(CONFIG_LINUX_QCMBR) += -DLINUX_QCMBR
 
 # Enable feature sync tsf between multi devices
 cppflags-$(CONFIG_WLAN_SYNC_TSF) += -DWLAN_FEATURE_TSF
-cppflags-$(CONFIG_WLAN_SYNC_TSF_PLUS) += -DWLAN_FEATURE_TSF_PLUS
+
+ifeq ($(CONFIG_WLAN_SYNC_TSF_PLUS), y)
+cppflags-y += -DWLAN_FEATURE_TSF_PLUS
+
+ifneq ($(CONFIG_WLAN_SYNC_TSF_PLUS_DISABLE_SOCK_TS), y)
+cppflags-y += -DWLAN_FEATURE_TSF_PLUS_SOCK_TS
+endif
+
+endif
+
 # Enable feature sync tsf for chips based on Adrastea arch
 cppflags-$(CONFIG_WLAN_SYNC_TSF_PLUS_NOIRQ) += -DWLAN_FEATURE_TSF_PLUS_NOIRQ
 

@@ -750,7 +750,7 @@ ol_tx_pkt_capture_tx_completion_process(
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 
-#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 static inline struct htt_tx_compl_ind_append_tx_tstamp *ol_tx_get_txtstamps(
 		u_int32_t *msg_word_header, u_int32_t **msg_word_payload,
 		int num_msdus)
@@ -1792,7 +1792,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 
 #endif /* QCA_COMPUTE_TX_DELAY */
 
-#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 void ol_register_timestamp_callback(tp_ol_timestamp_cb ol_tx_timestamp_cb)
 {
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
