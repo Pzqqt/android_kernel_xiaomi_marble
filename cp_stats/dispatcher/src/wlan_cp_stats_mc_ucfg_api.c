@@ -253,16 +253,21 @@ ucfg_twt_get_all_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 		}
 
 		if (opmode == QDF_STA_MODE &&
-		    num_twt_session >= TWT_PEER_MAX_SESSIONS)
+		    num_twt_session >= TWT_PEER_MAX_SESSIONS) {
+			wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 			goto done;
+		}
 
 		if (opmode == QDF_SAP_MODE &&
-		    num_twt_session >= (sap_max_peer * TWT_PEER_MAX_SESSIONS))
+		    num_twt_session >= (sap_max_peer * TWT_PEER_MAX_SESSIONS)) {
+			wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 			goto done;
+		}
 
 		peer_next = wlan_peer_get_next_active_peer_of_vdev(
 							vdev, peer_list, peer,
 							WLAN_CP_STATS_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 		peer = peer_next;
 	}
 
