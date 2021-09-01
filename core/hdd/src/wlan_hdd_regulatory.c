@@ -36,7 +36,6 @@
 #include "sap_api.h"
 #include "wlan_hdd_hostapd.h"
 #include "osif_psoc_sync.h"
-#include "sap_internal.h"
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -1109,30 +1108,6 @@ void fill_wiphy_channel_320mhz(struct ieee80211_channel *wiphy_chan,
 }
 #endif
 
-static void hdd_fill_dfs_cac_duration(struct ieee80211_channel *wiphy_chan)
-{
-	enum dfs_reg dfs_region;
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-
-	if (wlan_hdd_validate_context(hdd_ctx))
-		return;
-
-	wlan_reg_get_dfs_region(hdd_ctx->pdev, &dfs_region);
-
-	if (dfs_region != DFS_ETSI_REGION) {
-		wiphy_chan->dfs_cac_ms = DEFAULT_CAC_TIMEOUT;
-		return;
-	}
-	if (IS_CH_BONDING_WITH_WEATHER_CH(wlan_reg_freq_to_chan(
-						hdd_ctx->pdev,
-						wiphy_chan->center_freq)) ||
-	    IS_ETSI_WEATHER_FREQ(wiphy_chan->center_freq))
-		wiphy_chan->dfs_cac_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
-
-	else
-		wiphy_chan->dfs_cac_ms = DEFAULT_CAC_TIMEOUT;
-}
-
 static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
 			       struct regulatory_channel *cur_chan)
 {
@@ -1165,8 +1140,6 @@ static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
 	fill_wiphy_channel_320mhz(wiphy_chan, cur_chan->max_bw);
 
 	wiphy_chan->orig_flags = wiphy_chan->flags;
-
-	hdd_fill_dfs_cac_duration(wiphy_chan);
 }
 
 static void fill_wiphy_band_channels(struct wiphy *wiphy,
