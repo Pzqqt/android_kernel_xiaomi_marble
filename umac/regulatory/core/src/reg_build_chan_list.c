@@ -2378,7 +2378,6 @@ static void reg_disable_afc_mas_chan_list_channels(
 static void reg_free_expiry_afc_info(struct afc_regulatory_info *afc_info)
 {
 	qdf_mem_free(afc_info->expiry_info);
-	qdf_mem_free(afc_info);
 }
 
 /**
