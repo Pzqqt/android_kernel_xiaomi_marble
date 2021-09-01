@@ -28,7 +28,7 @@ void sde_sync_put(void *fence)
 signed long sde_sync_wait(void *fnc, long timeout_ms)
 {
 	struct dma_fence *fence = fnc;
-	int rc;
+	int rc, status = 0;
 	char timeline_str[TIMELINE_VAL_LENGTH];
 
 	if (!fence)
@@ -43,18 +43,31 @@ signed long sde_sync_wait(void *fnc, long timeout_ms)
 			fence->ops->timeline_value_str(fence,
 					timeline_str, TIMELINE_VAL_LENGTH);
 
-		if (test_bit(SPEC_FENCE_FLAG_FENCE_ARRAY, &fence->flags) &&
-						fence->error == -EINVAL) {
-			SDE_INFO("spec fence bind error :%d\n", fence->error);
-			rc = -EBADF;
+		status = dma_fence_get_status(fence);
+		if (test_bit(SPEC_FENCE_FLAG_FENCE_ARRAY, &fence->flags)) {
+			if (status == -EINVAL) {
+				SDE_INFO("spec fence bind failure status:%d\n", status);
+				rc = -EBADF;
+			} else if (fence->ops->signaled && fence->ops->signaled(fence)) {
+				SDE_INFO("spec fence status:%d\n", status);
+			} else {
+				SDE_ERROR(
+					"fence driver name:%s timeline name:%s signaled:0x%x status:%d flags:0x%x rc:%d\n",
+					fence->ops->get_driver_name(fence),
+					fence->ops->get_timeline_name(fence),
+					fence->ops->signaled ?
+					fence->ops->signaled(fence) : 0xffffffff,
+					status, fence->flags, rc);
+			}
 		} else {
 			SDE_ERROR(
-				"fence driver name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x error:%d\n",
+				"fence driver name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x status:%d\n",
 				fence->ops->get_driver_name(fence),
 				fence->ops->get_timeline_name(fence),
 				fence->seqno, timeline_str,
 				fence->ops->signaled ?
-				fence->ops->signaled(fence) : 0xffffffff, fence->error);
+				fence->ops->signaled(fence) : 0xffffffff,
+				status);
 		}
 	}
 
