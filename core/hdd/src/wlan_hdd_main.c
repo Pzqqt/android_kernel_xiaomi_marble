@@ -16250,19 +16250,6 @@ dev_alloc_err:
 /* amount of time we sleep for each retry (arbitrary) */
 #define CTRL_PARAM_SLEEP 100
 
-static int wlan_hdd_state_ctrl_param_create_with_retry(void)
-{
-	int retries = CTRL_PARAM_WAIT / CTRL_PARAM_SLEEP;
-	int errno;
-
-	do {
-		errno = wlan_hdd_state_ctrl_param_create();
-		if (!errno || !--retries)
-			return errno;
-		msleep(CTRL_PARAM_SLEEP);
-	} while (true);
-}
-
 static void wlan_hdd_state_ctrl_param_destroy(void)
 {
 	cdev_del(&wlan_hdd_state_cdev);
@@ -16275,7 +16262,7 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 
 #else /* WLAN_CTRL_NAME */
 
-static int  wlan_hdd_state_ctrl_param_create_with_retry(void)
+static int wlan_hdd_state_ctrl_param_create(void)
 {
 	return 0;
 }
@@ -17091,16 +17078,10 @@ int hdd_driver_load(void)
 
 	hdd_set_conparam(con_mode);
 
-	errno = wlan_hdd_state_ctrl_param_create_with_retry();
-	if (errno) {
-		hdd_err("Failed to create ctrl param; errno:%d", errno);
-		goto wakelock_destroy;
-	}
-
 	errno = pld_init();
 	if (errno) {
 		hdd_err("Failed to init PLD; errno:%d", errno);
-		goto param_destroy;
+		goto wakelock_destroy;
 	}
 
 	/* driver mode pass to cnss2 platform driver*/
@@ -17119,11 +17100,20 @@ int hdd_driver_load(void)
 		hdd_err("Failed to register driver; errno:%d", errno);
 		goto pld_deinit;
 	}
+
+	errno = wlan_hdd_state_ctrl_param_create();
+	if (errno) {
+		hdd_err("Failed to create ctrl param; errno:%d", errno);
+		goto unregister_driver;
+	}
+
 	hdd_debug("%s: driver loaded", WLAN_MODULE_NAME);
 	hdd_place_marker(NULL, "DRIVER LOADED", NULL);
 
 	return 0;
 
+unregister_driver:
+	wlan_hdd_unregister_driver();
 pld_deinit:
 	status = osif_driver_sync_trans_start(&driver_sync);
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
@@ -17138,8 +17128,6 @@ pld_deinit:
 	/* Wait for any ref taken on /dev/wlan to be released */
 	while (qdf_atomic_read(&wlan_hdd_state_fops_ref))
 		;
-param_destroy:
-	wlan_hdd_state_ctrl_param_destroy();
 wakelock_destroy:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 comp_deinit:
@@ -17217,6 +17205,8 @@ void hdd_driver_unload(void)
 	 */
 	osif_driver_sync_trans_stop(driver_sync);
 
+	wlan_hdd_state_ctrl_param_destroy();
+
 	/* trigger SoC remove */
 	wlan_hdd_unregister_driver();
 
@@ -17233,7 +17223,6 @@ void hdd_driver_unload(void)
 
 	hdd_driver_mode_change_unregister();
 	pld_deinit();
-	wlan_hdd_state_ctrl_param_destroy();
 	hdd_set_conparam(0);
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 	hdd_component_deinit();
