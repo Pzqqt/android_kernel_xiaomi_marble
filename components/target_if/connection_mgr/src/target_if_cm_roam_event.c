@@ -307,6 +307,7 @@ int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 		return -EINVAL;
 	}
 
+	roam_event->psoc = psoc;
 	msg.bodyptr = roam_event;
 	msg.type = ROAM_EVENT;
 	msg.callback = target_if_roam_event_dispatcher;
@@ -398,6 +399,7 @@ target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
 		return -EINVAL;
 	}
 
+	data->psoc = psoc;
 	msg.bodyptr = data;
 	msg.type = ROAM_VDEV_DISCONNECT_EVENT;
 	msg.callback = target_if_roam_event_dispatcher;
@@ -575,6 +577,7 @@ target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 		return -EINVAL;
 	}
 
+	data->psoc = psoc;
 	msg.bodyptr = data;
 	msg.type = ROAM_PMKID_REQ_EVENT;
 	msg.callback = target_if_roam_event_dispatcher;
