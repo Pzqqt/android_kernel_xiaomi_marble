@@ -506,6 +506,8 @@ void lim_process_mlm_auth_cnf(struct mac_context *mac_ctx, uint32_t *msg)
 
 	if (auth_cnf->resultCode == eSIR_SME_SUCCESS) {
 		if (session_entry->limSmeState == eLIM_SME_WT_AUTH_STATE) {
+			lim_deactivate_and_change_timer(mac_ctx,
+							eLIM_ASSOC_FAIL_TIMER);
 			lim_send_mlm_assoc_req(mac_ctx, session_entry);
 		} else {
 			/*

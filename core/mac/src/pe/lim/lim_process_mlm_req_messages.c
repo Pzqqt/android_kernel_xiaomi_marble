@@ -952,7 +952,9 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			 session_entry->peSessionId,
 			 session_entry->limMlmState));
-	pe_debug("vdev %d Sending Assoc_Req Frame", session_entry->vdev_id);
+	pe_debug("vdev %d Sending Assoc_Req Frame, timeout %d msec",
+		 session_entry->vdev_id,
+		 (int)mac_ctx->lim.lim_timers.gLimAssocFailureTimer.initScheduleTimeInMsecs);
 
 	/* Prepare and send Association request frame */
 	lim_send_assoc_req_mgmt_frame(mac_ctx, mlm_assoc_req, session_entry);

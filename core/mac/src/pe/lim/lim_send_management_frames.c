@@ -3151,10 +3151,10 @@ alloc_packet:
 		}
 	}
 
-	pe_nofl_info("Auth TX: seq %d seq num %d status %d WEP %d to " QDF_MAC_ADDR_FMT,
-		     auth_frame->authTransactionSeqNumber, mac_ctx->mgmtSeqNum,
-		     auth_frame->authStatusCode, mac_hdr->fc.wep,
-		     QDF_MAC_ADDR_REF(mac_hdr->da));
+	pe_nofl_info("Auth TX: vdev %d seq %d seq num %d status %d WEP %d to " QDF_MAC_ADDR_FMT,
+		     vdev_id, auth_frame->authTransactionSeqNumber,
+		     mac_ctx->mgmtSeqNum, auth_frame->authStatusCode,
+		     mac_hdr->fc.wep, QDF_MAC_ADDR_REF(mac_hdr->da));
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   frame, frame_len);
 
