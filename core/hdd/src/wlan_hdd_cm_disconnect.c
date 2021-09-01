@@ -45,6 +45,7 @@
 #include "hif.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_napi.h"
+#include "wlan_hdd_cfr.h"
 #include "wlan_roam_debug.h"
 #include "wma_api.h"
 
@@ -155,6 +156,7 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter,
 
 	/* update P2P connection status */
 	ucfg_p2p_status_disconnect(vdev);
+	hdd_cfr_disconnect(adapter->vdev);
 
 	hdd_wmm_adapter_clear(adapter);
 	ucfg_cm_ft_reset(vdev);

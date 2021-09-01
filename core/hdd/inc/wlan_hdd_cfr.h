@@ -49,6 +49,25 @@ wlan_hdd_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
 				       const void *data,
 				       int data_len);
 
+#ifdef WLAN_ENH_CFR_ENABLE
+/**
+ * hdd_cfr_disconnect() - Handle disconnection event in CFR
+ * @vdev: Pointer to vdev object
+ *
+ * Handle disconnection event in CFR. Stop CFR if it started and get
+ * disconnection event.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS hdd_cfr_disconnect(struct wlan_objmgr_vdev *vdev);
+#else
+static inline QDF_STATUS
+hdd_cfr_disconnect(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 extern const struct nla_policy cfr_config_policy[
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_MAX + 1];
 
@@ -64,6 +83,11 @@ extern const struct nla_policy cfr_config_policy[
 },
 #else
 #define FEATURE_CFR_VENDOR_COMMANDS
+static inline QDF_STATUS
+hdd_cfr_disconnect(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_CFR_ENABLE */
 #endif /* _WLAN_HDD_CFR_H */
 
