@@ -2102,6 +2102,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case CM_PREAUTH_REQ:
 		cm_process_preauth_req(msg);
 		break;
+	case CM_ABORT_CONN_TIMER:
+		lim_deactivate_timers_for_vdev(mac_ctx, msg->bodyval);
+		break;
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

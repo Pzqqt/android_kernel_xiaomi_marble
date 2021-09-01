@@ -90,14 +90,7 @@ static void lim_fill_status_code(uint8_t frame_type,
 	}
 }
 
-/**
- * lim_process_sae_auth_timeout() - This function is called to process sae
- * auth timeout
- * @mac_ctx: Pointer to Global MAC structure
- *
- * @Return: None
- */
-static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
+void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 {
 	struct pe_session *session;
 	enum wlan_status_code proto_status_code;
