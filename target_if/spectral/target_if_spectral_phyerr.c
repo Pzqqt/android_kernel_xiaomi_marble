@@ -1435,11 +1435,11 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 	struct spectral_search_fft_info_gen2 search_fft_info_sec80;
 	struct spectral_search_fft_info_gen2 *p_sfft_sec80 =
 		&search_fft_info_sec80;
-	uint32_t segid_skiplen;
-	struct spectral_phyerr_tlv_gen2 *ptlv;
-	struct spectral_phyerr_tlv_gen2 *ptlv_sec80;
-	struct spectral_phyerr_fft_gen2 *pfft;
-	struct spectral_phyerr_fft_gen2 *pfft_sec80;
+	uint32_t segid_skiplen = 0;
+	struct spectral_phyerr_tlv_gen2 *ptlv = NULL;
+	struct spectral_phyerr_tlv_gen2 *ptlv_sec80 = NULL;
+	struct spectral_phyerr_fft_gen2 *pfft = NULL;
+	struct spectral_phyerr_fft_gen2 *pfft_sec80 = NULL;
 	struct spectral_process_phyerr_info_gen2 process_phyerr_fields;
 	struct spectral_process_phyerr_info_gen2 *phyerr_info =
 						&process_phyerr_fields;
@@ -1451,7 +1451,7 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
-		goto fail;
+		goto fail_no_print;
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
@@ -2763,6 +2763,11 @@ static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
 		spectral_err_rl("Spectral LMAC object is null");
 		return;
 	}
+	if (detector_id >= MAX_DETECTORS_PER_PDEV) {
+		spectral_err_rl("Spectral detector_id %d exceeds range",
+				detector_id);
+		return;
+	}
 
 	if (!spectral->dbr_buff_debug)
 		return;
@@ -3067,6 +3072,13 @@ target_if_process_sfft_report_gen3(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
+						    &spectral->rparams);
+	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("No valid Spectral mode for detector id %u",
+				p_sfft->fft_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 	/*
 	 * For easy comparision between MDK team and OS team, the MDK script
 	 * variable names have been used
@@ -3195,13 +3207,6 @@ target_if_process_sfft_report_gen3(
 				FFT_REPORT_HDR_C_RELATIVE_PWR_SIZE_GEN3,
 				FFT_REPORT_HDR_C_RELATIVE_PWR_POS_GEN3);
 
-	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
-						    &spectral->rparams);
-	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
-		spectral_err_rl("No valid Spectral mode for detector id %u",
-				p_sfft->fft_detector_id);
-		return QDF_STATUS_E_FAILURE;
-	}
 	p_sfft->fft_bin_count =
 		target_if_spectral_get_bin_count_after_len_adj(
 			fft_hdr_length - spectral->rparams.fft_report_hdr_len,
