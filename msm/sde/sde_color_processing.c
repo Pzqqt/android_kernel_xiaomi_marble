@@ -908,6 +908,18 @@ static int _set_demura_feature(struct sde_hw_dspp *hw_dspp,
 	return ret;
 }
 
+static int _feature_unsupported(struct sde_hw_dspp *hw_dspp,
+				   struct sde_hw_cp_cfg *hw_cfg,
+				   struct sde_crtc *sde_crtc)
+{
+	if (!hw_dspp || !hw_cfg || !sde_crtc) {
+		DRM_ERROR("invalid argumets\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 feature_wrapper check_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
 #define setup_check_crtc_feature_wrappers(wrappers) \
 do { \
@@ -2192,6 +2204,45 @@ exit:
 		sde_cp_disable_features(crtc);
 }
 
+void sde_cp_reset_unsupported_feature_wrappers(struct sde_mdss_cfg *catalog)
+{
+	if (!catalog) {
+		DRM_ERROR("invalid catalog\n");
+		return;
+	}
+
+	if (!catalog->rc_count) {
+		check_crtc_feature_wrappers[SDE_CP_CRTC_DSPP_RC_MASK] =
+			_feature_unsupported;
+		check_crtc_pu_feature_wrappers[SDE_CP_CRTC_DSPP_RC_PU] =
+			_feature_unsupported;
+		set_crtc_feature_wrappers[SDE_CP_CRTC_DSPP_RC_MASK] =
+			_feature_unsupported;
+		set_crtc_pu_feature_wrappers[SDE_CP_CRTC_DSPP_RC_PU] =
+			_feature_unsupported;
+	}
+
+	if (!catalog->demura_count) {
+		check_crtc_pu_feature_wrappers[SDE_CP_CRTC_DSPP_DEMURA_PU] =
+			_feature_unsupported;
+		set_crtc_feature_wrappers[SDE_CP_CRTC_DSPP_DEMURA_INIT] =
+			_feature_unsupported;
+		set_crtc_pu_feature_wrappers[SDE_CP_CRTC_DSPP_DEMURA_PU] =
+			_feature_unsupported;
+	}
+
+	if (!catalog->spr_count) {
+		check_crtc_pu_feature_wrappers[SDE_CP_CRTC_DSPP_SPR_PU] =
+			_feature_unsupported;
+		set_crtc_feature_wrappers[SDE_CP_CRTC_DSPP_SPR_INIT] =
+			_feature_unsupported;
+		set_crtc_pu_feature_wrappers[SDE_CP_CRTC_DSPP_SPR_PU] =
+			_feature_unsupported;
+	}
+
+	return;
+}
+
 void sde_cp_crtc_install_properties(struct drm_crtc *crtc)
 {
 	struct sde_kms *kms = NULL;
@@ -2249,6 +2300,7 @@ void sde_cp_crtc_install_properties(struct drm_crtc *crtc)
 		setup_check_crtc_pu_feature_wrappers(
 				check_crtc_pu_feature_wrappers);
 		setup_dspp_caps_funcs(dspp_cap_update_func);
+		sde_cp_reset_unsupported_feature_wrappers(catalog);
 	}
 	if (!priv->cp_property)
 		goto exit;
