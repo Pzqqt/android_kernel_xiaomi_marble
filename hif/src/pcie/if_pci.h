@@ -46,6 +46,13 @@
 #define FORCE_WAKE_DELAY_MS 5
 #endif /* FORCE_WAKE */
 
+#ifdef CONFIG_PCI_LOW_POWER_INT_REG
+/* PCIe low power interrupt mask register */
+#define PCIE_LOW_POWER_INT_MASK_OFFSET	0x38044
+#define INTR_L1SS			BIT(3)
+#define INTR_CLKPM			BIT(4)
+#endif
+
 #ifdef QCA_HIF_HIA_EXTND
 extern int32_t frac, intval, ar900b_20_targ_clk, qca9888_20_targ_clk;
 #endif
