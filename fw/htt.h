@@ -16390,6 +16390,9 @@ enum HTT_MSDU_QTYPE {
     HTT_MSDU_QTYPE_UDP, /* Specifies MSDUQ index used for UDP flow */
     HTT_MSDU_QTYPE_NON_UDP, /* Specifies MSDUQ index used for non-udp flow */
     HTT_MSDU_QTYPE_HOL, /* Specified MSDUQ index used for Head of Line */
+    HTT_MSDU_QTYPE_USER_SPECIFIED, /* Specifies MSDUQ index used for advertising changeable flow type */
+    HTT_MSDU_QTYPE_HI_PRIO,        /* Specifies MSDUQ index used for high priority flow type */
+    HTT_MSDU_QTYPE_LO_PRIO,        /* Specifies MSDUQ index used for low priority flow type */
 
 
     /* New MSDU_QTYPE should be added above this line */

@@ -2771,11 +2771,11 @@ typedef struct {
      */
     A_UINT32 num_msdu_desc;
 
-/* The TLVs for hal_reg_capabilities, wmi_service_bitmap and mem_reqs[] will follow this TLV.
+/* This ready_event_fixed_param TLV is followed by the below TLVs:
  *     HAL_REG_CAPABILITIES   hal_reg_capabilities;
  *     A_UINT32 wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
  *     wlan_host_mem_req mem_reqs[];
- *     wlan_dbs_hw_mode_list[];
+ *     A_UINT32 wlan_dbs_hw_mode_list[];
  */
 } wmi_service_ready_event_fixed_param;
 
@@ -2957,6 +2957,31 @@ typedef struct {
 #define WMI_TARGET_CAP_FLAGS_RX_PEER_METADATA_VERSION_SET(target_cap_flags, value) \
         WMI_SET_BITS(target_cap_flags, 0, 2, value)
 
+/*
+ * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
+ */
+#define WMI_HTT_MSDUQ_IDX_TO_MSDUQ_QTYPE_INDEX_GET(index_and_type) \
+    WMI_GET_BITS(index_and_type, 0, 8)
+#define WMI_HTT_MSDUQ_IDX_TO_MSDUQ_QTYPE_INDEX_SET(index_and_type, value) \
+    WMI_SET_BITS(index_and_type, 0, 8, value)
+
+#define WMI_HTT_MSDUQ_IDX_TO_MSDUQ_QTYPE_TYPE_GET(index_and_type) \
+    WMI_GET_BITS(index_and_type, 8, 8)
+#define WMI_HTT_MSDUQ_IDX_TO_MSDUQ_QTYPE_TYPE_SET(index_and_type, value) \
+    WMI_SET_BITS(index_and_type, 8, 8, value)
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_htt_msdu_idx_to_htt_msdu_qtype.*/
+    /**
+     * index_and_type
+     *
+     * [7:0]   : htt_msduq_index
+     * [15:8]  : htt_msduq_type
+     * [31:16] : reserved
+     */
+    A_UINT32 index_and_type;
+} wmi_htt_msdu_idx_to_htt_msdu_qtype;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param.*/
 
@@ -3046,6 +3071,32 @@ typedef struct {
      *     WMI_HAL_REG_CAPABILITIES_EXT2;
      *     wmi_nan_capabilities;
      *     WMI_SCAN_RADIO_CAPABILITIES_EXT2;
+     */
+
+    /*
+     * Max number of LinkView peers supported by target
+     */
+    A_UINT32 max_num_linkview_peers;
+
+    /*
+     * Max number of msduq's per TID per peer supported by target,
+     * defines LinkView peers number
+     */
+    A_UINT32 max_num_msduq_supported_per_tid;
+
+    /*
+     * Number of peers support default flowqs
+     */
+    A_UINT32 default_num_msduq_supported_per_tid;
+
+    /* Followed by next TLVs:
+     *     WMI_DMA_RING_CAPABILITIES          dma_ring_caps[];
+     *     wmi_spectral_bin_scaling_params    wmi_bin_scaling_params[];
+     *     WMI_MAC_PHY_CAPABILITIES_EXT       mac_phy_caps[];
+     *     WMI_HAL_REG_CAPABILITIES_EXT2      hal_reg_caps[];
+     *     wmi_nan_capabilities               nan_cap;
+     *     WMI_SCAN_RADIO_CAPABILITIES_EXT2   wmi_scan_radio_caps[];
+     *     wmi_htt_msdu_idx_to_htt_msdu_qtype htt_msdu_idx_to_qtype_map[];
      */
 } wmi_service_ready_ext2_event_fixed_param;
 
@@ -3180,7 +3231,7 @@ typedef struct {
     /*
      * max_ast_index - max AST index that Firmware can generate
      * max_ast_index = (ast_table_size-1), ast_table_size is dynamically chosen
-     * based on num_peers configutation from Host. Hence Host needs to know the
+     * based on num_peers configuration from Host. Hence Host needs to know the
      * max_ast_index that Firmware can generate.
      * A 0x0 value for max_ast_index means the target has not specified a limit.
      */
@@ -3206,13 +3257,23 @@ typedef struct {
     /*
      * max_onchip_ast_index - max AST index that Firmware can generate
      * max_onchip_ast_index = (ast_table_size-1), where ast_table_size is
-     * dynamically chosen based on num_peers configutation from Host.
+     * dynamically chosen based on num_peers configuration from Host.
      * Hence Host needs to know the max_onchip_ast_index that Firmware can
      * generate.
      * A 0x0 value for max_onchip_ast_index means the target has not specified
      * a limit.
      */
     A_UINT32 max_onchip_ast_index;
+
+    /*
+     * The maximum number of LinkView peers can be supported onsite of target,
+     * based on proposed by the host configuration,
+     * total number of available resources, configured peers number,
+     * number of MSDUQs per LinkView peer's TID.
+     * Target can reduce proposed by WMI_INIT_CMDID number, depending on
+     * the target's resources availability.
+     */
+    A_UINT32 num_of_linkview_peers;
 
 /*
  * This fixed_param TLV is followed by these additional TLVs:
@@ -4039,6 +4100,24 @@ typedef struct {
      * BIT 1 : 31 Reserved
      */
     A_UINT32 carrier_config;
+
+    /** @brief num_of_linkview_peers - proposed by the host value of
+     *      the peers with the num_of_linkview_msduqs_per_tid allocation
+     *  @details
+     *  Host can request what the number of 'num_peers' should use
+     *  num_of_linkview_msduqs_per_tid. All other peers will use
+     *  default number of MSDUQs allocated.
+     */
+    A_UINT32 num_of_linkview_peers;
+
+    /** @brief num_of_linkview_msduqs_per_tid - proposed by the host value of
+     *      MSDUQs per each LinkView peer's TID
+     *  @details
+     *  Host sends the number of MSDUQs per each LinkView peer's TID.
+     *  This number will be used during resources allocation for
+     * LinkView peer in the target.
+     */
+    A_UINT32 num_of_linkview_msduqs_per_tid;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -4333,7 +4412,7 @@ typedef struct {
     wmi_abi_version host_abi_vers;
 
     A_UINT32 num_host_mem_chunks; /** size of array host_mem_chunks[] */
-/* The TLVs for resource_config, host_mem_chunks[], and hw_mode_config will follow.
+/* This init_cmd_fixed_param TLV is followed by the below TLVs:
  *     wmi_resource_config   resource_config;
  *     wlan_host_memory_chunk host_mem_chunks[];
  *     wmi_pdev_set_hw_mode_cmd_fixed_param hw_mode_config;
@@ -4342,8 +4421,9 @@ typedef struct {
  *         within the target.
  *         To avoid specifying a HW mode for the target, the host should
  *         fill hw_mode_config's fields with 0x0.
+ *     wmi_pdev_band_to_mac                 band_to_mac[];
+ *     wmi_htt_msdu_idx_to_htt_msdu_qtype   htt_msdu_idx_to_qtype_map[];
  */
-
 } wmi_init_cmd_fixed_param;
 
 /**
