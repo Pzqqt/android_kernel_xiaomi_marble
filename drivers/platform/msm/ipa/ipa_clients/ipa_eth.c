@@ -38,7 +38,7 @@
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
-#define IPA_ETH_PIPES_NO 6
+#define IPA_ETH_PIPES_NO 8
 
 struct ipa_eth_ready_cb_wrapper {
 	struct list_head link;
@@ -107,6 +107,12 @@ static u8 client_to_pipe_index(enum ipa_client_type client_type)
 		break;
 	case IPA_CLIENT_AQC_ETHERNET_PROD:
 		return 5;
+		break;
+	case IPA_CLIENT_ETHERNET2_CONS:
+		return 6;
+		break;
+	case IPA_CLIENT_ETHERNET2_PROD:
+		return 7;
 		break;
 	default:
 		IPAERR("invalid eth client_type\n");
@@ -397,6 +403,25 @@ static enum ipa_client_type
 			}
 		}
 		break;
+#if IPA_ETH_API_VER >= 2
+	case IPA_ETH_CLIENT_NTN3:
+		if (client->traffic_type == IPA_ETH_PIPE_BEST_EFFORT) {
+			if (client->inst_id == 0) {
+				if (pipe->dir == IPA_ETH_PIPE_DIR_TX) {
+					ipa_client_type = IPA_CLIENT_ETHERNET_CONS;
+				} else {
+					ipa_client_type = IPA_CLIENT_ETHERNET_PROD;
+				}
+			} else if (client->inst_id == 1) {
+				if (pipe->dir == IPA_ETH_PIPE_DIR_TX) {
+					ipa_client_type = IPA_CLIENT_ETHERNET2_CONS;
+				} else {
+					ipa_client_type = IPA_CLIENT_ETHERNET2_PROD;
+				}
+			}
+		}
+		break;
+#endif
 	default:
 		IPA_ETH_ERR("invalid client type%d\n",
 			client->client_type);
@@ -714,7 +739,8 @@ static int ipa_eth_client_disconn_pipes_internal(struct ipa_eth_client *client)
 				pipe->dir);
 			holb.en = 1;
 			holb.tmr_val = 0;
-			ipa3_cfg_ep_holb(ipa_get_ep_mapping(ipa_eth_get_ipa_client_type_from_pipe(pipe)), &holb);
+			ipa3_cfg_ep_holb(ipa_get_ep_mapping(
+				ipa_eth_get_ipa_client_type_from_pipe(pipe)), &holb);
 		}
 	}
 
@@ -735,6 +761,59 @@ static int ipa_eth_client_disconn_pipes_internal(struct ipa_eth_client *client)
 	return 0;
 }
 
+static void ipa_eth_msg_free_cb(void *buff, u32 len, u32 type)
+{
+	kfree(buff);
+}
+
+static int ipa_eth_client_conn_evt_internal(struct ipa_ecm_msg *msg)
+{
+	struct ipa_msg_meta msg_meta;
+	struct ipa_ecm_msg *eth_msg;
+	int ret;
+
+	IPA_ETH_DBG("enter\n");
+
+	eth_msg = kzalloc(sizeof(*eth_msg), GFP_KERNEL);
+	if (eth_msg == NULL)
+		return -ENOMEM;
+	memcpy(eth_msg, msg, sizeof(struct ipa_ecm_msg));
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_len = sizeof(struct ipa_ecm_msg);
+	msg_meta.msg_type = IPA_PERIPHERAL_CONNECT;
+
+	IPA_ETH_DBG("send IPA_PERIPHERAL_CONNECT, len:%d, buff %pK", msg_meta.msg_len, eth_msg);
+	ret = ipa_send_msg(&msg_meta, eth_msg, ipa_eth_msg_free_cb);
+
+	IPA_ETH_DBG("exit\n");
+
+	return ret;
+}
+
+static int ipa_eth_client_disconn_evt_internal(struct ipa_ecm_msg *msg)
+{
+	struct ipa_msg_meta msg_meta;
+	struct ipa_ecm_msg *eth_msg;
+	int ret;
+
+	IPA_ETH_DBG("enter\n");
+
+	eth_msg = kzalloc(sizeof(*eth_msg), GFP_KERNEL);
+	if (eth_msg == NULL)
+		return -ENOMEM;
+	memcpy(eth_msg, msg, sizeof(struct ipa_ecm_msg));
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_len = sizeof(struct ipa_ecm_msg);
+	msg_meta.msg_type = IPA_PERIPHERAL_DISCONNECT;
+
+	IPA_ETH_DBG("send PERIPHERAL_DISCONNECT, len:%d, buff %pK", msg_meta.msg_len, eth_msg);
+	ret = ipa_send_msg(&msg_meta, eth_msg, ipa_eth_msg_free_cb);
+
+	IPA_ETH_DBG("exit\n");
+
+	return ret;
+}
+
 static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 {
 	struct ipa_eth_intf *new_intf;
@@ -749,6 +828,13 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 	struct ipa_eth_client_pipe_info *pipe;
 	u32 len;
 	int ret = 0, i;
+#if IPA_ETH_API_VER >= 2
+	struct ipa_ecm_msg msg;
+	bool vlan_mode = false;
+	struct ipa_eth_hdr_info intf_hdr[IPA_IP_MAX];
+	struct ethhdr l_ethhdr[IPA_IP_MAX] = { 0 };
+	struct vlan_ethhdr l_vlan_ethhdr[IPA_IP_MAX] = { 0 };
+#endif
 
 	if (intf == NULL) {
 		IPA_ETH_ERR("invalid params intf=%pK\n", intf);
@@ -758,15 +844,92 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 		IPA_ETH_ERR("disconn called before register readiness\n");
 		return -EFAULT;
 	}
+#if IPA_ETH_API_VER >= 2
+	if (!intf->client) {
+		IPA_ETH_ERR("invalid intf->client\n");
+		return -EFAULT;
+	}
+	if (!intf->client->net_dev) {
+		IPA_ETH_ERR("invalid netdev\n");
+		return -EFAULT;
+	}
+	if (!intf->net_dev)
+		intf->net_dev = intf->client->net_dev;
+
+	IPA_ETH_DBG("register interface for netdev %s\n", intf->net_dev->name);
+	/* multiple attach support */
+	if (strnstr(intf->net_dev->name, "eth0", strlen(intf->net_dev->name))) {
+		ret = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH0, &vlan_mode);
+		if (ret) {
+			IPA_ETH_ERR("Could not determine IPA VLAN mode\n");
+			return ret;
+		}
+	} else if (strnstr(intf->net_dev->name, "eth1", strlen(intf->net_dev->name))) {
+		ret = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH1, &vlan_mode);
+		if (ret) {
+			IPA_ETH_ERR("Could not determine IPA VLAN mode\n");
+			return ret;
+		}
+	} else {
+		ret = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH, &vlan_mode);
+		if (ret) {
+			IPA_ETH_ERR("Could not determine IPA VLAN mode\n");
+			return ret;
+		}
+	}
+#else
 	IPA_ETH_DBG("register interface for netdev %s\n",
 		intf->netdev_name);
+#endif
 	mutex_lock(&ipa_eth_ctx->lock);
 	list_for_each_entry(entry, &ipa_eth_ctx->head_intf_list, link)
+#if IPA_ETH_API_VER >= 2
+		if (strcmp(entry->netdev_name, intf->net_dev->name) == 0) {
+#else
 		if (strcmp(entry->netdev_name, intf->netdev_name) == 0) {
+#endif
 			IPA_ETH_DBG("intf was added before.\n");
 			mutex_unlock(&ipa_eth_ctx->lock);
 			return 0;
 		}
+#if IPA_ETH_API_VER >= 2
+	memset(intf_hdr, 0, sizeof(intf_hdr));
+	if (!vlan_mode) {
+		struct ethhdr *eth_h;
+
+		intf_hdr[0].hdr = (u8 *)&l_ethhdr[0];
+		eth_h = (struct ethhdr *) intf_hdr[0].hdr;
+		memcpy(&eth_h->h_source, intf->net_dev->dev_addr, ETH_ALEN);
+		eth_h->h_proto = htons(ETH_P_IP);
+		intf_hdr[0].hdr_len = ETH_HLEN;
+		intf_hdr[0].hdr_type = IPA_HDR_L2_ETHERNET_II;
+
+		intf_hdr[1].hdr = (u8 *)&l_ethhdr[1];
+		eth_h = (struct ethhdr *) intf_hdr[1].hdr;
+		memcpy(&eth_h->h_source, intf->net_dev->dev_addr, ETH_ALEN);
+		eth_h->h_proto = htons(ETH_P_IPV6);
+		intf_hdr[1].hdr_len = ETH_HLEN;
+		intf_hdr[1].hdr_type = IPA_HDR_L2_ETHERNET_II;
+	} else {
+		struct vlan_ethhdr *vlan_eth_h;
+
+		intf_hdr[0].hdr = (u8 *)&l_vlan_ethhdr[0];
+		vlan_eth_h = (struct vlan_ethhdr *) intf_hdr[0].hdr;
+		memcpy(&vlan_eth_h->h_source, intf->net_dev->dev_addr, ETH_ALEN);
+		vlan_eth_h->h_vlan_proto = htons(ETH_P_8021Q);
+		vlan_eth_h->h_vlan_encapsulated_proto = htons(ETH_P_IP);
+		intf_hdr[0].hdr_len = VLAN_ETH_HLEN;
+		intf_hdr[0].hdr_type = IPA_HDR_L2_802_1Q;
+
+		intf_hdr[1].hdr = (u8 *)&l_vlan_ethhdr[1];
+		vlan_eth_h = (struct vlan_ethhdr *) intf_hdr[1].hdr;
+		memcpy(&vlan_eth_h->h_source, intf->net_dev->dev_addr, ETH_ALEN);
+		vlan_eth_h->h_vlan_proto = htons(ETH_P_8021Q);
+		vlan_eth_h->h_vlan_encapsulated_proto = htons(ETH_P_IPV6);
+		intf_hdr[1].hdr_len = VLAN_ETH_HLEN;
+		intf_hdr[1].hdr_type = IPA_HDR_L2_802_1Q;;
+	}
+#endif
 	new_intf = kzalloc(sizeof(*new_intf), GFP_KERNEL);
 	if (new_intf == NULL) {
 		IPA_ETH_ERR("fail to alloc new intf\n");
@@ -774,9 +937,14 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 		return -ENOMEM;
 	}
 	INIT_LIST_HEAD(&new_intf->link);
+#if IPA_ETH_API_VER >= 2
+	strlcpy(new_intf->netdev_name, intf->net_dev->name, sizeof(new_intf->netdev_name));
+	new_intf->hdr_len = intf_hdr[0].hdr_len;
+#else
 	strlcpy(new_intf->netdev_name, intf->netdev_name,
 		sizeof(new_intf->netdev_name));
 	new_intf->hdr_len = intf->hdr[0].hdr_len;
+#endif
 	/* add partial header */
 	len = sizeof(struct ipa_ioc_add_hdr) + 2 * sizeof(struct ipa_hdr_add);
 	hdr = kzalloc(len, GFP_KERNEL);
@@ -785,9 +953,12 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 		ret = -EFAULT;
 		goto fail_alloc_hdr;
 	}
-
+#if IPA_ETH_API_VER >= 2
+	if (ipa_eth_commit_partial_hdr(hdr, intf->net_dev->name, (struct ipa_eth_hdr_info *)intf_hdr)) {
+#else
 	if (ipa_eth_commit_partial_hdr(hdr,
 		intf->netdev_name, intf->hdr)) {
+#endif
 		IPA_ETH_ERR("fail to commit partial headers\n");
 		ret = -EFAULT;
 		goto fail_commit_hdr;
@@ -800,8 +971,12 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 
 	memset(&tx, 0, sizeof(struct ipa_tx_intf));
 	memset(&rx, 0, sizeof(struct ipa_rx_intf));
+#if IPA_ETH_API_VER >= 2
+	list_for_each_entry(pipe, &intf->client->pipe_list, link) {
+#else
 	for (i = 0; i < intf->pipe_hdl_list_size; i++) {
 		pipe = ipa_eth_get_pipe_from_hdl(intf->pipe_hdl_list[i]);
+#endif
 		if (pipe->dir == IPA_ETH_PIPE_DIR_TX) {
 			tx_client[tx.num_props] =
 				ipa_eth_get_ipa_client_type_from_pipe(pipe);
@@ -828,13 +1003,21 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 		for (i = 0; i < tx.num_props; i++) {
 			tx_prop[i].ip = IPA_IP_v4;
 			tx_prop[i].dst_pipe = tx_client[i];
+#if IPA_ETH_API_VER >= 2
+			tx_prop[i].hdr_l2_type = intf_hdr[0].hdr_type;
+#else
 			tx_prop[i].hdr_l2_type = intf->hdr[0].hdr_type;
+#endif
 			strlcpy(tx_prop[i].hdr_name, hdr->hdr[IPA_IP_v4].name,
 				sizeof(tx_prop[i].hdr_name));
 
 			tx_prop[i+1].ip = IPA_IP_v6;
 			tx_prop[i+1].dst_pipe = tx_client[i];
+#if IPA_ETH_API_VER >= 2
+			tx_prop[i+1].hdr_l2_type = intf_hdr[1].hdr_type;
+#else
 			tx_prop[i+1].hdr_l2_type = intf->hdr[1].hdr_type;
+#endif
 			strlcpy(tx_prop[i+1].hdr_name, hdr->hdr[IPA_IP_v6].name,
 				sizeof(tx_prop[i+1].hdr_name));
 		}
@@ -855,16 +1038,27 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 		for (i = 0; i < rx.num_props; i++) {
 			rx_prop[i].ip = IPA_IP_v4;
 			rx_prop[i].src_pipe = rx_client[i];
+#if IPA_ETH_API_VER >= 2
+			rx_prop[i].hdr_l2_type = intf_hdr[0].hdr_type;
+#else
 			rx_prop[i].hdr_l2_type = intf->hdr[0].hdr_type;
-
+#endif
 			rx_prop[i+1].ip = IPA_IP_v6;
 			rx_prop[i+1].src_pipe = rx_client[i];
+#if IPA_ETH_API_VER >= 2
+			rx_prop[i+1].hdr_l2_type = intf_hdr[1].hdr_type;
+#else
 			rx_prop[i+1].hdr_l2_type = intf->hdr[1].hdr_type;
+#endif
 		}
 		tx.num_props *= IPA_IP_MAX;
 		rx.num_props *= IPA_IP_MAX;
 	}
+#if IPA_ETH_API_VER >= 2
+	if (ipa_register_intf(intf->net_dev->name, &tx, &rx)) {
+#else
 	if (ipa_register_intf(intf->netdev_name, &tx, &rx)) {
+#endif
 		IPA_ETH_ERR("fail to add interface prop\n");
 		ret = -EFAULT;
 		goto fail_commit_hdr;
@@ -876,6 +1070,14 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 	kfree(tx_prop);
 	kfree(rx_prop);
 	mutex_unlock(&ipa_eth_ctx->lock);
+
+#if IPA_ETH_API_VER >= 2
+	if (intf->is_conn_evt) {
+		strlcpy(msg.name, intf->net_dev->name, sizeof(msg.name));
+		msg.ifindex = intf->net_dev->ifindex;
+		ipa_eth_client_conn_evt_internal(&msg);
+	}
+#endif
 	return 0;
 fail_commit_hdr:
 	kfree(hdr);
@@ -893,6 +1095,9 @@ static int ipa_eth_client_unreg_intf_internal(struct ipa_eth_intf_info *intf)
 	struct ipa_ioc_del_hdr *hdr = NULL;
 	struct ipa_eth_intf *entry;
 	struct ipa_eth_intf *next;
+#if IPA_ETH_API_VER >= 2
+	struct ipa_ecm_msg msg;
+#endif
 
 	if (intf == NULL) {
 		IPA_ETH_ERR("invalid params intf=%pK\n", intf);
@@ -902,12 +1107,24 @@ static int ipa_eth_client_unreg_intf_internal(struct ipa_eth_intf_info *intf)
 		IPA_ETH_ERR("disconn called before register readiness\n");
 		return -EFAULT;
 	}
+#if IPA_ETH_API_VER >= 2
+	if (!intf->net_dev) {
+		IPA_ETH_ERR("invalid netdev\n");
+		return -EFAULT;
+	}
+	IPA_ETH_DBG("unregister interface for netdev %s\n", intf->net_dev->name);
+#else
 	IPA_ETH_DBG("unregister interface for netdev %s\n",
 		intf->netdev_name);
+#endif
 	mutex_lock(&ipa_eth_ctx->lock);
 	list_for_each_entry_safe(entry, next, &ipa_eth_ctx->head_intf_list,
 		link)
+#if IPA_ETH_API_VER >= 2
+		if (strcmp(entry->netdev_name, intf->net_dev->name) == 0) {
+#else
 		if (strcmp(entry->netdev_name, intf->netdev_name) == 0) {
+#endif
 			len = sizeof(struct ipa_ioc_del_hdr) +
 				IPA_IP_MAX * sizeof(struct ipa_hdr_del);
 			hdr = kzalloc(len, GFP_KERNEL);
@@ -944,6 +1161,13 @@ static int ipa_eth_client_unreg_intf_internal(struct ipa_eth_intf_info *intf)
 fail:
 	kfree(hdr);
 	mutex_unlock(&ipa_eth_ctx->lock);
+#if IPA_ETH_API_VER >= 2
+	if (intf->is_conn_evt) {
+		strlcpy(msg.name, intf->net_dev->name, sizeof(msg.name));
+		msg.ifindex = intf->net_dev->ifindex;
+		ipa_eth_client_disconn_evt_internal(&msg);
+	}
+#endif
 	return ret;
 
 }
@@ -969,61 +1193,6 @@ static int ipa_eth_client_set_perf_profile_internal(struct ipa_eth_client *clien
 	}
 
 	return 0;
-}
-
-static void ipa_eth_msg_free_cb(void *buff, u32 len, u32 type)
-{
-	kfree(buff);
-}
-
-static int ipa_eth_client_conn_evt_internal(struct ipa_ecm_msg *msg)
-{
-	struct ipa_msg_meta msg_meta;
-	struct ipa_ecm_msg *eth_msg;
-	int ret;
-
-	IPADBG("enter\n");
-
-	eth_msg = kzalloc(sizeof(*eth_msg), GFP_KERNEL);
-	if (eth_msg == NULL)
-		return -ENOMEM;
-	memcpy(eth_msg, msg, sizeof(struct ipa_ecm_msg));
-	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
-	msg_meta.msg_len = sizeof(struct ipa_ecm_msg);
-	msg_meta.msg_type = IPA_PERIPHERAL_CONNECT;
-
-	IPADBG("send IPA_PERIPHERAL_CONNECT, len:%d, buff %pK",
-		msg_meta.msg_len, eth_msg);
-	ret = ipa_send_msg(&msg_meta, eth_msg, ipa_eth_msg_free_cb);
-
-	IPADBG("exit\n");
-
-	return ret;
-}
-
-static int ipa_eth_client_disconn_evt_internal(struct ipa_ecm_msg *msg)
-{
-	struct ipa_msg_meta msg_meta;
-	struct ipa_ecm_msg *eth_msg;
-	int ret;
-
-	IPADBG("enter\n");
-
-	eth_msg = kzalloc(sizeof(*eth_msg), GFP_KERNEL);
-	if (eth_msg == NULL)
-		return -ENOMEM;
-	memcpy(eth_msg, msg, sizeof(struct ipa_ecm_msg));
-	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
-	msg_meta.msg_len = sizeof(struct ipa_ecm_msg);
-	msg_meta.msg_type = IPA_PERIPHERAL_DISCONNECT;
-
-	IPADBG("send PERIPHERAL_DISCONNECT, len:%d, buff %pK",
-		msg_meta.msg_len, eth_msg);
-	ret = ipa_send_msg(&msg_meta, eth_msg, ipa_eth_msg_free_cb);
-
-	IPADBG("exit\n");
-
-	return ret;
 }
 
 enum ipa_client_type ipa_eth_get_ipa_client_type_from_eth_type_internal(
@@ -1090,8 +1259,10 @@ void ipa_eth_register(void)
 	funcs.ipa_eth_client_unreg_intf = ipa_eth_client_unreg_intf_internal;
 	funcs.ipa_eth_client_set_perf_profile =
 		ipa_eth_client_set_perf_profile_internal;
+#if IPA_ETH_API_VER < 2
 	funcs.ipa_eth_client_conn_evt = ipa_eth_client_conn_evt_internal;
 	funcs.ipa_eth_client_disconn_evt = ipa_eth_client_disconn_evt_internal;
+#endif
 	funcs.ipa_eth_get_ipa_client_type_from_eth_type =
 		ipa_eth_get_ipa_client_type_from_eth_type_internal;
 	funcs.ipa_eth_client_exist = ipa_eth_client_exist_internal;

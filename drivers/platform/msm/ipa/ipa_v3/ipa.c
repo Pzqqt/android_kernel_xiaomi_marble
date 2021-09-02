@@ -8017,6 +8017,18 @@ static ssize_t ipa3_write(struct file *file, const char __user *buf,
 			if (strnstr(dbg_buff, "eth", strlen(dbg_buff)))
 				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_EMAC] =
 				true;
+#if IPA_ETH_API_VER >= 2
+			/* In Dual NIC mode we get "vlan: eth [eth0|eth1] [eth0|eth1]?" while device name is
+			   "eth0" in legacy so, we set it to false to diffrentiate Dual NIC from legacy */
+			if (strnstr(dbg_buff, "eth0", strlen(dbg_buff))) {
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_ETH0] = true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_EMAC] = false;
+			}
+			if (strnstr(dbg_buff, "eth1", strlen(dbg_buff))){
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_ETH1] = true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_EMAC] = false;
+			}
+#endif
 			if (strnstr(dbg_buff, "rndis", strlen(dbg_buff)))
 				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_RNDIS] =
 				true;

@@ -3438,8 +3438,10 @@ int ipa3_eth_connect(
 int ipa3_eth_disconnect(
 	struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_client_type client_type);
+#if IPA_ETH_API_VER < 2
 int ipa3_eth_client_conn_evt(struct ipa_ecm_msg *msg);
 int ipa3_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
+#endif
 void ipa3_eth_get_status(u32 client, int scratch_id,
 	struct ipa3_eth_error_stats *stats);
 int ipa3_get_gsi_chan_info(struct gsi_chan_info *gsi_chan_info,
