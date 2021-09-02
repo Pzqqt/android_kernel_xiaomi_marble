@@ -356,6 +356,8 @@ struct spectral_nl_cb {
 			       enum spectral_msg_type smsg_type);
 	void (*free_sbuff)(struct wlan_objmgr_pdev *pdev,
 			   enum spectral_msg_type smsg_type);
+	int (*convert_to_nl_ch_width)(uint8_t phy_chwidth);
+	uint8_t (*convert_to_phy_ch_width)(uint8_t nl_chwidth);
 };
 
 /**

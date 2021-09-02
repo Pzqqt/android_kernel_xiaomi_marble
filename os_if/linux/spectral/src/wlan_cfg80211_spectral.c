@@ -201,6 +201,112 @@ convert_spectral_err_code_internal_to_nl
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE
+int
+wlan_spectral_get_nl80211_chwidth(uint8_t phy_chwidth)
+{
+	switch ((enum phy_ch_width)phy_chwidth) {
+	case CH_WIDTH_5MHZ:
+		return NL80211_CHAN_WIDTH_5;
+	case CH_WIDTH_10MHZ:
+		return NL80211_CHAN_WIDTH_10;
+	case CH_WIDTH_20MHZ:
+		return NL80211_CHAN_WIDTH_20;
+	case CH_WIDTH_40MHZ:
+		return NL80211_CHAN_WIDTH_40;
+	case CH_WIDTH_80MHZ:
+		return NL80211_CHAN_WIDTH_80;
+	case CH_WIDTH_160MHZ:
+		return NL80211_CHAN_WIDTH_160;
+	case CH_WIDTH_80P80MHZ:
+		return NL80211_CHAN_WIDTH_80P80;
+	case CH_WIDTH_320MHZ:
+	case CH_WIDTH_MAX:
+		return NL80211_CHAN_WIDTH_320;
+	case CH_WIDTH_INVALID:
+	default:
+		osif_err("Invalid spectral channel width %u", phy_chwidth);
+		return -EINVAL;
+	}
+}
+
+uint8_t
+wlan_spectral_get_phy_ch_width(uint8_t nl_chwidth)
+{
+	switch ((enum nl80211_chan_width)nl_chwidth) {
+	case NL80211_CHAN_WIDTH_5:
+		return CH_WIDTH_5MHZ;
+	case NL80211_CHAN_WIDTH_10:
+		return CH_WIDTH_10MHZ;
+	case NL80211_CHAN_WIDTH_20:
+		return CH_WIDTH_20MHZ;
+	case NL80211_CHAN_WIDTH_40:
+		return CH_WIDTH_40MHZ;
+	case NL80211_CHAN_WIDTH_80:
+		return CH_WIDTH_80MHZ;
+	case NL80211_CHAN_WIDTH_160:
+		return CH_WIDTH_160MHZ;
+	case NL80211_CHAN_WIDTH_80P80:
+		return CH_WIDTH_80P80MHZ;
+	case NL80211_CHAN_WIDTH_320:
+		return CH_WIDTH_320MHZ;
+	default:
+		osif_err("Invalid nl80211 channel width %u", nl_chwidth);
+		return CH_WIDTH_INVALID;
+	}
+}
+#else
+int
+wlan_spectral_get_nl80211_chwidth(uint8_t phy_chwidth)
+{
+	switch ((enum phy_ch_width)phy_chwidth) {
+	case CH_WIDTH_5MHZ:
+		return NL80211_CHAN_WIDTH_5;
+	case CH_WIDTH_10MHZ:
+		return NL80211_CHAN_WIDTH_10;
+	case CH_WIDTH_20MHZ:
+		return NL80211_CHAN_WIDTH_20;
+	case CH_WIDTH_40MHZ:
+		return NL80211_CHAN_WIDTH_40;
+	case CH_WIDTH_80MHZ:
+		return NL80211_CHAN_WIDTH_80;
+	case CH_WIDTH_160MHZ:
+	case CH_WIDTH_MAX:
+		return NL80211_CHAN_WIDTH_160;
+	case CH_WIDTH_80P80MHZ:
+		return NL80211_CHAN_WIDTH_80P80;
+	case CH_WIDTH_INVALID:
+	default:
+		osif_err("Invalid spectral channel width %u", phy_chwidth);
+		return -EINVAL;
+	}
+}
+
+uint8_t
+wlan_spectral_get_phy_ch_width(uint8_t nl_chwidth)
+{
+	switch ((enum nl80211_chan_width)nl_chwidth) {
+	case NL80211_CHAN_WIDTH_5:
+		return CH_WIDTH_5MHZ;
+	case NL80211_CHAN_WIDTH_10:
+		return CH_WIDTH_10MHZ;
+	case NL80211_CHAN_WIDTH_20:
+		return CH_WIDTH_20MHZ;
+	case NL80211_CHAN_WIDTH_40:
+		return CH_WIDTH_40MHZ;
+	case NL80211_CHAN_WIDTH_80:
+		return CH_WIDTH_80MHZ;
+	case NL80211_CHAN_WIDTH_160:
+		return CH_WIDTH_160MHZ;
+	case NL80211_CHAN_WIDTH_80P80:
+		return CH_WIDTH_80P80MHZ;
+	default:
+		osif_err("Invalid nl80211 channel width %u", nl_chwidth);
+		return CH_WIDTH_INVALID;
+	}
+}
+#endif /* WLAN_FEATURE_11BE */
+
 #ifdef DIRECT_BUF_RX_DEBUG
 QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
 	struct wlan_objmgr_pdev *pdev,

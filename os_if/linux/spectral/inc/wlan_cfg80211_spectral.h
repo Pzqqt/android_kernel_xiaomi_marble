@@ -49,6 +49,26 @@ extern const struct nla_policy
 	(type == QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_REQUEST_TYPE_SCAN))
 
 /**
+ * wlan_spectral_get_nl80211_chwidth() - Get nl80211_chan_width value for
+ * channel width from enum phy_ch_width
+ * @phy_chwidth: enum phy_ch_width channel width value
+ *
+ * Return: channel width converted to nl80211_chan_width
+ */
+int
+wlan_spectral_get_nl80211_chwidth(uint8_t phy_chwidth);
+
+/**
+ * wlan_spectral_get_phy_ch_width() - Convert channel width from
+ * nl80211_chan_width to enum phy_ch_width
+ * @nl_chwidth: nl80211 channel width value
+ *
+ * Return: channel width converted to phy_ch_width
+ */
+uint8_t
+wlan_spectral_get_phy_ch_width(uint8_t nl_chwidth);
+
+/**
  * wlan_cfg80211_register_spectral_cmd_handler() - Registration api for spectral
  * @pdev:    Pointer to pdev
  * @idx:     Index in function table

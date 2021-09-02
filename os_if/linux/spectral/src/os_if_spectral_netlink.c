@@ -18,6 +18,7 @@
  */
 
 #include <os_if_spectral_netlink.h>
+#include <wlan_cfg80211_spectral.h>
 #include <spectral_cmn_api_i.h>
 #include <spectral_defs_i.h>
 #include <wlan_nlink_srv.h>
@@ -600,6 +601,8 @@ os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev)
 	nl_cb.send_nl_bcast = os_if_spectral_nl_bcast_msg;
 	nl_cb.send_nl_unicast = os_if_spectral_nl_unicast_msg;
 	nl_cb.free_sbuff = os_if_spectral_free_skb;
+	nl_cb.convert_to_phy_ch_width = wlan_spectral_get_phy_ch_width;
+	nl_cb.convert_to_nl_ch_width = wlan_spectral_get_nl80211_chwidth;
 
 	if (sptrl_ctx->sptrlc_register_netlink_cb)
 		sptrl_ctx->sptrlc_register_netlink_cb(pdev, &nl_cb);

@@ -190,11 +190,9 @@ enum spectral_chan_width {
 	SPECTRAL_CH_WIDTH_80MHZ,
 	SPECTRAL_CH_WIDTH_160MHZ,
 	SPECTRAL_CH_WIDTH_80P80MHZ,
+	SPECTRAL_CH_WIDTH_320MHZ,
 	SPECTRAL_CH_WIDTH_5MHZ,
 	SPECTRAL_CH_WIDTH_10MHZ,
-#ifdef WLAN_FEATURE_11BE
-	SPECTRAL_CH_WIDTH_320MHZ,
-#endif
 	SPECTRAL_CH_WIDTH_MAX,
 	SPECTRAL_CH_WIDTH_INVALID,
 };
@@ -356,11 +354,13 @@ struct spectral_config {
  * @agile_spectral_cap: agile Spectral capability for 20/40/80
  * @agile_spectral_cap_160: agile Spectral capability for 160 MHz
  * @agile_spectral_cap_80p80: agile Spectral capability for 80p80
+ * @agile_spectral_cap_320: agile Spectral capability for 320
  * @num_detectors_20mhz: number of Spectral detectors in 20 MHz
  * @num_detectors_40mhz: number of Spectral detectors in 40 MHz
  * @num_detectors_80mhz: number of Spectral detectors in 80 MHz
  * @num_detectors_160mhz: number of Spectral detectors in 160 MHz
  * @num_detectors_80p80mhz: number of Spectral detectors in 80p80 MHz
+ * @num_detectors_320mhz: number of Spectral detectors in 320 MHz
  */
 struct spectral_caps {
 	uint8_t phydiag_cap;
@@ -377,11 +377,13 @@ struct spectral_caps {
 	bool agile_spectral_cap;
 	bool agile_spectral_cap_160;
 	bool agile_spectral_cap_80p80;
+	bool agile_spectral_cap_320;
 	uint32_t num_detectors_20mhz;
 	uint32_t num_detectors_40mhz;
 	uint32_t num_detectors_80mhz;
 	uint32_t num_detectors_160mhz;
 	uint32_t num_detectors_80p80mhz;
+	uint32_t num_detectors_320mhz;
 };
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)

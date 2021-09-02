@@ -274,13 +274,25 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		spec_samp_msg->spectral_mode = spectral_mode;
 		spec_samp_msg->target_reset_count =
 				spectral->timestamp_war.target_reset_count;
-		spec_samp_msg->operating_bw = rpt_info->operating_bw;
+		spec_samp_msg->operating_bw = spectral->nl_cb.
+				convert_to_nl_ch_width(rpt_info->operating_bw);
+		if (spec_samp_msg->operating_bw < 0) {
+			spectral_err_rl("Invalid operating channel width %d",
+					rpt_info->operating_bw);
+			return QDF_STATUS_E_FAILURE;
+		}
 		spec_samp_msg->pri20_freq = rpt_info->pri20_freq;
 		spec_samp_msg->cfreq1 = rpt_info->cfreq1;
 		spec_samp_msg->cfreq2 = rpt_info->cfreq2;
 		spec_samp_msg->sscan_cfreq1 = rpt_info->sscan_cfreq1;
 		spec_samp_msg->sscan_cfreq2 = rpt_info->sscan_cfreq2;
-		spec_samp_msg->sscan_bw = rpt_info->sscan_bw;
+		spec_samp_msg->sscan_bw = spectral->nl_cb.
+				convert_to_nl_ch_width(rpt_info->sscan_bw);
+		if (spec_samp_msg->sscan_bw < 0) {
+			spectral_err_rl("Invalid sscan channel width %d",
+					rpt_info->sscan_bw);
+			return QDF_STATUS_E_FAILURE;
+		}
 		spec_samp_msg->fft_width = FFT_BIN_SIZE_1BYTE;
 		spec_samp_msg->num_freq_spans = rpt_info->num_spans;
 
