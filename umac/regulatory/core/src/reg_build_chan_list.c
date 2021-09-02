@@ -675,6 +675,7 @@ static void reg_propagate_6g_mas_channel_list(
 		mas_chan_params->is_6g_channel_list_populated;
 	pdev_priv_obj->reg_6g_superid =
 		mas_chan_params->reg_6g_superid;
+	pdev_priv_obj->reg_cur_6g_ap_pwr_type = REG_INDOOR_AP;
 }
 #else
 static inline void reg_propagate_6g_mas_channel_list(
