@@ -8472,6 +8472,11 @@ static void wlan_update_bss_with_fils_data(struct mac_context *mac_ctx,
 	qdf_mem_copy(bss_descr->fils_info_element.realm,
 			fils_ind->realm_identifier.realm,
 			bss_descr->fils_info_element.realm_cnt * SIR_REALM_LEN);
+	pe_debug("FILS: bssid:" QDF_MAC_ADDR_FMT "is_present:%d cache_id[0x%x%x]",
+		 QDF_MAC_ADDR_REF(bss_descr->bssId),
+		 fils_ind->cache_identifier.is_present,
+		 fils_ind->cache_identifier.identifier[0],
+		 fils_ind->cache_identifier.identifier[1]);
 	if (fils_ind->cache_identifier.is_present) {
 		bss_descr->fils_info_element.is_cache_id_present = true;
 		qdf_mem_copy(bss_descr->fils_info_element.cache_id,

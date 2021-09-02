@@ -1540,13 +1540,13 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 			     fils_info->pmk_len);
 	}
 
-	pe_debug("FILS: fils=%d nai-len=%d rrk_len=%d akm=%d auth=%d pmk_len=%d",
+	pe_debug("FILS: fils=%d nai-len=%d rrk_len=%d akm=%d auth=%d pmk_len=%d rsn_len:%d",
 		 fils_info->is_fils_connection,
 		 fils_info->key_nai_length,
 		 fils_info->r_rk_length,
 		 fils_info->akm_type,
 		 fils_info->auth_type,
-		 fils_info->pmk_len);
+		 fils_info->pmk_len, pe_fils_info->rsn_ie_len);
 }
 
 #define EXTENDED_IE_HEADER_LEN 3

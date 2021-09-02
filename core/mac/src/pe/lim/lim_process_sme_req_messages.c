@@ -3542,11 +3542,17 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 		qdf_mem_copy(pmksa.cache_id,
 			     bss_desc->fils_info_element.cache_id,
 			     CACHE_ID_LEN);
-		qdf_mem_copy(&pmksa.bssid, session->bssId, QDF_MAC_ADDR_SIZE);
+		pe_debug("FILS: Cache id =0x%x 0x%x", pmksa.cache_id[0],
+			 pmksa.cache_id[1]);
 	} else {
 		qdf_mem_copy(&pmksa.bssid, session->bssId, QDF_MAC_ADDR_SIZE);
 	}
+
 	pmksa_peer = wlan_crypto_get_peer_pmksa(session->vdev, &pmksa);
+	if (!pmksa_peer)
+		pe_debug("FILS: vdev:%d Peer PMKSA not found ssid:%.*s cache_id_present:%d",
+			 session->vdev_id, pmksa.ssid_len, pmksa.ssid,
+			 bss_desc->fils_info_element.is_cache_id_present);
 
 	/* TODO: Add support for Adaptive 11r connection */
 	rsn_ie_end = wlan_crypto_build_rsnie_with_pmksa(session->vdev, rsn_ie,
