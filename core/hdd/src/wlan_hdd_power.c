@@ -1439,14 +1439,6 @@ flush_mc_list:
 static void hdd_update_conn_state_mask(struct hdd_adapter *adapter,
 				       uint32_t *conn_state_mask)
 {
-
-	eConnectionState conn_state;
-	struct hdd_station_ctx *sta_ctx;
-
-	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	conn_state = sta_ctx->conn_info.conn_state;
-
 	if (hdd_cm_is_vdev_associated(adapter))
 		*conn_state_mask |= (1 << adapter->vdev_id);
 }

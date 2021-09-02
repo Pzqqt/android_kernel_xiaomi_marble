@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -233,21 +233,6 @@ int hdd_start_tsf_sync(struct hdd_adapter *adapter);
 int hdd_stop_tsf_sync(struct hdd_adapter *adapter);
 
 /**
- * hdd_tsf_notify_wlan_state_change() -
- *     notify tsf module of wlan connection state
- * @old_state: old wlan state
- * @new_state: new wlan state
- *
- * This function check the old and new connection state, determine whether
- * to start or stop tsf sync
- *
- * Return: nothing
- */
-void hdd_tsf_notify_wlan_state_change(struct hdd_adapter *adapter,
-				      eConnectionState old_state,
-				      eConnectionState new_state);
-
-/**
  * hdd_tx_timestamp() - time stamp TX netbuf
  *
  * @netbuf: pointer to a TX netbuf
@@ -301,14 +286,6 @@ static inline int hdd_start_tsf_sync(struct hdd_adapter *adapter)
 static inline int hdd_stop_tsf_sync(struct hdd_adapter *adapter)
 {
 	return -ENOTSUPP;
-}
-
-static inline
-void hdd_tsf_notify_wlan_state_change(struct hdd_adapter *adapter,
-				      eConnectionState old_state,
-				      eConnectionState new_state)
-
-{
 }
 
 static inline

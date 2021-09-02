@@ -352,9 +352,8 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
+		hdd_err_rl("Invalid state, vdev %d mode %d",
+			   adapter->vdev_id, adapter->device_mode);
 		return -EINVAL;
 	}
 
@@ -419,9 +418,8 @@ int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
+		hdd_err_rl("Invalid state, vdev %d mode %d",
+			   adapter->vdev_id, adapter->device_mode);
 		return -EINVAL;
 	}
 
@@ -748,17 +746,14 @@ fail:
 static int hdd_is_twt_command_allowed(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_station_ctx *hdd_sta_ctx;
 
 	if (adapter->device_mode != QDF_STA_MODE &&
 	    adapter->device_mode != QDF_P2P_CLIENT_MODE)
 		return -EOPNOTSUPP;
 
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
+		hdd_err_rl("Invalid state, vdev %d mode %d",
+			   adapter->vdev_id, adapter->device_mode);
 		return -EAGAIN;
 	}
 
@@ -2031,9 +2026,8 @@ hdd_send_twt_del_all_sessions_to_userspace(struct hdd_adapter *adapter)
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_debug("Not associated, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
+		hdd_debug("Not associated, vdev %d mode %d",
+			   adapter->vdev_id, adapter->device_mode);
 		return;
 	}
 
@@ -2264,9 +2258,8 @@ static int hdd_sta_twt_terminate_session(struct hdd_adapter *adapter,
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
+		hdd_err_rl("Invalid state, vdev %d mode %d",
+			   adapter->vdev_id, adapter->device_mode);
 
 		/*
 		 * Return success, since STA is not associated and there is

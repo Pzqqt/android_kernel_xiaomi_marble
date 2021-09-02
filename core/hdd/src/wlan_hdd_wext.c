@@ -5939,9 +5939,8 @@ hdd_connection_state_string(eConnectionState connection_state)
 {
 	switch (connection_state) {
 		CASE_RETURN_STRING(eConnectionState_NotConnected);
-		CASE_RETURN_STRING(eConnectionState_Connecting);
-		CASE_RETURN_STRING(eConnectionState_Associated);
-		CASE_RETURN_STRING(eConnectionState_Disconnecting);
+		CASE_RETURN_STRING(eConnectionState_NdiDisconnected);
+		CASE_RETURN_STRING(eConnectionState_NdiConnected);
 	default:
 		return "UNKNOWN";
 	}
@@ -6475,21 +6474,18 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		int status = 0;
 		bool enable_snr_monitoring;
 		struct hdd_context *hdd_ctx;
-		struct hdd_station_ctx *sta_ctx;
 
 		hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 		status = wlan_hdd_validate_context(hdd_ctx);
 		if (status)
 			return status;
 
-		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		enable_snr_monitoring =
 				ucfg_scan_is_snr_monitor_enabled(hdd_ctx->psoc);
 		if (!enable_snr_monitoring ||
 		    !hdd_cm_is_vdev_associated(adapter)) {
-			hdd_err("getSNR failed: Enable SNR Monitoring-%d, ConnectionState-%d",
-				enable_snr_monitoring,
-				sta_ctx->conn_info.conn_state);
+			hdd_err("getSNR failed: Enable SNR Monitoring-%d",
+				enable_snr_monitoring);
 			return -ENONET;
 		}
 		wlan_hdd_get_snr(adapter, &s7snr);

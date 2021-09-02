@@ -20573,7 +20573,6 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int status;
 
 	hdd_enter();
@@ -20591,8 +20590,7 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 		return -EINVAL;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
-		   TRACE_CODE_HDD_CFG80211_UPDATE_FT_IES,
-		   adapter->vdev_id, sta_ctx->conn_info.conn_state);
+		   TRACE_CODE_HDD_CFG80211_UPDATE_FT_IES, adapter->vdev_id, 0);
 
 	/* Added for debug on reception of Re-assoc Req. */
 	if (!hdd_cm_is_vdev_associated(adapter)) {

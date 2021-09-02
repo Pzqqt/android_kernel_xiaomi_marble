@@ -313,8 +313,6 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	char *connect_time;
-	uint32_t time_buffer_size;
 
 	/* save the new connection state */
 	if (conn_state == hdd_sta_ctx->conn_info.conn_state)
@@ -324,19 +322,7 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 		       hdd_sta_ctx->conn_info.conn_state, conn_state,
 		       adapter->dev->name, adapter->vdev_id);
 
-	hdd_tsf_notify_wlan_state_change(adapter,
-					 hdd_sta_ctx->conn_info.conn_state,
-					 conn_state);
 	hdd_sta_ctx->conn_info.conn_state = conn_state;
-
-	connect_time = hdd_sta_ctx->conn_info.connect_time;
-	time_buffer_size = sizeof(hdd_sta_ctx->conn_info.connect_time);
-	if (conn_state == eConnectionState_Associated)
-		qdf_get_time_of_the_day_in_hr_min_sec_usec(connect_time,
-							   time_buffer_size);
-	else
-		qdf_mem_zero(connect_time, time_buffer_size);
-
 }
 
 enum band_info hdd_conn_get_connected_band(struct hdd_adapter *adapter)
