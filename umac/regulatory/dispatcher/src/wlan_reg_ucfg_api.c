@@ -262,7 +262,13 @@ QDF_STATUS ucfg_reg_get_partial_afc_req_info(
 		struct wlan_afc_host_partial_request **afc_req,
 		uint64_t req_id)
 {
-	return reg_get_partial_afc_req_info(pdev, afc_req, req_id);
+	QDF_STATUS status;
+
+	status = reg_get_partial_afc_req_info(pdev, afc_req);
+	if (status == QDF_STATUS_SUCCESS)
+		reg_dmn_set_afc_req_id(afc_req, req_id);
+
+	return status;
 }
 #endif
 

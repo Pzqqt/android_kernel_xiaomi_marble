@@ -1265,7 +1265,6 @@ QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
  * reg_get_partial_afc_req_info() - Get the AFC partial request information
  * @pdev: Pointer to pdev
  * @afc_req: Address of AFC request pointer
- * @req_id: AFC request ID.
  *
  * NOTE:- The memory for AFC request is allocated by the function must be
  *        freed by the caller.
@@ -1273,8 +1272,7 @@ QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
  */
 QDF_STATUS
 reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
-			     struct wlan_afc_host_partial_request **afc_req,
-			     uint64_t req_id);
+			     struct wlan_afc_host_partial_request **afc_req);
 
 /**
  * reg_print_partial_afc_req_info() - Print the AFC partial request
@@ -1800,5 +1798,16 @@ bool reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev);
  * Return: true if regulatory should not take any action or false otherwise
  */
 bool reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_dmn_set_afc_req_id() - Set the request ID in the AFC partial request
+ *                            object
+ * @afc_req: pointer to AFC partial request
+ * @req_id: AFC request ID
+ *
+ * Return: Void
+ */
+void reg_dmn_set_afc_req_id(struct wlan_afc_host_partial_request *afc_req,
+			    uint64_t req_id);
 #endif
 #endif

@@ -5501,15 +5501,6 @@ handle_invalid_priv_object:
 	return status;
 }
 
-/**
- * reg_dmn_set_afc_req_id() - Set the request ID in the AFC partial request
- *                            object
- * @afc_req: pointer to AFC partial request
- * @req_id: AFC request ID
- *
- * Return: Void
- */
-static
 void reg_dmn_set_afc_req_id(struct wlan_afc_host_partial_request *afc_req,
 			    uint64_t req_id)
 {
