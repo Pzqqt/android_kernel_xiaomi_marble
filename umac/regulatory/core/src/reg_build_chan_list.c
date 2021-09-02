@@ -2465,6 +2465,9 @@ static void reg_disable_afc_mas_chan_list_channels(
 	struct regulatory_channel *afc_mas_chan_list;
 	enum channel_enum chan_idx;
 
+	QDF_TRACE(QDF_MODULE_ID_AFC, QDF_TRACE_LEVEL_DEBUG,
+		  "Processing AFC Switch to LPI event");
+
 	afc_mas_chan_list = pdev_priv_obj->mas_chan_list_6g_afc;
 
 	for (chan_idx = 0; chan_idx < NUM_6GHZ_CHANNELS; chan_idx++) {
@@ -2912,6 +2915,9 @@ reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
 	uint32_t size_of_6g_chan_list =
 		NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel);
 	QDF_STATUS status;
+
+	QDF_TRACE(QDF_MODULE_ID_AFC, QDF_TRACE_LEVEL_DEBUG,
+		  "Processing AFC Power event");
 
 	if (afc_info->power_info->fw_status_code !=
 	    REG_FW_AFC_POWER_EVENT_SUCCESS) {

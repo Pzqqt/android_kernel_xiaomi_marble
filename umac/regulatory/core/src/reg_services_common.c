@@ -5577,6 +5577,9 @@ QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	QDF_TRACE(QDF_MODULE_ID_AFC, QDF_TRACE_LEVEL_DEBUG,
+		  "Processing AFC Start/Renew Expiry event");
+
 	reg_dmn_set_afc_req_id(afc_req, req_id);
 
 	reg_print_partial_afc_req_info(pdev, afc_req);

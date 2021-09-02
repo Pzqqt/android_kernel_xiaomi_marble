@@ -3391,6 +3391,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_MLOIE] = {"MLOIE"},
 	[QDF_MODULE_ID_MBSS] = {"MBSS"},
 	[QDF_MODULE_ID_MON] = {"MONITOR"},
+	[QDF_MODULE_ID_AFC] = {"AFC"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 qdf_export_symbol(g_qdf_category_name);
