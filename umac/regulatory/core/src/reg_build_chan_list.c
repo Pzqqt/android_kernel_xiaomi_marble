@@ -2928,6 +2928,8 @@ reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
 	pdev_priv_obj->is_6g_afc_power_event_received =
 	soc_reg->mas_chan_params[phy_id].is_6g_afc_power_event_received;
 
+	reg_modify_6g_afc_chan_list(pdev_priv_obj);
+
 	if (tx_ops->trigger_acs_for_afc &&
 	    !wlan_reg_is_noaction_on_afc_pwr_evt(pdev))
 		tx_ops->trigger_acs_for_afc(pdev);
