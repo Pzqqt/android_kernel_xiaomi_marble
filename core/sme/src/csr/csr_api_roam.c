@@ -111,7 +111,6 @@
 #define ROAMING_OFFLOAD_TIMER_STOP	2
 #define CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD    (5 * QDF_MC_TIMER_TO_SEC_UNIT)
 
-
 #ifdef WLAN_FEATURE_SAE
 /**
  * csr_sae_callback - Update SAE info to CSR roam session
@@ -3092,6 +3091,7 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 		pDstProfile->extended_rates.numRates =
 			pSrcProfile->extended_rates.numRates;
 	}
+	pDstProfile->require_h2e = pSrcProfile->require_h2e;
 	pDstProfile->cac_duration_ms = pSrcProfile->cac_duration_ms;
 	pDstProfile->dfs_regdomain   = pSrcProfile->dfs_regdomain;
 	pDstProfile->chan_switch_hostapd_rate_enabled  =
@@ -5361,6 +5361,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 	uint32_t opr_ch_freq = 0;
 	tSirNwType nw_type;
 	uint32_t tmp_opr_ch_freq = 0;
+	uint8_t h2e;
 	tSirMacRateSet *opr_rates = &pParam->operationalRateSet;
 	tSirMacRateSet *ext_rates = &pParam->extendedRateSet;
 
@@ -5448,6 +5449,22 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 			break;
 		}
 		pParam->operation_chan_freq = opr_ch_freq;
+	}
+
+	if (pProfile->require_h2e) {
+		h2e = WLAN_BASIC_RATE_MASK |
+			WLAN_BSS_MEMBERSHIP_SELECTOR_SAE_H2E;
+		if (ext_rates->numRates < SIR_MAC_MAX_NUMBER_OF_RATES) {
+			ext_rates->rate[ext_rates->numRates] = h2e;
+			ext_rates->numRates++;
+			sme_debug("H2E bss membership add to ext support rate");
+		} else if (opr_rates->numRates < SIR_MAC_MAX_NUMBER_OF_RATES) {
+			opr_rates->rate[opr_rates->numRates] = h2e;
+			opr_rates->numRates++;
+			sme_debug("H2E bss membership add to support rate");
+		} else {
+			sme_err("rates full, can not add H2E bss membership");
+		}
 	}
 
 	pParam->sirNwType = nw_type;
