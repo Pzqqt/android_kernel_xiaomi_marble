@@ -1560,6 +1560,8 @@ void __disable_unprepare_clks(struct msm_vidc_core *core)
 				__func__, cl->name);
 
 		clk_disable_unprepare(cl->clk);
+		if (cl->has_scaling)
+			__set_clk_rate(core, cl, 0);
 		cl->prev = 0;
 	}
 }
@@ -1647,6 +1649,8 @@ fail_clk_enable:
 		d_vpr_e("Clock: %s disable and unprepare\n",
 			cl->name);
 		clk_disable_unprepare(cl->clk);
+		if (cl->has_scaling)
+			__set_clk_rate(core, cl, 0);
 		cl->prev = 0;
 	}
 
