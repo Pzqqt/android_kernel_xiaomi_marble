@@ -7471,6 +7471,9 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	/* Assign resource limitation to each group */
 	ipa3_set_resorce_groups_min_max_limits();
 
+	/* Initialize general resource group parameters */
+	ipa3_set_resorce_groups_config();
+
 	idr = &(ipa3_ctx->flt_rule_ids[IPA_IP_v4]);
 	idr_init(idr);
 	idr = &(ipa3_ctx->flt_rule_ids[IPA_IP_v6]);

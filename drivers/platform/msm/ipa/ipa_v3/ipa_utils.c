@@ -276,6 +276,17 @@ struct rsrc_min_max {
 	u32 max;
 };
 
+struct ipa_rsrc_cfg {
+	u8 src_grp_index;
+	bool src_grp_valid;
+	u8 dst_pipe_index;
+	bool dst_pipe_valid;
+	u8 dst_grp_index;
+	bool dst_grp_valid;
+	u8 src_grp_2nd_prio_index;
+	bool src_grp_2nd_prio_valid;
+};
+
 enum ipa_ver {
 	IPA_3_0,
 	IPA_3_5,
@@ -867,6 +878,28 @@ static const u32 ipa3_rsrc_rx_grp_hps_weight_config
 	},
 };
 
+static const struct ipa_rsrc_cfg ipa_rsrc_config[IPA_VER_MAX] = {
+	[IPA_5_0] = {
+		.src_grp_index          = 4,
+		.src_grp_valid          = 1,
+		.dst_pipe_index         = 0,
+		.dst_pipe_valid         = 0,
+		.dst_grp_index          = 0,
+		.dst_grp_valid          = 0,
+		.src_grp_2nd_prio_index = 1,
+		.src_grp_2nd_prio_valid = 1,
+	},
+	[IPA_5_1] = {
+		.src_grp_index          = 4,
+		.src_grp_valid          = 1,
+		.dst_pipe_index         = 0,
+		.dst_pipe_valid         = 0,
+		.dst_grp_index          = 0,
+		.dst_grp_valid          = 0,
+		.src_grp_2nd_prio_index = 1,
+		.src_grp_2nd_prio_valid = 1,
+	},
+};
 
 enum ipa_qmb_instance_type {
 	IPA_QMB_INSTANCE_DDR = 0,
@@ -10199,7 +10232,7 @@ bool ipa_is_modem_pipe(int pipe_idx)
 
 static void ipa3_write_rsrc_grp_type_reg(int group_index,
 			enum ipa_rsrc_grp_type_src n, bool src,
-			struct ipahal_reg_rsrc_grp_cfg *val)
+			struct ipahal_reg_rsrc_grp_xy_cfg *val)
 {
 	u8 hw_type_idx;
 
@@ -10713,7 +10746,7 @@ void ipa3_set_resorce_groups_min_max_limits(void)
 	int dst_rsrc_type_max;
 	int src_grp_idx_max;
 	int dst_grp_idx_max;
-	struct ipahal_reg_rsrc_grp_cfg val;
+	struct ipahal_reg_rsrc_grp_xy_cfg val;
 	u8 hw_type_idx;
 
 	IPADBG("ENTER\n");
@@ -10840,6 +10873,31 @@ void ipa3_set_resorce_groups_min_max_limits(void)
 		ipa3_configure_rx_hps();
 	}
 
+	IPADBG("EXIT\n");
+}
+
+void ipa3_set_resorce_groups_config(void)
+{
+	struct ipahal_reg_rsrc_grp_cfg cfg;
+	struct ipahal_reg_rsrc_grp_cfg_ext cfg_ext;
+
+	IPADBG("ENTER\n");
+
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		cfg.src_grp_index = ipa_rsrc_config[ipa3_ctx->hw_type_index].src_grp_index;
+		cfg.src_grp_valid = ipa_rsrc_config[ipa3_ctx->hw_type_index].src_grp_valid;
+		cfg.dst_pipe_index = ipa_rsrc_config[ipa3_ctx->hw_type_index].dst_pipe_index;
+		cfg.dst_pipe_valid = ipa_rsrc_config[ipa3_ctx->hw_type_index].dst_pipe_valid;
+		cfg.dst_grp_index = ipa_rsrc_config[ipa3_ctx->hw_type_index].dst_grp_index;
+		cfg.src_grp_valid = ipa_rsrc_config[ipa3_ctx->hw_type_index].src_grp_valid;
+		cfg_ext.index = ipa_rsrc_config[ipa3_ctx->hw_type_index].src_grp_2nd_prio_index;
+		cfg_ext.valid = ipa_rsrc_config[ipa3_ctx->hw_type_index].src_grp_2nd_prio_valid;
+
+		IPADBG("Write IPA_RSRC_GRP_CFG\n");
+		ipahal_write_reg_fields(IPA_RSRC_GRP_CFG, &cfg);
+		IPADBG("Write IPA_RSRC_GRP_CFG_EXT\n");
+		ipahal_write_reg_fields(IPA_RSRC_GRP_CFG_EXT, &cfg_ext);
+	}
 	IPADBG("EXIT\n");
 }
 
