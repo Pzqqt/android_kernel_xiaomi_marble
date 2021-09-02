@@ -1065,20 +1065,20 @@ dfs_random_channel_sel_set_bitmap_for_freq(struct wlan_dfs *dfs,
  */
 static void dfs_assign_6g_channels(struct  chan_bonding_bitmap *ch_map)
 {
-	ch_map->chan_bonding_set[6].start_chan_freq = 5955;
-	ch_map->chan_bonding_set[7].start_chan_freq = 6035;
-	ch_map->chan_bonding_set[8].start_chan_freq = 6115;
-	ch_map->chan_bonding_set[9].start_chan_freq = 6195;
-	ch_map->chan_bonding_set[10].start_chan_freq = 6275;
-	ch_map->chan_bonding_set[11].start_chan_freq = 6355;
-	ch_map->chan_bonding_set[12].start_chan_freq = 6435;
-	ch_map->chan_bonding_set[13].start_chan_freq = 6515;
-	ch_map->chan_bonding_set[14].start_chan_freq = 6595;
-	ch_map->chan_bonding_set[15].start_chan_freq = 6675;
-	ch_map->chan_bonding_set[16].start_chan_freq = 6755;
-	ch_map->chan_bonding_set[17].start_chan_freq = 6835;
-	ch_map->chan_bonding_set[18].start_chan_freq = 6915;
-	ch_map->chan_bonding_set[19].start_chan_freq = 6995;
+	ch_map->chan_bonding_set[7].start_chan_freq = 5955;
+	ch_map->chan_bonding_set[8].start_chan_freq = 6035;
+	ch_map->chan_bonding_set[9].start_chan_freq = 6115;
+	ch_map->chan_bonding_set[10].start_chan_freq = 6195;
+	ch_map->chan_bonding_set[11].start_chan_freq = 6275;
+	ch_map->chan_bonding_set[12].start_chan_freq = 6355;
+	ch_map->chan_bonding_set[13].start_chan_freq = 6435;
+	ch_map->chan_bonding_set[14].start_chan_freq = 6515;
+	ch_map->chan_bonding_set[15].start_chan_freq = 6595;
+	ch_map->chan_bonding_set[16].start_chan_freq = 6675;
+	ch_map->chan_bonding_set[17].start_chan_freq = 6755;
+	ch_map->chan_bonding_set[18].start_chan_freq = 6835;
+	ch_map->chan_bonding_set[19].start_chan_freq = 6915;
+	ch_map->chan_bonding_set[20].start_chan_freq = 6995;
 }
 #else
 static inline void dfs_assign_6g_channels(struct  chan_bonding_bitmap *ch_map)
@@ -1121,6 +1121,7 @@ static uint16_t dfs_find_ch_with_fallback_for_freq(struct wlan_dfs *dfs,
 	ch_map.chan_bonding_set[3].start_chan_freq = 5580;
 	ch_map.chan_bonding_set[4].start_chan_freq = 5660;
 	ch_map.chan_bonding_set[5].start_chan_freq = 5745;
+	ch_map.chan_bonding_set[6].start_chan_freq = 5825;
 
 	dfs_assign_6g_channels(&ch_map);
 	for (i = 0; i < num_chan; i++) {

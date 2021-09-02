@@ -67,10 +67,10 @@
 
 #ifdef CONFIG_BAND_6GHZ
 /* Number of 80MHz channels in 5GHz and 6GHz band */
-#define DFS_MAX_80MHZ_BANDS                     (6 + 14)
+#define DFS_MAX_80MHZ_BANDS                     (7 + 14)
 #else
 /* Number of 80MHz channels in 5GHz band */
-#define DFS_MAX_80MHZ_BANDS                     6
+#define DFS_MAX_80MHZ_BANDS                     7
 #endif
 
 /* Start channel and center channel diff in 80Mhz */
