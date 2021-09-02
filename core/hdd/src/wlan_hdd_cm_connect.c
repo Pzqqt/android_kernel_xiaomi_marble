@@ -601,14 +601,21 @@ static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 		hdd_sta_ctx->conn_info.conn_flag.vht_op_present = false;
 	}
 
-	/* Cleanup already existing he info */
-	hdd_cleanup_conn_info(adapter);
+	/*
+	 * Cache connection info only in case of station
+	 */
+	if (adapter->device_mode == QDF_STA_MODE) {
+		/* Cleanup already existing he info */
+		hdd_cleanup_conn_info(adapter);
 
-	/* Cache last connection info */
-	qdf_mem_copy(&hdd_sta_ctx->cache_conn_info, &hdd_sta_ctx->conn_info,
-		     sizeof(hdd_sta_ctx->cache_conn_info));
+		/* Cache last connection info */
+		qdf_mem_copy(&hdd_sta_ctx->cache_conn_info,
+			     &hdd_sta_ctx->conn_info,
+			     sizeof(hdd_sta_ctx->cache_conn_info));
 
-	hdd_copy_he_operation(hdd_sta_ctx, &assoc_resp->he_op);
+		hdd_copy_he_operation(hdd_sta_ctx, &assoc_resp->he_op);
+	}
+
 	qdf_mem_free(assoc_resp);
 }
 
