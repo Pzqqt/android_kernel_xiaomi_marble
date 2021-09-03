@@ -903,9 +903,6 @@ report:
 		goto exit;
 	}
 
-	if (mbhc->mbhc_cb->bcs_enable)
-		mbhc->mbhc_cb->bcs_enable(mbhc, true);
-
 	pr_debug("%s: Valid plug found, plug type %d wrk_cmpt %d btn_intr %d\n",
 			__func__, plug_type, wrk_complete,
 			mbhc->btn_press_intr);
@@ -927,6 +924,9 @@ enable_supply:
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_DETECTION_DONE, 1);
 	else
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_DETECTION_DONE, 0);
+
+	if (mbhc->mbhc_cb->bcs_enable)
+		mbhc->mbhc_cb->bcs_enable(mbhc, true);
 
 	if (mbhc->mbhc_cb->mbhc_micbias_control)
 		wcd_mbhc_adc_update_fsm_source(mbhc, plug_type);
