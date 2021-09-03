@@ -236,8 +236,14 @@ static void check_userspace_service_state(struct snd_soc_pcm_runtime *rtd,
 	}
 }
 
-static int get_intf_index(const char *stream_name)
+static int get_mi2s_tdm_auxpcm_intf_index(const char *stream_name)
 {
+
+	if (!strnstr(stream_name, "TDM", strlen(stream_name)) ||
+	    !strnstr(stream_name, "MI2S", strlen(stream_name)) ||
+	    !strnstr(stream_name, "AUXPCM", strlen(stream_name)))
+		return -EINVAL;
+
 	if (strnstr(stream_name, "LPAIF_RXTX", strlen(stream_name)))
 		return QUAT_MI2S_TDM_AUXPCM;
 	else if (strnstr(stream_name, "LPAIF_WSA", strlen(stream_name)))
@@ -376,7 +382,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 	const char *stream_name = rtd->dai_link->stream_name;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
-	int index = get_intf_index(stream_name);
+	int index = get_mi2s_tdm_auxpcm_intf_index(stream_name);
 	struct clk_cfg intf_clk_cfg;
 
 	dev_dbg(rtd->card->dev,
@@ -420,7 +426,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 					intf_clk_cfg.clk_id, intf_clk_cfg.clk_freq_in_hz);
 				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 1);
 				if (ret < 0) {
-					pr_err("%s: prm lpass clk cfg set failed ret %d\n",
+					pr_err("%s: prm lpass tdm clk cfg set failed ret %d\n",
 						__func__, ret);
 					goto done;
 				}
@@ -470,8 +476,9 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 					goto done;
 				}
 			} else {
-				pr_err("%s: invalid stream name: %s\n", __func__,
-					stream_name);
+				pr_err("%s: unsupported stream name: %s\n",
+					__func__, stream_name);
+				goto done;
 			}
 		}
 		atomic_inc(&pdata->lpass_intf_clk_ref_cnt[index]);
@@ -488,7 +495,7 @@ int msm_common_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_card *card = rtd->card;
 	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
 	const char *stream_name = rtd->dai_link->stream_name;
-	int index = get_intf_index(stream_name);
+	int index = get_mi2s_tdm_auxpcm_intf_index(stream_name);
 
 	dev_dbg(rtd->card->dev,
 		"%s: substream = %s  stream = %d\n",
@@ -527,7 +534,7 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	const char *stream_name = rtd->dai_link->stream_name;
-	int index = get_intf_index(stream_name);
+	int index = get_mi2s_tdm_auxpcm_intf_index(stream_name);
 	struct clk_cfg intf_clk_cfg;
 	unsigned int rate = runtime->rate;
 
@@ -548,20 +555,22 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 		if (atomic_read(&pdata->lpass_intf_clk_ref_cnt[index]) == 0) {
 			if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
 				intf_clk_cfg.clk_id = get_tdm_clk_id(index);
-				pr_debug("%s: Disable clock ID: %d\n", __func__, intf_clk_cfg.clk_id);
+				pr_debug("%s: Disable tdm clock ID: %d\n",
+					__func__, intf_clk_cfg.clk_id);
 				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
 				if (ret < 0)
-					pr_err("%s: prm clk cfg set failed ret %d\n",
+					pr_err("%s: prm tdm clk cfg set failed ret %d\n",
 					__func__, ret);
 			} else if((strnstr(stream_name, "MI2S", strlen(stream_name)))) {
 				intf_clk_cfg.clk_id = get_mi2s_clk_id(index);
-				pr_debug("%s: Disable clock ID: %d\n", __func__, intf_clk_cfg.clk_id);
+				pr_debug("%s: Disable mi2s clock ID: %d\n",
+					__func__, intf_clk_cfg.clk_id);
 				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
 				if (ret < 0)
 					pr_err("%s: prm mi2s clk cfg disable failed ret %d\n",
 						__func__, ret);
 			} else {
-				pr_err("%s: invalid stream name: %s\n",
+				pr_err("%s: unsupported stream name: %s\n",
 					__func__, stream_name);
 			}
 
