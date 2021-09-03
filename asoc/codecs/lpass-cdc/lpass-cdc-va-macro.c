@@ -175,6 +175,7 @@ struct lpass_cdc_va_macro_priv {
 	bool wcd_dmic_enabled;
 	int dapm_tx_clk_status;
 	u16 current_clk_id;
+	bool dev_up;
 };
 
 static bool lpass_cdc_va_macro_get_data(struct snd_soc_component *component,
@@ -344,6 +345,7 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 		trace_printk("%s, enter SSR up\n", __func__);
 		/* reset swr after ssr/pdr */
 		va_priv->reset_swr = true;
+		va_priv->dev_up = true;
 		if (va_priv->swr_ctrl_data)
 			swrm_wcd_notify(
 				va_priv->swr_ctrl_data[0].va_swr_pdev,
@@ -353,6 +355,7 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 		lpass_cdc_rsc_clk_reset(va_dev, VA_CORE_CLK);
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_DOWN:
+		va_priv->dev_up = false;
 		if (va_priv->swr_ctrl_data) {
 			swrm_wcd_notify(
 				va_priv->swr_ctrl_data[0].va_swr_pdev,
@@ -466,25 +469,25 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (va_priv->current_clk_id == VA_CORE_CLK &&
-			va_priv->va_swr_clk_cnt != 0 &&
-			va_priv->tx_clk_status) {
+		if (va_priv->current_clk_id == VA_CORE_CLK) {
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					TX_CORE_CLK,
 					true);
 			if (ret) {
-				dev_dbg(component->dev,
+				dev_err(component->dev,
 					"%s: request clock TX_CLK enable failed\n",
 					__func__);
-				break;
+				if (va_priv->dev_up)
+					break;
 			}
 			ret = lpass_cdc_va_macro_core_vote(va_priv, true);
 			if (ret < 0) {
 				dev_err(va_priv->dev,
 					"%s: va request core vote failed\n",
 					__func__);
-				break;
+				if (va_priv->dev_up)
+					break;
 			}
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
@@ -492,13 +495,14 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					false);
 			lpass_cdc_va_macro_core_vote(va_priv, false);
 			if (ret) {
-				dev_dbg(component->dev,
+				dev_err(component->dev,
 					"%s: request clock VA_CLK disable failed\n",
 					__func__);
-				lpass_cdc_clk_rsc_request_clock(va_priv->dev,
-					va_priv->default_clk_id,
-					TX_CORE_CLK,
-					false);
+				if (va_priv->dev_up)
+					lpass_cdc_clk_rsc_request_clock(va_priv->dev,
+						va_priv->default_clk_id,
+						TX_CORE_CLK,
+						false);
 				break;
 			}
 			va_priv->current_clk_id = TX_CORE_CLK;
@@ -2134,6 +2138,8 @@ static int lpass_cdc_va_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF3 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_INPUT");
 	snd_soc_dapm_sync(dapm);
+
+	va_priv->dev_up = true;
 
 	for (i = 0; i < LPASS_CDC_VA_MACRO_NUM_DECIMATORS; i++) {
 		va_priv->va_hpf_work[i].va_priv = va_priv;
