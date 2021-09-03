@@ -252,11 +252,27 @@ pkt_capture_process_ppdu_stats(void *log_data)
 }
 
 void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
-			  u_int16_t vdev_id, uint32_t status)
+			  u_int16_t peer_id, uint32_t status)
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t tid = 0;
 	struct dp_soc *psoc = soc;
+	struct wlan_objmgr_vdev *vdev;
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct pkt_capture_frame_filter *frame_filter;
+	uint16_t vdev_id = 0;
+
+	vdev = pkt_capture_get_vdev();
+	if (!vdev)
+		return;
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("vdev priv is NULL");
+		return;
+	}
+
+	frame_filter = &vdev_priv->frame_filter;
 
 	switch (event) {
 	case WDI_EVENT_PKT_CAPTURE_TX_DATA:
@@ -274,10 +290,9 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 
 		hal_tx_comp_get_status(&desc->comp, &tx_comp_status,
 				       psoc->hal_soc);
-		if (!(pkt_capture_get_pktcap_mode_v2() &
-					PKT_CAPTURE_MODE_DATA_ONLY)) {
+
+		if (!frame_filter->data_tx_frame_filter)
 			return;
-		}
 
 		if (tx_comp_status.valid)
 			pktcapture_hdr.ppdu_id = tx_comp_status.ppdu_id;
@@ -397,9 +412,17 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 
 	case WDI_EVENT_PKT_CAPTURE_RX_DATA:
 	{
-		if (!(pkt_capture_get_pktcap_mode_v2() &
-					PKT_CAPTURE_MODE_DATA_ONLY))
+		qdf_nbuf_t nbuf = (qdf_nbuf_t)log_data;
+
+		if (!frame_filter->data_rx_frame_filter) {
+			/*
+			 * Rx offload packets are delivered only to pkt capture
+			 * component and not to stack so free them.
+			 */
+			if (status == RX_OFFLOAD_PKT)
+				qdf_nbuf_free(nbuf);
 			return;
+		}
 
 		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc,
 					      status);
@@ -410,8 +433,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 	{
 		qdf_nbuf_t nbuf = (qdf_nbuf_t)log_data;
 
-		if (!(pkt_capture_get_pktcap_mode_v2() &
-					PKT_CAPTURE_MODE_DATA_ONLY)) {
+		if (!frame_filter->data_rx_frame_filter) {
 			/*
 			 * Rx offload packets are delivered only to pkt capture
 			 * component and not to stack so free them.
@@ -432,8 +454,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		bool is_pkt_during_roam = false;
 		uint32_t freq = 0;
 
-		if (!(pkt_capture_get_pktcap_mode_v2() &
-					PKT_CAPTURE_MODE_DATA_ONLY))
+		if (!frame_filter->data_tx_frame_filter)
 			return;
 
 		offload_deliver_msg =

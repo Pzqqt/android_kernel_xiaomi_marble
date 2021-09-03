@@ -244,12 +244,12 @@ pkt_capture_get_pktcap_mode_v2(void);
  * @soc: dp_soc handle
  * @event: wdi event
  * @log_data: nbuf data
- * @vdev_id: vdev id
+ * @peer_id: peer id
  * @status: status
  *
  * Return: None
  */
 void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
-			  u_int16_t vdev_id, uint32_t status);
+			  u_int16_t peer_id, uint32_t status);
 #endif
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */
