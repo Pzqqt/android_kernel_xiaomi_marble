@@ -410,7 +410,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 				}
 
 				intf_clk_cfg.clk_freq_in_hz = rate * slot_width * slots;
-				intf_clk_cfg.clk_attri = CLOCK_ATTRIBUTE_COUPLE_NO;
+				intf_clk_cfg.clk_attri = pdata->tdm_clk_attribute[index];
 				intf_clk_cfg.clk_root = 0;
 
 				if (pdata->is_audio_hw_vote_required[index]  &&
@@ -455,7 +455,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 
 				intf_clk_cfg.clk_freq_in_hz = rate *
 					MI2S_NUM_CHANNELS * sample_width;
-				intf_clk_cfg.clk_attri = CLOCK_ATTRIBUTE_COUPLE_NO;
+				intf_clk_cfg.clk_attri = pdata->mi2s_clk_attribute[index];
 				intf_clk_cfg.clk_root = CLOCK_ROOT_DEFAULT;
 
 				if (pdata->is_audio_hw_vote_required[index]  &&
@@ -603,7 +603,7 @@ int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 {
 	struct msm_common_pdata *common_pdata = NULL;
 	int count, ret = 0;
-	uint32_t lpass_audio_hw_vote_required[MI2S_TDM_AUXPCM_MAX] = {0};
+	uint32_t val_array[MI2S_TDM_AUXPCM_MAX] = {0};
 	struct clk *lpass_audio_hw_vote = NULL;
 
 	common_pdata = kcalloc(1, sizeof(struct msm_common_pdata), GFP_KERNEL);
@@ -641,14 +641,46 @@ int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 
 	ret = of_property_read_u32_array(pdev->dev.of_node,
 				"qcom,mi2s-tdm-is-hw-vote-needed",
-				lpass_audio_hw_vote_required, MI2S_TDM_AUXPCM_MAX);
+				val_array, MI2S_TDM_AUXPCM_MAX);
 	if (ret) {
 		dev_dbg(&pdev->dev, "%s:no qcom,mi2s-tdm-is-hw-vote-needed in DT node\n",
 			__func__);
 	} else {
 		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
 			common_pdata->is_audio_hw_vote_required[count] =
-					lpass_audio_hw_vote_required[count];
+					val_array[count];
+		}
+	}
+
+	ret = of_property_read_u32_array(pdev->dev.of_node, "qcom,tdm-clk-attribute",
+			val_array, MI2S_TDM_AUXPCM_MAX);
+	if (ret) {
+		dev_info(&pdev->dev,
+			"%s: No DT match for tdm clk attribute, set to default\n", __func__);
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->tdm_clk_attribute[count] =
+				CLOCK_ATTRIBUTE_COUPLE_NO;
+		}
+	} else {
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->tdm_clk_attribute[count] =
+					val_array[count];
+		}
+	}
+
+	ret = of_property_read_u32_array(pdev->dev.of_node, "qcom,mi2s-clk-attribute",
+			val_array, MI2S_TDM_AUXPCM_MAX);
+	if (ret) {
+		dev_info(&pdev->dev,
+			"%s: No DT match for mi2s clk attribute, set to default\n", __func__);
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->mi2s_clk_attribute[count] =
+				CLOCK_ATTRIBUTE_COUPLE_NO;
+		}
+	} else {
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->mi2s_clk_attribute[count] =
+				val_array[count];
 		}
 	}
 

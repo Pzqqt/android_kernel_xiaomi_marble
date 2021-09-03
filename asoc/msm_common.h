@@ -49,6 +49,8 @@ struct msm_common_pdata {
 	atomic_t lpass_audio_hw_vote_ref_cnt;
 	struct clk *lpass_audio_hw_vote;
 	uint32_t is_audio_hw_vote_required[MI2S_TDM_AUXPCM_MAX];
+	uint32_t tdm_clk_attribute[MI2S_TDM_AUXPCM_MAX];
+	uint32_t mi2s_clk_attribute[MI2S_TDM_AUXPCM_MAX];
 };
 
 int snd_card_notify_user(snd_card_status_t card_status);
