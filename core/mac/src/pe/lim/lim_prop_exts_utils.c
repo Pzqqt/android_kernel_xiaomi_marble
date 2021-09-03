@@ -227,16 +227,21 @@ void lim_update_he_bw_cap_mcs(struct pe_session *session,
 	if ((session->opmode == QDF_STA_MODE ||
 	     session->opmode == QDF_P2P_CLIENT_MODE) &&
 	    beacon && beacon->he_cap.present) {
-		if (!beacon->he_cap.chan_width_2)
+		if (!beacon->he_cap.chan_width_2) {
 			is_80mhz = 1;
-		else if (beacon->he_cap.chan_width_2 &&
+		} else if (beacon->he_cap.chan_width_2 &&
 			 !lim_validate_he160_mcs_map(session->mac_ctx,
 			   *((uint16_t *)beacon->he_cap.rx_he_mcs_map_160),
 			   *((uint16_t *)beacon->he_cap.tx_he_mcs_map_160),
-						     session->nss))
+						     session->nss)) {
 			is_80mhz = 1;
-		else
+			if (session->ch_width == CH_WIDTH_160MHZ) {
+				pe_debug("HE160 Rx/Tx MCS is not valid, falling back to 80MHz");
+				session->ch_width = CH_WIDTH_80MHZ;
+			}
+		} else {
 			is_80mhz = 0;
+		}
 	} else {
 		is_80mhz = 1;
 	}
@@ -245,11 +250,6 @@ void lim_update_he_bw_cap_mcs(struct pe_session *session,
 		session->he_config.chan_width_2 = 0;
 		session->he_config.chan_width_3 = 0;
 	} else if (session->ch_width == CH_WIDTH_160MHZ) {
-		if (is_80mhz) {
-			pe_debug("HE160 Rx/Tx MCS is not valid, falling back to 80MHz");
-			session->ch_width = CH_WIDTH_80MHZ;
-			session->he_config.chan_width_2 = 0;
-		}
 		session->he_config.chan_width_3 = 0;
 	}
 	/* Reset the > 20MHz caps for 20MHz connection */
