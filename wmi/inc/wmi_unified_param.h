@@ -5410,8 +5410,12 @@ struct wmi_host_fw_abi_ver {
  * @is_sap_connected_d3wow_enabled: is sap d3wow with connected client supported
  * @is_go_connected_d3wow_enabled: is go d3wow with connected client supported
  * @dynamic_pcie_gen_speed_change: is dynamic pcie gen speed change enabled
- * @lpi_only_mode: Indicates whether AP is capable of operating in LPI only
- *                 mode or both LPI/SP mode
+ * @is_6ghz_sp_pwrmode_supp_enabled: Indicates whether AP is capable of
+ *                                   operating in SP Power mode in 6GHz.
+ *                                   0 - AP can operate in non-SP power mode.
+ *                                       Eg: LPI mode
+ *                                   1 - AP can operate in all power modes,
+ *                                       inclusive of SP power mode.
  * @afc_timer_check_disable: Disables AFC Timer related checks in FW
  * @afc_req_id_check_disable: Disables AFC Request ID check in FW
  */
@@ -5530,7 +5534,7 @@ typedef struct {
 	bool twt_ack_support_cap;
 	uint32_t ema_init_config;
 	uint32_t target_cap_flags;
-	bool lpi_only_mode;
+	bool is_6ghz_sp_pwrmode_supp_enabled;
 	bool afc_timer_check_disable;
 	bool afc_req_id_check_disable;
 } target_resource_config;

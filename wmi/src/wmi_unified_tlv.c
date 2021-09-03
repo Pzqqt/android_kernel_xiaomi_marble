@@ -7712,7 +7712,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 
 	WMI_RSRC_CFG_HOST_SERVICE_FLAG_LPI_SP_MODE_SUPPORT_SET(
 		resource_cfg->host_service_flags,
-		tgt_res_cfg->lpi_only_mode);
+		tgt_res_cfg->is_6ghz_sp_pwrmode_supp_enabled);
 
 	WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_TIMER_CHECK_SET(
 		resource_cfg->host_service_flags,
