@@ -136,6 +136,9 @@
  * ii) The AP is transmitting in 36/44/48/52/56/60/64 in 160MHz mode and then
  * the  AP moves to the adjacent channel 36/44/48 in 80MHz mode and starts
  * transmitting.
+ * iii) The AP is transmitting in 52/56/60/64 in 20MHz or 40MHz mode and
+ * the AP moves to the adjacent channels 40/44/48 in 20MHz mode or
+ * 36/40/44/48 in 40MHz mode and starts transmitting.
  * Hence, center frequencies from 5260MHz to 5320MHz in Spruce HW are called
  * Spruce Spur 80MHz Frequencies and, center frequencies from 5180MHz and
  * 5320MHz except 5200MHz are called Spruce Spur 160MHz Frequencies.
@@ -149,6 +152,10 @@
 /* Avoid channels 36/44/48 */
 #define DFS_IS_SPRUCE_SPUR_AVOID_FREQS(_ch) \
 		(((_ch) >= 5180) && ((_ch) <= 5240) && ((_ch) != 5200))
+
+/* Avoid channels 36/40/44/48 in HT40 mode and 40/44/48 in HT20 mode. */
+#define DFS_IS_CHAN_SPRUCE_SPUR_FREQ_20_40_MHZ(_ch) \
+		(((_ch) >= 5200) && ((_ch) <= 5240))
 #endif
 
 /**

@@ -353,7 +353,9 @@ bool utils_dfs_is_spruce_spur_war_applicable(struct wlan_objmgr_pdev *pdev)
 	cur_freq = dfs->dfs_curchan->dfs_ch_freq;
 
 	/* Is the current channel width 80MHz? */
-	if (WLAN_IS_CHAN_MODE_80(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_MODE_80(dfs->dfs_curchan) ||
+	    WLAN_IS_CHAN_MODE_40(dfs->dfs_curchan) ||
+	    WLAN_IS_CHAN_MODE_20(dfs->dfs_curchan)) {
 		/* is the primary channel 52/56/60/64? */
 		bool is_chan_spur_80mhzfreq =
 		    DFS_IS_CHAN_SPRUCE_SPUR_FREQ_80MHZ(cur_freq);
