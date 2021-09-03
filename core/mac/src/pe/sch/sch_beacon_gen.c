@@ -48,6 +48,53 @@
 
 const uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x9 };
 
+/**
+ * sch_get_csa_ecsa_count_offset() - get the offset of Switch count field
+ * @ie: pointer to the beggining of IEs in the beacon frame buffer
+ * @ie_len: length of the IEs in the buffer
+ * @csa_count_offset: pointer to the csa_count_offset variable in the caller
+ * @ecsa_count_offset: pointer to the ecsa_count_offset variable in the caller
+ *
+ * Gets the offset of the switch count field in the CSA/ECSA IEs from the start
+ * of the IEs buffer.
+ *
+ * Return: None
+ */
+static void sch_get_csa_ecsa_count_offset(const uint8_t *ie, uint32_t ie_len,
+					  uint32_t *csa_count_offset,
+					  uint32_t *ecsa_count_offset)
+{
+	const uint8_t *ptr = ie;
+	uint8_t elem_id;
+	uint16_t elem_len;
+	uint32_t offset = 0;
+
+	/* IE is not present */
+	if (!ie_len)
+		return;
+
+	while (ie_len >= 2) {
+		elem_id = ptr[0];
+		elem_len = ptr[1];
+		ie_len -= 2;
+		offset += 2;
+
+		if (elem_id == DOT11F_EID_CHANSWITCHANN &&
+		    elem_len == 3)
+			*csa_count_offset = offset +
+					SCH_CSA_SWITCH_COUNT_OFFSET;
+
+		if (elem_id == DOT11F_EID_EXT_CHAN_SWITCH_ANN &&
+		    elem_len == 4)
+			*ecsa_count_offset = offset +
+					SCH_ECSA_SWITCH_COUNT_OFFSET;
+
+		ie_len -= elem_len;
+		offset += elem_len;
+		ptr += (elem_len + 2);
+	}
+}
+
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
  * lim_update_link_info() - update mlo_link_info
@@ -196,11 +243,75 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 			     sizeof(bcn_2->eht_cap));
 	}
 }
+
+static void lim_upt_mlo_partner_info(struct mac_context *mac,
+				     struct pe_session *session,
+				     uint8_t *ie, uint32_t ie_len,
+				     uint16_t ie_offset)
+{
+	const uint8_t *mlo_ie;
+	uint16_t subie_len;
+	const uint8_t *subie_sta_prof;
+	uint16_t subie_sta_prof_len;
+	int link;
+	struct ml_sch_partner_info *sch_info;
+	uint16_t per_sta_ofst = mac->sch.sch_mlo_partner.mlo_ie_link_info_ofst;
+
+	mlo_ie = wlan_get_ext_ie_ptr_from_ext_id(MLO_IE_OUI_TYPE,
+						 MLO_IE_OUI_SIZE,
+						 ie, ie_len);
+	/* IE is not present */
+	if (!mlo_ie) {
+		pe_err("no mlo ie in mlo ap vdev id %d", session->vdev_id);
+		return;
+	}
+	for (link = 0; link < mac->sch.sch_mlo_partner.num_links; link++) {
+		sch_info = &mac->sch.sch_mlo_partner.partner_info[link];
+		if (!sch_info->link_info_sta_prof_ofst)
+			continue;
+		if (!sch_info->csa_ext_csa_exist) {
+			per_sta_ofst += 1; /* subelement ID */
+			subie_len = mlo_ie[per_sta_ofst];
+			per_sta_ofst += 1; /* length */
+			per_sta_ofst += subie_len; /* payload of per sta info */
+			continue;
+		}
+		subie_sta_prof = mlo_ie + per_sta_ofst +
+					sch_info->link_info_sta_prof_ofst;
+		per_sta_ofst += 1; /* subelement ID */
+		subie_len = mlo_ie[per_sta_ofst];
+		per_sta_ofst += 1; /* length */
+		per_sta_ofst += subie_len; /* payload of per sta info */
+		subie_sta_prof_len = subie_len + 2 -
+					sch_info->link_info_sta_prof_ofst;
+		sch_get_csa_ecsa_count_offset(subie_sta_prof,
+					      subie_sta_prof_len,
+					      &sch_info->bcn_csa_cnt_ofst,
+					      &sch_info->bcn_ext_csa_cnt_ofst);
+		/* plus offset from IE of sta prof to ie */
+		if (sch_info->bcn_csa_cnt_ofst)
+			sch_info->bcn_csa_cnt_ofst += ie_offset +
+						subie_sta_prof - ie;
+		if (sch_info->bcn_ext_csa_cnt_ofst)
+			sch_info->bcn_ext_csa_cnt_ofst += ie_offset +
+						subie_sta_prof - ie;
+		pe_debug("vdev %d mlo csa_count_offset %d ecsa_count_offset %d",
+			 sch_info->vdev_id, sch_info->bcn_csa_cnt_ofst,
+			 sch_info->bcn_ext_csa_cnt_ofst);
+	}
+}
 #else
 static void lim_update_link_info(struct mac_context *mac_ctx,
 				 struct pe_session *session,
 				 tDot11fBeacon1 *bcn_1,
 				 tDot11fBeacon2 *bcn_2)
+{
+}
+
+static void lim_upt_mlo_partner_info(struct mac_context *mac,
+				     struct pe_session *session,
+				     uint8_t *ie, uint32_t ie_len,
+				     uint16_t ie_offset)
 {
 }
 #endif
@@ -320,53 +431,6 @@ sch_append_addn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 			addn_ielen);
 	}
 	return status;
-}
-
-/**
- * sch_get_csa_ecsa_count_offset() - get the offset of Switch count field
- * @ie: pointer to the beggining of IEs in the beacon frame buffer
- * @ie_len: length of the IEs in the buffer
- * @csa_count_offset: pointer to the csa_count_offset variable in the caller
- * @ecsa_count_offset: pointer to the ecsa_count_offset variable in the caller
- *
- * Gets the offset of the switch count field in the CSA/ECSA IEs from the start
- * of the IEs buffer.
- *
- * Return: None
- */
-static void sch_get_csa_ecsa_count_offset(uint8_t *ie, uint32_t ie_len,
-					  uint32_t *csa_count_offset,
-					  uint32_t *ecsa_count_offset)
-{
-	uint8_t *ptr = ie;
-	uint8_t elem_id;
-	uint16_t elem_len;
-	uint32_t offset = 0;
-
-	/* IE is not present */
-	if (!ie_len)
-		return;
-
-	while (ie_len >= 2) {
-		elem_id = ptr[0];
-		elem_len = ptr[1];
-		ie_len -= 2;
-		offset += 2;
-
-		if (elem_id == DOT11F_EID_CHANSWITCHANN &&
-		    elem_len == 3)
-			*csa_count_offset = offset +
-					SCH_CSA_SWITCH_COUNT_OFFSET;
-
-		if (elem_id == DOT11F_EID_EXT_CHAN_SWITCH_ANN &&
-		    elem_len == 4)
-			*ecsa_count_offset = offset +
-					SCH_ECSA_SWITCH_COUNT_OFFSET;
-
-		ie_len -= elem_len;
-		offset += elem_len;
-		ptr += (elem_len + 2);
-	}
 }
 
 /**
@@ -823,9 +887,16 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 				session->schBeaconOffsetBegin + TIM_IE_SIZE +
 				ecsa_count_offset;
 
-	pe_debug("csa_count_offset %d ecsa_count_offset %d",
+	pe_debug("vdev id %d csa_count_offset %d ecsa_count_offset %d",
+		 session->vdev_id,
 		 mac_ctx->sch.csa_count_offset,
 		 mac_ctx->sch.ecsa_count_offset);
+
+	if (wlan_vdev_mlme_is_mlo_ap(session->vdev))
+		lim_upt_mlo_partner_info(mac_ctx, session,
+					 session->pSchBeaconFrameEnd, n_bytes,
+					 session->schBeaconOffsetBegin +
+					 TIM_IE_SIZE);
 
 	extra_ie = session->pSchBeaconFrameEnd + n_bytes;
 	extra_ie_offset = n_bytes;

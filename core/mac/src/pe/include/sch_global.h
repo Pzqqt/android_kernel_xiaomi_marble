@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +43,43 @@
 #define tSchBeaconStruct tSirProbeRespBeacon
 #define tpSchBeaconStruct struct sSirProbeRespBeacon *
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * struct ml_sch_partner_info - Partner link information
+ * @vdev_id: Vdev id
+ * @beacon_interval: Beacon interval
+ * @bcn_csa_cnt_ofst: CSA swith count offset in beacon frame
+ * @bcn_ext_csa_cnt_ofst: ECSA switch count offset in beacon frame
+ * @link_info_sta_prof_ofst: offset sta profile in link info.
+ *                           If per sta profile exists, this value is non zero
+ * @prb_csa_cnt_ofst: CSA swith count offset in probe frame
+ * @prb_ext_csa_cnt_ofst: ECSA switch count offset in probe frame
+ * @csa_ext_csa_exist: csa or ext csa exists
+ */
+struct ml_sch_partner_info {
+	uint32_t vdev_id;
+	uint32_t beacon_interval;
+	uint32_t bcn_csa_cnt_ofst;
+	uint32_t bcn_ext_csa_cnt_ofst;
+	uint16_t link_info_sta_prof_ofst;
+	uint32_t prb_csa_cnt_ofst;
+	uint32_t prb_ext_csa_cnt_ofst;
+	bool csa_ext_csa_exist;
+};
+
+/**
+ * struct mlo_sch_partner_links - ML partner links
+ * @num_links: Number of links
+ * @mlo_ie_link_info_ofst: offset of link info in mlo IE
+ * @partner_info: Partner link info
+ */
+struct mlo_sch_partner_links {
+	uint8_t num_links;
+	uint16_t mlo_ie_link_info_ofst;
+	struct ml_sch_partner_info partner_info[WLAN_UMAC_MLO_MAX_VDEVS];
+};
+#endif
+
 /**
  * struct sch_context - SCH global context
  * @beacon_interval: global beacon interval
@@ -57,6 +94,9 @@ struct sch_context {
 	uint16_t p2p_ie_offset;
 	uint32_t csa_count_offset;
 	uint32_t ecsa_count_offset;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_sch_partner_links sch_mlo_partner;
+#endif
 };
 
 #endif
