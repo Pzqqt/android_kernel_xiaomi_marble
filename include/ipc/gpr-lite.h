@@ -284,4 +284,5 @@ void gpr_driver_unregister(struct gpr_driver *drv);
 int gpr_send_pkt(struct gpr_device *adev, struct gpr_pkt *pkt);
 
 enum gpr_subsys_state gpr_get_modem_state(void);
+enum gpr_subsys_state gpr_get_q6_state(void);
 #endif /* __QCOM_GPR_H_ */
