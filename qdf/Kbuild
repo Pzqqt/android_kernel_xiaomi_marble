@@ -74,9 +74,9 @@ $(HOST_QAL_SRC)/linux/src/qal_devcfg.o \
 $(HOST_QAL_SRC)/linux/src/qal_vbus_dev.o \
 $(HOST_QAL_SRC)/linux/src/qal_notifier.o \
 $(HOST_QAL_SRC)/linux/src/qal_devnode.o
-#ifeq ($(DBDC_REPEATER_SUPPORT),1)
+ifeq ($(DBDC_REPEATER_SUPPORT),1)
 qal-objs += $(HOST_QAL_SRC)/linux/src/qal_bridge.o
-#endif
+endif
 
 #linux/src/qdf_net.o \
 #linux/src/qdf_net_event.o \
