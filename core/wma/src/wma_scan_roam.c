@@ -1685,6 +1685,7 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf,
  * wma_rso_print_trigger_info  - Roam trigger related details
  * @data:    Pointer to the roam trigger data
  * @vdev_id: Vdev ID
+ * @is_full_scan: True if it is full scan else partial scan
  *
  * Prints the vdev, roam trigger reason, time of the day at which roaming
  * was triggered.
@@ -1692,10 +1693,14 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf,
  * Return: None
  */
 static void
-wma_rso_print_trigger_info(struct wmi_roam_trigger_info *data, uint8_t vdev_id)
+wma_rso_print_trigger_info(struct wmi_roam_trigger_info *data, uint8_t vdev_id,
+			   bool is_full_scan)
 {
 	char *buf;
 	char time[TIME_STRING_LEN];
+
+	/* Update roam trigger info to userspace */
+	cm_roam_trigger_info_event(data, vdev_id, is_full_scan);
 
 	buf = qdf_mem_malloc(MAX_ROAM_DEBUG_BUF_SIZE);
 	if (!buf)
@@ -1790,6 +1795,9 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN], time2[TIME_STRING_LEN];
 
+	/* Update roam candidates info to userspace */
+	cm_roam_candidate_info_event(ap);
+
 	wma_nofl_info("%62s%62s", LINE_STR, LINE_STR);
 	wma_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s %7s %6s %12s %20s",
 		      "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
@@ -1837,6 +1845,9 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 	uint8_t i;
 	char *buf, *buf1, *tmp;
 	char time[TIME_STRING_LEN];
+
+	/* Update roam scan info to userspace */
+	cm_roam_scan_info_event(scan, vdev_id);
 
 	buf = qdf_mem_malloc(ROAM_CHANNEL_BUF_SIZE);
 	if (!buf)
@@ -1897,6 +1908,9 @@ wma_rso_print_roam_result(struct wmi_roam_result *res,
 {
 	char *buf;
 	char time[TIME_STRING_LEN];
+
+	/* Update roam result info to userspace */
+	cm_roam_result_info_event(res, vdev_id, 0);
 
 	buf = qdf_mem_malloc(ROAM_FAILURE_BUF_SIZE);
 	if (!buf)
@@ -2163,8 +2177,11 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			num_btm += roam_info->trigger.btm_trig_data.candidate_list_count;
 
 		if (roam_info->trigger.present) {
+			bool is_full_scan =
+				roam_info->scan.present &&
+				roam_info->scan.type;
 			wma_rso_print_trigger_info(&roam_info->trigger,
-						   vdev_id);
+						   vdev_id, is_full_scan);
 			wlan_cm_update_roam_states(wma->psoc, vdev_id,
 					roam_info->trigger.trigger_reason,
 					ROAM_TRIGGER_REASON);
@@ -2332,7 +2349,7 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 
 		if (roam_info->trigger.present)
 			wma_rso_print_trigger_info(&roam_info->trigger,
-						   vdev_id);
+						   vdev_id, 1);
 
 		status = wmi_unified_extract_roam_scan_stats(wma->wmi_handle,
 							     event,

@@ -2856,7 +2856,7 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	wmi_roam_stats_event_fixed_param *fixed_param;
 	struct roam_stats_event *stats_info;
 	struct roam_msg_info *roam_msg_info = NULL;
-	uint8_t vdev_id, i;
+	uint8_t vdev_id, i, num_btm = 0;
 	uint8_t num_tlv = 0, num_chan = 0, num_ap = 0, num_rpt = 0;
 	uint32_t rem_len;
 	QDF_STATUS status;
@@ -2977,13 +2977,18 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 		 */
 		status = wmi_unified_extract_roam_trigger_stats(wmi_handle,
 						    evt_buf,
-						    &stats_info->trigger[i], i);
+						    &stats_info->trigger[i], i,
+						    num_btm);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			wmi_debug_rl("Extract roam trigger stats failed vdev %d at %d iteration",
 				     vdev_id, i);
 			status =  QDF_STATUS_E_INVAL;
 			goto err;
 		}
+
+		if (stats_info->trigger[i].trigger_reason ==
+		    WMI_ROAM_TRIGGER_REASON_BTM)
+			num_btm += stats_info->trigger[i].btm_trig_data.candidate_list_count;
 
 		/* Roam scan related details - Scan channel, scan type .. */
 		status = wmi_unified_extract_roam_scan_stats(wmi_handle,
@@ -3046,7 +3051,8 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 
 		status = wmi_unified_extract_roam_trigger_stats(wmi_handle,
 						    evt_buf,
-						    &stats_info->trigger[0], 0);
+						    &stats_info->trigger[0],
+						    0, 0);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			wmi_debug_rl("Extract roamtrigger stats failed vdev %d",
 				     vdev_id);

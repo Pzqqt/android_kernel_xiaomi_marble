@@ -4746,6 +4746,111 @@ send_evt:
 	return status;
 }
 
+#if defined(WLAN_FEATURE_CONNECTIVITY_LOGGING) && \
+    defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
+{
+	struct wlan_log_record *log_record = NULL;
+	struct wmi_roam_candidate_info *ap = scan->ap;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return;
+
+	log_record->vdev_id = vdev_id;
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->fw_timestamp_us = scan->ap->timestamp;
+	log_record->log_subtype = WLAN_ROAM_SCAN_DONE;
+
+	qdf_copy_macaddr(&log_record->bssid, &ap->bssid);
+
+	log_record->roam_scan.cand_ap_count = scan->num_ap;
+	if (scan->num_chan > WLAN_MAX_LOGGING_FREQ)
+		scan->num_chan = WLAN_MAX_LOGGING_FREQ;
+	log_record->roam_scan.num_scanned_freq = scan->num_chan;
+	qdf_mem_copy(&log_record->roam_scan.scan_freq, &scan->chan_freq,
+		     scan->num_chan);
+
+	wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+}
+
+void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+				uint8_t vdev_id, bool is_full_scan)
+{
+	struct wlan_log_record *log_record = NULL;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return;
+
+	log_record->vdev_id = vdev_id;
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->log_subtype = WLAN_ROAM_SCAN_START;
+
+	log_record->roam_trig.trigger_reason  = data->trigger_reason;
+	log_record->roam_trig.trigger_sub_reason = data->trigger_sub_reason;
+	log_record->roam_trig.current_rssi = data->current_rssi;
+	log_record->roam_trig.cu_load = data->cu_trig_data.cu_load;
+	log_record->roam_trig.rssi_threshold = data->rssi_trig_data.threshold;
+
+	wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+}
+
+void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap)
+{
+	struct wlan_log_record *log_record = NULL;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return;
+
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->fw_timestamp_us = ap->timestamp;
+	if (!ap->type)
+		log_record->log_subtype = WLAN_ROAM_SCORE_CAND_AP;
+	else
+		log_record->log_subtype = WLAN_ROAM_SCORE_CURR_AP;
+
+	log_record->ap.is_current_ap = ap->type;
+	qdf_copy_macaddr(&log_record->ap.cand_bssid, &ap->bssid);
+
+	log_record->ap.rssi  = ap->rssi;
+	log_record->ap.cu_load = ap->cu_load;
+	log_record->ap.total_score = ap->total_score;
+	log_record->ap.etp = ap->etp;
+
+	wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+}
+
+void cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
+			       bool roam_abort)
+{
+	struct wlan_log_record *log_record = NULL;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return;
+
+	log_record->vdev_id = vdev_id;
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	if (roam_abort) {
+		log_record->log_subtype = WLAN_ROAM_CANCEL;
+		log_record->fw_timestamp_us = log_record->timestamp_us;
+	} else {
+		log_record->log_subtype = WLAN_ROAM_RESULT;
+		log_record->fw_timestamp_us = res->timestamp;
+		log_record->roam_result.roam_fail_reason = res->fail_reason;
+		log_record->roam_result.roam_status = res->status;
+	}
+
+	wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+}
+#endif  /* WLAN_FEATURE_CONNECTIVITY_LOGGING */
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS
 cm_find_roam_candidate(struct wlan_objmgr_pdev *pdev,

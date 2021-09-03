@@ -275,7 +275,7 @@ struct wlan_connect_info {
 #define WLAN_MAX_LOG_RECORDS 45
 #define WLAN_MAX_LOG_LEN     256
 #define WLAN_RECORDS_PER_SEC 20
-#define MAX_RECORD_IN_SINGLE_EVT 10
+#define MAX_RECORD_IN_SINGLE_EVT 7
 
 /**
  * struct wlan_log_record  - Structure for indvidual records in the ring

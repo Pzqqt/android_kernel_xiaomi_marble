@@ -28,6 +28,69 @@
 #include "qdf_str.h"
 #include "wlan_cm_roam_public_struct.h"
 
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+/**
+ * cm_roam_scan_info_event() - send scan info to userspace
+ * @scan: roam scan data
+ * @vdev_id: vdev id
+ *
+ * Return: void
+ */
+void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id);
+
+/**
+ * cm_roam_trigger_info_event() - send trigger info to userspace
+ * @data: roam trigger data
+ * @vdev_id: vdev id
+ * @is_full_scan: is full scan or partial scan
+ *
+ * Return: void
+ */
+void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+				uint8_t vdev_id, bool is_full_scan);
+
+/**
+ * cm_roam_candidate_info_event() - send trigger info to userspace
+ * @ap: roam candidate info
+ *
+ * Return: void
+ */
+void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap);
+
+/**
+ * cm_roam_result_info_event() - send scan results info to userspace
+ * @res: roam result data
+ * @vdev_id: vdev id
+ * @roam_abort: Is roam abort
+ *
+ * Return: void
+ */
+void cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
+			       bool roam_abort);
+#else
+static inline void
+cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
+{
+}
+
+static inline void
+cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data, uint8_t vdev_id,
+			   bool is_full_scan)
+{
+}
+
+static inline void
+cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap)
+{
+}
+
+static inline void
+cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
+			  bool roam_abort)
+{
+}
+#endif /* WLAN_FEATURE_CONNECTIVITY_LOGGING */
+
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 
 /**
@@ -255,8 +318,8 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 void cm_update_owe_info(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp, uint8_t vdev_id);
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+#if defined(WLAN_FEATURE_CONNECTIVITY_LOGGING) && \
+	defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * cm_roam_mgmt_frame_event() - Roam management frame event
  * @frame_data: frame_data
@@ -329,5 +392,4 @@ cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif /* FEATURE_CONNECTIVITY_LOGGING */
-#endif /* FEATURE_ROAM_OFFLOAD */
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */
