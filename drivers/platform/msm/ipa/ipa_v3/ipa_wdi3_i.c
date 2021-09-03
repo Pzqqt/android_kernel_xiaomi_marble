@@ -1205,21 +1205,9 @@ exit:
 int ipa3_get_wdi3_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 {
 	int i;
-	int ipa_ep_idx_tx, ipa_ep_idx_rx;
 
-	ipa_ep_idx_tx = ipa3_get_ep_mapping(IPA_CLIENT_WLAN2_CONS);
-	ipa_ep_idx_rx = ipa3_get_ep_mapping(IPA_CLIENT_WLAN2_PROD);
-
-	if ((ipa_ep_idx_tx == -1) || (ipa_ep_idx_rx == -1) ||
-		!ipa3_ctx->ep[ipa_ep_idx_tx].valid ||
-		!ipa3_ctx->ep[ipa_ep_idx_rx].valid) {
+	if (!ipa3_ctx->wdi3_ctx.dbg_stats.uc_dbg_stats_mmio)
 		return -EINVAL;
-	}
-
-	if (!ipa3_ctx->wdi3_ctx.dbg_stats.uc_dbg_stats_mmio) {
-		IPAERR("bad NULL parms for wdi3_gsi_stats\n");
-		return -EINVAL;
-	}
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 	for (i = 0; i < MAX_WDI3_CHANNELS; i++) {
