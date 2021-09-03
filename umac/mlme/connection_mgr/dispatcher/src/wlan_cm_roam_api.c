@@ -2547,12 +2547,13 @@ cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data)
  * enum roam_trigger_reason
  * @ptr: Pointer to the roam trigger info
  * @buf: Destination buffer to write the reason string
+ * @is_full_scan: Is roam scan partial scan or all channels scan
  *
  * Return: None
  */
 static void
 cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
-				     char *buf)
+				     char *buf, bool is_full_scan)
 {
 	uint16_t buf_cons, buf_left = MAX_ROAM_DEBUG_BUF_SIZE;
 	char *temp = buf;
@@ -2672,16 +2673,19 @@ cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
  */
 static void
 cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
-				 uint8_t vdev_id)
+				 uint8_t vdev_id, bool is_full_scan)
 {
 	char *buf;
 	char time[TIME_STRING_LEN];
+
+	/* Update roam trigger info to userspace */
+	cm_roam_trigger_info_event(data, vdev_id, is_full_scan);
 
 	buf = qdf_mem_malloc(MAX_ROAM_DEBUG_BUF_SIZE);
 	if (!buf)
 		return;
 
-	cm_roam_stats_get_trigger_detail_str(data, buf);
+	cm_roam_stats_get_trigger_detail_str(data, buf, is_full_scan);
 	mlme_get_converted_timestamp(data->timestamp, time);
 	mlme_nofl_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
@@ -2770,6 +2774,9 @@ cm_stats_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN], time2[TIME_STRING_LEN];
 
+	/* Update roam candidates info to userspace */
+	cm_roam_candidate_info_event(ap);
+
 	mlme_nofl_info("%62s%62s", LINE_STR, LINE_STR);
 	mlme_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s %7s %6s %12s %20s",
 		       "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
@@ -2817,6 +2824,9 @@ cm_roam_stats_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 	uint8_t i;
 	char *buf, *buf1, *tmp;
 	char time[TIME_STRING_LEN];
+
+	/* Update roam scan info to userspace */
+	cm_roam_scan_info_event(scan, vdev_id);
 
 	buf = qdf_mem_malloc(ROAM_CHANNEL_BUF_SIZE);
 	if (!buf)
@@ -2877,6 +2887,9 @@ cm_roam_stats_print_roam_result(struct wmi_roam_result *res,
 {
 	char *buf;
 	char time[TIME_STRING_LEN];
+
+	/* Update roam result info to userspace */
+	cm_roam_result_info_event(res, vdev_id, 0);
 
 	buf = qdf_mem_malloc(ROAM_FAILURE_BUF_SIZE);
 	if (!buf)
@@ -2967,9 +2980,14 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	for (i = 0; i < stats_info->num_tlv; i++) {
 		if (stats_info->trigger[i].present) {
+			bool is_full_scan =
+				stats_info->scan[i].present &&
+				stats_info->scan[i].type;
+
 			cm_roam_stats_print_trigger_info(
-							&stats_info->trigger[i],
-							stats_info->vdev_id);
+						&stats_info->trigger[i],
+						stats_info->vdev_id,
+						is_full_scan);
 		       status = wlan_cm_update_roam_states(psoc,
 					stats_info->vdev_id,
 					stats_info->trigger[i].trigger_reason,
@@ -3043,8 +3061,8 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 
 		if (stats_info->trigger[0].present)
 			cm_roam_stats_print_trigger_info(
-							&stats_info->trigger[0],
-							stats_info->vdev_id);
+						&stats_info->trigger[0],
+						stats_info->vdev_id, 1);
 
 		if (stats_info->scan[0].present &&
 		    stats_info->trigger[0].present)
@@ -3056,7 +3074,7 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 		if (stats_info->btm_rsp[0].present)
 			cm_roam_stats_print_btm_rsp_info(
 							&stats_info->btm_rsp[0],
-							stats_info->vdev_id);
+							stats_info->vdev_id, 0);
 	}
 	if (stats_info->roam_msg_info && stats_info->num_roam_msg_info &&
 	    stats_info->num_roam_msg_info - rem_tlv) {

@@ -324,6 +324,7 @@ QDF_STATUS cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	if (roam_req)
 		cm_id = roam_req->cm_id;
 
+	cm_roam_result_info_event(NULL, vdev_id, true);
 	/* continue even if no roam command is found */
 	status = wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_ENABLED,
 					   REASON_ROAM_ABORT);
