@@ -22,6 +22,7 @@
 #ifndef _WLAN_MGMT_TXRX_RX_REO_I_H
 #define _WLAN_MGMT_TXRX_RX_REO_I_H
 
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
 #include <qdf_list.h>
 #include <qdf_timer.h>
 #include <qdf_lock.h>
@@ -31,6 +32,55 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_psoc_obj.h>
 
+#define MGMT_RX_REO_MAX_LIST_SIZE        (100)
+#define MGMT_RX_REO_LIST_TIMEOUT         (10 * USEC_PER_MSEC)
+#define MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS  (BIT(0))
+#define MGMT_RX_REO_STATUS_AGED_OUT                       (BIT(1))
+/**
+ * TODO: Dummy macro for Maximum MLO links on the system
+ * This is added only as a place holder for the time being.
+ * Remove this once the actual one is implemented.
+ */
+#define MGMT_RX_REO_MAX_LINKS (16)
+/* Reason to release an entry from the reorder list */
+#define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_ZERO_WAIT_COUNT           (BIT(0))
+#define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_AGED_OUT                  (BIT(1))
+#define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_OLDER_THAN_AGED_OUT_FRAME (BIT(2))
+
+#define MGMT_RX_REO_LIST_ENTRY_IS_WAITING_FOR_FRAME_ON_OTHER_LINK(entry)   \
+	((entry)->status & MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS)
+#define MGMT_RX_REO_LIST_ENTRY_IS_AGED_OUT(entry)   \
+	((entry)->status & MGMT_RX_REO_STATUS_AGED_OUT)
+#define MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(ts, entry)  \
+	(mgmt_rx_reo_compare_global_timestamps_gte(                            \
+	 (ts)->global_ts, mgmt_rx_reo_get_global_ts((entry)->rx_params)))
+
+/**
+ * enum mgmt_rx_reo_frame_descriptor_type - Enumeration for management frame
+ * descriptor type.
+ * @MGMT_RX_REO_FRAME_DESC_HOST_CONSUMED_FRAME: Management frame to be consumed
+ * by host.
+ * @MGMT_RX_REO_FRAME_DESC_FW_CONSUMED_FRAME: Management frame consumed by FW
+ * @MGMT_RX_REO_FRAME_DESC_ERROR_FRAME: Management frame which got dropped
+ * at host due to any error
+ */
+enum mgmt_rx_reo_frame_descriptor_type {
+	MGMT_RX_REO_FRAME_DESC_HOST_CONSUMED_FRAME,
+	MGMT_RX_REO_FRAME_DESC_FW_CONSUMED_FRAME,
+	MGMT_RX_REO_FRAME_DESC_ERROR_FRAME,
+};
+
+/**
+ * struct mgmt_rx_reo_global_ts_info - This structure holds the global time
+ * stamp information of a frame.
+ * @global_ts: Global time stamp value
+ * @valid: Indicates whether global time stamp is valid
+ */
+struct mgmt_rx_reo_global_ts_info {
+	bool valid;
+	uint32_t global_ts;
+};
+
 /**
  * struct mgmt_rx_reo_list – Linked list used to reorder the management frames
  * received. Each list entry would correspond to a management frame. List
@@ -38,22 +88,20 @@
  * HW.
  * @list: List used for reordering
  * @list_lock: Lock to protect the list
- * @num_entries: Number of entries in the list
+ * @max_list_size: Maximum size of the reorder list
  * @ageout_timer: Periodic timer to age-out the list entries
+ * @ts_latest_aged_out_frame: Stores the global time stamp for the latest aged
+ * out frame. Latest aged out frame is the aged out frame in reorder list which
+ * has the largest global time stamp value.
  */
 struct mgmt_rx_reo_list {
 	qdf_list_t list;
 	qdf_spinlock_t list_lock;
-	uint32_t num_entries;
+	uint32_t max_list_size;
 	qdf_timer_t ageout_timer;
+	struct mgmt_rx_reo_global_ts_info ts_latest_aged_out_frame;
 };
 
-/**
- * TODO: Dummy macro for Maximum MLO links on the system
- * This is added only as a place holder for the time being.
- * Remove this once the actual one is implemented.
- */
-#define MGMT_RX_REO_MAX_LINKS (16)
 /*
  * struct mgmt_rx_reo_wait_count - Wait count for a mgmt frame
  * @per_link_count: Array of wait counts for all MLO links. Each array entry
@@ -63,22 +111,26 @@ struct mgmt_rx_reo_list {
  */
 struct mgmt_rx_reo_wait_count {
 	unsigned int per_link_count[MGMT_RX_REO_MAX_LINKS];
-	unsigned int total_count;
+	unsigned long long int total_count;
 };
 
 /**
  * struct mgmt_rx_reo_list_entry - Entry in the Management reorder list
- * @node: list node
- * @wbuf: nbuf corresponding to this frame.
+ * @node: List node
+ * @nbuf: nbuf corresponding to this frame
  * @rx_params: Management rx event parameters
- * @insertion_timestamp: Host time stamp when this entry is inserted to
+ * @wait_count: Wait counts for the frame
+ * @insertion_ts: Host time stamp when this entry is inserted to
  * the list.
+ * @status: Status for this entry
  */
 struct mgmt_rx_reo_list_entry {
 	qdf_list_node_t node;
-	qdf_nbuf_t wbuf;
-	struct mgmt_rx_event_params rx_params;
-	uint32_t insertion_timestamp;
+	qdf_nbuf_t nbuf;
+	struct mgmt_rx_event_params *rx_params;
+	struct mgmt_rx_reo_wait_count wait_count;
+	uint64_t insertion_ts;
+	uint32_t status;
 };
 
 /**
@@ -86,11 +138,112 @@ struct mgmt_rx_reo_list_entry {
  * management rx-reordering. Reordering is done across all the psocs.
  * So there should be only one instance of this structure defined.
  * @reo_list: Linked list used for reordering
- * @global_ts_last_delivered_frame: HW time stamp of the last frame
+ * @ts_last_delivered_frame: Stores the global time stamp for the last frame
  * delivered to the upper layer
  */
 struct mgmt_rx_reo_context {
 	struct mgmt_rx_reo_list reo_list;
-	uint32_t global_ts_last_delivered_frame;
+	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
 };
+
+/**
+ * struct mgmt_rx_reo_frame_descriptor - Frame Descriptor used to describe
+ * a management frame in mgmt rx reo module.
+ * @type: Frame descriptor type
+ * @nbuf: nbuf corresponding to this frame
+ * @rx_params: Management rx event parameters
+ * @wait_count: Wait counts for the frame
+ */
+struct mgmt_rx_reo_frame_descriptor {
+	enum mgmt_rx_reo_frame_descriptor_type type;
+	qdf_nbuf_t nbuf;
+	struct mgmt_rx_event_params *rx_params;
+	struct mgmt_rx_reo_wait_count wait_count;
+};
+
+/**
+ * mgmt_rx_reo_get_global_ts() - Helper API to get global time stamp
+ * corresponding to the mgmt rx event
+ * @rx_params: Management rx event params
+ *
+ * Return: global time stamp corresponding to the mgmt rx event
+ */
+static inline uint32_t
+mgmt_rx_reo_get_global_ts(struct mgmt_rx_event_params *rx_params)
+{
+	qdf_assert_always(rx_params);
+	qdf_assert_always(rx_params->reo_params);
+
+	return rx_params->reo_params->global_timestamp;
+}
+
+/**
+ * mgmt_rx_reo_get_pkt_counter() - Helper API to get packet counter
+ * corresponding to the mgmt rx event
+ * @rx_params: Management rx event params
+ *
+ * Return: Management packet counter corresponding to the mgmt rx event
+ */
+static inline uint16_t
+mgmt_rx_reo_get_pkt_counter(struct mgmt_rx_event_params *rx_params)
+{
+	qdf_assert_always(rx_params);
+	qdf_assert_always(rx_params->reo_params);
+
+	return rx_params->reo_params->mgmt_pkt_ctr;
+}
+
+/**
+ * mgmt_rx_reo_get_link_id() - Helper API to get link id corresponding to the
+ * mgmt rx event
+ * @rx_params: Management rx event params
+ *
+ * Return: link id corresponding to the mgmt rx event
+ */
+static inline uint8_t
+mgmt_rx_reo_get_link_id(struct mgmt_rx_event_params *rx_params)
+{
+	qdf_assert_always(rx_params);
+	qdf_assert_always(rx_params->reo_params);
+
+	return rx_params->reo_params->link_id;
+}
+
+/**
+ * mgmt_rx_reo_get_pdev_id() - Helper API to get pdev id corresponding to the
+ * mgmt rx event
+ * @rx_params: Management rx event params
+ *
+ * Return: pdev id corresponding to the mgmt rx event
+ */
+static inline uint8_t
+mgmt_rx_reo_get_pdev_id(struct mgmt_rx_event_params *rx_params)
+{
+	qdf_assert_always(rx_params);
+	qdf_assert_always(rx_params->reo_params);
+
+	return rx_params->reo_params->pdev_id;
+}
+
+/**
+ * mgmt_rx_reo_init_context() - Initialize the management rx-reorder context
+ *
+ * API to initialize the global management rx-reorder context object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_init_context(void);
+
+/**
+ * mgmt_rx_reo_deinit_context() - De initialize the management rx-reorder
+ * context
+ *
+ * API to de initialize the global management rx-reorder context object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_deinit_context(void);
+#endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_I_H */

@@ -158,3 +158,15 @@ wlan_mgmt_rx_reo_pdev_obj_destroy_notification(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+wlan_mgmt_rx_reo_deinit(void)
+{
+	return mgmt_rx_reo_deinit_context();
+}
+
+QDF_STATUS
+wlan_mgmt_rx_reo_init(void)
+{
+	return mgmt_rx_reo_init_context();
+}

@@ -38,6 +38,28 @@ struct mgmt_txrx_priv_pdev_context;
 #define mgmt_rx_reo_debug mgmt_txrx_debug
 
 /**
+ * wlan_mgmt_rx_reo_init() - Initializes the management rx-reorder module
+ *
+ * This function gets called from dispatcher init and initializes the management
+ * rx-reorder module.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mgmt_rx_reo_init(void);
+
+/**
+ * wlan_mgmt_rx_reo_deinit() - De initializes the management rx-reorder module
+ *
+ * This function gets called from dispatcher deinit and de initializes the
+ * management rx-reorder module.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mgmt_rx_reo_deinit(void);
+
+/**
  * wlan_mgmt_rx_reo_pdev_obj_create_notification() - pdev create handler for
  * management rx-reorder module
  * @pdev: pointer to pdev object
@@ -109,6 +131,34 @@ static inline QDF_STATUS
 wlan_mgmt_rx_reo_pdev_obj_destroy_notification(
 			struct wlan_objmgr_pdev *pdev,
 			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_mgmt_rx_reo_init() - Initializes the management rx-reorder module
+ *
+ * This function gets called from dispatcher init and initializes the management
+ * rx-reorder module.
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+wlan_mgmt_rx_reo_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_mgmt_rx_reo_deinit() - De initializes the management rx-reorder module
+ *
+ * This function gets called from dispatcher deinit and de initializes the
+ * management rx-reorder module.
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+wlan_mgmt_rx_reo_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
