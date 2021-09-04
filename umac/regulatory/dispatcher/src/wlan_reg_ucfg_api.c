@@ -265,8 +265,8 @@ QDF_STATUS ucfg_reg_get_partial_afc_req_info(
 	QDF_STATUS status;
 
 	status = reg_get_partial_afc_req_info(pdev, afc_req);
-	if (status == QDF_STATUS_SUCCESS)
-		reg_dmn_set_afc_req_id(afc_req, req_id);
+	if (status == QDF_STATUS_SUCCESS && afc_req)
+		reg_dmn_set_afc_req_id(*afc_req, req_id);
 
 	return status;
 }
