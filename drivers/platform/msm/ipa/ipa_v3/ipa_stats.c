@@ -402,16 +402,12 @@ static int ipa_get_clock_stats(unsigned long arg)
 	clock_stats = (struct ipa_lnx_clock_stats *) memdup_user((
 		const void __user *)arg, alloc_size);
 	if (IS_ERR(clock_stats)) {
-		IPA_STATS_ERR("copy from user failed");
+		IPA_STATS_ERR("copy from user failed\n");
 		return -ENOMEM;
 	}
 
-	clock_stats->scale_thresh_svs =
-		ipa3_ctx->ctrl->clock_scaling_bw_threshold_svs;
-	clock_stats->scale_thresh_nom =
-		ipa3_ctx->ctrl->clock_scaling_bw_threshold_nominal;
-	clock_stats->scale_thresh_tur =
-		ipa3_ctx->ctrl->clock_scaling_bw_threshold_turbo;
+	if(ipa_pm_get_scaling_bw_levels(clock_stats))
+		IPA_STATS_ERR("Couldn't get scaling bw levels\n");
 	clock_stats->aggr_bw =
 		ipa_pm_get_aggregated_throughput();
 	clock_stats->curr_clk_vote = ipa_pm_get_current_clk_vote();
@@ -955,6 +951,7 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 							sizeof(struct ipa_lnx_gsi_rx_debug_stats)) +
 							(instance_ptr->num_pipes *
 							sizeof(struct ipa_lnx_pipe_info)));
+						continue;
 					}
 				} else {
 					if(ipa3_get_aqc_gsi_stats(&stats)) {
@@ -967,6 +964,7 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 							sizeof(struct ipa_lnx_gsi_rx_debug_stats)) +
 							(instance_ptr->num_pipes *
 							sizeof(struct ipa_lnx_pipe_info)));
+						continue;
 					}
 				}
 
@@ -1012,6 +1010,7 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 						sizeof(struct ipa_lnx_gsi_rx_debug_stats)) +
 						(instance_ptr->num_pipes *
 						sizeof(struct ipa_lnx_pipe_info)));
+					continue;
 				}
 				client_type = IPA_CLIENT_RTK_ETHERNET_CONS;
 				instance_ptr->pm_bandwidth =
@@ -1390,6 +1389,7 @@ static int ipa_get_mhip_inst_stats(unsigned long arg)
 				(instance_ptr->gsi_debug_stats.num_rx_instances *
 					sizeof(struct ipa_lnx_gsi_rx_debug_stats)) +
 				(instance_ptr->num_pipes * sizeof(struct ipa_lnx_pipe_info)));
+			continue;
 		}
 
 		tx_instance_ptr = (struct ipa_lnx_gsi_tx_debug_stats *)((
@@ -1505,6 +1505,7 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 	int i = 0;
 	int j, k;
 	int holb_drop_stats_num_pipes = 0;
+	int ipa_ep_idx_tx, ipa_ep_idx_rx;
 	int ipa_client_type;
 	int reg_idx;
 	int index;
@@ -1546,31 +1547,39 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 
 	/* For WLAN instance */
 	if (ipa_lnx_agent_ctx.log_type_mask & SPRHD_IPA_LOG_TYPE_WLAN_STATS) {
-		ipa_lnx_agent_ctx.alloc_info.num_wlan_instances = 1;
-		ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_pipes = 2;
-		ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_tx_instances = 1;
-		ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_rx_instances = 1;
-		ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].pipes_client_type[0]
-			= IPA_CLIENT_WLAN2_CONS;
-		ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].pipes_client_type[1]
-			= IPA_CLIENT_WLAN2_PROD;
-		ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].tx_inst_client_type[0]
-			= IPA_CLIENT_WLAN2_CONS;
-		ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].rx_inst_client_type[0]
-			= IPA_CLIENT_WLAN2_PROD;
-		if(ipa_wdi_is_tx1_used() == 1) {
-			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_tx_instances++;
-			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_pipes++;
-			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[
-				0].pipes_client_type[2] = IPA_CLIENT_WLAN2_CONS1;
-			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[
-				0].tx_inst_client_type[1] = IPA_CLIENT_WLAN2_CONS1;
+		ipa_ep_idx_tx = ipa3_get_ep_mapping(IPA_CLIENT_WLAN2_CONS);
+		ipa_ep_idx_rx = ipa3_get_ep_mapping(IPA_CLIENT_WLAN2_PROD);
+		if ((ipa_ep_idx_tx == -1) || (ipa_ep_idx_rx == -1) ||
+			!ipa3_ctx->ep[ipa_ep_idx_tx].valid ||
+			!ipa3_ctx->ep[ipa_ep_idx_rx].valid) {
+			ipa_lnx_agent_ctx.alloc_info.num_wlan_instances = 0;
+		} else {
+			ipa_lnx_agent_ctx.alloc_info.num_wlan_instances = 1;
+			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_pipes = 2;
+			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_tx_instances = 1;
+			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_rx_instances = 1;
+			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].pipes_client_type[0]
+				= IPA_CLIENT_WLAN2_CONS;
+			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].pipes_client_type[1]
+				= IPA_CLIENT_WLAN2_PROD;
+			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].tx_inst_client_type[0]
+				= IPA_CLIENT_WLAN2_CONS;
+			ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].rx_inst_client_type[0]
+				= IPA_CLIENT_WLAN2_PROD;
+			if(ipa_wdi_is_tx1_used() == 1) {
+				ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_tx_instances++;
+				ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[0].num_pipes++;
+				ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[
+					0].pipes_client_type[2] = IPA_CLIENT_WLAN2_CONS1;
+				ipa_lnx_agent_ctx.alloc_info.wlan_inst_info[
+					0].tx_inst_client_type[1] = IPA_CLIENT_WLAN2_CONS1;
+		}
 		}
 	}
 
 	/* For ETH instance */
 	if (ipa_lnx_agent_ctx.log_type_mask & SPRHD_IPA_LOG_TYPE_ETH_STATS) {
-		ipa_lnx_agent_ctx.alloc_info.num_eth_instances = IPA_ETH_INST_ID_MAX;
+		ipa_lnx_agent_ctx.alloc_info.num_eth_instances = 0;
 		for (i = 0; i < IPA_ETH_INST_ID_MAX; i++) {
 			ipa_lnx_agent_ctx.alloc_info.eth_inst_info[i].num_pipes = 0;
 			ipa_lnx_agent_ctx.alloc_info.eth_inst_info[i].num_pipes = 0;
@@ -1609,6 +1618,7 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 					}
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
 						i].pipes_client_type[(k*2) + 1] = ipa_client_type;
+					ipa_lnx_agent_ctx.alloc_info.num_eth_instances++;
 					k++;
 				}
 			}

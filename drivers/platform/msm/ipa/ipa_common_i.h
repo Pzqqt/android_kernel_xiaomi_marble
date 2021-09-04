@@ -901,6 +901,7 @@ int ipa_set_pkt_init_ex_hdr_ofst(
   struct ipa_pkt_init_ex_hdr_ofst_set *lookup, bool proc_ctx);
 
 /* IPA stats pm functions */
+int ipa_pm_get_scaling_bw_levels(struct ipa_lnx_clock_stats *clock_stats);
 int ipa_pm_get_aggregated_throughput(void);
 int ipa_pm_get_current_clk_vote(void);
 bool ipa_get_pm_client_stats_filled(struct pm_client_stats *pm_stats_ptr,
