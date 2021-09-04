@@ -463,6 +463,8 @@ typedef enum {
     WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID,
     /* Configure MEC AGING TIMER */
     WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID,
+    /* Set bios interface table */
+    WMI_PDEV_SET_BIOS_INTERFACE_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -4881,6 +4883,12 @@ typedef enum {
 
 /* Force unicast address in RA */
 #define WMI_SCAN_FLAG_EXT_FORCE_UNICAST_RA            0x00001000
+
+/**
+ * Indicate to add 10 Mhz offset to spectral scan center frequencies
+ * sent by Host when checking against support channel list in FW
+ */
+#define WMI_SCAN_FLAG_EXT_SPECTRAL_CFREQ_PLUS_10MHZ_IN_SUPP_CH_LIST 0x00002000
 
 /**
  * new 6 GHz flags per chan (short ssid or bssid) in struct
@@ -26137,6 +26145,80 @@ typedef struct {
 } wmi_pdev_set_bios_geo_table_cmd_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_bios_interface_cmd_fixed_param */
+    A_UINT32 pdev_id;       /* pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 param_type_id; /* BIOS parameters type, see bios_param_type_e */
+    /* length:
+     * Number of valid bytes in A_UINT8 TLV array that follows this
+     * fixed_param TLV.
+     * The number of bytes allocated in the A_UINT8 TLV array will be a
+     * multiple of 4.  The "length" field indicates how many of these
+     * byte elements contain valid data; the remainder are only for
+     * alignment padding and should be ignored.
+     */
+    A_UINT32 length;
+    /*  Following this structure is TLV, bios data array */
+} wmi_pdev_set_bios_interface_cmd_fixed_param;
+
+typedef enum {
+    BIOS_PARAM_CCA_THRESHOLD_TYPE,
+    /*  CCA THR structure has 29 bytes, it includes control flag and
+     *  CCA THR parameters;
+     *
+     *  If CCA_THR_Control is set 0, FW will still use
+     *  AGC_ENERGY_DETECT_THRESHOLD.agcEnergyDetThr in BDF, and detailed
+     *  CCA threshold do not need to be transported.
+     *  If CCA_THR_Control is set 1, FW needs to use CCA threshold parameters
+     *  in BIOS, and CCA THR parameters are provided in the subsequent A_UINT8
+     *  TLV array.
+     *
+     *  In CCA THR parameters, ETSI / MKK / CHN use same CCA threshold,
+     *  and FCC / KOR use same CCA threshold. Its unit is in 1db,
+     *  which is relative to HW NF value.
+     *
+     *  //control flag
+     *  A_UINT8         CCA_THR_Control
+     *
+     *  //5G
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaPri20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaExt20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaExt40dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaExt80dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaPri20dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaExt20dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaExt40dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr5G_thrCcaExt80dB_FCC_KOR
+     *
+     *  //2G
+     *  A_UINT8     agcEnergyDetThr2G_thrCcaPri20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr2G_thrCcaExt20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr2G_thrCcaExt40dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr2G_thrCcaExt80dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr2G_thrCcaPri20dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr2G_thrCcaExt20dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr2G_hrCcaExt40dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr2G_hrCcaExt80dB_FCC_KOR
+     *
+     *  //6G
+     *  A_UINT8     agcEnergyDetThr6G_thrCcaPri20dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr6G_thrCcaExt20dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr6G_thrCcaExt40dB_FCC_KOR
+     *  A_UINT8     agcEnergyDetThr6G_thrCcaExt80dB_FCC_KOR
+     *
+     *  //6G-LPI/VLP
+     *  A_UINT8     agcEnergyDetThr6GLPI.thrCcaPri20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr6GLPI thrCcaExt20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr6GLPI thrCcaExt40dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr6GLPI.thrCcaExt80dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr6GVLP.thrCcaPri20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr6GVLP thrCcaExt20dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr6GVLP thrCcaExt40dB_ETSI_MKK_CHN
+     *  A_UINT8     agcEnergyDetThr6GVLP.thrCcaExt80dB_ETSI_MKK_CHN
+     */
+    BIOS_PARAM_TYPE_MAX,
+} bios_param_type_e;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_mimogain_table_cmd_fixed_param */
     union {
         A_UINT32 mac_id; /* OBSOLETE - will be removed once all refs are gone */
@@ -29457,6 +29539,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_MLO_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_THERMAL_STATS_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_INTERFACE_CMDID);
     }
 
     return "Invalid WMI cmd";

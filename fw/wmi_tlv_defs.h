@@ -1199,6 +1199,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_thermal_throt_temp_range_stats,
     WMITLV_TAG_STRUC_wmi_ctrl_path_awgn_stats_struct,
     WMITLV_TAG_STRUC_wmi_htt_msdu_idx_to_htt_msdu_qtype,
+    WMITLV_TAG_STRUC_wmi_pdev_set_bios_interface_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1673,6 +1674,7 @@ typedef enum {
     OP(WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID) \
     OP(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID) \
     OP(WMI_REQUEST_THERMAL_STATS_CMDID) \
+    OP(WMI_PDEV_SET_BIOS_INTERFACE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4036,6 +4038,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_bios_geo_table_cmd_fixed_param, wmi_pdev_set_bios_geo_table_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, geo_offset, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID);
+
+/* Set bios interface table */
+#define WMITLV_TABLE_WMI_PDEV_SET_BIOS_INTERFACE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_bios_interface_cmd_fixed_param, wmi_pdev_set_bios_interface_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, parameters, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_BIOS_INTERFACE_CMDID);
 
 /* Override the array gain table */
 #define WMITLV_TABLE_WMI_PDEV_SET_MIMOGAIN_TABLE_CMDID(id,op,buf,len) \
