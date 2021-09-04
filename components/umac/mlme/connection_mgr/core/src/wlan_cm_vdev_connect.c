@@ -33,6 +33,7 @@
 #include "wlan_logging_sock_svc.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_roam_debug.h"
+#include "wlan_mlo_mgr_sta.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
@@ -87,8 +88,7 @@ static void
 wlan_cm_disconnect_on_wait_key_timeout(struct wlan_objmgr_psoc *psoc,
 				       struct wlan_objmgr_vdev *vdev)
 {
-	cm_disconnect(psoc, vdev->vdev_objmgr.vdev_id, CM_MLME_DISCONNECT,
-		      REASON_KEY_TIMEOUT, NULL);
+	mlo_disconnect(vdev, CM_MLME_DISCONNECT, REASON_KEY_TIMEOUT, NULL);
 }
 
 void cm_wait_for_key_time_out_handler(void *data)

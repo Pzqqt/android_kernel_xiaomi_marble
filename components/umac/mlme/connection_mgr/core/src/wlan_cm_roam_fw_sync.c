@@ -43,6 +43,7 @@
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
+#include <wlan_mlo_mgr_sta.h>
 
 QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			       void *event, uint32_t event_data_len)
@@ -880,8 +881,8 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 	 * or disconnect the AP.
 	 */
 	if (wlan_reg_is_disable_for_freq(pdev, roam_synch_data->chan_freq)) {
-		cm_disconnect(psoc, vdev_id, CM_ROAM_DISCONNECT,
-			      REASON_OPER_CHANNEL_BAND_CHANGE, NULL);
+		mlo_disconnect(cm_ctx->vdev, CM_ROAM_DISCONNECT,
+			       REASON_OPER_CHANNEL_BAND_CHANGE, NULL);
 		status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
@@ -987,10 +988,9 @@ QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 
 	if (source == CM_ROAMING_HOST ||
 	    source == CM_ROAMING_NUD_FAILURE)
-		status = cm_disconnect(psoc, vdev_id,
-				       CM_ROAM_DISCONNECT,
-				       REASON_USER_TRIGGERED_ROAM_FAILURE,
-				       NULL);
+		status = mlo_disconnect(vdev, CM_ROAM_DISCONNECT,
+					REASON_USER_TRIGGERED_ROAM_FAILURE,
+					NULL);
 
 error:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
@@ -1086,10 +1086,8 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 			    DEBUG_ROAM_SYNCH_FAIL,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
 
-	status = cm_disconnect(ind->psoc, ind->vdev_id,
-			       CM_MLME_DISCONNECT,
-			       REASON_FW_TRIGGERED_ROAM_FAILURE,
-			       NULL);
+	status = mlo_disconnect(vdev, CM_MLME_DISCONNECT,
+				REASON_FW_TRIGGERED_ROAM_FAILURE, NULL);
 
 	if (mlme_obj->cfg.gen.fatal_event_trigger)
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
