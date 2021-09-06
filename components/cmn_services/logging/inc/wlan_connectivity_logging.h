@@ -28,6 +28,7 @@
 #include "wlan_crypto_global_api.h"
 #include <wlan_cm_api.h>
 #include "wlan_cm_roam_api.h"
+#include "wlan_logging_sock_svc.h"
 
 #define WLAN_MAX_LOGGING_FREQ 90
 
@@ -273,7 +274,9 @@ struct wlan_connect_info {
 
 #define WLAN_MAX_LOG_RECORDS 45
 #define WLAN_MAX_LOG_LEN     256
-#define MAX_RECORD_IN_SINGLE_EVT 5
+#define WLAN_RECORDS_PER_SEC 20
+#define MAX_RECORD_IN_SINGLE_EVT 10
+
 /**
  * struct wlan_log_record  - Structure for indvidual records in the ring
  * buffer
@@ -325,6 +328,8 @@ struct wlan_cl_hdd_cbks {
  * struct wlan_connectivity_log_buf_data  - Master structure to hold the
  * pointers to the ring buffers.
  * @hdd_cbks: Hdd callbacks
+ * @first_record_timestamp_in_last_sec: First record timestamp
+ * @sent_msgs_count: Total sent messages counter in the last 1 sec
  * @head: Pointer to the 1st record allocated in the ring buffer.
  * @read_ptr: Pointer to the next record that can be read.
  * @write_ptr: Pointer to the next empty record to be written.
@@ -337,6 +342,8 @@ struct wlan_cl_hdd_cbks {
  */
 struct wlan_connectivity_log_buf_data {
 	struct wlan_cl_hdd_cbks hdd_cbks;
+	uint64_t first_record_timestamp_in_last_sec;
+	uint64_t sent_msgs_count;
 	struct wlan_log_record *head;
 	struct wlan_log_record *read_ptr;
 	struct wlan_log_record *write_ptr;
