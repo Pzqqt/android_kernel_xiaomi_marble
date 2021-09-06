@@ -71,6 +71,24 @@ void wlan_connectivity_logging_deinit(void)
 }
 #endif
 
+static bool wlan_logging_is_queue_empty(void)
+{
+	if (!qdf_atomic_read(&global_cl.is_active))
+		return true;
+
+	qdf_spin_lock_bh(&global_cl.write_ptr_lock);
+
+	if (global_cl.read_ptr == global_cl.write_ptr &&
+	    !global_cl.write_ptr->is_record_filled) {
+		qdf_spin_unlock_bh(&global_cl.write_ptr_lock);
+		return true;
+	}
+
+	qdf_spin_unlock_bh(&global_cl.write_ptr_lock);
+
+	return false;
+}
+
 QDF_STATUS
 wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 {
@@ -96,6 +114,8 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 		logging_debug("vdev:%d dropping msg sub-type:%d total drpd:%d",
 			      new_record->vdev_id, new_record->log_subtype,
 			      qdf_atomic_read(&global_cl.dropped_msgs));
+		wlan_logging_set_connectivity_log();
+
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -110,6 +130,8 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 
 	qdf_spin_unlock_bh(&global_cl.write_ptr_lock);
 
+	wlan_logging_set_connectivity_log();
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -118,12 +140,37 @@ wlan_connectivity_log_dequeue(void)
 {
 	struct wlan_log_record *data;
 	uint8_t idx = 0;
+	uint64_t current_timestamp, time_delta;
+
+	if (wlan_logging_is_queue_empty())
+		return QDF_STATUS_SUCCESS;
 
 	data = qdf_mem_malloc(MAX_RECORD_IN_SINGLE_EVT * sizeof(*data));
 	if (!data)
 		return QDF_STATUS_E_NOMEM;
 
 	while (global_cl.read_ptr->is_record_filled) {
+		current_timestamp = qdf_get_time_of_the_day_ms();
+		time_delta = current_timestamp -
+				global_cl.first_record_timestamp_in_last_sec;
+		/*
+		 * Don't send logs if the time difference between the first
+		 * packet queued and current timestamp is less than 1 second and
+		 * the sent messages count is 20.
+		 * Else if the current record to be dequeued is 1 sec apart from
+		 * the previous first packet timestamp, then reset the
+		 * sent messages counter and first packet timestamp.
+		 */
+		if (time_delta < 1000 &&
+		    global_cl.sent_msgs_count >= WLAN_RECORDS_PER_SEC) {
+			break;
+		} else if (time_delta > 1000) {
+			global_cl.sent_msgs_count = 0;
+			global_cl.first_record_timestamp_in_last_sec =
+							current_timestamp;
+		}
+
+		global_cl.sent_msgs_count %= WLAN_RECORDS_PER_SEC;
 		data[idx] = *global_cl.read_ptr;
 
 		global_cl.read_idx++;
@@ -132,6 +179,7 @@ wlan_connectivity_log_dequeue(void)
 		global_cl.read_ptr =
 			&global_cl.head[global_cl.read_idx];
 
+		global_cl.sent_msgs_count++;
 		idx++;
 		if (idx >= MAX_RECORD_IN_SINGLE_EVT)
 			break;
