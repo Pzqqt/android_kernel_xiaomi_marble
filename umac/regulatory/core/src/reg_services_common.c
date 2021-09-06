@@ -4845,7 +4845,6 @@ reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_AFC_SUPPORT
 /**
  * get_reg_rules_for_pdev() - Get the pointer to the reg rules for the pdev
  * @pdev: Pointer to pdev
@@ -4868,6 +4867,7 @@ reg_get_reg_rules_for_pdev(struct wlan_objmgr_pdev *pdev)
 	return psoc_reg_rules;
 }
 
+#ifdef CONFIG_AFC_SUPPORT
 /**
  * reg_is_empty_range() - If both left, right frquency edges in the input range
  * are zero then the range is empty, else not.
@@ -5828,6 +5828,28 @@ QDF_STATUS reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
+/**
+ * reg_get_num_rules_of_ap_pwr_type() - Get the number of reg rules present
+ * for a given ap power type
+ * @pdev - Pointer to pdev
+ * @ap_pwr_type - AP power type
+ *
+ * Return: Return the number of reg rules for a given ap power type
+ */
+static uint8_t
+reg_get_num_rules_of_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				 enum reg_6g_ap_type ap_pwr_type)
+{
+	struct reg_rule_info *psoc_reg_rules = reg_get_reg_rules_for_pdev(pdev);
+
+	if (ap_pwr_type > REG_MAX_SUPP_AP_TYPE) {
+		reg_err("Unsupported 6G AP power type");
+		return 0;
+	}
+
+	return psoc_reg_rules->num_of_6g_ap_reg_rules[ap_pwr_type];
+}
+
 QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 					       enum reg_6g_ap_type ap_pwr_type)
 {
@@ -5839,6 +5861,9 @@ QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 		reg_err("pdev reg component is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	if (!reg_get_num_rules_of_ap_pwr_type(pdev, ap_pwr_type))
+		return QDF_STATUS_E_FAILURE;
 
 	status = reg_set_cur_6g_ap_pwr_type(pdev, ap_pwr_type);
 	if (QDF_IS_STATUS_ERROR(status)) {
