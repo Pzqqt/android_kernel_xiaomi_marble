@@ -40,6 +40,7 @@
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_MON, ## params)
 #define dp_mon_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MON, params)
 #define dp_mon_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MON, params)
+#define dp_mon_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MON, params)
 
 #ifndef WLAN_TX_PKT_CAPTURE_ENH
 struct dp_pdev_tx_capture {
