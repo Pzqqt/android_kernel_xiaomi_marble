@@ -380,7 +380,11 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 			qdf_mem_free(pdev_stats);
 			return status;
 		}
-		ev->pdev_stats[i].max_pwr = pdev_stats->chan_tx_pwr;
+
+		/*
+		 * It's 0.5 db unit from halphy. so correct the value here
+		 */
+		ev->pdev_stats[i].max_pwr = pdev_stats->chan_tx_pwr >> 1;
 
 		/*
 		 * if pdev_stats->pdev_id is 0, then the event contains all
