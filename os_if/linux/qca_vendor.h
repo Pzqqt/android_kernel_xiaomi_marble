@@ -2566,6 +2566,25 @@ enum qca_roaming_policy {
  * @QCA_ROAM_REASON_BSS_LOAD: Roam triggered due to the channel utilization
  * breaching out the configured threshold.
  *
+ * @QCA_ROAM_REASON_WTC: Roam triggered due to Wireless to Cellular BSS
+ * transition request.
+ *
+ * @QCA_ROAM_REASON_IDLE: Roam triggered when device is suspended,
+ * there is no data activity with the AP and the current rssi falls below a
+ * certain threshold.
+ *
+ * @QCA_ROAM_REASON_DISCONNECTION: Roam triggered due to
+ * deauthentication or disassociation frames received from the connected AP.
+ *
+ * @QCA_ROAM_REASON_PERIODIC_TIMER: Roam triggered as part of the periodic
+ * scan that happens when there is no candiate AP found during the poor
+ * RSSI scan trigger.
+ *
+ * @QCA_ROAM_REASON_BACKGROUND_SCAN: Roam triggered based on the scan
+ * results obtained from an external scan (not aimed at roaming).
+ *
+ * @QCA_ROAM_REASON_BT_ACTIVITY: Roam triggered due to bluetooth
+ * connection is established when the station is connected in 2.4 Ghz band.
  */
 enum qca_roam_reason {
 	QCA_ROAM_REASON_UNKNOWN,
@@ -2577,6 +2596,12 @@ enum qca_roam_reason {
 	QCA_ROAM_REASON_USER_TRIGGER,
 	QCA_ROAM_REASON_BTM,
 	QCA_ROAM_REASON_BSS_LOAD,
+	QCA_ROAM_REASON_WTC,
+	QCA_ROAM_REASON_IDLE,
+	QCA_ROAM_REASON_DISCONNECTION,
+	QCA_ROAM_REASON_PERIODIC_TIMER,
+	QCA_ROAM_REASON_BACKGROUND_SCAN,
+	QCA_ROAM_REASON_BT_ACTIVITY,
 };
 
 /**
