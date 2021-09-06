@@ -391,6 +391,11 @@ QDF_STATUS
 QDF_STATUS
 (*extract_roam_msg_info)(wmi_unified_t wmi_handle, void *evt_buf,
 			 struct roam_msg_info *dst, uint8_t idx);
+
+QDF_STATUS
+(*extract_roam_frame_info)(wmi_unified_t wmi_handle, void *evt_buf,
+			   struct roam_frame_info *dst, uint8_t idx,
+			   uint8_t num_frames);
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
  * extract_roam_sync_event  - Extract roam sync event func ptr
@@ -2282,7 +2287,7 @@ QDF_STATUS
 (*extract_roam_trigger_stats)(wmi_unified_t wmi_handle,
 			      void *evt_buf,
 			      struct wmi_roam_trigger_info *trig,
-			      uint8_t idx);
+			      uint8_t idx, uint8_t btm_idx);
 
 QDF_STATUS
 (*extract_roam_scan_stats)(wmi_unified_t wmi_handle,

@@ -3255,11 +3255,11 @@ QDF_STATUS
 wmi_unified_extract_roam_trigger_stats(wmi_unified_t wmi,
 				       void *evt_buf,
 				       struct wmi_roam_trigger_info *trig,
-				       uint8_t idx)
+				       uint8_t idx, uint8_t btm_idx)
 {
 	if (wmi->ops->extract_roam_trigger_stats)
 		return wmi->ops->extract_roam_trigger_stats(wmi, evt_buf, trig,
-							    idx);
+							    idx, btm_idx);
 
 	return QDF_STATUS_E_FAILURE;
 }

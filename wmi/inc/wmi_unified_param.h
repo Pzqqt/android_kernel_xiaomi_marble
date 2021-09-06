@@ -7518,12 +7518,27 @@ struct wmi_roam_scan_stats_res {
 	struct wmi_roam_scan_stats_params roam_scan[0];
 };
 
-#define MAX_ROAM_CANDIDATE_AP      9
-#define MAX_ROAM_SCAN_CHAN         38
-#define MAX_ROAM_SCAN_STATS_TLV    5
+#define MAX_ROAM_CANDIDATE_AP    9
+#define MAX_ROAM_SCAN_CHAN       38
+#define MAX_ROAM_SCAN_STATS_TLV  5
+#define WLAN_MAX_BTM_CANDIDATE   8
+#define WLAN_ROAM_MAX_FRAME_INFO 6
+/**
+ * struct btm_req_candidate_info  - BTM request candidate
+ * info
+ * @candidate_bssid: Candidate bssid received in BTM request
+ * @timestamp: candidate_timestamp;
+ * @preference: candidate preference
+ */
+struct wmi_btm_req_candidate_info {
+	struct qdf_mac_addr candidate_bssid;
+	uint32_t timestamp;
+	uint8_t preference;
+};
 
 /**
  * struct wmi_roam_btm_trigger_data - BTM roam trigger related information
+ * @timestamp:             timestamp
  * @btm_request_mode:      BTM request mode - solicited/unsolicited
  * @disassoc_timer:        Number of TBTT before AP disassociates the STA in ms
  * @validity_interval:     Preferred candidate list validity interval in ms
@@ -7533,8 +7548,11 @@ struct wmi_roam_scan_stats_res {
  * in milli seconds
  * @btm_mbo_assoc_retry_timeout: BTM MBO assoc retry timeout value in
  * milli seconds
+ * @token: BTM request dialog token
+ * @btm_cand: BTM request candidate information
  */
 struct wmi_roam_btm_trigger_data {
+	uint32_t timestamp;
 	uint32_t btm_request_mode;
 	uint32_t disassoc_timer;
 	uint32_t validity_interval;
@@ -7542,6 +7560,8 @@ struct wmi_roam_btm_trigger_data {
 	uint32_t btm_resp_status;
 	uint32_t btm_bss_termination_timeout;
 	uint32_t btm_mbo_assoc_retry_timeout;
+	uint16_t token;
+	struct wmi_btm_req_candidate_info btm_cand[WLAN_MAX_BTM_CANDIDATE];
 };
 
 /**
@@ -7643,6 +7663,7 @@ struct wmi_roam_candidate_info {
  * @type:      0 - Partial roam scan; 1 - Full roam scan
  * @num_ap:    Number of candidate APs.
  * @num_chan:  Number of channels.
+ * @frame_info_count: Frame info TLV count
  * @next_rssi_threshold: Next roam can trigger rssi threshold
  * @chan_freq: List of frequencies scanned as part of roam scan
  * @ap: List of candidate AP info
@@ -7652,6 +7673,7 @@ struct wmi_roam_scan_data {
 	uint16_t type;
 	uint16_t num_ap;
 	uint16_t num_chan;
+	uint16_t frame_info_count;
 	uint32_t next_rssi_threshold;
 	uint16_t chan_freq[MAX_ROAM_SCAN_CHAN];
 	struct wmi_roam_candidate_info ap[MAX_ROAM_CANDIDATE_AP];
@@ -7672,6 +7694,9 @@ struct wmi_roam_result {
 	uint32_t fail_reason;
 };
 
+#define WLAN_11KV_TYPE_BTM_REQ  1
+#define WLAN_11KV_TYPE_NEIGHBOR_RPT 2
+
 /**
  *  struct wmi_neighbor_report_data - Neighbor report/BTM request related
  *  data.
@@ -7680,7 +7705,11 @@ struct wmi_roam_result {
  *  @req_type:   1 - BTM query ; 2 - 11K neighbor report request
  *  @req_time:   Request timestamp in ms
  *  @resp_time:  Response timestamp in ms
+ *  @num_freq: Number of frequencies
  *  @freq:       Channel frequency in Mhz
+ *  @btm_query_token: BTM query dialog token.
+ *  @btm_query_reason: BTM query reasons as defined in
+ *  IEEE802.11v spec table 7-43x
  */
 struct wmi_neighbor_report_data {
 	bool present;
@@ -7690,6 +7719,8 @@ struct wmi_neighbor_report_data {
 	uint32_t resp_time;
 	uint8_t num_freq;
 	uint32_t freq[MAX_ROAM_SCAN_CHAN];
+	uint16_t btm_query_token;
+	uint8_t btm_query_reason;
 };
 
 /**

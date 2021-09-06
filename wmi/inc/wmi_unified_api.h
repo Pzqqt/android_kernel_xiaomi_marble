@@ -707,13 +707,14 @@ wmi_unified_extract_hw_mode_resp(wmi_unified_t wmi,
  * @evt_buf:    Pointer to the event buffer
  * @trig:       Pointer to destination structure to fill data
  * @idx:        TLV id
+ * @btm_idx:    BTM candidates index
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 wmi_unified_extract_roam_trigger_stats(wmi_unified_t wmi, void *evt_buf,
 				       struct wmi_roam_trigger_info *trig,
-				       uint8_t idx);
+				       uint8_t idx, uint8_t btm_idx);
 
 /**
  * wmi_unified_extract_roam_scan_stats() - Extract roam scan stats from
