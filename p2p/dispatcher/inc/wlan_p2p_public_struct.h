@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,7 +67,7 @@ struct p2p_ps_params {
  */
 struct p2p_roc_req {
 	uint32_t vdev_id;
-	uint32_t chan;
+	qdf_freq_t chan;
 	uint32_t phy_mode;
 	uint32_t duration;
 };
@@ -96,7 +96,7 @@ struct p2p_event {
 	uint32_t vdev_id;
 	enum p2p_roc_event roc_event;
 	uint64_t cookie;
-	uint32_t chan;
+	qdf_freq_t chan;
 	uint32_t duration;
 };
 

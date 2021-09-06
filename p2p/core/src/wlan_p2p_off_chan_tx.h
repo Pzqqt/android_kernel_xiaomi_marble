@@ -173,7 +173,7 @@ struct tx_action_context {
 	int scan_id;
 	uint64_t roc_cookie;
 	int32_t id;
-	uint8_t chan;
+	qdf_freq_t chan;
 	uint8_t *buf;
 	int buf_len;
 	bool off_chan;

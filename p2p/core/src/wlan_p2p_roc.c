@@ -113,9 +113,7 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	req->scan_req.scan_type = SCAN_TYPE_P2P_LISTEN;
 	req->scan_req.scan_req_id = p2p_soc_obj->scan_req_id;
 	req->scan_req.chan_list.num_chan = 1;
-	req->scan_req.chan_list.chan[0].freq = wlan_reg_legacy_chan_to_freq(
-								pdev,
-								roc_ctx->chan);
+	req->scan_req.chan_list.chan[0].freq = roc_ctx->chan;
 	req->scan_req.dwell_time_passive = roc_ctx->duration;
 	req->scan_req.dwell_time_active = 0;
 	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;

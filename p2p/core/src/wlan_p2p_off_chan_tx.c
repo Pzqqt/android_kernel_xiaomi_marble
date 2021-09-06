@@ -1085,7 +1085,7 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 	}
 
 	if (tx_ctx->chan)
-		chanfreq = wlan_reg_legacy_chan_to_freq(pdev, tx_ctx->chan);
+		chanfreq = tx_ctx->chan;
 
 	mgmt_param.chanfreq = chanfreq;
 
