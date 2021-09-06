@@ -244,7 +244,7 @@ static void msm_set_upd_config(struct snd_soc_pcm_runtime *rtd)
 	} else {
 		if (!strncmp(component->driver->name, WCD937X_DRV_NAME,
 				strlen(WCD937X_DRV_NAME))){
-			pdata->get_dev_num = wcd937x_codec_get_dev_num;
+			panic("Device is wcd937x, which is unsupported");
 		} else if (!strncmp(component->driver->name, WCD938X_DRV_NAME,
 				strlen(WCD938X_DRV_NAME))){
 			pdata->get_dev_num = wcd938x_codec_get_dev_num;
@@ -1361,11 +1361,10 @@ static int msm_snd_card_late_probe(struct snd_soc_card *card)
 		return -ENOMEM;
 	wcd_mbhc_cfg.calibration = mbhc_calibration;
 
-	if (!is_wcd937x)
-		ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
-	else
-		ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+	if (is_wcd937x)
+		panic("Device is wcd937x, which is unsupported");
 
+	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
 	if (ret) {
 		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
 			__func__, ret);
@@ -1691,11 +1690,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 	}
 	if(!strncmp(component->driver->name, WCD937X_DRV_NAME,
 			strlen(WCD937X_DRV_NAME))){
-		wcd937x_info_create_codec_entry(pdata->codec_root, component);
-		codec_variant = wcd937x_get_codec_variant(component);
-		dev_dbg(component->dev, "%s: variant %d\n",__func__, codec_variant);
-		lpass_cdc_set_port_map(lpass_cdc_component,
-			ARRAY_SIZE(sm_port_map_wcd937x), sm_port_map_wcd937x);
+		panic("Device is wcd937x, which is unsupported");
 	} else {
 		wcd938x_info_create_codec_entry(pdata->codec_root, component);
 		codec_variant = wcd938x_get_codec_variant(component);
