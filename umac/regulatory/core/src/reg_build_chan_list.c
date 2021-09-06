@@ -2540,6 +2540,8 @@ reg_process_afc_expiry_event(struct afc_regulatory_info *afc_info)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	pdev_priv_obj->is_6g_afc_power_event_received = false;
+
 	reg_debug("AFC event subtype: %d",
 		  afc_info->expiry_info->event_subtype);
 	switch (afc_info->expiry_info->event_subtype) {
