@@ -1803,20 +1803,6 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		      ((mcs >= MAX_MCS) && (pkt_type == DOT11_AX)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
 		      ((mcs < MAX_MCS) && (pkt_type == DOT11_AX)));
-
-	if ((soc->process_rx_status) &&
-	    hal_rx_tlv_first_mpdu_get(soc->hal_soc, rx_tlv_hdr)) {
-#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
-		if (!vdev->pdev)
-			return;
-
-		dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
-				     &peer->stats, peer->peer_id,
-				     UPDATE_PEER_STATS,
-				     vdev->pdev->pdev_id);
-#endif
-
-	}
 }
 
 #ifndef WDS_VENDOR_EXTENSION
