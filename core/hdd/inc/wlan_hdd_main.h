@@ -2224,7 +2224,7 @@ struct hdd_context {
 #endif
 	bool is_wifi3_0_target;
 	bool dump_in_progress;
-	qdf_time_t bw_vote_time;
+	uint64_t bw_vote_time;
 	struct hdd_dual_sta_policy dual_sta_policy;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct hdd_mld_mac_info mld_mac_info;
