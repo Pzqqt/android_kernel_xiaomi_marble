@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -167,7 +167,9 @@
 #define CFG_TGT_DEFAULT_SCAN_MAX_HANDLERS   0x4
 
 /* maximum number of VDEV that could use BMISS offload */
+#ifndef CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV
 #define CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV   0x2
+#endif
 
 /* maximum number of VDEV offload Roaming to support */
 #ifndef CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV
