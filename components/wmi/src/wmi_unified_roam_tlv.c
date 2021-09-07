@@ -1618,6 +1618,8 @@ extract_roam_btm_response_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 				   dst->target_bssid.bytes);
 	dst->vsie_reason = src_data->vsie_reason;
 	dst->timestamp = src_data->timestamp;
+	dst->btm_resp_dialog_token = src_data->btm_resp_dialog_token;
+	dst->btm_delay = src_data->btm_resp_bss_termination_delay;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1686,6 +1688,112 @@ extract_roam_msg_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	dst->msg_id = src_data->msg_id;
 	dst->msg_param1 = src_data->msg_param1;
 	dst->msg_param2 = src_data->msg_param2;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static enum wlan_roam_frame_subtype
+wmi_get_converted_roam_eapol_subtype(
+		WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE eapol_subtype)
+{
+	switch (eapol_subtype) {
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M1:
+		return ROAM_FRAME_SUBTYPE_M1;
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M2:
+		return ROAM_FRAME_SUBTYPE_M2;
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M3:
+		return ROAM_FRAME_SUBTYPE_M3;
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M4:
+		return ROAM_FRAME_SUBTYPE_M4;
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_GTK_M1:
+		return ROAM_FRAME_SUBTYPE_GTK_M1;
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_GTK_M2:
+		return ROAM_FRAME_SUBTYPE_GTK_M2;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+static enum qdf_dp_tx_rx_status
+wmi_get_converted_tx_status(
+		WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS roam_tx_status)
+{
+	switch (roam_tx_status) {
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS_ACK:
+		return QDF_TX_RX_STATUS_OK;
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS_NO_ACK:
+		return QDF_TX_RX_STATUS_NO_ACK;
+	case WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS_TX_FAIL:
+		return QDF_TX_RX_STATUS_DROP;
+	default:
+		break;
+	}
+
+	return QDF_TX_RX_STATUS_INVALID;
+}
+
+/**
+ * extract_roam_frame_info_tlv() - Extract the frame exchanges during roaming
+ * info from the WMI_ROAM_STATS_EVENTID
+ * @wmi_handle: wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @dst:        Pointer to destination structure to fill data
+ * @idx:        TLV id
+ * @num_frames: Number of Frame TLVs to be extracted
+ */
+static QDF_STATUS
+extract_roam_frame_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			    struct roam_frame_info *dst, uint8_t frame_idx,
+			    uint8_t num_frames)
+{
+	WMI_ROAM_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_roam_frame_info *src_data = NULL;
+	uint8_t i, subtype;
+
+	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
+
+	if (!param_buf || !param_buf->roam_frame_info ||
+	    !param_buf->num_roam_frame_info ||
+	    (frame_idx + num_frames) >= param_buf->num_roam_frame_info) {
+		wmi_debug("Empty roam_frame_info param buf frame_idx:%d num_frames:%d",
+			  frame_idx, num_frames);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	src_data = &param_buf->roam_frame_info[frame_idx];
+
+	if (num_frames > WLAN_ROAM_MAX_FRAME_INFO)
+		num_frames = WLAN_ROAM_MAX_FRAME_INFO;
+
+	for (i = 0; i < num_frames; i++) {
+		dst->present = true;
+		dst->timestamp = src_data->timestamp;
+		dst->type = WMI_GET_BITS(src_data->frame_info, 0, 2);
+
+		subtype = WMI_GET_BITS(src_data->frame_info, 2, 4);
+		if (dst->type == WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT) {
+			dst->type = ROAM_FRAME_INFO_FRAME_TYPE_EXT;
+			dst->subtype =
+				wmi_get_converted_roam_eapol_subtype(subtype);
+		} else {
+			dst->subtype = subtype;
+		}
+
+		dst->is_req = WMI_GET_BITS(src_data->frame_info, 6, 1);
+		dst->seq_num = WMI_GET_BITS(src_data->frame_info, 7, 16);
+		dst->status_code = src_data->status_code;
+		if (dst->is_req)
+			dst->tx_status = wmi_get_converted_tx_status(
+							src_data->status_code);
+
+		dst->retry_count = src_data->retry_count;
+		dst->rssi = (-1) * src_data->rssi_dbm_abs;
+
+		dst++;
+		src_data++;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3145,6 +3253,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 				extract_roam_btm_response_stats_tlv;
 	ops->extract_roam_initial_info = extract_roam_initial_info_tlv;
 	ops->extract_roam_msg_info = extract_roam_msg_info_tlv;
+	ops->extract_roam_frame_info = extract_roam_frame_info_tlv;
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 	ops->extract_roam_sync_event = extract_roam_sync_event_tlv;
 	ops->extract_roam_sync_frame_event = extract_roam_sync_frame_event_tlv;

@@ -255,4 +255,79 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 void cm_update_owe_info(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp, uint8_t vdev_id);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+/**
+ * cm_roam_mgmt_frame_event() - Roam management frame event
+ * @frame_data: frame_data
+ * @vdev_id: vdev_id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id);
+
+/**
+ * cm_roam_btm_req_event  - Send BTM request related logging event
+ * @btm_data: BTM trigger related data
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
+		      uint8_t vdev_id);
+
+/**
+ * cm_roam_btm_resp_event() - Send BTM response logging event
+ * @btm_data: BTM response data
+ * @vdev_id: Vdev id
+ * @is_wtc: Is WTC or BTM response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+		       uint8_t vdev_id, bool is_wtc);
+
+/**
+ * cm_roam_btm_query_event()  - Send BTM query logging event
+ * @btm_data: BTM data
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
+			uint8_t vdev_id);
+
+#else
+static inline QDF_STATUS
+cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
+		      uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+		       uint8_t vdev_id, bool is_wtc)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
+			uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* FEATURE_CONNECTIVITY_LOGGING */
+#endif /* FEATURE_ROAM_OFFLOAD */
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */

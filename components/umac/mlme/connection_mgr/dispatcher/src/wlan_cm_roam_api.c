@@ -379,6 +379,18 @@ uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
 	return band_mask;
 }
 
+QDF_STATUS
+wlan_cm_roam_extract_frame_info(wmi_unified_t wmi, void *evt_buf,
+				struct roam_frame_info *dst, uint8_t idx,
+				uint8_t num_frames)
+{
+	if (wmi->ops->extract_roam_msg_info)
+		return wmi->ops->extract_roam_frame_info(wmi, evt_buf,
+							 dst, idx, num_frames);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id, bool pcl_per_vdev)
 {
@@ -2687,7 +2699,7 @@ cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
  */
 static void
 cm_roam_stats_print_btm_rsp_info(struct roam_btm_response_data *data,
-				 uint8_t vdev_id)
+				 uint8_t vdev_id, bool is_wtc)
 {
 	char time[TIME_STRING_LEN];
 
@@ -2696,6 +2708,7 @@ cm_roam_stats_print_btm_rsp_info(struct roam_btm_response_data *data,
 		       QDF_MAC_ADDR_FMT, time, vdev_id, data->btm_status,
 		       data->vsie_reason,
 		       QDF_MAC_ADDR_REF(data->target_bssid.bytes));
+	cm_roam_btm_resp_event(data, vdev_id, is_wtc);
 }
 
 /**
@@ -2993,10 +3006,16 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 		    (stats_info->trigger[i].trigger_reason ==
 		     ROAM_TRIGGER_REASON_WTC_BTM ||
 		     stats_info->trigger[i].trigger_reason ==
-		     ROAM_TRIGGER_REASON_BTM)))
+		     ROAM_TRIGGER_REASON_BTM))) {
+			bool is_wtc =
+				(stats_info->trigger[i].trigger_reason ==
+				 ROAM_TRIGGER_REASON_WTC_BTM);
+
 			cm_roam_stats_print_btm_rsp_info(
-							&stats_info->btm_rsp[i],
-							stats_info->vdev_id);
+						&stats_info->btm_rsp[i],
+						stats_info->vdev_id,
+						is_wtc);
+		}
 
 		if (stats_info->roam_init_info[i].present)
 			cm_roam_stats_print_roam_initial_info(
