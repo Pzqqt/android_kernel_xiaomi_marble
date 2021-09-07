@@ -2492,8 +2492,16 @@ static int __power_collapse(struct iris_hfi_device *device, bool force)
 
 		if (count == max_tries) {
 			dprintk(CVP_ERR,
-					"Skip PC. Core is not in right state (%#x, %#x)\n",
-					wfi_status, pc_ready);
+				"Skip PC. Core is not ready (%#x, %#x)\n",
+				wfi_status, pc_ready);
+			goto skip_power_off;
+		}
+	} else {
+		wfi_status = __read_register(device, CVP_WRAPPER_CPU_STATUS);
+		if (!(wfi_status & BIT(0))) {
+			dprintk(CVP_WARN,
+				"Skip PC as wfi_status (%#x) bit not set\n",
+				wfi_status);
 			goto skip_power_off;
 		}
 	}
@@ -3771,7 +3779,8 @@ static int __iris_power_on(struct iris_hfi_device *device)
 	dprintk(CVP_CORE, "Done with interrupt enabling\n");
 	device->intr_status = 0;
 	enable_irq(device->cvp_hal_data->irq);
-
+	__write_register(device,
+		CVP_WRAPPER_DEBUG_BRIDGE_LPI_CONTROL, 0x7);
 	pr_info(CVP_DBG_TAG "cvp (eva) powered on\n", "pwr");
 	return 0;
 

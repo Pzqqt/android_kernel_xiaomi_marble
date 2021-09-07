@@ -185,6 +185,9 @@ static struct file *msm_cvp_fget(unsigned int fd, struct task_struct *task,
 	struct files_struct *files = task->files;
 	struct file *file;
 
+	if (!files)
+		return NULL;
+
 	rcu_read_lock();
 loop:
 	file = fcheck_files(files, fd);
