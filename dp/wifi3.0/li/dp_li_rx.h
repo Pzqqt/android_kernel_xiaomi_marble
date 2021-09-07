@@ -100,4 +100,34 @@ dp_rx_peer_metadata_peer_id_get_li(struct dp_soc *soc, uint32_t peer_metadata)
 
 	return metadata->peer_id;
 }
+
+#ifdef QCA_DP_RX_NBUF_AND_NBUF_DATA_PREFETCH
+static inline
+void dp_rx_prefetch_nbuf_data(qdf_nbuf_t nbuf, qdf_nbuf_t next)
+{
+	struct rx_pkt_tlvs *pkt_tlvs;
+
+	if (next) {
+		/* prefetch skb->next and first few bytes of skb->cb */
+		qdf_prefetch(next);
+		/* skb->cb spread across 2 cache lines hence below prefetch */
+		qdf_prefetch(&next->_skb_refdst);
+		qdf_prefetch(&next->len);
+		qdf_prefetch(&next->protocol);
+		pkt_tlvs = (struct rx_pkt_tlvs *)next->data;
+		/* sa_idx, da_idx, l3_pad in RX msdu_end TLV */
+		qdf_prefetch(pkt_tlvs);
+		/* msdu_done in RX attention TLV */
+		qdf_prefetch(&pkt_tlvs->attn_tlv);
+		/* fr_ds & to_ds in RX MPDU start TLV */
+		if (qdf_nbuf_is_rx_chfrag_end(nbuf))
+			qdf_prefetch(&pkt_tlvs->mpdu_start_tlv);
+	}
+}
+#else
+static inline
+void dp_rx_prefetch_nbuf_data(qdf_nbuf_t nbuf, qdf_nbuf_t next)
+{
+}
+#endif
 #endif

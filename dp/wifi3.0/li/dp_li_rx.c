@@ -455,6 +455,8 @@ done:
 	nbuf = nbuf_head;
 	while (nbuf) {
 		next = nbuf->next;
+		dp_rx_prefetch_nbuf_data(nbuf, next);
+
 		if (qdf_unlikely(dp_rx_is_raw_frame_dropped(nbuf))) {
 			nbuf = next;
 			DP_STATS_INC(soc, rx.err.raw_frm_drop, 1);
