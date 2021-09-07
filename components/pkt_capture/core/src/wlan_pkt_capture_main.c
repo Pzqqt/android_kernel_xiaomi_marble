@@ -150,7 +150,7 @@ pkt_capture_get_pktcap_mode_v2()
 	if (!vdev_priv)
 		pkt_capture_err("vdev_priv is NULL");
 	else
-		mode = vdev_priv->cb_ctx->pkt_capture_mode;
+		mode = vdev_priv->cfg_params.pkt_capture_mode;
 
 	return mode;
 }
@@ -650,7 +650,7 @@ void pkt_capture_set_pktcap_mode(struct wlan_objmgr_psoc *psoc,
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (vdev_priv)
-		vdev_priv->cb_ctx->pkt_capture_mode = mode;
+		vdev_priv->cfg_params.pkt_capture_mode = mode;
 	else
 		pkt_capture_err("vdev_priv is NULL");
 
@@ -682,10 +682,45 @@ pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
 	if (!vdev_priv)
 		pkt_capture_err("vdev_priv is NULL");
 	else
-		mode = vdev_priv->cb_ctx->pkt_capture_mode;
+		mode = vdev_priv->cfg_params.pkt_capture_mode;
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
 	return mode;
+}
+
+void pkt_capture_set_pktcap_config(struct wlan_objmgr_vdev *vdev,
+				   enum pkt_capture_config config)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (vdev_priv)
+		vdev_priv->cfg_params.pkt_capture_config = config;
+	else
+		pkt_capture_err("vdev_priv is NULL");
+}
+
+enum pkt_capture_config
+pkt_capture_get_pktcap_config(struct wlan_objmgr_vdev *vdev)
+{
+	enum pkt_capture_config config = 0;
+	struct pkt_capture_vdev_priv *vdev_priv;
+
+	if (!vdev)
+		return 0;
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv)
+		pkt_capture_err("vdev_priv is NULL");
+	else
+		config = vdev_priv->cfg_params.pkt_capture_config;
+
+	return config;
 }
 
 /**
@@ -988,6 +1023,8 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	enum pkt_capture_mode mode = PACKET_CAPTURE_MODE_DISABLE;
 	ol_txrx_soc_handle soc;
 	QDF_STATUS status;
+	enum pkt_capture_config config = 0;
+	bool check_enable_beacon = 0;
 
 	if (!vdev) {
 		pkt_capture_err("vdev is NULL");
@@ -1047,9 +1084,34 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 		vdev_priv->frame_filter.connected_beacon_interval =
 			frame_filter.connected_beacon_interval;
 
-	if (vdev_priv->frame_filter.mgmt_tx_frame_filter ||
-	    vdev_priv->frame_filter.mgmt_rx_frame_filter)
+	if (vdev_priv->frame_filter.mgmt_tx_frame_filter)
 		mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
+
+	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
+	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL) {
+		mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
+		config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
+		config |= PACKET_CAPTURE_CONFIG_OFF_CHANNEL_BEACON_ENABLE;
+	} else {
+		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
+		    PKT_CAPTURE_MGMT_CONNECT_NO_BEACON) {
+			mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
+			config |= PACKET_CAPTURE_CONFIG_NO_BEACON_ENABLE;
+		} else {
+			check_enable_beacon = 1;
+		}
+	}
+
+	if (check_enable_beacon) {
+		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
+		    PKT_CAPTURE_MGMT_CONNECT_BEACON)
+			config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
+
+		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
+		    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON)
+			config |=
+				PACKET_CAPTURE_CONFIG_OFF_CHANNEL_BEACON_ENABLE;
+	}
 
 	if (vdev_priv->frame_filter.data_tx_frame_filter ||
 	    vdev_priv->frame_filter.data_rx_frame_filter)
@@ -1064,6 +1126,22 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 
 		if (mode & PACKET_CAPTURE_MODE_DATA_ONLY)
 			cdp_set_pkt_capture_mode(soc, true);
+	}
+
+	if (vdev_priv->frame_filter.ctrl_tx_frame_filter ||
+	    vdev_priv->frame_filter.ctrl_rx_frame_filter)
+		config |= PACKET_CAPTURE_CONFIG_TRIGGER_ENABLE;
+
+	if (vdev_priv->frame_filter.data_rx_frame_filter &
+	    PKT_CAPTURE_DATA_FRAME_QOS_NULL)
+		config |= PACKET_CAPTURE_CONFIG_QOS_ENABLE;
+
+	if (config != pkt_capture_get_pktcap_config(vdev)) {
+		status = tgt_pkt_capture_send_config(vdev, config);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pkt_capture_err("packet capture send config failed");
+			return status;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
