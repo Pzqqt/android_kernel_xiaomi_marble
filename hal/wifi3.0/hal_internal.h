@@ -511,6 +511,9 @@ struct hal_srng {
 	/* Virtual base address of the ring */
 	uint32_t *ring_base_vaddr;
 
+	/* virtual address end */
+	uint32_t *ring_vaddr_end;
+
 	/* Number of entries in ring */
 	uint32_t num_entries;
 

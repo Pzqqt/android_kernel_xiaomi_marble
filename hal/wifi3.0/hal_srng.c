@@ -1509,6 +1509,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	srng->num_entries = ring_params->num_entries;
 	srng->ring_size = srng->num_entries * srng->entry_size;
 	srng->ring_size_mask = srng->ring_size - 1;
+	srng->ring_vaddr_end = srng->ring_base_vaddr + srng->ring_size;
 	srng->msi_addr = ring_params->msi_addr;
 	srng->msi_data = ring_params->msi_data;
 	srng->intr_timer_thres_us = ring_params->intr_timer_thres_us;
