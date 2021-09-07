@@ -209,7 +209,7 @@ uint32_t dp_rx_process_li(struct dp_intr *int_ctx,
 	bool near_full;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT];
 	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT];
-	uint32_t num_pending;
+	uint32_t num_pending = 0;
 	uint32_t rx_bufs_used = 0, rx_buf_cookie;
 	uint16_t msdu_len = 0;
 	uint16_t peer_id;
@@ -228,7 +228,6 @@ uint32_t dp_rx_process_li(struct dp_intr *int_ctx,
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 	struct dp_soc *soc = int_ctx->soc;
-	uint8_t core_id = 0;
 	struct cdp_tid_rx_stats *tid_stats;
 	qdf_nbuf_t nbuf_head;
 	qdf_nbuf_t nbuf_tail;
@@ -239,7 +238,6 @@ uint32_t dp_rx_process_li(struct dp_intr *int_ctx,
 	struct hif_opaque_softc *scn;
 	int32_t tid = 0;
 	bool is_prev_msdu_last = true;
-	uint32_t num_entries_avail = 0;
 	uint32_t rx_ol_pkt_cnt = 0;
 	uint32_t num_entries = 0;
 	struct hal_rx_msdu_metadata msdu_metadata;
@@ -290,14 +288,21 @@ more_data:
 		goto done;
 	}
 
+	if (!num_pending)
+		num_pending = hal_srng_dst_num_valid(hal_soc, hal_ring_hdl, 0);
+
+	dp_srng_dst_inv_cached_descs(soc, hal_ring_hdl, num_pending);
+
+	if (num_pending > quota)
+		num_pending = quota;
+
 	/*
 	 * start reaping the buffers from reo ring and queue
 	 * them in per vdev queue.
 	 * Process the received pkts in a different per vdev loop.
 	 */
-	while (qdf_likely(quota &&
-			  (ring_desc = hal_srng_dst_peek(hal_soc,
-							 hal_ring_hdl)))) {
+	while (qdf_likely(num_pending)) {
+		ring_desc = dp_srng_dst_get_next(soc, hal_ring_hdl);
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
 		if (qdf_unlikely(error == HAL_REO_ERROR_DETECTED)) {
 			dp_rx_err("%pK: HAL RING 0x%pK:error %d",
@@ -344,7 +349,6 @@ more_data:
 							&tail[rx_desc->pool_id],
 							rx_desc);
 			}
-			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 			continue;
 		}
 
@@ -363,7 +367,6 @@ more_data:
 						   ring_desc, rx_desc);
 			/* ignore duplicate RX desc and continue to process */
 			/* Pop out the descriptor */
-			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 			continue;
 		}
 
@@ -374,7 +377,6 @@ more_data:
 			dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
 						   ring_desc, rx_desc);
 			rx_desc->in_err_state = 1;
-			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 			continue;
 		}
 
@@ -397,11 +399,6 @@ more_data:
 			 * the new MPDU
 			 */
 			if (is_prev_msdu_last) {
-				/* Get number of entries available in HW ring */
-				num_entries_avail =
-				hal_srng_dst_num_valid(hal_soc,
-						       hal_ring_hdl, 1);
-
 				/* For new MPDU check if we can read complete
 				 * MPDU by comparing the number of buffers
 				 * available and number of buffers needed to
@@ -410,20 +407,25 @@ more_data:
 				if ((msdu_desc_info.msdu_len /
 				     (RX_DATA_BUFFER_SIZE -
 				      soc->rx_pkt_tlv_size) + 1) >
-				    num_entries_avail) {
+				    num_pending) {
 					DP_STATS_INC(soc,
 						     rx.msdu_scatter_wait_break,
 						     1);
 					dp_rx_cookie_reset_invalid_bit(
 								     ring_desc);
+					/* As we are going to break out of the
+					 * loop because of unavailability of
+					 * descs to form complete SG, we need to
+					 * reset the TP in the REO destination
+					 * ring.
+					 */
+					hal_srng_dst_dec_tp(hal_soc,
+							    hal_ring_hdl);
 					break;
 				}
 				is_prev_msdu_last = false;
 			}
 		}
-
-		core_id = smp_processor_id();
-		DP_STATS_INC(soc, rx.ring_packets[core_id][reo_ring_num], 1);
 
 		if (mpdu_desc_info.mpdu_flags & HAL_MPDU_F_RETRY_BIT)
 			qdf_nbuf_set_rx_retry_flag(rx_desc->nbuf, 1);
@@ -435,9 +437,6 @@ more_data:
 		if (!is_prev_msdu_last &&
 		    msdu_desc_info.msdu_flags & HAL_MSDU_F_LAST_MSDU_IN_MPDU)
 			is_prev_msdu_last = true;
-
-		/* Pop out the descriptor*/
-		hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 
 		rx_bufs_reaped[rx_desc->pool_id]++;
 		peer_mdata = mpdu_desc_info.peer_meta_data;
@@ -509,8 +508,10 @@ more_data:
 		 * across multiple buffers, let us not decrement quota
 		 * till we reap all buffers of that MSDU.
 		 */
-		if (qdf_likely(!qdf_nbuf_is_rx_chfrag_cont(rx_desc->nbuf)))
+		if (qdf_likely(!qdf_nbuf_is_rx_chfrag_cont(rx_desc->nbuf))) {
 			quota -= 1;
+			num_pending -= 1;
+		}
 
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
 					    &tail[rx_desc->pool_id], rx_desc);
@@ -526,6 +527,10 @@ more_data:
 	}
 done:
 	dp_rx_srng_access_end(int_ctx, soc, hal_ring_hdl);
+
+	DP_STATS_INCC(soc,
+		      rx.ring_packets[qdf_get_smp_processor_id()][reo_ring_num],
+		      num_rx_bufs_reaped, num_rx_bufs_reaped);
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		/*

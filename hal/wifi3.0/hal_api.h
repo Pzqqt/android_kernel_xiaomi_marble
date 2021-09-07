@@ -1489,6 +1489,25 @@ void *hal_srng_dst_get_next_cached(void *hal_soc,
 	return (void *)desc;
 }
 
+/**
+ * hal_srng_dst_dec_tp - decrement the TP of the Dst ring by one entry
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Destination ring pointer
+ *
+ * reset the tail pointer in the destination ring by one entry
+ *
+ */
+static inline
+void hal_srng_dst_dec_tp(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+
+	if (qdf_unlikely(!srng->u.dst_ring.tp))
+		srng->u.dst_ring.tp = (srng->ring_size - srng->entry_size);
+	else
+		srng->u.dst_ring.tp -= srng->entry_size;
+}
+
 static inline int hal_srng_lock(hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
@@ -1642,10 +1661,9 @@ uint32_t hal_srng_dst_num_valid(void *hal_soc,
  * hal_srng_dst_inv_cached_descs - API to invalidate descriptors in batch mode
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring_hdl: Destination ring pointer
- * @entry_count: Number of descriptors to be invalidated
+ * @entry_count: call invalidate API if valid entries available
  *
- * Invalidates a set of cached descriptors starting from tail to
- * provided count worth
+ * Invalidates a set of cached descriptors starting from TP to cached_HP
  *
  * Return - None
  */
@@ -1654,9 +1672,8 @@ static inline void hal_srng_dst_inv_cached_descs(void *hal_soc,
 						 uint32_t entry_count)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
-	uint32_t hp = srng->u.dst_ring.cached_hp;
-	uint32_t tp = srng->u.dst_ring.tp;
-	uint32_t sync_p = 0;
+	uint32_t *first_desc;
+	uint32_t *last_desc;
 
 	/*
 	 * If SRNG does not have cached descriptors this
@@ -1665,38 +1682,23 @@ static inline void hal_srng_dst_inv_cached_descs(void *hal_soc,
 	if (!(srng->flags & HAL_SRNG_CACHED_DESC))
 		return;
 
-	if (qdf_unlikely(entry_count == 0))
+	if (!entry_count)
 		return;
 
-	sync_p = (entry_count - 1) * srng->entry_size;
+	first_desc = &srng->ring_base_vaddr[srng->u.dst_ring.tp];
+	last_desc = &srng->ring_base_vaddr[srng->u.dst_ring.cached_hp];
 
-	if (hp > tp) {
-		qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[tp],
-				       &srng->ring_base_vaddr[tp + sync_p]
-				       + (srng->entry_size * sizeof(uint32_t)));
-	} else {
-		/*
-		 * We have wrapped around
-		 */
-		uint32_t wrap_cnt = ((srng->ring_size - tp) / srng->entry_size);
+	if (last_desc > (uint32_t *)first_desc)
+		/* invalidate from tp to cached_hp */
+		qdf_nbuf_dma_inv_range((void *)first_desc, (void *)(last_desc));
+	else {
+		/* invalidate from tp to end of the ring */
+		qdf_nbuf_dma_inv_range((void *)first_desc,
+				       (void *)srng->ring_vaddr_end);
 
-		if (entry_count <= wrap_cnt) {
-			qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[tp],
-					       &srng->ring_base_vaddr[tp + sync_p] +
-					       (srng->entry_size * sizeof(uint32_t)));
-			return;
-		}
-
-		entry_count -= wrap_cnt;
-		sync_p = (entry_count - 1) * srng->entry_size;
-
-		qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[tp],
-				       &srng->ring_base_vaddr[srng->ring_size - srng->entry_size] +
-				       (srng->entry_size * sizeof(uint32_t)));
-
-		qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[0],
-				       &srng->ring_base_vaddr[sync_p]
-				       + (srng->entry_size * sizeof(uint32_t)));
+		/* invalidate from start of ring to cached_hp */
+		qdf_nbuf_dma_inv_range((void *)srng->ring_base_vaddr,
+				       (void *)last_desc);
 	}
 }
 
