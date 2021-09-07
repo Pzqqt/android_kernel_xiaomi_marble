@@ -257,6 +257,9 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 	if (bl_temp > panel->bl_config.bl_max_level)
 		bl_temp = panel->bl_config.bl_max_level;
 
+        if (bl_temp && (bl_temp < panel->bl_config.bl_min_level))
+                bl_temp = panel->bl_config.bl_min_level;
+
 	pr_debug("bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n",
 		bl_scale, bl_scale_sv, (u32)bl_temp);
 
