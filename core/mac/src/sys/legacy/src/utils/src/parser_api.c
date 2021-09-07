@@ -7549,7 +7549,6 @@ QDF_STATUS populate_dot11f_bcn_mlo_ie(struct mac_context *mac_ctx,
 
 	lim_get_mlo_vdev_list(session, &vdev_count, wlan_vdev_list);
 	for (link = 0; link < vdev_count; link++) {
-		pe_err("on link %d", link);
 		if (!wlan_vdev_list[link])
 			continue;
 		if (wlan_vdev_list[link] == session->vdev) {
@@ -7599,7 +7598,6 @@ QDF_STATUS populate_dot11f_bcn_mlo_ie(struct mac_context *mac_ctx,
 				     sizeof(tSirMacAddr));
 			num_sta_pro++;
 		}
-		pe_err("copied data for link %d", link);
 		lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
 	}
 	mlo_ie->num_sta_profile = num_sta_pro;
@@ -8774,9 +8772,8 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 			       QDF_MAC_ADDR_REF(link_info->link_addr.bytes));
 			continue;
 		}
-		//chan_freq = wlan_reg_chan_opclass_to_freq(chan, op_class,
-		//					  false);
-		chan_freq = wlan_reg_legacy_chan_to_freq(mac_ctx->pdev, chan);
+		chan_freq = wlan_reg_chan_opclass_to_freq(chan, op_class,
+							  true);
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 			wlan_populate_basic_rates(&b_rates, false, true);
 			wlan_populate_basic_rates(&e_rates, true, false);
