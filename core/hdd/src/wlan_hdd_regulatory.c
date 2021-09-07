@@ -940,6 +940,12 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 	bool update_already_in_progress =
 		hdd_ctx->is_regulatory_update_in_progress;
 
+	if (cds_is_driver_unloading() || cds_is_driver_recovering() ||
+	    cds_is_driver_in_bad_state()) {
+		hdd_err("unloading or ssr in progress, ignore");
+		return;
+	}
+
 	hdd_debug("country: %c%c, initiator %d, dfs_region: %d",
 		  request->alpha2[0],
 		  request->alpha2[1],
