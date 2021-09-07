@@ -2851,20 +2851,27 @@ static int dp_display_validate_topology(struct dp_display_private *dp,
 			return rc;
 		}
 
-		/* Only DSCMERGE is supported on DP */
-		num_lm  = max(num_lm, num_dsc);
 		num_dsc = max(num_lm, num_dsc);
-	} else {
-		num_3dmux = avail_res->num_3dmux;
+		if ((num_dsc > avail_res->num_lm) ||  (num_dsc > avail_res->num_dsc)) {
+			DP_DEBUG("mode %sx%d: not enough resources for dsc %d dsc_a:%d lm_a:%d\n",
+					mode->name, fps, num_dsc, avail_res->num_dsc,
+					avail_res->num_lm);
+			/* Clear DSC caps and retry */
+			dp_mode->capabilities &= ~DP_PANEL_CAPS_DSC;
+			return -EAGAIN;
+		} else {
+			/* Only DSCMERGE is supported on DP */
+			num_lm = num_dsc;
+		}
+	}
+
+	if (!num_dsc && (num_lm == 2) && avail_res->num_3dmux) {
+		num_3dmux = 1;
 	}
 
 	if (num_lm > avail_res->num_lm) {
 		DP_DEBUG("mode %sx%d is invalid, not enough lm %d %d\n",
 				mode->name, fps, num_lm, num_lm, avail_res->num_lm);
-		return -EPERM;
-	} else if (num_dsc > avail_res->num_dsc) {
-		DP_DEBUG("mode %sx%d is invalid, not enough dsc %d %d\n",
-				mode->name, fps, num_dsc, avail_res->num_dsc);
 		return -EPERM;
 	} else if (!num_dsc && (num_lm == dual && !num_3dmux)) {
 		DP_DEBUG("mode %sx%d is invalid, not enough 3dmux %d %d\n",
@@ -2916,16 +2923,20 @@ static enum drm_mode_status dp_display_validate_mode(
 
 	dp_display->convert_to_dp_mode(dp_display, panel, mode, &dp_mode);
 
+	rc = dp_display_validate_topology(dp, dp_panel, mode, &dp_mode, avail_res);
+	if (rc == -EAGAIN) {
+		dp_panel->convert_to_dp_mode(dp_panel, mode, &dp_mode);
+		rc = dp_display_validate_topology(dp, dp_panel, mode, &dp_mode, avail_res);
+	}
+
+	if (rc)
+		goto end;
+
 	rc = dp_display_validate_link_clock(dp, mode, dp_mode);
 	if (rc)
 		goto end;
 
 	rc = dp_display_validate_pixel_clock(dp_mode, dp_display->max_pclk_khz);
-	if (rc)
-		goto end;
-
-	rc = dp_display_validate_topology(dp, dp_panel, mode,
-			&dp_mode, avail_res);
 	if (rc)
 		goto end;
 
