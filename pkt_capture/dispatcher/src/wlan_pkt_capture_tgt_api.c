@@ -126,10 +126,9 @@ tgt_pkt_capture_send_mode(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 QDF_STATUS
 tgt_pkt_capture_send_config(struct wlan_objmgr_vdev *vdev,
-			    enum pkt_capture_trigger_qos_config config)
+			    enum pkt_capture_config config)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct pkt_capture_vdev_priv *vdev_priv;
@@ -161,6 +160,7 @@ tgt_pkt_capture_send_config(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 QDF_STATUS
 tgt_pkt_capture_smu_event(struct wlan_objmgr_psoc *psoc,
 			  struct smu_event_params *param)

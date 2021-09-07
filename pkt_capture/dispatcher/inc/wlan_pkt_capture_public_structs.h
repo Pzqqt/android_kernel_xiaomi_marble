@@ -38,19 +38,22 @@ enum pkt_capture_mode {
 };
 
 /**
- * enum pkt_capture_trigger_qos_config - packet capture config
- * @PACKET_CAPTURE_CONFIG_TRIGGER_QOS_DISABLE: disable capture for trigger and
- *                                             qos frames
+ * enum pkt_capture_config - packet capture config
  * @PACKET_CAPTURE_CONFIG_TRIGGER_ENABLE: enable capture for trigger frames only
  * @PACKET_CAPTURE_CONFIG_QOS_ENABLE: enable capture for qos frames only
- * @PACKET_CAPTURE_CONFIG_TRIGGER_QOS_ENABLE: enable capture for both trigger
- *                                            and qos frames
+ * @PACKET_CAPTURE_CONFIG_CONNECT_NO_BEACON_ENABLE: drop all beacons, when
+ *                                                  device in connected state
+ * @PACKET_CAPTURE_CONFIG_CONNECT_BEACON_ENABLE: enable only connected BSSID
+ *                                      beacons, when device in connected state
+ * @PACKET_CAPTURE_CONFIG_CONNECT_OFF_CHANNEL_BEACON_ENABLE: enable off channel
+ *                                      beacons, when device in connected state
  */
-enum pkt_capture_trigger_qos_config {
-	PACKET_CAPTURE_CONFIG_TRIGGER_QOS_DISABLE = 0,
-	PACKET_CAPTURE_CONFIG_TRIGGER_ENABLE,
-	PACKET_CAPTURE_CONFIG_QOS_ENABLE,
-	PACKET_CAPTURE_CONFIG_TRIGGER_QOS_ENABLE,
+enum pkt_capture_config {
+	PACKET_CAPTURE_CONFIG_TRIGGER_ENABLE = BIT(0),
+	PACKET_CAPTURE_CONFIG_QOS_ENABLE = BIT(1),
+	PACKET_CAPTURE_CONFIG_NO_BEACON_ENABLE = BIT(2),
+	PACKET_CAPTURE_CONFIG_BEACON_ENABLE = BIT(3),
+	PACKET_CAPTURE_CONFIG_OFF_CHANNEL_BEACON_ENABLE = BIT(4),
 };
 
 /**
@@ -106,7 +109,7 @@ struct wlan_pkt_capture_tx_ops {
 	QDF_STATUS (*pkt_capture_send_config)
 				(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id,
-				 enum pkt_capture_trigger_qos_config config);
+				 enum pkt_capture_config config);
 };
 
 /**

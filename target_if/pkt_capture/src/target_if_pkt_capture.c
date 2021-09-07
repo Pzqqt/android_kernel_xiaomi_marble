@@ -79,14 +79,22 @@ static QDF_STATUS
 target_if_set_packet_capture_config
 			(struct wlan_objmgr_psoc *psoc,
 			 uint8_t vdev_id,
-			 enum pkt_capture_trigger_qos_config config_value)
+			 enum pkt_capture_config config_value)
 {
 	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wlan_objmgr_vdev *vdev;
 	struct vdev_set_params param;
 
 	if (!wmi_handle) {
 		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_PKT_CAPTURE_ID);
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -98,9 +106,12 @@ target_if_set_packet_capture_config
 	param.param_value = (uint32_t)config_value;
 
 	status = wmi_unified_vdev_set_param_send(wmi_handle, &param);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_SUCCESS(status))
+		ucfg_pkt_capture_set_pktcap_config(vdev, config_value);
+	else
 		pkt_capture_err("failed to set packet capture config");
 
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
 	return status;
 }
 #else
@@ -108,7 +119,7 @@ static QDF_STATUS
 target_if_set_packet_capture_config
 			(struct wlan_objmgr_psoc *psoc,
 			 uint8_t vdev_id,
-			 enum pkt_capture_trigger_qos_config config_value)
+			 enum pkt_capture_config config_value)
 {
 	return QDF_STATUS_SUCCESS;
 }
