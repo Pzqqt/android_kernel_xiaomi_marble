@@ -2603,6 +2603,7 @@ struct wlan_mlme_sae_single_pmk {
 	struct mlme_pmk_info pmk_info;
 };
 
+#define ROAM_FRAME_INFO_FRAME_TYPE_EXT 3
 /**
  * struct mlme_roam_debug_info - Roam debug information storage structure.
  * @trigger:            Roam trigger related data
@@ -2612,6 +2613,8 @@ struct wlan_mlme_sae_single_pmk {
  * @btm_rsp:            BTM response information
  * @roam_init_info:     Roam initial info
  * @roam_msg_info:      roam related message information
+ * @frame_info:         Information related to mgmt/eapol frames exchanged
+ *                      during roaming.
  */
 struct mlme_roam_debug_info {
 	struct wmi_roam_trigger_info trigger;
@@ -2621,6 +2624,7 @@ struct mlme_roam_debug_info {
 	struct roam_btm_response_data btm_rsp;
 	struct roam_initial_data roam_init_info;
 	struct roam_msg_info roam_msg_info;
+	struct roam_frame_info frame_info[WLAN_ROAM_MAX_FRAME_INFO];
 };
 
 /**

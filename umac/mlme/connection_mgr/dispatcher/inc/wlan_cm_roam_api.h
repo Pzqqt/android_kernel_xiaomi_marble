@@ -763,6 +763,21 @@ uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
 				     uint8_t vdev_id);
 
 /**
+ * wlan_cm_roam_extract_frame_info  - Extract the roam frame info TLV
+ * @wmi: wmi handle
+ * @evt_buf: Pointer to the event buffer
+ * @dst: Destination buffer
+ * @idx: TLV index
+ * @num_frames: Number of frame info TLVs
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_extract_frame_info(wmi_unified_t wmi, void *evt_buf,
+				struct roam_frame_info *dst, uint8_t idx,
+				uint8_t num_frames);
+
+/**
  * wlan_cm_roam_activate_pcl_per_vdev() - Set the PCL command to be sent per
  * vdev instead of pdev.
  * @psoc: PSOC pointer
@@ -1101,6 +1116,13 @@ static inline QDF_STATUS
 wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
 				  struct roam_btm_response_data *dst,
 				  uint8_t idx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+wlan_cm_roam_extract_frame_info(wmi_unified_t wmi, void *evt_buf,
+				struct roam_frame_info *dst, uint8_t idx)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

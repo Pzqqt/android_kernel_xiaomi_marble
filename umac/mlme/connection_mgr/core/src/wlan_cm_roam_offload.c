@@ -41,6 +41,7 @@
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include "wlan_reg_ucfg_api.h"
+#include "wlan_connectivity_logging.h"
 
 #ifdef WLAN_FEATURE_SAE
 #define CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) \
@@ -4927,4 +4928,218 @@ bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc)
 
 	return val;
 }
+
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+static enum wlan_main_tag
+cm_roam_get_tag(enum mgmt_subtype subtype, bool is_tx)
+{
+	switch (subtype) {
+	case MGMT_SUBTYPE_ASSOC_REQ:
+		return WLAN_ASSOC_REQ;
+	case MGMT_SUBTYPE_ASSOC_RESP:
+		return WLAN_ASSOC_RSP;
+	case MGMT_SUBTYPE_REASSOC_REQ:
+		return WLAN_ASSOC_REQ;
+	case MGMT_SUBTYPE_REASSOC_RESP:
+		return WLAN_ASSOC_RSP;
+	case MGMT_SUBTYPE_DISASSOC:
+		if (is_tx)
+			return WLAN_DISASSOC_TX;
+		else
+			return WLAN_DISASSOC_RX;
+		break;
+	case MGMT_SUBTYPE_AUTH:
+		if (is_tx)
+			return WLAN_AUTH_REQ;
+		else
+			return WLAN_AUTH_RESP;
+		break;
+	case MGMT_SUBTYPE_DEAUTH:
+		if (is_tx)
+			return WLAN_DEAUTH_TX;
+		else
+			return WLAN_DEAUTH_RX;
+	default:
+		break;
+	}
+
+	return WLAN_TAG_MAX;
+}
+
+static enum wlan_main_tag
+cm_roam_get_eapol_tag(enum wlan_roam_frame_subtype subtype)
+{
+	switch (subtype) {
+	case ROAM_FRAME_SUBTYPE_M1:
+		return WLAN_EAPOL_M1;
+	case ROAM_FRAME_SUBTYPE_M2:
+		return WLAN_EAPOL_M2;
+	case ROAM_FRAME_SUBTYPE_M3:
+		return WLAN_EAPOL_M3;
+	case ROAM_FRAME_SUBTYPE_M4:
+		return WLAN_EAPOL_M4;
+	case ROAM_FRAME_SUBTYPE_GTK_M1:
+		return WLAN_GTK_M1;
+	case ROAM_FRAME_SUBTYPE_GTK_M2:
+		return WLAN_GTK_M2;
+	default:
+		break;
+	}
+
+	return WLAN_TAG_MAX;
+}
+
+QDF_STATUS
+cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
+			uint8_t vdev_id)
+{
+	struct wlan_log_record *log_record = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return QDF_STATUS_E_NOMEM;
+
+	log_record->log_subtype = WLAN_BTM_QUERY;
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
+	log_record->vdev_id = vdev_id;
+
+	status = wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+
+	return status;
+}
+
+QDF_STATUS
+cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+		       uint8_t vdev_id, bool is_wtc)
+{
+	struct wlan_log_record *log_record = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return QDF_STATUS_E_NOMEM;
+
+	if (is_wtc)
+		log_record->log_subtype = WLAN_ROAM_WTC;
+	else
+		log_record->log_subtype = WLAN_BTM_RESP;
+
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
+	log_record->vdev_id = vdev_id;
+
+	log_record->btm_info.token = btm_data->btm_resp_dialog_token;
+	log_record->btm_info.btm_status_code = btm_data->btm_status;
+	log_record->btm_info.btm_delay = btm_data->btm_delay;
+	log_record->btm_info.target_bssid = btm_data->target_bssid;
+	if (is_wtc) {
+		log_record->btm_info.reason = btm_data->vsie_reason;
+		log_record->btm_info.wtc_duration = btm_data->btm_delay;
+	}
+
+	status = wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+
+	return status;
+}
+
+/**
+ * cm_roam_btm_candidate_event()  - Send BTM roam candidate logging event
+ * @btm_data: BTM data
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+cm_roam_btm_candidate_event(struct wmi_btm_req_candidate_info *btm_data,
+			    uint8_t vdev_id)
+{
+	struct wlan_log_record *log_record = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return QDF_STATUS_E_NOMEM;
+
+	log_record->log_subtype = WLAN_BTM_REQ_CANDI;
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
+	log_record->vdev_id = vdev_id;
+	log_record->btm_cand.preference = btm_data->preference;
+	log_record->btm_cand.bssid = btm_data->candidate_bssid;
+
+	status = wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+
+	return status;
+}
+
+QDF_STATUS
+cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
+		      uint8_t vdev_id)
+{
+	struct wlan_log_record *log_record = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t i;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return QDF_STATUS_E_NOMEM;
+
+	log_record->log_subtype = WLAN_BTM_REQ;
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
+	log_record->vdev_id = vdev_id;
+
+	log_record->btm_info.token = btm_data->token;
+	log_record->btm_info.mode = btm_data->btm_request_mode;
+	log_record->btm_info.disassoc_timer = btm_data->disassoc_timer;
+	log_record->btm_info.validity_timer = btm_data->validity_interval;
+	log_record->btm_info.candidate_list_count =
+				btm_data->candidate_list_count;
+
+	status = wlan_connectivity_log_enqueue(log_record);
+	for (i = 0; i < log_record->btm_info.candidate_list_count; i++)
+		cm_roam_btm_candidate_event(&btm_data->btm_cand[i], vdev_id);
+
+	qdf_mem_free(log_record);
+
+	return status;
+}
+
+QDF_STATUS
+cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id)
+{
+	struct wlan_log_record *log_record = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return QDF_STATUS_E_NOMEM;
+
+	log_record->timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_record->fw_timestamp_us = frame_data->timestamp * 1000;
+	log_record->vdev_id = vdev_id;
+
+	log_record->pkt_info.seq_num = frame_data->seq_num;
+	log_record->pkt_info.rssi = frame_data->rssi;
+	log_record->pkt_info.tx_status = frame_data->tx_status;
+	log_record->pkt_info.frame_status_code = frame_data->status_code;
+
+	if (frame_data->type == ROAM_FRAME_INFO_FRAME_TYPE_EXT)
+		log_record->log_subtype =
+			cm_roam_get_eapol_tag(frame_data->subtype);
+	else
+		log_record->log_subtype = cm_roam_get_tag(frame_data->subtype,
+							  frame_data->is_req);
+
+	status = wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+
+	return status;
+}
+#endif /* WLAN_FEATURE_CONNECTIVITY_LOGGING */
 #endif  /* WLAN_FEATURE_ROAM_OFFLOAD */

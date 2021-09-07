@@ -169,6 +169,60 @@
 #define CM_CFG_VALID_CHANNEL_LIST_LEN 100
 
 /**
+ * enum roam_trigger_sub_reason - Roam trigger sub reasons
+ * @ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER: Roam scan triggered due to
+ * periodic timer expiry
+ * @ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER: Roam scan triggered due to
+ * inactivity detection and connected AP RSSI falls below a certain threshold
+ * @ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER: Roam scan triggered due to BTM
+ * Disassoc Imminent timeout
+ * @ROAM_TRIGGER_SUB_REASON_FULL_SCAN: Roam scan triggered due to partial scan
+ * failure
+ * @ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC: Roam scan triggered due to Low
+ * rssi periodic timer
+ * @ROAM_TRIGGER_SUB_REASON_CU_PERIODIC: Roam scan triggered due to CU periodic
+ * timer
+ * @ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY: Roam scan
+ * triggered due to periodic timer after device inactivity after low rssi
+ * trigger
+ * @ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU: Roam scan
+ * triggered due to first periodic timer exiry when full scan count is not 0
+ * and roam scan trigger is CU load
+ * @ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU: Roam scan triggered due to
+ * first periodic timer exiry when full scan count is 0 and roam scan trigger
+ * is CU load
+ */
+enum roam_trigger_sub_reason {
+	ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER = 1,
+	ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_LOW_RSSI,
+	ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER,
+	ROAM_TRIGGER_SUB_REASON_FULL_SCAN,
+	ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC,
+	ROAM_TRIGGER_SUB_REASON_CU_PERIODIC,
+	ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY,
+	ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU,
+	ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU,
+};
+
+/**
+ * enum wlan_roam_frame_subtype - Roam frame subtypes
+ * @ROAM_FRAME_SUBTYPE_M1: EAPOL M1 Frame
+ * @ROAM_FRAME_SUBTYPE_M2: EAPOL M2 Frame
+ * @ROAM_FRAME_SUBTYPE_M3: EAPOL M3 Frame
+ * @ROAM_FRAME_SUBTYPE_M4: EAPOL M4 Frame
+ * @ROAM_FRAME_SUBTYPE_GTK_M1: GTK M1 Frame
+ * @ROAM_FRAME_SUBTYPE_GTK_M2: GTK M2 Frame
+ */
+enum wlan_roam_frame_subtype {
+	ROAM_FRAME_SUBTYPE_M1 = 1,
+	ROAM_FRAME_SUBTYPE_M2,
+	ROAM_FRAME_SUBTYPE_M3,
+	ROAM_FRAME_SUBTYPE_M4,
+	ROAM_FRAME_SUBTYPE_GTK_M1,
+	ROAM_FRAME_SUBTYPE_GTK_M2,
+};
+
+/**
  * struct cm_roam_neighbor_report_offload_params - neighbor report offload
  *                                                 parameters
  * @offload_11k_enable_bitmask: neighbor report offload bitmask control
@@ -1638,6 +1692,8 @@ enum roam_offload_state {
  *  @target_bssid:  AP MAC address
  *  @vsie_reason:   Vsie_reason value
  *  @timestamp:     This timestamp indicates the time when btm rsp is sent
+ *  @btm_resp_dialog_token: Dialog token
+ *  @btm_delay: BTM bss termination delay
  */
 struct roam_btm_response_data {
 	bool present;
@@ -1645,6 +1701,8 @@ struct roam_btm_response_data {
 	struct qdf_mac_addr target_bssid;
 	uint32_t vsie_reason;
 	uint32_t timestamp;
+	uint16_t btm_resp_dialog_token;
+	uint8_t btm_delay;
 };
 
 /**
@@ -1680,6 +1738,34 @@ struct roam_msg_info {
 	uint32_t msg_id;
 	uint32_t msg_param1;
 	uint32_t msg_param2;
+};
+
+/**
+ * struct roam_frame_info  - Structure to hold the mgmt frame/eapol frame
+ * related info exchanged during roaming.
+ * @present:     Flag to indicate if roam frame info TLV is present
+ * @timestamp:   Fw timestamp at which the frame was Tx/Rx'ed
+ * @type:        Frame Type
+ * @subtype:     Frame subtype
+ * @is_req:      Frame is request frame or response frame
+ * @seq_num:     Frame sequence number from the 802.11 header
+ * @status_code: Status code from 802.11 spec, section 9.4.1.9
+ * @tx_status: Frame TX status defined by enum qdf_dp_tx_rx_status
+ * applicable only for tx frames
+ * @rssi: Frame rssi
+ * @retry_count: Frame retry count
+ */
+struct roam_frame_info {
+	bool present;
+	uint32_t timestamp;
+	uint8_t type;
+	uint8_t subtype;
+	uint8_t is_req;
+	enum qdf_dp_tx_rx_status tx_status;
+	uint16_t seq_num;
+	uint16_t status_code;
+	int32_t rssi;
+	uint16_t retry_count;
 };
 
 /**
