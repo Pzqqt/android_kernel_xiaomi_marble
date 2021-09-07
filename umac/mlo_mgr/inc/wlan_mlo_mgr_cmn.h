@@ -209,6 +209,16 @@ void mlo_mlme_peer_delete(struct wlan_objmgr_peer *peer);
 void mlo_mlme_peer_assoc_resp(struct wlan_objmgr_peer *peer);
 
 /**
+ * mlo_mlme_get_link_assoc_req() - API to get link assoc req buffer
+ * @peer: Object manager peer
+ * @link_ix: link id of vdev
+ *
+ * Return: assoc req buffer
+ */
+qdf_nbuf_t mlo_mlme_get_link_assoc_req(struct wlan_objmgr_peer *peer,
+				       uint8_t link_ix);
+
+/**
  * mlo_get_link_vdev_ix() - Get index of link VDEV in MLD
  * @ml_dev: ML device context
  * @vdev: VDEV object

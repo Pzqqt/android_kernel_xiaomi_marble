@@ -643,3 +643,21 @@ QDF_STATUS wlan_mlo_link_peer_delete(struct wlan_objmgr_peer *peer)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+qdf_export_symbol(wlan_mlo_link_peer_delete);
+
+qdf_nbuf_t mlo_peer_get_link_peer_assoc_req_buf(
+			struct wlan_mlo_peer_context *ml_peer,
+			uint8_t link_ix)
+{
+	struct wlan_objmgr_peer *peer = NULL;
+	qdf_nbuf_t assocbuf = NULL;
+
+	peer = wlan_mlo_peer_get_assoc_peer(ml_peer);
+	if (!peer)
+		return NULL;
+
+	assocbuf = mlo_mlme_get_link_assoc_req(peer, link_ix);
+
+	return assocbuf;
+}

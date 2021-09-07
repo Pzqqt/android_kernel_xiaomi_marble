@@ -258,6 +258,17 @@ QDF_STATUS wlan_mlo_link_peer_attach(struct wlan_mlo_peer_context *ml_peer,
 QDF_STATUS wlan_mlo_link_peer_delete(struct wlan_objmgr_peer *peer);
 
 /**
+ * mlo_peer_get_link_peer_assoc_req_buf() - API to get link assoc req buffer
+ * @peer: Object manager peer
+ * @link_ix: link id of vdev
+ *
+ * Return: assoc req buffer
+ */
+qdf_nbuf_t mlo_peer_get_link_peer_assoc_req_buf(
+			struct wlan_mlo_peer_context *ml_peer,
+			uint8_t link_ix);
+
+/**
  ** APIs to operations on ML peer object
  */
 typedef QDF_STATUS (*wlan_mlo_op_handler)(struct wlan_mlo_dev_context *ml_dev,
