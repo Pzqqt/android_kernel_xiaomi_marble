@@ -369,15 +369,21 @@ const char *v4l2_pixelfmt_name(u32 pixfmt)
 void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)
 {
+	struct dma_buf *dbuf;
+
 	if (!(tag & msm_vidc_debug) || !inst || !vbuf || !tag_str || !str)
 		return;
 
+	dbuf = (struct dma_buf *)vbuf->dmabuf;
+
 	dprintk_inst(tag, tag_str, inst,
-		"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
+		"%s: %s: idx %2d fd %3d off %d daddr %#llx inode %8lu ref %2ld size %8d filled %8d flags %#x ts %8lld attr %#x counts(etb ebd ftb fbd) %4llu %4llu %4llu %4llu\n",
 		str, buf_name(vbuf->type),
 		vbuf->index, vbuf->fd, vbuf->data_offset,
-		vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
-		vbuf->flags, vbuf->timestamp, vbuf->attr);
+		vbuf->device_addr, (dbuf ? file_inode(dbuf->file)->i_ino : -1),
+		(dbuf ? file_count(dbuf->file) : -1), vbuf->buffer_size, vbuf->data_size,
+		vbuf->flags, vbuf->timestamp, vbuf->attr, inst->debug_count.etb,
+		inst->debug_count.ebd, inst->debug_count.ftb, inst->debug_count.fbd);
 }
 
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
@@ -2857,7 +2863,7 @@ static void msm_vidc_print_stats(struct msm_vidc_inst *inst)
 	bitrate_kbps = (inst->stats.data_size * 8 * 1000) / (dt_ms * 1024);
 
 	i_vpr_hp(inst,
-		"stats: counts (etb,ebd,ftb,fbd): %u %u %u %u (total %u %u %u %u), achieved bitrate %lldKbps fps %u/s, frame rate %u, operating rate %u, priority %u, dt %ums\n",
+		"stats: counts (etb,ebd,ftb,fbd): %u %u %u %u (total %llu %llu %llu %llu), achieved bitrate %lldKbps fps %u/s, frame rate %u, operating rate %u, priority %u, dt %ums\n",
 		etb, ebd, ftb, fbd, inst->debug_count.etb, inst->debug_count.ebd,
 		inst->debug_count.ftb, inst->debug_count.fbd,
 		bitrate_kbps, achieved_fps, frame_rate, operating_rate, priority, dt_ms);
