@@ -4806,6 +4806,35 @@ hdd_monitor_mode_qdf_create_event(struct hdd_adapter *adapter,
 }
 #endif
 
+static inline bool hdd_is_mac_addr_same(uint8_t *addr1, uint8_t *addr2)
+{
+	return !qdf_mem_cmp(addr1, addr2, QDF_MAC_ADDR_SIZE);
+}
+
+#ifdef DP_FEATURE_11BE_MLO
+static inline bool hdd_nbuf_dst_addr_is_mld_addr(struct hdd_adapter *adapter,
+						 struct sk_buff *nbuf)
+{
+	return hdd_is_mac_addr_same(adapter->mld_addr.bytes,
+				    qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+#else
+static inline bool hdd_nbuf_dst_addr_is_mld_addr(struct hdd_adapter *adapter,
+						 struct sk_buff *nbuf)
+{
+	return false;
+}
+#endif
+
+static inline bool hdd_nbuf_dst_addr_is_self_addr(struct hdd_adapter *adapter,
+						  struct sk_buff *nbuf)
+{
+	return hdd_is_mac_addr_same(adapter->mac_addr.bytes,
+				    qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
      defined(WLAN_FEATURE_11AX)
 /**

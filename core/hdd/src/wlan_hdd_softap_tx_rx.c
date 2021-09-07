@@ -1178,10 +1178,8 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 			is_eapol = true;
 
 		if (qdf_unlikely(is_eapol &&
-				 qdf_mem_cmp(qdf_nbuf_data(skb) +
-					     QDF_NBUF_DEST_MAC_OFFSET,
-					     adapter->mac_addr.bytes,
-					     QDF_MAC_ADDR_SIZE))) {
+		    !(hdd_nbuf_dst_addr_is_self_addr(adapter, skb) ||
+		    hdd_nbuf_dst_addr_is_mld_addr(adapter, skb)))) {
 			qdf_nbuf_free(skb);
 			continue;
 		}
