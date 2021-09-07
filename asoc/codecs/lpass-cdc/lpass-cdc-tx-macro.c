@@ -145,7 +145,7 @@ struct lpass_cdc_tx_macro_priv {
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
 	int pcm_rate[NUM_DECIMATORS];
-	bool wcd_dmic_enabled;
+	bool swr_dmic_enable;
 };
 
 static bool lpass_cdc_tx_macro_get_data(struct snd_soc_component *component,
@@ -339,8 +339,7 @@ static int lpass_cdc_tx_macro_event_handler(struct snd_soc_component *component,
 
 static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 {
-	u16 adc_mux_reg = 0, adc_reg = 0;
-	u16 adc_n = LPASS_CDC_ADC_MAX;
+	u16 adc_mux_reg = 0;
 	bool ret = false;
 	struct device *tx_dev = NULL;
 	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
@@ -352,11 +351,7 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 			LPASS_CDC_TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
 
 	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
-		adc_reg = LPASS_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
-			LPASS_CDC_TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read(component, adc_reg) &
-				LPASS_CDC_TX_MACRO_SWR_MIC_MUX_SEL_MASK;
-		if (adc_n < LPASS_CDC_ADC_MAX)
+		if (!tx_priv->swr_dmic_enable)
 			return true;
 	}
 
@@ -516,7 +511,7 @@ static int lpass_cdc_tx_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	}
 	if (strnstr(widget->name, "SMIC", strlen(widget->name))) {
 		if (val != 0) {
-			if (!tx_priv->wcd_dmic_enabled) {
+			if (!tx_priv->swr_dmic_enable) {
 				snd_soc_component_update_bits(component,
 							mic_sel_reg,
 							1 << 7, 0x0 << 7);
@@ -713,6 +708,39 @@ static int lpass_cdc_tx_macro_bcs_ch_put(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 
 	tx_priv->bcs_ch = value;
+
+	return 0;
+}
+
+static int lpass_cdc_tx_macro_swr_dmic_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+
+	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+	return -EINVAL;
+
+	ucontrol->value.integer.value[0] = tx_priv->swr_dmic_enable;
+
+	return 0;
+}
+
+static int lpass_cdc_tx_macro_swr_dmic_put(struct snd_kcontrol *kcontrol,
+			    struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+	int value = ucontrol->value.integer.value[0];
+
+	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	tx_priv->swr_dmic_enable = value;
 
 	return 0;
 }
@@ -1810,6 +1838,9 @@ static const struct snd_kcontrol_new lpass_cdc_tx_macro_snd_controls[] = {
 	SOC_SINGLE_EXT("DEC0_BCS Switch", SND_SOC_NOPM, 0, 1, 0,
 		       lpass_cdc_tx_macro_get_bcs, lpass_cdc_tx_macro_set_bcs),
 
+	SOC_SINGLE_EXT("TX_SWR_DMIC Enable", SND_SOC_NOPM, 0, 1, 0,
+			lpass_cdc_tx_macro_swr_dmic_get, lpass_cdc_tx_macro_swr_dmic_put),
+
 	SOC_ENUM_EXT("BCS Channel", bcs_ch_enum,
 		     lpass_cdc_tx_macro_bcs_ch_get, lpass_cdc_tx_macro_bcs_ch_put),
 
@@ -1999,7 +2030,6 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 	char __iomem *tx_io_base = NULL;
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
-	const char *wcd_dmic_enabled = "qcom,wcd-dmic-enabled";
 
 	if (!lpass_cdc_is_va_macro_registered(&pdev->dev)) {
 		dev_err(&pdev->dev,
@@ -2030,6 +2060,7 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 	tx_priv->tx_io_base = tx_io_base;
+	tx_priv->swr_dmic_enable = false;
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {
@@ -2042,11 +2073,6 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 		sample_rate, tx_priv) == LPASS_CDC_TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED)
 			return -EINVAL;
 	}
-
-	if (of_find_property(pdev->dev.of_node, wcd_dmic_enabled, NULL))
-		tx_priv->wcd_dmic_enabled = true;
-	else
-		tx_priv->wcd_dmic_enabled = false;
 
 	mutex_init(&tx_priv->mclk_lock);
 	lpass_cdc_tx_macro_init_ops(&ops, tx_io_base);

@@ -172,10 +172,10 @@ struct lpass_cdc_va_macro_priv {
 	bool clk_div_switch;
 	int dec_mode[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
 	int pcm_rate[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
-	bool wcd_dmic_enabled;
 	int dapm_tx_clk_status;
 	u16 current_clk_id;
 	bool dev_up;
+	bool swr_dmic_enable;
 };
 
 static bool lpass_cdc_va_macro_get_data(struct snd_soc_component *component,
@@ -831,8 +831,7 @@ done:
 
 static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 {
-	u16 adc_mux_reg = 0, adc_reg = 0;
-	u16 adc_n = LPASS_CDC_ADC_MAX;
+	u16 adc_mux_reg = 0;
 	bool ret = false;
 	struct device *va_dev = NULL;
 	struct lpass_cdc_va_macro_priv *va_priv = NULL;
@@ -844,11 +843,7 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 	adc_mux_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
 	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
-		adc_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
-			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read(component, adc_reg) &
-				LPASS_CDC_VA_MACRO_SWR_MIC_MUX_SEL_MASK;
-		if (adc_n < LPASS_CDC_ADC_MAX)
+		if (!va_priv->swr_dmic_enable)
 			return true;
 	}
 
@@ -997,7 +992,7 @@ static int lpass_cdc_va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	}
 	if (strnstr(widget->name, "SMIC", strlen(widget->name))) {
 		if (val != 0) {
-			if (!va_priv->wcd_dmic_enabled) {
+			if (!va_priv->swr_dmic_enable) {
 				snd_soc_component_update_bits(component,
 							mic_sel_reg,
 							1 << 7, 0x0 << 7);
@@ -1056,6 +1051,40 @@ static int lpass_cdc_va_macro_lpi_put(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 
 	va_priv->lpi_enable = ucontrol->value.integer.value[0];
+
+	return 0;
+}
+
+static int lpass_cdc_va_macro_swr_dmic_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct device *va_dev = NULL;
+	struct lpass_cdc_va_macro_priv *va_priv = NULL;
+
+	if (!lpass_cdc_va_macro_get_data(component, &va_dev,
+					 &va_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = va_priv->swr_dmic_enable;
+
+	return 0;
+}
+
+static int lpass_cdc_va_macro_swr_dmic_put(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct device *va_dev = NULL;
+	struct lpass_cdc_va_macro_priv *va_priv = NULL;
+
+	if (!lpass_cdc_va_macro_get_data(component, &va_dev,
+					 &va_priv, __func__))
+		return -EINVAL;
+
+	va_priv->swr_dmic_enable = ucontrol->value.integer.value[0];
 
 	return 0;
 }
@@ -1228,7 +1257,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					    TX_HPF_CUT_OFF_FREQ_MASK,
 					    CF_MIN_3DB_150HZ << 5);
 		}
-		if (is_amic_enabled(component, decimator) < LPASS_CDC_ADC_MAX) {
+		if (is_amic_enabled(component, decimator)) {
 			hpf_delay = LPASS_CDC_VA_TX_AMIC_HPF_DELAY_MS;
 			unmute_delay = LPASS_CDC_VA_TX_AMIC_UNMUTE_DELAY_MS;
 			if (va_tx_unmute_delay < unmute_delay)
@@ -2012,6 +2041,9 @@ static const struct snd_kcontrol_new lpass_cdc_va_macro_snd_controls[] = {
 	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
 		lpass_cdc_va_macro_lpi_get, lpass_cdc_va_macro_lpi_put),
 
+	SOC_SINGLE_EXT("VA_SWR_DMIC Enable", 0, 0, 1, 0,
+		lpass_cdc_va_macro_swr_dmic_get, lpass_cdc_va_macro_swr_dmic_put),
+
 	SOC_ENUM_EXT("VA_DEC0 MODE", dec_mode_mux_enum,
 			lpass_cdc_va_macro_dec_mode_get, lpass_cdc_va_macro_dec_mode_put),
 
@@ -2097,6 +2129,7 @@ static int lpass_cdc_va_macro_init(struct snd_soc_component *component)
 	}
 
 	va_priv->lpi_enable = false;
+	va_priv->swr_dmic_enable = false;
 	//va_priv->register_event_listener = false;
 
 	va_priv->version = lpass_cdc_get_version(va_dev);
@@ -2357,7 +2390,6 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	const char *micb_current_str = "qcom,va-vdd-micb-current";
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,va-dmic-sample-rate";
-	const char *wcd_dmic_enabled = "qcom,wcd-dmic-enabled";
 	u32 default_clk_id = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
 	u32 is_used_va_swr_gpio = 0;
@@ -2377,10 +2409,6 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	if (of_find_property(pdev->dev.of_node, wcd_dmic_enabled, NULL))
-		va_priv->wcd_dmic_enabled = true;
-	else
-		va_priv->wcd_dmic_enabled = false;
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {
