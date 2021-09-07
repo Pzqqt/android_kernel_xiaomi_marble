@@ -2,7 +2,11 @@ CONFIG_CNSS_WCN7850 := y
 
 include $(WLAN_ROOT)/configs/default_defconfig
 
+#Enable 11BE EHT
 CONFIG_WLAN_FEATURE_11BE := y
 
 # Max Sta Vdev Config
 CONFIG_CFG_MAX_STA_VDEVS := 4
+
+#Enable 11BE MLO
+CONFIG_WLAN_FEATURE_11BE_MLO := y
