@@ -2104,9 +2104,8 @@ static void reg_store_regulatory_ext_info_to_socpriv(
 		soc_reg->domain_code_6g_ap[i] =
 			regulat_info->domain_code_6g_ap[i];
 
-		if (soc_reg->domain_code_6g_ap[i])
-			soc_reg->mas_chan_params[phy_id].
-				is_6g_channel_list_populated = true;
+		soc_reg->mas_chan_params[phy_id].
+			is_6g_channel_list_populated = true;
 
 		qdf_mem_copy(soc_reg->domain_code_6g_client[i],
 			     regulat_info->domain_code_6g_client[i],
