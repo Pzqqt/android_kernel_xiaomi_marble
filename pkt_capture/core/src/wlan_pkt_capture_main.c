@@ -984,6 +984,10 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 				  struct wlan_objmgr_vdev *vdev)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_psoc *psoc;
+	enum pkt_capture_mode mode = PACKET_CAPTURE_MODE_DISABLE;
+	ol_txrx_soc_handle soc;
+	QDF_STATUS status;
 
 	if (!vdev) {
 		pkt_capture_err("vdev is NULL");
@@ -993,6 +997,18 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("vdev_priv is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		pkt_capture_err("psoc is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
+	if (!soc) {
+		pkt_capture_err("Invalid soc");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1030,6 +1046,25 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	    BIT(PKT_CAPTURE_ATTR_SET_MONITOR_MODE_CONNECTED_BEACON_INTERVAL))
 		vdev_priv->frame_filter.connected_beacon_interval =
 			frame_filter.connected_beacon_interval;
+
+	if (vdev_priv->frame_filter.mgmt_tx_frame_filter ||
+	    vdev_priv->frame_filter.mgmt_rx_frame_filter)
+		mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
+
+	if (vdev_priv->frame_filter.data_tx_frame_filter ||
+	    vdev_priv->frame_filter.data_rx_frame_filter)
+		mode |= PACKET_CAPTURE_MODE_DATA_ONLY;
+
+	if (mode != pkt_capture_get_pktcap_mode(psoc)) {
+		status = tgt_pkt_capture_send_mode(vdev, mode);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pkt_capture_err("Unable to send packet capture mode");
+			return status;
+		}
+
+		if (mode & PACKET_CAPTURE_MODE_DATA_ONLY)
+			cdp_set_pkt_capture_mode(soc, true);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
