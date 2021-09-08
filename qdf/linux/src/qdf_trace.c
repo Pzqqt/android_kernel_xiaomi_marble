@@ -135,15 +135,18 @@ static char qdf_module_param[QDF_PARAM_MAX][QDF_PARAM_STR_LENGTH] = {
  * string contains printf-like replacement parameters, which follow
  * this parameter in the variable argument list.
  *
- * Return: None
+ * Return: num of bytes written to buffer
  */
-void qdf_snprintf(char *str_buffer, unsigned int size, char *str_format, ...)
+int qdf_snprintf(char *str_buffer, unsigned int size, char *str_format, ...)
 {
 	va_list args;
+	int i;
 
 	va_start(args, str_format);
-	vsnprintf(str_buffer, size, str_format, args);
+	i = vsnprintf(str_buffer, size, str_format, args);
 	va_end(args);
+
+	return i;
 }
 qdf_export_symbol(qdf_snprintf);
 

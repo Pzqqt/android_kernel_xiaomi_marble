@@ -948,6 +948,8 @@ struct dp_soc_stats {
 		uint32_t tx_comp_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_tx_comp_handler */
 		uint32_t hp_oos2;
+		/* tx desc freed as part of vdev detach */
+		uint32_t tx_comp_exception;
 	} tx;
 
 	/* SOC level RX stats */

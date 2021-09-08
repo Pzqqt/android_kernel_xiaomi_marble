@@ -4702,6 +4702,7 @@ more_data:
 				 !tx_desc->flags)) {
 				dp_tx_comp_info_rl("Descriptor freed in vdev_detach %d",
 						   tx_desc->id);
+				DP_STATS_INC(soc, tx.tx_comp_exception, 1);
 				continue;
 			}
 
