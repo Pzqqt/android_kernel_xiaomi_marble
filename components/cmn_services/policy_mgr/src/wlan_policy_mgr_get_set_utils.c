@@ -661,11 +661,267 @@ static void policy_mgr_set_hw_mode_params(struct wlan_objmgr_psoc *psoc,
 		hw_mode_id);
 }
 
+static void
+policy_mgr_dbs_update_mac0(struct policy_mgr_freq_range *mac_freq,
+			   struct wlan_psoc_host_mac_phy_caps *mac_cap)
+{
+	/*
+	 * Fill 2.4 ghz freq only for MAC Phy 0
+	 */
+	mac_freq->high_2ghz_freq = mac_cap->reg_cap_ext.high_2ghz_chan ?
+				   QDF_MIN(mac_cap->reg_cap_ext.high_2ghz_chan,
+					   wlan_reg_max_24ghz_chan_freq()) :
+				   wlan_reg_max_24ghz_chan_freq();
+	mac_freq->low_2ghz_freq = QDF_MAX(mac_cap->reg_cap_ext.low_2ghz_chan,
+					  wlan_reg_min_24ghz_chan_freq());
+
+	/*
+	 * Filling high 5 ghz low and high here as they will be later used while
+	 * processing mac 1 frequency range. If mac 0, 5ghz frequency range is
+	 * present then it is intersected with mac 1 ranges and maximum of both
+	 * is considered as viable range.
+	 */
+	mac_freq->high_5ghz_freq = mac_cap->reg_cap_ext.high_5ghz_chan;
+	mac_freq->low_5ghz_freq = mac_cap->reg_cap_ext.low_5ghz_chan;
+}
+
+static void
+policy_mgr_dbs_update_mac1(struct policy_mgr_psoc_priv_obj *pm_ctx,
+			   struct policy_mgr_freq_range *mac_freq,
+			   struct wlan_psoc_host_mac_phy_caps *mac_cap)
+{
+	qdf_freq_t max_5g_freq;
+	struct policy_mgr_freq_range *mac0_freq;
+
+	max_5g_freq = wlan_reg_max_6ghz_chan_freq() ?
+		      wlan_reg_max_6ghz_chan_freq() :
+		      wlan_reg_max_5ghz_chan_freq();
+
+	/*
+	 * For MAC 1, fill the maximum and minimum possible value for 5ghz even
+	 * if the frequency are zeroes, as for DBS, 5 ghz channel should be
+	 * enabled.
+	 */
+	mac_freq->low_5ghz_freq = QDF_MAX(mac_cap->reg_cap_ext.low_5ghz_chan,
+				     wlan_reg_min_5ghz_chan_freq());
+	mac_freq->high_5ghz_freq = mac_cap->reg_cap_ext.high_5ghz_chan ?
+				   QDF_MIN(mac_cap->reg_cap_ext.high_5ghz_chan,
+					   max_5g_freq) :
+				   max_5g_freq;
+
+	mac0_freq = &pm_ctx->hw_mode.freq_range_caps[MODE_DBS][0];
+
+	if (mac0_freq->low_5ghz_freq) {
+		if (mac0_freq->low_5ghz_freq < mac_freq->low_5ghz_freq)
+			mac_freq->low_5ghz_freq = mac0_freq->low_5ghz_freq;
+		mac0_freq->low_5ghz_freq = 0;
+	}
+
+	if (mac0_freq->high_5ghz_freq) {
+		if (mac0_freq->high_5ghz_freq > mac_freq->high_5ghz_freq)
+			mac_freq->high_5ghz_freq = mac0_freq->high_5ghz_freq;
+		mac0_freq->high_5ghz_freq = 0;
+	}
+}
+
+
+static void
+policy_mgr_update_dbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				struct wlan_psoc_host_mac_phy_caps *mac_cap,
+				uint32_t phy_id)
+{
+	struct policy_mgr_freq_range *mac;
+
+	mac = &pm_ctx->hw_mode.freq_range_caps[MODE_DBS][phy_id];
+
+	/* mac can either be 0 or 1 */
+	if (!phy_id)
+		policy_mgr_dbs_update_mac0(mac, mac_cap);
+	else
+		policy_mgr_dbs_update_mac1(pm_ctx, mac, mac_cap);
+}
+
+static void
+policy_mgr_update_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				struct wlan_psoc_host_mac_phy_caps *mac_cap,
+				uint32_t phy_id)
+{
+	struct policy_mgr_freq_range *mac, *mac0 = NULL;
+	qdf_freq_t max_5g_freq;
+
+	mac = &pm_ctx->hw_mode.freq_range_caps[MODE_SBS][phy_id];
+	max_5g_freq = wlan_reg_max_6ghz_chan_freq() ?
+		      wlan_reg_max_6ghz_chan_freq() :
+		      wlan_reg_max_5ghz_chan_freq();
+
+	/*
+	 * If both low and high 5 ghz freq are zero, then disable that range by
+	 * filling zero for that particular mac. If one of the frequencies is
+	 * zero, then take the maximum possible range for that case.
+	 *
+	 * For 5 Ghz and 6 Ghz Frequency, If the mac0 lower 5ghz frequency is
+	 * greater than mac1 lower 5 ghz frequency then the mac0 has high share
+	 * of 5g range and it should be made sure that mac1 5g high is less than
+	 * mac 0 5g low.
+	 * If the mac0 lower 5ghz frequency is less than mac1 lower 5 ghz
+	 * frequency then the mac0 has low share of 5g range and it should be
+	 * made sure that mac1 5g low is greater than mac0 5g high.
+	 */
+	if (mac_cap->reg_cap_ext.low_5ghz_chan ||
+	    mac_cap->reg_cap_ext.high_5ghz_chan) {
+		mac->low_5ghz_freq = QDF_MAX(mac_cap->reg_cap_ext.low_5ghz_chan,
+				     wlan_reg_min_5ghz_chan_freq());
+		mac->high_5ghz_freq = mac_cap->reg_cap_ext.high_5ghz_chan ?
+				    QDF_MIN(mac_cap->reg_cap_ext.high_5ghz_chan,
+					    max_5g_freq) :
+				    max_5g_freq;
+
+		if (phy_id) {
+			mac0 = &pm_ctx->hw_mode.freq_range_caps[MODE_SBS][0];
+
+			if (mac0->low_5ghz_freq > mac->low_5ghz_freq) {
+				if (mac->high_5ghz_freq >=
+				    mac0->low_5ghz_freq) {
+					mac->high_5ghz_freq =
+							mac0->low_5ghz_freq -
+							20;
+				}
+			} else {
+			/*
+			 * If Mac0 high_5ghz_freq is equal to max_5g_freq, this
+			 * means Mac0 supports all 5 Ghz channel, So, disable
+			 * the 5ghz channels for Mac1.
+			 */
+				if (mac0->high_5ghz_freq == max_5g_freq) {
+					mac->low_5ghz_freq = 0;
+					mac->high_5ghz_freq = 0;
+				} else if (mac0->high_5ghz_freq >=
+					   mac->low_5ghz_freq) {
+					mac->low_5ghz_freq =
+							mac0->high_5ghz_freq +
+							20;
+				}
+			}
+		}
+	}
+
+	/*
+	 * Fill 2.4 ghz freq only for MAC Phy 0
+	 */
+	if (!phy_id) {
+		mac->low_2ghz_freq =
+				QDF_MAX(mac_cap->reg_cap_ext.low_2ghz_chan,
+					wlan_reg_min_24ghz_chan_freq());
+		mac->high_2ghz_freq =
+				    mac_cap->reg_cap_ext.high_2ghz_chan ?
+				    QDF_MIN(mac_cap->reg_cap_ext.high_2ghz_chan,
+					    wlan_reg_max_24ghz_chan_freq()) :
+				    wlan_reg_max_24ghz_chan_freq();
+	}
+}
+
+static void
+policy_mgr_update_smm_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				struct wlan_psoc_host_mac_phy_caps *mac_cap,
+				uint32_t phy_id)
+{
+	struct policy_mgr_freq_range *mac_range;
+	qdf_freq_t max_5g_freq;
+
+	mac_range = &pm_ctx->hw_mode.freq_range_caps[MODE_SMM][phy_id];
+
+	policy_mgr_debug("Supported Bands %x", mac_cap->supported_bands);
+	if (mac_cap->supported_bands & WMI_HOST_WLAN_2G_CAPABILITY) {
+		mac_range->low_2ghz_freq =
+				QDF_MAX(mac_cap->reg_cap_ext.low_2ghz_chan,
+					wlan_reg_min_24ghz_chan_freq());
+		mac_range->high_2ghz_freq =
+				mac_cap->reg_cap_ext.high_2ghz_chan ?
+				QDF_MIN(mac_cap->reg_cap_ext.high_2ghz_chan,
+					wlan_reg_max_24ghz_chan_freq()) :
+				wlan_reg_max_24ghz_chan_freq();
+	}
+
+	if (mac_cap->supported_bands & WMI_HOST_WLAN_5G_CAPABILITY) {
+		max_5g_freq = wlan_reg_max_6ghz_chan_freq() ?
+			      wlan_reg_max_6ghz_chan_freq() :
+			      wlan_reg_max_5ghz_chan_freq();
+		mac_range->low_5ghz_freq =
+				QDF_MAX(mac_cap->reg_cap_ext.low_5ghz_chan,
+					wlan_reg_min_5ghz_chan_freq());
+		mac_range->high_5ghz_freq =
+				mac_cap->reg_cap_ext.high_5ghz_chan ?
+				QDF_MIN(mac_cap->reg_cap_ext.high_5ghz_chan,
+					max_5g_freq) :
+				max_5g_freq;
+	}
+}
+
+static void
+policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
+				struct policy_mgr_psoc_priv_obj *pm_ctx,
+				enum wmi_hw_mode_config_type hw_config_type,
+				uint32_t phy_id,
+				struct wlan_psoc_host_mac_phy_caps *mac_cap)
+{
+	if (phy_id >= MAX_MAC) {
+		policy_mgr_err("mac more than two not supported: %d",
+			       phy_id);
+		return;
+	}
+
+	policy_mgr_debug("Hw_Mode: %d Phy_id: %d low_2g %d high_2g %d low_5g %d high_5g %d",
+			 hw_config_type, phy_id,
+			 mac_cap->reg_cap_ext.low_2ghz_chan,
+			 mac_cap->reg_cap_ext.high_2ghz_chan,
+			 mac_cap->reg_cap_ext.low_5ghz_chan,
+			 mac_cap->reg_cap_ext.high_5ghz_chan);
+
+	switch (hw_config_type) {
+	case WMI_HW_MODE_SINGLE:
+		if (phy_id) {
+			policy_mgr_debug("MAC Phy 1 is not supported");
+			break;
+		}
+		policy_mgr_update_smm_freq_info(pm_ctx, mac_cap,
+						phy_id);
+		break;
+
+	case WMI_HW_MODE_DBS:
+	case WMI_HW_MODE_DBS_2G_5G:
+		policy_mgr_update_dbs_freq_info(pm_ctx, mac_cap,
+						phy_id);
+		break;
+	case WMI_HW_MODE_DBS_SBS:
+	case WMI_HW_MODE_DBS_OR_SBS:
+		policy_mgr_update_sbs_freq_info(pm_ctx, mac_cap,
+						phy_id);
+		policy_mgr_update_dbs_freq_info(pm_ctx, mac_cap,
+						phy_id);
+		break;
+	case WMI_HW_MODE_2G_PHYB:
+		if (phy_id)
+			policy_mgr_update_smm_freq_info(pm_ctx, mac_cap,
+							phy_id);
+		break;
+	case WMI_HW_MODE_SBS:
+	case WMI_HW_MODE_SBS_PASSIVE:
+		policy_mgr_update_sbs_freq_info(pm_ctx, mac_cap,
+						phy_id);
+		break;
+	default:
+		policy_mgr_err("HW mode not defined %d",
+			       hw_config_type);
+		break;
+	}
+}
+
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 					  struct target_psoc_info *tgt_hdl)
 {
 	struct wlan_psoc_host_mac_phy_caps *tmp;
-	uint32_t i, hw_config_type, j = 0;
+	uint32_t i, j = 0;
+	enum wmi_hw_mode_config_type hw_config_type;
 	uint32_t dbs_mode, sbs_mode;
 	struct policy_mgr_mac_ss_bw_info mac0_ss_bw_info = {0};
 	struct policy_mgr_mac_ss_bw_info mac1_ss_bw_info = {0};
@@ -718,6 +974,10 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		mac1_ss_bw_info.mac_rx_stream = 0;
 		mac1_ss_bw_info.mac_bw = 0;
 
+		policy_mgr_update_mac_freq_info(psoc, pm_ctx,
+						hw_config_type,
+						tmp->phy_id, tmp);
+
 		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
 		if ((hw_config_type == WMI_HW_MODE_DBS) ||
 		    (hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
@@ -726,6 +986,9 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 			/* Update for MAC1 */
 			tmp = &info->mac_phy_cap[j++];
 			policy_mgr_get_hw_mode_params(tmp, &mac1_ss_bw_info);
+			policy_mgr_update_mac_freq_info(psoc, pm_ctx,
+							hw_config_type,
+							tmp->phy_id, tmp);
 			if (hw_config_type == WMI_HW_MODE_DBS ||
 			    hw_config_type == WMI_HW_MODE_DBS_OR_SBS)
 				dbs_mode = HW_MODE_DBS;
@@ -739,6 +1002,16 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_set_hw_mode_params(psoc, mac0_ss_bw_info,
 			mac1_ss_bw_info, i, tmp->hw_mode_id, dbs_mode,
 			sbs_mode);
+	}
+	for (i = MODE_SMM; i < MODE_HW_MAX; i++) {
+		for (j = 0; j < MAX_MAC; j++) {
+			policy_mgr_debug("Mode: %d Mac: %d low_2g %d high_2g %d low_5g %d high_5g %d",
+			  i, j,
+			  pm_ctx->hw_mode.freq_range_caps[i][j].low_2ghz_freq,
+			  pm_ctx->hw_mode.freq_range_caps[i][j].high_2ghz_freq,
+			  pm_ctx->hw_mode.freq_range_caps[i][j].low_5ghz_freq,
+			  pm_ctx->hw_mode.freq_range_caps[i][j].high_5ghz_freq);
+		}
 	}
 	return QDF_STATUS_SUCCESS;
 }

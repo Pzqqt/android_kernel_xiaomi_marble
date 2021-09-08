@@ -1206,13 +1206,48 @@ struct policy_mgr_vdev_entry_info {
 };
 
 /**
+ * struct policy_mgr_freq_range – hw mode freq range for the pdev
+ * @low_2ghz_ freq: lower 2.4GHz channels
+ * @high_2ghz_ freq: higher 2.4 GHz channels
+ * @low_5ghz_ freq: lower 5 GHz channels
+ * @high_5ghz_ freq: higher 5 GHz channels
+ */
+struct policy_mgr_freq_range {
+	qdf_freq_t low_2ghz_freq;
+	qdf_freq_t high_2ghz_freq;
+	qdf_freq_t low_5ghz_freq;
+	qdf_freq_t high_5ghz_freq;
+};
+
+/**
+ * enum policy_mgr_mode – enum for host mode
+ * @MODE_SMM:    Single mac mode
+ * @MODE_DBS:    DBS mode
+ * @MODE_SBS:    SBS mode
+ * @MODE_HW_MAX: MAX
+ */
+enum policy_mgr_mode {
+	MODE_SMM,
+	MODE_DBS,
+	MODE_SBS,
+	MODE_HW_MAX,
+};
+
+/**
  * struct dbs_hw_mode_info - WLAN_DBS_HW_MODES_TLV Format
  * @tlv_header: TLV header, TLV tag and len; tag equals WMITLV_TAG_ARRAY_UINT32
  * @hw_mode_list: WLAN_DBS_HW_MODE_LIST entries
+ * @freq_range_caps: Initial capability and range for different modes for both
+ *                   pdev
+ * @cur_mac_freq_range: Current freq range for both pdev, this can be used to
+ *                      reject if 2 home channels on a MAC, depending on opmode
+ *                      and current HW mode.
  */
 struct dbs_hw_mode_info {
 	uint32_t tlv_header;
 	uint32_t *hw_mode_list;
+	struct policy_mgr_freq_range freq_range_caps[MODE_HW_MAX][MAX_MAC];
+	struct policy_mgr_freq_range cur_mac_freq_range[MAX_MAC];
 };
 
 /**
