@@ -2877,7 +2877,7 @@ int schedule_stats_work(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 	mod_delayed_work(inst->response_workq, &inst->stats_work,
-		msecs_to_jiffies(core->capabilities[STATS_TIMEOUT].value));
+		msecs_to_jiffies(core->capabilities[STATS_TIMEOUT_MS].value));
 
 	return 0;
 }

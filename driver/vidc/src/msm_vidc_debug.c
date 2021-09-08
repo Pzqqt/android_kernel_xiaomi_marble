@@ -15,6 +15,8 @@ extern struct msm_vidc_core *g_core;
 
 #define MAX_SSR_STRING_LEN         64
 #define MAX_DEBUG_LEVEL_STRING_LEN 15
+#define MSM_VIDC_MIN_STATS_DELAY_MS     200
+#define MSM_VIDC_MAX_STATS_DELAY_MS     10000
 
 unsigned int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL | FW_PRINTK;
 
@@ -192,6 +194,58 @@ static const struct file_operations core_info_fops = {
 	.read = core_info_read,
 };
 
+static ssize_t stats_delay_write_ms(struct file *filp, const char __user *buf,
+		size_t count, loff_t *ppos)
+{
+	int rc = 0;
+	struct msm_vidc_core *core = filp->private_data;
+	char kbuf[MAX_DEBUG_LEVEL_STRING_LEN] = {0};
+	u32 delay_ms = 0;
+
+	/* filter partial writes and invalid commands */
+	if (*ppos != 0 || count >= sizeof(kbuf) || count == 0) {
+		d_vpr_e("returning error - pos %d, count %d\n", *ppos, count);
+		rc = -EINVAL;
+	}
+
+	rc = simple_write_to_buffer(kbuf, sizeof(kbuf) - 1, ppos, buf, count);
+	if (rc < 0) {
+		d_vpr_e("%s: User memory fault\n", __func__);
+		rc = -EFAULT;
+		goto exit;
+	}
+
+	rc = kstrtoint(kbuf, 0, &delay_ms);
+	if (rc) {
+		d_vpr_e("returning error err %d\n", rc);
+		rc = -EINVAL;
+		goto exit;
+	}
+	delay_ms = clamp_t(u32, delay_ms, MSM_VIDC_MIN_STATS_DELAY_MS, MSM_VIDC_MAX_STATS_DELAY_MS);
+	core->capabilities[STATS_TIMEOUT_MS].value = delay_ms;
+	d_vpr_h("Stats delay is updated to - %d ms\n", delay_ms);
+
+exit:
+	return rc;
+}
+
+static ssize_t stats_delay_read_ms(struct file *file, char __user *buf,
+		size_t count, loff_t *ppos)
+{
+	size_t len;
+	char kbuf[MAX_DEBUG_LEVEL_STRING_LEN];
+	struct msm_vidc_core *core = file->private_data;
+
+	len = scnprintf(kbuf, sizeof(kbuf), "%u\n", core->capabilities[STATS_TIMEOUT_MS].value);
+	return simple_read_from_buffer(buf, count, ppos, kbuf, len);
+}
+
+static const struct file_operations stats_delay_fops = {
+	.open = simple_open,
+	.write = stats_delay_write_ms,
+	.read = stats_delay_read_ms,
+};
+
 static ssize_t trigger_ssr_write(struct file* filp, const char __user* buf,
 	size_t count, loff_t* ppos)
 {
@@ -290,6 +344,10 @@ struct dentry *msm_vidc_debugfs_init_core(void *core_in)
 	}
 	if (!debugfs_create_file("trigger_ssr", 0200,
 			dir, core, &ssr_fops)) {
+		d_vpr_e("debugfs_create_file: fail\n");
+		goto failed_create_dir;
+	}
+	if (!debugfs_create_file("stats_delay_ms", 0644, dir, core, &stats_delay_fops)) {
 		d_vpr_e("debugfs_create_file: fail\n");
 		goto failed_create_dir;
 	}
