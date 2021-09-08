@@ -522,5 +522,19 @@ target_if_pmo_psoc_send_idle_monitor_cmd(struct wlan_objmgr_psoc *psoc,
  */
 void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *tx_ops);
 
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+/**
+ * target_if_pmo_send_icmp_offload_req() - sends icmp request to fwr
+ * @psoc: objmgr psoc
+ * @pmo_icmp_req: icmp offload request
+ *
+ * This functions sends icmp request to fwr.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+target_if_pmo_send_icmp_offload_req(struct wlan_objmgr_psoc *psoc,
+				    struct pmo_icmp_offload *pmo_icmp_req);
 #endif
 
+#endif

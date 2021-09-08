@@ -26,6 +26,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
 #include "wlan_ipa_obj_mgmt_api.h"
+#include "wlan_pmo_icmp.h"
 
 static struct wlan_pmo_ctx *gp_pmo_ctx;
 
@@ -218,6 +219,21 @@ wlan_pmo_get_igmp_offload_enable_cfg(struct wlan_objmgr_psoc *psoc,
 {}
 #endif
 
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+static void
+wlan_pmo_get_icmp_offload_enable_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->is_icmp_offload_enable =
+			cfg_get(psoc, CFG_ENABLE_ICMP_OFFLOAD);
+}
+#else
+static inline void
+wlan_pmo_get_icmp_offload_enable_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct pmo_psoc_cfg *psoc_cfg)
+{}
+#endif
+
 static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct pmo_psoc_cfg *psoc_cfg)
 {
@@ -275,8 +291,7 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	wlan_pmo_get_igmp_offload_enable_cfg(psoc, psoc_cfg);
 	psoc_cfg->disconnect_sap_tdls_in_wow =
 			cfg_get(psoc, CFG_DISCONNECT_SAP_TDLS_IN_WOW);
-	psoc_cfg->is_icmp_offload_enable =
-			cfg_get(psoc, CFG_ENABLE_ICMP_OFFLOAD);
+	wlan_pmo_get_icmp_offload_enable_cfg(psoc, psoc_cfg);
 }
 
 QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
