@@ -251,12 +251,227 @@ pkt_capture_process_ppdu_stats(void *log_data)
 	qdf_spin_unlock(&vdev_priv->lock_q);
 }
 
+static void
+pkt_capture_process_tx_data(void *soc, void *log_data, u_int16_t vdev_id,
+			    uint32_t status)
+{
+	struct dp_soc *psoc = soc;
+	uint8_t tid = 0;
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
+	struct pkt_capture_tx_hdr_elem_t *ptr_pktcapture_hdr;
+	struct pkt_capture_tx_hdr_elem_t pktcapture_hdr = {0};
+	struct hal_tx_completion_status tx_comp_status = {0};
+	struct qdf_tso_seg_elem_t *tso_seg = NULL;
+	uint32_t txcap_hdr_size =
+			sizeof(struct pkt_capture_tx_hdr_elem_t);
+
+	struct dp_tx_desc_s *desc = log_data;
+	qdf_nbuf_t netbuf;
+	int nbuf_len;
+
+	hal_tx_comp_get_status(&desc->comp, &tx_comp_status,
+			       psoc->hal_soc);
+
+	if (tx_comp_status.valid)
+		pktcapture_hdr.ppdu_id = tx_comp_status.ppdu_id;
+	pktcapture_hdr.timestamp = tx_comp_status.tsf;
+	pktcapture_hdr.preamble = tx_comp_status.pkt_type;
+	pktcapture_hdr.mcs = tx_comp_status.mcs;
+	pktcapture_hdr.bw = tx_comp_status.bw;
+	/* nss not available */
+	pktcapture_hdr.nss = 0;
+	pktcapture_hdr.rssi_comb = tx_comp_status.ack_frame_rssi;
+	/* rate not available */
+	pktcapture_hdr.rate = 0;
+	pktcapture_hdr.stbc = tx_comp_status.stbc;
+	pktcapture_hdr.sgi = tx_comp_status.sgi;
+	pktcapture_hdr.ldpc = tx_comp_status.ldpc;
+	/* Beamformed not available */
+	pktcapture_hdr.beamformed = 0;
+	pktcapture_hdr.framectrl = IEEE80211_FC0_TYPE_DATA |
+				   (IEEE80211_FC1_DIR_TODS << 8);
+	pktcapture_hdr.tx_retry_cnt = tx_comp_status.transmit_cnt - 1;
+	/* seqno not available */
+	pktcapture_hdr.seqno = 0;
+	tid = tx_comp_status.tid;
+	status = tx_comp_status.status;
+
+	if (desc->frm_type == dp_tx_frm_tso) {
+		if (!desc->tso_desc)
+			return;
+		tso_seg = desc->tso_desc;
+		nbuf_len = tso_seg->seg.total_len;
+	} else {
+		nbuf_len = qdf_nbuf_len(desc->nbuf);
+	}
+
+	netbuf = qdf_nbuf_alloc(NULL,
+				roundup(nbuf_len + RESERVE_BYTES, 4),
+				RESERVE_BYTES, 4, false);
+
+	if (!netbuf)
+		return;
+
+	qdf_nbuf_put_tail(netbuf, nbuf_len);
+
+	if (desc->frm_type == dp_tx_frm_tso) {
+		uint8_t frag_cnt, num_frags = 0;
+		int frag_len = 0;
+		uint32_t tcp_seq_num;
+		uint16_t ip_len;
+
+		if (tso_seg->seg.num_frags > 0)
+			num_frags = tso_seg->seg.num_frags - 1;
+
+		/*Num of frags in a tso seg cannot be less than 2 */
+		if (num_frags < 1) {
+			pkt_capture_err("num of frags in tso segment is %d\n",
+					(num_frags + 1));
+			qdf_nbuf_free(netbuf);
+			return;
+		}
+
+		tcp_seq_num = tso_seg->seg.tso_flags.tcp_seq_num;
+		tcp_seq_num = qdf_cpu_to_be32(tcp_seq_num);
+
+		ip_len = tso_seg->seg.tso_flags.ip_len;
+		ip_len = qdf_cpu_to_be16(ip_len);
+
+		for (frag_cnt = 0; frag_cnt <= num_frags; frag_cnt++) {
+			qdf_mem_copy(
+			qdf_nbuf_data(netbuf) + frag_len,
+			tso_seg->seg.tso_frags[frag_cnt].vaddr,
+			tso_seg->seg.tso_frags[frag_cnt].length);
+			frag_len +=
+				tso_seg->seg.tso_frags[frag_cnt].length;
+		}
+
+		qdf_mem_copy((qdf_nbuf_data(netbuf) +
+			     IPV4_PKT_LEN_OFFSET),
+			     &ip_len, sizeof(ip_len));
+		qdf_mem_copy((qdf_nbuf_data(netbuf) +
+			     IPV4_TCP_SEQ_NUM_OFFSET),
+			     &tcp_seq_num, sizeof(tcp_seq_num));
+	} else {
+		qdf_mem_copy(qdf_nbuf_data(netbuf),
+			     qdf_nbuf_data(desc->nbuf), nbuf_len);
+	}
+
+	if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
+		netbuf = qdf_nbuf_realloc_headroom(netbuf,
+						   txcap_hdr_size);
+		if (!netbuf) {
+			QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE,
+				  QDF_TRACE_LEVEL_ERROR,
+				  FL("No headroom"));
+			return;
+		}
+	}
+
+	if (!qdf_nbuf_push_head(netbuf, txcap_hdr_size)) {
+		QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE,
+			  QDF_TRACE_LEVEL_ERROR, FL("No headroom"));
+		qdf_nbuf_free(netbuf);
+		return;
+	}
+
+	ptr_pktcapture_hdr =
+	(struct pkt_capture_tx_hdr_elem_t *)qdf_nbuf_data(netbuf);
+	qdf_mem_copy(ptr_pktcapture_hdr, &pktcapture_hdr,
+		     txcap_hdr_size);
+
+	pkt_capture_datapkt_process(
+		vdev_id, netbuf, TXRX_PROCESS_TYPE_DATA_TX_COMPL,
+		tid, status, TXRX_PKTCAPTURE_PKT_FORMAT_8023,
+		bssid, NULL, pktcapture_hdr.tx_retry_cnt);
+}
+
+/**
+ * pkt_capture_is_frame_filter_set() - Check frame filter is set
+ * @nbuf: buffer address
+ * @frame_filter: frame filter address
+ * @direction: frame direction
+ *
+ * Return: true, if filter bit is set
+ *         false, if filter bit is not set
+ */
+static bool
+pkt_capture_is_frame_filter_set(qdf_nbuf_t buf,
+				struct pkt_capture_frame_filter *frame_filter,
+				bool direction)
+{
+	enum pkt_capture_data_frame_type data_frame_type =
+		PKT_CAPTURE_DATA_FRAME_TYPE_ALL;
+
+	if (qdf_nbuf_is_ipv4_arp_pkt(buf)) {
+		data_frame_type = PKT_CAPTURE_DATA_FRAME_TYPE_ARP;
+	} else if (qdf_nbuf_is_ipv4_eapol_pkt(buf)) {
+		data_frame_type = PKT_CAPTURE_DATA_FRAME_TYPE_EAPOL;
+	} else if (qdf_nbuf_data_is_tcp_syn(buf)) {
+		data_frame_type =
+			PKT_CAPTURE_DATA_FRAME_TYPE_TCP_SYN;
+	} else if (qdf_nbuf_data_is_tcp_syn_ack(buf)) {
+		data_frame_type =
+			PKT_CAPTURE_DATA_FRAME_TYPE_TCP_SYNACK;
+	} else if (qdf_nbuf_data_is_tcp_syn(buf)) {
+		data_frame_type =
+			PKT_CAPTURE_DATA_FRAME_TYPE_TCP_FIN;
+	} else if (qdf_nbuf_data_is_tcp_syn_ack(buf)) {
+		data_frame_type =
+			PKT_CAPTURE_DATA_FRAME_TYPE_TCP_FINACK;
+	} else if (qdf_nbuf_data_is_tcp_ack(buf)) {
+		data_frame_type =
+			PKT_CAPTURE_DATA_FRAME_TYPE_TCP_ACK;
+	} else if (qdf_nbuf_data_is_tcp_rst(buf)) {
+		data_frame_type =
+			PKT_CAPTURE_DATA_FRAME_TYPE_TCP_RST;
+	} else if (qdf_nbuf_is_ipv4_pkt(buf)) {
+		if (qdf_nbuf_is_ipv4_dhcp_pkt(buf))
+			data_frame_type =
+				PKT_CAPTURE_DATA_FRAME_TYPE_DHCPV4;
+		else if (qdf_nbuf_is_icmp_pkt(buf))
+			data_frame_type =
+				PKT_CAPTURE_DATA_FRAME_TYPE_ICMPV4;
+		else if (qdf_nbuf_data_is_dns_query(buf))
+			data_frame_type =
+				PKT_CAPTURE_DATA_FRAME_TYPE_DNSV4;
+		else if (qdf_nbuf_data_is_dns_response(buf))
+			data_frame_type =
+				PKT_CAPTURE_DATA_FRAME_TYPE_DNSV4;
+	} else if (qdf_nbuf_is_ipv6_pkt(buf)) {
+		if (qdf_nbuf_is_ipv6_dhcp_pkt(buf))
+			data_frame_type =
+				PKT_CAPTURE_DATA_FRAME_TYPE_DHCPV6;
+		else if (qdf_nbuf_is_icmpv6_pkt(buf))
+			data_frame_type =
+				PKT_CAPTURE_DATA_FRAME_TYPE_ICMPV6;
+		/* need to add code for
+		 * PKT_CAPTURE_DATA_FRAME_TYPE_DNSV6
+		 */
+	}
+	/* Add code for
+	 * PKT_CAPTURE_DATA_FRAME_TYPE_RTP
+	 * PKT_CAPTURE_DATA_FRAME_TYPE_SIP
+	 * PKT_CAPTURE_DATA_FRAME_QOS_NULL
+	 */
+
+	if (direction == IEEE80211_FC1_DIR_TODS) {
+		if (data_frame_type & frame_filter->data_tx_frame_filter)
+			return true;
+		else
+			return false;
+	} else {
+		if (data_frame_type & frame_filter->data_rx_frame_filter)
+			return true;
+		else
+			return false;
+	}
+}
+
 void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			  u_int16_t peer_id, uint32_t status)
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint8_t tid = 0;
-	struct dp_soc *psoc = soc;
 	struct wlan_objmgr_vdev *vdev;
 	struct pkt_capture_vdev_priv *vdev_priv;
 	struct pkt_capture_frame_filter *frame_filter;
@@ -277,135 +492,20 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 	switch (event) {
 	case WDI_EVENT_PKT_CAPTURE_TX_DATA:
 	{
-		struct pkt_capture_tx_hdr_elem_t *ptr_pktcapture_hdr;
-		struct pkt_capture_tx_hdr_elem_t pktcapture_hdr = {0};
-		struct hal_tx_completion_status tx_comp_status = {0};
-		struct qdf_tso_seg_elem_t *tso_seg = NULL;
-		uint32_t txcap_hdr_size =
-				sizeof(struct pkt_capture_tx_hdr_elem_t);
-
 		struct dp_tx_desc_s *desc = log_data;
-		qdf_nbuf_t netbuf;
-		int nbuf_len;
-
-		hal_tx_comp_get_status(&desc->comp, &tx_comp_status,
-				       psoc->hal_soc);
 
 		if (!frame_filter->data_tx_frame_filter)
 			return;
 
-		if (tx_comp_status.valid)
-			pktcapture_hdr.ppdu_id = tx_comp_status.ppdu_id;
-		pktcapture_hdr.timestamp = tx_comp_status.tsf;
-		pktcapture_hdr.preamble = tx_comp_status.pkt_type;
-		pktcapture_hdr.mcs = tx_comp_status.mcs;
-		pktcapture_hdr.bw = tx_comp_status.bw;
-		/* nss not available */
-		pktcapture_hdr.nss = 0;
-		pktcapture_hdr.rssi_comb = tx_comp_status.ack_frame_rssi;
-		/* rate not available */
-		pktcapture_hdr.rate = 0;
-		pktcapture_hdr.stbc = tx_comp_status.stbc;
-		pktcapture_hdr.sgi = tx_comp_status.sgi;
-		pktcapture_hdr.ldpc = tx_comp_status.ldpc;
-		/* Beamformed not available */
-		pktcapture_hdr.beamformed = 0;
-		pktcapture_hdr.framectrl = IEEE80211_FC0_TYPE_DATA |
-					   (IEEE80211_FC1_DIR_TODS << 8);
-		pktcapture_hdr.tx_retry_cnt = tx_comp_status.transmit_cnt - 1;
-		/* seqno not available */
-		pktcapture_hdr.seqno = 0;
-		tid = tx_comp_status.tid;
-		status = tx_comp_status.status;
-
-		if (desc->frm_type == dp_tx_frm_tso) {
-			if (!desc->tso_desc)
-				return;
-			tso_seg = desc->tso_desc;
-			nbuf_len = tso_seg->seg.total_len;
-		} else {
-			nbuf_len = qdf_nbuf_len(desc->nbuf);
+		if (frame_filter->data_tx_frame_filter &
+		    PKT_CAPTURE_DATA_FRAME_TYPE_ALL) {
+			pkt_capture_process_tx_data(soc, log_data,
+						    vdev_id, status);
+		} else if (pkt_capture_is_frame_filter_set(
+			   desc->nbuf, frame_filter, IEEE80211_FC1_DIR_TODS)) {
+			pkt_capture_process_tx_data(soc, log_data,
+						    vdev_id, status);
 		}
-
-		netbuf = qdf_nbuf_alloc(NULL,
-					roundup(nbuf_len + RESERVE_BYTES, 4),
-					RESERVE_BYTES, 4, false);
-
-		if (!netbuf)
-			return;
-
-		qdf_nbuf_put_tail(netbuf, nbuf_len);
-
-		if (desc->frm_type == dp_tx_frm_tso) {
-			uint8_t frag_cnt, num_frags = 0;
-			int frag_len = 0;
-			uint32_t tcp_seq_num;
-			uint16_t ip_len;
-
-			if (tso_seg->seg.num_frags > 0)
-				num_frags = tso_seg->seg.num_frags - 1;
-
-			/*Num of frags in a tso seg cannot be less than 2 */
-			if (num_frags < 1) {
-				pkt_capture_err("num of frags in tso segment is %d\n",
-						(num_frags + 1));
-				qdf_nbuf_free(netbuf);
-				return;
-			}
-
-			tcp_seq_num = tso_seg->seg.tso_flags.tcp_seq_num;
-			tcp_seq_num = qdf_cpu_to_be32(tcp_seq_num);
-
-			ip_len = tso_seg->seg.tso_flags.ip_len;
-			ip_len = qdf_cpu_to_be16(ip_len);
-
-			for (frag_cnt = 0; frag_cnt <= num_frags; frag_cnt++) {
-				qdf_mem_copy(
-				qdf_nbuf_data(netbuf) + frag_len,
-				tso_seg->seg.tso_frags[frag_cnt].vaddr,
-				tso_seg->seg.tso_frags[frag_cnt].length);
-				frag_len +=
-					tso_seg->seg.tso_frags[frag_cnt].length;
-			}
-
-			qdf_mem_copy((qdf_nbuf_data(netbuf) +
-				     IPV4_PKT_LEN_OFFSET),
-				     &ip_len, sizeof(ip_len));
-			qdf_mem_copy((qdf_nbuf_data(netbuf) +
-				     IPV4_TCP_SEQ_NUM_OFFSET),
-				     &tcp_seq_num, sizeof(tcp_seq_num));
-		} else {
-			qdf_mem_copy(qdf_nbuf_data(netbuf),
-				     qdf_nbuf_data(desc->nbuf), nbuf_len);
-		}
-
-		if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
-			netbuf = qdf_nbuf_realloc_headroom(netbuf,
-							   txcap_hdr_size);
-			if (!netbuf) {
-				QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE,
-					  QDF_TRACE_LEVEL_ERROR,
-					  FL("No headroom"));
-				return;
-			}
-		}
-
-		if (!qdf_nbuf_push_head(netbuf, txcap_hdr_size)) {
-			QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE,
-				  QDF_TRACE_LEVEL_ERROR, FL("No headroom"));
-			qdf_nbuf_free(netbuf);
-			return;
-		}
-
-		ptr_pktcapture_hdr =
-		(struct pkt_capture_tx_hdr_elem_t *)qdf_nbuf_data(netbuf);
-		qdf_mem_copy(ptr_pktcapture_hdr, &pktcapture_hdr,
-			     txcap_hdr_size);
-
-		pkt_capture_datapkt_process(
-			vdev_id, netbuf, TXRX_PROCESS_TYPE_DATA_TX_COMPL,
-			tid, status, TXRX_PKTCAPTURE_PKT_FORMAT_8023,
-			bssid, NULL, pktcapture_hdr.tx_retry_cnt);
 
 		break;
 	}
@@ -424,8 +524,19 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			return;
 		}
 
-		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc,
-					      status);
+		if (frame_filter->data_rx_frame_filter &
+		    PKT_CAPTURE_DATA_FRAME_TYPE_ALL) {
+			pkt_capture_msdu_process_pkts(bssid, log_data,
+						      vdev_id, soc, status);
+		} else if (pkt_capture_is_frame_filter_set(
+			   nbuf, frame_filter, IEEE80211_FC1_DIR_FROMDS)) {
+			pkt_capture_msdu_process_pkts(bssid, log_data,
+						      vdev_id, soc, status);
+		} else {
+			if (status == RX_OFFLOAD_PKT)
+				qdf_nbuf_free(nbuf);
+		}
+
 		break;
 	}
 
@@ -443,8 +554,19 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			return;
 		}
 
-		pkt_capture_process_rx_data_no_peer(soc, vdev_id, bssid, status,
-						    nbuf);
+		if (frame_filter->data_rx_frame_filter &
+		    PKT_CAPTURE_DATA_FRAME_TYPE_ALL) {
+			pkt_capture_process_rx_data_no_peer(soc, vdev_id, bssid,
+							    status, nbuf);
+		} else if (pkt_capture_is_frame_filter_set(
+			   nbuf, frame_filter, IEEE80211_FC1_DIR_FROMDS)) {
+			pkt_capture_process_rx_data_no_peer(soc, vdev_id, bssid,
+							    status, nbuf);
+		} else {
+			if (status == RX_OFFLOAD_PKT)
+				qdf_nbuf_free(nbuf);
+		}
+
 		break;
 	}
 
@@ -453,6 +575,8 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		struct htt_tx_offload_deliver_ind_hdr_t *offload_deliver_msg;
 		bool is_pkt_during_roam = false;
 		uint32_t freq = 0;
+		qdf_nbuf_t buf = log_data +
+				sizeof(struct htt_tx_offload_deliver_ind_hdr_t);
 
 		if (!frame_filter->data_tx_frame_filter)
 			return;
@@ -470,9 +594,17 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			vdev_id = offload_deliver_msg->vdev_id;
 		}
 
-		pkt_capture_offload_deliver_indication_handler(
-						log_data,
-						vdev_id, bssid, soc);
+		if (frame_filter->data_tx_frame_filter &
+		    PKT_CAPTURE_DATA_FRAME_TYPE_ALL) {
+			pkt_capture_offload_deliver_indication_handler(
+							log_data,
+							vdev_id, bssid, soc);
+		} else if (pkt_capture_is_frame_filter_set(
+			   buf, frame_filter, IEEE80211_FC1_DIR_TODS)) {
+			pkt_capture_offload_deliver_indication_handler(
+							log_data,
+							vdev_id, bssid, soc);
+		}
 		break;
 	}
 
