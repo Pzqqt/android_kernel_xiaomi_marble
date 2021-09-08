@@ -2698,9 +2698,10 @@ reg_search_afc_power_info_for_freq(
 				if (reg_chan_band_to_freq(pdev,
 							  subchannels[k],
 							  BIT(REG_BAND_6G)) ==
-							  freq)
+							  freq) {
 					*eirp_power = eirp_obj->eirp_power;
 					break;
+				}
 			}
 		}
 	}
