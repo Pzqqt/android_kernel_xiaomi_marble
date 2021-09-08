@@ -7499,8 +7499,8 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 							 1);
 
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
-	resource_cfg->peer_map_unmap_v2_support =
-		tgt_res_cfg->peer_map_unmap_v2;
+	resource_cfg->peer_map_unmap_versions =
+		tgt_res_cfg->peer_map_unmap_version;
 	resource_cfg->smart_ant_cap = tgt_res_cfg->smart_ant_cap;
 	if (tgt_res_cfg->re_ul_resp)
 		WMI_SET_BITS(resource_cfg->flags2, 0, 4,
