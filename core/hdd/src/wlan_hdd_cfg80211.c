@@ -18557,13 +18557,25 @@ static int _wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
 	if (errno)
-		return errno;
+		goto err;
 
 	errno = __wlan_hdd_cfg80211_change_iface(wiphy, net_dev, type,
 						 flags, params);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
+	return errno;
+err:
+	/* In the SSR case, errno will be -EINVAL from
+	 * __dsc_vdev_can_trans with qdf_is_recovering()
+	 * is true, only change -EINVAL to -EBUSY to make
+	 * wpa_supplicant has chance to retry mode switch.
+	 * Meanwhile do not touch the errno from
+	 * __wlan_hdd_cfg80211_change_iface with this
+	 * change.
+	 */
+	if (errno && errno != -EAGAIN && errno != -EBUSY)
+		errno = -EBUSY;
 	return errno;
 }
 
