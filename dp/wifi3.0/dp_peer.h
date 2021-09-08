@@ -835,6 +835,16 @@ struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
 						struct dp_vdev *vdev,
 						enum dp_mod_id mod_id);
 
+void dp_peer_ast_table_detach(struct dp_soc *soc);
+void dp_peer_find_map_detach(struct dp_soc *soc);
+void dp_soc_wds_detach(struct dp_soc *soc);
+QDF_STATUS dp_peer_ast_table_attach(struct dp_soc *soc);
+QDF_STATUS dp_peer_ast_hash_attach(struct dp_soc *soc);
+QDF_STATUS dp_peer_mec_hash_attach(struct dp_soc *soc);
+void dp_soc_wds_attach(struct dp_soc *soc);
+void dp_peer_mec_hash_detach(struct dp_soc *soc);
+void dp_peer_ast_hash_detach(struct dp_soc *soc);
+
 #ifdef FEATURE_AST
 /*
  * dp_peer_delete_ast_entries(): Delete all AST entries for a peer

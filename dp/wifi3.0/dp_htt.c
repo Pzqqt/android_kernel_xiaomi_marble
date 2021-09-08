@@ -2726,10 +2726,11 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			 * Update ast indexes for flow override support
 			 * Applicable only for non wds peers
 			 */
-			dp_peer_ast_index_flow_queue_map_create(
-					    soc->dp_soc, is_wds,
-					    peer_id, peer_mac_addr,
-					    &ast_flow_info);
+			if (!soc->dp_soc->ast_offload_support)
+				dp_peer_ast_index_flow_queue_map_create(
+						soc->dp_soc, is_wds,
+						peer_id, peer_mac_addr,
+						&ast_flow_info);
 
 			break;
 		}

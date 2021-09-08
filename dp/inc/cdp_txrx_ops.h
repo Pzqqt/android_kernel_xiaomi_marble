@@ -513,7 +513,7 @@ struct cdp_cmn_ops {
 	QDF_STATUS (*txrx_peer_map_attach)(ol_txrx_soc_handle soc,
 					   uint32_t num_peers,
 					   uint32_t max_ast_index,
-					   bool peer_map_unmap_v2);
+					   uint8_t peer_map_unmap_v);
 
 	QDF_STATUS (*set_soc_param)(ol_txrx_soc_handle soc,
 				    enum cdp_soc_param_t param,

@@ -39,6 +39,35 @@
 #include "dp_hist.h"
 #include "dp_rx_buffer_pool.h"
 
+#ifndef AST_OFFLOAD_ENABLE
+static void
+dp_rx_wds_learn(struct dp_soc *soc,
+		struct dp_vdev *vdev,
+		uint8_t *rx_tlv_hdr,
+		struct dp_peer *peer,
+		qdf_nbuf_t nbuf,
+		struct hal_rx_msdu_metadata msdu_metadata)
+{
+	/* WDS Source Port Learning */
+	if (qdf_likely(vdev->wds_enabled))
+		dp_rx_wds_srcport_learn(soc,
+				rx_tlv_hdr,
+				peer,
+				nbuf,
+				msdu_metadata);
+}
+#else
+static void
+dp_rx_wds_learn(struct dp_soc *soc,
+		struct dp_vdev *vdev,
+		uint8_t *rx_tlv_hdr,
+		struct dp_peer *ta_peer,
+		qdf_nbuf_t nbuf,
+		struct hal_rx_msdu_metadata msdu_metadata)
+{
+}
+#endif
+
 /**
  * dp_rx_process_be() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -676,16 +705,11 @@ done:
 		if (qdf_likely(vdev->rx_decap_type ==
 			       htt_cmn_pkt_type_ethernet) &&
 		    qdf_likely(!vdev->mesh_vdev)) {
-			/* WDS Destination Address Learning */
-			dp_rx_da_learn(soc, rx_tlv_hdr, peer, nbuf);
-
-			/* WDS Source Port Learning */
-			if (qdf_likely(vdev->wds_enabled))
-				dp_rx_wds_srcport_learn(soc,
-							rx_tlv_hdr,
-							peer,
-							nbuf,
-							msdu_metadata);
+			dp_rx_wds_learn(soc, vdev,
+					rx_tlv_hdr,
+					peer,
+					nbuf,
+					msdu_metadata);
 
 			/* Intrabss-fwd */
 			if (dp_rx_check_ap_bridge(vdev))

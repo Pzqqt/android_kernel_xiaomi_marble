@@ -285,7 +285,8 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 	bank_config->src_buffer_swap = 0;
 	bank_config->link_meta_swap = 0;
 
-	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta) {
+	if ((soc->sta_mode_search_policy == HAL_TX_ADDR_INDEX_SEARCH) &&
+	     vdev->opmode == wlan_op_mode_sta) {
 		bank_config->index_lookup_enable = 1;
 		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_MEC_NOTIFY;
 		bank_config->addrx_en = 0;

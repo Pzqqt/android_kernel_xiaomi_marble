@@ -2968,15 +2968,16 @@ void dp_tx_nawds_handler(struct dp_soc *soc, struct dp_vdev *vdev,
 	struct dp_ast_entry *ast_entry = NULL;
 	qdf_ether_header_t *eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
-	qdf_spin_lock_bh(&soc->ast_lock);
-	ast_entry = dp_peer_ast_hash_find_by_pdevid
-				(soc,
-				 (uint8_t *)(eh->ether_shost),
-				 vdev->pdev->pdev_id);
-
-	if (ast_entry)
-		sa_peer_id = ast_entry->peer_id;
-	qdf_spin_unlock_bh(&soc->ast_lock);
+	if (!soc->ast_offload_support) {
+		qdf_spin_lock_bh(&soc->ast_lock);
+		ast_entry = dp_peer_ast_hash_find_by_pdevid
+					(soc,
+					(uint8_t *)(eh->ether_shost),
+					vdev->pdev->pdev_id);
+		if (ast_entry)
+			sa_peer_id = ast_entry->peer_id;
+		qdf_spin_unlock_bh(&soc->ast_lock);
+	}
 
 	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
@@ -2985,11 +2986,15 @@ void dp_tx_nawds_handler(struct dp_soc *soc, struct dp_vdev *vdev,
 			/* Multicast packets needs to be
 			 * dropped in case of intra bss forwarding
 			 */
-			if (sa_peer_id == peer->peer_id) {
-				dp_tx_debug("multicast packet");
-				DP_STATS_INC(peer, tx.nawds_mcast_drop, 1);
-				continue;
+			if (!soc->ast_offload_support) {
+				if (sa_peer_id == peer->peer_id) {
+					dp_tx_debug("multicast packet");
+					DP_STATS_INC(peer, tx.nawds_mcast_drop,
+						     1);
+					continue;
+				}
 			}
+
 			nbuf_clone = qdf_nbuf_clone(nbuf);
 
 			if (!nbuf_clone) {
@@ -4895,12 +4900,8 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 	else
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
 
-	/* Set search type only when peer map v2 messaging is enabled
-	 * as we will have the search index (AST hash) only when v2 is
-	 * enabled
-	 */
-	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta)
-		vdev->search_type = HAL_TX_ADDR_INDEX_SEARCH;
+	if (vdev->opmode == wlan_op_mode_sta)
+		vdev->search_type = soc->sta_mode_search_policy;
 	else
 		vdev->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
 }

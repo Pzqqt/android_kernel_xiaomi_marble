@@ -656,9 +656,14 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	int status = -1;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry  *ast_entry = NULL;
-	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc_hdl,
-						       peer_mac, 0, vdev_id,
-						       DP_MOD_ID_CDP);
+	struct dp_peer *peer;
+
+	if (soc->ast_offload_support)
+		return status;
+
+	peer = dp_peer_find_hash_find((struct dp_soc *)soc_hdl,
+				      peer_mac, 0, vdev_id,
+				      DP_MOD_ID_CDP);
 
 	if (!peer) {
 		dp_peer_debug("Peer is NULL!");
@@ -719,8 +724,12 @@ static QDF_STATUS dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	struct dp_ast_entry *ast_entry = NULL;
 	struct dp_peer *peer;
 	struct dp_pdev *pdev;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
-						     DP_MOD_ID_CDP);
+	struct dp_vdev *vdev;
+
+	if (soc->ast_offload_support)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
@@ -769,6 +778,9 @@ dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 			     uint8_t vdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
+
+	if (soc->ast_offload_support)
+		return QDF_STATUS_SUCCESS;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
@@ -846,6 +858,9 @@ static bool dp_peer_get_ast_info_by_soc_wifi3
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_peer *peer = NULL;
 
+	if (soc->ast_offload_support)
+		return false;
+
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	ast_entry = dp_peer_ast_hash_find_soc(soc, ast_mac_addr);
@@ -896,6 +911,9 @@ static bool dp_peer_get_ast_info_by_pdevid_wifi3
 	struct dp_ast_entry *ast_entry;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_peer *peer = NULL;
+
+	if (soc->ast_offload_support)
+		return false;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
@@ -950,6 +968,9 @@ static QDF_STATUS dp_peer_ast_entry_del_by_soc(struct cdp_soc_t *soc_handle,
 	struct dp_ast_entry *ast_entry = NULL;
 	txrx_ast_free_cb cb = NULL;
 	void *arg = NULL;
+
+	if (soc->ast_offload_support)
+		return -QDF_STATUS_E_INVAL;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast_entry = dp_peer_ast_hash_find_soc(soc, mac_addr);
@@ -1010,6 +1031,9 @@ static QDF_STATUS dp_peer_ast_entry_del_by_pdev(struct cdp_soc_t *soc_handle,
 	struct dp_ast_entry *ast_entry;
 	txrx_ast_free_cb cb = NULL;
 	void *arg = NULL;
+
+	if (soc->ast_offload_support)
+		return -QDF_STATUS_E_INVAL;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, mac_addr, pdev_id);
@@ -5251,6 +5275,8 @@ static void dp_soc_deinit(void *txrx_soc)
 
 	/* free peer tables & AST tables allocated during peer_map_attach */
 	if (soc->peer_map_attach_success) {
+		if (soc->arch_ops.txrx_peer_detach)
+			soc->arch_ops.txrx_peer_detach(soc);
 		dp_peer_find_detach(soc);
 		soc->peer_map_attach_success = FALSE;
 	}
@@ -6240,6 +6266,9 @@ static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 {
 	struct dp_ast_entry *ast_entry;
 
+	if (soc->ast_offload_support)
+		return;
+
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (soc->ast_override_support)
 		ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, peer_mac_addr,
@@ -6700,6 +6729,9 @@ static QDF_STATUS dp_cp_peer_del_resp_handler(struct cdp_soc_t *soc_hdl,
 	struct dp_ast_entry  *ast_entry = NULL;
 	txrx_ast_free_cb cb = NULL;
 	void *cookie;
+
+	if (soc->ast_offload_support)
+		return QDF_STATUS_E_INVAL;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
@@ -10263,7 +10295,7 @@ dp_dump_rx_flow_tag_stats(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 					   uint32_t max_peers,
 					   uint32_t max_ast_index,
-					   bool peer_map_unmap_v2)
+					   uint8_t peer_map_unmap_versions)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
@@ -10276,7 +10308,15 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 	if (dp_peer_find_attach(soc))
 		return QDF_STATUS_E_FAILURE;
 
-	soc->is_peer_map_unmap_v2 = peer_map_unmap_v2;
+	if (soc->arch_ops.txrx_peer_attach) {
+		QDF_STATUS status;
+		status = soc->arch_ops.txrx_peer_attach(soc);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			dp_peer_find_detach(soc);
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	soc->peer_map_unmap_versions = peer_map_unmap_versions;
 	soc->peer_map_attach_success = TRUE;
 
 	return QDF_STATUS_SUCCESS;
@@ -11862,6 +11902,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	soc->cce_disable = false;
 	soc->max_ast_ageout_count = MAX_AST_AGEOUT_COUNT;
 
+	soc->sta_mode_search_policy = DP_TX_ADDR_SEARCH_ADDR_POLICY;
 	qdf_mem_zero(&soc->vdev_id_map, sizeof(soc->vdev_id_map));
 	qdf_spinlock_create(&soc->vdev_map_lock);
 	qdf_atomic_init(&soc->num_tx_outstanding);
@@ -13082,6 +13123,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		soc->per_tid_basize_max_tid = 8;
 		soc->wbm_release_desc_rx_sg_support = 1;
 		soc->rxdma2sw_rings_not_supported = 1;
+		soc->ast_offload_support = AST_OFFLOAD_ENABLE_STATUS;
 
 		break;
 	default:

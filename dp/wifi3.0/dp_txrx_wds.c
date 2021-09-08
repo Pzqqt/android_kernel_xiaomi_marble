@@ -155,6 +155,9 @@ static void dp_ast_aging_timer_fn(void *soc_hdl)
  */
 void dp_soc_wds_attach(struct dp_soc *soc)
 {
+	if (soc->ast_offload_support)
+		return;
+
 	soc->wds_ast_aging_timer_cnt = 0;
 	soc->pending_ageout = false;
 	qdf_timer_init(soc->osdev, &soc->ast_aging_timer,
