@@ -361,3 +361,14 @@ QDF_STATUS wmi_unified_app_type1_params_in_fw_cmd(
 }
 #endif /* WLAN_FEATURE_EXTWOW_SUPPORT */
 
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+QDF_STATUS wmi_unified_config_icmp_offload_cmd(wmi_unified_t wmi_handle,
+			struct pmo_icmp_offload *pmo_icmp_req)
+{
+	if (wmi_handle->ops->send_icmp_offload_config_cmd)
+		return wmi_handle->ops->send_icmp_offload_config_cmd(
+				wmi_handle, pmo_icmp_req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

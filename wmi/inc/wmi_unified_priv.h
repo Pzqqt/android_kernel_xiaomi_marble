@@ -988,6 +988,11 @@ QDF_STATUS (*send_config_packet_filter_cmd)(wmi_unified_t wmi_handle,
 		uint8_t vdev_id, struct pmo_rcv_pkt_fltr_cfg *rcv_filter_param,
 		uint8_t filter_id, bool enable);
 #endif
+
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+QDF_STATUS (*send_icmp_offload_config_cmd)(wmi_unified_t wmi_handle,
+			   struct pmo_icmp_offload *pmo_icmp_req);
+#endif
 #endif /* end of WLAN_POWER_MANAGEMENT_OFFLOAD */
 #ifdef WLAN_WMI_BCN
 QDF_STATUS (*send_bcn_buf_ll_cmd)(wmi_unified_t wmi_handle,
