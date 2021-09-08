@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017,2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017,2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,6 +131,29 @@ static inline void qdf_nbuf_set_exc_frame(qdf_nbuf_t buf, uint8_t value)
 static inline void qdf_nbuf_set_rx_ipa_smmu_map(qdf_nbuf_t buf,
 						uint8_t value)
 {
+}
+
+/**
+ * qdf_nbuf_is_intra_bss() - get intra bss bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_intra_bss(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_intra_bss(buf);
+}
+
+/**
+ * qdf_nbuf_set_intra_bss() - set  intra bss bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_intra_bss(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_intra_bss(buf, val);
 }
 
 /**

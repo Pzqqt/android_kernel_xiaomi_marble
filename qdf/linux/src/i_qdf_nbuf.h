@@ -113,6 +113,7 @@ typedef union {
  * @rx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
  * @rx.dev.priv_cb_w.msdu_len: length of RX packet
  * @rx.dev.priv_cb_w.peer_id: peer_id for RX packet
+ * @rx.dev.priv_cb_w.flag_intra_bss: flag to indicate this is intra bss packet
  * @rx.dev.priv_cb_w.protocol_tag: protocol tag set by app for rcvd packet type
  * @rx.dev.priv_cb_w.flow_tag: flow tag set by application for 5 tuples rcvd
  *
@@ -225,7 +226,9 @@ struct qdf_nbuf_cb {
 				struct {
 					void *ext_cb_ptr;
 					void *fctx;
-					uint16_t msdu_len;
+					uint16_t msdu_len : 14,
+						 flag_intra_bss : 1,
+						 reserved : 1;
 					uint16_t peer_id;
 					uint16_t protocol_tag;
 					uint16_t flow_tag;
