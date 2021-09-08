@@ -42,6 +42,24 @@ static void init_deinit_set_send_init_cmd(struct wlan_objmgr_psoc *psoc,
 	init_deinit_prepare_send_init_cmd(psoc, tgt_hdl);
 }
 
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+static void
+init_deinit_update_p2p_p2p_conc_support(struct wmi_unified *wmi_handle,
+					struct wlan_objmgr_psoc *psoc)
+{
+	if (wmi_service_enabled(wmi_handle, wmi_service_p2p_p2p_cc_support))
+		wlan_psoc_nif_fw_ext_cap_set(psoc,
+					     WLAN_SOC_EXT_P2P_P2P_CONC_SUPPORT);
+	else
+		target_if_debug("P2P + P2P conc disabled");
+}
+#else
+static inline void
+init_deinit_update_p2p_p2p_conc_support(struct wmi_unified *wmi_handle,
+					struct wlan_objmgr_psoc *psoc)
+{}
+#endif
+
 static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 							uint8_t *event,
 							uint32_t data_len)
@@ -213,6 +231,7 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 					       WLAN_SOC_CEXT_WMI_MGMT_REF);
 		target_if_debug("WMI mgmt service disabled");
 	}
+	init_deinit_update_p2p_p2p_conc_support(wmi_handle, psoc);
 
 	err_code = init_deinit_handle_host_mem_req(psoc, tgt_hdl, event);
 	if (err_code != QDF_STATUS_SUCCESS)
