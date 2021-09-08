@@ -1331,6 +1331,11 @@ PMO_OBJS +=     $(PMO_DIR)/core/src/wlan_pmo_ns.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_ns.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_ICMP_OFFLOAD), y)
+PMO_OBJS +=     $(PMO_DIR)/core/src/wlan_pmo_icmp.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_icmp.o
+endif
+
 $(call add-wlan-objs,pmo,$(PMO_OBJS))
 
 ########## DISA (ENCRYPTION TEST) ##########
@@ -1624,6 +1629,9 @@ CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_ns.o
 endif
 ifeq ($(CONFIG_WLAN_FEATURE_PACKET_FILTERING), y)
 CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o
+endif
+ifeq ($(CONFIG_WLAN_FEATURE_ICMP_OFFLOAD), y)
+CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_icmp.o
 endif
 endif
 

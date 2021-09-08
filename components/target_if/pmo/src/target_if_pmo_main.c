@@ -23,6 +23,7 @@
 
 #include "target_if_pmo.h"
 #include "wlan_pmo_common_public_struct.h"
+#include "wlan_pmo_icmp.h"
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 static inline
@@ -49,6 +50,17 @@ update_pmo_igmp_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 #else
 static inline void
 update_pmo_igmp_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
+{}
+#endif
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+static void tgt_if_pmo_icmp_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
+{
+	pmo_tx_ops->send_icmp_offload_req =
+		target_if_pmo_send_icmp_offload_req;
+}
+#else
+static inline void
+tgt_if_pmo_icmp_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 {}
 #endif
 void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
@@ -138,5 +150,6 @@ void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 	pmo_tx_ops->psoc_send_idle_roam_suspend_mode =
 		target_if_pmo_psoc_send_idle_monitor_cmd;
 	tgt_if_pmo_reg_pkt_filter_ops(pmo_tx_ops);
+	tgt_if_pmo_icmp_tx_ops(pmo_tx_ops);
 }
 

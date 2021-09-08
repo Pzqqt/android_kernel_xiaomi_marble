@@ -603,6 +603,8 @@
  * This ini is used to enable/disable firmware's capability of sending ICMP
  * response to clients.
  *
+ * Supported Feature: STA
+ *
  * Usage: External
  *
  * </ini>
