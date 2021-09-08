@@ -3560,3 +3560,16 @@ wmi_unified_send_set_halphy_cal(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef FEATURE_MEC_OFFLOAD
+QDF_STATUS
+wmi_unified_pdev_set_mec_timer(struct wmi_unified *wmi_handle,
+			       struct set_mec_timer_params *param)
+{
+	if (wmi_handle->ops->send_pdev_set_mec_timer_cmd)
+		return wmi_handle->ops->send_pdev_set_mec_timer_cmd(wmi_handle,
+								    param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

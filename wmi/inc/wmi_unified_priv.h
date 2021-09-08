@@ -449,6 +449,11 @@ QDF_STATUS
 			      struct roam_pmkid_req_event **list);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif
+#ifdef FEATURE_MEC_OFFLOAD
+QDF_STATUS
+(*send_pdev_set_mec_timer_cmd)(struct wmi_unified *wmi_handle,
+			       struct set_mec_timer_params *param);
+#endif
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
 				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				 struct vdev_create_params *param);

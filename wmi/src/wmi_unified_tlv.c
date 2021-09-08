@@ -14871,6 +14871,41 @@ static QDF_STATUS send_mws_coex_status_req_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef FEATURE_MEC_OFFLOAD
+static QDF_STATUS
+send_pdev_set_mec_timer_cmd_tlv(struct wmi_unified *wmi_handle,
+				struct set_mec_timer_params *param)
+{
+	wmi_pdev_mec_aging_timer_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err("wmi_buf_alloc failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_pdev_mec_aging_timer_config_cmd_fixed_param *)
+		wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_mec_aging_timer_config_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			wmi_pdev_mec_aging_timer_config_cmd_fixed_param));
+	cmd->pdev_id = param->pdev_id;
+	cmd->mec_aging_timer_threshold = param->mec_aging_timer_threshold;
+
+	wmi_mtrace(WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID, param->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID)) {
+		wmi_err("Failed to set mec aging timer param");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef WIFI_POS_CONVERGED
 /**
  * extract_oem_response_param_tlv() - Extract oem response params
@@ -16563,6 +16598,9 @@ struct wmi_ops tlv_ops =  {
 	.send_roam_scan_ch_list_req_cmd = send_roam_scan_ch_list_req_cmd_tlv,
 	.send_injector_config_cmd = send_injector_config_cmd_tlv,
 	.send_cp_stats_cmd = send_cp_stats_cmd_tlv,
+#ifdef FEATURE_MEC_OFFLOAD
+	.send_pdev_set_mec_timer_cmd = send_pdev_set_mec_timer_cmd_tlv,
+#endif
 #ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 	.extract_infra_cp_stats = extract_infra_cp_stats_tlv,
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
