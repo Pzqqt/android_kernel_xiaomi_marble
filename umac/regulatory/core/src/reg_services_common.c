@@ -139,28 +139,68 @@ static const struct bonded_channel_freq bonded_chan_160mhz_list_freq[] = {
 #endif /*CONFIG_BAND_6GHZ*/
 };
 
+#ifdef WLAN_FEATURE_11BE
+/* bonded_chan_320mhz_list_freq - List of 320MHz bonnded channel frequencies */
+static const struct bonded_channel_freq bonded_chan_320mhz_list_freq[] = {
+	{5500, 5800}, /* center freq: 5650 */
+#ifdef CONFIG_BAND_6GHZ
+	{5955, 6255}, /* center freq: 6105 */
+	{6115, 6415}, /* center freq: 6265 */
+	{6275, 6575}, /* center freq: 6425 */
+	{6435, 6735}, /* center freq: 6585 */
+	{6595, 6895}, /* center freq: 6745 */
+	{6755, 7055}  /* center freq: 6905 */
+#endif /*CONFIG_BAND_6GHZ*/
+};
+#endif
+
+/**
+ * struct bw_bonded_array_pair - Structure containing bandwidth, bonded_array
+ * corresponding to bandwidth and the size of the bonded array.
+ * @chwidth: channel width
+ * @bonded_chan_arr: bonded array corresponding to chwidth.
+ * @array_size: size of the bonded_chan_arr.
+ */
+struct bw_bonded_array_pair {
+	enum phy_ch_width chwidth;
+	const struct bonded_channel_freq *bonded_chan_arr;
+	uint16_t array_size;
+};
+
+/* Mapping of chwidth to bonded array and size of bonded array */
+static const
+struct bw_bonded_array_pair bw_bonded_array_pair_map[] = {
+#ifdef WLAN_FEATURE_11BE
+	{CH_WIDTH_320MHZ, bonded_chan_320mhz_list_freq,
+		QDF_ARRAY_SIZE(bonded_chan_320mhz_list_freq)},
+#endif
+	{CH_WIDTH_160MHZ, bonded_chan_160mhz_list_freq,
+		QDF_ARRAY_SIZE(bonded_chan_160mhz_list_freq)},
+	{CH_WIDTH_80P80MHZ, bonded_chan_80mhz_list_freq,
+		QDF_ARRAY_SIZE(bonded_chan_80mhz_list_freq)},
+	{CH_WIDTH_80MHZ, bonded_chan_80mhz_list_freq,
+		QDF_ARRAY_SIZE(bonded_chan_80mhz_list_freq)},
+	{CH_WIDTH_40MHZ, bonded_chan_40mhz_list_freq,
+		QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq)},
+};
+
 const struct bonded_channel_freq *
 reg_get_bonded_chan_entry(qdf_freq_t freq,
 			  enum phy_ch_width chwidth)
 {
 	const struct bonded_channel_freq *bonded_chan_arr;
-	uint16_t array_size, i;
+	uint16_t array_size, i, num_bws;
 
-	switch (chwidth) {
-	case CH_WIDTH_160MHZ:
-		bonded_chan_arr = bonded_chan_160mhz_list_freq;
-		array_size = QDF_ARRAY_SIZE(bonded_chan_160mhz_list_freq);
-		break;
-	case CH_WIDTH_80MHZ:
-	case CH_WIDTH_80P80MHZ:
-		bonded_chan_arr = bonded_chan_80mhz_list_freq;
-		array_size = QDF_ARRAY_SIZE(bonded_chan_80mhz_list_freq);
-		break;
-	case CH_WIDTH_40MHZ:
-		bonded_chan_arr = bonded_chan_40mhz_list_freq;
-		array_size = QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq);
-		break;
-	default:
+	num_bws = QDF_ARRAY_SIZE(bw_bonded_array_pair_map);
+	for (i = 0; i < num_bws; i++) {
+		if (chwidth == bw_bonded_array_pair_map[i].chwidth) {
+			bonded_chan_arr =
+				bw_bonded_array_pair_map[i].bonded_chan_arr;
+			array_size = bw_bonded_array_pair_map[i].array_size;
+			break;
+		}
+	}
+	if (i == num_bws) {
 		reg_debug("Could not find bonded_chan_array for chwidth %d",
 			  chwidth);
 		return NULL;
@@ -177,21 +217,6 @@ reg_get_bonded_chan_entry(qdf_freq_t freq,
 		  freq, chwidth);
 	return NULL;
 }
-
-#ifdef WLAN_FEATURE_11BE
-/* bonded_chan_320mhz_list_freq - List of 320MHz bonnded channel frequencies */
-static const struct bonded_channel_freq bonded_chan_320mhz_list_freq[] = {
-	{5500, 5800}, /* center freq: 5650 */
-#ifdef CONFIG_BAND_6GHZ
-	{5955, 6255}, /* center freq: 6105 */
-	{6115, 6415}, /* center freq: 6265 */
-	{6275, 6575}, /* center freq: 6425 */
-	{6435, 6735}, /* center freq: 6585 */
-	{6595, 6895}, /* center freq: 6745 */
-	{6755, 7055}  /* center freq: 6905 */
-#endif /*CONFIG_BAND_6GHZ*/
-};
-#endif
 
 #endif /*CONFIG_CHAN_FREQ_API*/
 

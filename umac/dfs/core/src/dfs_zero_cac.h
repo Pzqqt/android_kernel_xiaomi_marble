@@ -38,7 +38,13 @@
 #define OCAC_RESET 1
 #define OCAC_CANCEL 2
 
+#ifdef WLAN_FEATURE_11BE
+#define TREE_DEPTH_320                    5
+#define TREE_DEPTH_MAX                    TREE_DEPTH_320
+#else
 #define TREE_DEPTH_MAX                    TREE_DEPTH_160
+#endif
+
 #define TREE_DEPTH_160                    4
 #define TREE_DEPTH_80                     3
 #define TREE_DEPTH_40                     2
@@ -59,6 +65,8 @@
 #define DFS_CHWIDTH_80_VAL               80
 #define DFS_CHWIDTH_160_VAL             160
 #define DFS_CHWIDTH_165_VAL             165
+#define DFS_CHWIDTH_240_VAL             240
+#define DFS_CHWIDTH_320_VAL             320
 
 #define WEATHER_CHAN_START              120
 #define WEATHER_CHAN_END                128
@@ -85,10 +93,22 @@
 #define RESTRICTED_80P80_RIGHT_80_CENTER_CHAN 155
 #define RESTRICTED_80P80_LEFT_80_CENTER_FREQ  5690
 #define RESTRICTED_80P80_RIGHT_80_CENTER_FREQ 5775
-#define DEPTH_160_ROOT                        0
-#define DEPTH_80_ROOT                         1
-#define DEPTH_40_ROOT                         2
-#define DEPTH_20_ROOT                         3
+
+/* While building the precac tree with 320 MHz root, the center of the
+ * right side 160 MHz channel(which includes real IEEE channels 132, 136,
+ * 140, 144 and pseudo IEEE channels 148, 152, 156, 160)
+ */
+#define CENTER_OF_320_MHZ                     5650
+#define CENTER_OF_PSEUDO_160                  5730
+#define LAST_20_CENTER_OF_FIRST_160           5320
+#define FIRST_20_CENTER_OF_LAST_80            5745
+
+/* Depth of the tree of a given bandwidth. */
+#define DEPTH_320_ROOT                           0
+#define DEPTH_160_ROOT                           1
+#define DEPTH_80_ROOT                            2
+#define DEPTH_40_ROOT                            3
+#define DEPTH_20_ROOT                            4
 
 /**
  * struct precac_tree_node - Individual tree node structure for every node in
@@ -108,12 +128,12 @@ struct precac_tree_node {
 	struct precac_tree_node *left_child;
 	struct precac_tree_node *right_child;
 	uint8_t ch_ieee;
-	uint16_t ch_freq;
 	uint8_t n_caced_subchs;
 	uint8_t n_nol_subchs;
 	uint8_t n_valid_subchs;
-	uint8_t bandwidth;
 	uint8_t depth;
+	uint16_t bandwidth;
+	uint16_t ch_freq;
 };
 
 /**
@@ -944,6 +964,7 @@ static inline bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 #define NEXT_40_CHAN_FREQ_OFFSET               40
 #define NEXT_80_CHAN_FREQ_OFFSET               80
 #define NEXT_160_CHAN_FREQ_OFFSET             160
+#define NEXT_320_CHAN_FREQ_OFFSET             320
 
 #define WEATHER_CHAN_START_FREQ              5600
 #define WEATHER_CHAN_END_FREQ                5640
