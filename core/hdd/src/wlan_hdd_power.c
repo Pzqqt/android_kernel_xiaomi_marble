@@ -282,7 +282,7 @@ static void hdd_enable_igmp_offload(struct hdd_adapter *adapter)
 	}
 	status = hdd_send_igmp_offload_params(adapter, true);
 	if (status != QDF_STATUS_SUCCESS)
-		hdd_debug("Failed to enable gtk offload");
+		hdd_debug("Failed to enable igmp offload");
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 
