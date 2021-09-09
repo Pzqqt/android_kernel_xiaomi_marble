@@ -3072,13 +3072,6 @@ target_if_process_sfft_report_gen3(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
-						    &spectral->rparams);
-	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
-		spectral_err_rl("No valid Spectral mode for detector id %u",
-				p_sfft->fft_detector_id);
-		return QDF_STATUS_E_FAILURE;
-	}
 	/*
 	 * For easy comparision between MDK team and OS team, the MDK script
 	 * variable names have been used
@@ -3126,6 +3119,14 @@ target_if_process_sfft_report_gen3(
 		spectral_err("Invalid detector id %u, expected is 0 to %u",
 			     p_sfft->fft_detector_id,
 			     spectral->rparams.num_spectral_detectors);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
+						    &spectral->rparams);
+	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("No valid Spectral mode for detector id %u",
+				p_sfft->fft_detector_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
