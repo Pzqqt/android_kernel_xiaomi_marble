@@ -1592,7 +1592,7 @@ dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
 #endif
 
 #ifdef HTT_STATS_DEBUGFS_SUPPORT
-/* dp_send_htt_stats_dbgfs_msg() - Function to send htt data to upper layer
+/* dp_send_htt_stats_dbgfs_msg() - Function to send htt data to upper layer.
  * @pdev: dp pdev handle
  * @msg_word: HTT msg
  * @msg_len: Length of HTT msg sent
@@ -1632,6 +1632,67 @@ dp_htt_stats_dbgfs_send_msg(struct dp_pdev *pdev, uint32_t *msg_word,
 {
 }
 #endif /* HTT_STATS_DEBUGFS_SUPPORT */
+
+#ifdef WLAN_SYSFS_DP_STATS
+/* dp_htt_stats_sysfs_update_config() - Function to send htt data to upper layer.
+ * @pdev: dp pdev handle
+ *
+ * This function sets the process id and printing mode within the sysfs config
+ * struct. which enables DP_PRINT statements within this process to write to the
+ * console buffer provided by the user space.
+ *
+ * Return: None
+ */
+static inline void
+dp_htt_stats_sysfs_update_config(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	if (!soc) {
+		dp_htt_err("soc is null");
+		return;
+	}
+
+	if (!soc->sysfs_config) {
+		dp_htt_err("soc->sysfs_config is NULL");
+		return;
+	}
+
+	/* set sysfs config parameters */
+	soc->sysfs_config->process_id = qdf_get_current_pid();
+	soc->sysfs_config->printing_mode = PRINTING_MODE_ENABLED;
+}
+
+/*
+ * dp_htt_stats_sysfs_set_event() - Set sysfs stats event.
+ * @soc: soc handle.
+ * @msg_word: Pointer to htt msg word.
+ *
+ * @return: void
+ */
+static inline void
+dp_htt_stats_sysfs_set_event(struct dp_soc *soc, uint32_t *msg_word)
+{
+	int done = 0;
+
+	done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*(msg_word + 3));
+	if (done) {
+		if (qdf_event_set(&soc->sysfs_config->sysfs_txrx_fw_request_done))
+			dp_htt_err("%pK:event compl Fail to set event ",
+				   soc);
+	}
+}
+#else /* WLAN_SYSFS_DP_STATS */
+static inline void
+dp_htt_stats_sysfs_update_config(struct dp_pdev *pdev)
+{
+}
+
+static inline void
+dp_htt_stats_sysfs_set_event(struct dp_soc *dp_soc, uint32_t *msg_word)
+{
+}
+#endif /* WLAN_SYSFS_DP_STATS */
 
 /**
  * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
@@ -1696,6 +1757,9 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 			qdf_nbuf_free(htt_msg);
 			continue;
 		}
+
+		if (!cookie_val && (cookie_msb & DBG_SYSFS_STATS_COOKIE))
+			dp_htt_stats_sysfs_update_config(pdev);
 
 		if (cookie_msb & DBG_STATS_COOKIE_DP_STATS)
 			copy_stats = true;
@@ -1799,6 +1863,10 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 		if (htt_stats->msg_len >= DP_EXT_MSG_LENGTH) {
 			htt_stats->msg_len -= DP_EXT_MSG_LENGTH;
 		}
+
+		/* indicate event completion in case the event is done */
+		if (!cookie_val && (cookie_msb & DBG_SYSFS_STATS_COOKIE))
+			dp_htt_stats_sysfs_set_event(soc, msg_word);
 
 		qdf_nbuf_free(htt_msg);
 	}

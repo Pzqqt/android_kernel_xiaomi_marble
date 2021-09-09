@@ -580,6 +580,13 @@ struct cdp_cmn_ops {
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 	void (*txrx_drain)(ol_txrx_soc_handle soc);
 	int (*get_free_desc_poolsize)(struct cdp_soc_t *soc);
+#ifdef WLAN_SYSFS_DP_STATS
+	QDF_STATUS (*txrx_sysfs_fill_stats)(ol_txrx_soc_handle soc,
+					    char *buf, uint32_t buf_size);
+	QDF_STATUS (*txrx_sysfs_set_stat_type)(ol_txrx_soc_handle soc,
+					       uint32_t stat_type,
+					       uint32_t mac_id);
+#endif /* WLAN_SYSFS_DP_STATS */
 };
 
 struct cdp_ctrl_ops {

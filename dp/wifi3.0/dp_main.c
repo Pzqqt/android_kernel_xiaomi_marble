@@ -105,6 +105,11 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #define SET_PEER_REF_CNT_ONE(_peer)
 #endif
 
+#ifdef WLAN_SYSFS_DP_STATS
+/* sysfs event wait time for firmware stat request unit millseconds */
+#define WLAN_SYSFS_STAT_REQ_WAIT_MS 3000
+#endif
+
 QDF_COMPILE_TIME_ASSERT(max_rx_rings_check,
 			MAX_REO_DEST_RINGS == CDP_MAX_RX_RINGS);
 
@@ -158,6 +163,9 @@ QDF_COMPILE_TIME_ASSERT(hif_event_history_size,
 QDF_COMPILE_TIME_ASSERT(wlan_cfg_num_int_ctxs,
 			WLAN_CFG_INT_NUM_CONTEXTS_MAX >=
 			WLAN_CFG_INT_NUM_CONTEXTS);
+
+static QDF_STATUS dp_sysfs_deinitialize_stats(struct dp_soc *soc_hdl);
+static QDF_STATUS dp_sysfs_initialize_stats(struct dp_soc *soc_hdl);
 
 static void dp_pdev_srng_deinit(struct dp_pdev *pdev);
 static QDF_STATUS dp_pdev_srng_init(struct dp_pdev *pdev);
@@ -5350,6 +5358,7 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 
 	soc->arch_ops.txrx_soc_detach(soc);
 
+	dp_sysfs_deinitialize_stats(soc);
 	dp_soc_swlm_detach(soc);
 	dp_soc_tx_desc_sw_pools_free(soc);
 	dp_soc_srng_free(soc);
@@ -9436,25 +9445,91 @@ dp_set_pdev_dscp_tid_map_wifi3(struct cdp_soc_t *soc_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SYSFS_DP_STATS
+/*
+ * dp_sysfs_event_trigger(): Trigger event to wait for firmware
+ * stats request response.
+ * @soc: soc handle
+ * @cookie_val: cookie value
+ *
+ * @Return: QDF_STATUS
+ */
+static QDF_STATUS
+dp_sysfs_event_trigger(struct dp_soc *soc, uint32_t cookie_val)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	/* wait for firmware response for sysfs stats request */
+	if (cookie_val == DBG_SYSFS_STATS_COOKIE) {
+		if (!soc) {
+			dp_cdp_err("soc is NULL");
+			return QDF_STATUS_E_FAILURE;
+		}
+		/* wait for event completion */
+		status = qdf_wait_single_event(&soc->sysfs_config->sysfs_txrx_fw_request_done,
+					       WLAN_SYSFS_STAT_REQ_WAIT_MS);
+		if (status == QDF_STATUS_SUCCESS)
+			dp_cdp_info("sysfs_txrx_fw_request_done event completed");
+		else if (status == QDF_STATUS_E_TIMEOUT)
+			dp_cdp_warn("sysfs_txrx_fw_request_done event expired");
+		else
+			dp_cdp_warn("sysfs_txrx_fw_request_done event erro code %d", status);
+	}
+
+	return status;
+}
+#else /* WLAN_SYSFS_DP_STATS */
+/*
+ * dp_sysfs_event_trigger(): Trigger event to wait for firmware
+ * stats request response.
+ * @soc: soc handle
+ * @cookie_val: cookie value
+ *
+ * @Return: QDF_STATUS
+ */
+static QDF_STATUS
+dp_sysfs_event_trigger(struct dp_soc *soc, uint32_t cookie_val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SYSFS_DP_STATS */
+
 /**
- * dp_fw_stats_process(): Process TxRX FW stats request
+ * dp_fw_stats_process(): Process TXRX FW stats request.
  * @vdev_handle: DP VDEV handle
  * @req: stats request
  *
- * return: int
+ * return: QDF_STATUS
  */
-static int dp_fw_stats_process(struct dp_vdev *vdev,
-			       struct cdp_txrx_stats_req *req)
+static QDF_STATUS
+dp_fw_stats_process(struct dp_vdev *vdev,
+		    struct cdp_txrx_stats_req *req)
 {
 	struct dp_pdev *pdev = NULL;
+	struct dp_soc *soc = NULL;
 	uint32_t stats = req->stats;
 	uint8_t mac_id = req->mac_id;
+	uint32_t cookie_val = DBG_STATS_COOKIE_DEFAULT;
 
 	if (!vdev) {
 		DP_TRACE(NONE, "VDEV not found");
-		return 1;
+		return QDF_STATUS_E_FAILURE;
 	}
+
 	pdev = vdev->pdev;
+	if (!pdev) {
+		DP_TRACE(NONE, "PDEV not found");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc = pdev->soc;
+	if (!soc) {
+		DP_TRACE(NONE, "soc not found");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* In case request is from host sysfs for displaying stats on console */
+	if (req->cookie_val == DBG_SYSFS_STATS_COOKIE)
+		cookie_val = DBG_SYSFS_STATS_COOKIE;
 
 	/*
 	 * For HTT_DBG_EXT_STATS_RESET command, FW need to config
@@ -9476,16 +9551,20 @@ static int dp_fw_stats_process(struct dp_vdev *vdev,
 	}
 
 	if (req->stats == (uint8_t)HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT) {
-		return dp_h2t_ext_stats_msg_send(pdev,
-				HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT,
-				req->param0, req->param1, req->param2,
-				req->param3, 0, DBG_STATS_COOKIE_DEFAULT,
-				mac_id);
+		dp_h2t_ext_stats_msg_send(pdev,
+					  HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT,
+					  req->param0, req->param1, req->param2,
+					  req->param3, 0, cookie_val,
+					  mac_id);
 	} else {
-		return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
-				req->param1, req->param2, req->param3,
-				0, DBG_STATS_COOKIE_DEFAULT, mac_id);
+		dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
+					  req->param1, req->param2, req->param3,
+					  0, cookie_val, mac_id);
 	}
+
+	dp_sysfs_event_trigger(soc, cookie_val);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -9627,6 +9706,202 @@ static QDF_STATUS dp_txrx_dump_stats(struct cdp_soc_t *psoc, uint16_t value,
 	return status;
 
 }
+
+#ifdef WLAN_SYSFS_DP_STATS
+static
+void dp_sysfs_get_stat_type(struct dp_soc *soc, uint32_t *mac_id,
+			    uint32_t *stat_type)
+{
+	qdf_spinlock_acquire(&soc->sysfs_config->rw_stats_lock);
+	*stat_type = soc->sysfs_config->stat_type_requested;
+	*mac_id   = soc->sysfs_config->mac_id;
+
+	qdf_spinlock_release(&soc->sysfs_config->rw_stats_lock);
+}
+
+static
+void dp_sysfs_update_config_buf_params(struct dp_soc *soc,
+				       uint32_t curr_len,
+				       uint32_t max_buf_len,
+				       char *buf)
+{
+	qdf_spinlock_acquire(&soc->sysfs_config->sysfs_write_user_buffer);
+	/* set sysfs_config parameters */
+	soc->sysfs_config->buf = buf;
+	soc->sysfs_config->curr_buffer_length = curr_len;
+	soc->sysfs_config->max_buffer_length = max_buf_len;
+	qdf_spinlock_release(&soc->sysfs_config->sysfs_write_user_buffer);
+}
+
+static
+QDF_STATUS dp_sysfs_fill_stats(ol_txrx_soc_handle soc_hdl,
+			       char *buf, uint32_t buf_size)
+{
+	uint32_t mac_id = 0;
+	uint32_t stat_type = 0;
+	uint32_t fw_stats = 0;
+	uint32_t host_stats = 0;
+	enum cdp_stats stats;
+	struct cdp_txrx_stats_req req;
+	struct dp_soc *soc = NULL;
+
+	if (!soc_hdl) {
+		dp_cdp_err("%pK: soc_hdl is NULL", soc_hdl);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	soc = cdp_soc_t_to_dp_soc(soc_hdl);
+
+	if (!soc) {
+		dp_cdp_err("%pK: soc is NULL", soc);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dp_sysfs_get_stat_type(soc, &mac_id, &stat_type);
+
+	stats = stat_type;
+	if (stats >= CDP_TXRX_MAX_STATS) {
+		dp_cdp_info("sysfs stat type requested is invalid");
+		return QDF_STATUS_E_INVAL;
+	}
+	/*
+	 * DP_CURR_FW_STATS_AVAIL: no of FW stats currently available
+	 *			has to be updated if new FW HTT stats added
+	 */
+	if (stats > CDP_TXRX_MAX_STATS)
+		stats = stats + DP_CURR_FW_STATS_AVAIL - DP_HTT_DBG_EXT_STATS_MAX;
+
+	/* build request */
+	fw_stats = dp_stats_mapping_table[stats][STATS_FW];
+	host_stats = dp_stats_mapping_table[stats][STATS_HOST];
+
+	req.stats = stat_type;
+	req.mac_id = mac_id;
+	/* request stats to be printed */
+	qdf_mutex_acquire(&soc->sysfs_config->sysfs_read_lock);
+
+	if (fw_stats != TXRX_FW_STATS_INVALID) {
+		/* update request with FW stats type */
+		req.cookie_val = DBG_SYSFS_STATS_COOKIE;
+	} else if ((host_stats != TXRX_HOST_STATS_INVALID) &&
+			(host_stats <= TXRX_HOST_STATS_MAX)) {
+		req.cookie_val = DBG_STATS_COOKIE_DEFAULT;
+		soc->sysfs_config->process_id = qdf_get_current_pid();
+		soc->sysfs_config->printing_mode = PRINTING_MODE_ENABLED;
+	}
+
+	dp_sysfs_update_config_buf_params(soc, 0, buf_size, buf);
+
+	dp_txrx_stats_request(soc_hdl, mac_id, &req);
+	soc->sysfs_config->process_id = 0;
+	soc->sysfs_config->printing_mode = PRINTING_MODE_DISABLED;
+
+	dp_sysfs_update_config_buf_params(soc, 0, 0, NULL);
+
+	qdf_mutex_release(&soc->sysfs_config->sysfs_read_lock);
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS dp_sysfs_set_stat_type(ol_txrx_soc_handle soc_hdl,
+				  uint32_t stat_type, uint32_t mac_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+
+	if (!soc_hdl) {
+		dp_cdp_err("%pK: soc is NULL", soc);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spinlock_acquire(&soc->sysfs_config->rw_stats_lock);
+
+	soc->sysfs_config->stat_type_requested = stat_type;
+	soc->sysfs_config->mac_id = mac_id;
+
+	qdf_spinlock_release(&soc->sysfs_config->rw_stats_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS dp_sysfs_initialize_stats(struct dp_soc *soc_hdl)
+{
+	struct dp_soc *soc;
+	QDF_STATUS status;
+
+	if (!soc_hdl) {
+		dp_cdp_err("%pK: soc_hdl is NULL", soc_hdl);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	soc = soc_hdl;
+
+	soc->sysfs_config = qdf_mem_malloc(sizeof(struct sysfs_stats_config));
+	if (!soc->sysfs_config) {
+		dp_cdp_err("failed to allocate memory for sysfs_config no memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = qdf_event_create(&soc->sysfs_config->sysfs_txrx_fw_request_done);
+	/* create event for fw stats request from sysfs */
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_cdp_err("failed to create event sysfs_txrx_fw_request_done");
+		qdf_mem_free(soc->sysfs_config);
+		soc->sysfs_config = NULL;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_spinlock_create(&soc->sysfs_config->rw_stats_lock);
+	qdf_mutex_create(&soc->sysfs_config->sysfs_read_lock);
+	qdf_spinlock_create(&soc->sysfs_config->sysfs_write_user_buffer);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS dp_sysfs_deinitialize_stats(struct dp_soc *soc_hdl)
+{
+	struct dp_soc *soc;
+	QDF_STATUS status;
+
+	if (!soc_hdl) {
+		dp_cdp_err("%pK: soc_hdl is NULL", soc_hdl);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	soc = soc_hdl;
+	if (!soc->sysfs_config) {
+		dp_cdp_err("soc->sysfs_config is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = qdf_event_destroy(&soc->sysfs_config->sysfs_txrx_fw_request_done);
+	if (status != QDF_STATUS_SUCCESS)
+		dp_cdp_err("Failed to detroy event sysfs_txrx_fw_request_done ");
+
+	qdf_mutex_destroy(&soc->sysfs_config->sysfs_read_lock);
+	qdf_spinlock_destroy(&soc->sysfs_config->rw_stats_lock);
+	qdf_spinlock_destroy(&soc->sysfs_config->sysfs_write_user_buffer);
+
+	qdf_mem_free(soc->sysfs_config);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else /* WLAN_SYSFS_DP_STATS */
+
+static
+QDF_STATUS dp_sysfs_deinitialize_stats(struct dp_soc *soc_hdl)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS dp_sysfs_initialize_stats(struct dp_soc *soc_hdl)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SYSFS_DP_STATS */
 
 /**
  * dp_txrx_clear_dump_stats() - clear dumpStats
@@ -10788,6 +11063,10 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 #if defined(FEATURE_RUNTIME_PM) || defined(DP_POWER_SAVE)
 	.txrx_drain = dp_drain_txrx,
 #endif
+#ifdef WLAN_SYSFS_DP_STATS
+	.txrx_sysfs_fill_stats = dp_sysfs_fill_stats,
+	.txrx_sysfs_set_stat_type = dp_sysfs_set_stat_type,
+#endif /* WLAN_SYSFS_DP_STATS */
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
@@ -11771,6 +12050,11 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			dp_err("failed to attach monitor");
 			goto fail6;
 		}
+	}
+
+	if (dp_sysfs_initialize_stats(soc) != QDF_STATUS_SUCCESS) {
+		dp_err("failed to initialize dp stats sysfs file");
+		dp_sysfs_deinitialize_stats(soc);
 	}
 
 	dp_soc_swlm_attach(soc);

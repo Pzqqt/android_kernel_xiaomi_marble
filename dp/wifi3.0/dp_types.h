@@ -1664,6 +1664,43 @@ struct dp_soc_features {
 	uint8_t pn_in_reo_dest;
 };
 
+enum sysfs_printing_mode {
+	PRINTING_MODE_DISABLED = 0,
+	PRINTING_MODE_ENABLED
+};
+
+#ifdef WLAN_SYSFS_DP_STATS
+/**
+ * struct sysfs_stats_config: Data structure holding stats sysfs config.
+ * @rw_stats_lock: Lock to read and write to stat_type and pdev_id.
+ * @sysfs_read_lock: Lock held while another stat req is being executed.
+ * @sysfs_write_user_buffer: Lock to change buff len, max buf len
+ * and *buf.
+ * @sysfs_txrx_fw_request_done: Event to wait for firmware response.
+ * @stat_type_requested: stat type requested.
+ * @mac_id: mac id for which stat type are requested.
+ * @printing_mode: Should a print go through.
+ * @process_id: Process allowed to write to buffer.
+ * @curr_buffer_length: Curr length of buffer written
+ * @max_buffer_length: Max buffer length.
+ * @buf: Sysfs buffer.
+ */
+struct sysfs_stats_config {
+	/* lock held to read stats */
+	qdf_spinlock_t rw_stats_lock;
+	qdf_mutex_t sysfs_read_lock;
+	qdf_spinlock_t sysfs_write_user_buffer;
+	qdf_event_t sysfs_txrx_fw_request_done;
+	uint32_t stat_type_requested;
+	uint32_t mac_id;
+	enum sysfs_printing_mode printing_mode;
+	int process_id;
+	uint16_t curr_buffer_length;
+	uint16_t max_buffer_length;
+	char *buf;
+};
+#endif
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/**
@@ -1896,7 +1933,10 @@ struct dp_soc {
 
 	/* SoC level data path statistics */
 	struct dp_soc_stats stats;
-
+#ifdef WLAN_SYSFS_DP_STATS
+	/* sysfs config for DP stats */
+	struct sysfs_stats_config *sysfs_config;
+#endif
 	/* timestamp to keep track of msdu buffers received on reo err ring */
 	uint64_t rx_route_err_start_pkt_ts;
 

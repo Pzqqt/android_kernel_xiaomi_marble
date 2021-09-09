@@ -2411,7 +2411,7 @@ struct cdp_txrx_stats_req {
 	uint32_t	param3;
 	uint32_t	cookie_val;
 	uint8_t		mac_id;
-	char *peer_addr;
+	char		*peer_addr;
 };
 
 /**
