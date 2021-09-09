@@ -12810,6 +12810,11 @@ typedef enum {
      */
     WMI_VDEV_PARAM_SMART_MONITOR_CONFIG,     /* 0xA9  */
 
+    /** Value of MAX modulated DTIM in ms to be applied
+     *  in Suspend mode. This parameter will override
+     *  the value of WMI_VDEV_PARAM_MAX_LI_OF_MODDTIM
+     */
+    WMI_VDEV_PARAM_MAX_LI_OF_MODDTIM_MS,     /* 0xAA */
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
