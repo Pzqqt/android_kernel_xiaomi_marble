@@ -1883,13 +1883,11 @@ struct cm_roam_scan_ch_resp {
  * enum roam_dispatcher_events - Roam events to post to scheduler thread
  * @ROAM_EVENT_INVALID: Invalid event
  * @ROAM_PMKID_REQ_EVENT: Roam pmkid request event
- * @ROAM_EVENT: Roam event
  * @ROAM_VDEV_DISCONNECT_EVENT: Roam disconnect event
  */
 enum roam_dispatcher_events {
 	ROAM_EVENT_INVALID,
 	ROAM_PMKID_REQ_EVENT,
-	ROAM_EVENT,
 	ROAM_VDEV_DISCONNECT_EVENT,
 };
 #endif
