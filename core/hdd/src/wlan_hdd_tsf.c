@@ -1133,11 +1133,9 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter)
 			break;
 		}
 		hdd_warn("Reach the max continuous error count");
-		/*
-		 * fall through:
-		 * If reach MAX_CONTINUOUS_ERROR_CNT, treat it as a
-		 * valid pair
-		 */
+
+		/* If reach MAX_CONTINUOUS_ERROR_CNT, treat it as valid pair */
+		/* fallthrough */
 	case HDD_TS_STATUS_READY:
 		adapter->last_target_time = adapter->cur_target_time;
 		adapter->last_target_global_tsf_time =
