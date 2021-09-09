@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -413,13 +413,17 @@
 #define WLAN_CFG_PKTLOG_MIN_BUFFER_SIZE 1
 #define WLAN_CFG_PKTLOG_MAX_BUFFER_SIZE 10
 
-#ifdef QCA_WIFI_KIWI
+#ifdef IPA_OFFLOAD
 #define WLAN_CFG_NUM_REO_RINGS_MAP 0x7
 #else
 #define WLAN_CFG_NUM_REO_RINGS_MAP 0xF
 #endif
 #define WLAN_CFG_NUM_REO_RINGS_MAP_MIN 0x1
+#if defined(CONFIG_BERYLLIUM)
+#define WLAN_CFG_NUM_REO_RINGS_MAP_MAX 0xFF
+#else
 #define WLAN_CFG_NUM_REO_RINGS_MAP_MAX 0xF
+#endif
 
 #define WLAN_CFG_RADIO_0_DEFAULT_REO 0x1
 #define WLAN_CFG_RADIO_1_DEFAULT_REO 0x2

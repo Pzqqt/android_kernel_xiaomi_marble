@@ -1479,94 +1479,85 @@ void hal_compute_reo_remap_ix2_ix3_kiwi(uint32_t *ring_map,
 					uint32_t num_rings, uint32_t *remap1,
 					uint32_t *remap2)
 {
-	/*
-	 * The 4 bits REO destination ring value is defined as: 0: TCL
-	 * 1:SW1  2:SW2  3:SW3  4:SW4  5:Release  6:FW(WIFI)  7:SW5
-	 * 8:SW6 9:SW7  10:SW8  11: NOT_USED.
-	 *
-	 */
-	uint32_t reo_dest_ring_map[] = {REO_REMAP_SW1, REO_REMAP_SW2,
-					REO_REMAP_SW3, REO_REMAP_SW4,
-					REO_REMAP_SW5, REO_REMAP_SW6,
-					REO_REMAP_SW7, REO_REMAP_SW8};
 
 	switch (num_rings) {
+	/* should we have all the different possible ring configs */
 	default:
 	case 3:
-		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 19) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 20) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 21) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 22) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 23);
+		*remap1 = HAL_REO_REMAP_IX2(ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(ring_map[0], 19) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 20) |
+			  HAL_REO_REMAP_IX2(ring_map[2], 21) |
+			  HAL_REO_REMAP_IX2(ring_map[0], 22) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 23);
 
-		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 24) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 25) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 26) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 27) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 28) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 29) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 30) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 31);
+		*remap2 = HAL_REO_REMAP_IX3(ring_map[2], 24) |
+			  HAL_REO_REMAP_IX3(ring_map[0], 25) |
+			  HAL_REO_REMAP_IX3(ring_map[1], 26) |
+			  HAL_REO_REMAP_IX3(ring_map[2], 27) |
+			  HAL_REO_REMAP_IX3(ring_map[0], 28) |
+			  HAL_REO_REMAP_IX3(ring_map[1], 29) |
+			  HAL_REO_REMAP_IX3(ring_map[2], 30) |
+			  HAL_REO_REMAP_IX3(ring_map[0], 31);
 		break;
 	case 4:
-		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[3], 19) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 20) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 21) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 22) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[3], 23);
+		*remap1 = HAL_REO_REMAP_IX2(ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(ring_map[3], 19) |
+			  HAL_REO_REMAP_IX2(ring_map[0], 20) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 21) |
+			  HAL_REO_REMAP_IX2(ring_map[2], 22) |
+			  HAL_REO_REMAP_IX2(ring_map[3], 23);
 
-		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 24) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 25) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 26) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[3], 27) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 28) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 29) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 30) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[3], 31);
+		*remap2 = HAL_REO_REMAP_IX3(ring_map[0], 24) |
+			  HAL_REO_REMAP_IX3(ring_map[1], 25) |
+			  HAL_REO_REMAP_IX3(ring_map[2], 26) |
+			  HAL_REO_REMAP_IX3(ring_map[3], 27) |
+			  HAL_REO_REMAP_IX3(ring_map[0], 28) |
+			  HAL_REO_REMAP_IX3(ring_map[1], 29) |
+			  HAL_REO_REMAP_IX3(ring_map[2], 30) |
+			  HAL_REO_REMAP_IX3(ring_map[3], 31);
 		break;
 	case 6:
-		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[4], 19) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[5], 20) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[6], 21) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 22) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 23);
+		*remap1 = HAL_REO_REMAP_IX2(ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(ring_map[3], 19) |
+			  HAL_REO_REMAP_IX2(ring_map[4], 20) |
+			  HAL_REO_REMAP_IX2(ring_map[5], 21) |
+			  HAL_REO_REMAP_IX2(ring_map[0], 22) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 23);
 
-		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 24) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[4], 25) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[5], 26) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[6], 27) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 28) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 29) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 30) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[4], 31);
+		*remap2 = HAL_REO_REMAP_IX3(ring_map[2], 24) |
+			  HAL_REO_REMAP_IX3(ring_map[3], 25) |
+			  HAL_REO_REMAP_IX3(ring_map[4], 26) |
+			  HAL_REO_REMAP_IX3(ring_map[5], 27) |
+			  HAL_REO_REMAP_IX3(ring_map[0], 28) |
+			  HAL_REO_REMAP_IX3(ring_map[1], 29) |
+			  HAL_REO_REMAP_IX3(ring_map[2], 30) |
+			  HAL_REO_REMAP_IX3(ring_map[3], 31);
 		break;
 	case 8:
-		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[3], 19) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[4], 20) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[5], 21) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[6], 22) |
-			  HAL_REO_REMAP_IX2(reo_dest_ring_map[7], 23);
+		*remap1 = HAL_REO_REMAP_IX2(ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(ring_map[3], 19) |
+			  HAL_REO_REMAP_IX2(ring_map[4], 20) |
+			  HAL_REO_REMAP_IX2(ring_map[5], 21) |
+			  HAL_REO_REMAP_IX2(ring_map[6], 22) |
+			  HAL_REO_REMAP_IX2(ring_map[7], 23);
 
-		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 24) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 25) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 26) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[3], 27) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[4], 28) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[5], 29) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[6], 30) |
-			  HAL_REO_REMAP_IX3(reo_dest_ring_map[7], 31);
+		*remap2 = HAL_REO_REMAP_IX3(ring_map[0], 24) |
+			  HAL_REO_REMAP_IX3(ring_map[1], 25) |
+			  HAL_REO_REMAP_IX3(ring_map[2], 26) |
+			  HAL_REO_REMAP_IX3(ring_map[3], 27) |
+			  HAL_REO_REMAP_IX3(ring_map[4], 28) |
+			  HAL_REO_REMAP_IX3(ring_map[5], 29) |
+			  HAL_REO_REMAP_IX3(ring_map[6], 30) |
+			  HAL_REO_REMAP_IX3(ring_map[7], 31);
 		break;
 	}
 }

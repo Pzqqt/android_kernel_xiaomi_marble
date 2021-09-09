@@ -440,6 +440,7 @@ dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx_num)
 }
 #endif
 
+#ifdef IPA_OFFLOAD
 /**
  * dp_get_num_rx_contexts() - get number of RX contexts
  * @soc_hdl: cdp opaque soc handle
@@ -448,17 +449,51 @@ dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx_num)
  */
 static int dp_get_num_rx_contexts(struct cdp_soc_t *soc_hdl)
 {
-	int i;
-	int num_rx_contexts = 0;
-
+	int num_rx_contexts;
+	uint32_t reo_ring_map;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
-	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
-		if (wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, i))
-			num_rx_contexts++;
+	reo_ring_map = wlan_cfg_get_reo_rings_mapping(soc->wlan_cfg_ctx);
+
+	switch (soc->arch_id) {
+	case CDP_ARCH_TYPE_BE:
+		/* 2 REO rings are used for IPA */
+		reo_ring_map &=  ~(BIT(3) | BIT(7));
+
+		break;
+	case CDP_ARCH_TYPE_LI:
+		/* 1 REO ring is used for IPA */
+		reo_ring_map &=  ~BIT(3);
+		break;
+	default:
+		dp_err("unkonwn arch_id 0x%x", soc->arch_id);
+		QDF_BUG(0);
+	}
+	/*
+	 * qdf_get_hweight32 prefer over qdf_get_hweight8 in case map is scaled
+	 * in future
+	 */
+	num_rx_contexts = qdf_get_hweight32(reo_ring_map);
 
 	return num_rx_contexts;
 }
+#else
+static int dp_get_num_rx_contexts(struct cdp_soc_t *soc_hdl)
+{
+	int num_rx_contexts;
+	uint32_t reo_config;
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	reo_config = wlan_cfg_get_reo_rings_mapping(soc->wlan_cfg_ctx);
+	/*
+	 * qdf_get_hweight32 prefer over qdf_get_hweight8 in case map is scaled
+	 * in future
+	 */
+	num_rx_contexts = qdf_get_hweight32(reo_config);
+
+	return num_rx_contexts;
+}
+#endif
 
 #else
 
@@ -4026,26 +4061,29 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap0,
 			 uint32_t *remap1, uint32_t *remap2)
 {
-	uint32_t ring[8] = {REO_REMAP_SW1, REO_REMAP_SW2, REO_REMAP_SW3};
-	int target_type;
+	uint32_t ring[WLAN_CFG_NUM_REO_DEST_RING_MAX] = {
+				REO_REMAP_SW1, REO_REMAP_SW2, REO_REMAP_SW3,
+				REO_REMAP_SW5, REO_REMAP_SW6, REO_REMAP_SW7};
 
-	target_type = hal_get_target_type(soc->hal_soc);
-
-	switch (target_type) {
-	case TARGET_TYPE_KIWI:
+	switch (soc->arch_id) {
+	case CDP_ARCH_TYPE_BE:
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
 					      soc->num_reo_dest_rings -
 					      USE_2_IPA_RX_REO_RINGS, remap1,
 					      remap2);
 		break;
 
-	default:
+	case CDP_ARCH_TYPE_LI:
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
 					      soc->num_reo_dest_rings -
 					      USE_1_IPA_RX_REO_RING, remap1,
 					      remap2);
 		hal_compute_reo_remap_ix0(soc->hal_soc, remap0);
 		break;
+	default:
+		dp_err("unkonwn arch_id 0x%x", soc->arch_id);
+		QDF_BUG(0);
+
 	}
 
 	dp_debug("remap1 %x remap2 %x", *remap1, *remap2);
@@ -4125,6 +4163,29 @@ static uint8_t dp_reo_ring_selection(uint32_t value, uint32_t *ring)
 	uint8_t num = 0;
 
 	switch (value) {
+	/* should we have all the different possible ring configs */
+	case 0xFF:
+		num = 8;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW2;
+		ring[2] = REO_REMAP_SW3;
+		ring[3] = REO_REMAP_SW4;
+		ring[4] = REO_REMAP_SW5;
+		ring[5] = REO_REMAP_SW6;
+		ring[6] = REO_REMAP_SW7;
+		ring[7] = REO_REMAP_SW8;
+		break;
+
+	case 0x3F:
+		num = 6;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW2;
+		ring[2] = REO_REMAP_SW3;
+		ring[3] = REO_REMAP_SW4;
+		ring[4] = REO_REMAP_SW5;
+		ring[5] = REO_REMAP_SW6;
+		break;
+
 	case 0xF:
 		num = 4;
 		ring[0] = REO_REMAP_SW1;
@@ -4202,6 +4263,9 @@ static uint8_t dp_reo_ring_selection(uint32_t value, uint32_t *ring)
 		num = 1;
 		ring[0] = REO_REMAP_SW1;
 		break;
+	default:
+		dp_err("unkonwn reo ring map 0x%x", value);
+		QDF_BUG(0);
 	}
 	return num;
 }
@@ -4214,14 +4278,14 @@ bool dp_reo_remap_config(struct dp_soc *soc,
 	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 	uint32_t reo_config = wlan_cfg_get_reo_rings_mapping(soc->wlan_cfg_ctx);
 	uint8_t target_type, num;
-	uint32_t ring[4];
+	uint32_t ring[WLAN_CFG_NUM_REO_DEST_RING_MAX];
 	uint32_t value;
 
 	target_type = hal_get_target_type(soc->hal_soc);
 
 	switch (offload_radio) {
 	case dp_nss_cfg_default:
-		value = reo_config & 0xF;
+		value = reo_config & WLAN_CFG_NUM_REO_RINGS_MAP_MAX;
 		num = dp_reo_ring_selection(value, ring);
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
 					      num, remap1, remap2);
