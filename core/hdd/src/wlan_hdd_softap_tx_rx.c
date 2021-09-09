@@ -1506,9 +1506,17 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	return status;
 }
 
-QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
-				       struct qdf_mac_addr *sta_mac,
-				       enum ol_txrx_peer_state state)
+/**
+ * hdd_softap_change_per_sta_state() - Change the state of a SoftAP station
+ * @adapter: pointer to adapter context
+ * @sta_mac: MAC address of the station
+ * @state: new state of the station
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS hdd_softap_change_per_sta_state(struct hdd_adapter *adapter,
+						  struct qdf_mac_addr *sta_mac,
+						  enum ol_txrx_peer_state state)
 {
 	QDF_STATUS qdf_status;
 	struct hdd_station_info *sta_info;
@@ -1554,3 +1562,39 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	return qdf_status;
 }
 
+QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
+				       struct qdf_mac_addr *sta_mac,
+				       enum ol_txrx_peer_state state)
+{
+	struct qdf_mac_addr *mldaddr;
+	struct wlan_objmgr_peer *peer;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct hdd_context *hdd_ctx;
+
+	status = hdd_softap_change_per_sta_state(adapter, sta_mac, state);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (!hdd_ctx) {
+		hdd_err("hdd ctx is null");
+		return status;
+	}
+	peer = wlan_objmgr_get_peer_by_mac(hdd_ctx->psoc,
+					   sta_mac->bytes,
+					   WLAN_LEGACY_MAC_ID);
+
+	if (!peer) {
+		hdd_err("peer is null");
+		return status;
+	}
+	mldaddr = (struct qdf_mac_addr *)wlan_peer_mlme_get_mldaddr(peer);
+	if (mldaddr && !qdf_is_macaddr_zero(mldaddr))
+		status = hdd_softap_change_per_sta_state(adapter, mldaddr,
+							 state);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+
+	return status;
+}
