@@ -14982,6 +14982,8 @@ static uint32_t wmi_convert_fw_to_cm_trig_reason(uint32_t fw_trig_reason)
 		return ROAM_TRIGGER_REASON_WTC_BTM;
 	case WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT:
 		return ROAM_TRIGGER_REASON_PMK_TIMEOUT;
+	case WMI_ROAM_TRIGGER_REASON_BTC:
+		return ROAM_TRIGGER_REASON_BTC;
 	case WMI_ROAM_TRIGGER_EXT_REASON_MAX:
 		return ROAM_TRIGGER_REASON_MAX;
 	default:
@@ -15028,6 +15030,7 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	case WMI_ROAM_TRIGGER_REASON_IDLE:
 	case WMI_ROAM_TRIGGER_REASON_FORCED:
 	case WMI_ROAM_TRIGGER_REASON_UNIT_TEST:
+	case WMI_ROAM_TRIGGER_REASON_BTC:
 		return QDF_STATUS_SUCCESS;
 
 	case WMI_ROAM_TRIGGER_REASON_BTM:
