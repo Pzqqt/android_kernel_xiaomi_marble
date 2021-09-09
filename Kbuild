@@ -4,13 +4,18 @@ KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM=1
 
 ifeq ($(CONFIG_ARCH_WAIPIO), y)
 include $(VIDEO_ROOT)/config/waipio_video.conf
-LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/waipio_video.h
+LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/waipio_video.h \
+                   -I$(VIDEO_ROOT)/driver/platform/waipio/inc
+endif
+
+ifeq ($(CONFIG_ARCH_DIWALI), y)
+include $(VIDEO_ROOT)/config/diwali_video.conf
+LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/diwali_video.h \
+                   -I$(VIDEO_ROOT)/driver/platform/diwali/inc
 endif
 
 LINUXINCLUDE    += -I$(VIDEO_ROOT)/driver/vidc/inc \
-                   -I$(VIDEO_ROOT)/include/uapi/vidc \
-                   -I$(VIDEO_ROOT)/driver/platform/waipio/inc \
-                   -I$(VIDEO_ROOT)/driver/variant/iris2/inc
+                   -I$(VIDEO_ROOT)/include/uapi/vidc
 
 USERINCLUDE     += -I$(VIDEO_ROOT)/include/uapi/vidc/media \
                    -I$(VIDEO_ROOT)/include/uapi/vidc
@@ -21,7 +26,12 @@ ifeq ($(CONFIG_MSM_VIDC_WAIPIO), y)
 msm_video-objs += driver/platform/waipio/src/msm_vidc_waipio.o
 endif
 
+ifeq ($(CONFIG_MSM_VIDC_DIWALI), y)
+msm_video-objs += driver/platform/diwali/src/msm_vidc_diwali.o
+endif
+
 ifeq ($(CONFIG_MSM_VIDC_IRIS2), y)
+LINUXINCLUDE   += -I$(VIDEO_ROOT)/driver/variant/iris2/inc
 msm_video-objs += driver/variant/iris2/src/msm_vidc_buffer_iris2.o \
                   driver/variant/iris2/src/msm_vidc_power_iris2.o \
                   driver/variant/iris2/src/msm_vidc_iris2.o
