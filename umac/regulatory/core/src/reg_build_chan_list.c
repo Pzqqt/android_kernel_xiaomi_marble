@@ -2749,32 +2749,33 @@ static QDF_STATUS reg_fill_eirp_pwr_in_afc_chan_list(
 }
 
 /**
- * reg_find_chan_enum_for_6g() - Find 6G channel enum for a given frequency
- * in the input channel list
+ * reg_find_low_limit_chan_enum_for_6g() - Find 6G channel enum for a given 6G
+ * lower edge frequency in the input channel list
  * @chan_list: Pointer to regulatory channel list.
- * @freq: Channel frequency.
+ * @low_freq: Channel frequency.
  * @channel_enum: pointer to output channel enum.
  *
  * Return: None
  */
-static void reg_find_chan_enum_for_6g(
-		struct regulatory_channel *chan_list, qdf_freq_t freq,
+static void reg_find_low_limit_chan_enum_for_6g(
+		struct regulatory_channel *chan_list, qdf_freq_t low_freq,
 		uint32_t *channel_enum)
 {
 	enum channel_enum chan_enum;
-	uint16_t min_bw;
-	uint16_t max_bw;
+	uint16_t min_bw, max_bw, left_edge_of_min_band, left_edge_of_max_band;
 	qdf_freq_t center_freq;
 
 	for (chan_enum = 0; chan_enum < NUM_6GHZ_CHANNELS; chan_enum++) {
 		min_bw = chan_list[chan_enum].min_bw;
 		max_bw = chan_list[chan_enum].max_bw;
 		center_freq = chan_list[chan_enum].center_freq;
+		left_edge_of_min_band = center_freq - min_bw / 2;
 
-		if ((center_freq - min_bw / 2) >= freq) {
-			if ((center_freq - max_bw / 2) < freq) {
+		if ((left_edge_of_min_band) >= low_freq) {
+			left_edge_of_max_band = center_freq - max_bw / 2;
+			if (left_edge_of_max_band < low_freq) {
 				if (max_bw <= 20)
-					max_bw = ((center_freq - freq) * 2);
+					max_bw = ((center_freq - low_freq) * 2);
 				if (max_bw < min_bw)
 					max_bw = min_bw;
 				chan_list[chan_enum].max_bw = max_bw;
@@ -2782,6 +2783,49 @@ static void reg_find_chan_enum_for_6g(
 			*channel_enum = chan_enum;
 			break;
 		}
+	}
+}
+
+/**
+ * reg_find_high_limit_chan_enum_for_6g() - Find 6G channel enum for a given
+ * 6G higher edge frequency in the input channel list
+ * @chan_list: Pointer to regulatory channel list.
+ * @freq: Channel frequency.
+ * @channel_enum: pointer to output channel enum.
+ *
+ * Return: None
+ */
+static void reg_find_high_limit_chan_enum_for_6g(
+		struct regulatory_channel *chan_list,
+		qdf_freq_t high_freq,
+		uint32_t *high_limit)
+{
+	enum channel_enum chan_enum;
+	uint16_t min_bw, max_bw, right_edge_of_min_band, right_edge_of_max_band;
+	qdf_freq_t center_freq;
+
+	for (chan_enum = NUM_6GHZ_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
+		min_bw = chan_list[chan_enum].min_bw;
+		max_bw = chan_list[chan_enum].max_bw;
+		center_freq = chan_list[chan_enum].center_freq;
+		right_edge_of_min_band = center_freq + min_bw / 2;
+
+		if (right_edge_of_min_band <= high_freq) {
+			right_edge_of_max_band = center_freq + max_bw / 2;
+			if (right_edge_of_max_band > high_freq) {
+				if (max_bw <= 20)
+					max_bw = ((high_freq -
+						   center_freq) * 2);
+				if (max_bw < min_bw)
+					max_bw = min_bw;
+				chan_list[chan_enum].max_bw = max_bw;
+			}
+			*high_limit = chan_enum;
+			break;
+		}
+
+		if (chan_enum == 0)
+			break;
 	}
 }
 
@@ -2816,10 +2860,12 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 		uint32_t low_limit_enum, high_limit_enum;
 		uint8_t j;
 
-		reg_find_chan_enum_for_6g(afc_chan_list, freq_obj->low_freq,
-					  &low_limit_enum);
-		reg_find_chan_enum_for_6g(afc_chan_list, freq_obj->high_freq,
-					  &high_limit_enum);
+		reg_find_low_limit_chan_enum_for_6g(afc_chan_list,
+						    freq_obj->low_freq,
+						    &low_limit_enum);
+		reg_find_high_limit_chan_enum_for_6g(afc_chan_list,
+						     freq_obj->high_freq,
+						     &high_limit_enum);
 		for (j = low_limit_enum; j <= high_limit_enum; j++) {
 			afc_chan_list[j].state = CHANNEL_STATE_ENABLE;
 			afc_chan_list[j].chan_flags &=
