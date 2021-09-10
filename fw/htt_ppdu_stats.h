@@ -210,10 +210,13 @@ PREPACK struct htt_tx_ppdu_stats_info {
     A_UINT32 tx_ratecode:       8,
              is_ampdu:          1,
              ba_ack_failed:     2,
-             /*  0: 20 MHz
-                 1: 40 MHz
-                 2: 80 MHz
-                 3: 160 MHz or 80+80 MHz */
+             /* bw
+              *  0: 20 MHz
+              *  1: 40 MHz
+              *  2: 80 MHz
+              *  3: 160 MHz or 80+80 MHz
+              *  4: 320 MHz
+              */
              bw:                3,
              sgi:               1,
              skipped_rate_ctrl: 1,
@@ -424,6 +427,7 @@ enum HTT_PPDU_STATS_BW {
     HTT_PPDU_STATS_BANDWIDTH_160MHZ = 5, /* includes 80+80 */
     HTT_PPDU_STATS_BANDWIDTH_DYN    = 6,
     HTT_PPDU_STATS_BANDWIDTH_DYN_PATTERNS = 7,
+    HTT_PPDU_STATS_BANDWIDTH_320MHZ = 8,
 };
 typedef enum HTT_PPDU_STATS_BW HTT_PPDU_STATS_BW;
 
