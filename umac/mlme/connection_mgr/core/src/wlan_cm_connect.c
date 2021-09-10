@@ -462,15 +462,22 @@ void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
 static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 					struct cm_connect_req *req)
 {
+	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) != QDF_STA_MODE)
+		return;
+
 	wlan_vdev_obj_lock(cm_ctx->vdev);
 	if (req->cur_candidate->entry->ie_list.multi_link) {
 		/* Use link address for ML connection */
 		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
 					   cm_ctx->vdev->vdev_mlme.linkaddr);
+		wlan_vdev_mlme_feat_ext2_cap_set(cm_ctx->vdev,
+						 WLAN_VDEV_FEXT2_MLO);
+		mlme_debug("set link address for ML connection");
 	} else {
 		/* Use net_dev address for non-ML connection */
 		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
 					   cm_ctx->vdev->vdev_mlme.mldaddr);
+		mlme_debug("set net_dev address for non-ML connection");
 	}
 	wlan_vdev_obj_unlock(cm_ctx->vdev);
 }
