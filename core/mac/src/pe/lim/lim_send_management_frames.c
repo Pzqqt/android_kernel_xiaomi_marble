@@ -2356,7 +2356,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 #ifdef WLAN_FEATURE_11BE_MLO
-	populate_dot11f_assoc_req_mlo_ie(mac_ctx, pe_session, frm);
+	if ((wlan_vdev_mlme_get_opmode(pe_session->vdev) == QDF_STA_MODE) &&
+	    wlan_vdev_mlme_is_mlo_vdev(pe_session->vdev))
+		populate_dot11f_assoc_req_mlo_ie(mac_ctx, pe_session, frm);
 #endif
 	if (pe_session->is11Rconnection) {
 		struct bss_description *bssdescr;
