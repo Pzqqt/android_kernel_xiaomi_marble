@@ -190,9 +190,14 @@ static void _sde_rm_inc_resource_info_lm(struct sde_rm *rm,
 	struct sde_rm_hw_blk *blk2;
 	const struct sde_lm_cfg *lm_cfg, *lm_cfg2;
 
+	lm_cfg = to_sde_hw_mixer(blk->hw)->cap;
+
+	/* Do not track & expose dummy mixers */
+	if (lm_cfg->dummy_mixer)
+		return;
+
 	avail_res->num_lm++;
 
-	lm_cfg = to_sde_hw_mixer(blk->hw)->cap;
 	/* Check for 3d muxes by comparing paired lms */
 	list_for_each_entry(blk2, &rm->hw_blks[SDE_HW_BLK_LM], list) {
 		lm_cfg2 = to_sde_hw_mixer(blk2->hw)->cap;
@@ -215,9 +220,14 @@ static void _sde_rm_dec_resource_info_lm(struct sde_rm *rm,
 	struct sde_rm_hw_blk *blk2;
 	const struct sde_lm_cfg *lm_cfg, *lm_cfg2;
 
+	lm_cfg = to_sde_hw_mixer(blk->hw)->cap;
+
+	/* Do not track & expose dummy mixers */
+	if (lm_cfg->dummy_mixer)
+		return;
+
 	avail_res->num_lm--;
 
-	lm_cfg = to_sde_hw_mixer(blk->hw)->cap;
 	/* Check for 3d muxes by comparing paired lms */
 	list_for_each_entry(blk2, &rm->hw_blks[SDE_HW_BLK_LM], list) {
 		lm_cfg2 = to_sde_hw_mixer(blk2->hw)->cap;
@@ -1097,6 +1107,9 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 		if ((RM_RQ_CWB(reqs) && !cwb_pref) ||
 		    (RM_RQ_DCWB(reqs) && !dcwb_pref)) {
 			SDE_DEBUG("fail: cwb/dcwb supported lm not allocated\n");
+			return false;
+		} else if (!RM_RQ_DCWB(reqs) && dcwb_pref) {
+			SDE_DEBUG("fail: dcwb supported dummy lm incorrectly allocated\n");
 			return false;
 		}
 	} else if ((!is_conn_primary && lm_primary_pref) ||
