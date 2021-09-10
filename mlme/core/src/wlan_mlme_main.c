@@ -2965,9 +2965,14 @@ bool wlan_vdev_id_is_11n_allowed(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP) ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP) ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
-	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104))
-		is_11n_allowed = false;
-
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104)) {
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP);
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP);
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40);
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104);
+		if (!ucast_cipher)
+			is_11n_allowed = false;
+	}
 err:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
