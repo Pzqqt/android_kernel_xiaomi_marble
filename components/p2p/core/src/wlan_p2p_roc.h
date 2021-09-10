@@ -76,7 +76,7 @@ enum roc_state {
  * @vdev_id:     Vdev id on which this request has come
  * @scan_id:     Scan id given by scan component for this roc req
  * @tx_ctx:      TX context if this ROC is for tx MGMT
- * @chan:        Chan for which this RoC has been requested
+ * @chan_freq:   Chan frequency for which this RoC has been requested
  * @phy_mode:    PHY mode
  * @duration:    Duration for the RoC
  * @roc_type:    RoC type  User requested or internal
@@ -90,7 +90,7 @@ struct p2p_roc_context {
 	uint32_t vdev_id;
 	uint32_t scan_id;
 	void *tx_ctx;
-	qdf_freq_t chan;
+	qdf_freq_t chan_freq;
 	uint8_t phy_mode;
 	uint32_t duration;
 	enum roc_type roc_type;
@@ -160,9 +160,9 @@ struct p2p_roc_context *p2p_find_roc_by_tx_ctx(
 	struct p2p_soc_priv_obj *p2p_soc_obj, uint64_t cookie);
 
 /**
- * p2p_find_roc_by_chan() - Find out roc context by channel
+ * p2p_find_roc_by_chan_freq() - Find out roc context by channel
  * @p2p_soc_obj: p2p psoc private object
- * @chan: channel of the ROC
+ * @chan_freq: channel frequency of the ROC
  *
  * This function finds out roc context by channel from p2p psoc
  * private object
@@ -170,8 +170,8 @@ struct p2p_roc_context *p2p_find_roc_by_tx_ctx(
  * Return: Pointer to roc context - success
  *         NULL                   - failure
  */
-struct p2p_roc_context *p2p_find_roc_by_chan(
-	struct p2p_soc_priv_obj *p2p_soc_obj, uint8_t chan);
+struct p2p_roc_context *p2p_find_roc_by_chan_freq(
+	struct p2p_soc_priv_obj *p2p_soc_obj, qdf_freq_t chan_freq);
 
 /**
  * p2p_restart_roc_timer() - Restarts roc timer
