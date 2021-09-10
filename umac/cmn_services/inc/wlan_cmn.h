@@ -292,6 +292,7 @@
  * @WLAN_UMAC_COMP_REPEATER:      Repeater component
  * @WLAN_UMAC_COMP_MBSS:          MBSS Framework
  * @WLAN_UMAC_COMP_WIFI_RADAR:    WIFI RADAR component
+ * @WLAN_UMAC_COMP_TWT:           Target Wake Time (TWT) Component
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -342,6 +343,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_REPEATER           = 41,
 	WLAN_UMAC_COMP_MBSS               = 42,
 	WLAN_UMAC_COMP_WIFI_RADAR         = 43,
+	WLAN_UMAC_COMP_TWT                = 44,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
