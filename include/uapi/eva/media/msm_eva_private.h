@@ -179,8 +179,8 @@ struct eva_kmd_session_control {
 	__u32 ctrl_data[8];
 };
 
-#define MAX_HFI_FENCE_SIZE	16
-#define MAX_HFI_FENCE_OFFSET	(MAX_HFI_PKT_SIZE-MAX_HFI_FENCE_SIZE)
+#define MAX_HFI_FENCE_SIZE	64
+#define MAX_HFI_FENCE_OFFSET	MAX_HFI_PKT_SIZE
 struct eva_kmd_hfi_fence_packet {
 	__u32 pkt_data[MAX_HFI_FENCE_OFFSET];
 	__u32 fence_data[MAX_HFI_FENCE_SIZE];
