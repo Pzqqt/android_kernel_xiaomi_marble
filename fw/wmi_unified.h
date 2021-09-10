@@ -7680,6 +7680,53 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SCAN_RADIO_TX_ON_DFS,
 
+    /*
+     * Param to configure Minimum OBSS ppdu time below which
+     * spatial reuse will not happen over the TXOP duration of the OBSS frame.
+     * If the incoming OBSS frame ppdu duration is greater then the value
+     * configured, then spatial reuse can happen over the OBSS PPDU.
+     * The value is configured in microseconds.
+     */
+    WMI_PDEV_PARAM_OBSS_MIN_DURATION_CHECK_FOR_SR,
+
+    /*
+     * Param to Enable/Disable Truncate SR feature.
+     * PPDUs transmitted using SR opportunity will be truncated at the end
+     * of OBSS frame duration and will not extend beyond.
+     */
+    WMI_PDEV_PARAM_TRUNCATE_SR,
+
+    /* Parameter used to configure separate NON_SRG/SRG OBSS PD threshold for
+     * for Control Frame.
+     * (SRG = Spatial Reuse Group)
+     * The accepted values are in between 0x00 and 0xFF, inclusive.
+     * The parameter value is checked against the RSSI of the OBSS Control
+     * frame. If RSSI is below the parameter value, then the Control frame is
+     * aborted and NAV is ignored. Separate OBSS PD threshold for Control frame
+     * is added to account for the higher TX power used for such control frames
+     * when compared with data frames.
+     *
+     * The input value will be interpreted as a signed value in dBm units.
+     *
+     * The values will be reflected in the registers only if
+     * SRG / non-srg based spatial reuse is enabled via
+     * WMI_PDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD cmd.
+     * bit    | purpose
+     * -----------------
+     * 0  - 7 | Param Value for non-srg OBSS PD threshold for non-SRG
+     *        | control frames
+     * 8  - 15| Param Value for srg OBSS PD threshold for SRG control frames
+     * 16 - 29| Reserved
+     * 30     | Enable/Disable separate SRG based spatial reuse for OBSS
+     *        | control frames.
+     *        | If set to 0, ignore bits 8-15.
+     * 31     | Enable/Disable separate non-SRG based spatial reuse for OBSS
+     *        | control frames.
+     *        | If set to 0, ignore bits 0-7.
+     */
+    WMI_PDEV_PARAM_CTRL_FRAME_OBSS_PD_THRESHOLD,
+
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -7738,6 +7785,18 @@ typedef enum {
     #define WMI_PDEV_OBSS_PD_ENABLE_PER_AC_GET(per_ac_cfg) WMI_GET_BITS(per_ac_cfg, 0, 4)
 #define WMI_PDEV_SRP_ENABLE_PER_AC_SET(per_ac_cfg, value) WMI_SET_BITS(per_ac_cfg, 16, 4, value)
     #define WMI_PDEV_SRP_ENABLE_PER_AC_GET(per_ac_cfg) WMI_GET_BITS(per_ac_cfg, 16, 4)
+
+#define WMI_PDEV_IS_NON_SRG_SEP_PD_THRESH_CTRL_FRAME_ENABLED(pd_threshold_cfg) WMI_GET_BITS(pd_threshold_cfg, 31, 1)
+#define WMI_PDEV_NON_SRG_SEP_PD_THRESH_CTRL_FRAME_ENABLE(pd_threshold_cfg) WMI_SET_BITS(pd_threshold_cfg, 31, 1, 1)
+#define WMI_PDEV_NON_SRG_SEP_PD_THRESH_CTRL_FRAME_DISABLE(pd_threshold_cfg) WMI_SET_BITS(pd_threshold_cfg, 31, 1, 0)
+#define WMI_PDEV_NON_SRG_SEP_PD_THRESH_CTRL_FRAME_SET(pd_threshold_cfg, value) WMI_SET_BITS(pd_threshold_cfg, 0, 8, value)
+#define WMI_PDEV_NON_SRG_SEP_PD_THRESH_CTRL_FRAME_GET(pd_threshold_cfg) WMI_GET_BITS(pd_threshold_cfg, 0, 8)
+
+#define WMI_PDEV_IS_SRG_SEP_PD_THRESH_CTRL_FRAME_ENABLED(pd_threshold_cfg) WMI_GET_BITS(pd_threshold_cfg, 30, 1)
+#define WMI_PDEV_SRG_SEP_PD_THRESH_CTRL_FRAME_ENABLE(pd_threshold_cfg) WMI_SET_BITS(pd_threshold_cfg, 30, 1, 1)
+#define WMI_PDEV_SRG_SEP_PD_THRESH_CTRL_FRAME_DISABLE(pd_threshold_cfg) WMI_SET_BITS(pd_threshold_cfg, 30, 1, 0)
+#define WMI_PDEV_SRG_SEP_PD_THRESH_CTRL_FRAME_SET(pd_threshold_cfg, value) WMI_SET_BITS(pd_threshold_cfg, 8, 8, value)
+#define WMI_PDEV_SRG_SEP_PD_THRESH_CTRL_FRAME_GET(pd_threshold_cfg) WMI_GET_BITS(pd_threshold_cfg, 8, 8)
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param */
