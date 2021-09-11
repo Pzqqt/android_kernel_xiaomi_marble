@@ -35,23 +35,61 @@
 
 /* Output Reports */
 static const u8 JC_OUTPUT_RUMBLE_AND_SUBCMD	= 0x01;
+static const u8 JC_OUTPUT_FW_UPDATE_PKT		= 0x03;
+static const u8 JC_OUTPUT_RUMBLE_ONLY		= 0x10;
+static const u8 JC_OUTPUT_MCU_DATA		= 0x11;
 static const u8 JC_OUTPUT_USB_CMD		= 0x80;
 
 /* Subcommand IDs */
-static const u8 JC_SUBCMD_SET_PLAYER_LIGHTS	= 0x30;
-static const u8 JC_SUBCMD_SPI_FLASH_READ	= 0x10;
+static const u8 JC_SUBCMD_STATE			/*= 0x00*/;
+static const u8 JC_SUBCMD_MANUAL_BT_PAIRING	= 0x01;
+static const u8 JC_SUBCMD_REQ_DEV_INFO		= 0x02;
 static const u8 JC_SUBCMD_SET_REPORT_MODE	= 0x03;
+static const u8 JC_SUBCMD_TRIGGERS_ELAPSED	= 0x04;
+static const u8 JC_SUBCMD_GET_PAGE_LIST_STATE	= 0x05;
+static const u8 JC_SUBCMD_SET_HCI_STATE		= 0x06;
+static const u8 JC_SUBCMD_RESET_PAIRING_INFO	= 0x07;
+static const u8 JC_SUBCMD_LOW_POWER_MODE	= 0x08;
+static const u8 JC_SUBCMD_SPI_FLASH_READ	= 0x10;
+static const u8 JC_SUBCMD_SPI_FLASH_WRITE	= 0x11;
+static const u8 JC_SUBCMD_RESET_MCU		= 0x20;
+static const u8 JC_SUBCMD_SET_MCU_CONFIG	= 0x21;
+static const u8 JC_SUBCMD_SET_MCU_STATE		= 0x22;
+static const u8 JC_SUBCMD_SET_PLAYER_LIGHTS	= 0x30;
+static const u8 JC_SUBCMD_GET_PLAYER_LIGHTS	= 0x31;
+static const u8 JC_SUBCMD_SET_HOME_LIGHT	= 0x38;
+static const u8 JC_SUBCMD_ENABLE_IMU		= 0x40;
+static const u8 JC_SUBCMD_SET_IMU_SENSITIVITY	= 0x41;
+static const u8 JC_SUBCMD_WRITE_IMU_REG		= 0x42;
+static const u8 JC_SUBCMD_READ_IMU_REG		= 0x43;
+static const u8 JC_SUBCMD_ENABLE_VIBRATION	= 0x48;
+static const u8 JC_SUBCMD_GET_REGULATED_VOLTAGE	= 0x50;
 
 /* Input Reports */
+static const u8 JC_INPUT_BUTTON_EVENT		= 0x3F;
 static const u8 JC_INPUT_SUBCMD_REPLY		= 0x21;
 static const u8 JC_INPUT_IMU_DATA		= 0x30;
 static const u8 JC_INPUT_MCU_DATA		= 0x31;
 static const u8 JC_INPUT_USB_RESPONSE		= 0x81;
 
+/* Feature Reports */
+static const u8 JC_FEATURE_LAST_SUBCMD		= 0x02;
+static const u8 JC_FEATURE_OTA_FW_UPGRADE	= 0x70;
+static const u8 JC_FEATURE_SETUP_MEM_READ	= 0x71;
+static const u8 JC_FEATURE_MEM_READ		= 0x72;
+static const u8 JC_FEATURE_ERASE_MEM_SECTOR	= 0x73;
+static const u8 JC_FEATURE_MEM_WRITE		= 0x74;
+static const u8 JC_FEATURE_LAUNCH		= 0x75;
+
 /* USB Commands */
+static const u8 JC_USB_CMD_CONN_STATUS		= 0x01;
 static const u8 JC_USB_CMD_HANDSHAKE		= 0x02;
 static const u8 JC_USB_CMD_BAUDRATE_3M		= 0x03;
 static const u8 JC_USB_CMD_NO_TIMEOUT		= 0x04;
+static const u8 JC_USB_CMD_EN_TIMEOUT		= 0x05;
+static const u8 JC_USB_RESET			= 0x06;
+static const u8 JC_USB_PRE_HANDSHAKE		= 0x91;
+static const u8 JC_USB_SEND_UART		= 0x92;
 
 /* SPI storage addresses of factory calibration data */
 static const u16 JC_CAL_DATA_START		= 0x603d;
@@ -63,6 +101,11 @@ static const u16 JC_CAL_DATA_END		= 0x604e;
 static const u16 JC_MAX_STICK_MAG		= 32767;
 static const u16 JC_STICK_FUZZ			= 250;
 static const u16 JC_STICK_FLAT			= 500;
+
+/* Hat values for pro controller's d-pad */
+static const u16 JC_MAX_DPAD_MAG		= 1;
+static const u16 JC_DPAD_FUZZ			/*= 0*/;
+static const u16 JC_DPAD_FLAT			/*= 0*/;
 
 /* States for controller state machine */
 enum joycon_ctlr_state {
@@ -114,13 +157,13 @@ struct joycon_subcmd_request {
 	u8 packet_num; /* incremented every send */
 	u8 rumble_data[8];
 	u8 subcmd_id;
-	u8 data[0]; /* length depends on the subcommand */
+	u8 data[]; /* length depends on the subcommand */
 } __packed;
 
 struct joycon_subcmd_reply {
 	u8 ack; /* MSB 1 for ACK, 0 for NACK */
 	u8 id; /* id of requested subcmd */
-	u8 data[0]; /* will be at most 35 bytes */
+	u8 data[]; /* will be at most 35 bytes */
 } __packed;
 
 struct joycon_input_report {
@@ -418,18 +461,41 @@ static void joycon_parse_report(struct joycon_ctlr *ctlr,
 		/* report buttons */
 		input_report_key(dev, BTN_TL, btns & JC_BTN_L);
 		input_report_key(dev, BTN_TL2, btns & JC_BTN_ZL);
+		input_report_key(dev, BTN_SELECT, btns & JC_BTN_MINUS);
+		input_report_key(dev, BTN_THUMBL, btns & JC_BTN_LSTICK);
+		input_report_key(dev, BTN_Z, btns & JC_BTN_CAP);
+
 		if (id != USB_DEVICE_ID_NINTENDO_PROCON) {
 			/* Report the S buttons as the non-existent triggers */
 			input_report_key(dev, BTN_TR, btns & JC_BTN_SL_L);
 			input_report_key(dev, BTN_TR2, btns & JC_BTN_SR_L);
+
+			/* Report d-pad as digital buttons for the joy-cons */
+			input_report_key(dev, BTN_DPAD_DOWN,
+					 btns & JC_BTN_DOWN);
+			input_report_key(dev, BTN_DPAD_UP, btns & JC_BTN_UP);
+			input_report_key(dev, BTN_DPAD_RIGHT,
+					 btns & JC_BTN_RIGHT);
+			input_report_key(dev, BTN_DPAD_LEFT,
+					 btns & JC_BTN_LEFT);
+		} else {
+			int hatx = 0;
+			int haty = 0;
+
+			/* d-pad x */
+			if (btns & JC_BTN_LEFT)
+				hatx = -1;
+			else if (btns & JC_BTN_RIGHT)
+				hatx = 1;
+			input_report_abs(dev, ABS_HAT0X, hatx);
+
+			/* d-pad y */
+			if (btns & JC_BTN_UP)
+				haty = -1;
+			else if (btns & JC_BTN_DOWN)
+				haty = 1;
+			input_report_abs(dev, ABS_HAT0Y, haty);
 		}
-		input_report_key(dev, BTN_SELECT, btns & JC_BTN_MINUS);
-		input_report_key(dev, BTN_THUMBL, btns & JC_BTN_LSTICK);
-		input_report_key(dev, BTN_Z, btns & JC_BTN_CAP);
-		input_report_key(dev, BTN_DPAD_DOWN, btns & JC_BTN_DOWN);
-		input_report_key(dev, BTN_DPAD_UP, btns & JC_BTN_UP);
-		input_report_key(dev, BTN_DPAD_RIGHT, btns & JC_BTN_RIGHT);
-		input_report_key(dev, BTN_DPAD_LEFT, btns & JC_BTN_LEFT);
 	}
 	if (id != USB_DEVICE_ID_NINTENDO_JOYCONL) {
 		u16 raw_x;
@@ -471,7 +537,6 @@ static void joycon_parse_report(struct joycon_ctlr *ctlr,
 
 static const unsigned int joycon_button_inputs_l[] = {
 	BTN_SELECT, BTN_Z, BTN_THUMBL,
-	BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT,
 	BTN_TL, BTN_TL2,
 	0 /* 0 signals end of array */
 };
@@ -481,6 +546,11 @@ static const unsigned int joycon_button_inputs_r[] = {
 	BTN_SOUTH, BTN_EAST, BTN_NORTH, BTN_WEST,
 	BTN_TR, BTN_TR2,
 	0 /* 0 signals end of array */
+};
+
+/* We report joy-con d-pad inputs as buttons and pro controller as a hat. */
+static const unsigned int joycon_dpad_inputs_jc[] = {
+	BTN_DPAD_UP, BTN_DPAD_DOWN, BTN_DPAD_LEFT, BTN_DPAD_RIGHT,
 };
 
 static DEFINE_MUTEX(joycon_input_num_mutex);
@@ -520,7 +590,7 @@ static int joycon_input_create(struct joycon_ctlr *ctlr)
 	input_set_drvdata(ctlr->input, ctlr);
 
 
-	/* set up sticks */
+	/* set up sticks and buttons */
 	if (hdev->product != USB_DEVICE_ID_NINTENDO_JOYCONR) {
 		input_set_abs_params(ctlr->input, ABS_X,
 				     -JC_MAX_STICK_MAG, JC_MAX_STICK_MAG,
@@ -528,6 +598,24 @@ static int joycon_input_create(struct joycon_ctlr *ctlr)
 		input_set_abs_params(ctlr->input, ABS_Y,
 				     -JC_MAX_STICK_MAG, JC_MAX_STICK_MAG,
 				     JC_STICK_FUZZ, JC_STICK_FLAT);
+
+		for (i = 0; joycon_button_inputs_l[i] > 0; i++)
+			input_set_capability(ctlr->input, EV_KEY,
+					     joycon_button_inputs_l[i]);
+
+		/* configure d-pad differently for joy-con vs pro controller */
+		if (hdev->product != USB_DEVICE_ID_NINTENDO_PROCON) {
+			for (i = 0; joycon_dpad_inputs_jc[i] > 0; i++)
+				input_set_capability(ctlr->input, EV_KEY,
+						     joycon_dpad_inputs_jc[i]);
+		} else {
+			input_set_abs_params(ctlr->input, ABS_HAT0X,
+					     -JC_MAX_DPAD_MAG, JC_MAX_DPAD_MAG,
+					     JC_DPAD_FUZZ, JC_DPAD_FLAT);
+			input_set_abs_params(ctlr->input, ABS_HAT0Y,
+					     -JC_MAX_DPAD_MAG, JC_MAX_DPAD_MAG,
+					     JC_DPAD_FUZZ, JC_DPAD_FLAT);
+		}
 	}
 	if (hdev->product != USB_DEVICE_ID_NINTENDO_JOYCONL) {
 		input_set_abs_params(ctlr->input, ABS_RX,
@@ -536,18 +624,19 @@ static int joycon_input_create(struct joycon_ctlr *ctlr)
 		input_set_abs_params(ctlr->input, ABS_RY,
 				     -JC_MAX_STICK_MAG, JC_MAX_STICK_MAG,
 				     JC_STICK_FUZZ, JC_STICK_FLAT);
-	}
 
-	/* set up buttons */
-	if (hdev->product != USB_DEVICE_ID_NINTENDO_JOYCONR) {
-		for (i = 0; joycon_button_inputs_l[i] > 0; i++)
-			input_set_capability(ctlr->input, EV_KEY,
-					     joycon_button_inputs_l[i]);
-	}
-	if (hdev->product != USB_DEVICE_ID_NINTENDO_JOYCONL) {
 		for (i = 0; joycon_button_inputs_r[i] > 0; i++)
 			input_set_capability(ctlr->input, EV_KEY,
 					     joycon_button_inputs_r[i]);
+	}
+
+	/* Let's report joy-con S triggers separately */
+	if (hdev->product == USB_DEVICE_ID_NINTENDO_JOYCONL) {
+		input_set_capability(ctlr->input, EV_KEY, BTN_TR);
+		input_set_capability(ctlr->input, EV_KEY, BTN_TR2);
+	} else if (hdev->product == USB_DEVICE_ID_NINTENDO_JOYCONR) {
+		input_set_capability(ctlr->input, EV_KEY, BTN_TL);
+		input_set_capability(ctlr->input, EV_KEY, BTN_TL2);
 	}
 
 	ret = input_register_device(ctlr->input);
@@ -572,8 +661,6 @@ static int joycon_input_create(struct joycon_ctlr *ctlr)
 static int joycon_ctlr_read_handler(struct joycon_ctlr *ctlr, u8 *data,
 							      int size)
 {
-	int ret = 0;
-
 	if (data[0] == JC_INPUT_SUBCMD_REPLY || data[0] == JC_INPUT_IMU_DATA ||
 	    data[0] == JC_INPUT_MCU_DATA) {
 		if (size >= 12) /* make sure it contains the input report */
@@ -581,7 +668,7 @@ static int joycon_ctlr_read_handler(struct joycon_ctlr *ctlr, u8 *data,
 					    (struct joycon_input_report *)data);
 	}
 
-	return ret;
+	return 0;
 }
 
 static int joycon_ctlr_handle_event(struct joycon_ctlr *ctlr, u8 *data,
