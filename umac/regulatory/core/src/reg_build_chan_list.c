@@ -2477,6 +2477,9 @@ static void reg_disable_afc_mas_chan_list_channels(
 			afc_mas_chan_list[chan_idx].tx_power = 0;
 		}
 	}
+
+	qdf_mem_zero(pdev_priv_obj->afc_chan_list,
+		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
 }
 
 static void reg_free_expiry_afc_info(struct afc_regulatory_info *afc_info)
