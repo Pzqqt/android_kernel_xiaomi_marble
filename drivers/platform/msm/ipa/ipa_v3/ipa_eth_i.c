@@ -941,13 +941,13 @@ int ipa3_eth_connect(
 	net_dev = pipe->client_info->net_dev;
 
 	/* multiple attach support */
-	if (strnstr(net_dev->name, "eth0", strlen(net_dev->name))) {
+	if (strnstr(net_dev->name, STR_ETH0_IFACE, strlen(net_dev->name))) {
 		result = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH0, &vlan_mode);
 		if (result) {
 			IPAERR("Could not determine IPA VLAN mode\n");
 			return result;
 		}
-	} else if (strnstr(net_dev->name, "eth1", strlen(net_dev->name))) {
+	} else if (strnstr(net_dev->name, STR_ETH1_IFACE, strlen(net_dev->name))) {
 		result = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH1, &vlan_mode);
 		if (result) {
 			IPAERR("Could not determine IPA VLAN mode\n");
