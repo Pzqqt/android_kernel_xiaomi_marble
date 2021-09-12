@@ -8571,9 +8571,16 @@ wlan_get_ielen_from_bss_description(struct bss_description *bss_desc)
 
 	ieFields_offset = GET_FIELD_OFFSET(struct bss_description, ieFields);
 
-	if ((!bss_desc || !bss_desc->length) ||
-	    (bss_desc->length - sizeof(bss_desc->length) <= ieFields_offset))
+	if (!bss_desc) {
+		pe_err_rl("Bss_desc is NULL");
 		return 0;
+	}
+
+	if (bss_desc->length <= (ieFields_offset - sizeof(bss_desc->length))) {
+		pe_err_rl("Invalid bss_desc len:%d ie_fields_offset:%d",
+			  bss_desc->length, ieFields_offset);
+		return 0;
+	}
 
 	/*
 	 * Length of BSS desription is without length of
