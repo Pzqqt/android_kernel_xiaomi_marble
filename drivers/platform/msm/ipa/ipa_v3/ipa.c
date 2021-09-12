@@ -7343,9 +7343,11 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	struct gsi_per_props gsi_props;
 	struct ipa3_uc_hdlrs uc_hdlrs = { 0 };
 	struct ipa3_flt_tbl *flt_tbl;
+	struct ipa3_flt_tbl_nhash_lcl *lcl_tbl;
 	int i;
 	struct idr *idr;
 	bool reg = false;
+	enum ipa_ip_type ip;
 
 	if (ipa3_ctx == NULL) {
 		IPADBG("IPA driver haven't initialized\n");
@@ -7401,18 +7403,18 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		ipa3_ctx->smem_sz, ipa3_ctx->smem_restricted_bytes);
 
 	IPADBG("ip4_rt_hash=%u ip4_rt_nonhash=%u\n",
-		ipa3_ctx->ip4_rt_tbl_hash_lcl, ipa3_ctx->ip4_rt_tbl_nhash_lcl);
+		ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v4], ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v4]);
 
 	IPADBG("ip6_rt_hash=%u ip6_rt_nonhash=%u\n",
-		ipa3_ctx->ip6_rt_tbl_hash_lcl, ipa3_ctx->ip6_rt_tbl_nhash_lcl);
+		ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v6], ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v6]);
 
 	IPADBG("ip4_flt_hash=%u ip4_flt_nonhash=%u\n",
-		ipa3_ctx->ip4_flt_tbl_hash_lcl,
-		ipa3_ctx->ip4_flt_tbl_nhash_lcl);
+		ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v4],
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v4]);
 
 	IPADBG("ip6_flt_hash=%u ip6_flt_nonhash=%u\n",
-		ipa3_ctx->ip6_flt_tbl_hash_lcl,
-		ipa3_ctx->ip6_flt_tbl_nhash_lcl);
+		ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v6],
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v6]);
 
 	if (ipa3_ctx->smem_reqd_sz > ipa3_ctx->smem_sz) {
 		IPAERR("SW expect more core memory, needed %d, avail %d\n",
@@ -7479,51 +7481,43 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	idr = &(ipa3_ctx->flt_rule_ids[IPA_IP_v6]);
 	idr_init(idr);
 
+	INIT_LIST_HEAD(&ipa3_ctx->flt_tbl_nhash_lcl_list[IPA_IP_v4]);
+	INIT_LIST_HEAD(&ipa3_ctx->flt_tbl_nhash_lcl_list[IPA_IP_v6]);
+
 	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
 		if (!ipa_is_ep_support_flt(i))
 			continue;
 
-		flt_tbl = &ipa3_ctx->flt_tbl[i][IPA_IP_v4];
-		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
-		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
-			!ipa3_ctx->ip4_flt_tbl_hash_lcl;
+		for (ip = IPA_IP_v4; ip < IPA_IP_MAX; ip++) {
+			flt_tbl = &ipa3_ctx->flt_tbl[i][ip];
+			INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
+			flt_tbl->in_sys[IPA_RULE_HASHABLE] = !ipa3_ctx->flt_tbl_hash_lcl[ip];
 
-		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
-			all other EPs always place the table in DDR */
-		if (IPA_CLIENT_IS_ETH_PROD(i) ||
-			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
-			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
-			!ipa3_ctx->ip4_flt_tbl_nhash_lcl;
-		else
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
+			/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
+				all other EPs always place the table in DDR */
+			if (ipa3_ctx->flt_tbl_nhash_lcl[ip] &&
+			    (IPA_CLIENT_IS_ETH_PROD(i) ||
+			     ((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
+			      (i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))) {
+				flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = false;
+				lcl_tbl = kcalloc(1, sizeof(struct ipa3_flt_tbl_nhash_lcl),
+						  GFP_KERNEL);
+				WARN_ON(lcl_tbl);
+				if (likely(lcl_tbl)) {
+					lcl_tbl->tbl = flt_tbl;
+					/* Add to the head of the list, to be pulled first */
+					list_add(&lcl_tbl->link,
+						 &ipa3_ctx->flt_tbl_nhash_lcl_list[ip]);
+				}
+			} else
+				flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
 
-		/* Init force sys to false */
-		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
-		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
+			/* Init force sys to false */
+			flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
+			flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
 
-		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v4];
-
-		flt_tbl = &ipa3_ctx->flt_tbl[i][IPA_IP_v6];
-		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
-		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
-			!ipa3_ctx->ip6_flt_tbl_hash_lcl;
-
-		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
-			all other EPs always place the table in DDR */
-		if (IPA_CLIENT_IS_ETH_PROD(i) ||
-			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
-			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
-			!ipa3_ctx->ip6_flt_tbl_nhash_lcl;
-		else
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
-
-		/* Init force sys to false */
-		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
-		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
-
-		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v6];
+			flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[ip];
+		}
 	}
 
 	if (!ipa3_ctx->apply_rg10_wa) {

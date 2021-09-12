@@ -6605,19 +6605,20 @@ void _ipa_sram_settings_read_v3_0(void)
 		ipa3_ctx->hdr_proc_ctx_tbl.start_offset =
 			IPA_MEM_PART(modem_hdr_proc_ctx_size);
 	}
-	ipa3_ctx->ip4_rt_tbl_hash_lcl =	false;
-	ipa3_ctx->ip4_rt_tbl_nhash_lcl = false;
-	ipa3_ctx->ip6_rt_tbl_hash_lcl = false;
-	ipa3_ctx->ip6_rt_tbl_nhash_lcl = false;
-	ipa3_ctx->ip4_flt_tbl_hash_lcl = false;
-	ipa3_ctx->ip6_flt_tbl_hash_lcl = false;
+
+	ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v4] = false;
+	ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v4] = false;
+	ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v6] = false;
+	ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v6] = false;
+	ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v4] = false;
+	ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v6] = false;
 
 	if (ipa3_ctx->ipa_hw_type == IPA_HW_v5_0) {
-		ipa3_ctx->ip4_flt_tbl_nhash_lcl = true;
-		ipa3_ctx->ip6_flt_tbl_nhash_lcl = true;
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v4] = true;
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v6] = true;
 	} else {
-		ipa3_ctx->ip4_flt_tbl_nhash_lcl = false;
-		ipa3_ctx->ip6_flt_tbl_nhash_lcl = false;
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v4] = false;
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v6] = false;
 	}
 }
 

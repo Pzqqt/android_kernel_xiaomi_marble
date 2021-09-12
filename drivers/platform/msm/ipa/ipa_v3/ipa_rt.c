@@ -498,8 +498,8 @@ int __ipa_commit_rt_v3(enum ipa_ip_type ip)
 			IPA_MEM_PART(apps_v4_rt_hash_ofst);
 		lcl_nhash_bdy = ipa3_ctx->smem_restricted_bytes +
 			IPA_MEM_PART(apps_v4_rt_nhash_ofst);
-		lcl_hash = ipa3_ctx->ip4_rt_tbl_hash_lcl;
-		lcl_nhash = ipa3_ctx->ip4_rt_tbl_nhash_lcl;
+		lcl_hash = ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v4];
+		lcl_nhash = ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v4];
 		alloc_params.tbls_num = IPA_MEM_PART(v4_apps_rt_index_hi) -
 			IPA_MEM_PART(v4_apps_rt_index_lo) + 1;
 	} else {
@@ -516,8 +516,8 @@ int __ipa_commit_rt_v3(enum ipa_ip_type ip)
 			IPA_MEM_PART(apps_v6_rt_hash_ofst);
 		lcl_nhash_bdy = ipa3_ctx->smem_restricted_bytes +
 			IPA_MEM_PART(apps_v6_rt_nhash_ofst);
-		lcl_hash = ipa3_ctx->ip6_rt_tbl_hash_lcl;
-		lcl_nhash = ipa3_ctx->ip6_rt_tbl_nhash_lcl;
+		lcl_hash = ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v6];
+		lcl_nhash = ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v6];
 		alloc_params.tbls_num = IPA_MEM_PART(v6_apps_rt_index_hi) -
 			IPA_MEM_PART(v6_apps_rt_index_lo) + 1;
 	}
@@ -888,12 +888,8 @@ static struct ipa3_rt_tbl *__ipa_add_rt_tbl(enum ipa_ip_type ip,
 		strlcpy(entry->name, name, IPA_RESOURCE_NAME_MAX);
 		entry->set = set;
 		entry->cookie = IPA_RT_TBL_COOKIE;
-		entry->in_sys[IPA_RULE_HASHABLE] = (ip == IPA_IP_v4) ?
-			!ipa3_ctx->ip4_rt_tbl_hash_lcl :
-			!ipa3_ctx->ip6_rt_tbl_hash_lcl;
-		entry->in_sys[IPA_RULE_NON_HASHABLE] = (ip == IPA_IP_v4) ?
-			!ipa3_ctx->ip4_rt_tbl_nhash_lcl :
-			!ipa3_ctx->ip6_rt_tbl_nhash_lcl;
+		entry->in_sys[IPA_RULE_HASHABLE] = !ipa3_ctx->rt_tbl_hash_lcl[ip];
+		entry->in_sys[IPA_RULE_NON_HASHABLE] = !ipa3_ctx->rt_tbl_nhash_lcl[ip];
 		set->tbl_cnt++;
 		entry->rule_ids = &set->rule_ids;
 		list_add(&entry->link, &set->head_rt_tbl_list);

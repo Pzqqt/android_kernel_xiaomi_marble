@@ -307,5 +307,12 @@ int ipahal_rt_parse_hw_rule(u8 *rule_addr,
 int ipahal_flt_parse_hw_rule(u8 *rule_addr,
 	struct ipahal_flt_rule_entry *rule);
 
+/*
+ * ipa_fltrt_get_aligned_lcl_bdy_size() - Calculate real SRAM block aligned size
+ *  required for flt table bodies
+ * @total_sz_lcl_tbls: [in] The size in driver cashe
+ */
+u32 ipa_fltrt_get_aligned_lcl_bdy_size(u32 total_sz_lcl_tbls);
+
 
 #endif /* _IPAHAL_FLTRT_H_ */
