@@ -1200,6 +1200,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ctrl_path_awgn_stats_struct,
     WMITLV_TAG_STRUC_wmi_htt_msdu_idx_to_htt_msdu_qtype,
     WMITLV_TAG_STRUC_wmi_pdev_set_bios_interface_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_set_mu_snif_cmd_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1675,6 +1676,7 @@ typedef enum {
     OP(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID) \
     OP(WMI_REQUEST_THERMAL_STATS_CMDID) \
     OP(WMI_PDEV_SET_BIOS_INTERFACE_CMDID) \
+    OP(WMI_VDEV_SET_MU_SNIF_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4804,6 +4806,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID);
 #define WMITLV_TABLE_WMI_REQUEST_THERMAL_STATS_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_thermal_stats_cmd_fixed_param, wmi_thermal_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_THERMAL_STATS_CMDID);
+
+/** WMI cmd used to set mu sniffer param */
+#define WMITLV_TABLE_WMI_VDEV_SET_MU_SNIF_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_set_mu_snif_cmd_param, wmi_vdev_set_mu_snif_cmd_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, aids, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_MU_SNIF_CMDID);
 
 
 

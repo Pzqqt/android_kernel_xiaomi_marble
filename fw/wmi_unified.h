@@ -556,6 +556,8 @@ typedef enum {
     WMI_VDEV_IGMP_OFFLOAD_CMDID,
     /** Enable/Disable Intra Bss for each vdev */
     WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID,
+    /* set vdev mu sniffer param */
+    WMI_VDEV_SET_MU_SNIF_CMDID,
 
     /* peer specific commands */
 
@@ -29604,6 +29606,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_MLO_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_THERMAL_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_INTERFACE_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_SET_MU_SNIF_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -36058,6 +36061,28 @@ typedef struct {
      */
 } wmi_pdev_multiple_vdev_set_param_cmd_fixed_param;
 
+typedef enum {
+    WMI_MU_SNIF_DISABLE,
+    WMI_MU_SNIF_USER_INPUT,
+    WMI_MU_SNIF_WILDCARD,
+} WMI_MU_SNIF_MODE;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+      * WMITLV_TAG_STRUC_wmi_vdev_set_mu_snif_cmd_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /* MU sniffer mode - refer to WMI_MU_SNIF_MODE enum */
+    A_UINT32 mode;
+    /* max num of user to decode */
+    A_UINT32 max_num_user;
+/**
+ * TLV (tag length value) parameters follow setting MU sniffer command
+ * structure. The TLV's are:
+ * A_UINT32 aids[];
+ */
+} wmi_vdev_set_mu_snif_cmd_param;
 
 
 /* ADD NEW DEFS HERE */
