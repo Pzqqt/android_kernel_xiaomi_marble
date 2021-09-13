@@ -5900,8 +5900,8 @@ static QDF_STATUS send_oem_dma_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd = (uint8_t *) wmi_buf_data(buf);
 	qdf_mem_copy(cmd, cfg, sizeof(*cfg));
-	wmi_debug("Sending OEM Data Request to target, data len %lu"),
-		 sizeof(*cfg);
+	wmi_debug("Sending OEM Data Request to target, data len %lu",
+		 sizeof(*cfg));
 	wmi_mtrace(WMI_OEM_DMA_RING_CFG_REQ_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cfg),
 				WMI_OEM_DMA_RING_CFG_REQ_CMDID);
