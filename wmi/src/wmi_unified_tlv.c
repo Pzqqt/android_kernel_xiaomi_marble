@@ -7609,7 +7609,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_RSRC_CFG_HOST_SERVICE_FLAG_STA_TWT_SYNC_EVT_SUPPORT_SET(
 			resource_cfg->host_service_flags, 1);
 
-	WMI_TARGET_CAP_FLAGS_RX_PEER_METADATA_VERSION_SET(resource_cfg->flags2,
+	WMI_RSRC_CFG_FLAGS2_RX_PEER_METADATA_VERSION_SET(resource_cfg->flags2,
 						 tgt_res_cfg->target_cap_flags);
 }
 
