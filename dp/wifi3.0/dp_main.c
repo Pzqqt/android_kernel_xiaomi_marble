@@ -11776,6 +11776,12 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	wlan_minidump_log(soc, sizeof(*soc), soc->ctrl_psoc,
 			  WLAN_MD_DP_SOC, "dp_soc");
 
+	soc->hif_handle = hif_handle;
+
+	soc->hal_soc = hif_get_hal_handle(soc->hif_handle);
+	if (!soc->hal_soc)
+		goto fail0;
+
 	if (!QDF_IS_STATUS_SUCCESS(soc->arch_ops.txrx_soc_init(soc))) {
 		dp_err("unable to do target specific init");
 		goto fail0;
@@ -11791,11 +11797,6 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 		goto fail2;
 
 	htt_set_htc_handle(htt_soc, htc_handle);
-	soc->hif_handle = hif_handle;
-
-	soc->hal_soc = hif_get_hal_handle(soc->hif_handle);
-	if (!soc->hal_soc)
-		goto fail3;
 
 	dp_soc_cfg_init(soc);
 
@@ -11816,7 +11817,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	num_dp_msi = dp_get_num_msi_available(soc, soc->intr_mode);
 	if (num_dp_msi < 0) {
 		dp_init_err("%pK: dp_interrupt assignment failed", soc);
-		goto fail4;
+		goto fail3;
 	}
 
 	wlan_cfg_fill_interrupt_mask(soc->wlan_cfg_ctx, num_dp_msi,
@@ -11825,20 +11826,20 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	/* initialize WBM_IDLE_LINK ring */
 	if (dp_hw_link_desc_ring_init(soc)) {
 		dp_init_err("%pK: dp_hw_link_desc_ring_init failed", soc);
-		goto fail4;
+		goto fail3;
 	}
 
 	dp_link_desc_ring_replenish(soc, WLAN_INVALID_PDEV_ID);
 
 	if (dp_soc_srng_init(soc)) {
 		dp_init_err("%pK: dp_soc_srng_init failed", soc);
-		goto fail5;
+		goto fail4;
 	}
 
 	if (htt_soc_initialize(soc->htt_handle, soc->ctrl_psoc,
 			       htt_get_htc_handle(htt_soc),
 			       soc->hal_soc, soc->osdev) == NULL)
-		goto fail6;
+		goto fail5;
 
 	/* Initialize descriptors in TCL Rings */
 	for (i = 0; i < soc->num_tcl_data_rings; i++) {
@@ -11848,7 +11849,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 
 	if (dp_soc_tx_desc_sw_pools_init(soc)) {
 		dp_init_err("%pK: dp_tx_soc_attach failed", soc);
-		goto fail7;
+		goto fail6;
 	}
 
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx,
@@ -11961,14 +11962,12 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 		qdf_skb_total_mem_stats_read());
 
 	return soc;
-fail7:
-	htt_soc_htc_dealloc(soc->htt_handle);
 fail6:
-	dp_soc_srng_deinit(soc);
+	htt_soc_htc_dealloc(soc->htt_handle);
 fail5:
-	dp_hw_link_desc_ring_deinit(soc);
+	dp_soc_srng_deinit(soc);
 fail4:
-	dp_hw_link_desc_ring_free(soc);
+	dp_hw_link_desc_ring_deinit(soc);
 fail3:
 	htt_htc_pkt_pool_free(htt_soc);
 fail2:
