@@ -12224,6 +12224,24 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 			cfg_get(psoc, CFG_READ_MAC_ADDR_FROM_MAC_FILE);
 }
 
+#ifdef CONNECTION_ROAMING_CFG
+static QDF_STATUS hdd_cfg_parse_connection_roaming_cfg(void)
+{
+	QDF_STATUS status;
+
+	status = cfg_parse(WLAN_CONNECTION_ROAMING_INI_FILE);
+	if (QDF_IS_STATUS_ERROR(status))
+		status = cfg_parse(WLAN_CONNECTION_ROAMING_BACKUP_INI_FILE);
+
+	return status;
+}
+#else
+static inline QDF_STATUS hdd_cfg_parse_connection_roaming_cfg(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 struct hdd_context *hdd_context_create(struct device *dev)
 {
 	QDF_STATUS status;
@@ -12265,9 +12283,7 @@ struct hdd_context *hdd_context_create(struct device *dev)
 		goto err_free_config;
 	}
 
-	status = cfg_parse(WLAN_CONNECTION_ROAMING_INI_FILE);
-	if (QDF_IS_STATUS_ERROR(status))
-		status = cfg_parse(WLAN_CONNECTION_ROAMING_BACKUP_INI_FILE);
+	status = hdd_cfg_parse_connection_roaming_cfg();
 
 	ret = hdd_objmgr_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
 	if (ret) {
