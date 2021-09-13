@@ -1315,8 +1315,9 @@ int msm_cvp_noc_error_info(struct msm_cvp_core *core)
 
 	last_fault_count = core->smmu_fault_count;
 	core->ssr_count++;
-	dprintk(CVP_ERR, "cvp ssr count %d %d\n", core->ssr_count,
-			core->resources.max_ssr_allowed);
+	dprintk(CVP_ERR, "cvp ssr count %d %d %d\n", core->ssr_count,
+			core->resources.max_ssr_allowed,
+			core->smmu_fault_count);
 	hdev = core->device;
 	call_hfi_op(hdev, noc_error_info, hdev->hfi_device_data);
 
