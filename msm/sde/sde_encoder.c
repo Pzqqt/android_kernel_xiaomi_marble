@@ -1053,7 +1053,7 @@ static void _sde_encoder_get_qsync_fps_callback(struct drm_encoder *drm_enc,
 
 	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
 	if (sde_conn->ops.get_qsync_min_fps)
-		rc = sde_conn->ops.get_qsync_min_fps(sde_conn->display, conn_state);
+		rc = sde_conn->ops.get_qsync_min_fps(conn_state);
 
 	if (rc < 0) {
 		SDE_ERROR("invalid qsync min fps %d\n", rc);
