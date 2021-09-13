@@ -6491,6 +6491,12 @@ target_if_spectral_fw_param_event_handler(ol_scn_t scn, uint8_t *data_buf,
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
 
+	if (event_params.smode >= SPECTRAL_SCAN_MODE_MAX ||
+	    event_params.smode < SPECTRAL_SCAN_MODE_NORMAL) {
+		spectral_err("Invalid smode %d", event_params.smode);
+		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
+	}
+
 	pdev = wlan_objmgr_get_pdev_by_id(psoc, event_params.pdev_id,
 					  WLAN_SPECTRAL_ID);
 	if (!pdev) {
