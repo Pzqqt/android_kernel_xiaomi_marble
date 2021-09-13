@@ -3771,4 +3771,16 @@ static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
 	return true;
 }
 #endif
+
+/**
+ * policy_mgr_is_hwmode_offload_enabled() - Check for HW mode selection offload
+ *  support
+ * @psoc: PSOC object information
+ *
+ * Check if target supports HW mode selection offload or not
+ *
+ * Return: True if the target supports HW mode selection offload,
+ *         False otherwise.
+ */
+bool policy_mgr_is_hwmode_offload_enabled(struct wlan_objmgr_psoc *psoc);
 #endif /* __WLAN_POLICY_MGR_API_H */
