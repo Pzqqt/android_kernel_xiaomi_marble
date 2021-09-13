@@ -659,8 +659,9 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
 		sme_cbacks->sme_get_nss_for_vdev;
 	pm_ctx->sme_cbacks.sme_nss_update_request =
 		sme_cbacks->sme_nss_update_request;
-	pm_ctx->sme_cbacks.sme_pdev_set_hw_mode =
-		sme_cbacks->sme_pdev_set_hw_mode;
+	if (!policy_mgr_is_hwmode_offload_enabled(psoc))
+		pm_ctx->sme_cbacks.sme_pdev_set_hw_mode =
+			sme_cbacks->sme_pdev_set_hw_mode;
 	pm_ctx->sme_cbacks.sme_soc_set_dual_mac_config =
 		sme_cbacks->sme_soc_set_dual_mac_config;
 	pm_ctx->sme_cbacks.sme_change_mcc_beacon_interval =
