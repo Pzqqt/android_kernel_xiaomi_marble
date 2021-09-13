@@ -2452,6 +2452,8 @@ static int __power_collapse(struct iris_hfi_device *device, bool force)
 	else if (rc)
 		goto skip_power_off;
 
+	__flush_debug_queue(device, device->raw_packet);
+
 	pc_ready = __read_register(device, CVP_CTRL_STATUS) &
 		CVP_CTRL_STATUS_PC_READY;
 	if (!pc_ready) {
@@ -2505,8 +2507,6 @@ static int __power_collapse(struct iris_hfi_device *device, bool force)
 			goto skip_power_off;
 		}
 	}
-
-	__flush_debug_queue(device, device->raw_packet);
 
 	rc = __suspend(device);
 	if (rc)
