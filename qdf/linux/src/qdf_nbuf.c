@@ -1811,6 +1811,50 @@ bool __qdf_nbuf_data_is_dns_response(uint8_t *data)
 }
 
 /**
+ * __qdf_nbuf_data_is_tcp_fin() - check if skb data is a tcp fin
+ * @data: Pointer to network data buffer
+ *
+ * This api is to check if the packet is tcp fin.
+ *
+ * Return: true if packet is tcp fin packet.
+ *         false otherwise.
+ */
+bool __qdf_nbuf_data_is_tcp_fin(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_TCP_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_TCPOP_FIN)
+		return true;
+
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_is_tcp_fin_ack() - check if skb data is a tcp fin ack
+ * @data: Pointer to network data buffer
+ *
+ * This api is to check if the tcp packet is fin ack.
+ *
+ * Return: true if packet is tcp fin ack packet.
+ *         false otherwise.
+ */
+bool __qdf_nbuf_data_is_tcp_fin_ack(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_TCP_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_TCPOP_FIN_ACK)
+		return true;
+
+	return false;
+}
+
+/**
  * __qdf_nbuf_data_is_tcp_syn() - check if skb data is a tcp syn
  * @data: Pointer to network data buffer
  *
@@ -1849,6 +1893,28 @@ bool __qdf_nbuf_data_is_tcp_syn_ack(uint8_t *data)
 
 	if (op_code == QDF_NBUF_PKT_TCPOP_SYN_ACK)
 		return true;
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_is_tcp_rst() - check if skb data is a tcp rst
+ * @data: Pointer to network data buffer
+ *
+ * This api is to check if the tcp packet is rst.
+ *
+ * Return: true if packet is tcp rst packet.
+ *         false otherwise.
+ */
+bool __qdf_nbuf_data_is_tcp_rst(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_TCP_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_TCPOP_RST)
+		return true;
+
 	return false;
 }
 

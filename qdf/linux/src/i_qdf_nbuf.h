@@ -82,6 +82,11 @@ typedef struct sk_buff_head __qdf_nbuf_queue_head_t;
 /* mark the first packet after wow wakeup */
 #define QDF_MARK_FIRST_WAKEUP_PACKET   0x80000000
 
+/* TCP Related MASK */
+#define QDF_NBUF_PKT_TCPOP_FIN			0x01
+#define QDF_NBUF_PKT_TCPOP_FIN_ACK		0x11
+#define QDF_NBUF_PKT_TCPOP_RST			0x04
+
 /*
  * Make sure that qdf_dma_addr_t in the cb block is always 64 bit aligned
  */
@@ -862,8 +867,11 @@ uint32_t __qdf_nbuf_get_arp_tgt_ip(uint8_t *data);
 uint8_t *__qdf_nbuf_get_dns_domain_name(uint8_t *data, uint32_t len);
 bool __qdf_nbuf_data_is_dns_query(uint8_t *data);
 bool __qdf_nbuf_data_is_dns_response(uint8_t *data);
+bool __qdf_nbuf_data_is_tcp_fin(uint8_t *data);
+bool __qdf_nbuf_data_is_tcp_fin_ack(uint8_t *data);
 bool __qdf_nbuf_data_is_tcp_syn(uint8_t *data);
 bool __qdf_nbuf_data_is_tcp_syn_ack(uint8_t *data);
+bool __qdf_nbuf_data_is_tcp_rst(uint8_t *data);
 bool __qdf_nbuf_data_is_tcp_ack(uint8_t *data);
 uint16_t __qdf_nbuf_data_get_tcp_src_port(uint8_t *data);
 uint16_t __qdf_nbuf_data_get_tcp_dst_port(uint8_t *data);
