@@ -72,6 +72,7 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 #endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
 
 #ifdef QCA_OL_TX_MULTIQ_SUPPORT
+#ifdef DP_TX_IMPLICIT_RBM_MAPPING
 /*
  * dp_tx_get_rbm_id()- Get the RBM ID for data transmission completion.
  * @dp_soc - DP soc structure pointer
@@ -82,10 +83,16 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
 					  uint8_t ring_id)
 {
+	return 0;
+}
+#else
+static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
 	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
 			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
 }
-
+#endif /*DP_TX_IMPLICIT_RBM_MAPPING*/
 #else
 static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
 					  uint8_t tcl_index)

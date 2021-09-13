@@ -899,6 +899,23 @@ static QDF_STATUS dp_soc_srng_init_be(struct dp_soc *soc)
 	return dp_soc_ppe_srng_init(soc);
 }
 
+#ifdef DP_TX_IMPLICIT_RBM_MAPPING
+static void dp_tx_implicit_rbm_set_be(struct dp_soc *soc,
+				      uint8_t tx_ring_id,
+				      uint8_t bm_id)
+{
+	hal_tx_config_rbm_mapping_be(soc->hal_soc,
+				     soc->tcl_data_ring[tx_ring_id].hal_srng,
+				     bm_id);
+}
+#else
+static void dp_tx_implicit_rbm_set_be(struct dp_soc *soc,
+				      uint8_t tx_ring_id,
+				      uint8_t bm_id)
+{
+}
+#endif
+
 void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -931,6 +948,7 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_be;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_be;
 	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_be;
+	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_be;
 
 	dp_init_near_full_arch_ops_be(arch_ops);
 }

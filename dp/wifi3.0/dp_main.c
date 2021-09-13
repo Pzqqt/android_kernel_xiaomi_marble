@@ -4259,6 +4259,7 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 						uint8_t index)
 {
 	int tcl_ring_num, wbm_ring_num;
+	uint8_t bm_id;
 
 	if (index >= MAX_TCL_DATA_RINGS) {
 		dp_err("unexpected index!");
@@ -4294,6 +4295,9 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 		goto fail1;
 	}
 
+	bm_id = wlan_cfg_get_rbm_id_for_index(soc->wlan_cfg_ctx, tcl_ring_num);
+
+	soc->arch_ops.tx_implicit_rbm_set(soc, tcl_ring_num, bm_id);
 	wlan_minidump_log(soc->tx_comp_ring[index].base_vaddr_unaligned,
 			  soc->tx_comp_ring[index].alloc_size,
 			  soc->ctrl_psoc,

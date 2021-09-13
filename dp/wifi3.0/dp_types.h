@@ -1632,6 +1632,8 @@ struct dp_arch_ops {
 	int (*dp_srng_test_and_update_nf_params)(struct dp_soc *soc,
 						 struct dp_srng *dp_srng,
 						 int *max_reap_limit);
+	void (*tx_implicit_rbm_set)(struct dp_soc *soc, uint8_t tx_ring_id,
+				    uint8_t bm_id);
 };
 
 /**

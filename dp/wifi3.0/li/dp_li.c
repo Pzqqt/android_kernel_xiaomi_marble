@@ -291,6 +291,12 @@ static QDF_STATUS dp_soc_srng_init_li(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void dp_tx_implicit_rbm_set_li(struct dp_soc *soc,
+				      uint8_t tx_ring_id,
+				      uint8_t bm_id)
+{
+}
+
 void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -325,5 +331,6 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 			dp_rx_desc_cookie_2_va_li;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_li;
 	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_li;
+	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_li;
 }
 
