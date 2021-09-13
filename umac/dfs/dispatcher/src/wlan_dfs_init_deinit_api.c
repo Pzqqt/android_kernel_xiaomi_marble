@@ -471,6 +471,20 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	dfs->dfs_is_offload_enabled = dfs_tx_ops->dfs_is_tgt_offload(psoc);
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_offload %d",
 		 dfs->dfs_is_offload_enabled);
+
+	if (!dfs_tx_ops->dfs_is_tgt_radar_found_chan_freq_eq_center_freq) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"dfs_is_radar_found_chan_freq_eq_center_freq is null");
+		dfs_destroy_object(dfs);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs->dfs_is_radar_found_chan_freq_eq_center_freq =
+	    dfs_tx_ops->dfs_is_tgt_radar_found_chan_freq_eq_center_freq(psoc);
+	dfs_info(dfs, WLAN_DEBUG_DFS,
+		 "dfs_is_radar_found_chan_freq_eq_center_freq %d",
+		 dfs->dfs_is_radar_found_chan_freq_eq_center_freq);
+
 	dfs_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							    WLAN_UMAC_COMP_DFS);
 	dfs->dfs_soc_obj = dfs_soc_obj;
