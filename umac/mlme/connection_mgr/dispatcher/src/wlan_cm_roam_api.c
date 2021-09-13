@@ -561,6 +561,8 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	if (filter->num_of_channels)
 		mlme_debug("Freq list (%d): %s", filter->num_of_channels,
 			   chan_buff);
+
+	qdf_mem_free(chan_buff);
 }
 
 void
