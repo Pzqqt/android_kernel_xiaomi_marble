@@ -2513,6 +2513,9 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 
 	/*Loop till get the best channel in the given range */
 	for (count = 0; count < spect_info->numSpectChans; count++) {
+		if (!spect_info->pSpectCh[count].valid)
+			continue;
+
 		best_chan_freq = spect_info->pSpectCh[count].chan_freq;
 		/* check if best_ch_num is in preferred channel list */
 		best_chan_freq =
@@ -2565,6 +2568,9 @@ next_bw:
 		sap_debug("check bw %d", pref_bw);
 		for (count = 0; count < spect_info->numSpectChans; count++) {
 			struct ch_params ch_params = {0};
+
+			if (!spect_info->pSpectCh[count].valid)
+				continue;
 
 			cal_chan_freq = spect_info->pSpectCh[count].chan_freq;
 			cal_chan_weight = spect_info->pSpectCh[count].weight;
