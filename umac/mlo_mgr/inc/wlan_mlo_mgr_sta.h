@@ -22,6 +22,7 @@
 
 #include <wlan_cm_ucfg_api.h>
 #include <wlan_objmgr_vdev_obj.h>
+#include <wlan_mlo_mgr_cmn.h>
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_public_structs.h>
 
@@ -138,7 +139,6 @@ ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev);
 typedef void (*mlo_vdev_op_handler)(struct wlan_objmgr_vdev *vdev,
 				    void *arg);
 
-#ifndef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
 /*
  * mlo_iterate_connected_vdev_list: Iterate on connected ML links
  *
@@ -148,9 +148,31 @@ typedef void (*mlo_vdev_op_handler)(struct wlan_objmgr_vdev *vdev,
  *
  * Return: none
  */
+static inline
 void mlo_iterate_connected_vdev_list(struct wlan_objmgr_vdev *vdev,
 				     mlo_vdev_op_handler handler,
-				     void *arg);
+				     void *arg)
+{
+	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx = NULL;
+	uint8_t i = 0;
+
+	if (!mlo_dev_ctx || !(wlan_vdev_mlme_is_mlo_vdev(vdev)))
+		return;
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx)
+		return;
+
+	for (i =  0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
+		if (!mlo_dev_ctx->wlan_vdev_list[i])
+			continue;
+		if (qdf_test_bit(i, sta_ctx->wlan_connected_links)) {
+			if (handler)
+				handler(mlo_dev_ctx->wlan_vdev_list[i], arg);
+		}
+	}
+}
 
 /*
  * mlo_update_connect_req_links: update connect req links index
@@ -160,8 +182,61 @@ void mlo_iterate_connected_vdev_list(struct wlan_objmgr_vdev *vdev,
  *
  * Return: none
  */
-void
-mlo_update_connect_req_links(struct wlan_objmgr_vdev *vdev, uint8_t value);
+static inline void
+mlo_update_connect_req_links(struct wlan_objmgr_vdev *vdev, uint8_t value)
+{
+	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx = NULL;
+	uint8_t i = 0;
+
+	if (!mlo_dev_ctx)
+		return;
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx)
+		return;
+
+	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
+		if (!mlo_dev_ctx->wlan_vdev_list[i])
+			continue;
+
+		if (vdev == mlo_dev_ctx->wlan_vdev_list[i]) {
+			if (value)
+				qdf_set_bit(i, sta_ctx->wlan_connect_req_links);
+			else
+				qdf_clear_bit(
+					i, sta_ctx->wlan_connect_req_links);
+		}
+	}
+}
+
+/*
+ * mlo_is_vdev_connect_req_link: API to check if vdev is in active connection
+ *
+ * @vdev: vdev object
+ *
+ * Return: true is vdev is participating in active connect else false
+ */
+static inline bool
+mlo_is_vdev_connect_req_link(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx = NULL;
+
+	if (!mlo_dev_ctx)
+		return false;
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx)
+		return false;
+
+	if (qdf_test_bit(
+		mlo_get_link_vdev_ix(vdev->mlo_dev_ctx, vdev),
+		sta_ctx->wlan_connect_req_links))
+		return true;
+
+	return false;
+}
 
 /*
  * mlo_clear_connect_req_links: clear connect req links bitmap
@@ -170,7 +245,22 @@ mlo_update_connect_req_links(struct wlan_objmgr_vdev *vdev, uint8_t value);
  *
  * Return: none
  */
-void mlo_clear_connect_req_links_bmap(struct wlan_objmgr_vdev *vdev);
+static inline
+void mlo_clear_connect_req_links_bmap(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx = NULL;
+
+	if (!mlo_dev_ctx)
+		return;
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx)
+		return;
+
+	qdf_mem_zero(sta_ctx->wlan_connect_req_links,
+		     sizeof(sta_ctx->wlan_connect_req_links));
+}
 
 /*
  * mlo_update_connected_links: update connected links index
@@ -180,8 +270,32 @@ void mlo_clear_connect_req_links_bmap(struct wlan_objmgr_vdev *vdev);
  *
  * Return: none
  */
-void
-mlo_update_connected_links(struct wlan_objmgr_vdev *vdev, uint8_t value);
+static inline void
+mlo_update_connected_links(struct wlan_objmgr_vdev *vdev, uint8_t value)
+{
+	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx = NULL;
+	uint8_t i = 0;
+
+	if (!mlo_dev_ctx)
+		return;
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx)
+		return;
+
+	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
+		if (!mlo_dev_ctx->wlan_vdev_list[i])
+			continue;
+
+		if (vdev == mlo_dev_ctx->wlan_vdev_list[i]) {
+			if (value)
+				qdf_set_bit(i, sta_ctx->wlan_connected_links);
+			else
+				qdf_clear_bit(i, sta_ctx->wlan_connected_links);
+		}
+	}
+}
 
 /*
  * mlo_clear_connected_links: clear connected links bitmap
@@ -190,8 +304,25 @@ mlo_update_connected_links(struct wlan_objmgr_vdev *vdev, uint8_t value);
  *
  * Return: none
  */
-void mlo_clear_connected_links_bmap(struct wlan_objmgr_vdev *vdev);
+static inline
+void mlo_clear_connected_links_bmap(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
+	struct wlan_mlo_sta *sta_ctx = NULL;
 
+	if (!mlo_dev_ctx)
+		return;
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx)
+		return;
+
+	qdf_mem_zero(sta_ctx->wlan_connected_links,
+		     sizeof(sta_ctx->wlan_connected_links));
+
+}
+
+#ifndef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
 /*
  * mlo_get_ml_vdev_by_mac: get ml vdev from mac
  *
@@ -299,6 +430,12 @@ ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
 static inline void
 mlo_update_connect_req_links(struct wlan_objmgr_vdev *vdev, uint8_t value)
 { }
+
+static inline bool
+mlo_is_vdev_connect_req_link(struct wlan_objmgr_vdev *vdev)
+{
+	return true;
+}
 
 static inline void
 mlo_update_connected_links(struct wlan_objmgr_vdev *vdev, uint8_t value)
