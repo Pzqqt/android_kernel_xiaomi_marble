@@ -671,7 +671,7 @@ struct rx_mpdu_start_compact_qca9224 {
 	uint32_t reserved_27a                           : 32; // [31:0]
 	uint32_t reserved_28a                           : 32; // [31:0]
 	uint32_t reserved_29a                           : 32; // [31:0]
-}
+};
 #endif /* BIG_ENDIAN_HOST */
 
 /* TLV struct for word based Tlv */
