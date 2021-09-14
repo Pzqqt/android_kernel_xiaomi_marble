@@ -673,12 +673,18 @@ static void lim_start_bss_update_ht_vht_caps(struct mac_context *mac_ctx,
 	value = MLME_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF;
 	vht_config.csnof_beamformer_antSup = value;
 	vht_config.mu_beam_formee = 0;
+	/* Disable shortgi160 and 80 for 2.4Ghz BSS*/
+	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq)) {
+		vht_config.shortgi160and80plus80 = 0;
+		vht_config.shortgi80 = 0;
+	}
 
 	session->vht_config = vht_config;
+
 	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
 	session->ht_config = ht_caps.ht_caps;
-	pe_debug("HT capability 0x%x VHT capability 0x%x",
-		 ht_caps.caps, vht_config.caps);
+	pe_debug("cur_op_freq %d HT capability 0x%x VHT capability 0x%x",
+		 session->curr_op_freq, ht_caps.caps, vht_config.caps);
 }
 
 /**

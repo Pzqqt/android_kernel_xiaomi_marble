@@ -1302,6 +1302,9 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 			return QDF_STATUS_SUCCESS;
 		}
 
+		if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq))
+			pDot11f->supportedChannelWidthSet = 0;
+
 		if (pe_session->ht_config.adv_coding_cap)
 			pDot11f->ldpcCodingCap =
 				pe_session->vht_config.ldpc_coding;
