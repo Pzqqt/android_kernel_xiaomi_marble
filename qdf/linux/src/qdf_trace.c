@@ -240,15 +240,15 @@ qdf_export_symbol(qdf_trace_hex_ascii_dump);
 #ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
 static inline QDF_STATUS allocate_g_qdf_trace_tbl_buffer(void)
 {
-	g_qdf_trace_tbl = vzalloc(MAX_QDF_TRACE_RECORDS *
-				  sizeof(*g_qdf_trace_tbl));
+	g_qdf_trace_tbl = qdf_mem_valloc(MAX_QDF_TRACE_RECORDS *
+					 sizeof(*g_qdf_trace_tbl));
 	QDF_BUG(g_qdf_trace_tbl);
 	return g_qdf_trace_tbl ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
 }
 
 static inline void free_g_qdf_trace_tbl_buffer(void)
 {
-	vfree(g_qdf_trace_tbl);
+	qdf_mem_vfree(g_qdf_trace_tbl);
 	g_qdf_trace_tbl = NULL;
 }
 #else
@@ -672,15 +672,15 @@ qdf_export_symbol(qdf_state_info_dump_all);
 #ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
 static inline QDF_STATUS allocate_g_qdf_dp_trace_tbl_buffer(void)
 {
-	g_qdf_dp_trace_tbl = vzalloc(MAX_QDF_DP_TRACE_RECORDS *
-				     sizeof(*g_qdf_dp_trace_tbl));
+	g_qdf_dp_trace_tbl = qdf_mem_valloc(MAX_QDF_DP_TRACE_RECORDS *
+					    sizeof(*g_qdf_dp_trace_tbl));
 	QDF_BUG(g_qdf_dp_trace_tbl);
 	return g_qdf_dp_trace_tbl ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
 }
 
 static inline void free_g_qdf_dp_trace_tbl_buffer(void)
 {
-	vfree(g_qdf_dp_trace_tbl);
+	qdf_mem_vfree(g_qdf_dp_trace_tbl);
 	g_qdf_dp_trace_tbl = NULL;
 }
 #else

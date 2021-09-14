@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -283,6 +283,13 @@ s64 qdf_get_monotonic_boottime_ns(void);
  * Return: none
  */
 void qdf_timer_module_init(void);
+
+/**
+ * qdf_get_time_of_the_day_us() - Get time of the day in microseconds
+ *
+ * Return: None
+ */
+uint64_t qdf_get_time_of_the_day_us(void);
 
 /**
  * qdf_get_time_of_the_day_ms() - get time of the day in millisec

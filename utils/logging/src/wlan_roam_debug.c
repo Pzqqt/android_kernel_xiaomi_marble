@@ -49,7 +49,7 @@ static struct wlan_roam_debug_info *global_wlan_roam_debug_table;
 void wlan_roam_debug_init(void)
 {
 	uint8_t i;
-	global_wlan_roam_debug_table = vzalloc(
+	global_wlan_roam_debug_table = qdf_mem_valloc(
 				sizeof(struct wlan_roam_debug_info) * REC_MAX);
 
 	QDF_BUG(global_wlan_roam_debug_table);
@@ -86,7 +86,7 @@ static inline struct wlan_roam_debug_info *wlan_roam_debug_get_table(
  */
 void wlan_roam_debug_deinit(void)
 {
-	vfree(global_wlan_roam_debug_table);
+	qdf_mem_vfree(global_wlan_roam_debug_table);
 	global_wlan_roam_debug_table = NULL;
 }
 

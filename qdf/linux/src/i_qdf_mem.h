@@ -495,6 +495,24 @@ void *__qdf_mem_malloc(qdf_size_t size, const char *func, uint32_t line);
  */
 void __qdf_mem_free(void *ptr);
 
+/**
+ * __qdf_mem_valloc() - QDF virtual memory allocation API
+ * @size: Number of bytes of virtual memory to allocate.
+ * @func: Caller function name
+ * @line: Line number
+ *
+ * Return: A valid memory location on success, or NULL on failure
+ */
+void *__qdf_mem_valloc(size_t size, const char *func, uint32_t line);
+
+/**
+ * __qdf_mem_vfree() - QDF API to free virtual memory
+ * @ptr: Pointer to the virtual memory to free
+ *
+ * Return: None
+ */
+void __qdf_mem_vfree(void *ptr);
+
 #ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
 /**
  * __qdf_untracked_mem_malloc() - allocates non-QDF memory

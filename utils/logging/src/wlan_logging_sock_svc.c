@@ -220,14 +220,14 @@ static struct log_msg *gplog_msg;
 
 static inline QDF_STATUS allocate_log_msg_buffer(void)
 {
-	gplog_msg = vzalloc(MAX_LOGMSG_COUNT * sizeof(*gplog_msg));
+	gplog_msg = qdf_mem_valloc(MAX_LOGMSG_COUNT * sizeof(*gplog_msg));
 
 	return gplog_msg ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
 }
 
 static inline void free_log_msg_buffer(void)
 {
-	vfree(gplog_msg);
+	qdf_mem_vfree(gplog_msg);
 	gplog_msg = NULL;
 }
 
@@ -1152,7 +1152,7 @@ int wlan_logging_sock_init_svc(void)
 
 	/* Initialize the pktStats data structure here */
 	pkt_stats_size = sizeof(struct pkt_stats_msg);
-	gpkt_stats_buffers = vmalloc(MAX_PKTSTATS_BUFF * pkt_stats_size);
+	gpkt_stats_buffers = qdf_mem_valloc(MAX_PKTSTATS_BUFF * pkt_stats_size);
 	if (!gpkt_stats_buffers) {
 		qdf_err("Could not allocate memory for Pkt stats");
 		goto err1;
@@ -1222,7 +1222,7 @@ err2:
 	spin_lock_irqsave(&gwlan_logging.pkt_stats_lock, irq_flag);
 	gwlan_logging.pkt_stats_pcur_node = NULL;
 	spin_unlock_irqrestore(&gwlan_logging.pkt_stats_lock, irq_flag);
-	vfree(gpkt_stats_buffers);
+	qdf_mem_vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
 err1:
 	flush_timer_deinit();
@@ -1267,7 +1267,7 @@ int wlan_logging_sock_deinit_svc(void)
 			dev_kfree_skb(gpkt_stats_buffers[i].skb);
 	}
 	spin_unlock_irqrestore(&gwlan_logging.pkt_stats_lock, irq_flag);
-	vfree(gpkt_stats_buffers);
+	qdf_mem_vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
 
 	/* Delete the Flush timer then mark pcur_node NULL */
