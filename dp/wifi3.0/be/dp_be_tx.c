@@ -281,17 +281,18 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta) {
 		bank_config->index_lookup_enable = 1;
 		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_MEC_NOTIFY;
+		bank_config->addrx_en = 0;
+		bank_config->addry_en = 0;
 	} else {
 		bank_config->index_lookup_enable = 0;
 		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_FW_EXCEPTION;
+		bank_config->addrx_en =
+			(vdev->hal_desc_addr_search_flags &
+			 HAL_TX_DESC_ADDRX_EN) ? 1 : 0;
+		bank_config->addry_en =
+			(vdev->hal_desc_addr_search_flags &
+			 HAL_TX_DESC_ADDRY_EN) ? 1 : 0;
 	}
-
-	bank_config->addrx_en =
-		(vdev->hal_desc_addr_search_flags & HAL_TX_DESC_ADDRX_EN) ?
-		1 : 0;
-	bank_config->addry_en =
-		(vdev->hal_desc_addr_search_flags & HAL_TX_DESC_ADDRY_EN) ?
-		1 : 0;
 
 	bank_config->mesh_enable = vdev->mesh_vdev ? 1 : 0;
 
