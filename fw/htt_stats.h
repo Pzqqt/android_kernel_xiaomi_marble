@@ -1834,6 +1834,7 @@ typedef enum {
 
 #define HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS 4
 #define HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS 8
+#define HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS 8
 #define HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS 74
 #define HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS 8
 #define HTT_STATS_MAX_MUMIMO_GRP_SZ 8
@@ -2198,6 +2199,10 @@ typedef struct {
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    /* Represents the count for 11BE DL MU MIMO sequences */
+    A_UINT32 be_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /* Number of 11BE DL MU MIMO schedules posted per group size */
+    A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
@@ -2245,6 +2250,10 @@ typedef struct {
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    /* Represents the count for 11BE DL MU MIMO sequences */
+    A_UINT32 be_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /* Number of 11BE DL MU MIMO schedules posted per group size */
+    A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
 } htt_tx_pdev_dl_mu_mimo_sch_stats_tlv;
 
 typedef struct {
@@ -2300,10 +2309,11 @@ typedef struct {
     A_UINT32 ax_ofdma_ampdu_underrun_usr;   /* 11AX MU OFDMA ampdu underrun encountered, per user */
 } htt_tx_pdev_mu_mimo_mpdu_stats_tlv;
 
-#define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC 1  /* SCHED_TX_MODE_MU_MIMO_AC */
-#define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX 2  /* SCHED_TX_MODE_MU_MIMO_AX */
+#define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC  1 /* SCHED_TX_MODE_MU_MIMO_AC */
+#define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX  2 /* SCHED_TX_MODE_MU_MIMO_AX */
 #define HTT_STATS_TX_SCHED_MODE_MU_OFDMA_AX 3 /* SCHED_TX_MODE_MU_OFDMA_AX */
 #define HTT_STATS_TX_SCHED_MODE_MU_OFDMA_BE 4 /* SCHED_TX_MODE_MU_OFDMA_BE */
+#define HTT_STATS_TX_SCHED_MODE_MU_MIMO_BE  5 /* SCHED_TX_MODE_MU_MIMO_BE */
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3552,6 +3562,9 @@ typedef enum {
 } HTT_TX_PDEV_STATS_NUM_PUNCTURED_MODE_TYPE;
 
 #define HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
+/* 11be related updates */
+#define HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS 16 /* 0...13,-2,-1 */
+#define HTT_TX_PDEV_STATS_NUM_BE_BW_COUNTERS  5  /* 20,40,80,160,320 MHz */
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3668,6 +3681,21 @@ typedef struct {
     A_UINT32 reduced_ax_mu_ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
 } htt_tx_pdev_rate_stats_tlv;
 
+typedef struct {
+     /* 11be mode pdev rate stats; placed in a separate TLV to adhere to size restrictions */
+    htt_tlv_hdr_t tlv_hdr;
+    /* 11BE EHT DL MU MIMO TX MCS stats */
+    A_UINT32 be_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    /* 11BE EHT DL MU MIMO TX NSS stats (Indicates NSS for individual users) */
+    A_UINT32 be_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* 11BE EHT DL MU MIMO TX BW stats */
+    A_UINT32 be_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BE_BW_COUNTERS];
+    /* 11BE EHT DL MU MIMO TX guard interval stats */
+    A_UINT32 be_mu_mimo_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    /* 11BE DL MU MIMO LDPC count */
+    A_UINT32 be_mu_mimo_tx_ldpc;
+} htt_tx_pdev_rate_stats_be_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
  * TLV_TAGS:
  *      - HTT_STATS_TX_PDEV_RATE_STATS_TAG
@@ -3678,6 +3706,7 @@ typedef struct {
  */
 typedef struct {
     htt_tx_pdev_rate_stats_tlv rate_tlv;
+    htt_tx_pdev_rate_stats_be_tlv rate_be_tlv;
 } htt_tx_pdev_rate_stats_t;
 
 /* == PDEV RX RATE CTRL STATS == */
@@ -4727,6 +4756,7 @@ typedef enum {
 typedef enum {
     HTT_TX_AC_SOUNDING_MODE = 0,
     HTT_TX_AX_SOUNDING_MODE = 1,
+    HTT_TX_BE_SOUNDING_MODE = 2,
 } htt_stats_sounding_tx_mode;
 
 typedef struct {
@@ -4775,6 +4805,10 @@ typedef struct {
     A_UINT32 cv_in_use_cnt_exceeded;
     A_UINT32 cv_found;
     A_UINT32 cv_not_found;
+    /* Sounding per user in 320MHz bandwidth */
+    A_UINT32 sounding_320[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /* Counts number of soundings for all steering modes in 320MHz bandwidth */
+    A_UINT32 cbf_320[HTT_TXBF_MAX_NUM_OF_MODES];
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
