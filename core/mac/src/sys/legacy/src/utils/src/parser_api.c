@@ -7726,7 +7726,7 @@ populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 	mld_addr = wlan_vdev_mlme_get_mldaddr(session->vdev);
 	qdf_mem_copy(&mlo_ie->mld_mac_addr.info.mld_mac_addr, mld_addr,
 		     sizeof(mlo_ie->mld_mac_addr.info.mld_mac_addr));
-	mlo_ie->link_id_info_present = 1;
+	mlo_ie->link_id_info_present = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
