@@ -2215,3 +2215,40 @@ bail:
 	iounmap(ipa_sram_mmio);
 	return 0;
 }
+
+int ipa_flt_sram_set_client_prio_high(enum ipa_client_type client)
+{
+	int ipa_ep_idx = IPA_EP_NOT_ALLOCATED;
+	enum ipa_ip_type ip;
+
+	/* allow setting high priority only to ETH clients */
+	if (!IPA_CLIENT_IS_ETH_PROD(client)) {
+		IPAERR("Operation not permitted for non ETH clients\n");
+		return -EINVAL;
+	}
+
+	ipa_ep_idx = ipa_get_ep_mapping(client);
+	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED)
+		return -EINVAL;
+
+	if (!ipa_is_ep_support_flt(ipa_ep_idx))
+		return -EINVAL;
+
+	mutex_lock(&ipa3_ctx->lock);
+	for (ip = IPA_IP_v4; ip < IPA_IP_MAX; ip++) {
+		struct ipa3_flt_tbl_nhash_lcl *lcl_tbl, *tmp;
+		struct ipa3_flt_tbl *flt_tbl = &ipa3_ctx->flt_tbl[ipa_ep_idx][ip];
+		/* Position filtering table last in the list so, it will have first SRAM priority */
+		list_for_each_entry_safe(lcl_tbl, tmp, &ipa3_ctx->flt_tbl_nhash_lcl_list[ip], link) {
+			if (lcl_tbl->tbl == flt_tbl) {
+				list_del(&lcl_tbl->link);
+				list_add_tail(&lcl_tbl->link, &ipa3_ctx->flt_tbl_nhash_lcl_list[ip]);
+				break;
+			}
+		}
+	}
+	mutex_unlock(&ipa3_ctx->lock);
+
+	return 0;
+}
+

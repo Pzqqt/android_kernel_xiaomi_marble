@@ -3992,7 +3992,13 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		break;
-
+#ifdef IPA_IOC_FLT_MEM_PERIPHERAL_SET_PRIO_HIGH
+	case IPA_IOC_FLT_MEM_PERIPHERAL_SET_PRIO_HIGH:
+		retval = ipa_flt_sram_set_client_prio_high((enum ipa_client_type) arg);
+		if (retval)
+			IPAERR("ipa_flt_sram_set_client_prio_high failed! retval=%d\n", retval);
+		break;
+#endif
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		return -ENOTTY;

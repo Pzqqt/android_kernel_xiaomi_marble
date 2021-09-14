@@ -887,7 +887,6 @@ struct ipa3_hdr_proc_ctx_tbl {
  * @rule_cnt: number of filter rules
  * @in_sys: flag indicating if filter table is located in system memory
  * @sz: the size of the filter tables
- * @end: the last header index
  * @curr_mem: current filter tables block in sys memory
  * @prev_mem: previous filter table block in sys memory
  * @rule_ids: common idr structure that holds the rule_id for each rule
@@ -2839,6 +2838,8 @@ int ipa3_mdfy_flt_rule_v2(struct ipa_ioc_mdfy_flt_rule_v2 *rules);
 int ipa3_commit_flt(enum ipa_ip_type ip);
 
 int ipa3_reset_flt(enum ipa_ip_type ip, bool user_only);
+
+int ipa_flt_sram_set_client_prio_high(enum ipa_client_type client);
 
 /*
  * NAT
