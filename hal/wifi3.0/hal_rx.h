@@ -216,6 +216,7 @@ enum hal_rx_msdu_desc_flags {
  *			[3] raw_ampdu
  * @peer_meta_data:	Upper bits containing peer id, vdev id
  * @bar_frame: indicates if received frame is a bar frame
+ * @tid: tid value of received MPDU
  */
 struct hal_rx_mpdu_desc_info {
 	uint16_t msdu_count;
@@ -223,6 +224,8 @@ struct hal_rx_mpdu_desc_info {
 	uint32_t mpdu_flags;
 	uint32_t peer_meta_data; /* sw progamed meta-data:MAC Id & peer Id */
 	uint16_t bar_frame;
+	uint8_t tid:4,
+		reserved:4;
 };
 
 /**
@@ -232,12 +235,14 @@ struct hal_rx_mpdu_desc_info {
  * @ HAL_MPDU_F_RETRY_BIT: Retry bit is set in FC of MPDU
  * @ HAL_MPDU_F_AMPDU_FLAG: MPDU received as part of A-MPDU
  * @ HAL_MPDU_F_RAW_AMPDU: MPDU is a Raw MDPU
+ * @ HAL_MPDU_F_QOS_CONTROL_VALID: MPDU has a QoS control field
  */
 enum hal_rx_mpdu_desc_flags {
 	HAL_MPDU_F_FRAGMENT = (0x1 << 20),
 	HAL_MPDU_F_RETRY_BIT = (0x1 << 21),
 	HAL_MPDU_F_AMPDU_FLAG = (0x1 << 22),
-	HAL_MPDU_F_RAW_AMPDU = (0x1 << 30)
+	HAL_MPDU_F_RAW_AMPDU = (0x1 << 30),
+	HAL_MPDU_F_QOS_CONTROL_VALID = (0x1 << 31)
 };
 
 /* Return Buffer manager ID */

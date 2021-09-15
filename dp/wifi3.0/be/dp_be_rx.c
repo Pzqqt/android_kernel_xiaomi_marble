@@ -372,8 +372,9 @@ more_data:
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_INTRA_BSS)
 			qdf_nbuf_set_intra_bss(rx_desc->nbuf, 1);
 
-		qdf_nbuf_set_tid_val(rx_desc->nbuf,
-				     HAL_RX_REO_QUEUE_NUMBER_GET(ring_desc));
+		if (qdf_likely(mpdu_desc_info.mpdu_flags &
+			       HAL_MPDU_F_QOS_CONTROL_VALID))
+			qdf_nbuf_set_tid_val(rx_desc->nbuf, mpdu_desc_info.tid);
 #ifdef CONFIG_LITHIUM
 		qdf_nbuf_set_rx_reo_dest_ind(
 				rx_desc->nbuf,
