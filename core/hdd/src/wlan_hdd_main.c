@@ -11415,23 +11415,18 @@ static inline void hdd_lte_coex_restart_sap(struct hdd_adapter *adapter,
 }
 #endif /* defined(FEATURE_WLAN_CH_AVOID) */
 
-QDF_STATUS
-wlan_hdd_get_adapter_by_vdev_id_from_objmgr(struct hdd_context *hdd_ctx,
-					    struct hdd_adapter **adapter,
-					    struct wlan_objmgr_vdev *vdev)
+struct hdd_adapter *
+wlan_hdd_get_adapter_from_objmgr(struct wlan_objmgr_vdev *vdev)
 {
-	*adapter = NULL;
-	if (!hdd_ctx)
-		return QDF_STATUS_E_INVAL;
-
 	if (!vdev) {
 		hdd_err("null vdev object");
-		return QDF_STATUS_E_INVAL;
+		return NULL;
 	}
 
-	*adapter = vdev->vdev_nif.osdev->legacy_osif_priv;
+	if (vdev->vdev_nif.osdev)
+		return vdev->vdev_nif.osdev->legacy_osif_priv;
 
-	return QDF_STATUS_SUCCESS;
+	return NULL;
 }
 
 /**
@@ -11453,7 +11448,6 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 	uint8_t vdev_id[WLAN_MAX_VDEVS];
 	struct ieee80211_mgmt *mgmt =
 		(struct ieee80211_mgmt *)frame_ind->frameBuf;
-	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_INDICATE_MGMT_FRAME;
 
@@ -11494,10 +11488,9 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 			if (!vdev)
 				continue;
 
-			status = wlan_hdd_get_adapter_by_vdev_id_from_objmgr(
-						hdd_ctx, &adapter, vdev);
+			adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
 
-			if (QDF_IS_STATUS_ERROR(status) || !adapter) {
+			if (!adapter) {
 				wlan_objmgr_vdev_release_ref(vdev,
 							     WLAN_OSIF_ID);
 				continue;

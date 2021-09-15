@@ -2611,18 +2611,13 @@ void hdd_adapter_dev_put_debug(struct hdd_adapter *adapter,
 							next_adapter, dbgid))
 
 /**
- * wlan_hdd_get_adapter_by_vdev_id_from_objmgr() - Fetch adapter from objmgr
- * using vdev_id.
- * @hdd_ctx: the global HDD context
- * @adapter: an hdd_adapter double pointer to store the address of the adapter
+ * wlan_hdd_get_adapter_from_objmgr() - Fetch adapter from objmgr
  * @vdev: the vdev whose corresponding adapter has to be fetched
  *
- * Return: QDF_STATUS
+ * Return: the address of the adapter
  */
-QDF_STATUS
-wlan_hdd_get_adapter_by_vdev_id_from_objmgr(struct hdd_context *hdd_ctx,
-					    struct hdd_adapter **adapter,
-					    struct wlan_objmgr_vdev *vdev);
+struct hdd_adapter *
+wlan_hdd_get_adapter_from_objmgr(struct wlan_objmgr_vdev *vdev);
 
 struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 				     uint8_t session_type,
