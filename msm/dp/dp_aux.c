@@ -560,6 +560,15 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 	struct dp_aux_private *aux = container_of(drm_aux,
 			struct dp_aux_private, drm_aux);
 	ssize_t size;
+	int aborted;
+
+	mutex_lock(&aux->mutex);
+	aborted = atomic_read(&aux->aborted);
+	mutex_unlock(&aux->mutex);
+	if (aborted) {
+		size = -ETIMEDOUT;
+		goto end;
+	}
 
 	if (aux->sim_in_transfer) {
 		if (aux->aux_bridge && aux->aux_bridge->transfer)
@@ -572,7 +581,7 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 				drm_aux, msg);
 		aux->sim_in_transfer = false;
 	}
-
+end:
 	return size;
 }
 
