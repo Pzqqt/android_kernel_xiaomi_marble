@@ -3602,11 +3602,11 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	list_for_each_entry(i, &core->instances, list)
 		count++;
 
-	if (count <= core->capabilities[MAX_SESSION_COUNT].value) {
+	if (count < core->capabilities[MAX_SESSION_COUNT].value) {
 		list_add_tail(&inst->list, &core->instances);
 	} else {
-		i_vpr_e(inst, "%s: total sessions %d exceeded max limit %d\n",
-			__func__, count, core->capabilities[MAX_SESSION_COUNT].value);
+		i_vpr_e(inst, "%s: max limit %d already running %d sessions\n",
+			__func__, core->capabilities[MAX_SESSION_COUNT].value, count);
 		rc = -EINVAL;
 	}
 	core_unlock(core, __func__);
