@@ -34,7 +34,7 @@ wlan_connectivity_logging_register_callbacks(struct wlan_cl_hdd_cbks *hdd_cbks)
 			hdd_cbks->wlan_connectivity_log_send_to_usr;
 }
 
-void wlan_connectivity_logging_init(struct wlan_cl_hdd_cbks *hdd_cbks)
+void wlan_connectivity_logging_start(struct wlan_cl_hdd_cbks *hdd_cbks)
 {
 	global_cl.head = vzalloc(sizeof(*global_cl.head) *
 					 WLAN_MAX_LOG_RECORDS);
@@ -52,13 +52,16 @@ void wlan_connectivity_logging_init(struct wlan_cl_hdd_cbks *hdd_cbks)
 	global_cl.read_ptr = global_cl.head;
 	global_cl.write_ptr = global_cl.head;
 	global_cl.max_records = WLAN_MAX_LOG_RECORDS;
-	qdf_atomic_set(&global_cl.is_active, 1);
 
 	wlan_connectivity_logging_register_callbacks(hdd_cbks);
+	qdf_atomic_set(&global_cl.is_active, 1);
 }
 
-void wlan_connectivity_logging_deinit(void)
+void wlan_connectivity_logging_stop(void)
 {
+	if (!qdf_atomic_read(&global_cl.is_active))
+		return;
+
 	qdf_atomic_set(&global_cl.is_active, 0);
 	global_cl.read_ptr = NULL;
 	global_cl.write_ptr = NULL;

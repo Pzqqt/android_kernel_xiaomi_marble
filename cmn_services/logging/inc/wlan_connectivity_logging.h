@@ -368,21 +368,21 @@ struct wlan_connectivity_log_buf_data {
 
 #ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
 /**
- * wlan_connectivity_logging_init()  - Initialize the connectivity/roaming
+ * wlan_connectivity_logging_start()  - Initialize the connectivity/roaming
  * logging buffer
  * @hdd_cbks: Hdd callbacks
  *
  * Return: None
  */
-void wlan_connectivity_logging_init(struct wlan_cl_hdd_cbks *hdd_cbks);
+void wlan_connectivity_logging_start(struct wlan_cl_hdd_cbks *hdd_cbks);
 
 /**
- * wlan_connectivity_logging_deinit() - Deinitialize the connectivity logging
+ * wlan_connectivity_logging_stop() - Deinitialize the connectivity logging
  * buffers and spinlocks.
  *
  * Return: None
  */
-void wlan_connectivity_logging_deinit(void);
+void wlan_connectivity_logging_stop(void);
 
 /**
  * wlan_connectivity_log_dequeue() - Send the connectivity logs to userspace
@@ -399,10 +399,10 @@ QDF_STATUS wlan_connectivity_log_dequeue(void);
  */
 QDF_STATUS wlan_connectivity_log_enqueue(struct wlan_log_record *new_record);
 #else
-static inline void wlan_connectivity_logging_init(void)
+static inline void wlan_connectivity_logging_start(void)
 {}
 
-static inline void wlan_connectivity_logging_deinit(void)
+static inline void wlan_connectivity_logging_stop(void)
 {}
 
 static inline QDF_STATUS wlan_connectivity_log_dequeue(void)
