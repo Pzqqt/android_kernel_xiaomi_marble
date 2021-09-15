@@ -6204,6 +6204,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 				hdd_place_marker(adapter, "STOP with FAILURE",
 						 NULL);
 				hdd_sap_indicate_disconnect_for_sta(adapter);
+				hdd_medium_assess_deinit();
 				QDF_ASSERT(0);
 			}
 		}
