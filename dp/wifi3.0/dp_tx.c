@@ -3426,7 +3426,6 @@ static
 void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 		struct hal_tx_completion_status *ts)
 {
-	struct meta_hdr_s *mhdr;
 	qdf_nbuf_t netbuf = tx_desc->nbuf;
 
 	if (!tx_desc->msdu_ext_desc) {
@@ -3437,17 +3436,6 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 			return;
 		}
 	}
-	if (qdf_nbuf_push_head(netbuf, sizeof(struct meta_hdr_s)) == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"netbuf %pK offset %zu", netbuf,
-			sizeof(struct meta_hdr_s));
-		return;
-	}
-
-	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(netbuf);
-	mhdr->rssi = ts->ack_frame_rssi;
-	mhdr->band = tx_desc->pdev->operating_channel.band;
-	mhdr->channel = tx_desc->pdev->operating_channel.num;
 }
 
 #else

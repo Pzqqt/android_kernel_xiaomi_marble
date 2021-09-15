@@ -1226,7 +1226,7 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	ppdu_hdr->last_msdu = last_msdu;
 	if (qdf_unlikely(pdev->latency_capture_enable)) {
 		ppdu_hdr->tsf = ts->tsf;
-		ppdu_hdr->time_latency = time_latency;
+		ppdu_hdr->time_latency = (uint32_t)time_latency;
 	}
 
 	return QDF_STATUS_SUCCESS;
