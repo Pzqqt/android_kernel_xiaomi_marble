@@ -466,7 +466,8 @@ static void hdd_init_6ghz(struct hdd_context *hdd_ctx)
 }
 #endif
 
-#if defined(CFG80211_IFTYPE_AKM_SUITES_SUPPORT)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)) || \
+	defined(CFG80211_IFTYPE_AKM_SUITES_SUPPORT)
 /*akm suits supported by sta*/
 static const u32 hdd_sta_akm_suites[] = {
 	WLAN_AKM_SUITE_8021X,
@@ -17219,7 +17220,8 @@ static void wlan_hdd_set_nan_supported_bands(struct wiphy *wiphy)
  *
  * Return: void
  */
-#if defined(CFG80211_IFTYPE_AKM_SUITES_SUPPORT)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)) || \
+	defined(CFG80211_IFTYPE_AKM_SUITES_SUPPORT)
 static void
 wlan_hdd_update_akm_suit_info(struct wiphy *wiphy)
 {
