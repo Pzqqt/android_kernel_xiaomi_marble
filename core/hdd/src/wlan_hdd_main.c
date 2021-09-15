@@ -4446,6 +4446,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		hdd_set_hif_init_phase(hif_ctx, false);
 		hdd_hif_set_enable_detection(hif_ctx, true);
 
+		wlan_hdd_start_connectivity_logging();
+
 		break;
 
 	default:
@@ -14280,6 +14282,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		epping_close();
 	}
 
+	wlan_connectivity_logging_stop();
+
 	ucfg_ipa_component_config_free();
 	hdd_hif_close(hdd_ctx, hif_ctx);
 
@@ -15998,7 +16002,6 @@ int hdd_init(void)
 	hdd_trace_init();
 	hdd_register_debug_callback();
 	wlan_roam_debug_init();
-	wlan_hdd_init_connectivity_logging();
 
 	return 0;
 }
@@ -16012,7 +16015,6 @@ int hdd_init(void)
  */
 void hdd_deinit(void)
 {
-	wlan_connectivity_logging_deinit();
 	wlan_roam_debug_deinit();
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE

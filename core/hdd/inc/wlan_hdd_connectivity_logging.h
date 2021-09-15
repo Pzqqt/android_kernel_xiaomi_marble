@@ -25,14 +25,14 @@
 
 #ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
 /**
- * wlan_hdd_init_connectivity_logging()  - Initialize logging callbacks
+ * wlan_hdd_start_connectivity_logging()  - Initialize logging callbacks
  * and allocate global buffers
  *
  * Return: None
  */
-void wlan_hdd_init_connectivity_logging(void);
+void wlan_hdd_start_connectivity_logging(void);
 #else
 static inline
-void wlan_hdd_init_connectivity_logging(void)
+void wlan_hdd_start_connectivity_logging(void)
 {}
 #endif

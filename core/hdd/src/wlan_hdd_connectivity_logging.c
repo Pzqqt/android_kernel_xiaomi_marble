@@ -47,11 +47,11 @@ wlan_hdd_send_connectivity_log_to_user(struct wlan_log_record *rec,
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlan_hdd_init_connectivity_logging(void)
+void wlan_hdd_start_connectivity_logging(void)
 {
 	struct wlan_cl_hdd_cbks hdd_cb;
 
 	hdd_cb.wlan_connectivity_log_send_to_usr =
 			wlan_hdd_send_connectivity_log_to_user;
-	wlan_connectivity_logging_init(&hdd_cb);
+	wlan_connectivity_logging_start(&hdd_cb);
 }
