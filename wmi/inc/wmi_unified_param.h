@@ -5288,6 +5288,8 @@ typedef enum {
 	wmi_service_halphy_cal_status,
 	wmi_service_rtt_ap_initiator_staggered_mode_supported,
 	wmi_service_rtt_ap_initiator_bursted_mode_supported,
+	wmi_service_ema_multiple_group_supported,
+	wmi_service_large_beacon_supported,
 	wmi_service_aoa_for_rcc_supported,
 #ifdef WLAN_FEATURE_P2P_P2P_STA
 	wmi_service_p2p_p2p_cc_support,

@@ -17218,6 +17218,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED;
 	wmi_service[wmi_service_rtt_ap_initiator_bursted_mode_supported] =
 			WMI_SERVICE_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED;
+	wmi_service[wmi_service_ema_multiple_group_supported] =
+			WMI_SERVICE_EMA_MULTIPLE_GROUP_SUPPORT;
+	wmi_service[wmi_service_large_beacon_supported] =
+			WMI_SERVICE_LARGE_BEACON_SUPPORT;
 	wmi_service[wmi_service_aoa_for_rcc_supported] =
 			WMI_SERVICE_AOA_FOR_RCC_SUPPORTED;
 #ifdef WLAN_FEATURE_P2P_P2P_STA

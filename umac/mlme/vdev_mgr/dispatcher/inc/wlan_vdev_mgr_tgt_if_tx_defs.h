@@ -562,6 +562,8 @@ struct mlo_vdev_start_partner_links {
  * @ldpc_rx_enabled: Enable/Disable LDPC RX for this vdev
  * @mbssid_flags: MBSSID flags to FW
  * @vdevid_trans: Tx VDEV ID
+ * @mbssid_multi_group_flag: Flag to identify multi group mbssid support
+ * @mbssid_multi_group_id: Group id of current vdev
  */
 struct vdev_start_params {
 	uint8_t vdev_id;
@@ -590,6 +592,8 @@ struct vdev_start_params {
 	struct mlo_vdev_start_flags mlo_flags;
 	struct mlo_vdev_start_partner_links mlo_partner;
 #endif
+	uint8_t mbssid_multi_group_flag;
+	uint32_t mbssid_multi_group_id;
 };
 
 /**

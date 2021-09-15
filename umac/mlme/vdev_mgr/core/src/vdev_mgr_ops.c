@@ -238,6 +238,8 @@ static QDF_STATUS vdev_mgr_start_param_update(
 
 	mbss = &mlme_obj->mgmt.mbss_11ax;
 	param->mbssid_flags = mbss->mbssid_flags;
+	param->mbssid_multi_group_flag = mbss->is_multi_mbssid;
+	param->mbssid_multi_group_id   = mbss->grp_id;
 	param->vdevid_trans = mbss->vdevid_trans;
 
 	if (mlme_obj->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_AP) {
