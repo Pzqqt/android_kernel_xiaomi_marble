@@ -3169,8 +3169,8 @@ int wma_peer_create_confirm_handler(void *handle, uint8_t *evt_param_info,
 	req_msg = wma_find_remove_req_msgtype(wma, peer_create_rsp->vdev_id,
 					      WMA_PEER_CREATE_REQ);
 	if (!req_msg) {
-		wma_err("vdev:%d Failed to lookup peer create request message",
-			peer_create_rsp->vdev_id);
+		wma_debug("vdev:%d Failed to lookup peer create request msg",
+			  peer_create_rsp->vdev_id);
 		return -EINVAL;
 	}
 

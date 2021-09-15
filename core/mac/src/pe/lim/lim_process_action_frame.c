@@ -1529,7 +1529,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 					WMI_MGMT_TX_COMP_TYPE_DISCARD);
 		}
 	} else {
-		pe_err_rl("Failed to process addba request");
+		pe_debug_rl("Failed to process addba request");
 	}
 
 error:
