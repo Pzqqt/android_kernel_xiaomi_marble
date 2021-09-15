@@ -629,11 +629,13 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 			cfg80211_connect_result(
 				osif_priv->wdev->netdev,
 				rsp->bssid.bytes, req_ptr, req_len,
-				rsp_ptr, rsp_len, status, GFP_KERNEL);
+				rsp_ptr, rsp_len, status,
+				qdf_mem_malloc_flags());
 	} else {
 		cfg80211_connect_result(osif_priv->wdev->netdev,
 					rsp->bssid.bytes, req_ptr, req_len,
-					rsp_ptr, rsp_len, status, GFP_KERNEL);
+					rsp_ptr, rsp_len, status,
+					qdf_mem_malloc_flags());
 	}
 }
 #else /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */
@@ -668,12 +670,13 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 			cfg80211_connect_result(tmp_osif_priv->wdev->netdev,
 						macaddr.bytes, req_ptr,
 						req_len, rsp_ptr, rsp_len,
-						status, GFP_KERNEL);
+						status, qdf_mem_malloc_flags());
 		}
 	} else {
 		cfg80211_connect_result(osif_priv->wdev->netdev,
 					rsp->bssid.bytes, req_ptr, req_len,
-					rsp_ptr, rsp_len, status, GFP_KERNEL);
+					rsp_ptr, rsp_len, status,
+					qdf_mem_malloc_flags());
 	}
 }
 #endif /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */
