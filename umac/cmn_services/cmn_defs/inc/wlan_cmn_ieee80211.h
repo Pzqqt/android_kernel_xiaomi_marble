@@ -136,8 +136,8 @@
 
 /* Individual element IEs length checks */
 
-/* Maximum supported basic/mandatory rates are 8. */
-#define WLAN_SUPPORTED_RATES_IE_MAX_LEN          8
+/* Maximum supported basic/mandatory rates are 12 */
+#define WLAN_SUPPORTED_RATES_IE_MAX_LEN          12
 #define WLAN_FH_PARAM_IE_MAX_LEN                 5
 #define WLAN_DS_PARAM_IE_MAX_LEN                 1
 #define WLAN_CF_PARAM_IE_MAX_LEN                 6
