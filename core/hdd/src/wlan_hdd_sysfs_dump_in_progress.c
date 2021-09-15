@@ -29,6 +29,8 @@
 #include "wlan_hdd_sysfs.h"
 #include "osif_sync.h"
 
+static struct kobject *wifi_kobject;
+
 static ssize_t
 __hdd_sysfs_dump_in_progress_store(struct hdd_context *hdd_ctx,
 				   struct kobj_attribute *attr,
@@ -132,7 +134,7 @@ static struct kobj_attribute dump_in_progress_attribute =
 	__ATTR(dump_in_progress, 0660, hdd_sysfs_dump_in_progress_show,
 	       hdd_sysfs_dump_in_progress_store);
 
-void hdd_sysfs_create_dump_in_progress_interface(struct kobject *wifi_kobject)
+void hdd_sysfs_create_dump_in_progress_interface(void)
 {
 	int error;
 
@@ -146,7 +148,7 @@ void hdd_sysfs_create_dump_in_progress_interface(struct kobject *wifi_kobject)
 		hdd_err("could not create dump in progress sysfs file");
 }
 
-void hdd_sysfs_destroy_dump_in_progress_interface(struct kobject *wifi_kobject)
+void hdd_sysfs_destroy_dump_in_progress_interface(void)
 {
 	if (!wifi_kobject) {
 		hdd_err("could not get wifi kobject!");
@@ -155,5 +157,22 @@ void hdd_sysfs_destroy_dump_in_progress_interface(struct kobject *wifi_kobject)
 
 	sysfs_remove_file(wifi_kobject,
 			  &dump_in_progress_attribute.attr);
+}
+
+void hdd_sysfs_create_wifi_root_obj(void)
+{
+	wifi_kobject = kobject_create_and_add("wifi", NULL);
+	if (!wifi_kobject)
+		hdd_err("could not allocate wifi kobject");
+}
+
+void hdd_sysfs_destroy_wifi_root_obj(void)
+{
+	if (!wifi_kobject) {
+		hdd_err("could not get wifi kobject!");
+		return;
+	}
+	kobject_put(wifi_kobject);
+	wifi_kobject = NULL;
 }
 

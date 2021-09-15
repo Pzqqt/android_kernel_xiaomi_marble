@@ -92,7 +92,6 @@ static struct kobject *wlan_kobject;
 static struct kobject *driver_kobject;
 static struct kobject *fw_kobject;
 static struct kobject *psoc_kobject;
-static struct kobject *wifi_kobject;
 
 int
 hdd_sysfs_validate_and_copy_buf(char *dest_buf, size_t dest_buf_size,
@@ -563,23 +562,6 @@ static void hdd_sysfs_destroy_version_interface(void)
 	}
 }
 
-static void hdd_sysfs_create_wifi_root_obj(void)
-{
-	wifi_kobject = kobject_create_and_add("wifi", NULL);
-	if (!wifi_kobject)
-		hdd_err("could not allocate wifi kobject");
-}
-
-static void hdd_sysfs_destroy_wifi_root_obj(void)
-{
-	if (!wifi_kobject) {
-		hdd_err("could not get wifi kobject!");
-		return;
-	}
-	kobject_put(wifi_kobject);
-	wifi_kobject = NULL;
-}
-
 #ifdef WLAN_POWER_DEBUG
 static void hdd_sysfs_create_powerstats_interface(void)
 {
@@ -852,7 +834,7 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 	hdd_sysfs_create_wifi_root_obj();
 	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
 		hdd_sysfs_create_powerstats_interface();
-		hdd_sysfs_create_dump_in_progress_interface(wifi_kobject);
+		hdd_sysfs_create_dump_in_progress_interface();
 		hdd_sysfs_fw_mode_config_create(driver_kobject);
 		hdd_sysfs_scan_disable_create(driver_kobject);
 		hdd_sysfs_wow_ito_create(driver_kobject);
@@ -887,7 +869,7 @@ void hdd_destroy_sysfs_files(void)
 		hdd_sysfs_wow_ito_destroy(driver_kobject);
 		hdd_sysfs_scan_disable_destroy(driver_kobject);
 		hdd_sysfs_fw_mode_config_destroy(driver_kobject);
-		hdd_sysfs_destroy_dump_in_progress_interface(wifi_kobject);
+		hdd_sysfs_destroy_dump_in_progress_interface();
 		hdd_sysfs_destroy_powerstats_interface();
 	}
 	hdd_sysfs_destroy_wifi_root_obj();

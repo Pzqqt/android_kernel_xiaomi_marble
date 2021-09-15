@@ -30,7 +30,7 @@
  *
  * Return: None
  */
-void hdd_sysfs_create_dump_in_progress_interface(struct kobject *wifi_kobject);
+void hdd_sysfs_create_dump_in_progress_interface(void);
 
 /**
  * hdd_sysfs_destroy_dump_in_progress_interface() - API to destroy
@@ -39,14 +39,27 @@ void hdd_sysfs_create_dump_in_progress_interface(struct kobject *wifi_kobject);
  *
  * Return: None
  */
-void hdd_sysfs_destroy_dump_in_progress_interface(struct kobject *wifi_kobject);
+void hdd_sysfs_destroy_dump_in_progress_interface(void);
+
+void hdd_sysfs_create_wifi_root_obj(void);
+
+void hdd_sysfs_destroy_wifi_root_obj(void);
+
 #else
 static inline void
-hdd_sysfs_create_dump_in_progress_interface(struct kobject *wifi_kobject)
+hdd_sysfs_create_dump_in_progress_interface(void)
 {
 }
 static inline void
-hdd_sysfs_destroy_dump_in_progress_interface(struct kobject *wifi_kobject)
+hdd_sysfs_destroy_dump_in_progress_interface(void)
+{
+}
+
+static inline void hdd_sysfs_create_wifi_root_obj(void)
+{
+}
+
+static inline void hdd_sysfs_destroy_wifi_root_obj(void)
 {
 }
 #endif
