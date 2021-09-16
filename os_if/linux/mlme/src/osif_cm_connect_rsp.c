@@ -63,6 +63,10 @@ void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
 				   size_t *ie_data_len,
 				   const uint8_t **ie_data_ptr)
 {
+	/* Validate IE and length */
+	if (!assoc_req->len || !assoc_req->ptr)
+		return;
+
 	*ie_data_len = assoc_req->len;
 	*ie_data_ptr = assoc_req->ptr;
 }
@@ -71,6 +75,10 @@ void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
 				   size_t *ie_data_len,
 				   const uint8_t **ie_data_ptr)
 {
+	/* Validate IE and length */
+	if (!assoc_rsp->len || !assoc_rsp->ptr)
+		return;
+
 	*ie_data_len = assoc_rsp->len;
 	*ie_data_ptr = assoc_rsp->ptr;
 }
