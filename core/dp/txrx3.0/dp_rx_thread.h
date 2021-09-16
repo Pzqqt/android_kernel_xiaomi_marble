@@ -59,6 +59,7 @@ struct dp_rx_tm_handle_cmn;
  * @dropped_invalid_peer: packets(nbuf_list) dropped due to no peer
  * @dropped_others: packets dropped due to other reasons
  * @dropped_enq_fail: packets dropped due to pending queue full
+ * @rx_nbufq_loop_yield: rx loop yield counter
  */
 struct dp_rx_thread_stats {
 	unsigned int nbuf_queued[DP_RX_TM_MAX_REO_RINGS];
@@ -74,6 +75,7 @@ struct dp_rx_thread_stats {
 	unsigned int dropped_invalid_os_rx_handles;
 	unsigned int dropped_others;
 	unsigned int dropped_enq_fail;
+	unsigned int rx_nbufq_loop_yield;
 };
 
 /**
