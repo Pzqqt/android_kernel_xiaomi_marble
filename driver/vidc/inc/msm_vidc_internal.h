@@ -50,6 +50,7 @@
 #define BIT_DEPTH_10 (10 << 16 | 10)
 #define CODED_FRAMES_PROGRESSIVE 0x0
 #define CODED_FRAMES_INTERLACE 0x1
+#define MAX_VP9D_INST_COUNT     6
 /* TODO: move below macros to waipio.c */
 #define MAX_ENH_LAYER_HB        3
 #define MAX_HEVC_ENH_LAYER_SLIDING_WINDOW     5

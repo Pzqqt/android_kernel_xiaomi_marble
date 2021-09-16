@@ -72,6 +72,7 @@ static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 		v4l2_pixelfmt_name(v4l2_codec));
 
 	inst->codec = v4l2_codec_to_driver(v4l2_codec, __func__);
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat = v4l2_codec;
 	rc = msm_vidc_update_debug_str(inst);
 	if (rc)
 		goto exit;
@@ -1131,7 +1132,6 @@ int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	/* use grid dimension for image session */
 	if (is_image_session(inst))
 		fmt->fmt.pix_mp.width = fmt->fmt.pix_mp.height = HEIC_GRID_DIMENSION;
-	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 	fmt->fmt.pix_mp.num_planes = 1;
 	fmt->fmt.pix_mp.plane_fmt[0].bytesperline = 0;
 	fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
