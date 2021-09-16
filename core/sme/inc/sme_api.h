@@ -1212,6 +1212,17 @@ QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle,
 				  uint8_t channel_type);
 QDF_STATUS sme_set_ht2040_mode(mac_handle_t mac_handle, uint8_t sessionId,
 			       uint8_t channel_type, bool obssEnabled);
+
+/**
+ * sme_get_ht2040_mode() - get ht operation mode
+ * @mac_handle: pointer to mac context
+ * @vdev_id: vdev id
+ * @channel_type: channel type to provide
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS sme_get_ht2040_mode(mac_handle_t mac_handle, uint8_t vdev_id,
+			       enum eSirMacHTChannelType *channel_type);
 #endif
 
 /**

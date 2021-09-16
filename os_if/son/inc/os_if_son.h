@@ -35,6 +35,8 @@
 /**
  * struct son_callbacks - struct containing callback to non-converged driver
  * @os_if_is_acs_in_progress: whether acs is in progress or not
+ * @os_if_set_chan_ext_offset: set chan extend offset
+ * @os_if_get_chan_ext_offset: get chan extend offset
  * @os_if_set_bandwidth: set band width
  * @os_if_get_bandwidth: get band width
  * @os_if_set_chan: set chan
@@ -42,6 +44,11 @@
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
+	int (*os_if_set_chan_ext_offset)(
+				struct wlan_objmgr_vdev *vdev,
+				enum sec20_chan_offset son_chan_ext_offset);
+	enum sec20_chan_offset (*os_if_get_chan_ext_offset)(
+				struct wlan_objmgr_vdev *vdev);
 	int (*os_if_set_bandwidth)(struct wlan_objmgr_vdev *vdev,
 				   uint32_t son_bandwidth);
 	uint32_t (*os_if_get_bandwidth)(struct wlan_objmgr_vdev *vdev);
@@ -85,6 +92,25 @@ uint32_t os_if_son_is_acs_in_progress(struct wlan_objmgr_vdev *vdev);
  * Return: true if CAC is in progress
  */
 uint32_t os_if_son_is_cac_in_progress(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_set_chan_ext_offset() - set chan extend offset
+ * @vdev: vdev
+ * @son_chan_ext_offset son chan extend offset
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_set_chan_ext_offset(struct wlan_objmgr_vdev *vdev,
+				  enum sec20_chan_offset son_chan_ext_offset);
+
+/**
+ * os_if_son_get_chan_ext_offset() - get chan extend offset
+ * @vdev: vdev
+ *
+ * Return: enum sec20_chan_offset
+ */
+enum sec20_chan_offset os_if_son_get_chan_ext_offset(
+					struct wlan_objmgr_vdev *vdev);
 
 /**
  * os_if_son_set_bandwidth() - set band width

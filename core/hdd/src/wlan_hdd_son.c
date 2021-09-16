@@ -62,6 +62,137 @@ static uint32_t hdd_son_is_acs_in_progress(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
+ * hdd_son_chan_ext_offset_to_chan_type() - translate son chan extend offset
+ *                                          to chan type
+ * @son_chan_ext_offset: son chan ext offset
+ *
+ * Return: tSirMacHTChannelType
+ */
+static tSirMacHTChannelType hdd_son_chan_ext_offset_to_chan_type(
+				enum sec20_chan_offset son_chan_ext_offset)
+{
+	tSirMacHTChannelType chan_type;
+
+	switch (son_chan_ext_offset) {
+	case EXT_CHAN_OFFSET_ABOVE:
+		chan_type = eHT_CHAN_HT40PLUS;
+		break;
+	case EXT_CHAN_OFFSET_BELOW:
+		chan_type = eHT_CHAN_HT40MINUS;
+		break;
+	default:
+		chan_type = eHT_CHAN_HT20;
+		break;
+	}
+
+	return chan_type;
+}
+
+/**
+ * hdd_son_set_chan_ext_offset() - set son chan extend offset
+ * @vdev: vdev
+ * @son_chan_ext_offset: son chan extend offset
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_son_set_chan_ext_offset(
+				struct wlan_objmgr_vdev *vdev,
+				enum sec20_chan_offset son_chan_ext_offset)
+{
+	enum eSirMacHTChannelType chan_type;
+	QDF_STATUS status;
+	int retval = -EINVAL;
+	struct hdd_adapter *adapter;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return retval;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return retval;
+	}
+	if (!hdd_adapter_is_ap(adapter)) {
+		hdd_err("vdev id %d is not AP", adapter->vdev_id);
+		return retval;
+	}
+
+	retval = 0;
+	chan_type = hdd_son_chan_ext_offset_to_chan_type(son_chan_ext_offset);
+	status = hdd_set_sap_ht2040_mode(adapter, chan_type);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Cannot set SAP HT20/40 mode!");
+		retval = -EINVAL;
+	}
+
+	return retval;
+}
+
+/**
+ * hdd_chan_type_to_son_chan_ext_offset() - translate tSirMacHTChannelType
+ *                                          to son chan extend offset
+ * @chan_type: tSirMacHTChannelType
+ *
+ * Return: son chan extend offset
+ */
+static enum sec20_chan_offset hdd_chan_type_to_son_chan_ext_offset(
+				tSirMacHTChannelType chan_type)
+{
+	enum sec20_chan_offset son_chan_ext_offset;
+
+	switch (chan_type) {
+	case eHT_CHAN_HT40PLUS:
+		son_chan_ext_offset = EXT_CHAN_OFFSET_ABOVE;
+		break;
+	case eHT_CHAN_HT40MINUS:
+		son_chan_ext_offset = EXT_CHAN_OFFSET_BELOW;
+		break;
+	default:
+		son_chan_ext_offset = EXT_CHAN_OFFSET_NA;
+		break;
+	}
+
+	return son_chan_ext_offset;
+}
+
+/**
+ * hdd_son_get_chan_ext_offset() - get chan extend offset
+ * @vdev: vdev
+ *
+ * Return: enum sec20_chan_offset
+ */
+static enum sec20_chan_offset hdd_son_get_chan_ext_offset(
+						struct wlan_objmgr_vdev *vdev)
+{
+	enum eSirMacHTChannelType chan_type;
+	QDF_STATUS status;
+	struct hdd_adapter *adapter;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return 0;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return 0;
+	}
+	if (!hdd_adapter_is_ap(adapter)) {
+		hdd_err("vdev id %d is not AP", adapter->vdev_id);
+		return 0;
+	}
+
+	status = hdd_get_sap_ht2040_mode(adapter, &chan_type);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Cannot set SAP HT20/40 mode!");
+		return 0;
+	}
+
+	return hdd_chan_type_to_son_chan_ext_offset(chan_type);
+}
+
+/**
  * hdd_son_bandwidth_to_phymode() - get new eCsrPhyMode according
  *                                  to son band width
  * @son_bandwidth: son band width
@@ -396,6 +527,8 @@ void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 	struct son_callbacks cb_obj = {0};
 
 	cb_obj.os_if_is_acs_in_progress = hdd_son_is_acs_in_progress;
+	cb_obj.os_if_set_chan_ext_offset = hdd_son_set_chan_ext_offset;
+	cb_obj.os_if_get_chan_ext_offset = hdd_son_get_chan_ext_offset;
 	cb_obj.os_if_set_bandwidth = hdd_son_set_bandwidth;
 	cb_obj.os_if_get_bandwidth = hdd_son_get_bandwidth;
 	cb_obj.os_if_set_chan = hdd_son_set_chan;

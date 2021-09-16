@@ -99,6 +99,43 @@ uint32_t os_if_son_is_cac_in_progress(struct wlan_objmgr_vdev *vdev)
 }
 qdf_export_symbol(os_if_son_is_cac_in_progress);
 
+int os_if_son_set_chan_ext_offset(struct wlan_objmgr_vdev *vdev,
+				  enum sec20_chan_offset son_chan_ext_offset)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	ret = g_son_os_if_cb.os_if_set_chan_ext_offset(vdev,
+						       son_chan_ext_offset);
+	osif_debug("vdev %d set_chan_ext_offset %d, ret %d",
+		   wlan_vdev_get_id(vdev), son_chan_ext_offset, ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_set_chan_ext_offset);
+
+enum sec20_chan_offset os_if_son_get_chan_ext_offset(
+						struct wlan_objmgr_vdev *vdev)
+{
+	enum sec20_chan_offset chan_ext_offset;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	chan_ext_offset = g_son_os_if_cb.os_if_get_chan_ext_offset(vdev);
+	osif_debug("vdev %d chan_ext_offset %d",
+		   wlan_vdev_get_id(vdev), chan_ext_offset);
+
+	return chan_ext_offset;
+}
+qdf_export_symbol(os_if_son_get_chan_ext_offset);
+
 int os_if_son_set_bandwidth(struct wlan_objmgr_vdev *vdev,
 			    uint32_t son_bandwidth)
 {

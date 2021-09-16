@@ -7701,6 +7701,38 @@ QDF_STATUS sme_set_ht2040_mode(mac_handle_t mac_handle, uint8_t sessionId,
 	return status;
 }
 
+QDF_STATUS sme_get_ht2040_mode(mac_handle_t mac_handle, uint8_t vdev_id,
+			       enum eSirMacHTChannelType *channel_type)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	if (!CSR_IS_SESSION_VALID(mac, vdev_id)) {
+		sme_err("Session not valid for session id %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	session = CSR_GET_SESSION(mac, vdev_id);
+	sme_debug("Get HT operation beacon IE, channel_type=%d cur cbmode %d",
+		  *channel_type, session->bssParams.cbMode);
+
+	switch (session->bssParams.cbMode) {
+	case PHY_SINGLE_CHANNEL_CENTERED:
+		*channel_type = eHT_CHAN_HT20;
+		break;
+	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+		*channel_type = eHT_CHAN_HT40MINUS;
+		break;
+	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+		*channel_type = eHT_CHAN_HT40PLUS;
+		break;
+	default:
+		sme_err("Error!!! Invalid HT20/40 mode !");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 
 /*
