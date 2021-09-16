@@ -623,3 +623,38 @@ qdf_freq_t os_if_son_get_candidate_freq(struct wlan_objmgr_vdev *vdev)
 	return freq;
 }
 qdf_export_symbol(os_if_son_get_candidate_freq);
+
+int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
+			  enum ieee80211_phymode mode)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	ret = g_son_os_if_cb.os_if_set_phymode(vdev, mode);
+	osif_debug("vdev %d phymode %d ret %d",
+		   wlan_vdev_get_id(vdev), mode, ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_set_phymode);
+
+enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev)
+{
+	enum ieee80211_phymode phymode;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	phymode = g_son_os_if_cb.os_if_get_phymode(vdev);
+	osif_debug("vdev %d phymode %d",
+		   wlan_vdev_get_id(vdev), phymode);
+
+	return phymode;
+}
+qdf_export_symbol(os_if_son_get_phymode);

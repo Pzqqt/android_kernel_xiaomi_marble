@@ -7375,19 +7375,11 @@ static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_adapter *adapter,
 	return ret_val;
 }
 
-/**
- * hdd_config_phy_mode() - set PHY mode
- * @adapter: hdd adapter
- * @attr: nla attr sent from userspace
- *
- * Return: 0 on success; error number otherwise
- */
-static int hdd_config_phy_mode(struct hdd_adapter *adapter,
-			       const struct nlattr *attr)
+int hdd_set_phy_mode(struct hdd_adapter *adapter,
+		     enum qca_wlan_vendor_phy_mode vendor_phy_mode)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	enum qca_wlan_vendor_phy_mode vendor_phy_mode;
 	eCsrPhyMode phymode;
 	uint8_t supported_band;
 	uint32_t bonding_mode;
@@ -7397,8 +7389,6 @@ static int hdd_config_phy_mode(struct hdd_adapter *adapter,
 		hdd_err("psoc is NULL");
 		return -EINVAL;
 	}
-
-	vendor_phy_mode = nla_get_u32(attr);
 
 	ret = hdd_vendor_mode_to_phymode(vendor_phy_mode, &phymode);
 	if (ret < 0)
@@ -7415,6 +7405,23 @@ static int hdd_config_phy_mode(struct hdd_adapter *adapter,
 
 	return hdd_update_phymode(adapter, phymode, supported_band,
 				  bonding_mode);
+}
+
+/**
+ * hdd_config_phy_mode() - set PHY mode
+ * @adapter: hdd adapter
+ * @attr: nla attr sent from userspace
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_config_phy_mode(struct hdd_adapter *adapter,
+			       const struct nlattr *attr)
+{
+	enum qca_wlan_vendor_phy_mode vendor_phy_mode;
+
+	vendor_phy_mode = nla_get_u32(attr);
+
+	return hdd_set_phy_mode(adapter, vendor_phy_mode);
 }
 
 /**

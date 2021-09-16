@@ -778,6 +778,16 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 #endif
 
 /**
+ * hdd_set_phy_mode() - set phy mode
+ * @adapter: Handle to hdd_adapter
+ * @vendor_phy_mode: phy mode to set
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_phy_mode(struct hdd_adapter *adapter,
+		     enum qca_wlan_vendor_phy_mode vendor_phy_mode);
+
+/**
  * hdd_is_legacy_connection() - Is adapter connection is legacy
  * @adapter: Handle to hdd_adapter
  *

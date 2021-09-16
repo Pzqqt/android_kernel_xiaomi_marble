@@ -43,6 +43,8 @@
  * @os_if_set_country_code: set country code
  * @os_if_set_candidate_freq: set freq to switch after radar detection
  * @os_if_get_candidate_freq: get freq to switch after radar detection
+ * @os_if_set_phymode: set phy mode
+ * @os_if_get_phymode: get phy mode
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -62,6 +64,10 @@ struct son_callbacks {
 	int (*os_if_set_candidate_freq)(struct wlan_objmgr_vdev *vdev,
 					qdf_freq_t freq);
 	qdf_freq_t (*os_if_get_candidate_freq)(struct wlan_objmgr_vdev *vdev);
+	int (*os_if_set_phymode)(struct wlan_objmgr_vdev *vdev,
+				 enum ieee80211_phymode mode);
+	enum ieee80211_phymode (*os_if_get_phymode)(
+					struct wlan_objmgr_vdev *vdev);
 };
 
 /**
@@ -256,4 +262,22 @@ int os_if_son_set_candidate_freq(struct wlan_objmgr_vdev *vdev,
  * Return: candidate freq to switch after radar detection
  */
 qdf_freq_t os_if_son_get_candidate_freq(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_get_phymode() - get phy mode
+ * @vdev: vdev
+ *
+ * Return: enum ieee80211_phymode
+ */
+enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_set_phymode() - set phy mode
+ * @vdev: vdev
+ * @mode: son phy mode to set
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
+			  enum ieee80211_phymode mode);
 #endif
