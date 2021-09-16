@@ -5760,6 +5760,7 @@ static QDF_STATUS dp_mon_vdev_detach(struct dp_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+#if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(FEATURE_PERPKT_INFO)
 static QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer)
 {
 	struct dp_mon_peer *mon_peer;
@@ -5782,6 +5783,12 @@ static QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer)
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 static QDF_STATUS dp_mon_peer_detach(struct dp_peer *peer)
 {
