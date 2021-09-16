@@ -1096,6 +1096,9 @@ QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
 		qdf_sleep(10);
 	}
 
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
+	return QDF_STATUS_SUCCESS;
+
 	while (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
 		if (++wait_cnt > HIF_EP_WAKE_RESET_WAIT_CNT) {
 			hif_err("Release EP vote is not proceed by Fw");
