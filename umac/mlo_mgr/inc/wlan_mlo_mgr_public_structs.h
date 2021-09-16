@@ -29,7 +29,7 @@
 #include <wlan_objmgr_global_obj.h>
 
 /* MAX MLO dev support */
-#define WLAN_UMAC_MLO_MAX_VDEVS 3
+#define WLAN_UMAC_MLO_MAX_VDEVS 2
 
 /* MAX instances of ML devices */
 #define WLAN_UMAC_MLO_MAX_DEV 2
@@ -299,10 +299,10 @@ struct mlo_mlme_ext_ops {
 		    struct vdev_mlme_obj *vdev_mlme, void *ext_data);
 	QDF_STATUS (*mlo_mlme_ext_create_link_vdev)(
 		    struct vdev_mlme_obj *vdev_mlme, void *ext_data);
-	void (*mlo_mlme_ext_peer_create)(struct wlan_objmgr_vdev *vdev,
-					 struct wlan_mlo_peer_context *ml_peer,
-					 struct qdf_mac_addr *addr,
-					 qdf_nbuf_t frm_buf);
+	QDF_STATUS (*mlo_mlme_ext_peer_create)(struct wlan_objmgr_vdev *vdev,
+					struct wlan_mlo_peer_context *ml_peer,
+					struct qdf_mac_addr *addr,
+					qdf_nbuf_t frm_buf);
 	void (*mlo_mlme_ext_peer_assoc)(struct wlan_objmgr_peer *peer);
 	void (*mlo_mlme_ext_peer_assoc_fail)(struct wlan_objmgr_peer *peer);
 	void (*mlo_mlme_ext_peer_delete)(struct wlan_objmgr_peer *peer);

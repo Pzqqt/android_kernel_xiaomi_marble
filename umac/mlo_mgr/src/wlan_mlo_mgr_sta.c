@@ -1040,7 +1040,7 @@ error:
 }
 
 void mlo_get_assoc_rsp(struct wlan_objmgr_vdev *vdev,
-		       struct element_info **assoc_rsp_frame)
+		       struct element_info *assoc_rsp_frame)
 {
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
 	struct wlan_mlo_sta *sta_ctx = mlo_dev_ctx->sta_ctx;
@@ -1053,6 +1053,6 @@ void mlo_get_assoc_rsp(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	*assoc_rsp_frame = &sta_ctx->assoc_rsp;
+	*assoc_rsp_frame = sta_ctx->assoc_rsp;
 }
 #endif
