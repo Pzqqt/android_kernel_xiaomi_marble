@@ -773,6 +773,7 @@ int sde_hw_rc_check_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 	roi_list = hw_cfg->payload;
 	if (!roi_list) {
 		SDE_DEBUG("full frame update\n");
+		memset(&empty_roi_list, 0, sizeof(struct msm_roi_list));
 		roi_list = &empty_roi_list;
 	}
 
@@ -835,6 +836,7 @@ int sde_hw_rc_setup_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 	roi_list = hw_cfg->payload;
 	if (!roi_list) {
 		SDE_DEBUG("full frame update\n");
+		memset(&empty_roi_list, 0, sizeof(struct msm_roi_list));
 		roi_list = &empty_roi_list;
 	}
 
@@ -904,6 +906,9 @@ int sde_hw_rc_setup_mask(struct sde_hw_dspp *hw_dspp, void *cfg)
 		memset(RC_STATE(hw_dspp).last_rc_mask_cfg, 0,
 				sizeof(struct drm_msm_rc_mask_cfg));
 		RC_STATE(hw_dspp).mask_programmed = false;
+		memset(RC_STATE(hw_dspp).last_roi_list, 0,
+				sizeof(struct msm_roi_list));
+		RC_STATE(hw_dspp).roi_programmed = false;
 
 		return 0;
 	}
