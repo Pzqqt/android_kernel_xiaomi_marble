@@ -41,6 +41,8 @@
  * @os_if_get_bandwidth: get band width
  * @os_if_set_chan: set chan
  * @os_if_set_country_code: set country code
+ * @os_if_set_candidate_freq: set freq to switch after radar detection
+ * @os_if_get_candidate_freq: get freq to switch after radar detection
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -57,6 +59,9 @@ struct son_callbacks {
 	uint32_t (*os_if_get_sta_count)(struct wlan_objmgr_vdev *vdev);
 	int (*os_if_set_country_code)(struct wlan_objmgr_vdev *vdev,
 				      char *country_code);
+	int (*os_if_set_candidate_freq)(struct wlan_objmgr_vdev *vdev,
+					qdf_freq_t freq);
+	qdf_freq_t (*os_if_get_candidate_freq)(struct wlan_objmgr_vdev *vdev);
 };
 
 /**
@@ -233,4 +238,22 @@ int os_if_son_set_country_code(struct wlan_objmgr_vdev *vdev,
  */
 int os_if_son_get_country_code(struct wlan_objmgr_vdev *vdev,
 			       char *country_code);
+
+/**
+ * os_if_son_set_candidate_freq() - set freq to switch after radar detection
+ * @vdev: vdev
+ * @freq: freq to switch
+ *
+ * Return: 0 if candidate freq is set successfully
+ */
+int os_if_son_set_candidate_freq(struct wlan_objmgr_vdev *vdev,
+				 qdf_freq_t freq);
+
+/**
+ * os_if_son_get_candidate_freq() - get freq to switch after radar detection
+ * @vdev: vdev
+ *
+ * Return: candidate freq to switch after radar detection
+ */
+qdf_freq_t os_if_son_get_candidate_freq(struct wlan_objmgr_vdev *vdev);
 #endif

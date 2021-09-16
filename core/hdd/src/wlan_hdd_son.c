@@ -522,6 +522,81 @@ static int hdd_son_set_country(struct wlan_objmgr_vdev *vdev,
 	return hdd_reg_set_country(hdd_ctx, country_code);
 }
 
+/**
+ * hdd_son_set_candidate_freq() - set candidate freq. Switch to this freq
+ *                                after radar is detected
+ * @vdev: vdev
+ * @freq: candidate frequency
+ *
+ * Return: 0 if candidate freq is set successfully.
+ */
+static int hdd_son_set_candidate_freq(struct wlan_objmgr_vdev *vdev,
+				      qdf_freq_t freq)
+{
+	struct hdd_adapter *adapter;
+	struct sap_context *sap_ctx;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return -EINVAL;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return -EINVAL;
+	}
+	if (!hdd_adapter_is_ap(adapter)) {
+		hdd_err("vdev id %d is not AP", adapter->vdev_id);
+		return -EINVAL;
+	}
+
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	if (!sap_ctx) {
+		hdd_err("null sap_ctx");
+		return -EINVAL;
+	}
+
+	sap_ctx->candidate_freq = freq;
+
+	return 0;
+}
+
+/**
+ * hdd_son_get_candidate_freq() - get candidate freq
+ * @vdev: vdev
+ *
+ * Return: candidate freq
+ */
+static qdf_freq_t hdd_son_get_candidate_freq(struct wlan_objmgr_vdev *vdev)
+{
+	struct hdd_adapter *adapter;
+	struct sap_context *sap_ctx;
+	qdf_freq_t freq = 0;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return freq;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return freq;
+	}
+	if (!hdd_adapter_is_ap(adapter)) {
+		hdd_err("vdev id %d is not AP", adapter->vdev_id);
+		return freq;
+	}
+
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	if (!sap_ctx) {
+		hdd_err("null sap_ctx");
+		return freq;
+	}
+	freq = sap_ctx->candidate_freq;
+
+	return freq;
+}
+
 void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 {
 	struct son_callbacks cb_obj = {0};
@@ -533,6 +608,8 @@ void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.os_if_get_bandwidth = hdd_son_get_bandwidth;
 	cb_obj.os_if_set_chan = hdd_son_set_chan;
 	cb_obj.os_if_set_country_code = hdd_son_set_country;
+	cb_obj.os_if_set_candidate_freq = hdd_son_set_candidate_freq;
+	cb_obj.os_if_get_candidate_freq = hdd_son_get_candidate_freq;
 
 	os_if_son_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
 }

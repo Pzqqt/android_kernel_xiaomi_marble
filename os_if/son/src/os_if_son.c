@@ -588,3 +588,38 @@ int os_if_son_get_country_code(struct wlan_objmgr_vdev *vdev,
 	return qdf_status_to_os_return(status);
 }
 qdf_export_symbol(os_if_son_get_country_code);
+
+int os_if_son_set_candidate_freq(struct wlan_objmgr_vdev *vdev,
+				 qdf_freq_t freq)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+
+	ret = g_son_os_if_cb.os_if_set_candidate_freq(vdev, freq);
+	osif_debug("vdev %d set_candidate_freq %d ret %d",
+		   wlan_vdev_get_id(vdev), freq, ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_set_candidate_freq);
+
+qdf_freq_t os_if_son_get_candidate_freq(struct wlan_objmgr_vdev *vdev)
+{
+	qdf_freq_t freq;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	freq = g_son_os_if_cb.os_if_get_candidate_freq(vdev);
+	osif_debug("vdev %d candidate_freq %d",
+		   wlan_vdev_get_id(vdev), freq);
+
+	return freq;
+}
+qdf_export_symbol(os_if_son_get_candidate_freq);
