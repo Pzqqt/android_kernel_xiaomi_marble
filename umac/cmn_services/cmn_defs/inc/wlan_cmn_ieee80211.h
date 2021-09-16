@@ -39,8 +39,11 @@
 #define IEEE80211_CCMP_MICLEN       8
 #define WLAN_IEEE80211_GCMP_HEADERLEN    8
 #define WLAN_IEEE80211_GCMP_MICLEN       16
+
+#define IEEE80211_FC1_RETRY         0x08
 #define IEEE80211_FC1_WEP           0x40
 #define IEEE80211_FC1_ORDER         0x80
+
 #define WLAN_HDR_IV_LEN            3
 #define WLAN_HDR_EXT_IV_BIT        0x20
 #define WLAN_HDR_EXT_IV_LEN        4
@@ -244,8 +247,14 @@
 #endif
 
 #define WLAN_RATE_VAL              0x7f
+#define WLAN_BASIC_RATE_MASK       0x80
 
 #define WLAN_RV(v)     ((v) & WLAN_RATE_VAL)
+
+#define WLAN_BSS_MEMBERSHIP_SELECTOR_HT_PHY       127
+#define WLAN_BSS_MEMBERSHIP_SELECTOR_VHT_PHY      126
+#define WLAN_BSS_MEMBERSHIP_SELECTOR_SAE_H2E      123
+#define WLAN_BSS_MEMBERSHIP_SELECTOR_HE_PHY       122
 
 #define WLAN_CHAN_IS_5GHZ(chanidx) \
 	((chanidx > 30) ? true : false)

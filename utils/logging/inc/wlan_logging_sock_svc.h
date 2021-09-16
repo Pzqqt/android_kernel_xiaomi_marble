@@ -77,6 +77,14 @@ int wlan_logging_notifier_deinit(bool dump_at_kernel_enable);
 QDF_STATUS wlan_logging_wait_for_flush_log_completion(void);
 
 void wlan_logging_set_per_pkt_stats(void);
+
+/**
+ * wlan_logging_set_connectivity_log() - INterrupt the gwlan_logging thread
+ * to send the connectivity logs
+ *
+ * Return: None
+ */
+void wlan_logging_set_connectivity_log(void);
 void wlan_logging_set_fw_flush_complete(void);
 void wlan_flush_host_logs_for_fatal(void);
 void wlan_logging_set_active(bool active);
