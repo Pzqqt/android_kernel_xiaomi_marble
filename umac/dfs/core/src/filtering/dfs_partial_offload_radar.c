@@ -32,7 +32,7 @@
 #endif
 #include "../dfs_confirm_radar.h"
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * struct dfs_pulse dfs_fcc_radars_qcn7605 - FCC radar table for QCN7605
  *					     chipsets.

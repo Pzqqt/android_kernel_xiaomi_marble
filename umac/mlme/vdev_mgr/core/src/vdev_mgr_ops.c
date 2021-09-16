@@ -94,7 +94,7 @@ QDF_STATUS vdev_mgr_create_send(struct vdev_mlme_obj *mlme_obj)
 	return status;
 }
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 static bool vdev_mgr_is_opmode_sap_or_p2p_go(enum QDF_OPMODE op_mode)
 {
 	return (op_mode == QDF_SAP_MODE || op_mode == QDF_P2P_GO_MODE);

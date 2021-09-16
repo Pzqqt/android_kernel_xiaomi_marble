@@ -626,7 +626,7 @@ QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
 		uint64_t flags,
 		uint16_t flagext);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * utils_dfs_mark_leaking_chan_for_freq() - to mark channel leaking in to nol
  * @pdev: Pointer to pdev structure.

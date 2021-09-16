@@ -1925,7 +1925,7 @@ int dfs_get_filter_threshold(struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
 		int is_extchan_detect);
 
-#if defined(QCA_MCL_DFS_SUPPORT)
+#if defined(MOBILE_DFS_SUPPORT)
 /**
  * dfs_process_ar_event() - Process the ar event.
  * @dfs: Pointer to wlan_dfs structure.
@@ -2066,7 +2066,7 @@ dfs_switch_to_postnol_chan_if_nol_expired(struct wlan_dfs *dfs)
 }
 #endif
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * dfs_process_phyerr_filter_offload() - Process radar event.
  * @dfs: Pointer to wlan_dfs structure.
@@ -2349,7 +2349,7 @@ void dfs_getnol(struct wlan_dfs *dfs,
  *                          all the channels in dfs_ch_channels.
  * @dfs: Pointer to wlan_dfs structure.
  */
-#if !defined(QCA_MCL_DFS_SUPPORT)
+#if !defined(MOBILE_DFS_SUPPORT)
 void dfs_clear_nolhistory(struct wlan_dfs *dfs);
 #else
 static inline void

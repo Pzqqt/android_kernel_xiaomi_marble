@@ -285,7 +285,7 @@ QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * tgt_dfs_set_tx_leakage_threshold() - set tx_leakage_threshold.
  * @pdev: Pointer to DFS pdev object.
@@ -410,7 +410,7 @@ QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * tgt_dfs_set_phyerr_filter_offload() - config phyerr filter offload
  * @pdev: Pointer to DFS pdev object.

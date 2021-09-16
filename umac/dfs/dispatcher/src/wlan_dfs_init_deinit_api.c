@@ -25,7 +25,7 @@
 #include "wlan_dfs_tgt_api.h"
 #include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 #include "ieee80211_mlme_dfs_interface.h"
 #endif
 #include "wlan_objmgr_global_obj.h"
@@ -55,7 +55,7 @@ struct wlan_dfs *wlan_pdev_get_dfs_obj(struct wlan_objmgr_pdev *pdev)
  * frequency based APIs callback.
  * @mlme_callback: Pointer to dfs_to_mlme.
  */
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 #if defined(WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT) && defined(CONFIG_CHAN_FREQ_API)
 static inline void
 register_dfs_precac_auto_chan_callbacks_freq(struct dfs_to_mlme *mlme_callback)
@@ -78,7 +78,7 @@ register_dfs_precac_auto_chan_callbacks_freq(struct dfs_to_mlme *mlme_callback)
  * register_dfs_postnol_csa_callback - Register CSA callback
  * @mlme_callback: Pointer to dfs_to_mlme.
  */
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 #ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
 static inline void
 register_dfs_postnol_csa_callback(struct dfs_to_mlme *mlme_callback)
@@ -101,7 +101,7 @@ register_dfs_postnol_csa_callback(struct dfs_to_mlme *mlme_callback)
  * register_dfs_callbacks_for_freq() - Register dfs callbacks.
  * @mlme_callback: Pointer to dfs_to_mlme.
  */
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 #ifdef CONFIG_CHAN_FREQ_API
 static inline void
 register_dfs_callbacks_for_freq(struct dfs_to_mlme *mlme_callback)
@@ -120,7 +120,7 @@ register_dfs_callbacks_for_freq(struct dfs_to_mlme *mlme_callback)
 #endif
 #endif
 
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 void register_dfs_callbacks(void)
 {
 	struct dfs_to_mlme *tmp_dfs_to_mlme = &global_dfs_to_mlme;

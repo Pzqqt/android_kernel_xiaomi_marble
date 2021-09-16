@@ -1207,7 +1207,7 @@ uint32_t utils_dfs_chan_to_freq(uint8_t chan)
 }
 qdf_export_symbol(utils_dfs_chan_to_freq);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS utils_dfs_mark_leaking_chan_for_freq(struct wlan_objmgr_pdev *pdev,

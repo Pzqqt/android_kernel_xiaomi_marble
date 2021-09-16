@@ -13512,7 +13512,7 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * extract_wlan_radar_event_info_tlv() - extract radar pulse event
  * @wmi_handle: wma handle

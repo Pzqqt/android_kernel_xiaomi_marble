@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -71,7 +71,7 @@ QDF_STATUS wmi_extract_dfs_radar_detection_event(
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 QDF_STATUS wmi_extract_wlan_radar_event_info(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
