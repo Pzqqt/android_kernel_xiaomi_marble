@@ -1073,6 +1073,39 @@ uint16_t reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class)
 }
 
 #ifdef CONFIG_CHAN_FREQ_API
+/**
+ * reg_find_opclass_absent_in_ctry_opclss_tables() - Check Global Opclass table
+ * when Opclass is not present in specific country.
+ * @pdev - Pointer to pdev
+ * @freq - Destination Frequency
+ * @chan_width- Channel Width
+ * @global_tbl_lookup - Global Table Lookup
+ * @behav_limit - Behav Limit
+ * @op_class - Pointer to Opclass
+ * @chan_num - Pointer to Channel
+ *
+ * Return: Void
+ */
+static void
+reg_find_opclass_absent_in_ctry_opclss_tables(struct wlan_objmgr_pdev *pdev,
+					      qdf_freq_t freq,
+					      uint16_t chan_width,
+					      bool global_tbl_lookup,
+					      uint16_t behav_limit,
+					      uint8_t *op_class,
+					      uint8_t *chan_num)
+{
+	if (!global_tbl_lookup && !*op_class) {
+		global_tbl_lookup = true;
+		reg_freq_width_to_chan_op_class(pdev, freq,
+						chan_width,
+						global_tbl_lookup,
+						behav_limit,
+						op_class,
+						chan_num);
+	}
+}
+
 void reg_freq_width_to_chan_op_class_auto(struct wlan_objmgr_pdev *pdev,
 					  qdf_freq_t freq,
 					  uint16_t chan_width,
@@ -1091,12 +1124,19 @@ void reg_freq_width_to_chan_op_class_auto(struct wlan_objmgr_pdev *pdev,
 		global_tbl_lookup = false;
 	}
 
+	*op_class = 0;
 	reg_freq_width_to_chan_op_class(pdev, freq,
 					chan_width,
 					global_tbl_lookup,
 					behav_limit,
 					op_class,
 					chan_num);
+	reg_find_opclass_absent_in_ctry_opclss_tables(pdev, freq,
+						      chan_width,
+						      global_tbl_lookup,
+						      behav_limit,
+						      op_class,
+						      chan_num);
 }
 
 void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
