@@ -3163,9 +3163,12 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 	struct sde_encoder_virt *sde_enc;
 	struct sde_hw_ctl *ctl = phys_enc->hw_ctl;
 	struct sde_ctl_flush_cfg cfg;
+	int i;
 
 	ctl->ops.reset(ctl);
 	sde_encoder_helper_reset_mixers(phys_enc, NULL);
+
+	sde_enc = to_sde_encoder_virt(phys_enc->parent);
 
 	if (wb_enc) {
 		if (wb_enc->hw_wb->ops.bind_pingpong_blk) {
@@ -3177,14 +3180,16 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 						wb_enc->hw_wb->idx, true);
 		}
 	} else {
-		if (phys_enc->hw_intf->ops.bind_pingpong_blk) {
-			phys_enc->hw_intf->ops.bind_pingpong_blk(
-					phys_enc->hw_intf, false,
-					phys_enc->hw_pp->idx);
+		for (i = 0; i < sde_enc->num_phys_encs; i++) {
+			if (sde_enc->phys_encs[i] && phys_enc->hw_intf->ops.bind_pingpong_blk) {
+				phys_enc->hw_intf->ops.bind_pingpong_blk(
+						sde_enc->phys_encs[i]->hw_intf, false,
+						sde_enc->phys_encs[i]->hw_pp->idx);
 
-			if (ctl->ops.update_bitmask)
-				ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_INTF,
-						phys_enc->hw_intf->idx, true);
+				if (ctl->ops.update_bitmask)
+					ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_INTF,
+							sde_enc->phys_encs[i]->hw_intf->idx, true);
+			}
 		}
 	}
 
@@ -3205,8 +3210,6 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 			ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_CDM,
 					phys_enc->hw_cdm->idx, true);
 	}
-
-	sde_enc = to_sde_encoder_virt(phys_enc->parent);
 
 	if (phys_enc == sde_enc->cur_master && phys_enc->hw_pp &&
 			ctl->ops.reset_post_disable)
