@@ -904,6 +904,16 @@ QDF_STATUS wlan_cm_set_roam_band_bitmask(struct wlan_objmgr_psoc *psoc,
 					 uint32_t roam_band_bitmask);
 
 /**
+ * wlan_cm_set_roam_band_update() - send rso update on set band
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_set_roam_band_update(struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id);
+
+/**
  * wlan_cm_get_roam_scan_scheme_bitmap() - Get roam scan scheme bitmap value
  * @psoc: PSOC pointer
  * @vdev_id: VDEV id

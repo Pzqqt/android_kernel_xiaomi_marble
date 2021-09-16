@@ -826,6 +826,7 @@ int hdd_reg_set_band(struct net_device *dev, uint32_t band_bitmap)
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	uint32_t current_band;
+	QDF_STATUS status;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -855,6 +856,10 @@ int hdd_reg_set_band(struct net_device *dev, uint32_t band_bitmap)
 			band_bitmap);
 		return -EINVAL;
 	}
+
+	status = ucfg_cm_set_roam_band_update(hdd_ctx->psoc, adapter->vdev_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to send RSO update to fw on set band");
 
 	return 0;
 }

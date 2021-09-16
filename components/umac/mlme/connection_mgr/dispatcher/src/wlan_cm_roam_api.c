@@ -2118,6 +2118,13 @@ QDF_STATUS wlan_cm_set_roam_band_bitmask(struct wlan_objmgr_psoc *psoc,
 					  &src_config);
 }
 
+QDF_STATUS wlan_cm_set_roam_band_update(struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id)
+{
+	return cm_roam_update_cfg(psoc, vdev_id,
+				  REASON_ROAM_CONTROL_CONFIG_ENABLED);
+}
+
 uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 					     uint8_t vdev_id)
 {
