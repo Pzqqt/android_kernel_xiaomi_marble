@@ -51,6 +51,8 @@
  * @os_if_add_acl_mac: add mac to acl
  * @os_if_del_acl_mac: del mac from acl
  * @os_if_kickout_mac: kickout sta with given mac
+ * @os_if_set_chwidth: set chan width
+ * @os_if_get_chwidth: get chan width
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -85,6 +87,10 @@ struct son_callbacks {
 				 struct qdf_mac_addr *acl_mac);
 	int (*os_if_kickout_mac)(struct wlan_objmgr_vdev *vdev,
 				 struct qdf_mac_addr *acl_mac);
+	int (*os_if_set_chwidth)(struct wlan_objmgr_vdev *vdev,
+				 enum ieee80211_cwm_width son_chwidth);
+	enum ieee80211_cwm_width (*os_if_get_chwidth)(
+				struct wlan_objmgr_vdev *vdev);
 };
 
 /**
@@ -434,4 +440,21 @@ int os_if_son_del_acl_mac(struct wlan_objmgr_vdev *vdev,
 int os_if_son_kickout_mac(struct wlan_objmgr_vdev *vdev,
 			  struct qdf_mac_addr *mac);
 
+/**
+ * os_if_son_set_chwidth() - set chan width
+ * @vdev: vdev
+ * @son_chwidth: son chan width
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_set_chwidth(struct wlan_objmgr_vdev *vdev,
+			  enum ieee80211_cwm_width son_chwidth);
+
+/**
+ * os_if_son_get_chwidth() - get chan width
+ * @vdev: vdev
+ *
+ * Return: son chan width
+ */
+enum ieee80211_cwm_width os_if_son_get_chwidth(struct wlan_objmgr_vdev *vdev);
 #endif

@@ -796,6 +796,16 @@ int hdd_set_phy_mode(struct hdd_adapter *adapter,
 		     enum qca_wlan_vendor_phy_mode vendor_phy_mode);
 
 /**
+ * hdd_set_mac_chan_width() - set channel width
+ * @adapter: Handle to hdd_adapter
+ * @chwidth: given channel width
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_mac_chan_width(struct hdd_adapter *adapter,
+			   enum eSirMacHTChannelWidth chwidth);
+
+/**
  * hdd_is_legacy_connection() - Is adapter connection is legacy
  * @adapter: Handle to hdd_adapter
  *

@@ -62,6 +62,138 @@ static uint32_t hdd_son_is_acs_in_progress(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
+ * hdd_son_chan_width_to_chan_width() - translate son chan width
+ *                                      to mac chan width
+ * @son_chwidth: son chan width
+ *
+ * Return: mac chan width
+ */
+static enum eSirMacHTChannelWidth hdd_son_chan_width_to_chan_width(
+				enum ieee80211_cwm_width son_chwidth)
+{
+	enum eSirMacHTChannelWidth chwidth;
+
+	switch (son_chwidth) {
+	case IEEE80211_CWM_WIDTH20:
+		chwidth = eHT_CHANNEL_WIDTH_20MHZ;
+		break;
+	case IEEE80211_CWM_WIDTH40:
+		chwidth = eHT_CHANNEL_WIDTH_40MHZ;
+		break;
+	case IEEE80211_CWM_WIDTH80:
+		chwidth = eHT_CHANNEL_WIDTH_80MHZ;
+		break;
+	case IEEE80211_CWM_WIDTH160:
+		chwidth = eHT_CHANNEL_WIDTH_160MHZ;
+		break;
+	case IEEE80211_CWM_WIDTH80_80:
+		chwidth = eHT_CHANNEL_WIDTH_80P80MHZ;
+		break;
+	default:
+		chwidth = eHT_MAX_CHANNEL_WIDTH;
+	}
+
+	return chwidth;
+}
+
+/**
+ * hdd_son_set_chwidth() - set son chan width
+ * @vdev: vdev
+ * @son_chwidth: son chan width
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_son_set_chwidth(struct wlan_objmgr_vdev *vdev,
+			       enum ieee80211_cwm_width son_chwidth)
+{
+	enum eSirMacHTChannelWidth chwidth;
+	struct hdd_adapter *adapter;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return -EINVAL;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return -EINVAL;
+	}
+
+	chwidth = hdd_son_chan_width_to_chan_width(son_chwidth);
+
+	return hdd_set_mac_chan_width(adapter, chwidth);
+}
+
+/**
+ * hdd_chan_width_to_son_chwidth() - translate mac chan width
+ *                                   to son chan width
+ * @chwidth: mac chan width
+ *
+ * Return: son chan width
+ */
+static enum ieee80211_cwm_width hdd_chan_width_to_son_chwidth(
+				enum eSirMacHTChannelWidth chwidth)
+{
+	enum ieee80211_cwm_width son_chwidth;
+
+	switch (chwidth) {
+	case eHT_CHANNEL_WIDTH_20MHZ:
+		son_chwidth = IEEE80211_CWM_WIDTH20;
+		break;
+	case eHT_CHANNEL_WIDTH_40MHZ:
+		son_chwidth = IEEE80211_CWM_WIDTH40;
+		break;
+	case eHT_CHANNEL_WIDTH_80MHZ:
+		son_chwidth = IEEE80211_CWM_WIDTH80;
+		break;
+	case eHT_CHANNEL_WIDTH_160MHZ:
+		son_chwidth = IEEE80211_CWM_WIDTH160;
+		break;
+	case eHT_CHANNEL_WIDTH_80P80MHZ:
+		son_chwidth = IEEE80211_CWM_WIDTH80_80;
+		break;
+	default:
+		son_chwidth = IEEE80211_CWM_WIDTHINVALID;
+	}
+
+	return son_chwidth;
+}
+
+/**
+ * hdd_son_get_chwidth() - get chan width
+ * @vdev: vdev
+ *
+ * Return: son chan width
+ */
+static enum ieee80211_cwm_width hdd_son_get_chwidth(
+						struct wlan_objmgr_vdev *vdev)
+{
+	enum eSirMacHTChannelWidth chwidth;
+	struct hdd_adapter *adapter;
+	enum ieee80211_cwm_width son_chwidth = IEEE80211_CWM_WIDTHINVALID;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return son_chwidth;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return son_chwidth;
+	}
+
+	chwidth = wma_cli_get_command(adapter->vdev_id, WMI_VDEV_PARAM_CHWIDTH,
+				      VDEV_CMD);
+
+	if (chwidth < 0) {
+		hdd_err("Failed to get chwidth");
+		return son_chwidth;
+	}
+
+	return hdd_chan_width_to_son_chwidth(chwidth);
+}
+
+/**
  * hdd_son_chan_ext_offset_to_chan_type() - translate son chan extend offset
  *                                          to chan type
  * @son_chan_ext_offset: son chan ext offset
@@ -1143,6 +1275,8 @@ void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.os_if_set_phymode = hdd_son_set_phymode;
 	cb_obj.os_if_get_phymode = hdd_son_get_phymode;
 	cb_obj.os_if_get_rx_nss = hdd_son_get_rx_nss;
+	cb_obj.os_if_set_chwidth = hdd_son_set_chwidth;
+	cb_obj.os_if_get_chwidth = hdd_son_get_chwidth;
 
 	os_if_son_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
 }

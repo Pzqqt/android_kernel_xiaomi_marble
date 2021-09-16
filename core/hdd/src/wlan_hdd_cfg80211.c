@@ -8853,12 +8853,19 @@ static int hdd_set_elna_bypass(struct hdd_adapter *adapter,
 }
 #endif
 
-static uint32_t hdd_nl80211_chwidth_to_bonding_mode(uint8_t nl80211_chwidth)
+/**
+ * hdd_mac_chwidth_to_bonding_mode() - get bonding_mode from chan width
+ * @chwidth: chan width
+ *
+ * Return: bonding mode
+ */
+static uint32_t hdd_mac_chwidth_to_bonding_mode(
+			enum eSirMacHTChannelWidth chwidth)
 {
 	uint32_t bonding_mode;
 
-	switch (nl80211_chwidth) {
-	case NL80211_CHAN_WIDTH_20:
+	switch (chwidth) {
+	case eHT_CHANNEL_WIDTH_20MHZ:
 		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 		break;
 	default:
@@ -8866,6 +8873,16 @@ static uint32_t hdd_nl80211_chwidth_to_bonding_mode(uint8_t nl80211_chwidth)
 	}
 
 	return bonding_mode;
+}
+
+int hdd_set_mac_chan_width(struct hdd_adapter *adapter,
+			   enum eSirMacHTChannelWidth chwidth)
+{
+	uint32_t bonding_mode;
+
+	bonding_mode = hdd_mac_chwidth_to_bonding_mode(chwidth);
+
+	return hdd_update_channel_width(adapter, chwidth, bonding_mode);
 }
 
 /**
@@ -8881,7 +8898,6 @@ static int hdd_set_channel_width(struct hdd_adapter *adapter,
 {
 	uint8_t nl80211_chwidth;
 	enum eSirMacHTChannelWidth chwidth;
-	uint32_t bonding_mode;
 
 	nl80211_chwidth = nla_get_u8(attr);
 	chwidth = hdd_nl80211_chwidth_to_chwidth(nl80211_chwidth);
@@ -8890,9 +8906,7 @@ static int hdd_set_channel_width(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	bonding_mode = hdd_nl80211_chwidth_to_bonding_mode(nl80211_chwidth);
-
-	return hdd_update_channel_width(adapter, chwidth, bonding_mode);
+	return hdd_set_mac_chan_width(adapter, chwidth);
 }
 
 /**

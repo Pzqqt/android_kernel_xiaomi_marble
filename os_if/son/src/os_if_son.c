@@ -830,6 +830,29 @@ bool os_if_son_acl_is_probe_wh_set(struct wlan_objmgr_vdev *vdev,
 
 qdf_export_symbol(os_if_son_acl_is_probe_wh_set);
 
+int os_if_son_set_chwidth(struct wlan_objmgr_vdev *vdev,
+			  enum ieee80211_cwm_width son_chwidth)
+{
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+
+	return g_son_os_if_cb.os_if_set_chwidth(vdev, son_chwidth);
+}
+qdf_export_symbol(os_if_son_set_chwidth);
+
+enum ieee80211_cwm_width os_if_son_get_chwidth(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	return g_son_os_if_cb.os_if_get_chwidth(vdev);
+}
+qdf_export_symbol(os_if_son_get_chwidth);
+
 u_int8_t os_if_son_get_rx_streams(struct wlan_objmgr_vdev *vdev)
 {
 	if (!vdev) {
