@@ -2521,7 +2521,9 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	sap_new_freq = pcl.pcl_list[0];
-	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq)) {
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq) ||
+	    (WLAN_REG_IS_5GHZ_CH_FREQ(sap_ch_freq) &&
+	     WLAN_REG_IS_5GHZ_CH_FREQ(*intf_ch_freq))) {
 		for (i = 0; i < pcl.pcl_len; i++) {
 			if (pcl.pcl_list[i] == *intf_ch_freq) {
 				sap_new_freq = pcl.pcl_list[i];
