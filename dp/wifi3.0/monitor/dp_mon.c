@@ -3111,11 +3111,11 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		ppdu_desc->tlv_bitmap = s_ppdu_info->tlv_bitmap;
 
 		if (starved) {
-			dp_mon_err("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
-				   ppdu_desc->frame_ctrl,
-				   ppdu_desc->htt_frame_type,
-				   ppdu_desc->tlv_bitmap,
-				   ppdu_desc->user[0].completion_status);
+			dp_mon_info("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
+				    ppdu_desc->frame_ctrl,
+				    ppdu_desc->htt_frame_type,
+				    ppdu_desc->tlv_bitmap,
+				    ppdu_desc->user[0].completion_status);
 			starved = 0;
 		}
 
