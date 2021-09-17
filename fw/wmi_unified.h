@@ -27466,6 +27466,53 @@ typedef struct {
 #define WMI_PDEV_IS_BEACON_PRIORITY_SET(val) ((val) & WMI_PDEV_BEACON_PRIORITY_BIT)
 #define WMI_PDEV_IS_MGMT_PRIORITY_SET(val) ((val) & WMI_PDEV_MGMT_PRIORITY_BIT)
 
+/*
+ * For Maple 3-way coex, The interface will have following configurable
+ * priority bits to set relative priorities of WLAN/BT/3-radio PTA.
+ * To send below config host will use WMI_COEX_CONFIG_CMD command with
+ * config type WMI_COEX_CONFIG_THREE_WAY_COEX_START
+ * WMI_COEX_CONFIG_THREE_WAY_COEX_RESET
+ *
+ ** Bits 0 to 7 corresponds to Wifi
+ * Bit - 0: QCA_WIFI_BE
+ * Bit - 1: QCA_WIFI_BK
+ * Bit - 2: QCA_WIFI_VI
+ * Bit - 3: QCA_WIFI_VO
+ * Bit - 4: QCA_WIFI_BEACON
+ * Bit - 5: QCA_WIFI_MGMT
+ * Bits 6 - 7: Reserved
+ *
+ ** Bits 8 to 15 corresponds to BT
+ * Bit - 8: QCA_BT_ADVERTISER
+ * Bit - 9: QCA_BT_SCANNER
+ * Bit - 10: QCA_BT_BLE_CONNECTION
+ * Bits 11 to 15: Reserved
+ *
+ ** Bits 16 to 24 corresponds to 3-radio PTA,
+ * It can be anything BT/ZigBee connected to 802.15.4 radio
+ * Bit - 16: QCA_PTA_THIRD_RADIO_LOW
+ * Bit - 17: QCA_PTA_THIRD_RADIO_HIGH
+ * Bits 18 to 24: Reserved
+ *
+ ** Bits 25 to 31 Reserved for future use
+ */
+#define WMI_PDEV_BT_ADVERTISER_PRIORITY_BIT      (1 <<  8)
+#define WMI_PDEV_BT_SCANNER_PRIORITY_BIT         (1 <<  9)
+#define WMI_PDEV_BT_BLE_CONNECTION_PRIORITY_BIT  (1 << 10)
+#define WMI_PDEV_IS_BT_ADVERTISER_PRIORITY_SET(val) \
+    ((val) & WMI_PDEV_BT_ADVERTISER_PRIORITY_BIT)
+#define WMI_PDEV_IS_BT_SCANNER_PRIORITY_SET(val) \
+    ((val) & WMI_PDEV_BT_SCANNER_PRIORITY_BIT)
+#define WMI_PDEV_IS_BT_BLE_CONNECTION_PRIORITY_SET(val) \
+    ((val) & WMI_PDEV_BT_BLE_CONNECTION_PRIORITY_BIT)
+
+#define WMI_PDEV_PTA_THIRD_RADIO_LOW_PRIORITY_BIT  (1 << 16)
+#define WMI_PDEV_PTA_THIRD_RADIO_HIGH_PRIORITY_BIT (1 << 17)
+#define WMI_PDEV_IS_PTA_THIRD_RADIO_LOW_PRIORITY_SET(val) \
+    ((val) & WMI_PDEV_PTA_THIRD_RADIO_LOW_PRIORITY_BIT)
+#define WMI_PDEV_IS_PTA_THIRD_RADIO_HIGH_PRIORITY_SET(val) \
+    ((val) & WMI_PDEV_PTA_THIRD_RADIO_HIGH_PRIORITY_BIT)
+
 typedef enum wmi_coex_algo_type  {
     WMI_COEX_ALGO_UNCONS_FREERUN  = 0,
     WMI_COEX_ALGO_FREERUN         = 1,
