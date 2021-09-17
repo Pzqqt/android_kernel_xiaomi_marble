@@ -211,7 +211,9 @@
 #include <linux/bitfield.h>
 #include "wlan_hdd_mlo.h"
 #include <wlan_hdd_son.h>
-
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_ap.h>
+#endif
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
 #else
@@ -15859,6 +15861,43 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 	mutex_unlock(&hdd_ctx->sap_lock);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_hdd_mlo_sap_reinit() - handle mlo scenario for ssr
+ * @hdd_ctx: Pointer to hdd context
+ * @config: Pointer to sap config
+ * @adapter: Pointer to hostapd adapter
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wlan_hdd_mlo_sap_reinit(struct hdd_context *hdd_ctx,
+					  struct sap_config *config,
+					  struct hdd_adapter *adapter)
+{
+	if (config->mlo_sap) {
+		if (!mlo_ap_vdev_attach(adapter->vdev, config->link_id,
+					config->num_link)) {
+			hdd_err("SAP mlo mgr attach fail");
+			return QDF_STATUS_E_INVAL;
+		}
+	}
+
+	if (!policy_mgr_is_mlo_sap_concurrency_allowed(
+		hdd_ctx->psoc, wlan_vdev_mlme_is_mlo_ap(adapter->vdev))) {
+		hdd_err("MLO SAP concurrency check fails");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS wlan_hdd_mlo_sap_reinit(struct hdd_context *hdd_ctx,
+					  struct sap_config *config,
+					  struct hdd_adapter *adapter)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * wlan_hdd_start_sap() - this function starts bss of SAP.
  * @ap_adapter: SAP adapter
@@ -15902,6 +15941,11 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 				hdd_ctx->pdev,
 				hdd_ap_ctx->sap_config.chan_freq,
 				0, &hdd_ap_ctx->sap_config.ch_params);
+	if (QDF_IS_STATUS_ERROR(wlan_hdd_mlo_sap_reinit(hdd_ctx, sap_config,
+							ap_adapter))) {
+		hdd_err("SAP Not able to do mlo attach");
+		goto end;
+	}
 
 	qdf_event_reset(&hostapd_state->qdf_event);
 	if (wlansap_start_bss(hdd_ap_ctx->sap_context, hdd_hostapd_sap_event_cb,
@@ -15935,6 +15979,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 
 	return;
 end:
+	wlan_hdd_mlo_reset(ap_adapter);
 	wlansap_reset_sap_config_add_ie(sap_config, eUPDATE_IE_ALL);
 	mutex_unlock(&hdd_ctx->sap_lock);
 	/* SAP context and beacon cleanup will happen during driver unload

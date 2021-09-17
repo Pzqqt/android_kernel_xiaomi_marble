@@ -518,6 +518,11 @@ struct sap_config {
 	struct hdd_channel_info *channel_info;
 	uint32_t channel_info_count;
 	bool dfs_cac_offload;
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool mlo_sap;
+	uint8_t link_id;
+	uint8_t num_link;
+#endif
 };
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE

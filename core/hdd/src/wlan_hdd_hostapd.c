@@ -5319,6 +5319,10 @@ static QDF_STATUS wlan_hdd_mlo_update(struct hdd_context *hdd_ctx,
 			hdd_err("MLO SAP attach fails");
 			return QDF_STATUS_E_INVAL;
 		}
+
+		config->mlo_sap = true;
+		config->link_id = link_id;
+		config->num_link = num_link;
 	}
 
 	if (!policy_mgr_is_mlo_sap_concurrency_allowed(
@@ -5330,16 +5334,14 @@ static QDF_STATUS wlan_hdd_mlo_update(struct hdd_context *hdd_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_hdd_mlo_reset() - reset mlo configuration if start bss fails
- * @adapter: Pointer to hostapd adapter
- *
- * Return: void
- */
-static void wlan_hdd_mlo_reset(struct hdd_adapter *adapter)
+void wlan_hdd_mlo_reset(struct hdd_adapter *adapter)
 {
-	if (wlan_vdev_mlme_is_mlo_ap(adapter->vdev))
+	if (wlan_vdev_mlme_is_mlo_ap(adapter->vdev)) {
+		adapter->session.ap.sap_config.mlo_sap = false;
+		adapter->session.ap.sap_config.link_id = 0;
+		adapter->session.ap.sap_config.num_link = 0;
 		mlo_ap_vdev_detach(adapter->vdev);
+	}
 }
 #else
 static QDF_STATUS wlan_hdd_mlo_update(struct hdd_context *hdd_ctx,
@@ -5348,10 +5350,6 @@ static QDF_STATUS wlan_hdd_mlo_update(struct hdd_context *hdd_ctx,
 				      struct hdd_beacon_data *beacon)
 {
 	return QDF_STATUS_SUCCESS;
-}
-
-static void wlan_hdd_mlo_reset(struct hdd_adapter *adapter)
-{
 }
 #endif
 
