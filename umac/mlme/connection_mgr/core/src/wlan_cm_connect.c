@@ -1148,6 +1148,7 @@ QDF_STATUS cm_if_mgr_validate_candidate(struct cnx_mgr *cm_ctx,
 	struct if_mgr_event_data event_data = {0};
 
 	event_data.validate_bss_info.chan_freq = scan_entry->channel.chan_freq;
+	event_data.validate_bss_info.beacon_interval = scan_entry->bcn_int;
 	qdf_copy_macaddr(&event_data.validate_bss_info.peer_addr,
 			 &scan_entry->bssid);
 
