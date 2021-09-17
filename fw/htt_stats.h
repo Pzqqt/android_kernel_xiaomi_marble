@@ -411,6 +411,8 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_PDEV_PER_STATS = 40,
 
+    HTT_DBG_EXT_AST_ENTRIES = 41,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -1255,6 +1257,23 @@ typedef struct {
     A_UINT32     peer_flags;
     A_UINT32     qpeer_flags;
 } htt_peer_details_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32     sw_peer_id;
+    A_UINT32     ast_index;
+    htt_mac_addr mac_addr;
+    A_UINT32
+        pdev_id        : 2,
+        vdev_id        : 8,
+        next_hop       : 1,
+        mcast          : 1,
+        monitor_direct : 1,
+        mesh_sta       : 1,
+        mec            : 1,
+        intra_bss      : 1,
+        reserved       : 16;
+} htt_ast_entry_tlv;
 
 typedef enum {
     HTT_STATS_PREAM_OFDM,
