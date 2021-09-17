@@ -94,7 +94,7 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 
 #define QDF_SET_PARAM(__param, __val)    ((__param) |= (1 << (__val)))
 #define QDF_HAS_PARAM(__param, __val)    ((__param) &  (1 << (__val)))
-#define QDF_CLEAR_PARAM(__param, __val)  ((__param) &= ((~1) << (__val)))
+#define QDF_CLEAR_PARAM(__param, __val)  ((__param) &= (~(1 << (__val))))
 
 /**
  * QDF_MAX - get maximum of two values
