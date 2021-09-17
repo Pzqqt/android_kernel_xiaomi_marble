@@ -149,8 +149,13 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, 0,
 		CAP_FLAG_ROOT,
 		{0},
-		{PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, P_FRAME_QP,
-			B_FRAME_QP, META_ROI_INFO, BLUR_TYPES, MIN_QUALITY}},
+		{/* Do not change order of META_ROI_INFO, MIN_QUALITY, BLUR_TYPES
+		 * Since parent -> children relationship for these cap_ids is
+		 * as follows:
+		 * META_ROI_INFO -> MIN_QUALITY -> BLUR_TYPES
+		 */
+		PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, P_FRAME_QP,
+			B_FRAME_QP, META_ROI_INFO, MIN_QUALITY, BLUR_TYPES}},
 
 	{PIX_FMTS, DEC, HEVC|HEIC,
 		MSM_VIDC_FMT_NV12,
