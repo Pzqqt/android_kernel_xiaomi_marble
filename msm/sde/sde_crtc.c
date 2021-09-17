@@ -4160,6 +4160,43 @@ static int _sde_crtc_vblank_enable(
 	return 0;
 }
 
+static void _sde_crtc_reserve_resource(struct drm_crtc *crtc, struct drm_connector *conn)
+{
+	u32 min_transfer_time = 0, lm_count = 1;
+	u64 mode_clock_hz = 0, updated_fps = 0, topology_id;
+	struct drm_encoder *encoder;
+
+	if (!crtc || !conn)
+		return;
+
+	encoder = conn->state->best_encoder;
+	if (!sde_encoder_is_built_in_display(encoder))
+		return;
+
+	if (sde_encoder_check_curr_mode(encoder, MSM_DISPLAY_CMD_MODE))
+		sde_encoder_get_transfer_time(encoder, &min_transfer_time);
+
+	if (min_transfer_time)
+		updated_fps = DIV_ROUND_UP(1000000, min_transfer_time);
+	else
+		updated_fps = drm_mode_vrefresh(&crtc->mode);
+
+	topology_id = sde_connector_get_topology_name(conn);
+	if (TOPOLOGY_DUALPIPE_MODE(topology_id))
+		lm_count = 2;
+	else if (TOPOLOGY_QUADPIPE_MODE(topology_id))
+		lm_count = 4;
+
+	/* mode clock = [(h * v * fps * 1.05) / (num_lm)] */
+	mode_clock_hz = mult_frac(crtc->mode.htotal * crtc->mode.vtotal * updated_fps, 105, 100);
+	mode_clock_hz = div_u64(mode_clock_hz, lm_count);
+	SDE_DEBUG("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%u\n",
+			crtc->mode.name, crtc->mode.htotal, crtc->mode.vtotal,
+			updated_fps, lm_count, mode_clock_hz);
+
+	sde_core_perf_crtc_reserve_res(crtc, mode_clock_hz);
+}
+
 /**
  * sde_crtc_duplicate_state - state duplicate hook
  * @crtc: Pointer to drm crtc structure
@@ -4666,8 +4703,10 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 		sde_crtc_handle_power_event, crtc, sde_crtc->name);
 
 	/* Enable ESD thread */
-	for (i = 0; i < cstate->num_connectors; i++)
+	for (i = 0; i < cstate->num_connectors; i++) {
 		sde_connector_schedule_status_work(cstate->connectors[i], true);
+		_sde_crtc_reserve_resource(crtc, cstate->connectors[i]);
+	}
 }
 
 /* no input validation - caller API has all the checks */

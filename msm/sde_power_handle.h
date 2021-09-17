@@ -147,6 +147,16 @@ struct sde_power_event {
 	bool active;
 };
 
+/*
+ * struct sde_power_mmrm_reserve - mmrm resource reservation for clk and bw
+ * @clk_name: name of resource reservation clock
+ * @clk_rate: resource reservation clock rate
+ */
+struct sde_power_mmrm_reserve {
+	char clk_name[32];
+	u64 clk_rate;
+};
+
 /**
  * struct sde_power_handle: power handle main struct
  * @mp:		module power for clock and regulator
@@ -159,6 +169,7 @@ struct sde_power_event {
  * @rsc_client_init: boolean to control rsc client create
  * @mmrm_enable: boolean to indicate if mmrm is enabled
  * @ib_quota: ib quota of the given bus
+ * @mmrm_reserve: mmrm resource reservation
  */
 struct sde_power_handle {
 	struct dss_module_power mp;
@@ -173,6 +184,8 @@ struct sde_power_handle {
 	bool rsc_client_init;
 	bool mmrm_enable;
 	u64 ib_quota[SDE_POWER_HANDLE_DBUS_ID_MAX];
+
+	struct sde_power_mmrm_reserve mmrm_reserve;
 };
 
 /**
@@ -225,6 +238,16 @@ int sde_power_scale_reg_bus(struct sde_power_handle *phandle,
  */
 int sde_power_data_bus_state_update(struct sde_power_handle *phandle,
 							bool enable);
+
+/**
+ * sde_power_clk_reserve_rate() - reserve the clock rate with mmrm
+ * @pdata:  power handle containing the resources
+ * @clock_name: clock name which needs rate update.
+ * @rate:       Requested rate.
+ *
+ * Return: error code.
+ */
+int sde_power_clk_reserve_rate(struct sde_power_handle *pdata, char *clock_name, u64 rate);
 
 /**
  * sde_power_clk_set_rate() - set the clock rate
