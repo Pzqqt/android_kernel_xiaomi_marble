@@ -399,11 +399,10 @@ struct sde_connector_ops {
 
 	/**
 	 * get_qsync_min_fps - Get qsync min fps from qsync-min-fps-list
-	 * @display: Pointer to private display structure
 	 * @conn_state: Pointer to drm_connector_state structure
 	 * Returns: Qsync min fps value on success
 	 */
-	int (*get_qsync_min_fps)(void *display, struct drm_connector_state *conn_state);
+	int (*get_qsync_min_fps)(struct drm_connector_state *conn_state);
 
 	/**
 	 * get_avr_step_req - Get the required avr_step for given fps rate

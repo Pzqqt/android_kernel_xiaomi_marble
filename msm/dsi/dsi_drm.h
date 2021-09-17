@@ -174,10 +174,9 @@ void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
 
 /**
  * dsi_conn_get_qsync_min_fps() - get qsync min fps for given fps
- * @display:            Handle to display.
  * @conn_state:         Pointer to drm_connector_state structure
  *
  * Return: Qsync min fps rate or -ve error code.
  */
-int dsi_conn_get_qsync_min_fps(void *dsi_display, struct drm_connector_state *conn_state);
+int dsi_conn_get_qsync_min_fps(struct drm_connector_state *conn_state);
 #endif /* _DSI_DRM_H_ */
