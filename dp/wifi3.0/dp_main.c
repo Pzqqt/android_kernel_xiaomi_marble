@@ -2972,6 +2972,7 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 	int i = 0;
 	int num_irq = 0;
 	int rx_err_ring_intr_ctxt_id = HIF_MAX_GROUP;
+	int lmac_id = 0;
 
 	qdf_mem_set(&soc->mon_intr_id_lmac_map,
 		    sizeof(soc->mon_intr_id_lmac_map), DP_MON_INVALID_LMAC_ID);
@@ -3062,6 +3063,11 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 
 		if (rx_err_ring_mask)
 			rx_err_ring_intr_ctxt_id = i;
+
+		if (dp_is_mon_mask_valid(soc, &soc->intr_ctx[i])) {
+			soc->mon_intr_id_lmac_map[lmac_id] = i;
+			lmac_id++;
+		}
 	}
 
 	hif_configure_ext_group_interrupts(soc->hif_handle);

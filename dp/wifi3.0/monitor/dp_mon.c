@@ -941,7 +941,7 @@ static void dp_flush_monitor_rings(struct dp_soc *soc)
 	hal_soc_handle_t hal_soc = soc->hal_soc;
 	uint32_t lmac_id;
 	uint32_t hp, tp;
-	uint8_t dp_intr_id;
+	int dp_intr_id;
 	int budget;
 	void *mon_dst_srng;
 	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
@@ -961,6 +961,9 @@ static void dp_flush_monitor_rings(struct dp_soc *soc)
 		return;
 
 	dp_intr_id = soc->mon_intr_id_lmac_map[lmac_id];
+	if (qdf_unlikely(dp_intr_id == DP_MON_INVALID_LMAC_ID))
+		return;
+
 	mon_dst_srng = dp_rxdma_get_mon_dst_ring(pdev, lmac_id);
 
 	/* reap full ring */
