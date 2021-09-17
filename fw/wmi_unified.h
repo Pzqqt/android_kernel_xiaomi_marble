@@ -7728,6 +7728,9 @@ typedef enum {
      */
     WMI_PDEV_PARAM_CTRL_FRAME_OBSS_PD_THRESHOLD,
 
+    /* Param to configure the access category for the TWT queue */
+    WMI_PDEV_PARAM_TWT_AC_CONFIG,
+
 
 } WMI_PDEV_PARAM;
 
@@ -31031,6 +31034,13 @@ typedef struct {
      */
     A_UINT32 sp_start_tsf_lo; /* bits 31:0 */
     A_UINT32 sp_start_tsf_hi; /* bits 63:32 */
+
+    /*
+     * In announced mode, wait for announce timeout before explicit announce
+     * using QoS NULL.
+     * If set to 0, FW will send QoS NULL immediately.
+     */
+    A_UINT32 announce_timeout_us;
 } wmi_twt_add_dialog_cmd_fixed_param;
 
 /* status code of adding TWT dialog */
