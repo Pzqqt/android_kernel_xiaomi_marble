@@ -505,6 +505,12 @@ static void dp_audio_teardown_done(struct platform_device *pdev)
 		return;
 	}
 
+	if (audio->panel->stream_id >= DP_STREAM_MAX) {
+		DP_WARN("invalid stream id: %d\n",
+				audio->panel->stream_id);
+		return;
+	}
+
 	mutex_lock(&audio->ops_lock);
 	dp_audio_enable(audio, false);
 	mutex_unlock(&audio->ops_lock);
