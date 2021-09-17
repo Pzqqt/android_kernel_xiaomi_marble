@@ -119,11 +119,11 @@ enum sde_dbg_dump_context {
  * entry array access.
  */
 
-#if IS_ENABLED(CONFIG_DRM_SDE_VM)
+#if IS_ENABLED(CONFIG_DRM_MSM_LOW_MEM_FOOTPRINT)
 #define SDE_EVTLOG_ENTRY	(SDE_EVTLOG_PRINT_ENTRY * 8)
 #else
 #define SDE_EVTLOG_ENTRY	(SDE_EVTLOG_PRINT_ENTRY * 32)
-#endif /* IS_ENABLED(CONFIG_DRM_SDE_VM) */
+#endif /* IS_ENABLED(CONFIG_DRM_MSM_LOW_MEM_FOOTPRINT) */
 
 #define SDE_EVTLOG_MAX_DATA 15
 #define SDE_EVTLOG_BUF_MAX 512
@@ -169,11 +169,11 @@ extern struct sde_dbg_evtlog *sde_dbg_base_evtlog;
  * number must be greater than number of possible writes in at least one
  * single commit.
  */
-#if IS_ENABLED(CONFIG_DRM_SDE_VM)
+#if IS_ENABLED(CONFIG_DRM_MSM_LOW_MEM_FOOTPRINT)
 #define SDE_REGLOG_ENTRY 256
 #else
 #define SDE_REGLOG_ENTRY 1024
-#endif /* IS_ENABLED(CONFIG_DRM_SDE_VM) */
+#endif /* IS_ENABLED(CONFIG_DRM_MSM_LOW_MEM_FOOTPRINT) */
 
 struct sde_dbg_reglog_log {
 	s64 time;
