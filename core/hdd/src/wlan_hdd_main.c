@@ -13707,6 +13707,10 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
 		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
 					       ALLOWED_KEYMGMT_6G_MASK);
+	} else {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
+		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
+					       DEFAULT_KEYMGMT_6G_MASK);
 	}
 	hdd_thermal_stats_cmd_init(hdd_ctx);
 
