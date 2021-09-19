@@ -40,6 +40,8 @@
 
 #define SWRM_DSD_PARAMS_PORT 4
 
+#define SWRM_SPK_DAC_PORT_RECEIVER 0
+
 #define SWR_BROADCAST_CMD_ID            0x0F
 #define SWR_DEV_ID_MASK			0xFFFFFFFFFFFF
 #define SWR_REG_VAL_PACK(data, dev, id, reg)	\
@@ -747,6 +749,12 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 	else if ((swrm->master_id == MASTER_ID_RX) &&
 		(swrm->bus_clk == SWR_CLK_RATE_11P2896MHZ))
 		usecase = 2;
+
+	if ((swrm->master_id == MASTER_ID_WSA) &&
+	    swrm->mport_cfg[SWRM_SPK_DAC_PORT_RECEIVER].port_en &&
+	    swrm->mport_cfg[SWRM_SPK_DAC_PORT_RECEIVER].ch_rate ==
+			SWR_CLK_RATE_4P8MHZ)
+		usecase = 1;
 
 	params = swrm->port_param[usecase];
 	copy_port_tables(swrm, params);
@@ -1522,8 +1530,7 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 						port_req->dev_num, 0x00,
 						SWRS_DP_BLOCK_CONTROL_1(slv_id));
 			}
-			if (port_req->blk_pack_mode != SWR_INVALID_PARAM
-					&& swrm->master_id != MASTER_ID_WSA) {
+			if (port_req->blk_pack_mode != SWR_INVALID_PARAM) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] =
 					SWR_REG_VAL_PACK(
@@ -1858,6 +1865,15 @@ static int swrm_connect_port(struct swr_master *master,
 				swrm->dynamic_port_map_supported) {
 			mport->ch_rate += portinfo->ch_rate[i];
 			swrm_update_bus_clk(swrm);
+		} else {
+			/*
+			 * Fallback to assign slave port ch_rate
+			 * as master port uses same ch_rate as slave
+			 * unlike soundwire TX master ports where
+			 * unified ports and multiple slave port
+			 * channels can attach to same master port
+			 */
+			mport->ch_rate = portinfo->ch_rate[i];
 		}
 	}
 	master->num_port += portinfo->num_port;

@@ -279,7 +279,7 @@ struct lpass_cdc_wsa_macro_priv {
 	struct platform_device *pdev_child_devices
 			[LPASS_CDC_WSA_MACRO_CHILD_DEVICES_MAX];
 	int child_count;
-	int ear_spkr_gain;
+	int wsa_spkrrecv;
 	int spkr_gain_offset;
 	int spkr_mode;
 	int is_softclip_on[LPASS_CDC_WSA_MACRO_SOFTCLIP_MAX];
@@ -323,6 +323,10 @@ static const char * const lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_text[] = {
 	"OFF", "ON"
 };
 
+static const char *const lpass_cdc_wsa_macro_ear_spkrrecv_text[] = {
+	"OFF", "ON"
+};
+
 static const char * const lpass_cdc_wsa_macro_comp_mode_text[] = {
 	"G_21_DB", "G_19P5_DB", "G_18_DB", "G_16P5_DB", "G_15_DB",
 	"G_13P5_DB", "G_12_DB", "G_10P5_DB", "G_9_DB"
@@ -336,6 +340,8 @@ static const struct snd_kcontrol_new wsa_int1_vbat_mix_switch[] = {
 	SOC_DAPM_SINGLE("WSA RX1 VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
 };
 
+static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_ear_spkrrecv_enum,
+				lpass_cdc_wsa_macro_ear_spkrrecv_text);
 static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_enum,
 			lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_text);
 static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_comp_mode_enum,
@@ -1530,6 +1536,9 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
 
+	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
 	dev_dbg(component->dev, "%s %d %s\n", __func__, event, w->name);
 
 	if (!(strcmp(w->name, "WSA_RX INT0 INTERP"))) {
@@ -1578,8 +1587,14 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 
 		lpass_cdc_wsa_macro_config_compander(component, w->shift, event);
 		lpass_cdc_wsa_macro_config_softclip(component, w->shift, event);
+		if(wsa_priv->wsa_spkrrecv)
+			snd_soc_component_update_bits(component,
+					LPASS_CDC_WSA_RX0_RX_PATH_CFG1,
+					0x08, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		snd_soc_component_update_bits(component,
+				LPASS_CDC_WSA_RX0_RX_PATH_CFG1,	0x08, 0x08);
 		lpass_cdc_wsa_macro_config_compander(component, w->shift, event);
 		lpass_cdc_wsa_macro_config_softclip(component, w->shift, event);
 		lpass_cdc_wsa_macro_enable_prim_interpolator(component, reg, event);
@@ -2028,6 +2043,44 @@ static int lpass_cdc_wsa_macro_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int lpass_cdc_wsa_macro_ear_spkrrecv_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
+
+	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = wsa_priv->wsa_spkrrecv;
+
+	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+		 __func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int lpass_cdc_wsa_macro_ear_spkrrecv_put(struct snd_kcontrol *kcontrol,
+                                        struct snd_ctl_elem_value *ucontrol)
+{
+        struct snd_soc_component *component =
+                                snd_soc_kcontrol_component(kcontrol);
+        struct device *wsa_dev = NULL;
+        struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
+
+        if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+                return -EINVAL;
+
+        wsa_priv->wsa_spkrrecv = ucontrol->value.integer.value[0];
+
+        dev_dbg(component->dev, "%s:spkrrecv status = %d\n",
+                 __func__, wsa_priv->wsa_spkrrecv);
+
+        return 0;
+}
+
 static int lpass_cdc_wsa_macro_comp_mode_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
@@ -2239,6 +2292,9 @@ static int lpass_cdc_wsa_macro_soft_clip_enable_put(struct snd_kcontrol *kcontro
 }
 
 static const struct snd_kcontrol_new lpass_cdc_wsa_macro_snd_controls[] = {
+	SOC_ENUM_EXT("WSA SPKRRECV", lpass_cdc_wsa_macro_ear_spkrrecv_enum,
+			lpass_cdc_wsa_macro_ear_spkrrecv_get,
+			lpass_cdc_wsa_macro_ear_spkrrecv_put),
 	SOC_ENUM_EXT("GSM mode Enable", lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_enum,
 		     lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_get,
 		     lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_put),
@@ -2659,10 +2715,10 @@ static const struct lpass_cdc_wsa_macro_reg_mask_val
 				lpass_cdc_wsa_macro_reg_init[] = {
 	{LPASS_CDC_WSA_BOOST0_BOOST_CFG1, 0x3F, 0x12},
 	{LPASS_CDC_WSA_BOOST0_BOOST_CFG2, 0x1C, 0x08},
-	{LPASS_CDC_WSA_COMPANDER0_CTL7, 0x1E, 0x0C},
+	{LPASS_CDC_WSA_COMPANDER0_CTL7, 0x1E, 0x18},
 	{LPASS_CDC_WSA_BOOST1_BOOST_CFG1, 0x3F, 0x12},
 	{LPASS_CDC_WSA_BOOST1_BOOST_CFG2, 0x1C, 0x08},
-	{LPASS_CDC_WSA_COMPANDER1_CTL7, 0x1E, 0x0C},
+	{LPASS_CDC_WSA_COMPANDER1_CTL7, 0x1E, 0x18},
 	{LPASS_CDC_WSA_BOOST0_BOOST_CTL, 0x70, 0x58},
 	{LPASS_CDC_WSA_BOOST1_BOOST_CTL, 0x70, 0x58},
 	{LPASS_CDC_WSA_RX0_RX_PATH_CFG1, 0x08, 0x08},
