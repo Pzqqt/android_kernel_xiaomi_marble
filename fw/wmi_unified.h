@@ -13507,6 +13507,8 @@ typedef struct {
     A_UINT32 per_sta_profile_offset;
     /** Quiet IE offset from the beginning of the template. */
     A_UINT32 quiet_ie_offset;
+    /** Flag to check if other IEs are present in per-sta profile */
+    A_UINT32 is_other_ie_present;
 } wmi_bcn_tmpl_ml_params;
 
 typedef struct {
@@ -29687,7 +29689,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SET_MU_SNIF_CMDID);
     }
 
-    return "Invalid WMI cmd";
+    return (A_UINT8 *) "Invalid WMI cmd";
 }
 #endif /* WMI_CMD_STRINGS */
 
