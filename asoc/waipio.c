@@ -76,6 +76,9 @@ struct msm_asoc_mach_data {
 	int core_audio_vote_count;
 	u32 wsa_max_devs;
 	int wcd_disabled;
+	int (*get_dev_num)(struct snd_soc_component *);
+	int backend_used;
+	struct prm_earpa_hw_intf_config upd_config;
 };
 
 static bool is_initial_boot;
@@ -174,6 +177,134 @@ static bool msm_usbc_swap_gnd_mic(struct snd_soc_component *component, bool acti
 		return false;
 
 	return fsa4480_switch_event(pdata->fsa_handle, FSA_MIC_GND_SWAP);
+}
+
+static void msm_parse_upd_configuration(struct platform_device *pdev,
+					struct msm_asoc_mach_data *pdata)
+{
+	int ret = 0;
+	u32 dt_values[2];
+
+	if (!pdev || !pdata)
+		return;
+
+	ret = of_property_read_string(pdev->dev.of_node,
+		"qcom,upd_backends_used", &pdata->upd_config.backend_used);
+	if (ret) {
+		pr_debug("%s:could not find %s entry in dt\n",
+			__func__, "qcom,upd_backends_used");
+		return;
+	}
+
+	if (!strcmp(pdata->upd_config.backend_used, "wsa"))
+		pdata->get_dev_num = wsa883x_codec_get_dev_num;
+	else
+		pdata->get_dev_num = wcd938x_codec_get_dev_num;
+
+	ret = of_property_read_u32_array(pdev->dev.of_node,
+			"qcom,upd_lpass_reg_addr", dt_values, MAX_EARPA_REG);
+	if (ret) {
+		pr_debug("%s: could not find %s entry in dt\n",
+				__func__, "qcom,upd_lpass_reg_addr");
+		return;
+	} else {
+		pdata->upd_config.ear_pa_hw_reg_cfg.lpass_cdc_rx0_rx_path_ctl_phy_addr =
+									dt_values[0];
+		pdata->upd_config.ear_pa_hw_reg_cfg.lpass_wr_fifo_reg_phy_addr =
+								dt_values[1];
+	}
+
+	ret = of_property_read_u32(pdev->dev.of_node,
+			"qcom,upd_ear_pa_reg_addr", &pdata->upd_config.ear_pa_pkd_reg_addr);
+	if (ret) {
+		pr_debug("%s: could not find %s entry in dt\n",
+			__func__, "qcom,upd_ear_pa_reg_addr");
+	}
+}
+
+static void msm_set_upd_config(struct snd_soc_pcm_runtime *rtd)
+{
+	int val1 = 0, val2 = 0, ret = 0;
+	u8  dev_num = 0;
+	char cdc_name[DEV_NAME_STR_LEN];
+	struct snd_soc_component *component = NULL;
+	struct msm_asoc_mach_data *pdata = NULL;
+
+	if (!rtd) {
+		pr_err("%s: rtd is NULL\n", __func__);
+		return;
+	}
+
+	pdata = snd_soc_card_get_drvdata(rtd->card);
+	if (!pdata) {
+		pr_err("%s: pdata is NULL\n", __func__);
+		return;
+	}
+	if (!pdata->get_dev_num) {
+		pr_err("%s: get_dev_num is NULL\n", __func__);
+		return;
+	}
+
+	if (!pdata->upd_config.ear_pa_hw_reg_cfg.lpass_cdc_rx0_rx_path_ctl_phy_addr ||
+		!pdata->upd_config.ear_pa_hw_reg_cfg.lpass_wr_fifo_reg_phy_addr ||
+                !pdata->upd_config.ear_pa_pkd_reg_addr) {
+		pr_err("%s: upd static configuration is not set\n", __func__);
+		return;
+	}
+
+	memset(cdc_name, '\0', DEV_NAME_STR_LEN);
+	if (!strcmp(pdata->upd_config.backend_used, "wsa")) {
+		if (pdata->wsa_max_devs > 0)
+			memcpy(cdc_name, "wsa-codec.1", strlen("wsa-codec.1"));
+	}
+	else
+		memcpy(cdc_name, WCD938X_DRV_NAME, sizeof(WCD938X_DRV_NAME));
+
+	component = snd_soc_rtdcom_lookup(rtd, cdc_name);
+	if (!component) {
+		pr_err("%s: %s component is NULL\n", __func__,
+			cdc_name);
+		return;
+	}
+
+	dev_num = pdata->get_dev_num(component);
+	if (dev_num < 0 || dev_num > 6) {
+		pr_err("%s: invalid slave dev num : %d\n", __func__,
+							dev_num);
+		return;
+	}
+
+	pdata->upd_config.ear_pa_pkd_cfg.ear_pa_enable_pkd_reg_addr =
+				pdata->upd_config.ear_pa_pkd_reg_addr & 0xFFFF;
+	pdata->upd_config.ear_pa_pkd_cfg.ear_pa_disable_pkd_reg_addr =
+				pdata->upd_config.ear_pa_pkd_reg_addr & 0xFFFF;
+
+	val1 = val2 = 0;
+
+	/* bits 16:19 carry command id */
+	val1 |= 1 << 16;
+
+	/* bits 20:23 carry swr device number */
+	val1 |= dev_num << 20;
+
+	/*
+	 * bits 24:31 carry 8 bit data to disable or enable ear pa
+	 * for wcd 7bit is global enable bit - 1 -enable. 0 - disable
+	 * for wsa 0bit is global enable bit - 1 -enable, 0 - disable
+	*/
+	val2 = val1;
+
+	if (!strcmp(pdata->upd_config.backend_used, "wsa"))
+		val1 |= 1 << 24;
+	else
+		val1 |= 1 << 31;
+
+	pdata->upd_config.ear_pa_pkd_cfg.ear_pa_enable_pkd_reg_addr |= val1;
+	pdata->upd_config.ear_pa_pkd_cfg.ear_pa_disable_pkd_reg_addr |= val2;
+
+	ret = audio_prm_set_cdc_earpa_duty_cycling_req(&pdata->upd_config, 1);
+	if (ret < 0)
+		pr_err("%s: upd cdc duty cycling registration failed\n", __func__);
 }
 
 static struct snd_soc_ops msm_common_be_ops = {
@@ -1492,6 +1623,8 @@ static int waipio_ssr_enable(struct device *dev, void *data)
 {
 	struct platform_device *pdev = to_platform_device(dev);
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
+	struct snd_soc_pcm_runtime *rtd, *rtd_wcd, *rtd_wsa;
+	struct msm_asoc_mach_data *pdata;
 	int ret = 0;
 
 	if (!card) {
@@ -1507,6 +1640,47 @@ static int waipio_ssr_enable(struct device *dev, void *data)
 
 	snd_card_notify_user(SND_CARD_STATUS_ONLINE);
 	dev_dbg(dev, "%s: setting snd_card to ONLINE\n", __func__);
+
+	pdata = snd_soc_card_get_drvdata(card);
+	rtd_wcd = snd_soc_get_pcm_runtime(card, &card->dai_link[0]);
+	if (!rtd_wcd) {
+		dev_dbg(dev,
+			"%s: snd_soc_get_pcm_runtime for %s failed!\n",
+			__func__, card->dai_link[0]);
+	}
+
+	if (pdata->wsa_max_devs > 0) {
+		rtd_wsa = snd_soc_get_pcm_runtime(card,
+			&card->dai_link[ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links)]);
+		if (!rtd_wsa) {
+			dev_dbg(dev,
+			"%s: snd_soc_get_pcm_runtime for %s failed!\n",
+			__func__, card->dai_link[ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links)]);
+		}
+	}
+	/* set UPD configuration */
+	if(!pdata->upd_config.backend_used) {
+		dev_dbg(dev,
+		"%s: upd- backend_used is NULL\n", __func__);
+		goto err;
+	}
+	if (!strcmp(pdata->upd_config.backend_used, "wsa")) {
+		if (!rtd_wsa)
+			goto err;
+		else
+			rtd = rtd_wsa;
+	} else if(!strcmp(pdata->upd_config.backend_used, "wcd")) {
+		if (!rtd_wcd &&!pdata->wcd_disabled)
+			goto err;
+		else
+			rtd = rtd_wcd;
+	} else {
+		dev_err(card->dev, "%s: Invalid backend to set UPD config\n",
+			__func__);
+		goto err;
+	}
+
+	msm_set_upd_config(rtd);
 
 err:
 	return ret;
@@ -1650,6 +1824,9 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 		ret = -EPROBE_DEFER;
 		goto err;
 	}
+
+	/* parse upd configuration */
+	msm_parse_upd_configuration(pdev, pdata);
 
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
 	if (ret == -EPROBE_DEFER) {
