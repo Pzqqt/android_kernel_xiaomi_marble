@@ -444,20 +444,67 @@ enum htt_dbg_ext_stats_type {
 typedef enum {
     /* HTT_UPLOAD_MU_STATS: upload all MU stats:
      * UL MU-MIMO + DL MU-MIMO + UL MU-OFDMA + DL MU-OFDMA
+     * (note: included OFDMA stats are limited to 11ax)
      */
     HTT_UPLOAD_MU_STATS,
 
     /* HTT_UPLOAD_MU_MIMO_STATS: upload UL MU-MIMO + DL MU-MIMO stats */
     HTT_UPLOAD_MU_MIMO_STATS,
 
-    /* HTT_UPLOAD_MU_OFDMA_STATS: upload UL MU-OFDMA + DL MU-OFDMA stats */
+    /* HTT_UPLOAD_MU_OFDMA_STATS:
+     * upload UL MU-OFDMA + DL MU-OFDMA stats (note: 11ax only stats)
+     */
     HTT_UPLOAD_MU_OFDMA_STATS,
 
     HTT_UPLOAD_DL_MU_MIMO_STATS,
     HTT_UPLOAD_UL_MU_MIMO_STATS,
+    /* HTT_UPLOAD_DL_MU_OFDMA_STATS:
+     * upload DL MU-OFDMA stats (note: 11ax only stats)
+     */
     HTT_UPLOAD_DL_MU_OFDMA_STATS,
+    /* HTT_UPLOAD_UL_MU_OFDMA_STATS:
+     * upload UL MU-OFDMA stats (note: 11ax only stats)
+     */
     HTT_UPLOAD_UL_MU_OFDMA_STATS,
+
+    /*
+     * Upload BE UL MU-OFDMA + BE DL MU-OFDMA stats,
+     * TLV: htt_tx_pdev_dl_be_mu_ofdma_sch_stats_tlv and
+     * htt_tx_pdev_ul_be_mu_ofdma_sch_stats_tlv
+     */
+    HTT_UPLOAD_BE_MU_OFDMA_STATS,
+
+    /*
+     * Upload BE DL MU-OFDMA
+     * TLV: htt_tx_pdev_dl_be_mu_ofdma_sch_stats_tlv
+     */
+    HTT_UPLOAD_BE_DL_MU_OFDMA_STATS,
+
+    /*
+     * Upload BE UL MU-OFDMA
+     * TLV: htt_tx_pdev_ul_be_mu_ofdma_sch_stats_tlv
+     */
+    HTT_UPLOAD_BE_UL_MU_OFDMA_STATS,
 } htt_mu_stats_upload_t;
+
+/* htt_tx_rate_stats_upload_t
+ * Enumerations for specifying which stats to upload in response to
+ * HTT_DBG_EXT_STATS_PDEV_TX_RATE.
+ */
+typedef enum {
+    /* 11abgn, 11ac, and 11ax TX stats, and a few 11be SU stats
+     *
+     * TLV: htt_tx_pdev_rate_stats_tlv
+     */
+    HTT_TX_RATE_STATS_DEFAULT,
+
+    /*
+     * Upload 11be OFDMA TX stats
+     *
+     * TLV: htt_tx_pdev_rate_stats_be_ofdma_tlv
+     */
+    HTT_TX_RATE_STATS_UPLOAD_11BE_OFDMA,
+} htt_tx_rate_stats_upload_t;
 
 #define HTT_STATS_MAX_STRING_SZ32 4
 #define HTT_STATS_MACID_INVALID 0xff
@@ -2283,6 +2330,12 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+    /* Represents the count for 11BE DL MU OFDMA sequences */
+    A_UINT32 be_mu_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+} htt_tx_pdev_be_dl_mu_ofdma_sch_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
     /* Represents the count for 11AX UL MU OFDMA sequences with Basic Triggers */
     A_UINT32 ax_ul_mu_ofdma_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
     /* Represents the count for 11AX UL MU OFDMA sequences with BSRP Triggers */
@@ -2292,6 +2345,18 @@ typedef struct {
     /* Represents the count for 11AX UL MU OFDMA sequences with BRP Triggers */
     A_UINT32 ax_ul_mu_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* Represents the count for 11BE UL MU OFDMA sequences with Basic Triggers */
+    A_UINT32 be_ul_mu_ofdma_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11BE UL MU OFDMA sequences with BSRP Triggers */
+    A_UINT32 be_ul_mu_ofdma_bsr_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11BE UL MU OFDMA sequences with BAR Triggers */
+    A_UINT32 be_ul_mu_ofdma_bar_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11BE UL MU OFDMA sequences with BRP Triggers */
+    A_UINT32 be_ul_mu_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+} htt_tx_pdev_be_ul_mu_ofdma_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3551,6 +3616,7 @@ typedef struct {
 #define HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS 8
 #define HTT_TX_PDEV_STATS_NUM_LTF 4
 #define HTT_TX_PDEV_STATS_NUM_11AX_TRIGGER_TYPES 6
+#define HTT_TX_PDEV_STATS_NUM_11BE_TRIGGER_TYPES 6
 #define HTT_TX_NUM_OF_SOUNDING_STATS_WORDS \
     (HTT_TX_PDEV_STATS_NUM_BW_COUNTERS * \
      HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS)
@@ -3714,6 +3780,25 @@ typedef struct {
     /* 11BE DL MU MIMO LDPC count */
     A_UINT32 be_mu_mimo_tx_ldpc;
 } htt_tx_pdev_rate_stats_be_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    A_UINT32 mac_id__word;
+
+    A_UINT32 be_ofdma_tx_ldpc;      /* 11BE EHT DL MU OFDMA LDPC count */
+    /* 11BE EHT DL MU OFDMA TX MCS stats */
+    A_UINT32 be_ofdma_tx_mcs[HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    /* 11BE EHT DL MU OFDMA TX NSS stats (Indicates NSS for individual users) */
+    A_UINT32 be_ofdma_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* 11BE EHT DL MU OFDMA TX BW stats */
+    A_UINT32 be_ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_BE_BW_COUNTERS];
+    /* 11BE EHT DL MU OFDMA TX guard interval stats */
+    A_UINT32 be_ofdma_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+} htt_tx_pdev_rate_stats_be_ofdma_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
  * TLV_TAGS:
