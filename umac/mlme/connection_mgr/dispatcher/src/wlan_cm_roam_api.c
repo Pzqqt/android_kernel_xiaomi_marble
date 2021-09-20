@@ -2774,8 +2774,6 @@ cm_stats_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN], time2[TIME_STRING_LEN];
 
-	/* Update roam candidates info to userspace */
-	cm_roam_candidate_info_event(ap);
 
 	mlme_nofl_info("%62s%62s", LINE_STR, LINE_STR);
 	mlme_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s %7s %6s %12s %20s",
@@ -2798,6 +2796,8 @@ cm_stats_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 			  ap->etp, ap->rssi, ap->rssi_score, ap->cu_load,
 			  ap->cu_score, ap->total_score, ap->bl_reason,
 			  ap->bl_source, time2, ap->bl_original_timeout);
+		/* Update roam candidates info to userspace */
+		cm_roam_candidate_info_event(ap, i);
 		ap++;
 	}
 }

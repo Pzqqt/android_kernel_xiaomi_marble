@@ -52,10 +52,12 @@ void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
 /**
  * cm_roam_candidate_info_event() - send trigger info to userspace
  * @ap: roam candidate info
+ * @cand_ap_idx: Candidate AP index
  *
  * Return: void
  */
-void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap);
+void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
+				  uint8_t cand_ap_idx);
 
 /**
  * cm_roam_result_info_event() - send scan results info to userspace
@@ -80,7 +82,8 @@ cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data, uint8_t vdev_id,
 }
 
 static inline void
-cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap)
+cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
+			     uint8_t cand_idx)
 {
 }
 
