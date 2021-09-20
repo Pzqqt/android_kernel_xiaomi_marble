@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -137,6 +137,9 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			session->beacon = NULL;
 			session->bcnLen = 0;
 		}
+
+		mac_ctx->lim.bss_rssi =
+			(int8_t)WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 		session->bcnLen = WMA_GET_RX_MPDU_LEN(rx_pkt_info);
 		session->beacon = qdf_mem_malloc(session->bcnLen);
 		if (session->beacon)

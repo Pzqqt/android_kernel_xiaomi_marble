@@ -1497,15 +1497,6 @@ MLME_OBJS +=    $(CM_DIR)/dispatcher/src/wlan_cm_tgt_if_tx_api.o \
 		$(CM_DIR)/core/src/wlan_cm_vdev_connect.o \
 		$(CM_DIR)/core/src/wlan_cm_vdev_disconnect.o
 
-LOGGING_DIR := components/cmn_services/logging
-LOGGING_INC := -I$(WLAN_ROOT)/$(LOGGING_DIR)/inc
-
-MLME_INC += $(LOGGING_INC)
-
-ifeq ($(CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING), y)
-MLME_OBJS += $(LOGGING_DIR)/src/wlan_connectivity_logging.o
-endif
-
 ifeq ($(CONFIG_CM_UTF_ENABLE), y)
 MLME_OBJS +=    $(CM_DIR)/utf/src/cm_utf.o
 endif
@@ -1550,6 +1541,16 @@ BLM_OBJS :=    $(BLM_DIR)/core/src/wlan_blm_main.o \
 endif
 
 $(call add-wlan-objs,blm,$(BLM_OBJS))
+
+######### CONNECTIVITY_LOGGING #########
+CONN_LOGGING_DIR := components/cmn_services/logging
+CONN_LOGGING_INC := -I$(WLAN_ROOT)/$(CONN_LOGGING_DIR)/inc
+
+ifeq ($(CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING), y)
+CONN_LOGGING_OBJS := $(CONN_LOGGING_DIR)/src/wlan_connectivity_logging.o
+endif
+
+$(call add-wlan-objs,conn_logging,$(CONN_LOGGING_OBJS))
 
 ########## ACTION OUI ##########
 
@@ -2808,6 +2809,7 @@ INCS +=		$(UMAC_MLME_INC)
 INCS +=		$(MLME_INC)
 INCS +=		$(FWOL_INC)
 INCS +=		$(BLM_INC)
+INCS +=		$(CONN_LOGGING_INC)
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 INCS +=		$(PKTLOG_INC)

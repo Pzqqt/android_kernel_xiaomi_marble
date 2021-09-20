@@ -1958,6 +1958,7 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 	uint16_t reason_code;
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 	struct mgmt_frame_data *data;
+	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
 	pe_nofl_rl_info("Assoc req TX: %s (%d)",
 			(tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
@@ -1965,8 +1966,16 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 
 	if (params) {
 		data = params;
+
+		if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
+			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
+		else if (tx_complete  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
+			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
+		else
+			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
+
 		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, tx_complete,
+					     data->status_code, qdf_tx_complete,
 					     data->rssi, 0, 0, 0,
 					     WLAN_ASSOC_REQ);
 	}
@@ -2866,7 +2875,7 @@ static bool lim_is_ack_for_sae_auth(qdf_nbuf_t buf)
  * @context: pointer to global mac
  * @buf: buffer
  * @tx_complete : Sent status
- * @params; tx completion params
+ * @params: tx completion params
  *
  * Return: This returns QDF_STATUS
  */
@@ -2880,11 +2889,20 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	uint16_t auth_ack_status;
 	uint16_t reason_code;
 	bool sae_auth_acked;
+	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
 	if (params) {
 		data = params;
+
+		if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
+			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
+		else if (tx_complete  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
+			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
+		else
+			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
+
 		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, tx_complete,
+					     data->status_code, qdf_tx_complete,
 					     data->rssi, data->auth_algo,
 					     data->auth_type, data->auth_seq,
 					     WLAN_AUTH_REQ);
@@ -3499,11 +3517,20 @@ static QDF_STATUS lim_disassoc_tx_complete_cnf_handler(void *context,
 	QDF_STATUS status_code;
 	struct scheduler_msg msg = {0};
 	struct mgmt_frame_data *data;
+	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
 	if (params) {
 		data = params;
+
+		if (tx_success == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
+			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
+		else if (tx_success  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
+			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
+		else
+			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
+
 		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, tx_success,
+					     data->status_code, qdf_tx_complete,
 					     data->rssi, 0, 0, 0,
 					     WLAN_DISASSOC_TX);
 	}
@@ -3545,11 +3572,20 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
 	tLimMlmDeauthReq *deauth_req;
 	struct pe_session *session = NULL;
 	struct mgmt_frame_data *data;
+	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
 	if (params) {
 		data = params;
+
+		if (tx_success == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
+			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
+		else if (tx_success  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
+			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
+		else
+			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
+
 		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, tx_success,
+					     data->status_code, qdf_tx_complete,
 					     data->rssi, 0, 0, 0,
 					     WLAN_DEAUTH_TX);
 	}

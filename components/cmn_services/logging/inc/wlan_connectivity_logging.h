@@ -23,9 +23,6 @@
 #ifndef _WLAN_CONNECTIVITY_LOGGING_H_
 #define _WLAN_CONNECTIVITY_LOGGING_H_
 
-#include "wlan_policy_mgr_api.h"
-#include <wmi_unified_priv.h>
-#include "wlan_crypto_global_api.h"
 #include <wlan_cm_api.h>
 #include "wlan_cm_roam_api.h"
 #include "wlan_logging_sock_svc.h"
@@ -122,10 +119,10 @@ enum wlan_main_tag {
  * @cand_bssid: BSSID of the candidate AP
  * @is_current_ap: Is the entry candidate AP or connected AP
  * @idx: Entry index
- * @cu_load: Channel utilization load of the AP
- * @freq: Candidate AP channel frequency
+ * @cu_load: Channel utilization load of the AP in percentage
+ * @freq: Candidate AP channel frequency in MHz
  * @total_score: Total candidate AP score
- * @rssi: Candidate AP RSSI
+ * @rssi: Candidate AP RSSI in dBm
  * @etp: Estimated throughput value of the AP in Kbps
  */
 struct wlan_roam_candidate_info {
@@ -133,7 +130,7 @@ struct wlan_roam_candidate_info {
 	bool is_current_ap;
 	uint8_t idx;
 	uint8_t cu_load;
-	uint16_t freq;
+	qdf_freq_t freq;
 	uint16_t total_score;
 	int32_t rssi;
 	uint32_t etp;
@@ -143,22 +140,23 @@ struct wlan_roam_candidate_info {
  * struct wlan_roam_scan_info  - Roam scan related information
  * @cand_ap_count: Roam candidate AP count
  * @num_scanned_frequencies: Number of scanned frequencies
- * @scan_freq: Scanned frequencies
+ * @scan_freq: Array of scanned frequencies value in MHz
  */
 struct wlan_roam_scan_info {
 	uint8_t cand_ap_count;
 	uint16_t num_scanned_freq;
-	uint16_t scan_freq[WLAN_MAX_LOGGING_FREQ];
+	qdf_freq_t scan_freq[WLAN_MAX_LOGGING_FREQ];
 };
 
 /**
  * struct wlan_roam_result_info  - Roam result data
- * @roam_fail_reason: Roam failure reason code
- * @roam_status: Roam success or failure
+ * @roam_fail_reason: Roam failure reason code defined in enum
+ * wlan_roam_failure_reason_code
+ * @is_roam_successful: True if roamed successfully or false if roaming failed
  */
 struct wlan_roam_result_info {
-	uint8_t roam_fail_reason;
-	uint8_t roam_status;
+	enum wlan_roam_failure_reason_code roam_fail_reason;
+	bool is_roam_successful;
 };
 
 /**
@@ -166,16 +164,17 @@ struct wlan_roam_result_info {
  * related data.
  * @is_full_scan: True if the scan is Full scan. False if the roam scan is
  * partial channel map scan
- * @trigger_reason: Roam trigger reason
- * @trigger_sub_reason: Roam trigger sub reason defined by enum
+ * @trigger_reason: Roam trigger reason defined by enum roam_trigger_reason
+ * @trigger_sub_reason: Roam scan trigger sub reason indicating if
+ * periodic/inactivity scan timer initiated roam. Defined by enum
  * roam_trigger_sub_reason
  * @cu_load:  Current connected channel load in percentage
- * @current_rssi: Connected AP RSSI
- * @rssi_threshold: Roam scan trigger threshold
+ * @current_rssi: Connected AP RSSI in dBm
+ * @rssi_threshold: Roam scan trigger threshold in dBm
  */
 struct wlan_roam_trigger_info {
 	bool is_full_scan;
-	uint8_t trigger_reason;
+	enum roam_trigger_reason trigger_reason;
 	enum roam_trigger_sub_reason trigger_sub_reason;
 	uint8_t cu_load;
 	int32_t current_rssi;
@@ -194,9 +193,10 @@ struct wlan_btm_cand_info {
 
 /**
  * struct wlan_roam_btm_info - BTM frame related logging data
- * @reason: Query Reason field
+ * @reason: Query Reason field. Contains one of the values defined in IEEE
+ * Std 802.11‐2020 Table 9-198—Transition and Transition Query reasons
  * @mode: BTM Request Mode field
- * @sub_reason: WTC sub reason
+ * @sub_reason: WTC sub reason code field in the BTM WTC vendor specific IE
  * @candidate_list_count: Candidates list in the BTM frame
  * @btm_status_code: BSS Transition management status codes defined in
  * 802.11‐2020 Table 9-428—BTM status code definitions
@@ -205,9 +205,10 @@ struct wlan_btm_cand_info {
  * @token: dialog token. Dialog Token is a nonzero value chosen by the STA
  * while sending the BTM frame to identify the query/request/response
  * transaction
- * @validity_timer: Validity interval
- * @disassoc_timer: Disassoc timer
- * @wtc_duration: WTC duration field
+ * @validity_timer: Validity interval in TBTT
+ * @disassoc_timer: Time after which the AP disassociates the STA, defined
+ * in TBTT.
+ * @wtc_duration: WTC duration field in minutes
  * @target_bssid: BTM response target bssid field
  */
 struct wlan_roam_btm_info {
@@ -227,21 +228,27 @@ struct wlan_roam_btm_info {
 
 /**
  * struct wlan_packet_info  - Data packets related info
- * @tx_status: Packet TX status
- * @eap_type: EAP type
+ * @tx_status: Frame TX status defined by enum qdf_dp_tx_rx_status
+ * @eap_type: EAP type. Values defined by IANA at:
+ * https://www.iana.org/assignments/eap-numbers
  * @eap_len: EAP data length
- * @auth_algo: Authentication algorithm
+ * @auth_algo: authentication algorithm number defined in IEEE Std 802.11‐2020
+ * Section 9.4.1.1 Authentication Algorithm Number field.
  * @auth_seq_num: Authentication frame transaction sequence number
- * @auth_type: Authentication frame sub-type for SAE authentication
- * @frame_status_code: Frame status code/reason code
+ * @auth_type: Authentication frame sub-type for SAE authentication. Possible
+ * values:
+ * 1 - SAE commit frame
+ * 2 - SAE confirm frame
+ * @frame_status_code: Frame status code as defined in IEEE Std
+ * 802.11‐2020 Table 9-50—Status codes.
  * @seq_num: Frame sequence number
- * @rssi: Peer rssi
+ * @rssi: Peer RSSI in dBm
  * @is_retry_frame: is frame retried
  */
 struct wlan_packet_info {
 	uint8_t tx_status;
 	uint8_t eap_type;
-	uint8_t eap_len;
+	uint16_t eap_len;
 	uint8_t auth_algo;
 	uint8_t auth_seq_num;
 	uint8_t auth_type;
@@ -256,13 +263,18 @@ struct wlan_packet_info {
  * @ssid: SSID
  * @ssid_len: Length of the SSID
  * @bssid_hint: BSSID hint provided in the connect request
- * @freq: Frequency
- * @freq_hint: Frequency Hint
- * @akm: Akm suite
- * @pairwise: Pairwise suite
- * @group: Group cipher suite
- * @group_mgmt: Group manangement cipher suite
- * @auth_type: Authentication Algo
+ * @freq: Frequency in MHz
+ * @freq_hint: Frequency Hint in MHz
+ * @akm: Auth key management suite defined in IEEE Std 802.11‐2020
+ * Table 9-151—AKM suite selectors.
+ * @pairwise: Pairwise suite value as defined in IEEE 802.11 2020
+ * Table 12-10—Integrity and key wrap algorithms.
+ * @group: Group cipher suite value as defined in
+ * Table 12-10—Integrity and key wrap algorithms.
+ * @group_mgmt: Group manangement cipher suite as defined in
+ * Table 12-10—Integrity and key wrap algorithms.
+ * @auth_type: Authentication algorithm number field as defined in
+ * IEEE 802.11 - 2020 standard section 9.4.1.1
  * @conn_status: Connection failure status defined by enum
  * wlan_cm_connect_fail_reason
  * @is_bt_coex_active: Is there active bluetooth connection
@@ -271,8 +283,8 @@ struct wlan_connect_info {
 	char ssid[WLAN_SSID_MAX_LEN];
 	uint8_t ssid_len;
 	struct qdf_mac_addr bssid_hint;
-	uint32_t freq;
-	uint32_t freq_hint;
+	qdf_freq_t freq;
+	qdf_freq_t freq_hint;
 	uint32_t akm;
 	uint32_t pairwise;
 	uint32_t group;
@@ -325,19 +337,23 @@ struct wlan_log_record {
 };
 
 /**
- * struct wlan_cl_hdd_cbks  - HDD callbacks to be invoked for connectivity
+ * struct wlan_cl_osif_cbks  - OSIF callbacks to be invoked for connectivity
  * logging
  * @wlan_connectivity_log_send_to_usr: Send the log buffer to user space
  */
-struct wlan_cl_hdd_cbks {
-	QDF_STATUS (*wlan_connectivity_log_send_to_usr)
-			(struct wlan_log_record *rec, uint8_t num_records);
+struct wlan_cl_osif_cbks {
+	QDF_STATUS
+	(*wlan_connectivity_log_send_to_usr) (struct wlan_log_record *rec,
+					      void *context,
+					      uint8_t num_records);
 };
 
 /**
  * struct wlan_connectivity_log_buf_data  - Master structure to hold the
  * pointers to the ring buffers.
- * @hdd_cbks: Hdd callbacks
+ * @osif_cbks: OSIF callbacks
+ * @osif_cb_context: Pointer to the context to be passed to OSIF
+ * callback
  * @first_record_timestamp_in_last_sec: First record timestamp
  * @sent_msgs_count: Total sent messages counter in the last 1 sec
  * @head: Pointer to the 1st record allocated in the ring buffer.
@@ -351,7 +367,8 @@ struct wlan_cl_hdd_cbks {
  * @is_active: If the global buffer is initialized or not
  */
 struct wlan_connectivity_log_buf_data {
-	struct wlan_cl_hdd_cbks hdd_cbks;
+	struct wlan_cl_osif_cbks osif_cbks;
+	void *osif_cb_context;
 	uint64_t first_record_timestamp_in_last_sec;
 	uint64_t sent_msgs_count;
 	struct wlan_log_record *head;
@@ -380,11 +397,13 @@ struct wlan_connectivity_log_buf_data {
 /**
  * wlan_connectivity_logging_start()  - Initialize the connectivity/roaming
  * logging buffer
- * @hdd_cbks: Hdd callbacks
+ * @osif_cbks: OSIF callbacks
+ * @osif_cbk_context: OSIF callback context argument
  *
  * Return: None
  */
-void wlan_connectivity_logging_start(struct wlan_cl_hdd_cbks *hdd_cbks);
+void wlan_connectivity_logging_start(struct wlan_cl_osif_cbks *osif_cbks,
+				     void *osif_cb_context);
 
 /**
  * wlan_connectivity_logging_stop() - Deinitialize the connectivity logging
@@ -438,7 +457,9 @@ wlan_connectivity_mgmt_event(struct wlan_frame_hdr *mac_hdr,
 			     uint8_t auth_seq,
 			     enum wlan_main_tag tag);
 #else
-static inline void wlan_connectivity_logging_start(void)
+static inline
+void wlan_connectivity_logging_start(struct wlan_cl_osif_cbks *osif_cbks,
+				     void *osif_cb_context)
 {}
 
 static inline void wlan_connectivity_logging_stop(void)

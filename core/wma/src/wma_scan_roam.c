@@ -1824,8 +1824,6 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN], time2[TIME_STRING_LEN];
 
-	/* Update roam candidates info to userspace */
-	cm_roam_candidate_info_event(ap);
 
 	wma_nofl_info("%62s%62s", LINE_STR, LINE_STR);
 	wma_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s %7s %6s %12s %20s",
@@ -1848,6 +1846,10 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 			      ap->etp, ap->rssi, ap->rssi_score, ap->cu_load,
 			      ap->cu_score, ap->total_score, ap->bl_reason,
 			      ap->bl_source, time2, ap->bl_original_timeout);
+
+		/* Update roam candidates info to userspace */
+		cm_roam_candidate_info_event(ap, i);
+
 		ap++;
 	}
 }
@@ -1922,6 +1924,23 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 	qdf_mem_free(buf1);
 }
 
+static
+bool mlme_is_roam_aborted(enum wlan_roam_failure_reason_code reason)
+{
+	switch (reason) {
+	case ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO:
+	case ROAM_FAIL_REASON_HOST:
+	case ROAM_FAIL_REASON_NO_CAND_AP_FOUND:
+	case ROAM_FAIL_REASON_INTERNAL_ABORT:
+	case ROAM_FAIL_REASON_SCAN_START:
+		return true;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 /**
  * wma_rso_print_roam_result()  - Print roam result related info
  * @res:     Roam result strucure pointer
@@ -1938,8 +1957,12 @@ wma_rso_print_roam_result(struct wmi_roam_result *res,
 	char *buf;
 	char time[TIME_STRING_LEN];
 
-	/* Update roam result info to userspace */
-	cm_roam_result_info_event(res, vdev_id, 0);
+	/* Log the roam result event to userspace */
+	if (res->status == 1 &&
+	    mlme_is_roam_aborted(res->fail_reason))
+		cm_roam_result_info_event(NULL, vdev_id, true);
+	else
+		cm_roam_result_info_event(res, vdev_id, false);
 
 	buf = qdf_mem_malloc(ROAM_FAILURE_BUF_SIZE);
 	if (!buf)

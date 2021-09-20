@@ -318,6 +318,88 @@ enum roam_fail_params {
 	ROAM_FAIL_REASON,
 };
 
+/**
+ * enum wlan_roam_failure_reason_code - Roaming failure reason codes
+ * @ROAM_FAIL_REASON_NO_SCAN_START: Scan start failed
+ * @ROAM_FAIL_REASON_NO_AP_FOUND: No roamable AP found
+ * @ROAM_FAIL_REASON_NO_CAND_AP_FOUND: No candidate AP found
+ * @ROAM_FAIL_REASON_HOST: Host aborted roaming due to vdev stop from
+ * host
+ * @ROAM_FAIL_REASON_AUTH_SEND: Auth TX failure
+ * @ROAM_FAIL_REASON_NO_AUTH_RESP: No Authentication response received
+ * @ROAM_FAIL_REASON_AUTH_RECV: Authentication response received with
+ * error status code
+ * @ROAM_FAIL_REASON_REASSOC_SEND: Reassoc request TX failed
+ * @ROAM_FAIL_REASON_REASSOC_RECV: Reassoc response frame not received
+ * @ROAM_FAIL_REASON_NO_REASSOC_RESP: No reassociation response received
+ * @ROAM_FAIL_REASON_EAPOL_TIMEOUT: EAPoL timedout
+ * @ROAM_FAIL_REASON_MLME: MLME internal error
+ * @ROAM_FAIL_REASON_INTERNAL_ABORT: Abort due to internal firmware error
+ * @ROAM_FAIL_REASON_SCAN_START: Not able to start roam scan
+ * @ROAM_FAIL_REASON_AUTH_NO_ACK: No ack received for Auth request frame
+ * @ROAM_FAIL_REASON_AUTH_INTERNAL_DROP: Auth request dropped internally
+ * @ROAM_FAIL_REASON_REASSOC_NO_ACK: No ack received for reassoc request frame
+ * @ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP: Reassoc frame dropped internally
+ * at firmware
+ * @ROAM_FAIL_REASON_EAPOL_M2_SEND: EAPoL M2 send failed
+ * @ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP: EAPoL M2 frame dropped internally
+ * at firmware
+ * @ROAM_FAIL_REASON_EAPOL_M2_NO_ACK: No ack received for EAPoL M2 frame
+ * @ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT: EAPoL M3 not received from AP
+ * @ROAM_FAIL_REASON_EAPOL_M4_SEND: EAPoL M4 frame TX failed
+ * @ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP: EAPoL M4 frame dropped internally
+ * @ROAM_FAIL_REASON_EAPOL_M4_NO_ACK: No ack received for EAPoL M4 frame
+ * @ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS: Roam scan start failed for final
+ * bmiss case
+ * @ROAM_FAIL_REASON_DISCONNECT: Deauth/Disassoc frame received from AP during
+ * roaming
+ * @ROAM_FAIL_REASON_SYNC: Roam failure due to host wake-up during roaming in
+ * progress
+ * @ROAM_FAIL_REASON_SAE_INVALID_PMKID: Invalid PMKID during SAE roaming
+ * @ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT: SAE roaming preauthentication
+ * timedout
+ * @ROAM_FAIL_REASON_SAE_PREAUTH_FAIL: SAE preauthentication failure
+ * @ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO: Start handoff failed
+ * @ROAM_FAIL_REASON_UNKNOWN: Default reason
+ */
+enum wlan_roam_failure_reason_code {
+	ROAM_FAIL_REASON_NO_SCAN_START = 1,
+	ROAM_FAIL_REASON_NO_AP_FOUND,
+	ROAM_FAIL_REASON_NO_CAND_AP_FOUND,
+
+	/* Failure reasons after roam scan is complete */
+	ROAM_FAIL_REASON_HOST,
+	ROAM_FAIL_REASON_AUTH_SEND,
+	ROAM_FAIL_REASON_NO_AUTH_RESP,
+	ROAM_FAIL_REASON_AUTH_RECV,
+	ROAM_FAIL_REASON_REASSOC_SEND,
+	ROAM_FAIL_REASON_REASSOC_RECV,
+	ROAM_FAIL_REASON_NO_REASSOC_RESP,
+	ROAM_FAIL_REASON_EAPOL_TIMEOUT,
+	ROAM_FAIL_REASON_MLME,
+	ROAM_FAIL_REASON_INTERNAL_ABORT,
+	ROAM_FAIL_REASON_SCAN_START,
+	ROAM_FAIL_REASON_AUTH_NO_ACK,
+	ROAM_FAIL_REASON_AUTH_INTERNAL_DROP,
+	ROAM_FAIL_REASON_REASSOC_NO_ACK,
+	ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP,
+	ROAM_FAIL_REASON_EAPOL_M2_SEND,
+	ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP,
+	ROAM_FAIL_REASON_EAPOL_M2_NO_ACK,
+	ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT,
+	ROAM_FAIL_REASON_EAPOL_M4_SEND,
+	ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP,
+	ROAM_FAIL_REASON_EAPOL_M4_NO_ACK,
+	ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS,
+	ROAM_FAIL_REASON_DISCONNECT,
+	ROAM_FAIL_REASON_SYNC,
+	ROAM_FAIL_REASON_SAE_INVALID_PMKID,
+	ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT,
+	ROAM_FAIL_REASON_SAE_PREAUTH_FAIL,
+	ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO,
+	ROAM_FAIL_REASON_UNKNOWN = 255,
+};
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * srtuct reassoc_timer_ctx - reassoc timer context

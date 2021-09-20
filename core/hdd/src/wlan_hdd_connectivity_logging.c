@@ -93,9 +93,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_CONNECTING] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,    sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,    sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP, NLA_U64, sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID, NLA_U8, sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_SSID, NLA_BINARY,
 	 GET_ATTR_OFFSET(conn_info.ssid_len), GET_ATTR_OFFSET(conn_info.ssid)},
@@ -125,9 +125,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_CONNECTING_FAIL] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32, sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8, sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,      NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -139,17 +139,17 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_AUTH_REQ] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,       NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_RSSI,        NLA_U16,  sizeof(uint16_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_RSSI,        NLA_S32,  sizeof(int32_t),
 	 GET_ATTR_OFFSET(pkt_info.rssi)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_AUTH_ALGO,   NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.auth_algo)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_AUTH_FRAME_TYPE, NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_SAE_AUTH_FRAME_TYPE, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.auth_type)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_SEQUENCE_NUMBER, NLA_U16,  sizeof(uint16_t),
 	 GET_ATTR_OFFSET(pkt_info.seq_num)},
@@ -167,15 +167,15 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_AUTH_RESP] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32, sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8, sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,      NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_AUTH_ALGO,  NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.auth_algo)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_AUTH_FRAME_TYPE, NLA_U8,  sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_SAE_AUTH_FRAME_TYPE, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.auth_type)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_SEQUENCE_NUMBER,   NLA_U16, sizeof(uint16_t),
 	 GET_ATTR_OFFSET(pkt_info.seq_num)},
@@ -189,9 +189,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ASSOC_REQ] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,       NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -211,9 +211,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ASSOC_RESP] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,       NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -227,9 +227,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DEAUTH_RX] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,       NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -245,9 +245,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DEAUTH_TX] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,       NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -263,9 +263,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DISASSOC_RX] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID, NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX, NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID, NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -281,9 +281,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DISASSOC_TX] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP, NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP, NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID, NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX, NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID, NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -299,9 +299,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_BEACON_LOSS_DISCONN] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,       NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
@@ -315,9 +315,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_SCAN_START] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_TRIGGER_REASON,  NLA_U8,
 	 sizeof(uint8_t), GET_ATTR_OFFSET(roam_trig.trigger_reason)},
@@ -327,7 +327,7 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	 GET_ATTR_OFFSET(roam_trig.current_rssi)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_CU,  NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(roam_trig.cu_load)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_SCAN_TYPE, NLA_FLAG, sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_SCAN_TYPE, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(roam_trig.is_full_scan)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_RSSI_THRESHOLD, NLA_U32,
 	 sizeof(uint8_t), GET_ATTR_OFFSET(roam_trig.rssi_threshold)},
@@ -339,9 +339,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_SCAN_DONE] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_AP_COUNT,  NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(roam_scan.cand_ap_count)},
@@ -355,9 +355,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_SCORE_CURR_AP] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,
 	 sizeof(uint64_t), GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8, sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,  NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(ap.cand_bssid)},
@@ -377,9 +377,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_SCORE_CAND_AP] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_AP_RANK, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(ap.idx)},
@@ -403,10 +403,12 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_RESULT] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
+	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,  NLA_BINARY, QDF_MAC_ADDR_SIZE,
+	 GET_ATTR_OFFSET(bssid)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP, NLA_U64,
 	 sizeof(uint64_t), GET_ATTR_OFFSET(fw_timestamp_us)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
@@ -415,9 +417,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_CANCEL] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP, NLA_U64,
 	 sizeof(uint64_t), GET_ATTR_OFFSET(fw_timestamp_us)},
@@ -427,9 +429,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_BTM_QUERY] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BTM_TOKEN,  NLA_U16, sizeof(uint16_t),
 	 GET_ATTR_OFFSET(btm_info.token)},
@@ -443,9 +445,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_BTM_REQ] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32, sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,  sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,  sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BTM_TOKEN,  NLA_U16, sizeof(uint16_t),
 	 GET_ATTR_OFFSET(btm_info.token)},
@@ -465,9 +467,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_BTM_WTC] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_REASON_CODE, NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(btm_info.reason)},
@@ -483,9 +485,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_BTM_REQ_CANDI] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,  NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,   NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,     NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,     NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,  NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(btm_cand.bssid)},
@@ -499,9 +501,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_BTM_RESP] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32, sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64, sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,  sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,  sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BTM_TOKEN,  NLA_U16, sizeof(uint16_t),
 	 GET_ATTR_OFFSET(btm_info.token)},
@@ -519,9 +521,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DHCP_DISCOVER] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FRAME_TX_STATUS, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.tx_status)},
@@ -531,9 +533,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DHCP_OFFER] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
@@ -541,9 +543,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DHCP_REQUEST] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FRAME_TX_STATUS, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.tx_status)},
@@ -553,9 +555,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DHCP_ACK] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
@@ -563,9 +565,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_DHCP_NACK] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
@@ -573,9 +575,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAPOL_M1] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP, NLA_U64,
 	 sizeof(uint64_t), GET_ATTR_OFFSET(fw_timestamp_us)},
@@ -585,9 +587,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAPOL_M2] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FRAME_TX_STATUS,   NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.tx_status)},
@@ -599,9 +601,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAPOL_M3] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP, NLA_U64,
 	 sizeof(uint64_t), GET_ATTR_OFFSET(fw_timestamp_us)},
@@ -611,9 +613,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAPOL_M4] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FRAME_TX_STATUS, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.tx_status)},
@@ -625,9 +627,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_GTK_M1] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP, NLA_U64,
 	 sizeof(uint64_t), GET_ATTR_OFFSET(fw_timestamp_us)},
@@ -637,9 +639,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_GTK_M2] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FRAME_TX_STATUS, NLA_U8, sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.tx_status)},
@@ -651,13 +653,13 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAP_REQUEST] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EAP_TYPE,   NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.eap_type)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_EAP_LEN,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_EAP_LEN,    NLA_U16,  sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.eap_len)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
@@ -665,23 +667,25 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAP_RESPONSE] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EAP_TYPE,   NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.eap_type)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_EAP_LEN,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_EAP_LEN,    NLA_U16,  sizeof(uint8_t),
 	 GET_ATTR_OFFSET(pkt_info.eap_len)},
+	{QCA_WLAN_VENDOR_ATTR_DIAG_FRAME_TX_STATUS, NLA_U8, sizeof(uint8_t),
+	 GET_ATTR_OFFSET(pkt_info.tx_status)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
 
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAP_SUCCESS] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
@@ -689,9 +693,9 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_EAP_FAILURE] = {
 	{QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE, NLA_U32,  sizeof(uint32_t),
 	 GET_ATTR_OFFSET(log_subtype)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_HOST_TIMESTAMP,  NLA_U64,  sizeof(uint64_t),
 	 GET_ATTR_OFFSET(timestamp_us)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_VDEV_ID,    NLA_U8,   sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_IFINDEX,    NLA_U8,   sizeof(uint8_t),
 	 GET_ATTR_OFFSET(vdev_id)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
@@ -797,20 +801,27 @@ wlan_hdd_get_converted_tx_status(uint8_t tx_status)
 static uint16_t
 wlan_hdd_get_connectivity_log_tlv_len(struct wlan_log_record *rec)
 {
-	uint16_t j, attr_id, log_event_type, len = 0;
+	uint16_t j, attr_id, log_evt_type, len = 0;
 
-	log_event_type = hdd_connectivity_log_attr_table[rec->log_subtype];
+	log_evt_type = hdd_connectivity_log_attr_table[rec->log_subtype];
+	if (log_evt_type >= (QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1))
+			return 0;
+
 	for (j = 0; j < QCA_WLAN_VENDOR_ATTR_DIAG_MAX; j++) {
 		attr_id =
-			connectivity_attr_table[log_event_type][j].attribute_id;
+			connectivity_attr_table[log_evt_type][j].attribute_id;
 		if (attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_MAX)
 			break;
 
-		if (attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ &&
+		if (log_evt_type ==
+		    QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_CONNECTING &&
+		    attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ &&
 		    !rec->conn_info.freq)
 			continue;
 
-		if (attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ_HINT &&
+		if (log_evt_type ==
+		    QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_CONNECTING &&
+		    attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ_HINT &&
 		    !rec->conn_info.freq_hint)
 			continue;
 
@@ -818,7 +829,15 @@ wlan_hdd_get_connectivity_log_tlv_len(struct wlan_log_record *rec)
 		    !rec->fw_timestamp_us)
 			continue;
 
-		len += connectivity_attr_table[log_event_type][j].attribute_length;
+		if (log_evt_type ==
+		    QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_SCAN_DONE &&
+		    attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_FREQ_LIST) {
+			len += NLMSG_HDRLEN +
+			       (rec->roam_scan.num_scanned_freq *
+				sizeof(rec->roam_scan.scan_freq[0]));
+		} else {
+			len += connectivity_attr_table[log_evt_type][j].attribute_length;
+		}
 	}
 
 	return len;
@@ -840,9 +859,13 @@ wlan_hdd_get_connectivity_log_event_len(struct wlan_log_record *rec,
 static QDF_STATUS
 wlan_hdd_put_connectivity_logging_data(struct sk_buff *skb,
 				       struct wlan_log_record *rec,
-				       uint8_t attribute_id)
+				       struct connectivity_log_attr *attribute)
 {
 	int errno = 0;
+	struct qdf_mac_addr bssid = {0};
+	enum  qca_vendor_attr_diag_event_type attribute_id =
+						attribute->attribute_id;
+	uint16_t field_offset = attribute->field_offset;
 
 	switch (attribute_id) {
 	case QCA_WLAN_VENDOR_ATTR_DIAG_SSID:
@@ -851,12 +874,13 @@ wlan_hdd_put_connectivity_logging_data(struct sk_buff *skb,
 
 		break;
 	case QCA_WLAN_VENDOR_ATTR_DIAG_BSSID:
-		if (qdf_is_macaddr_zero(&rec->bssid) ||
-		    qdf_is_macaddr_broadcast(&rec->bssid))
+		bssid = ATTR_GET_VALUE(struct qdf_mac_addr, rec, field_offset);
+		if (qdf_is_macaddr_zero(&bssid) ||
+		    qdf_is_macaddr_broadcast(&bssid))
 			break;
 
 		nla_put(skb, attribute_id, QDF_MAC_ADDR_SIZE,
-			rec->bssid.bytes);
+			bssid.bytes);
 		break;
 	case QCA_WLAN_VENDOR_ATTR_DIAG_BSSID_HINT:
 		if (qdf_is_macaddr_zero(&rec->bssid) ||
@@ -877,6 +901,42 @@ wlan_hdd_put_connectivity_logging_data(struct sk_buff *skb,
 }
 
 static QDF_STATUS
+wlan_hdd_fill_roam_scan_frequencies(struct sk_buff *skb,
+				    struct wlan_log_record *rec)
+{
+	int errno;
+	struct nlattr *attr, *attr1;
+	uint8_t i;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	attr = nla_nest_start(
+			skb, QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_FREQ_LIST);
+	if (!attr)
+		return QDF_STATUS_E_FAILURE;
+
+	for (i = 0; i < rec->roam_scan.num_scanned_freq; i++) {
+		attr1 = nla_nest_start(skb, i);
+		if (!attr1) {
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+
+		errno = nla_put_u16(skb, QCA_WLAN_VENDOR_ATTR_DIAG_FREQ,
+				    rec->roam_scan.scan_freq[i]);
+		if (errno) {
+			status = qdf_status_from_os_return(errno);
+			break;
+		}
+
+		nla_nest_end(skb, attr1);
+	}
+
+	nla_nest_end(skb, attr);
+
+	return status;
+}
+
+static QDF_STATUS
 wlan_hdd_fill_connectivity_logging_data(struct sk_buff *skb,
 					struct wlan_log_record *rec)
 {
@@ -887,7 +947,13 @@ wlan_hdd_fill_connectivity_logging_data(struct sk_buff *skb,
 	QDF_STATUS status;
 	int errno;
 
+	/*
+	 * Continue to the next event if the Event type is invalid
+	 */
 	evt_type = hdd_connectivity_log_attr_table[rec->log_subtype];
+	if (evt_type >= (QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1))
+		return QDF_STATUS_SUCCESS;
+
 	errno = nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_DIAG_EVENT_TYPE,
 			    evt_type);
 	if (errno)
@@ -904,17 +970,27 @@ wlan_hdd_fill_connectivity_logging_data(struct sk_buff *skb,
 		if (attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_MAX)
 			break;
 
-		if (attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ &&
+		if (evt_type == QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_CONNECTING &&
+		    attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ &&
 		    !rec->conn_info.freq)
 			continue;
 
-		if (attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ_HINT &&
+		if (evt_type == QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_CONNECTING &&
+		    attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FREQ_HINT &&
 		    !rec->conn_info.freq_hint)
 			continue;
 
 		if (attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP &&
 		    !rec->fw_timestamp_us)
 			continue;
+
+		if (evt_type ==
+		    QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_ROAM_SCAN_DONE &&
+		    attr_id == QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_FREQ_LIST) {
+			status = wlan_hdd_fill_roam_scan_frequencies(skb, rec);
+			if (QDF_IS_STATUS_ERROR(status))
+				continue;
+		}
 
 		switch (attr.attribute_type) {
 		case NLA_U8:
@@ -968,7 +1044,7 @@ wlan_hdd_fill_connectivity_logging_data(struct sk_buff *skb,
 			break;
 		case NLA_BINARY:
 			status = wlan_hdd_put_connectivity_logging_data(
-						skb, rec, attr.attribute_id);
+						skb, rec, &attr);
 			if (QDF_IS_STATUS_ERROR(status))
 				return status;
 			break;
@@ -990,6 +1066,7 @@ wlan_hdd_fill_connectivity_logging_data(struct sk_buff *skb,
  */
 static QDF_STATUS
 wlan_hdd_send_connectivity_log_to_user(struct wlan_log_record *rec,
+				       void *hdd_context,
 				       uint8_t num_records)
 {
 	struct hdd_context *hdd_ctx;
@@ -1000,8 +1077,8 @@ wlan_hdd_send_connectivity_log_to_user(struct wlan_log_record *rec,
 
 	hdd_enter();
 
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx)
+	hdd_ctx = hdd_context;
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return QDF_STATUS_E_FAILURE;
 
 	len = wlan_hdd_get_connectivity_log_event_len(rec, num_records);
@@ -1046,13 +1123,13 @@ failure:
 	return QDF_STATUS_E_FAILURE;
 }
 
-void wlan_hdd_start_connectivity_logging(void)
+void wlan_hdd_start_connectivity_logging(struct hdd_context *hdd_ctx)
 {
-	struct wlan_cl_hdd_cbks hdd_cb;
+	struct wlan_cl_osif_cbks hdd_cb;
 
 	hdd_cb.wlan_connectivity_log_send_to_usr =
 			wlan_hdd_send_connectivity_log_to_user;
-	wlan_connectivity_logging_start(&hdd_cb);
+	wlan_connectivity_logging_start(&hdd_cb, hdd_ctx);
 }
 
 void wlan_hdd_connectivity_event_connecting(struct hdd_context *hdd_ctx,

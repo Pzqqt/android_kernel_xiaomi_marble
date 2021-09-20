@@ -1701,8 +1701,9 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(
 			mac->psoc, pdev_id, dot11_hdr->da, WLAN_LEGACY_SME_ID);
 	if (vdev) {
-		lim_sae_auth_cleanup_retry(mac, wlan_vdev_get_id(vdev));
 		vdev_id = wlan_vdev_get_id(vdev);
+
+		lim_sae_auth_cleanup_retry(mac, vdev_id);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	}
 

@@ -27,16 +27,20 @@
 static struct wlan_connectivity_log_buf_data global_cl;
 
 static void
-wlan_connectivity_logging_register_callbacks(struct wlan_cl_hdd_cbks *hdd_cbks)
+wlan_connectivity_logging_register_callbacks(
+				struct wlan_cl_osif_cbks *osif_cbks,
+				void *osif_cb_context)
 {
-	global_cl.hdd_cbks.wlan_connectivity_log_send_to_usr =
-			hdd_cbks->wlan_connectivity_log_send_to_usr;
+	global_cl.osif_cbks.wlan_connectivity_log_send_to_usr =
+			osif_cbks->wlan_connectivity_log_send_to_usr;
+	global_cl.osif_cb_context = osif_cb_context;
 }
 
-void wlan_connectivity_logging_start(struct wlan_cl_hdd_cbks *hdd_cbks)
+void wlan_connectivity_logging_start(struct wlan_cl_osif_cbks *osif_cbks,
+				     void *osif_cb_context)
 {
-	global_cl.head = vzalloc(sizeof(*global_cl.head) *
-					 WLAN_MAX_LOG_RECORDS);
+	global_cl.head = qdf_mem_valloc(sizeof(*global_cl.head) *
+					WLAN_MAX_LOG_RECORDS);
 	if (!global_cl.head) {
 		QDF_BUG(0);
 		return;
@@ -52,7 +56,8 @@ void wlan_connectivity_logging_start(struct wlan_cl_hdd_cbks *hdd_cbks)
 	global_cl.write_ptr = global_cl.head;
 	global_cl.max_records = WLAN_MAX_LOG_RECORDS;
 
-	wlan_connectivity_logging_register_callbacks(hdd_cbks);
+	wlan_connectivity_logging_register_callbacks(osif_cbks,
+						     osif_cb_context);
 	qdf_atomic_set(&global_cl.is_active, 1);
 }
 
@@ -61,6 +66,9 @@ void wlan_connectivity_logging_stop(void)
 	if (!qdf_atomic_read(&global_cl.is_active))
 		return;
 
+	global_cl.osif_cb_context = NULL;
+	global_cl.osif_cbks.wlan_connectivity_log_send_to_usr = NULL;
+
 	qdf_atomic_set(&global_cl.is_active, 0);
 	global_cl.read_ptr = NULL;
 	global_cl.write_ptr = NULL;
@@ -68,7 +76,7 @@ void wlan_connectivity_logging_stop(void)
 	global_cl.read_idx = 0;
 	global_cl.write_idx = 0;
 
-	vfree(global_cl.head);
+	qdf_mem_vfree(global_cl.head);
 	global_cl.head = NULL;
 }
 
@@ -143,7 +151,7 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 	}
 
 	/*
-	 * This API writes to the logging buffer if the buffer is empty.
+	 * This API writes to the logging buffer if the buffer is not full.
 	 * 1. Acquire the write spinlock.
 	 * 2. Copy the record to the write block.
 	 * 3. Update the write pointer
@@ -152,14 +160,14 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 	qdf_spin_lock_bh(&global_cl.write_ptr_lock);
 
 	write_block = global_cl.write_ptr;
-	/* If the buffer is not empty, increment the dropped msgs counter and
+	/* If the buffer is full, increment the dropped msgs counter and
 	 * return
 	 */
 	if (global_cl.read_ptr == global_cl.write_ptr &&
 	    write_block->is_record_filled) {
 		qdf_spin_unlock_bh(&global_cl.write_ptr_lock);
 		qdf_atomic_inc(&global_cl.dropped_msgs);
-		logging_debug("vdev:%d dropping msg sub-type:%d total drpd:%d",
+		logging_debug("vdev:%d dropping msg sub-type:%d total dropped:%d",
 			      new_record->vdev_id, new_record->log_subtype,
 			      qdf_atomic_read(&global_cl.dropped_msgs));
 		wlan_logging_set_connectivity_log();
@@ -187,6 +195,8 @@ QDF_STATUS
 wlan_connectivity_log_dequeue(void)
 {
 	struct wlan_log_record *data;
+	struct wlan_cl_osif_cbks *osif_cbk;
+	void *osif_cb_context;
 	uint8_t idx = 0;
 	uint64_t current_timestamp, time_delta;
 
@@ -221,6 +231,12 @@ wlan_connectivity_log_dequeue(void)
 		global_cl.sent_msgs_count %= WLAN_RECORDS_PER_SEC;
 		data[idx] = *global_cl.read_ptr;
 
+		/*
+		 * Reset the read block after copy. This will set the
+		 * is_record_filled to false.
+		 */
+		qdf_mem_zero(global_cl.read_ptr, sizeof(*global_cl.read_ptr));
+
 		global_cl.read_idx++;
 		global_cl.read_idx %= global_cl.max_records;
 
@@ -229,12 +245,19 @@ wlan_connectivity_log_dequeue(void)
 
 		global_cl.sent_msgs_count++;
 		idx++;
-		if (idx >= MAX_RECORD_IN_SINGLE_EVT)
+
+		if (idx >= MAX_RECORD_IN_SINGLE_EVT) {
+			wlan_logging_set_connectivity_log();
 			break;
+		}
 	}
 
-	if (global_cl.hdd_cbks.wlan_connectivity_log_send_to_usr)
-		global_cl.hdd_cbks.wlan_connectivity_log_send_to_usr(data, idx);
+	osif_cbk = &global_cl.osif_cbks;
+	osif_cb_context = global_cl.osif_cb_context;
+	if (osif_cbk->wlan_connectivity_log_send_to_usr)
+		osif_cbk->wlan_connectivity_log_send_to_usr(data,
+							   osif_cb_context,
+							   idx);
 
 	qdf_mem_free(data);
 

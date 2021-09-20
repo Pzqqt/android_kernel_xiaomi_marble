@@ -1082,11 +1082,13 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			      session_entry,
 			      (assoc_rsp->status_code ? QDF_STATUS_E_FAILURE :
 			       QDF_STATUS_SUCCESS), assoc_rsp->status_code);
-	wlan_connectivity_mgmt_event((struct wlan_frame_hdr *)hdr,
-				     session_entry->vdev_id,
-				     assoc_rsp->status_code, 0, rssi,
-				     0, 0, 0,
-				     WLAN_ASSOC_RSP);
+
+	if (subtype != LIM_REASSOC)
+		wlan_connectivity_mgmt_event((struct wlan_frame_hdr *)hdr,
+					     session_entry->vdev_id,
+					     assoc_rsp->status_code, 0, rssi,
+					     0, 0, 0,
+					     WLAN_ASSOC_RSP);
 
 	ap_nss = lim_get_nss_supported_by_ap(&assoc_rsp->VHTCaps,
 					     &assoc_rsp->HTCaps,

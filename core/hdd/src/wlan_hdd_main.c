@@ -4468,7 +4468,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		hdd_set_hif_init_phase(hif_ctx, false);
 		hdd_hif_set_enable_detection(hif_ctx, true);
 
-		wlan_hdd_start_connectivity_logging();
+		wlan_hdd_start_connectivity_logging(hdd_ctx);
 
 		break;
 
