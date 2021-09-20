@@ -1500,7 +1500,7 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 	struct spectral_process_phyerr_info_gen2 process_phyerr_fields;
 	struct spectral_process_phyerr_info_gen2 *phyerr_info =
 						&process_phyerr_fields;
-	uint8_t segid;
+	uint8_t segid = 0;
 	uint8_t segid_sec80;
 	enum phy_ch_width ch_width;
 	QDF_STATUS ret;
@@ -1508,7 +1508,7 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
-		goto fail_no_print;
+		return -EPERM;
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
