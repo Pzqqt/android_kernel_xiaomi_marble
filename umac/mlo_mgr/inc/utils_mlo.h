@@ -21,6 +21,7 @@
 #ifndef _WLAN_UTILS_MLO_H_
 #define _WLAN_UTILS_MLO_H_
 
+#include <wlan_cmn_ieee80211.h>
 #include "wlan_mlo_mgr_public_structs.h"
 #include <wlan_cm_ucfg_api.h>
 #include <wlan_objmgr_vdev_obj.h>
@@ -69,6 +70,29 @@ util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
 QDF_STATUS
 util_find_mlie(uint8_t *buf, qdf_size_t buflen, uint8_t **mlieseq,
 	       qdf_size_t *mlieseqlen);
+
+/**
+ * util_get_mlie_variant - Get the variant of the given Multi-Link element or
+ * element fragment sequence.
+ *
+ * @mlieseq: Starting address of the Multi-Link element or Multi-Link element
+ * fragment sequence
+ * @mlieseqlen: Total length of the Multi-Link element or Multi-Link element
+ * fragment sequence
+ * @variant: Pointer to the location where the value of the variant should be
+ * updated. On success, the value should be interpreted by the caller as a
+ * member of enum wlan_ml_variant. (This enum is not directly used as an
+ * argument, so that non-MLO code that happens to call this function does not
+ * need to be aware of the definition of the enum, though such a call would
+ * ultimately result in an error). The value should be ignored by the caller if
+ * the function returns error.
+ *
+ * Return: QDF_STATUS_SUCCESS in the case of success, QDF_STATUS value giving
+ * the reason for error in the case of failure
+ */
+QDF_STATUS
+util_get_mlie_variant(uint8_t *mlieseq, qdf_size_t mlieseqlen,
+		      int *variant);
 #else
 static inline QDF_STATUS
 util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
@@ -80,6 +104,13 @@ util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
 static inline QDF_STATUS
 util_find_mlie(uint8_t *buf, qdf_size_t buflen, uint8_t **mlieseq,
 	       qdf_size_t *mlieseqlen)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+util_get_mlie_variant(uint8_t *mlieseq, qdf_size_t mlieseqlen,
+		      int *variant)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

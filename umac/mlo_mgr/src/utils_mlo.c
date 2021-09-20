@@ -473,4 +473,35 @@ util_find_mlie(uint8_t *buf, qdf_size_t buflen, uint8_t **mlieseq,
 	*mlieseqlen = ieseqlen;
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+util_get_mlie_variant(uint8_t *mlieseq, qdf_size_t mlieseqlen,
+		      int *variant)
+{
+	struct wlan_ie_multilink *mlie_fixed;
+	enum wlan_ml_variant var;
+	uint16_t mlcontrol;
+
+	if (!mlieseq || !mlieseqlen || !variant)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	if (mlieseqlen < sizeof(struct wlan_ie_multilink))
+		return QDF_STATUS_E_INVAL;
+
+	mlie_fixed = (struct wlan_ie_multilink *)mlieseq;
+
+	if ((mlie_fixed->elem_id != WLAN_ELEMID_EXTN_ELEM) ||
+	    (mlie_fixed->elem_id_ext != WLAN_EXTN_ELEMID_MULTI_LINK))
+		return QDF_STATUS_E_INVAL;
+
+	mlcontrol = le16toh(mlie_fixed->mlcontrol);
+	var = QDF_GET_BITS(mlcontrol, WLAN_ML_CTRL_TYPE_IDX,
+			   WLAN_ML_CTRL_TYPE_BITS);
+
+	if (var >= WLAN_ML_VARIANT_INVALIDSTART)
+		return QDF_STATUS_E_PROTO;
+
+	*variant = var;
+	return QDF_STATUS_SUCCESS;
+}
 #endif
