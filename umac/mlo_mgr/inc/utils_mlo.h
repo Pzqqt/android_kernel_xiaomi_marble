@@ -143,6 +143,33 @@ util_get_bvmlie_mldmacaddr(uint8_t *mlieseq, qdf_size_t mlieseqlen,
 QDF_STATUS
 util_get_bvmlie_primary_linkid(uint8_t *mlieseq, qdf_size_t mlieseqlen,
 			       bool *linkidfound, uint8_t *linkid);
+
+/**
+ * util_get_bvmlie_persta_partner_info() - Get per-STA partner link information
+ * @mlie: Starting address of the Multi-Link element
+ * @mlielen: Total length of the Multi-Link element
+ * @partner_info: Pointer to the location where the partner link information
+ * should be updated. This should be ignored by the caller if the function
+ * returns error. Note that success will be returned and the number of links in
+ * this structure will be reported as 0, if no Link Info is found, or no per-STA
+ * profile is found, or if none of the per-STA profiles includes a MAC address
+ * in the STA Info field (assuming no errors are encountered).
+ *
+ * Get partner link information in the per-STA profiles present in a Basic
+ * variant Multi-Link element. The partner link information is returned only for
+ * those per-STA profiles which have a MAC address in the STA Info field. Also
+ * note that the current implementation does not have Multi-Link element
+ * fragmentation support - this will be added in an upcoming change after shared
+ * helper utilities for the same are available. Similarly, the current
+ * implementation does not have support for per-STA profile fragmentation - this
+ * may be added once it is introduced in the IEEE802.11be standard.
+ *
+ * Return: QDF_STATUS_SUCCESS in the case of success, QDF_STATUS value giving
+ * the reason for error in the case of failure
+ */
+QDF_STATUS
+util_get_bvmlie_persta_partner_info(uint8_t *mlie, qdf_size_t mlielen,
+				    struct mlo_partner_info *partner_info);
 #else
 static inline QDF_STATUS
 util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
@@ -176,6 +203,13 @@ util_get_bvmlie_mldmacaddr(uint8_t *mlieseq, qdf_size_t mlieseqlen,
 static inline QDF_STATUS
 util_get_bvmlie_primary_linkid(uint8_t *mlieseq, qdf_size_t mlieseqlen,
 			       bool *linkidfound, uint8_t *linkid)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+util_get_bvmlie_persta_partner_info(uint8_t *mlie, qdf_size_t mlielen,
+				    struct mlo_partner_info *partner_info)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
