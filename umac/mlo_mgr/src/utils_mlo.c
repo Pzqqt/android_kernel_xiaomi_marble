@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -182,6 +183,33 @@ uint8_t *util_parse_sta_profile_ie(uint8_t *subelement,
 	return &tmp[tmp_len];
 }
 
+static
+uint8_t *util_get_successorfrag(uint8_t *currie, uint8_t *frame, qdf_size_t len)
+{
+	uint8_t *nextie;
+
+	if (!currie || !frame || !len)
+		return NULL;
+
+	if ((currie + MIN_IE_LEN) > (frame + len))
+		return NULL;
+
+	/* Check whether there is sufficient space in the frame for the current
+	 * IE, plus at least another MIN_IE_LEN bytes for the IE header of a
+	 * fragment (if present) that would come just after the current IE.
+	 */
+	if ((currie + MIN_IE_LEN + currie[TAG_LEN_POS] + MIN_IE_LEN) >
+			(frame + len))
+		return NULL;
+
+	nextie = currie + currie[TAG_LEN_POS] + MIN_IE_LEN;
+
+	if (nextie[ID_POS] != WLAN_ELEMID_FRAGMENT)
+		return NULL;
+
+	return nextie;
+}
+
 QDF_STATUS util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
 				   struct qdf_mac_addr link_addr,
 				   uint8_t *assoc_link_frame)
@@ -361,6 +389,88 @@ update_header:
 	/* seq num not used so not populated */
 	qdf_mem_free(orig_copy);
 
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+util_find_mlie(uint8_t *buf, qdf_size_t buflen, uint8_t **mlieseq,
+	       qdf_size_t *mlieseqlen)
+{
+	uint8_t *bufboundary;
+	uint8_t *ieseq;
+	qdf_size_t ieseqlen;
+	uint8_t *currie;
+	uint8_t *successorfrag;
+
+	if (!buf || !buflen || !mlieseq || !mlieseqlen)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	*mlieseq = NULL;
+	*mlieseqlen = 0;
+
+	/* Find Multi-Link element. In case a fragment sequence is present,
+	 * this element will be the leading fragment.
+	 */
+	ieseq = util_find_extn_eid(WLAN_ELEMID_EXTN_ELEM,
+				   WLAN_EXTN_ELEMID_MULTI_LINK, buf,
+				   buflen);
+
+	/* Even if the element is not found, we have successfully examined the
+	 * buffer. The caller will be provided a NULL value for the starting of
+	 * the Multi-Link element. Hence, we return success.
+	 */
+	if (!ieseq)
+		return QDF_STATUS_SUCCESS;
+
+	bufboundary = buf + buflen;
+
+	if ((ieseq + MIN_IE_LEN) > bufboundary)
+		return QDF_STATUS_E_INVAL;
+
+	ieseqlen = MIN_IE_LEN + ieseq[TAG_LEN_POS];
+
+	if (ieseqlen < sizeof(struct wlan_ie_multilink))
+		return QDF_STATUS_E_PROTO;
+
+	if ((ieseq + ieseqlen) > bufboundary)
+		return QDF_STATUS_E_INVAL;
+
+	/* In the next sequence of checks, if there is no space in the buffer
+	 * for another element after the Multi-Link element/element fragment
+	 * sequence, it could indicate an issue since non-MLO EHT elements
+	 * would be expected to follow the Multi-Link element/element fragment
+	 * sequence. However, this is outside of the purview of this function,
+	 * hence we ignore it.
+	 */
+
+	currie = ieseq;
+	successorfrag = util_get_successorfrag(currie, buf, buflen);
+
+	/* Fragmentation definitions as of IEEE802.11be D1.0 and
+	 * IEEE802.11REVme D0.2 are applied. Only the case where Multi-Link
+	 * element is present in a buffer from the core frame is considered.
+	 * Future changes to fragmentation, cases where the Multi-Link element
+	 * is present in a subelement, etc. to be reflected here if applicable
+	 * as and when the rules evolve.
+	 */
+	while (successorfrag) {
+		/* We should not be seeing a successor fragment if the length
+		 * of the current IE is lesser than the max.
+		 */
+		if (currie[TAG_LEN_POS] != WLAN_MAX_IE_LEN)
+			return QDF_STATUS_E_PROTO;
+
+		if (successorfrag[TAG_LEN_POS] == 0)
+			return QDF_STATUS_E_PROTO;
+
+		ieseqlen +=  (MIN_IE_LEN + successorfrag[TAG_LEN_POS]);
+
+		currie = successorfrag;
+		successorfrag = util_get_successorfrag(currie, buf, buflen);
+	}
+
+	*mlieseq = ieseq;
+	*mlieseqlen = ieseqlen;
 	return QDF_STATUS_SUCCESS;
 }
 #endif
