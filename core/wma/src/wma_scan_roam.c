@@ -2070,7 +2070,7 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 		num_tlv = MAX_ROAM_SCAN_STATS_TLV;
 	}
 
-	rem_len = WMI_SVC_MSG_MAX_SIZE - sizeof(*fixed_param);
+	rem_len = len - sizeof(*fixed_param);
 	if (rem_len < num_tlv * sizeof(wmi_roam_trigger_reason)) {
 		wma_err_rl("Invalid roam trigger data");
 		goto err;
