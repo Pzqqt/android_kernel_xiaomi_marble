@@ -5669,18 +5669,18 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS csr_set_pmk_cache_ft(struct mac_context *mac, uint32_t session_id,
+QDF_STATUS csr_set_pmk_cache_ft(struct mac_context *mac, uint8_t vdev_id,
 				struct wlan_crypto_pmksa *pmk_cache)
 {
 	struct wlan_objmgr_vdev *vdev;
 	int32_t akm;
 
-	if (!CSR_IS_SESSION_VALID(mac, session_id)) {
-		sme_err("session %d not found", session_id);
+	if (!CSR_IS_SESSION_VALID(mac, vdev_id)) {
+		sme_err("session %d not found", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, session_id,
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
 		sme_err("vdev is NULL");
@@ -5701,31 +5701,47 @@ QDF_STATUS csr_set_pmk_cache_ft(struct mac_context *mac, uint32_t session_id,
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384) ||
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384)) {
 		sme_debug("Auth type: %x update the MDID in cache", akm);
-		cm_update_pmk_cache_ft(mac->psoc, session_id);
+		cm_update_pmk_cache_ft(mac->psoc, vdev_id);
 	} else {
 		struct cm_roam_values_copy src_cfg;
-		QDF_STATUS status = QDF_STATUS_E_FAILURE;
-		tCsrScanResultInfo *scan_res;
+		struct scan_filter *scan_filter;
+		qdf_list_t *list = NULL;
+		struct scan_cache_node *first_node = NULL;
+		struct rsn_mdie *mdie = NULL;
+		qdf_list_node_t *cur_node = NULL;
 
-		scan_res = qdf_mem_malloc(sizeof(tCsrScanResultInfo));
-		if (!scan_res)
+		scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
+		if (!scan_filter)
 			return QDF_STATUS_E_NOMEM;
-
-		status = csr_scan_get_result_for_bssid(mac, &pmk_cache->bssid,
-						       scan_res);
-		if (QDF_IS_STATUS_SUCCESS(status) &&
-		    scan_res->BssDescriptor.mdiePresent) {
+		scan_filter->num_of_bssid = 1;
+		qdf_mem_copy(scan_filter->bssid_list[0].bytes,
+			     &pmk_cache->bssid, sizeof(struct qdf_mac_addr));
+		list = wlan_scan_get_result(mac->pdev, scan_filter);
+		qdf_mem_free(scan_filter);
+		if (!list || (list && !qdf_list_size(list))) {
+			sme_debug("Scan list is empty");
+			goto err;
+		}
+		qdf_list_peek_front(list, &cur_node);
+		first_node = qdf_container_of(cur_node,
+					      struct scan_cache_node,
+					      node);
+		if (first_node && first_node->entry)
+			mdie = (struct rsn_mdie *)
+					util_scan_entry_mdie(first_node->entry);
+		if (mdie) {
 			sme_debug("Update MDID in cache from scan_res");
 			src_cfg.bool_value = true;
 			src_cfg.uint_value =
-				(scan_res->BssDescriptor.mdie[0] |
-				 (scan_res->BssDescriptor.mdie[1] << 8));
-			wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
+				(mdie->mobility_domain[0] |
+				 (mdie->mobility_domain[1] << 8));
+			wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
 						   MOBILITY_DOMAIN, &src_cfg);
-			cm_update_pmk_cache_ft(mac->psoc, session_id);
+			cm_update_pmk_cache_ft(mac->psoc, vdev_id);
 		}
-		qdf_mem_free(scan_res);
-		scan_res = NULL;
+err:
+		if (list)
+			wlan_scan_purge_results(list);
 	}
 	return QDF_STATUS_SUCCESS;
 }

@@ -3468,7 +3468,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
 	return status;
 }
 
-QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t vdev_id,
 				struct wlan_crypto_pmksa *pmk_cache)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -3476,7 +3476,7 @@ QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_set_pmk_cache_ft(mac, session_id, pmk_cache);
+		status = csr_set_pmk_cache_ft(mac, vdev_id, pmk_cache);
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;

@@ -630,7 +630,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS -status whether MDID is set or not
  */
-QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t vdev_id,
 				struct wlan_crypto_pmksa *pmk_cache);
 #else
 static inline
@@ -661,7 +661,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
 }
 
 static inline
-QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t vdev_id,
 				struct wlan_crypto_pmksa *pmk_cache)
 {
 	return QDF_STATUS_SUCCESS;
