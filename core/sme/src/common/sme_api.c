@@ -12621,6 +12621,30 @@ void sme_set_chan_info_callback(mac_handle_t mac_handle,
 	mac->chan_info_cb = callback;
 }
 
+#ifdef WLAN_FEATURE_CAL_FAILURE_TRIGGER
+void sme_set_cal_failure_event_cb(
+			mac_handle_t mac_handle,
+			void (*callback)(uint8_t cal_type, uint8_t reason))
+{
+	struct mac_context *mac;
+	QDF_STATUS status   = QDF_STATUS_SUCCESS;
+
+	if (!mac_handle) {
+		QDF_ASSERT(0);
+		return;
+	}
+	mac = MAC_CONTEXT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->cal_failure_event_cb = callback;
+		sme_release_global_lock(&mac->sme);
+	} else {
+		sme_err("sme_acquire_global_lock failed");
+	}
+}
+#endif
+
 void sme_set_vdev_ies_per_band(mac_handle_t mac_handle, uint8_t vdev_id,
 			       enum QDF_OPMODE device_mode)
 {
