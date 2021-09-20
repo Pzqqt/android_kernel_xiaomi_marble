@@ -2445,7 +2445,9 @@ static void
 cm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 			    struct sir_rssi_disallow_lst *entry)
 {
-	struct reject_ap_info ap_info = {0};
+	struct reject_ap_info ap_info;
+
+	qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
 
 	ap_info.bssid = entry->bssid;
 	ap_info.reject_ap_type = DRIVER_RSSI_REJECT_TYPE;
