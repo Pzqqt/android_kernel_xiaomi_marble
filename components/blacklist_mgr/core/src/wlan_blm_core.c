@@ -1199,6 +1199,7 @@ blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 	}
 
 	for (i = 0; i < num_of_bssid; i++) {
+		qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
 		ap_info.bssid = bssid_black_list[i];
 		ap_info.reject_ap_type = USERSPACE_BLACKLIST_TYPE;
 		ap_info.source = ADDED_BY_DRIVER;

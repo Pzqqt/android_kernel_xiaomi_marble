@@ -4561,6 +4561,8 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 			if (tb2[PARAM_SET_BSSID_HINT]) {
 				struct reject_ap_info ap_info;
 
+				qdf_mem_zero(&ap_info,
+					     sizeof(struct reject_ap_info));
 				nla_memcpy(ap_info.bssid.bytes,
 					   tb2[PARAM_SET_BSSID],
 					   QDF_MAC_ADDR_SIZE);

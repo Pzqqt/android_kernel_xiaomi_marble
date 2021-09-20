@@ -245,6 +245,7 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 	hdd_debug("nud fail detected, try roaming to better BSSID, vdev id: %d",
 		  adapter->vdev_id);
 
+	qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
 	ap_info.bssid = sta_ctx->conn_info.bssid;
 	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
 	ap_info.reject_reason = REASON_NUD_FAILURE;

@@ -8464,6 +8464,7 @@ lim_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 {
 	struct reject_ap_info ap_info;
 
+	qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
 	ap_info.bssid = entry->bssid;
 	ap_info.reject_ap_type = DRIVER_RSSI_REJECT_TYPE;
 	ap_info.rssi_reject_params.expected_rssi = entry->expected_rssi;
