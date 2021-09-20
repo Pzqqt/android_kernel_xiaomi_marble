@@ -9596,19 +9596,31 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": WDI-2.0 over gsi= %s\n",
 			ipa_drv_res->ipa_wdi2_over_gsi
 			? "True" : "False");
+
 	ipa_drv_res->ipa_endp_delay_wa =
-			of_property_read_bool(pdev->dev.of_node,
-			"qcom,ipa-endp-delay-wa");
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,ipa-endp-delay-wa");
 	IPADBG(": endppoint delay wa = %s\n",
-			ipa_drv_res->ipa_endp_delay_wa
-			? "True" : "False");
+		ipa_drv_res->ipa_endp_delay_wa
+		? "True" : "False");
 
 	ipa_drv_res->ipa_endp_delay_wa_v2 =
-			of_property_read_bool(pdev->dev.of_node,
-			"qcom,ipa-endp-delay-wa-v2");
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,ipa-endp-delay-wa-v2");
 	IPADBG(": endppoint delay wa v2 = %s\n",
-			ipa_drv_res->ipa_endp_delay_wa_v2
-			? "True" : "False");
+		ipa_drv_res->ipa_endp_delay_wa_v2
+		? "True" : "False");
+
+	/**
+	 * Overwrite end point delay workaround for
+	 * APQ target as device tree is same
+	 * for MSM and APQ
+	 */
+	if (ipa_drv_res->platform_type == IPA_PLAT_TYPE_APQ) {
+		ipa_drv_res->ipa_endp_delay_wa = true;
+		ipa_drv_res->ipa_endp_delay_wa_v2 = false;
+	}
+
 
 	ipa_drv_res->ulso_wa = of_property_read_bool(pdev->dev.of_node,
 			"qcom,ipa-ulso-wa");
