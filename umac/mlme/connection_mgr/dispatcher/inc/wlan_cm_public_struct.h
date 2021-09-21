@@ -248,6 +248,7 @@ struct wlan_cm_connect_req {
  * @fils_info: Fills related connect info
  * @is_non_assoc_link: non assoc link
  * @ml_parnter_info: ml partner link info
+ * @owe_trans_ssid: owe trans ssid to be used when scan entry ssid is wildcard
  */
 struct wlan_cm_vdev_connect_req {
 	uint8_t vdev_id;
@@ -269,6 +270,7 @@ struct wlan_cm_vdev_connect_req {
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct mlo_partner_info ml_parnter_info;
 #endif
+	struct wlan_ssid owe_trans_ssid;
 };
 
 /**

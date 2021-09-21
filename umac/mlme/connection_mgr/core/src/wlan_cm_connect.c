@@ -1733,6 +1733,12 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req.is_non_assoc_link = cm_req->connect_req.req.is_non_assoc_link;
 	cm_update_ml_partner_info(&cm_req->connect_req.req, &req);
 
+	if (util_scan_entry_is_hidden_ap(req.bss->entry) &&
+	    QDF_HAS_PARAM(neg_sec_info->key_mgmt, WLAN_CRYPTO_KEY_MGMT_OWE)) {
+		mlme_debug("OWE transition candidate has wildcard ssid");
+		req.owe_trans_ssid = cm_req->connect_req.req.ssid;
+	}
+
 	wlan_reg_get_cc_and_src(psoc, country_code);
 	mlme_nofl_info(CM_PREFIX_FMT "Connecting to %.*s " QDF_MAC_ADDR_FMT " rssi: %d freq: %d akm 0x%x cipher: uc 0x%x mc 0x%x, wps %d osen %d force RSN %d CC: %c%c",
 		       CM_PREFIX_REF(req.vdev_id, req.cm_id),
