@@ -20,7 +20,45 @@ static struct v4l2_file_operations msm_v4l2_file_operations = {
 	.poll                           = msm_v4l2_poll,
 };
 
-static struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
+static struct v4l2_ioctl_ops msm_v4l2_ioctl_ops_enc = {
+	.vidioc_querycap                = msm_v4l2_querycap,
+	.vidioc_enum_fmt_vid_cap        = msm_v4l2_enum_fmt,
+	.vidioc_enum_fmt_vid_out        = msm_v4l2_enum_fmt,
+	.vidioc_enum_framesizes         = msm_v4l2_enum_framesizes,
+	.vidioc_enum_frameintervals     = msm_v4l2_enum_frameintervals,
+	.vidioc_try_fmt_vid_cap_mplane  = msm_v4l2_try_fmt,
+	.vidioc_try_fmt_vid_out_mplane  = msm_v4l2_try_fmt,
+	.vidioc_s_fmt_vid_cap           = msm_v4l2_s_fmt,
+	.vidioc_s_fmt_vid_out           = msm_v4l2_s_fmt,
+	.vidioc_s_fmt_vid_cap_mplane    = msm_v4l2_s_fmt,
+	.vidioc_s_fmt_vid_out_mplane    = msm_v4l2_s_fmt,
+	.vidioc_s_fmt_meta_out          = msm_v4l2_s_fmt,
+	.vidioc_s_fmt_meta_cap          = msm_v4l2_s_fmt,
+	.vidioc_g_fmt_vid_cap           = msm_v4l2_g_fmt,
+	.vidioc_g_fmt_vid_out           = msm_v4l2_g_fmt,
+	.vidioc_g_fmt_vid_cap_mplane    = msm_v4l2_g_fmt,
+	.vidioc_g_fmt_vid_out_mplane    = msm_v4l2_g_fmt,
+	.vidioc_g_fmt_meta_out          = msm_v4l2_g_fmt,
+	.vidioc_g_fmt_meta_cap          = msm_v4l2_g_fmt,
+	.vidioc_g_selection             = msm_v4l2_g_selection,
+	.vidioc_s_selection             = msm_v4l2_s_selection,
+	.vidioc_s_parm                  = msm_v4l2_s_parm,
+	.vidioc_g_parm                  = msm_v4l2_g_parm,
+	.vidioc_reqbufs                 = msm_v4l2_reqbufs,
+	.vidioc_qbuf                    = msm_v4l2_qbuf,
+	.vidioc_dqbuf                   = msm_v4l2_dqbuf,
+	.vidioc_streamon                = msm_v4l2_streamon,
+	.vidioc_streamoff               = msm_v4l2_streamoff,
+	.vidioc_s_ctrl                  = msm_v4l2_s_ctrl,
+	.vidioc_g_ctrl                  = msm_v4l2_g_ctrl,
+	.vidioc_queryctrl               = msm_v4l2_queryctrl,
+	.vidioc_querymenu               = msm_v4l2_querymenu,
+	.vidioc_subscribe_event         = msm_v4l2_subscribe_event,
+	.vidioc_unsubscribe_event       = msm_v4l2_unsubscribe_event,
+	.vidioc_encoder_cmd             = msm_v4l2_encoder_cmd,
+};
+
+static struct v4l2_ioctl_ops msm_v4l2_ioctl_ops_dec = {
 	.vidioc_querycap                = msm_v4l2_querycap,
 	.vidioc_enum_fmt_vid_cap        = msm_v4l2_enum_fmt,
 	.vidioc_enum_fmt_vid_out        = msm_v4l2_enum_fmt,
@@ -56,7 +94,6 @@ static struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
 	.vidioc_subscribe_event         = msm_v4l2_subscribe_event,
 	.vidioc_unsubscribe_event       = msm_v4l2_unsubscribe_event,
 	.vidioc_decoder_cmd             = msm_v4l2_decoder_cmd,
-	.vidioc_encoder_cmd             = msm_v4l2_encoder_cmd,
 };
 
 static struct v4l2_ctrl_ops msm_v4l2_ctrl_ops = {
@@ -89,7 +126,8 @@ static int msm_vidc_init_ops(struct msm_vidc_core *core)
 
 	d_vpr_h("%s: initialize ops\n", __func__);
 	core->v4l2_file_ops = &msm_v4l2_file_operations;
-	core->v4l2_ioctl_ops = &msm_v4l2_ioctl_ops;
+	core->v4l2_ioctl_ops_enc = &msm_v4l2_ioctl_ops_enc;
+	core->v4l2_ioctl_ops_dec = &msm_v4l2_ioctl_ops_dec;
 	core->v4l2_ctrl_ops = &msm_v4l2_ctrl_ops;
 	core->vb2_ops = &msm_vb2_ops;
 	core->vb2_mem_ops = &msm_vb2_mem_ops;

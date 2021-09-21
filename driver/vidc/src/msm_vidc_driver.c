@@ -1104,6 +1104,20 @@ bool res_is_greater_than(u32 width, u32 height,
 		return false;
 }
 
+bool res_is_greater_than_or_equal_to(u32 width, u32 height,
+	u32 ref_width, u32 ref_height)
+{
+	u32 num_mbs = NUM_MBS_PER_FRAME(height, width);
+	u32 max_side = max(ref_width, ref_height);
+
+	if (num_mbs >= NUM_MBS_PER_FRAME(ref_height, ref_width) ||
+		width >= max_side ||
+		height >= max_side)
+		return true;
+	else
+		return false;
+}
+
 bool res_is_less_than(u32 width, u32 height,
 	u32 ref_width, u32 ref_height)
 {
@@ -1598,6 +1612,37 @@ bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst)
 	return false;
 }
 
+static int msm_vidc_discard_pending_ipsc(struct msm_vidc_inst *inst)
+{
+	struct response_work *resp_work, *dummy = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (list_empty(&inst->response_works))
+		return 0;
+
+	/* discard pending port settings change if any */
+	list_for_each_entry_safe(resp_work, dummy,
+			&inst->response_works, list) {
+		if (resp_work->type == RESP_WORK_INPUT_PSC) {
+			i_vpr_h(inst,
+				"%s: discard pending input psc\n", __func__);
+
+			/* override the psc properties again if ipsc discarded */
+			inst->ipsc_properties_set = false;
+
+			list_del(&resp_work->list);
+			kfree(resp_work->data);
+			kfree(resp_work);
+		}
+	}
+
+	return 0;
+}
+
 static int msm_vidc_process_pending_ipsc(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_state *new_state)
 {
@@ -1683,7 +1728,6 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 {
 	int rc = 0;
 	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
-	struct response_work *resp_work, *dummy;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1706,17 +1750,6 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 				   inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG ||
 				   inst->state == MSM_VIDC_DRAIN_START_INPUT) {
 			new_state = MSM_VIDC_START_OUTPUT;
-			/* discard pending port settings change if any */
-			list_for_each_entry_safe(resp_work, dummy,
-						&inst->response_works, list) {
-				if (resp_work->type == RESP_WORK_INPUT_PSC) {
-					i_vpr_h(inst,
-						"%s: discard pending input psc\n", __func__);
-					list_del(&resp_work->list);
-					kfree(resp_work->data);
-					kfree(resp_work);
-				}
-			}
 		}
 	} else if (type == OUTPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_START_OUTPUT) {
@@ -3805,6 +3838,9 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		goto error;
 	}
 
+	/* discard pending port settings change if any */
+	msm_vidc_discard_pending_ipsc(inst);
+
 	/* flush deferred buffers */
 	msm_vidc_flush_buffers(inst, buffer_type);
 	msm_vidc_flush_delayed_unmap_buffers(inst, buffer_type);
@@ -5164,7 +5200,7 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 
 static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 {
-	u32 video_mbpf = 0, image_mbpf = 0;
+	u32 video_mbpf = 0, image_mbpf = 0, video_rt_mbpf = 0;
 	struct msm_vidc_core *core;
 	struct msm_vidc_inst *instance;
 
@@ -5196,6 +5232,24 @@ static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 	if (image_mbpf > core->capabilities[MAX_IMAGE_MBPF].value) {
 		i_vpr_e(inst, "%s: image overloaded. needed %u, max %u", __func__,
 			image_mbpf, core->capabilities[MAX_IMAGE_MBPF].value);
+		return -ENOMEM;
+	}
+
+	core_lock(core, __func__);
+	/* check real-time video sessions max limit */
+	list_for_each_entry(instance, &core->instances, list) {
+		if (is_thumbnail_session(instance) ||
+			is_image_session(instance) ||
+			!is_realtime_session(instance))
+			continue;
+
+		video_rt_mbpf += msm_vidc_get_mbs_per_frame(instance);
+	}
+	core_unlock(core, __func__);
+
+	if (video_rt_mbpf > core->capabilities[MAX_RT_MBPF].value) {
+		i_vpr_e(inst, "%s: real-time video overloaded. needed %u, max %u",
+			__func__, video_rt_mbpf, core->capabilities[MAX_RT_MBPF].value);
 		return -ENOMEM;
 	}
 
@@ -5334,37 +5388,18 @@ exit:
 	return allow;
 }
 
-int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
+static int msm_vidc_check_resolution_supported(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_inst_capability *capability;
 	u32 width = 0, height = 0, min_width, min_height,
 		max_width, max_height;
-	bool allow = false, is_interlaced = false;
-	int rc = 0;
+	bool is_interlaced = false;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
-
-	if (is_image_session(inst) && is_secure_session(inst)) {
-		i_vpr_e(inst, "%s: secure image session not supported\n", __func__);
-		rc = -EINVAL;
-		goto exit;
-	}
-
-	rc = msm_vidc_check_core_mbps(inst);
-	if (rc)
-		goto exit;
-
-	rc = msm_vidc_check_core_mbpf(inst);
-	if (rc)
-		goto exit;
-
-	rc = msm_vidc_check_inst_mbpf(inst);
-	if (rc)
-		goto exit;
 
 	if (is_decode_session(inst)) {
 		width = inst->fmts[INPUT_PORT].fmt.pix_mp.width;
@@ -5399,44 +5434,19 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 		i_vpr_e(inst, "%s: resolution is not even. wxh [%u x %u], compose [%u x %u]\n",
 			__func__, width, height, inst->compose.width,
 			inst->compose.height);
-		rc = -EINVAL;
-		goto exit;
+		return -EINVAL;
 	}
 
-	/* check decoder input width and height is in supported range */
-	if (is_decode_session(inst)) {
+	/* check if input width and height is in supported range */
+	if (is_decode_session(inst) || is_encode_session(inst)) {
 		if (!in_range(width, min_width, max_width) ||
 			!in_range(height, min_height, max_height)) {
 			i_vpr_e(inst,
 				"%s: unsupported input wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
 				__func__, width, height, min_width,
 				min_height, max_width, max_height);
-			rc = -EINVAL;
-			goto exit;
+			return -EINVAL;
 		}
-	}
-
-	/* check encoder crop width and height is in supported range */
-	if (is_encode_session(inst)) {
-		if (!in_range(width, min_width, max_width) ||
-			!in_range(height, min_height, max_height)) {
-			i_vpr_e(inst,
-				"%s: unsupported wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
-				__func__, width, height, min_width,
-				min_height, max_width, max_height);
-			rc = -EINVAL;
-			goto exit;
-		}
-	}
-
-	/* check image capabilities */
-	if (is_image_encode_session(inst)) {
-		allow = msm_vidc_allow_image_encode_session(inst);
-		if (!allow) {
-			rc = -EINVAL;
-			goto exit;
-		}
-		return 0;
 	}
 
 	/* check interlace supported resolution */
@@ -5445,9 +5455,149 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 		NUM_MBS_PER_FRAME(width, height) > INTERLACE_MB_PER_FRAME_MAX)) {
 		i_vpr_e(inst, "%s: unsupported interlace wxh [%u x %u], max [%u x %u]\n",
 			__func__, width, height, INTERLACE_WIDTH_MAX, INTERLACE_HEIGHT_MAX);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int msm_vidc_check_max_sessions(struct msm_vidc_inst *inst)
+{
+	u32 width = 0, height = 0;
+	u32 num_720p_sessions = 0, num_1080p_sessions = 0;
+	u32 num_4k_sessions = 0, num_8k_sessions = 0;
+	struct msm_vidc_inst *i;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	if (!core->capabilities) {
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	core_lock(core, __func__);
+	list_for_each_entry(i, &core->instances, list) {
+		/* skip image sessions count */
+		if (is_image_session(inst))
+			continue;
+
+		if (is_decode_session(i)) {
+			width = i->fmts[INPUT_PORT].fmt.pix_mp.width;
+			height = i->fmts[INPUT_PORT].fmt.pix_mp.height;
+		} else if (is_encode_session(i)) {
+			width = i->crop.width;
+			height = i->crop.height;
+		}
+
+		/*
+		 * one 8k session equals to 64 720p sessions in reality.
+		 * So for one 8k session the number of 720p sessions will
+		 * exceed max supported session count(16), hence one 8k session
+		 * will be rejected as well.
+		 * Therefore, treat one 8k session equal to two 4k sessions and
+		 * one 4k session equal to two 1080p sessions and
+		 * one 1080p session equal to two 720p sessions. This equation
+		 * will make one 8k session equal to eight 720p sessions
+		 * which looks good.
+		 */
+		if (res_is_greater_than(width, height, 4096, 2176)) {
+			num_8k_sessions += 1;
+			num_4k_sessions += 2;
+			num_1080p_sessions += 4;
+			num_720p_sessions += 8;
+		} else if (res_is_greater_than(width, height, 1920, 1088)) {
+			num_4k_sessions += 1;
+			num_1080p_sessions += 2;
+			num_720p_sessions += 4;
+		} else if (res_is_greater_than(width, height, 1280, 736)) {
+			num_1080p_sessions += 1;
+			num_720p_sessions += 2;
+		} else {
+			num_720p_sessions += 1;
+		}
+	}
+	core_unlock(core, __func__);
+
+	if (num_8k_sessions > core->capabilities[MAX_NUM_8K_SESSIONS].value) {
+		i_vpr_e(inst, "%s: total 8k sessions %d, exceeded max limit %d\n",
+			__func__, num_8k_sessions,
+			core->capabilities[MAX_NUM_8K_SESSIONS].value);
+		return -ENOMEM;
+	}
+
+	if (num_4k_sessions > core->capabilities[MAX_NUM_4K_SESSIONS].value) {
+		i_vpr_e(inst, "%s: total 4K sessions %d, exceeded max limit %d\n",
+			__func__, num_4k_sessions,
+			core->capabilities[MAX_NUM_4K_SESSIONS].value);
+		return -ENOMEM;
+	}
+
+	if (num_1080p_sessions > core->capabilities[MAX_NUM_1080P_SESSIONS].value) {
+		i_vpr_e(inst, "%s: total 1080p sessions %d, exceeded max limit %d\n",
+			__func__, num_1080p_sessions,
+			core->capabilities[MAX_NUM_1080P_SESSIONS].value);
+		return -ENOMEM;
+	}
+
+	if (num_720p_sessions > core->capabilities[MAX_NUM_720P_SESSIONS].value) {
+		i_vpr_e(inst, "%s: total sessions(<=720p) %d, exceeded max limit %d\n",
+			__func__, num_720p_sessions,
+			core->capabilities[MAX_NUM_720P_SESSIONS].value);
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
+{
+	bool allow = false;
+	int rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (is_image_session(inst) && is_secure_session(inst)) {
+		i_vpr_e(inst, "%s: secure image session not supported\n", __func__);
 		rc = -EINVAL;
 		goto exit;
 	}
+
+	rc = msm_vidc_check_core_mbps(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_check_core_mbpf(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_check_inst_mbpf(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_check_resolution_supported(inst);
+	if (rc)
+		goto exit;
+
+	/* check image capabilities */
+	if (is_image_encode_session(inst)) {
+		allow = msm_vidc_allow_image_encode_session(inst);
+		if (!allow) {
+			rc = -EINVAL;
+			goto exit;
+		}
+	}
+
+	rc = msm_vidc_check_max_sessions(inst);
+	if (rc)
+		goto exit;
 
 exit:
 	if (rc) {

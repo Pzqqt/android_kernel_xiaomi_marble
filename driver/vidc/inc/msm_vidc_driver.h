@@ -428,6 +428,8 @@ void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,
 	enum msm_vidc_ctrl_list_type list_type);
 bool res_is_greater_than(u32 width, u32 height,
 	u32 ref_width, u32 ref_height);
+bool res_is_greater_than_or_equal_to(u32 width, u32 height,
+	u32 ref_width, u32 ref_height);
 bool res_is_less_than(u32 width, u32 height,
 	u32 ref_width, u32 ref_height);
 bool res_is_less_than_or_equal_to(u32 width, u32 height,

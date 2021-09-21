@@ -266,7 +266,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 			} else {
 				vote_data->color_formats[0] = MSM_VIDC_FMT_NV12;
 			}
-			vote_data->color_formats[0] = color_format;
+			vote_data->color_formats[1] = color_format;
 		} else {
 			vote_data->num_formats = 1;
 			vote_data->color_formats[0] = color_format;

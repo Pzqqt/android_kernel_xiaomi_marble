@@ -192,8 +192,9 @@ static int __disable_unprepare_clock_iris2(struct msm_vidc_core *core,
 		if (strcmp(cl->name, clk_name))
 			continue;
 		found = true;
-
 		clk_disable_unprepare(cl->clk);
+		if (cl->has_scaling)
+			__set_clk_rate(core, cl, 0);
 		cl->prev = 0;
 		d_vpr_h("%s: clock %s disable unprepared\n", __func__, cl->name);
 		break;
@@ -245,6 +246,8 @@ static int __prepare_enable_clock_iris2(struct msm_vidc_core *core,
 			d_vpr_e("%s: clock %s not enabled\n",
 				__func__, cl->name);
 			clk_disable_unprepare(cl->clk);
+			if (cl->has_scaling)
+				__set_clk_rate(core, cl, 0);
 			return -EINVAL;
 		}
 		d_vpr_h("%s: clock %s prepare enabled\n", __func__, cl->name);
