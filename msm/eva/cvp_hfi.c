@@ -4144,6 +4144,7 @@ static inline int __resume(struct iris_hfi_device *device)
 {
 	int rc = 0;
 	u32 flags = 0, reg_gdsc, reg_cbcr;
+	struct msm_cvp_core *core;
 
 	if (!device) {
 		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
@@ -4154,6 +4155,8 @@ static inline int __resume(struct iris_hfi_device *device)
 		dprintk(CVP_PWR, "iris_hfi_device in deinit state.");
 		return -EINVAL;
 	}
+
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
 
 	dprintk(CVP_PWR, "Resuming from power collapse\n");
 	rc = __iris_power_on(device);
@@ -4181,6 +4184,7 @@ static inline int __resume(struct iris_hfi_device *device)
 	rc = __boot_firmware(device);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to reset cvp core\n");
+		msm_cvp_trigger_ssr(core, SSR_ERR_FATAL);
 		goto err_reset_core;
 	}
 
