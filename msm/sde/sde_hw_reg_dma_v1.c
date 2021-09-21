@@ -14,7 +14,7 @@
 #define GUARD_BYTES (BIT(8) - 1)
 #define ALIGNED_OFFSET (U32_MAX & ~(GUARD_BYTES))
 #define ADDR_ALIGN BIT(8)
-#define MAX_RELATIVE_OFF (BIT(20) - 1)
+#define MAX_RELATIVE_OFF (BIT(21) - 1)
 #define ABSOLUTE_RANGE BIT(27)
 
 #define DECODE_SEL_OP (BIT(HW_BLK_SELECT))
@@ -254,6 +254,9 @@ static int write_multi_reg(struct sde_reg_dma_setup_ops_cfg *cfg)
 	cfg->dma_buf->next_op_allowed = REG_WRITE_OP | DECODE_SEL_OP;
 	cfg->dma_buf->ops_completed |= REG_WRITE_OP;
 
+	if (cfg->blk == MDSS)
+		cfg->dma_buf->abs_write_cnt += SIZE_DWORD(cfg->data_size);
+
 	return 0;
 }
 
@@ -319,8 +322,10 @@ static int write_single_reg(struct sde_reg_dma_setup_ops_cfg *cfg)
 			cfg->dma_buf->index);
 	loc[0] = SINGLE_REG_WRITE_OPCODE;
 	loc[0] |= (cfg->blk_offset & MAX_RELATIVE_OFF);
-	if (cfg->blk == MDSS)
+	if (cfg->blk == MDSS) {
 		loc[0] |= ABSOLUTE_RANGE;
+		cfg->dma_buf->abs_write_cnt++;
+	}
 
 	loc[1] = *cfg->data;
 	cfg->dma_buf->index += ops_mem_size[cfg->ops];
@@ -622,6 +627,32 @@ static int validate_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 		DRM_ERROR("invalid queue selected %d or op %d for SB LUTDMA\n",
 				cfg->queue_select, cfg->op);
 		return -EINVAL;
+	}
+
+	if ((cfg->dma_buf->abs_write_cnt % 2) != 0) {
+		/* Touch up buffer to avoid HW issues with odd number of abs writes */
+		u32 reg = 0;
+		struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
+
+		dma_write_cfg.dma_buf = cfg->dma_buf;
+		dma_write_cfg.blk = MDSS;
+		dma_write_cfg.feature = REG_DMA_FEATURES_MAX;
+		dma_write_cfg.ops = HW_BLK_SELECT;
+		if (validate_write_decode_sel(&dma_write_cfg) || write_decode_sel(&dma_write_cfg)) {
+			DRM_ERROR("Failed setting MDSS decode select for LUTDMA touch up\n");
+			return -EINVAL;
+		}
+
+		/* Perform dummy write on LUTDMA RO version reg */
+		dma_write_cfg.ops = REG_SINGLE_WRITE;
+		dma_write_cfg.blk_offset = reg_dma->caps->base_off +
+				reg_dma->caps->reg_dma_blks[cfg->dma_type].base;
+		dma_write_cfg.data = &reg;
+		dma_write_cfg.data_size = sizeof(uint32_t);
+		if (validate_write_reg(&dma_write_cfg) || write_single_reg(&dma_write_cfg)) {
+			DRM_ERROR("Failed to add touch up write to LUTDMA buffer\n");
+			return -EINVAL;
+		}
 	}
 
 	return 0;
@@ -1110,6 +1141,7 @@ static int reset_reg_dma_buffer_v1(struct sde_reg_dma_buffer *lut_buf)
 	lut_buf->index = 0;
 	lut_buf->ops_completed = 0;
 	lut_buf->next_op_allowed = DECODE_SEL_OP;
+	lut_buf->abs_write_cnt = 0;
 	return 0;
 }
 

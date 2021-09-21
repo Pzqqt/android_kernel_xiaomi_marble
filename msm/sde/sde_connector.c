@@ -880,10 +880,6 @@ static int _sde_connector_update_dirty_properties(
 			_sde_connector_update_power_locked(c_conn);
 			mutex_unlock(&c_conn->lock);
 			break;
-		case CONNECTOR_PROP_BL_SCALE:
-		case CONNECTOR_PROP_SV_BL_SCALE:
-			_sde_connector_update_bl_scale(c_conn);
-			break;
 		case CONNECTOR_PROP_HDR_METADATA:
 			_sde_connector_update_hdr_metadata(c_conn, c_state);
 			break;
@@ -1054,6 +1050,14 @@ void sde_connector_helper_bridge_disable(struct drm_connector *connector)
 	c_conn->allow_bl_update = false;
 }
 
+void sde_connector_helper_bridge_post_disable(struct drm_connector *connector)
+{
+	struct sde_connector *c_conn = NULL;
+	c_conn = to_sde_connector(connector);
+
+	c_conn->panel_dead = false;
+}
+
 void sde_connector_helper_bridge_enable(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn = NULL;
@@ -1086,7 +1090,6 @@ void sde_connector_helper_bridge_enable(struct drm_connector *connector)
 		c_conn->bl_device->props.state &= ~BL_CORE_FBBLANK;
 		backlight_update_status(c_conn->bl_device);
 	}
-	c_conn->panel_dead = false;
 }
 
 int sde_connector_clk_ctrl(struct drm_connector *connector, bool enable)

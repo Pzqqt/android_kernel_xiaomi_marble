@@ -744,10 +744,12 @@ static void *get_vaddr(struct drm_gem_object *obj, unsigned madv)
 		}
 
 		if (obj->import_attach) {
-			ret = dma_buf_begin_cpu_access(
-				obj->import_attach->dmabuf, DMA_BIDIRECTIONAL);
-			if (ret)
-				goto fail;
+			if (obj->dev && obj->dev->dev && !dev_is_dma_coherent(obj->dev->dev)) {
+				ret = dma_buf_begin_cpu_access(
+					obj->import_attach->dmabuf, DMA_BIDIRECTIONAL);
+				if (ret)
+					goto fail;
+			}
 
 			msm_obj->vaddr =
 				dma_buf_vmap(obj->import_attach->dmabuf);
@@ -870,8 +872,8 @@ static void msm_gem_vunmap_locked(struct drm_gem_object *obj)
 
 	if (obj->import_attach) {
 		dma_buf_vunmap(obj->import_attach->dmabuf, msm_obj->vaddr);
-		dma_buf_end_cpu_access(obj->import_attach->dmabuf,
-						DMA_BIDIRECTIONAL);
+		if (obj->dev && obj->dev->dev && !dev_is_dma_coherent(obj->dev->dev))
+			dma_buf_end_cpu_access(obj->import_attach->dmabuf, DMA_BIDIRECTIONAL);
 	} else {
 		vunmap(msm_obj->vaddr);
 	}

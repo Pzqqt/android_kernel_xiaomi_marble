@@ -1161,6 +1161,12 @@ void sde_conn_timeline_status(struct drm_connector *conn);
 void sde_connector_helper_bridge_disable(struct drm_connector *connector);
 
 /**
+ * sde_connector_helper_bridge_post_disable - helper function for drm bridge post disable
+ * @connector: Pointer to DRM connector object
+ */
+void sde_connector_helper_bridge_post_disable(struct drm_connector *connector);
+
+/**
  * sde_connector_destroy - destroy drm connector object
  * @connector: Pointer to DRM connector object
  */

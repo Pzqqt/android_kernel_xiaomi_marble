@@ -257,6 +257,9 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 	if (bl_temp > panel->bl_config.bl_max_level)
 		bl_temp = panel->bl_config.bl_max_level;
 
+        if (bl_temp && (bl_temp < panel->bl_config.bl_min_level))
+                bl_temp = panel->bl_config.bl_min_level;
+
 	pr_debug("bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n",
 		bl_scale, bl_scale_sv, (u32)bl_temp);
 
@@ -274,12 +277,13 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 	int rc = 0;
 	int i;
 	struct dsi_display_ctrl *m_ctrl, *ctrl;
-	bool skip_op = is_skip_op_required(display);
+	bool skip_op = display->trusted_vm_env;
 
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
 
-	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_ON);
+	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
+				DSI_CTRL_ENGINE_ON, skip_op);
 	if (rc) {
 		DSI_ERR("[%s] enable mcmd engine failed, skip_op:%d rc:%d\n",
 		       display->name, skip_op, rc);
@@ -291,7 +295,8 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 		if (!ctrl->ctrl || (ctrl == m_ctrl))
 			continue;
 
-		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl, DSI_CTRL_ENGINE_ON);
+		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl,
+					DSI_CTRL_ENGINE_ON, skip_op);
 		if (rc) {
 			DSI_ERR(
 			    "[%s] enable cmd engine failed, skip_op:%d rc:%d\n",
@@ -302,7 +307,8 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 
 	goto done;
 error_disable_master:
-	(void)dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
+	(void)dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
+				DSI_CTRL_ENGINE_OFF, skip_op);
 done:
 	mutex_unlock(&m_ctrl->ctrl->ctrl_lock);
 	return rc;
@@ -313,6 +319,7 @@ static int dsi_display_cmd_engine_disable(struct dsi_display *display)
 	int rc = 0;
 	int i;
 	struct dsi_display_ctrl *m_ctrl, *ctrl;
+	bool skip_op = display->trusted_vm_env;
 
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
@@ -322,17 +329,19 @@ static int dsi_display_cmd_engine_disable(struct dsi_display *display)
 		if (!ctrl->ctrl || (ctrl == m_ctrl))
 			continue;
 
-		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
+		rc = dsi_ctrl_set_cmd_engine_state(ctrl->ctrl,
+					DSI_CTRL_ENGINE_OFF, skip_op);
 		if (rc)
 			DSI_ERR(
-			   "[%s] disable cmd engine failed, rc:%d\n",
-				display->name, rc);
+			   "[%s] disable cmd engine failed, skip_op:%d rc:%d\n",
+				display->name, skip_op, rc);
 	}
 
-	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl, DSI_CTRL_ENGINE_OFF);
+	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
+				DSI_CTRL_ENGINE_OFF, skip_op);
 	if (rc)
-		DSI_ERR("[%s] disable mcmd engine failed, rc:%d\n",
-			display->name, rc);
+		DSI_ERR("[%s] disable mcmd engine failed, skip_op:%d rc:%d\n",
+			display->name, skip_op, rc);
 
 	mutex_unlock(&m_ctrl->ctrl->ctrl_lock);
 	return rc;
@@ -8486,41 +8495,47 @@ int dsi_display_disable(struct dsi_display *display)
 	rc = dsi_display_wake_up(display);
 	if (rc)
 		DSI_ERR("[%s] display wake up failed, rc=%d\n",
-			display->name, rc);
-
-	if (is_skip_op_required(display)) {
-		/* applicable only for trusted vm */
-		display->panel->panel_initialized = false;
-		display->panel->power_mode = SDE_MODE_DPMS_OFF;
-		goto out_unlock;
-	}
+		       display->name, rc);
 
 	if (display->config.panel_mode == DSI_OP_VIDEO_MODE) {
 		rc = dsi_display_vid_engine_disable(display);
 		if (rc)
-			DSI_ERR("[%s]failed to disable DSI vid engine, rc=%d\n", display->name, rc);
+			DSI_ERR("[%s]failed to disable DSI vid engine, rc=%d\n",
+			       display->name, rc);
 	} else if (display->config.panel_mode == DSI_OP_CMD_MODE) {
-		/* On POMS request , disable panel TE through delayed work queue. */
-		if (display->poms_pending && display->panel->poms_align_vsync) {
-			INIT_DELAYED_WORK(&display->poms_te_work, dsi_display_handle_poms_te);
-			queue_delayed_work(system_wq, &display->poms_te_work,
+		/**
+		 * On POMS request , disable panel TE through
+		 * delayed work queue.
+		 */
+		if (display->poms_pending &&
+				display->panel->poms_align_vsync) {
+			INIT_DELAYED_WORK(&display->poms_te_work,
+					dsi_display_handle_poms_te);
+			queue_delayed_work(system_wq,
+					&display->poms_te_work,
 					msecs_to_jiffies(100));
 		}
 		rc = dsi_display_cmd_engine_disable(display);
 		if (rc)
-			DSI_ERR("[%s]failed to disable DSI cmd engine, rc=%d\n", display->name, rc);
+			DSI_ERR("[%s]failed to disable DSI cmd engine, rc=%d\n",
+			       display->name, rc);
 	} else {
 		DSI_ERR("[%s] Invalid configuration\n", display->name);
 		rc = -EINVAL;
 	}
 
-	if (!display->poms_pending) {
+	if (!display->poms_pending && !is_skip_op_required(display)) {
 		rc = dsi_panel_disable(display->panel);
 		if (rc)
-			DSI_ERR("[%s] failed to disable DSI panel, rc=%d\n", display->name, rc);
+			DSI_ERR("[%s] failed to disable DSI panel, rc=%d\n",
+				display->name, rc);
 	}
 
-out_unlock:
+	if (is_skip_op_required(display)) {
+		/* applicable only for trusted vm */
+		display->panel->panel_initialized = false;
+		display->panel->power_mode = SDE_MODE_DPMS_OFF;
+	}
 	mutex_unlock(&display->display_lock);
 	SDE_EVT32(SDE_EVTLOG_FUNC_EXIT);
 	return rc;

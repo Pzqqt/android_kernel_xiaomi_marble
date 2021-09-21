@@ -451,9 +451,9 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 		goto error;
 	}
 
-	cmds->ctrl_flags = 0;
-
 	for (i = 0; i < count; i++) {
+		cmds->ctrl_flags = 0;
+
 		if (state == DSI_CMD_SET_STATE_LP)
 			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
 

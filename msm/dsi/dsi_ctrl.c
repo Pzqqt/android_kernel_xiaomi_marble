@@ -444,7 +444,7 @@ static void dsi_ctrl_post_cmd_transfer(struct dsi_ctrl *dsi_ctrl)
 	}
 
 	/* Command engine disable, unmask overflow, remove vote on clocks and gdsc */
-	rc = dsi_ctrl_set_cmd_engine_state(dsi_ctrl, DSI_CTRL_ENGINE_OFF);
+	rc = dsi_ctrl_set_cmd_engine_state(dsi_ctrl, DSI_CTRL_ENGINE_OFF, false);
 	if (rc)
 		DSI_CTRL_ERR(dsi_ctrl, "failed to disable command engine\n");
 
@@ -3422,7 +3422,7 @@ int dsi_ctrl_transfer_prepare(struct dsi_ctrl *dsi_ctrl, u32 flags)
 
 	dsi_ctrl_mask_error_status_interrupts(dsi_ctrl, mask, true);
 
-	rc = dsi_ctrl_set_cmd_engine_state(dsi_ctrl, DSI_CTRL_ENGINE_ON);
+	rc = dsi_ctrl_set_cmd_engine_state(dsi_ctrl, DSI_CTRL_ENGINE_ON, false);
 	if (rc) {
 		DSI_CTRL_ERR(dsi_ctrl, "failed to enable command engine: %d\n", rc);
 		mutex_unlock(&dsi_ctrl->ctrl_lock);
@@ -3826,6 +3826,8 @@ error:
  * dsi_ctrl_set_cmd_engine_state() - set command engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
+ * @skip_op:             Boolean to indicate few operations can be skipped.
+ *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Command engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON.
@@ -3833,7 +3835,7 @@ error:
  * Return: error code.
  */
 int dsi_ctrl_set_cmd_engine_state(struct dsi_ctrl *dsi_ctrl,
-				  enum dsi_engine_state state)
+				  enum dsi_engine_state state, bool skip_op)
 {
 	int rc = 0;
 
@@ -3860,22 +3862,24 @@ int dsi_ctrl_set_cmd_engine_state(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	if (state == DSI_CTRL_ENGINE_ON)
-		dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, true);
-	else
-		dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, false);
+	if (!skip_op) {
+		if (state == DSI_CTRL_ENGINE_ON)
+			dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, true);
+		else
+			dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, false);
+	}
 
 	if (state == DSI_CTRL_ENGINE_ON)
 		dsi_ctrl->cmd_engine_refcount++;
 	else
 		dsi_ctrl->cmd_engine_refcount = 0;
 
-	SDE_EVT32(dsi_ctrl->cell_index, state);
+	SDE_EVT32(dsi_ctrl->cell_index, state, skip_op);
 
 	dsi_ctrl_update_state(dsi_ctrl, DSI_CTRL_OP_CMD_ENGINE, state);
 error:
-	DSI_CTRL_DEBUG(dsi_ctrl, "Set cmd engine state:%d, enable count: %d\n",
-			state, dsi_ctrl->cmd_engine_refcount);
+	DSI_CTRL_DEBUG(dsi_ctrl, "Set cmd engine state:%d, skip_op:%d, enable count: %d\n",
+			state, skip_op, dsi_ctrl->cmd_engine_refcount);
 	return rc;
 }
 

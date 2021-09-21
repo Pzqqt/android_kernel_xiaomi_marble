@@ -27,19 +27,19 @@
 #define PA_LUTV_DSPP_CTRL_OFF 0x4c
 #define PA_LUTV_DSPP_SWAP_OFF 0x18
 /**
- * the diff between LTM_INIT_ENABLE/DISABLE masks are portrait_en and
- * merge_mode bits. When disabling INIT property, we don't want to reset those
- * bits since they are needed for both LTM histogram and VLUT.
+ * the diff between LTM_INIT_ENABLE/DISABLE masks is portrait_en bits.
+ * When disabling INIT property, we don't want to reset those bits since
+ * they are needed for both LTM histogram and VLUT.
  */
-#define REG_DMA_LTM_INIT_ENABLE_OP_MASK 0xFFFC8CAB
+#define REG_DMA_LTM_INIT_ENABLE_OP_MASK 0xFFFF8CAB
 #define REG_DMA_LTM_INIT_DISABLE_OP_MASK 0xFFFF8CAF
 #define REG_DMA_LTM_ROI_OP_MASK 0xFEFFFFFF
 /**
- * the diff between LTM_VLUT_ENABLE/DISABLE masks are dither strength and
- * unsharp_gain bits. When disabling VLUT property, we want to reset these
- * bits since those are only valid if VLUT is enabled.
+ * the diff between LTM_VLUT_ENABLE/DISABLE masks are merge_mode, dither
+ * strength and unsharp_gain bits. When disabling VLUT property, we want
+ * to reset these bits since those are only valid if VLUT is enabled.
  */
-#define REG_DMA_LTM_VLUT_ENABLE_OP_MASK 0xFEFFFFAD
+#define REG_DMA_LTM_VLUT_ENABLE_OP_MASK 0xFEFCFFAD
 #define REG_DMA_LTM_VLUT_DISABLE_OP_MASK 0xFEFF8CAD
 #define REG_DMA_LTM_UPDATE_REQ_MASK 0xFFFFFFFE
 
@@ -3509,11 +3509,6 @@ void reg_dmav1_setup_ltm_initv1(struct sde_hw_dspp *ctx, void *cfg)
 	else
 		opmode &= ~BIT(2);
 
-	if (phase.merge_en)
-		opmode |= BIT(16);
-	else
-		opmode &= ~(BIT(16) | BIT(17));
-
 	phase_data[0] = phase.init_v;
 	phase_data[1] = phase.inc_h;
 	phase_data[2] = phase.inc_v;
@@ -3806,6 +3801,7 @@ void reg_dmav1_setup_ltm_vlutv1(struct sde_hw_dspp *ctx, void *cfg)
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct sde_reg_dma_kickoff_cfg kick_off;
 	struct sde_hw_reg_dma_ops *dma_ops;
+	struct sde_ltm_phase_info phase;
 	enum sde_ltm dspp_idx[LTM_MAX] = {0};
 	enum sde_ltm idx = 0;
 	u32 offset, crs = 0, index = 0, len = 0, blk = 0, opmode = 0;
@@ -3876,6 +3872,7 @@ void reg_dmav1_setup_ltm_vlutv1(struct sde_hw_dspp *ctx, void *cfg)
 		return;
 	}
 
+	sde_ltm_get_phase_info(hw_cfg, &phase);
 	for (i = 0; i < num_mixers; i++) {
 		/* broadcast feature is not supported with REG_SINGLE_MODIFY */
 		/* reset decode select to unicast */
@@ -3906,6 +3903,10 @@ void reg_dmav1_setup_ltm_vlutv1(struct sde_hw_dspp *ctx, void *cfg)
 			opmode |= BIT(6);
 		if (ltm_vlut_ops_mask[dspp_idx[i]] & ltm_roi)
 			opmode |= BIT(24);
+		if (phase.merge_en)
+			opmode |= BIT(16);
+		else
+			opmode &= ~(BIT(16) | BIT(17));
 		ltm_vlut_ops_mask[dspp_idx[i]] |= ltm_vlut;
 
 		REG_DMA_SETUP_OPS(dma_write_cfg, 0x4, &opmode, sizeof(u32),

@@ -310,12 +310,15 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 {
 	int rc = 0;
+	struct dsi_display *display;
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
 
 	if (!bridge) {
 		DSI_ERR("Invalid params\n");
 		return;
 	}
+
+	display = c_bridge->display;
 
 	SDE_ATRACE_BEGIN("dsi_bridge_post_disable");
 	SDE_ATRACE_BEGIN("dsi_display_disable");
@@ -327,6 +330,9 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 		return;
 	}
 	SDE_ATRACE_END("dsi_display_disable");
+
+	if (display && display->drm_conn)
+		sde_connector_helper_bridge_post_disable(display->drm_conn);
 
 	rc = dsi_display_unprepare(c_bridge->display);
 	if (rc) {
@@ -597,7 +603,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 		return -EINVAL;
 
 	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
-	rc = dsi_display_find_mode(dsi_display, &partial_dsi_mode, NULL, &dsi_mode);
+	rc = dsi_display_find_mode(dsi_display, &partial_dsi_mode, sub_mode, &dsi_mode);
 	if (rc || !dsi_mode->priv_info)
 		return -EINVAL;
 

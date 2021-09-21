@@ -163,6 +163,7 @@ struct dp_display_private {
 
 	struct platform_device *pdev;
 	struct device_node *aux_switch_node;
+	bool aux_switch_ready;
 	struct dp_aux_bridge *aux_bridge;
 	struct dentry *root;
 	struct completion notification_comp;
@@ -1051,16 +1052,21 @@ error_ctrl:
 	return rc;
 }
 
-static void dp_display_host_ready(struct dp_display_private *dp)
+static int dp_display_host_ready(struct dp_display_private *dp)
 {
+	int rc = 0;
+
 	if (!dp_display_state_is(DP_STATE_INITIALIZED)) {
-		dp_display_state_show("[not initialized]");
-		return;
+		rc = dp_display_host_init(dp);
+		if (rc) {
+			dp_display_state_show("[not initialized]");
+			return rc;
+		}
 	}
 
 	if (dp_display_state_is(DP_STATE_READY)) {
 		dp_display_state_log("[already ready]");
-		return;
+		return rc;
 	}
 
 	/*
@@ -1088,6 +1094,7 @@ static void dp_display_host_ready(struct dp_display_private *dp)
 	dp_display_state_add(DP_STATE_READY);
 	/* log this as it results from user action of cable connection */
 	DP_INFO("[OK]\n");
+	return rc;
 }
 
 static void dp_display_host_unready(struct dp_display_private *dp)
@@ -1190,7 +1197,11 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 		dp_display_state_remove(DP_STATE_SRC_PWRDN);
 	}
 
-	dp_display_host_ready(dp);
+	rc = dp_display_host_ready(dp);
+	if (rc) {
+		dp_display_state_show("[ready failed]");
+		goto end;
+	}
 
 	dp->link->psm_config(dp->link, &dp->panel->link_info, false);
 	dp->debug->psm_enabled = false;
@@ -1324,6 +1335,55 @@ static int dp_display_process_hpd_low(struct dp_display_private *dp)
 	return rc;
 }
 
+static int dp_display_fsa4480_callback(struct notifier_block *self,
+		unsigned long event, void *data)
+{
+	return 0;
+}
+
+static int dp_display_init_aux_switch(struct dp_display_private *dp)
+{
+	int rc = 0;
+	struct notifier_block nb;
+	const u32 max_retries = 50;
+	u32 retry;
+
+	if (dp->aux_switch_ready)
+	       return rc;
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+
+	nb.notifier_call = dp_display_fsa4480_callback;
+	nb.priority = 0;
+
+	/*
+	 * Iteratively wait for reg notifier which confirms that fsa driver is probed.
+	 * Bootup DP with cable connected usecase can hit this scenario.
+	 */
+	for (retry = 0; retry < max_retries; retry++) {
+		rc = fsa4480_reg_notifier(&nb, dp->aux_switch_node);
+		if (rc == 0) {
+			DP_DEBUG("registered notifier successfully\n");
+			dp->aux_switch_ready = true;
+			break;
+		} else {
+			DP_DEBUG("failed to register notifier retry=%d rc=%d\n", retry, rc);
+			msleep(100);
+		}
+	}
+
+	if (retry == max_retries) {
+		DP_WARN("Failed to register fsa notifier\n");
+		dp->aux_switch_ready = false;
+		return rc;
+	}
+
+	fsa4480_unreg_notifier(&nb, dp->aux_switch_node);
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, rc);
+	return rc;
+}
+
 static int dp_display_usbpd_configure_cb(struct device *dev)
 {
 	int rc = 0;
@@ -1341,7 +1401,11 @@ static int dp_display_usbpd_configure_cb(struct device *dev)
 	}
 
 	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch
-	    && !dp->parser->gpio_aux_switch) {
+	    && !dp->parser->gpio_aux_switch && dp->aux_switch_node) {
+		rc = dp_display_init_aux_switch(dp);
+		if (rc)
+			return rc;
+
 		rc = dp->aux->aux_switch(dp->aux, true, dp->hpd->orientation);
 		if (rc)
 			return rc;
@@ -1896,6 +1960,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	int rc = 0;
 	u32 dp_core_revision = 0;
 	bool hdcp_disabled;
+	const char *phandle = "qcom,dp-aux-switch";
 	struct device *dev = &dp->pdev->dev;
 	struct dp_hpd_cb *cb = &dp->hpd_cb;
 	struct dp_ctrl_in ctrl_in = {
@@ -1939,6 +2004,10 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	}
 
 	dp_core_revision = dp_catalog_get_dp_core_version(dp->catalog);
+
+	dp->aux_switch_node = of_parse_phandle(dp->pdev->dev.of_node, phandle, 0);
+	if (!dp->aux_switch_node)
+		DP_DEBUG("cannot parse %s handle\n", phandle);
 
 	dp->aux = dp_aux_get(dev, &dp->catalog->aux, dp->parser,
 			dp->aux_switch_node, dp->aux_bridge);
@@ -2295,7 +2364,11 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 	}
 
 	/* For supporting DP_PANEL_SRC_INITIATED_POWER_DOWN case */
-	dp_display_host_ready(dp);
+	rc = dp_display_host_ready(dp);
+	if (rc) {
+		dp_display_state_show("[ready failed]");
+		goto end;
+	}
 
 	if (dp->debug->psm_enabled) {
 		dp->link->psm_config(dp->link, &dp->panel->link_info, false);
@@ -2778,20 +2851,27 @@ static int dp_display_validate_topology(struct dp_display_private *dp,
 			return rc;
 		}
 
-		/* Only DSCMERGE is supported on DP */
-		num_lm  = max(num_lm, num_dsc);
 		num_dsc = max(num_lm, num_dsc);
-	} else {
-		num_3dmux = avail_res->num_3dmux;
+		if ((num_dsc > avail_res->num_lm) ||  (num_dsc > avail_res->num_dsc)) {
+			DP_DEBUG("mode %sx%d: not enough resources for dsc %d dsc_a:%d lm_a:%d\n",
+					mode->name, fps, num_dsc, avail_res->num_dsc,
+					avail_res->num_lm);
+			/* Clear DSC caps and retry */
+			dp_mode->capabilities &= ~DP_PANEL_CAPS_DSC;
+			return -EAGAIN;
+		} else {
+			/* Only DSCMERGE is supported on DP */
+			num_lm = num_dsc;
+		}
+	}
+
+	if (!num_dsc && (num_lm == 2) && avail_res->num_3dmux) {
+		num_3dmux = 1;
 	}
 
 	if (num_lm > avail_res->num_lm) {
 		DP_DEBUG("mode %sx%d is invalid, not enough lm %d %d\n",
 				mode->name, fps, num_lm, num_lm, avail_res->num_lm);
-		return -EPERM;
-	} else if (num_dsc > avail_res->num_dsc) {
-		DP_DEBUG("mode %sx%d is invalid, not enough dsc %d %d\n",
-				mode->name, fps, num_dsc, avail_res->num_dsc);
 		return -EPERM;
 	} else if (!num_dsc && (num_lm == dual && !num_3dmux)) {
 		DP_DEBUG("mode %sx%d is invalid, not enough 3dmux %d %d\n",
@@ -2843,16 +2923,20 @@ static enum drm_mode_status dp_display_validate_mode(
 
 	dp_display->convert_to_dp_mode(dp_display, panel, mode, &dp_mode);
 
+	rc = dp_display_validate_topology(dp, dp_panel, mode, &dp_mode, avail_res);
+	if (rc == -EAGAIN) {
+		dp_panel->convert_to_dp_mode(dp_panel, mode, &dp_mode);
+		rc = dp_display_validate_topology(dp, dp_panel, mode, &dp_mode, avail_res);
+	}
+
+	if (rc)
+		goto end;
+
 	rc = dp_display_validate_link_clock(dp, mode, dp_mode);
 	if (rc)
 		goto end;
 
 	rc = dp_display_validate_pixel_clock(dp_mode, dp_display->max_pclk_khz);
-	if (rc)
-		goto end;
-
-	rc = dp_display_validate_topology(dp, dp_panel, mode,
-			&dp_mode, avail_res);
 	if (rc)
 		goto end;
 
@@ -3045,48 +3129,6 @@ static int dp_display_create_workqueue(struct dp_display_private *dp)
 	INIT_WORK(&dp->attention_work, dp_display_attention_work);
 
 	return 0;
-}
-
-static int dp_display_fsa4480_callback(struct notifier_block *self,
-		unsigned long event, void *data)
-{
-	return 0;
-}
-
-static int dp_display_init_aux_switch(struct dp_display_private *dp)
-{
-	int rc = 0;
-	const char *phandle = "qcom,dp-aux-switch";
-	struct notifier_block nb;
-
-	if (!dp->pdev->dev.of_node) {
-		DP_ERR("cannot find dev.of_node\n");
-		rc = -ENODEV;
-		goto end;
-	}
-
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
-	dp->aux_switch_node = of_parse_phandle(dp->pdev->dev.of_node,
-			phandle, 0);
-	if (!dp->aux_switch_node) {
-		DP_WARN("cannot parse %s handle\n", phandle);
-		rc = -ENODEV;
-		goto end;
-	}
-
-	nb.notifier_call = dp_display_fsa4480_callback;
-	nb.priority = 0;
-
-	rc = fsa4480_reg_notifier(&nb, dp->aux_switch_node);
-	if (rc) {
-		DP_ERR("failed to register notifier (%d)\n", rc);
-		goto end;
-	}
-
-	fsa4480_unreg_notifier(&nb, dp->aux_switch_node);
-end:
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, rc);
-	return rc;
 }
 
 static int dp_display_bridge_internal_hpd(void *dev, bool hpd, bool hpd_irq)
@@ -3501,12 +3543,6 @@ static int dp_display_probe(struct platform_device *pdev)
 	dp->name = "drm_dp";
 
 	memset(&dp->mst, 0, sizeof(dp->mst));
-
-	rc = dp_display_init_aux_switch(dp);
-	if (rc) {
-		rc = -EPROBE_DEFER;
-		goto error;
-	}
 
 	rc = dp_display_init_aux_bridge(dp);
 	if (rc)
