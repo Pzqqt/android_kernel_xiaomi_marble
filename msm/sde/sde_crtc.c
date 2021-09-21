@@ -3979,7 +3979,7 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 			continue;
 
 		if (sde_encoder_get_intf_mode(encoder) == INTF_MODE_VIDEO)
-			sde_encoder_kickoff(encoder, false, true);
+			sde_encoder_kickoff(encoder, true);
 	}
 
 	/* panic the device if VBIF is not in good state */
@@ -4086,7 +4086,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		if (encoder->crtc != crtc)
 			continue;
 
-		sde_encoder_kickoff(encoder, false, true);
+		sde_encoder_kickoff(encoder, true);
 	}
 	sde_crtc->kickoff_in_progress = false;
 
@@ -7061,7 +7061,7 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 		sde_plane_ctl_flush(plane, ctl, true);
 
 	/* kickoff encoder and wait for VBLANK */
-	sde_encoder_kickoff(drm_enc, false, false);
+	sde_encoder_kickoff(drm_enc, false);
 	sde_encoder_wait_for_event(drm_enc, MSM_ENC_VBLANK);
 
 	SDE_EVT32(DRMID(crtc), SDE_EVTLOG_FUNC_EXIT);
