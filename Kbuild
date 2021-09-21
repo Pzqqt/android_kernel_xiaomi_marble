@@ -55,7 +55,7 @@ LINUX_CODE := $(call KERNEL_VERSION,$(VERSION),$(PATCHLEVEL),$(SUBLEVEL))
 COMPOSITE_CODE := 330260 # hardcoded $(call KERNEL_VERSION,5,10,20)
 ifeq ($(KERNEL_SUPPORTS_NESTED_COMPOSITES),)
   #flag is not explicitly present
-  ifneq ($(findstring gki,$(CONFIG_LOCALVERSION)),)
+  ifneq ($(findstring gki,$(CONFIG_LOCALVERSION))$(findstring qki,$(CONFIG_LOCALVERSION)),)
     # GKI kernel
     ifeq ($(shell test $(LINUX_CODE) -ge $(COMPOSITE_CODE); echo $$?),0)
       # version >= 5.10.20
