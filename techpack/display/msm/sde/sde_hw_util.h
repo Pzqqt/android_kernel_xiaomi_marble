@@ -172,13 +172,10 @@ struct sde_hw_inline_pre_downscale_cfg {
 
 u32 *sde_hw_util_get_log_mask_ptr(void);
 
-void sde_reg_write(struct sde_hw_blk_reg_map *c,
-		u32 reg_off,
-		u32 val,
-		const char *name);
+void sde_reg_write(struct sde_hw_blk_reg_map *c, u32 reg_off, u32 val);
 int sde_reg_read(struct sde_hw_blk_reg_map *c, u32 reg_off);
 
-#define SDE_REG_WRITE(c, off, val) sde_reg_write(c, off, val, #off)
+#define SDE_REG_WRITE(c, off, val) sde_reg_write(c, off, val)
 #define SDE_REG_READ(c, off) sde_reg_read(c, off)
 
 #define MISR_FRAME_COUNT_MASK		0xFF
