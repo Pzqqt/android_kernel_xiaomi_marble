@@ -617,7 +617,7 @@ static void mmrm_sw_dump_enabled_client_info(struct mmrm_sw_clk_mgr_info *sinfo)
 	for (c = 0; c < sinfo->tot_clk_clients; c++) {
 		tbl_entry = &sinfo->clk_client_tbl[c];
 		if (tbl_entry->clk_rate) {
-			d_mpr_p("%s: csid(0x%x) clk_rate(%zu) vdd_level(%zu) cur_ma(%zu)\n",
+			d_mpr_e("%s: csid(0x%x) clk_rate(%zu) vdd_level(%zu) cur_ma(%zu)\n",
 				__func__,
 				tbl_entry->clk_src_id,
 				tbl_entry->clk_rate,
@@ -627,7 +627,7 @@ static void mmrm_sw_dump_enabled_client_info(struct mmrm_sw_clk_mgr_info *sinfo)
 		}
 	}
 	if (peak_data) {
-		d_mpr_p("%s: aggreg_val(%zu) aggreg_level(%zu)\n", __func__,
+		d_mpr_e("%s: aggreg_val(%zu) aggreg_level(%zu)\n", __func__,
 			peak_data->aggreg_val, peak_data->aggreg_level);
 	}
 }
@@ -778,10 +778,21 @@ static bool mmrm_sw_is_valid_num_hw_block(struct mmrm_sw_clk_client_tbl_entry *t
 
 	if (num_hw_blocks == 1) {
 		rc = true;
-	} else if  (tbl_entry->clk_src_id == 0x10025) { // CAM_CC_IFE_CSID_CLK_SRC
-		if (num_hw_blocks >= 1 && num_hw_blocks <= 3)
+	} else if (tbl_entry->clk_src_id == 0x10025) { // CAM_CC_IFE_CSID_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 3)
+			rc = true;
+	} else if ((tbl_entry->clk_src_id == 0x10040) || // CAM_CC_IFE_LITE_CLK_SRC 
+		 (tbl_entry->clk_src_id == 0x10043)) { // CAM_CC_IFE_LITE_CSID_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 5)
+			rc = true;
+	} else if (tbl_entry->clk_src_id == 0x1004B) { // CAM_CC_JPEG_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 2)
+			rc = true;
+	} else if (tbl_entry->clk_src_id == 0x10017) { // CAM_CC_CPHY_RX_CLK_SRC
+		if (num_hw_blocks > 1 && num_hw_blocks <= 9)
 			rc = true;
 	}
+
 	return rc;
 }
 
@@ -866,14 +877,15 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 			rc = -EINVAL;
 			goto err_invalid_clk_val;
 		}
+
+		if (!mmrm_sw_is_valid_num_hw_block(tbl_entry, client_data)) {
+			d_mpr_e("%s: csid(0x%x) num_hw_block:%d\n",
+				__func__, tbl_entry->clk_src_id, client_data->num_hw_blocks);
+			rc = -EINVAL;
+			goto err_invalid_client_data;
+		}
 	} else {
 		req_level = 0;
-	}
-	if (!mmrm_sw_is_valid_num_hw_block(tbl_entry, client_data)) {
-		d_mpr_e("%s: csid(0x%x) num_hw_block:%d\n",
-			__func__, tbl_entry->clk_src_id, client_data->num_hw_blocks);
-		rc = -EINVAL;
-		goto err_invalid_client_data;
 	}
 
 	mutex_lock(&sw_clk_mgr->lock);
