@@ -1084,7 +1084,12 @@ static void dp_catalog_ctrl_config_ctrl(struct dp_catalog_ctrl *ctrl, u8 ln_cnt)
 	io_data = catalog->io.dp_link;
 
 	cfg = dp_read(DP_CONFIGURATION_CTRL);
-	cfg &= ~(BIT(4) | BIT(5));
+	/*
+	 * Reset ASSR (alternate scrambler seed reset) by resetting BIT(10).
+	 * ASSR should be set to disable for TPS4 link training pattern.
+	 * Forcing it to 0 as the power on reset value of register enables it.
+	 */
+	cfg &= ~(BIT(4) | BIT(5) | BIT(10));
 	cfg |= (ln_cnt - 1) << 4;
 	dp_write(DP_CONFIGURATION_CTRL, cfg);
 
