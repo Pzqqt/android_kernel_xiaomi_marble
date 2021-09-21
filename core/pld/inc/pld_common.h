@@ -24,8 +24,12 @@
 #include <linux/pm.h>
 #include <osapi_linux.h>
 
-#if IS_ENABLED(CONFIG_CNSS_UTILS)
+#ifdef CNSS_UTILS
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#include "cnss_utils.h"
+#else
 #include <net/cnss_utils.h>
+#endif
 #endif
 
 #define PLD_IMAGE_FILE               "athwlan.bin"
@@ -39,8 +43,12 @@
 
 #define TOTAL_DUMP_SIZE         0x00200000
 
-#if IS_ENABLED(CONFIG_WCNSS_MEM_PRE_ALLOC)
+#ifdef CNSS_MEM_PRE_ALLOC
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#include "cnss_prealloc.h"
+#else
 #include <net/cnss_prealloc.h>
+#endif
 #endif
 
 /**
@@ -969,7 +977,7 @@ void pld_thermal_unregister(struct device *dev, int mon_id);
 int pld_get_thermal_state(struct device *dev, unsigned long *thermal_state,
 			  int mon_id);
 
-#if IS_ENABLED(CONFIG_WCNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
+#if defined(CNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
 
 /**
  * pld_nbuf_pre_alloc() - get allocated nbuf from platform driver.

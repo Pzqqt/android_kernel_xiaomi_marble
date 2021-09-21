@@ -525,13 +525,18 @@ void rrm_get_country_code_from_connected_profile(struct mac_context *mac,
 
 	status = wlan_cm_get_country_code(mac->pdev, vdev_id, country_code);
 
+	pe_debug("Country info from bcn:%c%c 0x%x", country_code[0],
+		 country_code[1], country_code[2]);
+
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_zero(country_code, REG_ALPHA2_LEN + 1);
 
-	if (!country_code[0])
+	if (!country_code[0]) {
 		wlan_reg_read_current_country(mac->psoc, country_code);
-	if (!country_code[0])
 		country_code[2] = OP_CLASS_GLOBAL;
+		pe_debug("Current country info %c%c 0x%x", country_code[0],
+			 country_code[1], country_code[2]);
+	}
 }
 
 #define ABS(x)      ((x < 0) ? -x : x)

@@ -53,11 +53,6 @@ struct csr_timer_info {
 #define CSR_IS_QOS_BSS(pIes)  \
 		((pIes)->WMMParams.present || (pIes)->WMMInfoAp.present)
 
-eCsrMediaAccessType
-csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
-			  struct bss_description *pSirBssDesc,
-			  tDot11fBeaconIEs *pIes);
-
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
 

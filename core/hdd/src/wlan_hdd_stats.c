@@ -1434,9 +1434,16 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 	if (stats)
 		qdf_list_insert_back(&priv->ll_stats_q, &stats->ll_stats_node);
 
-	if (!priv->request_bitmap)
+	if (!priv->request_bitmap) {
 exit:
+		/* Thread which invokes this function has allocated memory in
+		 * WMA for radio stats, that memory should be freed from the
+		 * same thread to avoid any race conditions between two threads
+		 */
+		sme_radio_tx_mem_free();
 		osif_request_complete(request);
+	}
+
 }
 
 static void hdd_debugfs_process_ll_stats(struct hdd_adapter *adapter,
@@ -1474,8 +1481,15 @@ static void hdd_debugfs_process_ll_stats(struct hdd_adapter *adapter,
 		hdd_err("INVALID LL_STATS_NOTIFY RESPONSE");
 	}
 
-	if (!priv->request_bitmap)
+	if (!priv->request_bitmap) {
+		/* Thread which invokes this function has allocated memory in
+		 * WMA for radio stats, that memory should be freed from the
+		 * same thread to avoid any race conditions between two threads
+		 */
+		sme_radio_tx_mem_free();
 		osif_request_complete(request);
+	}
+
 }
 
 void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
@@ -2003,11 +2017,12 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 		qdf_spin_lock(&priv->ll_stats_lock);
 		priv->request_bitmap = 0;
 		qdf_spin_unlock(&priv->ll_stats_lock);
+		sme_radio_tx_mem_free();
 		ret = -ETIMEDOUT;
 	} else {
 		hdd_update_station_stats_cached_timestamp(adapter);
 	}
-	sme_radio_tx_mem_free();
+
 	qdf_spin_lock(&priv->ll_stats_lock);
 	status = qdf_list_remove_front(&priv->ll_stats_q, &ll_node);
 	qdf_spin_unlock(&priv->ll_stats_lock);
@@ -4960,6 +4975,50 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 		os_rate->flags |= RATE_INFO_FLAGS_SHORT_GI;
 }
 
+/**
+ * hdd_get_current_mcs_set() - Get current MCS rate set from connection info
+ * @adapter: Pointer to STA adapter
+ * @buf: pointer to buffer for holding the output mcs rate set
+ * @len: length of the buffer
+ *
+ * Return: number of elements in mcs rate set, 0 for failure.
+ */
+static qdf_size_t
+hdd_get_current_mcs_set(struct hdd_adapter *adapter, uint8_t *buf,
+			qdf_size_t len)
+{
+	struct hdd_station_ctx *hdd_sta_ctx;
+	qdf_size_t ret = 0;
+	int i;
+	uint32_t *mcs_set;
+	uint8_t *dst_rate = buf;
+
+	if (!adapter || !buf || !len)
+		return 0;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!hdd_sta_ctx) {
+		hdd_err("Invalid sta ctx");
+		return 0;
+	}
+
+	if (!hdd_sta_ctx->conn_info.conn_flag.ht_present) {
+		hdd_err("No HT cap");
+		return 0;
+	}
+
+	mcs_set = (uint32_t *)hdd_sta_ctx->conn_info.ht_caps.mcs.rx_mask;
+	for (i = 0; i < VALID_MAX_MCS_INDEX && ret < len; i++) {
+		if (!QDF_GET_BITS(*mcs_set, i, 1))
+			continue;
+
+		*dst_rate++ = i;
+		ret++;
+	}
+
+	return ret;
+}
+
 bool hdd_report_max_rate(struct hdd_adapter *adapter,
 			 mac_handle_t mac_handle,
 			 struct rate_info *rate,
@@ -4979,7 +5038,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	uint8_t extended_rates[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
 	qdf_size_t er_leng = CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX;
 	uint8_t mcs_rates[SIZE_OF_BASIC_MCS_SET];
-	qdf_size_t mcs_leng = SIZE_OF_BASIC_MCS_SET;
+	qdf_size_t mcs_len;
 	struct index_data_rate_type *supported_mcs_rate;
 	enum data_rate_11ac_max_mcs vht_max_mcs;
 	uint8_t max_mcs_idx = 0;
@@ -5080,15 +5139,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	 * actual speed
 	 */
 	if ((3 != rssidx) && !(rate_flags & TX_RATE_LEGACY)) {
-		if (0 != ucfg_mlme_get_current_mcs_set(hdd_ctx->psoc,
-						       mcs_rates,
-						       &mcs_leng)) {
-			hdd_err("cfg get returned failure");
-			/*To keep GUI happy */
-			return false;
-		}
 		rate_flag = 0;
-
 		if (rate_flags & (TX_RATE_VHT80 | TX_RATE_HE80 |
 				TX_RATE_HE160 | TX_RATE_VHT160))
 			mode = 2;
@@ -5152,6 +5203,15 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 			max_mcs_idx = (max_mcs_idx > mcs_index) ?
 				max_mcs_idx : mcs_index;
 		} else {
+			mcs_len =
+				hdd_get_current_mcs_set(adapter, mcs_rates,
+							SIZE_OF_BASIC_MCS_SET);
+			if (!mcs_len) {
+				hdd_err("Failed to get current mcs rate set");
+				/*To keep GUI happy */
+				return false;
+			}
+
 			if (rate_flags & TX_RATE_HT40)
 				rate_flag |= 1;
 			if (rate_flags & TX_RATE_SGI)
@@ -5172,7 +5232,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 				}
 			}
 
-			for (i = 0; i < mcs_leng; i++) {
+			for (i = 0; i < mcs_len; i++) {
 				for (j = 0; j < max_ht_idx; j++) {
 					if (supported_mcs_rate[j].
 						beacon_rate_index ==

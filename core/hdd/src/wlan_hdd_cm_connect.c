@@ -75,6 +75,33 @@ bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
 	return is_vdev_active;
 }
 
+bool hdd_cm_is_vdev_connected(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_vdev_connected;
+	enum QDF_OPMODE opmode;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (adapter->device_mode == QDF_NDI_MODE)
+		return (sta_ctx->conn_info.conn_state ==
+			eConnectionState_NdiConnected);
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+	if (!vdev)
+		return false;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+		return false;
+	}
+	is_vdev_connected = ucfg_cm_is_vdev_connected(vdev);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return is_vdev_connected;
+}
+
 bool hdd_cm_is_connecting(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
@@ -433,6 +460,7 @@ hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *hdd_sta_ctx;
+	uint32_t time_buffer_size;
 
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx is NULL");
@@ -446,6 +474,8 @@ hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	time_buffer_size = sizeof(hdd_sta_ctx->conn_info.connect_time);
+	qdf_mem_zero(hdd_sta_ctx->conn_info.connect_time, time_buffer_size);
 	hdd_init_scan_reject_params(hdd_ctx);
 	hdd_cm_save_connect_status(adapter, rsp->status_code);
 	hdd_conn_remove_connect_info(hdd_sta_ctx);
@@ -571,14 +601,21 @@ static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 		hdd_sta_ctx->conn_info.conn_flag.vht_op_present = false;
 	}
 
-	/* Cleanup already existing he info */
-	hdd_cleanup_conn_info(adapter);
+	/*
+	 * Cache connection info only in case of station
+	 */
+	if (adapter->device_mode == QDF_STA_MODE) {
+		/* Cleanup already existing he info */
+		hdd_cleanup_conn_info(adapter);
 
-	/* Cache last connection info */
-	qdf_mem_copy(&hdd_sta_ctx->cache_conn_info, &hdd_sta_ctx->conn_info,
-		     sizeof(hdd_sta_ctx->cache_conn_info));
+		/* Cache last connection info */
+		qdf_mem_copy(&hdd_sta_ctx->cache_conn_info,
+			     &hdd_sta_ctx->conn_info,
+			     sizeof(hdd_sta_ctx->cache_conn_info));
 
-	hdd_copy_he_operation(hdd_sta_ctx, &assoc_resp->he_op);
+		hdd_copy_he_operation(hdd_sta_ctx, &assoc_resp->he_op);
+	}
+
 	qdf_mem_free(assoc_resp);
 }
 
@@ -834,6 +871,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	bool is_roam = rsp->is_reassoc;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint32_t phymode;
+	uint32_t time_buffer_size;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -855,6 +893,10 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	hdd_cm_save_connect_status(adapter, rsp->status_code);
 
 	hdd_init_scan_reject_params(hdd_ctx);
+	time_buffer_size = sizeof(sta_ctx->conn_info.connect_time);
+	qdf_mem_zero(sta_ctx->conn_info.connect_time, time_buffer_size);
+	qdf_get_time_of_the_day_in_hr_min_sec_usec(sta_ctx->conn_info.connect_time,
+						   time_buffer_size);
 	hdd_start_tsf_sync(adapter);
 	hdd_cm_rec_connect_info(adapter, rsp);
 

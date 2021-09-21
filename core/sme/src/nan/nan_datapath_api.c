@@ -40,8 +40,9 @@ QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session,
 			struct csr_roam_profile *profile)
 {
 	QDF_STATUS status;
-	struct bss_config_param bss_cfg = {0};
+	struct bss_config_param bss_cfg;
 
+	qdf_mem_zero(&bss_cfg, sizeof(struct bss_config_param));
 	/* Build BSS configuration from profile */
 	status = csr_roam_prepare_bss_config_from_profile(mac_ctx, profile,
 							  session,

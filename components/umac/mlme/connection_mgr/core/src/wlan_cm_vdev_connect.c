@@ -1051,15 +1051,13 @@ QDF_STATUS cm_flush_join_req(struct scheduler_msg *msg)
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
-static void cm_fill_ml_partner_info(struct cm_vdev_join_req *join_req)
+static void cm_fill_ml_info(struct cm_vdev_join_req *join_req)
 {
-	if (!join_req->entry->ml_info)
-		return;
-
 	join_req->partner_info = util_scan_get_ml_partner_info(join_req->entry);
+	join_req->assoc_link_id = join_req->entry->ml_info.self_link_id;
 }
 #else
-static void cm_fill_ml_partner_info(struct cm_vdev_join_req *join_req)
+static void cm_fill_ml_info(struct cm_vdev_join_req *join_req)
 {
 }
 #endif
@@ -1088,7 +1086,7 @@ cm_copy_join_params(struct cm_vdev_join_req *join_req,
 	if (!join_req->entry)
 		return QDF_STATUS_E_NOMEM;
 
-	cm_fill_ml_partner_info(join_req);
+	cm_fill_ml_info(join_req);
 
 	join_req->vdev_id = req->vdev_id;
 	join_req->cm_id = req->cm_id;

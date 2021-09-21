@@ -1043,6 +1043,125 @@ QDF_STATUS ucfg_fwol_send_dscp_up_map_to_fw(struct wlan_objmgr_vdev *vdev,
 }
 #endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
 
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+QDF_STATUS ucfg_fwol_set_mdns_config(struct wlan_objmgr_psoc *psoc,
+				     struct mdns_config_info *mdns_info)
+{
+	QDF_STATUS status;
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_tx_ops *tx_ops;
+
+	if (!psoc) {
+		fwol_err("NULL pointer for psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tx_ops = &fwol_obj->tx_ops;
+	if (tx_ops->set_mdns_config)
+		status = tx_ops->set_mdns_config(psoc, mdns_info);
+	else
+		status = QDF_STATUS_E_IO;
+
+	return status;
+}
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
+void ucfg_fwol_update_fw_cap_info(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_fwol_capability_info *caps)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return;
+	}
+
+	qdf_mem_copy(&fwol_obj->capability_info, caps,
+		     sizeof(fwol_obj->capability_info));
+}
+
+#ifdef THERMAL_STATS_SUPPORT
+static QDF_STATUS
+ucfg_fwol_get_cap(struct wlan_objmgr_psoc *psoc,
+		  struct wlan_fwol_capability_info *cap_info)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cap_info) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*cap_info = fwol_obj->capability_info;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_send_get_thermal_stats_cmd(struct wlan_objmgr_psoc *psoc,
+				       enum thermal_stats_request_type req_type,
+				       void (*callback)(void *context,
+				       struct thermal_throttle_info *response),
+				       void *context)
+{
+	QDF_STATUS status;
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_tx_ops *tx_ops;
+	struct wlan_fwol_thermal_temp thermal_temp = {0};
+	struct wlan_fwol_capability_info cap_info;
+	struct wlan_fwol_callbacks *cbs;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = ucfg_fwol_get_thermal_temp(psoc, &thermal_temp);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_INVAL;
+
+	status = ucfg_fwol_get_cap(psoc, &cap_info);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_INVAL;
+
+	if (!thermal_temp.therm_stats_offset ||
+	    !cap_info.fw_thermal_stats_cap) {
+		fwol_err("Command Disabled in Ini gThermalStatsTempOffset %d or not enabled in FW %d",
+			 thermal_temp.therm_stats_offset,
+			 cap_info.fw_thermal_stats_cap);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Registering Callback for the Request command */
+	if (callback && context) {
+		cbs = &fwol_obj->cbs;
+		cbs->get_thermal_stats_callback = callback;
+		cbs->get_thermal_stats_context = context;
+	}
+
+	tx_ops = &fwol_obj->tx_ops;
+	if (tx_ops && tx_ops->get_thermal_stats)
+		status = tx_ops->get_thermal_stats(psoc, req_type,
+					thermal_temp.therm_stats_offset);
+	else
+		status = QDF_STATUS_E_INVAL;
+
+	return status;
+}
+#endif /* THERMAL_STATS_SUPPORT */
+
 QDF_STATUS ucfg_fwol_configure_global_params(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_pdev *pdev)
 {

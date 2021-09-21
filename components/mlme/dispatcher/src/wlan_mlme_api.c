@@ -2610,6 +2610,39 @@ wlan_mlme_get_sta_miracast_mcc_rest_time(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+wlan_mlme_get_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*value = mlme_obj->cfg.sta.usr_scan_probe_unicast_ra;
+
+	mlme_legacy_debug("scan_probe_unicast_ra %d", *value);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_set_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_legacy_debug("scan_probe_unicast_ra %d", value);
+	mlme_obj->cfg.sta.usr_scan_probe_unicast_ra = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlan_mlme_get_sap_mcc_chnl_avoid(struct wlan_objmgr_psoc *psoc,
 				 uint8_t *value)
 {
@@ -5059,4 +5092,49 @@ wlan_mlme_get_last_delba_sent_time(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return mlme_priv->last_delba_sent_time;
+}
+
+QDF_STATUS mlme_set_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			    bool ps_enable)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+	if (!vdev)
+		return status;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (mlme_priv) {
+		mlme_priv->is_usr_ps_enabled = ps_enable;
+		status = QDF_STATUS_SUCCESS;
+		mlme_legacy_debug("vdev:%d user PS:%d", vdev_id,
+				  mlme_priv->is_usr_ps_enabled);
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return status;
+}
+
+bool mlme_get_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	bool usr_ps_enable = false;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+	if (!vdev)
+		return false;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (mlme_priv)
+		usr_ps_enable = mlme_priv->is_usr_ps_enabled;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return usr_ps_enable;
 }

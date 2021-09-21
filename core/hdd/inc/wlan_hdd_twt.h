@@ -306,6 +306,18 @@ void hdd_twt_update_work_handler(void *data);
  */
 void wlan_twt_concurrency_update(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_twt_del_dialog_in_ps_disable() - TWT teardown in case of ps disable
+ * @hdd_ctx: hdd context pointer
+ * @mac_addr: STA mac address
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
+				      struct qdf_mac_addr *mac_addr,
+				      uint8_t vdev_id);
+
 #define FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT                            \
 {                                                                        \
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,                         \
@@ -404,6 +416,13 @@ static inline void hdd_twt_update_work_handler(void *data)
 }
 
 static inline void wlan_twt_concurrency_update(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline
+void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
+				      struct qdf_mac_addr *mac_addr,
+				      uint8_t vdev_id)
 {
 }
 

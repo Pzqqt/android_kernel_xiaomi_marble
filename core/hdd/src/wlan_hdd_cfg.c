@@ -752,16 +752,16 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 	return status;
 }
 
-eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(uint8_t mode)
+enum wmm_user_mode hdd_to_csr_wmm_mode(uint8_t mode)
 {
 	switch (mode) {
 	case HDD_WMM_USER_MODE_QBSS_ONLY:
-		return eCsrRoamWmmQbssOnly;
+		return WMM_USER_MODE_QBSS_ONLY;
 	case HDD_WMM_USER_MODE_NO_QOS:
-		return eCsrRoamWmmNoQos;
+		return WMM_USER_MODE_NO_QOS;
 	case HDD_WMM_USER_MODE_AUTO:
 	default:
-		return eCsrRoamWmmAuto;
+		return WMM_USER_MODE_AUTO;
 	}
 }
 

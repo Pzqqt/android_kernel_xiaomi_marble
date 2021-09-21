@@ -161,6 +161,36 @@ static void lim_extract_he_op(struct pe_session *session,
 	}
 }
 
+static bool lim_validate_he160_mcs_map(struct mac_context *mac_ctx,
+				       uint16_t peer_rx, uint16_t peer_tx,
+				       uint8_t nss)
+{
+	uint16_t rx_he_mcs_map;
+	uint16_t tx_he_mcs_map;
+	uint16_t he_mcs_map;
+
+	he_mcs_map = *((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+				tx_he_mcs_map_160);
+	rx_he_mcs_map = HE_INTERSECT_MCS(peer_rx, he_mcs_map);
+
+	he_mcs_map = *((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+				rx_he_mcs_map_160);
+	tx_he_mcs_map = HE_INTERSECT_MCS(peer_tx, he_mcs_map);
+
+	if (nss == NSS_1x1_MODE) {
+		rx_he_mcs_map |= HE_MCS_INV_MSK_4_NSS(1);
+		tx_he_mcs_map |= HE_MCS_INV_MSK_4_NSS(1);
+	} else if (nss == NSS_2x2_MODE) {
+		rx_he_mcs_map |= (HE_MCS_INV_MSK_4_NSS(1) &
+				HE_MCS_INV_MSK_4_NSS(2));
+		tx_he_mcs_map |= (HE_MCS_INV_MSK_4_NSS(1) &
+				HE_MCS_INV_MSK_4_NSS(2));
+	}
+
+	return ((rx_he_mcs_map != HE_MCS_ALL_DISABLED) &&
+		(tx_he_mcs_map != HE_MCS_ALL_DISABLED));
+}
+
 static void lim_check_is_he_mcs_valid(struct pe_session *session,
 				      tSirProbeRespBeacon *beacon_struct)
 {
@@ -197,14 +227,21 @@ void lim_update_he_bw_cap_mcs(struct pe_session *session,
 	if ((session->opmode == QDF_STA_MODE ||
 	     session->opmode == QDF_P2P_CLIENT_MODE) &&
 	    beacon && beacon->he_cap.present) {
-		if (!beacon->he_cap.chan_width_2)
+		if (!beacon->he_cap.chan_width_2) {
 			is_80mhz = 1;
-		else if (beacon->he_cap.chan_width_2 &&
-			 (*(uint16_t *)beacon->he_cap.rx_he_mcs_map_160 ==
-			  HE_MCS_ALL_DISABLED))
+		} else if (beacon->he_cap.chan_width_2 &&
+			 !lim_validate_he160_mcs_map(session->mac_ctx,
+			   *((uint16_t *)beacon->he_cap.rx_he_mcs_map_160),
+			   *((uint16_t *)beacon->he_cap.tx_he_mcs_map_160),
+						     session->nss)) {
 			is_80mhz = 1;
-		else
+			if (session->ch_width == CH_WIDTH_160MHZ) {
+				pe_debug("HE160 Rx/Tx MCS is not valid, falling back to 80MHz");
+				session->ch_width = CH_WIDTH_80MHZ;
+			}
+		} else {
 			is_80mhz = 0;
+		}
 	} else {
 		is_80mhz = 1;
 	}

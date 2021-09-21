@@ -120,6 +120,58 @@ enum PM_AP_DFS_MASTER_MODE {
 	PM_STA_SAP_ON_DFS_MASTER_MODE_FLEX,
 };
 
+static inline const char *pcl_type_to_string(uint32_t idx)
+{
+	switch (idx) {
+	CASE_RETURN_STRING(PM_NONE);
+	CASE_RETURN_STRING(PM_24G);
+	CASE_RETURN_STRING(PM_5G);
+	CASE_RETURN_STRING(PM_SCC_CH);
+	CASE_RETURN_STRING(PM_MCC_CH);
+	CASE_RETURN_STRING(PM_SCC_CH_24G);
+	CASE_RETURN_STRING(PM_SCC_CH_5G);
+	CASE_RETURN_STRING(PM_24G_SCC_CH);
+	CASE_RETURN_STRING(PM_5G_SCC_CH);
+	CASE_RETURN_STRING(PM_SCC_ON_5_SCC_ON_24_24G);
+	CASE_RETURN_STRING(PM_SCC_ON_5_SCC_ON_24_5G);
+	CASE_RETURN_STRING(PM_SCC_ON_24_SCC_ON_5_24G);
+	CASE_RETURN_STRING(PM_SCC_ON_24_SCC_ON_5_5G);
+	CASE_RETURN_STRING(PM_SCC_ON_5_SCC_ON_24);
+	CASE_RETURN_STRING(PM_SCC_ON_24_SCC_ON_5);
+	CASE_RETURN_STRING(PM_MCC_CH_24G);
+	CASE_RETURN_STRING(PM_MCC_CH_5G);
+	CASE_RETURN_STRING(PM_24G_MCC_CH);
+	CASE_RETURN_STRING(PM_5G_MCC_CH);
+	CASE_RETURN_STRING(PM_SBS_CH);
+	CASE_RETURN_STRING(PM_SBS_CH_5G);
+	CASE_RETURN_STRING(PM_24G_SCC_CH_SBS_CH);
+	CASE_RETURN_STRING(PM_24G_SCC_CH_SBS_CH_5G);
+	CASE_RETURN_STRING(PM_24G_SBS_CH_MCC_CH);
+	/* New PCL type for DBS-SBS HW */
+	CASE_RETURN_STRING(PM_SBS_CH_24G_SCC_CH);
+	CASE_RETURN_STRING(PM_SBS_CH_SCC_CH_24G);
+	CASE_RETURN_STRING(PM_SCC_CH_SBS_CH_24G);
+	CASE_RETURN_STRING(PM_SBS_CH_SCC_CH_5G_24G);
+	CASE_RETURN_STRING(PM_SCC_CH_MCC_CH_SBS_CH_24G);
+	default:
+		return "Unknown";
+	}
+}
+
+static inline const char *device_mode_to_string(uint32_t idx)
+{
+	switch (idx) {
+	CASE_RETURN_STRING(PM_STA_MODE);
+	CASE_RETURN_STRING(PM_SAP_MODE);
+	CASE_RETURN_STRING(PM_P2P_CLIENT_MODE);
+	CASE_RETURN_STRING(PM_P2P_GO_MODE);
+	CASE_RETURN_STRING(PM_NDI_MODE);
+	CASE_RETURN_STRING(PM_NAN_DISC_MODE);
+	default:
+		return "Unknown";
+	}
+};
+
 /**
  * policy_mgr_get_allow_mcc_go_diff_bi() - to get information on whether GO
  *						can have diff BI than STA in MCC
@@ -1108,8 +1160,7 @@ struct policy_mgr_conc_connection_info *policy_mgr_get_conn_info(
  * @tx_streams: number of transmit spatial streams
  * @rx_streams: number of receive spatial streams
  * @chain_mask: chain mask
- * @type: connection type
- * @sub_type: connection subtype
+ * @mode: conn mode
  * @ch_freq: channel frequency value
  * @mac_id: mac id
  *
@@ -1122,8 +1173,8 @@ QDF_STATUS
 policy_mgr_incr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
 				      uint32_t vdev_id, uint32_t tx_streams,
 				      uint32_t rx_streams,
-				      uint32_t chain_mask, uint32_t type,
-				      uint32_t sub_type,
+				      uint32_t chain_mask,
+				      enum policy_mgr_con_mode mode,
 				      uint32_t ch_freq, uint32_t mac_id);
 
 /**
@@ -1217,7 +1268,7 @@ enum policy_mgr_pcl_type policy_mgr_get_pcl_from_third_conn_table(
 static inline QDF_STATUS policy_mgr_incr_connection_count_utfw(
 		struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
-		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
+		uint32_t chain_mask, enum policy_mgr_con_mode mode,
 		uint32_t ch_freq, uint32_t mac_id)
 {
 	return QDF_STATUS_SUCCESS;

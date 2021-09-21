@@ -2348,6 +2348,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
+#ifdef WLAN_FEATURE_11BE_MLO
+			hdd_debug("Registering STA MLD :" QDF_MAC_ADDR_FMT,
+				  QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+			qdf_status = hdd_softap_register_sta(
+						adapter,
+						true,
+						ap_ctx->privacy,
+						(struct qdf_mac_addr *)
+						&event->sta_mld,
+						event);
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+				hdd_err("Failed to register STA MLD %d "
+					QDF_MAC_ADDR_FMT, qdf_status,
+					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+#endif
 		} else {
 			qdf_status = hdd_softap_register_sta(
 						adapter,
@@ -2360,6 +2375,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
+#ifdef WLAN_FEATURE_11BE_MLO
+			hdd_debug("Registering STA MLD :" QDF_MAC_ADDR_FMT,
+				  QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+			qdf_status = hdd_softap_register_sta(
+						adapter,
+						false,
+						ap_ctx->privacy,
+						(struct qdf_mac_addr *)
+						&event->sta_mld,
+						event);
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+				hdd_err("Failed to register STA MLD %d "
+					QDF_MAC_ADDR_FMT, qdf_status,
+					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+#endif
 		}
 
 		sta_id = event->staId;
@@ -5791,13 +5821,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	 * may not be good with non QOS 11N AP
 	 * Default: enable QOS for SAP unless WMM IE not present for 11bga
 	 */
-	sme_config->csr_config.WMMSupportMode = eCsrRoamWmmAuto;
+	sme_config->csr_config.WMMSupportMode = WMM_USER_MODE_AUTO;
 	ie = wlan_get_vendor_ie_ptr_from_oui(WMM_OUI_TYPE, WMM_OUI_TYPE_SIZE,
 					     beacon->tail, beacon->tail_len);
 	if (!ie && (config->SapHw_mode == eCSR_DOT11_MODE_11a ||
 		config->SapHw_mode == eCSR_DOT11_MODE_11g ||
 		config->SapHw_mode == eCSR_DOT11_MODE_11b))
-		sme_config->csr_config.WMMSupportMode = eCsrRoamWmmNoQos;
+		sme_config->csr_config.WMMSupportMode = WMM_USER_MODE_NO_QOS;
 	sme_update_config(mac_handle, sme_config);
 
 	if (!((adapter->device_mode == QDF_SAP_MODE) &&
@@ -6122,7 +6152,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		status = wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_status =
-				qdf_wait_for_event_completion(&hostapd_state->
+				qdf_wait_single_event(&hostapd_state->
 					qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 

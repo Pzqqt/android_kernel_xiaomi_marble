@@ -45,6 +45,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include <wlan_cm_api.h>
 #include <lim_mlo.h>
+#include "wlan_mlo_mgr_peer.h"
 
 static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
 static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
@@ -90,14 +91,7 @@ static void lim_fill_status_code(uint8_t frame_type,
 	}
 }
 
-/**
- * lim_process_sae_auth_timeout() - This function is called to process sae
- * auth timeout
- * @mac_ctx: Pointer to Global MAC structure
- *
- * @Return: None
- */
-static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
+void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 {
 	struct pe_session *session;
 	enum wlan_status_code proto_status_code;
@@ -396,7 +390,7 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 {
 	struct wlan_objmgr_vdev *vdev;
 #ifdef WLAN_FEATURE_11BE_MLO
-	struct wlan_objmgr_peer *link_peer;
+	struct wlan_objmgr_peer *link_peer = NULL;
 	uint8_t link_id;
 	struct mlo_partner_info partner_info;
 #endif
@@ -418,6 +412,9 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 		     vdev->vdev_mlme.macaddr,
 		     QDF_MAC_ADDR_SIZE);
 	partner_info.partner_link_info[0].link_id = link_id;
+	pe_debug("link_addr " QDF_MAC_ADDR_FMT,
+		 QDF_MAC_ADDR_REF(
+			partner_info.partner_link_info[0].link_addr.bytes));
 
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Get the bss peer obj */
@@ -435,9 +432,10 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 
 		if (QDF_IS_STATUS_ERROR(status))
 			pe_err("Peer creation failed");
+
+		wlan_objmgr_peer_release_ref(link_peer, WLAN_LEGACY_MAC_ID);
 	}
 end:
-	wlan_objmgr_peer_release_ref(link_peer, WLAN_LEGACY_MAC_ID);
 #endif
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
@@ -952,7 +950,9 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			 session_entry->peSessionId,
 			 session_entry->limMlmState));
-	pe_debug("vdev %d Sending Assoc_Req Frame", session_entry->vdev_id);
+	pe_debug("vdev %d Sending Assoc_Req Frame, timeout %d msec",
+		 session_entry->vdev_id,
+		 (int)mac_ctx->lim.lim_timers.gLimAssocFailureTimer.initScheduleTimeInMsecs);
 
 	/* Prepare and send Association request frame */
 	lim_send_assoc_req_mgmt_frame(mac_ctx, mlm_assoc_req, session_entry);
@@ -1695,10 +1695,41 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 	}
 }
 
+static void lim_send_pre_auth_failure(uint8_t vdev_id, tSirMacAddr bssid)
+{
+	struct scheduler_msg sch_msg = {0};
+	struct wmi_roam_auth_status_params *params;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params)
+		return;
+
+	params->vdev_id = vdev_id;
+	params->preauth_status = STATUS_UNSPECIFIED_FAILURE;
+	qdf_mem_copy(params->bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(params->pmkid, PMKID_LEN);
+
+	sch_msg.type = WMA_ROAM_PRE_AUTH_STATUS;
+	sch_msg.bodyptr = params;
+	pe_debug("Sending pre auth failure for mac_addr " QDF_MAC_ADDR_FMT,
+		 QDF_MAC_ADDR_REF(params->bssid.bytes));
+
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA,
+					&sch_msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Sending preauth status failed");
+		qdf_mem_free(params);
+	}
+}
+
 static void lim_handle_sae_auth_timeout(struct mac_context *mac_ctx,
 					struct pe_session *session_entry)
 {
 	struct sae_auth_retry *sae_retry;
+	tpSirMacMgmtHdr mac_hdr;
 
 	sae_retry = mlme_get_sae_auth_retry(session_entry->vdev);
 	if (!(sae_retry && sae_retry->sae_auth.ptr)) {
@@ -1707,18 +1738,25 @@ static void lim_handle_sae_auth_timeout(struct mac_context *mac_ctx,
 		return;
 	}
 
-	pe_debug("retry sae auth for seq num %d vdev id %d",
-		 mac_ctx->mgmtSeqNum, session_entry->vdev_id);
-	lim_send_frame(mac_ctx, session_entry->vdev_id,
-		       sae_retry->sae_auth.ptr, sae_retry->sae_auth.len);
-
-	sae_retry->sae_auth_max_retry--;
-	/* Activate Auth Retry timer if max_retries are not done */
-	if (!sae_retry->sae_auth_max_retry || (tx_timer_activate(
-	    &mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer) !=
-	    TX_SUCCESS))
+	if (!sae_retry->sae_auth_max_retry) {
+		if (MLME_IS_ROAMING_IN_PROG(mac_ctx->psoc,
+					    session_entry->vdev_id)) {
+			mac_hdr = (tpSirMacMgmtHdr)sae_retry->sae_auth.ptr;
+			lim_send_pre_auth_failure(session_entry->vdev_id,
+						  mac_hdr->bssId);
+		}
 		goto free_and_deactivate_timer;
+	}
 
+	pe_debug("Retry sae auth for seq num %d vdev id %d",
+		 mac_ctx->mgmtSeqNum, session_entry->vdev_id);
+	lim_send_frame(mac_ctx, session_entry->vdev_id, sae_retry->sae_auth.ptr,
+		       sae_retry->sae_auth.len);
+	sae_retry->sae_auth_max_retry--;
+
+	if (TX_SUCCESS != tx_timer_activate(
+	    &mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer))
+		goto free_and_deactivate_timer;
 	return;
 
 free_and_deactivate_timer:

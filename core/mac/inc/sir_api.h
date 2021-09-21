@@ -990,6 +990,7 @@ struct join_req {
 	tSirAddie addIEAssoc;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct mlo_partner_info partner_info;
+	uint8_t assoc_link_id;
 #endif
 	/* Warning:::::::::::: Do not add any new param in this struct */
 	/* Pls make this as last variable in struct */
@@ -1076,6 +1077,7 @@ struct assoc_ind {
 	uint32_t owe_ie_len;
 	uint16_t owe_status;
 	bool need_assoc_rsp_tx_cb;
+	tSirMacAddr peer_mld_addr;
 };
 
 /**
@@ -1791,6 +1793,7 @@ struct sir_host_offload_req {
 /* Packet Types. */
 #define SIR_KEEP_ALIVE_NULL_PKT              1
 #define SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
+#define SIR_KEEP_ALIVE_MGMT_FRAME            5
 
 /* Keep Alive request. */
 struct keep_alive_req {

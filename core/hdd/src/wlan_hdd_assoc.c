@@ -313,8 +313,6 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	char *connect_time;
-	uint32_t time_buffer_size;
 
 	/* save the new connection state */
 	if (conn_state == hdd_sta_ctx->conn_info.conn_state)
@@ -324,19 +322,7 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 		       hdd_sta_ctx->conn_info.conn_state, conn_state,
 		       adapter->dev->name, adapter->vdev_id);
 
-	hdd_tsf_notify_wlan_state_change(adapter,
-					 hdd_sta_ctx->conn_info.conn_state,
-					 conn_state);
 	hdd_sta_ctx->conn_info.conn_state = conn_state;
-
-	connect_time = hdd_sta_ctx->conn_info.connect_time;
-	time_buffer_size = sizeof(hdd_sta_ctx->conn_info.connect_time);
-	if (conn_state == eConnectionState_Associated)
-		qdf_get_time_of_the_day_in_hr_min_sec_usec(connect_time,
-							   time_buffer_size);
-	else
-		qdf_mem_zero(connect_time, time_buffer_size);
-
 }
 
 enum band_info hdd_conn_get_connected_band(struct hdd_adapter *adapter)
@@ -431,6 +417,34 @@ void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx)
 	if (sta_adapter)
 		wlan_hdd_cm_issue_disconnect(sta_adapter,
 					     REASON_UNSPEC_FAILURE, false);
+}
+
+bool hdd_is_any_sta_connected(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
+	wlan_net_dev_ref_dbgid dbgid =
+				NET_DEV_HOLD_IS_ANY_STA_CONNECTED;
+
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return false;
+	}
+
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
+		if (QDF_STA_MODE == adapter->device_mode ||
+		    QDF_P2P_CLIENT_MODE == adapter->device_mode) {
+			if (hdd_cm_is_vdev_connected(adapter)) {
+				hdd_adapter_dev_put_debug(adapter, dbgid);
+				if (next_adapter)
+					hdd_adapter_dev_put_debug(next_adapter,
+								  dbgid);
+				return true;
+			}
+		}
+		hdd_adapter_dev_put_debug(adapter, dbgid);
+	}
+	return false;
 }
 
 /**

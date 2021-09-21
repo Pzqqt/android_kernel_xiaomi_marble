@@ -266,7 +266,6 @@ tCsrScanResultInfo *csr_scan_result_get_next(struct mac_context *mac,
 
 /* some support functions */
 bool csr_is11h_supported(struct mac_context *mac);
-bool csr_is11e_supported(struct mac_context *mac);
 bool csr_is_wmm_supported(struct mac_context *mac);
 
 /* Return SUCCESS is the command is queued, failed */

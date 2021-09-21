@@ -41,17 +41,11 @@
 /**
  * enum eConnectionState - connection state values at HDD
  * @eConnectionState_NotConnected: Not associated in Infra
- * @eConnectionState_Connecting: While connection in progress
- * @eConnectionState_Associated: Associated in an Infrastructure network
- * @eConnectionState_Disconnecting: Disconnecting in an Infrastructure network.
  * @eConnectionState_NdiDisconnected: NDI in disconnected state - no peers
  * @eConnectionState_NdiConnected: NDI in connected state - at least one peer
  */
 typedef enum {
 	eConnectionState_NotConnected,
-	eConnectionState_Connecting,
-	eConnectionState_Associated,
-	eConnectionState_Disconnecting,
 	eConnectionState_NdiDisconnected,
 	eConnectionState_NdiConnected,
 } eConnectionState;
@@ -262,6 +256,14 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
  * Return: none
  */
 void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_is_any_sta_connected() - check if any sta in connected state
+ * @hdd_ctx: hdd context
+ *
+ * Return: true if any connected sta
+ */
+bool hdd_is_any_sta_connected(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback

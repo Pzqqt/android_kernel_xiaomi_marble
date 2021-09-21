@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -232,4 +232,13 @@ hdd_thermal_unregister_callbacks(struct hdd_context *hdd_ctx)
 {
 }
 #endif /* FEATURE_THERMAL_VENDOR_COMMANDS */
+
+#ifdef THERMAL_STATS_SUPPORT
+QDF_STATUS
+hdd_send_get_thermal_stats_cmd(struct hdd_context *hdd_ctx,
+			       enum thermal_stats_request_type request_type,
+			       void (*callback)(void *context,
+			       struct thermal_throttle_info *response),
+			       void *context);
+#endif /* THERMAL_STATS_SUPPORT */
 #endif /* __HDD_THERMAL_H */

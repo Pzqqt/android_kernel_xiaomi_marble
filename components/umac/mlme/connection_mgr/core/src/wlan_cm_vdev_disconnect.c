@@ -32,6 +32,21 @@
 #include "wni_api.h"
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 
+static void cm_abort_connect_request_timers(struct wlan_objmgr_vdev *vdev)
+{
+	struct scheduler_msg msg;
+	QDF_STATUS status;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	msg.bodyval = wlan_vdev_get_id(vdev);
+	msg.type = CM_ABORT_CONN_TIMER;
+	status = scheduler_post_message(QDF_MODULE_ID_MLME,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("msg CM_ABORT_CONN_TIMER post fail");
+}
+
 QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req)
 {
@@ -69,6 +84,7 @@ QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 		cm_roam_state_change(pdev, req->vdev_id, WLAN_ROAM_RSO_STOPPED,
 				     REASON_DRIVER_DISABLED);
 	}
+	cm_abort_connect_request_timers(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -194,67 +210,6 @@ static inline void cm_disconnect_diag_event(struct wlan_objmgr_vdev *vdev,
 {}
 #endif
 
-/**
- * cm_clear_pmkid_on_ap_off() - clear pmkid cache when ap off
- * @psoc: psoc ptr
- * @pdev: pdev ptr
- * @vdev: vdev ptr
- * @req: disconnect req
- *
- * In AP side power off/on case, AP security has been cleanup.
- * The STA side might still cache PMK ID in driver and it will always use
- * PMK cache to connect to AP and get continuously connect failure in SAE
- * security. This function is to detect AP off based on FW reported BMISS
- * event. Meanwhile judge FW reported last RSSI > roaming Low rssi
- * and not less than 20db of host cached RSSI to avoid some false
- * alarm such as normal DUT roll in/out roaming.
- *
- * Return: void
- */
-static void cm_clear_pmkid_on_ap_off(struct wlan_objmgr_psoc *psoc,
-				     struct wlan_objmgr_pdev *pdev,
-				     struct wlan_objmgr_vdev *vdev,
-				     struct wlan_cm_disconnect_req *req)
-{
-	int8_t cache_rssi = 0;
-	int32_t bmiss_rssi;
-	uint8_t lookup_threshold = 0;
-	struct wlan_crypto_pmksa *pmksa;
-	int32_t akm;
-	struct cm_roam_values_copy temp;
-
-	if (req->reason_code != REASON_BEACON_MISSED)
-		return;
-
-	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
-	if (!QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
-		return;
-
-	cm_get_rssi_snr_by_bssid(pdev, &req->bssid, &cache_rssi, NULL);
-	wlan_cm_roam_cfg_get_value(psoc, req->vdev_id,
-				   NEIGHBOUR_LOOKUP_THRESHOLD, &temp);
-	lookup_threshold = temp.uint_value;
-
-	wlan_cm_roam_cfg_get_value(psoc, req->vdev_id,
-				   LOST_LINK_RSSI, &temp);
-	bmiss_rssi = temp.int_value;
-
-	if (!bmiss_rssi || !lookup_threshold || !cache_rssi)
-		return;
-	mlme_nofl_debug("sta bmiss on rssi %d scan rssi %d th %d", bmiss_rssi,
-			cache_rssi, lookup_threshold);
-	if (bmiss_rssi > (lookup_threshold * (-1))) {
-		if (bmiss_rssi + AP_OFF_RSSI_OFFSET > cache_rssi) {
-			pmksa = qdf_mem_malloc(sizeof(*pmksa));
-			if (!pmksa)
-				return;
-			qdf_copy_macaddr(&pmksa->bssid, &req->bssid);
-			wlan_crypto_set_del_pmksa(vdev, pmksa, false);
-			qdf_mem_free(pmksa);
-		}
-	}
-}
-
 QDF_STATUS
 cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_cm_discon_rsp *rsp)
@@ -284,7 +239,6 @@ cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			 CM_PREFIX_REF(vdev_id, rsp->req.cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
-	cm_clear_pmkid_on_ap_off(psoc, pdev, vdev, &rsp->req.req);
 	cm_disconnect_diag_event(vdev, rsp);
 	wlan_tdls_notify_sta_disconnect(vdev_id, false, false, vdev);
 	policy_mgr_decr_session_set_pcl(psoc, op_mode, vdev_id);

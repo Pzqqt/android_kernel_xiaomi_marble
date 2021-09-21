@@ -21,11 +21,11 @@
  */
 
 #include "wlan_pkt_capture_mon_thread.h"
-#include <linux/kthread.h>
 #include "cds_ieee80211_common.h"
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "cdp_txrx_ctrl.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_mgmt_txrx_utils_api.h"
 
 void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 		     struct wlan_objmgr_vdev *vdev, uint16_t ch_freq)
@@ -36,6 +36,9 @@ void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	cdp_config_param_type val;
+	uint16_t status;
+	tSirMacAuthFrameBody *auth;
+	struct pkt_capture_vdev_priv *vdev_priv;
 
 	rthdr = (struct radiotap_header *)qdf_nbuf_data(msdu);
 	rtlen = rthdr->it_len;
@@ -43,17 +46,78 @@ void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 	type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	sub_type = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("packet capture vdev priv is NULL");
+		return;
+	}
+
+	/*
+	 *  Update channel only if successful AUTH Resp is received.
+	 *  This is done so that EAPOL M1 data frame have correct
+	 *  channel
+	 */
 	if ((type == IEEE80211_FC0_TYPE_MGT) &&
 	    (sub_type == MGMT_SUBTYPE_AUTH)) {
 		uint8_t chan = wlan_reg_freq_to_chan(pdev, ch_freq);
 
-		val.cdp_pdev_param_monitor_chan = chan;
-		cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+		auth = (tSirMacAuthFrameBody *)(qdf_nbuf_data(msdu) + rtlen +
+			sizeof(tSirMacMgmtHdr));
+
+		if (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_2 ||
+		    auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_4) {
+			if (auth->authStatusCode == STATUS_SUCCESS) {
+				val.cdp_pdev_param_monitor_chan = chan;
+				cdp_txrx_set_pdev_param(
+					soc, wlan_objmgr_pdev_get_pdev_id(pdev),
 					CDP_MONITOR_CHANNEL, val);
 
-		val.cdp_pdev_param_mon_freq = ch_freq;
-		cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				val.cdp_pdev_param_mon_freq = ch_freq;
+				cdp_txrx_set_pdev_param(
+					soc, wlan_objmgr_pdev_get_pdev_id(pdev),
 					CDP_MONITOR_FREQUENCY, val);
+			}
+		}
+	}
+
+	/*
+	 *  Update channel to last connected channel in case of assoc/reassoc
+	 *  response failure and save current chan in case of success
+	 */
+	if ((type == IEEE80211_FC0_TYPE_MGT) &&
+	    ((sub_type == MGMT_SUBTYPE_ASSOC_RESP) ||
+	    (sub_type == MGMT_SUBTYPE_REASSOC_RESP))) {
+		if(qdf_nbuf_len(msdu) < (rtlen + sizeof(tSirMacMgmtHdr) +
+		   SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET)) {
+			pkt_capture_err("Packet length is less than expected");
+			qdf_nbuf_free(msdu);
+			return;
+		}
+
+		status = (uint16_t)(*(qdf_nbuf_data(msdu) + rtlen +
+			 sizeof(tSirMacMgmtHdr) +
+			 SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET));
+
+		if (status == STATUS_SUCCESS) {
+			vdev_priv->last_freq = vdev_priv->curr_freq;
+			vdev_priv->curr_freq = ch_freq;
+		} else {
+			uint8_t chan_num;
+			chan_num = wlan_reg_freq_to_chan(pdev,
+							 vdev_priv->last_freq);
+
+			val.cdp_pdev_param_monitor_chan = chan_num;
+			cdp_txrx_set_pdev_param(
+				soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				CDP_MONITOR_CHANNEL, val);
+
+			val.cdp_pdev_param_mon_freq = vdev_priv->last_freq;
+			cdp_txrx_set_pdev_param(
+				soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				CDP_MONITOR_FREQUENCY, val);
+
+			vdev_priv->curr_freq = vdev_priv->last_freq;
+		}
 	}
 
 	if (cb_ctx->mon_cb(cb_ctx->mon_ctx, msdu) != QDF_STATUS_SUCCESS) {

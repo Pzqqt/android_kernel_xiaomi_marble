@@ -168,6 +168,7 @@ void pkt_capture_offload_deliver_indication_handler(
  * @dir: direction rx: 0 and tx: 1
  * @status: tx status
  * @tx_retry_cnt: tx retry count
+ * @ppdu_id: ppdu_id of msdu
  */
 struct pkt_capture_tx_hdr_elem_t {
 	uint32_t timestamp;
@@ -186,6 +187,18 @@ struct pkt_capture_tx_hdr_elem_t {
 	uint8_t tx_retry_cnt;
 	uint16_t framectrl;
 	uint16_t seqno;
+	uint32_t ppdu_id;
+};
+
+/**
+ * pkt_capture_ppdu_stats_q_node - node structure to be enqueued
+ * in ppdu_stats_q
+ * @node: list node
+ * @buf: buffer data received from ppdu_stats
+ */
+struct pkt_capture_ppdu_stats_q_node {
+	qdf_list_node_t node;
+	uint32_t buf[];
 };
 
 /**

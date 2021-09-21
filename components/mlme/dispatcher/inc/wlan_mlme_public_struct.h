@@ -1447,6 +1447,7 @@ struct wlan_mlme_acs {
  * @is_all_twt_tgt_cap_enabled: support for all twt enable/disable
  * @is_twt_statistics_tgt_cap_enabled: support for twt statistics
  * @twt_congestion_timeout: congestion timeout value
+ * @disable_btwt_usr_cfg: User config param to enable/disable the BTWT support
  * @enable_twt_24ghz: Enable/disable host TWT when STA is connected in
  * 2.4Ghz
  * @req_flag: requestor flag enable/disable
@@ -1464,6 +1465,7 @@ struct wlan_mlme_cfg_twt {
 	bool is_all_twt_tgt_cap_enabled;
 	bool is_twt_statistics_tgt_cap_enabled;
 	uint32_t twt_congestion_timeout;
+	bool disable_btwt_usr_cfg;
 	bool enable_twt_24ghz;
 	bool req_flag;
 	bool res_flag;
@@ -1574,6 +1576,7 @@ enum station_keepalive_method {
  * @single_tid:                     Set replay counter for all TID
  * @allow_tpc_from_ap:              Support for AP power constraint
  * @usr_disabled_roaming:           User config for roaming disable
+ * @usr_scan_probe_unicast_ra:      User config unicast probe req in scan
  */
 struct wlan_mlme_sta_cfg {
 	uint32_t sta_keep_alive_period;
@@ -1596,6 +1599,7 @@ struct wlan_mlme_sta_cfg {
 	bool allow_tpc_from_ap;
 	enum station_keepalive_method sta_keepalive_method;
 	bool usr_disabled_roaming;
+	bool usr_scan_probe_unicast_ra;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type event_payload;
 #endif
@@ -2340,12 +2344,14 @@ struct wlan_mlme_btm {
 /**
  * struct wlan_mlme_fe_wlm - WLM related configs
  * @latency_enable: Flag to check if latency is enabled
+ * @latency_reset: Flag to check if latency reset is enabled
  * @latency_level: WLM latency level
  * @latency_flags: WLM latency flags setting
  * @latency_host_flags: WLM latency host flags setting
  */
 struct wlan_mlme_fe_wlm {
 	bool latency_enable;
+	bool latency_reset;
 	uint8_t latency_level;
 	uint32_t latency_flags[MLME_NUM_WLM_LATENCY_LEVEL];
 	uint32_t latency_host_flags[MLME_NUM_WLM_LATENCY_LEVEL];

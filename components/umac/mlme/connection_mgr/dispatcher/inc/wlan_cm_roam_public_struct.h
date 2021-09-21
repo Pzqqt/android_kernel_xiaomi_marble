@@ -337,6 +337,7 @@ struct roam_synch_frame_ind {
  * wmi_roam_invoke_status_error in case of forced roam
  * @lost_link_rssi: lost link RSSI
  * @roam_sync_frame_ind: roam sync frame ind
+ * @roam_band_bitmask: This allows the driver to roam within this band
  */
 struct rso_config {
 #ifdef WLAN_FEATURE_HOST_ROAM
@@ -344,7 +345,7 @@ struct rso_config {
 	struct reassoc_timer_ctx ctx;
 #endif
 	qdf_mutex_t cm_rso_lock;
-	uint8_t rsn_cap;
+	uint16_t rsn_cap;
 	uint8_t country_code[REG_ALPHA2_LEN + 1];
 	bool disable_hi_rssi;
 	bool roam_control_enable;
@@ -381,6 +382,7 @@ struct rso_config {
 	uint32_t roam_invoke_fail_reason;
 	int32_t lost_link_rssi;
 	struct roam_synch_frame_ind roam_sync_frame_ind;
+	uint32_t roam_band_bitmask;
 };
 
 /**
@@ -486,6 +488,7 @@ struct rso_config_params {
  * @HS_20_AP: Hotspot 2.0 AP
  * @MBO_OCE_ENABLED_AP: MBO/OCE enabled network
  * @LOST_LINK_RSSI: lost link RSSI
+ * @ROAM_BAND: Allowed band for roaming in FW
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
@@ -514,6 +517,7 @@ enum roam_cfg_param {
 	MBO_OCE_ENABLED_AP,
 	IS_SINGLE_PMK,
 	LOST_LINK_RSSI,
+	ROAM_BAND,
 };
 
 /**
@@ -649,6 +653,8 @@ struct ap_profile {
  * @rssi_scoring: RSSI scoring information.
  * @esp_qbss_scoring: ESP/QBSS scoring percentage information
  * @oce_wan_scoring: OCE WAN metrics percentage information
+ * @eht_caps_weightage: EHT caps weightage out of total score in %
+ * @mlo_weightage: MLO weightage out of total score in %
  */
 struct scoring_param {
 	uint32_t disable_bitmap;
@@ -676,6 +682,10 @@ struct scoring_param {
 	struct rssi_config_score rssi_scoring;
 	struct per_slot_score esp_qbss_scoring;
 	struct per_slot_score oce_wan_scoring;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t eht_caps_weightage;
+	uint8_t mlo_weightage;
+#endif
 };
 
 /**
@@ -1829,10 +1839,12 @@ enum cm_vdev_disconnect_reason {
 /*
  * struct vdev_disconnect_event_data - Roam disconnect event data
  * @vdev_id: vdev id
+ * @psoc: psoc object
  * @reason: roam reason of type @enum cm_vdev_disconnect_reason
  */
 struct vdev_disconnect_event_data {
 	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
 	enum cm_vdev_disconnect_reason reason;
 };
 
@@ -1849,11 +1861,26 @@ struct cm_roam_scan_ch_resp {
 	uint32_t command_resp;
 	uint32_t *chan_list;
 };
+
+/**
+ * enum roam_dispatcher_events - Roam events to post to scheduler thread
+ * @ROAM_EVENT_INVALID: Invalid event
+ * @ROAM_PMKID_REQ_EVENT: Roam pmkid request event
+ * @ROAM_EVENT: Roam event
+ * @ROAM_VDEV_DISCONNECT_EVENT: Roam disconnect event
+ */
+enum roam_dispatcher_events {
+	ROAM_EVENT_INVALID,
+	ROAM_PMKID_REQ_EVENT,
+	ROAM_EVENT,
+	ROAM_VDEV_DISCONNECT_EVENT,
+};
 #endif
 
 /**
  * struct roam_offload_roam_event: Data carried by roam event
  * @vdev_id: vdev id
+ * @psoc: psoc object
  * @reason: reason for roam event of type @enum roam_reason
  * @rssi: associated AP's rssi calculated by FW when reason code
  *	  is WMI_ROAM_REASON_LOW_RSSI
@@ -1867,6 +1894,7 @@ struct cm_roam_scan_ch_resp {
  */
 struct roam_offload_roam_event {
 	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
 	enum roam_reason reason;
 	uint32_t rssi;
 	enum cm_roam_notif notif;
@@ -1874,6 +1902,56 @@ struct roam_offload_roam_event {
 	uint32_t notif_params1;
 	struct cm_hw_mode_trans_ind *hw_mode_trans_ind;
 	uint8_t *deauth_disassoc_frame;
+};
+
+/**
+ * struct roam_stats_event - Data carried by stats event
+ * @vdev_id: vdev id
+ * @num_tlv: Number of roam scans triggered
+ * @num_roam_msg_info: Number of roam_msg_info present in event
+ * @trigger: Roam trigger related details
+ * @scan: Roam scan event details
+ * @result: Roam result related info
+ * @data_11kv: Neighbor report/BTM request related data
+ * @btm_rsp: BTM response related data
+ * @roam_init_info: Roam initial related data
+ * @roam_msg_info: Roam message related information
+ */
+struct roam_stats_event {
+	uint8_t vdev_id;
+	uint8_t num_tlv;
+	uint8_t num_roam_msg_info;
+	struct wmi_roam_trigger_info trigger[MAX_ROAM_SCAN_STATS_TLV];
+	struct wmi_roam_scan_data scan[MAX_ROAM_SCAN_STATS_TLV];
+	struct wmi_roam_result result[MAX_ROAM_SCAN_STATS_TLV];
+	struct wmi_neighbor_report_data data_11kv[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_btm_response_data btm_rsp[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_initial_data roam_init_info[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_msg_info *roam_msg_info;
+};
+
+/*
+ * struct auth_offload_event - offload data carried by roam event
+ * @vdev_id: vdev id
+ * @ap_bssid: SAE authentication offload MAC Addess
+ */
+struct auth_offload_event {
+	uint8_t vdev_id;
+	struct qdf_mac_addr ap_bssid;
+};
+
+/*
+ * struct roam_pmkid_req_event - Pmkid event with entries destination structure
+ * @vdev_id: VDEV id
+ * @psoc: psoc object
+ * @num_entries: total entries sent over the event
+ * @ap_bssid: bssid list
+ */
+struct roam_pmkid_req_event {
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t num_entries;
+	struct qdf_mac_addr ap_bssid[];
 };
 
 /**
@@ -1965,6 +2043,8 @@ struct cm_roam_values_copy {
 
 /* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
 #define MAX_VDEV_SUPPORTED 4
+#define MAX_PN_LEN 8
+#define MAX_KEY_LEN 32
 
 /**
  * struct cm_ho_fail_ind - ho fail indication to CM
@@ -2003,13 +2083,34 @@ struct cm_hw_mode_trans_ind {
 };
 
 /*
- * struct roam_pmkid_req_event - Pmkid event with entries destination structure
- * @num_entries: total entries sent over the event
- * @ap_bssid: bssid list
+ * struct ml_setup_link_param - MLO setup link param
+ * @vdev_id: vdev id of the link
+ * @link_id: link id of the link
+ * @channel: wmi channel
+ * @flags: link flags
  */
-struct roam_pmkid_req_event {
-	uint32_t num_entries;
-	struct qdf_mac_addr ap_bssid[];
+struct ml_setup_link_param {
+	uint32_t vdev_id;
+	uint32_t link_id;
+	wmi_channel channel;
+	uint32_t flags;
+};
+
+/*
+ * struct ml_key_material_param - MLO key material param
+ * @link_id: key is for which link, when link_id is 0xf,
+ * means the key is used for all links, like PTK
+ * @key_idx: key idx
+ * @key_cipher: key cipher
+ * @pn: pn
+ * @key_buff: key buffer
+ */
+struct ml_key_material_param {
+	uint32_t link_id;
+	uint32_t key_idx;
+	uint32_t key_cipher;
+	uint8_t pn[MAX_PN_LEN];
+	uint8_t key_buff[MAX_KEY_LEN];
 };
 
 struct roam_offload_synch_ind {
@@ -2056,6 +2157,12 @@ struct roam_offload_synch_ind {
 	bool is_ft_im_roam;
 	enum wlan_phymode phy_mode; /*phy mode sent by fw */
 	wmi_channel chan;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t num_setup_links;
+	struct ml_setup_link_param ml_link[WLAN_UMAC_MLO_MAX_VDEVS];
+	uint8_t num_ml_key_material;
+	struct ml_key_material_param ml_key[WLAN_UMAC_MLO_MAX_VDEVS];
+#endif
 };
 
 /**
@@ -2067,6 +2174,9 @@ struct roam_offload_synch_ind {
  * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
  * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
  * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
+ * @roam_stats_event_rx: Rx ops function pointer for roam stats event
+ * @roam_auth_offload_event: Rx ops function pointer for auth offload event
+ * @roam_pmkid_request_event_rx: Rx ops function pointer for roam pmkid event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -2075,7 +2185,7 @@ struct wlan_cm_roam_rx_ops {
 				      struct roam_offload_synch_ind *sync_ind);
 	QDF_STATUS (*roam_sync_frame_event)(struct wlan_objmgr_psoc *psoc,
 					    struct roam_synch_frame_ind *frm);
-	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event roam_event);
+	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event *roam_event);
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
 					  struct roam_blacklist_event *list);
@@ -2083,6 +2193,13 @@ struct wlan_cm_roam_rx_ops {
 	(*vdev_disconnect_event)(struct vdev_disconnect_event_data *data);
 	QDF_STATUS
 	(*roam_scan_chan_list_event)(struct cm_roam_scan_ch_resp *data);
+	QDF_STATUS
+	(*roam_stats_event_rx)(struct wlan_objmgr_psoc *psoc,
+			       struct roam_stats_event *stats_info);
+	QDF_STATUS
+	(*roam_auth_offload_event)(struct auth_offload_event *auth_event);
+	QDF_STATUS
+	(*roam_pmkid_request_event_rx)(struct roam_pmkid_req_event *list);
 #endif
 };
 #endif

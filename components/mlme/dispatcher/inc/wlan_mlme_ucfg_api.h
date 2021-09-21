@@ -3272,6 +3272,34 @@ ucfg_mlme_get_wmm_mode(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 	return wlan_mlme_get_wmm_mode(psoc, value);
 }
 
+/**
+ * ucfg_mlme_cfg_get_wlm_level() - Get the WLM level value
+ * @psoc: pointer to psoc object
+ * @level: level that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_wlm_level(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *level)
+{
+	return mlme_get_cfg_wlm_level(psoc, level);
+}
+
+/**
+ * ucfg_mlme_cfg_get_wlm_reset() - Get the WLM reset flag
+ * @psoc: pointer to psoc object
+ * @reset: reset that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_wlm_reset(struct wlan_objmgr_psoc *psoc,
+				       bool *reset)
+{
+	return mlme_get_cfg_wlm_reset(psoc, reset);
+}
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * ucfg_mlme_update_tgt_he_cap() - Update tgt he cap in mlme component
@@ -4116,6 +4144,40 @@ ucfg_mlme_set_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 				   uint32_t value);
 
 /**
+ * ucfg_mlme_get_scan_probe_unicast_ra() - Get scan probe unicast RA cfg
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * This API gives scan probe request with unicast RA user config
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool *value)
+{
+	return wlan_mlme_get_scan_probe_unicast_ra(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_scan_probe_unicast_ra() - Set scan probe unicast RA cfg
+ *
+ * @psoc: pointer to psoc object
+ * @value: set value
+ *
+ * This API sets scan probe request with unicast RA user config
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool value)
+{
+	return wlan_mlme_set_scan_probe_unicast_ra(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_peer_phymode() - get phymode of peer
  * @psoc: pointer to psoc object
  * @mac:  Pointer to the mac addr of the peer
@@ -4208,6 +4270,34 @@ ucfg_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
 }
 
 #endif
+
+/**
+ * ucfg_mlme_set_user_ps()  - Set the PS user config
+ * @psoc: pointer to psoc object
+ * @vdev_id: Vdev id
+ * @ps_enable: Flag to indicate if user PS is enabled
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				 bool ps_enable)
+{
+	return mlme_set_user_ps(psoc, vdev_id, ps_enable);
+}
+
+/**
+ * ucfg_mlme_get_user_ps()  - Get user PS flag
+ * @psoc: pointer to psoc object
+ * @vdev_id: Vdev id
+ *
+ * Return: True if user ps is enabled else false
+ */
+static inline
+bool ucfg_mlme_get_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return mlme_get_user_ps(psoc, vdev_id);
+}
 
 /**
  * ucfg_mlme_set_ft_over_ds() - update ft_over_ds status with user configured

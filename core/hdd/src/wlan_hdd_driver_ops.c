@@ -1622,6 +1622,11 @@ static int wlan_hdd_runtime_suspend(struct device *dev)
 		return -EBUSY;
 	}
 
+	if (wlan_hdd_is_cpu_pm_qos_in_progress()) {
+		hdd_debug("PM QoS Latency constraint, ignore runtime suspend");
+		return -EBUSY;
+	}
+
 	status = ucfg_pmo_psoc_bus_runtime_suspend(hdd_ctx->psoc,
 						   hdd_pld_runtime_suspend_cb);
 	err = qdf_status_to_os_return(status);

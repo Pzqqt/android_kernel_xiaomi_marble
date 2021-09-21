@@ -59,6 +59,11 @@ struct pkt_capture_cb_context {
  * @rx_ops: rx ops
  * @tx_ops: tx ops
  * @rx_avg_rssi: avg rssi of rx data packets
+ * @ppdu_stats_q: list used for storing smu related ppdu stats
+ * @lock_q: spinlock for ppdu_stats q
+ * @tx_nss: nss of tx data packets received from ppdu stats
+ * @last_freq: Last connected freq
+ * @curr_freq: current connected freq
  */
 struct pkt_capture_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
@@ -67,6 +72,11 @@ struct pkt_capture_vdev_priv {
 	struct wlan_pkt_capture_rx_ops rx_ops;
 	struct wlan_pkt_capture_tx_ops tx_ops;
 	int32_t rx_avg_rssi;
+	qdf_list_t ppdu_stats_q;
+	qdf_spinlock_t lock_q;
+	uint8_t tx_nss;
+	qdf_freq_t last_freq;
+	qdf_freq_t curr_freq;
 };
 
 /**

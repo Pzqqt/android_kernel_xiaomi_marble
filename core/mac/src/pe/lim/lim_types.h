@@ -245,6 +245,9 @@ typedef struct sLimMlmAssocInd {
 	tDot11fIEVHTCaps vht_caps;
 	bool he_caps_present;
 	bool is_sae_authenticated;
+#ifdef WLAN_FEATURE_11BE_MLO
+	tSirMacAddr peer_mld_addr;
+#endif
 } tLimMlmAssocInd, *tpLimMlmAssocInd;
 
 typedef struct sLimMlmReassocReq {
@@ -1343,6 +1346,15 @@ void lim_process_auth_failure_timeout(struct mac_context *mac_ctx);
  */
 void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 				       uint32_t msg_type);
+
+/**
+ * lim_process_sae_auth_timeout() - This function is called to process sae
+ * auth timeout
+ * @mac_ctx: Pointer to Global MAC structure
+ *
+ * @Return: None
+ */
+void lim_process_sae_auth_timeout(struct mac_context *mac_ctx);
 
 /**
  * lim_send_frame() - API to send frame

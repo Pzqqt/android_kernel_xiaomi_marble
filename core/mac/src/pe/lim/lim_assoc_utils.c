@@ -4317,7 +4317,7 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 				 pe_session->peSessionId,
 				 pe_session->limMlmState));
 	}
-	if (mlo_conn && !mlo_recv_assoc_frm)
+	if (mlo_conn && !mlo_recv_assoc_frm && LIM_IS_AP_ROLE(pe_session))
 		return;
 
 	lim_send_del_sta_cnf(mac, sta_dsaddr, staDsAssocId, mlmStaContext,

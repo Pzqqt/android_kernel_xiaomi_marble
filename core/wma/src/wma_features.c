@@ -2812,8 +2812,13 @@ static int wma_wake_event_piggybacked(
 		break;
 	case WOW_REASON_ROAM_PMKID_REQUEST:
 		wma_debug("Host woken up because of PMKID request event");
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 		errno = wma_roam_pmkid_request_event_handler(wma, pb_event,
 							     pb_event_len);
+#else
+		errno = target_if_pmkid_request_event_handler(wma,
+					pb_event, pb_event_len);
+#endif
 		break;
 	case WOW_REASON_VDEV_DISCONNECT:
 		wma_debug("Host woken up because of vdev disconnect event");

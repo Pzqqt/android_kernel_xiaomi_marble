@@ -355,6 +355,20 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		      uint8_t vdev_id);
 
 /**
+ * sme_update_bfer_caps_as_per_nss_chains() - Update beamformer caps as per nss
+ * chains.
+ * @mac_handle: The handle returned by mac_open
+ * @cfg: wma target config
+ *
+ * This API will update beamformer capability as per nss chains
+ *
+ * Return: None
+ */
+void
+sme_update_bfer_caps_as_per_nss_chains(mac_handle_t mac_handle,
+				       struct wma_tgt_cfg *cfg);
+
+/**
  * sme_vdev_create() - Create vdev for given persona
  * @mac_handle: The handle returned by mac_open
  * @vdev_params: params required for vdev creation
@@ -3280,6 +3294,18 @@ int sme_update_he_ldpc_supp(mac_handle_t mac_handle, uint8_t session_id,
 			    uint16_t he_ldpc);
 
 /**
+ * sme_update_he_capabilities() - Update the session HE capability
+ * @mac_handle: Opaque handle to the global MAC context
+ * @session_id: SME session id
+ * @cfg_val: set value
+ * @cfg_id: HE cap cfg id
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_capabilities(mac_handle_t mac_handle, uint8_t session_id,
+			       uint8_t cfg_val, uint8_t cfg_id);
+
+/**
  * sme_update_he_twt_req_support() - Sets twt request capability
  * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
@@ -3427,6 +3453,14 @@ static inline void sme_config_su_ppdu_queue(uint8_t session_id, bool enable)
 static inline int sme_update_he_twt_req_support(mac_handle_t mac_handle,
 						uint8_t session_id,
 						uint8_t cfg_val)
+{
+	return 0;
+}
+
+static inline int sme_update_he_capabilities(mac_handle_t mac_handle,
+					      uint8_t session_id,
+					      uint8_t cfg_val,
+					      uint8_t cfg_id)
 {
 	return 0;
 }

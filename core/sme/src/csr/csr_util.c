@@ -270,18 +270,6 @@ bool csr_is_conn_state_connected(struct mac_context *mac, uint32_t sessionId)
 	       csr_is_conn_state_connected_wds(mac, sessionId);
 }
 
-static tSirMacCapabilityInfo csr_get_bss_capabilities(struct bss_description *
-						      pSirBssDesc)
-{
-	tSirMacCapabilityInfo dot11Caps;
-
-	/* tSirMacCapabilityInfo is 16-bit */
-	qdf_get_u16((uint8_t *) &pSirBssDesc->capabilityInfo,
-		    (uint16_t *) &dot11Caps);
-
-	return dot11Caps;
-}
-
 bool csr_is_conn_state_connected_wds(struct mac_context *mac_ctx,
 				     uint32_t session_id)
 {
@@ -809,104 +797,17 @@ bool csr_is_conn_state_disconnected(struct mac_context *mac, uint8_t vdev_id)
 	       mac->roam.roamSession[vdev_id].connectState;
 }
 
-static bool csr_is_qos_bss_desc(struct bss_description *pSirBssDesc)
-{
-	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
-
-	return (bool) dot11Caps.qos;
-}
-
 bool csr_is11h_supported(struct mac_context *mac)
 {
 	return mac->mlme_cfg->gen.enabled_11h;
 }
 
-bool csr_is11e_supported(struct mac_context *mac)
-{
-	return mac->roam.configParam.Is11eSupportEnabled;
-}
-
 bool csr_is_wmm_supported(struct mac_context *mac)
 {
-	if (eCsrRoamWmmNoQos == mac->roam.configParam.WMMSupportMode)
+	if (WMM_USER_MODE_NO_QOS == mac->roam.configParam.WMMSupportMode)
 		return false;
 	else
 		return true;
-}
-
-/* pIes can be passed in as NULL if the caller doesn't have one prepared */
-static bool csr_is_bss_description_wme(struct mac_context *mac,
-				       struct bss_description *pSirBssDesc,
-				       tDot11fBeaconIEs *pIes)
-{
-	/* Assume that WME is found... */
-	bool fWme = true;
-	tDot11fBeaconIEs *pIesTemp = pIes;
-
-	do {
-		if (!pIesTemp) {
-			if (!QDF_IS_STATUS_SUCCESS
-				    (csr_get_parsed_bss_description_ies
-					    (mac, pSirBssDesc, &pIesTemp))) {
-				fWme = false;
-				break;
-			}
-		}
-		/* if the Wme Info IE is found, then WME is supported... */
-		if (CSR_IS_QOS_BSS(pIesTemp))
-			break;
-		/* if none of these are found, then WME is NOT supported... */
-		fWme = false;
-	} while (0);
-	if (!csr_is_wmm_supported(mac) && fWme)
-		if (!pIesTemp->HTCaps.present)
-			fWme = false;
-
-	if ((!pIes) && (pIesTemp))
-		/* we allocate memory here so free it before returning */
-		qdf_mem_free(pIesTemp);
-
-	return fWme;
-}
-
-eCsrMediaAccessType
-csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
-			  struct bss_description *pSirBssDesc,
-			  tDot11fBeaconIEs *pIes)
-{
-	eCsrMediaAccessType qosType = eCSR_MEDIUM_ACCESS_DCF;
-
-	if (!pIes) {
-		QDF_ASSERT(pIes);
-		return qosType;
-	}
-
-	do {
-		/* If we find WMM in the Bss Description, then we let this
-		 * override and use WMM.
-		 */
-		if (csr_is_bss_description_wme(mac_ctx, pSirBssDesc, pIes))
-			qosType = eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP;
-		else {
-			/* If the QoS bit is on, then the AP is
-			 * advertising 11E QoS.
-			 */
-			if (csr_is_qos_bss_desc(pSirBssDesc))
-				qosType = eCSR_MEDIUM_ACCESS_11e_eDCF;
-			else
-				qosType = eCSR_MEDIUM_ACCESS_DCF;
-
-			/* Scale back based on the types turned on
-			 * for the adapter.
-			 */
-			if (eCSR_MEDIUM_ACCESS_11e_eDCF == qosType
-			    && !csr_is11e_supported(mac_ctx))
-				qosType = eCSR_MEDIUM_ACCESS_DCF;
-		}
-
-	} while (0);
-
-	return qosType;
 }
 
 /* This function will allocate memory for the parsed IEs to the caller.

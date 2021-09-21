@@ -272,6 +272,14 @@ void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter);
 
 /**
+ * hdd_cm_is_vdev_connected() - Checks if vdev is connected or not
+ * @adapter: pointer to the adapter structure
+ *
+ * Returns: True if vdev is connected else false
+ */
+bool hdd_cm_is_vdev_connected(struct hdd_adapter *adapter);
+
+/**
  * hdd_cm_is_connecting() - Function to check connection in progress
  * @adapter: pointer to the adapter structure
  *

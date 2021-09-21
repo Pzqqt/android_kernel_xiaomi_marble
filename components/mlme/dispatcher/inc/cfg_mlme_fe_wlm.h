@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,7 +52,7 @@
  *
  * @min: 0
  * @max: 1
- * @default: 0
+ * @default: 1
  *
  * 0 - disable
  * 1 - enable
@@ -62,6 +62,23 @@
 #define CFG_LATENCY_ENABLE CFG_INI_BOOL("wlm_latency_enable", \
 					1, \
 					"WLM latency Enable")
+
+/*
+ * <ini>
+ * wlm_latency_reset_on_disconnect - WLM latency level reset on disconnect
+ *
+ * @min: 0
+ * @max: 1
+ * @default: 0
+ *
+ * 0 - disable
+ * 1 - enable
+ *
+ * </ini>
+ */
+#define CFG_LATENCY_RESET CFG_INI_BOOL("wlm_latency_reset_on_disconnect", \
+				       0, \
+				       "WLM latency reset on disconnect")
 
 /*
  * <ini>
@@ -414,6 +431,7 @@
 
 #define CFG_FE_WLM_ALL \
 	CFG(CFG_LATENCY_ENABLE) \
+	CFG(CFG_LATENCY_RESET) \
 	CFG(CFG_LATENCY_LEVEL) \
 	CFG(CFG_LATENCY_FLAGS_NORMAL) \
 	CFG(CFG_LATENCY_FLAGS_MOD) \

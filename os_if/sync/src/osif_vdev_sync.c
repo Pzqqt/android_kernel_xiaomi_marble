@@ -25,7 +25,8 @@
 #include "qdf_status.h"
 #include "qdf_types.h"
 
-static struct osif_vdev_sync __osif_vdev_sync_arr[WLAN_MAX_VDEVS];
+static struct osif_vdev_sync __osif_vdev_sync_arr[WLAN_MAX_VDEVS +
+						  WLAN_MAX_ML_VDEVS];
 static qdf_spinlock_t __osif_vdev_sync_lock;
 
 #define osif_vdev_sync_lock_create() qdf_spinlock_create(&__osif_vdev_sync_lock)

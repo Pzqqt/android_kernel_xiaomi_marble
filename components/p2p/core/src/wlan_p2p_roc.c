@@ -113,9 +113,7 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	req->scan_req.scan_type = SCAN_TYPE_P2P_LISTEN;
 	req->scan_req.scan_req_id = p2p_soc_obj->scan_req_id;
 	req->scan_req.chan_list.num_chan = 1;
-	req->scan_req.chan_list.chan[0].freq = wlan_reg_legacy_chan_to_freq(
-								pdev,
-								roc_ctx->chan);
+	req->scan_req.chan_list.chan[0].freq = roc_ctx->chan;
 	req->scan_req.dwell_time_passive = roc_ctx->duration;
 	req->scan_req.dwell_time_active = 0;
 	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
@@ -127,7 +125,17 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 				p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
 		p2p_debug("present go number:%d", go_num);
 		if (go_num)
-			req->scan_req.dwell_time_passive *=
+		/* Add fixed 300ms extra ROC time instead of multiplying the
+		 * ROC duration by const value as this causes the ROC to be
+		 * upto 1.5 secs if GO is present. Firmware will advertize NOA
+		 * of 1.5 secs and if supplicant cancels ROC after 200 or 300ms
+		 * then firmware cannot cancel NOA. So when supplicant sends
+		 * next ROC it will be delayed as firmware already is running
+		 * previous NOA. This causes p2p find issues if GO is present.
+		 * So add fixed duration of 300ms and also cap max ROC to 600ms
+		 * when GO is present
+		 */
+			req->scan_req.dwell_time_passive +=
 					P2P_ROC_DURATION_MULTI_GO_PRESENT;
 		else
 			req->scan_req.dwell_time_passive *=
@@ -135,7 +143,12 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 		/* this is to protect too huge value if some customers
 		 * give a higher value from supplicant
 		 */
-		if (req->scan_req.dwell_time_passive > P2P_MAX_ROC_DURATION)
+		if (go_num && req->scan_req.dwell_time_passive >
+		    P2P_MAX_ROC_DURATION_GO_PRESENT)
+			req->scan_req.dwell_time_passive =
+					P2P_MAX_ROC_DURATION_GO_PRESENT;
+		else if (req->scan_req.dwell_time_passive >
+			 P2P_MAX_ROC_DURATION)
 			req->scan_req.dwell_time_passive = P2P_MAX_ROC_DURATION;
 	}
 	p2p_debug("FW requested roc duration is:%d",

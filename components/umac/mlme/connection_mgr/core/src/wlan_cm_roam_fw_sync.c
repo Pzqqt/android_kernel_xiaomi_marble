@@ -1127,43 +1127,6 @@ void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
-#ifdef WLAN_FEATURE_FIPS
-QDF_STATUS cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
-				 uint8_t vdev_id,
-				 struct roam_pmkid_req_event *src_lst)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_objmgr_vdev *vdev;
-	struct qdf_mac_addr *dst_list;
-	uint32_t num_entries, i;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_MLME_SB_ID);
-	if (!vdev) {
-		mlme_err("vdev object is NULL");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	num_entries = src_lst->num_entries;
-	mlme_debug("Num entries %d", num_entries);
-	for (i = 0; i < num_entries; i++) {
-		dst_list = &src_lst->ap_bssid[i];
-		status = mlme_cm_osif_pmksa_candidate_notify(vdev, dst_list,
-							     1, false);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			mlme_err("Number %d Notify failed for " QDF_MAC_ADDR_FMT,
-				 i, QDF_MAC_ADDR_REF(dst_list->bytes));
-			goto rel_ref;
-		}
-	}
-
-rel_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
-
-	return status;
-}
-#endif /* WLAN_FEATURE_FIPS */
-
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS wlan_cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
 {

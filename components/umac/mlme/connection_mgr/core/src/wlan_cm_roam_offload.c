@@ -100,6 +100,45 @@ cm_roam_fill_rssi_change_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * cm_roam_is_per_roam_allowed()  - Check if PER roam trigger needs to be
+ * disabled based on the current connected rates.
+ * @psoc:   Pointer to the psoc object
+ * @vdev_id: Vdev id
+ *
+ * Return: true if PER roam trigger is allowed
+ */
+static bool
+cm_roam_is_per_roam_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct qdf_mac_addr connected_bssid = {0};
+	struct wlan_objmgr_vdev *vdev;
+	enum wlan_phymode peer_phymode = WLAN_PHYMODE_AUTO;
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("Vdev is null for vdev_id:%d", vdev_id);
+		return false;
+	}
+
+	status = wlan_vdev_get_bss_peer_mac(vdev, &connected_bssid);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return false;
+
+	mlme_get_peer_phymode(psoc, connected_bssid.bytes, &peer_phymode);
+	if (peer_phymode < WLAN_PHYMODE_11NA_HT20) {
+		mlme_debug("vdev:%d PER roam trigger disabled for phymode:%d",
+			   peer_phymode, vdev_id);
+		return false;
+	}
+
+	return true;
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * cm_roam_reason_vsie() - set roam reason vsie
@@ -137,9 +176,21 @@ static void
 cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		 struct wlan_roam_triggers *params)
 {
+	bool is_per_roam_enabled;
+
 	params->vdev_id = vdev_id;
 	params->trigger_bitmap =
 		mlme_get_roam_trigger_bitmap(psoc, vdev_id);
+
+	/*
+	 * Disable PER trigger for phymode less than 11n to avoid
+	 * frequent roams as the PER rate threshold is greater than
+	 * 11a/b/g rates
+	 */
+	is_per_roam_enabled = cm_roam_is_per_roam_allowed(psoc, vdev_id);
+	if (!is_per_roam_enabled)
+		params->trigger_bitmap &= ~BIT(ROAM_TRIGGER_REASON_PER);
+
 	params->roam_scan_scheme_bitmap =
 		wlan_cm_get_roam_scan_scheme_bitmap(psoc, vdev_id);
 	wlan_cm_roam_get_vendor_btm_params(psoc, &params->vendor_btm_param);
@@ -498,6 +549,60 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 		cm_crypto_authmode_to_wmi_authmode(authmode, akm, uccipher);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool
+cm_roam_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id, uint32_t roam_band_mask)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t count;
+	bool concurrency_is_dbs;
+	struct wlan_channel *chan;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev is NULL");
+		return false;
+	}
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+	if (!chan) {
+		mlme_err("no active channel");
+		return false;
+	}
+
+	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+							  NULL);
+	if (count != 2)
+		return true;
+
+	concurrency_is_dbs = !(policy_mgr_current_concurrency_is_mcc(psoc) ||
+	      policy_mgr_current_concurrency_is_scc(psoc));
+
+	if (!concurrency_is_dbs)
+		return true;
+
+	mlme_debug("STA + STA concurrency is in DBS. ch freq %d, roam band:%d",
+		   chan->ch_freq, roam_band_mask);
+
+	if (wlan_reg_freq_to_band(chan->ch_freq) == REG_BAND_2G &&
+	    (!(roam_band_mask & BIT(REG_BAND_2G)))) {
+		mlme_debug("Change in band (2G to 5G/6G) not allowed");
+		return false;
+	}
+
+	if ((wlan_reg_freq_to_band(chan->ch_freq) == REG_BAND_5G ||
+	     wlan_reg_freq_to_band(chan->ch_freq) == REG_BAND_6G) &&
+	    (!(roam_band_mask & BIT(REG_BAND_5G)) &&
+	     !(roam_band_mask & BIT(REG_BAND_6G)))) {
+		mlme_debug("Change in band (5G/6G to 2G) not allowed");
+		return false;
+	}
+
+	return true;
 }
 
 #else
@@ -910,6 +1015,24 @@ cm_roam_fill_11w_params(struct wlan_objmgr_vdev *vdev,
 	}
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void
+cm_update_mlo_score_params(struct scoring_param *req_score_params,
+			   struct weight_cfg *weight_config)
+{
+	req_score_params->eht_caps_weightage =
+		weight_config->eht_caps_weightage;
+	req_score_params->mlo_weightage =
+		weight_config->mlo_weightage;
+}
+#else
+static void
+cm_update_mlo_score_params(struct scoring_param *req_score_params,
+			   struct weight_cfg *weight_config)
+{
+}
+#endif
+
 static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_mlme_psoc_ext_obj *mlme_obj,
 				   struct scoring_param *req_score_params,
@@ -961,6 +1084,8 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 		weight_config->oce_subnet_id_weightage;
 	req_score_params->sae_pk_ap_weightage =
 		weight_config->sae_pk_ap_weightage;
+
+	cm_update_mlo_score_params(req_score_params, weight_config);
 
 	/* TODO: update scoring params corresponding to ML scoring */
 	req_score_params->bw_index_score =
@@ -2691,7 +2816,7 @@ cm_roam_fill_per_roam_request(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * cm_roam_offload_per_scan() - populates roam offload scan request and sends
+ * cm_roam_offload_per_config() - populates roam offload scan request and sends
  * to fw
  * @psoc: psoc context
  * @vdev_id: vdev id
@@ -2702,7 +2827,17 @@ static QDF_STATUS
 cm_roam_offload_per_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	struct wlan_per_roam_config_req *req;
+	bool is_per_roam_enabled;
 	QDF_STATUS status;
+
+	/*
+	 * Disable PER trigger for phymode less than 11n to avoid
+	 * frequent roams as the PER rate threshold is greater than
+	 * 11a/b/g rates
+	 */
+	is_per_roam_enabled = cm_roam_is_per_roam_allowed(psoc, vdev_id);
+	if (!is_per_roam_enabled)
+		return QDF_STATUS_SUCCESS;
 
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req)
@@ -4291,6 +4426,8 @@ static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 					       DEFAULT_ROAM_SCAN_SCHEME_BITMAP);
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
 				   MOBILITY_DOMAIN, &src_cfg);
+	wlan_cm_set_roam_band_bitmask(psoc, vdev_id, REG_BAND_MASK_ALL);
+
 	mdie_present = src_cfg.bool_value;
 	/* Based on the auth scheme tell if we are 11r */
 	if (cm_is_auth_type_11r(mlme_obj, vdev, mdie_present)) {
@@ -4381,6 +4518,7 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 	struct cm_req *cm_req;
 	QDF_STATUS status;
 	uint8_t roam_control_bitmap;
+	struct qdf_mac_addr connected_bssid;
 	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
 	bool roam_offload_enabled = cm_roam_offload_enabled(psoc);
 
@@ -4410,6 +4548,12 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 		cm_req->roam_req.req.forced_roaming = true;
 		source = CM_ROAMING_NUD_FAILURE;
 		goto send_evt;
+	}
+
+	wlan_vdev_get_bss_peer_mac(vdev, &connected_bssid);
+	if (qdf_is_macaddr_equal(bssid, &connected_bssid)) {
+		mlme_debug("Reassoc BSSID is same as currently associated AP");
+		chan_freq = wlan_get_operation_chan_freq(vdev);
 	}
 
 	if (!chan_freq || qdf_is_macaddr_zero(bssid)) {

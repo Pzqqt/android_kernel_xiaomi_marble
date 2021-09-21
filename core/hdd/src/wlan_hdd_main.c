@@ -166,7 +166,11 @@
 #include "qdf_func_tracker.h"
 
 #ifdef CNSS_GENL
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#include "cnss_nl.h"
+#else
 #include <net/cnss_nl.h>
+#endif
 #endif
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_ocb_ucfg_api.h"
@@ -392,6 +396,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_CFR] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_IFMGR] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_GPIO] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_MLO] = {QDF_TRACE_LEVEL_ALL},
 };
 
 struct notifier_block hdd_netdev_notifier;
@@ -2723,6 +2728,8 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	hdd_update_tgt_ht_cap(hdd_ctx, &cfg->ht_cap);
 
+	sme_update_bfer_caps_as_per_nss_chains(hdd_ctx->mac_handle, cfg);
+
 	hdd_update_tgt_vht_cap(hdd_ctx, &cfg->vht_cap);
 	if (cfg->services.en_11ax  &&
 	    (hdd_ctx->config->dot11Mode == eHDD_DOT11_MODE_AUTO ||
@@ -4240,6 +4247,11 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 
 	cds_set_driver_state_module_stop(false);
 
+	qdf_event_reset(&hdd_ctx->regulatory_update_event);
+	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+	hdd_ctx->is_regulatory_update_in_progress = true;
+	qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+
 	switch (hdd_ctx->driver_status) {
 	case DRIVER_MODULES_UNINITIALIZED:
 		hdd_nofl_debug("Wlan transitioning (UNINITIALIZED -> CLOSED)");
@@ -5553,6 +5565,7 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	QDF_STATUS qdf_status;
+	uint8_t latency_level;
 
 	/* cfg80211 initialization and registration */
 	dev = alloc_netdev_mq(sizeof(*adapter), name,
@@ -5621,7 +5634,13 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 	adapter->wdev.wiphy = hdd_ctx->wiphy;
 	adapter->wdev.netdev = dev;
-	adapter->latency_level = cfg_get(hdd_ctx->psoc, CFG_LATENCY_LEVEL);
+	qdf_status = ucfg_mlme_cfg_get_wlm_level(hdd_ctx->psoc, &latency_level);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_debug("Can't get latency level");
+		latency_level =
+			QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL;
+	}
+	adapter->latency_level = latency_level;
 
 	/* set dev's parent to underlying device */
 	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
@@ -6190,6 +6209,7 @@ static char *net_dev_ref_debug_string_from_id(wlan_net_dev_ref_dbgid dbgid)
 		"NET_DEV_HOLD_CACHE_STATION_STATS_CB",
 		"NET_DEV_HOLD_DISPLAY_TXRX_STATS",
 		"NET_DEV_HOLD_START_PRE_CAC_TRANS",
+		"NET_DEV_HOLD_IS_ANY_STA_CONNECTED",
 		"NET_DEV_HOLD_ID_MAX"};
 	int32_t num_dbg_strings = QDF_ARRAY_SIZE(strings);
 
@@ -7111,6 +7131,8 @@ static void __hdd_close_adapter(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter,
 				bool rtnl_held)
 {
+	if (adapter->device_mode == QDF_STA_MODE)
+		hdd_cleanup_conn_info(adapter);
 	qdf_list_destroy(&adapter->blocked_scan_request_q);
 	qdf_mutex_destroy(&adapter->blocked_scan_request_q_lock);
 	policy_mgr_clear_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
@@ -7445,7 +7467,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			ucfg_ipa_flush_pending_vdev_events(hdd_ctx->pdev,
 							   adapter->vdev_id);
 		}
-		hdd_cleanup_conn_info(adapter);
 		hdd_vdev_destroy(adapter);
 		break;
 
@@ -7549,7 +7570,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 				qdf_event_reset(&hostapd_state->
 						qdf_stop_bss_event);
-				status = qdf_wait_for_event_completion(
+				status = qdf_wait_single_event(
 					&hostapd_state->qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 				if (QDF_IS_STATUS_ERROR(status)) {
@@ -8001,9 +8022,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = bandwidth;
-	hdd_select_cbmode(adapter, freq,
-			  &roam_profile.ch_params);
-
+	hdd_select_cbmode(adapter, freq, 0, &roam_profile.ch_params);
 	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
@@ -8982,8 +9001,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
-	hdd_deinit_regulatory_update_event(hdd_ctx);
-
 	hdd_driver_memdump_deinit();
 
 	qdf_nbuf_deinit_replenish_timer();
@@ -9013,6 +9030,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 		hdd_lpass_notify_stop(hdd_ctx);
 	}
 
+	hdd_deinit_regulatory_update_event(hdd_ctx);
 	hdd_exit_netlink_services(hdd_ctx);
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
@@ -10030,6 +10048,13 @@ void hdd_send_mscs_action_frame(struct hdd_context *hdd_ctx,
 {
 	uint64_t mscs_vo_pkt_delta;
 	unsigned long tx_vo_pkts;
+
+	/*
+	 * To disable MSCS feature in driver set mscs_pkt_threshold = 0
+	 * in ini file.
+	 */
+	if (!hdd_ctx->config->mscs_pkt_threshold)
+		return;
 
 	tx_vo_pkts = adapter->hdd_stats.tx_rx_stats.tx_classified_ac[SME_AC_VO];
 
@@ -12325,6 +12350,7 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
+	bool reset;
 
 	hdd_enter_dev(adapter->dev);
 	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
@@ -12353,11 +12379,21 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 	hdd_register_hl_netdev_fc_timer(adapter,
 					hdd_tx_resume_timer_expired_handler);
 
-	status = sme_set_wlm_latency_level(hdd_ctx->mac_handle,
-					   adapter->vdev_id,
-					   adapter->latency_level);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_warn("set latency level failed, %u", status);
+	status = ucfg_mlme_cfg_get_wlm_reset(hdd_ctx->psoc, &reset);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not get the wlm reset flag");
+		reset = false;
+	}
+
+	if (!reset) {
+		status = sme_set_wlm_latency_level(hdd_ctx->mac_handle,
+						   adapter->vdev_id,
+						   adapter->latency_level);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_warn("set wlm mode failed, %u", status);
+		else
+			hdd_debug("set wlm mode %d", adapter->latency_level);
+	}
 
 	hdd_exit();
 
@@ -13527,6 +13563,17 @@ static int hdd_init_mws_coex(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef THERMAL_STATS_SUPPORT
+static void hdd_thermal_stats_cmd_init(struct hdd_context *hdd_ctx)
+{
+	hdd_send_get_thermal_stats_cmd(hdd_ctx, thermal_stats_init, NULL, NULL);
+}
+#else
+static void hdd_thermal_stats_cmd_init(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 /**
  * hdd_features_init() - Init features
  * @hdd_ctx:	HDD context
@@ -13642,6 +13689,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
 					       ALLOWED_KEYMGMT_6G_MASK);
 	}
+	hdd_thermal_stats_cmd_init(hdd_ctx);
 
 	hdd_exit();
 	return 0;
@@ -15741,7 +15789,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(hdd_ap_ctx->
 							sap_context)) {
-			qdf_status = qdf_wait_for_event_completion(&hostapd_state->
+			qdf_status = qdf_wait_single_event(&hostapd_state->
 					qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -15979,6 +16027,8 @@ static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_GET_ADAPTER;
 	int ret;
+	QDF_STATUS qdf_status;
+	uint8_t latency_level;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
@@ -15989,8 +16039,17 @@ static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
 					   dbgid) {
-		adapter->latency_level =
-				cfg_get(hdd_ctx->psoc, CFG_LATENCY_LEVEL);
+		qdf_status = ucfg_mlme_cfg_get_wlm_level(hdd_ctx->psoc,
+							 &latency_level);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			adapter->latency_level =
+			       QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL;
+		else
+			adapter->latency_level = latency_level;
+
+		adapter->upgrade_udp_qos_threshold = QCA_WLAN_AC_BK;
+		hdd_debug("UDP packets qos reset to: %d",
+			  adapter->upgrade_udp_qos_threshold);
 		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 }
@@ -16190,19 +16249,6 @@ dev_alloc_err:
 /* amount of time we sleep for each retry (arbitrary) */
 #define CTRL_PARAM_SLEEP 100
 
-static int wlan_hdd_state_ctrl_param_create_with_retry(void)
-{
-	int retries = CTRL_PARAM_WAIT / CTRL_PARAM_SLEEP;
-	int errno;
-
-	do {
-		errno = wlan_hdd_state_ctrl_param_create();
-		if (!errno || !--retries)
-			return errno;
-		msleep(CTRL_PARAM_SLEEP);
-	} while (true);
-}
-
 static void wlan_hdd_state_ctrl_param_destroy(void)
 {
 	cdev_del(&wlan_hdd_state_cdev);
@@ -16215,7 +16261,7 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 
 #else /* WLAN_CTRL_NAME */
 
-static int  wlan_hdd_state_ctrl_param_create_with_retry(void)
+static int wlan_hdd_state_ctrl_param_create(void)
 {
 	return 0;
 }
@@ -17031,16 +17077,10 @@ int hdd_driver_load(void)
 
 	hdd_set_conparam(con_mode);
 
-	errno = wlan_hdd_state_ctrl_param_create_with_retry();
-	if (errno) {
-		hdd_err("Failed to create ctrl param; errno:%d", errno);
-		goto wakelock_destroy;
-	}
-
 	errno = pld_init();
 	if (errno) {
 		hdd_err("Failed to init PLD; errno:%d", errno);
-		goto param_destroy;
+		goto wakelock_destroy;
 	}
 
 	/* driver mode pass to cnss2 platform driver*/
@@ -17059,11 +17099,20 @@ int hdd_driver_load(void)
 		hdd_err("Failed to register driver; errno:%d", errno);
 		goto pld_deinit;
 	}
+
+	errno = wlan_hdd_state_ctrl_param_create();
+	if (errno) {
+		hdd_err("Failed to create ctrl param; errno:%d", errno);
+		goto unregister_driver;
+	}
+
 	hdd_debug("%s: driver loaded", WLAN_MODULE_NAME);
 	hdd_place_marker(NULL, "DRIVER LOADED", NULL);
 
 	return 0;
 
+unregister_driver:
+	wlan_hdd_unregister_driver();
 pld_deinit:
 	status = osif_driver_sync_trans_start(&driver_sync);
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
@@ -17078,8 +17127,6 @@ pld_deinit:
 	/* Wait for any ref taken on /dev/wlan to be released */
 	while (qdf_atomic_read(&wlan_hdd_state_fops_ref))
 		;
-param_destroy:
-	wlan_hdd_state_ctrl_param_destroy();
 wakelock_destroy:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 comp_deinit:
@@ -17157,6 +17204,8 @@ void hdd_driver_unload(void)
 	 */
 	osif_driver_sync_trans_stop(driver_sync);
 
+	wlan_hdd_state_ctrl_param_destroy();
+
 	/* trigger SoC remove */
 	wlan_hdd_unregister_driver();
 
@@ -17173,7 +17222,6 @@ void hdd_driver_unload(void)
 
 	hdd_driver_mode_change_unregister();
 	pld_deinit();
-	wlan_hdd_state_ctrl_param_destroy();
 	hdd_set_conparam(0);
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 	hdd_component_deinit();
@@ -18151,9 +18199,8 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
-			qdf_status =
-				qdf_wait_for_event_completion(&hostapd_state->
-					qdf_stop_bss_event,
+			qdf_status = qdf_wait_single_event(
+					&hostapd_state->qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {

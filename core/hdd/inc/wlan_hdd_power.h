@@ -241,6 +241,17 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 			       enum pmo_offload_trigger trigger);
 
 /**
+ * hdd_set_grat_arp_keepalive() - Enable grat APR keepalive
+ * @adapter: the HDD adapter to configure
+ *
+ * This configures gratuitous APR keepalive based on the adapter's current
+ * connection information, specifically IPv4 address and BSSID
+ *
+ * return: zero for success, non-zero for failure
+ */
+int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter);
+
+/**
  * hdd_enable_mc_addr_filtering() - enable MC address list in FW
  * @adapter: adapter whose MC list is being set
  * @trigger: trigger reason for request
@@ -435,6 +446,23 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
  */
 int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 			   void *context);
+
+/**
+ * wlan_hdd_is_cpu_pm_qos_in_progress() - WLAN HDD PM QoS Status Function
+ *
+ * This function check for PM QoS global vote.
+ *
+ * Return: true if there is PM QoS global vote,
+ *	   or an false otherwise
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+bool wlan_hdd_is_cpu_pm_qos_in_progress(void);
+#else
+static inline bool wlan_hdd_is_cpu_pm_qos_in_progress(void)
+{
+	return false;
+}
+#endif
 #endif
 /**
  * wlan_hdd_ipv6_changed() - IPv6 change notifier callback

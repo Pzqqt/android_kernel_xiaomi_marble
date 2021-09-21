@@ -753,6 +753,16 @@ wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
 				   struct roam_msg_info *dst, uint8_t idx);
 
 /**
+ * wlan_cm_get_roam_band_value  - Get roam band value from RSO config
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * Return: Roam Band
+ */
+uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id);
+
+/**
  * wlan_cm_roam_activate_pcl_per_vdev() - Set the PCL command to be sent per
  * vdev instead of pdev.
  * @psoc: PSOC pointer
@@ -879,6 +889,19 @@ QDF_STATUS
 wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 				       uint8_t vdev_id,
 				       uint32_t roam_scan_scheme_bitmap);
+
+/**
+ * wlan_cm_set_roam_band_bitmask() - Set roam band bitmask for vdev
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @roam_band_bitmask: bitmask of roam band for which roam scan needs to be
+ * enabled in fw
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_set_roam_band_bitmask(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id,
+					 uint32_t roam_band_bitmask);
 
 /**
  * wlan_cm_get_roam_scan_scheme_bitmap() - Get roam scan scheme bitmap value
@@ -1039,6 +1062,13 @@ void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 {}
 
 static inline
+uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id)
+{
+	return REG_BAND_MASK_ALL;
+}
+
+static inline
 bool wlan_cm_roam_is_pcl_per_vdev_active(struct wlan_objmgr_psoc *psoc,
 					 uint8_t vdev_id)
 {
@@ -1113,6 +1143,13 @@ wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
+static inline QDF_STATUS
+wlan_cm_set_roam_band_bitmask(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			      uint32_t roam_band_bitmask)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
 static inline
 uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 					     uint8_t vdev_id)
@@ -1159,6 +1196,26 @@ cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
 }
 #endif
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+#ifdef WLAN_FEATURE_FIPS
+/**
+ * cm_roam_pmkid_req_ind() - Function to handle
+ * roam event from firmware for pmkid generation.
+ * @psoc: psoc pointer
+ * @vdev_id: Vdev id
+ * @bss_list: candidate AP bssid list
+ */
+QDF_STATUS
+cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
+		      uint8_t vdev_id, struct roam_pmkid_req_event *bss_list);
+#else /* WLAN_FEATURE_FIPS */
+static inline QDF_STATUS
+cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
+		      uint8_t vdev_id, struct roam_pmkid_req_event *bss_list)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_FIPS */
 
 /**
  * wlan_get_chan_by_bssid_from_rnr: get chan from rnr through bssid
@@ -1269,7 +1326,7 @@ void cm_handle_roam_reason_suitable_ap(uint8_t vdev_id, uint32_t rssi);
  * Return: QDF_STATUS
  */
 QDF_STATUS
-cm_roam_event_handler(struct roam_offload_roam_event roam_event);
+cm_roam_event_handler(struct roam_offload_roam_event *roam_event);
 
 /**
  * cm_btm_blacklist_event_handler() - Black list the given BSSID due to btm
@@ -1308,6 +1365,44 @@ cm_handle_disconnect_reason(struct vdev_disconnect_event_data *data);
  */
 QDF_STATUS
 cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data);
+
+/**
+ * cm_roam_stats_event_handler() - Carries extracted roam stats info
+ * @psoc: PSOC pointer
+ * @stats_info: stats data carried by roam_stats_event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
+			    struct roam_stats_event *stats_info);
+
+/**
+ * cm_handle_auth_offload() - auth offload evt wrapper for wma
+ * @auth_event: auth offload event data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_auth_offload(struct auth_offload_event *auth_event);
+
+/**
+ * cm_roam_auth_offload_event_handler() - Handler for auth offload event
+ * @auth_event: Authentication event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_auth_offload_event_handler(struct auth_offload_event *auth_event);
+
+/*
+ * cm_roam_pmkid_request_handler() - Carries extracted pmkid list info
+ * @data: Pmkid event with entries
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data);
 
 /**
  * cm_roam_update_vdev() - Update the STA and BSS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,7 @@
 
 #include "wlan_ipa_public_struct.h"
 #include "wlan_objmgr_pdev_obj.h"
+#include "wlan_ipa_main.h"
 
 #ifdef IPA_OFFLOAD
 
@@ -57,6 +58,17 @@ QDF_STATUS ipa_register_is_ipa_ready(struct wlan_objmgr_pdev *pdev);
  */
 void ipa_disable_register_cb(void);
 
+/**
+ * wlan_ipa_config_is_enabled() - api to get IPA enable status
+ *
+ * Return: true - ipa is enabled
+ *         false - ipa is not enabled
+ */
+static inline bool wlan_ipa_config_is_enabled(void)
+{
+	return ipa_config_is_enabled();
+}
+
 #else
 
 static inline QDF_STATUS ipa_init(void)
@@ -78,6 +90,12 @@ static inline QDF_STATUS ipa_register_is_ipa_ready(
 static inline void ipa_disable_register_cb(void)
 {
 }
+
+static inline bool wlan_ipa_config_is_enabled(void)
+{
+	return false;
+}
+
 #endif /* IPA_OFFLOAD */
 
 #endif /* _WLAN_IPA_OBJ_MGMT_H_ */

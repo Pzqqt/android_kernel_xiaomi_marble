@@ -326,6 +326,89 @@ QDF_STATUS
 wmi_extract_roam_scan_chan_list(wmi_unified_t wmi_handle,
 				uint8_t *event, uint32_t data_len,
 				struct cm_roam_scan_ch_resp **data);
+
+/**
+ * wmi_unified_extract_roam_btm_response() - Extract BTM response
+ * @wmi:       wmi handle
+ * @evt_buf:   Pointer to the event buffer
+ * @dst:       Pointer to destination structure to fill data
+ * @idx:       TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_btm_response(wmi_unified_t wmi, void *evt_buf,
+				      struct roam_btm_response_data *dst,
+				      uint8_t idx);
+
+/**
+ * wmi_unified_extract_roam_initial_info() - Extract initial info
+ * @wmi:       wmi handle
+ * @evt_buf:   Pointer to the event buffer
+ * @dst:       Pointer to destination structure to fill data
+ * @idx:       TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
+				      struct roam_initial_data *dst,
+				      uint8_t idx);
+
+/**
+ * wmi_unified_extract_roam_msg_info() - Extract roam msg info
+ * @wmi:       wmi handle
+ * @evt_buf:   Pointer to the event buffer
+ * @dst:       Pointer to destination structure to fill data
+ * @idx:       TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
+				  struct roam_msg_info *dst, uint8_t idx);
+
+/**
+ * wmi_extract_roam_stats_event  - Extract roam stats event
+ * @wmi_handle: WMI handle
+ * @event: Event data received from firmware
+ * @data_len: Event data length received from firmware
+ * @stats_info: Extract the event and fill in stats_info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_extract_roam_stats_event(wmi_unified_t wmi_handle,
+			     uint8_t *event, uint32_t data_len,
+			     struct roam_stats_event **stats_info);
+
+/**
+ * wmi_extract_auth_offload_event  - Extract auth offload event
+ * @wmi_handle: WMI handle
+ * @event: Event data received from firmware
+ * @data_len: Event data length received from firmware
+ * @roam_event: Extract the event and fill in auth_event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_extract_auth_offload_event(wmi_unified_t wmi_handle,
+			       uint8_t *event, uint32_t data_len,
+			       struct auth_offload_event *auth_event);
+
+/**
+ * wmi_extract_roam_pmkid_request - Extract roam pmkid list
+ * @wmi_handle: WMI handle
+ * @event: Event data received from firmware
+ * @data_len: Event data length received from firmware
+ * @data: Extract the event and fill in data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_extract_roam_pmkid_request(wmi_unified_t wmi_handle,
+			       uint8_t *event, uint32_t data_len,
+			       struct roam_pmkid_req_event **data);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

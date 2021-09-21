@@ -484,6 +484,9 @@ typedef struct {
 	uint32_t ecsa_count_offset;
 	enum sir_bcn_update_reason reason;
 	QDF_STATUS status;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_bcn_templ_partner_links mlo_partner;
+#endif
 } tSendbeaconParams, *tpSendbeaconParams;
 
 /**

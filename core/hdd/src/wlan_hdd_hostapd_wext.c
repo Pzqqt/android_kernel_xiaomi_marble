@@ -2138,8 +2138,7 @@ __iw_softap_stopbss(struct net_device *dev,
 		status = wlansap_stop_bss(
 			WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			status =
-				qdf_wait_for_event_completion(&hostapd_state->
+			status = qdf_wait_single_event(&hostapd_state->
 					qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
 

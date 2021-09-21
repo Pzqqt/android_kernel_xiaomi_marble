@@ -1014,6 +1014,7 @@ typedef struct {
 	ol_txrx_pktdump_cb wma_mgmt_rx_packetdump_cb;
 	bool rcpi_enabled;
 	tSirLLStatsResults *link_stats_results;
+	qdf_mutex_t radio_stats_lock;
 	uint64_t tx_fail_cnt;
 #ifdef FEATURE_WLM_STATS
 	struct wma_wlm_stats_data wlm_data;

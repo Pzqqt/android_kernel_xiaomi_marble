@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2021 The Linux Foundation. All rights reserved.
  *
  *
  *
@@ -126,7 +126,9 @@
 #define CFG_TGT_DEFAULT_SCAN_MAX_REQS   0x4
 
 /* maximum number of VDEV that could use BMISS offload */
+#ifndef CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV
 #define CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV   0x3
+#endif
 
 /* maximum number of VDEV offload Roaming to support */
 #ifndef CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV

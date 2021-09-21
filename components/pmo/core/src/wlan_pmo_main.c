@@ -25,6 +25,7 @@
 #include "wlan_pmo_cfg.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
+#include "wlan_ipa_obj_mgmt_api.h"
 
 static struct wlan_pmo_ctx *gp_pmo_ctx;
 
@@ -240,6 +241,11 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE);
 	psoc_cfg->is_bus_suspend_enabled_in_go_mode =
 		cfg_get(psoc, CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE);
+	if (wlan_ipa_config_is_enabled()) {
+		pmo_info("ipa is enabled and hence disable sap/go d3 wow");
+		psoc_cfg->is_bus_suspend_enabled_in_sap_mode = 0;
+		psoc_cfg->is_bus_suspend_enabled_in_go_mode = 0;
+	}
 	psoc_cfg->is_dynamic_pcie_gen_speed_change_enabled =
 		cfg_get(psoc, CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH);
 	psoc_cfg->default_power_save_mode = psoc_cfg->power_save_mode;
@@ -269,6 +275,8 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	wlan_pmo_get_igmp_offload_enable_cfg(psoc, psoc_cfg);
 	psoc_cfg->disconnect_sap_tdls_in_wow =
 			cfg_get(psoc, CFG_DISCONNECT_SAP_TDLS_IN_WOW);
+	psoc_cfg->is_icmp_offload_enable =
+			cfg_get(psoc, CFG_ENABLE_ICMP_OFFLOAD);
 }
 
 QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)

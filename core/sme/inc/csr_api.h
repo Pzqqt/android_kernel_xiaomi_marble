@@ -30,6 +30,7 @@
 #include "csr_link_list.h"
 #include "wlan_scan_public_structs.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_main.h"
 
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
 
@@ -381,21 +382,6 @@ typedef enum {
 	eCSR_CONNECT_STATE_TYPE_NDI_STARTED,
 } eCsrConnectState;
 
-/*
- * This parameter is no longer supported in the Profile.
- * Need to set this in the global properties for the adapter.
- */
-typedef enum eCSR_MEDIUM_ACCESS {
-	eCSR_MEDIUM_ACCESS_AUTO = 0,
-	eCSR_MEDIUM_ACCESS_DCF,
-	eCSR_MEDIUM_ACCESS_11e_eDCF,
-	eCSR_MEDIUM_ACCESS_11e_HCF,
-
-	eCSR_MEDIUM_ACCESS_WMM_eDCF_802dot1p,
-	eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP,
-	eCSR_MEDIUM_ACCESS_WMM_eDCF_NoClassify,
-} eCsrMediaAccessType;
-
 typedef enum {
 	eCSR_OPERATING_CHANNEL_ALL = 0,
 	eCSR_OPERATING_CHANNEL_AUTO = eCSR_OPERATING_CHANNEL_ALL,
@@ -422,13 +408,6 @@ typedef enum {
 	eCsrRoamReasonSmeIssuedForLostLink,
 
 } eCsrRoamReasonCodes;
-
-typedef enum {
-	eCsrRoamWmmAuto = 0,
-	eCsrRoamWmmQbssOnly = 1,
-	eCsrRoamWmmNoQos = 2,
-
-} eCsrRoamWmmUserModeType;
 
 /*
  * Following fields might need modification dynamically once STA is up
@@ -490,7 +469,7 @@ struct csr_config_params {
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
 	uint32_t HeartbeatThresh50;
-	eCsrRoamWmmUserModeType WMMSupportMode;
+	enum wmm_user_mode WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
 	/* to set MCC Enable/Disable mode */
@@ -612,6 +591,7 @@ struct csr_roam_info {
 	struct sir_sae_info *sae_info;
 #endif
 	struct assoc_ind *owe_pending_assoc_ind;
+	struct qdf_mac_addr peer_mld;
 };
 
 typedef struct sSirSmeAssocIndToUpperLayerCnf {
@@ -651,6 +631,9 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	tDot11fIEVHTCaps vht_caps;
 	tSirMacCapabilityInfo capability_info;
 	bool he_caps_present;
+#ifdef WLAN_FEATURE_11BE_MLO
+	tSirMacAddr peer_mld_addr;
+#endif
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {

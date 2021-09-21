@@ -48,6 +48,7 @@
  * @scan_ie: Default scan ie to be used in the uncast probe req
  * @entry: scan entry for the candidate
  * @partner_info: Partner link information for an ML connection
+ * @assoc_link_id: Assoc link ID of an ML connection
  */
 struct cm_vdev_join_req {
 	uint8_t vdev_id;
@@ -61,6 +62,7 @@ struct cm_vdev_join_req {
 	struct scan_cache_entry *entry;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct mlo_partner_info partner_info;
+	uint8_t assoc_link_id;
 #endif
 };
 

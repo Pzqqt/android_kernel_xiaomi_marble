@@ -437,6 +437,8 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		      vdev_id, mac_ctx->mgmtSeqNum,
 		      QDF_MAC_ADDR_REF(bssid),
 		      (int)sizeof(tSirMacMgmtHdr) + payload);
+	qdf_trace_hex_dump(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG, frame,
+			   sizeof(tSirMacMgmtHdr) + payload);
 
 	/* If this probe request is sent during P2P Search State, then we need
 	 * to send it at OFDM rate.
@@ -1584,6 +1586,11 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			populate_dot11f_eht_operation(mac_ctx, pe_session,
 						      &frm.eht_op);
 		}
+
+#ifdef WLAN_FEATURE_11BE_MLO
+		populate_dot11f_assoc_rsp_mlo_ie(mac_ctx, pe_session,
+						 sta, &frm);
+ #endif
 
 		if (status_code == STATUS_ASSOC_REJECTED_TEMPORARILY) {
 			max_retries =
@@ -3151,10 +3158,10 @@ alloc_packet:
 		}
 	}
 
-	pe_nofl_info("Auth TX: seq %d seq num %d status %d WEP %d to " QDF_MAC_ADDR_FMT,
-		     auth_frame->authTransactionSeqNumber, mac_ctx->mgmtSeqNum,
-		     auth_frame->authStatusCode, mac_hdr->fc.wep,
-		     QDF_MAC_ADDR_REF(mac_hdr->da));
+	pe_nofl_info("Auth TX: vdev %d seq %d seq num %d status %d WEP %d to " QDF_MAC_ADDR_FMT,
+		     vdev_id, auth_frame->authTransactionSeqNumber,
+		     mac_ctx->mgmtSeqNum, auth_frame->authStatusCode,
+		     mac_hdr->fc.wep, QDF_MAC_ADDR_REF(mac_hdr->da));
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   frame, frame_len);
 
@@ -5400,9 +5407,10 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	uint8_t dialog_token;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t he_frag = 0;
-	tpDphHashNode sta_ds;
+	tpDphHashNode sta_ds = NULL;
 	uint16_t aid;
 	bool he_cap = false;
+	struct wlan_mlme_qos *qos_aggr;
 
 	vdev_id = session->vdev_id;
 
@@ -5410,50 +5418,59 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 				&dialog_token, &status_code, &buff_size,
 				&batimeout);
 
+	qos_aggr = &mac_ctx->mlme_cfg->qos_mlme_params;
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 	frm.Category.category = ACTION_CATEGORY_BACK;
 	frm.Action.action = ADDBA_RESPONSE;
 
 	frm.DialogToken.token = dialog_token;
 	frm.Status.status = status_code;
-	if (mac_ctx->reject_addba_req) {
+
+	if ((LIM_IS_STA_ROLE(session) && qos_aggr->rx_aggregation_size == 1 &&
+	    !mac_ctx->usr_cfg_ba_buff_size) || mac_ctx->reject_addba_req) {
 		frm.Status.status = STATUS_REQUEST_DECLINED;
-		pe_err("refused addba req");
-	}
-	frm.addba_param_set.tid = tid;
+		pe_err("refused addba req for rx_aggregation_size: %d mac_ctx->reject_addba_req: %d",
+		       qos_aggr->rx_aggregation_size, mac_ctx->reject_addba_req);
+	} else if (LIM_IS_STA_ROLE(session) && !mac_ctx->usr_cfg_ba_buff_size) {
+		frm.addba_param_set.buff_size =
+			QDF_MIN(qos_aggr->rx_aggregation_size, calc_buff_size);
+	} else {
+		sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
+					       &session->dph.dphHashTable);
+		if (sta_ds && lim_is_session_he_capable(session))
+			he_cap = lim_is_sta_he_capable(sta_ds);
 
-	sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
-				       &session->dph.dphHashTable);
-	if (sta_ds && lim_is_session_he_capable(session))
-		he_cap = lim_is_sta_he_capable(sta_ds);
-
-	if (sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER)
-		frm.addba_param_set.buff_size = calc_buff_size;
-	else if (he_cap)
-		frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
-	else
-		frm.addba_param_set.buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
-
-	if (mac_ctx->usr_cfg_ba_buff_size)
-		frm.addba_param_set.buff_size = mac_ctx->usr_cfg_ba_buff_size;
-
-	if (frm.addba_param_set.buff_size > MAX_BA_BUFF_SIZE)
-		frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
-
-	if (frm.addba_param_set.buff_size > SIR_MAC_BA_DEFAULT_BUFF_SIZE) {
-		if (session->active_ba_64_session) {
+		if (sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER)
+			frm.addba_param_set.buff_size = calc_buff_size;
+		else if (he_cap)
+			frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
+		else
 			frm.addba_param_set.buff_size =
-				SIR_MAC_BA_DEFAULT_BUFF_SIZE;
+					SIR_MAC_BA_DEFAULT_BUFF_SIZE;
+
+		if (mac_ctx->usr_cfg_ba_buff_size)
+			frm.addba_param_set.buff_size =
+					mac_ctx->usr_cfg_ba_buff_size;
+
+		if (frm.addba_param_set.buff_size > MAX_BA_BUFF_SIZE)
+			frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
+
+		if (frm.addba_param_set.buff_size > SIR_MAC_BA_DEFAULT_BUFF_SIZE) {
+			if (session->active_ba_64_session) {
+				frm.addba_param_set.buff_size =
+					SIR_MAC_BA_DEFAULT_BUFF_SIZE;
+			}
+		} else if (!session->active_ba_64_session) {
+			session->active_ba_64_session = true;
 		}
-	} else if (!session->active_ba_64_session) {
-		session->active_ba_64_session = true;
-	}
-	if (buff_size && (frm.addba_param_set.buff_size > buff_size)) {
-		pe_debug("buff size: %d larger than peer's capability: %d",
-			 frm.addba_param_set.buff_size, buff_size);
-		frm.addba_param_set.buff_size = buff_size;
+		if (buff_size && (frm.addba_param_set.buff_size > buff_size)) {
+			pe_debug("buff size: %d larger than peer's capability: %d",
+				 frm.addba_param_set.buff_size, buff_size);
+			frm.addba_param_set.buff_size = buff_size;
+		}
 	}
 
+	frm.addba_param_set.tid = tid;
 	/* Enable RX AMSDU only in HE mode if supported */
 	if (mac_ctx->is_usr_cfg_amsdu_enabled &&
 	    ((IS_PE_SESSION_HE_MODE(session) &&

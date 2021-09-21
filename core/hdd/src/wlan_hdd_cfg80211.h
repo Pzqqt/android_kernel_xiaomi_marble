@@ -417,8 +417,17 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       uint32_t ch_freq);
 
-void hdd_select_cbmode(struct hdd_adapter *adapter, uint32_t oper_freq,
-		       struct ch_params *ch_params);
+/**
+ * hdd_select_cbmode() - select channel bonding mode
+ * @adapter: Pointer to adapter
+ * @oper_freq: Operating frequency (MHz)
+ * @sec_ch_2g_freq: secondary channel freq
+ * @ch_params: channel info struct to populate
+ *
+ * Return: none
+ */
+void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
+		       qdf_freq_t sec_ch_2g_freq, struct ch_params *ch_params);
 
 /**
  * wlan_hdd_is_ap_supports_immediate_power_save() - to find certain vendor APs

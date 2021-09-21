@@ -328,6 +328,19 @@ void lim_send_sme_mgmt_frame_ind(struct mac_context *mac_ctx, uint8_t frame_type
 void lim_deactivate_timers(struct mac_context *mac_ctx);
 
 /*
+ * lim_deactivate_timers_for_vdev() - Deactivate lim connection timers
+ * @mac_ctx: Pointer to global mac structure
+ * @vdev_id: vdev id
+ *
+ * This function is used to trigger timeout of lim connection timers to abort
+ * connect request.
+ *
+ * Return: None
+ */
+void lim_deactivate_timers_for_vdev(struct mac_context *mac_ctx,
+				    uint8_t vdev_id);
+
+/*
  * The below 'product' check tobe removed if 'Association' is
  * allowed in IBSS.
  */

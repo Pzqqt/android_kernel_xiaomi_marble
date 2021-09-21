@@ -73,7 +73,7 @@ static void lim_notify_link_info(struct pe_session *pe_session)
 	for (link = 0; link < vdev_count; link++) {
 		if (!wlan_vdev_list[link])
 			continue;
-		if (wlan_vdev_list[link] == session->vdev) {
+		if (wlan_vdev_list[link] == pe_session->vdev) {
 			lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
 			continue;
 		}
@@ -81,8 +81,42 @@ static void lim_notify_link_info(struct pe_session *pe_session)
 		lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
 	}
 }
+
+/**
+ * lim_update_sch_mlo_partner() - update partner information needed in mlo IE
+ * @mac: pointer to mac
+ * @pe_session: pointer to pe session
+ * @bcn_param: pointer to tpSendbeaconParams
+ *
+ * Return: void
+ */
+static void lim_update_sch_mlo_partner(struct mac_context *mac,
+				       struct pe_session *pe_session,
+				       tpSendbeaconParams bcn_param)
+{
+	int link;
+	struct ml_sch_partner_info *sch_info;
+	struct ml_bcn_partner_info *bcn_info;
+
+	bcn_param->mlo_partner.num_links = mac->sch.sch_mlo_partner.num_links;
+	for (link = 0; link < mac->sch.sch_mlo_partner.num_links; link++) {
+		sch_info = &mac->sch.sch_mlo_partner.partner_info[link];
+		bcn_info = &bcn_param->mlo_partner.partner_info[link];
+		bcn_info->vdev_id = sch_info->vdev_id;
+		bcn_info->beacon_interval = sch_info->beacon_interval;
+		bcn_info->csa_switch_count_offset = sch_info->bcn_csa_cnt_ofst;
+		bcn_info->ext_csa_switch_count_offset =
+					sch_info->bcn_ext_csa_cnt_ofst;
+	}
+}
 #else
 static void lim_notify_link_info(struct pe_session *pe_session)
+{
+}
+
+static void lim_update_sch_mlo_partner(struct mac_context *mac,
+				       struct pe_session *pe_session,
+				       tpSendbeaconParams bcn_param)
 {
 }
 #endif
@@ -127,7 +161,7 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 		beaconParams->csa_count_offset = mac->sch.csa_count_offset;
 		beaconParams->ecsa_count_offset = mac->sch.ecsa_count_offset;
 	}
-
+	lim_update_sch_mlo_partner(mac, pe_session, beaconParams);
 	beaconParams->vdev_id = pe_session->smeSessionId;
 	beaconParams->reason = reason;
 

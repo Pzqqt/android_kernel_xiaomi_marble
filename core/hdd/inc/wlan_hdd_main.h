@@ -527,6 +527,7 @@ typedef enum {
 	NET_DEV_HOLD_DISPLAY_TXRX_STATS = 58,
 	NET_DEV_HOLD_BUS_BW_MGR = 59,
 	NET_DEV_HOLD_START_PRE_CAC_TRANS = 60,
+	NET_DEV_HOLD_IS_ANY_STA_CONNECTED = 61,
 
 	/* Keep it at the end */
 	NET_DEV_HOLD_ID_MAX
@@ -1877,7 +1878,6 @@ struct hdd_context {
 	qdf_spinlock_t hdd_adapter_lock;
 	qdf_list_t hdd_adapters; /* List of adapters */
 	bool is_therm_cmd_supp;
-
 	/** Pointer for firmware image data */
 	const struct firmware *fw;
 
@@ -2224,10 +2224,13 @@ struct hdd_context {
 #endif
 	bool is_wifi3_0_target;
 	bool dump_in_progress;
-	qdf_time_t bw_vote_time;
+	uint64_t bw_vote_time;
 	struct hdd_dual_sta_policy dual_sta_policy;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct hdd_mld_mac_info mld_mac_info;
+#endif
+#ifdef THERMAL_STATS_SUPPORT
+	bool is_therm_stats_in_progress;
 #endif
 };
 

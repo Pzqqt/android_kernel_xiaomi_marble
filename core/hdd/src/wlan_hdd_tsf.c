@@ -1971,21 +1971,6 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 	return HDD_TSF_OP_SUCC;
 }
 #endif
-
-void hdd_tsf_notify_wlan_state_change(struct hdd_adapter *adapter,
-				      eConnectionState old_state,
-				      eConnectionState new_state)
-{
-	if (!adapter)
-		return;
-
-	if (old_state != eConnectionState_Associated &&
-	    new_state == eConnectionState_Associated)
-		hdd_start_tsf_sync(adapter);
-	else if (old_state == eConnectionState_Associated &&
-		 new_state != eConnectionState_Associated)
-		hdd_stop_tsf_sync(adapter);
-}
 #else
 static inline void hdd_update_tsf(struct hdd_adapter *adapter, uint64_t tsf)
 {

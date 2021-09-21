@@ -3607,7 +3607,7 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 	switch (value) {
 	case 1:
 		/* Enable PowerSave */
-		sme_save_usr_ps_cfg(mac_handle, true);
+		ucfg_mlme_set_user_ps(hdd_ctx->psoc, adapter->vdev_id, true);
 		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_ENABLE);
 		return 0;
@@ -3615,7 +3615,7 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 		/* Disable PowerSave */
 		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_DISABLE);
-		sme_save_usr_ps_cfg(mac_handle, false);
+		ucfg_mlme_set_user_ps(hdd_ctx->psoc, adapter->vdev_id, false);
 		return 0;
 	case 3:
 		/* Enable UASPD */
@@ -5939,9 +5939,8 @@ hdd_connection_state_string(eConnectionState connection_state)
 {
 	switch (connection_state) {
 		CASE_RETURN_STRING(eConnectionState_NotConnected);
-		CASE_RETURN_STRING(eConnectionState_Connecting);
-		CASE_RETURN_STRING(eConnectionState_Associated);
-		CASE_RETURN_STRING(eConnectionState_Disconnecting);
+		CASE_RETURN_STRING(eConnectionState_NdiDisconnected);
+		CASE_RETURN_STRING(eConnectionState_NdiConnected);
 	default:
 		return "UNKNOWN";
 	}
@@ -6475,21 +6474,18 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		int status = 0;
 		bool enable_snr_monitoring;
 		struct hdd_context *hdd_ctx;
-		struct hdd_station_ctx *sta_ctx;
 
 		hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 		status = wlan_hdd_validate_context(hdd_ctx);
 		if (status)
 			return status;
 
-		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		enable_snr_monitoring =
 				ucfg_scan_is_snr_monitor_enabled(hdd_ctx->psoc);
 		if (!enable_snr_monitoring ||
 		    !hdd_cm_is_vdev_associated(adapter)) {
-			hdd_err("getSNR failed: Enable SNR Monitoring-%d, ConnectionState-%d",
-				enable_snr_monitoring,
-				sta_ctx->conn_info.conn_state);
+			hdd_err("getSNR failed: Enable SNR Monitoring-%d",
+				enable_snr_monitoring);
 			return -ENONET;
 		}
 		wlan_hdd_get_snr(adapter, &s7snr);
@@ -6718,13 +6714,13 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		if ((apps_args[0] < 0) || (apps_args[1] < 0) ||
 		    (apps_args[2] < 0) || (apps_args[3] < 0) ||
 		    (apps_args[4] < 0) || (apps_args[5] < 0) ||
-		    (apps_args[6] < 0) || (apps_args[7] < 0)) {
+		    (apps_args[6] < 0)) {
 			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
 		policy_mgr_incr_connection_count_utfw(hdd_ctx->psoc,
 			apps_args[0], apps_args[1], apps_args[2], apps_args[3],
-			apps_args[4], apps_args[5], apps_args[6], apps_args[7]);
+			apps_args[4], apps_args[5], apps_args[6]);
 	}
 	break;
 
@@ -6843,43 +6839,124 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 
 	case WE_POLICY_MANAGER_SCENARIO_CMD:
 	{
+#define FREQ_2G_A 2437
+#define FREQ_2G_B 2462
+#define FREQ_5G_LOW 5180
+#define FREQ_5G_HIGH 5745
+#define FREQ_6G_A 5975
+#define FREQ_6G_B 6135
 		clean_report(hdd_ctx);
 		if (apps_args[0] == 1) {
 			wlan_hdd_one_connection_scenario(hdd_ctx);
 		} else if (apps_args[0] == 2) {
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				6, POLICY_MGR_TWO_TWO);
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				36, POLICY_MGR_TWO_TWO);
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				6, POLICY_MGR_ONE_ONE);
-			wlan_hdd_two_connections_scenario(hdd_ctx,
-				36, POLICY_MGR_ONE_ONE);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_2G_A, POLICY_MGR_TWO_TWO);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_2G_A, POLICY_MGR_ONE_ONE);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, POLICY_MGR_ONE_ONE);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, POLICY_MGR_TWO_TWO);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_5G_HIGH, POLICY_MGR_ONE_ONE);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_5G_HIGH, POLICY_MGR_TWO_TWO);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_6G_A, POLICY_MGR_ONE_ONE);
+			wlan_hdd_two_connections_scenario(
+				hdd_ctx, FREQ_6G_A, POLICY_MGR_TWO_TWO);
 		} else if (apps_args[0] == 3) {
-			/* MCC on same band with 2x2 same mac*/
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				6, 11, POLICY_MGR_TWO_TWO, 0);
-			/* MCC on diff band with 2x2 same mac*/
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				6, 36, POLICY_MGR_TWO_TWO, 0);
-			/* MCC on diff band with 1x1 diff mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 6, POLICY_MGR_ONE_ONE, 0);
-			/* MCC on diff band with 1x1 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 6, POLICY_MGR_ONE_ONE, 1);
-			/* SCC on same band with 2x2 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 36, POLICY_MGR_TWO_TWO, 0);
-			/* SCC on same band with 1x1 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 36, POLICY_MGR_ONE_ONE, 1);
-			/* MCC on same band with 2x2 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 149, POLICY_MGR_TWO_TWO, 0);
-			/* MCC on same band with 1x1 same mac */
-			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 149, POLICY_MGR_ONE_ONE, 1);
+			/* PM_STA_SAP_SCC_24_1x1 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_2G_A,
+				POLICY_MGR_ONE_ONE, 1);
+			/* PM_STA_SAP_SCC_24_2x2 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_2G_A,
+				POLICY_MGR_TWO_TWO, 1);
+			/* PM_STA_SAP_MCC_24_1x1 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_2G_B,
+				POLICY_MGR_ONE_ONE, 1);
+			/* PM_STA_SAP_MCC_24_2x2 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_2G_B,
+				POLICY_MGR_TWO_TWO, 1);
+			/* PM_STA_SAP_SCC_5_1x1 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_5G_LOW,
+				POLICY_MGR_ONE_ONE, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_HIGH, FREQ_5G_HIGH,
+				POLICY_MGR_ONE_ONE, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_6G_A, FREQ_6G_A,
+				POLICY_MGR_ONE_ONE, 1);
+			/* PM_STA_SAP_SCC_5_2x2 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_5G_LOW,
+				POLICY_MGR_TWO_TWO, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_HIGH, FREQ_5G_HIGH,
+				POLICY_MGR_TWO_TWO, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_6G_A, FREQ_6G_A,
+				POLICY_MGR_TWO_TWO, 1);
+			/* PM_STA_SAP_MCC_5_1x1 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_5G_HIGH,
+				POLICY_MGR_ONE_ONE, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_6G_A,
+				POLICY_MGR_ONE_ONE, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_6G_A, FREQ_6G_B,
+				POLICY_MGR_ONE_ONE, 1);
+			/* PM_STA_SAP_MCC_5_2x2 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_5G_HIGH,
+				POLICY_MGR_TWO_TWO, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_6G_A,
+				POLICY_MGR_TWO_TWO, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_6G_A, FREQ_6G_B,
+				POLICY_MGR_TWO_TWO, 1);
+			/* PM_STA_SAP_MCC_24_5_1x1 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_5G_HIGH,
+				POLICY_MGR_ONE_ONE, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_6G_A,
+				POLICY_MGR_ONE_ONE, 1);
+			/* PM_STA_SAP_MCC_24_5_2x2 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_5G_HIGH,
+				POLICY_MGR_TWO_TWO, 1);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_6G_A,
+				POLICY_MGR_TWO_TWO, 1);
+			/* PM_STA_SAP_DBS_1x1 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_5G_HIGH,
+				POLICY_MGR_ONE_ONE, 0);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_6G_A,
+				POLICY_MGR_ONE_ONE, 0);
+			/* PM_STA_SAP_DBS_2x2 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_5G_HIGH,
+				POLICY_MGR_TWO_TWO, 0);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_2G_A, FREQ_6G_A,
+				POLICY_MGR_TWO_TWO, 0);
+			/* PM_STA_SAP_SBS_5_1x1 or PM_STA_SAP_SBS_5_2x2 */
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_5G_HIGH,
+				POLICY_MGR_ONE_ONE, 0);
+			wlan_hdd_three_connections_scenario(
+				hdd_ctx, FREQ_5G_LOW, FREQ_6G_A,
+				POLICY_MGR_ONE_ONE, 0);
 		}
 		print_report(hdd_ctx);
 	}

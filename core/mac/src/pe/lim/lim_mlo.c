@@ -99,7 +99,7 @@ struct pe_session *pe_find_partner_session_by_link_id(
 		return NULL;
 	}
 
-	vdev = mlo_get_partner_vdev_by_link_id(session->vdev, link_id);
+	vdev = mlo_get_vdev_by_link_id(session->vdev, link_id);
 
 	if (!vdev) {
 		pe_err("vdev is null");
@@ -515,7 +515,7 @@ void lim_mlo_ap_sta_assoc_suc(struct wlan_objmgr_peer *peer)
 	}
 	sta = dph_lookup_hash_entry(mac, peer->macaddr, &aid,
 				    &pe_session->dph.dphHashTable);
-	if (!sta_ds) {
+	if (!sta) {
 		pe_err("sta ds is null");
 		return;
 	}
@@ -644,7 +644,7 @@ void lim_mlo_ap_sta_assoc_fail(struct wlan_objmgr_peer *peer)
 	}
 	sta = dph_lookup_hash_entry(mac, peer->macaddr, &aid,
 				    &pe_session->dph.dphHashTable);
-	if (!sta_ds) {
+	if (!sta) {
 		pe_err("sta ds is null");
 		return;
 	}

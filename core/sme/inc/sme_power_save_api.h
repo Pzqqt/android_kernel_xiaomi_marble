@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,15 +82,5 @@ void sme_auto_ps_entry_timer_expired(void *ps_param);
 QDF_STATUS sme_ps_close(mac_handle_t mac_handle);
 QDF_STATUS sme_ps_close_per_session(mac_handle_t mac_handle,
 				    uint32_t session_id);
-
-/**
- * sme_save_usr_ps_cfg(): saves user power save config
- * @mac_handle: Opaque handle to the global MAC context
- * @val: set val
- *
- * Returns: QDF_STATUS
- */
-void sme_save_usr_ps_cfg(mac_handle_t mac_handle, bool val);
-
 #endif /* #if !defined(__SME_POWER_SAVE_API_H) */
 

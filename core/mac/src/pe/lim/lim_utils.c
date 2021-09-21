@@ -495,6 +495,66 @@ void lim_deactivate_timers(struct mac_context *mac_ctx)
 	tx_timer_deactivate(&lim_timer->sae_auth_timer);
 }
 
+void lim_deactivate_timers_for_vdev(struct mac_context *mac_ctx,
+				    uint8_t vdev_id)
+{
+	tLimTimers *lim_timer = &mac_ctx->lim.lim_timers;
+	struct pe_session *pe_session;
+
+	pe_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!pe_session) {
+		pe_err("pe session invalid for vdev %d", vdev_id);
+		return;
+	}
+	pe_debug("pe limMlmState %s vdev %d",
+		 lim_mlm_state_str(pe_session->limMlmState),
+		 vdev_id);
+	switch (pe_session->limMlmState) {
+	case eLIM_MLM_WT_JOIN_BEACON_STATE:
+		if (tx_timer_running(
+				&lim_timer->gLimJoinFailureTimer)) {
+			pe_debug("Trigger Join failure timeout for vdev %d",
+				 vdev_id);
+			tx_timer_deactivate(
+				&lim_timer->gLimJoinFailureTimer);
+			lim_process_join_failure_timeout(mac_ctx);
+		}
+		break;
+	case eLIM_MLM_WT_AUTH_FRAME2_STATE:
+	case eLIM_MLM_WT_AUTH_FRAME4_STATE:
+		if (tx_timer_running(
+				&lim_timer->gLimAuthFailureTimer)) {
+			pe_debug("Trigger Auth failure timeout for vdev %d",
+				 vdev_id);
+			tx_timer_deactivate(
+				&lim_timer->gLimAuthFailureTimer);
+			lim_process_auth_failure_timeout(mac_ctx);
+		}
+		break;
+	case eLIM_MLM_WT_ASSOC_RSP_STATE:
+		if (tx_timer_running(
+				&lim_timer->gLimAssocFailureTimer)) {
+			pe_debug("Trigger Assoc failure timeout for vdev %d",
+				 vdev_id);
+			tx_timer_deactivate(
+				&lim_timer->gLimAssocFailureTimer);
+			lim_process_assoc_failure_timeout(mac_ctx,
+							  LIM_ASSOC);
+		}
+		break;
+	case eLIM_MLM_WT_SAE_AUTH_STATE:
+		if (tx_timer_running(&lim_timer->sae_auth_timer)) {
+			pe_debug("Trigger SAE Auth failure timeout for vdev %d",
+				 vdev_id);
+			tx_timer_deactivate(
+				&lim_timer->sae_auth_timer);
+			lim_process_sae_auth_timeout(mac_ctx);
+		}
+		break;
+	default:
+		return;
+	}
+}
 
 /**
  * lim_cleanup_mlm() - This function is called to cleanup
@@ -7261,9 +7321,18 @@ lim_revise_req_he_cap_per_band(struct mlme_legacy_priv *mlme_priv,
 	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq)) {
 		he_config->bfee_sts_lt_80 =
 			mac->he_cap_2g.bfee_sts_lt_80;
+		he_config->tx_he_mcs_map_lt_80 =
+			mac->he_cap_2g.tx_he_mcs_map_lt_80;
+		he_config->rx_he_mcs_map_lt_80 =
+			mac->he_cap_2g.rx_he_mcs_map_lt_80;
+
 	} else {
 		he_config->bfee_sts_lt_80 =
 			mac->he_cap_5g.bfee_sts_lt_80;
+		he_config->tx_he_mcs_map_lt_80 =
+			mac->he_cap_5g.tx_he_mcs_map_lt_80;
+		he_config->rx_he_mcs_map_lt_80 =
+			mac->he_cap_5g.rx_he_mcs_map_lt_80;
 
 		he_config->num_sounding_lt_80 =
 			mac->he_cap_5g.num_sounding_lt_80;
@@ -7923,12 +7992,22 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		}
 	}
 
-	lim_populate_he_mcs_per_bw(mac_ctx,
-		&rates->rx_he_mcs_map_lt_80, &rates->tx_he_mcs_map_lt_80,
-		peer_he_caps->rx_he_mcs_map_lt_80,
-		peer_he_caps->tx_he_mcs_map_lt_80, nss,
-		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80,
-		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80);
+	if (wlan_reg_is_24ghz_ch_freq(session_entry->curr_op_freq))
+		lim_populate_he_mcs_per_bw(mac_ctx,
+			&rates->rx_he_mcs_map_lt_80,
+			&rates->tx_he_mcs_map_lt_80,
+			peer_he_caps->rx_he_mcs_map_lt_80,
+			peer_he_caps->tx_he_mcs_map_lt_80, nss,
+			mac_ctx->he_cap_2g.rx_he_mcs_map_lt_80,
+			mac_ctx->he_cap_2g.tx_he_mcs_map_lt_80);
+	else
+		lim_populate_he_mcs_per_bw(mac_ctx,
+			&rates->rx_he_mcs_map_lt_80,
+			&rates->tx_he_mcs_map_lt_80,
+			peer_he_caps->rx_he_mcs_map_lt_80,
+			peer_he_caps->tx_he_mcs_map_lt_80, nss,
+			mac_ctx->he_cap_5g.rx_he_mcs_map_lt_80,
+			mac_ctx->he_cap_5g.tx_he_mcs_map_lt_80);
 
 	if (session_entry->ch_width == CH_WIDTH_160MHZ) {
 		lim_populate_he_mcs_per_bw(
@@ -8733,6 +8812,8 @@ void lim_process_ap_ecsa_timeout(void *data)
 		}
 	} else {
 		lim_send_csa_tx_complete(session->vdev_id);
+		/* Clear CSA IE count and update beacon */
+		lim_send_dfs_chan_sw_ie_update(mac_ctx, session);
 	}
 }
 

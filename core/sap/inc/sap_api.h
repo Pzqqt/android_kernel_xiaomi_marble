@@ -281,6 +281,7 @@ typedef struct sap_StationAssocReassocCompleteEvent_s {
 	tDot11fIEVHTCaps vht_caps;
 	tSirMacCapabilityInfo capability_info;
 	bool he_caps_present;
+	struct qdf_mac_addr sta_mld;
 } tSap_StationAssocReassocCompleteEvent;
 
 typedef struct sap_StationDisassocCompleteEvent_s {

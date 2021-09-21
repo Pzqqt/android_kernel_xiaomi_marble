@@ -122,7 +122,6 @@ struct csr_channel {
 };
 
 struct bss_config_param {
-	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	tSirMacCapabilityInfo BssCap;
@@ -191,7 +190,7 @@ struct csr_config {
 	eCsrPhyMode phyMode;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	uint32_t HeartbeatThresh50;
-	eCsrRoamWmmUserModeType WMMSupportMode;
+	enum wmm_user_mode WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
 	bool fenableMCCMode;
@@ -299,8 +298,6 @@ struct csr_roam_session {
 	bool is_bcn_recv_start;
 	bool beacon_report_do_not_resume;
 #endif
-	bool fWMMConnection;
-	bool fQOSConnection;
 #ifdef FEATURE_WLAN_ESE
 	bool isPrevApInfoValid;
 	uint32_t roamTS1;

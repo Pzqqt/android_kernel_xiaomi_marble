@@ -93,6 +93,7 @@
 #include <wlan_cm_api.h>
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include "wlan_nan_api.h"
+#include "wlan_mlo_mgr_peer.h"
 #ifdef DCS_INTERFERENCE_DETECTION
 #include <wlan_dcs_ucfg_api.h>
 #endif
@@ -2363,10 +2364,12 @@ wma_delete_peer_on_vdev_stop(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 #ifdef WLAN_FEATURE_11BE_MLO
-	peer = wlan_objmgr_get_peer_by_mac(wma.psoc, &bssid.bytes,
+	peer = wlan_objmgr_get_peer_by_mac(wma->psoc, bssid.bytes,
 					   WLAN_LEGACY_WMA_ID);
-	if (peer)
+	if (peer) {
 		wlan_mlo_link_peer_delete(peer);
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+	}
 #endif
 
 	vdev_stop_resp = qdf_mem_malloc(sizeof(*vdev_stop_resp));

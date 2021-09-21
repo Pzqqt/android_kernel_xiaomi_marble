@@ -26,8 +26,8 @@
 /*
  * <ini>
  * join_failure_timeout - Join failure timeout value
- * @Min: 0
- * @Max: 65535
+ * @Min: 500
+ * @Max: 3000
  * @Default: 3000
  *
  * This cfg is used to configure the join failure timeout.
@@ -38,8 +38,8 @@
  */
 #define CFG_JOIN_FAILURE_TIMEOUT CFG_INI_UINT( \
 		"join_failure_timeout", \
-		0, \
-		65535, \
+		500, \
+		3000, \
 		3000, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Join failure timeout")
@@ -47,8 +47,8 @@
 /*
  * <ini>
  * auth_failure_timeout - Auth failure timeout value
- * @Min: 0
- * @Max: 65535
+ * @Min: 500
+ * @Max: 5000
  * @Default: 1000
  *
  * This cfg is used to configure the auth failure timeout.
@@ -89,8 +89,8 @@
 /*
  * <ini>
  * assoc_failure_timeout - Assoc failure timeout value
- * @Min: 0
- * @Max: 65535
+ * @Min: 500
+ * @Max: 3000
  * @Default: 2000
  *
  * This cfg is used to configure the assoc failure timeout.
@@ -101,8 +101,8 @@
  */
 #define CFG_ASSOC_FAILURE_TIMEOUT CFG_INI_UINT( \
 		"assoc_failure_timeout", \
-		0, \
-		65535, \
+		500, \
+		3000, \
 		2000, \
 		CFG_VALUE_OR_DEFAULT, \
 		"assoc failure timeout")
