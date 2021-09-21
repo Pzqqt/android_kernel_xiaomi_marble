@@ -9,6 +9,30 @@
 #include "msm_cvp_core.h"
 #include "msm_cvp_dsp.h"
 
+#ifdef CVP_SYNX_ENABLED
+int cvp_sess_init_synx(struct msm_cvp_inst *inst)
+{
+	struct synx_initialization_params params;
+
+	params.name = "cvp-kernel-client";
+	if (synx_initialize(&inst->synx_session_id, &params)) {
+		dprintk(CVP_ERR, "%s synx_initialize failed\n", __func__);
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
+int cvp_sess_deinit_synx(struct msm_cvp_inst *inst)
+{
+	if (!inst) {
+		dprintk(CVP_ERR, "Used invalid sess in deinit_synx\n");
+		return -EINVAL;
+	}
+	synx_uninitialize(inst->synx_session_id);
+	return 0;
+}
+
 void cvp_dump_fence_queue(struct msm_cvp_inst *inst)
 {
 	struct cvp_fence_queue *q;
@@ -242,4 +266,4 @@ int cvp_synx_ops(struct msm_cvp_inst *inst, enum cvp_synx_type type,
 		return -EINVAL;
 	}
 }
-
+#endif

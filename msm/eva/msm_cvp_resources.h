@@ -188,5 +188,6 @@ static inline bool is_iommu_present(struct msm_cvp_platform_resources *res)
 	return !list_empty(&res->context_banks);
 }
 
+int cvp_of_fdt_get_ddrtype(void);
 #endif
 

@@ -15,7 +15,6 @@
 #include "cvp_hfi_api.h"
 #include "msm_cvp_clocks.h"
 #include <linux/dma-buf.h>
-#include <media/msm_media_info.h>
 
 #define MAX_EVENTS 30
 #define NUM_CYCLES16X16_HCD_FRAME 95
@@ -343,7 +342,7 @@ int msm_cvp_destroy(struct msm_cvp_inst *inst)
 
 	__deinit_session_queue(inst);
 	__deinit_fence_queue(inst);
-	synx_uninitialize(inst->synx_session_id);
+	cvp_sess_deinit_synx(inst);
 
 	pr_info(CVP_DBG_TAG "Closed cvp instance: %pK session_id = %d\n",
 		"sess", inst, hash32_ptr(inst->session));

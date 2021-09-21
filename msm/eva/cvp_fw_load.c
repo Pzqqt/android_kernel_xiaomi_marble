@@ -14,6 +14,7 @@
 #include <linux/of_address.h>
 #include <linux/firmware.h>
 #include <linux/soc/qcom/mdt_loader.h>
+#include "cvp_dump.h"
 
 #define MAX_FIRMWARE_NAME_SIZE 128
 
@@ -103,6 +104,11 @@ static int __load_fw_to_memory(struct platform_device *pdev,
 		dprintk(CVP_ERR, "%s: error %d authenticating \"%s\"\n",
 				__func__, rc, firmware_name);
 		goto exit;
+	}
+	rc = md_eva_dump("evafwdata", (uintptr_t)virt, phys, EVAFW_IMAGE_SIZE);
+	if (rc) {
+		dprintk(CVP_ERR, "%s: error %d in dumping \"%s\"\n",
+				__func__, rc, firmware_name);
 	}
 
 	memunmap(virt);

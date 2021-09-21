@@ -20,14 +20,12 @@
 #include <linux/kthread.h>
 #include <linux/dma-mapping.h>
 #include "msm_cvp_core.h"
-#include <media/msm_media_info.h>
 #include <media/msm_eva_private.h>
 #include "cvp_hfi_api.h"
 #include "cvp_hfi_helper.h"
 #include <synx_api.h>
 
 #define MAX_SUPPORTED_INSTANCES 16
-#define MAX_NAME_LENGTH 64
 #define MAX_DEBUGFS_NAME 50
 #define MAX_DSP_INIT_ATTEMPTS 16
 #define FENCE_WAIT_SIGNAL_TIMEOUT 100

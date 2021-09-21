@@ -30,6 +30,7 @@
 #include "cvp_hfi_io.h"
 #include "msm_cvp_dsp.h"
 #include "msm_cvp_clocks.h"
+#include "cvp_dump.h"
 
 #define FIRMWARE_SIZE			0X00A00000
 #define REG_ADDR_OFFSET_BITMASK	0x000FFFFF
@@ -1796,8 +1797,15 @@ static int iris_hfi_core_init(void *device)
 	if (rc) {
 		dprintk(CVP_ERR, "failed to init queues\n");
 		rc = -ENOMEM;
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
+	cvp_register_va_md_region();
+
+	// Add node for dev struct
+	add_va_node_to_list(&head_node_dbg_struct, dev,
+        sizeof(struct iris_hfi_device), "iris_hfi_device-dev", false);
+	add_queue_header_to_va_md_list((void*)dev);
+	add_hfi_queue_to_va_md_list((void*)dev);
 
 	rc = msm_cvp_map_ipcc_regs(&ipcc_iova);
 	if (!rc) {
@@ -1809,7 +1817,7 @@ static int iris_hfi_core_init(void *device)
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to start core\n");
 		rc = -ENODEV;
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
 
 	dev->version = __read_register(dev, CVP_VERSION_INFO);
@@ -1817,12 +1825,12 @@ static int iris_hfi_core_init(void *device)
 	rc =  call_hfi_pkt_op(dev, sys_init, &pkt, 0);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to create sys init pkt\n");
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
 
 	if (__iface_cmdq_write(dev, &pkt)) {
 		rc = -ENOTEMPTY;
-		goto err_mmrm_dereg;
+		goto err_core_init;
 	}
 
 	rc = call_hfi_pkt_op(dev, sys_image_version, &version_pkt);
@@ -1848,11 +1856,14 @@ static int iris_hfi_core_init(void *device)
 	dprintk(CVP_CORE, "Core inited successfully\n");
 
 	return 0;
-err_mmrm_dereg:
-	msm_cvp_mmrm_deregister(dev);
+
 err_core_init:
 	__set_state(dev, IRIS_STATE_DEINIT);
 	__unload_fw(dev);
+	if (dev->mmrm_cvp)
+	{
+		msm_cvp_mmrm_deregister(dev);
+	}
 err_load_fw:
 err_no_mem:
 	dprintk(CVP_ERR, "Core init failed\n");
@@ -1882,6 +1893,9 @@ static int iris_hfi_core_release(void *dev)
 
 	__dsp_shutdown(device, 0);
 
+	__disable_subcaches(device);
+	__unload_fw(device);
+
 	if (msm_cvp_mmrm_enabled) {
 		rc = msm_cvp_mmrm_deregister(device);
 		if (rc) {
@@ -1890,9 +1904,6 @@ static int iris_hfi_core_release(void *dev)
 				__func__, rc);
 		}
 	}
-
-	__disable_subcaches(device);
-	__unload_fw(device);
 
 	/* unlink all sessions from device */
 	list_for_each_entry_safe(session, next, &device->sess_head, list) {
@@ -1938,6 +1949,7 @@ static int iris_hfi_core_trigger_ssr(void *device,
 	int rc = 0;
 	struct iris_hfi_device *dev;
 
+	cvp_free_va_md_list();
 	if (!device) {
 		dprintk(CVP_ERR, "invalid device\n");
 		return -ENODEV;
@@ -2449,6 +2461,8 @@ static int __power_collapse(struct iris_hfi_device *device, bool force)
 	else if (rc)
 		goto skip_power_off;
 
+	__flush_debug_queue(device, device->raw_packet);
+
 	pc_ready = __read_register(device, CVP_CTRL_STATUS) &
 		CVP_CTRL_STATUS_PC_READY;
 	if (!pc_ready) {
@@ -2489,13 +2503,19 @@ static int __power_collapse(struct iris_hfi_device *device, bool force)
 
 		if (count == max_tries) {
 			dprintk(CVP_ERR,
-					"Skip PC. Core is not in right state (%#x, %#x)\n",
-					wfi_status, pc_ready);
+				"Skip PC. Core is not ready (%#x, %#x)\n",
+				wfi_status, pc_ready);
+			goto skip_power_off;
+		}
+	} else {
+		wfi_status = __read_register(device, CVP_WRAPPER_CPU_STATUS);
+		if (!(wfi_status & BIT(0))) {
+			dprintk(CVP_WARN,
+				"Skip PC as wfi_status (%#x) bit not set\n",
+				wfi_status);
 			goto skip_power_off;
 		}
 	}
-
-	__flush_debug_queue(device, device->raw_packet);
 
 	rc = __suspend(device);
 	if (rc)
@@ -3768,7 +3788,8 @@ static int __iris_power_on(struct iris_hfi_device *device)
 	dprintk(CVP_CORE, "Done with interrupt enabling\n");
 	device->intr_status = 0;
 	enable_irq(device->cvp_hal_data->irq);
-
+	__write_register(device,
+		CVP_WRAPPER_DEBUG_BRIDGE_LPI_CONTROL, 0x7);
 	pr_info(CVP_DBG_TAG "cvp (eva) powered on\n", "pwr");
 	return 0;
 
