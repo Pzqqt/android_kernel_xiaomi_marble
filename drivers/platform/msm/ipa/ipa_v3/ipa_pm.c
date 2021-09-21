@@ -648,6 +648,7 @@ int ipa_pm_init(struct ipa_pm_init_params *params)
 	if (!ipa_pm_ctx->wq) {
 		IPA_PM_ERR("create workqueue failed\n");
 		kfree(ipa_pm_ctx);
+		ipa_pm_ctx = NULL;
 		return -ENOMEM;
 	}
 
@@ -1455,6 +1456,21 @@ int ipa_pm_exceptions_stat(char *buf, int size)
 	mutex_unlock(&ipa_pm_ctx->client_mutex);
 
 	return cnt;
+}
+
+int ipa_pm_get_scaling_bw_levels(struct ipa_lnx_clock_stats *clock_stats)
+{
+	struct clk_scaling_db *clk;
+
+	if (ipa_pm_ctx) {
+		clk = &ipa_pm_ctx->clk_scaling;
+		if (clk->threshold_size >= 3) {
+			clock_stats->scale_thresh_svs = clk->current_threshold[0];
+			clock_stats->scale_thresh_nom = clk->current_threshold[1];
+			clock_stats->scale_thresh_tur = clk->current_threshold[2];
+			return 0;
+		} else return -EINVAL;
+	} else return -EINVAL;
 }
 
 int ipa_pm_get_aggregated_throughput(void)

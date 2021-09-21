@@ -3322,6 +3322,7 @@ int ipa3_create_wdi_mapping(u32 num_buffers, struct ipa_wdi_buffer_info *info);
 int ipa3_set_flt_tuple_mask(int pipe_idx, struct ipahal_reg_hash_tuple *tuple);
 int ipa3_set_rt_tuple_mask(int tbl_idx, struct ipahal_reg_hash_tuple *tuple);
 void ipa3_set_resorce_groups_min_max_limits(void);
+void ipa3_set_resorce_groups_config(void);
 int ipa3_suspend_apps_pipes(bool suspend);
 void ipa3_force_close_coal(void);
 int ipa3_flt_read_tbl_from_hw(u32 pipe_idx,
@@ -3438,8 +3439,10 @@ int ipa3_eth_connect(
 int ipa3_eth_disconnect(
 	struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_client_type client_type);
+#if IPA_ETH_API_VER < 2
 int ipa3_eth_client_conn_evt(struct ipa_ecm_msg *msg);
 int ipa3_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
+#endif
 void ipa3_eth_get_status(u32 client, int scratch_id,
 	struct ipa3_eth_error_stats *stats);
 int ipa3_get_gsi_chan_info(struct gsi_chan_info *gsi_chan_info,

@@ -101,8 +101,7 @@ static int ipa3_hdr_proc_ctx_to_hw_format(struct ipa_mem_buffer *mem,
 
 		/* Check the pointer and header length to avoid dangerous overflow in HW */
 		if (unlikely(!entry->hdr || !entry->hdr->offset_entry ||
-			     entry->hdr->hdr_len == 0 ||
-			     entry->hdr->hdr_len > ipa_hdr_bin_sz[IPA_HDR_BIN_MAX - 1]))
+					 entry->hdr->hdr_len > ipa_hdr_bin_sz[IPA_HDR_BIN_MAX - 1]))
 			return -EINVAL;
 
 		ret = ipahal_cp_proc_ctx_to_hw_buff(entry->type, mem->base,
@@ -920,6 +919,10 @@ int ipa3_del_hdr_hpc_usr(struct ipa_ioc_del_hdr *hdls, bool by_user)
 		entry = (struct ipa3_hdr_entry *)ipa3_id_find(hdls->hdl[i].hdl);
 		if (entry) {
 			proc_ctx_entry = entry->proc_ctx;
+			/* Header API changed under the hood --> need to NULL proc_ctx in header entry to
+			   comply and avoid outdated code reach. need to be handled better in the future
+			 */
+			entry->proc_ctx = NULL;
 			entry->ref_cnt--;
 			result = __ipa3_del_hdr(hdls->hdl[i].hdl, by_user) != 0;
 			if (proc_ctx_entry) {

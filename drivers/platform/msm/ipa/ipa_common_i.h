@@ -19,6 +19,10 @@
 #include "ipa_stats.h"
 #include "gsi.h"
 
+#ifndef IPA_ETH_API_VER
+#define IPA_ETH_API_VER 1
+#endif
+
 #define WARNON_RATELIMIT_BURST 1
 #define IPA_RATELIMIT_BURST 1
 #define IPA_EP_ARR_SIZE 2
@@ -882,9 +886,12 @@ int ipa_eth_emac_disconnect(
 	struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_client_type client_type);
 
+#if IPA_ETH_API_VER < 2
 int ipa_eth_client_conn_evt(struct ipa_ecm_msg *msg);
 
 int ipa_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
+
+#endif
 
 /* ULSO mode Query */
 bool ipa3_is_ulso_supported(void);
@@ -894,6 +901,7 @@ int ipa_set_pkt_init_ex_hdr_ofst(
   struct ipa_pkt_init_ex_hdr_ofst_set *lookup, bool proc_ctx);
 
 /* IPA stats pm functions */
+int ipa_pm_get_scaling_bw_levels(struct ipa_lnx_clock_stats *clock_stats);
 int ipa_pm_get_aggregated_throughput(void);
 int ipa_pm_get_current_clk_vote(void);
 bool ipa_get_pm_client_stats_filled(struct pm_client_stats *pm_stats_ptr,

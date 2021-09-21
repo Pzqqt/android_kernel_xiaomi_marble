@@ -98,6 +98,8 @@ enum ipahal_reg_name {
 	IPA_DST_RSRC_GRP_23_RSRC_TYPE_n,
 	IPA_DST_RSRC_GRP_45_RSRC_TYPE_n,
 	IPA_DST_RSRC_GRP_67_RSRC_TYPE_n,
+	IPA_RSRC_GRP_CFG,
+	IPA_RSRC_GRP_CFG_EXT,
 	IPA_RX_HPS_CLIENTS_MIN_DEPTH_0,
 	IPA_RX_HPS_CLIENTS_MIN_DEPTH_1,
 	IPA_RX_HPS_CLIENTS_MAX_DEPTH_0,
@@ -512,17 +514,46 @@ struct ipahal_reg_debug_cnt_ctrl {
 };
 
 /*
- * struct ipahal_reg_rsrc_grp_cfg - Min/Max values for two rsrc groups
+ * struct ipahal_reg_rsrc_grp_xy_cfg - Min/Max values for two rsrc groups
  * @x_min - first group min value
  * @x_max - first group max value
  * @y_min - second group min value
  * @y_max - second group max value
  */
-struct ipahal_reg_rsrc_grp_cfg {
+struct ipahal_reg_rsrc_grp_xy_cfg {
 	u32 x_min;
 	u32 x_max;
 	u32 y_min;
 	u32 y_max;
+};
+
+/*
+ * struct ipahal_reg_rsrc_grp_cfg - General configuration of resource group behavior
+ * @src_grp_index - Index of special source resource group
+ * @src_grp_valid - Set to 1 if a special source resrouce group exists
+ * @dst_pipe_index - Index of special destination pipe
+ * @dst_pipe_valid - Set to 1 if a special destination pipe exists
+ * @dst_grp_index - Index of special destination resource group
+ * @dst_grp_valid - Set to 1 if a special destination resrouce group exists
+ */
+struct ipahal_reg_rsrc_grp_cfg {
+	u8 src_grp_index;
+	bool src_grp_valid;
+	u8 dst_pipe_index;
+	bool dst_pipe_valid;
+	u8 dst_grp_index;
+	bool dst_grp_valid;
+};
+
+/*
+ * struct ipahal_reg_rsrc_grp_cfg_ext - General configuration of resource group behavior extended
+ * @index - Index of 2nd-priority special source resource group.
+ * 	Will be chosen only in case 1st-level priority group is not requesting service.
+ * @valid - Set to 1 if a 2nd-priority special source resrouce group exists
+ */
+struct ipahal_reg_rsrc_grp_cfg_ext {
+	u8 index;
+	bool valid;
 };
 
 /*
