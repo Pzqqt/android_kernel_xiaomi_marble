@@ -1197,6 +1197,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_btm_request_candidate_info_tlv_param,
     WMITLV_TAG_STRUC_wmi_thermal_stats_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_thermal_throt_temp_range_stats,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_awgn_stats_struct,
 } WMITLV_TAG_ID;
 
 /*
@@ -6154,7 +6155,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_mem_stats_struct, ctrl_path_mem_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_twt_stats_struct, ctrl_path_twt_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_calibration_stats_struct, ctrl_path_calibration_stats, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_dfs_channel_stats_struct, ctrl_path_dfs_channel_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_dfs_channel_stats_struct, ctrl_path_dfs_channel_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_awgn_stats_struct, ctrl_path_awgn_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_RADIO_CHAN_STATS_EVENTID(id, op, buf, len) \
