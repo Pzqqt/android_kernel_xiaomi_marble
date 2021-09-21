@@ -1630,6 +1630,13 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
 		ucfg_scan_flush_results(pdev, NULL);
 
+	if (params->scan_probe_unicast_ra)
+		req->scan_req.scan_ctrl_flags_ext |=
+				SCAN_FLAG_EXT_FORCE_UNICAST_RA;
+
+	osif_debug("scan_ctrl_flags_ext %0x",
+		   req->scan_req.scan_ctrl_flags_ext);
+
 	/*
 	 * Acquire wakelock to handle the case where APP's send scan to connect.
 	 * If suspend is received during scan scan will be aborted and APP will

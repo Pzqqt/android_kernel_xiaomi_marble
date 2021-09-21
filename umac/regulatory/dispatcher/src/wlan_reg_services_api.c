@@ -145,6 +145,17 @@ QDF_STATUS wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 	return reg_get_6g_afc_chan_list(pdev, chan_list);
 }
 
+qdf_export_symbol(wlan_reg_get_6g_afc_chan_list);
+
+QDF_STATUS
+wlan_reg_get_6g_afc_mas_chan_list(struct wlan_objmgr_pdev *pdev,
+				  struct regulatory_channel *chan_list)
+{
+	return reg_get_6g_afc_mas_chan_list(pdev, chan_list);
+}
+
+qdf_export_symbol(wlan_reg_get_6g_afc_mas_chan_list);
+
 QDF_STATUS wlan_reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
 			       int16_t psd,
 			       uint16_t ch_bw,
@@ -385,16 +396,58 @@ regulatory_assign_unregister_master_ext_handler(struct wlan_objmgr_psoc *psoc,
 	if (tx_ops->unregister_master_ext_handler)
 		tx_ops->unregister_master_ext_handler(psoc, NULL);
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+static void regulatory_assign_register_afc_event_handler(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+	if (tx_ops->register_afc_event_handler)
+		tx_ops->register_afc_event_handler(psoc, NULL);
+}
+
+static void regulatory_assign_unregister_afc_event_handler(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+	if (tx_ops->unregister_afc_event_handler)
+		tx_ops->unregister_afc_event_handler(psoc, NULL);
+}
+#else
+static void regulatory_assign_register_afc_event_handler(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+}
+
+static void regulatory_assign_unregister_afc_event_handler(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+}
+#endif
 #else
 static inline void
 regulatory_assign_register_master_ext_handler(struct wlan_objmgr_psoc *psoc,
-					struct wlan_lmac_if_reg_tx_ops *tx_ops)
+					      struct wlan_lmac_if_reg_tx_ops *tx_ops)
 {
 }
 
 static inline void
 regulatory_assign_unregister_master_ext_handler(struct wlan_objmgr_psoc *psoc,
-					struct wlan_lmac_if_reg_tx_ops *tx_ops)
+						struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+}
+
+static void
+regulatory_assign_register_afc_event_handler(struct wlan_objmgr_psoc *psoc,
+					     struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+}
+
+static void
+regulatory_assign_unregister_afc_event_handler(struct wlan_objmgr_psoc *psoc,
+					       struct wlan_lmac_if_reg_tx_ops *tx_ops)
 {
 }
 #endif
@@ -407,6 +460,7 @@ QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (tx_ops->register_master_handler)
 		tx_ops->register_master_handler(psoc, NULL);
 	regulatory_assign_register_master_ext_handler(psoc, tx_ops);
+	regulatory_assign_register_afc_event_handler(psoc, tx_ops);
 	if (tx_ops->register_11d_new_cc_handler)
 		tx_ops->register_11d_new_cc_handler(psoc, NULL);
 	if (tx_ops->register_ch_avoid_event_handler)
@@ -425,6 +479,7 @@ QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 	if (tx_ops->unregister_master_handler)
 		tx_ops->unregister_master_handler(psoc, NULL);
 	regulatory_assign_unregister_master_ext_handler(psoc, tx_ops);
+	regulatory_assign_unregister_afc_event_handler(psoc, tx_ops);
 	if (tx_ops->unregister_ch_avoid_event_handler)
 		tx_ops->unregister_ch_avoid_event_handler(psoc, NULL);
 
@@ -684,6 +739,12 @@ bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq)
 bool wlan_reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 {
 	return reg_is_freq_indoor(pdev, freq);
+}
+
+enum phy_ch_width
+wlan_reg_get_next_lower_bandwidth(enum phy_ch_width ch_width)
+{
+	return get_next_lower_bandwidth(ch_width);
 }
 
 #ifdef CONFIG_REG_CLIENT
@@ -1274,6 +1335,8 @@ QDF_STATUS wlan_reg_get_6g_chan_ap_power(struct wlan_objmgr_pdev *pdev,
 					tx_power, eirp_psd_power);
 }
 
+qdf_export_symbol(wlan_reg_get_6g_chan_ap_power);
+
 QDF_STATUS
 wlan_reg_get_client_power_for_connecting_ap(struct wlan_objmgr_pdev *pdev,
 					    enum reg_6g_ap_type ap_type,
@@ -1319,3 +1382,32 @@ bool wlan_reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return reg_is_ext_tpc_supported(psoc);
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+bool wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_afc_power_event_received(pdev);
+}
+
+qdf_export_symbol(wlan_reg_is_afc_power_event_received);
+
+QDF_STATUS wlan_reg_get_afc_req_id(struct wlan_objmgr_pdev *pdev,
+				   uint64_t *req_id)
+{
+	return reg_get_afc_req_id(pdev, req_id);
+}
+
+qdf_export_symbol(wlan_reg_get_afc_req_id);
+
+bool wlan_reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_afc_expiry_event_received(pdev);
+}
+
+qdf_export_symbol(wlan_reg_is_afc_expiry_event_received);
+
+bool wlan_reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_noaction_on_afc_pwr_evt(pdev);
+}
+#endif

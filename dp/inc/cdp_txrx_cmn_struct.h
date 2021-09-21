@@ -971,6 +971,7 @@ typedef void (*ol_txrx_pktdump_cb)(ol_txrx_soc_handle soc,
  * format specified by the OS to use for tx and rx
  * frames (either 802.3 or native WiFi). In case RX Threads are enabled, pkts
  * are given to the thread, instead of the stack via this pointer.
+ * @rx.rx_eapol - This rx function pointer used to receive only eapol frames
  * @rx.stack - function to give packets to the stack. Differs from @rx.rx.
  * In case RX Threads are enabled, this pointer holds the callback to give
  * packets to the stack.
@@ -1006,6 +1007,9 @@ struct ol_txrx_ops {
 	/* rx function pointers - specified by OS shim, stored by txrx */
 	struct {
 		ol_txrx_rx_fp           rx;
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+		ol_txrx_rx_fp     rx_eapol;
+#endif
 		ol_txrx_rx_fp           rx_stack;
 		ol_txrx_rx_flush_fp     rx_flush;
 		ol_txrx_rx_gro_flush_ind_fp           rx_gro_flush;
@@ -1290,6 +1294,8 @@ typedef union cdp_config_param_t {
 	bool cdp_psoc_param_pext_stats;
 
 	bool cdp_enable_tx_checksum;
+
+	bool cdp_skip_bar_update;
 } cdp_config_param_type;
 
 /**
@@ -1400,6 +1406,9 @@ enum cdp_vdev_param_type {
 #ifdef WLAN_SUPPORT_MESH_LATENCY
 	CDP_ENABLE_PEER_TID_LATENCY,
 	CDP_SET_VAP_MESH_TID,
+#endif
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+	CDP_SKIP_BAR_UPDATE_AP,
 #endif
 };
 

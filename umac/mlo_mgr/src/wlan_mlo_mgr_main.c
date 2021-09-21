@@ -360,6 +360,8 @@ QDF_STATUS wlan_mlo_mgr_vdev_created_notification(struct wlan_objmgr_vdev *vdev,
 		/* It's not a ML interface*/
 		return QDF_STATUS_SUCCESS;
 	}
+	mlo_debug("MLD addr" QDF_MAC_ADDR_FMT,
+		  QDF_MAC_ADDR_REF(mld_addr->bytes));
 	status = mlo_dev_ctx_init(vdev);
 
 	return status;
@@ -376,6 +378,8 @@ QDF_STATUS wlan_mlo_mgr_vdev_destroyed_notification(struct wlan_objmgr_vdev *vde
 		/* It's not a ML interface*/
 		return QDF_STATUS_SUCCESS;
 	}
+	mlo_debug("MLD addr" QDF_MAC_ADDR_FMT,
+		  QDF_MAC_ADDR_REF(mld_addr->bytes));
 
 	status = mlo_dev_ctx_deinit(vdev);
 

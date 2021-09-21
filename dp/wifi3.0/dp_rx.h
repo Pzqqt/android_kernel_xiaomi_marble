@@ -1587,13 +1587,32 @@ QDF_STATUS dp_peer_set_rx_capture_enabled(struct dp_pdev *pdev,
  * @nbuf_head: skb list head
  * @nbuf_tail: skb list tail
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void dp_rx_deliver_to_stack(struct dp_soc *soc,
-			    struct dp_vdev *vdev,
-			    struct dp_peer *peer,
-			    qdf_nbuf_t nbuf_head,
-			    qdf_nbuf_t nbuf_tail);
+QDF_STATUS dp_rx_deliver_to_stack(struct dp_soc *soc,
+				  struct dp_vdev *vdev,
+				  struct dp_peer *peer,
+				  qdf_nbuf_t nbuf_head,
+				  qdf_nbuf_t nbuf_tail);
+
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+/**
+ * dp_rx_eapol_deliver_to_stack() - deliver pkts to network stack
+ * caller to hold peer refcount and check for valid peer
+ * @soc: soc
+ * @vdev: vdev
+ * @peer: peer
+ * @nbuf_head: skb list head
+ * @nbuf_tail: skb list tail
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS dp_rx_eapol_deliver_to_stack(struct dp_soc *soc,
+					struct dp_vdev *vdev,
+					struct dp_peer *peer,
+					qdf_nbuf_t nbuf_head,
+					qdf_nbuf_t nbuf_tail);
+#endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 

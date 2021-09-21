@@ -75,6 +75,14 @@ QDF_STATUS tgt_reg_process_master_chan_list_ext(struct cur_regulatory_info
 
 	return reg_process_master_chan_list_ext(reg_info);
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+QDF_STATUS
+tgt_reg_process_afc_event(struct afc_regulatory_info *afc_info)
+{
+	return reg_process_afc_event(afc_info);
+}
+#endif
 #endif
 
 QDF_STATUS tgt_reg_process_11d_new_country(struct wlan_objmgr_psoc *psoc,

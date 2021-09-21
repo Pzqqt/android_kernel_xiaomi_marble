@@ -404,36 +404,13 @@ ucfg_scm_scan_free_scan_request_mem(struct scan_start_request *req)
 QDF_STATUS ucfg_scan_psoc_set_enable(struct wlan_objmgr_psoc *psoc,
 				     enum scan_disable_reason reason)
 {
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	scan_obj->scan_disabled &= ~reason;
-	scm_debug("Psoc scan_disabled %x", scan_obj->scan_disabled);
-
-	return QDF_STATUS_SUCCESS;
+	return wlan_scan_psoc_set_enable(psoc, reason);
 }
 
 QDF_STATUS ucfg_scan_psoc_set_disable(struct wlan_objmgr_psoc *psoc,
 				      enum scan_disable_reason reason)
 {
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	scan_obj->scan_disabled |= reason;
-
-	scm_debug("Psoc scan_disabled %x", scan_obj->scan_disabled);
-
-	return QDF_STATUS_SUCCESS;
+	return wlan_scan_psoc_set_disable(psoc, reason);
 }
 
 
@@ -587,14 +564,14 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 
 	if (cancel_pdev) {
 		pdev = wlan_vdev_get_pdev(vdev);
-		while ((ucfg_scan_get_pdev_status(pdev) !=
+		while ((wlan_get_pdev_status(pdev) !=
 		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
 			scm_debug("wait for all pdev scan to get complete");
 			qdf_sleep(SCM_CANCEL_SCAN_WAIT_TIME);
 			max_wait_iterations--;
 		}
 	} else if (cancel_vdev) {
-		while ((ucfg_scan_get_vdev_status(vdev) !=
+		while ((wlan_get_vdev_status(vdev) !=
 		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
 			scm_debug("wait for all vdev scan to get complete");
 			qdf_sleep(SCM_CANCEL_SCAN_WAIT_TIME);
@@ -1147,66 +1124,21 @@ end:
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline enum scm_scan_status
-get_scan_status_from_serialization_status(
-	enum wlan_serialization_cmd_status status)
-{
-	enum scm_scan_status scan_status;
-
-	switch (status) {
-	case WLAN_SER_CMD_IN_PENDING_LIST:
-		scan_status = SCAN_IS_PENDING;
-		break;
-	case WLAN_SER_CMD_IN_ACTIVE_LIST:
-		scan_status = SCAN_IS_ACTIVE;
-		break;
-	case WLAN_SER_CMDS_IN_ALL_LISTS:
-		scan_status = SCAN_IS_ACTIVE_AND_PENDING;
-		break;
-	case WLAN_SER_CMD_NOT_FOUND:
-		scan_status = SCAN_NOT_IN_PROGRESS;
-		break;
-	default:
-		scm_warn("invalid serialization status %d", status);
-		QDF_ASSERT(0);
-		scan_status = SCAN_NOT_IN_PROGRESS;
-		break;
-	}
-
-	return scan_status;
-}
-
 enum scm_scan_status
 ucfg_scan_get_vdev_status(struct wlan_objmgr_vdev *vdev)
 {
-	enum wlan_serialization_cmd_status status;
-
-	if (!vdev) {
-		scm_err("null vdev");
-		return SCAN_NOT_IN_PROGRESS;
-	}
-	status = wlan_serialization_vdev_scan_status(vdev);
-
-	return get_scan_status_from_serialization_status(status);
+	return wlan_get_vdev_status(vdev);
 }
 
 enum scm_scan_status
 ucfg_scan_get_pdev_status(struct wlan_objmgr_pdev *pdev)
 {
-	enum wlan_serialization_cmd_status status;
-
-	if (!pdev) {
-		scm_err("null pdev");
-		return SCAN_NOT_IN_PROGRESS;
-	}
-	status = wlan_serialization_pdev_scan_status(pdev);
-
-	return get_scan_status_from_serialization_status(status);
+	return wlan_get_pdev_status(pdev);
 }
 
 static void
-ucfg_scan_register_unregister_bcn_cb(struct wlan_objmgr_psoc *psoc,
-	bool enable)
+scan_register_unregister_bcn_cb(struct wlan_objmgr_psoc *psoc,
+				bool enable)
 {
 	QDF_STATUS status;
 	struct mgmt_txrx_mgmt_frame_cb_info cb_info[2];
@@ -1253,7 +1185,7 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 static QDF_STATUS
-ucfg_scan_cancel_pdev_scan(struct wlan_objmgr_pdev *pdev)
+scan_cancel_pdev_scan(struct wlan_objmgr_pdev *pdev)
 {
 	struct scan_cancel_request *req;
 	QDF_STATUS status;
@@ -1290,16 +1222,16 @@ ucfg_scan_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	struct wlan_objmgr_pdev *pdev = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i;
-	ucfg_scan_psoc_set_disable(psoc, REASON_SUSPEND);
+	wlan_scan_psoc_set_disable(psoc, REASON_SUSPEND);
 
 	/* Check all pdev */
 	for (i = 0; i < WLAN_UMAC_MAX_PDEVS; i++) {
 		pdev = wlan_objmgr_get_pdev_by_id(psoc, i, WLAN_SCAN_ID);
 		if (!pdev)
 			continue;
-		if (ucfg_scan_get_pdev_status(pdev) !=
+		if (wlan_get_pdev_status(pdev) !=
 		    SCAN_NOT_IN_PROGRESS) {
-			status = ucfg_scan_cancel_pdev_scan(pdev);
+			status = scan_cancel_pdev_scan(pdev);
 			scm_disable_obss_pdev_scan(psoc, pdev);
 		}
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
@@ -1315,12 +1247,12 @@ ucfg_scan_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 static QDF_STATUS
 ucfg_scan_resume_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	ucfg_scan_psoc_set_enable(psoc, REASON_SUSPEND);
+	wlan_scan_psoc_set_enable(psoc, REASON_SUSPEND);
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline void
-ucfg_scan_register_pmo_handler(void)
+scan_register_pmo_handler(void)
 {
 	pmo_register_suspend_handler(WLAN_UMAC_COMP_SCAN,
 		ucfg_scan_suspend_handler, NULL);
@@ -1329,7 +1261,7 @@ ucfg_scan_register_pmo_handler(void)
 }
 
 static inline void
-ucfg_scan_unregister_pmo_handler(void)
+scan_unregister_pmo_handler(void)
 {
 	pmo_unregister_suspend_handler(WLAN_UMAC_COMP_SCAN,
 		ucfg_scan_suspend_handler);
@@ -1339,12 +1271,12 @@ ucfg_scan_unregister_pmo_handler(void)
 
 #else
 static inline void
-ucfg_scan_register_pmo_handler(void)
+scan_register_pmo_handler(void)
 {
 }
 
 static inline void
-ucfg_scan_unregister_pmo_handler(void)
+scan_unregister_pmo_handler(void)
 {
 }
 #endif
@@ -1367,7 +1299,7 @@ ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 	/* Initialize the scan Globals */
 	wlan_scan_global_init(psoc, scan_obj);
 	qdf_spinlock_create(&scan_obj->lock);
-	ucfg_scan_register_pmo_handler();
+	scan_register_pmo_handler();
 	scm_db_init(psoc);
 	scm_channel_list_db_init(psoc);
 
@@ -1390,7 +1322,7 @@ ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc)
 		scm_err("Failed to get scan object");
 		return QDF_STATUS_E_FAILURE;
 	}
-	ucfg_scan_unregister_pmo_handler();
+	scan_unregister_pmo_handler();
 	qdf_spinlock_destroy(&scan_obj->lock);
 	wlan_scan_global_deinit(psoc);
 	scm_channel_list_db_deinit(psoc);
@@ -1449,7 +1381,7 @@ ucfg_scan_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
 	if (!wlan_reg_is_11d_offloaded(psoc))
 		scm_11d_cc_db_init(psoc);
-	ucfg_scan_register_unregister_bcn_cb(psoc, true);
+	scan_register_unregister_bcn_cb(psoc, true);
 	status = wlan_serialization_register_apply_rules_cb(psoc,
 				WLAN_SER_CMD_SCAN,
 				scm_serialization_scan_rules_cb);
@@ -1470,7 +1402,7 @@ ucfg_scan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	/* Unsubscribe for scan events from lmac layesr */
 	status = tgt_scan_unregister_ev_handler(psoc);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
-	ucfg_scan_register_unregister_bcn_cb(psoc, false);
+	scan_register_unregister_bcn_cb(psoc, false);
 	if (!wlan_reg_is_11d_offloaded(psoc))
 		scm_11d_cc_db_deinit(psoc);
 

@@ -32,6 +32,7 @@
 #include "wlan_objmgr_peer_obj.h"
 #include "qdf_nbuf.h"
 #include "wlan_lmac_if_api.h"
+#include <wlan_mgmt_txrx_rx_reo_utils_api.h>
 
 /**
  * wlan_mgmt_txrx_psoc_obj_create_notification() - called from objmgr when psoc
@@ -187,6 +188,13 @@ static QDF_STATUS wlan_mgmt_txrx_pdev_obj_create_notification(
 			     "mgmt_txrx tx_cmp");
 	qdf_runtime_lock_init(&mgmt_txrx_pdev_ctx->wakelock_tx_runtime_cmp);
 
+	status = wlan_mgmt_rx_reo_pdev_obj_create_notification(
+					pdev, mgmt_txrx_pdev_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_txrx_err("Failed to create mgmt Rx REO pdev object");
+		goto err_mgmt_rx_reo_attach;
+	}
+
 	if (wlan_objmgr_pdev_component_obj_attach(pdev,
 			WLAN_UMAC_COMP_MGMT_TXRX,
 			mgmt_txrx_pdev_ctx, QDF_STATUS_SUCCESS)
@@ -203,6 +211,10 @@ static QDF_STATUS wlan_mgmt_txrx_pdev_obj_create_notification(
 	return QDF_STATUS_SUCCESS;
 
 err_pdev_attach:
+	/* Avoiding error check in an error handler */
+	wlan_mgmt_rx_reo_pdev_obj_destroy_notification(pdev,
+						       mgmt_txrx_pdev_ctx);
+err_mgmt_rx_reo_attach:
 	qdf_runtime_lock_deinit(&mgmt_txrx_pdev_ctx->wakelock_tx_runtime_cmp);
 	qdf_wake_lock_destroy(&mgmt_txrx_pdev_ctx->wakelock_tx_cmp);
 	qdf_mem_free(mgmt_txrx_stats);
@@ -230,6 +242,7 @@ static QDF_STATUS wlan_mgmt_txrx_pdev_obj_destroy_notification(
 			void *arg)
 {
 	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx;
+	QDF_STATUS status;
 
 	if (!pdev) {
 		mgmt_txrx_err("pdev context passed is NULL");
@@ -249,6 +262,13 @@ static QDF_STATUS wlan_mgmt_txrx_pdev_obj_destroy_notification(
 				WLAN_UMAC_COMP_MGMT_TXRX, mgmt_txrx_pdev_ctx)
 			!= QDF_STATUS_SUCCESS) {
 		mgmt_txrx_err("Failed to detach mgmt txrx ctx in pdev ctx");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_mgmt_rx_reo_pdev_obj_destroy_notification(
+						pdev, mgmt_txrx_pdev_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_txrx_err("Failed to destroy mgmt Rx REO pdev object");
 		return QDF_STATUS_E_FAILURE;
 	}
 

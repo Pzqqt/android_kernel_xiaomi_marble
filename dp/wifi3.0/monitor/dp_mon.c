@@ -722,12 +722,17 @@ dp_get_scan_spcl_vap_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
 						     DP_MOD_ID_CDP);
 
-	if (!vdev || !stats)
+	if (!vdev || !stats) {
+		if (vdev)
+			dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_INVAL;
+	}
 
 	mon_vdev = vdev->monitor_vdev;
-	if (!mon_vdev || !mon_vdev->scan_spcl_vap_stats)
+	if (!mon_vdev || !mon_vdev->scan_spcl_vap_stats) {
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_INVAL;
+	}
 
 	qdf_mem_copy(stats, mon_vdev->scan_spcl_vap_stats,
 		     sizeof(struct cdp_scan_spcl_vap_stats));
@@ -1525,6 +1530,11 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	ppdu_tx_rate = dp_ath_rate_out(peer->stats.tx.avg_tx_rate);
 	DP_STATS_UPD(peer, tx.rnd_avg_tx_rate, ppdu_tx_rate);
 
+	peer->stats.tx.bw_info = ppdu->bw;
+	peer->stats.tx.gi_info = ppdu->gi;
+	peer->stats.tx.nss_info = ppdu->nss;
+	peer->stats.tx.mcs_info = ppdu->mcs;
+	peer->stats.tx.preamble_info = ppdu->preamble;
 	if (peer->vdev) {
 		/*
 		 * In STA mode:
@@ -3128,10 +3138,14 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 					     WDI_NO_VAL,
 					     pdev->pdev_id);
 		} else {
-			if (ppdu_desc->num_mpdu != 0 &&
+			if ((ppdu_desc->num_mpdu != 0 ||
+			     ppdu_desc->delayed_ba) &&
 			    ppdu_desc->num_users != 0 &&
-			    ppdu_desc->frame_ctrl &
-			    HTT_FRAMECTRL_DATATYPE) {
+			    ((ppdu_desc->frame_ctrl & HTT_FRAMECTRL_DATATYPE) ||
+			     ((ppdu_desc->htt_frame_type ==
+			       HTT_STATS_FTYPE_SGEN_MU_BAR) ||
+			      (ppdu_desc->htt_frame_type ==
+			       HTT_STATS_FTYPE_SGEN_BAR)))) {
 				dp_wdi_event_handler(WDI_EVENT_TX_PPDU_DESC,
 						     pdev->soc,
 						     nbuf, HTT_INVALID_PEER,
@@ -3275,7 +3289,9 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 			if ((tlv_type ==
 			     HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) &&
 			    (ppdu_desc->htt_frame_type ==
-			     HTT_STATS_FTYPE_SGEN_MU_BAR))
+			     HTT_STATS_FTYPE_SGEN_MU_BAR ||
+			     ppdu_desc->htt_frame_type ==
+			     HTT_STATS_FTYPE_SGEN_BAR))
 				return ppdu_info;
 
 			dp_ppdu_desc_deliver(pdev, ppdu_info);
@@ -3519,6 +3535,46 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 }
 #endif /* QCA_ENHANCED_STATS_SUPPORT */
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+static void dp_htt_process_smu_ppdu_stats_tlv(struct dp_soc *soc,
+					      qdf_nbuf_t htt_t2h_msg)
+{
+	uint32_t length;
+	uint8_t tlv_type;
+	uint32_t tlv_length, tlv_expected_size;
+	uint8_t *tlv_buf;
+
+	uint32_t *msg_word = (uint32_t *)qdf_nbuf_data(htt_t2h_msg);
+
+	length = HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_GET(*msg_word);
+
+	msg_word = msg_word + 4;
+
+	while (length > 0) {
+		tlv_buf = (uint8_t *)msg_word;
+		tlv_type = HTT_STATS_TLV_TAG_GET(*msg_word);
+		tlv_length = HTT_STATS_TLV_LENGTH_GET(*msg_word);
+
+		if (tlv_length == 0)
+			break;
+
+		tlv_length += HTT_TLV_HDR_LEN;
+
+		if (tlv_type == HTT_PPDU_STATS_FOR_SMU_TLV) {
+			tlv_expected_size = sizeof(htt_ppdu_stats_for_smu_tlv);
+
+			if (tlv_length >= tlv_expected_size)
+				dp_wdi_event_handler(
+					WDI_EVENT_PKT_CAPTURE_PPDU_STATS,
+					soc, msg_word, HTT_INVALID_VDEV,
+					WDI_NO_VAL, 0);
+		}
+		msg_word = (uint32_t *)((uint8_t *)tlv_buf + tlv_length);
+		length -= (tlv_length);
+	}
+}
+#endif
+
 /**
  * dp_txrx_ppdu_stats_handler() - Function to process HTT PPDU stats from FW
  * @soc: DP SOC handle
@@ -3568,6 +3624,15 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&mon_pdev->ppdu_stats_lock);
 
 	return free_buf;
+}
+#elif defined(WLAN_FEATURE_PKT_CAPTURE_V2)
+static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
+				       uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
+{
+	if (wlan_cfg_get_pkt_capture_mode(soc->wlan_cfg_ctx))
+		dp_htt_process_smu_ppdu_stats_tlv(soc, htt_t2h_msg);
+
+	return true;
 }
 #else
 static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
@@ -4814,6 +4879,7 @@ dp_enable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	pdev->enhanced_stats_en = true;
 	if (is_ppdu_txrx_capture_enabled(pdev) && !mon_pdev->bpr_enable) {
 		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ENH_STATS,
 					  pdev->pdev_id);
@@ -4852,6 +4918,7 @@ dp_disable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 		dp_cal_client_timer_stop(mon_pdev->cal_client_ctx);
 
 	mon_pdev->enhanced_stats_en = 0;
+	pdev->enhanced_stats_en = false;
 
 	if (is_ppdu_txrx_capture_enabled(pdev) && !mon_pdev->bpr_enable) {
 		dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
@@ -5327,6 +5394,7 @@ static void dp_mon_neighbour_peer_add_ast(struct dp_pdev *pdev,
 }
 
 #ifdef WDI_EVENT_ENABLE
+#ifndef REMOVE_PKT_LOG
 static void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
@@ -5337,6 +5405,12 @@ static void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 
 	return pdev->monitor_pdev->pl_dev;
 }
+#else
+static void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	return NULL;
+}
+#endif
 #endif
 
 QDF_STATUS dp_rx_populate_cbf_hdr(struct dp_soc *soc,
@@ -5678,7 +5752,10 @@ static QDF_STATUS dp_mon_vdev_detach(struct dp_vdev *vdev)
 
 	qdf_mem_free(mon_vdev);
 	vdev->monitor_vdev = NULL;
-	pdev->monitor_pdev->mvdev = NULL;
+	/* set mvdev to NULL only if detach is called for monitor/special vap
+	 */
+	if (pdev->monitor_pdev->mvdev == vdev)
+		pdev->monitor_pdev->mvdev = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }

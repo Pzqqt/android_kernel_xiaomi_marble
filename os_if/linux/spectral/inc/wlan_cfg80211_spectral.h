@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +35,10 @@
 extern const struct nla_policy
 	spectral_scan_policy
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_MAX + 1];
+
+extern const struct nla_policy
+	spectral_scan_get_status_policy
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_STATUS_MAX + 1];
 
 #define CONFIG_REQUESTED(type)    ((type == \
 	QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_REQUEST_TYPE_SCAN_AND_CONFIG) || \

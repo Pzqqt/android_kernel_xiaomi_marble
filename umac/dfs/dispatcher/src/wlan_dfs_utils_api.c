@@ -840,6 +840,8 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 		chan_list[i].dfs_ch_ieee  =
 			wlan_reg_freq_to_chan(pdev, pcl_ch[i]);
 		chan_list[i].dfs_ch_freq  = pcl_ch[i];
+		if (wlan_reg_is_dfs_for_freq(pdev, pcl_ch[i]))
+			chan_list[i].dfs_ch_flagext |= WLAN_CHAN_DFS;
 	}
 	*num_chan = i;
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "num channels %d", i);
@@ -1250,7 +1252,7 @@ QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return QDF_STATUS_SUCCESS;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
@@ -1292,7 +1294,7 @@ QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return QDF_STATUS_SUCCESS;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
@@ -1333,7 +1335,7 @@ void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
@@ -1353,7 +1355,7 @@ void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 	void *event_data;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);

@@ -513,12 +513,12 @@ bool tgt_dfs_is_stadfs_enabled(struct wlan_objmgr_pdev *pdev)
 #endif
 
 /**
- * tgt_dfs_is_pdev_5ghz() - Check if the input pdev is 5GHZ.
+ * tgt_dfs_is_5ghz_supported_in_pdev() - Check if the input pdev supports 5GHZ.
  * @pdev: Pointer to DFS pdev object.
  *
  * Return: true if the pdev supports 5GHz, else false.
  */
-bool tgt_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev);
+bool tgt_dfs_is_5ghz_supported_in_pdev(struct wlan_objmgr_pdev *pdev);
 
 #if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 /**

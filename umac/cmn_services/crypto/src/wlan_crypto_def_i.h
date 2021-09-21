@@ -320,7 +320,7 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define HAS_UCAST_CIPHER(_param, _c)  ((_param)->ucastcipherset & (1 << (_c)))
 
 #define UCIPHER_IS_CLEAR(_param)   \
-		HAS_UCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_NONE)
+		((_param)->ucastcipherset == 0)
 #define UCIPHER_IS_WEP(_param)     \
 		HAS_UCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WEP)
 #define UCIPHER_IS_TKIP(_param)    \
@@ -344,7 +344,7 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 			((_param)->mcastcipherset &= (~(1)<<(_c)))
 
 #define MCIPHER_IS_CLEAR(_param)   \
-		HAS_MCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_NONE)
+		((_param)->mcastcipherset == 0)
 #define MCIPHER_IS_WEP(_param)     \
 		HAS_MCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WEP)
 #define MCIPHER_IS_TKIP(_param)    \
@@ -360,8 +360,7 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define MCIPHER_IS_SMS4(_param)    \
 		HAS_MCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WAPI_SMS4)
 
-#define RESET_MGMT_CIPHERS(_param)   ((_param)->mgmtcipherset = \
-					(1 << WLAN_CRYPTO_CIPHER_NONE))
+#define RESET_MGMT_CIPHERS(_param)   ((_param)->mgmtcipherset = 0)
 #define SET_MGMT_CIPHER(_param, _c)  ((_param)->mgmtcipherset |= (1 << (_c)))
 #define HAS_MGMT_CIPHER(_param, _c)  ((_param)->mgmtcipherset & (1 << (_c)))
 #define IS_MGMT_CIPHER(_c)      ((_c == WLAN_CRYPTO_CIPHER_AES_CMAC) || \
@@ -371,6 +370,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 
 #define IS_FILS_CIPHER(_c)      ((_c) == WLAN_CRYPTO_CIPHER_FILS_AEAD)
 
+#define MGMT_CIPHER_IS_CLEAR(_param)   \
+		((_param)->mgmtcipherset == 0)
 #define MGMT_CIPHER_IS_CMAC(_param)    \
 		HAS_MGMT_CIPHER((_param), WLAN_CRYPTO_CIPHER_AES_CMAC)
 #define MGMT_CIPHER_IS_CMAC256(_param) \
@@ -380,8 +381,7 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define MGMT_CIPHER_IS_GMAC256(_param) \
 		HAS_MGMT_CIPHER((_param), WLAN_CRYPTO_CIPHER_AES_GMAC_256)
 
-#define RESET_KEY_MGMT(_param)   ((_param)->key_mgmt = \
-					(1 << WLAN_CRYPTO_KEY_MGMT_NONE))
+#define RESET_KEY_MGMT(_param)   ((_param)->key_mgmt = 0)
 #define SET_KEY_MGMT(_param, _c)  ((_param)->key_mgmt |= (1 << (_c)))
 #define HAS_KEY_MGMT(_param, _c)  ((_param)->key_mgmt & (1 << (_c)))
 

@@ -331,12 +331,15 @@ QDF_STATUS ucfg_reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev
  * opclass + channel ranges. This is partial because in the AFC request there
  * are a few more parameters: Longitude, Latitude a few other information
  * @pdev: Pointer to PDEV object.
+ * @afc_req: Address of AFC request pointer.
+ * @req_id: AFC request ID.
  *
  * Return: QDF_STATUS_E_INVAL if unable to set and QDF_STATUS_SUCCESS is set.
  */
-QDF_STATUS
-ucfg_reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
-				  struct wlan_afc_host_partial_request **afc_req);
+QDF_STATUS ucfg_reg_get_partial_afc_req_info(
+		struct wlan_objmgr_pdev *pdev,
+		struct wlan_afc_host_partial_request **afc_req,
+		uint64_t req_id);
 #endif
 
 /**
@@ -504,7 +507,7 @@ ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
-#ifdef CONFIG_AFC_SUPPORT
+#if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
 /**
  * ucfg_reg_send_afc_resp_rx_ind() - Send AFC response received indication to
  * the FW.
@@ -517,5 +520,15 @@ ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 ucfg_reg_send_afc_resp_rx_ind(struct wlan_objmgr_pdev *pdev,
 			      struct reg_afc_resp_rx_ind_info *afc_ind_obj);
+
+/**
+ * ucfg_reg_afc_start() - Start the AFC request from regulatory. This finally
+ *                   sends the request to registered callbacks
+ * @pdev: Pointer to pdev
+ * @req_id: The AFC request ID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
 #endif
 #endif

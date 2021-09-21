@@ -29,6 +29,7 @@
 
 #include "wlan_objmgr_cmn.h"
 #include "qdf_nbuf.h"
+#include "wlan_mgmt_txrx_rx_reo_public_structs.h"
 
 #define mgmt_txrx_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_MGMT_TXRX, params)
@@ -773,6 +774,7 @@ enum mgmt_frame_type {
  * @pdev_id: pdev id
  * @rx_params: pointer to other rx params
  *             (win specific, will be removed in phase 4)
+ * @reo_params: Pointer to MGMT Rx REO params
  */
 struct mgmt_rx_event_params {
 	uint32_t    chan_freq;
@@ -789,6 +791,9 @@ struct mgmt_rx_event_params {
 	uint32_t    tsf_l32;
 	uint8_t     pdev_id;
 	void        *rx_params;
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	struct mgmt_rx_reo_params *reo_params;
+#endif
 };
 
 /**

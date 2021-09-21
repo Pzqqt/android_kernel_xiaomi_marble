@@ -26,7 +26,7 @@
 #include <qdf_timer.h>
 #include <qdf_lock.h>
 #include <qdf_nbuf.h>
-#include <wlan_mgmt_txrx_utils_api.h>
+#include <wlan_mgmt_txrx_rx_reo_utils_api.h>
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
 
 /**
@@ -61,24 +61,6 @@ struct mgmt_rx_reo_list_entry {
 	uint32_t insertion_timestamp;
 };
 
-
-struct mgmt_rx_reo_snapshot;
-/*
- * struct mgmt_rx_reo_pdev_info - Pdev information required by the Management
- * Rx REO module
- * @host_or_fw_consumed_snapshot: Snapshot of latest frame consumed by Host/FW
- * @mac_hw_snapshot: Pointer to the snapshot of latest frame seen at the MAC HW
- * @fw_consumed_snapshot: Pointer to the snapshot of latest frame consumed
- * by the FW
- * @fw_forwarded_snapshot: Pointer to the snapshot of latest frame forwarded
- * to the Host by FW
- */
-struct mgmt_rx_reo_pdev_info {
-	struct mgmt_rx_reo_snapshot_simplified host_or_fw_consumed_snapshot;
-	struct mgmt_rx_reo_snapshot *mac_hw_snapshot;
-	struct mgmt_rx_reo_snapshot *fw_consumed_snapshot;
-	struct mgmt_rx_reo_snapshot *fw_forwarded_snapshot;
-};
 /**
  * struct mgmt_rx_reo_context - This structure holds the info required for
  * management rx-reordering. Reordering is done across all the psocs.

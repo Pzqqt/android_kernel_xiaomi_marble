@@ -304,4 +304,29 @@ QDF_STATUS mlo_peer_allocate_primary_umac(
 QDF_STATUS mlo_peer_free_primary_umac(
 		struct wlan_mlo_dev_context *ml_dev,
 		struct wlan_mlo_peer_context *ml_peer);
+
+/**
+ * mlo_ap_vdev_quiet_set() - Set quiet bitmap for requested vdev
+ * @vdev: Pointer to object manager vdev
+ *
+ * Return: void
+ */
+void mlo_ap_vdev_quiet_set(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_ap_vdev_quiet_clear() - Clear quiet bitmap for requested vdev
+ * @vdev: Pointer to object manager vdev
+ *
+ * Return: void
+ */
+void mlo_ap_vdev_quiet_clear(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_ap_vdev_quiet_is_any_idx_set() - Check if any index is set in
+ * quiet bitmap
+ * @vdev: Pointer to object manager vdev
+ *
+ * Return: true, if any index is set, else false
+ */
+bool mlo_ap_vdev_quiet_is_any_idx_set(struct wlan_objmgr_vdev *vdev);
 #endif

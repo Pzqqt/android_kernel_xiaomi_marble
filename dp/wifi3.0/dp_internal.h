@@ -600,11 +600,6 @@ dp_monitor_get_rx_status(struct dp_pdev *pdev)
 	return NULL;
 }
 
-static inline bool dp_monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
-{
-	return false;
-}
-
 static inline
 void dp_monitor_pdev_config_scan_spcl_vap(struct dp_pdev *pdev)
 {
@@ -2411,6 +2406,14 @@ void dp_pdev_print_delay_stats(struct dp_pdev *pdev);
  * Return:void
  */
 void dp_pdev_print_tid_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_pdev_print_rx_error_stats(): Print pdev level rx error stats
+ * @pdev: DP_PDEV handle
+ *
+ * Return:void
+ */
+void dp_pdev_print_rx_error_stats(struct dp_pdev *pdev);
 #endif /* CONFIG_WIN */
 
 void dp_soc_set_txrx_ring_map(struct dp_soc *soc);

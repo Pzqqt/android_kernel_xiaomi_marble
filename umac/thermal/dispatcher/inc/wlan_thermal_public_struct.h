@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,30 @@ enum thermal_throttle_level {
 	 THERMAL_SHUTOFF,
 	 THERMAL_SHUTDOWN_TARGET,
 	 THERMAL_UNKNOWN,
+};
+
+enum thermal_stats_request_type {
+	thermal_stats_none = 0,
+	thermal_stats_init,
+	thermal_stats_req,
+	thermal_stats_clear,
+	thermal_stats_current_all_sensors_temp,
+};
+
+/**
+ * thermal_throt_level_stats - thermal throttle info from Target
+ * @start_temp_level: Start temperature range to capture thermal stats
+ * @end_temp_level: End temperature range to capture thermal stats
+ * @total_time_ms_lo: Start time for every thermal stats level in msec
+ * @total_time_ms_hi: End time for every thermal stats level in msec
+ * @num_entry: Thermal stats counter for every time temp level for this range
+ */
+struct thermal_throt_level_stats {
+	uint32_t start_temp_level;
+	uint32_t end_temp_level;
+	uint32_t total_time_ms_lo;
+	uint32_t total_time_ms_hi;
+	uint32_t num_entry;
 };
 
 #endif /* _WLAN_THERMAL_PUBLIC_STRUCT_H_ */

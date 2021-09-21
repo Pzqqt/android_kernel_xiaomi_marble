@@ -822,30 +822,33 @@ target_if_spectral_log_SAMP_param(struct target_if_samp_msg_params *params)
 
 #ifdef OPTIMIZED_SAMP_MESSAGE
 /**
- * target_if_get_ieee80211_format_cfreq() - Calculate correct cfreq1/
- * cfreq2. The frequency values should be in-line with IEEE 802.11
+ * target_if_spectral_unify_cfreq_format() - Unify the cfreq representations.
  * @spectral: Pointer to target_if spectral internal structure
- * @cfreq1: Center frequency of Detector 1
- * @cfreq2: Center frequency of Detector 2
- * @pri20_freq: Primary 20MHz frequency
+ * @cfreq1: cfreq1 value received in the Spectral report
+ * @cfreq2: cfreq2 value received in the Spectral report
+ * @pri20_freq: Primary 20MHz frequency of operation
+ * @ch_width: channel width. If the center frequencies are of operating channel,
+ * pass the operating channel width, else pass the sscan channel width.
  * @smode: Spectral scan mode
  *
- * API to get correct cfreq1/cfreq2 values as per IEEE 802.11 standard
+ * This API converts the cfreq1 and cfreq2 representations as follows.
+ * For a contiguous channel, cfreq1 will represent the center of the entire
+ * span and cfreq2 will be 0. For a discontiguous channel like 80p80, cfreq1
+ * will represent the center of primary segment whereas cfreq2 will
+ * represent the center of secondary segment.
  *
  * Return: Success/Failure
  */
 static QDF_STATUS
-target_if_get_ieee80211_format_cfreq(struct target_if_spectral *spectral,
-				     uint32_t *cfreq1, uint32_t *cfreq2,
-				     uint32_t pri20_freq,
-				     enum spectral_scan_mode smode)
+target_if_spectral_unify_cfreq_format(struct target_if_spectral *spectral,
+				      uint32_t *cfreq1, uint32_t *cfreq2,
+				      uint32_t pri20_freq,
+				      enum phy_ch_width ch_width,
+				      enum spectral_scan_mode smode)
+
 {
-	uint32_t pri_det_freq, sec_det_freq;
+	uint32_t reported_cfreq1, reported_cfreq2;
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_objmgr_vdev *vdev;
-	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
-	enum channel_state state;
-	enum phy_ch_width ch_width;
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
@@ -862,48 +865,66 @@ target_if_get_ieee80211_format_cfreq(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	pri_det_freq = *cfreq1;
-	sec_det_freq = *cfreq2;
-	ch_width = spectral->ch_width[smode];
+	reported_cfreq1 = *cfreq1;
+	reported_cfreq2 = *cfreq2;
 
-	/* Adjust cfreq1 and cfreq2 as per IEEE802.11 standards */
 	if (ch_width == CH_WIDTH_160MHZ &&
 	    spectral->rparams.fragmentation_160[smode]) {
-		*cfreq1 = pri_det_freq;
-		*cfreq2 = (pri_det_freq + sec_det_freq) >> 1;
-	} else if (!spectral->rparams.fragmentation_160[smode] &&
-		   is_ch_width_160_or_80p80(ch_width)) {
-		if (ch_width == CH_WIDTH_80P80MHZ &&
-		    wlan_psoc_nif_fw_ext_cap_get(
-		    psoc, WLAN_SOC_RESTRICTED_80P80_SUPPORT)) {
-			vdev = target_if_spectral_get_vdev(spectral, smode);
-			if (!vdev) {
-				spectral_err_rl("vdev is NULL");
+		/* cfreq should be 0 for 160MHz as it is contiguous */
+		*cfreq2 = 0;
+
+		/**
+		 * For gen3 chipsets that use fragmentation, cfreq1 is center of
+		 * pri80, and cfreq2 is center of sec80. Averaging them gives
+		 * the center of the 160MHz span.
+		 * Whereas gen2 chipsets report the center of the 160MHz span in
+		 * cfreq2 itself.
+		 */
+		if (spectral->spectral_gen == SPECTRAL_GEN3)
+			*cfreq1 = (reported_cfreq1 + reported_cfreq2) >> 1;
+		else
+			*cfreq1 = reported_cfreq2;
+	} else if (ch_width == CH_WIDTH_80P80MHZ &&
+		   wlan_psoc_nif_fw_ext_cap_get(
+		   psoc, WLAN_SOC_RESTRICTED_80P80_SUPPORT)) {
+			/* In restricted 80p80 case */
+			const struct bonded_channel_freq
+					*bonded_chan_ptr = NULL;
+			enum channel_state state;
+
+			/* Get the 80MHz channel containing the pri20 freq */
+			state = wlan_reg_get_5g_bonded_channel_and_state_for_freq
+				(spectral->pdev_obj, pri20_freq, CH_WIDTH_80MHZ,
+				 &bonded_chan_ptr);
+
+			if (state == CHANNEL_STATE_DISABLE ||
+			    state == CHANNEL_STATE_INVALID) {
+				spectral_err_rl("Channel state is disable or invalid");
 				return QDF_STATUS_E_FAILURE;
 			}
-			*cfreq2 = target_if_vdev_get_chan_freq_seg2(vdev);
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
-		}
-		if (ch_width == CH_WIDTH_160MHZ)
-			*cfreq2 = pri_det_freq;
 
-		state = wlan_reg_get_5g_bonded_channel_and_state_for_freq
-			(spectral->pdev_obj, pri20_freq, CH_WIDTH_80MHZ,
-			 &bonded_chan_ptr);
-		if (state == CHANNEL_STATE_DISABLE ||
-		    state == CHANNEL_STATE_INVALID) {
-			spectral_err_rl("Channel state is disable or invalid");
-			return QDF_STATUS_E_FAILURE;
-		}
-		if (!bonded_chan_ptr) {
-			spectral_err_rl("Bonded channel is not found");
-			return QDF_STATUS_E_FAILURE;
-		}
-		*cfreq1 = (bonded_chan_ptr->start_freq +
-			   bonded_chan_ptr->end_freq) >> 1;
+			if (!bonded_chan_ptr) {
+				spectral_err_rl("Bonded channel is not found");
+				return QDF_STATUS_E_FAILURE;
+			}
+
+			/* cfreq1 is the center of the pri80 segment */
+			*cfreq1 = (bonded_chan_ptr->start_freq +
+				   bonded_chan_ptr->end_freq) >> 1;
+
+			/**
+			 * cfreq2 is 85MHz away from cfreq1. Whether it is
+			 * higher or lower depends on pri20_freq's relationship
+			 * with the reported center frequency.
+			 */
+			if (pri20_freq < reported_cfreq1)
+				*cfreq2 = *cfreq1 + FREQ_OFFSET_85MHZ;
+			else
+				*cfreq2 = *cfreq1 - FREQ_OFFSET_85MHZ;
 	} else {
-		*cfreq1 = pri_det_freq;
-		*cfreq2 = sec_det_freq;
+		/* All other cases are reporting the cfreq properly */
+		*cfreq1 = reported_cfreq1;
+		*cfreq2 = reported_cfreq2;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -956,30 +977,36 @@ target_if_populate_det_start_end_freqs(struct target_if_spectral *spectral,
 		switch (det) {
 		case 0:
 			if (ch_width == CH_WIDTH_160MHZ &&
-			    !is_fragmentation_160 &&
-			    smode == SPECTRAL_SCAN_MODE_NORMAL)
-				cfreq = rpt_info->sscan_cfreq2;
-			else
+			    is_fragmentation_160) {
+				if (rpt_info->pri20_freq <
+				    rpt_info->sscan_cfreq1)
+					cfreq = rpt_info->sscan_cfreq1 -
+						FREQ_OFFSET_40MHZ;
+				else
+					cfreq = rpt_info->sscan_cfreq1 +
+						FREQ_OFFSET_40MHZ;
+			} else
 				cfreq = rpt_info->sscan_cfreq1;
 			break;
+
 		case 1:
 			if (ch_width == CH_WIDTH_160MHZ &&
-			    is_fragmentation_160 &&
-			    rpt_info->sscan_cfreq1 >
-			    rpt_info->sscan_cfreq2) {
-				cfreq = rpt_info->sscan_cfreq1 -
-					FREQ_OFFSET_80MHZ;
-			} else {
-				if (ch_width == CH_WIDTH_160MHZ)
-					cfreq = rpt_info->sscan_cfreq1
-						+ FREQ_OFFSET_80MHZ;
+			    is_fragmentation_160) {
+				if (rpt_info->pri20_freq <
+				    rpt_info->sscan_cfreq1)
+					cfreq = rpt_info->sscan_cfreq1 +
+						FREQ_OFFSET_40MHZ;
 				else
-					cfreq = rpt_info->sscan_cfreq2;
-			}
+					cfreq = rpt_info->sscan_cfreq1 -
+						FREQ_OFFSET_40MHZ;
+			} else
+				cfreq = rpt_info->sscan_cfreq2;
 			break;
+
 		default:
 			return QDF_STATUS_E_FAILURE;
 		}
+
 		/* Set start and end frequencies */
 		target_if_spectral_set_start_end_freq(cfreq,
 						      ch_width,
@@ -1051,8 +1078,8 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 		case 0:
 			if (ch_width == CH_WIDTH_160MHZ &&
 			    is_fragmentation_160 &&
-			    spectral->report_info[smode].sscan_cfreq1 >
-			    spectral->report_info[smode].sscan_cfreq2)
+			    spectral->report_info[smode].pri20_freq >
+			    spectral->report_info[smode].sscan_cfreq1)
 				start_bin = num_fft_bins +
 					dest_det_info->lb_extrabins_num +
 					dest_det_info->rb_extrabins_num;
@@ -1062,8 +1089,8 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 		case 1:
 			if (ch_width == CH_WIDTH_160MHZ &&
 			    is_fragmentation_160 &&
-			    spectral->report_info[smode].sscan_cfreq1 >
-			    spectral->report_info[smode].sscan_cfreq2)
+			    spectral->report_info[smode].pri20_freq >
+			    spectral->report_info[smode].sscan_cfreq1)
 				start_bin = 0;
 			else
 				start_bin = num_fft_bins +
@@ -1149,30 +1176,22 @@ target_if_update_session_info_from_report_ctx(
 	rpt_info->cfreq1 = cfreq1;
 	rpt_info->cfreq2 = cfreq2;
 
-	/**
-	 * Convert cfreq1 and cfreq2 as per IEEE802.11 standards for gen3.
-	 * For gen2, we receive cfreq1/cfreq2 in line with IEEE802.11 standard
-	 * from the FW.
-	 * cfreq1: Centre frequency of the frequency span for 20/40/80 MHz BW.
-	 *         Pri80 Segment centre frequency in MHz for 80p80/160 MHz BW.
-	 * cfreq2: For 80p80, indicates segment 2 centre frequency in MHz.
-	 *         For 160MHz, indicates the center frequency of 160MHz span.
-	 *
-	 * For Agile mode, cfreq1/cfreq2 are taken as provided by user, no
-	 * conversion is done.
-	 * cfreq1: Center frequency of the span for 20/40/80/160. Frequency
-	 *         value 1 for Agile 80p80.
-	 * cfreq2: Frequency value 2 for Agile 80p80.
-	 */
-	if (spectral->spectral_gen == SPECTRAL_GEN3) {
-		ret = target_if_get_ieee80211_format_cfreq(
-			spectral, &rpt_info->cfreq1, &rpt_info->cfreq2,
-			rpt_info->pri20_freq, SPECTRAL_SCAN_MODE_NORMAL);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			spectral_err_rl("Unable to get correct cfreq1/cfreq2");
-			return QDF_STATUS_E_FAILURE;
-		}
+	if (spectral_debug_level & DEBUG_SPECTRAL4)
+		spectral_debug("Before conversion: cfreq1: %u cfreq2: %u",
+			       rpt_info->cfreq1, rpt_info->cfreq2);
+
+	ret = target_if_spectral_unify_cfreq_format(
+		spectral, &rpt_info->cfreq1, &rpt_info->cfreq2,
+		rpt_info->pri20_freq, rpt_info->operating_bw, smode);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Unable to unify cfreq1/cfreq2");
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (spectral_debug_level & DEBUG_SPECTRAL4)
+		spectral_debug("After conversion: cfreq1: %d cfreq2: %d",
+			       rpt_info->cfreq1, rpt_info->cfreq2);
 
 	/* For Agile mode, sscan_cfreq1 and sscan_cfreq2 are populated
 	 * during Spectral start scan
@@ -1428,11 +1447,21 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 	uint8_t segid_sec80;
 	enum phy_ch_width ch_width;
 	QDF_STATUS ret;
+	struct target_if_spectral_ops *p_sops;
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
 		goto fail;
 	}
+
+	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+	/* Drop the sample if Spectral is not active */
+	if (!p_sops->is_spectral_active(spectral,
+					SPECTRAL_SCAN_MODE_NORMAL)) {
+		spectral_info_rl("Spectral scan is not active");
+		goto fail_no_print;
+	}
+
 	if (!data) {
 		spectral_err_rl("Phyerror event buffer is null");
 		goto fail;
@@ -1616,10 +1645,12 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 	return 0;
 
 fail:
+	spectral_err_rl("Error while processing Spectral report");
+
+fail_no_print:
 	if (spectral_debug_level & DEBUG_SPECTRAL4)
 		spectral_debug_level = DEBUG_SPECTRAL;
 
-	spectral_err_rl("Error while processing Spectral report");
 	free_samp_msg_skb(spectral, SPECTRAL_SCAN_MODE_NORMAL);
 	return -EPERM;
 }

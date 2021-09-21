@@ -35,6 +35,7 @@
 #include <scheduler_api.h>
 #include "reg_build_chan_list.h"
 #include <qdf_platform.h>
+#include <wlan_reg_services_api.h>
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -518,7 +519,8 @@ static void reg_find_low_limit_chan_enum(
  * Return: None
  */
 static void reg_find_high_limit_chan_enum(
-		struct regulatory_channel *chan_list, qdf_freq_t high_freq,
+		struct regulatory_channel *chan_list,
+		qdf_freq_t high_freq,
 		uint32_t *high_limit)
 {
 	enum channel_enum chan_enum;
@@ -673,6 +675,7 @@ static void reg_propagate_6g_mas_channel_list(
 		mas_chan_params->is_6g_channel_list_populated;
 	pdev_priv_obj->reg_6g_superid =
 		mas_chan_params->reg_6g_superid;
+	pdev_priv_obj->reg_cur_6g_ap_pwr_type = REG_INDOOR_AP;
 }
 #else
 static inline void reg_propagate_6g_mas_channel_list(
@@ -1105,6 +1108,48 @@ reg_populate_secondary_cur_chan_list(struct wlan_regulatory_pdev_priv_obj
 	}
 }
 #else /* CONFIG_REG_CLIENT */
+
+/**
+ * reg_copy_ap_chan_list_to_mas_chan_list() - Copy the 6G ap channel list to
+ * the MIN_6GHZ_CHANNEL index of the mas_chan_list based on the AP power type
+ * In case of standard power type, if the afc channel list is available from
+ * the afc server, use afc channel list (intersected with SP power list)
+ * for the copy instead of using the standard power list directly.
+ * @pdev_priv_obj: pointer to pdev_priv_obj.
+ * @ap_pwr_type: 6G AP power type
+ *
+ * Return type: void.
+ */
+#ifdef CONFIG_AFC_SUPPORT
+static void
+reg_copy_ap_chan_list_to_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
+				       *pdev_priv_obj,
+				       enum reg_6g_ap_type ap_pwr_type)
+{
+	if (ap_pwr_type == REG_STANDARD_POWER_AP &&
+	    pdev_priv_obj->is_6g_afc_power_event_received) {
+		qdf_mem_copy(&pdev_priv_obj->mas_chan_list[MIN_6GHZ_CHANNEL],
+			     pdev_priv_obj->afc_chan_list,
+			     NUM_6GHZ_CHANNELS *
+			     sizeof(struct regulatory_channel));
+	} else {
+		qdf_mem_copy(&pdev_priv_obj->mas_chan_list[MIN_6GHZ_CHANNEL],
+			     pdev_priv_obj->mas_chan_list_6g_ap[ap_pwr_type],
+			     NUM_6GHZ_CHANNELS *
+			     sizeof(struct regulatory_channel));
+	}
+}
+#else
+static void
+reg_copy_ap_chan_list_to_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
+				       *pdev_priv_obj,
+				       enum reg_6g_ap_type ap_pwr_type)
+{
+	qdf_mem_copy(&pdev_priv_obj->mas_chan_list[MIN_6GHZ_CHANNEL],
+		     pdev_priv_obj->mas_chan_list_6g_ap[ap_pwr_type],
+		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
+}
+#endif
 static void
 reg_append_mas_chan_list_for_6g(struct wlan_regulatory_pdev_priv_obj
 				*pdev_priv_obj)
@@ -1116,9 +1161,7 @@ reg_append_mas_chan_list_for_6g(struct wlan_regulatory_pdev_priv_obj
 		return;
 	}
 
-	qdf_mem_copy(&pdev_priv_obj->mas_chan_list[MIN_6GHZ_CHANNEL],
-		     pdev_priv_obj->mas_chan_list_6g_ap[ap_pwr_type],
-		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
+	reg_copy_ap_chan_list_to_mas_chan_list(pdev_priv_obj, ap_pwr_type);
 }
 
 static inline void
@@ -1127,6 +1170,63 @@ reg_populate_secondary_cur_chan_list(struct wlan_regulatory_pdev_priv_obj
 {
 }
 #endif /* CONFIG_REG_CLIENT */
+
+#ifdef CONFIG_AFC_SUPPORT
+/* reg_intersect_6g_afc_chan_list() - Do intersection of tx_powers of AFC master
+ * channel list and SP channe list and store the power in the AFC channel list.
+ * @pdev_priv_obj: pointer to pdev_priv_obj.
+ *
+ * Return type: void.
+ */
+static void
+reg_intersect_6g_afc_chan_list(struct wlan_regulatory_pdev_priv_obj
+			       *pdev_priv_obj)
+{
+	struct regulatory_channel *afc_chan_list;
+	struct regulatory_channel *afc_mas_chan_list;
+	struct regulatory_channel *sp_chan_list;
+	uint8_t i;
+
+	afc_chan_list = pdev_priv_obj->afc_chan_list;
+	afc_mas_chan_list = pdev_priv_obj->mas_chan_list_6g_afc;
+	sp_chan_list =
+		pdev_priv_obj->mas_chan_list_6g_ap[REG_STANDARD_POWER_AP];
+
+	qdf_mem_copy(afc_chan_list, afc_mas_chan_list,
+		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
+
+	for (i = 0; i < NUM_6GHZ_CHANNELS; i++) {
+		if ((afc_chan_list[i].state != CHANNEL_STATE_DISABLE) &&
+		    !(afc_chan_list[i].chan_flags &
+		      REGULATORY_CHAN_DISABLED)) {
+			afc_chan_list[i].tx_power =
+				QDF_MIN(sp_chan_list[i].tx_power,
+					afc_mas_chan_list[i].tx_power);
+			afc_chan_list[i].psd_eirp =
+				QDF_MIN((int16_t)sp_chan_list[i].psd_eirp,
+					(int16_t)afc_mas_chan_list[i].psd_eirp);
+		}
+	}
+}
+
+/* reg_modify_6g_afc_chan_list() - Modify the AFC channel list if the AFC WMI
+ * power event is received from the target
+ * @pdev_priv_obj: pointer to pdev_priv_obj.
+ *
+ * Return type: void.
+ */
+static void
+reg_modify_6g_afc_chan_list(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	if (pdev_priv_obj->is_6g_afc_power_event_received)
+		reg_intersect_6g_afc_chan_list(pdev_priv_obj);
+}
+#else
+static inline void
+reg_modify_6g_afc_chan_list(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+#endif
 
 static void reg_copy_6g_cur_mas_chan_list_to_cmn(
 			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
@@ -1163,6 +1263,10 @@ reg_populate_secondary_cur_chan_list(struct wlan_regulatory_pdev_priv_obj
 {
 }
 #endif /* CONFIG_REG_CLIENT */
+static inline void
+reg_modify_6g_afc_chan_list(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
 #endif /* CONFIG_BAND_6GHZ */
 
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
@@ -1493,6 +1597,8 @@ reg_modify_chan_list_for_avoid_chan_ext(struct wlan_regulatory_pdev_priv_obj
 void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 					*pdev_priv_obj)
 {
+	reg_modify_6g_afc_chan_list(pdev_priv_obj);
+
 	reg_copy_6g_cur_mas_chan_list_to_cmn(pdev_priv_obj);
 
 	qdf_mem_copy(pdev_priv_obj->cur_chan_list, pdev_priv_obj->mas_chan_list,
@@ -2352,6 +2458,510 @@ QDF_STATUS reg_process_master_chan_list_ext(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+static void reg_disable_afc_mas_chan_list_channels(
+		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	struct regulatory_channel *afc_mas_chan_list;
+	enum channel_enum chan_idx;
+
+	afc_mas_chan_list = pdev_priv_obj->mas_chan_list_6g_afc;
+
+	for (chan_idx = 0; chan_idx < NUM_6GHZ_CHANNELS; chan_idx++) {
+		if (afc_mas_chan_list[chan_idx].state == CHANNEL_STATE_ENABLE) {
+			afc_mas_chan_list[chan_idx].state =
+							CHANNEL_STATE_DISABLE;
+			afc_mas_chan_list[chan_idx].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+			afc_mas_chan_list[chan_idx].psd_eirp = 0;
+			afc_mas_chan_list[chan_idx].tx_power = 0;
+		}
+	}
+}
+
+static void reg_free_expiry_afc_info(struct afc_regulatory_info *afc_info)
+{
+	qdf_mem_free(afc_info->expiry_info);
+}
+
+/**
+ * reg_process_afc_expiry_event() - Process the afc expiry event and get the
+ * afc request id
+ * @afc_info: Pointer to afc info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+reg_process_afc_expiry_event(struct afc_regulatory_info *afc_info)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint8_t phy_id;
+	uint8_t pdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	wlan_objmgr_ref_dbgid dbg_id;
+
+	psoc = afc_info->psoc;
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	phy_id = afc_info->phy_id;
+	tx_ops = reg_get_psoc_tx_ops(psoc);
+
+	if (soc_reg->offload_enabled)
+		dbg_id = WLAN_REGULATORY_NB_ID;
+	else
+		dbg_id = WLAN_REGULATORY_SB_ID;
+
+	if (tx_ops->get_pdev_id_from_phy_id)
+		tx_ops->get_pdev_id_from_phy_id(psoc, phy_id, &pdev_id);
+	else
+		pdev_id = phy_id;
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, dbg_id);
+
+	if (!pdev) {
+		reg_err("pdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev_priv_obj->is_6g_afc_power_event_received = false;
+
+	reg_debug("AFC event subtype: %d",
+		  afc_info->expiry_info->event_subtype);
+	switch (afc_info->expiry_info->event_subtype) {
+	case REG_AFC_EXPIRY_EVENT_START:
+	case REG_AFC_EXPIRY_EVENT_RENEW:
+		pdev_priv_obj->afc_request_id =
+					afc_info->expiry_info->request_id;
+		pdev_priv_obj->is_6g_afc_expiry_event_received = true;
+		reg_afc_start(pdev, pdev_priv_obj->afc_request_id);
+		break;
+	case REG_AFC_EXPIRY_EVENT_SWITCH_TO_LPI:
+		reg_disable_afc_mas_chan_list_channels(pdev_priv_obj);
+		if (tx_ops->trigger_acs_for_afc)
+			tx_ops->trigger_acs_for_afc(pdev);
+		break;
+	default:
+		reg_err_rl("Invalid event subtype");
+	};
+
+	wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+	reg_free_expiry_afc_info(afc_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * reg_fill_min_max_bw_for_afc_list() - Fill min and max bw in afc list from
+ * from the SP AFC list
+ * @pdev_priv_obj: Pointer to pdev_priv_obj
+ * @afc_chan_list: Pointer to afc_chan_list
+ *
+ * Return: void
+ */
+static void
+reg_fill_min_max_bw_for_afc_list(
+		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj,
+		struct regulatory_channel *afc_chan_list)
+{
+	uint8_t chan_idx;
+
+	for (chan_idx = 0; chan_idx < NUM_6GHZ_CHANNELS; chan_idx++) {
+		afc_chan_list[chan_idx].min_bw = MIN_AFC_BW;
+		afc_chan_list[chan_idx].max_bw = MAX_AFC_BW;
+	}
+}
+
+/**
+ * reg_get_subchannels_for_opclass() - Get the list of subchannels based on the
+ * the channel frequency index and opclass.
+ * @cfi: Channel frequency index
+ * @opclass: Operating class
+ * @subchannels: Pointer to list of subchannels
+ *
+ * Return: void
+ */
+static uint8_t reg_get_subchannels_for_opclass(uint8_t cfi,
+					       uint8_t opclass,
+					       uint8_t *subchannels)
+{
+	uint8_t nchans;
+
+	switch (opclass) {
+	case 131:
+	case 136:
+		nchans = 1;
+		subchannels[0] = cfi;
+		break;
+	case 132:
+		nchans = 2;
+		subchannels[0] = cfi - 2;
+		subchannels[1] = cfi + 2;
+		break;
+	case 133:
+		nchans = 4;
+		subchannels[0] = cfi - 6;
+		subchannels[1] = cfi - 2;
+		subchannels[2] = cfi + 2;
+		subchannels[3] = cfi + 6;
+		break;
+	case 134:
+		nchans = 8;
+		subchannels[0] = cfi - 14;
+		subchannels[1] = cfi - 10;
+		subchannels[2] = cfi - 6;
+		subchannels[3] = cfi - 2;
+		subchannels[4] = cfi + 2;
+		subchannels[5] = cfi + 6;
+		subchannels[6] = cfi + 10;
+		subchannels[7] = cfi + 14;
+		break;
+	default:
+		nchans = 0;
+		break;
+	}
+
+	return nchans;
+}
+
+/**
+ * reg_search_afc_power_info_for_freq() - Search the chan_eirp object for the
+ * eirp power for a given frequency
+ * @pdev: Pointer to pdev
+ * @afc_info: Pointer to afc_info
+ * @freq: Channel frequency
+ * @eirp_power: Pointer to eirp_power
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+reg_search_afc_power_info_for_freq(
+		struct wlan_objmgr_pdev *pdev,
+		struct afc_regulatory_info *afc_info,
+		qdf_freq_t freq,
+		uint16_t *eirp_power)
+{
+	struct reg_fw_afc_power_event *power_info;
+	uint8_t i;
+
+	if (!afc_info->power_info) {
+		reg_err("afc_info->power_info is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!afc_info->power_info->num_chan_objs) {
+		reg_err("num chan objs cannot be zero");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	power_info = afc_info->power_info;
+
+	*eirp_power = 0;
+	for (i = 0; i < power_info->num_chan_objs; i++) {
+		uint8_t j;
+		struct afc_chan_obj *chan_obj = &power_info->afc_chan_info[i];
+
+		if (!chan_obj->num_chans) {
+			reg_err("num chans cannot be zero");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		for (j = 0; j < chan_obj->num_chans; j++) {
+			uint8_t k;
+			struct chan_eirp_obj *eirp_obj =
+						&chan_obj->chan_eirp_info[j];
+			uint8_t opclass = chan_obj->global_opclass;
+			uint8_t subchannels[REG_MAX_20M_SUB_CH];
+			uint8_t nchans;
+
+			nchans =
+			reg_get_subchannels_for_opclass(eirp_obj->cfi,
+							opclass, subchannels);
+
+			for (k = 0; k < nchans; k++) {
+				if (reg_chan_band_to_freq(pdev,
+							  subchannels[k],
+							  BIT(REG_BAND_6G)) ==
+							  freq)
+					*eirp_power = eirp_obj->eirp_power;
+					break;
+			}
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * reg_fill_eirp_pwr_in_afc_chan_list() - Fill max eirp power in the afc master
+ * chan list
+ * @pdev: Pointer to pdev
+ * @afc_chan_list: Pointer to afc_chan_list
+ * @afc_info: Pointer to afc_info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS reg_fill_eirp_pwr_in_afc_chan_list(
+		struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *afc_chan_list,
+		struct afc_regulatory_info *afc_info)
+
+{
+	uint8_t chan_idx;
+	uint16_t eirp_power;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	for (chan_idx = 0; chan_idx < NUM_6GHZ_CHANNELS; chan_idx++) {
+		status =
+		reg_search_afc_power_info_for_freq(pdev,
+						   afc_info,
+						   afc_chan_list[chan_idx].
+						   center_freq,
+						   &eirp_power);
+		/*
+		 * The eirp_power is divided by 100 because the target
+		 * sends the EIRP in the units of 0.01 dbm.
+		 */
+		if (QDF_IS_STATUS_SUCCESS(status))
+			afc_chan_list[chan_idx].tx_power = eirp_power / 100;
+	}
+
+	return status;
+}
+
+/**
+ * reg_find_chan_enum_for_6g() - Find 6G channel enum for a given frequency
+ * in the input channel list
+ * @chan_list: Pointer to regulatory channel list.
+ * @freq: Channel frequency.
+ * @channel_enum: pointer to output channel enum.
+ *
+ * Return: None
+ */
+static void reg_find_chan_enum_for_6g(
+		struct regulatory_channel *chan_list, qdf_freq_t freq,
+		uint32_t *channel_enum)
+{
+	enum channel_enum chan_enum;
+	uint16_t min_bw;
+	uint16_t max_bw;
+	qdf_freq_t center_freq;
+
+	for (chan_enum = 0; chan_enum < NUM_6GHZ_CHANNELS; chan_enum++) {
+		min_bw = chan_list[chan_enum].min_bw;
+		max_bw = chan_list[chan_enum].max_bw;
+		center_freq = chan_list[chan_enum].center_freq;
+
+		if ((center_freq - min_bw / 2) >= freq) {
+			if ((center_freq - max_bw / 2) < freq) {
+				if (max_bw <= 20)
+					max_bw = ((center_freq - freq) * 2);
+				if (max_bw < min_bw)
+					max_bw = min_bw;
+				chan_list[chan_enum].max_bw = max_bw;
+			}
+			*channel_enum = chan_enum;
+			break;
+		}
+	}
+}
+
+/**
+ * reg_fill_max_psd_in_afc_chan_list() - Fill max_psd in the afc master chan
+ * list
+ * @pdev_priv_obj: Pointer to pdev_priv_obj
+ * @afc_chan_list: Pointer to afc_chan_list
+ * @power_info: Pointer to power_info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
+		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj,
+		struct regulatory_channel *afc_chan_list,
+		struct reg_fw_afc_power_event *power_info)
+{
+	uint8_t i;
+
+	if (!power_info) {
+		reg_err("power_info is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!power_info->num_freq_objs) {
+		reg_err("num freq objs cannot be zero");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < power_info->num_freq_objs; i++) {
+		struct afc_freq_obj *freq_obj = &power_info->afc_freq_info[i];
+		uint32_t low_limit_enum, high_limit_enum;
+		uint8_t j;
+
+		reg_find_chan_enum_for_6g(afc_chan_list, freq_obj->low_freq,
+					  &low_limit_enum);
+		reg_find_chan_enum_for_6g(afc_chan_list, freq_obj->high_freq,
+					  &high_limit_enum);
+		for (j = low_limit_enum; j <= high_limit_enum; j++) {
+			afc_chan_list[j].state = CHANNEL_STATE_ENABLE;
+			afc_chan_list[j].chan_flags &=
+						~REGULATORY_CHAN_DISABLED;
+			/*
+			 * The max_psd is divided by 100 because the target
+			 * sends the PSD in the units of 0.01 dbm/MHz.
+			 */
+			afc_chan_list[j].psd_eirp = freq_obj->max_psd / 100;
+			afc_chan_list[j].psd_flag = true;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * reg_process_afc_power_event() - Process the afc event and compute the 6G AFC
+ * channel list based on the frequency range and channel frequency indice set.
+ * @afc_info: Pointer to afc info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
+{
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t phy_id;
+	uint8_t pdev_id;
+	wlan_objmgr_ref_dbgid dbg_id;
+	struct wlan_objmgr_pdev *pdev;
+	struct mas_chan_params *this_mchan_params;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	struct regulatory_channel *afc_mas_chan_list;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint32_t size_of_6g_chan_list =
+		NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel);
+	QDF_STATUS status;
+
+	if (afc_info->power_info->fw_status_code !=
+	    REG_FW_AFC_POWER_EVENT_SUCCESS) {
+		reg_err_rl("AFC Power event failure status code %d",
+			   afc_info->power_info->fw_status_code);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc = afc_info->psoc;
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	tx_ops = reg_get_psoc_tx_ops(psoc);
+	phy_id = afc_info->phy_id;
+
+	if (tx_ops->get_pdev_id_from_phy_id)
+		tx_ops->get_pdev_id_from_phy_id(psoc, phy_id, &pdev_id);
+	else
+		pdev_id = phy_id;
+
+	reg_debug("process reg afc master chan list");
+	this_mchan_params = &soc_reg->mas_chan_params[phy_id];
+	afc_mas_chan_list = this_mchan_params->mas_chan_list_6g_afc;
+	reg_init_6g_master_chan(afc_mas_chan_list, soc_reg);
+	soc_reg->mas_chan_params[phy_id].is_6g_afc_power_event_received = true;
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, dbg_id);
+
+	if (!pdev) {
+		reg_err("pdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Free the old power_info event if it was allocated */
+	if (pdev_priv_obj->power_info)
+		reg_free_afc_pwr_info(pdev_priv_obj);
+
+	pdev_priv_obj->power_info = afc_info->power_info;
+	reg_fill_min_max_bw_for_afc_list(pdev_priv_obj,
+					 afc_mas_chan_list);
+	status = reg_fill_max_psd_in_afc_chan_list(pdev_priv_obj,
+						   afc_mas_chan_list,
+						   afc_info->power_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		reg_err("Error in filling max_psd in AFC chan list");
+		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+		return status;
+	}
+
+	status = reg_fill_eirp_pwr_in_afc_chan_list(pdev,
+						    afc_mas_chan_list,
+						    afc_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		reg_err("Error in filling EIRP power in AFC chan list");
+		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(pdev_priv_obj->mas_chan_list_6g_afc,
+		     afc_mas_chan_list,
+		     size_of_6g_chan_list);
+	pdev_priv_obj->is_6g_afc_power_event_received =
+	soc_reg->mas_chan_params[phy_id].is_6g_afc_power_event_received;
+
+	reg_modify_6g_afc_chan_list(pdev_priv_obj);
+
+	if (tx_ops->trigger_acs_for_afc &&
+	    !wlan_reg_is_noaction_on_afc_pwr_evt(pdev))
+		tx_ops->trigger_acs_for_afc(pdev);
+
+	wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * reg_process_afc_event() - Process the afc event received from the target.
+ * @afc_info: Pointer to afc_info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_process_afc_event(struct afc_regulatory_info *afc_info)
+{
+	switch (afc_info->event_type) {
+	case REG_AFC_EVENT_POWER_INFO:
+		return reg_process_afc_power_event(afc_info);
+	case REG_AFC_EVENT_TIMER_EXPIRY:
+		return reg_process_afc_expiry_event(afc_info);
+	default:
+		reg_err_rl("Invalid event type");
+		return QDF_STATUS_E_FAILURE;
+	}
+}
+#endif /* CONFIG_AFC_SUPPORT */
 #endif /* CONFIG_BAND_6GHZ */
 
 QDF_STATUS reg_process_master_chan_list(
@@ -2638,6 +3248,25 @@ QDF_STATUS reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 
 	afc_chan_list = pdev_priv_obj->afc_chan_list;
 	qdf_mem_copy(chan_list, afc_chan_list,
+		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+reg_get_6g_afc_mas_chan_list(struct wlan_objmgr_pdev *pdev,
+			     struct regulatory_channel *chan_list)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(chan_list, pdev_priv_obj->mas_chan_list_6g_afc,
 		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
 
 	return QDF_STATUS_SUCCESS;

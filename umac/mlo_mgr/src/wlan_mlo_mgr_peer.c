@@ -18,6 +18,7 @@
 #include "qdf_types.h"
 #include "wlan_cmn.h"
 #include "wlan_mlo_mgr_msgq.h"
+#include "wlan_objmgr_peer_obj.h"
 #include "wlan_mlo_mgr_peer.h"
 #include "wlan_mlo_mgr_ap.h"
 
@@ -188,7 +189,7 @@ void wlan_mlo_partner_peer_assoc_post(struct wlan_objmgr_peer *assoc_peer)
 		link_peer = peer_entry->link_peer;
 
 		if (wlan_objmgr_peer_try_get_ref(link_peer, WLAN_MLO_MGR_ID) !=
-						QDF_STATUS_SUCCESS)
+						 QDF_STATUS_SUCCESS)
 			continue;
 
 		link_peers[i] = link_peer;
@@ -273,8 +274,10 @@ void wlan_mlo_partner_peer_disconnect_notify(struct wlan_objmgr_peer *src_peer)
 	for (i = 0; i < MAX_MLO_LINK_PEERS; i++) {
 		link_peers[i] = NULL;
 		peer_entry = &ml_peer->peer_list[i];
-		if (!peer_entry->link_peer)
+		if (!peer_entry->link_peer) {
+			mlo_debug("link peer is null");
 			continue;
+		}
 
 		if (peer_entry->link_peer == src_peer)
 			continue;
@@ -364,7 +367,7 @@ static QDF_STATUS mlo_peer_attach_link_peer(
 
 		peer_entry->link_ix = i + 1;
 		peer_entry->hw_link_id = 1;
-			/*wlan_peer_get_hw_link_id(link_peer)TODO*/
+		/*wlan_peer_get_hw_link_id(link_peer)TODO*/
 		mlo_peer_assign_primary_umac(ml_peer, peer_entry);
 
 		status = QDF_STATUS_SUCCESS;
@@ -422,6 +425,17 @@ static QDF_STATUS mlo_dev_get_link_vdevs(
 	struct wlan_objmgr_vdev *vdev_link;
 	uint8_t link_id;
 
+	if (!ml_dev) {
+		mlo_err("ml_dev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!ml_info) {
+		mlo_err("ml_info is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlo_debug("num_partner_links %d", ml_info->num_partner_links);
 	for (i = 0; i < ml_info->num_partner_links; i++) {
 		link_id = ml_info->partner_link_info[i].link_id;
 		vdev_link = mlo_get_vdev_by_link_id(vdev, link_id);
@@ -437,7 +451,6 @@ static QDF_STATUS mlo_dev_get_link_vdevs(
 				wlan_objmgr_vdev_release_ref(vdev_link,
 							     WLAN_MLO_MGR_ID);
 			}
-			mlo_dev_lock_release(ml_dev);
 			return QDF_STATUS_E_INVAL;
 		}
 	}
@@ -483,8 +496,10 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 
 	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
 		vdev_link = link_vdevs[i];
-		if (!vdev_link)
+		if (!vdev_link) {
+			mlo_debug("vdev_link is null");
 			continue;
+		}
 
 		if (wlan_vdev_is_peer_create_allowed(vdev_link)
 			!= QDF_STATUS_SUCCESS) {

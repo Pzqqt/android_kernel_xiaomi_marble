@@ -67,12 +67,17 @@ src/qdf_parse.o \
 src/qdf_str.o \
 src/qdf_types.o \
 src/qdf_platform.o \
-$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
+$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o
+
+qal-objs :=    \
 $(HOST_QAL_SRC)/linux/src/qal_devcfg.o \
 $(HOST_QAL_SRC)/linux/src/qal_vbus_dev.o \
 $(HOST_QAL_SRC)/linux/src/qal_notifier.o \
-$(HOST_QAL_SRC)/linux/src/qal_devnode.o \
-$(HOST_QAL_SRC)/linux/src/qal_bridge.o \
+$(HOST_QAL_SRC)/linux/src/qal_devnode.o
+ifeq ($(DBDC_REPEATER_SUPPORT),1)
+qal-objs += $(HOST_QAL_SRC)/linux/src/qal_bridge.o
+endif
+
 #linux/src/qdf_net.o \
 #linux/src/qdf_net_event.o \
 #linux/src/qdf_net_ioctl.o
@@ -100,6 +105,8 @@ endif
 ifeq ($(WLAN_STREAMFS),1)
 qdf-objs += linux/src/qdf_streamfs.o
 endif
+
+qdf-objs += $(qal-objs)
 
 ifeq ($(BUILD_ADF_NET_IOCTL),1)
 EXTRA_CFLAGS+= -DADF_NET_IOCTL_SUPPORT

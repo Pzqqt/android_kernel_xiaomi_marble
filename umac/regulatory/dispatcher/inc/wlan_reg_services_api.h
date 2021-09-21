@@ -121,6 +121,15 @@ bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq);
  */
 bool wlan_reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
+/**
+ * wlan_reg_get_next_lower_bandwidth() - Get next lower bandwdith
+ * @ch_width: channel bandwdith
+ *
+ * Return: Return next lower bandwidth of input channel bandwidth
+ */
+enum phy_ch_width
+wlan_reg_get_next_lower_bandwidth(enum phy_ch_width ch_width);
+
 #ifdef CONFIG_REG_CLIENT
 /**
  * wlan_reg_is_freq_indoor_in_secondary_list() - Check if the input frequency is
@@ -556,6 +565,18 @@ QDF_STATUS wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 					 struct regulatory_channel *chan_list);
 
 /**
+ * wlan_reg_get_6g_afc_mas_chan_list() - provide the pdev afc master channel
+ * list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_reg_get_6g_afc_mas_chan_list(struct wlan_objmgr_pdev *pdev,
+				  struct regulatory_channel *chan_list);
+
+/**
  * wlan_reg_psd_2_eirp() - Calculate EIRP from PSD and bandwidth
  * channel list
  * @pdev: pdev pointer
@@ -569,6 +590,61 @@ QDF_STATUS wlan_reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
 			       int16_t psd,
 			       uint16_t ch_bw,
 			       int16_t *eirp);
+
+/**
+ * wlan_reg_is_afc_power_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC power event is received from the FW or false otherwise
+ */
+bool wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_reg_get_afc_req_id() - Get the AFC request ID
+ * @pdev: pdev pointer
+ * @req_id: Pointer to request id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_afc_req_id(struct wlan_objmgr_pdev *pdev,
+				   uint64_t *req_id);
+
+/**
+ * wlan_reg_is_afc_expiry_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC exipry event is received from the FW or false otherwise
+ */
+bool wlan_reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_reg_is_noaction_on_afc_pwr_evt() - Checks whether driver needs to
+ * take action for AFC action or the response should be handled by the
+ * user application.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if driver need not take action for AFC resp, false otherwise.
+ */
+bool
+wlan_reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev);
+#else
+static inline bool
+wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+
+static inline QDF_STATUS
+wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
+			      struct regulatory_channel *chan_list)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif
 
 /**

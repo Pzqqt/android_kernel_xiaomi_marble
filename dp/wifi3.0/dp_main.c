@@ -3972,9 +3972,10 @@ static bool dp_ipa_is_alt_tx_comp_ring(int index)
 static void dp_ipa_get_tx_ring_size(int tx_ring_num, int *tx_ipa_ring_sz,
 				    struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx)
 {
-	if (tx_ring_num == IPA_TCL_DATA_RING_IDX ||
-	    dp_ipa_is_alt_tx_ring(tx_ring_num))
+	if (tx_ring_num == IPA_TCL_DATA_RING_IDX)
 		*tx_ipa_ring_sz = wlan_cfg_ipa_tx_ring_size(soc_cfg_ctx);
+	else if (dp_ipa_is_alt_tx_ring(tx_ring_num))
+		*tx_ipa_ring_sz = wlan_cfg_ipa_tx_alt_ring_size(soc_cfg_ctx);
 }
 
 /**
@@ -3990,10 +3991,12 @@ static void dp_ipa_get_tx_comp_ring_size(int tx_comp_ring_num,
 					 int *tx_comp_ipa_ring_sz,
 				       struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx)
 {
-	if (tx_comp_ring_num == IPA_TCL_DATA_RING_IDX ||
-	    dp_ipa_is_alt_tx_comp_ring(tx_comp_ring_num))
+	if (tx_comp_ring_num == IPA_TCL_DATA_RING_IDX)
 		*tx_comp_ipa_ring_sz =
 				wlan_cfg_ipa_tx_comp_ring_size(soc_cfg_ctx);
+	else if (dp_ipa_is_alt_tx_comp_ring(tx_comp_ring_num))
+		*tx_comp_ipa_ring_sz =
+				wlan_cfg_ipa_tx_alt_comp_ring_size(soc_cfg_ctx);
 }
 #else
 static uint8_t dp_reo_ring_selection(uint32_t value, uint32_t *ring)
@@ -5760,6 +5763,41 @@ static void dp_vdev_pdev_list_remove(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 }
 
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+/*
+ * dp_vdev_init_rx_eapol() - initializing osif_rx_eapol
+ * @vdev: Datapath VDEV handle
+ *
+ * Return: None
+ */
+static inline void dp_vdev_init_rx_eapol(struct dp_vdev *vdev)
+{
+	vdev->osif_rx_eapol = NULL;
+}
+
+/*
+ * dp_vdev_register_rx_eapol() - Register VDEV operations for rx_eapol
+ * @vdev: DP vdev handle
+ * @txrx_ops: Tx and Rx operations
+ *
+ * Return: None
+ */
+static inline void dp_vdev_register_rx_eapol(struct dp_vdev *vdev,
+					     struct ol_txrx_ops *txrx_ops)
+{
+	vdev->osif_rx_eapol = txrx_ops->rx.rx_eapol;
+}
+#else
+static inline void dp_vdev_init_rx_eapol(struct dp_vdev *vdev)
+{
+}
+
+static inline void dp_vdev_register_rx_eapol(struct dp_vdev *vdev,
+					     struct ol_txrx_ops *txrx_ops)
+{
+}
+#endif
+
 /*
 * dp_vdev_attach_wifi3() - attach txrx vdev
 * @txrx_pdev: Datapath PDEV handle
@@ -5822,6 +5860,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	vdev->drop_unenc = 1;
 	vdev->sec_type = cdp_sec_type_none;
 	vdev->multipass_en = false;
+	dp_vdev_init_rx_eapol(vdev);
 	qdf_atomic_init(&vdev->ref_cnt);
 	for (i = 0; i < DP_MOD_ID_MAX; i++)
 		qdf_atomic_init(&vdev->mod_refs[i]);
@@ -5994,6 +6033,8 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
 	vdev->me_convert = txrx_ops->me_convert;
+
+	dp_vdev_register_rx_eapol(vdev, txrx_ops);
 
 	dp_vdev_register_tx_handler(vdev, soc, txrx_ops);
 
@@ -7692,7 +7733,7 @@ void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	struct dp_vdev *vdev = NULL;
 	struct dp_soc *soc;
 	struct cdp_vdev_stats *vdev_stats =
-			qdf_mem_malloc(sizeof(struct cdp_vdev_stats));
+			qdf_mem_malloc_atomic(sizeof(struct cdp_vdev_stats));
 
 	if (!vdev_stats) {
 		dp_cdp_err("%pK: DP alloc failure - unable to get alloc vdev stats",
@@ -8799,6 +8840,14 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 			val.cdp_vdev_param_mesh_tid);
 		vdev->mesh_tid_latency_config.latency_tid
 				= val.cdp_vdev_param_mesh_tid;
+		break;
+#endif
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+	case CDP_SKIP_BAR_UPDATE_AP:
+		dp_info("vdev_id %d skip BAR update: %u", vdev_id,
+			val.cdp_skip_bar_update);
+		vdev->skip_bar_update = val.cdp_skip_bar_update;
+		vdev->skip_bar_update_last_ts = 0;
 		break;
 #endif
 	default:
@@ -10247,6 +10296,11 @@ static QDF_STATUS dp_soc_set_param(struct cdp_soc_t  *soc_hdl,
 		soc->max_ast_ageout_count = value;
 		dp_info("Max ast ageout count %u", soc->max_ast_ageout_count);
 		break;
+	case DP_SOC_PARAM_EAPOL_OVER_CONTROL_PORT:
+		soc->eapol_over_control_port = value;
+		dp_info("Eapol over control_port:%d",
+			soc->eapol_over_control_port);
+		break;
 	default:
 		dp_info("not handled param %d ", param);
 		break;
@@ -10474,6 +10528,8 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(struct cdp_soc_t *soc_handle,
 		dp_pdev_print_tid_stats(pdev);
 		qdf_print("------ Delay Stats ------\n");
 		dp_pdev_print_delay_stats(pdev);
+		qdf_print("------ Rx Error Stats ------\n");
+		dp_pdev_print_rx_error_stats(pdev);
 		break;
 #endif
 	case DP_PARAM_TOTAL_Q_SIZE:

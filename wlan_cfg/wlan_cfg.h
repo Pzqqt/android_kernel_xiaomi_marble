@@ -222,8 +222,11 @@ struct wlan_srng_cfg {
  * @wow_check_rx_pending_enable: Enable RX frame pending check in WoW
  * @ipa_tx_ring_size: IPA tx ring size
  * @ipa_tx_comp_ring_size: IPA tx completion ring size
+ * @ipa_tx_alt_ring_size: IPA tx alt ring size
+ * @ipa_tx_alt_comp_ring_size: IPA tx alt completion ring size
  * @hw_cc_conv_enabled: cookie conversion enabled
  * @tcl_wbm_map_array: TCL-WBM map array
+ * @pkt_capture_mode: Packet capture mode config
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -351,7 +354,11 @@ struct wlan_cfg_dp_soc_ctxt {
 #ifdef IPA_OFFLOAD
 	uint32_t ipa_tx_ring_size;
 	uint32_t ipa_tx_comp_ring_size;
-#endif
+#ifdef IPA_WDI3_TX_TWO_PIPES
+	int ipa_tx_alt_ring_size;
+	int ipa_tx_alt_comp_ring_size;
+#endif /* IPA_WDI3_TX_TWO_PIPES */
+#endif /* IPA_OFFLOAD */
 	bool hw_cc_enabled;
 	struct wlan_cfg_tcl_wbm_ring_num_map *tcl_wbm_map_array;
 #ifdef WLAN_SUPPORT_PPEDS
@@ -359,6 +366,9 @@ struct wlan_cfg_dp_soc_ctxt {
 	int reo2ppe_ring;
 	int ppe2tcl_ring;
 	int ppe_release_ring;
+#endif
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+	uint32_t pkt_capture_mode;
 #endif
 };
 
@@ -1692,6 +1702,25 @@ uint32_t wlan_cfg_ipa_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: IPA Tx Completion ring size
  */
 uint32_t wlan_cfg_ipa_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_ipa_tx_alt_ring_size - Get Tx alt DMA ring size (TCL Data Ring)
+ * @wlan_cfg_soc_ctx: dp cfg context
+ *
+ * Return: IPA Tx alt Ring Size
+ */
+int wlan_cfg_ipa_tx_alt_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_ipa_tx_alt_comp_ring_size - Get Tx alt comp DMA ring size
+ *  (TCL Data Ring)
+ * @wlan_cfg_soc_ctx: dp cfg context
+ *
+ * Return: IPA Tx alt comp Ring Size
+ */
+int
+wlan_cfg_ipa_tx_alt_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
 #else
 static inline
 uint32_t wlan_cfg_ipa_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
@@ -1814,4 +1843,19 @@ wlan_cfg_get_dp_soc_ppe_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
 void
 wlan_cfg_get_prealloc_cfg(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			  struct wlan_dp_prealloc_cfg *cfg);
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+/**
+ * wlan_cfg_get_pkt_capture_mode() - Get packet capture mode config
+ * @cfg: config context
+ *
+ * Return: value of packet capture mode
+ */
+uint32_t wlan_cfg_get_pkt_capture_mode(struct wlan_cfg_dp_soc_ctxt *cfg);
+#else
+static inline
+uint32_t wlan_cfg_get_pkt_capture_mode(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return 0;
+}
+#endif
 #endif

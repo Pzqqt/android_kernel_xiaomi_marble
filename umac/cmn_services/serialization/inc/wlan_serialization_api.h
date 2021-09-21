@@ -29,6 +29,7 @@
 
 #include <qdf_status.h>
 #include <wlan_objmgr_cmn.h>
+#include "wlan_scan_public_structs.h"
 
 /* Preprocessor Definitions and Constants */
 
@@ -705,4 +706,22 @@ void wlan_serialization_purge_all_scan_cmd_by_vdev_id(
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_ser_vdev_queue_disable(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_get_vdev_status() - API to check vdev scan status
+ * @vdev: vdev object
+ *
+ * Return: enum scm_scan_status
+ */
+enum scm_scan_status
+wlan_get_vdev_status(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_get_pdev_status() - API to check pdev scan status
+ * @pdev: pdev object
+ *
+ * Return: enum scm_scan_status
+ */
+enum scm_scan_status
+wlan_get_pdev_status(struct wlan_objmgr_pdev *pdev);
 #endif

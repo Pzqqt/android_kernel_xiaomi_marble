@@ -140,6 +140,10 @@
 #define DP_RX_REFILL_THRD_THRESHOLD  512
 #endif
 
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+#define DP_SKIP_BAR_UPDATE_TIMEOUT 5000
+#endif
+
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
@@ -1909,6 +1913,7 @@ struct dp_soc {
 	uint8_t wds_ast_aging_timer_cnt;
 	bool pending_ageout;
 	uint32_t max_ast_ageout_count;
+	uint8_t eapol_over_control_port;
 
 	qdf_timer_t lmac_reap_timer;
 	uint8_t lmac_timer_init;
@@ -2429,6 +2434,9 @@ struct dp_pdev {
 	/* Global RX decap mode for the device */
 	enum htt_pkt_type rx_decap_mode;
 
+	/* Enhanced Stats is enabled */
+	bool enhanced_stats_en;
+
 	qdf_atomic_t num_tx_outstanding;
 	int32_t tx_descs_max;
 
@@ -2623,6 +2631,10 @@ struct dp_vdev {
 	bool wds_ext_enabled;
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 
+#ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
+	bool skip_bar_update;
+	unsigned long skip_bar_update_last_ts;
+#endif
 	/* WDS Aging timer period */
 	uint32_t wds_aging_timer_val;
 
@@ -2695,6 +2707,10 @@ struct dp_vdev {
 	ol_txrx_rx_gro_flush_ind_fp osif_gro_flush;
 	/* default RX call back function called by dp */
 	ol_txrx_rx_fp osif_rx;
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+	/* callback to receive eapol frames */
+	ol_txrx_rx_fp osif_rx_eapol;
+#endif
 	/* callback to deliver rx frames to the OS */
 	ol_txrx_rx_fp osif_rx_stack;
 	/* Callback to handle rx fisa frames */

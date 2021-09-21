@@ -230,7 +230,10 @@ QDF_STATUS dp_tx_init_bank_profiles(struct dp_soc_be *be_soc)
 	int i, num_tcl_banks;
 
 	num_tcl_banks = hal_tx_get_num_tcl_banks(be_soc->soc.hal_soc);
+
+	qdf_assert_always(num_tcl_banks);
 	be_soc->num_bank_profiles = num_tcl_banks;
+
 	be_soc->bank_profiles = qdf_mem_malloc(num_tcl_banks *
 					       sizeof(*be_soc->bank_profiles));
 	if (!be_soc->bank_profiles) {
@@ -244,6 +247,7 @@ QDF_STATUS dp_tx_init_bank_profiles(struct dp_soc_be *be_soc)
 		be_soc->bank_profiles[i].is_configured = false;
 		qdf_atomic_init(&be_soc->bank_profiles[i].ref_count);
 	}
+	dp_info("initialized %u bank profiles", be_soc->num_bank_profiles);
 	return QDF_STATUS_SUCCESS;
 }
 

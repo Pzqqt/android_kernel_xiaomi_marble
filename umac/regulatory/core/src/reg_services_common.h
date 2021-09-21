@@ -138,6 +138,13 @@
 #define DEFAULT_HIGH_6GFREQ   7125
 #endif
 
+#define SIXG_CHAN_2           2
+#ifdef CONFIG_BAND_6GHZ
+#define CHAN_ENUM_SIXG_2      CHAN_ENUM_5935
+#else
+#define CHAN_ENUM_SIXG_2      INVALID_CHANNEL
+#endif
+
 extern const struct chan_map *channel_map;
 extern const struct chan_map channel_map_us[];
 extern const struct chan_map channel_map_eu[];
@@ -160,6 +167,16 @@ struct afc_cb_handler {
 	afc_req_rx_evt_handler func;
 	void *arg;
 };
+
+/**
+ * reg_init_freq_range() - Initialize a freq_range object
+ * @left: The left frequency range
+ * @right: The right frequency range
+ *
+ * Return: The initialized freq_range object
+ */
+struct freq_range
+reg_init_freq_range(qdf_freq_t left, qdf_freq_t right);
 #endif
 /**
  * get_next_lower_bandwidth() - Get next lower bandwidth
@@ -1415,6 +1432,34 @@ QDF_STATUS reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 					       enum reg_6g_ap_type ap_pwr_type);
+
+/**
+ * reg_get_6g_chan_psd_eirp_power() - For a given frequency, get the max PSD
+ * from the mas_chan_list
+ * @freq: Channel frequency
+ * @mas_chan_list: Pointer to mas_chan_list
+ * @reg_psd: Pointer to reg_psd
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_get_6g_chan_psd_eirp_power(qdf_freq_t freq,
+			       struct regulatory_channel *mas_chan_list,
+			       uint16_t *reg_psd);
+
+/**
+ * reg_find_txpower_from_6g_list() - For a given frequency, get the max EIRP
+ * from the mas_chan_list
+ * @freq: Channel frequency
+ * @mas_chan_list: Pointer to mas_chan_list
+ * @reg_eirp: Pointer to reg_eirp
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_find_txpower_from_6g_list(qdf_freq_t freq,
+			      struct regulatory_channel *chan_list,
+			      uint16_t *reg_eirp);
 #else
 static inline QDF_STATUS
 reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
@@ -1505,6 +1550,24 @@ static inline
 QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 					       enum reg_6g_ap_type ap_pwr_type)
 {
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+reg_get_6g_chan_psd_eirp_power(qdf_freq_t freq,
+			       struct regulatory_channel *mas_chan_list,
+			       uint16_t *eirp_psd_power)
+{
+	*eirp_psd_power = 0;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+reg_find_txpower_from_6g_list(qdf_freq_t freq,
+			      struct regulatory_channel *chan_list,
+			      uint16_t *reg_eirp)
+{
+	*reg_eirp = 0;
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
@@ -1685,7 +1748,7 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
-#ifdef CONFIG_AFC_SUPPORT
+#if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
 /**
  * reg_send_afc_cmd() - Send AFC cmd to the FW
  * @pdev: pdev ptr
@@ -1696,5 +1759,55 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
 			    struct reg_afc_resp_rx_ind_info *afc_ind_obj);
+
+/**
+ * reg_is_afc_power_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC power event is received from the FW or false otherwise
+ */
+bool reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_get_afc_req_id() - Get the AFC request ID
+ * @pdev: pdev pointer
+ * @req_id: Pointer to request id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_get_afc_req_id(struct wlan_objmgr_pdev *pdev, uint64_t *req_id);
+
+/**
+ * reg_is_afc_expiry_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC expiry event is received from the FW or false otherwise
+ */
+bool reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_is_noaction_on_afc_pwr_evt() - Checks if the regulatory module
+ * needs to take action when AFC power event is received.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if regulatory should not take any action or false otherwise
+ */
+bool reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_dmn_set_afc_req_id() - Set the request ID in the AFC partial request
+ *                            object
+ * @afc_req: pointer to AFC partial request
+ * @req_id: AFC request ID
+ *
+ * Return: Void
+ */
+void reg_dmn_set_afc_req_id(struct wlan_afc_host_partial_request *afc_req,
+			    uint64_t req_id);
 #endif
 #endif

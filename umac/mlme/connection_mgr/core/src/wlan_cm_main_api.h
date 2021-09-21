@@ -216,6 +216,18 @@ QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
 			  struct wlan_cm_connect_resp *resp);
 
 /**
+ * cm_notify_connect_complete() - This API would be called for sending
+ * connect response notification
+ * @cm_ctx: connection manager context
+ * @resp: connection complete resp.
+ *
+ * This API would be called after connection completion resp from VDEV mgr
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_notify_connect_complete(struct cnx_mgr *cm_ctx,
+				      struct wlan_cm_connect_resp *resp);
+/**
  * cm_connect_complete() - This API would be called after connect complete
  * request from the serialization.
  * @cm_ctx: connection manager context
@@ -319,6 +331,18 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
  */
 QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
 
+/**
+ * cm_notify_disconnect_complete() - This API would be called for sending
+ * disconnect response notification
+ * @cm_ctx: connection manager context
+ * @resp: disconnection complete resp.
+ *
+ * This API would be called after disconnect completion resp from VDEV mgr
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_notify_disconnect_complete(struct cnx_mgr *cm_ctx,
+					 struct wlan_cm_discon_rsp *resp);
 /**
  * cm_disconnect_complete() - This API would be called after disconnect complete
  * request from the serialization.

@@ -187,11 +187,11 @@ struct wlan_regulatory_psoc_priv_obj {
  * @secondary_cur_chan_list: secondary current channel list, for concurrency
  * situations
  * @mas_chan_list: master channel list
+ * from the firmware.
  * @is_6g_channel_list_populated: indicates the channel lists are populated
  * @mas_chan_list_6g_ap: master channel list for 6G AP, includes all power types
  * @mas_chan_list_6g_client: master channel list for 6G client, includes
  *	all power types
- * @afc_chan_list : afc chan list for 6Ghz
  * @band_capability: bitmap of bands enabled, using enum reg_wifi_band as the
  *	bit position value
  * @reg_6g_superid: 6Ghz super domain id
@@ -207,6 +207,18 @@ struct wlan_regulatory_psoc_priv_obj {
  * @avoid_chan_ext_list: the extended avoid frequency list.
  * @afc_cb_lock: The spinlock to synchronize afc callbacks
  * @afc_cb_obj: The object containing the callback function and opaque argument
+ * @afc_request_id: The last AFC request id received from FW/halphy
+ * @is_6g_afc_power_event_received: indicates if the AFC power event is
+ * received
+ * @is_6g_afc_expiry_event_received: indicates if the AFC exipiry event is
+ * received
+ * @afc_chan_list: Intersection of AFC master and Standard power channel list
+ * @mas_chan_list_6g_afc: AFC master channel list constructed from the AFC
+ * server response.
+ * @power_info: pointer to AFC power information received from the AFC event
+ * sent by the target
+ * @is_reg_noaction_on_afc_pwr_evt: indicates whether regulatory needs to
+ * take action when AFC Power event is received
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
@@ -218,7 +230,6 @@ struct wlan_regulatory_pdev_priv_obj {
 	bool is_6g_channel_list_populated;
 	struct regulatory_channel mas_chan_list_6g_ap[REG_CURRENT_MAX_AP_TYPE][NUM_6GHZ_CHANNELS];
 	struct regulatory_channel mas_chan_list_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE][NUM_6GHZ_CHANNELS];
-	struct regulatory_channel afc_chan_list[NUM_6GHZ_CHANNELS];
 #endif
 #ifdef DISABLE_CHANNEL_LIST
 	struct regulatory_channel cache_disable_chan_list[NUM_CHANNELS];
@@ -271,6 +282,13 @@ struct wlan_regulatory_pdev_priv_obj {
 #ifdef CONFIG_AFC_SUPPORT
 	qdf_spinlock_t afc_cb_lock;
 	struct afc_cb_handler afc_cb_obj;
+	uint64_t afc_request_id;
+	bool is_6g_afc_power_event_received;
+	bool is_6g_afc_expiry_event_received;
+	struct regulatory_channel afc_chan_list[NUM_6GHZ_CHANNELS];
+	struct regulatory_channel mas_chan_list_6g_afc[NUM_6GHZ_CHANNELS];
+	struct reg_fw_afc_power_event *power_info;
+	bool is_reg_noaction_on_afc_pwr_evt;
 #endif
 };
 
@@ -343,4 +361,20 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
  */
 QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 		struct wlan_objmgr_pdev *pdev, void *arg_list);
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * reg_free_afc_pwr_info() - Free the AFC power information object
+ * @pdev_priv_obj: Pointer to pdev_priv_obj
+ *
+ * Return: void
+ */
+void
+reg_free_afc_pwr_info(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj);
+#else
+static inline void
+reg_free_afc_pwr_info(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+#endif
 #endif

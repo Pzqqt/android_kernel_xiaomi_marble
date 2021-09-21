@@ -14,10 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "wmi_unified_api.h"
+#include <osdep.h>
 #include "wmi.h"
 #include "wmi_unified_priv.h"
-#include "wmi_unified_param.h"
+#include "wmi_unified_api.h"
+#ifdef WLAN_MLO_MULTI_CHIP
+#include "wmi_unified_11be_setup_api.h"
+#endif
 #include "wmi_unified_11be_tlv.h"
 
 size_t vdev_create_mlo_params_size(void)
@@ -253,4 +256,205 @@ uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
 	return buf_ptr +
 	       (req->ml_links.num_links *
 		sizeof(wmi_peer_assoc_mlo_partner_link_params));
+}
+
+#ifdef WLAN_MLO_MULTI_CHIP
+QDF_STATUS mlo_setup_cmd_send_tlv(struct wmi_unified *wmi_handle,
+				  struct wmi_mlo_setup_params *param)
+{
+	QDF_STATUS ret;
+	wmi_mlo_setup_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	uint8_t *buf_ptr;
+	uint32_t *partner_links;
+	uint8_t idx;
+
+	if (param->num_valid_hw_links > MAX_LINK_IN_MLO)
+		return QDF_STATUS_E_INVAL;
+
+	len = sizeof(*cmd) +
+		(param->num_valid_hw_links * sizeof(uint32_t)) +
+		WMI_TLV_HDR_SIZE;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_mlo_setup_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_mlo_setup_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_mlo_setup_cmd_fixed_param));
+
+	cmd->mld_group_id = param->mld_grp_id;
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								param->pdev_id);
+	buf_ptr = (uint8_t *)cmd + sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       (sizeof(uint32_t) * param->num_valid_hw_links));
+	partner_links = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	for (idx = 0; idx < param->num_valid_hw_links; idx++)
+		partner_links[idx] = param->partner_links[idx];
+
+	wmi_mtrace(WMI_MLO_SETUP_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_MLO_SETUP_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send MLO setup command ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+QDF_STATUS mlo_ready_cmd_send_tlv(struct wmi_unified *wmi_handle,
+				  struct wmi_mlo_ready_params *param)
+{
+	QDF_STATUS ret;
+	wmi_mlo_ready_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_mlo_ready_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_mlo_ready_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_mlo_ready_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								param->pdev_id);
+
+	wmi_mtrace(WMI_MLO_READY_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_MLO_READY_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send MLO ready command ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+QDF_STATUS mlo_teardown_cmd_send_tlv(struct wmi_unified *wmi_handle,
+				     struct wmi_mlo_teardown_params *param)
+{
+	QDF_STATUS ret;
+	wmi_mlo_teardown_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_mlo_teardown_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_mlo_teardown_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_mlo_teardown_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								param->pdev_id);
+	switch (param->reason) {
+	case WMI_MLO_TEARDOWN_REASON_SSR:
+		cmd->reason_code = WMI_MLO_TEARDOWN_SSR_REASON;
+		break;
+	case WMI_MLO_TEARDOWN_REASON_DOWN:
+	default:
+		cmd->reason_code = WMI_MLO_TEARDOWN_SSR_REASON + 1;
+		break;
+	}
+
+	wmi_mtrace(WMI_MLO_TEARDOWN_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_MLO_TEARDOWN_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send MLO Teardown command ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+QDF_STATUS
+extract_mlo_setup_cmpl_event_tlv(struct wmi_unified *wmi_handle,
+				 uint8_t *buf,
+				 struct wmi_mlo_setup_complete_params *params)
+{
+	WMI_MLO_SETUP_COMPLETE_EVENTID_param_tlvs *param_buf;
+	wmi_mlo_setup_complete_event_fixed_param *ev;
+
+	param_buf = (WMI_MLO_SETUP_COMPLETE_EVENTID_param_tlvs *)buf;
+	if (!param_buf) {
+		wmi_err_rl("Param_buf is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	ev = (wmi_mlo_setup_complete_event_fixed_param *)param_buf->fixed_param;
+
+	params->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+								wmi_handle,
+								ev->pdev_id);
+	if (!ev->status)
+		params->status = WMI_MLO_SETUP_STATUS_SUCCESS;
+	else
+		params->status = WMI_MLO_SETUP_STATUS_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+extract_mlo_teardown_cmpl_event_tlv(struct wmi_unified *wmi_handle,
+				    uint8_t *buf,
+				    struct wmi_mlo_teardown_cmpl_params *params)
+{
+	WMI_MLO_TEARDOWN_COMPLETE_EVENTID_param_tlvs *param_buf;
+	wmi_mlo_teardown_complete_fixed_param *ev;
+
+	param_buf = (WMI_MLO_TEARDOWN_COMPLETE_EVENTID_param_tlvs *)buf;
+	if (!param_buf) {
+		wmi_err_rl("Param_buf is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	ev = (wmi_mlo_teardown_complete_fixed_param *)param_buf->fixed_param;
+
+	params->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+								wmi_handle,
+								ev->pdev_id);
+	if (!ev->status)
+		params->status = WMI_MLO_TEARDOWN_STATUS_SUCCESS;
+	else
+		params->status = WMI_MLO_TEARDOWN_STATUS_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void wmi_11be_attach_mlo_setup_tlv(wmi_unified_t wmi_handle)
+{
+	struct wmi_ops *ops = wmi_handle->ops;
+
+	ops->mlo_setup_cmd_send = mlo_setup_cmd_send_tlv;
+	ops->mlo_teardown_cmd_send = mlo_teardown_cmd_send_tlv;
+	ops->mlo_ready_cmd_send = mlo_ready_cmd_send_tlv;
+	ops->extract_mlo_setup_cmpl_event = extract_mlo_setup_cmpl_event_tlv;
+	ops->extract_mlo_teardown_cmpl_event =
+					extract_mlo_teardown_cmpl_event_tlv;
+}
+
+#else /*WLAN_MLO_MULTI_CHIP*/
+
+static void wmi_11be_attach_mlo_setup_tlv(wmi_unified_t wmi_handle)
+{}
+
+#endif /*WLAN_MLO_MULTI_CHIP*/
+
+void wmi_11be_attach_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_11be_attach_mlo_setup_tlv(wmi_handle);
 }

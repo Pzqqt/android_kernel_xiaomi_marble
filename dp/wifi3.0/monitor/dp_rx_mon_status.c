@@ -558,12 +558,21 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 			nss = ppdu_user->nss - 1;
 		mcs = ppdu_user->mcs;
 
+		if (peer) {
+			peer->stats.rx.nss_info = ppdu_user->nss;
+			peer->stats.rx.mcs_info = ppdu_user->mcs;
+		}
 	} else {
 		if (ppdu->u.nss == 0)
 			nss = 0;
 		else
 			nss = ppdu->u.nss - 1;
 		mcs = ppdu->u.mcs;
+
+		if (peer) {
+			peer->stats.rx.nss_info = ppdu->u.nss;
+			peer->stats.rx.mcs_info = ppdu->u.mcs;
+		}
 	}
 
 	ratekbps = dp_getrateindex(ppdu->u.gi,
@@ -580,6 +589,12 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 		ppdu->rx_ratecode = 0;
 		ppdu_user->rx_ratekbps = 0;
 		return;
+	}
+
+	if (peer) {
+		peer->stats.rx.bw_info = ppdu->u.bw;
+		peer->stats.rx.gi_info = ppdu->u.gi;
+		peer->stats.rx.preamble_info = ppdu->u.preamble;
 	}
 
 	ppdu->rix = rix;

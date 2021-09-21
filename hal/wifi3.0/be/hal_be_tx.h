@@ -22,6 +22,10 @@
 #include "hal_be_hw_headers.h"
 #include "hal_tx.h"
 
+/* Number of TX banks reserved i.e, will not be used by host driver. */
+/* MAX_TCL_BANK reserved for FW use */
+#define HAL_TX_NUM_RESERVED_BANKS 1
+
 enum hal_be_tx_ret_buf_manager {
 	HAL_BE_WBM_SW0_BM_ID = 5,
 	HAL_BE_WBM_SW1_BM_ID = 6,
@@ -416,11 +420,15 @@ static inline uint8_t
 hal_tx_get_num_tcl_banks(hal_soc_handle_t hal_soc_hdl)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+	int  hal_banks = 0;
 
-	if (hal_soc->ops->hal_tx_get_num_tcl_banks)
-		return hal_soc->ops->hal_tx_get_num_tcl_banks();
+	if (hal_soc->ops->hal_tx_get_num_tcl_banks) {
+		hal_banks =  hal_soc->ops->hal_tx_get_num_tcl_banks();
+		hal_banks -= HAL_TX_NUM_RESERVED_BANKS;
+		hal_banks = (hal_banks < 0) ? 0 : hal_banks;
+	}
 
-	return 0;
+	return hal_banks;
 }
 
 /**

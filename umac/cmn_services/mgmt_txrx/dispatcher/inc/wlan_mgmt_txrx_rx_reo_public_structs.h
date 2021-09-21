@@ -21,11 +21,27 @@
 
 #ifndef _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H
 #define _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H
-
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
+/*
+ * enum mgmt_rx_reo_shared_snapshot_id - Represents the management
+ * rx-reorder snapshots shared between host and target in the host DDR.
+ * These snapshots are written by FW/HW and read by Host.
+ * @MGMT_RX_REO_SHARED_SNAPSHOT_MAC_HW: MAC HW snapshot
+ * @MGMT_RX_REO_SHARED_SNAPSHOT_FW_CONSUMED: FW consumed snapshot
+ * @MGMT_RX_REO_SHARED_SNAPSHOT_FW_FORWADED: FW forwarded snapshot
+ * @MGMT_RX_REO_SHARED_SNAPSHOT_MAX: Max number of snapshots
+ * @MGMT_RX_REO_SHARED_SNAPSHOT_INVALID: Invalid snapshot
+ */
+enum mgmt_rx_reo_shared_snapshot_id {
+	MGMT_RX_REO_SHARED_SNAPSHOT_MAC_HW = 0,
+	MGMT_RX_REO_SHARED_SNAPSHOT_FW_CONSUMED = 1,
+	MGMT_RX_REO_SHARED_SNAPSHOT_FW_FORWADED = 2,
+	MGMT_RX_REO_SHARED_SNAPSHOT_MAX = 3,
+	MGMT_RX_REO_SHARED_SNAPSHOT_INVALID,
+};
 
 /*
- * struct mgmt_rx_reo_snapshot_simplified - Represents the simplified version of
+ * struct mgmt_rx_reo_snapshot_params - Represents the simplified version of
  * Management Rx Frame snapshot for Host use. Note that this is different from
  * the structure shared between the Host and FW/HW
  * @valid: Whether this snapshot is valid
@@ -34,11 +50,64 @@
  * @global_timestamp: Global timestamp.This is taken from a clock which is
  * common across all the HW links
  */
-struct mgmt_rx_reo_snapshot_simplified {
+struct mgmt_rx_reo_snapshot_params {
 	bool valid;
 	uint16_t mgmt_pkt_ctr;
 	uint32_t global_timestamp;
 };
 
+/*
+ * struct mgmt_rx_reo_snapshot - Represents the management rx-reorder snapshot
+ * @mgmt_rx_reo_snapshot_low: Lower 32 bits of the reo snapshot
+ * @mgmt_rx_reo_snapshot_high: Higher 32 bits of the reo snapshot
+ */
+struct mgmt_rx_reo_snapshot {
+	uint32_t mgmt_rx_reo_snapshot_low;
+	uint32_t mgmt_rx_reo_snapshot_high;
+};
+
+/*
+ * struct mgmt_rx_reo_params - MGMT Rx REO parameters
+ * @valid: Whether these params are valid
+ * @pdev_id: pdev ID for which FW consumed event is received
+ * @mgmt_pkt_ctr: MGMT packet counter of the frame that is consumed
+ * @global_timestamp: Global timestamp of the frame that is consumed
+ */
+struct mgmt_rx_reo_params {
+	bool valid;
+	uint8_t  pdev_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+};
+
+/*
+ * struct mgmt_rx_reo_filter - MGMT Rx REO filter
+ * @filter_low: Least significant 32-bits of the filter
+ * @filter_high: Most significant 32-bits of the filter
+ */
+struct mgmt_rx_reo_filter {
+	uint32_t low;
+	uint32_t high;
+};
+
+/*
+ * struct mgmt_rx_reo_pdev_info - Pdev information required by the Management
+ * Rx REO module
+ * @host_snapshot: Latest snapshot seen at the Host.
+ * It considers both MGMT Rx and MGMT FW consumed.
+ * @last_valid_shared_snapshot: Array of last valid snapshots(for snapshots
+ * shared between host and target)
+ * @host_target_shared_snapshot: Array of snapshot addresses(for snapshots
+ * shared between host and target)
+ * @filter: MGMT Rx REO filter
+ */
+struct mgmt_rx_reo_pdev_info {
+	struct mgmt_rx_reo_snapshot_params host_snapshot;
+	struct mgmt_rx_reo_snapshot_params last_valid_shared_snapshot
+				[MGMT_RX_REO_SHARED_SNAPSHOT_MAX];
+	struct mgmt_rx_reo_snapshot *host_target_shared_snapshot
+				[MGMT_RX_REO_SHARED_SNAPSHOT_MAX];
+	struct mgmt_rx_reo_filter filter;
+};
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H */

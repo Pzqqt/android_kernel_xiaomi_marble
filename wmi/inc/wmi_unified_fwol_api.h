@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,5 +86,37 @@ wmi_unified_send_dscp_tip_map_cmd(struct wmi_unified *wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
+
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+/**
+ * wmi_unified_send_set_mdns_config_cmd() - Send WMI set mDNS config cmd
+ * @wmi_handle: wmi handle
+ * @mdns_info: mdns config info
+ *
+ * Send WMI set mDNS config command to firmware.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_send_set_mdns_config_cmd(struct wmi_unified *wmi_handle,
+				     struct mdns_config_info *mdns_info);
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
+/**
+ * wmi_unified_send_get_thermal_stats_cmd() - Send WMI get thermal stats req
+ * @wmi_handle: wmi handle
+ * @req_type: Request type
+ * @temp_offset: temperature offset for setting the range for thermal stats
+
+ * Send WMI get thermal stats req command to firmware.
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef THERMAL_STATS_SUPPORT
+QDF_STATUS
+wmi_unified_send_get_thermal_stats_cmd(struct wmi_unified *wmi_handle,
+				       enum thermal_stats_request_type req_type,
+				       uint8_t temp_offset);
+#endif /* THERMAL_STATS_SUPPORT */
 
 #endif /* _WMI_UNIFIED_FWOL_API_H_ */

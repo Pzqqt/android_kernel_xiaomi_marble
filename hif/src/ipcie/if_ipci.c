@@ -878,6 +878,7 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	if (pld_is_device_awake(scn->qdf_dev->dev) <= 0) {
 		hif_err("Unable to wake up mhi");
 		HIF_STATS_INC(ipci_scn, mhi_force_wake_failure, 1);
+		hif_force_wake_release(hif_handle);
 		return -EINVAL;
 	}
 	HIF_STATS_INC(ipci_scn, mhi_force_wake_success, 1);

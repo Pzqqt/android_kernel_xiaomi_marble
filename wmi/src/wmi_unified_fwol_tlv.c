@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,11 +207,286 @@ static void wmi_fwol_attach_dscp_tid_tlv(struct wmi_ops *ops)
 }
 #endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
 
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+/**
+ * send_set_mdns_fqdn_cmd_tlv() - send set mDNS FQDN cmd to fw
+ * @wmi_handle: wmi handle
+ * @mdns_info: mDNS config info
+ *
+ * Send WMI_MDNS_SET_FQDN_CMDID to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+send_set_mdns_fqdn_cmd_tlv(wmi_unified_t wmi_handle,
+			   struct mdns_config_info *mdns_info)
+{
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	wmi_mdns_set_fqdn_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	uint16_t fqdn_len_aligned;
+	QDF_STATUS ret;
+
+	fqdn_len_aligned = roundup(mdns_info->fqdn_len, sizeof(uint32_t));
+	if (fqdn_len_aligned < mdns_info->fqdn_len) {
+		wmi_err_rl("integer overflow while rounding up data_len");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (fqdn_len_aligned > WMI_SVC_MSG_MAX_SIZE - WMI_TLV_HDR_SIZE) {
+		wmi_err_rl("wmi_max_msg_size overflow for given data_len");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len += WMI_TLV_HDR_SIZE + fqdn_len_aligned;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err_rl("Failed to allocate wmi buffer");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = wmi_buf_data(buf);
+	cmd = (wmi_mdns_set_fqdn_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_mdns_set_fqdn_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_mdns_set_fqdn_cmd_fixed_param));
+	cmd->vdev_id = mdns_info->vdev_id;
+	cmd->type = mdns_info->fqdn_type;
+	cmd->fqdn_len = mdns_info->fqdn_len;
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, fqdn_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(buf_ptr, mdns_info->fqdn_data, cmd->fqdn_len);
+
+	wmi_mtrace(WMI_MDNS_SET_FQDN_CMDID, mdns_info->vdev_id,
+		   mdns_info->fqdn_type);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_MDNS_SET_FQDN_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret))
+		wmi_buf_free(buf);
+
+	return ret;
+}
+
+/**
+ * send_set_mdns_response_cmd_tlv() - send set mDNS response cmd to fw
+ * @wmi_handle: wmi handle
+ * @mdns_info: mDNS config info
+ *
+ * Send WMI_MDNS_SET_RESPONSE_CMDID to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+send_set_mdns_response_cmd_tlv(wmi_unified_t wmi_handle,
+			       struct mdns_config_info *mdns_info)
+{
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	wmi_mdns_set_resp_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	uint16_t resp_len_aligned;
+	QDF_STATUS ret;
+
+	resp_len_aligned = roundup(mdns_info->answer_payload_len, sizeof(uint32_t));
+	if (resp_len_aligned < mdns_info->answer_payload_len) {
+		wmi_err_rl("integer overflow while rounding up data_len");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (resp_len_aligned > WMI_SVC_MSG_MAX_SIZE - WMI_TLV_HDR_SIZE) {
+		wmi_err_rl("wmi_max_msg_size overflow for given data_len");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len += WMI_TLV_HDR_SIZE + resp_len_aligned;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err_rl("Failed to allocate wmi buffer");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = wmi_buf_data(buf);
+	cmd = (wmi_mdns_set_resp_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_mdns_set_resp_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_mdns_set_resp_cmd_fixed_param));
+	cmd->vdev_id = mdns_info->vdev_id;
+	cmd->AR_count = mdns_info->resource_record_count;
+	cmd->resp_len = mdns_info->answer_payload_len;
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, resp_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(buf_ptr, mdns_info->answer_payload_data, cmd->resp_len);
+
+	wmi_mtrace(WMI_MDNS_SET_RESPONSE_CMDID, mdns_info->vdev_id, 0);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_MDNS_SET_RESPONSE_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret))
+		wmi_buf_free(buf);
+
+	return ret;
+}
+
+/**
+ * send_set_mdns_offload_cmd_tlv() - send set mDNS offload cmd to fw
+ * @wmi_handle: wmi handle
+ * @mdns_info: mDNS config info
+ *
+ * Send WMI_MDNS_OFFLOAD_ENABLE_CMDID to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+send_set_mdns_offload_cmd_tlv(wmi_unified_t wmi_handle,
+			      struct mdns_config_info *mdns_info)
+{
+	wmi_buf_t buf;
+	wmi_mdns_offload_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	QDF_STATUS ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err_rl("Failed to allocate wmi buffer");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_mdns_offload_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_mdns_offload_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_mdns_offload_cmd_fixed_param));
+	cmd->vdev_id = mdns_info->vdev_id;
+	cmd->enable = mdns_info->enable;
+
+	wmi_mtrace(WMI_MDNS_OFFLOAD_ENABLE_CMDID, mdns_info->vdev_id, 0);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_MDNS_OFFLOAD_ENABLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret))
+		wmi_buf_free(buf);
+
+	return ret;
+}
+
+/**
+ * send_set_mdns_config_cmd_tlv() - send set mDNS config cmd to fw
+ * @wmi_handle: wmi handle
+ * @mdns_info: mdns config info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+send_set_mdns_config_cmd_tlv(wmi_unified_t wmi_handle,
+			     struct mdns_config_info *mdns_info)
+{
+	QDF_STATUS ret;
+
+	if (!mdns_info->enable) {
+		ret = send_set_mdns_offload_cmd_tlv(wmi_handle, mdns_info);
+		if (QDF_IS_STATUS_ERROR(ret))
+			wmi_err_rl("Failed to send mDNS offload command. ret = %d", ret);
+
+		return ret;
+	}
+
+	ret = send_set_mdns_fqdn_cmd_tlv(wmi_handle, mdns_info);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err_rl("Failed to send set fqdn command. ret = %d", ret);
+		return ret;
+	}
+
+	ret = send_set_mdns_response_cmd_tlv(wmi_handle, mdns_info);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err_rl("Failed to send set mDNS response command. ret = %d", ret);
+		return ret;
+	}
+
+	ret = send_set_mdns_offload_cmd_tlv(wmi_handle, mdns_info);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err_rl("Failed to send set mDNS offload  command. ret = %d", ret);
+		return ret;
+	}
+
+	return ret;
+}
+
+static void wmi_fwol_attach_mdns_tlv(struct wmi_ops *ops)
+{
+	ops->send_set_mdns_config_cmd = send_set_mdns_config_cmd_tlv;
+}
+#else
+static void wmi_fwol_attach_mdns_tlv(struct wmi_ops *ops)
+{
+}
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
+#ifdef THERMAL_STATS_SUPPORT
+/**
+ * send_get_thermal_stats_cmd_tlv() - send get thermal stats cmd to fw
+ * @wmi_handle: wmi handle
+ * @req_type: req type
+ * @temp_offset: temperature offset
+ *
+ * Send WMI_REQUEST_THERMAL_STATS_CMDID to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+send_get_thermal_stats_cmd_tlv(wmi_unified_t wmi_handle,
+			       enum thermal_stats_request_type req_type,
+			       uint8_t temp_offset)
+{
+	wmi_buf_t buf;
+	wmi_thermal_stats_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	QDF_STATUS ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err("Failed to allocate wmi buffer");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_thermal_stats_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_thermal_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_thermal_stats_cmd_fixed_param));
+	cmd->thermal_action = req_type;
+	cmd->thermal_offset = temp_offset;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_REQUEST_THERMAL_STATS_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send get thermal stats cmd = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+static void wmi_fwol_attach_thermal_stats_tlv(struct wmi_ops *ops)
+{
+	ops->send_get_thermal_stats_cmd = send_get_thermal_stats_cmd_tlv;
+}
+#else
+static void wmi_fwol_attach_thermal_stats_tlv(struct wmi_ops *ops)
+{
+}
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
+
 void wmi_fwol_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
 
 	wmi_fwol_attach_elna_tlv(ops);
 	wmi_fwol_attach_dscp_tid_tlv(ops);
-
+	wmi_fwol_attach_mdns_tlv(ops);
+	wmi_fwol_attach_thermal_stats_tlv(ops);
 }

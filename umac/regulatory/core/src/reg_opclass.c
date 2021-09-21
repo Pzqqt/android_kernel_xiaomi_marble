@@ -85,6 +85,20 @@ CFISLST_TYPE CFISLST(_gopcls) = {NELEMS(CFISARR(_gopcls)), CFISARR(_gopcls)}
 /* The NULL pointer to a cfis list object */
 #define NULL_CFIS_LST NULL
 
+/* CFIs for global opclass 131: (start Freq=5925 BW=20MHz) */
+static const uint8_t opcls_131_cfis_arr[] = {
+#ifdef CONFIG_AFC_SUPPORT
+	  1, 5, 9, 13, 17, 21, 25, 29, 33,
+	  37, 41, 45, 49, 53, 57, 61, 65, 69,
+	  73, 77, 81, 85, 89, 93, 97,
+	  101, 105, 109, 113, 117, 121, 125,
+	  129, 133, 137, 141, 145, 149, 153,
+	  157, 161, 165, 169, 173, 177, 181,
+	  185, 189, 193, 197, 201, 205, 209,
+	  213, 217, 221, 225, 229, 233,
+#endif
+};
+
 /* CFIs for global opclass 132: (start Freq=5925 BW=40MHz) */
 static const uint8_t opcls_132_cfis_arr[] = {
 #ifdef CONFIG_AFC_SUPPORT
@@ -134,6 +148,7 @@ static const uint8_t opcls_137_cfis_arr[] = {
 #endif
 
 /* Create the CFIS static constant lists */
+CREATE_CFIS_LST(131);
 CREATE_CFIS_LST(132);
 CREATE_CFIS_LST(133);
 CREATE_CFIS_LST(134);
@@ -220,7 +235,7 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  157, 161, 165, 169, 173, 177, 181,
 	  185, 189, 193, 197, 201, 205, 209,
 	  213, 217, 221, 225, 229, 233},
-	NULL_CFIS_LST},
+	&CFISLST(131)},
 
 	{132, 40, BW40_LOW_PRIMARY, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49,
@@ -545,6 +560,80 @@ static const struct reg_dmn_op_class_map_t
 }
 
 #ifdef CONFIG_AFC_SUPPORT
+static bool reg_is_range_valid(struct freq_range *range)
+{
+	return (range->right > range->left);
+}
+
+/**
+ * reg_is_subrange() - Check if range_first is a subrange of range_second
+ * @range_first: Pointer to first range
+ * @range_second: Pointer to first range
+ *
+ * Return: True if the range_first is a subrange range_second, else false
+ */
+static bool reg_is_subrange(struct freq_range *range_first,
+			    struct freq_range *range_second)
+{
+	bool is_subrange;
+	bool is_valid;
+
+	is_valid = reg_is_range_valid(range_first) &&
+		   reg_is_range_valid(range_second);
+
+	if (!is_valid)
+		return false;
+
+	is_subrange = (range_first->left >= range_second->left) &&
+		      (range_first->right <= range_second->right);
+
+	return is_subrange;
+}
+
+/**
+ * reg_is_cfi_freq_in_ranges() - Check if the given 'cfi' in the any of the
+ * frequency ranges
+ * @cfi_freq: The center frequency index frequency
+ * @bw: bandwidth of the band with center freq cfi_freq
+ * @p_frange_lst: Pointer to frequency range list (AFC)
+ *
+ * return: True if the cfi is in the ranges, else false
+ */
+static bool reg_is_cfi_freq_in_ranges(qdf_freq_t cfi_freq,
+				      uint16_t bw,
+				      struct wlan_afc_frange_list *p_frange_lst)
+{
+	uint32_t num_ranges;
+	struct wlan_afc_freq_range_obj *p_range_objs;
+	uint8_t i;
+	bool is_cfi_supported = false;
+
+	num_ranges = p_frange_lst->num_ranges;
+	p_range_objs = &p_frange_lst->range_objs[0];
+	for (i = 0; i <  num_ranges; i++) {
+		qdf_freq_t cfi_band_left;
+		qdf_freq_t cfi_band_right;
+		struct freq_range range_cfi;
+		struct freq_range range_chip;
+
+		cfi_band_left = cfi_freq - bw / 2;
+		cfi_band_right = cfi_freq + bw / 2;
+
+		range_cfi = reg_init_freq_range(cfi_band_left,
+						cfi_band_right);
+		range_chip = reg_init_freq_range(p_range_objs->lowfreq,
+						 p_range_objs->highfreq);
+		is_cfi_supported = reg_is_subrange(&range_cfi, &range_chip);
+
+		if (is_cfi_supported)
+			return true;
+
+		p_range_objs++;
+	}
+
+	return is_cfi_supported;
+}
+
 void reg_dmn_free_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 					    uint8_t num_opclasses,
 					    uint8_t *opclass_lst,
@@ -559,8 +648,8 @@ void reg_dmn_free_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 	 * unallocated memory.
 
 	 */
-
-	qdf_mem_free(channel_lists[0]);
+	if (channel_lists)
+		qdf_mem_free(channel_lists[0]);
 
 	/*
 	 * opclass_lst, chansize_lst and channel_lists were allocated as a
@@ -586,7 +675,11 @@ static uint8_t reg_dmn_get_num_6g_opclasses(struct wlan_objmgr_pdev *pdev)
 
 	count = 0;
 	while (op_class_tbl && op_class_tbl->op_class) {
-		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class))
+		const struct c_freq_lst *p_lst;
+
+		p_lst = op_class_tbl->p_cfi_lst_obj;
+		if (p_lst &&
+		    reg_is_6ghz_op_class(pdev, op_class_tbl->op_class))
 			count++;
 
 		op_class_tbl++;
@@ -599,6 +692,7 @@ static uint8_t reg_dmn_get_num_6g_opclasses(struct wlan_objmgr_pdev *pdev)
  * reg_dmn_fill_6g_opcls_chan_lists() - Copy the channel lists for 6g opclasses
  * to the output argument list ('channel_lists')
  * @pdev: Pointer to pdev.
+ * @p_frange_lst: Pointer to frequencey range list (AFC)
  * @chansize_lst: Array of sizes of channel lists
  * @channel_lists: The array list pointers where the channel lists are to be
  *                 copied.
@@ -606,6 +700,7 @@ static uint8_t reg_dmn_get_num_6g_opclasses(struct wlan_objmgr_pdev *pdev)
  * Return: Void
  */
 static void reg_dmn_fill_6g_opcls_chan_lists(struct wlan_objmgr_pdev *pdev,
+					     struct wlan_afc_frange_list *p_frange_lst,
 					     uint8_t chansize_lst[],
 					     uint8_t *channel_lists[])
 {
@@ -615,24 +710,52 @@ static void reg_dmn_fill_6g_opcls_chan_lists(struct wlan_objmgr_pdev *pdev,
 	op_class_tbl = global_op_class;
 
 	while (op_class_tbl && op_class_tbl->op_class) {
-		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
-			uint8_t *dst;
-			const uint8_t *src;
-			const struct c_freq_lst *p_lst;
-			uint8_t len;
+		const struct c_freq_lst *p_lst;
 
-			p_lst = op_class_tbl->p_cfi_lst_obj;
-			src = p_lst->p_cfis_arr;
+		p_lst = op_class_tbl->p_cfi_lst_obj;
+		if (p_lst &&
+		    reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
+			uint8_t j;
+			uint8_t cfi_idx = 0;
+			uint8_t *dst;
+
 			dst = channel_lists[i];
-			len = chansize_lst[i] * sizeof(*dst);
-			qdf_mem_copy(dst, src, len);
+			for (j = 0; j < p_lst->num_cfis; j++) {
+				uint8_t cfi;
+				qdf_freq_t cfi_freq;
+				qdf_freq_t start_freq = op_class_tbl->start_freq;
+				uint16_t bw = op_class_tbl->chan_spacing;
+
+				cfi = p_lst->p_cfis_arr[j];
+				cfi_freq = start_freq +
+					FREQ_TO_CHAN_SCALE * cfi;
+
+				if (reg_is_cfi_freq_in_ranges(cfi_freq,
+							      bw,
+							      p_frange_lst)) {
+					dst[cfi_idx++] = cfi;
+				}
+			}
 			i++;
 		}
 		op_class_tbl++;
 	}
 }
 
+static bool reg_is_val_within_range(qdf_freq_t val,
+				    qdf_freq_t left,
+				    qdf_freq_t right)
+{
+	bool is_within = false;
+
+	if (val >= left && val <= right)
+		is_within = true;
+
+	return is_within;
+}
+
 QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
+						 struct wlan_afc_frange_list *p_frange_lst,
 						 uint8_t *num_opclasses,
 						 uint8_t **opclass_lst,
 						 uint8_t **chansize_lst,
@@ -651,6 +774,10 @@ QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 	uint8_t *p_total_alloc1;
 	uint8_t *p_total_alloc2;
 	uint8_t *p_temp_alloc;
+
+	*opclass_lst = NULL;
+	*chansize_lst =  NULL;
+	*channel_lists = NULL;
 
 	op_class_tbl = global_op_class;
 
@@ -684,12 +811,31 @@ QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 	/* Fill arrays with opclasses and chanlist sizes */
 	count = 0;
 	while (op_class_tbl && op_class_tbl->op_class) {
-		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
-			const struct c_freq_lst *p_lst;
+		const struct c_freq_lst *p_lst;
 
-			p_lst = op_class_tbl->p_cfi_lst_obj;
+		p_lst = op_class_tbl->p_cfi_lst_obj;
+		if (p_lst &&
+		    reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
+			uint8_t n_supp_cfis = 0;
+			uint8_t j;
+
 			l_opcls_lst[count] = op_class_tbl->op_class;
-			l_chansize_lst[count] = p_lst->num_cfis;
+			for (j = 0; j < p_lst->num_cfis; j++) {
+				uint8_t cfi;
+				qdf_freq_t cfi_freq;
+				qdf_freq_t start_freq = op_class_tbl->start_freq;
+				uint16_t bw = op_class_tbl->chan_spacing;
+
+				cfi = p_lst->p_cfis_arr[j];
+				cfi_freq = start_freq +
+					FREQ_TO_CHAN_SCALE * cfi;
+				if (reg_is_cfi_freq_in_ranges(cfi_freq,
+							      bw,
+							      p_frange_lst)) {
+					n_supp_cfis++;
+				}
+			}
+			l_chansize_lst[count] = n_supp_cfis;
 			count++;
 		}
 		op_class_tbl++;
@@ -719,7 +865,7 @@ QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 	}
 
 	/* Fill the array with channl lists */
-	reg_dmn_fill_6g_opcls_chan_lists(pdev, l_chansize_lst, arr_chan_lists);
+	reg_dmn_fill_6g_opcls_chan_lists(pdev, p_frange_lst, l_chansize_lst, arr_chan_lists);
 
 	*opclass_lst = l_opcls_lst;
 	*chansize_lst = l_chansize_lst;

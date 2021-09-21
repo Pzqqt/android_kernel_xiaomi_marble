@@ -53,7 +53,9 @@
 #include "wmi_unified_twt_param.h"
 #include "wmi_unified_twt_api.h"
 #endif
-
+#ifdef WDS_CONV_TARGET_IF_OPS_ENABLE
+#include "wmi_unified_wds_api.h"
+#endif
 #ifdef FEATURE_WLAN_EXTSCAN
 #include "wmi_unified_extscan_api.h"
 #endif
@@ -115,6 +117,10 @@
 #endif
 
 #include "wmi_unified_cp_stats_api.h"
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+#include "wmi_unified_11be_setup_api.h"
+#endif
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -2742,6 +2748,47 @@ QDF_STATUS
 wmi_extract_mgmt_rx_params(wmi_unified_t wmi_handle, void *evt_buf,
 			   struct mgmt_rx_event_params *hdr, uint8_t **bufp);
 
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+/**
+ * wmi_extract_mgmt_rx_fw_consumed() - extract MGMT Rx FW consumed event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @params: Pointer to MGMT Rx REO parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_mgmt_rx_fw_consumed(wmi_unified_t wmi_handle, void *evt_buf,
+				struct mgmt_rx_reo_params *params);
+
+/**
+ * wmi_extract_mgmt_rx_reo_params() - extract MGMT Rx REO params from
+ * MGMT_RX_EVENT_ID
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @params: Pointer to MGMT Rx REO parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_mgmt_rx_reo_params(wmi_unified_t wmi_handle, void *evt_buf,
+			       struct mgmt_rx_reo_params *params);
+
+/**
+ * wmi_unified_mgmt_rx_reo_filter_config_cmd() - Send MGMT Rx REO filter
+ * configuration command
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev ID of the radio
+ * @filter: Pointer to MGMT Rx REO filter
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_mgmt_rx_reo_filter_config_cmd(
+					wmi_unified_t wmi_handle,
+					uint8_t pdev_id,
+					struct mgmt_rx_reo_filter *filter);
+#endif
+
 /**
  * wmi_extract_vdev_roam_param() - extract vdev roam param from event
  * @wmi_handle: wmi handle
@@ -2976,6 +3023,9 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
  * @evt_buf: Pointer to event buffer
  * @temp: Pointer to hold extracted temperature
  * @level: Pointer to hold extracted level in host enum
+ * @therm_throt_levels: Pointer to hold extracted number of level in thermal
+ *                      stats
+ * @tt_lvl_stats_event: Pointer to hold extracted thermal stats for each level
  * @pdev_id: Pointer to hold extracted pdev_id
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
@@ -2983,6 +3033,8 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
 				     uint32_t *temp,
 				     enum thermal_throttle_level *level,
+				     uint32_t *therm_throt_levels,
+				     struct thermal_throt_level_stats *tt_stats,
 				     uint32_t *pdev_id);
 
 /**
@@ -4356,4 +4408,28 @@ QDF_STATUS
 wmi_extract_halphy_cal_status_ev_param(wmi_unified_t wmi_handle,
 				       void *evt_buf,
 				       struct wmi_host_pdev_get_halphy_cal_status_event *param);
+
+/**
+ * wmi_unified_send_set_halphy_cal() - send set halphy cal bmap
+ * @wmi_handle: wmi handle
+ * @param: set halphy cal input info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_send_set_halphy_cal(wmi_unified_t wmi_handle,
+					   struct wmi_host_send_set_halphy_cal_info *param);
+
+/**
+ * wmi_extract_halphy_cal_ev_param() - extract halphy cal status from FW event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buf
+ * @param: halphy cal status info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_halphy_cal_ev_param(wmi_unified_t wmi_handle,
+				void *evt_buf,
+				struct wmi_host_pdev_set_halphy_cal_event *param);
+
 #endif /* _WMI_UNIFIED_API_H_ */

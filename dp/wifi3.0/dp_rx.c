@@ -1582,13 +1582,23 @@ static void dp_rx_check_delivery_to_stack(struct dp_soc *soc,
 }
 #endif /* ifdef DELIVERY_TO_STACK_STATUS_CHECK */
 
-void dp_rx_deliver_to_stack(struct dp_soc *soc,
+/*
+ * dp_rx_validate_rx_callbacks() - validate rx callbacks
+ * @soc DP soc
+ * @vdev: DP vdev handle
+ * @peer: pointer to the peer object
+ * nbuf_head: skb list head
+ *
+ * Return: QDF_STATUS - QDF_STATUS_SUCCESS
+ *			QDF_STATUS_E_FAILURE
+ */
+static inline QDF_STATUS
+dp_rx_validate_rx_callbacks(struct dp_soc *soc,
 			    struct dp_vdev *vdev,
 			    struct dp_peer *peer,
-			    qdf_nbuf_t nbuf_head,
-			    qdf_nbuf_t nbuf_tail)
+			    qdf_nbuf_t nbuf_head)
 {
-	int num_nbuf = 0;
+	int num_nbuf;
 
 	if (qdf_unlikely(!vdev || vdev->delete.pending)) {
 		num_nbuf = dp_rx_drop_nbuf_list(NULL, nbuf_head);
@@ -1598,7 +1608,7 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 		 * belonged. Hence we update the soc rx error stats.
 		 */
 		DP_STATS_INC(soc, rx.err.invalid_vdev, num_nbuf);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*
@@ -1613,8 +1623,21 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 							nbuf_head);
 			DP_STATS_DEC(peer, rx.to_stack.num, num_nbuf);
 		}
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_rx_deliver_to_stack(struct dp_soc *soc,
+				  struct dp_vdev *vdev,
+				  struct dp_peer *peer,
+				  qdf_nbuf_t nbuf_head,
+				  qdf_nbuf_t nbuf_tail)
+{
+	if (dp_rx_validate_rx_callbacks(soc, vdev, peer, nbuf_head) !=
+					QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
 
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw) ||
 			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi)) {
@@ -1623,7 +1646,26 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 	}
 
 	dp_rx_check_delivery_to_stack(soc, vdev, peer, nbuf_head);
+
+	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef QCA_SUPPORT_EAPOL_OVER_CONTROL_PORT
+QDF_STATUS dp_rx_eapol_deliver_to_stack(struct dp_soc *soc,
+					struct dp_vdev *vdev,
+					struct dp_peer *peer,
+					qdf_nbuf_t nbuf_head,
+					qdf_nbuf_t nbuf_tail)
+{
+	if (dp_rx_validate_rx_callbacks(soc, vdev, peer, nbuf_head) !=
+					QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev->osif_rx_eapol(vdev->osif_vdev, nbuf_head);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 #ifdef VDEV_PEER_PROTOCOL_COUNT
@@ -2066,37 +2108,19 @@ void dp_rx_deliver_to_pkt_capture(struct dp_soc *soc,  struct dp_pdev *pdev,
 				  uint16_t peer_id, uint32_t is_offload,
 				  qdf_nbuf_t netbuf)
 {
-	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, netbuf,
-			     peer_id, is_offload, pdev->pdev_id);
+	if (wlan_cfg_get_pkt_capture_mode(soc->wlan_cfg_ctx))
+		dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, netbuf,
+				     peer_id, is_offload, pdev->pdev_id);
 }
 
 void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 					  uint32_t is_offload)
 {
-	uint16_t msdu_len = 0;
-	uint16_t peer_id, vdev_id;
-	uint32_t pkt_len = 0;
-	uint8_t *rx_tlv_hdr;
-	struct hal_rx_msdu_metadata msdu_metadata;
-
-	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
-	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
-	rx_tlv_hdr = qdf_nbuf_data(nbuf);
-	hal_rx_msdu_metadata_get(soc->hal_soc, rx_tlv_hdr, &msdu_metadata);
-	msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
-	pkt_len = msdu_len + msdu_metadata.l3_hdr_pad +
-		  soc->rx_pkt_tlv_size;
-
-	qdf_nbuf_set_pktlen(nbuf, pkt_len);
-	dp_rx_skip_tlvs(soc, nbuf, msdu_metadata.l3_hdr_pad);
-
-	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, nbuf,
-			     HTT_INVALID_VDEV, is_offload, 0);
-
-	qdf_nbuf_push_head(nbuf, msdu_metadata.l3_hdr_pad +
-			   soc->rx_pkt_tlv_size);
+	if (wlan_cfg_get_pkt_capture_mode(soc->wlan_cfg_ctx))
+		dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER,
+				     soc, nbuf, HTT_INVALID_VDEV,
+				     is_offload, 0);
 }
-
 #endif
 
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */

@@ -534,7 +534,7 @@ ucfg_scan_get_vdev_status(struct wlan_objmgr_vdev *vdev);
 
 /**
  * ucfg_scan_get_pdev_status() - API to check pdev scan status
- * @pdev: vdev object
+ * @pdev: pdev object
  *
  * Return: enum scm_scan_status
  */

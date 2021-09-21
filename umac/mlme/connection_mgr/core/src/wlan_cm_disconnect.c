@@ -449,6 +449,18 @@ cm_inform_blm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 {}
 #endif
 
+QDF_STATUS cm_notify_disconnect_complete(struct cnx_mgr *cm_ctx,
+					 struct wlan_cm_discon_rsp *resp)
+{
+	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
+	mlo_sta_link_disconn_notify(cm_ctx->vdev, resp);
+	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
+	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
+	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 				  struct wlan_cm_discon_rsp *resp)
 {
@@ -459,11 +471,7 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 	if (!cm_get_req_by_cm_id(cm_ctx, resp->req.cm_id))
 		return QDF_STATUS_SUCCESS;
 
-	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
-	mlo_sta_link_disconn_notify(cm_ctx->vdev, resp);
-	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
-	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
-	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
+	cm_notify_disconnect_complete(cm_ctx, resp);
 
 	/*
 	 * Remove all pending disconnect if this is an active disconnect

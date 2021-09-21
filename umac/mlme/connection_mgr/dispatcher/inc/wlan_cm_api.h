@@ -454,10 +454,9 @@ void wlan_cm_set_candidate_custom_sort_cb(
  * wlan_cm_get_rnr() - get rnr
  * @vdev:vdev
  * @cm_id: connect mgr id
- * @rnr: rnr to get
  *
- * Return: QDF_STATUS
+ * Return: rnr pointer
  */
-QDF_STATUS wlan_cm_get_rnr(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id,
-			   struct reduced_neighbor_report *rnr);
+struct reduced_neighbor_report *wlan_cm_get_rnr(struct wlan_objmgr_vdev *vdev,
+						wlan_cm_id cm_id);
 #endif /* __WLAN_CM_UCFG_API_H */

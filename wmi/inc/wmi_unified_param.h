@@ -59,7 +59,7 @@
 #define WMI_MCC_MIN_NON_ZERO_CHANNEL_LATENCY  30
 
 #ifdef WMI_AP_SUPPORT
-#define WMI_BEACON_TX_BUFFER_SIZE             (1500)
+#define WMI_BEACON_TX_BUFFER_SIZE             (2500)
 #else
 #define WMI_BEACON_TX_BUFFER_SIZE             (512)
 #endif
@@ -4571,6 +4571,9 @@ typedef enum {
 	wmi_pdev_csa_switch_count_status_event_id,
 	wmi_reg_chan_list_cc_event_id,
 	wmi_reg_chan_list_cc_ext_event_id,
+#ifdef CONFIG_AFC_SUPPORT
+	wmi_afc_event_id,
+#endif
 	wmi_offchan_data_tx_completion_event,
 	wmi_dfs_cac_complete_id,
 	wmi_dfs_radar_detection_event_id,
@@ -4683,7 +4686,15 @@ typedef enum {
 	wmi_vdev_smart_monitor_event_id,
 #endif
 	wmi_pdev_get_halphy_cal_status_event_id,
+	wmi_pdev_set_halphy_cal_event_id,
 	wmi_pdev_aoa_phasedelta_event_id,
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	wmi_mgmt_rx_fw_consumed_eventid,
+#endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	wmi_mlo_setup_complete_event_id,
+	wmi_mlo_teardown_complete_event_id,
+#endif
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5273,12 +5284,16 @@ typedef enum {
 #endif
 	wmi_service_sae_eapol_offload_support,
 	wmi_service_ampdu_tx_buf_size_256_support,
+	wmi_service_halphy_cal_enable_disable_support,
 	wmi_service_halphy_cal_status,
 	wmi_service_rtt_ap_initiator_staggered_mode_supported,
 	wmi_service_rtt_ap_initiator_bursted_mode_supported,
 	wmi_service_aoa_for_rcc_supported,
 #ifdef WLAN_FEATURE_P2P_P2P_STA
 	wmi_service_p2p_p2p_cc_support,
+#endif
+#ifdef THERMAL_STATS_SUPPORT
+	wmi_service_thermal_stats_temp_range_supported,
 #endif
 	wmi_services_max,
 } wmi_conv_service_ids;
@@ -5429,6 +5444,10 @@ struct wmi_host_fw_abi_ver {
  * @is_sap_connected_d3wow_enabled: is sap d3wow with connected client supported
  * @is_go_connected_d3wow_enabled: is go d3wow with connected client supported
  * @dynamic_pcie_gen_speed_change: is dynamic pcie gen speed change enabled
+ * @lpi_only_mode: Indicates whether AP is capable of operating in LPI only
+ *                 mode or both LPI/SP mode
+ * @afc_timer_check_disable: Disables AFC Timer related checks in FW
+ * @afc_req_id_check_disable: Disables AFC Request ID check in FW
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5542,6 +5561,9 @@ typedef struct {
 	bool twt_ack_support_cap;
 	uint32_t ema_init_config;
 	uint32_t target_cap_flags;
+	bool lpi_only_mode;
+	bool afc_timer_check_disable;
+	bool afc_req_id_check_disable;
 } target_resource_config;
 
 /**
@@ -8074,8 +8096,42 @@ struct wmi_host_pdev_get_dpd_status_event {
 
 struct wmi_host_pdev_get_halphy_cal_status_event {
 	uint32_t pdev_id;
-	uint32_t halphy_cal_valid_bmap;
-	uint32_t halphy_cal_status;
+	uint32_t halphy_cal_adc_status:1,
+		 halphy_cal_bwfilter_status:1,
+		 halphy_cal_pdet_and_pal_status:1,
+		 halphy_cal_rxdco_status:1,
+		 halphy_cal_comb_txiq_rxiq_status:1,
+		 halphy_cal_ibf_status:1,
+		 halphy_cal_pa_droop_status:1,
+		 halphy_cal_dac_status:1,
+		 halphy_cal_ani_status:1,
+		 halphy_cal_noise_floor_status:1;
+};
+
+/**
+ * enum wmi_host_set_halphy_cal_chan_sel - channel select values for
+ *                                         set halphy cal
+ * @WMI_HOST_SET_HALPHY_CAL_HOME_CHANNEL: Home channel
+ * @WMI_HOST_SET_HALPHY_CAL_SCAN_CHANNEL: Scan channel
+ * @WMI_HOST_SET_HALPHY_CAL_BOTH_CHANNELS: Both (Home + Scan) channels
+ */
+
+enum wmi_host_set_halphy_cal_chan_sel {
+	WMI_HOST_SET_HALPHY_CAL_HOME_CHANNEL = 0,
+	WMI_HOST_SET_HALPHY_CAL_SCAN_CHANNEL = 1,
+	WMI_HOST_SET_HALPHY_CAL_BOTH_CHANNELS = 2,
+};
+
+/**
+ * struct wmi_host_send_set_halphy_cal_info
+ * @pdev_id: pdev id
+ * @value: bmap value
+ * @chan_Sel: channel for calibration - HOME/SCAN/BOTH
+ */
+struct wmi_host_send_set_halphy_cal_info {
+	uint8_t pdev_id;
+	uint32_t value;
+	enum wmi_host_set_halphy_cal_chan_sel chan_sel;
 };
 
 /**
@@ -8092,6 +8148,27 @@ struct wmi_install_key_comp_event {
 	uint32_t key_flags;
 	uint32_t status;
 	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
+};
+
+/**
+ * wmi_host_set_halphy_cal_status - status values from
+ *                                 WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID
+ * @WMI_HOST_SET_HALPHY_CAL_STATUS_SUCCESS: set halphy cal success
+ * @WMI_HOST_SET_HALPHY_CAL_STATUS_FAIL: set halphy cal failure
+ */
+enum wmi_host_set_halphy_cal_status {
+        WMI_HOST_SET_HALPHY_CAL_STATUS_SUCCESS = 0,
+        WMI_HOST_SET_HALPHY_CAL_STATUS_FAIL = 1,
+};
+
+/**
+ * struct wmi_host_send_set_halphy_cal_event
+ * @pdev_id: pdev id
+ * @status: PASS/FAIL
+ */
+struct wmi_host_pdev_set_halphy_cal_event {
+	uint32_t pdev_id;
+	enum wmi_host_set_halphy_cal_status status;
 };
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */

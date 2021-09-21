@@ -2010,7 +2010,7 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
 
 	dp_tx_desc_update_fast_comp_flag(soc, tx_desc,
-					 !dp_monitor_is_enable_enhanced_stats(pdev));
+					 !pdev->enhanced_stats_en);
 
 	dp_tx_update_mesh_flags(soc, vdev, tx_desc);
 
@@ -3855,7 +3855,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 	uint64_t delta_ms;
 	struct cdp_tx_sojourn_stats *sojourn_stats;
 
-	if (qdf_unlikely(!dp_monitor_is_enable_enhanced_stats(pdev)))
+	if (qdf_unlikely(!pdev->enhanced_stats_en))
 		return;
 
 	if (qdf_unlikely(tid == HTT_INVALID_TID ||

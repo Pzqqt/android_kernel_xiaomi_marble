@@ -805,6 +805,8 @@ static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
+	/* Select only ESS type */
+	filter->bss_type = WLAN_TYPE_BSS;
 	filter->enable_adaptive_11r =
 		wlan_mlme_adaptive_11r_enabled(psoc);
 	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) != QDF_STA_MODE)
@@ -1296,6 +1298,7 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 	}
 
 	status = cm_connect_get_candidates(pdev, cm_ctx, cm_req);
+
 	/* In case of status pending connect will continue after scan */
 	if (status == QDF_STATUS_E_PENDING)
 		return QDF_STATUS_SUCCESS;
@@ -1810,6 +1813,19 @@ cm_update_scan_db_on_connect_success(struct cnx_mgr *cm_ctx,
 			    resp->freq, rssi, resp->cm_id);
 }
 
+QDF_STATUS cm_notify_connect_complete(struct cnx_mgr *cm_ctx,
+				      struct wlan_cm_connect_resp *resp)
+{
+	mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
+	mlo_sta_link_connect_notify(cm_ctx->vdev, resp);
+	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
+	cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
+					  resp->connect_status);
+	cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 			       struct wlan_cm_connect_resp *resp)
 {
@@ -1838,14 +1854,8 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 	if (resp->is_reassoc && QDF_IS_STATUS_ERROR(resp->connect_status))
 		send_ind = false;
 
-	if (send_ind) {
-		mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
-		mlo_sta_link_connect_notify(cm_ctx->vdev, resp);
-		mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
-		cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
-						  resp->connect_status);
-		cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
-	}
+	if (send_ind)
+		cm_notify_connect_complete(cm_ctx, resp);
 
 	/* Update scan entry in case connect is success or fails with bssid */
 	if (!qdf_is_macaddr_zero(&resp->bssid)) {

@@ -803,7 +803,7 @@ enum scan_mode_6ghz {
  * mawc_nlo_enabled - For NLO/PNO, enable MAWC based scan
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
  * Enable/Disable the Motion Aided Wireless Connectivity
  * based NLO using this parameter
@@ -816,7 +816,7 @@ enum scan_mode_6ghz {
  */
 #define CFG_MAWC_NLO_ENABLED CFG_INI_BOOL( \
 			"mawc_nlo_enabled", \
-			1, \
+			0, \
 			"Enable MAWC based scan")
 
 /*
