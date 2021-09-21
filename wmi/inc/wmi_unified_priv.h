@@ -1376,6 +1376,14 @@ QDF_STATUS (*extract_pdev_caldata_version_check_ev_param)(
 	wmi_unified_t wmi_handle,
 	void *evt_buf, wmi_host_pdev_check_cal_version_event *param);
 
+QDF_STATUS
+(*send_peer_set_intra_bss_cmd)(wmi_unified_t wmi_handle,
+			       struct wmi_intra_bss_params *param);
+
+QDF_STATUS
+(*send_vdev_set_intra_bss_cmd)(struct wmi_unified *wmi_handle,
+			       struct wmi_intra_bss_params *param);
+
 #ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 QDF_STATUS (*set_rx_pkt_type_routing_tag_cmd)(
 	wmi_unified_t wmi_hdl, struct wmi_rx_pkt_protocol_routing_info *param);
