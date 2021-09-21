@@ -3739,6 +3739,7 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 	uint32_t ie_len;
 	uint32_t bss_len;
 	struct join_req *pe_join_req;
+	int32_t akm;
 
 	ie_len = util_scan_entry_ie_len(req->entry);
 	bss_len = (uint16_t)(offsetof(struct bss_description,
@@ -3762,6 +3763,16 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 		qdf_mem_free(session->lim_join_req);
 		session->lim_join_req = NULL;
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	akm = wlan_crypto_get_param(session->vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (!req->entry->ssid.length &&
+	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE) &&
+	    req->owe_trans_ssid.length) {
+		req->entry->ssid = req->owe_trans_ssid;
+		pe_debug("OWE transition ssid is %.*s", req->entry->ssid.length,
+			 req->entry->ssid.ssid);
 	}
 
 	/* Copy the SSID from req to session entry  */
