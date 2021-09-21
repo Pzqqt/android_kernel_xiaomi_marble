@@ -603,7 +603,6 @@ struct spectral_fft_bin_len_adj_swar {
  * of FFT bins.
  * @fragmentation_160: This indicates whether Spectral reports in 160/80p80 is
  * fragmented.
- * @max_agile_ch_width: Maximum agile BW supported by the target
  * @detid_mode_table: Detector ID to Spectral scan mode table
  * @num_spectral_detectors: Total number of Spectral detectors
  * @marker: Describes the boundaries of pri80, 5 MHz and sec80 bins
@@ -613,7 +612,6 @@ struct spectral_report_params {
 	uint8_t ssumaary_padding_bytes;
 	uint8_t fft_report_hdr_len;
 	bool fragmentation_160[SPECTRAL_SCAN_MODE_MAX];
-	enum phy_ch_width max_agile_ch_width;
 	enum spectral_scan_mode detid_mode_table[SPECTRAL_DETECTOR_ID_MAX];
 	uint8_t num_spectral_detectors;
 	struct spectral_fft_bin_markers_160_165mhz
@@ -1225,6 +1223,7 @@ int get_supported_sscan_bw_pos(enum phy_ch_width sscan_bw);
  * @session_report_info_lock: Lock to synchronize access to session report info
  * @supported_bws: Supported sscan bandwidths for all sscan modes and
  * operating widths
+ * @supported_sscan_bw_list: List of supported sscan widths for all sscan modes
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -1356,6 +1355,8 @@ struct target_if_spectral {
 	qdf_spinlock_t session_report_info_lock;
 	struct spectral_supported_bws
 		supported_bws[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
+	/* Whether a given sscan BW is supported on a given smode */
+	bool supported_sscan_bw_list[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
 };
 
 /**

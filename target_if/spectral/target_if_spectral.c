@@ -2232,9 +2232,13 @@ target_if_populate_supported_sscan_bws_be(struct target_if_spectral *spectral)
 	supported_bws = &spectral->supported_bws
 			[SPECTRAL_SCAN_MODE_NORMAL][op_bw];
 	supported_bws->bandwidths |= 1 << get_supported_sscan_bw_pos(op_bw);
+	spectral->supported_sscan_bw_list
+		[SPECTRAL_SCAN_MODE_NORMAL][op_bw] = true;
 	supported_bws = &spectral->supported_bws
 			[SPECTRAL_SCAN_MODE_AGILE][op_bw];
 	supported_bws->bandwidths |= 1 << get_supported_sscan_bw_pos(op_bw);
+	spectral->supported_sscan_bw_list
+		[SPECTRAL_SCAN_MODE_AGILE][op_bw] = true;
 
 	for (op_bw = CH_WIDTH_40MHZ; op_bw < CH_WIDTH_MAX; op_bw++) {
 		bool is_supported;
@@ -2257,17 +2261,24 @@ target_if_populate_supported_sscan_bws_be(struct target_if_spectral *spectral)
 				[SPECTRAL_SCAN_MODE_NORMAL][op_bw];
 		supported_bws->bandwidths |=
 				1 << get_supported_sscan_bw_pos(op_bw);
+		spectral->supported_sscan_bw_list
+			[SPECTRAL_SCAN_MODE_NORMAL][op_bw] = true;
 
 		/* Agile mode */
 		supported_bws = &spectral->supported_bws
 				[SPECTRAL_SCAN_MODE_AGILE][op_bw];
 		supported_bws->bandwidths |=
 				1 << get_supported_sscan_bw_pos(op_bw);
+		spectral->supported_sscan_bw_list
+			[SPECTRAL_SCAN_MODE_AGILE][op_bw] = true;
 
 		half_op_bw = target_if_get_half_bandwidth(op_bw);
-		if (half_op_bw != CH_WIDTH_INVALID)
+		if (half_op_bw != CH_WIDTH_INVALID) {
 			supported_bws->bandwidths |=
 				1 << get_supported_sscan_bw_pos(half_op_bw);
+			spectral->supported_sscan_bw_list
+				[SPECTRAL_SCAN_MODE_AGILE][half_op_bw] = true;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -2327,10 +2338,14 @@ target_if_populate_supported_sscan_bws(struct target_if_spectral *spectral,
 				 * If fragmentation is supported, then only 80Hz
 				 * agile width is supported
 				 */
-				if (spectral->rparams.fragmentation_160[smode])
+				if (spectral->rparams.
+				    fragmentation_160[smode]) {
 					supported_bws->bandwidths |=
 					 1 << get_supported_sscan_bw_pos(
 						CH_WIDTH_80MHZ);
+					spectral->supported_sscan_bw_list
+						[smode][CH_WIDTH_80MHZ] = true;
+				}
 
 				/**
 				 * If restricted 80p80 is supported, then both
@@ -2343,15 +2358,23 @@ target_if_populate_supported_sscan_bws(struct target_if_spectral *spectral,
 					supported_bws->bandwidths |=
 						1 << get_supported_sscan_bw_pos(
 							CH_WIDTH_160MHZ);
-					if (op_bw == CH_WIDTH_160MHZ)
+					spectral->supported_sscan_bw_list
+						[smode][CH_WIDTH_160MHZ] = true;
+
+					if (op_bw == CH_WIDTH_160MHZ) {
 						supported_bws->bandwidths |=
 						1 << get_supported_sscan_bw_pos(
 							CH_WIDTH_80P80MHZ);
+						spectral->supported_sscan_bw_list
+							[smode][CH_WIDTH_80P80MHZ] = true;
+					}
 				}
 			} else {
 				supported_bws->bandwidths |=
 					1 << get_supported_sscan_bw_pos(
 						op_bw);
+					spectral->supported_sscan_bw_list
+						[smode][op_bw] = true;
 			}
 		}
 	}
@@ -3087,7 +3110,6 @@ target_if_spectral_report_params_init(
 		smode = SPECTRAL_SCAN_MODE_NORMAL;
 		for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++)
 			rparams->fragmentation_160[smode] = false;
-		rparams->max_agile_ch_width = CH_WIDTH_80P80MHZ;
 	} else {
 		rparams->version = SPECTRAL_REPORT_FORMAT_VERSION_1;
 		rparams->num_spectral_detectors =
@@ -3095,7 +3117,6 @@ target_if_spectral_report_params_init(
 		smode = SPECTRAL_SCAN_MODE_NORMAL;
 		for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++)
 			rparams->fragmentation_160[smode] = true;
-		rparams->max_agile_ch_width = CH_WIDTH_80MHZ;
 	}
 
 	switch (rparams->version) {
@@ -3391,13 +3412,16 @@ target_if_spectral_detector_list_init(struct target_if_spectral *spectral)
 	 * always be pri80 detector, and second detector for sec80.
 	 */
 	ch_width = CH_WIDTH_20MHZ;
-	for (; ch_width <= CH_WIDTH_80P80MHZ; ch_width++) {
+	for (; ch_width < CH_WIDTH_MAX; ch_width++) {
 		/* Normal spectral scan */
 		smode = SPECTRAL_SCAN_MODE_NORMAL;
 		spectral_debug("is_hw_mode_sbs: %d is_using_phya1:%d",
 			       is_hw_mode_sbs, is_using_phya1);
 
 		qdf_spin_lock_bh(&spectral->detector_list_lock);
+
+		if (!spectral->supported_sscan_bw_list[smode][ch_width])
+			goto agile_handling;
 
 		det_list = &spectral->detector_list[smode][ch_width];
 		det_list->num_detectors = 1;
@@ -3413,26 +3437,22 @@ target_if_spectral_detector_list_init(struct target_if_spectral *spectral)
 			det_list->detectors[1] = SPECTRAL_DETECTOR_ID_1;
 		}
 
+agile_handling:
 		/* Agile spectral scan */
 		smode = SPECTRAL_SCAN_MODE_AGILE;
+		if (!spectral->supported_sscan_bw_list[smode][ch_width]) {
+			qdf_spin_unlock_bh(&spectral->detector_list_lock);
+			continue;
+		}
+
 		det_list = &spectral->detector_list[smode][ch_width];
 		det_list->num_detectors = 1;
 
-		if (spectral->rparams.fragmentation_160[smode]) {
-			/**
-			 * Skip to next iteration if 160/80p80 MHz for Agile
-			 * scan. Only 20/40/80 MHz is supported on platforms
-			 * with fragmentation, as only 1 detector is available.
-			 */
-			if (is_ch_width_160_or_80p80(ch_width)) {
-				qdf_spin_unlock_bh(
-						&spectral->detector_list_lock);
-				continue;
-			}
+		if (spectral->rparams.fragmentation_160[smode])
 			det_list->detectors[0] = SPECTRAL_DETECTOR_ID_2;
-		} else {
+		else
 			det_list->detectors[0] = SPECTRAL_DETECTOR_ID_1;
-		}
+
 		qdf_spin_unlock_bh(&spectral->detector_list_lock);
 	}
 
