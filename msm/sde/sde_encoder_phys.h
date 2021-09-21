@@ -805,6 +805,13 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 		struct sde_encoder_phys_wb *wb_enc);
 
 /**
+ * sde_encoder_helper_phys_reset - helper function to reset virt encoder
+ *                 if vsync is missing on phys encoder
+ * @phys_enc: Pointer to physical encoder structure
+ */
+void sde_encoder_helper_phys_reset(struct sde_encoder_phys *phys_enc);
+
+/**
  * sde_encoder_helper_setup_misr - helper function to setup misr
  * @phys_enc: Pointer to physical encoder structure
  * @enable: enable/disable flag

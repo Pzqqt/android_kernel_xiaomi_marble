@@ -325,12 +325,9 @@ void sde_encoder_trigger_kickoff_pending(struct drm_encoder *encoder);
  * sde_encoder_kickoff - trigger a double buffer flip of the ctl path
  *	(i.e. ctl flush and start) immediately.
  * @encoder:	encoder pointer
- * @is_error:	whether the current commit needs to be aborted and replaced
- *		with a 'safe' commit
  * @config_changed: if true new configuration is applied on the control path
  */
-void sde_encoder_kickoff(struct drm_encoder *encoder, bool is_error,
-		bool config_changed);
+void sde_encoder_kickoff(struct drm_encoder *encoder, bool config_changed);
 
 /**
  * sde_encoder_wait_for_event - Waits for encoder events
