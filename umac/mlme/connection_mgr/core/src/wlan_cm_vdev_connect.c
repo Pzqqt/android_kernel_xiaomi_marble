@@ -1088,6 +1088,9 @@ cm_copy_join_params(struct cm_vdev_join_req *join_req,
 
 	cm_fill_ml_info(join_req);
 
+	if (req->owe_trans_ssid.length)
+		join_req->owe_trans_ssid = req->owe_trans_ssid;
+
 	join_req->vdev_id = req->vdev_id;
 	join_req->cm_id = req->cm_id;
 	join_req->force_rsne_override = req->force_rsne_override;
