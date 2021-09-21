@@ -476,6 +476,18 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		/* .no_host_mode = SND_SOC_DAI_LINK_NO_HOST, */
 		SND_SOC_DAILINK_REG(vi_feedback),
 	},
+	{
+		.name = LPASS_BE_WSA_CDC_DMA_RX_0_VIRT,
+		.stream_name = LPASS_BE_WSA_CDC_DMA_RX_0_VIRT,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
+		SND_SOC_DAILINK_REG(wsa_dma_rx0),
+		.init = &msm_int_wsa_init,
+	},
 };
 
 static struct snd_soc_dai_link msm_wsa2_cdc_dma_be_dai_links[] = {
@@ -1493,7 +1505,7 @@ static int waipio_ssr_enable(struct device *dev, void *data)
 		dev_dbg(dev, "%s: TODO \n", __func__);
 	}
 
-	snd_card_notify_user(1);
+	snd_card_notify_user(SND_CARD_STATUS_ONLINE);
 	dev_dbg(dev, "%s: setting snd_card to ONLINE\n", __func__);
 
 err:
@@ -1511,7 +1523,7 @@ static void waipio_ssr_disable(struct device *dev, void *data)
 	}
 
 	dev_dbg(dev, "%s: setting snd_card to OFFLINE\n", __func__);
-	snd_card_notify_user(0);
+	snd_card_notify_user(SND_CARD_STATUS_OFFLINE);
 
 	if (!strcmp(card->name, "waipio-stub-snd-card")) {
 		/* TODO */
@@ -1700,6 +1712,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	/* Add QoS request for audio tasks */
 	msm_audio_add_qos_request();
+
+	/* change card status to ONLINE */
+	dev_dbg(&pdev->dev, "%s: setting snd_card to ONLINE\n", __func__);
+	snd_card_set_card_status(SND_CARD_STATUS_ONLINE);
 
 	return 0;
 err:

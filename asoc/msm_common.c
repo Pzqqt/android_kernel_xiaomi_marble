@@ -24,6 +24,7 @@
 #include <dsp/msm_audio_ion.h>
 #include <sound/info.h>
 #include <dsp/audio_prm.h>
+#include <dsp/digital-cdc-rsc-mgr.h>
 
 #include "msm_common.h"
 
@@ -46,6 +47,11 @@ struct snd_card_pdata {
 #define TDM_SLOT_WIDTH_BITS 32
 #define TDM_MAX_SLOTS 8
 #define MI2S_NUM_CHANNELS 2
+
+#define SAMPLING_RATE_44P1KHZ   44100
+#define SAMPLING_RATE_88P2KHZ   88200
+#define SAMPLING_RATE_176P4KHZ  176400
+#define SAMPLING_RATE_352P8KHZ  352800
 
 static struct attribute device_state_attr = {
 	.name = "state",
@@ -144,10 +150,16 @@ done:
 	return ret;
 }
 
-int snd_card_notify_user(int card_status)
+int snd_card_notify_user(snd_card_status_t card_status)
 {
 	snd_card_pdata->card_status = card_status;
 	sysfs_notify(&snd_card_pdata->snd_card_kobj, NULL, "card_state");
+	return 0;
+}
+
+int snd_card_set_card_status(snd_card_status_t card_status)
+{
+	snd_card_pdata->card_status = card_status;
 	return 0;
 }
 
@@ -224,8 +236,14 @@ static void check_userspace_service_state(struct snd_soc_pcm_runtime *rtd,
 	}
 }
 
-static int get_intf_index(const char *stream_name)
+static int get_mi2s_tdm_auxpcm_intf_index(const char *stream_name)
 {
+
+	if (!strnstr(stream_name, "TDM", strlen(stream_name)) ||
+	    !strnstr(stream_name, "MI2S", strlen(stream_name)) ||
+	    !strnstr(stream_name, "AUXPCM", strlen(stream_name)))
+		return -EINVAL;
+
 	if (strnstr(stream_name, "LPAIF_RXTX", strlen(stream_name)))
 		return QUAT_MI2S_TDM_AUXPCM;
 	else if (strnstr(stream_name, "LPAIF_WSA", strlen(stream_name)))
@@ -242,6 +260,20 @@ static int get_intf_index(const char *stream_name)
 	}
 	pr_debug("%s: stream name %s does not match\n", __func__, stream_name);
 	return -EINVAL;
+}
+
+static bool is_fractional_sample_rate(unsigned int sample_rate)
+{
+	switch (sample_rate) {
+	case SAMPLING_RATE_44P1KHZ:
+	case SAMPLING_RATE_88P2KHZ:
+	case SAMPLING_RATE_176P4KHZ:
+	case SAMPLING_RATE_352P8KHZ:
+		return true;
+	default:
+		return false;
+	}
+	return false;
 }
 
 static int get_mi2s_clk_id(int index)
@@ -306,6 +338,38 @@ static int get_tdm_clk_id(int index)
 	return clk_id;
 }
 
+int mi2s_tdm_hw_vote_req(struct msm_common_pdata *pdata, int enable)
+{
+	int ret = 0;
+
+	if (!pdata || (pdata->lpass_audio_hw_vote == NULL)) {
+		pr_err("%s: pdata or lpass audio hw vote node NULL", __func__);
+		return -EINVAL;
+	}
+
+	pr_debug("%s: lpass audio hw vote for fractional sample rate enable: %d\n",
+				__func__, enable);
+
+	if (enable) {
+		if (atomic_read(&pdata->lpass_audio_hw_vote_ref_cnt) == 0) {
+			ret = digital_cdc_rsc_mgr_hw_vote_enable(pdata->lpass_audio_hw_vote);
+			if (ret < 0) {
+				pr_err("%s lpass audio hw vote enable failed %d\n",
+					__func__, ret);
+					return ret;
+				}
+			}
+		atomic_inc(&pdata->lpass_audio_hw_vote_ref_cnt);
+	} else {
+		atomic_dec(&pdata->lpass_audio_hw_vote_ref_cnt);
+		if (atomic_read(&pdata->lpass_audio_hw_vote_ref_cnt) == 0)
+			digital_cdc_rsc_mgr_hw_vote_disable(pdata->lpass_audio_hw_vote);
+		else if (atomic_read(&pdata->lpass_audio_hw_vote_ref_cnt) < 0)
+			atomic_set(&pdata->lpass_audio_hw_vote_ref_cnt, 0);
+	}
+	return ret;
+}
+
 int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 				struct snd_pcm_hw_params *params)
 {
@@ -318,7 +382,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 	const char *stream_name = rtd->dai_link->stream_name;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
-	int index = get_intf_index(stream_name);
+	int index = get_mi2s_tdm_auxpcm_intf_index(stream_name);
 	struct clk_cfg intf_clk_cfg;
 
 	dev_dbg(rtd->card->dev,
@@ -332,7 +396,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 
 	if (index >= 0) {
 		mutex_lock(&pdata->lock[index]);
-		if (pdata->mi2s_gpio_p[index]) {
+		if (atomic_read(&pdata->lpass_intf_clk_ref_cnt[index]) == 0) {
 			if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
 				slots = pdata->tdm_max_slots;
 				rate = params_rate(params);
@@ -346,14 +410,23 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 				}
 
 				intf_clk_cfg.clk_freq_in_hz = rate * slot_width * slots;
-				intf_clk_cfg.clk_attri = CLOCK_ATTRIBUTE_COUPLE_NO;
+				intf_clk_cfg.clk_attri = pdata->tdm_clk_attribute[index];
 				intf_clk_cfg.clk_root = 0;
 
+				if (pdata->is_audio_hw_vote_required[index]  &&
+					is_fractional_sample_rate(rate)) {
+					ret = mi2s_tdm_hw_vote_req(pdata, 1);
+					if (ret < 0) {
+						pr_err("%s lpass audio hw vote enable failed %d\n",
+							__func__, ret);
+						goto done;
+					}
+				}
 				pr_debug("%s: clk_id :%d clk freq %d\n", __func__,
 					intf_clk_cfg.clk_id, intf_clk_cfg.clk_freq_in_hz);
 				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 1);
 				if (ret < 0) {
-					pr_err("%s: prm lpass clk cfg set failed ret %d\n",
+					pr_err("%s: prm lpass tdm clk cfg set failed ret %d\n",
 						__func__, ret);
 					goto done;
 				}
@@ -379,11 +452,21 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 					pr_debug("%s: bitwidth set to default : %d\n",
 							__func__, sample_width);
 				}
+
 				intf_clk_cfg.clk_freq_in_hz = rate *
 					MI2S_NUM_CHANNELS * sample_width;
-				intf_clk_cfg.clk_attri = CLOCK_ATTRIBUTE_COUPLE_NO;
+				intf_clk_cfg.clk_attri = pdata->mi2s_clk_attribute[index];
 				intf_clk_cfg.clk_root = CLOCK_ROOT_DEFAULT;
 
+				if (pdata->is_audio_hw_vote_required[index]  &&
+					is_fractional_sample_rate(rate)) {
+					ret = mi2s_tdm_hw_vote_req(pdata, 1);
+					if (ret < 0) {
+						pr_err("%s lpass audio hw vote enable failed %d\n",
+						__func__, ret);
+						goto done;
+					}
+				}
 				pr_debug("%s: mi2s clk_id :%d clk freq %d\n", __func__,
 					intf_clk_cfg.clk_id, intf_clk_cfg.clk_freq_in_hz);
 				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 1);
@@ -393,11 +476,12 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 					goto done;
 				}
 			} else {
-				pr_err("%s: invalid stream name: %s\n", __func__,
-					stream_name);
+				pr_err("%s: unsupported stream name: %s\n",
+					__func__, stream_name);
+				goto done;
 			}
-
 		}
+		atomic_inc(&pdata->lpass_intf_clk_ref_cnt[index]);
 done:
 		mutex_unlock(&pdata->lock[index]);
 	}
@@ -411,7 +495,7 @@ int msm_common_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_card *card = rtd->card;
 	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
 	const char *stream_name = rtd->dai_link->stream_name;
-	int index = get_intf_index(stream_name);
+	int index = get_mi2s_tdm_auxpcm_intf_index(stream_name);
 
 	dev_dbg(rtd->card->dev,
 		"%s: substream = %s  stream = %d\n",
@@ -448,9 +532,11 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_common_pdata *pdata = msm_common_get_pdata(card);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 	const char *stream_name = rtd->dai_link->stream_name;
-	int index = get_intf_index(stream_name);
+	int index = get_mi2s_tdm_auxpcm_intf_index(stream_name);
 	struct clk_cfg intf_clk_cfg;
+	unsigned int rate = runtime->rate;
 
 	memset(&intf_clk_cfg, 0, sizeof(struct clk_cfg));
 	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
@@ -465,31 +551,48 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 
 	if (index >= 0) {
 		mutex_lock(&pdata->lock[index]);
+		atomic_dec(&pdata->lpass_intf_clk_ref_cnt[index]);
+		if (atomic_read(&pdata->lpass_intf_clk_ref_cnt[index]) == 0) {
+			if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
+				intf_clk_cfg.clk_id = get_tdm_clk_id(index);
+				pr_debug("%s: Disable tdm clock ID: %d\n",
+					__func__, intf_clk_cfg.clk_id);
+				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
+				if (ret < 0)
+					pr_err("%s: prm tdm clk cfg set failed ret %d\n",
+					__func__, ret);
+			} else if((strnstr(stream_name, "MI2S", strlen(stream_name)))) {
+				intf_clk_cfg.clk_id = get_mi2s_clk_id(index);
+				pr_debug("%s: Disable mi2s clock ID: %d\n",
+					__func__, intf_clk_cfg.clk_id);
+				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
+				if (ret < 0)
+					pr_err("%s: prm mi2s clk cfg disable failed ret %d\n",
+						__func__, ret);
+			} else {
+				pr_err("%s: unsupported stream name: %s\n",
+					__func__, stream_name);
+			}
+
+			if (pdata->is_audio_hw_vote_required[index]  &&
+				is_fractional_sample_rate(rate)) {
+				ret = mi2s_tdm_hw_vote_req(pdata, 0);
+			}
+		} else if (atomic_read(&pdata->lpass_intf_clk_ref_cnt[index]) < 0) {
+			atomic_set(&pdata->lpass_intf_clk_ref_cnt[index], 0);
+		}
+
 		if (pdata->mi2s_gpio_p[index]) {
 			atomic_dec(&pdata->mi2s_gpio_ref_cnt[index]);
-			if (atomic_read(&pdata->mi2s_gpio_ref_cnt[index]) == 0) {
-				if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
-					intf_clk_cfg.clk_id = get_tdm_clk_id(index);
-					ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
-					if (ret < 0)
-						pr_err("%s: prm clk cfg set failed ret %d\n",
-						__func__, ret);
-				} else if((strnstr(stream_name, "MI2S", strlen(stream_name)))) {
-					intf_clk_cfg.clk_id = get_mi2s_clk_id(index);
-					ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
-					if (ret < 0)
-						pr_err("%s: prm mi2s clk cfg disable failed ret %d\n",
-							__func__, ret);
-				} else {
-					pr_err("%s: invalid stream name: %s\n",
-						__func__, stream_name);
-				}
+			if (atomic_read(&pdata->mi2s_gpio_ref_cnt[index]) == 0)  {
 				ret = msm_cdc_pinctrl_select_sleep_state(
-						pdata->mi2s_gpio_p[index]);
+					pdata->mi2s_gpio_p[index]);
 				if (ret)
 					dev_err(card->dev,
 					"%s: pinctrl set actv fail %d\n",
 					__func__, ret);
+			} else if (atomic_read(&pdata->mi2s_gpio_ref_cnt[index]) < 0) {
+				atomic_set(&pdata->mi2s_gpio_ref_cnt[index], 0);
 			}
 		}
 		mutex_unlock(&pdata->lock[index]);
@@ -500,6 +603,8 @@ int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 {
 	struct msm_common_pdata *common_pdata = NULL;
 	int count, ret = 0;
+	uint32_t val_array[MI2S_TDM_AUXPCM_MAX] = {0};
+	struct clk *lpass_audio_hw_vote = NULL;
 
 	common_pdata = kcalloc(1, sizeof(struct msm_common_pdata), GFP_KERNEL);
 	if (!common_pdata)
@@ -521,6 +626,62 @@ int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 		common_pdata->tdm_max_slots = TDM_MAX_SLOTS;
 		dev_info(&pdev->dev, "%s: Using default tdm max slot: %d\n",
 			__func__, common_pdata->tdm_max_slots);
+	}
+
+	/* Register LPASS audio hw vote */
+	lpass_audio_hw_vote = devm_clk_get(&pdev->dev, "lpass_audio_hw_vote");
+	if (IS_ERR(lpass_audio_hw_vote)) {
+		ret = PTR_ERR(lpass_audio_hw_vote);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "lpass_audio_hw_vote", ret);
+		lpass_audio_hw_vote = NULL;
+		ret = 0;
+	}
+	common_pdata->lpass_audio_hw_vote = lpass_audio_hw_vote;
+
+	ret = of_property_read_u32_array(pdev->dev.of_node,
+				"qcom,mi2s-tdm-is-hw-vote-needed",
+				val_array, MI2S_TDM_AUXPCM_MAX);
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s:no qcom,mi2s-tdm-is-hw-vote-needed in DT node\n",
+			__func__);
+	} else {
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->is_audio_hw_vote_required[count] =
+					val_array[count];
+		}
+	}
+
+	ret = of_property_read_u32_array(pdev->dev.of_node, "qcom,tdm-clk-attribute",
+			val_array, MI2S_TDM_AUXPCM_MAX);
+	if (ret) {
+		dev_info(&pdev->dev,
+			"%s: No DT match for tdm clk attribute, set to default\n", __func__);
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->tdm_clk_attribute[count] =
+				CLOCK_ATTRIBUTE_COUPLE_NO;
+		}
+	} else {
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->tdm_clk_attribute[count] =
+					val_array[count];
+		}
+	}
+
+	ret = of_property_read_u32_array(pdev->dev.of_node, "qcom,mi2s-clk-attribute",
+			val_array, MI2S_TDM_AUXPCM_MAX);
+	if (ret) {
+		dev_info(&pdev->dev,
+			"%s: No DT match for mi2s clk attribute, set to default\n", __func__);
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->mi2s_clk_attribute[count] =
+				CLOCK_ATTRIBUTE_COUPLE_NO;
+		}
+	} else {
+		for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
+			common_pdata->mi2s_clk_attribute[count] =
+				val_array[count];
+		}
 	}
 
 	common_pdata->mi2s_gpio_p[PRI_MI2S_TDM_AUXPCM] = of_parse_phandle(pdev->dev.of_node,
