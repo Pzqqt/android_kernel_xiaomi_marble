@@ -512,15 +512,23 @@ bool sde_encoder_is_cwb_disabling(struct drm_encoder *drm_enc,
  * sde_encoder_is_primary_display - checks if underlying display is primary
  *     display or not.
  * @drm_enc:    Pointer to drm encoder structure
- * @Return:     true if it is primary display. false if secondary display
+ * @Return:     true if it is primary display. false otherwise
  */
 bool sde_encoder_is_primary_display(struct drm_encoder *enc);
+
+/**
+ * sde_encoder_is_built_in_display - checks if underlying display is built in
+ *     display or not.
+ * @drm_enc:    Pointer to drm encoder structure
+ * @Return:     true if it is a built in display. false otherwise
+ */
+bool sde_encoder_is_built_in_display(struct drm_encoder *enc);
 
 /**
  * sde_encoder_is_dsi_display - checks if underlying display is DSI
  *     display or not.
  * @drm_enc:    Pointer to drm encoder structure
- * @Return:     true if it is primary display. false if secondary display
+ * @Return:     true if it is a dsi display. false otherwise
  */
 bool sde_encoder_is_dsi_display(struct drm_encoder *enc);
 

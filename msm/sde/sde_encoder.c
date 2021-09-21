@@ -342,6 +342,15 @@ bool sde_encoder_is_primary_display(struct drm_encoder *drm_enc)
 		SDE_CONNECTOR_PRIMARY);
 }
 
+bool sde_encoder_is_built_in_display(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+
+	return sde_enc &&
+		(sde_enc->disp_info.display_type == SDE_CONNECTOR_PRIMARY ||
+		sde_enc->disp_info.display_type == SDE_CONNECTOR_SECONDARY);
+}
+
 bool sde_encoder_is_dsi_display(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
