@@ -66,6 +66,16 @@
 #include "wlan_reg_services_api.h"
 #include <lim_mlo.h>
 
+#define LIM_QOS_AP_SUPPORTS_UAPSD         0x80
+
+#define LIM_IS_QOS_BSS(ie_struct)  \
+		(ie_struct->WMMParams.present || ie_struct->WMMInfoAp.present)
+
+#define LIM_IS_UAPSD_BSS(ie_struct) \
+	((ie_struct->WMMParams.present && \
+	 (ie_struct->WMMParams.qosInfo & LIM_QOS_AP_SUPPORTS_UAPSD)) || \
+	 (ie_struct->WMMInfoAp.present && ie_struct->WMMInfoAp.uapsd))
+
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
 static bool __lim_process_sme_start_bss_req(struct mac_context *,
@@ -2869,8 +2879,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 
 	status = lim_fill_dot11_mode(mac_ctx, session, ie_struct);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(ie_struct);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto send;
 	}
 
 	status = wlan_get_rate_set(mac_ctx, ie_struct, session);
@@ -2887,8 +2897,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 
 	status = lim_check_and_validate_6g_ap(mac_ctx, bss_desc, ie_struct);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(ie_struct);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto send;
 	}
 
 	if (wlan_reg_is_6ghz_chan_freq(bss_desc->chan_freq)) {
@@ -2901,8 +2911,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 					programmed_country, &power_type_6g,
 					&ctry_code_match);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			qdf_mem_free(ie_struct);
-			return QDF_STATUS_E_NOSUPPORT;
+			status = QDF_STATUS_E_NOSUPPORT;
+			goto send;
 		}
 		session->ap_power_type_6g = power_type_6g;
 		session->same_ctry_code = ctry_code_match;
@@ -2940,8 +2950,6 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	session->statypeForBss = STA_ENTRY_PEER;
 
 	lim_update_qos(mac_ctx, session, bss_desc, ie_struct);
-	qdf_mem_free(ie_struct);
-	ie_struct = NULL;
 
 	if (session->lim_join_req->bssDescription.adaptive_11r_ap)
 		session->is_adaptive_11r_connection =
@@ -3050,8 +3058,10 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	session->limCurrentBssCaps = bss_desc->capabilityInfo;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
-	if (!mlme_obj)
-		return QDF_STATUS_E_FAILURE;
+	if (!mlme_obj) {
+		status =  QDF_STATUS_E_FAILURE;
+		goto send;
+	}
 
 	lim_extract_ap_capability(mac_ctx,
 		(uint8_t *)bss_desc->ieFields,
@@ -3143,10 +3153,12 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		status = wlan_mlme_get_wmm_mode(mac_ctx->psoc, &wmm_mode);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			pe_err("Get wmm_mode failed");
-			return QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_E_INVAL;
+			goto send;
 		}
-		if (wmm_mode == 2) {
-			/*QoS not enabled in cfg file */
+		if (wmm_mode == 2 || !(LIM_IS_QOS_BSS(ie_struct)) ||
+		    !(LIM_IS_UAPSD_BSS(ie_struct))) {
+			/*QoS not enabled in cfg file or in BSS*/
 			session->gUapsdPerAcBitmask = 0;
 		} else {
 			/*QoS enabled, update uapsd mask from cfg file */
@@ -3154,7 +3166,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 							      &value);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				pe_err("Get uapsd_mask failed");
-				return QDF_STATUS_E_INVAL;
+				status = QDF_STATUS_E_INVAL;
+				goto send;
 			}
 			session->gUapsdPerAcBitmask = value;
 		}
@@ -3172,7 +3185,12 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	lim_fill_cc_mode(mac_ctx, session);
 	lim_fill_rssi(session, bss_desc);
 
-	return QDF_STATUS_SUCCESS;
+	status = QDF_STATUS_SUCCESS;
+
+send:
+	qdf_mem_free(ie_struct);
+	return status;
+
 }
 
 static QDF_STATUS
