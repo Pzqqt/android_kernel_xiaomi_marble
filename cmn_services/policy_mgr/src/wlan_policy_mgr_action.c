@@ -2497,7 +2497,7 @@ sap_restart:
 
 		if (!qdf_delayed_work_start(&pm_ctx->sta_ap_intf_check_work,
 					    timeout_ms)) {
-			policy_mgr_err("change interface request failure");
+			policy_mgr_debug("change interface request already queued");
 			return;
 		}
 	}
