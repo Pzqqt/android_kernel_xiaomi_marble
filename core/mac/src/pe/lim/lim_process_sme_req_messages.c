@@ -66,16 +66,6 @@
 #include "wlan_reg_services_api.h"
 #include <lim_mlo.h>
 
-#define LIM_QOS_AP_SUPPORTS_UAPSD         0x80
-
-#define LIM_IS_QOS_BSS(ie_struct)  \
-		(ie_struct->WMMParams.present || ie_struct->WMMInfoAp.present)
-
-#define LIM_IS_UAPSD_BSS(ie_struct) \
-	((ie_struct->WMMParams.present && \
-	 (ie_struct->WMMParams.qosInfo & LIM_QOS_AP_SUPPORTS_UAPSD)) || \
-	 (ie_struct->WMMInfoAp.present && ie_struct->WMMInfoAp.uapsd))
-
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
 static bool __lim_process_sme_start_bss_req(struct mac_context *,
