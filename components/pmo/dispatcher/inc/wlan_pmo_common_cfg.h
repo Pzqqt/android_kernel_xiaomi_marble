@@ -554,7 +554,7 @@
  * igmp_version_support - Configure igmp version
  * @Min: 0x00000000
  * @Max: 0x7
- * @Default: 0x0000000
+ * @Default: 0x7
  *
  * This ini is used to configure version while offloading igmp
  *
