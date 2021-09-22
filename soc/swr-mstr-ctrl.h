@@ -190,6 +190,7 @@ struct swr_mstr_ctrl {
 	struct clk *lpass_core_hw_vote;
 	struct clk *lpass_core_audio;
 	u8 num_usecase;
+	u32 pcm_enable_count;
 	u32 swr_irq_wakeup_capable;
 	int hw_core_clk_en;
 	int aud_core_clk_en;
