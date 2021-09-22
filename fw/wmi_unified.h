@@ -9309,6 +9309,8 @@ typedef struct {
     A_UINT32 num_probes_tx;
     /** Number of Beacon misses on this interface (accruing over time) */
     A_UINT32 num_beacon_miss;
+    /** time slice duty cycle percentage of this interface*/
+    A_UINT32 time_slice_duty_cycle;
 } wmi_iface_link_stats;
 
 typedef enum {
