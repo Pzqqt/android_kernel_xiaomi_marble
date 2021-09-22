@@ -1925,13 +1925,15 @@ ol_txrx_vdev_per_vdev_tx_desc_init(struct ol_txrx_vdev_t *vdev)
  */
 static QDF_STATUS
 ol_txrx_vdev_attach(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
-		    uint8_t *vdev_mac_addr,
-		    uint8_t vdev_id, enum wlan_op_mode op_mode,
-		    enum wlan_op_subtype subtype)
+		    struct cdp_vdev_info *vdev_info)
 {
 	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
 	struct ol_txrx_pdev_t *pdev = ol_txrx_get_pdev_from_pdev_id(soc,
 								    pdev_id);
+	uint8_t *vdev_mac_addr = vdev_info->vdev_mac_addr;
+	uint8_t vdev_id = vdev_info->vdev_id;
+	enum wlan_op_mode op_mode = vdev_info->op_mode;
+	enum wlan_op_subtype subtype = vdev_info->subtype;
 
 	struct ol_txrx_vdev_t *vdev;
 	QDF_STATUS qdf_status;
@@ -2408,7 +2410,7 @@ static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
  */
 static QDF_STATUS
 ol_txrx_peer_attach(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
-		    uint8_t *peer_mac_addr)
+		    uint8_t *peer_mac_addr, enum cdp_peer_type peer_type)
 {
 	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
 	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_soc_vdev_id(soc,
