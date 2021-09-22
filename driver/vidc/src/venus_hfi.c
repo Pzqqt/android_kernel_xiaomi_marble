@@ -2597,8 +2597,11 @@ static int __load_fw_to_memory(struct platform_device *pdev,
 		return -ENOMEM;
 	}
 
+	/* prevent system suspend during fw_load */
+	pm_stay_awake(pdev->dev.parent);
 	rc = qcom_mdt_load(&pdev->dev, firmware, firmware_name,
 		pas_id, virt, phys, res_size, NULL);
+	pm_relax(pdev->dev.parent);
 	if (rc) {
 		d_vpr_e("%s: error %d loading fw \"%s\"\n",
 			__func__, rc, firmware_name);
