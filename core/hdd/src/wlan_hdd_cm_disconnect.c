@@ -324,6 +324,8 @@ hdd_cm_disconnect_complete_pre_user_update(struct wlan_objmgr_vdev *vdev,
 
 	hdd_handle_disassociation_event(adapter, &rsp->req.req.bssid);
 
+	wlan_vdev_mlme_feat_ext2_cap_clear(vdev, WLAN_VDEV_FEXT2_MLO);
+
 	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_DISCONNECT_HANDLER,
 			   rsp->req.req.bssid.bytes,
 			   rsp->req.cm_id,
