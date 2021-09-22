@@ -3928,15 +3928,17 @@ uint16_t wlan_crypto_get_keyid(uint8_t *data, int hdrlen)
 	struct wlan_frame_hdr *hdr = (struct wlan_frame_hdr *)data;
 	uint8_t *iv;
 	uint8_t stype = WLAN_FC0_GET_STYPE(hdr->i_fc[0]);
+	uint8_t type = WLAN_FC0_GET_TYPE(hdr->i_fc[0]);
 
 	/*
 	 * In FILS SK (Re)Association request/response frame has
 	 * to be decrypted
 	 */
-	if ((stype == WLAN_FC0_STYPE_ASSOC_REQ) ||
+	if ((type == WLAN_FC0_TYPE_MGMT) &&
+	    ((stype == WLAN_FC0_STYPE_ASSOC_REQ) ||
 	    (stype == WLAN_FC0_STYPE_REASSOC_REQ) ||
 	    (stype == WLAN_FC0_STYPE_ASSOC_RESP) ||
-	    (stype == WLAN_FC0_STYPE_REASSOC_RESP)) {
+	    (stype == WLAN_FC0_STYPE_REASSOC_RESP))) {
 		return 0;
 	}
 
