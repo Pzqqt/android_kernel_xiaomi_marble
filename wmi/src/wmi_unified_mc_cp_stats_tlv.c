@@ -327,6 +327,13 @@ extract_peer_stats_count_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	if (!ev_param)
 		return QDF_STATUS_E_FAILURE;
 
+	if (!param_buf->num_peer_stats_info ||
+	    param_buf->num_peer_stats_info < ev_param->num_peers) {
+		wmi_err_rl("actual num of peers stats info: %d is less than provided peers: %d",
+			   param_buf->num_peer_stats_info, ev_param->num_peers);
+		return QDF_STATUS_E_FAULT;
+	}
+
 	if (!stats_param)
 		return QDF_STATUS_E_FAILURE;
 
