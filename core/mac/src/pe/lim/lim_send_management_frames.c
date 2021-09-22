@@ -746,6 +746,12 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 					    &frm->he_6ghz_band_cap);
 	}
 
+	if (wlan_vdev_mlme_is_mlo_ap(pe_session->vdev)) {
+		populate_dot11f_bcn_mlo_ie(mac_ctx, pe_session,
+					   &frm->mlo_ie);
+		populate_dot11f_mlo_rnr(mac_ctx, pe_session,
+					&frm->reduced_neighbor_report);
+	}
 	if (lim_is_session_eht_capable(pe_session)) {
 		pe_debug("Populate EHT IEs");
 		populate_dot11f_eht_caps(mac_ctx, pe_session, &frm->eht_cap);
