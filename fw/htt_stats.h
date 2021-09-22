@@ -3833,7 +3833,10 @@ typedef struct {
 #define HTT_RX_PDEV_MAX_OFDMA_NUM_USER 8
 #define HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER 8
 #define HTT_RX_PDEV_STATS_RXEVM_MAX_PILOTS_PER_NSS 16
-/*HTT_RX_PDEV_STATS_NUM_RU_SIZE_COUNTERS:
+#define HTT_RX_PDEV_STATS_NUM_BE_MCS_COUNTERS 16 /* 0-13, -2, -1 */
+#define HTT_RX_PDEV_STATS_NUM_BE_BW_COUNTERS  5  /* 20,40,80,160,320 MHz */
+
+/* HTT_RX_PDEV_STATS_NUM_RU_SIZE_COUNTERS:
  * RU size index 0: HTT_UL_OFDMA_V0_RU_SIZE_RU_26
  * RU size index 1: HTT_UL_OFDMA_V0_RU_SIZE_RU_52
  * RU size index 2: HTT_UL_OFDMA_V0_RU_SIZE_RU_106
@@ -4191,12 +4194,56 @@ typedef struct {
     A_UINT32 reduced_ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
 } htt_rx_pdev_ul_mumimo_trig_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /*
+     * BIT [7:0]  :- mac_id
+     * BIT [31:8] :- reserved
+     *
+     * Refer to HTT_STATS_CMN_MAC_ID_GET/SET macros.
+     */
+    A_UINT32 mac_id__word;
+
+    /* Number of times UL MUMIMO RX packets received */
+    A_UINT32 rx_11be_ul_mumimo;
+
+    /* 11BE EHT UL MU-MIMO RX TB PPDU MCS stats */
+    A_UINT32 be_ul_mumimo_rx_mcs[HTT_RX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    /*
+     * 11BE EHT UL MU-MIMO RX GI & LTF stats.
+     * Index 0 indicates 1xLTF + 1.6 msec GI
+     * Index 1 indicates 2xLTF + 1.6 msec GI
+     * Index 2 indicates 4xLTF + 3.2 msec GI
+     */
+    A_UINT32 be_ul_mumimo_rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    /* 11BE EHT UL MU-MIMO RX TB PPDU NSS stats (Increments the individual user NSS in the UL MU MIMO PPDU received) */
+    A_UINT32 be_ul_mumimo_rx_nss[HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+    /* 11BE EHT UL MU-MIMO RX TB PPDU BW stats */
+    A_UINT32 be_ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_BE_BW_COUNTERS];
+    /* Number of times UL MUMIMO TB PPDUs received with STBC */
+    A_UINT32 be_ul_mumimo_rx_stbc;
+    /* Number of times UL MUMIMO TB PPDUs received with LDPC */
+    A_UINT32 be_ul_mumimo_rx_ldpc;
+
+    /* RSSI in dBm for Rx TB PPDUs */
+    A_INT8 be_rx_ul_mumimo_chain_rssi_in_dbm[HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BE_BW_COUNTERS];
+    /* Target RSSI programmed in UL MUMIMO triggers (units dBm) */
+    A_INT8 be_rx_ul_mumimo_target_rssi[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER][HTT_RX_PDEV_STATS_NUM_BE_BW_COUNTERS];
+    /* FD RSSI measured for Rx UL TB PPDUs (units dBm) */
+    A_INT8 be_rx_ul_mumimo_fd_rssi[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+    /* Average pilot EVM measued for RX UL TB PPDU */
+    A_INT8 be_rx_ulmumimo_pilot_evm_dB_mean[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+} htt_rx_pdev_ul_mumimo_trig_be_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS
  * TLV_TAGS:
  *    - HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_STATS_TAG
+ *    - HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_BE_STATS_TAG
  */
 typedef struct {
     htt_rx_pdev_ul_mumimo_trig_stats_tlv ul_mumimo_trig_tlv;
+    htt_rx_pdev_ul_mumimo_trig_be_stats_tlv ul_mumimo_trig_be_tlv;
 } htt_rx_pdev_ul_mumimo_trig_stats_t;
 
 typedef struct {
