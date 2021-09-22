@@ -8668,21 +8668,24 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 
 	/* if dual sta roaming enabled and both sta in DBS then no need
 	 * to enable roaming on primary as both STA's have roaming enabled.
-	 * if dual sta roaming enabled and both sta in MCC then need to enable
-	 * roaming on primary vdev.
+	 * if dual sta roaming enabled and both sta in MCC or SCC then need
+	 * to enable roaming on primary vdev.
 	 * if dual sta roaming NOT enabled then need to enable roaming on
 	 * primary vdev for dual STA concurrency in MCC or DBS.
 	 */
-	if ((is_set_primary_iface &&
-	     ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc) &&
-	     policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) ||
-	    (is_set_primary_iface &&
-	     !ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc))){
-		hdd_debug("Enable roaming on requested interface: %d",
-			  adapter->vdev_id);
-		wlan_cm_roam_state_change(hdd_ctx->pdev, adapter->vdev_id,
-					  WLAN_ROAM_RSO_ENABLED,
-					  REASON_ROAM_SET_PRIMARY);
+	if (primary_vdev_id !=  WLAN_UMAC_VDEV_ID_MAX)
+		if ((ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc) &&
+		     (policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc) ||
+		      policy_mgr_current_concurrency_is_scc(hdd_ctx->psoc))) ||
+		    (!ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc))) {
+			hdd_err("Enable roaming on requested interface: %d",
+				adapter->vdev_id);
+			hdd_debug("Enable roaming on requested interface: %d",
+				  adapter->vdev_id);
+			wlan_cm_roam_state_change(hdd_ctx->pdev,
+						  adapter->vdev_id,
+						  WLAN_ROAM_RSO_ENABLED,
+						  REASON_ROAM_SET_PRIMARY);
 	}
 
 	/*
