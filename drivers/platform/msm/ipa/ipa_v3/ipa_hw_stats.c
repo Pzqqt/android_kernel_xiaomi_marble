@@ -1863,15 +1863,18 @@ int ipa_drop_stats_init(void)
 
 		}
 	} else {
-		mask = ipa_hw_stats_get_ep_bit_n_idx(
-			IPA_CLIENT_USB_DPL_CONS,
-			&reg_idx);
-		pipe_bitmask[reg_idx] |= mask;
+		/* ADPL pipe hw stats is now taken care by IPA Q6 */
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_USB_DPL_CONS,
+				&reg_idx);
+			pipe_bitmask[reg_idx] |= mask;
 
-		mask = ipa_hw_stats_get_ep_bit_n_idx(
-			IPA_CLIENT_ODL_DPL_CONS,
-			&reg_idx);
-		pipe_bitmask[reg_idx] |= mask;
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_ODL_DPL_CONS,
+				&reg_idx);
+			pipe_bitmask[reg_idx] |= mask;
+		}
 	}
 
 	/* Currently we have option to enable drop stats using debugfs.
@@ -2693,6 +2696,7 @@ static ssize_t ipa_debugfs_enable_disable_drop_stats(struct file *file,
 	int i, j;
 	bool is_pipe = false;
 	ssize_t ret;
+	int pipe_num_temp;
 
 	if (ipa3_ctx->hw_stats && ipa3_ctx->hw_stats->enabled) {
 		for (i = 0; i < IPAHAL_IPA5_PIPE_REG_NUM; i++) {
@@ -2734,10 +2738,19 @@ static ssize_t ipa_debugfs_enable_disable_drop_stats(struct file *file,
 			pipe_ep_reg_bit = ipahal_get_ep_bit(pipe_num);
 			is_pipe = true;
 		}
+		pipe_num_temp = ipa3_get_client_by_pipe(pipe_num);
 		if (dbg_buff[i] == seprator) {
-			if (pipe_num >= 0 && pipe_num < ipa3_ctx->ipa_num_pipes
-				&& ipa3_get_client_by_pipe(pipe_num) <
-				IPA_CLIENT_MAX) {
+			/* Removing ADPL and ODL stats as Q6 supports it from IPA_5_0 */
+			if ((pipe_num_temp == IPA_CLIENT_USB_DPL_CONS ||
+				pipe_num_temp == IPA_CLIENT_ODL_DPL_CONS) &&
+				ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+				pipe_num = 0;
+				is_pipe = false;
+				continue;
+			}
+
+			else if (pipe_num >= 0 && pipe_num < ipa3_ctx->ipa_num_pipes
+				&& pipe_num_temp < IPA_CLIENT_MAX) {
 				IPADBG("pipe number %u\n", pipe_num);
 				if (enable_pipe)
 					pipe_bitmask[pipe_ep_reg_idx] |=
@@ -2750,7 +2763,13 @@ static ssize_t ipa_debugfs_enable_disable_drop_stats(struct file *file,
 			is_pipe = false;
 		}
 	}
-	if (is_pipe && pipe_num >= 0 && pipe_num < ipa3_ctx->ipa_num_pipes &&
+	pipe_num_temp = ipa3_get_client_by_pipe(pipe_num);
+	/* Removing ADPL and ODL stats as Q6 supports it from IPA_5_0 */
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 &&
+		(pipe_num_temp == IPA_CLIENT_USB_DPL_CONS ||
+		pipe_num_temp == IPA_CLIENT_ODL_DPL_CONS)) {
+		IPAERR("Enable/Disable hw stats on DPL is not supported");
+	} else if (is_pipe && pipe_num >= 0 && pipe_num < ipa3_ctx->ipa_num_pipes &&
 		ipa3_get_client_by_pipe(pipe_num) < IPA_CLIENT_MAX) {
 		IPADBG("pipe number %u\n", pipe_num);
 		if (enable_pipe)
