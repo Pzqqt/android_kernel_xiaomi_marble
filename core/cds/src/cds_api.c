@@ -1976,6 +1976,9 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 		goto deinit_rtl;
 	}
 
+	cds_err("critical host timeout trigger fw recovery for reason code %d",
+		gp_cds_context->recovery_reason);
+
 	cds_set_recovery_in_progress(true);
 	cds_set_assert_target_in_progress(true);
 	if (pld_force_collect_target_dump(qdf->dev))
