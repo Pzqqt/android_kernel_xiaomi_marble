@@ -2657,6 +2657,7 @@ struct dp_pdev {
 		qdf_work_t work;
 		qdf_workqueue_t *work_queue;
 		uint32_t seq_num;
+		uint8_t queue_depth;
 		qdf_spinlock_t list_lock;
 
 		TAILQ_HEAD(, dp_soc_srngs_state) list;

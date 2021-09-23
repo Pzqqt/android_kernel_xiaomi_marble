@@ -57,6 +57,8 @@
 	((pkt->htc_pkt.Status != QDF_STATUS_E_CANCELED) && \
 	(pkt->htc_pkt.Status != QDF_STATUS_E_RESOURCES))
 
+#define HTT_BKP_STATS_MAX_QUEUE_DEPTH 16
+
 /*
  * htt_htc_pkt_alloc() - Allocate HTC packet buffer
  * @htt_soc:	HTT SOC handle
@@ -2229,6 +2231,7 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 	int lmac_id;
 	uint32_t j = 0;
 	struct dp_soc_srngs_state * soc_srngs_state = NULL;
+	struct dp_soc_srngs_state *drop_srngs_state = NULL;
 	QDF_STATUS status;
 
 	soc_srngs_state = qdf_mem_malloc(sizeof(struct dp_soc_srngs_state));
@@ -2410,6 +2413,17 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 	qdf_spin_lock_bh(&pdev->bkp_stats.list_lock);
 
 	soc_srngs_state->seq_num = pdev->bkp_stats.seq_num;
+
+	if (pdev->bkp_stats.queue_depth >= HTT_BKP_STATS_MAX_QUEUE_DEPTH) {
+		drop_srngs_state = TAILQ_FIRST(&pdev->bkp_stats.list);
+		qdf_assert_always(drop_srngs_state);
+		TAILQ_REMOVE(&pdev->bkp_stats.list, drop_srngs_state,
+			     list_elem);
+		qdf_mem_free(drop_srngs_state);
+		pdev->bkp_stats.queue_depth--;
+	}
+
+	pdev->bkp_stats.queue_depth++;
 	TAILQ_INSERT_TAIL(&pdev->bkp_stats.list, soc_srngs_state,
 			  list_elem);
 	pdev->bkp_stats.seq_num++;
@@ -3833,25 +3847,28 @@ dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 static void dp_bk_pressure_stats_handler(void *context)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)context;
-	struct dp_soc_srngs_state *soc_srngs_state, *soc_srngs_state_next;
+	struct dp_soc_srngs_state *soc_srngs_state = NULL;
 	const char *ring_name;
 	int i;
 	struct dp_srng_ring_state *ring_state;
+	bool empty_flag;
 
-	TAILQ_HEAD(, dp_soc_srngs_state) soc_srngs_state_list;
-
-	TAILQ_INIT(&soc_srngs_state_list);
 	qdf_spin_lock_bh(&pdev->bkp_stats.list_lock);
-	TAILQ_CONCAT(&soc_srngs_state_list, &pdev->bkp_stats.list,
-		     list_elem);
+
+	/* Extract only first entry for printing in one work event */
+	if (pdev->bkp_stats.queue_depth &&
+	    !TAILQ_EMPTY(&pdev->bkp_stats.list)) {
+		soc_srngs_state = TAILQ_FIRST(&pdev->bkp_stats.list);
+		TAILQ_REMOVE(&pdev->bkp_stats.list, soc_srngs_state,
+			     list_elem);
+		pdev->bkp_stats.queue_depth--;
+	}
+
+	empty_flag = TAILQ_EMPTY(&pdev->bkp_stats.list);
 	qdf_spin_unlock_bh(&pdev->bkp_stats.list_lock);
 
-	TAILQ_FOREACH_SAFE(soc_srngs_state, &soc_srngs_state_list,
-			   list_elem, soc_srngs_state_next) {
-		TAILQ_REMOVE(&soc_srngs_state_list, soc_srngs_state,
-			     list_elem);
-
-		DP_PRINT_STATS("### START BKP stats for seq_num %u ###",
+	if (soc_srngs_state) {
+		DP_PRINT_STATS("### BKP stats for seq_num %u START ###",
 			       soc_srngs_state->seq_num);
 		for (i = 0; i < soc_srngs_state->max_ring_id; i++) {
 			ring_state = &soc_srngs_state->ring_state[i];
@@ -3873,6 +3890,11 @@ static void dp_bk_pressure_stats_handler(void *context)
 		qdf_mem_free(soc_srngs_state);
 	}
 	dp_print_napi_stats(pdev->soc);
+
+	/* Schedule work again if queue is not empty */
+	if (!empty_flag)
+		qdf_queue_work(0, pdev->bkp_stats.work_queue,
+			       &pdev->bkp_stats.work);
 }
 
 /*
@@ -3915,6 +3937,7 @@ QDF_STATUS dp_pdev_bkp_stats_attach(struct dp_pdev *pdev)
 {
 	TAILQ_INIT(&pdev->bkp_stats.list);
 	pdev->bkp_stats.seq_num = 0;
+	pdev->bkp_stats.queue_depth = 0;
 
 	qdf_create_work(0, &pdev->bkp_stats.work,
 			dp_bk_pressure_stats_handler, pdev);
