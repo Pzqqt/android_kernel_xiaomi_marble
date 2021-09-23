@@ -2929,6 +2929,11 @@ reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
 	else
 		pdev_id = phy_id;
 
+	if (soc_reg->offload_enabled)
+		dbg_id = WLAN_REGULATORY_NB_ID;
+	else
+		dbg_id = WLAN_REGULATORY_SB_ID;
+
 	reg_debug("process reg afc master chan list");
 	this_mchan_params = &soc_reg->mas_chan_params[phy_id];
 	afc_mas_chan_list = this_mchan_params->mas_chan_list_6g_afc;

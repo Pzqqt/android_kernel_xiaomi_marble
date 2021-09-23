@@ -13132,6 +13132,9 @@ static void copy_power_event(struct afc_regulatory_info *afc_info,
 		afc_chan_info = qdf_mem_malloc(power_info->num_chan_objs *
 					       sizeof(*afc_chan_info));
 
+		if (!afc_chan_info)
+			return;
+
 		copy_afc_chan_obj_info(afc_chan_info,
 				       power_info->num_chan_objs,
 				       channel_info_hdr,
