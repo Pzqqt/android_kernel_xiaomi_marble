@@ -2200,17 +2200,29 @@ static QDF_STATUS policy_mgr_check_6ghz_sap_conc(
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t ch_freq = *con_ch_freq;
+	bool find_alternate = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid context");
 		return QDF_STATUS_E_FAILURE;
 	}
-
+	if (ch_freq && WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq) &&
+	    !policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) &&
+	    !policy_mgr_is_safe_channel(psoc, ch_freq)) {
+		find_alternate = true;
+		policymgr_nofl_debug("con ch_freq %d unsafe", ch_freq);
+	}
 	if (ch_freq && WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq) &&
 	    !WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq) &&
 	    !policy_mgr_get_ap_6ghz_capable(psoc, sap_vdev_id, NULL)) {
-		policy_mgr_debug("sap %d not support 6ghz freq %d",
+		find_alternate = true;
+		policymgr_nofl_debug("sap not capable on con ch_freq %d",
+				     ch_freq);
+	}
+
+	if (find_alternate) {
+		policy_mgr_debug("sap %d not support 6ghz freq %d to find alternate",
 				 sap_vdev_id, ch_freq);
 		if (policy_mgr_is_hw_dbs_capable(psoc)) {
 			ch_freq = policy_mgr_select_2g_chan(psoc);
