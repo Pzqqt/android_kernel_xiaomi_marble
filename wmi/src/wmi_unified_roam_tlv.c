@@ -2026,7 +2026,7 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 			  WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
 {
 	wmi_roam_synch_event_fixed_param *synch_event;
-	wmi_channel *chan;
+	wmi_channel *chan = NULL;
 	wmi_key_material *key;
 	wmi_key_material_ext *key_ft;
 	wmi_roam_fils_synch_tlv_param *fils_info;
@@ -2034,11 +2034,7 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t kck_len;
 	uint8_t kek_len;
-#ifdef WLAN_FEATURE_11BE_MLO
-	uint8_t i;
-	wmi_roam_ml_setup_links_param *setup_links;
-	wmi_roam_ml_key_material_param *ml_key_param;
-#endif
+
 	synch_event = param_buf->fixed_param;
 	roam_sync_ind->roamed_vdev_id = synch_event->vdev_id;
 	roam_sync_ind->auth_status = synch_event->auth_status;
@@ -2089,10 +2085,10 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 		roam_sync_ind->chan_freq = chan->mhz;
 		roam_sync_ind->phy_mode =
 			wlan_cm_fw_to_host_phymode(WMI_GET_CHANNEL_MODE(chan));
+		roam_sync_ind->chan = *chan;
 	} else {
 		roam_sync_ind->phy_mode = WLAN_PHYMODE_AUTO;
 	}
-	roam_sync_ind->chan = *chan;
 
 	key = param_buf->key;
 	key_ft = param_buf->key_ext;
