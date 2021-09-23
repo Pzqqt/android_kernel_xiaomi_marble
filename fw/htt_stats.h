@@ -3082,6 +3082,7 @@ typedef struct {
     A_UINT32 tcl_res_addrx_timeout;
     A_UINT32 invalid_vdev;
     A_UINT32 invalid_tcl_exp_frame_desc;
+    A_UINT32 vdev_id_mismatch_cnt;
 } htt_tx_de_cmn_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
