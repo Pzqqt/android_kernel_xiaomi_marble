@@ -23,6 +23,7 @@
 #include <linux/soc/qcom/smem.h>
 #include <linux/dma-mapping.h>
 #include <linux/reset.h>
+#include <linux/pm_wakeup.h>
 #include "hfi_packetization.h"
 #include "msm_cvp_debug.h"
 #include "cvp_core_hfi.h"
@@ -1786,6 +1787,7 @@ static int iris_hfi_core_init(void *device)
 		goto err_no_mem;
 	}
 
+	pm_stay_awake(dev->res->pdev->dev.parent);
 	dev->bus_vote.data_count = 1;
 	dev->bus_vote.data->power_mode = CVP_POWER_TURBO;
 
@@ -1871,6 +1873,7 @@ static int iris_hfi_core_init(void *device)
 
 	cvp_dsp_send_hfi_queue();
 
+	pm_relax(dev->res->pdev->dev.parent);
 	dprintk(CVP_CORE, "Core inited successfully\n");
 
 	return 0;
@@ -1886,6 +1889,7 @@ err_load_fw:
 err_no_mem:
 	dprintk(CVP_ERR, "Core init failed\n");
 	mutex_unlock(&dev->lock);
+	pm_relax(dev->res->pdev->dev.parent);
 	return rc;
 }
 
