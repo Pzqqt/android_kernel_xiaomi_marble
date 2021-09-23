@@ -5288,10 +5288,14 @@ static QDF_STATUS wlan_hdd_mlo_update(struct hdd_context *hdd_ctx,
 		wlan_hdd_get_mlo_link_id(beacon, &link_id, &num_link);
 		hdd_debug("MLO SAP vdev id %d, link id %d total link %d",
 			  adapter->vdev_id, link_id, num_link);
-		if (!num_link)
+		if (!num_link) {
+			hdd_debug("start 11be AP without mlo");
+			return QDF_STATUS_SUCCESS;
+		}
+		if (!mlo_ap_vdev_attach(adapter->vdev, link_id, num_link)) {
+			hdd_err("MLO SAP attach fails");
 			return QDF_STATUS_E_INVAL;
-		if (!mlo_ap_vdev_attach(adapter->vdev, link_id, num_link))
-			return QDF_STATUS_E_INVAL;
+		}
 	}
 
 	if (!policy_mgr_is_mlo_sap_concurrency_allowed(
