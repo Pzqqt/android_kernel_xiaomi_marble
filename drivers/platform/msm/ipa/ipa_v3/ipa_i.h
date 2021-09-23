@@ -131,6 +131,8 @@ enum {
 
 #define NTN3_CLIENTS_NUM 2
 
+#define IPA_MAX_NAPI_SORT_PAGE_THRSHLD 3
+#define IPA_MAX_PAGE_WQ_RESCHED_TIME 2
 
 #define IPA_WDI2_OVER_GSI() (ipa3_ctx->ipa_wdi2_over_gsi \
 		&& (ipa_get_wdi_version() == IPA_WDI_2))
@@ -1199,6 +1201,10 @@ struct ipa3_sys_context {
 	bool ext_ioctl_v2;
 	bool common_buff_pool;
 	struct ipa3_sys_context *common_sys;
+	struct tasklet_struct tasklet_find_freepage;
+	atomic_t page_avilable;
+	struct delayed_work freepage_work;
+	u32 napi_sort_page_thrshld_cnt;
 
 	/* ordering is important - mutable fields go above */
 	struct ipa3_ep_context *ep;
@@ -1212,6 +1218,7 @@ struct ipa3_sys_context {
 	struct workqueue_struct *repl_wq;
 	struct ipa3_status_stats *status_stat;
 	u32 pm_hdl;
+	struct workqueue_struct *freepage_wq;
 	/* ordering is important - other immutable fields go below */
 };
 
@@ -1562,6 +1569,9 @@ struct ipa3_stats {
 	atomic_t num_buff_above_thresh_for_coal_pipe_notified;
 	atomic_t num_buff_below_thresh_for_def_pipe_notified;
 	atomic_t num_buff_below_thresh_for_coal_pipe_notified;
+	u64 num_sort_tasklet_sched[3];
+	u64 num_of_times_wq_reschd;
+	u64 page_recycle_cnt_in_tasklet;
 };
 
 /* offset for each stats */
@@ -2474,6 +2484,8 @@ struct ipa3_context {
 	int ipa_pil_load;
 	phys_addr_t per_stats_smem_pa;
 	void *per_stats_smem_va;
+	u32 ipa_max_napi_sort_page_thrshld;
+	u32 page_wq_reschd_time;
 };
 
 struct ipa3_plat_drv_res {
