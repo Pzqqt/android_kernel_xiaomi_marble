@@ -30,8 +30,10 @@
 #include "asoc/msm-cdc-pinctrl.h"
 #include "asoc/wcd-mbhc-v2.h"
 #include "codecs/wcd938x/wcd938x-mbhc.h"
+#include "codecs/wcd937x/wcd937x-mbhc.h"
 #include "codecs/wsa883x/wsa883x.h"
 #include "codecs/wcd938x/wcd938x.h"
+#include "codecs/wcd937x/wcd937x.h"
 #include "codecs/lpass-cdc/lpass-cdc.h"
 #include <bindings/audio-codec-port-types.h>
 #include "codecs/lpass-cdc/lpass-cdc-wsa-macro.h"
@@ -1275,6 +1277,7 @@ static int msm_snd_card_late_probe(struct snd_soc_card *card)
 	struct snd_soc_pcm_runtime *rtd;
 	int ret = 0;
 	void *mbhc_calibration;
+	bool is_wcd937x = false;
 
 	rtd = snd_soc_get_pcm_runtime(card, &card->dai_link[0]);
 	if (!rtd) {
@@ -1286,15 +1289,25 @@ static int msm_snd_card_late_probe(struct snd_soc_card *card)
 
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
 	if (!component) {
-		pr_err("%s component is NULL\n", __func__);
-		return -EINVAL;
+		component = snd_soc_rtdcom_lookup(rtd, WCD937X_DRV_NAME);
+		if (!component) {
+			pr_err("%s component is NULL\n", __func__);
+			return -EINVAL;
+		} else {
+			is_wcd937x = true;
+		}
 	}
 
 	mbhc_calibration = def_wcd_mbhc_cal();
 	if (!mbhc_calibration)
 		return -ENOMEM;
 	wcd_mbhc_cfg.calibration = mbhc_calibration;
-	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+
+	if (!is_wcd937x)
+		ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+	else
+		ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+
 	if (ret) {
 		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
 			__func__, ret);
@@ -1549,7 +1562,6 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic5");
 
-	lpass_cdc_set_port_map(lpass_cdc_component, ARRAY_SIZE(sm_port_map), sm_port_map);
 
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
@@ -1570,9 +1582,11 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
 	if (!component) {
-		pr_err("%s could not find component for %s\n",
-			__func__, WCD938X_DRV_NAME);
-		return -EINVAL;
+		component = snd_soc_rtdcom_lookup(rtd, WCD937X_DRV_NAME);
+		if (!component) {
+			pr_err("%s component is NULL\n", __func__);
+			return -EINVAL;
+		}
 	}
 	dapm = snd_soc_component_get_dapm(component);
 	card = component->card->snd_card;
@@ -1598,14 +1612,25 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 		}
 		pdata->codec_root = entry;
 	}
-	wcd938x_info_create_codec_entry(pdata->codec_root, component);
+	if(!strncmp(component->driver->name, WCD937X_DRV_NAME,
+			strlen(WCD937X_DRV_NAME))){
+		wcd937x_info_create_codec_entry(pdata->codec_root, component);
+		codec_variant = wcd937x_get_codec_variant(component);
+		dev_dbg(component->dev, "%s: variant %d\n",__func__, codec_variant);
+		lpass_cdc_set_port_map(lpass_cdc_component,
+			ARRAY_SIZE(sm_port_map_wcd937x), sm_port_map_wcd937x);
+	} else {
+		wcd938x_info_create_codec_entry(pdata->codec_root, component);
+		codec_variant = wcd938x_get_codec_variant(component);
+		dev_dbg(component->dev, "%s: variant %d\n", __func__, codec_variant);
+		lpass_cdc_set_port_map(lpass_cdc_component, ARRAY_SIZE(sm_port_map), sm_port_map);
 
-	codec_variant = wcd938x_get_codec_variant(component);
-	dev_dbg(component->dev, "%s: variant %d\n", __func__, codec_variant);
-	if (codec_variant == WCD9385)
-		ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, true);
-	else
-		ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, false);
+		/* check if the variant is wcd9385 and set RX HIFI filter capability */
+		if (codec_variant == WCD9385)
+			ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, true);
+		else
+			ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, false);
+	}
 
 	if (ret < 0) {
 		dev_err(component->dev, "%s: set fir capability failed: %d\n",
