@@ -1591,5 +1591,25 @@ error:
 }
 
 
+bool is_cvp_inst_valid(struct msm_cvp_inst *inst)
+{
+	struct msm_cvp_core *core;
+	struct msm_cvp_inst *sess;
 
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	if (!core)
+		return false;
+
+	mutex_lock(&core->lock);
+	list_for_each_entry(sess, &core->instances, list) {
+		if (inst == sess) {
+			if (kref_read(&inst->kref)) {
+				mutex_unlock(&core->lock);
+				return true;
+			}
+		}
+	}
+	mutex_unlock(&core->lock);
+	return false;
+}
 

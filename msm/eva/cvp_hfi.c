@@ -1777,6 +1777,7 @@ static int iris_hfi_core_init(void *device)
 
 	dprintk(CVP_CORE, "Core initializing\n");
 
+	pm_stay_awake(dev->res->pdev->dev.parent);
 	mutex_lock(&dev->lock);
 
 	dev->bus_vote.data =
@@ -1787,7 +1788,6 @@ static int iris_hfi_core_init(void *device)
 		goto err_no_mem;
 	}
 
-	pm_stay_awake(dev->res->pdev->dev.parent);
 	dev->bus_vote.data_count = 1;
 	dev->bus_vote.data->power_mode = CVP_POWER_TURBO;
 

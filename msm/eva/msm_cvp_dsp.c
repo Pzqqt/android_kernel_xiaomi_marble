@@ -1403,7 +1403,7 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	inst = (struct msm_cvp_inst *)ptr_dsp2cpu(
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
-	if (!inst) {
+	if (!inst || !is_cvp_inst_valid(inst)) {
 		dprintk(CVP_ERR, "%s incorrect session ID\n", __func__);
 		cmd->ret = -1;
 		goto dsp_fail_delete;
