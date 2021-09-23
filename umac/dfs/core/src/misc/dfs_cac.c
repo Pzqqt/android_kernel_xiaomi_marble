@@ -64,6 +64,22 @@ void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
 		     sizeof(dfs->dfs_cac_started_chan));
 }
 
+static void dfs_clear_nol_history_for_curchan(struct wlan_dfs *dfs)
+{
+	struct dfs_channel *chan = dfs->dfs_curchan;
+	uint16_t sub_channels[NUM_CHANNELS_160MHZ];
+	uint8_t num_subchs;
+
+	num_subchs = dfs_get_bonding_channel_without_seg_info_for_freq(
+				chan, sub_channels);
+
+	if (dfs->dfs_is_stadfs_enabled)
+		if (dfs_mlme_is_opmode_sta(dfs->dfs_pdev_obj))
+			utils_dfs_reg_update_nol_history_chan_for_freq(
+				dfs->dfs_pdev_obj, sub_channels,
+				num_subchs, DFS_NOL_HISTORY_RESET);
+}
+
 void dfs_process_cac_completion(struct wlan_dfs *dfs)
 {
 	enum phy_ch_width ch_width = CH_WIDTH_INVALID;
@@ -126,6 +142,9 @@ void dfs_process_cac_completion(struct wlan_dfs *dfs)
 	}
 
 	dfs_clear_cac_started_chan(dfs);
+
+	/* Clear NOL history for current channel on successful CAC completion */
+	dfs_clear_nol_history_for_curchan(dfs);
 	/* Iterate over the nodes, processing the CAC completion event. */
 	dfs_mlme_proc_cac(dfs->dfs_pdev_obj, 0);
 
