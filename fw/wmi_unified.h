@@ -558,6 +558,8 @@ typedef enum {
     WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID,
     /* set vdev mu sniffer param */
     WMI_VDEV_SET_MU_SNIF_CMDID,
+    /** ICMP OFFLOAD */
+    WMI_VDEV_ICMP_OFFLOAD_CMDID,
 
     /* peer specific commands */
 
@@ -29691,6 +29693,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_REQUEST_THERMAL_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_INTERFACE_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_MU_SNIF_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_ICMP_OFFLOAD_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -36129,6 +36132,45 @@ typedef struct {
  *     WMI_IPV4_ADDR  grp_ip_address[num_mcast_ipv4_addr];
  */
 } wmi_igmp_offload_fixed_param;
+
+/* flags for ICMP Offload IP4,IP6 */
+#define WMI_ICMP_OFFLOAD_IPV4_ENABLED_BIT 0
+#define WMI_ICMP_OFFLOAD_IPV6_ENABLED_BIT 1
+
+/* set IPv4 enabled/disabled flag and get the flag */
+#define WMI_SET_ICMP_OFFLOAD_IPV4_ENABLED_BIT(valid_bitmask)  \
+    WMI_SET_BITS(valid_bitmask, WMI_ICMP_OFFLOAD_IPV4_ENABLED_BIT, 1, 1)
+
+#define WMI_SET_ICMP_OFFLOAD_IPV4_DISABLED_BIT(valid_bitmask) \
+    WMI_SET_BITS(valid_bitmask, WMI_ICMP_OFFLOAD_IPV4_ENABLED_BIT, 1, 0)
+
+#define WMI_GET_ICMP_OFFLOAD_IPV4_ENABLED(valid_bitmask) \
+    WMI_GET_BITS(valid_bitmask, WMI_ICMP_OFFLOAD_IPV4_ENABLED_BIT, 1)
+
+/* set IPv6 enabled flag, disabled and get the flag */
+#define WMI_SET_ICMP_OFFLOAD_IPV6_ENABLED_BIT(valid_bitmask) \
+    WMI_SET_BITS(valid_bitmask, WMI_ICMP_OFFLOAD_IPV6_ENABLED_BIT, 1, 1)
+
+#define WMI_SET_ICMP_OFFLOAD_IPV6_DISABLED_BIT(valid_bitmask) \
+    WMI_SET_BITS(valid_bitmask, WMI_ICMP_OFFLOAD_IPV6_ENABLED_BIT, 1, 0)
+
+#define WMI_GET_ICMP_OFFLOAD_IPV6_ENABLED(valid_bitmask) \
+    WMI_GET_BITS(valid_bitmask, WMI_ICMP_OFFLOAD_IPV6_ENABLED_BIT, 1)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_vdev_icmp_offload_cmd_fixed_param
+     */
+    A_UINT32      tlv_header;
+    A_UINT32      vdev_id;
+    A_UINT32      enable;
+    /* bitmask for valid ipv4/ipv6 address */
+    A_UINT32      valid_bitmask;
+    WMI_IPV4_ADDR ipv4_addr;
+/* Following this structure are the TLVs:
+ *      WMI_IPV6_ADDR ipv6_addr[num_ipv6_addr];
+ */
+} wmi_icmp_offload_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals

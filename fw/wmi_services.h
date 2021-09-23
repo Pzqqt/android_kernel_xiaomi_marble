@@ -557,6 +557,7 @@ typedef  enum  {
      */
     WMI_SERVICE_SPATIAL_REUSE_ENHANCEMENT_SUPPORT = 306,
     WMI_SERVICE_MU_SNIF = 307, /* FW support MU sniffer */
+    WMI_SERVICE_ICMP_OFFLOAD = 308, /* FW supports ping offload during APPS suspend */
 
 
     WMI_MAX_EXT2_SERVICE
