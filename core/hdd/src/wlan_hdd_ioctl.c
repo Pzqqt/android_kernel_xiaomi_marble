@@ -5987,10 +5987,12 @@ static int drv_cmd_set_fcc_channel(struct hdd_adapter *adapter,
 	}
 
 	if (!rf_test_mode) {
-		if (fcc_constraint)
+		if (fcc_constraint) {
 			band_bitmap |= (BIT(REG_BAND_5G) | BIT(REG_BAND_2G));
-		else
-			band_bitmap = REG_BAND_MASK_ALL;
+		} else {
+			if (wlan_reg_is_6ghz_supported(hdd_ctx->psoc))
+				band_bitmap = REG_BAND_MASK_ALL;
+		}
 		if (hdd_reg_set_band(adapter->dev, band_bitmap))
 			status_6G = QDF_STATUS_E_FAILURE;
 	}
