@@ -920,6 +920,18 @@ static int sde_encoder_phys_vid_wait_for_vblank(
 	return _sde_encoder_phys_vid_wait_for_vblank(phys_enc, true);
 }
 
+static int sde_encoder_phys_vid_wait_for_commit_done(
+		struct sde_encoder_phys *phys_enc)
+{
+	int rc;
+
+	rc =  _sde_encoder_phys_vid_wait_for_vblank(phys_enc, true);
+	if (rc)
+		sde_encoder_helper_phys_reset(phys_enc);
+
+	return rc;
+}
+
 static int sde_encoder_phys_vid_wait_for_vblank_no_notify(
 		struct sde_encoder_phys *phys_enc)
 {
@@ -1310,7 +1322,7 @@ static void sde_encoder_phys_vid_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->destroy = sde_encoder_phys_vid_destroy;
 	ops->get_hw_resources = sde_encoder_phys_vid_get_hw_resources;
 	ops->control_vblank_irq = sde_encoder_phys_vid_control_vblank_irq;
-	ops->wait_for_commit_done = sde_encoder_phys_vid_wait_for_vblank;
+	ops->wait_for_commit_done = sde_encoder_phys_vid_wait_for_commit_done;
 	ops->wait_for_vblank = sde_encoder_phys_vid_wait_for_vblank_no_notify;
 	ops->wait_for_tx_complete = sde_encoder_phys_vid_wait_for_vblank;
 	ops->irq_control = sde_encoder_phys_vid_irq_control;
