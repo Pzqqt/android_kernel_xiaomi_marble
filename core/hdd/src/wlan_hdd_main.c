@@ -2320,7 +2320,7 @@ static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
 			return;
 		}
 		b2g_vht_target =
-		(chip_mode & WMI_HOST_REGDMN_MODE_11AC_VHT20_2G) ?
+		(chip_mode & HOST_REGDMN_MODE_11AC_VHT20_2G) ?
 		true : false;
 	}
 
