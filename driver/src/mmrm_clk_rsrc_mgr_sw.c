@@ -460,7 +460,7 @@ err_invalid_level:
 
 static int mmrm_sw_calculate_total_current(
 	struct mmrm_sw_clk_mgr_info *sinfo,
-	u32 req_level, u32 *total_cur)
+	u32 req_level, u32 *total_cur, struct mmrm_sw_clk_client_tbl_entry *tbl_entry_new)
 {
 	int rc = 0;
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
@@ -475,14 +475,16 @@ static int mmrm_sw_calculate_total_current(
 	/* calculate sum of values (scaled by volt) */
 	for (c = 0; c < sinfo->tot_clk_clients; c++) {
 		tbl_entry = &sinfo->clk_client_tbl[c];
-		if (IS_ERR_OR_NULL(tbl_entry->clk) || !tbl_entry->clk_rate) {
+		if (IS_ERR_OR_NULL(tbl_entry->clk) || !tbl_entry->clk_rate
+			|| (tbl_entry == tbl_entry_new)) {
 			continue;
 		}
-		sum_cur += tbl_entry->current_ma[tbl_entry->vdd_level][req_level];
+		sum_cur += (tbl_entry->current_ma[tbl_entry->vdd_level][req_level]
+			* tbl_entry->num_hw_blocks);
 	}
 
 	*total_cur = sum_cur;
-	d_mpr_h("%s: total_cur(%d)\n", __func__, sum_cur);
+	d_mpr_h("%s: total_cur(%lu)\n", __func__, *total_cur);
 	return rc;
 
 err_invalid_level:
@@ -617,13 +619,14 @@ static void mmrm_sw_dump_enabled_client_info(struct mmrm_sw_clk_mgr_info *sinfo)
 	for (c = 0; c < sinfo->tot_clk_clients; c++) {
 		tbl_entry = &sinfo->clk_client_tbl[c];
 		if (tbl_entry->clk_rate) {
-			d_mpr_e("%s: csid(0x%x) clk_rate(%zu) vdd_level(%zu) cur_ma(%zu)\n",
+			d_mpr_e("%s: csid(0x%x) clk_rate(%zu) vdd_level(%zu) cur_ma(%zu) num_hw_blocks(%zu)\n",
 				__func__,
 				tbl_entry->clk_src_id,
 				tbl_entry->clk_rate,
 				tbl_entry->vdd_level,
 				tbl_entry->current_ma[tbl_entry->vdd_level]
-									[peak_data->aggreg_level]);
+					[peak_data->aggreg_level] * tbl_entry->num_hw_blocks,
+				tbl_entry->num_hw_blocks);
 		}
 	}
 	if (peak_data) {
@@ -698,7 +701,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	u32 peak_cur = peak_data->aggreg_val;
 	u32 old_cur = 0, new_cur = 0;
 
-	int delta_cur;
+	int delta_cur = 0;
 
 	/* check the req level and adjust according to tbl entries */
 	rc = mmrm_sw_check_req_level(sinfo, tbl_entry->clk_src_id, req_level, &adj_level);
@@ -706,24 +709,38 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 		goto err_invalid_level;
 	}
 
+	/* calculate new cur val as per adj_val */
+	if (clk_val)
+		new_cur = tbl_entry->current_ma[req_level][adj_level] * num_hw_blocks;
+
+
+	/* calculate old cur */
+	if (tbl_entry->clk_rate) {
+		//old_cur = tbl_entry->current_ma[tbl_entry->vdd_level][adj_level];
+		old_cur = tbl_entry->current_ma[tbl_entry->vdd_level]
+			[peak_data->aggreg_level] * tbl_entry->num_hw_blocks;
+	}
+
+	/* 1. adj_level increase: recalculated peak_cur other clients + new_cur
+	 * 2. adj_level decrease: recalculated peak_cur other clients + new_cur
+	 * 3. clk_val increase: aggreg_val + (new_cur - old_cur)
+	 * 4. clk_val decrease: aggreg_val + (new_cur - old_cur)
+	 * 5. clk_val 0: aggreg_val - old_cur
+	 */
+
 	/* recalculate aggregated current with adj level */
 	if (adj_level != peak_data->aggreg_level) {
-		rc = mmrm_sw_calculate_total_current(sinfo, adj_level, &peak_cur);
+		rc = mmrm_sw_calculate_total_current(sinfo, adj_level, &peak_cur, tbl_entry);
 		if (rc) {
 			goto err_invalid_level;
 		}
+		peak_cur += new_cur;
+	} else {
+		delta_cur = (signed int)new_cur - old_cur;
 	}
 
-	/* calculate delta cur */
-	if (tbl_entry->clk_rate) {
-		old_cur = tbl_entry->current_ma[tbl_entry->vdd_level][adj_level];
-	}
-
-	if (clk_val) {
-		new_cur = tbl_entry->current_ma[req_level][adj_level] * num_hw_blocks;
-	}
-
-	delta_cur = (signed)new_cur - old_cur;
+	d_mpr_h("%s: csid (0x%x) peak_cur(%zu) new_cur(%zu) old_cur(%zu) delta_cur(%d)\n",
+		__func__, tbl_entry->clk_src_id, peak_cur, new_cur, old_cur, delta_cur);
 
 	/* negative value, update peak data */
 	if ((signed)peak_cur + delta_cur <= 0) {
@@ -753,6 +770,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 			goto err_peak_overshoot;
 		}
 	}
+
 	/* update peak data */
 	peak_data->aggreg_val = peak_cur + delta_cur;
 	peak_data->aggreg_level = adj_level;
@@ -848,7 +866,8 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	 */
 	req_reserve = client_data->flags & MMRM_CLIENT_DATA_FLAG_RESERVE_ONLY;
 	if (tbl_entry->clk_rate == clk_val &&
-				tbl_entry->num_hw_blocks == client_data->num_hw_blocks) {
+		tbl_entry->num_hw_blocks == client_data->num_hw_blocks) {
+
 		d_mpr_h("%s: csid(0x%x) same as previous clk rate %llu\n",
 			__func__, tbl_entry->clk_src_id, clk_val);
 
