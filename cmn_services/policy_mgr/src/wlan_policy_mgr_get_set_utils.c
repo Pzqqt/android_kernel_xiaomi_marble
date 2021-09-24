@@ -3439,6 +3439,72 @@ bool policy_mgr_is_p2p_p2p_conc_supported(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+/**
+ * policy_mgr_is_third_conn_sta_p2p_p2p_valid: This API checks the firmware
+ * capability and allows STA + P2P + P2P combination. It can be in SCC/MCC/DBS
+ * @psoc: psoc pointer
+ * @new_conn_mode: third connection mode
+ *
+ * Return: true if support else false
+ */
+static bool policy_mgr_is_third_conn_sta_p2p_p2p_valid(
+					struct wlan_objmgr_psoc *psoc,
+					enum policy_mgr_con_mode new_conn_mode)
+{
+	int num_sta, num_go, num_cli;
+
+	num_sta = policy_mgr_mode_specific_connection_count(psoc,
+							    PM_STA_MODE,
+							    NULL);
+
+	num_go = policy_mgr_mode_specific_connection_count(psoc,
+							   PM_P2P_GO_MODE,
+							   NULL);
+
+	num_cli = policy_mgr_mode_specific_connection_count(psoc,
+							    PM_P2P_CLIENT_MODE,
+							    NULL);
+
+	if (num_sta + num_go + num_cli != 2)
+		return true;
+
+	/* If STA + P2P + another STA comes up then return true
+	 * as this API is only for two port P2P + single STA combo
+	 * checks
+	 */
+	if (num_sta == 1 && new_conn_mode == PM_STA_MODE)
+		return true;
+
+	if ((((PM_STA_MODE == pm_conc_connection_list[0].mode &&
+	       PM_P2P_GO_MODE == pm_conc_connection_list[1].mode) ||
+	      (PM_P2P_GO_MODE == pm_conc_connection_list[0].mode &&
+	       PM_STA_MODE == pm_conc_connection_list[1].mode))
+	      ||
+	      (PM_P2P_GO_MODE == pm_conc_connection_list[0].mode &&
+	       PM_P2P_GO_MODE == pm_conc_connection_list[1].mode)
+	      ||
+	      ((PM_STA_MODE == pm_conc_connection_list[0].mode &&
+		PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode) ||
+	       (PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode &&
+		PM_STA_MODE == pm_conc_connection_list[1].mode))
+	      ||
+	      (PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode &&
+	       PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode)
+	      ||
+	      ((PM_P2P_GO_MODE == pm_conc_connection_list[0].mode &&
+		PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode) ||
+	       (PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode &&
+		PM_P2P_GO_MODE == pm_conc_connection_list[1].mode))) &&
+	      num_sta <= 1) {
+		if ((new_conn_mode == PM_STA_MODE ||
+		     new_conn_mode == PM_P2P_CLIENT_MODE ||
+		     new_conn_mode == PM_P2P_GO_MODE) &&
+		    !policy_mgr_is_p2p_p2p_conc_supported(psoc))
+			return false;
+	}
+
+	return true;
+}
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint32_t ch_freq,
@@ -3581,6 +3647,12 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 	if (!policy_mgr_allow_wapi_concurrency(pm_ctx)) {
 		policy_mgr_rl_debug("Don't allow new conn when wapi security conn existing");
+		return status;
+	}
+
+	/* Allow sta+p2p+p2p only if firmware supports the capablity */
+	if (!policy_mgr_is_third_conn_sta_p2p_p2p_valid(psoc, mode)) {
+		policy_mgr_err("Don't allow third connection as GO or GC or STA with old fw");
 		return status;
 	}
 
