@@ -164,6 +164,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{PRIORITY,                       "PRIORITY"                   },
 	{ENC_IP_CR,                      "ENC_IP_CR"                  },
 	{DPB_LIST,                       "DPB_LIST"                   },
+	{ALL_INTRA,                      "ALL_INTRA"                  },
 	{META_LTR_MARK_USE,              "META_LTR_MARK_USE"          },
 	{META_DPB_MISR,                  "META_DPB_MISR"              },
 	{META_OPB_MISR,                  "META_OPB_MISR"              },
