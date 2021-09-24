@@ -2361,7 +2361,8 @@ cm_roam_scan_offload_fill_rso_configs(struct wlan_objmgr_psoc *psoc,
 	if (command == ROAM_SCAN_OFFLOAD_STOP) {
 		if (reason == REASON_ROAM_STOP_ALL ||
 		    reason == REASON_DISCONNECTED ||
-		    reason == REASON_ROAM_SYNCH_FAILED) {
+		    reason == REASON_ROAM_SYNCH_FAILED ||
+		    reason == REASON_ROAM_SET_PRIMARY) {
 			mode = WMI_ROAM_SCAN_MODE_NONE;
 		} else {
 			if (wlan_is_roam_offload_enabled(mlme_obj->cfg.lfr))
