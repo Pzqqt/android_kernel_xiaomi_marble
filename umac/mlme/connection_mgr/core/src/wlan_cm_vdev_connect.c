@@ -1053,8 +1053,12 @@ QDF_STATUS cm_flush_join_req(struct scheduler_msg *msg)
 #ifdef WLAN_FEATURE_11BE_MLO
 static void cm_fill_ml_info(struct cm_vdev_join_req *join_req)
 {
-	join_req->partner_info = util_scan_get_ml_partner_info(join_req->entry);
-	join_req->assoc_link_id = join_req->entry->ml_info.self_link_id;
+	if (QDF_IS_STATUS_SUCCESS(
+		util_scan_get_ml_partner_info(join_req->entry,
+					      &join_req->partner_info))) {
+		join_req->assoc_link_id = join_req->entry->ml_info.self_link_id;
+		mlme_debug("Assoc link ID:%d", join_req->assoc_link_id);
+	}
 }
 #else
 static void cm_fill_ml_info(struct cm_vdev_join_req *join_req)
