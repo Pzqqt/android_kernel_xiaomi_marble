@@ -1302,8 +1302,12 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 	struct hdd_ll_stats *stats = NULL;
 	size_t stat_size = 0;
 
-	if (!(priv->request_bitmap & results->paramId))
+	qdf_spin_lock(&priv->ll_stats_lock);
+
+	if (!(priv->request_bitmap & results->paramId)) {
+		qdf_spin_unlock(&priv->ll_stats_lock);
 		return;
+	}
 
 	if (results->paramId & WMI_LINK_STATS_RADIO) {
 		struct wifi_radio_stats *rs_results, *stat_result;
@@ -1439,14 +1443,18 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 
 	if (!priv->request_bitmap) {
 exit:
+		qdf_spin_unlock(&priv->ll_stats_lock);
+
 		/* Thread which invokes this function has allocated memory in
 		 * WMA for radio stats, that memory should be freed from the
 		 * same thread to avoid any race conditions between two threads
 		 */
 		sme_radio_tx_mem_free();
 		osif_request_complete(request);
+		return;
 	}
 
+	qdf_spin_unlock(&priv->ll_stats_lock);
 }
 
 static void hdd_debugfs_process_ll_stats(struct hdd_adapter *adapter,
@@ -1544,10 +1552,7 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 		if (results->rspId == DEBUGFS_LLSTATS_REQID) {
 			hdd_debugfs_process_ll_stats(adapter, results, request);
 		 } else {
-			qdf_spin_lock(&priv->ll_stats_lock);
-			if (priv->request_bitmap)
-				hdd_process_ll_stats(results, request);
-			qdf_spin_unlock(&priv->ll_stats_lock);
+			hdd_process_ll_stats(results, request);
 		}
 
 		osif_request_put(request);
