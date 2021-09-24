@@ -668,12 +668,12 @@ policy_mgr_dbs_update_mac0(struct policy_mgr_freq_range *mac_freq,
 	/*
 	 * Fill 2.4 ghz freq only for MAC Phy 0
 	 */
+	mac_freq->low_2ghz_freq = QDF_MAX(mac_cap->reg_cap_ext.low_2ghz_chan,
+					  wlan_reg_min_24ghz_chan_freq());
 	mac_freq->high_2ghz_freq = mac_cap->reg_cap_ext.high_2ghz_chan ?
 				   QDF_MIN(mac_cap->reg_cap_ext.high_2ghz_chan,
 					   wlan_reg_max_24ghz_chan_freq()) :
 				   wlan_reg_max_24ghz_chan_freq();
-	mac_freq->low_2ghz_freq = QDF_MAX(mac_cap->reg_cap_ext.low_2ghz_chan,
-					  wlan_reg_min_24ghz_chan_freq());
 
 	/*
 	 * Filling high 5 ghz low and high here as they will be later used while
@@ -681,8 +681,8 @@ policy_mgr_dbs_update_mac0(struct policy_mgr_freq_range *mac_freq,
 	 * present then it is intersected with mac 1 ranges and maximum of both
 	 * is considered as viable range.
 	 */
-	mac_freq->high_5ghz_freq = mac_cap->reg_cap_ext.high_5ghz_chan;
 	mac_freq->low_5ghz_freq = mac_cap->reg_cap_ext.low_5ghz_chan;
+	mac_freq->high_5ghz_freq = mac_cap->reg_cap_ext.high_5ghz_chan;
 }
 
 static void
@@ -735,21 +735,42 @@ policy_mgr_update_dbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	mac = &pm_ctx->hw_mode.freq_range_caps[MODE_DBS][phy_id];
 
 	/* mac can either be 0 or 1 */
-	if (!phy_id)
-		policy_mgr_dbs_update_mac0(mac, mac_cap);
-	else
+	if (phy_id)
 		policy_mgr_dbs_update_mac1(pm_ctx, mac, mac_cap);
+	else
+		policy_mgr_dbs_update_mac0(mac, mac_cap);
 }
 
 static void
-policy_mgr_update_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
-				struct wlan_psoc_host_mac_phy_caps *mac_cap,
-				uint32_t phy_id)
+policy_mgr_fill_sbs_2ghz_freq(uint32_t phy_id,
+			      struct policy_mgr_freq_range *mac,
+			      struct wlan_psoc_host_mac_phy_caps *mac_phy_cap)
 {
-	struct policy_mgr_freq_range *mac, *mac0 = NULL;
-	qdf_freq_t max_5g_freq;
+	/*
+	 * Fill 2.4 ghz freq only for MAC Phy 0
+	 */
+	if (!phy_id) {
+		mac->low_2ghz_freq =
+				QDF_MAX(mac_phy_cap->reg_cap_ext.low_2ghz_chan,
+					wlan_reg_min_24ghz_chan_freq());
+		mac->high_2ghz_freq =
+				mac_phy_cap->reg_cap_ext.high_2ghz_chan ?
+				QDF_MIN(mac_phy_cap->reg_cap_ext.high_2ghz_chan,
+					wlan_reg_max_24ghz_chan_freq()) :
+				wlan_reg_max_24ghz_chan_freq();
+	}
 
-	mac = &pm_ctx->hw_mode.freq_range_caps[MODE_SBS][phy_id];
+}
+
+static void
+policy_mgr_fill_sbs_5ghz_freq(uint32_t phy_id,
+			      struct policy_mgr_freq_range *mac,
+			      struct wlan_psoc_host_mac_phy_caps *mac_cap,
+			      struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	qdf_freq_t max_5g_freq;
+	struct policy_mgr_freq_range *mac0 = NULL;
+
 	max_5g_freq = wlan_reg_max_6ghz_chan_freq() ?
 		      wlan_reg_max_6ghz_chan_freq() :
 		      wlan_reg_max_5ghz_chan_freq();
@@ -804,20 +825,19 @@ policy_mgr_update_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
 			}
 		}
 	}
+}
 
-	/*
-	 * Fill 2.4 ghz freq only for MAC Phy 0
-	 */
-	if (!phy_id) {
-		mac->low_2ghz_freq =
-				QDF_MAX(mac_cap->reg_cap_ext.low_2ghz_chan,
-					wlan_reg_min_24ghz_chan_freq());
-		mac->high_2ghz_freq =
-				    mac_cap->reg_cap_ext.high_2ghz_chan ?
-				    QDF_MIN(mac_cap->reg_cap_ext.high_2ghz_chan,
-					    wlan_reg_max_24ghz_chan_freq()) :
-				    wlan_reg_max_24ghz_chan_freq();
-	}
+static void
+policy_mgr_update_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				struct wlan_psoc_host_mac_phy_caps *mac_cap,
+				uint32_t phy_id)
+{
+	struct policy_mgr_freq_range *mac;
+
+	mac = &pm_ctx->hw_mode.freq_range_caps[MODE_SBS][phy_id];
+
+	policy_mgr_fill_sbs_5ghz_freq(phy_id, mac, mac_cap, pm_ctx);
+	policy_mgr_fill_sbs_2ghz_freq(phy_id, mac, mac_cap);
 }
 
 static void
@@ -916,6 +936,51 @@ policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+static void
+policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
+				   enum policy_mgr_mode hw_mode)
+{
+	uint32_t i;
+
+	for (i = 0; i < MAX_MAC; i++)
+		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
+			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE: mode %d: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					    hw_mode, i,
+					    freq_range[i].low_2ghz_freq,
+					    freq_range[i].high_2ghz_freq,
+					    freq_range[i].low_5ghz_freq,
+					    freq_range[i].high_5ghz_freq);
+}
+
+static void
+policy_mgr_dump_curr_freq_range(struct policy_mgr_freq_range *freq_range)
+{
+	uint32_t i;
+
+	for (i = 0; i < MAX_MAC; i++)
+		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
+			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					    i, freq_range[i].low_2ghz_freq,
+					    freq_range[i].high_2ghz_freq,
+					    freq_range[i].low_5ghz_freq,
+					    freq_range[i].high_5ghz_freq);
+}
+
+static void
+policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	uint32_t i;
+	struct policy_mgr_freq_range *freq_range;
+
+	for (i = MODE_SMM; i < MODE_HW_MAX; i++) {
+		freq_range = pm_ctx->hw_mode.freq_range_caps[i];
+		policy_mgr_dump_freq_range_per_mac(freq_range, i);
+	}
+
+	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
+	policy_mgr_dump_curr_freq_range(freq_range);
+}
+
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 					  struct target_psoc_info *tgt_hdl)
 {
@@ -1003,16 +1068,8 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 			mac1_ss_bw_info, i, tmp->hw_mode_id, dbs_mode,
 			sbs_mode);
 	}
-	for (i = MODE_SMM; i < MODE_HW_MAX; i++) {
-		for (j = 0; j < MAX_MAC; j++) {
-			policy_mgr_debug("Mode: %d Mac: %d low_2g %d high_2g %d low_5g %d high_5g %d",
-			  i, j,
-			  pm_ctx->hw_mode.freq_range_caps[i][j].low_2ghz_freq,
-			  pm_ctx->hw_mode.freq_range_caps[i][j].high_2ghz_freq,
-			  pm_ctx->hw_mode.freq_range_caps[i][j].low_5ghz_freq,
-			  pm_ctx->hw_mode.freq_range_caps[i][j].high_5ghz_freq);
-		}
-	}
+	policy_mgr_dump_freq_range(pm_ctx);
+
 	return QDF_STATUS_SUCCESS;
 }
 
