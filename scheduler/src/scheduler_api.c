@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,7 +63,7 @@ static inline void scheduler_watchdog_notify(struct scheduler_ctx *sched)
 	sched_fatal("Callback %s (type 0x%x) exceeded its allotted time of %ds",
 		    sched->watchdog_callback ? symbol : "<null>",
 		    sched->watchdog_msg_type,
-		    SCHEDULER_WATCHDOG_TIMEOUT / 1000);
+		    sched->timeout / 1000);
 }
 
 static void scheduler_watchdog_timeout(void *arg)
@@ -83,7 +83,7 @@ static void scheduler_watchdog_timeout(void *arg)
 	if (qdf_atomic_test_bit(MC_SHUTDOWN_EVENT_MASK, &sched->sch_event_flag))
 		return;
 
-	QDF_DEBUG_PANIC("Going down for Scheduler Watchdog Bite!");
+	SCHED_DEBUG_PANIC("Going down for Scheduler Watchdog Bite!");
 }
 
 QDF_STATUS scheduler_enable(void)
