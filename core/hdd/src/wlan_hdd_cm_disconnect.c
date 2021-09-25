@@ -253,15 +253,26 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 			   struct net_device *dev, u16 reason)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
+	int ret;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
 	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
+
+	if (hdd_ctx->is_wiphy_suspended) {
+		hdd_info_rl("wiphy is suspended retry disconnect");
+		return -EAGAIN;
+	}
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_DISCONNECT,
