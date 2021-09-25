@@ -6275,3 +6275,60 @@ bool reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev)
 	return pdev_priv_obj->is_reg_noaction_on_afc_pwr_evt;
 }
 #endif
+
+/**
+ * struct bw_wireless_modes_pair - structure containing bandwidth and wireless
+ * modes corresponding to the bandwidth
+ * @ch_width: channel width
+ * @wireless_modes: wireless modes bitmap corresponding to @ch_width. This
+ * bitmap is a combination of enum values HOST_REGDMN_MODE
+ */
+struct bw_wireless_modes_pair {
+	enum phy_ch_width ch_width;
+	uint64_t wireless_modes;
+};
+
+/* Mapping of bandwidth to wireless modes */
+static const struct bw_wireless_modes_pair bw_wireless_modes_pair_map[] = {
+#ifdef WLAN_FEATURE_11BE
+	{CH_WIDTH_320MHZ, WIRELESS_320_MODES},
+#endif
+	{CH_WIDTH_80P80MHZ, WIRELESS_80P80_MODES},
+	{CH_WIDTH_160MHZ, WIRELESS_160_MODES},
+	{CH_WIDTH_80MHZ, WIRELESS_80_MODES},
+	{CH_WIDTH_40MHZ, WIRELESS_40_MODES},
+	{CH_WIDTH_20MHZ, WIRELESS_20_MODES},
+	{CH_WIDTH_10MHZ, WIRELESS_10_MODES},
+	{CH_WIDTH_5MHZ, WIRELESS_5_MODES},
+};
+
+QDF_STATUS reg_is_chwidth_supported(struct wlan_objmgr_pdev *pdev,
+				    enum phy_ch_width ch_width,
+				    bool *is_supported)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint64_t wireless_modes;
+	uint8_t num_bws, idx;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*is_supported = false;
+
+	wireless_modes = pdev_priv_obj->wireless_modes;
+	num_bws = QDF_ARRAY_SIZE(bw_wireless_modes_pair_map);
+
+	for (idx = 0; idx < num_bws; ++idx) {
+		if (bw_wireless_modes_pair_map[idx].ch_width == ch_width) {
+			*is_supported = !!(wireless_modes &
+					   bw_wireless_modes_pair_map[idx].wireless_modes);
+			break;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}

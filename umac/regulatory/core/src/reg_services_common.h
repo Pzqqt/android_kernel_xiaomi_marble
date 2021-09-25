@@ -1810,4 +1810,17 @@ bool reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev);
 void reg_dmn_set_afc_req_id(struct wlan_afc_host_partial_request *afc_req,
 			    uint64_t req_id);
 #endif
+
+/**
+ * reg_is_chwidth_supported() - Check if given channel width is supported
+ * on a given pdev
+ * @pdev: pdev pointer
+ * @ch_width: channel width.
+ * @is_supported: whether the channel width is supported
+ *
+ * Return QDF_STATUS_SUCCESS of operation
+ */
+QDF_STATUS reg_is_chwidth_supported(struct wlan_objmgr_pdev *pdev,
+				    enum phy_ch_width ch_width,
+				    bool *is_supported);
 #endif
