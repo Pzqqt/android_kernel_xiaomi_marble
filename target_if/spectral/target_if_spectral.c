@@ -2008,10 +2008,64 @@ target_if_spectral_get_macaddr(void *arg, char *addr)
 }
 
 /**
+ * target_if_init_spectral_param_min_max_be() - Initialize Spectral parameter
+ * min and max values for beryllium chipsets
+ *
+ * @spectral: Spectral LMAC object
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_init_spectral_param_min_max_be(struct target_if_spectral *spectral)
+{
+	struct spectral_param_min_max *param_min_max;
+	enum phy_ch_width op_bw;
+	QDF_STATUS status;
+
+	param_min_max = &spectral->param_min_max;
+	param_min_max->fft_size_min = SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3_BE;
+
+	for (op_bw = CH_WIDTH_20MHZ; op_bw < CH_WIDTH_MAX; op_bw++) {
+		bool is_supported;
+
+		status = wlan_reg_is_chwidth_supported(spectral->pdev_obj,
+						       op_bw, &is_supported);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			spectral_err("Unable to check if ch_width(%d) is supported",
+				     op_bw);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (!is_supported) {
+			param_min_max->fft_size_max[op_bw] = INVALID_FFT_SIZE;
+			continue;
+		}
+
+		switch (op_bw) {
+		case CH_WIDTH_20MHZ:
+			param_min_max->fft_size_max[op_bw] =
+				SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_BE_20MHZ;
+			break;
+
+		case CH_WIDTH_40MHZ:
+			param_min_max->fft_size_max[op_bw] =
+				SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_BE_40MHZ;
+			break;
+
+		default:
+			param_min_max->fft_size_max[op_bw] =
+				SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_BE;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * target_if_init_spectral_param_min_max() - Initialize Spectral parameter
  * min and max values
  *
- * @param_min_max: Pointer to Spectral parameter min and max structure
+ * @spectral: Spectral LMAC object
  * @gen: Spectral HW generation
  * @target_type: Target type
  *
@@ -2021,9 +2075,20 @@ target_if_spectral_get_macaddr(void *arg, char *addr)
  */
 static QDF_STATUS
 target_if_init_spectral_param_min_max(
-				struct spectral_param_min_max *param_min_max,
+				struct target_if_spectral *spectral,
 				enum spectral_gen gen, uint32_t target_type)
 {
+	struct spectral_param_min_max *param_min_max;
+
+	if (!spectral) {
+		spectral_err("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (is_spectral_arch_beryllium(target_type))
+		return target_if_init_spectral_param_min_max_be(spectral);
+
+	param_min_max = &spectral->param_min_max;
 	switch (gen) {
 	case SPECTRAL_GEN3:
 		param_min_max->fft_size_min = SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3;
@@ -3510,7 +3575,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	}
 
 	status = target_if_init_spectral_param_min_max(
-					&spectral->param_min_max,
+					spectral,
 					spectral->spectral_gen, target_type);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		spectral_err("Failed to initialize parameter min max values");
