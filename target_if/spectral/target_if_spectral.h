@@ -936,6 +936,8 @@ struct vdev_spectral_enable_params;
  * @wmi_service_enabled: API to check whether a given WMI service is enabled
  * @extract_pdev_spectral_session_chan_info: Extract Spectral scan session
  * channel information
+ * @extract_pdev_spectral_session_detector_info: Extract Spectral scan session
+ * detector information
  */
 struct spectral_wmi_ops {
 	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
@@ -965,6 +967,10 @@ struct spectral_wmi_ops {
 	QDF_STATUS (*extract_pdev_spectral_session_chan_info)(
 			wmi_unified_t wmi_handle, void *event,
 			struct spectral_session_chan_info *chan_info);
+	QDF_STATUS (*extract_pdev_spectral_session_detector_info)(
+		wmi_unified_t wmi_handle, void *event,
+		struct spectral_session_det_info *det_info,
+		uint8_t det_info_idx);
 };
 
 /**
@@ -2869,6 +2875,18 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * spectral_is_session_info_expected_from_target() - Check if spectral scan
+ * session is expected from target
+ * @pdev: pdev pointer
+ * @is_session_info_expected: Pointer to caller variable
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS
+spectral_is_session_info_expected_from_target(struct wlan_objmgr_pdev *pdev,
+					      bool *is_session_info_expected);
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)

@@ -5596,8 +5596,8 @@ target_if_spectral_populate_session_report_info(
 }
 
 /**
- * target_if_spectral_populate_session_detector_info() - Populate per-session
- * detector level information.
+ * target_if_spectral_populate_session_det_host_info() - Populate per-session
+ * detector level information that is known to the Host
  *
  * @spectral: Pointer to Spectral object
  * @smode: Spectral scan mode
@@ -5605,7 +5605,7 @@ target_if_spectral_populate_session_report_info(
  * Return: Success/Failure
  */
 static QDF_STATUS
-target_if_spectral_populate_session_detector_info(
+target_if_spectral_populate_session_det_host_info(
 				struct target_if_spectral *spectral,
 				enum spectral_scan_mode smode)
 {
@@ -5714,7 +5714,7 @@ target_if_spectral_populate_session_report_info(
 }
 
 static QDF_STATUS
-target_if_spectral_populate_session_detector_info(
+target_if_spectral_populate_session_det_host_info(
 				struct target_if_spectral *spectral,
 				enum spectral_scan_mode smode)
 {
@@ -5722,15 +5722,7 @@ target_if_spectral_populate_session_detector_info(
 }
 #endif /* OPTIMIZED_SAMP_MESSAGE */
 
-/**
- * spectral_is_session_info_expected_from_target() - Check if spectral scan
- * session is expected from target
- * @pdev: pdev pointer
- * @is_session_info_expected: Pointer to caller variable
- *
- * Return: QDF_STATUS of operation
- */
-static QDF_STATUS
+QDF_STATUS
 spectral_is_session_info_expected_from_target(struct wlan_objmgr_pdev *pdev,
 					      bool *is_session_info_expected)
 {
@@ -5995,7 +5987,7 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		ret = target_if_spectral_populate_session_detector_info(
+		ret = target_if_spectral_populate_session_det_host_info(
 					spectral, smode);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			qdf_spin_unlock(&spectral->spectral_lock);
@@ -6930,6 +6922,43 @@ target_if_extract_pdev_spectral_session_chan_info(
 	return psoc_spectral->wmi_ops.extract_pdev_spectral_session_chan_info(
 			wmi_handle, evt_buf, chan_info);
 }
+
+/**
+ * target_if_extract_pdev_spectral_session_detector_info() - Wrapper
+ * function to extract detector information for a spectral scan session
+ * @psoc: Pointer to psoc object
+ * @evt_buf: Event buffer
+ * @det_info: Spectral session detector information data structure to be filled
+ * by this API
+ * @det_info_idx: index in the array of spectral scan detector info TLVs
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_extract_pdev_spectral_session_detector_info(
+			struct wlan_objmgr_psoc *psoc, void *evt_buf,
+			struct spectral_session_det_info *det_info,
+			uint8_t det_info_idx)
+{
+	wmi_unified_t wmi_handle;
+	struct target_if_psoc_spectral *psoc_spectral;
+
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_handle) {
+		spectral_err("WMI handle is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_spectral = get_target_if_spectral_handle_from_psoc(psoc);
+	if (!psoc_spectral) {
+		spectral_err("spectral object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return psoc_spectral->wmi_ops.
+			extract_pdev_spectral_session_detector_info(
+				wmi_handle, evt_buf, det_info, det_info_idx);
+}
 #else
 /**
  * target_if_spectral_wmi_unified_register_event_handler() - Wrapper function to
@@ -7140,7 +7169,72 @@ target_if_extract_pdev_spectral_session_chan_info(
 	return wmi_extract_pdev_spectral_session_chan_info(
 			wmi_handle, evt_buf, chan_info);
 }
+
+/**
+ * target_if_extract_pdev_spectral_session_detector_info() - Wrapper
+ * function to extract detector information for a spectral scan session
+ * @psoc: Pointer to psoc object
+ * @evt_buf: Event buffer
+ * @det_info: Spectral session detector information data structure to be filled
+ * by this API
+ * @det_info_idx: index in the array of spectral scan detector info TLVs
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_extract_pdev_spectral_session_detector_info(
+			struct wlan_objmgr_psoc *psoc, void *evt_buf,
+			struct spectral_session_det_info *det_info,
+			uint8_t det_info_idx)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_handle) {
+		spectral_err("WMI handle is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return wmi_extract_pdev_spectral_session_detector_info(
+				wmi_handle, evt_buf, det_info, det_info_idx);
+}
 #endif
+
+/**
+ * target_if_update_det_info_in_spectral_session() - Update detector
+ * information in spectral scan session
+ * @spectral: Spectral LMAC object
+ * @det_info: Pointer to spectral session detector information
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_update_det_info_in_spectral_session(
+	struct target_if_spectral *spectral,
+	const struct spectral_session_det_info *det_info)
+{
+	struct per_session_det_map *det_map;
+	struct per_session_dest_det_info *dest_det_info;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	qdf_assert_always(det_info->det_id < MAX_DETECTORS_PER_PDEV);
+
+	qdf_spin_lock_bh(&spectral->session_det_map_lock);
+
+	det_map = &spectral->det_map[det_info->det_id];
+	dest_det_info = &det_map->dest_det_info[0];
+
+	dest_det_info->start_freq = det_info->start_freq;
+	dest_det_info->end_freq = det_info->end_freq;
+
+	qdf_spin_unlock_bh(&spectral->session_det_map_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * target_if_update_chan_info_in_spectral_session() - Update channel information
@@ -7293,6 +7387,7 @@ target_if_spectral_fw_param_event_handler(ol_scn_t scn, uint8_t *data_buf,
 
 	if (is_session_info_expected) {
 		struct spectral_session_chan_info chan_info;
+		uint8_t det_info_idx = 0;
 
 		status = target_if_extract_pdev_spectral_session_chan_info(
 				psoc, data_buf, &chan_info);
@@ -7308,7 +7403,7 @@ target_if_spectral_fw_param_event_handler(ol_scn_t scn, uint8_t *data_buf,
 			goto release_pdev_ref;
 		}
 
-		/* FFT bins depend upon chan info, so update them */
+		/* FFT bins info depends upon sscan_bw, update it */
 		status = target_if_populate_fft_bins_info(spectral,
 							  event_params.smode);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -7320,11 +7415,33 @@ target_if_spectral_fw_param_event_handler(ol_scn_t scn, uint8_t *data_buf,
 		 * per-session det info that depends on sscan_bw needs to be
 		 * updated here
 		 */
-		status = target_if_spectral_populate_session_detector_info(
+		status = target_if_spectral_populate_session_det_host_info(
 					spectral, event_params.smode);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			spectral_err("Failed to populate per-session det info");
 			goto release_pdev_ref;
+		}
+
+		for (; det_info_idx < event_params.num_det_info;
+		     ++det_info_idx) {
+			struct spectral_session_det_info det_info;
+
+			status =
+			  target_if_extract_pdev_spectral_session_detector_info
+				(psoc, data_buf, &det_info, det_info_idx);
+
+			if (QDF_IS_STATUS_ERROR(status)) {
+				spectral_err("Unable to extract spectral session detector info for %u",
+					     det_info_idx);
+				goto release_pdev_ref;
+			}
+
+			status = target_if_update_det_info_in_spectral_session(
+					spectral, &det_info);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				spectral_err("Unable to update detector info");
+				goto release_pdev_ref;
+			}
 		}
 	}
 

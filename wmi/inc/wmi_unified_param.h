@@ -2939,11 +2939,13 @@ struct spectral_fft_bin_markers_160_165mhz {
  * @pdev_id: Pdev id
  * @smode: Spectral scan mode
  * @num_fft_bin_index: Number of TLVs with FFT bin start and end indices
+ * @num_det_info: Number of detector info TLVs
  */
 struct spectral_startscan_resp_params {
 	uint32_t pdev_id;
 	enum spectral_scan_mode smode;
 	uint8_t num_fft_bin_index;
+	uint8_t num_det_info;
 };
 
 /**
@@ -2980,6 +2982,18 @@ struct spectral_session_chan_info {
 	qdf_freq_t sscan_cfreq2;
 	enum phy_ch_width sscan_bw;
 	uint16_t sscan_puncture_20mhz_bitmap;
+};
+
+/**
+ * struct spectral_session_det_info - Detector info for a spectral scan session
+ * @det_id: detector ID
+ * @start_freq: start frequency (in MHz) of this detector
+ * @end_freq: end frequency (in MHz) of this detector
+ */
+struct spectral_session_det_info {
+	uint8_t det_id;
+	qdf_freq_t start_freq;
+	qdf_freq_t end_freq;
 };
 #endif
 

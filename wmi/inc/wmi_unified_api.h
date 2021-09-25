@@ -2222,6 +2222,22 @@ QDF_STATUS wmi_extract_pdev_sscan_fft_bin_index(
 QDF_STATUS wmi_extract_pdev_spectral_session_chan_info(
 			wmi_unified_t wmi_handle, void *event,
 			struct spectral_session_chan_info *chan_info);
+
+/**
+ * wmi_extract_pdev_spectral_session_detector_info() - Extract detector
+ * information for a spectral scan session
+ * @wmi_handle: handle to WMI.
+ * @evt_buf: Event buffer
+ * @det_info: Spectral session detector information data structure to be filled
+ * by this API
+ * @det_info_idx: index in the array of spectral scan detector info TLVs
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS wmi_extract_pdev_spectral_session_detector_info(
+		wmi_unified_t wmi_handle, void *event,
+		struct spectral_session_det_info *det_info,
+		uint8_t det_info_idx);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 #if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
