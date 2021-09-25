@@ -894,14 +894,14 @@ static bool init_deinit_regdmn_160mhz_support(
 		struct wlan_psoc_host_hal_reg_capabilities_ext *hal_cap)
 {
 	return ((hal_cap->wireless_modes &
-		WMI_HOST_REGDMN_MODE_11AC_VHT160) != 0);
+		HOST_REGDMN_MODE_11AC_VHT160) != 0);
 }
 
 static bool init_deinit_regdmn_80p80mhz_support(
 		struct wlan_psoc_host_hal_reg_capabilities_ext *hal_cap)
 {
 	return ((hal_cap->wireless_modes &
-			WMI_HOST_REGDMN_MODE_11AC_VHT80_80) != 0);
+			HOST_REGDMN_MODE_11AC_VHT80_80) != 0);
 }
 
 static bool init_deinit_vht_160mhz_is_supported(uint32_t vhtcap)

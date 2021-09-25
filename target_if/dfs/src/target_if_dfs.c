@@ -285,7 +285,7 @@ static QDF_STATUS target_if_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if (reg_cap_ptr[pdev_id].wireless_modes &
-			WMI_HOST_REGDMN_MODE_11A)
+			HOST_REGDMN_MODE_11A)
 		*is_5ghz = true;
 	else
 		*is_5ghz = false;

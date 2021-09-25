@@ -10002,7 +10002,7 @@ static QDF_STATUS extract_service_ready_tlv(wmi_unified_t wmi_handle,
 }
 
 /* convert_wireless_modes_tlv() - Convert REGDMN_MODE values sent by target
- *	 to host internal WMI_HOST_REGDMN_MODE values.
+ *	 to host internal HOST_REGDMN_MODE values.
  *	 REGULATORY TODO : REGDMN_MODE_11AC_VHT*_2G values are not used by the
  *	 host currently. Add this in the future if required.
  *	 11AX (Phase II) : 11ax related values are not currently
@@ -10020,73 +10020,73 @@ static inline uint32_t convert_wireless_modes_tlv(uint32_t target_wireless_mode)
 	wmi_debug("Target wireless mode: 0x%x", target_wireless_mode);
 
 	if (target_wireless_mode & REGDMN_MODE_11A)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11A;
+		wireless_modes |= HOST_REGDMN_MODE_11A;
 
 	if (target_wireless_mode & REGDMN_MODE_TURBO)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_TURBO;
+		wireless_modes |= HOST_REGDMN_MODE_TURBO;
 
 	if (target_wireless_mode & REGDMN_MODE_11B)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11B;
+		wireless_modes |= HOST_REGDMN_MODE_11B;
 
 	if (target_wireless_mode & REGDMN_MODE_PUREG)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_PUREG;
+		wireless_modes |= HOST_REGDMN_MODE_PUREG;
 
 	if (target_wireless_mode & REGDMN_MODE_11G)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11G;
+		wireless_modes |= HOST_REGDMN_MODE_11G;
 
 	if (target_wireless_mode & REGDMN_MODE_108G)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_108G;
+		wireless_modes |= HOST_REGDMN_MODE_108G;
 
 	if (target_wireless_mode & REGDMN_MODE_108A)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_108A;
+		wireless_modes |= HOST_REGDMN_MODE_108A;
 
 	if (target_wireless_mode & REGDMN_MODE_11AC_VHT20_2G)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT20_2G;
+		wireless_modes |= HOST_REGDMN_MODE_11AC_VHT20_2G;
 
 	if (target_wireless_mode & REGDMN_MODE_XR)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_XR;
+		wireless_modes |= HOST_REGDMN_MODE_XR;
 
 	if (target_wireless_mode & REGDMN_MODE_11A_HALF_RATE)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11A_HALF_RATE;
+		wireless_modes |= HOST_REGDMN_MODE_11A_HALF_RATE;
 
 	if (target_wireless_mode & REGDMN_MODE_11A_QUARTER_RATE)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11A_QUARTER_RATE;
+		wireless_modes |= HOST_REGDMN_MODE_11A_QUARTER_RATE;
 
 	if (target_wireless_mode & REGDMN_MODE_11NG_HT20)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT20;
+		wireless_modes |= HOST_REGDMN_MODE_11NG_HT20;
 
 	if (target_wireless_mode & REGDMN_MODE_11NA_HT20)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT20;
+		wireless_modes |= HOST_REGDMN_MODE_11NA_HT20;
 
 	if (target_wireless_mode & REGDMN_MODE_11NG_HT40PLUS)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT40PLUS;
+		wireless_modes |= HOST_REGDMN_MODE_11NG_HT40PLUS;
 
 	if (target_wireless_mode & REGDMN_MODE_11NG_HT40MINUS)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT40MINUS;
+		wireless_modes |= HOST_REGDMN_MODE_11NG_HT40MINUS;
 
 	if (target_wireless_mode & REGDMN_MODE_11NA_HT40PLUS)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT40PLUS;
+		wireless_modes |= HOST_REGDMN_MODE_11NA_HT40PLUS;
 
 	if (target_wireless_mode & REGDMN_MODE_11NA_HT40MINUS)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT40MINUS;
+		wireless_modes |= HOST_REGDMN_MODE_11NA_HT40MINUS;
 
 	if (target_wireless_mode & REGDMN_MODE_11AC_VHT20)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT20;
+		wireless_modes |= HOST_REGDMN_MODE_11AC_VHT20;
 
 	if (target_wireless_mode & REGDMN_MODE_11AC_VHT40PLUS)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT40PLUS;
+		wireless_modes |= HOST_REGDMN_MODE_11AC_VHT40PLUS;
 
 	if (target_wireless_mode & REGDMN_MODE_11AC_VHT40MINUS)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT40MINUS;
+		wireless_modes |= HOST_REGDMN_MODE_11AC_VHT40MINUS;
 
 	if (target_wireless_mode & REGDMN_MODE_11AC_VHT80)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT80;
+		wireless_modes |= HOST_REGDMN_MODE_11AC_VHT80;
 
 	if (target_wireless_mode & REGDMN_MODE_11AC_VHT160)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT160;
+		wireless_modes |= HOST_REGDMN_MODE_11AC_VHT160;
 
 	if (target_wireless_mode & REGDMN_MODE_11AC_VHT80_80)
-		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT80_80;
+		wireless_modes |= HOST_REGDMN_MODE_11AC_VHT80_80;
 
 	return wireless_modes;
 }
@@ -10164,31 +10164,31 @@ static void convert_11be_flags_to_modes_ext(uint32_t target_wireless_modes_ext,
 					    uint64_t *wireless_modes_ext)
 {
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT20)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT20;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEG_EHT20;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT40PLUS)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT40PLUS;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEG_EHT40PLUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT40MINUS)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT40MINUS;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEG_EHT40MINUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT20)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT20;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEA_EHT20;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT40PLUS)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT40PLUS;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEA_EHT40PLUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT40MINUS)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT40MINUS;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEA_EHT40MINUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT80)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT80;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEA_EHT80;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT160)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT160;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEA_EHT160;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT320)
-		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT320;
+		*wireless_modes_ext |= HOST_REGDMN_MODE_11BEA_EHT320;
 }
 #else
 static void convert_11be_flags_to_modes_ext(uint32_t target_wireless_modes_ext,
@@ -10205,31 +10205,31 @@ static inline uint64_t convert_wireless_modes_ext_tlv(
 	wmi_debug("Target wireless mode: 0x%x", target_wireless_modes_ext);
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXG_HE20)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXG_HE20;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXG_HE20;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXG_HE40PLUS)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXG_HE40PLUS;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXG_HE40PLUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXG_HE40MINUS)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXG_HE40MINUS;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXG_HE40MINUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE20)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE20;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXA_HE20;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE40PLUS)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE40PLUS;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXA_HE40PLUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE40MINUS)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE40MINUS;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXA_HE40MINUS;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE80)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE80;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXA_HE80;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE160)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE160;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXA_HE160;
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE80_80)
-		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE80_80;
+		wireless_modes_ext |= HOST_REGDMN_MODE_11AXA_HE80_80;
 
 	convert_11be_flags_to_modes_ext(target_wireless_modes_ext,
 					&wireless_modes_ext);
