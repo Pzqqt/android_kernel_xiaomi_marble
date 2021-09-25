@@ -6950,6 +6950,35 @@ static QDF_STATUS send_simulation_test_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+#define WLAN_PHY_CH_WIDTH_320MHZ CH_WIDTH_320MHZ
+#else
+#define WLAN_PHY_CH_WIDTH_320MHZ CH_WIDTH_INVALID
+#endif
+enum phy_ch_width wmi_map_ch_width(A_UINT32 wmi_width)
+{
+	switch (wmi_width) {
+	case WMI_CHAN_WIDTH_20:
+		return CH_WIDTH_20MHZ;
+	case WMI_CHAN_WIDTH_40:
+		return CH_WIDTH_40MHZ;
+	case WMI_CHAN_WIDTH_80:
+		return CH_WIDTH_80MHZ;
+	case WMI_CHAN_WIDTH_160:
+		return CH_WIDTH_160MHZ;
+	case WMI_CHAN_WIDTH_80P80:
+		return CH_WIDTH_80P80MHZ;
+	case WMI_CHAN_WIDTH_5:
+		return CH_WIDTH_5MHZ;
+	case WMI_CHAN_WIDTH_10:
+		return CH_WIDTH_10MHZ;
+	case WMI_CHAN_WIDTH_320:
+		return WLAN_PHY_CH_WIDTH_320MHZ;
+	default:
+		return CH_WIDTH_INVALID;
+	}
+}
+
 /**
  * send_vdev_spectral_configure_cmd_tlv() - send VDEV spectral configure
  * command to fw
@@ -7182,6 +7211,61 @@ extract_pdev_sscan_fft_bin_index_tlv(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef SPECTRAL_BERYLLIUM
+/**
+ * extract_pdev_spectral_session_chan_info_tlv() - Extract channel information
+ * for a spectral scan session
+ * @wmi_handle: handle to WMI.
+ * @event: Event buffer
+ * @chan_info: Spectral session channel information data structure to be filled
+ * by this API
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+extract_pdev_spectral_session_chan_info_tlv(
+			wmi_unified_t wmi_handle, void *event,
+			struct spectral_session_chan_info *chan_info)
+{
+	WMI_PDEV_SSCAN_FW_PARAM_EVENTID_param_tlvs *param_buf = event;
+	wmi_pdev_sscan_chan_info *chan_info_tlv;
+
+	if (!param_buf) {
+		wmi_err("param_buf is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!chan_info) {
+		wmi_err("chan_info is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	chan_info_tlv = param_buf->chan_info;
+	if (!chan_info_tlv) {
+		wmi_err("chan_info tlv is not present in the event");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	chan_info->operating_pri20_freq =
+			(qdf_freq_t)chan_info_tlv->operating_pri20_freq;
+	chan_info->operating_cfreq1 =
+			(qdf_freq_t)chan_info_tlv->operating_cfreq1;
+	chan_info->operating_cfreq2 =
+			(qdf_freq_t)chan_info_tlv->operating_cfreq2;
+	chan_info->operating_bw = wmi_map_ch_width(chan_info_tlv->operating_bw);
+	chan_info->operating_puncture_20mhz_bitmap =
+		chan_info_tlv->operating_puncture_20mhz_bitmap;
+
+	chan_info->sscan_cfreq1 = (qdf_freq_t)chan_info_tlv->sscan_cfreq1;
+	chan_info->sscan_cfreq2 = (qdf_freq_t)chan_info_tlv->sscan_cfreq2;
+	chan_info->sscan_bw = wmi_map_ch_width(chan_info_tlv->sscan_bw);
+	chan_info->sscan_puncture_20mhz_bitmap =
+		chan_info_tlv->sscan_puncture_20mhz_bitmap;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* SPECTRAL_BERYLLIUM */
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 #ifdef FEATURE_WPSS_THERMAL_MITIGATION
@@ -16217,6 +16301,10 @@ struct wmi_ops tlv_ops =  {
 				extract_pdev_sscan_fw_cmd_fixed_param_tlv,
 	.extract_pdev_sscan_fft_bin_index =
 				extract_pdev_sscan_fft_bin_index_tlv,
+#ifdef SPECTRAL_BERYLLIUM
+	.extract_pdev_spectral_session_chan_info =
+				extract_pdev_spectral_session_chan_info_tlv,
+#endif /* SPECTRAL_BERYLLIUM */
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 	.send_thermal_mitigation_param_cmd =
 		send_thermal_mitigation_param_cmd_tlv,
@@ -17325,6 +17413,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_mgmt_rx_reo_supported] =
 			WMI_SERVICE_MGMT_RX_REO_SUPPORTED;
 	wmi_service[wmi_service_phy_dma_byte_swap_support] =
+			WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_spectral_session_info_support] =
 			WMI_SERVICE_UNAVAILABLE;
 }
 

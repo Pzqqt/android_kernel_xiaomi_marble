@@ -934,6 +934,8 @@ struct vdev_spectral_enable_params;
  * @wmi_unified_register_event_handler: Register WMI event handler
  * @wmi_unified_unregister_event_handler: Unregister WMI event handler
  * @wmi_service_enabled: API to check whether a given WMI service is enabled
+ * @extract_pdev_spectral_session_chan_info: Extract Spectral scan session
+ * channel information
  */
 struct spectral_wmi_ops {
 	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
@@ -960,6 +962,9 @@ struct spectral_wmi_ops {
 				wmi_conv_event_id event_id);
 	bool (*wmi_service_enabled)(wmi_unified_t wmi_handle,
 				    uint32_t service_id);
+	QDF_STATUS (*extract_pdev_spectral_session_chan_info)(
+			wmi_unified_t wmi_handle, void *event,
+			struct spectral_session_chan_info *chan_info);
 };
 
 /**
@@ -1065,6 +1070,7 @@ struct per_session_det_map {
  * @sscan_bw: Normal/Agile Scan BW based on Spectral scan mode.
  * Valid values = enum phy_ch_width
  * @num_spans: Number of frequency spans
+ * @valid: Indicated whether report info is valid
  */
 struct per_session_report_info {
 	uint32_t pri20_freq;
@@ -1075,6 +1081,7 @@ struct per_session_report_info {
 	uint32_t sscan_cfreq2;
 	enum phy_ch_width sscan_bw;
 	uint8_t num_spans;
+	bool valid;
 };
 
 /**
@@ -2839,6 +2846,29 @@ QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
 	struct spectral_fft_bin_len_adj_swar *swar,
 	void *bin_pwr_data, size_t pwr_count);
 #endif /* BIG_ENDIAN_HOST */
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_populate_fft_bins_info() - Populate the start and end bin
+ * indices, on per-detector level.
+ * @spectral: Pointer to target_if spectral internal structure
+ * @smode: Spectral scan mode
+ *
+ * Populate the start and end bin indices, on per-detector level.
+ *
+ * Return: Success/Failure
+ */
+QDF_STATUS
+target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
+				 enum spectral_scan_mode smode);
+#else
+static inline QDF_STATUS
+target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
+				 enum spectral_scan_mode smode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)

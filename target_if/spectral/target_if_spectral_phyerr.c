@@ -1034,17 +1034,7 @@ target_if_populate_det_start_end_freqs(struct target_if_spectral *spectral,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * target_if_populate_fft_bins_info() - Populate the start and end bin
- * indices, on per-detector level.
- * @spectral: Pointer to target_if spectral internal structure
- * @smode: Spectral scan mode
- *
- * Populate the start and end bin indices, on per-detector level.
- *
- * Return: Success/Failure
- */
-static QDF_STATUS
+QDF_STATUS
 target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 				 enum spectral_scan_mode smode)
 {
