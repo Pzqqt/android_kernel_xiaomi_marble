@@ -1084,6 +1084,37 @@ struct sscan_detector_list {
 };
 
 /**
+ * struct spectral_supported_bws - Supported sscan bandwidths
+ * @bandwidths: bitmap of supported sscan bandwidths. Make sure to maintain this
+ * bitmap in the increasing order of bandwidths.
+ */
+struct spectral_supported_bws {
+	union {
+		struct {
+			uint32_t supports_sscan_bw_5:1,
+				 supports_sscan_bw_10:1,
+				 supports_sscan_bw_20:1,
+				 supports_sscan_bw_40:1,
+				 supports_sscan_bw_80:1,
+				 supports_sscan_bw_160:1,
+				 supports_sscan_bw_80_80:1,
+				 supports_sscan_bw_320:1,
+				 reserved:24;
+		};
+		uint32_t bandwidths;
+	};
+};
+
+/**
+ * get_supported_sscan_bw_pos() - Get the position of a given sscan_bw inside
+ * the supported sscan bandwidths bitmap
+ * @sscan_bw: Spectral scan bandwidth
+ *
+ * Return: bit position for a valid sscan bandwidth, else -1
+ */
+int get_supported_sscan_bw_pos(enum phy_ch_width sscan_bw);
+
+/**
  * struct target_if_spectral - main spectral structure
  * @pdev: Pointer to pdev
  * @spectral_ops: Target if internal Spectral low level operations table
@@ -1146,6 +1177,7 @@ struct sscan_detector_list {
  * @tsf64: Latest TSF Value
  * @param_info: Offload architecture Spectral parameter cache information
  * @ch_width: Indicates Channel Width 20/40/80/160 MHz for each Spectral mode
+ * @sscan_width_configured: Whether user has configured sscan bandwidth
  * @diag_stats: Diagnostic statistics
  * @is_160_format:  Indicates whether information provided by HW is in altered
  * format for 802.11ac 160/80+80 MHz support (QCA9984 onwards)
@@ -1186,6 +1218,8 @@ struct sscan_detector_list {
  * @session_det_map_lock: Lock to synchronize accesses to session detector map
  * @report_info: Per session info to be filled at report level in SAMP message
  * @session_report_info_lock: Lock to synchronize access to session report info
+ * @supported_bws: Supported sscan bandwidths for all sscan modes and
+ * operating widths
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -1274,6 +1308,7 @@ struct target_if_spectral {
 					param_info[SPECTRAL_SCAN_MODE_MAX];
 #endif
 	enum phy_ch_width ch_width[SPECTRAL_SCAN_MODE_MAX];
+	bool sscan_width_configured[SPECTRAL_SCAN_MODE_MAX];
 	struct spectral_diag_stats              diag_stats;
 	bool                                    is_160_format;
 	bool                                    is_lb_edge_extrabins_format;
@@ -1314,6 +1349,8 @@ struct target_if_spectral {
 	qdf_spinlock_t session_det_map_lock;
 	struct per_session_report_info report_info[SPECTRAL_SCAN_MODE_MAX];
 	qdf_spinlock_t session_report_info_lock;
+	struct spectral_supported_bws
+		supported_bws[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
 };
 
 /**

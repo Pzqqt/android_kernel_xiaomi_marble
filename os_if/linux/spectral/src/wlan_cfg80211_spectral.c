@@ -91,6 +91,8 @@ const struct nla_policy spectral_scan_policy[
 							.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_BUFFER_DEBUG] = {
 							.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH] = {
+							.type = NLA_U8},
 };
 
 const struct nla_policy spectral_scan_get_status_policy[
@@ -126,6 +128,7 @@ static void wlan_spectral_intit_config(struct spectral_config *config_req)
 	config_req->ss_chn_mask =        SPECTRAL_PHYERR_PARAM_NOVAL;
 	config_req->ss_frequency.cfreq1 = SPECTRAL_PHYERR_PARAM_NOVAL;
 	config_req->ss_frequency.cfreq2 = SPECTRAL_PHYERR_PARAM_NOVAL;
+	config_req->ss_bandwidth = SPECTRAL_PHYERR_PARAM_NOVAL;
 }
 
 /**
@@ -368,6 +371,10 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2])
 		config_req.ss_frequency.cfreq2 = nla_get_u32(tb
 		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2]);
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH])
+		config_req.ss_bandwidth = nla_get_u8(tb
+		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH]);
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_MODE]) {
 		status = convert_spectral_mode_nl_to_internal(nla_get_u32(tb
@@ -676,7 +683,10 @@ int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 			sconfig->ss_frequency.cfreq1) ||
 	    nla_put_u32(skb,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2,
-			sconfig->ss_frequency.cfreq2))
+			sconfig->ss_frequency.cfreq2) ||
+	    nla_put_u8(skb,
+		       QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH,
+		       sconfig->ss_bandwidth))
 
 		goto fail;
 

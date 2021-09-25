@@ -309,6 +309,7 @@ struct spectral_config_frequency {
 *                           span of interest or center frequency (in MHz) of
  *                          any WLAN channel in the secondary 80 MHz span of
  *                          interest.
+ * @ss_bandwidth: Spectral scan bandwidth
  */
 struct spectral_config {
 	uint16_t ss_fft_period;
@@ -336,6 +337,7 @@ struct spectral_config {
 	int8_t ss_nf_pwr[AH_MAX_CHAINS * 2];
 	int32_t ss_nf_temp_data;
 	struct spectral_config_frequency ss_frequency;
+	uint16_t ss_bandwidth;
 };
 
 /**
