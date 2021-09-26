@@ -853,7 +853,6 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 			       tDot11fIEExtSuppRates *pDot11f,
 			       struct pe_session *pe_session)
 {
-	QDF_STATUS nsir_status;
 	qdf_size_t n_rates = 0;
 	uint8_t rates[SIR_MAC_MAX_NUMBER_OF_RATES];
 
@@ -874,15 +873,9 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 			pe_err("null pe_session");
 			return QDF_STATUS_E_INVAL;
 		}
-		n_rates = SIR_MAC_MAX_NUMBER_OF_RATES;
-		nsir_status = mlme_get_ext_opr_rate(pe_session->vdev, rates,
-						    &n_rates);
-		if (QDF_IS_STATUS_ERROR(nsir_status)) {
-			n_rates = 0;
-			pe_err("Failed to retrieve nItem from CFG status: %d",
-			       (nsir_status));
-			return nsir_status;
-		}
+
+		n_rates = mlme_get_ext_opr_rate(pe_session->vdev, rates,
+						sizeof(rates));
 	}
 
 	if (0 != n_rates) {

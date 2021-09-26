@@ -4980,50 +4980,6 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 		os_rate->flags |= RATE_INFO_FLAGS_SHORT_GI;
 }
 
-/**
- * hdd_get_current_mcs_set() - Get current MCS rate set from connection info
- * @adapter: Pointer to STA adapter
- * @buf: pointer to buffer for holding the output mcs rate set
- * @len: length of the buffer
- *
- * Return: number of elements in mcs rate set, 0 for failure.
- */
-static qdf_size_t
-hdd_get_current_mcs_set(struct hdd_adapter *adapter, uint8_t *buf,
-			qdf_size_t len)
-{
-	struct hdd_station_ctx *hdd_sta_ctx;
-	qdf_size_t ret = 0;
-	int i;
-	uint32_t *mcs_set;
-	uint8_t *dst_rate = buf;
-
-	if (!adapter || !buf || !len)
-		return 0;
-
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_sta_ctx) {
-		hdd_err("Invalid sta ctx");
-		return 0;
-	}
-
-	if (!hdd_sta_ctx->conn_info.conn_flag.ht_present) {
-		hdd_err("No HT cap");
-		return 0;
-	}
-
-	mcs_set = (uint32_t *)hdd_sta_ctx->conn_info.ht_caps.mcs.rx_mask;
-	for (i = 0; i < VALID_MAX_MCS_INDEX && ret < len; i++) {
-		if (!QDF_GET_BITS(*mcs_set, i, 1))
-			continue;
-
-		*dst_rate++ = i;
-		ret++;
-	}
-
-	return ret;
-}
-
 bool hdd_report_max_rate(struct hdd_adapter *adapter,
 			 mac_handle_t mac_handle,
 			 struct rate_info *rate,
@@ -5038,10 +4994,10 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	bool is_vht20_mcs9 = false;
 	uint16_t he_mcs_12_13_map = 0;
 	uint16_t current_rate = 0;
-	qdf_size_t or_leng = CSR_DOT11_SUPPORTED_RATES_MAX;
+	qdf_size_t or_leng;
 	uint8_t operational_rates[CSR_DOT11_SUPPORTED_RATES_MAX];
 	uint8_t extended_rates[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
-	qdf_size_t er_leng = CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX;
+	qdf_size_t er_leng;
 	uint8_t mcs_rates[SIZE_OF_BASIC_MCS_SET];
 	qdf_size_t mcs_len;
 	struct index_data_rate_type *supported_mcs_rate;
@@ -5091,14 +5047,8 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	}
 
 	/* Get Basic Rate Set */
-	if (0 != ucfg_mlme_get_opr_rate(vdev, operational_rates,
-					&or_leng)) {
-		hdd_err("cfg get returned failure");
-		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
-		/*To keep GUI happy */
-		return false;
-	}
-
+	or_leng = ucfg_mlme_get_opr_rate(vdev, operational_rates,
+					 sizeof(operational_rates));
 	for (i = 0; i < or_leng; i++) {
 		for (j = 0;
 			 j < ARRAY_SIZE(supported_data_rate); j++) {
@@ -5116,14 +5066,8 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	}
 
 	/* Get Extended Rate Set */
-	if (0 != ucfg_mlme_get_ext_opr_rate(vdev, extended_rates,
-					    &er_leng)) {
-		hdd_err("cfg get returned failure");
-		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
-		/*To keep GUI happy */
-		return false;
-	}
-
+	er_leng = ucfg_mlme_get_ext_opr_rate(vdev, extended_rates,
+					     sizeof(extended_rates));
 	he_mcs_12_13_map = wlan_vdev_mlme_get_he_mcs_12_13_map(vdev);
 
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
@@ -5208,9 +5152,9 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 			max_mcs_idx = (max_mcs_idx > mcs_index) ?
 				max_mcs_idx : mcs_index;
 		} else {
-			mcs_len =
-				hdd_get_current_mcs_set(adapter, mcs_rates,
-							SIZE_OF_BASIC_MCS_SET);
+			mcs_len = ucfg_mlme_get_mcs_rate(adapter->vdev,
+							 mcs_rates,
+							 sizeof(mcs_rates));
 			if (!mcs_len) {
 				hdd_err("Failed to get current mcs rate set");
 				/*To keep GUI happy */

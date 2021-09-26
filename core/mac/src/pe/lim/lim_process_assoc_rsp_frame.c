@@ -773,6 +773,69 @@ static void lim_update_ml_partner_info(struct pe_session *session_entry,
 #endif
 
 /**
+ * hdd_cm_update_mcs_rate_set() - Update MCS rate set from HT capability
+ * @vdev: Pointer to vdev boject
+ * @ht_cap: pointer to parsed HT capablity
+ *
+ * Return: None.
+ */
+static inline void
+lim_update_mcs_rate_set(struct wlan_objmgr_vdev *vdev, tDot11fIEHTCaps *ht_cap)
+{
+	qdf_size_t len = 0;
+	int i;
+	uint32_t *mcs_set;
+	uint8_t dst_rate[VALID_MAX_MCS_INDEX] = {0};
+
+	mcs_set = (uint32_t *)ht_cap->supportedMCSSet;
+	for (i = 0; i < VALID_MAX_MCS_INDEX; i++) {
+		if (!QDF_GET_BITS(*mcs_set, i, 1))
+			continue;
+
+		dst_rate[len++] = i;
+	}
+
+	mlme_set_mcs_rate(vdev, dst_rate, len);
+}
+
+/**
+ * hdd_cm_update_rate_set() - Update rate set according to assoc resp
+ * @psoc: Pointer to psoc object
+ * @vdev_id: vdev id
+ * @assoc_resp: pointer to parsed associate response
+ *
+ * Return: None.
+ */
+static void
+lim_update_vdev_rate_set(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			 tpSirAssocRsp assoc_resp)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_err("vdev not found for id: %d", vdev_id);
+		return;
+	}
+
+	if (assoc_resp->suppRatesPresent && assoc_resp->supportedRates.numRates)
+		mlme_set_opr_rate(vdev, assoc_resp->supportedRates.rate,
+				  assoc_resp->supportedRates.numRates);
+
+	if (assoc_resp->extendedRatesPresent &&
+	    assoc_resp->extendedRates.numRates)
+		mlme_set_ext_opr_rate(vdev,
+				      assoc_resp->extendedRates.rate,
+				      assoc_resp->extendedRates.numRates);
+
+	if (assoc_resp->HTCaps.present)
+		lim_update_mcs_rate_set(vdev, &assoc_resp->HTCaps);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+}
+
+/**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
  * @rx_packet_info    - A pointer to Rx packet info structure
@@ -1136,6 +1199,9 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		lim_objmgr_update_vdev_nss(mac_ctx->psoc,
 					   session_entry->smeSessionId,
 					   session_entry->nss);
+		lim_update_vdev_rate_set(mac_ctx->psoc,
+					 session_entry->smeSessionId,
+					 assoc_rsp);
 
 		if ((session_entry->limMlmState ==
 		     eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
@@ -1233,6 +1299,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	lim_objmgr_update_vdev_nss(mac_ctx->psoc,
 				   session_entry->smeSessionId,
 				   session_entry->nss);
+	lim_update_vdev_rate_set(mac_ctx->psoc, session_entry->smeSessionId,
+				 assoc_rsp);
 
 	/*
 	 * Extract the AP capabilities from the beacon that

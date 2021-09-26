@@ -4897,26 +4897,32 @@ wlan_mlme_get_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool *val)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
-			     qdf_size_t *len)
+qdf_size_t mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+			     qdf_size_t len)
 {
 	struct mlme_legacy_priv *mlme_priv;
 
 	if (!vdev || !dst || !len) {
 		mlme_legacy_err("invalid params");
-		return QDF_STATUS_E_INVAL;
+		return 0;
 	}
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
 		mlme_legacy_err("vdev legacy private object is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return 0;
 	}
 
-	*len = mlme_priv->opr_rate_set.len;
-	qdf_mem_copy(dst, mlme_priv->opr_rate_set.data, *len);
+	if (len < mlme_priv->opr_rate_set.len) {
+		mlme_legacy_err("Invalid length %zd (<%zd)", len,
+				mlme_priv->opr_rate_set.len);
+		return 0;
+	}
 
-	return QDF_STATUS_SUCCESS;
+	qdf_mem_copy(dst, mlme_priv->opr_rate_set.data,
+		     mlme_priv->opr_rate_set.len);
+
+	return mlme_priv->opr_rate_set.len;
 }
 
 QDF_STATUS mlme_set_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
@@ -4947,26 +4953,32 @@ QDF_STATUS mlme_set_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
-			     qdf_size_t *len)
+qdf_size_t mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+				 qdf_size_t len)
 {
 	struct mlme_legacy_priv *mlme_priv;
 
 	if (!vdev || !dst || !len) {
 		mlme_legacy_err("invalid params");
-		return QDF_STATUS_E_INVAL;
+		return 0;
 	}
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
 		mlme_legacy_err("vdev legacy private object is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return 0;
 	}
 
-	*len = mlme_priv->ext_opr_rate_set.len;
-	qdf_mem_copy(dst, mlme_priv->ext_opr_rate_set.data, *len);
+	if (len < mlme_priv->ext_opr_rate_set.len) {
+		mlme_legacy_err("Invalid length %zd (<%zd)", len,
+				mlme_priv->ext_opr_rate_set.len);
+		return 0;
+	}
 
-	return QDF_STATUS_SUCCESS;
+	qdf_mem_copy(dst, mlme_priv->ext_opr_rate_set.data,
+		     mlme_priv->ext_opr_rate_set.len);
+
+	return mlme_priv->ext_opr_rate_set.len;
 }
 
 QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
@@ -4993,6 +5005,62 @@ QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 
 	mlme_priv->ext_opr_rate_set.len = len;
 	qdf_mem_copy(mlme_priv->ext_opr_rate_set.data, src, len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_size_t mlme_get_mcs_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+			     qdf_size_t len)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!vdev || !dst || !len) {
+		mlme_legacy_err("invalid params");
+		return 0;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return 0;
+	}
+
+	if (len < mlme_priv->mcs_rate_set.len) {
+		mlme_legacy_err("Invalid length %zd (<%zd)", len,
+				mlme_priv->mcs_rate_set.len);
+		return 0;
+	}
+
+	qdf_mem_copy(dst, mlme_priv->mcs_rate_set.data,
+		     mlme_priv->mcs_rate_set.len);
+
+	return mlme_priv->mcs_rate_set.len;
+}
+
+QDF_STATUS mlme_set_mcs_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
+			     qdf_size_t len)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!vdev || !src) {
+		mlme_legacy_err("invalid params");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (len > mlme_priv->mcs_rate_set.max_len) {
+		mlme_legacy_err("Invalid len %zd (>%zd)", len,
+				mlme_priv->mcs_rate_set.max_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_priv->mcs_rate_set.len = len;
+	qdf_mem_copy(mlme_priv->mcs_rate_set.data, src, len);
 
 	return QDF_STATUS_SUCCESS;
 }
