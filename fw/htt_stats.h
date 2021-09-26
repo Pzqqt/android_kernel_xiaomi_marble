@@ -1998,6 +1998,29 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 be_su_ndpa;      /* 11be EHT SU NDPA frame sent over the air */
+    A_UINT32 be_su_ndp;       /* 11be EHT NDP frame sent over the air */
+    A_UINT32 be_mu_mimo_ndpa; /* 11be EHT MU MIMO NDPA frame sent over the air */
+    A_UINT32 be_mu_mimo_ndp;  /* 11be EHT MU MIMO NDP frame sent over theT air */
+    /* 11be EHT MU BR-POLL frame for users 1 - 7 sent over the air */
+    A_UINT32 be_mu_mimo_brpoll[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS - 1];
+    A_UINT32 be_basic_trigger;       /* 11be EHT MU Basic Trigger frame sent over the air */
+    A_UINT32 be_bsr_trigger;         /* 11be EHT MU BSRP Trigger frame sent over the air */
+    A_UINT32 be_mu_bar_trigger;      /* 11be EHT MU BAR Trigger frame sent over the air */
+    A_UINT32 be_mu_rts_trigger;      /* 11be EHT MU RTS Trigger frame sent over the air */
+    A_UINT32 be_ulmumimo_trigger;    /* 11be EHT MU UL-MUMIMO Trigger frame sent over the air */
+    A_UINT32 be_su_ndpa_queued;      /* 11be EHT SU NDPA frame queued to the HW */
+    A_UINT32 be_su_ndp_queued;       /* 11be EHT SU NDP frame queued to the HW */
+    A_UINT32 be_mu_mimo_ndpa_queued; /* 11be EHT MU MIMO NDPA frame queued to the HW */
+    A_UINT32 be_mu_mimo_ndp_queued;  /* 11be EHT MU MIMO NDP frame queued to the HW */
+    /* 11be EHT MU BR-POLL frame for users 1 - 7 queued to the HW */
+    A_UINT32 be_mu_mimo_brpoll_queued[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS - 1];
+    /* 11be EHT UL-MUMIMO Trigger frame for users 0 - 7 successfully sent over the air */
+    A_UINT32 be_ul_mumimo_trigger[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+} htt_tx_selfgen_be_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
     /* 11AX HE OFDMA NDPA frame queued to the HW */
     A_UINT32 ax_ofdma_ndpa_queued[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
     /* 11AX HE OFDMA NDPA frame sent over the air */
@@ -2121,6 +2144,31 @@ typedef struct {
     A_UINT32 ax_ul_mumimo_trigger_err[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_selfgen_ax_err_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 be_su_ndp_err;       /* 11BE EHT SU NDP frame completed with error(s) */
+    A_UINT32 be_su_ndpa_err;      /* 11BE EHT SU NDPA frame completed with error(s) */
+    A_UINT32 be_mu_mimo_ndpa_err; /* 11BE EHT MU MIMO NDPA frame completed with error(s) */
+    A_UINT32 be_mu_mimo_ndp_err;  /* 11BE EHT MU MIMO NDP frame completed with error(s) */
+    /* 11BE EHT MU BR-POLL frame for 1 - 7 users completed with error(s) */
+    A_UINT32 be_mu_mimo_brp_err[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS - 1];
+    A_UINT32 be_basic_trigger_err;    /* 11BE EHT MU Basic Trigger frame completed with error(s) */
+    A_UINT32 be_bsr_trigger_err;      /* 11BE EHT MU BSRP Trigger frame completed with error(s) */
+    A_UINT32 be_mu_bar_trigger_err;   /* 11BE EHT MU BAR Trigger frame completed with error(s) */
+    A_UINT32 be_mu_rts_trigger_err;   /* 11BE EHT MU RTS Trigger frame completed with error(s) */
+    A_UINT32 be_ulmumimo_trigger_err; /* 11BE EHT MU ULMUMIMO Trigger frame completed with error(s) */
+    /* Number of CBF(s) received when 11BE EHT MU MIMO BRPOLL frame completed with error(s) */
+    A_UINT32 be_mu_mimo_brp_err_num_cbf_received[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    A_UINT32 be_su_ndpa_flushed;      /* 11BE EHT SU NDPA frame flushed by HW */
+    A_UINT32 be_su_ndp_flushed;       /* 11BE EHT SU NDP frame flushed by HW */
+    A_UINT32 be_mu_mimo_ndpa_flushed; /* 11BE EHT MU MIMO NDPA frame flushed by HW */
+    A_UINT32 be_mu_mimo_ndp_flushed;  /* 11BE HT MU MIMO NDP frame flushed by HW */
+    /* 11BE EHT MU BR-POLL frame for users 1 - 7 flushed by HW */
+    A_UINT32 be_mu_mimo_brpoll_flushed[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS - 1];
+    /* 11BE EHT UL-MUMIMO Trigger frame for users 0 - 7 completed with error(s) */
+    A_UINT32 be_ul_mumimo_trigger_err[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+} htt_tx_selfgen_be_err_stats_tlv;
+
 /*
  * Scheduler completion status reason code.
  * (0) HTT_TXERR_NONE - No error (Success).
@@ -2204,6 +2252,38 @@ typedef struct {
     A_UINT32 ax_ulmumimo_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
 } htt_tx_selfgen_ax_sched_status_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* 11BE EHT SU NDPA scheduler completion status reason code */
+    A_UINT32 be_su_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE SU NDP scheduler completion status reason code */
+    A_UINT32 be_su_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE EHT SU NDP scheduler error code */
+    A_UINT32 be_su_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11BE EHT MU MIMO NDPA scheduler completion status reason code */
+    A_UINT32 be_mu_mimo_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE EHT MU MIMO NDP scheduler completion status reason code */
+    A_UINT32 be_mu_mimo_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE EHT MU MIMO NDP scheduler error code */
+    A_UINT32 be_mu_mimo_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11BE EHT MU MIMO MU BRPOLL scheduler completion status reason code */
+    A_UINT32 be_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE EHT MU MIMO MU BRPOLL scheduler error code */
+    A_UINT32 be_mu_brp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11BE EHT MU BAR scheduler completion status reason code */
+    A_UINT32 be_mu_bar_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE EHT MU BAR scheduler error code */
+    A_UINT32 be_mu_bar_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11BE EHT UL OFDMA Basic Trigger scheduler completion status reason code */
+    A_UINT32 be_basic_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE EHT UL OFDMA Basic Trigger scheduler error code */
+    A_UINT32 be_basic_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11BE EHT UL MUMIMO Basic Trigger scheduler completion status reason code */
+    A_UINT32 be_ulmumimo_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11BE EHT UL MUMIMO Basic Trigger scheduler error code */
+    A_UINT32 be_ulmumimo_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+} htt_tx_selfgen_be_sched_status_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SELFGEN_INFO
  * TLV_TAGS:
  *      - HTT_STATS_TX_SELFGEN_CMN_STATS_TAG
@@ -2211,6 +2291,11 @@ typedef struct {
  *      - HTT_STATS_TX_SELFGEN_AX_STATS_TAG
  *      - HTT_STATS_TX_SELFGEN_AC_ERR_STATS_TAG
  *      - HTT_STATS_TX_SELFGEN_AX_ERR_STATS_TAG
+ *      - HTT_STATS_TX_SELFGEN_AC_SCHED_STATUS_STATS_TAG
+ *      - HTT_STATS_TX_SELFGEN_AX_SCHED_STATUS_STATS_TAG
+ *      - HTT_STATS_TX_SELFGEN_BE_STATS_TAG
+ *      - HTT_STATS_TX_SELFGEN_BE_ERR_STATS_TAG
+ *      - HTT_STATS_TX_SELFGEN_BE_SCHED_STATUS_STATS_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -2224,6 +2309,9 @@ typedef struct {
     htt_tx_selfgen_ax_err_stats_tlv ax_err_tlv;
     htt_tx_selfgen_ac_sched_status_stats_tlv ac_sched_status_tlv;
     htt_tx_selfgen_ax_sched_status_stats_tlv ax_sched_status_tlv;
+    htt_tx_selfgen_be_stats_tlv be_tlv;
+    htt_tx_selfgen_be_err_stats_tlv be_err_tlv;
+    htt_tx_selfgen_be_sched_status_stats_tlv be_sched_status_tlv;
 } htt_tx_pdev_selfgen_stats_t;
 
 /* == TX MU STATS == */
