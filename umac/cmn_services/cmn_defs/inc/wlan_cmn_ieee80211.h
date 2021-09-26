@@ -192,6 +192,9 @@
 #define OUI_TYPE_BITS           24
 #define MAX_ADAPTIVE_11R_IE_LEN 8
 
+/* Minimum length of Non-Inheritance element (inclusive of the IE header) */
+#define MIN_NONINHERITANCEELEM_LEN 5
+
 /*
  * sae single pmk vendor specific IE details
  * Category     Data

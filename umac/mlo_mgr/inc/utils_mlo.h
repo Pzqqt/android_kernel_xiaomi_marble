@@ -25,24 +25,74 @@
 #include "wlan_mlo_mgr_public_structs.h"
 #include <wlan_cm_ucfg_api.h>
 #include <wlan_objmgr_vdev_obj.h>
+
 #ifdef WLAN_FEATURE_11BE_MLO
 
-#define FC0_IEEE_MGMT_FRM 0x10
-#define FC1_IEEE_MGMT_FRM 0x00
-
 /**
- * util_gen_link_assoc_rsp - Generate link association response
+ * util_gen_link_assoc_req() - Generate link specific assoc request
+ * @frame: Pointer to original association request. This should not contain the
+ * 802.11 header, and must start from the fixed fields in the association
+ * request. This is required due to some caller semantics built into the end to
+ * end design.
+ * @frame_len: Length of original association request
+ * @isreassoc: Whether this is a re-association request
+ * @link_addr: Secondary link's MAC address
+ * @link_frame: Generated secondary link specific association request. Note that
+ * this will start from the 802.11 header (unlike the original association
+ * request). This should be ignored in the case of failure.
+ * @link_frame_maxsize: Maximum size of generated secondary link specific
+ * association request
+ * @link_frame_len: Pointer to location where populated length of generated
+ * secondary link specific association request should be written. This should be
+ * ignored in the case of failure.
  *
- * @frame: association response frame ptr
- * @len: length of assoc rsp frame
- * @link_addr: link mac addr
- * @new_ie: Generated Link assoc rsp
+ * Generate a link specific logically equivalent association request for the
+ * secondary link from the original association request containing a Multi-Link
+ * element. This applies to both association and re-association requests.
+ * Currently, only two link MLO is supported.
  *
- * Return: true if vdev is a link vdev, false otherwise
+ * Return: QDF_STATUS_SUCCESS in the case of success, QDF_STATUS value giving
+ * the reason for error in the case of failure.
  */
 QDF_STATUS
-util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
-			struct qdf_mac_addr link_addr, uint8_t *new_ie);
+util_gen_link_assoc_req(uint8_t *frame, qdf_size_t frame_len, bool isreassoc,
+			struct qdf_mac_addr link_addr,
+			uint8_t *link_frame,
+			qdf_size_t link_frame_maxsize,
+			qdf_size_t *link_frame_len);
+
+/**
+ * util_gen_link_assoc_rsp() - Generate link specific assoc response
+ * @frame: Pointer to original association response. This should not contain the
+ * 802.11 header, and must start from the fixed fields in the association
+ * response. This is required due to some caller semantics built into the end to
+ * end design.
+ * @frame_len: Length of original association response
+ * @isreassoc: Whether this is a re-association response
+ * @link_addr: Secondary link's MAC address
+ * @link_frame: Generated secondary link specific association response. Note
+ * that this will start from the 802.11 header (unlike the original association
+ * response). This should be ignored in the case of failure.
+ * @link_frame_maxsize: Maximum size of generated secondary link specific
+ * association response
+ * @link_frame_len: Pointer to location where populated length of generated
+ * secondary link specific association response should be written. This should
+ * be ignored in the case of failure.
+ *
+ * Generate a link specific logically equivalent association response for the
+ * secondary link from the original association response containing a Multi-Link
+ * element. This applies to both association and re-association responses.
+ * Currently, only two link MLO is supported.
+ *
+ * Return: QDF_STATUS_SUCCESS in the case of success, QDF_STATUS value giving
+ * the reason for error in the case of failure.
+ */
+QDF_STATUS
+util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t frame_len, bool isreassoc,
+			struct qdf_mac_addr link_addr,
+			uint8_t *link_frame,
+			qdf_size_t link_frame_maxsize,
+			qdf_size_t *link_frame_len);
 
 /**
  * util_find_mlie - Find the first Multi-Link element or the start of the first
@@ -172,8 +222,21 @@ util_get_bvmlie_persta_partner_info(uint8_t *mlie, qdf_size_t mlielen,
 				    struct mlo_partner_info *partner_info);
 #else
 static inline QDF_STATUS
-util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
-			struct qdf_mac_addr link_addr, uint8_t *new_ie)
+util_gen_link_assoc_req(uint8_t *frame, qdf_size_t frame_len, bool isreassoc,
+			struct qdf_mac_addr link_addr,
+			uint8_t *link_frame,
+			qdf_size_t link_frame_maxsize,
+			qdf_size_t *link_frame_len)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t frame_len, bool isreassoc,
+			struct qdf_mac_addr link_addr,
+			uint8_t *link_frame,
+			qdf_size_t link_frame_maxsize,
+			qdf_size_t *link_frame_len)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
