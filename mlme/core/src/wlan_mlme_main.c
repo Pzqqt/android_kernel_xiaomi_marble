@@ -114,10 +114,16 @@ QDF_STATUS mlme_init_rate_config(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv->opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
+	mlme_priv->opr_rate_set.max_len =
+		QDF_MIN(CFG_OPERATIONAL_RATE_SET_LEN, CFG_STR_DATA_LEN);
 	mlme_priv->opr_rate_set.len = 0;
-	mlme_priv->ext_opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
+	mlme_priv->ext_opr_rate_set.max_len =
+		QDF_MIN(CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN,
+			CFG_STR_DATA_LEN);
 	mlme_priv->ext_opr_rate_set.len = 0;
+	mlme_priv->mcs_rate_set.max_len =
+		QDF_MIN(CFG_SUPPORTED_MCS_SET_LEN, CFG_STR_DATA_LEN);
+	mlme_priv->mcs_rate_set.len = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
