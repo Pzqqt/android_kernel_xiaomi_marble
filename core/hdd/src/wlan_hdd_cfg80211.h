@@ -622,6 +622,16 @@ enum hdd_chain_mode {
 void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw);
 
 /*
+ * hdd_get_sap_operating_band_by_adapter: Get current adapter operating channel
+ * for sap.
+ * @adapter: Pointer to adapter
+ *
+ * Return : Corresponding band for SAP operating channel
+ */
+
+uint8_t hdd_get_sap_operating_band_by_adapter(struct hdd_adapter *adapter);
+
+/*
  * hdd_get_sap_operating_band:  Get current operating channel
  * for sap.
  * @hdd_ctx: hdd context

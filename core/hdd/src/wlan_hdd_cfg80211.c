@@ -12430,6 +12430,34 @@ static enum sta_roam_policy_dfs_mode wlan_hdd_get_sta_roam_dfs_mode(
 }
 
 /*
+ * hdd_get_sap_operating_band_by_adapter:  Get current adapter operating band
+ * for sap.
+ * @adapter: Pointer to adapter
+ *
+ * Return : Corresponding band for SAP operating channel
+ */
+uint8_t hdd_get_sap_operating_band_by_adapter(struct hdd_adapter *adapter)
+{
+	uint32_t operating_chan_freq;
+	uint8_t sap_operating_band = 0;
+
+	if (adapter->device_mode != QDF_SAP_MODE &&
+	    adapter->device_mode != QDF_P2P_GO_MODE)
+		return BAND_UNKNOWN;
+
+	operating_chan_freq = adapter->session.ap.operating_chan_freq;
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(operating_chan_freq))
+		sap_operating_band = BAND_2G;
+	else if (WLAN_REG_IS_5GHZ_CH_FREQ(operating_chan_freq) ||
+		 WLAN_REG_IS_6GHZ_CHAN_FREQ(operating_chan_freq))
+		sap_operating_band = BAND_5G;
+	else
+		sap_operating_band = BAND_UNKNOWN;
+
+	return sap_operating_band;
+}
+
+/*
  * hdd_get_sap_operating_band:  Get current operating channel
  * for sap.
  * @hdd_ctx: hdd context
@@ -12439,8 +12467,7 @@ static enum sta_roam_policy_dfs_mode wlan_hdd_get_sta_roam_dfs_mode(
 uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter, *next_adapter = NULL;
-	uint32_t  operating_chan_freq;
-	uint8_t sap_operating_band = 0;
+	uint8_t operating_band = 0;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_GET_SAP_OPERATING_BAND;
 
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
@@ -12450,19 +12477,12 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 			continue;
 		}
 
-		operating_chan_freq = adapter->session.ap.operating_chan_freq;
-		if (WLAN_REG_IS_24GHZ_CH_FREQ(operating_chan_freq))
-			sap_operating_band = BAND_2G;
-		else if (WLAN_REG_IS_5GHZ_CH_FREQ(operating_chan_freq) ||
-			 WLAN_REG_IS_6GHZ_CHAN_FREQ(operating_chan_freq))
-			sap_operating_band = BAND_5G;
-		else
-			sap_operating_band = BAND_ALL;
+		operating_band = hdd_get_sap_operating_band_by_adapter(adapter);
 
 		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 
-	return sap_operating_band;
+	return operating_band;
 }
 
 const struct nla_policy

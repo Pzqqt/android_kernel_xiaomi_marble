@@ -1343,16 +1343,18 @@ QDF_STATUS hdd_get_nss(struct hdd_adapter *adapter, uint8_t *nss)
 
 /**
  * hdd_get_sap_tx_nss() - get the sap tx nss
- * @vdev: Pointer to vdev
+ * @adapter: Pointer to adapter
  * @hdd_ctx: Pointer to hdd context
+ * @vdev: Pointer to vdev
  * @tx_nss: pointer to tx_nss
  *
  * get the sap tx nss
  *
  * Return: None
  */
-static QDF_STATUS hdd_get_sap_tx_nss(struct wlan_objmgr_vdev *vdev,
+static QDF_STATUS hdd_get_sap_tx_nss(struct hdd_adapter *adapter,
 				     struct hdd_context *hdd_ctx,
+				     struct wlan_objmgr_vdev *vdev,
 				     uint8_t *tx_nss)
 {
 	struct wlan_mlme_nss_chains *dynamic_cfg;
@@ -1366,7 +1368,9 @@ static QDF_STATUS hdd_get_sap_tx_nss(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	operating_band = hdd_get_sap_operating_band(hdd_ctx);
+	operating_band = hdd_get_sap_operating_band_by_adapter(adapter);
+	if (operating_band == BAND_UNKNOWN)
+		return QDF_STATUS_E_INVAL;
 	sme_get_sap_vdev_type_nss(mac_handle, &vdev_nss, operating_band);
 	if (hdd_ctx->dynamic_nss_chains_support) {
 		dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
@@ -1451,7 +1455,7 @@ QDF_STATUS hdd_get_tx_nss(struct hdd_adapter *adapter, uint8_t *tx_nss)
 
 	if (adapter->device_mode == QDF_SAP_MODE ||
 	    adapter->device_mode == QDF_P2P_GO_MODE)
-		status = hdd_get_sap_tx_nss(vdev, hdd_ctx, tx_nss);
+		status = hdd_get_sap_tx_nss(adapter, hdd_ctx, vdev, tx_nss);
 	else
 		status = hdd_get_sta_tx_nss(adapter, hdd_ctx, vdev, tx_nss);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
@@ -1461,16 +1465,18 @@ QDF_STATUS hdd_get_tx_nss(struct hdd_adapter *adapter, uint8_t *tx_nss)
 
 /**
  * hdd_get_sap_rx_nss() - get the sap rx nss
- * @vdev: Pointer to vdev
+ * @adapter: Pointer to adapter
  * @hdd_ctx: Pointer to hdd context
+ * @vdev: Pointer to vdev
  * @rx_nss: pointer to rx_nss
  *
  * get the sap tx nss
  *
  * Return: None
  */
-static QDF_STATUS hdd_get_sap_rx_nss(struct wlan_objmgr_vdev *vdev,
+static QDF_STATUS hdd_get_sap_rx_nss(struct hdd_adapter *adapter,
 				     struct hdd_context *hdd_ctx,
+				     struct wlan_objmgr_vdev *vdev,
 				     uint8_t *rx_nss)
 {
 	struct wlan_mlme_nss_chains *dynamic_cfg;
@@ -1484,7 +1490,9 @@ static QDF_STATUS hdd_get_sap_rx_nss(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	operating_band = hdd_get_sap_operating_band(hdd_ctx);
+	operating_band = hdd_get_sap_operating_band_by_adapter(adapter);
+	if (operating_band == BAND_UNKNOWN)
+		return QDF_STATUS_E_INVAL;
 	sme_get_sap_vdev_type_nss(mac_handle, &vdev_nss, operating_band);
 	if (hdd_ctx->dynamic_nss_chains_support) {
 		dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
@@ -1569,7 +1577,7 @@ QDF_STATUS hdd_get_rx_nss(struct hdd_adapter *adapter, uint8_t *rx_nss)
 
 	if (adapter->device_mode == QDF_SAP_MODE ||
 	    adapter->device_mode == QDF_P2P_GO_MODE)
-		status = hdd_get_sap_rx_nss(vdev, hdd_ctx, rx_nss);
+		status = hdd_get_sap_rx_nss(adapter, hdd_ctx, vdev, rx_nss);
 	else
 		status = hdd_get_sta_rx_nss(adapter, hdd_ctx, vdev, rx_nss);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
