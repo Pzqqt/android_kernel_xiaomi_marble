@@ -650,6 +650,30 @@ enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 	return psoc_priv->cfg_param.pkt_capture_mode;
 }
 
+bool pkt_capture_is_tx_mgmt_enable(struct wlan_objmgr_pdev *pdev)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = pkt_capture_get_vdev();
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return false;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("vdev_priv is NULL");
+		return false;
+	}
+
+	if (!(vdev_priv->frame_filter.mgmt_tx_frame_filter &
+	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL))
+		return false;
+
+	return true;
+}
+
 QDF_STATUS
 pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 			       QDF_STATUS (*mon_cb)(void *, qdf_nbuf_t),

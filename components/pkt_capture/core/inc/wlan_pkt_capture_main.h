@@ -230,6 +230,14 @@ void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 				  struct wlan_objmgr_vdev *vdev);
 
+/**
+ * pkt_capture_is_tx_mgmt_enable - Check if tx mgmt frames enabled
+ * @pdev: pointer to pdev
+ *
+ * Return: bool
+ */
+bool pkt_capture_is_tx_mgmt_enable(struct wlan_objmgr_pdev *pdev);
+
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_get_pktcap_mode_v2 - Get packet capture mode
