@@ -469,6 +469,14 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 			goto exit;
 	}
 
+	if (capability->cap[cap_id].value == prev_value && cap_id == GOP_SIZE) {
+		/*
+		 * Ignore setting same GOP size value to firmware to avoid
+		 * unnecessary generation of IDR frame.
+		 */
+		goto exit;
+	}
+
 	/* add cap_id to firmware list always */
 	rc = msm_vidc_add_capid_to_list(inst, cap_id, FW_LIST);
 	if (rc)
