@@ -268,7 +268,8 @@ static QDF_STATUS sme_process_hw_mode_trans_ind(struct mac_context *mac,
 	policy_mgr_hw_mode_transition_cb(param->old_hw_mode_index,
 		param->new_hw_mode_index,
 		param->num_vdev_mac_entries,
-		param->vdev_mac_map, mac->psoc);
+		param->vdev_mac_map, param->num_freq_map, param->mac_freq_map,
+		mac->psoc);
 
 	return QDF_STATUS_SUCCESS;
 }

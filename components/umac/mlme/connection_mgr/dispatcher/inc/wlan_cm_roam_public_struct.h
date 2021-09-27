@@ -2147,6 +2147,11 @@ struct cm_roam_values_copy {
 #define MAX_PN_LEN 8
 #define MAX_KEY_LEN 32
 
+/* MAX_FREQ_RANGE_NUM shouldn't exceed as only in case od SBS there will be 3
+ * frequency ranges, For DBS, it will be 2. For SMM, it will be 1
+ */
+#define MAX_FREQ_RANGE_NUM 3
+
 /**
  * struct cm_ho_fail_ind - ho fail indication to CM
  * @vdev_id: vdev id
@@ -2170,6 +2175,18 @@ struct policy_mgr_vdev_mac_map {
 };
 
 /**
+ * struct policy_mgr_pdev_mac_freq_map - vdev id-mac id map
+ * @pdev_id: Pdev id, macros starting with WMI_PDEV_ID_
+ * @start_freq: Start Frequency in Mhz
+ * @end_freq: End Frequency in Mhz
+ */
+struct policy_mgr_pdev_mac_freq_map {
+	uint32_t pdev_id;
+	qdf_freq_t start_freq;
+	qdf_freq_t end_freq;
+};
+
+/**
  * struct cm_hw_mode_trans_ind - HW mode transition indication
  * @old_hw_mode_index: Index of old HW mode
  * @new_hw_mode_index: Index of new HW mode
@@ -2181,6 +2198,8 @@ struct cm_hw_mode_trans_ind {
 	uint32_t new_hw_mode_index;
 	uint32_t num_vdev_mac_entries;
 	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
+	uint32_t num_freq_map;
+	struct policy_mgr_pdev_mac_freq_map mac_freq_map[MAX_FREQ_RANGE_NUM];
 };
 
 /*

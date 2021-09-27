@@ -2463,6 +2463,8 @@ QDF_STATUS policy_mgr_check_conn_with_mode_and_vdev_id(
  * @new_hw_mode_index: New HW mode index
  * @num_vdev_mac_entries: Number of vdev-mac id mapping that follows
  * @vdev_mac_map: vdev-mac id map. This memory will be freed by the caller.
+ * @num_mac_freq: Number of pdev freq maping that follows
+ * @mac_freq_range: mac_freq_range mapping
  * So, make local copy if needed.
  *
  * Provides the old and new HW mode index set by the FW
@@ -2473,6 +2475,8 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 		uint32_t new_hw_mode_index,
 		uint32_t num_vdev_mac_entries,
 		struct policy_mgr_vdev_mac_map *vdev_mac_map,
+		uint32_t num_mac_freq,
+		struct policy_mgr_pdev_mac_freq_map *mac_freq_range,
 		struct wlan_objmgr_psoc *context);
 
 /**

@@ -3897,6 +3897,37 @@ void wma_process_pdev_hw_mode_trans_ind(void *handle,
 		 wma->old_hw_mode_index, wma->new_hw_mode_index);
 }
 
+static void
+wma_process_mac_freq_mapping(struct cm_hw_mode_trans_ind *hw_mode_trans_ind,
+		WMI_PDEV_HW_MODE_TRANSITION_EVENTID_param_tlvs *param_buf)
+{
+	uint32_t i, num_mac_freq;
+	wmi_pdev_band_to_mac *mac_freq;
+
+	mac_freq = param_buf->mac_freq_mapping;
+	num_mac_freq = param_buf->num_mac_freq_mapping;
+
+	if (!mac_freq) {
+		wma_debug("mac_freq Null");
+		return;
+	}
+
+	if (!num_mac_freq || num_mac_freq > MAX_FREQ_RANGE_NUM) {
+		wma_debug("num mac freq invalid %d", num_mac_freq);
+		return;
+	}
+
+	hw_mode_trans_ind->num_freq_map = num_mac_freq;
+	for (i = 0; i < num_mac_freq; i++) {
+		hw_mode_trans_ind->mac_freq_map[i].pdev_id =
+							mac_freq[i].pdev_id;
+		hw_mode_trans_ind->mac_freq_map[i].start_freq =
+							mac_freq[i].start_freq;
+		hw_mode_trans_ind->mac_freq_map[i].end_freq =
+							mac_freq[i].end_freq;
+	}
+}
+
 /**
  * wma_pdev_hw_mode_transition_evt_handler() - HW mode transition evt handler
  * @handle: WMI handle
@@ -3953,8 +3984,10 @@ static int wma_pdev_hw_mode_transition_evt_handler(void *handle,
 		qdf_mem_free(hw_mode_trans_ind);
 		return -EINVAL;
 	}
+
 	wma_process_pdev_hw_mode_trans_ind(wma, wmi_event, vdev_mac_entry,
 		hw_mode_trans_ind);
+	wma_process_mac_freq_mapping(hw_mode_trans_ind, param_buf);
 	/* Pass the message to PE */
 	wma_send_msg(wma, SIR_HAL_PDEV_HW_MODE_TRANS_IND,
 		     (void *) hw_mode_trans_ind, 0);
