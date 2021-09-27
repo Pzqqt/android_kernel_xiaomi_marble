@@ -7739,7 +7739,6 @@ QDF_STATUS
 sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 					tpSirMultiLink_IE mlo_ie_ptr)
 {
-	tDot11fIEmlo_ie *mlo_ie;
 	tDot11fIEsta_profile *sta_prof, *pStaProf;
 
 	if (!pr)
@@ -7749,10 +7748,6 @@ sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 		pe_err("MLO IE not present");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
-	mlo_ie = qdf_mem_malloc(sizeof(*mlo_ie));
-	if (!mlo_ie)
-		return QDF_STATUS_E_FAILURE;
 
 	qdf_mem_zero((uint8_t *)mlo_ie_ptr, sizeof(tSirMultiLink_IE));
 
