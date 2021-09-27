@@ -854,12 +854,136 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 		info->vdev_id, conn_index);
 }
 
+static bool
+policy_mgr_is_freq_range_5_6ghz(qdf_freq_t start_freq, qdf_freq_t end_freq)
+{
+	if ((wlan_reg_is_5ghz_ch_freq(start_freq) ||
+	     wlan_reg_is_6ghz_chan_freq(start_freq)) &&
+	    (wlan_reg_is_5ghz_ch_freq(end_freq) ||
+	     wlan_reg_is_6ghz_chan_freq(end_freq)))
+		return true;
+
+	return false;
+}
+
+static bool
+policy_mgr_is_freq_range_2ghz(qdf_freq_t start_freq, qdf_freq_t end_freq)
+{
+	if (wlan_reg_is_24ghz_ch_freq(start_freq) &&
+	    wlan_reg_is_24ghz_ch_freq(end_freq))
+		return true;
+
+	return false;
+}
+
+static void
+policy_mgr_fill_curr_mac_2ghz_freq(uint32_t pdev_id,
+				   struct policy_mgr_pdev_mac_freq_map *freq,
+				   struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].low_2ghz_freq =
+							freq->start_freq;
+	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].high_2ghz_freq =
+							freq->end_freq;
+}
+
+static void
+policy_mgr_fill_curr_mac_5ghz_freq(uint32_t pdev_id,
+				   struct policy_mgr_pdev_mac_freq_map *freq,
+				   struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].low_5ghz_freq =
+							freq->start_freq;
+	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].high_5ghz_freq =
+							freq->end_freq;
+}
+
+void
+policy_mgr_fill_curr_mac_freq_by_hwmode(struct policy_mgr_psoc_priv_obj *pm_ctx,
+					enum policy_mgr_mode mode_hw)
+{
+	uint8_t i;
+	struct policy_mgr_freq_range *cur_mac_freq, *hwmode_freq;
+
+	cur_mac_freq = pm_ctx->hw_mode.cur_mac_freq_range;
+	hwmode_freq = pm_ctx->hw_mode.freq_range_caps[mode_hw];
+
+	for (i = 0; i < MAX_MAC; i++) {
+		cur_mac_freq[i].low_2ghz_freq = hwmode_freq[i].low_2ghz_freq;
+		cur_mac_freq[i].high_2ghz_freq = hwmode_freq[i].high_2ghz_freq;
+		cur_mac_freq[i].low_5ghz_freq = hwmode_freq[i].low_5ghz_freq;
+		cur_mac_freq[i].high_5ghz_freq = hwmode_freq[i].high_5ghz_freq;
+	}
+}
+
+static void
+policy_mgr_fill_legacy_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				  struct policy_mgr_hw_mode_params hw_mode)
+{
+	enum policy_mgr_mode mode;
+
+	mode = hw_mode.dbs_cap ? MODE_DBS : MODE_SMM;
+	policy_mgr_fill_curr_mac_freq_by_hwmode(pm_ctx, mode);
+}
+
+static void
+policy_mgr_fill_curr_freq_by_pdev_freq(int32_t num_mac_freq,
+				struct policy_mgr_pdev_mac_freq_map *freq,
+				struct policy_mgr_psoc_priv_obj *pm_ctx,
+				struct policy_mgr_hw_mode_params hw_mode)
+{
+	uint32_t pdev_id, i;
+
+	for (i = 0; i < num_mac_freq; i++) {
+		pdev_id = freq[i].pdev_id;
+
+		if (pdev_id >= MAX_MAC) {
+			policy_mgr_debug("Invalid pdev id %d", pdev_id);
+			return;
+		}
+
+		policy_mgr_debug("pdev_id %d start freq %d end_freq %d",
+				 pdev_id, freq[i].start_freq,
+				 freq[i].end_freq);
+
+		if (policy_mgr_is_freq_range_2ghz(freq[i].start_freq,
+						  freq[i].end_freq))
+			policy_mgr_fill_curr_mac_2ghz_freq(pdev_id,
+							   &freq[i],
+							   pm_ctx);
+		else if (policy_mgr_is_freq_range_5_6ghz(freq[i].start_freq,
+							 freq[i].end_freq))
+			policy_mgr_fill_curr_mac_5ghz_freq(pdev_id,
+							   &freq[i],
+							   pm_ctx);
+		else
+			policy_mgr_fill_legacy_freq_range(pm_ctx, hw_mode);
+	}
+}
+
+static void
+policy_mgr_update_curr_mac_freq(uint32_t num_mac_freq,
+				struct policy_mgr_pdev_mac_freq_map *freq,
+				struct policy_mgr_psoc_priv_obj *pm_ctx,
+				struct policy_mgr_hw_mode_params hw_mode)
+{
+	if (num_mac_freq && freq) {
+		policy_mgr_fill_curr_freq_by_pdev_freq(num_mac_freq, freq,
+						       pm_ctx, hw_mode);
+		return;
+	}
+
+	policy_mgr_fill_legacy_freq_range(pm_ctx, hw_mode);
+}
+
 /**
  * policy_mgr_update_hw_mode_conn_info() - Update connection
  * info based on HW mode
  * @num_vdev_mac_entries: Number of vdev-mac id entries that follow
  * @vdev_mac_map: Mapping of vdev-mac id
  * @hw_mode: HW mode
+ * @num_mac_freq: number of Frequency Range
+ * @freq_info: Pointer to Frequency Range
  *
  * Updates the connection info parameters based on the new HW mode
  *
@@ -868,7 +992,9 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 				uint32_t num_vdev_mac_entries,
 				struct policy_mgr_vdev_mac_map *vdev_mac_map,
-				struct policy_mgr_hw_mode_params hw_mode)
+				struct policy_mgr_hw_mode_params hw_mode,
+				uint32_t num_mac_freq,
+				struct policy_mgr_pdev_mac_freq_map *freq_info)
 {
 	uint32_t i, conn_index, found;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -905,6 +1031,9 @@ void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	policy_mgr_update_curr_mac_freq(num_mac_freq, freq_info, pm_ctx,
+					hw_mode);
 	policy_mgr_dump_connection_status_info(psoc);
 }
 
@@ -976,7 +1105,7 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	policy_mgr_update_hw_mode_conn_info(context,
 					    num_vdev_mac_entries,
 					    vdev_mac_map,
-					    hw_mode);
+					    hw_mode, 0, NULL);
 	if (pm_ctx->mode_change_cb)
 		pm_ctx->mode_change_cb();
 

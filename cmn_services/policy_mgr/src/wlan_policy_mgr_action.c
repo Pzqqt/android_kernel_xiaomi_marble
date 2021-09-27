@@ -45,6 +45,8 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 			uint32_t new_hw_mode_index,
 			uint32_t num_vdev_mac_entries,
 			struct policy_mgr_vdev_mac_map *vdev_mac_map,
+			uint32_t num_mac_freq,
+			struct policy_mgr_pdev_mac_freq_map *mac_freq_range,
 			struct wlan_objmgr_psoc *context)
 {
 	QDF_STATUS status;
@@ -65,6 +67,13 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 
 	policy_mgr_debug("old_hw_mode_index=%d, new_hw_mode_index=%d",
 		old_hw_mode_index, new_hw_mode_index);
+
+	if (mac_freq_range)
+		for (i = 0; i < num_mac_freq; i++)
+			policy_mgr_debug("pdev_id:%d start_freq:%d end_freq %d",
+					 mac_freq_range[i].pdev_id,
+					 mac_freq_range[i].start_freq,
+					 mac_freq_range[i].end_freq);
 
 	for (i = 0; i < num_vdev_mac_entries; i++)
 		policy_mgr_debug("vdev_id:%d mac_id:%d",
@@ -90,8 +99,8 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 
 	/* update pm_conc_connection_list */
 	policy_mgr_update_hw_mode_conn_info(context, num_vdev_mac_entries,
-					  vdev_mac_map,
-					  hw_mode);
+					    vdev_mac_map, hw_mode,
+					    num_mac_freq, mac_freq_range);
 
 	if (pm_ctx->mode_change_cb)
 		pm_ctx->mode_change_cb();

@@ -936,6 +936,22 @@ policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+void
+policy_mgr_dump_curr_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	uint32_t i;
+	struct policy_mgr_freq_range *freq_range;
+
+	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
+	for (i = 0; i < MAX_MAC; i++)
+		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
+			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					    i, freq_range[i].low_2ghz_freq,
+					    freq_range[i].high_2ghz_freq,
+					    freq_range[i].low_5ghz_freq,
+					    freq_range[i].high_5ghz_freq);
+}
+
 static void
 policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
 				   enum policy_mgr_mode hw_mode)
@@ -953,21 +969,7 @@ policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
 }
 
 static void
-policy_mgr_dump_curr_freq_range(struct policy_mgr_freq_range *freq_range)
-{
-	uint32_t i;
-
-	for (i = 0; i < MAX_MAC; i++)
-		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
-					    i, freq_range[i].low_2ghz_freq,
-					    freq_range[i].high_2ghz_freq,
-					    freq_range[i].low_5ghz_freq,
-					    freq_range[i].high_5ghz_freq);
-}
-
-static void
-policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
+policy_mgr_dump_hw_modes_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 {
 	uint32_t i;
 	struct policy_mgr_freq_range *freq_range;
@@ -976,9 +978,13 @@ policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 		freq_range = pm_ctx->hw_mode.freq_range_caps[i];
 		policy_mgr_dump_freq_range_per_mac(freq_range, i);
 	}
+}
 
-	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
-	policy_mgr_dump_curr_freq_range(freq_range);
+void
+policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	policy_mgr_dump_hw_modes_freq_range(pm_ctx);
+	policy_mgr_dump_curr_freq_range(pm_ctx);
 }
 
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
@@ -1068,6 +1074,11 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 			mac1_ss_bw_info, i, tmp->hw_mode_id, dbs_mode,
 			sbs_mode);
 	}
+
+	/*
+	 * Initializing Current frequency with SMM frequency.
+	 */
+	policy_mgr_fill_curr_mac_freq_by_hwmode(pm_ctx, MODE_SMM);
 	policy_mgr_dump_freq_range(pm_ctx);
 
 	return QDF_STATUS_SUCCESS;
@@ -3965,6 +3976,7 @@ void policy_mgr_dump_connection_status_info(struct wlan_objmgr_psoc *psoc)
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
+	policy_mgr_dump_freq_range(pm_ctx);
 	policy_mgr_validate_conn_info(psoc);
 }
 
@@ -5038,7 +5050,7 @@ QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
 
 	if (QDF_IS_STATUS_SUCCESS(status))
 		policy_mgr_update_hw_mode_conn_info(psoc, 1, &vdev_mac_map,
-						    hw_mode);
+						    hw_mode, 0, NULL);
 
 	return status;
 }
