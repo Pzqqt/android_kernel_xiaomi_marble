@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
-
+#define CREATE_TRACE_POINTS
 #include "msm_vidc_debug.h"
 #include "msm_vidc_driver.h"
 #include "msm_vidc_dt.h"
@@ -10,6 +10,7 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
 #include "msm_vidc_internal.h"
+#include "msm_vidc_events.h"
 
 extern struct msm_vidc_core *g_core;
 

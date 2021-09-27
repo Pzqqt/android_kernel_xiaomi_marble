@@ -22,6 +22,8 @@
 #include "venus_hfi.h"
 #include "venus_hfi_response.h"
 #include "hfi_packet.h"
+#include "msm_vidc_events.h"
+
 extern struct msm_vidc_core *g_core;
 
 #define is_odd(val) ((val) % 2 == 1)
@@ -371,7 +373,7 @@ void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm
 {
 	struct dma_buf *dbuf;
 
-	if (!(tag & msm_vidc_debug) || !inst || !vbuf || !tag_str || !str)
+	if (!inst || !vbuf || !tag_str || !str)
 		return;
 
 	dbuf = (struct dma_buf *)vbuf->dmabuf;
@@ -384,6 +386,11 @@ void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm
 		(dbuf ? file_count(dbuf->file) : -1), vbuf->buffer_size, vbuf->data_size,
 		vbuf->flags, vbuf->timestamp, vbuf->attr, inst->debug_count.etb,
 		inst->debug_count.ebd, inst->debug_count.ftb, inst->debug_count.fbd);
+
+	trace_msm_v4l2_vidc_buffer_event_log(inst, str, buf_name(vbuf->type), vbuf,
+		(dbuf ? file_inode(dbuf->file)->i_ino : -1), (dbuf ? file_count(dbuf->file) : -1));
+
+
 }
 
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
@@ -1193,6 +1200,9 @@ int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 	else
 		i_vpr_h(inst, "%s: state changed to %s from %s\n",
 		   func, state_name(request_state), state_name(inst->state));
+
+	trace_msm_vidc_common_state_change(inst, func, state_name(inst->state),
+			state_name(request_state));
 
 	inst->state = request_state;
 

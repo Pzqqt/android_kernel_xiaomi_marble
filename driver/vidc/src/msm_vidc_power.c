@@ -13,6 +13,7 @@
 #include "msm_vidc_platform.h"
 #include "msm_vidc_buffer.h"
 #include "venus_hfi.h"
+#include "msm_vidc_events.h"
 
 /* Q16 Format */
 #define MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR (1 << 16)
@@ -524,6 +525,10 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 		inst->power.sys_cache_bw, inst->power.dcvs_flags,
 		core->power.clk_freq, core->power.bw_ddr,
 		core->power.bw_llcc);
+
+	trace_msm_vidc_perf_power_scale(inst, core->power.clk_freq,
+		core->power.bw_ddr, core->power.bw_llcc);
+
 	return 0;
 }
 
