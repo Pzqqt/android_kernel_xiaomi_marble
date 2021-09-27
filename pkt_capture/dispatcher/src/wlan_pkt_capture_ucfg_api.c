@@ -229,9 +229,15 @@ ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				      qdf_nbuf_t nbuf,
 				      uint8_t status)
 {
-	return pkt_capture_process_mgmt_tx_data(
+	if (pkt_capture_is_tx_mgmt_enable(pdev))
+		return pkt_capture_process_mgmt_tx_data(
 					pdev, params, nbuf,
 					pkt_capture_mgmt_status_map(status));
+
+	else {
+		qdf_nbuf_free(nbuf);
+		return QDF_STATUS_SUCCESS;
+	}
 }
 
 void
