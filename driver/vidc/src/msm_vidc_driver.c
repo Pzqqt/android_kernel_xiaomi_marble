@@ -2629,6 +2629,7 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 {
 	bool allow = false;
 	struct msm_vidc_core *core;
+	u32 fps;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: Invalid args: %pK\n", __func__, inst);
@@ -2681,6 +2682,13 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 	allow = !is_lowlatency_session(inst);
 	if (!allow) {
 		i_vpr_h(inst, "%s: lowlatency session\n", __func__);
+		goto exit;
+	}
+
+	fps =  msm_vidc_get_fps(inst);
+	if (is_decode_session(inst) && fps >= MAXIMUM_FPS) {
+		allow = false;
+		i_vpr_h(inst, "%s: unsupported fps %d\n", __func__, fps);
 		goto exit;
 	}
 
