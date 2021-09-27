@@ -2855,10 +2855,17 @@ QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
 	size_t ch_index;
 	size_t target_ch_cnt = 0;
 
-	if (!sap_ctx || !ch_freq_list || !ch_cnt ||
-	    !sap_ctx->acs_cfg->master_freq_list ||
-	    !sap_ctx->acs_cfg->master_ch_list_count) {
+	if (!sap_ctx || !ch_freq_list || !ch_cnt) {
 		sap_err("NULL parameters");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	if (!sap_ctx->acs_cfg->acs_mode) {
+		sap_debug("acs not enabled, no filtering required");
+		return QDF_STATUS_SUCCESS;
+	} else if (!sap_ctx->acs_cfg->master_freq_list ||
+		   !sap_ctx->acs_cfg->master_ch_list_count) {
+		sap_err("Empty acs channel list");
 		return QDF_STATUS_E_FAULT;
 	}
 
