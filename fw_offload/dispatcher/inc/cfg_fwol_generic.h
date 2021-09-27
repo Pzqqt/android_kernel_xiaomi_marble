@@ -429,7 +429,7 @@
 	"gFwDebugWowModuleLoglevel", \
 	0, \
 	FW_MODULE_LOG_LEVEL_STRING_LENGTH, \
-	"5,3,18,3,31,3,36,3,57,3", \
+	"1,3,5,3,18,1,19,3,31,1,36,1,57,3", \
 	"Set modulized firmware wow debug log level")
 
 #ifdef FEATURE_WLAN_RA_FILTERING
