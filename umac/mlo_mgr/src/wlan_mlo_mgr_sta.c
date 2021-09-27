@@ -531,7 +531,8 @@ mlo_send_link_disconnect(struct wlan_mlo_dev_context *mlo_dev_ctx,
 		if (qdf_test_bit(i, mlo_dev_ctx->sta_ctx->wlan_connected_links) &&
 		    mlo_dev_ctx->wlan_vdev_list[i] != mlo_get_assoc_link_vdev(mlo_dev_ctx))
 			wlan_cm_disconnect(mlo_dev_ctx->wlan_vdev_list[i],
-					   source, reason_code, NULL);
+					   CM_MLO_DISCONNECT, reason_code,
+					   NULL);
 	}
 
 	wlan_cm_disconnect(mlo_get_assoc_link_vdev(mlo_dev_ctx),
@@ -554,7 +555,7 @@ mlo_send_link_disconnect_sync(struct wlan_mlo_dev_context *mlo_dev_ctx,
 		if (qdf_test_bit(i, mlo_dev_ctx->sta_ctx->wlan_connected_links) &&
 		    mlo_dev_ctx->wlan_vdev_list[i] != mlo_get_assoc_link_vdev(mlo_dev_ctx))
 			wlan_cm_disconnect_sync(mlo_dev_ctx->wlan_vdev_list[i],
-						source, reason_code);
+						CM_MLO_DISCONNECT, reason_code);
 	}
 
 	wlan_cm_disconnect_sync(mlo_get_assoc_link_vdev(mlo_dev_ctx),
