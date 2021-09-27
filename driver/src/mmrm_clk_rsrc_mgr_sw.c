@@ -995,12 +995,51 @@ err_invalid_client:
 	return rc;
 }
 
+static int mmrm_sw_clk_print_enabled_client_info(struct mmrm_clk_mgr *sw_clk_mgr,
+	char *buf,
+	int sz)
+{
+	u32 c, len;
+	u32 left_spaces = (u32)sz;
+	struct mmrm_sw_clk_mgr_info *sinfo = &(sw_clk_mgr->data.sw_info);
+	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry = NULL;
+
+	len = scnprintf(buf, left_spaces, "  csid    clk_rate     vdd_level   cur_ma   num_hw_blocks\n");
+	left_spaces -= len;
+	buf += len;
+
+	if (sinfo != NULL && peak_data != NULL) {
+		for (c = 0; (c < sinfo->tot_clk_clients) && (left_spaces > 1); c++) {
+			tbl_entry = &sinfo->clk_client_tbl[c];
+			if ((tbl_entry != NULL) && (tbl_entry->clk_rate)) {
+				len = scnprintf(buf, left_spaces, "0x%x    %zu   %zu   %zu   %zu\n",
+					tbl_entry->clk_src_id,
+					tbl_entry->clk_rate,
+					tbl_entry->vdd_level,
+					tbl_entry->current_ma[tbl_entry->vdd_level]
+						[peak_data->aggreg_level] * tbl_entry->num_hw_blocks,
+					tbl_entry->num_hw_blocks);
+				left_spaces -= len;
+				buf += len;
+			}
+		}
+		if (left_spaces > 1) {
+			len = scnprintf(buf, left_spaces, "aggreg_val(%zu) aggreg_level(%zu)\n",
+				peak_data->aggreg_val, peak_data->aggreg_level);
+			left_spaces -= len;
+		}
+	}
+	return (sz - left_spaces);
+}
+
 static struct mmrm_clk_mgr_client_ops clk_client_swops = {
 	.clk_client_reg = mmrm_sw_clk_client_register,
 	.clk_client_dereg = mmrm_sw_clk_client_deregister,
 	.clk_client_setval = mmrm_sw_clk_client_setval,
 	.clk_client_setval_inrange = mmrm_sw_clk_client_setval_inrange,
 	.clk_client_getval = mmrm_sw_clk_client_getval,
+	.clk_print_enabled_client_info = mmrm_sw_clk_print_enabled_client_info,
 };
 
 static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
