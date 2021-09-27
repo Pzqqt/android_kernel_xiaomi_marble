@@ -939,6 +939,11 @@ wma_roam_update_vdev(tp_wma_handle wma,
 
 	vdev_id = roam_synch_ind_ptr->roamed_vdev_id;
 	wma->interfaces[vdev_id].nss = roam_synch_ind_ptr->nss;
+	/* update freq and channel width */
+	wma->interfaces[vdev_id].ch_freq =
+		roam_synch_ind_ptr->chan_freq;
+	wma->interfaces[vdev_id].chan_width =
+		roam_synch_ind_ptr->chan_width;
 
 	del_sta_params = qdf_mem_malloc(sizeof(*del_sta_params));
 	if (!del_sta_params) {
@@ -998,6 +1003,8 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	struct vdev_mlme_obj *vdev_mlme;
 	uint8_t channel;
 	struct wlan_objmgr_pdev *pdev = NULL;
+	qdf_freq_t sec_ch_2g_freq = 0;
+	struct ch_params ch_params = {0};
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
 	if (!vdev_mlme)
@@ -1020,8 +1027,30 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	des_chan->ch_width = iface->chan_width;
 	if (chan) {
 		des_chan->ch_freq = chan->mhz;
-		des_chan->ch_cfreq1 = chan->band_center_freq1;
-		des_chan->ch_cfreq2 = chan->band_center_freq2;
+		ch_params.ch_width = des_chan->ch_width;
+		if (wlan_reg_is_24ghz_ch_freq(des_chan->ch_freq) &&
+		    des_chan->ch_width == CH_WIDTH_40MHZ &&
+		    chan->band_center_freq1) {
+			if (des_chan->ch_freq < chan->band_center_freq1)
+				sec_ch_2g_freq = des_chan->ch_freq + 20;
+			else
+				sec_ch_2g_freq = des_chan->ch_freq - 20;
+		}
+		wlan_reg_set_channel_params_for_freq(pdev, des_chan->ch_freq,
+						     sec_ch_2g_freq,
+						     &ch_params);
+		if (ch_params.ch_width != des_chan->ch_width ||
+		    ch_params.mhz_freq_seg0 != chan->band_center_freq1 ||
+		    ch_params.mhz_freq_seg1 != chan->band_center_freq2)
+			wma_err("ch mismatch host & fw bw (%d %d) seg0 (%d, %d) seg1 (%d, %d)",
+				ch_params.ch_width, des_chan->ch_width,
+				ch_params.mhz_freq_seg0,
+				chan->band_center_freq1,
+				ch_params.mhz_freq_seg1,
+				chan->band_center_freq2);
+		des_chan->ch_cfreq1 = ch_params.mhz_freq_seg0;
+		des_chan->ch_cfreq2 = ch_params.mhz_freq_seg1;
+		des_chan->ch_width = ch_params.ch_width;
 	} else {
 		wma_err("LFR3: invalid chan");
 	}
