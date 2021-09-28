@@ -2345,8 +2345,6 @@ int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		qdf_atomic_set(&scn->link_suspended, 1);
 
-	hif_apps_wake_irq_enable(GET_HIF_OPAQUE_HDL(scn));
-
 	return 0;
 }
 
@@ -2361,8 +2359,6 @@ int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
  */
 int hif_pci_bus_resume_noirq(struct hif_softc *scn)
 {
-	hif_apps_wake_irq_disable(GET_HIF_OPAQUE_HDL(scn));
-
 	/* a vote for link up can come in the middle of the ongoing resume
 	 * process. hence, clear the link suspend flag once
 	 * hif_bus_resume_noirq() succeeds since PCIe link is already resumed
