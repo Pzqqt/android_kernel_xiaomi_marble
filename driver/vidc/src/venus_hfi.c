@@ -668,6 +668,14 @@ int __set_clk_rate(struct msm_vidc_core *core,
 	}
 	client = cl->mmrm_client;
 
+	/*
+	 * This conversion is necessary since we are scaling clock values based on
+	 * the branch clock. However, mmrm driver expects source clock to be registered
+	 * and used for scaling.
+	 * TODO: Remove this scaling if using source clock instead of branch clock.
+	 */
+	rate = rate * MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
+
 	/* bail early if requested clk rate is not changed */
 	if (rate == cl->prev)
 		return 0;
@@ -1609,6 +1617,7 @@ int __prepare_enable_clks(struct msm_vidc_core *core)
 {
 	struct clock_info *cl = NULL;
 	int rc = 0, c = 0;
+	u64 rate = 0;
 
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1626,9 +1635,16 @@ int __prepare_enable_clks(struct msm_vidc_core *core)
 		 * them.  Since we don't really have a load at this point, scale
 		 * it to the lowest frequency possible
 		 */
-		if (cl->has_scaling)
-			__set_clk_rate(core, cl,
-					clk_round_rate(cl->clk, 0));
+		if (cl->has_scaling) {
+			rate = clk_round_rate(cl->clk, 0);
+			/**
+			 * source clock is already multipled with scaling ratio and __set_clk_rate
+			 * attempts to multiply again. So divide scaling ratio before calling
+			 * __set_clk_rate.
+			 */
+			rate = rate / MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
+			__set_clk_rate(core, cl, rate);
+		}
 
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {

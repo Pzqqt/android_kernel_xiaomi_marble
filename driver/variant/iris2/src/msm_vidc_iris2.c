@@ -213,6 +213,7 @@ static int __prepare_enable_clock_iris2(struct msm_vidc_core *core,
 	int rc = 0;
 	struct clock_info *cl;
 	bool found;
+	u64 rate = 0;
 
 	if (!core || !clk_name) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -233,8 +234,16 @@ static int __prepare_enable_clock_iris2(struct msm_vidc_core *core,
 		 * them.  Since we don't really have a load at this point, scale
 		 * it to the lowest frequency possible
 		 */
-		if (cl->has_scaling)
-			__set_clk_rate(core, cl, clk_round_rate(cl->clk, 0));
+		if (cl->has_scaling) {
+			rate = clk_round_rate(cl->clk, 0);
+			/**
+			 * source clock is already multipled with scaling ratio and __set_clk_rate
+			 * attempts to multiply again. So divide scaling ratio before calling
+			 * __set_clk_rate.
+			 */
+			rate = rate / MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
+			__set_clk_rate(core, cl, rate);
+		}
 
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
@@ -586,6 +595,13 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		rc = 0;
 	}
 
+	/* Turn off MVP MVS0 SRC clock */
+	rc = __disable_unprepare_clock_iris2(core, "video_cc_mvs0_clk_src");
+	if (rc) {
+		d_vpr_e("%s: disable unprepare video_cc_mvs0_clk_src failed\n", __func__);
+		rc = 0;
+	}
+
 	return rc;
 }
 
@@ -639,8 +655,14 @@ static int __power_on_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		goto fail_clk_controller;
 
+	rc = __prepare_enable_clock_iris2(core, "video_cc_mvs0_clk_src");
+	if (rc)
+		goto fail_clk_src;
+
 	return 0;
 
+fail_clk_src:
+	__disable_unprepare_clock_iris2(core, "core_clk");
 fail_clk_controller:
 	__disable_unprepare_clock_iris2(core, "gcc_video_axi0");
 fail_clk_axi:
