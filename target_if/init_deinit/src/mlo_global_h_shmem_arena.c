@@ -436,7 +436,7 @@ static int parse_mlo_glb_h_shmem_arena(
 	return parsed_bytes;
 }
 
-QDF_STATUS mlo_glb_h_shmem_arena_ctx_init(uint8_t *arena_vaddr,
+QDF_STATUS mlo_glb_h_shmem_arena_ctx_init(void *arena_vaddr,
 					  size_t arena_len)
 {
 	struct wlan_host_mlo_glb_h_shmem_arena_ctx *shmem_arena_ctx;

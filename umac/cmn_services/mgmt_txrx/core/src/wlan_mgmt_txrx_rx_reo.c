@@ -102,6 +102,36 @@ mgmt_rx_reo_compare_global_timestamps_gte(uint32_t ts1, uint32_t ts2)
 }
 
 /**
+ * wlan_mgmt_rx_reo_get_priv_object() - Get the pdev private object of
+ * MGMT Rx REO module
+ * @pdev: pointer to pdev object
+ *
+ * Return: Pointer to pdev private object of MGMT Rx REO module on success,
+ * else NULL
+ */
+static struct mgmt_rx_reo_pdev_info *
+wlan_mgmt_rx_reo_get_priv_object(struct wlan_objmgr_pdev *pdev)
+{
+	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx;
+
+	if (!pdev) {
+		mgmt_rx_reo_err("pdev is null");
+		return NULL;
+	}
+
+	mgmt_txrx_pdev_ctx = (struct mgmt_txrx_priv_pdev_context *)
+		wlan_objmgr_pdev_get_comp_private_obj(pdev,
+						      WLAN_UMAC_COMP_MGMT_TXRX);
+
+	if (!mgmt_txrx_pdev_ctx) {
+		mgmt_rx_reo_err("mgmt txrx context is NULL");
+		return NULL;
+	}
+
+	return mgmt_txrx_pdev_ctx->mgmt_rx_reo_pdev_ctx;
+}
+
+/**
  * wlan_mgmt_rx_reo_algo_calculate_wait_count() - Calculates the number of
  * frames an incoming frame should wait for before it gets delivered.
  * @in_frame_pdev: pdev on which this frame is received
