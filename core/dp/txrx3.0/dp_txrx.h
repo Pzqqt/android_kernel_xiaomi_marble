@@ -612,4 +612,6 @@ static inline void dp_prealloc_deinit(void) { }
 
 #endif
 
+uint32_t dp_get_tx_inqueue(ol_txrx_soc_handle soc);
+
 #endif /* _DP_TXRX_H */
