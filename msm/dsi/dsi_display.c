@@ -8135,17 +8135,17 @@ static int dsi_display_set_roi(struct dsi_display *display,
 		if (!changed)
 			continue;
 
-		/* send the new roi to the panel via dcs commands */
-		rc = dsi_panel_send_roi_dcs(display->panel, i, &ctrl_roi);
-		if (rc) {
-			DSI_ERR("dsi_panel_set_roi failed rc %d\n", rc);
-			return rc;
-		}
-
 		/* re-program the ctrl with the timing based on the new roi */
 		rc = dsi_ctrl_timing_setup(ctrl->ctrl);
 		if (rc) {
 			DSI_ERR("dsi_ctrl_setup failed rc %d\n", rc);
+			return rc;
+		}
+
+		/* send the new roi to the panel via dcs commands */
+		rc = dsi_panel_send_roi_dcs(display->panel, i, &ctrl_roi);
+		if (rc) {
+			DSI_ERR("dsi_panel_set_roi failed rc %d\n", rc);
 			return rc;
 		}
 	}
