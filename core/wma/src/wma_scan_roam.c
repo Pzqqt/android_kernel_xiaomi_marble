@@ -5127,6 +5127,9 @@ void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
+	if (!wma)
+		return;
+
 	wma_roam_update_vdev(wma, sync_ind);
 }
 
@@ -5136,6 +5139,9 @@ cm_roam_pe_sync_callback(struct roam_offload_synch_ind *sync_ind,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status;
+
+	if (!wma)
+		return QDF_STATUS_E_INVAL;
 
 	status = wma->pe_roam_synch_cb(wma->mac_context,
 				sync_ind, ie_len,
@@ -5148,6 +5154,9 @@ void cm_update_phymode_on_roam(uint8_t vdev_id, uint8_t *bssid,
 			       wmi_channel *chan)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma)
+		return;
 
 	wma_update_phymode_on_roam(wma, bssid, chan, &wma->interfaces[vdev_id]);
 }
