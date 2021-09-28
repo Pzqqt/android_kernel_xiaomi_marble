@@ -295,7 +295,12 @@ void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter)
 void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
 				uint32_t reason_code)
 {
+	struct hdd_station_ctx *hdd_sta_ctx;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	adapter->connect_req_status = reason_code;
+	hdd_sta_ctx->conn_info.assoc_status_code = reason_code;
+	hdd_sta_ctx->cache_conn_info.assoc_status_code = reason_code;
 }
 
 #ifdef FEATURE_WLAN_WAPI
@@ -746,6 +751,7 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 		return;
 
 	qdf_copy_macaddr(&sta_ctx->conn_info.bssid, &rsp->bssid);
+	sta_ctx->conn_info.assoc_status_code = rsp->status_code;
 
 	crypto_params = wlan_crypto_vdev_get_crypto_params(adapter->vdev);
 
