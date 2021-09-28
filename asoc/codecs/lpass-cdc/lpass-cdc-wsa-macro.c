@@ -998,6 +998,7 @@ static int lpass_cdc_wsa_macro_event_handler(struct snd_soc_component *component
 		break;
 	case LPASS_CDC_MACRO_EVT_CLK_RESET:
 		lpass_cdc_rsc_clk_reset(wsa_dev, WSA_CORE_CLK);
+		lpass_cdc_rsc_clk_reset(wsa_dev, WSA_TX_CORE_CLK);
 		break;
 	}
 	return 0;

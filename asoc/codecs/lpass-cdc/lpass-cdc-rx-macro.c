@@ -1567,6 +1567,7 @@ static int lpass_cdc_rx_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case LPASS_CDC_MACRO_EVT_CLK_RESET:
 		lpass_cdc_rsc_clk_reset(rx_dev, RX_CORE_CLK);
+		lpass_cdc_rsc_clk_reset(rx_dev, RX_TX_CORE_CLK);
 		break;
 	case LPASS_CDC_MACRO_EVT_RX_PA_GAIN_UPDATE:
 		rx_priv->rx0_gain_val = snd_soc_component_read(component,
