@@ -11218,6 +11218,7 @@ void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 		hal_srng_access_end(soc->hal_soc, hal_srng);
 
 		hal_srng_set_flush_last_ts(hal_srng);
+		qdf_atomic_set(&soc->tx_pending_rtpm, 0);
 		dp_debug("flushed");
 	}
 }

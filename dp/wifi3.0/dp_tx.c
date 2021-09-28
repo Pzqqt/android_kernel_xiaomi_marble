@@ -1458,6 +1458,7 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 		} else {
 			dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 			hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+			qdf_atomic_inc(&soc->tx_pending_rtpm);
 			hal_srng_inc_flush_cnt(hal_ring_hdl);
 		}
 		dp_runtime_put(soc);
@@ -1466,6 +1467,7 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 		dp_runtime_get(soc);
 		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+		qdf_atomic_inc(&soc->tx_pending_rtpm);
 		hal_srng_inc_flush_cnt(hal_ring_hdl);
 		dp_runtime_put(soc);
 	}

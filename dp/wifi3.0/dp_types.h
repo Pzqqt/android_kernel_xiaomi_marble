@@ -2126,6 +2126,9 @@ struct dp_soc {
 #ifdef FEATURE_RUNTIME_PM
 	/* Dp runtime refcount */
 	qdf_atomic_t dp_runtime_refcount;
+
+	/* Dp tx pending count in RTPM */
+	qdf_atomic_t tx_pending_rtpm;
 #endif
 	/* Invalid buffer that allocated for RX buffer */
 	qdf_nbuf_queue_t invalid_buf_queue;

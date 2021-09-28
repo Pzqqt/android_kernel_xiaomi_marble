@@ -1232,6 +1232,7 @@ struct ol_if_ops {
 				   uint32_t service_interval_ul, uint32_t burst_size_ul,
 				   uint8_t add_or_sub, uint8_t ac);
 #endif
+	uint32_t (*dp_get_tx_inqueue)(ol_txrx_soc_handle soc);
 };
 
 #ifdef DP_PEER_EXTENDED_API

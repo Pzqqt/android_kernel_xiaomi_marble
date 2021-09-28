@@ -2700,4 +2700,19 @@ cdp_set_pkt_capture_mode(ol_txrx_soc_handle soc, bool val)
 {
 }
 #endif
+
+/**
+ * cdp_rx_get_pending() - Get number of pending frames of RX threads
+ * @soc: opaque soc handle
+ * Return: number of pending frames
+ */
+static inline uint32_t
+cdp_get_tx_inqueue(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ol_ops ||
+	    !soc->ol_ops->dp_get_tx_inqueue)
+		return 0;
+
+	return soc->ol_ops->dp_get_tx_inqueue(soc);
+}
 #endif /* _CDP_TXRX_CMN_H_ */
