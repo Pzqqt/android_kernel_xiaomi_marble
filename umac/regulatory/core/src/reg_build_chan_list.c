@@ -2844,6 +2844,7 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 		struct reg_fw_afc_power_event *power_info)
 {
 	uint8_t i;
+	struct regulatory_channel *sp_chan_list;
 
 	if (!power_info) {
 		reg_err("power_info is NULL");
@@ -2855,6 +2856,8 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	sp_chan_list =
+		pdev_priv_obj->mas_chan_list_6g_ap[REG_STANDARD_POWER_AP];
 	for (i = 0; i < power_info->num_freq_objs; i++) {
 		struct afc_freq_obj *freq_obj = &power_info->afc_freq_info[i];
 		uint32_t low_limit_enum, high_limit_enum;
@@ -2867,15 +2870,19 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 						     freq_obj->high_freq,
 						     &high_limit_enum);
 		for (j = low_limit_enum; j <= high_limit_enum; j++) {
-			afc_chan_list[j].state = CHANNEL_STATE_ENABLE;
-			afc_chan_list[j].chan_flags &=
+			if (sp_chan_list[j].state == CHANNEL_STATE_ENABLE) {
+				afc_chan_list[j].state = CHANNEL_STATE_ENABLE;
+				afc_chan_list[j].chan_flags &=
 						~REGULATORY_CHAN_DISABLED;
-			/*
-			 * The max_psd is divided by 100 because the target
-			 * sends the PSD in the units of 0.01 dbm/MHz.
-			 */
-			afc_chan_list[j].psd_eirp = freq_obj->max_psd / 100;
-			afc_chan_list[j].psd_flag = true;
+				/*
+				 * The max_psd is divided by 100 because the
+				 * target sends the PSD in the units of
+				 * 0.01 dbm/MHz.
+				 */
+				afc_chan_list[j].psd_eirp =
+							freq_obj->max_psd / 100;
+				afc_chan_list[j].psd_flag = true;
+			}
 		}
 	}
 
