@@ -496,7 +496,8 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 	crypto_params = &crypto_priv->crypto_params;
 	if (set) {
 		pmkid_cache = wlan_crypto_get_pmksa(vdev, &pmksa->bssid);
-		if (pmkid_cache && ((pmksa->pmk_len == pmkid_cache->pmk_len) &&
+		if (pmkid_cache && (pmksa->pmk_len &&
+				    pmksa->pmk_len == pmkid_cache->pmk_len &&
 				    !qdf_mem_cmp(pmkid_cache->pmk, pmksa->pmk,
 						 pmksa->pmk_len))) {
 			crypto_debug("PMKSA entry found with same PMK");
