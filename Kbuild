@@ -1914,6 +1914,7 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_11BE_MLO), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_11be_tlv.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_11be_api.o
 endif
 
 $(call add-wlan-objs,wmi,$(WMI_OBJS))
