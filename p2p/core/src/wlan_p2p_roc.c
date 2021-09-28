@@ -82,7 +82,9 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	struct wlan_objmgr_vdev *vdev;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
 	uint32_t go_num;
+	uint8_t ndp_num = 0, nan_disc_enabled_num = 0;
 	struct wlan_objmgr_pdev *pdev;
+	bool is_dbs;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
 			p2p_soc_obj->soc, roc_ctx->vdev_id,
@@ -123,7 +125,17 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	if (req->scan_req.dwell_time_passive < P2P_MAX_ROC_DURATION) {
 		go_num = policy_mgr_mode_specific_connection_count(
 				p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
-		p2p_debug("present go number:%d", go_num);
+		policy_mgr_mode_specific_num_active_sessions(p2p_soc_obj->soc,
+							     QDF_NDI_MODE,
+							     &ndp_num);
+		policy_mgr_mode_specific_num_active_sessions(p2p_soc_obj->soc,
+							     QDF_NAN_DISC_MODE,
+							     &nan_disc_enabled_num);
+		p2p_debug("present go number:%d, NDP number:%d, NAN number:%d",
+			  go_num, ndp_num, nan_disc_enabled_num);
+
+		is_dbs = policy_mgr_is_hw_dbs_capable(p2p_soc_obj->soc);
+
 		if (go_num)
 		/* Add fixed 300ms extra ROC time instead of multiplying the
 		 * ROC duration by const value as this causes the ROC to be
@@ -144,12 +156,31 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 		 * give a higher value from supplicant
 		 */
 		if (go_num && req->scan_req.dwell_time_passive >
-		    P2P_MAX_ROC_DURATION_GO_PRESENT)
+		    P2P_MAX_ROC_DURATION_GO_PRESENT) {
 			req->scan_req.dwell_time_passive =
 					P2P_MAX_ROC_DURATION_GO_PRESENT;
-		else if (req->scan_req.dwell_time_passive >
-			 P2P_MAX_ROC_DURATION)
+		} else if (ndp_num) {
+			if (is_dbs && req->scan_req.dwell_time_passive >
+			    P2P_MAX_ROC_DURATION_DBS_NDP_PRESENT)
+				req->scan_req.dwell_time_passive =
+					P2P_MAX_ROC_DURATION_DBS_NDP_PRESENT;
+			else if (!is_dbs && req->scan_req.dwell_time_passive >
+				 P2P_MAX_ROC_DURATION_NON_DBS_NDP_PRESENT)
+				req->scan_req.dwell_time_passive =
+					P2P_MAX_ROC_DURATION_NON_DBS_NDP_PRESENT;
+		} else if (nan_disc_enabled_num) {
+			if (is_dbs && req->scan_req.dwell_time_passive >
+			    P2P_MAX_ROC_DURATION_DBS_NAN_PRESENT)
+				req->scan_req.dwell_time_passive =
+					P2P_MAX_ROC_DURATION_DBS_NAN_PRESENT;
+			else if (!is_dbs && req->scan_req.dwell_time_passive >
+				 P2P_MAX_ROC_DURATION_NON_DBS_NAN_PRESENT)
+				req->scan_req.dwell_time_passive =
+					P2P_MAX_ROC_DURATION_NON_DBS_NAN_PRESENT;
+		} else if (req->scan_req.dwell_time_passive >
+			 P2P_MAX_ROC_DURATION) {
 			req->scan_req.dwell_time_passive = P2P_MAX_ROC_DURATION;
+		}
 	}
 	p2p_debug("FW requested roc duration is:%d",
 		  req->scan_req.dwell_time_passive);
