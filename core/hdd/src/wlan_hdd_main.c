@@ -5876,7 +5876,8 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	INIT_COMPLETION(adapter->vdev_destroy_event);
 	status = sme_vdev_delete(hdd_ctx->mac_handle, vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to delete vdev; status:%d", status);
+		hdd_err("vdev %d: failed to delete with status:%d",
+			vdev_id, status);
 		goto send_status;
 	}
 
@@ -5885,7 +5886,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 			&adapter->vdev_destroy_event,
 			msecs_to_jiffies(SME_CMD_VDEV_CREATE_DELETE_TIMEOUT));
 	if (!rc) {
-		hdd_err("timed out waiting for sme vdev delete");
+		hdd_err("vdev %d: timed out waiting for delete", vdev_id);
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 		sme_cleanup_session(hdd_ctx->mac_handle, vdev_id);
 		qdf_trigger_self_recovery(hdd_ctx->psoc,
