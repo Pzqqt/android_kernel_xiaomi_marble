@@ -38,10 +38,13 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	enum QDF_OPMODE  vdev_opmode;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	pmo_is_device_in_low_pwr_mode is_low_pwr_mode;
+	struct pmo_vdev_priv_obj *vdev_ctx;
 
 	vdev_opmode = pmo_get_vdev_opmode(vdev);
 	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_debug("vdev_opmode %d vdev_id %d", vdev_opmode, vdev_id);
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	switch (vdev_opmode) {
 	case QDF_STA_MODE:
@@ -65,10 +68,18 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	case QDF_OCB_MODE:
 	case QDF_MONITOR_MODE:
 		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
+		if (vdev_ctx->magic_ptrn_enable)
+			pmo_set_wow_event_bitmap(WOW_MAGIC_PKT_RECVD_EVENT,
+						 PMO_WOW_MAX_EVENT_BM_LEN,
+						 event_bitmap);
 		break;
 
 	case QDF_IBSS_MODE:
 		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
+		if (vdev_ctx->magic_ptrn_enable)
+			pmo_set_wow_event_bitmap(WOW_MAGIC_PKT_RECVD_EVENT,
+						 PMO_WOW_MAX_EVENT_BM_LEN,
+						 event_bitmap);
 		pmo_set_wow_event_bitmap(WOW_BEACON_EVENT,
 					 PMO_WOW_MAX_EVENT_BM_LEN,
 					 event_bitmap);

@@ -359,9 +359,6 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 	pmo_set_wow_event_bitmap(WOW_PATTERN_MATCH_EVENT,
 				 wow_bitmap_size,
 				 bitmask);
-	pmo_set_wow_event_bitmap(WOW_MAGIC_PKT_RECVD_EVENT,
-				 wow_bitmap_size,
-				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_DEAUTH_RECVD_EVENT,
 				 wow_bitmap_size,
 				 bitmask);
