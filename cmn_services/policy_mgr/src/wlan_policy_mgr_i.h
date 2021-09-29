@@ -682,6 +682,23 @@ QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 		struct policy_mgr_psoc_priv_obj *pm_ctx);
 
 /**
+ * policy_mgr_update_hw_mode_list() - Function to print frequency range
+ * for both MAC 0 and MAC1 for given Hw mode
+ *
+ * @freq_range: Policy Mgr context
+ * @hw_mode: HW mode
+ *
+ * This Function will print frequency range for both MAC 0 and MAC1 for given
+ * Hw mode
+ *
+ * Return: void
+ *
+ */
+void
+policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
+				   enum policy_mgr_mode hw_mode);
+
+/**
  * policy_mgr_fill_curr_mac_freq_by_hwmode() - Fill Current Mac frequency with
  * the frequency range of the given Hw Mode
  *
@@ -702,7 +719,7 @@ policy_mgr_fill_curr_mac_freq_by_hwmode(struct policy_mgr_psoc_priv_obj *pm_ctx,
  *
  * @pm_ctx: Policy Mgr context
  *
- * This function to Function to print every frequency range
+ * This function will print every frequency range
  * for both MAC 0 and MAC1 for every Hw mode
  *
  * Return: void
@@ -717,7 +734,7 @@ policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx);
  *
  * @pm_ctx: Policy Mgr context
  *
- * This function to Function to print current frequency range
+ * This function will print current frequency range
  * for both MAC 0 and MAC1 for every Hw mode
  *
  * Return: void

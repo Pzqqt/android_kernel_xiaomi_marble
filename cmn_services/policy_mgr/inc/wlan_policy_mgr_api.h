@@ -2681,13 +2681,87 @@ bool policy_mgr_is_dbs_scan_allowed(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_is_current_hwmode_dbs() - Check if current hw mode is DBS
- * @psoc: PSOC object information
- * Checks if current hardware mode of the system is DBS or no
+ * policy_mgr_are_2_freq_on_same_mac() - Function to check whether both the
+ * input frequencies are on same mac
  *
- * Return: true or false
+ * @psoc: Pointer to Psoc
+ * @freq_1: Frequency 1 to check
+ * @freq_2: Frequency 2 to check
+ *
+ * This Function check whether both the input frequency exist in the same mac
+ *
+ * Return:True if both the frequency exist on the same mac.
+ *
+ */
+bool
+policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
+				  qdf_freq_t freq_1,
+				  qdf_freq_t  freq_2);
+
+/**
+ * policy_mgr_are_3_freq_on_same_mac() - Function to check whether all three
+ * input frequencies are in same mac
+ *
+ * @psoc: Pointer to Psoc
+ * @freq_1: Frequency 1 to check
+ * @freq_2: Frequency 2 to check
+ * @freq_3: Frequency 3 to check
+ *
+ * This Function check whether all three input frequencies exist in the same
+ * mac.
+ *
+ * Return:True if all three frequency exist on the same mac
+ *
+ */
+bool
+policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
+				  qdf_freq_t freq_1, qdf_freq_t freq_2,
+				  qdf_freq_t freq_3);
+
+/**
+ * policy_mgr_are_sbs_chan() - Function to check whether both the
+ * input frequency are in SBS frequency range
+ *
+ * @pm_ctx: Policy Mgr context
+ * @freq_range: freq range to check
+ * @freq_1: Frequency 1 to check
+ * @freq_2: Frequency 2 to check
+ *
+ * This Function check whether both the input frequency exist in the SBS
+ * frequency range.
+ *
+ * Return:True if both the frequency exist on the SBS frequency range.
+ *
+ */
+bool
+policy_mgr_are_sbs_chan(struct wlan_objmgr_psoc *psoc, qdf_freq_t freq_1,
+			qdf_freq_t  freq_2);
+
+/**
+ * policy_mgr_is_current_hwmode_dbs() - Function to check if current HW mode is
+ * DBS
+ *
+ * @psoc: Pointer to Psoc
+ *
+ * This Function checks if current HW mode is DBS
+ *
+ * Return:True if current HW mode is DBS.
+ *
  */
 bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_is_current_hwmode_sbs() - Function to check if current HW mode is
+ * SBS
+ *
+ * @psoc: Pointer to Psoc
+ *
+ * This Function checks if current HW mode is SBS
+ *
+ * Return:True if current HW mode is SBS.
+ *
+ */
+bool policy_mgr_is_current_hwmode_sbs(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_is_dp_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
