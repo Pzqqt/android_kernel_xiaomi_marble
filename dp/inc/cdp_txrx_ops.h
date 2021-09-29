@@ -587,6 +587,9 @@ struct cdp_cmn_ops {
 					       uint32_t stat_type,
 					       uint32_t mac_id);
 #endif /* WLAN_SYSFS_DP_STATS */
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+	void (*set_pkt_capture_mode)(struct cdp_soc_t *soc, bool val);
+#endif
 };
 
 struct cdp_ctrl_ops {

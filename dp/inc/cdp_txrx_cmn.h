@@ -2672,4 +2672,32 @@ cdp_get_free_desc_poolsize(ol_txrx_soc_handle soc)
 
 	return soc->ops->cmn_drv_ops->get_free_desc_poolsize(soc);
 }
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+/**
+ * cdp_set_pkt_capture_mode() - set pkt capture mode in dp ctx
+ * @soc: opaque soc handle
+ * @val: value to be set
+ */
+static inline void
+cdp_set_pkt_capture_mode(ol_txrx_soc_handle soc, bool val)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_pkt_capture_mode)
+		return;
+
+	soc->ops->cmn_drv_ops->set_pkt_capture_mode(soc, val);
+}
+#else
+static inline void
+cdp_set_pkt_capture_mode(ol_txrx_soc_handle soc, bool val)
+{
+}
+#endif
 #endif /* _CDP_TXRX_CMN_H_ */
