@@ -2859,20 +2859,18 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 
 	session->enable_session_twt_support =
 					lim_enable_twt(mac_ctx, ie_struct);
-
-	cb_mode = wlan_get_cb_mode(mac_ctx, session->curr_op_freq, ie_struct);
-	if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq) &&
-	    session->force_24ghz_in_ht20) {
-		cb_mode = PHY_SINGLE_CHANNEL_CENTERED;
-		pe_debug("force_24ghz_in_ht20 is set so set cbmode to 0");
-	}
-
 	status = lim_fill_dot11_mode(mac_ctx, session, ie_struct);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		status = QDF_STATUS_E_FAILURE;
 		goto send;
 	}
-
+	cb_mode = wlan_get_cb_mode(mac_ctx, session->curr_op_freq, ie_struct,
+				   session);
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq) &&
+	    session->force_24ghz_in_ht20) {
+		cb_mode = PHY_SINGLE_CHANNEL_CENTERED;
+		pe_debug("force_24ghz_in_ht20 is set so set cbmode to 0");
+	}
 	status = wlan_get_rate_set(mac_ctx, ie_struct, session);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("Get rate failed vdev id %d", session->vdev_id);
@@ -4312,7 +4310,8 @@ static void lim_handle_reassoc_req(struct cm_vdev_join_req *req)
 	session_entry->lim_reassoc_chan_freq = req->entry->channel.chan_freq;
 	cb_mode = wlan_get_cb_mode(mac_ctx,
 				  session_entry->lim_reassoc_chan_freq,
-				  ie_struct);
+				  ie_struct,
+				  session_entry);
 	session_entry->reAssocHtSupportedChannelWidthSet = cb_mode ? 1 : 0;
 	session_entry->reAssocHtRecommendedTxWidthSet =
 		session_entry->reAssocHtSupportedChannelWidthSet;

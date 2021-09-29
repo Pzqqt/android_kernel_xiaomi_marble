@@ -1093,7 +1093,8 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 
 ePhyChanBondState wlan_get_cb_mode(struct mac_context *mac,
 				   qdf_freq_t ch_freq,
-				   tDot11fBeaconIEs *ie_struct)
+				   tDot11fBeaconIEs *ie_struct,
+				   struct pe_session *pe_session)
 {
 	ePhyChanBondState cb_mode = PHY_SINGLE_CHANNEL_CENTERED;
 	uint32_t sec_ch_freq = 0;
@@ -1109,6 +1110,11 @@ ePhyChanBondState wlan_get_cb_mode(struct mac_context *mac,
 	}
 
 	if (self_cb_mode == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE)
+		return PHY_SINGLE_CHANNEL_CENTERED;
+
+	if (pe_session->dot11mode == MLME_DOT11_MODE_11A ||
+	    pe_session->dot11mode == MLME_DOT11_MODE_11G ||
+	    pe_session->dot11mode == MLME_DOT11_MODE_11B)
 		return PHY_SINGLE_CHANNEL_CENTERED;
 
 	if (!(ie_struct->HTCaps.present && (eHT_CHANNEL_WIDTH_40MHZ ==
