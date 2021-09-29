@@ -1979,15 +1979,13 @@ get_sbs_chlist(struct wlan_objmgr_psoc *psoc,
 	for (i = 0; i < chlist1_len; i++) {
 		if (*sbs_num >= size_of_sbs)
 			return;
-		if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(chan_freq,
-						       chlist1[i]))
+		if (policy_mgr_are_sbs_chan(psoc, chan_freq, chlist1[i]))
 			sbs_freqs[(*sbs_num)++] = chlist1[i];
 	}
 	for (i = 0; i < chlist2_len; i++) {
 		if (*sbs_num >= size_of_sbs)
 			return;
-		if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(chan_freq,
-						       chlist2[i]))
+		if (policy_mgr_are_sbs_chan(psoc, chan_freq, chlist2[i]))
 			sbs_freqs[(*sbs_num)++] = chlist2[i];
 	}
 }
@@ -2090,8 +2088,8 @@ get_sub_channels(struct wlan_objmgr_psoc *psoc,
 
 	if (policy_mgr_is_hw_sbs_capable(psoc)) {
 		if (*scc_num > 1) {
-			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-					scc_freqs[0], scc_freqs[1])) {
+			if (policy_mgr_are_sbs_chan(psoc, scc_freqs[0],
+						    scc_freqs[1])) {
 				/* 2/3 home channels with SBS separation */
 				*sbs_num = 0;
 			} else {
@@ -3626,9 +3624,9 @@ enum policy_mgr_conc_next_action
 			else
 				return PM_NOP;
 		} else if (band1 == REG_BAND_5G && band2 == REG_BAND_5G) {
-			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[0].freq,
-			    pm_conc_connection_list[1].freq)) {
+			if (policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[1].freq)) {
 				if (!hw_mode.sbs_cap)
 					return PM_SBS;
 				else
@@ -3653,15 +3651,15 @@ enum policy_mgr_conc_next_action
 				return PM_NOP;
 		} else if (band1 == REG_BAND_5G && band2 == REG_BAND_5G &&
 			   band3 == REG_BAND_5G) {
-			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[0].freq,
-			    pm_conc_connection_list[2].freq) &&
-			    WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[1].freq,
-			    pm_conc_connection_list[2].freq) &&
-			    WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[0].freq,
-			    pm_conc_connection_list[1].freq)) {
+			if (policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[2].freq) &&
+			    policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[1].freq,
+					pm_conc_connection_list[2].freq) &&
+			    policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[1].freq)) {
 				if (!hw_mode.sbs_cap)
 					return PM_SBS;
 				else
