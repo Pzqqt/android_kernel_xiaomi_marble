@@ -488,8 +488,9 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc,
 	if (is_runtime_pm)
 		pmo_core_enable_runtime_pm_offloads(psoc);
 
-	if (psoc_ctx->psoc_cfg.suspend_mode == PMO_SUSPEND_WOW &&
-	    pmo_core_is_wow_applicable(psoc)) {
+	if ((is_runtime_pm) ||
+	    (psoc_ctx->psoc_cfg.suspend_mode == PMO_SUSPEND_WOW &&
+	    pmo_core_is_wow_applicable(psoc))) {
 		pmo_debug("WOW Suspend");
 		pmo_core_apply_lphb(psoc);
 		/*
