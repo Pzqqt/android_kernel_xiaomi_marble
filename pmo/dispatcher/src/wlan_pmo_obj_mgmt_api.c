@@ -257,6 +257,8 @@ QDF_STATUS pmo_vdev_object_created_notification(
 	}
 
 	qdf_spinlock_create(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->magic_ptrn_enable =
+		psoc_ctx->psoc_cfg.magic_ptrn_enable;
 	vdev_ctx->ptrn_match_enable =
 		psoc_ctx->psoc_cfg.ptrn_match_enable_all_vdev;
 	vdev_ctx->pmo_psoc_ctx = psoc_ctx;
