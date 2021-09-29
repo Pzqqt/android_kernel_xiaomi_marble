@@ -249,7 +249,7 @@ wlan_cfg80211_tdls_extract_6ghz_params(struct tdls_update_peer_params *req_info,
 	}
 
 	qdf_mem_copy(&req_info->he_6ghz_cap, params->he_6ghz_capa,
-		     sizeof(params->he_6ghz_capa));
+		     sizeof(req_info->he_6ghz_cap));
 }
 #else
 static void
