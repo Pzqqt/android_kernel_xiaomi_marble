@@ -20,11 +20,11 @@ extern struct notifier_block eva_struct_list_notif_blk;
 
 /* notifier handler function for list of eva hfi queues */
 int eva_hfiq_list_notif_handler(struct notifier_block *this,
-                                        unsigned long event, void *ptr);
+					unsigned long event, void *ptr);
 
 /* notifier handler function for list of eva global structures */
 int eva_struct_list_notif_handler(struct notifier_block *this,
-                                        unsigned long event, void *ptr);
+					unsigned long event, void *ptr);
 
 /*
  * wrapper for static minidump
@@ -47,7 +47,7 @@ int md_eva_dump(const char* name, u64 virt, u64 phys, u64 size);
  *		to the intermidiate buffer allocated by kzmalloc.
 */
 void add_va_node_to_list(void *list_head_node, void *buff_va,
-                        u32 buff_size, const char *region_name, bool copy);
+			u32 buff_size, const char *region_name, bool copy);
 
 /*
  * Registers subsystem to minidump driver
