@@ -2219,7 +2219,7 @@ static int msm_vidc_insert_sort(struct list_head *head,
 		prev = node;
 	}
 
-	if (!is_inserted)
+	if (!is_inserted && prev)
 		list_add(&entry->list, &prev->list);
 
 	return 0;

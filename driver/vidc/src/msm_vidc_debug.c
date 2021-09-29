@@ -126,6 +126,11 @@ void msm_vidc_show_stats(void *inst)
 	int x;
 	struct msm_vidc_inst *i = (struct msm_vidc_inst *) inst;
 
+	if (!i) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
 	for (x = 0; x < MAX_PROFILING_POINTS; x++) {
 		if (i->debug.pdata[x].name[0]) {
 			if (i->debug.samples) {
