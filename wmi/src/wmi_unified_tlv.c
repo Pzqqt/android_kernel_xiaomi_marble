@@ -17322,6 +17322,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_HW_MODE_POLICY_OFFLOAD_SUPPORT;
 	wmi_service[wmi_service_mgmt_rx_reo_supported] =
 			WMI_SERVICE_MGMT_RX_REO_SUPPORTED;
+	wmi_service[wmi_service_phy_dma_byte_swap_support] =
+			WMI_SERVICE_UNAVAILABLE;
 }
 
 /**

@@ -99,6 +99,7 @@
 #define SPECTRAL_PARAM_RPT_MODE_MIN               (0)
 #define SPECTRAL_PARAM_RPT_MODE_MAX               (3)
 #define MAX_FFTBIN_VALUE                          (255)
+#define SPECTRAL_DWORD_SIZE                       (4)
 
 /* DBR ring debug size for Spectral */
 #define SPECTRAL_DBR_RING_DEBUG_SIZE 512
@@ -606,6 +607,7 @@ struct spectral_fft_bin_len_adj_swar {
  * @detid_mode_table: Detector ID to Spectral scan mode table
  * @num_spectral_detectors: Total number of Spectral detectors
  * @marker: Describes the boundaries of pri80, 5 MHz and sec80 bins
+ * @hw_fft_bin_width: FFT bin width reported by the HW
  */
 struct spectral_report_params {
 	enum spectral_report_format_version version;
@@ -616,6 +618,7 @@ struct spectral_report_params {
 	uint8_t num_spectral_detectors;
 	struct spectral_fft_bin_markers_160_165mhz
 				marker[SPECTRAL_SCAN_MODE_MAX];
+	uint8_t hw_fft_bin_width;
 };
 
 /**
@@ -787,7 +790,7 @@ struct target_if_spectral_ops {
 		struct target_if_spectral *spectral,
 		void *data);
 	QDF_STATUS (*byte_swap_fft_bins)(
-		struct spectral_fft_bin_len_adj_swar *swar,
+		const struct spectral_report_params *rparams,
 		void *bin_pwr_data, size_t num_fftbins);
 };
 
@@ -2844,5 +2847,30 @@ QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
 #undef __ATTRIB_PACK
 #endif
 
+/**
+ * target_if_spectral_copy_fft_bins() - Copy FFT bins from source buffer to
+ * destination buffer
+ * @spectral: Pointer to Spectral LMAC object
+ * @src_fft_buf: Pointer to source FFT buffer
+ * @dest_fft_buf: Pointer to destination FFT buffer
+ * @fft_bin_count: Number of FFT bins to copy
+ * @bytes_copied: Number of bytes copied by this API
+ *
+ * Different targets supports different FFT bin widths. This API encapsulates
+ * all those details and copies 8-bit FFT value into the destination buffer.
+ * Also, this API takes care of handling big-endian mode.
+ * In essence, it does the following.
+ *   - Read DWORDs one by one
+ *   - Extract individual FFT bins out of it
+ *   - Copy the FFT bin to destination buffer
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS
+target_if_spectral_copy_fft_bins(struct target_if_spectral *spectral,
+				 const void *src_fft_buf,
+				 void *dest_fft_buf,
+				 uint32_t fft_bin_count,
+				 uint32_t *bytes_copied);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 #endif /* _TARGET_IF_SPECTRAL_H_ */

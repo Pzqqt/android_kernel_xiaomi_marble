@@ -2171,6 +2171,75 @@ target_if_spectral_dump_phyerr_data_gen2(uint8_t *data, uint32_t datalen,
 	return 0;
 }
 
+QDF_STATUS
+target_if_spectral_copy_fft_bins(struct target_if_spectral *spectral,
+				 const void *src_fft_buf,
+				 void *dest_fft_buf,
+				 uint32_t fft_bin_count,
+				 uint32_t *bytes_copied)
+{
+	uint16_t idx, dword_idx, fft_bin_idx;
+	uint8_t num_bins_per_dword, hw_fft_bin_width_bits;
+	uint32_t num_dwords;
+	uint16_t fft_bin_val;
+	struct spectral_report_params *rparams;
+	const uint32_t *dword_ptr;
+	uint32_t dword;
+	uint8_t *fft_bin_buf;
+
+	*bytes_copied = 0;
+
+	if (!spectral) {
+		spectral_err("spectral lmac object is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!src_fft_buf) {
+		spectral_err("source fft bin buffer is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!dest_fft_buf) {
+		spectral_err("destination fft bin buffer is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	rparams = &spectral->rparams;
+	num_bins_per_dword = SPECTRAL_DWORD_SIZE / rparams->hw_fft_bin_width;
+	num_dwords = fft_bin_count / num_bins_per_dword;
+	hw_fft_bin_width_bits = rparams->hw_fft_bin_width * QDF_CHAR_BIT;
+
+	fft_bin_idx = 0;
+	dword_ptr = src_fft_buf;
+	fft_bin_buf = dest_fft_buf;
+	for (dword_idx = 0; dword_idx < num_dwords; dword_idx++) {
+		dword = *dword_ptr++; /* Read a DWORD */
+		for (idx = 0; idx < num_bins_per_dword; idx++) {
+			fft_bin_val = (uint16_t)QDF_GET_BITS(
+					dword,
+					idx * hw_fft_bin_width_bits,
+					hw_fft_bin_width_bits);
+			/**
+			 * To check whether FFT bin values exceed 8 bits,
+			 * we add a check before copying values to fft_bin_buf.
+			 * If it crosses 8 bits, we cap the values to maximum
+			 * value supported by 8 bits ie. 255. This needs to be
+			 * done as the destination array in SAMP message is
+			 * 8 bits. This is a temporary solution till an array
+			 * of 16 bits is used for SAMP message.
+			 */
+			if (qdf_unlikely(fft_bin_val > MAX_FFTBIN_VALUE))
+				fft_bin_val = MAX_FFTBIN_VALUE;
+
+			fft_bin_buf[fft_bin_idx++] = fft_bin_val;
+		}
+	}
+
+	*bytes_copied = num_dwords *  SPECTRAL_DWORD_SIZE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef DIRECT_BUF_RX_ENABLE
 /**
  * target_if_get_spectral_mode() - Get Spectral scan mode corresponding to a
@@ -2361,8 +2430,6 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	size_t fft_bin_count;
 	size_t fft_bin_size;
 	size_t fft_bin_len_inband_tfer = 0;
-	uint8_t *fft_bin_buf = NULL;
-	size_t fft_bin_buf_size;
 	uint8_t tag, signature;
 
 	qdf_assert_always(spectral);
@@ -2434,68 +2501,30 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	spectral_debug("fft_avgpwr_db = %u", p_sfft->fft_avgpwr_db);
 	spectral_debug("fft_relpwr_db = %u", p_sfft->fft_relpwr_db);
 
-	fft_bin_buf_size = fft_bin_count;
-
 	if (fft_bin_count > 0) {
-		int idx;
+		uint8_t *fft_bin_buf;
+		uint32_t bytes_copied;
+		QDF_STATUS status;
 
-		if (spectral->len_adj_swar.fftbin_size_war ==
-				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
-			uint32_t *binptr_32 = (uint32_t *)&p_fft_report->buf;
-			uint16_t *fft_bin_buf_16 = NULL;
-
-			/* Useful width of FFT bin is 10 bits, increasing it to
-			 * byte boundary makes it 2 bytes. Hence, buffer to be
-			 * allocated should be of size fft_bin_count
-			 * multiplied by 2.
-			 */
-			fft_bin_buf_size <<= 1;
-
-			fft_bin_buf_16 = (uint16_t *)qdf_mem_malloc(
-						fft_bin_buf_size);
-			if (!fft_bin_buf_16) {
-				spectral_err("Failed to allocate memory");
-				return;
-			}
-
-			for (idx = 0; idx < fft_bin_count; idx++)
-				fft_bin_buf_16[idx] =
-					*((uint16_t *)binptr_32++);
-
-			fft_bin_buf = (uint8_t *)fft_bin_buf_16;
-		} else if (spectral->len_adj_swar.fftbin_size_war ==
-				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
-			uint16_t *binptr_16 = (uint16_t *)&p_fft_report->buf;
-			uint16_t *fft_bin_buf_16 = NULL;
-
-			/* Useful width of FFT bin is 10 bits, increasing it to
-			 * byte boundary makes it 2 bytes. Hence, buffer to be
-			 * allocated should be of size fft_bin_count
-			 * multiplied by 2.
-			 */
-			fft_bin_buf_size <<= 1;
-
-			fft_bin_buf_16 = (uint16_t *)qdf_mem_malloc(
-						fft_bin_buf_size);
-			if (!fft_bin_buf_16) {
-				spectral_err("Failed to allocate memory");
-				return;
-			}
-
-			for (idx = 0; idx < fft_bin_count; idx++)
-				fft_bin_buf_16[idx] = *(binptr_16++);
-
-			fft_bin_buf = (uint8_t *)fft_bin_buf_16;
-		} else {
-			fft_bin_buf = (uint8_t *)&p_fft_report->buf;
+		fft_bin_buf = qdf_mem_malloc(fft_bin_count);
+		if (!fft_bin_buf) {
+			spectral_err_rl("memory allocation failed");
+			return;
 		}
 
-		spectral_debug("FFT bin buffer size = %zu", fft_bin_buf_size);
-		spectral_debug("FFT bins:");
-		target_if_spectral_hexdump(fft_bin_buf, fft_bin_buf_size);
-		if ((spectral->len_adj_swar.fftbin_size_war !=
-				SPECTRAL_FFTBIN_SIZE_NO_WAR) && fft_bin_buf)
+		status = target_if_spectral_copy_fft_bins(
+				spectral, &p_fft_report->buf,
+				fft_bin_buf, fft_bin_count, &bytes_copied);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			spectral_err_rl("Unable to populate FFT bins");
 			qdf_mem_free(fft_bin_buf);
+			return;
+		}
+
+		spectral_debug("FFT bin buffer size = %zu", fft_bin_count);
+		spectral_debug("FFT bins:");
+		target_if_spectral_hexdump(fft_bin_buf, fft_bin_count);
+		qdf_mem_free(fft_bin_buf);
 	}
 }
 #endif
@@ -2958,36 +2987,24 @@ QDF_STATUS target_if_byte_swap_spectral_headers_gen3(
 }
 
 QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
-	struct spectral_fft_bin_len_adj_swar *swar,
+	const struct spectral_report_params *rparams,
 	void *bin_pwr_data, size_t num_fftbins)
 {
-	int i;
-	uint16_t *binptr_16;
-	uint32_t *binptr_32;
+	uint16_t dword_idx, num_dwords;
+	uint8_t num_bins_per_dword;
+	uint32_t *dword_ptr;
 
 	qdf_assert_always(bin_pwr_data);
-	qdf_assert_always(swar);
+	qdf_assert_always(rparams);
 
-	if (swar->fftbin_size_war ==
-			SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
-		binptr_32 = (uint32_t *)bin_pwr_data;
+	num_bins_per_dword = SPECTRAL_DWORD_SIZE / rparams->hw_fft_bin_width;
+	num_dwords = pwr_count / num_bins_per_dword;
+	dword_ptr = (uint32_t *)bin_pwr_data;
 
-		for (i = 0; i < num_fftbins; i++) {
-			/* Get the useful first 2 bytes of the DWORD */
-			binptr_16 = ((uint16_t *)binptr_32);
-			/* Byteswap and copy it back */
-			*binptr_16 = qdf_le16_to_cpu(*binptr_16);
-			++binptr_32; /* Go to next DWORD */
-		}
-	} else if (swar->fftbin_size_war ==
-			SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
-		binptr_16 = (uint16_t *)bin_pwr_data;
-
-		for (i = 0; i < num_fftbins; i++) {
-			/* Byteswap the FFT bin and copy it back */
-			*binptr_16 = qdf_le16_to_cpu(*binptr_16);
-			++binptr_16;
-		}
+	for (dword_idx = 0; dword_idx < num_dwords; dword_idx++) {
+		/* Read a DWORD, byteswap it, and copy it back */
+		*dword_ptr = qdf_le32_to_cpu(*dword_ptr);
+		++dword_ptr;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -3284,7 +3301,7 @@ target_if_process_sfft_report_gen3(
 	 *       they should use them only after this point.
 	 */
 	if (p_sops->byte_swap_fft_bins) {
-		ret = p_sops->byte_swap_fft_bins(&spectral->len_adj_swar,
+		ret = p_sops->byte_swap_fft_bins(&spectral->rparams,
 						 &p_sfft->bin_pwr_data,
 						 p_sfft->fft_bin_count);
 		if (QDF_IS_STATUS_ERROR(ret)) {
@@ -3849,7 +3866,7 @@ target_if_consume_spectral_report_gen3(
 		 */
 		if (p_sops->byte_swap_fft_bins) {
 			ret = p_sops->byte_swap_fft_bins(
-						&spectral->len_adj_swar,
+						&spectral->rparams,
 						temp, fft_bin_count);
 			if (QDF_IS_STATUS_ERROR(ret)) {
 				spectral_err_rl("Byte-swap on the FFT bins failed");
@@ -3970,7 +3987,7 @@ target_if_consume_spectral_report_gen3(
 		 */
 		if (p_sops->byte_swap_fft_bins) {
 			ret = p_sops->byte_swap_fft_bins(
-					&spectral->len_adj_swar,
+					&spectral->rparams,
 					params.bin_pwr_data_sec80,
 					fft_bin_count);
 			if (QDF_IS_STATUS_ERROR(ret)) {

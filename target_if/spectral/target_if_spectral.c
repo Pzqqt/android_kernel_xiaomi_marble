@@ -2575,32 +2575,88 @@ target_if_init_spectral_ops_gen2(void)
 
 #ifdef BIG_ENDIAN_HOST
 /**
+ * spectral_is_host_byte_swap_required() - Check if byte swap has to be done
+ * on the Host
+ * @pdev: pdev pointer
+ * @is_swap_required: Pointer to caller variable
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+spectral_is_host_byte_swap_required(struct wlan_objmgr_pdev *pdev,
+				    bool *is_swap_required)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+
+	if (!pdev) {
+		spectral_err("pdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle =  get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		spectral_err("wmi handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/**
+	 * If a chipset supports byte-swap inside the target itself, then no
+	 * need to apply byte swap on the Host.
+	 */
+	*is_swap_required = !target_if_spectral_wmi_service_enabled(
+				psoc, wmi_handle,
+				wmi_service_phy_dma_byte_swap_support);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * target_if_spectral_init_byte_swap_funcs_gen3() - Initialize byte-swap
  * operations for Spectral chipset generation 3.
- *
+ * @spectral: Spectral LMAC object
  * @p_sops: Spectral function pointer table
  *
  * Return: None
  */
 static void
 target_if_spectral_init_byte_swap_funcs_gen3(
+	struct target_if_spectral *spectral,
 	struct target_if_spectral_ops *p_sops)
 {
+	bool is_swap_required;
+	QDF_STATUS status;
+
+	qdf_assert_always(spectral);
 	qdf_assert_always(p_sops);
 
-	/* None of current Gen3 chipsets support byte-swap inside the target.
-	 * so, Host would have to implement the byte-swap for these chipsets.
-	 *
-	 * If a chipset supports byte-swap inside the target itself in future,
-	 * then, for that chipset, initialize these function pointers with
-	 * NULL based on the capability advertisement.
-	 */
-	p_sops->byte_swap_headers = target_if_byte_swap_spectral_headers_gen3;
-	p_sops->byte_swap_fft_bins = target_if_byte_swap_spectral_fft_bins_gen3;
+	status = spectral_is_host_byte_swap_required(spectral->pdev_obj,
+						     &is_swap_required);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		spectral_err("Failed to check whether byte swap is required");
+		return;
+	}
+
+	if (is_swap_required) {
+		p_sops->byte_swap_headers =
+			target_if_byte_swap_spectral_headers_gen3;
+		p_sops->byte_swap_fft_bins =
+			target_if_byte_swap_spectral_fft_bins_gen3;
+	} else {
+		p_sops->byte_swap_headers = NULL;
+		p_sops->byte_swap_fft_bins = NULL;
+	}
 }
 #else
 static void
 target_if_spectral_init_byte_swap_funcs_gen3(
+	struct target_if_spectral *spectral,
 	struct target_if_spectral_ops *p_sops)
 {
 	qdf_assert_always(p_sops);
@@ -2614,20 +2670,21 @@ target_if_spectral_init_byte_swap_funcs_gen3(
 /**
  * target_if_init_spectral_ops_gen3() - Initialize Spectral target_if internal
  * operations specific to Spectral chipset generation 3.
+ * @spectral: Spectral LMAC object
  *
  * Initializes target_if_spectral_ops specific to Spectral chipset generation 3.
  *
  * Return: None
  */
 static void
-target_if_init_spectral_ops_gen3(void)
+target_if_init_spectral_ops_gen3(struct target_if_spectral *spectral)
 {
 	struct target_if_spectral_ops *p_sops = &spectral_ops;
 
 	p_sops->process_spectral_report =
 			target_if_spectral_process_report_gen3;
 
-	target_if_spectral_init_byte_swap_funcs_gen3(p_sops);
+	target_if_spectral_init_byte_swap_funcs_gen3(spectral, p_sops);
 }
 
 /**
@@ -2647,7 +2704,7 @@ target_if_init_spectral_ops(struct target_if_spectral *spectral)
 	if (spectral->spectral_gen == SPECTRAL_GEN2)
 		target_if_init_spectral_ops_gen2();
 	else if (spectral->spectral_gen == SPECTRAL_GEN3)
-		target_if_init_spectral_ops_gen3();
+		target_if_init_spectral_ops_gen3(spectral);
 	else
 		spectral_err("Invalid Spectral generation");
 }
@@ -3028,6 +3085,7 @@ target_if_spectral_attach_simulation(struct target_if_spectral *spectral)
  * target_if_spectral_len_adj_swar_init() - Initialize FFT bin length adjustment
  * related info
  * @swar: Pointer to Spectral FFT bin length adjustment SWAR params
+ * @rparams: Pointer to Spectral report parameter object
  * @target_type: Target type
  *
  * Function to Initialize parameters related to Spectral FFT bin
@@ -3037,6 +3095,7 @@ target_if_spectral_attach_simulation(struct target_if_spectral *spectral)
  */
 static void
 target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
+				     struct spectral_report_params *rparams,
 				     uint32_t target_type)
 {
 	if (target_type == TARGET_TYPE_QCA8074V2 ||
@@ -3045,14 +3104,18 @@ target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
 	    target_type == TARGET_TYPE_QCN6122 ||
 	    target_type == TARGET_TYPE_QCA5018 ||
 	    target_type == TARGET_TYPE_QCA6750 ||
-	    target_type == TARGET_TYPE_QCA6490)
+	    target_type == TARGET_TYPE_QCA6490) {
 		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
-	else if (target_type == TARGET_TYPE_QCA8074 ||
+		rparams->hw_fft_bin_width = 2;
+	} else if (target_type == TARGET_TYPE_QCA8074 ||
 		 target_type == TARGET_TYPE_QCA6018 ||
-		 target_type == TARGET_TYPE_QCA6390)
+		 target_type == TARGET_TYPE_QCA6390) {
 		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE;
-	else
+		rparams->hw_fft_bin_width = 4;
+	} else {
 		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_NO_WAR;
+		rparams->hw_fft_bin_width = 1;
+	}
 
 	if (target_type == TARGET_TYPE_QCA8074 ||
 	    target_type == TARGET_TYPE_QCA8074V2 ||
@@ -3564,9 +3627,11 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    target_type == TARGET_TYPE_QCA6750)
 		spectral->direct_dma_support = true;
 
+	target_if_spectral_report_params_init(&spectral->rparams,
+					      target_type);
 	target_if_spectral_len_adj_swar_init(&spectral->len_adj_swar,
+					     &spectral->rparams,
 					     target_type);
-	target_if_spectral_report_params_init(&spectral->rparams, target_type);
 
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
