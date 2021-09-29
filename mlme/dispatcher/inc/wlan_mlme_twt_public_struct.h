@@ -80,8 +80,6 @@ enum wlan_twt_session_state {
 	WLAN_TWT_SETUP_STATE_SUSPEND = 2,
 };
 
-#define WLAN_ALL_SESSIONS_DIALOG_ID 255
-
 #ifdef WLAN_SUPPORT_TWT
 #define WLAN_MAX_TWT_SESSIONS_PER_PEER 1
 
