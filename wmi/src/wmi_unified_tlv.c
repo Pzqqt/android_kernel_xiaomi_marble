@@ -2553,6 +2553,20 @@ static inline void copy_peer_flags_tlv_11be(
 }
 #endif
 
+/* Need to remove below flag after fw change merging */
+#ifdef PEER_DMS_CAPABLE
+static inline void set_peer_dms_capable(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd)
+{
+	cmd->peer_flags_ext |= WMI_PEER_EXT_DMS_CAPABLE;
+}
+#else
+static inline void set_peer_dms_capable(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd)
+{
+}
+#endif
+
 static inline void copy_peer_flags_tlv(
 			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
 			struct peer_assoc_params *param)
@@ -2562,7 +2576,8 @@ static inline void copy_peer_flags_tlv(
 	 * Just populate those flags and send it down
 	 */
 	cmd->peer_flags = 0;
-
+	if (param->peer_dms_capable)
+		set_peer_dms_capable(cmd);
 	/*
 	 * Do not enable HT/VHT if WMM/wme is disabled for vap.
 	 */
