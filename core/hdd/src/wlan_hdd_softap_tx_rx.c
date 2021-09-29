@@ -1429,7 +1429,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   WLAN_CONTROL_PATH);
 	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
 	ucfg_mlme_init_twt_context(hdd_ctx->psoc, sta_mac,
-				   WLAN_ALL_SESSIONS_DIALOG_ID);
+				   TWT_ALL_SESSIONS_DIALOG_ID);
 	return qdf_status;
 }
 

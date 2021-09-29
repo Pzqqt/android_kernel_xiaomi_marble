@@ -1919,7 +1919,7 @@ static QDF_STATUS sme_process_antenna_mode_resp(struct mac_context *mac,
  * to iterate through the list of all peers and check for any given @dialog_id
  * if the command @cmd is in progress.
  * Note: If @peer_mac is broadcast MAC address then @dialog_id shall always
- * be WLAN_ALL_SESSIONS_DIALOG_ID.
+ * be TWT_ALL_SESSIONS_DIALOG_ID.
  * For ex: If TWT teardown command is issued on a particular @dialog_id and
  * non-broadcast peer mac and FW response is not yet received then for that
  * particular @dialog_id and @peer_mac, TWT teardown is the active command,
@@ -1960,7 +1960,7 @@ sme_sap_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
  * If the input @peer_mac is a broadcast MAC address then there is nothing
  * to do, because the initialized structure is already in the expected format
  * Note: If @peer_mac is broadcast MAC address then @dialog_id shall always
- * be WLAN_ALL_SESSIONS_DIALOG_ID.
+ * be TWT_ALL_SESSIONS_DIALOG_ID.
  *
  * If the input @peer_mac is a non-broadcast MAC address then
  * mlme_add_twt_session() shall add the @dialog_id to the @peer_mac
@@ -1991,7 +1991,7 @@ sme_sap_add_twt_session(struct wlan_objmgr_psoc *psoc,
  * to iterate through the list of all peers and set the active command to @cmd
  * for the given @dialog_id
  * Note: If @peer_mac is broadcast MAC address then @dialog_id shall always
- * be WLAN_ALL_SESSIONS_DIALOG_ID.
+ * be TWT_ALL_SESSIONS_DIALOG_ID.
  * For ex: If TWT teardown command is issued on broadcast @peer_mac, then
  * it is same as issuing TWT teardown for all the peers (all TWT sessions).
  * Invoking mlme_sap_set_twt_all_peers_cmd_in_progress() shall iterate through
@@ -2033,7 +2033,7 @@ sme_sap_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
  * to iterate through the list of all peers and initialize the TWT session
  * context
  * Note: If @peer_mac is broadcast MAC address then @dialog_id shall always
- * be WLAN_ALL_SESSIONS_DIALOG_ID.
+ * be TWT_ALL_SESSIONS_DIALOG_ID.
  * For ex: If TWT teardown command is issued on broadcast @peer_mac, then
  * it is same as issuing TWT teardown for all the peers (all TWT sessions).
  * Then active command for all the peers is set to @WLAN_TWT_TERMINATE.
@@ -2235,7 +2235,7 @@ sme_process_sta_twt_del_dialog_event(
 					WLAN_TWT_TERMINATE, &active_cmd);
 
 	if (!is_evt_allowed &&
-	    param->dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
+	    param->dialog_id != TWT_ALL_SESSIONS_DIALOG_ID &&
 	    param->status != WMI_HOST_DEL_TWT_STATUS_ROAMING &&
 	    param->status != WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN &&
 	    param->status != WMI_HOST_DEL_TWT_STATUS_CONCURRENCY) {
@@ -2425,7 +2425,7 @@ sme_process_twt_nudge_dialog_event(struct mac_context *mac,
 					param->peer_macaddr, param->dialog_id,
 					WLAN_TWT_NUDGE, &active_cmd);
 		if (!is_evt_allowed &&
-		    param->dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID) {
+		    param->dialog_id != TWT_ALL_SESSIONS_DIALOG_ID) {
 			sme_debug("Nudge event dropped active_cmd:%d",
 				  active_cmd);
 			goto fail;

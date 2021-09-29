@@ -1107,7 +1107,7 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 						   FTM_TIME_SYNC_STA_CONNECTED);
 		ucfg_mlme_init_twt_context(hdd_ctx->psoc,
 					   &rsp->bssid,
-					   WLAN_ALL_SESSIONS_DIALOG_ID);
+					   TWT_ALL_SESSIONS_DIALOG_ID);
 	}
 	hdd_periodic_sta_stats_start(adapter);
 	wlan_twt_concurrency_update(hdd_ctx);

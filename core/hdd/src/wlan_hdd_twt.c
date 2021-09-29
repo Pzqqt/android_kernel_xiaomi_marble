@@ -986,7 +986,7 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 	case QDF_SAP_MODE:
 		return hdd_sap_twt_get_session_params(adapter, twt_param_attr);
 	default:
-		hdd_err_rl("TWT terminate is not supported on %s",
+		hdd_err_rl("TWT get session params is not supported on %s",
 			   qdf_opmode_str(adapter->device_mode));
 	}
 
@@ -2033,15 +2033,15 @@ hdd_send_twt_del_all_sessions_to_userspace(struct hdd_adapter *adapter)
 
 	if (!ucfg_mlme_is_twt_setup_done(psoc,
 					 &hdd_sta_ctx->conn_info.bssid,
-					 WLAN_ALL_SESSIONS_DIALOG_ID)) {
+					 TWT_ALL_SESSIONS_DIALOG_ID)) {
 		hdd_debug("No active TWT sessions, vdev_id: %d dialog_id: %d",
-			  adapter->vdev_id, WLAN_ALL_SESSIONS_DIALOG_ID);
+			  adapter->vdev_id, TWT_ALL_SESSIONS_DIALOG_ID);
 		return;
 	}
 
 	qdf_mem_zero(&params, sizeof(params));
 	params.vdev_id = adapter->vdev_id;
-	params.dialog_id = WLAN_ALL_SESSIONS_DIALOG_ID;
+	params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
 	params.status = WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR;
 	qdf_mem_copy(params.peer_macaddr, hdd_sta_ctx->conn_info.bssid.bytes,
 		     QDF_MAC_ADDR_SIZE);
@@ -3246,12 +3246,12 @@ free_skb:
 }
 
 /**
- * hdd_twt_get_capabilities() - Process TWT resume operation
- * in the received vendor command and send it to firmware
+ * hdd_twt_get_capabilities() - Process TWT get capabilities
+ * in the received vendor command.
  * @adapter: adapter pointer
  * @twt_param_attr: nl attributes
  *
- * Handles QCA_WLAN_TWT_RESUME
+ * Handles QCA_WLAN_TWT_GET_CAPABILITIES
  *
  * Return: 0 on success, negative value on failure
  */
@@ -3593,11 +3593,11 @@ static int hdd_twt_clear_session_traffic_stats(struct hdd_adapter *adapter,
 
 	if (ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
 						 &hdd_sta_ctx->conn_info.bssid,
-						 WLAN_ALL_SESSIONS_DIALOG_ID,
+						 TWT_ALL_SESSIONS_DIALOG_ID,
 						 WLAN_TWT_STATISTICS, NULL) ||
 	   ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
 						&hdd_sta_ctx->conn_info.bssid,
-						WLAN_ALL_SESSIONS_DIALOG_ID,
+						TWT_ALL_SESSIONS_DIALOG_ID,
 						WLAN_TWT_CLEAR_STATISTICS,
 						NULL)) {
 		hdd_warn("Already TWT statistics or clear statistics exists");
@@ -3709,11 +3709,11 @@ static int hdd_twt_get_session_traffic_stats(struct hdd_adapter *adapter,
 
 	if (ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
 						 &hdd_sta_ctx->conn_info.bssid,
-						 WLAN_ALL_SESSIONS_DIALOG_ID,
+						 TWT_ALL_SESSIONS_DIALOG_ID,
 						 WLAN_TWT_STATISTICS, NULL) ||
 	    ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
 						 &hdd_sta_ctx->conn_info.bssid,
-						 WLAN_ALL_SESSIONS_DIALOG_ID,
+						 TWT_ALL_SESSIONS_DIALOG_ID,
 						 WLAN_TWT_CLEAR_STATISTICS,
 						 NULL)) {
 		hdd_warn("Already TWT statistics or clear statistics exists");
@@ -4507,7 +4507,7 @@ void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
 	struct wmi_twt_del_dialog_param params = {0};
 	int ret;
 
-	params.dialog_id = WLAN_ALL_SESSIONS_DIALOG_ID;
+	params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
 	params.vdev_id = vdev_id;
 	qdf_mem_copy(params.peer_macaddr, mac_addr->bytes, QDF_MAC_ADDR_SIZE);
 
