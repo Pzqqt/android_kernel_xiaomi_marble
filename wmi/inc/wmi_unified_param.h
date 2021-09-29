@@ -1133,6 +1133,8 @@ struct peer_assoc_params {
 	struct peer_assoc_mlo_params mlo_params;
 	struct peer_assoc_ml_partner_links ml_links;
 #endif
+	uint8_t peer_dms_capable:1,
+		reserved:7;
 };
 
 /**
