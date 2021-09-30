@@ -1293,7 +1293,8 @@ policy_mgr_is_cur_freq_range_sbs(struct wlan_objmgr_psoc *psoc)
 	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
 	sbs_freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
 
-	if (!qdf_mem_cmp(freq_range, sbs_freq_range, sizeof(freq_range)))
+	if (!qdf_mem_cmp(freq_range, sbs_freq_range,
+			 sizeof(*freq_range) * MAX_MAC))
 		return true;
 
 	return false;
@@ -1301,7 +1302,7 @@ policy_mgr_is_cur_freq_range_sbs(struct wlan_objmgr_psoc *psoc)
 
 bool policy_mgr_is_current_hwmode_sbs(struct wlan_objmgr_psoc *psoc)
 {
-		struct policy_mgr_hw_mode_params hw_mode;
+	struct policy_mgr_hw_mode_params hw_mode;
 
 	if (!policy_mgr_is_hw_sbs_capable(psoc))
 		return false;
