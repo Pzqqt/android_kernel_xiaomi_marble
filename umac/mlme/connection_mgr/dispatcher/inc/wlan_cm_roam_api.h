@@ -28,9 +28,6 @@
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
 
-/* Default value of reason code */
-#define DISABLE_VENDOR_BTM_CONFIG 2
-
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * wlan_cm_enable_roaming_on_connected_sta() - Enable roaming on other connected
@@ -849,15 +846,6 @@ wlan_cm_roam_set_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_cm_roam_vendor_btm_params
 								*param);
 /**
- * wlan_cm_roam_disable_vendor_btm() - API to disable vendor btm by default
- * reason
- * @psoc: PSOC pointer
- *
- * Return: none
- */
-void wlan_cm_roam_disable_vendor_btm(struct wlan_objmgr_psoc *psoc);
-
-/**
  * wlan_cm_roam_get_vendor_btm_params() - API to get vendor btm param
  * @psoc: PSOC pointer
  * @param: vendor configured roam trigger param
@@ -1148,11 +1136,6 @@ wlan_cm_roam_disable_vendor_btm(struct wlan_objmgr_psoc *psoc)
 
 static inline void
 wlan_cm_roam_set_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
-				   struct wlan_cm_roam_vendor_btm_params *param)
-{}
-
-static inline void
-wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_cm_roam_vendor_btm_params *param)
 {}
 

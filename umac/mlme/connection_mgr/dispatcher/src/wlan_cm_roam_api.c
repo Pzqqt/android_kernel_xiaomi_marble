@@ -587,20 +587,6 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 }
 
 void
-wlan_cm_roam_disable_vendor_btm(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return;
-
-	/* Set default value of reason code */
-	mlme_obj->cfg.lfr.vendor_btm_param.user_roam_reason =
-					DISABLE_VENDOR_BTM_CONFIG;
-}
-
-void
 wlan_cm_roam_set_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_cm_roam_vendor_btm_params *param)
 {
