@@ -383,7 +383,7 @@ static void __schedule_power_collapse_work(struct msm_vidc_core *core)
 
 	if (!mod_delayed_work(core->pm_workq, &core->pm_work,
 			msecs_to_jiffies(core->capabilities[SW_PC_DELAY].value))) {
-		d_vpr_e("power collapse already scheduled\n");
+		d_vpr_h("power collapse already scheduled\n");
 	} else {
 		d_vpr_l("power collapse scheduled for %d ms\n",
 			core->capabilities[SW_PC_DELAY].value);
