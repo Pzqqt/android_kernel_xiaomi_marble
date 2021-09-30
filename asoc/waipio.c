@@ -1623,8 +1623,8 @@ static int waipio_ssr_enable(struct device *dev, void *data)
 {
 	struct platform_device *pdev = to_platform_device(dev);
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
-	struct snd_soc_pcm_runtime *rtd, *rtd_wcd, *rtd_wsa;
-	struct msm_asoc_mach_data *pdata;
+	struct snd_soc_pcm_runtime *rtd = NULL, *rtd_wcd = NULL, *rtd_wsa = NULL;
+	struct msm_asoc_mach_data *pdata = NULL;
 	int ret = 0;
 
 	if (!card) {
@@ -1642,6 +1642,10 @@ static int waipio_ssr_enable(struct device *dev, void *data)
 	dev_dbg(dev, "%s: setting snd_card to ONLINE\n", __func__);
 
 	pdata = snd_soc_card_get_drvdata(card);
+	if (!pdata) {
+		dev_dbg(dev, "%s: pdata is NULL \n", __func__);
+		goto err;
+	}
 	rtd_wcd = snd_soc_get_pcm_runtime(card, &card->dai_link[0]);
 	if (!rtd_wcd) {
 		dev_dbg(dev,
