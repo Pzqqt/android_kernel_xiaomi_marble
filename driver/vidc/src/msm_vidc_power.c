@@ -164,6 +164,16 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 	}
 	mutex_unlock(&core->lock);
 
+	if (msm_vidc_ddr_bw) {
+		d_vpr_l("msm_vidc_ddr_bw %d\n", msm_vidc_ddr_bw);
+		total_bw_ddr = msm_vidc_ddr_bw;
+	}
+
+	if (msm_vidc_llc_bw) {
+		d_vpr_l("msm_vidc_llc_bw %d\n", msm_vidc_llc_bw);
+		total_bw_llcc = msm_vidc_llc_bw;
+	}
+
 	rc = venus_hfi_scale_buses(inst, total_bw_ddr, total_bw_llcc);
 	if (rc)
 		return rc;
@@ -193,8 +203,6 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 
 	vote_data->power_mode = VIDC_POWER_NORMAL;
 	if (inst->power.buffer_counter < DCVS_WINDOW || is_image_session(inst))
-		vote_data->power_mode = VIDC_POWER_TURBO;
-	if (msm_vidc_clock_voting)
 		vote_data->power_mode = VIDC_POWER_TURBO;
 
 	if (vote_data->power_mode == VIDC_POWER_TURBO)

@@ -34,6 +34,8 @@ extern unsigned int msm_vidc_debug;
 extern bool msm_vidc_lossless_encode;
 extern bool msm_vidc_syscache_disable;
 extern int msm_vidc_clock_voting;
+extern int msm_vidc_ddr_bw;
+extern int msm_vidc_llc_bw;
 extern bool msm_vidc_fw_dump;
 extern unsigned int msm_vidc_enable_bugon;
 
