@@ -934,6 +934,9 @@ policy_mgr_fill_curr_freq_by_pdev_freq(int32_t num_mac_freq,
 {
 	uint32_t pdev_id, i;
 
+	/* memzero before filling it */
+	qdf_mem_zero(pm_ctx->hw_mode.cur_mac_freq_range,
+		     sizeof(pm_ctx->hw_mode.cur_mac_freq_range));
 	for (i = 0; i < num_mac_freq; i++) {
 		pdev_id = freq[i].pdev_id;
 
@@ -1005,6 +1008,9 @@ void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
+	policy_mgr_update_curr_mac_freq(num_mac_freq, freq_info, pm_ctx,
+					hw_mode);
+
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (i = 0; i < num_vdev_mac_entries; i++) {
 		conn_index = 0;
@@ -1032,8 +1038,6 @@ void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	policy_mgr_update_curr_mac_freq(num_mac_freq, freq_info, pm_ctx,
-					hw_mode);
 	policy_mgr_dump_connection_status_info(psoc);
 }
 
@@ -1301,29 +1305,13 @@ static uint32_t policy_mgr_dump_current_concurrency_three_connection(
 	return count;
 }
 
-/**
- * policy_mgr_dump_dbs_concurrency() - To dump the dbs concurrency
- * combination
- * @cc_mode: connection string
- *
- * This routine is called to dump the concurrency info
- *
- * Return: None
- */
-static void policy_mgr_dump_dbs_concurrency(struct wlan_objmgr_psoc *psoc,
-					char *cc_mode, uint32_t length)
+static void
+policy_mgr_dump_dual_mac_concurrency(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				     char *cc_mode, uint32_t length)
 {
-	char buf[4] = {0};
 	uint8_t mac = 0;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	char buf[4] = {0};
 
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return;
-	}
-
-	strlcat(cc_mode, " DBS", length);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (pm_conc_connection_list[0].mac ==
 		pm_conc_connection_list[1].mac) {
@@ -1368,6 +1356,54 @@ static void policy_mgr_dump_dbs_concurrency(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * policy_mgr_dump_dbs_concurrency() - To dump the dbs concurrency
+ * combination
+ * @cc_mode: connection string
+ *
+ * This routine is called to dump the concurrency info
+ *
+ * Return: None
+ */
+static void policy_mgr_dump_dbs_concurrency(struct wlan_objmgr_psoc *psoc,
+					char *cc_mode, uint32_t length)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	strlcat(cc_mode, " DBS", length);
+	policy_mgr_dump_dual_mac_concurrency(pm_ctx, cc_mode, length);
+}
+
+/**
+ * policy_mgr_dump_sbs_concurrency() - To dump the sbs concurrency
+ * combination
+ * @cc_mode: connection string
+ *
+ * This routine is called to dump the concurrency info
+ *
+ * Return: None
+ */
+static void policy_mgr_dump_sbs_concurrency(struct wlan_objmgr_psoc *psoc,
+					    char *cc_mode, uint32_t length)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	strlcat(cc_mode, " SBS", length);
+	policy_mgr_dump_dual_mac_concurrency(pm_ctx, cc_mode, length);
+}
+
+/**
  * policy_mgr_dump_current_concurrency() - To dump the current
  * concurrency combination
  *
@@ -1403,8 +1439,10 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 		if (pm_conc_connection_list[0].freq ==
 			pm_conc_connection_list[1].freq) {
 			strlcat(cc_mode, " SCC", sizeof(cc_mode));
-		} else if (policy_mgr_is_dbs_enable(psoc)) {
+		} else if (policy_mgr_is_current_hwmode_dbs(psoc)) {
 			strlcat(cc_mode, " DBS", sizeof(cc_mode));
+		} else if (policy_mgr_is_current_hwmode_sbs(psoc)) {
+			strlcat(cc_mode, " SBS", sizeof(cc_mode));
 		} else {
 			strlcat(cc_mode, " MCC", sizeof(cc_mode));
 		}
@@ -1431,8 +1469,14 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 						sizeof(cc_mode));
 		} else {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-			policy_mgr_dump_dbs_concurrency(psoc, cc_mode,
-					sizeof(cc_mode));
+			if (policy_mgr_is_current_hwmode_dbs(psoc))
+				policy_mgr_dump_dbs_concurrency(psoc, cc_mode,
+							sizeof(cc_mode));
+			else if (policy_mgr_is_current_hwmode_sbs(psoc))
+				policy_mgr_dump_sbs_concurrency(psoc, cc_mode,
+							sizeof(cc_mode));
+			else
+				strlcat(cc_mode, " MCC", sizeof(cc_mode));
 		}
 		policy_mgr_debug("%s", cc_mode);
 		break;
