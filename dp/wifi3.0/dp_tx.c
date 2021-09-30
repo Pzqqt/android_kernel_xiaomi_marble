@@ -1515,121 +1515,6 @@ static inline int dp_get_rtpm_tput_policy_requirement(struct dp_soc *soc)
 #endif
 
 /**
- * dp_cce_classify() - Classify the frame based on CCE rules
- * @vdev: DP vdev handle
- * @nbuf: skb
- *
- * Classify frames based on CCE rules
- * Return: bool( true if classified,
- *               else false)
- */
-static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
-{
-	qdf_ether_header_t *eh = NULL;
-	uint16_t   ether_type;
-	qdf_llc_t *llcHdr;
-	qdf_nbuf_t nbuf_clone = NULL;
-	qdf_dot3_qosframe_t *qos_wh = NULL;
-
-	if (qdf_likely(vdev->skip_sw_tid_classification)) {
-	/*
-	 * In case of mesh packets or hlos tid override enabled,
-	 * don't do any classification
-	 */
-		if (qdf_unlikely(vdev->skip_sw_tid_classification
-					& DP_TX_SKIP_CCE_CLASSIFY))
-			return false;
-	}
-
-	if (qdf_likely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
-		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
-		ether_type = eh->ether_type;
-		llcHdr = (qdf_llc_t *)(nbuf->data +
-					sizeof(qdf_ether_header_t));
-	} else {
-		qos_wh = (qdf_dot3_qosframe_t *) nbuf->data;
-		/* For encrypted packets don't do any classification */
-		if (qdf_unlikely(qos_wh->i_fc[1] & IEEE80211_FC1_WEP))
-			return false;
-
-		if (qdf_unlikely(qos_wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS)) {
-			if (qdf_unlikely(
-				qos_wh->i_fc[1] & QDF_IEEE80211_FC1_TODS &&
-				qos_wh->i_fc[1] & QDF_IEEE80211_FC1_FROMDS)) {
-
-				ether_type = *(uint16_t *)(nbuf->data
-						+ QDF_IEEE80211_4ADDR_HDR_LEN
-						+ sizeof(qdf_llc_t)
-						- sizeof(ether_type));
-				llcHdr = (qdf_llc_t *)(nbuf->data +
-						QDF_IEEE80211_4ADDR_HDR_LEN);
-			} else {
-				ether_type = *(uint16_t *)(nbuf->data
-						+ QDF_IEEE80211_3ADDR_HDR_LEN
-						+ sizeof(qdf_llc_t)
-						- sizeof(ether_type));
-				llcHdr = (qdf_llc_t *)(nbuf->data +
-					QDF_IEEE80211_3ADDR_HDR_LEN);
-			}
-
-			if (qdf_unlikely(DP_FRAME_IS_SNAP(llcHdr)
-				&& (ether_type ==
-				qdf_htons(QDF_NBUF_TRAC_EAPOL_ETH_TYPE)))) {
-
-				DP_STATS_INC(vdev, tx_i.cce_classified_raw, 1);
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	if (qdf_unlikely(DP_FRAME_IS_SNAP(llcHdr))) {
-		ether_type = *(uint16_t *)(nbuf->data + 2*QDF_MAC_ADDR_SIZE +
-				sizeof(*llcHdr));
-		nbuf_clone = qdf_nbuf_clone(nbuf);
-		if (qdf_unlikely(nbuf_clone)) {
-			qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr));
-
-			if (ether_type == htons(ETHERTYPE_VLAN)) {
-				qdf_nbuf_pull_head(nbuf_clone,
-						sizeof(qdf_net_vlanhdr_t));
-			}
-		}
-	} else {
-		if (ether_type == htons(ETHERTYPE_VLAN)) {
-			nbuf_clone = qdf_nbuf_clone(nbuf);
-			if (qdf_unlikely(nbuf_clone)) {
-				qdf_nbuf_pull_head(nbuf_clone,
-					sizeof(qdf_net_vlanhdr_t));
-			}
-		}
-	}
-
-	if (qdf_unlikely(nbuf_clone))
-		nbuf = nbuf_clone;
-
-
-	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf)
-		|| qdf_nbuf_is_ipv4_arp_pkt(nbuf)
-		|| qdf_nbuf_is_ipv4_wapi_pkt(nbuf)
-		|| qdf_nbuf_is_ipv4_tdls_pkt(nbuf)
-		|| (qdf_nbuf_is_ipv4_pkt(nbuf)
-			&& qdf_nbuf_is_ipv4_dhcp_pkt(nbuf))
-		|| (qdf_nbuf_is_ipv6_pkt(nbuf) &&
-			qdf_nbuf_is_ipv6_dhcp_pkt(nbuf)))) {
-		if (qdf_unlikely(nbuf_clone))
-			qdf_nbuf_free(nbuf_clone);
-		return true;
-	}
-
-	if (qdf_unlikely(nbuf_clone))
-		qdf_nbuf_free(nbuf_clone);
-
-	return false;
-}
-
-/**
  * dp_tx_get_tid() - Obtain TID to be used for this frame
  * @vdev: DP vdev handle
  * @nbuf: skb
@@ -2032,14 +1917,6 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		goto fail_return;
 	}
 
-	if (qdf_unlikely(soc->cce_disable)) {
-		if (dp_cce_classify(vdev, nbuf) == true) {
-			DP_STATS_INC(vdev, tx_i.cce_classified, 1);
-			tid = DP_VO_TID;
-			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
-		}
-	}
-
 	dp_tx_update_tdls_flags(soc, vdev, tx_desc);
 
 	if (qdf_unlikely(peer_id == DP_INVALID_PEER)) {
@@ -2181,14 +2058,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
 	uint8_t prep_desc_fail = 0, hw_enq_fail = 0;
-
-	if (qdf_unlikely(soc->cce_disable)) {
-		is_cce_classified = dp_cce_classify(vdev, nbuf);
-		if (is_cce_classified) {
-			DP_STATS_INC(vdev, tx_i.cce_classified, 1);
-			msdu_info->tid = DP_VO_TID;
-		}
-	}
 
 	if (msdu_info->frm_type == dp_tx_frm_me)
 		nbuf = msdu_info->u.sg_info.curr_seg->nbuf;
