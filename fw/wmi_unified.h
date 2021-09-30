@@ -2607,12 +2607,14 @@ typedef struct _wmi_ppe_threshold {
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_BITPOS          (29)
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_BITPOS (28)
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_BITPOS (27)
+#define WMI_DBS_FW_MODE_CFG_ASYNC_SBS_BITPOS            (26)
 
 #define WMI_DBS_FW_MODE_CFG_DBS_MASK                    (0x1 << WMI_DBS_FW_MODE_CFG_DBS_BITPOS)
 #define WMI_DBS_FW_MODE_CFG_AGILE_DFS_MASK              (0x1 << WMI_DBS_FW_MODE_CFG_AGILE_DFS_BITPOS)
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_DFS_MASK        (0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_BITPOS)
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_MASK   (0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_BITPOS)
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_MASK   (0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_BITPOS)
+#define WMI_DBS_FW_MODE_CFG_ASYNC_SBS_MASK              (0x1 << WMI_DBS_FW_MODE_CFG_ASYNC_SBS_BITPOS)
 
 #define WMI_DBS_FW_MODE_CFG_DBS_SET(fw_mode, value) \
     WMI_SET_BITS(fw_mode, WMI_DBS_FW_MODE_CFG_DBS_BITPOS, 1, value)
@@ -2624,6 +2626,8 @@ typedef struct _wmi_ppe_threshold {
     WMI_SET_BITS(fw_mode, WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_BITPOS, 1, value)
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_SET(fw_mode, value) \
     WMI_SET_BITS(fw_mode, WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_BITPOS, 1, value)
+#define WMI_DBS_FW_MODE_CFG_ASYNC_SBS_SET(fw_mode, value) \
+    WMI_SET_BITS(fw_mode, WMI_DBS_FW_MODE_CFG_ASYNC_SBS_BITPOS, 1, value)
 
 #define WMI_DBS_FW_MODE_CFG_DBS_GET(fw_mode)    \
     ((fw_mode & WMI_DBS_FW_MODE_CFG_DBS_MASK) >> WMI_DBS_FW_MODE_CFG_DBS_BITPOS)
@@ -2635,7 +2639,8 @@ typedef struct _wmi_ppe_threshold {
     ((fw_mode & WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_MASK) >> WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_BITPOS)
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_GET(fw_mode)    \
     ((fw_mode & WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_MASK) >> WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_BITPOS)
-
+#define WMI_DBS_FW_MODE_CFG_ASYNC_SBS_GET(fw_mode)    \
+    ((fw_mode & WMI_DBS_FW_MODE_CFG_ASYNC_SBS_MASK) >> WMI_DBS_FW_MODE_CFG_ASYNC_SBS_BITPOS)
 
 /** NOTE: This structure cannot be extended in the future without breaking WMI compatibility */
 typedef struct _wmi_abi_version {
@@ -3103,6 +3108,7 @@ typedef struct {
      *     wmi_nan_capabilities               nan_cap;
      *     WMI_SCAN_RADIO_CAPABILITIES_EXT2   wmi_scan_radio_caps[];
      *     wmi_htt_msdu_idx_to_htt_msdu_qtype htt_msdu_idx_to_qtype_map[];
+     *     wmi_dbs_or_sbs_cap_ext             dbs_or_sbs_cap_ext;
      */
 } wmi_service_ready_ext2_event_fixed_param;
 
@@ -36217,6 +36223,20 @@ typedef struct {
  * A_UINT32 aids[];
  */
 } wmi_vdev_set_mu_snif_cmd_param;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dbs_or_sbs_cap_ext*/
+    A_UINT32 tlv_header;
+    /* hw_mode_id: refer to WMI_HW_MODE_CAPABILITIES */
+    A_UINT32 hw_mode_id;
+    /*
+     * If sbs_lower_band_end_freq is set to non-zero, it indicates
+     * async SBS mode is supported, and lower-band/higher band to MAC
+     * mapping is switch-able. unit: mhz. examples 5180, 5320
+     */
+    A_UINT32 sbs_lower_band_end_freq;
+} wmi_dbs_or_sbs_cap_ext;
+
 
 
 /* ADD NEW DEFS HERE */

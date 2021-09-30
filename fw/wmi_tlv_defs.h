@@ -1204,6 +1204,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ctrl_path_btcoex_stats_struct,
     WMITLV_TAG_STRUC_wmi_icmp_offload_fixed_param,
     WMITLV_TAG_STRUC_WMI_IPV6_ADDR,
+    WMITLV_TAG_STRUC_wmi_dbs_or_sbs_cap_ext,
 } WMITLV_TAG_ID;
 
 /*
@@ -4873,7 +4874,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_capabilities, wmi_nan_capabilities, nan_cap, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_SCAN_RADIO_CAPABILITIES_EXT2, wmi_scan_radio_caps, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_twt_caps_params, twt_caps, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_htt_msdu_idx_to_htt_msdu_qtype, htt_msdu_idx_to_qtype_map, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_htt_msdu_idx_to_htt_msdu_qtype, htt_msdu_idx_to_qtype_map, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dbs_or_sbs_cap_ext, dbs_or_sbs_cap_ext, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT2_EVENTID);
 
 #define WMITLV_TABLE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID(id,op,buf,len) \
