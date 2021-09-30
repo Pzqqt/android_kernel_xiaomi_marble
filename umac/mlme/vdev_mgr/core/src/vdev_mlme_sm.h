@@ -23,7 +23,9 @@
 #ifndef _VDEV_MLME_SM_H_
 #define _VDEV_MLME_SM_H_
 
+#ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_ap.h>
+#endif
 #include <wlan_dfs_utils_api.h>
 
 /**
