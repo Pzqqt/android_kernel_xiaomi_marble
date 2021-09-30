@@ -621,6 +621,10 @@ struct cdp_ctrl_ops {
 				       uint8_t vdev_id,
 				       uint8_t *peer_mac,
 				       u_int32_t authorize);
+	bool
+		(*txrx_peer_get_authorize)(struct cdp_soc_t *soc_hdl,
+					   uint8_t vdev_id,
+					   uint8_t *peer_mac);
 
 	void (*tx_flush_buffers)(struct cdp_soc_t *soc, uint8_t vdev_id);
 

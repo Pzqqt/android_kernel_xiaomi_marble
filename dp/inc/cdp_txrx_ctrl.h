@@ -283,6 +283,33 @@ cdp_peer_authorize(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *peer_mac,
 			(soc, vdev_id, peer_mac, authorize);
 }
 
+/**
+ * cdp_peer_get_authorize Get per authorize status
+ *
+ * @soc - pointer to the soc
+ * @vdev_id - id of the pointer to vdev
+ * @peer_mac - mac address of the node's object
+ *
+ * Return: true is peer is authorized, false otherwise
+ */
+static inline bool
+cdp_peer_get_authorize(ol_txrx_soc_handle soc, uint8_t vdev_id,
+		       uint8_t *peer_mac)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance:");
+		QDF_BUG(0);
+		return false;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_peer_get_authorize)
+		return false;
+
+	return soc->ops->ctrl_ops->txrx_peer_get_authorize
+			(soc, vdev_id, peer_mac);
+}
+
 static inline void cdp_tx_flush_buffers
 (ol_txrx_soc_handle soc, uint8_t vdev_id)
 {

@@ -7309,6 +7309,35 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	return status;
 }
 
+/*
+ * dp_peer_get_authorize() - get peer authorize status
+ * @soc: soc handle
+ * @vdev_id: id of dp handle
+ * @peer_mac: mac of datapath PEER handle
+ *
+ * Retusn: true is peer is authorized, false otherwise
+ */
+static bool
+dp_peer_get_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		      uint8_t *peer_mac)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	bool authorize = false;
+	struct dp_peer *peer = dp_peer_find_hash_find(soc, peer_mac,
+						      0, vdev_id,
+						      DP_MOD_ID_CDP);
+
+	if (!peer) {
+		dp_cdp_debug("%pK: Peer is NULL!\n", soc);
+		return authorize;
+	}
+
+	authorize = peer->authorize;
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+
+	return authorize;
+}
+
 /**
  * dp_vdev_unref_delete() - check and process vdev delete
  * @soc : DP specific soc pointer
@@ -11272,6 +11301,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_peer_authorize = dp_peer_authorize,
+	.txrx_peer_get_authorize = dp_peer_get_authorize,
 #ifdef VDEV_PEER_PROTOCOL_COUNT
 	.txrx_enable_peer_protocol_count = dp_enable_vdev_peer_protocol_count,
 	.txrx_set_peer_protocol_drop_mask =
@@ -12219,7 +12249,6 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		dp_err("wlan_cfg_ctx failed\n");
 		goto fail1;
 	}
-
 	dp_soc_cfg_attach(soc);
 
 	if (dp_hw_link_desc_pool_banks_alloc(soc, WLAN_INVALID_PDEV_ID)) {
