@@ -478,9 +478,16 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 		config_req.ss_frequency.cfreq2 = nla_get_u32(tb
 		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2]);
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH])
-		config_req.ss_bandwidth = nla_get_u8(tb
-		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH]);
+	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH]) {
+		uint8_t sscan_bw_nl;
+
+		sscan_bw_nl = nla_get_u8(
+		   tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH]);
+
+		/* Convert to phy_ch_width format */
+		config_req.ss_bandwidth =
+			wlan_spectral_get_phy_ch_width(sscan_bw_nl);
+	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_MODE]) {
 		status = convert_spectral_mode_nl_to_internal(nla_get_u32(tb
@@ -691,6 +698,7 @@ int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 	struct spectral_cp_request sscan_req;
 	enum spectral_scan_mode sscan_mode = SPECTRAL_SCAN_MODE_NORMAL;
 	QDF_STATUS status;
+	int sscan_bw_nl;
 
 	if (wlan_cfg80211_nla_parse(
 			tb,
@@ -723,6 +731,12 @@ int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 	sscan_req.req_id = SPECTRAL_GET_CONFIG;
 	status = ucfg_spectral_control(pdev, &sscan_req);
 	sconfig = &sscan_req.config_req.sscan_config;
+
+	/* Convert to sscan_bw to NL8021 format */
+	sscan_bw_nl = wlan_spectral_get_nl80211_chwidth(sconfig->ss_bandwidth);
+	if (sscan_bw_nl == -EINVAL)
+		goto fail;
+
 	if (nla_put_u32(skb,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_SCAN_COUNT,
 			sconfig->ss_count) ||
@@ -792,7 +806,7 @@ int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 			sconfig->ss_frequency.cfreq2) ||
 	    nla_put_u8(skb,
 		       QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BANDWIDTH,
-		       sconfig->ss_bandwidth))
+		       sscan_bw_nl))
 
 		goto fail;
 
