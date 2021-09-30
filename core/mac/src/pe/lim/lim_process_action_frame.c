@@ -640,7 +640,8 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 	 * Change the status to failure and fallthrough to send response
 	 * to SME to cleanup the flow.
 	 */
-	if (!lim_is_medium_time_valid(mac_ctx, session, addts))
+	if (addts.tspec.tsinfo.traffic.direction != SIR_MAC_DIRECTION_DNLINK &&
+	    !lim_is_medium_time_valid(mac_ctx, session, addts))
 		addts.status = STATUS_UNSPECIFIED_FAILURE;
 
 	/* deactivate the response timer */
