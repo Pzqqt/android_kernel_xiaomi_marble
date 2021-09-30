@@ -393,6 +393,11 @@ cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
 	rsp->connect_rsp.vdev_id = roam_synch_data->roamed_vdev_id;
 	qdf_copy_macaddr(&rsp->connect_rsp.bssid, &roam_synch_data->bssid);
 
+	if (!util_scan_is_null_ssid(&roam_synch_data->ssid))
+		wlan_vdev_mlme_set_ssid(vdev,
+					roam_synch_data->ssid.ssid,
+					roam_synch_data->ssid.length);
+
 	status = wlan_vdev_mlme_get_ssid(vdev,
 					 rsp->connect_rsp.ssid.ssid,
 					 &rsp->connect_rsp.ssid.length);

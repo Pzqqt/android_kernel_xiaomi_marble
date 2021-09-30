@@ -2627,6 +2627,11 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	lim_fill_ft_session(mac_ctx, bss_desc, ft_session_ptr,
 			    session_ptr, roam_sync_ind_ptr->phy_mode,
 			    assoc_rsp);
+	roam_sync_ind_ptr->ssid.length =
+		qdf_min((qdf_size_t)ft_session_ptr->ssId.length,
+			sizeof(roam_sync_ind_ptr->ssid.ssid));
+	qdf_mem_copy(roam_sync_ind_ptr->ssid.ssid, ft_session_ptr->ssId.ssId,
+		     roam_sync_ind_ptr->ssid.length);
 	pe_set_rmf_caps(mac_ctx, ft_session_ptr, roam_sync_ind_ptr);
 	/* Next routine may update nss based on dot11Mode */
 
