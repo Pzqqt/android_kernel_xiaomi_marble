@@ -2886,3 +2886,39 @@ void __qdf_mem_vfree(void *ptr)
 }
 
 qdf_export_symbol(__qdf_mem_vfree);
+
+#if IS_ENABLED(CONFIG_ARM_SMMU) && defined(ENABLE_SMMU_S1_TRANSLATION)
+int
+qdf_iommu_domain_get_attr(qdf_iommu_domain_t *domain,
+			  enum qdf_iommu_attr attr, void *data)
+{
+	return __qdf_iommu_domain_get_attr(domain, attr, data);
+}
+
+qdf_export_symbol(qdf_iommu_domain_get_attr);
+#endif
+
+#ifdef ENHANCED_OS_ABSTRACTION
+void qdf_update_mem_map_table(qdf_device_t osdev,
+			      qdf_mem_info_t *mem_info,
+			      qdf_dma_addr_t dma_addr,
+			      uint32_t mem_size)
+{
+	if (!mem_info) {
+		qdf_nofl_err("%s: NULL mem_info", __func__);
+		return;
+	}
+
+	__qdf_update_mem_map_table(osdev, mem_info, dma_addr, mem_size);
+}
+
+qdf_export_symbol(qdf_update_mem_map_table);
+
+qdf_dma_addr_t qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
+					  qdf_dma_addr_t dma_addr)
+{
+	return __qdf_mem_paddr_from_dmaaddr(osdev, dma_addr);
+}
+
+qdf_export_symbol(qdf_mem_paddr_from_dmaaddr);
+#endif

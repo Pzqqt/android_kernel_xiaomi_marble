@@ -27,6 +27,10 @@ INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/src \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/ptt/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/core/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/core/src \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/dispatcher/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/ipa/dispatcher/src \
         -I$(WLAN_TOP)/pld/inc
 
 obj-m += qdf.o
@@ -82,6 +86,10 @@ endif
 #linux/src/qdf_net_event.o \
 #linux/src/qdf_net_ioctl.o
 #linux/src/qdf_net_wext.o
+
+ifeq ($(IPA_OFFLOAD), 1)
+qdf-objs += linux/src/qdf_ipa.o
+endif
 
 ifeq ($(MEMORY_DEBUG),1)
 qdf-objs += src/qdf_debug_domain.o \

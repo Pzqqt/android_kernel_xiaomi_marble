@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +25,7 @@
 
 /* Include Files */
 #include <qdf_ipa.h>
+#include <qdf_module.h>
 
 static uint8_t __qdf_to_ipa_wlan_event(int qdf_ipa_event)
 {
@@ -79,3 +81,5 @@ void __qdf_ipa_set_meta_msg_type(__qdf_ipa_msg_meta_t *meta, int type)
 {
 	meta->msg_type = __qdf_to_ipa_wlan_event(type);
 }
+
+qdf_export_symbol(__qdf_ipa_set_meta_msg_type);
