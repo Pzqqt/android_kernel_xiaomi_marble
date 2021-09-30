@@ -1488,11 +1488,26 @@ int ipa_pm_get_current_clk_vote(void)
 		return ipa3_ctx->app_clock_vote.cnt;
 }
 
+
+static int ipa_get_pm_hdl_from_name(char *client_name)
+{
+	int i;
+	struct pm_client_name_lookup *lookup;
+
+	for (i = 0; i < NUM_PM_CLIENT_NAMES; i++) {
+		lookup = &client_lookup_table[i];
+		if (!strcmp(lookup->name, client_name))
+			return lookup->idx_hdl;
+	}
+	return NUM_PM_CLIENT_NAMES + 2;
+}
+
 bool ipa_get_pm_client_stats_filled(struct pm_client_stats *pm_stats_ptr,
 	int pm_client_index)
 {
 	struct ipa_pm_client *client;
 	unsigned long flags;
+	int i;
 
 	client = ipa_pm_ctx->clients[pm_client_index];
 	mutex_lock(&ipa_pm_ctx->client_mutex);
@@ -1503,11 +1518,19 @@ bool ipa_get_pm_client_stats_filled(struct pm_client_stats *pm_stats_ptr,
 	spin_lock_irqsave(&client->state_lock, flags);
 	pm_stats_ptr->pm_client_group = client->group;
 	pm_stats_ptr->pm_client_state = client->state;
-	pm_stats_ptr->pm_client_hdl = pm_client_index;
+	pm_stats_ptr->pm_client_hdl = ipa_get_pm_hdl_from_name(client->name);
 	if (client->group == IPA_PM_GROUP_DEFAULT)
 		pm_stats_ptr->pm_client_bw = client->throughput;
 	else {
 		pm_stats_ptr->pm_client_bw = ipa_pm_ctx->group_tput[client->group];
+	}
+
+	pm_stats_ptr->pm_client_type = IPA_CLIENT_MAX;
+	for (i = 0; i < ipa3_get_max_num_pipes(); i++) {
+		if (ipa_pm_ctx->clients_by_pipe[i] == client) {
+			pm_stats_ptr->pm_client_type = ipa3_get_client_by_pipe(i);
+			break;
+		}
 	}
 
 	spin_unlock_irqrestore(&client->state_lock, flags);
