@@ -200,6 +200,7 @@ struct swr_mstr_ctrl {
 	u32 num_auto_enum;
 	bool enable_slave_irq;
 	u32 is_always_on;
+	bool clk_stop_wakeup;
 	struct swr_port_params pp[SWR_UC_MAX][SWR_MAX_MSTR_PORT_NUM];/*max_devNum * max_ports 11 * 14 */
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs_swrm_dent;
