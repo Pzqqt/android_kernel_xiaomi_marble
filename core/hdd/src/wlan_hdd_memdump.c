@@ -255,6 +255,8 @@ static int hdd_driver_memdump_procfs_init(struct hdd_context *hdd_ctx)
  */
 static void hdd_driver_memdump_procfs_remove(void)
 {
+	if (!proc_file_driver)
+		return;
 	remove_proc_entry(PROCFS_DRIVER_DUMP_NAME, proc_dir_driver);
 	pr_debug("/proc/%s/%s removed\n", PROCFS_DRIVER_DUMP_DIR,
 					  PROCFS_DRIVER_DUMP_NAME);
