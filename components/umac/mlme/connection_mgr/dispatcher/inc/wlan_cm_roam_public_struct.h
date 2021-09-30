@@ -109,6 +109,9 @@
 #define MAX_BSSID_FAVORED      16
 #define WLAN_MAX_BTM_CANDIDATES      8
 
+/* Default value of WTC reason code */
+#define DISABLE_VENDOR_BTM_CONFIG 2
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 #define MAX_FTIE_SIZE CM_MAX_FTIE_SIZE
 #else
