@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2017,2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,6 +132,7 @@ static inline void qdf_nbuf_set_exc_frame(qdf_nbuf_t buf, uint8_t value)
 static inline void qdf_nbuf_set_rx_ipa_smmu_map(qdf_nbuf_t buf,
 						uint8_t value)
 {
+	QDF_NBUF_CB_RX_PACKET_IPA_SMMU_MAP(buf) = value;
 }
 
 /**
@@ -164,8 +166,27 @@ static inline void qdf_nbuf_set_intra_bss(qdf_nbuf_t buf, uint8_t val)
  */
 static inline uint8_t qdf_nbuf_is_rx_ipa_smmu_map(qdf_nbuf_t buf)
 {
+	return QDF_NBUF_CB_RX_PACKET_IPA_SMMU_MAP(buf);
+}
+
+static inline int qdf_nbuf_ipa_owned_get(qdf_nbuf_t buf)
+{
 	return 0;
 }
+
+static inline void qdf_nbuf_ipa_owned_set(qdf_nbuf_t buf)
+{ }
+
+static inline void qdf_nbuf_ipa_owned_clear(qdf_nbuf_t buf)
+{ }
+
+static inline int qdf_nbuf_ipa_priv_get(qdf_nbuf_t buf)
+{
+	return 0;
+}
+
+static inline void qdf_nbuf_ipa_priv_set(qdf_nbuf_t buf, uint32_t priv)
+{ }
 
 /**
  * qdf_nbuf_set_rx_reo_dest_ind_or_sw_excpt() - set reo destination indication

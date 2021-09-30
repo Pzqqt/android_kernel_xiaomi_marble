@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,6 +101,10 @@
 
 #define __qdf_nbuf_get_rx_flow_tag(skb) \
 		(QDF_NBUF_CB_RX_FLOW_TAG((skb)))
+
+#define  QDF_NBUF_CB_RX_PACKET_IPA_SMMU_MAP(skb) \
+	 (((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_w. \
+	 ipa_smmu_map)
 
 /**
  * qdf_nbuf_cb_update_vdev_id() - update vdev id in skb cb
