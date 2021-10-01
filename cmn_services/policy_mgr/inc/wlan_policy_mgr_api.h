@@ -692,20 +692,29 @@ policy_mgr_is_p2p_p2p_conc_supported(struct wlan_objmgr_psoc *psoc)
 bool policy_mgr_is_go_scc_strict(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_check_forcescc_for_other_go() - check if another p2pgo
- * is present and find vdev id.
+ * policy_mgr_fetch_existing_con_info() - check if another vdev
+ * is present and find mode, freq , vdev id and chan width
  *
  * @psoc: psoc object
  * @vdev: vdev id
  * @freq: frequency
+ * @mode: existing vdev mode
+ * @con_freq: existing connection freq
+ * @ch_width: ch_width of existing connection
  *
- * This function checks if another p2p go is there.
+ * This function checks if another vdev is there and fetch connection
+ * info for that vdev.This is mainly for force SCC implementation of GO+GO ,
+ * GO+SAP or GO+STA where we fetch other existing GO, STA, SAP on the same
+ * band with MCC.
  *
  * Return: vdev_id
  */
 uint8_t
-policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
-				       uint8_t vdev_id, uint32_t curr_go_freq);
+policy_mgr_fetch_existing_con_info(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id, uint32_t curr_go_freq,
+				   enum policy_mgr_con_mode *mode,
+				   uint32_t *con_freq,
+				   enum phy_ch_width *ch_width);
 
 /**
  * policy_mgr_process_forcescc_for_go () - start work queue to move first p2p go
@@ -715,6 +724,7 @@ policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
  * @vdev_id: Vdev id
  * @ch_freq: Channel frequency to change
  * @ch_width: channel width to change
+ * @mode: existing vdev mode
  *
  * starts delayed work queue of 1 second to move first p2p go to new
  * p2p go's channel.
@@ -723,7 +733,8 @@ policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
  */
 void policy_mgr_process_forcescc_for_go(
 		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-		uint32_t ch_freq, uint32_t ch_width);
+		uint32_t ch_freq, uint32_t ch_width,
+		enum policy_mgr_con_mode mode);
 
 /**
  * policy_mgr_do_go_plus_go_force_scc() - First p2p go
@@ -750,9 +761,12 @@ bool policy_mgr_is_go_scc_strict(struct wlan_objmgr_psoc *psoc)
 }
 
 static inline
-uint8_t policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
-					       uint8_t vdev_id,
-					       uint32_t curr_go_freq)
+uint8_t policy_mgr_fetch_existing_con_info(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id,
+					   uint32_t curr_go_freq,
+					   enum policy_mgr_con_mode *mode,
+					   uint32_t *con_freq,
+					   enum phy_ch_width *ch_width)
 {
 	return WLAN_UMAC_VDEV_ID_MAX;
 }
@@ -760,7 +774,8 @@ uint8_t policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
 static inline
 void policy_mgr_process_forcescc_for_go(
 		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-		uint32_t ch_freq, uint32_t ch_width)
+		uint32_t ch_freq, uint32_t ch_width,
+		enum policy_mgr_con_mode mode)
 {}
 
 static inline

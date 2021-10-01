@@ -2026,25 +2026,27 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(
 	uint32_t ch_freq;
 	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	struct sta_ap_intf_check_work_ctx *work_info;
 
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid context");
 		return;
 	}
+	work_info = pm_ctx->sta_ap_intf_check_work_info;
 	/*
 	 * Check if force scc is required for GO + GO case. vdev id will be
 	 * valid in case of GO+GO force scc only. So, for valid vdev id move
 	 * first GO to newly formed GO channel.
 	 */
 	policy_mgr_debug("p2p go vdev id: %d",
-			 pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.vdev_id);
+			 work_info->go_plus_go_force_scc.vdev_id);
 	if (pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.vdev_id <
 	    WLAN_UMAC_VDEV_ID_MAX) {
 		policy_mgr_do_go_plus_go_force_scc(
-			pm_ctx->psoc, pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.vdev_id,
-			pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.ch_freq,
-			pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.ch_width);
-		pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+			pm_ctx->psoc, work_info->go_plus_go_force_scc.vdev_id,
+			work_info->go_plus_go_force_scc.ch_freq,
+			work_info->go_plus_go_force_scc.ch_width);
+		work_info->go_plus_go_force_scc.vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 		return;
 	}
 
@@ -2642,9 +2644,11 @@ void policy_mgr_do_go_plus_go_force_scc(struct wlan_objmgr_psoc *psoc,
 
 void policy_mgr_process_forcescc_for_go(struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id, uint32_t ch_freq,
-					uint32_t ch_width)
+					uint32_t ch_width,
+					enum policy_mgr_con_mode mode)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct sta_ap_intf_check_work_ctx *work_info;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2655,19 +2659,16 @@ void policy_mgr_process_forcescc_for_go(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("invalid work info");
 		return;
 	}
-	pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.vdev_id =
-								vdev_id;
-	pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.ch_freq =
-								ch_freq;
-	pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.ch_width =
-								ch_width;
+	work_info = pm_ctx->sta_ap_intf_check_work_info;
+	if (mode == PM_P2P_GO_MODE) {
+		work_info->go_plus_go_force_scc.vdev_id = vdev_id;
+		work_info->go_plus_go_force_scc.ch_freq = ch_freq;
+		work_info->go_plus_go_force_scc.ch_width = ch_width;
+	}
 
 	if (!qdf_delayed_work_start(&pm_ctx->sta_ap_intf_check_work,
-				    WAIT_BEFORE_GO_FORCESCC_RESTART)) {
-		policy_mgr_err("change interface request failure");
-		pm_ctx->sta_ap_intf_check_work_info->go_plus_go_force_scc.vdev_id =
-						WLAN_UMAC_VDEV_ID_MAX;
-	}
+				    WAIT_BEFORE_GO_FORCESCC_RESTART))
+		policy_mgr_debug("change interface request already queued");
 }
 #endif
 
