@@ -511,12 +511,25 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	uint32_t buff_len;
 	char *chan_buff;
 	uint32_t len = 0;
+	uint32_t sta_count;
+
+	filter->num_of_channels = 0;
+	sta_count = policy_mgr_mode_specific_connection_count(psoc,
+							PM_STA_MODE, NULL);
+
+	/* No need to fill freq list, if no other STA is in conencted state */
+	if (!sta_count)
+		return;
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
 		return;
 	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 	mlme_cfg = &mlme_obj->cfg;
+
+	mlme_debug("sta_count %d, primary vdev is %d dual sta roaming enabled %d",
+		   sta_count, dual_sta_policy->primary_vdev_id,
+		   wlan_mlme_get_dual_sta_roaming_enabled(psoc));
 
 	if (!wlan_mlme_get_dual_sta_roaming_enabled(psoc))
 		return;
@@ -530,11 +543,8 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	 * environment, so that user can switch to second
 	 * connection and mark it as primary.
 	 */
-	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
-		mlme_debug("primary iface is configured, vdev_id: %d",
-			   dual_sta_policy->primary_vdev_id);
+	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 		return;
-	}
 
 	/*
 	 * Get Reg domain valid channels and update to the scan filter
@@ -554,7 +564,6 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	if (!chan_buff)
 		return;
 
-	filter->num_of_channels = 0;
 	for (i = 0; i < num_channels; i++) {
 		is_ch_allowed =
 			wlan_cm_dual_sta_is_freq_allowed(psoc, channel_list[i],
