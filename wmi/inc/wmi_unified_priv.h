@@ -1476,6 +1476,10 @@ QDF_STATUS (*extract_pdev_sscan_fft_bin_index)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
 			struct spectral_fft_bin_markers_160_165mhz *params);
+
+QDF_STATUS (*extract_pdev_spectral_session_chan_info)(
+			wmi_unified_t wmi_handle, void *event,
+			struct spectral_session_chan_info *chan_info);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 QDF_STATUS (*send_vdev_spectral_configure_cmd)(wmi_unified_t wmi_handle,
@@ -3303,4 +3307,12 @@ static inline void wmi_mc_cp_stats_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif /* QCA_SUPPORT_MC_CP_STATS */
+
+/*
+ * wmi_map_ch_width() - map wmi channel width to host channel width
+ * @wmi_width: wmi channel width
+ *
+ * Return: host channel width, enum phy_ch_width
+ */
+enum phy_ch_width wmi_map_ch_width(A_UINT32 wmi_width);
 #endif

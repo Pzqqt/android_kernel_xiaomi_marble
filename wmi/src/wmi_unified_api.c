@@ -2584,6 +2584,18 @@ QDF_STATUS wmi_extract_pdev_sscan_fft_bin_index(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_extract_pdev_spectral_session_chan_info(
+			wmi_unified_t wmi_handle, void *event,
+			struct spectral_session_chan_info *chan_info)
+{
+	if (wmi_handle->ops->extract_pdev_spectral_session_chan_info)
+		return wmi_handle->ops->extract_pdev_spectral_session_chan_info(
+				wmi_handle,
+				event, chan_info);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 QDF_STATUS wmi_extract_spectral_scaling_params_service_ready_ext(

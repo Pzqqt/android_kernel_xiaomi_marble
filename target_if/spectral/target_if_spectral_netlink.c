@@ -227,6 +227,14 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		qdf_spin_lock_bh(&spectral->session_report_info_lock);
 
 		rpt_info = &spectral->report_info[spectral_mode];
+
+		if (!rpt_info->valid) {
+			qdf_spin_unlock_bh(&spectral->session_report_info_lock);
+			qdf_spin_unlock_bh(&spectral->session_det_map_lock);
+			spectral_info("per-session report info is not valid");
+			return QDF_STATUS_E_FAILURE;
+		}
+
 		spec_samp_msg->signature = SPECTRAL_SIGNATURE;
 		p_sops->get_mac_address(spectral, spec_samp_msg->macaddr);
 		spec_samp_msg->spectral_mode = spectral_mode;

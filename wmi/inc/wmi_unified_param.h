@@ -2945,6 +2945,42 @@ struct spectral_startscan_resp_params {
 	enum spectral_scan_mode smode;
 	uint8_t num_fft_bin_index;
 };
+
+/**
+ * struct spectral_session_chan_info - Spectral scan session channel information
+ * @operating_pri20_freq: frequency of primary 20MHz channel (in MHz)
+ * @operating_cfreq1: center frequency 1 of operating channel (in MHz)
+ * @operating_cfreq2: center frequency 2 of operating channel (in MHz).
+ * For contiguous channels, @operating_cfreq1 should be represent the center of
+ * the entire span and @operating_cfreq2 should be 0, whereas for non-contiguous
+ * channels, @operating_cfreq1 should represent the center of primary segment
+ * and @@operating_cfreq2 should represent the center of secondary segment.
+ * @operating_bw: operating bandwidth enumeration
+ * @operating_puncture_20mhz_bitmap: Puncture bitmap of operating channel.
+ * Each bit indicates one 20 MHz punctured channel
+ * @sscan_cfreq1: center frequency 1 (in MHz) of the channel in which spectral
+ * scan is done
+ * @sscan_cfreq2: center frequency 2 (in MHz) of the channel in which spectral
+ * scan is done. For contiguous channels, @sscan_cfreq1 should be represent the
+ * center of the entire span and @sscan_cfreq2 should be 0, whereas for
+ * non-contiguous channels, @sscan_cfreq1 should represent the center of primary
+ * segment and @sscan_cfreq2 should represent the center of secondary segment.
+ * @sscan_bw: bandwidth of the channel in which spectral scan is done
+ * @sscan_puncture_20mhz_bitmap: Puncture bitmap of channel in which spectral
+ * scan is done. Each bit indicates one 20 MHz punctured channel.
+ */
+struct spectral_session_chan_info {
+	qdf_freq_t operating_pri20_freq;
+	qdf_freq_t operating_cfreq1;
+	qdf_freq_t operating_cfreq2;
+	enum phy_ch_width operating_bw;
+	uint16_t operating_puncture_20mhz_bitmap;
+
+	qdf_freq_t sscan_cfreq1;
+	qdf_freq_t sscan_cfreq2;
+	enum phy_ch_width sscan_bw;
+	uint16_t sscan_puncture_20mhz_bitmap;
+};
 #endif
 
 /**
@@ -5210,6 +5246,7 @@ typedef enum {
 	wmi_service_hw_mode_policy_offload_support,
 	wmi_service_mgmt_rx_reo_supported,
 	wmi_service_phy_dma_byte_swap_support,
+	wmi_service_spectral_session_info_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

@@ -2208,6 +2208,20 @@ QDF_STATUS wmi_extract_pdev_sscan_fft_bin_index(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
 			struct spectral_fft_bin_markers_160_165mhz *param);
+
+/**
+ * wmi_extract_pdev_spectral_session_chan_info() - Extract channel information
+ * for a spectral scan session
+ * @wmi_handle: handle to WMI.
+ * @evt_buf: Event buffer
+ * @chan_info: Spectral session channel information data structure to be filled
+ * by this API
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS wmi_extract_pdev_spectral_session_chan_info(
+			wmi_unified_t wmi_handle, void *event,
+			struct spectral_session_chan_info *chan_info);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 #if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
