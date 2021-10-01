@@ -185,6 +185,7 @@ struct dbr_cfr_metadata {
 	u_int32_t   rx_start_ts;
 	u_int16_t   mcs_rate;
 	u_int16_t   gi_type;
+	u_int8_t    agc_gain_tbl_index[HOST_MAX_CHAINS];
 } __attribute__ ((__packed__));
 
 #ifdef WLAN_ENH_CFR_ENABLE
@@ -227,6 +228,7 @@ struct enh_cfr_metadata {
 	u_int16_t   mcs_rate;
 	u_int16_t   gi_type;
 	struct cfr_su_sig_info sig_info;
+	u_int8_t    agc_gain_tbl_index[HOST_MAX_CHAINS];
 } __attribute__ ((__packed__));
 #endif
 
