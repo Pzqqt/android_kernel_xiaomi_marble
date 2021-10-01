@@ -32531,6 +32531,7 @@ typedef enum {
     WMI_6GHZ_REG_LPI = 0,
     WMI_6GHZ_REG_VLP = 1,
     WMI_6GHZ_REG_SP  = 2,
+    WMI_6GHZ_REG_SP_STA = 3,
     WMI_6GHZ_REG_MAX = 5, /* Can't expand, b/c used as array length below */
 } WMI_6GHZ_REG_TYPE;
 
