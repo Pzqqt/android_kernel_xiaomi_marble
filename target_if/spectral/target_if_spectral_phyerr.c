@@ -1178,11 +1178,25 @@ target_if_update_session_info_from_report_ctx(
 	bool is_fragmentation_160;
 	uint32_t start_end_freq_arr[2];
 	QDF_STATUS ret;
+	bool is_session_info_expected;
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	ret = spectral_is_session_info_expected_from_target(
+				spectral->pdev_obj,
+				&is_session_info_expected);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to check if session info is expected");
+		return ret;
+	}
+
+	/* If FW sends this information, use it, no need to get it from here */
+	if (is_session_info_expected)
+		return QDF_STATUS_SUCCESS;
+
 	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
 		spectral_err_rl("Invalid Spectral mode");
 		return QDF_STATUS_E_FAILURE;

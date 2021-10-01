@@ -1480,6 +1480,11 @@ QDF_STATUS (*extract_pdev_sscan_fft_bin_index)(
 QDF_STATUS (*extract_pdev_spectral_session_chan_info)(
 			wmi_unified_t wmi_handle, void *event,
 			struct spectral_session_chan_info *chan_info);
+
+QDF_STATUS (*extract_pdev_spectral_session_detector_info)(
+		wmi_unified_t wmi_handle, void *event,
+		struct spectral_session_det_info *det_info,
+		uint8_t det_info_idx);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 QDF_STATUS (*send_vdev_spectral_configure_cmd)(wmi_unified_t wmi_handle,

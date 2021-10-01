@@ -7265,6 +7265,44 @@ extract_pdev_spectral_session_chan_info_tlv(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS
+extract_pdev_spectral_session_detector_info_tlv(
+			wmi_unified_t wmi_handle, void *event,
+			struct spectral_session_det_info *det_info, uint8_t idx)
+{
+	WMI_PDEV_SSCAN_FW_PARAM_EVENTID_param_tlvs *param_buf = event;
+	wmi_pdev_sscan_detector_info *det_info_tlv;
+
+	if (!param_buf) {
+		wmi_err("param_buf is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!det_info) {
+		wmi_err("chan_info is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!param_buf->det_info) {
+		wmi_err("det_info tlv is not present in the event");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (idx >= param_buf->num_det_info) {
+		wmi_err("det_info index(%u) is greater than or equal to %u",
+			idx, param_buf->num_det_info);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	det_info_tlv = &param_buf->det_info[idx];
+
+	det_info->det_id = det_info_tlv->detector_id;
+	det_info->start_freq = (qdf_freq_t)det_info_tlv->start_freq;
+	det_info->end_freq = (qdf_freq_t)det_info_tlv->end_freq;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* SPECTRAL_BERYLLIUM */
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
@@ -16304,6 +16342,8 @@ struct wmi_ops tlv_ops =  {
 #ifdef SPECTRAL_BERYLLIUM
 	.extract_pdev_spectral_session_chan_info =
 				extract_pdev_spectral_session_chan_info_tlv,
+	.extract_pdev_spectral_session_detector_info =
+				extract_pdev_spectral_session_detector_info_tlv,
 #endif /* SPECTRAL_BERYLLIUM */
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 	.send_thermal_mitigation_param_cmd =
