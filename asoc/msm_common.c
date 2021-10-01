@@ -239,8 +239,8 @@ static void check_userspace_service_state(struct snd_soc_pcm_runtime *rtd,
 static int get_mi2s_tdm_auxpcm_intf_index(const char *stream_name)
 {
 
-	if (!strnstr(stream_name, "TDM", strlen(stream_name)) ||
-	    !strnstr(stream_name, "MI2S", strlen(stream_name)) ||
+	if (!strnstr(stream_name, "TDM", strlen(stream_name)) &&
+	    !strnstr(stream_name, "MI2S", strlen(stream_name)) &&
 	    !strnstr(stream_name, "AUXPCM", strlen(stream_name)))
 		return -EINVAL;
 
