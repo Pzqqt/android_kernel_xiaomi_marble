@@ -417,6 +417,9 @@ static void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 			cfr_debug("agc_gain[%d] = %d\n",
 				  chain_id,
 				  meta->agc_gain[chain_id]);
+			cfr_debug("agc_gain_tbl_idx[%d] = %d\n",
+				  chain_id,
+				  meta->agc_gain_tbl_index[chain_id]);
 		}
 
 		cfr_debug("mcs_rate = %u\n", meta->mcs_rate);
@@ -864,10 +867,11 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 
 	for (i = 0; i < HOST_MAX_CHAINS; i++) {
 		meta->agc_gain[i] = get_gain_db(gain_info[i]);
+		meta->agc_gain_tbl_index[i] = get_gain_table_idx(gain_info[i]);
 
 		if (pcfr->is_aoa_for_rcc_support &&
 		    (i < pcfr->max_aoa_chains) &&
-		    (get_gain_table_idx(gain_info[i]) != 0)) {
+		    (meta->agc_gain_tbl_index[i] != 0)) {
 			cfr_debug("Invalid gain table index reported");
 			invalid_gain_table_idx = true;
 		}
@@ -906,7 +910,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 				meta->chain_phase[i] = INVALID_PHASE_DELTA;
 			else
 				meta->chain_phase[i] = ((pcfr->ibf_cal_val[i] +
-							pdelta) % 1024);
+							pdelta) & 0x3FF);
 		}
 	} else if (pcfr->is_aoa_for_rcc_support) {
 		/**
@@ -1591,6 +1595,11 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	qdf_mem_copy(&header->u.meta_enh.agc_gain[0],
 		     &tx_evt_param.agc_gain[0],
 		     HOST_MAX_CHAINS * sizeof(tx_evt_param.agc_gain[0]));
+	qdf_mem_copy(&header->u.meta_enh.agc_gain_tbl_index[0],
+		     &tx_evt_param.agc_gain_tbl_index[0],
+		     (HOST_MAX_CHAINS *
+		      sizeof(tx_evt_param.agc_gain_tbl_index[0])));
+
 	header->u.meta_enh.rtt_cfo_measurement = tx_evt_param.cfo_measurement;
 	header->u.meta_enh.rx_start_ts = tx_evt_param.rx_start_ts;
 	header->u.meta_enh.mcs_rate    = tx_evt_param.mcs_rate;

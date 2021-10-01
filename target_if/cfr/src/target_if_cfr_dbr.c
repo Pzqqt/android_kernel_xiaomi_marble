@@ -389,6 +389,13 @@ static void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 		  event->agc_gain[2], event->agc_gain[3],
 		  event->agc_gain[4], event->agc_gain[5],
 		  event->agc_gain[6], event->agc_gain[7]);
+	cfr_debug("gain_tbl_idx0: %u gain_tbl_idx1: %u gain_tbl_idx2: %u\n"
+		  "gain_tbl_idx3: %u gain_tbl_idx4: %u gain_tbl_idx5: %u\n"
+		  "gain_tbl_idx6: %u gain_tbl_idx7: %u\n",
+		  event->agc_gain_tbl_index[0], event->agc_gain_tbl_index[1],
+		  event->agc_gain_tbl_index[2], event->agc_gain_tbl_index[3],
+		  event->agc_gain_tbl_index[4], event->agc_gain_tbl_index[5],
+		  event->agc_gain_tbl_index[6], event->agc_gain_tbl_index[7]);
 }
 
 /**
@@ -589,6 +596,10 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	qdf_mem_copy(&header->u.meta_dbr.chain_phase[0],
 		     &tx_evt_param.chain_phase[0],
 		     HOST_MAX_CHAINS * sizeof(tx_evt_param.chain_phase[0]));
+	qdf_mem_copy(&header->u.meta_dbr.agc_gain_tbl_index[0],
+		     &tx_evt_param.agc_gain_tbl_index[0],
+		     (HOST_MAX_CHAINS *
+		      sizeof(tx_evt_param.agc_gain_tbl_index[0])));
 
 	status = correlate_and_relay(pdev, cookie, lut,
 				     CORRELATE_TX_EV_MODULE_ID);
