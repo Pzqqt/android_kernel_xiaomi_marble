@@ -114,6 +114,7 @@ struct svc_info {
 struct mq_map {
 	struct rmnet_bearer_map *bearer;
 	bool is_ll_ch;
+	bool drop_on_remove;
 };
 
 struct qos_info {
