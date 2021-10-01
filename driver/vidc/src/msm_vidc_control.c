@@ -948,7 +948,8 @@ int msm_vidc_adjust_bitrate_mode(void *instance, struct v4l2_ctrl *ctrl)
 	frame_rc = capability->cap[FRAME_RC_ENABLE].value;
 	frame_skip = capability->cap[FRAME_SKIP_MODE].value;
 
-	if (lossless) {
+	if (lossless || (msm_vidc_lossless_encode &&
+		inst->codec == MSM_VIDC_HEVC)) {
 		hfi_value = HFI_RC_LOSSLESS;
 		goto update;
 	}
