@@ -88,6 +88,9 @@ extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 				(0xffff & chain_phase_ev->chain_phase[idx]);
 			peer_tx_event->agc_gain[idx] =
 				WMI_UNIFIED_AGC_GAIN_GET(chain_phase_ev, idx);
+			peer_tx_event->agc_gain_tbl_index[idx] =
+				WMI_UNIFIED_AGC_GAIN_TBL_IDX_GET(chain_phase_ev,
+								 idx);
 		}
 	}
 

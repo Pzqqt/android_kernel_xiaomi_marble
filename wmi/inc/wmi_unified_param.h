@@ -7871,6 +7871,7 @@ typedef struct {
 	uint32_t rx_ts_reset;
 	uint32_t mcs_rate;
 	uint32_t gi_type;
+	uint8_t agc_gain_tbl_index[WMI_HOST_MAX_CHAINS];
 } wmi_cfr_peer_tx_event_param;
 
 /**
