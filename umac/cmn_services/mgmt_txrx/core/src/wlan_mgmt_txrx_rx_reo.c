@@ -623,9 +623,14 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 	QDF_STATUS status;
 	uint8_t link_id;
 	struct wlan_objmgr_pdev *pdev;
+	uint32_t entry_global_ts;
+	struct mgmt_rx_reo_global_ts_info *ts_last_delivered_frame;
 
 	qdf_assert_always(reo_list);
 	qdf_assert_always(entry);
+
+	entry_global_ts = mgmt_rx_reo_get_global_ts(entry->rx_params);
+	ts_last_delivered_frame = &reo_list->ts_last_delivered_frame;
 
 	release_reason = mgmt_rx_reo_list_entry_get_release_reason(
 				entry, &reo_list->ts_latest_aged_out_frame);
@@ -639,6 +644,32 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 	}
 
 	link_id = mgmt_rx_reo_get_link_id(entry->rx_params);
+
+	/**
+	 * Last delivered frame global time stamp is invalid means that
+	 * current frame is the first frame to be delivered to the upper layer
+	 * from the reorder list. Blindly update the last delivered frame global
+	 * time stamp to the current frame's global time stamp and set the valid
+	 * to true.
+	 * If the last delivered frame global time stamp is valid and
+	 * current frame's global time stamp is >= last delivered frame global
+	 * time stamp, deliver the current frame to upper layer and update the
+	 * last delivered frame global time stamp.
+	 */
+	if (!ts_last_delivered_frame->valid ||
+	    mgmt_rx_reo_compare_global_timestamps_gte(
+		    entry_global_ts, ts_last_delivered_frame->global_ts)) {
+		/* TODO Process current management frame here */
+
+		ts_last_delivered_frame->global_ts = entry_global_ts;
+		ts_last_delivered_frame->valid = true;
+	} else {
+		/**
+		 * We need to replicate all the cleanup activities which the
+		 * upper layer would have done.
+		 */
+		qdf_nbuf_free(entry->nbuf);
+	}
 
 	free_mgmt_rx_event_params(entry->rx_params);
 
@@ -1111,6 +1142,9 @@ mgmt_rx_reo_list_init(struct mgmt_rx_reo_list *reo_list)
 		return status;
 	}
 
+	reo_list->ts_last_delivered_frame.valid = false;
+	reo_list->ts_latest_aged_out_frame.valid = false;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1342,8 +1376,6 @@ mgmt_rx_reo_init_context(void)
 		mgmt_rx_reo_err("Failed to initialize mgmt Rx reo list");
 		return status;
 	}
-
-	reo_context->ts_last_delivered_frame.valid = false;
 
 	qdf_spinlock_create(&reo_context->reo_algo_entry_lock);
 
