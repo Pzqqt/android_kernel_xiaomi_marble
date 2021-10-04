@@ -5187,21 +5187,28 @@ static int msm_vidc_print_insts_info(struct msm_vidc_core *core)
 
 int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 {
-	u32 mbps = 0;
+	u32 mbps = 0, num_inactive_sessions = 0;
 	struct msm_vidc_core *core;
 	struct msm_vidc_inst *instance;
+	u64 curr_time_ns;
+	int rc = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
+	curr_time_ns = ktime_get_ns();
 
 	core_lock(core, __func__);
 	list_for_each_entry(instance, &core->instances, list) {
 		/* ignore invalid/error session */
 		if (is_session_error(instance))
 			continue;
+
+		if (!is_active_session(instance->last_qbuf_time_ns, curr_time_ns)) {
+			num_inactive_sessions++;
+		}
 
 		/* ignore thumbnail, image, and non realtime sessions */
 		if (is_thumbnail_session(instance) ||
@@ -5214,9 +5221,10 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 	core_unlock(core, __func__);
 
 	if (mbps > core->capabilities[MAX_MBPS].value) {
+		rc = num_inactive_sessions ? -ENOMEM : -EAGAIN;
 		i_vpr_e(inst, "%s: Hardware overloaded. needed %u, max %u", __func__,
 			mbps, core->capabilities[MAX_MBPS].value);
-		return -ENOMEM;
+		return rc;
 	}
 
 	return 0;
