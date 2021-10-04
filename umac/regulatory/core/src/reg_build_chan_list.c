@@ -2649,7 +2649,7 @@ static uint8_t reg_get_subchannels_for_opclass(uint8_t cfi,
  * reg_search_afc_power_info_for_freq() - Search the chan_eirp object for the
  * eirp power for a given frequency
  * @pdev: Pointer to pdev
- * @afc_info: Pointer to afc_info
+ * @power_info: Pointer to power_info
  * @freq: Channel frequency
  * @eirp_power: Pointer to eirp_power
  *
@@ -2658,24 +2658,16 @@ static uint8_t reg_get_subchannels_for_opclass(uint8_t cfi,
 static QDF_STATUS
 reg_search_afc_power_info_for_freq(
 		struct wlan_objmgr_pdev *pdev,
-		struct afc_regulatory_info *afc_info,
+		struct reg_fw_afc_power_event *power_info,
 		qdf_freq_t freq,
 		uint16_t *eirp_power)
 {
-	struct reg_fw_afc_power_event *power_info;
 	uint8_t i;
 
-	if (!afc_info->power_info) {
-		reg_err("afc_info->power_info is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!afc_info->power_info->num_chan_objs) {
+	if (!power_info->num_chan_objs) {
 		reg_err("num chan objs cannot be zero");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	power_info = afc_info->power_info;
 
 	*eirp_power = 0;
 	for (i = 0; i < power_info->num_chan_objs; i++) {
@@ -2705,28 +2697,27 @@ reg_search_afc_power_info_for_freq(
 							  BIT(REG_BAND_6G)) ==
 							  freq) {
 					*eirp_power = eirp_obj->eirp_power;
-					break;
+					return QDF_STATUS_SUCCESS;
 				}
 			}
 		}
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
- * reg_fill_eirp_pwr_in_afc_chan_list() - Fill max eirp power in the afc master
- * chan list
+ * reg_process_cfi_chan_list() - Fill eirp power and state in the cfi chan list
  * @pdev: Pointer to pdev
- * @afc_chan_list: Pointer to afc_chan_list
- * @afc_info: Pointer to afc_info
+ * @cfi_chan_list: Pointer to cfi_chan_list
+ * @power_info: Pointer to power_info
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS reg_fill_eirp_pwr_in_afc_chan_list(
+static QDF_STATUS reg_process_cfi_chan_list(
 		struct wlan_objmgr_pdev *pdev,
-		struct regulatory_channel *afc_chan_list,
-		struct afc_regulatory_info *afc_info)
+		struct regulatory_channel *cfi_chan_list,
+		struct reg_fw_afc_power_event *power_info)
 
 {
 	uint8_t chan_idx;
@@ -2736,16 +2727,20 @@ static QDF_STATUS reg_fill_eirp_pwr_in_afc_chan_list(
 	for (chan_idx = 0; chan_idx < NUM_6GHZ_CHANNELS; chan_idx++) {
 		status =
 		reg_search_afc_power_info_for_freq(pdev,
-						   afc_info,
-						   afc_chan_list[chan_idx].
+						   power_info,
+						   cfi_chan_list[chan_idx].
 						   center_freq,
 						   &eirp_power);
 		/*
 		 * The eirp_power is divided by 100 because the target
 		 * sends the EIRP in the units of 0.01 dbm.
 		 */
-		if (QDF_IS_STATUS_SUCCESS(status))
-			afc_chan_list[chan_idx].tx_power = eirp_power / 100;
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			cfi_chan_list[chan_idx].tx_power = eirp_power / 100;
+			cfi_chan_list[chan_idx].state = CHANNEL_STATE_ENABLE;
+			cfi_chan_list[chan_idx].chan_flags &=
+						~REGULATORY_CHAN_DISABLED;
+		}
 	}
 
 	return status;
@@ -2848,6 +2843,7 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 {
 	uint8_t i;
 	struct regulatory_channel *sp_chan_list;
+	struct regulatory_channel *cfi_chan_list;
 
 	if (!power_info) {
 		reg_err("power_info is NULL");
@@ -2859,8 +2855,20 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	cfi_chan_list = qdf_mem_malloc(sizeof(struct regulatory_channel) *
+				       NUM_6GHZ_CHANNELS);
+
+	if (!cfi_chan_list)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_copy(cfi_chan_list, afc_chan_list,
+		     sizeof(struct regulatory_channel) * NUM_6GHZ_CHANNELS);
 	sp_chan_list =
 		pdev_priv_obj->mas_chan_list_6g_ap[REG_STANDARD_POWER_AP];
+
+	reg_process_cfi_chan_list(pdev_priv_obj->pdev_ptr, cfi_chan_list,
+				  power_info);
+
 	for (i = 0; i < power_info->num_freq_objs; i++) {
 		struct afc_freq_obj *freq_obj = &power_info->afc_freq_info[i];
 		uint32_t low_limit_enum, high_limit_enum;
@@ -2873,7 +2881,8 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 						     freq_obj->high_freq,
 						     &high_limit_enum);
 		for (j = low_limit_enum; j <= high_limit_enum; j++) {
-			if (sp_chan_list[j].state == CHANNEL_STATE_ENABLE) {
+			if ((sp_chan_list[j].state == CHANNEL_STATE_ENABLE) &&
+			    (cfi_chan_list[j].state == CHANNEL_STATE_ENABLE)) {
 				afc_chan_list[j].state = CHANNEL_STATE_ENABLE;
 				afc_chan_list[j].chan_flags &=
 						~REGULATORY_CHAN_DISABLED;
@@ -2885,9 +2894,13 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 				afc_chan_list[j].psd_eirp =
 							freq_obj->max_psd / 100;
 				afc_chan_list[j].psd_flag = true;
+				afc_chan_list[j].tx_power =
+						cfi_chan_list[j].tx_power;
 			}
 		}
 	}
+
+	qdf_mem_free(cfi_chan_list);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2981,15 +2994,6 @@ reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
 		reg_err("Error in filling max_psd in AFC chan list");
 		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
 		return status;
-	}
-
-	status = reg_fill_eirp_pwr_in_afc_chan_list(pdev,
-						    afc_mas_chan_list,
-						    afc_info);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		reg_err("Error in filling EIRP power in AFC chan list");
-		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
-		return QDF_STATUS_E_FAILURE;
 	}
 
 	qdf_mem_copy(pdev_priv_obj->mas_chan_list_6g_afc,
