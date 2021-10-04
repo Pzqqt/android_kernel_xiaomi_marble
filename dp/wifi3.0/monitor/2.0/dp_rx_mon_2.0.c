@@ -23,38 +23,59 @@
 #include <dp_rx_mon.h>
 #include <dp_rx_mon_2.0.h>
 #include <dp_mon_2.0.h>
-#include <dp_mon_filter_2.0.h>
-
-#include "htt_ppdu_stats.h"
-#include "dp_cal_client_api.h"
-#if defined(DP_CON_MON)
-#ifndef REMOVE_PKT_LOG
-#include <pktlog_ac_api.h>
-#include <pktlog_ac.h>
-#endif
-#endif
-#ifdef FEATURE_PERPKT_INFO
-#include "dp_ratetable.h"
-#endif
 
 void
 dp_rx_mon_buf_desc_pool_deinit(struct dp_soc *soc)
 {
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	dp_mon_desc_pool_deinit(&mon_soc->rx_desc_mon);
 }
 
-void
+QDF_STATUS
 dp_rx_mon_buf_desc_pool_init(struct dp_soc *soc)
 {
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+	QDF_STATUS status;
+
+	status = dp_mon_desc_pool_init(&mon_soc->rx_desc_mon);
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_mon_err("Failed to init rx monior descriptor pool");
+		mon_soc->rx_mon_ring_fill_level = 0;
+	} else {
+		mon_soc->rx_mon_ring_fill_level =
+					DP_MON_RING_FILL_LEVEL_DEFAULT;
+	}
+
+	return status;
 }
 
 void dp_rx_mon_buf_desc_pool_free(struct dp_soc *soc)
 {
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	if (mon_soc)
+		dp_mon_desc_pool_free(&mon_soc->rx_desc_mon);
 }
 
 QDF_STATUS
 dp_rx_mon_buf_desc_pool_alloc(struct dp_soc *soc)
 {
-	return QDF_STATUS_SUCCESS;
+	struct dp_srng *mon_buf_ring;
+	struct dp_mon_desc_pool *rx_mon_desc_pool;
+	struct wlan_cfg_dp_soc_crxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	mon_buf_ring = &soc->rxdma_mon_buf_ring[0];
+
+	rx_mon_desc_pool = &mon_soc->rx_desc_mon;
+
+	return dp_mon_desc_pool_alloc(mon_soc->rx_mon_ring_fill_level,
+				      rx_mon_desc_pool);
 }
 
 void

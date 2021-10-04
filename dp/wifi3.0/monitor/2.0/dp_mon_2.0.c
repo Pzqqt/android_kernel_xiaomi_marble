@@ -38,6 +38,57 @@ extern void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 			   int ring_type, int ring_num);
 
 #if !defined(DISABLE_MON_CONFIG)
+QDF_STATUS dp_mon_desc_pool_init(struct dp_mon_desc_pool *mon_desc_pool)
+{
+	int desc_id;
+	/* Initialize monitor desc lock */
+	qdf_spinlock_create(&mon_desc_pool->lock);
+
+	qdf_spin_lock_bh(&mon_desc_pool->lock);
+
+	/* link SW descs into a freelist */
+	mon_desc_pool->freelist = &mon_desc_pool->array[0];
+	qdf_mem_zero(mon_desc_pool->freelist, mon_desc_pool->pool_size);
+
+	for (desc_id = 0; desc_id <= mon_desc_pool->pool_size - 1; desc_id++) {
+		if (desc_id == mon_desc_pool->pool_size - 1)
+			mon_desc_pool->array[desc_id].next = NULL;
+		else
+			mon_desc_pool->array[desc_id].next =
+				&mon_desc_pool->array[desc_id + 1];
+		mon_desc_pool->array[desc_id].mon_desc.in_use = 0;
+		mon_desc_pool->array[desc_id].mon_desc.cookie = desc_id;
+	}
+	qdf_spin_unlock_bh(&mon_desc_pool->lock);
+	return QDF_STATUS_SUCCESS;
+}
+
+void dp_mon_desc_pool_deinit(struct dp_mon_desc_pool *mon_desc_pool)
+{
+	qdf_spin_lock_bh(&mon_desc_pool->lock);
+
+	mon_desc_pool->freelist = NULL;
+	mon_desc_pool->pool_size = 0;
+
+	qdf_spin_unlock_bh(&mon_desc_pool->lock);
+	qdf_spinlock_destroy(&mon_desc_pool->lock);
+}
+
+void dp_mon_desc_pool_free(struct dp_mon_desc_pool *mon_desc_pool)
+{
+	qdf_mem_free(mon_desc_pool->array);
+}
+
+QDF_STATUS dp_mon_desc_pool_alloc(uint32_t pool_size,
+				  struct dp_mon_desc_pool *mon_desc_pool)
+{
+	mon_desc_pool->pool_size = pool_size;
+	mon_desc_pool->array = qdf_mem_malloc(pool_size *
+				     sizeof(union dp_mon_desc_list_elem_t));
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static
 void dp_vdev_set_monitor_mode_buf_rings_2_0(struct dp_pdev *pdev)
 {

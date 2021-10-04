@@ -15,7 +15,7 @@
  */
 
 #include <dp_types.h>
-#include "dp_rx.h"
+#include "dp_tx.h"
 #include "dp_peer.h"
 #include <dp_htt.h>
 #include <dp_mon_filter.h>
@@ -26,21 +26,54 @@
 void
 dp_tx_mon_buf_desc_pool_deinit(struct dp_soc *soc)
 {
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	dp_mon_desc_pool_deinit(&mon_soc->tx_desc_mon);
 }
 
-void
+QDF_STATUS
 dp_tx_mon_buf_desc_pool_init(struct dp_soc *soc)
 {
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+	QDF_STATUS status;
+
+	status = dp_mon_desc_pool_init(&mon_soc->tx_desc_mon);
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_mon_err("Failed to init tx monior descriptor pool");
+		mon_soc->tx_mon_ring_fill_level = 0;
+	} else {
+		mon_soc->tx_mon_ring_fill_level = DP_MON_RING_FILL_LEVEL_DEFAULT;
+	}
+
+	return status;
 }
 
 void dp_tx_mon_buf_desc_pool_free(struct dp_soc *soc)
 {
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	if (mon_soc)
+		dp_mon_desc_pool_free(&mon_soc->tx_desc_mon);
 }
 
 QDF_STATUS
 dp_tx_mon_buf_desc_pool_alloc(struct dp_soc *soc)
 {
-	return QDF_STATUS_SUCCESS;
+	struct dp_srng *mon_buf_ring;
+	struct dp_mon_desc_pool *tx_mon_desc_pool;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	mon_buf_ring = &mon_soc->tx_mon_buf_ring;
+
+	tx_mon_desc_pool = &mon_soc->tx_desc_mon;
+
+	return dp_mon_desc_pool_alloc(mon_soc->tx_mon_ring_fill_level,
+				      tx_mon_desc_pool);
 }
 
 void

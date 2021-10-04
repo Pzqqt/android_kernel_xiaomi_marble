@@ -47,8 +47,10 @@ dp_rx_mon_buf_desc_pool_deinit(struct dp_soc *soc);
  * dp_rx_mon_desc_pool_deinit() - deinit rx monitor descriptor pool
  * @soc: dp soc handle
  *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
  */
-void
+QDF_STATUS
 dp_rx_mon_buf_desc_pool_init(struct dp_soc *soc);
 
 /*

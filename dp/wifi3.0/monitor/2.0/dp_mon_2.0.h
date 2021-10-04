@@ -21,6 +21,8 @@
 #include <qdf_lock.h>
 #include <dp_types.h>
 
+#define DP_MON_RING_FILL_LEVEL_DEFAULT 2048
+
 /**
  * struct dp_mon_desc
  *
@@ -102,5 +104,41 @@ struct dp_mon_soc_be {
 	uint16_t tx_mon_ring_fill_level;
 };
 #endif
+
+/**
+ * dp_mon_desc_pool_init() - Monitor descriptor pool init
+ * @mon_desc_pool: mon desc pool
+ *
+ * Return: non-zero for failure, zero for success
+ */
+QDF_STATUS dp_mon_desc_pool_init(struct dp_mon_desc_pool *mon_desc_pool);
+
+/*
+ * dp_mon_desc_pool_deinit()- monitor descriptor pool deinit
+ * @mon_desc_pool: mon desc pool
+ *
+ * Return: None
+ *
+ */
+void dp_mon_desc_pool_deinit(struct dp_mon_desc_pool *mon_desc_pool);
+
+/*
+ * dp_mon_desc_pool_free()- monitor descriptor pool free
+ * @mon_desc_pool: mon desc pool
+ *
+ * Return: None
+ *
+ */
+void dp_mon_desc_pool_free(struct dp_mon_desc_pool *mon_desc_pool);
+
+/**
+ * dp_mon_desc_pool_alloc() - Monitor descriptor pool alloc
+ * @mon_desc_pool: mon desc pool
+ * @pool_size: Pool size
+ *
+ * Return: non-zero for failure, zero for success
+ */
+QDF_STATUS dp_mon_desc_pool_alloc(uint32_t pool_size,
+				  struct dp_mon_desc_pool *mon_desc_pool);
 
 #endif /* _DP_MON_2_0_H_ */
