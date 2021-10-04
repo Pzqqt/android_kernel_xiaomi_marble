@@ -1135,7 +1135,6 @@ void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS wlan_cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
 {
 	struct roam_synch_frame_ind *frame_ind;
@@ -1163,4 +1162,3 @@ QDF_STATUS wlan_cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* ROAM_TARGET_IF_CONVERGENCE */

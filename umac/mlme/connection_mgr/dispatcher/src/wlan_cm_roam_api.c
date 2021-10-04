@@ -36,9 +36,7 @@
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 #define CM_MIN_RSSI 0 /* 0dbm */
-#endif
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS
@@ -2319,7 +2317,6 @@ QDF_STATUS wlan_get_chan_by_link_id_from_rnr(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len, void *data)
 {
@@ -2331,9 +2328,7 @@ QDF_STATUS wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 #endif
 	return status;
 }
-#endif
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void
 cm_handle_roam_offload_events(struct roam_offload_roam_event *roam_event)
@@ -2537,6 +2532,7 @@ cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data)
 	return cm_handle_scan_ch_list_data(data);
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * cm_roam_stats_get_trigger_detail_str - Return roam trigger string from the
  * enum roam_trigger_reason
@@ -3087,7 +3083,7 @@ err:
 	qdf_mem_free(stats_info);
 	return status;
 }
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
+#endif
 
 #ifdef WLAN_FEATURE_FIPS
 QDF_STATUS cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,

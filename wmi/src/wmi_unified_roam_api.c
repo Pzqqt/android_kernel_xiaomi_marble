@@ -338,7 +338,6 @@ QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS wmi_extract_roam_sync_event(wmi_unified_t wmi_handle, void *evt_buf,
 				       uint32_t len,
 				       struct roam_offload_synch_ind **sync_ind)
@@ -488,5 +487,4 @@ wmi_extract_roam_pmkid_request(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif

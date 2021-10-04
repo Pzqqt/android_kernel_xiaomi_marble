@@ -53,7 +53,6 @@ target_if_cm_get_roam_rx_ops(struct wlan_objmgr_psoc *psoc)
 void
 target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops)
 {
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 	rx_ops->roam_sync_event = cm_roam_sync_event_handler;
 	rx_ops->roam_sync_frame_event = cm_roam_sync_frame_event_handler;
 	rx_ops->roam_event_rx = cm_roam_event_handler;
@@ -63,10 +62,8 @@ target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops)
 	rx_ops->roam_stats_event_rx = cm_roam_stats_event_handler;
 	rx_ops->roam_auth_offload_event = cm_roam_auth_offload_event_handler;
 	rx_ops->roam_pmkid_request_event_rx = cm_roam_pmkid_request_handler;
-#endif
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 int
 target_if_cm_roam_sync_frame_event(ol_scn_t scn,
 				   uint8_t *event,
@@ -613,4 +610,3 @@ target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif

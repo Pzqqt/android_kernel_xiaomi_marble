@@ -1979,7 +1979,6 @@ enum roam_reason {
 	ROAM_REASON_DEAUTH,
 };
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 /*
  * struct roam_blacklist_timeout - BTM blacklist entry
  * @bssid: bssid that is to be blacklisted
@@ -2061,7 +2060,6 @@ enum roam_dispatcher_events {
 	ROAM_PMKID_REQ_EVENT,
 	ROAM_VDEV_DISCONNECT_EVENT,
 };
-#endif
 
 /**
  * struct roam_offload_roam_event: Data carried by roam event
@@ -2392,7 +2390,6 @@ struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_frame_event)(struct wlan_objmgr_psoc *psoc,
 					    struct roam_synch_frame_ind *frm);
 	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event *roam_event);
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
 					  struct roam_blacklist_event *list);
 	QDF_STATUS
@@ -2406,6 +2403,5 @@ struct wlan_cm_roam_rx_ops {
 	(*roam_auth_offload_event)(struct auth_offload_event *auth_event);
 	QDF_STATUS
 	(*roam_pmkid_request_event_rx)(struct roam_pmkid_req_event *list);
-#endif
 };
 #endif

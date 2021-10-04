@@ -972,7 +972,6 @@ QDF_STATUS
 cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
 		    struct wlan_objmgr_vdev *vdev);
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
  * cm_invalid_roam_reason_handler() - Handler for invalid roam reason
  * @vdev_id: vdev id
@@ -1065,8 +1064,6 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 					 uint8_t *event,
 					 uint32_t len);
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
-
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1198,7 +1195,6 @@ cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
 	return false;
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 static inline void
 cm_handle_roam_reason_ho_failed(uint8_t vdev_id, struct qdf_mac_addr bssid,
 				struct cm_hw_mode_trans_ind *hw_mode_trans_ind)
@@ -1209,7 +1205,6 @@ cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-#endif
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #ifdef WLAN_FEATURE_FIPS
@@ -1264,7 +1259,6 @@ QDF_STATUS wlan_get_chan_by_link_id_from_rnr(struct wlan_objmgr_vdev *vdev,
 					     uint8_t *chan, uint8_t *op_class);
 #endif
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
  * cm_rso_cmd_status_event_handler() - Handler for rso cmd status
  * @vdev_id: vdev id
@@ -1485,12 +1479,4 @@ wlan_cm_fw_to_host_phymode(WMI_HOST_WLAN_PHY_MODE phymode);
 QDF_STATUS
 wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 				  uint16_t data_len, void *data);
-#else
-static inline QDF_STATUS
-wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
-				  uint16_t data_len, void *data)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif  /* WLAN_CM_ROAM_API_H__ */
