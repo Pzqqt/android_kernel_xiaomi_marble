@@ -14,14 +14,42 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <dp_types.h>
+#include "dp_rx.h"
+#include "dp_peer.h"
+#include <dp_htt.h>
+#include <dp_mon_filter.h>
+#include <dp_mon.h>
+#include <dp_tx_mon_2.0.h>
+#include <dp_mon_2.0.h>
+
 void
-dp_tx_mon_buffers_free(struct dp_pdev *pdev)
+dp_tx_mon_buf_desc_pool_deinit(struct dp_soc *soc)
+{
+}
+
+void
+dp_tx_mon_buf_desc_pool_init(struct dp_soc *soc)
+{
+}
+
+void dp_tx_mon_buf_desc_pool_free(struct dp_soc *soc)
 {
 }
 
 QDF_STATUS
-dp_tx_mon_buffers_alloc(struct dp_pdev *pdev)
+dp_tx_mon_buf_desc_pool_alloc(struct dp_soc *soc)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
+void
+dp_tx_mon_buffers_free(struct dp_soc *soc)
+{
+}
+
+QDF_STATUS
+dp_tx_mon_buffers_alloc(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}

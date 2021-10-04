@@ -17,4 +17,55 @@
 #ifndef _DP_TX_MON_2_0_H_
 #define _DP_TX_MON_2_0_H_
 
+/*
+ * dp_tx_mon_buffers_alloc() - allocate tx monitor buffers
+ * @soc: DP soc handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS
+dp_tx_mon_buffers_alloc(struct dp_soc *soc);
+
+/*
+ * dp_tx_mon_buffers_free() - free tx monitor buffers
+ * @soc: dp soc handle
+ *
+ */
+void
+dp_tx_mon_buffers_free(struct dp_soc *soc);
+
+/*
+ * dp_tx_mon_desc_pool_deinit() - deinit tx monitor descriptor pool
+ * @soc: dp soc handle
+ *
+ */
+void
+dp_tx_mon_buf_desc_pool_deinit(struct dp_soc *soc);
+
+/*
+ * dp_tx_mon_desc_pool_deinit() - deinit tx monitor descriptor pool
+ * @soc: dp soc handle
+ *
+ */
+void
+dp_tx_mon_buf_desc_pool_init(struct dp_soc *soc);
+
+/*
+ * dp_tx_mon_buf_desc_pool_free() - free tx monitor descriptor pool
+ * @soc: dp soc handle
+ *
+ */
+void dp_tx_mon_buf_desc_pool_free(struct dp_soc *soc);
+
+/*
+ * dp_tx_mon_buf_desc_pool_alloc() - allocate tx monitor descriptor pool
+ * @soc: DP soc handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS
+dp_tx_mon_buf_desc_pool_alloc(struct dp_soc *soc);
+
 #endif /* _DP_TX_MON_2_0_H_ */

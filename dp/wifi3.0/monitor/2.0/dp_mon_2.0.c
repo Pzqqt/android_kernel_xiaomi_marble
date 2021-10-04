@@ -78,7 +78,28 @@ QDF_STATUS dp_mon_htt_srng_setup_2_0(struct dp_soc *soc,
 				     int mac_id,
 				     int mac_for_pdev)
 {
-	return QDF_STATUS_SUCCESS;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+	QDF_STATUS status;
+
+	status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				soc->rxdma_mon_dst_ring[mac_id].hal_srng,
+				RXDMA_MONITOR_DST);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_mon_err("Failed to send htt srng setup message for Rxdma dst ring");
+		return status;
+	}
+
+	status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				mon_soc->tx_mon_dst_ring[mac_id].hal_srng,
+				TX_MONITOR_DST);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_mon_err("Failed to send htt srng message for Tx mon dst ring");
+		return status;
+	}
+	return status;
 }
 
 static uint32_t
@@ -96,27 +117,138 @@ dp_tx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 }
 
 static
-QDF_STATUS dp_mon_soc_attach_2_0(struct dp_soc *soc)
-{
-	return status;
-}
-
-static
 QDF_STATUS dp_mon_soc_detach_2_0(struct dp_soc *soc)
 {
-	return status;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	dp_tx_mon_buffers_free(soc);
+	dp_rx_mon_buffers_free(soc);
+	dp_tx_mon_buf_desc_pool_free(soc);
+	dp_rx_mon_buf_desc_pool_free(soc);
+
+	if (mon_soc) {
+		dp_srng_free(soc, &soc->rxdma_mon_buf_ring[0]);
+		dp_srng_free(soc, &mon_soc->tx_mon_buf_ring);
+		qdf_mem_free(be_soc->monitor_soc_be);
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static
-QDF_STATUS dp_mon_soc_init_2_0(struct dp_soc *soc)
+QDF_STATUS dp_mon_soc_attach_2_0(struct dp_soc *soc)
 {
-	return status;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = NULL;
+	int entries = 8192;
+
+	mon_soc = (struct dp_mon_soc_be *)qdf_mem_malloc(sizeof(*mon_soc));
+	if (!mon_soc) {
+		dp_mon_err("%pK: mem allocation failed", soc);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mem_zero(mon_soc, sizeof(*mon_soc));
+	be_soc->monitor_soc_be = mon_soc;
+
+	if (dp_srng_alloc(soc, &soc->rxdma_mon_buf_ring[0],
+			  RXDMA_MONITOR_BUF, entries, 0)) {
+		dp_mon_err("%pK: " RNG_ERR "rx_mon_buf_ring", soc);
+		goto fail;
+	}
+
+	if (dp_srng_alloc(soc, &mon_soc->tx_mon_buf_ring,
+			  TX_MONITOR_BUF, entries, 0)) {
+		dp_mon_err("%pK: " RNG_ERR "tx_mon_buf_ring", soc);
+		goto fail;
+	}
+
+	/* sw desc pool for src ring */
+	if (dp_rx_mon_buf_desc_pool_alloc(soc)) {
+		dp_mon_err("%pK: Rx mon desc pool allocation failed", soc);
+		goto fail;
+	}
+
+	if (dp_tx_mon_buf_desc_pool_alloc(soc)) {
+		dp_mon_err("%pK: Tx mon desc pool allocation failed", soc);
+		goto fail;
+	}
+
+	/* monitor buffers for src */
+	if (dp_rx_mon_buffers_alloc(soc)) {
+		dp_mon_err("%pK: Rx mon buffers allocation failed", soc);
+		goto fail;
+	}
+
+	if (dp_tx_mon_buffers_alloc(soc)) {
+		dp_mon_err("%pK: Tx mon buffers allocation failed", soc);
+		goto fail;
+	}
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_mon_soc_detach_2_0(soc);
+	return QDF_STATUS_E_NOMEM;
 }
 
 static
 QDF_STATUS dp_mon_soc_deinit_2_0(struct dp_soc *soc)
 {
-	return status;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	dp_tx_mon_buf_desc_pool_deinit(soc);
+	dp_rx_mon_buf_desc_pool_deinit(soc);
+
+	dp_srng_deinit(soc, &soc->rxdma_mon_buf_ring[0],
+		       RXDMA_MONITOR_BUF, 0);
+
+	dp_srng_deinit(soc, &mon_soc->tx_mon_buf_ring,
+		       TX_MONITOR_BUF, 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS dp_mon_soc_init_2_0(struct dp_soc *soc)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	if (dp_srng_init(soc, &soc->rxdma_mon_buf_ring[0],
+			 RXDMA_MONITOR_BUF, 0, 0)) {
+		dp_mon_err("%pK: " RNG_ERR "rx_mon_buf_ring", soc);
+		goto fail;
+	}
+
+	if (dp_srng_init(soc, &mon_soc->tx_mon_buf_ring,
+			 TX_MONITOR_BUF, 0, 0)) {
+		dp_mon_err("%pK: " RNG_ERR "tx_mon_buf_ring", soc);
+		goto fail;
+	}
+
+	if (dp_tx_mon_buf_desc_pool_init(soc)) {
+		dp_mon_err("%pK: " RNG_ERR "tx mon desc pool init", soc);
+		goto fail;
+	}
+
+	if (dp_rx_mon_buf_desc_pool_init(soc)) {
+		dp_mon_err("%pK: " RNG_ERR "rx mon desc pool init", soc);
+		goto fail;
+	}
+
+	htt_srng_setup(soc->htt_handle, 0,
+		       soc->rxdma_mon_buf_ring[0].hal_srng,
+		       RXDMA_MONITOR_BUF);
+
+	htt_srng_setup(soc->htt_handle, 0,
+		       mon_soc->tx_mon_buf_ring.hal_srng,
+		       TX_MONITOR_BUF);
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_mon_soc_deinit_2_0(soc);
+	return QDF_STATUS_E_FAILURE;
 }
 
 static
@@ -141,6 +273,31 @@ QDF_STATUS dp_pdev_mon_rings_alloc(struct dp_soc *soc, struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+static
+void dp_mon_pdev_free_2_0(struct dp_pdev *pdev)
+{
+	struct dp_pdev_be *be_pdev = dp_get_be_pdev_from_dp_pdev(pdev);
+
+	qdf_mem_free(be_pdev->monitor_pdev_be);
+	be_pdev->monitor_pdev_be = NULL;
+}
+
+static
+QDF_STATUS dp_mon_pdev_alloc_2_0(struct dp_pdev *pdev)
+{
+	struct dp_mon_pdev_be *mon_pdev = NULL;
+	struct dp_pdev_be *be_pdev = dp_get_be_pdev_from_dp_pdev(pdev);
+
+	mon_pdev = (struct dp_mon_pdev_be *)qdf_mem_malloc(sizeof(*mon_pdev));
+	if (!mon_pdev) {
+		dp_mon_err("%pK: mem allocation failed", pdev);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mem_zero(mon_pdev, sizeof(*mon_pdev));
+	be_pdev->monitor_pdev_be = mon_pdev;
+
+	return QDF_STATUS_SUCCESS;
+}
 #else
 static inline
 QDF_STATUS dp_mon_htt_srng_setup_2_0(struct dp_soc *soc,
@@ -210,18 +367,18 @@ QDF_STATUS dp_pdev_mon_rings_alloc(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 
 static inline
-void dp_mon_pdev_free(struct dp_pdev *pdev)
+void dp_mon_pdev_free_2_0(struct dp_pdev *pdev)
 {
 }
 
 static inline
-QDF_STATUS dp_mon_pdev_alloc(struct dp_pdev *pdev)
+QDF_STATUS dp_mon_pdev_alloc_2_0(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 struct dp_mon_ops monitor_ops_2_0 = {
 	.mon_soc_cfg_init = dp_mon_soc_cfg_init,
@@ -266,7 +423,7 @@ struct dp_mon_ops monitor_ops_2_0 = {
 #endif
 #if defined(WDI_EVENT_ENABLE) &&\
 	(defined(QCA_ENHANCED_STATS_SUPPORT) || !defined(REMOVE_PKT_LOG))
-	.mon_ppdu_stats_ind_handler = dp_ppdu_stats_ind_handler,
+	.mon_ppdu_stats_ind_handler = NULL,
 #endif
 	.mon_htt_ppdu_stats_attach = dp_htt_ppdu_stats_attach,
 	.mon_htt_ppdu_stats_detach = dp_htt_ppdu_stats_detach,
@@ -276,7 +433,7 @@ struct dp_mon_ops monitor_ops_2_0 = {
 	.mon_config_enh_tx_capture = dp_config_enh_tx_capture,
 #endif
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
-	.mon_config_enh_rx_capture = dp_config_enh_rx_capture,
+	.mon_config_enh_rx_capture = NULL,
 #endif
 #ifdef QCA_SUPPORT_BPR
 	.mon_set_bpr_enable = dp_set_bpr_enable_2_0,
@@ -384,5 +541,5 @@ struct dp_mon_ops *dp_mon_ops_get_2_0(void)
 
 struct cdp_mon_ops *dp_mon_cdp_ops_get_2_0(void)
 {
-	return &monitor_ops_2_0;
+	return &dp_ops_mon_2_0;
 }

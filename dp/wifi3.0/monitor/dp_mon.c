@@ -2081,7 +2081,7 @@ QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev)
 	}
 
 	if (mon_ops->mon_pdev_alloc) {
-		if (mon_ops->mon_rings_alloc(soc, pdev)) {
+		if (mon_ops->mon_pdev_alloc(pdev)) {
 			dp_mon_err("%pK: MONITOR pdev alloc failed", pdev);
 			goto fail1;
 		}
@@ -2095,8 +2095,8 @@ QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev)
 	}
 
 	/* Rx monitor mode specific init */
-	if (mon_ops->rx_pdev_mon_desc_pool_alloc) {
-		if (mon_ops->rx_pdev_mon_desc_pool_alloc(pdev)) {
+	if (mon_ops->rx_mon_desc_pool_alloc) {
+		if (mon_ops->rx_mon_desc_pool_alloc(pdev)) {
 			dp_mon_err("%pK: dp_rx_pdev_mon_attach failed", pdev);
 			goto fail3;
 		}
@@ -2134,8 +2134,8 @@ QDF_STATUS dp_mon_pdev_detach(struct dp_pdev *pdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (mon_ops->rx_pdev_mon_desc_pool_free)
-		mon_ops->rx_pdev_mon_desc_pool_free(pdev);
+	if (mon_ops->rx_mon_desc_pool_free)
+		mon_ops->rx_mon_desc_pool_free(pdev);
 	if (mon_ops->mon_rings_free)
 		mon_ops->mon_rings_free(pdev);
 	if (mon_ops->mon_pdev_free)
@@ -2214,12 +2214,12 @@ QDF_STATUS dp_mon_pdev_init(struct dp_pdev *pdev)
 	}
 
 	/* initialize sw monitor rx descriptors */
-	if (mon_ops->rx_pdev_mon_desc_pool_init)
-		mon_ops->rx_pdev_mon_desc_pool_init(pdev);
+	if (mon_ops->rx_mon_desc_pool_init)
+		mon_ops->rx_mon_desc_pool_init(pdev);
 
 	/* allocate buffers and replenish the monitor RxDMA ring */
-	if (mon_ops->rx_pdev_mon_buffers_alloc)
-		mon_ops->rx_pdev_mon_buffers_alloc(pdev);
+	if (mon_ops->rx_mon_buffers_alloc)
+		mon_ops->rx_mon_buffers_alloc(pdev);
 
 	dp_tx_ppdu_stats_attach(pdev);
 	mon_pdev->is_dp_mon_pdev_initialized = true;
@@ -2250,10 +2250,10 @@ QDF_STATUS dp_mon_pdev_deinit(struct dp_pdev *pdev)
 
 	dp_tx_ppdu_stats_detach(pdev);
 
-	if (mon_ops->rx_pdev_mon_buffers_free)
-		mon_ops->rx_pdev_mon_buffers_free(pdev);
-	if (mon_ops->rx_pdev_mon_desc_pool_deinit)
-		mon_ops->rx_pdev_mon_desc_pool_deinit(pdev);
+	if (mon_ops->rx_mon_buffers_free)
+		mon_ops->rx_mon_buffers_free(pdev);
+	if (mon_ops->rx_mon_desc_pool_deinit)
+		mon_ops->rx_mon_desc_pool_deinit(pdev);
 	if (mon_ops->mon_rings_deinit)
 		mon_ops->mon_rings_deinit(pdev);
 	dp_cal_client_detach(&mon_pdev->cal_client_ctx);
