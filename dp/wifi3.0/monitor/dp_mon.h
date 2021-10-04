@@ -358,10 +358,11 @@ struct dp_mon_ops {
 	QDF_STATUS (*mon_config_debug_sniffer)(struct dp_pdev *pdev, int val);
 	void (*mon_flush_rings)(struct dp_soc *soc);
 #if !defined(DISABLE_MON_CONFIG)
-	QDF_STATUS (*mon_htt_srng_setup)(struct dp_soc *soc,
-					 struct dp_pdev *pdev,
-					 int mac_id,
-					 int mac_for_pdev);
+	QDF_STATUS (*mon_pdev_htt_srng_setup)(struct dp_soc *soc,
+					      struct dp_pdev *pdev,
+					      int mac_id,
+					      int mac_for_pdev);
+	QDF_STATUS (*mon_soc_htt_srng_setup)(struct dp_soc *soc);
 #endif
 #if !defined(DISABLE_MON_CONFIG) && defined(MON_ENABLE_DROP_FOR_MAC)
 	uint32_t (*mon_drop_packets_for_mac)(struct dp_pdev *pdev,
@@ -1689,13 +1690,32 @@ static inline QDF_STATUS dp_monitor_htt_srng_setup(struct dp_soc *soc,
 	}
 
 	monitor_ops = mon_soc->mon_ops;
-	if (!monitor_ops || !monitor_ops->mon_htt_srng_setup) {
+	if (!monitor_ops || !monitor_ops->mon_pdev_htt_srng_setup) {
 		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return monitor_ops->mon_htt_srng_setup(soc, pdev, mac_id,
-					       mac_for_pdev);
+	return monitor_ops->mon_pdev_htt_srng_setup(soc, pdev, mac_id,
+						    mac_for_pdev);
+}
+
+static inline QDF_STATUS dp_monitor_soc_htt_srng_setup(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		dp_mon_debug("monitor soc is NULL");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_soc_htt_srng_setup) {
+		dp_mon_debug("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_soc_htt_srng_setup(soc);
 }
 #else
 static inline QDF_STATUS dp_monitor_htt_srng_setup(struct dp_soc *soc,

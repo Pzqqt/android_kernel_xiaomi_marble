@@ -3235,7 +3235,7 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_config_debug_sniffer = dp_config_debug_sniffer,
 	.mon_flush_rings = dp_flush_monitor_rings,
 #if !defined(DISABLE_MON_CONFIG)
-	.mon_htt_srng_setup = dp_mon_htt_srng_setup_1_0,
+	.mon_pdev_htt_srng_setup = dp_mon_htt_srng_setup_1_0,
 #endif
 #if defined(DP_CON_MON)
 	.mon_service_rings = dp_service_mon_rings,

@@ -5442,6 +5442,7 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 {
 	int i;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];
 
@@ -5541,6 +5542,9 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int mac_for_pdev;
 	int lmac_id;
+
+	/* Configure monitor mode rings */
+	dp_monitor_soc_htt_srng_setup(soc);
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev =  soc->pdev_list[i];

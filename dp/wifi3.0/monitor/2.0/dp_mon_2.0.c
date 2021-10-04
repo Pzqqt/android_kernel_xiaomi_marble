@@ -341,8 +341,37 @@ dp_set_bpr_enable_2_0(struct dp_pdev *pdev, int val)
 
 #ifndef DISABLE_MON_CONFIG
 static
-QDF_STATUS dp_mon_htt_srng_setup_2_0(struct dp_soc *soc,
-				     struct dp_pdev *pdev,
+QDF_STATUS dp_mon_soc_htt_srng_setup_2_0(struct dp_soc *soc)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	QDF_STATUS status;
+
+	status = htt_srng_setup(soc->htt_handle, 0,
+				soc->rxdma_mon_buf_ring[0].hal_srng,
+				RXDMA_MONITOR_BUF);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_err("Failed to send htt srng setup message for Rx mon buf ring");
+		return status;
+	}
+
+	status = htt_srng_setup(soc->htt_handle, 0,
+				mon_soc->tx_mon_buf_ring.hal_srng,
+				TX_MONITOR_BUF);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_err("Failed to send htt srng setup message for Tx mon buf ring");
+		return status;
+	}
+
+	return status;
+}
+
+static
+QDF_STATUS dp_mon_pdev_htt_srng_setup_2_0(struct dp_soc *soc,
+					  struct dp_pdev *pdev,
 				     int mac_id,
 				     int mac_for_pdev)
 {
@@ -564,14 +593,6 @@ QDF_STATUS dp_mon_soc_init_2_0(struct dp_soc *soc)
 		dp_mon_err("%pK: " RNG_ERR "rx mon desc pool init", soc);
 		goto fail;
 	}
-
-	htt_srng_setup(soc->htt_handle, 0,
-		       soc->rxdma_mon_buf_ring[0].hal_srng,
-		       RXDMA_MONITOR_BUF);
-
-	htt_srng_setup(soc->htt_handle, 0,
-		       mon_soc->tx_mon_buf_ring.hal_srng,
-		       TX_MONITOR_BUF);
 
 	return QDF_STATUS_SUCCESS;
 fail:
@@ -809,7 +830,8 @@ struct dp_mon_ops monitor_ops_2_0 = {
 	.mon_config_debug_sniffer = dp_config_debug_sniffer,
 	.mon_flush_rings = NULL,
 #if !defined(DISABLE_MON_CONFIG)
-	.mon_htt_srng_setup = dp_mon_htt_srng_setup_2_0,
+	.mon_pdev_htt_srng_setup = dp_mon_pdev_htt_srng_setup_2_0,
+	.mon_soc_htt_srng_setup = dp_mon_soc_htt_srng_setup_2_0,
 #endif
 #if defined(DP_CON_MON)
 	.mon_service_rings = NULL,

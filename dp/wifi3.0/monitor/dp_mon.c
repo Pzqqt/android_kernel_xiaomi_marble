@@ -1989,8 +1989,9 @@ QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
 	struct dp_mon_ops *mon_ops;
 
 	mon_ops = dp_mon_ops_get(soc);
-	if (mon_ops  && mon_ops->mon_htt_srng_setup)
-		return mon_ops->mon_htt_srng_setup(soc, pdev, mac_id, mac_for_pdev);
+	if (mon_ops  && mon_ops->mon_pdev_htt_srng_setup)
+		return mon_ops->mon_pdev_htt_srng_setup(soc, pdev,
+							mac_id, mac_for_pdev);
 
 	return QDF_STATUS_E_FAILURE;
 }
