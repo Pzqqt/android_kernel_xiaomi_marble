@@ -2743,13 +2743,8 @@ static int wma_wake_event_piggybacked(
 				    NULL, NULL, wake_reason,
 				    pb_event_len);
 		if (pb_event_len > 0) {
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 			errno = target_if_cm_roam_event(wma, pb_event,
 							pb_event_len);
-#else
-			errno = wma_roam_event_callback(wma, pb_event,
-							pb_event_len);
-#endif
 		} else {
 			/*
 			 * No wow_packet_buffer means a better AP beacon
@@ -2812,23 +2807,13 @@ static int wma_wake_event_piggybacked(
 		break;
 	case WOW_REASON_ROAM_PMKID_REQUEST:
 		wma_debug("Host woken up because of PMKID request event");
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-		errno = wma_roam_pmkid_request_event_handler(wma, pb_event,
-							     pb_event_len);
-#else
 		errno = target_if_pmkid_request_event_handler(wma,
 					pb_event, pb_event_len);
-#endif
 		break;
 	case WOW_REASON_VDEV_DISCONNECT:
 		wma_debug("Host woken up because of vdev disconnect event");
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-		errno = wma_roam_vdev_disconnect_event_handler(wma, pb_event,
-							       pb_event_len);
-#else
 		errno = target_if_cm_roam_vdev_disconnect_event_handler(wma,
 					pb_event, pb_event_len);
-#endif
 		break;
 	default:
 		wma_err("Wake reason %s(%u) is not a piggybacked event",

@@ -247,34 +247,7 @@ int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
  */
 int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 				 uint32_t len);
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-/**
- * wma_mlme_roam_synch_event_handler_cb() - roam synch event handler
- * @handle: wma handle
- * @event: event data
- * @len: length of data
- *
- * This function is roam synch event handler. It sends roam
- * indication for upper layer.
- *
- * Return: Success or Failure status
- */
-int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
-					 uint32_t len);
 
-/**
- * wma_roam_synch_frame_event_handler() - roam synch frame event handler
- * @handle: wma handle
- * @event: event data
- * @len: length of data
- *
- * This function is roam synch frame event handler.
- *
- * Return: Success or Failure status
- */
-int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
-					uint32_t len);
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 /**
  * wma_roam_vdev_disconnect_event_handler() - Handles roam vdev disconnect event
  * @handle: wma_handle

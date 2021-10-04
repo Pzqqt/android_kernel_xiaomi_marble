@@ -1798,7 +1798,6 @@ extract_roam_frame_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 static void
 wmi_extract_pdev_hw_mode_trans_ind(
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
@@ -2649,9 +2648,7 @@ extract_roam_event_tlv(wmi_unified_t wmi_handle, void *evt_buf, uint32_t len,
 end:
 	return status;
 }
-#endif
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 static enum blm_reject_ap_reason wmi_get_reject_reason(uint32_t reason)
 {
 	switch (reason) {
@@ -3245,7 +3242,6 @@ extract_roam_pmkid_request_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 {
@@ -3256,7 +3252,6 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_roam_initial_info = extract_roam_initial_info_tlv;
 	ops->extract_roam_msg_info = extract_roam_msg_info_tlv;
 	ops->extract_roam_frame_info = extract_roam_frame_info_tlv;
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 	ops->extract_roam_sync_event = extract_roam_sync_event_tlv;
 	ops->extract_roam_sync_frame_event = extract_roam_sync_frame_event_tlv;
 	ops->extract_roam_event = extract_roam_event_tlv;
@@ -3266,7 +3261,6 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_roam_stats_event = extract_roam_stats_event_tlv;
 	ops->extract_auth_offload_event = extract_auth_offload_event_tlv;
 	ops->extract_roam_pmkid_request = extract_roam_pmkid_request_tlv;
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =
 			send_process_roam_synch_complete_cmd_tlv;
@@ -3297,7 +3291,6 @@ extract_roam_msg_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 static inline QDF_STATUS
 extract_roam_sync_event(wmi_unified_t wmi_handle, void *evt_buf,
 			uint32_t len,
@@ -3319,7 +3312,6 @@ extract_roam_event(wmi_unified_t wmi_handle, void *evt_buf, uint32_t len,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #define ROAM_OFFLOAD_PMK_EXT_BYTES 16
