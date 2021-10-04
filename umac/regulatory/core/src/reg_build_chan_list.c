@@ -2545,8 +2545,6 @@ reg_process_afc_expiry_event(struct afc_regulatory_info *afc_info)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pdev_priv_obj->is_6g_afc_power_event_received = false;
-
 	reg_debug("AFC event subtype: %d",
 		  afc_info->expiry_info->event_subtype);
 	switch (afc_info->expiry_info->event_subtype) {
@@ -2558,6 +2556,7 @@ reg_process_afc_expiry_event(struct afc_regulatory_info *afc_info)
 		reg_afc_start(pdev, pdev_priv_obj->afc_request_id);
 		break;
 	case REG_AFC_EXPIRY_EVENT_SWITCH_TO_LPI:
+		pdev_priv_obj->is_6g_afc_power_event_received = false;
 		reg_disable_afc_mas_chan_list_channels(pdev_priv_obj);
 		if (tx_ops->trigger_acs_for_afc)
 			tx_ops->trigger_acs_for_afc(pdev);
