@@ -824,8 +824,14 @@ struct dp_rx_tid {
  * @num_host2rxdma_ring_masks: interrupts with host2rxdma_ring_mask set
  * @num_rx_ring_near_full_masks: Near-full interrupts for REO DST ring
  * @num_tx_comp_ring_near_full_masks: Near-full interrupts for TX completion
+ * @num_rx_wbm_rel_ring_near_full_masks: total number of times the wbm rel ring
+ *                                       near full interrupt was received
+ * @num_reo_status_ring_near_full_masks: total number of times the reo status
+ *                                       near full interrupt was received
+ * @num_near_full_masks: total number of times the near full interrupt
+ *                       was received
  * @num_masks: total number of times the interrupt was received
- * @num_masks: total number of times the near full interrupt was received
+ * @num_tx_mon_ring_masks: interrupts with num_tx_mon_ring_masks set
  *
  * Counter for individual masks are incremented only if there are any packets
  * on that ring.
@@ -845,6 +851,7 @@ struct dp_intr_stats {
 	uint32_t num_reo_status_ring_near_full_masks;
 	uint32_t num_near_full_masks;
 	uint32_t num_masks;
+	uint32_t num_tx_mon_ring_masks;
 };
 
 /* per interrupt context  */
@@ -854,6 +861,7 @@ struct dp_intr {
 	uint8_t rx_ring_mask;   /* Rx REO rings (0-3) associated
 				with this interrupt context */
 	uint8_t rx_mon_ring_mask;  /* Rx monitor ring mask (0-2) */
+	uint8_t tx_mon_ring_mask;  /* Tx monitor ring mask (0-2) */
 	uint8_t rx_err_ring_mask; /* REO Exception Ring */
 	uint8_t rx_wbm_rel_ring_mask; /* WBM2SW Rx Release Ring */
 	uint8_t reo_status_ring_mask; /* REO command response ring */

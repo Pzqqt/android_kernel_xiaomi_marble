@@ -378,13 +378,6 @@ dp_rx_mon_process_2_0(struct dp_soc *soc, struct dp_intr *int_ctx,
 	return 0;
 }
 
-static uint32_t
-dp_tx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
-		  uint32_t mac_id, uint32_t quota)
-{
-	return 0;
-}
-
 static
 QDF_STATUS dp_mon_soc_detach_2_0(struct dp_soc *soc)
 {

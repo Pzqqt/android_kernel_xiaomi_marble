@@ -1397,6 +1397,10 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 		/* dp_mon_process */
 		grp_mask = &soc->wlan_cfg_ctx->int_rx_mon_ring_mask[0];
 	break;
+	case TX_MONITOR_DST:
+		/* dp_tx_mon_process */
+		grp_mask = &soc->wlan_cfg_ctx->int_tx_mon_ring_mask[0];
+	break;
 	case RXDMA_DST:
 		/* dp_rxdma_err_process */
 		grp_mask = &soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[0];
@@ -1756,7 +1760,8 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 	 * TODO: See if this is required for any other ring
 	 */
 	if ((ring_type == RXDMA_BUF) || (ring_type == RXDMA_MONITOR_BUF) ||
-	    (ring_type == RXDMA_MONITOR_STATUS)) {
+	    (ring_type == RXDMA_MONITOR_STATUS ||
+	    (ring_type == TX_MONITOR_BUF))) {
 		/* TODO: Setting low threshold to 1/8th of ring size
 		 * see if this needs to be configurable
 		 */
@@ -2285,6 +2290,18 @@ static int dp_process_lmac_rings(struct dp_intr *int_ctx, int total_budget)
 						       remaining_quota);
 			if (work_done)
 				intr_stats->num_rx_mon_ring_masks++;
+			budget -= work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
+
+		if (int_ctx->tx_mon_ring_mask & (1 << mac_for_pdev)) {
+			work_done = dp_tx_mon_process(soc, int_ctx,
+						      mac_for_pdev,
+						      remaining_quota);
+			if (work_done)
+				intr_stats->num_tx_mon_ring_masks++;
 			budget -= work_done;
 			if (budget <= 0)
 				goto budget_done;
@@ -2854,6 +2871,8 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 					soc->wlan_cfg_ctx, intr_ctx_num);
 	int rx_mon_mask = wlan_cfg_get_rx_mon_ring_mask(
 					soc->wlan_cfg_ctx, intr_ctx_num);
+	int tx_mon_mask = wlan_cfg_get_tx_mon_ring_mask(
+					soc->wlan_cfg_ctx, intr_ctx_num);
 	int rx_err_ring_mask = wlan_cfg_get_rx_err_ring_mask(
 					soc->wlan_cfg_ctx, intr_ctx_num);
 	int rx_wbm_rel_ring_mask = wlan_cfg_get_rx_wbm_rel_ring_mask(
@@ -2882,7 +2901,7 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 
 	soc->intr_mode = DP_INTR_MSI;
 
-	if (tx_mask | rx_mask | rx_mon_mask | rx_err_ring_mask |
+	if (tx_mask | rx_mask | rx_mon_mask | tx_mon_mask | rx_err_ring_mask |
 	    rx_wbm_rel_ring_mask | reo_status_ring_mask | rxdma2host_ring_mask |
 	    host2rxdma_ring_mask | host2rxdma_mon_ring_mask |
 	    rx_near_full_grp_1_mask | rx_near_full_grp_2_mask |
@@ -3019,6 +3038,8 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 			wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, i);
 		int rx_mon_mask =
 			dp_soc_get_mon_mask_for_interrupt_mode(soc, i);
+		int tx_mon_ring_mask =
+			wlan_cfg_get_tx_mon_ring_mask(soc->wlan_cfg_ctx, i);
 		int rx_err_ring_mask =
 			wlan_cfg_get_rx_err_ring_mask(soc->wlan_cfg_ctx, i);
 		int rx_wbm_rel_ring_mask =
@@ -3046,6 +3067,7 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 		soc->intr_ctx[i].tx_ring_mask = tx_mask;
 		soc->intr_ctx[i].rx_ring_mask = rx_mask;
 		soc->intr_ctx[i].rx_mon_ring_mask = rx_mon_mask;
+		soc->intr_ctx[i].tx_mon_ring_mask = tx_mon_ring_mask;
 		soc->intr_ctx[i].rx_err_ring_mask = rx_err_ring_mask;
 		soc->intr_ctx[i].rxdma2host_ring_mask = rxdma2host_ring_mask;
 		soc->intr_ctx[i].host2rxdma_ring_mask = host2rxdma_ring_mask;

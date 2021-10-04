@@ -137,6 +137,8 @@ struct wlan_srng_cfg {
  * @int_rx_ring_mask: Bitmap of Rx interrupts mapped to each NAPI/Intr context
  * @int_rx_mon_ring_mask: Bitmap of Rx monitor ring interrupts mapped to each
  *			  NAPI/Intr context
+ * @int_tx_mon_ring_mask: Bitmap of Tx monitor ring interrupts mapped to each
+ *			  NAPI/Intr context
  * @int_rx_err_ring_mask: Bitmap of Rx err ring interrupts mapped to each
  *			  NAPI/Intr context
  * @int_wbm_rel_ring_mask: Bitmap of wbm rel ring interrupts mapped to each
@@ -261,6 +263,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_tx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t int_host2rxdma_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t int_rxdma2host_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -606,6 +609,29 @@ int wlan_cfg_get_rx_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
  */
 int wlan_cfg_get_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		int context);
+
+/**
+ * wlan_cfg_set_tx_mon_ring_mask() - Set Tx monitor ring interrupt mask
+ *				   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ * @mask: Interrupt mask
+ *
+ * Return: None
+ */
+void wlan_cfg_set_tx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+				   int context, int mask);
+
+/**
+ * wlan_cfg_get_tx_mon_ring_mask() - Return Tx monitor ring interrupt mask
+ *				   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_tx_mon_ring_mask[context]
+ */
+int wlan_cfg_get_tx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
+				  int context);
 
 /**
  * wlan_cfg_set_rxdma2host_ring_mask() - Set rxdma2host ring interrupt mask
