@@ -38,6 +38,221 @@ extern void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 			   int ring_type, int ring_num);
 
 #if !defined(DISABLE_MON_CONFIG)
+/*
+ * dp_mon_add_desc_list_to_free_list() - append unused desc_list back to
+ *					freelist.
+ *
+ * @soc: core txrx main context
+ * @local_desc_list: local desc list provided by the caller
+ * @tail: attach the point to last desc of local desc list
+ * @mon_desc_pool: monitor descriptor pool pointer
+ */
+static void
+dp_mon_add_desc_list_to_free_list(struct dp_soc *soc,
+				  union dp_mon_desc_list_elem_t **local_desc_list,
+				  union dp_mon_desc_list_elem_t **tail,
+				  struct dp_mon_desc_pool *mon_desc_pool)
+{
+	union dp_mon_desc_list_elem_t *temp_list = NULL;
+
+	qdf_spin_lock_bh(&mon_desc_pool->lock);
+
+	temp_list = mon_desc_pool->freelist;
+	mon_desc_pool->freelist = *local_desc_list;
+	(*tail)->next = temp_list;
+	*tail = NULL;
+	*local_desc_list = NULL;
+
+	qdf_spin_unlock_bh(&mon_desc_pool->lock);
+}
+
+/*
+ * dp_mon_get_free_desc_list() - provide a list of descriptors from
+ *				the free mon desc pool.
+ *
+ * @soc: core txrx main context
+ * @mon_desc_pool: monitor descriptor pool pointer
+ * @num_descs: number of descs requested from freelist
+ * @desc_list: attach the descs to this list (output parameter)
+ * @tail: attach the point to last desc of free list (output parameter)
+ *
+ * Return: number of descs allocated from free list.
+ */
+static uint16_t
+dp_mon_get_free_desc_list(struct dp_soc *soc,
+			  struct dp_mon_desc_pool *mon_desc_pool,
+			  uint16_t num_descs,
+			  union dp_mon_desc_list_elem_t **desc_list,
+			  union dp_mon_desc_list_elem_t **tail)
+{
+	uint16_t count;
+
+	qdf_spin_lock_bh(&mon_desc_pool->lock);
+
+	*desc_list = *tail = mon_desc_pool->freelist;
+
+	for (count = 0; count < num_descs; count++) {
+		if (qdf_unlikely(!mon_desc_pool->freelist)) {
+			qdf_spin_unlock_bh(&mon_desc_pool->lock);
+			return count;
+		}
+		*tail = mon_desc_pool->freelist;
+		mon_desc_pool->freelist = mon_desc_pool->freelist->next;
+	}
+	(*tail)->next = NULL;
+	qdf_spin_unlock_bh(&mon_desc_pool->lock);
+	return count;
+}
+
+void dp_mon_pool_frag_unmap_and_free(struct dp_soc *soc,
+				     struct dp_mon_desc_pool *mon_desc_pool)
+{
+	int desc_id;
+	qdf_frag_t vaddr;
+	qdf_dma_addr_t paddr;
+
+	qdf_spin_lock_bh(&mon_desc_pool->lock);
+	for (desc_id = 0; desc_id < mon_desc_pool->pool_size; desc_id++) {
+		if (mon_desc_pool->array[desc_id].mon_desc.in_use) {
+			vaddr = mon_desc_pool->array[desc_id].mon_desc.buf_addr;
+			paddr = mon_desc_pool->array[desc_id].mon_desc.paddr;
+
+			if (!(mon_desc_pool->array[desc_id].mon_desc.unmapped)) {
+				qdf_mem_unmap_page(soc->osdev, paddr,
+						   QDF_DMA_FROM_DEVICE,
+						   mon_desc_pool->buf_size);
+				mon_desc_pool->array[desc_id].mon_desc.unmapped = 1;
+				mon_desc_pool->array[desc_id].mon_desc.cookie = desc_id;
+			}
+			qdf_frag_free(vaddr);
+		}
+	}
+	qdf_spin_unlock_bh(&mon_desc_pool->lock);
+}
+
+static inline QDF_STATUS
+dp_mon_frag_alloc_and_map(struct dp_soc *dp_soc,
+			  struct dp_mon_desc *mon_desc,
+			  struct dp_mon_desc_pool *mon_desc_pool)
+{
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	mon_desc->buf_addr = qdf_frag_alloc(mon_desc_pool->buf_size);
+
+	if (!mon_desc->buf_addr) {
+		dp_mon_err("Frag alloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ret = qdf_mem_map_page(dp_soc->osdev,
+			       mon_desc->buf_addr,
+			       QDF_DMA_FROM_DEVICE,
+			       mon_desc_pool->buf_size,
+			       &mon_desc->paddr);
+
+	if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
+		qdf_frag_free(mon_desc->buf_addr);
+		dp_mon_err("Frag map failed");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+dp_mon_buffers_replenish(struct dp_soc *dp_soc,
+			 struct dp_srng *dp_mon_srng,
+			 struct dp_mon_desc_pool *mon_desc_pool,
+			 uint32_t num_req_buffers,
+			 union dp_mon_desc_list_elem_t **desc_list,
+			 union dp_mon_desc_list_elem_t **tail)
+{
+	uint32_t num_alloc_desc;
+	uint16_t num_desc_to_free = 0;
+	uint32_t num_entries_avail;
+	uint32_t count = 0;
+	int sync_hw_ptr = 1;
+	struct dp_mon_desc mon_desc = {0};
+	void *mon_ring_entry;
+	union dp_mon_desc_list_elem_t *next;
+	void *mon_srng;
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	mon_srng = dp_mon_srng->hal_srng;
+
+	/*
+	 * if desc_list is NULL, allocate the descs from freelist
+	 */
+	if (!(*desc_list)) {
+		num_alloc_desc = dp_mon_get_free_desc_list(dp_soc,
+							   mon_desc_pool,
+							   num_req_buffers,
+							   desc_list,
+							   tail);
+
+		if (!num_alloc_desc) {
+			dp_mon_err("%pK: no free rx_descs in freelist", dp_soc);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		dp_mon_info("%pK: %d rx desc allocated",
+			    dp_soc, num_alloc_desc);
+
+		num_req_buffers = num_alloc_desc;
+	}
+
+	hal_srng_access_start(dp_soc->hal_soc, mon_srng);
+	num_entries_avail = hal_srng_src_num_avail(dp_soc->hal_soc,
+						   mon_srng, sync_hw_ptr);
+
+	if (num_entries_avail < num_req_buffers) {
+		num_desc_to_free = num_req_buffers - num_entries_avail;
+		num_req_buffers = num_entries_avail;
+	}
+
+	while (count <= num_req_buffers) {
+		ret = dp_mon_frag_alloc_and_map(dp_soc,
+						&mon_desc,
+						mon_desc_pool);
+
+		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
+			if (qdf_unlikely(ret  == QDF_STATUS_E_FAULT))
+				continue;
+			break;
+		}
+
+		count++;
+		next = (*desc_list)->next;
+		mon_ring_entry = hal_srng_src_get_next(
+						dp_soc->hal_soc,
+						mon_srng);
+
+		qdf_assert_always((*desc_list)->mon_desc.in_use == 0);
+
+		(*desc_list)->mon_desc.in_use = 1;
+		(*desc_list)->mon_desc.unmapped = 0;
+
+		hal_mon_buff_addr_info_set(dp_soc->hal_soc,
+					   mon_ring_entry,
+					   &((*desc_list)->mon_desc),
+					   mon_desc.paddr);
+
+		*desc_list = next;
+	}
+
+	hal_srng_access_end(dp_soc->hal_soc, mon_srng);
+
+	/*
+	 * add any available free desc back to the free list
+	 */
+	if (*desc_list) {
+		dp_mon_add_desc_list_to_free_list(dp_soc, desc_list, tail,
+						  mon_desc_pool);
+	}
+
+	return ret;
+}
+
 QDF_STATUS dp_mon_desc_pool_init(struct dp_mon_desc_pool *mon_desc_pool)
 {
 	int desc_id;
@@ -46,6 +261,7 @@ QDF_STATUS dp_mon_desc_pool_init(struct dp_mon_desc_pool *mon_desc_pool)
 
 	qdf_spin_lock_bh(&mon_desc_pool->lock);
 
+	mon_desc_pool->buf_size = DP_MON_DATA_BUFFER_SIZE;
 	/* link SW descs into a freelist */
 	mon_desc_pool->freelist = &mon_desc_pool->array[0];
 	qdf_mem_zero(mon_desc_pool->freelist, mon_desc_pool->pool_size);
@@ -60,6 +276,7 @@ QDF_STATUS dp_mon_desc_pool_init(struct dp_mon_desc_pool *mon_desc_pool)
 		mon_desc_pool->array[desc_id].mon_desc.cookie = desc_id;
 	}
 	qdf_spin_unlock_bh(&mon_desc_pool->lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 

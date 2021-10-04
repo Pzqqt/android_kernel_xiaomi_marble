@@ -64,7 +64,6 @@ dp_tx_mon_buf_desc_pool_alloc(struct dp_soc *soc)
 {
 	struct dp_srng *mon_buf_ring;
 	struct dp_mon_desc_pool *tx_mon_desc_pool;
-	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
 	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
 	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
 
@@ -79,10 +78,31 @@ dp_tx_mon_buf_desc_pool_alloc(struct dp_soc *soc)
 void
 dp_tx_mon_buffers_free(struct dp_soc *soc)
 {
+	struct dp_mon_desc_pool *tx_mon_desc_pool;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	tx_mon_desc_pool = &mon_soc->tx_desc_mon;
+
+	dp_mon_pool_frag_unmap_and_free(soc, tx_mon_desc_pool);
 }
 
 QDF_STATUS
 dp_tx_mon_buffers_alloc(struct dp_soc *soc)
 {
-	return QDF_STATUS_SUCCESS;
+	struct dp_srng *mon_buf_ring;
+	struct dp_mon_desc_pool *tx_mon_desc_pool;
+	union dp_mon_desc_list_elem_t *desc_list = NULL;
+	union dp_mon_desc_list_elem_t *tail = NULL;
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mon_soc_be *mon_soc = be_soc->monitor_soc_be;
+
+	mon_buf_ring = &mon_soc->tx_mon_buf_ring;
+
+	tx_mon_desc_pool = &mon_soc->tx_desc_mon;
+
+	return dp_mon_buffers_replenish(soc, mon_buf_ring,
+					tx_mon_desc_pool,
+					mon_soc->tx_mon_ring_fill_level,
+					&desc_list, &tail);
 }

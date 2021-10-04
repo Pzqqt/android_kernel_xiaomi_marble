@@ -22,6 +22,7 @@
 #include <dp_types.h>
 
 #define DP_MON_RING_FILL_LEVEL_DEFAULT 2048
+#define DP_MON_DATA_BUFFER_SIZE     2048
 
 /**
  * struct dp_mon_desc
@@ -140,5 +141,38 @@ void dp_mon_desc_pool_free(struct dp_mon_desc_pool *mon_desc_pool);
  */
 QDF_STATUS dp_mon_desc_pool_alloc(uint32_t pool_size,
 				  struct dp_mon_desc_pool *mon_desc_pool);
+
+/*
+ * dp_mon_pool_frag_unmap_and_free() - free the mon desc frag called during
+ *			    de-initialization of wifi module.
+ *
+ * @soc: DP soc handle
+ * @mon_desc_pool: monitor descriptor pool pointer
+ *
+ * Return: None
+ */
+void dp_mon_pool_frag_unmap_and_free(struct dp_soc *dp_soc,
+				     struct dp_mon_desc_pool *mon_desc_pool);
+
+/*
+ * dp_mon_buffers_replenish() - replenish monitor ring with nbufs
+ *
+ * @soc: core txrx main context
+ * @dp_mon_srng: dp monitor circular ring
+ * @mon_desc_pool: Pointer to free mon descriptor pool
+ * @num_req_buffers: number of buffer to be replenished
+ * @desc_list: list of descs if called from dp_rx_process
+ *	       or NULL during dp rx initialization or out of buffer
+ *	       interrupt.
+ * @tail: tail of descs list
+ *
+ * Return: return success or failure
+ */
+QDF_STATUS dp_mon_buffers_replenish(struct dp_soc *dp_soc,
+				struct dp_srng *dp_mon_srng,
+				struct dp_mon_desc_pool *mon_desc_pool,
+				uint32_t num_req_buffers,
+				union dp_mon_desc_list_elem_t **desc_list,
+				union dp_mon_desc_list_elem_t **tail);
 
 #endif /* _DP_MON_2_0_H_ */
