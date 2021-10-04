@@ -42,6 +42,303 @@
 #define dp_mon_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MON, params)
 #define dp_mon_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MON, params)
 
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+struct dp_pdev_tx_capture {
+};
+
+struct dp_peer_tx_capture {
+};
+#endif
+
+/*
+ * dp_mon_soc_attach() - DP monitor soc attach
+ * @soc: Datapath SOC handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_NOMEM: Error
+ */
+QDF_STATUS dp_mon_soc_attach(struct dp_soc *soc);
+
+/*
+ * dp_mon_soc_detach() - DP monitor soc detach
+ * @soc: Datapath SOC handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_soc_detach(struct dp_soc *soc);
+
+/*
+ * dp_mon_soc_cfg_init() - DP monitor soc config init
+ * @soc: Datapath SOC handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc);
+
+/*
+ * dp_mon_pdev_attach() - DP monitor pdev attach
+ * @pdev: Datapath pdev handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_NOMEM: Error
+ */
+QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev);
+
+/*
+ * dp_mon_pdev_detach() - DP monitor pdev detach
+ * @pdev: Datapath pdev handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_pdev_detach(struct dp_pdev *pdev);
+
+/*
+ * dp_mon_pdev_init() - DP monitor pdev init
+ * @pdev: Datapath pdev handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_pdev_init(struct dp_pdev *pdev);
+
+/*
+ * dp_mon_pdev_deinit() - DP monitor pdev deinit
+ * @pdev: Datapath pdev handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_pdev_deinit(struct dp_pdev *pdev);
+
+/*
+ * dp_mon_vdev_attach() - DP monitor vdev attach
+ * @vdev: Datapath vdev handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_NOMEM: Error
+ */
+QDF_STATUS dp_mon_vdev_attach(struct dp_vdev *vdev);
+
+/*
+ * dp_mon_vdev_detach() - DP monitor vdev detach
+ * @vdev: Datapath vdev handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_vdev_detach(struct dp_vdev *vdev);
+
+/*
+ * dp_mon_peer_attach() - DP monitor peer attach
+ * @peer: Datapath peer handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_NOMEM: Error
+ */
+QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer);
+
+/*
+ * dp_mon_peer_detach() - DP monitor peer detach
+ * @peer: Datapath peer handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_peer_detach(struct dp_peer *peer);
+
+/*
+ * dp_mon_cdp_ops_register() - Register monitor cdp ops
+ * @soc: Datapath soc handle
+ *
+ */
+void dp_mon_cdp_ops_register(struct dp_soc *soc);
+
+/*
+ * dp_mon_cdp_ops_deregister() - deregister monitor cdp ops
+ * @soc: Datapath soc handle
+ *
+ */
+void dp_mon_cdp_ops_deregister(struct dp_soc *soc);
+
+/*
+ * dp_mon_ops_register() - Register monitor ops
+ * @soc: Datapath soc handle
+ *
+ */
+void dp_mon_ops_register(struct dp_soc *soc);
+
+/*
+ * dp_mon_htt_srng_setup() - DP mon htt srng setup
+ * @soc: Datapath soc handle
+ * @pdev: Datapath pdev handle
+ * @mac_id: mac id
+ * @mac_for_pdev: mac id mapped pdev
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_FAILURE: Error
+ */
+QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
+				 struct dp_pdev *pdev,
+				 int mac_id,
+				 int mac_for_pdev);
+
+/*
+ * dp_config_debug_sniffer()- API to enable/disable debug sniffer
+ * @pdev: DP_PDEV handle
+ * @val: user provided value
+ *
+ * Return: 0 for success. nonzero for failure.
+ */
+#if defined(QCA_MCOPY_SUPPORT) || defined(QCA_TX_CAPTURE_SUPPORT)
+QDF_STATUS
+dp_config_debug_sniffer(struct dp_pdev *pdev, int val);
+#else
+static inline QDF_STATUS
+dp_config_debug_sniffer(struct dp_pdev *pdev, int val) {
+	return QDF_STATUS_E_INVAL;
+}
+#endif /* QCA_MCOPY_SUPPORT || QCA_TX_CAPTURE_SUPPORT */
+
+/*
+ * dp_htt_ppdu_stats_attach() - attach resources for HTT PPDU stats processing
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_NOMEM: Error
+ */
+QDF_STATUS dp_htt_ppdu_stats_attach(struct dp_pdev *pdev);
+
+/*
+ * dp_htt_ppdu_stats_detach() - detach stats resources
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: void
+ */
+void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev);
+
+/*
+ *dp_set_bpr_enable() - API to enable/disable bpr feature
+ *@pdev_handle: DP_PDEV handle.
+ *@val: Provided value.
+ *
+ *Return: 0 for success. nonzero for failure.
+ */
+#ifdef QCA_SUPPORT_BPR
+QDF_STATUS
+dp_set_bpr_enable(struct dp_pdev *pdev, int val);
+#endif
+
+#ifdef ATH_SUPPORT_NAC
+int dp_set_filter_neigh_peers(struct dp_pdev *pdev,
+				     bool val);
+#endif /* ATH_SUPPORT_NAC */
+
+#ifdef WLAN_ATF_ENABLE
+void dp_set_atf_stats_enable(struct dp_pdev *pdev, bool value);
+#endif
+
+/**
+ * dp_set_bsscolor() - sets bsscolor for tx capture
+ * @pdev: Datapath PDEV handle
+ * @bsscolor: new bsscolor
+ */
+void
+dp_mon_set_bsscolor(struct dp_pdev *pdev, uint8_t bsscolor);
+
+/**
+ * dp_pdev_get_filter_ucast_data() - get DP PDEV monitor ucast filter
+ * @soc : data path soc handle
+ * @pdev_id : pdev_id
+ * Return: true on ucast filter flag set
+ */
+bool dp_pdev_get_filter_ucast_data(struct cdp_pdev *pdev_handle);
+
+/**
+ * dp_pdev_get_filter_mcast_data() - get DP PDEV monitor mcast filter
+ * @pdev_handle: Datapath PDEV handle
+ * Return: true on mcast filter flag set
+ */
+bool dp_pdev_get_filter_mcast_data(struct cdp_pdev *pdev_handle);
+
+/**
+ * dp_pdev_get_filter_non_data() - get DP PDEV monitor non_data filter
+ * @pdev_handle: Datapath PDEV handle
+ * Return: true on non data filter flag set
+ */
+bool dp_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle);
+
+/*
+ * dp_set_pktlog_wifi3() - attach txrx vdev
+ * @pdev: Datapath PDEV handle
+ * @event: which event's notifications are being subscribed to
+ * @enable: WDI event subscribe or not. (True or False)
+ *
+ * Return: Success, NULL on failure
+ */
+#ifdef WDI_EVENT_ENABLE
+int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
+			bool enable);
+#endif
+
+/* MCL specific functions */
+#if defined(DP_CON_MON) && !defined(REMOVE_PKT_LOG)
+/**
+ * dp_pktlogmod_exit() - API to cleanup pktlog info
+ * @pdev: Pdev handle
+ *
+ * Return: none
+ */
+void dp_pktlogmod_exit(struct dp_pdev *pdev);
+#else
+static inline
+void dp_pktlogmod_exit(struct dp_pdev *handle)
+{
+}
+#endif
+
+#ifdef QCA_MONITOR_PKT_SUPPORT
+/**
+ * dp_vdev_set_monitor_mode_buf_rings () - set monitor mode buf rings
+ *
+ * Allocate SW descriptor pool, buffers, link descriptor memory
+ * Initialize monitor related SRNGs
+ *
+ * @pdev: DP pdev object
+ *
+ * Return: void
+ */
+void dp_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev);
+
+/**
+ * dp_vdev_set_monitor_mode_rings () - set monitor mode rings
+ *
+ * Allocate SW descriptor pool, buffers, link descriptor memory
+ * Initialize monitor related SRNGs
+ *
+ * @pdev: DP pdev object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
+					  uint8_t delayed_replenish);
+
+#else
+static inline void
+dp_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
+{
+}
+
+static inline QDF_STATUS
+dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
+			       uint8_t delayed_replenish)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 struct dp_mon_ops {
 	QDF_STATUS (*mon_soc_cfg_init)(struct dp_soc *soc);
 	QDF_STATUS (*mon_pdev_attach)(struct dp_pdev *pdev);
@@ -69,10 +366,10 @@ struct dp_mon_ops {
 	void (*mon_service_rings)(struct  dp_soc *soc, uint32_t quota);
 #endif
 #ifndef DISABLE_MON_CONFIG
-	uint32_t (*mon_process)(struct dp_soc *soc,
-				struct dp_intr *int_ctx,
-				uint32_t mac_id,
-				uint32_t quota);
+	uint32_t (*mon_rx_process)(struct dp_soc *soc,
+				   struct dp_intr *int_ctx,
+				   uint32_t mac_id,
+				   uint32_t quota);
 #endif
 	void (*mon_peer_tx_init)(struct dp_pdev *pdev, struct dp_peer *peer);
 	void (*mon_peer_tx_cleanup)(struct dp_vdev *vdev,
@@ -135,6 +432,8 @@ struct dp_mon_ops {
 	void (*mon_pktlogmod_exit)(struct dp_pdev *pdev);
 #endif
 	void (*mon_vdev_set_monitor_mode_buf_rings)(struct dp_pdev *pdev);
+	QDF_STATUS (*mon_vdev_set_monitor_mode_rings)(struct dp_pdev *pdev,
+						      uint8_t delayed_replenish);
 	void (*mon_neighbour_peers_detach)(struct dp_pdev *pdev);
 #ifdef FEATURE_NAC_RSSI
 	QDF_STATUS (*mon_filter_neighbour_peer)(struct dp_pdev *pdev,
@@ -159,6 +458,47 @@ struct dp_mon_ops {
 					   uint8_t *mac_addr,
 					   qdf_nbuf_t nbuf,
 					   uint32_t flags);
+#ifdef QCA_ENHANCED_STATS_SUPPORT
+	void (*mon_filter_setup_enhanced_stats)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_enhanced_stats)(struct dp_pdev *pdev);
+#endif
+#ifdef QCA_MCOPY_SUPPORT
+	void (*mon_filter_setup_mcopy_mode)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_mcopy_mode)(struct dp_pdev *pdev);
+#endif
+#if defined(ATH_SUPPORT_NAC_RSSI) || defined(ATH_SUPPORT_NAC)
+	void (*mon_filter_setup_smart_monitor)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_smart_monitor)(struct dp_pdev *pdev);
+#endif
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
+	void (*mon_filter_setup_rx_enh_capture)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_rx_enh_capture)(struct dp_pdev *pdev);
+#endif
+	void (*mon_filter_setup_mon_mode)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_mon_mode)(struct dp_pdev *pdev);
+#ifdef WDI_EVENT_ENABLE
+	void (*mon_filter_setup_rx_pkt_log_full)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_rx_pkt_log_full)(struct dp_pdev *pdev);
+	void (*mon_filter_setup_rx_pkt_log_lite)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_rx_pkt_log_lite)(struct dp_pdev *pdev);
+	void (*mon_filter_setup_rx_pkt_log_cbf)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_rx_pkt_log_cbf)(struct dp_pdev *pdev);
+#endif
+	QDF_STATUS (*mon_filter_update)(struct dp_pdev *pdev);
+
+	QDF_STATUS (*mon_rings_alloc)(struct dp_soc* soc, struct dp_pdev *pdev);
+	void (*mon_rings_free)(struct dp_pdev *pdev);
+	QDF_STATUS (*mon_rings_init)(struct dp_soc* soc, struct dp_pdev *pdev);
+	void (*mon_rings_deinit)(struct dp_pdev *pdev);
+
+	QDF_STATUS (*rx_pdev_mon_buffers_alloc)(struct dp_pdev *pdev);
+	void (*rx_pdev_mon_buffers_free)(struct dp_pdev *pdev);
+	void (*rx_pdev_mon_desc_pool_init)(struct dp_pdev *pdev);
+	void (*rx_pdev_mon_desc_pool_deinit)(struct dp_pdev *pdev);
+	QDF_STATUS (*rx_pdev_mon_desc_pool_alloc)(struct dp_pdev *pdev);
+	void (*rx_pdev_mon_desc_pool_free)(struct dp_pdev *pdev);
+	QDF_STATUS (*mon_buffers_alloc)(struct dp_pdev *pdev);
+	QDF_STATUS (*mon_buffers_free)(struct dp_pdev *pdev);
 };
 
 struct dp_mon_soc {
@@ -563,16 +903,6 @@ dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS_MAX];
 
 int
 dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap);
-/**
- * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
- * @pdev: DP pdev handle
- * @ppdu_info: per PPDU TLV descriptor
- *
- * return: void
- */
-void
-dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
-			       struct ppdu_info *ppdu_info);
 
 #ifdef WDI_EVENT_ENABLE
 void dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn);
@@ -1409,12 +1739,12 @@ uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	}
 
 	monitor_ops = mon_soc->mon_ops;
-	if (!monitor_ops || !monitor_ops->mon_process) {
+	if (!monitor_ops || !monitor_ops->mon_rx_process) {
 		dp_mon_debug("callback not registered");
 		return 0;
 	}
 
-	return monitor_ops->mon_process(soc, int_ctx, mac_id, quota);
+	return monitor_ops->mon_rx_process(soc, int_ctx, mac_id, quota);
 }
 #else
 static inline
@@ -2606,23 +2936,166 @@ void dp_monitor_pdev_reset_scan_spcl_vap_stats_enable(struct dp_pdev *pdev,
 }
 #endif
 
-QDF_STATUS dp_mon_soc_attach(struct dp_soc *soc);
-QDF_STATUS dp_mon_soc_detach(struct dp_soc *soc);
-QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev);
-QDF_STATUS dp_mon_pdev_detach(struct dp_pdev *pdev);
-QDF_STATUS dp_mon_pdev_init(struct dp_pdev *pdev);
-QDF_STATUS dp_mon_pdev_deinit(struct dp_pdev *pdev);
-QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc);
-void dp_mon_cdp_ops_register(struct dp_soc *soc);
-void dp_mon_cdp_ops_deregister(struct dp_soc *soc);
-void dp_mon_ops_register(struct dp_mon_soc *mon_soc);
-QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
-				 struct dp_pdev *pdev,
-				 int mac_id,
-				 int mac_for_pdev);
 #ifdef QCA_ENHANCED_STATS_SUPPORT
 QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
 				    struct cdp_rx_stats_ppdu_user *ppdu_user);
+#endif
+
+/*
+ * dp_print_pdev_rx_mon_stats() - print rx mon stats
+ * @pdev: device object
+ *
+ * Return: void
+ */
+void
+dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_mcopy_check_deliver() - mcopy check deliver
+ * @pdev: DP pdev handle
+ * @peer_id: peer id
+ * @ppdu_id: ppdu
+ * @first_msdu: flag to indicate first msdu of ppdu
+ * Return: 0 on success, not 0 on failure
+ */
+QDF_STATUS dp_mcopy_check_deliver(struct dp_pdev *pdev,
+				  uint16_t peer_id,
+				  uint32_t ppdu_id,
+				  uint8_t first_msdu);
+
+/**
+ * dp_pdev_set_advance_monitor_filter() - Set DP PDEV monitor filter
+ * @soc: soc handle
+ * @pdev_id: id of Datapath PDEV handle
+ * @filter_val: Flag to select Filter for monitor mode
+ * Return: 0 on success, not 0 on failure
+ */
+#ifdef QCA_ADVANCE_MON_FILTER_SUPPORT
+QDF_STATUS
+dp_pdev_set_advance_monitor_filter(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				   struct cdp_monitor_filter *filter_val);
+#else
+static inline QDF_STATUS
+dp_pdev_set_advance_monitor_filter(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				   struct cdp_monitor_filter *filter_val)
+{
+	return QDF_STATUS_E_INVAL;
+}
+#endif /* QCA_ADVANCE_MON_FILTER_SUPPORT */
+
+/**
+ * dp_deliver_tx_mgmt() - Deliver mgmt frame for tx capture
+ * @cdp_soc : data path soc handle
+ * @pdev_id : pdev_id
+ * @nbuf: Management frame buffer
+ */
+QDF_STATUS
+dp_deliver_tx_mgmt(struct cdp_soc_t *cdp_soc, uint8_t pdev_id, qdf_nbuf_t nbuf);
+
+/**
+ * dp_filter_neighbour_peer() - API to filter neighbour peer
+ * @pdev : DP pdev handle
+ * @rx_pkt_hdr : packet header
+ *
+ * return: QDF_STATUS_SUCCESS on success
+ *	   QDF_STATUS_E_FAILURE on failure
+ */
+#ifdef FEATURE_NAC_RSSI
+QDF_STATUS dp_filter_neighbour_peer(struct dp_pdev *pdev,
+				    uint8_t *rx_pkt_hdr);
+#else
+static inline
+QDF_STATUS dp_filter_neighbour_peer(struct dp_pdev *pdev,
+				    uint8_t *rx_pkt_hdr)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_NAC_RSSI */
+
+/*
+ * dp_neighbour_peers_detach() - Detach neighbour peers(nac clients)
+ * @pdev: device object
+ *
+ * Return: void
+ */
+void dp_neighbour_peers_detach(struct dp_pdev *pdev);
+
+/**
+ * dp_reset_monitor_mode() - Disable monitor mode
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of datapath PDEV handle
+ * @smart_monitor: smart monitor flag
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
+				 uint8_t pdev_id,
+				 uint8_t smart_monitor);
+
+static inline
+struct dp_mon_ops *dp_mon_ops_get(struct dp_soc *soc)
+{
+	if (soc && soc->monitor_soc)
+		return soc->monitor_soc->mon_ops;
+
+	return NULL;
+}
+
+static inline
+struct cdp_mon_ops *dp_mon_cdp_ops_get(struct dp_soc *soc)
+{
+	struct cdp_ops *ops = soc->cdp_soc.ops;
+
+	return ops->mon_ops;
+}
+
+/**
+ * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
+ * @pdev: DP pdev handle
+ * @ppdu_info: per PPDU TLV descriptor
+ *
+ * return: void
+ */
+#ifdef QCA_ENHANCED_STATS_SUPPORT
+void
+dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
+			       struct ppdu_info *ppdu_info);
+#else
+static inline void
+dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
+			       struct ppdu_info *ppdu_info)
+{
+}
+#endif /* QCA_ENHANCED_STATS_SUPPORT */
+
+/**
+ * dp_mon_ops_get_1_0(): Get legacy monitor ops
+ *
+ * return: Pointer to dp_mon_ops
+ */
+struct dp_mon_ops *dp_mon_ops_get_1_0(void);
+
+/**
+ * dp_mon_cdp_ops_get_1_0(): Get legacy monitor cdp ops
+ *
+ * return: Pointer to dp_mon_cdp_ops
+ */
+struct cdp_mon_ops *dp_mon_cdp_ops_get_1_0(void);
+
+#ifdef QCA_MONITOR_2_0_SUPPORT
+/**
+ * dp_mon_ops_get_2_0(): Get BE monitor ops
+ *
+ * return: Pointer to dp_mon_ops
+ */
+struct dp_mon_ops *dp_mon_ops_get_2_0(void);
+
+/**
+ * dp_mon_cdp_ops_get_2_0(): Get BE monitor cdp ops
+ *
+ * return: Pointer to dp_mon_cdp_ops
+ */
+struct cdp_mon_ops *dp_mon_cdp_ops_get_2_0(void);
 #endif
 
 #endif /* _DP_MON_H_ */

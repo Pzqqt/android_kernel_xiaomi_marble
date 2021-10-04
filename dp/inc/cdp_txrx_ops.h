@@ -866,6 +866,8 @@ struct cdp_mon_ops {
 	/* Configure full monitor mode */
 	QDF_STATUS
 		(*config_full_mon_mode)(struct cdp_soc_t *soc, uint8_t val);
+	QDF_STATUS (*soc_config_full_mon_mode)(struct cdp_pdev *cdp_pdev,
+					       uint8_t val);
 };
 
 struct cdp_host_stats_ops {
