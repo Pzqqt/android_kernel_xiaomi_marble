@@ -822,6 +822,7 @@ struct dp_rx_tid {
  * @num_reo_status_ring_masks: interrupts with reo_status_ring_mask set
  * @num_rxdma2host_ring_masks: interrupts with rxdma2host_ring_mask set
  * @num_host2rxdma_ring_masks: interrupts with host2rxdma_ring_mask set
+ * @num_host2rxdma_mon_ring_masks: interrupts with host2rxdma_ring_mask set
  * @num_rx_ring_near_full_masks: Near-full interrupts for REO DST ring
  * @num_tx_comp_ring_near_full_masks: Near-full interrupts for TX completion
  * @num_rx_wbm_rel_ring_near_full_masks: total number of times the wbm rel ring
@@ -831,6 +832,9 @@ struct dp_rx_tid {
  * @num_near_full_masks: total number of times the near full interrupt
  *                       was received
  * @num_masks: total number of times the interrupt was received
+ * @num_host2txmon_ring_masks: interrupts with host2txmon_ring_mask set
+ * @num_near_full_masks: total number of times the interrupt was received
+ * @num_masks: total number of times the near full interrupt was received
  * @num_tx_mon_ring_masks: interrupts with num_tx_mon_ring_masks set
  *
  * Counter for individual masks are incremented only if there are any packets
@@ -845,10 +849,12 @@ struct dp_intr_stats {
 	uint32_t num_reo_status_ring_masks;
 	uint32_t num_rxdma2host_ring_masks;
 	uint32_t num_host2rxdma_ring_masks;
+	uint32_t num_host2rxdma_mon_ring_masks;
 	uint32_t num_rx_ring_near_full_masks[MAX_REO_DEST_RINGS];
 	uint32_t num_tx_comp_ring_near_full_masks[MAX_TCL_DATA_RINGS];
 	uint32_t num_rx_wbm_rel_ring_near_full_masks;
 	uint32_t num_reo_status_ring_near_full_masks;
+	uint32_t num_host2txmon_ring__masks;
 	uint32_t num_near_full_masks;
 	uint32_t num_masks;
 	uint32_t num_tx_mon_ring_masks;
@@ -875,6 +881,7 @@ struct dp_intr {
 	uint8_t rx_near_full_grp_2_mask;
 	/* WBM TX completion rings near full interrupt mask */
 	uint8_t tx_ring_near_full_mask;
+	uint8_t host2txmon_ring_mask; /* Tx monitor buffer ring */
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
 	qdf_lro_ctx_t lro_ctx;
