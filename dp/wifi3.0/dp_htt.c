@@ -52,20 +52,9 @@
 
 #define HTT_SHIFT_UPPER_TIMESTAMP 32
 #define HTT_MASK_UPPER_TIMESTAMP 0xFFFFFFFF00000000
-
-#define HTT_HTC_PKT_STATUS_SUCCESS \
-	((pkt->htc_pkt.Status != QDF_STATUS_E_CANCELED) && \
-	(pkt->htc_pkt.Status != QDF_STATUS_E_RESOURCES))
-
 #define HTT_BKP_STATS_MAX_QUEUE_DEPTH 16
 
-/*
- * htt_htc_pkt_alloc() - Allocate HTC packet buffer
- * @htt_soc:	HTT SOC handle
- *
- * Return: Pointer to htc packet buffer
- */
-static struct dp_htt_htc_pkt *
+struct dp_htt_htc_pkt *
 htt_htc_pkt_alloc(struct htt_soc *soc)
 {
 	struct dp_htt_htc_pkt_union *pkt = NULL;
@@ -88,11 +77,9 @@ htt_htc_pkt_alloc(struct htt_soc *soc)
 	return &pkt->u.pkt; /* not actually a dereference */
 }
 
-/*
- * htt_htc_pkt_free() - Free HTC packet buffer
- * @htt_soc:	HTT SOC handle
- */
-static void
+qdf_export_symbol(htt_htc_pkt_alloc);
+
+void
 htt_htc_pkt_free(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 {
 	struct dp_htt_htc_pkt_union *u_pkt =
@@ -104,6 +91,8 @@ htt_htc_pkt_free(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 	soc->htt_htc_pkt_freelist = u_pkt;
 	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
 }
+
+qdf_export_symbol(htt_htc_pkt_free);
 
 /*
  * htt_htc_pkt_pool_free() - Free HTC packet pool
@@ -122,14 +111,8 @@ htt_htc_pkt_pool_free(struct htt_soc *soc)
 	soc->htt_htc_pkt_freelist = NULL;
 }
 
-#ifdef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
 
-static void
-htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
-{
-}
-
-#else  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+#ifndef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
 
 /*
  * htt_htc_misc_pkt_list_trim() - trim misc list
@@ -169,7 +152,7 @@ htt_htc_misc_pkt_list_trim(struct htt_soc *soc, int level)
  * @htt_soc:	HTT SOC handle
  * @dp_htt_htc_pkt: pkt to be added to list
  */
-static void
+void
 htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 {
 	struct dp_htt_htc_pkt_union *u_pkt =
@@ -193,32 +176,8 @@ htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 	htt_htc_misc_pkt_list_trim(soc, misclist_trim_level);
 }
 
+qdf_export_symbol(htt_htc_misc_pkt_list_add);
 #endif  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
-
-/**
- * DP_HTT_SEND_HTC_PKT() - Send htt packet from host
- * @soc : HTT SOC handle
- * @pkt: pkt to be send
- * @cmd : command to be recorded in dp htt logger
- * @buf : Pointer to buffer needs to be recored for above cmd
- *
- * Return: None
- */
-static inline QDF_STATUS DP_HTT_SEND_HTC_PKT(struct htt_soc *soc,
-					     struct dp_htt_htc_pkt *pkt,
-					     uint8_t cmd, uint8_t *buf)
-{
-	QDF_STATUS status;
-
-	htt_command_record(soc->htt_logger_handle, cmd, buf);
-
-	status = htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
-	if (status == QDF_STATUS_SUCCESS && HTT_HTC_PKT_STATUS_SUCCESS)
-		htt_htc_misc_pkt_list_add(soc, pkt);
-	else
-		soc->stats.fail_count++;
-	return status;
-}
 
 /*
  * htt_htc_misc_pkt_pool_free() - free pkts in misc list
@@ -535,6 +494,17 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 		htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
 		htt_ring_type = HTT_HW_TO_SW_RING;
 		break;
+#if QCA_MONITOR_2_0_SUPPORT_WAR
+	// WAR till fw htt.h changes are merged
+	case TX_MONITOR_BUF:
+		htt_ring_id = HTT_TX_MON_HOST2MON_BUF_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case TX_MONITOR_DST:
+		htt_ring_id = HTT_TX_MON_MON2HOST_DEST_RING;
+		htt_ring_type = HTT_HW_TO_SW_RING;
+		break;
+#endif
 
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -947,6 +917,8 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 	*msg_word = 0;
 	HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_SET(*msg_word,
 		ring_buf_size);
+
+	dp_mon_rx_packet_length_set(soc->dp_soc, msg_word, htt_tlv_filter);
 
 	/* word 2 */
 	msg_word++;
@@ -1515,6 +1487,11 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 	if (mon_drop_th > 0)
 		HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_SET(*msg_word,
 								mon_drop_th);
+	dp_mon_rx_enable_mpdu_logging(soc->dp_soc, msg_word, htt_tlv_filter);
+
+	msg_word++;
+	*msg_word = 0;
+	dp_mon_rx_wmask_subscribe(soc->dp_soc, msg_word, htt_tlv_filter);
 
 	/* "response_required" field should be set if a HTT response message is
 	 * required after setting up the ring.

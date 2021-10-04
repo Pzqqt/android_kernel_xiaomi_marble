@@ -511,6 +511,12 @@ struct dp_mon_ops {
 	void (*tx_mon_desc_pool_deinit)(struct dp_pdev *pdev);
 	QDF_STATUS (*tx_mon_desc_pool_alloc)(struct dp_pdev *pdev);
 	void (*tx_mon_desc_pool_free)(struct dp_pdev *pdev);
+	void (*rx_packet_length_set)(uint32_t *msg_word,
+				     struct htt_rx_ring_tlv_filter *tlv_filter);
+	void (*rx_wmask_subscribe)(uint32_t *msg_word,
+				   struct htt_rx_ring_tlv_filter *tlv_filter);
+	void (*rx_enable_mpdu_logging)(uint32_t *msg_word,
+				       struct htt_rx_ring_tlv_filter *tlv_filter);
 };
 
 struct dp_mon_soc {
@@ -2947,6 +2953,72 @@ void dp_monitor_pdev_reset_scan_spcl_vap_stats_enable(struct dp_pdev *pdev,
 {
 }
 #endif
+
+static inline void
+dp_mon_rx_wmask_subscribe(struct dp_soc *soc, uint32_t *msg_word,
+			  struct htt_rx_ring_tlv_filter *tlv_filter)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+	struct dp_mon_ops *monitor_ops;
+
+	if (!mon_soc) {
+		dp_mon_debug("mon soc is NULL");
+		return;
+
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->rx_wmask_subscribe) {
+		dp_mon_debug("callback not registered");
+		return;
+	}
+
+	monitor_ops->rx_wmask_subscribe(msg_word, tlv_filter);
+}
+
+static inline void
+dp_mon_rx_enable_mpdu_logging(struct dp_soc *soc, uint32_t *msg_word,
+			      struct htt_rx_ring_tlv_filter *tlv_filter)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+	struct dp_mon_ops *monitor_ops;
+
+	if (!mon_soc) {
+		dp_mon_debug("mon soc is NULL");
+		return;
+
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->rx_enable_mpdu_logging) {
+		dp_mon_debug("callback not registered");
+		return;
+	}
+
+	monitor_ops->rx_enable_mpdu_logging(msg_word, tlv_filter);
+}
+
+static inline void
+dp_mon_rx_packet_length_set(struct dp_soc *soc, uint32_t *msg_word,
+			    struct htt_rx_ring_tlv_filter *tlv_filter)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+	struct dp_mon_ops *monitor_ops;
+
+	if (!mon_soc) {
+		dp_mon_debug("mon soc is NULL");
+		return;
+
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->rx_packet_length_set) {
+		dp_mon_debug("callback not registered");
+		return;
+	}
+
+	monitor_ops->rx_packet_length_set(msg_word, tlv_filter);
+}
 
 #ifdef QCA_ENHANCED_STATS_SUPPORT
 QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,

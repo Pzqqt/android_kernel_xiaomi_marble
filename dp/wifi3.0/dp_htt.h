@@ -680,6 +680,69 @@ struct dp_htt_rx_fisa_cfg {
 	uint32_t fisa_timeout;
 };
 
+/*
+ * htt_htc_pkt_alloc() - Allocate HTC packet buffer
+ * @htt_soc:	HTT SOC handle
+ *
+ * Return: Pointer to htc packet buffer
+ */
+struct dp_htt_htc_pkt *htt_htc_pkt_alloc(struct htt_soc *soc);
+
+/*
+ * htt_htc_pkt_free() - Free HTC packet buffer
+ * @htt_soc:	HTT SOC handle
+ */
+void
+htt_htc_pkt_free(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt);
+
+#define HTT_HTC_PKT_STATUS_SUCCESS \
+	((pkt->htc_pkt.Status != QDF_STATUS_E_CANCELED) && \
+	(pkt->htc_pkt.Status != QDF_STATUS_E_RESOURCES))
+
+#ifdef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
+
+static void
+htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
+{
+}
+
+#else  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+
+/*
+ * htt_htc_misc_pkt_list_add() - Add pkt to misc list
+ * @htt_soc:	HTT SOC handle
+ * @dp_htt_htc_pkt: pkt to be added to list
+ */
+void
+htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt);
+
+#endif  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+
+/**
+ * DP_HTT_SEND_HTC_PKT() - Send htt packet from host
+ * @soc : HTT SOC handle
+ * @pkt: pkt to be send
+ * @cmd : command to be recorded in dp htt logger
+ * @buf : Pointer to buffer needs to be recored for above cmd
+ *
+ * Return: None
+ */
+static inline QDF_STATUS DP_HTT_SEND_HTC_PKT(struct htt_soc *soc,
+					     struct dp_htt_htc_pkt *pkt,
+					     uint8_t cmd, uint8_t *buf)
+{
+	QDF_STATUS status;
+
+	htt_command_record(soc->htt_logger_handle, cmd, buf);
+
+	status = htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+	if (status == QDF_STATUS_SUCCESS && HTT_HTC_PKT_STATUS_SUCCESS)
+		htt_htc_misc_pkt_list_add(soc, pkt);
+	else
+		soc->stats.fail_count++;
+	return status;
+}
+
 QDF_STATUS dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 				 struct dp_htt_rx_fisa_cfg *fisa_config);
 

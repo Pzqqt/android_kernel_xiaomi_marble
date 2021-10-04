@@ -3356,6 +3356,9 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_rings_free = dp_mon_rings_free_1_0,
 	.mon_rings_init = dp_mon_rings_init_1_0,
 	.mon_rings_deinit = dp_mon_rings_deinit_1_0,
+	.rx_packet_length_set = NULL,
+	.rx_wmask_subscribe = NULL,
+	.rx_enable_mpdu_logging = NULL,
 };
 
 struct cdp_mon_ops dp_ops_mon_1_0 = {

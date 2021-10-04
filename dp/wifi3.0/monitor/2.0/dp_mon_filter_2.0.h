@@ -31,10 +31,36 @@ struct dp_mon_filter_be {
 	int tx_valid;
 };
 
+/**
+ * dp_rx_mon_packet_length_set() - Setup rx monitor per packet type length
+ * @msg_word: msg word
+ * @htt_tlv_filter: rx ring filter configuration
+ */
+void
+dp_rx_mon_packet_length_set(uint32_t *msg_word,
+			    struct htt_rx_ring_tlv_filter *tlvi_filter);
+
+/**
+ * dp_rx_mon_word_mask_subscribe() - Setup rx monitor word mask subscription
+ * @msg_word: msg word
+ * @htt_tlv_filter: rx ring filter configuration
+ */
+void
+dp_rx_mon_word_mask_subscribe(uint32_t *msg_word,
+			      struct htt_rx_ring_tlv_filter *tlv_filter);
+
+/**
+ * dp_rx_mon_enable_mpdu_logging() - Setup rx monitor per packet mpdu logging
+ * @msg_word: msg word
+ * @htt_tlv_filter: rx ring filter configuration
+ */
+void
+dp_rx_mon_enable_mpdu_logging(uint32_t *msg_word,
+			      struct htt_rx_ring_tlv_filter *tlv_filter);
+
 #ifdef QCA_ENHANCED_STATS_SUPPORT
 /**
  * dp_mon_filter_setup_enhanced_stats() - Setup the enhanced stats filter
- * @pdev: Monitor DP pdev handle
  * @pdev: DP pdev handle
  */
 void dp_mon_filter_setup_enhanced_stats_2_0(struct dp_pdev *pdev);
@@ -89,7 +115,6 @@ void dp_mon_filter_setup_smart_monitor_2_0(struct dp_pdev *pdev);
 
 /**
  * dp_mon_filter_reset_smart_monitor() - Reset the smart monitor mode filter
- * @pdev: monitor pdev handle
  * @pdev: DP pdev handle
  */
 void dp_mon_filter_reset_smart_monitor_2_0(struct dp_pdev *pdev);
@@ -163,7 +188,7 @@ void dp_mon_filter_setup_rx_pkt_log_lite_2_0(struct dp_pdev *pdev);
 
 /**
  * dp_mon_filter_reset_rx_pkt_log_lite() - Reset the Rx pktlog lite mode filter
- * @pdev: Monitor pdev handle
+ * @pdev: DP pdev handle
  */
 void dp_mon_filter_reset_rx_pkt_log_lite_2_0(struct dp_pdev *pdev);
 

@@ -791,6 +791,9 @@ struct dp_mon_ops monitor_ops_2_0 = {
 	.tx_mon_desc_pool_deinit = NULL,
 	.tx_mon_desc_pool_alloc = NULL,
 	.tx_mon_desc_pool_free = NULL,
+	.rx_packet_length_set = dp_rx_mon_packet_length_set,
+	.rx_wmask_subscribe = dp_rx_mon_word_mask_subscribe,
+	.rx_enable_mpdu_logging = dp_rx_mon_enable_mpdu_logging,
 };
 
 struct cdp_mon_ops dp_ops_mon_2_0 = {
