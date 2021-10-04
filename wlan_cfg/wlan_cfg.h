@@ -227,6 +227,8 @@ struct wlan_srng_cfg {
  * @hw_cc_conv_enabled: cookie conversion enabled
  * @tcl_wbm_map_array: TCL-WBM map array
  * @pkt_capture_mode: Packet capture mode config
+ * @rx_mon_buf_ring_size: Rx monitor buf ring size
+ * @tx_mon_buf_ring_size: Tx monitor buf ring size
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -370,24 +372,30 @@ struct wlan_cfg_dp_soc_ctxt {
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 	uint32_t pkt_capture_mode;
 #endif
+	uint32_t rx_mon_buf_ring_size;
+	uint32_t tx_mon_buf_ring_size;
 };
 
 /**
  * struct wlan_cfg_dp_pdev_ctxt - Configuration parameters for pdev (radio)
  * @rx_dma_buf_ring_size - Size of RxDMA buffer ring
  * @dma_mon_buf_ring_size - Size of RxDMA Monitor buffer ring
- * @dma_mon_dest_ring_size - Size of RxDMA Monitor Destination ring
+ * @dma_rx_mon_dest_ring_size - Size of RxDMA Monitor Destination ring
+ * @dma_tx_mon_dest_ring_size - Size of Tx Monitor Destination ring
  * @dma_mon_status_ring_size - Size of RxDMA Monitor Status ring
  * @rxdma_monitor_desc_ring - rxdma monitor desc ring size
+ * @dma_tx_mon_buf_ring_size - Tx monitor BUF Ring size
  */
 struct wlan_cfg_dp_pdev_ctxt {
 	int rx_dma_buf_ring_size;
 	int dma_mon_buf_ring_size;
-	int dma_mon_dest_ring_size;
+	int dma_rx_mon_dest_ring_size;
+	int dma_tx_mon_dest_ring_size;
 	int dma_mon_status_ring_size;
 	int rxdma_monitor_desc_ring;
 	int num_mac_rings;
 	int nss_enabled;
+	int dma_tx_mon_buf_ring_size;
 };
 
 /**
@@ -1030,16 +1038,6 @@ uint32_t wlan_cfg_max_peer_id(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: dma_mon_buf_ring_size
  */
 int wlan_cfg_get_dma_mon_buf_ring_size(
-		struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_ctx);
-
-/*
- * wlan_cfg_get_dma_mon_dest_ring_size() - Return Size of RxDMA Monitor
- *					Destination ring
- * @wlan_cfg_pdev_ctx
- *
- * Return: dma_mon_dest_size
- */
-int wlan_cfg_get_dma_mon_dest_ring_size(
 		struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_ctx);
 
 /*
@@ -1858,4 +1856,38 @@ uint32_t wlan_cfg_get_pkt_capture_mode(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return 0;
 }
 #endif
+
+/**
+ * wlan_cfg_get_dp_soc_rx_mon_buf_ring_size() - Rx MON buf ring size
+ * @cfg:  Configuration Handle
+ *
+ * Return: Size of Rx MON buf ring size
+ */
+uint32_t
+wlan_cfg_get_dp_soc_rx_mon_buf_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_get_dp_soc_tx_mon_buf_ring_size() - Tx MON buf ring size
+ * @cfg:  Configuration Handle
+ *
+ * Return: Size of Tx MON buf ring size
+ */
+uint32_t
+wlan_cfg_get_dp_soc_tx_mon_buf_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_get_dma_rx_mon_dest_ring_size() - Rx MON dest ring size
+ * @cfg:  Configuration Handle
+ *
+ * Return: Size of Rx MON dest ring size
+ */
+int wlan_cfg_get_dma_rx_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg);
+
+/**
+ * wlan_cfg_get_dma_tx_mon_dest_ring_size() - Tx MON dest ring size
+ * @cfg:  Configuration Handle
+ *
+ * Return: Size of Tx MON dest ring size
+ */
+int wlan_cfg_get_dma_tx_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg);
 #endif

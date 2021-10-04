@@ -2088,7 +2088,7 @@ QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev)
 	}
 
 	if (mon_ops->mon_rings_alloc) {
-		if (mon_ops->mon_rings_alloc(soc, pdev)) {
+		if (mon_ops->mon_rings_alloc(pdev)) {
 			dp_mon_err("%pK: MONITOR rings setup failed", pdev);
 			goto fail2;
 		}
@@ -2207,7 +2207,7 @@ QDF_STATUS dp_mon_pdev_init(struct dp_pdev *pdev)
 	}
 
 	if (mon_ops->mon_rings_init) {
-		if (mon_ops->mon_rings_init(soc, pdev)) {
+		if (mon_ops->mon_rings_init(pdev)) {
 			dp_mon_err("%pK: MONITOR rings setup failed", pdev);
 			goto fail1;
 		}

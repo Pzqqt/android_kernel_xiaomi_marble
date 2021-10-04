@@ -2233,7 +2233,7 @@ QDF_STATUS dp_mon_dest_rings_alloc(struct dp_pdev *pdev, int lmac_id)
 			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_buf_ring ", soc);
 			goto fail1;
 		}
-		entries = wlan_cfg_get_dma_mon_dest_ring_size(pdev_cfg_ctx);
+		entries = wlan_cfg_get_dma_rx_mon_dest_ring_size(pdev_cfg_ctx);
 		if (dp_srng_alloc(soc, &soc->rxdma_mon_dst_ring[lmac_id],
 				  RXDMA_MONITOR_DST, entries, 0)) {
 			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_dst_ring", soc);

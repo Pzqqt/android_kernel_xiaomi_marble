@@ -496,9 +496,9 @@ struct dp_mon_ops {
 #endif
 	QDF_STATUS (*mon_filter_update)(struct dp_pdev *pdev);
 
-	QDF_STATUS (*mon_rings_alloc)(struct dp_soc* soc, struct dp_pdev *pdev);
+	QDF_STATUS (*mon_rings_alloc)(struct dp_pdev *pdev);
 	void (*mon_rings_free)(struct dp_pdev *pdev);
-	QDF_STATUS (*mon_rings_init)(struct dp_soc* soc, struct dp_pdev *pdev);
+	QDF_STATUS (*mon_rings_init)(struct dp_pdev *pdev);
 	void (*mon_rings_deinit)(struct dp_pdev *pdev);
 
 	QDF_STATUS (*rx_mon_buffers_alloc)(struct dp_pdev *pdev);

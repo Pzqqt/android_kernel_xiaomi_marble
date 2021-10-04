@@ -197,8 +197,9 @@ void dp_mon_rings_free_1_0(struct dp_pdev *pdev)
 }
 
 static
-QDF_STATUS dp_mon_rings_init_1_0(struct dp_soc *soc, struct dp_pdev *pdev)
+QDF_STATUS dp_mon_rings_init_1_0(struct dp_pdev *pdev)
 {
+	struct dp_soc *soc = pdev->soc;
 	int mac_id = 0;
 	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
 
@@ -226,8 +227,9 @@ fail1:
 }
 
 static
-QDF_STATUS dp_mon_rings_alloc_1_0(struct dp_soc *soc, struct dp_pdev *pdev)
+QDF_STATUS dp_mon_rings_alloc_1_0(struct dp_pdev *pdev)
 {
+	struct dp_soc *soc = pdev->soc;
 	int mac_id = 0;
 	int entries;
 	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
@@ -255,24 +257,24 @@ fail1:
 	return QDF_STATUS_E_NOMEM;
 }
 #else
-static
+static inline
 void dp_mon_rings_deinit_1_0(struct dp_pdev *pdev)
 {
 }
 
-static
+static inline
 void dp_mon_rings_free_1_0(struct dp_pdev *pdev)
 {
 }
 
-static
-QDF_STATUS dp_mon_rings_init_1_0(struct dp_soc *soc, struct dp_pdev *pdev)
+static inline
+QDF_STATUS dp_mon_rings_init_1_0(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static
-QDF_STATUS dp_mon_rings_alloc_1_0(struct dp_soc *soc, struct dp_pdev *pdev)
+static inline
+QDF_STATUS dp_mon_rings_alloc_1_0(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -4981,7 +4981,7 @@ dp_print_pdev_cfg_params(struct dp_pdev *pdev)
 	DP_PRINT_STATS("DMA Mon buf ring size: %d ",
 		       pdev_cfg_ctx->dma_mon_buf_ring_size);
 	DP_PRINT_STATS("DMA Mon dest ring size: %d ",
-		       pdev_cfg_ctx->dma_mon_dest_ring_size);
+		       pdev_cfg_ctx->dma_rx_mon_dest_ring_size);
 	DP_PRINT_STATS("DMA Mon status ring size: %d ",
 		       pdev_cfg_ctx->dma_mon_status_ring_size);
 	DP_PRINT_STATS("Rxdma monitor desc ring: %d",

@@ -1804,6 +1804,10 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 			cfg_get(psoc, CFG_DP_WOW_CHECK_RX_PENDING);
 	wlan_cfg_ctx->delay_mon_replenish = cfg_get(psoc,
 			CFG_DP_DELAY_MON_REPLENISH);
+	wlan_cfg_ctx->rx_mon_buf_ring_size = cfg_get(psoc,
+					CFG_DP_RXDMA_MONITOR_BUF_RING);
+	wlan_cfg_ctx->tx_mon_buf_ring_size = cfg_get(psoc,
+					CFG_DP_TX_MONITOR_BUF_RING);
 	wlan_soc_ipa_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_hw_cc_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_ppe_cfg_attach(psoc, wlan_cfg_ctx);
@@ -1833,8 +1837,10 @@ wlan_cfg_pdev_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 					CFG_DP_RXDMA_BUF_RING);
 	wlan_cfg_ctx->dma_mon_buf_ring_size = cfg_get(psoc,
 					CFG_DP_RXDMA_MONITOR_BUF_RING);
-	wlan_cfg_ctx->dma_mon_dest_ring_size = cfg_get(psoc,
+	wlan_cfg_ctx->dma_rx_mon_dest_ring_size = cfg_get(psoc,
 					CFG_DP_RXDMA_MONITOR_DST_RING);
+	wlan_cfg_ctx->dma_tx_mon_dest_ring_size = cfg_get(psoc,
+					CFG_DP_TX_MONITOR_DST_RING);
 	wlan_cfg_ctx->dma_mon_status_ring_size = cfg_get(psoc,
 					CFG_DP_RXDMA_MONITOR_STATUS_RING);
 	wlan_cfg_ctx->rxdma_monitor_desc_ring = cfg_get(psoc,
@@ -2262,12 +2268,19 @@ int wlan_cfg_get_dma_mon_buf_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 
 qdf_export_symbol(wlan_cfg_get_dma_mon_buf_ring_size);
 
-int wlan_cfg_get_dma_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
+int wlan_cfg_get_dma_rx_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
-	return  cfg->dma_mon_dest_ring_size;
+	return  cfg->dma_rx_mon_dest_ring_size;
 }
 
-qdf_export_symbol(wlan_cfg_get_dma_mon_dest_ring_size);
+qdf_export_symbol(wlan_cfg_get_dma_rx_mon_dest_ring_size);
+
+int wlan_cfg_get_dma_tx_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
+{
+	return  cfg->dma_tx_mon_dest_ring_size;
+}
+
+qdf_export_symbol(wlan_cfg_get_dma_tx_mon_dest_ring_size);
 
 int wlan_cfg_get_dma_mon_stat_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
@@ -2854,3 +2867,19 @@ uint32_t wlan_cfg_get_pkt_capture_mode(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->pkt_capture_mode;
 }
 #endif
+
+uint32_t
+wlan_cfg_get_dp_soc_rx_mon_buf_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_mon_buf_ring_size;
+}
+
+qdf_export_symbol(wlan_cfg_get_dp_soc_rx_mon_buf_ring_size);
+
+uint32_t
+wlan_cfg_get_dp_soc_tx_mon_buf_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tx_mon_buf_ring_size;
+}
+
+qdf_export_symbol(wlan_cfg_get_dp_soc_tx_mon_buf_ring_size);
