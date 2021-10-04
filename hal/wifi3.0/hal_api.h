@@ -2961,4 +2961,12 @@ hal_cmem_write(hal_soc_handle_t hal_soc_hdl, uint32_t offset,
 
 	return;
 }
+
+static inline bool
+hal_dmac_cmn_src_rxbuf_ring_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->dmac_cmn_src_rxbuf_ring;
+}
 #endif /* _HAL_APIH_ */

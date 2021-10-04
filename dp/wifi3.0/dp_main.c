@@ -5513,9 +5513,11 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 		mac_for_pdev = i;
 		lmac_id = dp_get_lmac_id_for_pdev_id(soc, 0, i);
 
-		htt_srng_setup(soc->htt_handle, mac_for_pdev,
-			       soc->rx_refill_buf_ring[lmac_id].
-			       hal_srng, RXDMA_BUF);
+		if (soc->rx_refill_buf_ring[lmac_id].hal_srng)
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				       soc->rx_refill_buf_ring[lmac_id].
+				       hal_srng, RXDMA_BUF);
+
 		/* Configure monitor mode rings */
 		dp_monitor_htt_srng_setup(soc, pdev,
 					  lmac_id,
@@ -12044,25 +12046,25 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		goto fail3;
 	}
 
+	if (!QDF_IS_STATUS_SUCCESS(soc->arch_ops.txrx_soc_attach(soc))) {
+		dp_err("unable to do target specific attach");
+		goto fail4;
+	}
+
 	if (dp_soc_srng_alloc(soc)) {
 		dp_err("failed to allocate soc srng rings");
-		goto fail4;
+		goto fail5;
 	}
 
 	if (dp_soc_tx_desc_sw_pools_alloc(soc)) {
 		dp_err("dp_soc_tx_desc_sw_pools_alloc failed");
-		goto fail5;
-	}
-
-	if (!QDF_IS_STATUS_SUCCESS(soc->arch_ops.txrx_soc_attach(soc))) {
-		dp_err("unable to do target specific attach");
 		goto fail6;
 	}
 
 	if (!dp_monitor_modularized_enable()) {
 		if (dp_mon_soc_attach_wrapper(soc)) {
 			dp_err("failed to attach monitor");
-			goto fail6;
+			goto fail7;
 		}
 	}
 
@@ -12081,10 +12083,12 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		qdf_skb_total_mem_stats_read());
 
 	return soc;
-fail6:
+fail7:
 	dp_soc_tx_desc_sw_pools_free(soc);
-fail5:
+fail6:
 	dp_soc_srng_free(soc);
+fail5:
+	soc->arch_ops.txrx_soc_detach(soc);
 fail4:
 	dp_hw_link_desc_ring_free(soc);
 fail3:
@@ -12733,8 +12737,10 @@ static void dp_pdev_srng_deinit(struct dp_pdev *pdev)
 	struct dp_soc *soc = pdev->soc;
 	uint8_t i;
 
-	dp_srng_deinit(soc, &soc->rx_refill_buf_ring[pdev->lmac_id], RXDMA_BUF,
-		       pdev->lmac_id);
+	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc))
+		dp_srng_deinit(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
+			       RXDMA_BUF,
+			       pdev->lmac_id);
 
 	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
 		dp_deinit_tx_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
@@ -12777,10 +12783,13 @@ static QDF_STATUS dp_pdev_srng_init(struct dp_pdev *pdev)
 
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
 
-	if (dp_srng_init(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
-			 RXDMA_BUF, 0, pdev->lmac_id)) {
-		dp_init_err("%pK: dp_srng_init failed rx refill ring", soc);
-		goto fail1;
+	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		if (dp_srng_init(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
+				 RXDMA_BUF, 0, pdev->lmac_id)) {
+			dp_init_err("%pK: dp_srng_init failed rx refill ring",
+				    soc);
+			goto fail1;
+		}
 	}
 
 	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
@@ -12837,7 +12846,8 @@ static void dp_pdev_srng_free(struct dp_pdev *pdev)
 	struct dp_soc *soc = pdev->soc;
 	uint8_t i;
 
-	dp_srng_free(soc, &soc->rx_refill_buf_ring[pdev->lmac_id]);
+	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc))
+		dp_srng_free(soc, &soc->rx_refill_buf_ring[pdev->lmac_id]);
 
 	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
 		dp_free_tx_ring_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
@@ -12872,10 +12882,13 @@ static QDF_STATUS dp_pdev_srng_alloc(struct dp_pdev *pdev)
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
 
 	ring_size = wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx);
-	if (dp_srng_alloc(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
-			  RXDMA_BUF, ring_size, 0)) {
-		dp_init_err("%pK: dp_srng_alloc failed rx refill ring", soc);
-		goto fail1;
+	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		if (dp_srng_alloc(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
+				  RXDMA_BUF, ring_size, 0)) {
+			dp_init_err("%pK: dp_srng_alloc failed rx refill ring",
+				    soc);
+			goto fail1;
+		}
 	}
 
 	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {

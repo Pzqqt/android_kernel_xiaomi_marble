@@ -53,6 +53,9 @@ static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RIN
 static void dp_soc_cfg_attach_be(struct dp_soc *soc)
 {
 	soc->wlan_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
+
+	/* this is used only when dmac mode is enabled */
+	soc->num_rx_refill_buf_rings = 1;
 }
 
 qdf_size_t dp_get_context_size_be(enum dp_context_type context_type)
@@ -607,6 +610,10 @@ dp_rxdma_ring_sel_cfg_be(struct dp_soc *soc)
 							   pdev->pdev_id);
 
 			rx_mac_srng = dp_get_rxdma_ring(pdev, lmac_id);
+
+			if (!rx_mac_srng->hal_srng)
+				continue;
+
 			htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
 					    rx_mac_srng->hal_srng,
 					    RXDMA_BUF, RX_DATA_BUFFER_SIZE,
@@ -896,22 +903,87 @@ static QDF_STATUS dp_soc_ppe_srng_init(struct dp_soc *soc)
 
 static void dp_soc_srng_deinit_be(struct dp_soc *soc)
 {
+	uint32_t i;
+
 	dp_soc_ppe_srng_deinit(soc);
+
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
+			dp_srng_deinit(soc, &soc->rx_refill_buf_ring[i],
+				       RXDMA_BUF, 0);
+		}
+	}
 }
 
 static void dp_soc_srng_free_be(struct dp_soc *soc)
 {
+	uint32_t i;
+
 	dp_soc_ppe_srng_free(soc);
+
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++)
+			dp_srng_free(soc, &soc->rx_refill_buf_ring[i]);
+	}
 }
 
 static QDF_STATUS dp_soc_srng_alloc_be(struct dp_soc *soc)
 {
-	return dp_soc_ppe_srng_alloc(soc);
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+	uint32_t ring_size;
+	uint32_t i;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	ring_size = wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx);
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
+			if (dp_srng_alloc(soc, &soc->rx_refill_buf_ring[i],
+					  RXDMA_BUF, ring_size, 0)) {
+				dp_err("%pK: dp_srng_alloc failed refill ring",
+				       soc);
+				goto fail;
+			}
+		}
+	}
+
+	if (dp_soc_ppe_srng_alloc(soc)) {
+		dp_err("%pK: ppe rings alloc failed",
+		       soc);
+		goto fail;
+	}
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_soc_srng_free_be(soc);
+	return QDF_STATUS_E_NOMEM;
 }
 
 static QDF_STATUS dp_soc_srng_init_be(struct dp_soc *soc)
 {
-	return dp_soc_ppe_srng_init(soc);
+	int i = 0;
+
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
+			if (dp_srng_init(soc, &soc->rx_refill_buf_ring[i],
+					 RXDMA_BUF, 0, 0)) {
+				dp_err("%pK: dp_srng_init failed refill ring",
+				       soc);
+				goto fail;
+			}
+		}
+	}
+
+	if (dp_soc_ppe_srng_init(soc)) {
+		dp_err("%pK: ppe rings init failed",
+		       soc);
+		goto fail;
+	}
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_soc_srng_deinit_be(soc);
+	return QDF_STATUS_E_NOMEM;
 }
 
 #ifdef DP_TX_IMPLICIT_RBM_MAPPING

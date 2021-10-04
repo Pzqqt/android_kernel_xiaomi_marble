@@ -2175,6 +2175,9 @@ struct dp_soc {
 #endif
 	uint8_t rxdma2sw_rings_not_supported:1,
 		mec_fw_offload:1;
+
+	/* Number of Rx refill rings */
+	uint8_t num_rx_refill_buf_rings;
 };
 
 #ifdef IPA_OFFLOAD
