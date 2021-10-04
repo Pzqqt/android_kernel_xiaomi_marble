@@ -219,6 +219,317 @@ struct htt_soc {
 	HTT_TX_MUTEX_TYPE htt_tx_mutex;
 };
 
+#ifdef QCA_MONITOR_2_0_SUPPORT
+/**
+ * struct dp_tx_mon_downstream_tlv_config - Enable/Disable TxMon
+ * downstream TLVs
+ * tx_fes_setup: TX_FES_SETUP TLV
+ * tx_peer_entry: TX_PEER_ENTRY TLV
+ * tx_queue_extension: TX_QUEUE_EXTENSION TLV
+ * tx_last_mpdu_end: TX_LAST_MPDU_END TLV
+ * tx_last_mpdu_fetched: TX_LAST_MPDU_FETCHED TLV
+ * tx_data_sync: TX_DATA_SYNC TLV
+ * pcu_ppdu_setup_init: PCU_PPDU_SETUP_INIT TLV
+ * fw2s_mon: FW2S_MON TLV
+ * tx_loopback_setup: TX_LOOPBACK_SETUP TLV
+ * sch_critical_tlv_ref: SCH_CRITICAL_TLV_REF TLV
+ * ndp_preamble_done: NDP_PREAMBLE_DONE TLV
+ * tx_raw_frame_setup: TX_RAW_OR_NATIVE_FRAME_SETUP TLV
+ * txpcu_user_setup: TXPCU_USER_SETUP TLV
+ * rxpcu_setup: RXPCU_SETUP TLV
+ * rxpcu_setup_complete: RXPCU_SETUP_COMPLETE TLV
+ * coex_tx_req: COEX_TX_REQ TLV
+ * rxpcu_user_setup: RXPCU_USER_SETUP TLV
+ * rxpcu_user_setup_ext: RXPCU_USER_SETUP_EXT TLV
+ * wur_data: WUR_DATA TLV
+ * tqm_mpdu_global_start: TQM_MPDU_GLOBAL_START
+ * tx_fes_setup_complete: TX_FES_SETUP_COMPLETE TLV
+ * scheduler_end: SCHEDULER_END TLV
+ * sch_wait_instr_tx_path: SCH_WAIT_INSTR_TX_PATH TLV
+ *
+ */
+struct dp_tx_mon_downstream_tlv_config {
+	uint32_t tx_fes_setup:1,
+		 tx_peer_entry:1,
+		 tx_queue_extension:1,
+		 tx_last_mpdu_end:1,
+		 tx_last_mpdu_fetched:1,
+		 tx_data_sync:1,
+		 pcu_ppdu_setup_init:1,
+		 fw2s_mon:1,
+		 tx_loopback_setup:1,
+		 sch_critical_tlv_ref:1,
+		 ndp_preamble_done:1,
+		 tx_raw_frame_setup:1,
+		 txpcu_user_setup:1,
+		 rxpcu_setup:1,
+		 rxpcu_setup_complete:1,
+		 coex_tx_req:1,
+		 rxpcu_user_setup:1,
+		 rxpcu_user_setup_ext:1,
+		 wur_data:1,
+		 tqm_mpdu_global_start:1,
+		 tx_fes_setup_complete:1,
+		 scheduler_end:1,
+		 sch_wait_instr_tx_path:1;
+};
+
+/**
+ * struct dp_tx_mon_upstream_tlv_config - Enable/Disable TxMon
+ * upstream TLVs
+ * rx_response_required_info: RX_RESPONSE_REQUIRED_INFO
+ * TLV
+ * response_start_status: RESPONSE_START_STATUS TLV
+ * response_end_status: RESPONSE_END_STATUS TLV
+ * tx_fes_status_start: TX_FES_STATUS_START TLV
+ * tx_fes_status_start_ppdu: TX_FES_STATUS_START_PPDU TLV
+ * tx_fes_status_user_ppdu: TX_FES_STATUS_USER_PPDU TLV
+ * tx_fes_status_ack_or_ba: TX_FES_STATUS_ACK_OR_BA TLV
+ * tx_fes_status_1k_ba: TX_FES_STATUS_1K_BA TLV
+ * tx_fes_status_start_prot: TX_FES_STATUS_START_PROTO TLV
+ * tx_fes_status_user_response: TX_FES_STATUS_USER_RESPONSE TLV
+ * rx_frame_bitmap_ack: RX_FRAME_BITMAP_ACK TLV
+ * rx_frame_1k_bitmap_ack: RX_FRAME_1K_BITMAP_ACK TLV
+ * coex_tx_status: COEX_TX_STATUS TLV
+ * recevied_response_info: RECEIVED_RESPONSE_INFO TLV
+ * recevied_response_info_p2: RECEIVED_RESPONSE_INFO_PART2 TLV
+ * ofdma_trigger_details: OFDMA_TRIGGER_DETAILS
+ * recevied_trigger_info: RECEIVED_TRIGGER_INFO
+ * pdg_tx_request: PDG_TX_REQUEST
+ * pdg_response: PDG_RESPONSE
+ * pdg_trig_response: PDG_TRIG_RESPONSE
+ * trigger_response_tx_done: TRIGGER_RESPONSE_TX_DONE
+ * prot_tx_end: PROT_TX_END
+ * ppdu_tx_end: PPDU_TX_END
+ * r2r_status_end: R2R_STATUS_END
+ * flush_req: FLUSH_REQ
+ * mactx_phy_desc: MACTX_PHY_DESC
+ * mactx_user_desc_cmn: MACTX_USER_DESC_COMMON
+ * mactx_user_desc_per_usr: MACTX_USER_DESC_PER_USER
+ * tqm_acked_1k_mpdu: TQM_ACKED_1K_MPDU
+ * tqm_acked_mpdu: TQM_ACKED_MPDU
+ * tqm_update_tx_mpdu_count: TQM_UPDATE_TX_MPDU_COUNT
+ * phytx_ppdu_header_info_request: PHYTX_PPDU_HEADER_INFO_REQUEST
+ * u_sig_eht_su_mu: U_SIG_EHT_SU_MU
+ * u_sig_eht_su: U_SIG_EHT_SU
+ * eht_sig_usr_su: EHT_SIG_USR_SU
+ * eht_sig_usr_mu_mimo: EHT_SIG_USR_MU_MIMO
+ * eht_sig_usr_ofdma: EHT_SIG_USR_MU_MIMO
+ * he_sig_a_su: HE_SIG_A_SU
+ * he_sig_a_mu_dl: HE_SIG_A_MU_DL
+ * he_sig_a_mu_ul: HE_SIG_A_MU_UL
+ * he_sig_b1_mu: HE_SIG_B1_MU
+ * he_sig_b2_mu: HE_SIG_B2_MU
+ * he_sig_b2_ofdma: HE_SIG_B2_OFDMA
+ * vht_sig_b_mu160: VHT_SIG_B_MU160
+ * vht_sig_b_mu80: VHT_SIG_B_MU80
+ * vht_sig_b_mu40: VHT_SIG_B_MU40
+ * vht_sig_b_mu20: VHT_SIG_B_MU20
+ * vht_sig_b_su160: VHT_SIG_B_SU160
+ * vht_sig_b_su80: VHT_SIG_B_SU80
+ * vht_sig_b_su40: VHT_SIG_B_SU40
+ * vht_sig_b_su20: VHT_SIG_B_SU20
+ * vht_sig_a: VHT_SIG_A
+ * ht_sig: HT_SIG
+ * l_sig_b: L_SIG_B
+ * l_sig_a: L_SIG_A
+ * tx_service: TX_SERVICE
+ * txpcu_buf_status: TXPCU_BUFFER_STATUS
+ * txpcu_user_buf_status: TXPCU_USER_BUFFER_STATUS
+ * txdma_stop_request: TXDMA_STOP_REQUEST
+ * expected_response: EXPECTED_RESPONSE
+ * tx_mpdu_count_transfer_end: TX_MPDU_COUNT_TRANSFER_END
+ * rx_trig_info: RX_TRIG_INFO
+ * rxpcu_tx_setup_clear: RXPCU_TX_SETUP_CLEAR
+ * rx_frame_bitmap_req: RX_FRAME_BITMAP_REQ
+ * rx_phy_sleep: RX_PHY_SLEEP
+ * txpcu_preamble_done: TXPCU_PREAMBLE_DONE
+ * txpcu_phytx_debug32: TXPCU_PHYTX_DEBUG32
+ * txpcu_phytx_other_transmit_info32: TXPCU_PHYTX_OTHER_TRANSMIT_INFO32
+ * rx_ppdu_noack_report: RX_PPDU_NO_ACK_REPORT
+ * rx_ppdu_ack_report: RX_PPDU_ACK_REPORT
+ * coex_rx_status: COEX_RX_STATUS
+ * rx_start_param: RX_START_PARAM
+ * tx_cbf_info: TX_CBF_INFO
+ * rxpcu_early_rx_indication: RXPCU_EARLY_RX_INDICATION
+ * received_response_user_7_0: RECEIVED_RESPONSE_USER_7_0
+ * received_response_user_15_8: RECEIVED_RESPONSE_USER_15_8
+ * received_response_user_23_16: RECEIVED_RESPONSE_USER_23_16
+ * received_response_user_31_24: RECEIVED_RESPONSE_USER_31_24
+ * received_response_user_36_32: RECEIVED_RESPONSE_USER_36_32
+ * rx_pm_info: RX_PM_INFO
+ * rx_preamble: RX_PREAMBLE
+ * others: OTHERS
+ * mactx_pre_phy_desc: MACTX_PRE_PHY_DESC
+ *
+ */
+struct dp_tx_mon_upstream_tlv_config {
+	uint32_t rx_response_required_info:1,
+		 response_start_status:1,
+		 response_end_status:1,
+		 tx_fes_status_start:1,
+		 tx_fes_status_end:1,
+		 tx_fes_status_start_ppdu:1,
+		 tx_fes_status_user_ppdu:1,
+		 tx_fes_status_ack_or_ba:1,
+		 tx_fes_status_1k_ba:1,
+		 tx_fes_status_start_prot:1,
+		 tx_fes_status_prot:1,
+		 tx_fes_status_user_response:1,
+		 rx_frame_bitmap_ack:1,
+		 rx_frame_1k_bitmap_ack:1,
+		 coex_tx_status:1,
+		 recevied_response_info:1,
+		 recevied_response_info_p2:1,
+		 ofdma_trigger_details:1,
+		 recevied_trigger_info:1,
+		 pdg_tx_request:1,
+		 pdg_response:1,
+		 pdg_trig_response:1,
+		 trigger_response_tx_done:1,
+		 prot_tx_end:1,
+		 ppdu_tx_end:1,
+		 r2r_status_end:1,
+		 flush_req:1,
+		 mactx_phy_desc:1,
+		 mactx_user_desc_cmn:1,
+		 mactx_user_desc_per_usr:1;
+	uint32_t tqm_acked_1k_mpdu:1,
+		 tqm_acked_mpdu:1,
+		 tqm_update_tx_mpdu_count:1,
+		 phytx_ppdu_header_info_request:1,
+		 u_sig_eht_su_mu:1,
+		 u_sig_eht_su:1,
+		 u_sig_eht_tb:1,
+		 eht_sig_usr_su:1,
+		 eht_sig_usr_mu_mimo:1,
+		 eht_sig_usr_ofdma:1,
+		 he_sig_a_su:1,
+		 he_sig_a_mu_dl:1,
+		 he_sig_a_mu_ul:1,
+		 he_sig_b1_mu:1,
+		 he_sig_b2_mu:1,
+		 he_sig_b2_ofdma:1,
+		 vht_sig_b_mu160:1,
+		 vht_sig_b_mu80:1,
+		 vht_sig_b_mu40:1,
+		 vht_sig_b_mu20:1,
+		 vht_sig_b_su160:1,
+		 vht_sig_b_su80:1,
+		 vht_sig_b_su40:1,
+		 vht_sig_b_su20:1,
+		 vht_sig_a:1,
+		 ht_sig:1,
+		 l_sig_b:1,
+		 l_sig_a:1,
+		 tx_service:1;
+	uint32_t txpcu_buf_status:1,
+		 txpcu_user_buf_status:1,
+		 txdma_stop_request:1,
+		 expected_response:1,
+		 tx_mpdu_count_transfer_end:1,
+		 rx_trig_info:1,
+		 rxpcu_tx_setup_clear:1,
+		 rx_frame_bitmap_req:1,
+		 rx_phy_sleep:1,
+		 txpcu_preamble_done:1,
+		 txpcu_phytx_debug32:1,
+		 txpcu_phytx_other_transmit_info32:1,
+		 rx_ppdu_noack_report:1,
+		 rx_ppdu_ack_report:1,
+		 coex_rx_status:1,
+		 rx_start_param:1,
+		 tx_cbf_info:1,
+		 rxpcu_early_rx_indication:1,
+		 received_response_user_7_0:1,
+		 received_response_user_15_8:1,
+		 received_response_user_23_16:1,
+		 received_response_user_31_24:1,
+		 received_response_user_36_32:1,
+		 rx_pm_info:1,
+		 rx_preamble:1,
+		 others:1,
+		 mactx_pre_phy_desc:1;
+};
+
+/**
+ * struct dp_tx_mon_wordmask_config - Tx monitor word mask
+ * tx_fes_setup: TX_FES_SETUP TLV word mask
+ * tx_peer_entry: TX_PEER_ENTRY TLV word mask
+ * tx_queue_ext: TX_QUEUE_EXTENSION TLV word mask
+ * tx_msdu_start: TX_MSDU_START TLV word mask
+ * tx_mpdu_start: TX_MPDU_START TLV word mask
+ * pcu_ppdu_setup_init: PCU_PPDU_SETUP TLV word mask
+ * rxpcu_user_setup: RXPCU_USER_SETUP TLV word mask
+ */
+struct dp_tx_mon_wordmask_config {
+	uint16_t tx_fes_setup;
+	uint16_t tx_peer_entry;
+	uint16_t tx_queue_ext;
+	uint16_t tx_msdu_start;
+	uint16_t tx_mpdu_start;
+	uint16_t pcu_ppdu_setup_init;
+	uint16_t rxpcu_user_setup;
+};
+
+/**
+ * struct htt_tx_ring_tlv_filter - Tx ring TLV filter
+ * enable/disable.
+ * @dtlvs: enable/disable downstream TLVs
+ * @utlvs: enable/disable upstream TLVs
+ * @wmask: enable/disbale word mask subscription
+ * @mgmt_filter: enable/disable mgmt packets
+ * @data_filter: enable/disable data packets
+ * @ctrl_filter: enable/disable ctrl packets
+ * @mgmt_dma_length: configure length for mgmt packet
+ * @ctrl_dma_length: configure length for ctrl packet
+ * @data_dma_length: configure length for data packet
+ * @mgmt_mpdu_end: enable mpdu end tlv for mgmt
+ * @mgmt_msdu_end: enable msdu end tlv for mgmt
+ * @mgmt_msdu_start: enable msdu start tlv for mgmt
+ * @mgmt_mpdu_start: enable mpdu start tlv for mgmt
+ * @ctrl_mpdu_end: enable mpdu end tlv for ctrl
+ * @ctrl_msdu_end: enable msdu end tlv for ctrl
+ * @ctrl_msdu_start: enable msdu start tlv for ctrl
+ * @ctrl_mpdu_start: enable mpdu start tlv for ctrl
+ * @data_mpdu_end: enable mpdu end tlv for data
+ * @data_msdu_end: enable msdu end tlv for data
+ * @data_msdu_start: enable msdu start tlv for data
+ * @data_mpdu_start: enable mpdu start tlv for data
+ * @mgmt_mpdu_log: enable mgmt mpdu level logging
+ * @ctrl_mpdu_log: enable ctrl mpdu level logging
+ * @data_mpdu_log: enable data mpdu level logging
+ *
+ * NOTE: Do not change the layout of this structure
+ */
+struct htt_tx_ring_tlv_filter {
+	struct dp_tx_mon_downstream_tlv_config dtlvs;
+	struct dp_tx_mon_upstream_tlv_config utlvs;
+	struct dp_tx_mon_wordmask_config wmask;
+	uint16_t mgmt_filter;
+	uint16_t data_filter;
+	uint16_t ctrl_filter;
+	uint16_t mgmt_dma_length:3,
+		 ctrl_dma_length:3,
+		 data_dma_length:3;
+	uint16_t mgmt_mpdu_end:1,
+		 mgmt_msdu_end:1,
+		 mgmt_msdu_start:1,
+		 mgmt_mpdu_start:1,
+		 ctrl_mpdu_end:1,
+		 ctrl_msdu_end:1,
+		 ctrl_msdu_start:1,
+		 ctrl_mpdu_start:1,
+		 data_mpdu_end:1,
+		 data_msdu_end:1,
+		 data_msdu_start:1,
+		 data_mpdu_start:1;
+	uint8_t  mgmt_mpdu_log:1,
+		 ctrl_mpdu_log:1,
+		 data_mpdu_log:1;
+};
+#endif /* QCA_MONITOR_2_0_SUPPORT */
+
 /**
  * struct htt_rx_ring_tlv_filter - Rx ring TLV filter
  * enable/disable.
@@ -248,6 +559,16 @@ struct htt_soc {
  * @rx_msdu_end_offset: Offset of rx_msdu_end tlv
  * @rx_msdu_start_offset: Offset of rx_msdu_start tlv
  * @rx_attn_offset: Offset of rx_attention tlv
+ * @rx_mpdu_start_wmask: word mask for mpdu start tlv
+ * @rx_mpdu_end_wmask: word mask for mpdu end tlv
+ * @rx_msdu_end_tlv: word mask for msdu end tlv
+ * @rx_pkt_tlv_offset: rx pkt tlv offset
+ * @mgmt_dma_length: configure length for mgmt packet
+ * @ctrl_dma_length: configure length for ctrl packet
+ * @data_dma_length: configure length for data packet
+ * @mgmt_mpdu_log: enable mgmt mpdu level logging
+ * @ctrl_mpdu_log: enable ctrl mpdu level logging
+ * @data_mpdu_log: enable data mpdu level logging
  *
  * NOTE: Do not change the layout of this structure
  */
@@ -285,6 +606,18 @@ struct htt_rx_ring_tlv_filter {
 	uint16_t rx_msdu_end_offset;
 	uint16_t rx_msdu_start_offset;
 	uint16_t rx_attn_offset;
+#ifdef QCA_MONITOR_2_0_SUPPORT
+	uint16_t rx_mpdu_start_wmask;
+	uint16_t rx_mpdu_end_wmask;
+	uint16_t rx_msdu_end_wmask;
+	uint16_t rx_pkt_tlv_offset;
+	uint16_t mgmt_dma_length:3,
+		 ctrl_dma_length:3,
+		 data_dma_lepngth:3,
+		 mgmt_mpdu_log:1,
+		 ctrl_mpdu_log:1,
+		 data_mpdu_log:1;
+#endif
 };
 
 /**

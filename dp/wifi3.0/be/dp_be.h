@@ -144,6 +144,7 @@ struct dp_tx_bank_profile {
  * @hw_cc_ctx: core context of HW cookie conversion
  * @tx_spt_page_desc: spt page desc allocated for TX desc pool
  * @rx_spt_page_desc: spt page desc allocated for RX desc pool
+ * @monitor_soc_be: BE specific monitor object
  */
 struct dp_soc_be {
 	struct dp_soc soc;
@@ -158,6 +159,9 @@ struct dp_soc_be {
 	struct dp_srng ppe2tcl_ring;
 	struct dp_srng ppe_release_ring;
 #endif
+#if !defined(DISABLE_MON_CONFIG)
+	struct dp_mon_soc_be *monitor_soc_be;
+#endif
 };
 
 /* convert struct dp_soc_be pointer to struct dp_soc pointer */
@@ -166,9 +170,13 @@ struct dp_soc_be {
 /**
  * struct dp_pdev_be - Extended DP pdev for BE targets
  * @pdev: dp pdev structure
+ * @monitor_pdev_be: BE specific monitor object
  */
 struct dp_pdev_be {
 	struct dp_pdev pdev;
+#if !defined(DISABLE_MON_CONFIG)
+	struct dp_mon_pdev_be *monitor_pdev_be;
+#endif
 };
 
 /**

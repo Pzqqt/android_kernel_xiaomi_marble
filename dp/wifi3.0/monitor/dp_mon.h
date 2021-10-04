@@ -341,6 +341,12 @@ dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
 
 struct dp_mon_ops {
 	QDF_STATUS (*mon_soc_cfg_init)(struct dp_soc *soc);
+	QDF_STATUS (*mon_soc_attach)(struct dp_soc *soc);
+	QDF_STATUS (*mon_soc_detach)(struct dp_soc *soc);
+	QDF_STATUS (*mon_soc_init)(struct dp_soc *soc);
+	QDF_STATUS (*mon_soc_deinit)(struct dp_soc *soc);
+	QDF_STATUS (*mon_pdev_alloc)(struct dp_pdev *pdev);
+	QDF_STATUS (*mon_pdev_free)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_attach)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_detach)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_init)(struct dp_pdev *pdev);
@@ -367,6 +373,10 @@ struct dp_mon_ops {
 #endif
 #ifndef DISABLE_MON_CONFIG
 	uint32_t (*mon_rx_process)(struct dp_soc *soc,
+				   struct dp_intr *int_ctx,
+				   uint32_t mac_id,
+				   uint32_t quota);
+	uint32_t (*mon_tx_process)(struct dp_soc *soc,
 				   struct dp_intr *int_ctx,
 				   uint32_t mac_id,
 				   uint32_t quota);
@@ -491,14 +501,16 @@ struct dp_mon_ops {
 	QDF_STATUS (*mon_rings_init)(struct dp_soc* soc, struct dp_pdev *pdev);
 	void (*mon_rings_deinit)(struct dp_pdev *pdev);
 
-	QDF_STATUS (*rx_pdev_mon_buffers_alloc)(struct dp_pdev *pdev);
-	void (*rx_pdev_mon_buffers_free)(struct dp_pdev *pdev);
-	void (*rx_pdev_mon_desc_pool_init)(struct dp_pdev *pdev);
-	void (*rx_pdev_mon_desc_pool_deinit)(struct dp_pdev *pdev);
-	QDF_STATUS (*rx_pdev_mon_desc_pool_alloc)(struct dp_pdev *pdev);
-	void (*rx_pdev_mon_desc_pool_free)(struct dp_pdev *pdev);
-	QDF_STATUS (*mon_buffers_alloc)(struct dp_pdev *pdev);
-	QDF_STATUS (*mon_buffers_free)(struct dp_pdev *pdev);
+	QDF_STATUS (*rx_mon_buffers_alloc)(struct dp_pdev *pdev);
+	void (*rx_mon_buffers_free)(struct dp_pdev *pdev);
+	void (*rx_mon_desc_pool_init)(struct dp_pdev *pdev);
+	void (*rx_mon_desc_pool_deinit)(struct dp_pdev *pdev);
+	QDF_STATUS (*rx_mon_desc_pool_alloc)(struct dp_pdev *pdev);
+	void (*rx_mon_desc_pool_free)(struct dp_pdev *pdev);
+	void (*tx_mon_desc_pool_init)(struct dp_pdev *pdev);
+	void (*tx_mon_desc_pool_deinit)(struct dp_pdev *pdev);
+	QDF_STATUS (*tx_mon_desc_pool_alloc)(struct dp_pdev *pdev);
+	void (*tx_mon_desc_pool_free)(struct dp_pdev *pdev);
 };
 
 struct dp_mon_soc {

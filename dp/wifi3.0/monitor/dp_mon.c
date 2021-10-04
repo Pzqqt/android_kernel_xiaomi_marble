@@ -2080,10 +2080,17 @@ QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev)
 		goto fail1;
 	}
 
+	if (mon_ops->mon_pdev_alloc) {
+		if (mon_ops->mon_rings_alloc(soc, pdev)) {
+			dp_mon_err("%pK: MONITOR pdev alloc failed", pdev);
+			goto fail1;
+		}
+	}
+
 	if (mon_ops->mon_rings_alloc) {
 		if (mon_ops->mon_rings_alloc(soc, pdev)) {
 			dp_mon_err("%pK: MONITOR rings setup failed", pdev);
-			goto fail1;
+			goto fail2;
 		}
 	}
 
@@ -2091,16 +2098,19 @@ QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev)
 	if (mon_ops->rx_pdev_mon_desc_pool_alloc) {
 		if (mon_ops->rx_pdev_mon_desc_pool_alloc(pdev)) {
 			dp_mon_err("%pK: dp_rx_pdev_mon_attach failed", pdev);
-			goto fail2;
+			goto fail3;
 		}
 	}
 
 	pdev->monitor_pdev = mon_pdev;
 
 	return QDF_STATUS_SUCCESS;
-fail2:
+fail3:
 	if (mon_ops->mon_rings_free)
 		mon_ops->mon_rings_free(pdev);
+fail2:
+	if (mon_ops->mon_pdev_free)
+		mon_ops->mon_pdev_free(pdev);
 fail1:
 	pdev->monitor_pdev = NULL;
 	qdf_mem_free(mon_pdev);
@@ -2128,6 +2138,9 @@ QDF_STATUS dp_mon_pdev_detach(struct dp_pdev *pdev)
 		mon_ops->rx_pdev_mon_desc_pool_free(pdev);
 	if (mon_ops->mon_rings_free)
 		mon_ops->mon_rings_free(pdev);
+	if (mon_ops->mon_pdev_free)
+		mon_ops->mon_pdev_free(pdev);
+
 	pdev->monitor_pdev = NULL;
 	qdf_mem_free(mon_pdev);
 	return QDF_STATUS_SUCCESS;

@@ -13,3 +13,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+void
+dp_tx_mon_buffers_free(struct dp_pdev *pdev)
+{
+}
+
+QDF_STATUS
+dp_tx_mon_buffers_alloc(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
