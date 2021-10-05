@@ -1284,11 +1284,6 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					   REASON_ROAM_CONTROL_CONFIG_ENABLED);
 		break;
 	case ROAM_PREFERRED_CHAN:
-		if (dst_cfg->specific_chan_info.num_chan) {
-			mlme_err("Specific channel list is already configured");
-			status = QDF_STATUS_E_INVAL;
-			break;
-		}
 		status = cm_update_roam_scan_channel_list(psoc, vdev, rso_cfg,
 					vdev_id, &dst_cfg->pref_chan_info,
 					src_config->chan_info.freq_list,

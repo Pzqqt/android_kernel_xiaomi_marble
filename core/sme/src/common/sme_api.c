@@ -7114,18 +7114,37 @@ sme_update_roam_scan_freq_list(mac_handle_t mac_handle, uint8_t vdev_id,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	/*
+	 * NCHO Frequency configurations:
+	 * If ADDROAMSCANFREQUENCIES command is given, then freq_list_type is
+	 * QCA_PREFERRED_SCAN_FREQ_LIST.
+	 * If SETROAMSCANFREQUENCIES command is given, then freq_list_type is
+	 * QCA_SPECIFIC_SCAN_FREQ_LIST.
+	 *
+	 * If new channels are configured with type as STATIC(specific freq
+	 * list):
+	 * - FW clears both static & dynamic list.
+	 * - FW adds new channels to static & dynamic lists(both list contains
+	 *   only new channels)
+	 *
+	 * If Host configures new channels with type as DYNAMIC(preferred freq
+	 * list):
+	 * - FW clears the static list and adds new channels(Static list
+	 *   contains only new channels)
+	 * - FW will not clear dynamic list. New channels will be
+	 *   appended(Dynamic list contains old+new channels)
+	 */
+
 	src_config.chan_info.freq_list = freq_list;
 	src_config.chan_info.num_chan = num_chan;
-	if (freq_list_type == QCA_PREFERRED_SCAN_FREQ_LIST) {
-		sme_set_roam_scan_control(mac_handle, vdev_id, false);
+	if (freq_list_type == QCA_PREFERRED_SCAN_FREQ_LIST)
 		return wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
 						  ROAM_PREFERRED_CHAN,
 						  &src_config);
-	} else {
+	else
 		return wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
 						  ROAM_SPECIFIC_CHAN,
 						  &src_config);
-	}
 }
 
 /**
