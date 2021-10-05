@@ -494,7 +494,7 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 		htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
 		htt_ring_type = HTT_HW_TO_SW_RING;
 		break;
-#if QCA_MONITOR_2_0_SUPPORT_WAR
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR
 	// WAR till fw htt.h changes are merged
 	case TX_MONITOR_BUF:
 		htt_ring_id = HTT_TX_MON_HOST2MON_BUF_RING;

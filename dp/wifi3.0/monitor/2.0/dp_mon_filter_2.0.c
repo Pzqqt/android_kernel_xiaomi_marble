@@ -37,7 +37,7 @@ void dp_rx_mon_packet_length_set(uint32_t *msg_word,
 {
 	if (!msg_word || !tlv_filter)
 		return;
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	HTT_RX_MONITOR_CFG_CONFIG_LENGTH_MGMT_SET(*msg_word,
 			tlv_filter->mgmt_dma_length);
 	HTT_RX_MONITOR_CFG_CONFIG_LENGTH_CTRL_SET(*msg_word,
@@ -53,7 +53,7 @@ void dp_rx_mon_enable_mpdu_logging(uint32_t *msg_word,
 	if (!msg_word || !tlv_filter)
 		return;
 
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	if (htt_tlv_filter->mgmt_mpdu_log)
 		HTT_RX_MONITOR_CFG_MPDU_LOGGING_SET(*msg_word, MGMT,
 						    tlv_filter->mgmt_mpdu_log);
@@ -75,7 +75,7 @@ dp_rx_mon_word_mask_subscribe(uint32_t *msg_word,
 	if (!msg_word || !tlv_filter)
 		return;
 
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WMASK_SET(*msg_word,
 			tlv_filter->rx_mpdu_start_word_mask);
 
@@ -365,7 +365,7 @@ htt_tx_tlv_filter_mask_set_in1(uint32_t *msg_word,
 							 MACTX_USER_DESC_COMMON,
 							 tlv->mactx_user_desc_cmn);
 
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	if (tlv->l_sig_a)
 		htt_tx_monitor_tlv_filter_in1_enable_set(*msg_word,
 							 L_SIG_A,
@@ -520,7 +520,7 @@ htt_tx_tlv_filter_mask_set_in2(uint32_t *msg_word,
 							 TQM_ACKED_1K_MPDU,
 							 tlv->tqm_acked_1k_mpdu);
 
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	if (tlv->txpcu_buf_status)
 		htt_tx_monitor_tlv_filter_in2_enable_set(*msg_word,
 							 TXPCU_BUFFER_STATUS,
@@ -714,7 +714,7 @@ int htt_h2t_tx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 
 	hal_get_srng_params(soc->hal_soc, hal_ring_hdl, &srng_params);
 
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	switch (hal_ring_type) {
 	case TX_MONITOR_BUF:
 		htt_ring_id = HTT_TX_MON_HOST2MON_BUF_RING;
@@ -777,7 +777,7 @@ int htt_h2t_tx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 	HTT_TX_MONITOR_CFG_RING_BUFFER_SIZE_SET(*msg_word,
 						ring_buf_size);
 
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	if (htt_tlv_filter->mgmt_filter)
 		htt_tx_ring_pkt_type_set(*msg_word, ENABLE_FLAGS,
 					 MGMT, 1);
@@ -879,7 +879,7 @@ int htt_h2t_tx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 		HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_SET(*msg_word,
 					htt_tlv_filter->wmask.rxpcu_user_setup);
 
-#if QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR /* Yet to get FW support */
 	htt_tx_ring_pkt_type_set(*msg_word, ENABLE_MSDU_OR_MPDU_LOGGING,
 				 MGMT,
 				 htt_tlv_filter->mgmt_mpdu_log);
