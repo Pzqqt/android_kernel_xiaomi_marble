@@ -3,6 +3,7 @@ DATA_OFFLOAD_DLKM_BOARD_PLATFORMS_LIST := lahaina
 DATA_OFFLOAD_DLKM_BOARD_PLATFORMS_LIST += taro
 DATA_SHS_DLKM_BOARD_PLATFORMS_LIST := lahaina
 DATA_SHS_DLKM_BOARD_PLATFORMS_LIST += taro
+DATA_APS_DLKM_BOARD_PLATFORMS_LIST += taro
 ifneq ($(TARGET_BOARD_AUTO),true)
 ifeq ($(call is-board-platform-in-list,$(DATA_OFFLOAD_DLKM_BOARD_PLATFORMS_LIST)),true)
 BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/rmnet_offload.ko
@@ -12,5 +13,8 @@ endif
 ifeq ($(call is-board-platform-in-list,$(DATA_SHS_DLKM_BOARD_PLATFORMS_LIST)),true)
 BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/rmnet_shs.ko
 BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/rmnet_wlan.ko
+endif
+ifeq ($(call is-board-platform-in-list,$(DATA_APS_DLKM_BOARD_PLATFORMS_LIST)),true)
+BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/rmnet_aps.ko
 endif
 endif
