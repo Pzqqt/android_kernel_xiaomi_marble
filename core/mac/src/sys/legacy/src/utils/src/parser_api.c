@@ -7897,13 +7897,16 @@ QDF_STATUS wlan_parse_bss_description_ies(struct mac_context *mac_ctx,
 {
 	int ie_len = wlan_get_ielen_from_bss_description(bss_desc);
 
-	if (ie_len <= 0 || !ie_struct)
+	if (ie_len <= 0 || !ie_struct) {
+		pe_err("BSS description has invalid IE : %d", ie_len);
 		return QDF_STATUS_E_FAILURE;
-
+	}
 	if (DOT11F_FAILED(dot11f_unpack_beacon_i_es
 			  (mac_ctx, (uint8_t *)bss_desc->ieFields,
-			  ie_len, ie_struct, false)))
+			  ie_len, ie_struct, false))) {
+		pe_err("Beacon IE parsing failed");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

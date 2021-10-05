@@ -2064,10 +2064,15 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		qdf_mem_free(parsed_frm_ptr);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pe_debug("LFR3:Beacon/Prb Rsp: %d bssid "QDF_MAC_ADDR_FMT" beacon "QDF_MAC_ADDR_FMT,
+	pe_debug("LFR3:Beacon/Prb Rsp: %d len %d bssid "QDF_MAC_ADDR_FMT" beacon "QDF_MAC_ADDR_FMT,
 		 roam_synch_ind_ptr->isBeacon,
+		 roam_synch_ind_ptr->beaconProbeRespLength,
 		 QDF_MAC_ADDR_REF(roam_synch_ind_ptr->bssid.bytes),
 		 QDF_MAC_ADDR_REF(mac_hdr->bssId));
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   bcn_proberesp_ptr,
+			   roam_synch_ind_ptr->beaconProbeRespLength);
 
 	status = lim_roam_gen_beacon_descr(mac,
 					   roam_synch_ind_ptr,
@@ -2149,12 +2154,16 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	pe_debug("chan: %d rssi: %d ie_len %d",
 		 bss_desc_ptr->chan_freq,
 		 bss_desc_ptr->rssi, ie_len);
+
+	qdf_mem_free(parsed_frm_ptr);
 	if (ie_len) {
 		qdf_mem_copy(&bss_desc_ptr->ieFields,
 			     ie, ie_len);
 		qdf_mem_free(ie);
+	} else {
+		pe_err("Beacon/Probe rsp doesn't have any IEs");
+		return QDF_STATUS_E_FAILURE;
 	}
-	qdf_mem_free(parsed_frm_ptr);
 	return QDF_STATUS_SUCCESS;
 }
 

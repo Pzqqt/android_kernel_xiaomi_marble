@@ -4415,7 +4415,6 @@ csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
 	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
-	QDF_STATUS status;
 	struct disassoc_ind *pDisassocInd;
 
 	/*
@@ -4424,11 +4423,14 @@ csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	 * the WmStatusChange requests is pushed and processed
 	 */
 	pDisassocInd = (struct disassoc_ind *)msg_ptr;
-	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-				&pDisassocInd->bssid, &sessionId);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Session Id not found for BSSID "QDF_MAC_ADDR_FMT,
-			QDF_MAC_ADDR_REF(pDisassocInd->bssid.bytes));
+	sessionId = pDisassocInd->vdev_id;
+	sme_debug("Disassoc Indication from MAC for vdev_id %d bssid " QDF_MAC_ADDR_FMT,
+		  pDisassocInd->vdev_id,
+		  QDF_MAC_ADDR_REF(pDisassocInd->bssid.bytes));
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, sessionId)) {
+		sme_err("vdev:%d Invalid session. BSSID: " QDF_MAC_ADDR_FMT,
+			sessionId, QDF_MAC_ADDR_REF(pDisassocInd->bssid.bytes));
 
 		return;
 	}
@@ -4460,7 +4462,6 @@ csr_roam_chk_lnk_deauth_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
 	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
-	QDF_STATUS status;
 	struct deauth_ind *pDeauthInd;
 
 	pDeauthInd = (struct deauth_ind *)msg_ptr;
@@ -4468,11 +4469,13 @@ csr_roam_chk_lnk_deauth_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		  pDeauthInd->vdev_id,
 		  QDF_MAC_ADDR_REF(pDeauthInd->bssid.bytes));
 
-	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-						   &pDeauthInd->bssid,
-						   &sessionId);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	sessionId = pDeauthInd->vdev_id;
+	if (!CSR_IS_SESSION_VALID(mac_ctx, sessionId)) {
+		sme_err("vdev %d: Invalid session BSSID: " QDF_MAC_ADDR_FMT,
+			pDeauthInd->vdev_id,
+			QDF_MAC_ADDR_REF(pDeauthInd->bssid.bytes));
 		return;
+	}
 
 	if (csr_is_deauth_disassoc_already_active(mac_ctx, sessionId,
 	    pDeauthInd->peer_macaddr))
