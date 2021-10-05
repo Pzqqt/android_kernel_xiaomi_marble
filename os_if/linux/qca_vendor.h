@@ -977,6 +977,7 @@ enum qca_wlan_vendor_attr_update_sta_info {
  * @QCA_WLAN_802_11_MODE_11A: mode A
  * @QCA_WLAN_802_11_MODE_11AC: mode AC
  * @QCA_WLAN_802_11_MODE_11AX: mode AX
+ * @QCA_WLAN_802_11_MODE_11BE: mode BE
  * @QCA_WLAN_802_11_MODE_INVALID: Invalid dot11 mode
  */
 enum qca_wlan_802_11_mode {
@@ -986,6 +987,7 @@ enum qca_wlan_802_11_mode {
 	QCA_WLAN_802_11_MODE_11A,
 	QCA_WLAN_802_11_MODE_11AC,
 	QCA_WLAN_802_11_MODE_11AX,
+	QCA_WLAN_802_11_MODE_11BE,
 	QCA_WLAN_802_11_MODE_INVALID,
 };
 
