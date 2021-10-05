@@ -3393,6 +3393,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					"wlan_fw_rsp_wakelock");
 	qdf_runtime_lock_init(&wma_handle->wmi_cmd_rsp_runtime_lock);
 	qdf_runtime_lock_init(&wma_handle->sap_prevent_runtime_pm_lock);
+	qdf_runtime_lock_init(&wma_handle->ndp_prevent_runtime_pm_lock);
 
 	/* Register peer assoc conf event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -3504,6 +3505,7 @@ err_dbglog_init:
 		wma_err("Failed to destroy radio stats mutex");
 
 	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	qdf_runtime_lock_deinit(&wma_handle->ndp_prevent_runtime_pm_lock);
 	qdf_runtime_lock_deinit(&wma_handle->sap_prevent_runtime_pm_lock);
 	qdf_runtime_lock_deinit(&wma_handle->wmi_cmd_rsp_runtime_lock);
 	qdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
@@ -4575,6 +4577,7 @@ QDF_STATUS wma_close(void)
 	qdf_event_destroy(&wma_handle->tx_queue_empty_event);
 	wma_cleanup_hold_req(wma_handle);
 	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	qdf_runtime_lock_deinit(&wma_handle->ndp_prevent_runtime_pm_lock);
 	qdf_runtime_lock_deinit(&wma_handle->sap_prevent_runtime_pm_lock);
 	qdf_runtime_lock_deinit(&wma_handle->wmi_cmd_rsp_runtime_lock);
 	qdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);

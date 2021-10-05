@@ -4949,6 +4949,15 @@ static void wma_sap_allow_runtime_pm(tp_wma_handle wma)
 	qdf_runtime_pm_allow_suspend(&wma->sap_prevent_runtime_pm_lock);
 }
 
+static void wma_ndp_prevent_runtime_pm(tp_wma_handle wma)
+{
+	qdf_runtime_pm_prevent_suspend(&wma->ndp_prevent_runtime_pm_lock);
+}
+
+static void wma_ndp_allow_runtime_pm(tp_wma_handle wma)
+{
+	qdf_runtime_pm_allow_suspend(&wma->ndp_prevent_runtime_pm_lock);
+}
 #ifdef FEATURE_STA_MODE_VOTE_LINK
 static bool wma_add_sta_allow_sta_mode_vote_link(uint8_t oper_mode)
 {
@@ -5122,7 +5131,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("disable runtime pm and vote for link up");
 		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
-		wma_sap_prevent_runtime_pm(wma);
+		wma_ndp_prevent_runtime_pm(wma);
 	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
 		wma_debug("vote for link up");
 		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_STA_USER_ID);
@@ -5220,7 +5229,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("allow runtime pm and vote for link down");
 		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
-		wma_sap_allow_runtime_pm(wma);
+		wma_ndp_allow_runtime_pm(wma);
 	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
 		wma_debug("vote for link down");
 		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_STA_USER_ID);
