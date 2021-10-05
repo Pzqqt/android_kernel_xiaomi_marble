@@ -3613,6 +3613,10 @@ cm_roam_switch_to_rso_enable(struct wlan_objmgr_pdev *pdev,
 
 		return QDF_STATUS_SUCCESS;
 	case WLAN_ROAM_SYNCH_IN_PROG:
+		if (reason == REASON_ROAM_ABORT) {
+			mlme_debug("Roam synch in progress, drop Roam abort");
+			return QDF_STATUS_SUCCESS;
+		}
 		/*
 		 * After roam sych propagation is complete, send
 		 * RSO start command to firmware to update AP profile,
