@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2014, 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -25,6 +26,18 @@
 #define RMNET_SHS_STMP_ALL BIT(0)
 #define RMNET_SHS_NO_PSH BIT(1)
 #define RMNET_SHS_NO_DLMKR BIT(2)
+
+#define RMNET_LLM(prio) ((prio) == 0xDA001A) /* qmipriod */
+
+#define RMNET_APS_MAJOR 0x9B6D
+#define RMNET_APS_LLC_MASK 0x0100
+#define RMNET_APS_LLB_MASK 0x0200
+
+#define RMNET_APS_LLC(prio) \
+	(((prio) >> 16 == RMNET_APS_MAJOR) && ((prio) & RMNET_APS_LLC_MASK))
+
+#define RMNET_APS_LLB(prio) \
+        (((prio) >> 16 == RMNET_APS_MAJOR) && ((prio) & RMNET_APS_LLB_MASK))
 
 struct rmnet_shs_clnt_s {
 	u16 config;
@@ -196,6 +209,7 @@ struct rmnet_priv_stats {
 	u64 tso_segment_skip;
 	u64 ll_tso_segs;
 	u64 ll_tso_errs;
+	u64 aps_prio;
 };
 
 struct rmnet_priv {
