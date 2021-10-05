@@ -9,7 +9,6 @@
 #include <linux/poll.h>
 #include <linux/types.h>
 #include <linux/dma-buf.h>
-#include <linux/msm_ion.h>
 #include <linux/refcount.h>
 #include <media/msm_eva_private.h>
 #include "msm_cvp_buf.h"

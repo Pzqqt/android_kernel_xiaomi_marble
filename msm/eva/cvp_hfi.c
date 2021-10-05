@@ -1822,8 +1822,9 @@ static int iris_hfi_core_init(void *device)
 	cvp_register_va_md_region();
 
 	// Add node for dev struct
-	add_va_node_to_list(&head_node_dbg_struct, dev,
-        sizeof(struct iris_hfi_device), "iris_hfi_device-dev", false);
+	add_va_node_to_list(CVP_QUEUE_DUMP, dev,
+			sizeof(struct iris_hfi_device),
+			"iris_hfi_device-dev", false);
 	add_queue_header_to_va_md_list((void*)dev);
 	add_hfi_queue_to_va_md_list((void*)dev);
 

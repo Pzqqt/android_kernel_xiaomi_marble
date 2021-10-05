@@ -1916,8 +1916,7 @@ int cvp_dsp_device_init(void)
 	int i;
 	char name[CVP_FASTRPC_DRIVER_NAME_SIZE] = "qcom,fastcv0\0";
 
-    add_va_node_to_list(&head_node_dbg_struct,
-        &gfa_cv, sizeof(struct cvp_dsp_apps),
+	add_va_node_to_list(CVP_DBG_DUMP, &gfa_cv, sizeof(struct cvp_dsp_apps),
         "cvp_dsp_apps-gfa_cv", false);
 
 	mutex_init(&me->tx_lock);

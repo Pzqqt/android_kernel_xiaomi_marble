@@ -15,7 +15,7 @@
 #include <linux/types.h>
 #include <linux/version.h>
 #include <linux/io.h>
-#include <linux/of_fdt.h>
+#include <soc/qcom/of_common.h>
 #include "msm_cvp_internal.h"
 #include "msm_cvp_debug.h"
 #include "cvp_hfi_api.h"
@@ -204,7 +204,7 @@ static const struct of_device_id msm_cvp_dt_match[] = {
 		.data = &sm8450_data,
 	},
 	{
-		.compatible = "qcom,kailua-cvp",
+		.compatible = "qcom,kalama-cvp",
 		.data = &sm8550_data,
 	},
 
