@@ -3002,7 +3002,7 @@ QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
 	qdf_assert_always(rparams);
 
 	num_bins_per_dword = SPECTRAL_DWORD_SIZE / rparams->hw_fft_bin_width;
-	num_dwords = pwr_count / num_bins_per_dword;
+	num_dwords = num_fftbins / num_bins_per_dword;
 	dword_ptr = (uint32_t *)bin_pwr_data;
 
 	for (dword_idx = 0; dword_idx < num_dwords; dword_idx++) {

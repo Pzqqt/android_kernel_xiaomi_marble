@@ -2831,9 +2831,9 @@ QDF_STATUS target_if_byte_swap_spectral_headers_gen3(
 
 /**
  * target_if_byte_swap_spectral_fft_bins_gen3() - Apply byte-swap on FFT bins
- * @spectral: Pointer to Spectral FFT bin length adjustment WAR
+ * @rparams: Pointer to Spectral report parameters
  * @bin_pwr_data: Pointer to the start of FFT bins
- * @pwr_count: Number of FFT bins
+ * @num_fftbins: Number of FFT bins
  *
  * This API is only required for Big-endian Host platforms.
  * It applies pack-mode-aware byte-swap on the FFT bins as below:
@@ -2849,8 +2849,8 @@ QDF_STATUS target_if_byte_swap_spectral_headers_gen3(
  * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
  */
 QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
-	struct spectral_fft_bin_len_adj_swar *swar,
-	void *bin_pwr_data, size_t pwr_count);
+	const struct spectral_report_params *rparams,
+	void *bin_pwr_data, size_t num_fftbins);
 #endif /* BIG_ENDIAN_HOST */
 
 #ifdef OPTIMIZED_SAMP_MESSAGE
