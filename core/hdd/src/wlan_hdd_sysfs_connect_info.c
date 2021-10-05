@@ -285,6 +285,9 @@ uint8_t *hdd_dot11_mode_str(uint32_t dot11mode)
 		return "DOT11 MODE AUTO";
 	case eCSR_CFG_DOT11_MODE_ABG:
 		return "DOT11 MODE 11ABG";
+	case eCSR_CFG_DOT11_MODE_11AX:
+	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
+		return "DOT11_MODE_11AX";
 	}
 
 	return "UNKNOWN";
