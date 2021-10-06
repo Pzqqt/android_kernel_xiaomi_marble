@@ -5890,6 +5890,9 @@ QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (pdev_priv_obj->reg_cur_6g_ap_pwr_type == ap_pwr_type)
+		return QDF_STATUS_SUCCESS;
+
 	if (!reg_get_num_rules_of_ap_pwr_type(pdev, ap_pwr_type))
 		return QDF_STATUS_E_FAILURE;
 
