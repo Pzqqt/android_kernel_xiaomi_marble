@@ -32,10 +32,11 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_psoc_obj.h>
 
-#define MGMT_RX_REO_MAX_LIST_SIZE        (100)
-#define MGMT_RX_REO_LIST_TIMEOUT         (10 * USEC_PER_MSEC)
+#define MGMT_RX_REO_LIST_MAX_SIZE        (100)
+#define MGMT_RX_REO_LIST_TIMEOUT_US      (10 * USEC_PER_MSEC)
 #define MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS  (BIT(0))
 #define MGMT_RX_REO_STATUS_AGED_OUT                       (BIT(1))
+
 /**
  * TODO: Dummy macro for Maximum MLO links on the system
  * This is added only as a place holder for the time being.
@@ -47,6 +48,7 @@
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_ZERO_WAIT_COUNT           (BIT(0))
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_AGED_OUT                  (BIT(1))
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_OLDER_THAN_AGED_OUT_FRAME (BIT(2))
+#define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_LIST_MAX_SIZE_EXCEEDED    (BIT(3))
 
 #define MGMT_RX_REO_LIST_ENTRY_IS_WAITING_FOR_FRAME_ON_OTHER_LINK(entry)   \
 	((entry)->status & MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS)
@@ -142,6 +144,8 @@ struct mgmt_rx_reo_global_ts_info {
  * @list: List used for reordering
  * @list_lock: Lock to protect the list
  * @max_list_size: Maximum size of the reorder list
+ * @list_entry_timeout_us: Time out value(microsecond) for the reorder list
+ * entries
  * @ageout_timer: Periodic timer to age-out the list entries
  * @ts_latest_aged_out_frame: Stores the global time stamp for the latest aged
  * out frame. Latest aged out frame is the aged out frame in reorder list which
@@ -153,6 +157,7 @@ struct mgmt_rx_reo_list {
 	qdf_list_t list;
 	qdf_spinlock_t list_lock;
 	uint32_t max_list_size;
+	uint32_t list_entry_timeout_us;
 	qdf_timer_t ageout_timer;
 	struct mgmt_rx_reo_global_ts_info ts_latest_aged_out_frame;
 	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
@@ -336,5 +341,21 @@ QDF_STATUS
 wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 			    struct mgmt_rx_reo_frame_descriptor *desc,
 			    bool *is_queued);
+
+/**
+ * mgmt_rx_reo_list_max_size_exceeded() - Helper API to check whether
+ * list has exceeded the maximum configured size
+ * @reo_list: Pointer to reorder list
+ *
+ * This API expects the caller to acquire the spin lock protecting the reorder
+ * list.
+ *
+ * Return: true if reorder list has exceeded the max size
+ */
+static inline bool
+mgmt_rx_reo_list_max_size_exceeded(struct mgmt_rx_reo_list *reo_list)
+{
+	return (qdf_list_size(&reo_list->list) > reo_list->max_list_size);
+}
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_I_H */
