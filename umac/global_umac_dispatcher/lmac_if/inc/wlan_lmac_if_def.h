@@ -188,6 +188,10 @@ struct wlan_lmac_if_cp_stats_rx_ops {
 					struct wlan_objmgr_psoc *psoc,
 					stats_big_data_stats_event *ev);
 #endif
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+	QDF_STATUS (*twt_get_session_param_resp)(struct wlan_objmgr_psoc *psoc,
+					struct twt_session_stats_info *params);
+#endif
 };
 #endif
 

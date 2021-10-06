@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,6 +38,9 @@
 #include <wlan_cp_stats_utils_api.h>
 #include <wlan_cp_stats_ext_type.h>
 #include <wlan_cp_stats_public_structs.h>
+#ifdef WLAN_FEATURE_MIB_STATS
+#include <wlan_cp_stats_mc_defs.h>
+#endif
 
 /* noise floor */
 #define CP_STATS_TGT_NOISE_FLOOR_DBM (-96)
@@ -104,12 +108,16 @@ struct vdev_cp_stats {
  * @peer_stats: pointer to ic/mc specific stats
  * @peer_comp_priv_obj[]: component's private object pointers
  * @peer_cp_stats_lock:	lock to protect object
+ * @twt_param: Pointer to peer twt session parameters
  */
 struct peer_cp_stats {
 	struct wlan_objmgr_peer *peer_obj;
 	peer_ext_cp_stats_t *peer_stats;
 	void *peer_comp_priv_obj[WLAN_CP_STATS_MAX_COMPONENTS];
 	qdf_spinlock_t peer_cp_stats_lock;
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+	struct twt_session_stats_info twt_param[TWT_PEER_MAX_SESSIONS];
+#endif
 };
 
 /**
