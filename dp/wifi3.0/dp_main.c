@@ -10283,27 +10283,27 @@ static void dp_display_srng_info(struct cdp_soc_t *soc_hdl)
 	dp_info("SRNG HP-TP data:");
 	for (i = 0; i < soc->num_tcl_data_rings; i++) {
 		hal_get_sw_hptp(hal_soc, soc->tcl_data_ring[i].hal_srng,
-				&hp, &tp);
+				&tp, &hp);
 		dp_info("TCL DATA ring[%d]: hp=0x%x, tp=0x%x", i, hp, tp);
 
 		hal_get_sw_hptp(hal_soc, soc->tx_comp_ring[i].hal_srng,
-				&hp, &tp);
+				&tp, &hp);
 		dp_info("TX comp ring[%d]: hp=0x%x, tp=0x%x", i, hp, tp);
 	}
 
 	for (i = 0; i < soc->num_reo_dest_rings; i++) {
 		hal_get_sw_hptp(hal_soc, soc->reo_dest_ring[i].hal_srng,
-				&hp, &tp);
+				&tp, &hp);
 		dp_info("REO DST ring[%d]: hp=0x%x, tp=0x%x", i, hp, tp);
 	}
 
-	hal_get_sw_hptp(hal_soc, soc->reo_exception_ring.hal_srng, &hp, &tp);
+	hal_get_sw_hptp(hal_soc, soc->reo_exception_ring.hal_srng, &tp, &hp);
 	dp_info("REO exception ring: hp=0x%x, tp=0x%x", hp, tp);
 
-	hal_get_sw_hptp(hal_soc, soc->rx_rel_ring.hal_srng, &hp, &tp);
+	hal_get_sw_hptp(hal_soc, soc->rx_rel_ring.hal_srng, &tp, &hp);
 	dp_info("WBM RX release ring: hp=0x%x, tp=0x%x", hp, tp);
 
-	hal_get_sw_hptp(hal_soc, soc->wbm_desc_rel_ring.hal_srng, &hp, &tp);
+	hal_get_sw_hptp(hal_soc, soc->wbm_desc_rel_ring.hal_srng, &tp, &hp);
 	dp_info("WBM desc release ring: hp=0x%x, tp=0x%x", hp, tp);
 }
 
