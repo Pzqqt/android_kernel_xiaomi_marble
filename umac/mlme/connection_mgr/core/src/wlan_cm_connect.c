@@ -584,6 +584,22 @@ static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 	}
 }
 
+static
+QDF_STATUS cm_if_mgr_validate_candidate(struct cnx_mgr *cm_ctx,
+					struct scan_cache_entry *scan_entry)
+{
+	struct if_mgr_event_data event_data = {0};
+
+	event_data.validate_bss_info.chan_freq = scan_entry->channel.chan_freq;
+	event_data.validate_bss_info.beacon_interval = scan_entry->bcn_int;
+	qdf_copy_macaddr(&event_data.validate_bss_info.peer_addr,
+			 &scan_entry->bssid);
+
+	return if_mgr_deliver_event(cm_ctx->vdev,
+				    WLAN_IF_MGR_EV_VALIDATE_CANDIDATE,
+				    &event_data);
+}
+
 #ifdef CONN_MGR_ADV_FEATURE
 #ifdef WLAN_FEATURE_FILS_SK
 /*
@@ -678,6 +694,65 @@ static inline QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
 }
 #endif /* WLAN_FEATURE_FILS_SK */
 
+static void cm_get_vdev_id_from_bssid(struct wlan_objmgr_pdev *pdev,
+				   void *object, void *arg)
+{
+	uint8_t *vdev_id = arg;
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+
+	if (!vdev_id)
+		return;
+
+	if (!(wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE ||
+	      wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_CLIENT_MODE))
+		return;
+
+	if (cm_is_vdev_disconnecting(vdev))
+		*vdev_id = wlan_vdev_get_id(vdev);
+}
+
+/**
+ * cm_is_any_other_vdev_disconnecting() - check whether any other vdev is in
+ * disconnecting state
+ * @cm_ctx: connection manager context
+ * @cm_req: Connect request.
+ *
+ * As Connect is a blocking call this API will make sure the disconnect
+ * doesnt timeout on any vdev and thus make sure that PEER/VDEV SM are cleaned
+ * before vdev delete is sent.
+ *
+ * Return : true if disconnection is on any vdev_id
+ */
+static bool cm_is_any_other_vdev_disconnecting(struct cnx_mgr *cm_ctx,
+					       struct cm_req *cm_req)
+{
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t vdev_id;
+	uint8_t cur_vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+
+	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
+			 CM_PREFIX_REF(cur_vdev_id, cm_req->cm_id));
+		return false;
+	}
+
+	vdev_id = WLAN_INVALID_VDEV_ID;
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  cm_get_vdev_id_from_bssid,
+					  &vdev_id, 0,
+					  WLAN_MLME_CM_ID);
+
+	if (vdev_id != WLAN_INVALID_VDEV_ID && vdev_id != cur_vdev_id) {
+		mlme_info(CM_PREFIX_FMT "Abort connection as vdev %d is waiting for disconnect",
+			  CM_PREFIX_REF(cur_vdev_id, cm_req->cm_id),
+			  vdev_id);
+		return true;
+	}
+
+	return false;
+}
+
 QDF_STATUS
 cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_connect_resp *resp)
@@ -717,6 +792,7 @@ static bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
 	uint32_t key_mgmt;
 	struct wlan_objmgr_psoc *psoc;
 	bool sae_connection;
+	QDF_STATUS status;
 
 	psoc = wlan_pdev_get_psoc(wlan_vdev_get_pdev(cm_ctx->vdev));
 	key_mgmt = req->cur_candidate->entry->neg_sec_info.key_mgmt;
@@ -752,6 +828,11 @@ static bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
 
 use_same_candidate:
 	if (req->cur_candidate_retries >= max_retry_count)
+		return false;
+
+	status = cm_if_mgr_validate_candidate(cm_ctx,
+					      req->cur_candidate->entry);
+	if (QDF_IS_STATUS_ERROR(status))
 		return false;
 
 	mlme_info(CM_PREFIX_FMT "Retry again with " QDF_MAC_ADDR_FMT ", status code %d reason %d key_mgmt 0x%x retry count %d max retry %d",
@@ -875,6 +956,13 @@ static void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 	cm_set_key(cm_ctx, false, 0, &broadcast_mac);
 }
 #else
+
+static inline
+bool cm_is_any_other_vdev_disconnecting(struct cnx_mgr *cm_ctx,
+					struct cm_req *cm_req)
+{
+	return false;
+}
 
 static inline
 bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
@@ -1148,22 +1236,6 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static
-QDF_STATUS cm_if_mgr_validate_candidate(struct cnx_mgr *cm_ctx,
-					struct scan_cache_entry *scan_entry)
-{
-	struct if_mgr_event_data event_data = {0};
-
-	event_data.validate_bss_info.chan_freq = scan_entry->channel.chan_freq;
-	event_data.validate_bss_info.beacon_interval = scan_entry->bcn_int;
-	qdf_copy_macaddr(&event_data.validate_bss_info.peer_addr,
-			 &scan_entry->bssid);
-
-	return if_mgr_deliver_event(cm_ctx->vdev,
-				    WLAN_IF_MGR_EV_VALIDATE_CANDIDATE,
-				    &event_data);
-}
-
 QDF_STATUS cm_if_mgr_inform_connect_complete(struct wlan_objmgr_vdev *vdev,
 					     QDF_STATUS connect_status)
 {
@@ -1375,6 +1447,26 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 	}
 
 	prev_candidate = cm_req->connect_req.cur_candidate;
+	/*
+	 * In case of STA/CLI + STA/CLI, if a STA/CLI is in connecting state and
+	 * a disconnect is received on any other STA/CLI, the disconnect can
+	 * timeout waiting for the connection on first STA/CLI to get completed.
+	 * This is because the connect is a blocking serialization command and
+	 * it can try multiple candidates and thus can take upto 30+ sec to
+	 * complete.
+	 *
+	 * Now osif will proceed with vdev delete after disconnect timeout.
+	 * This can lead to vdev delete sent without vdev down/stop/peer delete
+	 * for the vdev.
+	 *
+	 * So abort the connection if any of the vdev is waiting for disconnect,
+	 * to avoid disconnect timeout.
+	 */
+	if (cm_is_any_other_vdev_disconnecting(cm_ctx, cm_req)) {
+		status = QDF_STATUS_E_FAILURE;
+		goto flush_single_pmk;
+	}
+
 	if (cm_req->connect_req.connect_attempts >=
 	    cm_ctx->max_connect_attempts) {
 		mlme_info(CM_PREFIX_FMT "%d attempts tried, max %d",
