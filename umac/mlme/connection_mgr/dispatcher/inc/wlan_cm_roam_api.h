@@ -27,6 +27,7 @@
 #include "../../core/src/wlan_cm_roam_offload.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
+#include "wlan_reg_ucfg_api.h"
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
@@ -752,12 +753,12 @@ wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
 /**
  * wlan_cm_get_roam_band_value  - Get roam band value from RSO config
  * @psoc: psoc pointer
- * @vdev_id: vdev id
+ * @vdev: Pointer to vdev
  *
  * Return: Roam Band
  */
 uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id);
+				     struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_cm_roam_extract_frame_info  - Extract the roam frame info TLV
@@ -1073,9 +1074,13 @@ void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 
 static inline
 uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id)
+				     struct wlan_objmgr_vdev *vdev)
 {
-	return REG_BAND_MASK_ALL;
+	uint32_t current_band;
+
+	ucfg_reg_get_band(wlan_vdev_get_pdev(vdev), &current_band);
+
+	return current_band;
 }
 
 static inline

@@ -33,6 +33,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_cm_api.h"
+#include "wlan_reg_ucfg_api.h"
 
 #define POLICY_MGR_MAX_CON_STRING_LEN   100
 
@@ -1643,7 +1644,7 @@ static uint32_t
 policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id)
 {
-	uint32_t band_mask = REG_BAND_MASK_ALL;
+	uint32_t band_mask;
 	struct wlan_objmgr_vdev *vdev;
 	bool dual_sta_roam_active;
 	struct wlan_channel *chan;
@@ -1657,19 +1658,22 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 	}
 
 	chan = wlan_vdev_get_active_channel(vdev);
+
+	ucfg_reg_get_band(wlan_vdev_get_pdev(vdev), &band_mask);
+	roam_band_mask = wlan_cm_get_roam_band_value(psoc, vdev);
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	if (!chan) {
 		policy_mgr_err("no active channel");
 		return 0;
 	}
 
-	roam_band_mask = wlan_cm_get_roam_band_value(psoc, vdev_id);
 	/*
 	 * if vendor command to configure roam band is set , we will
 	 * take this as priority instead of drv cmd "SETROAMINTRABAND" or
 	 * active connection band.
 	 */
-	if (roam_band_mask != REG_BAND_MASK_ALL)
+	if (roam_band_mask != band_mask)
 		return roam_band_mask;
 
 	/*
