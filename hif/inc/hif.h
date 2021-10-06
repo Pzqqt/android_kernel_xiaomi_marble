@@ -341,6 +341,8 @@ struct hif_opaque_softc {
  * @HIF_EVENT_BH_SCHED: NAPI POLL scheduled event
  * @HIF_EVENT_SRNG_ACCESS_START: hal ring access start event
  * @HIF_EVENT_SRNG_ACCESS_END: hal ring access end event
+ * @HIF_EVENT_BH_COMPLETE: NAPI POLL completion event
+ * @HIF_EVENT_BH_FORCE_BREAK: NAPI POLL force break event
  */
 enum hif_event_type {
 	HIF_EVENT_IRQ_TRIGGER,
@@ -349,6 +351,8 @@ enum hif_event_type {
 	HIF_EVENT_BH_SCHED,
 	HIF_EVENT_SRNG_ACCESS_START,
 	HIF_EVENT_SRNG_ACCESS_END,
+	HIF_EVENT_BH_COMPLETE,
+	HIF_EVENT_BH_FORCE_BREAK,
 	/* Do check hif_hist_skip_event_record when adding new events */
 };
 
@@ -375,7 +379,7 @@ enum hif_system_pm_state {
 /* HIF_EVENT_HIST_MAX should always be power of 2 */
 #define HIF_EVENT_HIST_MAX		512
 
-#define HIF_EVENT_HIST_ENABLE_MASK	0x3F
+#define HIF_EVENT_HIST_ENABLE_MASK	0xFF
 
 static inline uint64_t hif_get_log_timestamp(void)
 {

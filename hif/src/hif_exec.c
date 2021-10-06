@@ -119,6 +119,11 @@ hif_hist_skip_event_record(struct hif_event_history *hist_ev,
 		if (rec->type != HIF_EVENT_SRNG_ACCESS_START)
 			return true;
 		break;
+	case HIF_EVENT_BH_COMPLETE:
+	case HIF_EVENT_BH_FORCE_BREAK:
+		if (rec->type != HIF_EVENT_SRNG_ACCESS_END)
+			return true;
+		break;
 	default:
 		break;
 	}
@@ -623,6 +628,8 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	actual_dones = work_done;
 
 	if (!hif_ext_group->force_break && work_done < normalized_budget) {
+		hif_record_event(hif_ext_group->hif, hif_ext_group->grp_id,
+				 0, 0, 0, HIF_EVENT_BH_COMPLETE);
 		napi_complete(napi);
 		qdf_atomic_dec(&scn->active_grp_tasklet_cnt);
 		hif_ext_group->irq_enable(hif_ext_group);
@@ -630,6 +637,8 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	} else {
 		/* if the ext_group supports time based yield, claim full work
 		 * done anyways */
+		hif_record_event(hif_ext_group->hif, hif_ext_group->grp_id,
+				 0, 0, 0, HIF_EVENT_BH_FORCE_BREAK);
 		work_done = normalized_budget;
 	}
 
