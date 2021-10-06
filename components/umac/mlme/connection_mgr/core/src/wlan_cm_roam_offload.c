@@ -4567,6 +4567,7 @@ static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	enum QDF_OPMODE opmode;
+	uint32_t current_band;
 
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	if (opmode != QDF_STA_MODE) {
@@ -4594,7 +4595,8 @@ static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 					       DEFAULT_ROAM_SCAN_SCHEME_BITMAP);
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
 				   MOBILITY_DOMAIN, &src_cfg);
-	wlan_cm_set_roam_band_bitmask(psoc, vdev_id, REG_BAND_MASK_ALL);
+	ucfg_reg_get_band(pdev, &current_band);
+	wlan_cm_set_roam_band_bitmask(psoc, vdev_id, current_band);
 
 	mdie_present = src_cfg.bool_value;
 	/* Based on the auth scheme tell if we are 11r */

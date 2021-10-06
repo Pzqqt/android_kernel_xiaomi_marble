@@ -32,6 +32,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_blm_api.h"
 #include <../../core/src/wlan_cm_roam_i.h>
+#include "wlan_reg_ucfg_api.h"
 
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
@@ -365,12 +366,13 @@ wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
 }
 
 uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id)
+				     struct wlan_objmgr_vdev *vdev)
 {
 	struct cm_roam_values_copy config;
 	uint32_t band_mask;
 
-	wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_BAND, &config);
+	wlan_cm_roam_cfg_get_value(psoc, wlan_vdev_get_id(vdev), ROAM_BAND,
+				   &config);
 
 	band_mask = config.uint_value;
 	mlme_debug("[ROAM BAND] band mask:%d", band_mask);
@@ -1154,6 +1156,7 @@ cm_update_roam_scan_channel_list(struct wlan_objmgr_psoc *psoc,
 	uint16_t pref_chan_cnt = 0;
 	uint32_t valid_chan_num = 0;
 	struct cm_roam_values_copy config;
+	uint32_t current_band;
 
 	if (chan_info->num_chan) {
 		mlme_debug("Current channel num: %d", chan_info->num_chan);
@@ -1171,8 +1174,9 @@ cm_update_roam_scan_channel_list(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_BAND, &config);
+	ucfg_reg_get_band(wlan_vdev_get_pdev(vdev), &current_band);
 	/* No need to modify channel list if all channel is allowed */
-	if (config.uint_value != REG_BAND_MASK_ALL) {
+	if (config.uint_value != current_band) {
 		valid_chan_num =
 			cm_modify_chan_list_based_on_band(freq_list, num_chan,
 							  config.uint_value);
