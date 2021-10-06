@@ -16,7 +16,6 @@ union msm_v4l2_cmd {
 
 void *msm_vidc_open(void *core, u32 session_type);
 int msm_vidc_close(void *instance);
-int msm_vidc_suspend(int core_id);
 int msm_vidc_querycap(void *instance, struct v4l2_capability *cap);
 int msm_vidc_enum_fmt(void *instance, struct v4l2_fmtdesc *f);
 int msm_vidc_try_fmt(void *instance, struct v4l2_format *f);

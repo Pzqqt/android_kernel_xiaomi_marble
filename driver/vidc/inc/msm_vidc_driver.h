@@ -322,6 +322,7 @@ int msm_vidc_trigger_ssr(struct msm_vidc_core *core,
 void msm_vidc_ssr_handler(struct work_struct *work);
 void msm_vidc_pm_work_handler(struct work_struct *work);
 void msm_vidc_fw_unload_handler(struct work_struct *work);
+int msm_vidc_suspend(struct msm_vidc_core *core);
 void msm_vidc_batch_handler(struct work_struct *work);
 int msm_vidc_event_queue_init(struct msm_vidc_inst *inst);
 int msm_vidc_event_queue_deinit(struct msm_vidc_inst *inst);

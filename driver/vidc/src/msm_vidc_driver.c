@@ -4612,6 +4612,22 @@ void msm_vidc_fw_unload_handler(struct work_struct *work)
 
 }
 
+int msm_vidc_suspend(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_suspend(core);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
 void msm_vidc_batch_handler(struct work_struct *work)
 {
 	struct msm_vidc_inst *inst;

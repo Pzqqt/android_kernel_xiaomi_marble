@@ -470,12 +470,54 @@ static int msm_vidc_probe(struct platform_device *pdev)
 	return -EINVAL;
 }
 
+static int msm_vidc_pm_suspend(struct device *dev)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+
+	d_vpr_h("%s\n", __func__);
+	/*
+	 * Bail out if
+	 * - driver possibly not probed yet
+	 * - not the main device. We don't support power management on
+	 *   subdevices (e.g. context banks)
+	 */
+	if (!dev || !dev->driver ||
+		!of_device_is_compatible(dev->of_node, "qcom,msm-vidc"))
+		return 0;
+
+	core = dev_get_drvdata(dev);
+	if (!core) {
+		d_vpr_e("%s: invalid core\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_suspend(core);
+	if (rc == -ENOTSUPP)
+		rc = 0;
+	else if (rc)
+		d_vpr_e("Failed to suspend: %d\n", rc);
+
+	return rc;
+}
+
+static int msm_vidc_pm_resume(struct device *dev)
+{
+	d_vpr_h("%s\n", __func__);
+	return 0;
+}
+
+static const struct dev_pm_ops msm_vidc_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(msm_vidc_pm_suspend, msm_vidc_pm_resume)
+};
+
 struct platform_driver msm_vidc_driver = {
 	.probe = msm_vidc_probe,
 	.remove = msm_vidc_remove,
 	.driver = {
 		.name = "msm_vidc_v4l2",
 		.of_match_table = msm_vidc_dt_match,
+		.pm = &msm_vidc_pm_ops,
 	},
 };
 
