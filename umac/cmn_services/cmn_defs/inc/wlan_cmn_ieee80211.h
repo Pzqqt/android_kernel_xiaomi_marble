@@ -2192,7 +2192,6 @@ struct oce_reduced_wan_metrics {
 	uint8_t uplink_av_cap:4;
 };
 
-#define WLAN_VENDOR_WPA_IE_LEN 28
 /**
  * is_wpa_oui() - If vendor IE is WPA type
  * @frm: vendor IE pointer
