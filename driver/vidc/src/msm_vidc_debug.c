@@ -578,13 +578,24 @@ void msm_vidc_debugfs_update(void *instance,
 		break;
 	case MSM_VIDC_DEBUGFS_EVENT_EBD:
 		inst->debug_count.ebd++;
-		if (inst->debug_count.ebd &&
-			inst->debug_count.ebd == inst->debug_count.etb) {
+		/*
+		 * Host needs to ensure FW atleast have 2 buffers available always
+		 * one for HW processing and another for fw processing in parallel
+		 * to avoid FW starving for buffers
+		 */
+		if (inst->debug_count.etb < (inst->debug_count.ebd + 2)) {
 			toc(inst, FRAME_PROCESSING);
-			i_vpr_p(inst, "EBD: FW needs input buffers\n");
+			i_vpr_p(inst,
+				"EBD: FW needs input buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		}
-		if (inst->debug_count.ftb == inst->debug_count.fbd)
-			i_vpr_p(inst, "EBD: FW needs output buffers\n");
+		if (inst->debug_count.fbd &&
+			inst->debug_count.ftb < (inst->debug_count.fbd + 2))
+			i_vpr_p(inst,
+				"EBD: FW needs output buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		break;
 	case MSM_VIDC_DEBUGFS_EVENT_FTB:
 		inst->debug_count.ftb++;
@@ -597,13 +608,24 @@ void msm_vidc_debugfs_update(void *instance,
 	case MSM_VIDC_DEBUGFS_EVENT_FBD:
 		inst->debug_count.fbd++;
 		inst->debug.samples++;
-		if (inst->debug_count.fbd &&
-			inst->debug_count.fbd == inst->debug_count.ftb) {
+		/*
+		 * Host needs to ensure FW atleast have 2 buffers available always
+		 * one for HW processing and another for fw processing in parallel
+		 * to avoid FW starving for buffers
+		 */
+		if (inst->debug_count.ftb < (inst->debug_count.fbd + 2)) {
 			toc(inst, FRAME_PROCESSING);
-			i_vpr_p(inst, "FBD: FW needs output buffers\n");
+			i_vpr_p(inst,
+				"FBD: FW needs output buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		}
-		if (inst->debug_count.etb == inst->debug_count.ebd)
-			i_vpr_p(inst, "FBD: FW needs input buffers\n");
+		if (inst->debug_count.ebd &&
+			inst->debug_count.etb < (inst->debug_count.ebd + 2))
+			i_vpr_p(inst,
+				"FBD: FW needs input buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		break;
 	default:
 		i_vpr_e(inst, "invalid event in debugfs: %d\n", e);
