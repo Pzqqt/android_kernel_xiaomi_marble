@@ -372,23 +372,32 @@ void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm
 		struct msm_vidc_buffer *vbuf)
 {
 	struct dma_buf *dbuf;
+	struct inode *f_inode;
+	unsigned long inode_num = 0;
+	long ref_count = -1;
 
 	if (!inst || !vbuf || !tag_str || !str)
 		return;
 
 	dbuf = (struct dma_buf *)vbuf->dmabuf;
+	if (dbuf && dbuf->file) {
+		f_inode = file_inode(dbuf->file);
+		if (f_inode) {
+			inode_num = f_inode->i_ino;
+			ref_count = file_count(dbuf->file);
+		}
+	}
 
 	dprintk_inst(tag, tag_str, inst,
 		"%s: %s: idx %2d fd %3d off %d daddr %#llx inode %8lu ref %2ld size %8d filled %8d flags %#x ts %8lld attr %#x counts(etb ebd ftb fbd) %4llu %4llu %4llu %4llu\n",
 		str, buf_name(vbuf->type),
 		vbuf->index, vbuf->fd, vbuf->data_offset,
-		vbuf->device_addr, (dbuf ? file_inode(dbuf->file)->i_ino : -1),
-		(dbuf ? file_count(dbuf->file) : -1), vbuf->buffer_size, vbuf->data_size,
+		vbuf->device_addr, inode_num, ref_count, vbuf->buffer_size, vbuf->data_size,
 		vbuf->flags, vbuf->timestamp, vbuf->attr, inst->debug_count.etb,
 		inst->debug_count.ebd, inst->debug_count.ftb, inst->debug_count.fbd);
 
 	trace_msm_v4l2_vidc_buffer_event_log(inst, str, buf_name(vbuf->type), vbuf,
-		(dbuf ? file_inode(dbuf->file)->i_ino : -1), (dbuf ? file_count(dbuf->file) : -1));
+		inode_num, ref_count);
 
 
 }
@@ -4390,6 +4399,9 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 	bool is_secure, is_decode;
 	u32 bit_depth, bit_rate, frame_rate, width, height;
 	struct dma_buf *dbuf;
+	struct inode *f_inode;
+	unsigned long inode_num = 0;
+	long ref_count = -1;
 	int i = 0;
 
 	if (!inst || !inst->capabilities) {
@@ -4426,12 +4438,18 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 			if (!buf->dmabuf)
 				continue;
 			dbuf = (struct dma_buf *)buf->dmabuf;
+			if (dbuf && dbuf->file) {
+				f_inode = file_inode(dbuf->file);
+				if (f_inode) {
+					inode_num = f_inode->i_ino;
+					ref_count = file_count(dbuf->file);
+				}
+			}
 			i_vpr_e(inst,
-				"buf: type: %11s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, iova: %8x, inode: %9ld, flags: %8x, ts: %16lld, attr: %8x\n",
+				"buf: type: %11s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, daddr: %#llx, inode: %8lu, ref: %2ld, flags: %8x, ts: %16lld, attr: %8x\n",
 				buf_type_name_arr[i].name, buf->index, buf->fd, buf->buffer_size,
 				buf->data_offset, buf->data_size, buf->device_addr,
-				file_inode(dbuf->file)->i_ino,
-				buf->flags, buf->timestamp, buf->attr);
+				inode_num, ref_count, buf->flags, buf->timestamp, buf->attr);
 		}
 	}
 
