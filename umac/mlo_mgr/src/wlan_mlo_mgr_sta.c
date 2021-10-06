@@ -217,7 +217,7 @@ static void
 mlo_cm_handle_connect_in_connection_state(struct wlan_objmgr_vdev *vdev,
 					  struct wlan_cm_connect_req *req)
 {
-	mlo_disconnect_no_lock(vdev, CM_SB_DISCONNECT,
+	mlo_disconnect_no_lock(vdev, CM_OSIF_CFG_DISCONNECT,
 			       REASON_UNSPEC_FAILURE, NULL);
 	mlo_cm_handle_connect_in_disconnection_state(vdev, req);
 }
