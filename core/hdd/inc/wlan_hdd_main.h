@@ -2125,6 +2125,7 @@ struct hdd_context {
 #endif
 	uint8_t bt_a2dp_active:1;
 	uint8_t bt_vo_active:1;
+	uint8_t bt_profile_con:1;
 	enum band_info curr_band;
 	bool imps_enabled;
 #ifdef WLAN_FEATURE_PACKET_FILTERING

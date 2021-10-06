@@ -15224,6 +15224,10 @@ void hdd_bt_activity_cb(hdd_handle_t hdd_handle, uint32_t bt_activity)
 		hdd_ctx->bt_vo_active = 1;
 	else if (bt_activity == WLAN_COEX_EVENT_BT_VOICE_PROFILE_REMOVE)
 		hdd_ctx->bt_vo_active = 0;
+	else if (bt_activity == WLAN_COEX_EVENT_BT_PROFILE_CONNECTED)
+		hdd_ctx->bt_profile_con = 1;
+	else if (bt_activity == WLAN_COEX_EVENT_BT_PROFILE_DISCONNECTED)
+		hdd_ctx->bt_profile_con = 0;
 	else
 		return;
 

@@ -1174,7 +1174,7 @@ void wlan_hdd_connectivity_event_connecting(struct hdd_context *hdd_ctx,
 	record->conn_info.group = req->crypto.cipher_group;
 	record->conn_info.akm = req->crypto.akm_suites[0];
 	record->conn_info.auth_type = req->auth_type;
-	if (hdd_ctx->bt_a2dp_active || hdd_ctx->bt_vo_active)
+	if (hdd_ctx->bt_profile_con)
 		record->conn_info.is_bt_coex_active = true;
 
 	wlan_connectivity_log_enqueue(record);
