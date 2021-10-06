@@ -404,7 +404,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 			LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
-	{LOSSLESS, ENC, HEVC|HEIC,
+	{LOSSLESS, ENC, HEVC,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDEO_HEVC_LOSSLESS_CU},
