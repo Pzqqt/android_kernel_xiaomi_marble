@@ -6,7 +6,7 @@
 #include "dsi_phy_timing_calc.h"
 
 static const u32 bits_per_pixel[DSI_PIXEL_FORMAT_MAX] = {
-	16, 18, 18, 24, 3, 8, 12 };
+	16, 18, 18, 24, 3, 8, 12, 30 };
 
 static int dsi_phy_cmn_validate_and_set(struct timing_entry *t,
 	char const *t_name)
