@@ -2593,6 +2593,11 @@ PREPACK struct htt_tx_wbm_completion_v2 {
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S)); \
      } while (0)
 
+typedef enum {
+    TX_FRAME_TYPE_UNDEFINED = 0,
+    TX_FRAME_TYPE_EAPOL     = 1,
+} htt_tx_wbm_status_frame_type;
+
 /**
  * @brief HTT TX WBM transmit status from firmware to host
  * @details
@@ -2626,7 +2631,8 @@ PREPACK struct htt_tx_wbm_transmit_status {
        mcast_valid:      1,  /* If this "mcast_valid" is set, the mcast field
                               * contains valid data.
                               */
-       reserved0:        8;
+       frame_type:       4,  /* holds htt_tx_wbm_status_frame_type value */
+       reserved:         4;
    A_UINT32
        ppdu_start_tsf:  32;  /* PPDU Start timestamp added for multicast
                               * packets in the wbm completion path
