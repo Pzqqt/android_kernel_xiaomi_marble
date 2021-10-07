@@ -250,6 +250,11 @@ struct ie_list {
 #ifdef WLAN_FEATURE_11BE_MLO
 	uint8_t *multi_link;
 #endif
+
+/**
+ * For any new IEs in this structre, add handling in
+ * util_scan_copy_beacon_data API.
+ */
 };
 
 enum scan_entry_connection_state {
