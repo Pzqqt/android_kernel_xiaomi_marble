@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3893,11 +3894,11 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 
 	hdd_debug("iface_name = %s", iface_name);
 
-	dev = alloc_netdev_mq(sizeof(struct hdd_adapter), iface_name,
+	dev = alloc_netdev_mqs(sizeof(struct hdd_adapter), iface_name,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
-					  name_assign_type,
+			       name_assign_type,
 #endif
-					  ether_setup, NUM_TX_QUEUES);
+			       ether_setup, NUM_TX_QUEUES, NUM_RX_QUEUES);
 
 	if (!dev)
 		return NULL;

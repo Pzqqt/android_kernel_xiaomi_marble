@@ -158,14 +158,25 @@ struct hdd_apf_context {
 };
 #endif /* FEATURE_WLAN_APF */
 
+#ifdef TX_MULTIQ_PER_AC
+#define TX_GET_QUEUE_IDX(ac, off) (((ac) * TX_QUEUES_PER_AC) + (off))
+#define TX_QUEUES_PER_AC 4
+#else
+#define TX_GET_QUEUE_IDX(ac, off) (ac)
+#define TX_QUEUES_PER_AC 1
+#endif
+
 /** Number of Tx Queues */
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2) || \
 	defined(QCA_HL_NETDEV_FLOW_CONTROL) || \
 	defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
-#define NUM_TX_QUEUES 5
+/* Only one HI_PRIO queue */
+#define NUM_TX_QUEUES (4 * TX_QUEUES_PER_AC + 1)
 #else
-#define NUM_TX_QUEUES 4
+#define NUM_TX_QUEUES (4 * TX_QUEUES_PER_AC)
 #endif
+
+#define NUM_RX_QUEUES 5
 
 /*
  * Number of DPTRACE records to dump when a cfg80211 disconnect with reason
@@ -579,7 +590,16 @@ struct hdd_tx_rx_stats {
 		__u32    tx_orphaned;
 		__u32    tx_classified_ac[WLAN_MAX_AC];
 		__u32    tx_dropped_ac[WLAN_MAX_AC];
-
+#ifdef TX_MULTIQ_PER_AC
+		/* Neither valid socket nor skb->hash */
+		uint32_t inv_sk_and_skb_hash;
+		/* skb->hash already calculated */
+		uint32_t qselect_existing_skb_hash;
+		/* valid tx queue id in socket */
+		uint32_t qselect_sk_tx_map;
+		/* skb->hash calculated in select queue */
+		uint32_t qselect_skb_hash_calc;
+#endif
 		/* rx stats */
 		__u32 rx_packets;
 		__u32 rx_dropped;

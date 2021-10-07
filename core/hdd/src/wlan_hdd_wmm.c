@@ -141,13 +141,21 @@ config_tspec_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX + 1] = {
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter)
 {
-	/* Enable HI_PRIO queue */
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VO);
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VI);
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BE);
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BK);
-	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_HI_PRIO);
+	uint8_t i;
 
+	netif_wake_subqueue(adapter->dev,
+			    HDD_LINUX_AC_HI_PRIO * TX_QUEUES_PER_AC);
+
+	for (i = 0; i < TX_QUEUES_PER_AC; i++) {
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_VO, i));
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_VI, i));
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_BE, i));
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_BK, i));
+	}
 }
 #else
 void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter)
@@ -1928,6 +1936,69 @@ void hdd_wmm_classify_pkt(struct hdd_adapter *adapter,
 #endif /* HDD_WMM_DEBUG */
 }
 
+#ifdef TX_MULTIQ_PER_AC
+/**
+ * hdd_get_tx_queue_for_ac() - Get the netdev tx queue index
+ *  based on access category
+ * @adapter: adapter upon which the packet is being transmitted
+ * @skb: pointer to network buffer
+ * @ac: access category
+ *
+ * Return: tx queue index
+ */
+static
+uint16_t hdd_get_tx_queue_for_ac(struct hdd_adapter *adapter,
+				 struct sk_buff *skb, uint16_t ac)
+{
+	struct sock *sk = skb->sk;
+	int new_index;
+	int cpu = smp_processor_id();
+	struct hdd_tx_rx_stats *stats = &adapter->hdd_stats.tx_rx_stats;
+
+	if (qdf_unlikely(ac == HDD_LINUX_AC_HI_PRIO))
+		return TX_GET_QUEUE_IDX(HDD_LINUX_AC_HI_PRIO, 0);
+
+	if (!sk) {
+		/*
+		 * Neither valid socket nor skb_hash so default to the
+		 * first queue for the access category.
+		 */
+		if (qdf_unlikely(!skb->sw_hash && !skb->l4_hash)) {
+			++stats->per_cpu[cpu].inv_sk_and_skb_hash;
+
+			return TX_GET_QUEUE_IDX(ac, 0);
+		}
+		++stats->per_cpu[cpu].qselect_existing_skb_hash;
+
+		return TX_GET_QUEUE_IDX(ac,
+					reciprocal_scale(skb->hash,
+							 TX_QUEUES_PER_AC));
+	}
+
+	if (sk->sk_tx_queue_mapping != NO_QUEUE_MAPPING &&
+	    sk->sk_tx_queue_mapping < NUM_TX_QUEUES) {
+		++stats->per_cpu[cpu].qselect_sk_tx_map;
+		return sk->sk_tx_queue_mapping;
+	}
+
+	++stats->per_cpu[cpu].qselect_skb_hash_calc;
+	new_index = TX_GET_QUEUE_IDX(ac,
+				     reciprocal_scale(skb_get_hash(skb),
+						      TX_QUEUES_PER_AC));
+
+	if (sk_fullsock(sk) && rcu_access_pointer(sk->sk_dst_cache))
+		sk_tx_queue_set(sk, new_index);
+
+	return new_index;
+}
+#else
+static inline
+uint16_t hdd_get_tx_queue_for_ac(struct hdd_adapter *adapter,
+				 struct sk_buff *skb, uint16_t ac) {
+	return ac;
+}
+#endif
+
 /**
  * __hdd_get_queue_index() - get queue index
  * @up: user priority
@@ -1989,33 +2060,30 @@ static uint16_t hdd_wmm_select_queue(struct net_device *dev,
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status != 0) {
 		skb->priority = SME_QOS_WMM_UP_BE;
-		return HDD_LINUX_AC_BE;
+		return TX_GET_QUEUE_IDX(HDD_LINUX_AC_BE, 0);
 	}
 
 	/* Get the user priority from IP header */
 	hdd_wmm_classify_pkt(adapter, skb, &up, &is_crtical);
-	spin_lock_bh(&adapter->pause_map_lock);
-	if ((adapter->pause_map & (1 <<  WLAN_DATA_FLOW_CONTROL)) &&
-	   !(adapter->pause_map & (1 <<  WLAN_DATA_FLOW_CONTROL_PRIORITY))) {
-		if (qdf_nbuf_is_ipv4_arp_pkt(skb))
+
+	if (qdf_nbuf_is_ipv4_arp_pkt(skb)) {
+		is_crtical = true;
+	} else if (qdf_nbuf_is_icmpv6_pkt(skb)) {
+		proto_subtype = qdf_nbuf_get_icmpv6_subtype(skb);
+		switch (proto_subtype) {
+		case QDF_PROTO_ICMPV6_NA:
+		case QDF_PROTO_ICMPV6_NS:
 			is_crtical = true;
-		else if (qdf_nbuf_is_icmpv6_pkt(skb)) {
-			proto_subtype = qdf_nbuf_get_icmpv6_subtype(skb);
-			switch (proto_subtype) {
-			case QDF_PROTO_ICMPV6_NA:
-			case QDF_PROTO_ICMPV6_NS:
-				is_crtical = true;
-				break;
-			default:
-				break;
-			}
+			break;
+		default:
+			break;
 		}
 	}
-	spin_unlock_bh(&adapter->pause_map_lock);
+
 	skb->priority = up;
 	index = hdd_get_queue_index(skb->priority, is_crtical);
 
-	return index;
+	return hdd_get_tx_queue_for_ac(adapter, skb, index);
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))

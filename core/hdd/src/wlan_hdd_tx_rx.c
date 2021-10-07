@@ -75,6 +75,57 @@
 #include "wlan_hdd_object_manager.h"
 #include "wlan_hdd_mlo.h"
 
+#ifdef TX_MULTIQ_PER_AC
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
+/*
+ * Mapping Linux AC interpretation to SME AC.
+ * Host has 4 queues per access category (4 AC) and 1 high priority queue.
+ * 16 flow-controlled queues for regular traffic and one non-flow
+ * controlled queue for high priority control traffic(EOPOL, DHCP).
+ * The seventeenth queue is mapped to AC_VO to allow for proper prioritization.
+ */
+const uint8_t hdd_qdisc_ac_to_tl_ac[] = {
+	SME_AC_VO,
+	SME_AC_VO,
+	SME_AC_VO,
+	SME_AC_VO,
+	SME_AC_VI,
+	SME_AC_VI,
+	SME_AC_VI,
+	SME_AC_VI,
+	SME_AC_BE,
+	SME_AC_BE,
+	SME_AC_BE,
+	SME_AC_BE,
+	SME_AC_BK,
+	SME_AC_BK,
+	SME_AC_BK,
+	SME_AC_BK,
+	SME_AC_VO,
+};
+
+#else
+const uint8_t hdd_qdisc_ac_to_tl_ac[] = {
+	SME_AC_VO,
+	SME_AC_VO,
+	SME_AC_VO,
+	SME_AC_VO,
+	SME_AC_VI,
+	SME_AC_VI,
+	SME_AC_VI,
+	SME_AC_VI,
+	SME_AC_BE,
+	SME_AC_BE,
+	SME_AC_BE,
+	SME_AC_BE,
+	SME_AC_BK,
+	SME_AC_BK,
+	SME_AC_BK,
+	SME_AC_BK,
+};
+
+#endif
+#else
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /*
  * Mapping Linux AC interpretation to SME AC.
@@ -98,6 +149,7 @@ const uint8_t hdd_qdisc_ac_to_tl_ac[] = {
 	SME_AC_BK,
 };
 
+#endif
 #endif
 
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
@@ -2943,10 +2995,18 @@ wlan_hdd_update_queue_history_state(struct net_device *dev,
  */
 static inline void wlan_hdd_stop_non_priority_queue(struct hdd_adapter *adapter)
 {
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VO);
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VI);
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BE);
-	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BK);
+	uint8_t i;
+
+	for (i = 0; i < TX_QUEUES_PER_AC; i++) {
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_VO, i));
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_VI, i));
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_BE, i));
+		netif_stop_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_BK, i));
+	}
 }
 
 /**
@@ -2957,10 +3017,36 @@ static inline void wlan_hdd_stop_non_priority_queue(struct hdd_adapter *adapter)
  */
 static inline void wlan_hdd_wake_non_priority_queue(struct hdd_adapter *adapter)
 {
-	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_VO);
-	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_VI);
-	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_BE);
-	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_BK);
+	uint8_t i;
+
+	for (i = 0; i < TX_QUEUES_PER_AC; i++) {
+		netif_wake_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_VO, i));
+		netif_wake_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_VI, i));
+		netif_wake_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_BE, i));
+		netif_wake_subqueue(adapter->dev,
+				    TX_GET_QUEUE_IDX(HDD_LINUX_AC_BK, i));
+	}
+}
+
+static inline
+void hdd_wake_queues_for_ac(struct net_device *dev, enum hdd_wmm_linuxac ac)
+{
+	uint8_t i;
+
+	for (i = 0; i < TX_QUEUES_PER_AC; i++)
+		netif_wake_subqueue(dev, TX_GET_QUEUE_IDX(ac, i));
+}
+
+static inline
+void hdd_stop_queues_for_ac(struct net_device *dev, enum hdd_wmm_linuxac ac)
+{
+	uint8_t i;
+
+	for (i = 0; i < TX_QUEUES_PER_AC; i++)
+		netif_stop_subqueue(dev, TX_GET_QUEUE_IDX(ac, i));
 }
 
 /**
@@ -3027,14 +3113,16 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		spin_lock_bh(&adapter->pause_map_lock);
 		temp_map = adapter->pause_map;
 		adapter->pause_map &= ~(1 << reason);
-		netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_HI_PRIO);
+		netif_wake_subqueue(adapter->dev,
+				    HDD_LINUX_AC_HI_PRIO * TX_QUEUES_PER_AC);
 		wlan_hdd_update_pause_time(adapter, temp_map);
 		spin_unlock_bh(&adapter->pause_map_lock);
 		break;
 
 	case WLAN_NETIF_PRIORITY_QUEUE_OFF:
 		spin_lock_bh(&adapter->pause_map_lock);
-		netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_HI_PRIO);
+		netif_stop_subqueue(adapter->dev,
+				    HDD_LINUX_AC_HI_PRIO * TX_QUEUES_PER_AC);
 		wlan_hdd_update_txq_timestamp(adapter->dev);
 		wlan_hdd_update_unpause_time(adapter);
 		adapter->pause_map |= (1 << reason);
@@ -3043,8 +3131,8 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 
 	case WLAN_NETIF_BE_BK_QUEUE_OFF:
 		spin_lock_bh(&adapter->pause_map_lock);
-		netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BK);
-		netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BE);
+		hdd_stop_queues_for_ac(adapter->dev, HDD_LINUX_AC_BK);
+		hdd_stop_queues_for_ac(adapter->dev, HDD_LINUX_AC_BE);
 		wlan_hdd_update_txq_timestamp(adapter->dev);
 		wlan_hdd_update_unpause_time(adapter);
 		adapter->pause_map |= (1 << reason);
@@ -3053,7 +3141,7 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 
 	case WLAN_NETIF_VI_QUEUE_OFF:
 		spin_lock_bh(&adapter->pause_map_lock);
-		netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VI);
+		hdd_stop_queues_for_ac(adapter->dev, HDD_LINUX_AC_VI);
 		wlan_hdd_update_txq_timestamp(adapter->dev);
 		wlan_hdd_update_unpause_time(adapter);
 		adapter->pause_map |= (1 << reason);
@@ -3064,14 +3152,14 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		spin_lock_bh(&adapter->pause_map_lock);
 		temp_map = adapter->pause_map;
 		adapter->pause_map &= ~(1 << reason);
-		netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_VI);
+		hdd_wake_queues_for_ac(adapter->dev, HDD_LINUX_AC_VI);
 		wlan_hdd_update_pause_time(adapter, temp_map);
 		spin_unlock_bh(&adapter->pause_map_lock);
 		break;
 
 	case WLAN_NETIF_VO_QUEUE_OFF:
 		spin_lock_bh(&adapter->pause_map_lock);
-		netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VO);
+		hdd_stop_queues_for_ac(adapter->dev, HDD_LINUX_AC_VO);
 		wlan_hdd_update_txq_timestamp(adapter->dev);
 		wlan_hdd_update_unpause_time(adapter);
 		adapter->pause_map |= (1 << reason);
@@ -3082,7 +3170,7 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		spin_lock_bh(&adapter->pause_map_lock);
 		temp_map = adapter->pause_map;
 		adapter->pause_map &= ~(1 << reason);
-		netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_VO);
+		hdd_wake_queues_for_ac(adapter->dev, HDD_LINUX_AC_VO);
 		wlan_hdd_update_pause_time(adapter, temp_map);
 		spin_unlock_bh(&adapter->pause_map_lock);
 		break;
@@ -3264,7 +3352,7 @@ void hdd_send_rps_ind(struct hdd_adapter *adapter)
 	}
 
 	hdd_ctxt = WLAN_HDD_GET_CTX(adapter);
-	rps_data.num_queues = NUM_TX_QUEUES;
+	rps_data.num_queues = NUM_RX_QUEUES;
 
 	hdd_debug("cpu_map_list '%s'", hdd_ctxt->config->cpu_map_list);
 
@@ -3332,7 +3420,7 @@ void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
 	}
 
 	hdd_ctxt = WLAN_HDD_GET_CTX(adapter);
-	rps_data.num_queues = NUM_TX_QUEUES;
+	rps_data.num_queues = NUM_RX_QUEUES;
 
 	hdd_info("Set cpu_map_list 0");
 

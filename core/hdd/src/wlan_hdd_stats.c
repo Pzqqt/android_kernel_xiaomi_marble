@@ -6708,6 +6708,37 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 	return 0;
 }
 
+#ifdef TX_MULTIQ_PER_AC
+static inline
+void wlan_hdd_display_tx_multiq_stats(struct hdd_tx_rx_stats *stats)
+{
+	uint32_t total_inv_sk_and_skb_hash = 0;
+	uint32_t total_qselect_existing_skb_hash = 0;
+	uint32_t total_qselect_sk_tx_map = 0;
+	uint32_t total_qselect_skb_hash = 0;
+	uint8_t i;
+
+	for (i = 0; i < NUM_CPUS; i++) {
+		total_inv_sk_and_skb_hash +=
+					  stats->per_cpu[i].inv_sk_and_skb_hash;
+		total_qselect_existing_skb_hash +=
+				    stats->per_cpu[i].qselect_existing_skb_hash;
+		total_qselect_sk_tx_map += stats->per_cpu[i].qselect_sk_tx_map;
+		total_qselect_skb_hash +=
+					stats->per_cpu[i].qselect_skb_hash_calc;
+	}
+
+	hdd_debug("TX_MULTIQ: INV %u skb_hash %u sk_tx_map %u skb_hash_calc %u",
+		  total_inv_sk_and_skb_hash, total_qselect_existing_skb_hash,
+		  total_qselect_sk_tx_map, total_qselect_skb_hash);
+}
+#else
+static inline
+void wlan_hdd_display_tx_multiq_stats(struct hdd_tx_rx_stats *stats)
+{
+}
+#endif
+
 void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 {
 	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
@@ -6731,7 +6762,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 		total_tx_orphaned = 0;
 		stats = &adapter->hdd_stats.tx_rx_stats;
 
-		if (adapter->vdev_id == INVAL_VDEV_ID) {
+		if (adapter->vdev_id == WLAN_INVALID_VDEV_ID) {
 			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
@@ -6763,6 +6794,8 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 		hdd_debug("TX - called %u, dropped %u orphan %u",
 			  total_tx_pkt, total_tx_dropped,
 			  total_tx_orphaned);
+
+		wlan_hdd_display_tx_multiq_stats(stats);
 
 		for (i = 0; i < NUM_CPUS; i++) {
 			if (stats->per_cpu[i].rx_packets == 0)
