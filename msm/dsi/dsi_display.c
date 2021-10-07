@@ -5419,6 +5419,7 @@ static int dsi_display_get_io_resources(struct msm_io_res *io_res, void *data)
 static int dsi_display_pre_release(void *data)
 {
 	struct dsi_display *display;
+	int i;
 
 	if (!data)
 		return -EINVAL;
@@ -5427,6 +5428,17 @@ static int dsi_display_pre_release(void *data)
 	mutex_lock(&display->display_lock);
 	display->hw_ownership = false;
 	mutex_unlock(&display->display_lock);
+
+	/* flush work queues */
+	display_for_each_ctrl(i, display) {
+		struct dsi_display_ctrl *ctrl = &display->ctrl[i];
+
+		if (!ctrl->ctrl || !(ctrl->ctrl->post_tx_queued))
+			continue;
+		flush_workqueue(display->post_cmd_tx_workq);
+		cancel_work_sync(&ctrl->ctrl->post_cmd_tx_work);
+		ctrl->ctrl->post_tx_queued = false;
+	}
 
 	dsi_display_ctrl_irq_update(display, false);
 
