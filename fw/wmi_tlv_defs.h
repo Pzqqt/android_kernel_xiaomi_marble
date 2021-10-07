@@ -1205,6 +1205,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_icmp_offload_fixed_param,
     WMITLV_TAG_STRUC_WMI_IPV6_ADDR,
     WMITLV_TAG_STRUC_wmi_dbs_or_sbs_cap_ext,
+    WMITLV_TAG_STRUC_wmi_roam_set_param_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1682,6 +1683,7 @@ typedef enum {
     OP(WMI_PDEV_SET_BIOS_INTERFACE_CMDID) \
     OP(WMI_VDEV_SET_MU_SNIF_CMDID) \
     OP(WMI_VDEV_ICMP_OFFLOAD_CMDID) \
+    OP(WMI_ROAM_SET_PARAM_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4823,6 +4825,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_MU_SNIF_CMDID);
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_icmp_offload_fixed_param, wmi_icmp_offload_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_FIXED_STRUC, WMI_IPV6_ADDR, ipv6_addr, WMITLV_SIZE_VAR)
  WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ICMP_OFFLOAD_CMDID);
+
+/* Roam set param Cmd */
+#define WMITLV_TABLE_WMI_ROAM_SET_PARAM_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_set_param_cmd_fixed_param, wmi_roam_set_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SET_PARAM_CMDID);
 
 
 
