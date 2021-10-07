@@ -1264,6 +1264,7 @@ ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 	CONFIG_WMI_SEND_RECV_QMI := y
 	CONFIG_WLAN_DP_PENDING_MEM_FLUSH := y
 	CONFIG_WLAN_SKIP_BAR_UPDATE := y
+	CONFIG_TX_MULTIQ_PER_AC := y
 endif
 
 #Flag to enable hdd memory dump feature
