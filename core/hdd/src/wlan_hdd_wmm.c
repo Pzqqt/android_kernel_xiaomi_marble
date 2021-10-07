@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -382,6 +383,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	QDF_STATUS qdf_status;
 	uint32_t traffic_count = 0;
 	sme_ac_enum_type ac_type;
+	uint8_t cpu;
 
 	if (!qos_context) {
 		hdd_err("invalid user data");
@@ -399,9 +401,9 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	ac = &adapter->hdd_wmm_status.ac_status[ac_type];
 
 	/* Get the Tx stats for this AC. */
-	traffic_count =
-		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
-								    ac_type];
+	for (cpu = 0; cpu < NUM_CPUS; cpu++)
+		traffic_count += adapter->hdd_stats.tx_rx_stats.per_cpu[cpu].
+					 tx_classified_ac[qos_context->ac_type];
 
 	hdd_warn("WMM inactivity check for AC=%d, count=%u, last=%u",
 		 ac_type, traffic_count, ac->last_traffic_count);
@@ -450,6 +452,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 	struct hdd_adapter *adapter = qos_context->adapter;
 	sme_ac_enum_type ac_type = qos_context->ac_type;
 	struct hdd_wmm_ac_status *ac;
+	uint8_t cpu;
 
 	adapter = qos_context->adapter;
 	ac = &adapter->hdd_wmm_status.ac_status[ac_type];
@@ -476,10 +479,13 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 		return qdf_status;
 	}
 	ac->inactivity_time = inactivity_time;
+
+	ac->last_traffic_count = 0;
 	/* Initialize the current tx traffic count on this AC */
-	ac->last_traffic_count =
-		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
-								    ac_type];
+	for (cpu = 0; cpu < NUM_CPUS; cpu++)
+		ac->last_traffic_count +=
+			adapter->hdd_stats.tx_rx_stats.per_cpu[cpu].
+					 tx_classified_ac[qos_context->ac_type];
 	qos_context->is_inactivity_timer_running = true;
 	return qdf_status;
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -170,6 +171,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int need_orphan = 0;
+	int cpu;
 
 	if (adapter->tx_flow_low_watermark > 0) {
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 19, 0))
@@ -199,7 +201,8 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 
 	if (need_orphan) {
 		skb_orphan(skb);
-		++adapter->hdd_stats.tx_rx_stats.tx_orphaned;
+		cpu = qdf_get_smp_processor_id();
+		++adapter->hdd_stats.tx_rx_stats.per_cpu[cpu].tx_orphaned;
 	} else
 		skb = skb_unshare(skb, GFP_ATOMIC);
 
@@ -221,6 +224,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 19, 0))
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 #endif
+	int cpu;
 
 	hdd_skb_fill_gso_size(adapter->dev, skb);
 
@@ -232,7 +236,8 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 		 * to send more packets. The flow would ultimately be controlled
 		 * by the limited number of tx descriptors for the vdev.
 		 */
-		++adapter->hdd_stats.tx_rx_stats.tx_orphaned;
+		cpu = qdf_get_smp_processor_id();
+		++adapter->hdd_stats.tx_rx_stats.per_cpu[cpu].tx_orphaned;
 		skb_orphan(skb);
 	}
 #endif
@@ -573,9 +578,11 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint32_t num_seg;
 	struct hdd_station_info *sta_info = NULL;
+	struct hdd_tx_rx_stats *stats = &adapter->hdd_stats.tx_rx_stats;
+	int cpu = qdf_get_smp_processor_id();
 
-	++adapter->hdd_stats.tx_rx_stats.tx_called;
-	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
+	++stats->per_cpu[cpu].tx_called;
+	stats->cont_txtimeout_cnt = 0;
 
 	/* Prevent this function from being called during SSR since TL
 	 * context may not be reinitialized at this time which may
@@ -685,7 +692,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 
 	/* Get TL AC corresponding to Qdisc queue index/AC. */
 	ac = hdd_qdisc_ac_to_tl_ac[skb->queue_mapping];
-	++adapter->hdd_stats.tx_rx_stats.tx_classified_ac[ac];
+	++stats->per_cpu[cpu].tx_classified_ac[ac];
 
 #if defined(IPA_OFFLOAD)
 	if (!qdf_nbuf_ipa_owned_get(skb)) {
@@ -747,7 +754,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD_DATA,
 				   "%s: skb %pK linearize failed. drop the pkt",
 				   __func__, skb);
-		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
+		++stats->per_cpu[cpu].tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
 
@@ -756,7 +763,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 				   "%s: Failed to send packet to txrx for sta: "
 				   QDF_MAC_ADDR_FMT, __func__,
 				   QDF_MAC_ADDR_REF(dest_mac_addr->bytes));
-		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
+		++stats->per_cpu[cpu].tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
 	netif_trans_update(dev);
@@ -780,7 +787,7 @@ drop_pkt_accounting:
 		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true,
 				     STA_INFO_SOFTAP_HARD_START_XMIT);
 	++adapter->stats.tx_dropped;
-	++adapter->hdd_stats.tx_rx_stats.tx_dropped;
+	++stats->per_cpu[cpu].tx_dropped;
 }
 
 netdev_tx_t hdd_softap_hard_start_xmit(struct sk_buff *skb,
@@ -1100,6 +1107,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 	struct qdf_mac_addr *src_mac;
 	struct hdd_station_info *sta_info;
 	bool is_eapol = false;
+	struct hdd_tx_rx_stats *stats;
 
 	/* Sanity check on inputs */
 	if (unlikely((!adapter_context) || (!rx_buf))) {
@@ -1123,6 +1131,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	stats = &adapter->hdd_stats.tx_rx_stats;
 	/* walk the chain until all are processed */
 	next = (struct sk_buff *)rx_buf;
 
@@ -1143,7 +1152,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 			continue;
 		}
 		cpu_index = wlan_hdd_get_cpu();
-		++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
+		++stats->per_cpu[cpu_index].rx_packets;
 		++adapter->stats.rx_packets;
 		/* count aggregated RX frame into stats */
 		adapter->stats.rx_packets += qdf_nbuf_get_gso_segs(skb);
@@ -1224,9 +1233,9 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		}
 
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
-			++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
+			++stats->per_cpu[cpu_index].rx_delivered;
 		else
-			++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
+			++stats->per_cpu[cpu_index].rx_refused;
 	}
 
 	return QDF_STATUS_SUCCESS;

@@ -10273,7 +10273,9 @@ void hdd_send_mscs_action_frame(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter)
 {
 	uint64_t mscs_vo_pkt_delta;
-	unsigned long tx_vo_pkts;
+	unsigned long tx_vo_pkts = 0;
+	uint8_t cpu;
+	struct hdd_tx_rx_stats *stats = &adapter->hdd_stats.tx_rx_stats;
 
 	/*
 	 * To disable MSCS feature in driver set mscs_pkt_threshold = 0
@@ -10282,7 +10284,8 @@ void hdd_send_mscs_action_frame(struct hdd_context *hdd_ctx,
 	if (!hdd_ctx->config->mscs_pkt_threshold)
 		return;
 
-	tx_vo_pkts = adapter->hdd_stats.tx_rx_stats.tx_classified_ac[SME_AC_VO];
+	for (cpu = 0; cpu < NUM_CPUS; cpu++)
+		tx_vo_pkts += stats->per_cpu[cpu].tx_classified_ac[SME_AC_VO];
 
 	if (!adapter->mscs_counter)
 		adapter->mscs_prev_tx_vo_pkts = tx_vo_pkts;

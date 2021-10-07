@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -571,18 +572,21 @@ struct hdd_tx_rx_histogram {
 };
 
 struct hdd_tx_rx_stats {
-	/* start_xmit stats */
-	__u32    tx_called;
-	__u32    tx_dropped;
-	__u32    tx_orphaned;
-	__u32    tx_classified_ac[NUM_TX_QUEUES];
-	__u32    tx_dropped_ac[NUM_TX_QUEUES];
+	struct {
+		/* start_xmit stats */
+		__u32    tx_called;
+		__u32    tx_dropped;
+		__u32    tx_orphaned;
+		__u32    tx_classified_ac[WLAN_MAX_AC];
+		__u32    tx_dropped_ac[WLAN_MAX_AC];
 
-	/* rx stats */
-	__u32 rx_packets[NUM_CPUS];
-	__u32 rx_dropped[NUM_CPUS];
-	__u32 rx_delivered[NUM_CPUS];
-	__u32 rx_refused[NUM_CPUS];
+		/* rx stats */
+		__u32 rx_packets;
+		__u32 rx_dropped;
+		__u32 rx_delivered;
+		__u32 rx_refused;
+	} per_cpu[NUM_CPUS];
+
 	qdf_atomic_t rx_usolict_arp_n_mcast_drp;
 
 	/* rx gro */
