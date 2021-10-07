@@ -4974,6 +4974,13 @@ typedef enum {
 	wmi_vdev_param_mcast_steer,
 #ifdef WLAN_FEATURE_11BE
 	wmi_vdev_param_set_ehtop,
+	wmi_vdev_param_set_eht_mu_mode,
+	wmi_vdev_param_set_eht_puncturing_mode,
+	wmi_vdev_param_set_eht_ltf,
+	wmi_vdev_param_set_ul_eht_ltf,
+	wmi_vdev_param_set_eht_dcm,
+	wmi_vdev_param_set_eht_range_ext,
+	wmi_vdev_param_set_non_data_eht_range_ext,
 #endif
 } wmi_conv_vdev_param_id;
 

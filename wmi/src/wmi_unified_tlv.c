@@ -476,6 +476,15 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_set_heop] = WMI_VDEV_PARAM_HEOPS_0_31,
 #ifdef WLAN_FEATURE_11BE
 	[wmi_vdev_param_set_ehtop] = WMI_VDEV_PARAM_EHTOPS_0_31,
+	[wmi_vdev_param_set_eht_mu_mode] = WMI_VDEV_PARAM_SET_EHT_MU_MODE,
+	[wmi_vdev_param_set_eht_puncturing_mode] =
+					WMI_VDEV_PARAM_SET_EHT_PUNCTURING_MODE,
+	[wmi_vdev_param_set_eht_ltf] = WMI_VDEV_PARAM_EHT_LTF,
+	[wmi_vdev_param_set_ul_eht_ltf] = WMI_VDEV_PARAM_UL_EHT_LTF,
+	[wmi_vdev_param_set_eht_dcm] = WMI_VDEV_PARAM_EHT_DCM,
+	[wmi_vdev_param_set_eht_range_ext] = WMI_VDEV_PARAM_EHT_RANGE_EXT,
+	[wmi_vdev_param_set_non_data_eht_range_ext] =
+					WMI_VDEV_PARAM_NON_DATA_EHT_RANGE_EXT,
 #endif
 	[wmi_vdev_param_sensor_ap] = WMI_VDEV_PARAM_SENSOR_AP,
 	[wmi_vdev_param_dtim_enable_cts] = WMI_VDEV_PARAM_DTIM_ENABLE_CTS,
