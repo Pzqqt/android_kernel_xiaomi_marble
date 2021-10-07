@@ -14689,6 +14689,7 @@ typedef struct {
  *               (value 1 is enabled, value 0 is disabled)
  *               bits 1:5 are for ring 32 (i.e. ring id value
  *               selected from 0 to 31 values)
+ *               bits 6:7 are for LMAC/peer based routing.
  *               bit 8 for peer based ring selection enabled or not
  *               (value 1 is enabled, value 0 is disabled
  *                bits 9-15 are valid when bit 8 is set to 1)
@@ -14789,6 +14790,15 @@ typedef struct {
  *  11: Disable NSS clamp feature or Fallback to autorate
  */
 #define WMI_PEER_PARAM_DYN_NSS_EN_MASK                 0x24
+
+/* Per peer enable/disable RTS/CTS for unicast management frames.
+ * Enabling RTS/CTS only applicable after association process of the peer.
+ * Currently supported for spruce(2x2) chipset.
+ * Expected values:
+ * 0 : Disable RTS/CTS for unicast management frames.
+ * 1 : Enable  RTS/CTS for unicast management frames.
+ */
+#define WMI_PEER_PARAM_EN_RTSCTS_FOR_UNICAST_MGMT      0x25
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
@@ -20817,6 +20827,26 @@ typedef enum {
     WMI_PEER_TID_MAX_NUM_MSDU_IN_MPDU_VALID = 0x00000004,
 } WMI_PEER_TID_EXT_CONFIG_VALID_BITMAP;
 
+/*
+ * Per TID level enable/disable of RTS/CTS for that peer.
+ * Currently applicable only for "data tids" within targets which set
+ * the RTSCTS_FOR_UNICAST_MGMT WMI service bit.
+ *
+ * Enum values/Expected values for disable_rts_cts of
+ * WMI_PEER_TID_DISABLE_RTS_CTS_VALID as below:
+ *
+ * 0 (WMI_RTSCTS_RESET)   - Use default RTS/CTS
+ * 1 (WMI_RTSCTS_DISABLE) - Disable RTS/CTS for every ppdu for that
+ *                          configured data TID
+ * 2 (WMI_RTSCTS_ENABLE)  - Enable RTS/CTS for  every ppdu for that
+ *                          configured data TID
+ */
+typedef enum {
+    WMI_RTSCTS_RESET   = 0,
+    WMI_RTSCTS_DISABLE = 1,
+    WMI_RTSCTS_ENABLE  = 2,
+} WMI_PEER_TID_CONFIG_RTSCTS_CONTROL;
+
 /**
  * MPDU Aggregate value for the TID
  */
@@ -20887,7 +20917,15 @@ typedef struct {
      */
     A_UINT32 tid_config_supported_bitmap;
 
-    /* Knob to enable/disable RTS/CTS per TID */
+    /* Knob to enable/disable RTS/CTS per TID
+     * Enum values/Expected values:
+     *
+     * 0 (WMI_RTSCTS_RESET)   - Use default RTS/CTS
+     * 1 (WMI_RTSCTS_DISABLE) - Disable RTS/CTS for every ppdu for
+     *                          that configured data TID
+     * 2 (WMI_RTSCTS_ENABLE)  - Enable RTS/CTS for  every ppdu for
+     *                          that configured data TID
+     */
     A_UINT32 disable_rts_cts;
 
     /** Size for mpdu aggregation
