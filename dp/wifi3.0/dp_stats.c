@@ -174,6 +174,46 @@ const char *intfrm_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 #define TID_DELAY_STATS 2	/* Delay stats type */
 #define TID_RX_ERROR_STATS 3	/* Rx Error stats type */
 
+#ifdef WLAN_SYSFS_DP_STATS
+void DP_PRINT_STATS(const char *fmt, ...)
+{
+	void *soc_void = NULL;
+	va_list val;
+	uint16_t buf_written = 0;
+	uint16_t curr_len = 0;
+	uint16_t max_len = 0;
+	struct dp_soc *soc = NULL;
+
+	soc_void = cds_get_context(QDF_MODULE_ID_SOC);
+	soc = cdp_soc_t_to_dp_soc(soc_void);
+	va_start(val, fmt);
+	QDF_VTRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH, (char *)fmt, val);
+	/* writing to the buffer */
+	if (soc->sysfs_config && soc->sysfs_config->printing_mode == PRINTING_MODE_ENABLED) {
+		if (soc->sysfs_config->process_id == qdf_get_current_pid()) {
+			curr_len = soc->sysfs_config->curr_buffer_length;
+			max_len = soc->sysfs_config->max_buffer_length;
+			if ((max_len - curr_len) <= 1)
+				return;
+
+			qdf_spinlock_acquire(&soc->sysfs_config->sysfs_write_user_buffer);
+			if (soc->sysfs_config->buf) {
+				buf_written = vscnprintf(soc->sysfs_config->buf + curr_len,
+							 max_len - curr_len, fmt, val);
+				curr_len += buf_written;
+				if ((max_len - curr_len) <= 1)
+					return;
+
+				buf_written += scnprintf(soc->sysfs_config->buf + curr_len,
+							 max_len - curr_len, "\n");
+				soc->sysfs_config->curr_buffer_length +=  buf_written;
+			}
+			qdf_spinlock_release(&soc->sysfs_config->sysfs_write_user_buffer);
+		}
+	}
+	va_end(val);
+}
+#endif /* WLAN_SYSFS_DP_STATS */
 /*
  * dp_print_stats_string_tlv: display htt_stats_string_tlv
  * @tag_buf: buffer containing the tlv htt_stats_string_tlv
