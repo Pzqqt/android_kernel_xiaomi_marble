@@ -14698,17 +14698,32 @@ typedef struct {
  *               mcast or not (value 1 is enabled, value 0 is disabled)
  *               bit 11 is for ring selection enabled for filter-pass
  *               BAR or not (value 1 is enabled, value 0 is disabled)
- *               bit 12-13 is for source ring selection value
+ *               bit 12-14 is for source ring selection value
  *               (value 0 for wbm2rxdma buf ring,
  *                value 1 for fw2rxdma buf ring,
  *                value 2 for sw2rxdma buf ring,
- *                value 3 for no buf ring)
- *               bit 14-15 is for destination ring selection value
+ *                value 3 for no buf ring,
+ *                value 4 for sw2rxdma_exception buf ring,
+ *                value 5 for fw2rxdma buf ring)
+ *               bit 15-17 is for destination ring selection value
  *               (value 0 for wbm release ring,
  *                value 1 for rxdma2fw ring,
  *                value 2 for rxdma2sw ring,
- *                value 3 for rxdma2reo ring)
+ *                value 3 for rxdma2reo ring,
+ *                value 4 for rxdma2fw_pmac1_ring,
+ *                value 5 for rxdma2reo_remote0_ring,
+ *                value 6 for rxdma2reo_remote1_ring)
  */
+#define WMI_PEER_HASH_BASED_ROUTING_GET(value32)        WMI_GET_BITS(value32, 0x0, 1)
+#define WMI_PEER_ROUTING_RING_ID_GET(value32)           WMI_GET_BITS(value32, 0x1, 5)
+#define WMI_PEER_LMAC_BASED_ROUTING_GET(value32)        WMI_GET_BITS(value32, 0x6, 2)
+#define WMI_PEER_BASED_RING_SELECTION_GET(value32)      WMI_GET_BITS(value32, 0x8, 1)
+#define WMI_PEER_FILTER_PASS_UNICAST_GET(value32)       WMI_GET_BITS(value32, 0x9, 1)
+#define WMI_PEER_FILTER_PASS_MCAST_GET(value32)         WMI_GET_BITS(value32, 0xA, 1)
+#define WMI_PEER_FILTER_PASS_BAR_GET(value32)           WMI_GET_BITS(value32, 0xB, 1)
+#define WMI_PEER_FILTER_PASS_SRC_RING_VAL_GET(value32)  WMI_GET_BITS(value32, 0xC, 3)
+#define WMI_PEER_FILTER_PASS_DEST_RING_VAL_GET(value32) WMI_GET_BITS(value32, 0xF, 3)
+
 #define WMI_PEER_SET_DEFAULT_ROUTING                    0x13
 /* peer NSS for VHT160 - Extended NSS support */
 #define WMI_PEER_NSS_VHT160                             0x14
