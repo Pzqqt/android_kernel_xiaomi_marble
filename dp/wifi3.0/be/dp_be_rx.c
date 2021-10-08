@@ -56,6 +56,49 @@ dp_rx_wds_learn(struct dp_soc *soc,
 				msdu_metadata);
 }
 #else
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+/**
+ * dp_wds_ext_peer_learn_be() - function to send event to control
+ * path on receiving 1st 4-address frame from backhaul.
+ * @soc: DP soc
+ * @ta_peer: WDS repeater peer
+ * @rx_tlv_hdr  : start address of rx tlvs
+ *
+ * Return: void
+ */
+static inline void dp_wds_ext_peer_learn_be(struct dp_soc *soc,
+					    struct dp_peer *ta_peer,
+					    uint8_t *rx_tlv_hdr)
+{
+	uint8_t wds_ext_src_mac[QDF_MAC_ADDR_SIZE];
+
+	/* instead of checking addr4 is valid or not in per packet path
+	 * check for init bit, which will be set on reception of
+	 * first addr4 valid packet.
+	 */
+	if (!ta_peer->vdev->wds_ext_enabled ||
+	    qdf_atomic_test_bit(WDS_EXT_PEER_INIT_BIT, &ta_peer->wds_ext.init))
+		return;
+
+	if (hal_rx_get_mpdu_mac_ad4_valid(soc->hal_soc, rx_tlv_hdr)) {
+		qdf_atomic_test_and_set_bit(WDS_EXT_PEER_INIT_BIT,
+					    &ta_peer->wds_ext.init);
+		qdf_mem_copy(wds_ext_src_mac, &ta_peer->mac_addr.raw[0],
+			     QDF_MAC_ADDR_SIZE);
+		soc->cdp_soc.ol_ops->rx_wds_ext_peer_learn(
+						soc->ctrl_psoc,
+						ta_peer->peer_id,
+						ta_peer->vdev->vdev_id,
+						wds_ext_src_mac);
+	}
+}
+#else
+static inline void dp_wds_ext_peer_learn_be(struct dp_soc *soc,
+					    struct dp_peer *ta_peer,
+					    uint8_t *rx_tlv_hdr)
+{
+}
+#endif
 static void
 dp_rx_wds_learn(struct dp_soc *soc,
 		struct dp_vdev *vdev,
@@ -64,6 +107,7 @@ dp_rx_wds_learn(struct dp_soc *soc,
 		qdf_nbuf_t nbuf,
 		struct hal_rx_msdu_metadata msdu_metadata)
 {
+	dp_wds_ext_peer_learn_be(soc, ta_peer, rx_tlv_hdr);
 }
 #endif
 
