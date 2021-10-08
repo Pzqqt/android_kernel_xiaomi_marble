@@ -411,6 +411,8 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	 GET_ATTR_OFFSET(bssid)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP, NLA_U64,
 	 sizeof(uint64_t), GET_ATTR_OFFSET(fw_timestamp_us)},
+	{QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_SUCCESSFUL, NLA_FLAG,
+	 sizeof(uint64_t), GET_ATTR_OFFSET(roam_result.is_roam_successful)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_MAX,   0, 0, 0},
 	},
 
@@ -997,7 +999,7 @@ wlan_hdd_fill_connectivity_logging_data(struct sk_buff *skb,
 			val8 = ATTR_GET_VALUE(uint8_t, rec, attr.field_offset);
 			attr_val8 = val8;
 			if (attr.attribute_id ==
-			    QCA_WLAN_VENDOR_ATTR_DIAG_BTM_WTC_SUB_REASON_CODE)
+			    QCA_WLAN_VENDOR_ATTR_DIAG_ROAM_TRIGGER_SUB_REASON)
 				attr_val8 = wlan_hdd_get_converted_roam_sub_reason(val8);
 			else if (attr.attribute_id ==
 				 QCA_WLAN_VENDOR_ATTR_DIAG_FRAME_TX_STATUS)

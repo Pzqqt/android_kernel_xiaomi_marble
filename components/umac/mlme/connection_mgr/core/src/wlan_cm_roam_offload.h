@@ -346,6 +346,7 @@ cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
 
 /**
  * cm_roam_btm_resp_event() - Send BTM response logging event
+ * @trigger_info: Roam trigger related data
  * @btm_data: BTM response data
  * @vdev_id: Vdev id
  * @is_wtc: Is WTC or BTM response
@@ -353,7 +354,8 @@ cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
+		       struct roam_btm_response_data *btm_data,
 		       uint8_t vdev_id, bool is_wtc);
 
 /**
@@ -382,7 +384,8 @@ cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
 }
 
 static inline QDF_STATUS
-cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
+		       struct roam_btm_response_data *btm_data,
 		       uint8_t vdev_id, bool is_wtc)
 {
 	return QDF_STATUS_E_NOSUPPORT;

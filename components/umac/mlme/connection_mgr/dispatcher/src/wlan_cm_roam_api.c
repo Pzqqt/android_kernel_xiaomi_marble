@@ -2543,12 +2543,14 @@ cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data)
  * @ptr: Pointer to the roam trigger info
  * @buf: Destination buffer to write the reason string
  * @is_full_scan: Is roam scan partial scan or all channels scan
+ * @vdev_id: vdev id
  *
  * Return: None
  */
 static void
 cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
-				     char *buf, bool is_full_scan)
+				     char *buf, bool is_full_scan,
+				     uint8_t vdev_id)
 {
 	uint16_t buf_cons, buf_left = MAX_ROAM_DEBUG_BUF_SIZE;
 	char *temp = buf;
@@ -2624,6 +2626,8 @@ cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
 		buf_left -= buf_cons;
 		break;
 	case ROAM_TRIGGER_REASON_WTC_BTM:
+		cm_roam_btm_resp_event(ptr, NULL, vdev_id, true);
+
 		if (ptr->wtc_btm_trig_data.wtc_candi_rssi_ext_present) {
 			buf_cons = qdf_snprint(temp, buf_left,
 				   "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th_2g:%d, wtc_candi_rssi_th_5g:%d, wtc_candi_rssi_th_6g:%d",
@@ -2680,7 +2684,7 @@ cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
 	if (!buf)
 		return;
 
-	cm_roam_stats_get_trigger_detail_str(data, buf, is_full_scan);
+	cm_roam_stats_get_trigger_detail_str(data, buf, is_full_scan, vdev_id);
 	mlme_get_converted_timestamp(data->timestamp, time);
 	mlme_nofl_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
@@ -2697,7 +2701,8 @@ cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
  * Return: None
  */
 static void
-cm_roam_stats_print_btm_rsp_info(struct roam_btm_response_data *data,
+cm_roam_stats_print_btm_rsp_info(struct wmi_roam_trigger_info *trigger_info,
+				 struct roam_btm_response_data *data,
 				 uint8_t vdev_id, bool is_wtc)
 {
 	char time[TIME_STRING_LEN];
@@ -2707,7 +2712,7 @@ cm_roam_stats_print_btm_rsp_info(struct roam_btm_response_data *data,
 		       QDF_MAC_ADDR_FMT, time, vdev_id, data->btm_status,
 		       data->vsie_reason,
 		       QDF_MAC_ADDR_REF(data->target_bssid.bytes));
-	cm_roam_btm_resp_event(data, vdev_id, is_wtc);
+	cm_roam_btm_resp_event(trigger_info, data, vdev_id, is_wtc);
 }
 
 /**
@@ -3016,18 +3021,12 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 		 */
 		if (stats_info->btm_rsp[i].present &&
 		    (stats_info->trigger[i].present &&
-		    (stats_info->trigger[i].trigger_reason ==
-		     ROAM_TRIGGER_REASON_WTC_BTM ||
 		     stats_info->trigger[i].trigger_reason ==
-		     ROAM_TRIGGER_REASON_BTM))) {
-			bool is_wtc =
-				(stats_info->trigger[i].trigger_reason ==
-				 ROAM_TRIGGER_REASON_WTC_BTM);
-
+		     ROAM_TRIGGER_REASON_BTM)) {
 			cm_roam_stats_print_btm_rsp_info(
+						&stats_info->trigger[i],
 						&stats_info->btm_rsp[i],
-						stats_info->vdev_id,
-						is_wtc);
+						stats_info->vdev_id, false);
 		}
 
 		if (stats_info->roam_init_info[i].present)
@@ -3068,8 +3067,9 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 
 		if (stats_info->btm_rsp[0].present)
 			cm_roam_stats_print_btm_rsp_info(
-							&stats_info->btm_rsp[0],
-							stats_info->vdev_id, 0);
+					&stats_info->trigger[i],
+					&stats_info->btm_rsp[0],
+					stats_info->vdev_id, 0);
 	}
 	if (stats_info->roam_msg_info && stats_info->num_roam_msg_info &&
 	    stats_info->num_roam_msg_info - rem_tlv) {
