@@ -1682,6 +1682,8 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		}
 		clear_bit(DISABLE_PENDING, &swrm->port_req_pending);
 		swrm_cleanup_disabled_port_reqs(master);
+		/* reset enable_count to 0 in SSR if master is already down */
+		swrm->pcm_enable_count = 0;
 		if (!swrm_is_port_en(master)) {
 			dev_dbg(&master->dev, "%s: pm_runtime auto suspend triggered\n",
 				__func__);
