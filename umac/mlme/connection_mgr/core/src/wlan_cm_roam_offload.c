@@ -4801,6 +4801,7 @@ void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
 	log_record->roam_trig.current_rssi = (-1) * data->current_rssi;
 	log_record->roam_trig.cu_load = data->cu_trig_data.cu_load;
 	log_record->roam_trig.rssi_threshold = data->rssi_trig_data.threshold;
+	log_record->roam_trig.is_full_scan = is_full_scan;
 
 	wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
@@ -5128,7 +5129,8 @@ cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 }
 
 QDF_STATUS
-cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
+		       struct roam_btm_response_data *btm_data,
 		       uint8_t vdev_id, bool is_wtc)
 {
 	struct wlan_log_record *log_record = NULL;
@@ -5138,23 +5140,30 @@ cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
 	if (!log_record)
 		return QDF_STATUS_E_NOMEM;
 
-	if (is_wtc)
+	if (is_wtc) {
+		struct wmi_roam_wtc_btm_trigger_data *wtc_data =
+				&trigger_info->wtc_btm_trig_data;
+
 		log_record->log_subtype = WLAN_ROAM_WTC;
-	else
+		log_record->btm_info.reason = wtc_data->vsie_trigger_reason;
+		log_record->btm_info.sub_reason = wtc_data->sub_code;
+	} else {
 		log_record->log_subtype = WLAN_BTM_RESP;
 
-	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
-	log_record->vdev_id = vdev_id;
-
-	log_record->btm_info.token = btm_data->btm_resp_dialog_token;
-	log_record->btm_info.btm_status_code = btm_data->btm_status;
-	log_record->btm_info.btm_delay = btm_data->btm_delay;
-	log_record->btm_info.target_bssid = btm_data->target_bssid;
-	if (is_wtc) {
-		log_record->btm_info.reason = btm_data->vsie_reason;
-		log_record->btm_info.wtc_duration = btm_data->btm_delay;
+		if (btm_data) {
+			log_record->btm_info.token =
+					btm_data->btm_resp_dialog_token;
+			log_record->btm_info.btm_status_code =
+					btm_data->btm_status;
+			log_record->btm_info.btm_delay = btm_data->btm_delay;
+			log_record->btm_info.target_bssid =
+					btm_data->target_bssid;
+		}
 	}
+
+	log_record->timestamp_us = qdf_get_time_of_the_day_us();
+	log_record->fw_timestamp_us = trigger_info->timestamp * 1000;
+	log_record->vdev_id = vdev_id;
 
 	status = wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
