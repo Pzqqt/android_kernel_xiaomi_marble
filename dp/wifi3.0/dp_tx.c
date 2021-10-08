@@ -372,6 +372,21 @@ dp_tx_tso_history_add(struct dp_soc *soc, struct qdf_tso_info_t tso_info,
 }
 #endif /* WLAN_FEATURE_DP_TX_DESC_HISTORY */
 
+static int dp_get_rtpm_tput_policy_requirement(struct dp_soc *soc);
+
+/**
+ * dp_is_tput_high() - Check if throughput is high
+ *
+ * @soc - core txrx main context
+ *
+ * The current function is based of the RTPM tput policy variable where RTPM is
+ * avoided based on throughput.
+ */
+static inline int dp_is_tput_high(struct dp_soc *soc)
+{
+	return dp_get_rtpm_tput_policy_requirement(soc);
+}
+
 #if defined(FEATURE_TSO)
 /**
  * dp_tx_tso_unmap_segment() - Unmap TSO segment
@@ -949,14 +964,19 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
  * Return: None
  */
 #ifdef DP_DISABLE_TX_PKT_TRACE
-static void dp_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
+static void dp_tx_trace_pkt(struct dp_soc *soc,
+			    qdf_nbuf_t skb, uint16_t msdu_id,
 			    uint8_t vdev_id)
 {
 }
 #else
-static void dp_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
+static void dp_tx_trace_pkt(struct dp_soc *soc,
+			    qdf_nbuf_t skb, uint16_t msdu_id,
 			    uint8_t vdev_id)
 {
+	if (dp_is_tput_high(soc))
+		return;
+
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
 	QDF_NBUF_CB_TX_DP_TRACE(skb) = 1;
 	DPTRACE(qdf_dp_trace_ptr(skb,
@@ -1048,7 +1068,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->pkt_offset = 0;
 	tx_desc->length = qdf_nbuf_headlen(nbuf);
 
-	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
+	dp_tx_trace_pkt(soc, nbuf, tx_desc->id, vdev->vdev_id);
 
 	if (qdf_unlikely(vdev->multipass_en)) {
 		if (!dp_tx_multipass_process(soc, vdev, nbuf, msdu_info))
@@ -1181,7 +1201,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->tso_desc = msdu_info->u.tso_info.curr_seg;
 	tx_desc->tso_num_desc = msdu_info->u.tso_info.tso_num_seg_list;
 
-	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
+	dp_tx_trace_pkt(soc, nbuf, tx_desc->id, vdev->vdev_id);
 
 	/* Handle scattered frames - TSO/SG/ME */
 	/* Allocate and prepare an extension descriptor for scattered frames */
