@@ -1554,6 +1554,8 @@ flush_single_pmk:
 	if (same_candidate_used)
 		*same_candidate_used = use_same_candidate;
 
+	wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev, WLAN_VDEV_FEXT2_MLO);
+
 	return status;
 }
 
@@ -1928,6 +1930,10 @@ QDF_STATUS cm_notify_connect_complete(struct cnx_mgr *cm_ctx,
 	cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
 					  resp->connect_status);
 	cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
+
+	if (QDF_IS_STATUS_ERROR(resp->connect_status))
+		wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev,
+						   WLAN_VDEV_FEXT2_MLO);
 
 	return QDF_STATUS_SUCCESS;
 }
