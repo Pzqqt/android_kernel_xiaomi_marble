@@ -1051,6 +1051,102 @@ static int dsi_pll_5nm_set_byteclk_div(struct dsi_pll_resource *pll,
 	return 0;
 }
 
+static int dsi_pll_calc_dphy_pclk_div(struct dsi_pll_resource *pll)
+{
+	u32 m_val, n_val; /* M and N values of MND trio */
+	u32 pclk_div;
+
+	if (pll->bpp == 30 && pll->lanes == 4) {
+		/* RGB101010 */
+		m_val = 2;
+		n_val = 3;
+	} else if (pll->bpp == 18 && pll->lanes == 2) {
+		/* RGB666_packed */
+		m_val = 2;
+		n_val = 9;
+	} else if (pll->bpp == 18 && pll->lanes == 4) {
+		/* RGB666_packed */
+		m_val = 4;
+		n_val = 9;
+	} else if (pll->bpp == 16 && pll->lanes == 3) {
+		/* RGB565 */
+		m_val = 3;
+		n_val = 8;
+	} else {
+		m_val = 1;
+		n_val = 1;
+	}
+
+	/* Calculating pclk_div assuming dsiclk_sel to be 1 */
+	pclk_div = pll->bpp;
+	pclk_div = mult_frac(pclk_div, m_val, n_val);
+	do_div(pclk_div, 2);
+	do_div(pclk_div, pll->lanes);
+
+	DSI_PLL_DBG(pll, "bpp: %d, lanes: %d, m_val: %u, n_val: %u, pclk_div: %u\n",
+                          pll->bpp, pll->lanes, m_val, n_val, pclk_div);
+
+	return pclk_div;
+}
+
+static int dsi_pll_calc_cphy_pclk_div(struct dsi_pll_resource *pll)
+{
+	u32 m_val, n_val; /* M and N values of MND trio */
+	u32 pclk_div;
+	u32 phy_post_div = dsi_pll_get_phy_post_div(pll);
+
+	if (pll->bpp == 24 && pll->lanes == 2) {
+		/*
+		 * RGB888 or DSC is enabled
+		 * Skipping DSC enabled check
+		 */
+		m_val = 2;
+		n_val = 3;
+	} else if (pll->bpp == 30) {
+		/* RGB101010 */
+		if (pll->lanes == 1) {
+			m_val = 4;
+			n_val = 15;
+		} else {
+			m_val = 16;
+			n_val = 35;
+		}
+	} else if (pll->bpp == 18) {
+		/* RGB666_packed */
+		if (pll->lanes == 1) {
+			m_val = 8;
+			n_val = 63;
+		} else if (pll->lanes == 2) {
+			m_val = 16;
+			n_val = 63;
+		} else if (pll->lanes == 3) {
+			m_val = 8;
+			n_val = 21;
+		} else {
+			m_val = 1;
+			n_val = 1;
+		}
+	} else if (pll->bpp == 16 && pll->lanes == 3) {
+		/* RGB565 */
+		m_val = 3;
+		n_val = 7;
+	} else {
+		m_val = 1;
+		n_val = 1;
+	}
+
+	/* Calculating pclk_div assuming dsiclk_sel to be 3 */
+	pclk_div =  pll->bpp * phy_post_div;
+	pclk_div = mult_frac(pclk_div, m_val, n_val);
+	do_div(pclk_div, 8);
+	do_div(pclk_div, pll->lanes);
+
+	DSI_PLL_DBG(pll, "bpp: %d, lanes: %d, m_val: %u, n_val: %u, phy_post_div: %u pclk_div: %u\n",
+                          pll->bpp, pll->lanes, m_val, n_val, phy_post_div, pclk_div);
+
+	return pclk_div;
+}
+
 static int dsi_pll_5nm_set_pclk_div(struct dsi_pll_resource *pll, bool commit)
 {
 
@@ -1066,13 +1162,15 @@ static int dsi_pll_5nm_set_pclk_div(struct dsi_pll_resource *pll, bool commit)
 		phy_post_div = dsi_pll_get_phy_post_div(pll);
 		pclk_src_rate = div_u64(pclk_src_rate, phy_post_div);
 		pclk_src_rate = div_u64(pclk_src_rate, 2);
+		pclk_div = dsi_pll_calc_dphy_pclk_div(pll);
 	} else {
 		dsi_clk = 0x3;
 		pclk_src_rate *= 2;
 		pclk_src_rate = div_u64(pclk_src_rate, 7);
+		pclk_div = dsi_pll_calc_cphy_pclk_div(pll);
 	}
 
-	pclk_div = DIV_ROUND_CLOSEST(pclk_src_rate, pll->pclk_rate);
+	pll->pclk_rate = div_u64(pclk_src_rate, pclk_div);
 
 	DSI_PLL_DBG(pll, "pclk rate: %llu, dsi_clk: %d, pclk_div: %d\n",
 			pll->pclk_rate, dsi_clk, pclk_div);
