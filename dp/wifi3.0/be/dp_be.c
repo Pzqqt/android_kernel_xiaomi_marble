@@ -676,7 +676,7 @@ dp_service_near_full_srngs_be(struct dp_soc *soc, struct dp_intr *int_ctx,
 	}
 
 	if (tx_ring_near_full_mask) {
-		for (ring = 0; ring < MAX_TCL_DATA_RINGS; ring++) {
+		for (ring = 0; ring < soc->num_tcl_data_rings; ring++) {
 			if (!(tx_ring_near_full_mask & (1 << ring)))
 				continue;
 

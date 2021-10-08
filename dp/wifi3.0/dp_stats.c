@@ -6488,7 +6488,7 @@ void dp_print_soc_interrupt_stats(struct dp_soc *soc)
 		qdf_mem_zero(int_ctx_str, sizeof(int_ctx_str));
 		intr_stats = &soc->intr_ctx[i].intr_stats;
 
-		if (!intr_stats->num_masks)
+		if (!intr_stats->num_masks && !intr_stats->num_near_full_masks)
 			continue;
 
 		pos += qdf_scnprintf(buf + pos,

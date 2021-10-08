@@ -120,6 +120,10 @@ struct dp_int_mask_assignment {
 
 #ifdef CONFIG_BERYLLIUM
 #ifdef IPA_OFFLOAD
+/*
+ * NEAR-FULL IRQ mask should be updated, if any change is made to
+ * the below TX mask.
+ */
 static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[0] = WLAN_CFG_TX_RING_MASK_0, [1] = WLAN_CFG_TX_RING_MASK_6,
 	[2] = WLAN_CFG_TX_RING_MASK_7};
