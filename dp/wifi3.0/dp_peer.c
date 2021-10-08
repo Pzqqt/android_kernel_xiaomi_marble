@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5041,7 +5042,7 @@ int dp_get_peer_state(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 						       vdev_id, DP_MOD_ID_CDP);
 
 	if (!peer)
-		return QDF_STATUS_E_FAILURE;
+		return OL_TXRX_PEER_STATE_INVALID;
 
 	DP_TRACE(DEBUG, "peer %pK stats %d", peer, peer->state);
 	peer_state = peer->state;
