@@ -3168,37 +3168,90 @@ bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * policy_mgr_is_3rd_conn_on_same_band() - Check whether 3rd connection is on
- * same band or not
+ * policy_mgr_allow_same_mac_diff_freq() - Check whether diff freq are allowed
+ * on same mac
+ *
+ * @psoc: Pointer to Psoc
  * @ch_freq: channel frequency
  *
- * Check the existing two connection are in same band or not. If it is in
- * same band then check the 3rd connection is also in same band or not
+ * Check whether diff freq are allowed on same mac
  *
  * Return: True/False
  */
-static bool policy_mgr_is_3rd_conn_on_same_band(uint32_t ch_freq)
+static
+bool policy_mgr_allow_same_mac_diff_freq(struct wlan_objmgr_psoc *psoc,
+					 qdf_freq_t ch_freq)
 {
-	bool ret = false;
+	bool allow = true;
 
-	if (((WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) &&
-	    (WLAN_REG_IS_24GHZ_CH_FREQ
-	    (pm_conc_connection_list[0].freq)) &&
-	    (WLAN_REG_IS_24GHZ_CH_FREQ
-	    (pm_conc_connection_list[1].freq))) ||
-	    (((WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) ||
-	    (WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq))) &&
-	    ((WLAN_REG_IS_5GHZ_CH_FREQ
-	    (pm_conc_connection_list[0].freq)) ||
-	    (WLAN_REG_IS_6GHZ_CHAN_FREQ
-	    (pm_conc_connection_list[0].freq))) &&
-	    ((WLAN_REG_IS_5GHZ_CH_FREQ
-	    (pm_conc_connection_list[1].freq)) ||
-	    (WLAN_REG_IS_6GHZ_CHAN_FREQ
-	    (pm_conc_connection_list[1].freq))))) {
-		ret = true;
+	if ((pm_conc_connection_list[0].mode == PM_NAN_DISC_MODE &&
+	     pm_conc_connection_list[1].mode == PM_NDI_MODE) ||
+	    (pm_conc_connection_list[0].mode == PM_NDI_MODE &&
+	     pm_conc_connection_list[1].mode == PM_NAN_DISC_MODE)) {
+		/*
+		 * NAN + NDI are managed in Firmware by dividing
+		 * up slots. Connection on NDI is re-negotiable
+		 * and therefore a 3rd connection with the
+		 * same MAC is possible.
+		 */
+	} else if (!policy_mgr_is_hw_dbs_capable(psoc) &&
+		    policy_mgr_is_interband_mcc_supported(psoc)) {
+		if (ch_freq !=  pm_conc_connection_list[0].freq &&
+		    ch_freq !=  pm_conc_connection_list[1].freq) {
+			policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
+			allow = false;
+		}
+	} else if (policy_mgr_are_3_freq_on_same_mac(psoc, ch_freq,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[1].freq)) {
+			policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
+			allow = false;
 	}
-	return ret;
+
+	return allow;
+}
+
+/**
+ * policy_mgr_allow_same_mac_same_freq() - check whether given frequency is
+ * allowed for same mac
+ *
+ * @psoc: Pointer to Psoc
+ * @ch_freq: channel frequency
+ * @mode: Concurrency Mode
+ *
+ * check whether given frequency is allowed for same mac
+ *
+ * Return: True/False
+ */
+static
+bool policy_mgr_allow_same_mac_same_freq(struct wlan_objmgr_psoc *psoc,
+					 qdf_freq_t ch_freq,
+					 enum policy_mgr_con_mode mode)
+{
+	bool allow = true;
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc) &&
+	    policy_mgr_is_interband_mcc_supported(psoc)) {
+		policy_mgr_rl_debug("allow 2 intf SCC + new intf ch %d for legacy hw",
+				    ch_freq);
+	} else if ((pm_conc_connection_list[0].mode == PM_NAN_DISC_MODE &&
+		    pm_conc_connection_list[1].mode == PM_NDI_MODE) ||
+		    (pm_conc_connection_list[0].mode == PM_NDI_MODE &&
+		    pm_conc_connection_list[1].mode == PM_NAN_DISC_MODE)) {
+		/*
+		 * NAN + NDI are managed in Firmware by dividing
+		 * up slots. Connection on NDI is re-negotiable
+		 * and therefore a 3rd connection with the
+		 * same MAC is possible.
+		 */
+	} else if (policy_mgr_are_2_freq_on_same_mac(psoc, ch_freq,
+					pm_conc_connection_list[0].freq) &&
+		   !policy_mgr_is_3rd_conn_on_same_band_allowed(psoc, mode)) {
+			policy_mgr_rl_debug("don't allow 3rd home channel on same MAC – for sta+multi-AP");
+			allow = false;
+	}
+
+	return allow;
 }
 
 /**
@@ -3250,64 +3303,13 @@ bool policy_mgr_allow_new_home_channel(
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
 		) && (pm_conc_connection_list[0].mac ==
 			pm_conc_connection_list[1].mac)) {
-			if ((pm_conc_connection_list[0].mode ==
-							PM_NAN_DISC_MODE &&
-				    pm_conc_connection_list[1].mode ==
-								PM_NDI_MODE) ||
-				   (pm_conc_connection_list[0].mode ==
-								PM_NDI_MODE &&
-				    pm_conc_connection_list[1].mode ==
-							    PM_NAN_DISC_MODE)) {
-				/*
-				 * NAN + NDI are managed in Firmware by dividing
-				 * up slots. Connection on NDI is re-negotiable
-				 * and therefore a 3rd connection with the
-				 * same MAC is possible.
-				 */
-				status = true;
-			} else if (!policy_mgr_is_hw_dbs_capable(psoc) &&
-				   policy_mgr_is_interband_mcc_supported(psoc)) {
-				if (ch_freq !=
-				    pm_conc_connection_list[0].freq &&
-				    ch_freq !=
-				    pm_conc_connection_list[1].freq) {
-					policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
-					status = false;
-				}
-			} else if (policy_mgr_is_3rd_conn_on_same_band(
-				   ch_freq)) {
-				policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
-				status = false;
-			}
+			status = policy_mgr_allow_same_mac_diff_freq(psoc,
+								     ch_freq);
 		} else if (pm_conc_connection_list[0].mac ==
 			   pm_conc_connection_list[1].mac) {
-			/* Existing two connections are SCC */
-			if (!policy_mgr_is_hw_dbs_capable(psoc) &&
-			    policy_mgr_is_interband_mcc_supported(psoc)) {
-				/* keep legacy chip "allow" as it is */
-				policy_mgr_rl_debug("allow 2 intf SCC + new intf ch %d for legacy hw",
-						    ch_freq);
-			} else if ((pm_conc_connection_list[0].mode ==
-							    PM_NAN_DISC_MODE &&
-				    pm_conc_connection_list[1].mode ==
-								PM_NDI_MODE) ||
-				   (pm_conc_connection_list[0].mode ==
-								PM_NDI_MODE &&
-				    pm_conc_connection_list[1].mode ==
-							    PM_NAN_DISC_MODE)) {
-				/*
-				 * NAN + NDI are managed in Firmware by dividing
-				 * up slots. Connection on NDI is re-negotiable
-				 * and therefore a 3rd connection with the
-				 * same MAC is possible.
-				 */
-			} else if (policy_mgr_is_3rd_conn_on_same_band(
-				   ch_freq) &&
-				   !(policy_mgr_is_3rd_conn_on_same_band_allowed(
-				   psoc, mode))) {
-				policy_mgr_rl_debug("don't allow 3rd home channel on same MAC - sta existing");
-				status = false;
-			}
+			status = policy_mgr_allow_same_mac_same_freq(psoc,
+								     ch_freq,
+								     mode);
 		}
 	} else if ((num_connections == 1) &&
 		   (mcc_to_scc_switch ==
@@ -3326,8 +3328,9 @@ bool policy_mgr_allow_new_home_channel(
 		 */
 		if ((pm_conc_connection_list[0].mode != PM_NAN_DISC_MODE) &&
 		    (mode != PM_NAN_DISC_MODE))
-			status = wlan_reg_is_same_band_freqs(ch_freq,
-				      pm_conc_connection_list[0].freq);
+			status = policy_mgr_are_2_freq_on_same_mac(psoc,
+								   ch_freq,
+					pm_conc_connection_list[0].freq);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
@@ -3353,7 +3356,9 @@ bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 		if ((pm_conc_connection_list[list[index]].ch_flagext &
 		     (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) &&
 		    WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq) &&
-		    (ch_freq != pm_conc_connection_list[list[index]].freq)) {
+		    (ch_freq != pm_conc_connection_list[list[index]].freq &&
+		     !policy_mgr_are_sbs_chan(psoc, ch_freq,
+				pm_conc_connection_list[list[index]].freq))) {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 			policy_mgr_rl_debug("don't allow MCC if SAP/GO on DFS channel");
 			return false;
