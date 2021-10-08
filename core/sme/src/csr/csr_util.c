@@ -614,7 +614,7 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(
  */
 uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			uint32_t sap_ch_freq, eCsrPhyMode sap_phymode,
-			uint8_t cc_switch_mode)
+			uint8_t cc_switch_mode, uint8_t vdev_id)
 {
 	struct csr_roam_session *session = NULL;
 	uint8_t i = 0, chb = PHY_SINGLE_CHANNEL_CENTERED;
@@ -708,24 +708,9 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			intf_ch_freq = 0;
 	} else if (intf_ch_freq && sap_ch_freq != intf_ch_freq &&
 		   (policy_mgr_is_force_scc(mac_ctx->psoc))) {
-		if (!((intf_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
-		       sap_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484)) ||
-		     (intf_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
-		      sap_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484)))) {
-			if (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) ||
-			    cc_switch_mode ==
-			    QDF_MCC_TO_SCC_WITH_PREFERRED_BAND)
-				intf_ch_freq = 0;
-		} else if (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) &&
-			   cc_switch_mode ==
-				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
-			status = policy_mgr_get_sap_mandatory_channel(
-					mac_ctx->psoc, sap_ch_freq,
-					&intf_ch_freq);
-			if (QDF_IS_STATUS_ERROR(status))
-				sme_err("no mandatory channels (%d, %d)",
-					sap_ch_freq, intf_ch_freq);
-		}
+		policy_mgr_check_scc_sbs_channel(mac_ctx->psoc, &intf_ch_freq,
+						 sap_ch_freq, vdev_id,
+						 cc_switch_mode);
 	} else if ((intf_ch_freq == sap_ch_freq) && (cc_switch_mode ==
 				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(intf_ch_freq) ||

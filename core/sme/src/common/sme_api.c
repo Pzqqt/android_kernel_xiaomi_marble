@@ -5361,7 +5361,8 @@ uint32_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
 uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 					      uint16_t sap_ch_freq,
 					      eCsrPhyMode sapPhyMode,
-					      uint8_t cc_switch_mode)
+					      uint8_t cc_switch_mode,
+					      uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -5370,7 +5371,7 @@ uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		intf_ch_freq = csr_check_concurrent_channel_overlap(
-			mac, sap_ch_freq, sapPhyMode, cc_switch_mode);
+			mac, sap_ch_freq, sapPhyMode, cc_switch_mode, vdev_id);
 		sme_release_global_lock(&mac->sme);
 	}
 
@@ -10353,7 +10354,7 @@ QDF_STATUS sme_enable_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag)
  * @sap_ch - channel to switch
  * @sap_phy_mode - phy mode of SAP
  * @cc_switch_mode - concurreny switch mode
- * @session_id - sme session id.
+ * @vdev_id - vdev id.
  *
  * Return: true if there is no channel interference else return false
  */
@@ -10361,11 +10362,11 @@ bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 				     uint32_t sap_ch_freq,
 				     eCsrPhyMode sap_phy_mode,
 				     uint8_t cc_switch_mode,
-				     uint8_t session_id)
+				     uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
 	uint16_t intf_channel_freq = 0;
 
 	if (!session)
@@ -10375,7 +10376,8 @@ bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		intf_channel_freq = csr_check_concurrent_channel_overlap(
-			mac, sap_ch_freq, sap_phy_mode, cc_switch_mode);
+			mac, sap_ch_freq, sap_phy_mode, cc_switch_mode,
+			vdev_id);
 		sme_release_global_lock(&mac->sme);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

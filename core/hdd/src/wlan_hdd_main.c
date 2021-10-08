@@ -3831,6 +3831,8 @@ static void hdd_register_policy_manager_callback(
 				hdd_indicate_active_ndp_cnt;
 	hdd_cbacks.wlan_get_ap_prefer_conc_ch_params =
 			wlan_get_ap_prefer_conc_ch_params;
+	hdd_cbacks.wlan_get_sap_acs_band =
+			wlan_get_sap_acs_band;
 
 	if (QDF_STATUS_SUCCESS !=
 	    policy_mgr_register_hdd_cb(psoc, &hdd_cbacks)) {

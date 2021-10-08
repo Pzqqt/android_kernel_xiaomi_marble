@@ -976,7 +976,8 @@ sap_validate_chan(struct sap_context *sap_context,
 					mac_handle,
 					sap_context->chan_freq,
 					sap_context->phyMode,
-					sap_context->cc_switch_mode);
+					sap_context->cc_switch_mode,
+					sap_context->sessionId);
 			sap_debug("After check overlap: sap freq %d con freq:%d",
 				  sap_context->chan_freq, con_ch_freq);
 			ch_params = sap_context->ch_params;

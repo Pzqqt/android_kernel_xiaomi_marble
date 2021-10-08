@@ -454,6 +454,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 	struct mac_context *mac;
 	uint16_t intf_ch_freq;
 	eCsrPhyMode phy_mode;
+	uint8_t vdev_id;
 
 	mac = sap_get_mac_context();
 	if (!mac) {
@@ -461,11 +462,13 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 		return 0;
 	}
 	phy_mode = sap_ctx->phyMode;
+	vdev_id = sap_ctx->sessionId;
 	intf_ch_freq = sme_check_concurrent_channel_overlap(
 						MAC_HANDLE(mac),
 						sap_ctx->chan_freq,
 						phy_mode,
-						sap_ctx->cc_switch_mode);
+						sap_ctx->cc_switch_mode,
+						vdev_id);
 	return intf_ch_freq;
 }
 #endif
@@ -3250,14 +3253,14 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 
 	cc_mode = sap_ctx->cc_switch_mode;
 	phy_mode = sap_ctx->phyMode;
+	vdev_id = wlan_vdev_get_id(sap_ctx->vdev);
 	intf_ch_freq = sme_check_concurrent_channel_overlap(
 						       MAC_HANDLE(mac),
 						       restart_freq,
 						       phy_mode,
-						       cc_mode);
+						       cc_mode, vdev_id);
 	if (intf_ch_freq)
 		restart_freq = intf_ch_freq;
-	vdev_id = sap_ctx->vdev->vdev_objmgr.vdev_id;
 	sap_debug("vdev: %d, CSA target freq: %d", vdev_id, restart_freq);
 
 	return restart_freq;

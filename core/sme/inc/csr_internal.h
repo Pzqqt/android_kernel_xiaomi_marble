@@ -544,7 +544,7 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 uint16_t csr_check_concurrent_channel_overlap(
 		struct mac_context *mac,
 		uint32_t sap_ch_freq, eCsrPhyMode sap_phymode,
-		uint8_t cc_switch_mode);
+		uint8_t cc_switch_mode, uint8_t vdev_id);
 #endif
 
 /* Returns whether the current association is a 11r assoc or not */

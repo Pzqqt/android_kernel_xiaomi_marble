@@ -1041,6 +1041,28 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 				  uint32_t ext_flags);
 
 /**
+ * policy_mgr_check_scc_sbs_channel() - Check for allowed
+ * concurrency combination
+ * @psoc: PSOC object information
+ * @mode: new connection mode
+ * @ch_freq: channel frequency on which new connection is coming up
+ * @bw: Bandwidth requested by the connection (optional)
+ * @vdev_id: Vdev Id
+ * @cc_mode: concurrent switch mode
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * allowed or not based on the HW capability, but no need to
+ * invoke get_pcl
+ *
+ * Return: True/False
+ */
+void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
+				      qdf_freq_t *intf_ch_freq,
+				      qdf_freq_t sap_ch_freq,
+				      uint8_t vdev_id, uint8_t cc_mode);
+
+/**
  * policy_mgr_nan_sap_pre_enable_conc_check() - Check if NAN+SAP SCC is
  *                                              allowed in given ch
  * @psoc: PSOC object information
@@ -1638,6 +1660,7 @@ struct policy_mgr_sme_cbacks {
  * @wlan_hdd_indicate_active_ndp_cnt: indicate active ndp cnt to hdd
  * @wlan_get_ap_prefer_conc_ch_params: get prefer ap channel bw parameters
  *  based on target channel frequency and concurrent connections.
+ * @wlan_get_sap_acs_band: get acs band from sap config
  */
 struct policy_mgr_hdd_cbacks {
 	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
@@ -1663,6 +1686,8 @@ struct policy_mgr_hdd_cbacks {
 			struct wlan_objmgr_psoc *psoc,
 			uint8_t vdev_id, uint32_t chan_freq,
 			struct ch_params *ch_params);
+	uint32_t (*wlan_get_sap_acs_band)(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id, uint32_t *acs_band);
 };
 
 /**

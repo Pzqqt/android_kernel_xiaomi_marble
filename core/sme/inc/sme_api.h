@@ -853,6 +853,7 @@ uint32_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
  * @sap_ch_freq: SAP home channel frequency
  * @sapPhyMode: sap phymode
  * @cc_switch_mode: force scc channel switch mode
+ * @vdev_id: vdev id
  *
  * Determine if a concurrent channel is interfering.
  *
@@ -861,7 +862,8 @@ uint32_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
 uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 					      uint16_t sap_ch_freq,
 					      eCsrPhyMode sapPhyMode,
-					      uint8_t cc_switch_mode);
+					      uint8_t cc_switch_mode,
+					      uint8_t vdev_id);
 #endif
 
 /**
@@ -1924,7 +1926,7 @@ void sme_update_tgt_services(mac_handle_t mac_handle,
 bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 				     uint32_t sap_ch_freq, eCsrPhyMode sap_phy_mode,
 				     uint8_t cc_switch_mode,
-				     uint8_t session_id);
+				     uint8_t vdev_id);
 
 bool sme_is_session_id_valid(mac_handle_t mac_handle, uint32_t session_id);
 

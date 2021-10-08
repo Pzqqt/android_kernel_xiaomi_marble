@@ -3475,6 +3475,34 @@ sap_restart:
 }
 
 QDF_STATUS
+wlan_get_sap_acs_band(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		      uint32_t *acs_band)
+{
+	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(psoc,
+								vdev_id);
+	struct sap_config *sap_config;
+
+	if (!ap_adapter || (ap_adapter->device_mode != QDF_SAP_MODE &&
+			    ap_adapter->device_mode != QDF_P2P_GO_MODE)) {
+		hdd_err("invalid adapter");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/*
+	 * If acs mode is false, that means acs is disabled and acs band can be
+	 * QCA_ACS_MODE_IEEE80211ANY
+	 */
+	sap_config = &ap_adapter->session.ap.sap_config;
+	if (sap_config->acs_cfg.acs_mode == false) {
+		*acs_band = QCA_ACS_MODE_IEEE80211ANY;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	*acs_band = sap_config->acs_cfg.band;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlan_get_ap_prefer_conc_ch_params(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id, uint32_t chan_freq,
