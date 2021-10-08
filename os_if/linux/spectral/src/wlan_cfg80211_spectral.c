@@ -938,6 +938,16 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 		if (ret)
 			goto fail;
 	}
+	if (scaps->agile_spectral_cap_320) {
+		int ret;
+
+		ret = nla_put_flag
+		  (skb,
+		   QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_AGILE_SPECTRAL_320);
+		if (ret)
+			goto fail;
+	}
+
 
 	if (nla_put_u32(
 		skb,
@@ -967,6 +977,12 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 		skb,
 		QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_NUM_DETECTORS_80P80_MHZ,
 		scaps->num_detectors_80p80mhz))
+		goto fail;
+
+	if (nla_put_u32(
+		skb,
+		QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_NUM_DETECTORS_320_MHZ,
+		scaps->num_detectors_320mhz))
 		goto fail;
 
 	wlan_cfg80211_qal_devcfg_send_response((qdf_nbuf_t)skb);

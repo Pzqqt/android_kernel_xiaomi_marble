@@ -1563,11 +1563,13 @@ struct target_if_samp_msg_params {
  * @agile_spectral_cap: agile Spectral scan capability for 20/40/80 MHz
  * @agile_spectral_cap_160: agile Spectral scan capability for 160 MHz
  * @agile_spectral_cap_80p80: agile Spectral scan capability for 80+80 MHz
+ * @agile_spectral_cap_320: agile Spectral scan capability for 320 MHz
  */
 struct target_if_spectral_agile_mode_cap {
 	bool agile_spectral_cap;
 	bool agile_spectral_cap_160;
 	bool agile_spectral_cap_80p80;
+	bool agile_spectral_cap_320;
 };
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
