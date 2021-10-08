@@ -2037,28 +2037,18 @@ uint16_t hdd_get_queue_index(uint16_t up, bool is_eapol)
 }
 #endif
 
-/**
- * hdd_wmm_select_queue() - Function which will classify the packet
- *       according to linux qdisc expectation.
- *
- * @dev: [in] pointer to net_device structure
- * @skb: [in] pointer to os packet
- *
- * Return: Qdisc queue index
- */
-static uint16_t hdd_wmm_select_queue(struct net_device *dev,
-				     struct sk_buff *skb)
+static uint16_t __hdd_wmm_select_queue(struct net_device *dev,
+				       struct sk_buff *skb)
 {
 	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
 	uint16_t index;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool is_crtical = false;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	int status;
 	enum qdf_proto_subtype proto_subtype;
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status != 0) {
+	if (qdf_unlikely(!hdd_ctx || cds_is_driver_transitioning())) {
+		hdd_debug_rl("driver is transitioning! Using default(BE) queue.");
 		skb->priority = SME_QOS_WMM_UP_BE;
 		return TX_GET_QUEUE_IDX(HDD_LINUX_AC_BE, 0);
 	}
@@ -2084,6 +2074,26 @@ static uint16_t hdd_wmm_select_queue(struct net_device *dev,
 	index = hdd_get_queue_index(skb->priority, is_crtical);
 
 	return hdd_get_tx_queue_for_ac(adapter, skb, index);
+}
+
+/**
+ * hdd_wmm_select_queue() - Function which will classify the packet
+ *       according to linux qdisc expectation.
+ *
+ * @dev: [in] pointer to net_device structure
+ * @skb: [in] pointer to os packet
+ *
+ * Return: Qdisc queue index
+ */
+static uint16_t hdd_wmm_select_queue(struct net_device *dev,
+				     struct sk_buff *skb)
+{
+	uint16_t q_index;
+
+	hdd_dp_ssr_protect();
+	q_index = __hdd_wmm_select_queue(dev, skb);
+	hdd_dp_ssr_unprotect();
+	return q_index;
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
