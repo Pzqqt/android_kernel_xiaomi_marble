@@ -794,6 +794,9 @@ QDF_STATUS if_mgr_validate_candidate(struct wlan_objmgr_vdev *vdev,
 
 		if (conc_freq) {
 			if ((conc_freq == chan_freq) ||
+			    (policy_mgr_is_hw_sbs_capable(psoc) &&
+			     policy_mgr_are_sbs_chan(psoc, conc_freq,
+			     chan_freq)) ||
 			    (policy_mgr_is_hw_dbs_capable(psoc) &&
 			    !wlan_reg_is_same_band_freqs(conc_freq,
 							 chan_freq))) {
