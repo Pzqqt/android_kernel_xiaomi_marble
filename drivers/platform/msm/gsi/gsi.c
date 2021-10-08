@@ -5611,6 +5611,13 @@ uint32_t gsi_get_evt_ring_len(int evt_hdl)
 }
 EXPORT_SYMBOL(gsi_get_evt_ring_len);
 
+void gsi_update_almst_empty_thrshold(unsigned long chan_hdl, unsigned short threshold)
+{
+	gsihal_write_reg_nk(GSI_EE_n_CH_k_CH_ALMST_EMPTY_THRSHOLD,
+		gsi_ctx->per.ee, chan_hdl, threshold);
+}
+EXPORT_SYMBOL(gsi_update_almst_empty_thrshold);
+
 static union __packed gsi_channel_scratch __gsi_update_mhi_channel_scratch(
 	unsigned long chan_hdl, struct __packed gsi_mhi_channel_scratch mscr)
 {
@@ -5716,13 +5723,6 @@ int gsi_get_fw_version(struct gsi_fw_version *ver)
 
 	return 0;
 }
-
-void gsi_update_almst_empty_thrshold(unsigned long chan_hdl, unsigned short threshold)
-{
-	gsihal_write_reg_nk(GSI_EE_n_CH_k_CH_ALMST_EMPTY_THRSHOLD,
-		gsi_ctx->per.ee, chan_hdl, threshold);
-}
-EXPORT_SYMBOL(gsi_update_almst_empty_thrshold);
 
 static int msm_gsi_probe(struct platform_device *pdev)
 {
