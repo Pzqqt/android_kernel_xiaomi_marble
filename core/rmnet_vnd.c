@@ -79,7 +79,8 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 	u32 mark;
 	unsigned int len;
 	rmnet_perf_tether_egress_hook_t rmnet_perf_tether_egress;
-	bool low_latency;
+	bool low_latency = false;
+	bool need_to_drop = false;
 
 	priv = netdev_priv(dev);
 	if (priv->real_dev) {
@@ -92,7 +93,14 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 		if (rmnet_perf_tether_egress) {
 			rmnet_perf_tether_egress(skb);
 		}
-		low_latency = qmi_rmnet_flow_is_low_latency(dev, skb);
+
+		qmi_rmnet_get_flow_state(dev, skb, &need_to_drop, &low_latency);
+		if (unlikely(need_to_drop)) {
+			this_cpu_inc(priv->pcpu_stats->stats.tx_drops);
+			kfree_skb(skb);
+			return NETDEV_TX_OK;
+		}
+
 		if (low_latency && skb_is_gso(skb)) {
 			netdev_features_t features;
 			struct sk_buff *segs, *tmp;

@@ -226,21 +226,6 @@ int qmi_rmnet_flow_control(struct net_device *dev, u32 mq_idx, int enable)
 	return 0;
 }
 
-static void qmi_rmnet_reset_txq(struct net_device *dev, unsigned int txq)
-{
-	struct Qdisc *qdisc;
-
-	if (unlikely(txq >= dev->num_tx_queues))
-		return;
-
-	qdisc = rtnl_dereference(netdev_get_tx_queue(dev, txq)->qdisc);
-	if (qdisc) {
-		spin_lock_bh(qdisc_lock(qdisc));
-		qdisc_reset(qdisc);
-		spin_unlock_bh(qdisc_lock(qdisc));
-	}
-}
-
 /**
  * qmi_rmnet_watchdog_fn - watchdog timer func
  */
@@ -371,15 +356,13 @@ static void __qmi_rmnet_bearer_put(struct net_device *dev,
 
 			mq->bearer = NULL;
 			mq->is_ll_ch = false;
-			if (reset) {
-				qmi_rmnet_reset_txq(dev, i);
-				qmi_rmnet_flow_control(dev, i, 1);
+			mq->drop_on_remove = reset;
+			smp_mb();
 
-				if (dfc_mode == DFC_MODE_SA) {
-					j = i + ACK_MQ_OFFSET;
-					qmi_rmnet_reset_txq(dev, j);
-					qmi_rmnet_flow_control(dev, j, 1);
-				}
+			qmi_rmnet_flow_control(dev, i, 1);
+			if (dfc_mode == DFC_MODE_SA) {
+				j = i + ACK_MQ_OFFSET;
+				qmi_rmnet_flow_control(dev, j, 1);
 			}
 		}
 
@@ -404,6 +387,8 @@ static void __qmi_rmnet_update_mq(struct net_device *dev,
 	if (!mq->bearer) {
 		mq->bearer = bearer;
 		mq->is_ll_ch = bearer->ch_switch.current_ch;
+		mq->drop_on_remove = false;
+		smp_mb();
 
 		if (dfc_mode == DFC_MODE_SA) {
 			bearer->mq_idx = itm->mq_idx;
@@ -958,8 +943,8 @@ void qmi_rmnet_prepare_ps_bearers(struct net_device *dev, u8 *num_bearers,
 EXPORT_SYMBOL(qmi_rmnet_prepare_ps_bearers);
 
 #ifdef CONFIG_QTI_QMI_DFC
-bool qmi_rmnet_flow_is_low_latency(struct net_device *dev,
-				   struct sk_buff *skb)
+bool qmi_rmnet_get_flow_state(struct net_device *dev, struct sk_buff *skb,
+			      bool *drop, bool *is_low_latency)
 {
 	struct qos_info *qos = rmnet_get_qos_pt(dev);
 	int txq = skb->queue_mapping;
@@ -970,9 +955,15 @@ bool qmi_rmnet_flow_is_low_latency(struct net_device *dev,
 	if (unlikely(!qos || txq >= MAX_MQ_NUM))
 		return false;
 
-	return qos->mq[txq].is_ll_ch;
+	/* If the bearer is gone, packets may need to be dropped */
+	*drop = (txq != DEFAULT_MQ_NUM && !READ_ONCE(qos->mq[txq].bearer) &&
+		 READ_ONCE(qos->mq[txq].drop_on_remove));
+
+	*is_low_latency = READ_ONCE(qos->mq[txq].is_ll_ch);
+
+	return true;
 }
-EXPORT_SYMBOL(qmi_rmnet_flow_is_low_latency);
+EXPORT_SYMBOL(qmi_rmnet_get_flow_state);
 
 void qmi_rmnet_burst_fc_check(struct net_device *dev,
 			      int ip_type, u32 mark, unsigned int len)
