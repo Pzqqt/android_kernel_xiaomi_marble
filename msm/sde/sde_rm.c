@@ -24,6 +24,9 @@
 	(((h)->rsvp && ((h)->rsvp->enc_id != (r)->enc_id)) ||\
 		((h)->rsvp_nxt && ((h)->rsvp_nxt->enc_id != (r)->enc_id)))
 
+#define RESERVED_BY_CURRENT(h, r) \
+	(((h)->rsvp && ((h)->rsvp->enc_id == (r)->enc_id)))
+
 #define RM_RQ_LOCK(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_RESERVE_LOCK))
 #define RM_RQ_CLEAR(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_RESERVE_CLEAR))
 #define RM_RQ_DSPP(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_DSPP))
@@ -1848,12 +1851,39 @@ static int _sde_rm_make_ctl_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 	return ret;
 }
 
+/*
+ * Returns number of dsc hw blocks previously  owned by this encoder.
+ * Returns 0 if not found  or error
+ */
+static int _sde_rm_find_prev_dsc(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
+		u8 *prev_dsc, u32 max_cnt)
+{
+	int i = 0;
+	struct sde_rm_hw_iter iter_dsc;
+
+	if ((!prev_dsc) || (max_cnt < MAX_DATA_PATH_PER_DSIPLAY))
+		return 0;
+
+	sde_rm_init_hw_iter(&iter_dsc, 0, SDE_HW_BLK_DSC);
+
+	while (_sde_rm_get_hw_locked(rm, &iter_dsc)) {
+		if (RESERVED_BY_CURRENT(iter_dsc.blk, rsvp))
+			prev_dsc[i++] =  iter_dsc.blk->id;
+
+		if (i >= MAX_DATA_PATH_PER_DSIPLAY)
+		       return 0;
+	}
+
+	return i;
+}
+
 static int _sde_rm_make_dsc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 		struct sde_rm_requirements *reqs,
 		struct sde_splash_display *splash_display)
 {
 	int i;
 	u8 *hw_ids = NULL;
+	u8 prev_dsc[MAX_DATA_PATH_PER_DSIPLAY] = {0,};
 
 	/* Check if splash data provided dsc_ids */
 	if (splash_display) {
@@ -1866,7 +1896,16 @@ static int _sde_rm_make_dsc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 				i, splash_display->dsc_ids[i]);
 	}
 
-	return  _sde_rm_reserve_dsc(rm, rsvp, reqs, hw_ids);
+	/*
+	 * find if this encoder has previously allocated dsc hw blocks, use same dsc blocks
+	 * if found to avoid switching dsc encoders during each modeset, as currently we
+	 * dont have feasible way of decoupling previously owned dsc blocks by resetting
+	 * respective dsc encoders mux control and flush them from commit path
+	 */
+	if (!hw_ids && _sde_rm_find_prev_dsc(rm, rsvp, prev_dsc, MAX_DATA_PATH_PER_DSIPLAY))
+		return  _sde_rm_reserve_dsc(rm, rsvp, reqs, prev_dsc);
+	else
+		return  _sde_rm_reserve_dsc(rm, rsvp, reqs, hw_ids);
 
 }
 
