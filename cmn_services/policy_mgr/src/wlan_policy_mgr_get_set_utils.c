@@ -3440,7 +3440,9 @@ static bool policy_mgr_is_6g_channel_allowed(
 			WLAN_REG_IS_5GHZ_CH_FREQ(conn->freq);
 		if ((conn->mode == PM_SAP_MODE ||
 		     conn->mode == PM_P2P_GO_MODE) &&
-		    is_dfs && ch_freq != conn->freq) {
+		    is_dfs && (ch_freq != conn->freq &&
+			       !policy_mgr_are_sbs_chan(psoc, ch_freq,
+							conn->freq))) {
 			policy_mgr_rl_debug("don't allow MCC if SAP/GO on DFS channel");
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 			return false;
@@ -5252,7 +5254,8 @@ bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 			policy_mgr_debug("DBS unsupported, mcc and scc unsupported too, don't allow 2nd AP");
 			return false;
 		}
-		if (WLAN_REG_IS_SAME_BAND_FREQS(ch_freq, con_freq)) {
+		if (policy_mgr_are_2_freq_on_same_mac(psoc, ch_freq,
+						      con_freq)){
 			policy_mgr_debug("DBS supported, 2 SAP on same band, reject 2nd AP");
 			return false;
 		}
