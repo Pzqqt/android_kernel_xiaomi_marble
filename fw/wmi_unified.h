@@ -12911,7 +12911,13 @@ typedef enum {
     /* vdev param to configure the Smart Monitor features
      *  Bit : 0     - enable/disable Trigger frames
      *  Bit : 1     - enable/disable QOS frames
-     *  Bit : 2-31  - reserved
+     *  Bit : 2-4   - if 1, fwd beacon frames from connected AP
+     *              - if 2, fwd beacon frames from unconnected AP
+     *                during roam scan/host scan
+     *              - if 3, fwd beacons from unconnected AP during
+     *                roam scan/host scan and from connected AP
+     *              - if 4, don't fwd any beacon frame
+     *  Bit : 5-31  - reserved
      */
     WMI_VDEV_PARAM_SMART_MONITOR_CONFIG,     /* 0xA9  */
 
