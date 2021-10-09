@@ -790,9 +790,18 @@ static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
 	if (swrm->version >= SWRM_VERSION_1_7)
 		reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL_V1P7;
 
-	if (enable)
-		reg_val |= SWRM_COMP_FEATURE_CFG_PCM_EN_MASK;
-	swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, reg_val);
+	if (enable) {
+		if (swrm->pcm_enable_count == 0) {
+			reg_val |= SWRM_COMP_FEATURE_CFG_PCM_EN_MASK;
+			swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, reg_val);
+		}
+		swrm->pcm_enable_count++;
+	} else {
+		if (swrm->pcm_enable_count > 0)
+			swrm->pcm_enable_count--;
+		if (swrm->pcm_enable_count == 0)
+			swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, reg_val);
+	}
 	return 0;
 }
 
@@ -1673,6 +1682,8 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		}
 		clear_bit(DISABLE_PENDING, &swrm->port_req_pending);
 		swrm_cleanup_disabled_port_reqs(master);
+		/* reset enable_count to 0 in SSR if master is already down */
+		swrm->pcm_enable_count = 0;
 		if (!swrm_is_port_en(master)) {
 			dev_dbg(&master->dev, "%s: pm_runtime auto suspend triggered\n",
 				__func__);
@@ -2795,7 +2806,7 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_err(swrm->dev, "missing port mapping\n");
 		goto err_pdata_fail;
 	}
-
+	swrm->pcm_enable_count = 0;
 	map_length = map_size / (3 * sizeof(u32));
 	if (num_ports > SWR_MSTR_PORT_LEN) {
 		dev_err(&pdev->dev, "%s:invalid number of swr ports\n",
