@@ -1,5 +1,15 @@
 # Build audio kernel driver
-ifneq ($(TARGET_USES_QMAA),true)
+ifeq ($(TARGET_USES_QMAA),true)
+ifeq ($(TARGET_USES_QMAA_OVERRIDE_AUDIO),true)
+BUILD_AUDIO_MODULES := true
+else
+BUILD_AUDIO_MODULES := false
+endif
+else
+BUILD_AUDIO_MODULES := true
+endif
+
+ifeq ($(BUILD_AUDIO_MODULES),true)
 ifneq ($(TARGET_BOARD_AUTO),true)
 ifeq ($(call is-board-platform-in-list,$(TARGET_BOARD_PLATFORM)),true)
 BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/q6_notifier_dlkm.ko\
