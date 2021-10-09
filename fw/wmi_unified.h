@@ -34458,6 +34458,16 @@ typedef struct {
             ~(0xff << (((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8)) | \
             (((value)<<((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8))
 
+#define WMI_UNIFIED_AGC_GAIN_TBL_IDX_GET(tlv, chain_idx) \
+    ((A_UINT8) ((tlv)->agc_gain_tbl_index[(chain_idx)/WMI_CFR_AGC_GAIN_CHAINS_PER_U32] >> \
+        ((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8) & WMI_UNIFIED_AGC_GAIN_MASK)
+
+#define WMI_UNIFIED_AGC_GAIN_TBL_IDX_SET(tlv, chain_idx, value) \
+    (tlv)->agc_gain_tbl_index[chain_idx/WMI_CFR_AGC_GAIN_CHAINS_PER_U32] = \
+        (tlv)->agc_gain_tbl_index[chain_idx/WMI_CFR_AGC_GAIN_CHAINS_PER_U32] & \
+            ~(0xff << (((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8)) | \
+            (((value)<<((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8))
+
 typedef struct {
     /** TLV tag and len; tag equals
     * WMITLV_TAG_STRUC_wmi_peer_cfr_capture_event_phase_fixed_param */
@@ -34486,6 +34496,25 @@ typedef struct {
      * the AGC gain indices for individual chains.
      */
     A_UINT32 agc_gain_index[WMI_MAX_CHAINS/WMI_CFR_AGC_GAIN_CHAINS_PER_U32];
+
+    /*
+     * Each chain is provided with 8 bits within agc_gain_tbl_index.
+     * The value for each of these 8-bit portions is between 0 to 2:
+     *  0 : Default Gain Table
+     *  1 : Low RF Gain Table.
+     *      Low gain applied at RF as compared to gains applied when
+     *      gain_table _idx = 0 is selected.
+     *  2 : Very Low RF Gain Table.
+     *      It's similar to above with even lower gains applied.
+     *
+     * AoA should use the normal/regular GLUT, thus GAIN_TABLE_IDX
+     * should always be ‘0’. If it is not ‘0’, it means that there was
+     * out-of-band blocker causing the hardware to pick a different
+     * gain table. In that case, AoA result will not be reliable.
+     * Therefore, the recommendation is to stop doing AoA if
+     * GAIN_TABLE_IDX != 0 and indicate error.
+     */
+    A_UINT32 agc_gain_tbl_index[WMI_MAX_CHAINS/WMI_CFR_AGC_GAIN_CHAINS_PER_U32];
 } wmi_peer_cfr_capture_event_phase_fixed_param;
 
 #define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK      0x80000000
