@@ -36321,6 +36321,14 @@ typedef struct {
     A_UINT32 sbs_lower_band_end_freq;
 } wmi_dbs_or_sbs_cap_ext;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals wmi_cust_bdf_version_capabilities*/
+    /* Cust bdf Major version in bdf */
+    A_UINT32 cust_bdf_ver_major;
+    /* Cust bdf Minor version in bdf */
+    A_UINT32 cust_bdf_ver_minor;
+} wmi_cust_bdf_version_capabilities;
+
 
 
 /* ADD NEW DEFS HERE */
