@@ -2509,7 +2509,7 @@ QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev)
 	rx_sw_desc_num =
 	wlan_cfg_get_dp_soc_rx_sw_desc_num(soc->wlan_cfg_ctx);
 
-	rx_desc_pool->owner = DP_WBM2SW_RBM(soc->wbm_sw0_bm_id);
+	rx_desc_pool->owner = dp_rx_get_rx_bm_id(soc);
 	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
 	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
 	/* Disable monitor dest processing via frag */

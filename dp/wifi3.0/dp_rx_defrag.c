@@ -1257,6 +1257,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	qdf_nbuf_t nbuf_head;
 	struct rx_desc_pool *rx_desc_pool = NULL;
 	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(dst_ring_desc);
+	uint8_t rx_defrag_rbm_id = dp_rx_get_defrag_bm_id(soc);
 
 	/* do duplicate link desc address check */
 	dp_rx_link_desc_refill_duplicate_check(
@@ -1350,7 +1351,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	}
 
 	hal_rxdma_buff_addr_info_set(soc->hal_soc, msdu0, paddr, cookie,
-				     DP_DEFRAG_RBM(soc->wbm_sw0_bm_id));
+				     rx_defrag_rbm_id);
 
 	/* Lets fill entrance ring now !!! */
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
@@ -1362,7 +1363,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	}
 
 	dp_rx_reinject_ring_record_entry(soc, paddr, cookie,
-					 DP_DEFRAG_RBM(soc->wbm_sw0_bm_id));
+					 rx_defrag_rbm_id);
 	paddr = (uint64_t)buf_info.paddr;
 	/* buf addr */
 	hal_rxdma_buff_addr_info_set(soc->hal_soc, ent_ring_desc, paddr,

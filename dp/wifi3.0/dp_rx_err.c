@@ -2216,11 +2216,11 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 					    msdu_list.rbm[0]);
 		// TODO - BE- Check if the RBM is to be checked for all chips
 		if (qdf_unlikely((msdu_list.rbm[0] !=
-					DP_WBM2SW_RBM(soc->wbm_sw0_bm_id)) &&
+					dp_rx_get_rx_bm_id(soc)) &&
 				 (msdu_list.rbm[0] !=
 				  HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST) &&
 				 (msdu_list.rbm[0] !=
-					DP_DEFRAG_RBM(soc->wbm_sw0_bm_id)))) {
+					dp_rx_get_defrag_bm_id(soc)))) {
 			/* TODO */
 			/* Call appropriate handler */
 			if (!wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx)) {

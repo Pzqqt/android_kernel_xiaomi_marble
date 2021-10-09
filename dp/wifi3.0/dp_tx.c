@@ -4496,8 +4496,8 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 		goto release_tx_desc;
 	}
 	default:
-		dp_tx_comp_alert("Invalid HTT tx_status %d\n",
-				 tx_status);
+		dp_tx_comp_err("Invalid HTT tx_status %d\n",
+			       tx_status);
 		goto release_tx_desc;
 	}
 

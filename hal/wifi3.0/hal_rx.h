@@ -253,6 +253,8 @@ enum hal_rx_mpdu_desc_flags {
 #define HAL_RX_BUF_RBM_SW5_BM(sw0_bm_id)	(sw0_bm_id + 5)
 #define HAL_RX_BUF_RBM_SW6_BM(sw0_bm_id)	(sw0_bm_id + 6)
 
+#define HAL_RX_BUF_RBM_SW_BM(sw0_bm_id, wbm2sw_id)	(sw0_bm_id + wbm2sw_id)
+
 #define HAL_REO_DESTINATION_RING_MSDU_COUNT_OFFSET	0x8
 #define HAL_REO_DESTINATION_RING_MSDU_COUNT_LSB		0
 #define HAL_REO_DESTINATION_RING_MSDU_COUNT_MASK	0x000000ff

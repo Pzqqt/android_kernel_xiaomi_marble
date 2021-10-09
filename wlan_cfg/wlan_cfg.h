@@ -380,6 +380,7 @@ struct wlan_cfg_dp_soc_ctxt {
 #endif
 	uint32_t rx_mon_buf_ring_size;
 	uint32_t tx_mon_buf_ring_size;
+	uint8_t rx_rel_wbm2sw_ring_id;
 };
 
 /**
@@ -1938,4 +1939,23 @@ void wlan_cfg_set_host2txmon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
  */
 int wlan_cfg_get_host2txmon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 				      int context);
+
+/*
+ * wlan_cfg_get_rx_rel_ring_id() - get wbm2sw ring id for Rx release ring
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: wbm2sw ring id
+ */
+uint8_t
+wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_set_rx_rel_ring_id() - set wbm2sw ring id for Rx release ring
+ * @cfg: soc configuration context
+ *
+ * Return: None
+ */
+void
+wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+			    uint8_t wbm2sw_ring_id);
 #endif

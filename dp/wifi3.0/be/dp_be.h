@@ -69,6 +69,13 @@
 /* 4K aligned case, number of bits HW append for one PPT entry value */
 #define DP_CC_PPT_ENTRY_HW_APEND_BITS_4K_ALIGNED 12
 
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+/* WBM2SW ring id for rx release */
+#define WBM2SW_REL_ERR_RING_NUM 3
+#else
+/* WBM2SW ring id for rx release */
+#define WBM2SW_REL_ERR_RING_NUM 5
+#endif
 /**
  * struct dp_spt_page_desc - secondary page table page descriptors
  * @next: pointer to next linked SPT page Desc

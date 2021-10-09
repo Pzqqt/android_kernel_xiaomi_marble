@@ -76,8 +76,6 @@
 #define MAX_REO_DEST_RINGS 8
 #define MAX_TCL_DATA_RINGS 5
 
-#define WBM2SW_REL_ERR_RING_NUM 3
-
 #define MAX_RX_MAC_RINGS 2
 
 #endif /* __WLAN_INIT_CFG_H */

@@ -37,7 +37,6 @@ static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RIN
 	{3, 6, HAL_BE_WBM_SW5_BM_ID, 0},
 	{4, 7, HAL_BE_WBM_SW6_BM_ID, 0}
 };
-
 #else
 #define DP_TX_VDEV_ID_CHECK_ENABLE 1
 
@@ -52,6 +51,10 @@ static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RIN
 
 static void dp_soc_cfg_attach_be(struct dp_soc *soc)
 {
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	wlan_cfg_set_rx_rel_ring_id(soc_cfg_ctx, WBM2SW_REL_ERR_RING_NUM);
+
 	soc->wlan_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
 
 	/* this is used only when dmac mode is enabled */

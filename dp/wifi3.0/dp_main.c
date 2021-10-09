@@ -1167,11 +1167,15 @@ uint8_t *dp_srng_get_near_full_irq_mask(struct dp_soc *soc,
 					enum hal_ring_type ring_type,
 					int ring_num)
 {
+	struct wlan_cfg_dp_soc_ctxt *cfg_ctx = soc->wlan_cfg_ctx;
+	uint8_t wbm2_sw_rx_rel_ring_id;
 	uint8_t *nf_irq_mask = NULL;
 
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
-		if (ring_num != WBM2SW_REL_ERR_RING_NUM) {
+		wbm2_sw_rx_rel_ring_id =
+			wlan_cfg_get_rx_rel_ring_id(soc_cfg_ctx);
+		if (ring_num != wbm2_sw_rx_rel_ring_id) {
 			nf_irq_mask = &soc->wlan_cfg_ctx->
 					int_tx_ring_near_full_irq_mask[0];
 		}
@@ -1354,10 +1358,13 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 	struct wlan_cfg_dp_soc_ctxt *cfg_ctx = soc->wlan_cfg_ctx;
 	uint8_t *grp_mask, *nf_irq_mask = NULL;
 	bool nf_irq_enabled = false;
+	uint8_t wbm2_sw_rx_rel_ring_id;
 
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
-		if (ring_num == WBM2SW_REL_ERR_RING_NUM) {
+		wbm2_sw_rx_rel_ring_id =
+			wlan_cfg_get_rx_rel_ring_id(cfg_ctx);
+		if (ring_num == wbm2_sw_rx_rel_ring_id) {
 			/* dp_rx_wbm_err_process - soc->rx_rel_ring */
 			grp_mask = &cfg_ctx->int_rx_wbm_rel_ring_mask[0];
 			ring_num = 0;
@@ -1961,11 +1968,17 @@ void *dp_srng_aligned_mem_alloc_consistent(struct dp_soc *soc,
 					   uint32_t ring_type)
 
 {
-	return qdf_aligned_mem_alloc_consistent(soc->osdev, &srng->alloc_size,
-						&srng->base_vaddr_unaligned,
-						&srng->base_paddr_unaligned,
-						&srng->base_paddr_aligned,
-						DP_RING_BASE_ALIGN);
+	void *mem;
+
+	mem = qdf_aligned_mem_alloc_consistent(soc->osdev, &srng->alloc_size,
+					       &srng->base_vaddr_unaligned,
+					       &srng->base_paddr_unaligned,
+					       &srng->base_paddr_aligned,
+					       DP_RING_BASE_ALIGN);
+	if (mem)
+		qdf_mem_set(srng->base_vaddr_unaligned, 0, srng->alloc_size);
+
+	return mem;
 }
 
 static inline void dp_srng_mem_free_consistent(struct dp_soc *soc,
@@ -13070,6 +13083,7 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 {
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
 	uint8_t i;
+	uint8_t wbm2_sw_rx_rel_ring_id;
 
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
 
@@ -13125,9 +13139,10 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 			  WLAN_MD_DP_SRNG_REO_REINJECT,
 			  "reo_reinject_ring");
 
+	wbm2_sw_rx_rel_ring_id = wlan_cfg_get_rx_rel_ring_id(soc_cfg_ctx);
 	/* Rx release ring */
 	if (dp_srng_init(soc, &soc->rx_rel_ring, WBM2SW_RELEASE,
-			 WBM2SW_REL_ERR_RING_NUM, 0)) {
+			 wbm2_sw_rx_rel_ring_id, 0)) {
 		dp_init_err("%pK: dp_srng_init failed for rx_rel_ring", soc);
 		goto fail1;
 	}

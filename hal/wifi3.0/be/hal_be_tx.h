@@ -602,6 +602,35 @@ hal_tx_config_rbm_mapping_be(hal_soc_handle_t hal_soc_hdl,
  *
  * Return: void
  */
+#ifdef DP_TX_IMPLICIT_RBM_MAPPING
+static inline void
+hal_tx_desc_set_buf_addr_be(hal_soc_handle_t hal_soc_hdl, void *desc,
+			    dma_addr_t paddr, uint8_t rbm_id,
+			    uint32_t desc_id, uint8_t type)
+{
+	/* Set buffer_addr_info.buffer_addr_31_0 */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_ADDR_INFO_BUFFER_ADDR_31_0) =
+		HAL_TX_SM(TCL_DATA_CMD, BUF_ADDR_INFO_BUFFER_ADDR_31_0, paddr);
+
+	/* Set buffer_addr_info.buffer_addr_39_32 */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_ADDR_INFO_BUFFER_ADDR_39_32) |=
+		HAL_TX_SM(TCL_DATA_CMD, BUF_ADDR_INFO_BUFFER_ADDR_39_32,
+			  (((uint64_t)paddr) >> 32));
+
+	/* Set buffer_addr_info.sw_buffer_cookie = desc_id */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_ADDR_INFO_SW_BUFFER_COOKIE) |=
+		HAL_TX_SM(TCL_DATA_CMD, BUF_ADDR_INFO_SW_BUFFER_COOKIE,
+			  desc_id);
+
+	/* Set  Buffer or Ext Descriptor Type */
+	HAL_SET_FLD(desc, TCL_DATA_CMD,
+		    BUF_OR_EXT_DESC_TYPE) |=
+		HAL_TX_SM(TCL_DATA_CMD, BUF_OR_EXT_DESC_TYPE, type);
+}
+#else
 static inline void
 hal_tx_desc_set_buf_addr_be(hal_soc_handle_t hal_soc_hdl, void *desc,
 			    dma_addr_t paddr, uint8_t rbm_id,
@@ -635,6 +664,7 @@ hal_tx_desc_set_buf_addr_be(hal_soc_handle_t hal_soc_hdl, void *desc,
 		    BUF_OR_EXT_DESC_TYPE) |=
 		HAL_TX_SM(TCL_DATA_CMD, BUF_OR_EXT_DESC_TYPE, type);
 }
+#endif
 
 #ifdef HWIO_TCL_R0_VDEV_MCAST_PACKET_CTRL_MAP_n_VAL_SHFT
 

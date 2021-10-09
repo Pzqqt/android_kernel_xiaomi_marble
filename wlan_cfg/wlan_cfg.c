@@ -41,7 +41,7 @@
 #define WLAN_CFG_TX_RING_MASK_0 BIT(0)
 #define WLAN_CFG_TX_RING_MASK_1 BIT(1)
 #define WLAN_CFG_TX_RING_MASK_2 BIT(2)
-#define WLAN_CFG_TX_RING_MASK_3 0
+#define WLAN_CFG_TX_RING_MASK_3 BIT(3)
 #define WLAN_CFG_TX_RING_MASK_4 BIT(4)
 #define WLAN_CFG_TX_RING_MASK_5 BIT(5)
 #define WLAN_CFG_TX_RING_MASK_6 BIT(6)
@@ -2941,3 +2941,16 @@ void wlan_cfg_set_host2txmon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 }
 
 qdf_export_symbol(wlan_cfg_set_host2txmon_ring_mask);
+
+uint8_t
+wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_rel_wbm2sw_ring_id;
+}
+
+void
+wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+			    uint8_t wbm2sw_ring_id)
+{
+	cfg->rx_rel_wbm2sw_ring_id = wbm2sw_ring_id;
+}

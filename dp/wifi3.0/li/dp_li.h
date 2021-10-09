@@ -21,6 +21,9 @@
 #include <dp_types.h>
 #include <hal_li_tx.h>
 
+/* WBM2SW ring id for rx release */
+#define WBM2SW_REL_ERR_RING_NUM 3
+
 /**
  * struct dp_soc_li - Extended DP soc for LI targets
  * @soc: dp soc structure

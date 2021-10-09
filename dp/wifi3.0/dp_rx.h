@@ -39,9 +39,6 @@
 #define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW1_BM(sw0_bm_id)
 /* RBM value used for re-injecting defragmented packets into REO */
 #define DP_DEFRAG_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
-#else
-#define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
-#define DP_DEFRAG_RBM(sw0_bm_id)	DP_WBM2SW_RBM(sw0_bm_id)
 #endif /* QCA_HOST2FW_RXBUF_RING */
 
 #define RX_BUFFER_RESERVATION   0
@@ -2023,6 +2020,38 @@ dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
 		return true;
 
 	return false;
+}
+#endif
+
+#ifdef QCA_HOST2FW_RXBUF_RING
+static inline uint8_t
+dp_rx_get_defrag_bm_id(struct dp_soc *soc)
+{
+	return DP_DEFRAG_RBM(soc->wbm_sw0_bm_id);
+}
+
+static inline uint8_t
+dp_rx_get_rx_bm_id(struct dp_soc *soc)
+{
+	return DP_WBM2SW_RBM(soc->wbm_sw0_bm_id);
+}
+#else
+static inline uint8_t
+dp_rx_get_rx_bm_id(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *cfg_ctx = soc->wlan_cfg_ctx;
+	uint8_t wbm2_sw_rx_rel_ring_id;
+
+	wbm2_sw_rx_rel_ring_id = wlan_cfg_get_rx_rel_ring_id(cfg_ctx);
+
+	return HAL_RX_BUF_RBM_SW_BM(soc->wbm_sw0_bm_id,
+				    wbm2_sw_rx_rel_ring_id);
+}
+
+static inline uint8_t
+dp_rx_get_defrag_bm_id(struct dp_soc *soc)
+{
+	return dp_rx_get_rx_bm_id(soc);
 }
 #endif
 
