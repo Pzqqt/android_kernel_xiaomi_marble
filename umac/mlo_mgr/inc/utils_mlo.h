@@ -93,6 +93,29 @@ util_find_mlie(uint8_t *buf, qdf_size_t buflen, uint8_t **mlieseq,
 QDF_STATUS
 util_get_mlie_variant(uint8_t *mlieseq, qdf_size_t mlieseqlen,
 		      int *variant);
+
+/**
+ * util_get_bvmlie_mldmacaddr - Get the MLD MAC address from a given Basic
+ * variant Multi-Link element or element fragment sequence.
+ *
+ * @mlieseq: Starting address of the Multi-Link element or Multi-Link element
+ * fragment sequence
+ * @mlieseqlen: Total length of the Multi-Link element or Multi-Link element
+ * fragment sequence
+ * @mldmacaddrfound: Pointer to the location where a boolean status should be
+ * updated indicating whether the MLD MAC address was found or not. This should
+ * be ignored by the caller if the function returns error.
+ * @linkid: Pointer to the location where the MLD MAC address should be updated.
+ * This should be ignored by the caller if the function returns error, or if the
+ * function indicates that the MLD MAC address was not found.
+ *
+ * Return: QDF_STATUS_SUCCESS in the case of success, QDF_STATUS value giving
+ * the reason for error in the case of failure
+ */
+QDF_STATUS
+util_get_bvmlie_mldmacaddr(uint8_t *mlieseq, qdf_size_t mlieseqlen,
+			   bool *mldmacaddrfound,
+			   struct qdf_mac_addr *mldmacaddr);
 #else
 static inline QDF_STATUS
 util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
@@ -111,6 +134,14 @@ util_find_mlie(uint8_t *buf, qdf_size_t buflen, uint8_t **mlieseq,
 static inline QDF_STATUS
 util_get_mlie_variant(uint8_t *mlieseq, qdf_size_t mlieseqlen,
 		      int *variant)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+util_get_bvmlie_mldmacaddr(uint8_t *mlieseq, qdf_size_t mlieseqlen,
+			   bool *mldmacaddrfound,
+			   struct qdf_mac_addr *mldmacaddr)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

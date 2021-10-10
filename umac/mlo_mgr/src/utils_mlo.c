@@ -504,4 +504,58 @@ util_get_mlie_variant(uint8_t *mlieseq, qdf_size_t mlieseqlen,
 	*variant = var;
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+util_get_bvmlie_mldmacaddr(uint8_t *mlieseq, qdf_size_t mlieseqlen,
+			   bool *mldmacaddrfound,
+			   struct qdf_mac_addr *mldmacaddr)
+{
+	struct wlan_ie_multilink *mlie_fixed;
+	enum wlan_ml_variant variant;
+	uint16_t mlcontrol;
+	uint16_t presencebitmap;
+
+	if (!mlieseq || !mlieseqlen || !mldmacaddrfound || !mldmacaddr)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	*mldmacaddrfound = false;
+	qdf_mem_zero(mldmacaddr, sizeof(*mldmacaddr));
+
+	if (mlieseqlen < sizeof(struct wlan_ie_multilink))
+		return QDF_STATUS_E_INVAL;
+
+	mlie_fixed = (struct wlan_ie_multilink *)mlieseq;
+
+	if ((mlie_fixed->elem_id != WLAN_ELEMID_EXTN_ELEM) ||
+	    (mlie_fixed->elem_id_ext != WLAN_EXTN_ELEMID_MULTI_LINK))
+		return QDF_STATUS_E_INVAL;
+
+	mlcontrol = le16toh(mlie_fixed->mlcontrol);
+
+	variant = QDF_GET_BITS(mlcontrol, WLAN_ML_CTRL_TYPE_IDX,
+			       WLAN_ML_CTRL_TYPE_BITS);
+
+	if (variant != WLAN_ML_VARIANT_BASIC)
+		return QDF_STATUS_E_INVAL;
+
+	presencebitmap = QDF_GET_BITS(mlcontrol, WLAN_ML_CTRL_PBM_IDX,
+				      WLAN_ML_CTRL_PBM_BITS);
+
+	if (presencebitmap & WLAN_ML_BV_CTRL_PBM_MLDMACADDR_P) {
+		/* Common Info starts at mlieseq + sizeof(struct
+		 * wlan_ie_multilink). Check if there is sufficient space in
+		 * Common Info for the MLD MAC address.
+		 */
+		if ((sizeof(struct wlan_ie_multilink) + QDF_MAC_ADDR_SIZE) >
+				mlieseqlen)
+			return QDF_STATUS_E_PROTO;
+
+		*mldmacaddrfound = true;
+		qdf_mem_copy(mldmacaddr->bytes,
+			     mlieseq + sizeof(struct wlan_ie_multilink),
+			     QDF_MAC_ADDR_SIZE);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
