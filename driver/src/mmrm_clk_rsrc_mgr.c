@@ -107,3 +107,17 @@ int mmrm_clk_client_getval(struct mmrm_clk_mgr *clk_mgr,
 	return clk_mgr->clk_client_ops->clk_client_getval(
 		clk_mgr, client, val);
 }
+
+int mmrm_clk_print_enabled_client_info(struct mmrm_clk_mgr *clk_mgr,
+	char *buf, int sz)
+{
+	if (!clk_mgr || !clk_mgr->clk_client_ops ||
+		!clk_mgr->clk_client_ops->clk_print_enabled_client_info) {
+		d_mpr_e("%s: invalid clk mgr\n", __func__);
+		return -EINVAL;
+	}
+
+	return clk_mgr->clk_client_ops->clk_print_enabled_client_info(
+		clk_mgr, buf, sz);
+}
+
