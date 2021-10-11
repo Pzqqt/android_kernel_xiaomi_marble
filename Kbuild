@@ -1004,7 +1004,8 @@ OS_IF_OBJ += $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
 	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_connect_rsp.o \
 	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_disconnect_rsp.o \
 	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_req.o \
-	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_roam_rsp.o
+	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_roam_rsp.o \
+	     $(OS_IF_DIR)/linux/mlme/src/osif_vdev_mgr_util.o
 
 CONFIG_CRYPTO_COMPONENT := y
 
@@ -3721,6 +3722,7 @@ cppflags-$(CONFIG_FEATURE_ALIGN_STATS_FROM_DP) += -DFEATURE_ALIGN_STATS_FROM_DP
 cppflags-$(CONFIG_DP_RX_SPECIAL_FRAME_NEED) += -DDP_RX_SPECIAL_FRAME_NEED
 cppflags-$(CONFIG_FEATURE_STATS_EXT_V2) += -DFEATURE_STATS_EXT_V2
 cppflags-$(CONFIG_WLAN_FEATURE_CAL_FAILURE_TRIGGER) += -DWLAN_FEATURE_CAL_FAILURE_TRIGGER
+cppflags-$(CONFIG_WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE) += -DWLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 
 cppflags-$(CONFIG_VERBOSE_DEBUG) += -DENABLE_VERBOSE_DEBUG
 cppflags-$(CONFIG_RX_DESC_DEBUG_CHECK) += -DRX_DESC_DEBUG_CHECK

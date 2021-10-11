@@ -768,6 +768,13 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	hdd_debug("Changing MAC to " QDF_MAC_ADDR_FMT " of interface %s ",
 		  QDF_MAC_ADDR_REF(mac_addr.bytes),
 		  dev->name);
+
+	if (adapter->vdev) {
+		ret = hdd_dynamic_mac_address_set(hdd_ctx, adapter, mac_addr);
+		if (ret)
+			return ret;
+	}
+
 	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr, &mac_addr);
 	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);

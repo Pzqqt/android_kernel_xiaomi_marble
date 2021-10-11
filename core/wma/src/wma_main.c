@@ -4661,6 +4661,22 @@ wma_get_tdls_ax_support(struct wmi_unified *wmi_handle,
 {}
 #endif
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+static inline void wma_get_dynamic_vdev_macaddr_support(
+		  struct wmi_unified *wmi_handle, struct wma_tgt_services *cfg)
+{
+	cfg->dynamic_vdev_macaddr_support =
+		wmi_service_enabled(
+			wmi_handle,
+			wmi_service_dynamic_update_vdev_macaddr_support);
+}
+#else
+static inline void wma_get_dynamic_vdev_macaddr_support(
+		  struct wmi_unified *wmi_handle, struct wma_tgt_services *cfg)
+{
+}
+#endif
+
 /**
  * wma_update_target_services() - update target services from wma handle
  * @wmi_handle: Unified wmi handle
@@ -4804,6 +4820,8 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 
 	wma_get_igmp_offload_enable(wmi_handle, cfg);
 	wma_get_tdls_ax_support(wmi_handle, cfg);
+
+	wma_get_dynamic_vdev_macaddr_support(wmi_handle, cfg);
 }
 
 /**

@@ -1360,6 +1360,16 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+static
+QDF_STATUS vdevmgr_mlme_vdev_send_set_mac_addr(struct qdf_mac_addr mac_addr,
+					       struct qdf_mac_addr mld_addr,
+					       struct wlan_objmgr_vdev *vdev)
+{
+	return vdev_mgr_send_set_mac_addr(mac_addr, mld_addr, vdev);
+}
+#endif
+
 /**
  * ap_vdev_dfs_cac_timer_stop() – callback to stop cac timer
  * @vdev_mlme: vdev mlme object
@@ -1878,6 +1888,9 @@ static struct mlme_ext_ops ext_ops = {
 	.mlme_cm_ext_vdev_down_req_cb = cm_send_vdev_down_req,
 	.mlme_cm_ext_reassoc_req_cb = cm_handle_reassoc_req,
 	.mlme_cm_ext_roam_start_ind_cb = cm_handle_roam_start,
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	.mlme_vdev_send_set_mac_addr = vdevmgr_mlme_vdev_send_set_mac_addr,
+#endif
 };
 
 #ifdef WLAN_FEATURE_11BE_MLO

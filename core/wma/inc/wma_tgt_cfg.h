@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -51,6 +52,8 @@
  * @is_fw_therm_throt_supp: Get thermal throttling threshold
  * @igmp_offload_enable: Get igmp offload enable or disable
  * @en_11be: enable 11be
+ * @dynamic_vdev_macaddr_support: Dynamic update of vdev MAC addr is
+ *                                supported or not
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
@@ -96,6 +99,9 @@ struct wma_tgt_services {
 	bool igmp_offload_enable;
 #endif
 	bool en_11be;
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	bool dynamic_vdev_macaddr_support;
+#endif
 };
 
 /**

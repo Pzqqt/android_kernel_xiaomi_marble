@@ -1247,6 +1247,7 @@ struct hdd_context;
  *			progress, and any operation using rtnl lock inside
  *			the driver can be avoided/skipped.
  * @mon_adapter: hdd_adapter of monitor mode.
+ * @set_mac_addr_req_ctx: Set MAC address command request context
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1571,6 +1572,9 @@ struct hdd_adapter {
 #endif
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct hdd_mlo_adapter_info mlo_adapter_info;
+#endif
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	void *set_mac_addr_req_ctx;
 #endif
 };
 
@@ -2309,6 +2313,10 @@ struct hdd_context {
 	bool is_therm_stats_in_progress;
 #endif
 	qdf_atomic_t rx_skip_qdisc_chk_conc;
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	bool is_vdev_macaddr_dynamic_update_supported;
+#endif
 };
 
 /**
@@ -5147,6 +5155,60 @@ static inline void hdd_dp_ssr_unprotect(void)
 {
 	qdf_atomic_dec(&dp_protect_entry_count);
 }
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * hdd_dynamic_mac_address_set(): API to set MAC address, when interface
+ *                                is up.
+ * @hdd_context: Pointer to HDD context
+ * @adapter: Pointer to hdd_adapter
+ * @mac_addr: MAC address to set
+ *
+ * This API is used to update the current VDEV MAC address.
+ *
+ * Return: 0 for success. non zero valure for failure.
+ */
+int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				struct qdf_mac_addr mac_addr);
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
+/**
+ * hdd_update_vdev_mac_address() - Update VDEV MAC address dynamically
+ * @hdd_ctx: Pointer to HDD context
+ * @adapter: Pointer to HDD adapter
+ * @mac_addr: MAC address to be updated
+ *
+ * API to update VDEV MAC address during interface is in UP state.
+ *
+ * Return: 0 for Success. Error code for failure
+ */
+int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				struct qdf_mac_addr mac_addr);
+#else
+static inline int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
+					      struct hdd_adapter *adapter,
+					      struct qdf_mac_addr mac_addr)
+{
+	return hdd_dynamic_mac_address_set(hdd_ctx, adapter, mac_addr);
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
+#else
+static inline int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
+					      struct hdd_adapter *adapter,
+					      struct qdf_mac_addr mac_addr)
+{
+	return 0;
+}
+
+static inline int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
+					      struct hdd_adapter *adapter,
+					      struct qdf_mac_addr mac_addr)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE */
 
 #ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
 /**

@@ -2564,5 +2564,16 @@ QDF_STATUS wma_send_ani_level_request(tp_wma_handle wma_handle,
  * Return: QDF status
  */
 QDF_STATUS wma_vdev_detach(struct del_vdev_params *pdel_vdev_req_param);
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * wma_p2p_self_peer_remove() - Send P2P self peer delete command to FW
+ * @vdev: Object manager vdev
+ *
+ * Return: success if peer delete command sent to firmware, else failure.
+ */
+
+QDF_STATUS wma_p2p_self_peer_remove(struct wlan_objmgr_vdev *vdev);
+#endif
 #endif
 

@@ -576,6 +576,32 @@ error:
 	return qdf_status;
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS wma_p2p_self_peer_remove(struct wlan_objmgr_vdev *vdev)
+{
+	struct del_vdev_params *del_self_peer_req;
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	QDF_STATUS status;
+
+	if (!wma_handle)
+		return QDF_STATUS_E_INVAL;
+
+	del_self_peer_req = qdf_mem_malloc(sizeof(*del_self_peer_req));
+	if (!del_self_peer_req)
+		return QDF_STATUS_E_NOMEM;
+
+	del_self_peer_req->vdev = vdev;
+	del_self_peer_req->vdev_id = wlan_vdev_get_id(vdev);
+	qdf_mem_copy(del_self_peer_req->self_mac_addr,
+		     wlan_vdev_mlme_get_macaddr(vdev),
+		     QDF_MAC_ADDR_SIZE);
+
+	status = wma_self_peer_remove(wma_handle, del_self_peer_req);
+
+	return status;
+}
+#endif
+
 /**
  * wma_remove_objmgr_peer() - remove objmgr peer information from host driver
  * @wma: wma handle

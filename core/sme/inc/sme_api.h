@@ -4498,4 +4498,40 @@ QDF_STATUS sme_switch_channel(mac_handle_t mac_handle,
 			      struct qdf_mac_addr *bssid,
 			      qdf_freq_t chan_freq,
 			      enum phy_ch_width chan_width);
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * sme_send_set_mac_addr() - Send set MAC address command to FW
+ * @mac_addr: VDEV MAC address
+ * @mld_addr: VDEV MLD address
+ * @vdev: Pointer to object manager VDEV
+ *
+ * API to send set MAC address request command to FW
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_send_set_mac_addr(struct qdf_mac_addr mac_addr,
+				 struct qdf_mac_addr mld_addr,
+				 struct wlan_objmgr_vdev *vdev);
+
+/**
+ * sme_update_vdev_mac_addr() - Update VDEV MAC address
+ * @psoc: Pointer to PSOC structure
+ * @mac_addr: VDEV MAC address
+ * @vdev: Pointer to object manager VDEV
+ * @update_sta_self_peer: Flag to check self peer MAC address or not.
+ * @req_status: Status of the set MAC address request to the FW
+ *
+ * API to update MLME structures with new MAC address. This will be invoked
+ * after receiving success status form the FW for the set MAC address request
+ * command.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_update_vdev_mac_addr(struct wlan_objmgr_psoc *psoc,
+				    struct qdf_mac_addr mac_addr,
+				    struct wlan_objmgr_vdev *vdev,
+				    bool update_sta_self_peer, int req_status);
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */
