@@ -2188,21 +2188,21 @@ static int __init msm_drm_register(void)
 	DBG("init");
 	sde_rsc_rpmh_register();
 	sde_rsc_register();
+	msm_smmu_driver_init();
+	sde_wb_register();
+	platform_driver_register(&msm_platform_driver);
 	dsi_display_register();
 	msm_hdcp_register();
 	dp_display_register();
-	msm_smmu_driver_init();
 	msm_dsi_register();
 	msm_edp_register();
 	msm_hdmi_register();
-	sde_wb_register();
-	return platform_driver_register(&msm_platform_driver);
+	return 0;
 }
 
 static void __exit msm_drm_unregister(void)
 {
 	DBG("fini");
-	platform_driver_unregister(&msm_platform_driver);
 	sde_wb_unregister();
 	msm_hdmi_unregister();
 	msm_edp_unregister();
@@ -2214,6 +2214,7 @@ static void __exit msm_drm_unregister(void)
 	dp_display_unregister();
 	dsi_display_unregister();
 	sde_rsc_unregister();
+	platform_driver_unregister(&msm_platform_driver);
 }
 
 module_init(msm_drm_register);

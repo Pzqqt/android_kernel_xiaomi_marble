@@ -829,6 +829,31 @@ void sde_core_perf_crtc_release_bw(struct drm_crtc *crtc)
 	}
 }
 
+void sde_core_perf_crtc_reserve_res(struct drm_crtc *crtc, u64 reserve_rate)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_kms *kms;
+	struct msm_drm_private *priv;
+
+	if (!crtc) {
+		SDE_ERROR("invalid crtc\n");
+		return;
+	}
+
+	/* use current perf, which are the values voted */
+	sde_crtc = to_sde_crtc(crtc);
+	kms = _sde_crtc_get_kms(crtc);
+	priv = kms->dev->dev_private;
+
+	kms->perf.core_clk_reserve_rate = max(kms->perf.core_clk_reserve_rate, reserve_rate);
+	kms->perf.core_clk_reserve_rate = min(kms->perf.core_clk_reserve_rate,
+			kms->perf.max_core_clk_rate);
+	sde_power_clk_reserve_rate(&priv->phandle, kms->perf.clk_name,
+			kms->perf.core_clk_reserve_rate);
+
+	SDE_DEBUG("reserve clk:%llu\n", kms->perf.core_clk_reserve_rate);
+}
+
 static u64 _sde_core_perf_get_core_clk_rate(struct sde_kms *kms)
 {
 	u64 clk_rate = kms->perf.perf_tune.min_core_clk;

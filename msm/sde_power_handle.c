@@ -800,6 +800,32 @@ void sde_power_resource_deinit(struct platform_device *pdev,
 		sde_rsc_client_destroy(phandle->rsc_client);
 }
 
+static void sde_power_mmrm_reserve(struct sde_power_handle *phandle)
+{
+	int i;
+	struct dss_module_power *mp = &phandle->mp;
+	u64 rate = phandle->mmrm_reserve.clk_rate;
+
+	if (!phandle->mmrm_enable)
+		return;
+
+	for (i = 0; i < mp->num_clk; i++) {
+		if (!strcmp(mp->clk_config[i].clk_name, phandle->mmrm_reserve.clk_name)) {
+			if (mp->clk_config[i].max_rate)
+				rate = min(rate, (u64)mp->clk_config[i].max_rate);
+
+			mp->clk_config[i].rate = rate;
+			mp->clk_config[i].mmrm.flags =
+				MMRM_CLIENT_DATA_FLAG_RESERVE_ONLY;
+
+			SDE_ATRACE_BEGIN("sde_clk_set_rate");
+			msm_dss_single_clk_set_rate(&mp->clk_config[i]);
+			SDE_ATRACE_END("sde_clk_set_rate");
+			break;
+		}
+	}
+}
+
 int sde_power_scale_reg_bus(struct sde_power_handle *phandle,
 	u32 usecase_ndx, bool skip_lock)
 {
@@ -897,6 +923,7 @@ int sde_power_resource_enable(struct sde_power_handle *phandle, bool enable)
 		SDE_EVT32_VERBOSE(enable, SDE_EVTLOG_FUNC_CASE2);
 		sde_power_rsc_update(phandle, false);
 
+		sde_power_mmrm_reserve(phandle);
 		msm_dss_enable_clk(mp->clk_config, mp->num_clk, enable);
 
 		sde_power_scale_reg_bus(phandle, VOTE_INDEX_DISABLE, true);
@@ -934,6 +961,25 @@ vreg_err:
 	SDE_ATRACE_END("sde_power_resource_enable");
 	mutex_unlock(&phandle->phandle_lock);
 	return rc;
+}
+
+int sde_power_clk_reserve_rate(struct sde_power_handle *phandle, char *clock_name, u64 rate)
+{
+	if (!phandle) {
+		pr_err("invalid input power handle\n");
+		return -EINVAL;
+	} else if (!phandle->mmrm_enable) {
+		pr_debug("mmrm disabled, return early\n");
+		return 0;
+	}
+
+	mutex_lock(&phandle->phandle_lock);
+	phandle->mmrm_reserve.clk_rate = rate;
+	strlcpy(phandle->mmrm_reserve.clk_name, clock_name,
+			sizeof(phandle->mmrm_reserve.clk_name));
+	mutex_unlock(&phandle->phandle_lock);
+
+	return 0;
 }
 
 int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,

@@ -706,30 +706,21 @@ int dsi_conn_set_avr_step_info(struct dsi_panel *panel, void *info)
 	return 0;
 }
 
-int dsi_conn_get_qsync_min_fps(void *display_dsi, struct drm_connector_state *conn_state)
+int dsi_conn_get_qsync_min_fps(struct drm_connector_state *conn_state)
 {
-	struct dsi_display *display = (struct dsi_display *)display_dsi;
-	int rc = 0;
-	struct dsi_display_mode partial_dsi_mode, *dsi_mode;
-	struct msm_sub_mode new_sub_mode;
-	struct sde_connector_state *sde_conn_state;
-	struct drm_display_mode *drm_mode;
+	struct sde_connector_state *sde_conn_state = to_sde_connector_state(conn_state);
+	struct msm_display_mode *msm_mode;
+	struct dsi_display_mode_priv_info *priv_info;
 
-	if (!display || !display->drm_conn || !conn_state)
+	if (!sde_conn_state)
 		return -EINVAL;
 
-	sde_conn_state = to_sde_connector_state(conn_state);
-	drm_mode = sde_conn_state->msm_mode.base;
-	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
-	new_sub_mode.dsc_mode = sde_connector_get_property(conn_state, CONNECTOR_PROP_DSC_MODE);
+	msm_mode = &sde_conn_state->msm_mode;
+	if (!msm_mode || !msm_mode->private)
+		return -EINVAL;
 
-	rc = dsi_display_find_mode(display, &partial_dsi_mode, &new_sub_mode, &dsi_mode);
-	if (rc) {
-		DSI_ERR("invalid mode\n");
-		return rc;
-	}
-
-	return dsi_mode->timing.qsync_min_fps;
+	priv_info = (struct dsi_display_mode_priv_info *)(msm_mode->private);
+	return priv_info->qsync_min_fps;
 }
 
 int dsi_conn_set_info_blob(struct drm_connector *connector,

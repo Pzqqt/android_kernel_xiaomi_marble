@@ -212,7 +212,7 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 
 	size = min_t(size_t, count, SZ_2K);
 
-	if (size <= 4)
+	if (size < 4)
 		goto bail;
 
 	buf = kzalloc(size, GFP_KERNEL);
@@ -231,9 +231,10 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 		DP_ERR("offset kstrtoint error\n");
 		goto bail;
 	}
+	debug->dpcd_offset = offset;
 
 	size -= 4;
-	if (size == 0)
+	if (size < char_to_nib)
 		goto bail;
 
 	dpcd_size = size / char_to_nib;
@@ -277,7 +278,6 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 
 	dp_sim_write_dpcd_reg(debug->sim_bridge,
 			dpcd, dpcd_buf_index, offset);
-	debug->dpcd_offset = offset;
 	debug->dpcd_size = dpcd_buf_index;
 
 bail:
@@ -315,21 +315,27 @@ static ssize_t dp_debug_read_dpcd(struct file *file,
 
 	/*
 	 * In simulation mode, this function returns the last written DPCD node.
-	 * For a real monitor plug in, it always dumps the first 16 DPCD registers.
+	 * For a real monitor plug in, it dumps the first byte at the last written DPCD address
+	 * unless the address is 0, in which case the first 20 bytes are dumped
 	 */
 	if (debug->dp_debug.sim_mode) {
 		dp_sim_read_dpcd_reg(debug->sim_bridge, dpcd, debug->dpcd_size, debug->dpcd_offset);
 	} else {
-		debug->dpcd_size = sizeof(debug->panel->dpcd);
-		debug->dpcd_offset = 0;
-		memcpy(dpcd, debug->panel->dpcd, debug->dpcd_size);
+		if (debug->dpcd_offset) {
+			debug->dpcd_size = 1;
+			if (drm_dp_dpcd_read(debug->aux->drm_aux, debug->dpcd_offset, dpcd,
+					debug->dpcd_size) != 1)
+				goto bail;
+		} else {
+			debug->dpcd_size = sizeof(debug->panel->dpcd);
+			memcpy(dpcd, debug->panel->dpcd, debug->dpcd_size);
+		}
 	}
 
-	len += scnprintf(buf, buf_size, "%04x: ", debug->dpcd_offset);
+	len += scnprintf(buf + len , buf_size - len, "%04x: ", debug->dpcd_offset);
 
 	while (offset < debug->dpcd_size)
-		len += scnprintf(buf + len, buf_size - len, "%02x ",
-				dpcd[debug->dpcd_offset + offset++]);
+		len += scnprintf(buf + len, buf_size - len, "%02x ", dpcd[offset++]);
 
 	kfree(dpcd);
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_CORE_PERF_H_
@@ -78,6 +78,7 @@ struct sde_core_perf_tune {
  * @uidle_enabled: indicates if uidle is already enabled
  * @idle_sys_cache_enabled: override system cache enable state
  *                          for idle usecase
+ * @core_clk_reserve_rate: reserve core clk rate for built-in display
  */
 struct sde_core_perf {
 	struct drm_device *dev;
@@ -99,6 +100,7 @@ struct sde_core_perf {
 	bool llcc_active[SDE_SYS_CACHE_MAX];
 	bool uidle_enabled;
 	bool idle_sys_cache_enabled;
+	u64 core_clk_reserve_rate;
 };
 
 /**
@@ -130,6 +132,13 @@ void sde_core_perf_crtc_update(struct drm_crtc *crtc,
  * @crtc: Pointer to crtc
  */
 void sde_core_perf_crtc_release_bw(struct drm_crtc *crtc);
+
+/**
+ * sde_core_perf_reserve_res - reserve core clock resource for built-in displays.
+ * @crtc: Pointer to crtc
+ * @reserve_rate: core clock rate for built-in display
+ */
+void sde_core_perf_crtc_reserve_res(struct drm_crtc *crtc, u64 reserve_rate);
 
 /**
  * sde_core_perf_crtc_update_uidle - attempts to enable uidle of the given crtc

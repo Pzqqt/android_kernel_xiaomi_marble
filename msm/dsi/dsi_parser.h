@@ -92,7 +92,7 @@ static inline int dsi_parser_read_u32(const struct device_node *np,
 	return -ENODEV;
 }
 
-int dsi_parser_read_u32_index(const struct device_node *np,
+static inline int dsi_parser_read_u32_index(const struct device_node *np,
 			const char *propname, u32 index, u32 *out_value)
 {
 	return -ENODEV;

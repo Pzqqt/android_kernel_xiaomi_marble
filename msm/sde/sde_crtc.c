@@ -3979,7 +3979,7 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 			continue;
 
 		if (sde_encoder_get_intf_mode(encoder) == INTF_MODE_VIDEO)
-			sde_encoder_kickoff(encoder, false, true);
+			sde_encoder_kickoff(encoder, true);
 	}
 
 	/* panic the device if VBIF is not in good state */
@@ -4086,7 +4086,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		if (encoder->crtc != crtc)
 			continue;
 
-		sde_encoder_kickoff(encoder, false, true);
+		sde_encoder_kickoff(encoder, true);
 	}
 	sde_crtc->kickoff_in_progress = false;
 
@@ -4158,6 +4158,43 @@ static int _sde_crtc_vblank_enable(
 	}
 
 	return 0;
+}
+
+static void _sde_crtc_reserve_resource(struct drm_crtc *crtc, struct drm_connector *conn)
+{
+	u32 min_transfer_time = 0, lm_count = 1;
+	u64 mode_clock_hz = 0, updated_fps = 0, topology_id;
+	struct drm_encoder *encoder;
+
+	if (!crtc || !conn)
+		return;
+
+	encoder = conn->state->best_encoder;
+	if (!sde_encoder_is_built_in_display(encoder))
+		return;
+
+	if (sde_encoder_check_curr_mode(encoder, MSM_DISPLAY_CMD_MODE))
+		sde_encoder_get_transfer_time(encoder, &min_transfer_time);
+
+	if (min_transfer_time)
+		updated_fps = DIV_ROUND_UP(1000000, min_transfer_time);
+	else
+		updated_fps = drm_mode_vrefresh(&crtc->mode);
+
+	topology_id = sde_connector_get_topology_name(conn);
+	if (TOPOLOGY_DUALPIPE_MODE(topology_id))
+		lm_count = 2;
+	else if (TOPOLOGY_QUADPIPE_MODE(topology_id))
+		lm_count = 4;
+
+	/* mode clock = [(h * v * fps * 1.05) / (num_lm)] */
+	mode_clock_hz = mult_frac(crtc->mode.htotal * crtc->mode.vtotal * updated_fps, 105, 100);
+	mode_clock_hz = div_u64(mode_clock_hz, lm_count);
+	SDE_DEBUG("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%u\n",
+			crtc->mode.name, crtc->mode.htotal, crtc->mode.vtotal,
+			updated_fps, lm_count, mode_clock_hz);
+
+	sde_core_perf_crtc_reserve_res(crtc, mode_clock_hz);
 }
 
 /**
@@ -4666,8 +4703,10 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 		sde_crtc_handle_power_event, crtc, sde_crtc->name);
 
 	/* Enable ESD thread */
-	for (i = 0; i < cstate->num_connectors; i++)
+	for (i = 0; i < cstate->num_connectors; i++) {
 		sde_connector_schedule_status_work(cstate->connectors[i], true);
+		_sde_crtc_reserve_resource(crtc, cstate->connectors[i]);
+	}
 }
 
 /* no input validation - caller API has all the checks */
@@ -7061,7 +7100,7 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 		sde_plane_ctl_flush(plane, ctl, true);
 
 	/* kickoff encoder and wait for VBLANK */
-	sde_encoder_kickoff(drm_enc, false, false);
+	sde_encoder_kickoff(drm_enc, false);
 	sde_encoder_wait_for_event(drm_enc, MSM_ENC_VBLANK);
 
 	SDE_EVT32(DRMID(crtc), SDE_EVTLOG_FUNC_EXIT);

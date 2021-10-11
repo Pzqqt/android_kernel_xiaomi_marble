@@ -43,7 +43,7 @@ enum dp_altmode_pin_assignment {
 
 static int dp_altmode_set_usb_dp_mode(struct dp_altmode_private *altmode)
 {
-	int rc;
+	int rc = 0;
 	struct device_node *np;
 	struct device_node *usb_node;
 	struct platform_device *usb_pdev;
@@ -71,7 +71,7 @@ static int dp_altmode_set_usb_dp_mode(struct dp_altmode_private *altmode)
 
 	while (timeout) {
 		rc = dwc3_msm_set_dp_mode(&usb_pdev->dev, altmode->connected, altmode->lanes);
-		if (rc != -EBUSY)
+		if (rc != -EBUSY && rc != -EAGAIN)
 			break;
 
 		DP_WARN("USB busy, retry\n");

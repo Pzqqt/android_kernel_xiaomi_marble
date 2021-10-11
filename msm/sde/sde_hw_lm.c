@@ -337,6 +337,8 @@ static int sde_hw_lm_setup_noise_layer(struct sde_hw_mixer *ctx,
 	SDE_REG_WRITE(c, LM_BLEND0_CONST_ALPHA + stage_off, alpha);
 	val = ctx->cfg.out_width | (ctx->cfg.out_height << 16);
 	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_SIZE + stage_off, val);
+	/* partial update is not supported in noise layer */
+	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_XY + stage_off, 0);
 	val = SDE_REG_READ(c, LM_OP_MODE);
 	val = (1 << cfg->noise_blend_stage) | val;
 	SDE_REG_WRITE(c, LM_OP_MODE, val);
@@ -359,6 +361,8 @@ static int sde_hw_lm_setup_noise_layer(struct sde_hw_mixer *ctx,
 	SDE_REG_WRITE(c, LM_OP_MODE, val);
 	val = ctx->cfg.out_width | (ctx->cfg.out_height << 16);
 	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_SIZE + stage_off, val);
+	/* partial update is not supported in noise layer */
+	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_XY + stage_off, 0);
 
 	val = 1;
 	if (mixer->right_mixer)

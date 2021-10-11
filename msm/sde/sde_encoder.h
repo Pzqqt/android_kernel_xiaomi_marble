@@ -325,12 +325,9 @@ void sde_encoder_trigger_kickoff_pending(struct drm_encoder *encoder);
  * sde_encoder_kickoff - trigger a double buffer flip of the ctl path
  *	(i.e. ctl flush and start) immediately.
  * @encoder:	encoder pointer
- * @is_error:	whether the current commit needs to be aborted and replaced
- *		with a 'safe' commit
  * @config_changed: if true new configuration is applied on the control path
  */
-void sde_encoder_kickoff(struct drm_encoder *encoder, bool is_error,
-		bool config_changed);
+void sde_encoder_kickoff(struct drm_encoder *encoder, bool config_changed);
 
 /**
  * sde_encoder_wait_for_event - Waits for encoder events
@@ -515,15 +512,23 @@ bool sde_encoder_is_cwb_disabling(struct drm_encoder *drm_enc,
  * sde_encoder_is_primary_display - checks if underlying display is primary
  *     display or not.
  * @drm_enc:    Pointer to drm encoder structure
- * @Return:     true if it is primary display. false if secondary display
+ * @Return:     true if it is primary display. false otherwise
  */
 bool sde_encoder_is_primary_display(struct drm_encoder *enc);
+
+/**
+ * sde_encoder_is_built_in_display - checks if underlying display is built in
+ *     display or not.
+ * @drm_enc:    Pointer to drm encoder structure
+ * @Return:     true if it is a built in display. false otherwise
+ */
+bool sde_encoder_is_built_in_display(struct drm_encoder *enc);
 
 /**
  * sde_encoder_is_dsi_display - checks if underlying display is DSI
  *     display or not.
  * @drm_enc:    Pointer to drm encoder structure
- * @Return:     true if it is primary display. false if secondary display
+ * @Return:     true if it is a dsi display. false otherwise
  */
 bool sde_encoder_is_dsi_display(struct drm_encoder *enc);
 
