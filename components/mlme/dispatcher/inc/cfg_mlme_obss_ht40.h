@@ -248,7 +248,7 @@
  * bss_color_collision_det_sta - Enables BSS color collision detection in STA
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini used to enable or disable the BSS color collision detection in
  * STA mode if obss_color_collision_offload is enabled.
@@ -261,7 +261,7 @@
  */
 #define CFG_BSS_CLR_COLLISION_DETCN_STA CFG_INI_BOOL( \
 		"bss_color_collision_det_sta", \
-		0, \
+		1, \
 		"BSS color collision detection in STA")
 
 #define CFG_OBSS_HT40_ALL \
