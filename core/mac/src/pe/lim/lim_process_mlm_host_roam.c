@@ -43,6 +43,7 @@
 #include "wma_if.h"
 #include "rrm_api.h"
 #include "wma.h"
+#include <lim_mlo.h>
 
 static void lim_handle_sme_reaasoc_result(struct mac_context *, tSirResultCodes,
 		uint16_t, struct pe_session *);
@@ -187,6 +188,7 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 				eLIM_JOIN_FAILURE;
 			sta->mlmStaContext.resultCode = resultCode;
 			sta->mlmStaContext.protStatusCode = protStatusCode;
+			lim_mlo_notify_peer_disconn(pe_session, sta);
 			lim_cleanup_rx_path(mac, sta, pe_session, true);
 			/* Cleanup if add bss failed */
 			if (pe_session->add_bss_failed) {

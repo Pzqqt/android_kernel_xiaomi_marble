@@ -45,6 +45,7 @@
 #include "wlan_mlme_twt_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_connectivity_logging.h"
+#include <lim_mlo.h>
 
 /**
  * lim_update_stads_htcap() - Updates station Descriptor HT capability
@@ -1254,6 +1255,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			session_entry->gUapsdPerAcDeliveryEnableMask = 0;
 			session_entry->gUapsdPerAcTriggerEnableMask = 0;
 
+			lim_mlo_notify_peer_disconn(session_entry, sta_ds);
 			if (lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry,
 						true) != QDF_STATUS_SUCCESS) {
 				pe_err("Could not cleanup the rx path");

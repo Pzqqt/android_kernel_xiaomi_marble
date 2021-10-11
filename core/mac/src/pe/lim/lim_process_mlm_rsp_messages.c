@@ -1291,6 +1291,7 @@ QDF_STATUS lim_sta_handle_connect_fail(join_params *param)
 		 * make sure PE is sending eWNI_SME_JOIN_RSP
 		 * to SME
 		 */
+		lim_mlo_notify_peer_disconn(session, sta_ds);
 		lim_cleanup_rx_path(mac_ctx, sta_ds, session, true);
 		qdf_mem_free(session->lim_join_req);
 		session->lim_join_req = NULL;
@@ -1302,6 +1303,8 @@ QDF_STATUS lim_sta_handle_connect_fail(join_params *param)
 			goto error;
 		}
 		return QDF_STATUS_SUCCESS;
+	} else {
+		lim_mlo_sta_notify_peer_disconn(session);
 	}
 	qdf_mem_free(session->lim_join_req);
 	session->lim_join_req = NULL;

@@ -1926,6 +1926,7 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 	 */
 	if (peer_mld_addr &&
 	    !qdf_is_macaddr_zero((struct qdf_mac_addr *)peer_mld_addr)) {
+		wlan_peer_mlme_flag_ext_set(obj_peer, WLAN_PEER_FEXT_MLO);
 		wma_debug("peer " QDF_MAC_ADDR_FMT "is_assoc_peer%d mld mac " QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(peer_addr), is_assoc_peer,
 			  QDF_MAC_ADDR_REF(peer_mld_addr));

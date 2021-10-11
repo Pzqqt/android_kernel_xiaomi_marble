@@ -79,6 +79,7 @@
 #include <qdf_hang_event_notifier.h>
 #include <qdf_notifier.h>
 #include "wlan_pkt_capture_ucfg_api.h"
+#include <lim_mlo.h>
 
 struct pe_hang_event_fixed_param {
 	uint16_t tlv_header;
@@ -2664,6 +2665,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 	session_ptr->limSmeState = eLIM_SME_IDLE_STATE;
+	lim_mlo_notify_peer_disconn(session_ptr, curr_sta_ds);
 	lim_cleanup_rx_path(mac_ctx, curr_sta_ds, session_ptr, false);
 	lim_delete_dph_hash_entry(mac_ctx, curr_sta_ds->staAddr, aid,
 				  session_ptr);
