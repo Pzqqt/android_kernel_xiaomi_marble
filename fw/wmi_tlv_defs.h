@@ -1207,6 +1207,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_dbs_or_sbs_cap_ext,
     WMITLV_TAG_STRUC_wmi_roam_set_param_cmd_fixed_param,
     WMITLV_TAG_STRUC_cust_bdf_version_capabilities,
+    WMITLV_TAG_STRUC_wmi_pdev_fips_extend_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_fips_extend_cmd_init_params,
+    WMITLV_TAG_STRUC_wmi_pdev_fips_extend_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1685,6 +1689,8 @@ typedef enum {
     OP(WMI_VDEV_SET_MU_SNIF_CMDID) \
     OP(WMI_VDEV_ICMP_OFFLOAD_CMDID) \
     OP(WMI_ROAM_SET_PARAM_CMDID) \
+    OP(WMI_PDEV_FIPS_EXTEND_CMDID) \
+    OP(WMI_PDEV_FIPS_MODE_SET_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1957,6 +1963,7 @@ typedef enum {
     OP(WMI_AFC_EVENTID) \
     OP(WMI_TWT_ACK_EVENTID) \
     OP(WMI_PDEV_AOA_PHASEDELTA_EVENTID) \
+    OP(WMI_PDEV_FIPS_EXTEND_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4067,6 +4074,18 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_MIMOGAIN_TABLE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FIPS_CMDID);
 
+/* FIPS extended cmd */
+#define WMITLV_TABLE_WMI_PDEV_FIPS_EXTEND_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_fips_extend_cmd_fixed_param, wmi_pdev_fips_extend_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_fips_extend_cmd_init_params, cmd_params, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FIPS_EXTEND_CMDID);
+
+/* FIPS mode set cmd */
+#define WMITLV_TABLE_WMI_PDEV_FIPS_MODE_SET_CMDID(id,op,buf,len) \
+     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param, wmi_pdev_fips_mode_set_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FIPS_MODE_SET_CMDID);
+
 /* get CCK ANI level */
 #define WMITLV_TABLE_WMI_PDEV_GET_ANI_CCK_CONFIG_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_ani_cck_config_cmd_fixed_param, wmi_pdev_get_ani_cck_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -5943,6 +5962,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_AFC_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_fips_event_fixed_param, wmi_pdev_fips_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)   \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FIPS_EVENTID);
+
+/* FIPS event */
+#define WMITLV_TABLE_WMI_PDEV_FIPS_EXTEND_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_fips_extend_event_fixed_param, wmi_pdev_fips_extend_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FIPS_EXTEND_EVENTID);
 
 #define WMITLV_TABLE_WMI_PDEV_CHANNEL_HOPPING_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_channel_hopping_event_fixed_param, wmi_pdev_channel_hopping_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)

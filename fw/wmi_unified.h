@@ -465,6 +465,8 @@ typedef enum {
     WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID,
     /* Set bios interface table */
     WMI_PDEV_SET_BIOS_INTERFACE_CMDID,
+    WMI_PDEV_FIPS_EXTEND_CMDID,
+    WMI_PDEV_FIPS_MODE_SET_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1553,6 +1555,8 @@ typedef enum {
 
     /* Event to get AOA phasedelta values from HALPHY */
     WMI_PDEV_AOA_PHASEDELTA_EVENTID,
+
+    WMI_PDEV_FIPS_EXTEND_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -26086,6 +26090,16 @@ typedef struct wmi_bpf_get_vdev_work_memory_resp_evt_s {
 #define FIPS_ENGINE_AES_MIC     1
 #define FIPS_ERROR_OPER_TIMEOUT 1
 
+typedef enum {
+    WMI_FIPS_KEY_CIPHER_CCM,
+    WMI_FIPS_KEY_CIPHER_GCM
+} wmi_fips_key_cipher;
+
+typedef enum {
+    WMI_FIPS_DISABLE,
+    WMI_FIPS_ENABLE
+} wmi_fips_mode_set;
+
 /* WMI_PDEV_FIPS_CMDID */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_fips_cmd_fixed_param */
@@ -26108,6 +26122,47 @@ typedef struct {
  * A_UINT32 data[1]; <-- In Data (keep this in the end)
  */
 } wmi_pdev_fips_cmd_fixed_param;
+
+#define MAX_IVNONCE_LEN_FIPS_EXTEND 16
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_fips_extend_cmd_init_params */
+
+    A_UINT32 fips_cmd;            /* FIPS_ENCRYPT or FIPS_DECRYPT */
+    A_UINT32 key_cipher;          /* CCM or GCM */
+
+    A_UINT32 key_len;             /* FIPS_KEY_LENGTH_128 or FIPS_KEY_LENGTH_256: 16/32 bytes */
+
+    A_UINT8 key[WMI_MAX_KEY_LEN]; /* Key if this message is sent by a big-endian host, the byte-ordering of this array needs to be maintained (by manually byte-swapping this array's contents to make up for the automatic byte-swapping done by the copy engine). */
+    A_UINT32 nonce_iv_len;
+    A_UINT8 nonce_iv[MAX_IVNONCE_LEN_FIPS_EXTEND]; /* if this message is sent by a big-endian host, the byte-ordering of this array needs to be maintained (by manually byte-swapping this array's contents to make up for the automatic byte-swapping done by the copy engine).*/
+    A_UINT32 tag_len;        /* 8 or 16  */
+    A_UINT32 aad_len;
+    A_UINT32 payload_len;/* Plaintext length */
+} wmi_fips_extend_cmd_init_params;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_fips_extend_cmd_fixed_param */
+
+    A_UINT32 pdev_id;
+    A_UINT32 fips_cookie;        /* Cookie value to identify test vector */
+    A_UINT32 frag_idx;           /* Fragment Number */
+    A_UINT32 more_bit;           /* Set to 0 for last fragment number */
+    A_UINT32 data_len;            /* data length ()*/
+
+/*
+ * Following this structure are the TLVs:
+ *     wmi_fips_extend_cmd_init_params cmd_params
+ *     A_UINT32 data[1]; <-- In Data ((aad, payload in order))
+ */
+} wmi_pdev_fips_extend_cmd_fixed_param;
+
+typedef struct {
+     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_fips_extend_cmd_fixed_param */
+
+     A_UINT32 pdev_id;
+     A_UINT32 fips_mode_set;        /*FIPS_MODE_ENABLE -Enable, FIPS_MODE_DISABLE -disable  */
+} wmi_pdev_fips_mode_set_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_smart_ant_enable_cmd_fixed_param */
@@ -26972,6 +27027,20 @@ typedef struct {
  *    A_UINT32 data[1]; <-- Out Data (keep this in the end)
  */
 } wmi_pdev_fips_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_fips_event_fixed_param */
+    A_UINT32 pdev_id;
+    A_UINT32 fips_cookie;    /* Cookie value to identify test vector */
+    A_UINT32 cmd_frag_idx;   /* Fragment Number */
+    A_UINT32 more_bit;
+    A_UINT32 error_status; /* Error status: 0 (no err), 1, or OPER_TIMEOUT */
+    A_UINT32 data_len;     /* Data length CTlen+ TAGlen*/
+/*
+ * Following this structure is the TLV:
+ *    A_UINT32 data[1]; <-- Out Data (ciphertext+tag)
+ */
+} wmi_pdev_fips_extend_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_channel_hopping_event_fixed_param */
@@ -29766,6 +29835,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SET_MU_SNIF_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_ICMP_OFFLOAD_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_SET_PARAM_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_FIPS_EXTEND_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_FIPS_MODE_SET_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -34514,7 +34585,7 @@ typedef struct {
      *      It's similar to above with even lower gains applied.
      *
      * AoA should use the normal/regular GLUT, thus GAIN_TABLE_IDX
-     * should always be ‘0’. If it is not ‘0’, it means that there was
+     * should always be 0. If it is not 0, it means that there was
      * out-of-band blocker causing the hardware to pick a different
      * gain table. In that case, AoA result will not be reliable.
      * Therefore, the recommendation is to stop doing AoA if
