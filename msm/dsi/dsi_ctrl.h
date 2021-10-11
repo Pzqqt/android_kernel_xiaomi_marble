@@ -920,4 +920,8 @@ int dsi_ctrl_wait4dynamic_refresh_done(struct dsi_ctrl *ctrl);
  */
 int dsi_ctrl_get_io_resources(struct msm_io_res *io_res);
 
+/**
+ * dsi_ctrl_toggle_error_interrupt_status() - Toggles error interrupt status
+ */
+void dsi_ctrl_toggle_error_interrupt_status(struct dsi_ctrl *dsi_ctrl, bool enable);
 #endif /* _DSI_CTRL_H_ */
