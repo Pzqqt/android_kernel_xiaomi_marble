@@ -1,4 +1,5 @@
 /* Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -16,16 +17,68 @@
 #include <linux/skbuff.h>
 #include <linux/ipa.h>
 #include <linux/if_ether.h>
+#include <linux/interrupt.h>
+#include <linux/version.h>
 #include "rmnet_ll.h"
 #include "rmnet_ll_core.h"
 
+#define IPA_RMNET_LL_RECEIVE 1
+#define IPA_RMNET_LL_FLOW_EVT 2
+
+#define MAX_Q_LEN 1000
+
 static struct rmnet_ll_endpoint *rmnet_ll_ipa_ep;
+static struct sk_buff_head tx_pending_list;
+extern spinlock_t rmnet_ll_tx_lock;
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
+static void rmnet_ll_ipa_tx_pending(unsigned long data);
+DECLARE_TASKLET(tx_pending_task, rmnet_ll_ipa_tx_pending, 0);
+static void rmnet_ll_ipa_tx_pending(unsigned long data)
+#else
+static void rmnet_ll_ipa_tx_pending(struct tasklet_struct *t);
+DECLARE_TASKLET(tx_pending_task, rmnet_ll_ipa_tx_pending);
+static void rmnet_ll_ipa_tx_pending(struct tasklet_struct *t)
+#endif
+{
+	struct rmnet_ll_stats *stats = rmnet_ll_get_stats();
+	struct sk_buff *skb;
+	int rc;
+
+	spin_lock_bh(&rmnet_ll_tx_lock);
+
+	while ((skb = __skb_dequeue(&tx_pending_list))) {
+		rc = ipa_rmnet_ll_xmit(skb);
+		if (rc == -EAGAIN) {
+			stats->tx_disabled++;
+			__skb_queue_head(&tx_pending_list, skb);
+			break;
+		}
+		if (rc >= 0)
+			stats->tx_fc_sent++;
+		else
+			stats->tx_fc_err++;
+	}
+
+	spin_unlock_bh(&rmnet_ll_tx_lock);
+}
 
 static void rmnet_ll_ipa_rx(void *arg, void *rx_data)
 {
-	struct rmnet_ll_endpoint *ll_ep = *((struct rmnet_ll_endpoint **)arg);
+	struct rmnet_ll_endpoint *ll_ep = rmnet_ll_ipa_ep;
 	struct rmnet_ll_stats *stats = rmnet_ll_get_stats();
 	struct sk_buff *skb, *tmp;
+
+	if (arg == (void *)(uintptr_t)(IPA_RMNET_LL_FLOW_EVT)) {
+		stats->tx_enabled++;
+		tasklet_schedule(&tx_pending_task);
+		return;
+	}
+
+	if (unlikely(arg != (void *)(uintptr_t)(IPA_RMNET_LL_RECEIVE))) {
+		pr_err("%s: invalid arg %u\n", __func__, (uintptr_t)arg);
+		return;
+	}
 
 	skb = rx_data;
 	/* Odds are IPA does this, but just to be safe */
@@ -67,10 +120,16 @@ static void rmnet_ll_ipa_probe(void *arg)
 static void rmnet_ll_ipa_remove(void *arg)
 {
 	struct rmnet_ll_endpoint **ll_ep = arg;
+	struct sk_buff *skb;
 
 	dev_put((*ll_ep)->phys_dev);
 	kfree(*ll_ep);
 	*ll_ep = NULL;
+
+	spin_lock_bh(&rmnet_ll_tx_lock);
+	while ((skb = __skb_dequeue(&tx_pending_list)))
+		kfree_skb(skb);
+	spin_unlock_bh(&rmnet_ll_tx_lock);
 }
 
 static void rmnet_ll_ipa_ready(void * __unused)
@@ -90,17 +149,45 @@ static void rmnet_ll_ipa_ready(void * __unused)
 
 static int rmnet_ll_ipa_tx(struct sk_buff *skb)
 {
+	struct rmnet_ll_stats *stats = rmnet_ll_get_stats();
+	int rc;
+
 	if (!rmnet_ll_ipa_ep)
 		return -ENODEV;
 
+	if (!skb_queue_empty(&tx_pending_list))
+		goto queue_skb;
+
+	rc = ipa_rmnet_ll_xmit(skb);
+
+	/* rc >=0: success, return number of free descriptors left */
+	if (rc >= 0)
+		return 0;
+
 	/* IPA handles freeing the SKB on failure */
-	return ipa_rmnet_ll_xmit(skb);
+	if (rc != -EAGAIN)
+		return rc;
+
+	stats->tx_disabled++;
+
+queue_skb:
+	/* Flow controlled */
+	if (skb_queue_len(&tx_pending_list) >= MAX_Q_LEN) {
+		kfree_skb(skb);
+		return -ENOMEM;
+	}
+
+	__skb_queue_tail(&tx_pending_list, skb);
+	stats->tx_fc_queued++;
+
+	return 0;
 }
 
 static int rmnet_ll_ipa_init(void)
 {
 	int rc;
 
+	__skb_queue_head_init(&tx_pending_list);
 	rc = ipa_register_ipa_ready_cb(rmnet_ll_ipa_ready, NULL);
 	if (rc == -EEXIST) {
 		/* IPA is already up. Call it ourselves, since they don't */

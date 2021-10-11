@@ -1,4 +1,5 @@
 /* Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,7 +24,7 @@
 
 static struct rmnet_ll_stats rmnet_ll_stats;
 /* For TX sync with DMA operations */
-static DEFINE_SPINLOCK(rmnet_ll_tx_lock);
+DEFINE_SPINLOCK(rmnet_ll_tx_lock);
 
 /* Client operations for respective underlying HW */
 extern struct rmnet_ll_client_ops rmnet_ll_client;
