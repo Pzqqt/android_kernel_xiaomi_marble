@@ -13,15 +13,13 @@
 #include "msm_vidc_platform.h"
 #include "msm_vidc_buffer.h"
 #include "venus_hfi.h"
+#include "msm_vidc_events.h"
 
 /* Q16 Format */
 #define MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR (1 << 16)
 #define MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR (4 << 16)
 #define MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO (1 << 16)
 #define MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO (5 << 16)
-
-/* TODO: Move to dtsi OR use source clock instead of branch clock.*/
-#define MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO 3
 
 u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 {
@@ -166,6 +164,16 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 	}
 	mutex_unlock(&core->lock);
 
+	if (msm_vidc_ddr_bw) {
+		d_vpr_l("msm_vidc_ddr_bw %d\n", msm_vidc_ddr_bw);
+		total_bw_ddr = msm_vidc_ddr_bw;
+	}
+
+	if (msm_vidc_llc_bw) {
+		d_vpr_l("msm_vidc_llc_bw %d\n", msm_vidc_llc_bw);
+		total_bw_llcc = msm_vidc_llc_bw;
+	}
+
 	rc = venus_hfi_scale_buses(inst, total_bw_ddr, total_bw_llcc);
 	if (rc)
 		return rc;
@@ -195,8 +203,6 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 
 	vote_data->power_mode = VIDC_POWER_NORMAL;
 	if (inst->power.buffer_counter < DCVS_WINDOW || is_image_session(inst))
-		vote_data->power_mode = VIDC_POWER_TURBO;
-	if (msm_vidc_clock_voting)
 		vote_data->power_mode = VIDC_POWER_TURBO;
 
 	if (vote_data->power_mode == VIDC_POWER_TURBO)
@@ -364,15 +370,6 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 		__func__, rate, freq, increment, decrement);
 	mutex_unlock(&core->lock);
 
-	/*
-	 * This conversion is necessary since we are scaling clock values based on
-	 * the branch clock. However, mmrm driver expects source clock to be registered
-	 * and used for scaling.
-	 * TODO: Remove this scaling if using source clock instead of branch clock.
-	 */
-	rate = rate * MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
-	i_vpr_l(inst, "%s: scaled clock rate %lu\n", __func__, rate);
-
 	rc = venus_hfi_scale_clocks(inst, rate);
 	if (rc)
 		return rc;
@@ -524,6 +521,10 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 		inst->power.sys_cache_bw, inst->power.dcvs_flags,
 		core->power.clk_freq, core->power.bw_ddr,
 		core->power.bw_llcc);
+
+	trace_msm_vidc_perf_power_scale(inst, core->power.clk_freq,
+		core->power.bw_ddr, core->power.bw_llcc);
+
 	return 0;
 }
 

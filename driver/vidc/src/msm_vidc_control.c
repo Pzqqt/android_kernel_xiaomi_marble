@@ -469,6 +469,14 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 			goto exit;
 	}
 
+	if (capability->cap[cap_id].value == prev_value && cap_id == GOP_SIZE) {
+		/*
+		 * Ignore setting same GOP size value to firmware to avoid
+		 * unnecessary generation of IDR frame.
+		 */
+		goto exit;
+	}
+
 	/* add cap_id to firmware list always */
 	rc = msm_vidc_add_capid_to_list(inst, cap_id, FW_LIST);
 	if (rc)
@@ -940,7 +948,8 @@ int msm_vidc_adjust_bitrate_mode(void *instance, struct v4l2_ctrl *ctrl)
 	frame_rc = capability->cap[FRAME_RC_ENABLE].value;
 	frame_skip = capability->cap[FRAME_SKIP_MODE].value;
 
-	if (lossless) {
+	if (lossless || (msm_vidc_lossless_encode &&
+		inst->codec == MSM_VIDC_HEVC)) {
 		hfi_value = HFI_RC_LOSSLESS;
 		goto update;
 	}
@@ -1017,7 +1026,7 @@ int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl)
 	struct msm_vidc_inst_capability *capability;
 	s32 adjusted_value;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	s32 rc_type = -1;
+	s32 rc_type = -1, all_intra = 0;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1028,13 +1037,20 @@ int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl)
 	adjusted_value = ctrl ? ctrl->val : capability->cap[LTR_COUNT].value;
 
 	if (msm_vidc_get_parent_value(inst, LTR_COUNT, BITRATE_MODE,
-		&rc_type, __func__))
+		&rc_type, __func__) ||
+		msm_vidc_get_parent_value(inst, LTR_COUNT, ALL_INTRA,
+		&all_intra, __func__))
 		return -EINVAL;
 
-	if (rc_type != HFI_RC_OFF &&
+	if ((rc_type != HFI_RC_OFF &&
 		rc_type != HFI_RC_CBR_CFR &&
-		rc_type != HFI_RC_CBR_VFR)
+		rc_type != HFI_RC_CBR_VFR) ||
+		all_intra) {
 		adjusted_value = 0;
+		i_vpr_h(inst,
+			"%s: ltr count unsupported, rc_type: %#x, all_intra %d\n",
+			__func__,rc_type, all_intra);
+	}
 
 	msm_vidc_update_cap_value(inst, LTR_COUNT,
 		adjusted_value, __func__);
@@ -1125,7 +1141,7 @@ int msm_vidc_adjust_mark_ltr(void *instance, struct v4l2_ctrl *ctrl)
 int msm_vidc_adjust_ir_random(void *instance, struct v4l2_ctrl *ctrl)
 {
 	struct msm_vidc_inst_capability *capability;
-	s32 adjusted_value;
+	s32 adjusted_value, all_intra = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
 
 	if (!inst || !inst->capabilities) {
@@ -1136,6 +1152,17 @@ int msm_vidc_adjust_ir_random(void *instance, struct v4l2_ctrl *ctrl)
 
 	adjusted_value = ctrl ? ctrl->val : capability->cap[IR_RANDOM].value;
 
+	if (msm_vidc_get_parent_value(inst, IR_RANDOM, ALL_INTRA,
+		&all_intra, __func__))
+		return -EINVAL;
+
+	if (all_intra) {
+		adjusted_value = 0;
+		i_vpr_h(inst, "%s: IR unsupported, all intra: %d\n",
+			__func__, all_intra);
+		goto exit;
+	}
+
 	/*
 	 * BITRATE_MODE dependency is NOT common across all chipsets.
 	 * Hence, do not return error if not specified as one of the parent.
@@ -1145,6 +1172,7 @@ int msm_vidc_adjust_ir_random(void *instance, struct v4l2_ctrl *ctrl)
 		inst->hfi_rc_type != HFI_RC_CBR_VFR)
 		adjusted_value = 0;
 
+exit:
 	msm_vidc_update_cap_value(inst, IR_RANDOM,
 		adjusted_value, __func__);
 
@@ -1248,7 +1276,7 @@ int msm_vidc_adjust_slice_count(void *instance, struct v4l2_ctrl *ctrl)
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
 	struct msm_vidc_inst_capability *capability;
 	struct v4l2_format *output_fmt;
-	s32 adjusted_value, rc_type = -1, slice_mode;
+	s32 adjusted_value, rc_type = -1, slice_mode, all_intra = 0;
 	u32 slice_val, mbpf = 0, mbps = 0, max_mbpf = 0, max_mbps = 0;
 	u32 update_cap, max_avg_slicesize, output_width, output_height;
 	u32 min_width, min_height, max_width, max_height, fps;
@@ -1263,7 +1291,9 @@ int msm_vidc_adjust_slice_count(void *instance, struct v4l2_ctrl *ctrl)
 		capability->cap[SLICE_MODE].value;
 
 	if (msm_vidc_get_parent_value(inst, SLICE_MODE,
-		BITRATE_MODE, &rc_type, __func__))
+		BITRATE_MODE, &rc_type, __func__) ||
+		msm_vidc_get_parent_value(inst, SLICE_MODE,
+		ALL_INTRA, &all_intra, __func__))
 		return -EINVAL;
 
 	if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE)
@@ -1273,12 +1303,13 @@ int msm_vidc_adjust_slice_count(void *instance, struct v4l2_ctrl *ctrl)
 	if (fps > MAX_SLICES_FRAME_RATE ||
 		(rc_type != HFI_RC_OFF &&
 		rc_type != HFI_RC_CBR_CFR &&
-		rc_type != HFI_RC_CBR_VFR)) {
+		rc_type != HFI_RC_CBR_VFR) ||
+		all_intra) {
 		adjusted_value = V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE;
 		update_cap = SLICE_MODE;
 		i_vpr_h(inst,
-			"%s: slice unsupported, fps: %u, rc_type: %#x\n",
-			__func__, fps, rc_type);
+			"%s: slice unsupported, fps: %u, rc_type: %#x, all_intra %d\n",
+			__func__, fps, rc_type, all_intra);
 		goto exit;
 	}
 
@@ -1954,6 +1985,53 @@ int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl)
 	}
 
 	msm_vidc_update_cap_value(inst, BLUR_TYPES,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_all_intra(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_core *core;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 gop_size = -1, bframe = -1;
+	u32 width, height, fps, mbps, max_mbps;
+
+	if (!inst || !inst->capabilities || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = capability->cap[ALL_INTRA].value;
+
+	if (msm_vidc_get_parent_value(inst, ALL_INTRA, GOP_SIZE,
+		&gop_size, __func__) ||
+		msm_vidc_get_parent_value(inst, ALL_INTRA, B_FRAME,
+		&bframe, __func__))
+		return -EINVAL;
+
+	width = inst->crop.width;
+	height = inst->crop.height;
+	fps =  msm_vidc_get_fps(inst);
+	mbps = NUM_MBS_PER_SEC(height, width, fps);
+	core = inst->core;
+	max_mbps = core->capabilities[MAX_MBPS_ALL_INTRA].value;
+
+	if (mbps > max_mbps) {
+		adjusted_value = 0;
+		i_vpr_h(inst, "%s: mbps %d exceeds max supported mbps %d\n",
+			__func__, mbps, max_mbps);
+		goto exit;
+	}
+
+	if (!gop_size && !bframe)
+		adjusted_value = 1;
+
+exit:
+	msm_vidc_update_cap_value(inst, ALL_INTRA,
 		adjusted_value, __func__);
 
 	return 0;

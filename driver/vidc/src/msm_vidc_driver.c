@@ -22,6 +22,8 @@
 #include "venus_hfi.h"
 #include "venus_hfi_response.h"
 #include "hfi_packet.h"
+#include "msm_vidc_events.h"
+
 extern struct msm_vidc_core *g_core;
 
 #define is_odd(val) ((val) % 2 == 1)
@@ -162,6 +164,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{PRIORITY,                       "PRIORITY"                   },
 	{ENC_IP_CR,                      "ENC_IP_CR"                  },
 	{DPB_LIST,                       "DPB_LIST"                   },
+	{ALL_INTRA,                      "ALL_INTRA"                  },
 	{META_LTR_MARK_USE,              "META_LTR_MARK_USE"          },
 	{META_DPB_MISR,                  "META_DPB_MISR"              },
 	{META_OPB_MISR,                  "META_OPB_MISR"              },
@@ -369,15 +372,35 @@ const char *v4l2_pixelfmt_name(u32 pixfmt)
 void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)
 {
-	if (!(tag & msm_vidc_debug) || !inst || !vbuf || !tag_str || !str)
+	struct dma_buf *dbuf;
+	struct inode *f_inode;
+	unsigned long inode_num = 0;
+	long ref_count = -1;
+
+	if (!inst || !vbuf || !tag_str || !str)
 		return;
 
+	dbuf = (struct dma_buf *)vbuf->dmabuf;
+	if (dbuf && dbuf->file) {
+		f_inode = file_inode(dbuf->file);
+		if (f_inode) {
+			inode_num = f_inode->i_ino;
+			ref_count = file_count(dbuf->file);
+		}
+	}
+
 	dprintk_inst(tag, tag_str, inst,
-		"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
+		"%s: %s: idx %2d fd %3d off %d daddr %#llx inode %8lu ref %2ld size %8d filled %8d flags %#x ts %8lld attr %#x counts(etb ebd ftb fbd) %4llu %4llu %4llu %4llu\n",
 		str, buf_name(vbuf->type),
 		vbuf->index, vbuf->fd, vbuf->data_offset,
-		vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
-		vbuf->flags, vbuf->timestamp, vbuf->attr);
+		vbuf->device_addr, inode_num, ref_count, vbuf->buffer_size, vbuf->data_size,
+		vbuf->flags, vbuf->timestamp, vbuf->attr, inst->debug_count.etb,
+		inst->debug_count.ebd, inst->debug_count.ftb, inst->debug_count.fbd);
+
+	trace_msm_v4l2_vidc_buffer_event_log(inst, str, buf_name(vbuf->type), vbuf,
+		inode_num, ref_count);
+
+
 }
 
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
@@ -1187,6 +1210,9 @@ int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 	else
 		i_vpr_h(inst, "%s: state changed to %s from %s\n",
 		   func, state_name(request_state), state_name(inst->state));
+
+	trace_msm_vidc_common_state_change(inst, func, state_name(inst->state),
+			state_name(request_state));
 
 	inst->state = request_state;
 
@@ -2203,7 +2229,7 @@ static int msm_vidc_insert_sort(struct list_head *head,
 		prev = node;
 	}
 
-	if (!is_inserted)
+	if (!is_inserted && prev)
 		list_add(&entry->list, &prev->list);
 
 	return 0;
@@ -2613,6 +2639,7 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 {
 	bool allow = false;
 	struct msm_vidc_core *core;
+	u32 fps;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: Invalid args: %pK\n", __func__, inst);
@@ -2665,6 +2692,13 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 	allow = !is_lowlatency_session(inst);
 	if (!allow) {
 		i_vpr_h(inst, "%s: lowlatency session\n", __func__);
+		goto exit;
+	}
+
+	fps =  msm_vidc_get_fps(inst);
+	if (is_decode_session(inst) && fps >= MAXIMUM_FPS) {
+		allow = false;
+		i_vpr_h(inst, "%s: unsupported fps %d\n", __func__, fps);
 		goto exit;
 	}
 
@@ -2857,7 +2891,7 @@ static void msm_vidc_print_stats(struct msm_vidc_inst *inst)
 	bitrate_kbps = (inst->stats.data_size * 8 * 1000) / (dt_ms * 1024);
 
 	i_vpr_hp(inst,
-		"stats: counts (etb,ebd,ftb,fbd): %u %u %u %u (total %u %u %u %u), achieved bitrate %lldKbps fps %u/s, frame rate %u, operating rate %u, priority %u, dt %ums\n",
+		"stats: counts (etb,ebd,ftb,fbd): %u %u %u %u (total %llu %llu %llu %llu), achieved bitrate %lldKbps fps %u/s, frame rate %u, operating rate %u, priority %u, dt %ums\n",
 		etb, ebd, ftb, fbd, inst->debug_count.etb, inst->debug_count.ebd,
 		inst->debug_count.ftb, inst->debug_count.fbd,
 		bitrate_kbps, achieved_fps, frame_rate, operating_rate, priority, dt_ms);
@@ -2877,7 +2911,7 @@ int schedule_stats_work(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 	mod_delayed_work(inst->response_workq, &inst->stats_work,
-		msecs_to_jiffies(core->capabilities[STATS_TIMEOUT].value));
+		msecs_to_jiffies(core->capabilities[STATS_TIMEOUT_MS].value));
 
 	return 0;
 }
@@ -3602,11 +3636,11 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	list_for_each_entry(i, &core->instances, list)
 		count++;
 
-	if (count <= core->capabilities[MAX_SESSION_COUNT].value) {
+	if (count < core->capabilities[MAX_SESSION_COUNT].value) {
 		list_add_tail(&inst->list, &core->instances);
 	} else {
-		i_vpr_e(inst, "%s: total sessions %d exceeded max limit %d\n",
-			__func__, count, core->capabilities[MAX_SESSION_COUNT].value);
+		i_vpr_e(inst, "%s: max limit %d already running %d sessions\n",
+			__func__, core->capabilities[MAX_SESSION_COUNT].value, count);
 		rc = -EINVAL;
 	}
 	core_unlock(core, __func__);
@@ -4366,6 +4400,9 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 	bool is_secure, is_decode;
 	u32 bit_depth, bit_rate, frame_rate, width, height;
 	struct dma_buf *dbuf;
+	struct inode *f_inode;
+	unsigned long inode_num = 0;
+	long ref_count = -1;
 	int i = 0;
 
 	if (!inst || !inst->capabilities) {
@@ -4402,12 +4439,18 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 			if (!buf->dmabuf)
 				continue;
 			dbuf = (struct dma_buf *)buf->dmabuf;
+			if (dbuf && dbuf->file) {
+				f_inode = file_inode(dbuf->file);
+				if (f_inode) {
+					inode_num = f_inode->i_ino;
+					ref_count = file_count(dbuf->file);
+				}
+			}
 			i_vpr_e(inst,
-				"buf: type: %11s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, iova: %8x, inode: %9ld, flags: %8x, ts: %16lld, attr: %8x\n",
+				"buf: type: %11s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, daddr: %#llx, inode: %8lu, ref: %2ld, flags: %8x, ts: %16lld, attr: %8x\n",
 				buf_type_name_arr[i].name, buf->index, buf->fd, buf->buffer_size,
 				buf->data_offset, buf->data_size, buf->device_addr,
-				file_inode(dbuf->file)->i_ino,
-				buf->flags, buf->timestamp, buf->attr);
+				inode_num, ref_count, buf->flags, buf->timestamp, buf->attr);
 		}
 	}
 
@@ -5163,21 +5206,28 @@ static int msm_vidc_print_insts_info(struct msm_vidc_core *core)
 
 int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 {
-	u32 mbps = 0;
+	u32 mbps = 0, num_inactive_sessions = 0;
 	struct msm_vidc_core *core;
 	struct msm_vidc_inst *instance;
+	u64 curr_time_ns;
+	int rc = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
+	curr_time_ns = ktime_get_ns();
 
 	core_lock(core, __func__);
 	list_for_each_entry(instance, &core->instances, list) {
 		/* ignore invalid/error session */
 		if (is_session_error(instance))
 			continue;
+
+		if (!is_active_session(instance->last_qbuf_time_ns, curr_time_ns)) {
+			num_inactive_sessions++;
+		}
 
 		/* ignore thumbnail, image, and non realtime sessions */
 		if (is_thumbnail_session(instance) ||
@@ -5190,9 +5240,10 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 	core_unlock(core, __func__);
 
 	if (mbps > core->capabilities[MAX_MBPS].value) {
+		rc = num_inactive_sessions ? -ENOMEM : -EAGAIN;
 		i_vpr_e(inst, "%s: Hardware overloaded. needed %u, max %u", __func__,
 			mbps, core->capabilities[MAX_MBPS].value);
-		return -ENOMEM;
+		return rc;
 	}
 
 	return 0;

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
-
+#define CREATE_TRACE_POINTS
 #include "msm_vidc_debug.h"
 #include "msm_vidc_driver.h"
 #include "msm_vidc_dt.h"
@@ -10,11 +10,14 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
 #include "msm_vidc_internal.h"
+#include "msm_vidc_events.h"
 
 extern struct msm_vidc_core *g_core;
 
 #define MAX_SSR_STRING_LEN         64
 #define MAX_DEBUG_LEVEL_STRING_LEN 15
+#define MSM_VIDC_MIN_STATS_DELAY_MS     200
+#define MSM_VIDC_MAX_STATS_DELAY_MS     10000
 
 unsigned int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL | FW_PRINTK;
 
@@ -82,6 +85,8 @@ bool msm_vidc_syscache_disable = !true;
 EXPORT_SYMBOL(msm_vidc_syscache_disable);
 
 int msm_vidc_clock_voting = !1;
+int msm_vidc_ddr_bw = !1;
+int msm_vidc_llc_bw = !1;
 
 bool msm_vidc_fw_dump = !true;
 EXPORT_SYMBOL(msm_vidc_fw_dump);
@@ -122,6 +127,11 @@ void msm_vidc_show_stats(void *inst)
 {
 	int x;
 	struct msm_vidc_inst *i = (struct msm_vidc_inst *) inst;
+
+	if (!i) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
 
 	for (x = 0; x < MAX_PROFILING_POINTS; x++) {
 		if (i->debug.pdata[x].name[0]) {
@@ -192,6 +202,58 @@ static const struct file_operations core_info_fops = {
 	.read = core_info_read,
 };
 
+static ssize_t stats_delay_write_ms(struct file *filp, const char __user *buf,
+		size_t count, loff_t *ppos)
+{
+	int rc = 0;
+	struct msm_vidc_core *core = filp->private_data;
+	char kbuf[MAX_DEBUG_LEVEL_STRING_LEN] = {0};
+	u32 delay_ms = 0;
+
+	/* filter partial writes and invalid commands */
+	if (*ppos != 0 || count >= sizeof(kbuf) || count == 0) {
+		d_vpr_e("returning error - pos %d, count %d\n", *ppos, count);
+		rc = -EINVAL;
+	}
+
+	rc = simple_write_to_buffer(kbuf, sizeof(kbuf) - 1, ppos, buf, count);
+	if (rc < 0) {
+		d_vpr_e("%s: User memory fault\n", __func__);
+		rc = -EFAULT;
+		goto exit;
+	}
+
+	rc = kstrtoint(kbuf, 0, &delay_ms);
+	if (rc) {
+		d_vpr_e("returning error err %d\n", rc);
+		rc = -EINVAL;
+		goto exit;
+	}
+	delay_ms = clamp_t(u32, delay_ms, MSM_VIDC_MIN_STATS_DELAY_MS, MSM_VIDC_MAX_STATS_DELAY_MS);
+	core->capabilities[STATS_TIMEOUT_MS].value = delay_ms;
+	d_vpr_h("Stats delay is updated to - %d ms\n", delay_ms);
+
+exit:
+	return rc;
+}
+
+static ssize_t stats_delay_read_ms(struct file *file, char __user *buf,
+		size_t count, loff_t *ppos)
+{
+	size_t len;
+	char kbuf[MAX_DEBUG_LEVEL_STRING_LEN];
+	struct msm_vidc_core *core = file->private_data;
+
+	len = scnprintf(kbuf, sizeof(kbuf), "%u\n", core->capabilities[STATS_TIMEOUT_MS].value);
+	return simple_read_from_buffer(buf, count, ppos, kbuf, len);
+}
+
+static const struct file_operations stats_delay_fops = {
+	.open = simple_open,
+	.write = stats_delay_write_ms,
+	.read = stats_delay_read_ms,
+};
+
 static ssize_t trigger_ssr_write(struct file* filp, const char __user* buf,
 	size_t count, loff_t* ppos)
 {
@@ -246,6 +308,10 @@ struct dentry* msm_vidc_debugfs_init_drv()
 
 	debugfs_create_u32("core_clock_voting", 0644, dir,
 			&msm_vidc_clock_voting);
+	debugfs_create_u32("ddr_bw_kbps", 0644, dir,
+			&msm_vidc_ddr_bw);
+	debugfs_create_u32("llc_bw_kbps", 0644, dir,
+			&msm_vidc_llc_bw);
 	debugfs_create_bool("disable_video_syscache", 0644, dir,
 			&msm_vidc_syscache_disable);
 	debugfs_create_bool("lossless_encoding", 0644, dir,
@@ -290,6 +356,10 @@ struct dentry *msm_vidc_debugfs_init_core(void *core_in)
 	}
 	if (!debugfs_create_file("trigger_ssr", 0200,
 			dir, core, &ssr_fops)) {
+		d_vpr_e("debugfs_create_file: fail\n");
+		goto failed_create_dir;
+	}
+	if (!debugfs_create_file("stats_delay_ms", 0644, dir, core, &stats_delay_fops)) {
 		d_vpr_e("debugfs_create_file: fail\n");
 		goto failed_create_dir;
 	}
@@ -508,13 +578,24 @@ void msm_vidc_debugfs_update(void *instance,
 		break;
 	case MSM_VIDC_DEBUGFS_EVENT_EBD:
 		inst->debug_count.ebd++;
-		if (inst->debug_count.ebd &&
-			inst->debug_count.ebd == inst->debug_count.etb) {
+		/*
+		 * Host needs to ensure FW atleast have 2 buffers available always
+		 * one for HW processing and another for fw processing in parallel
+		 * to avoid FW starving for buffers
+		 */
+		if (inst->debug_count.etb < (inst->debug_count.ebd + 2)) {
 			toc(inst, FRAME_PROCESSING);
-			i_vpr_p(inst, "EBD: FW needs input buffers\n");
+			i_vpr_p(inst,
+				"EBD: FW needs input buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		}
-		if (inst->debug_count.ftb == inst->debug_count.fbd)
-			i_vpr_p(inst, "EBD: FW needs output buffers\n");
+		if (inst->debug_count.fbd &&
+			inst->debug_count.ftb < (inst->debug_count.fbd + 2))
+			i_vpr_p(inst,
+				"EBD: FW needs output buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		break;
 	case MSM_VIDC_DEBUGFS_EVENT_FTB:
 		inst->debug_count.ftb++;
@@ -527,13 +608,24 @@ void msm_vidc_debugfs_update(void *instance,
 	case MSM_VIDC_DEBUGFS_EVENT_FBD:
 		inst->debug_count.fbd++;
 		inst->debug.samples++;
-		if (inst->debug_count.fbd &&
-			inst->debug_count.fbd == inst->debug_count.ftb) {
+		/*
+		 * Host needs to ensure FW atleast have 2 buffers available always
+		 * one for HW processing and another for fw processing in parallel
+		 * to avoid FW starving for buffers
+		 */
+		if (inst->debug_count.ftb < (inst->debug_count.fbd + 2)) {
 			toc(inst, FRAME_PROCESSING);
-			i_vpr_p(inst, "FBD: FW needs output buffers\n");
+			i_vpr_p(inst,
+				"FBD: FW needs output buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		}
-		if (inst->debug_count.etb == inst->debug_count.ebd)
-			i_vpr_p(inst, "FBD: FW needs input buffers\n");
+		if (inst->debug_count.ebd &&
+			inst->debug_count.etb < (inst->debug_count.ebd + 2))
+			i_vpr_p(inst,
+				"FBD: FW needs input buffers. Processed etb %llu ebd %llu ftb %llu fbd %llu\n",
+				inst->debug_count.etb, inst->debug_count.ebd,
+				inst->debug_count.ftb, inst->debug_count.fbd);
 		break;
 	default:
 		i_vpr_e(inst, "invalid event in debugfs: %d\n", e);

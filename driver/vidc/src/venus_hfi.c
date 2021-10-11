@@ -25,6 +25,7 @@
 #include "msm_vidc_debug.h"
 #include "hfi_packet.h"
 #include "venus_hfi_response.h"
+#include "msm_vidc_events.h"
 
 #define MIN_PAYLOAD_SIZE 3
 
@@ -382,7 +383,7 @@ static void __schedule_power_collapse_work(struct msm_vidc_core *core)
 
 	if (!mod_delayed_work(core->pm_workq, &core->pm_work,
 			msecs_to_jiffies(core->capabilities[SW_PC_DELAY].value))) {
-		d_vpr_e("power collapse already scheduled\n");
+		d_vpr_h("power collapse already scheduled\n");
 	} else {
 		d_vpr_l("power collapse scheduled for %d ms\n",
 			core->capabilities[SW_PC_DELAY].value);
@@ -666,6 +667,14 @@ int __set_clk_rate(struct msm_vidc_core *core,
 		return -EINVAL;
 	}
 	client = cl->mmrm_client;
+
+	/*
+	 * This conversion is necessary since we are scaling clock values based on
+	 * the branch clock. However, mmrm driver expects source clock to be registered
+	 * and used for scaling.
+	 * TODO: Remove this scaling if using source clock instead of branch clock.
+	 */
+	rate = rate * MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
 
 	/* bail early if requested clk rate is not changed */
 	if (rate == cl->prev)
@@ -1303,6 +1312,10 @@ static int __protect_cp_mem(struct msm_vidc_core *core)
 	if (rc)
 		d_vpr_e("Failed to protect memory(%d)\n", rc);
 
+	trace_venus_hfi_var_done(
+		memprot.cp_start, memprot.cp_size,
+		memprot.cp_nonpixel_start, memprot.cp_nonpixel_size);
+
 	return rc;
 }
 #if 0 // TODO
@@ -1604,6 +1617,7 @@ int __prepare_enable_clks(struct msm_vidc_core *core)
 {
 	struct clock_info *cl = NULL;
 	int rc = 0, c = 0;
+	u64 rate = 0;
 
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1621,9 +1635,16 @@ int __prepare_enable_clks(struct msm_vidc_core *core)
 		 * them.  Since we don't really have a load at this point, scale
 		 * it to the lowest frequency possible
 		 */
-		if (cl->has_scaling)
-			__set_clk_rate(core, cl,
-					clk_round_rate(cl->clk, 0));
+		if (cl->has_scaling) {
+			rate = clk_round_rate(cl->clk, 0);
+			/**
+			 * source clock is already multipled with scaling ratio and __set_clk_rate
+			 * attempts to multiply again. So divide scaling ratio before calling
+			 * __set_clk_rate.
+			 */
+			rate = rate / MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
+			__set_clk_rate(core, cl, rate);
+		}
 
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
@@ -2614,6 +2635,7 @@ int __load_fw(struct msm_vidc_core *core)
 	core->handoff_done = false;
 	core->hw_power_control = false;
 
+	trace_msm_v4l2_vidc_fw_load("START");
 	rc = __init_resources(core);
 	if (rc) {
 		d_vpr_e("%s: Failed to init resources: %d\n", __func__, rc);
@@ -2651,6 +2673,7 @@ int __load_fw(struct msm_vidc_core *core)
 	* present.
 	*/
 	__hand_off_regulators(core);
+	trace_msm_v4l2_vidc_fw_load("END");
 
 	return rc;
 fail_protect_mem:
@@ -2662,6 +2685,7 @@ fail_load_fw:
 fail_venus_power_on:
 	__deinit_resources(core);
 fail_init_res:
+	trace_msm_v4l2_vidc_fw_load("END");
 	return rc;
 }
 

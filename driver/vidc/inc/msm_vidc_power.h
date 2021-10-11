@@ -13,6 +13,9 @@
 
 #define COMPRESSION_RATIO_MAX 5
 
+/* TODO: Move to dtsi OR use source clock instead of branch clock.*/
+#define MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO 3
+
 enum vidc_bus_type {
 	PERF,
 	DDR,

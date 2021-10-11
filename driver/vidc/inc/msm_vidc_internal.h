@@ -50,6 +50,7 @@
 #define BIT_DEPTH_10 (10 << 16 | 10)
 #define CODED_FRAMES_PROGRESSIVE 0x0
 #define CODED_FRAMES_INTERLACE 0x1
+#define MAX_VP9D_INST_COUNT     6
 /* TODO: move below macros to waipio.c */
 #define MAX_ENH_LAYER_HB        3
 #define MAX_HEVC_ENH_LAYER_SLIDING_WINDOW     5
@@ -318,6 +319,7 @@ enum msm_vidc_core_capability_type {
 	MAX_MBPS_HQ,
 	MAX_MBPF_B_FRAME,
 	MAX_MBPS_B_FRAME,
+	MAX_MBPS_ALL_INTRA,
 	MAX_ENH_LAYER_COUNT,
 	NUM_VPP_PIPE,
 	SW_PC,
@@ -334,7 +336,7 @@ enum msm_vidc_core_capability_type {
 	DCVS,
 	DECODE_BATCH,
 	DECODE_BATCH_TIMEOUT,
-	STATS_TIMEOUT,
+	STATS_TIMEOUT_MS,
 	AV_SYNC_WINDOW_SIZE,
 	CLK_FREQ_THRESHOLD,
 	NON_FATAL_FAULTS,
@@ -459,6 +461,7 @@ enum msm_vidc_inst_capability_type {
 	PRIORITY,
 	ENC_IP_CR,
 	DPB_LIST,
+	ALL_INTRA,
 	META_LTR_MARK_USE,
 	META_DPB_MISR,
 	META_OPB_MISR,
