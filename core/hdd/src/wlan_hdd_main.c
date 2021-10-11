@@ -12626,9 +12626,8 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 						   adapter->latency_level);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_warn("set wlm mode failed, %u", status);
-		else
-			hdd_debug("set wlm mode %d", adapter->latency_level);
 	}
+	hdd_debug("wlm initial mode %u", adapter->latency_level);
 
 	hdd_exit();
 
