@@ -113,16 +113,16 @@
 #define CFG_VHT_RX_SUPP_DATA_RATE CFG_UINT( \
 		"rx_supp_data_rate", \
 		0, \
-		866, \
-		866, \
+		780, \
+		780, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT RX SUPP DATA RATE")
 
 #define CFG_VHT_TX_SUPP_DATA_RATE CFG_UINT( \
 		"tx_supp_data_rate", \
 		0, \
-		866, \
-		866, \
+		780, \
+		780, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT TX SUPP DATA RATE")
 
