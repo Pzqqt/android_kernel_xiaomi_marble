@@ -404,6 +404,7 @@ enum wlan_mlme_cfg_id;
  * @psoc_wake_lock_init: Initialize psoc wake lock for vdev response timer
  * @psoc_wake_lock_deinit: De-Initialize psoc wake lock for vdev response timer
  * @get_hw_link_id: Get hw_link_id for pdev
+ * @vdev_send_set_mac_addr: API to send set MAC address request to FW
  */
 struct wlan_lmac_if_mlme_tx_ops {
 	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
@@ -493,6 +494,11 @@ struct wlan_lmac_if_mlme_tx_ops {
 					      uint8_t grp_id);
 	QDF_STATUS (*target_if_mlo_ready)(struct wlan_objmgr_pdev **pdev,
 					  uint8_t num_pdevs);
+#endif
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS (*vdev_send_set_mac_addr)(struct qdf_mac_addr mac_addr,
+				     struct qdf_mac_addr mld_addr,
+				     struct wlan_objmgr_vdev *vdev);
 #endif
 };
 

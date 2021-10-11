@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -249,5 +250,21 @@ static inline uint32_t vdev_mgr_fetch_ratecode(struct vdev_mlme_obj *mlme_obj)
 {
 	return mlme_obj->mgmt.rate_info.bcn_tx_rate;
 }
+#endif
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * vdev_mgr_send_set_mac_addr() - Send set MAC address command to FW
+ * @mac_addr: VDEV MAC address
+ * @mld_addr: VDEV MLD address
+ * @vdev: Pointer to object manager VDEV
+ *
+ * API to send set MAC address request to FW
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS vdev_mgr_send_set_mac_addr(struct qdf_mac_addr mac_addr,
+				      struct qdf_mac_addr mld_addr,
+				      struct wlan_objmgr_vdev *vdev);
 #endif
 #endif /* __VDEV_MGR_OPS_H__ */

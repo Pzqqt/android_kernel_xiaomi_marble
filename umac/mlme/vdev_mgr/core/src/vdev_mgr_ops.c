@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -820,3 +821,21 @@ QDF_STATUS vdev_mgr_peer_delete_all_send(struct vdev_mlme_obj *mlme_obj)
 	return status;
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS vdev_mgr_send_set_mac_addr(struct qdf_mac_addr mac_addr,
+				      struct qdf_mac_addr mld_addr,
+				      struct wlan_objmgr_vdev *vdev)
+{
+	return tgt_vdev_mgr_send_set_mac_addr(mac_addr, mld_addr, vdev);
+}
+
+QDF_STATUS vdev_mgr_cdp_vdev_attach(struct vdev_mlme_obj *mlme_obj)
+{
+	return tgt_vdev_mgr_cdp_vdev_attach(mlme_obj);
+}
+
+QDF_STATUS vdev_mgr_cdp_vdev_detach(struct vdev_mlme_obj *mlme_obj)
+{
+	return tgt_vdev_mgr_cdp_vdev_detach(mlme_obj);
+}
+#endif

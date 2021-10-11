@@ -1169,4 +1169,21 @@ static inline struct wlan_vdev_aid_mgr *wlan_vdev_mlme_get_aid_mgr(
 	return vdev_mlme->mgmt.ap.aid_mgr;
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * vdev_mgr_cdp_vdev_attach() - MLME API to attach CDP vdev
+ * @mlme_obj: pointer to vdev_mlme_obj
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS vdev_mgr_cdp_vdev_attach(struct vdev_mlme_obj *mlme_obj);
+
+/**
+ * vdev_mgr_cdp_vdev_detach() - MLME API to detach CDP vdev
+ * @mlme_obj: pointer to vdev_mlme_obj
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS vdev_mgr_cdp_vdev_detach(struct vdev_mlme_obj *mlme_obj);
+#endif
 #endif

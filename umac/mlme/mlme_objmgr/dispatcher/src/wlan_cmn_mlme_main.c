@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -573,3 +574,18 @@ bool mlme_max_chan_switch_is_set(struct wlan_objmgr_vdev *vdev)
 
 	return phy_config->max_chan_switch_ie;
 }
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS mlme_vdev_ops_send_set_mac_address(struct qdf_mac_addr mac_addr,
+					      struct qdf_mac_addr mld_addr,
+					      struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	if (glbl_ops && glbl_ops->mlme_vdev_send_set_mac_addr)
+		ret = glbl_ops->mlme_vdev_send_set_mac_addr(mac_addr, mld_addr,
+							    vdev);
+
+	return ret;
+}
+#endif

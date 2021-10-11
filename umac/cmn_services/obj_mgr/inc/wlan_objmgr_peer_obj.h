@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -892,6 +893,21 @@ static inline void wlan_peer_set_macaddr(struct wlan_objmgr_peer *peer,
 	/* This API is invoked with lock acquired, do not add log prints */
 	WLAN_ADDR_COPY(peer->macaddr, macaddr);
 }
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * wlan_peer_update_macaddr() - Update peer MAC address
+ * @peer: PEER object
+ * @new_macaddr: New MAC address
+ *
+ * API to update peer MAC address and corresponding peer hash entry in PSOC
+ * peer list.
+ *
+ * Return: SUCCESS/FAILURE
+ */
+QDF_STATUS wlan_peer_update_macaddr(struct wlan_objmgr_peer *peer,
+				    uint8_t *new_macaddr);
+#endif
 
 /**
  * wlan_peer_get_macaddr() - get mac addr

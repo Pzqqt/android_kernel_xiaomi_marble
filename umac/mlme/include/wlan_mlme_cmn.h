@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -162,6 +163,8 @@ struct mlme_cm_ops {
  * @mlme_cm_ext_roam_start_ind_cb:          callback to indicate roam start
  * @mlme_cm_ext_reassoc_req_cb:             callback for reassoc request to
  *                                          VDEV/PEER SM
+ * @mlme_vdev_send_set_mac_addr:            callback to send set MAC address
+ *                                          request to FW
  */
 struct mlme_ext_ops {
 	QDF_STATUS (*mlme_psoc_ext_hdl_create)(
@@ -232,6 +235,12 @@ struct mlme_ext_ops {
 	QDF_STATUS (*mlme_cm_ext_reassoc_req_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_vdev_reassoc_req *req);
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	QDF_STATUS (*mlme_vdev_send_set_mac_addr)(
+						struct qdf_mac_addr mac_addr,
+						struct qdf_mac_addr mld_addr,
+						struct wlan_objmgr_vdev *vdev);
+#endif
 };
 
 /**
@@ -751,4 +760,19 @@ void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb cm_osif_ops);
  */
 bool mlme_max_chan_switch_is_set(struct wlan_objmgr_vdev *vdev);
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * mlme_vdev_ops_send_set_mac_address() - Send set MAC address request to FW
+ * @mac_addr: VDEV MAC address
+ * @mld_addr: VDEV MLD address
+ * @vdev: vdev pointer
+ *
+ * API to send set MAC address request command to FW
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_vdev_ops_send_set_mac_address(struct qdf_mac_addr mac_addr,
+					      struct qdf_mac_addr mld_addr,
+					      struct wlan_objmgr_vdev *vdev);
+#endif
 #endif
