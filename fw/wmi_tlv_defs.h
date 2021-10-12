@@ -1211,6 +1211,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_fips_extend_cmd_init_params,
     WMITLV_TAG_STRUC_wmi_pdev_fips_extend_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1691,6 +1693,7 @@ typedef enum {
     OP(WMI_ROAM_SET_PARAM_CMDID) \
     OP(WMI_PDEV_FIPS_EXTEND_CMDID) \
     OP(WMI_PDEV_FIPS_MODE_SET_CMDID) \
+    OP(WMI_VDEV_UPDATE_MAC_ADDR_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1964,6 +1967,7 @@ typedef enum {
     OP(WMI_TWT_ACK_EVENTID) \
     OP(WMI_PDEV_AOA_PHASEDELTA_EVENTID) \
     OP(WMI_PDEV_FIPS_EXTEND_EVENTID) \
+    OP(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3192,6 +3196,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_DOWN_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_set_param_cmd_fixed_param, wmi_vdev_set_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_PARAM_CMDID);
+
+/* Update vdev mac address */
+#define WMITLV_TABLE_WMI_VDEV_UPDATE_MAC_ADDR_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param, wmi_vdev_update_mac_addr_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_UPDATE_MAC_ADDR_CMDID);
 
 /* Pdev suspend Cmd */
 #define WMITLV_TABLE_WMI_PDEV_SUSPEND_CMDID(id,op,buf,len)                                                         \
@@ -6535,6 +6544,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID(id,op,buf,len)  \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_halphy_cal_bmap_evt_fixed_param, wmi_pdev_set_halphy_cal_bmap_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID);
+
+/* Update vdev mac address conf event to host */
+#define WMITLV_TABLE_WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param, wmi_vdev_update_mac_addr_conf_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID);
 
 
 #ifdef __cplusplus

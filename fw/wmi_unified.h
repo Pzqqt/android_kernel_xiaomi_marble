@@ -562,6 +562,8 @@ typedef enum {
     WMI_VDEV_SET_MU_SNIF_CMDID,
     /** ICMP OFFLOAD */
     WMI_VDEV_ICMP_OFFLOAD_CMDID,
+    /** Update vdev mac address */
+    WMI_VDEV_UPDATE_MAC_ADDR_CMDID,
 
     /* peer specific commands */
 
@@ -1628,6 +1630,8 @@ typedef enum {
     WMI_VDEV_DISCONNECT_EVENTID,
     /** Send Smart Monitor related params to host */
     WMI_VDEV_SMART_MONITOR_EVENTID,
+    /** Send status of vdev mac address update request to host */
+    WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -11054,6 +11058,39 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; */
     wmi_mlo_flags mlo_flags; /*only mlo enable and assoc link flag need by vdev start*/
 } wmi_vdev_start_mlo_params;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param */
+    /** Unique id identifying the VDEV to update mac addr */
+    A_UINT32 vdev_id;
+    /** New VDEV MAC address to configure */
+    wmi_mac_addr vdev_macaddr;
+    /** New MLD MAC address to configure */
+    wmi_mac_addr mld_macaddr;
+} wmi_vdev_update_mac_addr_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param */
+    /** Unique id identifying the VDEV */
+    A_UINT32 vdev_id;
+    /*
+     * Status of mac address update request.
+     * Refer to wmi_vdev_update_mac_addr_conf_status.
+     */
+    A_UINT32 status;
+} wmi_vdev_update_mac_addr_conf_event_fixed_param;
+
+/** VDEV update mac address event response status codes */
+typedef enum {
+    /** VDEV mac address updated sucessfully */
+    WMI_VDEV_UPDATE_MAC_ADDR_CONF_STATUS_SUCCESS = 0,
+    /** Requested VDEV not found */
+    WMI_VDEV_UPDATE_MAC_ADDR_CONF_STATUS_INVALID_VDEVID = 1,
+    /** Unsupported VDEV combination.eg: received cmd in VDEV connected state */
+    WMI_VDEV_UPDATE_MAC_ADDR_CONF_STATUS_NOT_SUPPORTED = 2,
+    /** FW internal failure to update mac address */
+    WMI_VDEV_UPDATE_MAC_ADDR_CONF_STATUS_INTERNAL_FAIL = 3,
+} wmi_vdev_update_mac_addr_conf_status;
 
 /** values for vdev_type */
 #define WMI_VDEV_TYPE_AP         0x1
