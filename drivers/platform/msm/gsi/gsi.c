@@ -4895,6 +4895,8 @@ int gsi_flow_control_ee(unsigned int chan_idx, int ep_id, unsigned int ee,
 		return -GSI_STATUS_INVALID_PARAMS;
 	}
 
+	GSIDBG("GSI flow control opcode=%d, ch_id=%d\n", op, chan_idx);
+
 	mutex_lock(&gsi_ctx->mlock);
 	__gsi_config_glob_irq(gsi_ctx->per.ee,
 			gsihal_get_glob_irq_en_gp_int1_mask(), ~0);
@@ -4930,13 +4932,19 @@ wait_again:
 			wait_due_pending++;
 			goto wait_again;
 		}
-		res = -GSI_STATUS_TIMED_OUT;
-		GSI_ASSERT();
-		goto free_lock;
+		GSIERR("GSI_EE_n_CNTXT_GLOB_IRQ_EN_OFFS = 0x%x\n",
+			gsihal_read_reg_n(GSI_EE_n_CNTXT_GLOB_IRQ_EN, gsi_ctx->per.ee));
+		GSIERR("GSI_EE_n_CNTXT_GLOB_IRQ_STTS_OFFS IRQ type = 0x%x\n",
+			gsihal_read_reg_n(GSI_EE_n_CNTXT_GLOB_IRQ_STTS, gsi_ctx->per.ee));
 	}
 
 	gsi_ctx->scratch.word0.val = gsihal_read_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
 					gsi_ctx->per.ee);
+
+	GSIDBG(
+		"Flow control command response GENERIC_CMD_RESPONSE_CODE = %u, val = %u\n",
+		gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code,
+		gsi_ctx->scratch.word0.val);
 
 	if (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code ==
 		GSI_GEN_EE_CMD_RETURN_CODE_CHANNEL_NOT_RUNNING) {
@@ -4958,6 +4966,7 @@ wait_again:
 	if (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code == 0) {
 		GSIERR("No response received\n");
 		res = -GSI_STATUS_ERROR;
+		GSI_ASSERT();
 		goto free_lock;
 	}
 

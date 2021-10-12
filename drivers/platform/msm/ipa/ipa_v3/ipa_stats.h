@@ -62,6 +62,27 @@
 #define SPRHD_IPA_LOG_TYPE_USB_STATS       0x00010
 #define SPRHD_IPA_LOG_TYPE_MHIP_STATS      0x00020
 
+
+/**
+ * Look up table for pm stats client names.
+ * New entry to be added when new client
+ * registers with pm
+ */
+struct pm_client_name_lookup { char *name; int idx_hdl;};
+static struct pm_client_name_lookup client_lookup_table[] = {
+	{"ODL", 1},
+	{"IPA_CLIENT_APPS_LAN_CONS", 2},
+	{"EMB MODEM", 3},
+	{"TETH MODEM", 4},
+	{"rmnet_ipa%d", 5},
+	{"USB", 6},
+	{"USB DPL", 7},
+	{"MODEM (USB RMNET)", 8},
+	{"IPA_CLIENT_APPS_WAN_CONS", 9}
+};
+
+#define NUM_PM_CLIENT_NAMES (sizeof(client_lookup_table)/sizeof(struct pm_client_name_lookup))
+
 /**
  * Every structure is associated with the underlying macro
  * for it's length and that has to be updated every time there

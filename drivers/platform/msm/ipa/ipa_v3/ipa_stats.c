@@ -416,7 +416,6 @@ static int ipa_get_clock_stats(unsigned long arg)
 	pm_stats_ptr = &clock_stats->pm_clnt_stats[0];
 	for (i = 1; i < ipa_lnx_agent_ctx.alloc_info.num_pm_clients; i++) {
 		if (ipa_get_pm_client_stats_filled(pm_stats_ptr, i)) {
-			pm_stats_ptr->pm_client_type = ipa3_get_client_by_pipe(i);
 			clock_stats->active_clients++;
 			pm_stats_ptr = (struct pm_client_stats *)((uint64_t)pm_stats_ptr +
 				sizeof(struct pm_client_stats));

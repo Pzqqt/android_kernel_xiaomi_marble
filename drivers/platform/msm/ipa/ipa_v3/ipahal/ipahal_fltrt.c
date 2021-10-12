@@ -4429,6 +4429,22 @@ nhash_alloc_fail:
 	return -ENOMEM;
 }
 
+u32 ipa_fltrt_get_aligned_lcl_bdy_size(u32 total_sz_lcl_tbls)
+{
+	u32 result = total_sz_lcl_tbls;
+	struct ipahal_fltrt_obj *obj = &ipahal_fltrt_objs[ipahal_ctx->hw_type];
+
+	/* for table terminator */
+	result += obj->tbl_width * total_sz_lcl_tbls;
+	/* align the start of local rule-set */
+	result += obj->lcladdr_alignment * total_sz_lcl_tbls;
+	/* SRAM block size alignment */
+	result += obj->blk_sz_alignment;
+	result &= ~(obj->blk_sz_alignment);
+
+	return result;
+}
+
 /*
  * ipa_fltrt_alloc_lcl_bdy() - allocate and initialize buffers for
  *  local flt/rt tables bodies to be filled into sram
@@ -4459,16 +4475,8 @@ static int ipa_fltrt_alloc_lcl_bdy(
 	 *  and H/W local table start offset alignment
 	 */
 	if (params->total_sz_lcl_nhash_tbls + params->num_lcl_nhash_tbls > 0) {
-		params->nhash_bdy.size = params->total_sz_lcl_nhash_tbls;
-		/* for table terminator */
-		params->nhash_bdy.size += obj->tbl_width *
-			params->num_lcl_nhash_tbls;
-		/* align the start of local rule-set */
-		params->nhash_bdy.size += obj->lcladdr_alignment *
-			params->num_lcl_nhash_tbls;
-		/* SRAM block size alignment */
-		params->nhash_bdy.size += obj->blk_sz_alignment;
-		params->nhash_bdy.size &= ~(obj->blk_sz_alignment);
+		params->nhash_bdy.size =
+			ipa_fltrt_get_aligned_lcl_bdy_size(params->total_sz_lcl_nhash_tbls);
 
 		IPAHAL_DBG_LOW("nhash lcl tbl bdy total h/w size = %u\n",
 			params->nhash_bdy.size);
@@ -4494,16 +4502,8 @@ alloc1:
 	}
 
 	if (obj->support_hash && params->hash_bdy.size) {
-		params->hash_bdy.size = params->total_sz_lcl_hash_tbls;
-		/* for table terminator */
-		params->hash_bdy.size += obj->tbl_width *
-			params->num_lcl_hash_tbls;
-		/* align the start of local rule-set */
-		params->hash_bdy.size += obj->lcladdr_alignment *
-			params->num_lcl_hash_tbls;
-		/* SRAM block size alignment */
-		params->hash_bdy.size += obj->blk_sz_alignment;
-		params->hash_bdy.size &= ~(obj->blk_sz_alignment);
+		params->hash_bdy.size = 
+			ipa_fltrt_get_aligned_lcl_bdy_size(params->total_sz_lcl_hash_tbls);
 
 		IPAHAL_DBG_LOW("hash lcl tbl bdy total h/w size = %u\n",
 			params->hash_bdy.size);

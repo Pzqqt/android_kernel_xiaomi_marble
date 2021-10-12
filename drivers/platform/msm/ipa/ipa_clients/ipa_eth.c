@@ -858,13 +858,13 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 
 	IPA_ETH_DBG("register interface for netdev %s\n", intf->net_dev->name);
 	/* multiple attach support */
-	if (strnstr(intf->net_dev->name, "eth0", strlen(intf->net_dev->name))) {
+	if (strnstr(intf->net_dev->name, STR_ETH0_IFACE, strlen(intf->net_dev->name))) {
 		ret = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH0, &vlan_mode);
 		if (ret) {
 			IPA_ETH_ERR("Could not determine IPA VLAN mode\n");
 			return ret;
 		}
-	} else if (strnstr(intf->net_dev->name, "eth1", strlen(intf->net_dev->name))) {
+	} else if (strnstr(intf->net_dev->name, STR_ETH1_IFACE, strlen(intf->net_dev->name))) {
 		ret = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH1, &vlan_mode);
 		if (ret) {
 			IPA_ETH_ERR("Could not determine IPA VLAN mode\n");

@@ -887,7 +887,6 @@ struct ipa3_hdr_proc_ctx_tbl {
  * @rule_cnt: number of filter rules
  * @in_sys: flag indicating if filter table is located in system memory
  * @sz: the size of the filter tables
- * @end: the last header index
  * @curr_mem: current filter tables block in sys memory
  * @prev_mem: previous filter table block in sys memory
  * @rule_ids: common idr structure that holds the rule_id for each rule
@@ -904,6 +903,11 @@ struct ipa3_flt_tbl {
 	bool sticky_rear;
 	struct idr *rule_ids;
 	bool force_sys[IPA_RULE_TYPE_MAX];
+};
+
+struct ipa3_flt_tbl_nhash_lcl {
+	struct list_head link;
+	struct ipa3_flt_tbl *tbl;
 };
 
 /**
@@ -2152,14 +2156,11 @@ struct ipa3_context {
 	bool hdr_proc_ctx_tbl_lcl;
 	struct ipa_mem_buffer hdr_sys_mem;
 	struct ipa_mem_buffer hdr_proc_ctx_mem;
-	bool ip4_rt_tbl_hash_lcl;
-	bool ip4_rt_tbl_nhash_lcl;
-	bool ip6_rt_tbl_hash_lcl;
-	bool ip6_rt_tbl_nhash_lcl;
-	bool ip4_flt_tbl_hash_lcl;
-	bool ip4_flt_tbl_nhash_lcl;
-	bool ip6_flt_tbl_hash_lcl;
-	bool ip6_flt_tbl_nhash_lcl;
+	bool rt_tbl_hash_lcl[IPA_IP_MAX];
+	bool rt_tbl_nhash_lcl[IPA_IP_MAX];
+	bool flt_tbl_hash_lcl[IPA_IP_MAX];
+	bool flt_tbl_nhash_lcl[IPA_IP_MAX];
+	struct list_head flt_tbl_nhash_lcl_list[IPA_IP_MAX];
 	struct ipa3_active_clients ipa3_active_clients;
 	struct ipa3_active_clients_log_ctx ipa3_active_clients_logging;
 	struct workqueue_struct *power_mgmt_wq;
@@ -2330,7 +2331,6 @@ struct ipa3_context {
 	u16 ulso_ip_id_max;
 	bool use_pm_wrapper;
 	u8 page_poll_threshold;
-	u32 non_hash_flt_lcl_sys_switch;
 	bool wan_common_page_pool;
 	u64 gsi_msi_addr;
 	u64 gsi_msi_clear_addr;
@@ -2838,6 +2838,8 @@ int ipa3_mdfy_flt_rule_v2(struct ipa_ioc_mdfy_flt_rule_v2 *rules);
 int ipa3_commit_flt(enum ipa_ip_type ip);
 
 int ipa3_reset_flt(enum ipa_ip_type ip, bool user_only);
+
+int ipa_flt_sram_set_client_prio_high(enum ipa_client_type client);
 
 /*
  * NAT

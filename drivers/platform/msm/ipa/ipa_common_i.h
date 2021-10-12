@@ -179,6 +179,12 @@ do {\
 #define IPA_GSI_CHANNEL_STOP_SLEEP_MIN_USEC (3000)
 #define IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC (5000)
 
+#define STR_ETH_IFACE "eth"
+#define STR_ETH0_IFACE "eth0"
+#define STR_ETH1_IFACE "eth1"
+#define STR_RNDIS_IFACE "rndis"
+#define STR_ECM_IFACE "ecm"
+
 /**
  * qmap_hdr -
  * @next_hdr: 1 - there is a qmap extension header, 0 - opposite
