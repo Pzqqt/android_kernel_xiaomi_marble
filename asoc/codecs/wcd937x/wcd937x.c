@@ -2697,6 +2697,30 @@ static struct snd_info_entry_ops wcd937x_variant_ops = {
 };
 
 /*
+ * wcd937x_get_codec_variant
+ * @component: component instance
+ *
+ * Return: codec variant or -EINVAL in error.
+ */
+int wcd937x_get_codec_variant(struct snd_soc_component *component)
+{
+	struct wcd937x_priv *priv = NULL;
+
+	if (!component)
+		return -EINVAL;
+
+	priv = snd_soc_component_get_drvdata(component);
+	if (!priv) {
+		dev_err(component->dev,
+			"%s:wcd937x not probed\n", __func__);
+		return 0;
+	}
+
+	return priv->variant;
+}
+EXPORT_SYMBOL(wcd937x_get_codec_variant);
+
+/*
  * wcd937x_info_create_codec_entry - creates wcd937x module
  * @codec_root: The parent directory
  * @component: component instance

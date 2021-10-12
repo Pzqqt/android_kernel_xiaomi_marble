@@ -296,6 +296,97 @@ static int audio_prm_set_lpass_clk_cfg_rel(struct clk_cfg *cfg)
         return ret;
 }
 
+/**
+ * audio_prm_set_cdc_earpa_duty_cycling_req() - send codec reg values
+ * for codec duty cycling.
+ *
+ * Return: 0 if reg passing is success.
+ */
+int audio_prm_set_cdc_earpa_duty_cycling_req(struct prm_earpa_hw_intf_config *earpa_config,
+								uint32_t enable)
+{
+	struct gpr_pkt *pkt;
+	prm_cmd_request_cdc_duty_cycling_t prm_rsc_request_reg_info;
+	int ret = 0;
+	uint32_t size;
+
+	size = GPR_HDR_SIZE + sizeof(prm_cmd_request_cdc_duty_cycling_t);
+	pkt = kzalloc(size,  GFP_KERNEL);
+	if (!pkt)
+		return -ENOMEM;
+	pkt->hdr.header = GPR_SET_FIELD(GPR_PKT_VERSION, GPR_PKT_VER) |
+			GPR_SET_FIELD(GPR_PKT_HEADER_SIZE, GPR_PKT_HEADER_WORD_SIZE_V) |
+			GPR_SET_FIELD(GPR_PKT_PACKET_SIZE, size);
+
+	pkt->hdr.src_port = GPR_SVC_ASM;
+	pkt->hdr.dst_port = PRM_MODULE_INSTANCE_ID;
+	pkt->hdr.dst_domain_id = GPR_IDS_DOMAIN_ID_ADSP_V;
+	pkt->hdr.src_domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
+	pkt->hdr.token = 0;
+	if (enable)
+		pkt->hdr.opcode = PRM_CMD_REQUEST_HW_RSC;
+	else
+		pkt->hdr.opcode = PRM_CMD_RELEASE_HW_RSC;
+
+	memset(&prm_rsc_request_reg_info, 0, sizeof(prm_cmd_request_cdc_duty_cycling_t));
+	prm_rsc_request_reg_info.payload_header.payload_address_lsw = 0;
+	prm_rsc_request_reg_info.payload_header.payload_address_msw = 0;
+	prm_rsc_request_reg_info.payload_header.mem_map_handle = 0;
+	prm_rsc_request_reg_info.payload_header.payload_size =
+			sizeof(prm_cmd_request_cdc_duty_cycling_t) - sizeof(apm_cmd_header_t);
+
+	/* Populate the param payload */
+	prm_rsc_request_reg_info.module_payload_0.module_instance_id =
+							PRM_MODULE_INSTANCE_ID;
+	prm_rsc_request_reg_info.module_payload_0.error_code = 0;
+	prm_rsc_request_reg_info.module_payload_0.param_id =
+						PARAM_ID_RSC_HW_CODEC_REG_INFO;
+	prm_rsc_request_reg_info.module_payload_0.param_size =
+			sizeof(prm_cmd_request_cdc_duty_cycling_t) -
+			sizeof(apm_cmd_header_t) - sizeof(apm_module_param_data_t);
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.num_reg_info_t = MAX_EARPA_REG;
+	/* Setting up DIGITAL Mute register value */
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].hw_codec_reg_id =
+							HW_CODEC_DIG_REG_ID_MUTE_CTRL;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].hw_codec_reg_addr_msw = 0;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].hw_codec_reg_addr_lsw =
+			earpa_config->ear_pa_hw_reg_cfg.lpass_cdc_rx0_rx_path_ctl_phy_addr;
+
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].num_ops =
+							MAX_EARPA_CDC_DUTY_CYC_OPERATION;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].hw_codec_op[0].hw_codec_op_id =
+								HW_CODEC_OP_DIG_MUTE_ENABLE;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].hw_codec_op[0].hw_codec_op_value =
+								DIG_MUTE_ENABLE;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].hw_codec_op[1].hw_codec_op_id =
+								HW_CODEC_OP_DIG_MUTE_DISABLE;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[0].hw_codec_op[1].hw_codec_op_value =
+								DIG_MUTE_DISABLE;
+	/* Setting up LPASS_PA_REG Values */
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].hw_codec_reg_id =
+						HW_CODEC_ANALOG_REG_ID_CMD_FIFO_WRITE;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].hw_codec_reg_addr_msw = 0;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].hw_codec_reg_addr_lsw =
+					earpa_config->ear_pa_hw_reg_cfg.lpass_wr_fifo_reg_phy_addr;
+
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].num_ops =
+							MAX_EARPA_CDC_DUTY_CYC_OPERATION;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].hw_codec_op[0].hw_codec_op_id =
+							HW_CODEC_OP_ANA_PGA_ENABLE;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].hw_codec_op[0].hw_codec_op_value =
+					earpa_config->ear_pa_pkd_cfg.ear_pa_enable_pkd_reg_addr;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].hw_codec_op[1].hw_codec_op_id =
+							HW_CODEC_OP_ANA_PGA_DISABLE;
+	prm_rsc_request_reg_info.hw_codec_reg_info_t.hw_codec_reg[1].hw_codec_op[1].hw_codec_op_value =
+					earpa_config->ear_pa_pkd_cfg.ear_pa_disable_pkd_reg_addr;
+
+	memcpy(&pkt->payload, &prm_rsc_request_reg_info, sizeof(prm_cmd_request_cdc_duty_cycling_t));
+	ret = prm_gpr_send_pkt(pkt, &g_prm.wait);
+	kfree(pkt);
+	return ret;
+}
+EXPORT_SYMBOL(audio_prm_set_cdc_earpa_duty_cycling_req);
+
 int audio_prm_set_lpass_clk_cfg (struct clk_cfg *clk, uint8_t enable)
 {
 	int ret = 0;
