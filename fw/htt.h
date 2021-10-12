@@ -658,6 +658,16 @@ typedef enum {
     HTT_STATS_PER_RATE_STATS_TAG                   = 128, /* htt_tx_rate_stats_per_tlv */
     HTT_STATS_MU_PPDU_DIST_TAG                     = 129, /* htt_pdev_mu_ppdu_dist_tlv */
     HTT_STATS_TX_PDEV_MUMIMO_GRP_STATS_TAG         = 130, /* htt_tx_pdev_mumimo_grp_stats_tlv */
+    HTT_STATS_TX_PDEV_BE_RATE_STATS_TAG            = 131, /* htt_tx_pdev_rate_stats_be_tlv */
+    HTT_STATS_AST_ENTRY_TAG                        = 132, /* htt_ast_entry_tlv */
+    HTT_STATS_TX_PDEV_BE_DL_MU_OFDMA_STATS_TAG     = 133, /* htt_tx_pdev_dl_be_mu_ofdma_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_BE_UL_MU_OFDMA_STATS_TAG     = 134, /* htt_tx_pdev_ul_be_mu_ofdma_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_RATE_STATS_BE_OFDMA_TAG      = 135, /* htt_tx_pdev_rate_stats_be_ofdma_tlv */
+    HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_BE_STATS_TAG  = 136, /* htt_rx_pdev_ul_mumimo_trig_be_stats_tlv */
+    HTT_STATS_TX_SELFGEN_BE_ERR_STATS_TAG          = 137, /* htt_tx_selfgen_be_err_stats_tlv */
+    HTT_STATS_TX_SELFGEN_BE_STATS_TAG              = 138, /* htt_tx_selfgen_be_stats_tlv */
+    HTT_STATS_TX_SELFGEN_BE_SCHED_STATUS_STATS_TAG = 139, /* htt_tx_selfgen_be_sched_status_stats_tlv */
+
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -2395,6 +2405,7 @@ typedef enum {
    HTT_TX_FW2WBM_TX_STATUS_REINJECT,
    HTT_TX_FW2WBM_TX_STATUS_INSPECT,
    HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY,
+   HTT_TX_FW2WBM_TX_STATUS_VDEVID_MISMATCH,
 
    HTT_TX_FW2WBM_TX_STATUS_MAX
 } htt_tx_fw2wbm_tx_status_t;
@@ -16390,6 +16401,9 @@ enum HTT_MSDU_QTYPE {
     HTT_MSDU_QTYPE_UDP, /* Specifies MSDUQ index used for UDP flow */
     HTT_MSDU_QTYPE_NON_UDP, /* Specifies MSDUQ index used for non-udp flow */
     HTT_MSDU_QTYPE_HOL, /* Specified MSDUQ index used for Head of Line */
+    HTT_MSDU_QTYPE_USER_SPECIFIED, /* Specifies MSDUQ index used for advertising changeable flow type */
+    HTT_MSDU_QTYPE_HI_PRIO,        /* Specifies MSDUQ index used for high priority flow type */
+    HTT_MSDU_QTYPE_LO_PRIO,        /* Specifies MSDUQ index used for low priority flow type */
 
 
     /* New MSDU_QTYPE should be added above this line */

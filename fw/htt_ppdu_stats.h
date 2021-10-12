@@ -210,10 +210,13 @@ PREPACK struct htt_tx_ppdu_stats_info {
     A_UINT32 tx_ratecode:       8,
              is_ampdu:          1,
              ba_ack_failed:     2,
-             /*  0: 20 MHz
-                 1: 40 MHz
-                 2: 80 MHz
-                 3: 160 MHz or 80+80 MHz */
+             /* bw
+              *  0: 20 MHz
+              *  1: 40 MHz
+              *  2: 80 MHz
+              *  3: 160 MHz or 80+80 MHz
+              *  4: 320 MHz
+              */
              bw:                3,
              sgi:               1,
              skipped_rate_ctrl: 1,
@@ -424,6 +427,7 @@ enum HTT_PPDU_STATS_BW {
     HTT_PPDU_STATS_BANDWIDTH_160MHZ = 5, /* includes 80+80 */
     HTT_PPDU_STATS_BANDWIDTH_DYN    = 6,
     HTT_PPDU_STATS_BANDWIDTH_DYN_PATTERNS = 7,
+    HTT_PPDU_STATS_BANDWIDTH_320MHZ = 8,
 };
 typedef enum HTT_PPDU_STATS_BW HTT_PPDU_STATS_BW;
 
@@ -441,16 +445,23 @@ typedef enum HTT_PPDU_STATS_BW HTT_PPDU_STATS_BW;
      } while (0)
 
 enum HTT_PPDU_STATS_SEQ_TYPE {
-    HTT_SEQTYPE_UNSPECIFIED     = 0,
-    HTT_SEQTYPE_SU              = 1,
-    HTT_SEQTYPE_AC_MU_MIMO      = 2,
-    HTT_SEQTYPE_AX_MU_MIMO      = 3,
-    HTT_SEQTYPE_MU_OFDMA        = 4,
-    HTT_SEQTYPE_UL_TRIG         = 5,
-    HTT_SEQTYPE_BURST_BCN       = 6,
-    HTT_SEQTYPE_UL_BSR_RESP     = 7,
-    HTT_SEQTYPE_UL_BSR_TRIG     = 8,
-    HTT_SEQTYPE_UL_RESP         = 9,
+    HTT_SEQTYPE_UNSPECIFIED         = 0,
+    HTT_SEQTYPE_SU                  = 1,
+    HTT_SEQTYPE_AC_MU_MIMO          = 2,
+    HTT_SEQTYPE_AX_MU_MIMO          = 3,
+    HTT_SEQTYPE_MU_OFDMA            = 4,
+    HTT_SEQTYPE_UL_MU_OFDMA_TRIG    = 5, /* new name - use this */
+        HTT_SEQTYPE_UL_TRIG         = 5,  /* deprecated old name */
+    HTT_SEQTYPE_BURST_BCN           = 6,
+    HTT_SEQTYPE_UL_BSR_RESP         = 7,
+    HTT_SEQTYPE_UL_BSR_TRIG         = 8,
+    HTT_SEQTYPE_UL_RESP             = 9,
+    HTT_SEQTYPE_UL_MU_MIMO_TRIG     = 10,
+    HTT_SEQTYPE_BE_MU_MIMO          = 11,
+    HTT_SEQTYPE_BE_MU_OFDMA         = 12,
+    HTT_SEQTYPE_BE_UL_MU_OFDMA_TRIG = 13,
+    HTT_SEQTYPE_BE_UL_MU_MIMO_TRIG  = 14,
+    HTT_SEQTYPE_BE_UL_BSR_TRIG      = 15,
 };
 typedef enum HTT_PPDU_STATS_SEQ_TYPE HTT_PPDU_STATS_SEQ_TYPE;
 
@@ -604,6 +615,11 @@ typedef enum HTT_PPDU_STATS_SPATIAL_REUSE HTT_PPDU_STATS_SPATIAL_REUSE;
 #define HTT_PPDU_STATS_COMMON_TRIG_COOKIE_GET(_val) \
         (((_val) & HTT_PPDU_STATS_COMMON_TRIG_COOKIE_M) >> \
          HTT_PPDU_STATS_COMMON_TRIG_COOKIE_S)
+
+enum HTT_SEQ_TYPE {
+    WAL_PPDU_SEQ_TYPE = 0,
+    HTT_PPDU_SEQ_TYPE = 1,
+};
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -764,6 +780,26 @@ typedef struct {
             A_UINT32 trig_cookie: 16,
                      trig_cookie_rsvd: 15,
                      trig_cookie_valid: 1;
+        };
+    };
+
+    /*
+     * htt_seq_type field is added for backward compatibility with
+     * pktlog decoder, host driver or any third party tool interpreting
+     * ppdu sequence type. If field 'htt_seq_type'is not present or is
+     * present but set to WAL_PPDU_SEQ_TYPE, decoder should interpret
+     * the seq type as WAL_TXSEND_PPDU_SEQUENCE.
+     * If the new field htt_seq_type is present and is set to
+     * HTT_PPDU_SEQ_TYPE then decoder should interpret the seq type as
+     * HTT_PPDU_STATS_SEQ_TYPE. htt_seq_type field will be set to
+     * HTT_PPDU_SEQ_TYPE in firmware versions where this field is
+     * defined.
+     */
+    union {
+        A_UINT32 reserved__htt_seq_type;
+        struct {
+            A_UINT32 htt_seq_type:  1,
+                     reserved3:     31;
         };
     };
 } htt_ppdu_stats_common_tlv;
