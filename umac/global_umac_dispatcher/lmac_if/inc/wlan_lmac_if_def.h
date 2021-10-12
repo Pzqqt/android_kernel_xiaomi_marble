@@ -1842,6 +1842,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 						uint8_t ic_vhtop_ch_freq_seg2,
 						uint16_t dfs_ch_mhz_freq_seg1,
 						uint16_t dfs_ch_mhz_freq_seg2,
+						uint16_t dfs_ch_punc_pattern,
 						bool *is_channel_updated);
 #endif
 #ifdef DFS_COMPONENT_ENABLE
