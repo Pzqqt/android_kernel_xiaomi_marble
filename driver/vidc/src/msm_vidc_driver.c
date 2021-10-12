@@ -2868,7 +2868,7 @@ void msm_vidc_update_stats(struct msm_vidc_inst *inst,
 	msm_vidc_debugfs_update(inst, etype);
 }
 
-static void msm_vidc_print_stats(struct msm_vidc_inst *inst)
+void msm_vidc_print_stats(struct msm_vidc_inst *inst)
 {
 	u32 frame_rate, operating_rate, achieved_fps, priority, etb, ebd, ftb, fbd, dt_ms;
 	u64 bitrate_kbps = 0, time_ms = ktime_get_ns() / 1000 / 1000;
@@ -2909,6 +2909,16 @@ int schedule_stats_work(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
+	/**
+	 * Hfi session is already closed and inst also going to be
+	 * closed soon. So skip scheduling new stats_work to avoid
+	 * use-after-free issues with close sequence.
+	 */
+	if (!inst->packet) {
+		i_vpr_e(inst, "skip scheduling stats_work\n");
+		return 0;
+	}
 	core = inst->core;
 	mod_delayed_work(inst->response_workq, &inst->stats_work,
 		msecs_to_jiffies(core->capabilities[STATS_TIMEOUT_MS].value));
@@ -2916,16 +2926,13 @@ int schedule_stats_work(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int cancel_stats_work(struct msm_vidc_inst *inst)
+int cancel_stats_work_sync(struct msm_vidc_inst *inst)
 {
 	if (!inst) {
 		d_vpr_e("%s: Invalid arguments\n", __func__);
 		return -EINVAL;
 	}
-	cancel_delayed_work(&inst->stats_work);
-
-	/* print final stats */
-	msm_vidc_print_stats(inst);
+	cancel_delayed_work_sync(&inst->stats_work);
 
 	return 0;
 }
@@ -2936,7 +2943,7 @@ void msm_vidc_stats_handler(struct work_struct *work)
 
 	inst = container_of(work, struct msm_vidc_inst, stats_work.work);
 	inst = get_inst_ref(g_core, inst);
-	if (!inst) {
+	if (!inst || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
