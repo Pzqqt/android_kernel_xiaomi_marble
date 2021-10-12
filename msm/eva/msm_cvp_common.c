@@ -646,7 +646,11 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 	cur_state = core->state;
 	core->state = CVP_CORE_UNINIT;
 	dprintk(CVP_WARN, "SYS_ERROR received for core %pK\n", core);
-	msm_cvp_noc_error_info(core);
+	if (response->status == CVP_ERR_NOC_ERROR) {
+		dprintk(CVP_WARN, "Got NOC error");
+		msm_cvp_noc_error_info(core);
+		MSM_CVP_ERROR(true);
+	}
 	call_hfi_op(hdev, flush_debug_queue, hdev->hfi_device_data);
 	list_for_each_entry(inst, &core->instances, list) {
 		dprintk(CVP_WARN,
@@ -672,10 +676,6 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 
 	/* handle the hw error before core released to get full debug info */
 	msm_cvp_handle_hw_error(core);
-	if (response->status == CVP_ERR_NOC_ERROR) {
-		dprintk(CVP_WARN, "Got NOC error");
-		MSM_CVP_ERROR(true);
-	}
 
 	dprintk(CVP_CORE, "Calling core_release\n");
 	rc = call_hfi_op(hdev, core_release, hdev->hfi_device_data);
@@ -1591,5 +1591,25 @@ error:
 }
 
 
+bool is_cvp_inst_valid(struct msm_cvp_inst *inst)
+{
+	struct msm_cvp_core *core;
+	struct msm_cvp_inst *sess;
 
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	if (!core)
+		return false;
+
+	mutex_lock(&core->lock);
+	list_for_each_entry(sess, &core->instances, list) {
+		if (inst == sess) {
+			if (kref_read(&inst->kref)) {
+				mutex_unlock(&core->lock);
+				return true;
+			}
+		}
+	}
+	mutex_unlock(&core->lock);
+	return false;
+}
 

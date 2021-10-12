@@ -39,7 +39,7 @@ static void * __cvp_dma_buf_vmap(struct dma_buf *dbuf)
 #endif
 }
 
-static void __cvp_dma_buf_vunmap(void *vaddr, struct dma_buf *dbuf)
+static void __cvp_dma_buf_vunmap(struct dma_buf *dbuf, void *vaddr)
 {
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 13, 0))
 	dma_buf_vunmap(dbuf, vaddr);

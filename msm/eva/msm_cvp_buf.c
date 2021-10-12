@@ -33,11 +33,17 @@
 	} while (0)
 
 
-void print_smem(u32 tag, const char *str, struct msm_cvp_inst *inst,
+int print_smem(u32 tag, const char *str, struct msm_cvp_inst *inst,
 		struct msm_cvp_smem *smem)
 {
-	if (!(tag & msm_cvp_debug) || !inst || !smem)
-		return;
+	if (!(tag & msm_cvp_debug))
+		return 0;
+
+	if (!inst || !smem) {
+		dprintk(CVP_ERR, "Invalid inst 0x%llx or smem 0x%llx\n",
+				inst, smem);
+		return -EINVAL;
+	}
 
 	if (smem->dma_buf) {
 		dprintk(tag,
@@ -46,6 +52,7 @@ void print_smem(u32 tag, const char *str, struct msm_cvp_inst *inst,
 			smem->size, smem->flags, smem->device_addr,
 			smem->bitmap_index, smem->refcount);
 	}
+	return 0;
 }
 
 static void print_internal_buffer(u32 tag, const char *str,
@@ -78,7 +85,9 @@ void print_cvp_buffer(u32 tag, const char *str, struct msm_cvp_inst *inst,
 static void _log_smem(struct inst_snapshot *snapshot, struct msm_cvp_inst *inst,
 		struct msm_cvp_smem *smem, bool logging)
 {
-	print_smem(CVP_ERR, "bufdump", inst, smem);
+
+	if (print_smem(CVP_ERR, "bufdump", inst, smem))
+		return;
 	if (!logging || !snapshot)
 		return;
 	if (snapshot && snapshot->smem_index < MAX_ENTRIES) {
@@ -941,7 +950,7 @@ void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst, bool log)
 			"---Buffer details for inst: %pK of type: %d---\n",
 			inst, inst->session_type);
 	mutex_lock(&inst->dma_cache.lock);
-	dprintk(CVP_ERR, "dma cache:\n");
+	dprintk(CVP_ERR, "dma cache: %d\n", inst->dma_cache.nr);
 	if (inst->dma_cache.nr <= MAX_DMABUF_NUMS)
 		for (i = 0; i < inst->dma_cache.nr; i++)
 			_log_smem(snap, inst, inst->dma_cache.entries[i], log);

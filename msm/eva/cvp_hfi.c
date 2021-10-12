@@ -23,6 +23,7 @@
 #include <linux/soc/qcom/smem.h>
 #include <linux/dma-mapping.h>
 #include <linux/reset.h>
+#include <linux/pm_wakeup.h>
 #include "hfi_packetization.h"
 #include "msm_cvp_debug.h"
 #include "cvp_core_hfi.h"
@@ -745,6 +746,8 @@ static int __read_register(struct iris_hfi_device *device, u32 reg)
 
 static void __set_registers(struct iris_hfi_device *device)
 {
+	struct msm_cvp_core *core;
+	struct msm_cvp_platform_data *pdata;
 	struct reg_set *reg_set;
 	int i;
 
@@ -754,6 +757,9 @@ static void __set_registers(struct iris_hfi_device *device)
 		return;
 	}
 
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	pdata = core->platform_data;
+
 	reg_set = &device->res->reg_set;
 	for (i = 0; i < reg_set->count; i++) {
 		__write_register(device, reg_set->reg_tbl[i].reg,
@@ -762,6 +768,19 @@ static void __set_registers(struct iris_hfi_device *device)
 					reg_set->reg_tbl[i].reg,
 					reg_set->reg_tbl[i].value);
 	}
+
+	__write_register(device, CVP_CPU_CS_AXI4_QOS,
+				pdata->noc_qos->axi_qos);
+	__write_register(device, CVP_NOC_PRIORITYLUT_LOW,
+				pdata->noc_qos->prioritylut_low);
+	__write_register(device, CVP_NOC_PRIORITYLUT_HIGH,
+				pdata->noc_qos->prioritylut_high);
+	__write_register(device, CVP_NOC_URGENCY_LOW,
+				pdata->noc_qos->urgency_low);
+	__write_register(device, CVP_NOC_DANGERLUT_LOW,
+				pdata->noc_qos->dangerlut_low);
+	__write_register(device, CVP_NOC_SAFELUT_LOW,
+				pdata->noc_qos->safelut_low);
 }
 
 /*
@@ -1758,6 +1777,7 @@ static int iris_hfi_core_init(void *device)
 
 	dprintk(CVP_CORE, "Core initializing\n");
 
+	pm_stay_awake(dev->res->pdev->dev.parent);
 	mutex_lock(&dev->lock);
 
 	dev->bus_vote.data =
@@ -1853,6 +1873,7 @@ static int iris_hfi_core_init(void *device)
 
 	cvp_dsp_send_hfi_queue();
 
+	pm_relax(dev->res->pdev->dev.parent);
 	dprintk(CVP_CORE, "Core inited successfully\n");
 
 	return 0;
@@ -1868,6 +1889,7 @@ err_load_fw:
 err_no_mem:
 	dprintk(CVP_ERR, "Core init failed\n");
 	mutex_unlock(&dev->lock);
+	pm_relax(dev->res->pdev->dev.parent);
 	return rc;
 }
 
@@ -3054,7 +3076,8 @@ static int __handle_reset_clk(struct msm_cvp_platform_resources *res,
 			goto failed_to_reset;
 		}
 
-		if (pwr_state != rst_info.required_state)
+		if (pwr_state != CVP_POWER_IGNORED &&
+			pwr_state != rst_info.required_state)
 			break;
 
 		rc = reset_control_assert(rst);
@@ -3065,7 +3088,8 @@ static int __handle_reset_clk(struct msm_cvp_platform_resources *res,
 			goto failed_to_reset;
 		}
 
-		if (pwr_state != rst_info.required_state)
+		if (pwr_state != CVP_POWER_IGNORED &&
+			pwr_state != rst_info.required_state)
 			break;
 
 		rc = reset_control_deassert(rst);
@@ -3099,6 +3123,8 @@ static int reset_ahb2axi_bridge(struct iris_hfi_device *device)
 	else
 		s = CVP_POWER_OFF;
 
+	s = CVP_POWER_IGNORED;
+
 	for (i = 0; i < device->res->reset_set.count; i++) {
 		rc = __handle_reset_clk(device->res, i, ASSERT, s);
 		if (rc) {
@@ -3106,10 +3132,12 @@ static int reset_ahb2axi_bridge(struct iris_hfi_device *device)
 				"failed to assert reset clocks\n");
 			goto failed_to_reset;
 		}
+	}
 
-		/* wait for deassert */
-		usleep_range(1000, 1050);
+	/* wait for deassert */
+	usleep_range(1000, 1050);
 
+	for (i = 0; i < device->res->reset_set.count; i++) {
 		rc = __handle_reset_clk(device->res, i, DEASSERT, s);
 		if (rc) {
 			dprintk(CVP_ERR,
@@ -3884,16 +3912,17 @@ static int __power_off_controller(struct iris_hfi_device *device)
 {
 	u32 lpi_status, reg_status = 0, count = 0, max_count = 1000;
 	u32 sbm_ln0_low;
+	int rc;
 
 	/* HPG 6.2.2 Step 1  */
 	__write_register(device, CVP_CPU_CS_X2RPMh, 0x3);
 
 	/* HPG 6.2.2 Step 2, noc to low power */
-	__write_register(device, CVP_AON_WRAPPER_MVP_NOC_LPI_CONTROL, 0x1);
+	__write_register(device, CVP_AON_WRAPPER_CVP_NOC_LPI_CONTROL, 0x1);
 	while (!reg_status && count < max_count) {
 		lpi_status =
 			 __read_register(device,
-				CVP_AON_WRAPPER_MVP_NOC_LPI_STATUS);
+				CVP_AON_WRAPPER_CVP_NOC_LPI_STATUS);
 		reg_status = lpi_status & BIT(0);
 		/* Wait for Core noc lpi status to be set */
 		usleep_range(50, 100);
@@ -3970,11 +3999,16 @@ static int __power_off_controller(struct iris_hfi_device *device)
 	/* HPG 6.2.2 Step 5 */
 	msm_cvp_disable_unprepare_clk(device, "cvp_clk");
 
-	/* HPG 6.2.2 Step 6 */
-	__disable_regulator(device, "cvp");
-
 	/* HPG 6.2.2 Step 7 */
 	msm_cvp_disable_unprepare_clk(device, "gcc_video_axi1");
+
+	/* Added to avoid pending transaction after power off */
+	rc = call_iris_op(device, reset_ahb2axi_bridge, device);
+	if (rc)
+		dprintk(CVP_ERR, "Off: Failed to reset ahb2axi: %d\n", rc);
+
+	/* HPG 6.2.2 Step 6 */
+	__disable_regulator(device, "cvp");
 
 	return 0;
 }
@@ -4110,6 +4144,7 @@ static inline int __resume(struct iris_hfi_device *device)
 {
 	int rc = 0;
 	u32 flags = 0, reg_gdsc, reg_cbcr;
+	struct msm_cvp_core *core;
 
 	if (!device) {
 		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
@@ -4120,6 +4155,8 @@ static inline int __resume(struct iris_hfi_device *device)
 		dprintk(CVP_PWR, "iris_hfi_device in deinit state.");
 		return -EINVAL;
 	}
+
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
 
 	dprintk(CVP_PWR, "Resuming from power collapse\n");
 	rc = __iris_power_on(device);
@@ -4147,6 +4184,7 @@ static inline int __resume(struct iris_hfi_device *device)
 	rc = __boot_firmware(device);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to reset cvp core\n");
+		msm_cvp_trigger_ssr(core, SSR_ERR_FATAL);
 		goto err_reset_core;
 	}
 
