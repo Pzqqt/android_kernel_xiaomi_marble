@@ -36,6 +36,8 @@ struct rmnet_frag_descriptor {
 	struct list_head list;
 	struct list_head frags;
 	struct net_device *dev;
+	u32 coal_bufsize;
+	u32 coal_bytes;
 	u32 len;
 	u32 hash;
 	u32 priority;

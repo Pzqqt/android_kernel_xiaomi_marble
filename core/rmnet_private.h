@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2014, 2016-2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, 2016-2021 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -12,6 +12,8 @@
 
 #ifndef _RMNET_PRIVATE_H_
 #define _RMNET_PRIVATE_H_
+
+#include <linux/types.h>
 
 #define RMNET_MAX_PACKET_SIZE      16384
 #define RMNET_DFLT_PACKET_SIZE     1500
@@ -44,5 +46,18 @@ RMNET_INGRESS_FORMAT_DL_MARKER_V2)
 #define RMNET_EPMODE_VND (1)
 /* Pass the frame directly to another device with dev_queue_xmit() */
 #define RMNET_EPMODE_BRIDGE (2)
+
+/* Struct for skb control block use within rmnet driver */
+struct rmnet_skb_cb {
+	/* MUST be the first entries because of legacy reasons */
+	char flush_shs;
+	char qmap_steer;
+
+	/* coalescing stats */
+	u32 coal_bytes;
+	u32 coal_bufsize;
+};
+
+#define RMNET_SKB_CB(skb) ((struct rmnet_skb_cb *)(skb)->cb)
 
 #endif /* _RMNET_PRIVATE_H_ */

@@ -35,6 +35,13 @@
 			       sizeof(struct rmnet_map_header) + \
 			       sizeof(struct rmnet_map_control_command_header))
 
+#define rmnet_descriptor_for_each_frag(p, desc) \
+	list_for_each_entry(p, &desc->frags, list)
+#define rmnet_descriptor_for_each_frag_safe(p, tmp, desc) \
+	list_for_each_entry_safe(p, tmp, &desc->frags, list)
+#define rmnet_descriptor_for_each_frag_safe_reverse(p, tmp, desc) \
+	list_for_each_entry_safe_reverse(p, tmp, &desc->frags, list)
+
 typedef void (*rmnet_perf_desc_hook_t)(struct rmnet_frag_descriptor *frag_desc,
 				       struct rmnet_port *port);
 typedef void (*rmnet_perf_chain_hook_t)(void);
@@ -81,7 +88,7 @@ void rmnet_recycle_frag_descriptor(struct rmnet_frag_descriptor *frag_desc,
 
 	list_del(&frag_desc->list);
 
-	list_for_each_entry_safe(frag, tmp, &frag_desc->frags, list) {
+	rmnet_descriptor_for_each_frag_safe(frag, tmp, frag_desc) {
 		struct page *page = skb_frag_page(&frag->frag);
 
 		if (page)
@@ -112,7 +119,7 @@ void *rmnet_frag_pull(struct rmnet_frag_descriptor *frag_desc,
 		return NULL;
 	}
 
-	list_for_each_entry_safe(frag, tmp, &frag_desc->frags, list) {
+	rmnet_descriptor_for_each_frag_safe(frag, tmp, frag_desc) {
 		u32 frag_size = skb_frag_size(&frag->frag);
 
 		if (!size)
@@ -162,7 +169,7 @@ void *rmnet_frag_trim(struct rmnet_frag_descriptor *frag_desc,
 
 	/* Compute number of bytes to remove from the end */
 	eat = frag_desc->len - size;
-	list_for_each_entry_safe_reverse(frag, tmp, &frag_desc->frags, list) {
+	rmnet_descriptor_for_each_frag_safe_reverse(frag, tmp, frag_desc) {
 		u32 frag_size = skb_frag_size(&frag->frag);
 
 		if (!eat)
@@ -206,7 +213,7 @@ static int rmnet_frag_copy_data(struct rmnet_frag_descriptor *frag_desc,
 		return -EINVAL;
 
 	/* Copy 'len' bytes into the bufer starting from 'off' */
-	list_for_each_entry(frag, &frag_desc->frags, list) {
+	rmnet_descriptor_for_each_frag(frag, frag_desc) {
 		if (!len)
 			break;
 
@@ -241,7 +248,7 @@ void *rmnet_frag_header_ptr(struct rmnet_frag_descriptor *frag_desc, u32 off,
 
 	/* Find the starting fragment */
 	offset = off;
-	list_for_each_entry(frag, &frag_desc->frags, list) {
+	rmnet_descriptor_for_each_frag(frag, frag_desc) {
 		frag_size = skb_frag_size(&frag->frag);
 		if (off < frag_size) {
 			start = skb_frag_address(&frag->frag) + off;
@@ -298,7 +305,7 @@ int rmnet_frag_descriptor_add_frags_from(struct rmnet_frag_descriptor *to,
 	if (off > from->len || len > from->len || off + len > from->len)
 		return -EINVAL;
 
-	list_for_each_entry(frag, &from->frags, list) {
+	rmnet_descriptor_for_each_frag(frag, from) {
 		u32 frag_size;
 
 		if (!len)
@@ -798,6 +805,7 @@ static struct sk_buff *rmnet_alloc_skb(struct rmnet_frag_descriptor *frag_desc,
 	struct sk_buff *head_skb, *current_skb, *skb;
 	struct skb_shared_info *shinfo;
 	struct rmnet_fragment *frag, *tmp;
+	struct rmnet_skb_cb *cb;
 
 	/* Use the exact sizes if we know them (i.e. RSB/RSC, rmnet_perf) */
 	if (frag_desc->hdrs_valid) {
@@ -840,7 +848,7 @@ static struct sk_buff *rmnet_alloc_skb(struct rmnet_frag_descriptor *frag_desc,
 	current_skb = head_skb;
 
 	/* Add in the page fragments */
-	list_for_each_entry_safe(frag, tmp, &frag_desc->frags, list) {
+	rmnet_descriptor_for_each_frag_safe(frag, tmp, frag_desc) {
 		struct page *p = skb_frag_page(&frag->frag);
 		u32 frag_size = skb_frag_size(&frag->frag);
 
@@ -874,6 +882,9 @@ add_frag:
 skip_frags:
 	head_skb->dev = frag_desc->dev;
 	rmnet_set_skb_proto(head_skb);
+	cb = RMNET_SKB_CB(head_skb);
+	cb->coal_bytes = frag_desc->coal_bytes;
+	cb->coal_bufsize = frag_desc->coal_bufsize;
 
 	/* Handle any header metadata that needs to be updated after RSB/RSC
 	 * segmentation
@@ -971,7 +982,7 @@ skip_frags:
 	}
 
 	if (frag_desc->flush_shs)
-		head_skb->cb[0] = 1;
+		cb->flush_shs = 1;
 
 	/* Handle coalesced packets */
 	if (frag_desc->gso_segs > 1)
@@ -1150,6 +1161,10 @@ static void __rmnet_frag_segment_data(struct rmnet_frag_descriptor *coal_desc,
 	coal_desc->pkt_id = pkt_id + 1;
 	coal_desc->gso_segs = 0;
 
+	/* Only relevant for the first segment to avoid overcoutning */
+	coal_desc->coal_bytes = 0;
+	coal_desc->coal_bufsize = 0;
+
 	list_add_tail(&new_desc->list, list);
 	return;
 
@@ -1191,9 +1206,7 @@ static bool rmnet_frag_validate_csum(struct rmnet_frag_descriptor *frag_desc)
 	return !csum_fold(csum);
 }
 
-/* Converts the coalesced frame into a list of descriptors.
- * NLOs containing csum erros will not be included.
- */
+/* Converts the coalesced frame into a list of descriptors */
 static void
 rmnet_frag_segment_coal_data(struct rmnet_frag_descriptor *coal_desc,
 			     u64 nlo_err_mask, struct rmnet_port *port,
@@ -1201,6 +1214,7 @@ rmnet_frag_segment_coal_data(struct rmnet_frag_descriptor *coal_desc,
 {
 	struct rmnet_priv *priv = netdev_priv(coal_desc->dev);
 	struct rmnet_map_v5_coal_header coal_hdr;
+	struct rmnet_fragment *frag;
 	u8 *version;
 	u16 pkt_len;
 	u8 pkt, total_pkt = 0;
@@ -1317,6 +1331,10 @@ rmnet_frag_segment_coal_data(struct rmnet_frag_descriptor *coal_desc,
 	}
 
 	coal_desc->hdrs_valid = 1;
+	coal_desc->coal_bytes = coal_desc->len;
+	rmnet_descriptor_for_each_frag(frag, coal_desc)
+		coal_desc->coal_bufsize +=
+			page_size(skb_frag_page(&frag->frag));
 
 	if (rmnet_map_v5_csum_buggy(&coal_hdr) && !zero_csum) {
 		/* Mark the checksum as valid if it checks out */
