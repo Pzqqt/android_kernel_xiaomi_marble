@@ -662,11 +662,15 @@ int __set_clk_rate(struct msm_vidc_core *core,
 	struct mmrm_client *client;
 
 	/* not registered */
-	if (!core || !cl || !cl->mmrm_client) {
+	if (!core || !cl || !core->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	client = cl->mmrm_client;
+
+	if (core->capabilities[MMRM].value && !cl->mmrm_client) {
+		d_vpr_e("%s: invalid mmrm client\n", __func__);
+		return -EINVAL;
+	}
 
 	/*
 	 * This conversion is necessary since we are scaling clock values based on
@@ -681,13 +685,26 @@ int __set_clk_rate(struct msm_vidc_core *core,
 		return 0;
 
 	d_vpr_p("Scaling clock %s to %llu, prev %llu\n", cl->name, rate, cl->prev);
-	memset(&client_data, 0, sizeof(client_data));
-	client_data.num_hw_blocks = 1;
-	rc = mmrm_client_set_value(client, &client_data, rate);
-	if (rc) {
-		d_vpr_e("%s: Failed to set clock rate %llu %s: %d\n",
-			__func__, rate, cl->name, rc);
-		return rc;
+
+	if (core->capabilities[MMRM].value) {
+		/* set clock rate to mmrm driver */
+		client = cl->mmrm_client;
+		memset(&client_data, 0, sizeof(client_data));
+		client_data.num_hw_blocks = 1;
+		rc = mmrm_client_set_value(client, &client_data, rate);
+		if (rc) {
+			d_vpr_e("%s: Failed to set mmrm clock rate %llu %s: %d\n",
+				__func__, rate, cl->name, rc);
+			return rc;
+		}
+	} else {
+		/* set clock rate to clock driver */
+		rc = clk_set_rate(cl->clk, rate);
+		if (rc) {
+			d_vpr_e("%s: Failed to set clock rate %llu %s: %d\n",
+				__func__, rate, cl->name, rc);
+			return rc;
+		}
 	}
 	cl->prev = rate;
 	return rc;
@@ -1425,6 +1442,16 @@ static void __deregister_mmrm(struct msm_vidc_core *core)
 {
 	struct clock_info *cl;
 
+	if (!core || !core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	if (!core->capabilities[MMRM].value) {
+		d_vpr_h("%s: MMRM not supported\n", __func__);
+		return;
+	}
+
 	venus_hfi_for_each_clock(core, cl) {
 		if (cl->has_scaling && cl->mmrm_client) {
 			mmrm_client_deregister(cl->mmrm_client);
@@ -1437,6 +1464,16 @@ static int __register_mmrm(struct msm_vidc_core *core)
 {
 	int rc = 0;
 	struct clock_info *cl;
+
+	if (!core ||!core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!core->capabilities[MMRM].value) {
+		d_vpr_h("%s: MMRM not supported\n", __func__);
+		return 0;
+	}
 
 	venus_hfi_for_each_clock(core, cl) {
 		struct mmrm_client_desc desc;

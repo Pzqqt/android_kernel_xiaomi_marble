@@ -170,6 +170,29 @@ static int msm_vidc_register_video_device(struct msm_vidc_core *core,
 	return 0;
 }
 
+static int msm_vidc_check_mmrm_support(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	if (!core || !core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!core->capabilities[MMRM].value)
+		goto exit;
+
+	/* Todo: Dependency on MMRM driver changes */
+	// if (!mmrm_client_check_scaling_supported(MMRM_CLIENT_CLOCK, 0)) {
+	// 	d_vpr_e("%s: MMRM not supported\n", __func__);
+	// 	core->capabilities[MMRM].value = 0;
+	// }
+
+exit:
+	d_vpr_h("%s: %d\n", __func__, core->capabilities[MMRM].value);
+	return rc;
+}
+
 static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -391,6 +414,12 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 	if (rc) {
 		d_vpr_e("Failed to register video encoder\n");
 		goto enc_reg_failed;
+	}
+
+	rc = msm_vidc_check_mmrm_support(core);
+	if (rc) {
+		d_vpr_e("Failed to check MMRM scaling support\n");
+		rc = 0; /* Ignore error */
 	}
 
 	core->debugfs_root = msm_vidc_debugfs_init_core(core);
