@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +33,12 @@
 #define SCHEDULER_NUMBER_OF_MSG_QUEUE 6
 #define SCHEDULER_WRAPPER_MAX_FAIL_COUNT (SCHEDULER_CORE_MAX_MESSAGES * 3)
 #define SCHEDULER_WATCHDOG_TIMEOUT (10 * 1000) /* 10s */
+
+#ifdef CONFIG_AP_PLATFORM
+#define SCHED_DEBUG_PANIC(msg)
+#else
+#define SCHED_DEBUG_PANIC(msg) QDF_DEBUG_PANIC(msg)
+#endif
 
 #define sched_fatal(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_SCHEDULER, params)

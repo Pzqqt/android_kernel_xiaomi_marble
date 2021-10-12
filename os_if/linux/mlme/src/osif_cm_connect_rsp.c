@@ -43,6 +43,19 @@ void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
 	*ie_data_len = assoc_req->len - WLAN_ASSOC_REQ_IES_OFFSET;
 	*ie_data_ptr = assoc_req->ptr + WLAN_ASSOC_REQ_IES_OFFSET;
 }
+#else
+void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
+				   size_t *ie_data_len,
+				   const uint8_t **ie_data_ptr)
+{
+	/* Validate IE and length */
+	if (!assoc_req->len || !assoc_req->ptr)
+		return;
+
+	*ie_data_len = assoc_req->len;
+	*ie_data_ptr = assoc_req->ptr;
+}
+#endif
 
 void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
 				   size_t *ie_data_len,
@@ -56,26 +69,6 @@ void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
 	*ie_data_len = assoc_rsp->len - WLAN_ASSOC_RSP_IES_OFFSET;
 	*ie_data_ptr = assoc_rsp->ptr + WLAN_ASSOC_RSP_IES_OFFSET;
 }
-
-#else
-
-void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
-				   size_t *ie_data_len,
-				   const uint8_t **ie_data_ptr)
-{
-	*ie_data_len = assoc_req->len;
-	*ie_data_ptr = assoc_req->ptr;
-}
-
-void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
-				   size_t *ie_data_len,
-				   const uint8_t **ie_data_ptr)
-{
-	*ie_data_len = assoc_rsp->len;
-	*ie_data_ptr = assoc_rsp->ptr;
-}
-
-#endif
 
 /**
  * osif_validate_connect_and_reset_src_id() - Validate connect response and
@@ -621,11 +614,13 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 			cfg80211_connect_result(
 				osif_priv->wdev->netdev,
 				rsp->bssid.bytes, req_ptr, req_len,
-				rsp_ptr, rsp_len, status, GFP_KERNEL);
+				rsp_ptr, rsp_len, status,
+				qdf_mem_malloc_flags());
 	} else {
 		cfg80211_connect_result(osif_priv->wdev->netdev,
 					rsp->bssid.bytes, req_ptr, req_len,
-					rsp_ptr, rsp_len, status, GFP_KERNEL);
+					rsp_ptr, rsp_len, status,
+					qdf_mem_malloc_flags());
 	}
 }
 #else /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */
@@ -660,12 +655,13 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 			cfg80211_connect_result(tmp_osif_priv->wdev->netdev,
 						macaddr.bytes, req_ptr,
 						req_len, rsp_ptr, rsp_len,
-						status, GFP_KERNEL);
+						status, qdf_mem_malloc_flags());
 		}
 	} else {
 		cfg80211_connect_result(osif_priv->wdev->netdev,
 					rsp->bssid.bytes, req_ptr, req_len,
-					rsp_ptr, rsp_len, status, GFP_KERNEL);
+					rsp_ptr, rsp_len, status,
+					qdf_mem_malloc_flags());
 	}
 }
 #endif /* WLAN_FEATURE_11BE_MLO_ADV_FEATURE */

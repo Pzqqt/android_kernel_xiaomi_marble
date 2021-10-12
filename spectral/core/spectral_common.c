@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -343,6 +343,15 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 				goto bad;
 		}
 
+		if (sp_in->ss_bandwidth != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_CHAN_WIDTH;
+			param.value = sp_in->ss_bandwidth;
+			ret = sc->sptrlc_set_spectral_config
+						(pdev, &param, smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
+
 		break;
 
 	case SPECTRAL_GET_CONFIG:
@@ -373,6 +382,7 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 		spectralparams->ss_dbm_adj = sp_out.ss_dbm_adj;
 		spectralparams->ss_chn_mask = sp_out.ss_chn_mask;
 		spectralparams->ss_frequency = sp_out.ss_frequency;
+		spectralparams->ss_bandwidth = sp_out.ss_bandwidth;
 		break;
 
 	case SPECTRAL_IS_ACTIVE:

@@ -558,7 +558,7 @@ void dfs_getnol(struct wlan_dfs *dfs, void *dfs_nolinfo)
 	DFS_GET_NOL_LOCKED(dfs, nolinfo->dfs_nol, &(nolinfo->dfs_ch_nchans));
 }
 
-#if !defined(QCA_MCL_DFS_SUPPORT)
+#if !defined(MOBILE_DFS_SUPPORT)
 #ifdef CONFIG_CHAN_FREQ_API
 void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 {

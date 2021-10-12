@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,7 +69,7 @@ QDF_STATUS wmi_extract_dfs_radar_detection_event(
 		struct radar_found_info *radar_found,
 		uint32_t len);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * wmi_extract_wlan_radar_event_info() - function to handle radar pulse event.
  * @wmi_handle: wmi handle

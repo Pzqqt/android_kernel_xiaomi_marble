@@ -32,6 +32,127 @@
 #endif
 #include "../dfs_confirm_radar.h"
 
+#ifdef MOBILE_DFS_SUPPORT
+/**
+ * struct dfs_pulse dfs_fcc_radars_qcn7605 - FCC radar table for QCN7605
+ *					     chipsets.
+ */
+static const struct dfs_pulse dfs_fcc_radars_qcn7605[] = {
+	/* FCC TYPE 1 */
+	{18,  1,  700, 700, 0,  4,  5,  0,  1, 13,  0, 3,  1, 5, 0, 0},
+	{18,  1,  350, 350, 0,  4,  5,  0,  1, 13,  0, 3,  0, 5, 0, 0},
+
+	/* FCC TYPE 6 */
+	{9,   1, 3003, 3003, 1,  7,  5,  0,  1, 18,  0, 0,  1, 1000, 0, 1},
+
+	/* FCC TYPE 2 */
+	{23, 5, 4347, 6666, 0,  4, 11,  0,  7, 13,  0, 3,  0, 5, 0, 2},
+
+	/* FCC TYPE 3 */
+	{18, 10, 2000, 5000, 0,  4,  8,  6, 13, 22,  0, 3, 0, 5, 0, 5},
+
+	/* FCC TYPE 4 */
+	{16, 15, 2000, 5000, 0,  4,  7, 11, 23, 22,  0, 3, 0, 5, 0, 11},
+
+	/* FCC NEW TYPE 1 */
+	/* 518us to 938us pulses (min 56 pulses) */
+	{57, 1, 1066, 1930, 0, 4,  20,  0,  1, 13,  0, 3,  0, 5, 0, 21},
+
+	/* 938us to 2000 pulses (min 26 pulses) */
+	{27, 1,  500, 1066, 0, 4,  13,  0,  1, 22,  0, 3,  0, 5, 0, 22},
+
+	/* 2000 to 3067us pulses (min 17 pulses) */
+	{18, 1,  325,  500, 0, 4,  9,   0,  1, 22,  0, 3,  0, 5, 0, 23},
+};
+
+/**
+ * struct dfs_pulse dfs_mkk4_radars_qcn7605 - MKK4 radar table for QCN7605
+ *					      chipsets.
+ */
+static const struct dfs_pulse dfs_mkk4_radars_qcn7605[] = {
+	/* following two filters are specific to Japan/MKK4 */
+	/* 1389 +/- 6 us */
+	{18,  1,  720,  720, 0,  4,  6,  0,  1, 13,  0, 3, 0, 5, 0, 17},
+
+	/* 4000 +/- 6 us */
+	{18,  4,  250,  250, 0,  4,  5,  1,  6, 18,  0, 3, 0, 5, 0, 18},
+
+	/* 3846 +/- 7 us */
+	{18,  5,  260,  260, 0,  4,  6,  1,  6, 18,  0, 3, 1, 5, 0, 19},
+
+	/* following filters are common to both FCC and JAPAN */
+
+	/* FCC TYPE 1 */
+	{18,  1,  700, 700, 0,  4,  5,  0,  1, 18,  0, 3,  1, 5, 0, 0},
+	{18,  1,  350, 350, 0,  4,  5,  0,  1, 18,  0, 3,  0, 5, 0, 0},
+
+	/* FCC TYPE 6 */
+	{9,   1, 3003, 3003, 1,  7,  5,  0,  1, 18,  0, 0, 1,  1000, 0, 1},
+
+	/* FCC TYPE 2 */
+	{23, 5, 4347, 6666, 0,  4, 11,  0,  7, 22,  0, 3,  0, 5, 0, 2},
+
+	/* FCC TYPE 3 */
+	{18, 10, 2000, 5000, 0,  4,  8,  6, 13, 22,  0, 3, 0, 5, 0, 5},
+
+	/* FCC TYPE 4 */
+	{16, 15, 2000, 5000, 0,  4,  7, 11, 23, 22,  0, 3, 0, 5, 0, 11},
+};
+
+/**
+ * dfs_pulse dfs_etsi_radars_qcn7605 - ETSI radar table for QCN7605
+ *				       chipsets.
+ */
+static const struct dfs_pulse dfs_etsi_radars_qcn7605[] = {
+	/* EN 302 502 frequency hopping pulse */
+	/* PRF 3000, 1us duration, 9 pulses per burst */
+	{9,   1, 3000, 3000, 1,  4,  5,  0,  1, 18,  0, 0, 1,  1000, 0, 40},
+	/* PRF 4500, 20us duration, 9 pulses per burst */
+	{9,  20, 4500, 4500, 1,  4,  5, 19, 21, 18,  0, 0, 1,  1000, 0, 41},
+
+	/* Type 3 */
+	/* 10 15us, 200-1000 PRF, 15 pulses */
+	{15, 15, 200, 1000, 0, 4, 5, 8, 18, 22, 0, 0, 0, 5, 0, 42},
+
+	/* Type 4 */
+	/* 1-15us, 1200-1600 PRF, 15 pulses */
+	{15, 15, 1200, 1600, 0, 4, 5, 0, 18, 22, 0, 0, 0, 5, 0, 43},
+
+	/* TYPE staggered pulse */
+	/* Type 5*/
+	/* 0.8-2us, 2-3 bursts,300-400 PRF, 10 pulses each */
+	{30,  2,  300,  400, 2, 30,  3,  0,  5, 15, 0,   0, 1, 5, 0, 31},
+	/* Type 6 */
+	/* 0.8-2us, 2-3 bursts, 400-1200 PRF, 15 pulses each */
+	{30,  2,  400, 1200, 2, 30,  7,  0,  5, 15, 0,   0, 0, 5, 0, 32},
+
+	/* constant PRF based */
+	/* Type 1 */
+	/* 0.8-5us, 200  300 PRF, 10 pulses */
+	{10, 5,   200,  400, 0,  4,  5,  0,  8, 15, 0,   0, 2, 5, 0, 33},
+	{10, 5,   400,  600, 0,  4,  5,  0,  8, 15, 0,   0, 2, 5, 0, 37},
+	{10, 5,   600,  800, 0,  4,  5,  0,  8, 13, 0,   0, 2, 5, 0, 38},
+	{10, 5,   800, 1000, 0,  4,  5,  0,  8, 15, 0,   0, 2, 5, 0, 39},
+	/* {10, 5,   200, 1000, 0,  6,  5,  0,  8, 15, 0,   0, 2, 5, 33}, */
+
+	/* Type 2 */
+	/* 0.8-15us, 200-1600 PRF, 15 pulses */
+	{15, 15,  200, 1600, 0,  4, 8,  0, 18, 24, 0,   0, 0, 5, 0, 34},
+
+	/* Type 3 */
+	/* 0.8-15us, 2300-4000 PRF, 25 pulses*/
+	{25, 15, 2300, 4000, 0,  4, 10, 0, 18, 24, 0,   0, 0, 5, 0, 35},
+
+	/* Type 4 */
+	/* 20-30us, 2000-4000 PRF, 20 pulses*/
+	{20, 30, 2000, 4000, 0,  4, 6, 19, 33, 24, 0,   0, 0, 24,  1, 36},
+};
+#else
+static const struct dfs_pulse dfs_fcc_radars_qcn7605[]  = { };
+static const struct dfs_pulse dfs_etsi_radars_qcn7605[] = { };
+static const struct dfs_pulse dfs_mkk4_radars_qcn7605[] = { };
+#endif
+
 /**
  * struct dfs_pulse dfs_fcc_radars - FCC radar table for Offload chipsets.
  */
@@ -276,8 +397,13 @@ static inline void dfs_assign_fcc_pulse_table(
 		uint32_t target_type,
 		struct wlan_lmac_if_target_tx_ops *tx_ops)
 {
-	rinfo->dfs_radars = dfs_fcc_radars;
-	rinfo->numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
+	if (tx_ops->tgt_is_tgt_type_qcn7605(target_type)) {
+		rinfo->dfs_radars = (struct dfs_pulse *)dfs_fcc_radars_qcn7605;
+		rinfo->numradars = QDF_ARRAY_SIZE(dfs_fcc_radars_qcn7605);
+	} else {
+		rinfo->dfs_radars = dfs_fcc_radars;
+		rinfo->numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
+	}
 
 	if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
 			tx_ops->tgt_is_tgt_type_ipq4019(target_type)) {
@@ -416,12 +542,13 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 	struct wlan_dfs_radar_tab_info rinfo;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_target_tx_ops *tgt_tx_ops;
-	int i;
+	int i, num_radars;
 	uint32_t target_type;
 	int dfsdomain = DFS_FCC_DOMAIN;
 	struct dfs_pulse *external_radars, *merged_radars = NULL;
 	uint8_t num_ext_radars;
 	struct wlan_lmac_if_tx_ops *tx_ops;
+	struct dfs_pulse *dfs_radars;
 
 	/* Fetch current radar patterns from the lmac */
 	qdf_mem_zero(&rinfo, sizeof(rinfo));
@@ -473,15 +600,30 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs_debug(dfs, WLAN_DEBUG_DFS, "ETSI domain");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
+		if (tgt_tx_ops->tgt_is_tgt_type_qcn7605(target_type)) {
+			dfs_radars =
+				(struct dfs_pulse *)dfs_etsi_radars_qcn7605;
+			num_radars = QDF_ARRAY_SIZE(dfs_etsi_radars_qcn7605);
+		} else {
+			dfs_radars = dfs_etsi_radars;
+			num_radars = QDF_ARRAY_SIZE(dfs_etsi_radars);
+		}
+
 		if (dfs_is_en302_502_applicable(dfs)) {
-			rinfo.dfs_radars = dfs_etsi_radars;
-			rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
+			rinfo.dfs_radars = dfs_radars;
+			rinfo.numradars = num_radars;
 		} else {
 			uint8_t offset = ETSI_LEGACY_PULSE_ARR_OFFSET;
-
-			rinfo.dfs_radars = &dfs_etsi_radars[offset];
-			rinfo.numradars =
-				QDF_ARRAY_SIZE(dfs_etsi_radars) - offset;
+			if (num_radars > offset) {
+				rinfo.dfs_radars = &dfs_radars[offset];
+				rinfo.numradars = num_radars - offset;
+			} else {
+				dfs_err(dfs, WLAN_DEBUG_DFS,
+					"ETSI num radars = %u, offset = %u",
+					num_radars, offset);
+				rinfo.dfs_radars = NULL;
+				rinfo.numradars = 0;
+			}
 		}
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
@@ -509,16 +651,30 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 	case DFS_MKKN_DOMAIN:
 		dfs_debug(dfs, WLAN_DEBUG_DFS, "MKKN domain");
 		rinfo.dfsdomain = DFS_MKKN_DOMAIN;
-		rinfo.dfs_radars = dfs_mkk4_radars;
-		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
+		if (tgt_tx_ops->tgt_is_tgt_type_qcn7605(target_type)) {
+			rinfo.dfs_radars =
+				(struct dfs_pulse *)dfs_mkk4_radars_qcn7605;
+			rinfo.numradars =
+				QDF_ARRAY_SIZE(dfs_mkk4_radars_qcn7605);
+		} else {
+			rinfo.dfs_radars = dfs_mkk4_radars;
+			rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
+		}
 		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tgt_tx_ops);
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT_MKKN;
 		break;
 	case DFS_MKK4_DOMAIN:
 		dfs_debug(dfs, WLAN_DEBUG_DFS, "MKK4 domain");
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
-		rinfo.dfs_radars = dfs_mkk4_radars;
-		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
+		if (tgt_tx_ops->tgt_is_tgt_type_qcn7605(target_type)) {
+			rinfo.dfs_radars =
+				(struct dfs_pulse *)dfs_mkk4_radars_qcn7605;
+			rinfo.numradars =
+				QDF_ARRAY_SIZE(dfs_mkk4_radars_qcn7605);
+		} else {
+			rinfo.dfs_radars = dfs_mkk4_radars;
+			rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
+		}
 		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tgt_tx_ops);
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;

@@ -171,6 +171,32 @@ enum spectral_scan_mode {
 	SPECTRAL_SCAN_MODE_INVALID = 0xff,
 };
 
+/**
+ * enum spectral_chan_width - Spectral-specific channel width enum
+ * @SPECTRAL_CH_WIDTH_20MHZ: 20 mhz width
+ * @SPECTRAL_CH_WIDTH_40MHZ: 40 mhz width
+ * @SPECTRAL_CH_WIDTH_80MHZ: 80 mhz width
+ * @SPECTRAL_CH_WIDTH_160MHZ: 160 mhz width
+ * @SPECTRAL_CH_WIDTH_80P80MHZ: 80+80 mhz width
+ * @SPECTRAL_CH_WIDTH_5MHZ: 5 mhz width
+ * @SPECTRAL_CH_WIDTH_10MHZ: 10 mhz width
+ * @SPECTRAL_CH_WIDTH_320MHZ: 320 mhz width
+ * @SPECTRAL_CH_WIDTH_MAX: Max possible width
+ * @SPECTRAL_CH_WIDTH_INVALID: invalid width
+ */
+enum spectral_chan_width {
+	SPECTRAL_CH_WIDTH_20MHZ,
+	SPECTRAL_CH_WIDTH_40MHZ,
+	SPECTRAL_CH_WIDTH_80MHZ,
+	SPECTRAL_CH_WIDTH_160MHZ,
+	SPECTRAL_CH_WIDTH_80P80MHZ,
+	SPECTRAL_CH_WIDTH_320MHZ,
+	SPECTRAL_CH_WIDTH_5MHZ,
+	SPECTRAL_CH_WIDTH_10MHZ,
+	SPECTRAL_CH_WIDTH_MAX,
+	SPECTRAL_CH_WIDTH_INVALID,
+};
+
 struct spectral_ioctl_params {
 	int16_t   spectral_fft_period;
 	int16_t   pectral_period;
@@ -281,6 +307,7 @@ struct spectral_config_frequency {
 *                           span of interest or center frequency (in MHz) of
  *                          any WLAN channel in the secondary 80 MHz span of
  *                          interest.
+ * @ss_bandwidth: Spectral scan bandwidth
  */
 struct spectral_config {
 	uint16_t ss_fft_period;
@@ -308,6 +335,7 @@ struct spectral_config {
 	int8_t ss_nf_pwr[AH_MAX_CHAINS * 2];
 	int32_t ss_nf_temp_data;
 	struct spectral_config_frequency ss_frequency;
+	uint16_t ss_bandwidth;
 };
 
 /**
@@ -326,11 +354,13 @@ struct spectral_config {
  * @agile_spectral_cap: agile Spectral capability for 20/40/80
  * @agile_spectral_cap_160: agile Spectral capability for 160 MHz
  * @agile_spectral_cap_80p80: agile Spectral capability for 80p80
+ * @agile_spectral_cap_320: agile Spectral capability for 320
  * @num_detectors_20mhz: number of Spectral detectors in 20 MHz
  * @num_detectors_40mhz: number of Spectral detectors in 40 MHz
  * @num_detectors_80mhz: number of Spectral detectors in 80 MHz
  * @num_detectors_160mhz: number of Spectral detectors in 160 MHz
  * @num_detectors_80p80mhz: number of Spectral detectors in 80p80 MHz
+ * @num_detectors_320mhz: number of Spectral detectors in 320 MHz
  */
 struct spectral_caps {
 	uint8_t phydiag_cap;
@@ -347,17 +377,19 @@ struct spectral_caps {
 	bool agile_spectral_cap;
 	bool agile_spectral_cap_160;
 	bool agile_spectral_cap_80p80;
+	bool agile_spectral_cap_320;
 	uint32_t num_detectors_20mhz;
 	uint32_t num_detectors_40mhz;
 	uint32_t num_detectors_80mhz;
 	uint32_t num_detectors_160mhz;
 	uint32_t num_detectors_80p80mhz;
+	uint32_t num_detectors_320mhz;
 };
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)
 
 #define MAX_SPECTRAL_CHAINS           (3)
-#define MAX_NUM_BINS                  (1024)
+#define MAX_NUM_BINS                  (2048)
 #define MAX_NUM_BINS_PRI80            (1024)
 #define MAX_NUM_BINS_SEC80            (520)
 #define MAX_NUM_BINS_5MHZ             (32)

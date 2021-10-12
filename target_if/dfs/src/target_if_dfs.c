@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -102,7 +102,7 @@ static bool target_if_is_dfs_3(uint32_t target_type)
 	return is_dfs_3;
 }
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * target_if_radar_event_handler() - handle radar event when
  * phyerr filter offload is enabled.
@@ -285,7 +285,7 @@ static QDF_STATUS target_if_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if (reg_cap_ptr[pdev_id].wireless_modes &
-			WMI_HOST_REGDMN_MODE_11A)
+			HOST_REGDMN_MODE_11A)
 		*is_5ghz = true;
 	else
 		*is_5ghz = false;
@@ -293,7 +293,7 @@ static QDF_STATUS target_if_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * target_if_dfs_set_phyerr_filter_offload() - config phyerr filter offload.
  * @pdev: Pointer to DFS pdev object.

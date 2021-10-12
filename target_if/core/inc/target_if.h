@@ -552,6 +552,14 @@ bool target_is_tgt_type_qcn9000(uint32_t target_type);
 bool target_is_tgt_type_qcn6122(uint32_t target_type);
 
 /**
+ * target_is_tgt_type_qcn7605() - Check if the target type is QCN7605
+ * @target_type: target type to be checked.
+ *
+ * Return: true if the target_type is QCN7605, else false.
+ */
+bool target_is_tgt_type_qcn7605(uint32_t target_type);
+
+/**
  * target_psoc_set_wlan_init_status() - set info wlan_init_status
  * @psoc_info:          pointer to structure target_psoc_info
  * @wlan_init_status:   FW init status

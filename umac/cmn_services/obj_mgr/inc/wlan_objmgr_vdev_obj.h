@@ -1384,7 +1384,7 @@ static inline bool wlan_vdev_mlme_is_mlo_ap(struct wlan_objmgr_vdev *vdev)
  * wlan_vdev_mlme_is_mlo_vdev() - whether it is mlo vdev or not
  * @vdev: VDEV object
  *
- * Return: True if it is mlo ap, otherwise false.
+ * Return: True if it is mlo, otherwise false.
  */
 static inline
 bool wlan_vdev_mlme_is_mlo_vdev(struct wlan_objmgr_vdev *vdev)
@@ -1393,10 +1393,10 @@ bool wlan_vdev_mlme_is_mlo_vdev(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
- * wlan_vdev_mlme_is_mlo_vdev() - whether it is mlo vdev or not
+ * wlan_vdev_mlme_is_mlo_vdev() - whether it is mlo sta link vdev or not
  * @vdev: VDEV object
  *
- * Return: True if it is mlo ap, otherwise false.
+ * Return: True if it is mlo sta link, otherwise false.
  */
 static inline
 bool wlan_vdev_mlme_is_mlo_link_vdev(struct wlan_objmgr_vdev *vdev)
@@ -1405,6 +1405,43 @@ bool wlan_vdev_mlme_is_mlo_link_vdev(struct wlan_objmgr_vdev *vdev)
 						WLAN_VDEV_FEXT2_MLO_STA_LINK);
 }
 
+/**
+ * wlan_vdev_mlme_is_assoc_sta_vdev() - whether it is mlo sta assoc vdev or not
+ * @vdev: VDEV object
+ *
+ * Return: True if it is mlo sta assoc vdev, otherwise false.
+ */
+static inline
+bool wlan_vdev_mlme_is_assoc_sta_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	if (!(wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) ||
+	    !wlan_vdev_mlme_is_mlo_vdev(vdev))
+		return false;
+
+	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		return true;
+
+	return false;
+}
+
+/**
+ * wlan_vdev_mlme_is_link_sta_vdev() - whether it is mlo sta link vdev or not
+ * @vdev: VDEV object
+ *
+ * Return: True if it is mlo sta link vdev, otherwise false.
+ */
+static inline
+bool wlan_vdev_mlme_is_link_sta_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	if (!(wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) ||
+	    !wlan_vdev_mlme_is_mlo_vdev(vdev))
+		return false;
+
+	if (wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		return true;
+
+	return false;
+}
 #else
 
 static inline
@@ -1415,6 +1452,18 @@ bool wlan_vdev_mlme_is_mlo_vdev(struct wlan_objmgr_vdev *vdev)
 
 static inline
 bool wlan_vdev_mlme_is_mlo_link_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline
+bool wlan_vdev_mlme_is_assoc_sta_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline
+bool wlan_vdev_mlme_is_link_sta_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	return false;
 }

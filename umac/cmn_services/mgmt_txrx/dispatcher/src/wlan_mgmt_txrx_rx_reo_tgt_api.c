@@ -20,41 +20,7 @@
  *  definitions
  */
 #include <wlan_mgmt_txrx_rx_reo_tgt_api.h>
-#include <wlan_lmac_if_def.h>
-
-/**
- * wlan_pdev_get_mgmt_rx_reo_txops() - Get management rx-reorder txops from pdev
- * @pdev: Pointer to pdev object
- *
- * Read management rx-reorder snapshots from target.
- *
- * Return: Pointer to management rx-reorder txops
- */
-static struct wlan_lmac_if_mgmt_rx_reo_tx_ops *
-wlan_pdev_get_mgmt_rx_reo_txops(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_tx_ops *tx_ops;
-
-	if (!pdev) {
-		mgmt_rx_reo_err("pdev is NULL");
-		return NULL;
-	}
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		mgmt_rx_reo_err("psoc is NULL");
-		return NULL;
-	}
-
-	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
-	if (!tx_ops) {
-		mgmt_rx_reo_err("tx_ops is NULL");
-		return NULL;
-	}
-
-	return &tx_ops->mgmt_txrx_tx_ops.mgmt_rx_reo_tx_ops;
-}
+#include "../../core/src/wlan_mgmt_txrx_rx_reo_i.h"
 
 QDF_STATUS
 tgt_mgmt_rx_reo_read_snapshot(
@@ -76,14 +42,74 @@ tgt_mgmt_rx_reo_read_snapshot(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	return mgmt_rx_reo_txops->read_mgmt_rx_reo_snapshot(address, id, value);
+	return mgmt_rx_reo_txops->read_mgmt_rx_reo_snapshot(pdev, address, id,
+							    value);
+}
+
+/**
+ * tgt_mgmt_rx_reo_enter_algo_without_buffer() - Entry point to the MGMT Rx REO
+ * algorithm when there is no frame buffer
+ * @pdev: pdev for which this frame/event is intended
+ * @reo_params: MGMT Rx REO parameters corresponding to this frame/event
+ * @type: Type of the MGMT Rx REO frame/event descriptor
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+tgt_mgmt_rx_reo_enter_algo_without_buffer(
+				struct wlan_objmgr_pdev *pdev,
+				struct mgmt_rx_reo_params *reo_params,
+				enum mgmt_rx_reo_frame_descriptor_type type)
+{
+	struct mgmt_rx_event_params mgmt_rx_params;
+	struct mgmt_rx_reo_frame_descriptor desc;
+	bool is_frm_queued;
+	QDF_STATUS status;
+
+	if (!pdev) {
+		mgmt_rx_reo_err("pdev is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!reo_params) {
+		mgmt_rx_reo_err("mgmt rx reo params are null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mgmt_rx_params.reo_params = reo_params;
+
+	desc.nbuf = NULL; /* No frame buffer */
+	desc.rx_params = &mgmt_rx_params;
+	desc.type = type;
+
+	/** If REO is not required for this descriptor,
+	 *  no need to proceed further
+	 */
+	if (!is_mgmt_rx_reo_required(pdev, &desc))
+		return  QDF_STATUS_SUCCESS;
+
+	/* Enter the REO algorithm */
+	status = wlan_mgmt_rx_reo_algo_entry(pdev, &desc, &is_frm_queued);
+
+	qdf_assert_always(!is_frm_queued);
+
+	return status;
 }
 
 QDF_STATUS
-tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_psoc *psoc,
+tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_pdev *pdev,
 					  struct mgmt_rx_reo_params *params)
 {
-	return QDF_STATUS_SUCCESS;
+	return tgt_mgmt_rx_reo_enter_algo_without_buffer(
+			pdev, params, MGMT_RX_REO_FRAME_DESC_FW_CONSUMED_FRAME);
+}
+
+QDF_STATUS
+tgt_mgmt_rx_reo_host_drop_handler(struct wlan_objmgr_pdev *pdev,
+				  struct mgmt_rx_reo_params *params)
+{
+	return tgt_mgmt_rx_reo_enter_algo_without_buffer(
+			pdev, params, MGMT_RX_REO_FRAME_DESC_ERROR_FRAME);
 }
 
 QDF_STATUS tgt_mgmt_rx_reo_filter_config(struct wlan_objmgr_pdev *pdev,
@@ -126,4 +152,54 @@ tgt_mgmt_rx_reo_get_snapshot_address(
 
 	return mgmt_rx_reo_txops->get_mgmt_rx_reo_snapshot_address(pdev, id,
 								   address);
+}
+
+QDF_STATUS tgt_mgmt_rx_reo_frame_handler(
+				struct wlan_objmgr_pdev *pdev,
+				qdf_nbuf_t buf,
+				struct mgmt_rx_event_params *mgmt_rx_params)
+{
+	QDF_STATUS status;
+	struct mgmt_rx_reo_frame_descriptor desc;
+	bool is_queued;
+
+	if (!pdev) {
+		mgmt_rx_reo_err("pdev is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto cleanup;
+	}
+
+	if (!buf) {
+		mgmt_rx_reo_err("nbuf is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto cleanup;
+	}
+
+	if (!mgmt_rx_params) {
+		mgmt_rx_reo_err("MGMT rx params is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto cleanup;
+	}
+
+	/* Populate frame descriptor */
+	desc.type = MGMT_RX_REO_FRAME_DESC_HOST_CONSUMED_FRAME;
+	desc.nbuf = buf;
+	desc.rx_params = mgmt_rx_params;
+
+	/* If REO is not required for this frame, process it right away */
+	if (!is_mgmt_rx_reo_required(pdev, &desc)) {
+		return tgt_mgmt_txrx_process_rx_frame(pdev, buf,
+						      mgmt_rx_params);
+	}
+
+	status = wlan_mgmt_rx_reo_algo_entry(pdev, &desc, &is_queued);
+
+	/* If frame is queued, we shouldn't free up params and buf pointers */
+	if (is_queued)
+		return status;
+cleanup:
+	qdf_nbuf_free(buf);
+	free_mgmt_rx_event_params(mgmt_rx_params);
+
+	return status;
 }

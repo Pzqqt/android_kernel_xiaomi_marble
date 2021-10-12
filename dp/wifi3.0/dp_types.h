@@ -103,6 +103,12 @@
 
 #define MAX_AST_AGEOUT_COUNT 128
 
+#ifdef TX_ADDR_INDEX_SEARCH
+#define DP_TX_ADDR_SEARCH_ADDR_POLICY HAL_TX_ADDR_INDEX_SEARCH
+#else
+#define DP_TX_ADDR_SEARCH_ADDR_POLICY HAL_TX_ADDR_SEARCH_DEFAULT
+#endif
+
 #define WBM_INT_ERROR_ALL 0
 #define WBM_INT_ERROR_REO_NULL_BUFFER 1
 #define WBM_INT_ERROR_REO_NULL_LINK_DESC 2
@@ -113,6 +119,12 @@
 #define MAX_TX_HW_QUEUES MAX_TCL_DATA_RINGS
 /* Maximum retries for Delba per tid per peer */
 #define DP_MAX_DELBA_RETRY 3
+
+#ifdef AST_OFFLOAD_ENABLE
+#define AST_OFFLOAD_ENABLE_STATUS 1
+#else
+#define AST_OFFLOAD_ENABLE_STATUS 0
+#endif
 
 #define PCP_TID_MAP_MAX 8
 #define MAX_MU_USERS 37
@@ -948,6 +960,8 @@ struct dp_soc_stats {
 		uint32_t tx_comp_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_tx_comp_handler */
 		uint32_t hp_oos2;
+		/* tx desc freed as part of vdev detach */
+		uint32_t tx_comp_exception;
 	} tx;
 
 	/* SOC level RX stats */
@@ -1576,6 +1590,8 @@ struct dp_arch_ops {
 				       struct dp_vdev *vdev);
 	QDF_STATUS (*txrx_vdev_detach)(struct dp_soc *soc,
 				       struct dp_vdev *vdev);
+	QDF_STATUS (*txrx_peer_attach)(struct dp_soc *soc);
+	void (*txrx_peer_detach)(struct dp_soc *soc);
 	QDF_STATUS (*dp_rxdma_ring_sel_cfg)(struct dp_soc *soc);
 	void (*soc_cfg_attach)(struct dp_soc *soc);
 
@@ -1630,6 +1646,8 @@ struct dp_arch_ops {
 	int (*dp_srng_test_and_update_nf_params)(struct dp_soc *soc,
 						 struct dp_srng *dp_srng,
 						 int *max_reap_limit);
+	void (*tx_implicit_rbm_set)(struct dp_soc *soc, uint8_t tx_ring_id,
+				    uint8_t bm_id);
 };
 
 /**
@@ -1912,9 +1930,11 @@ struct dp_soc {
 	/*Timer counter for WDS AST entry ageout*/
 	uint8_t wds_ast_aging_timer_cnt;
 	bool pending_ageout;
+	bool ast_offload_support;
 	uint32_t max_ast_ageout_count;
 	uint8_t eapol_over_control_port;
 
+	uint8_t sta_mode_search_policy;
 	qdf_timer_t lmac_reap_timer;
 	uint8_t lmac_timer_init;
 	qdf_timer_t int_timer;
@@ -1967,8 +1987,8 @@ struct dp_soc {
 	bool is_last_stats_ctx_init;
 #endif /* WLAN_FEATURE_STATS_EXT */
 
-	/* Flag to indicate if HTT v2 is enabled*/
-	bool is_peer_map_unmap_v2;
+	/* Indicates HTT map/unmap versions*/
+	uint8_t peer_map_unmap_versions;
 	/* Per peer per Tid ba window size support */
 	uint8_t per_tid_basize_max_tid;
 	/* Soc level flag to enable da_war */

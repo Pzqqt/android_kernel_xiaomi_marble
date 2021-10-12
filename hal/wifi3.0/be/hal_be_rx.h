@@ -166,6 +166,11 @@
 		RX_MSDU_DESC_INFO_DA_IS_MCBC_OFFSET)) &	\
 		RX_MSDU_DESC_INFO_DA_IS_MCBC_MASK)
 
+#define HAL_RX_MSDU_INTRA_BSS_FLAG_GET(msdu_info_ptr)		\
+	((*_OFFSET_TO_WORD_PTR(msdu_info_ptr,			\
+		RX_MSDU_DESC_INFO_INTRA_BSS_OFFSET)) &	\
+		RX_MSDU_DESC_INFO_INTRA_BSS_MASK)
+
 #define HAL_RX_MPDU_ENCRYPT_TYPE_GET(_rx_mpdu_info)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
 	RX_MPDU_INFO_ENCRYPT_TYPE_OFFSET)),		\
@@ -366,6 +371,9 @@ uint32_t hal_rx_msdu_flags_get_be(rx_msdu_desc_info_t msdu_desc_info_hdl)
 
 	if (HAL_RX_MSDU_DA_IS_MCBC_FLAG_GET(msdu_desc_info))
 		flags |= HAL_MSDU_F_DA_IS_MCBC;
+
+	if (HAL_RX_MSDU_INTRA_BSS_FLAG_GET(msdu_desc_info))
+		flags |= HAL_MSDU_F_INTRA_BSS;
 
 	return flags;
 }

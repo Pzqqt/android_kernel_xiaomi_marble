@@ -963,13 +963,18 @@ target_if_populate_det_start_end_freqs(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
+
 	ch_width = spectral->report_info[smode].sscan_bw;
 	is_fragmentation_160 = spectral->rparams.fragmentation_160[smode];
 
 	rpt_info = &spectral->report_info[smode];
+
+	qdf_spin_lock_bh(&spectral->detector_list_lock);
 	detector_list = &spectral->detector_list[smode][ch_width];
 
 	for (det = 0; det < detector_list->num_detectors; det++) {
+		qdf_spin_lock_bh(&spectral->session_det_map_lock);
 		det_map = &spectral->det_map
 				[detector_list->detectors[det]];
 		dest_det_info = &det_map->dest_det_info[0];
@@ -1004,6 +1009,11 @@ target_if_populate_det_start_end_freqs(struct target_if_spectral *spectral,
 			break;
 
 		default:
+			qdf_spin_unlock_bh(&spectral->session_det_map_lock);
+			qdf_spin_unlock_bh(&spectral->detector_list_lock);
+			qdf_spin_unlock_bh(
+					&spectral->session_report_info_lock);
+
 			return QDF_STATUS_E_FAILURE;
 		}
 
@@ -1014,22 +1024,17 @@ target_if_populate_det_start_end_freqs(struct target_if_spectral *spectral,
 						      start_end_freq_arr);
 		dest_det_info->start_freq = start_end_freq_arr[0];
 		dest_det_info->end_freq = start_end_freq_arr[1];
+
+		qdf_spin_unlock_bh(&spectral->session_det_map_lock);
 	}
+
+	qdf_spin_unlock_bh(&spectral->detector_list_lock);
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * target_if_populate_fft_bins_info() - Populate the start and end bin
- * indices, on per-detector level.
- * @spectral: Pointer to target_if spectral internal structure
- * @smode: Spectral scan mode
- *
- * Populate the start and end bin indices, on per-detector level.
- *
- * Return: Success/Failure
- */
-static QDF_STATUS
+QDF_STATUS
 target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 				 enum spectral_scan_mode smode)
 {
@@ -1053,6 +1058,8 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
+
 	ch_width = spectral->report_info[smode].sscan_bw;
 	is_fragmentation_160 = spectral->rparams.fragmentation_160[smode];
 	spectral_fft_size = spectral->params[smode].ss_fft_size;
@@ -1061,14 +1068,19 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 		target_if_spectral_get_num_fft_bins(spectral_fft_size,
 						    rpt_mode);
 	if (num_fft_bins < 0) {
+		qdf_spin_unlock_bh(&spectral->session_report_info_lock);
 		spectral_err_rl("Invalid number of FFT bins %d",
 				num_fft_bins);
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_spin_lock_bh(&spectral->detector_list_lock);
 	detector_list = &spectral->detector_list[smode][ch_width];
 
 	for (det = 0; det < detector_list->num_detectors; det++) {
+		uint16_t lb_extrabins_offset = 0;
+
+		qdf_spin_lock_bh(&spectral->session_det_map_lock);
 		det_map = &spectral->det_map
 				[detector_list->detectors[det]];
 		dest_det_info = &det_map->dest_det_info[0];
@@ -1079,12 +1091,14 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 			if (ch_width == CH_WIDTH_160MHZ &&
 			    is_fragmentation_160 &&
 			    spectral->report_info[smode].pri20_freq >
-			    spectral->report_info[smode].sscan_cfreq1)
-				start_bin = num_fft_bins +
+			    spectral->report_info[smode].sscan_cfreq1) {
+				start_bin = num_fft_bins;
+				lb_extrabins_offset =
 					dest_det_info->lb_extrabins_num +
 					dest_det_info->rb_extrabins_num;
-			else
+			} else {
 				start_bin = 0;
+			}
 			break;
 		case 1:
 			if (ch_width == CH_WIDTH_160MHZ &&
@@ -1092,26 +1106,44 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 			    spectral->report_info[smode].pri20_freq >
 			    spectral->report_info[smode].sscan_cfreq1)
 				start_bin = 0;
-			else
-				start_bin = num_fft_bins +
+			else {
+				start_bin = num_fft_bins;
+				lb_extrabins_offset =
 					dest_det_info->lb_extrabins_num +
 					dest_det_info->rb_extrabins_num;
+			}
 			break;
 		default:
+			qdf_spin_unlock_bh(&spectral->session_det_map_lock);
+			qdf_spin_unlock_bh(&spectral->detector_list_lock);
+			qdf_spin_unlock_bh(
+					&spectral->session_report_info_lock);
+
 			return QDF_STATUS_E_FAILURE;
 		}
-		dest_det_info->dest_start_bin_idx = start_bin +
-					dest_det_info->lb_extrabins_num;
+		dest_det_info->dest_start_bin_idx = start_bin;
 		dest_det_info->dest_end_bin_idx =
 					dest_det_info->dest_start_bin_idx +
 					num_fft_bins - 1;
-		if (dest_det_info->lb_extrabins_num)
-			dest_det_info->lb_extrabins_start_idx = start_bin;
+		if (dest_det_info->lb_extrabins_num) {
+			if (is_ch_width_160_or_80p80(ch_width)) {
+				dest_det_info->lb_extrabins_start_idx =
+							2 * num_fft_bins +
+							lb_extrabins_offset;
+			} else {
+				dest_det_info->lb_extrabins_start_idx =
+								num_fft_bins;
+			}
+		}
 		if (dest_det_info->rb_extrabins_num)
-			dest_det_info->rb_extrabins_start_idx = 1 +
-					dest_det_info->dest_end_bin_idx;
+			dest_det_info->rb_extrabins_start_idx =
+					dest_det_info->lb_extrabins_start_idx +
+					dest_det_info->lb_extrabins_num;
 		dest_det_info->src_start_bin_idx = 0;
+		qdf_spin_unlock_bh(&spectral->session_det_map_lock);
 	}
+	qdf_spin_unlock_bh(&spectral->detector_list_lock);
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1146,11 +1178,25 @@ target_if_update_session_info_from_report_ctx(
 	bool is_fragmentation_160;
 	uint32_t start_end_freq_arr[2];
 	QDF_STATUS ret;
+	bool is_session_info_expected;
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	ret = spectral_is_session_info_expected_from_target(
+				spectral->pdev_obj,
+				&is_session_info_expected);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to check if session info is expected");
+		return ret;
+	}
+
+	/* If FW sends this information, use it, no need to get it from here */
+	if (is_session_info_expected)
+		return QDF_STATUS_SUCCESS;
+
 	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
 		spectral_err_rl("Invalid Spectral mode");
 		return QDF_STATUS_E_FAILURE;
@@ -1167,6 +1213,8 @@ target_if_update_session_info_from_report_ctx(
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
 
 	rpt_info = &spectral->report_info[smode];
 	ch_width = rpt_info->sscan_bw;
@@ -1185,6 +1233,7 @@ target_if_update_session_info_from_report_ctx(
 		rpt_info->pri20_freq, rpt_info->operating_bw, smode);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
+		qdf_spin_unlock_bh(&spectral->session_report_info_lock);
 		spectral_err_rl("Unable to unify cfreq1/cfreq2");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1200,6 +1249,7 @@ target_if_update_session_info_from_report_ctx(
 		rpt_info->sscan_cfreq1 = rpt_info->cfreq1;
 		rpt_info->sscan_cfreq2 = rpt_info->cfreq2;
 	}
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
 
 	if (ch_width == CH_WIDTH_80P80MHZ && wlan_psoc_nif_fw_ext_cap_get(
 	    psoc, WLAN_SOC_RESTRICTED_80P80_SUPPORT)) {
@@ -1216,8 +1266,10 @@ target_if_update_session_info_from_report_ctx(
 		 * normal/agile spectral scan. So, detector_list will
 		 * have only one detector
 		 */
+		qdf_spin_lock_bh(&spectral->detector_list_lock);
 		detector_list = &spectral->detector_list[smode][ch_width];
 
+		qdf_spin_lock_bh(&spectral->session_det_map_lock);
 		det_map = &spectral->det_map[detector_list->detectors[0]];
 
 		dest_det_info = &det_map->dest_det_info[0];
@@ -1228,6 +1280,7 @@ target_if_update_session_info_from_report_ctx(
 		dest_det_info->src_start_bin_idx = marker->start_pri80 *
 						   fft_bin_size;
 		/* Set start and end frequencies */
+		qdf_spin_lock_bh(&spectral->session_report_info_lock);
 		target_if_spectral_set_start_end_freq(rpt_info->sscan_cfreq1,
 						      ch_width,
 						      is_fragmentation_160,
@@ -1265,6 +1318,10 @@ target_if_update_session_info_from_report_ctx(
 		dest_det_info->end_freq =
 				max(det_map->dest_det_info[0].start_freq,
 				    det_map->dest_det_info[1].start_freq);
+
+		qdf_spin_unlock_bh(&spectral->session_report_info_lock);
+		qdf_spin_unlock_bh(&spectral->session_det_map_lock);
+		qdf_spin_unlock_bh(&spectral->detector_list_lock);
 	} else {
 		ret = target_if_populate_fft_bins_info(spectral, smode);
 		if (QDF_IS_STATUS_ERROR(ret)) {
@@ -1278,6 +1335,7 @@ target_if_update_session_info_from_report_ctx(
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* OPTIMIZED_SAMP_MESSAGE */
@@ -1324,7 +1382,10 @@ target_if_spectral_populate_samp_params_gen2(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
 	ch_width = spectral->report_info[smode].sscan_bw;
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
+
 	acs_stats = phyerr_info->acs_stats;
 	pfft = phyerr_info->pfft;
 	p_sfft = phyerr_info->p_sfft;
@@ -1435,15 +1496,15 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 	struct spectral_search_fft_info_gen2 search_fft_info_sec80;
 	struct spectral_search_fft_info_gen2 *p_sfft_sec80 =
 		&search_fft_info_sec80;
-	uint32_t segid_skiplen;
-	struct spectral_phyerr_tlv_gen2 *ptlv;
-	struct spectral_phyerr_tlv_gen2 *ptlv_sec80;
-	struct spectral_phyerr_fft_gen2 *pfft;
-	struct spectral_phyerr_fft_gen2 *pfft_sec80;
+	uint32_t segid_skiplen = 0;
+	struct spectral_phyerr_tlv_gen2 *ptlv = NULL;
+	struct spectral_phyerr_tlv_gen2 *ptlv_sec80 = NULL;
+	struct spectral_phyerr_fft_gen2 *pfft = NULL;
+	struct spectral_phyerr_fft_gen2 *pfft_sec80 = NULL;
 	struct spectral_process_phyerr_info_gen2 process_phyerr_fields;
 	struct spectral_process_phyerr_info_gen2 *phyerr_info =
 						&process_phyerr_fields;
-	uint8_t segid;
+	uint8_t segid = 0;
 	uint8_t segid_sec80;
 	enum phy_ch_width ch_width;
 	QDF_STATUS ret;
@@ -1451,7 +1512,7 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
-		goto fail;
+		return -EPERM;
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
@@ -1479,7 +1540,10 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 		goto fail;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
 	ch_width = spectral->report_info[SPECTRAL_SCAN_MODE_NORMAL].sscan_bw;
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
+
 	ptlv = (struct spectral_phyerr_tlv_gen2 *)data;
 
 	if (spectral->is_160_format)
@@ -2111,6 +2175,75 @@ target_if_spectral_dump_phyerr_data_gen2(uint8_t *data, uint32_t datalen,
 	return 0;
 }
 
+QDF_STATUS
+target_if_spectral_copy_fft_bins(struct target_if_spectral *spectral,
+				 const void *src_fft_buf,
+				 void *dest_fft_buf,
+				 uint32_t fft_bin_count,
+				 uint32_t *bytes_copied)
+{
+	uint16_t idx, dword_idx, fft_bin_idx;
+	uint8_t num_bins_per_dword, hw_fft_bin_width_bits;
+	uint32_t num_dwords;
+	uint16_t fft_bin_val;
+	struct spectral_report_params *rparams;
+	const uint32_t *dword_ptr;
+	uint32_t dword;
+	uint8_t *fft_bin_buf;
+
+	*bytes_copied = 0;
+
+	if (!spectral) {
+		spectral_err("spectral lmac object is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!src_fft_buf) {
+		spectral_err("source fft bin buffer is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!dest_fft_buf) {
+		spectral_err("destination fft bin buffer is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	rparams = &spectral->rparams;
+	num_bins_per_dword = SPECTRAL_DWORD_SIZE / rparams->hw_fft_bin_width;
+	num_dwords = fft_bin_count / num_bins_per_dword;
+	hw_fft_bin_width_bits = rparams->hw_fft_bin_width * QDF_CHAR_BIT;
+
+	fft_bin_idx = 0;
+	dword_ptr = src_fft_buf;
+	fft_bin_buf = dest_fft_buf;
+	for (dword_idx = 0; dword_idx < num_dwords; dword_idx++) {
+		dword = *dword_ptr++; /* Read a DWORD */
+		for (idx = 0; idx < num_bins_per_dword; idx++) {
+			fft_bin_val = (uint16_t)QDF_GET_BITS(
+					dword,
+					idx * hw_fft_bin_width_bits,
+					hw_fft_bin_width_bits);
+			/**
+			 * To check whether FFT bin values exceed 8 bits,
+			 * we add a check before copying values to fft_bin_buf.
+			 * If it crosses 8 bits, we cap the values to maximum
+			 * value supported by 8 bits ie. 255. This needs to be
+			 * done as the destination array in SAMP message is
+			 * 8 bits. This is a temporary solution till an array
+			 * of 16 bits is used for SAMP message.
+			 */
+			if (qdf_unlikely(fft_bin_val > MAX_FFTBIN_VALUE))
+				fft_bin_val = MAX_FFTBIN_VALUE;
+
+			fft_bin_buf[fft_bin_idx++] = fft_bin_val;
+		}
+	}
+
+	*bytes_copied = num_dwords *  SPECTRAL_DWORD_SIZE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef DIRECT_BUF_RX_ENABLE
 /**
  * target_if_get_spectral_mode() - Get Spectral scan mode corresponding to a
@@ -2301,8 +2434,6 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	size_t fft_bin_count;
 	size_t fft_bin_size;
 	size_t fft_bin_len_inband_tfer = 0;
-	uint8_t *fft_bin_buf = NULL;
-	size_t fft_bin_buf_size;
 	uint8_t tag, signature;
 
 	qdf_assert_always(spectral);
@@ -2374,68 +2505,30 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	spectral_debug("fft_avgpwr_db = %u", p_sfft->fft_avgpwr_db);
 	spectral_debug("fft_relpwr_db = %u", p_sfft->fft_relpwr_db);
 
-	fft_bin_buf_size = fft_bin_count;
-
 	if (fft_bin_count > 0) {
-		int idx;
+		uint8_t *fft_bin_buf;
+		uint32_t bytes_copied;
+		QDF_STATUS status;
 
-		if (spectral->len_adj_swar.fftbin_size_war ==
-				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
-			uint32_t *binptr_32 = (uint32_t *)&p_fft_report->buf;
-			uint16_t *fft_bin_buf_16 = NULL;
-
-			/* Useful width of FFT bin is 10 bits, increasing it to
-			 * byte boundary makes it 2 bytes. Hence, buffer to be
-			 * allocated should be of size fft_bin_count
-			 * multiplied by 2.
-			 */
-			fft_bin_buf_size <<= 1;
-
-			fft_bin_buf_16 = (uint16_t *)qdf_mem_malloc(
-						fft_bin_buf_size);
-			if (!fft_bin_buf_16) {
-				spectral_err("Failed to allocate memory");
-				return;
-			}
-
-			for (idx = 0; idx < fft_bin_count; idx++)
-				fft_bin_buf_16[idx] =
-					*((uint16_t *)binptr_32++);
-
-			fft_bin_buf = (uint8_t *)fft_bin_buf_16;
-		} else if (spectral->len_adj_swar.fftbin_size_war ==
-				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
-			uint16_t *binptr_16 = (uint16_t *)&p_fft_report->buf;
-			uint16_t *fft_bin_buf_16 = NULL;
-
-			/* Useful width of FFT bin is 10 bits, increasing it to
-			 * byte boundary makes it 2 bytes. Hence, buffer to be
-			 * allocated should be of size fft_bin_count
-			 * multiplied by 2.
-			 */
-			fft_bin_buf_size <<= 1;
-
-			fft_bin_buf_16 = (uint16_t *)qdf_mem_malloc(
-						fft_bin_buf_size);
-			if (!fft_bin_buf_16) {
-				spectral_err("Failed to allocate memory");
-				return;
-			}
-
-			for (idx = 0; idx < fft_bin_count; idx++)
-				fft_bin_buf_16[idx] = *(binptr_16++);
-
-			fft_bin_buf = (uint8_t *)fft_bin_buf_16;
-		} else {
-			fft_bin_buf = (uint8_t *)&p_fft_report->buf;
+		fft_bin_buf = qdf_mem_malloc(fft_bin_count);
+		if (!fft_bin_buf) {
+			spectral_err_rl("memory allocation failed");
+			return;
 		}
 
-		spectral_debug("FFT bin buffer size = %zu", fft_bin_buf_size);
-		spectral_debug("FFT bins:");
-		target_if_spectral_hexdump(fft_bin_buf, fft_bin_buf_size);
-		if ((spectral->len_adj_swar.fftbin_size_war !=
-				SPECTRAL_FFTBIN_SIZE_NO_WAR) && fft_bin_buf)
+		status = target_if_spectral_copy_fft_bins(
+				spectral, &p_fft_report->buf,
+				fft_bin_buf, fft_bin_count, &bytes_copied);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			spectral_err_rl("Unable to populate FFT bins");
 			qdf_mem_free(fft_bin_buf);
+			return;
+		}
+
+		spectral_debug("FFT bin buffer size = %zu", fft_bin_count);
+		spectral_debug("FFT bins:");
+		target_if_spectral_hexdump(fft_bin_buf, fft_bin_count);
+		qdf_mem_free(fft_bin_buf);
 	}
 }
 #endif
@@ -2763,6 +2856,11 @@ static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
 		spectral_err_rl("Spectral LMAC object is null");
 		return;
 	}
+	if (detector_id >= MAX_DETECTORS_PER_PDEV) {
+		spectral_err_rl("Spectral detector_id %d exceeds range",
+				detector_id);
+		return;
+	}
 
 	if (!spectral->dbr_buff_debug)
 		return;
@@ -2893,36 +2991,24 @@ QDF_STATUS target_if_byte_swap_spectral_headers_gen3(
 }
 
 QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
-	struct spectral_fft_bin_len_adj_swar *swar,
+	const struct spectral_report_params *rparams,
 	void *bin_pwr_data, size_t num_fftbins)
 {
-	int i;
-	uint16_t *binptr_16;
-	uint32_t *binptr_32;
+	uint16_t dword_idx, num_dwords;
+	uint8_t num_bins_per_dword;
+	uint32_t *dword_ptr;
 
 	qdf_assert_always(bin_pwr_data);
-	qdf_assert_always(swar);
+	qdf_assert_always(rparams);
 
-	if (swar->fftbin_size_war ==
-			SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
-		binptr_32 = (uint32_t *)bin_pwr_data;
+	num_bins_per_dword = SPECTRAL_DWORD_SIZE / rparams->hw_fft_bin_width;
+	num_dwords = pwr_count / num_bins_per_dword;
+	dword_ptr = (uint32_t *)bin_pwr_data;
 
-		for (i = 0; i < num_fftbins; i++) {
-			/* Get the useful first 2 bytes of the DWORD */
-			binptr_16 = ((uint16_t *)binptr_32);
-			/* Byteswap and copy it back */
-			*binptr_16 = qdf_le16_to_cpu(*binptr_16);
-			++binptr_32; /* Go to next DWORD */
-		}
-	} else if (swar->fftbin_size_war ==
-			SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
-		binptr_16 = (uint16_t *)bin_pwr_data;
-
-		for (i = 0; i < num_fftbins; i++) {
-			/* Byteswap the FFT bin and copy it back */
-			*binptr_16 = qdf_le16_to_cpu(*binptr_16);
-			++binptr_16;
-		}
+	for (dword_idx = 0; dword_idx < num_dwords; dword_idx++) {
+		/* Read a DWORD, byteswap it, and copy it back */
+		*dword_ptr = qdf_le32_to_cpu(*dword_ptr);
+		++dword_ptr;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -3117,6 +3203,14 @@ target_if_process_sfft_report_gen3(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
+						    &spectral->rparams);
+	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("No valid Spectral mode for detector id %u",
+				p_sfft->fft_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/* Populate the Search FFT Info */
 	p_sfft->timestamp = p_fft_report->fft_timestamp;
 	p_sfft->last_raw_timestamp = spectral->timestamp_war.
@@ -3195,13 +3289,6 @@ target_if_process_sfft_report_gen3(
 				FFT_REPORT_HDR_C_RELATIVE_PWR_SIZE_GEN3,
 				FFT_REPORT_HDR_C_RELATIVE_PWR_POS_GEN3);
 
-	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
-						    &spectral->rparams);
-	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
-		spectral_err_rl("No valid Spectral mode for detector id %u",
-				p_sfft->fft_detector_id);
-		return QDF_STATUS_E_FAILURE;
-	}
 	p_sfft->fft_bin_count =
 		target_if_spectral_get_bin_count_after_len_adj(
 			fft_hdr_length - spectral->rparams.fft_report_hdr_len,
@@ -3218,7 +3305,7 @@ target_if_process_sfft_report_gen3(
 	 *       they should use them only after this point.
 	 */
 	if (p_sops->byte_swap_fft_bins) {
-		ret = p_sops->byte_swap_fft_bins(&spectral->len_adj_swar,
+		ret = p_sops->byte_swap_fft_bins(&spectral->rparams,
 						 &p_sfft->bin_pwr_data,
 						 p_sfft->fft_bin_count);
 		if (QDF_IS_STATUS_ERROR(ret)) {
@@ -3428,17 +3515,20 @@ target_if_consume_spectral_report_gen3(
 		goto fail;
 	}
 
+	qdf_spin_lock_bh(&spectral->detector_list_lock);
 	det_list = &spectral->detector_list[spectral_mode]
 			[spectral->report_info[spectral_mode].sscan_bw];
 	for (det = 0; det < det_list->num_detectors; det++) {
 		if (p_sfft->fft_detector_id == det_list->detectors[det])
 			break;
 		if (det == det_list->num_detectors - 1) {
+			qdf_spin_unlock_bh(&spectral->detector_list_lock);
 			spectral_info("Incorrect det id %d for given scan mode and channel width",
 				      p_sfft->fft_detector_id);
 			goto fail_no_print;
 		}
 	}
+	qdf_spin_unlock_bh(&spectral->detector_list_lock);
 
 	ret = target_if_update_session_info_from_report_ctx(
 						spectral,
@@ -3450,6 +3540,7 @@ target_if_consume_spectral_report_gen3(
 		goto fail;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
 	/* Check FFT report are in order for 160 MHz and 80p80 */
 	if (is_ch_width_160_or_80p80(
 	    spectral->report_info[spectral_mode].sscan_bw) &&
@@ -3457,9 +3548,13 @@ target_if_consume_spectral_report_gen3(
 		ret = target_if_160mhz_delivery_state_change(
 				spectral, spectral_mode,
 				p_sfft->fft_detector_id);
-		if (ret != QDF_STATUS_SUCCESS)
+		if (ret != QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock_bh(
+					&spectral->session_report_info_lock);
 			goto fail;
+		}
 	}
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
 
 	p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)data;
 	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
@@ -3775,7 +3870,7 @@ target_if_consume_spectral_report_gen3(
 		 */
 		if (p_sops->byte_swap_fft_bins) {
 			ret = p_sops->byte_swap_fft_bins(
-						&spectral->len_adj_swar,
+						&spectral->rparams,
 						temp, fft_bin_count);
 			if (QDF_IS_STATUS_ERROR(ret)) {
 				spectral_err_rl("Byte-swap on the FFT bins failed");
@@ -3896,7 +3991,7 @@ target_if_consume_spectral_report_gen3(
 		 */
 		if (p_sops->byte_swap_fft_bins) {
 			ret = p_sops->byte_swap_fft_bins(
-					&spectral->len_adj_swar,
+					&spectral->rparams,
 					params.bin_pwr_data_sec80,
 					fft_bin_count);
 			if (QDF_IS_STATUS_ERROR(ret)) {

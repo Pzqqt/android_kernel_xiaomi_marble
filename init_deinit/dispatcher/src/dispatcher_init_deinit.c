@@ -40,9 +40,7 @@
 #include "wifi_pos_api.h"
 #endif /* WIFI_POS_CONVERGED */
 #include <wlan_reg_services_api.h>
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_main.h"
-#endif
 #ifdef DFS_COMPONENT_ENABLE
 #include <wlan_dfs_init_deinit_api.h>
 #endif
@@ -550,7 +548,6 @@ static QDF_STATUS atf_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* END of WLAN_ATF_ENABLE */
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 static QDF_STATUS dispatcher_init_crypto(void)
 {
 	return wlan_crypto_init();
@@ -570,27 +567,6 @@ static QDF_STATUS dispatcher_crypto_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return wlan_crypto_psoc_disable(psoc);
 }
-#else
-static QDF_STATUS dispatcher_init_crypto(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_deinit_crypto(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_crypto_psoc_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_crypto_psoc_disable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* END of WLAN_CONV_CRYPTO_SUPPORTED */
 
 #ifdef WIFI_POS_CONVERGED
 static QDF_STATUS dispatcher_init_wifi_pos(void)

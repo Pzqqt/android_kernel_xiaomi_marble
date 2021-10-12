@@ -941,7 +941,7 @@ static void dp_flush_monitor_rings(struct dp_soc *soc)
 	hal_soc_handle_t hal_soc = soc->hal_soc;
 	uint32_t lmac_id;
 	uint32_t hp, tp;
-	uint8_t dp_intr_id;
+	int dp_intr_id;
 	int budget;
 	void *mon_dst_srng;
 	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
@@ -961,6 +961,9 @@ static void dp_flush_monitor_rings(struct dp_soc *soc)
 		return;
 
 	dp_intr_id = soc->mon_intr_id_lmac_map[lmac_id];
+	if (qdf_unlikely(dp_intr_id == DP_MON_INVALID_LMAC_ID))
+		return;
+
 	mon_dst_srng = dp_rxdma_get_mon_dst_ring(pdev, lmac_id);
 
 	/* reap full ring */
@@ -3108,11 +3111,11 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		ppdu_desc->tlv_bitmap = s_ppdu_info->tlv_bitmap;
 
 		if (starved) {
-			dp_mon_err("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
-				   ppdu_desc->frame_ctrl,
-				   ppdu_desc->htt_frame_type,
-				   ppdu_desc->tlv_bitmap,
-				   ppdu_desc->user[0].completion_status);
+			dp_mon_info("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
+				    ppdu_desc->frame_ctrl,
+				    ppdu_desc->htt_frame_type,
+				    ppdu_desc->tlv_bitmap,
+				    ppdu_desc->user[0].completion_status);
 			starved = 0;
 		}
 
@@ -4944,7 +4947,7 @@ QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
 	struct cdp_interface_peer_qos_stats qos_stats_intf;
 
 	if (ppdu_user->peer_id == HTT_INVALID_PEER) {
-		dp_mon_err("Invalid peer id");
+		dp_mon_warn("Invalid peer id");
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_zero(&qos_stats_intf, sizeof(qos_stats_intf));
@@ -5760,6 +5763,7 @@ static QDF_STATUS dp_mon_vdev_detach(struct dp_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+#if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(FEATURE_PERPKT_INFO)
 static QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer)
 {
 	struct dp_mon_peer *mon_peer;
@@ -5782,6 +5786,12 @@ static QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer)
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 static QDF_STATUS dp_mon_peer_detach(struct dp_peer *peer)
 {

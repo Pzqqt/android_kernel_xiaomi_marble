@@ -665,13 +665,13 @@ QDF_STATUS tgt_if_regulatory_modify_freq_range(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!(reg_cap->wireless_modes & WMI_HOST_REGDMN_MODE_11A)) {
+	if (!(reg_cap->wireless_modes & HOST_REGDMN_MODE_11A)) {
 		reg_cap->low_5ghz_chan = 0;
 		reg_cap->high_5ghz_chan = 0;
 	}
 
 	if (!(reg_cap->wireless_modes &
-	     (WMI_HOST_REGDMN_MODE_11B | WMI_HOST_REGDMN_MODE_PUREG))) {
+	     (HOST_REGDMN_MODE_11B | HOST_REGDMN_MODE_PUREG))) {
 		reg_cap->low_2ghz_chan = 0;
 		reg_cap->high_2ghz_chan = 0;
 	}

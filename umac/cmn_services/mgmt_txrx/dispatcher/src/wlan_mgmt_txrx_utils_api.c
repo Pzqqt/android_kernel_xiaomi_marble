@@ -324,9 +324,19 @@ QDF_STATUS wlan_mgmt_txrx_init(void)
 		goto err_pdev_delete;
 	}
 
+	status = wlan_mgmt_rx_reo_init();
+	if (status != QDF_STATUS_SUCCESS) {
+		mgmt_txrx_err("Failed to initialize mgmt Rx reo module");
+		goto err_reo_init;
+	}
+
 	mgmt_txrx_debug("Successfully registered create and destroy handlers with objmgr");
 	return QDF_STATUS_SUCCESS;
 
+err_reo_init:
+	wlan_objmgr_unregister_pdev_destroy_handler(
+			WLAN_UMAC_COMP_MGMT_TXRX,
+			wlan_mgmt_txrx_pdev_obj_destroy_notification, NULL);
 err_pdev_delete:
 	wlan_objmgr_unregister_pdev_create_handler(WLAN_UMAC_COMP_MGMT_TXRX,
 			wlan_mgmt_txrx_pdev_obj_create_notification, NULL);
@@ -342,6 +352,11 @@ err_psoc_create:
 
 QDF_STATUS wlan_mgmt_txrx_deinit(void)
 {
+	if (QDF_IS_STATUS_ERROR(wlan_mgmt_rx_reo_deinit())) {
+		mgmt_txrx_err("Failed to de-initialize mgmt Rx reo module");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_MGMT_TXRX,
 				wlan_mgmt_txrx_psoc_obj_create_notification,
 				NULL)
@@ -371,7 +386,6 @@ QDF_STATUS wlan_mgmt_txrx_deinit(void)
 			!= QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_E_FAILURE;
 	}
-
 
 	mgmt_txrx_debug("Successfully unregistered create and destroy handlers with objmgr");
 	return QDF_STATUS_SUCCESS;

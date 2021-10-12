@@ -72,6 +72,7 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 #endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
 
 #ifdef QCA_OL_TX_MULTIQ_SUPPORT
+#ifdef DP_TX_IMPLICIT_RBM_MAPPING
 /*
  * dp_tx_get_rbm_id()- Get the RBM ID for data transmission completion.
  * @dp_soc - DP soc structure pointer
@@ -82,10 +83,16 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
 					  uint8_t ring_id)
 {
+	return 0;
+}
+#else
+static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
 	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
 			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
 }
-
+#endif /*DP_TX_IMPLICIT_RBM_MAPPING*/
 #else
 static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
 					  uint8_t tcl_index)
@@ -278,20 +285,22 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 	bank_config->src_buffer_swap = 0;
 	bank_config->link_meta_swap = 0;
 
-	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta) {
+	if ((soc->sta_mode_search_policy == HAL_TX_ADDR_INDEX_SEARCH) &&
+	     vdev->opmode == wlan_op_mode_sta) {
 		bank_config->index_lookup_enable = 1;
 		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_MEC_NOTIFY;
+		bank_config->addrx_en = 0;
+		bank_config->addry_en = 0;
 	} else {
 		bank_config->index_lookup_enable = 0;
 		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_FW_EXCEPTION;
+		bank_config->addrx_en =
+			(vdev->hal_desc_addr_search_flags &
+			 HAL_TX_DESC_ADDRX_EN) ? 1 : 0;
+		bank_config->addry_en =
+			(vdev->hal_desc_addr_search_flags &
+			 HAL_TX_DESC_ADDRY_EN) ? 1 : 0;
 	}
-
-	bank_config->addrx_en =
-		(vdev->hal_desc_addr_search_flags & HAL_TX_DESC_ADDRX_EN) ?
-		1 : 0;
-	bank_config->addry_en =
-		(vdev->hal_desc_addr_search_flags & HAL_TX_DESC_ADDRY_EN) ?
-		1 : 0;
 
 	bank_config->mesh_enable = vdev->mesh_vdev ? 1 : 0;
 

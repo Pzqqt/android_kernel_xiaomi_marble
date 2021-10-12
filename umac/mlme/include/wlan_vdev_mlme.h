@@ -485,6 +485,8 @@ struct vdev_mlme_beacon_info {
  * @vdev_bmap: vdev bitmap of VAPs in MBSS group
  * @is_cmn_param: flag to check mbss common param
  * @trans_bssid: bssid of transmitted AP (MBSS IE case)
+ * @is_multi_mbssid: Flag to identify multi group mbssid support
+ * @grp_id: Group id of current vdev
  */
 struct vdev_mlme_mbss_11ax {
 	uint32_t profile_idx;
@@ -494,6 +496,8 @@ struct vdev_mlme_mbss_11ax {
 	unsigned long vdev_bmap;
 	bool is_cmn_param;
 	uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
+	bool is_multi_mbssid;
+	uint32_t grp_id;
 };
 
 /**

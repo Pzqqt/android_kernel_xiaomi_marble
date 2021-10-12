@@ -1177,6 +1177,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 					     CFG_DP_TCL_CMD_CREDIT_RING);
 	wlan_cfg_ctx->tcl_status_ring = cfg_get(psoc,
 						CFG_DP_TCL_STATUS_RING);
+	wlan_cfg_ctx->reo_dst_ring_size = cfg_get(psoc,
+						  CFG_DP_RX_DESTINATION_RING);
 	wlan_cfg_ctx->reo_reinject_ring = cfg_get(psoc,
 						  CFG_DP_REO_REINJECT_RING);
 	wlan_cfg_ctx->rx_release_ring = cfg_get(psoc,

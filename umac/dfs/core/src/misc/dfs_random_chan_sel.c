@@ -1440,6 +1440,26 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 }
 #endif
 
+/**
+ * dfs_remove_spruce_spur_channels_for_bw_20_40() - API to remove the
+ * spur channels in spruce if current bw is 20/40MHz.
+ * @freq_list: Input list from which spur channels are removed.
+ * @freq_count: Input list count.
+ *
+ * return: void.
+ */
+static void
+dfs_remove_spruce_spur_channels_for_bw_20_40(uint16_t *freq_list,
+					     uint8_t freq_count)
+{
+	uint8_t i;
+
+	for (i = 0; i < freq_count; i++) {
+		if (DFS_IS_CHAN_SPRUCE_SPUR_FREQ_20_40_MHZ(freq_list[i]))
+			freq_list[i] = 0;
+	}
+}
+
 #ifdef CONFIG_CHAN_FREQ_API
 uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 					     struct dfs_channel *chan_list,
@@ -1494,6 +1514,12 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 		return 0;
 	}
 
+	if (flag_no_spur_leakage_adj_chans &&
+	    (*chan_wd == DFS_CH_WIDTH_20MHZ ||
+	     *chan_wd == DFS_CH_WIDTH_40MHZ))
+		dfs_remove_spruce_spur_channels_for_bw_20_40(
+				random_chan_freq_list,
+				random_chan_cnt);
 	do {
 		int ret;
 

@@ -47,6 +47,10 @@ qdf_declare_param(qdf_log_flush_timer_period, uint);
 #include "qdf_mc_timer.h"
 #include <host_diag_core_log.h>
 
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+#include <wlan_connectivity_logging.h>
+#endif
+
 /* Global qdf print id */
 
 /* Preprocessor definitions and constants */
@@ -135,15 +139,18 @@ static char qdf_module_param[QDF_PARAM_MAX][QDF_PARAM_STR_LENGTH] = {
  * string contains printf-like replacement parameters, which follow
  * this parameter in the variable argument list.
  *
- * Return: None
+ * Return: num of bytes written to buffer
  */
-void qdf_snprintf(char *str_buffer, unsigned int size, char *str_format, ...)
+int qdf_snprintf(char *str_buffer, unsigned int size, char *str_format, ...)
 {
 	va_list args;
+	int i;
 
 	va_start(args, str_format);
-	vsnprintf(str_buffer, size, str_format, args);
+	i = vsnprintf(str_buffer, size, str_format, args);
 	va_end(args);
+
+	return i;
 }
 qdf_export_symbol(qdf_snprintf);
 
@@ -233,15 +240,15 @@ qdf_export_symbol(qdf_trace_hex_ascii_dump);
 #ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
 static inline QDF_STATUS allocate_g_qdf_trace_tbl_buffer(void)
 {
-	g_qdf_trace_tbl = vzalloc(MAX_QDF_TRACE_RECORDS *
-				  sizeof(*g_qdf_trace_tbl));
+	g_qdf_trace_tbl = qdf_mem_valloc(MAX_QDF_TRACE_RECORDS *
+					 sizeof(*g_qdf_trace_tbl));
 	QDF_BUG(g_qdf_trace_tbl);
 	return g_qdf_trace_tbl ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
 }
 
 static inline void free_g_qdf_trace_tbl_buffer(void)
 {
-	vfree(g_qdf_trace_tbl);
+	qdf_mem_vfree(g_qdf_trace_tbl);
 	g_qdf_trace_tbl = NULL;
 }
 #else
@@ -665,15 +672,15 @@ qdf_export_symbol(qdf_state_info_dump_all);
 #ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
 static inline QDF_STATUS allocate_g_qdf_dp_trace_tbl_buffer(void)
 {
-	g_qdf_dp_trace_tbl = vzalloc(MAX_QDF_DP_TRACE_RECORDS *
-				     sizeof(*g_qdf_dp_trace_tbl));
+	g_qdf_dp_trace_tbl = qdf_mem_valloc(MAX_QDF_DP_TRACE_RECORDS *
+					    sizeof(*g_qdf_dp_trace_tbl));
 	QDF_BUG(g_qdf_dp_trace_tbl);
 	return g_qdf_dp_trace_tbl ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
 }
 
 static inline void free_g_qdf_dp_trace_tbl_buffer(void)
 {
-	vfree(g_qdf_dp_trace_tbl);
+	qdf_mem_vfree(g_qdf_dp_trace_tbl);
 	g_qdf_dp_trace_tbl = NULL;
 }
 #else
@@ -1717,6 +1724,143 @@ static bool qdf_log_icmp_pkt(uint8_t vdev_id, struct sk_buff *skb,
 	return false;
 }
 
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+/**
+ * qdf_subtype_to_wlan_main_tag() - Convert qdf subtype to wlan main tag
+ * @subtype: EAPoL key subtype
+ *
+ * Return: Wlan main tag subtype
+ */
+static int qdf_subtype_to_wlan_main_tag(enum qdf_proto_subtype subtype)
+{
+	switch (subtype) {
+	case QDF_PROTO_DHCP_DISCOVER:
+		return WLAN_DHCP_DISCOVER;
+	case QDF_PROTO_DHCP_REQUEST:
+		return WLAN_DHCP_REQUEST;
+	case QDF_PROTO_DHCP_OFFER:
+		return WLAN_DHCP_OFFER;
+	case QDF_PROTO_DHCP_ACK:
+		return WLAN_DHCP_ACK;
+	case QDF_PROTO_DHCP_NACK:
+		return WLAN_DHCP_NACK;
+	case QDF_PROTO_EAPOL_M1:
+		return WLAN_EAPOL_M1;
+	case QDF_PROTO_EAPOL_M2:
+		return WLAN_EAPOL_M2;
+	case QDF_PROTO_EAPOL_M3:
+		return WLAN_EAPOL_M3;
+	case QDF_PROTO_EAPOL_M4:
+		return WLAN_EAPOL_M4;
+	default:
+		return WLAN_TAG_MAX;
+	}
+}
+
+/**
+ * qdf_get_wlan_eap_code() - Get EAP code
+ * @data: skb data pointer
+ *
+ * Return: EAP code value
+ */
+static int qdf_get_wlan_eap_code(uint8_t *data)
+{
+	uint8_t code = *(data + EAP_CODE_OFFSET);
+
+	switch (code) {
+	case QDF_EAP_REQUEST:
+		return WLAN_EAP_REQUEST;
+	case QDF_EAP_RESPONE:
+		return WLAN_EAP_RESPONSE;
+	case QDF_EAP_SUCCESS:
+		return WLAN_EAP_SUCCESS;
+	case QDF_EAP_FAILURE:
+		return WLAN_EAP_FAILURE;
+	default:
+		return WLAN_TAG_MAX;
+	}
+}
+
+/**
+ * qdf_eapol_get_key_type() - Get EAPOL key type
+ * @data: skb data pointer
+ * @subtype: EAPoL key subtype
+ *
+ * Return: EAPOL key type
+ */
+static
+uint8_t qdf_eapol_get_key_type(uint8_t *data, enum qdf_proto_subtype subtype)
+{
+	uint16_t key_info = *(uint16_t *)(data + EAPOL_KEY_INFO_OFFSET);
+
+	/* If key type is PTK, key type will be set in EAPOL Key info */
+	if (key_info & EAPOL_KEY_TYPE_MASK)
+		return qdf_subtype_to_wlan_main_tag(subtype);
+	else if (key_info & EAPOL_KEY_ENCRYPTED_MASK)
+		return WLAN_GTK_M1;
+	else
+		return WLAN_GTK_M2;
+}
+
+/**
+ * qdf_fill_wlan_connectivity_log() - Fill and queue protocol packet to logging
+ * the logging queue
+ * @type: Protocol type
+ * @subtype: Protocol subtype
+ * @dir: Rx or Tx
+ * @qdf_tx_status: Tx completion status
+ * @vdev_id: DP vdev ID
+ * @data: skb data pointer
+ *
+ * Return: None
+ */
+static
+void qdf_fill_wlan_connectivity_log(enum qdf_proto_type type,
+				    enum qdf_proto_subtype subtype,
+				    enum qdf_proto_dir dir,
+				    enum qdf_dp_tx_rx_status qdf_tx_status,
+				    uint8_t vdev_id, uint8_t *data)
+{
+	struct wlan_log_record log_buf;
+	uint8_t pkt_type;
+
+	log_buf.timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_buf.vdev_id = vdev_id;
+	if (type == QDF_PROTO_TYPE_DHCP) {
+		log_buf.log_subtype = qdf_subtype_to_wlan_main_tag(subtype);
+	} else if (type == QDF_PROTO_TYPE_EAPOL) {
+		pkt_type = *(data + EAPOL_PACKET_TYPE_OFFSET);
+		if (pkt_type == 0) {
+			log_buf.log_subtype = qdf_get_wlan_eap_code(data);
+			log_buf.pkt_info.eap_type = *(data + EAP_TYPE_OFFSET);
+			log_buf.pkt_info.eap_len =
+			   qdf_ntohs(*(uint16_t *)(data + EAP_LENGTH_OFFSET));
+		} else if (pkt_type == EAPOL_PACKET_TYPE_KEY) {
+			log_buf.log_subtype = qdf_eapol_get_key_type(data,
+								     subtype);
+		}
+	} else {
+		return;
+	}
+
+	/*Tx completion status needs to be logged*/
+	if (dir == QDF_TX)
+		log_buf.pkt_info.tx_status = qdf_tx_status;
+
+	wlan_connectivity_log_enqueue(&log_buf);
+}
+
+#else
+static inline
+void qdf_fill_wlan_connectivity_log(enum qdf_proto_type type,
+				    enum qdf_proto_subtype subtype,
+				    enum qdf_proto_dir dir,
+				    enum qdf_dp_tx_rx_status qdf_tx_status,
+				    uint8_t vdev_id, uint8_t *data)
+{
+}
+#endif
+
 /**
  * qdf_log_eapol_pkt() - log EAPOL packet
  * @vdev_id: ID of the vdev
@@ -1747,12 +1891,15 @@ static bool qdf_log_eapol_pkt(uint8_t vdev_id, struct sk_buff *skb,
 
 	subtype = qdf_nbuf_get_eapol_subtype(skb);
 
-	if (dp_eap_event && dir == QDF_RX)
+	if (dp_eap_event && dir == QDF_RX) {
 		qdf_dp_log_proto_pkt_info(skb->data + QDF_NBUF_SRC_MAC_OFFSET,
 					  skb->data + QDF_NBUF_DEST_MAC_OFFSET,
 					  QDF_PROTO_TYPE_EAPOL, subtype, dir,
 					  QDF_TRACE_DEFAULT_MSDU_ID,
 					  QDF_TX_RX_STATUS_INVALID);
+		qdf_fill_wlan_connectivity_log(QDF_PROTO_TYPE_EAPOL, subtype,
+					       QDF_RX, 0, vdev_id, skb->data);
+	}
 
 	if (dp_eap_trace) {
 		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
@@ -1822,12 +1969,15 @@ static bool qdf_log_dhcp_pkt(uint8_t vdev_id, struct sk_buff *skb,
 
 	subtype = qdf_nbuf_get_dhcp_subtype(skb);
 
-	if (dp_dhcp_event && dir == QDF_RX)
+	if (dp_dhcp_event && dir == QDF_RX) {
 		qdf_dp_log_proto_pkt_info(skb->data + QDF_NBUF_SRC_MAC_OFFSET,
 					  skb->data + QDF_NBUF_DEST_MAC_OFFSET,
 					  QDF_PROTO_TYPE_DHCP, subtype, dir,
 					  QDF_TRACE_DEFAULT_MSDU_ID,
 					  QDF_TX_RX_STATUS_INVALID);
+		qdf_fill_wlan_connectivity_log(QDF_PROTO_TYPE_DHCP, subtype,
+					       QDF_RX, 0, vdev_id, 0);
+	}
 
 	if (dp_dhcp_trace) {
 		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
@@ -2328,16 +2478,22 @@ void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	struct qdf_dp_trace_ptr_buf buf;
 	int buf_size = sizeof(struct qdf_dp_trace_ptr_buf);
 	enum qdf_proto_type pkt_type;
+	enum qdf_proto_subtype subtype;
 
 	pkt_type = qdf_dp_get_pkt_proto_type(nbuf);
 	if ((code == QDF_DP_TRACE_FREE_PACKET_PTR_RECORD ||
 	     code == QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD) &&
-	    qdf_dp_proto_log_enable_check(pkt_type, qdf_tx_status))
+	    qdf_dp_proto_log_enable_check(pkt_type, qdf_tx_status)) {
+		subtype = qdf_dp_get_pkt_subtype(nbuf, pkt_type);
 		qdf_dp_log_proto_pkt_info(nbuf->data + QDF_NBUF_SRC_MAC_OFFSET,
 					 nbuf->data + QDF_NBUF_DEST_MAC_OFFSET,
-					 pkt_type,
-					 qdf_dp_get_pkt_subtype(nbuf, pkt_type),
+					 pkt_type, subtype,
 					 QDF_TX, msdu_id, qdf_tx_status);
+		qdf_fill_wlan_connectivity_log(pkt_type, subtype,
+					       QDF_TX, qdf_tx_status,
+					       QDF_NBUF_CB_TX_VDEV_CTX(nbuf),
+					       nbuf->data);
+	}
 
 	if (qdf_dp_enable_check(nbuf, code, QDF_TX) == false)
 		return;
@@ -3231,6 +3387,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_DBDC_REP] = {"DBDC_REP"},
 	[QDF_MODULE_ID_EXT_AP] = {"EXT_AP"},
 	[QDF_MODULE_ID_MLO] = {"MLO_MGR"},
+	[QDF_MODULE_ID_MGMT_RX_REO] = {"MGMT_RX_REO"},
 	[QDF_MODULE_ID_MLOIE] = {"MLOIE"},
 	[QDF_MODULE_ID_MBSS] = {"MBSS"},
 	[QDF_MODULE_ID_MON] = {"MONITOR"},
@@ -3806,6 +3963,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_MLOIE] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_MBSS] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_MON] = QDF_TRACE_LEVEL_ERROR,
+		[QDF_MODULE_ID_MGMT_RX_REO] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 	};
 

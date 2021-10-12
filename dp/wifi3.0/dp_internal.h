@@ -2267,8 +2267,20 @@ void dp_vdev_peer_stats_update_protocol_cnt_tx(struct dp_vdev *vdev_hdl,
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 void dp_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl);
+
+/**
+ * dp_tx_dump_flow_pool_info_compact() - dump flow pool info
+ * @soc: DP soc context
+ *
+ * Return: none
+ */
+void dp_tx_dump_flow_pool_info_compact(struct dp_soc *soc);
 int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	bool force);
+#else
+static inline void dp_tx_dump_flow_pool_info_compact(struct dp_soc *soc)
+{
+}
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 #ifdef QCA_OL_DP_SRNG_LOCK_LESS_ACCESS

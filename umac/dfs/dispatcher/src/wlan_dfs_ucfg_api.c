@@ -275,7 +275,7 @@ ucfg_dfs_get_precac_chan_state_for_freq(struct wlan_objmgr_pdev *pdev,
 #endif
 #endif
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
 		struct dfs_user_config *req)
 {

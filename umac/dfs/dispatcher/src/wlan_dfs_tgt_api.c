@@ -33,7 +33,7 @@
 #include "../../core/src/dfs_process_radar_found_ind.h"
 #include <qdf_module.h>
 #include "../../core/src/dfs_partial_offload_radar.h"
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 #include "wlan_mlme_ucfg_api.h"
 #endif
 
@@ -221,7 +221,7 @@ QDF_STATUS tgt_dfs_process_phyerr(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(tgt_dfs_process_phyerr);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 QDF_STATUS tgt_dfs_process_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
 						 struct radar_event_info
 						 *wlan_radar_event)
@@ -338,7 +338,7 @@ QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(tgt_dfs_destroy_object);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
@@ -563,7 +563,7 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(tgt_dfs_process_radar_ind);
 
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
@@ -643,7 +643,7 @@ QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(tgt_dfs_process_emulate_bang_radar_cmd);
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;

@@ -1131,6 +1131,9 @@ struct dfs_rcac_params {
  *                                   CAC REQUIRED, CAC COMPLETED, NOL,
  *                                   PRECAC STARTED, PRECAC COMPLETED etc. of
  *                                   all the DFS channels.
+ * @dfs_precac_max_root_bw:          Stores the max bandwidth (in MHz) to be
+ *                                   included in the precac forest as per the
+ *                                   regulatory current channel list.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1302,6 +1305,9 @@ struct wlan_dfs {
 #if defined(WLAN_DISP_CHAN_INFO)
 	enum channel_dfs_state dfs_channel_state_array[NUM_DFS_CHANS];
 #endif /* WLAN_DISP_CHAN_INFO */
+#ifdef QCA_SUPPORT_AGILE_DFS
+	uint16_t       dfs_precac_max_root_bw;
+#endif
 };
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
@@ -1925,7 +1931,7 @@ int dfs_get_filter_threshold(struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
 		int is_extchan_detect);
 
-#if defined(QCA_MCL_DFS_SUPPORT)
+#if defined(MOBILE_DFS_SUPPORT)
 /**
  * dfs_process_ar_event() - Process the ar event.
  * @dfs: Pointer to wlan_dfs structure.
@@ -2066,7 +2072,7 @@ dfs_switch_to_postnol_chan_if_nol_expired(struct wlan_dfs *dfs)
 }
 #endif
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * dfs_process_phyerr_filter_offload() - Process radar event.
  * @dfs: Pointer to wlan_dfs structure.
@@ -2349,7 +2355,7 @@ void dfs_getnol(struct wlan_dfs *dfs,
  *                          all the channels in dfs_ch_channels.
  * @dfs: Pointer to wlan_dfs structure.
  */
-#if !defined(QCA_MCL_DFS_SUPPORT)
+#if !defined(MOBILE_DFS_SUPPORT)
 void dfs_clear_nolhistory(struct wlan_dfs *dfs);
 #else
 static inline void

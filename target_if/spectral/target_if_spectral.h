@@ -91,9 +91,15 @@
 #define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3          (5)
 #define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_DEFAULT  (9)
 #define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_QCN9000  (10)
+#define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3_BE       (5)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_BE       (11)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_BE_20MHZ (9)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_BE_40MHZ (10)
+#define INVALID_FFT_SIZE                          (0xFFFF)
 #define SPECTRAL_PARAM_RPT_MODE_MIN               (0)
 #define SPECTRAL_PARAM_RPT_MODE_MAX               (3)
 #define MAX_FFTBIN_VALUE                          (255)
+#define SPECTRAL_DWORD_SIZE                       (4)
 
 /* DBR ring debug size for Spectral */
 #define SPECTRAL_DBR_RING_DEBUG_SIZE 512
@@ -598,21 +604,21 @@ struct spectral_fft_bin_len_adj_swar {
  * of FFT bins.
  * @fragmentation_160: This indicates whether Spectral reports in 160/80p80 is
  * fragmented.
- * @max_agile_ch_width: Maximum agile BW supported by the target
  * @detid_mode_table: Detector ID to Spectral scan mode table
  * @num_spectral_detectors: Total number of Spectral detectors
  * @marker: Describes the boundaries of pri80, 5 MHz and sec80 bins
+ * @hw_fft_bin_width: FFT bin width reported by the HW
  */
 struct spectral_report_params {
 	enum spectral_report_format_version version;
 	uint8_t ssumaary_padding_bytes;
 	uint8_t fft_report_hdr_len;
 	bool fragmentation_160[SPECTRAL_SCAN_MODE_MAX];
-	enum phy_ch_width max_agile_ch_width;
 	enum spectral_scan_mode detid_mode_table[SPECTRAL_DETECTOR_ID_MAX];
 	uint8_t num_spectral_detectors;
 	struct spectral_fft_bin_markers_160_165mhz
 				marker[SPECTRAL_SCAN_MODE_MAX];
+	uint8_t hw_fft_bin_width;
 };
 
 /**
@@ -784,7 +790,7 @@ struct target_if_spectral_ops {
 		struct target_if_spectral *spectral,
 		void *data);
 	QDF_STATUS (*byte_swap_fft_bins)(
-		struct spectral_fft_bin_len_adj_swar *swar,
+		const struct spectral_report_params *rparams,
 		void *bin_pwr_data, size_t num_fftbins);
 };
 
@@ -928,6 +934,10 @@ struct vdev_spectral_enable_params;
  * @wmi_unified_register_event_handler: Register WMI event handler
  * @wmi_unified_unregister_event_handler: Unregister WMI event handler
  * @wmi_service_enabled: API to check whether a given WMI service is enabled
+ * @extract_pdev_spectral_session_chan_info: Extract Spectral scan session
+ * channel information
+ * @extract_pdev_spectral_session_detector_info: Extract Spectral scan session
+ * detector information
  */
 struct spectral_wmi_ops {
 	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
@@ -954,6 +964,13 @@ struct spectral_wmi_ops {
 				wmi_conv_event_id event_id);
 	bool (*wmi_service_enabled)(wmi_unified_t wmi_handle,
 				    uint32_t service_id);
+	QDF_STATUS (*extract_pdev_spectral_session_chan_info)(
+			wmi_unified_t wmi_handle, void *event,
+			struct spectral_session_chan_info *chan_info);
+	QDF_STATUS (*extract_pdev_spectral_session_detector_info)(
+		wmi_unified_t wmi_handle, void *event,
+		struct spectral_session_det_info *det_info,
+		uint8_t det_info_idx);
 };
 
 /**
@@ -1059,6 +1076,7 @@ struct per_session_det_map {
  * @sscan_bw: Normal/Agile Scan BW based on Spectral scan mode.
  * Valid values = enum phy_ch_width
  * @num_spans: Number of frequency spans
+ * @valid: Indicated whether report info is valid
  */
 struct per_session_report_info {
 	uint32_t pri20_freq;
@@ -1069,6 +1087,7 @@ struct per_session_report_info {
 	uint32_t sscan_cfreq2;
 	enum phy_ch_width sscan_bw;
 	uint8_t num_spans;
+	bool valid;
 };
 
 /**
@@ -1082,6 +1101,37 @@ struct sscan_detector_list {
 	uint8_t detectors[SPECTRAL_DETECTOR_ID_MAX];
 	uint8_t num_detectors;
 };
+
+/**
+ * struct spectral_supported_bws - Supported sscan bandwidths
+ * @bandwidths: bitmap of supported sscan bandwidths. Make sure to maintain this
+ * bitmap in the increasing order of bandwidths.
+ */
+struct spectral_supported_bws {
+	union {
+		struct {
+			uint32_t supports_sscan_bw_5:1,
+				 supports_sscan_bw_10:1,
+				 supports_sscan_bw_20:1,
+				 supports_sscan_bw_40:1,
+				 supports_sscan_bw_80:1,
+				 supports_sscan_bw_160:1,
+				 supports_sscan_bw_80_80:1,
+				 supports_sscan_bw_320:1,
+				 reserved:24;
+		};
+		uint32_t bandwidths;
+	};
+};
+
+/**
+ * get_supported_sscan_bw_pos() - Get the position of a given sscan_bw inside
+ * the supported sscan bandwidths bitmap
+ * @sscan_bw: Spectral scan bandwidth
+ *
+ * Return: bit position for a valid sscan bandwidth, else -1
+ */
+int get_supported_sscan_bw_pos(enum phy_ch_width sscan_bw);
 
 /**
  * struct target_if_spectral - main spectral structure
@@ -1146,6 +1196,7 @@ struct sscan_detector_list {
  * @tsf64: Latest TSF Value
  * @param_info: Offload architecture Spectral parameter cache information
  * @ch_width: Indicates Channel Width 20/40/80/160 MHz for each Spectral mode
+ * @sscan_width_configured: Whether user has configured sscan bandwidth
  * @diag_stats: Diagnostic statistics
  * @is_160_format:  Indicates whether information provided by HW is in altered
  * format for 802.11ac 160/80+80 MHz support (QCA9984 onwards)
@@ -1180,9 +1231,15 @@ struct sscan_detector_list {
  * @finite_scan: Parameters for finite Spectral scan
  * @detector_list: Detector list for a given Spectral scan mode and channel
  * width, based on the target type.
+ * @detector_list_lock: Lock to synchronize accesses to detector list
  * @det_map: Map of per-session detector information keyed by the Spectral HW
  * detector id.
+ * @session_det_map_lock: Lock to synchronize accesses to session detector map
  * @report_info: Per session info to be filled at report level in SAMP message
+ * @session_report_info_lock: Lock to synchronize access to session report info
+ * @supported_bws: Supported sscan bandwidths for all sscan modes and
+ * operating widths
+ * @supported_sscan_bw_list: List of supported sscan widths for all sscan modes
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -1271,6 +1328,7 @@ struct target_if_spectral {
 					param_info[SPECTRAL_SCAN_MODE_MAX];
 #endif
 	enum phy_ch_width ch_width[SPECTRAL_SCAN_MODE_MAX];
+	bool sscan_width_configured[SPECTRAL_SCAN_MODE_MAX];
 	struct spectral_diag_stats              diag_stats;
 	bool                                    is_160_format;
 	bool                                    is_lb_edge_extrabins_format;
@@ -1306,8 +1364,15 @@ struct target_if_spectral {
 					finite_scan[SPECTRAL_SCAN_MODE_MAX];
 	struct sscan_detector_list
 			detector_list[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
+	qdf_spinlock_t detector_list_lock;
 	struct per_session_det_map det_map[MAX_DETECTORS_PER_PDEV];
+	qdf_spinlock_t session_det_map_lock;
 	struct per_session_report_info report_info[SPECTRAL_SCAN_MODE_MAX];
+	qdf_spinlock_t session_report_info_lock;
+	struct spectral_supported_bws
+		supported_bws[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
+	/* Whether a given sscan BW is supported on a given smode */
+	bool supported_sscan_bw_list[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
 };
 
 /**
@@ -2788,6 +2853,41 @@ QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
 	void *bin_pwr_data, size_t pwr_count);
 #endif /* BIG_ENDIAN_HOST */
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_populate_fft_bins_info() - Populate the start and end bin
+ * indices, on per-detector level.
+ * @spectral: Pointer to target_if spectral internal structure
+ * @smode: Spectral scan mode
+ *
+ * Populate the start and end bin indices, on per-detector level.
+ *
+ * Return: Success/Failure
+ */
+QDF_STATUS
+target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
+				 enum spectral_scan_mode smode);
+#else
+static inline QDF_STATUS
+target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
+				 enum spectral_scan_mode smode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * spectral_is_session_info_expected_from_target() - Check if spectral scan
+ * session is expected from target
+ * @pdev: pdev pointer
+ * @is_session_info_expected: Pointer to caller variable
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS
+spectral_is_session_info_expected_from_target(struct wlan_objmgr_pdev *pdev,
+					      bool *is_session_info_expected);
+
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)
 #endif
@@ -2795,5 +2895,30 @@ QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
 #undef __ATTRIB_PACK
 #endif
 
+/**
+ * target_if_spectral_copy_fft_bins() - Copy FFT bins from source buffer to
+ * destination buffer
+ * @spectral: Pointer to Spectral LMAC object
+ * @src_fft_buf: Pointer to source FFT buffer
+ * @dest_fft_buf: Pointer to destination FFT buffer
+ * @fft_bin_count: Number of FFT bins to copy
+ * @bytes_copied: Number of bytes copied by this API
+ *
+ * Different targets supports different FFT bin widths. This API encapsulates
+ * all those details and copies 8-bit FFT value into the destination buffer.
+ * Also, this API takes care of handling big-endian mode.
+ * In essence, it does the following.
+ *   - Read DWORDs one by one
+ *   - Extract individual FFT bins out of it
+ *   - Copy the FFT bin to destination buffer
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS
+target_if_spectral_copy_fft_bins(struct target_if_spectral *spectral,
+				 const void *src_fft_buf,
+				 void *dest_fft_buf,
+				 uint32_t fft_bin_count,
+				 uint32_t *bytes_copied);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 #endif /* _TARGET_IF_SPECTRAL_H_ */

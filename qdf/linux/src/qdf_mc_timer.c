@@ -856,42 +856,6 @@ s64 qdf_get_monotonic_boottime_ns(void)
 }
 qdf_export_symbol(qdf_get_monotonic_boottime_ns);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0))
-qdf_time_t qdf_get_time_of_the_day_ms(void)
-{
-	struct timespec64 tv;
-	qdf_time_t local_time;
-	struct rtc_time tm;
-
-	ktime_get_real_ts64(&tv);
-	local_time = (qdf_time_t)(tv.tv_sec - (sys_tz.tz_minuteswest * 60));
-	rtc_time64_to_tm(local_time, &tm);
-
-	return (tm.tm_hour * 60 * 60 * 1000) +
-		(tm.tm_min * 60 * 1000) + (tm.tm_sec * 1000) +
-		(tv.tv_nsec / 1000000);
-}
-
-qdf_export_symbol(qdf_get_time_of_the_day_ms);
-
-#else
-qdf_time_t qdf_get_time_of_the_day_ms(void)
-{
-	struct timeval tv;
-	qdf_time_t local_time;
-	struct rtc_time tm;
-
-	do_gettimeofday(&tv);
-	local_time = (qdf_time_t)(tv.tv_sec - (sys_tz.tz_minuteswest * 60));
-	rtc_time_to_tm(local_time, &tm);
-
-	return (tm.tm_hour * 60 * 60 * 1000) +
-		(tm.tm_min * 60 * 1000) + (tm.tm_sec * 1000) +
-		(tv.tv_usec / 1000);
-}
-qdf_export_symbol(qdf_get_time_of_the_day_ms);
-#endif
-
 /**
  * qdf_timer_module_deinit() - Deinitializes a QDF timer module.
  *
@@ -925,6 +889,27 @@ void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len)
 
 qdf_export_symbol(qdf_get_time_of_the_day_in_hr_min_sec_usec);
 
+uint64_t qdf_get_time_of_the_day_us(void)
+{
+	struct timespec64 tv;
+	struct rtc_time tm;
+	unsigned long local_time;
+	uint64_t time_of_day_us = 0;
+
+	ktime_get_real_ts64(&tv);
+	/* Convert rtc to local time */
+	local_time = (u32)(tv.tv_sec - (sys_tz.tz_minuteswest * 60));
+	rtc_time64_to_tm(local_time, &tm);
+
+	time_of_day_us += (uint64_t)tm.tm_hour * 60 * 60 * 1000 * 1000;
+	time_of_day_us += (uint64_t)tm.tm_min * 60 * 1000 * 1000;
+	time_of_day_us += (uint64_t)tm.tm_sec * 1000 * 1000;
+	time_of_day_us += qdf_do_div((uint64_t)tv.tv_nsec,  1000);
+
+	return time_of_day_us;
+}
+
+qdf_export_symbol(qdf_get_time_of_the_day_us);
 #else
 void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len)
 {
@@ -942,4 +927,37 @@ void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len)
 		tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
 }
 qdf_export_symbol(qdf_get_time_of_the_day_in_hr_min_sec_usec);
+
+uint64_t qdf_get_time_of_the_day_us(void)
+{
+	struct timeval tv;
+	struct rtc_time tm;
+	unsigned long local_time;
+	uint64_t time_of_day_us = 0;
+
+	do_gettimeofday(&tv);
+	/* Convert rtc to local time */
+	local_time = (u32)(tv.tv_sec - (sys_tz.tz_minuteswest * 60));
+	rtc_time_to_tm(local_time, &tm);
+
+	time_of_day_us += (uint64_t)tm.tm_hour * 60 * 60 * 1000 * 1000;
+	time_of_day_us += (uint64_t)tm.tm_min * 60 * 1000 * 1000;
+	time_of_day_us += (uint64_t)tm.tm_sec * 1000 * 1000;
+	time_of_day_us += (uint64_t)tv.tv_usec;
+
+	return time_of_day_us;
+}
+
+qdf_export_symbol(qdf_get_time_of_the_day_us);
 #endif
+
+qdf_time_t qdf_get_time_of_the_day_ms(void)
+{
+	qdf_time_t time_of_the_day_ms;
+
+	time_of_the_day_ms = qdf_do_div(qdf_get_time_of_the_day_us(), 1000);
+
+	return time_of_the_day_ms;
+}
+
+qdf_export_symbol(qdf_get_time_of_the_day_ms);

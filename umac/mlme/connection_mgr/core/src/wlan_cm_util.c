@@ -256,6 +256,26 @@ void cm_trigger_panic_on_cmd_timeout(struct wlan_objmgr_vdev *vdev)
 #else
 void cm_trigger_panic_on_cmd_timeout(struct wlan_objmgr_vdev *vdev)
 {
+	struct vdev_mlme_obj *vdev_mlme = NULL;
+	struct wlan_sm *vdev_sm = NULL;
+
+	vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(
+			vdev,
+			WLAN_UMAC_COMP_MLME);
+	if (!vdev_mlme) {
+		mlme_err("VDEV MLME is null");
+		goto error;
+	}
+
+	vdev_sm = vdev_mlme->sm_hdl;
+	if (!vdev_sm) {
+		mlme_err("VDEV SM is null");
+		goto error;
+	}
+
+	wlan_sm_print_history(vdev_sm);
+	cm_sm_history_print(vdev);
+error:
 	QDF_ASSERT(0);
 }
 #endif

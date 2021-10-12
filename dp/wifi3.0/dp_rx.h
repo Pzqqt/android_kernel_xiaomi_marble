@@ -272,6 +272,27 @@ bool dp_rx_deliver_special_frame(struct dp_soc *soc, struct dp_peer *peer,
 }
 #endif
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+#ifdef DP_RX_DISABLE_NDI_MDNS_FORWARDING
+static inline
+bool dp_rx_check_ndi_mdns_fwding(struct dp_peer *ta_peer, qdf_nbuf_t nbuf)
+{
+	if (ta_peer->vdev->opmode == wlan_op_mode_ndi &&
+	    qdf_nbuf_is_ipv6_mdns_pkt(nbuf)) {
+		DP_STATS_INC(ta_peer, rx.intra_bss.mdns_no_fwd, 1);
+		return false;
+	}
+		return true;
+}
+#else
+static inline
+bool dp_rx_check_ndi_mdns_fwding(struct dp_peer *ta_peer, qdf_nbuf_t nbuf)
+{
+	return true;
+}
+#endif
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 /* DOC: Offset to obtain LLC hdr
  *
  * In the case of Wifi parse error
@@ -1101,20 +1122,19 @@ bool dp_rx_intrabss_fwd(struct dp_soc *soc,
 
 #ifdef DISABLE_EAPOL_INTRABSS_FWD
 /*
- * dp_rx_intrabss_fwd_wrapper() - Wrapper API for intrabss fwd. For EAPOL
+ * dp_rx_intrabss_eapol_drop_check() - API For EAPOL
  *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
  * @soc: core txrx main context
  * @ta_peer: source peer entry
  * @rx_tlv_hdr: start address of rx tlvs
  * @nbuf: nbuf that has to be intrabss forwarded
- * @msdu_metadata: msdu metadata
  *
  * Return: true if it is forwarded else false
  */
 static inline
-bool dp_rx_intrabss_fwd_wrapper(struct dp_soc *soc, struct dp_peer *ta_peer,
-				uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
-				struct hal_rx_msdu_metadata msdu_metadata)
+bool dp_rx_intrabss_eapol_drop_check(struct dp_soc *soc,
+				     struct dp_peer *ta_peer,
+				     uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf)
 {
 	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf) &&
 			 qdf_mem_cmp(qdf_nbuf_data(nbuf) +
@@ -1126,18 +1146,18 @@ bool dp_rx_intrabss_fwd_wrapper(struct dp_soc *soc, struct dp_peer *ta_peer,
 		return true;
 	}
 
-	return dp_rx_intrabss_fwd(soc, ta_peer, rx_tlv_hdr, nbuf,
-				  msdu_metadata);
+	return false;
 }
-
-#define DP_RX_INTRABSS_FWD(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata) \
-		dp_rx_intrabss_fwd_wrapper(soc, peer, rx_tlv_hdr, nbuf, \
-					   msdu_metadata)
 #else /* DISABLE_EAPOL_INTRABSS_FWD */
-#define DP_RX_INTRABSS_FWD(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata) \
-		dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata)
-#endif /* DISABLE_EAPOL_INTRABSS_FWD */
 
+static inline
+bool dp_rx_intrabss_eapol_drop_check(struct dp_soc *soc,
+				     struct dp_peer *ta_peer,
+				     uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif /* DISABLE_EAPOL_INTRABSS_FWD */
 /**
  * dp_rx_defrag_concat() - Concatenate the fragments
  *
@@ -1256,7 +1276,8 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
 #include "dp_rx_tag.h"
 #endif
 
-#ifndef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+#if !defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) &&\
+	!defined(WLAN_SUPPORT_RX_FLOW_TAG)
 /**
  * dp_rx_update_protocol_tag() - Reads CCE metadata from the RX MSDU end TLV
  *                              and set the corresponding tag in QDF packet
@@ -1276,7 +1297,9 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 			  bool is_reo_exception, bool is_update_stats)
 {
 }
+#endif
 
+#ifndef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /**
  * dp_rx_err_cce_drop() - Reads CCE metadata from the RX MSDU end TLV
  *                        and returns whether cce metadata matches

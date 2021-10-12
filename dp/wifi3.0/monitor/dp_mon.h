@@ -40,14 +40,7 @@
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_MON, ## params)
 #define dp_mon_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MON, params)
 #define dp_mon_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MON, params)
-
-#ifndef WLAN_TX_PKT_CAPTURE_ENH
-struct dp_pdev_tx_capture {
-};
-
-struct dp_peer_tx_capture {
-};
-#endif
+#define dp_mon_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MON, params)
 
 struct dp_mon_ops {
 	QDF_STATUS (*mon_soc_cfg_init)(struct dp_soc *soc);
@@ -214,7 +207,9 @@ struct  dp_mon_pdev {
 	uint16_t mo_data_filter;
 	uint16_t md_data_filter;
 
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
 	struct dp_pdev_tx_capture tx_capture;
+#endif
 
 	/* tx packet capture enhancement */
 	enum cdp_tx_enh_capture_mode tx_capture_enabled;
@@ -382,7 +377,9 @@ struct  dp_mon_vdev {
 };
 
 struct dp_mon_peer {
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
 	struct dp_peer_tx_capture tx_capture;
+#endif
 #ifdef FEATURE_PERPKT_INFO
 	/* delayed ba ppdu stats handling */
 	struct cdp_delayed_tx_completion_ppdu_user delayed_ba_ppdu_stats;

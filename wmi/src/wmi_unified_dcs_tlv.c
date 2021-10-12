@@ -100,42 +100,6 @@ static QDF_STATUS extract_dcs_im_tgt_stats_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_11BE
-#define WLAN_PHY_CH_WIDTH_320MHZ CH_WIDTH_320MHZ
-#else
-#define WLAN_PHY_CH_WIDTH_320MHZ CH_WIDTH_INVALID
-#endif
-
-/*
- * wmi_map_ch_width() - map wmi channel width to host channel width
- * @wmi_width: wmi channel width enum
- *
- * Return: host channel width, enum phy_ch_width
- */
-static inline enum phy_ch_width wmi_map_ch_width(wmi_channel_width wmi_width)
-{
-	switch (wmi_width) {
-	case WMI_CHAN_WIDTH_20:
-		return CH_WIDTH_20MHZ;
-	case WMI_CHAN_WIDTH_40:
-		return CH_WIDTH_40MHZ;
-	case WMI_CHAN_WIDTH_80:
-		return CH_WIDTH_80MHZ;
-	case WMI_CHAN_WIDTH_160:
-		return CH_WIDTH_160MHZ;
-	case WMI_CHAN_WIDTH_80P80:
-		return CH_WIDTH_80P80MHZ;
-	case WMI_CHAN_WIDTH_5:
-		return CH_WIDTH_5MHZ;
-	case WMI_CHAN_WIDTH_10:
-		return CH_WIDTH_10MHZ;
-	case WMI_CHAN_WIDTH_320:
-		return WLAN_PHY_CH_WIDTH_320MHZ;
-	default:
-		return CH_WIDTH_INVALID;
-	}
-}
-
 /*
  * extract_dcs_awgn_info_tlv() - extract DCS AWGN interference from event
  * @wmi_handle: wmi handle

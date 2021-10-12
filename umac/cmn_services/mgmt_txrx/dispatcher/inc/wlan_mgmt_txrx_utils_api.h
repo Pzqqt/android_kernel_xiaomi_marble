@@ -796,6 +796,51 @@ struct mgmt_rx_event_params {
 #endif
 };
 
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+static inline
+struct mgmt_rx_event_params *alloc_mgmt_rx_event_params(void)
+{
+	struct mgmt_rx_event_params *rx_params;
+
+	rx_params = qdf_mem_malloc(sizeof(struct mgmt_rx_event_params));
+	if (!rx_params)
+		return NULL;
+
+	rx_params->reo_params =
+		qdf_mem_malloc(sizeof(struct mgmt_rx_reo_params));
+
+	if (!rx_params->reo_params) {
+		qdf_mem_free(rx_params);
+		return NULL;
+	}
+
+	return rx_params;
+}
+
+static inline void
+free_mgmt_rx_event_params(struct mgmt_rx_event_params *rx_params)
+{
+	if (rx_params)
+		qdf_mem_free(rx_params->reo_params);
+
+	qdf_mem_free(rx_params);
+}
+#else
+static inline
+struct mgmt_rx_event_params *alloc_mgmt_rx_event_params(void)
+{
+	struct mgmt_rx_event_params *rx_params;
+
+	rx_params = qdf_mem_malloc(sizeof(struct mgmt_rx_event_params));
+	if (!rx_params)
+		return NULL;
+
+	return rx_params;
+}
+
+#define free_mgmt_rx_event_params(rx_params) qdf_mem_free((rx_params))
+#endif
+
 /**
  * mgmt_tx_download_comp_cb - function pointer for tx download completions.
  * @context: caller component specific context

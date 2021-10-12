@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,6 +29,8 @@
 #include "dp_internal.h"
 #define INVALID_FLOW_ID 0xFF
 #define MAX_INVALID_BIN 3
+#define GLOBAL_FLOW_POOL_STATS_LEN 25
+#define FLOW_POOL_LOG_LEN 50
 
 #ifdef QCA_AC_BASED_FLOW_CONTROL
 /**
@@ -220,6 +222,46 @@ void dp_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl)
 		qdf_spin_lock_bh(&soc->flow_pool_array_lock);
 	}
 	qdf_spin_unlock_bh(&soc->flow_pool_array_lock);
+}
+
+void dp_tx_dump_flow_pool_info_compact(struct dp_soc *soc)
+{
+	struct dp_txrx_pool_stats *pool_stats = &soc->pool_stats;
+	struct dp_tx_desc_pool_s *pool = NULL;
+	char *comb_log_str;
+	uint32_t comb_log_str_size;
+	int bytes_written = 0;
+	int i;
+
+	comb_log_str_size = GLOBAL_FLOW_POOL_STATS_LEN +
+				(FLOW_POOL_LOG_LEN * MAX_TXDESC_POOLS) + 1;
+	comb_log_str = qdf_mem_malloc(comb_log_str_size);
+	if (!comb_log_str)
+		return;
+
+	bytes_written = qdf_snprintf(&comb_log_str[bytes_written],
+				     comb_log_str_size, "G:(%d,%d,%d) ",
+				     pool_stats->pool_map_count,
+				     pool_stats->pool_unmap_count,
+				     pool_stats->pkt_drop_no_pool);
+
+	for (i = 0; i < MAX_TXDESC_POOLS; i++) {
+		pool = &soc->tx_desc[i];
+		if (pool->status > FLOW_POOL_INVALID)
+			continue;
+		bytes_written += qdf_snprintf(&comb_log_str[bytes_written],
+				      (bytes_written >= comb_log_str_size) ? 0 :
+				      comb_log_str_size - bytes_written,
+				      "| %d %d: (%d,%d,%d)",
+				      pool->flow_pool_id, pool->status,
+				      pool->pool_size, pool->avail_desc,
+				      pool->pkt_drop_no_desc);
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "FLOW_POOL_STATS %s", comb_log_str);
+
+	qdf_mem_free(comb_log_str);
 }
 
 /**

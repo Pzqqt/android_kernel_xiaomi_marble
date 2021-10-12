@@ -152,6 +152,8 @@
 #define WLAN_SOC_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED 0x08000000
 	/* ext cc event supported by fw */
 #define WLAN_SOC_EXT_EVENT_SUPPORTED      0x010000000
+	/* check 29th bit for p2p + p2p conc support by fw */
+#define WLAN_SOC_EXT_P2P_P2P_CONC_SUPPORT 0x20000000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */
@@ -216,7 +218,8 @@
 #define WLAN_SOC_F_PEER_CREATE_RESP    0x10000000
 /* Strict channel mode */
 #define WLAN_SOC_F_STRICT_CHANNEL      0x20000000
-
+/* MGMT Rx REO feature capability */
+#define WLAN_SOC_F_MGMT_RX_REO_CAPABLE  0x40000000
 
 /* PSOC op flags */
 

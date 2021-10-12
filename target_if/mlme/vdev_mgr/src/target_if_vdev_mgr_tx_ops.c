@@ -1031,6 +1031,7 @@ static QDF_STATUS target_if_vdev_mgr_multiple_vdev_set_param_cmd(
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
+	int param_id;
 
 	if (!pdev || !param) {
 		mlme_err("Invalid input");
@@ -1054,6 +1055,9 @@ static QDF_STATUS target_if_vdev_mgr_multiple_vdev_set_param_cmd(
 			 param->num_vdevs);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	param_id = target_if_vdev_mlme_id_2_wmi(param->param_id);
+	param->param_id = param_id;
 
 	status = wmi_unified_send_multiple_vdev_set_param_cmd(wmi_handle,
 							      param);

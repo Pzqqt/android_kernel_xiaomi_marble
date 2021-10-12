@@ -1411,3 +1411,12 @@ bool wlan_reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev)
 	return reg_is_noaction_on_afc_pwr_evt(pdev);
 }
 #endif
+
+QDF_STATUS wlan_reg_is_chwidth_supported(struct wlan_objmgr_pdev *pdev,
+					 enum phy_ch_width ch_width,
+					 bool *is_supported)
+{
+	return reg_is_chwidth_supported(pdev, ch_width, is_supported);
+}
+
+qdf_export_symbol(wlan_reg_is_chwidth_supported);

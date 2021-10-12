@@ -2142,21 +2142,21 @@ void cdp_if_mgmt_drain(ol_txrx_soc_handle soc,
  * @soc: opaque soc handle
  * @max_peers: number of peers created in FW
  * @max_ast_index: max number of AST index supported in FW
- * @peer_map_unmap_v2: flag indicates HTT peer map v2 is enabled in FW
+ * @peer_map_unmap_v: Indicates HTT peer map/unmap versions enabled in FW
  *
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
 cdp_peer_map_attach(ol_txrx_soc_handle soc, uint32_t max_peers,
-		    uint32_t max_ast_index, bool peer_map_unmap_v2)
+		    uint32_t max_ast_index, uint8_t peer_map_unmap_v)
 {
 	if (soc && soc->ops && soc->ops->cmn_drv_ops &&
 	    soc->ops->cmn_drv_ops->txrx_peer_map_attach)
 		return soc->ops->cmn_drv_ops->txrx_peer_map_attach(soc,
 							max_peers,
 							max_ast_index,
-							peer_map_unmap_v2);
+							peer_map_unmap_v);
 
 	return QDF_STATUS_SUCCESS;
 }

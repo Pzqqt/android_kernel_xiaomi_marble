@@ -22,6 +22,7 @@
 #include "dp_li.h"
 #include "dp_li_tx.h"
 #include "dp_li_rx.h"
+#include "dp_peer.h"
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
@@ -98,6 +99,41 @@ static QDF_STATUS dp_vdev_detach_li(struct dp_soc *soc, struct dp_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef AST_OFFLOAD_ENABLE
+static void dp_peer_detach_li(struct dp_soc *soc)
+{
+	dp_soc_wds_detach(soc);
+	dp_peer_ast_hash_detach(soc);
+	dp_peer_mec_hash_detach(soc);
+}
+
+static QDF_STATUS dp_peer_attach_li(struct dp_soc *soc)
+{
+	QDF_STATUS status;
+
+	status = dp_peer_ast_table_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto hash_detach;
+
+	status = dp_peer_ast_hash_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto ast_table_detach;
+
+	status = dp_peer_mec_hash_attach(soc);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		dp_soc_wds_attach(soc);
+		return status;
+	}
+
+hash_detach:
+	dp_peer_ast_hash_detach(soc);
+ast_table_detach:
+	dp_peer_ast_table_detach(soc);
+
+	return status;
+}
+#endif
 
 qdf_size_t dp_get_soc_context_size_li(void)
 {
@@ -291,6 +327,12 @@ static QDF_STATUS dp_soc_srng_init_li(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void dp_tx_implicit_rbm_set_li(struct dp_soc *soc,
+				      uint8_t tx_ring_id,
+				      uint8_t bm_id)
+{
+}
+
 void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -321,9 +363,14 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_pdev_detach = dp_pdev_detach_li;
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_li;
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_li;
+#ifdef AST_OFFLOAD_ENABLE
+	arch_ops->txrx_peer_attach = dp_peer_attach_li;
+	arch_ops->txrx_peer_detach = dp_peer_detach_li;
+#endif
 	arch_ops->dp_rx_desc_cookie_2_va =
 			dp_rx_desc_cookie_2_va_li;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_li;
 	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_li;
+	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_li;
 }
 

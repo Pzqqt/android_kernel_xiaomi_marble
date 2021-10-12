@@ -1856,4 +1856,17 @@ wlan_reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
  * Return: true if FW supports new command or false otherwise
  */
 bool wlan_reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_reg_is_chwidth_supported() - Check if given channel width is supported
+ * on a given pdev
+ * @pdev: pdev pointer
+ * @ch_width: channel width.
+ * @is_supported: whether the channel width is supported
+ *
+ * Return QDF_STATUS_SUCCESS of operation
+ */
+QDF_STATUS wlan_reg_is_chwidth_supported(struct wlan_objmgr_pdev *pdev,
+					 enum phy_ch_width ch_width,
+					 bool *is_supported);
 #endif

@@ -156,6 +156,7 @@ uint8_t *util_parse_sta_profile_ie(uint8_t *subelement,
 	if (qdf_test_bit(WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_MACADDRP_IDX,
 			 (unsigned long *)&subelement[STA_CTRL_1])) {
 		tmp_len = tmp_len + QDF_MAC_ADDR_SIZE;
+		mlo_debug("copied mac addr: " QDF_MAC_ADDR_FMT, &tmp[4]);
 		qdf_mem_copy(&bssid->bytes, &tmp[4], QDF_MAC_ADDR_SIZE);
 	}
 
@@ -234,6 +235,10 @@ QDF_STATUS util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
 
 	if (!sub_copy)
 		return QDF_STATUS_E_NULL_VALUE;
+
+	mlo_debug("dumping hex after parsing multi link ctrl");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_MLO, QDF_TRACE_LEVEL_DEBUG,
+			   sub_copy, link_info_len);
 
 	/* parse sta profile ie */
 	sub_copy = util_parse_sta_profile_ie(sub_copy,

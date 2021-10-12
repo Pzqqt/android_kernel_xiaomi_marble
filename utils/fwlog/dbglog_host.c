@@ -4073,7 +4073,7 @@ static ssize_t dbglog_block_read(struct file *file,
 	char *buf;
 	int ret;
 
-	buf = vzalloc(count);
+	buf = qdf_mem_valloc(count);
 	if (!buf)
 		return -ENOMEM;
 
@@ -4088,7 +4088,7 @@ static ssize_t dbglog_block_read(struct file *file,
 		ret =
 		   wait_for_completion_interruptible(&fwlog->fwlog_completion);
 		if (ret == -ERESTARTSYS) {
-			vfree(buf);
+			qdf_mem_vfree(buf);
 			return ret;
 		}
 
@@ -4122,7 +4122,7 @@ static ssize_t dbglog_block_read(struct file *file,
 	ret_cnt = len;
 
 out:
-	vfree(buf);
+	qdf_mem_vfree(buf);
 
 	return ret_cnt;
 }

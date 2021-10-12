@@ -54,6 +54,9 @@
 #define QDF_NBUF_CB_RX_PKT_LEN(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_w.msdu_len)
 
+#define QDF_NBUF_CB_RX_INTRA_BSS(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_w.flag_intra_bss)
+
 #define __qdf_nbuf_set_rx_fctx_type(skb, ctx, type) \
 	do { \
 		QDF_NBUF_CB_RX_FCTX((skb)) = (ctx); \
@@ -62,6 +65,12 @@
 
 #define __qdf_nbuf_get_rx_fctx(skb) \
 		 QDF_NBUF_CB_RX_FCTX((skb))
+
+#define __qdf_nbuf_set_intra_bss(skb, val) \
+	((QDF_NBUF_CB_RX_INTRA_BSS((skb))) = val)
+
+#define __qdf_nbuf_is_intra_bss(skb) \
+	(QDF_NBUF_CB_RX_INTRA_BSS((skb)))
 
 #define __qdf_nbuf_set_tx_fctx_type(skb, ctx, type) \
 	do { \

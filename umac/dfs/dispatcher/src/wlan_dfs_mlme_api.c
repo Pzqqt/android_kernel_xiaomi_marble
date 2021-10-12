@@ -27,7 +27,7 @@
 #include "../../core/src/dfs.h"
 #include "scheduler_api.h"
 #include <wlan_reg_ucfg_api.h>
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 #include "wni_api.h"
 #endif
 
@@ -48,7 +48,7 @@ void dfs_mlme_proc_spoof_success(struct wlan_objmgr_pdev *pdev)
 }
 #endif
 
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee,
 		uint16_t freq,
@@ -102,7 +102,7 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 #ifdef CONFIG_CHAN_FREQ_API
 void dfs_mlme_start_csa_for_freq(struct wlan_objmgr_pdev *pdev,
 				 uint8_t ieee_chan, uint16_t freq,
@@ -136,7 +136,7 @@ void dfs_mlme_start_csa_for_freq(struct wlan_objmgr_pdev *pdev,
 #endif
 #endif
 
-#ifndef QCA_MCL_DFS_SUPPORT
+#ifndef MOBILE_DFS_SUPPORT
 void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 {
 	if (global_dfs_to_mlme.mlme_proc_cac)

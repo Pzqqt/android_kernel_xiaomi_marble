@@ -367,7 +367,7 @@ ucfg_dfs_get_precac_chan_state_for_freq(struct wlan_objmgr_pdev *pdev,
 
 #endif
 
-#ifdef QCA_MCL_DFS_SUPPORT
+#ifdef MOBILE_DFS_SUPPORT
 /**
  * ucfg_dfs_update_config() - Update DFS user config.
  * @psoc: Pointer to psoc.

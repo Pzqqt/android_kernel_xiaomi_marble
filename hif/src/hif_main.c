@@ -1096,6 +1096,9 @@ QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
 		qdf_sleep(10);
 	}
 
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
+	return QDF_STATUS_SUCCESS;
+
 	while (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
 		if (++wait_cnt > HIF_EP_WAKE_RESET_WAIT_CNT) {
 			hif_err("Release EP vote is not proceed by Fw");
@@ -2106,11 +2109,8 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 
 	hif_info("wake interrupt received on irq %d", irq);
 
-	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx)) {
-		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
-		hif_pm_runtime_request_resume(hif_ctx,
-					      RTPM_ID_WAKE_INTR_HANDLER);
-	}
+	hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
+	hif_pm_runtime_request_resume(hif_ctx, RTPM_ID_WAKE_INTR_HANDLER);
 
 	if (scn->initial_wakeup_cb)
 		scn->initial_wakeup_cb(scn->initial_wakeup_priv);

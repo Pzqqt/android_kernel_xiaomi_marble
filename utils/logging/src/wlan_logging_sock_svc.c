@@ -36,6 +36,9 @@
 #include <qdf_event.h>
 #include <qdf_module.h>
 #include <qdf_str.h>
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+#include <wlan_connectivity_logging.h>
+#endif
 
 #ifdef CNSS_GENL
 #ifdef CONFIG_CNSS_OUT_OF_TREE
@@ -99,9 +102,11 @@
 #endif /* FEATURE_PKTLOG */
 
 #define MAX_PKTSTATS_BUFF   16
-#define HOST_LOG_DRIVER_MSG        0x001
-#define HOST_LOG_PER_PKT_STATS     0x002
-#define HOST_LOG_FW_FLUSH_COMPLETE 0x003
+#define HOST_LOG_DRIVER_MSG              0x001
+#define HOST_LOG_PER_PKT_STATS           0x002
+#define HOST_LOG_FW_FLUSH_COMPLETE       0x003
+#define HOST_LOG_DRIVER_CONNECTIVITY_MSG 0x004
+
 #define DIAG_TYPE_LOGS                 1
 #define PTT_MSG_DIAG_CMDS_TYPE    0x5050
 #define MAX_LOG_LINE 500
@@ -215,14 +220,14 @@ static struct log_msg *gplog_msg;
 
 static inline QDF_STATUS allocate_log_msg_buffer(void)
 {
-	gplog_msg = vzalloc(MAX_LOGMSG_COUNT * sizeof(*gplog_msg));
+	gplog_msg = qdf_mem_valloc(MAX_LOGMSG_COUNT * sizeof(*gplog_msg));
 
 	return gplog_msg ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
 }
 
 static inline void free_log_msg_buffer(void)
 {
-	vfree(gplog_msg);
+	qdf_mem_vfree(gplog_msg);
 	gplog_msg = NULL;
 }
 
@@ -801,6 +806,20 @@ static void setup_flush_timer(void)
 	qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
 }
 
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+static QDF_STATUS
+wlan_logging_send_connectivity_event(void)
+{
+	return wlan_connectivity_log_dequeue();
+}
+#else
+static inline QDF_STATUS
+wlan_logging_send_connectivity_event(void)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
 /**
  * wlan_logging_thread() - The WLAN Logger thread
  * @Arg - pointer to the HDD context
@@ -827,6 +846,9 @@ static int wlan_logging_thread(void *Arg)
 						     &gwlan_logging.eventFlag)
 						  || test_bit(
 						     HOST_LOG_FW_FLUSH_COMPLETE,
+						     &gwlan_logging.eventFlag)
+						  || test_bit(
+						     HOST_LOG_DRIVER_CONNECTIVITY_MSG,
 						     &gwlan_logging.eventFlag)
 						  || gwlan_logging.exit));
 
@@ -892,6 +914,11 @@ static int wlan_logging_thread(void *Arg)
 						&gwlan_logging.wait_queue);
 			}
 		}
+
+		/* Dequeue the connectivity_log */
+		wlan_logging_send_connectivity_event();
+		clear_bit(HOST_LOG_DRIVER_CONNECTIVITY_MSG,
+			  &gwlan_logging.eventFlag);
 	}
 
 	complete_and_exit(&gwlan_logging.shutdown_comp, 0);
@@ -1125,7 +1152,7 @@ int wlan_logging_sock_init_svc(void)
 
 	/* Initialize the pktStats data structure here */
 	pkt_stats_size = sizeof(struct pkt_stats_msg);
-	gpkt_stats_buffers = vmalloc(MAX_PKTSTATS_BUFF * pkt_stats_size);
+	gpkt_stats_buffers = qdf_mem_valloc(MAX_PKTSTATS_BUFF * pkt_stats_size);
 	if (!gpkt_stats_buffers) {
 		qdf_err("Could not allocate memory for Pkt stats");
 		goto err1;
@@ -1166,6 +1193,7 @@ int wlan_logging_sock_init_svc(void)
 	clear_bit(HOST_LOG_DRIVER_MSG, &gwlan_logging.eventFlag);
 	clear_bit(HOST_LOG_PER_PKT_STATS, &gwlan_logging.eventFlag);
 	clear_bit(HOST_LOG_FW_FLUSH_COMPLETE, &gwlan_logging.eventFlag);
+	clear_bit(HOST_LOG_DRIVER_CONNECTIVITY_MSG, &gwlan_logging.eventFlag);
 	init_completion(&gwlan_logging.shutdown_comp);
 	gwlan_logging.thread = kthread_create(wlan_logging_thread, NULL,
 					      "wlan_logging_thread");
@@ -1194,7 +1222,7 @@ err2:
 	spin_lock_irqsave(&gwlan_logging.pkt_stats_lock, irq_flag);
 	gwlan_logging.pkt_stats_pcur_node = NULL;
 	spin_unlock_irqrestore(&gwlan_logging.pkt_stats_lock, irq_flag);
-	vfree(gpkt_stats_buffers);
+	qdf_mem_vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
 err1:
 	flush_timer_deinit();
@@ -1226,6 +1254,7 @@ int wlan_logging_sock_deinit_svc(void)
 	clear_bit(HOST_LOG_DRIVER_MSG, &gwlan_logging.eventFlag);
 	clear_bit(HOST_LOG_PER_PKT_STATS, &gwlan_logging.eventFlag);
 	clear_bit(HOST_LOG_FW_FLUSH_COMPLETE, &gwlan_logging.eventFlag);
+	clear_bit(HOST_LOG_DRIVER_CONNECTIVITY_MSG, &gwlan_logging.eventFlag);
 	wake_up_interruptible(&gwlan_logging.wait_queue);
 	wait_for_completion(&gwlan_logging.shutdown_comp);
 
@@ -1238,7 +1267,7 @@ int wlan_logging_sock_deinit_svc(void)
 			dev_kfree_skb(gpkt_stats_buffers[i].skb);
 	}
 	spin_unlock_irqrestore(&gwlan_logging.pkt_stats_lock, irq_flag);
-	vfree(gpkt_stats_buffers);
+	qdf_mem_vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
 
 	/* Delete the Flush timer then mark pcur_node NULL */
@@ -1268,6 +1297,15 @@ void wlan_logging_set_per_pkt_stats(void)
 		return;
 
 	set_bit(HOST_LOG_PER_PKT_STATS, &gwlan_logging.eventFlag);
+	wake_up_interruptible(&gwlan_logging.wait_queue);
+}
+
+void wlan_logging_set_connectivity_log(void)
+{
+	if (gwlan_logging.is_active == false)
+		return;
+
+	set_bit(HOST_LOG_DRIVER_CONNECTIVITY_MSG, &gwlan_logging.eventFlag);
 	wake_up_interruptible(&gwlan_logging.wait_queue);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -93,6 +93,12 @@ static inline uint32_t __qdf_list_max_size(__qdf_list_t *list)
 
 #define __qdf_list_for_each_del(list_ptr, cursor, next, node_field) \
 	list_for_each_entry_safe(cursor, next, &(list_ptr)->anchor, node_field)
+
+#define __qdf_list_for_each_from(list_ptr, cursor, node_field) \
+	list_for_each_entry_from(cursor, &(list_ptr)->anchor, node_field)
+
+#define  __qdf_list_first_entry_or_null(list_ptr, type, node_field) \
+	list_first_entry_or_null(&(list_ptr)->anchor, type, node_field)
 
 /**
  * __qdf_init_list_head() - initialize list head

@@ -1143,8 +1143,8 @@ enum qdf_dp_tx_rx_status qdf_dp_get_status_from_a_status(uint8_t status)
 
 void qdf_trace_display(void);
 
-void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
-		  char *str_format, ...);
+int __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
+				char *str_format, ...);
 
 #define QDF_SNPRINTF qdf_snprintf
 

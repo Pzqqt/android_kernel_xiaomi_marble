@@ -219,6 +219,19 @@ void mlo_mlme_peer_assoc_resp(struct wlan_objmgr_peer *peer);
 uint8_t mlo_get_link_vdev_ix(struct wlan_mlo_dev_context *mldev,
 			     struct wlan_objmgr_vdev *vdev);
 
+/**
+ * mlo_get_ml_vdev_list() - get mlo vdev list
+ * @vdev: vdev pointer
+ * @vdev_count: vdev count
+ * @wlan_vdev_list: vdev list
+ *
+ * Caller should release ref of the vdevs in wlan_vdev_list
+ * Return: None
+ */
+void mlo_get_ml_vdev_list(struct wlan_objmgr_vdev *vdev,
+			  uint16_t *vdev_count,
+			  struct wlan_objmgr_vdev **wlan_vdev_list);
+
 #define INVALID_HW_LINK_ID 0xFFFF
 #ifdef WLAN_MLO_MULTI_CHIP
 /**
