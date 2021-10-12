@@ -2379,7 +2379,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_pcl_chan_weights *weight,
-		enum policy_mgr_con_mode mode)
+		enum policy_mgr_con_mode mode, struct wlan_objmgr_vdev *vdev)
 {
 	uint32_t i, j;
 	struct policy_mgr_conc_connection_info
@@ -2418,7 +2418,8 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		for (i = 0; i < weight->saved_num_chan; i++) {
 			if (policy_mgr_is_concurrency_allowed
 				(psoc, mode, weight->saved_chan_list[i],
-				HW_MODE_20_MHZ)) {
+				HW_MODE_20_MHZ,
+				policy_mgr_get_conc_ext_flags(vdev, false))) {
 				weight->weighed_valid_list[i] =
 					WEIGHT_OF_NON_PCL_CHANNELS;
 			}

@@ -11830,6 +11830,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	struct weighed_pcl *w_pcl;
 	struct nlattr *nla_attr, *channel;
 	struct policy_mgr_pcl_chan_weights *chan_weights;
+	struct net_device *ndev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 
 	hdd_enter_dev(wdev->netdev);
 
@@ -11887,7 +11889,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	sme_get_valid_channels(chan_weights->saved_chan_list,
 			       &chan_weights->saved_num_chan);
 	policy_mgr_get_valid_chan_weights(hdd_ctx->psoc, chan_weights,
-					  intf_mode);
+					  intf_mode,
+					  adapter->vdev);
 	w_pcl = qdf_mem_malloc(sizeof(struct weighed_pcl) * NUM_CHANNELS);
 	if (!w_pcl) {
 		qdf_mem_free(chan_weights);
@@ -12024,7 +12027,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	int ret = 0;
 	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_MAX + 1];
-	uint32_t ch_freq;
+	uint32_t ch_freq, conc_ext_flags;
 
 	hdd_enter_dev(ndev);
 
@@ -12060,9 +12063,12 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 
 	ch_freq = nla_get_u32(tb[
 			      QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_FREQ]);
+	conc_ext_flags = policy_mgr_get_conc_ext_flags(adapter->vdev, false);
+
 	/* check pcl table */
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc, intf_mode,
-					  ch_freq, HW_MODE_20_MHZ)) {
+					  ch_freq, HW_MODE_20_MHZ,
+					  conc_ext_flags)) {
 		hdd_err("Set channel hint failed due to concurrency check");
 		return -EINVAL;
 	}

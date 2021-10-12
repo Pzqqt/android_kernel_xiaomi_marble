@@ -1069,7 +1069,7 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 {
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint32_t ndi_cnt, sta_cnt, id;
+	uint32_t ndi_cnt, sta_cnt, id, conc_ext_flags;
 
 	sta_cnt = policy_mgr_mode_specific_connection_count(psoc,
 							    PM_STA_MODE, NULL);
@@ -1113,9 +1113,11 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	if (!ucfg_nan_is_sta_nan_ndi_4_port_allowed(psoc))
 		return false;
 
+	conc_ext_flags = policy_mgr_get_conc_ext_flags(vdev, false);
+
 	/* The final freq would be provided by FW, it is not known now */
 	return policy_mgr_allow_concurrency(psoc, PM_NDI_MODE, 0,
-					    HW_MODE_20_MHZ);
+					    HW_MODE_20_MHZ, conc_ext_flags);
 }
 
 bool

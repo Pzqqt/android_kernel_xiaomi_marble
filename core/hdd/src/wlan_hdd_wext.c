@@ -6851,7 +6851,9 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 				hdd_ctx->psoc, apps_args[0],
 				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
 							     apps_args[1]),
-							     apps_args[2]);
+				apps_args[2],
+				policy_mgr_get_conc_ext_flags(adapter->vdev,
+							      false));
 		hdd_debug("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
 	break;

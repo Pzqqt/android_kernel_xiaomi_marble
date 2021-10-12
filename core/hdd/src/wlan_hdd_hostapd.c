@@ -6002,7 +6002,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
-					config->chan_freq, HW_MODE_20_MHZ)) {
+				config->chan_freq, HW_MODE_20_MHZ,
+				policy_mgr_get_conc_ext_flags(adapter->vdev,
+							      false))) {
 			mutex_unlock(&hdd_ctx->sap_lock);
 
 			hdd_err("This concurrency combination is not allowed");
@@ -6834,7 +6836,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				policy_mgr_convert_device_mode_to_qdf_type(
 				adapter->device_mode),
 				freq,
-				channel_width)) {
+				channel_width,
+				policy_mgr_get_conc_ext_flags(adapter->vdev,
+							      false))) {
 		hdd_err("Connection failed due to concurrency check failure");
 		return -EINVAL;
 	}
