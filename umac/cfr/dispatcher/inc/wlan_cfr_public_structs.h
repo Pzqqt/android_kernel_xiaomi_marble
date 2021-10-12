@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 /**
  * cfr_cwm_width : Capture bandwidth
  * 0 : 20MHz, 1 : 40MHz, 2 : 80MHz, 3 : 160MHz, 4 : 80+80MHz
+ * 5 : 320MHz
  */
 enum cfr_cwm_width {
 	CFR_CWM_WIDTH20,
@@ -34,6 +35,7 @@ enum cfr_cwm_width {
 	CFR_CWM_WIDTH80,
 	CFR_CWM_WIDTH160,
 	CFR_CWM_WIDTH80_80,
+	CFR_CWM_WIDTH320,
 
 	CFR_CWM_WIDTH_MAX,
 	CFR_CWM_WIDTHINVALID = 0xff
@@ -90,7 +92,7 @@ enum cfr_capture_method {
  * to capture by programming the user provided values.
  * These values(cap_dur, cap_intvl) range from 1 us to roughly 16.8 in 1 us
  * units. Max value is 0xFFFFFF, i.e., 16.777215 s
- * @bw: Bandwidth: 20, 40, 80, 160, 320MHz
+ * @bw: Bandwidth: 20, 40, 80, 160, 240, 320MHz
  * @nss: 8 bits are allotted for NSS mask. Specifies which numbers of
  * spatial streams (MIMO factor) are permitted
  * @grp_id:  Group id could of any value between 0 and 15
@@ -150,10 +152,10 @@ struct cfr_wlanconfig_param {
 		 rsvd1                       :8;
 	uint32_t cap_intvl                   :24,
 		 rsvd2                       :8;
-	uint32_t bw                          :5,
+	uint32_t bw                          :6,
 		 nss                         :8,
 		 grp_id                      :4,
-		 rsvd3                       :15;
+		 rsvd3                       :14;
 
 	uint32_t expected_mgmt_subtype       :16,
 		 expected_ctrl_subtype       :16;
@@ -174,6 +176,9 @@ struct cfr_wlanconfig_param {
 	uint32_t cap_count                   :16,
 		 cap_intval_mode_sel         :1,
 		 rsvd7                       :15;
+#endif
+#ifdef WLAN_FEATURE_11BE
+	uint32_t puncture_bitmap;
 #endif
 };
 
