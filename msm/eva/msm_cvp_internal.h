@@ -121,22 +121,12 @@ struct msm_cvp_ubwc_config_data {
 	u32 bank_spreading;
 };
 
-struct msm_cvp_qos_setting {
-	u32 axi_qos;
-	u32 prioritylut_low;
-	u32 prioritylut_high;
-	u32 urgency_low;
-	u32 dangerlut_low;
-	u32 safelut_low;
-};
-
 struct msm_cvp_platform_data {
 	struct msm_cvp_common_data *common_data;
 	unsigned int common_data_length;
 	unsigned int sku_version;
 	uint32_t vpu_ver;
 	struct msm_cvp_ubwc_config_data *ubwc_config;
-	struct msm_cvp_qos_setting *noc_qos;
 };
 
 struct msm_cvp_drv {

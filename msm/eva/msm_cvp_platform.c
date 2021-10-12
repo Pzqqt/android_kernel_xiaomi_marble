@@ -162,14 +162,6 @@ static struct msm_cvp_ubwc_config_data kona_ubwc_data[] = {
 	UBWC_CONFIG(1, 1, 1, 0, 0, 0, 8, 32, 16, 0, 0),
 };
 
-static struct msm_cvp_qos_setting waipio_noc_qos = {
-	.axi_qos = 0x99,
-	.prioritylut_low = 0x22222222,
-	.prioritylut_high = 0x33333333,
-	.urgency_low = 0x1022,
-	.dangerlut_low = 0x0,
-	.safelut_low = 0xffff,
-};
 
 static struct msm_cvp_platform_data default_data = {
 	.common_data = default_common_data,
@@ -177,7 +169,6 @@ static struct msm_cvp_platform_data default_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_5,
 	.ubwc_config = 0x0,
-	.noc_qos = 0x0,
 };
 
 static struct msm_cvp_platform_data sm8450_data = {
@@ -186,7 +177,6 @@ static struct msm_cvp_platform_data sm8450_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_5,
 	.ubwc_config = kona_ubwc_data,
-	.noc_qos = &waipio_noc_qos,
 };
 
 static struct msm_cvp_platform_data sm8550_data = {
@@ -195,7 +185,6 @@ static struct msm_cvp_platform_data sm8550_data = {
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_5,
 	.ubwc_config = kona_ubwc_data,
-	.noc_qos = 0x0,
 };
 
 static const struct of_device_id msm_cvp_dt_match[] = {

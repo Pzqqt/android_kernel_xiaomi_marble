@@ -745,8 +745,6 @@ static int __read_register(struct iris_hfi_device *device, u32 reg)
 
 static void __set_registers(struct iris_hfi_device *device)
 {
-	struct msm_cvp_core *core;
-	struct msm_cvp_platform_data *pdata;
 	struct reg_set *reg_set;
 	int i;
 
@@ -756,9 +754,6 @@ static void __set_registers(struct iris_hfi_device *device)
 		return;
 	}
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
-	pdata = core->platform_data;
-
 	reg_set = &device->res->reg_set;
 	for (i = 0; i < reg_set->count; i++) {
 		__write_register(device, reg_set->reg_tbl[i].reg,
@@ -767,19 +762,6 @@ static void __set_registers(struct iris_hfi_device *device)
 					reg_set->reg_tbl[i].reg,
 					reg_set->reg_tbl[i].value);
 	}
-
-	__write_register(device, CVP_CPU_CS_AXI4_QOS,
-				pdata->noc_qos->axi_qos);
-	__write_register(device, CVP_NOC_PRIORITYLUT_LOW,
-				pdata->noc_qos->prioritylut_low);
-	__write_register(device, CVP_NOC_PRIORITYLUT_HIGH,
-				pdata->noc_qos->prioritylut_high);
-	__write_register(device, CVP_NOC_URGENCY_LOW,
-				pdata->noc_qos->urgency_low);
-	__write_register(device, CVP_NOC_DANGERLUT_LOW,
-				pdata->noc_qos->dangerlut_low);
-	__write_register(device, CVP_NOC_SAFELUT_LOW,
-				pdata->noc_qos->safelut_low);
 }
 
 /*
@@ -3907,11 +3889,11 @@ static int __power_off_controller(struct iris_hfi_device *device)
 	__write_register(device, CVP_CPU_CS_X2RPMh, 0x3);
 
 	/* HPG 6.2.2 Step 2, noc to low power */
-	__write_register(device, CVP_AON_WRAPPER_CVP_NOC_LPI_CONTROL, 0x1);
+	__write_register(device, CVP_AON_WRAPPER_MVP_NOC_LPI_CONTROL, 0x1);
 	while (!reg_status && count < max_count) {
 		lpi_status =
 			 __read_register(device,
-				CVP_AON_WRAPPER_CVP_NOC_LPI_STATUS);
+				CVP_AON_WRAPPER_MVP_NOC_LPI_STATUS);
 		reg_status = lpi_status & BIT(0);
 		/* Wait for Core noc lpi status to be set */
 		usleep_range(50, 100);
