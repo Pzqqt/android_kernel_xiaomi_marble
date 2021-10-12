@@ -576,7 +576,19 @@ enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
 							&sta_vdev_id,
 							con_ch_freq,
 							&sta_ch_width);
+	if (sta_present) {
+		sta_chan_width = policy_mgr_get_ch_width(sta_ch_width);
+		if (wlan_reg_is_dfs_for_freq(pdev, con_ch_freq) ||
+		    sta_chan_width == CH_WIDTH_160MHZ)
+			is_con_chan_dfs = true;
+	}
+
 	if (policy_mgr_is_hw_dbs_capable(psoc)) {
+		if (is_con_chan_dfs)
+			channel_width = QDF_MIN(sta_chan_width, channel_width);
+		else if (sta_present && channel_width == CH_WIDTH_160MHZ)
+			channel_width = CH_WIDTH_80MHZ;
+
 		policy_mgr_get_sta_sap_scc_on_dfs_chnl(
 					psoc, &sta_sap_scc_on_dfs_chnl);
 		if (sta_sap_scc_on_dfs_chnl ==
@@ -606,11 +618,6 @@ enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
 	/* if no STA present return max of BW and 80MHZ */
 	if (!sta_present)
 		return CH_WIDTH_80MHZ;
-
-	sta_chan_width = policy_mgr_get_ch_width(sta_ch_width);
-	if (wlan_reg_is_dfs_for_freq(pdev, con_ch_freq) ||
-	    sta_chan_width == CH_WIDTH_160MHZ)
-		is_con_chan_dfs = true;
 
 	/* if STA not on DFS return max of BW and 80MHZ */
 	if (!is_con_chan_dfs)
@@ -2848,10 +2855,17 @@ QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
 	size_t ch_index;
 	size_t target_ch_cnt = 0;
 
-	if (!sap_ctx || !ch_freq_list || !ch_cnt ||
-	    !sap_ctx->acs_cfg->master_freq_list ||
-	    !sap_ctx->acs_cfg->master_ch_list_count) {
+	if (!sap_ctx || !ch_freq_list || !ch_cnt) {
 		sap_err("NULL parameters");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	if (!sap_ctx->acs_cfg->acs_mode) {
+		sap_debug("acs not enabled, no filtering required");
+		return QDF_STATUS_SUCCESS;
+	} else if (!sap_ctx->acs_cfg->master_freq_list ||
+		   !sap_ctx->acs_cfg->master_ch_list_count) {
+		sap_err("Empty acs channel list");
 		return QDF_STATUS_E_FAULT;
 	}
 

@@ -238,6 +238,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 						   session_entry->peSessionId,
 						   reason_code,
 						   eLIM_LINK_MONITORING_DEAUTH);
+			qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
 			qdf_mem_copy(&ap_info.bssid, msg->addr2,
 				     QDF_MAC_ADDR_SIZE);
 			ap_info.reject_ap_type = DRIVER_AVOID_TYPE;

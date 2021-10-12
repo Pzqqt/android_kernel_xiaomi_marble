@@ -114,10 +114,16 @@ QDF_STATUS mlme_init_rate_config(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv->opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
+	mlme_priv->opr_rate_set.max_len =
+		QDF_MIN(CFG_OPERATIONAL_RATE_SET_LEN, CFG_STR_DATA_LEN);
 	mlme_priv->opr_rate_set.len = 0;
-	mlme_priv->ext_opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
+	mlme_priv->ext_opr_rate_set.max_len =
+		QDF_MIN(CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN,
+			CFG_STR_DATA_LEN);
 	mlme_priv->ext_opr_rate_set.len = 0;
+	mlme_priv->mcs_rate_set.max_len =
+		QDF_MIN(CFG_SUPPORTED_MCS_SET_LEN, CFG_STR_DATA_LEN);
+	mlme_priv->mcs_rate_set.len = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1157,13 +1163,13 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	he_caps->dot11_he_cap.rx_full_bw_su_he_mu_non_cmpr_sigb =
 			cfg_default(CFG_HE_RX_FULL_BW_MU_NON_CMPR_SIGB);
 	he_caps->dot11_he_cap.rx_he_mcs_map_lt_80 =
-			cfg_default(CFG_HE_RX_MCS_MAP_LT_80);
+			cfg_get(psoc, CFG_HE_RX_MCS_MAP_LT_80);
 	he_caps->dot11_he_cap.tx_he_mcs_map_lt_80 =
-			cfg_default(CFG_HE_TX_MCS_MAP_LT_80);
-	value = cfg_default(CFG_HE_RX_MCS_MAP_160);
+			cfg_get(psoc, CFG_HE_TX_MCS_MAP_LT_80);
+	value = cfg_get(psoc, CFG_HE_RX_MCS_MAP_160);
 	qdf_mem_copy(he_caps->dot11_he_cap.rx_he_mcs_map_160, &value,
 		     sizeof(uint16_t));
-	value = cfg_default(CFG_HE_TX_MCS_MAP_160);
+	value = cfg_get(psoc, CFG_HE_TX_MCS_MAP_160);
 	qdf_mem_copy(he_caps->dot11_he_cap.tx_he_mcs_map_160, &value,
 		     sizeof(uint16_t));
 	value = cfg_default(CFG_HE_RX_MCS_MAP_80_80);
@@ -2965,9 +2971,14 @@ bool wlan_vdev_id_is_11n_allowed(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP) ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP) ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
-	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104))
-		is_11n_allowed = false;
-
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104)) {
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP);
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP);
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40);
+		QDF_CLEAR_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104);
+		if (!ucast_cipher)
+			is_11n_allowed = false;
+	}
 err:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 

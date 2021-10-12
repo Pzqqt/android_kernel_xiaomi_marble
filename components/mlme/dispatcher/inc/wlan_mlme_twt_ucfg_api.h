@@ -278,7 +278,7 @@ ucfg_mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
  *
  * Check if the number of active TWT sessions is equal to the maximum number
  * of TWT sessions supported. Only count the TWT session slot if it not
- * WLAN_ALL_SESSIONS_DIALOG_ID and dialog id is different from input dialog_id,
+ * TWT_ALL_SESSIONS_DIALOG_ID and dialog id is different from input dialog_id,
  * because if same dialog_id already exists in the TWT sessions, we should
  * return false since re-negotiation is supported on existing dialog_id.
  *

@@ -129,8 +129,6 @@ extern const struct nla_policy wlan_hdd_wisa_cmd_policy[
 #define VENDOR1_AP_OUI_TYPE "\x00\xE0\x4C"
 #define VENDOR1_AP_OUI_TYPE_SIZE 3
 
-#define WLAN_BSS_MEMBERSHIP_SELECTOR_VHT_PHY 126
-#define WLAN_BSS_MEMBERSHIP_SELECTOR_HT_PHY 127
 #define BASIC_RATE_MASK   0x80
 #define RATE_MASK         0x7f
 
@@ -624,6 +622,16 @@ enum hdd_chain_mode {
 void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw);
 
 /*
+ * hdd_get_sap_operating_band_by_adapter: Get current adapter operating channel
+ * for sap.
+ * @adapter: Pointer to adapter
+ *
+ * Return : Corresponding band for SAP operating channel
+ */
+
+uint8_t hdd_get_sap_operating_band_by_adapter(struct hdd_adapter *adapter);
+
+/*
  * hdd_get_sap_operating_band:  Get current operating channel
  * for sap.
  * @hdd_ctx: hdd context
@@ -768,6 +776,16 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 {
 }
 #endif
+
+/**
+ * hdd_set_phy_mode() - set phy mode
+ * @adapter: Handle to hdd_adapter
+ * @vendor_phy_mode: phy mode to set
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_phy_mode(struct hdd_adapter *adapter,
+		     enum qca_wlan_vendor_phy_mode vendor_phy_mode);
 
 /**
  * hdd_is_legacy_connection() - Is adapter connection is legacy

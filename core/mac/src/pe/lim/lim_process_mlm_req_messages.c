@@ -405,12 +405,14 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 					     (struct qdf_mac_addr *)peer_mac);
 
 #ifdef WLAN_FEATURE_11BE_MLO
+	if (!wlan_vdev_mlme_is_mlo_vdev(vdev))
+		goto end;
+
 	link_id = vdev->vdev_mlme.mlo_link_id;
 	/* currently only 2 link MLO supported */
 	partner_info.num_partner_links = 1;
 	qdf_mem_copy(partner_info.partner_link_info[0].link_addr.bytes,
-		     vdev->vdev_mlme.macaddr,
-		     QDF_MAC_ADDR_SIZE);
+		     vdev->vdev_mlme.macaddr, QDF_MAC_ADDR_SIZE);
 	partner_info.partner_link_info[0].link_id = link_id;
 	pe_debug("link_addr " QDF_MAC_ADDR_FMT,
 		 QDF_MAC_ADDR_REF(
@@ -426,9 +428,7 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 		}
 
 		status = wlan_mlo_peer_create(vdev, link_peer,
-					      &partner_info,
-					      NULL,
-					      0);
+					      &partner_info, NULL, 0);
 
 		if (QDF_IS_STATUS_ERROR(status))
 			pe_err("Peer creation failed");

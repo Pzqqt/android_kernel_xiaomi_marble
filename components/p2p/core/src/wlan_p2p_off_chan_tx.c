@@ -209,7 +209,7 @@ static QDF_STATUS p2p_check_and_update_channel(struct tx_action_context *tx_ctx)
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_roc_context *curr_roc_ctx;
 
-	if (!tx_ctx || tx_ctx->chan) {
+	if (!tx_ctx || tx_ctx->chan_freq) {
 		p2p_err("NULL tx ctx or channel valid");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -230,7 +230,7 @@ static QDF_STATUS p2p_check_and_update_channel(struct tx_action_context *tx_ctx)
 	    (mode == QDF_P2P_DEVICE_MODE ||
 	     mode == QDF_P2P_CLIENT_MODE ||
 	     mode == QDF_P2P_GO_MODE))
-		tx_ctx->chan = curr_roc_ctx->chan;
+		tx_ctx->chan_freq = curr_roc_ctx->chan_freq;
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 
@@ -1064,7 +1064,6 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 	void *mac_addr;
 	uint8_t pdev_id;
 	struct wlan_objmgr_vdev *vdev;
-	qdf_freq_t chanfreq = 0;
 	struct wlan_objmgr_pdev *pdev;
 
 	psoc = tx_ctx->p2p_soc_obj->soc;
@@ -1084,10 +1083,7 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (tx_ctx->chan)
-		chanfreq = tx_ctx->chan;
-
-	mgmt_param.chanfreq = chanfreq;
+	mgmt_param.chanfreq = tx_ctx->chan_freq;
 
 	mgmt_param.qdf_ctx = wlan_psoc_get_qdf_dev(psoc);
 	if (!(mgmt_param.qdf_ctx)) {
@@ -1165,7 +1161,7 @@ static QDF_STATUS p2p_roc_req_for_tx_action(
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 	roc_ctx->p2p_soc_obj = p2p_soc_obj;
 	roc_ctx->vdev_id = tx_ctx->vdev_id;
-	roc_ctx->chan = tx_ctx->chan;
+	roc_ctx->chan_freq = tx_ctx->chan_freq;
 	roc_ctx->duration = tx_ctx->duration;
 	roc_ctx->roc_state = ROC_STATE_IDLE;
 	roc_ctx->roc_type = OFF_CHANNEL_TX;
@@ -1808,13 +1804,15 @@ void p2p_dump_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 	while (QDF_IS_STATUS_SUCCESS(status)) {
 		tx_ctx = qdf_container_of(p_node,
 				struct tx_action_context, node);
-		p2p_debug("p2p soc object:%pK, tx ctx:%pK, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%pK, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
-			p2p_soc_obj, tx_ctx,
-			tx_ctx->vdev_id, tx_ctx->scan_id,
-			tx_ctx->roc_cookie, tx_ctx->chan,
-			tx_ctx->buf, tx_ctx->buf_len,
-			tx_ctx->off_chan, tx_ctx->no_cck,
-			tx_ctx->no_ack, tx_ctx->duration);
+		p2p_debug("p2p soc object:%pK, tx ctx:%pK, vdev_id:%d, "
+			  "scan_id:%d, roc_cookie:%llx, freq:%d, buf:%pK, "
+			  "len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
+			  p2p_soc_obj, tx_ctx,
+			  tx_ctx->vdev_id, tx_ctx->scan_id,
+			  tx_ctx->roc_cookie, tx_ctx->chan_freq,
+			  tx_ctx->buf, tx_ctx->buf_len,
+			  tx_ctx->off_chan, tx_ctx->no_cck,
+			  tx_ctx->no_ack, tx_ctx->duration);
 
 		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_roc,
 						p_node, &p_node);
@@ -1826,13 +1824,15 @@ void p2p_dump_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 	while (QDF_IS_STATUS_SUCCESS(status)) {
 		tx_ctx = qdf_container_of(p_node,
 				struct tx_action_context, node);
-		p2p_debug("p2p soc object:%pK, tx_ctx:%pK, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%pK, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
-			p2p_soc_obj, tx_ctx,
-			tx_ctx->vdev_id, tx_ctx->scan_id,
-			tx_ctx->roc_cookie, tx_ctx->chan,
-			tx_ctx->buf, tx_ctx->buf_len,
-			tx_ctx->off_chan, tx_ctx->no_cck,
-			tx_ctx->no_ack, tx_ctx->duration);
+		p2p_debug("p2p soc object:%pK, tx_ctx:%pK, vdev_id:%d, "
+			  "scan_id:%d, roc_cookie:%llx, freq:%d, buf:%pK, "
+			  "len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
+			  p2p_soc_obj, tx_ctx,
+			  tx_ctx->vdev_id, tx_ctx->scan_id,
+			  tx_ctx->roc_cookie, tx_ctx->chan_freq,
+			  tx_ctx->buf, tx_ctx->buf_len,
+			  tx_ctx->off_chan, tx_ctx->no_cck,
+			  tx_ctx->no_ack, tx_ctx->duration);
 
 		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_ack,
 						p_node, &p_node);
@@ -2923,7 +2923,7 @@ void p2p_rand_mac_tx(struct wlan_objmgr_pdev *pdev,
 		return;
 	soc = tx_action->p2p_soc_obj->soc;
 
-	if (!tx_action->no_ack && tx_action->chan &&
+	if (!tx_action->no_ack && tx_action->chan_freq &&
 	    tx_action->buf_len > MIN_MAC_HEADER_LEN &&
 	    p2p_is_vdev_support_rand_mac_by_id(soc, tx_action->vdev_id) &&
 	    p2p_is_random_mac(soc, tx_action->vdev_id,
@@ -2931,7 +2931,7 @@ void p2p_rand_mac_tx(struct wlan_objmgr_pdev *pdev,
 		status = p2p_request_random_mac(
 			soc, tx_action->vdev_id,
 			&tx_action->buf[SRC_MAC_ADDR_OFFSET],
-			wlan_reg_legacy_chan_to_freq(pdev, tx_action->chan),
+			tx_action->chan_freq,
 			tx_action->id,
 			tx_action->duration);
 		if (status == QDF_STATUS_SUCCESS)
@@ -3003,11 +3003,13 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 
-	p2p_debug("soc:%pK, tx_ctx:%pK, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%pK, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
-		p2p_soc_obj->soc, tx_ctx, tx_ctx->vdev_id,
-		tx_ctx->scan_id, tx_ctx->roc_cookie, tx_ctx->chan,
-		tx_ctx->buf, tx_ctx->buf_len, tx_ctx->off_chan,
-		tx_ctx->no_cck, tx_ctx->no_ack, tx_ctx->duration);
+	p2p_debug("soc:%pK, tx_ctx:%pK, vdev_id:%d, scan_id:%d, "
+		  "roc_cookie:%llx, freq:%d, buf:%pK, len:%d, "
+		  "off_chan:%d, cck:%d, ack:%d, duration:%d",
+		  p2p_soc_obj->soc, tx_ctx, tx_ctx->vdev_id,
+		  tx_ctx->scan_id, tx_ctx->roc_cookie, tx_ctx->chan_freq,
+		  tx_ctx->buf, tx_ctx->buf_len, tx_ctx->off_chan,
+		  tx_ctx->no_cck, tx_ctx->no_ack, tx_ctx->duration);
 
 	status = p2p_get_frame_info(tx_ctx->buf, tx_ctx->buf_len,
 			&(tx_ctx->frame_info));
@@ -3036,8 +3038,8 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 		tx_ctx->no_ack = 1;
 	}
 
-	if (!tx_ctx->off_chan || !tx_ctx->chan) {
-		if (!tx_ctx->chan)
+	if (!tx_ctx->off_chan || !tx_ctx->chan_freq) {
+		if (!tx_ctx->chan_freq)
 			p2p_check_and_update_channel(tx_ctx);
 		status = p2p_execute_tx_action_frame(tx_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
@@ -3049,7 +3051,7 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 
 	/* For off channel tx case */
 	curr_roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
-	if (curr_roc_ctx && (curr_roc_ctx->chan == tx_ctx->chan)) {
+	if (curr_roc_ctx && (curr_roc_ctx->chan_freq == tx_ctx->chan_freq)) {
 		if ((curr_roc_ctx->roc_state == ROC_STATE_REQUESTED) ||
 		    (curr_roc_ctx->roc_state == ROC_STATE_STARTED)) {
 			tx_ctx->roc_cookie = (uintptr_t)curr_roc_ctx;
@@ -3080,7 +3082,8 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 		}
 	}
 
-	curr_roc_ctx = p2p_find_roc_by_chan(p2p_soc_obj, tx_ctx->chan);
+	curr_roc_ctx = p2p_find_roc_by_chan_freq(p2p_soc_obj,
+						 tx_ctx->chan_freq);
 	if (curr_roc_ctx && (curr_roc_ctx->roc_state == ROC_STATE_IDLE)) {
 		tx_ctx->roc_cookie = (uintptr_t)curr_roc_ctx;
 		status = qdf_list_insert_back(

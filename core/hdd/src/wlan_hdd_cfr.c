@@ -349,6 +349,30 @@ wlan_cfg80211_cfr_set_config(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 
+static QDF_STATUS hdd_stop_enh_cfr(struct wlan_objmgr_vdev *vdev)
+{
+	if (!ucfg_cfr_get_rcc_enabled(vdev))
+		return QDF_STATUS_SUCCESS;
+
+	hdd_debug("cleanup rcc mode");
+	wlan_objmgr_vdev_try_get_ref(vdev, WLAN_CFR_ID);
+	ucfg_cfr_set_rcc_mode(vdev, RCC_DIS_ALL_MODE, 0);
+	ucfg_cfr_subscribe_ppdu_desc(wlan_vdev_get_pdev(vdev),
+				     false);
+	ucfg_cfr_committed_rcc_config(vdev);
+	ucfg_cfr_stop_indication(vdev);
+	ucfg_cfr_suspend(wlan_vdev_get_pdev(vdev));
+	hdd_debug("stop indication done");
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_cfr_disconnect(struct wlan_objmgr_vdev *vdev)
+{
+	return hdd_stop_enh_cfr(vdev);
+}
+
 static int
 wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 				   struct nlattr **tb)
@@ -385,23 +409,13 @@ wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE_GROUP_BITMAP]);
 		hdd_debug("params.en_cfg %d", params.en_cfg);
 		ucfg_cfr_set_en_bitmap(vdev, &params);
-	} else {
-		hdd_debug("cleanup rcc mode");
-		ucfg_cfr_set_rcc_mode(vdev, RCC_DIS_ALL_MODE, 0);
-	}
-
-	if (is_start_capture)
 		ucfg_cfr_resume(wlan_vdev_get_pdev(vdev));
-
-	ucfg_cfr_subscribe_ppdu_desc(wlan_vdev_get_pdev(vdev),
-				     is_start_capture);
-	ucfg_cfr_committed_rcc_config(vdev);
-	if (!is_start_capture) {
-		ucfg_cfr_stop_indication(vdev);
-		ucfg_cfr_suspend(wlan_vdev_get_pdev(vdev));
-		hdd_debug("stop indication done");
+		ucfg_cfr_subscribe_ppdu_desc(wlan_vdev_get_pdev(vdev),
+					     true);
+		ucfg_cfr_committed_rcc_config(vdev);
+	} else {
+		hdd_stop_enh_cfr(vdev);
 	}
-
 out:
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_CFR_ID);
 	return ret;

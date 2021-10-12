@@ -119,9 +119,9 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	QDF_STATUS status;
 	int32_t id;
 
-	p2p_debug("soc:%pK, vdev_id:%d, chan:%d, phy_mode:%d, duration:%d",
-		soc, roc_req->vdev_id, roc_req->chan,
-		roc_req->phy_mode, roc_req->duration);
+	p2p_debug("soc:%pK, vdev_id:%d, chanfreq:%d, phy_mode:%d, duration:%d",
+		  soc, roc_req->vdev_id, roc_req->chan_freq,
+		  roc_req->phy_mode, roc_req->duration);
 
 	if (!soc) {
 		p2p_err("psoc context passed is NULL");
@@ -149,7 +149,7 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	*cookie = (uint64_t)id;
 	roc_ctx->p2p_soc_obj = p2p_soc_obj;
 	roc_ctx->vdev_id = roc_req->vdev_id;
-	roc_ctx->chan = roc_req->chan;
+	roc_ctx->chan_freq = roc_req->chan_freq;
 	roc_ctx->phy_mode = roc_req->phy_mode;
 	roc_ctx->duration = roc_req->duration;
 	roc_ctx->roc_state = ROC_STATE_IDLE;
@@ -303,10 +303,11 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	QDF_STATUS status;
 	int32_t id;
 
-	p2p_debug("soc:%pK, vdev_id:%d, chan:%d, wait:%d, buf_len:%d, cck:%d, no ack:%d, off chan:%d",
-		soc, mgmt_frm->vdev_id, mgmt_frm->chan,
-		mgmt_frm->wait, mgmt_frm->len, mgmt_frm->no_cck,
-		mgmt_frm->dont_wait_for_ack, mgmt_frm->off_chan);
+	p2p_debug("soc:%pK, vdev_id:%d, freq:%d, wait:%d, buf_len:%d,"
+		  " cck:%d, no ack:%d, off chan:%d",
+		  soc, mgmt_frm->vdev_id, mgmt_frm->chan_freq,
+		  mgmt_frm->wait, mgmt_frm->len, mgmt_frm->no_cck,
+		  mgmt_frm->dont_wait_for_ack, mgmt_frm->off_chan);
 
 	if (!soc) {
 		p2p_err("psoc context passed is NULL");
@@ -340,7 +341,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	*cookie = (uint64_t)id;
 	tx_action->p2p_soc_obj = p2p_soc_obj;
 	tx_action->vdev_id = mgmt_frm->vdev_id;
-	tx_action->chan = mgmt_frm->chan;
+	tx_action->chan_freq = mgmt_frm->chan_freq;
 	tx_action->duration = mgmt_frm->wait;
 	tx_action->buf_len = mgmt_frm->len;
 	tx_action->no_cck = mgmt_frm->no_cck;

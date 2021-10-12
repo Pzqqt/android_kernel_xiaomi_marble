@@ -838,6 +838,51 @@ static void wlansap_update_vendor_acs_chan(struct mac_context *mac_ctx,
 	}
 }
 
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+/**
+ * sap_check_and_process_forcescc_for_other_go() - find if other p2p go is there
+ * and needs to be moved to current p2p go's channel.
+ *
+ * @cur_sap_ctx: current sap context
+ *
+ * Return: None
+ */
+static void
+sap_check_and_process_forcescc_for_other_go(struct sap_context *cur_sap_ctx)
+{
+	struct sap_context *sap_ctx;
+	struct mac_context *mac_ctx;
+	uint8_t i;
+
+	mac_ctx = sap_get_mac_context();
+	if (!mac_ctx) {
+		sap_err("Invalid MAC context");
+		return;
+	}
+
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		sap_ctx = mac_ctx->sap.sapCtxList[i].sap_context;
+		if (sap_ctx &&
+		    QDF_P2P_GO_MODE == mac_ctx->sap.sapCtxList[i].sapPersona &&
+		    sap_ctx->is_forcescc_restart_required) {
+			sap_debug("sessionId %d chan_freq %d chan_width %d",
+				  sap_ctx->sessionId, cur_sap_ctx->chan_freq,
+				  cur_sap_ctx->ch_params.ch_width);
+			policy_mgr_process_forcescc_for_go(
+				mac_ctx->psoc, sap_ctx->sessionId,
+				cur_sap_ctx->chan_freq,
+				cur_sap_ctx->ch_params.ch_width);
+			sap_ctx->is_forcescc_restart_required = false;
+			break;
+		}
+	}
+}
+#else
+static void
+sap_check_and_process_forcescc_for_other_go(struct sap_context *cur_sap_ctx)
+{}
+#endif
+
 QDF_STATUS wlansap_roam_callback(void *ctx,
 				 struct csr_roam_info *csr_roam_info,
 				 uint32_t roam_id,
@@ -1145,10 +1190,25 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		 * disassoc event
 		 * Fill in the event structure
 		 */
-		if (roam_status == eCSR_ROAM_SET_KEY_COMPLETE)
+		if (roam_status == eCSR_ROAM_SET_KEY_COMPLETE) {
 			sap_signal_hdd_event(sap_ctx, csr_roam_info,
 					     eSAP_STA_SET_KEY_EVENT,
 					     (void *) eSAP_STATUS_SUCCESS);
+
+		/*
+		 * After set key if this is the first peer connecting to new GO
+		 * then check for peer count (which is self peer + peer count)
+		 * and take decision for GO+GO force SCC
+		 */
+			if (sap_ctx->vdev->vdev_mlme.vdev_opmode ==
+			    QDF_P2P_GO_MODE &&
+			    wlan_vdev_get_peer_count(sap_ctx->vdev) == 2 &&
+			    policy_mgr_mode_specific_connection_count(
+						mac_ctx->psoc, PM_P2P_GO_MODE,
+						NULL) > 1)
+				sap_check_and_process_forcescc_for_other_go(
+								sap_ctx);
+		}
 		break;
 	case eCSR_ROAM_RESULT_MAX_ASSOC_EXCEEDED:
 		/* Fill in the event structure */

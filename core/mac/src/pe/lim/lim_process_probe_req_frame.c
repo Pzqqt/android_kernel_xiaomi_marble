@@ -481,6 +481,8 @@ lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 			uint8_t *buf_descr, struct pe_session *session)
 {
 	uint8_t i;
+	struct wlan_channel *chan;
+	uint16_t probe_req_freq = WMA_GET_RX_FREQ(buf_descr);
 
 	if (session) {
 		if (LIM_IS_AP_ROLE(session)) {
@@ -495,6 +497,18 @@ lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 		session = pe_find_session_by_session_id(mac_ctx, i);
 		if (!session)
 			continue;
+		chan = wlan_vdev_get_active_channel(session->vdev);
+		/**
+		 * For GO present on 5G/6G/2G band channel and if probe req
+		 * is received for p2p listen on the listen channel then no
+		 * need to send probe resp on GO operating channel
+		 **/
+		if (!chan || chan->ch_freq != probe_req_freq) {
+			pe_debug("do not send probe resp to requested probe freq %d",
+				 probe_req_freq);
+			continue;
+		}
+
 		if (LIM_IS_AP_ROLE(session))
 			lim_indicate_probe_req_to_hdd(mac_ctx,
 					buf_descr, session);

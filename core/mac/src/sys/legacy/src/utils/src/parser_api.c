@@ -853,8 +853,7 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 			       tDot11fIEExtSuppRates *pDot11f,
 			       struct pe_session *pe_session)
 {
-	QDF_STATUS nsir_status;
-	qdf_size_t nRates = 0;
+	qdf_size_t n_rates = 0;
 	uint8_t rates[SIR_MAC_MAX_NUMBER_OF_RATES];
 
 	/* Use the ext rates present in session entry whenever nChannelNum is set to OPERATIONAL
@@ -863,9 +862,9 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 	 */
 	if (POPULATE_DOT11F_RATES_OPERATIONAL == nChannelNum) {
 		if (pe_session) {
-			nRates = pe_session->extRateSet.numRates;
+			n_rates = pe_session->extRateSet.numRates;
 			qdf_mem_copy(rates, pe_session->extRateSet.rate,
-				     nRates);
+				     n_rates);
 		} else {
 			pe_err("no session context exists while populating Operational Rate Set");
 		}
@@ -874,20 +873,15 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 			pe_err("null pe_session");
 			return QDF_STATUS_E_INVAL;
 		}
-		nRates = SIR_MAC_MAX_NUMBER_OF_RATES;
-		nsir_status = mlme_get_ext_opr_rate(pe_session->vdev, rates,
-						    &nRates);
-		if (QDF_IS_STATUS_ERROR(nsir_status)) {
-			nRates = 0;
-			pe_err("Failed to retrieve nItem from CFG status: %d",
-			       (nsir_status));
-			return nsir_status;
-		}
+
+		n_rates = mlme_get_ext_opr_rate(pe_session->vdev, rates,
+						sizeof(rates));
 	}
 
-	if (0 != nRates) {
-		pDot11f->num_rates = (uint8_t) nRates;
-		qdf_mem_copy(pDot11f->rates, rates, nRates);
+	if (0 != n_rates) {
+		pe_debug("ext supp rates present, num %d", (uint8_t)n_rates);
+		pDot11f->num_rates = (uint8_t)n_rates;
+		qdf_mem_copy(pDot11f->rates, rates, n_rates);
 		pDot11f->present = 1;
 	}
 
@@ -1099,7 +1093,8 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 
 ePhyChanBondState wlan_get_cb_mode(struct mac_context *mac,
 				   qdf_freq_t ch_freq,
-				   tDot11fBeaconIEs *ie_struct)
+				   tDot11fBeaconIEs *ie_struct,
+				   struct pe_session *pe_session)
 {
 	ePhyChanBondState cb_mode = PHY_SINGLE_CHANNEL_CENTERED;
 	uint32_t sec_ch_freq = 0;
@@ -1115,6 +1110,11 @@ ePhyChanBondState wlan_get_cb_mode(struct mac_context *mac,
 	}
 
 	if (self_cb_mode == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE)
+		return PHY_SINGLE_CHANNEL_CENTERED;
+
+	if (pe_session->dot11mode == MLME_DOT11_MODE_11A ||
+	    pe_session->dot11mode == MLME_DOT11_MODE_11G ||
+	    pe_session->dot11mode == MLME_DOT11_MODE_11B)
 		return PHY_SINGLE_CHANNEL_CENTERED;
 
 	if (!(ie_struct->HTCaps.present && (eHT_CHANNEL_WIDTH_40MHZ ==
@@ -1300,6 +1300,9 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 			pDot11f->present = 0;
 			return QDF_STATUS_SUCCESS;
 		}
+
+		if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq))
+			pDot11f->supportedChannelWidthSet = 0;
 
 		if (pe_session->ht_config.adv_coding_cap)
 			pDot11f->ldpcCodingCap =
@@ -7726,7 +7729,7 @@ populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 	mld_addr = wlan_vdev_mlme_get_mldaddr(session->vdev);
 	qdf_mem_copy(&mlo_ie->mld_mac_addr.info.mld_mac_addr, mld_addr,
 		     sizeof(mlo_ie->mld_mac_addr.info.mld_mac_addr));
-	mlo_ie->link_id_info_present = 1;
+	mlo_ie->link_id_info_present = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7735,7 +7738,6 @@ QDF_STATUS
 sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 					tpSirMultiLink_IE mlo_ie_ptr)
 {
-	tDot11fIEmlo_ie *mlo_ie;
 	tDot11fIEsta_profile *sta_prof, *pStaProf;
 
 	if (!pr)
@@ -7745,10 +7747,6 @@ sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 		pe_err("MLO IE not present");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
-	mlo_ie = qdf_mem_malloc(sizeof(*mlo_ie));
-	if (!mlo_ie)
-		return QDF_STATUS_E_FAILURE;
 
 	qdf_mem_zero((uint8_t *)mlo_ie_ptr, sizeof(tSirMultiLink_IE));
 
@@ -8571,9 +8569,16 @@ wlan_get_ielen_from_bss_description(struct bss_description *bss_desc)
 
 	ieFields_offset = GET_FIELD_OFFSET(struct bss_description, ieFields);
 
-	if ((!bss_desc || !bss_desc->length) ||
-	    (bss_desc->length - sizeof(bss_desc->length) <= ieFields_offset))
+	if (!bss_desc) {
+		pe_err_rl("Bss_desc is NULL");
 		return 0;
+	}
+
+	if (bss_desc->length <= (ieFields_offset - sizeof(bss_desc->length))) {
+		pe_err_rl("Invalid bss_desc len:%d ie_fields_offset:%d",
+			  bss_desc->length, ieFields_offset);
+		return 0;
+	}
 
 	/*
 	 * Length of BSS desription is without length of

@@ -459,6 +459,7 @@ struct csr_roam_profile {
 	uint16_t beacon_tx_rate;
 	tSirMacRateSet  supported_rates;
 	tSirMacRateSet  extended_rates;
+	bool require_h2e;
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 };

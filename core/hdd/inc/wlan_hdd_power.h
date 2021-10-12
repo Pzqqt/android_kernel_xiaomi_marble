@@ -452,13 +452,16 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
  *
  * This function check for PM QoS global vote.
  *
+ * @hdd_ctx: hdd_context pointer
+ *
  * Return: true if there is PM QoS global vote,
  *	   or an false otherwise
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
-bool wlan_hdd_is_cpu_pm_qos_in_progress(void);
+bool wlan_hdd_is_cpu_pm_qos_in_progress(struct hdd_context *hdd_ctx);
 #else
-static inline bool wlan_hdd_is_cpu_pm_qos_in_progress(void)
+static inline bool
+wlan_hdd_is_cpu_pm_qos_in_progress(struct hdd_context *hdd_ctx)
 {
 	return false;
 }

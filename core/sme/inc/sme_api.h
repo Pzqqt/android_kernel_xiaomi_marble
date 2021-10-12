@@ -630,7 +630,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS -status whether MDID is set or not
  */
-QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t vdev_id,
 				struct wlan_crypto_pmksa *pmk_cache);
 #else
 static inline
@@ -661,7 +661,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
 }
 
 static inline
-QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t vdev_id,
 				struct wlan_crypto_pmksa *pmk_cache)
 {
 	return QDF_STATUS_SUCCESS;
@@ -1212,6 +1212,17 @@ QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle,
 				  uint8_t channel_type);
 QDF_STATUS sme_set_ht2040_mode(mac_handle_t mac_handle, uint8_t sessionId,
 			       uint8_t channel_type, bool obssEnabled);
+
+/**
+ * sme_get_ht2040_mode() - get ht operation mode
+ * @mac_handle: pointer to mac context
+ * @vdev_id: vdev id
+ * @channel_type: channel type to provide
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS sme_get_ht2040_mode(mac_handle_t mac_handle, uint8_t vdev_id,
+			       enum eSirMacHTChannelType *channel_type);
 #endif
 
 /**

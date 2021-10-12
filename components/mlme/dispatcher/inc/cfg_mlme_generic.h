@@ -164,7 +164,7 @@ enum wlan_wds_mode {
  * rf_test_mode_enabled - Enable rf test mode support
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
  * This cfg is used to set rf test mode support flag
  *
@@ -174,7 +174,7 @@ enum wlan_wds_mode {
  */
 #define CFG_RF_TEST_MODE_SUPP_ENABLED CFG_BOOL( \
 		"rf_test_mode_enabled", \
-		1, \
+		0, \
 		"rf test mode Enable Flag")
 
 /*

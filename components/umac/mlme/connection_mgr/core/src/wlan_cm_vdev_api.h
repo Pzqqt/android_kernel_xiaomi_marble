@@ -49,6 +49,7 @@
  * @entry: scan entry for the candidate
  * @partner_info: Partner link information for an ML connection
  * @assoc_link_id: Assoc link ID of an ML connection
+ * @owe_trans_ssid: owe trans ssid to be used when scan entry ssid is wildcard
  */
 struct cm_vdev_join_req {
 	uint8_t vdev_id;
@@ -64,6 +65,7 @@ struct cm_vdev_join_req {
 	struct mlo_partner_info partner_info;
 	uint8_t assoc_link_id;
 #endif
+	struct wlan_ssid owe_trans_ssid;
 };
 
 /**

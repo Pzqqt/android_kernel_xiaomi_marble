@@ -1053,8 +1053,12 @@ QDF_STATUS cm_flush_join_req(struct scheduler_msg *msg)
 #ifdef WLAN_FEATURE_11BE_MLO
 static void cm_fill_ml_info(struct cm_vdev_join_req *join_req)
 {
-	join_req->partner_info = util_scan_get_ml_partner_info(join_req->entry);
-	join_req->assoc_link_id = join_req->entry->ml_info.self_link_id;
+	if (QDF_IS_STATUS_SUCCESS(
+		util_scan_get_ml_partner_info(join_req->entry,
+					      &join_req->partner_info))) {
+		join_req->assoc_link_id = join_req->entry->ml_info.self_link_id;
+		mlme_debug("Assoc link ID:%d", join_req->assoc_link_id);
+	}
 }
 #else
 static void cm_fill_ml_info(struct cm_vdev_join_req *join_req)
@@ -1087,6 +1091,9 @@ cm_copy_join_params(struct cm_vdev_join_req *join_req,
 		return QDF_STATUS_E_NOMEM;
 
 	cm_fill_ml_info(join_req);
+
+	if (req->owe_trans_ssid.length)
+		join_req->owe_trans_ssid = req->owe_trans_ssid;
 
 	join_req->vdev_id = req->vdev_id;
 	join_req->cm_id = req->cm_id;
@@ -1344,6 +1351,7 @@ static void cm_process_connect_complete(struct wlan_objmgr_psoc *psoc,
 		cm_update_pmk_cache_ft(psoc, vdev_id);
 	}
 
+	cm_update_owe_info(vdev, rsp, vdev_id);
 	cm_csr_set_joined(vdev_id);
 	cm_csr_send_set_ie(vdev);
 
@@ -1406,8 +1414,8 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			rsp->freq);
 
 	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status)) {
-		cm_process_connect_complete(psoc, pdev, vdev, rsp);
 		policy_mgr_incr_active_session(psoc, op_mode, vdev_id);
+		cm_process_connect_complete(psoc, pdev, vdev, rsp);
 		wlan_tdls_notify_sta_connect(vdev_id,
 					     mlme_get_tdls_chan_switch_prohibited(vdev),
 					     mlme_get_tdls_prohibited(vdev),

@@ -141,6 +141,12 @@ ucfg_cm_set_roam_band_mask(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	return wlan_cm_set_roam_band_bitmask(psoc, vdev_id, roam_band_mask);
 }
 
+static inline QDF_STATUS
+ucfg_cm_set_roam_band_update(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return wlan_cm_set_roam_band_update(psoc, vdev_id);
+}
+
 static inline bool
 ucfg_cm_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id, uint32_t roam_band_mask)
@@ -160,6 +166,12 @@ ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 static inline QDF_STATUS
 ucfg_cm_set_roam_band_mask(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			   uint32_t roam_band_mask)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_cm_set_roam_band_update(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
 }

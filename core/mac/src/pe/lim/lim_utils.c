@@ -7929,11 +7929,11 @@ static QDF_STATUS lim_populate_he_mcs_per_bw(struct mac_context *mac_ctx,
 	pe_debug("peer rates: rx_mcs - 0x%04x tx_mcs - 0x%04x",
 		 peer_rx, peer_tx);
 
-	*supp_rx_mcs = rx_mcs;
-	*supp_tx_mcs = tx_mcs;
+	pe_debug("self rates: rx_mcs - 0x%04x tx_mcs - 0x%04x",
+		 rx_mcs, tx_mcs);
 
-	*supp_tx_mcs = HE_INTERSECT_MCS(*supp_rx_mcs, peer_tx);
-	*supp_rx_mcs = HE_INTERSECT_MCS(*supp_tx_mcs, peer_rx);
+	*supp_tx_mcs = HE_INTERSECT_MCS(rx_mcs, peer_tx);
+	*supp_rx_mcs = HE_INTERSECT_MCS(tx_mcs, peer_rx);
 
 	if (nss == NSS_1x1_MODE) {
 		*supp_rx_mcs |= HE_MCS_INV_MSK_4_NSS(1);
@@ -8464,6 +8464,7 @@ lim_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 {
 	struct reject_ap_info ap_info;
 
+	qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
 	ap_info.bssid = entry->bssid;
 	ap_info.reject_ap_type = DRIVER_RSSI_REJECT_TYPE;
 	ap_info.rssi_reject_params.expected_rssi = entry->expected_rssi;

@@ -39,6 +39,16 @@
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "wlan_qct_sys.h"
 
+#define LIM_QOS_AP_SUPPORTS_UAPSD         0x80
+
+#define LIM_IS_QOS_BSS(ie_struct)  \
+		(ie_struct->WMMParams.present || ie_struct->WMMInfoAp.present)
+
+#define LIM_IS_UAPSD_BSS(ie_struct) \
+	((ie_struct->WMMParams.present && \
+	 (ie_struct->WMMParams.qosInfo & LIM_QOS_AP_SUPPORTS_UAPSD)) || \
+	 (ie_struct->WMMInfoAp.present && ie_struct->WMMInfoAp.uapsd))
+
 #define LIM_AID_MASK                              0xC000
 #define LIM_SPECTRUM_MANAGEMENT_BIT_MASK          0x0100
 #define LIM_RRM_BIT_MASK                          0x1000

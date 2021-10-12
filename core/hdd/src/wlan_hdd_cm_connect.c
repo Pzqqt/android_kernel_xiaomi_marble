@@ -26,6 +26,7 @@
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_object_manager.h"
 #include "wlan_hdd_power.h"
+#include "wlan_hdd_connectivity_logging.h"
 #include <osif_cm_req.h>
 #include <wlan_logging_sock_svc.h>
 #include <wlan_hdd_periodic_sta_stats.h>
@@ -294,7 +295,12 @@ void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter)
 void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
 				uint32_t reason_code)
 {
+	struct hdd_station_ctx *hdd_sta_ctx;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	adapter->connect_req_status = reason_code;
+	hdd_sta_ctx->conn_info.assoc_status_code = reason_code;
+	hdd_sta_ctx->cache_conn_info.assoc_status_code = reason_code;
 }
 
 #ifdef FEATURE_WLAN_WAPI
@@ -422,6 +428,7 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 
 	hdd_update_scan_ie_for_connect(adapter, &params);
 
+	wlan_hdd_connectivity_event_connecting(hdd_ctx, req, adapter->vdev_id);
 	status = osif_cm_connect(ndev, vdev, req, &params);
 
 	if (status || ucfg_cm_is_vdev_roaming(vdev)) {
@@ -509,6 +516,7 @@ hdd_cm_connect_failure_post_user_update(struct wlan_objmgr_vdev *vdev,
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 	}
 
+	wlan_hdd_connectivity_fail_event(vdev, rsp);
 	hdd_clear_roam_profile_ie(adapter);
 	ucfg_cm_reset_key(hdd_ctx->pdev, adapter->vdev_id);
 	hdd_wmm_dscp_initial_state(adapter);
@@ -743,6 +751,7 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 		return;
 
 	qdf_copy_macaddr(&sta_ctx->conn_info.bssid, &rsp->bssid);
+	sta_ctx->conn_info.assoc_status_code = rsp->status_code;
 
 	crypto_params = wlan_crypto_vdev_get_crypto_params(adapter->vdev);
 
@@ -1098,7 +1107,7 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 						   FTM_TIME_SYNC_STA_CONNECTED);
 		ucfg_mlme_init_twt_context(hdd_ctx->psoc,
 					   &rsp->bssid,
-					   WLAN_ALL_SESSIONS_DIALOG_ID);
+					   TWT_ALL_SESSIONS_DIALOG_ID);
 	}
 	hdd_periodic_sta_stats_start(adapter);
 	wlan_twt_concurrency_update(hdd_ctx);

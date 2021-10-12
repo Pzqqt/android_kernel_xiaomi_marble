@@ -233,6 +233,14 @@ struct sap_context {
 	bool is_chan_change_inprogress;
 	qdf_list_t owe_pending_assoc_ind_list;
 	uint32_t freq_before_ch_switch;
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+/*
+ *This param is used for GO+GO force scc logic where after
+ *setkey first GO will move to latest GO's channel
+ */
+	bool is_forcescc_restart_required;
+#endif
+	qdf_freq_t candidate_freq;
 };
 
 /*----------------------------------------------------------------------------

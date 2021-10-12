@@ -1844,6 +1844,26 @@ static QDF_STATUS wma_cdp_peer_create(ol_txrx_soc_handle dp_soc,
 #endif
 
 /**
+ * wma_update_mlo_peer_create() - update mlo parameter for peer creation
+ * @param: peer create param
+ * @mlo_enable: mlo enable or not
+ *
+ * Return: Void
+ */
+#ifdef WLAN_FEATURE_11BE_MLO
+static void wma_update_mlo_peer_create(struct peer_create_params *param,
+				       bool mlo_enable)
+{
+	param->mlo_enabled = mlo_enable;
+}
+#else
+static void wma_update_mlo_peer_create(struct peer_create_params *param,
+				       bool mlo_enable)
+{
+}
+#endif
+
+/**
  * wma_add_peer() - send peer create command to fw
  * @wma: wma handle
  * @peer_addr: peer mac addr
@@ -1911,6 +1931,7 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 			  QDF_MAC_ADDR_REF(peer_mld_addr));
 		wlan_peer_mlme_set_mldaddr(obj_peer, peer_mld_addr);
 		wlan_peer_mlme_set_assoc_peer(obj_peer, is_assoc_peer);
+		wma_update_mlo_peer_create(&param, true);
 	}
 	status = wma_cdp_peer_create(dp_soc, vdev_id, peer_addr, obj_peer);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -3148,8 +3169,8 @@ int wma_peer_create_confirm_handler(void *handle, uint8_t *evt_param_info,
 	req_msg = wma_find_remove_req_msgtype(wma, peer_create_rsp->vdev_id,
 					      WMA_PEER_CREATE_REQ);
 	if (!req_msg) {
-		wma_err("vdev:%d Failed to lookup peer create request message",
-			peer_create_rsp->vdev_id);
+		wma_debug("vdev:%d Failed to lookup peer create request msg",
+			  peer_create_rsp->vdev_id);
 		return -EINVAL;
 	}
 

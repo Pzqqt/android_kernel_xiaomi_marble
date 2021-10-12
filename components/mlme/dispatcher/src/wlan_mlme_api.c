@@ -619,6 +619,32 @@ QDF_STATUS wlan_mlme_cfg_get_enable_ul_ofdm(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+/* mlme_get_min_rate_cap() - get minimum capability for HE-MCS between
+ *                           ini value and fw capability.
+ *
+ * Rx HE-MCS Map and Tx HE-MCS Map subfields format where 2-bit indicates
+ * 0 indicates support for HE-MCS 0-7 for n spatial streams
+ * 1 indicates support for HE-MCS 0-9 for n spatial streams
+ * 2 indicates support for HE-MCS 0-11 for n spatial streams
+ * 3 indicates that n spatial streams is not supported for HE PPDUs
+ *
+ */
+static uint16_t mlme_get_min_rate_cap(uint16_t val1, uint16_t val2)
+{
+	uint16_t ret = 0, i;
+
+	for (i = 0; i < 8; i++) {
+		if (((val1 >> (2 * i)) & 0x3) == 0x3 ||
+		    ((val2 >> (2 * i)) & 0x3) == 0x3) {
+			ret |= 0x3 << (2 * i);
+			continue;
+		}
+		ret |= QDF_MIN((val1 >> (2 * i)) & 0x3,
+			      (val2 >> (2 * i)) & 0x3) << (2 * i);
+	}
+	return ret;
+}
+
 QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 					  struct wma_tgt_cfg *wma_cfg)
 {
@@ -866,8 +892,12 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_obj->cfg.he_caps.dot11_he_cap.rx_full_bw_su_he_mu_non_cmpr_sigb =
 				he_cap->rx_full_bw_su_he_mu_non_cmpr_sigb;
 
-	tx_mcs_map = he_cap->tx_he_mcs_map_lt_80;
-	rx_mcs_map = he_cap->rx_he_mcs_map_lt_80;
+	tx_mcs_map = mlme_get_min_rate_cap(
+		mlme_obj->cfg.he_caps.dot11_he_cap.tx_he_mcs_map_lt_80,
+		he_cap->tx_he_mcs_map_lt_80);
+	rx_mcs_map = mlme_get_min_rate_cap(
+		mlme_obj->cfg.he_caps.dot11_he_cap.rx_he_mcs_map_lt_80,
+		he_cap->rx_he_mcs_map_lt_80);
 	if (!mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2) {
 		nss = 2;
 		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, nss);
@@ -880,8 +910,12 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 	if (cfg_in_range(CFG_HE_TX_MCS_MAP_LT_80, tx_mcs_map))
 		mlme_obj->cfg.he_caps.dot11_he_cap.tx_he_mcs_map_lt_80 =
 			tx_mcs_map;
-	tx_mcs_map = *((uint16_t *)he_cap->tx_he_mcs_map_160);
-	rx_mcs_map = *((uint16_t *)he_cap->rx_he_mcs_map_160);
+	tx_mcs_map = mlme_get_min_rate_cap(
+	   *((uint16_t *)mlme_obj->cfg.he_caps.dot11_he_cap.tx_he_mcs_map_160),
+	   *((uint16_t *)he_cap->tx_he_mcs_map_160));
+	rx_mcs_map = mlme_get_min_rate_cap(
+	   *((uint16_t *)mlme_obj->cfg.he_caps.dot11_he_cap.rx_he_mcs_map_160),
+	   *((uint16_t *)he_cap->rx_he_mcs_map_160));
 
 	if (!mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2) {
 		nss = 2;
@@ -3958,6 +3992,8 @@ char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
 		return "NONE";
 	case WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT:
 		return "PMK Expired";
+	case WMI_ROAM_TRIGGER_REASON_BTC:
+		return "BTC TRIGGER";
 	default:
 		return "UNKNOWN";
 	}
@@ -4106,98 +4142,98 @@ void wlan_mlme_clear_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
-char *mlme_get_roam_fail_reason_str(uint32_t result)
+char *mlme_get_roam_fail_reason_str(enum wlan_roam_failure_reason_code result)
 {
 	switch (result) {
-	case WMI_ROAM_FAIL_REASON_NO_SCAN_START:
+	case ROAM_FAIL_REASON_NO_SCAN_START:
 		return "SCAN NOT STARTED";
-	case WMI_ROAM_FAIL_REASON_NO_AP_FOUND:
+	case ROAM_FAIL_REASON_NO_AP_FOUND:
 		return "NO AP FOUND";
-	case WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND:
+	case ROAM_FAIL_REASON_NO_CAND_AP_FOUND:
 		return "NO CANDIDATE FOUND";
-	case WMI_ROAM_FAIL_REASON_HOST:
+	case ROAM_FAIL_REASON_HOST:
 		return "HOST ABORTED";
-	case WMI_ROAM_FAIL_REASON_AUTH_SEND:
+	case ROAM_FAIL_REASON_AUTH_SEND:
 		return "Send AUTH Failed";
-	case WMI_ROAM_FAIL_REASON_AUTH_RECV:
+	case ROAM_FAIL_REASON_AUTH_RECV:
 		return "Received AUTH with FAILURE Status";
-	case WMI_ROAM_FAIL_REASON_NO_AUTH_RESP:
+	case ROAM_FAIL_REASON_NO_AUTH_RESP:
 		return "No Auth response from AP";
-	case WMI_ROAM_FAIL_REASON_REASSOC_SEND:
+	case ROAM_FAIL_REASON_REASSOC_SEND:
 		return "Send Re-assoc request failed";
-	case WMI_ROAM_FAIL_REASON_REASSOC_RECV:
+	case ROAM_FAIL_REASON_REASSOC_RECV:
 		return "Received Re-Assoc resp with Failure status";
-	case WMI_ROAM_FAIL_REASON_NO_REASSOC_RESP:
+	case ROAM_FAIL_REASON_NO_REASSOC_RESP:
 		return "No Re-assoc response from AP";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M1_TIMEOUT:
+	case ROAM_FAIL_REASON_EAPOL_TIMEOUT:
 		return "EAPOL M1 timed out";
-	case WMI_ROAM_FAIL_REASON_MLME:
+	case ROAM_FAIL_REASON_MLME:
 		return "MLME error";
-	case WMI_ROAM_FAIL_REASON_INTERNAL_ABORT:
+	case ROAM_FAIL_REASON_INTERNAL_ABORT:
 		return "Fw aborted roam";
-	case WMI_ROAM_FAIL_REASON_SCAN_START:
+	case ROAM_FAIL_REASON_SCAN_START:
 		return "Unable to start roam scan";
-	case WMI_ROAM_FAIL_REASON_AUTH_NO_ACK:
+	case ROAM_FAIL_REASON_AUTH_NO_ACK:
 		return "No ACK for Auth req";
-	case WMI_ROAM_FAIL_REASON_AUTH_INTERNAL_DROP:
+	case ROAM_FAIL_REASON_AUTH_INTERNAL_DROP:
 		return "Auth req dropped internally";
-	case WMI_ROAM_FAIL_REASON_REASSOC_NO_ACK:
+	case ROAM_FAIL_REASON_REASSOC_NO_ACK:
 		return "No ACK for Re-assoc req";
-	case WMI_ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP:
+	case ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP:
 		return "Re-assoc dropped internally";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M2_SEND:
+	case ROAM_FAIL_REASON_EAPOL_M2_SEND:
 		return "Unable to send M2 frame";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP:
+	case ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP:
 		return "M2 Frame dropped internally";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M2_NO_ACK:
+	case ROAM_FAIL_REASON_EAPOL_M2_NO_ACK:
 		return "No ACK for M2 frame";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT:
+	case ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT:
 		return "EAPOL M3 timed out";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M4_SEND:
+	case ROAM_FAIL_REASON_EAPOL_M4_SEND:
 		return "Unable to send M4 frame";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP:
+	case ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP:
 		return "M4 frame dropped internally";
-	case WMI_ROAM_FAIL_REASON_EAPOL_M4_NO_ACK:
+	case ROAM_FAIL_REASON_EAPOL_M4_NO_ACK:
 		return "No ACK for M4 frame";
-	case WMI_ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS:
+	case ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS:
 		return "No scan on final BMISS";
-	case WMI_ROAM_FAIL_REASON_DISCONNECT:
+	case ROAM_FAIL_REASON_DISCONNECT:
 		return "Disconnect received during handoff";
-	case WMI_ROAM_FAIL_REASON_SYNC:
+	case ROAM_FAIL_REASON_SYNC:
 		return "Previous roam sync pending";
-	case WMI_ROAM_FAIL_REASON_SAE_INVALID_PMKID:
+	case ROAM_FAIL_REASON_SAE_INVALID_PMKID:
 		return "Reason assoc reject - invalid PMKID";
-	case WMI_ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT:
+	case ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT:
 		return "SAE preauth timed out";
-	case WMI_ROAM_FAIL_REASON_SAE_PREAUTH_FAIL:
+	case ROAM_FAIL_REASON_SAE_PREAUTH_FAIL:
 		return "SAE preauth failed";
-	case WMI_ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO:
+	case ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO:
 		return "Start handoff failed- internal error";
 	default:
 		return "UNKNOWN";
 	}
 }
 
-char *mlme_get_sub_reason_str(uint32_t sub_reason)
+char *mlme_get_sub_reason_str(enum roam_trigger_sub_reason sub_reason)
 {
 	switch (sub_reason) {
-	case WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER:
+	case ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER:
 		return "PERIODIC TIMER";
-	case WMI_ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC:
+	case ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC:
 		return "LOW RSSI PERIODIC TIMER1";
-	case WMI_ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER:
+	case ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER:
 		return "BTM DISASSOC IMMINENT TIMER";
-	case WMI_ROAM_TRIGGER_SUB_REASON_FULL_SCAN:
+	case ROAM_TRIGGER_SUB_REASON_FULL_SCAN:
 		return "FULL SCAN";
-	case WMI_ROAM_TRIGGER_SUB_REASON_CU_PERIODIC:
+	case ROAM_TRIGGER_SUB_REASON_CU_PERIODIC:
 		return "CU PERIODIC Timer1";
-	case WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_LOW_RSSI:
+	case ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_LOW_RSSI:
 		return "LOW RSSI INACTIVE TIMER";
-	case WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU:
+	case ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU:
 		return "CU PERIODIC TIMER2";
-	case WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_LOW_RSSI:
+	case ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY:
 		return "LOW RSSI PERIODIC TIMER2";
-	case WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU:
+	case ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU:
 		return "CU INACTIVITY TIMER";
 	default:
 		return "NONE";
@@ -4861,26 +4897,32 @@ wlan_mlme_get_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool *val)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
-			     qdf_size_t *len)
+qdf_size_t mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+			     qdf_size_t len)
 {
 	struct mlme_legacy_priv *mlme_priv;
 
 	if (!vdev || !dst || !len) {
 		mlme_legacy_err("invalid params");
-		return QDF_STATUS_E_INVAL;
+		return 0;
 	}
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
 		mlme_legacy_err("vdev legacy private object is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return 0;
 	}
 
-	*len = mlme_priv->opr_rate_set.len;
-	qdf_mem_copy(dst, mlme_priv->opr_rate_set.data, *len);
+	if (len < mlme_priv->opr_rate_set.len) {
+		mlme_legacy_err("Invalid length %zd (<%zd)", len,
+				mlme_priv->opr_rate_set.len);
+		return 0;
+	}
 
-	return QDF_STATUS_SUCCESS;
+	qdf_mem_copy(dst, mlme_priv->opr_rate_set.data,
+		     mlme_priv->opr_rate_set.len);
+
+	return mlme_priv->opr_rate_set.len;
 }
 
 QDF_STATUS mlme_set_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
@@ -4911,26 +4953,32 @@ QDF_STATUS mlme_set_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
-			     qdf_size_t *len)
+qdf_size_t mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+				 qdf_size_t len)
 {
 	struct mlme_legacy_priv *mlme_priv;
 
 	if (!vdev || !dst || !len) {
 		mlme_legacy_err("invalid params");
-		return QDF_STATUS_E_INVAL;
+		return 0;
 	}
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
 		mlme_legacy_err("vdev legacy private object is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return 0;
 	}
 
-	*len = mlme_priv->ext_opr_rate_set.len;
-	qdf_mem_copy(dst, mlme_priv->ext_opr_rate_set.data, *len);
+	if (len < mlme_priv->ext_opr_rate_set.len) {
+		mlme_legacy_err("Invalid length %zd (<%zd)", len,
+				mlme_priv->ext_opr_rate_set.len);
+		return 0;
+	}
 
-	return QDF_STATUS_SUCCESS;
+	qdf_mem_copy(dst, mlme_priv->ext_opr_rate_set.data,
+		     mlme_priv->ext_opr_rate_set.len);
+
+	return mlme_priv->ext_opr_rate_set.len;
 }
 
 QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
@@ -4957,6 +5005,62 @@ QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 
 	mlme_priv->ext_opr_rate_set.len = len;
 	qdf_mem_copy(mlme_priv->ext_opr_rate_set.data, src, len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_size_t mlme_get_mcs_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+			     qdf_size_t len)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!vdev || !dst || !len) {
+		mlme_legacy_err("invalid params");
+		return 0;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return 0;
+	}
+
+	if (len < mlme_priv->mcs_rate_set.len) {
+		mlme_legacy_err("Invalid length %zd (<%zd)", len,
+				mlme_priv->mcs_rate_set.len);
+		return 0;
+	}
+
+	qdf_mem_copy(dst, mlme_priv->mcs_rate_set.data,
+		     mlme_priv->mcs_rate_set.len);
+
+	return mlme_priv->mcs_rate_set.len;
+}
+
+QDF_STATUS mlme_set_mcs_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
+			     qdf_size_t len)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!vdev || !src) {
+		mlme_legacy_err("invalid params");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (len > mlme_priv->mcs_rate_set.max_len) {
+		mlme_legacy_err("Invalid len %zd (>%zd)", len,
+				mlme_priv->mcs_rate_set.max_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_priv->mcs_rate_set.len = len;
+	qdf_mem_copy(mlme_priv->mcs_rate_set.data, src, len);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5137,4 +5241,28 @@ bool mlme_get_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
 
 	return usr_ps_enable;
+}
+
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+bool
+wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_psoc_nif_fw_ext_cap_get(psoc,
+					    WLAN_SOC_EXT_P2P_P2P_CONC_SUPPORT);
+}
+#endif
+
+enum phy_ch_width mlme_get_vht_ch_width(void)
+{
+	enum phy_ch_width bandwidth = CH_WIDTH_INVALID;
+	uint32_t fw_ch_wd = wma_get_vht_ch_width();
+
+	if (fw_ch_wd == WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ)
+		bandwidth = CH_WIDTH_80P80MHZ;
+	else if (fw_ch_wd == WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
+		bandwidth = CH_WIDTH_160MHZ;
+	else
+		bandwidth = CH_WIDTH_80MHZ;
+
+	return bandwidth;
 }

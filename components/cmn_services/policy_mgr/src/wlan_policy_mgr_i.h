@@ -538,7 +538,9 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 				uint32_t num_vdev_mac_entries,
 				struct policy_mgr_vdev_mac_map *vdev_mac_map,
-				struct policy_mgr_hw_mode_params hw_mode);
+				struct policy_mgr_hw_mode_params hw_mode,
+				uint32_t num_mac_freq,
+				struct policy_mgr_pdev_mac_freq_map *freq_info);
 void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 				uint32_t cfgd_hw_mode_index,
 				uint32_t num_vdev_mac_entries,
@@ -678,6 +680,51 @@ enum policy_mgr_conc_next_action
 
 QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 		struct policy_mgr_psoc_priv_obj *pm_ctx);
+
+/**
+ * policy_mgr_fill_curr_mac_freq_by_hwmode() - Fill Current Mac frequency with
+ * the frequency range of the given Hw Mode
+ *
+ * @pm_ctx: Policy Mgr context
+ * @mode_hw: Policy Mgr Hw mode
+ *
+ * Fill Current Mac frequency with the frequency range of the given Hw Mode
+ *
+ * Return: None
+ */
+void
+policy_mgr_fill_curr_mac_freq_by_hwmode(struct policy_mgr_psoc_priv_obj *pm_ctx,
+					enum policy_mgr_mode mode_hw);
+
+/**
+ * policy_mgr_update_hw_mode_list() - Function to print every frequency range
+ * for both MAC 0 and MAC1 for every Hw mode
+ *
+ * @pm_ctx: Policy Mgr context
+ *
+ * This function to Function to print every frequency range
+ * for both MAC 0 and MAC1 for every Hw mode
+ *
+ * Return: void
+ *
+ */
+void
+policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx);
+
+/**
+ * policy_mgr_dump_curr_freq_range() - Function to print current frequency range
+ * for both MAC 0 and MAC1
+ *
+ * @pm_ctx: Policy Mgr context
+ *
+ * This function to Function to print current frequency range
+ * for both MAC 0 and MAC1 for every Hw mode
+ *
+ * Return: void
+ *
+ */
+void
+policy_mgr_dump_curr_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx);
 
 /**
  * policy_mgr_reg_chan_change_callback() - Callback to be

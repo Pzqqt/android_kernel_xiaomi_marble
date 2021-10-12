@@ -492,35 +492,158 @@
 				0, \
 				"He Rx Full Bw Mu Non Cmpr Sigb")
 
-#define CFG_HE_RX_MCS_MAP_LT_80 CFG_UINT( \
+/* 11AX related INI configuration */
+/*
+ * <ini>
+ * he_rx_mcs_map_lt_80 - configure Rx HE-MCS Map for ≤ 80 MHz
+ * @Min: 0
+ * @Max: 0xFFFF
+ * @Default: 0xFFFA
+ *
+ * This ini is used to configure Rx HE-MCS Map for ≤ 80 MHz
+ * 0:1 Max HE-MCS For 1 SS
+ * 2:3 Max HE-MCS For 2 SS
+ * 4:5 Max HE-MCS For 3 SS
+ * 6:7 Max HE-MCS For 4 SS
+ * 8:9 Max HE-MCS For 5 SS
+ * 10:11 Max HE-MCS For 6 SS
+ * 12:13 Max HE-MCS For 7 SS
+ * 14:15 Max HE-MCS For 8 SS
+ *
+ * 0 indicates support for HE-MCS 0-7 for n spatial streams
+ * 1 indicates support for HE-MCS 0-9 for n spatial streams
+ * 2 indicates support for HE-MCS 0-11 for n spatial streams
+ * 3 indicates that n spatial streams is not supported for HE PPDUs
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HE_RX_MCS_MAP_LT_80 CFG_INI_UINT( \
 				"he_rx_mcs_map_lt_80", \
 				0, \
 				0xFFFF, \
-				0xFFF0, \
+				0xFFFA, \
 				CFG_VALUE_OR_DEFAULT, \
 				"He Rx Mcs Map Lt 80")
 
-#define CFG_HE_TX_MCS_MAP_LT_80 CFG_UINT( \
+/* 11AX related INI configuration */
+/*
+ * <ini>
+ * he_tx_mcs_map_lt_80 - configure Tx HE-MCS Map for ≤ 80 MHz
+ * @Min: 0
+ * @Max: 0xFFFF
+ * @Default: 0xFFFA
+ *
+ * This ini is used to configure Tx HE-MCS Map for ≤ 80 MHz
+ * 0:1 Max HE-MCS For 1 SS
+ * 2:3 Max HE-MCS For 2 SS
+ * 4:5 Max HE-MCS For 3 SS
+ * 6:7 Max HE-MCS For 4 SS
+ * 8:9 Max HE-MCS For 5 SS
+ * 10:11 Max HE-MCS For 6 SS
+ * 12:13 Max HE-MCS For 7 SS
+ * 14:15 Max HE-MCS For 8 SS
+ *
+ * 0 indicates support for HE-MCS 0-7 for n spatial streams
+ * 1 indicates support for HE-MCS 0-9 for n spatial streams
+ * 2 indicates support for HE-MCS 0-11 for n spatial streams
+ * 3 indicates that n spatial streams is not supported for HE PPDUs
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HE_TX_MCS_MAP_LT_80 CFG_INI_UINT( \
 				"he_tx_mcs_map_lt_80", \
 				0, \
 				0xFFFF, \
-				0xFFF0, \
+				0xFFFA, \
 				CFG_VALUE_OR_DEFAULT, \
 				"He Tx Mcs Map Lt 80")
-
-#define CFG_HE_RX_MCS_MAP_160 CFG_UINT( \
+/* 11AX related INI configuration */
+/*
+ * <ini>
+ * he_rx_mcs_map_160 - configure Rx HE-MCS Map for 160 MHz
+ * @Min: 0
+ * @Max: 0xFFFF
+ * @Default: 0xFFFA
+ *
+ * This ini is used to configure Rx HE-MCS Map for 160 MHz
+ * 0:1 Max HE-MCS For 1 SS
+ * 2:3 Max HE-MCS For 2 SS
+ * 4:5 Max HE-MCS For 3 SS
+ * 6:7 Max HE-MCS For 4 SS
+ * 8:9 Max HE-MCS For 5 SS
+ * 10:11 Max HE-MCS For 6 SS
+ * 12:13 Max HE-MCS For 7 SS
+ * 14:15 Max HE-MCS For 8 SS
+ *
+ * 0 indicates support for HE-MCS 0-7 for n spatial streams
+ * 1 indicates support for HE-MCS 0-9 for n spatial streams
+ * 2 indicates support for HE-MCS 0-11 for n spatial streams
+ * 3 indicates that n spatial streams is not supported for HE PPDUs
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HE_RX_MCS_MAP_160 CFG_INI_UINT( \
 				"he_rx_mcs_map_160", \
 				0, \
 				0xFFFF, \
-				0xFFF0, \
+				0xFFFA, \
 				CFG_VALUE_OR_DEFAULT, \
 				"He Rx Mcs Map 160")
 
-#define CFG_HE_TX_MCS_MAP_160 CFG_UINT( \
+/* 11AX related INI configuration */
+/*
+ * <ini>
+ * he_tx_mcs_map_160 - configure Tx HE-MCS Map for 160 MHz
+ * @Min: 0
+ * @Max: 0xFFFF
+ * @Default: 0xFFFA
+ *
+ * This ini is used to configure Tx HE-MCS Map for 160 MHz
+ * 0:1 Max HE-MCS For 1 SS
+ * 2:3 Max HE-MCS For 2 SS
+ * 4:5 Max HE-MCS For 3 SS
+ * 6:7 Max HE-MCS For 4 SS
+ * 8:9 Max HE-MCS For 5 SS
+ * 10:11 Max HE-MCS For 6 SS
+ * 12:13 Max HE-MCS For 7 SS
+ * 14:15 Max HE-MCS For 8 SS
+ *
+ * 0 indicates support for HE-MCS 0-7 for n spatial streams
+ * 1 indicates support for HE-MCS 0-9 for n spatial streams
+ * 2 indicates support for HE-MCS 0-11 for n spatial streams
+ * 3 indicates that n spatial streams is not supported for HE PPDUs
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HE_TX_MCS_MAP_160 CFG_INI_UINT( \
 				"he_tx_mcs_map_160", \
 				0, \
 				0xFFFF, \
-				0xFFF0, \
+				0xFFFA, \
 				CFG_VALUE_OR_DEFAULT, \
 				"He Tx Mcs Map 160")
 

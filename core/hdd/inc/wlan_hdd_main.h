@@ -268,8 +268,6 @@ enum hdd_nb_cmd_id {
 	INTERFACE_DOWN
 };
 
-#define WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS  1000
-#define WLAN_WAIT_TIME_STOP_ROAM  4000
 #define WLAN_WAIT_TIME_STATS       800
 #define WLAN_WAIT_TIME_LINK_STATUS 800
 
@@ -1218,6 +1216,7 @@ struct hdd_context;
  * @delete_in_progress: Flag to indicate that the adapter delete is in
  *			progress, and any operation using rtnl lock inside
  *			the driver can be avoided/skipped.
+ * @mon_adapter: hdd_adapter of monitor mode.
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1531,6 +1530,9 @@ struct hdd_adapter {
 	bool delete_in_progress;
 #ifdef WLAN_FEATURE_BIG_DATA_STATS
 	struct big_data_stats_event big_data_stats;
+#endif
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+	struct hdd_adapter *mon_adapter;
 #endif
 };
 
@@ -2609,18 +2611,13 @@ void hdd_adapter_dev_put_debug(struct hdd_adapter *adapter,
 							next_adapter, dbgid))
 
 /**
- * wlan_hdd_get_adapter_by_vdev_id_from_objmgr() - Fetch adapter from objmgr
- * using vdev_id.
- * @hdd_ctx: the global HDD context
- * @adapter: an hdd_adapter double pointer to store the address of the adapter
+ * wlan_hdd_get_adapter_from_objmgr() - Fetch adapter from objmgr
  * @vdev: the vdev whose corresponding adapter has to be fetched
  *
- * Return: QDF_STATUS
+ * Return: the address of the adapter
  */
-QDF_STATUS
-wlan_hdd_get_adapter_by_vdev_id_from_objmgr(struct hdd_context *hdd_ctx,
-					    struct hdd_adapter **adapter,
-					    struct wlan_objmgr_vdev *vdev);
+struct hdd_adapter *
+wlan_hdd_get_adapter_from_objmgr(struct wlan_objmgr_vdev *vdev);
 
 struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 				     uint8_t session_type,
@@ -4625,6 +4622,13 @@ int hdd_psoc_idle_shutdown(struct device *dev);
 int hdd_psoc_idle_restart(struct device *dev);
 
 /**
+ * hdd_adapter_is_ap() - whether adapter is ap or not
+ * @adapter: adapter to check
+ * Return: true if it is AP
+ */
+bool hdd_adapter_is_ap(struct hdd_adapter *adapter);
+
+/**
  * hdd_common_roam_callback() - common sme roam callback
  * @psoc: Object Manager Psoc
  * @session_id: session id for which callback is called
@@ -4675,6 +4679,22 @@ void wlan_hdd_del_monitor(struct hdd_context *hdd_ctx,
 void
 wlan_hdd_del_p2p_interface(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_reset_monitor_interface() - reset monitor interface flags
+ * @sta_adapter: station adapter
+ *
+ * Return: void
+ */
+void hdd_reset_monitor_interface(struct hdd_adapter *sta_adapter);
+
+/**
+ * hdd_is_pkt_capture_mon_enable() - Is packet capture monitor mode enable
+ * @sta_adapter: station adapter
+ *
+ * Return: status of packet capture monitor adapter
+ */
+struct hdd_adapter *
+hdd_is_pkt_capture_mon_enable(struct hdd_adapter *sta_adapter);
 #else
 static inline
 void wlan_hdd_del_monitor(struct hdd_context *hdd_ctx,
@@ -4691,6 +4711,15 @@ bool wlan_hdd_is_mon_concurrency(void)
 static inline
 void wlan_hdd_del_p2p_interface(struct hdd_context *hdd_ctx)
 {
+}
+
+static inline void hdd_reset_monitor_interface(struct hdd_adapter *sta_adapter)
+{
+}
+
+static inline int hdd_is_pkt_capture_mon_enable(struct hdd_adapter *adapter)
+{
+	return 0;
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 /**

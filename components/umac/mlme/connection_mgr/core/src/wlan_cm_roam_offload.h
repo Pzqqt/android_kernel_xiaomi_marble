@@ -28,6 +28,72 @@
 #include "qdf_str.h"
 #include "wlan_cm_roam_public_struct.h"
 
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+/**
+ * cm_roam_scan_info_event() - send scan info to userspace
+ * @scan: roam scan data
+ * @vdev_id: vdev id
+ *
+ * Return: void
+ */
+void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id);
+
+/**
+ * cm_roam_trigger_info_event() - send trigger info to userspace
+ * @data: roam trigger data
+ * @vdev_id: vdev id
+ * @is_full_scan: is full scan or partial scan
+ *
+ * Return: void
+ */
+void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+				uint8_t vdev_id, bool is_full_scan);
+
+/**
+ * cm_roam_candidate_info_event() - send trigger info to userspace
+ * @ap: roam candidate info
+ * @cand_ap_idx: Candidate AP index
+ *
+ * Return: void
+ */
+void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
+				  uint8_t cand_ap_idx);
+
+/**
+ * cm_roam_result_info_event() - send scan results info to userspace
+ * @res: roam result data
+ * @vdev_id: vdev id
+ * @roam_abort: Is roam abort
+ *
+ * Return: void
+ */
+void cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
+			       bool roam_abort);
+#else
+static inline void
+cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
+{
+}
+
+static inline void
+cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data, uint8_t vdev_id,
+			   bool is_full_scan)
+{
+}
+
+static inline void
+cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
+			     uint8_t cand_idx)
+{
+}
+
+static inline void
+cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
+			  bool roam_abort)
+{
+}
+#endif /* WLAN_FEATURE_CONNECTIVITY_LOGGING */
+
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 
 /**
@@ -243,4 +309,90 @@ cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
 bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 			 struct wlan_objmgr_vdev *vdev,
 			 bool mdie_present);
+
+/**
+ * cm_update_owe_info() - Update owe transition mode element info
+ * @vdev: Object manager VDEV
+ * @rsp: connect resp from VDEV mgr
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+void cm_update_owe_info(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp, uint8_t vdev_id);
+
+#if defined(WLAN_FEATURE_CONNECTIVITY_LOGGING) && \
+	defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * cm_roam_mgmt_frame_event() - Roam management frame event
+ * @frame_data: frame_data
+ * @vdev_id: vdev_id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id);
+
+/**
+ * cm_roam_btm_req_event  - Send BTM request related logging event
+ * @btm_data: BTM trigger related data
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
+		      uint8_t vdev_id);
+
+/**
+ * cm_roam_btm_resp_event() - Send BTM response logging event
+ * @btm_data: BTM response data
+ * @vdev_id: Vdev id
+ * @is_wtc: Is WTC or BTM response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+		       uint8_t vdev_id, bool is_wtc);
+
+/**
+ * cm_roam_btm_query_event()  - Send BTM query logging event
+ * @btm_data: BTM data
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
+			uint8_t vdev_id);
+
+#else
+static inline QDF_STATUS
+cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
+		      uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_btm_resp_event(struct roam_btm_response_data *btm_data,
+		       uint8_t vdev_id, bool is_wtc)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
+			uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* FEATURE_CONNECTIVITY_LOGGING */
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */

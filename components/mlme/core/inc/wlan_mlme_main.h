@@ -22,6 +22,7 @@
 #ifndef _WLAN_MLME_MAIN_H_
 #define _WLAN_MLME_MAIN_H_
 
+#include "qdf_periodic_work.h"
 #include <wlan_mlme_public_struct.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
@@ -392,6 +393,7 @@ struct wait_for_key_timer {
  * @hb_failure_rssi: heartbeat failure AP RSSI
  * @opr_rate_set: operational rates set
  * @ext_opr_rate_set: extended operational rates set
+ * @mcs_rate_set: MCS Based rates set
  * @mscs_req_info: Information related to mscs request
  * @he_config: he config
  * @he_sta_obsspd: he_sta_obsspd
@@ -428,6 +430,7 @@ struct mlme_legacy_priv {
 	uint32_t hb_failure_rssi;
 	struct mlme_cfg_str opr_rate_set;
 	struct mlme_cfg_str ext_opr_rate_set;
+	struct mlme_cfg_str mcs_rate_set;
 	bool twt_wait_for_notify;
 #ifdef WLAN_FEATURE_MSCS
 	struct mscs_req_info mscs_req_info;

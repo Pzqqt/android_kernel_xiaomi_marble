@@ -472,6 +472,74 @@ __lim_process_add_ts_req(struct mac_context *mac, uint8_t *pRxPacketInfo,
 }
 
 /**
+ * lim_is_medium_time_valid() - To check whether AP sends ADD TS response for
+ * an AC with zero medium time and ACM is enabled
+ * @mac_ctx: Pointer to mac context
+ * @pe_session: pointer to session
+ * @addts: Add TS resp buffer
+ *
+ * Return: false if ADD TS response frame for an AC has 0 as medium time.
+ */
+static bool
+lim_is_medium_time_valid(struct mac_context *mac, struct pe_session *pe_session,
+			 tSirAddtsRspInfo addts)
+{
+	struct mac_ts_info *ts_info = &addts.tspec.tsinfo;
+	uint16_t user_priority = ts_info->traffic.userPrio;
+	uint8_t ac = upToAc(user_priority);
+	struct bss_description *bss_desc;
+	tDot11fBeaconIEs *ie_local;
+	bool is_acm = false;
+	QDF_STATUS status;
+
+	if (!pe_session->lim_join_req) {
+		pe_err("Join Request is NULL");
+		return false;
+	}
+
+	bss_desc = &pe_session->lim_join_req->bssDescription;
+	status = wlan_get_parsed_bss_description_ies(mac, bss_desc, &ie_local);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_debug("bss parsing failed");
+		return false;
+	}
+
+	if (ie_local && LIM_IS_QOS_BSS(ie_local)) {
+		switch (ac) {
+		case QCA_WLAN_AC_BE:
+			if (ie_local->WMMParams.acbe_acm)
+				is_acm = true;
+			break;
+		case QCA_WLAN_AC_BK:
+			if (ie_local->WMMParams.acbk_acm)
+				is_acm = true;
+			break;
+		case QCA_WLAN_AC_VI:
+			if (ie_local->WMMParams.acvi_acm)
+				is_acm = true;
+			break;
+		case QCA_WLAN_AC_VO:
+			if (ie_local->WMMParams.acvo_acm)
+				is_acm = true;
+			break;
+		default:
+			pe_debug("Unknown AC:%d", ac);
+			break;
+		}
+	}
+	/*
+	 * If AP sends ADD TS response for an AC with medium time as 0
+	 * and acm disabled treat it as ADD TS failure.
+	 */
+	if (!addts.tspec.mediumTime && is_acm) {
+		pe_debug("medium time 0 and ACM is mandatory. ADDTS failed");
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * __lim_process_add_ts_rsp() - To process add ts response frame
  * @mac_ctx: pointer to mac context
  * @rx_pkt_info: Received packet info
@@ -569,17 +637,11 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 		addts.tspec.tsinfo.traffic.userPrio, addts.status);
 
 	/*
-	 * If AP sends ADD TS response for an AC with medium time as 0
-	 * treat it as ADD TS failure.
+	 * Change the status to failure and fallthrough to send response
+	 * to SME to cleanup the flow.
 	 */
-	if (!addts.tspec.mediumTime) {
-		pe_err("Medium Time 0! Add TS failed");
-		/*
-		 * Change the status to failure and fallthrough to send response
-		 * to SME to cleanup the flow.
-		 */
+	if (!lim_is_medium_time_valid(mac_ctx, session, addts))
 		addts.status = STATUS_UNSPECIFIED_FAILURE;
-	}
 
 	/* deactivate the response timer */
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_ADDTS_RSP_TIMER);
@@ -1529,7 +1591,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 					WMI_MGMT_TX_COMP_TYPE_DISCARD);
 		}
 	} else {
-		pe_err_rl("Failed to process addba request");
+		pe_debug_rl("Failed to process addba request");
 	}
 
 error:

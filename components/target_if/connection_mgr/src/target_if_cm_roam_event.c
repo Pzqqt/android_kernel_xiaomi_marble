@@ -146,10 +146,10 @@ int target_if_cm_roam_sync_event(ol_scn_t scn, uint8_t *event,
 		return -EINVAL;
 	}
 
-	status = wmi_extract_roam_sync_event(wmi_handle, event,
-					     len, &sync_ind);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("parsing of event failed, %d", status);
+	qdf_status = wmi_extract_roam_sync_event(wmi_handle, event,
+						 len, &sync_ind);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		target_if_err("parsing of event failed, %d", qdf_status);
 		status = -EINVAL;
 		goto err;
 	}
@@ -178,111 +178,13 @@ err:
 	return status;
 }
 
-static QDF_STATUS target_if_roam_event_dispatcher(struct scheduler_msg *msg)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_cm_roam_rx_ops *roam_rx_ops;
-
-	switch (msg->type) {
-	case ROAM_PMKID_REQ_EVENT:
-	{
-		struct roam_pmkid_req_event *data = msg->bodyptr;
-
-		if (!data->psoc) {
-			target_if_err("psoc is null");
-			status = QDF_STATUS_E_NULL_VALUE;
-			goto done;
-		}
-		roam_rx_ops = target_if_cm_get_roam_rx_ops(data->psoc);
-		if (!roam_rx_ops || !roam_rx_ops->roam_pmkid_request_event_rx) {
-			target_if_err("No valid roam rx ops");
-			status = QDF_STATUS_E_INVAL;
-			goto done;
-		}
-
-		status = roam_rx_ops->roam_pmkid_request_event_rx(data);
-	}
-	break;
-	case ROAM_EVENT:
-	{
-		struct roam_offload_roam_event *data = msg->bodyptr;
-
-		if (!data->psoc) {
-			target_if_err("psoc is null");
-			status = QDF_STATUS_E_NULL_VALUE;
-			goto done;
-		}
-		roam_rx_ops = target_if_cm_get_roam_rx_ops(data->psoc);
-		if (!roam_rx_ops || !roam_rx_ops->roam_event_rx) {
-			target_if_err("No valid roam rx ops");
-			status = QDF_STATUS_E_INVAL;
-			goto done;
-		}
-
-		status = roam_rx_ops->roam_event_rx(data);
-	}
-	break;
-	case ROAM_VDEV_DISCONNECT_EVENT:
-	{
-		struct vdev_disconnect_event_data *data = msg->bodyptr;
-
-		if (!data->psoc) {
-			target_if_err("psoc is null");
-			status = QDF_STATUS_E_NULL_VALUE;
-			goto done;
-		}
-
-		roam_rx_ops = target_if_cm_get_roam_rx_ops(data->psoc);
-		if (!roam_rx_ops || !roam_rx_ops->vdev_disconnect_event) {
-			target_if_err("No valid roam rx ops");
-			status = -EINVAL;
-			goto done;
-		}
-		status = roam_rx_ops->vdev_disconnect_event(data);
-	}
-	break;
-	default:
-		target_if_err("invalid msg type %d", msg->type);
-		status = QDF_STATUS_E_INVAL;
-	}
-
-done:
-	qdf_mem_free(msg->bodyptr);
-	msg->bodyptr = NULL;
-	return status;
-}
-
-static QDF_STATUS target_if_roam_event_flush_cb(struct scheduler_msg *msg)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	switch (msg->type) {
-	case ROAM_PMKID_REQ_EVENT:
-	case ROAM_EVENT:
-	case ROAM_VDEV_DISCONNECT_EVENT:
-		qdf_mem_free(msg->bodyptr);
-		msg->bodyptr = NULL;
-		break;
-	default:
-		target_if_err("invalid msg type %d", msg->type);
-		status = QDF_STATUS_E_INVAL;
-		goto free_res;
-	}
-	return status;
-
-free_res:
-	qdf_mem_free(msg->bodyptr);
-	msg->bodyptr = NULL;
-	return status;
-}
-
 int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 {
 	QDF_STATUS qdf_status;
 	struct wmi_unified *wmi_handle;
 	struct roam_offload_roam_event *roam_event = NULL;
 	struct wlan_objmgr_psoc *psoc;
-	struct scheduler_msg msg = {0};
+	struct wlan_cm_roam_rx_ops *roam_rx_ops;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -303,22 +205,31 @@ int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 	qdf_status = wmi_extract_roam_event(wmi_handle, event, len, roam_event);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		target_if_err("parsing of event failed, %d", qdf_status);
-		qdf_mem_free(roam_event);
-		return -EINVAL;
+		qdf_status = QDF_STATUS_E_INVAL;
+		goto done;
 	}
 
 	roam_event->psoc = psoc;
-	msg.bodyptr = roam_event;
-	msg.type = ROAM_EVENT;
-	msg.callback = target_if_roam_event_dispatcher;
-	msg.flush_callback = target_if_roam_event_flush_cb;
-	target_if_debug("ROAM_EVENT sent: %d", msg.type);
-	qdf_status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
-					    QDF_MODULE_ID_TARGET_IF,
-					    QDF_MODULE_ID_TARGET_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		target_if_roam_event_flush_cb(&msg);
 
+	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
+	if (!roam_rx_ops || !roam_rx_ops->roam_event_rx) {
+		target_if_err("No valid roam rx ops");
+		qdf_status = QDF_STATUS_E_INVAL;
+		goto done;
+	}
+
+	/**
+	 * This can be called from IRQ context for WOW events such as
+	 * WOW_REASON_LOW_RSSI and WOW_REASON_HO_FAIL. There is no issue
+	 * currently, as these events are posted to schedular thread from
+	 * cm_roam_event_handler, to access umac which use mutex.
+	 * If any new ROAM event is added in IRQ context in future, avoid taking
+	 * mutex. If mutex/sleep is needed, post a message to scheduler thread.
+	 */
+	qdf_status = roam_rx_ops->roam_event_rx(roam_event);
+
+done:
+	qdf_mem_free(roam_event);
 	return qdf_status_to_os_return(qdf_status);
 }
 
@@ -374,7 +285,7 @@ target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct vdev_disconnect_event_data *data;
-	struct scheduler_msg msg = {0};
+	struct wlan_cm_roam_rx_ops *roam_rx_ops;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -395,22 +306,27 @@ target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
 						       data);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		target_if_err("parsing of event failed, %d", qdf_status);
-		qdf_mem_free(data);
-		return -EINVAL;
+		goto done;
 	}
 
 	data->psoc = psoc;
-	msg.bodyptr = data;
-	msg.type = ROAM_VDEV_DISCONNECT_EVENT;
-	msg.callback = target_if_roam_event_dispatcher;
-	msg.flush_callback = target_if_roam_event_flush_cb;
-	target_if_debug("ROAM_VDEV_DISCONNECT_EVENT sent: %d", msg.type);
-	qdf_status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
-					    QDF_MODULE_ID_TARGET_IF,
-					    QDF_MODULE_ID_TARGET_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		target_if_roam_event_flush_cb(&msg);
+	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
+	if (!roam_rx_ops || !roam_rx_ops->vdev_disconnect_event) {
+		target_if_err("No valid roam rx ops");
+		qdf_status = QDF_STATUS_E_INVAL;
+		goto done;
+	}
 
+	/**
+	 * This can be called from IRQ context for WOW events. There is no
+	 * issue currently as this event is posted to scheduler thread from
+	 * wma_handle_disconnect_reason(). Avoid aquiring mutex/sleep in this
+	 * context in future and post a message to scheduler thread if needed.
+	 */
+	qdf_status = roam_rx_ops->vdev_disconnect_event(data);
+
+done:
+	qdf_mem_free(data);
 	return qdf_status_to_os_return(qdf_status);
 }
 
@@ -555,7 +471,7 @@ target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct roam_pmkid_req_event *data = NULL;
-	struct scheduler_msg msg = {0};
+	struct wlan_cm_roam_rx_ops *roam_rx_ops;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -573,22 +489,28 @@ target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 						    &data);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		target_if_err("parsing of event failed, %d", qdf_status);
-		qdf_mem_free(data);
-		return -EINVAL;
+		goto done;
 	}
 
 	data->psoc = psoc;
-	msg.bodyptr = data;
-	msg.type = ROAM_PMKID_REQ_EVENT;
-	msg.callback = target_if_roam_event_dispatcher;
-	msg.flush_callback = target_if_roam_event_flush_cb;
-	target_if_debug("ROAM_PMKID_REQ_EVENT sent: %d", msg.type);
-	qdf_status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
-					    QDF_MODULE_ID_TARGET_IF,
-					    QDF_MODULE_ID_TARGET_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		target_if_roam_event_flush_cb(&msg);
 
+	roam_rx_ops = target_if_cm_get_roam_rx_ops(data->psoc);
+	if (!roam_rx_ops || !roam_rx_ops->roam_pmkid_request_event_rx) {
+		target_if_err("No valid roam rx ops");
+		qdf_status = QDF_STATUS_E_INVAL;
+		goto done;
+	}
+
+	/**
+	 * This can be called from IRQ context for WOW events. There is no
+	 * issue currently as this event doesn't take any mutex.
+	 * If there is a mutex/sleep is needed in future, post a message to
+	 * scheduler thread.
+	 */
+	qdf_status = roam_rx_ops->roam_pmkid_request_event_rx(data);
+
+done:
+	qdf_mem_free(data);
 	return qdf_status_to_os_return(qdf_status);
 }
 

@@ -72,7 +72,7 @@ ucfg_twt_get_peer_session_param_by_dlg_id(struct peer_mc_cp_stats *mc_stats,
 		src_param = &mc_stats->twt_param[i];
 		if (!event_type ||
 		    (src_param->dialog_id != input_dialog_id &&
-		     input_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID))
+		     input_dialog_id != TWT_ALL_SESSIONS_DIALOG_ID))
 			continue;
 
 		if ((event_type == HOST_TWT_SESSION_SETUP) ||

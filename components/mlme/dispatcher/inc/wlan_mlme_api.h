@@ -3154,13 +3154,13 @@ wlan_mlme_get_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool *val);
 /**
  * mlme_get_opr_rate() - get operational rate
  * @vdev: vdev pointer
- * @dst: pointer to get operational rate
- * @len: length of operational rate
+ * @dst: buffer to get rates set
+ * @len: length of the buffer
  *
- * Return: QDF_SUCCESS if success
+ * Return: length of the rates set
  */
-QDF_STATUS mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
-			     qdf_size_t *len);
+qdf_size_t mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+			     qdf_size_t len);
 
 /**
  * mlme_set_opr_rate() - set operational rate
@@ -3176,13 +3176,13 @@ QDF_STATUS mlme_set_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 /**
  * mlme_get_ext_opr_rate() - get extended operational rate
  * @vdev: vdev pointer
- * @dst: pointer to get extended operational rate
- * @len: length of extended operational rate
+ * @dst: buffer to get rates set
+ * @len: length of the buffer
  *
- * Return: QDF_SUCCESS if success
+ * Return: length of the rates set
  */
-QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
-				 qdf_size_t *len);
+qdf_size_t mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+				 qdf_size_t len);
 
 /**
  * mlme_set_ext_opr_rate() - set extended operational rate
@@ -3194,6 +3194,28 @@ QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
  */
 QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 				 qdf_size_t len);
+
+/**
+ * mlme_get_mcs_rate() - get MCS based rate
+ * @vdev: vdev pointer
+ * @dst: buffer to get rates set
+ * @len: length of the buffer
+ *
+ * Return: length of the rates set
+ */
+qdf_size_t mlme_get_mcs_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+			     qdf_size_t len);
+
+/**
+ * mlme_set_mcs_rate() - set MCS based rate
+ * @vdev: vdev pointer
+ * @src: pointer to set MCS based rate
+ * @len: length of MCS based rate
+ *
+ * Return: QDF_SUCCESS if success
+ */
+QDF_STATUS mlme_set_mcs_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
+			     qdf_size_t len);
 
 /**
  * wlan_mlme_is_sta_mon_conc_supported() - Check if STA + Monitor mode
@@ -3336,4 +3358,30 @@ QDF_STATUS mlme_set_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
  * Return: True if user_ps flag is set
  */
 bool mlme_get_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+/**
+ * wlan_mlme_get_p2p_p2p_conc_support() - Get p2p+p2p conc support
+ *
+ * @psoc: pointer to psoc object
+ * @val : value
+ *
+ * Return: Success/failure
+ */
+bool
+wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
+/**
+ * mlme_get_vht_ch_width() - get vht channel width of fw capability
+ *
+ * Return: vht channel width
+ */
+enum phy_ch_width mlme_get_vht_ch_width(void);
 #endif /* _WLAN_MLME_API_H_ */

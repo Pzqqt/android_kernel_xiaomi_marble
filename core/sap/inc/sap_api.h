@@ -513,6 +513,7 @@ struct sap_config {
 	uint8_t *vendor_ie;
 	tSirMacRateSet supported_rates;
 	tSirMacRateSet extended_rates;
+	bool require_h2e;
 	enum sap_acs_dfs_mode acs_dfs_mode;
 	struct hdd_channel_info *channel_info;
 	uint32_t channel_info_count;

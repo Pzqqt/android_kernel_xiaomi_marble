@@ -45,6 +45,7 @@
 #include "hif.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_napi.h"
+#include "wlan_hdd_cfr.h"
 #include "wlan_roam_debug.h"
 #include "wma_api.h"
 
@@ -155,6 +156,7 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter,
 
 	/* update P2P connection status */
 	ucfg_p2p_status_disconnect(vdev);
+	hdd_cfr_disconnect(adapter->vdev);
 
 	hdd_wmm_adapter_clear(adapter);
 	ucfg_cm_ft_reset(vdev);
@@ -251,15 +253,26 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 			   struct net_device *dev, u16 reason)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
+	int ret;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
 	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
+
+	if (hdd_ctx->is_wiphy_suspended) {
+		hdd_info_rl("wiphy is suspended retry disconnect");
+		return -EAGAIN;
+	}
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_DISCONNECT,
@@ -434,14 +447,58 @@ hdd_cm_disconnect_complete_post_user_update(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_RUNTIME_PM
+static void
+wlan_hdd_runtime_pm_wow_disconnect_handler(struct hdd_context *hdd_ctx)
+{
+	struct hif_opaque_softc *hif_ctx;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return;
+	}
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx) {
+		hdd_err("hif_ctx is NULL");
+		return;
+	}
+
+	if (hdd_is_any_sta_connected(hdd_ctx)) {
+		hdd_debug("active connections: runtime pm prevented: %d",
+			  hdd_ctx->runtime_pm_prevented);
+		return;
+	}
+
+	hdd_debug("Runtime allowed : %d", hdd_ctx->runtime_pm_prevented);
+	qdf_spin_lock_irqsave(&hdd_ctx->pm_qos_lock);
+	if (hdd_ctx->runtime_pm_prevented) {
+		hif_pm_runtime_put(hif_ctx, RTPM_ID_QOS_NOTIFY);
+		hdd_ctx->runtime_pm_prevented = false;
+	}
+	qdf_spin_unlock_irqrestore(&hdd_ctx->pm_qos_lock);
+}
+#else
+static void
+wlan_hdd_runtime_pm_wow_disconnect_handler(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 QDF_STATUS hdd_cm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 				      struct wlan_cm_discon_rsp *rsp,
 				      enum osif_cb_type type)
 {
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
 	switch (type) {
 	case OSIF_PRE_USERSPACE_UPDATE:
 		return hdd_cm_disconnect_complete_pre_user_update(vdev, rsp);
 	case OSIF_POST_USERSPACE_UPDATE:
+		hdd_debug("Wifi disconnected: vdev id %d",
+			  vdev->vdev_objmgr.vdev_id);
+		wlan_hdd_runtime_pm_wow_disconnect_handler(hdd_ctx);
+
 		return hdd_cm_disconnect_complete_post_user_update(vdev, rsp);
 	default:
 		hdd_cm_disconnect_complete_pre_user_update(vdev, rsp);

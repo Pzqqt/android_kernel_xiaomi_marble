@@ -803,7 +803,10 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					   name_assign_type, true);
 	} else {
 		uint8_t *device_address;
-
+		if (strnstr(name, "p2p", 3) && mode == QDF_STA_MODE) {
+			hdd_debug("change mode to p2p device");
+			mode = QDF_P2P_DEVICE_MODE;
+		}
 		device_address = wlan_hdd_get_intf_addr(hdd_ctx, mode);
 		if (!device_address)
 			return ERR_PTR(-EINVAL);

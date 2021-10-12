@@ -283,7 +283,7 @@ static void wlan_p2p_event_callback(void *user_data,
 	}
 
 	pdev = wlan_vdev_get_pdev(vdev);
-	chan = ieee80211_get_channel(wdev->wiphy, p2p_event->chan);
+	chan = ieee80211_get_channel(wdev->wiphy, p2p_event->chan_freq);
 	if (!chan) {
 		osif_err("channel conversion failed");
 		goto fail;
@@ -364,7 +364,7 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	roc_req.chan = chan->center_freq;
+	roc_req.chan_freq = chan->center_freq;
 	roc_req.duration = duration;
 	roc_req.vdev_id = (uint32_t)vdev_id;
 
@@ -376,7 +376,7 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (!ok) {
-		osif_err("channel%d not OK for DNBS", roc_req.chan);
+		osif_err("channel%d not OK for DNBS", roc_req.chan_freq);
 		return -EINVAL;
 	}
 
@@ -455,7 +455,7 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	}
 
 	mgmt_tx.vdev_id = (uint32_t)vdev_id;
-	mgmt_tx.chan = chan_freq;
+	mgmt_tx.chan_freq = chan_freq;
 	mgmt_tx.wait = wait;
 	mgmt_tx.len = len;
 	mgmt_tx.no_cck = (uint32_t)no_cck;

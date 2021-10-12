@@ -107,6 +107,7 @@
 #define MAX_SSID_ALLOWED_LIST    8
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
+#define WLAN_MAX_BTM_CANDIDATES      8
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 #define MAX_FTIE_SIZE CM_MAX_FTIE_SIZE
@@ -166,6 +167,60 @@
 #define BMISS_MIN_RSSI  1
 #define MIN_RSSI_2G_TO_5G_ROAM 2
 #define CM_CFG_VALID_CHANNEL_LIST_LEN 100
+
+/**
+ * enum roam_trigger_sub_reason - Roam trigger sub reasons
+ * @ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER: Roam scan triggered due to
+ * periodic timer expiry
+ * @ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER: Roam scan triggered due to
+ * inactivity detection and connected AP RSSI falls below a certain threshold
+ * @ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER: Roam scan triggered due to BTM
+ * Disassoc Imminent timeout
+ * @ROAM_TRIGGER_SUB_REASON_FULL_SCAN: Roam scan triggered due to partial scan
+ * failure
+ * @ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC: Roam scan triggered due to Low
+ * rssi periodic timer
+ * @ROAM_TRIGGER_SUB_REASON_CU_PERIODIC: Roam scan triggered due to CU periodic
+ * timer
+ * @ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY: Roam scan
+ * triggered due to periodic timer after device inactivity after low rssi
+ * trigger
+ * @ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU: Roam scan
+ * triggered due to first periodic timer exiry when full scan count is not 0
+ * and roam scan trigger is CU load
+ * @ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU: Roam scan triggered due to
+ * first periodic timer exiry when full scan count is 0 and roam scan trigger
+ * is CU load
+ */
+enum roam_trigger_sub_reason {
+	ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER = 1,
+	ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_LOW_RSSI,
+	ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER,
+	ROAM_TRIGGER_SUB_REASON_FULL_SCAN,
+	ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC,
+	ROAM_TRIGGER_SUB_REASON_CU_PERIODIC,
+	ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY,
+	ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU,
+	ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU,
+};
+
+/**
+ * enum wlan_roam_frame_subtype - Roam frame subtypes
+ * @ROAM_FRAME_SUBTYPE_M1: EAPOL M1 Frame
+ * @ROAM_FRAME_SUBTYPE_M2: EAPOL M2 Frame
+ * @ROAM_FRAME_SUBTYPE_M3: EAPOL M3 Frame
+ * @ROAM_FRAME_SUBTYPE_M4: EAPOL M4 Frame
+ * @ROAM_FRAME_SUBTYPE_GTK_M1: GTK M1 Frame
+ * @ROAM_FRAME_SUBTYPE_GTK_M2: GTK M2 Frame
+ */
+enum wlan_roam_frame_subtype {
+	ROAM_FRAME_SUBTYPE_M1 = 1,
+	ROAM_FRAME_SUBTYPE_M2,
+	ROAM_FRAME_SUBTYPE_M3,
+	ROAM_FRAME_SUBTYPE_M4,
+	ROAM_FRAME_SUBTYPE_GTK_M1,
+	ROAM_FRAME_SUBTYPE_GTK_M2,
+};
 
 /**
  * struct cm_roam_neighbor_report_offload_params - neighbor report offload
@@ -263,6 +318,88 @@ enum roam_fail_params {
 	ROAM_FAIL_REASON,
 };
 
+/**
+ * enum wlan_roam_failure_reason_code - Roaming failure reason codes
+ * @ROAM_FAIL_REASON_NO_SCAN_START: Scan start failed
+ * @ROAM_FAIL_REASON_NO_AP_FOUND: No roamable AP found
+ * @ROAM_FAIL_REASON_NO_CAND_AP_FOUND: No candidate AP found
+ * @ROAM_FAIL_REASON_HOST: Host aborted roaming due to vdev stop from
+ * host
+ * @ROAM_FAIL_REASON_AUTH_SEND: Auth TX failure
+ * @ROAM_FAIL_REASON_NO_AUTH_RESP: No Authentication response received
+ * @ROAM_FAIL_REASON_AUTH_RECV: Authentication response received with
+ * error status code
+ * @ROAM_FAIL_REASON_REASSOC_SEND: Reassoc request TX failed
+ * @ROAM_FAIL_REASON_REASSOC_RECV: Reassoc response frame not received
+ * @ROAM_FAIL_REASON_NO_REASSOC_RESP: No reassociation response received
+ * @ROAM_FAIL_REASON_EAPOL_TIMEOUT: EAPoL timedout
+ * @ROAM_FAIL_REASON_MLME: MLME internal error
+ * @ROAM_FAIL_REASON_INTERNAL_ABORT: Abort due to internal firmware error
+ * @ROAM_FAIL_REASON_SCAN_START: Not able to start roam scan
+ * @ROAM_FAIL_REASON_AUTH_NO_ACK: No ack received for Auth request frame
+ * @ROAM_FAIL_REASON_AUTH_INTERNAL_DROP: Auth request dropped internally
+ * @ROAM_FAIL_REASON_REASSOC_NO_ACK: No ack received for reassoc request frame
+ * @ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP: Reassoc frame dropped internally
+ * at firmware
+ * @ROAM_FAIL_REASON_EAPOL_M2_SEND: EAPoL M2 send failed
+ * @ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP: EAPoL M2 frame dropped internally
+ * at firmware
+ * @ROAM_FAIL_REASON_EAPOL_M2_NO_ACK: No ack received for EAPoL M2 frame
+ * @ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT: EAPoL M3 not received from AP
+ * @ROAM_FAIL_REASON_EAPOL_M4_SEND: EAPoL M4 frame TX failed
+ * @ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP: EAPoL M4 frame dropped internally
+ * @ROAM_FAIL_REASON_EAPOL_M4_NO_ACK: No ack received for EAPoL M4 frame
+ * @ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS: Roam scan start failed for final
+ * bmiss case
+ * @ROAM_FAIL_REASON_DISCONNECT: Deauth/Disassoc frame received from AP during
+ * roaming
+ * @ROAM_FAIL_REASON_SYNC: Roam failure due to host wake-up during roaming in
+ * progress
+ * @ROAM_FAIL_REASON_SAE_INVALID_PMKID: Invalid PMKID during SAE roaming
+ * @ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT: SAE roaming preauthentication
+ * timedout
+ * @ROAM_FAIL_REASON_SAE_PREAUTH_FAIL: SAE preauthentication failure
+ * @ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO: Start handoff failed
+ * @ROAM_FAIL_REASON_UNKNOWN: Default reason
+ */
+enum wlan_roam_failure_reason_code {
+	ROAM_FAIL_REASON_NO_SCAN_START = 1,
+	ROAM_FAIL_REASON_NO_AP_FOUND,
+	ROAM_FAIL_REASON_NO_CAND_AP_FOUND,
+
+	/* Failure reasons after roam scan is complete */
+	ROAM_FAIL_REASON_HOST,
+	ROAM_FAIL_REASON_AUTH_SEND,
+	ROAM_FAIL_REASON_NO_AUTH_RESP,
+	ROAM_FAIL_REASON_AUTH_RECV,
+	ROAM_FAIL_REASON_REASSOC_SEND,
+	ROAM_FAIL_REASON_REASSOC_RECV,
+	ROAM_FAIL_REASON_NO_REASSOC_RESP,
+	ROAM_FAIL_REASON_EAPOL_TIMEOUT,
+	ROAM_FAIL_REASON_MLME,
+	ROAM_FAIL_REASON_INTERNAL_ABORT,
+	ROAM_FAIL_REASON_SCAN_START,
+	ROAM_FAIL_REASON_AUTH_NO_ACK,
+	ROAM_FAIL_REASON_AUTH_INTERNAL_DROP,
+	ROAM_FAIL_REASON_REASSOC_NO_ACK,
+	ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP,
+	ROAM_FAIL_REASON_EAPOL_M2_SEND,
+	ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP,
+	ROAM_FAIL_REASON_EAPOL_M2_NO_ACK,
+	ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT,
+	ROAM_FAIL_REASON_EAPOL_M4_SEND,
+	ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP,
+	ROAM_FAIL_REASON_EAPOL_M4_NO_ACK,
+	ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS,
+	ROAM_FAIL_REASON_DISCONNECT,
+	ROAM_FAIL_REASON_SYNC,
+	ROAM_FAIL_REASON_SAE_INVALID_PMKID,
+	ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT,
+	ROAM_FAIL_REASON_SAE_PREAUTH_FAIL,
+	ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO,
+	ROAM_FAIL_REASON_UNKNOWN = 255,
+};
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * srtuct reassoc_timer_ctx - reassoc timer context
@@ -286,6 +423,16 @@ struct roam_synch_frame_ind {
 	uint32_t reassoc_rsp_len;
 	uint8_t *reassoc_rsp;
 	uint8_t vdev_id;
+};
+
+/* struct owe_transition_mode_info - structure containing owe transition mode
+ * element info
+ * @is_owe_transition_conn: Current connection is in owe transition mode or not
+ * @ssid: ssid
+ */
+struct owe_transition_mode_info {
+	bool is_owe_transition_conn;
+	struct wlan_ssid  ssid;
 };
 
 /**
@@ -324,6 +471,7 @@ struct roam_synch_frame_ind {
  * @btk: btk data
  * @psk_pmk: pmk
  * @pmk_len: length of pmk
+ * @owe_info: owe ap profile info
  * @mdid: mdid info
  * @is_11r_assoc: is 11r assoc
  * @is_adaptive_11r_connection: is adaptive 11r connection
@@ -370,6 +518,7 @@ struct rso_config {
 	uint8_t psk_pmk[ROAM_SCAN_PSK_SIZE];
 	uint8_t pmk_len;
 #endif
+	struct owe_transition_mode_info owe_info;
 	struct mobility_domain_info mdid;
 	bool is_11r_assoc;
 	bool is_adaptive_11r_connection;
@@ -718,6 +867,7 @@ struct scoring_param {
  * ROAM_TRIGGER_REASON_ESS_RSSI: Roam triggered due to ess rssi
  * ROAM_TRIGGER_REASON_WTC_BTM: Roam triggered due to WTC BTM
  * ROAM_TRIGGER_REASON_PMK_TIMEOUT: Roam triggered due to PMK expiry
+ * ROAM_TRIGGER_REASON_BTC: Roam triggered due to BT Coex
  * ROAM_TRIGGER_REASON_MAX: Maximum number of roam triggers
  */
 enum roam_trigger_reason {
@@ -740,6 +890,7 @@ enum roam_trigger_reason {
 	ROAM_TRIGGER_REASON_ESS_RSSI,
 	ROAM_TRIGGER_REASON_WTC_BTM,
 	ROAM_TRIGGER_REASON_PMK_TIMEOUT,
+	ROAM_TRIGGER_REASON_BTC,
 	ROAM_TRIGGER_REASON_MAX,
 };
 
@@ -798,6 +949,7 @@ struct wlan_roam_triggers {
  * @param: scoring params to short candidate
  * @min_rssi_params: Min RSSI values for different roam triggers
  * @score_delta_params: Roam score delta values for different triggers
+ * @owe_ap_profile: owe ap profile info
  */
 struct ap_profile_params {
 	uint8_t vdev_id;
@@ -805,6 +957,7 @@ struct ap_profile_params {
 	struct scoring_param param;
 	struct roam_trigger_min_rssi min_rssi_params[NUM_OF_ROAM_MIN_RSSI];
 	struct roam_trigger_score_delta score_delta_param[NUM_OF_ROAM_TRIGGERS];
+	struct owe_transition_mode_info owe_ap_profile;
 };
 
 /**
@@ -1621,6 +1774,8 @@ enum roam_offload_state {
  *  @target_bssid:  AP MAC address
  *  @vsie_reason:   Vsie_reason value
  *  @timestamp:     This timestamp indicates the time when btm rsp is sent
+ *  @btm_resp_dialog_token: Dialog token
+ *  @btm_delay: BTM bss termination delay
  */
 struct roam_btm_response_data {
 	bool present;
@@ -1628,6 +1783,8 @@ struct roam_btm_response_data {
 	struct qdf_mac_addr target_bssid;
 	uint32_t vsie_reason;
 	uint32_t timestamp;
+	uint16_t btm_resp_dialog_token;
+	uint8_t btm_delay;
 };
 
 /**
@@ -1663,6 +1820,34 @@ struct roam_msg_info {
 	uint32_t msg_id;
 	uint32_t msg_param1;
 	uint32_t msg_param2;
+};
+
+/**
+ * struct roam_frame_info  - Structure to hold the mgmt frame/eapol frame
+ * related info exchanged during roaming.
+ * @present:     Flag to indicate if roam frame info TLV is present
+ * @timestamp:   Fw timestamp at which the frame was Tx/Rx'ed
+ * @type:        Frame Type
+ * @subtype:     Frame subtype
+ * @is_req:      Frame is request frame or response frame
+ * @seq_num:     Frame sequence number from the 802.11 header
+ * @status_code: Status code from 802.11 spec, section 9.4.1.9
+ * @tx_status: Frame TX status defined by enum qdf_dp_tx_rx_status
+ * applicable only for tx frames
+ * @rssi: Frame rssi
+ * @retry_count: Frame retry count
+ */
+struct roam_frame_info {
+	bool present;
+	uint32_t timestamp;
+	uint8_t type;
+	uint8_t subtype;
+	uint8_t is_req;
+	enum qdf_dp_tx_rx_status tx_status;
+	uint16_t seq_num;
+	uint16_t status_code;
+	int32_t rssi;
+	uint16_t retry_count;
 };
 
 /**
@@ -1866,13 +2051,11 @@ struct cm_roam_scan_ch_resp {
  * enum roam_dispatcher_events - Roam events to post to scheduler thread
  * @ROAM_EVENT_INVALID: Invalid event
  * @ROAM_PMKID_REQ_EVENT: Roam pmkid request event
- * @ROAM_EVENT: Roam event
  * @ROAM_VDEV_DISCONNECT_EVENT: Roam disconnect event
  */
 enum roam_dispatcher_events {
 	ROAM_EVENT_INVALID,
 	ROAM_PMKID_REQ_EVENT,
-	ROAM_EVENT,
 	ROAM_VDEV_DISCONNECT_EVENT,
 };
 #endif
@@ -2046,6 +2229,11 @@ struct cm_roam_values_copy {
 #define MAX_PN_LEN 8
 #define MAX_KEY_LEN 32
 
+/* MAX_FREQ_RANGE_NUM shouldn't exceed as only in case od SBS there will be 3
+ * frequency ranges, For DBS, it will be 2. For SMM, it will be 1
+ */
+#define MAX_FREQ_RANGE_NUM 3
+
 /**
  * struct cm_ho_fail_ind - ho fail indication to CM
  * @vdev_id: vdev id
@@ -2069,6 +2257,18 @@ struct policy_mgr_vdev_mac_map {
 };
 
 /**
+ * struct policy_mgr_pdev_mac_freq_map - vdev id-mac id map
+ * @pdev_id: Pdev id, macros starting with WMI_PDEV_ID_
+ * @start_freq: Start Frequency in Mhz
+ * @end_freq: End Frequency in Mhz
+ */
+struct policy_mgr_pdev_mac_freq_map {
+	uint32_t pdev_id;
+	qdf_freq_t start_freq;
+	qdf_freq_t end_freq;
+};
+
+/**
  * struct cm_hw_mode_trans_ind - HW mode transition indication
  * @old_hw_mode_index: Index of old HW mode
  * @new_hw_mode_index: Index of new HW mode
@@ -2080,6 +2280,8 @@ struct cm_hw_mode_trans_ind {
 	uint32_t new_hw_mode_index;
 	uint32_t num_vdev_mac_entries;
 	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
+	uint32_t num_freq_map;
+	struct policy_mgr_pdev_mac_freq_map mac_freq_map[MAX_FREQ_RANGE_NUM];
 };
 
 /*

@@ -45,6 +45,7 @@ hdd_dcs_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 {
 	struct reject_ap_info ap_info;
 
+	qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
 	qdf_copy_macaddr(&ap_info.bssid, bssid);
 	/* set retry_delay to reject new connect requests */
 	ap_info.rssi_reject_params.retry_delay =

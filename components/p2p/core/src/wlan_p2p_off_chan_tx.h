@@ -156,7 +156,7 @@ struct p2p_frame_info {
  * @scan_id:        Scan id given by scan component for this roc req
  * @roc_cookie:     Cookie for remain on channel request
  * @id:             Identifier of this tx context
- * @chan:           Chan for which this tx has been requested
+ * @chan_freq:      Chan frequency for which this tx has been requested
  * @buf:            tx buffer
  * @buf_len:        Length of tx buffer
  * @off_chan:       Is this off channel tx
@@ -173,7 +173,7 @@ struct tx_action_context {
 	int scan_id;
 	uint64_t roc_cookie;
 	int32_t id;
-	qdf_freq_t chan;
+	qdf_freq_t chan_freq;
 	uint8_t *buf;
 	int buf_len;
 	bool off_chan;
