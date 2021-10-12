@@ -962,8 +962,6 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 	}
 
 	core->smmu_fault_count++;
-	if (!core->last_fault_addr)
-		core->last_fault_addr = iova;
 	dprintk(CVP_ERR, "%s - faulting address: %lx, %d\n",
 		__func__, iova, core->smmu_fault_count);
 
