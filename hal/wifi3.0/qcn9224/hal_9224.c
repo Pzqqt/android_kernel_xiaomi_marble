@@ -796,8 +796,8 @@ void hal_rx_get_rtt_info_9224(void *rx_tlv, void *ppdu_info_hdl)
 
 	ppdu_info->cfr_info.chan_capture_status =
 	HAL_RX_GET(rx_tlv,
-		   RX_LOCATION_INFO,
-		   RESERVED_3);
+		   PHYRX_LOCATION_RX_LOCATION_INFO_DETAILS,
+		   RTT_CFR_STATUS);
 
 	ppdu_info->cfr_info.rx_start_ts =
 	HAL_RX_GET(rx_tlv,
@@ -811,23 +811,27 @@ void hal_rx_get_rtt_info_9224(void *rx_tlv, void *ppdu_info_hdl)
 
 	ppdu_info->cfr_info.agc_gain_info0 =
 	HAL_RX_GET(rx_tlv,
-		   PHYRX_PKT_END_INFO,
-		   PHY_TIMESTAMP_1_LOWER_32);
+		   PHYRX_LOCATION_RX_LOCATION_INFO_DETAILS,
+		   GAIN_CHAIN0);
+
+	ppdu_info->cfr_info.agc_gain_info0 |=
+	(((uint32_t)HAL_RX_GET(rx_tlv,
+		    PHYRX_LOCATION_RX_LOCATION_INFO_DETAILS,
+		    GAIN_CHAIN1)) << 16);
 
 	ppdu_info->cfr_info.agc_gain_info1 =
 	HAL_RX_GET(rx_tlv,
-		   PHYRX_PKT_END_INFO,
-		   PHY_TIMESTAMP_1_UPPER_32);
+		   PHYRX_LOCATION_RX_LOCATION_INFO_DETAILS,
+		   GAIN_CHAIN2);
 
-	ppdu_info->cfr_info.agc_gain_info2 =
-	HAL_RX_GET(rx_tlv,
-		   PHYRX_PKT_END_INFO,
-		   PHY_TIMESTAMP_2_LOWER_32);
+	ppdu_info->cfr_info.agc_gain_info1 |=
+	(((uint32_t)HAL_RX_GET(rx_tlv,
+		    PHYRX_LOCATION_RX_LOCATION_INFO_DETAILS,
+		    GAIN_CHAIN3)) << 16);
 
-	ppdu_info->cfr_info.agc_gain_info3 =
-	HAL_RX_GET(rx_tlv,
-		   PHYRX_PKT_END_INFO,
-		   PHY_TIMESTAMP_2_UPPER_32);
+	ppdu_info->cfr_info.agc_gain_info2 = 0;
+
+	ppdu_info->cfr_info.agc_gain_info3 = 0;
 }
 #endif
 

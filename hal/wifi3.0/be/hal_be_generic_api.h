@@ -478,7 +478,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 		ppdu_info->rx_state = HAL_RX_MON_PPDU_END;
 		break;
 
-	case WIFIPHYRX_PKT_END_E:
+	case WIFIPHYRX_LOCATION_E:
 		hal_rx_get_rtt_info(hal_soc_hdl, rx_tlv, ppdu_info);
 		break;
 
@@ -1426,6 +1426,11 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 
 		ppdu_info->sw_frame_group_id =
 			HAL_RX_GET_SW_FRAME_GROUP_ID(rx_tlv);
+
+		ppdu_info->rx_user_status[user_id].sw_peer_id =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO,
+				   SW_PEER_ID);
 
 		if (ppdu_info->sw_frame_group_id ==
 		    HAL_MPDU_SW_FRAME_GROUP_NULL_DATA) {
