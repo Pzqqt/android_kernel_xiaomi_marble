@@ -3072,8 +3072,7 @@ static int __handle_reset_clk(struct msm_cvp_platform_resources *res,
 			goto failed_to_reset;
 		}
 
-		if (pwr_state != CVP_POWER_IGNORED &&
-			pwr_state != rst_info.required_state)
+		if (pwr_state != rst_info.required_state)
 			break;
 
 		rc = reset_control_assert(rst);
@@ -3084,8 +3083,7 @@ static int __handle_reset_clk(struct msm_cvp_platform_resources *res,
 			goto failed_to_reset;
 		}
 
-		if (pwr_state != CVP_POWER_IGNORED &&
-			pwr_state != rst_info.required_state)
+		if (pwr_state != rst_info.required_state)
 			break;
 
 		rc = reset_control_deassert(rst);
@@ -3119,8 +3117,6 @@ static int reset_ahb2axi_bridge(struct iris_hfi_device *device)
 	else
 		s = CVP_POWER_OFF;
 
-	s = CVP_POWER_IGNORED;
-
 	for (i = 0; i < device->res->reset_set.count; i++) {
 		rc = __handle_reset_clk(device->res, i, ASSERT, s);
 		if (rc) {
@@ -3128,12 +3124,10 @@ static int reset_ahb2axi_bridge(struct iris_hfi_device *device)
 				"failed to assert reset clocks\n");
 			goto failed_to_reset;
 		}
-	}
 
-	/* wait for deassert */
-	usleep_range(1000, 1050);
+		/* wait for deassert */
+		usleep_range(1000, 1050);
 
-	for (i = 0; i < device->res->reset_set.count; i++) {
 		rc = __handle_reset_clk(device->res, i, DEASSERT, s);
 		if (rc) {
 			dprintk(CVP_ERR,
@@ -3908,7 +3902,6 @@ static int __power_off_controller(struct iris_hfi_device *device)
 {
 	u32 lpi_status, reg_status = 0, count = 0, max_count = 1000;
 	u32 sbm_ln0_low;
-	int rc;
 
 	/* HPG 6.2.2 Step 1  */
 	__write_register(device, CVP_CPU_CS_X2RPMh, 0x3);
@@ -3995,16 +3988,11 @@ static int __power_off_controller(struct iris_hfi_device *device)
 	/* HPG 6.2.2 Step 5 */
 	msm_cvp_disable_unprepare_clk(device, "cvp_clk");
 
-	/* HPG 6.2.2 Step 7 */
-	msm_cvp_disable_unprepare_clk(device, "gcc_video_axi1");
-
-	/* Added to avoid pending transaction after power off */
-	rc = call_iris_op(device, reset_ahb2axi_bridge, device);
-	if (rc)
-		dprintk(CVP_ERR, "Off: Failed to reset ahb2axi: %d\n", rc);
-
 	/* HPG 6.2.2 Step 6 */
 	__disable_regulator(device, "cvp");
+
+	/* HPG 6.2.2 Step 7 */
+	msm_cvp_disable_unprepare_clk(device, "gcc_video_axi1");
 
 	return 0;
 }

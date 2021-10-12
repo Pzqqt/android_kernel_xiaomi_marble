@@ -88,7 +88,7 @@ enum power_state {
 	CVP_POWER_INIT,
 	CVP_POWER_ON,
 	CVP_POWER_OFF,
-	CVP_POWER_IGNORED,
+	CVP_POWER_INVALID,
 };
 
 struct reset_info {
