@@ -1026,6 +1026,7 @@ bool policy_mgr_is_any_dfs_beaconing_session_present(
  * @mode:	new connection mode
  * @ch_freq: channel frequency on which new connection is coming up
  * @bw: Bandwidth requested by the connection (optional)
+ * @ext_flags: extended flags for concurrency check (union conc_ext_flag)
  *
  * When a new connection is about to come up check if current
  * concurrency combination including the new connection is
@@ -1036,7 +1037,8 @@ bool policy_mgr_is_any_dfs_beaconing_session_present(
 bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 				  enum policy_mgr_con_mode mode,
 				  uint32_t ch_freq,
-				  enum hw_mode_bandwidth bw);
+				  enum hw_mode_bandwidth bw,
+				  uint32_t ext_flags);
 
 /**
  * policy_mgr_nan_sap_pre_enable_conc_check() - Check if NAN+SAP SCC is
@@ -2361,6 +2363,7 @@ QDF_STATUS policy_mgr_get_pcl_for_vdev_id(struct wlan_objmgr_psoc *psoc,
  * @weight: Pointer to the structure containing pcl, saved channel list and
  * weighed channel list
  * @mode: Policy manager connection mode
+ * @vdev: pointer to vdev on which new connection is coming up
  *
  * Provides the weightage for all valid channels. This compares the PCL list
  * with the valid channel list. The channels present in the PCL get their
@@ -2371,7 +2374,7 @@ QDF_STATUS policy_mgr_get_pcl_for_vdev_id(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_pcl_chan_weights *weight,
-		enum policy_mgr_con_mode mode);
+		enum policy_mgr_con_mode mode, struct wlan_objmgr_vdev *vdev);
 
 /**
  * policy_mgr_set_hw_mode_on_channel_switch() - Set hw mode
@@ -3988,6 +3991,20 @@ void policy_mgr_get_hw_dbs_max_bw(struct wlan_objmgr_psoc *psoc,
  */
 bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 					       bool is_new_vdev_mlo);
+
+/**
+ * policy_mgr_get_conc_ext_flags() - get extended flags for concurrency check
+ * @vdev: pointer to vdev on which new connection is coming up
+ * @force_mlo: true means it's a MLO connection, false means uncertain
+ *
+ * In some scenario the flag WLAN_VDEV_FEXT2_MLO may not set for vdev when
+ * checking concurrency, then caller can set force_mlo accordingly to get
+ * proper extended flags.
+ *
+ * Return: extended flags for concurrency check
+ */
+uint32_t
+policy_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev, bool force_mlo);
 #else
 
 static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
@@ -3995,6 +4012,12 @@ static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
 			bool is_new_vdev_mlo)
 {
 	return true;
+}
+
+static inline uint32_t
+policy_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev, bool force_mlo)
+{
+	return 0;
 }
 #endif
 

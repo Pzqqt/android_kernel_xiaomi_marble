@@ -389,6 +389,25 @@ struct policy_mgr_mac_ss_bw_info {
 	uint32_t mac_band_cap;
 };
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * union conc_ext_flag - extended flags for concurrency check
+ *
+ * @mlo: the new connection is MLO
+ * @mlo_link_assoc_connected: the new connection is secondary MLO link and
+ *  the corresponding assoc link is connected
+ * @value: uint32 value for extended flags
+ */
+union conc_ext_flag {
+	struct {
+		uint32_t mlo: 1;
+		uint32_t mlo_link_assoc_connected: 1;
+	};
+
+	uint32_t value;
+};
+#endif
+
 struct policy_mgr_psoc_priv_obj *policy_mgr_get_context(
 		struct wlan_objmgr_psoc *psoc);
 QDF_STATUS policy_mgr_get_updated_scan_config(
@@ -792,6 +811,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
  * @mode: new connection mode
  * @ch_freq: channel frequency on which new connection is coming up
  * @bw: Bandwidth requested by the connection (optional)
+ * @ext_flags: extended flags for concurrency check (union conc_ext_flag)
  *
  * When a new connection is about to come up check if current
  * concurrency combination including the new connection is
@@ -803,5 +823,6 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint32_t ch_freq,
-				       enum hw_mode_bandwidth bw);
+				       enum hw_mode_bandwidth bw,
+				       uint32_t ext_flags);
 #endif

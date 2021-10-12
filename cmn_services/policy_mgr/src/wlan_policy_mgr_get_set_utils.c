@@ -39,6 +39,10 @@
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_sta.h"
+#endif
+
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
 
@@ -3357,14 +3361,11 @@ static inline bool policy_mgr_is_concurrency_allowed_4_port(
  * policy_mgr_allow_multiple_sta_connections() - check whether multiple STA
  * concurrency is allowed and F/W supported
  * @psoc: Pointer to soc
- * @second_sta_freq: 2nd STA channel frequency
- * @first_sta_freq: 1st STA channel frequency
  *
  *  Return: true if supports else false.
  */
-static bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc,
-					       uint32_t second_sta_freq,
-					       uint32_t first_sta_freq)
+static bool
+policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc)
 {
 	struct wmi_unified *wmi_handle;
 
@@ -3456,8 +3457,127 @@ static bool policy_mgr_is_6g_channel_allowed(
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
-bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
-					       bool is_new_vdev_mlo)
+uint32_t
+policy_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev, bool force_mlo)
+{
+	struct wlan_objmgr_vdev *assoc_vdev;
+	union conc_ext_flag conc_ext_flags;
+
+	conc_ext_flags.value = 0;
+	if (!vdev || wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+		return conc_ext_flags.value;
+
+	if (!force_mlo && !wlan_vdev_mlme_is_mlo_vdev(vdev))
+		return conc_ext_flags.value;
+
+	conc_ext_flags.mlo = 1;
+	if (wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
+		assoc_vdev = ucfg_mlo_get_assoc_link_vdev(vdev);
+		if (assoc_vdev && ucfg_cm_is_vdev_active(assoc_vdev))
+			conc_ext_flags.mlo_link_assoc_connected = 1;
+	}
+
+	return conc_ext_flags.value;
+}
+
+/**
+ * policy_mgr_allow_sta_concurrency() - check whether STA concurrency is allowed
+ * @psoc: Pointer to soc
+ * @freq: frequency to be checked
+ * @ext_flags: extended flags for concurrency check
+ *
+ *  Return: true if supports else false.
+ */
+static bool
+policy_mgr_allow_sta_concurrency(struct wlan_objmgr_psoc *psoc,
+				 qdf_freq_t freq,
+				 uint32_t ext_flags)
+{
+	uint32_t conn_index = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_vdev *vdev;
+	bool is_mlo, mlo_sap_present = false, mlo_sta_present = false;
+	uint8_t vdev_id, sta_cnt = 0;
+	enum policy_mgr_con_mode mode;
+	union conc_ext_flag conc_ext_flags;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	conc_ext_flags.value = ext_flags;
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		mode = pm_conc_connection_list[conn_index].mode;
+		if ((mode != PM_STA_MODE && mode != PM_SAP_MODE) ||
+		    !pm_conc_connection_list[conn_index].in_use)
+			continue;
+
+		vdev_id = pm_conc_connection_list[conn_index].vdev_id;
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+							    WLAN_POLICY_MGR_ID);
+		if (!vdev)
+			continue;
+
+		is_mlo = wlan_vdev_mlme_is_mlo_vdev(vdev);
+		if (mode == PM_SAP_MODE) {
+			if (is_mlo)
+				mlo_sap_present = true;
+
+			goto next;
+		}
+
+		/* Skip the link vdev for MLO STA */
+		if (wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+			goto next;
+
+		sta_cnt++;
+		if (!is_mlo)
+			goto next;
+
+		mlo_sta_present = true;
+next:
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	/* Reject if multiple STA connections are not allowed */
+	if (sta_cnt &&
+	    !policy_mgr_allow_multiple_sta_connections(psoc)) {
+		policy_mgr_rl_debug("Disallow Multiple STA connections");
+		return false;
+	}
+
+	if (mlo_sta_present && conc_ext_flags.mlo_link_assoc_connected) {
+		policy_mgr_rl_debug("Allow secondary MLO link");
+		return true;
+	}
+
+	if (conc_ext_flags.mlo && (mlo_sta_present || mlo_sap_present)) {
+		policy_mgr_rl_debug("Disallow ML STA when ML STA/SAP is present");
+		return false;
+	}
+
+	/*
+	 * Reject a 3rd STA.
+	 * Treat a MLO STA(including the primary and secondary link vdevs)
+	 * as 1 STA here.
+	 */
+	if (sta_cnt >= 2) {
+		policy_mgr_rl_debug("Disallow 3rd STA");
+		return false;
+	}
+
+	return true;
+}
+
+bool
+policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+					  bool is_new_vdev_mlo)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t conn_index;
@@ -3504,6 +3624,31 @@ bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		ret = true;
 
 	return ret;
+}
+#else
+static bool
+policy_mgr_allow_sta_concurrency(struct wlan_objmgr_psoc *psoc,
+				 qdf_freq_t freq,
+				 uint32_t ext_flags)
+{
+	uint32_t count;
+
+	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+							  NULL);
+	if (!count)
+		return true;
+
+	if (count >= 2) {
+		policy_mgr_rl_debug("Disallow 3rd STA");
+		return false;
+	}
+
+	if (!policy_mgr_allow_multiple_sta_connections(psoc)) {
+		policy_mgr_rl_debug("Multiple STA connections is not allowed");
+		return false;
+	}
+
+	return true;
 }
 #endif
 
@@ -3583,7 +3728,8 @@ static bool policy_mgr_is_third_conn_sta_p2p_p2p_valid(
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint32_t ch_freq,
-				       enum hw_mode_bandwidth bw)
+				       enum hw_mode_bandwidth bw,
+				       uint32_t ext_flags)
 {
 	uint32_t num_connections = 0, count = 0, index = 0;
 	bool status = false, match = false;
@@ -3591,7 +3737,6 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool sta_sap_scc_on_dfs_chan;
 	bool go_force_scc;
-	uint32_t sta_freq;
 	enum channel_state chan_state;
 	bool is_dfs_ch = false;
 
@@ -3677,19 +3822,9 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
-	/* Check for STA+STA concurrency */
-	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
-							  list);
-	if (mode == PM_STA_MODE && count) {
-		if (count >= 2) {
-			policy_mgr_rl_debug("3rd STA isn't permitted");
-			return status;
-		}
-		sta_freq = pm_conc_connection_list[list[0]].freq;
-		if (!policy_mgr_allow_multiple_sta_connections(psoc, ch_freq,
-							       sta_freq))
-			return status;
-	}
+	if (mode == PM_STA_MODE &&
+	    !policy_mgr_allow_sta_concurrency(psoc, ch_freq, ext_flags))
+		return status;
 
 	if (!policy_mgr_allow_sap_go_concurrency(psoc, mode, ch_freq,
 						 WLAN_INVALID_VDEV_ID)) {
@@ -3739,7 +3874,8 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 				  enum policy_mgr_con_mode mode,
 				  uint32_t ch_freq,
-				  enum hw_mode_bandwidth bw)
+				  enum hw_mode_bandwidth bw,
+				  uint32_t ext_flags)
 {
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
@@ -3754,7 +3890,8 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
-	allowed = policy_mgr_is_concurrency_allowed(psoc, mode, ch_freq, bw);
+	allowed = policy_mgr_is_concurrency_allowed(psoc, mode, ch_freq,
+						    bw, ext_flags);
 
 	/* Fourth connection concurrency check */
 	if (allowed && policy_mgr_get_connection_count(psoc) == 3)
@@ -3777,8 +3914,9 @@ policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	uint32_t old_ch_freq;
+	uint32_t old_ch_freq, conc_ext_flags;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -3824,8 +3962,14 @@ policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_store_and_del_conn_info_by_vdev_id(
 			psoc, vdev_id, info, &num_cxn_del);
 
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_POLICY_MGR_ID);
+	conc_ext_flags = policy_mgr_get_conc_ext_flags(vdev, false);
 	allow = policy_mgr_allow_concurrency(psoc, mode, ch_freq,
-					     HW_MODE_20_MHZ);
+					     HW_MODE_20_MHZ, conc_ext_flags);
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+
 	/* Restore the connection entry */
 	if (num_cxn_del > 0)
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
@@ -3964,6 +4108,8 @@ bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
 	enum policy_mgr_con_mode mode;
 	bool ret;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t conc_ext_flags;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -3986,8 +4132,16 @@ bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, session_id,
+						    WLAN_POLICY_MGR_ID);
+
 	/* Take care of 160MHz and 80+80Mhz later */
-	ret = policy_mgr_allow_concurrency(psoc, mode, ch_freq, HW_MODE_20_MHZ);
+	conc_ext_flags = policy_mgr_get_conc_ext_flags(vdev, false);
+	ret = policy_mgr_allow_concurrency(psoc, mode, ch_freq, HW_MODE_20_MHZ,
+					   conc_ext_flags);
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+
 	if (false == ret) {
 		policy_mgr_err("Connection failed due to conc check fail");
 		return 0;

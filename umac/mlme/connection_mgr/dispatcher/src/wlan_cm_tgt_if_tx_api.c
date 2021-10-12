@@ -111,7 +111,7 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 
 	status = policy_mgr_get_valid_chan_weights(
 			psoc, (struct policy_mgr_pcl_chan_weights *)weights,
-			PM_STA_MODE);
+			PM_STA_MODE, vdev);
 
 	qdf_mem_free(freq_list);
 
