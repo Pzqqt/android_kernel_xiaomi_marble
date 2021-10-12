@@ -4214,7 +4214,7 @@ QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx)
 	*/
 	twt_en_dis.role = WMI_TWT_ROLE_REQUESTOR;
 	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
-	twt_en_dis.ext_conf_present = false;
+	twt_en_dis.ext_conf_present = true;
 	qdf_event_reset(&hdd_ctx->twt_disable_comp_evt);
 	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
 
@@ -4247,7 +4247,7 @@ QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
 	*/
 	twt_en_dis.role = WMI_TWT_ROLE_RESPONDER;
 	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
-	twt_en_dis.ext_conf_present = false;
+	twt_en_dis.ext_conf_present = true;
 	qdf_event_reset(&hdd_ctx->twt_disable_comp_evt);
 	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
 
