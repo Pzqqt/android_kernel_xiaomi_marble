@@ -27,6 +27,11 @@
 #define _DFS_PROCESS_RADAR_FOUND_IND_H_
 #include "dfs_partial_offload_radar.h"
 
+#define BW_20   20
+#define BW_40   40
+#define BW_80   80
+#define BW_160 160
+#define BW_320 320
 /**
  * dfs_false_radarfound_reset_vars () - Reset dfs radar detection related
  * variables and queues after processing radar and disabling phyerror reception.

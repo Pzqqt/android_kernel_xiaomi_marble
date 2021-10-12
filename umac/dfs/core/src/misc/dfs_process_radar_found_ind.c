@@ -486,31 +486,112 @@ dfs_find_radar_affected_subchans_for_freq(struct wlan_dfs *dfs,
 }
 #endif
 
-/*
+/**
+ * dfs_calc_bonding_freqs: Calculate bonding channel frequencies from the
+ * channel width's center frequency and channel width.
+ * It is assumed that the caller has allocated sufficient memory for 'freq_list'
+ * so that it can hold all the output subchannels.
+ *
+ * center_freq: Center frequency of the channel width.
+ * ch_width: Channel width.
+ * freq_list: output array of sub-channel frequencies.
+ *
+ * Return: void
+ */
+static void
+dfs_calc_bonding_freqs(qdf_freq_t center_freq,
+		       uint16_t ch_width,
+		       uint16_t *freq_list)
+{
+#define CHAN_SPACING_MHZ_5G 20
+#define SUB20CHAN_BW_MHZ_5G 20
+	uint8_t nchans = ch_width / CHAN_SPACING_MHZ_5G;
+	qdf_freq_t first_subchan_cfreq = center_freq - (ch_width / 2) +
+					 (SUB20CHAN_BW_MHZ_5G / 2);
+	uint8_t i;
+
+	for (i = 0; i < nchans; ++i)
+		freq_list[i] = first_subchan_cfreq + (i * CHAN_SPACING_MHZ_5G);
+}
+
+/**
+ * dfs_get_20mhz_bonding_channels() - Get bonding frequency list of 20MHz
+ * channel.
+ * @center_freq: Center frequency of the 20MHz channel.
+ * @freq_list: Pointer to frequency list.
+ *
+ * Return: void
+ */
+static
+void dfs_get_20mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+{
+	uint16_t chwidth = BW_20;
+
+	dfs_calc_bonding_freqs(center_freq, chwidth, freq_list);
+}
+
+/**
+ * dfs_get_40mhz_bonding_channels() - Get bonding frequency list of 40MHz
+ * channel.
+ * @center_freq: Center frequency of the 40MHz channel.
+ * @freq_list: Pointer to frequency list.
+ *
+ * Return: void
+ */
+static
+void dfs_get_40mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+{
+	uint16_t chwidth = BW_40;
+
+	dfs_calc_bonding_freqs(center_freq, chwidth, freq_list);
+}
+
+/**
+ * dfs_get_80mhz_bonding_channels() - Get bonding frequency list of 80MHz
+ * channel.
+ * @center_freq: Center frequency of the 80MHz channel.
+ * @freq_list: Pointer to frequency list.
+ *
+ * Return: void
+ */
+static
+void dfs_get_80mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+{
+	uint16_t chwidth = BW_80;
+
+	dfs_calc_bonding_freqs(center_freq, chwidth, freq_list);
+}
+
+/**
+ * dfs_get_160mhz_bonding_channels() - Get bonding frequency list of 160MHz
+ * channel.
+ * @center_freq: Center frequency of the 160MHz channel.
+ * @freq_list: Pointer to frequency list.
+ *
+ * Return: void
+ */
+static
+void dfs_get_160mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+{
+	uint16_t chwidth = BW_160;
+
+	dfs_calc_bonding_freqs(center_freq, chwidth, freq_list);
+}
+
+/**
  * dfs_get_320mhz_bonding_channels() - Get bonding frequency list of 320MHz
  * channel.
  * @center_freq: Center frequency of the 320MHz channel.
  * @freq_list: Pointer to frequency list.
+ *
+ * Return: void
  */
 static
 void dfs_get_320mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
 {
-	freq_list[0]  = center_freq - DFS_5GHZ_8TH_CHAN_FREQ_OFFSET;
-	freq_list[1]  = center_freq - DFS_5GHZ_7TH_CHAN_FREQ_OFFSET;
-	freq_list[2]  = center_freq - DFS_5GHZ_6TH_CHAN_FREQ_OFFSET;
-	freq_list[3]  = center_freq - DFS_5GHZ_5TH_CHAN_FREQ_OFFSET;
-	freq_list[4]  = center_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-	freq_list[5]  = center_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-	freq_list[6]  = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-	freq_list[7]  = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[8]  = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[9]  = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-	freq_list[10] = center_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-	freq_list[11] = center_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-	freq_list[12] = center_freq + DFS_5GHZ_5TH_CHAN_FREQ_OFFSET;
-	freq_list[13] = center_freq + DFS_5GHZ_6TH_CHAN_FREQ_OFFSET;
-	freq_list[14] = center_freq + DFS_5GHZ_7TH_CHAN_FREQ_OFFSET;
-	freq_list[15] = center_freq + DFS_5GHZ_8TH_CHAN_FREQ_OFFSET;
+	uint16_t chwidth = 320;
+
+	dfs_calc_bonding_freqs(center_freq, chwidth, freq_list);
 }
 
 /*
@@ -531,39 +612,31 @@ dfs_get_bonding_channel_without_seg_info_for_freq(struct dfs_channel *chan,
 
 	if (WLAN_IS_CHAN_MODE_20(chan)) {
 		nchannels = 1;
-		freq_list[0] = center_freq;
+		dfs_get_20mhz_bonding_channels(center_freq,
+					       freq_list);
 	} else if (WLAN_IS_CHAN_MODE_40(chan)) {
 		nchannels = 2;
-		freq_list[0] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[1] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		dfs_get_40mhz_bonding_channels(center_freq,
+					       freq_list);
 	} else if (WLAN_IS_CHAN_MODE_80(chan)) {
 		nchannels = 4;
-		freq_list[0] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[1] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[2] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[3] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		dfs_get_80mhz_bonding_channels(center_freq,
+					       freq_list);
 	} else if (WLAN_IS_CHAN_MODE_80_80(chan)) {
 		nchannels = 8;
-		freq_list[0] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[1] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[2] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[3] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		dfs_get_80mhz_bonding_channels(center_freq,
+					       freq_list);
 		center_freq = chan->dfs_ch_mhz_freq_seg2;
-		freq_list[4] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[5] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[6] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[7] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		dfs_get_80mhz_bonding_channels(center_freq,
+					       freq_list + 4);
 	} else if (WLAN_IS_CHAN_MODE_160(chan)) {
 		nchannels = 8;
 		center_freq = chan->dfs_ch_mhz_freq_seg2;
-		freq_list[0] = center_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-		freq_list[1] = center_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-		freq_list[2] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[3] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[4] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[5] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[6] = center_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-		freq_list[7] = center_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+		dfs_get_160mhz_bonding_channels(center_freq, freq_list);
+	} else if (WLAN_IS_CHAN_MODE_320(chan)) {
+		nchannels = 16;
+		center_freq = chan->dfs_ch_mhz_freq_seg2;
+		dfs_get_320mhz_bonding_channels(center_freq, freq_list);
 	}
 
 	return nchannels;
@@ -571,40 +644,6 @@ dfs_get_bonding_channel_without_seg_info_for_freq(struct dfs_channel *chan,
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API
-/*
- * dfs_get_80mhz_bonding_channels() - Get bonding frequency list of 80MHz
- * channel.
- * @center_freq: Center frequency of the 80MHz channel.
- * @freq_list: Pointer to frequency list.
- */
-static
-void dfs_get_80mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
-{
-	freq_list[0] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-	freq_list[1] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[2] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[3] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-}
-
-/*
- * dfs_get_160mhz_bonding_channels() - Get bonding frequency list of 160MHz
- * channel.
- * @center_freq: Center frequency of the 160MHz channel.
- * @freq_list: Pointer to frequency list.
- */
-static
-void dfs_get_160mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
-{
-	freq_list[0] = center_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-	freq_list[1] = center_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-	freq_list[2] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-	freq_list[3] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[4] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[5] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-	freq_list[6] = center_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-	freq_list[7] = center_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-}
-
 /*
  * dfs_get_agile_subchans_for_curchan_160() - Get bonding frequency list of
  * agile channels when current operating channel is 160MHz.
@@ -705,11 +744,10 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 
 	if (WLAN_IS_CHAN_MODE_20(curchan)) {
 		nchannels = 1;
-		freq_list[0] = center_freq;
+		dfs_get_20mhz_bonding_channels(center_freq, freq_list);
 	} else if (WLAN_IS_CHAN_MODE_40(curchan)) {
 		nchannels = 2;
-		freq_list[0] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[1] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		dfs_get_40mhz_bonding_channels(center_freq, freq_list);
 	} else if (WLAN_IS_CHAN_MODE_80(curchan)) {
 		nchannels = 4;
 		dfs_get_80mhz_bonding_channels(center_freq, freq_list);
