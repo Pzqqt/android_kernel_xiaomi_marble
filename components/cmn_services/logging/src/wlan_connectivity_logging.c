@@ -66,18 +66,21 @@ void wlan_connectivity_logging_stop(void)
 	if (!qdf_atomic_read(&global_cl.is_active))
 		return;
 
+	qdf_spin_lock_bh(&global_cl.write_ptr_lock);
+
 	global_cl.osif_cb_context = NULL;
 	global_cl.osif_cbks.wlan_connectivity_log_send_to_usr = NULL;
 
 	qdf_atomic_set(&global_cl.is_active, 0);
 	global_cl.read_ptr = NULL;
 	global_cl.write_ptr = NULL;
-	qdf_spinlock_destroy(&global_cl.write_ptr_lock);
 	global_cl.read_idx = 0;
 	global_cl.write_idx = 0;
 
 	qdf_mem_vfree(global_cl.head);
 	global_cl.head = NULL;
+	qdf_spin_unlock_bh(&global_cl.write_ptr_lock);
+	qdf_spinlock_destroy(&global_cl.write_ptr_lock);
 }
 
 void
@@ -122,6 +125,11 @@ static bool wlan_logging_is_queue_empty(void)
 		return true;
 
 	qdf_spin_lock_bh(&global_cl.write_ptr_lock);
+
+	if (!global_cl.write_ptr) {
+		qdf_spin_unlock_bh(&global_cl.write_ptr_lock);
+		return true;
+	}
 
 	if (global_cl.read_ptr == global_cl.write_ptr &&
 	    !global_cl.write_ptr->is_record_filled) {
