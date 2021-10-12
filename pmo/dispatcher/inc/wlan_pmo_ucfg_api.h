@@ -1287,7 +1287,7 @@ ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc);
 
 #ifdef WLAN_FEATURE_ICMP_OFFLOAD
 /**
- * ucfg_pmo_check_icmp_offload(): API to check if icmp offload is enabled
+ * ucfg_pmo_check_icmp_offload() - API to check if icmp offload is enabled
  * @psoc: objmgr psoc handle
  * @vdev_id: vdev_id
  *
@@ -1295,6 +1295,7 @@ ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS ucfg_pmo_check_icmp_offload(struct wlan_objmgr_psoc *psoc,
 				       uint8_t vdev_id);
+
 /**
  * ucfg_pmo_is_icmp_offload_enabled() - Get icmp offload enable or not
  * @psoc: pointer to psoc object

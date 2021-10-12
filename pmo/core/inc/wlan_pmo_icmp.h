@@ -23,10 +23,11 @@
 
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 
-#include "wlan_pmo_obj_mgmt_public_struct.h"
+#include "qdf_types.h"
+#include "wlan_objmgr_psoc_obj.h"
 
 /**
- * pmo_core_icmp_check_offload(): API to check if icmp offload is enabled
+ * pmo_core_icmp_check_offload() - API to check if icmp offload is enabled
  * @psoc: objmgr psoc handle
  * @vdev_id: vdev id
  *
