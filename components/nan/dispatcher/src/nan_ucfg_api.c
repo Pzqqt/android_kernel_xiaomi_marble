@@ -677,7 +677,7 @@ QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
 				return status;
 			}
 
-			status = nan_discovery_pre_enable(psoc,
+			status = nan_discovery_pre_enable(req->pdev,
 						  req->social_chan_2g_freq);
 			if (QDF_IS_STATUS_SUCCESS(status)) {
 				len = sizeof(struct nan_enable_req) +
@@ -1190,6 +1190,7 @@ QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
 	nan_req = qdf_mem_malloc(sizeof(*nan_req) + data_len);
 	if (!nan_req)
 		return -ENOMEM;
+	qdf_mem_zero(nan_req, sizeof(*nan_req) + data_len);
 
 	nan_req->psoc = psoc;
 	nan_req->disable_2g_discovery = true;

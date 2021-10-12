@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,8 @@
 #include "wlan_p2p_public_struct.h"
 #include "../../core/src/wlan_p2p_main.h"
 #include "../../core/src/wlan_p2p_roc.h"
+#include <cds_utils.h>
+#include "wlan_scan_api.h"
 
 bool wlan_p2p_check_oui_and_force_1x1(uint8_t *assoc_ie, uint32_t assoc_ie_len)
 {
@@ -70,4 +72,52 @@ QDF_STATUS wlan_p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return p2p_status_connect(vdev);
+}
+
+static void wlan_p2p_abort_vdev_scan(struct wlan_objmgr_pdev *pdev,
+				     void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	struct scan_cancel_request *req;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	QDF_STATUS status;
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_DEVICE_MODE)
+		return;
+
+	p2p_soc_obj =
+		wlan_objmgr_psoc_get_comp_private_obj(wlan_vdev_get_psoc(vdev),
+						      WLAN_UMAC_COMP_P2P);
+	if (!p2p_soc_obj) {
+		p2p_err("P2P soc object is NULL");
+		return;
+	}
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return;
+
+	req->vdev = vdev;
+	req->cancel_req.requester = p2p_soc_obj->scan_req_id;
+	req->cancel_req.scan_id = INVALID_SCAN_ID;
+	req->cancel_req.vdev_id = wlan_vdev_get_id(vdev);
+	req->cancel_req.req_type = WLAN_SCAN_CANCEL_VDEV_ALL;
+
+	qdf_mtrace(QDF_MODULE_ID_P2P, QDF_MODULE_ID_SCAN,
+		   req->cancel_req.req_type,
+		   req->cancel_req.vdev_id,
+		   req->cancel_req.scan_id);
+	status = wlan_scan_cancel(req);
+
+	p2p_debug("abort scan, scan req id:%d, scan id:%d, status:%d",
+		  req->cancel_req.requester,
+		  req->cancel_req.scan_id, status);
+}
+
+QDF_STATUS wlan_p2p_abort_scan(struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_objmgr_pdev_iterate_obj_list(pdev,
+						 WLAN_VDEV_OP,
+						 wlan_p2p_abort_vdev_scan,
+						 NULL, 0, WLAN_P2P_ID);
 }

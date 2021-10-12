@@ -2501,6 +2501,7 @@ static int os_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,
 	nan_req = qdf_mem_malloc(sizeof(*nan_req) +  buf_len);
 	if (!nan_req)
 		return -ENOMEM;
+	qdf_mem_zero(nan_req, sizeof(*nan_req) + buf_len);
 
 	nan_req->psoc = psoc;
 	nan_req->params.request_data_len = buf_len;
@@ -2533,7 +2534,7 @@ static int os_if_process_nan_disable_req(struct wlan_objmgr_psoc *psoc,
 	return qdf_status_to_os_return(status);
 }
 
-static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
+static int os_if_process_nan_enable_req(struct wlan_objmgr_pdev *pdev,
 					struct nlattr **tb)
 {
 	uint32_t chan_freq_2g, chan_freq_5g = 0;
@@ -2541,6 +2542,7 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	uint32_t fine_time_meas_cap;
 	struct nan_enable_req *nan_req;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NAN_DISC_24GHZ_BAND_FREQ]) {
 		osif_err("NAN Social channel for 2.4Gz is unavailable!");
@@ -2570,6 +2572,7 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	if (chan_freq_5g)
 		nan_req->social_chan_5g_freq = chan_freq_5g;
 	nan_req->psoc = psoc;
+	nan_req->pdev = pdev;
 	nan_req->params.request_data_len = buf_len;
 
 	ucfg_mlme_get_fine_time_meas_cap(psoc, &fine_time_meas_cap);
@@ -2592,11 +2595,12 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	return qdf_status_to_os_return(status);
 }
 
-int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+int os_if_process_nan_req(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			  const void *data, int data_len)
 {
 	uint32_t nan_subcmd;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX + 1];
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX,
 				    data, data_len, nan_attr_policy)) {
@@ -2631,7 +2635,7 @@ int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	switch (nan_subcmd) {
 	case QCA_WLAN_NAN_EXT_SUBCMD_TYPE_ENABLE_REQ:
-		return os_if_process_nan_enable_req(psoc, tb);
+		return os_if_process_nan_enable_req(pdev, tb);
 	case QCA_WLAN_NAN_EXT_SUBCMD_TYPE_DISABLE_REQ:
 		return os_if_process_nan_disable_req(psoc, tb);
 	default:

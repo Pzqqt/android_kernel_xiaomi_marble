@@ -196,14 +196,15 @@ fail:
 }
 
 /**
- * p2p_scan_abort() - Abort scan
+ * p2p_roc_abort() - Abort roc
  * @roc_ctx: remain on channel request
  *
- * This function trigger an abort scan request to scan component.
+ * This function triggers an abort scan request to scan component to abort the
+ * ROC request which is running through roc_ctx.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-static QDF_STATUS p2p_scan_abort(struct p2p_roc_context *roc_ctx)
+static QDF_STATUS p2p_roc_abort(struct p2p_roc_context *roc_ctx)
 {
 	QDF_STATUS status;
 	struct scan_cancel_request *req;
@@ -350,7 +351,7 @@ static QDF_STATUS p2p_execute_cancel_roc_req(
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("Failed to stop roc timer, roc %pK", roc_ctx);
 
-	status = p2p_scan_abort(roc_ctx);
+	status = p2p_roc_abort(roc_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("Failed to abort scan, status:%d, destroy roc %pK",
 			status, roc_ctx);

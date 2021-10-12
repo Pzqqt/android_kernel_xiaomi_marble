@@ -611,6 +611,7 @@ struct nan_disable_req {
  * @social_chan_2g_freq: Social channel in 2G band for the NAN Discovery
  * @social_chan_5g_freq: Social channel in 5G band for the NAN Discovery
  * @params: NAN request structure containing message for the target
+ * @pdev: Pointer to the pdev object
  */
 struct nan_enable_req {
 	struct wlan_objmgr_psoc *psoc;
@@ -618,6 +619,7 @@ struct nan_enable_req {
 	uint32_t social_chan_5g_freq;
 	/* Variable length, do not add anything after this */
 	struct nan_msg_params params;
+	struct wlan_objmgr_pdev *pdev;
 };
 
 /**
