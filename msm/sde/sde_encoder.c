@@ -2439,33 +2439,17 @@ static void _sde_encoder_virt_populate_hw_res(struct drm_encoder *drm_enc)
 }
 
 static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
-      struct drm_display_mode *adj_mode, struct msm_display_mode *msm_mode, bool pre_modeset)
+		struct msm_display_mode *msm_mode, bool pre_modeset)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 	enum sde_intf_mode intf_mode;
-	struct drm_display_mode *old_adj_mode = NULL;
 	int ret;
-	bool is_cmd_mode = false, res_switch = false;
+	bool is_cmd_mode = false;
 
 	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		is_cmd_mode = true;
 
 	if (pre_modeset) {
-		if (sde_enc->cur_master)
-			old_adj_mode = &sde_enc->cur_master->cached_mode;
-		if (old_adj_mode && is_cmd_mode)
-			res_switch = !drm_mode_match(old_adj_mode, adj_mode, DRM_MODE_MATCH_TIMINGS);
-
-		if (res_switch) {
-			/* avoid early tear check reconfigure for resolution switch */
-			ret = sde_encoder_wait_for_event(drm_enc, MSM_ENC_TX_COMPLETE);
-			if (ret && ret != -EWOULDBLOCK) {
-				SDE_ERROR_ENC(sde_enc, "wait for idle failed %d\n", ret);
-				SDE_EVT32(DRMID(drm_enc), ret, SDE_EVTLOG_ERROR);
-				return ret;
-			}
-		}
-
 		intf_mode = sde_encoder_get_intf_mode(drm_enc);
 		if (msm_is_mode_seamless_dms(msm_mode) ||
 				(msm_is_mode_seamless_dyn_clk(msm_mode) &&
@@ -2570,7 +2554,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 
 	/* release resources before seamless mode change */
 	msm_mode = &c_state->msm_mode;
-	ret = sde_encoder_virt_modeset_rc(drm_enc, adj_mode, msm_mode, true);
+	ret = sde_encoder_virt_modeset_rc(drm_enc, msm_mode, true);
 	if (ret)
 		return;
 
@@ -2609,7 +2593,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 
 	/* update resources after seamless mode change */
-	sde_encoder_virt_modeset_rc(drm_enc, adj_mode, msm_mode, false);
+	sde_encoder_virt_modeset_rc(drm_enc, msm_mode, false);
 }
 
 void sde_encoder_control_te(struct drm_encoder *drm_enc, bool enable)
@@ -2803,7 +2787,6 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 				&sde_enc->cur_master->intf_cfg_v1);
 
 	_sde_encoder_update_vsync_source(sde_enc, &sde_enc->disp_info);
-	sde_encoder_control_te(drm_enc, true);
 
 	memset(&sde_enc->prv_conn_roi, 0, sizeof(sde_enc->prv_conn_roi));
 	memset(&sde_enc->cur_conn_roi, 0, sizeof(sde_enc->cur_conn_roi));
@@ -2906,6 +2889,7 @@ void sde_encoder_virt_restore(struct drm_encoder *drm_enc)
 		sde_enc->cur_master->ops.restore(sde_enc->cur_master);
 
 	_sde_encoder_virt_enable_helper(drm_enc);
+	sde_encoder_control_te(drm_enc, true);
 }
 
 static void sde_encoder_populate_encoder_phys(struct drm_encoder *drm_enc,
@@ -3055,9 +3039,12 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	memset(&sde_enc->cur_master->intf_cfg_v1, 0,
 			sizeof(sde_enc->cur_master->intf_cfg_v1));
 
+	/* turn off vsync_in to update tear check configuration */
+	sde_encoder_control_te(drm_enc, false);
 	sde_encoder_populate_encoder_phys(drm_enc, sde_enc, msm_mode);
 
 	_sde_encoder_virt_enable_helper(drm_enc);
+	sde_encoder_control_te(drm_enc, true);
 }
 
 void sde_encoder_virt_reset(struct drm_encoder *drm_enc)
