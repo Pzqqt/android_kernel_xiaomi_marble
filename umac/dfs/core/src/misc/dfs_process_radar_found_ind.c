@@ -160,7 +160,7 @@ dfs_radar_add_channel_list_to_nol_for_freq(struct wlan_dfs *dfs,
 	uint16_t last_chan_freq = 0;
 	uint8_t num_ch = 0;
 
-	if (*num_channels > NUM_CHANNELS_160MHZ) {
+	if (*num_channels > NUM_CHANNELS_320MHZ) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"Invalid num channels: %d", *num_channels);
 		return QDF_STATUS_E_FAILURE;
@@ -176,6 +176,7 @@ dfs_radar_add_channel_list_to_nol_for_freq(struct wlan_dfs *dfs,
 				 freq_list[i]);
 			continue;
 		}
+
 		last_chan_freq = freq_list[i];
 		DFS_NOL_ADD_CHAN_LOCKED(dfs,
 					freq_list[i],
@@ -413,7 +414,7 @@ dfs_find_radar_affected_subchans_for_freq(struct wlan_dfs *dfs,
 	uint32_t flag;
 	int32_t sidx;
 	uint16_t candidate_subchan_freq;
-	uint16_t cur_subchans[NUM_CHANNELS_160MHZ];
+	uint16_t cur_subchans[NUM_CHANNELS_320MHZ];
 	uint8_t n_cur_subchans;
 	struct dfs_channel *curchan = dfs->dfs_curchan;
 	struct freqs_offsets freq_offset;
@@ -448,7 +449,8 @@ dfs_find_radar_affected_subchans_for_freq(struct wlan_dfs *dfs,
 		dfs_radar_chan_for_40(&freq_offset, freq_center);
 	} else if (WLAN_IS_CHAN_MODE_80(curchan) ||
 			WLAN_IS_CHAN_MODE_160(curchan) ||
-			WLAN_IS_CHAN_MODE_80_80(curchan)) {
+			WLAN_IS_CHAN_MODE_80_80(curchan) ||
+			WLAN_IS_CHAN_MODE_320(curchan)) {
 		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDARY_SIDX)) {
 			freq_offset.offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
 			freq_offset.offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
@@ -483,6 +485,33 @@ dfs_find_radar_affected_subchans_for_freq(struct wlan_dfs *dfs,
 	return num_radar_subchans;
 }
 #endif
+
+/*
+ * dfs_get_320mhz_bonding_channels() - Get bonding frequency list of 320MHz
+ * channel.
+ * @center_freq: Center frequency of the 320MHz channel.
+ * @freq_list: Pointer to frequency list.
+ */
+static
+void dfs_get_320mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+{
+	freq_list[0]  = center_freq - DFS_5GHZ_8TH_CHAN_FREQ_OFFSET;
+	freq_list[1]  = center_freq - DFS_5GHZ_7TH_CHAN_FREQ_OFFSET;
+	freq_list[2]  = center_freq - DFS_5GHZ_6TH_CHAN_FREQ_OFFSET;
+	freq_list[3]  = center_freq - DFS_5GHZ_5TH_CHAN_FREQ_OFFSET;
+	freq_list[4]  = center_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+	freq_list[5]  = center_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
+	freq_list[6]  = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+	freq_list[7]  = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[8]  = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[9]  = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+	freq_list[10] = center_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
+	freq_list[11] = center_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+	freq_list[12] = center_freq + DFS_5GHZ_5TH_CHAN_FREQ_OFFSET;
+	freq_list[13] = center_freq + DFS_5GHZ_6TH_CHAN_FREQ_OFFSET;
+	freq_list[14] = center_freq + DFS_5GHZ_7TH_CHAN_FREQ_OFFSET;
+	freq_list[15] = center_freq + DFS_5GHZ_8TH_CHAN_FREQ_OFFSET;
+}
 
 /*
  * dfs_get_bonding_channel_without_seg_info_for_freq() - Get bonding frequency
@@ -657,7 +686,8 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 	 */
 	if (detector_id == dfs_get_agile_detector_id(dfs))
 		center_freq = dfs->dfs_agile_precac_freq_mhz;
-	else if (WLAN_IS_CHAN_MODE_160(curchan))
+	else if (WLAN_IS_CHAN_MODE_160(curchan) ||
+		 WLAN_IS_CHAN_MODE_320(curchan))
 		center_freq = curchan->dfs_ch_mhz_freq_seg2;
 	else if (!segment_id)
 		center_freq = curchan->dfs_ch_mhz_freq_seg1;
@@ -693,7 +723,10 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 							       &nchannels);
 		else
 			dfs_get_160mhz_bonding_channels(center_freq, freq_list);
-	} else if (WLAN_IS_CHAN_MODE_80_80(curchan)) {
+	} else if (WLAN_IS_CHAN_MODE_320(curchan)) {
+		nchannels = 16;
+		dfs_get_320mhz_bonding_channels(center_freq, freq_list);
+	}  else if (WLAN_IS_CHAN_MODE_80_80(curchan)) {
 		/*
 		 * If the current channel's bandwidth is 80P80MHz,
 		 * the corresponding agile Detector's bandwidth will be 160MHz
@@ -994,8 +1027,8 @@ dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
 				   struct radar_found_info *radar_found)
 {
 	bool wait_for_csa = false;
-	uint16_t freq_list[NUM_CHANNELS_160MHZ];
-	uint16_t nol_freq_list[NUM_CHANNELS_160MHZ];
+	uint16_t freq_list[NUM_CHANNELS_320MHZ];
+	uint16_t nol_freq_list[NUM_CHANNELS_320MHZ];
 	uint8_t num_channels;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t freq_center;

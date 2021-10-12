@@ -96,13 +96,19 @@ dfs_flush_additional_pulses(struct wlan_dfs *dfs)
 
 #ifdef CONFIG_CHAN_FREQ_API
 /* Next channel frequency offsets from center channel frequency */
-#define DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET  10
-#define DFS_5GHZ_2ND_CHAN_FREQ_OFFSET   30
-#define DFS_5GHZ_3RD_CHAN_FREQ_OFFSET   50
-#define DFS_5GHZ_4TH_CHAN_FREQ_OFFSET   70
+#define DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET   10
+#define DFS_5GHZ_2ND_CHAN_FREQ_OFFSET    30
+#define DFS_5GHZ_3RD_CHAN_FREQ_OFFSET    50
+#define DFS_5GHZ_4TH_CHAN_FREQ_OFFSET    70
+#define DFS_5GHZ_5TH_CHAN_FREQ_OFFSET    90
+#define DFS_5GHZ_6TH_CHAN_FREQ_OFFSET   110
+#define DFS_5GHZ_7TH_CHAN_FREQ_OFFSET   130
+#define DFS_5GHZ_8TH_CHAN_FREQ_OFFSET   150
 #endif
-/* Max number of bonding channels in 160 MHz segment */
-#define NUM_CHANNELS_160MHZ 8
+/* Number of 20MHz sub-channels in 160 MHz segment */
+#define NUM_CHANNELS_160MHZ  8
+/* Number of 20MHz sub-channels in 320 MHz segment */
+#define NUM_CHANNELS_320MHZ 16
 
 #if defined(QCA_DFS_RCSA_SUPPORT)
 /**
