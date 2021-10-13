@@ -1571,6 +1571,9 @@ dp_enable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 
 	mon_pdev = pdev->monitor_pdev;
 
+	if (!mon_pdev)
+		return QDF_STATUS_E_FAILURE;
+
 	if (mon_pdev->enhanced_stats_en == 0)
 		dp_cal_client_timer_start(mon_pdev->cal_client_ctx);
 
