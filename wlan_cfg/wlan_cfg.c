@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,10 +130,45 @@ static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[0] = WLAN_CFG_TX_RING_MASK_0, [1] = WLAN_CFG_TX_RING_MASK_4,
 	[2] = WLAN_CFG_TX_RING_MASK_2, [3] = WLAN_CFG_TX_RING_MASK_6,
 	[4] = WLAN_CFG_TX_RING_MASK_7};
-#endif
+#endif /* IPA_OFFLOAD */
+
+static inline const
+uint8_t *wlan_cfg_get_tx_ring_int_mask(struct wlan_cfg_dp_soc_ctxt *cfg_ctx)
+{
+	return &tx_ring_mask_msi[0];
+}
 #else
 static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	WLAN_CFG_TX_RING_MASK_0, 0, 0, 0, 0, 0, 0};
+	[0] = WLAN_CFG_TX_RING_MASK_0};
+
+#ifdef TX_MULTI_TCL
+static const uint8_t multi_tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+	[0] = WLAN_CFG_TX_RING_MASK_0, [7] = WLAN_CFG_TX_RING_MASK_2,
+	[8] = WLAN_CFG_TX_RING_MASK_4};
+
+#ifdef IPA_OFFLOAD
+static inline const
+uint8_t *wlan_cfg_get_tx_ring_int_mask(struct wlan_cfg_dp_soc_ctxt *cfg_ctx)
+{
+	if (cfg_ctx->ipa_enabled)
+		return &tx_ring_mask_msi[0];
+
+	return &multi_tx_ring_mask_msi[0];
+}
+#else
+static inline const
+uint8_t *wlan_cfg_get_tx_ring_int_mask(struct wlan_cfg_dp_soc_ctxt *cfg_ctx)
+{
+	return &multi_tx_ring_mask_msi[0];
+}
+#endif /* IPA_OFFLOAD */
+#else
+static inline const
+uint8_t *wlan_cfg_get_tx_ring_int_mask(struct wlan_cfg_dp_soc_ctxt *cfg_ctx)
+{
+	return &tx_ring_mask_msi[0];
+}
+#endif /* TX_MULTI_TCL */
 #endif /* CONFIG_BERYLLIUM */
 
 #ifdef CONFIG_BERYLLIUM
@@ -151,12 +187,12 @@ static const uint8_t rx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 #else /* !defined(CONFIG_BERYLLIUM) */
 #ifdef IPA_OFFLOAD
 static const uint8_t rx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	0, WLAN_CFG_RX_RING_MASK_0, WLAN_CFG_RX_RING_MASK_1,
-	WLAN_CFG_RX_RING_MASK_2, 0, 0, 0};
+	[1] = WLAN_CFG_RX_RING_MASK_0, [2] = WLAN_CFG_RX_RING_MASK_1,
+	[3] = WLAN_CFG_RX_RING_MASK_2};
 #else
 static const uint8_t rx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	0, WLAN_CFG_RX_RING_MASK_0, WLAN_CFG_RX_RING_MASK_1,
-	WLAN_CFG_RX_RING_MASK_2, WLAN_CFG_RX_RING_MASK_3, 0, 0};
+	[1] = WLAN_CFG_RX_RING_MASK_0, [2] = WLAN_CFG_RX_RING_MASK_1,
+	[3] = WLAN_CFG_RX_RING_MASK_2, [4] = WLAN_CFG_RX_RING_MASK_3};
 #endif
 #endif /* CONFIG_BERYLLIUM */
 
@@ -166,13 +202,12 @@ static const  uint8_t rxdma2host_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 		WLAN_CFG_RXDMA2HOST_RING_MASK_1};
 #else
 static const  uint8_t rxdma2host_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	0, 0, 0, 0, 0, WLAN_CFG_RXDMA2HOST_RING_MASK_0,
-	WLAN_CFG_RXDMA2HOST_RING_MASK_1};
+	[5] = WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+	[6] = WLAN_CFG_RXDMA2HOST_RING_MASK_1};
 #endif /* CONFIG_BERYLLIUM */
 
 static const  uint8_t rx_mon_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	[1] = WLAN_CFG_RX_MON_RING_MASK_0,
-	[2] = WLAN_CFG_RX_MON_RING_MASK_1};
+	[1] = WLAN_CFG_RX_MON_RING_MASK_0, [2] = WLAN_CFG_RX_MON_RING_MASK_1};
 
 static const  uint8_t host2rxdma_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {0};
 
@@ -191,11 +226,11 @@ static const  uint8_t reo_status_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[13] = WLAN_CFG_REO_STATUS_RING_MASK_0};
 #else
 static const  uint8_t rx_err_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	0, 0, 0, 0, 0, 0, WLAN_CFG_RX_ERR_RING_MASK_0};
+	[6] = WLAN_CFG_RX_ERR_RING_MASK_0};
 static const  uint8_t rx_wbm_rel_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	0, 0, 0, 0, 0, 0, WLAN_CFG_RX_WBM_REL_RING_MASK_0};
+	[6] = WLAN_CFG_RX_WBM_REL_RING_MASK_0};
 static const  uint8_t reo_status_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	0, 0, 0, 0, 0, 0, WLAN_CFG_REO_STATUS_RING_MASK_0};
+	[6] = WLAN_CFG_REO_STATUS_RING_MASK_0};
 #endif
 
 #ifdef CONFIG_BERYLLIUM
@@ -1462,9 +1497,11 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 				  int interrupt_mode,
 				  bool is_monitor_mode)
 {	int i = 0;
+	const uint8_t *tx_ring_intr_mask =
+				wlan_cfg_get_tx_ring_int_mask(wlan_cfg_ctx);
 
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
-		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_mask_msi[i];
+		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_intr_mask[i];
 		wlan_cfg_ctx->int_rx_mon_ring_mask[i] =
 							rx_mon_ring_mask_msi[i];
 		wlan_cfg_ctx->int_tx_mon_ring_mask[i] = 0;
@@ -2167,7 +2204,7 @@ int wlan_cfg_per_pdev_lmac_ring(struct wlan_cfg_dp_soc_ctxt *cfg)
 
 qdf_export_symbol(wlan_cfg_per_pdev_lmac_ring);
 
-#if defined(DP_USE_SINGLE_TCL)
+#if defined(DP_USE_SINGLE_TCL) && !defined(TX_MULTI_TCL)
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return 1;
@@ -2180,6 +2217,23 @@ int wlan_cfg_num_nss_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
 
 #else
 
+#if defined(IPA_OFFLOAD) && defined(TX_MULTI_TCL)
+int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	if (!cfg->ipa_enabled)
+		return cfg->num_tcl_data_rings;
+
+	return 1;
+}
+
+int wlan_cfg_num_nss_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	if (!cfg->ipa_enabled)
+		return cfg->num_tcl_data_rings;
+
+	return 1;
+}
+#else
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_tcl_data_rings;
@@ -2189,7 +2243,7 @@ int wlan_cfg_num_nss_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_nss_tcl_data_rings;
 }
-
+#endif
 #endif
 
 int wlan_cfg_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)

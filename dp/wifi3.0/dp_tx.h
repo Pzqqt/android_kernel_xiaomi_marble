@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -457,16 +458,38 @@ static inline hal_ring_handle_t dp_tx_get_hal_ring_hdl(struct dp_soc *soc,
 
 #else /* QCA_OL_TX_MULTIQ_SUPPORT */
 
+#ifdef TX_MULTI_TCL
+#ifdef IPA_OFFLOAD
+static inline void dp_tx_get_queue(struct dp_vdev *vdev,
+				   qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
+{
+	/* get flow id */
+	queue->desc_pool_id = DP_TX_GET_DESC_POOL_ID(vdev);
+	if (vdev->pdev->soc->wlan_cfg_ctx->ipa_enabled)
+		queue->ring_id = DP_TX_GET_RING_ID(vdev);
+	else
+		queue->ring_id = (qdf_nbuf_get_queue_mapping(nbuf) %
+					vdev->pdev->soc->num_tcl_data_rings);
+}
+#else
+static inline void dp_tx_get_queue(struct dp_vdev *vdev,
+				   qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
+{
+	/* get flow id */
+	queue->desc_pool_id = DP_TX_GET_DESC_POOL_ID(vdev);
+	queue->ring_id = (qdf_nbuf_get_queue_mapping(nbuf) %
+				vdev->pdev->soc->num_tcl_data_rings);
+}
+#endif
+#else
 static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 				   qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
 {
 	/* get flow id */
 	queue->desc_pool_id = DP_TX_GET_DESC_POOL_ID(vdev);
 	queue->ring_id = DP_TX_GET_RING_ID(vdev);
-
-	dp_tx_debug("pool_id:%d ring_id: %d skb %pK ",
-		    queue->desc_pool_id, queue->ring_id, nbuf);
 }
+#endif
 
 static inline hal_ring_handle_t dp_tx_get_hal_ring_hdl(struct dp_soc *soc,
 						       uint8_t ring_id)

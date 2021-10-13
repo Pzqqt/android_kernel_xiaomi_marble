@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,11 +79,31 @@ static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
 }
 #endif
 #else
+
+#ifdef TX_MULTI_TCL
+#ifdef IPA_OFFLOAD
+static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	if (soc->wlan_cfg_ctx->ipa_enabled)
+		return (ring_id + soc->wbm_sw0_bm_id);
+
+	return soc->wlan_cfg_ctx->tcl_wbm_map_array[ring_id].wbm_rbm_id;
+}
+#else
+static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return soc->wlan_cfg_ctx->tcl_wbm_map_array[ring_id].wbm_rbm_id;
+}
+#endif
+#else
 static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
 					  uint8_t ring_id)
 {
 	return (ring_id + soc->wbm_sw0_bm_id);
 }
+#endif
 #endif
 
 #if defined(CLEAR_SW2TCL_CONSUMED_DESC)
@@ -232,6 +253,7 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
 	coalesce = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid);
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, tx_desc->length);
+	DP_STATS_INC(soc, tx.tcl_enq[ring_id], 1);
 	dp_tx_update_stats(soc, tx_desc->nbuf);
 	status = QDF_STATUS_SUCCESS;
 

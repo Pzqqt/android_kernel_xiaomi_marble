@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4037,6 +4038,9 @@ static bool dp_ipa_is_alt_tx_comp_ring(int index)
 static void dp_ipa_get_tx_ring_size(int tx_ring_num, int *tx_ipa_ring_sz,
 				    struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx)
 {
+	if (!soc_cfg_ctx->ipa_enabled)
+		return;
+
 	if (tx_ring_num == IPA_TCL_DATA_RING_IDX)
 		*tx_ipa_ring_sz = wlan_cfg_ipa_tx_ring_size(soc_cfg_ctx);
 	else if (dp_ipa_is_alt_tx_ring(tx_ring_num))
@@ -4056,6 +4060,9 @@ static void dp_ipa_get_tx_comp_ring_size(int tx_comp_ring_num,
 					 int *tx_comp_ipa_ring_sz,
 				       struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx)
 {
+	if (!soc_cfg_ctx->ipa_enabled)
+		return;
+
 	if (tx_comp_ring_num == IPA_TCL_DATA_RING_IDX)
 		*tx_comp_ipa_ring_sz =
 				wlan_cfg_ipa_tx_comp_ring_size(soc_cfg_ctx);

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2134,7 +2135,7 @@ struct hal_hw_srng_config hw_srng_table_6490[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-#ifdef IPA_WDI3_TX_TWO_PIPES
+#if defined(IPA_WDI3_TX_TWO_PIPES) || defined(TX_MULTI_TCL)
 		.max_rings = 5,
 #else
 		.max_rings = 4,
