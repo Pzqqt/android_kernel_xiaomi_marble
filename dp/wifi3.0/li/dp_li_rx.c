@@ -376,7 +376,9 @@ more_data:
 
 		qdf_nbuf_set_tid_val(rx_desc->nbuf,
 				     HAL_RX_REO_QUEUE_NUMBER_GET(ring_desc));
-		qdf_nbuf_set_rx_reo_dest_ind(
+
+		/* set reo dest indication */
+		qdf_nbuf_set_rx_reo_dest_ind_or_sw_excpt(
 				rx_desc->nbuf,
 				HAL_RX_REO_MSDU_REO_DST_IND_GET(ring_desc));
 

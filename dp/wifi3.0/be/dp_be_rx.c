@@ -375,11 +375,11 @@ more_data:
 		if (qdf_likely(mpdu_desc_info.mpdu_flags &
 			       HAL_MPDU_F_QOS_CONTROL_VALID))
 			qdf_nbuf_set_tid_val(rx_desc->nbuf, mpdu_desc_info.tid);
-#ifdef CONFIG_LITHIUM
-		qdf_nbuf_set_rx_reo_dest_ind(
+
+		/* set sw exception */
+		qdf_nbuf_set_rx_reo_dest_ind_or_sw_excpt(
 				rx_desc->nbuf,
-				HAL_RX_REO_MSDU_REO_DST_IND_GET(ring_desc));
-#endif
+				hal_rx_sw_exception_get_be(ring_desc));
 
 		QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_desc_info.msdu_len;
 

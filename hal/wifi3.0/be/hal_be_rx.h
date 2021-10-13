@@ -454,4 +454,17 @@ static inline uintptr_t hal_rx_get_reo_desc_va(void *reo_desc)
 	return (uintptr_t)va_from_desc;
 }
 
+/**
+ * hal_rx_sw_exception_get_be() - Get sw_exception bit value from REO Desc
+ * @reo_desc: REO2SW ring descriptor pointer
+ *
+ * sw_exception bit might not exist in reo destination ring descriptor
+ * for some chipset, so just restrict this function for BE only.
+ *
+ * Return: sw_exception bit value
+ */
+static inline uint8_t hal_rx_sw_exception_get_be(void *reo_desc)
+{
+	return HAL_RX_GET(reo_desc, REO_DESTINATION_RING, SW_EXCEPTION);
+}
 #endif /* _HAL_BE_RX_H_ */
