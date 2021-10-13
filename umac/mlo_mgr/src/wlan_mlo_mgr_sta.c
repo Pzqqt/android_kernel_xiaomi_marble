@@ -414,6 +414,8 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 		    (mlo_dev_ctx->wlan_vdev_list[i] == vdev))
 			continue;
 		wlan_vdev_mlme_feat_ext2_cap_set(mlo_dev_ctx->wlan_vdev_list[i],
+						 WLAN_VDEV_FEXT2_MLO);
+		wlan_vdev_mlme_feat_ext2_cap_set(mlo_dev_ctx->wlan_vdev_list[i],
 						 WLAN_VDEV_FEXT2_MLO_STA_LINK);
 		mlo_prepare_and_send_connect(
 				mlo_dev_ctx->wlan_vdev_list[i],
