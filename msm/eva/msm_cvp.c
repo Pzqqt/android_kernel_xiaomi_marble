@@ -1157,6 +1157,7 @@ static int msm_cvp_session_start(struct msm_cvp_inst *inst,
 		struct eva_kmd_arg *arg)
 {
 	struct cvp_session_queue *sq;
+	struct cvp_hfi_device *hdev;
 
 	sq = &inst->session_queue;
 	spin_lock(&sq->lock);
@@ -1169,6 +1170,14 @@ static int msm_cvp_session_start(struct msm_cvp_inst *inst,
 	sq->state = QUEUE_START;
 	spin_unlock(&sq->lock);
 
+	if (inst->prop.type == HFI_SESSION_FD
+		|| inst->prop.type == HFI_SESSION_DMM) {
+		spin_lock(&inst->core->resources.pm_qos.lock);
+		inst->core->resources.pm_qos.off_vote_cnt++;
+		spin_unlock(&inst->core->resources.pm_qos.lock);
+		hdev = inst->core->device;
+		call_hfi_op(hdev, pm_qos_update, hdev->hfi_device_data);
+	}
 	return cvp_fence_thread_start(inst);
 }
 

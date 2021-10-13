@@ -750,7 +750,7 @@ int cvp_read_platform_resources_from_drv_data(
 {
 	struct msm_cvp_platform_data *platform_data;
 	struct msm_cvp_platform_resources *res;
-	int rc = 0;
+	int rc = 0, i;
 
 	if (!core || !core->platform_data) {
 		dprintk(CVP_ERR, "%s Invalid data\n", __func__);
@@ -783,8 +783,13 @@ int cvp_read_platform_resources_from_drv_data(
 	res->debug_timeout = find_key_value(platform_data,
 			"qcom,debug-timeout");
 
-	res->pm_qos_latency_us = find_key_value(platform_data,
+	res->pm_qos.latency_us = find_key_value(platform_data,
 			"qcom,pm-qos-latency-us");
+	res->pm_qos.silver_count = 4;
+	for (i = 0; i < res->pm_qos.silver_count; i++)
+		res->pm_qos.silver_cores[i] = i;
+	res->pm_qos.off_vote_cnt = 0;
+	spin_lock_init(&res->pm_qos.lock);
 
 	res->max_secure_inst_count = find_key_value(platform_data,
 			"qcom,max-secure-instances");

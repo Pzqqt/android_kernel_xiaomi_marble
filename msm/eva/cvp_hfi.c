@@ -1760,6 +1760,53 @@ static int __sys_set_power_control(struct iris_hfi_device *device,
 	return 0;
 }
 
+static void cvp_pm_qos_update(struct iris_hfi_device *device, bool vote_on)
+{
+	u32 latency, off_vote_cnt;
+	int i, err = 0;
+
+	spin_lock(&device->res->pm_qos.lock);
+	off_vote_cnt = device->res->pm_qos.off_vote_cnt;
+	spin_unlock(&device->res->pm_qos.lock);
+
+	if (vote_on && off_vote_cnt)
+		return;
+
+	latency = vote_on ? device->res->pm_qos.latency_us :
+			PM_QOS_RESUME_LATENCY_DEFAULT_VALUE;
+
+	if (device->res->pm_qos.latency_us && device->res->pm_qos.pm_qos_hdls)
+		for (i = 0; i < device->res->pm_qos.silver_count; i++) {
+			err = dev_pm_qos_update_request(
+				&device->res->pm_qos.pm_qos_hdls[i],
+				latency);
+			if (err < 0) {
+				if (vote_on) {
+					dprintk(CVP_WARN,
+						"pm qos on failed %d\n", err);
+				} else {
+					dprintk(CVP_WARN,
+						"pm qos off failed %d\n", err);
+				}
+			}
+		}
+}
+static int iris_pm_qos_update(void *device)
+{
+	struct iris_hfi_device *dev;
+
+	if (!device) {
+		dprintk(CVP_ERR, "%s Invalid device\n", __func__);
+		return -ENODEV;
+	}
+
+	dev = device;
+
+	cvp_pm_qos_update(dev, true);
+
+	return 0;
+}
+
 static int iris_hfi_core_init(void *device)
 {
 	int rc = 0;
@@ -1866,10 +1913,35 @@ static int iris_hfi_core_init(void *device)
 	__set_ubwc_config(device);
 	__sys_set_idle_indicator(device, true);
 
-	if (dev->res->pm_qos_latency_us)
-		cpu_latency_qos_add_request(&dev->qos,
-				dev->res->pm_qos_latency_us);
+	if (dev->res->pm_qos.latency_us) {
+		int err = 0;
+		u32 i, cpu;
 
+		dev->res->pm_qos.pm_qos_hdls = kcalloc(
+				dev->res->pm_qos.silver_count,
+				sizeof(struct dev_pm_qos_request),
+				GFP_KERNEL);
+
+		if (!dev->res->pm_qos.pm_qos_hdls) {
+			dprintk(CVP_WARN, "Failed allocate pm_qos_hdls\n");
+			goto pm_qos_bail;
+		}
+
+		for (i = 0; i < dev->res->pm_qos.silver_count; i++) {
+			cpu = dev->res->pm_qos.silver_cores[i];
+			err = dev_pm_qos_add_request(
+				get_cpu_device(cpu),
+				&dev->res->pm_qos.pm_qos_hdls[i],
+				DEV_PM_QOS_RESUME_LATENCY,
+				dev->res->pm_qos.latency_us);
+			if (err < 0)
+				dprintk(CVP_WARN,
+					"%s pm_qos_add_req %d failed\n",
+					__func__, i);
+		}
+	}
+
+pm_qos_bail:
 	mutex_unlock(&dev->lock);
 
 	cvp_dsp_send_hfi_queue();
@@ -1896,9 +1968,10 @@ err_no_mem:
 
 static int iris_hfi_core_release(void *dev)
 {
-	int rc = 0;
+	int rc = 0, i;
 	struct iris_hfi_device *device = dev;
 	struct cvp_hal_session *session, *next;
+	struct dev_pm_qos_request *qos_hdl;
 
 	if (!device) {
 		dprintk(CVP_ERR, "invalid device\n");
@@ -1907,9 +1980,16 @@ static int iris_hfi_core_release(void *dev)
 
 	mutex_lock(&device->lock);
 	dprintk(CVP_WARN, "Core releasing\n");
-	if (device->res->pm_qos_latency_us &&
-		cpu_latency_qos_request_active(&device->qos))
-		cpu_latency_qos_remove_request(&device->qos);
+	if (device->res->pm_qos.latency_us &&
+		device->res->pm_qos.pm_qos_hdls) {
+		for (i = 0; i < device->res->pm_qos.silver_count; i++) {
+			qos_hdl = &device->res->pm_qos.pm_qos_hdls[i];
+			if ((qos_hdl != NULL) && dev_pm_qos_request_active(qos_hdl))
+				dev_pm_qos_remove_request(qos_hdl);
+		}
+		kfree(device->res->pm_qos.pm_qos_hdls);
+		device->res->pm_qos.pm_qos_hdls = NULL;
+	}
 
 	__resume(device);
 	__set_state(device, IRIS_STATE_DEINIT);
@@ -3845,10 +3925,6 @@ static inline int __suspend(struct iris_hfi_device *device)
 
 	dprintk(CVP_PWR, "Entering suspend\n");
 
-	if (device->res->pm_qos_latency_us &&
-		cpu_latency_qos_request_active(&device->qos))
-		cpu_latency_qos_remove_request(&device->qos);
-
 	rc = __tzbsp_set_cvp_state(TZ_SUBSYS_STATE_SUSPEND);
 	if (rc) {
 		dprintk(CVP_WARN, "Failed to suspend cvp core %d\n", rc);
@@ -3858,6 +3934,10 @@ static inline int __suspend(struct iris_hfi_device *device)
 	__disable_subcaches(device);
 
 	call_iris_op(device, power_off, device);
+
+	if (device->res->pm_qos.latency_us && device->res->pm_qos.pm_qos_hdls)
+		cvp_pm_qos_update(device, false);
+
 	return rc;
 
 err_tzbsp_suspend:
@@ -4195,9 +4275,8 @@ static inline int __resume(struct iris_hfi_device *device)
 	 */
 	__set_threshold_registers(device);
 
-	if (device->res->pm_qos_latency_us)
-		cpu_latency_qos_add_request(&device->qos,
-				device->res->pm_qos_latency_us);
+	if (device->res->pm_qos.latency_us && device->res->pm_qos.pm_qos_hdls)
+		cvp_pm_qos_update(device, true);
 
 	__sys_set_debug(device, msm_cvp_fw_debug);
 
@@ -4685,6 +4764,7 @@ static void iris_init_hfi_callbacks(struct cvp_hfi_device *hdev)
 	hdev->flush_debug_queue = iris_hfi_flush_debug_queue;
 	hdev->noc_error_info = iris_hfi_noc_error_info;
 	hdev->validate_session = iris_hfi_validate_session;
+	hdev->pm_qos_update = iris_pm_qos_update;
 }
 
 int cvp_iris_hfi_initialize(struct cvp_hfi_device *hdev, u32 device_id,
