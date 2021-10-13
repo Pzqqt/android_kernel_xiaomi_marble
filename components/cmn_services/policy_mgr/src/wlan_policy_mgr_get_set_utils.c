@@ -715,8 +715,8 @@ policy_mgr_update_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
 }
 
 static void
-policy_mgr_fill_sbs_freq_from_dbs(struct policy_mgr_psoc_priv_obj *pm_ctx,
-				  uint8_t phy_id)
+policy_mgr_modify_sbs_freq(struct policy_mgr_psoc_priv_obj *pm_ctx,
+			   uint8_t phy_id)
 {
 	uint8_t shared_phy_id;
 	struct policy_mgr_freq_range *sbs_mac_range, *shared_mac_range;
@@ -758,12 +758,12 @@ policy_mgr_fill_sbs_freq_from_dbs(struct policy_mgr_psoc_priv_obj *pm_ctx,
 			non_shared_range->high_5ghz_freq =
 				QDF_MAX(shared_mac_range->low_5ghz_freq - 10,
 					non_shared_range->low_5ghz_freq);
-	} else if (shared_mac_range->low_5ghz_freq <
-		   non_shared_range->low_5ghz_freq) {
+	} else if (shared_mac_range->high_5ghz_freq <
+		   non_shared_range->high_5ghz_freq) {
 		policy_mgr_debug("LOW 5Ghz shared");
 		/*
-		 * If the shared mac lower 5Ghz frequency is less/equal than
-		 * non-shared mac lower 5Ghz frequency then the shared mac has
+		 * If the shared mac high 5Ghz frequency is less than
+		 * non-shared mac high 5Ghz frequency then the shared mac has
 		 * LOW 5Ghz shared with 2.4Ghz So non-shared mac's 5Ghz low
 		 * freq should be greater than the shared mac's high 5Ghz freq.
 		 */
@@ -777,44 +777,169 @@ policy_mgr_fill_sbs_freq_from_dbs(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	}
 }
 
+static qdf_freq_t
+policy_mgr_get_highest_5ghz_freq_frm_range(struct policy_mgr_freq_range *range)
+{
+	uint8_t phy_id;
+	qdf_freq_t highest_freq = 0;
+	qdf_freq_t max_5g_freq = wlan_reg_max_6ghz_chan_freq() ?
+			wlan_reg_max_6ghz_chan_freq() :
+			wlan_reg_max_5ghz_chan_freq();
+
+	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
+		if (range[phy_id].high_5ghz_freq > highest_freq)
+			highest_freq = range[phy_id].high_5ghz_freq;
+	}
+
+	return highest_freq ? highest_freq : max_5g_freq;
+}
+
+static qdf_freq_t
+policy_mgr_get_lowest_5ghz_freq_frm_range(struct policy_mgr_freq_range *range)
+{
+	uint8_t phy_id;
+	qdf_freq_t lowest_freq = 0;
+
+	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
+		if ((!lowest_freq && range[phy_id].low_5ghz_freq) ||
+		    (range[phy_id].low_5ghz_freq < lowest_freq))
+			lowest_freq = range[phy_id].low_5ghz_freq;
+	}
+
+	return lowest_freq ? lowest_freq : wlan_reg_min_5ghz_chan_freq();
+}
+
 static void
-policy_mgr_update_dbs_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx)
+policy_mgr_fill_lower_share_sbs_freq(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				     uint16_t sbs_range_sep,
+				     struct policy_mgr_freq_range *ref_freq)
+{
+	struct policy_mgr_freq_range *lower_sbs_freq_range;
+	uint8_t phy_id;
+
+	lower_sbs_freq_range =
+		pm_ctx->hw_mode.freq_range_caps[MODE_SBS_LOWER_SHARE];
+
+	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
+		lower_sbs_freq_range[phy_id].low_2ghz_freq =
+						ref_freq[phy_id].low_2ghz_freq;
+		lower_sbs_freq_range[phy_id].high_2ghz_freq =
+						ref_freq[phy_id].high_2ghz_freq;
+
+		/* update for shared mac */
+		if (lower_sbs_freq_range[phy_id].low_2ghz_freq) {
+			lower_sbs_freq_range[phy_id].low_5ghz_freq =
+			    policy_mgr_get_lowest_5ghz_freq_frm_range(ref_freq);
+			lower_sbs_freq_range[phy_id].high_5ghz_freq =
+				sbs_range_sep;
+		} else {
+			lower_sbs_freq_range[phy_id].low_5ghz_freq =
+				sbs_range_sep + 10;
+			lower_sbs_freq_range[phy_id].high_5ghz_freq =
+			   policy_mgr_get_highest_5ghz_freq_frm_range(ref_freq);
+		}
+	}
+}
+
+static void
+policy_mgr_fill_upper_share_sbs_freq(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				     uint16_t sbs_range_sep,
+				     struct policy_mgr_freq_range *ref_freq)
+{
+	struct policy_mgr_freq_range *upper_sbs_freq_range;
+	uint8_t phy_id;
+
+	upper_sbs_freq_range =
+		pm_ctx->hw_mode.freq_range_caps[MODE_SBS_UPPER_SHARE];
+
+	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
+		upper_sbs_freq_range[phy_id].low_2ghz_freq =
+						ref_freq[phy_id].low_2ghz_freq;
+		upper_sbs_freq_range[phy_id].high_2ghz_freq =
+						ref_freq[phy_id].high_2ghz_freq;
+
+		/* update for shared mac */
+		if (upper_sbs_freq_range[phy_id].low_2ghz_freq) {
+			upper_sbs_freq_range[phy_id].low_5ghz_freq =
+				sbs_range_sep + 10;
+			upper_sbs_freq_range[phy_id].high_5ghz_freq =
+			   policy_mgr_get_highest_5ghz_freq_frm_range(ref_freq);
+		} else {
+			upper_sbs_freq_range[phy_id].low_5ghz_freq =
+			    policy_mgr_get_lowest_5ghz_freq_frm_range(ref_freq);
+			upper_sbs_freq_range[phy_id].high_5ghz_freq =
+				sbs_range_sep;
+		}
+	}
+}
+
+static bool
+policy_mgr_both_phy_range_updated(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				  enum policy_mgr_mode hwmode)
 {
 	struct policy_mgr_freq_range *mac_range;
 	uint8_t phy_id;
 
-	/* Reset 5Ghz range for shared mac for DBS */
 	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
 		mac_range =
-			&pm_ctx->hw_mode.freq_range_caps[MODE_DBS][phy_id];
-		if (mac_range->low_2ghz_freq &&
-		    mac_range->low_5ghz_freq) {
-			mac_range->low_5ghz_freq = 0;
-			mac_range->high_5ghz_freq = 0;
-		}
-	}
-	/* Fix SBS MAC range */
-	for (phy_id = 0; phy_id < MAX_MAC; phy_id++)
-		policy_mgr_fill_sbs_freq_from_dbs(pm_ctx, phy_id);
-}
-
-static bool
-policy_mgr_both_dbs_phy_range_updated(struct policy_mgr_psoc_priv_obj *pm_ctx)
-{
-	struct policy_mgr_freq_range *dbs_mac_range;
-	uint8_t phy_id;
-
-	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
-		dbs_mac_range =
-			&pm_ctx->hw_mode.freq_range_caps[MODE_DBS][phy_id];
+			&pm_ctx->hw_mode.freq_range_caps[hwmode][phy_id];
 		/* modify SBS/DBS range only when both phy for DBS are filled */
-		if (!dbs_mac_range->low_2ghz_freq &&
-		    !dbs_mac_range->low_5ghz_freq)
+		if (!mac_range->low_2ghz_freq && !mac_range->low_5ghz_freq)
 			return false;
 	}
 
 	return true;
 }
+
+static void
+policy_mgr_update_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	uint16_t sbs_range_sep;
+	struct policy_mgr_freq_range *mac_range;
+	uint8_t phy_id;
+
+	mac_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
+
+	/*
+	 * If sbs_lower_band_end_freq has a value Z, then the frequency range
+	 * will be split using that value.
+	 */
+	sbs_range_sep = pm_ctx->hw_mode.sbs_lower_band_end_freq;
+	if (sbs_range_sep) {
+		policy_mgr_fill_upper_share_sbs_freq(pm_ctx, sbs_range_sep,
+						     mac_range);
+		policy_mgr_fill_lower_share_sbs_freq(pm_ctx, sbs_range_sep,
+						     mac_range);
+		/* Reset the SBS range */
+		qdf_mem_zero(mac_range, sizeof(*mac_range) * MAX_MAC);
+		return;
+	}
+
+	/*
+	 * If sbs_lower_band_end_freq is not set that means FW will send one
+	 * shared mac range and one non-shared mac range. so update that freq.
+	 */
+	for (phy_id = 0; phy_id < MAX_MAC; phy_id++)
+		policy_mgr_modify_sbs_freq(pm_ctx, phy_id);
+}
+
+static void
+policy_mgr_update_dbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	struct policy_mgr_freq_range *mac_range;
+	uint8_t phy_id;
+
+	mac_range = pm_ctx->hw_mode.freq_range_caps[MODE_DBS];
+	/* Reset 5Ghz range for shared mac for DBS */
+	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
+		if (mac_range[phy_id].low_2ghz_freq &&
+		    mac_range[phy_id].low_5ghz_freq) {
+			mac_range[phy_id].low_5ghz_freq = 0;
+			mac_range[phy_id].high_5ghz_freq = 0;
+		}
+	}
+}
+
 static void
 policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 				struct policy_mgr_psoc_priv_obj *pm_ctx,
@@ -828,8 +953,9 @@ policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	policy_mgr_debug("Hw_Mode: %d Phy_id: %d band: %x low_2g %d high_2g %d low_5g %d high_5g %d",
+	policy_mgr_debug("Hw_Mode: %d Phy_id: %d band: %x SBS low band end freq %d low_2g %d high_2g %d low_5g %d high_5g %d",
 			 hw_config_type, phy_id, mac_cap->supported_bands,
+			 pm_ctx->hw_mode.sbs_lower_band_end_freq,
 			 mac_cap->reg_cap_ext.low_2ghz_chan,
 			 mac_cap->reg_cap_ext.high_2ghz_chan,
 			 mac_cap->reg_cap_ext.low_5ghz_chan,
@@ -851,11 +977,22 @@ policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 	case WMI_HW_MODE_DBS_SBS:
 	case WMI_HW_MODE_DBS_OR_SBS:
 		policy_mgr_update_freq_info(pm_ctx, mac_cap, MODE_DBS, phy_id);
-		policy_mgr_update_freq_info(pm_ctx, mac_cap, MODE_SBS, phy_id);
+		/*
+		 * fill SBS only if freq is provided by FW or
+		 * pm_ctx->hw_mode.sbs_lower_band_end_freq is set
+		 */
+		if (pm_ctx->hw_mode.sbs_lower_band_end_freq ||
+		    mac_cap->reg_cap_ext.low_5ghz_chan ||
+		    mac_cap->reg_cap_ext.low_2ghz_chan)
+			policy_mgr_update_freq_info(pm_ctx, mac_cap, MODE_SBS,
+						    phy_id);
 
 		/* Modify the SBS/DBS list once both phy info are filled */
-		if (policy_mgr_both_dbs_phy_range_updated(pm_ctx))
-			policy_mgr_update_dbs_sbs_freq_info(pm_ctx);
+		if (policy_mgr_both_phy_range_updated(pm_ctx, MODE_DBS))
+			policy_mgr_update_dbs_freq_info(pm_ctx);
+		/* Modify the SBS/DBS list once both phy info are filled */
+		if (policy_mgr_both_phy_range_updated(pm_ctx, MODE_SBS))
+			policy_mgr_update_sbs_freq_info(pm_ctx);
 		break;
 	case WMI_HW_MODE_2G_PHYB:
 		if (phy_id)
@@ -865,6 +1002,10 @@ policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 	case WMI_HW_MODE_SBS:
 	case WMI_HW_MODE_SBS_PASSIVE:
 		policy_mgr_update_freq_info(pm_ctx, mac_cap, MODE_SBS, phy_id);
+		/* Modify the SBS Upper Lower list once both phy are filled */
+		if (policy_mgr_both_phy_range_updated(pm_ctx, MODE_SBS))
+			policy_mgr_update_sbs_freq_info(pm_ctx);
+
 		break;
 	default:
 		policy_mgr_err("HW mode not defined %d",
@@ -889,6 +1030,22 @@ policy_mgr_dump_curr_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 					    freq_range[i].high_5ghz_freq);
 }
 
+static const char *policy_mgr_hw_mode_to_str(enum policy_mgr_mode hw_mode)
+{
+	if (hw_mode >= MODE_HW_MAX)
+		return "Unknown";
+
+	switch (hw_mode) {
+	CASE_RETURN_STRING(MODE_SMM);
+	CASE_RETURN_STRING(MODE_DBS);
+	CASE_RETURN_STRING(MODE_SBS);
+	CASE_RETURN_STRING(MODE_SBS_UPPER_SHARE);
+	CASE_RETURN_STRING(MODE_SBS_LOWER_SHARE);
+	default:
+		return "Unknown";
+	}
+}
+
 void
 policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
 				   enum policy_mgr_mode hw_mode)
@@ -897,7 +1054,8 @@ policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
 
 	for (i = 0; i < MAX_MAC; i++)
 		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE: mode %d: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE: %s(%d): mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					    policy_mgr_hw_mode_to_str(hw_mode),
 					    hw_mode, i,
 					    freq_range[i].low_2ghz_freq,
 					    freq_range[i].high_2ghz_freq,
@@ -915,6 +1073,33 @@ policy_mgr_dump_hw_modes_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 		freq_range = pm_ctx->hw_mode.freq_range_caps[i];
 		policy_mgr_dump_freq_range_per_mac(freq_range, i);
 	}
+}
+
+static void
+policy_mgr_dump_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	uint32_t i;
+	struct policy_mgr_freq_range *freq_range;
+
+	for (i = MODE_SMM; i < MODE_HW_MAX; i++) {
+		if ((i == MODE_SBS) ||
+		    (pm_ctx->hw_mode.sbs_lower_band_end_freq &&
+		    (i == MODE_SBS_LOWER_SHARE || i == MODE_SBS_UPPER_SHARE))) {
+			freq_range = pm_ctx->hw_mode.freq_range_caps[i];
+			policy_mgr_dump_freq_range_per_mac(freq_range, i);
+		}
+	}
+}
+
+static bool polocy_mgr_sbs_range_present(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	if (policy_mgr_both_phy_range_updated(pm_ctx, MODE_SBS) ||
+	    (pm_ctx->hw_mode.sbs_lower_band_end_freq &&
+	     policy_mgr_both_phy_range_updated(pm_ctx, MODE_SBS_LOWER_SHARE) &&
+	     policy_mgr_both_phy_range_updated(pm_ctx, MODE_SBS_UPPER_SHARE)))
+		return true;
+
+	return false;
 }
 
 void
@@ -1000,9 +1185,10 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 			if (hw_config_type == WMI_HW_MODE_DBS ||
 			    hw_config_type == WMI_HW_MODE_DBS_OR_SBS)
 				dbs_mode = HW_MODE_DBS;
-			if ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
+			if (polocy_mgr_sbs_range_present(pm_ctx) &&
+			    ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
 			    (hw_config_type == WMI_HW_MODE_SBS) ||
-			    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS))
+			    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS)))
 				sbs_mode = HW_MODE_SBS;
 		}
 
@@ -1035,6 +1221,35 @@ policy_mgr_are_2_freq_in_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	}
 
 	return false;
+}
+
+static bool
+policy_mgr_are_2_freq_in_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx,
+					qdf_freq_t freq_1, qdf_freq_t freq_2)
+{
+	struct policy_mgr_freq_range *sbs_low_share;
+	struct policy_mgr_freq_range *sbs_uppr_share;
+	struct policy_mgr_freq_range *sbs_range;
+
+	policy_mgr_dump_sbs_freq_range(pm_ctx);
+	if (pm_ctx->hw_mode.sbs_lower_band_end_freq) {
+		sbs_uppr_share =
+			pm_ctx->hw_mode.freq_range_caps[MODE_SBS_UPPER_SHARE];
+		sbs_low_share =
+			pm_ctx->hw_mode.freq_range_caps[MODE_SBS_LOWER_SHARE];
+		if (policy_mgr_are_2_freq_in_freq_range(pm_ctx, sbs_low_share,
+							freq_1, freq_2) ||
+		    policy_mgr_are_2_freq_in_freq_range(pm_ctx, sbs_uppr_share,
+							freq_1, freq_2))
+				return true;
+
+		return false;
+	}
+
+	sbs_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
+
+	return policy_mgr_are_2_freq_in_freq_range(pm_ctx, sbs_range,
+						   freq_1, freq_2);
 }
 
 bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
@@ -1083,10 +1298,7 @@ bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	 * Current HW is SMM check, if they can lead to SBS or DBS without being
 	 * in same mac, return true only if Both will lead to same mac
 	 */
-	freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
-	policy_mgr_dump_freq_range_per_mac(freq_range, MODE_SBS);
-	if (!policy_mgr_are_2_freq_in_freq_range(pm_ctx, freq_range,
-						 freq_1, freq_2))
+	if (!policy_mgr_are_2_freq_in_sbs_freq_range(pm_ctx, freq_1, freq_2))
 		return false;
 
 	/*
@@ -1116,6 +1328,36 @@ policy_mgr_are_3_freq_in_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	}
 
 	return false;
+}
+
+static bool
+policy_mgr_are_3_freq_in_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx,
+					qdf_freq_t freq_1, qdf_freq_t freq_2,
+					qdf_freq_t freq_3)
+{
+	struct policy_mgr_freq_range *sbs_low_share;
+	struct policy_mgr_freq_range *sbs_uppr_share;
+	struct policy_mgr_freq_range *sbs_range;
+
+	policy_mgr_dump_sbs_freq_range(pm_ctx);
+	if (pm_ctx->hw_mode.sbs_lower_band_end_freq) {
+		sbs_uppr_share =
+			pm_ctx->hw_mode.freq_range_caps[MODE_SBS_UPPER_SHARE];
+		sbs_low_share =
+			pm_ctx->hw_mode.freq_range_caps[MODE_SBS_LOWER_SHARE];
+		if (policy_mgr_are_3_freq_in_freq_range(pm_ctx, sbs_low_share,
+							freq_1, freq_2,
+							freq_3) ||
+		    policy_mgr_are_3_freq_in_freq_range(pm_ctx, sbs_uppr_share,
+							freq_1, freq_2, freq_3))
+			return true;
+
+		return false;
+	}
+
+	sbs_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
+	return policy_mgr_are_3_freq_in_freq_range(pm_ctx,sbs_range,
+						   freq_1, freq_2, freq_3);
 }
 
 bool
@@ -1168,10 +1410,8 @@ policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	 * Current HW is SMM check, if they can lead to SBS or DBS without being
 	 * in same mac, return true only if both will lead to same mac
 	 */
-	freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
-	policy_mgr_dump_freq_range_per_mac(freq_range, MODE_SBS);
-	if (!policy_mgr_are_3_freq_in_freq_range(pm_ctx, freq_range, freq_1,
-						 freq_2, freq_3))
+	if (!policy_mgr_are_3_freq_in_sbs_freq_range(pm_ctx, freq_1, freq_2,
+						     freq_3))
 		return false;
 	/*
 	 * If SBS lead to same mac, check if DBS mode will also lead to same mac
@@ -1184,13 +1424,11 @@ policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 }
 
 bool policy_mgr_are_sbs_chan(struct wlan_objmgr_psoc *psoc, qdf_freq_t freq_1,
-			     qdf_freq_t  freq_2)
+			     qdf_freq_t freq_2)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	struct policy_mgr_freq_range *sbs_freq_range;
 
 	pm_ctx = policy_mgr_get_context(psoc);
-
 	if (!pm_ctx)
 		return false;
 
@@ -1203,30 +1441,27 @@ bool policy_mgr_are_sbs_chan(struct wlan_objmgr_psoc *psoc, qdf_freq_t freq_1,
 	    WLAN_REG_IS_24GHZ_CH_FREQ(freq_2))
 		return false;
 
-	sbs_freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
-	policy_mgr_dump_freq_range_per_mac(sbs_freq_range, MODE_SBS);
-
-	return !policy_mgr_are_2_freq_in_freq_range(pm_ctx, sbs_freq_range,
-						    freq_1, freq_2);
+	return !policy_mgr_are_2_freq_in_sbs_freq_range(pm_ctx, freq_1, freq_2);
 }
 
 static bool
 policy_mgr_is_cur_freq_range_sbs(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	struct policy_mgr_freq_range *freq_range, *sbs_freq_range;
+	struct policy_mgr_freq_range *freq_range;
+	uint8_t i;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx)
 		return false;
 
 	policy_mgr_dump_curr_freq_range(pm_ctx);
-	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
-	sbs_freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
-
-	if (!qdf_mem_cmp(freq_range, sbs_freq_range,
-			 sizeof(*freq_range) * MAX_MAC))
-		return true;
+	/* Check if any of the mac is shared */
+	for (i = 0 ; i < MAX_MAC; i++) {
+		freq_range = &pm_ctx->hw_mode.cur_mac_freq_range[i];
+		if (freq_range->low_2ghz_freq && freq_range->low_5ghz_freq)
+			return true;
+	}
 
 	return false;
 }
