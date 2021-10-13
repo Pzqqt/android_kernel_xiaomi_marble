@@ -1578,10 +1578,12 @@ $(call add-wlan-objs,action_oui,$(ACTION_OUI_OBJS))
 ######## PACKET CAPTURE ########
 
 PKT_CAPTURE_DIR := components/pkt_capture
+PKT_CAPTURE_OS_IF_DIR := os_if/pkt_capture
 PKT_CAPTURE_TARGET_IF_DIR := components/target_if/pkt_capture/
 PKT_CAPTURE_INC := -I$(WLAN_ROOT)/$(PKT_CAPTURE_DIR)/core/inc \
 		  -I$(WLAN_ROOT)/$(PKT_CAPTURE_DIR)/dispatcher/inc \
-		  -I$(WLAN_ROOT)/$(PKT_CAPTURE_TARGET_IF_DIR)/inc
+		  -I$(WLAN_ROOT)/$(PKT_CAPTURE_TARGET_IF_DIR)/inc \
+		  -I$(WLAN_ROOT)/$(PKT_CAPTURE_OS_IF_DIR)/inc
 
 ifeq ($(CONFIG_WLAN_FEATURE_PKT_CAPTURE), y)
 PKT_CAPTURE_OBJS := $(PKT_CAPTURE_DIR)/core/src/wlan_pkt_capture_main.o \
@@ -1590,7 +1592,8 @@ PKT_CAPTURE_OBJS := $(PKT_CAPTURE_DIR)/core/src/wlan_pkt_capture_main.o \
 		$(PKT_CAPTURE_DIR)/core/src/wlan_pkt_capture_data_txrx.o \
 		$(PKT_CAPTURE_DIR)/dispatcher/src/wlan_pkt_capture_ucfg_api.o \
 		$(PKT_CAPTURE_DIR)/dispatcher/src/wlan_pkt_capture_tgt_api.o \
-		$(PKT_CAPTURE_TARGET_IF_DIR)/src/target_if_pkt_capture.o
+		$(PKT_CAPTURE_TARGET_IF_DIR)/src/target_if_pkt_capture.o \
+		$(PKT_CAPTURE_OS_IF_DIR)/src/os_if_pkt_capture.o
 endif
 
 $(call add-wlan-objs,pkt_capture,$(PKT_CAPTURE_OBJS))
