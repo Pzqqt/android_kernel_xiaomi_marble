@@ -652,6 +652,26 @@ static QDF_STATUS lim_set_ldpc_exception(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * lim_revise_req_vht_cap_per_band: Update vht cap based on band
+ * session: Session pointer
+ *
+ * Return: None
+ *
+ */
+static void lim_revise_req_vht_cap_per_band(struct pe_session *session)
+{
+	struct wlan_vht_config *vht_config;
+
+	vht_config = &session->vht_config;
+	/* Disable shortgi160 and 80 for 2.4Ghz BSS*/
+	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq)) {
+		pe_debug("Disable shortgi ie for 80MHz & 160MHz in 2G band");
+		vht_config->shortgi80 = 0;
+		vht_config->shortgi160and80plus80 = 0;
+	}
+}
+
 static void lim_start_bss_update_ht_vht_caps(struct mac_context *mac_ctx,
 					     struct pe_session *session)
 {
@@ -673,11 +693,6 @@ static void lim_start_bss_update_ht_vht_caps(struct mac_context *mac_ctx,
 	value = MLME_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF;
 	vht_config.csnof_beamformer_antSup = value;
 	vht_config.mu_beam_formee = 0;
-	/* Disable shortgi160 and 80 for 2.4Ghz BSS*/
-	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq)) {
-		vht_config.shortgi160and80plus80 = 0;
-		vht_config.shortgi80 = 0;
-	}
 	if (session->pLimStartBssReq->vht_channel_width <= CH_WIDTH_80MHZ) {
 		vht_config.shortgi160and80plus80 = 0;
 		vht_config.supported_channel_widthset = 0;
@@ -687,6 +702,8 @@ static void lim_start_bss_update_ht_vht_caps(struct mac_context *mac_ctx,
 
 	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
 	session->ht_config = ht_caps.ht_caps;
+
+	lim_revise_req_vht_cap_per_band(session);
 	pe_debug("cur_op_freq %d HT capability 0x%x VHT capability 0x%x bw %d",
 		 session->curr_op_freq, ht_caps.caps, vht_config.caps,
 		 session->pLimStartBssReq->vht_channel_width);
@@ -1370,6 +1387,7 @@ static void lim_join_req_update_ht_vht_caps(struct mac_context *mac,
 						bcn_ie->HTCaps.shortGI40MHz;
 	}
 
+	lim_revise_req_vht_cap_per_band(session);
 	pe_debug("HT capability 0x%x VHT capability 0x%x",
 		 ht_caps.caps, vht_config.caps);
 }
