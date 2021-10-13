@@ -725,6 +725,7 @@ hal_tx_vdev_mcast_ctrl_set(hal_soc_handle_t hal_soc_hdl,
  *
  * Return: void
  */
+#ifdef HWIO_TCL_R0_CMN_CONFIG_VDEVID_MISMATCH_EXCEPTION_BMSK
 static inline void
 hal_tx_vdev_mismatch_routing_set(hal_soc_handle_t hal_soc_hdl,
 				 enum hal_tx_vdev_mismatch_notify config)
@@ -746,4 +747,11 @@ hal_tx_vdev_mismatch_routing_set(hal_soc_handle_t hal_soc_hdl,
 
 	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
 }
+#else
+static inline void
+hal_tx_vdev_mismatch_routing_set(hal_soc_handle_t hal_soc_hdl,
+				 enum hal_tx_vdev_mismatch_notify config)
+{
+}
+#endif
 #endif /* _HAL_BE_TX_H_ */
