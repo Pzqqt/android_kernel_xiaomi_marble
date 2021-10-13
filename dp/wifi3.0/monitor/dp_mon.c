@@ -1984,21 +1984,6 @@ bool dp_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
 	return false;
 }
 
-QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
-				 struct dp_pdev *pdev,
-				 int mac_id,
-				 int mac_for_pdev)
-{
-	struct dp_mon_ops *mon_ops;
-
-	mon_ops = dp_mon_ops_get(soc);
-	if (mon_ops  && mon_ops->mon_pdev_htt_srng_setup)
-		return mon_ops->mon_pdev_htt_srng_setup(soc, pdev,
-							mac_id, mac_for_pdev);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
 {
 	int target_type;

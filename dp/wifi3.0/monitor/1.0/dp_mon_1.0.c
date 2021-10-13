@@ -257,6 +257,11 @@ fail1:
 	return QDF_STATUS_E_NOMEM;
 }
 #else
+inline
+void dp_flush_monitor_rings(struct dp_soc *soc)
+{
+}
+
 static inline
 void dp_mon_rings_deinit_1_0(struct dp_pdev *pdev)
 {
@@ -690,15 +695,6 @@ QDF_STATUS dp_mon_htt_srng_setup_1_0(struct dp_soc *soc,
 	return status;
 }
 #endif
-#else
-static
-QDF_STATUS dp_mon_htt_srng_setup_1_0(struct dp_soc *soc,
-				     struct dp_pdev *pdev,
-				     int mac_id,
-				     int mac_for_pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 /* MCL specific functions */
@@ -3210,13 +3206,6 @@ dp_rx_mon_process_1_0(struct dp_soc *soc, struct dp_intr *int_ctx,
 		return dp_rx_mon_process(soc, int_ctx, mac_id, quota);
 
 	return dp_rx_mon_status_process(soc, int_ctx, mac_id, quota);
-}
-#else
-static uint32_t
-dp_rx_mon_process_1_0(struct dp_soc *soc, struct dp_intr *int_ctx,
-	              uint32_t mac_id, uint32_t quota)
-{
-	return 0;
 }
 #endif
 
