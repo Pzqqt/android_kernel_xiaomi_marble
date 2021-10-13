@@ -960,7 +960,8 @@ QDF_STATUS (*send_wow_delete_pattern_cmd)(wmi_unified_t wmi_handle,
 					  uint8_t ptrn_id,
 					  uint8_t vdev_id);
 
-QDF_STATUS (*send_host_wakeup_ind_to_fw_cmd)(wmi_unified_t wmi_handle);
+QDF_STATUS (*send_host_wakeup_ind_to_fw_cmd)(wmi_unified_t wmi_handle,
+					     bool tx_pending_ind);
 
 QDF_STATUS (*send_wow_timer_pattern_cmd)(wmi_unified_t wmi_handle,
 			uint8_t vdev_id, uint32_t cookie, uint32_t time);

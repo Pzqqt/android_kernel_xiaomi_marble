@@ -308,10 +308,13 @@ QDF_STATUS wmi_unified_wow_delete_pattern_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_host_wakeup_ind_to_fw_cmd(wmi_unified_t wmi_handle)
+QDF_STATUS wmi_unified_host_wakeup_ind_to_fw_cmd(wmi_unified_t wmi_handle,
+						 bool tx_pending_ind)
 {
 	if (wmi_handle->ops->send_host_wakeup_ind_to_fw_cmd)
-		return wmi_handle->ops->send_host_wakeup_ind_to_fw_cmd(wmi_handle);
+		return wmi_handle->ops->send_host_wakeup_ind_to_fw_cmd
+						(wmi_handle,
+						 tx_pending_ind);
 
 	return QDF_STATUS_E_FAILURE;
 }

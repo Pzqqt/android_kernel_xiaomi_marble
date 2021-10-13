@@ -1682,16 +1682,19 @@ QDF_STATUS wmi_unified_cmd_send_chk(struct wmi_unified *wmi_handle,
 }
 #endif
 
+#define WMI_WAKEUP_TX_PEDNING_IND       1
 /**
  * send_host_wakeup_ind_to_fw_cmd_tlv() - send wakeup ind to fw
  * @wmi_handle: wmi handle
+ * @tx_pending_ind: flag of TX has pending frames
  *
  * Sends host wakeup indication to FW. On receiving this indication,
  * FW will come out of WOW.
  *
  * Return: CDF status
  */
-static QDF_STATUS send_host_wakeup_ind_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
+static QDF_STATUS send_host_wakeup_ind_to_fw_cmd_tlv(wmi_unified_t wmi_handle,
+						     bool tx_pending_ind)
 {
 	wmi_wow_hostwakeup_from_sleep_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -1708,6 +1711,12 @@ static QDF_STATUS send_host_wakeup_ind_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
 
 	cmd = (wmi_wow_hostwakeup_from_sleep_cmd_fixed_param *)
 	      wmi_buf_data(buf);
+
+	if (tx_pending_ind) {
+		wmi_debug("TX pending before WoW wake, indicate FW");
+		cmd->reserved0 |= WMI_WAKEUP_TX_PEDNING_IND;
+	}
+
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		WMITLV_TAG_STRUC_wmi_wow_hostwakeup_from_sleep_cmd_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN

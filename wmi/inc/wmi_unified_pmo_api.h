@@ -330,13 +330,15 @@ QDF_STATUS wmi_unified_wow_delete_pattern_cmd(wmi_unified_t wmi_handle,
 /**
  * wmi_unified_host_wakeup_ind_to_fw_cmd() - send wakeup ind to fw
  * @wmi_handle: wmi handle
+ * @tx_pending_ind: flag of TX has pending frames
  *
  * Sends host wakeup indication to FW. On receiving this indication,
  * FW will come out of WOW.
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_host_wakeup_ind_to_fw_cmd(wmi_unified_t wmi_handle);
+QDF_STATUS wmi_unified_host_wakeup_ind_to_fw_cmd(wmi_unified_t wmi_handle,
+						 bool tx_pending_ind);
 
 /**
  * wmi_unified_wow_timer_pattern_cmd() - set timer pattern tlv, so that
