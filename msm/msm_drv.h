@@ -976,6 +976,8 @@ struct msm_drm_private {
 	struct task_struct *pp_event_thread;
 	struct kthread_worker pp_event_worker;
 
+	struct kthread_work thread_priority_work;
+
 	unsigned int num_encoders;
 	struct drm_encoder *encoders[MAX_ENCODERS];
 
