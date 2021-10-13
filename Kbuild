@@ -947,6 +947,7 @@ endif
 
 ifeq ($(CONFIG_BERYLLIUM), y)
 cppflags-y += -DCONFIG_BERYLLIUM
+cppflags-y += -DDP_OFFLOAD_FRAME_WITH_SW_EXCEPTION
 endif
 
 cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
