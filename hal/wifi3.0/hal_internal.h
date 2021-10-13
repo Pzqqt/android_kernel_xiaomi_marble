@@ -411,6 +411,7 @@ typedef struct hal_ring_handle *hal_ring_handle_t;
  * @enqueue_time: enqueue time (qdf_log_timestamp)
  * @work_scheduled_time: work scheduled time (qdf_log_timestamp)
  * @dequeue_time: dequeue time (qdf_log_timestamp)
+ * @cpu_id: record cpuid when schedule work
  */
 struct hal_reg_write_q_elem {
 	struct hal_srng *srng;
@@ -421,6 +422,7 @@ struct hal_reg_write_q_elem {
 	qdf_time_t enqueue_time;
 	qdf_time_t work_scheduled_time;
 	qdf_time_t dequeue_time;
+	int cpu_id;
 };
 
 /**

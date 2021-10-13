@@ -817,6 +817,7 @@ static void hal_reg_write_work(void *arg)
 
 	q_elem = &hal->reg_write_queue[(hal->read_idx)];
 	q_elem->work_scheduled_time = qdf_get_log_timestamp();
+	q_elem->cpu_id = qdf_get_cpu();
 
 	/* Make sure q_elem consistent in the memory for multi-cores */
 	qdf_rmb();
