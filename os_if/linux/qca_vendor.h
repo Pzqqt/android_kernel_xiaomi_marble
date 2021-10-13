@@ -9096,6 +9096,16 @@ enum qca_wlan_twt_setup_state {
  * This parameter is used for
  * 1. TWT SET Response
  * 2. TWT GET Response
+ *
+ * @QCA_WLAN_VENDOR_ATTR_TWT_SETUP_ANNOUNCE_TIMEOUT: Optional (u32)
+ * This attribute is used to configure the announce timeout value (in us) in
+ * firmware. This timeout value is only applicable for announced TWT. If
+ * timeout value is non-zero then firmware waits upto timeout value to use
+ * data frame as announcement frame. If timeout value is 0 then firmware sends
+ * explicit QoS NULL frame as announcement frame on SP start. Default value in
+ * firmware is 0.
+ * This parameter is used for
+ * 1. TWT SET Request
  */
 enum qca_wlan_vendor_attr_twt_setup {
 	QCA_WLAN_VENDOR_ATTR_TWT_SETUP_INVALID = 0,
@@ -9130,6 +9140,7 @@ enum qca_wlan_vendor_attr_twt_setup {
 	QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_PERSISTENCE = 24,
 
 	QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESPONDER_PM_MODE = 25,
+	QCA_WLAN_VENDOR_ATTR_TWT_SETUP_ANNOUNCE_TIMEOUT = 26,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_TWT_SETUP_AFTER_LAST,
