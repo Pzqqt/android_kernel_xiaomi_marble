@@ -678,13 +678,18 @@ static void lim_start_bss_update_ht_vht_caps(struct mac_context *mac_ctx,
 		vht_config.shortgi160and80plus80 = 0;
 		vht_config.shortgi80 = 0;
 	}
+	if (session->pLimStartBssReq->vht_channel_width <= CH_WIDTH_80MHZ) {
+		vht_config.shortgi160and80plus80 = 0;
+		vht_config.supported_channel_widthset = 0;
+	}
 
 	session->vht_config = vht_config;
 
 	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
 	session->ht_config = ht_caps.ht_caps;
-	pe_debug("cur_op_freq %d HT capability 0x%x VHT capability 0x%x",
-		 session->curr_op_freq, ht_caps.caps, vht_config.caps);
+	pe_debug("cur_op_freq %d HT capability 0x%x VHT capability 0x%x bw %d",
+		 session->curr_op_freq, ht_caps.caps, vht_config.caps,
+		 session->pLimStartBssReq->vht_channel_width);
 }
 
 /**
