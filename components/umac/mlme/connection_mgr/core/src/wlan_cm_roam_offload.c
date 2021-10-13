@@ -4851,6 +4851,7 @@ void cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
 	if (roam_abort) {
 		log_record->log_subtype = WLAN_ROAM_CANCEL;
 		log_record->fw_timestamp_us = log_record->timestamp_us;
+		log_record->roam_result.roam_fail_reason = res->fail_reason;
 	} else {
 		log_record->log_subtype = WLAN_ROAM_RESULT;
 		log_record->fw_timestamp_us = res->timestamp * 1000;
