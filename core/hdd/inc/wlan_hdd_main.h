@@ -3416,6 +3416,18 @@ static inline bool hdd_scan_random_mac_addr_supported(void)
 }
 #endif
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+static inline bool hdd_dynamic_mac_addr_supported(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx->is_vdev_macaddr_dynamic_update_supported;
+}
+#else
+static inline bool hdd_dynamic_mac_addr_supported(struct hdd_context *hdd_ctx)
+{
+	return false;
+}
+#endif
+
 /**
  * hdd_start_vendor_acs(): Start vendor ACS procedure
  * @adapter: pointer to SAP adapter struct
