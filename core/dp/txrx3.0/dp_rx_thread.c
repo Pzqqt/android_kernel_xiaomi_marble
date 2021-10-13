@@ -24,13 +24,16 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cds_sched.h>
 
-#ifdef HAL_CONFIG_SLUB_DEBUG_ON
 /* Timeout in ms to wait for a DP rx thread */
+#ifdef HAL_CONFIG_SLUB_DEBUG_ON
 #define DP_RX_THREAD_WAIT_TIMEOUT 4000
-/* number of rx pkts that thread should yield */
-#define DP_RX_THREAD_YIELD_PKT_CNT 20000
 #else
 #define DP_RX_THREAD_WAIT_TIMEOUT 2000
+#endif
+
+#ifdef CONFIG_SLUB_DEBUG_ON
+/* number of rx pkts that thread should yield */
+#define DP_RX_THREAD_YIELD_PKT_CNT 20000
 #endif
 
 #define DP_RX_TM_DEBUG 0
