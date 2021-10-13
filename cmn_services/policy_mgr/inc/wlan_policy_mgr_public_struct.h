@@ -1250,15 +1250,19 @@ struct policy_mgr_freq_range {
 
 /**
  * enum policy_mgr_mode – enum for host mode
- * @MODE_SMM:    Single mac mode
- * @MODE_DBS:    DBS mode
- * @MODE_SBS:    SBS mode
+ * @MODE_SMM:               Single mac mode
+ * @MODE_DBS:               DBS mode
+ * @MODE_SBS:               SBS mode with either high share or low share
+ * @MODE_SBS_UPPER_SHARE:   Higher 5Ghz shared with 2.4Ghz
+ * @MODE_SBS_LOWER_SHARE:   LOWER 5Ghz shared with 2.4Ghz
  * @MODE_HW_MAX: MAX
  */
 enum policy_mgr_mode {
 	MODE_SMM,
 	MODE_DBS,
 	MODE_SBS,
+	MODE_SBS_UPPER_SHARE,
+	MODE_SBS_LOWER_SHARE,
 	MODE_HW_MAX,
 };
 
@@ -1266,6 +1270,7 @@ enum policy_mgr_mode {
  * struct dbs_hw_mode_info - WLAN_DBS_HW_MODES_TLV Format
  * @tlv_header: TLV header, TLV tag and len; tag equals WMITLV_TAG_ARRAY_UINT32
  * @hw_mode_list: WLAN_DBS_HW_MODE_LIST entries
+ * @sbs_lower_band_end_freq: value with which range will be divided
  * @freq_range_caps: Initial capability and range for different modes for both
  *                   pdev
  * @cur_mac_freq_range: Current freq range for both pdev, this can be used to
@@ -1275,6 +1280,7 @@ enum policy_mgr_mode {
 struct dbs_hw_mode_info {
 	uint32_t tlv_header;
 	uint32_t *hw_mode_list;
+	qdf_freq_t sbs_lower_band_end_freq;
 	struct policy_mgr_freq_range freq_range_caps[MODE_HW_MAX][MAX_MAC];
 	struct policy_mgr_freq_range cur_mac_freq_range[MAX_MAC];
 };
