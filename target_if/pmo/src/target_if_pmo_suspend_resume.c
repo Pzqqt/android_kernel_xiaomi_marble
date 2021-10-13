@@ -28,6 +28,8 @@
 #include "wmi_unified_api.h"
 #include "qdf_types.h"
 #include "pld_common.h"
+#include <cds_api.h>
+#include <cdp_txrx_cmn.h>
 
 #define TGT_WILDCARD_PDEV_ID 0x0
 
@@ -352,6 +354,7 @@ QDF_STATUS target_if_pmo_psoc_send_host_wakeup_ind(
 		struct wlan_objmgr_psoc *psoc)
 {
 	wmi_unified_t wmi_handle;
+	bool tx_pending_ind = false;
 
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
@@ -359,7 +362,11 @@ QDF_STATUS target_if_pmo_psoc_send_host_wakeup_ind(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	return wmi_unified_host_wakeup_ind_to_fw_cmd(wmi_handle);
+	if (cdp_get_tx_inqueue(cds_get_context(QDF_MODULE_ID_SOC)))
+		tx_pending_ind = true;
+
+	return wmi_unified_host_wakeup_ind_to_fw_cmd(wmi_handle,
+						     tx_pending_ind);
 }
 #endif
 
