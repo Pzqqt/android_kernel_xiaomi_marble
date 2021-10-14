@@ -1881,6 +1881,35 @@ struct hdd_dual_sta_policy {
 	uint8_t primary_vdev_id;
 };
 
+#if defined(WLAN_FEATURE_DP_BUS_BANDWIDTH) && defined(FEATURE_RUNTIME_PM)
+/**
+ * enum hdd_rtpm_tput_policy_state - states to track runtime_pm tput policy
+ * @RTPM_TPUT_POLICY_STATE_INVALID: invalid state
+ * @RTPM_TPUT_POLICY_STATE_REQUIRED: state indicating runtime_pm is required
+ * @RTPM_TPUT_POLICY_STATE_NOT_REQUIRE: state indicating runtime_pm is NOT
+ * required
+ */
+enum hdd_rtpm_tput_policy_state {
+	RTPM_TPUT_POLICY_STATE_INVALID,
+	RTPM_TPUT_POLICY_STATE_REQUIRED,
+	RTPM_TPUT_POLICY_STATE_NOT_REQUIRED
+};
+
+/**
+ * struct hdd_rtpm_tput_policy_context - RTPM throughput policy context
+ * @curr_state: current state of throughput policy (RTPM require or not)
+ * @wake_lock: wakelock for QDF wake_lock acquire/release APIs
+ * @rtpm_lock: lock use for QDF rutime PM prevent/allow APIs
+ * @high_tput_vote: atomic variable to keep track of voting
+ */
+struct hdd_rtpm_tput_policy_context {
+	enum hdd_rtpm_tput_policy_state curr_state;
+	qdf_wake_lock_t wake_lock;
+	qdf_runtime_lock_t rtpm_lock;
+	qdf_atomic_t high_tput_vote;
+};
+#endif
+
 /**
  * struct hdd_context - hdd shared driver and psoc/device context
  * @psoc: object manager psoc context
@@ -1999,6 +2028,9 @@ struct hdd_context {
 	uint64_t prev_tx;
 	qdf_atomic_t low_tput_gro_enable;
 	uint32_t bus_low_vote_cnt;
+#ifdef FEATURE_RUNTIME_PM
+	struct hdd_rtpm_tput_policy_context rtpm_tput_policy_ctx;
+#endif
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 	struct completion ready_to_suspend;

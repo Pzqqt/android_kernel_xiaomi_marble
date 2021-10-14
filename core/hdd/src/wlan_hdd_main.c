@@ -4397,6 +4397,107 @@ static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx, uint8_t vdev_id)
 
 #endif
 
+#if defined(WLAN_FEATURE_DP_BUS_BANDWIDTH) && defined(FEATURE_RUNTIME_PM)
+static void hdd_rtpm_tput_policy_init(struct hdd_context *hdd_ctx)
+{
+	struct hdd_rtpm_tput_policy_context *ctx;
+
+	ctx = &hdd_ctx->rtpm_tput_policy_ctx;
+	qdf_wake_lock_create(&ctx->wake_lock, "rtpm_tput_policy_lock");
+	qdf_runtime_lock_init(&ctx->rtpm_lock);
+	ctx->curr_state = RTPM_TPUT_POLICY_STATE_REQUIRED;
+	qdf_atomic_init(&ctx->high_tput_vote);
+}
+
+static void hdd_rtpm_tput_policy_deinit(struct hdd_context *hdd_ctx)
+{
+	struct hdd_rtpm_tput_policy_context *ctx;
+
+	ctx = &hdd_ctx->rtpm_tput_policy_ctx;
+	ctx->curr_state = RTPM_TPUT_POLICY_STATE_INVALID;
+	qdf_runtime_lock_deinit(&ctx->rtpm_lock);
+	qdf_wake_lock_destroy(&ctx->wake_lock);
+}
+
+static void hdd_rtpm_tput_policy_prevent(struct hdd_context *hdd_ctx)
+{
+	struct hdd_rtpm_tput_policy_context *ctx;
+
+	ctx = &hdd_ctx->rtpm_tput_policy_ctx;
+	qdf_wake_lock_acquire(&ctx->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_RTPM_TPUT_POLICY);
+	qdf_runtime_pm_prevent_suspend(&ctx->rtpm_lock);
+}
+
+static void hdd_rtpm_tput_policy_allow(struct hdd_context *hdd_ctx)
+{
+	struct hdd_rtpm_tput_policy_context *ctx;
+
+	ctx = &hdd_ctx->rtpm_tput_policy_ctx;
+	qdf_runtime_pm_allow_suspend(&ctx->rtpm_lock);
+	qdf_wake_lock_release(&ctx->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_RTPM_TPUT_POLICY);
+}
+
+#define HDD_RTPM_POLICY_HIGH_TPUT_THRESH TPUT_LEVEL_MEDIUM
+
+static void hdd_rtpm_tput_policy_apply(struct hdd_context *hdd_ctx,
+				       enum tput_level tput_level)
+{
+	int vote;
+	enum hdd_rtpm_tput_policy_state temp_state;
+	struct hdd_rtpm_tput_policy_context *ctx;
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (qdf_unlikely(!soc))
+		return;
+
+	ctx = &hdd_ctx->rtpm_tput_policy_ctx;
+
+	if (tput_level >= HDD_RTPM_POLICY_HIGH_TPUT_THRESH)
+		temp_state = RTPM_TPUT_POLICY_STATE_NOT_REQUIRED;
+	else
+		temp_state = RTPM_TPUT_POLICY_STATE_REQUIRED;
+
+	if (ctx->curr_state == temp_state)
+		return;
+
+	if (temp_state == RTPM_TPUT_POLICY_STATE_REQUIRED) {
+		cdp_set_rtpm_tput_policy_requirement(soc, false);
+		qdf_atomic_dec(&ctx->high_tput_vote);
+		hdd_rtpm_tput_policy_allow(hdd_ctx);
+	} else {
+		cdp_set_rtpm_tput_policy_requirement(soc, true);
+		qdf_atomic_inc(&ctx->high_tput_vote);
+		hdd_rtpm_tput_policy_prevent(hdd_ctx);
+	}
+
+	ctx->curr_state = temp_state;
+	vote = qdf_atomic_read(&ctx->high_tput_vote);
+
+	if (vote < 0 || vote > 1) {
+		hdd_alert_rl("Incorrect vote!");
+		QDF_BUG(0);
+	}
+}
+#else
+static inline
+void hdd_rtpm_tput_policy_init(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline
+void hdd_rtpm_tput_policy_deinit(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline
+void hdd_rtpm_tput_policy_apply(struct hdd_context *hdd_ctx,
+				enum tput_level tput_level)
+{
+}
+#endif
+
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 {
 	int ret = 0;
@@ -4460,6 +4561,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			ret = -EINVAL;
 			goto power_down;
 		}
+
+		hdd_rtpm_tput_policy_init(hdd_ctx);
 
 		status = ol_cds_init(qdf_dev, hif_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
@@ -4692,6 +4795,7 @@ cds_free:
 	ol_cds_free();
 
 hif_close:
+	hdd_rtpm_tput_policy_deinit(hdd_ctx);
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	hdd_hif_close(hdd_ctx, hif_ctx);
 power_down:
@@ -10033,6 +10137,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	param.policy_info.tput_level = tput_level;
 	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
+	hdd_rtpm_tput_policy_apply(hdd_ctx, tput_level);
+
 	dptrace_high_tput_req =
 			next_vote_level > PLD_BUS_WIDTH_IDLE ? true : false;
 
@@ -14569,6 +14675,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	}
 
 	wlan_connectivity_logging_stop();
+	hdd_rtpm_tput_policy_deinit(hdd_ctx);
 
 	ucfg_ipa_component_config_free();
 	hdd_hif_close(hdd_ctx, hif_ctx);

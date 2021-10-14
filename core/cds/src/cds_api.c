@@ -986,6 +986,9 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	ucfg_pmo_psoc_set_txrx_pdev_id(psoc, OL_TXRX_PDEV_ID);
 	ucfg_ocb_set_txrx_pdev_id(psoc, OL_TXRX_PDEV_ID);
 
+	cdp_set_rtpm_tput_policy_requirement(cds_get_context(QDF_MODULE_ID_SOC),
+					     false);
+
 	cds_debug("CDS successfully Opened");
 
 	return 0;
