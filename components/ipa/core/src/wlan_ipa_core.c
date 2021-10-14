@@ -1009,6 +1009,100 @@ wlan_ipa_eapol_intrabss_fwd_check(struct wlan_ipa_priv *ipa_ctx,
 	return true;
 }
 
+#ifdef MDM_PLATFORM
+static void
+wlan_ipa_set_sap_client_auth(struct wlan_ipa_priv *ipa_ctx, uint8_t *peer_mac,
+			     uint8_t is_authenticated)
+{
+	uint8_t idx;
+	struct ipa_uc_stas_map *sta_map;
+
+	for (idx = 0; idx < WLAN_IPA_MAX_STA_COUNT; idx++) {
+		sta_map = &ipa_ctx->assoc_stas_map[idx];
+		if (sta_map->is_reserved &&
+		    qdf_is_macaddr_equal(&sta_map->mac_addr,
+					 (struct qdf_mac_addr *)peer_mac)) {
+			sta_map->is_authenticated = is_authenticated;
+			break;
+		}
+	}
+}
+
+static inline uint8_t
+wlan_ipa_get_sap_client_auth(struct wlan_ipa_priv *ipa_ctx, uint8_t *peer_mac)
+{
+	uint8_t idx;
+	struct ipa_uc_stas_map *sta_map;
+
+	for (idx = 0; idx < WLAN_IPA_MAX_STA_COUNT; idx++) {
+		sta_map = &ipa_ctx->assoc_stas_map[idx];
+		if (sta_map->is_reserved &&
+		    qdf_is_macaddr_equal(&sta_map->mac_addr,
+					 (struct qdf_mac_addr *)peer_mac)) {
+			return sta_map->is_authenticated;
+		}
+	}
+
+	return false;
+}
+
+static inline uint8_t
+wlan_ipa_is_peer_authenticated(ol_txrx_soc_handle dp_soc,
+			       struct wlan_ipa_iface_context *iface,
+			       uint8_t *peer_mac)
+{
+	uint8_t is_authenticated = false;
+
+	if (iface->device_mode == QDF_SAP_MODE) {
+		is_authenticated = wlan_ipa_get_sap_client_auth(iface->ipa_ctx,
+								peer_mac);
+		if (is_authenticated)
+			return is_authenticated;
+		is_authenticated = cdp_peer_state_get(dp_soc,
+						      iface->session_id,
+						      peer_mac);
+		if (is_authenticated == OL_TXRX_PEER_STATE_AUTH)
+			wlan_ipa_set_sap_client_auth(iface->ipa_ctx,
+						     peer_mac,
+						     true);
+		else
+			is_authenticated = false;
+
+	} else if (iface->device_mode == QDF_STA_MODE) {
+		is_authenticated = iface->is_authenticated;
+		if (is_authenticated)
+			return is_authenticated;
+		is_authenticated = cdp_peer_state_get(dp_soc,
+						      iface->session_id,
+						      peer_mac);
+		if (is_authenticated == OL_TXRX_PEER_STATE_AUTH)
+			iface->is_authenticated = true;
+		else
+			is_authenticated = false;
+	}
+
+	return is_authenticated;
+}
+#else
+static void
+wlan_ipa_set_sap_client_auth(struct wlan_ipa_priv *ipa_ctx, uint8_t *peer_mac,
+			     uint8_t is_authenticated)
+{}
+
+static inline bool
+wlan_ipa_is_peer_authenticated(ol_txrx_soc_handle dp_soc,
+			       struct wlan_ipa_iface_context *iface,
+			       uint8_t *peer_mac)
+{
+	uint8_t is_authenticated = 0;
+
+	is_authenticated = cdp_peer_state_get(dp_soc,
+					      iface->session_id,
+					      peer_mac);
+
+	return (is_authenticated == OL_TXRX_PEER_STATE_AUTH);
+}
+#endif
 /**
  * __wlan_ipa_w2i_cb() - WLAN to IPA callback handler
  * @priv: pointer to private data registered with IPA (we register a
@@ -1106,10 +1200,10 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 		 * non-EAPOL/WAPI frames to be intrabss forwarded
 		 * or submitted to stack.
 		 */
-		if (cdp_peer_state_get(ipa_ctx->dp_soc,
-				       iface_context->session_id,
-				       &peer_mac_addr.bytes[0]) !=
-		    OL_TXRX_PEER_STATE_AUTH && !is_eapol_wapi) {
+		if (!wlan_ipa_is_peer_authenticated(ipa_ctx->dp_soc,
+						    iface_context,
+						    &peer_mac_addr.bytes[0]) &&
+		    !is_eapol_wapi) {
 			ipa_err_rl("Non EAPOL/WAPI packet received when peer " QDF_MAC_ADDR_FMT " is unauthorized",
 				   QDF_MAC_ADDR_REF(peer_mac_addr.bytes));
 			ipa_ctx->ipa_rx_internal_drop_count++;
@@ -1585,6 +1679,7 @@ static void wlan_ipa_cleanup_iface(struct wlan_ipa_iface_context *iface_context,
 		QDF_BUG(0);
 	}
 
+	iface_context->is_authenticated = false;
 	iface_context->dev = NULL;
 	iface_context->device_mode = QDF_MAX_NO_OF_MODE;
 	iface_context->session_id = WLAN_IPA_MAX_SESSION;
@@ -2836,6 +2931,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		qdf_mutex_acquire(&ipa_ctx->event_lock);
+		wlan_ipa_set_sap_client_auth(ipa_ctx, mac_addr, false);
 		if (!ipa_ctx->sap_num_connected_sta) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			ipa_debug("%s: Evt: %d, Client already disconnected",

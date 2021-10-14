@@ -330,7 +330,8 @@ struct wlan_ipa_priv;
  * @interface_lock: Interface lock
  * @ifa_address: Interface address
  * @stats: Interface stats
- * @bssid: BSSID. valid only for sta iface ctx;
+ * @bssid: BSSID. valid only for sta iface ctx
+ * @is_authenticated: is peer authenticated
  */
 struct wlan_ipa_iface_context {
 	struct wlan_ipa_priv *ipa_ctx;
@@ -349,6 +350,7 @@ struct wlan_ipa_iface_context {
 	uint32_t ifa_address;
 	struct wlan_ipa_iface_stats stats;
 	struct qdf_mac_addr bssid;
+	uint8_t is_authenticated;
 };
 
 /**
@@ -397,11 +399,13 @@ struct wlan_ipa_stats {
 /**
  * struct ipa_uc_stas_map - IPA UC assoc station map
  * @is_reserved: STA reserved flag
+ * @is_authenticated: is peer authenticated
  * @mac_addr: Station mac address
  */
 struct ipa_uc_stas_map {
 	bool is_reserved;
 	struct qdf_mac_addr mac_addr;
+	uint8_t is_authenticated;
 };
 
 /**
