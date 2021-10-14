@@ -1175,7 +1175,7 @@ uint8_t *dp_srng_get_near_full_irq_mask(struct dp_soc *soc,
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
 		wbm2_sw_rx_rel_ring_id =
-			wlan_cfg_get_rx_rel_ring_id(soc_cfg_ctx);
+			wlan_cfg_get_rx_rel_ring_id(cfg_ctx);
 		if (ring_num != wbm2_sw_rx_rel_ring_id) {
 			nf_irq_mask = &soc->wlan_cfg_ctx->
 					int_tx_ring_near_full_irq_mask[0];
