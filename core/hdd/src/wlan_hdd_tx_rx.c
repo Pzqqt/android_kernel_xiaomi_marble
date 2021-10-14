@@ -1050,18 +1050,15 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 	qdf_mem_copy(mac_addr.bytes, skb->data, sizeof(mac_addr.bytes));
 
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
-	    cds_is_load_or_unload_in_progress()) {
+	if (cds_is_driver_transitioning()) {
 		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD_DATA,
 				   "Recovery/(Un)load in progress, dropping the packet");
 		goto drop_pkt;
 	}
 
 	hdd_ctx = adapter->hdd_ctx;
-	if (wlan_hdd_validate_context(hdd_ctx))
-		goto drop_pkt;
 
-	if (hdd_ctx->hdd_wlan_suspended) {
+	if (!hdd_ctx || hdd_ctx->hdd_wlan_suspended) {
 		hdd_err_rl("Device is system suspended, drop pkt");
 		goto drop_pkt;
 	}

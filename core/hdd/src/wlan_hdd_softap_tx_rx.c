@@ -581,8 +581,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	 * context may not be reinitialized at this time which may
 	 * lead to a crash.
 	 */
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
-	    cds_is_load_or_unload_in_progress()) {
+	if (cds_is_driver_transitioning()) {
 		QDF_TRACE_DEBUG_RL(
 			  QDF_MODULE_ID_HDD_SAP_DATA,
 			  "%s: Recovery/(Un)load in Progress. Ignore!!!",

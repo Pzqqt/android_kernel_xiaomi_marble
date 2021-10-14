@@ -606,4 +606,20 @@ QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present);
  * Return: Status of map operation
  */
 int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
+
+/**
+ * cds_is_driver_transitioning() - Is driver transitioning
+ *
+ * Return: true if driver is loading/unloading/recovering and false otherwise.
+ */
+static inline bool cds_is_driver_transitioning(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_UNLOADING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_RECOVERING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_BAD);
+}
+
 #endif /* if !defined __CDS_API_H */
