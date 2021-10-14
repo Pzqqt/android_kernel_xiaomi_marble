@@ -907,7 +907,7 @@ static int dp_display_send_hpd_notification(struct dp_display_private *dp)
 		if (!dp->mst.cbs.hpd)
 			goto skip_wait;
 
-		dp->mst.cbs.hpd(&dp->dp_display, true);
+		dp->mst.cbs.hpd(&dp->dp_display, hpd);
 	}
 
 	if (hpd) {
@@ -1289,21 +1289,18 @@ static void dp_display_process_mst_hpd_low(struct dp_display_private *dp)
 
 		/*
 		 * HPD unplug callflow:
-		 * 1. send hpd unplug event with status=disconnected
-		 * 2. send hpd unplug on base connector so usermode can disable
-		 * all external displays.
-		 * 3. unset mst state in the topology mgr so the branch device
+		 * 1. send hpd unplug on base connector so usermode can disable
+                 * all external displays.
+		 * 2. unset mst state in the topology mgr so the branch device
 		 *  can be cleaned up.
 		 */
-		if (dp->mst.cbs.hpd)
-			dp->mst.cbs.hpd(&dp->dp_display, false);
 
 		if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
 				dp_display_state_is(DP_STATE_ENABLED)))
 			rc = dp_display_send_hpd_notification(dp);
 
-		dp_display_update_mst_state(dp, false);
 		dp_display_set_mst_mgr_state(dp, false);
+		dp_display_update_mst_state(dp, false);
 	}
 
 	DP_MST_DEBUG("mst_hpd_low. mst_active:%d\n", dp->mst.mst_active);
