@@ -7216,7 +7216,8 @@ int dsi_display_find_mode(struct dsi_display *display,
 			return rc;
 	}
 
-	priv_info = kzalloc(sizeof(struct dsi_display_mode_priv_info), GFP_KERNEL);
+	priv_info = kvzalloc(sizeof(struct dsi_display_mode_priv_info),
+			GFP_KERNEL);
 	if (ZERO_OR_NULL_PTR(priv_info))
 		return -ENOMEM;
 
@@ -7251,7 +7252,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 	cmp->priv_info = NULL;
 
 	mutex_unlock(&display->display_lock);
-	kfree(priv_info);
+	kvfree(priv_info);
 
 	if (!*out_mode) {
 		DSI_ERR("[%s] failed to find mode for v_active %u h_active %u fps %u pclk %u\n",
