@@ -2100,13 +2100,6 @@ struct ipa3_eth_error_stats {
  * @uc_fw_file_name: uC IPA fw file name
  * @eth_info: ethernet client mapping
  * @max_num_smmu_cb: number of smmu s1 cb supported
- * @u64 gsi_msi_addr: MSI SPI set address APSS_GICA_SETSPI_NSR
- * @u64 gsi_msi_clear_addr: MSI SPI clear address APSS_GICA_CLRSPI_NSR
- * @u64 gsi_msi_ioremapped_addr: iore mapped address for debugging purpose
- * @u32 gsi_rmnet_ctl_evt_ring_irq: IRQ number for rmnet_ctl pipe
- * @u32 gsi_rmnet_ll_evt_ring_irq; IRQ number for rmnet_ll pipe
- * @u32 gsi_rmnet_ctl_evt_ring_intvec: HW IRQ number for rmnet_ctl pipe
- * @u32 gsi_rmnet_ll_evt_ring_intvec; HW IRQ number for rmnet_ll pipe
  * @non_hash_flt_lcl_sys_switch: number of times non-hash flt table moved
  */
 struct ipa3_context {
@@ -2332,19 +2325,12 @@ struct ipa3_context {
 	u8 page_poll_threshold;
 	u32 non_hash_flt_lcl_sys_switch;
 	bool wan_common_page_pool;
-	u64 gsi_msi_addr;
-	u64 gsi_msi_clear_addr;
-	u64 gsi_msi_addr_io_mapped;
-	u64 gsi_msi_clear_addr_io_mapped;
-	u32 gsi_rmnet_ctl_evt_ring_intvec;
-	u32 gsi_rmnet_ctl_evt_ring_irq;
-	u32 gsi_rmnet_ll_evt_ring_intvec;
-	u32 gsi_rmnet_ll_evt_ring_irq;
 	bool use_tput_est_ep;
 	struct ipa_ioc_eogre_info eogre_cache;
 	bool eogre_enabled;
 	bool is_device_crashed;
 	bool ulso_wa;
+	u64 gsi_msi_addr;
 };
 
 struct ipa3_plat_drv_res {
@@ -2423,12 +2409,6 @@ struct ipa3_plat_drv_res {
 	u16 ulso_ip_id_min;
 	u16 ulso_ip_id_max;
 	bool use_pm_wrapper;
-	u64 gsi_msi_addr;
-	u64 gsi_msi_clear_addr;
-	u32 gsi_rmnet_ctl_evt_ring_intvec;
-	u32 gsi_rmnet_ctl_evt_ring_irq;
-	u32 gsi_rmnet_ll_evt_ring_intvec;
-	u32 gsi_rmnet_ll_evt_ring_irq;
 	bool use_tput_est_ep;
 	bool ulso_wa;
 };
@@ -3414,7 +3394,6 @@ irq_handler_t ipa3_get_isr(void);
 void ipa_pc_qmp_enable(void);
 u32 ipa3_get_r_rev_version(void);
 void ipa3_notify_clients_registered(void);
-void ipa_gsi_map_unmap_gsi_msi_addr(bool map);
 #if defined(CONFIG_IPA3_REGDUMP)
 int ipa_reg_save_init(u32 value);
 void ipa_save_registers(void);

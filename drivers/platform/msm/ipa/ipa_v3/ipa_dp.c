@@ -5210,25 +5210,11 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 	evt_rp_dma_addr = 0;
 	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));
 	gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_GPI_EV;
-	if ((ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) &&
-		ipa3_ctx->gsi_rmnet_ll_evt_ring_irq) {
-		gsi_evt_ring_props.intr = GSI_INTR_MSI;
-		gsi_evt_ring_props.msi_addr = ipa3_ctx->gsi_msi_addr;
-		gsi_evt_ring_props.msi_clear_addr = ipa3_ctx->gsi_msi_clear_addr_io_mapped;
-		gsi_evt_ring_props.msi_addr_iore_mapped = ipa3_ctx->gsi_msi_addr_io_mapped;
-		gsi_evt_ring_props.intvec = ipa3_ctx->gsi_rmnet_ll_evt_ring_intvec;
-		gsi_evt_ring_props.msi_irq = ipa3_ctx->gsi_rmnet_ll_evt_ring_irq;
-	} else if ((ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) &&
-		ipa3_ctx->gsi_rmnet_ctl_evt_ring_irq) {
-		gsi_evt_ring_props.intr = GSI_INTR_MSI;
-		gsi_evt_ring_props.msi_addr = ipa3_ctx->gsi_msi_addr;
-		gsi_evt_ring_props.msi_clear_addr = ipa3_ctx->gsi_msi_clear_addr_io_mapped;
-		gsi_evt_ring_props.msi_addr_iore_mapped = ipa3_ctx->gsi_msi_addr_io_mapped;
-		gsi_evt_ring_props.intvec = ipa3_ctx->gsi_rmnet_ctl_evt_ring_intvec;
-		gsi_evt_ring_props.msi_irq = ipa3_ctx->gsi_rmnet_ctl_evt_ring_irq;
-	} else {
-		gsi_evt_ring_props.intr = GSI_INTR_IRQ;
-	}
+	if ((ipa3_ctx->gsi_msi_addr) &&
+		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS ||
+		ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS))
+		gsi_evt_ring_props.intr = GSI_INTR_MSI; // intvec chosen dynamically.
+	else gsi_evt_ring_props.intr = GSI_INTR_IRQ;
 	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
 	gsi_evt_ring_props.ring_len = ring_size;
 	gsi_evt_ring_props.ring_base_vaddr =

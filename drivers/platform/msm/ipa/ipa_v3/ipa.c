@@ -7284,7 +7284,7 @@ void ipa3_notify_clients_registered(void)
 }
 EXPORT_SYMBOL(ipa3_notify_clients_registered);
 
-void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
+static void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
 {
 	struct ipa_smmu_cb_ctx *cb;
 	u64 rounddown_addr;
@@ -7300,20 +7300,13 @@ void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
 			IPAERR("iommu mapping failed for gsi_msi_addr\n");
 			ipa_assert();
 		}
-		ipa3_ctx->gsi_msi_clear_addr_io_mapped =
-			(u64)ioremap(ipa3_ctx->gsi_msi_clear_addr, 4);
-		ipa3_ctx->gsi_msi_addr_io_mapped =
-			(u64)ioremap(ipa3_ctx->gsi_msi_addr, 4);
 	} else {
-		iounmap((int *) ipa3_ctx->gsi_msi_clear_addr_io_mapped);
-		iounmap((int *) ipa3_ctx->gsi_msi_addr_io_mapped);
 		res = iommu_unmap(cb->iommu_domain, rounddown_addr, PAGE_SIZE);
-		ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
-		ipa3_ctx->gsi_msi_addr_io_mapped = 0;
 		if (res)
 			IPAERR("smmu unmap for gsi_msi_addr failed %d\n", res);
 	}
 }
+
 
 /**
  * ipa3_post_init() - Initialize the IPA Driver (Part II).
@@ -7703,11 +7696,11 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 
 	ipa_ut_module_init();
 
+	/* Query MSI address. */
+	gsi_query_device_msi_addr(&ipa3_ctx->gsi_msi_addr);
 	/* Map the MSI addresses for the GSI to access, for LL and QMAP FC pipe */
-	if (!ipa3_ctx->gsi_msi_addr_io_mapped &&
-		!ipa3_ctx->gsi_msi_clear_addr_io_mapped &&
-		(ipa3_ctx->rmnet_ll_enable || ipa3_ctx->rmnet_ctl_enable))
-			ipa_gsi_map_unmap_gsi_msi_addr(true);
+	if (ipa3_ctx->gsi_msi_addr)
+		ipa_gsi_map_unmap_gsi_msi_addr(true);
 
 	if(!ipa_spearhead_stats_init())
 		IPADBG("Fail to init spearhead ipa lnx module");
@@ -8612,18 +8605,6 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->ipa_gpi_event_rp_ddr = resource_p->ipa_gpi_event_rp_ddr;
 	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
 	ipa3_ctx->rmnet_ll_enable = resource_p->rmnet_ll_enable;
-	ipa3_ctx->gsi_msi_addr = resource_p->gsi_msi_addr;
-	ipa3_ctx->gsi_msi_addr_io_mapped = 0;
-	ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
-	ipa3_ctx->gsi_msi_clear_addr = resource_p->gsi_msi_clear_addr;
-	ipa3_ctx->gsi_rmnet_ctl_evt_ring_intvec =
-		resource_p->gsi_rmnet_ctl_evt_ring_intvec;
-	ipa3_ctx->gsi_rmnet_ctl_evt_ring_irq =
-		resource_p->gsi_rmnet_ctl_evt_ring_irq;
-	ipa3_ctx->gsi_rmnet_ll_evt_ring_intvec =
-		resource_p->gsi_rmnet_ll_evt_ring_intvec;
-	ipa3_ctx->gsi_rmnet_ll_evt_ring_irq =
-		resource_p->gsi_rmnet_ll_evt_ring_irq;
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
 			resource_p->tx_wrapper_cache_max_size);
 	ipa3_ctx->ipa_config_is_auto = resource_p->ipa_config_is_auto;
@@ -9472,10 +9453,6 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	u32 ipa_holb_monitor_max_cnt_usb;
 	u32 ipa_holb_monitor_max_cnt_11ad;
 	u32 ipa_wan_aggr_pkt_cnt;
-	u32 gsi_msi_addr;
-	u32 gsi_msi_clear_addr;
-	u32 gsi_rmnet_ctl_evt_ring_intvec;
-	u32 gsi_rmnet_ll_evt_ring_intvec;
 
 	/* initialize ipa3_res */
 	ipa_drv_res->ipa_wdi3_2g_holb_timeout = 0;
@@ -9815,58 +9792,6 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 			ipa_drv_res->rmnet_ll_enable
 			? "True" : "False");
 	}
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-msi-addr",
-		&gsi_msi_addr);
-	IPADBG("GSI MSI addr = %lu\n", gsi_msi_addr);
-	ipa_drv_res->gsi_msi_addr = (u64)gsi_msi_addr;
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-msi-clear-addr",
-		&gsi_msi_clear_addr);
-	IPADBG("GSI MSI clear addr = %lu\n", gsi_msi_clear_addr);
-	ipa_drv_res->gsi_msi_clear_addr = (u64)gsi_msi_clear_addr;
-
-	/* Get IPA MSI IRQ number for rmnet_ctl */
-	resource = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
-		"msi-irq-rmnet-ctl");
-	if (!resource) {
-		ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq = 0;
-		IPAERR(":get resource failed for msi-irq-rmnet-ctl\n");
-	} else {
-		ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq = resource->start;
-		IPADBG(": msi-irq-rmnet-ctl = %d\n",
-			ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq);
-	}
-
-	/* Get IPA MSI IRQ number for rmnet_ll */
-	resource = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
-		"msi-irq-rmnet-ll");
-	if (!resource) {
-		ipa_drv_res->gsi_rmnet_ll_evt_ring_irq = 0;
-		IPAERR(":get resource failed for msi-irq-rmnet-ll\n");
-	} else {
-		ipa_drv_res->gsi_rmnet_ll_evt_ring_irq = resource->start;
-		IPADBG(": msi-irq-rmnet-ll = %d\n",
-			ipa_drv_res->gsi_rmnet_ll_evt_ring_irq);
-	}
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-rmnet-ctl-evt-ring-intvec",
-		&gsi_rmnet_ctl_evt_ring_intvec);
-	IPADBG("gsi_rmnet_ctl_evt_ring_intvec = %u\n",
-		gsi_rmnet_ctl_evt_ring_intvec);
-	ipa_drv_res->gsi_rmnet_ctl_evt_ring_intvec =
-		gsi_rmnet_ctl_evt_ring_intvec;
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-rmnet-ll-evt-ring-intvec",
-		&gsi_rmnet_ll_evt_ring_intvec);
-	IPADBG("gsi_rmnet_ll_evt_ring_intvec = %u\n",
-		gsi_rmnet_ll_evt_ring_intvec);
-	ipa_drv_res->gsi_rmnet_ll_evt_ring_intvec =
-		gsi_rmnet_ll_evt_ring_intvec;
 
 	result = of_property_read_string(pdev->dev.of_node,
 			"qcom,use-gsi-ipa-fw", &ipa_drv_res->gsi_fw_file_name);
