@@ -1109,6 +1109,16 @@ policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	policy_mgr_dump_curr_freq_range(pm_ctx);
 }
 
+static void
+policy_mgr_update_sbs_lowr_band_end_frq(struct policy_mgr_psoc_priv_obj *pm_ctx,
+					struct tgt_info *info)
+{
+	if (wlan_reg_is_5ghz_ch_freq(info->sbs_lower_band_end_freq) ||
+	    wlan_reg_is_6ghz_chan_freq(info->sbs_lower_band_end_freq))
+		pm_ctx->hw_mode.sbs_lower_band_end_freq =
+						info->sbs_lower_band_end_freq;
+}
+
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 					  struct target_psoc_info *tgt_hdl)
 {
@@ -1144,6 +1154,7 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("DBS list is freed");
 	}
 
+	policy_mgr_update_sbs_lowr_band_end_frq(pm_ctx, info);
 	pm_ctx->num_dbs_hw_modes = info->service_ext_param.num_hw_modes;
 	pm_ctx->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
