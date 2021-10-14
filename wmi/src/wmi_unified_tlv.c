@@ -11726,6 +11726,39 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * extract_dbs_or_sbs_cap_service_ready_ext2_tlv() - extract dbs_or_sbs cap from
+ *                                                   service ready ext 2
+ *
+ * @wmi_handle: wmi handle
+ * @event: pointer to event buffer
+ * @sbs_lower_band_end_freq: If sbs_lower_band_end_freq is set to non-zero,
+ *                           it indicates async SBS mode is supported, and
+ *                           lower-band/higher band to MAC mapping is
+ *                           switch-able. unit: mhz. examples 5180, 5320
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS extract_dbs_or_sbs_cap_service_ready_ext2_tlv(
+				wmi_unified_t wmi_handle, uint8_t *event,
+				uint32_t *sbs_lower_band_end_freq)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	wmi_dbs_or_sbs_cap_ext *dbs_or_sbs_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	dbs_or_sbs_caps = param_buf->dbs_or_sbs_cap_ext;
+	if (!dbs_or_sbs_caps)
+		return QDF_STATUS_E_INVAL;
+
+	*sbs_lower_band_end_freq = dbs_or_sbs_caps->sbs_lower_band_end_freq;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_sar_cap_service_ready_ext_tlv() -
  *       extract SAR cap from service ready event
@@ -16476,6 +16509,8 @@ struct wmi_ops tlv_ops =  {
 	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 	.extract_service_ready_ext = extract_service_ready_ext_tlv,
 	.extract_service_ready_ext2 = extract_service_ready_ext2_tlv,
+	.extract_dbs_or_sbs_service_ready_ext2 =
+				extract_dbs_or_sbs_cap_service_ready_ext2_tlv,
 	.extract_hw_mode_cap_service_ready_ext =
 				extract_hw_mode_cap_service_ready_ext_tlv,
 	.extract_mac_phy_cap_service_ready_ext =

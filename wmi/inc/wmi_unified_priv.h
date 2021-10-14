@@ -2041,6 +2041,10 @@ QDF_STATUS (*extract_service_ready_ext2)(
 			uint8_t *evt_buf,
 			struct wlan_psoc_host_service_ext2_param *param);
 
+QDF_STATUS (*extract_dbs_or_sbs_service_ready_ext2)(
+			wmi_unified_t wmi_handle, uint8_t *event,
+			uint32_t *sbs_lower_band_end_freq);
+
 QDF_STATUS (*extract_hw_mode_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t hw_mode_idx,

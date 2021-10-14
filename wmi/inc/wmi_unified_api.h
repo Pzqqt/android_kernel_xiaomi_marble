@@ -3405,6 +3405,23 @@ QDF_STATUS wmi_extract_service_ready_ext2(
 		struct wmi_unified *wmi_handle, uint8_t *evt_buf,
 		struct wlan_psoc_host_service_ext2_param *param);
 
+/*
+ * wmi_extract_dbs_or_sbs_cap_service_ready_ext2() - extract dbs_or_sbs cap from
+ *                                                   service ready ext 2
+ *
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @sbs_lower_band_end_freq: If sbs_lower_band_end_freq is set to non-zero,
+ *                           it indicates async SBS mode is supported, and
+ *                           lower-band/higher band to MAC mapping is
+ *                           switch-able. unit: mhz. examples 5180, 5320
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_extract_dbs_or_sbs_cap_service_ready_ext2(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint32_t *sbs_lower_band_end_freq);
+
 /**
  * wmi_extract_hw_mode_cap_service_ready_ext() -
  *       extract HW mode cap from service ready event

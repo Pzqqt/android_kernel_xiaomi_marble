@@ -2461,6 +2461,18 @@ QDF_STATUS wmi_extract_service_ready_ext2(
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_extract_dbs_or_sbs_cap_service_ready_ext2(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint32_t *sbs_lower_band_end_freq)
+{
+	if (wmi_handle->ops->extract_dbs_or_sbs_service_ready_ext2)
+		return wmi_handle->ops->extract_dbs_or_sbs_service_ready_ext2(
+				wmi_handle,
+				evt_buf, sbs_lower_band_end_freq);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_extract_sar_cap_service_ready_ext(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
