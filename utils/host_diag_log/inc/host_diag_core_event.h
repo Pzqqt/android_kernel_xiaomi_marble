@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -948,6 +949,7 @@ enum wifi_connectivity_events {
  * @WIFI_POWER_EVENT_WAKELOCK_CFR: Wakelock for CFR
  * @WIFI_POWER_EVENT_WAKELOCK_SAP_D3_WOW: Wakelock for SAP D3 WOW max clinets
  * @WIFI_POWER_EVENT_WAKELOCK_GO_D3_WOW: Wakelock for GO D3 WOW max clients
+ * @WIFI_POWER_EVENT_WAKELOCK_RTPM_TPUT_POLICY: Wakelock for RTPM Tput policy
  *
  * Indicates the reason for which the wakelock was taken/released
  */
@@ -981,6 +983,7 @@ enum wake_lock_reason {
 	WIFI_POWER_EVENT_WAKELOCK_CFR,
 	WIFI_POWER_EVENT_WAKELOCK_SAP_D3_WOW,
 	WIFI_POWER_EVENT_WAKELOCK_GO_D3_WOW,
+	WIFI_POWER_EVENT_WAKELOCK_RTPM_TPUT_POLICY,
 };
 
 /* The length of interface name should >= IFNAMSIZ */

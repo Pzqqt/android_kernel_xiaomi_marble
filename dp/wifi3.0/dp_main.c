@@ -11297,6 +11297,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 #if defined(FEATURE_RUNTIME_PM) || defined(DP_POWER_SAVE)
 	.txrx_drain = dp_drain_txrx,
 #endif
+#if defined(FEATURE_RUNTIME_PM)
+	.set_rtpm_tput_policy = dp_set_rtpm_tput_policy_requirement,
+#endif
 #ifdef WLAN_SYSFS_DP_STATS
 	.txrx_sysfs_fill_stats = dp_sysfs_fill_stats,
 	.txrx_sysfs_set_stat_type = dp_sysfs_set_stat_type,

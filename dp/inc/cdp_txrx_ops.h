@@ -590,6 +590,10 @@ struct cdp_cmn_ops {
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 	void (*set_pkt_capture_mode)(struct cdp_soc_t *soc, bool val);
 #endif
+
+#ifdef FEATURE_RUNTIME_PM
+	void (*set_rtpm_tput_policy)(struct cdp_soc_t *soc, bool val);
+#endif
 };
 
 struct cdp_ctrl_ops {

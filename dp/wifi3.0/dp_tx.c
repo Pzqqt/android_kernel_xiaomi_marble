@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1418,6 +1419,10 @@ dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
 #endif
 
 #ifdef FEATURE_RUNTIME_PM
+static inline int dp_get_rtpm_tput_policy_requirement(struct dp_soc *soc)
+{
+	return qdf_atomic_read(&soc->rtpm_high_tput_flag);
+}
 /**
  * dp_tx_ring_access_end_wrapper() - Wrapper for ring access end
  * @soc: Datapath soc handle
@@ -1435,6 +1440,14 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 			      int coalesce)
 {
 	int ret;
+
+	/*
+	 * Avoid runtime get and put APIs under high throughput scenarios.
+	 */
+	if (dp_get_rtpm_tput_policy_requirement(soc)) {
+		dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
+		return;
+	}
 
 	ret = hif_pm_runtime_get(soc->hif_handle,
 				 RTPM_ID_DW_TX_HW_ENQUEUE, true);
@@ -1473,6 +1486,11 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 		hal_srng_inc_flush_cnt(hal_ring_hdl);
 		dp_runtime_put(soc);
 	}
+}
+#else
+static inline int dp_get_rtpm_tput_policy_requirement(struct dp_soc *soc)
+{
+	return 0;
 }
 #endif
 

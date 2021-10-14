@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2713,4 +2714,41 @@ cdp_get_tx_inqueue(ol_txrx_soc_handle soc)
 
 	return soc->ol_ops->dp_get_tx_inqueue(soc);
 }
+
+#ifdef FEATURE_RUNTIME_PM
+
+/**
+ * cdp_set_rtpm_tput_policy_requirement() - Set RTPM throughput policy
+ * @soc: opaque soc handle
+ * @is_high_tput: flag indicating whether throughput requirement is high or not
+ *
+ * The functions sets RTPM throughput policy requirement. If 'is_high_tput' is
+ * set, the expectation is that runtime_pm APIs will not be invoked per packet.
+ */
+
+static inline
+void cdp_set_rtpm_tput_policy_requirement(ol_txrx_soc_handle soc,
+					  bool is_high_tput)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_rtpm_tput_policy)
+		return;
+
+	soc->ops->cmn_drv_ops->set_rtpm_tput_policy(soc, is_high_tput);
+}
+#else
+static inline
+void cdp_set_rtpm_tput_policy_requirement(ol_txrx_soc_handle soc,
+					  bool is_high_tput)
+{
+}
+
+#endif /* FEATURE_RUNTIME_PM */
+
 #endif /* _CDP_TXRX_CMN_H_ */

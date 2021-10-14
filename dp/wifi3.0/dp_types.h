@@ -2206,6 +2206,10 @@ struct dp_soc {
 
 	/* Number of Rx refill rings */
 	uint8_t num_rx_refill_buf_rings;
+#ifdef FEATURE_RUNTIME_PM
+	/* flag to indicate vote for runtime_pm for high tput castt*/
+	qdf_atomic_t rtpm_high_tput_flag;
+#endif
 };
 
 #ifdef IPA_OFFLOAD

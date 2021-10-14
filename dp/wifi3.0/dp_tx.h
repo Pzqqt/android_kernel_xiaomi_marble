@@ -739,6 +739,22 @@ dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
 #endif /* WLAN_DP_FEATURE_SW_LATENCY_MGR */
 
 #ifdef FEATURE_RUNTIME_PM
+/**
+ * dp_set_rtpm_tput_policy_requirement() - Update RTPM throughput policy
+ * @soc_hdl: DP soc handle
+ * @is_high_tput: flag to indicate whether throughput is high
+ *
+ * Returns: none
+ */
+static inline
+void dp_set_rtpm_tput_policy_requirement(struct cdp_soc_t *soc_hdl,
+					 bool is_high_tput)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+
+	qdf_atomic_set(&soc->rtpm_high_tput_flag, is_high_tput);
+}
+
 void
 dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 			      hal_ring_handle_t hal_ring_hdl,
@@ -751,6 +767,11 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 {
 	dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
 }
+
+static inline void
+dp_set_rtpm_tput_policy_requirement(struct cdp_soc_t *soc_hdl,
+				    bool is_high_tput)
+{ }
 #endif
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
