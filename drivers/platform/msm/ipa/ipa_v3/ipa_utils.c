@@ -4502,6 +4502,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 15, 2, 28, 32, IPA_EE_Q6, GSI_FREE_PRE_FETCH, 3 },
 			IPA_TX_INSTANCE_NA },
+	[IPA_5_0_MHI][IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD] = {
+			true, IPA_v5_0_GROUP_URLLC,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 5, 8, 28, 32, IPA_EE_Q6, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_UL },
 	[IPA_5_0_MHI][IPA_CLIENT_TEST_PROD] = {
 			true, IPA_v5_0_GROUP_UL,
 			true,
