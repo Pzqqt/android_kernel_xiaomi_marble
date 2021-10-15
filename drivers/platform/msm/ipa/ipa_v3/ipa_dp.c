@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -2653,6 +2654,11 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 		}
 		rx_pkt->sys = sys;
 
+		trace_ipa3_replenish_rx_page_recycle(
+			stats_i,
+			rx_pkt->page_data.page,
+			rx_pkt->page_data.is_tmp_alloc);
+
 		dma_sync_single_for_device(ipa3_ctx->pdev,
 			rx_pkt->page_data.dma_addr,
 			rx_pkt->len, DMA_FROM_DEVICE);
@@ -4303,6 +4309,10 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 				rx_page.page, 0,
 				size,
 				PAGE_SIZE << rx_page.page_order);
+
+			trace_handle_page_completion(rx_page.page,
+				rx_skb, notify->bytes_xfered,
+				rx_page.is_tmp_alloc, sys->ep->client);
 		}
 	} else {
 		return NULL;
@@ -4370,6 +4380,10 @@ static void ipa3_rx_napi_chain(struct ipa3_sys_context *sys,
 					skb_shinfo(prev_skb)->frag_list =
 						rx_skb;
 
+				trace_ipa3_rx_napi_chain(first_skb,
+							 prev_skb,
+							 rx_skb);
+
 				prev_skb = rx_skb;
 			}
 		}
@@ -4417,6 +4431,11 @@ static void ipa3_rx_napi_chain(struct ipa3_sys_context *sys,
 							= rx_skb;
 
 					prev_skb = rx_skb;
+
+					trace_ipa3_rx_napi_chain(first_skb,
+								 prev_skb,
+								 rx_skb);
+
 				}
 			}
 			if (prev_skb) {

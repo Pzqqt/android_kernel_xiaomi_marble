@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/of.h>
@@ -24,6 +25,9 @@
 #include <linux/wait.h>
 #include <linux/delay.h>
 #include <linux/version.h>
+
+#define CREATE_TRACE_POINTS
+#include "gsi_trace.h"
 
 #define GSI_CMD_TIMEOUT (5*HZ)
 #define GSI_FC_CMD_TIMEOUT (2*GSI_CMD_TIMEOUT)
@@ -831,6 +835,15 @@ static void gsi_handle_ieob(int ee)
 			msk = gsihal_read_reg_nk(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_MSK_k, ee, k);
 			gsihal_write_reg_nk(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k, ee, k, ch & msk);
 
+			if (trace_gsi_qtimer_enabled())
+			{
+				uint64_t qtimer = 0;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+				qtimer = arch_timer_read_cntpct_el0();
+#endif
+				trace_gsi_qtimer(qtimer, false, 0, ch, msk);
+			}
+
 			for (i = 0; i < GSI_STTS_REG_BITS; i++) {
 				if ((1 << i) & ch & msk) {
 					evt_hdl = i + (GSI_STTS_REG_BITS * k);
@@ -1131,6 +1144,14 @@ static irqreturn_t gsi_msi_isr(int irq, void *ctxt)
 
 	evt = gsi_ctx->msi.evt[msi];
 	evt_ctxt = &gsi_ctx->evtr[evt];
+
+	if (trace_gsi_qtimer_enabled()) {
+		uint64_t qtimer = 0;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		qtimer = arch_timer_read_cntpct_el0();
+#endif
+		trace_gsi_qtimer(qtimer, true, evt, 0, 0);
+	}
 
 	if (evt_ctxt->props.intf != GSI_EVT_CHTYPE_GPI_EV) {
 		GSIERR("Unexpected irq intf %d\n",
