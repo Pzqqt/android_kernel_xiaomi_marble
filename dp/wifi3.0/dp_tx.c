@@ -62,6 +62,8 @@
 /* invalid peer id for reinject*/
 #define DP_INVALID_PEER 0XFFFE
 
+#define DP_RETRY_COUNT 7
+
 /*mapping between hal encrypt type and cdp_sec_type*/
 uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {HAL_TX_ENCRYPT_TYPE_NO_CIPHER,
 					  HAL_TX_ENCRYPT_TYPE_WEP_128,
@@ -3731,6 +3733,10 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	DP_STATS_INCC(peer, tx.stbc, 1, ts->stbc);
 	DP_STATS_INCC(peer, tx.ldpc, 1, ts->ldpc);
 	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
+	if (ts->first_msdu)
+		DP_STATS_INCC(peer, tx.mpdu_success_with_retries,
+			      qdf_do_div(ts->transmit_cnt, DP_RETRY_COUNT),
+			      ts->transmit_cnt > DP_RETRY_COUNT);
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

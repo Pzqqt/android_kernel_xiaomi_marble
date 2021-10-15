@@ -1377,6 +1377,8 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 	tgtobj->tx.dropped.fw_reason3 +=
 			srcobj->stats.tx.dropped.fw_reason3;
 	tgtobj->tx.dropped.age_out += srcobj->stats.tx.dropped.age_out;
+	tgtobj->tx.mpdu_success_with_retries +=
+			srcobj->stats.tx.mpdu_success_with_retries;
 	tgtobj->rx.err.mic_err += srcobj->stats.rx.err.mic_err;
 	if (srcobj->stats.rx.snr != 0)
 		tgtobj->rx.snr = srcobj->stats.rx.snr;
