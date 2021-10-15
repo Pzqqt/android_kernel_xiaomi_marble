@@ -316,9 +316,6 @@ enum hdd_nb_cmd_id {
 #define P2P_OUI_TYPE   "\x50\x6f\x9a\x09"
 #define P2P_OUI_TYPE_SIZE  4
 
-#define HS20_OUI_TYPE   "\x50\x6f\x9a\x10"
-#define HS20_OUI_TYPE_SIZE  4
-
 #define OSEN_OUI_TYPE   "\x50\x6f\x9a\x12"
 #define OSEN_OUI_TYPE_SIZE  4
 

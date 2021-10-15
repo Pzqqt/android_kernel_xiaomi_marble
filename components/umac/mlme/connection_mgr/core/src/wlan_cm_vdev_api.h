@@ -33,6 +33,9 @@
 #include "wlan_mlo_mgr_public_structs.h"
 #endif
 
+#define HS20_OUI_TYPE   "\x50\x6f\x9a\x10"
+#define HS20_OUI_TYPE_SIZE  4
+
 /**
  * struct cm_vdev_join_req - connect req from legacy CM to vdev manager
  * @vdev_id: vdev id
