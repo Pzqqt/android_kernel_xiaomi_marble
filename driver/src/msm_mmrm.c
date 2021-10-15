@@ -29,6 +29,14 @@
 	drv_data = (void *) -EPROBE_DEFER; \
 }
 
+#define CHECK_SKIP_MMRM_CLK_RSRC(drv_data)	\
+{									\
+	if (!drv_data->is_clk_scaling_supported) {	\
+		d_mpr_h("%s: mmrm clk rsrc not supported\n", __func__);\
+		goto skip_mmrm;				\
+	}								\
+}
+
 #define	MMRM_SYSFS_ENTRY_MAX_LEN PAGE_SIZE
 
 extern int msm_mmrm_debug;
@@ -37,11 +45,30 @@ extern u8 msm_mmrm_allow_multiple_register;
 
 struct mmrm_driver_data *drv_data = (void *) -EPROBE_DEFER;
 
+bool mmrm_client_check_scaling_supported(enum mmrm_client_type client_type, u32 client_domain)
+{
+	if (drv_data == (void *)-EPROBE_DEFER) {
+		d_mpr_e("%s: mmrm probe_init not done\n", __func__);
+		goto err_exit;
+	}
+
+	if (client_type == MMRM_CLIENT_CLOCK) {
+		CHECK_SKIP_MMRM_CLK_RSRC(drv_data);
+
+		/* TODO: Check for individual domain */
+	}
+
+	return true;
+err_exit:
+	d_mpr_e("%s: error exit\n", __func__);
+skip_mmrm:
+	return false;
+}
+EXPORT_SYMBOL(mmrm_client_check_scaling_supported);
+
 struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 {
 	struct mmrm_client *client = NULL;
-
-
 
 	/* check for null input */
 	if (!client_desc) {
@@ -56,6 +83,9 @@ struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 
 	/* check for client type, then register */
 	if (client_desc->client_type == MMRM_CLIENT_CLOCK) {
+		/* check for skip mmrm */
+		CHECK_SKIP_MMRM_CLK_RSRC(drv_data);
+
 		client = mmrm_clk_client_register(
 					drv_data->clk_mgr, client_desc);
 		if (!client) {
@@ -68,6 +98,7 @@ struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 		goto err_exit;
 	}
 
+skip_mmrm:
 	return client;
 
 err_exit:
@@ -79,7 +110,6 @@ EXPORT_SYMBOL(mmrm_client_register);
 int mmrm_client_deregister(struct mmrm_client *client)
 {
 	int rc = 0;
-
 
 	/* check for null input */
 	if (!client) {
@@ -95,6 +125,9 @@ int mmrm_client_deregister(struct mmrm_client *client)
 
 	/* check for client type, then deregister */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
+		/* check for skip mmrm */
+		CHECK_SKIP_MMRM_CLK_RSRC(drv_data);
+
 		rc = mmrm_clk_client_deregister(drv_data->clk_mgr, client);
 		if (rc != 0) {
 			d_mpr_e("%s: failed to deregister client\n", __func__);
@@ -105,6 +138,7 @@ int mmrm_client_deregister(struct mmrm_client *client)
 			__func__, client->client_type);
 	}
 
+skip_mmrm:
 	return rc;
 
 err_exit:
@@ -133,6 +167,9 @@ int mmrm_client_set_value(struct mmrm_client *client,
 
 	/* check for client type, then set value */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
+		/* check for skip mmrm */
+		CHECK_SKIP_MMRM_CLK_RSRC(drv_data);
+
 		rc = mmrm_clk_client_setval(drv_data->clk_mgr, client,
 				client_data, val);
 		if (rc != 0) {
@@ -144,6 +181,7 @@ int mmrm_client_set_value(struct mmrm_client *client,
 			__func__, client->client_type);
 	}
 
+skip_mmrm:
 	return rc;
 
 err_exit:
@@ -174,6 +212,9 @@ int mmrm_client_set_value_in_range(struct mmrm_client *client,
 
 	/* check for client type, then set value */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
+		/* check for skip mmrm */
+		CHECK_SKIP_MMRM_CLK_RSRC(drv_data);
+
 		rc = mmrm_clk_client_setval_inrange(drv_data->clk_mgr,
 				client, client_data, val);
 		if (rc != 0) {
@@ -185,6 +226,7 @@ int mmrm_client_set_value_in_range(struct mmrm_client *client,
 			__func__, client->client_type);
 	}
 
+skip_mmrm:
 	return rc;
 
 err_exit:
@@ -213,6 +255,9 @@ int mmrm_client_get_value(struct mmrm_client *client,
 
 	/* check for client type, then get value */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
+		/* check for skip mmrm */
+		CHECK_SKIP_MMRM_CLK_RSRC(drv_data);
+
 		rc = mmrm_clk_client_getval(drv_data->clk_mgr,
 				client, val);
 		if (rc != 0) {
@@ -224,6 +269,7 @@ int mmrm_client_get_value(struct mmrm_client *client,
 			__func__, client->client_type);
 	}
 
+skip_mmrm:
 	return rc;
 
 err_exit:
@@ -363,6 +409,7 @@ static struct attribute_group mmrm_fs_attrs_group = {
 static int msm_mmrm_probe_init(struct platform_device *pdev)
 {
 	int rc = 0;
+	u32 clk_clients = 0;
 
 	drv_data = kzalloc(sizeof(*drv_data), GFP_KERNEL);
 	if (!drv_data) {
@@ -370,6 +417,19 @@ static int msm_mmrm_probe_init(struct platform_device *pdev)
 			__func__);
 		rc = -ENOMEM;
 		goto err_no_mem;
+	}
+
+	/* check for clk clients needing admission control */
+	clk_clients = mmrm_count_clk_clients_frm_dt(pdev);
+	if (clk_clients) {
+		d_mpr_h("%s: %d clk clients managed for admission control\n",
+			__func__, clk_clients);
+		drv_data->is_clk_scaling_supported = true;
+	} else {
+		d_mpr_h("%s: no clk clients managed for admission control\n",
+			__func__);
+		drv_data->is_clk_scaling_supported = false;
+		goto skip_mmrm;
 	}
 
 	drv_data->platform_data = mmrm_get_platform_data(&pdev->dev);
@@ -405,6 +465,7 @@ static int msm_mmrm_probe_init(struct platform_device *pdev)
 			__func__);
 	}
 
+skip_mmrm:
 	return rc;
 
 err_mmrm_init:
@@ -449,10 +510,13 @@ static int msm_mmrm_remove(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	sysfs_remove_group(&pdev->dev.kobj, &mmrm_fs_attrs_group);
-	msm_mmrm_debugfs_deinit(drv_data->debugfs_root);
-	mmrm_deinit(drv_data);
-	mmrm_free_platform_resources(drv_data);
+	if (drv_data->is_clk_scaling_supported) {
+		sysfs_remove_group(&pdev->dev.kobj, &mmrm_fs_attrs_group);
+		msm_mmrm_debugfs_deinit(drv_data->debugfs_root);
+		mmrm_deinit(drv_data);
+		mmrm_free_platform_resources(drv_data);
+	}
+
 	dev_set_drvdata(&pdev->dev, NULL);
 	RESET_DRV_DATA(drv_data);
 

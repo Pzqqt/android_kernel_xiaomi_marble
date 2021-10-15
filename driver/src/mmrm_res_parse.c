@@ -221,6 +221,18 @@ err_load_mmrm_rail_table:
 	return rc;
 }
 
+int mmrm_count_clk_clients_frm_dt(struct platform_device *pdev)
+{
+	u32 size_clk_src = 0, num_clk_src = 0;
+
+	of_find_property(pdev->dev.of_node, "mmrm-client-info", &size_clk_src);
+	num_clk_src = size_clk_src / sizeof(struct nom_clk_src_info);
+	d_mpr_h("%s: found %d clk_srcs size %d\n",
+		__func__, num_clk_src, size_clk_src);
+
+	return num_clk_src;
+}
+
 int mmrm_read_platform_resources(struct platform_device *pdev,
 	struct mmrm_driver_data *drv_data)
 {
