@@ -102,7 +102,7 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 static struct msm_cvp_common_data sm8550_common_data[] = {
 	{
 		.key = "qcom,auto-pil",
-		.value = 0,
+		.value = 1,
 	},
 	{
 		.key = "qcom,never-unload-fw",
@@ -194,8 +194,8 @@ static struct msm_cvp_platform_data sm8550_data = {
 	.common_data_length =  ARRAY_SIZE(sm8550_common_data),
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_5,
-	.ubwc_config = kona_ubwc_data,
-	.noc_qos = 0x0,
+	.ubwc_config = kona_ubwc_data,	/*Reuse Kona setting*/
+	.noc_qos = &waipio_noc_qos,	/*Reuse Waipio setting*/
 };
 
 static const struct of_device_id msm_cvp_dt_match[] = {

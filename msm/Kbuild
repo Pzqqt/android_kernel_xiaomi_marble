@@ -21,6 +21,13 @@ KBUILD_CPPFLAGS += -DCONFIG_EVA_WAIPIO=1
 ccflags-y += -DCONFIG_EVA_WAIPIO=1
 endif
 
+ifeq ($(CONFIG_ARCH_KALAMA), y)
+$(info within KBUILD file CONFIG_ARCH_KALAMA = $(CONFIG_ARCH_KALAMA))
+# include $(EVA_ROOT)/config/waipio.mk
+KBUILD_CPPFLAGS += -DCONFIG_EVA_KALAMA=1
+ccflags-y += -DCONFIG_EVA_KALAMA=1
+endif
+
 msm-eva-objs := eva/cvp.o \
         eva/msm_cvp_ioctl.o \
         eva/msm_cvp_platform.o \
