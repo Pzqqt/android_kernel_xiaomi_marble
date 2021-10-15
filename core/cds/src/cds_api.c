@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2854,6 +2855,8 @@ cds_dp_get_vdev_stats(uint8_t vdev_id, struct cds_vdev_dp_stats *stats)
 
 	if (cds_get_cdp_vdev_stats(vdev_id, vdev_stats)) {
 		stats->tx_retries = vdev_stats->tx.retries;
+		stats->tx_mpdu_success_with_retries =
+			vdev_stats->tx.mpdu_success_with_retries;
 		ret = true;
 	}
 

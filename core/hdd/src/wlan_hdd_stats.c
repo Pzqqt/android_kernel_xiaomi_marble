@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3900,6 +3901,7 @@ static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
 	int i;
 	struct cds_vdev_dp_stats dp_stats;
 	uint32_t orig_cnt;
+	uint32_t orig_fail_cnt;
 
 	info->rx_packets = stats->rx_frm_cnt;
 	info->tx_packets = 0;
@@ -3914,9 +3916,13 @@ static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
 
 	if (cds_dp_get_vdev_stats(vdev_id, &dp_stats)) {
 		orig_cnt = info->tx_retries;
+		orig_fail_cnt = info->tx_failed;
 		info->tx_retries = dp_stats.tx_retries;
+		info->tx_failed += dp_stats.tx_mpdu_success_with_retries;
 		hdd_debug("vdev %d tx retries adjust from %d to %d",
 			  vdev_id, orig_cnt, info->tx_retries);
+		hdd_debug("tx failed adjust from %d to %d",
+			  orig_fail_cnt, info->tx_failed);
 	}
 
 	info->filled |= HDD_INFO_TX_PACKETS |
