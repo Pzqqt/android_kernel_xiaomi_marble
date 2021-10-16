@@ -17639,10 +17639,21 @@ typedef struct {
     A_UINT32 flags;  /* WMI_WOW_FLAG enums */
 } wmi_wow_enable_cmd_fixed_param;
 
+typedef enum {
+    WMI_WOW_RESUME_FLAG_TX_DATA          = 0x00000001, /* TX data pending to be sent in resume */
+} WMI_WOW_RESUME_FLAG_ENUM;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wow_hostwakeup_from_sleep_cmd_fixed_param  */
-    /** Reserved for future use */
-    A_UINT32 reserved0;
+    /* reserved0:
+     * This "reserved" field is not actually reserved any more.
+     * It is being used in certain FW branches to hold flags, whose values
+     * are defined by WMI_WOW_RESUME_FLAG_ENUM.
+     */
+    union {
+        A_UINT32 reserved0;
+        A_UINT32 flags;
+    };
 } wmi_wow_hostwakeup_from_sleep_cmd_fixed_param;
 
 #define WOW_ICMPV6_NA_FILTER_DISABLE 0
