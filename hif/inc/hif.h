@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2090,4 +2091,17 @@ static inline int hif_system_pm_state_check(struct hif_opaque_softc *hif)
 	return 0;
 }
 #endif
+
+/**
+ * hif_set_grp_intr_affinity() - API to set affinity for grp
+ *  intrs set in the bitmap
+ * @scn: hif handle
+ * @grp_intr_bitmask: grp intrs for which perf affinity should be
+ *  applied
+ * @perf: affine to perf or non-perf cluster
+ *
+ * Return: None
+ */
+void hif_set_grp_intr_affinity(struct hif_opaque_softc *scn,
+			       uint32_t grp_intr_bitmask, bool perf);
 #endif /* _HIF_H_ */

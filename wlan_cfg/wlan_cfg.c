@@ -1502,6 +1502,9 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
 		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_intr_mask[i];
+		if (wlan_cfg_ctx->int_tx_ring_mask[i])
+			wlan_cfg_ctx->tx_rings_grp_bitmap |= BIT(i);
+
 		wlan_cfg_ctx->int_rx_mon_ring_mask[i] =
 							rx_mon_ring_mask_msi[i];
 		wlan_cfg_ctx->int_tx_mon_ring_mask[i] = 0;

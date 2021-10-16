@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -627,7 +628,8 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 
 	actual_dones = work_done;
 
-	if (!hif_ext_group->force_break && work_done < normalized_budget) {
+	if (qdf_atomic_inc_not_zero(&hif_ext_group->force_napi_complete) ||
+	    (!hif_ext_group->force_break && work_done < normalized_budget)) {
 		hif_record_event(hif_ext_group->hif, hif_ext_group->grp_id,
 				 0, 0, 0, HIF_EVENT_BH_COMPLETE);
 		napi_complete(napi);
@@ -1018,6 +1020,7 @@ QDF_STATUS hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	hif_ext_group->hif = hif_ctx;
 	hif_ext_group->context_name = context_name;
 	hif_ext_group->type = type;
+	qdf_atomic_init(&hif_ext_group->force_napi_complete);
 
 	hif_state->hif_num_extgroup++;
 	return QDF_STATUS_SUCCESS;

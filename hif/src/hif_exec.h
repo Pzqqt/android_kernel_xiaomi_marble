@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -106,10 +107,9 @@ struct hif_exec_context {
 	enum hif_exec_type type;
 	unsigned long long poll_start_time;
 	bool force_break;
-#if defined(HIF_CPU_PERF_AFFINE_MASK) || defined(HIF_CPU_CLEAR_AFFINITY)
 	/* Stores the affinity hint mask for each WLAN IRQ */
 	qdf_cpu_mask new_cpu_mask[HIF_MAX_GRP_IRQ];
-#endif
+	qdf_atomic_t force_napi_complete;
 };
 
 /**
@@ -160,18 +160,20 @@ struct hif_exec_context *hif_exec_get_ctx(struct hif_opaque_softc *hif,
 					  uint8_t id);
 void hif_exec_kill(struct hif_opaque_softc *scn);
 
-#ifdef HIF_CPU_PERF_AFFINE_MASK
 /**
  * hif_pci_irq_set_affinity_hint() - API to set IRQ affinity
  * @hif_ext_group: hif_ext_group to extract the irq info
+ * @perf: affine to perf cluster or non-perf cluster
  *
- * This function will set the IRQ affinity to the gold cores
- * only for defconfig builds
+ * This function will set the IRQ affinity to gold cores
+ * or silver cores based on perf flag
  *
  * Return: none
  */
-void hif_pci_irq_set_affinity_hint(
-	struct hif_exec_context *hif_ext_group);
+void hif_pci_irq_set_affinity_hint(struct hif_exec_context *hif_ext_group,
+				   bool perf);
+
+#ifdef HIF_CPU_PERF_AFFINE_MASK
 
 /**
  * hif_pci_ce_irq_set_affinity_hint() - API to set IRQ affinity
@@ -194,10 +196,6 @@ static inline void hif_ce_irq_remove_affinity_hint(int irq)
 	hif_irq_affinity_remove(irq);
 }
 #else
-static inline void hif_pci_irq_set_affinity_hint(
-	struct hif_exec_context *hif_ext_group)
-{
-}
 
 static inline void hif_pci_ce_irq_set_affinity_hint(
 	struct hif_softc *scn)

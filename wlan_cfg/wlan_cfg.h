@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -231,6 +232,8 @@ struct wlan_srng_cfg {
  * @pkt_capture_mode: Packet capture mode config
  * @rx_mon_buf_ring_size: Rx monitor buf ring size
  * @tx_mon_buf_ring_size: Tx monitor buf ring size
+ * @tx_rings_grp_bitmap: bitmap of group intr contexts which have
+ *  non-zero tx ring mask
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -378,6 +381,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t rx_mon_buf_ring_size;
 	uint32_t tx_mon_buf_ring_size;
 	uint8_t rx_rel_wbm2sw_ring_id;
+	uint32_t tx_rings_grp_bitmap;
 };
 
 /**

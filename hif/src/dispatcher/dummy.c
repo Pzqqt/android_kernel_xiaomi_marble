@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -455,4 +456,9 @@ int hif_dummy_enable_grp_irqs(struct hif_softc *scn)
 int hif_dummy_disable_grp_irqs(struct hif_softc *scn)
 {
 	return -EOPNOTSUPP;
+}
+
+void hif_dummy_set_grp_intr_affinity(struct hif_softc *scn,
+				     uint32_t grp_intr_bitmap, bool perf)
+{
 }

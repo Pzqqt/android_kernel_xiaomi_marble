@@ -11862,6 +11862,14 @@ void dp_reset_rx_hw_ext_stats(struct cdp_soc_t *soc_hdl)
 }
 #endif /* WLAN_FEATURE_STATS_EXT */
 
+static
+uint32_t dp_get_tx_rings_grp_bitmap(struct cdp_soc_t *soc_hdl)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	return soc->wlan_cfg_ctx->tx_rings_grp_bitmap;
+}
+
 #ifdef DP_PEER_EXTENDED_API
 static struct cdp_misc_ops dp_ops_misc = {
 #ifdef FEATURE_WLAN_TDLS
@@ -11891,6 +11899,7 @@ static struct cdp_misc_ops dp_ops_misc = {
 	.is_swlm_enabled = dp_soc_is_swlm_enabled,
 #endif
 	.display_txrx_hw_info = dp_display_srng_info,
+	.get_tx_rings_grp_bitmap = dp_get_tx_rings_grp_bitmap,
 };
 #endif
 
