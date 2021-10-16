@@ -227,6 +227,16 @@ QDF_STATUS mlo_peer_free_aid(struct wlan_mlo_dev_context *ml_dev,
 	struct wlan_ml_vdev_aid_mgr *ml_aid_mgr;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	if (!ml_dev->ap_ctx) {
+		mlo_err("ml_dev->ap_ctx is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!ml_peer) {
+		mlo_err("ml_peer is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	ml_aid_mgr = ml_dev->ap_ctx->ml_aid_mgr;
 	if (!ml_aid_mgr)
 		return QDF_STATUS_E_INVAL;
@@ -522,17 +532,12 @@ void wlan_mlo_vdev_aid_mgr_deinit(struct wlan_mlo_dev_context *ml_dev)
 		return;
 
 	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
-		if (!ml_dev->wlan_vdev_list[i])
-			continue;
 
 		if (ml_aid_mgr->aid_mgr[i]) {
 			n = qdf_atomic_read(&ml_aid_mgr->aid_mgr[i]->ref_cnt);
-			mlo_info("Vdev ID %d, AID mgr ref cnt %d",
-				 wlan_vdev_get_id(ml_dev->wlan_vdev_list[i]),
-				 n);
+			mlo_info("AID mgr ref cnt %d", n);
 		} else {
-			mlo_err("Vdev ID %d, doesn't have associated AID mgr",
-				wlan_vdev_get_id(ml_dev->wlan_vdev_list[i]));
+			mlo_err("ID %d, doesn't have associated AID mgr", i);
 			continue;
 		}
 		wlan_vdev_aid_mgr_free(ml_aid_mgr->aid_mgr[i]);
