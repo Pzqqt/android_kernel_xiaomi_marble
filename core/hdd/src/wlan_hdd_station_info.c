@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1412,6 +1413,10 @@ static int hdd_get_connected_station_info(struct hdd_context *hdd_ctx,
 	if (txrx_rate) {
 		stainfo->tx_rate = stats->peer_stats_info_ext->tx_rate;
 		stainfo->rx_rate = stats->peer_stats_info_ext->rx_rate;
+		stainfo->tx_packets = stats->peer_stats_info_ext->tx_packets;
+		stainfo->tx_bytes = stats->peer_stats_info_ext->tx_bytes;
+		stainfo->rx_packets = stats->peer_stats_info_ext->rx_packets;
+		stainfo->rx_bytes = stats->peer_stats_info_ext->rx_bytes;
 		nl_buf_len += (sizeof(stainfo->tx_rate) + NLA_HDRLEN) +
 			(sizeof(stainfo->rx_rate) + NLA_HDRLEN);
 		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);

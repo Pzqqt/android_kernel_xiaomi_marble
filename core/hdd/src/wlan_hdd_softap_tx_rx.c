@@ -1180,7 +1180,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		if (sta_info) {
 			sta_info->rx_packets++;
 			sta_info->rx_bytes += skb->len;
-			sta_info->last_tx_rx_ts = qdf_system_ticks();
 			hdd_softap_inspect_dhcp_packet(adapter, skb, QDF_RX);
 			hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info,
 					     true,

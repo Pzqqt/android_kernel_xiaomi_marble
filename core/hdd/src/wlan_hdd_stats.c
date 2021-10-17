@@ -4907,11 +4907,36 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 static void wlan_hdd_fill_station_info(struct wlan_objmgr_psoc *psoc,
+				       struct hdd_adapter *adapter,
 				       struct station_info *sinfo,
 				       struct hdd_station_info *stainfo,
 				       struct hdd_fw_txrx_stats *stats)
 {
 	qdf_time_t curr_time, dur;
+	struct cdp_peer_stats *peer_stats;
+	QDF_STATUS status;
+
+	peer_stats = qdf_mem_malloc(sizeof(*peer_stats));
+	if (!peer_stats)
+		return;
+
+	status =
+		cdp_host_get_peer_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					adapter->vdev_id,
+					stainfo->sta_mac.bytes,
+					peer_stats);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("cdp_host_get_peer_stats failed. error: %u", status);
+		qdf_mem_free(peer_stats);
+		return;
+	}
+
+	stainfo->last_tx_rx_ts =
+		peer_stats->tx.last_tx_ts > peer_stats->rx.last_rx_ts ?
+		peer_stats->tx.last_tx_ts : peer_stats->rx.last_rx_ts;
+
+	qdf_mem_free(peer_stats);
 
 	curr_time = qdf_system_ticks();
 	dur = curr_time - stainfo->assoc_ts;
@@ -5215,7 +5240,8 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	txrx_stats.rssi = stats->peer_stats_info_ext->rssi
 			+ WLAN_HDD_TGT_NOISE_FLOOR_DBM;
 	wlan_hdd_fill_rate_info(&txrx_stats, stats->peer_stats_info_ext);
-	wlan_hdd_fill_station_info(hddctx->psoc, sinfo, stainfo, &txrx_stats);
+	wlan_hdd_fill_station_info(hddctx->psoc, adapter,
+				   sinfo, stainfo, &txrx_stats);
 	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
 			     STA_INFO_WLAN_HDD_GET_STATION_REMOTE);
