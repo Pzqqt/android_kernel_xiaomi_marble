@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_THERMAL_CORE_H__
@@ -16,6 +16,7 @@ struct sde_cdev {
 	struct thermal_cooling_device *cdev;
 	struct backlight_device *bd;
 	unsigned long thermal_state;
+	unsigned int cdev_sf;
 };
 
 #ifdef CONFIG_THERMAL_OF

@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  */
 #include <linux/err.h>
 #include <linux/slab.h>
 #include "msm_cooling_device.h"
+
+#define BRIGHTNESS_CDEV_MAX 255
 
 static int sde_cdev_get_max_brightness(struct thermal_cooling_device *cdev,
 					unsigned long *state)
 {
 	struct sde_cdev *disp_cdev = (struct sde_cdev *)cdev->devdata;
 
-	*state = disp_cdev->bd->props.max_brightness;
+	*state = disp_cdev->bd->props.max_brightness / disp_cdev->cdev_sf;
 
 	return 0;
 }
@@ -21,7 +23,8 @@ static int sde_cdev_get_cur_brightness(struct thermal_cooling_device *cdev,
 {
 	struct sde_cdev *disp_cdev = (struct sde_cdev *)cdev->devdata;
 
-	*state = disp_cdev->bd->props.max_brightness - disp_cdev->thermal_state;
+	*state = ((disp_cdev->bd->props.max_brightness -
+			disp_cdev->thermal_state) / disp_cdev->cdev_sf);
 
 	return 0;
 }
@@ -32,10 +35,11 @@ static int sde_cdev_set_cur_brightness(struct thermal_cooling_device *cdev,
 	struct sde_cdev *disp_cdev = (struct sde_cdev *)cdev->devdata;
 	unsigned long brightness_lvl = 0;
 
-	if (state > disp_cdev->bd->props.max_brightness)
+	if (state > disp_cdev->bd->props.max_brightness / disp_cdev->cdev_sf)
 		return -EINVAL;
 
-	brightness_lvl = disp_cdev->bd->props.max_brightness - state;
+	brightness_lvl = disp_cdev->bd->props.max_brightness -
+				(state * disp_cdev->cdev_sf);
 	if (brightness_lvl == disp_cdev->thermal_state)
 		return 0;
 	disp_cdev->thermal_state = brightness_lvl;
@@ -67,6 +71,13 @@ struct sde_cdev *backlight_cdev_register(struct device *dev,
 		return ERR_PTR(-ENOMEM);
 	disp_cdev->thermal_state = 0;
 	disp_cdev->bd = bd;
+
+	if (bd->props.max_brightness > BRIGHTNESS_CDEV_MAX)
+		disp_cdev->cdev_sf = (bd->props.max_brightness /
+						BRIGHTNESS_CDEV_MAX);
+	else
+		disp_cdev->cdev_sf = 1;
+
 	disp_cdev->cdev = thermal_of_cooling_device_register(dev->of_node,
 				(char *)dev_name(&bd->dev), disp_cdev,
 				&sde_cdev_ops);
