@@ -3755,6 +3755,7 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 		DP_STATS_INCC(peer, tx.mpdu_success_with_retries,
 			      qdf_do_div(ts->transmit_cnt, DP_RETRY_COUNT),
 			      ts->transmit_cnt > DP_RETRY_COUNT);
+	peer->stats.tx.last_tx_ts = qdf_system_ticks();
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

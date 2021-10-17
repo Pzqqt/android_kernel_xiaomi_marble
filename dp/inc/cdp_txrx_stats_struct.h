@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1022,6 +1023,7 @@ struct protocol_trace_count {
  *       <enum 2     1_6_us_sgi > HE related GI
  *       <enum 3     3_2_us_sgi > HE
  * @preamble_info: preamble
+ * @last_tx_ts: last timestamp in jiffies when tx comp occurred
  */
 struct cdp_tx_stats {
 	struct cdp_pkt_info comp_pkt;
@@ -1122,6 +1124,7 @@ struct cdp_tx_stats {
 		 preamble_info:4;
 	/* mpdu retry count in case of successful transmission */
 	uint32_t mpdu_success_with_retries;
+	unsigned long last_tx_ts;
 };
 
 /* struct cdp_rx_stats - rx Level Stats
@@ -1133,6 +1136,7 @@ struct cdp_tx_stats {
  * @raw: Raw Pakets received
  * @nawds_mcast_drop: Total multicast packets
  * @mec_drop: Total MEC packets dropped
+ * @last_rx_ts: last timestamp in jiffies when RX happened
  * @pkts: Intra BSS packets received
  * @fail: Intra BSS packets failed
  * @mdns_no_fwd: Intra BSS MDNS packets not forwarded
@@ -1211,6 +1215,7 @@ struct cdp_rx_stats {
 	struct cdp_pkt_info raw;
 	uint32_t nawds_mcast_drop;
 	struct cdp_pkt_info mec_drop;
+	unsigned long last_rx_ts;
 	struct {
 		struct cdp_pkt_info pkts;
 		struct cdp_pkt_info fail;

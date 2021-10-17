@@ -1714,6 +1714,8 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (!soc->process_rx_status)
 		return;
 
+	peer->stats.rx.last_rx_ts = qdf_system_ticks();
+
 	/*
 	 * TODO - For WCN7850 this field is present in ring_desc
 	 * Try to use ring desc instead of tlv.
