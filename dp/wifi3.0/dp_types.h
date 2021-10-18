@@ -148,6 +148,7 @@
 #define DP_TX_HW_DSCP_TID_MAP_VALID 0x1
 #define DP_TXRX_HLOS_TID_OVERRIDE_ENABLED 0x2
 #define DP_TX_MESH_ENABLED 0x4
+#define DP_TX_INVALID_QOS_TAG 0xf
 
 #ifdef WLAN_SUPPORT_RX_FISA
 #define FISA_FLOW_MAX_AGGR_COUNT        16 /* max flow aggregate count */

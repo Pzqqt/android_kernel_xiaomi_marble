@@ -1780,8 +1780,13 @@ static inline void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	if (qdf_likely(vdev->skip_sw_tid_classification)) {
 		/* Update tid in msdu_info from skb priority */
 		if (qdf_unlikely(vdev->skip_sw_tid_classification
-			    & DP_TXRX_HLOS_TID_OVERRIDE_ENABLED)) {
-			msdu_info->tid = qdf_nbuf_get_priority(nbuf);
+			& DP_TXRX_HLOS_TID_OVERRIDE_ENABLED)) {
+			uint32_t tid = qdf_nbuf_get_priority(nbuf);
+
+			if (tid == DP_TX_INVALID_QOS_TAG)
+				return;
+
+			msdu_info->tid = tid;
 			return;
 		}
 		return;
