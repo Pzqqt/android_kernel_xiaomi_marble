@@ -863,6 +863,26 @@ QDF_STATUS
 wmi_unified_vdev_set_param_send(wmi_unified_t wmi_handle,
 				struct vdev_set_params *param);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wmi_unified_roam_set_param_send() - WMI roam set parameter function
+ * @wmi_handle: handle to WMI.
+ * @roam_param: pointer to hold roam set parameter
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_roam_set_param_send(wmi_unified_t wmi_handle,
+				struct vdev_set_params *roam_param);
+#else
+static inline QDF_STATUS
+wmi_unified_roam_set_param_send(wmi_unified_t wmi_handle,
+				struct vdev_set_params *roam_param)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wmi_unified_sifs_trigger_send() - WMI vdev sifs trigger parameter function
  * @wmi_handle: handle to WMI.

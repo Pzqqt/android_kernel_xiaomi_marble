@@ -1092,6 +1092,9 @@ QDF_STATUS (*send_pdev_set_pcl_cmd)(wmi_unified_t wmi_handle,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS (*send_vdev_set_pcl_cmd)(wmi_unified_t wmi_handle,
 				    struct set_pcl_cmd_params *params);
+
+QDF_STATUS (*send_roam_set_param_cmd)(wmi_unified_t wmi_handle,
+				      struct vdev_set_params *roam_param);
 #endif
 
 #ifdef WLAN_POLICY_MGR_ENABLE
