@@ -1679,6 +1679,11 @@ enum wlan_ml_variant {
 
 /* Definitions related to Basic variant Multi-Link element Common Info field */
 
+/* Size in octets of Link ID Info subfield in Basic variant Multi-Link element
+ * Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_LINKIDINFO_SIZE                            1
+
 /* Definitions for sub-sub fields in Link ID Info subfield in Basic variant
  * Multi-Link element Common Info field. Any unused bits are reserved.
  */
@@ -1686,10 +1691,15 @@ enum wlan_ml_variant {
 #define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_IDX                      0
 #define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_BITS                     4
 
-/* Size in octets of Link ID Info subfield in Basic variant Multi-Link element
- * Common Info field.
+/* Size in octets of BSS Parameters Change Count subfield in Basic variant
+ * Multi-Link element Common Info field.
  */
-#define WLAN_ML_BV_CINFO_LINKIDINFO_SIZE                            1
+#define WLAN_ML_BV_CINFO_BSSPARAMCHNGCNT_SIZE                       1
+
+/* Size in octets of Medium Synchronization Delay Information subfield in Basic
+ * variant Multi-Link element Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_SIZE                      2
 
 /* Definitions for sub-sub fields in Medium Synchronization Delay Information
  * subfield in Basic variant Multi-Link element Common Info field.
@@ -1703,6 +1713,11 @@ enum wlan_ml_variant {
 /* Medium Synchronization Maximum Number Of TXOPs  */
 #define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_MAXTXOPS_IDX             12
 #define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_MAXTXOPS_BITS            4
+
+/* Size in octets of EML Capabilities subfield in Basic variant Multi-Link
+ * element Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_EMLCAP_SIZE                                2
 
 /* Definitions for sub-sub fields in EML Capabilities subfield in Basic variant
  * Multi-Link element Common Info field. Any unused bits are reserved.
@@ -1812,6 +1827,11 @@ enum wlan_ml_bv_cinfo_emlcap_transtimeout {
 	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_128TU = 8,
 	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_INVALIDSTART,
 };
+
+/* Size in octets of MLD Capabilities subfield in Basic variant Multi-Link
+ * element Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_MLDCAP_SIZE                                2
 
 /* Definitions for sub-sub fields in MLD Capabilities subfield in Basic variant
  * Multi-Link element Common Info field. Any unused bits are reserved.
