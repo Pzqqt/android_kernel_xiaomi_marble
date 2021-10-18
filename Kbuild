@@ -3688,6 +3688,9 @@ cppflags-$(CONFIG_TX_MULTI_TCL) += -DTX_MULTI_TCL
 # Enable Low latency
 cppflags-$(CONFIG_WLAN_FEATURE_LL_MODE) += -DWLAN_FEATURE_LL_MODE
 
+# Enable PCI low power interrupt register configuration
+cppflags-$(CONFIG_PCI_LOW_POWER_INT_REG) += -DCONFIG_PCI_LOW_POWER_INT_REG
+
 cppflags-$(CONFIG_WLAN_CLD_PM_QOS) += -DCLD_PM_QOS
 cppflags-$(CONFIG_WLAN_CLD_DEV_PM_QOS) += -DCLD_DEV_PM_QOS
 cppflags-$(CONFIG_REO_DESC_DEFER_FREE) += -DREO_DESC_DEFER_FREE
