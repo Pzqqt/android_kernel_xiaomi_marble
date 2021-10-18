@@ -6694,13 +6694,13 @@ QDF_STATUS dp_peer_mlo_setup(
 
 			/* relase the ref to original dp_vdev */
 			dp_vdev_unref_delete(soc, mld_peer->vdev,
-					     DP_MOD_ID_CDP);
+					     DP_MOD_ID_CHILD);
 			/*
 			 * get the ref to new dp_vdev,
 			 * increase dp_vdev ref_cnt
 			 */
 			mld_peer->vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
-							       DP_MOD_ID_CDP);
+							       DP_MOD_ID_CHILD);
 		}
 
 		/* associate mld and link peer */
