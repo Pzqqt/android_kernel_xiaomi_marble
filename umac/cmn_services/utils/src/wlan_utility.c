@@ -85,7 +85,7 @@ wlan_get_320_center_freq(qdf_freq_t freq,
 		*center_freq1 = 6105;
 	} else if ((freq >= 6115) && (freq <= 6255)) {
 		*center_freq1 = 6105;
-		*center_freq2 = 6205;
+		*center_freq2 = 6265;
 	} else if ((freq >= 6275) && (freq <= 6415)) {
 		*center_freq1 = 6265;
 		*center_freq2 = 6425;
