@@ -2579,6 +2579,7 @@ cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
 	case ROAM_TRIGGER_REASON_UNIT_TEST:
 		break;
 	case ROAM_TRIGGER_REASON_BTM:
+		cm_roam_btm_req_event(&ptr->btm_trig_data, vdev_id);
 		buf_cons = qdf_snprint(temp, buf_left,
 				       "Req_mode: %d Disassoc_timer: %d",
 				       ptr->btm_trig_data.btm_request_mode,
