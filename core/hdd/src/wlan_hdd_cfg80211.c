@@ -3041,6 +3041,73 @@ static void wlan_hdd_handle_zero_acs_list(struct hdd_context *hdd_ctx,
 	hdd_debug("retore acs chan list to single freq %d", acs_chan_default);
 }
 
+/**
+ * wlan_hdd_handle_single_ch_in_acs_list() - Handle acs list with single channel
+ * @hdd_ctx: hdd context
+ * @adapter: adapter
+ * @sap_config: sap acs config context
+ *
+ * If only one acs channel is left after filter, driver will return the channel
+ * to hostapd without ACS scan.
+ *
+ * Return: None
+ */
+static void
+wlan_hdd_handle_single_ch_in_acs_list(struct hdd_context *hdd_ctx,
+				      struct hdd_adapter *adapter,
+				      struct sap_config *sap_config)
+{
+	uint32_t channel_bonding_mode_2g;
+
+	ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
+					    &channel_bonding_mode_2g);
+	sap_config->acs_cfg.start_ch_freq =
+		sap_config->acs_cfg.freq_list[0];
+	sap_config->acs_cfg.end_ch_freq =
+		sap_config->acs_cfg.freq_list[0];
+	sap_config->acs_cfg.pri_ch_freq =
+			      sap_config->acs_cfg.freq_list[0];
+	if (sap_config->acs_cfg.pri_ch_freq <=
+	    WLAN_REG_CH_TO_FREQ(CHAN_ENUM_2484) &&
+	    sap_config->acs_cfg.ch_width >=
+				CH_WIDTH_40MHZ &&
+	    !channel_bonding_mode_2g) {
+		sap_config->acs_cfg.ch_width = CH_WIDTH_20MHZ;
+		hdd_debug("2.4ghz channel resetting BW to %d 2.4 cbmode %d",
+			  sap_config->acs_cfg.ch_width,
+			  channel_bonding_mode_2g);
+	}
+
+	wlan_sap_set_sap_ctx_acs_cfg(
+		WLAN_HDD_GET_SAP_CTX_PTR(adapter), sap_config);
+	sap_config_acs_result(hdd_ctx->mac_handle,
+			      WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+			    sap_config->acs_cfg.ht_sec_ch_freq);
+	sap_config->ch_params.ch_width =
+			sap_config->acs_cfg.ch_width;
+	sap_config->ch_params.sec_ch_offset =
+			wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+			sap_config->acs_cfg.ht_sec_ch_freq);
+	sap_config->ch_params.center_freq_seg0 =
+	wlan_reg_freq_to_chan(
+		hdd_ctx->pdev,
+		sap_config->acs_cfg.vht_seg0_center_ch_freq);
+	sap_config->ch_params.center_freq_seg1 =
+	wlan_reg_freq_to_chan(
+		hdd_ctx->pdev,
+		sap_config->acs_cfg.vht_seg1_center_ch_freq);
+	sap_config->ch_params.mhz_freq_seg0 =
+		sap_config->acs_cfg.vht_seg0_center_ch_freq;
+	sap_config->ch_params.mhz_freq_seg1 =
+		sap_config->acs_cfg.vht_seg1_center_ch_freq;
+	/*notify hostapd about channel override */
+	wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
+	wlansap_dcs_set_wlan_interference_mitigation_on_band(
+		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+		sap_config);
+}
+
 #if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static void wlan_hdd_set_sap_acs_ch_width_320(struct sap_config *sap_config)
 {
@@ -3110,6 +3177,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	QDF_STATUS qdf_status;
 	bool is_vendor_acs_support = false;
 	bool is_external_acs_policy = false;
+	bool is_vendor_unsafe_ch_present = false;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
 	bool go_11ac_override = 0;
@@ -3334,13 +3402,19 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (is_external_acs_policy &&
 	    policy_mgr_is_force_scc(hdd_ctx->psoc) &&
 	    policy_mgr_get_connection_count(hdd_ctx->psoc)) {
+		if (adapter->device_mode == QDF_SAP_MODE)
+			is_vendor_unsafe_ch_present =
+			wlansap_filter_vendor_unsafe_ch_freq(
+					WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					sap_config);
 		wlan_hdd_trim_acs_channel_list(
 					sap_config->acs_cfg.pcl_chan_freq,
 					sap_config->acs_cfg.pcl_ch_count,
 					sap_config->acs_cfg.freq_list,
 					&sap_config->acs_cfg.ch_list_count);
 		if (!sap_config->acs_cfg.ch_list_count &&
-		    sap_config->acs_cfg.master_ch_list_count)
+		    sap_config->acs_cfg.master_ch_list_count &&
+		    !is_vendor_unsafe_ch_present)
 			wlan_hdd_handle_zero_acs_list(
 				hdd_ctx,
 				sap_config->acs_cfg.freq_list,
@@ -3349,54 +3423,26 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				sap_config->acs_cfg.master_ch_list_count);
 		/* if it is only one channel, send ACS event to upper layer */
 		if (sap_config->acs_cfg.ch_list_count == 1) {
-			sap_config->acs_cfg.start_ch_freq =
-				sap_config->acs_cfg.freq_list[0];
-			sap_config->acs_cfg.end_ch_freq =
-				sap_config->acs_cfg.freq_list[0];
-			sap_config->acs_cfg.pri_ch_freq =
-					      sap_config->acs_cfg.freq_list[0];
-			if (sap_config->acs_cfg.pri_ch_freq <=
-			    WLAN_REG_CH_TO_FREQ(CHAN_ENUM_2484) &&
-			    sap_config->acs_cfg.ch_width >=
-						CH_WIDTH_40MHZ &&
-			    !channel_bonding_mode_2g) {
-				sap_config->acs_cfg.ch_width = CH_WIDTH_20MHZ;
-				hdd_debug("2.4ghz channel resetting BW to %d 2.4 cbmode %d",
-					  sap_config->acs_cfg.ch_width,
-					  channel_bonding_mode_2g);
-			}
-
-			wlan_sap_set_sap_ctx_acs_cfg(
-				WLAN_HDD_GET_SAP_CTX_PTR(adapter), sap_config);
-			sap_config_acs_result(hdd_ctx->mac_handle,
-					      WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-					    sap_config->acs_cfg.ht_sec_ch_freq);
-			sap_config->ch_params.ch_width =
-					sap_config->acs_cfg.ch_width;
-			sap_config->ch_params.sec_ch_offset =
-					wlan_reg_freq_to_chan(hdd_ctx->pdev,
-					sap_config->acs_cfg.ht_sec_ch_freq);
-			sap_config->ch_params.center_freq_seg0 =
-			wlan_reg_freq_to_chan(
-				hdd_ctx->pdev,
-				sap_config->acs_cfg.vht_seg0_center_ch_freq);
-			sap_config->ch_params.center_freq_seg1 =
-			wlan_reg_freq_to_chan(
-				hdd_ctx->pdev,
-				sap_config->acs_cfg.vht_seg1_center_ch_freq);
-			sap_config->ch_params.mhz_freq_seg0 =
-				sap_config->acs_cfg.vht_seg0_center_ch_freq;
-			sap_config->ch_params.mhz_freq_seg1 =
-				sap_config->acs_cfg.vht_seg1_center_ch_freq;
-			/*notify hostapd about channel override */
-			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
-			wlansap_dcs_set_wlan_interference_mitigation_on_band(
-					WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-					sap_config);
+			wlan_hdd_handle_single_ch_in_acs_list(
+					hdd_ctx, adapter, sap_config);
 			ret = 0;
 			goto out;
 		} else if (!sap_config->acs_cfg.ch_list_count) {
 			hdd_err("channel list count 0");
+			ret = -EINVAL;
+			goto out;
+		}
+	} else if (adapter->device_mode == QDF_SAP_MODE) {
+		wlansap_filter_vendor_unsafe_ch_freq(
+					WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					sap_config);
+		if (sap_config->acs_cfg.ch_list_count == 1) {
+			wlan_hdd_handle_single_ch_in_acs_list(
+					hdd_ctx, adapter, sap_config);
+			ret = 0;
+			goto out;
+		} else if (!sap_config->acs_cfg.ch_list_count) {
+			hdd_err("channel count 0 after vendor unsafe filter");
 			ret = -EINVAL;
 			goto out;
 		}

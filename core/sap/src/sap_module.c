@@ -56,6 +56,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "pld_common.h"
 
 #define SAP_DEBUG
 static struct sap_context *gp_sap_ctx[SAP_MAX_NUM_SESSION];
@@ -3264,6 +3265,69 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 	sap_debug("vdev: %d, CSA target freq: %d", vdev_id, restart_freq);
 
 	return restart_freq;
+}
+
+static inline bool
+wlansap_ch_in_avoid_ranges(uint32_t ch_freq,
+			   struct pld_ch_avoid_ind_type *ch_avoid_ranges)
+{
+	uint32_t i;
+
+	for (i = 0; i < ch_avoid_ranges->ch_avoid_range_cnt; i++) {
+		if (ch_freq >=
+			ch_avoid_ranges->avoid_freq_range[i].start_freq &&
+		    ch_freq <=
+			ch_avoid_ranges->avoid_freq_range[i].end_freq)
+			return true;
+	}
+
+	return false;
+}
+
+bool wlansap_filter_vendor_unsafe_ch_freq(
+	struct sap_context *sap_context, struct sap_config *sap_config)
+{
+	struct pld_ch_avoid_ind_type ch_avoid_ranges;
+	uint32_t i, j;
+	int ret;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	struct mac_context *mac;
+	uint32_t count;
+
+	if (!qdf_ctx)
+		return false;
+	mac = sap_get_mac_context();
+	if (!mac)
+		return false;
+
+	count = policy_mgr_mode_specific_connection_count(mac->psoc,
+							  PM_SAP_MODE, NULL);
+	if (count != policy_mgr_get_connection_count(mac->psoc))
+		return false;
+
+	ch_avoid_ranges.ch_avoid_range_cnt = 0;
+	ret = pld_get_wlan_unsafe_channel_sap(qdf_ctx->dev, &ch_avoid_ranges);
+	if (ret) {
+		sap_debug("failed to get vendor unsafe ch range, ret %d", ret);
+		return false;
+	}
+	if (!ch_avoid_ranges.ch_avoid_range_cnt)
+		return false;
+	for (i = 0; i < ch_avoid_ranges.ch_avoid_range_cnt; i++) {
+		sap_debug("vendor unsafe range[%d] %d %d", i,
+			  ch_avoid_ranges.avoid_freq_range[i].start_freq,
+			  ch_avoid_ranges.avoid_freq_range[i].end_freq);
+	}
+	for (i = 0, j = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
+		if (!wlansap_ch_in_avoid_ranges(
+				sap_config->acs_cfg.freq_list[i],
+				&ch_avoid_ranges))
+			sap_config->acs_cfg.freq_list[j++] =
+				sap_config->acs_cfg.freq_list[i];
+	}
+	sap_config->acs_cfg.ch_list_count = j;
+
+	return true;
 }
 
 #ifdef DCS_INTERFERENCE_DETECTION

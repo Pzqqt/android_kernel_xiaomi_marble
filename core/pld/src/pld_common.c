@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3239,6 +3240,38 @@ int pld_get_thermal_state(struct device *dev, unsigned long *thermal_state,
 
 	return errno;
 }
+
+#ifdef CNSS_UTILS_VENDOR_UNSAFE_CHAN_API_SUPPORT
+int pld_get_wlan_unsafe_channel_sap(
+	struct device *dev, struct pld_ch_avoid_ind_type *ch_avoid_ranges)
+{
+	struct cnss_ch_avoid_ind_type cnss_ch_avoid;
+	int ret;
+	int i;
+
+	if (!ch_avoid_ranges)
+		return -EINVAL;
+	cnss_ch_avoid.ch_avoid_range_cnt = 0;
+	ret = cnss_utils_get_wlan_unsafe_channel_sap(dev, &cnss_ch_avoid);
+	if (ret)
+		return ret;
+
+	for (i = 0;
+	     i < PLD_CH_AVOID_MAX_RANGE &&
+	     i < cnss_ch_avoid.ch_avoid_range_cnt; i++) {
+		ch_avoid_ranges->avoid_freq_range[i].start_freq =
+			cnss_ch_avoid.avoid_freq_range[i].start_freq;
+		ch_avoid_ranges->avoid_freq_range[i].end_freq =
+			cnss_ch_avoid.avoid_freq_range[i].end_freq;
+	}
+	ch_avoid_ranges->ch_avoid_range_cnt = i;
+	if (i < cnss_ch_avoid.ch_avoid_range_cnt)
+		pr_err("unexpected cnss ch_avoid_range_cnt %d",
+		       cnss_ch_avoid.ch_avoid_range_cnt);
+
+	return 0;
+}
+#endif
 
 #ifdef FEATURE_WLAN_TIME_SYNC_FTM
 /**

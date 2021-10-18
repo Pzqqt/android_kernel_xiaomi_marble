@@ -417,6 +417,30 @@ enum pld_wlan_time_sync_trigger_type {
 };
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 
+/* MAX channel avoid ranges supported in PLD */
+#define PLD_CH_AVOID_MAX_RANGE   4
+
+/**
+ * struct pld_ch_avoid_freq_type
+ * @start_freq: start freq (MHz)
+ * @end_freq: end freq (Mhz)
+ */
+struct pld_ch_avoid_freq_type {
+	uint32_t start_freq;
+	uint32_t end_freq;
+};
+
+/**
+ * struct pld_ch_avoid_ind_type
+ * @ch_avoid_range_cnt: count
+ * @avoid_freq_range: avoid freq range array
+ */
+struct pld_ch_avoid_ind_type {
+	uint32_t ch_avoid_range_cnt;
+	struct pld_ch_avoid_freq_type
+		avoid_freq_range[PLD_CH_AVOID_MAX_RANGE];
+};
+
 /**
  * struct pld_driver_ops - driver callback functions
  * @probe: required operation, will be called when device is detected
@@ -569,6 +593,28 @@ int pld_get_audio_wlan_timestamp(struct device *dev,
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 
 #if IS_ENABLED(CONFIG_CNSS_UTILS)
+#ifdef CNSS_UTILS_VENDOR_UNSAFE_CHAN_API_SUPPORT
+/**
+ * pld_get_wlan_unsafe_channel_sap() - Get vendor unsafe ch freq ranges
+ * @dev: device
+ * @ch_avoid_ranges: unsafe freq channel ranges
+ *
+ * Get vendor specific unsafe channel frequency ranges
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_get_wlan_unsafe_channel_sap(
+	struct device *dev, struct pld_ch_avoid_ind_type *ch_avoid_ranges);
+#else
+static inline
+int pld_get_wlan_unsafe_channel_sap(
+	struct device *dev, struct pld_ch_avoid_ind_type *ch_avoid_ranges)
+{
+	return 0;
+}
+#endif
+
 /**
  * pld_set_wlan_unsafe_channel() - Set unsafe channel
  * @dev: device
@@ -694,6 +740,12 @@ static inline int pld_get_driver_load_cnt(struct device *dev)
 	return cnss_utils_get_driver_load_cnt(dev);
 }
 #else
+static inline int pld_get_wlan_unsafe_channel_sap(
+	struct device *dev, struct pld_ch_avoid_ind_type *ch_avoid_ranges)
+{
+	return 0;
+}
+
 static inline int pld_set_wlan_unsafe_channel(struct device *dev,
 					      u16 *unsafe_ch_list,
 					      u16 ch_count)
