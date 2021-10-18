@@ -483,7 +483,7 @@ void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
 	struct wlan_mlo_sta *sta_ctx = NULL;
 
-	if (mlo_dev_ctx && wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+	if (mlo_dev_ctx) {
 		mlo_debug("Vdev: %d", wlan_vdev_get_id(vdev));
 		if (wlan_cm_is_vdev_disconnected(vdev)) {
 			// Connect Failure
