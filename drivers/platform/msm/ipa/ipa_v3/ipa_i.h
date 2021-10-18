@@ -127,6 +127,8 @@ enum {
 #define IPA_PAGE_POLL_DEFAULT_THRESHOLD 15
 #define IPA_PAGE_POLL_THRESHOLD_MAX 30
 
+#define NTN3_CLIENTS_NUM 2
+
 
 #define IPA_WDI2_OVER_GSI() (ipa3_ctx->ipa_wdi2_over_gsi \
 		&& (ipa_get_wdi_version() == IPA_WDI_2))
@@ -1990,6 +1992,35 @@ struct ipa3_eth_error_stats {
 	u32 err;
 };
 
+struct ipa_ntn3_stats_rx {
+	int rp;
+	int wp;
+	bool pending_db_after_rollback;
+	u32 msi_db_idx;
+	u32 chain_cnt;
+	u32 err_cnt;
+	u32 tres_handled;
+	u32 rollbacks_cnt;
+	u32 msi_db_cnt;
+};
+
+struct ipa_ntn3_stats_tx {
+	int rp;
+	int wp;
+	bool pending_db_after_rollback;
+	u32 msi_db_idx;
+	u32 derr_cnt;
+	u32 oob_cnt;
+	u32 tres_handled;
+	u32 rollbacks_cnt;
+	u32 msi_db_cnt;
+};
+
+struct ipa_ntn3_client_stats {
+	struct ipa_ntn3_stats_rx rx_stats;
+	struct ipa_ntn3_stats_tx tx_stats;
+};
+
 
 /**
  * struct ipa3_context - IPA context
@@ -3426,6 +3457,7 @@ int ipa3_eth_disconnect(
 int ipa3_eth_client_conn_evt(struct ipa_ecm_msg *msg);
 int ipa3_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
 #endif
+void ipa_eth_ntn3_get_status(struct ipa_ntn3_client_stats *s, unsigned inst_id);
 void ipa3_eth_get_status(u32 client, int scratch_id,
 	struct ipa3_eth_error_stats *stats);
 int ipa3_get_gsi_chan_info(struct gsi_chan_info *gsi_chan_info,

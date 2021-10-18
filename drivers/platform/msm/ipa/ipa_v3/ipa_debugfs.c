@@ -40,6 +40,7 @@ static const char * const ipa_eth_clients_strings[] = {
 	__stringify(RTK8111K),
 	__stringify(RTK8125B),
 	__stringify(NTN),
+	__stringify(NTN3),
 	__stringify(EMAC),
 };
 
@@ -3638,6 +3639,55 @@ done:
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
 }
 
+#if IPA_ETH_API_VER >= 2
+static void __ipa_ntn3_client_stats_read(int *cnt, struct ipa_ntn3_client_stats *s,
+	const char *str_client_tx, const char *str_client_rx)
+{
+	int nbytes;
+
+	nbytes = scnprintf(dbg_buff + *cnt, IPA_MAX_MSG_LEN - *cnt,
+		"%s_RP=0x%x\n"
+		"%s_WP=0x%x\n"
+		"%s_ntn_pending_db_after_rollback:%u\n"
+		"%s_msi_db_idx_val:%u\n"
+		"%s_tx_derr_counter:%u\n"
+		"%s_ntn_tx_oob_counter:%u\n"
+		"%s_ntn_accumulated_tres_handled:%u\n"
+		"%s_ntn_rollbacks_counter:%u\n"
+		"%s_ntn_msi_db_count:%u\n",
+		str_client_tx, s->tx_stats.rp,
+		str_client_tx, s->tx_stats.wp,
+		str_client_tx, s->tx_stats.pending_db_after_rollback,
+		str_client_tx, s->tx_stats.msi_db_idx,
+		str_client_tx, s->tx_stats.derr_cnt,
+		str_client_tx, s->tx_stats.oob_cnt,
+		str_client_tx, s->tx_stats.tres_handled,
+		str_client_tx, s->tx_stats.rollbacks_cnt,
+		str_client_tx, s->tx_stats.msi_db_cnt);
+	*cnt += nbytes;
+	nbytes = scnprintf(dbg_buff + *cnt, IPA_MAX_MSG_LEN - *cnt,
+		"%s_RP=0x%x\n"
+		"%s_WP=0x%x\n"
+		"%s_ntn_pending_db_after_rollback:%u\n"
+		"%s_msi_db_idx_val:%u\n"
+		"%s_ntn_rx_chain_counter:%u\n"
+		"%s_ntn_rx_err_counter:%u\n"
+		"%s_ntn_accumulated_tres_handled:%u\n"
+		"%s_ntn_rollbacks_counter:%u\n"
+		"%s_ntn_msi_db_count:%u\n",
+		str_client_rx, s->rx_stats.rp,
+		str_client_rx, s->rx_stats.wp,
+		str_client_rx, s->rx_stats.pending_db_after_rollback,
+		str_client_rx, s->rx_stats.msi_db_idx,
+		str_client_rx, s->rx_stats.chain_cnt,
+		str_client_rx, s->rx_stats.err_cnt,
+		str_client_rx, s->rx_stats.tres_handled,
+		str_client_rx, s->rx_stats.rollbacks_cnt,
+		str_client_rx, s->rx_stats.msi_db_cnt);
+	*cnt += nbytes;
+}
+#endif
+
 static ssize_t ipa3_eth_read_err_status(struct file *file,
 	char __user *ubuf, size_t count, loff_t *ppos)
 {
@@ -3648,6 +3698,10 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	struct ipa3_eth_error_stats tx_stats;
 	struct ipa3_eth_error_stats rx_stats;
 	int scratch_num;
+#if IPA_ETH_API_VER >= 2
+	struct ipa_ntn3_client_stats ntn3_stats;
+	const char *str_client_tx, *str_client_rx;
+#endif
 
 	memset(&tx_stats, 0, sizeof(struct ipa3_eth_error_stats));
 	memset(&rx_stats, 0, sizeof(struct ipa3_eth_error_stats));
@@ -3661,6 +3715,7 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 		goto done;
 	}
 	client = (struct ipa_eth_client *)file->private_data;
+
 	switch (client->client_type) {
 	case IPA_ETH_CLIENT_AQC107:
 	case IPA_ETH_CLIENT_AQC113:
@@ -3677,6 +3732,22 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 		tx_ep = IPA_CLIENT_ETHERNET_CONS;
 		rx_ep = IPA_CLIENT_ETHERNET_PROD;
 		scratch_num = 6;
+#if IPA_ETH_API_VER >= 2
+	case IPA_ETH_CLIENT_NTN3:
+
+		memset(&ntn3_stats, 0, sizeof(ntn3_stats));
+		if (strstr(file->f_path.dentry->d_name.name, "0_status")) {
+			ipa_eth_ntn3_get_status(&ntn3_stats, 0);
+			str_client_tx = ipa_clients_strings[IPA_CLIENT_ETHERNET_CONS];
+			str_client_rx = ipa_clients_strings[IPA_CLIENT_ETHERNET_PROD];
+		} else {
+			ipa_eth_ntn3_get_status(&ntn3_stats, 1);
+			str_client_tx = ipa_clients_strings[IPA_CLIENT_ETHERNET2_CONS];
+			str_client_rx = ipa_clients_strings[IPA_CLIENT_ETHERNET2_PROD];
+		}
+		__ipa_ntn3_client_stats_read(&cnt, &ntn3_stats, str_client_tx, str_client_rx);
+		goto done;
+#endif
 	default:
 		IPAERR("Not supported\n");
 		return 0;

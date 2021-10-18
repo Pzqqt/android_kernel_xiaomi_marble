@@ -2279,6 +2279,15 @@ void gsi_wdi3_write_evt_ring_db(unsigned long chan_hdl, uint32_t db_addr_low,
 int gsi_get_refetch_reg(unsigned long chan_hdl, bool is_rp);
 
 /**
+ * gsi_ntn3_client_stats_get - get ntn3 stats
+ *
+ * @ep_id: ep index
+ * @scratch_id: scratch register number
+ * @chan_hdl: gsi channel handle
+ */
+int gsi_ntn3_client_stats_get(unsigned ep_id, int scratch_id, unsigned chan_hdl);
+
+/**
  * gsi_get_drop_stats - get drop stats by GSI
  *
  * @ep_id: ep index

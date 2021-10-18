@@ -12336,6 +12336,68 @@ int ipa3_get_prot_id(enum ipa_client_type client)
 	return prot_id;
 }
 
+void __ipa_ntn3_cons_stats_get(struct ipa_ntn3_stats_rx *stats, enum ipa_client_type client)
+{
+	int ch_id, ipa_ep_idx;
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	ipa_ep_idx = ipa3_get_ep_mapping(client);
+	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED)
+		return;
+	ch_id = ipa3_ctx->ep[ipa_ep_idx].gsi_chan_hdl;
+
+	stats->pending_db_after_rollback = gsi_ntn3_client_stats_get(ipa_ep_idx, 4, ch_id);
+	stats->msi_db_idx = gsi_ntn3_client_stats_get(ipa_ep_idx, 5, ch_id);
+	stats->chain_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, 6, ch_id);
+	stats->err_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, 7, ch_id);
+	stats->tres_handled = gsi_ntn3_client_stats_get(ipa_ep_idx, 8, ch_id);
+	stats->rollbacks_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, 9, ch_id);
+	stats->msi_db_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, -1, ch_id);
+
+	stats->wp = gsi_get_refetch_reg(ch_id, false);
+	stats->rp = gsi_get_refetch_reg(ch_id, true);
+
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+}
+
+void __ipa_ntn3_prod_stats_get(struct ipa_ntn3_stats_tx *stats, enum ipa_client_type client)
+{
+	int ch_id, ipa_ep_idx;
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	ipa_ep_idx = ipa3_get_ep_mapping(client);
+	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED)
+		return;
+	ch_id = ipa3_ctx->ep[ipa_ep_idx].gsi_chan_hdl;
+
+	stats->pending_db_after_rollback = gsi_ntn3_client_stats_get(ipa_ep_idx, 4, ch_id);
+	stats->msi_db_idx = gsi_ntn3_client_stats_get(ipa_ep_idx, 5, ch_id);
+	stats->derr_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, 6, ch_id);
+	stats->oob_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, 7, ch_id);
+	stats->tres_handled = gsi_ntn3_client_stats_get(ipa_ep_idx, 8, ch_id);
+	stats->rollbacks_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, 9, ch_id);
+	stats->msi_db_cnt = gsi_ntn3_client_stats_get(ipa_ep_idx, -1, ch_id);
+
+	stats->wp = gsi_get_refetch_reg(ch_id, false);
+	stats->rp = gsi_get_refetch_reg(ch_id, true);
+
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+}
+
+void ipa_eth_ntn3_get_status(struct ipa_ntn3_client_stats *s, unsigned inst_id)
+{
+	if (inst_id == 0) {
+		__ipa_ntn3_cons_stats_get(&s->rx_stats, IPA_CLIENT_ETHERNET_CONS);
+		__ipa_ntn3_prod_stats_get(&s->tx_stats, IPA_CLIENT_ETHERNET_PROD);
+	} else {
+		__ipa_ntn3_cons_stats_get(&s->rx_stats, IPA_CLIENT_ETHERNET2_CONS);
+		__ipa_ntn3_prod_stats_get(&s->tx_stats, IPA_CLIENT_ETHERNET2_PROD);
+	}
+
+}
+
 void ipa3_eth_get_status(u32 client, int scratch_id,
 	struct ipa3_eth_error_stats *stats)
 {
@@ -12378,7 +12440,7 @@ void ipa3_eth_get_status(u32 client, int scratch_id,
 		stats->rp = gsi_get_refetch_reg(ch_id, true);
 		break;
 	case IPA_CLIENT_ETHERNET_PROD:
-		stats->wp = gsi_get_wp(ch_id);
+		stats->wp = gsi_get_refetch_reg(ch_id, false);
 		stats->rp = gsi_get_refetch_reg(ch_id, true);
 		break;
 	case IPA_CLIENT_ETHERNET_CONS:
