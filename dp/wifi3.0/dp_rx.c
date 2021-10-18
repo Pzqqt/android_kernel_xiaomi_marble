@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -560,14 +561,16 @@ bool dp_rx_intrabss_mcbc_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
  * dp_rx_intrabss_ucast_fwd() - Does intrabss forward for unicast packets
  *
  * @soc: core txrx main context
- * @ta_peer	: source peer entry
- * @rx_tlv_hdr	: start address of rx tlvs
- * @nbuf	: nbuf that has to be intrabss forwarded
- * @tid_stats	: tid stats pointer
+ * @ta_peer: source peer entry
+ * @tx_vdev_id: VDEV ID for Intra-BSS TX
+ * @rx_tlv_hdr: start address of rx tlvs
+ * @nbuf: nbuf that has to be intrabss forwarded
+ * @tid_stats: tid stats pointer
  *
  * Return: bool: true if it is forwarded else false
  */
 bool dp_rx_intrabss_ucast_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
+			      uint8_t tx_vdev_id,
 			      uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
 			      struct cdp_tid_rx_stats *tid_stats)
 {
@@ -601,7 +604,7 @@ bool dp_rx_intrabss_ucast_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
 	}
 
 	if (!dp_tx_send((struct cdp_soc_t *)soc,
-			ta_peer->vdev->vdev_id, nbuf)) {
+			tx_vdev_id, nbuf)) {
 		DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1,
 				 len);
 	} else {

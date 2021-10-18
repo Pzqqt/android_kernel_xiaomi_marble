@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1100,60 +1101,125 @@ uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
 #endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
-#ifdef INTRA_BSS_FW_OFFLOAD
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * dp_rx_intrabss_fwd_mlo_allow() - check if MLO forwarding is allowed
+ * @ta_peer: transmitter peer handle
+ * @da_peer: destination peer handle
+ *
+ * Return: true - MLO forwarding case, false: not
+ */
+static inline bool
+dp_rx_intrabss_fwd_mlo_allow(struct dp_peer *ta_peer,
+			     struct dp_peer *da_peer)
+{
+	/* one of TA/DA peer should belong to MLO connection peer,
+	 * only MLD peer type is as expected
+	 */
+	if (!IS_MLO_DP_MLD_PEER(ta_peer) &&
+	    !IS_MLO_DP_MLD_PEER(da_peer))
+		return false;
+
+	/* TA peer and DA peer's vdev should be partner MLO vdevs */
+	if (dp_peer_find_mac_addr_cmp(&ta_peer->vdev->mld_mac_addr,
+				      &da_peer->vdev->mld_mac_addr))
+		return false;
+
+	return true;
+}
+#else
+static inline bool
+dp_rx_intrabss_fwd_mlo_allow(struct dp_peer *ta_peer,
+			     struct dp_peer *da_peer)
+{
+	return false;
+}
+#endif
+
+#ifdef INTRA_BSS_FWD_OFFLOAD
+/**
+ * dp_rx_intrabss_ucast_check_be() - Check if intrabss is allowed
+				     for unicast frame
+ * @soc: SOC hanlde
+ * @nbuf: RX packet buffer
+ * @ta_peer: transmitter DP peer handle
+ * @msdu_metadata: MSDU meta data info
+ * @p_tx_vdev_id: get vdev id for Intra-BSS TX
+ *
+ * Return: true - intrabss allowed
+	   false - not allow
+ */
 static bool
 dp_rx_intrabss_ucast_check_be(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			      struct dp_peer *ta_peer,
-			      struct hal_rx_msdu_metadata *msdu_metadata)
+			      struct hal_rx_msdu_metadata *msdu_metadata,
+			      uint8_t *p_tx_vdev_id)
 {
-	return qdf_nbuf_is_intra_bss(nbuf);
+	uint16_t da_peer_id;
+	struct dp_peer *da_peer;
+
+	if (!qdf_nbuf_is_intra_bss(nbuf))
+		return false;
+
+	da_peer_id = dp_rx_peer_metadata_peer_id_get_be(
+						soc,
+						msdu_metadata->da_idx);
+	da_peer = dp_peer_get_ref_by_id(soc, da_peer_id, DP_MOD_ID_RX);
+	if (!da_peer)
+		return false;
+	*p_tx_vdev_id = da_peer->vdev->vdev_id;
+	dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+
+	return true;
 }
 #else
 static bool
 dp_rx_intrabss_ucast_check_be(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			      struct dp_peer *ta_peer,
-			      struct hal_rx_msdu_metadata *msdu_metadata)
+			      struct hal_rx_msdu_metadata *msdu_metadata,
+			      uint8_t *p_tx_vdev_id)
 {
 	uint16_t da_peer_id;
 	struct dp_peer *da_peer;
+	bool ret = false;
 
 	if (!(qdf_nbuf_is_da_valid(nbuf) || qdf_nbuf_is_da_mcbc(nbuf)))
 		return false;
 
-	/* The field da_idx here holds DA peer id
-	 */
-	da_peer_id = msdu_metadata->da_idx;
-
-	/* TA peer cannot be same as peer(DA) on which AST is present
-	 * this indicates a change in topology and that AST entries
-	 * are yet to be updated.
-	 */
-	if ((da_peer_id == ta_peer->peer_id) ||
-	    (da_peer_id == HTT_INVALID_PEER))
-		return false;
-
+	da_peer_id = dp_rx_peer_metadata_peer_id_get_be(
+						soc,
+						msdu_metadata->da_idx);
 	da_peer = dp_peer_get_ref_by_id(soc, da_peer_id,
 					DP_MOD_ID_RX);
 	if (!da_peer)
 		return false;
 
+	*p_tx_vdev_id = da_peer->vdev->vdev_id;
 	/* If the source or destination peer in the isolation
 	 * list then dont forward instead push to bridge stack.
 	 */
 	if (dp_get_peer_isolation(ta_peer) ||
-	    dp_get_peer_isolation(da_peer) ||
-	    (da_peer->vdev->vdev_id != ta_peer->vdev->vdev_id)) {
-		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
-		return false;
+	    dp_get_peer_isolation(da_peer))
+		goto rel_da_peer;
+
+	if (da_peer->bss_peer || da_peer == ta_peer)
+		goto rel_da_peer;
+
+	/* Same vdev, support Inra-BSS */
+	if (da_peer->vdev == ta_peer->vdev) {
+		ret = true;
+		goto rel_da_peer;
 	}
 
-	if (da_peer->bss_peer) {
-		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
-		return false;
+	/* MLO specific Intra-BSS check */
+	if (dp_rx_intrabss_fwd_mlo_allow(ta_peer, da_peer)) {
+		ret = true;
+		goto rel_da_peer;
 	}
 
+rel_da_peer:
 	dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
-	return true;
+	return ret;
 }
 #endif
 /*
@@ -1171,6 +1237,7 @@ bool dp_rx_intrabss_fwd_be(struct dp_soc *soc, struct dp_peer *ta_peer,
 			   uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
 			   struct hal_rx_msdu_metadata msdu_metadata)
 {
+	uint8_t tx_vdev_id;
 	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
 	uint8_t ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
 	struct cdp_tid_rx_stats *tid_stats = &ta_peer->vdev->pdev->stats.
@@ -1188,9 +1255,10 @@ bool dp_rx_intrabss_fwd_be(struct dp_soc *soc, struct dp_peer *ta_peer,
 		return dp_rx_intrabss_mcbc_fwd(soc, ta_peer, rx_tlv_hdr,
 					       nbuf, tid_stats);
 
-	if (dp_rx_intrabss_ucast_check_be(soc, nbuf, ta_peer, &msdu_metadata))
-		return dp_rx_intrabss_ucast_fwd(soc, ta_peer, rx_tlv_hdr,
-						nbuf, tid_stats);
+	if (dp_rx_intrabss_ucast_check_be(soc, nbuf, ta_peer,
+					  &msdu_metadata, &tx_vdev_id))
+		return dp_rx_intrabss_ucast_fwd(soc, ta_peer, tx_vdev_id,
+						rx_tlv_hdr, nbuf, tid_stats);
 
 	return false;
 }

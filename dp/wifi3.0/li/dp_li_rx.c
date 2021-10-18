@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,7 +88,8 @@ static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
 static bool
 dp_rx_intrabss_ucast_check_li(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			      struct dp_peer *ta_peer,
-			      struct hal_rx_msdu_metadata *msdu_metadata)
+			      struct hal_rx_msdu_metadata *msdu_metadata,
+			      uint8_t *p_tx_vdev_id)
 {
 	uint16_t da_peer_id;
 	struct dp_peer *da_peer;
@@ -119,6 +121,7 @@ dp_rx_intrabss_ucast_check_li(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (!da_peer)
 		return false;
 
+	*p_tx_vdev_id = da_peer->vdev->vdev_id;
 	/* If the source or destination peer in the isolation
 	 * list then dont forward instead push to bridge stack.
 	 */
@@ -155,6 +158,7 @@ dp_rx_intrabss_fwd_li(struct dp_soc *soc,
 		      qdf_nbuf_t nbuf,
 		      struct hal_rx_msdu_metadata msdu_metadata)
 {
+	uint8_t tx_vdev_id;
 	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
 	uint8_t ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
 	struct cdp_tid_rx_stats *tid_stats = &ta_peer->vdev->pdev->stats.
@@ -172,9 +176,10 @@ dp_rx_intrabss_fwd_li(struct dp_soc *soc,
 		return dp_rx_intrabss_mcbc_fwd(soc, ta_peer, rx_tlv_hdr,
 					       nbuf, tid_stats);
 
-	if (dp_rx_intrabss_ucast_check_li(soc, nbuf, ta_peer, &msdu_metadata))
-		return dp_rx_intrabss_ucast_fwd(soc, ta_peer, rx_tlv_hdr,
-						nbuf, tid_stats);
+	if (dp_rx_intrabss_ucast_check_li(soc, nbuf, ta_peer,
+					  &msdu_metadata, &tx_vdev_id))
+		return dp_rx_intrabss_ucast_fwd(soc, ta_peer, tx_vdev_id,
+						rx_tlv_hdr, nbuf, tid_stats);
 
 	return false;
 }
