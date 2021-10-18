@@ -477,6 +477,8 @@ static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 		/* Use net_dev address for non-ML connection */
 		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
 					   cm_ctx->vdev->vdev_mlme.mldaddr);
+		wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev,
+						   WLAN_VDEV_FEXT2_MLO);
 		mlme_debug("set net_dev address for non-ML connection");
 	}
 	wlan_vdev_obj_unlock(cm_ctx->vdev);
@@ -1553,8 +1555,6 @@ flush_single_pmk:
 
 	if (same_candidate_used)
 		*same_candidate_used = use_same_candidate;
-
-	wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev, WLAN_VDEV_FEXT2_MLO);
 
 	return status;
 }
