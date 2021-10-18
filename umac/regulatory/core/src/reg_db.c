@@ -20,7 +20,7 @@
 /**
  * DOC: reg_db.c
  * This file implements QCA regulatory database.
- * Current implementation conforms to database version 35.
+ * Current implementation conforms to database version 36.
  */
 
 #include <qdf_types.h>
@@ -1663,7 +1663,7 @@ const struct regdomain regdomains_5g[] = {
  * both AP and STA (eg ETSI1_VLP_6G).
  */
 enum reg_subdomains_6g {
-	FCC1_CLI_LPI_REGULAR_6G = 0x01,
+	FCC1_CLI_LPI_DEFAULT_6G = 0x01,
 	FCC1_CLI_SP_6G = 0x02,
 	FCC1_AP_LPI_6G = 0x03,
 	FCC1_CLI_LPI_SUBORDINATE = FCC1_AP_LPI_6G,
@@ -1684,6 +1684,10 @@ enum reg_subdomains_6g {
 	APL2_CLI_LPI_6G = APL2_AP_LPI_6G,
 	APL2_AP_VLP_6G = 0x23,
 	APL2_CLI_VLP_6G = APL2_AP_VLP_6G,
+	APL3_AP_VLP_6G = 0x24,
+	APL3_CLI_VLP_6G = APL3_AP_VLP_6G,
+	APL3_AP_LPI_6G = 0x25,
+	APL3_CLI_LPI_6G = APL3_AP_LPI_6G,
 };
 
 /**
@@ -1691,7 +1695,7 @@ enum reg_subdomains_6g {
  */
 static const struct sixghz_super_to_subdomains g_6g_reg_dmn_9_tuples[] = {
 	{FCC1_6G_01, FCC1_AP_LPI_6G, FCC1_AP_SP_6G, 0,
-	 {FCC1_CLI_LPI_REGULAR_6G, FCC1_CLI_LPI_SUBORDINATE},
+	 {FCC1_CLI_LPI_DEFAULT_6G, FCC1_CLI_LPI_SUBORDINATE},
 	 {FCC1_CLI_SP_6G, FCC1_CLI_SP_6G},
 	 {0, 0} },
 	{ETSI1_6G_02, ETSI1_AP_LPI_6G, 0, ETSI1_AP_VLP_6G,
@@ -1704,11 +1708,18 @@ static const struct sixghz_super_to_subdomains g_6g_reg_dmn_9_tuples[] = {
 	 {APL1_CLI_LPI_6G, APL1_CLI_LPI_6G}, {0, 0},
 	 {APL1_CLI_VLP_6G, APL1_CLI_VLP_6G} },
 	{FCC1_6G_05, FCC1_AP_LPI_6G, 0, 0,
-	 {FCC1_CLI_LPI_REGULAR_6G, FCC1_CLI_LPI_SUBORDINATE}, {0, 0},
+	 {FCC1_CLI_LPI_DEFAULT_6G, FCC1_CLI_LPI_SUBORDINATE}, {0, 0},
 	 {0, 0} },
 	{APL2_6G_06, APL2_AP_LPI_6G, 0, APL2_AP_VLP_6G,
 	 {APL2_CLI_LPI_6G, APL2_CLI_LPI_6G}, {0, 0},
 	 {APL2_CLI_VLP_6G, APL2_CLI_VLP_6G} },
+	{FCC1_6G_07, FCC1_AP_LPI_6G, 0, APL3_AP_VLP_6G,
+	 {FCC1_CLI_LPI_DEFAULT_6G, 0},
+	 {0, 0},
+	 {APL3_CLI_VLP_6G, APL3_CLI_VLP_6G} },
+	{APL3_6G_08, APL3_AP_LPI_6G, 0, 0,
+	 {APL3_CLI_LPI_6G, APL3_CLI_LPI_6G}, {0, 0},
+	 {0, 0} },
 };
 
 /**
@@ -1716,6 +1727,8 @@ static const struct sixghz_super_to_subdomains g_6g_reg_dmn_9_tuples[] = {
  */
 enum reg_rules_6g {
 	CHAN_5925_6425_1,
+	CHAN_5925_6425_2,
+	CHAN_5925_6425_3,
 	CHAN_5945_6425_1,
 	CHAN_5945_6425_2,
 	CHAN_5945_6425_3,
@@ -1730,16 +1743,19 @@ enum reg_rules_6g {
 	CHAN_6425_6525_2,
 	CHAN_6425_6525_3,
 	CHAN_6425_6525_4,
+	CHAN_6425_6525_5,
 	CHAN_6525_6875_1,
 	CHAN_6525_6875_2,
 	CHAN_6525_6875_3,
 	CHAN_6525_6875_4,
 	CHAN_6525_6875_5,
 	CHAN_6525_6875_6,
+	CHAN_6525_6875_7,
 	CHAN_6875_7125_1,
 	CHAN_6875_7125_2,
 	CHAN_6875_7125_3,
 	CHAN_6875_7125_4,
+	CHAN_6875_7125_5,
 };
 
 /**
@@ -1747,6 +1763,9 @@ enum reg_rules_6g {
  */
 static const struct regulatory_rule_ext reg_rules_6g[] = {
 	[CHAN_5925_6425_1] = {5925, 6425, 320, 23, REG_MAX_PSD,
+						REGULATORY_CHAN_INDOOR_ONLY},
+	[CHAN_5925_6425_2] = {5925, 6425, 320, 17, -5, 0},
+	[CHAN_5925_6425_3] = {5925, 6425, 320, 24, REG_MAX_PSD,
 						REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5945_6425_1] = {5945, 6425, 320, 30, 5,
 						REGULATORY_CHAN_INDOOR_ONLY},
@@ -1771,16 +1790,18 @@ static const struct regulatory_rule_ext reg_rules_6g[] = {
 						REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_6425_6525_4] = {6425, 6525, 320, 23, REG_MAX_PSD,
 						REGULATORY_CHAN_INDOOR_ONLY},
+	[CHAN_6425_6525_5] = {6425, 6525, 320, 17, -5, 0},
 	[CHAN_6525_6875_1] = {6525, 6875, 320, 30, 5,
 						REGULATORY_CHAN_INDOOR_ONLY},
-	[CHAN_6525_6875_2] = {6525, 6875, 320, 36, 23, 0},
-	[CHAN_6525_6875_3] = {6525, 6875, 320, 30, 17, 0},
+	[CHAN_6525_6875_2] = {6525, 6865, 160, 36, 23, 0},
+	[CHAN_6525_6875_3] = {6525, 6865, 160, 30, 17, 0},
 	[CHAN_6525_6875_4] = {6525, 6875, 320, 24, -1,
 						REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_6525_6875_5] = {6525, 6875, 160, 63, 2,
 						REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_6525_6875_6] = {6525, 6875, 320, 22, REG_MAX_PSD,
 						REGULATORY_CHAN_INDOOR_ONLY},
+	[CHAN_6525_6875_7] = {6525, 6875, 160, 17, -5, 0},
 	[CHAN_6875_7125_1] = {6875, 7125, 160, 30, 5,
 						REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_6875_7125_2] = {6875, 7125, 160, 24, -1,
@@ -1789,6 +1810,7 @@ static const struct regulatory_rule_ext reg_rules_6g[] = {
 						REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_6875_7125_4] = {6875, 7125, 160, 22, REG_MAX_PSD,
 						REGULATORY_CHAN_INDOOR_ONLY},
+	[CHAN_6875_7125_5] = {6875, 7125, 320, 17, -5, 0},
 };
 
 /**
@@ -1803,7 +1825,7 @@ static const struct sub_6g_regdomain sub_regdomains_6g[] = {
 				       CHAN_6525_6875_2} },
 	[FCC1_CLI_SP_6G] = {2, 320, 2, {CHAN_5945_6425_3,
 					CHAN_6525_6875_3} },
-	[FCC1_CLI_LPI_REGULAR_6G] = {2, 320,  4, {CHAN_5945_6425_4,
+	[FCC1_CLI_LPI_DEFAULT_6G] = {2, 320,  4, {CHAN_5945_6425_4,
 						  CHAN_6425_6525_2,
 						  CHAN_6525_6875_4,
 						  CHAN_6875_7125_2} },
@@ -1824,6 +1846,11 @@ static const struct sub_6g_regdomain sub_regdomains_6g[] = {
 					 CHAN_6425_6525_4,
 					 CHAN_6525_6875_6,
 					 CHAN_6875_7125_4} },
+	[APL3_AP_VLP_6G]  = {2, 320, 4, {CHAN_5925_6425_2,
+					 CHAN_6425_6525_5,
+					 CHAN_6525_6875_7,
+					 CHAN_6875_7125_5} },
+	[APL3_AP_LPI_6G]  = {2, 320, 1, {CHAN_5925_6425_3} },
 };
 #endif
 #ifdef CONFIG_REG_CLIENT
