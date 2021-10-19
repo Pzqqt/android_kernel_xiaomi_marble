@@ -62,13 +62,14 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 /**
  * cm_roam_result_info_event() - send scan results info to userspace
  * @res: roam result data
+ * @scan_data: Roam scan info
  * @vdev_id: vdev id
- * @roam_abort: Is roam abort
  *
  * Return: void
  */
-void cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
-			       bool roam_abort);
+void cm_roam_result_info_event(struct wmi_roam_result *res,
+			       struct wmi_roam_scan_data *scan_data,
+			       uint8_t vdev_id);
 #else
 static inline void
 cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
@@ -87,9 +88,10 @@ cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 {
 }
 
-static inline void
-cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
-			  bool roam_abort)
+static inline
+void cm_roam_result_info_event(struct wmi_roam_result *res,
+			       struct wmi_roam_scan_data *scan_data,
+			       uint8_t vdev_id)
 {
 }
 #endif /* WLAN_FEATURE_CONNECTIVITY_LOGGING */
@@ -369,6 +371,18 @@ QDF_STATUS
 cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 			uint8_t vdev_id);
 
+/**
+ * cm_roam_beacon_loss_disconnect_event() - Send BMISS disconnection logging
+ * event
+ * @bssid: BSSID
+ * @rssi: RSSI
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_beacon_loss_disconnect_event(struct qdf_mac_addr bssid, int32_t rssi,
+				     uint8_t vdev_id);
 #else
 static inline QDF_STATUS
 cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id)
@@ -394,6 +408,13 @@ cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
 static inline QDF_STATUS
 cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 			uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_roam_beacon_loss_disconnect_event(struct qdf_mac_addr bssid, int32_t rssi,
+				     uint8_t vdev_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
