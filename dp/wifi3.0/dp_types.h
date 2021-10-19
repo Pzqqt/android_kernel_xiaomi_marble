@@ -485,12 +485,19 @@ struct rx_desc_pool {
  * @vaddr: hlos virtual address pointer
  * @paddr: physical address pointer for descriptor
  * @flags: mark features for extension descriptor
+ * @me_buffer: Pointer to ME buffer - store this so that it can be freed on
+ *		Tx completion of ME packet
+ * @tso_desc: Pointer to Tso desc
+ * @tso_num_desc: Pointer to tso_num_desc
  */
 struct dp_tx_ext_desc_elem_s {
 	struct dp_tx_ext_desc_elem_s *next;
 	void *vaddr;
 	qdf_dma_addr_t paddr;
 	uint16_t flags;
+	struct dp_tx_me_buf_t *me_buffer;
+	struct qdf_tso_seg_elem_t *tso_desc;
+	struct qdf_tso_num_seg_elem_t *tso_num_desc;
 };
 
 /**
@@ -534,8 +541,6 @@ struct dp_tx_ext_desc_pool_s {
  * @buffer_src: buffer source TQM, REO, FW etc.
  * @frm_type: Frame Type - ToDo check if this is redundant
  * @pkt_offset: Offset from which the actual packet data starts
- * @me_buffer: Pointer to ME buffer - store this so that it can be freed on
- *		Tx completion of ME packet
  * @pool: handle to flow_pool this descriptor belongs to.
  */
 struct dp_tx_desc_s {
@@ -556,9 +561,6 @@ struct dp_tx_desc_s {
 	uint8_t pkt_offset;
 	uint8_t  pool_id;
 	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
-	void *me_buffer;
-	void *tso_desc;
-	void *tso_num_desc;
 	uint64_t timestamp;
 	struct hal_tx_desc_comp_s comp;
 };
