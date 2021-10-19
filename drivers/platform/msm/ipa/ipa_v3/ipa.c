@@ -3935,6 +3935,7 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 
 	case IPA_IOC_ADD_EoGRE_MAPPING:
+		IPADBG("Got IPA_IOC_ADD_EoGRE_MAPPING\n");
 		if (copy_from_user(
 				&eogre_info,
 				(const void __user *) arg,
@@ -3945,6 +3946,8 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+
+		ipa3_ctx->eogre_enabled = (retval == 0);
 
 		if (retval == 0 && send2uC == true) {
 			/*
@@ -3961,13 +3964,15 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			retval = ipa3_send_eogre_info(IPA_EoGRE_UP_EVENT, &eogre_info);
 		}
 
-		if (retval == 0) {
-			ipa3_ctx->eogre_enabled = true;
+		if (retval != 0) {
+			ipa3_ctx->eogre_enabled = false;
 		}
 
 		break;
 
 	case IPA_IOC_DEL_EoGRE_MAPPING:
+		IPADBG("Got IPA_IOC_DEL_EoGRE_MAPPING\n");
+
 		memset(&eogre_info, 0, sizeof(eogre_info));
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
