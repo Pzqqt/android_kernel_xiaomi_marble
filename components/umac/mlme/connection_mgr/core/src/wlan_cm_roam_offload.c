@@ -4837,10 +4837,15 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 	qdf_mem_free(log_record);
 }
 
-void cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
-			       bool roam_abort)
+#define TYPE_ROAMED_AP 2
+void cm_roam_result_info_event(struct wmi_roam_result *res,
+			       struct wmi_roam_scan_data *scan_data,
+			       uint8_t vdev_id)
 {
 	struct wlan_log_record *log_record = NULL;
+	uint8_t i;
+	bool roam_abort = (res->fail_reason == ROAM_FAIL_REASON_SYNC ||
+			   res->fail_reason == ROAM_FAIL_REASON_INTERNAL_ABORT);
 
 	log_record = qdf_mem_malloc(sizeof(*log_record));
 	if (!log_record)
@@ -4856,7 +4861,16 @@ void cm_roam_result_info_event(struct wmi_roam_result *res, uint8_t vdev_id,
 		log_record->log_subtype = WLAN_ROAM_RESULT;
 		log_record->fw_timestamp_us = res->timestamp * 1000;
 		log_record->roam_result.roam_fail_reason = res->fail_reason;
-		log_record->roam_result.is_roam_successful = res->status;
+		log_record->roam_result.is_roam_successful = (res->status == 0);
+		for (i = 0; i < scan_data->num_ap; i++) {
+			if (i >= MAX_ROAM_CANDIDATE_AP)
+				break;
+
+			if (scan_data->ap[i].type == TYPE_ROAMED_AP) {
+				log_record->bssid = scan_data->ap[i].bssid;
+				break;
+			}
+		}
 	}
 
 	wlan_connectivity_log_enqueue(log_record);
@@ -5261,6 +5275,29 @@ cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id)
 	else
 		log_record->log_subtype = cm_roam_get_tag(frame_data->subtype,
 							  frame_data->is_req);
+
+	status = wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+
+	return status;
+}
+
+QDF_STATUS
+cm_roam_beacon_loss_disconnect_event(struct qdf_mac_addr bssid, int32_t rssi,
+				     uint8_t vdev_id)
+{
+	struct wlan_log_record *log_record = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return QDF_STATUS_E_NOMEM;
+
+	log_record->timestamp_us = qdf_get_time_of_the_day_us();
+	log_record->vdev_id = vdev_id;
+	log_record->bssid = bssid;
+	log_record->log_subtype = WLAN_DISCONN_BMISS;
+	log_record->pkt_info.rssi = rssi;
 
 	status = wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);

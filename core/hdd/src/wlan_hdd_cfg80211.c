@@ -15232,8 +15232,9 @@ void hdd_bt_activity_cb(hdd_handle_t hdd_handle, uint32_t bt_activity)
 		return;
 
 	ucfg_scan_set_bt_activity(hdd_ctx->psoc, hdd_ctx->bt_a2dp_active);
-	hdd_debug("a2dp_active: %d vo_active: %d", hdd_ctx->bt_a2dp_active,
-		 hdd_ctx->bt_vo_active);
+	hdd_debug("a2dp_active: %d vo_active: %d connected:%d",
+		  hdd_ctx->bt_a2dp_active,
+		  hdd_ctx->bt_vo_active, hdd_ctx->bt_profile_con);
 }
 
 struct chain_rssi_priv {
