@@ -2657,7 +2657,10 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		hdd_tsf_timestamp_rx(hdd_ctx, skb, ktime_to_us(skb->tstamp));
 
 		if (send_over_nl && SEND_EAPOL_OVER_NL) {
-			if(cfg80211_rx_control_port(adapter->dev, skb, false))
+			if (wlan_hdd_cfg80211_rx_control_port(
+			 adapter->dev,
+			 (u8 *)&adapter->session.station.conn_info.peer_macaddr,
+			 skb, false))
 				qdf_status = QDF_STATUS_SUCCESS;
 			else
 				qdf_status = QDF_STATUS_E_INVAL;

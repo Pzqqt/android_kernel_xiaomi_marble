@@ -808,4 +808,23 @@ struct hdd_hostapd_state;
 QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
 				     struct hdd_hostapd_state *hapd_state,
 				     struct csr_del_sta_params *param);
+
+/**
+ * wlan_hdd_cfg80211_rx_control_port() - notification about a received control
+ * port frame
+ *
+ * @dev: net device pointer
+ * @ta_addr: transmitter address
+ * @skb: skbuf with the control port frame
+ * @unencrypted: Whether the frame is unencrypted
+ *
+ * Wrapper function for call to kernel function cfg80211_rx_control_port()
+ *
+ * Return: none
+ */
+bool wlan_hdd_cfg80211_rx_control_port(struct net_device *dev,
+				       u8 *ta_addr,
+				       struct sk_buff *skb,
+				       bool unencrypted);
+
 #endif

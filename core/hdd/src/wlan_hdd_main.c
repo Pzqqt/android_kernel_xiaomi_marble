@@ -3376,7 +3376,7 @@ static bool hdd_max_sta_interface_up_count_reached(struct hdd_adapter *adapter)
 	return false;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_IFTYPE_MLO_LINK_SUPPORT)
 static int hdd_start_link_adapter(struct hdd_adapter *sta_adapter)
 {
 	int i, ret = 0;

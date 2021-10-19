@@ -222,7 +222,7 @@ void hdd_update_dynamic_mld_mac_addr(struct hdd_context *hdd_ctx,
 			continue;
 		if (!qdf_mem_cmp(curr_mac_addr->bytes,
 				 mac_info->mld_mac_list[i].mld_addr.bytes,
-				 sizeof(struct qdf_mac_addr)))
+				 sizeof(struct qdf_mac_addr))) {
 			qdf_mem_copy(mac_info->mld_mac_list[i].mld_addr.bytes,
 				     new_mac_addr->bytes,
 				     sizeof(struct qdf_mac_addr));

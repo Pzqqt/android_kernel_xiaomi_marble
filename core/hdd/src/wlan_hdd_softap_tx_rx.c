@@ -1220,7 +1220,10 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		hdd_softap_tsf_timestamp_rx(hdd_ctx, skb);
 
 		if (is_eapol && SEND_EAPOL_OVER_NL) {
-			if(cfg80211_rx_control_port(adapter->dev, skb, false))
+			if (wlan_hdd_cfg80211_rx_control_port(
+							adapter->dev,
+							adapter->mac_addr.bytes,
+							skb, false))
 				qdf_status = QDF_STATUS_SUCCESS;
 			else
 				qdf_status = QDF_STATUS_E_INVAL;
