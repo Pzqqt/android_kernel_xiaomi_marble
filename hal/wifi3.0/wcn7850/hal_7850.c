@@ -1514,6 +1514,12 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 				hal_rx_tlv_populate_mpdu_desc_info_7850;
 	hal_soc->ops->hal_rx_tlv_get_pn_num =
 				hal_rx_tlv_get_pn_num_be;
+	hal_soc->ops->hal_get_reo_ent_desc_qdesc_addr =
+				hal_get_reo_ent_desc_qdesc_addr_be;
+	hal_soc->ops->hal_rx_get_qdesc_addr =
+				hal_rx_get_qdesc_addr_be;
+	hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind =
+				hal_set_reo_ent_desc_reo_dest_ind_be;
 };
 
 struct hal_hw_srng_config hw_srng_table_7850[] = {

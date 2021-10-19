@@ -2555,6 +2555,39 @@ hal_rx_tlv_get_pn_num(hal_soc_handle_t hal_soc_hdl,
 	hal_soc->ops->hal_rx_tlv_get_pn_num(buf, pn_num);
 }
 
+static inline uint8_t *
+hal_get_reo_ent_desc_qdesc_addr(hal_soc_handle_t hal_soc_hdl, uint8_t *desc)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_get_reo_ent_desc_qdesc_addr)
+		return hal_soc->ops->hal_get_reo_ent_desc_qdesc_addr(desc);
+
+	return NULL;
+}
+
+static inline uint8_t *
+hal_rx_get_qdesc_addr(hal_soc_handle_t hal_soc_hdl, uint8_t *dst_ring_desc,
+		      uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_get_qdesc_addr)
+		return hal_soc->ops->hal_rx_get_qdesc_addr(dst_ring_desc, buf);
+
+	return NULL;
+}
+
+static inline void
+hal_set_reo_ent_desc_reo_dest_ind(hal_soc_handle_t hal_soc_hdl,
+				  uint8_t *desc, uint32_t dst_ind)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind)
+		hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind(desc, dst_ind);
+}
+
 static inline uint32_t
 hal_rx_tlv_get_is_decrypted(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 {

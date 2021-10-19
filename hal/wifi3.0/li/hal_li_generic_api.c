@@ -1055,6 +1055,19 @@ hal_msdu_desc_info_set_li(hal_soc_handle_t hal_soc_hdl,
 				  DA_IS_VALID, 1);
 }
 
+static inline
+uint8_t *hal_get_reo_ent_desc_qdesc_addr_li(uint8_t *desc)
+{
+	return desc + REO_ENTRANCE_RING_4_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET;
+}
+
+static inline
+void hal_set_reo_ent_desc_reo_dest_ind_li(uint8_t *desc, uint32_t dst_ind)
+{
+	HAL_RX_FLD_SET(desc, REO_ENTRANCE_RING_5,
+		       REO_DESTINATION_INDICATION, dst_ind);
+}
+
 static QDF_STATUS hal_reo_status_update_li(hal_soc_handle_t hal_soc_hdl,
 					   hal_ring_desc_t reo_desc,
 					   void *st_handle,
@@ -1211,4 +1224,9 @@ void hal_hw_txrx_default_ops_attach_li(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_mpdu_desc_info_set = hal_mpdu_desc_info_set_li;
 	hal_soc->ops->hal_reo_status_update = hal_reo_status_update_li;
 	hal_soc->ops->hal_get_tlv_hdr_size = hal_get_tlv_hdr_size_li;
+	hal_soc->ops->hal_get_reo_ent_desc_qdesc_addr =
+			hal_get_reo_ent_desc_qdesc_addr_li;
+	hal_soc->ops->hal_rx_get_qdesc_addr = hal_rx_get_qdesc_addr_li;
+	hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind =
+			hal_set_reo_ent_desc_reo_dest_ind_li;
 }
