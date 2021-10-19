@@ -1828,6 +1828,8 @@ static void hal_hw_txrx_ops_attach_qca6490(struct hal_soc *hal_soc)
 					hal_rx_msdu_flow_idx_timeout_6490;
 	hal_soc->ops->hal_rx_msdu_fse_metadata_get =
 					hal_rx_msdu_fse_metadata_get_6490;
+	hal_soc->ops->hal_rx_msdu_cce_match_get =
+					hal_rx_msdu_cce_match_get_li;
 	hal_soc->ops->hal_rx_msdu_cce_metadata_get =
 					hal_rx_msdu_cce_metadata_get_6490;
 	hal_soc->ops->hal_rx_msdu_get_flow_params =

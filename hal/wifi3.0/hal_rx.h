@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1150,6 +1150,21 @@ hal_rx_msdu_end_last_msdu_get(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_msdu_end_last_msdu_get(buf);
+}
+
+/**
+ * hal_rx_msdu_cce_match_get: API to get CCE match
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ * Return: cce_meta_data
+ */
+static inline bool
+hal_rx_msdu_cce_match_get(hal_soc_handle_t hal_soc_hdl,
+			  uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_msdu_cce_match_get(buf);
 }
 
 /**
