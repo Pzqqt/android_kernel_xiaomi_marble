@@ -1918,7 +1918,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	struct sap_config *sap_config;
 	struct sap_context *sap_ctx = NULL;
 	uint8_t pdev_id;
-
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct wlan_objmgr_peer *peer;
+#endif
 	dev = context;
 	if (!dev) {
 		hdd_err("context is null");
@@ -2432,6 +2434,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA MLD %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+		peer = wlan_objmgr_get_peer_by_mac(hdd_ctx->psoc,
+						   event->staMac.bytes,
+						   WLAN_OSIF_ID);
+		if (!peer) {
+			hdd_err("Peer object not found");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		if (!qdf_is_macaddr_zero((struct qdf_mac_addr *)peer->mldaddr)
+		    && !wlan_peer_mlme_is_assoc_peer(peer)) {
+			wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
+			break;
+		}
+
+		wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
 #endif
 		}
 
