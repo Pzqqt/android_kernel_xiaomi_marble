@@ -578,6 +578,7 @@ struct  dp_mon_pdev {
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 	struct dp_pdev_tx_capture tx_capture;
+	bool stop_tx_capture_work_q_timer;
 #endif
 
 	/* tx packet capture enhancement */
