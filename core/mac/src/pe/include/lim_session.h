@@ -358,6 +358,7 @@ struct pe_session {
 	tAniAuthType authType;
 	tSirKeyMaterial WEPKeyMaterial[MAX_WEP_KEYS];
 
+	tDot11fIEWMMParams wmm_params;
 	tDot11fIERSN gStartBssRSNIe;
 	tDot11fIEWPA gStartBssWPAIe;
 	tSirAPWPSIEs APWPSIEs;

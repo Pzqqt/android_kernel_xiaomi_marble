@@ -2876,6 +2876,11 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_mem_zero(&session->wmm_params, sizeof(tDot11fIEWMMParams));
+	if (ie_struct->WMMParams.present)
+		qdf_mem_copy(&session->wmm_params, &ie_struct->WMMParams,
+			     sizeof(tDot11fIEWMMParams));
+
 	mac_ctx->mlme_cfg->power.local_power_constraint =
 		wlan_get_11h_power_constraint(mac_ctx,
 					      &ie_struct->PowerConstraints);

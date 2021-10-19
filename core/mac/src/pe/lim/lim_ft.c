@@ -545,6 +545,12 @@ void lim_fill_ft_session(struct mac_context *mac,
 			lim_get_ielen_from_bss_description(pbssDescription),
 			pBeaconStruct);
 
+	qdf_mem_zero(&ft_session->wmm_params, sizeof(tDot11fIEWMMParams));
+	if (pBeaconStruct->wmm_params.present)
+		qdf_mem_copy(&ft_session->wmm_params,
+			     &pBeaconStruct->wmm_params,
+			     sizeof(tDot11fIEWMMParams));
+
 	ft_session->rateSet.numRates =
 		pBeaconStruct->supportedRates.numRates;
 	qdf_mem_copy(ft_session->rateSet.rate,
