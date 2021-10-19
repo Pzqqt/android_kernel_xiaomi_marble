@@ -434,28 +434,31 @@ static void dp_tx_tso_desc_release(struct dp_soc *soc,
 				   struct dp_tx_desc_s *tx_desc)
 {
 	TSO_DEBUG("%s: Free the tso descriptor", __func__);
-	if (qdf_unlikely(!tx_desc->tso_desc)) {
+	if (qdf_unlikely(!tx_desc->msdu_ext_desc->tso_desc)) {
 		dp_tx_err("SO desc is NULL!");
 		qdf_assert(0);
-	} else if (qdf_unlikely(!tx_desc->tso_num_desc)) {
+	} else if (qdf_unlikely(!tx_desc->msdu_ext_desc->tso_num_desc)) {
 		dp_tx_err("TSO num desc is NULL!");
 		qdf_assert(0);
 	} else {
 		struct qdf_tso_num_seg_elem_t *tso_num_desc =
-			(struct qdf_tso_num_seg_elem_t *)tx_desc->tso_num_desc;
+			(struct qdf_tso_num_seg_elem_t *)tx_desc->
+				msdu_ext_desc->tso_num_desc;
 
 		/* Add the tso num segment into the free list */
 		if (tso_num_desc->num_seg.tso_cmn_num_seg == 0) {
 			dp_tso_num_seg_free(soc, tx_desc->pool_id,
-					    tx_desc->tso_num_desc);
-			tx_desc->tso_num_desc = NULL;
+					    tx_desc->msdu_ext_desc->
+					    tso_num_desc);
+			tx_desc->msdu_ext_desc->tso_num_desc = NULL;
 			DP_STATS_INC(tx_desc->pdev, tso_stats.tso_comp, 1);
 		}
 
 		/* Add the tso segment into the free list*/
 		dp_tx_tso_desc_free(soc,
-				    tx_desc->pool_id, tx_desc->tso_desc);
-		tx_desc->tso_desc = NULL;
+				    tx_desc->pool_id, tx_desc->msdu_ext_desc->
+				    tso_desc);
+		tx_desc->msdu_ext_desc->tso_desc = NULL;
 	}
 }
 #else
@@ -503,7 +506,8 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
-		dp_tx_me_free_buf(tx_desc->pdev, tx_desc->me_buffer);
+		dp_tx_me_free_buf(tx_desc->pdev, tx_desc->msdu_ext_desc->
+				  me_buffer);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		qdf_atomic_dec(&soc->num_tx_exception);
@@ -1198,8 +1202,9 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->vdev_id = vdev->vdev_id;
 	tx_desc->pdev = pdev;
 	tx_desc->pkt_offset = 0;
-	tx_desc->tso_desc = msdu_info->u.tso_info.curr_seg;
-	tx_desc->tso_num_desc = msdu_info->u.tso_info.tso_num_seg_list;
+	tx_desc->msdu_ext_desc->tso_desc = msdu_info->u.tso_info.curr_seg;
+	tx_desc->msdu_ext_desc->tso_num_desc = msdu_info->u.tso_info.
+					       tso_num_seg_list;
 
 	dp_tx_trace_pkt(soc, nbuf, tx_desc->id, vdev->vdev_id);
 
@@ -2008,11 +2013,14 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 					desc->msdu_ext_desc->vaddr)) {
 			dp_tx_desc_history_add(soc, desc->dma_addr, desc->nbuf,
 					       desc->id, DP_TX_COMP_MSDU_EXT);
-			dp_tx_tso_seg_history_add(soc, desc->tso_desc,
+			dp_tx_tso_seg_history_add(soc,
+						  desc->msdu_ext_desc->tso_desc,
 						  desc->nbuf, desc->id, type);
 			/* unmap eash TSO seg before free the nbuf */
-			dp_tx_tso_unmap_segment(soc, desc->tso_desc,
-						desc->tso_num_desc);
+			dp_tx_tso_unmap_segment(soc,
+						desc->msdu_ext_desc->tso_desc,
+						desc->msdu_ext_desc->
+						tso_num_desc);
 			qdf_nbuf_free(nbuf);
 			return;
 		}
@@ -2134,8 +2142,9 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		}
 
 		if (msdu_info->frm_type == dp_tx_frm_me) {
-			tx_desc->me_buffer =
-				msdu_info->u.sg_info.curr_seg->frags[0].vaddr;
+			tx_desc->msdu_ext_desc->me_buffer =
+				(struct dp_tx_me_buf_t *)msdu_info->
+				u.sg_info.curr_seg->frags[0].vaddr;
 			tx_desc->flags |= DP_TX_DESC_FLAG_ME;
 		}
 
