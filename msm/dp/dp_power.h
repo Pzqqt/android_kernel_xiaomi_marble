@@ -18,6 +18,7 @@
  * @clk_enable: enable/disable the DP clocks
  * @clk_status: check for clock status
  * @set_pixel_clk_parent: set the parent of DP pixel clock
+ * @park_clocks: park all clocks driven by PLL
  * @clk_get_rate: get the current rate for provided clk_name
  * @power_client_init: configures clocks and regulators
  * @power_client_deinit: frees clock and regulator resources
@@ -32,6 +33,7 @@ struct dp_power {
 				bool enable);
 	bool (*clk_status)(struct dp_power *power, enum dp_pm_type pm_type);
 	int (*set_pixel_clk_parent)(struct dp_power *power, u32 stream_id);
+	int (*park_clocks)(struct dp_power *power);
 	u64 (*clk_get_rate)(struct dp_power *power, char *clk_name);
 	int (*power_client_init)(struct dp_power *power,
 		struct sde_power_handle *phandle,
