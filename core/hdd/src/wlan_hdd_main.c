@@ -88,9 +88,6 @@
 #include "qdf_periodic_work.h"
 #endif
 
-#ifdef MSM_PLATFORM
-#include <soc/qcom/subsystem_restart.h>
-#endif
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <wlan_hdd_green_ap.h>
