@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1203,7 +1204,8 @@ done:
 }
 EXPORT_SYMBOL(qmi_rmnet_ps_ind_deregister);
 
-int qmi_rmnet_set_powersave_mode(void *port, uint8_t enable)
+int qmi_rmnet_set_powersave_mode(void *port, uint8_t enable, u8 num_bearers,
+				 u8 *bearer_id)
 {
 	int rc = -EINVAL;
 	struct qmi_info *qmi = (struct qmi_info *)rmnet_get_qmi_pt(port);
@@ -1211,7 +1213,8 @@ int qmi_rmnet_set_powersave_mode(void *port, uint8_t enable)
 	if (!qmi || !qmi->wda_client)
 		return rc;
 
-	rc = wda_set_powersave_mode(qmi->wda_client, enable);
+	rc = wda_set_powersave_mode(qmi->wda_client, enable, num_bearers,
+				    bearer_id);
 	if (rc < 0) {
 		pr_err("%s() failed set powersave mode[%u], err=%d\n",
 			__func__, enable, rc);
@@ -1292,7 +1295,8 @@ static void qmi_rmnet_check_stats(struct work_struct *work)
 		qmi->ps_ignore_grant = false;
 
 		/* Register to get QMI DFC and DL marker */
-		if (qmi_rmnet_set_powersave_mode(real_work->port, 0) < 0)
+		if (qmi_rmnet_set_powersave_mode(real_work->port, 0,
+						 0, NULL) < 0)
 			goto end;
 
 		qmi->ps_enabled = false;
@@ -1317,7 +1321,8 @@ static void qmi_rmnet_check_stats(struct work_struct *work)
 		}
 
 		/* Deregister to suppress QMI DFC and DL marker */
-		if (qmi_rmnet_set_powersave_mode(real_work->port, 1) < 0)
+		if (qmi_rmnet_set_powersave_mode(real_work->port, 1,
+						 0, NULL) < 0)
 			goto end;
 
 		qmi->ps_enabled = true;
@@ -1363,6 +1368,7 @@ static void qmi_rmnet_check_stats_2(struct work_struct *work)
 	u64 rxd, txd;
 	u64 rx, tx;
 	u8 num_bearers;
+	int rc;
 
 	real_work = container_of(to_delayed_work(work),
 				 struct rmnet_powersave_work, work);
@@ -1389,7 +1395,12 @@ static void qmi_rmnet_check_stats_2(struct work_struct *work)
 		qmi->ps_ignore_grant = false;
 
 		/* Out of powersave */
-		if (dfc_qmap_set_powersave(0, 0, NULL))
+		if (dfc_qmap)
+			rc = dfc_qmap_set_powersave(0, 0, NULL);
+		else
+			rc = qmi_rmnet_set_powersave_mode(real_work->port, 0,
+							  0, NULL);
+		if (rc)
 			goto end;
 
 		qmi->ps_enabled = false;
@@ -1413,7 +1424,11 @@ static void qmi_rmnet_check_stats_2(struct work_struct *work)
 					 ps_bearer_id);
 
 		/* Enter powersave */
-		dfc_qmap_set_powersave(1, num_bearers, ps_bearer_id);
+		if (dfc_qmap)
+			dfc_qmap_set_powersave(1, num_bearers, ps_bearer_id);
+		else
+			qmi_rmnet_set_powersave_mode(real_work->port, 1,
+						     num_bearers, ps_bearer_id);
 
 		if (rmnet_get_powersave_notif(real_work->port))
 			qmi_rmnet_ps_on_notify(real_work->port);
@@ -1462,7 +1477,7 @@ void qmi_rmnet_work_init(void *port)
 		return;
 	}
 
-	if (dfc_qmap && dfc_ps_ext)
+	if (dfc_ps_ext)
 		INIT_DEFERRABLE_WORK(&rmnet_work->work,
 				     qmi_rmnet_check_stats_2);
 	else

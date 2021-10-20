@@ -115,7 +115,8 @@ static inline int qmi_rmnet_get_queue(struct net_device *dev,
 #endif
 
 #ifdef CONFIG_QTI_QMI_POWER_COLLAPSE
-int qmi_rmnet_set_powersave_mode(void *port, uint8_t enable);
+int qmi_rmnet_set_powersave_mode(void *port, uint8_t enable, u8 num_bearers,
+				 u8 *bearer_id);
 void qmi_rmnet_work_init(void *port);
 void qmi_rmnet_work_exit(void *port);
 void qmi_rmnet_work_maybe_restart(void *port);
@@ -130,7 +131,8 @@ void qmi_rmnet_ps_off_notify(void *port);
 void qmi_rmnet_ps_on_notify(void *port);
 
 #else
-static inline int qmi_rmnet_set_powersave_mode(void *port, uint8_t enable)
+static inline int qmi_rmnet_set_powersave_mode(void *port, uint8_t enable,
+					       u8 num_bearers, u8 *bearer_id)
 {
 	return 0;
 }

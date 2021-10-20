@@ -12,7 +12,6 @@
 #include "dfc.h"
 
 #define QMAP_DFC_VER		1
-#define QMAP_PS_MAX_BEARERS	32
 
 struct qmap_dfc_config {
 	struct qmap_cmd_hdr	hdr;
@@ -102,7 +101,7 @@ struct qmap_dfc_powersave_req {
 	__be32			ep_type;
 	__be32			iface_id;
 	u8			num_bearers;
-	u8			bearer_id[QMAP_PS_MAX_BEARERS];
+	u8			bearer_id[PS_MAX_BEARERS];
 	u8			reserved4[3];
 } __aligned(1);
 
@@ -440,8 +439,8 @@ static int dfc_qmap_send_powersave(u8 enable, u8 num_bearers, u8 *bearer_id)
 	dfc_powersave->mode = enable ? 1 : 0;
 
 	if (enable && num_bearers) {
-		if (unlikely(num_bearers > QMAP_PS_MAX_BEARERS))
-			num_bearers = QMAP_PS_MAX_BEARERS;
+		if (unlikely(num_bearers > PS_MAX_BEARERS))
+			num_bearers = PS_MAX_BEARERS;
 		dfc_powersave->allow = 1;
 		dfc_powersave->autoshut = 1;
 		dfc_powersave->num_bearers = num_bearers;
