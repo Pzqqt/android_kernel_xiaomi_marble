@@ -50,6 +50,9 @@
 #define TRACE_EVENT_AUTH_RSP_TIMER_DEACT   0x6602
 #define TRACE_EVENT_AUTH_RSP_TIMER_ACT     0x6603
 
+#define SAE_AUTH_SEQ_NUM_OFFSET       2
+#define SAE_AUTH_STATUS_CODE_OFFSET   4
+
 /* MLM message types */
 enum mlmmsgtype {
 	LIM_MLM_MSG_START = 1000,

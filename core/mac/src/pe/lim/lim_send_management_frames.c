@@ -5901,6 +5901,7 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 	struct pe_session *session;
 	uint16_t auth_ack_status;
 	enum rateid min_rid = RATEID_DEFAULT;
+	uint16_t sae_auth_seq = 0;
 
 	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
@@ -5926,6 +5927,16 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 				      MAC_AUTH_FRAME_STATUS_CODE_OFFSET);
 		mgmt_data.rssi = mac_ctx->lim.bss_rssi;
 		mgmt_data.frame_subtype = MGMT_SUBTYPE_AUTH;
+		mgmt_data.auth_algo = *(uint16_t *)(frame +
+					  sizeof(tSirMacMgmtHdr));
+		if (mgmt_data.auth_algo == eSIR_AUTH_TYPE_SAE) {
+			sae_auth_seq =
+			    *(uint16_t *)(frame +
+					  sizeof(struct wlan_frame_hdr) +
+					  SAE_AUTH_SEQ_NUM_OFFSET);
+			mgmt_data.auth_seq = sae_auth_seq;
+			mgmt_data.auth_type = sae_auth_seq;
+		}
 		mgmt_frame_info = &mgmt_data;
 	}
 
