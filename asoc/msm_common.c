@@ -278,38 +278,37 @@ static bool is_fractional_sample_rate(unsigned int sample_rate)
 
 static int get_mi2s_clk_id(int index)
 {
-        int clk_id;
+	int clk_id = -EINVAL;
 
-        switch(index) {
-        case PRI_MI2S_TDM_AUXPCM:
-                clk_id = CLOCK_ID_PRI_MI2S_IBIT;
-                break;
-        case SEC_MI2S_TDM_AUXPCM:
-                clk_id = CLOCK_ID_SEP_MI2S_IBIT;
-                break;
-        case TER_MI2S_TDM_AUXPCM:
-                clk_id = CLOCK_ID_TER_MI2S_IBIT;
-                break;
-        case QUAT_MI2S_TDM_AUXPCM:
-                clk_id = CLOCK_ID_QUAD_MI2S_IBIT;
-                break;
-        case QUIN_MI2S_TDM_AUXPCM:
-                clk_id = CLOCK_ID_QUI_MI2S_IBIT;
-                break;
-        case SEN_MI2S_TDM_AUXPCM:
-                clk_id = CLOCK_ID_SEN_MI2S_IBIT;
-                break;
-        default:
-                pr_err("%s: Invalid interface index: %d\n", __func__, index);
-                clk_id = -EINVAL;
-        }
-        pr_debug("%s: clk id: %d\n", __func__, clk_id);
-        return clk_id;
+	switch(index) {
+	case PRI_MI2S_TDM_AUXPCM:
+		clk_id = CLOCK_ID_PRI_MI2S_IBIT;
+		break;
+	case SEC_MI2S_TDM_AUXPCM:
+		clk_id = CLOCK_ID_SEP_MI2S_IBIT;
+		break;
+	case TER_MI2S_TDM_AUXPCM:
+		clk_id = CLOCK_ID_TER_MI2S_IBIT;
+		break;
+	case QUAT_MI2S_TDM_AUXPCM:
+		clk_id = CLOCK_ID_QUAD_MI2S_IBIT;
+		break;
+	case QUIN_MI2S_TDM_AUXPCM:
+		clk_id = CLOCK_ID_QUI_MI2S_IBIT;
+		break;
+	case SEN_MI2S_TDM_AUXPCM:
+		clk_id = CLOCK_ID_SEN_MI2S_IBIT;
+		break;
+	default:
+		pr_err("%s: Invalid interface index: %d\n", __func__, index);
+	}
+	pr_debug("%s: clk id: %d\n", __func__, clk_id);
+	return clk_id;
 }
 
 static int get_tdm_clk_id(int index)
 {
-	int clk_id;
+	int clk_id = -EINVAL;
 
 	switch(index) {
 	case PRI_MI2S_TDM_AUXPCM:
@@ -332,7 +331,6 @@ static int get_tdm_clk_id(int index)
 		break;
 	default:
 		pr_err("%s: Invalid interface index: %d\n", __func__, index);
-		clk_id = -EINVAL;
 	}
 	pr_debug("%s: clk id: %d\n", __func__, clk_id);
 	return clk_id;
@@ -401,14 +399,11 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 				slots = pdata->tdm_max_slots;
 				rate = params_rate(params);
 
-				intf_clk_cfg.clk_id =  get_tdm_clk_id(index);
-				if (intf_clk_cfg.clk_id < 0) {
-					ret = -EINVAL;
-					pr_err("%s: Invalid tdm clk id %d", __func__,
-						intf_clk_cfg.clk_id);
+				ret = get_tdm_clk_id(index);
+				if ( ret < 0)
 					goto done;
-				}
 
+				intf_clk_cfg.clk_id = ret;
 				intf_clk_cfg.clk_freq_in_hz = rate * slot_width * slots;
 				intf_clk_cfg.clk_attri = pdata->tdm_clk_attribute[index];
 				intf_clk_cfg.clk_root = 0;
@@ -432,13 +427,11 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 				}
 			} else if ((strnstr(stream_name, "MI2S", strlen(stream_name)))) {
 
-				intf_clk_cfg.clk_id =  get_mi2s_clk_id(index);
-				if (intf_clk_cfg.clk_id < 0) {
-					ret = -EINVAL;
-					pr_err("%s: Invalid mi2s clk id %d", __func__,
-						intf_clk_cfg.clk_id);
+				ret =  get_mi2s_clk_id(index);
+				if (ret < 0)
 					goto done;
-				}
+
+				intf_clk_cfg.clk_id =  ret;
 				rate = params_rate(params);
 				switch (params_format(params)) {
 				case SNDRV_PCM_FORMAT_S24_LE:
@@ -554,21 +547,23 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 		atomic_dec(&pdata->lpass_intf_clk_ref_cnt[index]);
 		if (atomic_read(&pdata->lpass_intf_clk_ref_cnt[index]) == 0) {
 			if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
-				intf_clk_cfg.clk_id = get_tdm_clk_id(index);
-				pr_debug("%s: Disable tdm clock ID: %d\n",
-					__func__, intf_clk_cfg.clk_id);
-				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
-				if (ret < 0)
-					pr_err("%s: prm tdm clk cfg set failed ret %d\n",
-					__func__, ret);
-			} else if((strnstr(stream_name, "MI2S", strlen(stream_name)))) {
-				intf_clk_cfg.clk_id = get_mi2s_clk_id(index);
-				pr_debug("%s: Disable mi2s clock ID: %d\n",
-					__func__, intf_clk_cfg.clk_id);
-				ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
-				if (ret < 0)
-					pr_err("%s: prm mi2s clk cfg disable failed ret %d\n",
+				ret = get_tdm_clk_id(index);
+				if (ret > 0) {
+					intf_clk_cfg.clk_id = ret;
+					ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
+					if (ret < 0)
+						pr_err("%s: prm tdm clk cfg set failed ret %d\n",
 						__func__, ret);
+				}
+			} else if((strnstr(stream_name, "MI2S", strlen(stream_name)))) {
+				ret = get_mi2s_clk_id(index);
+				if (ret > 0) {
+					intf_clk_cfg.clk_id = ret;
+					ret = audio_prm_set_lpass_clk_cfg(&intf_clk_cfg, 0);
+					if (ret < 0)
+						pr_err("%s: prm mi2s clk cfg disable failed ret %d\n",
+							__func__, ret);
+				}
 			} else {
 				pr_err("%s: unsupported stream name: %s\n",
 					__func__, stream_name);
