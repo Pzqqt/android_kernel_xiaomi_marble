@@ -1604,6 +1604,40 @@ done:
 		pm_ctx->dual_mac_cfg.cur_fw_mode_config);
 }
 
+void policy_mgr_init_sbs_fw_config(struct wlan_objmgr_psoc *psoc,
+				   uint32_t fw_config)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool sbs_enabled;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	/*
+	 * If SBS is not enabled from ini, no need to set SBS bits in fw config
+	 */
+	sbs_enabled = pm_ctx->cfg.sbs_enable;
+	if (!sbs_enabled) {
+		policy_mgr_debug("SBS not enabled from ini");
+		return;
+	}
+
+	/* Initialize fw_mode_config_bits with default FW value */
+	WMI_DBS_FW_MODE_CFG_ASYNC_SBS_SET(
+			pm_ctx->dual_mac_cfg.cur_fw_mode_config,
+			WMI_DBS_FW_MODE_CFG_ASYNC_SBS_GET(fw_config));
+
+	policy_mgr_rl_debug("fw_mode config updated from %x to %x",
+			    pm_ctx->dual_mac_cfg.prev_fw_mode_config,
+			    pm_ctx->dual_mac_cfg.cur_fw_mode_config);
+	/* Initialize the previous scan/fw mode config */
+	pm_ctx->dual_mac_cfg.prev_fw_mode_config =
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config;
+}
+
 void policy_mgr_update_dbs_scan_config(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1898,14 +1932,40 @@ bool policy_mgr_is_interband_mcc_supported(struct wlan_objmgr_psoc *psoc)
 				    wmi_service_no_interband_mcc_support);
 }
 
+static bool policy_mgr_is_sbs_enable(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	/*
+	 * if gEnableSBS is not set then policy_mgr_init_sbs_fw_config won't
+	 * enable Async SBS fw config bit
+	 */
+	if (WMI_DBS_FW_MODE_CFG_ASYNC_SBS_GET(
+			pm_ctx->dual_mac_cfg.cur_fw_mode_config))
+		return true;
+
+	return false;
+}
+
 bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 {
+	if (!policy_mgr_is_sbs_enable(psoc)) {
+		policy_mgr_rl_debug("SBS INI is disabled");
+		return false;
+	}
+
 	if (!policy_mgr_find_if_fw_supports_dbs(psoc)) {
 		return false;
 	}
 
 	if (!policy_mgr_find_if_hwlist_has_sbs(psoc)) {
-		policymgr_nofl_debug("HW mode list has no SBS");
+		policy_mgr_rl_debug("HW mode list has no SBS");
 		return false;
 	}
 

@@ -5662,6 +5662,7 @@ static void wma_init_scan_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 	}
 
 	policy_mgr_init_dbs_config(psoc, scan_config, fw_config);
+	policy_mgr_init_sbs_fw_config(psoc, fw_config);
 
 	wma_debug("Exit");
 }
