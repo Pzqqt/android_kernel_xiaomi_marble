@@ -937,9 +937,16 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 			if (instance_ptr->eth_mode == IPA_ETH_CLIENT_AQC107 ||
 				instance_ptr->eth_mode == IPA_ETH_CLIENT_AQC113 ||
 				instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN ||
+#if IPA_ETH_API_VER >= 2
+				instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3 ||
+#endif
 				instance_ptr->eth_mode == IPA_ETH_CLIENT_EMAC) {
 
-				if(instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN) {
+				if(instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN
+#if IPA_ETH_API_VER >= 2
+					|| instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3
+#endif
+					) {
 					if(ipa3_get_ntn_gsi_stats(&stats)) {
 						instance_ptr = (struct eth_instance_info *)((
 							uint64_t)instance_ptr +
@@ -968,11 +975,18 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 				}
 
 				if (instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN ||
+#if IPA_ETH_API_VER >= 2
+					instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3 ||
+#endif
 					instance_ptr->eth_mode == IPA_ETH_CLIENT_EMAC)
 					tx_instance_ptr_local->tx_client =
 						IPA_CLIENT_ETHERNET_CONS;
 				else tx_instance_ptr_local->tx_client =
 						IPA_CLIENT_AQC_ETHERNET_CONS;
+#if IPA_ETH_API_VER >= 2
+				if ((instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3) && (i == 1))
+					tx_instance_ptr_local->tx_client = IPA_CLIENT_ETHERNET2_CONS;
+#endif
 				client_type = tx_instance_ptr_local->tx_client;
 				instance_ptr->pm_bandwidth =
 					ipa_pm_get_pm_clnt_throughput(client_type);
@@ -1052,14 +1066,24 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 			if ((instance_ptr->eth_mode == IPA_ETH_CLIENT_AQC107 ||
 				instance_ptr->eth_mode == IPA_ETH_CLIENT_AQC113 ||
 				instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN ||
+#if IPA_ETH_API_VER >= 2
+				instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3 ||
+#endif
 				instance_ptr->eth_mode == IPA_ETH_CLIENT_EMAC)) {
 
 				if (instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN ||
+#if IPA_ETH_API_VER >= 2
+					instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3 ||
+#endif
 					instance_ptr->eth_mode == IPA_ETH_CLIENT_EMAC)
 					rx_instance_ptr_local->rx_client =
 					IPA_CLIENT_ETHERNET_PROD;
 				else rx_instance_ptr_local->rx_client =
 						IPA_CLIENT_AQC_ETHERNET_PROD;
+#if IPA_ETH_API_VER >= 2
+				if ((instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3) && (i == 1))
+					rx_instance_ptr_local->rx_client = IPA_CLIENT_ETHERNET2_PROD;
+#endif
 				client_type = rx_instance_ptr_local->rx_client;
 				rx_instance_ptr_local->num_rx_ring_100_perc_with_pack =
 					stats.u.ring[0].ringFull;
@@ -1602,19 +1626,25 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 					ipa_client_type =
 						ipa_eth_get_ipa_client_type_from_eth_type(
 							j, IPA_ETH_PIPE_DIR_TX);
-					if (ipa_client_type >= IPA_CLIENT_MAX) {
+					if (ipa_client_type >= IPA_CLIENT_MAX)
 						IPA_STATS_ERR("Eth tx client type not found");
-						ipa_assert();
-					}
+#if IPA_ETH_API_VER >= 2
+					/* Overwrite client type if it is NTN3 and 2nd instance */
+					if ((j == IPA_ETH_CLIENT_NTN3) && (i == 1))
+						ipa_client_type = IPA_CLIENT_ETHERNET2_CONS;
+#endif
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
 						i].pipes_client_type[k*2] = ipa_client_type;
 					ipa_client_type =
 						ipa_eth_get_ipa_client_type_from_eth_type(
 							j, IPA_ETH_PIPE_DIR_RX);
-					if (ipa_client_type >= IPA_CLIENT_MAX) {
+					if (ipa_client_type >= IPA_CLIENT_MAX)
 						IPA_STATS_ERR("Eth rx client type not found");
-						ipa_assert();
-					}
+#if IPA_ETH_API_VER >= 2
+					/* Overwrite client type if it is NTN3 and 2nd instance */
+					if ((j == IPA_ETH_CLIENT_NTN3) && (i == 1))
+						ipa_client_type = IPA_CLIENT_ETHERNET2_PROD;
+#endif
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
 						i].pipes_client_type[(k*2) + 1] = ipa_client_type;
 					ipa_lnx_agent_ctx.alloc_info.num_eth_instances++;
