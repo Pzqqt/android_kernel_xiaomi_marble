@@ -229,6 +229,12 @@ int sde_cp_crtc_get_property(struct drm_crtc *crtc,
 				struct drm_property *property, uint64_t *val);
 
 /**
+ * sde_cp_crtc_mark_features_dirty: Move the cp features from active list to dirty list
+ * @crtc: Pointer to crtc.
+ */
+void sde_cp_crtc_mark_features_dirty(struct drm_crtc *crtc);
+
+/**
  * sde_cp_crtc_suspend: Suspend the crtc features
  * @crtc: Pointer to crtc.
  */
