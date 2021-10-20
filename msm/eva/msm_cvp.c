@@ -985,10 +985,7 @@ static int adjust_bw_freqs(void)
 	}
 
 	hdev->clk_freq = core->curr_freq;
-	rc = icc_set_bw(bus->client, bw_sum, 0);
-	if (rc)
-		dprintk(CVP_ERR, "Failed voting bus %s to ab %u\n",
-			bus->name, bw_sum);
+	rc = msm_cvp_set_bw(bus, bw_sum);
 
 	return rc;
 }
@@ -1622,6 +1619,12 @@ static void cvp_clean_fence_queue(struct msm_cvp_inst *inst, int synx_state)
 	q = &inst->fence_cmd_queue;
 
 	mutex_lock(&q->lock);
+	if (q->state == QUEUE_INVALID || q->state == QUEUE_INIT) {
+		dprintk(CVP_WARN, "Incorrect fence cmd queue state %d\n",
+			q->state);
+		mutex_unlock(&q->lock);
+		return;
+	}
 	q->mode = OP_DRAINING;
 
 	list_for_each_entry_safe(f, d, &q->wait_list, list) {
@@ -1645,6 +1648,8 @@ static void cvp_clean_fence_queue(struct msm_cvp_inst *inst, int synx_state)
 		cvp_cancel_synx(inst, CVP_INPUT_SYNX, f, synx_state);
 	}
 
+	q->mode = OP_INVALID;
+	q->state = QUEUE_INVALID;
 	mutex_unlock(&q->lock);
 }
 
@@ -1671,11 +1676,6 @@ retry:
 		return -EBUSY;
 
 	goto retry;
-
-	sq = &inst->session_queue_fence;
-	spin_lock(&sq->lock);
-	sq->state = QUEUE_INVALID;
-	spin_unlock(&sq->lock);
 
 	sq = &inst->session_queue_fence;
 	spin_lock(&sq->lock);
