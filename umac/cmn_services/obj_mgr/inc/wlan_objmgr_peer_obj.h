@@ -1125,7 +1125,7 @@ static inline void wlan_peer_mlme_set_assoc_peer(
 static inline bool wlan_peer_mlme_is_assoc_peer(
 				struct wlan_objmgr_peer *peer)
 {
-	return false;
+	return true;
 }
 #endif
 
