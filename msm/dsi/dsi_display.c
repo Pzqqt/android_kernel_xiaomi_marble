@@ -4083,7 +4083,8 @@ error:
 static bool dsi_display_validate_panel_resources(struct dsi_display *display)
 {
 	if (!is_sim_panel(display)) {
-		if (!gpio_is_valid(display->panel->reset_config.reset_gpio)) {
+		if (!display->panel->host_config.ext_bridge_mode &&
+				!gpio_is_valid(display->panel->reset_config.reset_gpio)) {
 			DSI_ERR("invalid reset gpio for the panel\n");
 			return false;
 		}
