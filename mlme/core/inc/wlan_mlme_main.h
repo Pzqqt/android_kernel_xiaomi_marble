@@ -335,6 +335,7 @@ struct ft_context {
  * @cckm_ie: cck IE
  * @cckm_ie_len: cckm_ie len
  * @ese_tspec_info: ese tspec info
+ * @ext_cap_ie: Ext CAP IE
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -358,6 +359,7 @@ struct mlme_connect_info {
 	tESETspecInfo ese_tspec_info;
 #endif
 #endif
+	uint8_t ext_cap_ie[DOT11F_IE_EXTCAP_MAX_LEN + 2];
 };
 
 /** struct wait_for_key_timer - wait for key timer object
