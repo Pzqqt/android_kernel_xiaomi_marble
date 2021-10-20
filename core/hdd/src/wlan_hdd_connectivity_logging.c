@@ -1154,7 +1154,8 @@ void wlan_hdd_connectivity_event_connecting(struct hdd_context *hdd_ctx,
 	record->conn_info.ssid_len = req->ssid_len;
 	if (req->ssid_len > WLAN_SSID_MAX_LEN)
 		record->conn_info.ssid_len = WLAN_SSID_MAX_LEN;
-	qdf_mem_copy(record->conn_info.ssid, req->ssid, req->ssid_len);
+	qdf_mem_copy(record->conn_info.ssid, req->ssid,
+		     record->conn_info.ssid_len);
 
 	if (req->bssid)
 		qdf_mem_copy(record->bssid.bytes, req->bssid,
