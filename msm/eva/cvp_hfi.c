@@ -812,7 +812,7 @@ static int __unvote_buses(struct iris_hfi_device *device)
 	device->bus_vote.data_count = 0;
 
 	iris_hfi_for_each_bus(device, bus) {
-		rc = icc_set_bw(bus->client, 0, 0);
+		rc = msm_cvp_set_bw(bus, 0);
 		if (rc) {
 			dprintk(CVP_ERR,
 			"%s: Failed unvoting bus\n", __func__);
@@ -853,7 +853,7 @@ no_data_count:
 
 	iris_hfi_for_each_bus(device, bus) {
 		if (bus) {
-			rc = icc_set_bw(bus->client, bus->range[1], 0);
+			rc = msm_cvp_set_bw(bus, bus->range[1]);
 			if (rc)
 				dprintk(CVP_ERR,
 				"Failed voting bus %s to ab %u\n",

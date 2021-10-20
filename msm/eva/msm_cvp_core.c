@@ -225,6 +225,7 @@ void *msm_cvp_open(int core_id, int session_type)
 	return inst;
 fail_init:
 	__deinit_session_queue(inst);
+	__deinit_fence_queue(inst);
 	mutex_lock(&core->lock);
 	list_del(&inst->list);
 	mutex_unlock(&core->lock);

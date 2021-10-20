@@ -645,6 +645,7 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 
 	cur_state = core->state;
 	core->state = CVP_CORE_UNINIT;
+	mutex_lock(&core->clk_lock);
 	dprintk(CVP_WARN, "SYS_ERROR received for core %pK\n", core);
 	if (response->status == CVP_ERR_NOC_ERROR) {
 		dprintk(CVP_WARN, "Got NOC error");
@@ -682,9 +683,11 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 	if (rc) {
 		dprintk(CVP_ERR, "core_release failed\n");
 		core->state = cur_state;
+		mutex_unlock(&core->clk_lock);
 		mutex_unlock(&core->lock);
 		return;
 	}
+	mutex_unlock(&core->clk_lock);
 	mutex_unlock(&core->lock);
 
 	dprintk(CVP_WARN, "SYS_ERROR handled.\n");

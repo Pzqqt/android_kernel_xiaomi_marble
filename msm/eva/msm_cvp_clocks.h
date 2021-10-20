@@ -22,4 +22,5 @@ int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
 		const char *name);
 int msm_cvp_init_clocks(struct iris_hfi_device *device);
 void msm_cvp_deinit_clocks(struct iris_hfi_device *device);
+int msm_cvp_set_bw(struct bus_info *bus, unsigned long bw);
 #endif

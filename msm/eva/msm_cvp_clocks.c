@@ -417,3 +417,19 @@ void msm_cvp_deinit_clocks(struct iris_hfi_device *device)
 		}
 	}
 }
+
+int msm_cvp_set_bw(struct bus_info *bus, unsigned long bw)
+{
+	int rc = 0;
+
+	if (!bus->client)
+		return -EINVAL;
+
+	rc = icc_set_bw(bus->client, bw, 0);
+	if (rc)
+		dprintk(CVP_ERR, "Failed voting bus %s to ab %u\n",
+			bus->name, bw);
+
+	return rc;
+}
+

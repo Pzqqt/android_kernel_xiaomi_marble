@@ -71,7 +71,7 @@ void cvp_dump_fence_queue(struct msm_cvp_inst *inst)
 int cvp_import_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc,
 		u32 *fence)
 {
-	int rc = 0;
+	int rc = 0, rr = 0;
 	int i;
 	struct cvp_fence_type *fs;
 	struct synx_import_params params;
@@ -99,12 +99,12 @@ int cvp_import_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc,
 				dprintk(CVP_ERR,
 					"%s: %d synx_import failed\n",
 					__func__, h_synx);
-				return rc;
+				rr = rc;
 			}
 		}
 	}
 
-	return 0;
+	return rr;
 }
 
 int cvp_release_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc)
