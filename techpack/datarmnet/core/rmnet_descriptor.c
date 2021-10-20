@@ -641,7 +641,7 @@ static int rmnet_frag_deaggregate_one(struct sk_buff *skb,
 	pkt_len += sizeof(*maph);
 	if (port->data_format & RMNET_FLAGS_INGRESS_MAP_CKSUMV4) {
 		pkt_len += sizeof(struct rmnet_map_dl_csum_trailer);
-	} else if ((port->data_format & (RMNET_FLAGS_INGRESS_MAP_CKSUMV5 |
+	} else if ((port->data_format & (RMNET_PRIV_FLAGS_INGRESS_MAP_CKSUMV5 |
 					 RMNET_FLAGS_INGRESS_COALESCE)) &&
 		   !maph->cd_bit) {
 		u32 hsize = 0;
@@ -1802,7 +1802,7 @@ __rmnet_frag_ingress_handler(struct rmnet_frag_descriptor *frag_desc,
 	/* Handle QMAPv5 packet */
 	if (qmap->next_hdr &&
 	    (port->data_format & (RMNET_FLAGS_INGRESS_COALESCE |
-				  RMNET_FLAGS_INGRESS_MAP_CKSUMV5))) {
+				  RMNET_PRIV_FLAGS_INGRESS_MAP_CKSUMV5))) {
 		if (rmnet_frag_process_next_hdr_packet(frag_desc, port, &segs,
 						       len))
 			goto recycle;

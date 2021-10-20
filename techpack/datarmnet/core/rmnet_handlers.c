@@ -320,7 +320,7 @@ __rmnet_map_ingress_handler(struct sk_buff *skb,
 	/* Handle QMAPv5 packet */
 	if (qmap->next_hdr &&
 	    (port->data_format & (RMNET_FLAGS_INGRESS_COALESCE |
-				  RMNET_FLAGS_INGRESS_MAP_CKSUMV5))) {
+				  RMNET_PRIV_FLAGS_INGRESS_MAP_CKSUMV5))) {
 		if (rmnet_map_process_next_hdr_packet(skb, &list, len))
 			goto free_skb;
 	} else {
@@ -372,7 +372,7 @@ rmnet_map_ingress_handler(struct sk_buff *skb,
 	}
 
 	if (port->data_format & (RMNET_FLAGS_INGRESS_COALESCE |
-				 RMNET_FLAGS_INGRESS_MAP_CKSUMV5)) {
+				 RMNET_PRIV_FLAGS_INGRESS_MAP_CKSUMV5)) {
 		if (skb_is_nonlinear(skb)) {
 			rmnet_frag_ingress_handler(skb, port);
 			return;
@@ -435,10 +435,10 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	if (port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV4) {
 		additional_header_len = sizeof(struct rmnet_map_ul_csum_header);
 		csum_type = RMNET_FLAGS_EGRESS_MAP_CKSUMV4;
-	} else if ((port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV5) ||
+	} else if ((port->data_format & RMNET_PRIV_FLAGS_EGRESS_MAP_CKSUMV5) ||
 		   (port->data_format & RMNET_EGRESS_FORMAT_PRIORITY)) {
 		additional_header_len = sizeof(struct rmnet_map_v5_csum_header);
-		csum_type = RMNET_FLAGS_EGRESS_MAP_CKSUMV5;
+		csum_type = RMNET_PRIV_FLAGS_EGRESS_MAP_CKSUMV5;
 	}
 
 	required_headroom += additional_header_len;
