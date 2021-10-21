@@ -336,6 +336,7 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_vdev *vdev;
 	qdf_nbuf_t wbuf;
 	int nbuf_len;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!pdev) {
 		pkt_capture_err("pdev is NULL");
@@ -343,25 +344,28 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	}
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	status = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("failed to get vdev ref");
 		return;
 	}
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("packet capture vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		return;
 	}
 
+	pkt_capture_vdev_put_ref(vdev);
 	if (pfc->type == IEEE80211_FC0_TYPE_MGT &&
 	    !(vdev_priv->frame_filter.mgmt_tx_frame_filter &
 	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL))
-		return;
+		goto exit;
 
 	if (pfc->type == IEEE80211_FC0_TYPE_CTL &&
 	    !vdev_priv->frame_filter.ctrl_tx_frame_filter)
-		return;
+		goto exit;
 
 	nbuf_len = qdf_nbuf_len(nbuf);
 	wbuf = qdf_nbuf_alloc(NULL, roundup(nbuf_len + RESERVE_BYTES, 4),
@@ -369,7 +373,7 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	if (!wbuf) {
 		pkt_capture_err("Failed to allocate wbuf for mgmt len(%u)",
 				nbuf_len);
-		return;
+		goto exit;
 	}
 
 	qdf_nbuf_put_tail(wbuf, nbuf_len);
@@ -397,6 +401,8 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 	if (QDF_STATUS_SUCCESS !=
 		pkt_capture_process_mgmt_tx_data(pdev, &params, wbuf, 0xFF))
 		qdf_nbuf_free(wbuf);
+exit:
+	pkt_capture_vdev_put_ref(vdev);
 }
 
 void
@@ -410,6 +416,7 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 	tpSirMacFrameCtl pfc;
 	qdf_nbuf_t wbuf, nbuf;
 	int nbuf_len;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if (!pdev) {
 		pkt_capture_err("pdev is NULL");
@@ -417,29 +424,32 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 	}
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	ret = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		pkt_capture_err("failed to get vdev ref");
 		return;
 	}
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("packet capture vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		return;
 	}
 
 	nbuf = mgmt_txrx_get_nbuf(pdev, desc_id);
 	if (!nbuf)
-		return;
+		goto exit;
+
 	pfc = (tpSirMacFrameCtl)(qdf_nbuf_data(nbuf));
 	if (pfc->type == IEEE80211_FC0_TYPE_MGT &&
 	    !(vdev_priv->frame_filter.mgmt_tx_frame_filter &
 	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL))
-		return;
+		goto exit;
 
 	if (pfc->type == IEEE80211_FC0_TYPE_CTL &&
 	    !vdev_priv->frame_filter.ctrl_tx_frame_filter)
-		return;
+		goto exit;
 
 	nbuf_len = qdf_nbuf_len(nbuf);
 	wbuf = qdf_nbuf_alloc(NULL, roundup(nbuf_len + RESERVE_BYTES, 4),
@@ -447,7 +457,7 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 	if (!wbuf) {
 		pkt_capture_err("Failed to allocate wbuf for mgmt len(%u)",
 				nbuf_len);
-		return;
+		goto exit;
 	}
 
 	qdf_nbuf_put_tail(wbuf, nbuf_len);
@@ -458,6 +468,9 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 					pdev, params, wbuf,
 					pkt_capture_mgmt_status_map(status)))
 		qdf_nbuf_free(wbuf);
+
+exit:
+	pkt_capture_vdev_put_ref(vdev);
 }
 
 /**
@@ -535,10 +548,12 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	int buf_len;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	status = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("failed to get vdev ref");
 		qdf_nbuf_free(wbuf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -546,6 +561,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("packet capture vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		qdf_nbuf_free(wbuf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -591,6 +607,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
 
 	pdev = wlan_vdev_get_pdev(vdev);
+	pkt_capture_vdev_put_ref(vdev);
 
 	if ((pfc->type == IEEE80211_FC0_TYPE_MGT) &&
 	    (pfc->subType == SIR_MAC_MGMT_DISASSOC ||
@@ -636,6 +653,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 exit:
+	pkt_capture_vdev_put_ref(vdev);
 	qdf_nbuf_free(wbuf);
 	return QDF_STATUS_SUCCESS;
 }
