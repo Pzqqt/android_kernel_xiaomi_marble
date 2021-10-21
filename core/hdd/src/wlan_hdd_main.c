@@ -9182,6 +9182,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
+	hdd_wait_for_dp_tx();
 	wlan_hdd_destroy_mib_stats_lock();
 	hdd_debugfs_ini_config_deinit(hdd_ctx);
 	hdd_debugfs_mws_coex_info_deinit(hdd_ctx);
@@ -19297,6 +19298,32 @@ out:
 	osif_driver_sync_op_stop(driver_sync);
 
 	return ret;
+}
+
+void hdd_wait_for_dp_tx(void)
+{
+	int count = MAX_SSR_WAIT_ITERATIONS;
+	int r;
+
+	hdd_enter();
+
+	while (count) {
+		r = atomic_read(&dp_protect_entry_count);
+
+		if (!r)
+			break;
+
+		if (--count) {
+			hdd_err_rl("Waiting for Packet tx to complete: %d",
+				   count);
+			msleep(SSR_WAIT_SLEEP_TIME);
+		}
+	}
+
+	if (!count)
+		hdd_err("Timed-out waiting for packet tx");
+
+	hdd_exit();
 }
 
 static const struct kernel_param_ops pcie_gen_speed_ops = {

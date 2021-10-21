@@ -125,6 +125,13 @@
  * Preprocessor definitions and constants
  */
 
+static qdf_atomic_t dp_protect_entry_count;
+/* Milli seconds to delay SSR thread when an packet is getting processed */
+#define SSR_WAIT_SLEEP_TIME 200
+/* MAX iteration count to wait for dp tx to complete */
+#define MAX_SSR_WAIT_ITERATIONS 100
+#define MAX_SSR_PROTECT_LOG (16)
+
 #ifdef FEATURE_WLAN_APF
 /**
  * struct hdd_apf_context - hdd Context for apf
@@ -5048,4 +5055,23 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
  * released.
  */
 void hdd_check_for_net_dev_ref_leak(struct hdd_adapter *adapter);
+
+/**
+ * hdd_wait_for_dp_tx: Wait for packet tx to complete
+ *
+ * This function waits for dp packet tx to complete
+ *
+ * Return: None
+ */
+void hdd_wait_for_dp_tx(void);
+
+static inline void hdd_dp_ssr_protect(void)
+{
+	qdf_atomic_inc_return(&dp_protect_entry_count);
+}
+
+static inline void hdd_dp_ssr_unprotect(void)
+{
+	qdf_atomic_dec(&dp_protect_entry_count);
+}
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

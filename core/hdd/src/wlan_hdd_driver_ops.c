@@ -1031,6 +1031,7 @@ static void hdd_soc_recovery_shutdown(struct device *dev)
 	if (errno)
 		return;
 
+	hdd_wait_for_dp_tx();
 	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	__hdd_soc_recovery_shutdown();
