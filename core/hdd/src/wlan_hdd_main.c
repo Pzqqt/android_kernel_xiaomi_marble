@@ -16805,11 +16805,11 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	return status;
 
 err_nan:
-	ucfg_nan_psoc_close(psoc);
-err_tdls:
 	ucfg_tdls_psoc_close(psoc);
-err_p2p:
+err_tdls:
 	ucfg_p2p_psoc_close(psoc);
+err_p2p:
+	ucfg_policy_mgr_psoc_close(psoc);
 err_plcy_mgr:
 	ucfg_pmo_psoc_close(psoc);
 err_pmo:
