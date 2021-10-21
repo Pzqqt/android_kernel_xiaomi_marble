@@ -865,6 +865,19 @@ static QDF_STATUS target_if_cm_roam_offload_chan_list(
 }
 
 /**
+ * target_if_cm_roam_send_time_sync_cmd  - Send time of the day in millisecs
+ * to firmware.
+ * @wmi_handle: WMI handle
+ *
+ * Return: None
+ */
+static void
+target_if_cm_roam_send_time_sync_cmd(wmi_unified_t wmi_handle)
+{
+	return wmi_send_time_stamp_sync_cmd_tlv(wmi_handle);
+}
+
+/**
  * target_if_cm_roam_send_start() - Send roam start related commands
  * to wmi
  * @vdev: vdev object
@@ -886,6 +899,8 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
 	if (!wmi_handle)
 		return QDF_STATUS_E_FAILURE;
+
+	target_if_cm_roam_send_time_sync_cmd(wmi_handle);
 
 	status = target_if_cm_roam_scan_offload_rssi_thresh(
 							wmi_handle,
