@@ -151,9 +151,9 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
 	qdf_spin_lock_bh(&mon_pdev->mon_lock);
 
 	cdp_ops = dp_mon_cdp_ops_get(soc);
-	if (cdp_ops  && cdp_ops->config_full_mon_mode)
+	if (cdp_ops  && cdp_ops->soc_config_full_mon_mode)
 		cdp_ops->soc_config_full_mon_mode((struct cdp_pdev *)pdev,
-						  DP_FULL_MON_ENABLE);
+						  DP_FULL_MON_DISABLE);
 	mon_pdev->mvdev = NULL;
 	mon_pdev->monitor_configured = false;
 
@@ -431,7 +431,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 	mon_pdev->monitor_configured = true;
 
 	cdp_ops = dp_mon_cdp_ops_get(soc);
-	if (cdp_ops  && cdp_ops->config_full_mon_mode)
+	if (cdp_ops  && cdp_ops->soc_config_full_mon_mode)
 		cdp_ops->soc_config_full_mon_mode((struct cdp_pdev *)pdev,
 						  DP_FULL_MON_ENABLE);
 	dp_mon_filter_setup_mon_mode(pdev);
