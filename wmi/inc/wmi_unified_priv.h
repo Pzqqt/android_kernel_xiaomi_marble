@@ -2738,6 +2738,14 @@ QDF_STATUS
 (*extract_mlo_teardown_cmpl_event)(wmi_unified_t wmi_handle,
 				   uint8_t *buf,
 				   struct wmi_mlo_teardown_cmpl_params *param);
+QDF_STATUS
+(*send_mlo_link_set_active_cmd)(wmi_unified_t wmi_handle,
+				struct wmi_mlo_link_set_active_param *param);
+
+QDF_STATUS
+(*extract_mlo_link_set_active_resp)(wmi_unified_t wmi_handle,
+				    void *evt_buf,
+				    struct wmi_mlo_link_set_active_resp *resp);
 #endif
 };
 

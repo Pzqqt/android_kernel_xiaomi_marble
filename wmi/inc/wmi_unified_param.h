@@ -4654,6 +4654,7 @@ typedef enum {
 #ifdef WLAN_FEATURE_11BE_MLO
 	wmi_mlo_setup_complete_event_id,
 	wmi_mlo_teardown_complete_event_id,
+	wmi_mlo_link_set_active_resp_eventid,
 #endif
 	wmi_events_max,
 } wmi_conv_event_id;

@@ -258,6 +258,229 @@ uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
 		sizeof(wmi_peer_assoc_mlo_partner_link_params));
 }
 
+/**
+ * force_mode_host_to_fw() - translate force mode for MLO link set active
+ *  command
+ * @force_mode: force mode defined by host
+ *
+ * Return: force mode defined by firmware
+ */
+static inline WMI_MLO_LINK_FORCE_MODE
+force_mode_host_to_fw(enum wmi_mlo_link_force_mode force_mode)
+{
+	switch (force_mode) {
+	case WMI_MLO_LINK_FORCE_MODE_ACTIVE:
+		return WMI_MLO_LINK_FORCE_ACTIVE;
+	case WMI_MLO_LINK_FORCE_MODE_INACTIVE:
+		return WMI_MLO_LINK_FORCE_INACTIVE;
+	case WMI_MLO_LINK_FORCE_MODE_ACTIVE_NUM:
+		return WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM;
+	case WMI_MLO_LINK_FORCE_MODE_INACTIVE_NUM:
+		return WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM;
+	case WMI_MLO_LINK_FORCE_MODE_NO_FORCE:
+		return WMI_MLO_LINK_NO_FORCE;
+	default:
+		return force_mode;
+	}
+}
+
+/**
+ * force_reason_host_to_fw() - translate force reason for MLO link set active
+ *  command
+ * @force_reason: force reason defined by host
+ *
+ * Return: force reason defined by firmware
+ */
+static inline WMI_MLO_LINK_FORCE_REASON
+force_reason_host_to_fw(enum wmi_mlo_link_force_reason force_reason)
+{
+	switch (force_reason) {
+	case WMI_MLO_LINK_FORCE_REASON_CONNECT:
+		return WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT;
+	case WMI_MLO_LINK_FORCE_REASON_DISCONNECT:
+		return WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT;
+	default:
+		return force_reason;
+	}
+}
+
+/**
+ * send_mlo_link_set_active_cmd_tlv() - send mlo link set active command
+ * @wmi_handle: wmi handle
+ * @param: Pointer to mlo link set active param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or QDF_STATUS_E_* for error
+ */
+static QDF_STATUS
+send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
+				 struct wmi_mlo_link_set_active_param *param)
+{
+	QDF_STATUS status;
+	wmi_mlo_link_set_active_cmd_fixed_param *cmd;
+	wmi_mlo_set_active_link_number_param *link_num_param;
+	uint32_t *vdev_bitmap;
+	uint32_t num_link_num_param = 0, num_vdev_bitmap = 0, tlv_len;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len;
+	int i;
+	WMITLV_TAG_ID tag_id;
+	uint32_t force_mode, force_reason;
+
+	if (!param->entry_num) {
+		wmi_err("No entry is provided");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	force_mode = force_mode_host_to_fw(param->force_mode);
+	switch (force_mode) {
+	case WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM:
+	case WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM:
+		num_link_num_param = param->entry_num;
+		break;
+	case WMI_MLO_LINK_FORCE_ACTIVE:
+	case WMI_MLO_LINK_FORCE_INACTIVE:
+	case WMI_MLO_LINK_NO_FORCE:
+		num_vdev_bitmap = param->entry_num;
+		break;
+	default:
+		wmi_err("Invalid force mode: %d", force_mode);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	force_reason = force_reason_host_to_fw(param->reason);
+	if (force_reason < WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT ||
+	    force_reason > WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT) {
+		wmi_err("Invalid force reason: %d", force_reason);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	len = sizeof(*cmd) +
+	      WMI_TLV_HDR_SIZE + sizeof(*link_num_param) * num_link_num_param +
+	      WMI_TLV_HDR_SIZE + sizeof(*vdev_bitmap) * num_vdev_bitmap;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_mlo_link_set_active_cmd_fixed_param *)buf_ptr;
+	tlv_len = WMITLV_GET_STRUCT_TLVLEN
+			(wmi_mlo_link_set_active_cmd_fixed_param);
+
+	tag_id = WMITLV_TAG_STRUC_wmi_mlo_link_set_active_cmd_fixed_param;
+	WMITLV_SET_HDR(&cmd->tlv_header, tag_id, tlv_len);
+	cmd->force_mode = force_mode;
+	cmd->reason = force_reason;
+	wmi_debug("mode %d reason %d", cmd->force_mode, cmd->reason);
+	buf_ptr += sizeof(*cmd);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(*link_num_param) * num_link_num_param);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	if (num_link_num_param) {
+		link_num_param =
+			(wmi_mlo_set_active_link_number_param *)buf_ptr;
+		tlv_len = WMITLV_GET_STRUCT_TLVLEN
+				(wmi_mlo_set_active_link_number_param);
+		for (i = 0; i < num_link_num_param; i++) {
+			WMITLV_SET_HDR(&link_num_param->tlv_header, 0, tlv_len);
+			link_num_param->num_of_link =
+				param->link_num[i].num_of_link;
+			link_num_param->vdev_type =
+				param->link_num[i].vdev_type;
+			link_num_param->vdev_subtype =
+				param->link_num[i].vdev_subtype;
+			link_num_param->home_freq =
+				param->link_num[i].home_freq;
+			wmi_debug("entry[%d]: num_of_link %d vdev type %d subtype %d freq %d",
+				  i, link_num_param->num_of_link,
+				  link_num_param->vdev_type,
+				  link_num_param->vdev_subtype,
+				  link_num_param->home_freq);
+			link_num_param++;
+		}
+
+		buf_ptr += sizeof(*link_num_param) * num_link_num_param;
+	}
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       sizeof(*vdev_bitmap) * num_vdev_bitmap);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	if (num_vdev_bitmap) {
+		vdev_bitmap = (A_UINT32 *)(buf_ptr);
+		for (i = 0; i < num_vdev_bitmap; i++) {
+			vdev_bitmap[i] = param->vdev_bitmap[i];
+			wmi_debug("entry[%d]: vdev_id_bitmap 0x%x ",
+				  i, vdev_bitmap[i]);
+		}
+
+		buf_ptr += sizeof(*vdev_bitmap) * num_vdev_bitmap;
+	}
+
+	wmi_mtrace(WMI_MLO_LINK_SET_ACTIVE_CMDID, 0, cmd->force_mode);
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_MLO_LINK_SET_ACTIVE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wmi_err("Failed to send MLO link set active command to FW: %d",
+			status);
+		wmi_buf_free(buf);
+	}
+
+	return status;
+}
+
+/**
+ * extract_mlo_link_set_active_resp_tlv() - extract mlo link set active resp
+ *  from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @resp: Pointer to hold mlo link set active resp
+ *
+ * Return: QDF_STATUS_SUCCESS for success or QDF_STATUS_E_* for error
+ */
+static QDF_STATUS
+extract_mlo_link_set_active_resp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+				     struct wmi_mlo_link_set_active_resp *resp)
+{
+	wmi_mlo_link_set_active_resp_event_fixed_param *evt;
+	WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID_param_tlvs *param_buf;
+	uint32_t entry_num, *bitmap;
+	int i;
+
+	param_buf = evt_buf;
+	if (!param_buf || !resp) {
+		wmi_err("Invalid param");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	evt = param_buf->fixed_param;
+	resp->status = evt->status;
+	wmi_debug("status: %u", resp->status);
+
+	bitmap = param_buf->force_active_vdev_bitmap;
+	entry_num = qdf_min(param_buf->num_force_active_vdev_bitmap,
+			    (uint32_t)WMI_MLO_VDEV_BITMAP_SZ);
+	resp->active_sz = entry_num;
+	for (i = 0; i < entry_num; i++) {
+		resp->active[i] = bitmap[i];
+		wmi_debug("active[%d]: 0x%x", i, resp->active[i]);
+	}
+
+	bitmap = param_buf->force_inactive_vdev_bitmap;
+	entry_num = qdf_min(param_buf->num_force_inactive_vdev_bitmap,
+			    (uint32_t)WMI_MLO_VDEV_BITMAP_SZ);
+	resp->inactive_sz = entry_num;
+	for (i = 0; i < entry_num; i++) {
+		resp->inactive[i] = bitmap[i];
+		wmi_debug("inactive[%d]: 0x%x", i, resp->inactive[i]);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_MLO_MULTI_CHIP
 QDF_STATUS mlo_setup_cmd_send_tlv(struct wmi_unified *wmi_handle,
 				  struct wmi_mlo_setup_params *param)
@@ -456,5 +679,11 @@ static void wmi_11be_attach_mlo_setup_tlv(wmi_unified_t wmi_handle)
 
 void wmi_11be_attach_tlv(wmi_unified_t wmi_handle)
 {
+	struct wmi_ops *ops = wmi_handle->ops;
+
 	wmi_11be_attach_mlo_setup_tlv(wmi_handle);
+	ops->extract_mlo_link_set_active_resp =
+		extract_mlo_link_set_active_resp_tlv;
+	ops->send_mlo_link_set_active_cmd =
+		send_mlo_link_set_active_cmd_tlv;
 }

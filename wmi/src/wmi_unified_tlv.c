@@ -17064,6 +17064,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_MLO_SETUP_COMPLETE_EVENTID;
 	event_ids[wmi_mlo_teardown_complete_event_id] =
 			WMI_MLO_TEARDOWN_COMPLETE_EVENTID;
+	event_ids[wmi_mlo_link_set_active_resp_eventid] =
+			WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID;
 #endif
 }
 
