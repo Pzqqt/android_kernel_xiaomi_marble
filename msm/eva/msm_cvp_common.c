@@ -1077,23 +1077,6 @@ int msm_cvp_deinit_core(struct msm_cvp_inst *inst)
 		goto core_already_uninited;
 	}
 
-	if (!core->resources.never_unload_fw) {
-		cancel_delayed_work(&core->fw_unload_work);
-
-		/*
-		 * Delay unloading of firmware. This is useful
-		 * in avoiding firmware download delays in cases where we
-		 * will have a burst of back to back cvp sessions
-		 */
-		schedule_delayed_work(&core->fw_unload_work,
-			msecs_to_jiffies(core->state == CVP_CORE_INIT_DONE ?
-			core->resources.msm_cvp_firmware_unload_delay : 0));
-
-		dprintk(CVP_CORE, "firmware unload delayed by %u ms\n",
-			core->state == CVP_CORE_INIT_DONE ?
-			core->resources.msm_cvp_firmware_unload_delay : 0);
-	}
-
 core_already_uninited:
 	change_cvp_inst_state(inst, MSM_CVP_CORE_UNINIT);
 	mutex_unlock(&core->lock);

@@ -180,7 +180,6 @@ struct msm_cvp_platform_resources {
 	bool thermal_mitigable;
 	const char *fw_name;
 	const char *hfi_version;
-	bool never_unload_fw;
 	bool debug_timeout;
 	struct cvp_pm_qos pm_qos;
 	uint32_t max_inst_count;

@@ -1506,63 +1506,6 @@ static int msm_cvp_set_sysprop(struct msm_cvp_inst *inst,
 	return rc;
 }
 
-static int cvp_drain_fence_cmd_queue_partial(struct msm_cvp_inst *inst)
-{
-	unsigned long wait_time;
-	struct cvp_fence_queue *q;
-	struct cvp_fence_command *f;
-	int rc = 0;
-	int count = 0, max_count = 0;
-
-	q = &inst->fence_cmd_queue;
-
-	mutex_lock(&q->lock);
-
-	list_for_each_entry(f, &q->sched_list, list) {
-		if (f->mode == OP_FLUSH)
-			continue;
-		++count;
-	}
-
-	list_for_each_entry(f, &q->wait_list, list) {
-		if (f->mode == OP_FLUSH)
-			continue;
-		++count;
-	}
-
-	mutex_unlock(&q->lock);
-	wait_time = count * CVP_MAX_WAIT_TIME * 1000;
-
-	dprintk(CVP_SYNX, "%s: wait %d us for %d fence command\n",
-			__func__, wait_time, count);
-
-	count = 0;
-	max_count = wait_time / 100;
-
-retry:
-	mutex_lock(&q->lock);
-	f = list_first_entry(&q->sched_list, struct cvp_fence_command, list);
-
-	/* Wait for all normal frames to finish before return */
-	if ((f && f->mode == OP_FLUSH) ||
-		(list_empty(&q->sched_list) && list_empty(&q->wait_list))) {
-		mutex_unlock(&q->lock);
-		return rc;
-	}
-
-	mutex_unlock(&q->lock);
-	usleep_range(100, 200);
-	++count;
-	if (count < max_count) {
-		goto retry;
-	} else {
-		rc = -ETIMEDOUT;
-		dprintk(CVP_ERR, "%s: timed out!\n", __func__);
-	}
-
-	return rc;
-}
-
 static int cvp_drain_fence_sched_list(struct msm_cvp_inst *inst)
 {
 	unsigned long wait_time;
@@ -1738,107 +1681,6 @@ exit:
 	return rc;
 }
 
-static void cvp_mark_fence_command(struct msm_cvp_inst *inst, u64 frame_id)
-{
-	int found = false;
-	struct cvp_fence_queue *q;
-	struct cvp_fence_command *f;
-
-	q = &inst->fence_cmd_queue;
-
-	list_for_each_entry(f, &q->sched_list, list) {
-		if (found) {
-			f->mode = OP_FLUSH;
-			continue;
-		}
-
-		if (f->frame_id >= frame_id) {
-			found = true;
-			f->mode = OP_FLUSH;
-		}
-	}
-
-	list_for_each_entry(f, &q->wait_list, list) {
-		if (found) {
-			f->mode = OP_FLUSH;
-			continue;
-		}
-
-		if (f->frame_id >= frame_id) {
-			found = true;
-			f->mode = OP_FLUSH;
-		}
-	}
-}
-
-static int cvp_flush_frame(struct msm_cvp_inst *inst, u64 frame_id)
-{
-	int rc = 0;
-	struct msm_cvp_inst *s;
-	struct cvp_fence_queue *q;
-	struct cvp_fence_command *f, *d;
-	u64 ktid;
-
-	if (!inst || !inst->core) {
-		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	s = cvp_get_inst_validate(inst->core, inst);
-	if (!s)
-		return -ECONNRESET;
-
-	dprintk(CVP_SESS, "Session %llx, flush frame with id %llu\n",
-			inst, frame_id);
-	q = &inst->fence_cmd_queue;
-
-	mutex_lock(&q->lock);
-	q->mode = OP_DRAINING;
-
-	cvp_mark_fence_command(inst, frame_id);
-
-	list_for_each_entry_safe(f, d, &q->wait_list, list) {
-		if (f->mode != OP_FLUSH)
-			continue;
-
-		ktid = f->pkt->client_data.kdata & (FENCE_BIT - 1);
-
-		dprintk(CVP_SYNX, "%s: flush frame %llu %llu from wait_list\n",
-			__func__, ktid, f->frame_id);
-
-		list_del_init(&f->list);
-		msm_cvp_unmap_frame(inst, f->pkt->client_data.kdata);
-		cvp_cancel_synx(inst, CVP_OUTPUT_SYNX, f,
-				SYNX_STATE_SIGNALED_CANCEL);
-		cvp_release_synx(inst, f);
-		cvp_free_fence_data(f);
-	}
-
-	list_for_each_entry(f, &q->sched_list, list) {
-		if (f->mode != OP_FLUSH)
-			continue;
-
-		ktid = f->pkt->client_data.kdata & (FENCE_BIT - 1);
-
-		dprintk(CVP_SYNX, "%s: flush frame %llu %llu from sched_list\n",
-			__func__, ktid, f->frame_id);
-		cvp_cancel_synx(inst, CVP_INPUT_SYNX, f,
-				SYNX_STATE_SIGNALED_CANCEL);
-	}
-
-	mutex_unlock(&q->lock);
-
-	rc = cvp_drain_fence_cmd_queue_partial(inst);
-	if (rc)
-		dprintk(CVP_WARN, "%s: continue flush. rc %d\n",
-		__func__, rc);
-
-	rc = cvp_flush_all(inst);
-
-	cvp_put_inst(s);
-	return rc;
-}
-
 int msm_cvp_handle_syscall(struct msm_cvp_inst *inst, struct eva_kmd_arg *arg)
 {
 	int rc = 0;
@@ -1926,7 +1768,8 @@ int msm_cvp_handle_syscall(struct msm_cvp_inst *inst, struct eva_kmd_arg *arg)
 		rc = cvp_flush_all(inst);
 		break;
 	case EVA_KMD_FLUSH_FRAME:
-		rc = cvp_flush_frame(inst, arg->data.frame_id);
+		dprintk(CVP_WARN, "EVA_KMD_FLUSH_FRAME IOCTL deprecated\n");
+		rc = 0;
 		break;
 	default:
 		dprintk(CVP_HFI, "%s: unknown arg type %#x\n",
