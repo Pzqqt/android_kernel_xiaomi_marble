@@ -26,7 +26,14 @@ enum ipa_rmnet_ll_state {
 
 
 #define IPA_WWAN_CONS_DESC_FIFO_SZ 256
-#define RMNET_LL_QUEUE_MAX ((2 * IPA_WWAN_CONS_DESC_FIFO_SZ) - 1)
+/* Allow max -2 packets, to account for any frags. */
+#define RMNET_LL_QUEUE_MAX ((2 * IPA_WWAN_CONS_DESC_FIFO_SZ) - 2)
+
+#define IPA_RMNET_LL_RECEIVE 1
+#define IPA_RMNET_LL_FLOW_EVT 2
+
+#define IPA_RMNET_LL_FREE_CREDIT_THRSHLD 64
+#define IPA_RMNET_LL_FREE_CREDIT_THRSHLD_MAX 128
 
 struct ipa3_rmnet_ll_cb_info {
 	ipa_rmnet_ll_ready_cb ready_cb;
@@ -70,6 +77,8 @@ struct rmnet_ll_ipa3_context {
 	u32 ipa3_to_apps_low_lat_data_hdl;
 	spinlock_t tx_lock;
 	struct ipa3_rmnet_ll_cb_info cb_info;
+	atomic_t under_flow_controlled_state;
+	u32 free_credit_thrshld;
 	struct sk_buff_head tx_queue;
 	u32 rmnet_ll_pm_hdl;
 	struct rmnet_ll_ipa3_debugfs dbgfs;
@@ -125,11 +134,53 @@ static ssize_t rmnet_ll_ipa3_read_stats(struct file *file, char __user *ubuf,
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
 }
 
+static ssize_t rmnet_ll_ipa3_read_free_credit_threshld
+(struct file *file, char __user *buf, size_t count, loff_t *ppos) {
+
+	int nbytes;
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+				"Free credit Threshold = %d\n",
+				rmnet_ll_ipa3_ctx->free_credit_thrshld);
+	return simple_read_from_buffer(buf, count, ppos, dbg_buff, nbytes);
+
+}
+static ssize_t rmnet_ll_ipa3_write_free_credit_threshld
+(struct file *file, const char __user *buf, size_t count, loff_t *ppos) {
+
+	int ret;
+	u32 free_credit_thrshld =0;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	ret = kstrtou32_from_user(buf, count, 0, &free_credit_thrshld);
+	if(ret)
+		return ret;
+
+	if(free_credit_thrshld != 0 &&
+		free_credit_thrshld <= IPA_RMNET_LL_FREE_CREDIT_THRSHLD_MAX)
+		rmnet_ll_ipa3_ctx->free_credit_thrshld = free_credit_thrshld;
+	else
+		IPAERR("Invalid value \n");
+
+	IPADBG("Updated free credit threshold = %d",
+		rmnet_ll_ipa3_ctx->free_credit_thrshld);
+
+	return count;
+}
+
+
+#define READ_WRITE_MODE 0664
 #define READ_ONLY_MODE  0444
 static const struct rmnet_ll_ipa3_debugfs_file debugfs_files[] = {
 	{
 		"stats", READ_ONLY_MODE, NULL, {
 			.read = rmnet_ll_ipa3_read_stats
+		}
+	}, {
+		"free_credit_threshld", READ_WRITE_MODE, NULL, {
+			.read = rmnet_ll_ipa3_read_free_credit_threshld,
+			.write = rmnet_ll_ipa3_write_free_credit_threshld,
 		}
 	},
 };
@@ -219,6 +270,7 @@ int ipa3_rmnet_ll_init(void)
 	mutex_init(&rmnet_ll_ipa3_ctx->lock);
 	spin_lock_init(&rmnet_ll_ipa3_ctx->tx_lock);
 	rmnet_ll_ipa3_ctx->pipe_state = IPA_RMNET_LL_PIPE_NOT_READY;
+	rmnet_ll_ipa3_ctx->free_credit_thrshld = IPA_RMNET_LL_FREE_CREDIT_THRSHLD;
 	rmnet_ll_ipa3_debugfs_init();
 	return 0;
 }
@@ -427,6 +479,7 @@ int ipa3_setup_apps_low_lat_data_cons_pipe(
 		rmnet_ll_ipa3_ctx->state = IPA_RMNET_LL_PIPE_READY;
 	else
 		rmnet_ll_ipa3_ctx->state = IPA_RMNET_LL_START;
+	atomic_set(&rmnet_ll_ipa3_ctx->under_flow_controlled_state, 0);
 	mutex_unlock(&rmnet_ll_ipa3_ctx->lock);
 
 	return 0;
@@ -578,29 +631,16 @@ int ipa3_teardown_apps_low_lat_data_pipes(void)
 int ipa3_rmnet_ll_xmit(struct sk_buff *skb)
 {
 	int ret;
-	int len;
+	int len, free_desc = 0;
 	unsigned long flags;
 
 	if (!ipa3_ctx->rmnet_ll_enable) {
 		IPAERR("low lat data pipe not supported\n");
 		kfree_skb(skb);
-		return 0;
+		return -ENODEV;
 	}
 
 	spin_lock_irqsave(&rmnet_ll_ipa3_ctx->tx_lock, flags);
-	/* we cannot infinitely queue the packet */
-	if ((atomic_read(
-		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts)
-		>= RMNET_LL_QUEUE_MAX)) {
-		IPAERR_RL("IPA LL TX queue full\n");
-		rmnet_ll_ipa3_ctx->stats.tx_pkt_dropped++;
-		rmnet_ll_ipa3_ctx->stats.tx_byte_dropped +=
-			skb->len;
-		spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
-			flags);
-		kfree_skb(skb);
-		return -EAGAIN;
-	}
 
 	if (rmnet_ll_ipa3_ctx->state != IPA_RMNET_LL_START) {
 		IPAERR("bad rmnet_ll state %d\n",
@@ -611,15 +651,37 @@ int ipa3_rmnet_ll_xmit(struct sk_buff *skb)
 		spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
 			flags);
 		kfree_skb(skb);
-		return 0;
+		return -EINVAL;
+	}
+
+	/* Letting RMNET LL layer to do the flow control. */
+	if (!atomic_read(
+		&rmnet_ll_ipa3_ctx->under_flow_controlled_state) &&
+		(atomic_read(
+		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts) >= 0) &&
+		((atomic_read(
+		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts)+
+		skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue))
+		>= RMNET_LL_QUEUE_MAX)) {
+		IPADBG("IPA LL TX queue full, %d + %d\n",
+			atomic_read(
+		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts),
+			skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue));
+		atomic_set(&rmnet_ll_ipa3_ctx->under_flow_controlled_state, 1);
+		spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
+			flags);
+		return -EAGAIN;
 	}
 
 	/* if queue is not empty, means we still have pending wq */
 	if (skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue) != 0) {
 		skb_queue_tail(&rmnet_ll_ipa3_ctx->tx_queue, skb);
+		free_desc = (RMNET_LL_QUEUE_MAX - (atomic_read(
+		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts)+
+		skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue)));
 		spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
 			flags);
-		return 0;
+		return (free_desc > 0) ? free_desc : 0;
 	}
 
 	/* rmnet_ll is calling from atomic context */
@@ -632,9 +694,12 @@ int ipa3_rmnet_ll_xmit(struct sk_buff *skb)
 		 */
 		queue_delayed_work(rmnet_ll_ipa3_ctx->wq,
 			&rmnet_ll_wakeup_work, 0);
+		free_desc = (RMNET_LL_QUEUE_MAX - (atomic_read(
+		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts)+
+		skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue)));
 		spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
 			flags);
-		return 0;
+		return (free_desc > 0) ? free_desc : 0;
 	} else if (ret) {
 		IPAERR("[%s] fatal: ipa pm activate failed %d\n",
 			__func__, ret);
@@ -644,7 +709,7 @@ int ipa3_rmnet_ll_xmit(struct sk_buff *skb)
 		spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
 			flags);
 		kfree_skb(skb);
-		return 0;
+		return -EPERM;
 	}
 	spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock, flags);
 
@@ -665,21 +730,24 @@ int ipa3_rmnet_ll_xmit(struct sk_buff *skb)
 			spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
 				flags);
 			kfree_skb(skb);
-			return 0;
+			return ret;
 		}
 		spin_lock_irqsave(&rmnet_ll_ipa3_ctx->tx_lock, flags);
 		skb_queue_head(&rmnet_ll_ipa3_ctx->tx_queue, skb);
 		queue_delayed_work(rmnet_ll_ipa3_ctx->wq,
 			&rmnet_ll_wakeup_work, 0);
-		ret = 0;
+		free_desc = (RMNET_LL_QUEUE_MAX - (atomic_read(
+		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts)+
+		skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue)));
 		goto out;
 	}
-
 	spin_lock_irqsave(&rmnet_ll_ipa3_ctx->tx_lock, flags);
 	atomic_inc(&rmnet_ll_ipa3_ctx->stats.outstanding_pkts);
+	free_desc = (RMNET_LL_QUEUE_MAX - (atomic_read(
+	&rmnet_ll_ipa3_ctx->stats.outstanding_pkts)+
+	skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue)));
 	rmnet_ll_ipa3_ctx->stats.tx_pkt_sent++;
 	rmnet_ll_ipa3_ctx->stats.tx_byte_sent += len;
-	ret = 0;
 
 out:
 	if (atomic_read(
@@ -687,7 +755,7 @@ out:
 		== 0)
 		ipa_pm_deferred_deactivate(rmnet_ll_ipa3_ctx->rmnet_ll_pm_hdl);
 	spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock, flags);
-	return ret;
+	return (free_desc > 0) ? free_desc : 0;
 }
 
 static void rmnet_ll_wakeup_ipa(struct work_struct *work)
@@ -775,6 +843,7 @@ static void apps_rmnet_ll_tx_complete_notify(void *priv,
 {
 	struct sk_buff *skb = (struct sk_buff *)data;
 	unsigned long flags;
+	u32 pending_credits = 0;
 
 	if (evt != IPA_WRITE_DONE) {
 		IPAERR("unsupported evt on Tx callback, Drop the packet\n");
@@ -789,13 +858,47 @@ static void apps_rmnet_ll_tx_complete_notify(void *priv,
 		return;
 	}
 
+	dev_kfree_skb_any(skb);
+	spin_lock_irqsave(&rmnet_ll_ipa3_ctx->tx_lock,
+		flags);
 	atomic_dec(&rmnet_ll_ipa3_ctx->stats.outstanding_pkts);
 
 	if (atomic_read(
 		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts) == 0)
 		ipa_pm_deferred_deactivate(rmnet_ll_ipa3_ctx->rmnet_ll_pm_hdl);
 
-	dev_kfree_skb_any(skb);
+	if (atomic_read(
+		&rmnet_ll_ipa3_ctx->under_flow_controlled_state)) {
+		pending_credits = (atomic_read(
+		&rmnet_ll_ipa3_ctx->stats.outstanding_pkts) +
+		skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue));
+
+		if ((RMNET_LL_QUEUE_MAX >= pending_credits) &&
+			((RMNET_LL_QUEUE_MAX - pending_credits) >=
+			rmnet_ll_ipa3_ctx->free_credit_thrshld)) {
+
+			atomic_set(&rmnet_ll_ipa3_ctx->under_flow_controlled_state, 0);
+			IPADBG("IPA LL flow control lifted, %d + %d, %d\n",
+				atomic_read(
+			&rmnet_ll_ipa3_ctx->stats.outstanding_pkts),
+				skb_queue_len(&rmnet_ll_ipa3_ctx->tx_queue),
+				atomic_read(
+			&rmnet_ll_ipa3_ctx->under_flow_controlled_state));
+			spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
+				flags);
+			if (rmnet_ll_ipa3_ctx->cb_info.rx_notify_cb) {
+				(*(rmnet_ll_ipa3_ctx->cb_info.rx_notify_cb))(
+				(void *)(uintptr_t)(IPA_RMNET_LL_FLOW_EVT),
+				NULL);
+			}
+		} else {
+			spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
+				flags);
+		}
+	} else {
+		spin_unlock_irqrestore(&rmnet_ll_ipa3_ctx->tx_lock,
+			flags);
+	}
 }
 
 /**
@@ -825,7 +928,7 @@ static void apps_rmnet_ll_receive_notify(void *priv,
 		rx_notify_cb_rx_data = (void *)data;
 		if (rmnet_ll_ipa3_ctx->cb_info.rx_notify_cb) {
 			(*(rmnet_ll_ipa3_ctx->cb_info.rx_notify_cb))(
-			rmnet_ll_ipa3_ctx->cb_info.rx_notify_cb_user_data,
+			(void *)(uintptr_t)(IPA_RMNET_LL_RECEIVE),
 			rx_notify_cb_rx_data);
 		} else
 			goto fail;
