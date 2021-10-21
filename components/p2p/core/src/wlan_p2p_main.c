@@ -1307,6 +1307,13 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 }
 
 #ifdef WLAN_FEATURE_P2P_DEBUG
+
+void p2p_status_update(struct p2p_soc_priv_obj *p2p_soc_obj,
+		       enum p2p_connection_status status)
+{
+	 p2p_soc_obj->connection_status = status;
+}
+
 static struct p2p_soc_priv_obj *
 get_p2p_soc_obj_by_vdev(struct wlan_objmgr_vdev *vdev)
 {
@@ -1355,14 +1362,14 @@ QDF_STATUS p2p_status_scan(struct wlan_objmgr_vdev *vdev)
 	switch (p2p_soc_obj->connection_status) {
 	case P2P_GO_NEG_COMPLETED:
 	case P2P_GO_NEG_PROCESS:
-		p2p_soc_obj->connection_status =
-				P2P_CLIENT_CONNECTING_STATE_1;
+		p2p_status_update(p2p_soc_obj,
+				  P2P_CLIENT_CONNECTING_STATE_1);
 		p2p_debug("[P2P State] Changing state from Go nego completed to Connection is started");
 		p2p_debug("P2P Scanning is started for 8way Handshake");
 		break;
 	case P2P_CLIENT_DISCONNECTED_STATE:
-		p2p_soc_obj->connection_status =
-				P2P_CLIENT_CONNECTING_STATE_2;
+		p2p_status_update(p2p_soc_obj,
+				  P2P_CLIENT_CONNECTING_STATE_2);
 		p2p_debug("[P2P State] Changing state from Disconnected state to Connection is started");
 		p2p_debug("P2P Scanning is started for 4way Handshake");
 		break;
@@ -1391,8 +1398,8 @@ QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
 	switch (p2p_soc_obj->connection_status) {
 	case P2P_CLIENT_CONNECTING_STATE_1:
-		p2p_soc_obj->connection_status =
-				P2P_CLIENT_CONNECTED_STATE_1;
+		p2p_status_update(p2p_soc_obj,
+				  P2P_CLIENT_CONNECTED_STATE_1);
 		p2p_debug("[P2P State] Changing state from Connecting state to Connected State for 8-way Handshake");
 		break;
 	case P2P_CLIENT_DISCONNECTED_STATE:
@@ -1403,8 +1410,8 @@ QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 		 */
 		/* fallthrough */
 	case P2P_CLIENT_CONNECTING_STATE_2:
-		p2p_soc_obj->connection_status =
-				P2P_CLIENT_COMPLETED_STATE;
+		p2p_status_update(p2p_soc_obj,
+				  P2P_CLIENT_COMPLETED_STATE);
 		p2p_debug("[P2P State] Changing state from Connecting state to P2P Client Connection Completed");
 		break;
 	default:
@@ -1432,12 +1439,12 @@ QDF_STATUS p2p_status_disconnect(struct wlan_objmgr_vdev *vdev)
 	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
 	switch (p2p_soc_obj->connection_status) {
 	case P2P_CLIENT_CONNECTED_STATE_1:
-		p2p_soc_obj->connection_status =
-				P2P_CLIENT_DISCONNECTED_STATE;
+		p2p_status_update(p2p_soc_obj,
+				  P2P_CLIENT_DISCONNECTED_STATE);
 		p2p_debug("[P2P State] 8 way Handshake completed and moved to disconnected state");
 		break;
 	case P2P_CLIENT_COMPLETED_STATE:
-		p2p_soc_obj->connection_status = P2P_NOT_ACTIVE;
+		p2p_status_update(p2p_soc_obj, P2P_NOT_ACTIVE);
 		p2p_debug("[P2P State] P2P Client is removed and moved to inactive state");
 		break;
 	default:
@@ -1467,13 +1474,13 @@ QDF_STATUS p2p_status_start_bss(struct wlan_objmgr_vdev *vdev)
 	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
 	switch (p2p_soc_obj->connection_status) {
 	case P2P_GO_NEG_COMPLETED:
-		p2p_soc_obj->connection_status =
-				P2P_GO_COMPLETED_STATE;
+		p2p_status_update(p2p_soc_obj,
+				  P2P_GO_COMPLETED_STATE);
 		p2p_debug("[P2P State] From Go nego completed to Non-autonomous Group started");
 		break;
 	case P2P_NOT_ACTIVE:
-		p2p_soc_obj->connection_status =
-				P2P_GO_COMPLETED_STATE;
+		p2p_status_update(p2p_soc_obj,
+				  P2P_GO_COMPLETED_STATE);
 		p2p_debug("[P2P State] From Inactive to Autonomous Group started");
 		break;
 	default:
@@ -1502,7 +1509,7 @@ QDF_STATUS p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev)
 
 	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
 	if (p2p_soc_obj->connection_status == P2P_GO_COMPLETED_STATE) {
-		p2p_soc_obj->connection_status = P2P_NOT_ACTIVE;
+		p2p_status_update(p2p_soc_obj, P2P_NOT_ACTIVE);
 		p2p_debug("[P2P State] From GO completed to Inactive state GO got removed");
 	}
 

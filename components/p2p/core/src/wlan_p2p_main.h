@@ -190,6 +190,16 @@ enum p2p_connection_status {
 	P2P_CLIENT_CONNECTING_STATE_2,
 	P2P_CLIENT_COMPLETED_STATE
 };
+
+/**
+ * p2p_status_update() - Update p2p connection status
+ * @p2p_soc_obj: p2p priv object
+ * @status: p2p connection status
+ *
+ * Return: void
+ */
+void p2p_status_update(struct p2p_soc_priv_obj *p2p_soc_obj,
+		       enum p2p_connection_status status);
 #endif
 
 /**
