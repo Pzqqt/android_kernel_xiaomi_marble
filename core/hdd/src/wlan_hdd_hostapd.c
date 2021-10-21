@@ -1632,6 +1632,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		}
 	}
 
+	qdf_mem_copy(&stainfo->mld_addr, &event->sta_mld, QDF_MAC_ADDR_SIZE);
+
 	cache_sta_info =
 		hdd_get_sta_info_by_mac(&adapter->cache_sta_info_list,
 					event->staMac.bytes,
@@ -1909,7 +1911,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	tSap_StationSetKeyCompleteEvent *key_complete;
 	int ret = 0;
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
-	struct hdd_station_info *stainfo, *cache_stainfo, *tmp = NULL;
+	struct hdd_station_info *stainfo, *cache_stainfo, *tmp = NULL,
+				*mld_sta_info;
 	mac_handle_t mac_handle;
 	struct sap_config *sap_config;
 	struct sap_context *sap_ctx = NULL;
@@ -2571,6 +2574,22 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		if (!stainfo) {
 			hdd_err("Failed to find the right station");
 			return QDF_STATUS_E_INVAL;
+		}
+
+		if (wlan_vdev_mlme_is_mlo_vdev(adapter->vdev)) {
+			mld_sta_info = hdd_get_sta_info_by_mac(
+						&adapter->sta_info_list,
+						stainfo->mld_addr.bytes,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
+			if (!mld_sta_info) {
+				hdd_debug("Failed to find the MLD station");
+			} else {
+				hdd_softap_deregister_sta(adapter,
+							  &mld_sta_info);
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						&mld_sta_info, true,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
+			}
 		}
 
 		/* Send DHCP STOP indication to FW */
