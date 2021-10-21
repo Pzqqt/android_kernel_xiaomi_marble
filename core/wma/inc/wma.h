@@ -1032,7 +1032,6 @@ typedef struct {
 	bool in_imps;
 	bool dynamic_nss_chains_support;
 	uint8_t  ito_repeat_count;
-	qdf_mc_timer_t wma_fw_time_sync_timer;
 	bool fw_therm_throt_support;
 	bool enable_tx_compl_tsf64;
 #ifdef WLAN_FEATURE_11BE

@@ -121,8 +121,6 @@
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
 
-#define WMA_FW_TIME_SYNC_TIMER 60000 /* 1 min */
-
 static uint32_t g_fw_wlan_feat_caps;
 /**
  * wma_get_fw_wlan_feat_caps() - get fw feature capablity
@@ -4027,29 +4025,6 @@ fail:
 
 }
 
-/**
- * wma_send_time_stamp_sync_cmd() - timer callback send timestamp to
- * firmware to sync with host.
- * @wma_handle: wma handle
- *
- * Return: void
- */
-static void wma_send_time_stamp_sync_cmd(void *data)
-{
-	tp_wma_handle wma_handle;
-	QDF_STATUS qdf_status;
-
-	wma_handle = (tp_wma_handle) data;
-
-	wmi_send_time_stamp_sync_cmd_tlv(wma_handle->wmi_handle);
-
-	/* Start/Restart the timer */
-	qdf_status = qdf_mc_timer_start(&wma_handle->wma_fw_time_sync_timer,
-				       WMA_FW_TIME_SYNC_TIMER);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		wma_err("Failed to start the firmware time sync timer");
-}
-
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 static void wma_register_spectral_cmds(tp_wma_handle wma_handle)
 {
@@ -4197,22 +4172,6 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
-	if (!mac->mlme_cfg->gen.enable_remove_time_stamp_sync_cmd &&
-	    cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-		/* Initialize firmware time stamp sync timer */
-		qdf_status = qdf_mc_timer_init(
-					&wma_handle->wma_fw_time_sync_timer,
-					QDF_TIMER_TYPE_SW,
-					wma_send_time_stamp_sync_cmd,
-					wma_handle);
-		if (QDF_IS_STATUS_ERROR(qdf_status)) {
-			wma_err("Failed to init fw time sync timer");
-			goto end;
-		}
-
-		/* Start firmware time stamp sync timer */
-		wma_send_time_stamp_sync_cmd(wma_handle);
-	}
 	/* Initialize log completion timeout */
 	qdf_status = qdf_mc_timer_init(&wma_handle->log_completion_timer,
 			QDF_TIMER_TYPE_SW,
@@ -4355,15 +4314,6 @@ QDF_STATUS wma_stop(void)
 		if (wma_is_vdev_up(i))
 			cdp_fc_vdev_flush(cds_get_context(QDF_MODULE_ID_SOC),
 					  i);
-	}
-
-	if (!mac->mlme_cfg->gen.enable_remove_time_stamp_sync_cmd &&
-	    cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-		/* Destroy firmware time stamp sync timer */
-		qdf_status = qdf_mc_timer_destroy(
-				&wma_handle->wma_fw_time_sync_timer);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			wma_err("Failed to destroy fw sync timer");
 	}
 
 	qdf_status = wma_tx_detach(wma_handle);
