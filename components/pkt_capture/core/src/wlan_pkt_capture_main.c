@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -680,6 +681,7 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 			       void *context)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
+	struct pkt_psoc_priv *psoc_priv;
 	struct wlan_objmgr_psoc *psoc;
 	enum pkt_capture_mode mode;
 	QDF_STATUS status;
@@ -710,8 +712,14 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 		goto mgmt_rx_ops_fail;
 	}
 
-	target_if_pkt_capture_register_tx_ops(&vdev_priv->tx_ops);
-	target_if_pkt_capture_register_rx_ops(&vdev_priv->rx_ops);
+	psoc_priv = pkt_capture_psoc_get_priv(psoc);
+	if (!psoc_priv) {
+		pkt_capture_err("psoc_priv is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	target_if_pkt_capture_register_tx_ops(&psoc_priv->tx_ops);
+	target_if_pkt_capture_register_rx_ops(&psoc_priv->rx_ops);
 	pkt_capture_wdi_event_subscribe(psoc);
 	pkt_capture_record_channel(vdev);
 	vdev_priv->curr_freq = vdev->vdev_mlme.des_chan->ch_freq;
