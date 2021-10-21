@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,13 +29,11 @@
  * @PACKET_CAPTURE_MODE_DISABLE: packet capture mode disable
  * @PACKET_CAPTURE_MODE_MGMT_ONLY: capture mgmt packets only
  * @PACKET_CAPTURE_MODE_DATA_ONLY: capture data packets only
- * @PACKET_CAPTURE_MODE_DATA_MGMT: capture both data and mgmt packets
  */
 enum pkt_capture_mode {
 	PACKET_CAPTURE_MODE_DISABLE = 0,
-	PACKET_CAPTURE_MODE_MGMT_ONLY,
-	PACKET_CAPTURE_MODE_DATA_ONLY,
-	PACKET_CAPTURE_MODE_DATA_MGMT,
+	PACKET_CAPTURE_MODE_MGMT_ONLY = BIT(0),
+	PACKET_CAPTURE_MODE_DATA_ONLY = BIT(1),
 };
 
 /**
