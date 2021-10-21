@@ -618,6 +618,7 @@ struct ipa_smmu_cb_ctx {
 	u32 va_end;
 	bool shared;
 	bool is_cache_coherent;
+	bool done;
 };
 
 /**
