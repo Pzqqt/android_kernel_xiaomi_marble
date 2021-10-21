@@ -36,7 +36,7 @@
 
 static struct msm_cvp_common_data default_common_data[] = {
 	{
-		.key = "qcom,never-unload-fw",
+		.key = "qcom,auto-pil",
 		.value = 1,
 	},
 };
@@ -47,8 +47,8 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 		.value = 1,
 	},
 	{
-		.key = "qcom,never-unload-fw",
-		.value = 1,
+		.key = "qcom,pm-qos-latency-us",
+		.value = 50,
 	},
 	{
 		.key = "qcom,sw-power-collapse",
@@ -99,8 +99,6 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 		.value = 1,
 	}
 };
-
-
 
 /* Default UBWC config for LPDDR5 */
 static struct msm_cvp_ubwc_config_data kona_ubwc_data[] = {
