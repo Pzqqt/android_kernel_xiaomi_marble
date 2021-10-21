@@ -5578,17 +5578,20 @@ static int msm_vidc_check_max_sessions(struct msm_vidc_inst *inst)
 		 * one 1080p session equal to two 720p sessions. This equation
 		 * will make one 8k session equal to eight 720p sessions
 		 * which looks good.
+		 *
+		 * Do not treat resolutions above 4k as 8k session instead
+		 * treat (4K + half 4k) above as 8k session
 		 */
-		if (res_is_greater_than(width, height, 4096, 2176)) {
+		if (res_is_greater_than(width, height, 4096 + (4096 >> 1), 2176 + (2176 >> 1))) {
 			num_8k_sessions += 1;
 			num_4k_sessions += 2;
 			num_1080p_sessions += 4;
 			num_720p_sessions += 8;
-		} else if (res_is_greater_than(width, height, 1920, 1088)) {
+		} else if (res_is_greater_than(width, height, 1920 + (1920 >> 1), 1088 + (1088 >> 1))) {
 			num_4k_sessions += 1;
 			num_1080p_sessions += 2;
 			num_720p_sessions += 4;
-		} else if (res_is_greater_than(width, height, 1280, 736)) {
+		} else if (res_is_greater_than(width, height, 1280 + (1280 >> 1), 736 + (736 >> 1))) {
 			num_1080p_sessions += 1;
 			num_720p_sessions += 2;
 		} else {
