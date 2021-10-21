@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -143,9 +143,11 @@ pkt_capture_get_pktcap_mode_v2()
 	enum pkt_capture_mode mode = PACKET_CAPTURE_MODE_DISABLE;
 	struct pkt_capture_vdev_priv *vdev_priv;
 	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev)
+	status = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
 		return PACKET_CAPTURE_MODE_DISABLE;
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
@@ -154,6 +156,7 @@ pkt_capture_get_pktcap_mode_v2()
 	else
 		mode = vdev_priv->cfg_params.pkt_capture_mode;
 
+	pkt_capture_vdev_put_ref(vdev);
 	return mode;
 }
 
@@ -208,14 +211,18 @@ pkt_capture_process_ppdu_stats(void *log_data)
 	struct pkt_capture_ppdu_stats_q_node *q_node;
 	htt_ppdu_stats_for_smu_tlv *smu;
 	uint32_t stats_len;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	vdev = pkt_capture_get_vdev();
-	if (qdf_unlikely(!vdev))
+	status = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
-	if (qdf_unlikely(!vdev_priv))
+	if (qdf_unlikely(!vdev_priv)) {
+		pkt_capture_vdev_put_ref(vdev);
 		return;
+	}
 
 	smu = (htt_ppdu_stats_for_smu_tlv *)log_data;
 	vdev_priv->tx_nss = smu->nss;
@@ -229,6 +236,7 @@ pkt_capture_process_ppdu_stats(void *log_data)
 		 */
 		if (smu->win_size > 8) {
 			qdf_spin_unlock(&vdev_priv->lock_q);
+			pkt_capture_vdev_put_ref(vdev);
 			pkt_capture_err("win size %d > 8 not supported\n",
 					smu->win_size);
 			return;
@@ -240,6 +248,7 @@ pkt_capture_process_ppdu_stats(void *log_data)
 		q_node = qdf_mem_malloc(sizeof(*q_node) + stats_len);
 		if (!q_node) {
 			qdf_spin_unlock(&vdev_priv->lock_q);
+			pkt_capture_vdev_put_ref(vdev);
 			pkt_capture_err("stats node and buf allocation fail\n");
 			return;
 		}
@@ -250,6 +259,7 @@ pkt_capture_process_ppdu_stats(void *log_data)
 				     &q_node->node);
 	}
 	qdf_spin_unlock(&vdev_priv->lock_q);
+	pkt_capture_vdev_put_ref(vdev);
 }
 
 static void
@@ -477,14 +487,17 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 	struct pkt_capture_vdev_priv *vdev_priv;
 	struct pkt_capture_frame_filter *frame_filter;
 	uint16_t vdev_id = 0;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev)
+	ret = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(ret))
 		return;
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		return;
 	}
 
@@ -495,8 +508,10 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 	{
 		struct dp_tx_desc_s *desc = log_data;
 
-		if (!frame_filter->data_tx_frame_filter)
+		if (!frame_filter->data_tx_frame_filter) {
+			pkt_capture_vdev_put_ref(vdev);
 			return;
+		}
 
 		if (frame_filter->data_tx_frame_filter &
 		    PKT_CAPTURE_DATA_FRAME_TYPE_ALL) {
@@ -507,7 +522,6 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			pkt_capture_process_tx_data(soc, log_data,
 						    vdev_id, status);
 		}
-
 		break;
 	}
 
@@ -522,6 +536,8 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			 */
 			if (status == RX_OFFLOAD_PKT)
 				qdf_nbuf_free(nbuf);
+
+			pkt_capture_vdev_put_ref(vdev);
 			return;
 		}
 
@@ -552,6 +568,8 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			 */
 			if (status == RX_OFFLOAD_PKT)
 				qdf_nbuf_free(nbuf);
+
+			pkt_capture_vdev_put_ref(vdev);
 			return;
 		}
 
@@ -579,8 +597,10 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		qdf_nbuf_t buf = log_data +
 				sizeof(struct htt_tx_offload_deliver_ind_hdr_t);
 
-		if (!frame_filter->data_tx_frame_filter)
+		if (!frame_filter->data_tx_frame_filter) {
+			pkt_capture_vdev_put_ref(vdev);
 			return;
+		}
 
 		offload_deliver_msg =
 		(struct htt_tx_offload_deliver_ind_hdr_t *)log_data;
@@ -616,6 +636,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 	default:
 		break;
 	}
+	pkt_capture_vdev_put_ref(vdev);
 }
 
 #else
@@ -655,23 +676,29 @@ bool pkt_capture_is_tx_mgmt_enable(struct wlan_objmgr_pdev *pdev)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
 	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	vdev = pkt_capture_get_vdev();
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	status = pkt_capture_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("failed to get vdev ref");
 		return false;
 	}
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {
 		pkt_capture_err("vdev_priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
 		return false;
 	}
 
 	if (!(vdev_priv->frame_filter.mgmt_tx_frame_filter &
-	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL))
+	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL)) {
+		pkt_capture_vdev_put_ref(vdev);
 		return false;
+	}
 
+	pkt_capture_vdev_put_ref(vdev);
 	return true;
 }
 
