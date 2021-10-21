@@ -2711,11 +2711,8 @@ extract_btm_blacklist_event(wmi_unified_t wmi_handle,
 	}
 
 	num_entries = param_buf->num_blacklist_with_timeout;
-	if (num_entries == 0) {
-		/* no aps to blacklist just return*/
-		wmi_err("No APs in blacklist received");
+	if (num_entries == 0)
 		return QDF_STATUS_SUCCESS;
-	}
 
 	if (num_entries > MAX_RSSI_AVOID_BSSID_LIST) {
 		wmi_err("num blacklist entries:%d exceeds maximum value",

@@ -259,6 +259,12 @@ target_if_cm_btm_blacklist_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 		return -EINVAL;
 	}
 
+	if (!dst_list) {
+		/* No APs to blacklist, just return */
+		target_if_err_rl("No APs in blacklist received");
+		return 0;
+	}
+
 	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
 	if (!roam_rx_ops || !roam_rx_ops->btm_blacklist_event) {
 		target_if_err("No valid roam rx ops");
