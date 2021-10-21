@@ -1351,6 +1351,63 @@ wlan_mgmt_rx_reo_update_host_snapshot(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+/**
+ * mgmt_rx_reo_log_ingress_frame() - Log the information about a frame entering
+ * the reorder algorithm.
+ * @reo_ctx: management rx reorder context
+ * @desc: Pointer to frame descriptor
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+mgmt_rx_reo_log_ingress_frame(struct mgmt_rx_reo_context *reo_ctx,
+			      struct mgmt_rx_reo_frame_descriptor *desc)
+{
+	struct reo_ingress_debug_info *ingress_frame_debug_info;
+	struct reo_ingress_debug_frame_info *cur_frame_debug_info;
+
+	if (!reo_ctx || !desc)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	ingress_frame_debug_info = &reo_ctx->ingress_frame_debug_info;
+
+	cur_frame_debug_info = &ingress_frame_debug_info->debug_info
+			[ingress_frame_debug_info->next_index];
+
+	cur_frame_debug_info->link_id =
+				mgmt_rx_reo_get_link_id(desc->rx_params);
+	cur_frame_debug_info->mgmt_pkt_ctr =
+				mgmt_rx_reo_get_pkt_counter(desc->rx_params);
+	cur_frame_debug_info->global_timestamp =
+				mgmt_rx_reo_get_global_ts(desc->rx_params);
+	cur_frame_debug_info->type = desc->type;
+	cur_frame_debug_info->wait_count = desc->wait_count;
+	cur_frame_debug_info->ingress_timestamp = qdf_get_log_timestamp();
+
+	ingress_frame_debug_info->next_index++;
+	ingress_frame_debug_info->next_index %=
+				MGMT_RX_REO_INGRESS_FRAME_DEBUG_ENTRIES_MAX;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+/**
+ * mgmt_rx_reo_log_ingress_frame() - Log the information about a frame entering
+ * the reorder algorithm.
+ * @reo_ctx: management rx reorder context
+ * @desc: Pointer to frame descriptor
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+mgmt_rx_reo_log_ingress_frame(struct mgmt_rx_reo_context *reo_ctx,
+			      struct mgmt_rx_reo_frame_descriptor *desc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT */
+
 QDF_STATUS
 wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 			    struct mgmt_rx_reo_frame_descriptor *desc,
@@ -1492,6 +1549,12 @@ wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 	/* Update the REO list */
 	status = mgmt_rx_reo_update_list(&reo_ctx->reo_list, num_mlo_links,
 					 desc, is_queued);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_spin_unlock(&reo_ctx->reo_algo_entry_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = mgmt_rx_reo_log_ingress_frame(reo_ctx, desc);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_spin_unlock(&reo_ctx->reo_algo_entry_lock);
 		return QDF_STATUS_E_FAILURE;

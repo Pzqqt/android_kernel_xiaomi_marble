@@ -62,6 +62,11 @@
 	(mgmt_rx_reo_compare_global_timestamps_gte(                            \
 	 (ts)->global_ts, mgmt_rx_reo_get_global_ts((entry)->rx_params)))
 
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+#define MGMT_RX_REO_INGRESS_FRAME_DEBUG_ENTRIES_MAX             (1000)
+#define MGMT_RX_REO_EGRESS_FRAME_DEBUG_ENTRIES_MAX              (1000)
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT*/
+
 /*
  * struct mgmt_rx_reo_pdev_info - Pdev information required by the Management
  * Rx REO module
@@ -333,6 +338,83 @@ struct mgmt_rx_reo_sim_context {
 };
 #endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
 
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+/**
+ * struct reo_ingress_debug_frame_info - Debug information about a frame
+ * entering reorder algorithm
+ * @link_id: link id
+ * @mgmt_pkt_ctr: management packet counter
+ * @global_timestamp: MLO global time stamp
+ * @type: Type of the frame descriptor
+ * @ingress_timestamp: Host time stamp when the frames enters the reorder
+ * algorithm
+ * @wait_count: Wait count calculated for the current frame
+ */
+struct reo_ingress_debug_frame_info {
+	uint8_t link_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+	enum mgmt_rx_reo_frame_descriptor_type type;
+	uint64_t ingress_timestamp;
+	struct mgmt_rx_reo_wait_count wait_count;
+};
+
+/**
+ * struct reo_egress_frame_debug_info - Debug information about a frame
+ * leaving the reorder module
+ * @is_delivered: Indicates whether the frame is delivered to upper layers
+ * @link_id: link id
+ * @mgmt_pkt_ctr: management packet counter
+ * @global_timestamp: MLO global time stamp
+ * @ingress_timestamp: Host time stamp when the frame enters the reorder module
+ * @insertion_ts: Host time stamp when the frame is inserted into the reorder
+ * list
+ * @egress_begin_timestamp: Host time stamp just before delivery of the frame
+ * to upper layer
+ * @egress_end_timestamp: Host time stamp just after delivery of the frame
+ * to upper layer
+ * @wait_count: Wait count calculated for the current frame
+ * @release_reason: Reason for delivering the frame to upper layers
+ */
+struct reo_egress_frame_debug_info {
+	bool is_delivered;
+	uint8_t link_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+	uint64_t ingress_timestamp;
+	uint64_t insertion_ts;
+	uint64_t egress_begin_timestamp;
+	uint64_t egress_end_timestamp;
+	struct mgmt_rx_reo_wait_count wait_count;
+	uint8_t release_reason;
+
+};
+
+/**
+ * struct reo_ingress_debug_info - Circular array to store the
+ * debug information about the frames entering the reorder algorithm.
+ * @frame_list: Circular array to store the debug info about frames
+ * @next_index: The index at which information about next frame will be logged
+ */
+struct reo_ingress_debug_info {
+	struct reo_ingress_debug_frame_info
+			frame_list[MGMT_RX_REO_INGRESS_FRAME_DEBUG_ENTRIES_MAX];
+	uint32_t next_index;
+};
+
+/**
+ * struct mgmt_rx_reo_egress_frame_debug_info - Circular array to store the
+ * debug information about the frames leaving the reorder module.
+ * @debug_info: Circular array to store the debug info
+ * @next_index: The index at which information about next frame will be logged
+ */
+struct mgmt_rx_reo_egress_frame_debug_info {
+	struct reo_egress_frame_debug_info
+			debug_info[MGMT_RX_REO_EGRESS_FRAME_DEBUG_ENTRIES_MAX];
+	uint32_t next_index;
+};
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT */
+
 /**
  * struct mgmt_rx_reo_context - This structure holds the info required for
  * management rx-reordering. Reordering is done across all the psocs.
@@ -342,6 +424,8 @@ struct mgmt_rx_reo_sim_context {
  * section execution
  * @num_mlo_links: Number of MLO links on the system
  * @sim_context: Management rx-reorder simulation context
+ * @ingress_frame_debug_info: Debug object to log incoming frames
+ * @egress_frame_debug_info: Debug object to log outgoing frames
  */
 struct mgmt_rx_reo_context {
 	struct mgmt_rx_reo_list reo_list;
@@ -351,6 +435,10 @@ struct mgmt_rx_reo_context {
 #else
 	struct mgmt_rx_reo_sim_context sim_context;
 #endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+	struct  reo_ingress_debug_info ingress_frame_debug_info;
+	struct  mgmt_rx_reo_egress_frame_debug_info egress_frame_debug_info;
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT */
 };
 
 /**
