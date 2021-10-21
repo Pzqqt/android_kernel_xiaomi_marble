@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -635,6 +636,7 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 		assoc_vdev = ucfg_mlo_get_assoc_link_vdev(vdev);
 		if (!assoc_vdev)
 			return;
+		qdf_mem_copy(&resp, rsp, sizeof(struct wlan_cm_connect_resp));
 		tmp_osif_priv  = wlan_vdev_get_ospriv(assoc_vdev);
 		freq = vdev->vdev_mlme.bss_chan->ch_freq;
 		wlan_vdev_get_bss_peer_mac(assoc_vdev, &macaddr);
@@ -649,19 +651,13 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 		}
 		qdf_mem_copy(resp.bssid.bytes, macaddr.bytes,
 			     QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(resp.ssid.ssid, rsp->ssid.ssid,
-			     rsp->ssid.length);
-		resp.ssid.length = rsp->ssid.length;
 		resp.freq = freq;
-		resp.connect_status = rsp->connect_status;
-		resp.reason = rsp->reason;
-		resp.status_code = rsp->status_code;
 		resp.connect_ies.assoc_req.ptr = rsp->connect_ies.assoc_req.ptr;
 		resp.connect_ies.assoc_req.len = rsp->connect_ies.assoc_req.len;
 		resp.connect_ies.assoc_rsp.ptr = rsp->connect_ies.assoc_rsp.ptr;
 		resp.connect_ies.assoc_rsp.len = rsp->connect_ies.assoc_rsp.len;
 		if (osif_update_connect_results(tmp_osif_priv->wdev->netdev, bss,
-						&resp, vdev))
+						&resp, assoc_vdev))
 			osif_connect_bss(tmp_osif_priv->wdev->netdev, bss, &resp);
 	}
 }

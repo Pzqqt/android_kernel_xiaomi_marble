@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -121,6 +122,15 @@ bool ucfg_mlo_is_mld_connected(struct wlan_objmgr_vdev *vdev);
  * Return: true if mld is disconnected, false otherwise
  */
 bool ucfg_mlo_is_mld_disconnected(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_mlo_mld_clear_mlo_cap - Clear MLO cap for all vdevs in MLD
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: None
+ */
+void ucfg_mlo_mld_clear_mlo_cap(struct wlan_objmgr_vdev *vdev);
 #endif
 
 /*

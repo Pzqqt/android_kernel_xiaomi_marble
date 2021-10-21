@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -442,12 +443,34 @@ cm_inform_blm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 	wlan_blm_update_bssid_connect_params(pdev, resp->req.req.bssid,
 					     BLM_AP_DISCONNECTED);
 }
+
 #else
 static inline void
 cm_inform_blm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_discon_rsp *resp)
 {}
 #endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+static inline void
+cm_clear_vdev_mlo_cap(struct wlan_objmgr_vdev *vdev)
+{
+	wlan_vdev_mlme_feat_ext2_cap_clear(vdev, WLAN_VDEV_FEXT2_MLO);
+}
+#else /*WLAN_FEATURE_11BE_MLO_ADV_FEATURE*/
+static inline void
+cm_clear_vdev_mlo_cap(struct wlan_objmgr_vdev *vdev)
+{
+	if (mlo_is_mld_sta(vdev) && ucfg_mlo_is_mld_disconnected(vdev))
+		ucfg_mlo_mld_clear_mlo_cap(vdev);
+}
+#endif /*WLAN_FEATURE_11BE_MLO_ADV_FEATURE*/
+#else /*WLAN_FEATURE_11BE_MLO*/
+static inline void
+cm_clear_vdev_mlo_cap(struct wlan_objmgr_vdev *vdev)
+{ }
+#endif /*WLAN_FEATURE_11BE_MLO*/
 
 QDF_STATUS cm_notify_disconnect_complete(struct cnx_mgr *cm_ctx,
 					 struct wlan_cm_discon_rsp *resp)
@@ -457,7 +480,7 @@ QDF_STATUS cm_notify_disconnect_complete(struct cnx_mgr *cm_ctx,
 	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
 	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
-	wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev, WLAN_VDEV_FEXT2_MLO);
+	cm_clear_vdev_mlo_cap(cm_ctx->vdev);
 
 	return QDF_STATUS_SUCCESS;
 }
