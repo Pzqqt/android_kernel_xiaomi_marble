@@ -400,69 +400,6 @@ QDF_STATUS dp_mon_pdev_htt_srng_setup_2_0(struct dp_soc *soc,
 	return status;
 }
 
-QDF_STATUS dp_tx_mon_refill_buf_ring_2_0(struct dp_intr *int_ctx)
-{
-	struct dp_soc *soc  = int_ctx->soc;
-	union dp_mon_desc_list_elem_t *desc_list = NULL;
-	union dp_mon_desc_list_elem_t *tail = NULL;
-	struct dp_srng *tx_mon_buf_ring;
-	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
-	struct dp_mon_soc_be *mon_soc_be = be_soc->monitor_soc_be;
-	struct dp_intr_stats *intr_stats = &int_ctx->intr_stats;
-	uint32_t num_entries_avail;
-	int sync_hw_ptr = 1;
-	void *hal_srng;
-
-	tx_mon_buf_ring = &be_soc->monitor_soc_be->tx_mon_buf_ring;
-	hal_srng = tx_mon_buf_ring->hal_srng;
-
-	intr_stats->num_host2txmon_ring__masks++;
-	mon_soc_be->tx_low_thresh_intrs++;
-	hal_srng_access_start(soc->hal_soc, hal_srng);
-	num_entries_avail = hal_srng_src_num_avail(soc->hal_soc,
-						   hal_srng,
-						   sync_hw_ptr);
-	hal_srng_access_end(soc->hal_soc, hal_srng);
-
-	dp_mon_buffers_replenish(soc, tx_mon_buf_ring,
-				 &be_soc->monitor_soc_be->tx_desc_mon,
-				 num_entries_avail, &desc_list, &tail);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS dp_rx_mon_refill_buf_ring_2_0(struct dp_intr *int_ctx)
-{
-	struct dp_soc *soc  = int_ctx->soc;
-	union dp_mon_desc_list_elem_t *desc_list = NULL;
-	union dp_mon_desc_list_elem_t *tail = NULL;
-	struct dp_srng *rx_mon_buf_ring;
-	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
-	struct dp_mon_soc_be *mon_soc_be = be_soc->monitor_soc_be;
-	struct dp_intr_stats *intr_stats = &int_ctx->intr_stats;
-	uint32_t num_entries_avail;
-	int sync_hw_ptr = 1;
-	void *hal_srng;
-
-	rx_mon_buf_ring = &soc->rxdma_mon_buf_ring[0];
-	hal_srng = rx_mon_buf_ring->hal_srng;
-
-	intr_stats->num_host2rxdma_ring_masks++;
-	mon_soc_be->rx_low_thresh_intrs++;
-	hal_srng_access_start(soc->hal_soc, hal_srng);
-	num_entries_avail = hal_srng_src_num_avail(soc->hal_soc,
-						   hal_srng,
-						   sync_hw_ptr);
-	hal_srng_access_end(soc->hal_soc, hal_srng);
-
-	dp_mon_buffers_replenish(soc, rx_mon_buf_ring,
-				 &be_soc->monitor_soc_be->rx_desc_mon,
-				 num_entries_avail, &desc_list, &tail);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-#ifndef DISABLE_MON_CONFIG
 static uint32_t
 dp_rx_mon_process_2_0(struct dp_soc *soc, struct dp_intr *int_ctx,
 		      uint32_t mac_id, uint32_t quota)
@@ -958,8 +895,6 @@ struct dp_mon_ops monitor_ops_2_0 = {
 	.rx_packet_length_set = dp_rx_mon_packet_length_set,
 	.rx_wmask_subscribe = dp_rx_mon_word_mask_subscribe,
 	.rx_enable_mpdu_logging = dp_rx_mon_enable_mpdu_logging,
-	.rx_mon_refill_buf_ring = dp_rx_mon_refill_buf_ring_2_0,
-	.tx_mon_refill_buf_ring = dp_tx_mon_refill_buf_ring_2_0,
 };
 
 struct cdp_mon_ops dp_ops_mon_2_0 = {
@@ -980,4 +915,3 @@ struct cdp_mon_ops *dp_mon_cdp_ops_get_2_0(void)
 {
 	return &dp_ops_mon_2_0;
 }
-#endif

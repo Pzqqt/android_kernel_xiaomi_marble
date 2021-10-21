@@ -60,8 +60,6 @@
 #define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1 0x2
 #define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2 0x4
 
-#define WLAN_CFG_HOST2TXMON_RING_MASK_0 0x1
-
 #define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0 0x1
 #define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1 0x2
 #define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2 0x4
@@ -106,7 +104,6 @@ struct dp_int_mask_assignment {
 	uint8_t rx_ring_near_full_irq_1_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t rx_ring_near_full_irq_2_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t tx_ring_near_full_irq_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	uint8_t host2txmon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 };
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
@@ -1362,9 +1359,6 @@ static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIO
 		  WLAN_CFG_REO_STATUS_RING_MASK_2,
 		  WLAN_CFG_REO_STATUS_RING_MASK_3,
 		  0, 0, 0, 0},
-		/* host2txmon ring masks */
-		{ WLAN_CFG_HOST2TXMON_RING_MASK_0,
-		  0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
 };
 #endif
@@ -1415,7 +1409,7 @@ struct wlan_srng_cfg wlan_srng_rxdma_monitor_status_cfg = {
 struct wlan_srng_cfg wlan_srng_tx_monitor_buf_cfg = {
 	.timer_threshold = WLAN_CFG_INT_TIMER_THRESHOLD_TX,
 	.batch_count_threshold = 0,
-	.low_threshold = WLAN_CFG_TX_MONITOR_BUF_RING_SIZE_MAX >> 3,
+	.low_threshold = WLAN_CFG_TX_MONITOR_BUF_SIZE_MAX >> 3,
 };
 
 /* DEFAULT_CONFIG ring configuration */
@@ -1557,8 +1551,6 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 			dp_mask_assignment[interrupt_index].rx_ring_near_full_irq_2_mask[i];
 		wlan_cfg_ctx->int_tx_ring_near_full_irq_mask[i] =
 			dp_mask_assignment[interrupt_index].tx_ring_near_full_irq_mask[i];
-		wlan_cfg_ctx->int_host2txmon_ring_mask[i] =
-			dp_mask_assignment[interrupt_index].host2txmon_ring_mask[i];
 	}
 }
 #endif
@@ -2925,22 +2917,6 @@ wlan_cfg_get_dp_soc_tx_mon_buf_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 }
 
 qdf_export_symbol(wlan_cfg_get_dp_soc_tx_mon_buf_ring_size);
-
-int wlan_cfg_get_host2txmon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
-				      int context)
-{
-	return cfg->int_host2txmon_ring_mask[context];
-}
-
-qdf_export_symbol(wlan_cfg_get_host2txmon_ring_mask);
-
-void wlan_cfg_set_host2txmon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
-				       int context, int mask)
-{
-	cfg->int_host2txmon_ring_mask[context] = mask;
-}
-
-qdf_export_symbol(wlan_cfg_set_host2txmon_ring_mask);
 
 uint8_t
 wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg)
