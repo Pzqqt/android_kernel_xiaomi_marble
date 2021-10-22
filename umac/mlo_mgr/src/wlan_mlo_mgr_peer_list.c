@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -155,10 +156,8 @@ wlan_find_mlpeer_link_mac_addr(struct wlan_mlo_dev_context *ml_dev,
 	uint8_t i;
 
 	ml_peer = (struct wlan_mlo_peer_context *)iter_ml_peer;
-	for (i = 0; i < MAX_MLO_PEER; i++) {
+	for (i = 0; i < MAX_MLO_LINK_PEERS; i++) {
 		link_peer = &ml_peer->peer_list[i];
-		if (!link_peer)
-			continue;
 
 		if (qdf_is_macaddr_equal(&link_mac_arg->mac_addr,
 					 &link_peer->link_addr)) {

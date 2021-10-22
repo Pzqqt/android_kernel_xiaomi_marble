@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -205,6 +206,17 @@ qdf_nbuf_t mlo_mlme_get_link_assoc_req(struct wlan_objmgr_peer *peer,
 		return NULL;
 
 	return mlo_ctx->mlme_ops->mlo_mlme_get_link_assoc_req(peer, link_ix);
+}
+
+void mlo_mlme_peer_deauth(struct wlan_objmgr_peer *peer)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (!mlo_ctx || !mlo_ctx->mlme_ops ||
+	    !mlo_ctx->mlme_ops->mlo_mlme_ext_deauth)
+		return;
+
+	mlo_ctx->mlme_ops->mlo_mlme_ext_deauth(peer);
 }
 
 uint8_t mlo_get_link_vdev_ix(struct wlan_mlo_dev_context *ml_dev,

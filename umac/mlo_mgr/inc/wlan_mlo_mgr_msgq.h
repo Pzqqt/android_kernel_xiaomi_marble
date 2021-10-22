@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +35,7 @@ struct ctxt_switch_mgr {
 	qdf_list_t msgq_list;
 	qdf_spinlock_t ctxt_lock;
 	bool timer_started;
+	bool allow_msg;
 	uint16_t max_messages_procd;
 };
 
@@ -43,12 +45,14 @@ struct ctxt_switch_mgr {
  * @MLO_PEER_ASSOC:    Partner peer ASSOC
  * @MLO_PEER_ASSOC_FAIL:  Partner peer ASSOC failure
  * @MLO_PEER_DISCONNECT:  Partner peer Disconnect
+ * @MLO_PEER_DEAUTH:  Initiate Deauth for ML connection
  */
 enum mlo_msg_type {
 	MLO_PEER_CREATE,
 	MLO_PEER_ASSOC,
 	MLO_PEER_ASSOC_FAIL,
 	MLO_PEER_DISCONNECT,
+	MLO_PEER_DEAUTH,
 };
 
 /*
@@ -90,17 +94,27 @@ struct peer_discon_notify_s {
 };
 
 /*
+ * struct peer_deauth_notify_s - MLO partner peer deauth notification
+ * @peer: Link peer on which Peer deauth to be sent
+ */
+struct peer_deauth_notify_s {
+	struct wlan_objmgr_peer *peer;
+};
+
+/*
  * union msg_payload - MLO message payload
  * @peer_create: peer create notification structure
  * @peer_assoc: peer assoc notification structure
  * @peer_assoc_fail: peer assoc fail notification structure
  * @peer_disconn: peer disconnect notification structure
+ * @peer_deauth: peer deauth notification structure
  */
 union msg_payload {
 	struct peer_create_notif_s peer_create;
 	struct peer_assoc_notify_s peer_assoc;
 	struct peer_assoc_fail_notify_s peer_assoc_fail;
 	struct peer_discon_notify_s peer_disconn;
+	struct peer_deauth_notify_s peer_deauth;
 };
 
 #define MLO_MAX_MSGQ_SIZE 256
@@ -131,4 +145,22 @@ struct mlo_ctxt_switch_msg_s {
 QDF_STATUS mlo_msgq_post(enum mlo_msg_type type,
 			 struct wlan_mlo_dev_context *ml_dev,
 			 void *payload);
+
+/**
+ * mlo_msgq_init() - Init MLO message queue
+ *
+ * This function initializes MLO msg queue module
+ *
+ * Return: void
+ */
+void mlo_msgq_init(void);
+
+/**
+ * mlo_msgq_free() - Free MLO message queue
+ *
+ * This function frees MLO msg queue module
+ *
+ * Return: void
+ */
+void mlo_msgq_free(void);
 #endif

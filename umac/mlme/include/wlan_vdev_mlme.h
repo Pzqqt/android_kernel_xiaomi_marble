@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -353,11 +354,13 @@ struct vdev_mlme_mgmt_generic {
 /*
  * struct wlan_vdev_aid_mgr – AID manager
  * @aid_bitmap: AID bitmap array
+ * @start_aid: start of AID index
  * @max_aid: Max allowed AID
  * @ref_cnt:  to share AID across VDEVs for MBSSID
  */
 struct wlan_vdev_aid_mgr {
 	qdf_bitmap(aid_bitmap, WLAN_UMAC_MAX_AID);
+	uint16_t start_aid;
 	uint16_t max_aid;
 	qdf_atomic_t ref_cnt;
 };

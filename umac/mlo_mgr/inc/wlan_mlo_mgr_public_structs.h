@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -102,11 +103,13 @@ struct mlo_mgr_context {
 /*
  * struct wlan_ml_vdev_aid_mgr – ML AID manager
  * @aid_bitmap: AID bitmap array
+ * @start_aid: start of AID index
  * @max_aid: Max allowed AID
  * @aid_mgr[]:  Array of link vdev aid mgr
  */
 struct wlan_ml_vdev_aid_mgr {
 	qdf_bitmap(aid_bitmap, WLAN_UMAC_MAX_AID);
+	uint16_t start_aid;
 	uint16_t max_aid;
 	struct wlan_vdev_aid_mgr *aid_mgr[WLAN_UMAC_MLO_MAX_VDEVS];
 };
@@ -207,6 +210,7 @@ struct wlan_mlo_dev_context {
  * @link_ix: Link index
  * @is_primary: sets true if the peer is primary UMAC’s peer
  * @hw_link_id: HW Link id of peer
+ * @assoc_rsp_buf: Assoc resp buffer
  */
 struct wlan_mlo_link_peer_entry {
 	struct wlan_objmgr_peer *link_peer;
@@ -214,6 +218,7 @@ struct wlan_mlo_link_peer_entry {
 	uint8_t link_ix;
 	bool is_primary;
 	uint8_t hw_link_id;
+	qdf_nbuf_t assoc_rsp_buf;
 };
 
 /*
@@ -243,6 +248,7 @@ enum mlo_peer_state {
  * @ref_cnt: Reference counter to avoid use after free
  * @ml_dev: MLO dev context
  * @mlpeer_state: MLO peer state
+ * @avg_link_rssi: avg RSSI of ML peer
  */
 struct wlan_mlo_peer_context {
 	qdf_list_node_t peer_node;
@@ -262,6 +268,7 @@ struct wlan_mlo_peer_context {
 	qdf_atomic_t ref_cnt;
 	struct wlan_mlo_dev_context *ml_dev;
 	enum mlo_peer_state mlpeer_state;
+	int8_t avg_link_rssi;
 };
 
 /*
@@ -287,6 +294,26 @@ struct mlo_partner_info {
 };
 
 /*
+ * struct mlo_tgt_link_info – ML target link info
+ * @vdev_id: link peer vdev id
+ * @hw_mld_link_id: HW link id
+ */
+struct mlo_tgt_link_info {
+	uint8_t vdev_id;
+	uint8_t hw_mld_link_id;
+};
+
+/*
+ * struct mlo_tgt_partner_info – mlo target partner link info
+ * @num_partner_links: no. of partner links
+ * @link_info: per partner link info
+ */
+struct mlo_tgt_partner_info {
+	uint8_t num_partner_links;
+	struct mlo_tgt_link_info link_info[WLAN_UMAC_MLO_MAX_VDEVS];
+};
+
+/*
  * struct mlo_mlme_ext_ops - MLME callback functions
  * @mlo_mlme_ext_validate_conn_req: Callback to validate connect request
  * @mlo_mlme_ext_create_link_vdev: Callback to create link vdev for ML STA
@@ -296,6 +323,7 @@ struct mlo_partner_info {
  * @mlo_mlme_ext_peer_delete: Callback to initiate link peer delete
  * @mlo_mlme_ext_assoc_resp: Callback to initiate assoc resp
  * @mlo_mlme_get_link_assoc_req: Calback to get link assoc req buffer
+ * @mlo_mlme_ext_deauth: Callback to initiate deauth
  */
 struct mlo_mlme_ext_ops {
 	QDF_STATUS (*mlo_mlme_ext_validate_conn_req)(
@@ -312,5 +340,6 @@ struct mlo_mlme_ext_ops {
 	void (*mlo_mlme_ext_assoc_resp)(struct wlan_objmgr_peer *peer);
 	qdf_nbuf_t (*mlo_mlme_get_link_assoc_req)(struct wlan_objmgr_peer *peer,
 						  uint8_t link_ix);
+	void (*mlo_mlme_ext_deauth)(struct wlan_objmgr_peer *peer);
 };
 #endif
