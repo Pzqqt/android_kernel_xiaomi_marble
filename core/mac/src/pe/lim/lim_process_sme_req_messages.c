@@ -6769,37 +6769,6 @@ lim_send_vdev_restart(struct mac_context *mac,
 	vdev_mgr_start_send(mlme_obj,  true);
 }
 
-#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-/**
- * lim_send_roam_set_pcl() - Process Roam offload flag from csr
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: Pointer to SME message buffer
- *
- * Return: None
- */
-static void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
-				  struct set_pcl_req *msg_buf)
-{
-	struct scheduler_msg wma_msg = {0};
-	QDF_STATUS status;
-
-	wma_msg.type = SIR_HAL_SET_PCL_TO_FW;
-	wma_msg.bodyptr = msg_buf;
-
-	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("Posting WMA_ROAM_SET_PCL failed");
-		qdf_mem_free(msg_buf);
-	}
-}
-#else
-static inline void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
-					 struct set_pcl_req *msg_buf)
-{
-	qdf_mem_free(msg_buf);
-}
-#endif
-
 static void lim_handle_update_ssid_hidden(struct mac_context *mac_ctx,
 				struct pe_session *session, uint8_t ssid_hidden)
 {
@@ -7745,10 +7714,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 #endif /* FEATURE_WLAN_ESE */
 	case eWNI_SME_SESSION_UPDATE_PARAM:
 		__lim_process_sme_session_update(mac, msg_buf);
-		break;
-	case eWNI_SME_ROAM_SEND_SET_PCL_REQ:
-		lim_send_roam_set_pcl(mac, (struct set_pcl_req *)msg_buf);
-		bufConsumed = false;
 		break;
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
 		/* Update the beaconInterval */
