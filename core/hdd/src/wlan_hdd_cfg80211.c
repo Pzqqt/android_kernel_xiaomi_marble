@@ -23123,6 +23123,7 @@ static int __wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 {
 	qdf_nbuf_t nbuf;
 	struct ethhdr *ehdr;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	nbuf = qdf_nbuf_alloc(NULL, (len + sizeof(struct ethhdr)), 0, 4, false);
 	if (!nbuf)
@@ -23131,7 +23132,12 @@ static int __wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 	skb_put_data(nbuf, buf, len);
 	ehdr = skb_push(nbuf, sizeof(struct ethhdr));
 	qdf_mem_copy(ehdr->h_dest, dest, ETH_ALEN);
-	qdf_mem_copy(ehdr->h_source, src, ETH_ALEN);
+
+	if (!src || qdf_is_macaddr_zero((struct qdf_mac_addr *)src))
+		qdf_mem_copy(ehdr->h_source, adapter->mac_addr.bytes, ETH_ALEN);
+	else
+		qdf_mem_copy(ehdr->h_source, src, ETH_ALEN);
+
 	ehdr->h_proto = proto;
 
 	nbuf->dev = dev;
@@ -23226,7 +23232,7 @@ bool wlan_hdd_cfg80211_rx_control_port(struct net_device *dev,
 				       struct sk_buff *skb,
 				       bool unencrypted)
 {
-	return cfg80211_rx_control_port(dev, skb, unencrypted);
+	return false;
 }
 #endif
 

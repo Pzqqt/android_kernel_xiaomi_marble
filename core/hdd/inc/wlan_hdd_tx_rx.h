@@ -82,7 +82,7 @@ struct hdd_context;
 #define SME_QOS_UAPSD_CFG_VI_CHANGED_MASK     0xF4
 #define SME_QOS_UAPSD_CFG_VO_CHANGED_MASK     0xF8
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef CFG80211_CTRL_FRAME_SRC_ADDR_TA_ADDR
 #define SEND_EAPOL_OVER_NL true
 #else
 #define SEND_EAPOL_OVER_NL  false
