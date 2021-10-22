@@ -6817,6 +6817,10 @@ int dsi_display_restore_bit_clk(struct dsi_display *display, struct dsi_display_
 		return -EINVAL;
 	}
 
+	/* avoid updating bit_clk for dyn clk feature disbaled usecase */
+	if (!display->panel->dyn_clk_caps.dyn_clk_support)
+		return 0;
+
 	clk_rate_hz = display->cached_clk_rate;
 
 	if (mode->priv_info->bit_clk_list.count) {
