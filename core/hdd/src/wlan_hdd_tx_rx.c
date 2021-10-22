@@ -1730,12 +1730,19 @@ static void hdd_resolve_rx_ol_mode(struct hdd_context *hdd_ctx)
  * check gro_result returned from napi_gro_receive to determine
  * is extra GRO flush still necessary.
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
+#define HDD_IS_EXTRA_GRO_FLUSH_NECESSARY(_gro_ret) true
+#define GRO_DROP_UPDATE_STATUS(gro_ret, status)
+#else
+#define GRO_DROP_UPDATE_STATUS(gro_ret, status) \
+	if ((gro_ret) == GRO_DROP) ((status) = QDF_STATUS_E_GRO_DROP)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
 #define HDD_IS_EXTRA_GRO_FLUSH_NECESSARY(_gro_ret) \
 	((_gro_ret) != GRO_DROP)
 #else
 #define HDD_IS_EXTRA_GRO_FLUSH_NECESSARY(_gro_ret) \
 	((_gro_ret) != GRO_DROP && (_gro_ret) != GRO_NORMAL)
+#endif
 #endif
 
 #ifdef WLAN_FEATURE_DYNAMIC_RX_AGGREGATION
@@ -1784,8 +1791,7 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 	}
 	local_bh_enable();
 
-	if (gro_ret == GRO_DROP)
-		status = QDF_STATUS_E_GRO_DROP;
+	GRO_DROP_UPDATE_STATUS(gro_ret, status);
 
 	return status;
 }
@@ -1827,8 +1833,7 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 	}
 	local_bh_enable();
 
-	if (gro_ret == GRO_DROP)
-		status = QDF_STATUS_E_GRO_DROP;
+	GRO_DROP_UPDATE_STATUS(gro_ret, status);
 
 	return status;
 }
