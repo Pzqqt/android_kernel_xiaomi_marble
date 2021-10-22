@@ -945,7 +945,6 @@ void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst, bool log)
 		return;
 	}
 
-	dprintk(CVP_ERR, "active session cmd %d\n", inst->cur_cmd_type);
 	dprintk(CVP_ERR,
 			"---Buffer details for inst: %pK of type: %d---\n",
 			inst, inst->session_type);
@@ -1221,7 +1220,6 @@ int msm_cvp_register_buffer(struct msm_cvp_inst *inst,
 	if (!s)
 		return -ECONNRESET;
 
-	inst->cur_cmd_type = EVA_KMD_REGISTER_BUFFER;
 	session = (struct cvp_hal_session *)inst->session;
 	if (!session) {
 		dprintk(CVP_ERR, "%s: invalid session\n", __func__);
@@ -1235,7 +1233,6 @@ int msm_cvp_register_buffer(struct msm_cvp_inst *inst,
 	dprintk(CVP_DSP, "%s: fd %d, iova 0x%x\n", __func__,
 			buf->fd, buf->reserved[0]);
 exit:
-	inst->cur_cmd_type = 0;
 	cvp_put_inst(s);
 	return rc;
 }
@@ -1258,11 +1255,9 @@ int msm_cvp_unregister_buffer(struct msm_cvp_inst *inst,
 	if (!s)
 		return -ECONNRESET;
 
-	inst->cur_cmd_type = EVA_KMD_UNREGISTER_BUFFER;
 	print_client_buffer(CVP_HFI, "unregister", inst, buf);
 
 	rc = msm_cvp_unmap_buf_dsp(inst, buf);
-	inst->cur_cmd_type = 0;
 	cvp_put_inst(s);
 	return rc;
 }

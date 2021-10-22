@@ -154,9 +154,8 @@ void *msm_cvp_open(int core_id, int session_type)
 		dprintk(CVP_ERR, "Instance num reached Max, rejecting session");
 		mutex_lock(&core->lock);
 		list_for_each_entry(inst, &core->instances, list)
-			dprintk(CVP_ERR, "inst %pK, cmd %d id %d\n",
-				inst, inst->cur_cmd_type,
-				hash32_ptr(inst->session));
+			dprintk(CVP_ERR, "inst %pK, id %d\n",
+				inst, hash32_ptr(inst->session));
 		mutex_unlock(&core->lock);
 
 		return NULL;
@@ -378,9 +377,6 @@ int msm_cvp_destroy(struct msm_cvp_inst *inst)
 
 	pr_info(CVP_DBG_TAG "Closed cvp instance: %pK session_id = %d\n",
 		"sess", inst, hash32_ptr(inst->session));
-	if (inst->cur_cmd_type)
-		dprintk(CVP_ERR, "deleted instance has pending cmd %d\n",
-				inst->cur_cmd_type);
 	inst->session = (void *)0xdeadbeef;
 	kfree(inst);
 	return 0;

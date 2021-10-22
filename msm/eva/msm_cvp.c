@@ -28,11 +28,9 @@ int msm_cvp_get_session_info(struct msm_cvp_inst *inst, u32 *session)
 	if (!s)
 		return -ECONNRESET;
 
-	s->cur_cmd_type = EVA_KMD_GET_SESSION_INFO;
 	*session = hash32_ptr(inst->session);
 	dprintk(CVP_SESS, "%s: id 0x%x\n", __func__, *session);
 
-	s->cur_cmd_type = 0;
 	cvp_put_inst(s);
 	return rc;
 }
@@ -143,13 +141,11 @@ static int msm_cvp_session_receive_hfi(struct msm_cvp_inst *inst,
 	if (!s)
 		return -ECONNRESET;
 
-	s->cur_cmd_type = EVA_KMD_RECEIVE_MSG_PKT;
 	wait_time = msecs_to_jiffies(CVP_MAX_WAIT_TIME);
 	sq = &inst->session_queue;
 
 	rc = cvp_wait_process_message(inst, sq, NULL, wait_time, out_pkt);
 
-	s->cur_cmd_type = 0;
 	cvp_put_inst(inst);
 	return rc;
 }
@@ -178,7 +174,6 @@ static int msm_cvp_session_process_hfi(
 	if (!s)
 		return -ECONNRESET;
 
-	inst->cur_cmd_type = EVA_KMD_SEND_CMD_PKT;
 	hdev = inst->core->device;
 
 	pkt_idx = get_pkt_index((struct cvp_hal_session_cmd_pkt *)in_pkt);
@@ -251,7 +246,6 @@ static int msm_cvp_session_process_hfi(
 			__func__, signal);
 
 exit:
-	inst->cur_cmd_type = 0;
 	cvp_put_inst(inst);
 	return rc;
 }
@@ -1005,13 +999,11 @@ int msm_cvp_update_power(struct msm_cvp_inst *inst)
 	if (!s)
 		return -ECONNRESET;
 
-	inst->cur_cmd_type = EVA_KMD_UPDATE_POWER;
 	core = inst->core;
 
 	mutex_lock(&core->clk_lock);
 	rc = adjust_bw_freqs();
 	mutex_unlock(&core->clk_lock);
-	inst->cur_cmd_type = 0;
 	cvp_put_inst(s);
 
 	return rc;
