@@ -4303,6 +4303,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	init_completion(&core->init_done);
 	core->smmu_fault_handled = false;
 	core->ssr.trigger = false;
+	core->pm_suspended = false;
 
 	rc = venus_hfi_core_init(core);
 	if (rc) {
@@ -4632,18 +4633,25 @@ void msm_vidc_batch_handler(struct work_struct *work)
 {
 	struct msm_vidc_inst *inst;
 	enum msm_vidc_allow allow;
+	struct msm_vidc_core *core;
 	int rc = 0;
 
 	inst = container_of(work, struct msm_vidc_inst, decode_batch.work.work);
 	inst = get_inst_ref(g_core, inst);
-	if (!inst) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
 
+	core = inst->core;
 	inst_lock(inst, __func__);
 	if (is_session_error(inst)) {
 		i_vpr_e(inst, "%s: failled. Session error\n", __func__);
+		goto exit;
+	}
+
+	if (core->pm_suspended) {
+		i_vpr_h(inst, "%s: device in pm suspend state\n", __func__);
 		goto exit;
 	}
 
