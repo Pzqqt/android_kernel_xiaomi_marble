@@ -849,6 +849,25 @@ int pld_idle_shutdown(struct device *dev,
  */
 int pld_idle_restart(struct device *dev,
 		     int (*restart_cb)(struct device *dev));
+
+/**
+ * pld_srng_devm_request_irq() - Register IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ * @handler: IRQ callback function
+ * @irqflags: IRQ flags
+ * @name: IRQ name
+ * @ctx: IRQ context
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_srng_devm_request_irq(struct device *dev, int irq,
+			      irq_handler_t handler,
+			      unsigned long irqflags,
+			      const char *name,
+			      void *ctx);
+
 /**
  * pld_srng_request_irq() - Register IRQ for SRNG
  * @dev: device
@@ -865,6 +884,7 @@ int pld_srng_request_irq(struct device *dev, int irq, irq_handler_t handler,
 			 unsigned long irqflags,
 			 const char *name,
 			 void *ctx);
+
 /**
  * pld_srng_free_irq() - Free IRQ for SRNG
  * @dev: device
@@ -1022,6 +1042,14 @@ static inline int pld_nbuf_pre_alloc_free(struct sk_buff *skb)
  * Return: PLD bus type
  */
 enum pld_bus_type pld_get_bus_type(struct device *dev);
+
+static inline int pfrm_devm_request_irq(struct device *dev, unsigned int ce_id,
+					irqreturn_t (*handler)(int, void *),
+					unsigned long flags, const char *name,
+					void *ctx)
+{
+	return pld_srng_devm_request_irq(dev, ce_id, handler, flags, name, ctx);
+}
 
 static inline int pfrm_request_irq(struct device *dev, unsigned int ce_id,
 				   irqreturn_t (*handler)(int, void *),
