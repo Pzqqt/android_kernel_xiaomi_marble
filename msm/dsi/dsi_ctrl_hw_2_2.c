@@ -299,6 +299,14 @@ void dsi_ctrl_hw_22_configure_splitlink(struct dsi_ctrl_hw *ctrl,
 	else
 		reg |= (BIT(12) | BIT(13));
 
+	/**
+	 * Avoid dma trigger on sublink1 for read commands. This can be
+	 * enabled in future if panel supports sending read command on sublink1.
+	 */
+	if (flags & DSI_CTRL_CMD_READ) {
+		reg = reg & ~BIT(13);
+	}
+
 	DSI_W32(ctrl, DSI_SPLIT_LINK, reg);
 
 	/* Make sure the split link config is updated */
