@@ -2761,8 +2761,7 @@ QDF_STATUS policy_mgr_set_chan_switch_complete_evt(
 		return QDF_STATUS_SUCCESS;
 	}
 
-	status = qdf_event_set(
-			&pm_ctx->channel_switch_complete_evt);
+	status = qdf_event_set_all(&pm_ctx->channel_switch_complete_evt);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		policy_mgr_err("set event failed");
