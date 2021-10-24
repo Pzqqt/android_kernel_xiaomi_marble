@@ -1164,6 +1164,7 @@ void wlan_hdd_connectivity_event_connecting(struct hdd_context *hdd_ctx,
 
 	record->timestamp_us = qdf_get_time_of_the_day_us();
 	record->vdev_id = vdev_id;
+	record->log_subtype = WLAN_CONNECTING;
 
 	record->conn_info.ssid_len = req->ssid_len;
 	if (req->ssid_len > WLAN_SSID_MAX_LEN)
@@ -1220,6 +1221,8 @@ wlan_hdd_connectivity_fail_event(struct wlan_objmgr_vdev *vdev,
 
 	log->timestamp_us = qdf_get_time_of_the_day_us();
 	log->vdev_id = vdev_id;
+	log->log_subtype = WLAN_CONNECTING_FAIL;
+
 	log->bssid = rsp->bssid;
 	log->conn_info.freq = rsp->freq;
 	log->conn_info.conn_status = rsp->reason;
