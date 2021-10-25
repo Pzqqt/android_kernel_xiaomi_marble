@@ -1684,11 +1684,19 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	struct snd_soc_component *component;
 	char buffer[MAX_NAME_LEN];
 	int dev_index = 0;
+	struct regmap_irq_chip *wsa883x_sub_regmap_irq_chip = NULL;
 
 	wsa883x = devm_kzalloc(&pdev->dev, sizeof(struct wsa883x_priv),
 			    GFP_KERNEL);
 	if (!wsa883x)
 		return -ENOMEM;
+
+	wsa883x_sub_regmap_irq_chip = devm_kzalloc(&pdev->dev, sizeof(struct regmap_irq_chip),
+				GFP_KERNEL);
+	if (!wsa883x_sub_regmap_irq_chip)
+		return -ENOMEM;
+	memcpy(wsa883x_sub_regmap_irq_chip, &wsa883x_regmap_irq_chip,
+		sizeof(struct regmap_irq_chip));
 
 	ret = wsa883x_enable_supplies(&pdev->dev, wsa883x);
 	if (ret) {
@@ -1704,6 +1712,7 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	}
 	swr_set_dev_data(pdev, wsa883x);
 	wsa883x->swr_slave = pdev;
+	wsa883x->dev = &pdev->dev;
 	pin_state_current = msm_cdc_pinctrl_get_state(wsa883x->wsa_rst_np);
 	wsa883x_gpio_ctrl(wsa883x, true);
 	/*
@@ -1734,11 +1743,11 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	devm_regmap_qti_debugfs_register(&pdev->dev, wsa883x->regmap);
 
 	/* Set all interrupts as edge triggered */
-	for (i = 0; i < wsa883x_regmap_irq_chip.num_regs; i++)
+	for (i = 0; i < wsa883x_sub_regmap_irq_chip->num_regs; i++)
 		regmap_write(wsa883x->regmap, (WSA883X_INTR_LEVEL0 + i), 0);
 
-	wsa883x_regmap_irq_chip.irq_drv_data = wsa883x;
-	wsa883x->irq_info.wcd_regmap_irq_chip = &wsa883x_regmap_irq_chip;
+	wsa883x_sub_regmap_irq_chip->irq_drv_data = wsa883x;
+	wsa883x->irq_info.wcd_regmap_irq_chip = wsa883x_sub_regmap_irq_chip;
 	wsa883x->irq_info.codec_name = "WSA883X";
 	wsa883x->irq_info.regmap = wsa883x->regmap;
 	wsa883x->irq_info.dev = &pdev->dev;
