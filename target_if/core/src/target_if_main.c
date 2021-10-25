@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,6 +99,8 @@
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 #include <target_if_mgmt_txrx.h>
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
+
+#include "wmi_unified_api.h"
 
 static struct target_if_ctx *g_target_if_ctx;
 
@@ -914,5 +917,69 @@ void target_pdev_set_hw_link_id(struct wlan_objmgr_pdev *pdev,
 		return;
 
 	tgt_pdev_info->hw_link_id  = hw_link_id;
+}
+
+static QDF_STATUS target_if_mlo_setup_send(struct wlan_objmgr_pdev *pdev,
+					   struct wlan_objmgr_pdev **pdev_list,
+					   uint8_t num_links, uint8_t grp_id)
+{
+	wmi_unified_t wmi_handle;
+	struct wmi_mlo_setup_params params = {0};
+	uint8_t idx, num_valid_links = 0;
+
+	wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_INVAL;
+
+	params.mld_grp_id = grp_id;
+	params.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	for (idx = 0; idx < num_links; idx++) {
+		if (pdev == pdev_list[idx])
+			continue;
+
+		params.partner_links[num_valid_links] =
+			target_if_pdev_get_hw_link_id(pdev_list[idx]);
+		num_valid_links++;
+	}
+	params.num_valid_hw_links = num_valid_links;
+
+	return wmi_mlo_setup_cmd_send(wmi_handle, &params);
+}
+
+QDF_STATUS target_if_mlo_setup_req(struct wlan_objmgr_pdev **pdev,
+				   uint8_t num_pdevs, uint8_t grp_id)
+{
+	uint8_t idx;
+
+	for (idx = 0; idx < num_pdevs; idx++)
+		target_if_mlo_setup_send(pdev[idx], pdev, num_pdevs, grp_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS target_if_mlo_ready_send(struct wlan_objmgr_pdev *pdev)
+{
+	wmi_unified_t wmi_handle;
+	struct wmi_mlo_ready_params params = {0};
+
+	wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_INVAL;
+
+	params.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	return wmi_mlo_ready_cmd_send(wmi_handle, &params);
+}
+
+QDF_STATUS target_if_mlo_ready(struct wlan_objmgr_pdev **pdev,
+			       uint8_t num_pdevs)
+{
+	uint8_t idx;
+
+	for (idx = 0; idx < num_pdevs; idx++)
+		target_if_mlo_ready_send(pdev[idx]);
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif /*WLAN_FEATURE_11BE_MLO && WLAN_MLO_MULTI_CHIP*/

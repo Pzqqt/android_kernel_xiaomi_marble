@@ -484,6 +484,11 @@ struct wlan_lmac_if_mlme_tx_ops {
 				enum wlan_vdev_mgr_tgt_if_rsp_bit clear_bit);
 #if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
 	uint16_t (*get_hw_link_id)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*target_if_mlo_setup_req)(struct wlan_objmgr_pdev **pdev,
+					      uint8_t num_pdevs,
+					      uint8_t grp_id);
+	QDF_STATUS (*target_if_mlo_ready)(struct wlan_objmgr_pdev **pdev,
+					  uint8_t num_pdevs);
 #endif
 };
 
