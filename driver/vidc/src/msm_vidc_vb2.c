@@ -261,7 +261,7 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	return rc;
 
 error:
-	i_vpr_h(inst, "Streamon: %s failed\n", v4l2_type_name(q->type));
+	i_vpr_e(inst, "Streamon: %s failed\n", v4l2_type_name(q->type));
 	return -EINVAL;
 }
 

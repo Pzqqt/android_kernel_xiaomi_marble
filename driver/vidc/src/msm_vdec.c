@@ -191,14 +191,6 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 	u32 left_offset, top_offset, right_offset, bottom_offset;
 	u32 payload[2] = {0};
 
-	if (inst->fmts[INPUT_PORT].fmt.pix_mp.width <
-		inst->crop.width)
-		return -EINVAL;
-
-	if (inst->fmts[INPUT_PORT].fmt.pix_mp.height <
-		inst->crop.height)
-		return -EINVAL;
-
 	left_offset = inst->crop.left;
 	top_offset = inst->crop.top;
 	right_offset = (inst->fmts[INPUT_PORT].fmt.pix_mp.width -
@@ -2396,6 +2388,14 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
 		pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
 		msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
+
+		/* update crop while input port is not streaming */
+		if (!inst->vb2q[INPUT_PORT].streaming) {
+			inst->crop.top = 0;
+			inst->crop.left = 0;
+			inst->crop.width = f->fmt.pix_mp.width;
+			inst->crop.height = f->fmt.pix_mp.height;
+		}
 		i_vpr_h(inst,
 			"%s: type: OUTPUT, format %s width %d height %d size %u min_count %d extra_count %d\n",
 			__func__, v4l2_pixelfmt_name(fmt->fmt.pix_mp.pixelformat),

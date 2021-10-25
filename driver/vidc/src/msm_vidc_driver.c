@@ -1959,8 +1959,8 @@ int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst *inst)
 
 	if (is_decode_session(inst)) {
 		inp_f = &inst->fmts[INPUT_PORT];
-		width = inp_f->fmt.pix_mp.width;
-		height = inp_f->fmt.pix_mp.height;
+		width = max(inp_f->fmt.pix_mp.width, inst->crop.width);
+		height = max(inp_f->fmt.pix_mp.height, inst->crop.height);
 	} else if (is_encode_session(inst)) {
 		width = inst->crop.width;
 		height = inst->crop.height;
@@ -5275,6 +5275,9 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 		i_vpr_e(inst, "%s: Hardware overloaded. needed %u, max %u", __func__,
 			mbps, core->capabilities[MAX_MBPS].value);
 		return rc;
+	} else {
+		i_vpr_h(inst, "%s: HW load needed %u is within max %u", __func__,
+			mbps, core->capabilities[MAX_MBPS].value);
 	}
 
 	return 0;
