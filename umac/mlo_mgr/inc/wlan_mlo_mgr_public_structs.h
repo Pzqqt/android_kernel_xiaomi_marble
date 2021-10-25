@@ -59,12 +59,46 @@ struct vdev_mlme_obj;
 #define STA_PROFILE_SUB_ELEM_ID 0
 #define PER_STA_PROF_MAC_ADDR_START 4
 
+#ifdef WLAN_MLO_MULTI_CHIP
 /*
- * struct mlo_setup_info
- * To store the MLO setup related information
+ * enum MLO_LINK_STATE – MLO link state enums
+ * @MLO_LINK_SETUP_INIT - MLO link SETUP exchange not yet done
+ * @MLO_LINK_SETUP_DONE - MLO link SETUP exchange started
+ * @MLO_LINK_READY - MLO link SETUP done and READY sent
+ * @MLO_LINK_TEARDOWN - MLO teardown done.
  */
-struct mlo_setup_info {
+enum MLO_LINK_STATE {
+	MLO_LINK_SETUP_INIT,
+	MLO_LINK_SETUP_DONE,
+	MLO_LINK_READY,
+	MLO_LINK_TEARDOWN
 };
+
+/**
+ * struct mlo_setup_info: MLO setup status per link
+ * @ml_grp_id: Unique id for ML grouping of Pdevs/links
+ * @tot_socs: Total number of soc participating in ML group
+ * @num_soc: Number of soc ready or probed
+ * @tot_links: Total links in ML group
+ * @num_links: Number of links probed in ML group
+ * @pdev_list[MAX_MLO_LINKS]: pdev pointers belonging to this group
+ * @state[MAX_MLO_LINKS]: MLO link state
+ * @state_lock: lock to protect access to link state
+ */
+#define MAX_MLO_LINKS 6
+struct mlo_setup_info {
+	uint8_t ml_grp_id;
+	uint8_t tot_socs;
+	uint8_t num_soc;
+	uint8_t tot_links;
+	uint8_t num_links;
+	struct wlan_objmgr_pdev *pdev_list[MAX_MLO_LINKS];
+	enum MLO_LINK_STATE state[MAX_MLO_LINKS];
+	qdf_spinlock_t state_lock;
+};
+
+#define MAX_MLO_GROUP 1
+#endif
 
 /*
  * struct mlo_mgr_context - MLO manager context
@@ -94,7 +128,9 @@ struct mlo_mgr_context {
 	qdf_list_t ml_dev_list;
 	qdf_bitmap(mlo_peer_id_bmap, MAX_MLO_PEER_ID);
 	uint16_t max_mlo_peer_id;
-	struct mlo_setup_info info;
+#ifdef WLAN_MLO_MULTI_CHIP
+	struct mlo_setup_info setup_info;
+#endif
 	struct mlo_mlme_ext_ops *mlme_ops;
 	struct ctxt_switch_mgr *msgq_ctx;
 	bool mlo_is_force_primary_umac;
@@ -344,4 +380,5 @@ struct mlo_mlme_ext_ops {
 						  uint8_t link_ix);
 	void (*mlo_mlme_ext_deauth)(struct wlan_objmgr_peer *peer);
 };
+
 #endif
