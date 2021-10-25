@@ -30,8 +30,6 @@
 #define MIN_SUPPORTED_WIDTH   32
 #define MIN_SUPPORTED_HEIGHT  32
 #define DEFAULT_FPS       30
-#define MINIMUM_FPS       1
-#define MAXIMUM_FPS       960
 #define MAXIMUM_VP9_FPS   60
 #define SINGLE_INPUT_BUFFER   1
 #define SINGLE_OUTPUT_BUFFER  1

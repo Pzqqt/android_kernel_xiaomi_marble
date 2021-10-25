@@ -2641,7 +2641,7 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 	struct msm_vidc_core *core;
 	u32 fps;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: Invalid args: %pK\n", __func__, inst);
 		return;
 	}
@@ -2696,7 +2696,8 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 	}
 
 	fps =  msm_vidc_get_fps(inst);
-	if (is_decode_session(inst) && fps >= MAXIMUM_FPS) {
+	if (is_decode_session(inst) &&
+			fps >= inst->capabilities->cap[FRAME_RATE].max) {
 		allow = false;
 		i_vpr_h(inst, "%s: unsupported fps %d\n", __func__, fps);
 		goto exit;

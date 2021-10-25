@@ -18,6 +18,8 @@
 #define MAX_BASE_LAYER_PRIORITY_ID 63
 #define MAX_BITRATE             220000000
 #define DEFAULT_BITRATE         20000000
+#define MINIMUM_FPS             1
+#define MAXIMUM_FPS             960
 #define MIN_QP_10BIT            -12
 #define MIN_QP_8BIT             0
 #define MAX_QP                  51

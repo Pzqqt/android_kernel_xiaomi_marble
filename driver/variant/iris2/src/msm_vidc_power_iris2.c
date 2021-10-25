@@ -166,7 +166,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		vsp_cycles += mbs_per_second * base_cycles;
 
 		/* Add 25 percent extra for 960fps use case */
-		if (fps >= MAXIMUM_FPS)
+		if (fps >= 960)
 			vsp_cycles += div_u64(vpp_cycles * 25, 100);
 
 		if (inst->codec == MSM_VIDC_VP9 &&
@@ -372,7 +372,7 @@ static u64 __calculate_decoder(struct vidc_bus_vote_data *d)
 			llc.line_buffer_write + ddr.total;
 
 	/* Add 25 percent extra for 960fps use case */
-	if (fps >= MAXIMUM_FPS) {
+	if (fps >= 960) {
 		ddr.total += div_u64(ddr.total * 25, 100);
 		llc.total += div_u64(llc.total * 25, 100);
 	}
