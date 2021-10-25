@@ -36,8 +36,9 @@
 
 #define MGMT_RX_REO_LIST_MAX_SIZE        (100)
 #define MGMT_RX_REO_LIST_TIMEOUT_US      (10 * USEC_PER_MSEC)
-#define MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS  (BIT(0))
-#define MGMT_RX_REO_STATUS_AGED_OUT                       (BIT(1))
+#define MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS         (BIT(0))
+#define MGMT_RX_REO_STATUS_AGED_OUT                              (BIT(1))
+#define MGMT_RX_REO_STATUS_OLDER_THAN_LATEST_AGED_OUT_FRAME      (BIT(2))
 
 /**
  * TODO: Dummy macro for Maximum MLO links on the system
@@ -58,9 +59,8 @@
 	((entry)->status & MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS)
 #define MGMT_RX_REO_LIST_ENTRY_IS_AGED_OUT(entry)   \
 	((entry)->status & MGMT_RX_REO_STATUS_AGED_OUT)
-#define MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(ts, entry)  \
-	(mgmt_rx_reo_compare_global_timestamps_gte(                            \
-	 (ts)->global_ts, mgmt_rx_reo_get_global_ts((entry)->rx_params)))
+#define MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(entry)  \
+	((entry)->status & MGMT_RX_REO_STATUS_OLDER_THAN_LATEST_AGED_OUT_FRAME)
 
 #ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
 #define MGMT_RX_REO_INGRESS_FRAME_DEBUG_ENTRIES_MAX             (1000)
@@ -156,9 +156,6 @@ struct mgmt_rx_reo_global_ts_info {
  * @list_entry_timeout_us: Time out value(microsecond) for the reorder list
  * entries
  * @ageout_timer: Periodic timer to age-out the list entries
- * @ts_latest_aged_out_frame: Stores the global time stamp for the latest aged
- * out frame. Latest aged out frame is the aged out frame in reorder list which
- * has the largest global time stamp value.
  * @ts_last_delivered_frame: Stores the global time stamp for the last frame
  * delivered to the upper layer
  */
@@ -168,7 +165,6 @@ struct mgmt_rx_reo_list {
 	uint32_t max_list_size;
 	uint32_t list_entry_timeout_us;
 	qdf_timer_t ageout_timer;
-	struct mgmt_rx_reo_global_ts_info ts_latest_aged_out_frame;
 	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
 };
 

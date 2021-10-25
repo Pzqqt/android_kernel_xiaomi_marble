@@ -753,9 +753,7 @@ mgmt_rx_reo_list_entry_get_release_reason(
 		release_reason |=
 				MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_AGED_OUT;
 
-	if (reo_list->ts_latest_aged_out_frame.valid &&
-	    MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(
-				&reo_list->ts_latest_aged_out_frame, entry))
+	if (MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(entry))
 		release_reason |=
 		MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_OLDER_THAN_AGED_OUT_FRAME;
 
@@ -859,9 +857,8 @@ mgmt_rx_reo_list_is_ready_to_send_up_entry(struct mgmt_rx_reo_list *reo_list,
 	return mgmt_rx_reo_list_max_size_exceeded(reo_list) ||
 	       !MGMT_RX_REO_LIST_ENTRY_IS_WAITING_FOR_FRAME_ON_OTHER_LINK(
 	       entry) || MGMT_RX_REO_LIST_ENTRY_IS_AGED_OUT(entry) ||
-	       (reo_list->ts_latest_aged_out_frame.valid &&
-		MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(
-				&reo_list->ts_latest_aged_out_frame, entry));
+	       MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME
+	       (entry);
 }
 
 /**
@@ -964,6 +961,12 @@ mgmt_rx_reo_list_ageout_timer_handler(void *arg)
 	uint64_t cur_ts;
 	QDF_STATUS status;
 	struct mgmt_rx_reo_context *reo_context;
+	/**
+	 * Stores the pointer to the entry in reorder list for the latest aged
+	 * out frame. Latest aged out frame is the aged out frame in reorder
+	 * list which has the largest global time stamp value.
+	 */
+	struct mgmt_rx_reo_list_entry *latest_aged_out_entry = NULL;
 
 	qdf_assert_always(reo_list);
 
@@ -977,21 +980,16 @@ mgmt_rx_reo_list_ageout_timer_handler(void *arg)
 	qdf_list_for_each(&reo_list->list, cur_entry, node) {
 		if (cur_ts - cur_entry->insertion_ts >=
 		    reo_list->list_entry_timeout_us) {
-			uint32_t cur_entry_global_ts;
-			struct mgmt_rx_reo_global_ts_info *ts_ageout;
-
-			ts_ageout = &reo_list->ts_latest_aged_out_frame;
-			cur_entry_global_ts = mgmt_rx_reo_get_global_ts(
-					      cur_entry->rx_params);
-
-			if (!ts_ageout->valid ||
-			    mgmt_rx_reo_compare_global_timestamps_gte(
-			    cur_entry_global_ts, ts_ageout->global_ts)) {
-				ts_ageout->global_ts = cur_entry_global_ts;
-				ts_ageout->valid = true;
-			}
-
+			latest_aged_out_entry = cur_entry;
 			cur_entry->status |= MGMT_RX_REO_STATUS_AGED_OUT;
+		}
+	}
+
+	if (latest_aged_out_entry) {
+		qdf_list_for_each(&reo_list->list, cur_entry, node) {
+			if (cur_entry == latest_aged_out_entry)
+				break;
+			cur_entry->status |= MGMT_RX_REO_STATUS_OLDER_THAN_LATEST_AGED_OUT_FRAME;
 		}
 	}
 
@@ -1330,7 +1328,6 @@ mgmt_rx_reo_list_init(struct mgmt_rx_reo_list *reo_list)
 	}
 
 	reo_list->ts_last_delivered_frame.valid = false;
-	reo_list->ts_latest_aged_out_frame.valid = false;
 
 	return QDF_STATUS_SUCCESS;
 }
