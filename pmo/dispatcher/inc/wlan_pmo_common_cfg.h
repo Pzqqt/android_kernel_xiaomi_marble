@@ -340,13 +340,14 @@
  * <ini>
  * gSuspendMode - Suspend mode configuration
  * @Min: 0
- * @Max: 2
+ * @Max: 3
  * @Default: 2
  *
  * This ini is used to set suspend mode. Configurations are as follows:
  * 0 - Does not support suspend.
  * 1 - Legency suspend mode, PDEV suspend.
  * 2 - WOW suspend mode.
+ * 3 - Full power down while suspend.
  *
  * Related: None
  *
@@ -357,7 +358,7 @@
  * </ini>
  */
 #define CFG_PMO_SUSPEND_MODE CFG_INI_UINT("gSuspendMode", \
-					  0, 2, 2, \
+					  0, 3, 2, \
 					  CFG_VALUE_OR_DEFAULT, \
 					  "Suspend mode")
 
