@@ -58,7 +58,9 @@
 #include <linux/qcom-iommu-util.h>
 #include "soc/qcom/secure_buffer.h"
 #include <linux/qtee_shmbridge.h>
+#ifdef CONFIG_DRM_SDE_VM
 #include <linux/gunyah/gh_irq_lend.h>
+#endif
 
 #define CREATE_TRACE_POINTS
 #include "sde_trace.h"
@@ -4823,6 +4825,7 @@ parse_fail:
 	return rc;
 }
 
+#ifdef CONFIG_DRM_SDE_VM
 int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 {
 	struct platform_device *pdev = to_platform_device(sde_kms->dev->dev);
@@ -4854,6 +4857,7 @@ int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 
 	return rc;
 }
+#endif
 
 static int sde_kms_hw_init(struct msm_kms *kms)
 {
