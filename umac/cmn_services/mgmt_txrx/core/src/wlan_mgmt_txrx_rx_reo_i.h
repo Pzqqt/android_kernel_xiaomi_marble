@@ -422,6 +422,18 @@ struct mgmt_rx_reo_egress_frame_debug_info {
  * @reo_list: Linked list used for reordering
  * @reo_algo_entry_lock: Spin lock to protect reo algorithm entry critical
  * section execution
+ * @frame_release_lock: Spin lock to serialize the frame delivery to the
+ * upper layers. This could prevent race conditions like the one given in
+ * the following example.
+ * Lets take an example of 2 links (Link A & B) and each has received
+ * a management frame A1(deauth) and B1(auth) such that MLO global time
+ * stamp of A1 < MLO global time stamp of B1. Host is concurrently
+ * executing "mgmt_rx_reo_list_release_entries" for A1 and B1 in
+ * 2 different CPUs. It is possible that frame B1 gets processed by
+ * upper layers before frame A1 and this could result in unwanted
+ * disconnection. Hence it is required to serialize the delivery
+ * of management frames to upper layers in the strict order of MLO
+ * global time stamp.
  * @num_mlo_links: Number of MLO links on the system
  * @sim_context: Management rx-reorder simulation context
  * @ingress_frame_debug_info: Debug object to log incoming frames
@@ -430,6 +442,7 @@ struct mgmt_rx_reo_egress_frame_debug_info {
 struct mgmt_rx_reo_context {
 	struct mgmt_rx_reo_list reo_list;
 	qdf_spinlock_t reo_algo_entry_lock;
+	qdf_spinlock_t frame_release_lock;
 #ifndef WLAN_MGMT_RX_REO_SIM_SUPPORT
 	uint8_t num_mlo_links;
 #else
@@ -455,6 +468,21 @@ struct mgmt_rx_reo_frame_descriptor {
 	struct mgmt_rx_event_params *rx_params;
 	struct mgmt_rx_reo_wait_count wait_count;
 };
+
+/**
+ * mgmt_rx_reo_get_context_from_reo_list() - Helper API to get pointer to
+ * management rx reorder context from pointer to management reorder list
+ * @reo_list: Pointer to management rx reorder list
+ *
+ * Return: Pointer to management rx reorder context
+ */
+static inline struct mgmt_rx_reo_context *
+mgmt_rx_reo_get_context_from_reo_list(struct mgmt_rx_reo_list *reo_list) {
+	qdf_assert_always(reo_list);
+
+	return qdf_container_of(reo_list, struct mgmt_rx_reo_context,
+				reo_list);
+}
 
 /**
  * mgmt_rx_reo_get_global_ts() - Helper API to get global time stamp

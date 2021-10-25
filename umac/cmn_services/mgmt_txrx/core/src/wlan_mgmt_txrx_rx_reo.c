@@ -771,16 +771,15 @@ mgmt_rx_reo_list_entry_get_release_reason(
  * for entries which can be released to upper layer. It is the caller's
  * responsibility to ensure that entry can be released (by using API
  * mgmt_rx_reo_list_is_ready_to_send_up_entry). This API is called after
- * acquiring the lock which protects the reorder list.
+ * acquiring the lock which serializes the frame delivery to the upper layers.
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
+mgmt_rx_reo_list_entry_send_up(const struct mgmt_rx_reo_list *reo_list,
 			       struct mgmt_rx_reo_list_entry *entry)
 {
 	uint8_t release_reason;
-	QDF_STATUS status;
 	uint8_t link_id;
 	struct wlan_objmgr_pdev *pdev;
 	uint32_t entry_global_ts;
@@ -789,6 +788,7 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 	qdf_assert_always(reo_list);
 	qdf_assert_always(entry);
 
+	link_id = mgmt_rx_reo_get_link_id(entry->rx_params);
 	entry_global_ts = mgmt_rx_reo_get_global_ts(entry->rx_params);
 	ts_last_delivered_frame = &reo_list->ts_last_delivered_frame;
 
@@ -796,14 +796,6 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 					reo_list, entry);
 
 	qdf_assert_always(release_reason != 0);
-
-	status = qdf_list_remove_node(&reo_list->list, &entry->node);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mgmt_rx_reo_err("Failed to remove entry %pK from list", entry);
-		qdf_assert_always(0);
-	}
-
-	link_id = mgmt_rx_reo_get_link_id(entry->rx_params);
 
 	/**
 	 * Last delivered frame global time stamp is invalid means that
@@ -874,7 +866,7 @@ mgmt_rx_reo_list_is_ready_to_send_up_entry(struct mgmt_rx_reo_list *reo_list,
 
 /**
  * mgmt_rx_reo_list_release_entries() - Release entries from the reorder list
- * @reo_list: Pointer to reorder list
+ * @reo_context: Pointer to management Rx reorder context
  *
  * This API releases the entries from the reorder list based on the following
  * conditions.
@@ -888,41 +880,70 @@ mgmt_rx_reo_list_is_ready_to_send_up_entry(struct mgmt_rx_reo_list *reo_list,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-mgmt_rx_reo_list_release_entries(struct mgmt_rx_reo_list *reo_list)
+mgmt_rx_reo_list_release_entries(struct mgmt_rx_reo_context *reo_context)
 {
-	struct mgmt_rx_reo_list_entry *cur_entry;
-	struct mgmt_rx_reo_list_entry *temp;
-	/* TODO yield if release_count > THRESHOLD */
-	uint16_t release_count = 0;
+	struct mgmt_rx_reo_list *reo_list;
 	QDF_STATUS status;
 
-	if (!reo_list) {
-		mgmt_rx_reo_err("reo list is null");
+	if (!reo_context) {
+		mgmt_rx_reo_err("reo context is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	qdf_spin_lock_bh(&reo_list->list_lock);
+	reo_list = &reo_context->reo_list;
 
-	qdf_list_for_each_del(&reo_list->list, cur_entry, temp, node) {
-		if (mgmt_rx_reo_list_is_ready_to_send_up_entry(reo_list,
-							       cur_entry)) {
-			mgmt_rx_reo_debug("Freeing up entry %pK", cur_entry);
-			status = mgmt_rx_reo_list_entry_send_up(reo_list,
-								cur_entry);
-			if (QDF_IS_STATUS_ERROR(status))
-				goto error;
+	qdf_spin_lock(&reo_context->frame_release_lock);
 
-			release_count++;
-		} else {
-			break;
+	while (1) {
+		struct mgmt_rx_reo_list_entry *first_entry;
+		/* TODO yield if release_count > THRESHOLD */
+		uint16_t release_count = 0;
+
+		qdf_spin_lock_bh(&reo_list->list_lock);
+
+		first_entry = qdf_list_first_entry_or_null(
+			&reo_list->list, struct mgmt_rx_reo_list_entry, node);
+
+		if (!first_entry) {
+			status = QDF_STATUS_SUCCESS;
+			goto exit_unlock_list_lock;
 		}
 
-		qdf_mem_free(cur_entry);
+		if (!mgmt_rx_reo_list_is_ready_to_send_up_entry(reo_list,
+								first_entry)) {
+			status = QDF_STATUS_SUCCESS;
+			goto exit_unlock_list_lock;
+		}
+
+		status = qdf_list_remove_node(&reo_list->list,
+					      &first_entry->node);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			status = QDF_STATUS_E_FAILURE;
+			goto exit_unlock_list_lock;
+		}
+
+		qdf_spin_unlock_bh(&reo_list->list_lock);
+
+		status = mgmt_rx_reo_list_entry_send_up(reo_list,
+							first_entry);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			status = QDF_STATUS_E_FAILURE;
+			qdf_mem_free(first_entry);
+			goto exit_unlock_frame_release_lock;
+		}
+
+		qdf_mem_free(first_entry);
+		release_count++;
 	}
 
 	status = QDF_STATUS_SUCCESS;
-error:
+	goto exit_unlock_frame_release_lock;
+
+exit_unlock_list_lock:
 	qdf_spin_unlock_bh(&reo_list->list_lock);
+exit_unlock_frame_release_lock:
+	qdf_spin_unlock(&reo_context->frame_release_lock);
+
 	return status;
 }
 
@@ -942,9 +963,12 @@ mgmt_rx_reo_list_ageout_timer_handler(void *arg)
 	struct mgmt_rx_reo_list_entry *cur_entry;
 	uint64_t cur_ts;
 	QDF_STATUS status;
+	struct mgmt_rx_reo_context *reo_context;
 
-	if (!reo_list)
-		return;
+	qdf_assert_always(reo_list);
+
+	reo_context = mgmt_rx_reo_get_context_from_reo_list(reo_list);
+	qdf_assert_always(reo_context);
 
 	qdf_spin_lock_bh(&reo_list->list_lock);
 
@@ -973,7 +997,7 @@ mgmt_rx_reo_list_ageout_timer_handler(void *arg)
 
 	qdf_spin_unlock_bh(&reo_list->list_lock);
 
-	status = mgmt_rx_reo_list_release_entries(reo_list);
+	status = mgmt_rx_reo_list_release_entries(reo_context);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mgmt_rx_reo_err("Failed to release list entries, status = %d",
 				status);
@@ -1563,7 +1587,7 @@ wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 	qdf_spin_unlock(&reo_ctx->reo_algo_entry_lock);
 
 	/* Finally, release the entries for which pending frame is received */
-	return mgmt_rx_reo_list_release_entries(&reo_ctx->reo_list);
+	return mgmt_rx_reo_list_release_entries(reo_ctx);
 }
 
 #ifndef WLAN_MGMT_RX_REO_SIM_SUPPORT
