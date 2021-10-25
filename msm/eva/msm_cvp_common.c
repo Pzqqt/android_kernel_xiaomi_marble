@@ -36,10 +36,12 @@ static void dump_hfi_queue(struct iris_hfi_device *device)
 	 * main memory.
 	 */
 	mb();
+	mutex_lock(&device->lock);
 	for (i = 0; i <= CVP_IFACEQ_DBGQ_IDX; i++) {
 		qinfo = &device->iface_queues[i];
 		queue = (struct cvp_hfi_queue_header *)qinfo->q_hdr;
 		if (!queue) {
+			mutex_unlock(&device->lock);
 			dprintk(CVP_ERR, "HFI queue not init, fail to dump\n");
 			return;
 		}
@@ -55,6 +57,7 @@ static void dump_hfi_queue(struct iris_hfi_device *device)
 		}
 
 	}
+	mutex_unlock(&device->lock);
 }
 
 struct msm_cvp_core *get_cvp_core(int core_id)

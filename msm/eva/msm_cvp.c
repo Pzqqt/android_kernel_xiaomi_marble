@@ -1619,12 +1619,6 @@ static void cvp_clean_fence_queue(struct msm_cvp_inst *inst, int synx_state)
 	q = &inst->fence_cmd_queue;
 
 	mutex_lock(&q->lock);
-	if (q->state == QUEUE_INVALID || q->state == QUEUE_INIT) {
-		dprintk(CVP_WARN, "Incorrect fence cmd queue state %d\n",
-			q->state);
-		mutex_unlock(&q->lock);
-		return;
-	}
 	q->mode = OP_DRAINING;
 
 	list_for_each_entry_safe(f, d, &q->wait_list, list) {
@@ -1648,8 +1642,6 @@ static void cvp_clean_fence_queue(struct msm_cvp_inst *inst, int synx_state)
 		cvp_cancel_synx(inst, CVP_INPUT_SYNX, f, synx_state);
 	}
 
-	q->mode = OP_INVALID;
-	q->state = QUEUE_INVALID;
 	mutex_unlock(&q->lock);
 }
 
@@ -1659,11 +1651,20 @@ int cvp_clean_session_queues(struct msm_cvp_inst *inst)
 	struct cvp_session_queue *sq;
 	u32 count = 0, max_retries = 100;
 
+	q = &inst->fence_cmd_queue;
+	mutex_lock(&q->lock);
+	if (q->state == QUEUE_START) {
+		mutex_unlock(&q->lock);
 	cvp_clean_fence_queue(inst, SYNX_STATE_SIGNALED_ERROR);
+	} else {
+		dprintk(CVP_WARN, "Incorrect fence cmd queue state %d\n",
+			q->state);
+		mutex_unlock(&q->lock);
+	}
+
 	cvp_fence_thread_stop(inst);
 
 	/* Waiting for all output synx sent */
-	q = &inst->fence_cmd_queue;
 retry:
 	mutex_lock(&q->lock);
 	if (list_empty(&q->sched_list)) {
