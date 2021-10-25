@@ -5130,4 +5130,21 @@ static inline void hdd_dp_ssr_unprotect(void)
 {
 	qdf_atomic_dec(&dp_protect_entry_count);
 }
+
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+/**
+ * hdd_set_suspend_mode: set the suspend_mode state to pld based on the
+ *                       configuration option from INI file
+ * @hdd_ctx: HDD context
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int hdd_set_suspend_mode(struct hdd_context *hdd_ctx);
+#else
+static inline int hdd_set_suspend_mode(struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+#endif
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

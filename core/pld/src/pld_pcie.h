@@ -137,6 +137,23 @@ static inline int pld_pcie_wlan_pm_control(struct device *dev, bool vote)
 }
 #endif
 
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+/**
+ * pld_pcie_set_suspend_mode() - Set current WLAN suspend mode
+ *
+ * This function is to set current wlan suspend mode for CNSS2
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pcie_set_suspend_mode(enum pld_suspend_mode mode);
+#else
+static inline int pld_pcie_set_suspend_mode(enum pld_suspend_mode mode)
+{
+	return 0;
+}
+#endif
+
 #ifndef CONFIG_PLD_PCIE_CNSS
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 static inline void *pld_pcie_smmu_get_domain(struct device *dev)

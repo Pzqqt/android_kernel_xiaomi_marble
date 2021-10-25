@@ -130,6 +130,39 @@ int pld_set_mode(u8 mode)
 	return 0;
 }
 
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+int pld_set_suspend_mode(enum pld_suspend_mode mode)
+{
+	struct pld_context *pld_context;
+	int ret;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -ENOMEM;
+
+	pld_context->suspend_mode = mode;
+
+	ret = pld_pcie_set_suspend_mode(mode);
+
+	return ret;
+}
+
+bool pld_is_full_power_down_enable(void)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		goto out;
+
+	if (pld_context->suspend_mode == PLD_FULL_POWER_DOWN)
+		return true;
+
+out:
+	return false;
+}
+#endif
+
 /**
  * pld_get_global_context() - Get global context of PLD
  *

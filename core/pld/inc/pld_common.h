@@ -322,6 +322,16 @@ enum pld_driver_mode {
 };
 
 /**
+ * enum pld_suspend_mode - WLAN suspend mode
+ * @PLD_SUSPEND: suspend
+ * @PLD_FULL_POWER_DOWN: full power down while suspend
+ */
+enum pld_suspend_mode {
+	PLD_SUSPEND,
+	PLD_FULL_POWER_DOWN,
+};
+
+/**
  * struct pld_device_version - WLAN device version info
  * @family_number: family number of WLAN SOC HW
  * @device_number: device number of WLAN SOC HW
@@ -489,6 +499,33 @@ void pld_deinit(void);
  *         Non zero failure code for errors
  */
 int pld_set_mode(u8 mode);
+
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+/**
+ * pld_set_suspend_mode() - set suspend mode in PLD module
+ * @mode: pld suspend mode
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_set_suspend_mode(enum pld_suspend_mode mode);
+/**
+ * pld_is_full_power_down_enable() - check full power down is enabled or not
+ *
+ * Return: true if full power down is enabled else false
+ */
+bool pld_is_full_power_down_enable(void);
+#else
+static inline int pld_set_suspend_mode(enum pld_suspend_mode mode)
+{
+	return 0;
+}
+
+static inline bool pld_is_full_power_down_enable(void)
+{
+	return false;
+}
+#endif
 
 int pld_register_driver(struct pld_driver_ops *ops);
 void pld_unregister_driver(void);

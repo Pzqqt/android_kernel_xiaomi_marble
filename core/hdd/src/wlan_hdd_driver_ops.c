@@ -638,6 +638,10 @@ static int __hdd_soc_probe(struct device *dev,
 	hdd_start_complete(0);
 	hdd_thermal_mitigation_register(hdd_ctx, dev);
 
+	errno = hdd_set_suspend_mode(hdd_ctx);
+	if (errno)
+		hdd_err("Failed to set suspend mode in PLD; errno:%d", errno);
+
 	hdd_soc_load_unlock(dev);
 
 	return 0;
@@ -970,13 +974,16 @@ static void __hdd_soc_recovery_shutdown(void)
 	struct hdd_context *hdd_ctx;
 	void *hif_ctx;
 
-	/* recovery starts via firmware down indication; ensure we got one */
-	QDF_BUG(cds_is_driver_recovering());
-	hdd_init_start_completion();
-
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx)
 		return;
+
+	if (wlan_hdd_is_full_power_down_enable(hdd_ctx))
+		cds_set_driver_state(CDS_DRIVER_STATE_RECOVERING);
+
+	/* recovery starts via firmware down indication; ensure we got one */
+	QDF_BUG(cds_is_driver_recovering());
+	hdd_init_start_completion();
 
 	/*
 	 * Perform SSR related cleanup if it has not already been done as a

@@ -17531,6 +17531,20 @@ static int hdd_register_driver_retry(void)
 	return errno;
 }
 
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+int hdd_set_suspend_mode(struct hdd_context *hdd_ctx)
+{
+	int errno;
+
+	if (wlan_hdd_is_full_power_down_enable(hdd_ctx))
+		errno = pld_set_suspend_mode(PLD_FULL_POWER_DOWN);
+	else
+		errno = pld_set_suspend_mode(PLD_SUSPEND);
+
+	return errno;
+}
+#endif
+
 int hdd_driver_load(void)
 {
 	struct osif_driver_sync *driver_sync;
