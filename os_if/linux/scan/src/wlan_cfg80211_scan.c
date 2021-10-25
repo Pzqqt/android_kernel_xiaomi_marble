@@ -1345,6 +1345,30 @@ wlan_cfg80211_allow_simultaneous_scan(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+enum scan_priority convert_nl_scan_priority_to_internal(
+	enum qca_wlan_vendor_scan_priority nl_scan_priority)
+{
+	switch (nl_scan_priority) {
+	case QCA_WLAN_VENDOR_SCAN_PRIORITY_VERY_LOW:
+		return SCAN_PRIORITY_VERY_LOW;
+
+	case QCA_WLAN_VENDOR_SCAN_PRIORITY_LOW:
+		return SCAN_PRIORITY_LOW;
+
+	case QCA_WLAN_VENDOR_SCAN_PRIORITY_MEDIUM:
+		return SCAN_PRIORITY_MEDIUM;
+
+	case QCA_WLAN_VENDOR_SCAN_PRIORITY_HIGH:
+		return SCAN_PRIORITY_HIGH;
+
+	case QCA_WLAN_VENDOR_SCAN_PRIORITY_VERY_HIGH:
+		return SCAN_PRIORITY_VERY_HIGH;
+
+	default:
+		return SCAN_PRIORITY_COUNT;
+	}
+}
+
 int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		       struct cfg80211_scan_request *request,
 		       struct scan_params *params)

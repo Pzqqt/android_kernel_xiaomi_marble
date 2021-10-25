@@ -451,4 +451,14 @@ void wlan_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
 void wlan_cfg80211_scan_done(struct net_device *netdev,
 			     struct cfg80211_scan_request *req,
 			     bool aborted);
+
+/**
+ * convert_nl_scan_priority_to_internal() - Convert NL80211 based scan prioirty
+ * value to internal scan priority value
+ * @nl_scan_priority : Scan priority value received in vendor attribute
+ *
+ * Return: Internal scan priority value
+ */
+enum scan_priority convert_nl_scan_priority_to_internal(
+	enum qca_wlan_vendor_scan_priority nl_scan_priority);
 #endif
