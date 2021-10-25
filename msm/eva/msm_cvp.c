@@ -1554,12 +1554,6 @@ static void cvp_clean_fence_queue(struct msm_cvp_inst *inst, int synx_state)
 	q = &inst->fence_cmd_queue;
 
 	mutex_lock(&q->lock);
-	if (q->state == QUEUE_INVALID || q->state == QUEUE_INIT) {
-		dprintk(CVP_WARN, "Incorrect fence cmd queue state %d\n",
-			q->state);
-		mutex_unlock(&q->lock);
-		return;
-	}
 	q->mode = OP_DRAINING;
 
 	list_for_each_entry_safe(f, d, &q->wait_list, list) {
@@ -1583,8 +1577,6 @@ static void cvp_clean_fence_queue(struct msm_cvp_inst *inst, int synx_state)
 		cvp_cancel_synx(inst, CVP_INPUT_SYNX, f, synx_state);
 	}
 
-	q->mode = OP_INVALID;
-	q->state = QUEUE_INVALID;
 	mutex_unlock(&q->lock);
 }
 
