@@ -1649,7 +1649,6 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	bool pin_state_current = false;
 	struct wsa_ctrl_platform_data *plat_data = NULL;
 	struct snd_soc_component *component;
-	const char *wsa883x_name_prefix_of = NULL;
 	char buffer[MAX_NAME_LEN];
 	int dev_index = 0;
 
@@ -1769,16 +1768,6 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR);
 
-	ret = of_property_read_string(pdev->dev.of_node, "qcom,wsa-prefix",
-				&wsa883x_name_prefix_of);
-	if (ret) {
-		dev_err(&pdev->dev,
-			"%s: Looking up %s property in node %s failed\n",
-			__func__, "qcom,wsa-prefix",
-			pdev->dev.of_node->full_name);
-		goto err_irq;
-	}
-
 	wsa883x->driver = devm_kzalloc(&pdev->dev,
 			sizeof(struct snd_soc_component_driver), GFP_KERNEL);
         if (!wsa883x->driver) {
@@ -1819,15 +1808,12 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	ret = snd_soc_register_component(&pdev->dev,
 				wsa883x->driver, wsa883x->dai_driver, 1);
 
-	wsa883x->wsa883x_name_prefix = kstrndup(wsa883x_name_prefix_of,
-			strlen(wsa883x_name_prefix_of), GFP_KERNEL);
 	component = snd_soc_lookup_component(&pdev->dev, wsa883x->driver->name);
 	if (!component) {
 		dev_err(&pdev->dev, "%s: component is NULL \n", __func__);
 		ret = -EINVAL;
 		goto err_mem;
 	}
-	component->name_prefix = wsa883x->wsa883x_name_prefix;
 
 	wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,bolero-handle", 0);
@@ -1897,7 +1883,6 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	return 0;
 
 err_mem:
-	kfree(wsa883x->wsa883x_name_prefix);
 	if (wsa883x->dai_driver) {
 		kfree(wsa883x->dai_driver->name);
 		kfree(wsa883x->dai_driver->playback.stream_name);
@@ -1962,7 +1947,6 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 #endif
 	mutex_destroy(&wsa883x->res_lock);
 	snd_soc_unregister_component(&pdev->dev);
-	kfree(wsa883x->wsa883x_name_prefix);
 	if (wsa883x->dai_driver) {
 		kfree(wsa883x->dai_driver->name);
 		kfree(wsa883x->dai_driver->playback.stream_name);
