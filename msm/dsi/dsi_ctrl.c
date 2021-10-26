@@ -433,7 +433,8 @@ static void dsi_ctrl_post_cmd_transfer(struct dsi_ctrl *dsi_ctrl)
 	if ((dsi_ctrl->pending_cmd_flags & DSI_CTRL_CMD_BROADCAST) &&
 			!(dsi_ctrl->pending_cmd_flags & DSI_CTRL_CMD_BROADCAST_MASTER)) {
 		dsi_ctrl_clear_dma_status(dsi_ctrl);
-	} else {
+	} else if (!(dsi_ctrl->pending_cmd_flags & DSI_CTRL_CMD_READ)) {
+		/* Wait for read command transfer to complete is done in dsi_message_rx. */
 		dsi_ctrl_dma_cmd_wait_for_done(dsi_ctrl);
 	}
 
