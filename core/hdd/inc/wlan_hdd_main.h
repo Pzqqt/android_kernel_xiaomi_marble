@@ -246,6 +246,7 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
  * @DEVICE_IFACE_OPENED: Adapter has been "opened" via the kernel
  * @SOFTAP_INIT_DONE: Software Access Point (SAP) is initialized
  * @VENDOR_ACS_RESPONSE_PENDING: Waiting for event for vendor acs
+ * @WDEV_ONLY_REGISTERED: Only WDEV is registered
  */
 enum hdd_adapter_flags {
 	NET_DEVICE_REGISTERED,
@@ -256,6 +257,7 @@ enum hdd_adapter_flags {
 	DEVICE_IFACE_OPENED,
 	SOFTAP_INIT_DONE,
 	VENDOR_ACS_RESPONSE_PENDING,
+	WDEV_ONLY_REGISTERED,
 };
 
 /**
@@ -1259,6 +1261,8 @@ struct hdd_adapter {
 
 	/** Current MAC Address for the adapter  */
 	struct qdf_mac_addr mac_addr;
+	/* MLD address for adapter */
+	struct qdf_mac_addr mld_addr;
 
 #ifdef WLAN_NUD_TRACKING
 	struct hdd_nud_tracking_info nud_tracking;
@@ -1533,6 +1537,9 @@ struct hdd_adapter {
 #endif
 #ifdef WLAN_FEATURE_PKT_CAPTURE
 	struct hdd_adapter *mon_adapter;
+#endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct hdd_mlo_adapter_info mlo_adapter_info;
 #endif
 };
 
@@ -2623,8 +2630,14 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 				     uint8_t session_type,
 				     const char *name, tSirMacAddr mac_addr,
 				     unsigned char name_assign_type,
-				     bool rtnl_held);
+				     bool rtnl_held,
+				     struct hdd_adapter_create_param *params);
 
+QDF_STATUS hdd_open_adapter_no_trans(struct hdd_context *hdd_ctx,
+				     enum QDF_OPMODE op_mode,
+				     const char *iface_name,
+				     uint8_t *mac_addr_bytes,
+				     struct hdd_adapter_create_param *params);
 /**
  * hdd_close_adapter() - remove and free @adapter from the adapter list
  * @hdd_ctx: The Hdd context containing the adapter list
@@ -4987,4 +5000,23 @@ uint8_t *hdd_ch_width_str(enum phy_ch_width ch_width);
  */
 int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width);
 
+/**
+ * hdd_stop_adapter_ext: close/delete the vdev session in host/fw.
+ * @hdd_context: HDD context
+ * @adapter: Pointer to hdd_adapter
+ *
+ * Close/delete the vdev session in host/firmware.
+ */
+QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter);
+
+/**
+ * hdd_check_for_net_dev_ref_leak: check for vdev reference leak in driver
+ * @adapter: Pointer to hdd_adapter
+ *
+ * various function take netdev reference to get protected against netdev
+ * getting deleted in parallel, check if all those references are cleanly
+ * released.
+ */
+void hdd_check_for_net_dev_ref_leak(struct hdd_adapter *adapter);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

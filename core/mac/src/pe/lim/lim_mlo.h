@@ -82,6 +82,15 @@ void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
 				 tpDphHashNode sta_ds);
 
 /**
+ * lim_mlo_sta_notify_peer_disconn - trigger mlo to delete partner peer
+ *                                   This API is only for MLO STA.
+ * @pe_session: pe session
+ *
+ * Return: void
+ */
+void lim_mlo_sta_notify_peer_disconn(struct pe_session *pe_session);
+
+/**
  * lim_mlo_cleanup_partner_peer() - cleanup given peer which is partner peer
  *                                  of mlo connection.
  *
@@ -223,6 +232,11 @@ void lim_mlo_save_mlo_info(tpDphHashNode sta_ds,
 
 static inline void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
 					       tpDphHashNode sta_ds)
+{
+}
+
+static inline void lim_mlo_sta_notify_peer_disconn(
+						struct pe_session *pe_session)
 {
 }
 

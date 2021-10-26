@@ -34,6 +34,7 @@
 #include "wlan_pmo_cfg.h"
 #include "wlan_pmo_static_config.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_pmo_icmp.h"
 
 QDF_STATUS ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
@@ -1000,3 +1001,25 @@ ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc)
 
 	return pmo_psoc_ctx->psoc_cfg.disconnect_sap_tdls_in_wow;
 }
+
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+QDF_STATUS ucfg_pmo_check_icmp_offload(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id)
+{
+	return pmo_core_icmp_check_offload(psoc, vdev_id);
+}
+
+bool
+ucfg_pmo_is_icmp_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.is_icmp_offload_enable;
+}
+
+QDF_STATUS ucfg_pmo_config_icmp_offload(struct wlan_objmgr_psoc *psoc,
+					struct pmo_icmp_offload *pmo_icmp_req)
+{
+	return pmo_tgt_config_icmp_offload_req(psoc, pmo_icmp_req);
+}
+#endif

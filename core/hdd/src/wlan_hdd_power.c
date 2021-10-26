@@ -724,6 +724,7 @@ static void __hdd_ipv6_notifier_work_queue(struct hdd_adapter *adapter)
 		goto exit;
 
 	hdd_enable_ns_offload(adapter, pmo_ipv6_change_notify);
+	hdd_enable_icmp_offload(adapter, pmo_ipv6_change_notify);
 
 	hdd_send_ps_config_to_fw(adapter);
 exit:
@@ -1070,6 +1071,7 @@ static void __hdd_ipv4_notifier_work_queue(struct hdd_adapter *adapter)
 		goto exit;
 
 	hdd_enable_arp_offload(adapter, pmo_ipv4_change_notify);
+	hdd_enable_icmp_offload(adapter, pmo_ipv4_change_notify);
 
 	status = ucfg_mlme_get_sta_keepalive_method(hdd_ctx->psoc, &val);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -1339,6 +1341,161 @@ put_vdev:
 free_req:
 	qdf_mem_free(arp_req);
 }
+
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+/**
+ * hdd_fill_ipv4_addr() - fill IPv4 addresses
+ * @adapter: Adapter context for which ICMP offload is to be configured
+ * @pmo_icmp_req: pointer to ICMP offload request params
+ *
+ * This is the IPv4 utility function to populate address.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+static int hdd_fill_ipv4_addr(struct hdd_adapter *adapter,
+			      struct pmo_icmp_offload *pmo_icmp_req)
+{
+	struct in_ifaddr *ifa;
+	uint8_t ipv4_addr_array[QDF_IPV4_ADDR_SIZE];
+	int i;
+
+	ifa = hdd_get_ipv4_local_interface(adapter);
+	if (!ifa || !ifa->ifa_local) {
+		hdd_debug("IP Address is not assigned");
+		return -EINVAL;
+	}
+
+	/* converting u32 to IPv4 address */
+	for (i = 0; i < QDF_IPV4_ADDR_SIZE; i++)
+		ipv4_addr_array[i] = (ifa->ifa_local >> i * 8) & 0xff;
+
+	qdf_mem_copy(pmo_icmp_req->ipv4_addr, &ipv4_addr_array,
+		     QDF_IPV4_ADDR_SIZE);
+
+	return 0;
+}
+
+/**
+ * hdd_fill_ipv6_addr() - fill IPv6 addresses
+ * @adapter: Adapter context for which ICMP offload is to be configured
+ * @pmo_icmp_req: pointer to ICMP offload request params
+ *
+ * This is the IPv6 utility function to populate addresses.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+static int hdd_fill_ipv6_addr(struct hdd_adapter *adapter,
+			      struct pmo_icmp_offload *pmo_icmp_req)
+{
+	struct inet6_dev *in6_dev;
+	struct pmo_ns_req *ns_req;
+	int i, errno;
+
+	in6_dev = __in6_dev_get(adapter->dev);
+	if (!in6_dev) {
+		hdd_err_rl("IPv6 dev does not exist");
+		return -EINVAL;
+	}
+
+	ns_req = qdf_mem_malloc(sizeof(*ns_req));
+	if (!ns_req)
+		return -ENOMEM;
+
+	ns_req->count = 0;
+	/* Unicast Addresses */
+	errno = hdd_fill_ipv6_uc_addr(in6_dev, ns_req->ipv6_addr,
+				      ns_req->ipv6_addr_type, ns_req->scope,
+				      &ns_req->count);
+	if (errno) {
+		hdd_debug("Reached Max IPv6 supported address %d",
+			  ns_req->count);
+		goto free_req;
+	}
+	/* Anycast Addresses */
+	errno = hdd_fill_ipv6_ac_addr(in6_dev, ns_req->ipv6_addr,
+				      ns_req->ipv6_addr_type, ns_req->scope,
+				      &ns_req->count);
+	if (errno) {
+		hdd_debug("Reached Max IPv6 supported address %d",
+			  ns_req->count);
+		goto free_req;
+	}
+
+	pmo_icmp_req->ipv6_count = ns_req->count;
+	for (i = 0; i < pmo_icmp_req->ipv6_count; i++) {
+		qdf_mem_copy(&pmo_icmp_req->ipv6_addr[i], &ns_req->ipv6_addr[i],
+			     QDF_IPV6_ADDR_SIZE);
+	}
+
+free_req:
+	qdf_mem_free(ns_req);
+	return errno;
+}
+
+void hdd_enable_icmp_offload(struct hdd_adapter *adapter,
+			     enum pmo_offload_trigger trigger)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
+	struct pmo_icmp_offload *pmo_icmp_req;
+	struct wlan_objmgr_vdev *vdev;
+	bool is_icmp_enable;
+	QDF_STATUS status;
+
+	is_icmp_enable = ucfg_pmo_is_icmp_offload_enabled(psoc);
+	if (!is_icmp_enable) {
+		hdd_debug("ICMP Offload not enabled");
+		return;
+	}
+
+	pmo_icmp_req = qdf_mem_malloc(sizeof(*pmo_icmp_req));
+	if (!pmo_icmp_req)
+		return;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		goto free_req;
+	}
+
+	status = ucfg_pmo_check_icmp_offload(psoc, adapter->vdev_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto put_vdev;
+
+	pmo_icmp_req->vdev_id = adapter->vdev_id;
+	pmo_icmp_req->enable = is_icmp_enable;
+	pmo_icmp_req->trigger = trigger;
+
+	switch (trigger) {
+	case pmo_ipv4_change_notify:
+		if (hdd_fill_ipv4_addr(adapter, pmo_icmp_req)) {
+			hdd_debug("Unable to populate IPv4 Address");
+			goto put_vdev;
+		}
+		break;
+	case pmo_ipv6_change_notify:
+		if (hdd_fill_ipv6_addr(adapter, pmo_icmp_req)) {
+			hdd_debug("Unable to populate IPv6 Address");
+			goto put_vdev;
+		}
+		break;
+	default:
+		QDF_DEBUG_PANIC("The trigger %d is not supported", trigger);
+		goto put_vdev;
+	}
+
+	status = ucfg_pmo_config_icmp_offload(psoc, pmo_icmp_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err_rl("icmp offload config in fw failed: %d", status);
+		goto put_vdev;
+	}
+
+put_vdev:
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
+free_req:
+	qdf_mem_free(pmo_icmp_req);
+}
+#endif
 
 void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)

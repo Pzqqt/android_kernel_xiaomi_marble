@@ -1784,65 +1784,6 @@ wma_increment_peer_count(tp_wma_handle wma, uint8_t vdev_id)
 	wma->interfaces[vdev_id].peer_count++;
 }
 
-#ifdef MLO_DP_INTERIM
-static QDF_STATUS wma_cdp_peer_create(ol_txrx_soc_handle dp_soc,
-				      uint8_t vdev_id,
-				      uint8_t *peer_addr,
-				      struct wlan_objmgr_peer *obj_peer)
-{
-	struct cdp_txrx_peer_info peer_info;
-	uint8_t *mld_mac;
-	QDF_STATUS status;
-
-	mld_mac = wlan_peer_mlme_get_mldaddr(peer);
-
-	if (!mld_mac || qdf_is_macaddr_zero(mld_mac))
-		return cdp_peer_create(dp_soc, vdev_id, peer_addr, NULL);
-
-	qdf_mem_zero(&peer_info, sizeof(peer_info));
-
-	peer_info.mld_peer_mac = mld_mac;
-	peer_info.peer_type = CDP_TXRX_LINK_PEER;
-	status = cdp_peer_create(dp_soc, vdev_id, peer_addr, &peer_info);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		wma_err("Unable to attach mld link peer " QDF_MAC_ADDR_FMT,
-			QDF_MAC_ADDR_REF(peer_addr));
-		return status;
-	}
-	if (wlan_peer_mlme_is_assoc_peer(obj_peer)) {
-		peer_info.mld_peer_mac = mld_mac;
-		peer_info.peer_type = CDP_TXRX_MLD_PEER;
-		status = cdp_peer_create(dp_soc, vdev_id, peer_addr,
-					 &peer_info);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wma_err("Unable to attach mld peer " QDF_MAC_ADDR_FMT,
-				QDF_MAC_ADDR_REF(peer_addr));
-			if (cdp_cfg_get_peer_unmap_conf_support(dp_soc))
-				cdp_peer_delete_sync(
-					dp_soc, vdev_id, peer_addr,
-					wma_peer_unmap_conf_cb,
-					1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
-			else
-				cdp_peer_delete(
-					dp_soc, vdev_id, peer_addr,
-					1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
-			wlan_objmgr_peer_obj_delete(obj_peer);
-		}
-	}
-
-	return status;
-}
-
-#else
-static QDF_STATUS wma_cdp_peer_create(ol_txrx_soc_handle dp_soc,
-				      uint8_t vdev_id,
-				      uint8_t *peer_addr,
-				      struct wlan_objmgr_peer *obj_peer)
-{
-	return cdp_peer_create(dp_soc, vdev_id, peer_addr);
-}
-#endif
-
 /**
  * wma_update_mlo_peer_create() - update mlo parameter for peer creation
  * @param: peer create param
@@ -1926,6 +1867,7 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 	 */
 	if (peer_mld_addr &&
 	    !qdf_is_macaddr_zero((struct qdf_mac_addr *)peer_mld_addr)) {
+		wlan_peer_mlme_flag_ext_set(obj_peer, WLAN_PEER_FEXT_MLO);
 		wma_debug("peer " QDF_MAC_ADDR_FMT "is_assoc_peer%d mld mac " QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(peer_addr), is_assoc_peer,
 			  QDF_MAC_ADDR_REF(peer_mld_addr));
@@ -1933,7 +1875,7 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 		wlan_peer_mlme_set_assoc_peer(obj_peer, is_assoc_peer);
 		wma_update_mlo_peer_create(&param, true);
 	}
-	status = wma_cdp_peer_create(dp_soc, vdev_id, peer_addr, obj_peer);
+	status = cdp_peer_create(dp_soc, vdev_id, peer_addr);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("Unable to attach peer "QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(peer_addr));
@@ -1980,6 +1922,59 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wma_cdp_peer_setup() - provide mlo information to cdp_peer_setup
+ * @wma: wma handle
+ * @dp_soc: dp soc
+ * @vdev_id: vdev id
+ * @peer_addr: peer mac addr
+ *
+ * Return: VOID
+ */
+static void wma_cdp_peer_setup(tp_wma_handle wma,
+			       ol_txrx_soc_handle dp_soc,
+			       uint8_t vdev_id,
+			       uint8_t *peer_addr)
+{
+	struct cdp_peer_setup_info peer_info;
+	uint8_t *mld_mac;
+	struct wlan_objmgr_peer *obj_peer = NULL;
+
+	obj_peer = wlan_objmgr_get_peer_by_mac(wma->psoc,
+					       peer_addr,
+					       WLAN_LEGACY_WMA_ID);
+	if (!obj_peer) {
+		wma_err("Invalid obj_peer");
+		return;
+	}
+
+	mld_mac = wlan_peer_mlme_get_mldaddr(obj_peer);
+
+	if (!mld_mac || qdf_is_macaddr_zero((struct qdf_mac_addr *)mld_mac)) {
+		cdp_peer_setup(dp_soc, vdev_id, peer_addr, NULL);
+		wlan_objmgr_peer_release_ref(obj_peer, WLAN_LEGACY_WMA_ID);
+		return;
+	}
+
+	qdf_mem_zero(&peer_info, sizeof(peer_info));
+
+	peer_info.mld_peer_mac = mld_mac;
+	peer_info.is_assoc_link = wlan_peer_mlme_is_assoc_peer(obj_peer);
+	peer_info.is_primary_link = peer_info.is_assoc_link;
+	cdp_peer_setup(dp_soc, vdev_id, peer_addr, &peer_info);
+	wlan_objmgr_peer_release_ref(obj_peer, WLAN_LEGACY_WMA_ID);
+}
+#else
+static void wma_cdp_peer_setup(tp_wma_handle wma,
+			       ol_txrx_soc_handle dp_soc,
+			       uint8_t vdev_id,
+			       uint8_t *peer_addr)
+{
+	cdp_peer_setup(dp_soc, vdev_id, peer_addr, NULL);
+}
+#endif
+
 QDF_STATUS wma_create_peer(tp_wma_handle wma,
 			   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 			   uint32_t peer_type, uint8_t vdev_id,
@@ -1997,7 +1992,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
 		return status;
 
 	wma_increment_peer_count(wma, vdev_id);
-	cdp_peer_setup(dp_soc, vdev_id, peer_addr);
+	wma_cdp_peer_setup(wma, dp_soc, vdev_id, peer_addr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3189,8 +3184,8 @@ int wma_peer_create_confirm_handler(void *handle, uint8_t *evt_param_info,
 			goto fail;
 		}
 
-		cdp_peer_setup(dp_soc, peer_create_rsp->vdev_id,
-			       peer_mac.bytes);
+		wma_cdp_peer_setup(wma, dp_soc, peer_create_rsp->vdev_id,
+				   peer_mac.bytes);
 
 		status = QDF_STATUS_SUCCESS;
 		ret = 0;
@@ -4949,6 +4944,15 @@ static void wma_sap_allow_runtime_pm(tp_wma_handle wma)
 	qdf_runtime_pm_allow_suspend(&wma->sap_prevent_runtime_pm_lock);
 }
 
+static void wma_ndp_prevent_runtime_pm(tp_wma_handle wma)
+{
+	qdf_runtime_pm_prevent_suspend(&wma->ndp_prevent_runtime_pm_lock);
+}
+
+static void wma_ndp_allow_runtime_pm(tp_wma_handle wma)
+{
+	qdf_runtime_pm_allow_suspend(&wma->ndp_prevent_runtime_pm_lock);
+}
 #ifdef FEATURE_STA_MODE_VOTE_LINK
 static bool wma_add_sta_allow_sta_mode_vote_link(uint8_t oper_mode)
 {
@@ -5122,7 +5126,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("disable runtime pm and vote for link up");
 		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
-		wma_sap_prevent_runtime_pm(wma);
+		wma_ndp_prevent_runtime_pm(wma);
 	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
 		wma_debug("vote for link up");
 		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_STA_USER_ID);
@@ -5220,7 +5224,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("allow runtime pm and vote for link down");
 		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
-		wma_sap_allow_runtime_pm(wma);
+		wma_ndp_allow_runtime_pm(wma);
 	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
 		wma_debug("vote for link down");
 		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_STA_USER_ID);

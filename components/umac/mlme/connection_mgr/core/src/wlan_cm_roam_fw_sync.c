@@ -43,6 +43,7 @@
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
+#include <wlan_mlo_mgr_sta.h>
 
 QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			       void *event, uint32_t event_data_len)
@@ -392,6 +393,11 @@ cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_NOMEM;
 	rsp->connect_rsp.vdev_id = roam_synch_data->roamed_vdev_id;
 	qdf_copy_macaddr(&rsp->connect_rsp.bssid, &roam_synch_data->bssid);
+
+	if (!util_scan_is_null_ssid(&roam_synch_data->ssid))
+		wlan_vdev_mlme_set_ssid(vdev,
+					roam_synch_data->ssid.ssid,
+					roam_synch_data->ssid.length);
 
 	status = wlan_vdev_mlme_get_ssid(vdev,
 					 rsp->connect_rsp.ssid.ssid,
@@ -792,7 +798,12 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_update_scan_db_on_roam_success(vdev, connect_rsp,
 					  roam_synch_data, cm_id);
 
-	cm_csr_connect_rsp(vdev, rsp);
+	status = cm_csr_connect_rsp(vdev, rsp);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Roam sync propagation failed, abort roaming");
+		goto error;
+	}
+
 	cm_process_roam_keys(vdev, rsp, cm_id);
 
 	mlme_cm_osif_connect_complete(vdev, connect_rsp);
@@ -875,8 +886,8 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 	 * or disconnect the AP.
 	 */
 	if (wlan_reg_is_disable_for_freq(pdev, roam_synch_data->chan_freq)) {
-		cm_disconnect(psoc, vdev_id, CM_ROAM_DISCONNECT,
-			      REASON_OPER_CHANNEL_BAND_CHANGE, NULL);
+		mlo_disconnect(cm_ctx->vdev, CM_ROAM_DISCONNECT,
+			       REASON_OPER_CHANNEL_BAND_CHANGE, NULL);
 		status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
@@ -982,10 +993,9 @@ QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 
 	if (source == CM_ROAMING_HOST ||
 	    source == CM_ROAMING_NUD_FAILURE)
-		status = cm_disconnect(psoc, vdev_id,
-				       CM_ROAM_DISCONNECT,
-				       REASON_USER_TRIGGERED_ROAM_FAILURE,
-				       NULL);
+		status = mlo_disconnect(vdev, CM_ROAM_DISCONNECT,
+					REASON_USER_TRIGGERED_ROAM_FAILURE,
+					NULL);
 
 error:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
@@ -1081,10 +1091,8 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 			    DEBUG_ROAM_SYNCH_FAIL,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
 
-	status = cm_disconnect(ind->psoc, ind->vdev_id,
-			       CM_MLME_DISCONNECT,
-			       REASON_FW_TRIGGERED_ROAM_FAILURE,
-			       NULL);
+	status = mlo_disconnect(vdev, CM_MLME_DISCONNECT,
+				REASON_FW_TRIGGERED_ROAM_FAILURE, NULL);
 
 	if (mlme_obj->cfg.gen.fatal_event_trigger)
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
@@ -1130,7 +1138,6 @@ void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS wlan_cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
 {
 	struct roam_synch_frame_ind *frame_ind;
@@ -1158,4 +1165,3 @@ QDF_STATUS wlan_cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* ROAM_TARGET_IF_CONVERGENCE */

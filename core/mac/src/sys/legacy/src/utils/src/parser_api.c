@@ -1301,8 +1301,12 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 			return QDF_STATUS_SUCCESS;
 		}
 
-		if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq))
+		if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq)) {
 			pDot11f->supportedChannelWidthSet = 0;
+		} else {
+			if (pe_session->ch_width <= CH_WIDTH_80MHZ)
+				pDot11f->supportedChannelWidthSet = 0;
+		}
 
 		if (pe_session->ht_config.adv_coding_cap)
 			pDot11f->ldpcCodingCap =
@@ -6557,6 +6561,16 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 	}
 	populate_dot11f_twt_he_cap(mac_ctx, session, he_cap);
 
+	if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq) ||
+	    wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
+		if (session->ch_width <= CH_WIDTH_80MHZ) {
+			he_cap->chan_width_2 = 0;
+			he_cap->chan_width_3 = 0;
+		} else if (session->ch_width == CH_WIDTH_160MHZ) {
+			he_cap->chan_width_3 = 0;
+		}
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -7897,13 +7911,16 @@ QDF_STATUS wlan_parse_bss_description_ies(struct mac_context *mac_ctx,
 {
 	int ie_len = wlan_get_ielen_from_bss_description(bss_desc);
 
-	if (ie_len <= 0 || !ie_struct)
+	if (ie_len <= 0 || !ie_struct) {
+		pe_err("BSS description has invalid IE : %d", ie_len);
 		return QDF_STATUS_E_FAILURE;
-
+	}
 	if (DOT11F_FAILED(dot11f_unpack_beacon_i_es
 			  (mac_ctx, (uint8_t *)bss_desc->ieFields,
-			  ie_len, ie_struct, false)))
+			  ie_len, ie_struct, false))) {
+		pe_err("Beacon IE parsing failed");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8455,6 +8472,11 @@ static void wlan_update_bss_with_fils_data(struct mac_context *mac_ctx,
 	qdf_mem_copy(bss_descr->fils_info_element.realm,
 			fils_ind->realm_identifier.realm,
 			bss_descr->fils_info_element.realm_cnt * SIR_REALM_LEN);
+	pe_debug("FILS: bssid:" QDF_MAC_ADDR_FMT "is_present:%d cache_id[0x%x%x]",
+		 QDF_MAC_ADDR_REF(bss_descr->bssId),
+		 fils_ind->cache_identifier.is_present,
+		 fils_ind->cache_identifier.identifier[0],
+		 fils_ind->cache_identifier.identifier[1]);
 	if (fils_ind->cache_identifier.is_present) {
 		bss_descr->fils_info_element.is_cache_id_present = true;
 		qdf_mem_copy(bss_descr->fils_info_element.cache_id,

@@ -636,4 +636,22 @@ QDF_STATUS wlan_hdd_get_ani_level(struct hdd_adapter *adapter,
 				  uint32_t *parsed_freqs,
 				  uint8_t num_freqs);
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
+
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+/**
+ * hdd_enable_icmp_offload() - API to enable ICMP offload
+ * @adapter: Adapter context for which ICMP offload is to be configured
+ * @trigger: trigger reason for request
+ *
+ * Return: None
+ */
+void hdd_enable_icmp_offload(struct hdd_adapter *adapter,
+			     enum pmo_offload_trigger trigger);
+#else
+static inline
+void hdd_enable_icmp_offload(struct hdd_adapter *adapter,
+			     enum pmo_offload_trigger trigger)
+{}
+#endif /* FEATURE_ICMP_OFFLOAD */
+
 #endif /* __WLAN_HDD_POWER_H */

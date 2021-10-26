@@ -975,3 +975,19 @@ void dp_prealloc_put_consistent_mem_unaligned(void *va_unaligned)
 		dp_err("unable to find vaddr %pK", va_unaligned);
 }
 #endif
+
+#ifdef FEATURE_RUNTIME_PM
+uint32_t dp_get_tx_inqueue(ol_txrx_soc_handle soc)
+{
+	struct dp_soc *dp_soc;
+
+	dp_soc = cdp_soc_t_to_dp_soc(soc);
+
+	return qdf_atomic_read(&dp_soc->tx_pending_rtpm);
+}
+#else
+uint32_t dp_get_tx_inqueue(ol_txrx_soc_handle soc)
+{
+	return 0;
+}
+#endif

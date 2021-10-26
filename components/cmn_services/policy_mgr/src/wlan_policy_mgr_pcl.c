@@ -1740,58 +1740,124 @@ static enum policy_mgr_two_connection_mode
 	return index;
 }
 
+/*
+ * policy_mgr_check_and_get_third_connection_pcl_table_index_for_scc() -
+ * This function checks connection mode is in scc or not and returns
+ * index value based on mode and prvided index inputs.
+ *
+ * @scc_2g_1x1: index of scc_2g_1x1 for provided concurrency
+ * @scc_2g_2x2: index of scc_2g_2x2 for provided concurrency
+ * @scc_5g_1x1: index of scc_5g_1x1 for provided concurrency
+ * @scc_5g_2x2: index of scc_5g_2x2 for provided concurrency
+ *
+ * Return: policy_mgr_two_connection_mode index
+ */
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_go_go(void)
+policy_mgr_check_and_get_third_connection_pcl_table_index_for_scc(
+			enum policy_mgr_two_connection_mode scc_2g_1x1,
+			enum policy_mgr_two_connection_mode scc_2g_2x2,
+			enum policy_mgr_two_connection_mode scc_5g_1x1,
+			enum policy_mgr_two_connection_mode scc_5g_2x2)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
-	/* SCC */
+
 	if (pm_conc_connection_list[0].freq ==
-		pm_conc_connection_list[1].freq) {
+	    pm_conc_connection_list[1].freq) {
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(
-			pm_conc_connection_list[0].freq)) {
+		    pm_conc_connection_list[0].freq)) {
 			if (POLICY_MGR_ONE_ONE ==
-				pm_conc_connection_list[0].chain_mask)
-				index = PM_P2P_GO_P2P_GO_SCC_24_1x1;
+					pm_conc_connection_list[0].chain_mask)
+				index = scc_2g_1x1;
 			else
-				index = PM_P2P_GO_P2P_GO_SCC_24_2x2;
+				index = scc_2g_2x2;
 		} else {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
-				index = PM_P2P_GO_P2P_GO_SCC_5_1x1;
+				index = scc_5g_1x1;
 			else
-				index = PM_P2P_GO_P2P_GO_SCC_5_2x2;
+				index = scc_5g_2x2;
 		}
-	/* MCC */
-	} else if (pm_conc_connection_list[0].mac ==
-		pm_conc_connection_list[1].mac) {
+	}
+	return index;
+}
+
+/*
+ * policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc() -
+ * This function checks connection mode is in mcc or not and returns
+ * index value based on mode and prvided index inputs.
+ *
+ * @mcc_2g_1x1: index of mcc_2g_1x1 for provided concurrency
+ * @mcc_2g_2x2: index of mcc_2g_2x2 for provided concurrency
+ * @mcc_5g_1x1: index of mcc_5g_1x1 for provided concurrency
+ * @mcc_5g_2x2: index of mcc_5g_2x2 for provided concurrency
+ * @mcc_24_5_1x1: index of mcc_24_5_1x1 for provided concurrency
+ * @mcc_24_5_2x2: index of mcc_24_5_2x2 for provided concurrency
+ *
+ * Return: policy_mgr_two_connection_mode index
+ */
+static enum policy_mgr_two_connection_mode
+policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+			enum policy_mgr_two_connection_mode mcc_2g_1x1,
+			enum policy_mgr_two_connection_mode mcc_2g_2x2,
+			enum policy_mgr_two_connection_mode mcc_5g_1x1,
+			enum policy_mgr_two_connection_mode mcc_5g_2x2,
+			enum policy_mgr_two_connection_mode mcc_24_5_1x1,
+			enum policy_mgr_two_connection_mode mcc_24_5_2x2)
+{
+	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
+
+	if (pm_conc_connection_list[0].mac == pm_conc_connection_list[1].mac) {
 		if ((WLAN_REG_IS_24GHZ_CH_FREQ(
-			pm_conc_connection_list[0].freq)) &&
-			(WLAN_REG_IS_24GHZ_CH_FREQ(
-			pm_conc_connection_list[1].freq))) {
+		    pm_conc_connection_list[0].freq)) &&
+		    (WLAN_REG_IS_24GHZ_CH_FREQ(
+		    pm_conc_connection_list[1].freq))) {
 			if (POLICY_MGR_ONE_ONE ==
-				pm_conc_connection_list[0].chain_mask)
-				index = PM_P2P_GO_P2P_GO_MCC_24_1x1;
+					pm_conc_connection_list[0].chain_mask)
+				index = mcc_2g_1x1;
 			else
-				index = PM_P2P_GO_P2P_GO_MCC_24_2x2;
+				index = mcc_2g_2x2;
 		} else if (!(WLAN_REG_IS_24GHZ_CH_FREQ(
-			pm_conc_connection_list[0].freq)) &&
-			!(WLAN_REG_IS_24GHZ_CH_FREQ(
-			pm_conc_connection_list[1].freq))) {
+			   pm_conc_connection_list[0].freq)) &&
+			   !(WLAN_REG_IS_24GHZ_CH_FREQ(
+			   pm_conc_connection_list[1].freq))) {
 			if (POLICY_MGR_ONE_ONE ==
-				pm_conc_connection_list[0].chain_mask)
-				index = PM_P2P_GO_P2P_GO_MCC_5_1x1;
+					pm_conc_connection_list[0].chain_mask)
+				index = mcc_5g_1x1;
 			else
-				index = PM_P2P_GO_P2P_GO_MCC_5_2x2;
+				index = mcc_5g_2x2;
 		} else {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
-				index = PM_P2P_GO_P2P_GO_MCC_24_5_1x1;
+				index = mcc_24_5_1x1;
 			else
-				index = PM_P2P_GO_P2P_GO_MCC_24_5_2x2;
+				index = mcc_24_5_2x2;
 		}
-	/* SBS or DBS */
-	} else if (pm_conc_connection_list[0].mac !=
-			pm_conc_connection_list[1].mac) {
+	}
+	return index;
+}
+
+/*
+ * policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs() -
+ * This function checks connection mode is in dbs or sbs and returns index
+ * value based on mode and prvided index inputs.
+ *
+ * @sbs_5g_1x1: index of sbs_5g_1x1 for provided concurrency
+ * @sbs_5g_2x2: index of sbs_5g_2x2 for provided concurrency
+ * @dbs_1x1: index of dbs_1x1 for provided concurrency
+ * @dbs_2x2: index of dbs_2x2 for provided concurrency
+ *
+ * Return: policy_mgr_two_connection_mode index
+ */
+static enum policy_mgr_two_connection_mode
+policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+			enum policy_mgr_two_connection_mode sbs_5g_1x1,
+			enum policy_mgr_two_connection_mode sbs_5g_2x2,
+			enum policy_mgr_two_connection_mode dbs_1x1,
+			enum policy_mgr_two_connection_mode dbs_2x2)
+{
+	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
+
+	if (pm_conc_connection_list[0].mac != pm_conc_connection_list[1].mac) {
 		/* SBS */
 		if (!(WLAN_REG_IS_24GHZ_CH_FREQ(
 		    pm_conc_connection_list[0].freq)) &&
@@ -1799,18 +1865,89 @@ static enum policy_mgr_two_connection_mode
 		    pm_conc_connection_list[1].freq))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
-				index = PM_P2P_GO_P2P_GO_SBS_5_1x1;
+				index = sbs_5g_1x1;
 			else
-				index = PM_P2P_GO_P2P_GO_SBS_5_2x2;
+				index = sbs_5g_2x2;
 		} else {
 		/* DBS */
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
-				index = PM_P2P_GO_P2P_GO_DBS_1x1;
+				index = dbs_1x1;
 			else
-				index = PM_P2P_GO_P2P_GO_DBS_2x2;
+				index = dbs_2x2;
 		}
 	}
+
+	return index;
+}
+
+static enum policy_mgr_two_connection_mode
+		policy_mgr_get_third_connection_pcl_table_index_cli_cli(void)
+{
+	enum policy_mgr_two_connection_mode index;
+
+	index =
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_scc(
+					PM_P2P_CLI_P2P_CLI_SCC_24_1x1,
+					PM_P2P_CLI_P2P_CLI_SCC_24_2x2,
+					PM_P2P_CLI_P2P_CLI_SCC_5_1x1,
+					PM_P2P_CLI_P2P_CLI_SCC_5_2x2);
+	if (index != PM_MAX_TWO_CONNECTION_MODE)
+		return index;
+
+	index =
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+					PM_P2P_CLI_P2P_CLI_MCC_24_1x1,
+					PM_P2P_CLI_P2P_CLI_MCC_24_2x2,
+					PM_P2P_CLI_P2P_CLI_MCC_5_1x1,
+					PM_P2P_CLI_P2P_CLI_MCC_5_2x2,
+					PM_P2P_CLI_P2P_CLI_MCC_24_5_1x1,
+					PM_P2P_CLI_P2P_CLI_MCC_24_5_2x2);
+
+	if (index != PM_MAX_TWO_CONNECTION_MODE)
+		return index;
+
+	index =
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+					PM_P2P_CLI_P2P_CLI_SBS_5_1x1,
+					PM_P2P_CLI_P2P_CLI_SBS_5_2x2,
+					PM_P2P_CLI_P2P_CLI_DBS_1x1,
+					PM_P2P_CLI_P2P_CLI_DBS_2x2);
+
+	return index;
+}
+
+static enum policy_mgr_two_connection_mode
+		policy_mgr_get_third_connection_pcl_table_index_go_go(void)
+{
+	enum policy_mgr_two_connection_mode index;
+
+	index =
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_scc(
+					PM_P2P_GO_P2P_GO_SCC_24_1x1,
+					PM_P2P_GO_P2P_GO_SCC_24_2x2,
+					PM_P2P_GO_P2P_GO_SCC_5_1x1,
+					PM_P2P_GO_P2P_GO_SCC_5_2x2);
+	if (index != PM_MAX_TWO_CONNECTION_MODE)
+		return index;
+
+	index =
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+					PM_P2P_GO_P2P_GO_MCC_24_1x1,
+					PM_P2P_GO_P2P_GO_MCC_24_2x2,
+					PM_P2P_GO_P2P_GO_MCC_5_1x1,
+					PM_P2P_GO_P2P_GO_MCC_5_2x2,
+					PM_P2P_GO_P2P_GO_MCC_24_5_1x1,
+					PM_P2P_GO_P2P_GO_MCC_24_5_2x2);
+	if (index != PM_MAX_TWO_CONNECTION_MODE)
+		return index;
+
+	index =
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+					PM_P2P_GO_P2P_GO_SBS_5_1x1,
+					PM_P2P_GO_P2P_GO_SBS_5_2x2,
+					PM_P2P_GO_P2P_GO_DBS_1x1,
+					PM_P2P_GO_P2P_GO_DBS_2x2);
 	return index;
 }
 
@@ -1989,6 +2126,11 @@ enum policy_mgr_two_connection_mode
 		 (pm_conc_connection_list[1].mode == PM_P2P_GO_MODE))
 		index =
 		policy_mgr_get_third_connection_pcl_table_index_go_go();
+
+	else if ((pm_conc_connection_list[0].mode == PM_P2P_CLIENT_MODE) &&
+		 (pm_conc_connection_list[1].mode == PM_P2P_CLIENT_MODE))
+		index =
+		policy_mgr_get_third_connection_pcl_table_index_cli_cli();
 
 	policy_mgr_debug("mode0:%d mode1:%d freq0:%d freq1:%d chain:%d index:%d",
 			 pm_conc_connection_list[0].mode,

@@ -57,6 +57,9 @@ void hdd_nud_flush_work(struct hdd_adapter *adapter)
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
+	if (hdd_adapter_is_link_adapter(adapter))
+		return;
+
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    hdd_ctx->config->enable_nud_tracking) {
 		hdd_debug("Flush the NUD work");

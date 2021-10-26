@@ -121,6 +121,25 @@ enum pkt_capture_mode
 ucfg_pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_pkt_capturee_set_pktcap_config - Set packet capture config
+ * @vdev: pointer to vdev object
+ * @config: config to be set
+ *
+ * Return: None
+ */
+void ucfg_pkt_capture_set_pktcap_config(struct wlan_objmgr_vdev *vdev,
+					enum pkt_capture_config config);
+
+/**
+ * ucfg_pkt_capture_get_pktcap_config - Get packet capture config
+ * @vdev: pointer to vdev object
+ *
+ * Return: config value
+ */
+enum pkt_capture_config
+ucfg_pkt_capture_get_pktcap_config(struct wlan_objmgr_vdev *vdev);
+
+/**
  * ucfg_pkt_capture_process_mgmt_tx_data() - process management tx packets
  * @pdev: pointer to pdev object
  * @params: management offload event params
@@ -267,27 +286,17 @@ int
 ucfg_pkt_capture_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 					struct pkt_capture_callbacks *cb_obj);
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
- * ucfg_pkt_capture_send_config - send packet capture config
- * @vdev: pointer to vdev object
- * @config: packet capture config
+ * ucfg_pkt_capture_set_filter ucfg API to set frame filter
+ * @frame_filter: pkt capture frame filter data
+ * @vdev: pointer to vdev
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-QDF_STATUS ucfg_pkt_capture_send_config
-				(struct wlan_objmgr_vdev *vdev,
-				 enum pkt_capture_trigger_qos_config config);
-#else
-static inline
-QDF_STATUS ucfg_pkt_capture_send_config
-				(struct wlan_objmgr_vdev *vdev,
-				 enum pkt_capture_trigger_qos_config config)
-{
-	return QDF_STATUS_SUCCESS;
-}
+QDF_STATUS
+ucfg_pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+			    struct wlan_objmgr_vdev *vdev);
 
-#endif
 #else
 static inline
 QDF_STATUS ucfg_pkt_capture_init(void)
@@ -341,6 +350,18 @@ static inline enum pkt_capture_mode
 ucfg_pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
 {
 	return PACKET_CAPTURE_MODE_DISABLE;
+}
+
+static inline
+void ucfg_pkt_capture_set_pktcap_config(struct wlan_objmgr_vdev *vdev,
+					enum pkt_capture_config config)
+{
+}
+
+static inline enum pkt_capture_config
+ucfg_pkt_capture_get_pktcap_config(struct wlan_objmgr_vdev *vdev)
+{
+	return 0;
 }
 
 static inline QDF_STATUS
@@ -418,12 +439,12 @@ ucfg_pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev)
 {
 }
 
-static inline
-QDF_STATUS ucfg_pkt_capture_send_config
-				(struct wlan_objmgr_vdev *vdev,
-				 enum pkt_capture_trigger_qos_config config)
+static inline QDF_STATUS
+ucfg_pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+			    struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 #endif /* _WLAN_PKT_CAPTURE_UCFG_API_H_ */

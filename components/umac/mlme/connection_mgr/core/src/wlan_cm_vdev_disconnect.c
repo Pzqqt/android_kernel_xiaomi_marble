@@ -31,6 +31,7 @@
 #include <wlan_cm_roam_api.h>
 #include "wni_api.h"
 #include "connection_mgr/core/src/wlan_cm_roam.h"
+#include <wlan_mlo_mgr_sta.h>
 
 static void cm_abort_connect_request_timers(struct wlan_objmgr_vdev *vdev)
 {
@@ -286,17 +287,28 @@ QDF_STATUS cm_send_sb_disconnect_req(struct scheduler_msg *msg)
 {
 	struct cm_vdev_discon_ind *ind;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!msg || !msg->bodyptr)
 		return QDF_STATUS_E_FAILURE;
 
 	ind = msg->bodyptr;
 
-	status = cm_disconnect(ind->psoc, ind->disconnect_param.vdev_id,
-			       ind->disconnect_param.source,
-			       ind->disconnect_param.reason_code,
-			       &ind->disconnect_param.bssid);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(ind->psoc,
+						ind->disconnect_param.vdev_id,
+						WLAN_MLME_CM_ID);
+
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found",
+			 ind->disconnect_param.vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = mlo_disconnect(vdev, ind->disconnect_param.source,
+				ind->disconnect_param.reason_code,
+				&ind->disconnect_param.bssid);
 	qdf_mem_free(ind);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return status;
 }

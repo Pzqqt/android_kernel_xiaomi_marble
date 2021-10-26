@@ -33,6 +33,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_cm_api.h"
+#include "wlan_reg_ucfg_api.h"
 
 #define POLICY_MGR_MAX_CON_STRING_LEN   100
 
@@ -934,6 +935,9 @@ policy_mgr_fill_curr_freq_by_pdev_freq(int32_t num_mac_freq,
 {
 	uint32_t pdev_id, i;
 
+	/* memzero before filling it */
+	qdf_mem_zero(pm_ctx->hw_mode.cur_mac_freq_range,
+		     sizeof(pm_ctx->hw_mode.cur_mac_freq_range));
 	for (i = 0; i < num_mac_freq; i++) {
 		pdev_id = freq[i].pdev_id;
 
@@ -1005,6 +1009,9 @@ void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
+	policy_mgr_update_curr_mac_freq(num_mac_freq, freq_info, pm_ctx,
+					hw_mode);
+
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (i = 0; i < num_vdev_mac_entries; i++) {
 		conn_index = 0;
@@ -1032,8 +1039,6 @@ void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	policy_mgr_update_curr_mac_freq(num_mac_freq, freq_info, pm_ctx,
-					hw_mode);
 	policy_mgr_dump_connection_status_info(psoc);
 }
 
@@ -1301,29 +1306,13 @@ static uint32_t policy_mgr_dump_current_concurrency_three_connection(
 	return count;
 }
 
-/**
- * policy_mgr_dump_dbs_concurrency() - To dump the dbs concurrency
- * combination
- * @cc_mode: connection string
- *
- * This routine is called to dump the concurrency info
- *
- * Return: None
- */
-static void policy_mgr_dump_dbs_concurrency(struct wlan_objmgr_psoc *psoc,
-					char *cc_mode, uint32_t length)
+static void
+policy_mgr_dump_dual_mac_concurrency(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				     char *cc_mode, uint32_t length)
 {
-	char buf[4] = {0};
 	uint8_t mac = 0;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	char buf[4] = {0};
 
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return;
-	}
-
-	strlcat(cc_mode, " DBS", length);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (pm_conc_connection_list[0].mac ==
 		pm_conc_connection_list[1].mac) {
@@ -1368,6 +1357,54 @@ static void policy_mgr_dump_dbs_concurrency(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * policy_mgr_dump_dbs_concurrency() - To dump the dbs concurrency
+ * combination
+ * @cc_mode: connection string
+ *
+ * This routine is called to dump the concurrency info
+ *
+ * Return: None
+ */
+static void policy_mgr_dump_dbs_concurrency(struct wlan_objmgr_psoc *psoc,
+					char *cc_mode, uint32_t length)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	strlcat(cc_mode, " DBS", length);
+	policy_mgr_dump_dual_mac_concurrency(pm_ctx, cc_mode, length);
+}
+
+/**
+ * policy_mgr_dump_sbs_concurrency() - To dump the sbs concurrency
+ * combination
+ * @cc_mode: connection string
+ *
+ * This routine is called to dump the concurrency info
+ *
+ * Return: None
+ */
+static void policy_mgr_dump_sbs_concurrency(struct wlan_objmgr_psoc *psoc,
+					    char *cc_mode, uint32_t length)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	strlcat(cc_mode, " SBS", length);
+	policy_mgr_dump_dual_mac_concurrency(pm_ctx, cc_mode, length);
+}
+
+/**
  * policy_mgr_dump_current_concurrency() - To dump the current
  * concurrency combination
  *
@@ -1403,8 +1440,10 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 		if (pm_conc_connection_list[0].freq ==
 			pm_conc_connection_list[1].freq) {
 			strlcat(cc_mode, " SCC", sizeof(cc_mode));
-		} else if (policy_mgr_is_dbs_enable(psoc)) {
+		} else if (policy_mgr_is_current_hwmode_dbs(psoc)) {
 			strlcat(cc_mode, " DBS", sizeof(cc_mode));
+		} else if (policy_mgr_is_current_hwmode_sbs(psoc)) {
+			strlcat(cc_mode, " SBS", sizeof(cc_mode));
 		} else {
 			strlcat(cc_mode, " MCC", sizeof(cc_mode));
 		}
@@ -1431,8 +1470,14 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 						sizeof(cc_mode));
 		} else {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-			policy_mgr_dump_dbs_concurrency(psoc, cc_mode,
-					sizeof(cc_mode));
+			if (policy_mgr_is_current_hwmode_dbs(psoc))
+				policy_mgr_dump_dbs_concurrency(psoc, cc_mode,
+							sizeof(cc_mode));
+			else if (policy_mgr_is_current_hwmode_sbs(psoc))
+				policy_mgr_dump_sbs_concurrency(psoc, cc_mode,
+							sizeof(cc_mode));
+			else
+				strlcat(cc_mode, " MCC", sizeof(cc_mode));
 		}
 		policy_mgr_debug("%s", cc_mode);
 		break;
@@ -1599,7 +1644,7 @@ static uint32_t
 policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id)
 {
-	uint32_t band_mask = REG_BAND_MASK_ALL;
+	uint32_t band_mask;
 	struct wlan_objmgr_vdev *vdev;
 	bool dual_sta_roam_active;
 	struct wlan_channel *chan;
@@ -1613,19 +1658,22 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 	}
 
 	chan = wlan_vdev_get_active_channel(vdev);
+
+	ucfg_reg_get_band(wlan_vdev_get_pdev(vdev), &band_mask);
+	roam_band_mask = wlan_cm_get_roam_band_value(psoc, vdev);
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	if (!chan) {
 		policy_mgr_err("no active channel");
 		return 0;
 	}
 
-	roam_band_mask = wlan_cm_get_roam_band_value(psoc, vdev_id);
 	/*
 	 * if vendor command to configure roam band is set , we will
 	 * take this as priority instead of drv cmd "SETROAMINTRABAND" or
 	 * active connection band.
 	 */
-	if (roam_band_mask != REG_BAND_MASK_ALL)
+	if (roam_band_mask != band_mask)
 		return roam_band_mask;
 
 	/*
@@ -1979,15 +2027,13 @@ get_sbs_chlist(struct wlan_objmgr_psoc *psoc,
 	for (i = 0; i < chlist1_len; i++) {
 		if (*sbs_num >= size_of_sbs)
 			return;
-		if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(chan_freq,
-						       chlist1[i]))
+		if (policy_mgr_are_sbs_chan(psoc, chan_freq, chlist1[i]))
 			sbs_freqs[(*sbs_num)++] = chlist1[i];
 	}
 	for (i = 0; i < chlist2_len; i++) {
 		if (*sbs_num >= size_of_sbs)
 			return;
-		if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(chan_freq,
-						       chlist2[i]))
+		if (policy_mgr_are_sbs_chan(psoc, chan_freq, chlist2[i]))
 			sbs_freqs[(*sbs_num)++] = chlist2[i];
 	}
 }
@@ -2090,8 +2136,8 @@ get_sub_channels(struct wlan_objmgr_psoc *psoc,
 
 	if (policy_mgr_is_hw_sbs_capable(psoc)) {
 		if (*scc_num > 1) {
-			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-					scc_freqs[0], scc_freqs[1])) {
+			if (policy_mgr_are_sbs_chan(psoc, scc_freqs[0],
+						    scc_freqs[1])) {
 				/* 2/3 home channels with SBS separation */
 				*sbs_num = 0;
 			} else {
@@ -3626,9 +3672,9 @@ enum policy_mgr_conc_next_action
 			else
 				return PM_NOP;
 		} else if (band1 == REG_BAND_5G && band2 == REG_BAND_5G) {
-			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[0].freq,
-			    pm_conc_connection_list[1].freq)) {
+			if (policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[1].freq)) {
 				if (!hw_mode.sbs_cap)
 					return PM_SBS;
 				else
@@ -3653,15 +3699,15 @@ enum policy_mgr_conc_next_action
 				return PM_NOP;
 		} else if (band1 == REG_BAND_5G && band2 == REG_BAND_5G &&
 			   band3 == REG_BAND_5G) {
-			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[0].freq,
-			    pm_conc_connection_list[2].freq) &&
-			    WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[1].freq,
-			    pm_conc_connection_list[2].freq) &&
-			    WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    pm_conc_connection_list[0].freq,
-			    pm_conc_connection_list[1].freq)) {
+			if (policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[2].freq) &&
+			    policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[1].freq,
+					pm_conc_connection_list[2].freq) &&
+			    policy_mgr_are_sbs_chan(psoc,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[1].freq)) {
 				if (!hw_mode.sbs_cap)
 					return PM_SBS;
 				else

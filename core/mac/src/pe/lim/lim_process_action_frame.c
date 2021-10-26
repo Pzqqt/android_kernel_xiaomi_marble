@@ -492,12 +492,16 @@ lim_is_medium_time_valid(struct mac_context *mac, struct pe_session *pe_session,
 	bool is_acm = false;
 	QDF_STATUS status;
 
-	if (!pe_session->lim_join_req) {
+	if (!pe_session->lim_join_req && !pe_session->pLimReAssocReq) {
 		pe_err("Join Request is NULL");
 		return false;
 	}
 
-	bss_desc = &pe_session->lim_join_req->bssDescription;
+	if (pe_session->lim_join_req)
+		bss_desc = &pe_session->lim_join_req->bssDescription;
+	else
+		bss_desc = &pe_session->pLimReAssocReq->bssDescription;
+
 	status = wlan_get_parsed_bss_description_ies(mac, bss_desc, &ie_local);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_debug("bss parsing failed");
@@ -640,7 +644,8 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 	 * Change the status to failure and fallthrough to send response
 	 * to SME to cleanup the flow.
 	 */
-	if (!lim_is_medium_time_valid(mac_ctx, session, addts))
+	if (addts.tspec.tsinfo.traffic.direction != SIR_MAC_DIRECTION_DNLINK &&
+	    !lim_is_medium_time_valid(mac_ctx, session, addts))
 		addts.status = STATUS_UNSPECIFIED_FAILURE;
 
 	/* deactivate the response timer */

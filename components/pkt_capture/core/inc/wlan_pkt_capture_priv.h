@@ -32,23 +32,23 @@
 #include "wlan_pkt_capture_mon_thread.h"
 
 /**
- * struct pkt_capture_cfg - packet capture cfg to store ini values
+ * struct pkt_capture_cfg - struct to store config values
  * @pkt_capture_mode: packet capture mode
+ * @pkt_capture_config: config for trigger, qos and beacon frames
  */
 struct pkt_capture_cfg {
 	enum pkt_capture_mode pkt_capture_mode;
+	enum pkt_capture_config pkt_capture_config;
 };
 
 /**
  * struct pkt_capture_cb_context - packet capture callback context
  * @mon_cb: monitor callback function pointer
  * @mon_ctx: monitor callback context
- * @pkt_capture_mode: packet capture mode
  */
 struct pkt_capture_cb_context {
 	QDF_STATUS (*mon_cb)(void *, qdf_nbuf_t);
 	void *mon_ctx;
-	enum pkt_capture_mode pkt_capture_mode;
 };
 
 /**
@@ -58,6 +58,8 @@ struct pkt_capture_cb_context {
  * @cb_ctx: pointer to packet capture mon callback context
  * @rx_ops: rx ops
  * @tx_ops: tx ops
+ * @frame_filter: config filter set by vendor command
+ * @cfg_params: packet capture config params
  * @rx_avg_rssi: avg rssi of rx data packets
  * @ppdu_stats_q: list used for storing smu related ppdu stats
  * @lock_q: spinlock for ppdu_stats q
@@ -71,6 +73,8 @@ struct pkt_capture_vdev_priv {
 	struct pkt_capture_cb_context *cb_ctx;
 	struct wlan_pkt_capture_rx_ops rx_ops;
 	struct wlan_pkt_capture_tx_ops tx_ops;
+	struct pkt_capture_frame_filter frame_filter;
+	struct pkt_capture_cfg cfg_params;
 	int32_t rx_avg_rssi;
 	qdf_list_t ppdu_stats_q;
 	qdf_spinlock_t lock_q;

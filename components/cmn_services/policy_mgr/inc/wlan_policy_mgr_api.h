@@ -692,20 +692,29 @@ policy_mgr_is_p2p_p2p_conc_supported(struct wlan_objmgr_psoc *psoc)
 bool policy_mgr_is_go_scc_strict(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_check_forcescc_for_other_go() - check if another p2pgo
- * is present and find vdev id.
+ * policy_mgr_fetch_existing_con_info() - check if another vdev
+ * is present and find mode, freq , vdev id and chan width
  *
  * @psoc: psoc object
  * @vdev: vdev id
  * @freq: frequency
+ * @mode: existing vdev mode
+ * @con_freq: existing connection freq
+ * @ch_width: ch_width of existing connection
  *
- * This function checks if another p2p go is there.
+ * This function checks if another vdev is there and fetch connection
+ * info for that vdev.This is mainly for force SCC implementation of GO+GO ,
+ * GO+SAP or GO+STA where we fetch other existing GO, STA, SAP on the same
+ * band with MCC.
  *
  * Return: vdev_id
  */
 uint8_t
-policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
-				       uint8_t vdev_id, uint32_t curr_go_freq);
+policy_mgr_fetch_existing_con_info(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id, uint32_t curr_go_freq,
+				   enum policy_mgr_con_mode *mode,
+				   uint32_t *con_freq,
+				   enum phy_ch_width *ch_width);
 
 /**
  * policy_mgr_process_forcescc_for_go () - start work queue to move first p2p go
@@ -715,6 +724,7 @@ policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
  * @vdev_id: Vdev id
  * @ch_freq: Channel frequency to change
  * @ch_width: channel width to change
+ * @mode: existing vdev mode
  *
  * starts delayed work queue of 1 second to move first p2p go to new
  * p2p go's channel.
@@ -723,7 +733,8 @@ policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
  */
 void policy_mgr_process_forcescc_for_go(
 		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-		uint32_t ch_freq, uint32_t ch_width);
+		uint32_t ch_freq, uint32_t ch_width,
+		enum policy_mgr_con_mode mode);
 
 /**
  * policy_mgr_do_go_plus_go_force_scc() - First p2p go
@@ -750,9 +761,12 @@ bool policy_mgr_is_go_scc_strict(struct wlan_objmgr_psoc *psoc)
 }
 
 static inline
-uint8_t policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
-					       uint8_t vdev_id,
-					       uint32_t curr_go_freq)
+uint8_t policy_mgr_fetch_existing_con_info(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id,
+					   uint32_t curr_go_freq,
+					   enum policy_mgr_con_mode *mode,
+					   uint32_t *con_freq,
+					   enum phy_ch_width *ch_width)
 {
 	return WLAN_UMAC_VDEV_ID_MAX;
 }
@@ -760,7 +774,8 @@ uint8_t policy_mgr_check_forcescc_for_other_go(struct wlan_objmgr_psoc *psoc,
 static inline
 void policy_mgr_process_forcescc_for_go(
 		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-		uint32_t ch_freq, uint32_t ch_width)
+		uint32_t ch_freq, uint32_t ch_width,
+		enum policy_mgr_con_mode mode)
 {}
 
 static inline
@@ -2681,13 +2696,87 @@ bool policy_mgr_is_dbs_scan_allowed(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_is_current_hwmode_dbs() - Check if current hw mode is DBS
- * @psoc: PSOC object information
- * Checks if current hardware mode of the system is DBS or no
+ * policy_mgr_are_2_freq_on_same_mac() - Function to check whether both the
+ * input frequencies are on same mac
  *
- * Return: true or false
+ * @psoc: Pointer to Psoc
+ * @freq_1: Frequency 1 to check
+ * @freq_2: Frequency 2 to check
+ *
+ * This Function check whether both the input frequency exist in the same mac
+ *
+ * Return:True if both the frequency exist on the same mac.
+ *
+ */
+bool
+policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
+				  qdf_freq_t freq_1,
+				  qdf_freq_t  freq_2);
+
+/**
+ * policy_mgr_are_3_freq_on_same_mac() - Function to check whether all three
+ * input frequencies are in same mac
+ *
+ * @psoc: Pointer to Psoc
+ * @freq_1: Frequency 1 to check
+ * @freq_2: Frequency 2 to check
+ * @freq_3: Frequency 3 to check
+ *
+ * This Function check whether all three input frequencies exist in the same
+ * mac.
+ *
+ * Return:True if all three frequency exist on the same mac
+ *
+ */
+bool
+policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
+				  qdf_freq_t freq_1, qdf_freq_t freq_2,
+				  qdf_freq_t freq_3);
+
+/**
+ * policy_mgr_are_sbs_chan() - Function to check whether both the
+ * input frequency are in SBS frequency range
+ *
+ * @pm_ctx: Policy Mgr context
+ * @freq_range: freq range to check
+ * @freq_1: Frequency 1 to check
+ * @freq_2: Frequency 2 to check
+ *
+ * This Function check whether both the input frequency exist in the SBS
+ * frequency range.
+ *
+ * Return:True if both the frequency exist on the SBS frequency range.
+ *
+ */
+bool
+policy_mgr_are_sbs_chan(struct wlan_objmgr_psoc *psoc, qdf_freq_t freq_1,
+			qdf_freq_t  freq_2);
+
+/**
+ * policy_mgr_is_current_hwmode_dbs() - Function to check if current HW mode is
+ * DBS
+ *
+ * @psoc: Pointer to Psoc
+ *
+ * This Function checks if current HW mode is DBS
+ *
+ * Return:True if current HW mode is DBS.
+ *
  */
 bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_is_current_hwmode_sbs() - Function to check if current HW mode is
+ * SBS
+ *
+ * @psoc: Pointer to Psoc
+ *
+ * This Function checks if current HW mode is SBS
+ *
+ * Return:True if current HW mode is SBS.
+ *
+ */
+bool policy_mgr_is_current_hwmode_sbs(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_is_dp_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2

@@ -707,6 +707,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 	int ret;
+	struct hdd_adapter_create_param create_params = {0};
 
 	hdd_enter();
 
@@ -800,7 +801,8 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		p2p_device_address.bytes[4] ^= 0x80;
 		adapter = hdd_open_adapter(hdd_ctx, mode, name,
 					   p2p_device_address.bytes,
-					   name_assign_type, true);
+					   name_assign_type, true,
+					   &create_params);
 	} else {
 		uint8_t *device_address;
 		if (strnstr(name, "p2p", 3) && mode == QDF_STA_MODE) {
@@ -813,7 +815,8 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 
 		adapter = hdd_open_adapter(hdd_ctx, mode, name,
 					   device_address,
-					   name_assign_type, true);
+					   name_assign_type, true,
+					   &create_params);
 		if (!adapter)
 			wlan_hdd_release_intf_addr(hdd_ctx, device_address);
 	}

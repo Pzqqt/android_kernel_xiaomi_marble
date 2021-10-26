@@ -171,7 +171,7 @@
  * in no of MPDUs
  * @Min: 1
  * @Max: 256
- * @Default: 64
+ * @Default: 256
  *
  * gRxAggregationSize gives an option to configure Rx aggregation size
  * in no of MPDUs. This can be useful in debugging throughput issues
@@ -188,7 +188,7 @@
 			"gRxAggregationSize", \
 			1, \
 			256, \
-			64, \
+			256, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Rx Aggregation size value")
 

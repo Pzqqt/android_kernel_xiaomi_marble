@@ -527,6 +527,21 @@ enum policy_mgr_one_connection_mode {
  *			2x2
  * @PM_P2P_GO_SAP_SBS_5_1x1: P2P GO & SAP connection on 5G SBS
  *			using 1x1
+ * @PM_P2P_GO_P2P_GO_SCC_24_1x1: P2P GO & P2P GO SCC on 2.4G using 1x1
+ * @PM_P2P_GO_P2P_GO_SCC_24_2x2: P2P GO & P2P GO SCC on 2.4G using 2x2
+ * @PM_P2P_GO_P2P_GO_MCC_24_1x1: P2P GO & P2P GO MCC on 2.4G using 1x1
+ * @PM_P2P_GO_P2P_GO_MCC_24_2x2: P2P GO & P2P GO MCC on 2.4G using 2x2
+ * @PM_P2P_GO_P2P_GO_SCC_5_1x1: P2P GO & P2P GO SCC on 5G using 1x1
+ * @PM_P2P_GO_P2P_GO_SCC_5_2x2: P2P GO & P2P GO SCC on 5G using 2x2
+ * @PM_P2P_GO_P2P_GO_MCC_5_1x1: P2P GO & P2P GO MCC on 5G using 1x1
+ * @PM_P2P_GO_P2P_GO_MCC_5_2x2: P2P GO & P2P GO MCC on 5G using 2x2
+ * @PM_P2P_GO_P2P_GO_MCC_24_5_1x1: P2P GO 2.4G & P2P GO 5G dual band MCC
+ *                                 using 1x1
+ * @PM_P2P_GO_P2P_GO_MCC_24_5_2x2: P2P GO 2.4G & P2P GO 5G dual band MCC
+ *                                 using 2x2
+ * @PM_P2P_GO_P2P_GO_DBS_1x1: P2P GO & P2P GO on DBS using 1x1
+ * @PM_P2P_GO_P2P_GO_DBS_2x2: P2P GO & P2P GO on DBS using 2x2
+ * @PM_P2P_GO_P2P_GO_SBS_5_1x1: P2P GO & P2P GO on SBS using 1x1
  * @PM_P2P_CLI_SAP_SCC_24_1x1: CLI & SAP connection on SCC using
  *			1x1@2.4 Ghz
  * @PM_P2P_CLI_SAP_SCC_24_2x2: CLI & SAP connection on SCC using
@@ -552,6 +567,21 @@ enum policy_mgr_one_connection_mode {
  *			2x2
  * @PM_P2P_CLI_SAP_SBS_5_1x1: P2P CLI & SAP connection on 5G SBS
  *			using 1x1
+ * @PM_P2P_CLI_P2P_CLI_SCC_24_1x1: P2P CLI & P2P CLI SCC on 2.4G using 1x1
+ * @PM_P2P_CLI_P2P_CLI_SCC_24_2x2: P2P CLI & P2P CLI SCC on 2.4G using 2x2
+ * @PM_P2P_CLI_P2P_CLI_MCC_24_1x1: P2P CLI & P2P CLI MCC on 2.4G using 1x1
+ * @PM_P2P_CLI_P2P_CLI_MCC_24_2x2: P2P CLI & P2P CLI MCC on 2.4G using 2x2
+ * @PM_P2P_CLI_P2P_CLI_SCC_5_1x1: P2P CLI & P2P CLI SCC on 5G using 1x1
+ * @PM_P2P_CLI_P2P_CLI_SCC_5_2x2: P2P CLI & P2P CLI SCC on 5G using 2x2
+ * @PM_P2P_CLI_P2P_CLI_MCC_5_1x1: P2P CLI & P2P CLI MCC on 5G using 1x1
+ * @PM_P2P_CLI_P2P_CLI_MCC_5_2x2: P2P CLI & P2P CLI MCC on 5G using 2x2
+ * @PM_P2P_CLI_P2P_CLI_MCC_24_5_1x1: P2P CLI 2.4G & P2P CLI 5G dual band MCC
+ *                                 using 1x1
+ * @PM_P2P_CLI_P2P_CLI_MCC_24_5_2x2: P2P CLI 2.4G & P2P CLI 5G dual band MCC
+ *                                 using 2x2
+ * @PM_P2P_CLI_P2P_CLI_DBS_1x1: P2P CLI & P2P CLI on DBS using 1x1
+ * @PM_P2P_CLI_P2P_CLI_DBS_2x2: P2P CLI & P2P CLI on DBS using 2x2
+ * @PM_P2P_CLI_P2P_CLI_SBS_5_1x1: P2P CLI & P2P CLI on SBS using 1x1
  * @PM_SAP_SAP_SCC_24_1x1: SAP & SAP connection on
  *			SCC using 1x1@2.4 Ghz
  * @PM_SAP_SAP_SCC_24_2x2: SAP & SAP connection on
@@ -622,21 +652,6 @@ enum policy_mgr_one_connection_mode {
  * @PM_NAN_DISC_NDI_MCC_24_2x2: NAN & NDI connection on MCC using 2x2 on 2.4 GHz
  * @PM_NAN_DISC_NDI_DBS_1x1: NAN & NDI connection on DBS using 1x1
  * @PM_NAN_DISC_NDI_DBS_2x2: NAN & NDI connection on DBS using 2x2
- * @PM_P2P_GO_P2P_GO_SCC_24_1x1: P2P GO & P2P GO SCC on 2.4G using 1x1
- * @PM_P2P_GO_P2P_GO_SCC_24_2x2: P2P GO & P2P GO SCC on 2.4G using 2x2
- * @PM_P2P_GO_P2P_GO_MCC_24_1x1: P2P GO & P2P GO MCC on 2.4G using 1x1
- * @PM_P2P_GO_P2P_GO_MCC_24_2x2: P2P GO & P2P GO MCC on 2.4G using 2x2
- * @PM_P2P_GO_P2P_GO_SCC_5_1x1: P2P GO & P2P GO SCC on 5G using 1x1
- * @PM_P2P_GO_P2P_GO_SCC_5_2x2: P2P GO & P2P GO SCC on 5G using 2x2
- * @PM_P2P_GO_P2P_GO_MCC_5_1x1: P2P GO & P2P GO MCC on 5G using 1x1
- * @PM_P2P_GO_P2P_GO_MCC_5_2x2: P2P GO & P2P GO MCC on 5G using 2x2
- * @PM_P2P_GO_P2P_GO_MCC_24_5_1x1: P2P GO 2.4G & P2P GO 5G dual band MCC
- *                                 using 1x1
- * @PM_P2P_GO_P2P_GO_MCC_24_5_2x2: P2P GO 2.4G & P2P GO 5G dual band MCC
- *                                 using 2x2
- * @PM_P2P_GO_P2P_GO_DBS_1x1: P2P GO & P2P GO on DBS using 1x1
- * @PM_P2P_GO_P2P_GO_DBS_2x2: P2P GO & P2P GO on DBS using 2x2
- * @PM_P2P_GO_P2P_GO_SBS_5_1x1: P2P GO & P2P GO on SBS using 1x1
  *
  * These are generic IDs that identify the various roles in the
  * software system
@@ -712,6 +727,20 @@ enum policy_mgr_two_connection_mode {
 	PM_P2P_GO_SAP_DBS_2x2,
 	PM_P2P_GO_SAP_SBS_5_1x1,
 	PM_P2P_GO_SAP_SBS_5_2x2 = PM_P2P_GO_SAP_SBS_5_1x1,
+	PM_P2P_GO_P2P_GO_SCC_24_1x1,
+	PM_P2P_GO_P2P_GO_SCC_24_2x2,
+	PM_P2P_GO_P2P_GO_MCC_24_1x1,
+	PM_P2P_GO_P2P_GO_MCC_24_2x2,
+	PM_P2P_GO_P2P_GO_SCC_5_1x1,
+	PM_P2P_GO_P2P_GO_SCC_5_2x2,
+	PM_P2P_GO_P2P_GO_MCC_5_1x1,
+	PM_P2P_GO_P2P_GO_MCC_5_2x2,
+	PM_P2P_GO_P2P_GO_MCC_24_5_1x1,
+	PM_P2P_GO_P2P_GO_MCC_24_5_2x2,
+	PM_P2P_GO_P2P_GO_DBS_1x1,
+	PM_P2P_GO_P2P_GO_DBS_2x2,
+	PM_P2P_GO_P2P_GO_SBS_5_1x1,
+	PM_P2P_GO_P2P_GO_SBS_5_2x2 = PM_P2P_GO_P2P_GO_SBS_5_1x1,
 	PM_P2P_CLI_SAP_SCC_24_1x1,
 	PM_P2P_CLI_SAP_SCC_24_2x2,
 	PM_P2P_CLI_SAP_MCC_24_1x1,
@@ -726,6 +755,20 @@ enum policy_mgr_two_connection_mode {
 	PM_P2P_CLI_SAP_DBS_2x2,
 	PM_P2P_CLI_SAP_SBS_5_1x1,
 	PM_P2P_CLI_SAP_SBS_5_2x2 = PM_P2P_CLI_SAP_SBS_5_1x1,
+	PM_P2P_CLI_P2P_CLI_SCC_24_1x1,
+	PM_P2P_CLI_P2P_CLI_SCC_24_2x2,
+	PM_P2P_CLI_P2P_CLI_MCC_24_1x1,
+	PM_P2P_CLI_P2P_CLI_MCC_24_2x2,
+	PM_P2P_CLI_P2P_CLI_SCC_5_1x1,
+	PM_P2P_CLI_P2P_CLI_SCC_5_2x2,
+	PM_P2P_CLI_P2P_CLI_MCC_5_1x1,
+	PM_P2P_CLI_P2P_CLI_MCC_5_2x2,
+	PM_P2P_CLI_P2P_CLI_MCC_24_5_1x1,
+	PM_P2P_CLI_P2P_CLI_MCC_24_5_2x2,
+	PM_P2P_CLI_P2P_CLI_DBS_1x1,
+	PM_P2P_CLI_P2P_CLI_DBS_2x2,
+	PM_P2P_CLI_P2P_CLI_SBS_5_1x1,
+	PM_P2P_CLI_P2P_CLI_SBS_5_2x2 = PM_P2P_CLI_P2P_CLI_SBS_5_1x1,
 	PM_SAP_SAP_SCC_24_1x1,
 	PM_SAP_SAP_SCC_24_2x2,
 	PM_SAP_SAP_MCC_24_1x1,
@@ -772,20 +815,6 @@ enum policy_mgr_two_connection_mode {
 	PM_NAN_DISC_NDI_MCC_24_2x2,
 	PM_NAN_DISC_NDI_DBS_1x1,
 	PM_NAN_DISC_NDI_DBS_2x2,
-	PM_P2P_GO_P2P_GO_SCC_24_1x1,
-	PM_P2P_GO_P2P_GO_SCC_24_2x2,
-	PM_P2P_GO_P2P_GO_MCC_24_1x1,
-	PM_P2P_GO_P2P_GO_MCC_24_2x2,
-	PM_P2P_GO_P2P_GO_SCC_5_1x1,
-	PM_P2P_GO_P2P_GO_SCC_5_2x2,
-	PM_P2P_GO_P2P_GO_MCC_5_1x1,
-	PM_P2P_GO_P2P_GO_MCC_5_2x2,
-	PM_P2P_GO_P2P_GO_MCC_24_5_1x1,
-	PM_P2P_GO_P2P_GO_MCC_24_5_2x2,
-	PM_P2P_GO_P2P_GO_DBS_1x1,
-	PM_P2P_GO_P2P_GO_DBS_2x2,
-	PM_P2P_GO_P2P_GO_SBS_5_1x1,
-	PM_P2P_GO_P2P_GO_SBS_5_2x2 = PM_P2P_GO_P2P_GO_SBS_5_1x1,
 	PM_MAX_TWO_CONNECTION_MODE
 };
 
@@ -1221,15 +1250,19 @@ struct policy_mgr_freq_range {
 
 /**
  * enum policy_mgr_mode – enum for host mode
- * @MODE_SMM:    Single mac mode
- * @MODE_DBS:    DBS mode
- * @MODE_SBS:    SBS mode
+ * @MODE_SMM:               Single mac mode
+ * @MODE_DBS:               DBS mode
+ * @MODE_SBS:               SBS mode with either high share or low share
+ * @MODE_SBS_UPPER_SHARE:   Higher 5Ghz shared with 2.4Ghz
+ * @MODE_SBS_LOWER_SHARE:   LOWER 5Ghz shared with 2.4Ghz
  * @MODE_HW_MAX: MAX
  */
 enum policy_mgr_mode {
 	MODE_SMM,
 	MODE_DBS,
 	MODE_SBS,
+	MODE_SBS_UPPER_SHARE,
+	MODE_SBS_LOWER_SHARE,
 	MODE_HW_MAX,
 };
 
@@ -1237,6 +1270,7 @@ enum policy_mgr_mode {
  * struct dbs_hw_mode_info - WLAN_DBS_HW_MODES_TLV Format
  * @tlv_header: TLV header, TLV tag and len; tag equals WMITLV_TAG_ARRAY_UINT32
  * @hw_mode_list: WLAN_DBS_HW_MODE_LIST entries
+ * @sbs_lower_band_end_freq: value with which range will be divided
  * @freq_range_caps: Initial capability and range for different modes for both
  *                   pdev
  * @cur_mac_freq_range: Current freq range for both pdev, this can be used to
@@ -1246,6 +1280,7 @@ enum policy_mgr_mode {
 struct dbs_hw_mode_info {
 	uint32_t tlv_header;
 	uint32_t *hw_mode_list;
+	qdf_freq_t sbs_lower_band_end_freq;
 	struct policy_mgr_freq_range freq_range_caps[MODE_HW_MAX][MAX_MAC];
 	struct policy_mgr_freq_range cur_mac_freq_range[MAX_MAC];
 };

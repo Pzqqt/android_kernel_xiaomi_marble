@@ -335,7 +335,6 @@ rel_ref:
 	return status;
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 QDF_STATUS
 cm_roam_sync_event_handler(struct wlan_objmgr_psoc *psoc,
 			   uint8_t *event,
@@ -547,4 +546,3 @@ err:
 	}
 	return status;
 }
-#endif /* ROAM_TARGET_IF_CONVERGENCE */

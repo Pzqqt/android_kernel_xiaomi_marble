@@ -283,13 +283,42 @@ void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
 		return;
 	}
 
-	if (lim_is_mlo_conn(pe_session, sta_ds)) {
+	if (wlan_peer_mlme_flag_ext_get(peer, WLAN_PEER_FEXT_MLO)) {
 		if (wlan_vdev_mlme_is_mlo_ap(pe_session->vdev))
 			lim_mlo_update_cleanup_trigger(
 					pe_session, sta_ds,
 					sta_ds->mlmStaContext.cleanupTrigger);
 		wlan_mlo_partner_peer_disconnect_notify(peer);
 	}
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+}
+
+void lim_mlo_sta_notify_peer_disconn(struct pe_session *pe_session)
+{
+	struct wlan_objmgr_peer *peer;
+	struct mac_context *mac_ctx;
+
+	if (!pe_session) {
+		pe_err("pe session is null");
+		return;
+	}
+	mac_ctx = pe_session->mac_ctx;
+	if (!mac_ctx) {
+		pe_err("mac context is null");
+		return;
+	}
+
+	peer = wlan_objmgr_get_peer_by_mac(mac_ctx->psoc,
+					   pe_session->bssId,
+					   WLAN_LEGACY_MAC_ID);
+	if (!peer) {
+		pe_err("peer is null");
+		return;
+	}
+
+	if (wlan_peer_mlme_flag_ext_get(peer, WLAN_PEER_FEXT_MLO))
+		wlan_mlo_partner_peer_disconnect_notify(peer);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
 }

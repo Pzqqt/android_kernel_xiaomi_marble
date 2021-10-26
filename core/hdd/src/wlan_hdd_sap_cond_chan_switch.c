@@ -244,6 +244,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	mac_handle_t mac_handle;
 	bool val;
 	enum phy_ch_width cac_ch_width;
+	struct hdd_adapter_create_param params = {0};
 
 	if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc)) {
 		hdd_debug("Pre CAC is not supported on non-dbs platforms");
@@ -339,7 +340,8 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		 */
 		pre_cac_adapter = hdd_open_adapter(hdd_ctx, QDF_SAP_MODE,
 						   SAP_PRE_CAC_IFNAME, mac_addr,
-						   NET_NAME_UNKNOWN, true);
+						   NET_NAME_UNKNOWN, true,
+						   &params);
 
 		if (!pre_cac_adapter) {
 			hdd_err("error opening the pre cac adapter");

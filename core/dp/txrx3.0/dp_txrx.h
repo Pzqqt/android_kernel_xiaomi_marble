@@ -245,6 +245,8 @@ static inline QDF_STATUS dp_txrx_suspend(ol_txrx_soc_handle soc)
 	}
 
 	qdf_status = dp_rx_tm_suspend(&dp_ext_hdl->rx_tm_hdl);
+	if (QDF_IS_STATUS_ERROR(qdf_status) && refill_thread->enabled)
+		dp_rx_refill_thread_resume(refill_thread);
 
 ret:
 	return qdf_status;
@@ -611,5 +613,7 @@ QDF_STATUS dp_prealloc_init(struct cdp_ctrl_objmgr_psoc *ctrl_psoc)
 static inline void dp_prealloc_deinit(void) { }
 
 #endif
+
+uint32_t dp_get_tx_inqueue(ol_txrx_soc_handle soc);
 
 #endif /* _DP_TXRX_H */

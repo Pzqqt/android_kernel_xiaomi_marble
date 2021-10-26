@@ -87,6 +87,31 @@ ucfg_pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
+ * ucfg_pkt_capture_set_pktcap_config - Set packet capture config
+ * @vdev: pointer to vdev object
+ * @config: config to be set
+ *
+ * Return: None
+ */
+void ucfg_pkt_capture_set_pktcap_config(struct wlan_objmgr_vdev *vdev,
+					enum pkt_capture_config config)
+{
+	pkt_capture_set_pktcap_config(vdev, config);
+}
+
+/**
+ * ucfg_pkt_capture_get_pktcap_config - Get packet capture config
+ * @vdev: pointer to vdev object
+ *
+ * Return: config value
+ */
+enum pkt_capture_config
+ucfg_pkt_capture_get_pktcap_config(struct wlan_objmgr_vdev *vdev)
+{
+	return pkt_capture_get_pktcap_config(vdev);
+}
+
+/**
  * ucfg_pkt_capture_init() - Packet capture component initialization.
  *
  * This function gets called when packet capture initializing.
@@ -204,9 +229,15 @@ ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				      qdf_nbuf_t nbuf,
 				      uint8_t status)
 {
-	return pkt_capture_process_mgmt_tx_data(
+	if (pkt_capture_is_tx_mgmt_enable(pdev))
+		return pkt_capture_process_mgmt_tx_data(
 					pdev, params, nbuf,
 					pkt_capture_mgmt_status_map(status));
+
+	else {
+		qdf_nbuf_free(nbuf);
+		return QDF_STATUS_SUCCESS;
+	}
 }
 
 void
@@ -309,11 +340,9 @@ ucfg_pkt_capture_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
-QDF_STATUS ucfg_pkt_capture_send_config
-				(struct wlan_objmgr_vdev *vdev,
-				 enum pkt_capture_trigger_qos_config config)
+QDF_STATUS
+ucfg_pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
+			    struct wlan_objmgr_vdev *vdev)
 {
-	return tgt_pkt_capture_send_config(vdev, config);
+	return pkt_capture_set_filter(frame_filter, vdev);
 }
-#endif

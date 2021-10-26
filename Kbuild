@@ -413,6 +413,9 @@ ifeq ($(CONFIG_WLAN_DUMP_IN_PROGRESS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dump_in_progress.o
 endif
 endif
+ifeq ($(CONFIG_WLAN_SYSFS_DP_STATS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_txrx_stats_console.o
+endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_fw_state.o
@@ -636,11 +639,6 @@ endif
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 MAC_NDP_OBJS += $(MAC_SRC_DIR)/pe/nan/nan_datapath.o
 endif
-
-#Temporarily enable ROAM_TARGET_IF_CONVERGENCE to enable wma to target_if roam
-#convergence. It shall be reverted sometime soon by removing the define
-#ROAM_TARGET_IF_CONVERGENCE usage and the legacy code(i.e. code in else part).
-cppflags-y += -DROAM_TARGET_IF_CONVERGENCE
 
 ifeq ($(CONFIG_QCACLD_WLAN_LFR2), y)
 	MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_mlm_host_roam.o \
@@ -1333,6 +1331,11 @@ PMO_OBJS +=     $(PMO_DIR)/core/src/wlan_pmo_ns.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_ns.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_ICMP_OFFLOAD), y)
+PMO_OBJS +=     $(PMO_DIR)/core/src/wlan_pmo_icmp.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_icmp.o
+endif
+
 $(call add-wlan-objs,pmo,$(PMO_OBJS))
 
 ########## DISA (ENCRYPTION TEST) ##########
@@ -1626,6 +1629,9 @@ CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_ns.o
 endif
 ifeq ($(CONFIG_WLAN_FEATURE_PACKET_FILTERING), y)
 CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o
+endif
+ifeq ($(CONFIG_WLAN_FEATURE_ICMP_OFFLOAD), y)
+CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_icmp.o
 endif
 endif
 
@@ -2011,7 +2017,8 @@ ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
 	-I$(WLAN_COMMON_INC)/dp/wifi3.0 \
 	-I$(WLAN_COMMON_INC)/target_if/dp/inc \
-	-I$(WLAN_COMMON_INC)/dp/wifi3.0/monitor
+	-I$(WLAN_COMMON_INC)/dp/wifi3.0/monitor \
+	-I$(WLAN_COMMON_INC)/dp/wifi3.0/monitor/1.0
 
 DP_SRC := $(WLAN_COMMON_ROOT)/dp/wifi3.0
 DP_OBJS := $(DP_SRC)/dp_main.o \
@@ -2024,12 +2031,15 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_peer.o \
 		$(DP_SRC)/dp_rx_desc.o \
 		$(DP_SRC)/dp_reo.o \
-		$(DP_SRC)/monitor/dp_rx_mon_dest.o \
-		$(DP_SRC)/monitor/dp_rx_mon_status.o \
-		$(DP_SRC)/dp_rx_defrag.o \
-		$(DP_SRC)/monitor/dp_mon_filter.o \
-		$(DP_SRC)/dp_stats.o \
 		$(DP_SRC)/monitor/dp_mon.o \
+		$(DP_SRC)/monitor/dp_mon_filter.o \
+		$(DP_SRC)/monitor/dp_rx_mon.o \
+		$(DP_SRC)/monitor/1.0/dp_rx_mon_dest_1.0.o \
+		$(DP_SRC)/monitor/1.0/dp_rx_mon_status_1.0.o \
+		$(DP_SRC)/dp_rx_defrag.o \
+		$(DP_SRC)/monitor/1.0/dp_mon_filter_1.0.o \
+		$(DP_SRC)/dp_stats.o \
+		$(DP_SRC)/monitor/1.0/dp_mon_1.0.o \
 		$(WLAN_COMMON_ROOT)/target_if/dp/src/target_if_dp.o
 
 ifeq ($(CONFIG_BERYLLIUM), y)
@@ -2978,7 +2988,6 @@ cppflags-$(CONFIG_PLD_PCIE_INIT_FLAG) += -DCONFIG_PLD_PCIE_INIT
 cppflags-$(CONFIG_WLAN_FEATURE_DP_RX_THREADS) += -DFEATURE_WLAN_DP_RX_THREADS
 cppflags-$(CONFIG_WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT) += -DWLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
 cppflags-$(CONFIG_FEATURE_HAL_DELAYED_REG_WRITE) += -DFEATURE_HAL_DELAYED_REG_WRITE
-cppflags-$(CONFIG_FEATURE_HAL_DELAYED_REG_WRITE_V2) += -DFEATURE_HAL_DELAYED_REG_WRITE_V2
 cppflags-$(CONFIG_QCA_OL_DP_SRNG_LOCK_LESS_ACCESS) += -DQCA_OL_DP_SRNG_LOCK_LESS_ACCESS
 cppflags-$(CONFIG_SHADOW_WRITE_DELAY) += -DSHADOW_WRITE_DELAY
 
@@ -3095,7 +3104,7 @@ cppflags-$(CONFIG_WLAN_SYSFS_STA_INFO) += -DWLAN_SYSFS_STA_INFO
 cppflags-$(CONFIG_WLAN_DL_MODES) += -DCONFIG_WLAN_DL_MODES
 cppflags-$(CONFIG_WLAN_THERMAL_MULTI_CLIENT_SUPPORT) += -DFEATURE_WPSS_THERMAL_MITIGATION
 cppflags-$(CONFIG_WLAN_DUMP_IN_PROGRESS) += -DCONFIG_WLAN_DUMP_IN_PROGRESS
-
+cppflags-$(CONFIG_WLAN_SYSFS_DP_STATS) += -DWLAN_SYSFS_DP_STATS
 
 cppflags-$(CONFIG_WIFI_MONITOR_SUPPORT) += -DWIFI_MONITOR_SUPPORT
 cppflags-$(CONFIG_QCA_MONITOR_PKT_SUPPORT) += -DQCA_MONITOR_PKT_SUPPORT

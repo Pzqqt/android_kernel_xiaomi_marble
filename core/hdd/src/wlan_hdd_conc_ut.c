@@ -339,7 +339,8 @@ static void _validate_mcc(bool *status, uint32_t *first_idx,
 	(*first_idx)++;
 }
 
-static void _validate_sbs(bool *status, uint32_t *first_idx,
+static void _validate_sbs(struct wlan_objmgr_psoc *psoc,
+			  bool *status, uint32_t *first_idx,
 			  uint32_t *pcl_freqs, uint32_t pcl_len,
 			  qdf_freq_t first_connection_chnl,
 			  qdf_freq_t second_connection_chnl,
@@ -358,9 +359,8 @@ static void _validate_sbs(bool *status, uint32_t *first_idx,
 		return;
 	}
 	for (; *first_idx < pcl_len; (*first_idx)++) {
-		if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-				pcl_freqs[*first_idx],
-				first_connection_chnl)) {
+		if (policy_mgr_are_sbs_chan(psoc, pcl_freqs[*first_idx],
+					    first_connection_chnl)) {
 			found_sbs = true;
 		} else {
 			non_sbs_freq = pcl_freqs[*first_idx];
@@ -414,7 +414,7 @@ static void _validate_end(bool *status, uint32_t *first_idx,
 			reason, reason_length)
 
 #define validate_sbs _validate_sbs(					\
-			&status, &first_idx, pcl_freqs, pcl_len,	\
+			psoc, &status, &first_idx, pcl_freqs, pcl_len,	\
 			first_connection_chnl, second_connection_chnl,	\
 			reason, reason_length)
 
@@ -431,6 +431,7 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 {
 	bool status = true;
 	uint32_t first_idx = 0;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 
 	if ((pcl_type != PM_NONE) && (pcl_len == 0)) {
 		snprintf(reason, reason_length, "no of channels = 0");

@@ -120,9 +120,6 @@ enum mlmmsgtype {
 #define MGMT_TX_USE_INCORRECT_KEY   BIT(0)
 
 #define LIM_DOS_PROTECTION_TIME 1000 //1000ms
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-#define LIM_MIN_RSSI 0 /* 0dbm */
-#endif
 /* enums used by LIM are as follows */
 
 enum eLimDisassocTrigger {
@@ -1240,19 +1237,6 @@ QDF_STATUS lim_process_sme_del_all_tdls_peers(struct mac_context *p_mac,
  * Return: None
  */
 void lim_send_bcn_rsp(struct mac_context *mac_ctx, tpSendbeaconParams rsp);
-
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-/**
- * lim_add_roam_blacklist_ap() - handle the blacklist bssid list received from
- * firmware
- * @mac_ctx: Pointer to Global MAC structure
- * @list: roam blacklist ap list
- *
- * Return: None
- */
-void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
-			       struct roam_blacklist_event *src_lst);
-#endif
 
 /**
  * lim_process_rx_channel_status_event() - processes

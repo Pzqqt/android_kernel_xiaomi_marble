@@ -2743,13 +2743,8 @@ static int wma_wake_event_piggybacked(
 				    NULL, NULL, wake_reason,
 				    pb_event_len);
 		if (pb_event_len > 0) {
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 			errno = target_if_cm_roam_event(wma, pb_event,
 							pb_event_len);
-#else
-			errno = wma_roam_event_callback(wma, pb_event,
-							pb_event_len);
-#endif
 		} else {
 			/*
 			 * No wow_packet_buffer means a better AP beacon
@@ -2812,23 +2807,13 @@ static int wma_wake_event_piggybacked(
 		break;
 	case WOW_REASON_ROAM_PMKID_REQUEST:
 		wma_debug("Host woken up because of PMKID request event");
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-		errno = wma_roam_pmkid_request_event_handler(wma, pb_event,
-							     pb_event_len);
-#else
 		errno = target_if_pmkid_request_event_handler(wma,
 					pb_event, pb_event_len);
-#endif
 		break;
 	case WOW_REASON_VDEV_DISCONNECT:
 		wma_debug("Host woken up because of vdev disconnect event");
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-		errno = wma_roam_vdev_disconnect_event_handler(wma, pb_event,
-							       pb_event_len);
-#else
 		errno = target_if_cm_roam_vdev_disconnect_event_handler(wma,
 					pb_event, pb_event_len);
-#endif
 		break;
 	default:
 		wma_err("Wake reason %s(%u) is not a piggybacked event",
@@ -2857,14 +2842,14 @@ static void wma_wake_event_log_reason(t_wma_handle *wma,
 	/* "Unspecified" means APPS triggered wake, else firmware triggered */
 	if (wake_info->wake_reason != WOW_REASON_UNSPECIFIED) {
 		vdev = &wma->interfaces[wake_info->vdev_id];
-		wma_nofl_alert("WLAN triggered wakeup: %s (%d), vdev: %d (%s)",
+		wma_nofl_info("WLAN triggered wakeup: %s (%d), vdev: %d (%s)",
 			      wma_wow_wake_reason_str(wake_info->wake_reason),
 			      wake_info->wake_reason,
 			      wake_info->vdev_id,
 			      wma_vdev_type_str(vdev->type));
 		wma_debug_assert_page_fault_wakeup(wake_info->wake_reason);
 	} else if (!wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
-		wma_nofl_alert("Non-WLAN triggered wakeup: %s (%d)",
+		wma_nofl_info("Non-WLAN triggered wakeup: %s (%d)",
 			      wma_wow_wake_reason_str(wake_info->wake_reason),
 			      wake_info->wake_reason);
 	}
@@ -2976,7 +2961,7 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
-	wma_nofl_alert("Received PDEV resume event");
+	wma_nofl_info("Received PDEV resume event");
 
 	ucfg_pmo_psoc_wakeup_host_event_received(wma->psoc);
 

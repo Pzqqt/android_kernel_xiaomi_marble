@@ -76,6 +76,7 @@
 #include <wlan_mlme_twt_api.h>
 #include "wlan_cm_roam_ucfg_api.h"
 #include <cm_utf.h>
+#include <wlan_mlo_mgr_sta.h>
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -5594,6 +5595,7 @@ static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx,
 	uint8_t vdev_id, found = false;
 	qdf_freq_t chan_freq;
 	enum QDF_OPMODE op_mode;
+	struct wlan_objmgr_vdev *vdev;
 
 	for (vdev_id = 0; vdev_id < WLAN_MAX_VDEVS; vdev_id++) {
 		op_mode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, vdev_id);
@@ -5613,8 +5615,17 @@ static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx,
 		if (!found) {
 			sme_debug("Disconnect Session: %d", vdev_id);
 			/* do not call cm disconnect while holding Sme lock */
-			cm_disconnect(mac_ctx->psoc, vdev_id,
-				      CM_MLME_DISCONNECT, reason, NULL);
+			vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+							mac_ctx->psoc,
+							vdev_id,
+							WLAN_LEGACY_SME_ID);
+			if (!vdev) {
+				sme_err("vdev object is NULL for vdev_id %d",
+					vdev_id);
+				return;
+			}
+			mlo_disconnect(vdev, CM_MLME_DISCONNECT, reason, NULL);
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		}
 	}
 }

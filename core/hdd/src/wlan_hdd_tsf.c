@@ -672,6 +672,16 @@ static
 enum hdd_tsf_op_result __hdd_stop_tsf_sync(struct hdd_adapter *adapter)
 {
 	QDF_STATUS ret;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("invalid hdd context");
+		return HDD_TSF_OP_FAIL;
+	}
+
+	if (!hdd_is_tsf_sync_enabled(hdd_ctx))
+		return HDD_TSF_OP_FAIL;
 
 	if (!hdd_get_th_sync_status(adapter)) {
 		hdd_err("Host Target sync has not initialized");
@@ -1485,10 +1495,8 @@ static enum hdd_tsf_op_result hdd_tsf_sync_deinit(struct hdd_adapter *adapter)
 	if (!adapter)
 		return HDD_TSF_OP_FAIL;
 
-	if (!hdd_get_th_sync_status(adapter)) {
-		hdd_err("Host Target sync has not been initialized!!");
+	if (!hdd_get_th_sync_status(adapter))
 		return HDD_TSF_OP_SUCC;
-	}
 
 	hdd_set_th_sync_status(adapter, false);
 	ret = qdf_mc_timer_destroy(&adapter->host_target_sync_timer);
@@ -1528,10 +1536,8 @@ int hdd_start_tsf_sync(struct hdd_adapter *adapter)
 		return -EINVAL;
 
 	ret = hdd_tsf_sync_init(adapter);
-	if (ret != HDD_TSF_OP_SUCC) {
-		hdd_err("Failed to init tsf sync, ret: %d", ret);
+	if (ret != HDD_TSF_OP_SUCC)
 		return -EINVAL;
-	}
 
 	return (__hdd_start_tsf_sync(adapter) ==
 		HDD_TSF_OP_SUCC) ? 0 : -EINVAL;

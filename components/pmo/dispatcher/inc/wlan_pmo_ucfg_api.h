@@ -1284,6 +1284,38 @@ uint32_t ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev);
  */
 bool
 ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc);
+
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+/**
+ * ucfg_pmo_check_icmp_offload() - API to check if icmp offload is enabled
+ * @psoc: objmgr psoc handle
+ * @vdev_id: vdev_id
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS ucfg_pmo_check_icmp_offload(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id);
+
+/**
+ * ucfg_pmo_is_icmp_offload_enabled() - Get icmp offload enable or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: icmp offload enable or not
+ */
+bool
+ucfg_pmo_is_icmp_offload_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_config_icmp_offload() - API to enable icmp offload request
+ * @psoc: pointer to psoc object
+ * @pmo_icmp_req: ICMP offload parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+ucfg_pmo_config_icmp_offload(struct wlan_objmgr_psoc *psoc,
+			     struct pmo_icmp_offload *pmo_icmp_req);
+#endif
 #else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 static inline QDF_STATUS
 ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -1991,6 +2023,26 @@ static inline bool
 ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
+}
+
+static inline
+QDF_STATUS ucfg_pmo_check_icmp_offload(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool
+ucfg_pmo_is_icmp_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+QDF_STATUS
+ucfg_pmo_config_icmp_offload(struct wlan_objmgr_psoc *psoc,
+			     struct pmo_icmp_offload *pmo_icmp_req)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 

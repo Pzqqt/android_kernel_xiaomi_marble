@@ -238,7 +238,6 @@ wmi_unified_send_roam_preauth_status(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 					struct set_pcl_cmd_params *params);
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
  * wmi_extract_roam_sync_event  - Extract roam sync event
  * @wmi_handle: WMI handle
@@ -409,7 +408,6 @@ QDF_STATUS
 wmi_extract_roam_pmkid_request(wmi_unified_t wmi_handle,
 			       uint8_t *event, uint32_t data_len,
 			       struct roam_pmkid_req_event **data);
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 /**

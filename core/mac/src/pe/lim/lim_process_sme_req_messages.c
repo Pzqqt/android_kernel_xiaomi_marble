@@ -678,13 +678,18 @@ static void lim_start_bss_update_ht_vht_caps(struct mac_context *mac_ctx,
 		vht_config.shortgi160and80plus80 = 0;
 		vht_config.shortgi80 = 0;
 	}
+	if (session->pLimStartBssReq->vht_channel_width <= CH_WIDTH_80MHZ) {
+		vht_config.shortgi160and80plus80 = 0;
+		vht_config.supported_channel_widthset = 0;
+	}
 
 	session->vht_config = vht_config;
 
 	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
 	session->ht_config = ht_caps.ht_caps;
-	pe_debug("cur_op_freq %d HT capability 0x%x VHT capability 0x%x",
-		 session->curr_op_freq, ht_caps.caps, vht_config.caps);
+	pe_debug("cur_op_freq %d HT capability 0x%x VHT capability 0x%x bw %d",
+		 session->curr_op_freq, ht_caps.caps, vht_config.caps,
+		 session->pLimStartBssReq->vht_channel_width);
 }
 
 /**
@@ -3542,11 +3547,17 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 		qdf_mem_copy(pmksa.cache_id,
 			     bss_desc->fils_info_element.cache_id,
 			     CACHE_ID_LEN);
-		qdf_mem_copy(&pmksa.bssid, session->bssId, QDF_MAC_ADDR_SIZE);
+		pe_debug("FILS: Cache id =0x%x 0x%x", pmksa.cache_id[0],
+			 pmksa.cache_id[1]);
 	} else {
 		qdf_mem_copy(&pmksa.bssid, session->bssId, QDF_MAC_ADDR_SIZE);
 	}
+
 	pmksa_peer = wlan_crypto_get_peer_pmksa(session->vdev, &pmksa);
+	if (!pmksa_peer)
+		pe_debug("FILS: vdev:%d Peer PMKSA not found ssid:%.*s cache_id_present:%d",
+			 session->vdev_id, pmksa.ssid_len, pmksa.ssid,
+			 bss_desc->fils_info_element.is_cache_id_present);
 
 	/* TODO: Add support for Adaptive 11r connection */
 	rsn_ie_end = wlan_crypto_build_rsnie_with_pmksa(session->vdev, rsn_ie,
@@ -9213,43 +9224,3 @@ void lim_continue_sta_csa_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 	pe_info("Continue CSA for STA vdev id %d", vdev_id);
 	lim_process_channel_switch(mac_ctx, vdev_id);
 }
-
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
-			       struct roam_blacklist_event *src_lst)
-{
-	uint32_t i;
-	struct sir_rssi_disallow_lst entry;
-	struct roam_blacklist_timeout *blacklist;
-
-	pe_debug("Received Blacklist event from FW num entries %d",
-		 src_lst->num_entries);
-	blacklist = &src_lst->roam_blacklist[0];
-	for (i = 0; i < src_lst->num_entries; i++) {
-
-		entry.bssid = blacklist->bssid;
-		entry.time_during_rejection = blacklist->received_time;
-		entry.reject_reason = blacklist->reject_reason;
-		entry.source = blacklist->source ? blacklist->source :
-						   ADDED_BY_TARGET;
-		entry.original_timeout = blacklist->original_timeout;
-		entry.received_time = blacklist->received_time;
-		/* If timeout = 0 and rssi = 0 ignore the entry */
-		if (!blacklist->timeout && !blacklist->rssi) {
-			continue;
-		} else if (blacklist->timeout) {
-			entry.retry_delay = blacklist->timeout;
-			/* set 0dbm as expected rssi */
-			entry.expected_rssi = LIM_MIN_RSSI;
-		} else {
-			/* blacklist timeout as 0 */
-			entry.retry_delay = blacklist->timeout;
-			entry.expected_rssi = blacklist->rssi;
-		}
-
-		/* Add this bssid to the rssi reject ap type in blacklist mgr */
-		lim_add_bssid_to_reject_list(mac_ctx->pdev, &entry);
-		blacklist++;
-	}
-}
-#endif

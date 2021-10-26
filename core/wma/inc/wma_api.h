@@ -566,21 +566,6 @@ bool wma_get_channel_switch_in_progress(struct wma_txrx_node *iface);
 QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data);
 
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-/**
- * wma_sta_mlme_vdev_roam_notify() - VDEV roam notify handling
- * @vdev_mlme_obj:  VDEV MLME comp object
- * @data_len: data size
- * @data: event data
- *
- * API invokes VDEV roam event handling
- *
- * Return: SUCCESS on successful completion of roam event handling
- *         FAILURE, if it fails due to any
- */
-QDF_STATUS wma_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
-					 uint16_t data_len, void *data);
-#endif
 /**
  * wma_ap_mlme_vdev_start_continue() - VDEV start response handling
  * @vdev_mlme_obj:  VDEV MLME comp object

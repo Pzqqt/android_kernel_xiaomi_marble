@@ -781,35 +781,4 @@ typedef struct sStatsExtRequest {
 } tStatsExtRequest, *tpStatsExtRequest;
 #endif /* WLAN_FEATURE_STATS_EXT */
 
-#ifndef ROAM_TARGET_IF_CONVERGENCE
-/*
- * struct roam_blacklist_timeout - BTM blacklist entry
- * @bssid - bssid that is to be blacklisted
- * @timeout - time duration for which the bssid is blacklisted
- * @received_time - boot timestamp at which the firmware event was received
- * @rssi - rssi value for which the bssid is blacklisted
- * @reject_reason: reason to add the BSSID to BLM
- * @original_timeout: original timeout sent by the AP
- * @source: Source of adding the BSSID to BLM
- */
-struct roam_blacklist_timeout {
-	struct qdf_mac_addr bssid;
-	uint32_t timeout;
-	qdf_time_t received_time;
-	int32_t rssi;
-	enum blm_reject_ap_reason reject_reason;
-	uint32_t original_timeout;
-	enum blm_reject_ap_source source;
-};
-
-/*
- * struct roam_blacklist_event - Blacklist event entries destination structure
- * @num_entries: total entries sent over the event
- * @roam_blacklist: blacklist details
- */
-struct roam_blacklist_event {
-	uint32_t num_entries;
-	struct roam_blacklist_timeout roam_blacklist[];
-};
-#endif
 #endif /* _HALMSGAPI_H_ */

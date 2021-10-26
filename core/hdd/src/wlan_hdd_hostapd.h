@@ -368,4 +368,18 @@ void hdd_stop_sap_due_to_invalid_channel(struct work_struct *work);
  * Return: true if any sta is connecting
  */
 bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_hdd_mlo_reset() - reset mlo configuration if start bss fails
+ * @adapter: Pointer to hostapd adapter
+ *
+ * Return: void
+ */
+void wlan_hdd_mlo_reset(struct hdd_adapter *adapter);
+#else
+static inline void wlan_hdd_mlo_reset(struct hdd_adapter *adapter)
+{
+}
+#endif /* end WLAN_FEATURE_11BE_MLO */
 #endif /* end #if !defined(WLAN_HDD_HOSTAPD_H) */

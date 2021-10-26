@@ -79,14 +79,22 @@ static QDF_STATUS
 target_if_set_packet_capture_config
 			(struct wlan_objmgr_psoc *psoc,
 			 uint8_t vdev_id,
-			 enum pkt_capture_trigger_qos_config config_value)
+			 enum pkt_capture_config config_value)
 {
 	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wlan_objmgr_vdev *vdev;
 	struct vdev_set_params param;
 
 	if (!wmi_handle) {
 		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_PKT_CAPTURE_ID);
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -98,9 +106,12 @@ target_if_set_packet_capture_config
 	param.param_value = (uint32_t)config_value;
 
 	status = wmi_unified_vdev_set_param_send(wmi_handle, &param);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_SUCCESS(status))
+		ucfg_pkt_capture_set_pktcap_config(vdev, config_value);
+	else
 		pkt_capture_err("failed to set packet capture config");
 
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
 	return status;
 }
 #else
@@ -108,11 +119,49 @@ static QDF_STATUS
 target_if_set_packet_capture_config
 			(struct wlan_objmgr_psoc *psoc,
 			 uint8_t vdev_id,
-			 enum pkt_capture_trigger_qos_config config_value)
+			 enum pkt_capture_config config_value)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * target_if_set_packet_capture_beacon_interval() - set packet capture beacon
+ * interval
+ * @psoc: pointer to psoc object
+ * @vdev_id: vdev id
+ * @nth_value: Beacon report period
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_set_packet_capture_beacon_interval
+			(struct wlan_objmgr_psoc *psoc,
+			 uint8_t vdev_id,
+			 uint32_t nth_value)
+{
+	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct vdev_set_params param;
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	target_if_debug("psoc:%pK, vdev_id:%d nth_value:%d",
+			psoc, vdev_id, nth_value);
+
+	param.vdev_id = vdev_id;
+	param.param_id = WMI_VDEV_PARAM_NTH_BEACON_TO_HOST;
+	param.param_value = nth_value;
+
+	status = wmi_unified_vdev_set_param_send(wmi_handle, &param);
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("failed to set beacon interval");
+
+	return status;
+}
 
 /**
  * target_if_mgmt_offload_data_event_handler() - offload event handler
@@ -424,4 +473,6 @@ target_if_pkt_capture_register_tx_ops(struct wlan_pkt_capture_tx_ops *tx_ops)
 
 	tx_ops->pkt_capture_send_mode = target_if_set_packet_capture_mode;
 	tx_ops->pkt_capture_send_config = target_if_set_packet_capture_config;
+	tx_ops->pkt_capture_send_beacon_interval =
+				target_if_set_packet_capture_beacon_interval;
 }

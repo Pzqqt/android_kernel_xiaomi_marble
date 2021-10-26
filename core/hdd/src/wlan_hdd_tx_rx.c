@@ -72,6 +72,7 @@
 #include "nan_ucfg_api.h"
 #include <wlan_hdd_sar_limits.h>
 #include "wlan_hdd_object_manager.h"
+#include "wlan_hdd_mlo.h"
 
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /*
@@ -2981,10 +2982,13 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 	struct hdd_netif_queue_history *txq_hist_ptr;
 
 	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) ||
-		 (!adapter->dev)) {
+	    (!adapter->dev)) {
 		hdd_err("adapter is invalid");
 		return;
 	}
+
+	if (hdd_adapter_is_link_adapter(adapter))
+		return;
 
 	switch (action) {
 

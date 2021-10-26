@@ -30,7 +30,6 @@
 #include <target_if.h>
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
  * target_if_cm_roam_sync_event() - Target IF handler for roam sync events
  * @scn: target handle
@@ -133,7 +132,6 @@ target_if_cm_roam_scan_chan_list_event_handler(ol_scn_t scn, uint8_t *event,
 int
 target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 				      uint32_t len);
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 
 /**
  * target_if_cm_roam_register_rx_ops  - Target IF API to register roam
@@ -151,7 +149,6 @@ target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops)
 {
 }
 
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 static inline
 QDF_STATUS
 target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
@@ -185,6 +182,5 @@ target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 {
 	return 0;
 }
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 #endif

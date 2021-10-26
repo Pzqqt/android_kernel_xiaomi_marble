@@ -2409,7 +2409,7 @@ QDF_STATUS lim_proc_assoc_req_frm_cmn(struct mac_context *mac_ctx,
 				STATUS_UNSPECIFIED_FAILURE,
 				1, sa,
 				sub_type, 0, session, false);
-		return status;
+		goto error;
 	}
 	/* check for the presence of vendor IE */
 	if (session->access_policy_vendor_ie &&
@@ -2418,7 +2418,7 @@ QDF_STATUS lim_proc_assoc_req_frm_cmn(struct mac_context *mac_ctx,
 		if (frame_len <= LIM_ASSOC_REQ_IE_OFFSET) {
 			pe_debug("Received action frame of invalid len %d",
 				 frame_len);
-			return QDF_STATUS_E_INVAL;
+			goto error;
 		}
 		if (!wlan_get_vendor_ie_ptr_from_oui(
 				&session->access_policy_vendor_ie[2],
@@ -2430,7 +2430,7 @@ QDF_STATUS lim_proc_assoc_req_frm_cmn(struct mac_context *mac_ctx,
 				lim_send_assoc_rsp_mgmt_frame(
 					mac_ctx, STATUS_UNSPECIFIED_FAILURE,
 					1, sa, sub_type, 0, session, false);
-			return QDF_STATUS_E_INVAL;
+			goto error;
 		}
 	}
 

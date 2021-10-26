@@ -3615,8 +3615,11 @@ mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc, struct wma_tgt_vht_cap *cfg)
 	if (vht_cap_info->short_gi_160mhz && !cfg->vht_short_gi_160)
 		vht_cap_info->short_gi_160mhz = cfg->vht_short_gi_160;
 
-	vht_cap_info->vht_mcs_10_11_supp = cfg->vht_mcs_10_11_supp;
-	mlme_legacy_debug(" vht_mcs_10_11_supp %d", cfg->vht_mcs_10_11_supp);
+	if (cfg_get(psoc, CFG_ENABLE_VHT_MCS_10_11))
+		vht_cap_info->vht_mcs_10_11_supp = cfg->vht_mcs_10_11_supp;
+
+	mlme_legacy_debug("vht_mcs_10_11_supp %d",
+			  vht_cap_info->vht_mcs_10_11_supp);
 
 	return QDF_STATUS_SUCCESS;
 }
