@@ -261,47 +261,64 @@ uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
 /**
  * force_mode_host_to_fw() - translate force mode for MLO link set active
  *  command
- * @force_mode: force mode defined by host
+ * @host_mode: force mode defined by host
+ * @fw_mode: buffer to store force mode defined by FW
  *
- * Return: force mode defined by firmware
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_INVAL otherwise
  */
-static inline WMI_MLO_LINK_FORCE_MODE
-force_mode_host_to_fw(enum wmi_mlo_link_force_mode force_mode)
+static inline QDF_STATUS
+force_mode_host_to_fw(enum wmi_mlo_link_force_mode host_mode,
+		      WMI_MLO_LINK_FORCE_MODE *fw_mode)
 {
-	switch (force_mode) {
+	switch (host_mode) {
 	case WMI_MLO_LINK_FORCE_MODE_ACTIVE:
-		return WMI_MLO_LINK_FORCE_ACTIVE;
+		*fw_mode = WMI_MLO_LINK_FORCE_ACTIVE;
+		break;
 	case WMI_MLO_LINK_FORCE_MODE_INACTIVE:
-		return WMI_MLO_LINK_FORCE_INACTIVE;
+		*fw_mode = WMI_MLO_LINK_FORCE_INACTIVE;
+		break;
 	case WMI_MLO_LINK_FORCE_MODE_ACTIVE_NUM:
-		return WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM;
+		*fw_mode = WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM;
+		break;
 	case WMI_MLO_LINK_FORCE_MODE_INACTIVE_NUM:
-		return WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM;
+		*fw_mode = WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM;
+		break;
 	case WMI_MLO_LINK_FORCE_MODE_NO_FORCE:
-		return WMI_MLO_LINK_NO_FORCE;
+		*fw_mode = WMI_MLO_LINK_NO_FORCE;
+		break;
 	default:
-		return force_mode;
+		wmi_err("Invalid force mode: %d", host_mode);
+		return QDF_STATUS_E_INVAL;
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * force_reason_host_to_fw() - translate force reason for MLO link set active
  *  command
- * @force_reason: force reason defined by host
+ * @host_reason: force reason defined by host
+ * @fw_reason: buffer to store force reason defined by FW
  *
- * Return: force reason defined by firmware
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_INVAL otherwise
  */
-static inline WMI_MLO_LINK_FORCE_REASON
-force_reason_host_to_fw(enum wmi_mlo_link_force_reason force_reason)
+static inline QDF_STATUS
+force_reason_host_to_fw(enum wmi_mlo_link_force_reason host_reason,
+			WMI_MLO_LINK_FORCE_REASON *fw_reason)
 {
-	switch (force_reason) {
+	switch (host_reason) {
 	case WMI_MLO_LINK_FORCE_REASON_CONNECT:
-		return WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT;
+		*fw_reason = WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT;
+		break;
 	case WMI_MLO_LINK_FORCE_REASON_DISCONNECT:
-		return WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT;
+		*fw_reason =  WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT;
+		break;
 	default:
-		return force_reason;
+		wmi_err("Invalid force reason: %d", host_reason);
+		return QDF_STATUS_E_INVAL;
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -325,14 +342,22 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	uint32_t len;
 	int i;
 	WMITLV_TAG_ID tag_id;
-	uint32_t force_mode, force_reason;
+	WMI_MLO_LINK_FORCE_MODE force_mode;
+	WMI_MLO_LINK_FORCE_REASON force_reason;
 
 	if (!param->entry_num) {
 		wmi_err("No entry is provided");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	force_mode = force_mode_host_to_fw(param->force_mode);
+	status = force_mode_host_to_fw(param->force_mode, &force_mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_INVAL;
+
+	status = force_reason_host_to_fw(param->reason, &force_reason);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_INVAL;
+
 	switch (force_mode) {
 	case WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM:
 	case WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM:
@@ -343,16 +368,6 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	case WMI_MLO_LINK_NO_FORCE:
 		num_vdev_bitmap = param->entry_num;
 		break;
-	default:
-		wmi_err("Invalid force mode: %d", force_mode);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	force_reason = force_reason_host_to_fw(param->reason);
-	if (force_reason < WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT ||
-	    force_reason > WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT) {
-		wmi_err("Invalid force reason: %d", force_reason);
-		return QDF_STATUS_E_INVAL;
 	}
 
 	len = sizeof(*cmd) +
