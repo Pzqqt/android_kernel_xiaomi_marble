@@ -1458,6 +1458,7 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 		} else {
 			dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 			hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+			qdf_atomic_inc(&soc->tx_pending_rtpm);
 			hal_srng_inc_flush_cnt(hal_ring_hdl);
 		}
 		dp_runtime_put(soc);
@@ -1466,6 +1467,7 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 		dp_runtime_get(soc);
 		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+		qdf_atomic_inc(&soc->tx_pending_rtpm);
 		hal_srng_inc_flush_cnt(hal_ring_hdl);
 		dp_runtime_put(soc);
 	}
@@ -4381,6 +4383,7 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 	 * descriptor in case of MEC notify.
 	 */
 	if (tx_status == HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY) {
+		qdf_assert_always(!soc->mec_fw_offload);
 		/*
 		 * Get vdev id from HTT status word in case of MEC
 		 * notification
@@ -4487,12 +4490,23 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 		dp_tx_inspect_handler(soc, vdev, tx_desc, status);
 		break;
 	}
+	case HTT_TX_FW2WBM_TX_STATUS_VDEVID_MISMATCH:
+	{
+		DP_STATS_INC(vdev, tx_i.dropped.fail_per_pkt_vdev_id_check, 1);
+		goto release_tx_desc;
+	}
 	default:
-		dp_tx_comp_debug("Invalid HTT tx_status %d\n",
-				 tx_status);
-		break;
+		dp_tx_comp_err("Invalid HTT tx_status %d\n",
+			       tx_status);
+		goto release_tx_desc;
 	}
 
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
+	return;
+
+release_tx_desc:
+	dp_tx_comp_free_buf(soc, tx_desc);
+	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
 }
 
@@ -4673,8 +4687,6 @@ more_data:
 			dp_tx_process_htt_completion(soc, tx_desc,
 					htt_tx_status, ring_id);
 		} else {
-			tx_desc->peer_id =
-				hal_tx_comp_get_peer_id(tx_comp_hal_desc);
 			tx_desc->tx_status =
 				hal_tx_comp_get_tx_status(tx_comp_hal_desc);
 			tx_desc->buffer_src = buffer_src;

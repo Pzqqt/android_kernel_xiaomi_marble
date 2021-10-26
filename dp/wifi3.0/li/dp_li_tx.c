@@ -51,6 +51,8 @@ void dp_tx_comp_get_params_from_hal_desc_li(struct dp_soc *soc,
 
 		qdf_assert_always(0);
 	}
+
+	(*r_tx_desc)->peer_id = hal_tx_comp_get_peer_id(tx_comp_hal_desc);
 }
 
 #ifdef QCA_OL_TX_MULTIQ_SUPPORT

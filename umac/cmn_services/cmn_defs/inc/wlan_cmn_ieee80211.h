@@ -271,6 +271,8 @@
 
 #define WLAN_BSS_MEMBERSHIP_SELECTOR_HT_PHY       127
 #define WLAN_BSS_MEMBERSHIP_SELECTOR_VHT_PHY      126
+#define WLAN_BSS_MEMBERSHIP_SELECTOR_GLK          125
+#define WLAN_BSS_MEMBERSHIP_SELECTOR_EPD          124
 #define WLAN_BSS_MEMBERSHIP_SELECTOR_SAE_H2E      123
 #define WLAN_BSS_MEMBERSHIP_SELECTOR_HE_PHY       122
 
@@ -1456,6 +1458,94 @@ struct wlan_ie_hecaps {
 #define WLAN_EHT_PHYCAP_LEN 8
 
 #define WLAN_EHT_MAX_MCS_MAPS 3
+
+#define EHTCAP_MAC_NSEPPRIACCESS_IDX                    0
+#define EHTCAP_MAC_NSEPPRIACCESS_BITS                   1
+#define EHTCAP_MAC_EHTOMCTRL_IDX                        1
+#define EHTCAP_MAC_EHTOMCTRL_BITS                       1
+#define EHTCAP_MAC_TRIGTXOP_IDX                         2
+#define EHTCAP_MAC_TRIGTXOP_BITS                        1
+
+#define EHTCAP_PHY_320MHZIN6GHZ_IDX                     1
+#define EHTCAP_PHY_320MHZIN6GHZ_BITS                    1
+#define EHTCAP_PHY_242TONERUBWLT20MHZ_IDX               2
+#define EHTCAP_PHY_242TONERUBWLT20MHZ_BITS              1
+#define EHTCAP_PHY_NDP4XEHTLTFAND320NSGI_IDX            3
+#define EHTCAP_PHY_NDP4XEHTLTFAND320NSGI_BITS           1
+#define EHTCAP_PHY_PARTIALBWULMU_IDX                    4
+#define EHTCAP_PHY_PARTIALBWULMU_BITS                   1
+#define EHTCAP_PHY_SUBFMR_IDX                           5
+#define EHTCAP_PHY_SUBFMR_BITS                          1
+#define EHTCAP_PHY_SUBFME_IDX                           6
+#define EHTCAP_PHY_SUBFME_BITS                          1
+#define EHTCAP_PHY_BFMESSLT80MHZ_IDX                    7
+#define EHTCAP_PHY_BFMESSLT80MHZ_BITS                   3
+#define EHTCAP_PHY_BFMESS160MHZ_IDX                     10
+#define EHTCAP_PHY_BFMESS160MHZ_BITS                    3
+#define EHTCAP_PHY_BFMESS320MHZ_IDX                     13
+#define EHTCAP_PHY_BFMESS320MHZ_BITS                    3
+#define EHTCAP_PHY_NUMSOUNDLT80MHZ_IDX                  16
+#define EHTCAP_PHY_NUMSOUNDLT80MHZ_BITS                 3
+#define EHTCAP_PHY_NUMSOUND160MHZ_IDX                   19
+#define EHTCAP_PHY_NUMSOUND160MHZ_BITS                  3
+#define EHTCAP_PHY_NUMSOUND320MHZ_IDX                   22
+#define EHTCAP_PHY_NUMSOUND320MHZ_BITS                  3
+#define EHTCAP_PHY_NG16SUFB_IDX                         25
+#define EHTCAP_PHY_NG16SUFB_BITS                        1
+#define EHTCAP_PHY_NG16MUFB_IDX                         26
+#define EHTCAP_PHY_NG16MUFB_BITS                        1
+#define EHTCAP_PHY_CODBK42SUFB_IDX                      27
+#define EHTCAP_PHY_CODBK42SUFB_BITS                     1
+#define EHTCAP_PHY_CODBK75MUFB_IDX                      28
+#define EHTCAP_PHY_CODBK75MUFB_BITS                     1
+#define EHTCAP_PHY_TRIGSUBFFB_IDX                       29
+#define EHTCAP_PHY_TRIGSUBFFB_BITS                      1
+#define EHTCAP_PHY_TRIGMUBFPARTBWFB_IDX                 30
+#define EHTCAP_PHY_TRIGMUBFPARTBWFB_BITS                1
+#define EHTCAP_PHY_TRIGCQIFB_IDX                        31
+#define EHTCAP_PHY_TRIGCQIFB_BITS                       1
+
+#define EHTCAP_PHY_PARTBWDLMUMIMO_IDX                   32
+#define EHTCAP_PHY_PARTBWDLMUMIMO_BITS                  1
+#define EHTCAP_PHY_PSRSR_IDX                            33
+#define EHTCAP_PHY_PSRSR_BITS                           1
+#define EHTCAP_PHY_PWRBSTFACTOR_IDX                     34
+#define EHTCAP_PHY_PWRBSTFACTOR_BITS                    1
+#define EHTCAP_PHY_4XEHTLTFAND800NSGI_IDX               35
+#define EHTCAP_PHY_4XEHTLTFAND800NSGI_BITS              1
+#define EHTCAP_PHY_MAXNC_IDX                            36
+#define EHTCAP_PHY_MAXNC_BITS                           4
+#define EHTCAP_PHY_NONTRIGCQIFB_IDX                     40
+#define EHTCAP_PHY_NONTRIGCQIFB_BITS                    1
+#define EHTCAP_PHY_TX1024AND4096QAMLS242TONERU_IDX      41
+#define EHTCAP_PHY_TX1024AND4096QAMLS242TONERU_BITS     1
+#define EHTCAP_PHY_RX1024AND4096QAMLS242TONERU_IDX      42
+#define EHTCAP_PHY_RX1024AND4096QAMLS242TONERU_BITS     1
+#define EHTCAP_PHY_PPETHRESPRESENT_IDX                  43
+#define EHTCAP_PHY_PPETHRESPRESENT_BITS                 1
+#define EHTCAP_PHY_CMNNOMPKTPAD_IDX                     44
+#define EHTCAP_PHY_CMNNOMPKTPAD_BITS                    2
+#define EHTCAP_PHY_MAXNUMEHTLTF_IDX                     46
+#define EHTCAP_PHY_MAXNUMEHTLTF_BITS                    5
+#define EHTCAP_PHY_SUPMCS15_IDX                         51
+#define EHTCAP_PHY_SUPMCS15_BITS                        4
+#define EHTCAP_PHY_EHTDUPIN6GHZ_IDX                     55
+#define EHTCAP_PHY_EHTDUPIN6GHZ_BITS                    1
+#define EHTCAP_PHY_20MHZOPSTARXNDPWIDERBW_IDX           56
+#define EHTCAP_PHY_20MHZOPSTARXNDPWIDERBW_BITS          1
+#define EHTCAP_PHY_NONOFDMAULMUMIMOLT80MHZ_IDX          57
+#define EHTCAP_PHY_NONOFDMAULMUMIMOLT80MHZ_BITS         1
+#define EHTCAP_PHY_NONOFDMAULMUMIMO160MHZ_IDX           58
+#define EHTCAP_PHY_NONOFDMAULMUMIMO160MHZ_BITS          1
+#define EHTCAP_PHY_NONOFDMAULMUMIMO320MHZ_IDX           59
+#define EHTCAP_PHY_NONOFDMAULMUMIMO320MHZ_BITS          1
+#define EHTCAP_PHY_MUBFMRLT80MHZ_IDX                    60
+#define EHTCAP_PHY_MUBFMRLT80MHZ_BITS                   1
+#define EHTCAP_PHY_MUBFMR160MHZ_IDX                     61
+#define EHTCAP_PHY_MUBFMR160MHZ_BITS                    1
+#define EHTCAP_PHY_MUBFMR320MHZ_IDX                     62
+#define EHTCAP_PHY_MUBFMR320MHZ_BITS                    1
+
 /**
  * struct wlan_ie_ehtcaps - EHT capabilities
  * @elem_id: EHT caps IE
@@ -2104,7 +2194,6 @@ struct oce_reduced_wan_metrics {
 	uint8_t uplink_av_cap:4;
 };
 
-#define WLAN_VENDOR_WPA_IE_LEN 28
 /**
  * is_wpa_oui() - If vendor IE is WPA type
  * @frm: vendor IE pointer

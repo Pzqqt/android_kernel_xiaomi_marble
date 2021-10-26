@@ -69,6 +69,13 @@
 /* 4K aligned case, number of bits HW append for one PPT entry value */
 #define DP_CC_PPT_ENTRY_HW_APEND_BITS_4K_ALIGNED 12
 
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+/* WBM2SW ring id for rx release */
+#define WBM2SW_REL_ERR_RING_NUM 3
+#else
+/* WBM2SW ring id for rx release */
+#define WBM2SW_REL_ERR_RING_NUM 5
+#endif
 /**
  * struct dp_spt_page_desc - secondary page table page descriptors
  * @next: pointer to next linked SPT page Desc
@@ -144,6 +151,7 @@ struct dp_tx_bank_profile {
  * @hw_cc_ctx: core context of HW cookie conversion
  * @tx_spt_page_desc: spt page desc allocated for TX desc pool
  * @rx_spt_page_desc: spt page desc allocated for RX desc pool
+ * @monitor_soc_be: BE specific monitor object
  */
 struct dp_soc_be {
 	struct dp_soc soc;
@@ -158,6 +166,9 @@ struct dp_soc_be {
 	struct dp_srng ppe2tcl_ring;
 	struct dp_srng ppe_release_ring;
 #endif
+#if !defined(DISABLE_MON_CONFIG)
+	struct dp_mon_soc_be *monitor_soc_be;
+#endif
 };
 
 /* convert struct dp_soc_be pointer to struct dp_soc pointer */
@@ -166,9 +177,13 @@ struct dp_soc_be {
 /**
  * struct dp_pdev_be - Extended DP pdev for BE targets
  * @pdev: dp pdev structure
+ * @monitor_pdev_be: BE specific monitor object
  */
 struct dp_pdev_be {
 	struct dp_pdev pdev;
+#if !defined(DISABLE_MON_CONFIG)
+	struct dp_mon_pdev_be *monitor_pdev_be;
+#endif
 };
 
 /**

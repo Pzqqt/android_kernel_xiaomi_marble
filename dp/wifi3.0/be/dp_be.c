@@ -24,7 +24,12 @@
 #include "dp_be_rx.h"
 #include <hal_be_api.h>
 
+/* Generic AST entry aging timer value */
+#define DP_AST_AGING_TIMER_DEFAULT_MS	5000
+
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+#define DP_TX_VDEV_ID_CHECK_ENABLE 0
+
 static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
 	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_BE_WBM_SW0_BM_ID, .for_ipa = 0},
 	{1, 4, HAL_BE_WBM_SW4_BM_ID, 0},
@@ -32,8 +37,8 @@ static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RIN
 	{3, 6, HAL_BE_WBM_SW5_BM_ID, 0},
 	{4, 7, HAL_BE_WBM_SW6_BM_ID, 0}
 };
-
 #else
+#define DP_TX_VDEV_ID_CHECK_ENABLE 1
 
 static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
 	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_BE_WBM_SW0_BM_ID, .for_ipa = 0},
@@ -46,7 +51,14 @@ static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RIN
 
 static void dp_soc_cfg_attach_be(struct dp_soc *soc)
 {
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	wlan_cfg_set_rx_rel_ring_id(soc_cfg_ctx, WBM2SW_REL_ERR_RING_NUM);
+
 	soc->wlan_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
+
+	/* this is used only when dmac mode is enabled */
+	soc->num_rx_refill_buf_rings = 1;
 }
 
 qdf_size_t dp_get_context_size_be(enum dp_context_type context_type)
@@ -433,6 +445,9 @@ static QDF_STATUS dp_soc_init_be(struct dp_soc *soc)
 
 	qdf_status = dp_hw_cookie_conversion_init(be_soc);
 
+	/* route vdev_id mismatch notification via FW completion */
+	hal_tx_vdev_mismatch_routing_set(soc->hal_soc,
+					 HAL_TX_VDEV_MISMATCH_FW_NOTIFY);
 	return qdf_status;
 }
 
@@ -460,19 +475,25 @@ static QDF_STATUS dp_vdev_attach_be(struct dp_soc *soc, struct dp_vdev *vdev)
 	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
 	struct dp_vdev_be *be_vdev = dp_get_be_vdev_from_dp_vdev(vdev);
 
-	be_vdev->bank_id = dp_tx_get_bank_profile(be_soc, be_vdev);
+	be_vdev->vdev_id_check_en = DP_TX_VDEV_ID_CHECK_ENABLE;
 
-	/* Needs to be enabled after bring-up*/
-	be_vdev->vdev_id_check_en = false;
+	be_vdev->bank_id = dp_tx_get_bank_profile(be_soc, be_vdev);
 
 	if (be_vdev->bank_id == DP_BE_INVALID_BANK_ID) {
 		QDF_BUG(0);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	if (vdev->opmode == wlan_op_mode_sta)
+	if (vdev->opmode == wlan_op_mode_sta) {
+		if (soc->cdp_soc.ol_ops->set_mec_timer)
+			soc->cdp_soc.ol_ops->set_mec_timer(
+					soc->ctrl_psoc,
+					vdev->vdev_id,
+					DP_AST_AGING_TIMER_DEFAULT_MS);
+
 		hal_tx_vdev_mcast_ctrl_set(soc->hal_soc, vdev->vdev_id,
 					   HAL_TX_MCAST_CTRL_MEC_NOTIFY);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -592,6 +613,10 @@ dp_rxdma_ring_sel_cfg_be(struct dp_soc *soc)
 							   pdev->pdev_id);
 
 			rx_mac_srng = dp_get_rxdma_ring(pdev, lmac_id);
+
+			if (!rx_mac_srng->hal_srng)
+				continue;
+
 			htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
 					    rx_mac_srng->hal_srng,
 					    RXDMA_BUF, RX_DATA_BUFFER_SIZE,
@@ -654,7 +679,7 @@ dp_service_near_full_srngs_be(struct dp_soc *soc, struct dp_intr *int_ctx,
 	}
 
 	if (tx_ring_near_full_mask) {
-		for (ring = 0; ring < MAX_TCL_DATA_RINGS; ring++) {
+		for (ring = 0; ring < soc->num_tcl_data_rings; ring++) {
 			if (!(tx_ring_near_full_mask & (1 << ring)))
 				continue;
 
@@ -881,22 +906,87 @@ static QDF_STATUS dp_soc_ppe_srng_init(struct dp_soc *soc)
 
 static void dp_soc_srng_deinit_be(struct dp_soc *soc)
 {
+	uint32_t i;
+
 	dp_soc_ppe_srng_deinit(soc);
+
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
+			dp_srng_deinit(soc, &soc->rx_refill_buf_ring[i],
+				       RXDMA_BUF, 0);
+		}
+	}
 }
 
 static void dp_soc_srng_free_be(struct dp_soc *soc)
 {
+	uint32_t i;
+
 	dp_soc_ppe_srng_free(soc);
+
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++)
+			dp_srng_free(soc, &soc->rx_refill_buf_ring[i]);
+	}
 }
 
 static QDF_STATUS dp_soc_srng_alloc_be(struct dp_soc *soc)
 {
-	return dp_soc_ppe_srng_alloc(soc);
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+	uint32_t ring_size;
+	uint32_t i;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	ring_size = wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx);
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
+			if (dp_srng_alloc(soc, &soc->rx_refill_buf_ring[i],
+					  RXDMA_BUF, ring_size, 0)) {
+				dp_err("%pK: dp_srng_alloc failed refill ring",
+				       soc);
+				goto fail;
+			}
+		}
+	}
+
+	if (dp_soc_ppe_srng_alloc(soc)) {
+		dp_err("%pK: ppe rings alloc failed",
+		       soc);
+		goto fail;
+	}
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_soc_srng_free_be(soc);
+	return QDF_STATUS_E_NOMEM;
 }
 
 static QDF_STATUS dp_soc_srng_init_be(struct dp_soc *soc)
 {
-	return dp_soc_ppe_srng_init(soc);
+	int i = 0;
+
+	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
+			if (dp_srng_init(soc, &soc->rx_refill_buf_ring[i],
+					 RXDMA_BUF, 0, 0)) {
+				dp_err("%pK: dp_srng_init failed refill ring",
+				       soc);
+				goto fail;
+			}
+		}
+	}
+
+	if (dp_soc_ppe_srng_init(soc)) {
+		dp_err("%pK: ppe rings init failed",
+		       soc);
+		goto fail;
+	}
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_soc_srng_deinit_be(soc);
+	return QDF_STATUS_E_NOMEM;
 }
 
 #ifdef DP_TX_IMPLICIT_RBM_MAPPING
@@ -947,6 +1037,8 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_be;
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_be;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_be;
+	arch_ops->dp_rx_peer_metadata_peer_id_get =
+					dp_rx_peer_metadata_peer_id_get_be;
 	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_be;
 	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_be;
 

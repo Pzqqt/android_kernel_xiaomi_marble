@@ -386,6 +386,31 @@ enum htt_cmn_t2h_en_stats_status {
 };
 
 /**
+ * enum cdp_peer_type - Peer type
+ * @CDP_INVALID_PEER_TYPE: invalid peer type
+ * @CDP_LINK_PEER_TYPE: legacy peer or link peer for MLO connection
+ * @CDP_MLD_PEER_TYPE: MLD peer for MLO connection
+ */
+enum cdp_peer_type {
+	CDP_INVALID_PEER_TYPE,
+	CDP_LINK_PEER_TYPE,
+	CDP_MLD_PEER_TYPE,
+};
+
+/**
+ * struct cdp_peer_setup_info: MLO connection info for cdp_peer_setup()
+ * @mld_peer_mac: mld peer mac address pointer
+ * @is_assoc_link: set true for first MLO link peer association
+ * @is_primary_link: for MCC, the first link will always be primary link,
+		     for WIN,  other link might be primary link.
+ */
+struct cdp_peer_setup_info {
+	uint8_t *mld_peer_mac;
+	uint8_t is_assoc_link:1,
+		is_primary_link:1;
+};
+
+/**
  * struct ol_txrx_peer_state - Peer state information
  */
 enum ol_txrx_peer_state {
@@ -614,6 +639,61 @@ struct cdp_tx_exception_metadata {
 #endif
 };
 
+/**
+ * wlan_op_mode - Virtual device operation mode
+ * @wlan_op_mode_unknown: Unknown mode
+ * @wlan_op_mode_ap: AP mode
+ * @wlan_op_mode_ibss: IBSS mode
+ * @wlan_op_mode_sta: STA (client) mode
+ * @wlan_op_mode_monitor: Monitor mode
+ * @wlan_op_mode_ocb: OCB mode
+ * @wlan_op_mode_ndi: NDI mode
+ */
+enum wlan_op_mode {
+	wlan_op_mode_unknown,
+	wlan_op_mode_ap,
+	wlan_op_mode_ibss,
+	wlan_op_mode_sta,
+	wlan_op_mode_monitor,
+	wlan_op_mode_ocb,
+	wlan_op_mode_ndi,
+};
+
+/**
+ * enum wlan_op_subtype - Virtual device subtype
+ * @wlan_op_subtype_none: Subtype not applicable
+ * @wlan_op_subtype_p2p_device: P2P device
+ * @wlan_op_subtye_p2p_cli: P2P Client
+ * @wlan_op_subtype_p2p_go: P2P GO
+ *
+ * This enum lists the subtypes of a particular virtual
+ * device.
+ */
+enum wlan_op_subtype {
+	wlan_op_subtype_none,
+	wlan_op_subtype_p2p_device,
+	wlan_op_subtype_p2p_cli,
+	wlan_op_subtype_p2p_go,
+};
+
+/**
+ * struct cdp_vdev_info - Vdev information
+ * @vdev_mac_addr: mac address of the vdev
+ * @vdev_id: ID of the vdev
+ * @op_mode: Operation mode of the vdev
+ * @subtype: subtype of the vdev
+ * @mld_mac_addr: MLD mac addr of the current vdev.
+ */
+struct cdp_vdev_info {
+	uint8_t *vdev_mac_addr;
+	uint8_t vdev_id;
+	enum wlan_op_mode op_mode;
+	enum wlan_op_subtype subtype;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t *mld_mac_addr;
+#endif
+};
+
 typedef struct cdp_soc_t *ol_txrx_soc_handle;
 
 /**
@@ -700,42 +780,6 @@ typedef struct ol_osif_vdev_t *ol_osif_vdev_handle;
 struct ol_osif_peer_t;
 typedef struct ol_osif_peer_t *ol_osif_peer_handle;
 #endif
-
-/**
- * wlan_op_mode - Virtual device operation mode
- * @wlan_op_mode_unknown: Unknown mode
- * @wlan_op_mode_ap: AP mode
- * @wlan_op_mode_ibss: IBSS mode
- * @wlan_op_mode_sta: STA (client) mode
- * @wlan_op_mode_monitor: Monitor mode
- * @wlan_op_mode_ocb: OCB mode
- */
-enum wlan_op_mode {
-	wlan_op_mode_unknown,
-	wlan_op_mode_ap,
-	wlan_op_mode_ibss,
-	wlan_op_mode_sta,
-	wlan_op_mode_monitor,
-	wlan_op_mode_ocb,
-	wlan_op_mode_ndi,
-};
-
-/**
- * enum wlan_op_subtype - Virtual device subtype
- * @wlan_op_subtype_none: Subtype not applicable
- * @wlan_op_subtype_p2p_device: P2P device
- * @wlan_op_subtye_p2p_cli: P2P Client
- * @wlan_op_subtype_p2p_go: P2P GO
- *
- * This enum lists the subtypes of a particular virtual
- * device.
- */
-enum wlan_op_subtype {
-	wlan_op_subtype_none,
-	wlan_op_subtype_p2p_device,
-	wlan_op_subtype_p2p_cli,
-	wlan_op_subtype_p2p_go,
-};
 
 /**
  * connectivity_stats_pkt_status - data pkt type
@@ -2411,7 +2455,7 @@ struct cdp_txrx_stats_req {
 	uint32_t	param3;
 	uint32_t	cookie_val;
 	uint8_t		mac_id;
-	char *peer_addr;
+	char		*peer_addr;
 };
 
 /**

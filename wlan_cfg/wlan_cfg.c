@@ -41,7 +41,7 @@
 #define WLAN_CFG_TX_RING_MASK_0 BIT(0)
 #define WLAN_CFG_TX_RING_MASK_1 BIT(1)
 #define WLAN_CFG_TX_RING_MASK_2 BIT(2)
-#define WLAN_CFG_TX_RING_MASK_3 0
+#define WLAN_CFG_TX_RING_MASK_3 BIT(3)
 #define WLAN_CFG_TX_RING_MASK_4 BIT(4)
 #define WLAN_CFG_TX_RING_MASK_5 BIT(5)
 #define WLAN_CFG_TX_RING_MASK_6 BIT(6)
@@ -53,9 +53,14 @@
 #define WLAN_CFG_RX_MON_RING_MASK_2 0x4
 #define WLAN_CFG_RX_MON_RING_MASK_3 0x0
 
+#define WLAN_CFG_TX_MON_RING_MASK_0 BIT(0)
+#define WLAN_CFG_TX_MON_RING_MASK_1 BIT(1)
+
 #define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0 0x1
 #define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1 0x2
 #define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2 0x4
+
+#define WLAN_CFG_HOST2TXMON_RING_MASK_0 0x1
 
 #define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0 0x1
 #define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1 0x2
@@ -90,6 +95,7 @@ struct dp_int_mask_assignment {
 	uint8_t tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t tx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t host2rxdma_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -100,6 +106,7 @@ struct dp_int_mask_assignment {
 	uint8_t rx_ring_near_full_irq_1_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t rx_ring_near_full_irq_2_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t tx_ring_near_full_irq_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t host2txmon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 };
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
@@ -113,6 +120,10 @@ struct dp_int_mask_assignment {
 
 #ifdef CONFIG_BERYLLIUM
 #ifdef IPA_OFFLOAD
+/*
+ * NEAR-FULL IRQ mask should be updated, if any change is made to
+ * the below TX mask.
+ */
 static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[0] = WLAN_CFG_TX_RING_MASK_0, [1] = WLAN_CFG_TX_RING_MASK_6,
 	[2] = WLAN_CFG_TX_RING_MASK_7};
@@ -222,6 +233,553 @@ static const uint8_t tx_ring_near_full_irq_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] =
  * This structure contains the best possible mask assignment for a given
  * number of MSIs available in the system.
  */
+#ifdef IPA_OFFLOAD
+static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIONS] = {
+	/* Interrupt assignment for integrated configuration */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ 0, 0, 0, 0, 0, 0, 0,
+		  WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0},
+		/* rx mon ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_RX_MON_RING_MASK_0,
+		  WLAN_CFG_RX_MON_RING_MASK_1,
+		  WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ 0, 0,	0, 0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0},
+		/* rx err ring masks */
+		{ WLAN_CFG_RX_ERR_RING_MASK_0,
+		  WLAN_CFG_RX_ERR_RING_MASK_1,
+		  WLAN_CFG_RX_ERR_RING_MASK_2,
+		  WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ WLAN_CFG_RX_WBM_REL_RING_MASK_0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_1,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_2,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* reo status ring masks */
+		{ WLAN_CFG_REO_STATUS_RING_MASK_0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_1,
+		  WLAN_CFG_REO_STATUS_RING_MASK_2,
+		  WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 1 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ WLAN_CFG_RX_RING_MASK_0 |
+		    WLAN_CFG_RX_RING_MASK_1 |
+		    WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ WLAN_CFG_RX_MON_RING_MASK_0 |
+		    WLAN_CFG_RX_MON_RING_MASK_1 |
+		    WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ WLAN_CFG_HOST2RXDMA_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_1 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_2 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ WLAN_CFG_RXDMA2HOST_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_1 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_2 |
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1 |
+		    WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1 |
+		    WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ WLAN_CFG_RX_ERR_RING_MASK_0 |
+		    WLAN_CFG_RX_ERR_RING_MASK_1 |
+		    WLAN_CFG_RX_ERR_RING_MASK_2 |
+		    WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ WLAN_CFG_RX_WBM_REL_RING_MASK_0 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_1 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_2 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* reo status ring masks */
+		{ WLAN_CFG_REO_STATUS_RING_MASK_0 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_1 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_2 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 2 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ WLAN_CFG_RX_RING_MASK_0 |
+		    WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ WLAN_CFG_RX_MON_RING_MASK_0 |
+		    WLAN_CFG_RX_MON_RING_MASK_1,
+		  WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ WLAN_CFG_HOST2RXDMA_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_2 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ WLAN_CFG_RXDMA2HOST_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_2 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ WLAN_CFG_RX_ERR_RING_MASK_0 |
+		    WLAN_CFG_RX_ERR_RING_MASK_1,
+		  WLAN_CFG_RX_ERR_RING_MASK_2 |
+		    WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ WLAN_CFG_RX_WBM_REL_RING_MASK_0 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_1,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_2 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* reo status ring masks */
+		{ WLAN_CFG_REO_STATUS_RING_MASK_0 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_1,
+		  WLAN_CFG_REO_STATUS_RING_MASK_2 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 3 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ WLAN_CFG_RX_RING_MASK_0,
+		    WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ 0, 0,
+		  WLAN_CFG_RX_MON_RING_MASK_0 |
+		    WLAN_CFG_RX_MON_RING_MASK_1 |
+		    WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ 0, 0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_1 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_2 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ 0, 0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_1 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_2 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ 0, 0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1 |
+		    WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ 0, 0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1 |
+		    WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ 0, 0,
+		  WLAN_CFG_RX_ERR_RING_MASK_0 |
+		    WLAN_CFG_RX_ERR_RING_MASK_1 |
+		    WLAN_CFG_RX_ERR_RING_MASK_2 |
+		    WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ 0, 0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_0 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_1 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_2 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* reo status ring masks */
+		{ 0, 0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_0 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_1 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_2 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 4 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ WLAN_CFG_RX_MON_RING_MASK_0,
+		  WLAN_CFG_RX_MON_RING_MASK_1,
+		  WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ WLAN_CFG_RX_ERR_RING_MASK_0,
+		  WLAN_CFG_RX_ERR_RING_MASK_1,
+		  WLAN_CFG_RX_ERR_RING_MASK_2,
+		  WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ WLAN_CFG_RX_WBM_REL_RING_MASK_0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_1,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_2,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* reo status ring masks */
+		{ WLAN_CFG_REO_STATUS_RING_MASK_0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_1,
+		  WLAN_CFG_REO_STATUS_RING_MASK_2,
+		  WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 5 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_RX_MON_RING_MASK_0 |
+		    WLAN_CFG_RX_MON_RING_MASK_1 |
+		    WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_1 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_2 |
+		    WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_1 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_2 |
+		    WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0 |
+		    WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1 |
+		    WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0 |
+		    WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1 |
+		    WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_RX_ERR_RING_MASK_0 |
+		    WLAN_CFG_RX_ERR_RING_MASK_1 |
+		    WLAN_CFG_RX_ERR_RING_MASK_2 |
+		    WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_0 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_1 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_2 |
+		    WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0},
+		/* reo status ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_0 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_1 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_2 |
+		    WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 6 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ 0, 0,
+		  WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ WLAN_CFG_RX_MON_RING_MASK_0,
+		  WLAN_CFG_RX_MON_RING_MASK_1,
+		  WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ WLAN_CFG_RX_ERR_RING_MASK_0,
+		  WLAN_CFG_RX_ERR_RING_MASK_1,
+		  WLAN_CFG_RX_ERR_RING_MASK_2,
+		  WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ WLAN_CFG_RX_WBM_REL_RING_MASK_0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_1,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_2,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+		/* reo status ring masks */
+		{ WLAN_CFG_REO_STATUS_RING_MASK_0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_1,
+		  WLAN_CFG_REO_STATUS_RING_MASK_2,
+		  WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 7 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RX_MON_RING_MASK_0,
+		  WLAN_CFG_RX_MON_RING_MASK_1,
+		  WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ 0, 0,	0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RX_ERR_RING_MASK_0,
+		  WLAN_CFG_RX_ERR_RING_MASK_1,
+		  WLAN_CFG_RX_ERR_RING_MASK_2,
+		  WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_1,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_2,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* reo status ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_1,
+		  WLAN_CFG_REO_STATUS_RING_MASK_2,
+		  WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0},
+	},
+	/* Interrupt assignment for 8 MSI combination */
+	{
+		/* tx ring masks */
+		{ WLAN_CFG_TX_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		/* rx ring masks */
+		{ 0, 0, 0, 0,
+		  WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0, 0},
+		/* rx mon ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RX_MON_RING_MASK_0,
+		  WLAN_CFG_RX_MON_RING_MASK_1,
+		  WLAN_CFG_RX_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0},
+		/* host2rxdma ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+		  WLAN_CFG_HOST2RXDMA_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* rxdma2host ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+		  WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* host2rxdma mon ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+		  WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0},
+		/* rxdma2host mon ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+		  WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2,
+		  0, 0, 0, 0, 0},
+		/* rx err ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RX_ERR_RING_MASK_0,
+		  WLAN_CFG_RX_ERR_RING_MASK_1,
+		  WLAN_CFG_RX_ERR_RING_MASK_2,
+		  WLAN_CFG_RX_ERR_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* rx wbm rel ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_0,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_1,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_2,
+		  WLAN_CFG_RX_WBM_REL_RING_MASK_3,
+		  0, 0, 0, 0},
+		/* reo status ring masks */
+		{ 0, 0, 0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_0,
+		  WLAN_CFG_REO_STATUS_RING_MASK_1,
+		  WLAN_CFG_REO_STATUS_RING_MASK_2,
+		  WLAN_CFG_REO_STATUS_RING_MASK_3,
+		  0, 0, 0, 0},
+	},
+};
+#else
 static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIONS] = {
 	/* Interrupt assignment for integrated configuration */
 	{
@@ -753,6 +1311,10 @@ static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIO
 		  WLAN_CFG_RX_MON_RING_MASK_1,
 		  WLAN_CFG_RX_MON_RING_MASK_2,
 		  0, 0, 0, 0, 0},
+		/* tx mon ring masks */
+		{ WLAN_CFG_TX_MON_RING_MASK_0,
+		  WLAN_CFG_TX_MON_RING_MASK_1,
+		  0, 0, 0, 0, 0, 0},
 		/* host2rxdma ring masks */
 		{ 0, 0, 0,
 		  WLAN_CFG_HOST2RXDMA_RING_MASK_0,
@@ -800,8 +1362,12 @@ static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIO
 		  WLAN_CFG_REO_STATUS_RING_MASK_2,
 		  WLAN_CFG_REO_STATUS_RING_MASK_3,
 		  0, 0, 0, 0},
+		/* host2txmon ring masks */
+		{ WLAN_CFG_HOST2TXMON_RING_MASK_0,
+		  0, 0, 0, 0, 0, 0, 0, 0, 0},
 	},
 };
+#endif
 #endif
 
 /**
@@ -845,6 +1411,13 @@ struct wlan_srng_cfg wlan_srng_rxdma_monitor_status_cfg = {
 	.low_threshold = WLAN_CFG_RXDMA_MONITOR_STATUS_RING_SIZE >> 3,
 };
 
+/* TX_MONITOR_BUF ring configuration */
+struct wlan_srng_cfg wlan_srng_tx_monitor_buf_cfg = {
+	.timer_threshold = WLAN_CFG_INT_TIMER_THRESHOLD_TX,
+	.batch_count_threshold = 0,
+	.low_threshold = WLAN_CFG_TX_MONITOR_BUF_RING_SIZE_MAX >> 3,
+};
+
 /* DEFAULT_CONFIG ring configuration */
 struct wlan_srng_cfg wlan_srng_default_cfg = {
 	.timer_threshold = WLAN_CFG_INT_TIMER_THRESHOLD_OTHER,
@@ -877,6 +1450,7 @@ void wlan_set_srng_cfg(struct wlan_srng_cfg **wlan_cfg)
 #ifdef WLAN_FEATURE_CIF_CFR
 	g_wlan_srng_cfg[WIFI_POS_SRC] = wlan_srng_default_cfg;
 #endif
+	g_wlan_srng_cfg[TX_MONITOR_BUF] = wlan_srng_tx_monitor_buf_cfg;
 	*wlan_cfg = g_wlan_srng_cfg;
 }
 
@@ -899,6 +1473,7 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_mask_msi[i];
 		wlan_cfg_ctx->int_rx_mon_ring_mask[i] =
 							rx_mon_ring_mask_msi[i];
+		wlan_cfg_ctx->int_tx_mon_ring_mask[i] = 0;
 		wlan_cfg_ctx->int_rx_err_ring_mask[i] =
 							rx_err_ring_mask_msi[i];
 		wlan_cfg_ctx->int_rx_wbm_rel_ring_mask[i] =
@@ -953,6 +1528,8 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 			dp_mask_assignment[interrupt_index].tx_ring_mask[i];
 		wlan_cfg_ctx->int_rx_mon_ring_mask[i] =
 			dp_mask_assignment[interrupt_index].rx_mon_ring_mask[i];
+		wlan_cfg_ctx->int_tx_mon_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].tx_mon_ring_mask[i];
 		wlan_cfg_ctx->int_rx_err_ring_mask[i] =
 			dp_mask_assignment[interrupt_index].rx_err_ring_mask[i];
 		wlan_cfg_ctx->int_rx_wbm_rel_ring_mask[i] =
@@ -980,6 +1557,8 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 			dp_mask_assignment[interrupt_index].rx_ring_near_full_irq_2_mask[i];
 		wlan_cfg_ctx->int_tx_ring_near_full_irq_mask[i] =
 			dp_mask_assignment[interrupt_index].tx_ring_near_full_irq_mask[i];
+		wlan_cfg_ctx->int_host2txmon_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].host2txmon_ring_mask[i];
 	}
 }
 #endif
@@ -1256,6 +1835,10 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 			cfg_get(psoc, CFG_DP_WOW_CHECK_RX_PENDING);
 	wlan_cfg_ctx->delay_mon_replenish = cfg_get(psoc,
 			CFG_DP_DELAY_MON_REPLENISH);
+	wlan_cfg_ctx->rx_mon_buf_ring_size = cfg_get(psoc,
+					CFG_DP_RXDMA_MONITOR_BUF_RING);
+	wlan_cfg_ctx->tx_mon_buf_ring_size = cfg_get(psoc,
+					CFG_DP_TX_MONITOR_BUF_RING);
 	wlan_soc_ipa_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_hw_cc_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_ppe_cfg_attach(psoc, wlan_cfg_ctx);
@@ -1285,8 +1868,10 @@ wlan_cfg_pdev_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 					CFG_DP_RXDMA_BUF_RING);
 	wlan_cfg_ctx->dma_mon_buf_ring_size = cfg_get(psoc,
 					CFG_DP_RXDMA_MONITOR_BUF_RING);
-	wlan_cfg_ctx->dma_mon_dest_ring_size = cfg_get(psoc,
+	wlan_cfg_ctx->dma_rx_mon_dest_ring_size = cfg_get(psoc,
 					CFG_DP_RXDMA_MONITOR_DST_RING);
+	wlan_cfg_ctx->dma_tx_mon_dest_ring_size = cfg_get(psoc,
+					CFG_DP_TX_MONITOR_DST_RING);
 	wlan_cfg_ctx->dma_mon_status_ring_size = cfg_get(psoc,
 					CFG_DP_RXDMA_MONITOR_STATUS_RING);
 	wlan_cfg_ctx->rxdma_monitor_desc_ring = cfg_get(psoc,
@@ -1359,6 +1944,12 @@ void wlan_cfg_set_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 		int context, int mask)
 {
 	cfg->int_rx_mon_ring_mask[context] = mask;
+}
+
+void wlan_cfg_set_tx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+				   int context, int mask)
+{
+	cfg->int_tx_mon_ring_mask[context] = mask;
 }
 
 int wlan_cfg_get_host2rxdma_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
@@ -1540,6 +2131,11 @@ int wlan_cfg_get_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)
 	return cfg->int_rx_mon_ring_mask[context];
 }
 
+int wlan_cfg_get_tx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)
+{
+	return cfg->int_tx_mon_ring_mask[context];
+}
+
 int wlan_cfg_get_ce_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)
 {
 	return cfg->int_ce_ring_mask[context];
@@ -1714,12 +2310,19 @@ int wlan_cfg_get_dma_mon_buf_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 
 qdf_export_symbol(wlan_cfg_get_dma_mon_buf_ring_size);
 
-int wlan_cfg_get_dma_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
+int wlan_cfg_get_dma_rx_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
-	return  cfg->dma_mon_dest_ring_size;
+	return  cfg->dma_rx_mon_dest_ring_size;
 }
 
-qdf_export_symbol(wlan_cfg_get_dma_mon_dest_ring_size);
+qdf_export_symbol(wlan_cfg_get_dma_rx_mon_dest_ring_size);
+
+int wlan_cfg_get_dma_tx_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
+{
+	return  cfg->dma_tx_mon_dest_ring_size;
+}
+
+qdf_export_symbol(wlan_cfg_get_dma_tx_mon_dest_ring_size);
 
 int wlan_cfg_get_dma_mon_stat_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
@@ -2306,3 +2909,48 @@ uint32_t wlan_cfg_get_pkt_capture_mode(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->pkt_capture_mode;
 }
 #endif
+
+uint32_t
+wlan_cfg_get_dp_soc_rx_mon_buf_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_mon_buf_ring_size;
+}
+
+qdf_export_symbol(wlan_cfg_get_dp_soc_rx_mon_buf_ring_size);
+
+uint32_t
+wlan_cfg_get_dp_soc_tx_mon_buf_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tx_mon_buf_ring_size;
+}
+
+qdf_export_symbol(wlan_cfg_get_dp_soc_tx_mon_buf_ring_size);
+
+int wlan_cfg_get_host2txmon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+				      int context)
+{
+	return cfg->int_host2txmon_ring_mask[context];
+}
+
+qdf_export_symbol(wlan_cfg_get_host2txmon_ring_mask);
+
+void wlan_cfg_set_host2txmon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+				       int context, int mask)
+{
+	cfg->int_host2txmon_ring_mask[context] = mask;
+}
+
+qdf_export_symbol(wlan_cfg_set_host2txmon_ring_mask);
+
+uint8_t
+wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_rel_wbm2sw_ring_id;
+}
+
+void
+wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+			    uint8_t wbm2sw_ring_id)
+{
+	cfg->rx_rel_wbm2sw_ring_id = wbm2sw_ring_id;
+}

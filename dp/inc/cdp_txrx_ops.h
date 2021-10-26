@@ -118,9 +118,8 @@ struct cdp_cmn_ops {
 	int (*txrx_pdev_attach_target)(ol_txrx_soc_handle soc, uint8_t pdev_id);
 
 	QDF_STATUS (*txrx_vdev_attach)
-		(struct cdp_soc_t *soc, uint8_t pdev_id, uint8_t *mac,
-		 uint8_t vdev_id, enum wlan_op_mode op_mode,
-		 enum wlan_op_subtype subtype);
+		(struct cdp_soc_t *soc, uint8_t pdev_id,
+		 struct cdp_vdev_info *vdev_info);
 
 	QDF_STATUS
 	(*txrx_vdev_detach)(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
@@ -156,11 +155,12 @@ struct cdp_cmn_ops {
 	QDF_STATUS
 	(*txrx_peer_create)
 		(ol_txrx_soc_handle soc, uint8_t vdev_id,
-		uint8_t *peer_mac_addr);
+		 uint8_t *peer_mac_addr, enum cdp_peer_type peer_type);
 
 	QDF_STATUS
 	(*txrx_peer_setup)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
-			   uint8_t *peer_mac);
+			   uint8_t *peer_mac,
+			   struct cdp_peer_setup_info *setup_info);
 
 	QDF_STATUS
 	(*txrx_cp_peer_del_response)
@@ -580,6 +580,16 @@ struct cdp_cmn_ops {
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 	void (*txrx_drain)(ol_txrx_soc_handle soc);
 	int (*get_free_desc_poolsize)(struct cdp_soc_t *soc);
+#ifdef WLAN_SYSFS_DP_STATS
+	QDF_STATUS (*txrx_sysfs_fill_stats)(ol_txrx_soc_handle soc,
+					    char *buf, uint32_t buf_size);
+	QDF_STATUS (*txrx_sysfs_set_stat_type)(ol_txrx_soc_handle soc,
+					       uint32_t stat_type,
+					       uint32_t mac_id);
+#endif /* WLAN_SYSFS_DP_STATS */
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+	void (*set_pkt_capture_mode)(struct cdp_soc_t *soc, bool val);
+#endif
 };
 
 struct cdp_ctrl_ops {
@@ -856,6 +866,8 @@ struct cdp_mon_ops {
 	/* Configure full monitor mode */
 	QDF_STATUS
 		(*config_full_mon_mode)(struct cdp_soc_t *soc, uint8_t val);
+	QDF_STATUS (*soc_config_full_mon_mode)(struct cdp_pdev *cdp_pdev,
+					       uint8_t val);
 };
 
 struct cdp_host_stats_ops {
@@ -1127,6 +1139,9 @@ struct ol_if_ops {
 	uint8_t (*freq_to_band)(struct cdp_ctrl_objmgr_psoc *psoc,
 				uint8_t pdev_id, uint16_t freq);
 
+	QDF_STATUS(*set_mec_timer)(struct cdp_ctrl_objmgr_psoc *psoc,
+				   uint8_t vdev_id, uint16_t mec_timer_val);
+
 #ifdef ATH_SUPPORT_NAC_RSSI
 	int (*config_fw_for_nac_rssi)(struct cdp_ctrl_objmgr_psoc *psoc,
 				      uint8_t pdev_id,
@@ -1219,6 +1234,7 @@ struct ol_if_ops {
 				   uint32_t service_interval_ul, uint32_t burst_size_ul,
 				   uint8_t add_or_sub, uint8_t ac);
 #endif
+	uint32_t (*dp_get_tx_inqueue)(ol_txrx_soc_handle soc);
 };
 
 #ifdef DP_PEER_EXTENDED_API

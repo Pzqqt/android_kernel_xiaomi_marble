@@ -1,19 +1,17 @@
 /*
- * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "hal_hw_headers.h"
@@ -31,6 +29,8 @@
 #include "wlan_cfg.h"
 #include "dp_internal.h"
 #include "dp_rx_buffer_pool.h"
+#include <dp_mon_1.0.h>
+#include <dp_rx_mon_1.0.h>
 
 #ifndef IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK
 #define IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK 0xe0
@@ -55,7 +55,7 @@
 #define MON_DEST_RING_STUCK_MAX_CNT 16
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
-static inline void
+void
 dp_handle_tx_capture(struct dp_soc *soc, struct dp_pdev *pdev,
 		     qdf_nbuf_t mon_mpdu)
 {
@@ -87,18 +87,10 @@ dp_tx_capture_get_user_id(struct dp_pdev *dp_pdev, void *rx_desc_tlv)
 }
 #endif
 #else
-static inline void
-dp_handle_tx_capture(struct dp_soc *soc, struct dp_pdev *pdev,
-		     qdf_nbuf_t mon_mpdu)
-{
-}
-
-#ifdef QCA_MONITOR_PKT_SUPPORT
 static void
 dp_tx_capture_get_user_id(struct dp_pdev *dp_pdev, void *rx_desc_tlv)
 {
 }
-#endif
 #endif
 
 #ifdef QCA_MONITOR_PKT_SUPPORT
@@ -471,34 +463,6 @@ next_msdu:
 	dp_rx_mon_remove_raw_frame_fcs_len(soc, head_msdu, tail_msdu);
 
 	return rx_bufs_used;
-}
-
-/**
- * dp_rx_extract_radiotap_info(): Extract and populate information in
- *				struct mon_rx_status type
- * @rx_status: Receive status
- * @mon_rx_status: Monitor mode status
- *
- * Returns: None
- */
-static inline
-void dp_rx_extract_radiotap_info(struct cdp_mon_status *rx_status,
-				 struct mon_rx_status *rx_mon_status)
-{
-	rx_mon_status->tsft = rx_status->cdp_rs_tstamp.cdp_tsf;
-	rx_mon_status->chan_freq = rx_status->rs_freq;
-	rx_mon_status->chan_num = rx_status->rs_channel;
-	rx_mon_status->chan_flags = rx_status->rs_flags;
-	rx_mon_status->rate = rx_status->rs_datarate;
-	/* TODO: rx_mon_status->ant_signal_db */
-	/* TODO: rx_mon_status->nr_ant */
-	rx_mon_status->mcs = rx_status->cdf_rs_rate_mcs;
-	rx_mon_status->is_stbc = rx_status->cdp_rs_stbc;
-	rx_mon_status->sgi = rx_status->cdp_rs_sgi;
-	/* TODO: rx_mon_status->ldpc */
-	/* TODO: rx_mon_status->beamformed */
-	/* TODO: rx_mon_status->vht_flags */
-	/* TODO: rx_mon_status->vht_flag_values1 */
 }
 
 void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
@@ -2032,7 +1996,6 @@ mpdu_stitch_fail:
 #endif
 
 #ifdef DP_RX_MON_MEM_FRAG
-static inline
 qdf_nbuf_t dp_rx_mon_restitch_mpdu(struct dp_soc *soc, uint32_t mac_id,
 				   qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu,
 				   struct cdp_mon_status *rs)
@@ -2047,7 +2010,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu(struct dp_soc *soc, uint32_t mac_id,
 							  tail_msdu, rs);
 }
 #else
-static inline
 qdf_nbuf_t dp_rx_mon_restitch_mpdu(struct dp_soc *soc, uint32_t mac_id,
 				   qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu,
 				   struct cdp_mon_status *rs)
@@ -2060,7 +2022,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu(struct dp_soc *soc, uint32_t mac_id,
 #ifdef DP_RX_MON_MEM_FRAG
 #if defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) ||\
 	defined(WLAN_SUPPORT_RX_FLOW_TAG)
-static inline
 void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
 					     qdf_nbuf_t nbuf)
 {
@@ -2113,116 +2074,12 @@ void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
 		ext_list = qdf_nbuf_queue_next(ext_list);
 	}
 }
-#else
-static inline
-void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
-					     qdf_nbuf_t nbuf)
-{
-}
 #endif
-#else
-static inline
-void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
-					     qdf_nbuf_t nbuf)
-{
-}
 #endif
 
-#ifdef DP_MON_RSSI_IN_DBM
-/*
- * dp_rx_mon_rssi_convert(): convert rssi_comb from unit dBm to dB
- * to match with radiotap further conversion requirement
- * @rx_status: monitor mode rx status pointer
- *
- * Return: none
- */
-static inline
-void dp_rx_mon_rssi_convert(struct mon_rx_status *rx_status)
-{
-	rx_status->rssi_comb = rx_status->rssi_comb -
-			rx_status->chan_noise_floor;
-}
-#else
-static inline
-void dp_rx_mon_rssi_convert(struct mon_rx_status *rx_status)
-{
-}
-#endif
-
-/**
- * dp_send_mgmt_packet_to_stack(): send indicataion to upper layers
- *
- * @soc: soc handle
- * @nbuf: Mgmt packet
- * @pdev: pdev handle
- *
- * Return: QDF_STATUS_SUCCESS on success
- *         QDF_STATUS_E_INVAL in error
- */
-#ifdef QCA_MCOPY_SUPPORT
-static inline QDF_STATUS dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
-						      qdf_nbuf_t nbuf,
-						      struct dp_pdev *pdev)
-{
-	uint32_t *nbuf_data;
-	struct ieee80211_frame *wh;
-	qdf_frag_t addr;
-	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
-
-	if (!nbuf)
-		return QDF_STATUS_E_INVAL;
-
-	/* Get addr pointing to80211 header */
-	addr = dp_rx_mon_get_nbuf_80211_hdr(nbuf);
-	if (qdf_unlikely(!addr)) {
-		qdf_nbuf_free(nbuf);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	/*check if this is not a mgmt packet*/
-	wh = (struct ieee80211_frame *)addr;
-	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
-	     IEEE80211_FC0_TYPE_MGT) &&
-	     ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
-	     IEEE80211_FC0_TYPE_CTL)) {
-		qdf_nbuf_free(nbuf);
-		return QDF_STATUS_E_INVAL;
-	}
-	nbuf_data = (uint32_t *)qdf_nbuf_push_head(nbuf, 4);
-	if (!nbuf_data) {
-		QDF_TRACE(QDF_MODULE_ID_DP,
-			  QDF_TRACE_LEVEL_ERROR,
-			  FL("No headroom"));
-		qdf_nbuf_free(nbuf);
-		return QDF_STATUS_E_INVAL;
-	}
-	*nbuf_data = mon_pdev->ppdu_info.com_info.ppdu_id;
-
-	dp_wdi_event_handler(WDI_EVENT_RX_MGMT_CTRL, soc, nbuf,
-			     HTT_INVALID_PEER,
-			     WDI_NO_VAL, pdev->pdev_id);
-	return QDF_STATUS_SUCCESS;
-}
-#else
-static inline QDF_STATUS dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
-						      qdf_nbuf_t nbuf,
-						      struct dp_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* QCA_MCOPY_SUPPORT */
-
-/*
- * dp_rx_mon_process_dest_pktlog(): function to log packet contents to
- * pktlog buffer and send to pktlog module
- * @soc: DP soc
- * @mac_id: MAC ID
- * @mpdu: MPDU buf
- * Return: status: 0 - Success, non-zero: Failure
- */
-static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
-						uint32_t mac_id,
-						qdf_nbuf_t mpdu)
+QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
+					 uint32_t mac_id,
+					 qdf_nbuf_t mpdu)
 {
 	uint32_t event, msdu_timestamp = 0;
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
@@ -2264,174 +2121,134 @@ static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * dp_rx_mon_deliver(): function to deliver packets to stack
- * @soc: DP soc
- * @mac_id: MAC ID
- * @head_msdu: head of msdu list
- * @tail_msdu: tail of msdu list
- *
- * Return: status: 0 - Success, non-zero: Failure
- */
-QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
-			     qdf_nbuf_t head_msdu,
-			     qdf_nbuf_t tail_msdu)
+#ifdef QCA_MONITOR_PKT_SUPPORT
+QDF_STATUS dp_mon_htt_dest_srng_setup(struct dp_soc *soc,
+				      struct dp_pdev *pdev,
+				      int mac_id,
+				      int mac_for_pdev)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
-	struct cdp_mon_status *rs;
-	qdf_nbuf_t mon_skb, skb_next;
-	qdf_nbuf_t mon_mpdu = NULL;
-	struct dp_mon_vdev *mon_vdev;
-	struct dp_mon_pdev *mon_pdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!pdev)
-		goto mon_deliver_fail;
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					soc->rxdma_mon_buf_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_BUF);
 
-	mon_pdev = pdev->monitor_pdev;
-	rs = &mon_pdev->rx_mon_recv_status;
-
-	if (!mon_pdev->mvdev && !mon_pdev->mcopy_mode &&
-	    !mon_pdev->rx_pktlog_cbf)
-		goto mon_deliver_fail;
-
-	/* restitch mon MPDU for delivery via monitor interface */
-	mon_mpdu = dp_rx_mon_restitch_mpdu(soc, mac_id, head_msdu,
-					   tail_msdu, rs);
-
-	/* If MPDU restitch fails, free buffers*/
-	if (!mon_mpdu) {
-		dp_info("MPDU restitch failed, free buffers");
-		goto mon_deliver_fail;
-	}
-
-	dp_rx_mon_process_dest_pktlog(soc, mac_id, mon_mpdu);
-
-	/* monitor vap cannot be present when mcopy is enabled
-	 * hence same skb can be consumed
-	 */
-	if (mon_pdev->mcopy_mode)
-		return dp_send_mgmt_packet_to_stack(soc, mon_mpdu, pdev);
-
-	if (mon_mpdu && mon_pdev->mvdev &&
-	    mon_pdev->mvdev->osif_vdev &&
-	    mon_pdev->mvdev->monitor_vdev &&
-	    mon_pdev->mvdev->monitor_vdev->osif_rx_mon) {
-		mon_vdev = mon_pdev->mvdev->monitor_vdev;
-
-		mon_pdev->ppdu_info.rx_status.ppdu_id =
-			mon_pdev->ppdu_info.com_info.ppdu_id;
-		mon_pdev->ppdu_info.rx_status.device_id = soc->device_id;
-		mon_pdev->ppdu_info.rx_status.chan_noise_floor =
-			pdev->chan_noise_floor;
-		/* convert rssi_comb from dBm to positive dB value */
-		dp_rx_mon_rssi_convert(&mon_pdev->ppdu_info.rx_status);
-
-		dp_handle_tx_capture(soc, pdev, mon_mpdu);
-
-		if (!qdf_nbuf_update_radiotap(&mon_pdev->ppdu_info.rx_status,
-					      mon_mpdu,
-					      qdf_nbuf_headroom(mon_mpdu))) {
-			DP_STATS_INC(pdev, dropped.mon_radiotap_update_err, 1);
-			goto mon_deliver_fail;
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_mon_err("Failed to send htt srng setup message for Rxdma mon buf ring");
+			return status;
 		}
 
-		dp_rx_mon_update_pf_tag_to_buf_headroom(soc, mon_mpdu);
-		mon_vdev->osif_rx_mon(mon_pdev->mvdev->osif_vdev,
-				      mon_mpdu,
-				      &mon_pdev->ppdu_info.rx_status);
-	} else {
-		dp_rx_mon_dest_debug("%pK: mon_mpdu=%pK monitor_vdev %pK osif_vdev %pK"
-				     , soc, mon_mpdu, mon_pdev->mvdev,
-				     (mon_pdev->mvdev ? mon_pdev->mvdev->osif_vdev
-				     : NULL));
-		goto mon_deliver_fail;
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					soc->rxdma_mon_dst_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_DST);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_mon_err("Failed to send htt srng setup message for Rxdma mon dst ring");
+			return status;
+		}
+
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					soc->rxdma_mon_desc_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_DESC);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_mon_err("Failed to send htt srng message for Rxdma mon desc ring");
+			return status;
+		}
 	}
 
-	return QDF_STATUS_SUCCESS;
-
-mon_deliver_fail:
-	mon_skb = head_msdu;
-	while (mon_skb) {
-		skb_next = qdf_nbuf_next(mon_skb);
-
-		 dp_rx_mon_dest_debug("%pK: [%s][%d] mon_skb=%pK len %u",
-				      soc,  __func__, __LINE__,
-				      mon_skb, mon_skb->len);
-
-		qdf_nbuf_free(mon_skb);
-		mon_skb = skb_next;
-	}
-	return QDF_STATUS_E_INVAL;
+	return status;
 }
+#endif /* QCA_MONITOR_PKT_SUPPORT */
 
-/**
-* dp_rx_mon_deliver_non_std()
-* @soc: core txrx main contex
-* @mac_id: MAC ID
-*
-* This function delivers the radio tap and dummy MSDU
-* into user layer application for preamble only PPDU.
-*
-* Return: QDF_STATUS
-*/
-QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc,
-				     uint32_t mac_id)
+#ifdef QCA_MONITOR_PKT_SUPPORT
+void dp_mon_dest_rings_deinit(struct dp_pdev *pdev, int lmac_id)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
-	ol_txrx_rx_mon_fp osif_rx_mon;
-	qdf_nbuf_t dummy_msdu;
-	struct dp_mon_pdev *mon_pdev;
-	struct dp_mon_vdev *mon_vdev;
+	struct dp_soc *soc = pdev->soc;
 
-	/* Sanity checking */
-	if (!pdev || !pdev->monitor_pdev)
-		goto mon_deliver_non_std_fail;
-
-	mon_pdev = pdev->monitor_pdev;
-
-	if (!mon_pdev->mvdev || !mon_pdev->mvdev ||
-	    !mon_pdev->mvdev->monitor_vdev ||
-	    !mon_pdev->mvdev->monitor_vdev->osif_rx_mon)
-		goto mon_deliver_non_std_fail;
-
-	mon_vdev = mon_pdev->mvdev->monitor_vdev;
-	/* Generate a dummy skb_buff */
-	osif_rx_mon = mon_vdev->osif_rx_mon;
-	dummy_msdu = qdf_nbuf_alloc(soc->osdev, MAX_MONITOR_HEADER,
-				    MAX_MONITOR_HEADER, 4, FALSE);
-	if (!dummy_msdu)
-		goto allocate_dummy_msdu_fail;
-
-	qdf_nbuf_set_pktlen(dummy_msdu, 0);
-	qdf_nbuf_set_next(dummy_msdu, NULL);
-
-	mon_pdev->ppdu_info.rx_status.ppdu_id =
-		mon_pdev->ppdu_info.com_info.ppdu_id;
-
-	/* Apply the radio header to this dummy skb */
-	if (!qdf_nbuf_update_radiotap(&mon_pdev->ppdu_info.rx_status,
-				      dummy_msdu,
-				      qdf_nbuf_headroom(dummy_msdu))) {
-		DP_STATS_INC(pdev, dropped.mon_radiotap_update_err, 1);
-		qdf_nbuf_free(dummy_msdu);
-		goto mon_deliver_non_std_fail;
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		dp_srng_deinit(soc, &soc->rxdma_mon_buf_ring[lmac_id],
+			       RXDMA_MONITOR_BUF, 0);
+		dp_srng_deinit(soc, &soc->rxdma_mon_dst_ring[lmac_id],
+			       RXDMA_MONITOR_DST, 0);
+		dp_srng_deinit(soc, &soc->rxdma_mon_desc_ring[lmac_id],
+			       RXDMA_MONITOR_DESC, 0);
 	}
+}
 
-	/* deliver to the user layer application */
-	osif_rx_mon(mon_pdev->mvdev->osif_vdev,
-		    dummy_msdu, NULL);
+void dp_mon_dest_rings_free(struct dp_pdev *pdev, int lmac_id)
+{
+	struct dp_soc *soc = pdev->soc;
 
-	/* Clear rx_status*/
-	qdf_mem_zero(&mon_pdev->ppdu_info.rx_status,
-		     sizeof(mon_pdev->ppdu_info.rx_status));
-	mon_pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		dp_srng_free(soc, &soc->rxdma_mon_buf_ring[lmac_id]);
+		dp_srng_free(soc, &soc->rxdma_mon_dst_ring[lmac_id]);
+		dp_srng_free(soc, &soc->rxdma_mon_desc_ring[lmac_id]);
+	}
+}
 
+QDF_STATUS dp_mon_dest_rings_init(struct dp_pdev *pdev, int lmac_id)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		if (dp_srng_init(soc, &soc->rxdma_mon_buf_ring[lmac_id],
+				 RXDMA_MONITOR_BUF, 0, lmac_id)) {
+			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_buf_ring ", soc);
+			goto fail1;
+		}
+
+		if (dp_srng_init(soc, &soc->rxdma_mon_dst_ring[lmac_id],
+				 RXDMA_MONITOR_DST, 0, lmac_id)) {
+			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_dst_ring", soc);
+			goto fail1;
+		}
+
+		if (dp_srng_init(soc, &soc->rxdma_mon_desc_ring[lmac_id],
+				 RXDMA_MONITOR_DESC, 0, lmac_id)) {
+			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_desc_ring", soc);
+			goto fail1;
+		}
+	}
 	return QDF_STATUS_SUCCESS;
 
-allocate_dummy_msdu_fail:
-		 dp_rx_mon_dest_debug("%pK: mon_skb=%pK ",
-				      soc, dummy_msdu);
-
-mon_deliver_non_std_fail:
-	return QDF_STATUS_E_INVAL;
+fail1:
+	return QDF_STATUS_E_NOMEM;
 }
+
+QDF_STATUS dp_mon_dest_rings_alloc(struct dp_pdev *pdev, int lmac_id)
+{
+	int entries;
+	struct dp_soc *soc = pdev->soc;
+	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx = pdev->wlan_cfg_ctx;
+
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		entries = wlan_cfg_get_dma_mon_buf_ring_size(pdev_cfg_ctx);
+		if (dp_srng_alloc(soc, &soc->rxdma_mon_buf_ring[lmac_id],
+				  RXDMA_MONITOR_BUF, entries, 0)) {
+			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_buf_ring ", soc);
+			goto fail1;
+		}
+		entries = wlan_cfg_get_dma_rx_mon_dest_ring_size(pdev_cfg_ctx);
+		if (dp_srng_alloc(soc, &soc->rxdma_mon_dst_ring[lmac_id],
+				  RXDMA_MONITOR_DST, entries, 0)) {
+			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_dst_ring", soc);
+			goto fail1;
+		}
+		entries = wlan_cfg_get_dma_mon_desc_ring_size(pdev_cfg_ctx);
+		if (dp_srng_alloc(soc, &soc->rxdma_mon_desc_ring[lmac_id],
+				  RXDMA_MONITOR_DESC, entries, 0)) {
+			dp_mon_err("%pK: " RNG_ERR "rxdma_mon_desc_ring", soc);
+			goto fail1;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+
+fail1:
+	return QDF_STATUS_E_NOMEM;
+}
+#endif

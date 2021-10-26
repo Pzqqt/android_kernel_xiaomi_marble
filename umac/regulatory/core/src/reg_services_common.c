@@ -5577,6 +5577,9 @@ QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	QDF_TRACE(QDF_MODULE_ID_AFC, QDF_TRACE_LEVEL_DEBUG,
+		  "Processing AFC Start/Renew Expiry event");
+
 	reg_dmn_set_afc_req_id(afc_req, req_id);
 
 	reg_print_partial_afc_req_info(pdev, afc_req);
@@ -5886,6 +5889,9 @@ QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 		reg_err("pdev reg component is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	if (pdev_priv_obj->reg_cur_6g_ap_pwr_type == ap_pwr_type)
+		return QDF_STATUS_SUCCESS;
 
 	if (!reg_get_num_rules_of_ap_pwr_type(pdev, ap_pwr_type))
 		return QDF_STATUS_E_FAILURE;

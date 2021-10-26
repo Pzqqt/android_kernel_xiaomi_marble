@@ -175,6 +175,8 @@ send_twt_add_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->max_wake_intvl_us = params->max_wake_intvl_us;
 	cmd->min_wake_dura_us = params->min_wake_dura_us;
 	cmd->max_wake_dura_us = params->max_wake_dura_us;
+	cmd->sp_start_tsf_lo = (uint32_t)(params->wake_time_tsf & 0xFFFFFFFF);
+	cmd->sp_start_tsf_hi = (uint32_t)(params->wake_time_tsf >> 32);
 	TWT_FLAGS_SET_CMD(cmd->flags, params->twt_cmd);
 	TWT_FLAGS_SET_BROADCAST(cmd->flags, params->flag_bcast);
 	TWT_FLAGS_SET_TRIGGER(cmd->flags, params->flag_trigger);
@@ -610,6 +612,10 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 				param_buf->twt_params[idx].sp_tsf_us_lo;
 	additional_params->sp_tsf_us_hi =
 				param_buf->twt_params[idx].sp_tsf_us_hi;
+	additional_params->pm_responder_bit_valid =
+				TWT_FLAGS_GET_PM_RESPONDER_MODE_VALID(flags);
+	additional_params->pm_responder_bit =
+				TWT_FLAGS_GET_PM_RESPONDER_MODE(flags);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1013,6 +1019,10 @@ extract_twt_session_stats_event_data(wmi_unified_t wmi_handle,
 	session->protection = WMI_TWT_SESSION_FLAG_TWT_PROTECTION_GET(flags);
 	session->info_frame_disabled =
 			WMI_TWT_SESSION_FLAG_TWT_INFO_FRAME_DISABLED_GET(flags);
+	session->pm_responder_bit =
+			WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_GET(flags);
+	session->pm_responder_bit_valid =
+		WMI_TWT_SESSION_FLAG_TWT_PM_RESPONDER_MODE_VALID_GET(flags);
 	session->dialog_id = twt_session->dialog_id;
 	session->wake_dura_us = twt_session->wake_dura_us;
 	session->wake_intvl_us = twt_session->wake_intvl_us;
@@ -1024,6 +1034,8 @@ extract_twt_session_stats_event_data(wmi_unified_t wmi_handle,
 		 session->bcast, session->trig,
 		 session->announ, session->dialog_id, session->wake_dura_us,
 		 session->wake_intvl_us, session->sp_offset_us);
+	wmi_debug("resp_pm_valid=%d resp_pm=%d",
+		  session->pm_responder_bit_valid, session->pm_responder_bit);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -228,6 +228,8 @@ target_if_spectral_get_agile_mode_cap(
 		agile_cap->agile_spectral_cap  = false;
 		agile_cap->agile_spectral_cap_160 = false;
 		agile_cap->agile_spectral_cap_80p80 = false;
+		agile_cap->agile_spectral_cap_320 = false;
+
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -259,6 +261,7 @@ target_if_spectral_get_agile_mode_cap(
 			table->cap_list[i].supports_aSpectral;
 		agile_cap->agile_spectral_cap_160 |=
 			table->cap_list[i].supports_aSpectral_160;
+		agile_cap->agile_spectral_cap_320 |= 0;
 	}
 
 	agile_cap->agile_spectral_cap_80p80 = agile_cap->agile_spectral_cap_160;
@@ -327,6 +330,8 @@ target_if_spectral_init_pdev_feature_cap_per_mode(struct wlan_objmgr_pdev *pdev,
 			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS);
 			wlan_pdev_nif_feat_ext_cap_set(
 			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS);
+			wlan_pdev_nif_feat_ext_cap_set(
+			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_320_DIS);
 
 			return QDF_STATUS_SUCCESS;
 		}
@@ -357,6 +362,13 @@ target_if_spectral_init_pdev_feature_cap_per_mode(struct wlan_objmgr_pdev *pdev,
 		else
 			wlan_pdev_nif_feat_ext_cap_clear(
 			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS);
+
+		if (!agile_cap.agile_spectral_cap_320)
+			wlan_pdev_nif_feat_ext_cap_set(
+			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_320_DIS);
+		else
+			wlan_pdev_nif_feat_ext_cap_clear(
+			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_320_DIS);
 
 		break;
 
@@ -2428,6 +2440,8 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS);
 	pcap->agile_spectral_cap_80p80 = !wlan_pdev_nif_feat_ext_cap_get(
 			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS);
+	pcap->agile_spectral_cap_320 = !wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_320_DIS);
 
 	if (scaling_params) {
 		for (param_idx = 0; param_idx < num_bin_scaling_params;
@@ -2457,9 +2471,15 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 	    target_type == TARGET_TYPE_QCA6490) {
 		pcap->num_detectors_160mhz = 1;
 		pcap->num_detectors_80p80mhz = 1;
+		pcap->num_detectors_320mhz = 0;
+	} else if (is_spectral_arch_beryllium(target_type)) {
+		pcap->num_detectors_160mhz = 1;
+		pcap->num_detectors_80p80mhz = 0;
+		pcap->num_detectors_320mhz = 1;
 	} else {
 		pcap->num_detectors_160mhz = 2;
 		pcap->num_detectors_80p80mhz = 2;
+		pcap->num_detectors_320mhz = 0;
 	}
 
 	status = target_if_populate_supported_sscan_bws(spectral, target_type);
@@ -4813,6 +4833,49 @@ target_if_get_spectral_config(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * target_if_spectral_get_num_detectors_for_higher_bws() - Get number of
+ * Spectral detectors for higher bandwidths
+ * @spectral: Pointer to target if Spectral object
+ * @ch_width: channel width
+ * @num_detectors: Pointer to the variable to store number of Spectral detectors
+ *
+ * API to get number of Spectral detectors used for scan in the given channel
+ * width.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_INVAL on failure
+ */
+static QDF_STATUS
+target_if_spectral_get_num_detectors_for_higher_bws(
+				struct target_if_spectral *spectral,
+				enum phy_ch_width ch_width,
+				uint32_t *num_detectors)
+{
+	switch (ch_width) {
+	case CH_WIDTH_320MHZ:
+		*num_detectors = spectral->capability.num_detectors_320mhz;
+		break;
+
+	default:
+		spectral_err("Unsupported channel width %d", ch_width);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+target_if_spectral_get_num_detectors_for_higher_bws(
+				struct target_if_spectral *spectral,
+				enum phy_ch_width ch_width,
+				uint32_t *num_detectors)
+{
+	spectral_err("Unsupported channel width %d", ch_width);
+	return QDF_STATUS_E_INVAL;
+}
+#endif
+
 /**
  * target_if_spectral_get_num_detectors() - Get number of Spectral detectors
  * @spectral: Pointer to target if Spectral object
@@ -4866,8 +4929,8 @@ target_if_spectral_get_num_detectors(struct target_if_spectral *spectral,
 		break;
 
 	default:
-		spectral_err("Unsupported channel width %d", ch_width);
-		return QDF_STATUS_E_INVAL;
+		return target_if_spectral_get_num_detectors_for_higher_bws(
+			spectral, ch_width, num_detectors);
 	}
 
 	return QDF_STATUS_SUCCESS;

@@ -253,6 +253,8 @@ enum hal_rx_mpdu_desc_flags {
 #define HAL_RX_BUF_RBM_SW5_BM(sw0_bm_id)	(sw0_bm_id + 5)
 #define HAL_RX_BUF_RBM_SW6_BM(sw0_bm_id)	(sw0_bm_id + 6)
 
+#define HAL_RX_BUF_RBM_SW_BM(sw0_bm_id, wbm2sw_id)	(sw0_bm_id + wbm2sw_id)
+
 #define HAL_REO_DESTINATION_RING_MSDU_COUNT_OFFSET	0x8
 #define HAL_REO_DESTINATION_RING_MSDU_COUNT_LSB		0
 #define HAL_REO_DESTINATION_RING_MSDU_COUNT_MASK	0x000000ff
@@ -574,6 +576,9 @@ enum hal_reo_error_code {
  * @ HAL_RXDMA_ERR_DA_TIMEOUT    : Destination Address  search timeout
  * @ HAL_RXDMA_ERR_FLOW_TIMEOUT  : Flow Search Timeout
  * @ HAL_RXDMA_ERR_FLUSH_REQUEST : RxDMA FIFO Flush request
+ * @ HAL_RXDMA_AMSDU_FRAGMENT    : Rx PCU reported A-MSDU
+ *                                 present as well as a fragmented MPDU
+ * @ HAL_RXDMA_MULTICAST_ECHO    : RX OLE reported a multicast echo
  * @ HAL_RXDMA_ERR_WAR           : RxDMA WAR dummy errors
  */
 enum hal_rxdma_error_code {
@@ -591,6 +596,8 @@ enum hal_rxdma_error_code {
 	HAL_RXDMA_ERR_DA_TIMEOUT,
 	HAL_RXDMA_ERR_FLOW_TIMEOUT,
 	HAL_RXDMA_ERR_FLUSH_REQUEST,
+	HAL_RXDMA_AMSDU_FRAGMENT,
+	HAL_RXDMA_MULTICAST_ECHO,
 	HAL_RXDMA_ERR_WAR = 31,
 	HAL_RXDMA_ERR_MAX
 };

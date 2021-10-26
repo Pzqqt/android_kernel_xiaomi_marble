@@ -42,6 +42,7 @@
  * Remove this once the actual one is implemented.
  */
 #define MGMT_RX_REO_MAX_LINKS (16)
+#define MGMT_RX_REO_INVALID_NUM_LINKS (-1)
 /* Reason to release an entry from the reorder list */
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_ZERO_WAIT_COUNT           (BIT(0))
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_AGED_OUT                  (BIT(1))
@@ -145,6 +146,8 @@ struct mgmt_rx_reo_global_ts_info {
  * @ts_latest_aged_out_frame: Stores the global time stamp for the latest aged
  * out frame. Latest aged out frame is the aged out frame in reorder list which
  * has the largest global time stamp value.
+ * @ts_last_delivered_frame: Stores the global time stamp for the last frame
+ * delivered to the upper layer
  */
 struct mgmt_rx_reo_list {
 	qdf_list_t list;
@@ -152,6 +155,7 @@ struct mgmt_rx_reo_list {
 	uint32_t max_list_size;
 	qdf_timer_t ageout_timer;
 	struct mgmt_rx_reo_global_ts_info ts_latest_aged_out_frame;
+	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
 };
 
 /*
@@ -190,14 +194,14 @@ struct mgmt_rx_reo_list_entry {
  * management rx-reordering. Reordering is done across all the psocs.
  * So there should be only one instance of this structure defined.
  * @reo_list: Linked list used for reordering
- * @ts_last_delivered_frame: Stores the global time stamp for the last frame
- * delivered to the upper layer
  * @num_mlo_links: Number of MLO links on the system
+ * @reo_algo_entry_lock: Spin lock to protect reo algorithm entry critical
+ * section execution
  */
 struct mgmt_rx_reo_context {
 	struct mgmt_rx_reo_list reo_list;
-	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
 	uint8_t num_mlo_links;
+	qdf_spinlock_t reo_algo_entry_lock;
 };
 
 /**

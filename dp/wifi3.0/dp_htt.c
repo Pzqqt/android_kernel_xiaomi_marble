@@ -52,18 +52,9 @@
 
 #define HTT_SHIFT_UPPER_TIMESTAMP 32
 #define HTT_MASK_UPPER_TIMESTAMP 0xFFFFFFFF00000000
+#define HTT_BKP_STATS_MAX_QUEUE_DEPTH 16
 
-#define HTT_HTC_PKT_STATUS_SUCCESS \
-	((pkt->htc_pkt.Status != QDF_STATUS_E_CANCELED) && \
-	(pkt->htc_pkt.Status != QDF_STATUS_E_RESOURCES))
-
-/*
- * htt_htc_pkt_alloc() - Allocate HTC packet buffer
- * @htt_soc:	HTT SOC handle
- *
- * Return: Pointer to htc packet buffer
- */
-static struct dp_htt_htc_pkt *
+struct dp_htt_htc_pkt *
 htt_htc_pkt_alloc(struct htt_soc *soc)
 {
 	struct dp_htt_htc_pkt_union *pkt = NULL;
@@ -86,11 +77,9 @@ htt_htc_pkt_alloc(struct htt_soc *soc)
 	return &pkt->u.pkt; /* not actually a dereference */
 }
 
-/*
- * htt_htc_pkt_free() - Free HTC packet buffer
- * @htt_soc:	HTT SOC handle
- */
-static void
+qdf_export_symbol(htt_htc_pkt_alloc);
+
+void
 htt_htc_pkt_free(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 {
 	struct dp_htt_htc_pkt_union *u_pkt =
@@ -102,6 +91,8 @@ htt_htc_pkt_free(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 	soc->htt_htc_pkt_freelist = u_pkt;
 	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
 }
+
+qdf_export_symbol(htt_htc_pkt_free);
 
 /*
  * htt_htc_pkt_pool_free() - Free HTC packet pool
@@ -120,14 +111,8 @@ htt_htc_pkt_pool_free(struct htt_soc *soc)
 	soc->htt_htc_pkt_freelist = NULL;
 }
 
-#ifdef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
 
-static void
-htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
-{
-}
-
-#else  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+#ifndef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
 
 /*
  * htt_htc_misc_pkt_list_trim() - trim misc list
@@ -167,7 +152,7 @@ htt_htc_misc_pkt_list_trim(struct htt_soc *soc, int level)
  * @htt_soc:	HTT SOC handle
  * @dp_htt_htc_pkt: pkt to be added to list
  */
-static void
+void
 htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 {
 	struct dp_htt_htc_pkt_union *u_pkt =
@@ -191,32 +176,8 @@ htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 	htt_htc_misc_pkt_list_trim(soc, misclist_trim_level);
 }
 
+qdf_export_symbol(htt_htc_misc_pkt_list_add);
 #endif  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
-
-/**
- * DP_HTT_SEND_HTC_PKT() - Send htt packet from host
- * @soc : HTT SOC handle
- * @pkt: pkt to be send
- * @cmd : command to be recorded in dp htt logger
- * @buf : Pointer to buffer needs to be recored for above cmd
- *
- * Return: None
- */
-static inline QDF_STATUS DP_HTT_SEND_HTC_PKT(struct htt_soc *soc,
-					     struct dp_htt_htc_pkt *pkt,
-					     uint8_t cmd, uint8_t *buf)
-{
-	QDF_STATUS status;
-
-	htt_command_record(soc->htt_logger_handle, cmd, buf);
-
-	status = htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
-	if (status == QDF_STATUS_SUCCESS && HTT_HTC_PKT_STATUS_SUCCESS)
-		htt_htc_misc_pkt_list_add(soc, pkt);
-	else
-		soc->stats.fail_count++;
-	return status;
-}
 
 /*
  * htt_htc_misc_pkt_pool_free() - free pkts in misc list
@@ -533,6 +494,17 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 		htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
 		htt_ring_type = HTT_HW_TO_SW_RING;
 		break;
+#ifdef QCA_MONITOR_2_0_SUPPORT_WAR
+	// WAR till fw htt.h changes are merged
+	case TX_MONITOR_BUF:
+		htt_ring_id = HTT_TX_MON_HOST2MON_BUF_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case TX_MONITOR_DST:
+		htt_ring_id = HTT_TX_MON_MON2HOST_DEST_RING;
+		htt_ring_type = HTT_HW_TO_SW_RING;
+		break;
+#endif
 
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -945,6 +917,8 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 	*msg_word = 0;
 	HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_SET(*msg_word,
 		ring_buf_size);
+
+	dp_mon_rx_packet_length_set(soc->dp_soc, msg_word, htt_tlv_filter);
 
 	/* word 2 */
 	msg_word++;
@@ -1513,6 +1487,11 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 	if (mon_drop_th > 0)
 		HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_SET(*msg_word,
 								mon_drop_th);
+	dp_mon_rx_enable_mpdu_logging(soc->dp_soc, msg_word, htt_tlv_filter);
+
+	msg_word++;
+	*msg_word = 0;
+	dp_mon_rx_wmask_subscribe(soc->dp_soc, msg_word, htt_tlv_filter);
 
 	/* "response_required" field should be set if a HTT response message is
 	 * required after setting up the ring.
@@ -1592,7 +1571,7 @@ dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
 #endif
 
 #ifdef HTT_STATS_DEBUGFS_SUPPORT
-/* dp_send_htt_stats_dbgfs_msg() - Function to send htt data to upper layer
+/* dp_send_htt_stats_dbgfs_msg() - Function to send htt data to upper layer.
  * @pdev: dp pdev handle
  * @msg_word: HTT msg
  * @msg_len: Length of HTT msg sent
@@ -1632,6 +1611,67 @@ dp_htt_stats_dbgfs_send_msg(struct dp_pdev *pdev, uint32_t *msg_word,
 {
 }
 #endif /* HTT_STATS_DEBUGFS_SUPPORT */
+
+#ifdef WLAN_SYSFS_DP_STATS
+/* dp_htt_stats_sysfs_update_config() - Function to send htt data to upper layer.
+ * @pdev: dp pdev handle
+ *
+ * This function sets the process id and printing mode within the sysfs config
+ * struct. which enables DP_PRINT statements within this process to write to the
+ * console buffer provided by the user space.
+ *
+ * Return: None
+ */
+static inline void
+dp_htt_stats_sysfs_update_config(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	if (!soc) {
+		dp_htt_err("soc is null");
+		return;
+	}
+
+	if (!soc->sysfs_config) {
+		dp_htt_err("soc->sysfs_config is NULL");
+		return;
+	}
+
+	/* set sysfs config parameters */
+	soc->sysfs_config->process_id = qdf_get_current_pid();
+	soc->sysfs_config->printing_mode = PRINTING_MODE_ENABLED;
+}
+
+/*
+ * dp_htt_stats_sysfs_set_event() - Set sysfs stats event.
+ * @soc: soc handle.
+ * @msg_word: Pointer to htt msg word.
+ *
+ * @return: void
+ */
+static inline void
+dp_htt_stats_sysfs_set_event(struct dp_soc *soc, uint32_t *msg_word)
+{
+	int done = 0;
+
+	done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*(msg_word + 3));
+	if (done) {
+		if (qdf_event_set(&soc->sysfs_config->sysfs_txrx_fw_request_done))
+			dp_htt_err("%pK:event compl Fail to set event ",
+				   soc);
+	}
+}
+#else /* WLAN_SYSFS_DP_STATS */
+static inline void
+dp_htt_stats_sysfs_update_config(struct dp_pdev *pdev)
+{
+}
+
+static inline void
+dp_htt_stats_sysfs_set_event(struct dp_soc *dp_soc, uint32_t *msg_word)
+{
+}
+#endif /* WLAN_SYSFS_DP_STATS */
 
 /**
  * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
@@ -1696,6 +1736,9 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 			qdf_nbuf_free(htt_msg);
 			continue;
 		}
+
+		if (!cookie_val && (cookie_msb & DBG_SYSFS_STATS_COOKIE))
+			dp_htt_stats_sysfs_update_config(pdev);
 
 		if (cookie_msb & DBG_STATS_COOKIE_DP_STATS)
 			copy_stats = true;
@@ -1799,6 +1842,10 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 		if (htt_stats->msg_len >= DP_EXT_MSG_LENGTH) {
 			htt_stats->msg_len -= DP_EXT_MSG_LENGTH;
 		}
+
+		/* indicate event completion in case the event is done */
+		if (!cookie_val && (cookie_msb & DBG_SYSFS_STATS_COOKIE))
+			dp_htt_stats_sysfs_set_event(soc, msg_word);
 
 		qdf_nbuf_free(htt_msg);
 	}
@@ -2161,6 +2208,7 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 	int lmac_id;
 	uint32_t j = 0;
 	struct dp_soc_srngs_state * soc_srngs_state = NULL;
+	struct dp_soc_srngs_state *drop_srngs_state = NULL;
 	QDF_STATUS status;
 
 	soc_srngs_state = qdf_mem_malloc(sizeof(struct dp_soc_srngs_state));
@@ -2342,6 +2390,17 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 	qdf_spin_lock_bh(&pdev->bkp_stats.list_lock);
 
 	soc_srngs_state->seq_num = pdev->bkp_stats.seq_num;
+
+	if (pdev->bkp_stats.queue_depth >= HTT_BKP_STATS_MAX_QUEUE_DEPTH) {
+		drop_srngs_state = TAILQ_FIRST(&pdev->bkp_stats.list);
+		qdf_assert_always(drop_srngs_state);
+		TAILQ_REMOVE(&pdev->bkp_stats.list, drop_srngs_state,
+			     list_elem);
+		qdf_mem_free(drop_srngs_state);
+		pdev->bkp_stats.queue_depth--;
+	}
+
+	pdev->bkp_stats.queue_depth++;
 	TAILQ_INSERT_TAIL(&pdev->bkp_stats.list, soc_srngs_state,
 			  list_elem);
 	pdev->bkp_stats.seq_num++;
@@ -2440,6 +2499,83 @@ dp_offload_ind_handler(struct htt_soc *soc, uint32_t *msg_word)
 static void
 dp_offload_ind_handler(struct htt_soc *soc, uint32_t *msg_word)
 {
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static void dp_htt_mlo_peer_map_handler(struct htt_soc *soc,
+					uint32_t *msg_word)
+{
+	uint8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
+	uint8_t *mlo_peer_mac_addr;
+	uint16_t mlo_peer_id;
+	uint8_t num_links;
+	struct dp_mlo_flow_override_info mlo_flow_info[DP_MLO_FLOW_INFO_MAX];
+
+	mlo_peer_id = HTT_RX_MLO_PEER_MAP_MLO_PEER_ID_GET(*msg_word);
+	num_links =
+		HTT_RX_MLO_PEER_MAP_NUM_LOGICAL_LINKS_GET(*msg_word);
+	mlo_peer_mac_addr =
+	htt_t2h_mac_addr_deswizzle((u_int8_t *)(msg_word + 1),
+				   &mac_addr_deswizzle_buf[0]);
+
+	mlo_flow_info[0].ast_idx =
+		HTT_RX_MLO_PEER_MAP_PRIMARY_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[0].ast_idx_valid =
+		HTT_RX_MLO_PEER_MAP_AST_INDEX_VALID_FLAG_GET(*(msg_word + 3));
+	mlo_flow_info[0].chip_id =
+		HTT_RX_MLO_PEER_MAP_CHIP_ID_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[0].tidmask =
+		HTT_RX_MLO_PEER_MAP_TIDMASK_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[0].cache_set_num =
+	HTT_RX_MLO_PEER_MAP_CACHE_SET_NUM_AST_INDEX_GET(*(msg_word + 3));
+
+	mlo_flow_info[1].ast_idx =
+		HTT_RX_MLO_PEER_MAP_PRIMARY_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[1].ast_idx_valid =
+		HTT_RX_MLO_PEER_MAP_AST_INDEX_VALID_FLAG_GET(*(msg_word + 3));
+	mlo_flow_info[1].chip_id =
+		HTT_RX_MLO_PEER_MAP_CHIP_ID_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[1].tidmask =
+		HTT_RX_MLO_PEER_MAP_TIDMASK_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[1].cache_set_num =
+	HTT_RX_MLO_PEER_MAP_CACHE_SET_NUM_AST_INDEX_GET(*(msg_word + 3));
+
+	mlo_flow_info[2].ast_idx =
+		HTT_RX_MLO_PEER_MAP_PRIMARY_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[2].ast_idx_valid =
+		HTT_RX_MLO_PEER_MAP_AST_INDEX_VALID_FLAG_GET(*(msg_word + 3));
+	mlo_flow_info[2].chip_id =
+		HTT_RX_MLO_PEER_MAP_CHIP_ID_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[2].tidmask =
+		HTT_RX_MLO_PEER_MAP_TIDMASK_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[2].cache_set_num =
+	HTT_RX_MLO_PEER_MAP_CACHE_SET_NUM_AST_INDEX_GET(*(msg_word + 3));
+
+	dp_rx_mlo_peer_map_handler(soc->dp_soc, mlo_peer_id,
+				   mlo_peer_mac_addr,
+				   mlo_flow_info);
+}
+
+static void dp_htt_mlo_peer_unmap_handler(struct htt_soc *soc,
+					  uint32_t *msg_word)
+{
+	uint16_t mlo_peer_id;
+
+	mlo_peer_id = HTT_RX_MLO_PEER_UNMAP_MLO_PEER_ID_GET(*msg_word);
+	dp_rx_mlo_peer_unmap_handler(soc->dp_soc, mlo_peer_id);
+}
+#else
+static void dp_htt_mlo_peer_map_handler(struct htt_soc *soc,
+					uint32_t *msg_word)
+{
+	qdf_assert_always(0);
+}
+
+static void dp_htt_mlo_peer_unmap_handler(struct htt_soc *soc,
+					 uint32_t *msg_word)
+{
+	qdf_assert_always(0);
 }
 #endif
 
@@ -2808,6 +2944,45 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			dp_offload_ind_handler(soc, msg_word);
 			break;
 		}
+	case HTT_T2H_MSG_TYPE_PEER_MAP_V3:
+	{
+		u_int8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
+		u_int8_t *peer_mac_addr;
+		u_int16_t peer_id;
+		u_int16_t hw_peer_id;
+		u_int8_t vdev_id;
+		uint8_t is_wds;
+		u_int16_t ast_hash = 0;
+
+		peer_id = HTT_RX_PEER_MAP_V3_SW_PEER_ID_GET(*msg_word);
+		vdev_id = HTT_RX_PEER_MAP_V3_VDEV_ID_GET(*msg_word);
+		peer_mac_addr =
+		htt_t2h_mac_addr_deswizzle((u_int8_t *)(msg_word + 1),
+					   &mac_addr_deswizzle_buf[0]);
+		hw_peer_id = HTT_RX_PEER_MAP_V3_HW_PEER_ID_GET(*(msg_word + 3));
+		ast_hash = HTT_RX_PEER_MAP_V3_CACHE_SET_NUM_GET(*(msg_word + 3));
+		is_wds = HTT_RX_PEER_MAP_V3_NEXT_HOP_GET(*(msg_word + 4));
+
+		dp_htt_info("HTT_T2H_MSG_TYPE_PEER_MAP_V3 msg for peer id %d vdev id %d n",
+			    peer_id, vdev_id);
+
+		dp_rx_peer_map_handler(soc->dp_soc, peer_id,
+				       hw_peer_id, vdev_id,
+				       peer_mac_addr, ast_hash,
+				       is_wds);
+
+		break;
+	}
+	case HTT_T2H_MSG_TYPE_MLO_RX_PEER_MAP:
+	{
+		dp_htt_mlo_peer_map_handler(soc, msg_word);
+		break;
+	}
+	case HTT_T2H_MSG_TYPE_MLO_RX_PEER_UNMAP:
+	{
+		dp_htt_mlo_peer_unmap_handler(soc, msg_word);
+		break;
+	}
 	default:
 		break;
 	};
@@ -3765,25 +3940,28 @@ dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 static void dp_bk_pressure_stats_handler(void *context)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)context;
-	struct dp_soc_srngs_state *soc_srngs_state, *soc_srngs_state_next;
+	struct dp_soc_srngs_state *soc_srngs_state = NULL;
 	const char *ring_name;
 	int i;
 	struct dp_srng_ring_state *ring_state;
+	bool empty_flag;
 
-	TAILQ_HEAD(, dp_soc_srngs_state) soc_srngs_state_list;
-
-	TAILQ_INIT(&soc_srngs_state_list);
 	qdf_spin_lock_bh(&pdev->bkp_stats.list_lock);
-	TAILQ_CONCAT(&soc_srngs_state_list, &pdev->bkp_stats.list,
-		     list_elem);
+
+	/* Extract only first entry for printing in one work event */
+	if (pdev->bkp_stats.queue_depth &&
+	    !TAILQ_EMPTY(&pdev->bkp_stats.list)) {
+		soc_srngs_state = TAILQ_FIRST(&pdev->bkp_stats.list);
+		TAILQ_REMOVE(&pdev->bkp_stats.list, soc_srngs_state,
+			     list_elem);
+		pdev->bkp_stats.queue_depth--;
+	}
+
+	empty_flag = TAILQ_EMPTY(&pdev->bkp_stats.list);
 	qdf_spin_unlock_bh(&pdev->bkp_stats.list_lock);
 
-	TAILQ_FOREACH_SAFE(soc_srngs_state, &soc_srngs_state_list,
-			   list_elem, soc_srngs_state_next) {
-		TAILQ_REMOVE(&soc_srngs_state_list, soc_srngs_state,
-			     list_elem);
-
-		DP_PRINT_STATS("### START BKP stats for seq_num %u ###",
+	if (soc_srngs_state) {
+		DP_PRINT_STATS("### BKP stats for seq_num %u START ###",
 			       soc_srngs_state->seq_num);
 		for (i = 0; i < soc_srngs_state->max_ring_id; i++) {
 			ring_state = &soc_srngs_state->ring_state[i];
@@ -3805,6 +3983,11 @@ static void dp_bk_pressure_stats_handler(void *context)
 		qdf_mem_free(soc_srngs_state);
 	}
 	dp_print_napi_stats(pdev->soc);
+
+	/* Schedule work again if queue is not empty */
+	if (!empty_flag)
+		qdf_queue_work(0, pdev->bkp_stats.work_queue,
+			       &pdev->bkp_stats.work);
 }
 
 /*
@@ -3847,6 +4030,7 @@ QDF_STATUS dp_pdev_bkp_stats_attach(struct dp_pdev *pdev)
 {
 	TAILQ_INIT(&pdev->bkp_stats.list);
 	pdev->bkp_stats.seq_num = 0;
+	pdev->bkp_stats.queue_depth = 0;
 
 	qdf_create_work(0, &pdev->bkp_stats.work,
 			dp_bk_pressure_stats_handler, pdev);

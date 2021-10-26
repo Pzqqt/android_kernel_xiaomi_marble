@@ -19,50 +19,6 @@
 #ifndef _DP_MON_FILTER_H_
 #define _DP_MON_FILTER_H_
 
-/**
- * Accessor Macros to access the software
- * defined HTT filter htt_rx_ring_tlv_filter.
- */
-#define DP_MON_FILTER_TLV_OFFSET                      0x00000000
-#define DP_MON_FILTER_TLV_MASK                        0xffffffff
-#define DP_MON_FILTER_TLV_LSB                         0
-
-#define DP_MON_FILTER_FP_MGMT_OFFSET                  0x00000004
-#define DP_MON_FILTER_FP_MGMT_MASK                    0x0000ffff
-#define DP_MON_FILTER_FP_MGMT_LSB                     0
-
-#define DP_MON_FILTER_MO_MGMT_OFFSET                  0x00000004
-#define DP_MON_FILTER_MO_MGMT_MASK                    0xffff0000
-#define DP_MON_FILTER_MO_MGMT_LSB                     16
-
-#define DP_MON_FILTER_FP_CTRL_OFFSET                  0x00000008
-#define DP_MON_FILTER_FP_CTRL_MASK                    0x0000ffff
-#define DP_MON_FILTER_FP_CTRL_LSB                     0
-
-#define DP_MON_FILTER_MO_CTRL_OFFSET                  0x00000008
-#define DP_MON_FILTER_MO_CTRL_MASK                    0xffff0000
-#define DP_MON_FILTER_MO_CTRL_LSB                     16
-
-#define DP_MON_FILTER_FP_DATA_OFFSET                  0x0000000c
-#define DP_MON_FILTER_FP_DATA_MASK                    0x0000ffff
-#define DP_MON_FILTER_FP_DATA_LSB                     0
-
-#define DP_MON_FILTER_MO_DATA_OFFSET                  0x0000000c
-#define DP_MON_FILTER_MO_DATA_MASK                    0xffff0000
-#define DP_MON_FILTER_MO_DATA_LSB                     16
-
-#define DP_MON_FILTER_MD_DATA_OFFSET                  0x00000010
-#define DP_MON_FILTER_MD_DATA_MASK                    0x0000ffff
-#define DP_MON_FILTER_MD_DATA_LSB                     0
-
-#define DP_MON_FILTER_MD_MGMT_OFFSET                  0x00000010
-#define DP_MON_FILTER_MD_MGMT_MASK                    0xffff0000
-#define DP_MON_FILTER_MD_MGMT_LSB                     16
-
-#define DP_MON_FILTER_MD_CTRL_OFFSET                  0x00000014
-#define DP_MON_FILTER_MD_CTRL_MASK                    0x0000ffff
-#define DP_MON_FILTER_MD_CTRL_LSB                     0
-
 #define DP_MON_FILTER_GET(src, field) \
 	((*((uint32_t *)((uint8_t *)(src) + DP_MON_ ## field ## _OFFSET)) & \
 	(DP_MON_ ## field ## _MASK)) >> DP_MON_ ## field ## _LSB) \
@@ -134,12 +90,16 @@ enum dp_mon_filter_mode {
  * @DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF: RXDMA srng type
  * @DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS: RxDMA monitor status srng
  * @DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF: RxDMA destination srng
+ * @DP_MON_FILTER_SRNG_TYPE_RXMON_DEST: RxMON destination srng
+ * @DP_MON_FILTER_SRNG_TYPE_TXMON_DEST: TxMON destination srng
  * @DP_MON_FILTER_SRNG_TYPE_MAX: Srng max type
  */
 enum dp_mon_filter_srng_type {
 	DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF,
 	DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS,
 	DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF,
+	DP_MON_FILTER_SRNG_TYPE_RXMON_DEST,
+	DP_MON_FILTER_SRNG_TYPE_TXMON_DEST,
 	DP_MON_FILTER_SRNG_TYPE_MAX
 };
 
@@ -157,15 +117,15 @@ enum dp_mon_filter_action {
 #ifdef QCA_ENHANCED_STATS_SUPPORT
 /**
  * dp_mon_filter_setup_enhanced_stats() - Setup the enhanced stats filter
- * @mon_pdev: Monitor pdev handle
+ * @pdev: DP pdev handle
  */
-void dp_mon_filter_setup_enhanced_stats(struct dp_mon_pdev *mon_pdev);
+void dp_mon_filter_setup_enhanced_stats(struct dp_pdev *pdev);
 
 /***
  * dp_mon_filter_reset_enhanced_stats() - Reset the enhanced stats filter
- * @mon_pdev: Monitor pdev handle
+ * @pdev: DP pdev handle
  */
-void dp_mon_filter_reset_enhanced_stats(struct dp_mon_pdev *mon_pdev);
+void dp_mon_filter_reset_enhanced_stats(struct dp_pdev *pdev);
 #endif /* QCA_ENHANCED_STATS_SUPPORT */
 
 #ifdef QCA_MCOPY_SUPPORT
@@ -263,6 +223,16 @@ void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev);
 #endif /* WDI_EVENT_ENABLE */
 
 /**
+ * dp_mon_filter_set_status_cbf() - Set the cbf status filters
+ * @pdev: DP pdev handle
+ * @filter: Dp mon filters
+ *
+ * Return: void
+ */
+void dp_mon_filter_set_status_cbf(struct dp_pdev *pdev,
+				  struct dp_mon_filter *filter);
+
+/**
  * dp_mon_filter_update() - Setup the monitor filter setting for a srng
  * type
  * @pdev: DP pdev handle
@@ -284,4 +254,104 @@ void dp_mon_filter_dealloc(struct dp_mon_pdev *mon_pdev);
  * @mon_pdev: monitor pdev handle
  */
 struct dp_mon_filter  **dp_mon_filter_alloc(struct dp_mon_pdev *mon_pdev);
+
+/**
+ * dp_mon_filter_show_filter() - Show the set filters
+ * @pdev: DP pdev handle
+ * @mode: The filter modes
+ * @tlv_filter: tlv filter
+ */
+void dp_mon_filter_show_filter(struct dp_mon_pdev *mon_pdev,
+			       enum dp_mon_filter_mode mode,
+			       struct dp_mon_filter *filter);
+
+/**
+ * dp_mon_ht2_rx_ring_cfg() - Send the tlv config to fw for a srng_type
+ * based on target
+ * @soc: DP soc handle
+ * @pdev: DP pdev handle
+ * @srng_type: The srng type for which filter wll be set
+ * @tlv_filter: tlv filter
+ */
+QDF_STATUS
+dp_mon_ht2_rx_ring_cfg(struct dp_soc *soc,
+		       struct dp_pdev *pdev,
+		       enum dp_mon_filter_srng_type srng_type,
+		       struct htt_rx_ring_tlv_filter *tlv_filter);
+
+/**
+ * dp_mon_filter_reset_mon_srng()
+ * @soc: DP SoC handle
+ * @pdev: DP pdev handle
+ * @mon_srng_type: Monitor srng type
+ */
+void
+dp_mon_filter_reset_mon_srng(struct dp_soc *soc, struct dp_pdev *pdev,
+			     enum dp_mon_filter_srng_type mon_srng_type);
+
+/**
+ * dp_mon_filter_set_mon_cmn() - Setp the common mon filters
+ * @pdev: DP pdev handle
+ * @filter: DP mon filter
+ *
+ * Return: QDF_STATUS
+ */
+void dp_mon_filter_set_mon_cmn(struct dp_mon_pdev *mon_pdev,
+			       struct dp_mon_filter *filter);
+
+/**
+ * dp_mon_filter_set_status_cmn() - Setp the common status filters
+ * @pdev: DP pdev handle
+ * @filter: Dp mon filters
+ *
+ * Return: QDF_STATUS
+ */
+void dp_mon_filter_set_status_cmn(struct dp_mon_pdev *mon_pdev,
+				  struct dp_mon_filter *filter);
+
+/**
+ * dp_mon_filter_setup_mon_mode() - Setup the Rx monitor mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_setup_mon_mode(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_reset_mon_mode() - Reset the Rx monitor mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_reset_mon_mode(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_set_cbf_cmn() - Set the common cbf mode filters
+ * @pdev: DP pdev handle
+ * @filter: Dp mon filters
+ *
+ * Return: void
+ */
+void dp_mon_filter_set_cbf_cmn(struct dp_pdev *pdev,
+			       struct dp_mon_filter *filter);
+
+/**
+ * dp_mon_filter_update() - Setup the monitor filter setting for a srng
+ * type
+ * @pdev: DP pdev handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_dealloc() - Deallocate the filter objects to be stored in
+ * the radio object.
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_dealloc(struct dp_mon_pdev *mon_pdev);
+
+/**
+ * dp_mon_filter_alloc() - Allocate the filter objects to be stored in
+ * the radio object.
+ * @mon_pdev: DP pdev handle
+ */
+struct dp_mon_filter **dp_mon_filter_alloc(struct dp_mon_pdev *mon_pdev);
+
 #endif /* #ifndef _DP_MON_FILTER_H_ */

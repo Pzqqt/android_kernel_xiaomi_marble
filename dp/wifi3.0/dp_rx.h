@@ -39,34 +39,11 @@
 #define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW1_BM(sw0_bm_id)
 /* RBM value used for re-injecting defragmented packets into REO */
 #define DP_DEFRAG_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
-#else
-#define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
-#define DP_DEFRAG_RBM(sw0_bm_id)	DP_WBM2SW_RBM(sw0_bm_id)
 #endif /* QCA_HOST2FW_RXBUF_RING */
 
 #define RX_BUFFER_RESERVATION   0
 
-#define DP_PEER_METADATA_PEER_ID_MASK	0x0000ffff
-#define DP_PEER_METADATA_PEER_ID_SHIFT	0
-#define DP_PEER_METADATA_VDEV_ID_MASK	0x003f0000
-#define DP_PEER_METADATA_VDEV_ID_SHIFT	16
-#define DP_PEER_METADATA_OFFLOAD_MASK	0x01000000
-#define DP_PEER_METADATA_OFFLOAD_SHIFT	24
-
-
 #define DP_DEFAULT_NOISEFLOOR	(-96)
-
-#define DP_PEER_METADATA_PEER_ID_GET(_peer_metadata)		\
-	(((_peer_metadata) & DP_PEER_METADATA_PEER_ID_MASK)	\
-			>> DP_PEER_METADATA_PEER_ID_SHIFT)
-
-#define DP_PEER_METADATA_VDEV_ID_GET(_peer_metadata)		\
-	(((_peer_metadata) & DP_PEER_METADATA_VDEV_ID_MASK)	\
-			>> DP_PEER_METADATA_VDEV_ID_SHIFT)
-
-#define DP_PEER_METADATA_OFFLOAD_GET(_peer_metadata)		\
-	(((_peer_metadata) & DP_PEER_METADATA_OFFLOAD_MASK)	\
-			>> DP_PEER_METADATA_OFFLOAD_SHIFT)
 
 #define DP_RX_DESC_MAGIC 0xdec0de
 
@@ -1121,6 +1098,32 @@ bool dp_rx_intrabss_fwd(struct dp_soc *soc,
 			struct hal_rx_msdu_metadata msdu_metadata);
 
 #ifdef DISABLE_EAPOL_INTRABSS_FWD
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline bool dp_nbuf_dst_addr_is_mld_addr(struct dp_vdev *vdev,
+						qdf_nbuf_t nbuf)
+{
+	struct qdf_mac_addr *self_mld_mac_addr =
+				(struct qdf_mac_addr *)vdev->mld_mac_addr.raw;
+	return qdf_is_macaddr_equal(self_mld_mac_addr,
+				    (struct qdf_mac_addr *)qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+#else
+static inline bool dp_nbuf_dst_addr_is_mld_addr(struct dp_vdev *vdev,
+						qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
+
+static inline bool dp_nbuf_dst_addr_is_self_addr(struct dp_vdev *vdev,
+						 qdf_nbuf_t nbuf)
+{
+	return qdf_is_macaddr_equal((struct qdf_mac_addr *)vdev->mac_addr.raw,
+				    (struct qdf_mac_addr *)qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+
 /*
  * dp_rx_intrabss_eapol_drop_check() - API For EAPOL
  *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
@@ -1137,10 +1140,8 @@ bool dp_rx_intrabss_eapol_drop_check(struct dp_soc *soc,
 				     uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf)
 {
 	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf) &&
-			 qdf_mem_cmp(qdf_nbuf_data(nbuf) +
-				     QDF_NBUF_DEST_MAC_OFFSET,
-				     ta_peer->vdev->mac_addr.raw,
-				     QDF_MAC_ADDR_SIZE))) {
+			 !(dp_nbuf_dst_addr_is_self_addr(ta_peer->vdev, nbuf) ||
+			   dp_nbuf_dst_addr_is_mld_addr(ta_peer->vdev, nbuf)))) {
 		qdf_nbuf_free(nbuf);
 		DP_STATS_INC(soc, rx.err.intrabss_eapol_drop, 1);
 		return true;
@@ -2025,6 +2026,45 @@ dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
 	return false;
 }
 #endif
+
+#ifdef QCA_HOST2FW_RXBUF_RING
+static inline uint8_t
+dp_rx_get_defrag_bm_id(struct dp_soc *soc)
+{
+	return DP_DEFRAG_RBM(soc->wbm_sw0_bm_id);
+}
+
+static inline uint8_t
+dp_rx_get_rx_bm_id(struct dp_soc *soc)
+{
+	return DP_WBM2SW_RBM(soc->wbm_sw0_bm_id);
+}
+#else
+static inline uint8_t
+dp_rx_get_rx_bm_id(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *cfg_ctx = soc->wlan_cfg_ctx;
+	uint8_t wbm2_sw_rx_rel_ring_id;
+
+	wbm2_sw_rx_rel_ring_id = wlan_cfg_get_rx_rel_ring_id(cfg_ctx);
+
+	return HAL_RX_BUF_RBM_SW_BM(soc->wbm_sw0_bm_id,
+				    wbm2_sw_rx_rel_ring_id);
+}
+
+static inline uint8_t
+dp_rx_get_defrag_bm_id(struct dp_soc *soc)
+{
+	return dp_rx_get_rx_bm_id(soc);
+}
+#endif
+
+static inline uint16_t
+dp_rx_peer_metadata_peer_id_get(struct dp_soc *soc, uint32_t peer_metadata)
+{
+	return soc->arch_ops.dp_rx_peer_metadata_peer_id_get(soc,
+							     peer_metadata);
+}
 
 /**
  * dp_rx_desc_pool_init_generic() - Generic Rx descriptors initialization

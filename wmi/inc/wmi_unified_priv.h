@@ -396,7 +396,6 @@ QDF_STATUS
 (*extract_roam_frame_info)(wmi_unified_t wmi_handle, void *evt_buf,
 			   struct roam_frame_info *dst, uint8_t idx,
 			   uint8_t num_frames);
-#ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
  * extract_roam_sync_event  - Extract roam sync event func ptr
  * @wmi_handle: WMI handle
@@ -447,7 +446,11 @@ QDF_STATUS
 (*extract_roam_pmkid_request)(wmi_unified_t wmi_handle,
 			      uint8_t *event, uint32_t data_len,
 			      struct roam_pmkid_req_event **list);
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
+#endif
+#ifdef FEATURE_MEC_OFFLOAD
+QDF_STATUS
+(*send_pdev_set_mec_timer_cmd)(struct wmi_unified *wmi_handle,
+			       struct set_mec_timer_params *param);
 #endif
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
 				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
@@ -984,6 +987,11 @@ QDF_STATUS (*send_enable_disable_packet_filter_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_config_packet_filter_cmd)(wmi_unified_t wmi_handle,
 		uint8_t vdev_id, struct pmo_rcv_pkt_fltr_cfg *rcv_filter_param,
 		uint8_t filter_id, bool enable);
+#endif
+
+#ifdef WLAN_FEATURE_ICMP_OFFLOAD
+QDF_STATUS (*send_icmp_offload_config_cmd)(wmi_unified_t wmi_handle,
+			   struct pmo_icmp_offload *pmo_icmp_req);
 #endif
 #endif /* end of WLAN_POWER_MANAGEMENT_OFFLOAD */
 #ifdef WLAN_WMI_BCN

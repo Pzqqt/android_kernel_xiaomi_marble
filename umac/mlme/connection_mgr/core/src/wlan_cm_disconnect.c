@@ -457,6 +457,7 @@ QDF_STATUS cm_notify_disconnect_complete(struct cnx_mgr *cm_ctx,
 	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
 	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
+	wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev, WLAN_VDEV_FEXT2_MLO);
 
 	return QDF_STATUS_SUCCESS;
 }

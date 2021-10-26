@@ -39,7 +39,11 @@ static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RIN
 
 static void dp_soc_cfg_attach_li(struct dp_soc *soc)
 {
-	soc->wlan_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	wlan_cfg_set_rx_rel_ring_id(soc_cfg_ctx, WBM2SW_REL_ERR_RING_NUM);
+
+	soc_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
 }
 
 qdf_size_t dp_get_context_size_li(enum dp_context_type context_type)
@@ -370,6 +374,8 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 	arch_ops->dp_rx_desc_cookie_2_va =
 			dp_rx_desc_cookie_2_va_li;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_li;
+	arch_ops->dp_rx_peer_metadata_peer_id_get =
+					dp_rx_peer_metadata_peer_id_get_li;
 	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_li;
 	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_li;
 }

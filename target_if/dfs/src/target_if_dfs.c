@@ -213,6 +213,42 @@ static bool target_if_dfs_offload(struct wlan_objmgr_psoc *psoc)
 				   wmi_service_dfs_phyerr_offload);
 }
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * target_if_dfs_is_radar_found_chan_freq_eq_center_freq: Check whether the
+ * service of 'radar_found_chan_freq' representing the center frequency of the
+ * radar segment is supported or not. If the service is not enabled, then
+ * chan_freq will indicate the channel's primary 20MHz center.
+ */
+static bool
+target_if_dfs_is_radar_found_chan_freq_eq_center_freq(
+						struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("null wmi_handle");
+		return false;
+	}
+
+	/*
+	 * Uncomment the following service as soon as it is ready.
+	 *
+	 * return wmi_service_enabled(wmi_handle,
+	 * wmi_is_radar_found_chan_freq_eq_center_freq);
+	 */
+	return false;
+}
+#else
+static bool
+target_if_dfs_is_radar_found_chan_freq_eq_center_freq(
+						struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
 static QDF_STATUS target_if_dfs_get_target_type(struct wlan_objmgr_pdev *pdev,
 						uint32_t *target_type)
 {
@@ -402,6 +438,8 @@ QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	dfs_tx_ops->dfs_send_avg_radar_params_to_fw =
 		&target_if_dfs_send_avg_params_to_fw;
 	dfs_tx_ops->dfs_is_tgt_offload = &target_if_dfs_offload;
+	dfs_tx_ops->dfs_is_tgt_radar_found_chan_freq_eq_center_freq =
+		&target_if_dfs_is_radar_found_chan_freq_eq_center_freq;
 
 	dfs_tx_ops->dfs_send_usenol_pdev_param =
 		&target_send_usenol_pdev_param;

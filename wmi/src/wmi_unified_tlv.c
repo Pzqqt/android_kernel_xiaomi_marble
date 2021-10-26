@@ -476,6 +476,15 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_set_heop] = WMI_VDEV_PARAM_HEOPS_0_31,
 #ifdef WLAN_FEATURE_11BE
 	[wmi_vdev_param_set_ehtop] = WMI_VDEV_PARAM_EHTOPS_0_31,
+	[wmi_vdev_param_set_eht_mu_mode] = WMI_VDEV_PARAM_SET_EHT_MU_MODE,
+	[wmi_vdev_param_set_eht_puncturing_mode] =
+					WMI_VDEV_PARAM_SET_EHT_PUNCTURING_MODE,
+	[wmi_vdev_param_set_eht_ltf] = WMI_VDEV_PARAM_EHT_LTF,
+	[wmi_vdev_param_set_ul_eht_ltf] = WMI_VDEV_PARAM_UL_EHT_LTF,
+	[wmi_vdev_param_set_eht_dcm] = WMI_VDEV_PARAM_EHT_DCM,
+	[wmi_vdev_param_set_eht_range_ext] = WMI_VDEV_PARAM_EHT_RANGE_EXT,
+	[wmi_vdev_param_set_non_data_eht_range_ext] =
+					WMI_VDEV_PARAM_NON_DATA_EHT_RANGE_EXT,
 #endif
 	[wmi_vdev_param_sensor_ap] = WMI_VDEV_PARAM_SENSOR_AP,
 	[wmi_vdev_param_dtim_enable_cts] = WMI_VDEV_PARAM_DTIM_ENABLE_CTS,
@@ -7712,7 +7721,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 
 	WMI_RSRC_CFG_HOST_SERVICE_FLAG_LPI_SP_MODE_SUPPORT_SET(
 		resource_cfg->host_service_flags,
-		tgt_res_cfg->lpi_only_mode);
+		tgt_res_cfg->is_6ghz_sp_pwrmode_supp_enabled);
 
 	WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_DISCARD_AFC_TIMER_CHECK_SET(
 		resource_cfg->host_service_flags,
@@ -14871,6 +14880,41 @@ static QDF_STATUS send_mws_coex_status_req_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef FEATURE_MEC_OFFLOAD
+static QDF_STATUS
+send_pdev_set_mec_timer_cmd_tlv(struct wmi_unified *wmi_handle,
+				struct set_mec_timer_params *param)
+{
+	wmi_pdev_mec_aging_timer_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err("wmi_buf_alloc failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_pdev_mec_aging_timer_config_cmd_fixed_param *)
+		wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_mec_aging_timer_config_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			wmi_pdev_mec_aging_timer_config_cmd_fixed_param));
+	cmd->pdev_id = param->pdev_id;
+	cmd->mec_aging_timer_threshold = param->mec_aging_timer_threshold;
+
+	wmi_mtrace(WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID, param->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID)) {
+		wmi_err("Failed to set mec aging timer param");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef WIFI_POS_CONVERGED
 /**
  * extract_oem_response_param_tlv() - Extract oem response params
@@ -16563,6 +16607,9 @@ struct wmi_ops tlv_ops =  {
 	.send_roam_scan_ch_list_req_cmd = send_roam_scan_ch_list_req_cmd_tlv,
 	.send_injector_config_cmd = send_injector_config_cmd_tlv,
 	.send_cp_stats_cmd = send_cp_stats_cmd_tlv,
+#ifdef FEATURE_MEC_OFFLOAD
+	.send_pdev_set_mec_timer_cmd = send_pdev_set_mec_timer_cmd_tlv,
+#endif
 #ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 	.extract_infra_cp_stats = extract_infra_cp_stats_tlv,
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */

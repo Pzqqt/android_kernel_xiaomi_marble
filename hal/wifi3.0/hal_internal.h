@@ -25,8 +25,7 @@
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
 #include "pld_common.h"
-#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
-	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE)
 #include "qdf_defer.h"
 #include "qdf_timer.h"
 #endif
@@ -398,8 +397,7 @@ typedef struct hal_ring_handle *hal_ring_handle_t;
  */
 #define HAL_SRNG_FLUSH_EVENT BIT(0)
 
-#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
-	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE)
 
 /**
  * struct hal_reg_write_q_elem - delayed register write queue element
@@ -411,6 +409,7 @@ typedef struct hal_ring_handle *hal_ring_handle_t;
  * @enqueue_time: enqueue time (qdf_log_timestamp)
  * @work_scheduled_time: work scheduled time (qdf_log_timestamp)
  * @dequeue_time: dequeue time (qdf_log_timestamp)
+ * @cpu_id: record cpuid when schedule work
  */
 struct hal_reg_write_q_elem {
 	struct hal_srng *srng;
@@ -421,6 +420,7 @@ struct hal_reg_write_q_elem {
 	qdf_time_t enqueue_time;
 	qdf_time_t work_scheduled_time;
 	qdf_time_t dequeue_time;
+	int cpu_id;
 };
 
 /**
@@ -478,21 +478,6 @@ struct hal_reg_write_soc_stats {
 	uint32_t sched_delay[REG_WRITE_SCHED_DELAY_HIST_MAX];
 	uint32_t dequeue_delay;
 };
-
-#ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
-struct hal_reg_write_tcl_stats {
-	uint32_t wq_delayed;
-	uint32_t wq_direct;
-	uint32_t timer_enq;
-	uint32_t timer_direct;
-	uint32_t enq_timer_set;
-	uint32_t direct_timer_set;
-	uint32_t timer_reset;
-	qdf_time_t enq_time;
-	qdf_time_t deq_time;
-	uint32_t sched_delay[REG_WRITE_SCHED_DELAY_HIST_MAX];
-};
-#endif
 #endif
 
 struct hal_offload_info {
@@ -644,10 +629,7 @@ struct hal_srng {
 	/* last ring desc entry cleared */
 	uint32_t last_desc_cleared;
 #endif
-#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
-	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
-	/* Previous hp/tp (based on ring dir) value written to the reg */
-	uint32_t last_reg_wr_val;
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE)
 	/* flag to indicate whether srng is already queued for delayed write */
 	uint8_t reg_write_in_progress;
 	/* last dequeue elem time stamp */
@@ -1033,8 +1015,7 @@ struct hal_hw_txrx_ops {
  */
 struct hal_soc_stats {
 	uint32_t reg_write_fail;
-#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
-	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE)
 	struct hal_reg_write_soc_stats wstats;
 #endif
 #ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
@@ -1150,20 +1131,6 @@ struct hal_soc {
 	/* read index used by worker thread to dequeue/write registers */
 	uint32_t read_idx;
 #endif /*FEATURE_HAL_DELAYED_REG_WRITE */
-#ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
-	/* delayed work for TCL reg write to be queued into workqueue */
-	qdf_work_t tcl_reg_write_work;
-	/* workqueue for TCL delayed register writes */
-	qdf_workqueue_t *tcl_reg_write_wq;
-	/* flag denotes whether TCL delayed write work is active */
-	qdf_atomic_t tcl_work_active;
-	/* flag indiactes TCL write happening from direct context */
-	bool tcl_direct;
-	/* timer to handle the pending TCL reg writes */
-	qdf_timer_t tcl_reg_write_timer;
-	/* stats related to TCL reg write */
-	struct hal_reg_write_tcl_stats tcl_stats;
-#endif /* FEATURE_HAL_DELAYED_REG_WRITE_V2 */
 	qdf_atomic_t active_work_cnt;
 #ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
 	struct shadow_reg_config
@@ -1174,8 +1141,7 @@ struct hal_soc {
 	bool dmac_cmn_src_rxbuf_ring;
 };
 
-#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
-	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE)
 /**
  *  hal_delayed_reg_write() - delayed regiter write
  * @hal_soc: HAL soc handle

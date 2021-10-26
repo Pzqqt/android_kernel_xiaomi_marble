@@ -78,4 +78,26 @@ struct dp_rx_desc *dp_rx_desc_cookie_2_va_li(struct dp_soc *soc,
 {
 	return dp_rx_cookie_2_va_rxdma_buf(soc, cookie);
 }
+
+#define DP_PEER_METADATA_VDEV_ID_MASK	0x003f0000
+#define DP_PEER_METADATA_VDEV_ID_SHIFT	16
+#define DP_PEER_METADATA_OFFLOAD_MASK	0x01000000
+#define DP_PEER_METADATA_OFFLOAD_SHIFT	24
+
+#define DP_PEER_METADATA_VDEV_ID_GET_LI(_peer_metadata)		\
+	(((_peer_metadata) & DP_PEER_METADATA_VDEV_ID_MASK)	\
+			>> DP_PEER_METADATA_VDEV_ID_SHIFT)
+
+#define DP_PEER_METADATA_OFFLOAD_GET_LI(_peer_metadata)		\
+	(((_peer_metadata) & DP_PEER_METADATA_OFFLOAD_MASK)	\
+			>> DP_PEER_METADATA_OFFLOAD_SHIFT)
+
+static inline uint16_t
+dp_rx_peer_metadata_peer_id_get_li(struct dp_soc *soc, uint32_t peer_metadata)
+{
+	struct htt_rx_peer_metadata_v0 *metadata =
+			(struct htt_rx_peer_metadata_v0 *)&peer_metadata;
+
+	return metadata->peer_id;
+}
 #endif

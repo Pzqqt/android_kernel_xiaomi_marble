@@ -102,6 +102,36 @@ mgmt_rx_reo_compare_global_timestamps_gte(uint32_t ts1, uint32_t ts2)
 }
 
 /**
+ * wlan_mgmt_rx_reo_get_priv_object() - Get the pdev private object of
+ * MGMT Rx REO module
+ * @pdev: pointer to pdev object
+ *
+ * Return: Pointer to pdev private object of MGMT Rx REO module on success,
+ * else NULL
+ */
+static struct mgmt_rx_reo_pdev_info *
+wlan_mgmt_rx_reo_get_priv_object(struct wlan_objmgr_pdev *pdev)
+{
+	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx;
+
+	if (!pdev) {
+		mgmt_rx_reo_err("pdev is null");
+		return NULL;
+	}
+
+	mgmt_txrx_pdev_ctx = (struct mgmt_txrx_priv_pdev_context *)
+		wlan_objmgr_pdev_get_comp_private_obj(pdev,
+						      WLAN_UMAC_COMP_MGMT_TXRX);
+
+	if (!mgmt_txrx_pdev_ctx) {
+		mgmt_rx_reo_err("mgmt txrx context is NULL");
+		return NULL;
+	}
+
+	return mgmt_txrx_pdev_ctx->mgmt_rx_reo_pdev_ctx;
+}
+
+/**
  * wlan_mgmt_rx_reo_algo_calculate_wait_count() - Calculates the number of
  * frames an incoming frame should wait for before it gets delivered.
  * @in_frame_pdev: pdev on which this frame is received
@@ -158,7 +188,6 @@ wlan_mgmt_rx_reo_algo_calculate_wait_count(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	qdf_assert_always(num_mlo_links >= 1);
 	qdf_assert_always(num_mlo_links <= MGMT_RX_REO_MAX_LINKS);
 
 	/* Get the MLO link ID of incoming frame */
@@ -594,9 +623,14 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 	QDF_STATUS status;
 	uint8_t link_id;
 	struct wlan_objmgr_pdev *pdev;
+	uint32_t entry_global_ts;
+	struct mgmt_rx_reo_global_ts_info *ts_last_delivered_frame;
 
 	qdf_assert_always(reo_list);
 	qdf_assert_always(entry);
+
+	entry_global_ts = mgmt_rx_reo_get_global_ts(entry->rx_params);
+	ts_last_delivered_frame = &reo_list->ts_last_delivered_frame;
 
 	release_reason = mgmt_rx_reo_list_entry_get_release_reason(
 				entry, &reo_list->ts_latest_aged_out_frame);
@@ -610,6 +644,32 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 	}
 
 	link_id = mgmt_rx_reo_get_link_id(entry->rx_params);
+
+	/**
+	 * Last delivered frame global time stamp is invalid means that
+	 * current frame is the first frame to be delivered to the upper layer
+	 * from the reorder list. Blindly update the last delivered frame global
+	 * time stamp to the current frame's global time stamp and set the valid
+	 * to true.
+	 * If the last delivered frame global time stamp is valid and
+	 * current frame's global time stamp is >= last delivered frame global
+	 * time stamp, deliver the current frame to upper layer and update the
+	 * last delivered frame global time stamp.
+	 */
+	if (!ts_last_delivered_frame->valid ||
+	    mgmt_rx_reo_compare_global_timestamps_gte(
+		    entry_global_ts, ts_last_delivered_frame->global_ts)) {
+		/* TODO Process current management frame here */
+
+		ts_last_delivered_frame->global_ts = entry_global_ts;
+		ts_last_delivered_frame->valid = true;
+	} else {
+		/**
+		 * We need to replicate all the cleanup activities which the
+		 * upper layer would have done.
+		 */
+		qdf_nbuf_free(entry->nbuf);
+	}
 
 	free_mgmt_rx_event_params(entry->rx_params);
 
@@ -858,7 +918,6 @@ mgmt_rx_reo_update_wait_count(
 	qdf_assert_always(wait_count_old_frame);
 	qdf_assert_always(wait_count_new_frame);
 
-	qdf_assert_always(num_mlo_links >= 1);
 	qdf_assert_always(num_mlo_links <= MGMT_RX_REO_MAX_LINKS);
 
 	for (link_id = 0; link_id < num_mlo_links; link_id++) {
@@ -1083,6 +1142,9 @@ mgmt_rx_reo_list_init(struct mgmt_rx_reo_list *reo_list)
 		return status;
 	}
 
+	reo_list->ts_last_delivered_frame.valid = false;
+	reo_list->ts_latest_aged_out_frame.valid = false;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1126,6 +1188,24 @@ wlan_mgmt_rx_reo_update_host_snapshot(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * mgmt_rx_reo_get_num_mlo_links() - Get number of MLO HW links from the reo
+ * context object
+ * @reo_context: Pointer to reo context object
+
+ * Return: On success returns number of MLO HW links. On failure returns -1.
+ */
+static int8_t
+mgmt_rx_reo_get_num_mlo_links(struct mgmt_rx_reo_context *reo_context)
+{
+	if (!reo_context) {
+		mgmt_rx_reo_err("Mgmt reo context is null");
+		return MGMT_RX_REO_INVALID_NUM_LINKS;
+	}
+
+	return reo_context->num_mlo_links;
+}
+
 QDF_STATUS
 wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 			    struct mgmt_rx_reo_frame_descriptor *desc,
@@ -1133,6 +1213,7 @@ wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 {
 	struct mgmt_rx_reo_context *reo_ctx;
 	QDF_STATUS status;
+	int8_t num_mlo_links;
 
 	if (!is_queued)
 		return QDF_STATUS_E_NULL_VALUE;
@@ -1147,15 +1228,108 @@ wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 	reo_ctx = mgmt_rx_reo_get_context();
 	if (!reo_ctx) {
 		mgmt_rx_reo_err("REO context is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	num_mlo_links = mgmt_rx_reo_get_num_mlo_links(reo_ctx);
+	qdf_assert_always(num_mlo_links > 0);
+	qdf_assert_always(num_mlo_links <= MGMT_RX_REO_MAX_LINKS);
+
+	/**
+	 * Critical Section = Host snapshot update + Calculation of wait
+	 * counts + Update reorder list. Following section describes the
+	 * motivation for making this a critical section.
+	 * Lets take an example of 2 links (Link A & B) and each has received
+	 * a management frame A1 and B1 such that MLO global time stamp of A1 <
+	 * MLO global time stamp of B1. Host is concurrently executing
+	 * "wlan_mgmt_rx_reo_algo_entry" for A1 and B1 in 2 different CPUs.
+	 *
+	 * A lock less version of this API("wlan_mgmt_rx_reo_algo_entry_v1") is
+	 * as follows.
+	 *
+	 * wlan_mgmt_rx_reo_algo_entry()
+	 * {
+	 *     Host snapshot update
+	 *     Calculation of wait counts
+	 *     Update reorder list
+	 *     Release to upper layer
+	 * }
+	 *
+	 * We may run into race conditions under the following sequence of
+	 * operations.
+	 *
+	 * 1. Host snapshot update for link A in context of frame A1
+	 * 2. Host snapshot update for link B in context of frame B1
+	 * 3. Calculation of wait count for frame B1
+	 *        link A wait count =  0
+	 *        link B wait count =  0
+	 * 4. Update reorder list with frame B1
+	 * 5. Release B1 to upper layer
+	 * 6. Calculation of wait count for frame A1
+	 *        link A wait count =  0
+	 *        link B wait count =  0
+	 * 7. Update reorder list with frame A1
+	 * 8. Release A1 to upper layer
+	 *
+	 * This leads to incorrect behaviour as B1 goes to upper layer before
+	 * A1.
+	 *
+	 * To prevent this lets make Host snapshot update + Calculate wait count
+	 * a critical section by adding locks. The updated version of the API
+	 * ("wlan_mgmt_rx_reo_algo_entry_v2") is as follows.
+	 *
+	 * wlan_mgmt_rx_reo_algo_entry()
+	 * {
+	 *     LOCK
+	 *         Host snapshot update
+	 *         Calculation of wait counts
+	 *     UNLOCK
+	 *     Update reorder list
+	 *     Release to upper layer
+	 * }
+	 *
+	 * With this API also We may run into race conditions under the
+	 * following sequence of operations.
+	 *
+	 * 1. Host snapshot update for link A in context of frame A1 +
+	 *    Calculation of wait count for frame A1
+	 *        link A wait count =  0
+	 *        link B wait count =  0
+	 * 2. Host snapshot update for link B in context of frame B1 +
+	 *    Calculation of wait count for frame B1
+	 *        link A wait count =  0
+	 *        link B wait count =  0
+	 * 4. Update reorder list with frame B1
+	 * 5. Release B1 to upper layer
+	 * 7. Update reorder list with frame A1
+	 * 8. Release A1 to upper layer
+	 *
+	 * This also leads to incorrect behaviour as B1 goes to upper layer
+	 * before A1.
+	 *
+	 * To prevent this, let's make Host snapshot update + Calculate wait
+	 * count + Update reorder list a critical section by adding locks.
+	 * The updated version of the API ("wlan_mgmt_rx_reo_algo_entry_final")
+	 * is as follows.
+	 *
+	 * wlan_mgmt_rx_reo_algo_entry()
+	 * {
+	 *     LOCK
+	 *         Host snapshot update
+	 *         Calculation of wait counts
+	 *         Update reorder list
+	 *     UNLOCK
+	 *     Release to upper layer
+	 * }
+	 */
+	qdf_spin_lock(&reo_ctx->reo_algo_entry_lock);
 
 	/* Update the Host snapshot */
 	status = wlan_mgmt_rx_reo_update_host_snapshot(
 						pdev,
 						desc->rx_params->reo_params);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mgmt_rx_reo_err("Unable to update Host snapshot");
+		qdf_spin_unlock(&reo_ctx->reo_algo_entry_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1163,19 +1337,22 @@ wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
 	status = wlan_mgmt_rx_reo_algo_calculate_wait_count(
 						pdev,
 						desc->rx_params->reo_params,
-						reo_ctx->num_mlo_links,
+						num_mlo_links,
 						&desc->wait_count);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mgmt_rx_reo_err("Wait count calculation failed");
+		qdf_spin_unlock(&reo_ctx->reo_algo_entry_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Update the REO list */
-	status = mgmt_rx_reo_update_list(&reo_ctx->reo_list, desc, is_queued);
+	status = mgmt_rx_reo_update_list(&reo_ctx->reo_list, num_mlo_links,
+					 desc, is_queued);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mgmt_rx_reo_err("REO list updation failed");
+		qdf_spin_unlock(&reo_ctx->reo_algo_entry_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	qdf_spin_unlock(&reo_ctx->reo_algo_entry_lock);
 
 	/* Finally, release the entries for which pending frame is received */
 	return mgmt_rx_reo_list_release_entries(&reo_ctx->reo_list);
@@ -1200,7 +1377,7 @@ mgmt_rx_reo_init_context(void)
 		return status;
 	}
 
-	reo_context->ts_last_delivered_frame.valid = false;
+	qdf_spinlock_create(&reo_context->reo_algo_entry_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1293,6 +1470,8 @@ mgmt_rx_reo_deinit_context(void)
 		mgmt_rx_reo_err("reo context is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	qdf_spinlock_destroy(&reo_context->reo_algo_entry_lock);
 
 	status = mgmt_rx_reo_list_deinit(&reo_context->reo_list);
 	if (QDF_IS_STATUS_ERROR(status)) {

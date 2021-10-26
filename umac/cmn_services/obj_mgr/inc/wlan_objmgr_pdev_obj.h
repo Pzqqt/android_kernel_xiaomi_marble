@@ -107,6 +107,8 @@
 #define WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS       0x00000040
 /* agile Spectral scan support disable for 80+80 MHz */
 #define WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS     0x00000080
+/* agile Spectral scan support disable for 320 MHz */
+#define WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_320_DIS     0x00000100
 
 /* PDEV op flags */
    /* Enable htrate for wep and tkip */

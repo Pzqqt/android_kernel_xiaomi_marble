@@ -320,6 +320,14 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 {
 	struct dfs_channel *curchan = dfs->dfs_curchan;
 
+	/* In case of 11BE Chipsets, radar found center frequency is
+	 * directly obtained from WMI.
+	 */
+	if (dfs->dfs_is_radar_found_chan_freq_eq_center_freq) {
+		*freq_center = radar_found->chan_freq;
+		return;
+	}
+
 	/* Radar found on agile detector ID.
 	 * Applicable to chips that have a separate agile radar detector
 	 * engine.

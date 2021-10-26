@@ -20,10 +20,11 @@
 #ifndef _WLAN_MLO_MGR_STA_H_
 #define _WLAN_MLO_MGR_STA_H_
 
-#include <wlan_mlo_mgr_public_structs.h>
 #include <wlan_cm_ucfg_api.h>
 #include <wlan_objmgr_vdev_obj.h>
 #ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_public_structs.h>
+
 /**
  * mlo_connect - Start the connection process
  *

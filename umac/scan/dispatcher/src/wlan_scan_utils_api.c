@@ -979,9 +979,6 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.vendor = (uint8_t *)ie;
 
 	if (is_wpa_oui((uint8_t *)ie)) {
-		if (ie->ie_len > WLAN_VENDOR_WPA_IE_LEN)
-			return QDF_STATUS_E_INVAL;
-
 		scan_params->ie_list.wpa = (uint8_t *)ie;
 	} else if (is_wps_oui((uint8_t *)ie)) {
 		scan_params->ie_list.wps = (uint8_t *)ie;

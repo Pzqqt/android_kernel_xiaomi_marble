@@ -45,7 +45,9 @@ bool wlan_spectral_is_mode_disabled_pdev(struct wlan_objmgr_pdev *pdev,
 					wlan_pdev_nif_feat_ext_cap_get(
 			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS) &&
 					wlan_pdev_nif_feat_ext_cap_get(
-			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS);
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS) &&
+					wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_320_DIS);
 		break;
 
 	default:

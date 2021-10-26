@@ -27,6 +27,32 @@
 
 extern uint8_t sec_type_map[MAX_CDP_SEC_TYPE];
 
+#ifdef DP_USE_REDUCED_PEER_ID_FIELD_WIDTH
+static inline uint16_t dp_tx_comp_get_peer_id(struct dp_soc *soc,
+					      void *tx_comp_hal_desc)
+{
+	uint16_t peer_id = hal_tx_comp_get_peer_id(tx_comp_hal_desc);
+	struct dp_tx_comp_peer_id *tx_peer_id =
+			(struct dp_tx_comp_peer_id *)&peer_id;
+
+	return (tx_peer_id->peer_id |
+	        (tx_peer_id->ml_peer_valid << soc->peer_id_shift));
+}
+#else
+/* Combine ml_peer_valid and peer_id field */
+#define DP_BE_TX_COMP_PEER_ID_MASK	0x00003fff
+#define DP_BE_TX_COMP_PEER_ID_SHIFT	0
+
+static inline uint16_t dp_tx_comp_get_peer_id(struct dp_soc *soc,
+					      void *tx_comp_hal_desc)
+{
+	uint16_t peer_id = hal_tx_comp_get_peer_id(tx_comp_hal_desc);
+
+	return ((peer_id & DP_BE_TX_COMP_PEER_ID_MASK) >>
+		DP_BE_TX_COMP_PEER_ID_SHIFT);
+}
+#endif
+
 #ifdef DP_FEATURE_HW_COOKIE_CONVERSION
 #ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
 void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
@@ -46,6 +72,10 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 		*r_tx_desc =
 		(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id);
 	}
+
+	if (*r_tx_desc)
+		(*r_tx_desc)->peer_id = dp_tx_comp_get_peer_id(soc,
+							       tx_comp_hal_desc);
 }
 #else
 void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
@@ -54,6 +84,10 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 {
 	*r_tx_desc = (struct dp_tx_desc_s *)
 			hal_tx_comp_get_desc_va(tx_comp_hal_desc);
+
+	if (*r_tx_desc)
+		(*r_tx_desc)->peer_id = dp_tx_comp_get_peer_id(soc,
+							       tx_comp_hal_desc);
 }
 #endif /* DP_HW_COOKIE_CONVERT_EXCEPTION */
 #else
@@ -68,6 +102,10 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 	tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
 	*r_tx_desc =
 	(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id);
+
+	if (*r_tx_desc)
+		(*r_tx_desc)->peer_id = dp_tx_comp_get_peer_id(soc,
+							       tx_comp_hal_desc);
 }
 #endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
 

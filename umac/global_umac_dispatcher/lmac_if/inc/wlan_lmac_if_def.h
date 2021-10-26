@@ -1028,6 +1028,10 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_ocac_abort_cmd:                 Send Off-Channel CAC abort command.
  * @dfs_is_pdev_5ghz:                   Check if the given pdev is 5GHz.
  * @dfs_set_phyerr_filter_offload:      Config phyerr filter offload.
+ * @dfs_is_tgt_radar_found_chan_freq_eq_center_freq:
+ *                                      Check if chan_freq parameter of the
+ *                                      radar found wmi event points to channel
+ *                                      center.
  * @dfs_send_offload_enable_cmd:        Send dfs offload enable command to fw.
  * @dfs_host_dfs_check_support:         To check Host DFS confirmation feature
  *                                      support.
@@ -1075,6 +1079,8 @@ struct wlan_lmac_if_dfs_tx_ops {
 			struct wlan_objmgr_pdev *pdev,
 			bool dfs_phyerr_filter_offload);
 	bool (*dfs_is_tgt_offload)(struct wlan_objmgr_psoc *psoc);
+	bool (*dfs_is_tgt_radar_found_chan_freq_eq_center_freq)
+		 (struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*dfs_send_offload_enable_cmd)(
 			struct wlan_objmgr_pdev *pdev,
 			bool enable);

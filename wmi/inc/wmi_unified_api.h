@@ -4463,4 +4463,16 @@ wmi_extract_halphy_cal_ev_param(wmi_unified_t wmi_handle,
 				void *evt_buf,
 				struct wmi_host_pdev_set_halphy_cal_event *param);
 
+#ifdef FEATURE_MEC_OFFLOAD
+/**
+ * wmi_unified_pdev_set_mec_timer() - set mec timer value
+ * @wmi_handle: wmi handle
+ * @param: params needed for mec timer config
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_unified_pdev_set_mec_timer(struct wmi_unified *wmi_handle,
+			       struct set_mec_timer_params *param);
+#endif
 #endif /* _WMI_UNIFIED_API_H_ */

@@ -125,6 +125,43 @@ dp_rx_desc_sw_cc_check(struct dp_soc *soc,
 }
 #endif /* DP_FEATURE_HW_COOKIE_CONVERSION && DP_HW_COOKIE_CONVERT_EXCEPTION */
 
+#define DP_PEER_METADATA_OFFLOAD_GET_BE(_peer_metadata)		(0)
+
+#ifdef DP_USE_REDUCED_PEER_ID_FIELD_WIDTH
+static inline uint16_t
+dp_rx_peer_metadata_peer_id_get_be(struct dp_soc *soc, uint32_t peer_metadata)
+{
+	struct htt_rx_peer_metadata_v1 *metadata =
+			(struct htt_rx_peer_metadata_v1 *)&peer_metadata;
+	uint16_t peer_id;
+
+	peer_id = metadata->peer_id |
+		  (metadata->ml_peer_valid << soc->peer_id_shift);
+
+	return peer_id;
+}
+#else
+/* Combine ml_peer_valid and peer_id field */
+#define DP_BE_PEER_METADATA_PEER_ID_MASK	0x00003fff
+#define DP_BE_PEER_METADATA_PEER_ID_SHIFT	0
+
+static inline uint16_t
+dp_rx_peer_metadata_peer_id_get_be(struct dp_soc *soc, uint32_t peer_metadata)
+{
+	return ((peer_metadata & DP_BE_PEER_METADATA_PEER_ID_MASK) >>
+		DP_BE_PEER_METADATA_PEER_ID_SHIFT);
+}
+#endif
+
+static inline uint16_t
+dp_rx_peer_metadata_vdev_id_get_be(struct dp_soc *soc, uint32_t peer_metadata)
+{
+	struct htt_rx_peer_metadata_v1 *metadata =
+			(struct htt_rx_peer_metadata_v1 *)&peer_metadata;
+
+	return metadata->vdev_id;
+}
+
 #ifdef WLAN_FEATURE_NEAR_FULL_IRQ
 /**
  * dp_rx_nf_process() - Near Full state handler for RX rings.

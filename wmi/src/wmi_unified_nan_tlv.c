@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -693,7 +693,7 @@ static QDF_STATUS extract_ndp_initiator_rsp_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#define MAX_NAN_MSG_LEN                 200
+#define MAX_NAN_MSG_LEN                 400
 
 static QDF_STATUS extract_nan_msg_tlv(uint8_t *data,
 				      struct nan_dump_msg *msg)

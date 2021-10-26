@@ -27,6 +27,12 @@
 #include <dp_types.h>
 #include "dp_be.h"
 
+struct __attribute__((__packed__)) dp_tx_comp_peer_id {
+	uint16_t peer_id:13,
+		 ml_peer_valid:1,
+		 reserved:2;
+};
+
 /* Invalid TX Bank ID value */
 #define DP_BE_INVALID_BANK_ID -1
 

@@ -126,6 +126,12 @@
 #define AST_OFFLOAD_ENABLE_STATUS 0
 #endif
 
+#ifdef FEATURE_MEC_OFFLOAD
+#define FW_MEC_FW_OFFLOAD_ENABLED 1
+#else
+#define FW_MEC_FW_OFFLOAD_ENABLED 0
+#endif
+
 #define PCP_TID_MAP_MAX 8
 #define MAX_MU_USERS 37
 
@@ -804,6 +810,9 @@ struct dp_rx_tid {
 
 	/* Peer TID statistics */
 	struct cdp_peer_tid_stats stats;
+
+	/* defrag usage only, dp_peer pointer related with this tid */
+	struct dp_peer *defrag_peer;
 };
 
 /**
@@ -816,10 +825,20 @@ struct dp_rx_tid {
  * @num_reo_status_ring_masks: interrupts with reo_status_ring_mask set
  * @num_rxdma2host_ring_masks: interrupts with rxdma2host_ring_mask set
  * @num_host2rxdma_ring_masks: interrupts with host2rxdma_ring_mask set
+ * @num_host2rxdma_mon_ring_masks: interrupts with host2rxdma_ring_mask set
  * @num_rx_ring_near_full_masks: Near-full interrupts for REO DST ring
  * @num_tx_comp_ring_near_full_masks: Near-full interrupts for TX completion
+ * @num_rx_wbm_rel_ring_near_full_masks: total number of times the wbm rel ring
+ *                                       near full interrupt was received
+ * @num_reo_status_ring_near_full_masks: total number of times the reo status
+ *                                       near full interrupt was received
+ * @num_near_full_masks: total number of times the near full interrupt
+ *                       was received
  * @num_masks: total number of times the interrupt was received
+ * @num_host2txmon_ring_masks: interrupts with host2txmon_ring_mask set
+ * @num_near_full_masks: total number of times the interrupt was received
  * @num_masks: total number of times the near full interrupt was received
+ * @num_tx_mon_ring_masks: interrupts with num_tx_mon_ring_masks set
  *
  * Counter for individual masks are incremented only if there are any packets
  * on that ring.
@@ -833,12 +852,15 @@ struct dp_intr_stats {
 	uint32_t num_reo_status_ring_masks;
 	uint32_t num_rxdma2host_ring_masks;
 	uint32_t num_host2rxdma_ring_masks;
+	uint32_t num_host2rxdma_mon_ring_masks;
 	uint32_t num_rx_ring_near_full_masks[MAX_REO_DEST_RINGS];
 	uint32_t num_tx_comp_ring_near_full_masks[MAX_TCL_DATA_RINGS];
 	uint32_t num_rx_wbm_rel_ring_near_full_masks;
 	uint32_t num_reo_status_ring_near_full_masks;
+	uint32_t num_host2txmon_ring__masks;
 	uint32_t num_near_full_masks;
 	uint32_t num_masks;
+	uint32_t num_tx_mon_ring_masks;
 };
 
 /* per interrupt context  */
@@ -848,6 +870,7 @@ struct dp_intr {
 	uint8_t rx_ring_mask;   /* Rx REO rings (0-3) associated
 				with this interrupt context */
 	uint8_t rx_mon_ring_mask;  /* Rx monitor ring mask (0-2) */
+	uint8_t tx_mon_ring_mask;  /* Tx monitor ring mask (0-2) */
 	uint8_t rx_err_ring_mask; /* REO Exception Ring */
 	uint8_t rx_wbm_rel_ring_mask; /* WBM2SW Rx Release Ring */
 	uint8_t reo_status_ring_mask; /* REO command response ring */
@@ -861,6 +884,7 @@ struct dp_intr {
 	uint8_t rx_near_full_grp_2_mask;
 	/* WBM TX completion rings near full interrupt mask */
 	uint8_t tx_ring_near_full_mask;
+	uint8_t host2txmon_ring_mask; /* Tx monitor buffer ring */
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
 	qdf_lro_ctx_t lro_ctx;
@@ -1634,6 +1658,10 @@ struct dp_arch_ops {
 	uint32_t (*dp_service_near_full_srngs)(struct dp_soc *soc,
 					       struct dp_intr *int_ctx,
 					       uint32_t dp_budget);
+	void (*tx_implicit_rbm_set)(struct dp_soc *soc, uint8_t tx_ring_id,
+				    uint8_t bm_id);
+	uint16_t (*dp_rx_peer_metadata_peer_id_get)(struct dp_soc *soc,
+						    uint32_t peer_metadata);
 
 	/* Control Arch Ops */
 	QDF_STATUS (*txrx_set_vdev_param)(struct dp_soc *soc,
@@ -1646,8 +1674,6 @@ struct dp_arch_ops {
 	int (*dp_srng_test_and_update_nf_params)(struct dp_soc *soc,
 						 struct dp_srng *dp_srng,
 						 int *max_reap_limit);
-	void (*tx_implicit_rbm_set)(struct dp_soc *soc, uint8_t tx_ring_id,
-				    uint8_t bm_id);
 };
 
 /**
@@ -1657,6 +1683,43 @@ struct dp_arch_ops {
 struct dp_soc_features {
 	uint8_t pn_in_reo_dest;
 };
+
+enum sysfs_printing_mode {
+	PRINTING_MODE_DISABLED = 0,
+	PRINTING_MODE_ENABLED
+};
+
+#ifdef WLAN_SYSFS_DP_STATS
+/**
+ * struct sysfs_stats_config: Data structure holding stats sysfs config.
+ * @rw_stats_lock: Lock to read and write to stat_type and pdev_id.
+ * @sysfs_read_lock: Lock held while another stat req is being executed.
+ * @sysfs_write_user_buffer: Lock to change buff len, max buf len
+ * and *buf.
+ * @sysfs_txrx_fw_request_done: Event to wait for firmware response.
+ * @stat_type_requested: stat type requested.
+ * @mac_id: mac id for which stat type are requested.
+ * @printing_mode: Should a print go through.
+ * @process_id: Process allowed to write to buffer.
+ * @curr_buffer_length: Curr length of buffer written
+ * @max_buffer_length: Max buffer length.
+ * @buf: Sysfs buffer.
+ */
+struct sysfs_stats_config {
+	/* lock held to read stats */
+	qdf_spinlock_t rw_stats_lock;
+	qdf_mutex_t sysfs_read_lock;
+	qdf_spinlock_t sysfs_write_user_buffer;
+	qdf_event_t sysfs_txrx_fw_request_done;
+	uint32_t stat_type_requested;
+	uint32_t mac_id;
+	enum sysfs_printing_mode printing_mode;
+	int process_id;
+	uint16_t curr_buffer_length;
+	uint16_t max_buffer_length;
+	char *buf;
+};
+#endif
 
 /* SOC level structure for data path */
 struct dp_soc {
@@ -1847,6 +1910,15 @@ struct dp_soc {
 		TAILQ_HEAD(, dp_peer) * bins;
 	} peer_hash;
 
+#ifdef WLAN_FEATURE_11BE_MLO
+	/* Protect mld peer hash table */
+	DP_MUTEX_TYPE mld_peer_hash_lock;
+	struct {
+		unsigned mask;
+		unsigned idx_bits;
+		TAILQ_HEAD(, dp_peer) * bins;
+	} mld_peer_hash;
+#endif
 	/* rx defrag state – TBD: do we need this per radio? */
 	struct {
 		struct {
@@ -1888,9 +1960,15 @@ struct dp_soc {
 	/* maximum value for peer_id */
 	uint32_t max_peers;
 
+	uint32_t peer_id_shift;
+	uint32_t peer_id_mask;
+
 	/* SoC level data path statistics */
 	struct dp_soc_stats stats;
-
+#ifdef WLAN_SYSFS_DP_STATS
+	/* sysfs config for DP stats */
+	struct sysfs_stats_config *sysfs_config;
+#endif
 	/* timestamp to keep track of msdu buffers received on reo err ring */
 	uint64_t rx_route_err_start_pkt_ts;
 
@@ -2080,6 +2158,9 @@ struct dp_soc {
 #ifdef FEATURE_RUNTIME_PM
 	/* Dp runtime refcount */
 	qdf_atomic_t dp_runtime_refcount;
+
+	/* Dp tx pending count in RTPM */
+	qdf_atomic_t tx_pending_rtpm;
 #endif
 	/* Invalid buffer that allocated for RX buffer */
 	qdf_nbuf_queue_t invalid_buf_queue;
@@ -2124,7 +2205,11 @@ struct dp_soc {
 #ifdef WIFI_MONITOR_SUPPORT
 	struct dp_mon_soc *monitor_soc;
 #endif
-	bool rxdma2sw_rings_not_supported;
+	uint8_t rxdma2sw_rings_not_supported:1,
+		mec_fw_offload:1;
+
+	/* Number of Rx refill rings */
+	uint8_t num_rx_refill_buf_rings;
 };
 
 #ifdef IPA_OFFLOAD
@@ -2610,6 +2695,7 @@ struct dp_pdev {
 		qdf_work_t work;
 		qdf_workqueue_t *work_queue;
 		uint32_t seq_num;
+		uint8_t queue_depth;
 		qdf_spinlock_t list_lock;
 
 		TAILQ_HEAD(, dp_soc_srngs_state) list;
@@ -2714,6 +2800,11 @@ struct dp_vdev {
 
 	/* MAC address */
 	union dp_align_mac_addr mac_addr;
+
+#ifdef WLAN_FEATURE_11BE_MLO
+	/* MLO MAC address corresponding to vdev */
+	union dp_align_mac_addr mld_mac_addr;
+#endif
 
 	/* node in the pdev's list of vdevs */
 	TAILQ_ENTRY(dp_vdev) vdev_list_elem;
@@ -2989,6 +3080,24 @@ struct dp_peer_ast_params {
 #define IEEE80211_SCS_MAX_NO_OF_ELEM 10
 #endif
 
+#define DP_MLO_FLOW_INFO_MAX	3
+
+/**
+ * struct dp_mlo_flow_override_info - Flow override info
+ * @ast_idx: Primary TCL AST Index
+ * @ast_idx_valid: Is AST index valid
+ * @chip_id: CHIP ID
+ * @tidmask: tidmask
+ * @cache_set_num: Cache set number
+ */
+struct dp_mlo_flow_override_info {
+	uint16_t ast_idx;
+	uint8_t ast_idx_valid;
+	uint8_t chip_id;
+	uint8_t tidmask;
+	uint8_t cache_set_num;
+};
+
 #ifdef WLAN_SUPPORT_MSCS
 /*MSCS Procedure based macros */
 #define IEEE80211_MSCS_MAX_ELEM_SIZE    5
@@ -3053,6 +3162,34 @@ struct dp_peer_mesh_latency_parameter {
 };
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/* Max number of links for MLO connection */
+#define DP_MAX_MLO_LINKS 3
+
+/**
+ * struct dp_peer_link_info - link peer information for MLO
+ * @mac_add: Mac address
+ * @vdev_id: Vdev ID for current link peer
+ * @is_valid: flag for link peer info valid or not
+ */
+struct dp_peer_link_info {
+	union dp_align_mac_addr mac_addr;
+	uint8_t vdev_id;
+	uint8_t is_valid;
+};
+
+/**
+ * struct dp_mld_link_peers - this structure is used to get link peers
+			      pointer from mld peer
+ * @link_peers: link peers pointer array
+ * @num_links: number of link peers fetched
+ */
+struct dp_mld_link_peers {
+	struct dp_peer *link_peers[DP_MAX_MLO_LINKS];
+	uint8_t num_links;
+};
+#endif
+
 /* Peer structure for data path state */
 struct dp_peer {
 	/* VDEV to which this peer is associated */
@@ -3072,8 +3209,8 @@ struct dp_peer {
 	/* node in the hash table bin's list of peers */
 	TAILQ_ENTRY(dp_peer) hash_list_elem;
 
-	/* TID structures */
-	struct dp_rx_tid rx_tid[DP_MAX_TIDS];
+	/* TID structures pointer */
+	struct dp_rx_tid *rx_tid;
 
 	/* TBD: No transmit TID state required? */
 
@@ -3094,6 +3231,11 @@ struct dp_peer {
 		in_twt:1, /* in TWT session */
 		delete_in_progress:1, /* Indicate kickout sent */
 		sta_self_peer:1; /* Indicate STA self peer */
+
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t assoc_link:1, /* first assoc link peer for MLO */
+		primary_link:1; /* primary link for MLO */
+#endif
 
 #ifdef QCA_SUPPORT_PEER_ISOLATION
 	bool isolation; /* enable peer isolation for this peer */
@@ -3178,6 +3320,17 @@ struct dp_peer {
 #endif
 #ifdef WIFI_MONITOR_SUPPORT
 	struct dp_mon_peer *monitor_peer;
+#endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	/* peer type */
+	enum cdp_peer_type peer_type;
+	/*---------for link peer---------*/
+	struct dp_peer *mld_peer;
+
+	/*---------for mld peer----------*/
+	struct dp_peer_link_info link_peers[DP_MAX_MLO_LINKS];
+	uint8_t num_links;
+	DP_MUTEX_TYPE link_peers_info_lock;
 #endif
 };
 
