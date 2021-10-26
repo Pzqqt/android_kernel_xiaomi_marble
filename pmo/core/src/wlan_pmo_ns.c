@@ -169,6 +169,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		status = pmo_tgt_enable_ns_offload_req(vdev, vdev_id);
 		break;
 	case pmo_apps_suspend:
+	case pmo_arp_ns_offload_dynamic_update:
 		/* enable arp when active offload is false (apps suspend) */
 		status = pmo_tgt_enable_ns_offload_req(vdev, vdev_id);
 		break;
@@ -204,6 +205,7 @@ static QDF_STATUS pmo_core_do_disable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		status = pmo_tgt_disable_ns_offload_req(vdev, vdev_id);
 		break;
 	case pmo_apps_resume:
+	case pmo_arp_ns_offload_dynamic_update:
 		status = pmo_tgt_disable_ns_offload_req(vdev, vdev_id);
 		break;
 	default:
