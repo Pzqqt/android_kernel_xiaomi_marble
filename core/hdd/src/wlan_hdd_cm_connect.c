@@ -1269,12 +1269,10 @@ static void hdd_update_hlp_info(struct net_device *dev,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	if (!rsp || !rsp->connect_ies.fils_ie) {
-		hdd_err("Connect resp/fils ie is NULL");
 		return;
 	}
 
 	if (!rsp->connect_ies.fils_ie->hlp_data_len) {
-		hdd_debug("FILS HLP Data NULL, len 0");
 		return;
 	}
 
