@@ -53,11 +53,11 @@ int _sde_vm_reclaim_mem(struct sde_kms *sde_kms)
 	rc = gh_rm_mem_reclaim(sde_vm->base.io_mem_handle, 0);
 	if (rc) {
 		SDE_ERROR("failed to reclaim IO memory, rc=%d\n", rc);
-		goto reclaim_fail;
+		return rc;
 	}
 
 	SDE_INFO("mem reclaim succeeded\n");
-reclaim_fail:
+
 	sde_vm->base.io_mem_handle = -1;
 
 	return rc;
