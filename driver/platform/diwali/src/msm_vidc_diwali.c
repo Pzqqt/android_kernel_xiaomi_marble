@@ -45,6 +45,11 @@
 	.bank_spreading = bsp,	\
 }
 
+#define DDR_TYPE_LPDDR4 0x6
+#define DDR_TYPE_LPDDR4X 0x7
+#define DDR_TYPE_LPDDR5 0x8
+#define DDR_TYPE_LPDDR5X 0x9
+
 #define ENC     MSM_VIDC_ENCODER
 #define DEC     MSM_VIDC_DECODER
 #define H264    MSM_VIDC_H264
@@ -1639,6 +1644,26 @@ static struct msm_vidc_platform_data diwali_data = {
 	.bus_bw_nrt = bus_bw_nrt,
 };
 
+static void msm_vidc_ddr_ubwc_config(
+	struct msm_vidc_platform_data *platform_data, u32 hbb_override_val)
+{
+	uint32_t ddr_type = DDR_TYPE_LPDDR5;
+
+	ddr_type = of_fdt_get_ddrtype();
+	if (ddr_type == -ENOENT) {
+		d_vpr_e("Failed to get ddr type, use LPDDR5\n");
+	}
+
+	if (platform_data->ubwc_config &&
+		(ddr_type == DDR_TYPE_LPDDR4 ||
+		 ddr_type == DDR_TYPE_LPDDR4X))
+		platform_data->ubwc_config->highest_bank_bit = hbb_override_val;
+
+	d_vpr_h("DDR Type 0x%x hbb 0x%x\n",
+		ddr_type, platform_data->ubwc_config ?
+		platform_data->ubwc_config->highest_bank_bit : -1);
+}
+
 static int msm_vidc_init_data(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -1650,6 +1675,9 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 	d_vpr_h("%s: initialize diwali data\n", __func__);
 
 	core->platform->data = diwali_data;
+
+	/* Check for DDR variant */
+	msm_vidc_ddr_ubwc_config(&core->platform->data, 0xe);
 
 	return rc;
 }
