@@ -681,6 +681,8 @@ struct drm_msm_rc_mask_cfg {
 	__u64 cfg_param_07;
 	__u32 cfg_param_08;
 	__u64 cfg_param_09[RC_DATA_SIZE_MAX];
+	__u32 height;
+	__u32 width;
 };
 
 #define FP16_SUPPORTED
