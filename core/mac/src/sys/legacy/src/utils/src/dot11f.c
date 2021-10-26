@@ -335,7 +335,7 @@ static uint32_t get_container_ies_len(tpAniSirGlobal pCtx,
 	len += *(pBufRemaining+1);
 	pBufRemaining += len + 2;
 	len += 2;
-	while (len < nBuf) {
+	while (len + 1 < nBuf) {
 		pIe = find_ie_defn(pCtx, pBufRemaining, nBuf - len, IEs);
 		if (NULL == pIe)
 			break;
