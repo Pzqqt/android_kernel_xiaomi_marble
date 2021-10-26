@@ -1589,6 +1589,9 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 fail_gen3:
 	ipa3_disable_data_path(ipa_ep_idx);
 fail_repl:
+	if (IPA_CLIENT_IS_CONS(ep->client) && !ep->sys->common_buff_pool)
+		ipa3_cleanup_rx(ep->sys);
+
 	ep->sys->repl_hdlr = ipa3_replenish_rx_cache;
 	if (ep->sys->repl && !ep->sys->common_buff_pool) {
 		kfree(ep->sys->repl);
@@ -1620,6 +1623,7 @@ fail_wq:
 fail_and_disable_clocks:
 	IPA_ACTIVE_CLIENTS_DEC_EP(sys_in->client);
 fail_gen:
+	IPA_STATS_INC_CNT(ipa3_ctx->stats.pipe_setup_fail_cnt);
 	return result;
 }
 

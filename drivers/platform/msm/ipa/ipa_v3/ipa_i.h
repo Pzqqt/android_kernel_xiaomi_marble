@@ -1550,6 +1550,7 @@ struct ipa3_stats {
 	u32 tx_non_linear;
 	u32 rx_page_drop_cnt;
 	u64 lower_order;
+	u32 pipe_setup_fail_cnt;
 	struct ipa3_page_recycle_stats page_recycle_stats[3];
 	u64 page_recycle_cnt[3][IPA_PAGE_POLL_THRESHOLD_MAX];
 	atomic_t num_buff_above_thresh_for_def_pipe_notified;
