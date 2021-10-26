@@ -1023,11 +1023,11 @@ policy_mgr_dump_curr_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
 	for (i = 0; i < MAX_MAC; i++)
 		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
-					    i, freq_range[i].low_2ghz_freq,
-					    freq_range[i].high_2ghz_freq,
-					    freq_range[i].low_5ghz_freq,
-					    freq_range[i].high_5ghz_freq);
+			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					     i, freq_range[i].low_2ghz_freq,
+					     freq_range[i].high_2ghz_freq,
+					     freq_range[i].low_5ghz_freq,
+					     freq_range[i].high_5ghz_freq);
 }
 
 static const char *policy_mgr_hw_mode_to_str(enum policy_mgr_mode hw_mode)
@@ -1054,13 +1054,13 @@ policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
 
 	for (i = 0; i < MAX_MAC; i++)
 		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE: %s(%d): mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
-					    policy_mgr_hw_mode_to_str(hw_mode),
-					    hw_mode, i,
-					    freq_range[i].low_2ghz_freq,
-					    freq_range[i].high_2ghz_freq,
-					    freq_range[i].low_5ghz_freq,
-					    freq_range[i].high_5ghz_freq);
+			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE: %s(%d): mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					     policy_mgr_hw_mode_to_str(hw_mode),
+					     hw_mode, i,
+					     freq_range[i].low_2ghz_freq,
+					     freq_range[i].high_2ghz_freq,
+					     freq_range[i].low_5ghz_freq,
+					     freq_range[i].high_5ghz_freq);
 }
 
 static void
