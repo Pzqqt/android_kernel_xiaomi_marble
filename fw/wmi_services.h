@@ -558,6 +558,8 @@ typedef  enum  {
     WMI_SERVICE_SPATIAL_REUSE_ENHANCEMENT_SUPPORT = 306,
     WMI_SERVICE_MU_SNIF = 307, /* FW support MU sniffer */
     WMI_SERVICE_ICMP_OFFLOAD = 308, /* FW supports ping offload during APPS suspend */
+    WMI_SERVICE_RTSCTS_FOR_UNICAST_MGMT_SUPPORT = 309, /* Indicates FW support RTSCTS for unicast management */
+    WMI_SERVICE_DYNAMIC_VDEV_MAC_ADDR_UPDATE_SUPPORT = 310, /* FW supports dynamic vdev mac address updating */
 
 
     WMI_MAX_EXT2_SERVICE

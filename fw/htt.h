@@ -218,9 +218,10 @@
  * 3.94 Add HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG,
  *      HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND defs.
  * 3.95 Add HTT_H2T_MSG_TYPE_TX_MONITOR_CFG def.
+ * 3.96 Modify HTT_H2T_MSG_TYPE_TX_MONITOR_CFG def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 95
+#define HTT_CURRENT_VERSION_MINOR 96
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -2593,6 +2594,11 @@ PREPACK struct htt_tx_wbm_completion_v2 {
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S)); \
      } while (0)
 
+typedef enum {
+    TX_FRAME_TYPE_UNDEFINED = 0,
+    TX_FRAME_TYPE_EAPOL     = 1,
+} htt_tx_wbm_status_frame_type;
+
 /**
  * @brief HTT TX WBM transmit status from firmware to host
  * @details
@@ -2626,7 +2632,8 @@ PREPACK struct htt_tx_wbm_transmit_status {
        mcast_valid:      1,  /* If this "mcast_valid" is set, the mcast field
                               * contains valid data.
                               */
-       reserved0:        8;
+       frame_type:       4,  /* holds htt_tx_wbm_status_frame_type value */
+       reserved:         4;
    A_UINT32
        ppdu_start_tsf:  32;  /* PPDU Start timestamp added for multicast
                               * packets in the wbm completion path
@@ -4704,11 +4711,9 @@ enum htt_srng_ring_id {
     HTT_RXDMA_NON_MONITOR_DEST_RING, /* Per MDPU indication to host for non-monitor RxDMA traffic upload */
     HTT_RXDMA_HOST_BUF_RING2,      /* Second ring used by FW to feed removed buffers and update removed packets */
     HTT_TX_MON_HOST2MON_BUF_RING,   /* Status buffers and Packet buffers are provided by host */
-    HTT_TX_MON_MON2HOST_DEST_RING0, /* Used by monitor to fill status buffers and provide to host */
-    HTT_TX_MON_MON2HOST_DEST_RING1, /* Used by monitor to fill status buffers and provide to host */
+    HTT_TX_MON_MON2HOST_DEST_RING,  /* Used by monitor to fill status buffers and provide to host */
     HTT_RX_MON_HOST2MON_BUF_RING,   /* Status buffers and Packet buffers are provided by host */
-    HTT_RX_MON_MON2HOST_DEST_RING0, /* Used by monitor to fill status buffers and provide to host */
-    HTT_RX_MON_MON2HOST_DEST_RING1, /* Used by monitor to fill status buffers and provide to host */
+    HTT_RX_MON_MON2HOST_DEST_RING, /* Used by monitor to fill status buffers and provide to host */
     /* Add Other SRING which can't be directly configured by host software above this line */
 };
 
@@ -5891,30 +5896,31 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
  *
  *    The message would appear as follows:
  *
- *    |31 28|27|26|25|24|23 22|21 19|18  16|15             8|7        |2   0|
- *    |-----+-----+--+--+-----=-----+------+----------------+---------+-----|
- *    |   rsvd1   |PS|SS|      ring_id     |     pdev_id    |    msg_type   |
- *    |-----+--------+--------+-----+------+--------------------------------|
- *    |rsvd2|  DATA  |  CTRL  | MGMT|  PT  |           ring_buffer_size     |
- *    |---------------------------------------------------------------+-----|
- *    |                          rsvd3                                |  E  |
- *    |---------------------------------------------------------------------|
- *    |                           tlv_filter_mask_in0                       |
- *    |---------------------------------------------------------------------|
- *    |                           tlv_filter_mask_in1                       |
- *    |---------------------------------------------------------------------|
- *    |                           tlv_filter_mask_in2                       |
- *    |---------------------------------------------------------------------|
- *    |                           tlv_filter_mask_in3                       |
- *    |------------------------------------+--------------------------------|
- *    |       tx_peer_entry_word_mask      |     tx_fes_setup_word_mask     |
- *    |------------------------------------+--------------------------------|
- *    |       tx_msdu_start_word_mask      |     tx_queue_ext_word_mask     |
- *    |------------------------------------+--------------------------------|
- *    |     pcu_ppdu_setup_word_mask       |     tx_mpdu_start_word_mask    |
- *    |-----------------------+-----+------+--------------------------------|
- *    |       rsvd4           | EMM |  PT  |   rxpcu_user_setup_word_mask   |
- *    |---------------------------------------------------------------------|
+ *    |31    26|25|24|23 22|21|20|19|18 16|15|14|13|12|11|10|9|8|7|6|5|4|3|2  0|
+ *    |--------+--+--+-----+--+--+--+-----+--+--+--+--+--+--+-+-+-+-+-+-+-+----|
+ *    | rsvd1  |PS|SS|       ring_id      |        pdev_id      |   msg_type   |
+ *    |-----------+--------+--------+-----+------------------------------------|
+ *    |   rsvd2   |  DATA  |  CTRL  | MGMT|            ring_buffer_size        |
+ *    |--------------------------------------+--+--+--+--+--+-+-+-+-+-+-+-+----|
+ *    |                                      | M| M| M| M| M|M|M|M|M|M|M|M|    |
+ *    |                                      | S| S| S| P| P|P|S|S|S|P|P|P|    |
+ *    |                                      | E| E| E| E| E|E|S|S|S|S|S|S|    |
+ *    |                  rsvd3               | D| C| M| D| C|M|D|C|M|D|C|M|  E |
+ *    |------------------------------------------------------------------------|
+ *    |                            tlv_filter_mask_in0                         |
+ *    |------------------------------------------------------------------------|
+ *    |                            tlv_filter_mask_in1                         |
+ *    |------------------------------------------------------------------------|
+ *    |                            tlv_filter_mask_in2                         |
+ *    |------------------------------------------------------------------------|
+ *    |                            tlv_filter_mask_in3                         |
+ *    |-----------------+-----------------+---------------------+--------------|
+ *    | tx_msdu_start_wm| tx_queue_ext_wm |  tx_peer_entry_wm   |tx_fes_stup_wm|
+ *    |------------------------------------------------------------------------|
+ *    |                       pcu_ppdu_setup_word_mask                         |
+ *    |--------------------+--+--+--+-----+---------------------+--------------|
+ *    |       rsvd4        | D| C| M|  PT |   rxpcu_usrsetp_wm  |tx_mpdu_srt_wm|
+ *    |------------------------------------------------------------------------|
  *
  * Where:
  *     PS = pkt_swap
@@ -5923,7 +5929,7 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
  * dword0 - b'0:7   - msg_type: This will be set to
  *                    0x1b (HTT_H2T_MSG_TYPE_TX_MONITOR_CFG)
  *          b'8:15  - pdev_id:
- *                    0 (for rings at SOC/UMAC level),
+ *                    0 (for rings at SOC level),
  *                    1/2/3 mac id (for rings at LMAC level)
  *          b'16:23 - ring_id : Identify the ring to configure.
  *                    More details can be got from enum htt_srng_ring_id
@@ -5934,45 +5940,142 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
  *                    BUF_RING_CFG_0 defs within HW .h files,
  *                    e.g. wmac_top_reg_seq_hwioreg.h
  *          b'26:31 - rsvd1:  reserved for future use
- * dword1 - b'0:16  - ring_buffer_size: size of bufferes referenced by rx ring,
+ * dword1 - b'0:15  - ring_buffer_size: size of bufferes referenced by rx ring,
  *                    in byte units.
  *                    Valid only for HW_TO_SW_RING and SW_TO_HW_RING
- *          b'16:18 - pkt_type_config_length (PT): MGMT, CTRL, DATA
- *                    Each bit out of 3 bits represents if configurable length
- *                    is valid and needs to programmed.
- *          b'19:21 - config_length_mgmt(MGMT) for MGMT: Each bit set represent
+ *          b'16:18 - config_length_mgmt(MGMT) for MGMT: Each bit set represent
  *                    64, 128, 256.
- *                    If all 3 bits are set config length is > 256
- *          b'22:24 - config_length_ctrl(CTRL) for CTRL: Each bit set represent
+ *                    If all 3 bits are set config length is > 256.
+ *                    if val is '0', then ignore this field.
+ *          b'19:21 - config_length_ctrl(CTRL) for CTRL: Each bit set represent
  *                    64, 128, 256.
- *                    If all 3 bits are set config length is > 256
- *          b'25:27 - config_length_data(DATA) for DATA: Each bit set represent
+ *                    If all 3 bits are set config length is > 256.
+ *                    if val is '0', then ignore this field.
+ *          b'22:24 - config_length_data(DATA) for DATA: Each bit set represent
  *                    64, 128, 256.
- *                    If all 3 bits are set config length is > 256
- *        - b'28:31 - rsvd2: Reserved for future use
+ *                    If all 3 bits are set config length is > 256.
+ *                    If val is '0', then ignore this field.
+ *        - b'25:31 - rsvd2: Reserved for future use
  * dword2 - b'0:2   - packet_type_enable_flags(E): MGMT, CTRL, DATA
- *          b'3:31  - rsvd3: Reserved for future use
+ *          b'3     - filter_in_tx_mpdu_start_mgmt(MPSM):
+ *                    If packet_type_enable_flags is '1' for MGMT type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for MGMT type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *          b'4     - filter_in_tx_mpdu_start_ctrl(MPSC)
+ *                    If packet_type_enable_flags is '1' for CTRL type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for CTRL type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *          b'5     - filter_in_tx_mpdu_start_data(MPSD)
+ *                    If packet_type_enable_flags is '1' for DATA type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for DATA type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *          b'6     - filter_in_tx_msdu_start_mgmt(MSSM)
+ *                    If packet_type_enable_flags is '1' for MGMT type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for MGMT type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *          b'7     - filter_in_tx_msdu_start_ctrl(MSSC)
+ *                    If packet_type_enable_flags is '1' for CTRL type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for CTRL type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *          b'8     - filter_in_tx_msdu_start_data(MSSD)
+ *                    If packet_type_enable_flags is '1' for DATA type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for DATA type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *          b'9     - filter_in_tx_mpdu_end_mgmt(MPEM)
+ *                    If packet_type_enable_flags is '1' for MGMT type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for MGMT type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *                    If filter_in_TX_MPDU_START = 1 it is recommended
+ *                    to set this bit.
+ *          b'10    - filter_in_tx_mpdu_end_ctrl(MPEC)
+ *                    If packet_type_enable_flags is '1' for CTRL type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for CTRL type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *                    If filter_in_TX_MPDU_START = 1 it is recommended
+ *                    to set this bit.
+ *          b'11    - filter_in_tx_mpdu_end_data(MPED)
+ *                    If packet_type_enable_flags is '1' for DATA type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for DATA type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *                    If filter_in_TX_MPDU_START = 1 it is recommended
+ *                    to set this bit.
+ *          b'12    - filter_in_tx_msdu_end_mgmt(MSEM)
+ *                    If packet_type_enable_flags is '1' for MGMT type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for MGMT type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *                    If filter_in_TX_MSDU_START = 1 it is recommended
+ *                    to set this bit.
+ *          b'13    - filter_in_tx_msdu_end_ctrl(MSEC)
+ *                    If packet_type_enable_flags is '1' for CTRL type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for CTRL type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *                    If filter_in_TX_MSDU_START = 1 it is recommended
+ *                    to set this bit.
+ *          b'14    - filter_in_tx_msdu_end_data(MSED)
+ *                    If packet_type_enable_flags is '1' for DATA type,
+ *                    monitor will ignore this bit and allow this TLV.
+ *                    If packet_type_enable_flags is '0' for DATA type,
+ *                    monitor will use this bit to enable/disable logging
+ *                    of this TLV.
+ *                    If filter_in_TX_MSDU_START = 1 it is recommended
+ *                    to set this bit.
+ *          b'15:31 - rsvd3: Reserved for future use
  * dword3 - b'0:31  - tlv_filter_mask_in0:
  * dword4 - b'0:31  - tlv_filter_mask_in1:
  * dword5 - b'0:31  - tlv_filter_mask_in2:
  * dword6 - b'0:31  - tlv_filter_mask_in3:
- * dword7 - b'0:15  - tx_fes_setup_word_mask:
- *        - b'16:31 - tx_peer_entry_word_mask:
- * dword8 - b'0:15  - tx_queue_ext_word_mask:
- *        - b'16:31 - tx_msdu_start_word_mask:
- * dword9 - b'0:15  - tx_mpdu_start_word_mask:
- *        - b'16:31 - pcu_ppdu_setup_word_mask:
- * dword10- b'0:15  - rxpcu_user_setup_word_mask:
- *        - b'16:18 - pkt_type_msdu_or_mpdu_logging (PT): MGMT, CTRL, DATA
- *                    Each bit out of 3 bits represents if MSDU/MPDU
- *                    logging is enabled
- *        - b'19:21 - enable_msdu_or_mpdu_logging (EMM): For MGMT, CTRL, DATA
+ * dword7 - b'0:7   - tx_fes_setup_word_mask:
+ *        - b'8:15  - tx_peer_entry_word_mask:
+ *        - b'16:23 - tx_queue_ext_word_mask:
+ *        - b'24:31 - tx_msdu_start_word_mask:
+ * dword8 - b'0:31  - pcu_ppdu_setup_word_mask:
+ * dword9 - b'0:7   - tx_mpdu_start_word_mask:
+ *        - b'8:15  - rxpcu_user_setup_word_mask:
+ *        - b'16:18 - pkt_type_enable_msdu_or_mpdu_logging (PT):
+ *                    MGMT, CTRL, DATA
+ *        - b'19    - dma_mpdu_mgmt(M): For MGMT
  *                    0 -> MSDU level logging is enabled
  *                         (valid only if bit is set in
- *                         pkt_type_msdu_or_mpdu_logging)
+ *                         pkt_type_enable_msdu_or_mpdu_logging)
  *                    1 -> MPDU level logging is enabled
  *                         (valid only if bit is set in
- *                         pkt_type_msdu_or_mpdu_logging)
+ *                         pkt_type_enable_msdu_or_mpdu_logging)
+ *        - b'20    - dma_mpdu_ctrl(C) : For CTRL
+ *                    0 -> MSDU level logging is enabled
+ *                         (valid only if bit is set in
+ *                         pkt_type_enable_msdu_or_mpdu_logging)
+ *                    1 -> MPDU level logging is enabled
+ *                         (valid only if bit is set in
+ *                         pkt_type_enable_msdu_or_mpdu_logging)
+ *        - b'21    - dma_mpdu_data(D) : For DATA
+ *                    0 -> MSDU level logging is enabled
+ *                         (valid only if bit is set in
+ *                         pkt_type_enable_msdu_or_mpdu_logging)
+ *                    1 -> MPDU level logging is enabled
+ *                         (valid only if bit is set in
+ *                         pkt_type_enable_msdu_or_mpdu_logging)
  *        - b'22:31 - rsvd4 for future use
  */
 PREPACK struct htt_tx_monitor_cfg_t {
@@ -5983,26 +6086,39 @@ PREPACK struct htt_tx_monitor_cfg_t {
              pkt_swap:                               1,
              rsvd1:                                  6;
     A_UINT32 ring_buffer_size:                      16,
-             pkt_type_config_length:                 3,
              config_length_mgmt:                     3,
              config_length_ctrl:                     3,
              config_length_data:                     3,
-             rsvd2:                                  4;
+             rsvd2:                                  7;
     A_UINT32 pkt_type_enable_flags:                  3,
-             rsvd3:                                 29;
+             filter_in_tx_mpdu_start_mgmt:           1,
+             filter_in_tx_mpdu_start_ctrl:           1,
+             filter_in_tx_mpdu_start_data:           1,
+             filter_in_tx_msdu_start_mgmt:           1,
+             filter_in_tx_msdu_start_ctrl:           1,
+             filter_in_tx_msdu_start_data:           1,
+             filter_in_tx_mpdu_end_mgmt:             1,
+             filter_in_tx_mpdu_end_ctrl:             1,
+             filter_in_tx_mpdu_end_data:             1,
+             filter_in_tx_msdu_end_mgmt:             1,
+             filter_in_tx_msdu_end_ctrl:             1,
+             filter_in_tx_msdu_end_data:             1,
+             rsvd3:                                 17;
     A_UINT32 tlv_filter_mask_in0;
     A_UINT32 tlv_filter_mask_in1;
     A_UINT32 tlv_filter_mask_in2;
     A_UINT32 tlv_filter_mask_in3;
-    A_UINT32 tx_fes_setup_word_mask:                16,
-             tx_peer_entry_word_mask:               16;
-    A_UINT32 tx_queue_ext_word_mask:                16,
-             tx_msdu_start_word_mask:               16;
-    A_UINT32 tx_mpdu_start_word_mask:               16,
-             pcu_ppdu_setup_word_mask:              16;
-    A_UINT32 rxpcu_user_setup_word_mask:            16,
-             pkt_type_msdu_or_mpdu_logging:         3,
-             enable_msdu_or_mpdu_logging:           3,
+    A_UINT32 tx_fes_setup_word_mask:                 8,
+             tx_peer_entry_word_mask:                8,
+             tx_queue_ext_word_mask:                 8,
+             tx_msdu_start_word_mask:                8;
+    A_UINT32 pcu_ppdu_setup_word_mask;
+    A_UINT32 tx_mpdu_start_word_mask:                8,
+             rxpcu_user_setup_word_mask:             8,
+             pkt_type_enable_msdu_or_mpdu_logging:   3,
+             dma_mpdu_mgmt:                          1,
+             dma_mpdu_ctrl:                          1,
+             dma_mpdu_data:                          1,
              rsvd4:                                 10;
 } POSTPACK;
 
@@ -6063,41 +6179,30 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_RING_BUFFER_SIZE_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_M     0x00070000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_S     16
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_GET(_var) \
-            (((_var) & HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_M) >> \
-                    HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_S)
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_SET(_var, _val)            \
-            do { \
-                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH, _val); \
-                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_S)); \
-            } while (0)
-
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_M         0x00380000
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_S         19
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_M     0x00070000
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_S     16
 #define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_M) >> \
                     HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_S)
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_SET(_var, _val)            \
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_SET(_var, _val) \
             do { \
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_M         0x01C00000
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_S         22
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_M         0x00380000
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_S         19
 #define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_M) >> \
                     HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_S)
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_SET(_var, _val)            \
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_SET(_var, _val) \
             do { \
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_CONFIG_LENGTH_CTRL_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_DATA_M         0x0E000000
-#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_DATA_S         25
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_DATA_M         0x01C00000
+#define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_DATA_S         22
 #define HTT_TX_MONITOR_CFG_CONFIG_LENGTH_DATA_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_CONFIG_LENGTH_DATA_M) >> \
                     HTT_TX_MONITOR_CFG_CONFIG_LENGTH_DATA_S)
@@ -6118,6 +6223,138 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_S)); \
             } while (0)
 
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT_M       0x00000008
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT_S       3
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_MGMT_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_M       0x00000010
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_S       4
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_S)); \
+            } while (0
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_M       0x00000020
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_S       5
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT_M       0x00000040
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT_S       6
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_MGMT_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_M       0x00000080
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_S       7
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_S)); \
+            } while (0
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_M       0x00000100
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_S       8
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT_M         0x00000200
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT_S         9
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_MGMT_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_M         0x00000400
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_S         10
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_S)); \
+            } while (0
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_M         0x00000800
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_S         11
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT_M         0x00001000
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT_S         12
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_MGMT_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_M         0x00002000
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_S         13
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_S)); \
+            } while (0
+
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_M         0x00004000
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_S         14
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_M) >> \
+                    HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_S)
+#define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_S)); \
+            } while (0)
+
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_M            0xffffffff
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_S            0
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_GET(_var) \
@@ -6129,7 +6366,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_TX_FES_SETUP_WORD_MASK_M     0x0000ffff
+#define HTT_TX_MONITOR_CFG_TX_FES_SETUP_WORD_MASK_M     0x000000ff
 #define HTT_TX_MONITOR_CFG_TX_FES_SETUP_WORD_MASK_S     0
 #define HTT_TX_MONITOR_CFG_TX_FES_SETUP_WORD_MASK_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_TX_FES_SETUP_WORD_MASK_M) >> \
@@ -6140,8 +6377,8 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_FES_SETUP_WORD_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_M         0xffff0000
-#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_S         16
+#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_M         0x0000ff00
+#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_S         8
 #define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_M) >> \
                     HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_S)
@@ -6151,8 +6388,8 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_WORD_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_M         0x0000ffff
-#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_S         0
+#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_M         0x00ff0000
+#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_S         16
 #define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_M) >> \
                     HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_S)
@@ -6162,8 +6399,8 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_WORD_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_M         0xffff0000
-#define HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_S         16
+#define HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_M         0xff000000
+#define HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_S         24
 #define HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_M) >> \
                     HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_S)
@@ -6173,7 +6410,18 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_MSDU_START_WORD_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_TX_MPDU_START_WORD_MASK_M         0x0000ffff
+#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_M         0xffffffff
+#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_S         0
+#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_M) >> \
+                    HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_S)
+#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_TX_MPDU_START_WORD_MASK_M         0x000000ff
 #define HTT_TX_MONITOR_CFG_TX_MPDU_START_WORD_MASK_S         0
 #define HTT_TX_MONITOR_CFG_TX_MPDU_START_WORD_MASK_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_TX_MPDU_START_WORD_MASK_M) >> \
@@ -6184,19 +6432,8 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_MPDU_START_WORD_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_M         0xffff0000
-#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_S         16
-#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_GET(_var) \
-            (((_var) & HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_M) >> \
-                    HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_S)
-#define HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_SET(_var, _val) \
-            do { \
-                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK, _val); \
-                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_PCU_PPDU_SETUP_WORD_MASK_S)); \
-            } while (0)
-
-#define HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_M         0x0000ffff
-#define HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_S         0
+#define HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_M         0x0000ff00
+#define HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_S         8
 #define HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_GET(_var) \
             (((_var) & HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_M) >> \
                     HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_S)
@@ -6206,63 +6443,73 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_RXPCU_USER_SETUP_WORD_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK_M         0x00070000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK_S         16
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK_GET(_var) \
-            (((_var) & HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK_M) >> \
-                    HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK_S)
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK_SET(_var, _val) \
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_M 0x00070000
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_S 16
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_M) >> \
+                    HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_S)
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_SET(_var, _val) \
             do { \
-                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK, _val); \
-                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MASK_S)); \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_S)); \
             } while (0)
 
-#define HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_M           0x00380000
-#define HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_S           19
-#define HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_GET(_var) \
-            (((_var) & HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_M) >> \
-                    HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_S)
-#define HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_SET(_var, _val) \
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT_M                  0x00080000
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT_S                  19
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT_M) >> \
+                    HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT_S)
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT_SET(_var, _val) \
             do { \
-                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK, _val); \
-                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_ENABLE_MSDU_OR_MPDU_LOGGING_MASK_S)); \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_DMA_MPDU_MGMT_S)); \
             } while (0)
 
-/*
- * pkt_type_config_length
- */
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_MGMT_M 0x00000001
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_MGMT_S 0
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL_M                  0x00100000
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL_S                  20
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL_M) >> \
+                    HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL_S)
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_DMA_MPDU_CTRL_S)); \
+            } while (0)
 
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_CTRL_M 0x00000002
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_CTRL_S 1
-
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_DATA_M 0x00000004
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_CONFIG_LENGTH_DATA_S 2
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_M                  0x00200000
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_S                  21
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_M) >> \
+                    HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_S)
+#define HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_DMA_MPDU_DATA, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_S)); \
+            } while (0)
 
 /*
  * pkt_type_enable_flags
  */
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_MGMT_M 0x00010000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_MGMT_S 16
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_MGMT_M 0x00000001
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_MGMT_S 0
 
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_CTRL_M 0x00020000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_CTRL_S 17
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_CTRL_M 0x00000002
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_CTRL_S 1
 
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_DATA_M 0x00040000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_DATA_S 18
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_DATA_M 0x00000004
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_FLAGS_DATA_S 2
 
 /*
- * pkt_type_msdu_or_mpdu_logging
- * */
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MGMT_M 0x00010000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_MGMT_S 16
+ * PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING
+ */
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MGMT_M 0x00010000
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_MGMT_S 16
 
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_CTRL_M 0x00020000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_CTRL_S 17
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_CTRL_M 0x00020000
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_CTRL_S 17
 
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_DATA_M 0x00040000
-#define HTT_TX_MONITOR_CFG_PKT_TYPE_MSDU_OR_MPDU_LOGGING_DATA_S 18
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_DATA_M 0x00040000
+#define HTT_TX_MONITOR_CFG_PKT_TYPE_ENABLE_MSDU_OR_MPDU_LOGGING_DATA_S 18
 
 #define HTT_TX_MONITOR_CFG_PKT_TYPE_SET(word, httsym, value) \
             do { \
@@ -6272,7 +6519,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
 #define HTT_TX_MONITOR_CFG_PKT_TYPE_GET(word, httsym) \
             (((word) & httsym##_M) >> httsym##_S)
 
-/* mode -> CONFIG_LENGTH, ENABLE_FLAGS, MSDU_OR_MPDU_LOGGING
+/* mode -> ENABLE_FLAGS, ENABLE_MSDU_OR_MPDU_LOGGING
  * type -> MGMT, CTRL, DATA*/
 
 #define htt_tx_ring_pkt_type_set( \
@@ -6488,11 +6735,11 @@ PREPACK struct htt_tx_monitor_cfg_t {
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN1_MACTX_USER_DESC_PER_USER_M 0x20000000
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN1_MACTX_USER_DESC_PER_USER_S         29
 
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_L_SIG_A_M              0x40000000
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_L_SIG_A_S                      30
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN1_L_SIG_A_M              0x40000000
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN1_L_SIG_A_S                      30
 
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_L_SIG_B_M              0x80000000
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_L_SIG_B_S                      31
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN1_L_SIG_B_M              0x80000000
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN1_L_SIG_B_S                      31
 
 #define HTT_TX_MONITOR_TLV_FILTER_MASK_IN1_SET(word, httsym, enable) \
             do { \
@@ -6592,20 +6839,20 @@ PREPACK struct htt_tx_monitor_cfg_t {
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TQM_ACKED_1K_MPDU_M    0x04000000
 #define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TQM_ACKED_1K_MPDU_S            26
 
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TXPCU_BUFFER_STATUS_M  0x08000000
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TXPCU_BUFFER_STATUS_S          27
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TXPCU_BUFFER_STATUS_M  0x08000000
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TXPCU_BUFFER_STATUS_S          27
 
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TXPCU_USER_BUFFER_STATUS_M 0x10000000
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TXPCU_USER_BUFFER_STATUS_S         28
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TXPCU_USER_BUFFER_STATUS_M 0x10000000
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TXPCU_USER_BUFFER_STATUS_S         28
 
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TXDMA_STOP_REQUEST_M   0x20000000
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TXDMA_STOP_REQUEST_S           29
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TXDMA_STOP_REQUEST_M   0x20000000
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TXDMA_STOP_REQUEST_S           29
 
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_EXPECTED_RESPONSE_M    0x40000000
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_EXPECTED_RESPONSE_S            30
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_EXPECTED_RESPONSE_M    0x40000000
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_EXPECTED_RESPONSE_S            30
 
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TX_MPDU_COUNT_TRANSFER_END_M 0x80000000
-#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN3_TX_MPDU_COUNT_TRANSFER_END_S         31
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TX_MPDU_COUNT_TRANSFER_END_M 0x80000000
+#define HTT_TX_MONITOR_CFG_TLV_FILTER_MASK_IN2_TX_MPDU_COUNT_TRANSFER_END_S         31
 
 #define HTT_TX_MONITOR_TLV_FILTER_MASK_IN2_SET(word, httsym, enable) \
             do { \
