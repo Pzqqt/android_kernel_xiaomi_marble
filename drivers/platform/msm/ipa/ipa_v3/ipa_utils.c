@@ -9821,12 +9821,21 @@ retry_alloc:
 		WARN_ON(1);
 		if (atomic_dec_return(&comp->cnt) == 0)
 			kfree(comp);
+		if (cmd.base) {
+			dma_free_coherent(ipa3_ctx->pdev, cmd.size,
+				cmd.base, cmd.phys_base);
+		}
 		return -ETIME;
 	}
 
 	IPADBG("TAG response arrived!\n");
 	if (atomic_dec_return(&comp->cnt) == 0)
 		kfree(comp);
+
+	if (cmd.base) {
+		dma_free_coherent(ipa3_ctx->pdev, cmd.size,
+			cmd.base, cmd.phys_base);
+	}
 
 	/*
 	 * sleep for short period to ensure IPA wrote all packets to
@@ -9855,7 +9864,7 @@ fail_free_desc:
 			tag_desc[i].callback(tag_desc[i].user1,
 				tag_desc[i].user2);
 	if (cmd.base) {
-		dma_free_coherent(ipa3_ctx->uc_pdev, cmd.size,
+		dma_free_coherent(ipa3_ctx->pdev, cmd.size,
 			cmd.base, cmd.phys_base);
 	}
 fail_free_tag_desc:
