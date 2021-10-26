@@ -129,7 +129,7 @@ static void mmrm_free_nom_clk_src_table(
 static int mmrm_load_nom_clk_src_table(
 	struct mmrm_clk_platform_resources *cres)
 {
-	int rc = 0, num_clk_src = 0, c = 0, size_clk_src = 0, entry_offset = 4;
+	int rc = 0, num_clk_src = 0, c = 0, size_clk_src = 0, entry_offset = 5;
 
 	struct platform_device *pdev = cres->pdev;
 	struct nom_clk_src_set *clk_srcs = &cres->nom_clk_set;
@@ -168,6 +168,9 @@ static int mmrm_load_nom_clk_src_table(
 		of_property_read_u32_index(pdev->dev.of_node,
 			"mmrm-client-info", (c*entry_offset+3),
 			&ci->nom_leak_pwr);
+		of_property_read_u32_index(pdev->dev.of_node,
+			"mmrm-client-info", (c*entry_offset+4),
+			&ci->num_hw_block);
 	}
 
 	/* print corner tables */

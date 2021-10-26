@@ -788,32 +788,6 @@ err_peak_overshoot:
 	return rc;
 }
 
-static bool mmrm_sw_is_valid_num_hw_block(struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
-	struct mmrm_client_data *client_data)
-{
-	bool rc = false;
-	u32 num_hw_blocks = client_data->num_hw_blocks;
-
-	if (num_hw_blocks == 1) {
-		rc = true;
-	} else if (tbl_entry->clk_src_id == 0x10025) { // CAM_CC_IFE_CSID_CLK_SRC
-		if (num_hw_blocks > 1 && num_hw_blocks <= 3)
-			rc = true;
-	} else if ((tbl_entry->clk_src_id == 0x10040) || // CAM_CC_IFE_LITE_CLK_SRC 
-		 (tbl_entry->clk_src_id == 0x10043)) { // CAM_CC_IFE_LITE_CSID_CLK_SRC
-		if (num_hw_blocks > 1 && num_hw_blocks <= 5)
-			rc = true;
-	} else if (tbl_entry->clk_src_id == 0x1004B) { // CAM_CC_JPEG_CLK_SRC
-		if (num_hw_blocks > 1 && num_hw_blocks <= 2)
-			rc = true;
-	} else if (tbl_entry->clk_src_id == 0x10017) { // CAM_CC_CPHY_RX_CLK_SRC
-		if (num_hw_blocks > 1 && num_hw_blocks <= 9)
-			rc = true;
-	}
-
-	return rc;
-}
-
 static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	struct mmrm_client *client,
 	struct mmrm_client_data *client_data,
@@ -896,8 +870,8 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 			rc = -EINVAL;
 			goto err_invalid_clk_val;
 		}
-
-		if (!mmrm_sw_is_valid_num_hw_block(tbl_entry, client_data)) {
+		if (!((client_data->num_hw_blocks >= 1) &&
+			   (client_data->num_hw_blocks <= tbl_entry->max_num_hw_blocks))) {
 			d_mpr_e("%s: csid(0x%x) num_hw_block:%d\n",
 				__func__, tbl_entry->clk_src_id, client_data->num_hw_blocks);
 			rc = -EINVAL;
@@ -1080,12 +1054,14 @@ static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 			nom_tbl_entry->nom_dyn_pwr;
 		tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM] =
 			nom_tbl_entry->nom_leak_pwr;
+		tbl_entry->max_num_hw_blocks = nom_tbl_entry->num_hw_block;
 
-		d_mpr_h("%s: updating csid(0x%x) dyn_pwr(%d) leak_pwr(%d)\n",
+		d_mpr_h("%s: updating csid(0x%x) dyn_pwr(%d) leak_pwr(%d) num(%d)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM],
-			tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]);
+			tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM],
+			tbl_entry->num_hw_blocks);
 	}
 
 	return rc;

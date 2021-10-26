@@ -333,6 +333,29 @@ static ssize_t dump_enabled_client_info_show(struct device *dev,
 	return rc;
 }
 
+static ssize_t dump_clk_res_info_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	int    i, len;
+	struct mmrm_clk_platform_resources *cres = &drv_data->clk_res;
+	struct nom_clk_src_set *clk_set = &cres->nom_clk_set;
+	struct nom_clk_src_info *pclk;
+	int left_spaces = MMRM_SYSFS_ENTRY_MAX_LEN;
+
+	for (i=0, pclk=clk_set->clk_src_tbl; i < clk_set->count && left_spaces > 1; i++, pclk++) {
+		len = scnprintf(buf, left_spaces, "%d  %d   %d  %d  %d\n",
+			pclk->domain,
+			pclk->clk_src_id,
+			pclk->nom_dyn_pwr,
+			pclk->nom_leak_pwr,
+			pclk->num_hw_block);
+		left_spaces -= len;
+		buf += len;
+	}
+
+	return MMRM_SYSFS_ENTRY_MAX_LEN - left_spaces;
+}
+
 static DEVICE_ATTR(debug, 0644,
 		mmrm_sysfs_debug_get,
 		mmrm_sysfs_debug_set);
@@ -346,6 +369,7 @@ static DEVICE_ATTR(allow_multiple_register, 0644,
 		mmrm_sysfs_allow_multiple_set);
 
 static DEVICE_ATTR_RO(dump_enabled_client_info);
+static DEVICE_ATTR_RO(dump_clk_res_info);
 
 
 static struct attribute *mmrm_fs_attrs[] = {
@@ -353,6 +377,7 @@ static struct attribute *mmrm_fs_attrs[] = {
 		&dev_attr_enable_throttle_feature.attr,
 		&dev_attr_allow_multiple_register.attr,
 		&dev_attr_dump_enabled_client_info.attr,
+		&dev_attr_dump_clk_res_info.attr,
 		NULL,
 };
 
