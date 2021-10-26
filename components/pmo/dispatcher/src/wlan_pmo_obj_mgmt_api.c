@@ -227,6 +227,26 @@ out:
 	return status;
 }
 
+#ifdef FEATURE_WLAN_DYNAMIC_ARP_NS_OFFLOAD
+static inline void
+pmo_vdev_dynamic_arp_ns_offload_init(struct pmo_vdev_priv_obj *vdev_ctx)
+{
+	qdf_runtime_lock_init(&vdev_ctx->dyn_arp_ns_offload_rt_lock);
+}
+
+static inline void
+pmo_vdev_dynamic_arp_ns_offload_deinit(struct pmo_vdev_priv_obj *vdev_ctx)
+{
+	qdf_runtime_lock_deinit(&vdev_ctx->dyn_arp_ns_offload_rt_lock);
+}
+#else
+static inline void
+pmo_vdev_dynamic_arp_ns_offload_init(struct pmo_vdev_priv_obj *vdev_ctx) {}
+
+static inline void
+pmo_vdev_dynamic_arp_ns_offload_deinit(struct pmo_vdev_priv_obj *vdev_ctx) {}
+#endif
+
 QDF_STATUS pmo_vdev_object_created_notification(
 		struct wlan_objmgr_vdev *vdev, void *arg)
 {
@@ -263,6 +283,7 @@ QDF_STATUS pmo_vdev_object_created_notification(
 		psoc_ctx->psoc_cfg.ptrn_match_enable_all_vdev;
 	vdev_ctx->pmo_psoc_ctx = psoc_ctx;
 	qdf_atomic_init(&vdev_ctx->gtk_err_enable);
+	pmo_vdev_dynamic_arp_ns_offload_init(vdev_ctx);
 
 out:
 	pmo_exit();
@@ -308,6 +329,7 @@ QDF_STATUS pmo_vdev_object_destroyed_notification(
 		pmo_err("Failed to detach vdev_ctx with vdev");
 
 	qdf_spinlock_destroy(&vdev_ctx->pmo_vdev_lock);
+	pmo_vdev_dynamic_arp_ns_offload_deinit(vdev_ctx);
 	qdf_mem_free(vdev_ctx);
 
 	return status;

@@ -179,6 +179,112 @@ bool pmo_core_vdev_get_restore_dtim(struct wlan_objmgr_vdev *vdev)
 	return value;
 }
 
+#ifdef FEATURE_WLAN_DYNAMIC_ARP_NS_OFFLOAD
+/**
+ * pmo_core_dynamic_arp_ns_offload_enable() - Enable vdev arp/ns offload
+ * @vdev: objmgr vdev handle
+ *
+ * Return: QDF_STATUS_E_ALREADY if arp/ns offload already enable
+ */
+static inline QDF_STATUS
+pmo_core_dynamic_arp_ns_offload_enable(struct wlan_objmgr_vdev *vdev)
+{
+	bool value;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	value = vdev_ctx->dyn_arp_ns_offload_disable;
+	if (!value)
+		status = QDF_STATUS_E_ALREADY;
+	else
+		vdev_ctx->dyn_arp_ns_offload_disable = false;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return status;
+}
+
+/**
+ * pmo_core_dynamic_arp_ns_offload_disable() - Disable vdev arp/ns offload
+ * @vdev: objmgr vdev handle
+ *
+ * Return: QDF_STATUS_E_ALREADY if arp/ns offload already disable
+ */
+static inline QDF_STATUS
+pmo_core_dynamic_arp_ns_offload_disable(struct wlan_objmgr_vdev *vdev)
+{
+	bool value;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	value = vdev_ctx->dyn_arp_ns_offload_disable;
+	if (value)
+		status = QDF_STATUS_E_ALREADY;
+	else
+		vdev_ctx->dyn_arp_ns_offload_disable = true;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return status;
+}
+
+/**
+ * pmo_core_get_dynamic_arp_ns_offload_disable() - Get arp/ns offload state
+ * @vdev: objmgr vdev handle
+ *
+ * Return: true if vdev arp/ns offload is disable
+ */
+static inline bool
+pmo_core_get_dynamic_arp_ns_offload_disable(struct wlan_objmgr_vdev *vdev)
+{
+	bool value;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	value = vdev_ctx->dyn_arp_ns_offload_disable;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return value;
+}
+
+/**
+ * pmo_core_dynamic_arp_ns_offload_runtime_prevent() - Prevent runtime suspend
+ * @vdev: objmgr vdev handle
+ *
+ * API to prevent runtime suspend happen when arp/ns offload is disable
+ *
+ * Return: None
+ */
+static inline void
+pmo_core_dynamic_arp_ns_offload_runtime_prevent(struct wlan_objmgr_vdev *vdev)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_runtime_pm_prevent_suspend(&vdev_ctx->dyn_arp_ns_offload_rt_lock);
+}
+
+/**
+ * pmo_core_dynamic_arp_ns_offload_runtime_allow() - Allow runtime suspend
+ * @vdev: objmgr vdev handle
+ *
+ * API to allow runtime suspend happen when arp/ns offload is enable
+ *
+ * Return: None
+ */
+static inline void
+pmo_core_dynamic_arp_ns_offload_runtime_allow(struct wlan_objmgr_vdev *vdev)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_runtime_pm_allow_suspend(&vdev_ctx->dyn_arp_ns_offload_rt_lock);
+}
+#endif
+
 /**
  * pmo_core_update_power_save_mode() - update power save mode
  * @vdev: objmgr vdev handle
