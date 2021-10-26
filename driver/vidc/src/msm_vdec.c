@@ -741,6 +741,14 @@ static int msm_vdec_set_input_properties(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
+	rc = msm_vidc_set_stage(inst, STAGE);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_set_pipe(inst, PIPE);
+	if (rc)
+		return rc;
+
 	rc = msm_vdec_set_output_order(inst, INPUT_PORT);
 	if (rc)
 		return rc;
@@ -778,14 +786,6 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 	}
 
 	rc = msm_vdec_set_colorformat(inst);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_set_stage(inst, STAGE);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_set_pipe(inst, PIPE);
 	if (rc)
 		return rc;
 
@@ -1368,6 +1368,14 @@ int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst)
 		return rc;
 
 	rc = msm_vdec_queue_input_internal_buffers(inst);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_set_stage(inst, STAGE);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_set_pipe(inst, PIPE);
 	if (rc)
 		return rc;
 
@@ -2121,14 +2129,6 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 
 		/* print final buffer counts & size details */
 		msm_vidc_print_buffer_info(inst);
-
-		rc = msm_vidc_set_stage(inst, STAGE);
-		if (rc)
-			return rc;
-
-		rc = msm_vidc_set_pipe(inst, PIPE);
-		if (rc)
-			return rc;
 
 		rc = msm_vidc_set_seq_change_at_sync_frame(inst);
 		if (rc)

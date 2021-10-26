@@ -961,11 +961,13 @@ int msm_vidc_close(void *instance)
 	i_vpr_h(inst, "%s()\n", __func__);
 	inst_lock(inst, __func__);
 	cancel_response_work(inst);
-	cancel_stats_work(inst);
+	/* print final stats */
+	msm_vidc_print_stats(inst);
 	msm_vidc_session_close(inst);
 	msm_vidc_remove_session(inst);
 	msm_vidc_destroy_buffers(inst);
 	inst_unlock(inst, __func__);
+	cancel_stats_work_sync(inst);
 	msm_vidc_show_stats(inst);
 	put_inst(inst);
 	msm_vidc_schedule_core_deinit(core);
