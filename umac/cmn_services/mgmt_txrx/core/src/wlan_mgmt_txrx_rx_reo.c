@@ -719,6 +719,123 @@ mgmt_rx_reo_list_display(struct mgmt_rx_reo_list *reo_list,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+/**
+ * mgmt_rx_reo_log_egress_frame_before_delivery() - Log the information about a
+ * frame exiting the reorder module. Logging is done before attempting the frame
+ * delivery to upper layers.
+ * @reo_ctx: management rx reorder context
+ * @entry: Pointer to reorder list entry
+ * @release_reason: Reason to release the frame to upper layers
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+mgmt_rx_reo_log_egress_frame_before_delivery(
+					struct mgmt_rx_reo_context *reo_ctx,
+					struct mgmt_rx_reo_list_entry *entry,
+					uint8_t release_reason)
+{
+	struct reo_egress_debug_info *egress_frame_debug_info;
+	struct reo_egress_debug_frame_info *cur_frame_debug_info;
+
+	if (!reo_ctx || !entry)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	egress_frame_debug_info = &reo_ctx->egress_frame_debug_info;
+
+	cur_frame_debug_info = &egress_frame_debug_info->debug_info
+			[egress_frame_debug_info->next_index];
+
+	cur_frame_debug_info->link_id =
+				mgmt_rx_reo_get_link_id(entry->rx_params);
+	cur_frame_debug_info->mgmt_pkt_ctr =
+				mgmt_rx_reo_get_pkt_counter(entry->rx_params);
+	cur_frame_debug_info->global_timestamp =
+				mgmt_rx_reo_get_global_ts(entry->rx_params);
+	cur_frame_debug_info->wait_count = entry->wait_count;
+	cur_frame_debug_info->insertion_ts = entry->insertion_ts;
+	cur_frame_debug_info->ingress_timestamp = entry->ingress_timestamp;
+	cur_frame_debug_info->egress_begin_timestamp = qdf_get_log_timestamp();
+	cur_frame_debug_info->release_reason = release_reason;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * mgmt_rx_reo_log_egress_frame_after_delivery() - Log the information about a
+ * frame exiting the reorder module. Logging is done after attempting the frame
+ * delivery to upper layer.
+ * @reo_ctx: management rx reorder context
+ * @is_delivered: Flag to indicate whether the frame is delivered to upper
+ * layers
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+mgmt_rx_reo_log_egress_frame_after_delivery(
+					struct mgmt_rx_reo_context *reo_ctx,
+					bool is_delivered)
+{
+	struct reo_egress_debug_info *egress_frame_debug_info;
+	struct reo_egress_debug_frame_info *cur_frame_debug_info;
+
+	if (!reo_ctx)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	egress_frame_debug_info = &reo_ctx->egress_frame_debug_info;
+
+	cur_frame_debug_info = &egress_frame_debug_info->debug_info
+			[egress_frame_debug_info->next_index];
+
+	cur_frame_debug_info->is_delivered = is_delivered;
+	cur_frame_debug_info->egress_end_timestamp = qdf_get_log_timestamp();
+
+	egress_frame_debug_info->next_index++;
+	egress_frame_debug_info->next_index %=
+				MGMT_RX_REO_EGRESS_FRAME_DEBUG_ENTRIES_MAX;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+/**
+ * mgmt_rx_reo_log_egress_frame_before_delivery() - Log the information about a
+ * frame exiting the reorder module. Logging is done before attempting the frame
+ * delivery to upper layers.
+ * @reo_ctx: management rx reorder context
+ * @entry: Pointer to reorder list entry
+ * @release_reason: Reason to release the frame to upper layers
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+mgmt_rx_reo_log_egress_frame_before_delivery(
+					struct mgmt_rx_reo_context *reo_ctx,
+					struct mgmt_rx_reo_list_entry *entry,
+					uint8_t release_reason)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * mgmt_rx_reo_log_egress_frame_after_delivery() - Log the information about a
+ * frame exiting the reorder module. Logging is done after attempting the frame
+ * delivery to upper layer.
+ * @reo_ctx: management rx reorder context
+ * @is_delivered: Flag to indicate whether the frame is delivered to upper
+ * layers
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+mgmt_rx_reo_log_egress_frame_after_delivery(
+					struct mgmt_rx_reo_context *reo_ctx,
+					bool is_delivered)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT */
+
 /**
  * mgmt_rx_reo_list_entry_get_release_reason() - Helper API to get the reason
  * for releasing the reorder list entry to upper layer.
@@ -782,9 +899,15 @@ mgmt_rx_reo_list_entry_send_up(const struct mgmt_rx_reo_list *reo_list,
 	struct wlan_objmgr_pdev *pdev;
 	uint32_t entry_global_ts;
 	struct mgmt_rx_reo_global_ts_info *ts_last_delivered_frame;
+	QDF_STATUS status;
+	struct mgmt_rx_reo_context *reo_context;
+	bool is_delivered = false;
 
 	qdf_assert_always(reo_list);
 	qdf_assert_always(entry);
+
+	reo_context = mgmt_rx_reo_get_context_from_reo_list(reo_list);
+	qdf_assert_always(reo_context);
 
 	link_id = mgmt_rx_reo_get_link_id(entry->rx_params);
 	entry_global_ts = mgmt_rx_reo_get_global_ts(entry->rx_params);
@@ -811,6 +934,7 @@ mgmt_rx_reo_list_entry_send_up(const struct mgmt_rx_reo_list *reo_list,
 		    entry_global_ts, ts_last_delivered_frame->global_ts)) {
 		/* TODO Process current management frame here */
 
+		is_delivered = true;
 		ts_last_delivered_frame->global_ts = entry_global_ts;
 		ts_last_delivered_frame->valid = true;
 	} else {
@@ -820,6 +944,11 @@ mgmt_rx_reo_list_entry_send_up(const struct mgmt_rx_reo_list *reo_list,
 		 */
 		qdf_nbuf_free(entry->nbuf);
 	}
+
+	status = mgmt_rx_reo_log_egress_frame(reo_context, entry,
+					      release_reason, is_delivered);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	free_mgmt_rx_event_params(entry->rx_params);
 
@@ -1234,6 +1363,7 @@ mgmt_rx_reo_update_list(struct mgmt_rx_reo_list *reo_list,
 		}
 
 		new_entry->insertion_ts = qdf_get_log_timestamp();
+		new_entry->ingress_timestamp = frame_desc->ingress_timestamp;
 
 		status = qdf_list_insert_before(&reo_list->list,
 						&new_entry->node,
@@ -1404,7 +1534,7 @@ mgmt_rx_reo_log_ingress_frame(struct mgmt_rx_reo_context *reo_ctx,
 				mgmt_rx_reo_get_global_ts(desc->rx_params);
 	cur_frame_debug_info->type = desc->type;
 	cur_frame_debug_info->wait_count = desc->wait_count;
-	cur_frame_debug_info->ingress_timestamp = qdf_get_log_timestamp();
+	cur_frame_debug_info->ingress_timestamp = desc->ingress_timestamp;
 
 	ingress_frame_debug_info->next_index++;
 	ingress_frame_debug_info->next_index %=
@@ -2072,6 +2202,7 @@ mgmt_rx_reo_sim_frame_handler_host(void *arg)
 
 	frame_descriptor->nbuf = NULL;
 	frame_descriptor->rx_params = rx_params;
+	frame_descriptor->ingress_timestamp = qdf_get_log_timestamp();
 
 	if (is_error_frame)
 		frame_type = MGMT_RX_REO_FRAME_DESC_ERROR_FRAME;

@@ -188,6 +188,8 @@ struct mgmt_rx_reo_wait_count {
  * @wait_count: Wait counts for the frame
  * @insertion_ts: Host time stamp when this entry is inserted to
  * the list.
+ * @ingress_timestamp: Host time stamp when this frame has arrived reorder
+ * module
  * @status: Status for this entry
  */
 struct mgmt_rx_reo_list_entry {
@@ -196,6 +198,7 @@ struct mgmt_rx_reo_list_entry {
 	struct mgmt_rx_event_params *rx_params;
 	struct mgmt_rx_reo_wait_count wait_count;
 	uint64_t insertion_ts;
+	uint64_t ingress_timestamp;
 	uint32_t status;
 };
 
@@ -356,7 +359,7 @@ struct reo_ingress_debug_frame_info {
 };
 
 /**
- * struct reo_egress_frame_debug_info - Debug information about a frame
+ * struct reo_egress_debug_frame_info - Debug information about a frame
  * leaving the reorder module
  * @is_delivered: Indicates whether the frame is delivered to upper layers
  * @link_id: link id
@@ -372,7 +375,7 @@ struct reo_ingress_debug_frame_info {
  * @wait_count: Wait count calculated for the current frame
  * @release_reason: Reason for delivering the frame to upper layers
  */
-struct reo_egress_frame_debug_info {
+struct reo_egress_debug_frame_info {
 	bool is_delivered;
 	uint8_t link_id;
 	uint16_t mgmt_pkt_ctr;
@@ -383,7 +386,6 @@ struct reo_egress_frame_debug_info {
 	uint64_t egress_end_timestamp;
 	struct mgmt_rx_reo_wait_count wait_count;
 	uint8_t release_reason;
-
 };
 
 /**
@@ -399,12 +401,12 @@ struct reo_ingress_debug_info {
 };
 
 /**
- * struct mgmt_rx_reo_egress_frame_debug_info - Circular array to store the
+ * struct reo_egress_debug_info - Circular array to store the
  * debug information about the frames leaving the reorder module.
  * @debug_info: Circular array to store the debug info
  * @next_index: The index at which information about next frame will be logged
  */
-struct mgmt_rx_reo_egress_frame_debug_info {
+struct reo_egress_debug_info {
 	struct reo_egress_frame_debug_info
 			debug_info[MGMT_RX_REO_EGRESS_FRAME_DEBUG_ENTRIES_MAX];
 	uint32_t next_index;
@@ -446,7 +448,7 @@ struct mgmt_rx_reo_context {
 #endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
 #ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
 	struct  reo_ingress_debug_info ingress_frame_debug_info;
-	struct  mgmt_rx_reo_egress_frame_debug_info egress_frame_debug_info;
+	struct  reo_egress_debug_info egress_frame_debug_info;
 #endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT */
 };
 
@@ -457,12 +459,15 @@ struct mgmt_rx_reo_context {
  * @nbuf: nbuf corresponding to this frame
  * @rx_params: Management rx event parameters
  * @wait_count: Wait counts for the frame
+ * @ingress_timestamp: Host time stamp when the frames enters the reorder
+ * algorithm
  */
 struct mgmt_rx_reo_frame_descriptor {
 	enum mgmt_rx_reo_frame_descriptor_type type;
 	qdf_nbuf_t nbuf;
 	struct mgmt_rx_event_params *rx_params;
 	struct mgmt_rx_reo_wait_count wait_count;
+	uint64_t ingress_timestamp;
 };
 
 /**
