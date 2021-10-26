@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2016, 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, 2019, 2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/regmap.h>
@@ -400,4 +400,5 @@ struct regmap_config wsa883x_regmap_config = {
 	.reg_format_endian = REGMAP_ENDIAN_NATIVE,
 	.val_format_endian = REGMAP_ENDIAN_NATIVE,
 	.can_multi_write = true,
+	.use_single_read = true,
 };
