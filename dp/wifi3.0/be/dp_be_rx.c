@@ -20,7 +20,6 @@
 #include "hal_hw_headers.h"
 #include "dp_types.h"
 #include "dp_rx.h"
-#include "dp_tx.h"
 #include "dp_be_rx.h"
 #include "dp_peer.h"
 #include "hal_rx.h"
@@ -1057,16 +1056,62 @@ uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
 #endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
-#if defined(QCA_WIFI_WCN7850) || !defined(INTRA_BSS_FW_OFFLOAD)
-bool dp_rx_intrabss_fwd_be(struct dp_soc *soc, struct dp_peer *ta_peer,
-			   uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
-			   struct hal_rx_msdu_metadata msdu_metadata)
+#ifdef INTRA_BSS_FW_OFFLOAD
+static bool
+dp_rx_intrabss_ucast_check_be(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			      struct dp_peer *ta_peer,
+			      struct hal_rx_msdu_metadata *msdu_metadata)
 {
-	/* Hamilton V1 uses Lithium path */
-	return dp_rx_intrabss_fwd(soc, ta_peer, rx_tlv_hdr, nbuf,
-				  msdu_metadata);
+	return qdf_nbuf_is_intra_bss(nbuf);
 }
 #else
+static bool
+dp_rx_intrabss_ucast_check_be(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			      struct dp_peer *ta_peer,
+			      struct hal_rx_msdu_metadata *msdu_metadata)
+{
+	uint16_t da_peer_id;
+	struct dp_peer *da_peer;
+
+	if (!(qdf_nbuf_is_da_valid(nbuf) || qdf_nbuf_is_da_mcbc(nbuf)))
+		return false;
+
+	/* The field da_idx here holds DA peer id
+	 */
+	da_peer_id = msdu_metadata->da_idx;
+
+	/* TA peer cannot be same as peer(DA) on which AST is present
+	 * this indicates a change in topology and that AST entries
+	 * are yet to be updated.
+	 */
+	if ((da_peer_id == ta_peer->peer_id) ||
+	    (da_peer_id == HTT_INVALID_PEER))
+		return false;
+
+	da_peer = dp_peer_get_ref_by_id(soc, da_peer_id,
+					DP_MOD_ID_RX);
+	if (!da_peer)
+		return false;
+
+	/* If the source or destination peer in the isolation
+	 * list then dont forward instead push to bridge stack.
+	 */
+	if (dp_get_peer_isolation(ta_peer) ||
+	    dp_get_peer_isolation(da_peer) ||
+	    (da_peer->vdev->vdev_id != ta_peer->vdev->vdev_id)) {
+		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+		return false;
+	}
+
+	if (da_peer->bss_peer) {
+		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+		return false;
+	}
+
+	dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+	return true;
+}
+#endif
 /*
  * dp_rx_intrabss_fwd_be() - API for intrabss fwd. For EAPOL
  *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
@@ -1082,8 +1127,6 @@ bool dp_rx_intrabss_fwd_be(struct dp_soc *soc, struct dp_peer *ta_peer,
 			   uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
 			   struct hal_rx_msdu_metadata msdu_metadata)
 {
-	uint16_t len;
-	qdf_nbuf_t nbuf_copy;
 	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
 	uint8_t ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
 	struct cdp_tid_rx_stats *tid_stats = &ta_peer->vdev->pdev->stats.
@@ -1097,80 +1140,14 @@ bool dp_rx_intrabss_fwd_be(struct dp_soc *soc, struct dp_peer *ta_peer,
 	 * like igmpsnoop decide whether to forward or not with
 	 * Mcast enhancement.
 	 */
-	if (qdf_nbuf_is_da_mcbc(nbuf) && !ta_peer->bss_peer) {
-		if (dp_rx_intrabss_eapol_drop_check(soc, ta_peer, rx_tlv_hdr,
-						    nbuf))
-			return true;
+	if (qdf_nbuf_is_da_mcbc(nbuf) && !ta_peer->bss_peer)
+		return dp_rx_intrabss_mcbc_fwd(soc, ta_peer, rx_tlv_hdr,
+					       nbuf, tid_stats);
 
-		if (!dp_rx_check_ndi_mdns_fwding(ta_peer, nbuf))
-			return false;
+	if (dp_rx_intrabss_ucast_check_be(soc, nbuf, ta_peer, &msdu_metadata))
+		return dp_rx_intrabss_ucast_fwd(soc, ta_peer, rx_tlv_hdr,
+						nbuf, tid_stats);
 
-		/* If the source peer in the isolation list
-		 * then dont forward instead push to bridge stack
-		 */
-		if (dp_get_peer_isolation(ta_peer))
-			return false;
-
-		nbuf_copy = qdf_nbuf_copy(nbuf);
-		if (!nbuf_copy)
-			return false;
-
-		len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
-		if (dp_tx_send((struct cdp_soc_t *)soc,
-			       ta_peer->vdev->vdev_id, nbuf_copy)) {
-			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);
-			tid_stats->fail_cnt[INTRABSS_DROP]++;
-			qdf_nbuf_free(nbuf_copy);
-		} else {
-			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1, len);
-			tid_stats->intrabss_cnt++;
-		}
-		return false;
-	}
-
-	if (qdf_nbuf_is_intra_bss(nbuf)) {
-		if (dp_rx_intrabss_eapol_drop_check(soc, ta_peer, rx_tlv_hdr,
-						    nbuf))
-			return true;
-
-		len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
-
-		/* linearize the nbuf just before we send to
-		 * dp_tx_send()
-		 */
-		if (qdf_unlikely(qdf_nbuf_is_frag(nbuf))) {
-			if (qdf_nbuf_linearize(nbuf) == -ENOMEM)
-				return false;
-
-			nbuf = qdf_nbuf_unshare(nbuf);
-			if (!nbuf) {
-				DP_STATS_INC_PKT(ta_peer,
-						 rx.intra_bss.fail, 1, len);
-				/* return true even though the pkt is
-				 * not forwarded. Basically skb_unshare
-				 * failed and we want to continue with
-				 * next nbuf.
-				 */
-				tid_stats->fail_cnt[INTRABSS_DROP]++;
-				return true;
-			}
-		}
-
-		if (!dp_tx_send((struct cdp_soc_t *)soc,
-				ta_peer->vdev->vdev_id, nbuf)) {
-			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1,
-					 len);
-		} else {
-			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1,
-					 len);
-			tid_stats->fail_cnt[INTRABSS_DROP]++;
-			return false;
-		}
-
-		return true;
-	}
 	return false;
 }
 #endif
-#endif
-

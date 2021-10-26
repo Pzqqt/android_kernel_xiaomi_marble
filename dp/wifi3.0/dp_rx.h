@@ -1079,24 +1079,6 @@ void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
 }
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
-/*
- * dp_rx_intrabss_fwd() - API for intrabss fwd. For EAPOL
- *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
- * @soc: core txrx main context
- * @ta_peer: source peer entry
- * @rx_tlv_hdr: start address of rx tlvs
- * @nbuf: nbuf that has to be intrabss forwarded
- * @msdu_metadata: msdu metadata
- *
- * Return: true if it is forwarded else false
- */
-
-bool dp_rx_intrabss_fwd(struct dp_soc *soc,
-			struct dp_peer *ta_peer,
-			uint8_t *rx_tlv_hdr,
-			qdf_nbuf_t nbuf,
-			struct hal_rx_msdu_metadata msdu_metadata);
-
 #ifdef DISABLE_EAPOL_INTRABSS_FWD
 #ifdef WLAN_FEATURE_11BE_MLO
 static inline bool dp_nbuf_dst_addr_is_mld_addr(struct dp_vdev *vdev,
@@ -1159,6 +1141,15 @@ bool dp_rx_intrabss_eapol_drop_check(struct dp_soc *soc,
 	return false;
 }
 #endif /* DISABLE_EAPOL_INTRABSS_FWD */
+
+bool dp_rx_intrabss_mcbc_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
+			     uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
+			     struct cdp_tid_rx_stats *tid_stats);
+
+bool dp_rx_intrabss_ucast_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
+			      uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
+			      struct cdp_tid_rx_stats *tid_stats);
+
 /**
  * dp_rx_defrag_concat() - Concatenate the fragments
  *
