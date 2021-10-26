@@ -81,6 +81,7 @@ tgt_mgmt_rx_reo_enter_algo_without_buffer(
 	desc.nbuf = NULL; /* No frame buffer */
 	desc.rx_params = &mgmt_rx_params;
 	desc.type = type;
+	desc.ingress_timestamp = qdf_get_log_timestamp();
 
 	/** If REO is not required for this descriptor,
 	 *  no need to proceed further
@@ -185,6 +186,7 @@ QDF_STATUS tgt_mgmt_rx_reo_frame_handler(
 	desc.type = MGMT_RX_REO_FRAME_DESC_HOST_CONSUMED_FRAME;
 	desc.nbuf = buf;
 	desc.rx_params = mgmt_rx_params;
+	desc.ingress_timestamp = qdf_get_log_timestamp();
 
 	/* If REO is not required for this frame, process it right away */
 	if (!is_mgmt_rx_reo_required(pdev, &desc)) {
