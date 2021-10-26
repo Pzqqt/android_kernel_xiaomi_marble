@@ -3992,13 +3992,7 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		break;
-#ifdef IPA_IOC_FLT_MEM_PERIPHERAL_SET_PRIO_HIGH
-	case IPA_IOC_FLT_MEM_PERIPHERAL_SET_PRIO_HIGH:
-		retval = ipa_flt_sram_set_client_prio_high((enum ipa_client_type) arg);
-		if (retval)
-			IPAERR("ipa_flt_sram_set_client_prio_high failed! retval=%d\n", retval);
-		break;
-#endif
+
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		return -ENOTTY;
@@ -4329,16 +4323,19 @@ static void ipa3_q6_avoid_holb(void)
 			 * setting HOLB on Q6 pipes, and from APPS perspective
 			 * they are not valid, therefore, the above function
 			 * will fail.
+			 * Also don't reset the HOLB timer to 0 for Q6 pipes.
 			 */
-			ipahal_write_reg_n_fields(
-				IPA_ENDP_INIT_HOL_BLOCK_TIMER_n,
-				ep_idx, &ep_holb);
+
+
+
 			ipahal_write_reg_n_fields(
 				IPA_ENDP_INIT_HOL_BLOCK_EN_n,
 				ep_idx, &ep_holb);
 
-			/* IPA4.5 issue requires HOLB_EN to be written twice */
-			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5)
+			/* For targets > IPA_4.0 issue requires HOLB_EN to
+			 * be written twice.
+			 */
+			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_0)
 				ipahal_write_reg_n_fields(
 					IPA_ENDP_INIT_HOL_BLOCK_EN_n,
 					ep_idx, &ep_holb);
@@ -7287,7 +7284,7 @@ void ipa3_notify_clients_registered(void)
 }
 EXPORT_SYMBOL(ipa3_notify_clients_registered);
 
-void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
+static void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
 {
 	struct ipa_smmu_cb_ctx *cb;
 	u64 rounddown_addr;
@@ -7303,20 +7300,13 @@ void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
 			IPAERR("iommu mapping failed for gsi_msi_addr\n");
 			ipa_assert();
 		}
-		ipa3_ctx->gsi_msi_clear_addr_io_mapped =
-			(u64)ioremap(ipa3_ctx->gsi_msi_clear_addr, 4);
-		ipa3_ctx->gsi_msi_addr_io_mapped =
-			(u64)ioremap(ipa3_ctx->gsi_msi_addr, 4);
 	} else {
-		iounmap((int *) ipa3_ctx->gsi_msi_clear_addr_io_mapped);
-		iounmap((int *) ipa3_ctx->gsi_msi_addr_io_mapped);
 		res = iommu_unmap(cb->iommu_domain, rounddown_addr, PAGE_SIZE);
-		ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
-		ipa3_ctx->gsi_msi_addr_io_mapped = 0;
 		if (res)
 			IPAERR("smmu unmap for gsi_msi_addr failed %d\n", res);
 	}
 }
+
 
 /**
  * ipa3_post_init() - Initialize the IPA Driver (Part II).
@@ -7349,11 +7339,9 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	struct gsi_per_props gsi_props;
 	struct ipa3_uc_hdlrs uc_hdlrs = { 0 };
 	struct ipa3_flt_tbl *flt_tbl;
-	struct ipa3_flt_tbl_nhash_lcl *lcl_tbl;
 	int i;
 	struct idr *idr;
 	bool reg = false;
-	enum ipa_ip_type ip;
 
 	if (ipa3_ctx == NULL) {
 		IPADBG("IPA driver haven't initialized\n");
@@ -7409,18 +7397,18 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		ipa3_ctx->smem_sz, ipa3_ctx->smem_restricted_bytes);
 
 	IPADBG("ip4_rt_hash=%u ip4_rt_nonhash=%u\n",
-		ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v4], ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v4]);
+		ipa3_ctx->ip4_rt_tbl_hash_lcl, ipa3_ctx->ip4_rt_tbl_nhash_lcl);
 
 	IPADBG("ip6_rt_hash=%u ip6_rt_nonhash=%u\n",
-		ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v6], ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v6]);
+		ipa3_ctx->ip6_rt_tbl_hash_lcl, ipa3_ctx->ip6_rt_tbl_nhash_lcl);
 
 	IPADBG("ip4_flt_hash=%u ip4_flt_nonhash=%u\n",
-		ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v4],
-		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v4]);
+		ipa3_ctx->ip4_flt_tbl_hash_lcl,
+		ipa3_ctx->ip4_flt_tbl_nhash_lcl);
 
 	IPADBG("ip6_flt_hash=%u ip6_flt_nonhash=%u\n",
-		ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v6],
-		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v6]);
+		ipa3_ctx->ip6_flt_tbl_hash_lcl,
+		ipa3_ctx->ip6_flt_tbl_nhash_lcl);
 
 	if (ipa3_ctx->smem_reqd_sz > ipa3_ctx->smem_sz) {
 		IPAERR("SW expect more core memory, needed %d, avail %d\n",
@@ -7487,43 +7475,51 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	idr = &(ipa3_ctx->flt_rule_ids[IPA_IP_v6]);
 	idr_init(idr);
 
-	INIT_LIST_HEAD(&ipa3_ctx->flt_tbl_nhash_lcl_list[IPA_IP_v4]);
-	INIT_LIST_HEAD(&ipa3_ctx->flt_tbl_nhash_lcl_list[IPA_IP_v6]);
-
 	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
 		if (!ipa_is_ep_support_flt(i))
 			continue;
 
-		for (ip = IPA_IP_v4; ip < IPA_IP_MAX; ip++) {
-			flt_tbl = &ipa3_ctx->flt_tbl[i][ip];
-			INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
-			flt_tbl->in_sys[IPA_RULE_HASHABLE] = !ipa3_ctx->flt_tbl_hash_lcl[ip];
+		flt_tbl = &ipa3_ctx->flt_tbl[i][IPA_IP_v4];
+		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
+		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
+			!ipa3_ctx->ip4_flt_tbl_hash_lcl;
 
-			/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
-				all other EPs always place the table in DDR */
-			if (ipa3_ctx->flt_tbl_nhash_lcl[ip] &&
-			    (IPA_CLIENT_IS_ETH_PROD(i) ||
-			     ((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
-			      (i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))) {
-				flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = false;
-				lcl_tbl = kcalloc(1, sizeof(struct ipa3_flt_tbl_nhash_lcl),
-						  GFP_KERNEL);
-				WARN_ON(lcl_tbl);
-				if (likely(lcl_tbl)) {
-					lcl_tbl->tbl = flt_tbl;
-					/* Add to the head of the list, to be pulled first */
-					list_add(&lcl_tbl->link,
-						 &ipa3_ctx->flt_tbl_nhash_lcl_list[ip]);
-				}
-			} else
-				flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
+		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
+			all other EPs always place the table in DDR */
+		if (IPA_CLIENT_IS_ETH_PROD(i) ||
+			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
+			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
+			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
+			!ipa3_ctx->ip4_flt_tbl_nhash_lcl;
+		else
+			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
 
-			/* Init force sys to false */
-			flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
-			flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
+		/* Init force sys to false */
+		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
+		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
 
-			flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[ip];
-		}
+		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v4];
+
+		flt_tbl = &ipa3_ctx->flt_tbl[i][IPA_IP_v6];
+		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
+		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
+			!ipa3_ctx->ip6_flt_tbl_hash_lcl;
+
+		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
+			all other EPs always place the table in DDR */
+		if (IPA_CLIENT_IS_ETH_PROD(i) ||
+			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
+			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
+			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
+			!ipa3_ctx->ip6_flt_tbl_nhash_lcl;
+		else
+			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
+
+		/* Init force sys to false */
+		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
+		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
+
+		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v6];
 	}
 
 	if (!ipa3_ctx->apply_rg10_wa) {
@@ -7700,11 +7696,11 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 
 	ipa_ut_module_init();
 
+	/* Query MSI address. */
+	gsi_query_device_msi_addr(&ipa3_ctx->gsi_msi_addr);
 	/* Map the MSI addresses for the GSI to access, for LL and QMAP FC pipe */
-	if (!ipa3_ctx->gsi_msi_addr_io_mapped &&
-		!ipa3_ctx->gsi_msi_clear_addr_io_mapped &&
-		(ipa3_ctx->rmnet_ll_enable || ipa3_ctx->rmnet_ctl_enable))
-			ipa_gsi_map_unmap_gsi_msi_addr(true);
+	if (ipa3_ctx->gsi_msi_addr)
+		ipa_gsi_map_unmap_gsi_msi_addr(true);
 
 	if(!ipa_spearhead_stats_init())
 		IPADBG("Fail to init spearhead ipa lnx module");
@@ -8609,18 +8605,6 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->ipa_gpi_event_rp_ddr = resource_p->ipa_gpi_event_rp_ddr;
 	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
 	ipa3_ctx->rmnet_ll_enable = resource_p->rmnet_ll_enable;
-	ipa3_ctx->gsi_msi_addr = resource_p->gsi_msi_addr;
-	ipa3_ctx->gsi_msi_addr_io_mapped = 0;
-	ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
-	ipa3_ctx->gsi_msi_clear_addr = resource_p->gsi_msi_clear_addr;
-	ipa3_ctx->gsi_rmnet_ctl_evt_ring_intvec =
-		resource_p->gsi_rmnet_ctl_evt_ring_intvec;
-	ipa3_ctx->gsi_rmnet_ctl_evt_ring_irq =
-		resource_p->gsi_rmnet_ctl_evt_ring_irq;
-	ipa3_ctx->gsi_rmnet_ll_evt_ring_intvec =
-		resource_p->gsi_rmnet_ll_evt_ring_intvec;
-	ipa3_ctx->gsi_rmnet_ll_evt_ring_irq =
-		resource_p->gsi_rmnet_ll_evt_ring_irq;
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
 			resource_p->tx_wrapper_cache_max_size);
 	ipa3_ctx->ipa_config_is_auto = resource_p->ipa_config_is_auto;
@@ -9469,10 +9453,6 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	u32 ipa_holb_monitor_max_cnt_usb;
 	u32 ipa_holb_monitor_max_cnt_11ad;
 	u32 ipa_wan_aggr_pkt_cnt;
-	u32 gsi_msi_addr;
-	u32 gsi_msi_clear_addr;
-	u32 gsi_rmnet_ctl_evt_ring_intvec;
-	u32 gsi_rmnet_ll_evt_ring_intvec;
 
 	/* initialize ipa3_res */
 	ipa_drv_res->ipa_wdi3_2g_holb_timeout = 0;
@@ -9812,58 +9792,6 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 			ipa_drv_res->rmnet_ll_enable
 			? "True" : "False");
 	}
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-msi-addr",
-		&gsi_msi_addr);
-	IPADBG("GSI MSI addr = %lu\n", gsi_msi_addr);
-	ipa_drv_res->gsi_msi_addr = (u64)gsi_msi_addr;
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-msi-clear-addr",
-		&gsi_msi_clear_addr);
-	IPADBG("GSI MSI clear addr = %lu\n", gsi_msi_clear_addr);
-	ipa_drv_res->gsi_msi_clear_addr = (u64)gsi_msi_clear_addr;
-
-	/* Get IPA MSI IRQ number for rmnet_ctl */
-	resource = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
-		"msi-irq-rmnet-ctl");
-	if (!resource) {
-		ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq = 0;
-		IPAERR(":get resource failed for msi-irq-rmnet-ctl\n");
-	} else {
-		ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq = resource->start;
-		IPADBG(": msi-irq-rmnet-ctl = %d\n",
-			ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq);
-	}
-
-	/* Get IPA MSI IRQ number for rmnet_ll */
-	resource = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
-		"msi-irq-rmnet-ll");
-	if (!resource) {
-		ipa_drv_res->gsi_rmnet_ll_evt_ring_irq = 0;
-		IPAERR(":get resource failed for msi-irq-rmnet-ll\n");
-	} else {
-		ipa_drv_res->gsi_rmnet_ll_evt_ring_irq = resource->start;
-		IPADBG(": msi-irq-rmnet-ll = %d\n",
-			ipa_drv_res->gsi_rmnet_ll_evt_ring_irq);
-	}
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-rmnet-ctl-evt-ring-intvec",
-		&gsi_rmnet_ctl_evt_ring_intvec);
-	IPADBG("gsi_rmnet_ctl_evt_ring_intvec = %u\n",
-		gsi_rmnet_ctl_evt_ring_intvec);
-	ipa_drv_res->gsi_rmnet_ctl_evt_ring_intvec =
-		gsi_rmnet_ctl_evt_ring_intvec;
-
-	result = of_property_read_u32(pdev->dev.of_node,
-		"qcom,gsi-rmnet-ll-evt-ring-intvec",
-		&gsi_rmnet_ll_evt_ring_intvec);
-	IPADBG("gsi_rmnet_ll_evt_ring_intvec = %u\n",
-		gsi_rmnet_ll_evt_ring_intvec);
-	ipa_drv_res->gsi_rmnet_ll_evt_ring_intvec =
-		gsi_rmnet_ll_evt_ring_intvec;
 
 	result = of_property_read_string(pdev->dev.of_node,
 			"qcom,use-gsi-ipa-fw", &ipa_drv_res->gsi_fw_file_name);

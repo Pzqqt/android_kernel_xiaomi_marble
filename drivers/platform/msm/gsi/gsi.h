@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef GSI_H
@@ -15,6 +15,7 @@
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
 #include <linux/iommu.h>
+#include <linux/msi.h>
 
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.
@@ -74,6 +75,7 @@
 	} while (0)
 
 #define GSI_IPC_LOG_PAGES 50
+#define GSI_MAX_NUM_MSI 2
 
 enum gsi_ver {
 	GSI_VER_ERR = 0,
@@ -1430,6 +1432,16 @@ struct gsi_log_ts {
 	u32 interrupt_type;
 };
 
+struct gsi_msi {
+	u32 num;
+	DECLARE_BITMAP(allocated, GSI_MAX_NUM_MSI);
+	DECLARE_BITMAP(used, GSI_MAX_NUM_MSI);
+	struct msi_msg msg[GSI_MAX_NUM_MSI];
+	u32 irq[GSI_MAX_NUM_MSI];
+	u32 evt[GSI_MAX_NUM_MSI];
+	unsigned long mask;
+};
+
 struct gsi_ctx {
 	void __iomem *base;
 	struct device *dev;
@@ -1454,6 +1466,9 @@ struct gsi_ctx {
 	void *ipc_logbuf;
 	void *ipc_logbuf_low;
 	struct gsi_coal_chan_info coal_info;
+	bool msi_addr_set;
+	uint64_t msi_addr;
+	struct gsi_msi msi;
 	/*
 	 * The following used only on emulation systems.
 	 */
@@ -2356,6 +2371,15 @@ int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 * @Return gsi_status
 */
 int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
+
+/**
+* gsi_query_device_msi_addr - get gsi device msi address
+*
+* @addr: [out] msi address
+*
+* @Return gsi_status
+*/
+int gsi_query_device_msi_addr(u64 *addr);
 
 /**
 * gsi_update_almst_empty_thrshold - update almst_empty_thrshold

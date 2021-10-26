@@ -4176,6 +4176,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 15, 2, 28, 32, IPA_EE_Q6, GSI_FREE_PRE_FETCH, 3 },
 			IPA_TX_INSTANCE_NA },
+	[IPA_5_0][IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD] = {
+			true, IPA_v5_0_GROUP_URLLC,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 5, 8, 28, 32, IPA_EE_Q6, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_UL },
 	[IPA_5_0][IPA_CLIENT_TEST_PROD] = {
 			true, IPA_v5_0_GROUP_UL,
 			true,
@@ -4495,6 +4502,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 15, 2, 28, 32, IPA_EE_Q6, GSI_FREE_PRE_FETCH, 3 },
 			IPA_TX_INSTANCE_NA },
+	[IPA_5_0_MHI][IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD] = {
+			true, IPA_v5_0_GROUP_URLLC,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 5, 8, 28, 32, IPA_EE_Q6, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_UL },
 	[IPA_5_0_MHI][IPA_CLIENT_TEST_PROD] = {
 			true, IPA_v5_0_GROUP_UL,
 			true,
@@ -6605,20 +6619,19 @@ void _ipa_sram_settings_read_v3_0(void)
 		ipa3_ctx->hdr_proc_ctx_tbl.start_offset =
 			IPA_MEM_PART(modem_hdr_proc_ctx_size);
 	}
-
-	ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v4] = false;
-	ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v4] = false;
-	ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v6] = false;
-	ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v6] = false;
-	ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v4] = false;
-	ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v6] = false;
+	ipa3_ctx->ip4_rt_tbl_hash_lcl =	false;
+	ipa3_ctx->ip4_rt_tbl_nhash_lcl = false;
+	ipa3_ctx->ip6_rt_tbl_hash_lcl = false;
+	ipa3_ctx->ip6_rt_tbl_nhash_lcl = false;
+	ipa3_ctx->ip4_flt_tbl_hash_lcl = false;
+	ipa3_ctx->ip6_flt_tbl_hash_lcl = false;
 
 	if (ipa3_ctx->ipa_hw_type == IPA_HW_v5_0) {
-		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v4] = true;
-		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v6] = true;
+		ipa3_ctx->ip4_flt_tbl_nhash_lcl = true;
+		ipa3_ctx->ip6_flt_tbl_nhash_lcl = true;
 	} else {
-		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v4] = false;
-		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v6] = false;
+		ipa3_ctx->ip4_flt_tbl_nhash_lcl = false;
+		ipa3_ctx->ip6_flt_tbl_nhash_lcl = false;
 	}
 }
 
@@ -8381,8 +8394,8 @@ int ipa3_cfg_ep_holb(u32 clnt_hdl, const struct ipa_ep_cfg_holb *ep_holb)
 	ipahal_write_reg_n_fields(IPA_ENDP_INIT_HOL_BLOCK_EN_n, clnt_hdl,
 		ep_holb);
 
-	/* IPA4.5 issue requires HOLB_EN to be written twice */
-	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5)
+	/* For targets > IPA_4.0 issue requires HOLB_EN to be written twice */
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_0)
 		ipahal_write_reg_n_fields(IPA_ENDP_INIT_HOL_BLOCK_EN_n,
 			clnt_hdl, ep_holb);
 

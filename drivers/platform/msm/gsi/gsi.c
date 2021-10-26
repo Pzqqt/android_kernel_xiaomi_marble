@@ -11,6 +11,8 @@
 #include <linux/msm_gsi.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
+#include <linux/msi.h>
+#include <linux/smp.h>
 #include "gsi.h"
 #include "gsi_emulation.h"
 #include "gsihal.h"
@@ -1112,23 +1114,25 @@ static irqreturn_t gsi_msi_isr(int irq, void *ctxt)
 	unsigned long flags;
 	unsigned long cntr;
 	bool empty;
+	uint8_t evt;
+	unsigned long msi;
 	struct gsi_evt_ctx *evt_ctxt;
-	void __iomem *msi_clear_add;
-	void __iomem *msi_add;
 
-	evt_ctxt = (struct gsi_evt_ctx *)(ctxt);
+	/* Determine which event channel to handle */
+	for (msi = 0; msi < gsi_ctx->msi.num; msi++) {
+		if (gsi_ctx->msi.irq[msi] == irq)
+			break;
+	}
+
+	evt = gsi_ctx->msi.evt[msi];
+	evt_ctxt = &gsi_ctx->evtr[evt];
 
 	if (evt_ctxt->props.intf != GSI_EVT_CHTYPE_GPI_EV) {
 		GSIERR("Unexpected irq intf %d\n",
 			evt_ctxt->props.intf);
 		GSI_ASSERT();
 	}
-	/* Clear IRQ by writing irq number to the MSI clear address */
-	msi_clear_add = (void __iomem *)evt_ctxt->props.msi_clear_addr;
-	iowrite32(evt_ctxt->props.intvec, msi_clear_add);
-	/* Writing zero to MSI address as well */
-	msi_add = (void __iomem *)evt_ctxt->props.msi_addr_iore_mapped;
-	iowrite32(0, msi_add);
+
 	/* Clearing IEOB irq if there are any genereated for MSI channel */
 	gsihal_write_reg_nk(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k, ee,
 		gsihal_get_ch_reg_idx(evt_ctxt->id),
@@ -1309,9 +1313,123 @@ int gsi_unmap_base(void)
 }
 EXPORT_SYMBOL(gsi_unmap_base);
 
+static void __gsi_msi_write_msg(struct msi_desc *desc, struct msi_msg *msg)
+{
+	u16 msi = 0;
+
+	if (IS_ERR_OR_NULL(desc) || IS_ERR_OR_NULL(msg) || IS_ERR_OR_NULL(gsi_ctx))
+		BUG();
+
+	msi = desc->platform.msi_index;
+
+	/* MSI should be valid and unallocated */
+	if ((msi >= gsi_ctx->msi.num) || (test_bit(msi, gsi_ctx->msi.allocated)))
+		BUG();
+
+	/* Save the message for later use */
+	memcpy(&gsi_ctx->msi.msg[msi], msg, sizeof(*msg));
+
+	dev_notice(gsi_ctx->dev,
+		"saved msi %u msg data %u addr 0x%08x%08x\n", msi,
+		msg->data, msg->address_hi, msg->address_lo);
+
+	/* Single MSI control is used. So MSI address will be same. */
+	if (!gsi_ctx->msi_addr_set) {
+		gsi_ctx->msi_addr = gsi_ctx->msi.msg[msi].address_hi;
+		gsi_ctx->msi_addr = (gsi_ctx->msi_addr << 32) |
+			gsi_ctx->msi.msg[msi].address_lo;
+		gsi_ctx->msi_addr_set = true;
+	}
+
+	GSIDBG("saved msi %u msg data %u addr 0x%08x%08x, MSI:0x%lx\n", msi,
+		msg->data, msg->address_hi, msg->address_lo, gsi_ctx->msi_addr);
+}
+
+static int __gsi_request_msi_irq(unsigned long msi)
+{
+	int result = 0;
+
+	/* Ensure this is not already allocated */
+	if (test_bit((int)msi, gsi_ctx->msi.allocated)) {
+		GSIERR("MSI %lu already allocated\n", msi);
+		return -GSI_STATUS_ERROR;
+	}
+
+	/* Request MSI IRQ
+	 * NOTE: During the call to devm_request_irq, the
+	 * __gsi_msi_write_msg callback is triggered.
+	 */
+	result = devm_request_irq(gsi_ctx->dev, gsi_ctx->msi.irq[msi],
+			(irq_handler_t)gsi_msi_isr, IRQF_TRIGGER_NONE,
+			"gsi_msi", gsi_ctx);
+
+	if (result) {
+		GSIERR("failed to register msi irq %u idx %lu\n",
+			gsi_ctx->msi.irq[msi], msi);
+		return -GSI_STATUS_ERROR;
+	}
+
+	set_bit(msi, gsi_ctx->msi.allocated);
+	return result;
+}
+
+static int __gsi_allocate_msis(void)
+{
+	int result = 0;
+	struct msi_desc *desc = NULL;
+	size_t size = 0;
+
+	/* Allocate all MSIs */
+	GSIDBG("gsi_ctx->dev = %lu, gsi_ctx->msi.num = %d", gsi_ctx->dev, gsi_ctx->msi.num);
+	result = platform_msi_domain_alloc_irqs(gsi_ctx->dev, gsi_ctx->msi.num,
+			__gsi_msi_write_msg);
+	if (result) {
+		GSIERR("error allocating platform MSIs - %d\n", result);
+		return -GSI_STATUS_ERROR;
+	}
+	GSIDBG("MSI allocating is succesful\n");
+
+	/* Loop through the allocated MSIs and save the info, then
+	 * request the IRQ.
+	 */
+	for_each_msi_entry(desc, gsi_ctx->dev) {
+		unsigned long msi = desc->platform.msi_index;
+
+		/* Ensure a valid index */
+		if (msi >= gsi_ctx->msi.num) {
+			GSIERR("error invalid MSI %lu\n", msi);
+			result = -GSI_STATUS_ERROR;
+			goto err_free_msis;
+		}
+
+		/* Save IRQ */
+		gsi_ctx->msi.irq[msi] = desc->irq;
+		GSIDBG("desc->irq =%d\n", desc->irq);
+
+		/* Request the IRQ */
+		if (__gsi_request_msi_irq(msi)) {
+			GSIERR("error requesting IRQ for MSI %lu\n",
+				msi);
+			result = -GSI_STATUS_ERROR;
+			goto err_free_msis;
+		}
+		GSIDBG("Requesting IRQ succesful\n");
+	}
+
+	return result;
+
+err_free_msis:
+	size = sizeof(unsigned long) * BITS_TO_LONGS(gsi_ctx->msi.num);
+	platform_msi_domain_free_irqs(gsi_ctx->dev);
+	memset(gsi_ctx->msi.allocated, 0, size);
+
+	return result;
+}
+
 int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 {
 	int res;
+	int result = GSI_STATUS_SUCCESS;
 	struct gsihal_reg_gsi_status gsi_status;
 	struct gsihal_reg_gsi_ee_n_cntxt_gsi_irq gen_irq;
 
@@ -1415,14 +1533,24 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
 
+	/* If MSIs are enabled, make sure they are set up */
+	if (gsi_ctx->msi.num) {
+		if (__gsi_allocate_msis()) {
+			GSIERR("failed to allocate MSIs\n");
+			goto err_free_irq;
+		}
+	}
+
 	/*
 	 * If base not previously mapped via gsi_map_base(), map it
 	 * now...
 	 */
 	if (!gsi_ctx->base) {
 		res = gsi_map_base(props->phys_addr, props->size, props->ver);
-		if (res)
-			return res;
+		if (res) {
+			result = res;
+			goto err_free_msis;
+		}
 	}
 
 	if (running_emulation) {
@@ -1444,7 +1572,8 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 			  "failed to remap emulator's interrupt controller HW\n");
 			gsi_unmap_base();
 			devm_free_irq(gsi_ctx->dev, props->irq, gsi_ctx);
-			return -GSI_STATUS_RES_ALLOC_FAILURE;
+			result = -GSI_STATUS_RES_ALLOC_FAILURE;
+			goto err_iounmap;
 		}
 
 		GSIDBG(
@@ -1470,7 +1599,8 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 		gsi_ctx->base = gsi_ctx->intcntrlr_base = NULL;
 		devm_free_irq(gsi_ctx->dev, props->irq, gsi_ctx);
 		GSIERR("failed to get max channels\n");
-		return -GSI_STATUS_ERROR;
+		result = -GSI_STATUS_ERROR;
+		goto err_iounmap;
 	}
 	gsi_ctx->max_ev = gsi_get_max_event_rings(gsi_ctx->per.ver);
 	if (gsi_ctx->max_ev == 0) {
@@ -1480,12 +1610,14 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 		gsi_ctx->base = gsi_ctx->intcntrlr_base = NULL;
 		devm_free_irq(gsi_ctx->dev, props->irq, gsi_ctx);
 		GSIERR("failed to get max event rings\n");
-		return -GSI_STATUS_ERROR;
+		result = -GSI_STATUS_ERROR;
+		goto err_iounmap;
 	}
 
 	if (gsi_ctx->max_ev > GSI_EVT_RING_MAX) {
 		GSIERR("max event rings are beyond absolute maximum\n");
-		return -GSI_STATUS_ERROR;
+		result = -GSI_STATUS_ERROR;
+		goto err_iounmap;
 	}
 
 	if (props->mhi_er_id_limits_valid &&
@@ -1497,7 +1629,8 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 		devm_free_irq(gsi_ctx->dev, props->irq, gsi_ctx);
 		GSIERR("MHI event ring start id %u is beyond max %u\n",
 			props->mhi_er_id_limits[0], gsi_ctx->max_ev);
-		return -GSI_STATUS_ERROR;
+		result = -GSI_STATUS_ERROR;
+		goto err_iounmap;
 	}
 
 	gsi_ctx->evt_bmap = ~((1 << gsi_ctx->max_ev) - 1);
@@ -1566,19 +1699,34 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 		res = setup_emulator_cntrlr(
 		    gsi_ctx->intcntrlr_base, gsi_ctx->intcntrlr_mem_size);
 		if (res != 0) {
-			gsi_unmap_base();
-			devm_iounmap(gsi_ctx->dev, gsi_ctx->intcntrlr_base);
-			gsi_ctx->base = gsi_ctx->intcntrlr_base = NULL;
-			devm_free_irq(gsi_ctx->dev, props->irq, gsi_ctx);
 			GSIERR("setup_emulator_cntrlr() failed\n");
-			return res;
+			result = res;
+			goto err_iounmap;
 		}
 	}
 
 	*dev_hdl = (uintptr_t)gsi_ctx;
 	gsi_ctx->gsi_isr_cache_index = 0;
 
-	return GSI_STATUS_SUCCESS;
+	return result;
+err_iounmap:
+	gsi_unmap_base();
+	if (running_emulation && gsi_ctx->intcntrlr_base != NULL)
+		devm_iounmap(gsi_ctx->dev, gsi_ctx->intcntrlr_base);
+	gsi_ctx->base = gsi_ctx->intcntrlr_base = NULL;
+
+err_free_msis:
+	if (gsi_ctx->msi.num) {
+		size_t size =
+			sizeof(unsigned long) * BITS_TO_LONGS(gsi_ctx->msi.num);
+		platform_msi_domain_free_irqs(gsi_ctx->dev);
+		memset(gsi_ctx->msi.allocated, 0, size);
+	}
+
+err_free_irq:
+	devm_free_irq(gsi_ctx->dev, props->irq, gsi_ctx);
+
+	return result;
 }
 EXPORT_SYMBOL(gsi_register_device);
 
@@ -1677,6 +1825,9 @@ int gsi_deregister_device(unsigned long dev_hdl, bool force)
 	}
 	__gsi_config_glob_irq(gsi_ctx->per.ee, ~0, 0);
 	__gsi_config_gen_irq(gsi_ctx->per.ee, ~0, 0);
+
+	if (gsi_ctx->msi.num)
+		platform_msi_domain_free_irqs(gsi_ctx->dev);
 
 	devm_free_irq(gsi_ctx->dev, gsi_ctx->per.irq, gsi_ctx);
 	gsihal_destroy();
@@ -1946,6 +2097,49 @@ static inline uint64_t gsi_read_event_ring_rp_reg(struct gsi_evt_ring_props* pro
 	return gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_4, ee, id);
 }
 
+static int __gsi_pair_msi(struct gsi_evt_ctx *ctx,
+		struct gsi_evt_ring_props *props)
+{
+	int result = GSI_STATUS_SUCCESS;
+	unsigned long msi = 0;
+
+	if (IS_ERR_OR_NULL(ctx) || IS_ERR_OR_NULL(props) || IS_ERR_OR_NULL(gsi_ctx))
+		BUG();
+
+	/* Find the first unused MSI */
+	msi = find_first_zero_bit(gsi_ctx->msi.used, gsi_ctx->msi.num);
+	if (msi >= gsi_ctx->msi.num) {
+		GSIERR("No free MSIs for evt %u\n", ctx->id);
+		return -GSI_STATUS_ERROR;
+	}
+
+	/* Ensure it's been allocated */
+	if (!test_bit((int)msi, gsi_ctx->msi.allocated)) {
+		GSIDBG("MSI %lu not allocated\n", msi);
+		return -GSI_STATUS_ERROR;
+	}
+
+	/* Save the event ID for later lookup */
+	gsi_ctx->msi.evt[msi] = ctx->id;
+
+	/* Add this event to the IRQ mask */
+	set_bit((int)ctx->id, &gsi_ctx->msi.mask);
+
+	props->intvec = gsi_ctx->msi.msg[msi].data;
+	props->msi_addr = (uint64_t)gsi_ctx->msi.msg[msi].address_hi << 32 |
+			(uint64_t)gsi_ctx->msi.msg[msi].address_lo;
+
+	GSIDBG("props->intvec = %d, props->msi_addr = %lu\n", props->intvec, props->msi_addr);
+
+	if (props->msi_addr == 0)
+		BUG();
+
+	/* Mark MSI as used */
+	set_bit(msi, gsi_ctx->msi.used);
+
+	return result;
+}
+
 int gsi_alloc_evt_ring(struct gsi_evt_ring_props *props, unsigned long dev_hdl,
 		unsigned long *evt_ring_hdl)
 {
@@ -2008,25 +2202,25 @@ int gsi_alloc_evt_ring(struct gsi_evt_ring_props *props, unsigned long dev_hdl,
 	init_completion(&ctx->compl);
 	atomic_set(&ctx->chan_ref_cnt, 0);
 	ctx->num_of_chan_allocated = 0;
-	ctx->props = *props;
-
-	if (ctx->props.intf == GSI_EVT_CHTYPE_GPI_EV &&
-		ctx->props.intr == GSI_INTR_MSI) {
-		GSIERR("Registering MSI Interrupt for intvec = %d\n",
-			ctx->props.intvec);
-		res = devm_request_irq(gsi_ctx->dev, ctx->props.msi_irq,
-				gsi_msi_isr,
-				IRQF_TRIGGER_HIGH,
-				"gsi",
-				ctx);
-		if (res) {
-			GSIERR("MSI interrupt reg fails res = %d, intvec = %d\n",
-				res, ctx->props.intvec);
-			GSI_ASSERT();
-		}
-	}
+	ctx->id = evt_id;
 
 	mutex_lock(&gsi_ctx->mlock);
+	/* Pair an MSI with this event if this is an MSI and GPI event channel
+	 * NOTE: This modifies props, so must be before props are saved to ctx.
+	 */
+	if (props->intf == GSI_EVT_CHTYPE_GPI_EV &&
+		props->intr == GSI_INTR_MSI) {
+		if (__gsi_pair_msi(ctx, props)) {
+			GSIERR("evt_id=%lu failed to pair MSI\n", evt_id);
+			if (!props->evchid_valid)
+				clear_bit(evt_id, &gsi_ctx->evt_bmap);
+			mutex_unlock(&gsi_ctx->mlock);
+			return -GSI_STATUS_NODEV;
+		}
+		GSIDBG("evt_id=%lu pair MSI succesful\n", evt_id);
+	}
+	ctx->props = *props;
+
 	ee = gsi_ctx->per.ee;
 	ev_ch_cmd.opcode = op;
 	ev_ch_cmd.chid = evt_id;
@@ -2144,6 +2338,7 @@ int gsi_dealloc_evt_ring(unsigned long evt_ring_hdl)
 	enum gsi_evt_ch_cmd_opcode op = GSI_EVT_DE_ALLOC;
 	struct gsi_evt_ctx *ctx;
 	int res = 0;
+	u32 msi;
 
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
@@ -2169,10 +2364,20 @@ int gsi_dealloc_evt_ring(unsigned long evt_ring_hdl)
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
 
+	/* Unpair the MSI */
 	if (ctx->props.intf == GSI_EVT_CHTYPE_GPI_EV &&
 		ctx->props.intr == GSI_INTR_MSI) {
 		GSIERR("Interrupt dereg for msi_irq = %d\n", ctx->props.msi_irq);
-		devm_free_irq(gsi_ctx->dev, ctx->props.msi_irq, ctx);
+
+		for (msi = 0; msi < gsi_ctx->msi.num; msi++) {
+			if (gsi_ctx->msi.msg[msi].data == ctx->props.intvec) {
+				mutex_lock(&gsi_ctx->mlock);
+				clear_bit(msi, gsi_ctx->msi.used);
+				gsi_ctx->msi.evt[msi] = 0;
+				clear_bit(evt_ring_hdl, &gsi_ctx->msi.mask);
+				mutex_unlock(&gsi_ctx->mlock);
+			}
+		}
 	}
 
 	mutex_lock(&gsi_ctx->mlock);
@@ -4263,7 +4468,6 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 	if (curr == GSI_CHAN_MODE_CALLBACK &&
 			mode == GSI_CHAN_MODE_POLL) {
 		if (gsi_ctx->per.ver >= GSI_VER_3_0) {
-			/* Masking/Unmasking of intrpts is not allowed for MSI chanls */
 			if (ctx->evtr->props.intr != GSI_INTR_MSI) {
 				__gsi_config_ieob_irq_k(gsi_ctx->per.ee,
 				gsihal_get_ch_reg_idx(ctx->evtr->id),
@@ -4314,7 +4518,6 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 				atomic_set(&coal_ctx->poll_mode, mode);
 		}
 		if (gsi_ctx->per.ver >= GSI_VER_3_0) {
-			/* Masking/Unmasking of intrpts is not allowed for MSI chanls */
 			if (ctx->evtr->props.intr != GSI_INTR_MSI) {
 				__gsi_config_ieob_irq_k(gsi_ctx->per.ee,
 				gsihal_get_ch_reg_idx(ctx->evtr->id),
@@ -5264,6 +5467,24 @@ int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr)
 }
 EXPORT_SYMBOL(gsi_query_msi_addr);
 
+int gsi_query_device_msi_addr(u64 *addr)
+{
+    if (!gsi_ctx) {
+            pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
+            return -GSI_STATUS_NODEV;
+    }
+
+	if (gsi_ctx->msi_addr_set)
+		*addr = gsi_ctx->msi_addr;
+	else
+		*addr = 0;
+
+	GSIDBG("Device MSI Addr: 0x%lx", *addr);
+    return 0;
+}
+EXPORT_SYMBOL(gsi_query_device_msi_addr);
+
+
 uint64_t gsi_read_event_ring_wp(int evtr_id, int ee)
 {
 	uint64_t wp;
@@ -5506,6 +5727,7 @@ EXPORT_SYMBOL(gsi_update_almst_empty_thrshold);
 static int msm_gsi_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
+	int result;
 
 	pr_debug("gsi_probe\n");
 	gsi_ctx = devm_kzalloc(dev, sizeof(*gsi_ctx), GFP_KERNEL);
@@ -5518,6 +5740,17 @@ static int msm_gsi_probe(struct platform_device *pdev)
 		"gsi", 0);
 	if (gsi_ctx->ipc_logbuf == NULL)
 		GSIERR("failed to create IPC log, continue...\n");
+
+	result = of_property_read_u32(pdev->dev.of_node, "qcom,num-msi",
+			&gsi_ctx->msi.num);
+	if (result)
+		GSIERR("No MSIs configured\n");
+	else {
+		if (gsi_ctx->msi.num > GSI_MAX_NUM_MSI) {
+			GSIERR("Num MSIs %u larger than max %u, normalizing\n");
+			gsi_ctx->msi.num = GSI_MAX_NUM_MSI;
+		} else GSIDBG("Num MSIs=%u\n", gsi_ctx->msi.num);
+	}
 
 	gsi_ctx->dev = dev;
 	init_completion(&gsi_ctx->gen_ee_cmd_compl);
