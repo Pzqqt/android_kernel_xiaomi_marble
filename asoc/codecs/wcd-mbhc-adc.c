@@ -1038,7 +1038,8 @@ static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)
 		goto exit;
 	}
 
-	if (mbhc->mbhc_cfg->moisture_en) {
+	if (mbhc->mbhc_cfg->moisture_en ||
+	    mbhc->mbhc_cfg->moisture_duty_cycle_en) {
 		if (mbhc->mbhc_cb->hph_pa_on_status)
 			if (mbhc->mbhc_cb->hph_pa_on_status(mbhc->component)) {
 				hphpa_on = true;
@@ -1053,7 +1054,8 @@ static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)
 		WCD_MBHC_REG_READ(WCD_MBHC_MOISTURE_STATUS, moisture_status);
 	}
 
-	if (mbhc->mbhc_cfg->moisture_en && !moisture_status) {
+	if ((mbhc->mbhc_cfg->moisture_en ||
+	    mbhc->mbhc_cfg->moisture_duty_cycle_en) && !moisture_status) {
 		pr_debug("%s: moisture present in jack\n", __func__);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MECH_DETECTION_TYPE, 1);

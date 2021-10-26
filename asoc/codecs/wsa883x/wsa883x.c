@@ -570,9 +570,9 @@ static int wsa_dev_mode_put(struct snd_kcontrol *kcontrol,
 }
 
 static const char * const wsa_pa_gain_text[] = {
-	"G_18_DB", "G_16P5_DB", "G_15_DB", "G_13P5_DB", "G_12_DB", "G_10P5_DB",
-	"G_9_DB", "G_7P5_DB", "G_6_DB", "G_4P5_DB", "G_3_DB", "G_1P5_DB",
-	"G_0_DB"
+	"G_21_DB", "G_19P5_DB", "G_18_DB", "G_16P5_DB", "G_15_DB", "G_13P5_DB",
+	"G_12_DB", "G_10P5_DB", "G_9_DB", "G_7P5_DB", "G_6_DB", "G_4P5_DB", "G_3_DB", "G_1P5_DB",
+	"G_0_DB", "N_1P5_DB", "N_3_DB"
 };
 
 static const struct soc_enum wsa_pa_gain_enum =
@@ -605,6 +605,10 @@ static int wsa_pa_gain_put(struct snd_kcontrol *kcontrol,
 
 	wsa883x->pa_gain =  ucontrol->value.integer.value[0];
 
+	if (!wsa883x->comp_enable)
+		snd_soc_component_update_bits(component,
+			WSA883X_DRE_CTL_1,
+			0x3E, wsa883x->pa_gain << 1);
 	return 0;
 }
 
@@ -1569,11 +1573,13 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 					WSA883X_IRQ_INT_PDM_WD);
 			/* Added delay as per HW sequence */
 			usleep_range(3000, 3100);
-			snd_soc_component_update_bits(wsa883x->component,
+			if (wsa883x->comp_enable) {
+				snd_soc_component_update_bits(wsa883x->component,
 						WSA883X_DRE_CTL_1,
 						0x01, 0x00);
-			/* Added delay as per HW sequence */
-			usleep_range(5000, 5050);
+				/* Added delay as per HW sequence */
+				usleep_range(5000, 5050);
+			}
 		}
 		break;
 	case BOLERO_SLV_EVT_PA_ON_POST_FSCLK_ADIE_LB:
