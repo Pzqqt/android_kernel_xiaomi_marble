@@ -2612,12 +2612,11 @@ void sde_cp_crtc_destroy_properties(struct drm_crtc *crtc)
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_busy);
 }
 
-void sde_cp_crtc_suspend(struct drm_crtc *crtc)
+void sde_cp_crtc_mark_features_dirty(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = NULL;
 	struct sde_cp_node *prop_node = NULL, *n = NULL;
 	bool ad_suspend = false;
-	unsigned long irq_flags;
 
 	if (!crtc) {
 		DRM_ERROR("crtc %pK\n", crtc);
@@ -2644,12 +2643,30 @@ void sde_cp_crtc_suspend(struct drm_crtc *crtc)
 	}
 	mutex_unlock(&sde_crtc->crtc_cp_lock);
 
+	if (ad_suspend)
+		_sde_cp_ad_set_prop(sde_crtc, AD_SUSPEND);
+}
+
+void sde_cp_crtc_suspend(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = NULL;
+	unsigned long irq_flags;
+
+	if (!crtc) {
+		DRM_ERROR("crtc %pK\n", crtc);
+		return;
+	}
+	sde_crtc = to_sde_crtc(crtc);
+	if (!sde_crtc) {
+		DRM_ERROR("sde_crtc %pK\n", sde_crtc);
+		return;
+	}
+
+	sde_cp_crtc_mark_features_dirty(crtc);
+
 	spin_lock_irqsave(&sde_crtc->ltm_lock, irq_flags);
 	sde_crtc->ltm_hist_en = false;
 	spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
-
-	if (ad_suspend)
-		_sde_cp_ad_set_prop(sde_crtc, AD_SUSPEND);
 }
 
 void sde_cp_crtc_resume(struct drm_crtc *crtc)
