@@ -1082,17 +1082,14 @@ static void sde_hw_sspp_setup_ts_prefill(struct sde_hw_pipe *ctx,
 	}
 
 	if (cfg->time) {
-		u64 temp = DIV_ROUND_UP_ULL(TS_CLK * 1000000ULL, cfg->time);
-
-		ts_bytes = temp * cfg->size;
+		ts_count = DIV_ROUND_UP_ULL(TS_CLK * cfg->time, 1000000ULL);
+		ts_bytes = DIV_ROUND_UP_ULL(cfg->size, ts_count);
 		if (ts_bytes > SSPP_TRAFFIC_SHAPER_BPC_MAX)
 			ts_bytes = SSPP_TRAFFIC_SHAPER_BPC_MAX;
 	}
 
-	if (ts_bytes) {
-		ts_count = DIV_ROUND_UP_ULL(cfg->size, ts_bytes);
+	if (ts_count)
 		ts_bytes |= BIT(31) | BIT(27);
-	}
 
 	SDE_REG_WRITE(&ctx->hw, ts_offset, ts_bytes);
 	SDE_REG_WRITE(&ctx->hw, ts_prefill_offset, ts_count);
