@@ -7775,14 +7775,14 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 
 		mutex_lock(&hdd_ctx->sap_lock);
 		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+			struct hdd_hostapd_state *hostapd_state =
+				WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+
+			qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 			status = wlansap_stop_bss(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 
 			if (QDF_IS_STATUS_SUCCESS(status)) {
-				struct hdd_hostapd_state *hostapd_state =
-					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-				qdf_event_reset(&hostapd_state->
-						qdf_stop_bss_event);
 				status = qdf_wait_single_event(
 					&hostapd_state->qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
