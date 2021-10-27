@@ -21645,10 +21645,6 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (chandef->width > NL80211_CHAN_WIDTH_40) {
-		hdd_err_rl("invalid chan width %d", chandef->width);
-		return -EINVAL;
-	}
 	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
