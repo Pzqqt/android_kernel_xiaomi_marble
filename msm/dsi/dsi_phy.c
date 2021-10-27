@@ -765,6 +765,40 @@ error:
 }
 
 /**
+ * dsi_phy_get_data_lanes_count() -   Count the data lines need to be configured
+ * @dsi_phy:                          DSI PHY handle.
+ *
+ * Return:                            Count of data lanes being used
+ */
+static inline int dsi_phy_get_data_lanes_count(struct msm_dsi_phy *phy)
+{
+	int num_of_lanes = 0;
+	enum dsi_data_lanes dlanes;
+
+	dlanes = phy->data_lanes;
+
+	/**
+	  * For split link use case effective data lines need to be used
+	  * rather than total lanes on PHY for clock calculation and hence we
+	  * fall back pll->lanes to lanes_per_sublink rather than total
+	  * lanes.
+	  */
+	if (phy->cfg.split_link.enabled)
+		return phy->cfg.split_link.lanes_per_sublink;
+
+	if (dlanes & DSI_DATA_LANE_0)
+		num_of_lanes++;
+	if (dlanes & DSI_DATA_LANE_1)
+		num_of_lanes++;
+	if (dlanes & DSI_DATA_LANE_2)
+		num_of_lanes++;
+	if (dlanes & DSI_DATA_LANE_3)
+		num_of_lanes++;
+
+	return num_of_lanes;
+}
+
+/**
  * dsi_phy_configure() -   Configure DSI PHY PLL
  * @dsi_phy:               DSI PHY handle.
  * @commit:                boolean to specify if calculated PHY configuration
@@ -779,7 +813,8 @@ int dsi_phy_configure(struct msm_dsi_phy *phy, bool commit)
 
 	phy->pll->type = phy->cfg.phy_type;
 	phy->pll->bpp = dsi_pixel_format_to_bpp(phy->dst_format);
-	phy->pll->lanes = dsi_get_num_of_data_lanes(phy->data_lanes);
+	phy->pll->lanes = dsi_phy_get_data_lanes_count(phy);
+
 	if (phy->hw.ops.configure)
 		rc = phy->hw.ops.configure(phy->pll, commit);
 
