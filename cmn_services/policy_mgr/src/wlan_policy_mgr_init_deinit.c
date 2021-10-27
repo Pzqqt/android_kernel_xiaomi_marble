@@ -437,7 +437,7 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	/* init pm_conc_connection_list */
 	qdf_mem_zero(pm_conc_connection_list, sizeof(pm_conc_connection_list));
-
+	policy_mgr_clear_concurrent_session_count(psoc);
 	/* init dbs_opportunistic_timer */
 	status = qdf_mc_timer_init(&pm_ctx->dbs_opportunistic_timer,
 				QDF_TIMER_TYPE_SW,
@@ -626,6 +626,7 @@ QDF_STATUS policy_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 
 	/* deinit pm_conc_connection_list */
 	qdf_mem_zero(pm_conc_connection_list, sizeof(pm_conc_connection_list));
+	policy_mgr_clear_concurrent_session_count(psoc);
 
 	return status;
 }
