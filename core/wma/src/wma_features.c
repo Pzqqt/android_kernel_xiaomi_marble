@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1621,7 +1622,7 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "MOTION_DETECT_BASELINE";
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 	case WOW_REASON_PAGE_FAULT:
-		return "PAGE_FAULT";
+		return "PF";
 	case WOW_REASON_ROAM_PMKID_REQUEST:
 		return "ROAM_PMKID_REQUEST";
 	case WOW_REASON_VDEV_DISCONNECT:
@@ -2601,7 +2602,7 @@ static int wma_wake_event_packet(
 		 * dump event buffer which contains more info regarding
 		 * current page fault.
 		 */
-		wma_info("PAGE_FAULT occurs during suspend: packet_len %u",
+		wma_info("PF occurs during suspend: packet_len %u",
 			 packet_len);
 		qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 				   packet, packet_len);
