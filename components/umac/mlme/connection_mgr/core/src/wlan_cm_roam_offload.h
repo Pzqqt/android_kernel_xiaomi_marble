@@ -28,7 +28,8 @@
 #include "qdf_str.h"
 #include "wlan_cm_roam_public_struct.h"
 
-#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+#if defined(WLAN_FEATURE_CONNECTIVITY_LOGGING) && \
+    defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * cm_roam_scan_info_event() - send scan info to userspace
  * @scan: roam scan data
