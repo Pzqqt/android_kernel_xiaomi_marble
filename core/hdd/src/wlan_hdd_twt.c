@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1770,12 +1771,11 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 			ret = -ENOMEM;
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -EAGAIN;
 			break;
 		}
 	}
 
-	ret = qdf_status_to_os_return(status);
 cleanup:
 	osif_request_put(request);
 	hdd_exit();
@@ -2159,12 +2159,10 @@ int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
 			ret = -EAGAIN;
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -EAGAIN;
 			break;
 		}
 	}
-
-	ret = qdf_status_to_os_return(status);
 cleanup:
 	osif_request_put(request);
 	hdd_exit();
@@ -2701,12 +2699,10 @@ int hdd_send_twt_pause_dialog_cmd(struct hdd_context *hdd_ctx,
 			ret = -EBUSY;
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -EAGAIN;
 			break;
 		}
 	}
-
-	ret = qdf_status_to_os_return(status);
 cleanup:
 	osif_request_put(request);
 	hdd_exit();
@@ -2862,12 +2858,10 @@ int hdd_send_twt_nudge_dialog_cmd(struct hdd_context *hdd_ctx,
 			ret = -EBUSY;
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -EAGAIN;
 			break;
 		}
 	}
-
-	ret = qdf_status_to_os_return(status);
 cleanup:
 	osif_request_put(request);
 	hdd_exit();
@@ -3164,12 +3158,10 @@ hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 			ret = -EBUSY;
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -EAGAIN;
 			break;
 		}
 	}
-
-	ret = qdf_status_to_os_return(status);
 cleanup:
 	osif_request_put(request);
 	hdd_exit();
