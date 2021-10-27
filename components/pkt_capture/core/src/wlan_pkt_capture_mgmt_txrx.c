@@ -460,6 +460,51 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * pkt_capture_is_beacon_forward_enable() - API to check whether particular
+ * beacon needs to be forwarded on mon interface based on vendor command
+ * @vdev: vdev object
+ * @wbuf: netbuf
+ *
+ * Return: bool
+ */
+static bool
+pkt_capture_is_beacon_forward_enable(struct wlan_objmgr_vdev *vdev,
+				     qdf_nbuf_t wbuf)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct qdf_mac_addr connected_bssid = {0};
+	tpSirMacMgmtHdr mac_hdr;
+	bool my_beacon = false;
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("packet capture vdev priv is NULL");
+		return false;
+	}
+
+	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
+	    PKT_CAPTURE_MGMT_CONNECT_NO_BEACON)
+		return false;
+
+	mac_hdr = (tpSirMacMgmtHdr)(qdf_nbuf_data(wbuf));
+	wlan_vdev_get_bss_peer_mac(vdev, &connected_bssid);
+
+	if (qdf_is_macaddr_equal((struct qdf_mac_addr *)mac_hdr->bssId,
+				 &connected_bssid))
+		my_beacon = true;
+
+	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
+	    PKT_CAPTURE_MGMT_CONNECT_BEACON && !my_beacon)
+		return false;
+
+	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
+	    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON && my_beacon)
+		return false;
+
+	return true;
+}
+
+/**
  * process_pktcapture_mgmt_rx_data_cb() -  process management rx packets
  * @rx_params: mgmt rx event params
  * @wbuf: netbuf
@@ -508,8 +553,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 
 	if (pfc->type == SIR_MAC_MGMT_FRAME) {
 		if (pfc->subType == SIR_MAC_MGMT_BEACON) {
-			if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-			    PKT_CAPTURE_MGMT_CONNECT_NO_BEACON)
+			if (!pkt_capture_is_beacon_forward_enable(vdev, wbuf))
 				goto exit;
 		} else {
 			if (!((vdev_priv->frame_filter.mgmt_rx_frame_filter &
