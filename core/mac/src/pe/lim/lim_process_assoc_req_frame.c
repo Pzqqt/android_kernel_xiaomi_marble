@@ -2176,6 +2176,21 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 		goto send_ind_to_sme;
 	}
 
+	if (LIM_IS_AP_ROLE(session)) {
+		if ((assoc_req->wpaPresent || assoc_req->rsnPresent) &&
+		    !session->privacy) {
+			pe_debug("reject assoc. wpa: %d, rsn: %d, privacy: %d",
+				 assoc_req->wpaPresent,
+				 assoc_req->rsnPresent,
+				 session->privacy);
+			lim_reject_association(mac_ctx, sa, sub_type, true,
+					       auth_type, peer_idx, false,
+					       STATUS_UNSPECIFIED_FAILURE,
+					       session);
+			return false;
+		}
+	}
+
 	/* check if sta is allowed per QoS AC rules */
 	if (!lim_chk_wmm(mac_ctx, sa, session, assoc_req, sub_type, qos_mode))
 		return false;
@@ -2254,18 +2269,6 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 		lim_set_mlo_recv_assoc(sta_ds, true);
 	else
 		lim_set_mlo_recv_assoc(sta_ds, false);
-
-	if (LIM_IS_AP_ROLE(session)) {
-		if ((assoc_req->wpaPresent || assoc_req->rsnPresent) &&
-		    !session->privacy) {
-			lim_reject_association(mac_ctx, sa, sub_type,
-					       true, auth_type, peer_idx,
-					       true,
-					       STATUS_UNSPECIFIED_FAILURE,
-					       session);
-			return false;
-		}
-	}
 
 send_ind_to_sme:
 	if (!lim_update_sta_ds(mac_ctx, sa, session, assoc_req,
