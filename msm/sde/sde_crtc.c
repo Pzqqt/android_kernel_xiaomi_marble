@@ -3675,7 +3675,7 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	dev = crtc->dev;
 	priv = dev->dev_private;
 
-	if ((sde_crtc->cache_state == CACHE_STATE_PRE_CACHE) &&
+	if ((sde_crtc->cache_state == CACHE_STATE_NORMAL) &&
 			sde_crtc_get_property(cstate, CRTC_PROP_CACHE_STATE))
 		sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_WRITE,
 				false);
@@ -3842,37 +3842,6 @@ static void _sde_crtc_remove_pipe_flush(struct drm_crtc *crtc)
 		/* clear plane flush bitmask */
 		sde_plane_ctl_flush(plane, ctl, false);
 	}
-}
-
-static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc)
-{
-	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
-	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
-	struct sde_kms *sde_kms = _sde_crtc_get_kms(crtc);
-	struct msm_drm_private *priv;
-	struct msm_drm_thread *event_thread;
-	int idle_time = 0;
-
-	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev_private)
-		return;
-
-	priv = sde_kms->dev->dev_private;
-
-	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
-
-	if (!idle_time ||
-		!sde_encoder_check_curr_mode(sde_crtc->mixers[0].encoder,
-						MSM_DISPLAY_VIDEO_MODE) ||
-			(crtc->index >= ARRAY_SIZE(priv->event_thread)) ||
-			(sde_crtc->cache_state > CACHE_STATE_NORMAL))
-		return;
-
-	/* schedule the idle notify delayed work */
-	event_thread = &priv->event_thread[crtc->index];
-
-	kthread_mod_delayed_work(&event_thread->worker,
-		&sde_crtc->idle_notify_work, msecs_to_jiffies(idle_time));
-	SDE_DEBUG("schedule idle notify work in %dms\n", idle_time);
 }
 
 /**
@@ -4098,8 +4067,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		sde_crtc->event = crtc->state->event;
 		spin_unlock_irqrestore(&dev->event_lock, flags);
 	}
-
-	_sde_crtc_schedule_idle_notify(crtc);
 
 	SDE_ATRACE_END("crtc_commit");
 }
@@ -4516,7 +4483,6 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	mutex_lock(&sde_crtc->crtc_lock);
 
 	kthread_cancel_delayed_work_sync(&sde_crtc->static_cache_read_work);
-	kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work);
 
 	SDE_EVT32(DRMID(crtc), sde_crtc->enabled, crtc->state->active,
 			crtc->state->enable, sde_crtc->cached_encoder_mask);
@@ -5842,10 +5808,6 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 
 	sde_crtc_install_perf_properties(sde_crtc, sde_kms, catalog, info);
 
-	msm_property_install_range(&sde_crtc->property_info,
-		"idle_time", 0, 0, U64_MAX, 0,
-		CRTC_PROP_IDLE_TIMEOUT);
-
 	if (catalog->has_trusted_vm_support) {
 		int init_idx = sde_in_trusted_vm(sde_kms) ? 1 : 0;
 
@@ -7038,12 +7000,8 @@ void sde_crtc_static_img_control(struct drm_crtc *crtc,
 		kthread_cancel_delayed_work_sync(
 				&sde_crtc->static_cache_read_work);
 		break;
-	case CACHE_STATE_PRE_CACHE:
-		if (sde_crtc->cache_state != CACHE_STATE_NORMAL)
-			return;
-		break;
 	case CACHE_STATE_FRAME_WRITE:
-		if (sde_crtc->cache_state != CACHE_STATE_PRE_CACHE)
+		if (sde_crtc->cache_state != CACHE_STATE_NORMAL)
 			return;
 		break;
 	case CACHE_STATE_FRAME_READ:
@@ -7139,33 +7097,10 @@ void sde_crtc_static_cache_read_kickoff(struct drm_crtc *crtc)
 			msecs_to_jiffies(msecs_fps));
 }
 
-/*
- * __sde_crtc_idle_notify_work - signal idle timeout to user space
- */
-static void __sde_crtc_idle_notify_work(struct kthread_work *work)
-{
-	struct sde_crtc *sde_crtc = container_of(work, struct sde_crtc,
-				idle_notify_work.work);
-	struct drm_crtc *crtc;
-	int ret = 0;
-
-	if (!sde_crtc) {
-		SDE_ERROR("invalid sde crtc\n");
-	} else {
-		crtc = &sde_crtc->base;
-		sde_crtc_event_notify(crtc, DRM_EVENT_IDLE_NOTIFY, sizeof(u32), ret);
-
-		SDE_DEBUG("crtc[%d]: idle timeout notified\n", crtc->base.id);
-
-		sde_crtc_static_img_control(crtc, CACHE_STATE_PRE_CACHE, false);
-	}
-}
-
 void sde_crtc_cancel_delayed_work(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc;
 	struct sde_crtc_state *cstate;
-	bool idle_status;
 	bool cache_status;
 
 	if (!crtc || !crtc->state)
@@ -7174,9 +7109,8 @@ void sde_crtc_cancel_delayed_work(struct drm_crtc *crtc)
 	sde_crtc = to_sde_crtc(crtc);
 	cstate = to_sde_crtc_state(crtc->state);
 
-	idle_status = kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work);
 	cache_status = kthread_cancel_delayed_work_sync(&sde_crtc->static_cache_read_work);
-	SDE_EVT32(DRMID(crtc), idle_status, cache_status);
+	SDE_EVT32(DRMID(crtc), cache_status);
 }
 
 /* initialize crtc */
@@ -7271,8 +7205,6 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 		sde_crtc->new_perf.llcc_active[i] = false;
 	}
 
-	kthread_init_delayed_work(&sde_crtc->idle_notify_work,
-					__sde_crtc_idle_notify_work);
 	kthread_init_delayed_work(&sde_crtc->static_cache_read_work,
 			__sde_crtc_static_cache_read_work);
 
