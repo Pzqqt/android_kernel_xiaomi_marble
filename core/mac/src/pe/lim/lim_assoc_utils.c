@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4367,8 +4368,6 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 				 pe_session->peSessionId,
 				 pe_session->limMlmState));
 	}
-	if (mlo_conn && !mlo_recv_assoc_frm && LIM_IS_AP_ROLE(pe_session))
-		return;
 
 	lim_send_del_sta_cnf(mac, sta_dsaddr, staDsAssocId, mlmStaContext,
 			     status_code, pe_session);
