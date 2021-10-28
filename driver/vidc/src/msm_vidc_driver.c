@@ -1959,8 +1959,8 @@ int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst *inst)
 
 	if (is_decode_session(inst)) {
 		inp_f = &inst->fmts[INPUT_PORT];
-		width = inp_f->fmt.pix_mp.width;
-		height = inp_f->fmt.pix_mp.height;
+		width = max(inp_f->fmt.pix_mp.width, inst->crop.width);
+		height = max(inp_f->fmt.pix_mp.height, inst->crop.height);
 	} else if (is_encode_session(inst)) {
 		width = inst->crop.width;
 		height = inst->crop.height;
@@ -4303,6 +4303,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	init_completion(&core->init_done);
 	core->smmu_fault_handled = false;
 	core->ssr.trigger = false;
+	core->pm_suspended = false;
 
 	rc = venus_hfi_core_init(core);
 	if (rc) {
@@ -4632,18 +4633,25 @@ void msm_vidc_batch_handler(struct work_struct *work)
 {
 	struct msm_vidc_inst *inst;
 	enum msm_vidc_allow allow;
+	struct msm_vidc_core *core;
 	int rc = 0;
 
 	inst = container_of(work, struct msm_vidc_inst, decode_batch.work.work);
 	inst = get_inst_ref(g_core, inst);
-	if (!inst) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
 
+	core = inst->core;
 	inst_lock(inst, __func__);
 	if (is_session_error(inst)) {
 		i_vpr_e(inst, "%s: failled. Session error\n", __func__);
+		goto exit;
+	}
+
+	if (core->pm_suspended) {
+		i_vpr_h(inst, "%s: device in pm suspend state\n", __func__);
 		goto exit;
 	}
 
@@ -5267,6 +5275,9 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 		i_vpr_e(inst, "%s: Hardware overloaded. needed %u, max %u", __func__,
 			mbps, core->capabilities[MAX_MBPS].value);
 		return rc;
+	} else {
+		i_vpr_h(inst, "%s: HW load needed %u is within max %u", __func__,
+			mbps, core->capabilities[MAX_MBPS].value);
 	}
 
 	return 0;
@@ -5578,17 +5589,20 @@ static int msm_vidc_check_max_sessions(struct msm_vidc_inst *inst)
 		 * one 1080p session equal to two 720p sessions. This equation
 		 * will make one 8k session equal to eight 720p sessions
 		 * which looks good.
+		 *
+		 * Do not treat resolutions above 4k as 8k session instead
+		 * treat (4K + half 4k) above as 8k session
 		 */
-		if (res_is_greater_than(width, height, 4096, 2176)) {
+		if (res_is_greater_than(width, height, 4096 + (4096 >> 1), 2176 + (2176 >> 1))) {
 			num_8k_sessions += 1;
 			num_4k_sessions += 2;
 			num_1080p_sessions += 4;
 			num_720p_sessions += 8;
-		} else if (res_is_greater_than(width, height, 1920, 1088)) {
+		} else if (res_is_greater_than(width, height, 1920 + (1920 >> 1), 1088 + (1088 >> 1))) {
 			num_4k_sessions += 1;
 			num_1080p_sessions += 2;
 			num_720p_sessions += 4;
-		} else if (res_is_greater_than(width, height, 1280, 736)) {
+		} else if (res_is_greater_than(width, height, 1280 + (1280 >> 1), 736 + (736 >> 1))) {
 			num_1080p_sessions += 1;
 			num_720p_sessions += 2;
 		} else {

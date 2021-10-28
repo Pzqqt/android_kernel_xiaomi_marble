@@ -112,6 +112,7 @@ struct msm_vidc_core {
 	struct completion                      init_done;
 	bool                                   handoff_done;
 	bool                                   hw_power_control;
+	bool                                   pm_suspended;
 };
 
 #endif // _MSM_VIDC_CORE_H_

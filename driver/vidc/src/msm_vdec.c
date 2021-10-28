@@ -191,14 +191,6 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 	u32 left_offset, top_offset, right_offset, bottom_offset;
 	u32 payload[2] = {0};
 
-	if (inst->fmts[INPUT_PORT].fmt.pix_mp.width <
-		inst->crop.width)
-		return -EINVAL;
-
-	if (inst->fmts[INPUT_PORT].fmt.pix_mp.height <
-		inst->crop.height)
-		return -EINVAL;
-
 	left_offset = inst->crop.left;
 	top_offset = inst->crop.top;
 	right_offset = (inst->fmts[INPUT_PORT].fmt.pix_mp.width -
@@ -2068,6 +2060,52 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	return rc;
 }
 
+static msm_vdec_alloc_and_queue_additional_dpb_buffers(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buffer = NULL;
+	int i, cur_min_count = 0, rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* get latest min_count and size */
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_DPB, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	/* get current min_count */
+	list_for_each_entry(buffer, &buffers->list, list)
+		cur_min_count++;
+
+	/* skip alloc and queue */
+	if (cur_min_count >= buffers->min_count)
+		return 0;
+
+	i_vpr_h(inst, "%s: dpb buffer count increased from %u -> %u\n",
+		__func__, cur_min_count, buffers->min_count);
+
+	/* allocate additional DPB buffers */
+	for (i = cur_min_count; i < buffers->min_count; i++) {
+		rc = msm_vidc_create_internal_buffer(inst, MSM_VIDC_BUF_DPB, i);
+		if (rc)
+			return rc;
+	}
+
+	/* queue additional DPB buffers */
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
 int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 {
 	int rc = 0;
@@ -2127,21 +2165,22 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		msm_vidc_allow_dcvs(inst);
 		msm_vidc_power_data_reset(inst);
 
-		/* print final buffer counts & size details */
-		msm_vidc_print_buffer_info(inst);
-
 		rc = msm_vidc_set_seq_change_at_sync_frame(inst);
 		if (rc)
 			return rc;
 
-		rc = venus_hfi_session_command(inst,
-				HFI_CMD_RESUME,
-				port,
-				HFI_PAYLOAD_NONE,
-				NULL,
-				0);
+		/* allocate and queue extra dpb buffers */
+		rc = msm_vdec_alloc_and_queue_additional_dpb_buffers(inst);
 		if (rc)
 			return rc;
+
+		/* print final buffer counts & size details */
+		msm_vidc_print_buffer_info(inst);
+
+		rc = msm_vdec_session_resume(inst, port);
+		if (rc)
+			return rc;
+
 	} else {
 		i_vpr_e(inst, "%s: unknown cmd %d\n", __func__, cmd);
 		return -EINVAL;
@@ -2349,6 +2388,14 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
 		pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
 		msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
+
+		/* update crop while input port is not streaming */
+		if (!inst->vb2q[INPUT_PORT].streaming) {
+			inst->crop.top = 0;
+			inst->crop.left = 0;
+			inst->crop.width = f->fmt.pix_mp.width;
+			inst->crop.height = f->fmt.pix_mp.height;
+		}
 		i_vpr_h(inst,
 			"%s: type: OUTPUT, format %s width %d height %d size %u min_count %d extra_count %d\n",
 			__func__, v4l2_pixelfmt_name(fmt->fmt.pix_mp.pixelformat),

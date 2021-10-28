@@ -341,6 +341,7 @@ enum msm_vidc_core_capability_type {
 	CLK_FREQ_THRESHOLD,
 	NON_FATAL_FAULTS,
 	ENC_AUTO_FRAMERATE,
+	MMRM,
 	CORE_CAP_MAX,
 };
 
