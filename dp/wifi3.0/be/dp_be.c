@@ -129,6 +129,10 @@ static void dp_cc_reg_cfg_init(struct dp_soc *soc,
 {
 	struct hal_hw_cc_config cc_cfg = { 0 };
 
+	if (soc->cdp_soc.ol_ops->get_con_mode &&
+	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
+		return;
+
 	if (!soc->wlan_cfg_ctx->hw_cc_enabled) {
 		dp_info("INI skip HW CC register setting");
 		return;
@@ -217,10 +221,6 @@ static QDF_STATUS dp_hw_cookie_conversion_attach(struct dp_soc_be *be_soc)
 	struct qdf_mem_dma_page_t *dma_page;
 	QDF_STATUS qdf_status;
 
-	if (soc->cdp_soc.ol_ops->get_con_mode &&
-	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
-		return QDF_STATUS_SUCCESS;
-
 	qdf_status = dp_hw_cc_cmem_addr_init(soc, cc_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		return qdf_status;
@@ -283,10 +283,6 @@ static QDF_STATUS dp_hw_cookie_conversion_detach(struct dp_soc_be *be_soc)
 	struct dp_soc *soc = DP_SOC_BE_GET_SOC(be_soc);
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
 
-	if (soc->cdp_soc.ol_ops->get_con_mode &&
-	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
-		return QDF_STATUS_SUCCESS;
-
 	qdf_mem_free(cc_ctx->page_desc_base);
 	dp_desc_multi_pages_mem_free(soc, DP_HW_CC_SPT_PAGE_TYPE,
 				     &cc_ctx->page_pool, 0, false);
@@ -301,10 +297,6 @@ static QDF_STATUS dp_hw_cookie_conversion_init(struct dp_soc_be *be_soc)
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
 	uint32_t i = 0;
 	struct dp_spt_page_desc *spt_desc;
-
-	if (soc->cdp_soc.ol_ops->get_con_mode &&
-	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
-		return QDF_STATUS_SUCCESS;
 
 	if (!cc_ctx->total_page_num) {
 		dp_err("total page num is 0");
@@ -341,12 +333,7 @@ static QDF_STATUS dp_hw_cookie_conversion_init(struct dp_soc_be *be_soc)
 
 static QDF_STATUS dp_hw_cookie_conversion_deinit(struct dp_soc_be *be_soc)
 {
-	struct dp_soc *soc = DP_SOC_BE_GET_SOC(be_soc);
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
-
-	if (soc->cdp_soc.ol_ops->get_con_mode &&
-	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_FTM_MODE)
-		return QDF_STATUS_SUCCESS;
 
 	cc_ctx->page_desc_freelist = NULL;
 	cc_ctx->free_page_num = 0;
