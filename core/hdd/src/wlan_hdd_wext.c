@@ -6778,10 +6778,11 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		hdd_debug("<iwpriv wlan0 pm_dbs> is called");
 		if (apps_args[0] == 0)
-			wma_set_dbs_capability_ut(0);
+			policy_mgr_set_dbs_cap_ut(hdd_ctx->psoc, 0);
 		else
-			wma_set_dbs_capability_ut(1);
+			policy_mgr_set_dbs_cap_ut(hdd_ctx->psoc, 1);
 
+		wma_enable_dbs_service_ut();
 		if (apps_args[1] >= PM_THROUGHPUT &&
 			apps_args[1] <= PM_LATENCY) {
 			hdd_debug("setting system pref to [%d]\n",

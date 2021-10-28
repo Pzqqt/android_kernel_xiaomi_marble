@@ -855,8 +855,6 @@ struct wma_wlm_stats_data {
  * @hw_bd_info: hardware board info
  * @miracast_value: miracast value
  * @log_completion_timer: log completion timer
- * @num_dbs_hw_modes: Number of HW modes supported by the FW
- * @hw_mode: DBS HW mode list
  * @old_hw_mode_index: Previous configured HW mode index
  * @new_hw_mode_index: Current configured HW mode index
  * @peer_authorized_cb: peer authorized hdd callback
@@ -981,8 +979,6 @@ typedef struct {
 	uint32_t hw_bd_info[HW_BD_INFO_SIZE];
 	uint32_t miracast_value;
 	qdf_mc_timer_t log_completion_timer;
-	uint32_t num_dbs_hw_modes;
-	struct dbs_hw_mode_info hw_mode;
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
 	wma_peer_authorized_fp peer_authorized_cb;

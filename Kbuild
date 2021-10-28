@@ -2654,9 +2654,6 @@ endif
 ifeq ($(CONFIG_WLAN_FEATURE_FIPS), y)
 WMA_OBJS+=	$(WMA_SRC_DIR)/wma_fips_api.o
 endif
-ifeq ($(CONFIG_MPC_UT_FRAMEWORK), y)
-WMA_OBJS +=	$(WMA_SRC_DIR)/wma_utils_ut.o
-endif
 ifeq ($(CONFIG_WLAN_FEATURE_11AX), y)
 WMA_OBJS+=	$(WMA_SRC_DIR)/wma_he.o
 endif
