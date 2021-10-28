@@ -771,23 +771,6 @@ static inline int dsi_pixel_format_to_bpp(enum dsi_pixel_format fmt)
 	return 24;
 }
 
-/* return number of DSI data lanes */
-static inline int dsi_get_num_of_data_lanes(enum dsi_data_lanes dlanes)
-{
-	int num_of_lanes = 0;
-
-	if (dlanes & DSI_DATA_LANE_0)
-		num_of_lanes++;
-	if (dlanes & DSI_DATA_LANE_1)
-		num_of_lanes++;
-	if (dlanes & DSI_DATA_LANE_2)
-		num_of_lanes++;
-	if (dlanes & DSI_DATA_LANE_3)
-		num_of_lanes++;
-
-	return num_of_lanes;
-}
-
 static inline u64 dsi_h_active_dce(struct dsi_mode_info *mode)
 {
 	u64 h_active = 0;
