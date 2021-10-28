@@ -799,8 +799,8 @@ static void hal_reg_write_work(void *arg)
 
 static void __hal_flush_reg_write_work(struct hal_soc *hal)
 {
-	qdf_cancel_work(&hal->reg_write_work);
-
+	qdf_flush_work(&hal->reg_write_work);
+	qdf_disable_work(&hal->reg_write_work);
 }
 
 void hal_flush_reg_write_work(hal_soc_handle_t hal_handle)
