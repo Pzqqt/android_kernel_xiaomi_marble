@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -249,6 +250,9 @@ void target_if_cfr_fill_header(struct csi_cfr_header *hdr,
 	} else if (target_type == TARGET_TYPE_QCA8074V2) {
 		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_6;
 		hdr->cmn.chip_type = CFR_CAPTURE_RADIO_HKV2;
+	} else if (target_type == TARGET_TYPE_QCA9574) {
+		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_6;
+		hdr->cmn.chip_type = CFR_CAPTURE_RADIO_ALDER;
 	} else {
 		if (target_type == TARGET_TYPE_QCN9000)
 			hdr->cmn.cfr_metadata_version = CFR_META_VERSION_7;
@@ -430,7 +434,8 @@ target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 
 	target_type = target_if_cfr_get_target_type(psoc);
 
-	if (target_type == TARGET_TYPE_QCA8074V2) {
+	if ((target_type == TARGET_TYPE_QCA8074V2) ||
+	    (target_type == TARGET_TYPE_QCA9574)) {
 		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
 		return cfr_dbr_init_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_IPQ4019) ||
@@ -463,7 +468,8 @@ target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 
 	target_type = target_if_cfr_get_target_type(psoc);
 
-	if (target_type == TARGET_TYPE_QCA8074V2) {
+	if ((target_type == TARGET_TYPE_QCA8074V2) ||
+	    (target_type == TARGET_TYPE_QCA9574)) {
 		return cfr_dbr_deinit_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_IPQ4019) ||
 		   (target_type == TARGET_TYPE_QCA9984) ||
