@@ -4023,4 +4023,24 @@ bool policy_mgr_is_hwmode_offload_enabled(struct wlan_objmgr_psoc *psoc);
  */
 bool policy_mgr_is_3rd_conn_on_same_band_allowed(struct wlan_objmgr_psoc *psoc,
 						 enum policy_mgr_con_mode mode);
+
+#ifdef MPC_UT_FRAMEWORK
+/**
+ * policy_mgr_set_dbs_cap_ut() - Set DBS capability for UT framework
+ *
+ * @psoc: Pointer to psoc
+ * @dbs: Value of DBS capability to be set
+ *
+ * Sets the DBS capability for unit test framework. If the HW mode is
+ * already sent by the FW, only the DBS capability needs to be set. If the
+ * FW did not send any HW mode list, a single entry is created and DBS mode
+ * is set in it. The DBS capability is also set in the service bit map.
+ *
+ * Return: None
+ */
+void policy_mgr_set_dbs_cap_ut(struct wlan_objmgr_psoc *psoc, uint32_t dbs);
+#else
+static inline void
+policy_mgr_set_dbs_cap_ut(struct wlan_objmgr_psoc *psoc, uint32_t dbs) {}
+#endif
 #endif /* __WLAN_POLICY_MGR_API_H */
