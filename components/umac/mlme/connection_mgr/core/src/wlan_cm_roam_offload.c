@@ -43,6 +43,7 @@
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_connectivity_logging.h"
+#include "wlan_if_mgr_roam.h"
 
 #ifdef WLAN_FEATURE_SAE
 #define CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) \
@@ -3216,6 +3217,69 @@ static QDF_STATUS cm_is_rso_allowed(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+void cm_handle_sta_sta_roaming_enablement(struct wlan_objmgr_psoc *psoc,
+					  uint8_t curr_vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	uint32_t sta_count, conn_idx = 0;
+	struct dual_sta_policy *dual_sta_policy;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	uint8_t temp_vdev_id;
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, curr_vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_debug("vdev object is NULL");
+		return;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		goto rel_ref;
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
+	sta_count = policy_mgr_get_mode_specific_conn_info(psoc, NULL,
+							   vdev_id_list,
+							   PM_STA_MODE);
+
+	if (!(wlan_mlme_get_dual_sta_roaming_enabled(psoc) && sta_count == 2)) {
+		mlme_debug("Dual sta roaming is not enabled or count:%d",
+			   sta_count);
+		goto rel_ref;
+	}
+
+	if (!(policy_mgr_current_concurrency_is_mcc(psoc) ||
+	    policy_mgr_current_concurrency_is_scc(psoc))) {
+		mlme_debug("After roam on vdev_id:%d, STA + STA concurrency is in DBS:%d",
+			   curr_vdev_id, sta_count);
+		for (conn_idx = 0; conn_idx < sta_count; conn_idx++) {
+			temp_vdev_id = vdev_id_list[conn_idx];
+			if (temp_vdev_id == curr_vdev_id) {
+				wlan_cm_roam_activate_pcl_per_vdev(psoc,
+								   curr_vdev_id,
+								   true);
+				/* Set PCL after sending roam complete */
+				policy_mgr_set_pcl_for_existing_combo(psoc,
+								PM_STA_MODE,
+								curr_vdev_id);
+			} else {
+				/* Enable roaming on secondary vdev */
+				if_mgr_enable_roaming(pdev, vdev, RSO_SET_PCL);
+			}
+		}
+	} else {
+		mlme_debug("After roam STA + STA concurrency is in MCC/SCC");
+	}
+rel_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
 QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t rso_command,
 				uint8_t reason)
@@ -3579,6 +3643,8 @@ cm_roam_switch_to_rso_enable(struct wlan_objmgr_pdev *pdev,
 	control_bitmap = mlme_get_operations_bitmap(psoc, vdev_id);
 
 	cur_state = mlme_get_roam_state(psoc, vdev_id);
+	mlme_debug("CM_RSO: vdev%d: cur_state : %d", vdev_id, cur_state);
+
 	switch (cur_state) {
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_RSO_STOPPED:
