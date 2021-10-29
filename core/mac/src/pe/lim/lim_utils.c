@@ -7588,7 +7588,11 @@ void lim_update_session_he_capable(struct mac_context *mac, struct pe_session *s
 	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band)
 		session->vhtCapability = 0;
 
-	pe_debug("he_capable: %d", session->he_capable);
+	if (!wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
+		session->he_config.ul_mu = mac->he_cap_5g.ul_mu;
+
+	pe_debug("he_capable: %d ul mu %d",
+		 session->he_capable, session->he_config.ul_mu);
 }
 
 void lim_update_session_he_capable_chan_switch(struct mac_context *mac,
