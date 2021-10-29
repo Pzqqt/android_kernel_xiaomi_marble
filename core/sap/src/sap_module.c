@@ -1190,7 +1190,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 				   params);
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static enum phy_ch_width
 wlansap_get_target_eht_phy_ch_width(void)
 {

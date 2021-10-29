@@ -1145,7 +1145,7 @@ static int pcie_gen_speed;
 /* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static enum phy_ch_width hdd_get_eht_phy_ch_width_from_target(void)
 {
 	uint32_t max_fw_bw = sme_get_eht_ch_width();
@@ -19135,7 +19135,7 @@ static const struct hdd_chwidth_info chwidth_info[] = {
 		.ch_bw_str = "10MHz",
 		.phy_chwidth = CH_WIDTH_10MHZ,
 	},
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	[NL80211_CHAN_WIDTH_320] = {
 		.sir_chwidth_valid = true,
 		.sir_chwidth = eHT_CHANNEL_WIDTH_320MHZ,

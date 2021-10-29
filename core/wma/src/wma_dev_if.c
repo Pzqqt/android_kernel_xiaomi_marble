@@ -3780,7 +3780,7 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id)
 
 	wma_vdev_set_he_bss_params(wma, vdev_id,
 				   &mlme_obj->proto.he_ops_info);
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	wma_vdev_set_eht_bss_params(wma, vdev_id,
 				    &mlme_obj->proto.eht_ops_info);
 #endif

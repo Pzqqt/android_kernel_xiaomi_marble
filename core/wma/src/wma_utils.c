@@ -3284,7 +3284,7 @@ wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 			phymode = WLAN_PHYMODE_11A;
 			break;
 		}
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 		if (is_eht) {
 			if (ch_width == CH_WIDTH_160MHZ)
 				phymode = WLAN_PHYMODE_11BEA_EHT160;

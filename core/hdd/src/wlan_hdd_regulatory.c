@@ -1104,7 +1104,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static void fill_wiphy_channel_320mhz(struct ieee80211_channel *wiphy_chan,
 				      uint16_t max_bw)
 {

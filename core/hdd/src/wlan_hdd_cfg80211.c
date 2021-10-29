@@ -3026,7 +3026,7 @@ static void wlan_hdd_handle_zero_acs_list(struct hdd_context *hdd_ctx,
 	hdd_debug("retore acs chan list to single freq %d", acs_chan_default);
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static void wlan_hdd_set_sap_acs_ch_width_320(struct sap_config *sap_config)
 {
 	sap_config->acs_cfg.ch_width = CH_WIDTH_320MHZ;
@@ -15445,7 +15445,7 @@ hdd_convert_phy_bw_to_nl_bw(enum phy_ch_width bw)
 		return NL80211_CHAN_WIDTH_5;
 	case CH_WIDTH_10MHZ:
 		return NL80211_CHAN_WIDTH_10;
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	case CH_WIDTH_320MHZ:
 		return NL80211_CHAN_WIDTH_320;
 #endif

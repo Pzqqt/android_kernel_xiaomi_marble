@@ -759,7 +759,7 @@ static inline uint16_t ch_width_in_mhz(enum phy_ch_width ch_width)
 		return 5;
 	case CH_WIDTH_10MHZ:
 		return 10;
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	case CH_WIDTH_320MHZ:
 		return 320;
 #endif

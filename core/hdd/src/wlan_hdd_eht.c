@@ -31,6 +31,7 @@
 #include "wma_api.h"
 #include "wlan_hdd_sysfs.h"
 
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 #define CHAN_WIDTH_SET_40MHZ_IN_2G \
 	IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_IN_2G
 #define CHAN_WIDTH_SET_40MHZ_80MHZ_IN_5G \
@@ -322,3 +323,4 @@ void hdd_sysfs_11be_rate_destroy(struct hdd_adapter *adapter)
 	device_remove_file(&adapter->dev->dev, &dev_attr_11be_rate);
 }
 
+#endif

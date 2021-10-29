@@ -861,7 +861,7 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter)
 	return errno;
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static void
 wlan_hdd_set_chandef_320mhz(struct cfg80211_chan_def *chandef,
 			    struct hdd_chan_change_params chan_change)

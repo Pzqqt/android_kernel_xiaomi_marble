@@ -2904,7 +2904,7 @@ lim_convert_channel_width_enum(enum phy_ch_width ch_width)
 		return eHT_CHANNEL_WIDTH_160MHZ;
 	case CH_WIDTH_80P80MHZ:
 		return eHT_CHANNEL_WIDTH_80P80MHZ;
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	case CH_WIDTH_320MHZ:
 		return eHT_CHANNEL_WIDTH_320MHZ;
 #endif
