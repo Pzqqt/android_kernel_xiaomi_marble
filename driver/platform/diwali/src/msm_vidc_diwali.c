@@ -5,6 +5,7 @@
  */
 
 #include <linux/of.h>
+#include <linux/io.h>
 
 #include "msm_vidc_diwali.h"
 #include "msm_vidc_platform.h"
@@ -45,6 +46,15 @@
 	.bank_spreading = bsp,	\
 }
 
+#define EFUSE_ENTRY(sa, s, m, sh, p) \
+{	\
+	.start_address = sa,		\
+	.size = s,	\
+	.mask = m,	\
+	.shift = sh,	\
+	.purpose = p	\
+}
+
 #define DDR_TYPE_LPDDR4 0x6
 #define DDR_TYPE_LPDDR4X 0x7
 #define DDR_TYPE_LPDDR5 0x8
@@ -58,7 +68,7 @@
 #define HEIC    MSM_VIDC_HEIC
 #define CODECS_ALL     (H264 | HEVC | VP9 | HEIC)
 
-static struct msm_platform_core_capability core_data_diwali[] = {
+static struct msm_platform_core_capability core_data_diwali_v0[] = {
 	/* {type, value} */
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
@@ -108,7 +118,13 @@ static struct msm_platform_core_capability core_data_diwali[] = {
 	{ENC_AUTO_FRAMERATE, 1},
 };
 
-static struct msm_platform_inst_capability instance_data_diwali[] = {
+static struct msm_platform_core_capability core_data_diwali_v1[] = {
+};
+
+static struct msm_platform_core_capability core_data_diwali_v2[] = {
+};
+
+static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 	/* {cap, domain, codec,
 	 *      min, max, step_or_mask, value,
 	 *      v4l2_id,
@@ -1601,6 +1617,12 @@ static struct msm_platform_inst_capability instance_data_diwali[] = {
 		V4L2_CID_MPEG_VIDC_VENC_COMPLEXITY},
 };
 
+static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
+};
+
+static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
+};
+
 /*
  * Custom conversion coefficients for resolution: 176x144 negative
  * coeffs are converted to s4.9 format
@@ -1632,17 +1654,76 @@ static u32 bus_bw_nrt[] = {
 	11000000,
 };
 
+static struct msm_vidc_efuse_data efuse_data_diwali[] = {
+	/* IRIS_4K60_FMAX_LIMIT_EFUSE - max 4K@60 */
+	EFUSE_ENTRY(0x221C0274, 4, 0x8000000000, 0x27, SKU_VERSION),
+	/* IRIS_MULTIPIPE_DISABLE - max 4K@30 */
+	EFUSE_ENTRY(0x221C0270, 4, 0x0000000080, 0x06, SKU_VERSION),
+};
+
 static struct msm_vidc_platform_data diwali_data = {
-	.core_data = core_data_diwali,
-	.core_data_size = ARRAY_SIZE(core_data_diwali),
-	.instance_data = instance_data_diwali,
-	.instance_data_size = ARRAY_SIZE(instance_data_diwali),
+	.core_data = core_data_diwali_v0,
+	.core_data_size = ARRAY_SIZE(core_data_diwali_v0),
+	.instance_data = instance_data_diwali_v0,
+	.instance_data_size = ARRAY_SIZE(instance_data_diwali_v0),
 	.csc_data.vpe_csc_custom_bias_coeff = vpe_csc_custom_bias_coeff,
 	.csc_data.vpe_csc_custom_matrix_coeff = vpe_csc_custom_matrix_coeff,
 	.csc_data.vpe_csc_custom_limit_coeff = vpe_csc_custom_limit_coeff,
 	.ubwc_config = ubwc_config_diwali,
 	.bus_bw_nrt = bus_bw_nrt,
+	.efuse_data = efuse_data_diwali,
+	.efuse_data_size = ARRAY_SIZE(efuse_data_diwali),
+	.sku_version = 0,
 };
+
+static int msm_vidc_read_efuse(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	void __iomem *base;
+	u32 i = 0, efuse = 0, efuse_data_count = 0;
+	struct msm_vidc_efuse_data *efuse_data = NULL;
+	struct msm_vidc_platform_data *platform_data;
+
+	if (!core || !core->platform || !core->pdev) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	platform_data = &core->platform->data;
+	efuse_data = platform_data->efuse_data;
+	efuse_data_count = platform_data->efuse_data_size;
+
+	if (!efuse_data)
+		return 0;
+
+	for (i = 0; i < efuse_data_count; i++) {
+		switch ((efuse_data[i]).purpose) {
+		case SKU_VERSION:
+			base = devm_ioremap(&core->pdev->dev, (efuse_data[i]).start_address,
+					(efuse_data[i]).size);
+			if (!base) {
+				d_vpr_e("failed efuse: start %#x, size %d\n",
+					(efuse_data[i]).start_address,
+					(efuse_data[i]).size);
+				return -EINVAL;
+			} else {
+				efuse = readl_relaxed(base);
+				platform_data->sku_version =
+						(efuse & (efuse_data[i]).mask) >>
+						(efuse_data[i]).shift;
+			}
+			break;
+		default:
+			break;
+		}
+		if (platform_data->sku_version) {
+			d_vpr_h("efuse 0x%x, platform version 0x%x\n",
+				efuse, platform_data->sku_version);
+			break;
+		}
+	}
+	return rc;
+}
 
 static void msm_vidc_ddr_ubwc_config(
 	struct msm_vidc_platform_data *platform_data, u32 hbb_override_val)
@@ -1667,6 +1748,7 @@ static void msm_vidc_ddr_ubwc_config(
 static int msm_vidc_init_data(struct msm_vidc_core *core)
 {
 	int rc = 0;
+	struct msm_vidc_platform_data *platform_data = NULL;
 
 	if (!core || !core->platform) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1675,6 +1757,30 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 	d_vpr_h("%s: initialize diwali data\n", __func__);
 
 	core->platform->data = diwali_data;
+	platform_data = &core->platform->data;
+
+	/* Check for sku version */
+	rc = msm_vidc_read_efuse(core);
+	if (rc) {
+		d_vpr_e("%s: Failed to read efuse\n", __func__);
+		return rc;
+	}
+
+	if (platform_data->sku_version == SKU_VERSION_1) {
+		platform_data->core_data = core_data_diwali_v1;
+		platform_data->core_data_size =
+				ARRAY_SIZE(core_data_diwali_v1);
+		platform_data->instance_data = instance_data_diwali_v1;
+		platform_data->instance_data_size =
+				ARRAY_SIZE(instance_data_diwali_v1);
+	} else if (platform_data->sku_version == SKU_VERSION_2) {
+		platform_data->core_data = core_data_diwali_v2;
+		platform_data->core_data_size =
+				ARRAY_SIZE(core_data_diwali_v2);
+		platform_data->instance_data = instance_data_diwali_v2;
+		platform_data->instance_data_size =
+				ARRAY_SIZE(instance_data_diwali_v2);
+	}
 
 	/* Check for DDR variant */
 	msm_vidc_ddr_ubwc_config(&core->platform->data, 0xe);
