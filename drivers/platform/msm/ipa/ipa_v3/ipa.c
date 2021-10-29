@@ -69,6 +69,8 @@
 #define DEFAULT_MPM_TETH_AGGR_SIZE 24
 #define DEFAULT_MPM_UC_THRESH_SIZE 4
 
+RAW_NOTIFIER_HEAD(ipa_rmnet_notifier_list);
+
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.
  */
@@ -7266,6 +7268,10 @@ static inline void ipa3_register_to_fmwk(void)
 	data.ipa_rmnet_ll_xmit = ipa3_rmnet_ll_xmit;
 	data.ipa_register_rmnet_ll_cb = ipa3_register_rmnet_ll_cb;
 	data.ipa_unregister_rmnet_ll_cb = ipa3_unregister_rmnet_ll_cb;
+	data.ipa_register_notifier =
+		ipa3_register_notifier;
+	data.ipa_unregister_notifier =
+		ipa3_unregister_notifier;
 
 	if (ipa_fmwk_register_ipa(&data)) {
 		IPAERR("couldn't register to IPA framework\n");
@@ -9123,6 +9129,12 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 			goto fail_rmnet_ll_init;
 		}
 	}
+	ipa3_ctx->ipa_rmnet_notifier_list_internal = &ipa_rmnet_notifier_list;
+	spin_lock_init(&ipa3_ctx->notifier_lock);
+	ipa3_ctx->buff_above_thresh_for_def_pipe_notified = false;
+	ipa3_ctx->buff_above_thresh_for_coal_pipe_notified = false;
+	ipa3_ctx->buff_below_thresh_for_def_pipe_notified = false;
+	ipa3_ctx->buff_below_thresh_for_coal_pipe_notified = false;
 
 	mutex_init(&ipa3_ctx->app_clock_vote.mutex);
 	ipa3_ctx->is_modem_up = false;
