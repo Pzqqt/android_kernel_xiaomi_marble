@@ -433,7 +433,7 @@ static const uint8_t *cm_diag_get_akm_str(enum mgmt_auth_type auth_type,
 		return "NONE";
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static enum mgmt_dot11_mode
 cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 {

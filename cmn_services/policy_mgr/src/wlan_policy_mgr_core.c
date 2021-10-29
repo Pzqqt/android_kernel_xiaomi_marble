@@ -1949,7 +1949,7 @@ enum hw_mode_bandwidth policy_mgr_get_bw(enum phy_ch_width chan_width)
 	case CH_WIDTH_10MHZ:
 		bw = HW_MODE_10_MHZ;
 		break;
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	case CH_WIDTH_320MHZ:
 		bw = HW_MODE_320_MHZ;
 		break;
@@ -1988,7 +1988,7 @@ enum phy_ch_width policy_mgr_get_ch_width(enum hw_mode_bandwidth bw)
 	case HW_MODE_10_MHZ:
 		ch_width = CH_WIDTH_10MHZ;
 		break;
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	case HW_MODE_320_MHZ:
 		ch_width = CH_WIDTH_320MHZ;
 		break;
