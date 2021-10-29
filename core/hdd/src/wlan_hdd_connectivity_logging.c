@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -103,7 +104,7 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	 GET_ATTR_OFFSET(conn_info.ssid_len), GET_ATTR_OFFSET(conn_info.ssid)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID,  NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(bssid)},
-	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID_HINT, NLA_BINARY, sizeof(uint8_t),
+	{QCA_WLAN_VENDOR_ATTR_DIAG_BSSID_HINT, NLA_BINARY, QDF_MAC_ADDR_SIZE,
 	 GET_ATTR_OFFSET(conn_info.bssid_hint)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FREQ,       NLA_U16,    sizeof(uint16_t),
 	 GET_ATTR_OFFSET(conn_info.freq)},
@@ -900,8 +901,8 @@ wlan_hdd_put_connectivity_logging_data(struct sk_buff *skb,
 			bssid.bytes);
 		break;
 	case QCA_WLAN_VENDOR_ATTR_DIAG_BSSID_HINT:
-		if (qdf_is_macaddr_zero(&rec->bssid) ||
-		    qdf_is_macaddr_broadcast(&rec->bssid))
+		if (qdf_is_macaddr_zero(&rec->conn_info.bssid_hint) ||
+		    qdf_is_macaddr_broadcast(&rec->conn_info.bssid_hint))
 			break;
 
 		nla_put(skb, attribute_id, QDF_MAC_ADDR_SIZE,
