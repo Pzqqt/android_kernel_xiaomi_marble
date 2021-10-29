@@ -201,7 +201,7 @@ convert_spectral_err_code_internal_to_nl
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 int
 wlan_spectral_get_nl80211_chwidth(uint8_t phy_chwidth)
 {
