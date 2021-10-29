@@ -64,8 +64,6 @@ struct msm_vidc_platform_data {
 	u32 core_data_size;
 	struct msm_platform_inst_capability *instance_data;
 	u32 instance_data_size;
-	struct allowed_clock_rates_table *allowed_clks_tbl;
-	u32 allowed_clks_tbl_size;
 	struct msm_vidc_csc_coeff csc_data;
 	struct msm_vidc_ubwc_config_data *ubwc_config;
 	u32 *bus_bw_nrt;

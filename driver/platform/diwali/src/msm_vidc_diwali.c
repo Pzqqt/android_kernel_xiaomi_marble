@@ -14,6 +14,7 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_control.h"
 #include "hfi_property.h"
+#include "msm_vidc_dt.h"
 
 #define DEFAULT_VIDEO_CONCEAL_COLOR_BLACK 0x8020010
 #define MINIMUM_FPS             1
@@ -1623,6 +1624,14 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 };
 
+static struct allowed_clock_rates_table clock_data_diwali_v1[] = {
+	{240000000}, {338000000}, {366000000}
+};
+
+static struct allowed_clock_rates_table clock_data_diwali_v2[] = {
+	{200000000}
+};
+
 /*
  * Custom conversion coefficients for resolution: 176x144 negative
  * coeffs are converted to s4.9 format
@@ -1747,10 +1756,10 @@ static void msm_vidc_ddr_ubwc_config(
 
 static int msm_vidc_init_data(struct msm_vidc_core *core)
 {
-	int rc = 0;
+	int rc = 0, i = 0;
 	struct msm_vidc_platform_data *platform_data = NULL;
 
-	if (!core || !core->platform) {
+	if (!core || !core->platform || !core->dt) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -1773,6 +1782,10 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 		platform_data->instance_data = instance_data_diwali_v1;
 		platform_data->instance_data_size =
 				ARRAY_SIZE(instance_data_diwali_v1);
+		/* Overide with SKU clock data into dt */
+		core->dt->allowed_clks_tbl = clock_data_diwali_v1;
+		core->dt->allowed_clks_tbl_size =
+				ARRAY_SIZE(clock_data_diwali_v1);
 	} else if (platform_data->sku_version == SKU_VERSION_2) {
 		platform_data->core_data = core_data_diwali_v2;
 		platform_data->core_data_size =
@@ -1780,6 +1793,16 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 		platform_data->instance_data = instance_data_diwali_v2;
 		platform_data->instance_data_size =
 				ARRAY_SIZE(instance_data_diwali_v2);
+		/* Overide with SKU clock data into dt */
+		core->dt->allowed_clks_tbl = clock_data_diwali_v2;
+		core->dt->allowed_clks_tbl_size =
+				ARRAY_SIZE(clock_data_diwali_v2);
+	}
+
+	if (platform_data->sku_version) {
+		d_vpr_h("Updated allowed clock rates\n");
+		for (i = 0; i < core->dt->allowed_clks_tbl_size; i++)
+			d_vpr_h("    %d\n", core->dt->allowed_clks_tbl[i]);
 	}
 
 	/* Check for DDR variant */
