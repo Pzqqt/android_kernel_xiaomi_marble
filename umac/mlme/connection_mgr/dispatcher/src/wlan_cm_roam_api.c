@@ -103,6 +103,12 @@ QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 	return cm_roam_send_rso_cmd(psoc, vdev_id, rso_command, reason);
 }
 
+void wlan_cm_handle_sta_sta_roaming_enablement(struct wlan_objmgr_psoc *psoc,
+					       uint8_t vdev_id)
+{
+	return cm_handle_sta_sta_roaming_enablement(psoc, vdev_id);
+}
+
 QDF_STATUS
 wlan_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		     uint8_t reason)
