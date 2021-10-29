@@ -465,7 +465,7 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 
 	if (LIM_IS_STA_ROLE(pe_session)) {
 		auth_algo = *(uint16_t *)body_ptr;
-		if (frame_len > (SAE_AUTH_STATUS_CODE_OFFSET + 2)) {
+		if (frame_len >= (SAE_AUTH_STATUS_CODE_OFFSET + 2)) {
 			sae_auth_seq =
 				*(uint16_t *)(body_ptr +
 					      SAE_AUTH_SEQ_NUM_OFFSET);
@@ -1702,7 +1702,7 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 	if (auth_alg != eSIR_AUTH_TYPE_SAE)
 		return false;
 
-	if (frm_len > (SAE_AUTH_STATUS_CODE_OFFSET + 2)) {
+	if (frm_len >= (SAE_AUTH_STATUS_CODE_OFFSET + 2)) {
 		sae_auth_seq =
 			*(uint16_t *)(frm_body + SAE_AUTH_SEQ_NUM_OFFSET);
 		sae_status_code =
