@@ -2352,6 +2352,12 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 			rc = -ENOMEM;
 			goto exit;
 		}
+
+		rc = msm_vidc_check_core_mbpf(inst);
+		if (rc) {
+			i_vpr_e(inst, "%s: unsupported load\n", __func__);
+			goto exit;
+		}
 	}
 
 	msm_vidc_update_cap_value(inst, PRIORITY, adjusted_value, __func__);
