@@ -1072,7 +1072,7 @@ hal_rx_flow_setup_fse_7850(uint8_t *rx_fst, uint32_t table_offset,
 		(table_offset * HAL_RX_FST_ENTRY_SIZE);
 
 	/* clear the valid bit before starting the deletion*/
-	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY, VALID);
 
 	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY, SRC_IP_127_96) =
 		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY, SRC_IP_127_96,
