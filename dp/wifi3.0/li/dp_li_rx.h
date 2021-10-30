@@ -130,4 +130,75 @@ void dp_rx_prefetch_nbuf_data(qdf_nbuf_t nbuf, qdf_nbuf_t next)
 {
 }
 #endif
+
+#ifdef QCA_DP_RX_HW_SW_NBUF_DESC_PREFETCH
+/**
+ * dp_rx_cookie_2_va_rxdma_buf_prefetch() - function to prefetch the SW desc
+ * @soc: Handle to DP Soc structure
+ * @cookie: cookie used to lookup virtual address
+ *
+ * Return: prefetched Rx descriptor virtual address
+ */
+static inline
+void *dp_rx_cookie_2_va_rxdma_buf_prefetch(struct dp_soc *soc, uint32_t cookie)
+{
+	uint8_t pool_id = DP_RX_DESC_COOKIE_POOL_ID_GET(cookie);
+	uint16_t index = DP_RX_DESC_COOKIE_INDEX_GET(cookie);
+	struct rx_desc_pool *rx_desc_pool;
+	void *prefetch_desc;
+
+	if (qdf_unlikely(pool_id >= MAX_RXDESC_POOLS))
+		return NULL;
+
+	rx_desc_pool = &soc->rx_desc_buf[pool_id];
+
+	if (qdf_unlikely(index >= rx_desc_pool->pool_size))
+		return NULL;
+
+	prefetch_desc = &soc->rx_desc_buf[pool_id].array[index].rx_desc;
+	qdf_prefetch(prefetch_desc);
+	return prefetch_desc;
+}
+
+/**
+ * dp_rx_prefetch_hw_sw_nbuf_desc() - function to prefetch HW and SW desc
+ * @soc: Handle to HAL Soc structure
+ * @num_entries: valid number of HW descriptors
+ * @hal_ring_hdl: Destination ring pointer
+ * @last_prefetched_hw_desc: pointer to the last prefetched HW descriptor
+ * @last_prefetched_sw_desc: input & output param of last prefetch SW desc
+ *
+ * Return: None
+ */
+static inline
+void dp_rx_prefetch_hw_sw_nbuf_desc(struct dp_soc *soc,
+				    hal_soc_handle_t hal_soc,
+				    uint32_t num_entries,
+				    hal_ring_handle_t hal_ring_hdl,
+				    hal_ring_desc_t *last_prefetched_hw_desc,
+				    struct dp_rx_desc **last_prefetched_sw_desc)
+{
+	if (*last_prefetched_sw_desc) {
+		qdf_prefetch((uint8_t *)(*last_prefetched_sw_desc)->nbuf);
+		qdf_prefetch((uint8_t *)(*last_prefetched_sw_desc)->nbuf + 64);
+	}
+
+	if (num_entries) {
+		*last_prefetched_sw_desc = dp_rx_cookie_2_va_rxdma_buf_prefetch(soc, HAL_RX_REO_BUF_COOKIE_GET(*last_prefetched_hw_desc));
+		*last_prefetched_hw_desc = hal_srng_dst_prefetch_next_cached_desc(hal_soc,
+										  hal_ring_hdl,
+										  (uint8_t *)*last_prefetched_hw_desc);
+	}
+}
+#else
+static inline
+void dp_rx_prefetch_hw_sw_nbuf_desc(struct dp_soc *soc,
+				    hal_soc_handle_t hal_soc,
+				    uint32_t quota,
+				    hal_ring_handle_t hal_ring_hdl,
+				    hal_ring_desc_t *last_prefetched_hw_desc,
+				    struct dp_rx_desc **last_prefetched_sw_desc)
+{
+}
+#endif
 #endif

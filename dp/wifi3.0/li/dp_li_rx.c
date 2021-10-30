@@ -203,8 +203,10 @@ uint32_t dp_rx_process_li(struct dp_intr *int_ctx,
 			  uint32_t quota)
 {
 	hal_ring_desc_t ring_desc;
+	hal_ring_desc_t last_prefetched_hw_desc;
 	hal_soc_handle_t hal_soc;
 	struct dp_rx_desc *rx_desc = NULL;
+	struct dp_rx_desc *last_prefetched_sw_desc = NULL;
 	qdf_nbuf_t nbuf, next;
 	bool near_full;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT];
@@ -295,6 +297,9 @@ more_data:
 
 	if (num_pending > quota)
 		num_pending = quota;
+
+	last_prefetched_hw_desc = dp_srng_dst_prefetch(hal_soc, hal_ring_hdl,
+						       num_pending);
 
 	/*
 	 * start reaping the buffers from reo ring and queue
@@ -516,6 +521,12 @@ more_data:
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
 					    &tail[rx_desc->pool_id], rx_desc);
 		num_rx_bufs_reaped++;
+
+		dp_rx_prefetch_hw_sw_nbuf_desc(soc, hal_soc, num_pending,
+					       hal_ring_hdl,
+					       &last_prefetched_hw_desc,
+					       &last_prefetched_sw_desc);
+
 		/*
 		 * only if complete msdu is received for scatter case,
 		 * then allow break.

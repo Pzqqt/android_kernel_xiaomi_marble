@@ -2435,6 +2435,30 @@ static inline void dp_srng_dst_inv_cached_descs(struct dp_soc *dp_soc,
 }
 #endif /* QCA_CACHED_RING_DESC */
 
+#if defined(QCA_CACHED_RING_DESC) && defined(QCA_DP_RX_HW_SW_NBUF_DESC_PREFETCH)
+/**
+ * dp_srng_dst_prefetch() - Wrapper function to prefetch descs from dest ring
+ * @hal_soc_hdl: HAL SOC handle
+ * @hal_ring: opaque pointer to the HAL Rx Destination ring
+ * @num_entries: Entry count
+ *
+ * Return: None
+ */
+static inline void *dp_srng_dst_prefetch(hal_soc_handle_t hal_soc,
+					 hal_ring_handle_t hal_ring_hdl,
+					 uint32_t num_entries)
+{
+	return hal_srng_dst_prefetch(hal_soc, hal_ring_hdl, num_entries);
+}
+#else
+static inline void *dp_srng_dst_prefetch(hal_soc_handle_t hal_soc,
+					 hal_ring_handle_t hal_ring_hdl,
+					 uint32_t num_entries)
+{
+	return NULL;
+}
+#endif
+
 #ifdef QCA_ENH_V3_STATS_SUPPORT
 /**
  * dp_pdev_print_delay_stats(): Print pdev level delay stats
