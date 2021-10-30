@@ -366,9 +366,8 @@ static u32 sde_rsc_timer_calculate(struct sde_rsc_priv *rsc,
 	rsc_time_slot_0_ns = div_u64(rsc_time_slot_0_ns, cxo_period_ns);
 	rsc->timer_config.rsc_time_slot_0_ns = (u32) rsc_time_slot_0_ns;
 
-	/* time_slot_1 for mode1 latency */
-	rsc_time_slot_1_ns = frame_time_ns;
-	rsc_time_slot_1_ns = div_u64(rsc_time_slot_1_ns, cxo_period_ns);
+	/* time_slot_1 for mode1 latency - 1 fps */
+	rsc_time_slot_1_ns = div_u64(TICKS_IN_NANO_SECOND, cxo_period_ns);
 	rsc->timer_config.rsc_time_slot_1_ns = (u32) rsc_time_slot_1_ns;
 
 	/* mode 2 is infinite */
