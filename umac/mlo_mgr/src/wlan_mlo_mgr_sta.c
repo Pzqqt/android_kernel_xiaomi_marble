@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -532,7 +533,14 @@ void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
 						REASON_UNSPEC_FAILURE, NULL);
 				return;
 			}
+		} else if (!wlan_cm_is_vdev_connected(vdev)) {
+			/* If vdev is not in disconnected or connected state,
+			 * then the event is received due to connect req being
+			 * flushed. Hence, ignore this event
+			 */
+			return;
 		}
+
 		if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
 			if (mlo_dev_ctx->sta_ctx->assoc_rsp.ptr) {
 				qdf_mem_free(
