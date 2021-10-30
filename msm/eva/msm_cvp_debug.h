@@ -8,7 +8,7 @@
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include "msm_cvp_internal.h"
-#include "trace/events/msm_cvp_events.h"
+#include "msm_cvp_events.h"
 
 #ifndef CVP_DBG_LABEL
 #define CVP_DBG_LABEL "msm_cvp"
