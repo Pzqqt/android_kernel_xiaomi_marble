@@ -144,6 +144,16 @@ QDF_STATUS mlo_reg_mlme_ext_cb(struct mlo_mgr_context *ctx,
 QDF_STATUS mlo_unreg_mlme_ext_cb(struct mlo_mgr_context *ctx);
 
 /**
+ * mlo_mlme_clone_sta_security() - Clone Security params in partner vdevs
+ * @vdev: Object manager vdev
+ * @req: wlan_cm_connect_req data object to be passed to callback
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_mlme_clone_sta_security(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_connect_req *req);
+
+/**
  * mlo_mlme_validate_conn_req() - Validate connect request
  * @vdev: Object manager vdev
  * @ext_data: Data object to be passed to callback

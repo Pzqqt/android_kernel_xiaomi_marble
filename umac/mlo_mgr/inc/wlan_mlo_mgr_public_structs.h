@@ -365,6 +365,7 @@ struct mlo_tgt_partner_info {
  * @mlo_mlme_ext_assoc_resp: Callback to initiate assoc resp
  * @mlo_mlme_get_link_assoc_req: Calback to get link assoc req buffer
  * @mlo_mlme_ext_deauth: Callback to initiate deauth
+ * @mlo_mlme_ext_clone_security_param: Callback to clone mlo security params
  */
 struct mlo_mlme_ext_ops {
 	QDF_STATUS (*mlo_mlme_ext_validate_conn_req)(
@@ -382,6 +383,9 @@ struct mlo_mlme_ext_ops {
 	qdf_nbuf_t (*mlo_mlme_get_link_assoc_req)(struct wlan_objmgr_peer *peer,
 						  uint8_t link_ix);
 	void (*mlo_mlme_ext_deauth)(struct wlan_objmgr_peer *peer);
+	QDF_STATUS (*mlo_mlme_ext_clone_security_param)(
+		    struct vdev_mlme_obj *vdev_mlme,
+		    struct wlan_cm_connect_req *req);
 };
 
 /* maximum size of vdev bitmap array for MLO link set active command */

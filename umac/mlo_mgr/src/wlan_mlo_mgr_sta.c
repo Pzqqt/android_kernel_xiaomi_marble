@@ -342,6 +342,11 @@ mlo_validate_connect_req(struct wlan_objmgr_vdev *vdev,
 					mlo_dev_ctx->wlan_vdev_list[i], NULL);
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
+			/*
+			 * clone security params in all partner sta vaps
+			 */
+			mlo_mlme_clone_sta_security(
+				mlo_dev_ctx->wlan_vdev_list[i], req);
 		}
 	}
 	return status;
