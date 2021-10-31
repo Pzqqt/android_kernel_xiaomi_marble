@@ -729,11 +729,12 @@ int msm_vidc_enum_frameintervals(void *instance, struct v4l2_frmivalenum *fival)
 
 	fival->type = V4L2_FRMIVAL_TYPE_STEPWISE;
 	fival->stepwise.min.numerator = 1;
-	fival->stepwise.min.denominator = min_t(u32, fps, MAXIMUM_FPS);
+	fival->stepwise.min.denominator =
+			min_t(u32, fps, capability->cap[FRAME_RATE].max);
 	fival->stepwise.max.numerator = 1;
 	fival->stepwise.max.denominator = 1;
 	fival->stepwise.step.numerator = 1;
-	fival->stepwise.step.denominator = MAXIMUM_FPS;
+	fival->stepwise.step.denominator = capability->cap[FRAME_RATE].max;
 
 	return 0;
 }
