@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017, 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -175,5 +176,30 @@ static inline QDF_STATUS target_if_wifi_pos_convert_pdev_id_target_to_host(
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* CNSS_GENL */
+
+#if !defined(CNSS_GENL) && defined(WLAN_RTT_MEASUREMENT_NOTIFICATION)
+/**
+ * target_if_wifi_pos_parse_measreq_chan_info() - Get the channel info from
+ *                                                measurement request buffer.
+ * @pdev: Pointer to pdev structure
+ * @data_len: Data length of the LOWI measurement request buffer
+ * @dara: Pointer to the LOWI measurement request buffer
+ * @chinfo: Pointer to a structure to save channel info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_wifi_pos_parse_measreq_chan_info(struct wlan_objmgr_pdev *pdev,
+					   uint32_t data_len, uint8_t *data,
+					   struct rtt_channel_info *chinfo);
+#else
+static inline QDF_STATUS
+target_if_wifi_pos_parse_measreq_chan_info(struct wlan_objmgr_pdev *pdev,
+					   uint32_t data_len, uint8_t *data,
+					   struct rtt_channel_info *chinfo)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /*!defined(CNSS_GENL) && defined(WLAN_RTT_MEASUREMENT_NOTIFICATION)*/
 
 #endif /* _WIFI_POS_TGT_IF_H_ */

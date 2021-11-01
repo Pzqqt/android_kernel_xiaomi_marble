@@ -4103,7 +4103,21 @@ QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_convert_pdev_id_target_to_host(wmi_unified_t wmi_handle,
 					      uint32_t target_pdev_id,
 					      uint32_t *host_pdev_id);
-#endif
+
+#ifdef WLAN_RTT_MEASUREMENT_NOTIFICATION
+/**
+ * wmi_unified_extract_measreq_chan_info() - Extract the channel info from the
+ * LOWI measurement request buffer.
+ * @wmi_handle: wmi handle
+ * @data_len: the length of @data
+ * @data: the pointer to data buf
+ * @chinfo: Pointer to a structure to save channel info
+ */
+QDF_STATUS wmi_unified_extract_measreq_chan_info(
+		wmi_unified_t wmi_handle, uint32_t data_len, uint8_t *data,
+		struct rtt_channel_info *chinfo);
+#endif /* WLAN_RTT_MEASUREMENT_NOTIFICATION */
+#endif /* CNSS_GENL */
 
 /**
  * wmi_unified_send_bss_color_change_enable_cmd() - WMI function to send bss
