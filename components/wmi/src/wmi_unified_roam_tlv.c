@@ -2832,6 +2832,38 @@ extract_roam_scan_chan_list_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+extract_roam_stats_with_single_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
+				   struct roam_stats_event *stats_info)
+{
+	QDF_STATUS status;
+	uint8_t vdev_id = stats_info->vdev_id;
+
+	status = wmi_unified_extract_roam_11kv_stats(
+			wmi_handle, evt_buf, &stats_info->data_11kv[0], 0, 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_err("Roam 11kv stats extract failed vdev %d", vdev_id);
+
+	status = wmi_unified_extract_roam_trigger_stats(
+			wmi_handle, evt_buf, &stats_info->trigger[0], 0, 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_debug_rl("Extract roamtrigger stats failed vdev %d",
+			     vdev_id);
+
+	status = wmi_unified_extract_roam_scan_stats(
+			wmi_handle, evt_buf, &stats_info->scan[0], 0, 0, 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_debug_rl("Roam scan stats extract failed vdev %d", vdev_id);
+
+	status = wmi_unified_extract_roam_btm_response(
+			wmi_handle, evt_buf, &stats_info->btm_rsp[0], 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_debug_rl("Roam btm rsp stats extract fail vdev %d",
+			     vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_roam_stats_event_tlv() - Extract the roam stats event
  * from the wmi_roam_stats_event_id
@@ -2963,6 +2995,10 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	stats_info->num_roam_msg_info = param_buf->num_roam_msg_info;
 	stats_info->num_tlv = num_tlv;
 
+	if (!num_tlv)
+		extract_roam_stats_with_single_tlv(wmi_handle, evt_buf,
+						   stats_info);
+
 	for (i = 0; i < num_tlv; i++) {
 		/*
 		 * Roam Trigger id and that specific roam trigger related
@@ -3031,50 +3067,6 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 			goto err;
 		}
 	}
-	if (!num_tlv) {
-		status = wmi_unified_extract_roam_11kv_stats(wmi_handle,
-					       evt_buf,
-					       &stats_info->data_11kv[0], 0, 0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_err("Roam 11kv stats extract failed vdev %d",
-				vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-
-		status = wmi_unified_extract_roam_trigger_stats(wmi_handle,
-						    evt_buf,
-						    &stats_info->trigger[0],
-						    0, 0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_debug_rl("Extract roamtrigger stats failed vdev %d",
-				     vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-
-		status = wmi_unified_extract_roam_scan_stats(wmi_handle,
-							   evt_buf,
-							   &stats_info->scan[0],
-							   0, 0, 0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_debug_rl("Roam scan stats extract failed vdev %d",
-				     vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-
-		status = wmi_unified_extract_roam_btm_response(wmi_handle,
-							evt_buf,
-							&stats_info->btm_rsp[0],
-							0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_debug_rl("Roam btm rsp stats extract fail vdev %d",
-				     vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-	}
 
 	if (param_buf->roam_msg_info && param_buf->num_roam_msg_info) {
 		roam_msg_info = qdf_mem_malloc(param_buf->num_roam_msg_info *
@@ -3120,6 +3112,7 @@ err:
 	}
 	return status;
 }
+
 static QDF_STATUS
 extract_auth_offload_event_tlv(wmi_unified_t wmi_handle,
 			       uint8_t *event, uint32_t len,
