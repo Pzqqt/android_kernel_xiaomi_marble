@@ -38,78 +38,77 @@
  */
 
 /* Output Reports */
-static const u8 JC_OUTPUT_RUMBLE_AND_SUBCMD	= 0x01;
-static const u8 JC_OUTPUT_FW_UPDATE_PKT		= 0x03;
-static const u8 JC_OUTPUT_RUMBLE_ONLY		= 0x10;
-static const u8 JC_OUTPUT_MCU_DATA		= 0x11;
-static const u8 JC_OUTPUT_USB_CMD		= 0x80;
+#define JC_OUTPUT_RUMBLE_AND_SUBCMD	 0x01
+#define JC_OUTPUT_FW_UPDATE_PKT		 0x03
+#define JC_OUTPUT_RUMBLE_ONLY		 0x10
+#define JC_OUTPUT_MCU_DATA		 0x11
+#define JC_OUTPUT_USB_CMD		 0x80
 
 /* Subcommand IDs */
-static const u8 JC_SUBCMD_STATE			/*= 0x00*/;
-static const u8 JC_SUBCMD_MANUAL_BT_PAIRING	= 0x01;
-static const u8 JC_SUBCMD_REQ_DEV_INFO		= 0x02;
-static const u8 JC_SUBCMD_SET_REPORT_MODE	= 0x03;
-static const u8 JC_SUBCMD_TRIGGERS_ELAPSED	= 0x04;
-static const u8 JC_SUBCMD_GET_PAGE_LIST_STATE	= 0x05;
-static const u8 JC_SUBCMD_SET_HCI_STATE		= 0x06;
-static const u8 JC_SUBCMD_RESET_PAIRING_INFO	= 0x07;
-static const u8 JC_SUBCMD_LOW_POWER_MODE	= 0x08;
-static const u8 JC_SUBCMD_SPI_FLASH_READ	= 0x10;
-static const u8 JC_SUBCMD_SPI_FLASH_WRITE	= 0x11;
-static const u8 JC_SUBCMD_RESET_MCU		= 0x20;
-static const u8 JC_SUBCMD_SET_MCU_CONFIG	= 0x21;
-static const u8 JC_SUBCMD_SET_MCU_STATE		= 0x22;
-static const u8 JC_SUBCMD_SET_PLAYER_LIGHTS	= 0x30;
-static const u8 JC_SUBCMD_GET_PLAYER_LIGHTS	= 0x31;
-static const u8 JC_SUBCMD_SET_HOME_LIGHT	= 0x38;
-static const u8 JC_SUBCMD_ENABLE_IMU		= 0x40;
-static const u8 JC_SUBCMD_SET_IMU_SENSITIVITY	= 0x41;
-static const u8 JC_SUBCMD_WRITE_IMU_REG		= 0x42;
-static const u8 JC_SUBCMD_READ_IMU_REG		= 0x43;
-static const u8 JC_SUBCMD_ENABLE_VIBRATION	= 0x48;
-static const u8 JC_SUBCMD_GET_REGULATED_VOLTAGE	= 0x50;
+#define JC_SUBCMD_STATE			 0x00
+#define JC_SUBCMD_MANUAL_BT_PAIRING	 0x01
+#define JC_SUBCMD_REQ_DEV_INFO		 0x02
+#define JC_SUBCMD_SET_REPORT_MODE	 0x03
+#define JC_SUBCMD_TRIGGERS_ELAPSED	 0x04
+#define JC_SUBCMD_GET_PAGE_LIST_STATE	 0x05
+#define JC_SUBCMD_SET_HCI_STATE		 0x06
+#define JC_SUBCMD_RESET_PAIRING_INFO	 0x07
+#define JC_SUBCMD_LOW_POWER_MODE	 0x08
+#define JC_SUBCMD_SPI_FLASH_READ	 0x10
+#define JC_SUBCMD_SPI_FLASH_WRITE	 0x11
+#define JC_SUBCMD_RESET_MCU		 0x20
+#define JC_SUBCMD_SET_MCU_CONFIG	 0x21
+#define JC_SUBCMD_SET_MCU_STATE		 0x22
+#define JC_SUBCMD_SET_PLAYER_LIGHTS	 0x30
+#define JC_SUBCMD_GET_PLAYER_LIGHTS	 0x31
+#define JC_SUBCMD_SET_HOME_LIGHT	 0x38
+#define JC_SUBCMD_ENABLE_IMU		 0x40
+#define JC_SUBCMD_SET_IMU_SENSITIVITY	 0x41
+#define JC_SUBCMD_WRITE_IMU_REG		 0x42
+#define JC_SUBCMD_READ_IMU_REG		 0x43
+#define JC_SUBCMD_ENABLE_VIBRATION	 0x48
+#define JC_SUBCMD_GET_REGULATED_VOLTAGE	 0x50
 
 /* Input Reports */
-static const u8 JC_INPUT_BUTTON_EVENT		= 0x3F;
-static const u8 JC_INPUT_SUBCMD_REPLY		= 0x21;
-static const u8 JC_INPUT_IMU_DATA		= 0x30;
-static const u8 JC_INPUT_MCU_DATA		= 0x31;
-static const u8 JC_INPUT_USB_RESPONSE		= 0x81;
+#define JC_INPUT_BUTTON_EVENT		 0x3F
+#define JC_INPUT_SUBCMD_REPLY		 0x21
+#define JC_INPUT_IMU_DATA		 0x30
+#define JC_INPUT_MCU_DATA		 0x31
+#define JC_INPUT_USB_RESPONSE		 0x81
 
 /* Feature Reports */
-static const u8 JC_FEATURE_LAST_SUBCMD		= 0x02;
-static const u8 JC_FEATURE_OTA_FW_UPGRADE	= 0x70;
-static const u8 JC_FEATURE_SETUP_MEM_READ	= 0x71;
-static const u8 JC_FEATURE_MEM_READ		= 0x72;
-static const u8 JC_FEATURE_ERASE_MEM_SECTOR	= 0x73;
-static const u8 JC_FEATURE_MEM_WRITE		= 0x74;
-static const u8 JC_FEATURE_LAUNCH		= 0x75;
+#define JC_FEATURE_LAST_SUBCMD		 0x02
+#define JC_FEATURE_OTA_FW_UPGRADE	 0x70
+#define JC_FEATURE_SETUP_MEM_READ	 0x71
+#define JC_FEATURE_MEM_READ		 0x72
+#define JC_FEATURE_ERASE_MEM_SECTOR	 0x73
+#define JC_FEATURE_MEM_WRITE		 0x74
+#define JC_FEATURE_LAUNCH		 0x75
 
 /* USB Commands */
-static const u8 JC_USB_CMD_CONN_STATUS		= 0x01;
-static const u8 JC_USB_CMD_HANDSHAKE		= 0x02;
-static const u8 JC_USB_CMD_BAUDRATE_3M		= 0x03;
-static const u8 JC_USB_CMD_NO_TIMEOUT		= 0x04;
-static const u8 JC_USB_CMD_EN_TIMEOUT		= 0x05;
-static const u8 JC_USB_RESET			= 0x06;
-static const u8 JC_USB_PRE_HANDSHAKE		= 0x91;
-static const u8 JC_USB_SEND_UART		= 0x92;
+#define JC_USB_CMD_CONN_STATUS		 0x01
+#define JC_USB_CMD_HANDSHAKE		 0x02
+#define JC_USB_CMD_BAUDRATE_3M		 0x03
+#define JC_USB_CMD_NO_TIMEOUT		 0x04
+#define JC_USB_CMD_EN_TIMEOUT		 0x05
+#define JC_USB_RESET			 0x06
+#define JC_USB_PRE_HANDSHAKE		 0x91
+#define JC_USB_SEND_UART		 0x92
 
 /* SPI storage addresses of factory calibration data */
-static const u16 JC_CAL_DATA_START		= 0x603d;
-static const u16 JC_CAL_DATA_END		= 0x604e;
+#define JC_CAL_DATA_START	0x603d
+#define JC_CAL_DATA_END		0x604e
 #define JC_CAL_DATA_SIZE	(JC_CAL_DATA_END - JC_CAL_DATA_START + 1)
 
-
 /* The raw analog joystick values will be mapped in terms of this magnitude */
-static const u16 JC_MAX_STICK_MAG		= 32767;
-static const u16 JC_STICK_FUZZ			= 250;
-static const u16 JC_STICK_FLAT			= 500;
+#define JC_MAX_STICK_MAG		 32767
+#define JC_STICK_FUZZ			 250
+#define JC_STICK_FLAT			 500
 
 /* Hat values for pro controller's d-pad */
-static const u16 JC_MAX_DPAD_MAG		= 1;
-static const u16 JC_DPAD_FUZZ			/*= 0*/;
-static const u16 JC_DPAD_FLAT			/*= 0*/;
+#define JC_MAX_DPAD_MAG		1
+#define JC_DPAD_FUZZ		0
+#define JC_DPAD_FLAT		0
 
 /* frequency/amplitude tables for rumble */
 struct joycon_rumble_freq_data {
