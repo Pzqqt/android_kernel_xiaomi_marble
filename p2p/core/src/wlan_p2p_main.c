@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +36,7 @@
 #include "wlan_p2p_off_chan_tx.h"
 #include "wlan_p2p_cfg.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_mlme_api.h"
 
 /**
  * p2p_get_cmd_type_str() - parse cmd to string
@@ -1508,3 +1510,49 @@ QDF_STATUS p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev)
 }
 
 #endif /* WLAN_FEATURE_P2P_DEBUG */
+
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+QDF_STATUS p2p_check_and_force_scc_go_plus_go(struct wlan_objmgr_psoc *psoc,
+					      struct wlan_objmgr_vdev *vdev)
+{
+	int go_count = 0;
+	uint32_t existing_chan_freq, chan_freq;
+	enum phy_ch_width existing_ch_width, ch_width;
+	uint8_t existing_vdev_id = WLAN_UMAC_VDEV_ID_MAX, vdev_id;
+	enum policy_mgr_con_mode existing_vdev_mode = PM_MAX_NUM_OF_MODE;
+	bool go_force_scc = false;
+
+	go_count = policy_mgr_mode_specific_connection_count(
+			psoc, PM_P2P_GO_MODE, NULL);
+	go_force_scc = policy_mgr_go_scc_enforced(psoc);
+	if (go_count > 1 && go_force_scc) {
+		vdev_id = wlan_vdev_get_id(vdev);
+		chan_freq = wlan_get_operation_chan_freq(vdev);
+		ch_width = vdev->vdev_mlme.bss_chan->ch_width;
+		p2p_debug("Current vdev_id %d, chan_freq %d and ch_width %d",
+			  vdev_id, chan_freq, ch_width);
+		existing_vdev_id = policy_mgr_fetch_existing_con_info(
+				psoc, vdev_id,
+				chan_freq,
+				&existing_vdev_mode,
+				&existing_chan_freq,
+				&existing_ch_width);
+		p2p_debug("Existing vdev_id %d, chan_freq %d and ch_width %d",
+			  existing_vdev_id, existing_chan_freq,
+			  existing_ch_width);
+		if (existing_vdev_id == WLAN_UMAC_VDEV_ID_MAX) {
+			p2p_debug("force scc not required");
+			return QDF_STATUS_SUCCESS;
+		}
+		if (existing_vdev_mode == PM_P2P_GO_MODE) {
+			policy_mgr_process_forcescc_for_go(psoc,
+							   existing_vdev_id,
+							   chan_freq,
+							   ch_width,
+							   PM_P2P_GO_MODE);
+			p2p_debug("CSA for vdev_id %d", existing_vdev_id);
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#endif
