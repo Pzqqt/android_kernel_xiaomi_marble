@@ -1323,6 +1323,7 @@ struct dual_sta_policy {
  * @ocv_support: FW supports OCV or not
  * @wds_mode: wds mode supported
  * @dual_sta_policy_cfg: Dual STA policies configuration
+ * @tx_retry_multiplier: TX xretry extension parameter
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1368,6 +1369,7 @@ struct wlan_mlme_generic {
 	bool ocv_support;
 	enum wlan_wds_mode wds_mode;
 	struct dual_sta_policy dual_sta_policy;
+	uint32_t tx_retry_multiplier;
 };
 
 /*
