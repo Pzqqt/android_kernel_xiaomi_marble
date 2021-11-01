@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +50,7 @@ const char *if_mgr_get_event_str(enum wlan_if_mgr_evt event)
 	CASE_RETURN_STRING(WLAN_IF_MGR_EV_AP_STOP_HT40);
 	CASE_RETURN_STRING(WLAN_IF_MGR_EV_AP_DONE_HT40);
 	CASE_RETURN_STRING(WLAN_IF_MGR_EV_AP_CANCEL_HT40);
+	CASE_RETURN_STRING(WLAN_IF_MGR_EV_CSA_COMPLETE);
 	default:
 		return "Unknown";
 	}
@@ -152,6 +154,9 @@ QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 		break;
 	case WLAN_IF_MGR_EV_VALIDATE_CANDIDATE:
 		status = if_mgr_validate_candidate(vdev, event_data);
+		break;
+	case WLAN_IF_MGR_EV_CSA_COMPLETE:
+		status = if_mgr_csa_complete(vdev, event_data);
 		break;
 	default:
 		status = if_mgr_deliver_mbss_event(vdev, event, event_data);
