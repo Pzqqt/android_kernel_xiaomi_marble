@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +28,7 @@
 #include <wmi_unified_api.h>
 #include <target_if.h>
 #include <init_deinit_lmac.h>
+#include <wlan_pkt_capture_api.h>
 
 /**
  * target_if_set_packet_capture_mode() - set packet capture mode
@@ -203,8 +205,7 @@ target_if_mgmt_offload_data_event_handler(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
-	if (!(ucfg_pkt_capture_get_pktcap_mode(psoc) &
-	      PKT_CAPTURE_MODE_MGMT_ONLY))
+	if (!(wlan_pkt_capture_is_tx_mgmt_enable(pdev)))
 		return -EINVAL;
 
 	status = wmi_unified_extract_vdev_mgmt_offload_event(wmi_handle, data,

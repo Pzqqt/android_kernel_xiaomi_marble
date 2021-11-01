@@ -677,6 +677,7 @@ bool pkt_capture_is_tx_mgmt_enable(struct wlan_objmgr_pdev *pdev)
 	struct pkt_capture_vdev_priv *vdev_priv;
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	enum pkt_capture_config config;
 
 	vdev = pkt_capture_get_vdev();
 	status = pkt_capture_vdev_get_ref(vdev);
@@ -692,10 +693,14 @@ bool pkt_capture_is_tx_mgmt_enable(struct wlan_objmgr_pdev *pdev)
 		return false;
 	}
 
+	config = pkt_capture_get_pktcap_config(vdev);
+
 	if (!(vdev_priv->frame_filter.mgmt_tx_frame_filter &
 	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL)) {
-		pkt_capture_vdev_put_ref(vdev);
-		return false;
+		if (!(config & PACKET_CAPTURE_CONFIG_QOS_ENABLE)) {
+			pkt_capture_vdev_put_ref(vdev);
+			return false;
+		}
 	}
 
 	pkt_capture_vdev_put_ref(vdev);
@@ -1352,8 +1357,10 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	    vdev_priv->frame_filter.ctrl_rx_frame_filter)
 		config |= PACKET_CAPTURE_CONFIG_TRIGGER_ENABLE;
 
-	if (vdev_priv->frame_filter.data_rx_frame_filter &
-	    PKT_CAPTURE_DATA_FRAME_QOS_NULL)
+	if ((vdev_priv->frame_filter.data_tx_frame_filter &
+	    PKT_CAPTURE_DATA_FRAME_TYPE_ALL) ||
+	    (vdev_priv->frame_filter.data_tx_frame_filter &
+	    PKT_CAPTURE_DATA_FRAME_QOS_NULL))
 		config |= PACKET_CAPTURE_CONFIG_QOS_ENABLE;
 
 	if (config != pkt_capture_get_pktcap_config(vdev)) {
