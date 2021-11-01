@@ -89,10 +89,13 @@ static struct snd_soc_card snd_soc_card_waipio_msm;
 static int dmic_0_1_gpio_cnt;
 static int dmic_2_3_gpio_cnt;
 static int dmic_4_5_gpio_cnt;
+static int qos_vote_status;
+static struct dev_pm_qos_request latency_pm_qos_req; /* pm_qos request */
 
 static void *def_wcd_mbhc_cal(void);
 
 static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime*);
+static int msm_va_codec_init(struct snd_soc_pcm_runtime*);
 static int msm_int_wsa_init(struct snd_soc_pcm_runtime*);
 
 /*
@@ -126,21 +129,22 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 static const unsigned int audio_core_list[] = {1, 2};
 static cpumask_t audio_cpu_map = CPU_MASK_NONE;
 static struct dev_pm_qos_request *msm_audio_req = NULL;
+static unsigned int qos_client_active_cnt;
 
 static void msm_audio_add_qos_request()
 {
 	int i;
 	int cpu = 0;
 
-	msm_audio_req = kzalloc(sizeof(struct dev_pm_qos_request) * NR_CPUS,
-				 GFP_KERNEL);
+	msm_audio_req = kcalloc(num_possible_cpus(),
+			sizeof(struct dev_pm_qos_request), GFP_KERNEL);
 	if (!msm_audio_req) {
 		pr_err("%s failed to alloc mem for qos req.\n", __func__);
 		return;
 	}
 
 	for (i = 0; i < ARRAY_SIZE(audio_core_list); i++) {
-		if (audio_core_list[i] >= NR_CPUS)
+		if (audio_core_list[i] >= num_possible_cpus())
 			pr_err("%s incorrect cpu id: %d specified.\n", __func__, audio_core_list[i]);
 		else
 			cpumask_set_cpu(audio_core_list[i], &audio_cpu_map);
@@ -166,6 +170,29 @@ static void msm_audio_remove_qos_request()
 			pr_debug("%s remove cpu affinity of core %d.\n", __func__, cpu);
 		}
 		kfree(msm_audio_req);
+	}
+}
+
+static void msm_audio_update_qos_request(u32 latency)
+{
+	int cpu = 0;
+	int ret = -1;
+
+	if (msm_audio_req) {
+		for_each_cpu(cpu, &audio_cpu_map) {
+			ret = dev_pm_qos_update_request(
+					&msm_audio_req[cpu], latency);
+			if (1 == ret ) {
+				pr_debug("%s: updated latency of core %d to %u.\n",
+								__func__, cpu, latency);
+			} else if (0 == ret) {
+				pr_debug("%s: latency of core %d not changed.\n",
+								__func__, cpu);
+			} else {
+				pr_err("%s: failed to update latency of core %d, error %d \n",
+								__func__, cpu, ret);
+			}
+		}
 	}
 }
 
@@ -816,6 +843,7 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(va_dma_tx0),
+		.init = msm_va_codec_init,
 	},
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_1,
@@ -1521,6 +1549,68 @@ static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 	msm_common_dai_link_init(rtd);
 
 	return 0;
+}
+
+static int msm_qos_ctl_put(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	qos_vote_status = ucontrol->value.enumerated.item[0];
+	if (qos_vote_status) {
+		if (dev_pm_qos_request_active(&latency_pm_qos_req))
+			dev_pm_qos_remove_request(&latency_pm_qos_req);
+
+		qos_client_active_cnt++;
+		if (qos_client_active_cnt == 1)
+			msm_audio_update_qos_request(MSM_LL_QOS_VALUE);
+	} else {
+		if (qos_client_active_cnt > 0)
+			qos_client_active_cnt--;
+		if (qos_client_active_cnt == 0)
+			msm_audio_update_qos_request(PM_QOS_CPU_LATENCY_DEFAULT_VALUE);
+	}
+
+	return 0;
+}
+
+static int msm_qos_ctl_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] = qos_vote_status;
+	return 0;
+}
+
+static const char *const qos_text[] = {"Disable", "Enable"};
+
+static SOC_ENUM_SINGLE_EXT_DECL(qos_vote, qos_text);
+
+static const struct snd_kcontrol_new card_pm_qos_controls[] = {
+	SOC_ENUM_EXT("PM_QOS Vote", qos_vote,
+			msm_qos_ctl_get, msm_qos_ctl_put),
+};
+
+static int msm_va_codec_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_component *lpass_cdc_component = NULL;
+	int ret = 0;
+
+	msm_common_dai_link_init(rtd);
+
+	lpass_cdc_component = snd_soc_rtdcom_lookup(rtd, "lpass-cdc");
+	if (!lpass_cdc_component) {
+		pr_err("%s: could not find component for lpass-cdc\n",
+				__func__);
+		return ret;
+	}
+
+	ret = snd_soc_add_component_controls(lpass_cdc_component,
+			card_pm_qos_controls, ARRAY_SIZE(card_pm_qos_controls));
+	if (ret < 0) {
+		pr_err("%s: add common snd controls failed: %d\n",
+				__func__, ret);
+		ret = 0; /* non-fatal */
+	}
+
+	return ret;
 }
 
 static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
