@@ -357,7 +357,6 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	pkt_capture_vdev_put_ref(vdev);
 	if (pfc->type == IEEE80211_FC0_TYPE_MGT &&
 	    !(vdev_priv->frame_filter.mgmt_tx_frame_filter &
 	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL))
