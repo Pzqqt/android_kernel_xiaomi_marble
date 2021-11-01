@@ -53,6 +53,9 @@
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_scan_utils_api.h>
 
+/* IF MGR API header file */
+#include "wlan_if_mgr_ucfg_api.h"
+
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
@@ -1146,6 +1149,9 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		break;
 	case eCSR_ROAM_SET_CHANNEL_RSP:
 		sap_debug("Received set channel response");
+		ucfg_if_mgr_deliver_event(sap_ctx->vdev,
+					  WLAN_IF_MGR_EV_CSA_COMPLETE,
+					  NULL);
 		break;
 	case eCSR_ROAM_CAC_COMPLETE_IND:
 		sap_debug("Received cac complete indication");

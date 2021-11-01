@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -589,4 +590,22 @@ static inline QDF_STATUS p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_P2P_DEBUG */
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+/**
+ * p2p_check_and_force_scc_go_plus_go() - Check and do force scc for
+ * go plus go
+ * @psoc: psoc object
+ * @vdev: vdev object
+ *
+ * This function checks whether force scc is enabled or not. If it
+ * is enabled then it will do force scc to remaining p2p go vdev if
+ * user has initiated CSA to current vdev.
+ *
+ * Return: status
+ */
+
+QDF_STATUS
+p2p_check_and_force_scc_go_plus_go(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_objmgr_vdev *vdev);
+#endif /* WLAN_FEATURE_P2P_P2P_STA */
 #endif /* _WLAN_P2P_MAIN_H_ */
