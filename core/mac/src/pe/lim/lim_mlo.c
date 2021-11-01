@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -607,7 +608,7 @@ void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
 			ml_peer = wlan_mlo_get_mlpeer_by_aid(
 					pe_session->vdev->mlo_dev_ctx,
 					sta->assocId);
-			wlan_mlo_link_peer_attach(ml_peer, peer);
+			wlan_mlo_link_peer_attach(ml_peer, peer, NULL);
 		}
 		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
 	} else {
