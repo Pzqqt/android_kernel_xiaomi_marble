@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4832,6 +4833,7 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 	log_record->ap.total_score = ap->total_score;
 	log_record->ap.etp = ap->etp;
 	log_record->ap.idx = cand_ap_idx;
+	log_record->ap.freq = ap->freq;
 
 	wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
