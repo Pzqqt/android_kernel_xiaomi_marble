@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -164,7 +165,7 @@ enum wlan_wds_mode {
  * rf_test_mode_enabled - Enable rf test mode support
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This cfg is used to set rf test mode support flag
  *
@@ -174,7 +175,7 @@ enum wlan_wds_mode {
  */
 #define CFG_RF_TEST_MODE_SUPP_ENABLED CFG_BOOL( \
 		"rf_test_mode_enabled", \
-		0, \
+		1, \
 		"rf test mode Enable Flag")
 
 /*
