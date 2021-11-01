@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -500,4 +501,13 @@ int __qdf_fls(uint32_t x)
 	return fls(x);
 }
 
+/**
+ * __qdf_get_smp_processor_id() - Get the current CPU id
+ *
+ * Return: current CPU id
+ */
+static inline int __qdf_get_smp_processor_id(void)
+{
+	return smp_processor_id();
+}
 #endif /*_I_QDF_UTIL_H*/
