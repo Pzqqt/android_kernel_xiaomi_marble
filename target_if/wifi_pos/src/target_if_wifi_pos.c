@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,13 +22,13 @@
  * This file defines the functions pertinent to wifi positioning component's
  * target if layer.
  */
-#include "../../../../umac/wifi_pos/src/wifi_pos_utils_i.h"
 #include "wifi_pos_utils_pub.h"
 
 #include "wmi_unified_api.h"
 #include "wlan_lmac_if_def.h"
 #include "target_if_wifi_pos.h"
 #include "../../../../umac/wifi_pos/src/wifi_pos_main_i.h"
+#include "../../../../umac/wifi_pos/src/wifi_pos_utils_i.h"
 #include "target_if.h"
 #ifdef WLAN_FEATURE_CIF_CFR
 #include "hal_api.h"
@@ -333,6 +334,8 @@ void target_if_wifi_pos_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_wifi_pos_convert_pdev_id_target_to_host;
 	wifi_pos_tx_ops->wifi_pos_get_vht_ch_width =
 		target_if_wifi_pos_get_vht_ch_width;
+	wifi_pos_tx_ops->wifi_pos_parse_measreq_chan_info =
+		target_if_wifi_pos_parse_measreq_chan_info;
 
 }
 
@@ -486,6 +489,35 @@ QDF_STATUS target_if_wifi_pos_convert_pdev_id_target_to_host(
 	return wmi_convert_pdev_id_target_to_host(wmi_hdl, target_pdev_id,
 						  host_pdev_id);
 }
+
+#ifdef WLAN_RTT_MEASUREMENT_NOTIFICATION
+static QDF_STATUS
+target_if_wifi_pos_parse_measreq_chan_info(struct wlan_objmgr_pdev *pdev,
+					   uint32_t data_len, uint8_t *data,
+					   struct rtt_channel_info *chinfo)
+{
+	QDF_STATUS status;
+	wmi_unified_t wmi_hdl = get_wmi_unified_hdl_from_pdev(pdev);
+
+	if (!data) {
+		target_if_err("data is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!wmi_hdl) {
+		target_if_err("wmi_hdl is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_extract_measreq_chan_info(wmi_hdl, data_len, data,
+						       chinfo);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		target_if_err("wmi_unified_extract_measreq_chan_info failed");
+
+	return status;
+}
+#endif /* WLAN_RTT_MEASUREMENT_NOTIFICATION */
 #endif /* CNSS_GENL */
 
 #ifdef WLAN_FEATURE_CIF_CFR

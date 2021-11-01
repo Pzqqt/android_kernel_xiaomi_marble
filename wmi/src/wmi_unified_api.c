@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3202,6 +3203,20 @@ QDF_STATUS wmi_convert_pdev_id_target_to_host(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_RTT_MEASUREMENT_NOTIFICATION
+QDF_STATUS wmi_unified_extract_measreq_chan_info(
+		wmi_unified_t wmi_handle, uint32_t data_len, uint8_t *data,
+		struct rtt_channel_info *chinfo)
+{
+	if (wmi_handle->ops->extract_measreq_chan_info)
+		return wmi_handle->ops->extract_measreq_chan_info(
+								data_len,
+								data, chinfo);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_RTT_MEASUREMENT_NOTIFICATION */
 #endif
 
 QDF_STATUS

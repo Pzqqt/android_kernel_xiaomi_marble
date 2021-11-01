@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -704,4 +705,37 @@ struct muedca_params {
 	uint8_t muedca_timer[AC_MAX];       /* MU EDCA timer value */
 };
 
+/* Total 10 BSSIDs can be packed in a single measurement request buffer */
+#define RTT_MAX_BSSIDS_TO_SCAN  10
+
+/**
+ * struct rtt_bssid_info - Store the parsed macaddr and BW from the measurement
+ *                         request buffer.
+ * @macaddr: Destination macaddr to scan
+ * @bw: packet bandwidth
+ */
+struct rtt_bssid_info {
+	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t bw;
+};
+
+/**
+ * struct rtt_channel_info - Store the parsed channel info from LOWI measurement
+ *                           request buffer.
+ * @freq: Channel frequency
+ * @cfreq1: Center frequency1
+ * @cfreq2: Center frequency2
+ * @phymode: Phymode
+ * @num_bssids: Number of bssids present in the measurement request buffer
+ * @bssid_info: Array to store BW and macaddr present in the measurement request
+ *              buffer.
+ */
+struct rtt_channel_info {
+	uint16_t freq;
+	uint16_t cfreq1;
+	uint16_t cfreq2;
+	uint16_t phymode;
+	uint16_t num_bssids;
+	struct rtt_bssid_info bssid_info[RTT_MAX_BSSIDS_TO_SCAN];
+};
 #endif /* __WLAN_VDEV_MGR_TX_OPS_DEFS_H__ */

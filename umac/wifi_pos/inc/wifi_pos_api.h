@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,6 +87,7 @@ struct wifi_pos_interface {
  * @OEM_ERR_NULL_MESSAGE_HEADER: Invalid message header
  * @OEM_ERR_INVALID_MESSAGE_TYPE: Invalid message type
  * @OEM_ERR_INVALID_MESSAGE_LENGTH: Invalid length in message body
+ * @OEM_ERR_REQUEST_REJECTED: Request is rejected by the driver
  */
 enum oem_err_msg {
 	OEM_ERR_NULL_CONTEXT = 1,
@@ -93,7 +95,8 @@ enum oem_err_msg {
 	OEM_ERR_INVALID_SIGNATURE,
 	OEM_ERR_NULL_MESSAGE_HEADER,
 	OEM_ERR_INVALID_MESSAGE_TYPE,
-	OEM_ERR_INVALID_MESSAGE_LENGTH
+	OEM_ERR_INVALID_MESSAGE_LENGTH,
+	OEM_ERR_REQUEST_REJECTED
 };
 
 /* this struct is needed since MLME is not converged yet */
@@ -510,7 +513,52 @@ QDF_STATUS wifi_pos_register_get_pdev_id_by_dev_name(
 		struct wlan_objmgr_psoc *psoc,
 		QDF_STATUS (*handler)(char *dev_name, uint8_t *pdev_id,
 				      struct wlan_objmgr_psoc **psoc));
-#endif
+#endif /* CNSS_GENL */
+
+#if !defined(CNSS_GENL) && defined(WLAN_RTT_MEASUREMENT_NOTIFICATION)
+/**
+ * ucfg_wifi_pos_measurement_request_notification: ucfg API to notify
+ * measurement request received from the LOWI application
+ * @pdev: Pointer to pdev structure
+ * @req: Pointer to wifi_pos_req_msg structure
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in
+ * case of failure
+ */
+QDF_STATUS ucfg_wifi_pos_measurement_request_notification(
+		struct wlan_objmgr_pdev *pdev,
+		struct wifi_pos_req_msg *req);
+
+/**
+ * wifi_pos_register_measurement_request_notification: API to register a
+ * callback that needs to be called when the driver receives a measurement
+ * request from the LOWI application.
+ * @psoc: pointer to global psoc object
+ * @handler: callback to be registered
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in case of
+ * failure.
+ */
+QDF_STATUS wifi_pos_register_measurement_request_notification(
+		struct wlan_objmgr_psoc *psoc,
+		QDF_STATUS (*handler)(struct wlan_objmgr_pdev *pdev,
+				      struct rtt_channel_info *chinfo));
+#else
+static inline QDF_STATUS ucfg_wifi_pos_measurement_request_notification(
+		struct wlan_objmgr_pdev *pdev,
+		struct wifi_pos_req_msg *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wifi_pos_register_measurement_request_notification(
+		struct wlan_objmgr_psoc *psoc,
+		QDF_STATUS (*handler)(struct wlan_objmgr_pdev *pdev,
+				      struct rtt_channel_info *chinfo))
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /*!defined(CNSS_GENL) && defined(WLAN_RTT_MEASUREMENT_NOTIFICATION)*/
 
 /**
  * wifi_pos_send_report_resp: Send report to osif

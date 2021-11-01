@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +21,7 @@
  * This file defines the APIs wifi_pos component.
  */
 
+#include <wlan_lmac_if_def.h>
 #include "wifi_pos_api.h"
 #include "wifi_pos_utils_i.h"
 #include "wifi_pos_main_i.h"
@@ -406,7 +408,37 @@ QDF_STATUS wifi_pos_register_get_pdev_id_by_dev_name(
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif
+
+#ifdef WLAN_RTT_MEASUREMENT_NOTIFICATION
+QDF_STATUS wifi_pos_register_measurement_request_notification(
+		struct wlan_objmgr_psoc *psoc,
+		QDF_STATUS (*handler)(struct wlan_objmgr_pdev *pdev,
+				      struct rtt_channel_info *chinfo))
+{
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc;
+
+	if (!psoc) {
+		wifi_pos_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!handler) {
+		wifi_pos_err("Null callback");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wifi_pos_psoc = wifi_pos_get_psoc_priv_obj(psoc);
+	if (!wifi_pos_psoc) {
+		wifi_pos_err("wifi_pos priv obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wifi_pos_psoc->wifi_pos_measurement_request_notification = handler;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_RTT_MEASUREMENT_NOTIFICATION */
+#endif /* CNSS_GENL */
 
 QDF_STATUS wifi_pos_register_send_action(
 				struct wlan_objmgr_psoc *psoc,

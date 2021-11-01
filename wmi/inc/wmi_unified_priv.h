@@ -2660,6 +2660,10 @@ QDF_STATUS (*send_lcr_cmd)(wmi_unified_t wmi_handle,
 			   struct wmi_wifi_pos_lcr_info *lcr_info);
 QDF_STATUS (*send_lci_cmd)(wmi_unified_t wmi_handle,
 			   struct wifi_pos_lci_info *lci_info);
+#if !defined(CNSS_GENL) && defined(WLAN_RTT_MEASUREMENT_NOTIFICATION)
+QDF_STATUS (*extract_measreq_chan_info)(uint32_t data_len, uint8_t *data,
+					struct rtt_channel_info *chinfo);
+#endif
 
 #ifdef WLAN_SUPPORT_MESH_LATENCY
 QDF_STATUS (*config_vdev_tid_latency_info_cmd)(

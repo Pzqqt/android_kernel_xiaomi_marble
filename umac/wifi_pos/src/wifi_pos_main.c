@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +22,7 @@
  * This file defines the important functions pertinent to
  * wifi positioning to initialize and de-initialize the component.
  */
+#include <wlan_lmac_if_def.h>
 #include "target_if_wifi_pos.h"
 #include "wifi_pos_oem_interface_i.h"
 #include "wifi_pos_utils_i.h"
@@ -213,6 +215,7 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
 				wifi_pos_get_psoc_priv_obj(wifi_pos_get_psoc());
 	QDF_STATUS status;
+	uint8_t err;
 
 
 	if (!wifi_pos_obj) {
@@ -300,6 +303,19 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 			wifi_pos_err("pdev null");
 			return QDF_STATUS_E_INVAL;
 		}
+
+		status = ucfg_wifi_pos_measurement_request_notification(
+				pdev, req);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			err = OEM_ERR_REQUEST_REJECTED;
+			wifi_pos_obj->wifi_pos_send_rsp(
+					psoc, wifi_pos_get_app_pid(psoc),
+					WIFI_POS_CMD_ERROR, sizeof(err), &err);
+			wlan_objmgr_pdev_release_ref(pdev,
+						     WLAN_WIFI_POS_CORE_ID);
+			return QDF_STATUS_E_INVAL;
+		}
+
 		data_req.data_len = req->buf_len;
 		data_req.data = req->buf;
 		tx_ops->data_req_tx(pdev, &data_req);
