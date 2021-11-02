@@ -814,6 +814,10 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->flags |= (param->special_vdev_mode ? VDEV_FLAGS_SCAN_MODE_VAP : 0);
 	cmd->vdevid_trans = param->vdevid_trans;
 	cmd->num_cfg_txrx_streams = num_bands;
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+	cmd->vdev_stats_id_valid = param->vdev_stats_id_valid;
+	cmd->vdev_stats_id = param->vdev_stats_id;
+#endif
 	copy_vdev_create_pdev_id(wmi_handle, cmd, param);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
 	wmi_debug("ID = %d[pdev:%d] VAP Addr = "QDF_MAC_ADDR_FMT,

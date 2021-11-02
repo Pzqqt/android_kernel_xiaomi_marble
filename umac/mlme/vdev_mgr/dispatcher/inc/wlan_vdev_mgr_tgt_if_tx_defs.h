@@ -614,6 +614,8 @@ struct vdev_set_params {
 /**
  * struct vdev_create_params - vdev create cmd parameter
  * @vdev_id: interface id
+ * @vdev_stats_id_valid: flag to indicate valid stats id
+ * @vdev_stats_id: stats_id for stats collection
  * @type: interface type
  * @subtype: interface subtype
  * @nss_2g: NSS for 2G
@@ -625,6 +627,8 @@ struct vdev_set_params {
  */
 struct vdev_create_params {
 	uint8_t vdev_id;
+	bool vdev_stats_id_valid;
+	uint8_t vdev_stats_id;
 	uint32_t type;
 	uint32_t subtype;
 	uint8_t nss_2g;
