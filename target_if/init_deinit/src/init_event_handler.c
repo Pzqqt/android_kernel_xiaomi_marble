@@ -538,7 +538,7 @@ static int init_deinit_service_available_handler(ol_scn_t scn_handle,
 #if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
 static void init_deinit_mlo_update_soc_ready(struct wlan_objmgr_psoc *psoc)
 {
-	mlo_setup_update_soc_ready(wlan_psoc_get_id(psoc));
+	mlo_setup_update_soc_ready(psoc);
 }
 
 static void init_deinit_send_ml_link_ready(struct wlan_objmgr_psoc *psoc,

@@ -28,20 +28,21 @@ void mlo_setup_update_total_socs(uint8_t tot_socs);
 
 /**
  * mlo_setup_update_num_links() - API to update num links in soc for mlo
- * @soc_id: soc id of SoC corresponding to num_link
+ * @soc_id: soc object of SoC corresponding to num_link
  * @num_links: Number of links in that soc
  *
  * Return: None.
  */
-void mlo_setup_update_num_links(uint8_t soc_id, uint8_t num_links);
+void mlo_setup_update_num_links(struct wlan_objmgr_psoc *psoc,
+				uint8_t num_links);
 
 /**
  * mlo_setup_update_soc_ready() - API to notify when FW init done
- * @soc_id: soc id of SoC ready
+ * @psoc: soc object of SoC ready
  *
  * Return: None.
  */
-void mlo_setup_update_soc_ready(uint8_t soc_id);
+void mlo_setup_update_soc_ready(struct wlan_objmgr_psoc *psoc);
 
 /**
  * mlo_setup_link_ready() - API to notify link ready
