@@ -82,10 +82,12 @@ enum MLO_LINK_STATE {
  * @tot_links: Total links in ML group
  * @num_links: Number of links probed in ML group
  * @pdev_list[MAX_MLO_LINKS]: pdev pointers belonging to this group
+ * @soc_list[MAX_MLO_CHIPS]: psoc pointers belonging to this group
  * @state[MAX_MLO_LINKS]: MLO link state
  * @state_lock: lock to protect access to link state
  */
 #define MAX_MLO_LINKS 6
+#define MAX_MLO_CHIPS 3
 struct mlo_setup_info {
 	uint8_t ml_grp_id;
 	uint8_t tot_socs;
@@ -93,6 +95,7 @@ struct mlo_setup_info {
 	uint8_t tot_links;
 	uint8_t num_links;
 	struct wlan_objmgr_pdev *pdev_list[MAX_MLO_LINKS];
+	struct wlan_objmgr_psoc *soc_list[MAX_MLO_CHIPS];
 	enum MLO_LINK_STATE state[MAX_MLO_LINKS];
 	qdf_spinlock_t state_lock;
 };

@@ -20,6 +20,7 @@
 #include "wlan_mlo_mgr_main.h"
 #ifdef WLAN_MLO_MULTI_CHIP
 #include "wlan_lmac_if_def.h"
+#include <cdp_txrx_mlo.h>
 #endif
 
 #ifdef WLAN_MLO_MULTI_CHIP
@@ -35,7 +36,8 @@ void mlo_setup_update_total_socs(uint8_t tot_socs)
 
 qdf_export_symbol(mlo_setup_update_total_socs);
 
-void mlo_setup_update_num_links(uint8_t soc_id, uint8_t num_links)
+void mlo_setup_update_num_links(struct wlan_objmgr_psoc *psoc,
+				uint8_t num_links)
 {
 	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
 
@@ -47,14 +49,29 @@ void mlo_setup_update_num_links(uint8_t soc_id, uint8_t num_links)
 
 qdf_export_symbol(mlo_setup_update_num_links);
 
-void mlo_setup_update_soc_ready(uint8_t soc_id)
+void mlo_setup_update_soc_ready(struct wlan_objmgr_psoc *psoc)
 {
 	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+	uint8_t chip_idx;
 
 	if (!mlo_ctx)
 		return;
 
+	chip_idx = mlo_ctx->setup_info.num_soc;
+	mlo_ctx->setup_info.soc_list[chip_idx] = psoc;
 	mlo_ctx->setup_info.num_soc++;
+
+	if (mlo_ctx->setup_info.num_soc != mlo_ctx->setup_info.tot_socs)
+		return;
+
+	for (chip_idx = 0; chip_idx < mlo_ctx->setup_info.num_soc;
+			chip_idx++) {
+		struct wlan_objmgr_psoc *tmp_soc =
+			mlo_ctx->setup_info.soc_list[chip_idx];
+
+		cdp_soc_mlo_soc_setup(wlan_psoc_get_dp_handle(tmp_soc),
+				      mlo_ctx->dp_handle);
+	}
 }
 
 qdf_export_symbol(mlo_setup_update_soc_ready);
