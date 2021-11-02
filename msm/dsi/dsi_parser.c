@@ -925,6 +925,7 @@ void *dsi_parser_get_head_node(void *in,
 	buf = parser->buf;
 
 	memcpy(buf, data, size);
+	buf[size] = '\0';
 
 	strreplace(buf, '\n', ' ');
 	strreplace(buf, '\t', '*');
