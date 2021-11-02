@@ -7749,6 +7749,12 @@ typedef enum {
     /* Param to configure the access category for the TWT queue */
     WMI_PDEV_PARAM_TWT_AC_CONFIG,
 
+    /*
+     * TX xretry extension parameter to allow product specific adjustment.
+     * I.e. multiply the xretry counter by N% for a requirement from framework.
+     */
+    WMI_PDEV_PARAM_PDEV_STATS_TX_XRETRY_EXT,
+
 
 } WMI_PDEV_PARAM;
 
