@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2268,16 +2269,6 @@ ucfg_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
  */
 enum pmo_suspend_mode
 ucfg_pmo_get_suspend_mode(struct wlan_objmgr_psoc *psoc);
-
-/**
- * ucfg_pmo_get_dynamic_pcie_gen_switch_cfg() - get PMO config for
- * dynamic PCIe gen speed change
- * @psoc: pointer to psoc object
- *
- * Return: bool
- */
-bool
-ucfg_pmo_get_dynamic_pcie_gen_switch_cfg(struct wlan_objmgr_psoc *psoc);
 
 #ifdef SYSTEM_PM_CHECK
 /**
