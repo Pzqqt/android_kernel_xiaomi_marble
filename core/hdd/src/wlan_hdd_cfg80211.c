@@ -15810,6 +15810,22 @@ static int __wlan_hdd_cfg80211_set_roam_events(struct wiphy *wiphy,
 	ucfg_cm_update_roam_rt_stats(hdd_ctx->psoc,
 				     param, ROAM_RT_STATS_ENABLE);
 
+	if (param == (ROAM_RT_STATS_ENABLED |
+		      ROAM_RT_STATS_ENABLED_IN_SUSPEND_MODE)) {
+		ucfg_pmo_enable_wakeup_event(hdd_ctx->psoc, adapter->vdev_id,
+					     WOW_ROAM_STATS_EVENT);
+		ucfg_cm_update_roam_rt_stats(hdd_ctx->psoc,
+					     ROAM_RT_STATS_ENABLED,
+					     ROAM_RT_STATS_SUSPEND_MODE_ENABLE);
+	} else if (ucfg_cm_get_roam_rt_stats(hdd_ctx->psoc,
+					  ROAM_RT_STATS_SUSPEND_MODE_ENABLE)) {
+		ucfg_pmo_disable_wakeup_event(hdd_ctx->psoc, adapter->vdev_id,
+					      WOW_ROAM_STATS_EVENT);
+		ucfg_cm_update_roam_rt_stats(hdd_ctx->psoc,
+					     ROAM_RT_STATS_DISABLED,
+					     ROAM_RT_STATS_SUSPEND_MODE_ENABLE);
+	}
+
 	status = ucfg_cm_roam_send_rt_stats_config(hdd_ctx->pdev,
 						   adapter->vdev_id, param);
 
