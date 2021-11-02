@@ -23,7 +23,7 @@
 #define MAX_BASE_LAYER_PRIORITY_ID 63
 #define MIN_CHROMA_QP_OFFSET    -12
 #define MAX_CHROMA_QP_OFFSET    0
-#define MAX_BITRATE             220000000
+#define MAX_BITRATE             100000000
 #define DEFAULT_BITRATE         20000000
 #define MIN_QP_10BIT            -12
 #define MIN_QP_8BIT             0
@@ -73,23 +73,24 @@ static struct msm_platform_core_capability core_data_diwali_v0[] = {
 	/* {type, value} */
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
-	/* TODO (AM) : concurrency spec needs to be verified for diwali */
 	{MAX_SESSION_COUNT, 16},
 	{MAX_NUM_720P_SESSIONS, 16},
 	{MAX_NUM_1080P_SESSIONS, 8},
 	{MAX_NUM_4K_SESSIONS, 4},
 	{MAX_NUM_8K_SESSIONS, 1},
 	{MAX_SECURE_SESSION_COUNT, 3},
-	{MAX_MBPF, 138240}, /* ((8192x4320)/256) */
-	{MAX_MBPS, 4147200},/* max_load
-                    *(3840x2176)/256)@120fps decode,
-                    *(8192x4320)/256)@30fps decode
-                    */
-	{MAX_IMAGE_MBPF, 1048576}, /* (16384x16384)/256 */
+	{MAX_RT_MBPF, 138240}, /* ((8192x4320)/256) */
+	{MAX_MBPF, 173056}, /* (8192x4320)/256 + (4096x2176)/256*/
+	{MAX_MBPS, 4177920}, /* max_load
+			 * 4096x2176@120fps which is greater than
+			 * 8192x4320@30fps
+			 */
+	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
-	{MAX_MBPS_HQ, 489600}, /* ((1920x1088)/256)@60fps */
+	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
 	{MAX_MBPF_B_FRAME, 32640}, /* 3840x2176/256 */
-	{MAX_MBPS_B_FRAME, 1958400}, /* 3840x2176/256 MBs@60fps */
+	{MAX_MBPS_B_FRAME, 979200}, /* 3840x2176/256 MBs@30fps */
+	{MAX_MBPS_ALL_INTRA, 489600}, /* ((1920x1088)/256)@60fps */
 	{MAX_ENH_LAYER_COUNT, 5},
 	{NUM_VPP_PIPE, 2},
 	{SW_PC, 1},
@@ -114,15 +115,109 @@ static struct msm_platform_core_capability core_data_diwali_v0[] = {
 	{DCVS, 1},
 	{DECODE_BATCH, 1},
 	{DECODE_BATCH_TIMEOUT, 200},
+	{STATS_TIMEOUT_MS, 2000},
 	{AV_SYNC_WINDOW_SIZE, 40},
 	{NON_FATAL_FAULTS, 1},
 	{ENC_AUTO_FRAMERATE, 1},
+	{MMRM, 0},
 };
 
 static struct msm_platform_core_capability core_data_diwali_v1[] = {
+	/* {type, value} */
+	{ENC_CODECS, H264|HEVC|HEIC},
+	{DEC_CODECS, H264|HEVC|VP9|HEIC},
+	{MAX_SESSION_COUNT, 16},
+	{MAX_NUM_720P_SESSIONS, 16},
+	{MAX_NUM_1080P_SESSIONS, 8},
+	{MAX_NUM_4K_SESSIONS, 4},
+	{MAX_SECURE_SESSION_COUNT, 3},
+	{MAX_RT_MBPF, 130560}, /* ((3840x2176)/256) x 4 */
+	{MAX_MBPF, 139264}, /* ((4096x2176)/256) x 4 */
+	{MAX_MBPS, 2088960}, /* 4096x2176@60fps */
+	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
+	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
+	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
+	{MAX_MBPF_B_FRAME, 32640}, /* 3840x2176/256 */
+	{MAX_MBPS_B_FRAME, 979200}, /* 3840x2176/256 MBs@30fps */
+	{MAX_MBPS_ALL_INTRA, 489600}, /* ((1920x1088)/256)@60fps */
+	{MAX_ENH_LAYER_COUNT, 5},
+	{NUM_VPP_PIPE, 2},
+	{SW_PC, 1},
+	{FW_UNLOAD, 0},
+	{HW_RESPONSE_TIMEOUT, HW_RESPONSE_TIMEOUT_VALUE}, /* 1000 ms */
+	{SW_PC_DELAY,         SW_PC_DELAY_VALUE        }, /* 1500 ms (>HW_RESPONSE_TIMEOUT)*/
+	{FW_UNLOAD_DELAY,     FW_UNLOAD_DELAY_VALUE    }, /* 3000 ms (>SW_PC_DELAY)*/
+	// TODO: review below entries, and if required rename as PREFETCH
+	{PREFIX_BUF_COUNT_PIX, 18},
+	{PREFIX_BUF_SIZE_PIX, 13434880}, /* Calculated by VIDEO_RAW_BUFFER_SIZE for 4096x2160 UBWC */
+	{PREFIX_BUF_COUNT_NON_PIX, 1},
+	{PREFIX_BUF_SIZE_NON_PIX, 209715200}, /*
+		 * Internal buffer size is calculated for secure decode session
+		 * of resolution 4k (4096x2160)
+		 * Internal buf size = calculate_scratch_size() +
+		 *	calculate_scratch1_size() + calculate_persist1_size()
+		 * Take maximum between VP9 10bit, HEVC 10bit, AVC secure
+		 * decoder sessions
+		 */
+	{PAGEFAULT_NON_FATAL, 1},
+	{PAGETABLE_CACHING, 0},
+	{DCVS, 1},
+	{DECODE_BATCH, 1},
+	{DECODE_BATCH_TIMEOUT, 200},
+	{STATS_TIMEOUT_MS, 2000},
+	{AV_SYNC_WINDOW_SIZE, 40},
+	{NON_FATAL_FAULTS, 1},
+	{ENC_AUTO_FRAMERATE, 1},
+	{MMRM, 0},
 };
 
 static struct msm_platform_core_capability core_data_diwali_v2[] = {
+	/* {type, value} */
+	{ENC_CODECS, H264|HEVC|HEIC},
+	{DEC_CODECS, H264|HEVC|VP9|HEIC},
+	{MAX_SESSION_COUNT, 16},
+	{MAX_NUM_720P_SESSIONS, 16},
+	{MAX_NUM_1080P_SESSIONS, 8},
+	{MAX_NUM_4K_SESSIONS, 4},
+	{MAX_SECURE_SESSION_COUNT, 3},
+	{MAX_RT_MBPF, 130560}, /* ((3840x2176)/256) x 3 */
+	{MAX_MBPF, 104448}, /* ((4096x2176)/256) x 3 */
+	{MAX_MBPS, 1044480}, /* 4096x2176@30fps */
+	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
+	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
+	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
+	{MAX_MBPF_B_FRAME, 32640}, /* 3840x2176/256 */
+	{MAX_MBPS_B_FRAME, 979200}, /* 3840x2176/256 MBs@30fps */
+	{MAX_MBPS_ALL_INTRA, 489600}, /* ((1920x1088)/256)@60fps */
+	{MAX_ENH_LAYER_COUNT, 5},
+	{NUM_VPP_PIPE, 2},
+	{SW_PC, 1},
+	{FW_UNLOAD, 0},
+	{HW_RESPONSE_TIMEOUT, HW_RESPONSE_TIMEOUT_VALUE}, /* 1000 ms */
+	{SW_PC_DELAY,         SW_PC_DELAY_VALUE        }, /* 1500 ms (>HW_RESPONSE_TIMEOUT)*/
+	{FW_UNLOAD_DELAY,     FW_UNLOAD_DELAY_VALUE    }, /* 3000 ms (>SW_PC_DELAY)*/
+	// TODO: review below entries, and if required rename as PREFETCH
+	{PREFIX_BUF_COUNT_PIX, 18},
+	{PREFIX_BUF_SIZE_PIX, 13434880}, /* Calculated by VIDEO_RAW_BUFFER_SIZE for 4096x2160 UBWC */
+	{PREFIX_BUF_COUNT_NON_PIX, 1},
+	{PREFIX_BUF_SIZE_NON_PIX, 209715200}, /*
+		 * Internal buffer size is calculated for secure decode session
+		 * of resolution 4k (4096x2160)
+		 * Internal buf size = calculate_scratch_size() +
+		 *	calculate_scratch1_size() + calculate_persist1_size()
+		 * Take maximum between VP9 10bit, HEVC 10bit, AVC secure
+		 * decoder sessions
+		 */
+	{PAGEFAULT_NON_FATAL, 1},
+	{PAGETABLE_CACHING, 0},
+	{DCVS, 1},
+	{DECODE_BATCH, 1},
+	{DECODE_BATCH_TIMEOUT, 200},
+	{STATS_TIMEOUT_MS, 2000},
+	{AV_SYNC_WINDOW_SIZE, 40},
+	{NON_FATAL_FAULTS, 1},
+	{ENC_AUTO_FRAMERATE, 1},
+	{MMRM, 0},
 };
 
 static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
