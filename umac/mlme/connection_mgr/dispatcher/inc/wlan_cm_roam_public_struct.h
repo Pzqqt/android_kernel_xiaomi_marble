@@ -1852,6 +1852,30 @@ struct roam_msg_info {
 };
 
 /**
+ * struct roam_event_rt_info - Roam event related information
+ * @roam_scan_state: roam scan state notif value
+ * @roam_invoke_fail_reason: roam invoke fail reason
+ */
+struct roam_event_rt_info {
+	uint32_t roam_scan_state;
+	uint32_t roam_invoke_fail_reason;
+};
+
+/**
+ * enum roam_rt_stats_type: different types of params to get roam event stats
+ * for the vdev
+ * @ROAM_RT_STATS_TYPE_SCAN_STATE: Roam Scan Start/End
+ * @ROAM_RT_STATS_TYPE_INVOKE_FAIL_REASON: One of WMI_ROAM_FAIL_REASON_ID for
+ * roam failure in case of forced roam
+ * @ROAM_RT_STATS_TYPE_ROAM_SCAN_INFO: Roam Trigger/Fail/Scan/AP Stats
+ */
+enum roam_rt_stats_type {
+	ROAM_RT_STATS_TYPE_SCAN_STATE,
+	ROAM_RT_STATS_TYPE_INVOKE_FAIL_REASON,
+	ROAM_RT_STATS_TYPE_ROAM_SCAN_INFO,
+};
+
+/**
  * struct roam_frame_info  - Structure to hold the mgmt frame/eapol frame
  * related info exchanged during roaming.
  * @present:     Flag to indicate if roam frame info TLV is present
@@ -1958,6 +1982,8 @@ struct roam_invoke_req {
  * @CM_ROAM_NOTIF_DISASSOC_RECV: indicate disassoc received, notif_params to be
 				 sent as reason code, notif_params1 to be sent
 				 as frame length
+ * @CM_ROAM_NOTIF_SCAN_END: indicate roam scan end, notif_params to be sent
+			      as WMI_ROAM_TRIGGER_REASON_ID
  */
 enum cm_roam_notif {
 	CM_ROAM_NOTIF_INVALID = 0,
@@ -1971,6 +1997,7 @@ enum cm_roam_notif {
 	CM_ROAM_NOTIF_SCAN_START,
 	CM_ROAM_NOTIF_DEAUTH_RECV,
 	CM_ROAM_NOTIF_DISASSOC_RECV,
+	CM_ROAM_NOTIF_SCAN_END = 12,
 };
 
 /**
@@ -2126,6 +2153,7 @@ struct roam_offload_roam_event {
  * @btm_rsp: BTM response related data
  * @roam_init_info: Roam initial related data
  * @roam_msg_info: Roam message related information
+ * @roam_event_param: Roam event notif params
  */
 struct roam_stats_event {
 	uint8_t vdev_id;
@@ -2138,6 +2166,7 @@ struct roam_stats_event {
 	struct roam_btm_response_data btm_rsp[MAX_ROAM_SCAN_STATS_TLV];
 	struct roam_initial_data roam_init_info[MAX_ROAM_SCAN_STATS_TLV];
 	struct roam_msg_info *roam_msg_info;
+	struct roam_event_rt_info roam_event_param;
 };
 
 /*
