@@ -1213,6 +1213,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_set_active_link_number_param,
 } WMITLV_TAG_ID;
 
 /*

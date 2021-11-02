@@ -36280,7 +36280,7 @@ typedef struct wmi_mlo_link_set_active_cmd
 
 typedef struct wmi_mlo_set_active_link_number_param
 {
-    /** TLV tag and len; */
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_set_active_link_number_param */
     A_UINT32 tlv_header;
     /** number of link to be config */
     A_UINT32 num_of_link;
