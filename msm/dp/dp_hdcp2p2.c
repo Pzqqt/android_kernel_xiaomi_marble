@@ -316,7 +316,8 @@ static int dp_hdcp2p2_authenticate(void *input)
 	ctrl->sink_status = SINK_CONNECTED;
 	atomic_set(&ctrl->auth_state, HDCP_STATE_AUTHENTICATING);
 
-	kthread_park(ctrl->thread);
+	if (kthread_should_park())
+		kthread_park(ctrl->thread);
 	kfifo_reset(&ctrl->cmd_q);
 	kthread_unpark(ctrl->thread);
 
