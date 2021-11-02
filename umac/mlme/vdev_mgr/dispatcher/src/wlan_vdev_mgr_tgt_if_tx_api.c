@@ -103,6 +103,7 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 
 	vdev_info.vdev_mac_addr = wlan_vdev_mlme_get_macaddr(vdev);
 	vdev_info.vdev_id = vdev_id;
+	vdev_info.vdev_stats_id = param->vdev_stats_id;
 	vdev_info.op_mode = wlan_util_vdev_get_cdp_txrx_opmode(vdev);
 	vdev_info.subtype = wlan_util_vdev_get_cdp_txrx_subtype(vdev);
 	wlan_vdev_mgr_fill_mlo_params(&vdev_info, param);
