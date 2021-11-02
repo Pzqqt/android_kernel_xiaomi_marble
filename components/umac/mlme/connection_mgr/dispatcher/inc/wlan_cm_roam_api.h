@@ -1108,6 +1108,26 @@ wlan_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 uint8_t
 wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			  enum roam_rt_stats_params stats);
+
+/**
+ * cm_report_roam_rt_stats - Gathers/Sends the roam events stats
+ * @psoc:      Pointer to psoc structure
+ * @vdev_id:   Vdev ID
+ * @events:    Event/Notif type from roam event/roam stats event
+ * @roam_info: Roam stats from the roam stats event
+ * @value:     Notif param value from the roam event
+ * @idx:       TLV index in roam stats event
+ *
+ * Gathers the roam stats from the roam event and the roam stats event and
+ * sends them to hdd for filling the vendor attributes.
+ *
+ * Return: none
+ */
+void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id,
+			     enum roam_rt_stats_type events,
+			     struct roam_stats_event *roam_info,
+			     uint32_t value, uint8_t idx);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1267,6 +1287,13 @@ wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 {
 	return 0;
 }
+
+static inline void
+cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			uint8_t vdev_id, enum roam_rt_stats_type events,
+			struct roam_stats_event *roam_info,
+			uint32_t value, uint8_t idx)
+{}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #ifdef WLAN_FEATURE_FIPS

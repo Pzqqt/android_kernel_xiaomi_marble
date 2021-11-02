@@ -1,5 +1,6 @@
  /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2584,6 +2585,12 @@ void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif)
 		return;
 	}
 	wma_invalid_roam_reason_handler(wma_handle, vdev_id, notif);
+
+	if (notif == CM_ROAM_NOTIF_SCAN_START ||
+	    notif == CM_ROAM_NOTIF_SCAN_END)
+		cm_report_roam_rt_stats(wma_handle->psoc, vdev_id,
+					ROAM_RT_STATS_TYPE_SCAN_STATE,
+					NULL, notif, 0);
 }
 #endif
 
@@ -2745,6 +2752,9 @@ cm_handle_roam_reason_invoke_roam_fail(uint8_t vdev_id,	uint32_t notif_params,
 	wma_handle_hw_mode_trans_ind(wma_handle, trans_ind);
 	wma_handle_roam_reason_invoke_roam_fail(wma_handle, vdev_id,
 						notif_params);
+	cm_report_roam_rt_stats(wma_handle->psoc, vdev_id,
+				ROAM_RT_STATS_TYPE_INVOKE_FAIL_REASON,
+				NULL, notif_params, 0);
 }
 
 static void
