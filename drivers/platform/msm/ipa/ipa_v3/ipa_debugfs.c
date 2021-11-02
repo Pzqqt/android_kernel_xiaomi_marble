@@ -1555,7 +1555,12 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		"flow_enable=%u\n"
 		"flow_disable=%u\n"
 		"rx_page_drop_cnt=%u\n"
-		"lower_order=%u\n",
+		"lower_order=%u\n"
+		"rmnet_notifier_enabled=%u\n"
+		"num_buff_above_thresh_for_def_pipe_notified=%u\n"
+		"num_buff_below_thresh_for_def_pipe_notified=%u\n"
+		"num_buff_above_thresh_for_coal_pipe_notified=%u\n"
+		"num_buff_below_thresh_for_coal_pipe_notified=%u\n",
 		ipa3_ctx->stats.tx_sw_pkts,
 		ipa3_ctx->stats.tx_hw_pkts,
 		ipa3_ctx->stats.tx_non_linear,
@@ -1576,8 +1581,12 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		ipa3_ctx->stats.flow_enable,
 		ipa3_ctx->stats.flow_disable,
 		ipa3_ctx->stats.rx_page_drop_cnt,
-		ipa3_ctx->stats.lower_order
-		);
+		ipa3_ctx->stats.lower_order,
+		ipa3_ctx->ipa_rmnet_notifier_enabled,
+		atomic_read(&ipa3_ctx->stats.num_buff_above_thresh_for_def_pipe_notified),
+		atomic_read(&ipa3_ctx->stats.num_buff_below_thresh_for_def_pipe_notified),
+		atomic_read(&ipa3_ctx->stats.num_buff_above_thresh_for_coal_pipe_notified),
+		atomic_read(&ipa3_ctx->stats.num_buff_below_thresh_for_coal_pipe_notified));
 	cnt += nbytes;
 
 	for (i = 0; i < IPAHAL_PKT_STATUS_EXCEPTION_MAX; i++) {

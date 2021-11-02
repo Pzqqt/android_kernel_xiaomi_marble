@@ -14,6 +14,7 @@
 #include <net/sock.h>
 #include <net/ipv6.h>
 #include <asm/page.h>
+#include <linux/mutex.h>
 #include "gsi.h"
 #include "ipa_i.h"
 #include "ipa_trace.h"
@@ -79,6 +80,8 @@
 #define IPA_GSI_CH_20_WA_VIRT_CHAN 29
 
 #define IPA_DEFAULT_SYS_YELLOW_WM 32
+/* High threshold is set for 50% of the buffer */
+#define IPA_BUFF_THRESHOLD_HIGH 112
 #define IPA_REPL_XFER_THRESH 20
 #define IPA_REPL_XFER_MAX 36
 
@@ -2466,6 +2469,43 @@ static struct ipa3_rx_pkt_wrapper * ipa3_get_free_page
 	return NULL;
 }
 
+int ipa3_register_notifier(void *fn_ptr)
+{
+	if (fn_ptr == NULL)
+		return -EFAULT;
+	spin_lock(&ipa3_ctx->notifier_lock);
+	atomic_set(&ipa3_ctx->stats.num_buff_above_thresh_for_def_pipe_notified, 0);
+	atomic_set(&ipa3_ctx->stats.num_buff_above_thresh_for_coal_pipe_notified, 0);
+	atomic_set(&ipa3_ctx->stats.num_buff_below_thresh_for_def_pipe_notified, 0);
+	atomic_set(&ipa3_ctx->stats.num_buff_below_thresh_for_coal_pipe_notified, 0);
+	ipa3_ctx->ipa_rmnet_notifier.notifier_call = fn_ptr;
+	if (!ipa3_ctx->ipa_rmnet_notifier_enabled)
+		raw_notifier_chain_register(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+			&ipa3_ctx->ipa_rmnet_notifier);
+	else {
+		IPAWANERR("rcvd notifier reg again, changing the cb function\n");
+		ipa3_ctx->ipa_rmnet_notifier.notifier_call = fn_ptr;
+	}
+	ipa3_ctx->ipa_rmnet_notifier_enabled = true;
+	spin_unlock(&ipa3_ctx->notifier_lock);
+	return 0;
+}
+
+int ipa3_unregister_notifier(void *fn_ptr)
+{
+	if (fn_ptr == NULL)
+		return -EFAULT;
+	spin_lock(&ipa3_ctx->notifier_lock);
+	ipa3_ctx->ipa_rmnet_notifier.notifier_call = fn_ptr;
+	if (ipa3_ctx->ipa_rmnet_notifier_enabled)
+		raw_notifier_chain_unregister(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+			&ipa3_ctx->ipa_rmnet_notifier);
+	else IPAWANERR("rcvd notifier unreg again\n");
+	ipa3_ctx->ipa_rmnet_notifier_enabled = false;
+	spin_unlock(&ipa3_ctx->notifier_lock);
+	return 0;
+}
+
 static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 {
 	struct ipa3_rx_pkt_wrapper *rx_pkt;
@@ -2564,16 +2604,64 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 		__trigger_repl_work(sys);
 
 	if (rx_len_cached <= IPA_DEFAULT_SYS_YELLOW_WM) {
-		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS)
+		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS) {
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty);
-		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if (ipa3_ctx->ipa_rmnet_notifier_enabled
+				&& !ipa3_ctx->buff_below_thresh_for_def_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_below_thresh_for_def_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_BELOW_LOW_THRESHOLD_FOR_DEFAULT_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_def_pipe_notified = false;
+				ipa3_ctx->buff_below_thresh_for_def_pipe_notified = true;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		}
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) {
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty_coal);
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if (ipa3_ctx->ipa_rmnet_notifier_enabled
+				&& !ipa3_ctx->buff_below_thresh_for_coal_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_below_thresh_for_coal_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_BELOW_LOW_THRESHOLD_FOR_COAL_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_coal_pipe_notified = false;
+				ipa3_ctx->buff_below_thresh_for_coal_pipe_notified = true;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		}
 		else if (sys->ep->client == IPA_CLIENT_APPS_LAN_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_rx_empty);
 		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.rmnet_ll_rx_empty);
 		else
 			WARN_ON(1);
+	}
+
+	if (rx_len_cached >= IPA_BUFF_THRESHOLD_HIGH) {
+		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS) {
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if(ipa3_ctx->ipa_rmnet_notifier_enabled &&
+				!ipa3_ctx->buff_above_thresh_for_def_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_above_thresh_for_def_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_ABOVE_HIGH_THRESHOLD_FOR_DEFAULT_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_def_pipe_notified = true;
+				ipa3_ctx->buff_below_thresh_for_def_pipe_notified = false;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		} else if (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) {
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if(ipa3_ctx->ipa_rmnet_notifier_enabled &&
+				!ipa3_ctx->buff_above_thresh_for_coal_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_above_thresh_for_coal_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_ABOVE_HIGH_THRESHOLD_FOR_COAL_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_coal_pipe_notified = true;
+				ipa3_ctx->buff_below_thresh_for_coal_pipe_notified = false;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		}
 	}
 
 	return;

@@ -1553,6 +1553,10 @@ struct ipa3_stats {
 	u64 lower_order;
 	struct ipa3_page_recycle_stats page_recycle_stats[3];
 	u64 page_recycle_cnt[3][IPA_PAGE_POLL_THRESHOLD_MAX];
+	atomic_t num_buff_above_thresh_for_def_pipe_notified;
+	atomic_t num_buff_above_thresh_for_coal_pipe_notified;
+	atomic_t num_buff_below_thresh_for_def_pipe_notified;
+	atomic_t num_buff_below_thresh_for_coal_pipe_notified;
 };
 
 /* offset for each stats */
@@ -2366,6 +2370,14 @@ struct ipa3_context {
 	bool is_device_crashed;
 	bool ulso_wa;
 	u64 gsi_msi_addr;
+	spinlock_t notifier_lock;
+	struct raw_notifier_head *ipa_rmnet_notifier_list_internal;
+	struct notifier_block ipa_rmnet_notifier;
+	bool ipa_rmnet_notifier_enabled;
+	bool buff_above_thresh_for_def_pipe_notified;
+	bool buff_above_thresh_for_coal_pipe_notified;
+	bool buff_below_thresh_for_def_pipe_notified;
+	bool buff_below_thresh_for_coal_pipe_notified;
 };
 
 struct ipa3_plat_drv_res {
@@ -3390,6 +3402,8 @@ int ipa3_register_rmnet_ll_cb(
 	void *user_data3);
 int ipa3_unregister_rmnet_ll_cb(void);
 int ipa3_rmnet_ll_xmit(struct sk_buff *skb);
+int ipa3_register_notifier(void *fn_ptr);
+int ipa3_unregister_notifier(void *fn_ptr);
 int ipa3_setup_apps_low_lat_data_prod_pipe(
 	struct rmnet_egress_param *egress_param,
 	struct net_device *dev);
