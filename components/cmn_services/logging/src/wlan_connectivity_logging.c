@@ -236,7 +236,10 @@ wlan_connectivity_log_dequeue(void)
 							current_timestamp;
 		}
 
-		global_cl.sent_msgs_count %= WLAN_RECORDS_PER_SEC;
+		global_cl.sent_msgs_count =
+				qdf_do_div_rem(global_cl.sent_msgs_count,
+					       WLAN_RECORDS_PER_SEC);
+
 		data[idx] = *global_cl.read_ptr;
 
 		/*
