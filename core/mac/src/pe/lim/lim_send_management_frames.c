@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3840,6 +3841,12 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 					      pe_session,
 					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
+		wlan_connectivity_mgmt_event((struct wlan_frame_hdr *)pMacHdr,
+					     pe_session->vdev_id, nReason,
+					     QDF_TX_RX_STATUS_OK,
+					     mac->lim.bss_rssi, 0, 0, 0,
+					     WLAN_DISASSOC_TX);
+
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status = wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 					TXRX_FRM_802_11_MGMT,
@@ -4080,6 +4087,13 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 					      pe_session,
 					      QDF_STATUS_SUCCESS,
 					      QDF_STATUS_SUCCESS);
+
+		wlan_connectivity_mgmt_event((struct wlan_frame_hdr *)pMacHdr,
+					     pe_session->vdev_id, nReason,
+					     QDF_TX_RX_STATUS_OK,
+					     mac->lim.bss_rssi, 0, 0, 0,
+					     WLAN_DEAUTH_TX);
+
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
 			wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
