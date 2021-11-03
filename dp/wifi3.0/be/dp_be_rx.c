@@ -769,7 +769,7 @@ done:
 	 *
 	 * One more loop will move the state to normal processing and yield
 	 */
-	if (ring_near_full)
+	if (ring_near_full && quota)
 		goto more_data;
 
 	if (dp_rx_enable_eol_data_check(soc) && rx_bufs_used) {
