@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -755,4 +756,50 @@ cdp_get_scan_spcl_vap_stats(ol_txrx_soc_handle soc,
 								      stats);
 }
 #endif
+
+static inline QDF_STATUS
+cdp_get_peer_delay_stats(ol_txrx_soc_handle soc,
+			 uint8_t vdev_id,
+			 uint8_t *peer_mac,
+			 struct cdp_delay_tid_stats *delay_stats)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_peer_delay_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->txrx_get_peer_delay_stats(soc,
+								   vdev_id,
+								   peer_mac,
+								   delay_stats);
+}
+
+static inline QDF_STATUS
+cdp_get_peer_jitter_stats(ol_txrx_soc_handle soc,
+			  uint8_t pdev_id,
+			  uint8_t vdev_id,
+			  uint8_t *peer_mac,
+			  struct cdp_peer_tid_stats *tid_stats)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_peer_jitter_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->txrx_get_peer_jitter_stats(soc,
+								    pdev_id,
+								    vdev_id,
+								    peer_mac,
+								    tid_stats);
+}
 #endif /* _CDP_TXRX_HOST_STATS_H_ */

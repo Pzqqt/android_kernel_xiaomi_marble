@@ -9401,6 +9401,121 @@ dp_txrx_get_soc_stats(struct cdp_soc_t *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_PEER_EXT_STATS
+/* dp_txrx_get_peer_delay_stats - to get peer delay stats per TIDs
+ * @soc: soc handle
+ * @vdev_id: id of vdev handle
+ * @peer_mac: mac of DP_PEER handle
+ * @delay_stats: pointer to delay stats array
+ * return: status success/failure
+ */
+static QDF_STATUS
+dp_txrx_get_peer_delay_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			     uint8_t *peer_mac,
+			     struct cdp_delay_tid_stats *delay_stats)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_peer *peer = dp_peer_find_hash_find(soc, peer_mac, 0, vdev_id,
+						      DP_MOD_ID_CDP);
+	struct cdp_peer_ext_stats *pext_stats;
+	struct cdp_delay_rx_stats *rx_delay;
+	struct cdp_delay_tx_stats *tx_delay;
+	uint8_t tid;
+
+	if (!peer)
+		return QDF_STATUS_E_FAILURE;
+
+	if (!wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx)) {
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pext_stats = peer->pext_stats;
+	if (!pext_stats) {
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (tid = 0; tid < CDP_MAX_DATA_TIDS; tid++) {
+		rx_delay = &delay_stats[tid].rx_delay;
+		dp_accumulate_delay_tid_stats(soc, pext_stats->delay_stats,
+					      &rx_delay->to_stack_delay, tid,
+					      CDP_HIST_TYPE_REAP_STACK);
+		tx_delay = &delay_stats[tid].tx_delay;
+		dp_accumulate_delay_tid_stats(soc, pext_stats->delay_stats,
+					      &tx_delay->tx_swq_delay, tid,
+					      CDP_HIST_TYPE_SW_ENQEUE_DELAY);
+		dp_accumulate_delay_tid_stats(soc, pext_stats->delay_stats,
+					      &tx_delay->hwtx_delay, tid,
+					      CDP_HIST_TYPE_HW_COMP_DELAY);
+	}
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+dp_txrx_get_peer_delay_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			     uint8_t *peer_mac,
+			     struct cdp_delay_tid_stats *delay_stats)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* QCA_PEER_EXT_STATS */
+
+#ifdef WLAN_PEER_JITTER
+/* dp_txrx_get_peer_jitter_stats - to get peer jitter stats per TIDs
+ * @soc: soc handle
+ * @pdev_id: id of pdev handle
+ * @vdev_id: id of vdev handle
+ * @peer_mac: mac of DP_PEER handle
+ * @tid_stats: pointer to jitter stats array
+ * return: status success/failure
+ */
+static QDF_STATUS
+dp_txrx_get_peer_jitter_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			      uint8_t vdev_id, uint8_t *peer_mac,
+			      struct cdp_peer_tid_stats *tid_stats)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_peer *peer;
+	uint8_t tid;
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	if (!wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx))
+		return QDF_STATUS_E_FAILURE;
+
+	peer = dp_peer_find_hash_find(soc, peer_mac, 0, vdev_id, DP_MOD_ID_CDP);
+	if (!peer)
+		return QDF_STATUS_E_FAILURE;
+
+	for (tid = 0; tid < qdf_min(CDP_DATA_TID_MAX, DP_MAX_TIDS); tid++) {
+		struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+
+		tid_stats[tid].tx_avg_jitter = rx_tid->stats.tx_avg_jitter;
+		tid_stats[tid].tx_avg_delay = rx_tid->stats.tx_avg_delay;
+		tid_stats[tid].tx_avg_err = rx_tid->stats.tx_avg_err;
+		tid_stats[tid].tx_total_success =
+					rx_tid->stats.tx_total_success;
+		tid_stats[tid].tx_drop = rx_tid->stats.tx_drop;
+	}
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+dp_txrx_get_peer_jitter_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			      uint8_t vdev_id, uint8_t *peer_mac,
+			      struct cdp_peer_tid_stats *tid_stats)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_PEER_JITTER */
+
 /* dp_txrx_get_peer_stats - will return cdp_peer_stats
  * @soc: soc handle
  * @vdev_id: id of vdev handle
@@ -11389,6 +11504,8 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_get_pdev_stats = dp_txrx_get_pdev_stats,
 	.txrx_get_ratekbps = dp_txrx_get_ratekbps,
 	.txrx_update_vdev_stats = dp_txrx_update_vdev_host_stats,
+	.txrx_get_peer_delay_stats = dp_txrx_get_peer_delay_stats,
+	.txrx_get_peer_jitter_stats = dp_txrx_get_peer_jitter_stats,
 	/* TODO */
 };
 

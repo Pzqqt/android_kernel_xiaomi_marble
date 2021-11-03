@@ -1012,6 +1012,16 @@ struct cdp_host_stats_ops {
 	(*txrx_get_scan_spcl_vap_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
 					struct cdp_scan_spcl_vap_stats *stats);
 #endif
+
+	QDF_STATUS
+	(*txrx_get_peer_delay_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				     uint8_t *peer_mac,
+				     struct cdp_delay_tid_stats *delay_stats);
+
+	QDF_STATUS
+	(*txrx_get_peer_jitter_stats)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				      uint8_t vdev_id, uint8_t *peer_mac,
+				      struct cdp_peer_tid_stats *tid_stats);
 };
 
 struct cdp_wds_ops {

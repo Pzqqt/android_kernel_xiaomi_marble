@@ -5495,22 +5495,11 @@ static void dp_print_hist_stats(struct cdp_hist_stats *hstats,
 	DP_PRINT_STATS("Avg = %u\n", hstats->avg);
 }
 
-/*
- * dp_accumulate_delay_tid_stats(): Accumulate the tid stats to the
- *                                  hist stats.
- * @soc: DP SoC handle
- * @stats: cdp_delay_tid stats
- * @dst_hstats: Destination histogram to copy tid stats
- * @tid: TID value
- *
- * Return: void
- */
-static void
-dp_accumulate_delay_tid_stats(struct dp_soc *soc,
-			      struct cdp_delay_tid_stats stats[]
-			      [CDP_MAX_TXRX_CTX],
-			      struct cdp_hist_stats *dst_hstats,
-			      uint8_t tid, uint32_t mode)
+void dp_accumulate_delay_tid_stats(struct dp_soc *soc,
+				   struct cdp_delay_tid_stats stats[]
+				   [CDP_MAX_TXRX_CTX],
+				   struct cdp_hist_stats *dst_hstats,
+				   uint8_t tid, uint32_t mode)
 {
 	uint8_t ring_id;
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3117,4 +3118,22 @@ void dp_peer_flush_frags(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
  * Return:
  */
 void dp_soc_reset_mon_intr_mask(struct dp_soc *soc);
+
+#ifdef QCA_PEER_EXT_STATS
+/*
+ * dp_accumulate_delay_tid_stats(): Accumulate the tid stats to the
+ *                                  hist stats.
+ * @soc: DP SoC handle
+ * @stats: cdp_delay_tid stats
+ * @dst_hstats: Destination histogram to copy tid stats
+ * @tid: TID value
+ *
+ * Return: void
+ */
+void dp_accumulate_delay_tid_stats(struct dp_soc *soc,
+				   struct cdp_delay_tid_stats stats[]
+				   [CDP_MAX_TXRX_CTX],
+				   struct cdp_hist_stats *dst_hstats,
+				   uint8_t tid, uint32_t mode);
+#endif /* QCA_PEER_EXT_STATS */
 #endif /* #ifndef _DP_INTERNAL_H_ */
