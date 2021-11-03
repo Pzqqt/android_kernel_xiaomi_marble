@@ -4861,6 +4861,7 @@ send_evt:
     defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 {
+	int i;
 	struct wlan_log_record *log_record = NULL;
 	struct wmi_roam_candidate_info *ap = scan->ap;
 
@@ -4880,8 +4881,8 @@ void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 		scan->num_chan = MAX_ROAM_SCAN_CHAN;
 
 	log_record->roam_scan.num_scanned_freq = scan->num_chan;
-	qdf_mem_copy(&log_record->roam_scan.scan_freq, &scan->chan_freq[0],
-		     scan->num_chan * sizeof(scan->chan_freq[0]));
+	for (i = 0; i < scan->num_chan; i++)
+		log_record->roam_scan.scan_freq[i] = scan->chan_freq[i];
 
 	wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
