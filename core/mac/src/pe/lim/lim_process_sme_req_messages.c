@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3544,7 +3545,7 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 			      NULL, 0, rsn_ie, DOT11F_IE_RSN_MAX_LEN);
 
 	if (req->force_rsne_override && QDF_IS_STATUS_SUCCESS(status)) {
-		rsn_ie_len = rsn_ie[1];
+		rsn_ie_len = rsn_ie[1] + 2;
 		if (rsn_ie_len < DOT11F_IE_RSN_MIN_LEN ||
 		    rsn_ie_len > DOT11F_IE_RSN_MAX_LEN) {
 			pe_err("RSN length %d not within limits", rsn_ie_len);
@@ -3554,7 +3555,7 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 
 		session->lim_join_req->rsnIE.length = rsn_ie_len;
 		qdf_mem_copy(session->lim_join_req->rsnIE.rsnIEdata,
-			     rsn_ie, rsn_ie_len + 2);
+			     rsn_ie, rsn_ie_len);
 
 		qdf_mem_free(rsn_ie);
 		return QDF_STATUS_SUCCESS;

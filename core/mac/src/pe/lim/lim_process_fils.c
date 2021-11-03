@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1244,13 +1245,16 @@ free_buf:
  *
  * Return: None
  */
-static QDF_STATUS lim_generate_fils_pmkr1_name(struct pe_session *pe_session)
+static QDF_STATUS lim_generate_fils_pmkr1_name(struct mac_context *mac_ctx,
+					       struct pe_session *pe_session)
 {
 	uint8_t *hash;
 	uint8_t *scatter_list[PMKR1_SCATTER_LIST_ELEM];
 	uint32_t len[PMKR1_SCATTER_LIST_ELEM];
 	uint8_t *buf;
 	uint8_t gp_mgmt_cipher_suite[4];
+	uint32_t ret;
+	tDot11fIERSN dot11f_ie_rsn = {0};
 	struct pe_fils_session *fils_info = pe_session->fils_info;
 
 	if (!fils_info)
@@ -1283,53 +1287,92 @@ static QDF_STATUS lim_generate_fils_pmkr1_name(struct pe_session *pe_session)
 	}
 	qdf_mem_copy(fils_info->pmkr1_name, hash, FILS_PMK_NAME_LEN);
 
-	if (fils_info->rsn_ie_len) {
-		if (fils_info->group_mgmt_cipher_present) {
-			/*
-			 * If 802.11w is enabled, group management cipher
-			 * suite is added at the end of RSN IE after
-			 * PMKID. Since the driver has opaque RSN IE
-			 * saved in fils_session, strip the last 4 bytes
-			 * of the RSN IE to get group mgmt cipher suite.
-			 * Then copy the PMKID followed by the grp mgmt cipher
-			 * suite.
-			 */
-			buf = fils_info->rsn_ie + fils_info->rsn_ie_len - 4;
-			qdf_mem_copy(gp_mgmt_cipher_suite, buf, 4);
-			buf -= 2;
-		} else {
-			buf = fils_info->rsn_ie + fils_info->rsn_ie_len;
-		}
+	qdf_mem_zero(hash, SHA384_DIGEST_SIZE);
+	qdf_mem_free(hash);
 
-		/*
-		 * Add PMKID count as 1. PMKID count field is 2 bytes long.
-		 * Copy the PMKR1-Name in the PMKID list at the end of the
-		 * RSN IE.
-		 */
-		*buf = 1;
-		buf += 2;
-		qdf_mem_copy(buf, fils_info->pmkr1_name, FILS_PMK_NAME_LEN);
-		if (fils_info->group_mgmt_cipher_present) {
-			fils_info->rsn_ie_len += FILS_PMK_NAME_LEN;
-			fils_info->rsn_ie[1] += (FILS_PMK_NAME_LEN);
-		} else {
-			fils_info->rsn_ie_len += (2 + FILS_PMK_NAME_LEN);
-			fils_info->rsn_ie[1] += (2 + FILS_PMK_NAME_LEN);
-		}
-
-		if (fils_info->group_mgmt_cipher_present) {
-			buf += FILS_PMK_NAME_LEN;
-			qdf_mem_copy(buf, gp_mgmt_cipher_suite, 4);
-		}
-	} else {
+	if (!fils_info->rsn_ie_len) {
 		pe_err("FT-FILS: RSN IE not present");
-		qdf_mem_zero(hash, SHA384_DIGEST_SIZE);
-		qdf_mem_free(hash);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(hash, SHA384_DIGEST_SIZE);
-	qdf_mem_free(hash);
+	ret = dot11f_unpack_ie_rsn(mac_ctx, fils_info->rsn_ie + 2,
+				   fils_info->rsn_ie_len - 2,
+				   &dot11f_ie_rsn, 0);
+
+	if (!DOT11F_SUCCEEDED(ret)) {
+		pe_err("unpack RSN IE failed, ret: %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (fils_info->group_mgmt_cipher_present) {
+		/*
+		 * If 802.11w is enabled, group management cipher
+		 * suite is added at the end of RSN IE after
+		 * PMKID. Since the driver has opaque RSN IE
+		 * saved in fils_session, strip the last 4 bytes
+		 * of the RSN IE to get group mgmt cipher suite.
+		 * Then copy the PMKID followed by the grp mgmt cipher
+		 * suite.
+		 */
+
+		buf = fils_info->rsn_ie + fils_info->rsn_ie_len - 4;
+		fils_info->rsn_ie[1] -= 4; /* strip the grp mgmt cipher len */
+		qdf_mem_copy(gp_mgmt_cipher_suite, buf, 4);
+
+		if (dot11f_ie_rsn.pmkid_count) {
+			buf -= dot11f_ie_rsn.pmkid_count * PMKID_LEN;
+			fils_info->rsn_ie[1] -=
+				dot11f_ie_rsn.pmkid_count * PMKID_LEN;
+		}
+
+		fils_info->rsn_ie[1] -= 2;
+		buf -= 2; /* skip past the pmkid count */
+		/* Clear the buffer occupied by PMKID and GRP mgmt cipher */
+		qdf_mem_zero(buf,
+			     (dot11f_ie_rsn.pmkid_count * PMKID_LEN) + 2 + 4);
+	} else {
+		buf = fils_info->rsn_ie + fils_info->rsn_ie_len;
+	}
+
+	pe_debug("FT-FILS: Construct IM assoc RSN IE: current RSN len:%d gp_mgmt_cipher_present:%d",
+		 fils_info->rsn_ie_len,
+		 fils_info->group_mgmt_cipher_present);
+
+	/*
+	 * Add PMKID count as 1. PMKID count field is 2 bytes long.
+	 * Copy the PMKR1-Name in the PMKID list at the end of the
+	 * RSN IE.
+	 */
+	*buf = 1; /* RSNIE PMKID Count = 1 */
+	buf += 2; /* RSNIE PMKID count field is 2 bytes */
+	/* PMKID = fils_info->pmkr1_name */
+	qdf_mem_copy(buf, fils_info->pmkr1_name, FILS_PMK_NAME_LEN);
+	buf += FILS_PMK_NAME_LEN;
+	fils_info->rsn_ie[1] += FILS_PMK_NAME_LEN + 2;
+
+	if (fils_info->group_mgmt_cipher_present) {
+		qdf_mem_copy(buf, gp_mgmt_cipher_suite, 4);
+		fils_info->rsn_ie[1] += 4; /* Add the grp mgmt cipher len */
+	}
+
+	fils_info->rsn_ie_len = fils_info->rsn_ie[1] + 2;
+
+	pe_debug("FT-FILS: Final RSN length:%d", fils_info->rsn_ie[1]);
+	qdf_trace_hex_dump(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   fils_info->rsn_ie, fils_info->rsn_ie_len);
+
+	if (pe_session->lim_join_req) {
+		qdf_mem_zero(pe_session->lim_join_req->rsnIE.rsnIEdata,
+			     WLAN_MAX_IE_LEN + 2);
+		pe_session->lim_join_req->rsnIE.length =
+						fils_info->rsn_ie[1] + 2;
+		qdf_mem_copy(pe_session->lim_join_req->rsnIE.rsnIEdata,
+			     fils_info->rsn_ie,
+			     pe_session->lim_join_req->rsnIE.length);
+	} else {
+		pe_debug("FT-FILS: Join req is NULL");
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1399,7 +1442,7 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 		if (QDF_IS_STATUS_ERROR(status))
 			return false;
 
-		status = lim_generate_fils_pmkr1_name(pe_session);
+		status = lim_generate_fils_pmkr1_name(mac_ctx, pe_session);
 		if (QDF_IS_STATUS_ERROR(status))
 			return false;
 	}

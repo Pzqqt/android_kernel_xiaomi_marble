@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017, 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -333,7 +334,7 @@ struct pe_fils_session {
 	uint16_t sequence_number;
 	uint8_t fils_session[SIR_FILS_SESSION_LENGTH];
 	uint8_t fils_nonce[SIR_FILS_NONCE_LENGTH];
-	uint8_t rsn_ie[WLAN_MAX_IE_LEN];
+	uint8_t rsn_ie[WLAN_MAX_IE_LEN + 2];
 	uint8_t rsn_ie_len;
 	bool group_mgmt_cipher_present;
 	struct mac_ft_ie ft_ie;
