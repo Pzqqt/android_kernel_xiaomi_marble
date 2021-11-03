@@ -485,7 +485,6 @@ static inline void hal_rx_dump_mpdu_start_tlv_7850(void *mpdustart,
 		       "all_frames_shall_be_encrypted  :%x"
 		       "encrypt_type:%x "
 		       "wep_key_width_for_variable_key :%x"
-		       "mesh_sta:%x "
 		       "bssid_hit:%x "
 		       "bssid_number:%x "
 		       "tid:%x "
@@ -505,7 +504,6 @@ static inline void hal_rx_dump_mpdu_start_tlv_7850(void *mpdustart,
 		       mpdu_info->all_frames_shall_be_encrypted,
 		       mpdu_info->encrypt_type,
 		       mpdu_info->wep_key_width_for_variable_key,
-		       mpdu_info->mesh_sta,
 		       mpdu_info->bssid_hit,
 		       mpdu_info->bssid_number,
 		       mpdu_info->tid,
