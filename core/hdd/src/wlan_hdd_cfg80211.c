@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -999,17 +1000,24 @@ static inline uint8_t hdd_get_bw_offset(uint32_t ch_width)
 /**
  * wlan_vendor_bitmap_to_reg_wifi_band_bitmap() - Convert vendor bitmap to
  * reg_wifi_band bitmap
+ * @psoc: PSOC pointer
  * @vendor_bitmap: vendor bitmap value coming via vendor command
  *
  * Return: reg_wifi_band bitmap
  */
 static uint32_t
-wlan_vendor_bitmap_to_reg_wifi_band_bitmap(uint32_t vendor_bitmap)
+wlan_vendor_bitmap_to_reg_wifi_band_bitmap(struct wlan_objmgr_psoc *psoc,
+					   uint32_t vendor_bitmap)
 {
 	uint32_t reg_bitmap = 0;
 
-	if (vendor_bitmap == QCA_SETBAND_AUTO)
+	if (vendor_bitmap == QCA_SETBAND_AUTO) {
 		reg_bitmap |= REG_BAND_MASK_ALL;
+		if (!wlan_reg_is_6ghz_supported(psoc)) {
+			hdd_debug("Driver doesn't support 6ghz");
+			reg_bitmap = (reg_bitmap & (~BIT(REG_BAND_6G)));
+		}
+	}
 	if (vendor_bitmap & QCA_SETBAND_2G)
 		reg_bitmap |= BIT(REG_BAND_2G);
 	if (vendor_bitmap & QCA_SETBAND_5G)
@@ -5286,8 +5294,9 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 		band_mask =
 			nla_get_u32(tb2[QCA_ATTR_ROAM_CONTROL_BAND_MASK]);
 		band_mask =
-			wlan_vendor_bitmap_to_reg_wifi_band_bitmap(band_mask);
-		hdd_debug("[ROAM BAND] band_mask:%d", band_mask);
+			wlan_vendor_bitmap_to_reg_wifi_band_bitmap(hdd_ctx->psoc,
+								   band_mask);
+		hdd_debug("[ROAM BAND] set roam band mask:%d", band_mask);
 		if (band_mask) {
 			ucfg_cm_set_roam_band_mask(hdd_ctx->psoc, vdev_id,
 						   band_mask);
@@ -13209,7 +13218,9 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_SETBAND_MASK]) {
 		band_mask = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_SETBAND_MASK]);
 		reg_wifi_band_bitmap =
-			wlan_vendor_bitmap_to_reg_wifi_band_bitmap(band_mask);
+			wlan_vendor_bitmap_to_reg_wifi_band_bitmap(hdd_ctx->psoc,
+								   band_mask);
+		hdd_debug("[SET BAND] set band mask:%d", reg_wifi_band_bitmap);
 	} else if (tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]) {
 		band_val = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]);
 		reg_wifi_band_bitmap =
