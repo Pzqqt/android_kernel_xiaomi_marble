@@ -464,6 +464,8 @@ void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
 static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 					struct cm_connect_req *req)
 {
+	struct qdf_mac_addr *mac;
+
 	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) != QDF_STA_MODE)
 		return;
 
@@ -477,11 +479,16 @@ static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 		mlme_debug("set link address for ML connection");
 	} else {
 		/* Use net_dev address for non-ML connection */
-		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
-					   cm_ctx->vdev->vdev_mlme.mldaddr);
+		mac = (struct qdf_mac_addr *)cm_ctx->vdev->vdev_mlme.mldaddr;
+		if (!qdf_is_macaddr_zero(mac)) {
+			wlan_vdev_mlme_set_macaddr(cm_ctx->vdev, mac->bytes);
+			mlme_debug(QDF_MAC_ADDR_FMT " for non-ML connection",
+				   QDF_MAC_ADDR_REF(mac->bytes));
+		}
+
 		wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev,
 						   WLAN_VDEV_FEXT2_MLO);
-		mlme_debug("set net_dev address for non-ML connection");
+		mlme_debug("clear MLO cap for non-ML connection");
 	}
 	wlan_vdev_obj_unlock(cm_ctx->vdev);
 }
