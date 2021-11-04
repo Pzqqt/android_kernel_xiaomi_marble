@@ -82,7 +82,7 @@
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
 
-#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
+#if defined(WLAN_FEATURE_11BE)
 static inline bool sap_acs_cfg_is_chwidth_320mhz(uint16_t width)
 {
 	return width == CH_WIDTH_320MHZ;

@@ -25,7 +25,7 @@
 #include "service_ready_param.h"
 #include "target_if.h"
 
-#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
+#if defined(WLAN_FEATURE_11BE)
 /**
  * wma_convert_eht_cap() - convert EHT capabilities into dot11f structure
  * @eht_cap: pointer to dot11f structure

@@ -15569,9 +15569,14 @@ hdd_convert_phy_bw_to_nl_bw(enum phy_ch_width bw)
 		return NL80211_CHAN_WIDTH_5;
 	case CH_WIDTH_10MHZ:
 		return NL80211_CHAN_WIDTH_10;
-#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
+#if defined(WLAN_FEATURE_11BE)
+#if defined(CFG80211_11BE_BASIC)
 	case CH_WIDTH_320MHZ:
 		return NL80211_CHAN_WIDTH_320;
+#else
+	case CH_WIDTH_320MHZ:
+		return NL80211_CHAN_WIDTH_20;
+#endif
 #endif
 	case CH_WIDTH_INVALID:
 	case CH_WIDTH_MAX:

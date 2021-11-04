@@ -636,7 +636,7 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 					    &peer_set_param_fp);
 }
 
-#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
+#if defined(WLAN_FEATURE_11BE)
 static enum wlan_phymode
 wma_eht_chan_phy_mode(uint32_t freq, uint8_t dot11_mode, uint16_t bw_val,
 		      enum phy_ch_width chan_width)
