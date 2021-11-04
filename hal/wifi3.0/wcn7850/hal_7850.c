@@ -519,7 +519,6 @@ static inline void hal_rx_dump_mpdu_start_tlv_7850(void *mpdustart,
 		       "phy_err_during_mpdu_header  :%x"
 		       "protocol_version_err:%x "
 		       "ast_based_lookup_valid:%x "
-		       "ranging:%x "
 		       "reserved_9a:%x "
 		       "phy_ppdu_id:%x "
 		       "ast_index:%x "
@@ -541,7 +540,6 @@ static inline void hal_rx_dump_mpdu_start_tlv_7850(void *mpdustart,
 		       mpdu_info->phy_err_during_mpdu_header,
 		       mpdu_info->protocol_version_err,
 		       mpdu_info->ast_based_lookup_valid,
-		       mpdu_info->ranging,
 		       mpdu_info->reserved_9a,
 		       mpdu_info->phy_ppdu_id,
 		       mpdu_info->ast_index,
@@ -665,12 +663,7 @@ static inline void hal_rx_dump_mpdu_start_tlv_7850(void *mpdustart,
 		       "vdev_id:%x "
 		       "service_code:%x "
 		       "priority_valid:%x "
-		       "reserved_23a:%x "
-		       "multi_link_addr_ad1_ad2_valid  :%x"
-		       "multi_link_addr_ad1_31_0:%x "
-		       "multi_link_addr_ad1_47_32:%x "
-		       "multi_link_addr_ad2_15_0:%x "
-		       "multi_link_addr_ad2_47_16:%x ",
+		       "reserved_23a:%x ",
 		       mpdu_info->mac_addr_ad1_31_0,
 		       mpdu_info->mac_addr_ad1_47_32,
 		       mpdu_info->mac_addr_ad2_15_0,
@@ -685,12 +678,7 @@ static inline void hal_rx_dump_mpdu_start_tlv_7850(void *mpdustart,
 		       mpdu_info->vdev_id,
 		       mpdu_info->service_code,
 		       mpdu_info->priority_valid,
-		       mpdu_info->reserved_23a,
-		       mpdu_info->multi_link_addr_ad1_ad2_valid,
-		       mpdu_info->multi_link_addr_ad1_31_0,
-		       mpdu_info->multi_link_addr_ad1_47_32,
-		       mpdu_info->multi_link_addr_ad2_15_0,
-		       mpdu_info->multi_link_addr_ad2_47_16);
+		       mpdu_info->reserved_23a);
 }
 
 /**
