@@ -468,6 +468,11 @@ enum ipa_hw_irq_srcs_e {
 #define IPA_HW_REG_SAVE_GSI_NUM_EVT_CNTXT_UC         2
 
 /*
+ * Total number of event ring contexts that need to be saved for Q6
+ */
+#define IPA_HW_REG_SAVE_GSI_NUM_EVT_CNTXT_Q6         11
+
+/*
  * Total number of endpoints for which ipa_reg_save.pipes[endp_number]
  * are not saved by default (only if ipa_cfg.gen.full_reg_trace =
  * true) There is no extra endpoints in Stingray
