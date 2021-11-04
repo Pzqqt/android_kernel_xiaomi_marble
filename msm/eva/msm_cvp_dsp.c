@@ -1023,6 +1023,7 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 	struct cvp_dsp_apps *me = &gfa_cv;
 	int rc = 0;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
+	bool skip_deregister = true;
 
 	dprintk(CVP_DSP, "%s -> cvp_find_fastrpc_node_with_handle pid 0x%x\n",
 			__func__, handle);
@@ -1067,6 +1068,7 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 		if (rc) {
 			dprintk(CVP_ERR, "%s fastrpc driver reg fail err %d\n",
 				__func__, rc);
+			skip_deregister = true;
 			goto fail_fastrpc_driver_register;
 		}
 
@@ -1076,7 +1078,8 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 				msecs_to_jiffies(CVP_DSP_RESPONSE_TIMEOUT))) {
 			dprintk(CVP_ERR, "%s fastrpc driver_register timeout\n",
 				__func__);
-			goto fail_fastrpc_driver_timeout;
+			skip_deregister = false;
+			goto fail_fastrpc_driver_register;
 		}
 	} else {
 		dprintk(CVP_DSP, "%s fastrpc probe hndl %pK pid 0x%x\n",
@@ -1085,13 +1088,14 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 
 	return rc;
 
-fail_fastrpc_driver_timeout:
-	__fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
 fail_fastrpc_driver_register:
 	/* remove list if this is the last session */
 	mutex_lock(&me->fastrpc_driver_list.lock);
 	list_del(&frpc_node->list);
 	mutex_unlock(&me->fastrpc_driver_list.lock);
+
+	if (!skip_deregister)
+		__fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
 
 	mutex_lock(&me->driver_name_lock);
 	eva_fastrpc_driver_release_name(frpc_node);
