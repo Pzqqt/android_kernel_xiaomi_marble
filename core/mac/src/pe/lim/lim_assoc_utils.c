@@ -4336,7 +4336,6 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 	struct qdf_mac_addr sta_dsaddr;
 	struct lim_sta_context mlmStaContext;
 	bool mlo_conn = false;
-	bool mlo_recv_assoc_frm = false;
 
 	if (!sta) {
 		pe_err("sta is NULL");
@@ -4348,10 +4347,9 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 		     sta->staAddr, QDF_MAC_ADDR_SIZE);
 
 	mlmStaContext = sta->mlmStaContext;
-	mlo_conn = lim_is_mlo_conn(pe_session, sta);
-	mlo_recv_assoc_frm = lim_is_mlo_recv_assoc(sta);
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
+		mlo_conn = lim_is_mlo_conn(pe_session, sta);
 		if (mlo_conn)
 			lim_release_mlo_conn_idx(mac, sta->assocId,
 						 pe_session, false);

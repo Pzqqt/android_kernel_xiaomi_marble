@@ -382,18 +382,23 @@ void lim_mlo_set_mld_mac_peer(tpDphHashNode sta_ds,
 
 bool lim_is_mlo_conn(struct pe_session *session, tpDphHashNode sta_ds)
 {
+	bool mlo_conn = false;
+
 	if (!sta_ds) {
 		pe_err("sta ds is null");
-		return false;
+		return mlo_conn;
 	}
 
 	if (!session) {
 		pe_err("session is null");
-		return false;
+		return mlo_conn;
 	}
 
-	return sta_ds->mlmStaContext.eht_capable &&
-	       IS_DOT11_MODE_EHT(session->dot11mode);
+	if (wlan_vdev_mlme_is_mlo_vdev(session->vdev) &&
+	    !qdf_is_macaddr_zero((struct qdf_mac_addr *)sta_ds->mld_addr))
+		mlo_conn = true;
+
+	return mlo_conn;
 }
 
 void lim_set_mlo_recv_assoc(tpDphHashNode sta_ds, bool mlo_recv_assoc_frm)
