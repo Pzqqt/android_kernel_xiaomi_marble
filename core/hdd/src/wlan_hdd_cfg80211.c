@@ -1012,19 +1012,19 @@ wlan_vendor_bitmap_to_reg_wifi_band_bitmap(struct wlan_objmgr_psoc *psoc,
 {
 	uint32_t reg_bitmap = 0;
 
-	if (vendor_bitmap == QCA_SETBAND_AUTO) {
+	if (vendor_bitmap == QCA_SETBAND_AUTO)
 		reg_bitmap |= REG_BAND_MASK_ALL;
-		if (!wlan_reg_is_6ghz_supported(psoc)) {
-			hdd_debug("Driver doesn't support 6ghz");
-			reg_bitmap = (reg_bitmap & (~BIT(REG_BAND_6G)));
-		}
-	}
 	if (vendor_bitmap & QCA_SETBAND_2G)
 		reg_bitmap |= BIT(REG_BAND_2G);
 	if (vendor_bitmap & QCA_SETBAND_5G)
 		reg_bitmap |= BIT(REG_BAND_5G);
 	if (vendor_bitmap & QCA_SETBAND_6G)
 		reg_bitmap |= BIT(REG_BAND_6G);
+
+	if (!wlan_reg_is_6ghz_supported(psoc)) {
+		hdd_debug("Driver doesn't support 6ghz");
+		reg_bitmap = (reg_bitmap & (~BIT(REG_BAND_6G)));
+	}
 
 	return reg_bitmap;
 }
