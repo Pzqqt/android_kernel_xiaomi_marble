@@ -3342,6 +3342,10 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				sap_config->acs_cfg.master_ch_list_count);
 		/* if it is only one channel, send ACS event to upper layer */
 		if (sap_config->acs_cfg.ch_list_count == 1) {
+			sap_config->acs_cfg.start_ch_freq =
+				sap_config->acs_cfg.freq_list[0];
+			sap_config->acs_cfg.end_ch_freq =
+				sap_config->acs_cfg.freq_list[0];
 			sap_config->acs_cfg.pri_ch_freq =
 					      sap_config->acs_cfg.freq_list[0];
 			if (sap_config->acs_cfg.pri_ch_freq <=
