@@ -1214,6 +1214,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_set_active_link_number_param,
+    WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1695,6 +1697,8 @@ typedef enum {
     OP(WMI_PDEV_FIPS_EXTEND_CMDID) \
     OP(WMI_PDEV_FIPS_MODE_SET_CMDID) \
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CMDID) \
+    OP(WMI_SAWF_SVC_CLASS_CFG_CMDID) \
+    OP(WMI_SAWF_SVC_CLASS_DISABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4860,6 +4864,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_MU_SNIF_CMDID);
 #define WMITLV_TABLE_WMI_ROAM_SET_PARAM_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_set_param_cmd_fixed_param, wmi_roam_set_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SET_PARAM_CMDID);
+
+#define WMITLV_TABLE_WMI_SAWF_SVC_CLASS_CFG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param, wmi_sawf_svc_class_cfg_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_CFG_CMDID);
+
+#define WMITLV_TABLE_WMI_SAWF_SVC_CLASS_DISABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param, wmi_sawf_svc_class_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
 
 
 

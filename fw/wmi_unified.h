@@ -271,6 +271,7 @@ typedef enum {
     WMI_GRP_VENDOR,         /* 0x46 vendor specific group */
     WMI_GRP_LATENCY,        /* 0x47 TID/AC level latency config */
     WMI_GRP_MLO,            /* 0x48 MLO(Multiple Link Operation) management */
+    WMI_GRP_SAWF,           /* 0x49 SAWF (Service Aware WiFi) */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1417,6 +1418,13 @@ typedef enum {
     WMI_MLO_READY_CMDID,
     /** WMI cmd used for tearing down a hw_link part of MLO */
     WMI_MLO_TEARDOWN_CMDID,
+
+    /** WMI commands specific to Service Aware WiFi (SAWF) */
+    /** configure or reconfigure the parameters for a service class */
+    WMI_SAWF_SVC_CLASS_CFG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_SAWF),
+    /** disable a service class */
+    WMI_SAWF_SVC_CLASS_DISABLE_CMDID,
+
 } WMI_CMD_ID;
 
 typedef enum {
@@ -29892,6 +29900,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_SET_PARAM_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_FIPS_EXTEND_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_FIPS_MODE_SET_CMDID);
+        WMI_RETURN_STRING(WMI_SAWF_SVC_CLASS_CFG_CMDID);
+        WMI_RETURN_STRING(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -36489,6 +36499,104 @@ typedef struct {
     /* Cust bdf Minor version in bdf */
     A_UINT32 cust_bdf_ver_minor;
 } wmi_cust_bdf_version_capabilities;
+
+typedef enum {
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_MIN_THRUPUT    = 0,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_MAX_THRUPUT    = 0xffffffff,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_BURST_SIZE     = 0,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_SVC_INTERVAL   = 0xffffffff,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_DELAY_BOUND    = 0xffffffff,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_TIME_TO_LIVE   = 0xffffffff,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_PRIORITY       = 0,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_TID            = 0xffffffff,
+    WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_MSDU_LOSS_RATE = 0,
+} WMI_SAWF_SVC_CLASS_PARAM_DEFAULTS;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param */
+    A_UINT32 svc_class_id; /* which service class is being configured */
+    /*-----
+     * The below fields specify the values for the parameters of the
+     * service class being configured.
+     * Each such service class parameter has a default value specified in the
+     * above WMI_SAWF_SVC_CLASS_PARAM_DEFAULTS enum.
+     * This default value shall be specified for service classes where
+     * the parameter in question is not applicable.
+     * For example, for service classes that have no minimum throughput
+     * requirement, the min_thruput_kbps field should be set to
+     * WMI_SAWF_SVC_CLASS_PARAM_DEFAULT_MIN_THRUPUT, i.e. 0.
+     *-----*/
+    /* min_thruput_kbps:
+     * How much throughput should be "guaranteed" for each MSDU queue
+     * belonging to this service class.
+     * Units are kilobits per second.
+     */
+    A_UINT32 min_thruput_kbps;
+    /* max_thruput_kbps:
+     * What upper limit on throughput shall be applied to MSDU queues beloning
+     * to this service class, if other peer-TIDs are not meeting their QoS
+     * service goals.
+     * Units are kilobits per second.
+     */
+    A_UINT32 max_thruput_kbps;
+    /* burst_size_bytes:
+     * How much data (i.e. how many MSDUs) should be pulled from a
+     * MSDU queue belonging to this service class to be formed into MPDUs
+     * and enqueued for transmission.
+     * Similarly, how long should a tx op be for MPDUs containing MSDUs from
+     * this service class, to ensure that the necessary amount of data gets
+     * delivered to the peer.
+     * Units are bytes.
+     */
+    A_UINT32 burst_size_bytes;
+    /* svc_interval_ms:
+     * How frequently MSDUs belonging to this service class should be
+     * formed into MPDUs and enqueued for transmission.
+     * The svc_interval_ms parameter is expected to be <= the delay_bound_ms
+     * parameter.
+     * Units are milliseconds.
+     */
+    A_UINT32 svc_interval_ms;
+    /* delay_bound_ms:
+     * How promptly the MSDUs belonging to this service class need to be
+     * delivered to the recipient peer.
+     * Units are milliseconds.
+     */
+    A_UINT32 delay_bound_ms;
+    /* time_to_live_ms:
+     * How long MSDUs belonging to this service class remain valid.
+     * If the MSDU has not been successfully transmitted before this
+     * time-to-live time has elapsed, the MSDU should be discarded.
+     * The time_to_live_ms parameter is expected to be >= the delay_bound_ms
+     * parameter.
+     * Units are milliseconds.
+     */
+    A_UINT32 time_to_live_ms;
+    /* priority:
+     * What degree of precedence shall the WLAN FW's tx scheduler use
+     * when considering whether to transmit MPDUs generated from MSDUs
+     * belonging to this service class.
+     */
+    A_UINT32 priority;
+    /* tid:
+     * Which WLAN TID shall be used for delivering traffic of this
+     * service class.
+     */
+    A_UINT32 tid;
+    /* msdu_loss_rate_ppm:
+     * This parameter indicates the acceptable rate of MSDU loss.
+     * Units are parts per million.
+     * E.g. if it is acceptable for 1 MSDU of every 10000 to be lost,
+     * the msdu_loss_rate_ppm value would be 100,
+     * since 100 / 1000000 = 1 / 10000.
+     */
+    A_UINT32 msdu_loss_rate_ppm;
+} wmi_sawf_svc_class_cfg_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param */
+    A_UINT32 svc_class_id; /* which service class is being disabled */
+} wmi_sawf_svc_class_disable_cmd_fixed_param;
 
 
 
