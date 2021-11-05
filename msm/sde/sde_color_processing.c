@@ -169,6 +169,8 @@ static bool feature_handoff_mask[SDE_CP_CRTC_MAX_FEATURES] = {
 	[SDE_CP_CRTC_DSPP_SIXZONE] = 1,
 	[SDE_CP_CRTC_DSPP_GAMUT] = 1,
 	[SDE_CP_CRTC_DSPP_DITHER] = 1,
+	[SDE_CP_CRTC_DSPP_SPR_INIT] = 1,
+	[SDE_CP_CRTC_DSPP_DEMURA_INIT] = 1,
 };
 
 typedef void (*dspp_cap_update_func_t)(struct sde_crtc *crtc,
