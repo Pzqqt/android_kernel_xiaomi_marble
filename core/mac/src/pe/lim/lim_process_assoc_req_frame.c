@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2751,8 +2752,48 @@ static void lim_fill_assoc_ind_wapi_info(
 }
 #endif
 
+#ifdef WLAN_FEATURE_11AX
+static bool lim_fill_assoc_he_info(struct mac_context *mac_ctx,
+				   struct pe_session *session_entry,
+				   tpSirAssocReq assoc_req,
+				   tpLimMlmAssocInd assoc_ind)
+{
+	if (session_entry->he_capable && assoc_req->he_cap.present) {
+		if (session_entry->limRFBand == REG_BAND_2G) {
+			if (session_entry->ch_width == CH_WIDTH_20MHZ)
+				assoc_ind->chan_info.info = MODE_11AX_HE20;
+			else if (session_entry->ch_width == CH_WIDTH_40MHZ &&
+				 assoc_req->he_cap.chan_width_0 == 1)
+				assoc_ind->chan_info.info = MODE_11AX_HE40;
+		} else {
+			if (session_entry->ch_width == CH_WIDTH_160MHZ &&
+				assoc_req->he_cap.chan_width_2 == 1)
+				assoc_ind->chan_info.info = MODE_11AX_HE160;
+			else if (session_entry->ch_width == CH_WIDTH_80MHZ &&
+				 assoc_req->he_cap.chan_width_1 == 1)
+				assoc_ind->chan_info.info = MODE_11AX_HE80;
+			else if (session_entry->ch_width == CH_WIDTH_40MHZ &&
+				 assoc_req->he_cap.chan_width_1 == 1)
+				assoc_ind->chan_info.info = MODE_11AX_HE40;
+			else
+				assoc_ind->chan_info.info = MODE_11AX_HE20;
+		}
+		return true;
+	}
+
+	return false;
+}
+#else
+static bool lim_fill_assoc_he_info(struct mac_context *mac_ctx,
+				   struct pe_session *session_entry,
+				   tpSirAssocReq assoc_req,
+				   tpLimMlmAssocInd assoc_ind)
+{
+	return false;
+}
+#endif
 /**
- * lim_fill_assoc_ind_vht_info() - Updates VHT information in assoc indication
+ * lim_fill_assoc_ind_info() - Updates HE/VHT/HT information in assoc indication
  * @mac_ctx: Global Mac context
  * @assoc_req: pointer to association request
  * @session_entry: PE session entry
@@ -2763,23 +2804,46 @@ static void lim_fill_assoc_ind_wapi_info(
  *
  * Return: None
  */
-static void lim_fill_assoc_ind_vht_info(struct mac_context *mac_ctx,
-					struct pe_session *session_entry,
-					tpSirAssocReq assoc_req,
-					tpLimMlmAssocInd assoc_ind,
-					tpDphHashNode sta_ds)
+static void lim_fill_assoc_ind_info(struct mac_context *mac_ctx,
+				    struct pe_session *session_entry,
+				    tpSirAssocReq assoc_req,
+				    tpLimMlmAssocInd assoc_ind,
+				    tpDphHashNode sta_ds)
 {
 	uint8_t chan;
 	uint8_t i;
 	bool nw_type_11b = true;
+	uint32_t cfreq = 0;
+	enum reg_wifi_band band;
+
+	band = wlan_reg_freq_to_band(session_entry->curr_op_freq);
+	cfreq = wlan_reg_chan_band_to_freq(mac_ctx->pdev,
+				session_entry->ch_center_freq_seg0, BIT(band));
+	assoc_ind->chan_info.band_center_freq1 = cfreq;
+	if (session_entry->ch_center_freq_seg1) {
+		cfreq = wlan_reg_chan_band_to_freq(mac_ctx->pdev,
+				session_entry->ch_center_freq_seg1, BIT(band));
+		assoc_ind->chan_info.band_center_freq2 = cfreq;
+	}
+	if (session_entry->ch_width == CH_WIDTH_40MHZ) {
+		if (session_entry->htSecondaryChannelOffset ==
+			    PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
+			assoc_ind->chan_info.band_center_freq1 += 10;
+		else
+			assoc_ind->chan_info.band_center_freq1 -= 10;
+	}
+	if (lim_fill_assoc_he_info(mac_ctx, session_entry,
+				   assoc_req, assoc_ind))
+		return;
 
 	if (session_entry->limRFBand == REG_BAND_2G) {
-		if (session_entry->vhtCapability && assoc_req->VHTCaps.present)
+		if (session_entry->vhtCapability
+			   && assoc_req->VHTCaps.present) {
 			assoc_ind->chan_info.info = MODE_11AC_VHT20_2G;
-		else if (session_entry->htCapability
-			    && assoc_req->HTCaps.present)
+		} else if (session_entry->htCapability
+			    && assoc_req->HTCaps.present) {
 			assoc_ind->chan_info.info = MODE_11NG_HT20;
-		else {
+		} else {
 			for (i = 0; i < SIR_NUM_11A_RATES; i++) {
 				if (sirIsArate(sta_ds->
 					       supportedRates.llaRates[i]
@@ -2808,11 +2872,6 @@ static void lim_fill_assoc_ind_vht_info(struct mac_context *mac_ctx,
 		if ((session_entry->ch_width == CH_WIDTH_40MHZ)
 			&& assoc_req->HTCaps.supportedChannelWidthSet) {
 			assoc_ind->chan_info.info = MODE_11AC_VHT40;
-			if (session_entry->htSecondaryChannelOffset ==
-			    PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-				assoc_ind->chan_info.band_center_freq1 += 10;
-			else
-				assoc_ind->chan_info.band_center_freq1 -= 10;
 			return;
 		}
 
@@ -2824,11 +2883,6 @@ static void lim_fill_assoc_ind_vht_info(struct mac_context *mac_ctx,
 		if ((session_entry->ch_width == CH_WIDTH_40MHZ)
 		    && assoc_req->HTCaps.supportedChannelWidthSet) {
 			assoc_ind->chan_info.info = MODE_11NA_HT40;
-			if (session_entry->htSecondaryChannelOffset ==
-			    PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-				assoc_ind->chan_info.band_center_freq1 += 10;
-			else
-				assoc_ind->chan_info.band_center_freq1 -= 10;
 			return;
 		}
 
@@ -3151,8 +3205,13 @@ bool lim_fill_lim_assoc_ind_params(
 			     &assoc_req->vendor_vht_ie.VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));
 
-	lim_fill_assoc_ind_vht_info(mac_ctx, session_entry, assoc_req,
-				    assoc_ind, sta_ds);
+	lim_fill_assoc_ind_info(mac_ctx, session_entry, assoc_req,
+				assoc_ind, sta_ds);
+	pe_debug("ch_width: %d vht_cap %d ht_cap %d chan_info %d center_freq1 %d",
+		 session_entry->ch_width,
+		 session_entry->vhtCapability, session_entry->htCapability,
+		 assoc_ind->chan_info.info,
+		 assoc_ind->chan_info.band_center_freq1);
 	assoc_ind->he_caps_present = assoc_req->he_cap.present;
 	assoc_ind->is_sae_authenticated =
 				assoc_req->is_sae_authenticated;

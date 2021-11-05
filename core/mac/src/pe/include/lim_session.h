@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -419,6 +420,7 @@ struct pe_session {
 	uint8_t vhtCapability;
 	tLimOperatingModeInfo gLimOperatingMode;
 	uint8_t vhtCapabilityPresentInBeacon;
+	/* center freq number as advertized OTA */
 	uint8_t ch_center_freq_seg0;
 	enum phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg1;
