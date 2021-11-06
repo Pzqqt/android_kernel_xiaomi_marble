@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -235,7 +236,7 @@
 #define WLAN_CFG_RX_DEFRAG_TIMEOUT_MAX 100
 
 #define WLAN_CFG_NUM_TCL_DATA_RINGS 3
-#define WLAN_CFG_NUM_TCL_DATA_RINGS_MIN 3
+#define WLAN_CFG_NUM_TCL_DATA_RINGS_MIN 1
 #define WLAN_CFG_NUM_TCL_DATA_RINGS_MAX MAX_TCL_DATA_RINGS
 
 #if defined(CONFIG_BERYLLIUM)
