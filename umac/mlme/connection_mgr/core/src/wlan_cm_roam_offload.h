@@ -299,6 +299,27 @@ QDF_STATUS
 cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id, uint8_t cfg);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * cm_roam_send_rt_stats_config() - Send roam event stats cfg value to FW
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ * @param_value: roam stats enable/disable cfg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_send_rt_stats_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint8_t param_value);
+#else
+static inline QDF_STATUS
+cm_roam_send_rt_stats_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void
 cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,

@@ -1085,6 +1085,29 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 					 uint8_t *event,
 					 uint32_t len);
+
+/**
+ * wlan_cm_update_roam_rt_stats() - Store roam event stats command params
+ * @psoc: PSOC pointer
+ * @value: Value to update
+ * @stats: type of value to update
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t value, enum roam_rt_stats_params stats);
+
+/**
+ * wlan_cm_get_roam_rt_stats() - Get roam event stats value
+ * @psoc: PSOC pointer
+ * @stats: Get roam event command param for specific attribute
+ *
+ * Return: Roam events stats param value
+ */
+uint8_t
+wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			  enum roam_rt_stats_params stats);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1229,6 +1252,20 @@ static inline QDF_STATUS
 cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
 {
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+wlan_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t value, enum roam_rt_stats_params stats)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint8_t
+wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			  enum roam_rt_stats_params stats)
+{
+	return 0;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

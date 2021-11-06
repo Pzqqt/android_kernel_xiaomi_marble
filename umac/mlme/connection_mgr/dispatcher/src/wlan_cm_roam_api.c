@@ -2250,6 +2250,57 @@ uint32_t wlan_cm_get_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	return roam_states;
 }
+
+QDF_STATUS
+wlan_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t value, enum roam_rt_stats_params stats)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_cm_roam_rt_stats *roam_rt_stats;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roam_rt_stats = &mlme_obj->cfg.lfr.roam_rt_stats;
+
+	switch (stats) {
+	case ROAM_RT_STATS_ENABLE:
+		roam_rt_stats->roam_stats_enabled = value;
+		break;
+	default:
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+uint8_t wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+				  enum roam_rt_stats_params stats)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_cm_roam_rt_stats *roam_rt_stats;
+	uint8_t rstats_value = 0;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roam_rt_stats = &mlme_obj->cfg.lfr.roam_rt_stats;
+	switch (stats) {
+	case ROAM_RT_STATS_ENABLE:
+		rstats_value = roam_rt_stats->roam_stats_enabled;
+		break;
+	default:
+		break;
+	}
+
+	return rstats_value;
+}
 #endif
 
 QDF_STATUS wlan_get_chan_by_bssid_from_rnr(struct wlan_objmgr_vdev *vdev,

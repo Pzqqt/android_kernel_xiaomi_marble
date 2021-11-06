@@ -667,6 +667,39 @@ cm_roam_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
 	return true;
 }
 
+/**
+ * cm_roam_send_rt_stats_config() - set roam stats parameters
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @param_value: roam stats param value
+ *
+ * This function is used to set roam event stats parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_send_rt_stats_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint8_t param_value)
+{
+	struct roam_disable_cfg *req;
+	QDF_STATUS status;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return QDF_STATUS_E_NOMEM;
+
+	req->vdev_id = vdev_id;
+	req->cfg = param_value;
+
+	status = wlan_cm_tgt_send_roam_rt_stats_config(psoc, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send roam rt stats config");
+
+	qdf_mem_free(req);
+
+	return status;
+}
+
 #else
 static inline void
 cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
@@ -2673,6 +2706,8 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_roam_scan_btm_offload(psoc, vdev, &start_req->btm_config, rso_cfg);
 	cm_roam_offload_11k_params(psoc, vdev, &start_req->roam_11k_params,
 				   true);
+	start_req->wlan_roam_rt_stats_config =
+			wlan_cm_get_roam_rt_stats(psoc, ROAM_RT_STATS_ENABLE);
 
 	status = wlan_cm_tgt_send_roam_start_req(psoc, vdev_id, start_req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -2755,6 +2790,8 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					      &update_req->rso_chan_info,
 					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					      reason);
+	update_req->wlan_roam_rt_stats_config =
+			wlan_cm_get_roam_rt_stats(psoc, ROAM_RT_STATS_ENABLE);
 
 	status = wlan_cm_tgt_send_roam_update_req(psoc, vdev_id, update_req);
 	if (QDF_IS_STATUS_ERROR(status))
