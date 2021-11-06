@@ -219,9 +219,10 @@
  *      HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND defs.
  * 3.95 Add HTT_H2T_MSG_TYPE_TX_MONITOR_CFG def.
  * 3.96 Modify HTT_H2T_MSG_TYPE_TX_MONITOR_CFG def.
+ * 3.97 Add tx MSDU drop byte count fields in vdev_txrx_stats_hw_stats TLV.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 96
+#define HTT_CURRENT_VERSION_MINOR 97
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -16948,7 +16949,7 @@ typedef struct {
     A_UINT32 tx_msdu_cnt_lo;
     A_UINT32 tx_msdu_cnt_hi;
 
-    /* tx excessive retry discarded msdu cnt*/
+    /* tx excessive retry discarded msdu cnt */
     A_UINT32 tx_msdu_excessive_retry_discard_cnt_lo;
     A_UINT32 tx_msdu_excessive_retry_discard_cnt_hi;
 
@@ -16959,6 +16960,18 @@ typedef struct {
     /* discarded tx msdus cnt coz of time to live expiry */
     A_UINT32 tx_msdu_ttl_expire_drop_cnt_lo;
     A_UINT32 tx_msdu_ttl_expire_drop_cnt_hi;
+
+    /* tx excessive retry discarded msdu byte cnt */
+    A_UINT32 tx_msdu_excessive_retry_discard_byte_cnt_lo;
+    A_UINT32 tx_msdu_excessive_retry_discard_byte_cnt_hi;
+
+    /* TX congestion ctrl msdu drop byte cnt */
+    A_UINT32 tx_msdu_cong_ctrl_drop_byte_cnt_lo;
+    A_UINT32 tx_msdu_cong_ctrl_drop_byte_cnt_hi;
+
+    /* discarded tx msdus byte cnt coz of time to live expiry */
+    A_UINT32 tx_msdu_ttl_expire_drop_byte_cnt_lo;
+    A_UINT32 tx_msdu_ttl_expire_drop_byte_cnt_hi;
 } htt_t2h_vdev_txrx_stats_hw_stats_tlv;
 
 #endif
