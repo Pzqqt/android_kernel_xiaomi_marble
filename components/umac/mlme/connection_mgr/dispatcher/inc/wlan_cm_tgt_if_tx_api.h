@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,10 +37,28 @@
 QDF_STATUS
 wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 			       struct set_pcl_req *pcl_req);
+
+/**
+ * wlan_cm_tgt_send_roam_rt_stats_config() - Send roam event stats config
+ * command to FW
+ * @psoc: psoc pointer
+ * @req: roam stats config parameter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_rt_stats_config(struct wlan_objmgr_psoc *psoc,
+						 struct roam_disable_cfg *req);
 #else
 static inline QDF_STATUS
 wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 			       struct set_pcl_req *pcl_req)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+wlan_cm_tgt_send_roam_rt_stats_config(struct wlan_objmgr_psoc *psoc,
+				      struct roam_disable_cfg *req)
 {
 	return QDF_STATUS_E_FAILURE;
 }
