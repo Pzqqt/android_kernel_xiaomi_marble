@@ -2790,6 +2790,17 @@ wlan_mlme_get_idle_roam_min_rssi(struct wlan_objmgr_psoc *psoc, uint32_t *val);
  */
 QDF_STATUS
 wlan_mlme_get_idle_roam_band(struct wlan_objmgr_psoc *psoc, uint32_t *val);
+
+/**
+ * wlan_mlme_get_self_bss_roam() - Get self bss roam enable status
+ * @psoc: pointer to psoc object
+ * @enable_self_bss_roam:  Pointer to self bss roam enable status
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_self_bss_roam(struct wlan_objmgr_psoc *psoc,
+			    uint8_t *enable_self_bss_roam);
 #else
 static inline QDF_STATUS
 wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
