@@ -5072,6 +5072,7 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 	struct roam_invoke_req *roam_invoke_req = NULL;
 	wlan_cm_id cm_id;
 	uint8_t vdev_id;
+	uint8_t enable_self_bss_roam = false;
 
 	if (!req)
 		return QDF_STATUS_E_FAILURE;
@@ -5097,6 +5098,14 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 	}
 
 	wlan_vdev_get_bss_peer_mac(cm_ctx->vdev, &connected_bssid);
+	wlan_mlme_get_self_bss_roam(psoc, &enable_self_bss_roam);
+	if (!enable_self_bss_roam &&
+	    qdf_is_macaddr_equal(&roam_req->req.bssid, &connected_bssid)) {
+		mlme_err(CM_PREFIX_FMT "self bss roam disabled",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		status = QDF_STATUS_E_FAILURE;
+		goto roam_err;
+	}
 
 	roam_invoke_req = qdf_mem_malloc(sizeof(*roam_invoke_req));
 	if (!roam_invoke_req) {

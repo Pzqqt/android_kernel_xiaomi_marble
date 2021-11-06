@@ -4462,6 +4462,25 @@ wlan_mlme_get_idle_roam_band(struct wlan_objmgr_psoc *psoc, uint32_t *val)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+wlan_mlme_get_self_bss_roam(struct wlan_objmgr_psoc *psoc,
+			    uint8_t *enable_self_bss_roam)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*enable_self_bss_roam =
+			cfg_get(psoc, CFG_LFR3_ENABLE_SELF_BSS_ROAM);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_self_bss_roam = mlme_obj->cfg.lfr.enable_self_bss_roam;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 QDF_STATUS
