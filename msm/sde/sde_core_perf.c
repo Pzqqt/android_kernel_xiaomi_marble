@@ -514,7 +514,7 @@ static void _sde_core_uidle_setup_cfg(struct sde_kms *kms,
 		uidle->ops.set_uidle_ctl(uidle, &cfg);
 }
 
-static void _sde_core_uidle_setup_ctl(struct drm_crtc *crtc,
+void sde_core_perf_uidle_setup_ctl(struct drm_crtc *crtc,
 	bool enable)
 {
 	struct drm_encoder *drm_enc;
@@ -544,7 +544,7 @@ static int _sde_core_perf_enable_uidle(struct sde_kms *kms,
 	SDE_EVT32(uidle_state);
 	_sde_core_uidle_setup_wd(kms, enable);
 	_sde_core_uidle_setup_cfg(kms, uidle_state);
-	_sde_core_uidle_setup_ctl(crtc, enable);
+	sde_core_perf_uidle_setup_ctl(crtc, true);
 
 	kms->perf.uidle_enabled = enable;
 
@@ -599,7 +599,7 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 	struct drm_crtc *tmp_crtc;
 	struct sde_kms *kms;
 	enum sde_uidle_state uidle_status = UIDLE_STATE_FAL1_FAL10;
-	u32 fps;
+	u32 fps, num_crtc = 0;
 
 	if (!crtc) {
 		SDE_ERROR("invalid crtc\n");
@@ -627,6 +627,7 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 
 		if (_sde_core_perf_crtc_is_power_on(tmp_crtc)) {
 
+			num_crtc++;
 			/*
 			 * If DFPS is enabled with VFP, SDE clock and
 			 * transfer time will get fixed at max FPS
@@ -644,7 +645,7 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 				_sde_core_perf_is_cwb(tmp_crtc),
 				uidle_status, uidle_crtc_status, enable);
 
-			if (_sde_core_perf_is_wb(tmp_crtc) ||
+			if ((num_crtc > 1) || _sde_core_perf_is_wb(tmp_crtc) ||
 				_sde_core_perf_is_cwb(tmp_crtc) || !fps) {
 				uidle_status = UIDLE_STATE_DISABLE;
 				break;
@@ -668,6 +669,8 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 
 	_sde_core_perf_enable_uidle(kms, crtc,
 			enable ? uidle_status : UIDLE_STATE_DISABLE);
+
+	kms->perf.catalog->uidle_cfg.dirty = !enable;
 
 	/* If perf counters enabled, set them up now */
 	if (kms->catalog->uidle_cfg.debugfs_perf)
