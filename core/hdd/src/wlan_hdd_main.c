@@ -10109,6 +10109,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->high_bus_bw_request) {
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
 		tput_level = TPUT_LEVEL_VERY_HIGH;
+	} else if (total_pkts > hdd_ctx->config->bus_bw_ultra_high_threshold) {
+		next_vote_level = PLD_BUS_WIDTH_ULTRA_HIGH;
+		tput_level = TPUT_LEVEL_ULTRA_HIGH;
 	} else if (total_pkts > hdd_ctx->config->bus_bw_very_high_threshold) {
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
 		tput_level = TPUT_LEVEL_VERY_HIGH;
@@ -10124,6 +10127,18 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	} else {
 		next_vote_level = PLD_BUS_WIDTH_IDLE;
 		tput_level = TPUT_LEVEL_IDLE;
+	}
+
+	/*
+	 * DBS mode requires more DDR/SNOC resources, vote to ultra high
+	 * only when TPUT can reach VHT80 KPI and IPA is disabled,
+	 * for other cases, follow general voting logic
+	 */
+	if (!ucfg_ipa_is_fw_wdi_activated(hdd_ctx->pdev) &&
+	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
+	    (total_pkts > hdd_ctx->config->bus_bw_dbs_threshold)) {
+		next_vote_level = PLD_BUS_WIDTH_ULTRA_HIGH;
+		tput_level = TPUT_LEVEL_ULTRA_HIGH;
 	}
 
 	param.policy = BBM_TPUT_POLICY;
@@ -10927,11 +10942,12 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 	hdd_nofl_debug("BW compute Interval: %d ms",
 		       hdd_ctx->config->bus_bw_compute_interval);
-	hdd_nofl_debug("BW TH - Very High: %d High: %d Med: %d Low: %d",
+	hdd_nofl_debug("BW TH - Very High: %d High: %d Med: %d Low: %d DBS: %d",
 		       hdd_ctx->config->bus_bw_very_high_threshold,
 		       hdd_ctx->config->bus_bw_high_threshold,
 		       hdd_ctx->config->bus_bw_medium_threshold,
-		       hdd_ctx->config->bus_bw_low_threshold);
+		       hdd_ctx->config->bus_bw_low_threshold,
+		       hdd_ctx->config->bus_bw_dbs_threshold);
 	hdd_nofl_debug("Enable TCP DEL ACK: %d",
 		       hdd_ctx->en_tcp_delack_no_lro);
 	hdd_nofl_debug("TCP DEL High TH: %d TCP DEL Low TH: %d",
