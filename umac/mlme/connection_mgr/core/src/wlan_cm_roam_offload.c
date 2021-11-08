@@ -4907,6 +4907,7 @@ void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
 	log_record->roam_trig.cu_load = data->cu_trig_data.cu_load;
 	log_record->roam_trig.rssi_threshold = (-1) * data->rssi_trig_data.threshold;
 	log_record->roam_trig.is_full_scan = is_full_scan;
+	log_record->fw_timestamp_us = data->timestamp * 1000;
 
 	wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
