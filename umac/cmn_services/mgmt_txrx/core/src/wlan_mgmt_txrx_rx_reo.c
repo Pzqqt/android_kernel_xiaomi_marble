@@ -1071,7 +1071,7 @@ mgmt_rx_reo_list_entry_get_release_reason(
 	if (!reo_list || !entry)
 		return 0;
 
-	if (mgmt_rx_reo_list_max_size_exceeded(reo_list))
+	if (MGMT_RX_REO_LIST_ENTRY_IS_MAX_SIZE_EXCEEDED(entry))
 		release_reason |=
 		   MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_LIST_MAX_SIZE_EXCEEDED;
 
@@ -1254,6 +1254,10 @@ mgmt_rx_reo_list_release_entries(struct mgmt_rx_reo_context *reo_context)
 			status = QDF_STATUS_SUCCESS;
 			goto exit_unlock_list_lock;
 		}
+
+		if (mgmt_rx_reo_list_max_size_exceeded(reo_list))
+			first_entry->status |=
+				MGMT_RX_REO_STATUS_LIST_MAX_SIZE_EXCEEDED;
 
 		status = qdf_list_remove_node(&reo_list->list,
 					      &first_entry->node);
