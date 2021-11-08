@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -262,3 +262,33 @@ bool qdf_list_node_in_any_list(const qdf_list_node_t *node)
 	return true;
 }
 
+QDF_STATUS qdf_list_split(qdf_list_t *new, qdf_list_t *list,
+			  qdf_list_node_t *node)
+{
+	qdf_list_node_t *cur_node;
+	uint32_t new_list_count = 0;
+
+	list_cut_position(&new->anchor, &list->anchor, node);
+
+	list_for_each(cur_node, &new->anchor)
+		new_list_count++;
+
+	new->count = new_list_count;
+	list->count = list->count - new->count;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qdf_list_split);
+
+QDF_STATUS qdf_list_join(qdf_list_t *list1, qdf_list_t *list2)
+{
+	list_splice_tail_init(&list2->anchor, &list1->anchor);
+
+	list1->count = list1->count + list2->count;
+	list2->count = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qdf_list_join);
