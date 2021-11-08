@@ -935,6 +935,7 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS qdf_status;
 	struct dp_txrx_config dp_config;
 	struct hdd_context *hdd_ctx;
+	struct cdp_pdev_attach_params pdev_params = { 0 };
 
 
 	hdd_ctx = gp_cds_context->hdd_context;
@@ -943,9 +944,11 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	pdev_params.htc_handle = gp_cds_context->htc_ctx;
+	pdev_params.qdf_osdev = gp_cds_context->qdf_ctx;
+	pdev_params.pdev_id = 0;
 	qdf_status = cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
-				     gp_cds_context->htc_ctx,
-				     gp_cds_context->qdf_ctx, 0);
+				     &pdev_params);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_alert("Failed to open TXRX");
