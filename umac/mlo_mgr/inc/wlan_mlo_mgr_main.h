@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -404,7 +405,62 @@ void ml_peerlist_lock_release(struct wlan_mlo_peer_list *ml_peerlist)
 	qdf_spin_unlock_bh(&ml_peerlist->peer_list_lock);
 }
 
-#else
+/**
+ * copied_conn_req_lock_create - Create original connect req mutex/spinlock
+ * @sta_ctx:  MLO STA related information
+ *
+ * Create mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void copied_conn_req_lock_create(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_spinlock_create(&sta_ctx->copied_conn_req_lock);
+}
+
+/**
+ * copied_conn_req_lock_destroy - Destroy original connect req mutex/spinlock
+ * @sta_ctx:  MLO STA related information
+ *
+ * Destroy mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void copied_conn_req_lock_destroy(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_spinlock_destroy(&sta_ctx->copied_conn_req_lock);
+}
+
+/**
+ * copied_conn_req_lock_acquire - Acquire original connect req mutex/spinlock
+ * @sta_ctx:  MLO STA related information
+ *
+ * Acquire mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void copied_conn_req_lock_acquire(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_spin_lock_bh(&sta_ctx->copied_conn_req_lock);
+}
+
+/**
+ * copied_conn_req_lock_release - Release original connect req mutex/spinlock
+ * @sta_ctx:  MLO STA related information
+ *
+ * Release mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void copied_conn_req_lock_release(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_spin_unlock_bh(&sta_ctx->copied_conn_req_lock);
+}
+#else /* WLAN_MLO_USE_SPINLOCK */
 static inline
 void ml_link_lock_create(struct mlo_mgr_context *mlo_ctx)
 {
@@ -545,6 +601,30 @@ static inline
 void ml_peerlist_lock_release(struct wlan_mlo_peer_list *ml_peerlist)
 {
 	qdf_mutex_release(&ml_peerlist->peer_list_lock);
+}
+
+static inline
+void copied_conn_req_lock_create(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_mutex_create(&sta_ctx->copied_conn_req_lock);
+}
+
+static inline
+void copied_conn_req_lock_destroy(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_mutex_destroy(&sta_ctx->copied_conn_req_lock);
+}
+
+static inline
+void copied_conn_req_lock_acquire(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_mutex_acquire(&sta_ctx->copied_conn_req_lock);
+}
+
+static inline
+void copied_conn_req_lock_release(struct wlan_mlo_sta *sta_ctx)
+{
+	qdf_mutex_release(&sta_ctx->copied_conn_req_lock);
 }
 #endif /* WLAN_MLO_USE_SPINLOCK */
 
