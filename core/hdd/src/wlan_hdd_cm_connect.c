@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -304,11 +305,11 @@ void hdd_cm_netif_queue_enable(struct hdd_adapter *adapter)
 					     adapter->vdev_id);
 		qdf_queue_work(0, hdd_ctx->adapter_ops_wq,
 			       &adapter->netdev_features_update_work);
-	} else {
-		wlan_hdd_netif_queue_control(adapter,
-					     WLAN_WAKE_ALL_NETIF_QUEUE,
-					     WLAN_CONTROL_PATH);
 	}
+
+	wlan_hdd_netif_queue_control(adapter,
+				     WLAN_WAKE_ALL_NETIF_QUEUE,
+				     WLAN_CONTROL_PATH);
 }
 
 void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter)

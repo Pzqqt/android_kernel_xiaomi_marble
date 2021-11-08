@@ -10705,24 +10705,16 @@ __hdd_adapter_param_update_work(struct hdd_adapter *adapter)
 {
 	/**
 	 * This check is needed in case the work got scheduled after the
-	 * interface got disconnected. During disconnection, the network queues
-	 * are paused and hence should not be, mistakenly, restarted here.
-	 * There are two approaches to handle this case
-	 * 1) Flush the work during disconnection
-	 * 2) Check for connected state in work
-	 *
-	 * Since the flushing of work during disconnection will need to be
-	 * done at multiple places or entry points, instead its preferred to
-	 * check the connection state and skip the operation here.
+	 * interface got disconnected.
+	 * Netdev features update is to be done only after the connection,
+	 * since the connection mode plays an important role in identifying
+	 * the features that are to be updated.
+	 * So in case of interface disconnect skip feature update.
 	 */
 	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	hdd_netdev_update_features(adapter);
-
-	hdd_debug("Enabling queues");
-	wlan_hdd_netif_queue_control(adapter, WLAN_WAKE_ALL_NETIF_QUEUE,
-				     WLAN_CONTROL_PATH);
 }
 
 /**
