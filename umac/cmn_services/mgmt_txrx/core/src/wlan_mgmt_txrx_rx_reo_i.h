@@ -39,6 +39,7 @@
 #define MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS         (BIT(0))
 #define MGMT_RX_REO_STATUS_AGED_OUT                              (BIT(1))
 #define MGMT_RX_REO_STATUS_OLDER_THAN_LATEST_AGED_OUT_FRAME      (BIT(2))
+#define MGMT_RX_REO_STATUS_LIST_MAX_SIZE_EXCEEDED                (BIT(3))
 
 /**
  * TODO: Dummy macro for Maximum MLO links on the system
@@ -61,6 +62,8 @@
 	((entry)->status & MGMT_RX_REO_STATUS_AGED_OUT)
 #define MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(entry)  \
 	((entry)->status & MGMT_RX_REO_STATUS_OLDER_THAN_LATEST_AGED_OUT_FRAME)
+#define MGMT_RX_REO_LIST_ENTRY_IS_MAX_SIZE_EXCEEDED(entry)  \
+	((entry)->status & MGMT_RX_REO_STATUS_LIST_MAX_SIZE_EXCEEDED)
 
 #ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
 #define MGMT_RX_REO_INGRESS_FRAME_DEBUG_ENTRIES_MAX             (1000)
