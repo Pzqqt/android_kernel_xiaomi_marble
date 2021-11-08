@@ -1952,7 +1952,7 @@ uint16_t hdd_get_tx_queue_for_ac(struct hdd_adapter *adapter,
 {
 	struct sock *sk = skb->sk;
 	int new_index;
-	int cpu = smp_processor_id();
+	int cpu = qdf_get_smp_processor_id();
 	struct hdd_tx_rx_stats *stats = &adapter->hdd_stats.tx_rx_stats;
 
 	if (qdf_unlikely(ac == HDD_LINUX_AC_HI_PRIO))
