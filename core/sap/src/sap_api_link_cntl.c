@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -865,10 +866,11 @@ sap_check_and_process_forcescc_for_go_plus_go(
 		sap_ctx = mac_ctx->sap.sapCtxList[i].sap_context;
 		if (sap_ctx &&
 		    QDF_P2P_GO_MODE == mac_ctx->sap.sapCtxList[i].sapPersona &&
-		    sap_ctx->is_forcescc_restart_required) {
-			sap_debug("sessionId %d chan_freq %d chan_width %d",
-				  sap_ctx->sessionId, cur_sap_ctx->chan_freq,
-				  cur_sap_ctx->ch_params.ch_width);
+		    sap_ctx->is_forcescc_restart_required &&
+		    cur_sap_ctx->sessionId != sap_ctx->sessionId) {
+			sap_debug("update chan_freq %d of sessionId %d with chan_freq %d",
+				  sap_ctx->chan_freq, sap_ctx->sessionId,
+				  cur_sap_ctx->chan_freq);
 			policy_mgr_process_forcescc_for_go(
 				mac_ctx->psoc, sap_ctx->sessionId,
 				cur_sap_ctx->chan_freq,
