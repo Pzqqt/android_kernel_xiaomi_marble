@@ -156,8 +156,8 @@ struct mgmt_rx_reo_global_ts_info {
  * @list_entry_timeout_us: Time out value(microsecond) for the reorder list
  * entries
  * @ageout_timer: Periodic timer to age-out the list entries
- * @ts_last_delivered_frame: Stores the global time stamp for the last frame
- * delivered to the upper layer
+ * @ts_last_released_frame: Stores the global time stamp for the last frame
+ * removed from the reorder list
  */
 struct mgmt_rx_reo_list {
 	qdf_list_t list;
@@ -165,7 +165,7 @@ struct mgmt_rx_reo_list {
 	uint32_t max_list_size;
 	uint32_t list_entry_timeout_us;
 	qdf_timer_t ageout_timer;
-	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
+	struct mgmt_rx_reo_global_ts_info ts_last_released_frame;
 };
 
 /*
@@ -216,7 +216,10 @@ struct mgmt_rx_reo_list_entry {
 #define MGMT_RX_REO_SIM_PERCENTAGE_FW_CONSUMED_FRAMES  (10)
 #define MGMT_RX_REO_SIM_PERCENTAGE_ERROR_FRAMES        (10)
 
-#define MGMT_RX_REO_SIM_PENDING_FRAME_LIST_MAX_SIZE  (1000)
+#define MGMT_RX_REO_SIM_PENDING_FRAME_LIST_MAX_SIZE    (1000)
+#define MGMT_RX_REO_SIM_STALE_FRAME_LIST_MAX_SIZE      \
+				(MGMT_RX_REO_SIM_PENDING_FRAME_LIST_MAX_SIZE)
+#define MGMT_RX_REO_SIM_STALE_FRAME_TEMP_LIST_MAX_SIZE (100)
 
 /**
  * struct mgmt_rx_frame_params - Parameters associated with a management frame.
@@ -251,6 +254,28 @@ struct mgmt_rx_reo_pending_frame_list {
  * @node: linked list node
  */
 struct mgmt_rx_reo_pending_frame_list_entry {
+	struct mgmt_rx_frame_params params;
+	qdf_list_node_t node;
+};
+
+/**
+ * struct mgmt_rx_reo_stale_frame_list - List which contains all the
+ * stale management frames.
+ * @list: list data structure
+ * @lock: lock used to protect the list
+ */
+struct mgmt_rx_reo_stale_frame_list {
+	qdf_list_t list;
+	qdf_spinlock_t lock;
+};
+
+/**
+ * struct mgmt_rx_reo_stale_frame_list_entry - Structure used to represent an
+ * entry in the stale frame list.
+ * @params: parameters related to the management frame
+ * @node: linked list node
+ */
+struct mgmt_rx_reo_stale_frame_list_entry {
 	struct mgmt_rx_frame_params params;
 	qdf_list_node_t node;
 };
@@ -322,6 +347,7 @@ struct mgmt_rx_reo_mac_hw_simulator {
  * @host_mgmt_frame_handler: Per link work queue to simulate the host layer
  * @fw_mgmt_frame_handler: Per link work queue to simulate the FW layer
  * @pending_frame_list: List used to store pending frames
+ * @stale_frame_list: List used to store stale frames
  * @mac_hw_sim:  MAC HW simulation object
  * @snapshot: snapshots required for reo algorithm
  * @link_id_to_pdev_map: link_id to pdev object map
@@ -330,6 +356,7 @@ struct mgmt_rx_reo_sim_context {
 	struct workqueue_struct *host_mgmt_frame_handler[MGMT_RX_REO_MAX_LINKS];
 	struct workqueue_struct *fw_mgmt_frame_handler[MGMT_RX_REO_MAX_LINKS];
 	struct mgmt_rx_reo_pending_frame_list pending_frame_list;
+	struct mgmt_rx_reo_stale_frame_list stale_frame_list;
 	struct mgmt_rx_reo_mac_hw_simulator mac_hw_sim;
 	struct mgmt_rx_reo_snapshot snapshot[MGMT_RX_REO_MAX_LINKS]
 					    [MGMT_RX_REO_SHARED_SNAPSHOT_MAX];
@@ -461,6 +488,11 @@ struct mgmt_rx_reo_context {
  * @wait_count: Wait counts for the frame
  * @ingress_timestamp: Host time stamp when the frames enters the reorder
  * algorithm
+ * @is_stale: Indicates whether this frame is stale. Any frame older than the
+ * last frame delivered to upper layer is a stale frame. Stale frames should not
+ * be delivered to the upper layers. These frames can be discarded after
+ * updating the host snapshot and wait counts of entries currently residing in
+ * the reorder list.
  */
 struct mgmt_rx_reo_frame_descriptor {
 	enum mgmt_rx_reo_frame_descriptor_type type;
@@ -468,6 +500,7 @@ struct mgmt_rx_reo_frame_descriptor {
 	struct mgmt_rx_event_params *rx_params;
 	struct mgmt_rx_reo_wait_count wait_count;
 	uint64_t ingress_timestamp;
+	bool is_stale;
 };
 
 /**
