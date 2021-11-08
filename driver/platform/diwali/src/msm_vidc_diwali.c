@@ -138,21 +138,24 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 
 	{FRAME_WIDTH, DEC, CODECS_ALL, 96, 8192, 1, 1920},
 	{FRAME_WIDTH, DEC, VP9, 96, 4096, 1, 1920},
-	{FRAME_WIDTH, ENC, CODECS_ALL, 128, 8192, 1, 1920},
+	{FRAME_WIDTH, ENC, CODECS_ALL, 128, 4096, 1, 1920},
 	{LOSSLESS_FRAME_WIDTH, ENC, H264|HEVC, 128, 4096, 1, 1920},
 	{SECURE_FRAME_WIDTH, DEC, H264|HEVC|VP9, 96, 4096, 1, 1920},
 	{SECURE_FRAME_WIDTH, ENC, H264|HEVC, 128, 4096, 1, 1920},
 	{FRAME_HEIGHT, DEC, CODECS_ALL, 96, 8192, 1, 1080},
 	{FRAME_HEIGHT, DEC, VP9, 96, 4096, 1, 1080},
-	{FRAME_HEIGHT, ENC, CODECS_ALL, 128, 8192, 1, 1080},
+	{FRAME_HEIGHT, ENC, CODECS_ALL, 128, 4096, 1, 1080},
 	{LOSSLESS_FRAME_HEIGHT, ENC, H264|HEVC, 128, 4096, 1, 1080},
 	{SECURE_FRAME_HEIGHT, DEC, H264|HEVC|VP9, 96, 4096, 1, 1080},
 	{SECURE_FRAME_HEIGHT, ENC, H264|HEVC, 128, 4096, 1, 1080},
 	{PIX_FMTS, ENC, H264,
 		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_NV12C,
-		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
-		MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C,
+		/* Since CTSEncodeDecode test cannot handle BT 709LR,
+		 * disabled HW RGBA encoding.
+		 * | MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		 */
 		MSM_VIDC_FMT_NV12C,
 		0, 0,
 		CAP_FLAG_ROOT,
@@ -162,14 +165,22 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_TP10C,
 		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
-		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C |
-		MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C,
+		/* Since CTSEncodeDecode test cannot handle BT 709LR,
+		 * disabled HW RGBA encoding.
+		 * | MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		 */
 		MSM_VIDC_FMT_NV12C,
 		0, 0,
 		CAP_FLAG_ROOT,
 		{0},
-		{PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, P_FRAME_QP,
-			B_FRAME_QP, META_ROI_INFO, BLUR_TYPES, MIN_QUALITY}},
+		{/* Do not change order of META_ROI_INFO, MIN_QUALITY, BLUR_TYPES
+		 * Since parent -> children relationship for these cap_ids is
+		 * as follows:
+		 * META_ROI_INFO -> MIN_QUALITY -> BLUR_TYPES
+		 */
+		PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, P_FRAME_QP,
+			B_FRAME_QP, META_ROI_INFO, MIN_QUALITY, BLUR_TYPES}},
 
 	{PIX_FMTS, DEC, HEVC|HEIC,
 		MSM_VIDC_FMT_NV12,
@@ -202,40 +213,30 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		V4L2_CID_MIN_BUFFERS_FOR_CAPTURE,
 		HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
-	/* TODO (AM): review requied for encode/decode spec */
-	/* (8192 * 4320) / 256 */
-	{MBPF, ENC, CODECS_ALL, 64, 138240, 1, 138240},
-	{MBPF, DEC, CODECS_ALL, 64, 138240, 1, 138240},
 
-	/* (4096 * 2304) / 256 */
-	{MBPF, DEC, VP9, 36, 36864, 1, 36864},
-	/* (4096 * 2304) / 256 */
-	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 36864, 1, 36864},
+	/* (4096 * 2176) / 256 */
+	{MBPF, ENC, CODECS_ALL, 64, 34816, 1, 34816},
+	/* (8192 * 4320) / 256 */
+	{MBPF, DEC, CODECS_ALL, 36, 138240, 1, 138240},
+	/* (4096 * 2176) / 256 */
+	{MBPF, DEC, VP9, 36, 34816, 1, 34816},
+	/* (4096 * 2176) / 256 */
+	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 34816, 1, 34816},
 	/* Batch Mode Decode */
 	/* TODO: update with new values based on updated voltage corner */
-	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 34816},
-	/* (4096 * 2304) / 256 */
+	/* (1920 * 1088) / 256 */
+	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 8160},
 	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 60, 1, 60},
-	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 36864, 1, 8160},
-	/* ((1920 * 1088) / 256) * 480 fps */
-	{MBPS, ENC, CODECS_ALL, 64, 3916800, 1, 3916800},
-	/* ((1920 * 1088) / 256) * 960 fps */
-	{MBPS, DEC, CODECS_ALL, 64, 7833600, 1, 7833600},
-	/* ((4096 * 2304) / 256) * 60 */
-	{MBPS, DEC, VP9, 36, 2211840, 1, 2211840},
-	/* ((4096 * 2304) / 256) * 60 fps */
-	{POWER_SAVE_MBPS, ENC, CODECS_ALL, 0, 2211840, 1, 2211840},
-
-	 /* (8192 * 4320) / 256 */
-
-	 /* Encode spec - 4K@60 */
-	 /* ((3840 * 2176) / 256) * 60 fps */
-	{MBPS, ENC, CODECS_ALL, 64,  1958400, 1, 489600},
-	{MBPS, DEC, CODECS_ALL, 64,  1958400, 1, 489600},
-
-	 /* Decode spec - 8K@30, 4k@120*/
-	 /* ((8192 * 4320) / 256) * 30 fps */
-	{MBPS, DEC, CODECS_ALL, 64, 4147200, 1, 979200},
+	/* (4096 * 2176) / 256 */
+	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 34816, 1, 34816},
+	/* ((4096 * 2176) / 256) * 60 fps */
+	{MBPS, ENC, CODECS_ALL, 64, 2088960, 1, 2088960},
+	/* ((4096 * 2176) / 256) * 120 fps */
+	{MBPS, DEC, CODECS_ALL, 36, 4147200, 1, 4147200},
+	/* ((4096 * 2176) / 256) * 60 */
+	{MBPS, DEC, VP9, 36, 2088960, 1, 2088960},
+	/* ((1920 * 1088) / 256) * 30 fps */
+	{POWER_SAVE_MBPS, ENC, CODECS_ALL, 0, 244800, 1, 244800},
 
 	{FRAME_RATE, ENC, CODECS_ALL,
 		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
@@ -264,7 +265,6 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 
 	{SCALE_FACTOR, ENC, H264|HEVC, 1, 8, 1, 8},
 
-	/* TODO (AM): review requied for VSP/VPP cycle */
 	{MB_CYCLES_VSP, ENC, CODECS_ALL, 25, 25, 1, 25},
 	{MB_CYCLES_VSP, DEC, CODECS_ALL, 25, 25, 1, 25},
 	{MB_CYCLES_VSP, DEC, VP9, 60, 60, 1, 60},
@@ -431,7 +431,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 			LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
-	{LOSSLESS, ENC, HEVC|HEIC,
+	{LOSSLESS, ENC, HEVC,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDEO_HEVC_LOSSLESS_CU},
@@ -468,7 +468,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{ENH_LAYER_COUNT},
-		{0},
+		{ALL_INTRA},
 		msm_vidc_adjust_gop_size, msm_vidc_set_gop_size},
 
 	{GOP_CLOSURE, ENC, H264|HEVC,
@@ -483,7 +483,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		HFI_PROP_MAX_B_FRAMES,
 		CAP_FLAG_OUTPUT_PORT,
 		{ENH_LAYER_COUNT},
-		{0},
+		{ALL_INTRA},
 		msm_vidc_adjust_b_frame, msm_vidc_set_u32},
 
 	{BLUR_TYPES, ENC, CODECS_ALL,
@@ -553,7 +553,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		V4L2_CID_MPEG_VIDEO_LTR_COUNT,
 		HFI_PROP_LTR_COUNT,
 		CAP_FLAG_OUTPUT_PORT,
-		{BITRATE_MODE}, {0},
+		{BITRATE_MODE, ALL_INTRA}, {0},
 		msm_vidc_adjust_ltr_count, msm_vidc_set_u32},
 
 	{USE_LTR, ENC, H264|HEVC,
@@ -587,7 +587,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		V4L2_CID_MPEG_VIDC_INTRA_REFRESH_PERIOD,
 		HFI_PROP_IR_RANDOM_PERIOD,
 		CAP_FLAG_OUTPUT_PORT,
-		{BITRATE_MODE}, {0},
+		{BITRATE_MODE, ALL_INTRA}, {0},
 		msm_vidc_adjust_ir_random, msm_vidc_set_u32},
 
 	{AU_DELIMITER, ENC, H264|HEVC,
@@ -620,7 +620,6 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		msm_vidc_adjust_cac,
 		msm_vidc_set_vbr_related_properties},
 
-	/* TODO (AM): review requied for bitrate boost margin */
 	{BITRATE_BOOST, ENC, H264|HEVC,
 		0, MAX_BITRATE_BOOST, 25, MAX_BITRATE_BOOST,
 		V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST,
@@ -1061,9 +1060,30 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		{0},
 		NULL, msm_vidc_set_u32_enum},
 
+	{LEVEL, DEC, VP9,
+		V4L2_MPEG_VIDEO_VP9_LEVEL_1_0,
+		V4L2_MPEG_VIDEO_VP9_LEVEL_5_1,
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_1_0) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_1_1) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_2_0) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_2_1) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_3_0) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_3_1) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_4_0) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_4_1) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_5_0) |
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_5_1),
+		V4L2_MPEG_VIDEO_VP9_LEVEL_5_1,
+		V4L2_CID_MPEG_VIDEO_VP9_LEVEL,
+		HFI_PROP_LEVEL,
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
+		{0},
+		{0},
+		NULL, msm_vidc_set_u32_enum},
+
 	{LEVEL, DEC, H264,
 		V4L2_MPEG_VIDEO_H264_LEVEL_1_0,
-		V4L2_MPEG_VIDEO_H264_LEVEL_5_0,
+		V4L2_MPEG_VIDEO_H264_LEVEL_6_0,
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1B) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_1) |
@@ -1077,8 +1097,12 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_3_2) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_1) |
-		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_2),
-		V4L2_MPEG_VIDEO_H264_LEVEL_4_0,
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_2) |
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_0) |
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_1) |
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_2) |
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_6_0),
+		V4L2_MPEG_VIDEO_H264_LEVEL_6_0,
 		V4L2_CID_MPEG_VIDEO_H264_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
@@ -1088,7 +1112,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 
 	{LEVEL, ENC, H264,
 		V4L2_MPEG_VIDEO_H264_LEVEL_1_0,
-		V4L2_MPEG_VIDEO_H264_LEVEL_5_0,
+		V4L2_MPEG_VIDEO_H264_LEVEL_5_2,
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1B) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_1) |
@@ -1102,25 +1126,33 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_3_2) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_1) |
-		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_2),
-		V4L2_MPEG_VIDEO_H264_LEVEL_4_0,
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_2) |
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_0) |
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_1) |
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_2),
+		V4L2_MPEG_VIDEO_H264_LEVEL_5_2,
 		V4L2_CID_MPEG_VIDEO_H264_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
 		{0},
 		{0},
-		NULL, msm_vidc_set_u32_enum},
+		NULL, msm_vidc_set_level},
 
 	{LEVEL, DEC, HEVC|HEIC,
 		V4L2_MPEG_VIDEO_HEVC_LEVEL_1,
-		V4L2_MPEG_VIDEO_HEVC_LEVEL_4_1,
+		V4L2_MPEG_VIDEO_HEVC_LEVEL_6,
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_3) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_3_1) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4),
-		V4L2_MPEG_VIDEO_HEVC_LEVEL_4,
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4_1) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_2) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_6),
+		V4L2_MPEG_VIDEO_HEVC_LEVEL_6,
 		V4L2_CID_MPEG_VIDEO_HEVC_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
@@ -1128,23 +1160,25 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		{0},
 		NULL, msm_vidc_set_u32_enum},
 
-    {LEVEL, ENC, HEVC|HEIC,
+	{LEVEL, ENC, HEVC|HEIC,
 		V4L2_MPEG_VIDEO_HEVC_LEVEL_1,
-		V4L2_MPEG_VIDEO_HEVC_LEVEL_4_1,
+		V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1,
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_3) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_3_1) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4),
-		V4L2_MPEG_VIDEO_HEVC_LEVEL_4,
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4_1) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1),
+		V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1,
 		V4L2_CID_MPEG_VIDEO_HEVC_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
 		{0},
 		{0},
-		NULL, msm_vidc_set_u32_enum},
-
+		NULL, msm_vidc_set_level},
 
 	/* TODO: Bring the VP9 Level upstream GKI change, and level cap here:
 	 *	go/videogki
@@ -1215,7 +1249,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MODE,
 		0,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
-		{BITRATE_MODE}, {0},
+		{BITRATE_MODE, ALL_INTRA}, {0},
 		msm_vidc_adjust_slice_count, msm_vidc_set_slice_count},
 
 	{SLICE_MAX_BYTES, ENC, H264|HEVC|HEIC,
@@ -1255,7 +1289,8 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		HFI_PROP_CHROMA_QP_OFFSET,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
 		{0}, {0},
-		NULL, msm_vidc_set_chroma_qp_index_offset},
+		msm_vidc_adjust_chroma_qp_index_offset,
+		msm_vidc_set_chroma_qp_index_offset},
 
 	{DISPLAY_DELAY_ENABLE, DEC, H264|HEVC|VP9,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
@@ -1385,6 +1420,16 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		CAP_FLAG_OUTPUT_PORT,
 		{0}, {0},
 		NULL, NULL},
+
+	{ALL_INTRA, ENC, H264|HEVC,
+		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
+		1, V4L2_MPEG_MSM_VIDC_DISABLE,
+		0,
+		0,
+		CAP_FLAG_OUTPUT_PORT,
+		{GOP_SIZE, B_FRAME},
+		{LTR_COUNT, IR_RANDOM, SLICE_MODE},
+		msm_vidc_adjust_all_intra, NULL},
 
 	{META_LTR_MARK_USE, ENC, H264|HEVC,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
@@ -1518,16 +1563,14 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		HFI_PROP_DEC_QP_METADATA},
 
 	/* configure image properties */
-	/* TODO (AM): review requied for image properties */
-	{FRAME_WIDTH, ENC, HEIC, 512, 16384, 1, 16384},
-	{FRAME_HEIGHT, ENC, HEIC, 512, 16384, 1, 16384},
-
+	{FRAME_WIDTH, ENC, HEIC, 128, 16384, 1, 16384},
+	{FRAME_HEIGHT, ENC, HEIC, 128, 16384, 1, 16384},
 	{MIN_BUFFERS_INPUT, ENC|DEC, HEIC, 0, 64, 1, 1,
 		V4L2_CID_MIN_BUFFERS_FOR_OUTPUT},
-	{MBPF, DEC, HEIC, 36, 34816, 1, 8160 }, /* ((8192x8192)/256) */
-	{MBPF, ENC, HEIC, 36, 34816, 1, 8160}, /* ((16384x16384)/256) */
-	{MBPS, DEC, HEIC,  64, 1958400, 1, 489600 }, /* ((8192x8192)/256)@1fps */
-	{MBPS, ENC, HEIC,  64, 1958400, 1, 489600}, /* ((16384x16384)/256)@1fps */
+	{MBPF, DEC, HEIC, 36, 262144,  1, 262144 }, /* ((8192x8192)/256) */
+	{MBPF, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256) */
+	{MBPS, DEC, HEIC, 36, 262144,  1, 262144 }, /* ((8192x8192)/256)@1fps */
+	{MBPS, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256)@1fps */
 	{BITRATE_MODE, ENC, HEIC,
 		V4L2_MPEG_VIDEO_BITRATE_MODE_CQ,
 		V4L2_MPEG_VIDEO_BITRATE_MODE_CQ,
@@ -1616,6 +1659,11 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		0, 100,
 		1, 100,
 		V4L2_CID_MPEG_VIDC_VENC_COMPLEXITY},
+	{META_MAX_NUM_REORDER_FRAMES, DEC, HEVC | H264,
+		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
+		1, V4L2_MPEG_MSM_VIDC_DISABLE,
+		V4L2_CID_MPEG_VIDC_METADATA_MAX_NUM_REORDER_FRAMES,
+		HFI_PROP_MAX_NUM_REORDER_FRAMES},
 };
 
 static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
