@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -311,4 +312,88 @@ void wlan_son_ind_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
 					      frame, frame_len,
 					      &assocstatus);
 	wlan_objmgr_peer_release_ref(peer, WLAN_SON_ID);
+}
+
+static int wlan_son_deliver_mlme_event(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_objmgr_peer *peer,
+				       uint32_t event,
+				       void *event_data)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+	int ret;
+
+	if (!vdev)
+		return -EINVAL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (rx_ops && rx_ops->son_rx_ops.deliver_event) {
+		qdf_debug("deliver mlme event %d", event);
+		ret = rx_ops->son_rx_ops.deliver_event(vdev,
+						       peer,
+						       event,
+						       event_data);
+	} else {
+		return -EINVAL;
+	}
+
+	return ret;
+}
+
+int wlan_son_deliver_tx_power(struct wlan_objmgr_vdev *vdev,
+			      int32_t max_pwr)
+{
+	int ret;
+
+	qdf_debug("tx power %d", max_pwr);
+	ret = wlan_son_deliver_mlme_event(vdev,
+					  NULL,
+					  MLME_EVENT_TX_PWR_CHANGE,
+					  &max_pwr);
+
+	return ret;
+}
+
+int wlan_son_deliver_vdev_stop(struct wlan_objmgr_vdev *vdev)
+{
+	int ret;
+
+	struct wlan_vdev_state_event event;
+
+	event.state = VDEV_STATE_STOPPED;
+	qdf_debug("state %d", event.state);
+	ret = wlan_son_deliver_mlme_event(vdev,
+					  NULL,
+					  MLME_EVENT_VDEV_STATE,
+					  &event);
+
+	return ret;
+}
+
+int wlan_son_deliver_inst_rssi(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_objmgr_peer *peer,
+			       uint32_t irssi)
+{
+	struct wlan_peer_inst_rssi event;
+	int ret;
+
+	if (irssi > 0 && irssi <= 127) {
+		event.iRSSI = irssi;
+		event.valid = true;
+		qdf_debug("irssi %d", event.iRSSI);
+	} else {
+		event.valid = false;
+		qdf_debug("irssi invalid");
+	}
+
+	ret = wlan_son_deliver_mlme_event(vdev,
+					  peer,
+					  MLME_EVENT_INST_RSSI,
+					  &event);
+
+	return ret;
 }

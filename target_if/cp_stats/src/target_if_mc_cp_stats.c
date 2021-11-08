@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,6 +41,9 @@
 #include <cdp_txrx_host_stats.h>
 #include <cdp_txrx_ctrl.h>
 #include <cds_api.h>
+#ifdef WLAN_FEATURE_SON
+#include "son_api.h"
+#endif
 
 #ifdef WLAN_SUPPORT_TWT
 
@@ -1251,6 +1255,85 @@ target_if_big_data_stats_unregister_tx_ops(struct wlan_lmac_if_cp_stats_tx_ops
 {}
 #endif
 
+#ifdef WLAN_FEATURE_SON
+static int
+target_if_mc_cp_stats_inst_rssi_stats_event_handler(ol_scn_t scn,
+						    uint8_t *data,
+						    uint32_t datalen)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct wmi_host_inst_rssi_stats_resp ev = {0};
+
+	if (!scn || !data) {
+		cp_stats_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		cp_stats_err("null psoc");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		cp_stats_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_inst_rssi_stats_resp(wmi_handle, data, &ev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("extract event failed");
+		return qdf_status_to_os_return(status);
+	}
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, ev.peer_macaddr.bytes,
+					   WLAN_CP_STATS_ID);
+	if (!peer) {
+		cp_stats_err("null peer");
+		return -EINVAL;
+	}
+
+	wlan_son_deliver_inst_rssi(wlan_peer_get_vdev(peer),
+				   peer,
+				   ev.inst_rssi);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	return 0;
+}
+
+static QDF_STATUS
+target_if_register_inst_rssi_event_handler(struct wmi_unified *wmi_handle)
+{
+	return wmi_unified_register_event_handler(wmi_handle,
+			wmi_inst_rssi_stats_event_id,
+			target_if_mc_cp_stats_inst_rssi_stats_event_handler,
+			WMI_RX_SERIALIZER_CTX);
+}
+
+static void
+target_if_unregister_inst_rssi_event_handler(struct wmi_unified *wmi_handle)
+{
+	wmi_unified_unregister_event_handler(wmi_handle,
+					     wmi_inst_rssi_stats_event_id);
+}
+#else
+static QDF_STATUS
+target_if_register_inst_rssi_event_handler(struct wmi_unified *wmi_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+target_if_unregister_inst_rssi_event_handler(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
 static QDF_STATUS
 target_if_mc_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 {
@@ -1287,6 +1370,10 @@ target_if_mc_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(ret_val))
 		cp_stats_err("Failed to register big data stats info event cb");
 
+	ret_val = target_if_register_inst_rssi_event_handler(wmi_handle);
+	if (QDF_IS_STATUS_ERROR(ret_val))
+		cp_stats_err("Failed to register inst rssi stats event cb");
+
 	return ret_val;
 }
 
@@ -1306,6 +1393,7 @@ target_if_mc_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	target_if_unregister_inst_rssi_event_handler(wmi_handle);
 	target_if_unregister_big_data_event_handler(wmi_handle);
 
 	wmi_unified_unregister_event_handler(wmi_handle,
