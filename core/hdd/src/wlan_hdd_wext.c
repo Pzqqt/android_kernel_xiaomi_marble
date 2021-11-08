@@ -5814,7 +5814,7 @@ static int hdd_set_fwtest(int argc, int cmd, int value)
 	struct set_fwtest_params *fw_test;
 
 	/* check for max number of arguments */
-	if (argc > (WMA_MAX_NUM_ARGS) ||
+	if (argc > WMI_UNIT_TEST_MAX_NUM_ARGS ||
 	    argc != HDD_FWTEST_PARAMS) {
 		hdd_err("Too Many args %d", argc);
 		return -EINVAL;
@@ -7195,8 +7195,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			hdd_err_rl("Invalid MODULE ID %d", apps_args[0]);
 			return -EINVAL;
 		}
-		if ((apps_args[1] > (WMA_MAX_NUM_ARGS)) ||
-		    (apps_args[1] < 0)) {
+		if (apps_args[1] > WMI_UNIT_TEST_MAX_NUM_ARGS ||
+		    apps_args[1] < 0) {
 			hdd_err_rl("Too Many/Few args %d", apps_args[1]);
 			return -EINVAL;
 		}

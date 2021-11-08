@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,7 +40,7 @@ static ssize_t __hdd_sysfs_unit_test_target_store(
 	struct hdd_context *hdd_ctx;
 	char buf_local[MAX_USER_COMMAND_SIZE_UNIT_TEST_TARGET + 1];
 	char *sptr, *token;
-	uint32_t apps_args[WMA_MAX_NUM_ARGS];
+	uint32_t apps_args[WMI_UNIT_TEST_MAX_NUM_ARGS];
 	int module_id, args_num, ret, i;
 	uint8_t vdev_id = 0;
 	QDF_STATUS status;
@@ -90,7 +91,7 @@ static ssize_t __hdd_sysfs_unit_test_target_store(
 		hdd_err_rl("Invalid MODULE ID %d", module_id);
 		return -EINVAL;
 	}
-	if (args_num > WMA_MAX_NUM_ARGS) {
+	if (args_num > WMI_UNIT_TEST_MAX_NUM_ARGS) {
 		hdd_err_rl("Too many args %d", args_num);
 		return -EINVAL;
 	}

@@ -708,7 +708,7 @@ QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
 			return QDF_STATUS_E_FAILURE;
 	}
 
-	if (arg_count > WMA_MAX_NUM_ARGS) {
+	if (arg_count > WMI_UNIT_TEST_MAX_NUM_ARGS) {
 		wma_err("arg_count is crossed the boundary");
 		return QDF_STATUS_E_FAILURE;
 	}
