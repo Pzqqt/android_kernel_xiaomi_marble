@@ -2135,7 +2135,8 @@ struct hal_hw_srng_config hw_srng_table_6490[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-#if defined(IPA_WDI3_TX_TWO_PIPES) || defined(TX_MULTI_TCL)
+#if defined(IPA_WDI3_TX_TWO_PIPES) || defined(TX_MULTI_TCL) || \
+	defined(CONFIG_PLD_PCIE_FW_SIM)
 		.max_rings = 5,
 #else
 		.max_rings = 4,
