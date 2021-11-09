@@ -35,6 +35,7 @@ struct mmrm_driver_data {
 	struct mmrm_platform_data *platform_data;
 
 	/* clk */
+	bool is_clk_scaling_supported;
 	struct mmrm_clk_platform_resources clk_res;
 	struct mmrm_clk_mgr *clk_mgr;
 	struct mmrm_clk_mgr_ops *clk_mgr_ops;
@@ -44,6 +45,8 @@ struct mmrm_driver_data {
 };
 
 struct mmrm_platform_data *mmrm_get_platform_data(struct device *dev);
+
+int mmrm_count_clk_clients_frm_dt(struct platform_device *pdev);
 
 int mmrm_read_platform_resources(
 	struct platform_device *pdev,
