@@ -9793,20 +9793,22 @@ static void hdd_clear_rps_cpu_mask(struct hdd_context *hdd_ctx)
 /**
  * hdd_pm_qos_update_cpu_mask() - Prepare CPU mask for PM_qos voting
  * @mask: return variable of cpumask for the TPUT
- * @high_throughput: only update high cores mask for high TPUT
+ * @enable_perf_cluster: Enable PERF cluster or not
+ *
+ * By default, the function sets CPU mask for silver cluster unless
+ * enable_perf_cluster is set as true.
  *
  * Return: none
  */
 static inline void hdd_pm_qos_update_cpu_mask(cpumask_t *mask,
-					      bool high_throughput)
+					      bool enable_perf_cluster)
 {
 	cpumask_set_cpu(0, mask);
 	cpumask_set_cpu(1, mask);
 	cpumask_set_cpu(2, mask);
 	cpumask_set_cpu(3, mask);
 
-	if (high_throughput) {
-		/* For high TPUT include GOLD mask also */
+	if (enable_perf_cluster) {
 		cpumask_set_cpu(4, mask);
 		cpumask_set_cpu(5, mask);
 		cpumask_set_cpu(6, mask);
@@ -9823,40 +9825,33 @@ static inline void hdd_pm_qos_update_cpu_mask(cpumask_t *mask,
 #endif
 
 #ifdef CLD_DEV_PM_QOS
-/**
- * hdd_pm_qos_update_request() - API to request for pm_qos
- * @hdd_ctx: handle to hdd context
- * @pm_qos_cpu_mask: cpu_mask to apply
- *
- * Return: none
- */
-static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
-					     cpumask_t *pm_qos_cpu_mask)
+
+static inline void _hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
+					      cpumask_t *pm_qos_cpu_mask,
+					      unsigned int latency)
 {
 	int cpu;
-	unsigned int latency;
+	uint32_t default_latency;
 
+	default_latency = wlan_hdd_get_default_pm_qos_cpu_latency();
 	qdf_cpumask_copy(&hdd_ctx->qos_cpu_mask, pm_qos_cpu_mask);
 
 	if (qdf_cpumask_empty(pm_qos_cpu_mask)) {
-		latency = wlan_hdd_get_pm_qos_cpu_latency();
 		for_each_present_cpu(cpu) {
 			dev_pm_qos_update_request(
 				&hdd_ctx->pm_qos_req[cpu],
-				latency);
+				default_latency);
 		}
 		hdd_debug("Empty mask %*pb: Set latency %u",
 			  qdf_cpumask_pr_args(&hdd_ctx->qos_cpu_mask),
-			  latency);
-	} else {
-		latency = HDD_PM_QOS_HIGH_TPUT_LATENCY_US;
-		/* Set latency to default for CPUs not included in mask */
+			  wlan_hdd_get_default_pm_qos_cpu_latency());
+	} else { /* Set latency to default for CPUs not included in mask */
 		qdf_for_each_cpu_not(cpu, &hdd_ctx->qos_cpu_mask) {
 			dev_pm_qos_update_request(
 				&hdd_ctx->pm_qos_req[cpu],
-				wlan_hdd_get_pm_qos_cpu_latency());
+				default_latency);
 		}
-		/* Set latency to 1 for CPUs included in mask */
+		/* Set latency for CPUs included in mask */
 		qdf_for_each_cpu(cpu, &hdd_ctx->qos_cpu_mask) {
 			dev_pm_qos_update_request(
 				&hdd_ctx->pm_qos_req[cpu],
@@ -9868,20 +9863,41 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 	}
 }
 
+/**
+ * hdd_pm_qos_update_request() - API to request for pm_qos
+ * @hdd_ctx: handle to hdd context
+ * @pm_qos_cpu_mask: cpu_mask to apply
+ *
+ * Return: none
+ */
+static void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
+				      cpumask_t *pm_qos_cpu_mask)
+{
+	unsigned int latency;
+
+	if (qdf_cpumask_empty(pm_qos_cpu_mask))
+		latency = wlan_hdd_get_default_pm_qos_cpu_latency();
+	else
+		latency = HDD_PM_QOS_HIGH_TPUT_LATENCY_US;
+
+	_hdd_pm_qos_update_request(hdd_ctx, pm_qos_cpu_mask, latency);
+}
+
 static inline void hdd_pm_qos_add_request(struct hdd_context *hdd_ctx)
 {
 	struct device *cpu_dev;
 	int cpu;
+	uint32_t default_latency = wlan_hdd_get_default_pm_qos_cpu_latency();
+
 
 	qdf_cpumask_clear(&hdd_ctx->qos_cpu_mask);
 	hdd_pm_qos_update_cpu_mask(&hdd_ctx->qos_cpu_mask, false);
 
 	for_each_present_cpu(cpu) {
 		cpu_dev = get_cpu_device(cpu);
-
 		dev_pm_qos_add_request(cpu_dev, &hdd_ctx->pm_qos_req[cpu],
 				       DEV_PM_QOS_RESUME_LATENCY,
-				       wlan_hdd_get_pm_qos_cpu_latency());
+				       default_latency);
 		hdd_debug("Set qos_cpu_mask %*pb for affine_cores",
 			 cpumask_pr_args(&hdd_ctx->qos_cpu_mask));
 	}
@@ -10070,6 +10086,7 @@ static inline void hdd_low_tput_gro_flush_skip_handler(
  * @hdd_ctx - handle to hdd context
  * @rx_packets - receive packet count in last bus bandwidth interval
  * @next_rx_level - pointer to next_rx_level to be filled
+ * @cpu_mask - pm_qos cpu_mask needed for RX, to be filled
  * @is_rx_pm_qos_high - pointer indicating if high qos is needed, to be filled
  *
  * The function tunes various aspects of the driver based on a running average
@@ -10081,6 +10098,7 @@ static
 bool hdd_bus_bandwidth_work_tune_rx(struct hdd_context *hdd_ctx,
 				    const uint64_t rx_packets,
 				    enum wlan_tp_level *next_rx_level,
+				    cpumask_t *cpu_mask,
 				    bool *is_rx_pm_qos_high)
 {
 	bool rx_level_change = false;
@@ -10107,20 +10125,28 @@ bool hdd_bus_bandwidth_work_tune_rx(struct hdd_context *hdd_ctx,
 	hdd_ctx->prev_rx_offload_pkts = rx_offload_pkts;
 
 	avg_rx = avg_no_rx_offload_pkts + avg_rx_offload_pkts;
+
+	cpumask_clear(cpu_mask);
+
+	if (avg_no_rx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold) {
+		rxthread_high_tput_req = true;
+		*is_rx_pm_qos_high = true;
+		hdd_pm_qos_update_cpu_mask(cpu_mask, true);
+	} else if (avg_rx > hdd_ctx->config->bus_bw_high_threshold) {
+		rxthread_high_tput_req = false;
+		*is_rx_pm_qos_high = false;
+		hdd_pm_qos_update_cpu_mask(cpu_mask, false);
+	} else {
+		*is_rx_pm_qos_high = false;
+		rxthread_high_tput_req = false;
+	}
+
 	/*
 	 * Takes care to set Rx_thread affinity for below case
 	 * 1)LRO/GRO not supported ROME case
 	 * 2)when rx_ol is disabled in cases like concurrency etc
 	 * 3)For UDP cases
 	 */
-	if (avg_no_rx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold) {
-		rxthread_high_tput_req = true;
-		*is_rx_pm_qos_high = true;
-	} else {
-		rxthread_high_tput_req = false;
-		*is_rx_pm_qos_high = false;
-	}
-
 	if (cds_sched_handle_throughput_req(rxthread_high_tput_req))
 		hdd_warn("Rx thread high_tput(%d) affinity request failed",
 			 rxthread_high_tput_req);
@@ -10164,6 +10190,7 @@ bool hdd_bus_bandwidth_work_tune_rx(struct hdd_context *hdd_ctx,
  * @hdd_ctx - handle to hdd context
  * @tx_packets - transmit packet count in last bus bandwidth interval
  * @next_tx_level - pointer to next_tx_level to be filled
+ * @cpu_mask - pm_qos cpu_mask needed for TX, to be filled
  * @is_tx_pm_qos_high - pointer indicating if high qos is needed, to be filled
  *
  * The function tunes various aspects of the driver based on a running average
@@ -10175,6 +10202,7 @@ static
 bool hdd_bus_bandwidth_work_tune_tx(struct hdd_context *hdd_ctx,
 				    const uint64_t tx_packets,
 				    enum wlan_tp_level *next_tx_level,
+				    cpumask_t *cpu_mask,
 				    bool *is_tx_pm_qos_high)
 {
 	bool tx_level_change = false;
@@ -10199,11 +10227,18 @@ bool hdd_bus_bandwidth_work_tune_tx(struct hdd_context *hdd_ctx,
 	/* fine-tuning parameters for TX Flows */
 	hdd_ctx->prev_tx = tx_packets;
 
+	cpumask_clear(cpu_mask);
+
 	if (avg_no_tx_offload_pkts >
-		hdd_ctx->config->bus_bw_high_threshold)
+		hdd_ctx->config->bus_bw_very_high_threshold) {
+		hdd_pm_qos_update_cpu_mask(cpu_mask, true);
 		*is_tx_pm_qos_high = true;
-	else
+	} else if (avg_tx > hdd_ctx->config->bus_bw_high_threshold) {
+		hdd_pm_qos_update_cpu_mask(cpu_mask, false);
 		*is_tx_pm_qos_high = false;
+	} else {
+		*is_tx_pm_qos_high = false;
+	}
 
 	if (avg_tx > hdd_ctx->config->tcp_tx_high_tput_thres)
 		*next_tx_level = WLAN_SVC_TP_HIGH;
@@ -10248,7 +10283,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_IDLE;
 	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
-	cpumask_t pm_qos_cpu_mask;
+	cpumask_t pm_qos_cpu_mask_tx, pm_qos_cpu_mask_rx, pm_qos_cpu_mask;
 	bool is_rx_pm_qos_high;
 	bool is_tx_pm_qos_high;
 	enum tput_level tput_level;
@@ -10260,8 +10295,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	if (!soc)
 		return;
-
-	cpumask_clear(&pm_qos_cpu_mask);
 
 	if (hdd_ctx->high_bus_bw_request) {
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
@@ -10391,24 +10424,38 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	rx_level_change = hdd_bus_bandwidth_work_tune_rx(hdd_ctx,
 							 rx_packets,
 							 &next_rx_level,
+							 &pm_qos_cpu_mask_rx,
 							 &is_rx_pm_qos_high);
 
 	tx_level_change = hdd_bus_bandwidth_work_tune_tx(hdd_ctx,
 							 tx_packets,
 							 &next_tx_level,
+							 &pm_qos_cpu_mask_tx,
 							 &is_tx_pm_qos_high);
-
-	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask,
-				   is_tx_pm_qos_high | is_rx_pm_qos_high);
 
 	index = hdd_ctx->hdd_txrx_hist_idx;
 	if (vote_level_change || tx_level_change || rx_level_change) {
-		/* Clear all the mask if no silver/gold vote is required */
+		/* Clear mask if BW is not HIGH or more */
 		if (next_vote_level < PLD_BUS_WIDTH_HIGH) {
 			is_rx_pm_qos_high = false;
 			is_tx_pm_qos_high = false;
 			cpumask_clear(&pm_qos_cpu_mask);
+		} else {
+			cpumask_clear(&pm_qos_cpu_mask);
+
+			cpumask_or(&pm_qos_cpu_mask,
+				   &pm_qos_cpu_mask_tx,
+				   &pm_qos_cpu_mask_rx);
+
+			/* Default mask in case throughput is high */
+			if (qdf_cpumask_empty(&pm_qos_cpu_mask))
+				hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask,
+							   false);
 		}
+
+		if (!hdd_ctx->pm_qos_request)
+			hdd_pm_qos_update_request(hdd_ctx,
+						  &pm_qos_cpu_mask);
 
 		hdd_ctx->hdd_txrx_hist[index].next_tx_level = next_tx_level;
 		hdd_ctx->hdd_txrx_hist[index].next_rx_level = next_rx_level;
@@ -10422,10 +10469,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		hdd_ctx->hdd_txrx_hist[index].qtime = qdf_get_log_timestamp();
 		hdd_ctx->hdd_txrx_hist_idx++;
 		hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
-
-
-		if (!hdd_ctx->pm_qos_request)
-			hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
 	}
 
 	/* Roaming is a high priority job but gets processed in scheduler
@@ -10873,7 +10916,7 @@ void hdd_adapter_feature_update_work_deinit(struct hdd_adapter *adapter)
 	hdd_exit();
 }
 
-static uint8_t *convert_level_to_string(uint32_t level)
+static uint8_t *hdd_tp_level_to_str(uint32_t level)
 {
 	switch (level) {
 	/* initialize the wlan sub system */
@@ -11026,25 +11069,20 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 	hdd_nofl_debug("[index][timestamp]: interval_rx, interval_tx, bus_bw_level, RX TP Level, TX TP Level, Rx:Tx pm_qos");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
+		struct hdd_tx_rx_histogram *hist;
+
 		/* using hdd_log to avoid printing function name */
-		if (hdd_ctx->hdd_txrx_hist[i].qtime > 0)
-			hdd_nofl_debug("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s, %s:%s",
-				       i, hdd_ctx->hdd_txrx_hist[i].qtime,
-				       hdd_ctx->hdd_txrx_hist[i].interval_rx,
-				       hdd_ctx->hdd_txrx_hist[i].interval_tx,
-				       convert_level_to_string(
-					hdd_ctx->hdd_txrx_hist[i].
-						next_vote_level),
-				       convert_level_to_string(
-					hdd_ctx->hdd_txrx_hist[i].
-						next_rx_level),
-				       convert_level_to_string(
-					hdd_ctx->hdd_txrx_hist[i].
-						next_tx_level),
-				hdd_ctx->hdd_txrx_hist[i].is_rx_pm_qos_high ?
-				"HIGH" : "LOW",
-				hdd_ctx->hdd_txrx_hist[i].is_tx_pm_qos_high ?
-				"HIGH" : "LOW");
+		if (hdd_ctx->hdd_txrx_hist[i].qtime <= 0)
+			continue;
+		hist = &hdd_ctx->hdd_txrx_hist[i];
+		hdd_nofl_debug("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s, %s:%s",
+			       i, hist->qtime, hist->interval_rx,
+			       hist->interval_tx,
+			       pld_level_to_str(hist->next_vote_level),
+			       hdd_tp_level_to_str(hist->next_rx_level),
+			       hdd_tp_level_to_str(hist->next_tx_level),
+			       hist->is_rx_pm_qos_high ? "HIGH" : "LOW",
+			       hist->is_tx_pm_qos_high ? "HIGH" : "LOW");
 	}
 }
 

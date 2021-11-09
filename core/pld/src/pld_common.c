@@ -3210,6 +3210,32 @@ void pld_thermal_unregister(struct device *dev, int mon_id)
 	}
 }
 
+uint8_t *pld_level_to_str(uint32_t level)
+{
+	switch (level) {
+	/* initialize the wlan sub system */
+	case PLD_BUS_WIDTH_NONE:
+		return "NONE";
+	case PLD_BUS_WIDTH_IDLE:
+		return "IDLE";
+	case PLD_BUS_WIDTH_LOW:
+		return "LOW";
+	case PLD_BUS_WIDTH_MEDIUM:
+		return "MEDIUM";
+	case PLD_BUS_WIDTH_HIGH:
+		return "HIGH";
+	case PLD_BUS_WIDTH_VERY_HIGH:
+		return "VERY_HIGH";
+	case PLD_BUS_WIDTH_LOW_LATENCY:
+		return "LOW_LAT";
+	default:
+		if (level > PLD_BUS_WIDTH_VERY_HIGH)
+			return "VERY_HIGH+";
+		else
+			return "INVAL";
+	}
+}
+
 int pld_get_thermal_state(struct device *dev, unsigned long *thermal_state,
 			  int mon_id)
 {
