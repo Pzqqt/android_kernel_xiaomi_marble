@@ -1790,6 +1790,8 @@ typedef enum {
     WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID,
     /** Firmware roam capability information */
     WMI_ROAM_CAPABILITY_REPORT_EVENTID,
+    /** Send AP frame content like beacon/probe resp etc.. */
+    WMI_ROAM_FRAME_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -22733,6 +22735,19 @@ typedef struct {
      */
 } wmi_roam_synch_frame_event_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_frame_event_fixed_param  */
+    /** Unique id identifying the VDEV on which roaming is done by firmware */
+    A_UINT32 vdev_id;
+    /* Exact frame length without considering 4 byte alignement */
+    A_UINT32 frame_length;
+    /**
+     * TLV (tag length value) parameters follows roam_frame_event
+     * The TLV's are:
+     *     A_UINT8 frame[frame_length];
+     */
+} wmi_roam_frame_event_fixed_param;
+
 #define WMI_PEER_ESTIMATED_LINKSPEED_INVALID    0xFFFFFFFF
 
 typedef struct {
@@ -29902,6 +29917,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_FIPS_MODE_SET_CMDID);
         WMI_RETURN_STRING(WMI_SAWF_SVC_CLASS_CFG_CMDID);
         WMI_RETURN_STRING(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_UPDATE_MAC_ADDR_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
