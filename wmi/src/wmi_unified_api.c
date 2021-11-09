@@ -1143,6 +1143,30 @@ wmi_unified_pdev_fips_cmd_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+QDF_STATUS
+wmi_unified_pdev_fips_extend_cmd_send(wmi_unified_t wmi_handle,
+				      struct fips_extend_params *param)
+{
+	if (wmi_handle->ops->send_pdev_fips_extend_cmd)
+		return wmi_handle->ops->send_pdev_fips_extend_cmd(wmi_handle,
+								  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_pdev_fips_mode_set_cmd(wmi_unified_t wmi_handle,
+				   struct fips_mode_set_params *param)
+{
+	if (wmi_handle->ops->send_pdev_fips_mode_set_cmd)
+		return wmi_handle->ops->send_pdev_fips_mode_set_cmd(wmi_handle,
+								    param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 #ifdef WLAN_FEATURE_DISA
 QDF_STATUS
 wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
@@ -1923,6 +1947,21 @@ wmi_extract_fips_event_data(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+QDF_STATUS
+wmi_extract_fips_extend_event_data(wmi_unified_t wmi_handle, void *evt_buf,
+				   struct wmi_host_fips_extend_event_param
+				   *param)
+{
+	if (wmi_handle->ops->extract_fips_extend_ev_data) {
+		return wmi_handle->ops->extract_fips_extend_ev_data(wmi_handle,
+								    evt_buf,
+								    param);
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 /**
  * wmi_unified_extract_pn() - extract pn event data

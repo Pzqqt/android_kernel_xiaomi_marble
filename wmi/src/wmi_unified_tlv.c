@@ -8242,13 +8242,146 @@ static QDF_STATUS send_flush_logs_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
 }
 
 #ifdef BIG_ENDIAN_HOST
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
 /**
-* fips_conv_data_be() - LE to BE conversion of FIPS ev data
-* @param data_len - data length
-* @param data - pointer to data
-*
-* Return: QDF_STATUS - success or error status
+ * fips_extend_align_data_be() - LE to BE conversion of FIPS extend ev data
+ * @param - fips extend param related parameters
+ *
+ * Return: QDF_STATUS - success or error status
 */
+static QDF_STATUS fips_extend_align_data_be(wmi_unified_t wmi_handle,
+					    struct fips_extend_params *param)
+{
+	unsigned char *key_unaligned, *nonce_iv_unaligned, *data_unaligned;
+	int c;
+	u_int8_t *key_aligned = NULL;
+	u_int8_t *nonce_iv_aligned = NULL;
+	u_int8_t *data_aligned = NULL;
+	int ret = QDF_STATUS_SUCCESS;
+
+	/* Assigning unaligned space to copy the key */
+	key_unaligned = qdf_mem_malloc(sizeof(u_int8_t) *
+				       param->cmd_params.key_len + FIPS_ALIGN);
+	/* Checking if kmalloc is successful to allocate space */
+	if (!key_unaligned)
+		return QDF_STATUS_E_INVAL;
+
+	data_unaligned = qdf_mem_malloc(sizeof(u_int8_t) * param->data_len +
+					FIPS_ALIGN);
+	/* Checking if kmalloc is successful to allocate space */
+	if (!data_unaligned) {
+		ret = QDF_STATUS_E_INVAL;
+		goto fips_align_fail_data;
+	}
+
+	/* Checking if space is aligned */
+	if (!FIPS_IS_ALIGNED(key_unaligned, FIPS_ALIGN)) {
+		/* align to 4 */
+		key_aligned = (u_int8_t *)FIPS_ALIGNTO(key_unaligned,
+						       FIPS_ALIGN);
+	} else {
+		key_aligned = (u_int8_t *)key_unaligned;
+	}
+
+	/* memset and copy content from key to key aligned */
+	OS_MEMSET(key_aligned, 0, param->cmd_params.key_len);
+	OS_MEMCPY(key_aligned, param->cmd_params.key,
+		  param->cmd_params.key_len);
+
+	/* print a hexdump for host debug */
+	wmi_debug("Aligned and Copied Key: ");
+	qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+			   key_aligned, param->cmd_params.key_len);
+
+	/* Checking of space is aligned */
+	if (!FIPS_IS_ALIGNED(data_unaligned, FIPS_ALIGN)) {
+		/* align to 4 */
+		data_aligned =
+		(u_int8_t *)FIPS_ALIGNTO(data_unaligned, FIPS_ALIGN);
+	} else {
+		data_aligned = (u_int8_t *)data_unaligned;
+	}
+
+	/* memset and copy content from data to data aligned */
+	OS_MEMSET(data_aligned, 0, param->data_len);
+	OS_MEMCPY(data_aligned, param->data, param->data_len);
+
+	/* print a hexdump for host debug */
+	wmi_debug("\t Properly Aligned and Copied Data: ");
+	qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+			   data_aligned, param->data_len);
+
+	/* converting to little Endian */
+	for (c = 0; c < param->cmd_params.key_len / 4; c++) {
+		*((u_int32_t *)key_aligned + c) =
+		qdf_cpu_to_le32(*((u_int32_t *)key_aligned + c));
+	}
+	for (c = 0; c < param->data_len / 4; c++) {
+		*((u_int32_t *)data_aligned + c) =
+		qdf_cpu_to_le32(*((u_int32_t *)data_aligned + c));
+	}
+
+	/* update endian data */
+	OS_MEMCPY(param->cmd_params.key, key_aligned,
+		  param->cmd_params.key_len);
+	OS_MEMCPY(param->data, data_aligned, param->data_len);
+
+	if (param->cmd_params.nonce_iv_len) {
+		nonce_iv_unaligned = qdf_mem_malloc(sizeof(u_int8_t) *
+						    param->cmd_params.nonce_iv_len +
+						    FIPS_ALIGN);
+
+		/* Checking if kmalloc is successful to allocate space */
+		if (!nonce_iv_unaligned) {
+			ret = QDF_STATUS_E_INVAL;
+			goto fips_align_fail_nonce_iv;
+		}
+		/* Checking if space is aligned */
+		if (!FIPS_IS_ALIGNED(nonce_iv_unaligned, FIPS_ALIGN)) {
+			/* align to 4 */
+			nonce_iv_aligned =
+			(u_int8_t *)FIPS_ALIGNTO(nonce_iv_unaligned,
+				FIPS_ALIGN);
+		} else {
+			nonce_iv_aligned = (u_int8_t *)nonce_iv_unaligned;
+		}
+
+		/* memset and copy content from iv to iv aligned */
+		OS_MEMSET(nonce_iv_aligned, 0, param->cmd_params.nonce_iv_len);
+		OS_MEMCPY(nonce_iv_aligned, param->cmd_params.nonce_iv,
+			  param->cmd_params.nonce_iv_len);
+
+		/* print a hexdump for host debug */
+		wmi_debug("\t Aligned and Copied Nonce_IV: ");
+		qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+				   nonce_iv_aligned,
+				   param->cmd_params.nonce_iv_len);
+
+		for (c = 0; c < param->cmd_params.nonce_iv_len / 4; c++) {
+			*((u_int32_t *)nonce_iv_aligned + c) =
+			qdf_cpu_to_le32(*((u_int32_t *)nonce_iv_aligned + c));
+		}
+	}
+
+	/* clean up allocated spaces */
+	qdf_mem_free(nonce_iv_unaligned);
+	nonce_iv_unaligned = NULL;
+	nonce_iv_aligned = NULL;
+
+fips_align_fail_nonce_iv:
+	qdf_mem_free(data_unaligned);
+	data_unaligned = NULL;
+	data_aligned = NULL;
+
+fips_align_fail_data:
+	qdf_mem_free(key_unaligned);
+	key_unaligned = NULL;
+	key_aligned = NULL;
+
+	return ret;
+}
+#endif
+
 static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
 			struct fips_params *param)
 {
@@ -8336,13 +8469,26 @@ static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #else
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+/**
+ * fips_extend_align_data_be() - DUMMY for LE platform
+ *
+ * Return: QDF_STATUS - success
+ */
+static QDF_STATUS fips_extend_align_data_be(wmi_unified_t wmi_handle,
+					    struct fips_extend_params *param)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
 * fips_align_data_be() - DUMMY for LE platform
 *
 * Return: QDF_STATUS - success
 */
 static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
-		struct fips_params *param)
+				     struct fips_params *param)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -8528,6 +8674,166 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return retval;
 }
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+/**
+ * send_pdev_fips_extend_cmd_tlv() - send pdev fips cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold pdev fips param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_pdev_fips_extend_cmd_tlv(wmi_unified_t wmi_handle,
+			      struct fips_extend_params *param)
+{
+	wmi_pdev_fips_extend_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len = sizeof(wmi_pdev_fips_extend_cmd_fixed_param);
+	QDF_STATUS retval = QDF_STATUS_SUCCESS;
+
+	len += WMI_TLV_HDR_SIZE;
+	if (param->frag_idx == 0)
+		len += sizeof(wmi_fips_extend_cmd_init_params);
+
+	/* Length TLV placeholder for array of bytes */
+	len += WMI_TLV_HDR_SIZE;
+	if (param->data_len)
+		len += (param->data_len * sizeof(uint8_t));
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_FAILURE;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_pdev_fips_extend_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_fips_extend_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_pdev_fips_extend_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								param->pdev_id);
+
+	cmd->fips_cookie = param->cookie;
+	cmd->frag_idx = param->frag_idx;
+	cmd->more_bit = param->more_bit;
+	cmd->data_len = param->data_len;
+
+	if (fips_extend_align_data_be(wmi_handle, param) !=
+	    QDF_STATUS_SUCCESS) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *)(cmd + 1);
+	if (cmd->frag_idx == 0) {
+		wmi_fips_extend_cmd_init_params *cmd_params;
+
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       sizeof(wmi_fips_extend_cmd_init_params));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		cmd_params = (wmi_fips_extend_cmd_init_params *)buf_ptr;
+		WMITLV_SET_HDR(buf_ptr,
+			       WMITLV_TAG_STRUC_wmi_fips_extend_cmd_init_params,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_fips_extend_cmd_init_params));
+		cmd_params->fips_cmd = param->cmd_params.fips_cmd;
+		cmd_params->key_cipher = param->cmd_params.key_cipher;
+		cmd_params->key_len = param->cmd_params.key_len;
+		cmd_params->nonce_iv_len = param->cmd_params.nonce_iv_len;
+		cmd_params->tag_len = param->cmd_params.tag_len;
+		cmd_params->aad_len = param->cmd_params.aad_len;
+		cmd_params->payload_len = param->cmd_params.payload_len;
+
+		qdf_mem_copy(cmd_params->key, param->cmd_params.key,
+			     param->cmd_params.key_len);
+		qdf_mem_copy(cmd_params->nonce_iv, param->cmd_params.nonce_iv,
+			     param->cmd_params.nonce_iv_len);
+
+		wmi_debug("Key len = %d, IVNoncelen = %d, Tlen = %d, Alen = %d, Plen = %d",
+			  cmd_params->key_len, cmd_params->nonce_iv_len,
+			  cmd_params->tag_len, cmd_params->aad_len,
+			  cmd_params->payload_len);
+
+		buf_ptr += sizeof(wmi_fips_extend_cmd_init_params);
+	} else {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
+	if (param->data) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, param->data_len);
+
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		if (param->data_len)
+			qdf_mem_copy(buf_ptr,
+				     (uint8_t *)param->data, param->data_len);
+
+		wmi_debug("Data: ");
+		qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+				   buf_ptr, cmd->data_len);
+
+		if (param->data_len)
+			buf_ptr += param->data_len;
+
+		wmi_mtrace(WMI_PDEV_FIPS_EXTEND_CMDID, NO_SESSION, 0);
+		retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+					      WMI_PDEV_FIPS_EXTEND_CMDID);
+		wmi_debug("return value %d", retval);
+	} else {
+		wmi_debug("Key or Data is NULL");
+		wmi_buf_free(buf);
+		retval = QDF_STATUS_E_BADMSG;
+	}
+
+	return retval;
+}
+
+/**
+ * send_pdev_fips_mode_set_cmd_tlv() - send pdev fips cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold pdev fips param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_pdev_fips_mode_set_cmd_tlv(wmi_unified_t wmi_handle,
+				struct fips_mode_set_params *param)
+{
+	wmi_pdev_fips_mode_set_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len = sizeof(wmi_pdev_fips_mode_set_cmd_fixed_param);
+	QDF_STATUS retval = QDF_STATUS_SUCCESS;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_FAILURE;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_pdev_fips_mode_set_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_pdev_fips_mode_set_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								param->pdev_id);
+
+	cmd->fips_mode_set = param->mode;
+	wmi_mtrace(WMI_PDEV_FIPS_MODE_SET_CMDID, NO_SESSION, 0);
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_PDEV_FIPS_MODE_SET_CMDID);
+	if (retval) {
+		wmi_err("Failed to send FIPS mode enable cmd");
+		wmi_buf_free(buf);
+	}
+	return retval;
+}
+#endif
 
 /**
  * send_wlan_profile_enable_cmd_tlv() - send wlan profile enable command
@@ -12566,6 +12872,45 @@ static QDF_STATUS extract_fips_event_data_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+/**
+ * extract_fips_extend_event_data_tlv() - extract fips event data
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: pointer FIPS event params
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+extract_fips_extend_event_data_tlv(wmi_unified_t wmi_handle,
+				   void *evt_buf,
+				   struct wmi_host_fips_extend_event_param
+				    *param)
+{
+	WMI_PDEV_FIPS_EXTEND_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_fips_extend_event_fixed_param *event;
+
+	param_buf = (WMI_PDEV_FIPS_EXTEND_EVENTID_param_tlvs *)evt_buf;
+	event = (wmi_pdev_fips_extend_event_fixed_param *)param_buf->fixed_param;
+
+	if (fips_conv_data_be(event->data_len, param_buf->data) !=
+							QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
+
+	param->data = (uint32_t *)param_buf->data;
+	param->data_len = event->data_len;
+	param->error_status = event->error_status;
+	param->fips_cookie = event->fips_cookie;
+	param->cmd_frag_idx = event->cmd_frag_idx;
+	param->more_bit = event->more_bit;
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+								wmi_handle,
+								event->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef WLAN_FEATURE_DISA
 /**
  * extract_encrypt_decrypt_resp_event_tlv() - extract encrypt decrypt resp
@@ -16536,6 +16881,9 @@ struct wmi_ops tlv_ops =  {
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
 	.extract_fips_event_data = extract_fips_event_data_tlv,
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+	.extract_fips_extend_ev_data = extract_fips_extend_event_data_tlv,
+#endif
 #if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
 	.send_vdev_fils_enable_cmd = send_vdev_fils_enable_cmd_send,
 #endif
@@ -16544,6 +16892,10 @@ struct wmi_ops tlv_ops =  {
 				extract_encrypt_decrypt_resp_event_tlv,
 #endif
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+	.send_pdev_fips_extend_cmd = send_pdev_fips_extend_cmd_tlv,
+	.send_pdev_fips_mode_set_cmd = send_pdev_fips_mode_set_cmd_tlv,
+#endif
 	.extract_get_pn_data = extract_get_pn_data_tlv,
 	.send_pdev_get_pn_cmd = send_pdev_get_pn_cmd_tlv,
 	.send_wlan_profile_enable_cmd = send_wlan_profile_enable_cmd_tlv,
@@ -16942,6 +17294,9 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_soc_set_dual_mac_config_resp_event_id] =
 				WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID;
 	event_ids[wmi_pdev_fips_event_id] = WMI_PDEV_FIPS_EVENTID;
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+	event_ids[wmi_pdev_fips_extend_event_id] = WMI_PDEV_FIPS_EXTEND_EVENTID;
+#endif
 	event_ids[wmi_pdev_csa_switch_count_status_event_id] =
 				WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID;
 	event_ids[wmi_vdev_ocac_complete_event_id] =
