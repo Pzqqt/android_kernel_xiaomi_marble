@@ -2334,6 +2334,19 @@ QDF_STATUS dp_mon_peer_detach(struct dp_peer *peer)
 	return QDF_STATUS_SUCCESS;
 }
 
+void dp_mon_register_intr_ops(struct dp_soc *soc)
+{
+	struct dp_mon_ops *mon_ops = NULL;
+
+	mon_ops = dp_mon_ops_get(soc);
+	if (!mon_ops) {
+		dp_mon_err("Monitor ops is NULL");
+		return;
+	}
+	if (mon_ops->mon_register_intr_ops)
+		mon_ops->mon_register_intr_ops(soc);
+}
+
 void dp_mon_ops_register(struct dp_soc *soc)
 {
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;

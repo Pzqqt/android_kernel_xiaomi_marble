@@ -748,6 +748,13 @@ QDF_STATUS dp_mon_pdev_alloc_2_0(struct dp_pdev *pdev)
 }
 #endif
 
+static void dp_mon_register_intr_ops_2_0(struct dp_soc *soc)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	mon_soc->mon_rx_process = dp_rx_mon_process_2_0;
+}
+
 struct dp_mon_ops monitor_ops_2_0 = {
 	.mon_soc_cfg_init = dp_mon_soc_cfg_init,
 	.mon_soc_attach = dp_mon_soc_attach_2_0,
@@ -774,7 +781,7 @@ struct dp_mon_ops monitor_ops_2_0 = {
 	.mon_service_rings = NULL,
 #endif
 #ifndef DISABLE_MON_CONFIG
-	.mon_rx_process = dp_rx_mon_process_2_0,
+	.mon_rx_process = NULL,
 	.mon_tx_process = dp_tx_mon_process,
 #endif
 #if !defined(DISABLE_MON_CONFIG) && defined(MON_ENABLE_DROP_FOR_MAC)
@@ -895,6 +902,9 @@ struct dp_mon_ops monitor_ops_2_0 = {
 	.rx_packet_length_set = dp_rx_mon_packet_length_set,
 	.rx_wmask_subscribe = dp_rx_mon_word_mask_subscribe,
 	.rx_enable_mpdu_logging = dp_rx_mon_enable_mpdu_logging,
+#ifndef DISABLE_MON_CONFIG
+	.mon_register_intr_ops = dp_mon_register_intr_ops_2_0,
+#endif
 };
 
 struct cdp_mon_ops dp_ops_mon_2_0 = {

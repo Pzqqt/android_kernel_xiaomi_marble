@@ -3204,6 +3204,13 @@ dp_rx_mon_process_1_0(struct dp_soc *soc, struct dp_intr *int_ctx,
 
 	return dp_rx_mon_status_process(soc, int_ctx, mac_id, quota);
 }
+
+static void dp_mon_register_intr_ops_1_0(struct dp_soc *soc)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	mon_soc->mon_rx_process = dp_rx_mon_process_1_0;
+}
 #endif
 
 struct dp_mon_ops monitor_ops_1_0 = {
@@ -3227,7 +3234,7 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_service_rings = dp_service_mon_rings,
 #endif
 #ifndef DISABLE_MON_CONFIG
-	.mon_rx_process = dp_rx_mon_process_1_0,
+	.mon_rx_process = NULL,
 #endif
 #if !defined(DISABLE_MON_CONFIG) && defined(MON_ENABLE_DROP_FOR_MAC)
 	.mon_drop_packets_for_mac = dp_mon_drop_packets_for_mac,
@@ -3347,6 +3354,9 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.rx_packet_length_set = NULL,
 	.rx_wmask_subscribe = NULL,
 	.rx_enable_mpdu_logging = NULL,
+#if !defined(DISABLE_MON_CONFIG)
+	.mon_register_intr_ops = dp_mon_register_intr_ops_1_0,
+#endif
 };
 
 struct cdp_mon_ops dp_ops_mon_1_0 = {

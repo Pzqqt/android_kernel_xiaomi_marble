@@ -178,6 +178,8 @@ void dp_mon_cdp_ops_deregister(struct dp_soc *soc);
  */
 void dp_mon_ops_register(struct dp_soc *soc);
 
+void dp_mon_register_intr_ops(struct dp_soc *soc);
+
 /*
  * dp_mon_htt_srng_setup() - DP mon htt srng setup
  * @soc: Datapath soc handle
@@ -526,6 +528,9 @@ struct dp_mon_ops {
 				   struct htt_rx_ring_tlv_filter *tlv_filter);
 	void (*rx_enable_mpdu_logging)(uint32_t *msg_word,
 				       struct htt_rx_ring_tlv_filter *tlv_filter);
+#ifndef DISABLE_MON_CONFIG
+	void (*mon_register_intr_ops)(struct dp_soc *soc);
+#endif
 };
 
 struct dp_mon_soc {
@@ -556,6 +561,12 @@ struct dp_mon_soc {
 
 	struct dp_mon_ops *mon_ops;
 	bool monitor_mode_v2;
+#ifndef DISABLE_MON_CONFIG
+	uint32_t (*mon_rx_process)(struct dp_soc *soc,
+				   struct dp_intr *int_ctx,
+				   uint32_t mac_id,
+				   uint32_t quota);
+#endif
 };
 
 struct  dp_mon_pdev {
@@ -1777,7 +1788,6 @@ static inline
 uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			    uint32_t mac_id, uint32_t quota)
 {
-	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
@@ -1785,13 +1795,12 @@ uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 		return 0;
 	}
 
-	monitor_ops = mon_soc->mon_ops;
-	if (!monitor_ops || !monitor_ops->mon_rx_process) {
+	if (!mon_soc->mon_rx_process) {
 		dp_mon_debug("callback not registered");
 		return 0;
 	}
 
-	return monitor_ops->mon_rx_process(soc, int_ctx, mac_id, quota);
+	return mon_soc->mon_rx_process(soc, int_ctx, mac_id, quota);
 }
 
 static inline uint32_t

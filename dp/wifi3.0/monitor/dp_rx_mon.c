@@ -1288,11 +1288,10 @@ uint32_t
 dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	       uint32_t mac_id, uint32_t quota)
 {
-	struct dp_mon_ops *mon_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
-	mon_ops = dp_mon_ops_get(soc);
-	if (mon_ops && mon_ops->mon_rx_process)
-		return mon_ops->mon_rx_process(soc, int_ctx,
+	if (mon_soc && mon_soc->mon_rx_process)
+		return mon_soc->mon_rx_process(soc, int_ctx,
 					       mac_id, quota);
 	return 0;
 }
