@@ -465,7 +465,7 @@ connectivity_attr_table[QCA_WLAN_VENDOR_DIAG_EVENT_TYPE_MAX + 1]
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BTM_DISASSOC_TIMER, NLA_U16,
 	 sizeof(uint16_t), GET_ATTR_OFFSET(btm_info.disassoc_timer)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BTM_VALIDITY_INTERVAL, NLA_U8,
-	 sizeof(uint8_t), GET_ATTR_OFFSET(btm_info.disassoc_timer)},
+	 sizeof(uint8_t), GET_ATTR_OFFSET(btm_info.validity_timer)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_BTM_CANDIDATE_LIST_COUNT, NLA_U8,
 	 sizeof(uint8_t), GET_ATTR_OFFSET(btm_info.candidate_list_count)},
 	{QCA_WLAN_VENDOR_ATTR_DIAG_FIRMWARE_TIMESTAMP, NLA_U64,

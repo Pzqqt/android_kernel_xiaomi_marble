@@ -3044,6 +3044,19 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 			goto err;
 		}
 
+		/* BTM req/resp or Neighbor report/response info */
+		status = wmi_unified_extract_roam_11kv_stats(
+				      wmi_handle,
+				      evt_buf,
+				      &stats_info->data_11kv[i],
+				      i, num_rpt);
+		if (QDF_IS_STATUS_ERROR(status))
+			wmi_debug_rl("Roam 11kv stats extract fail vdev %d iter %d",
+				     vdev_id, i);
+
+		if (stats_info->data_11kv[i].present)
+			num_rpt += stats_info->data_11kv[i].num_freq;
+
 		/* BTM resp info */
 		status = wmi_unified_extract_roam_btm_response(wmi_handle,
 							evt_buf,
@@ -3085,21 +3098,6 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 					vdev_id);
 				status = QDF_STATUS_E_INVAL;
 				goto err;
-			}
-			if (roam_msg_info[i].present && i < num_tlv) {
-			     /* BTM req/resp or Neighbor report/response info */
-				status = wmi_unified_extract_roam_11kv_stats(
-						      wmi_handle,
-						      evt_buf,
-						      &stats_info->data_11kv[i],
-						      i, num_rpt);
-				if (QDF_IS_STATUS_ERROR(status)) {
-					wmi_debug_rl("Roam 11kv stats extract fail vdev %d iter %d",
-						     vdev_id, i);
-					status = QDF_STATUS_E_INVAL;
-					goto err;
-				}
-				num_rpt += stats_info->data_11kv[i].num_freq;
 			}
 		}
 	}
