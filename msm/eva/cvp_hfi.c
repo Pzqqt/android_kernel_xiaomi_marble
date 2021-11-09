@@ -3204,7 +3204,9 @@ static int reset_ahb2axi_bridge(struct iris_hfi_device *device)
 	else
 		s = CVP_POWER_OFF;
 
+#ifdef CONFIG_EVA_WAIPIO
 	s = CVP_POWER_IGNORED;
+#endif
 
 	for (i = 0; i < device->res->reset_set.count; i++) {
 		rc = __handle_reset_clk(device->res, i, ASSERT, s);
@@ -4077,6 +4079,13 @@ static int __power_off_controller(struct iris_hfi_device *device)
 			"DBLP Release: lpi_status %x\n", lpi_status);
 	}
 
+	/* PDXFIFO reset: addition for Kailua */
+#ifdef CONFIG_EVA_KALAMA
+	__write_register(device, CVP_WRAPPER_AXI_CLOCK_CONFIG, 0x3);
+	__write_register(device, CVP_WRAPPER_QNS4PDXFIFO_RESET, 0x1);
+	__write_register(device, CVP_WRAPPER_QNS4PDXFIFO_RESET, 0x0);
+	__write_register(device, CVP_WRAPPER_AXI_CLOCK_CONFIG, 0x0);
+#endif
 	/* HPG 6.2.2 Step 5 */
 	msm_cvp_disable_unprepare_clk(device, "cvp_clk");
 

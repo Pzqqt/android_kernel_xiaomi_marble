@@ -28,7 +28,11 @@ bool msm_cvp_cacheop_disabled = !true;
 int msm_cvp_clock_voting = !1;
 bool msm_cvp_syscache_disable = !true;
 bool msm_cvp_dsp_disable = !true;
+#ifdef CVP_MMRM_ENABLED
 bool msm_cvp_mmrm_enabled = true;
+#else
+bool msm_cvp_mmrm_enabled = !true;
+#endif
 bool msm_cvp_dcvs_disable = !true;
 int msm_cvp_minidump_enable = !1;
 
