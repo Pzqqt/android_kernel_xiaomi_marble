@@ -599,9 +599,7 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	int i = 0;
 	u8 swr_devnum = 0;
 	int dev_index = -1;
-	char* prefix_name = NULL;
 	struct swr_dmic_priv *swr_dmic = NULL;
-	const char *swr_dmic_name_prefix_of = NULL;
 	const char *swr_dmic_codec_name_of = NULL;
 	struct snd_soc_component *component = NULL;
 	int num_retry = NUM_ATTEMPTS;
@@ -644,15 +642,6 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	swr_set_dev_data(pdev, swr_dmic);
 
 	swr_dmic->swr_slave = pdev;
-
-	ret = of_property_read_string(pdev->dev.of_node, "qcom,swr-dmic-prefix",
-				&swr_dmic_name_prefix_of);
-	if (ret) {
-		dev_dbg(&pdev->dev, "%s: Looking up %s property in node %s failed\n",
-		__func__, "qcom,swr-dmic-prefix",
-		pdev->dev.of_node->full_name);
-		goto dev_err;
-	}
 
 	ret = of_property_read_string(pdev->dev.of_node, "qcom,codec-name",
 				&swr_dmic_codec_name_of);
@@ -755,16 +744,6 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		goto dev_err;
 	}
 	swr_dmic->component = component;
-	prefix_name = devm_kzalloc(&pdev->dev,
-					strlen(swr_dmic_name_prefix_of) + 1,
-					GFP_KERNEL);
-	if (!prefix_name) {
-		ret = -ENOMEM;
-		goto dev_err;
-	}
-	strlcpy(prefix_name, swr_dmic_name_prefix_of,
-			strlen(prefix_name) + 1);
-	component->name_prefix = prefix_name;
 
 	return 0;
 
