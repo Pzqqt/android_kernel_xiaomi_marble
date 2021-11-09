@@ -1,4 +1,5 @@
 /* Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,6 +30,11 @@ struct rmnet_ll_stats {
 		u64 rx_oom;
 		u64 rx_pkts;
 		u64 rx_tmp_allocs;
+		u64 tx_disabled;
+		u64 tx_enabled;
+		u64 tx_fc_queued;
+		u64 tx_fc_sent;
+		u64 tx_fc_err;
 };
 
 int rmnet_ll_send_skb(struct sk_buff *skb);
