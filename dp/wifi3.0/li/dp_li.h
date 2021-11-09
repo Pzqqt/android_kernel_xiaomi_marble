@@ -20,6 +20,7 @@
 
 #include <dp_types.h>
 #include <hal_li_tx.h>
+#include <hal_li_rx.h>
 
 /* WBM2SW ring id for rx release */
 #define WBM2SW_REL_ERR_RING_NUM 3

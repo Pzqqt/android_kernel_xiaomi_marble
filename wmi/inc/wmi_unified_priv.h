@@ -960,7 +960,8 @@ QDF_STATUS (*send_wow_delete_pattern_cmd)(wmi_unified_t wmi_handle,
 					  uint8_t ptrn_id,
 					  uint8_t vdev_id);
 
-QDF_STATUS (*send_host_wakeup_ind_to_fw_cmd)(wmi_unified_t wmi_handle);
+QDF_STATUS (*send_host_wakeup_ind_to_fw_cmd)(wmi_unified_t wmi_handle,
+					     bool tx_pending_ind);
 
 QDF_STATUS (*send_wow_timer_pattern_cmd)(wmi_unified_t wmi_handle,
 			uint8_t vdev_id, uint32_t cookie, uint32_t time);
@@ -1091,6 +1092,9 @@ QDF_STATUS (*send_pdev_set_pcl_cmd)(wmi_unified_t wmi_handle,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS (*send_vdev_set_pcl_cmd)(wmi_unified_t wmi_handle,
 				    struct set_pcl_cmd_params *params);
+
+QDF_STATUS (*send_roam_set_param_cmd)(wmi_unified_t wmi_handle,
+				      struct vdev_set_params *roam_param);
 #endif
 
 #ifdef WLAN_POLICY_MGR_ENABLE
@@ -2037,6 +2041,10 @@ QDF_STATUS (*extract_service_ready_ext2)(
 			uint8_t *evt_buf,
 			struct wlan_psoc_host_service_ext2_param *param);
 
+QDF_STATUS (*extract_dbs_or_sbs_service_ready_ext2)(
+			wmi_unified_t wmi_handle, uint8_t *event,
+			uint32_t *sbs_lower_band_end_freq);
+
 QDF_STATUS (*extract_hw_mode_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t hw_mode_idx,
@@ -2737,6 +2745,14 @@ QDF_STATUS
 (*extract_mlo_teardown_cmpl_event)(wmi_unified_t wmi_handle,
 				   uint8_t *buf,
 				   struct wmi_mlo_teardown_cmpl_params *param);
+QDF_STATUS
+(*send_mlo_link_set_active_cmd)(wmi_unified_t wmi_handle,
+				struct wmi_mlo_link_set_active_param *param);
+
+QDF_STATUS
+(*extract_mlo_link_set_active_resp)(wmi_unified_t wmi_handle,
+				    void *evt_buf,
+				    struct wmi_mlo_link_set_active_resp *resp);
 #endif
 };
 

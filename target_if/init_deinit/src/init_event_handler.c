@@ -353,6 +353,11 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		target_if_debug("failed to populate twt cap ext2");
 
+	err_code = init_deinit_populate_dbs_or_sbs_cap_ext2(psoc, wmi_handle,
+							    event, info);
+	if (err_code)
+		target_if_debug("failed to populate dbs_or_sbs cap ext2");
+
 	target_if_regulatory_set_ext_tpc(psoc);
 
 	target_if_reg_set_lower_6g_edge_ch_info(psoc);

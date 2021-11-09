@@ -100,47 +100,5 @@ RX_MSDU_DETAILS_RX_MSDU_DESC_INFO_DETAILS_RESERVED_0A_OFFSET))
 
 #if defined(QCA_WIFI_WCN9224) && defined(WLAN_CFR_ENABLE) && \
 	defined(WLAN_ENH_CFR_ENABLE)
-
-static inline
-void hal_rx_get_bb_info_9224(void *rx_tlv,
-			     void *ppdu_info_hdl)
-{
-	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
-
-	ppdu_info->cfr_info.bb_captured_channel =
-	  HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO, BB_CAPTURED_CHANNEL);
-
-	ppdu_info->cfr_info.bb_captured_timeout =
-	  HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO, BB_CAPTURED_TIMEOUT);
-
-	ppdu_info->cfr_info.bb_captured_reason =
-	  HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO, BB_CAPTURED_REASON);
-}
-
-static inline
-void hal_rx_get_rtt_info_9224(void *rx_tlv,
-			      void *ppdu_info_hdl)
-{
-	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
-
-	ppdu_info->cfr_info.rx_location_info_valid =
-		HAL_RX_GET(rx_tlv, PHYRX_LOCATION,
-			   RX_LOCATION_INFO_DETAILS_RX_LOCATION_INFO_VALID);
-
-	ppdu_info->cfr_info.rtt_che_buffer_pointer_low32 =
-	HAL_RX_GET(rx_tlv,
-		   RX_LOCATION_INFO,
-		   RTT_CHE_BUFFER_POINTER_LOW32);
-
-	ppdu_info->cfr_info.rtt_che_buffer_pointer_high8 =
-	HAL_RX_GET(rx_tlv,
-		   RX_LOCATION_INFO,
-		   RTT_CHE_BUFFER_POINTER_HIGH8);
-
-	ppdu_info->cfr_info.chan_capture_status =
-	HAL_RX_GET(rx_tlv,
-		   RX_LOCATION_INFO,
-		   RESERVED_3);
-}
 #endif
 #endif

@@ -76,4 +76,6 @@ void hal_reo_init_cmd_ring_li(hal_soc_handle_t hal_soc_hdl,
 			      hal_ring_handle_t hal_ring_hdl);
 
 uint8_t hal_get_tlv_hdr_size_li(void);
+
+uint8_t *hal_rx_get_qdesc_addr_li(uint8_t *dst_ring_desc, uint8_t *buf);
 #endif /* _HAL_LI_REO_H_ */

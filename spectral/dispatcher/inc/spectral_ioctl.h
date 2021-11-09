@@ -118,6 +118,16 @@ enum spectral_report_mode {
 };
 
 /**
+ * enum spectral_pwr_format: Spectral FFT bin pwr format
+ * @SPECTRAL_PWR_FORMAT_LINEAR: Linear mode
+ * @SPECTRAL_PWR_FORMAT_DBM: dBm mode
+ */
+enum spectral_pwr_format {
+	SPECTRAL_PWR_FORMAT_LINEAR = 0,
+	SPECTRAL_PWR_FORMAT_DBM = 1,
+};
+
+/**
  * enum spectral_scan_priority: Spectral scan priority
  * @SPECTRAL_SCAN_PRIORITY_LOW: Low priority Spectral scan
  * @SPECTRAL_SCAN_PRIORITY_HIGH: High priority Spectral scan

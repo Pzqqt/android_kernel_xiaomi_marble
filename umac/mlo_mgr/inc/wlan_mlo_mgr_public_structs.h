@@ -268,10 +268,12 @@ struct wlan_mlo_peer_context {
  * struct mlo_link_info – ML link info
  * @link_addr: link mac address
  * @link_id: link index
+ * @chan_freq: Operating channel frequency
  */
 struct mlo_link_info {
 	struct qdf_mac_addr link_addr;
 	uint8_t link_id;
+	uint16_t chan_freq;
 };
 
 /*
@@ -293,6 +295,7 @@ struct mlo_partner_info {
  * @mlo_mlme_ext_peer_assoc_fail: Callback to notify peer assoc failure
  * @mlo_mlme_ext_peer_delete: Callback to initiate link peer delete
  * @mlo_mlme_ext_assoc_resp: Callback to initiate assoc resp
+ * @mlo_mlme_get_link_assoc_req: Calback to get link assoc req buffer
  */
 struct mlo_mlme_ext_ops {
 	QDF_STATUS (*mlo_mlme_ext_validate_conn_req)(
@@ -307,5 +310,7 @@ struct mlo_mlme_ext_ops {
 	void (*mlo_mlme_ext_peer_assoc_fail)(struct wlan_objmgr_peer *peer);
 	void (*mlo_mlme_ext_peer_delete)(struct wlan_objmgr_peer *peer);
 	void (*mlo_mlme_ext_assoc_resp)(struct wlan_objmgr_peer *peer);
+	qdf_nbuf_t (*mlo_mlme_get_link_assoc_req)(struct wlan_objmgr_peer *peer,
+						  uint8_t link_ix);
 };
 #endif

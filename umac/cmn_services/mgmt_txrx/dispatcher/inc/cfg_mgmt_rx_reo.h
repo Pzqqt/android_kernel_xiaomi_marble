@@ -15,7 +15,7 @@
  */
 
 /**
- *  DOC: cfg_mgmt_txrx.h
+ *  DOC: cfg_mgmt_rx_reo.h
  *  This file contains cfg definitions of mgmt rx reo sub-component
  */
 

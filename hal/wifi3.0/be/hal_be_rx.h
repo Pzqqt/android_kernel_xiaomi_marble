@@ -129,6 +129,16 @@
 	RX_MPDU_DESC_INFO_BAR_FRAME_MASK) >> \
 	RX_MPDU_DESC_INFO_BAR_FRAME_LSB)
 
+#define HAL_RX_MPDU_TID_GET(mpdu_info_ptr) \
+	((mpdu_info_ptr[RX_MPDU_DESC_INFO_TID_OFFSET >> 2] & \
+	RX_MPDU_DESC_INFO_TID_MASK) >> \
+	RX_MPDU_DESC_INFO_TID_LSB)
+
+#define HAL_RX_MPDU_MPDU_QOS_CONTROL_VALID_GET(mpdu_info_ptr) \
+	((mpdu_info_ptr[RX_MPDU_DESC_INFO_MPDU_QOS_CONTROL_VALID_OFFSET >> 2] &\
+	RX_MPDU_DESC_INFO_MPDU_QOS_CONTROL_VALID_MASK) >> \
+	RX_MPDU_DESC_INFO_MPDU_QOS_CONTROL_VALID_LSB)
+
 /*
  * NOTE: None of the following _GET macros need a right
  * shift by the corresponding _LSB. This is because, they are
@@ -243,6 +253,9 @@ static inline uint32_t hal_rx_get_mpdu_flags(uint32_t *mpdu_info)
 	if (HAL_RX_MPDU_RAW_MPDU_GET(mpdu_info))
 		mpdu_flags |= HAL_MPDU_F_RAW_AMPDU;
 
+	if (HAL_RX_MPDU_MPDU_QOS_CONTROL_VALID_GET(mpdu_info))
+		mpdu_flags |= HAL_MPDU_F_QOS_CONTROL_VALID;
+
 	return mpdu_flags;
 }
 
@@ -254,11 +267,6 @@ static inline uint32_t hal_rx_get_mpdu_flags(uint32_t *mpdu_info)
 		(REO_DESTINATION_RING_REO_DEST_BUFFER_TYPE_OFFSET >> 2))) & \
 		REO_DESTINATION_RING_REO_DEST_BUFFER_TYPE_MASK) >> \
 		REO_DESTINATION_RING_REO_DEST_BUFFER_TYPE_LSB)
-
-#define HAL_RX_REO_QUEUE_NUMBER_GET(reo_desc) (((*(((uint32_t *)reo_desc) + \
-	(REO_DESTINATION_RING_RX_MPDU_DESC_INFO_DETAILS_TID_OFFSET >> 2))) & \
-	REO_DESTINATION_RING_RX_MPDU_DESC_INFO_DETAILS_TID_MASK) >> \
-	REO_DESTINATION_RING_RX_MPDU_DESC_INFO_DETAILS_TID_LSB)
 
 #define HAL_RX_REO_ERROR_GET(reo_desc) (((*(((uint32_t *)reo_desc) + \
 		(REO_DESTINATION_RING_REO_ERROR_CODE_OFFSET >> 2))) & \
@@ -396,6 +404,7 @@ void hal_rx_mpdu_desc_info_get_be(void *desc_addr,
 	mpdu_desc_info->peer_meta_data =
 		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);
 	mpdu_desc_info->bar_frame = HAL_RX_MPDU_BAR_FRAME_GET(mpdu_info);
+	mpdu_desc_info->tid = HAL_RX_MPDU_TID_GET(mpdu_info);
 }
 
 /*
@@ -445,4 +454,17 @@ static inline uintptr_t hal_rx_get_reo_desc_va(void *reo_desc)
 	return (uintptr_t)va_from_desc;
 }
 
+/**
+ * hal_rx_sw_exception_get_be() - Get sw_exception bit value from REO Desc
+ * @reo_desc: REO2SW ring descriptor pointer
+ *
+ * sw_exception bit might not exist in reo destination ring descriptor
+ * for some chipset, so just restrict this function for BE only.
+ *
+ * Return: sw_exception bit value
+ */
+static inline uint8_t hal_rx_sw_exception_get_be(void *reo_desc)
+{
+	return HAL_RX_GET(reo_desc, REO_DESTINATION_RING, SW_EXCEPTION);
+}
 #endif /* _HAL_BE_RX_H_ */

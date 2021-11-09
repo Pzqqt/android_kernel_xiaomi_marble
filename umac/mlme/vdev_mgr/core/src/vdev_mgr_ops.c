@@ -126,11 +126,54 @@ vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *mlme_obj,
 	param->eht_ops = mlme_obj->proto.eht_ops_info.eht_ops;
 	param->channel.puncture_pattern = des_chan->puncture_bitmap;
 }
+
+static inline void
+vdev_mgr_set_cur_chan_punc_pattern(struct wlan_channel *des_chan,
+				   uint16_t *puncture_bitmap)
+{
+	*puncture_bitmap = des_chan->puncture_bitmap;
+}
 #else
 static void
 vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *mlme_obj,
 				 struct vdev_start_params *param,
 				 struct wlan_channel *des_chan)
+{
+}
+
+static inline void
+vdev_mgr_set_cur_chan_punc_pattern(struct wlan_channel *des_chan,
+				   uint16_t *puncture_bitmap)
+{
+	*puncture_bitmap = 0;
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static void
+vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *mlme_obj,
+				struct vdev_start_params *param)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = mlme_obj->vdev;
+	if (!vdev) {
+		mlme_err("VDEV is NULL");
+		return;
+	}
+
+	if (!wlan_vdev_mlme_is_mlo_vdev(vdev))
+		return;
+
+	param->mlo_flags.mlo_enabled = 1;
+
+	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		param->mlo_flags.mlo_assoc_link = 1;
+}
+#else
+static void
+vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *mlme_obj,
+				struct vdev_start_params *param)
 {
 }
 #endif
@@ -147,6 +190,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	enum QDF_OPMODE op_mode;
 	bool is_dfs_chan_updated = false;
 	struct vdev_mlme_mbss_11ax *mbss;
+	uint16_t puncture_bitmap;
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
@@ -172,6 +216,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	if (vdev_mgr_is_opmode_sap_or_p2p_go(op_mode) &&
 	    vdev_mgr_is_49G_5G_chan_freq(des_chan->ch_freq)) {
+		vdev_mgr_set_cur_chan_punc_pattern(des_chan, &puncture_bitmap);
 		tgt_dfs_set_current_channel_for_freq(pdev, des_chan->ch_freq,
 						     des_chan->ch_flags,
 						     des_chan->ch_flagext,
@@ -180,6 +225,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 						     des_chan->ch_freq_seg2,
 						     des_chan->ch_cfreq1,
 						     des_chan->ch_cfreq2,
+						     puncture_bitmap,
 						     &is_dfs_chan_updated);
 		if (des_chan->ch_cfreq2)
 			param->channel.dfs_set_cfreq2 =
@@ -209,6 +255,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	param->he_ops = mlme_obj->proto.he_ops_info.he_ops;
 
 	vdev_mgr_start_param_update_11be(mlme_obj, param, des_chan);
+	vdev_mgr_start_param_update_mlo(mlme_obj, param);
 
 	param->channel.chan_id = des_chan->ch_ieee;
 	param->channel.pwr = mlme_obj->mgmt.generic.tx_power;
@@ -261,16 +308,6 @@ static QDF_STATUS vdev_mgr_start_param_update(
 		param->channel.dfs_set_cfreq2 = dfs_set_cfreq2;
 		param->channel.set_agile = set_agile;
 	}
-/* WLAN_FEATURE_11BE_MLO macro is termporary,
- *  will be removed once MLO testing is complete
- */
-#ifdef WLAN_FEATURE_11BE_MLO
-	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
-		param->mlo_flags.mlo_enabled = 1;
-		if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
-			param->mlo_flags.mlo_assoc_link = 1;
-	}
-#endif
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_SB_ID);
 	return QDF_STATUS_SUCCESS;
 }

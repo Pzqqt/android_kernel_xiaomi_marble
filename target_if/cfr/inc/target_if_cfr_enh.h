@@ -93,6 +93,26 @@
 
 #define STREAMFS_NUM_SUBBUF_PINE 255
 
+/* Max 37 users in MU case for Waikiki */
+#define WAIKIKI_CFR_MU_USERS 37
+
+#define WAIKIKI_MAX_HEADER_LENGTH_WORDS 87
+
+#define WAIKIKI_MAX_DATA_LENGTH_BYTES 64128
+
+/* Max size :
+ * sizeof(csi_cfr_header) + 348 bytes(cfr header) + 64128 bytes(cfr payload)
+ * where cfr_header size = rtt upload header len + freeze_tlv len +
+ *                         uplink user setup info + alignment bytes
+ *                       = 16bytes + 32bytes + (8bytes * 37users) + 4bytes
+ */
+#define STREAMFS_MAX_SUBBUF_WAIKIKI \
+	(sizeof(struct csi_cfr_header) + \
+	 (WAIKIKI_MAX_HEADER_LENGTH_WORDS * 4) + \
+	 WAIKIKI_MAX_DATA_LENGTH_BYTES)
+
+#define STREAMFS_NUM_SUBBUF_WAIKIKI  127
+
 /* Max 4 users in MU case for Spruce */
 #define SPRUCE_CFR_MU_USERS 4
 
@@ -111,14 +131,30 @@
 #define STREAMFS_NUM_SUBBUF_SPRUCE 255
 
 /* enum macrx_freeze_tlv_version: Reported by uCode in enh_dma_header
- * MACRX_FREEZE_TLV_VERSION_1: Single MU UL user info reported by MAC
- * MACRX_FREEZE_TLV_VERSION_2: Upto 4 MU UL user info reported by MAC
- * MACRX_FREEZE_TLV_VERSION_3: Upto 37 MU UL user info reported by MAC
+ * MACRX_FREEZE_TLV_VERSION_1: Single MU UL user info reported by MAC.
+ * This is used in Cypress/HastingsPrime chips. Corresponding structures are
+ * macrx_freeze_capture_channel and 1 uplink_user_setup_info.
+ *
+ * MACRX_FREEZE_TLV_VERSION_2: Upto 4 MU UL user info reported by MAC.
+ * This is used in Maple/Spruce/Moselle chips. Corresponding structures are
+ * macrx_freeze_capture_channel and 2 uplink_user_setup_info.
+ *
+ * MACRX_FREEZE_TLV_VERSION_3: Upto 37 MU UL user info reported by MAC.
+ * This is used in Pine chip. The corresponding structures are
+ * macrx_freeze_capture_channel_v3 and 37 uplink_user_setup_info.
+ *
+ * MACRX_FREEZE_TLV_VERSION_4: Upto 37 MU UL user info reported by MAC.
+ * This is used in Hamilton 1/2.
+ *
+ * MACRX_FREEZE_TLV_VERSION_5: Upto 37 MU UL user info reported by MAC.
+ * This is used in Waikiki chipsets.
  */
 enum macrx_freeze_tlv_version {
 	MACRX_FREEZE_TLV_VERSION_1 = 1,
 	MACRX_FREEZE_TLV_VERSION_2 = 2,
 	MACRX_FREEZE_TLV_VERSION_3 = 3,
+	MACRX_FREEZE_TLV_VERSION_4 = 4,
+	MACRX_FREEZE_TLV_VERSION_5 = 5,
 	MACRX_FREEZE_TLV_VERSION_MAX
 };
 
@@ -151,6 +187,16 @@ enum macrx_freeze_tlv_version {
  *
  */
 #define STREAMFS_NUM_SUBBUF_MAPLE 255
+
+enum UCODE_UPLOAD_HEADER_VERSION {
+	UPLOAD_HEADER_VERSION_1 = 1,
+	UPLOAD_HEADER_VERSION_2 = 2,
+	UPLOAD_HEADER_VERSION_3 = 3,
+	UPLOAD_HEADER_VERSION_4 = 4,
+	UPLOAD_HEADER_VERSION_8 = 8,
+	UPLOAD_HEADER_VERSION_9 = 9,
+	UPLOAD_HEADER_VERSION_MAX
+};
 
 /*
  * @tag: ucode fills this with 0xBA
@@ -210,6 +256,10 @@ enum macrx_freeze_tlv_version {
  *
  *			1 - HKV2/Hastings
  *			2 - Cypress
+ *			3 - Hasting Prime
+ *			4 - Pine
+ *			8 - Hamilton
+ *			9 - Waikiki
  *
  * @target_id:
  *
@@ -481,6 +531,56 @@ struct uplink_user_setup_info {
 		 sta_coding                      :  1, //[23]
 		 ru_start_index                  :  7, //[30:24]
 		 reserved_0c                     :  1; //[31]
+};
+
+struct macrx_freeze_capture_channel_v5 {
+	uint16_t freeze                          :  1, //[0]
+		 capture_reason                  :  3, //[3:1]
+		 packet_type                     :  2, //[5:4]
+		 packet_sub_type                 :  4, //[9:6]
+		 reserved                        :  5, //[14:10]
+		 sw_peer_id_valid                :  1; //[15]
+	uint16_t sw_peer_id                      : 16; //[15:0]
+	uint16_t phy_ppdu_id                     : 16; //[15:0]
+	uint16_t packet_ta_lower_16              : 16; //[15:0]
+	uint16_t packet_ta_mid_16                : 16; //[15:0]
+	uint16_t packet_ta_upper_16              : 16; //[15:0]
+	uint16_t packet_ra_lower_16              : 16; //[15:0]
+	uint16_t packet_ra_mid_16                : 16; //[15:0]
+	uint16_t packet_ra_upper_16              : 16; //[15:0]
+	uint16_t tsf_timestamp_15_0              : 16; //[15:0]
+	uint16_t tsf_timestamp_31_16             : 16; //[15:0]
+	uint16_t tsf_timestamp_47_32             : 16; //[15:0]
+	uint16_t tsf_timestamp_63_48             : 16; //[15:0]
+	uint16_t user_index_or_user_mask_5_0     :  6, //[5:0]
+		 directed                        :  1, //[6]
+		 reserved_13                     :  9; //[15:7]
+	uint16_t user_mask_21_6                  : 16; //[15:0]
+	uint16_t user_mask_36_22                 : 15, //[14:0]
+		 reserved_15a                    :  1; //[15]
+};
+
+struct uplink_user_setup_info_v2 {
+	uint32_t bw_info_valid                   :  1, //[0]
+		 uplink_receive_type             :  2, //[2:1]
+		 reserved_0a                     :  1, //[3]
+		 uplink_11ax_mcs                 :  4, //[7:4]
+		 nss                             :  3, //[10:8]
+		 stream_offset                   :  3, //[13:11]
+		 sta_dcm                         :  1, //[14]
+		 sta_coding                      :  1, //[15]
+		 ru_type_80_0                    :  4, //[19:16]
+		 ru_type_80_1                    :  4, //[23:20]
+		 ru_type_80_2                    :  4, //[27:24]
+		 ru_type_80_3                    :  4; //[31:28]
+	uint32_t ru_start_index_80_0             :  6, //[5:0]
+		 reserved_1a                     :  2, //[7:6]
+		 ru_start_index_80_1             :  6, //[13:8]
+		 reserved_1b                     :  2, //[15:14]
+		 ru_start_index_80_2             :  6, //[21:16]
+		 reserved_1c                     :  2, //[23:22]
+		 ru_start_index_80_3             :  6, //[29:24]
+		 reserved_1d                     :  2; //[31-30]
 };
 
 /**

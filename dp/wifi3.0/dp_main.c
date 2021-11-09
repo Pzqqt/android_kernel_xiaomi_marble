@@ -1422,10 +1422,6 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 		grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[0];
 	break;
 
-	case TX_MONITOR_BUF:
-		grp_mask = &soc->wlan_cfg_ctx->int_host2txmon_ring_mask[0];
-	break;
-
 	case TCL_DATA:
 	/* CMD_CREDIT_RING is used as command in 8074 and credit in 9000 */
 	case TCL_CMD_CREDIT:
@@ -2340,7 +2336,7 @@ static int dp_process_lmac_rings(struct dp_intr *int_ctx, int total_budget)
 		}
 
 		if (int_ctx->host2rxdma_ring_mask &
-				(1 << mac_for_pdev)) {
+					(1 << mac_for_pdev)) {
 			union dp_rx_desc_list_elem_t *desc_list = NULL;
 			union dp_rx_desc_list_elem_t *tail = NULL;
 			struct dp_srng *rx_refill_buf_ring;
@@ -2354,20 +2350,13 @@ static int dp_process_lmac_rings(struct dp_intr *int_ctx, int total_budget)
 
 			intr_stats->num_host2rxdma_ring_masks++;
 			DP_STATS_INC(pdev, replenish.low_thresh_intrs,
-					1);
+				     1);
 			dp_rx_buffers_replenish(soc, mac_for_pdev,
-					rx_refill_buf_ring,
-					&soc->rx_desc_buf[mac_for_pdev],
-					0, &desc_list, &tail);
+						rx_refill_buf_ring,
+						&soc->rx_desc_buf[mac_for_pdev],
+						0, &desc_list, &tail);
 		}
-
 	}
-
-	if (int_ctx->host2rxdma_mon_ring_mask)
-		dp_tx_mon_buf_refill(int_ctx);
-
-	if (int_ctx->host2txmon_ring_mask)
-		dp_tx_mon_buf_refill(int_ctx);
 
 budget_done:
 	return total_budget - budget;
@@ -2920,8 +2909,6 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 		wlan_cfg_get_tx_ring_near_full_mask(soc->wlan_cfg_ctx,
 						    intr_ctx_num);
 
-	int host2txmon_ring_mask = wlan_cfg_get_host2txmon_ring_mask(
-					soc->wlan_cfg_ctx, intr_ctx_num);
 	unsigned int vector =
 		(intr_ctx_num % msi_vector_count) + msi_vector_start;
 	int num_irq = 0;
@@ -2932,7 +2919,7 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 	    rx_wbm_rel_ring_mask | reo_status_ring_mask | rxdma2host_ring_mask |
 	    host2rxdma_ring_mask | host2rxdma_mon_ring_mask |
 	    rx_near_full_grp_1_mask | rx_near_full_grp_2_mask |
-	    tx_ring_near_full_mask | host2txmon_ring_mask)
+	    tx_ring_near_full_mask)
 		irq_id_map[num_irq++] =
 			pld_get_msi_irq(soc->osdev->dev, vector);
 
@@ -3089,13 +3076,12 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 		int tx_ring_near_full_mask =
 			wlan_cfg_get_tx_ring_near_full_mask(soc->wlan_cfg_ctx,
 							    i);
-		int host2txmon_ring_mask =
-			wlan_cfg_get_host2txmon_ring_mask(soc->wlan_cfg_ctx, i);
 
 		soc->intr_ctx[i].dp_intr_id = i;
 		soc->intr_ctx[i].tx_ring_mask = tx_mask;
 		soc->intr_ctx[i].rx_ring_mask = rx_mask;
 		soc->intr_ctx[i].rx_mon_ring_mask = rx_mon_mask;
+		soc->intr_ctx[i].tx_mon_ring_mask = tx_mon_ring_mask;
 		soc->intr_ctx[i].rx_err_ring_mask = rx_err_ring_mask;
 		soc->intr_ctx[i].rxdma2host_ring_mask = rxdma2host_ring_mask;
 		soc->intr_ctx[i].host2rxdma_ring_mask = host2rxdma_ring_mask;
@@ -3109,8 +3095,6 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 						rx_near_full_grp_2_mask;
 		soc->intr_ctx[i].tx_ring_near_full_mask =
 						tx_ring_near_full_mask;
-		soc->intr_ctx[i].tx_mon_ring_mask = tx_mon_ring_mask;
-		soc->intr_ctx[i].host2txmon_ring_mask = host2txmon_ring_mask;
 
 		soc->intr_ctx[i].soc = soc;
 
@@ -6694,13 +6678,13 @@ QDF_STATUS dp_peer_mlo_setup(
 
 			/* relase the ref to original dp_vdev */
 			dp_vdev_unref_delete(soc, mld_peer->vdev,
-					     DP_MOD_ID_CDP);
+					     DP_MOD_ID_CHILD);
 			/*
 			 * get the ref to new dp_vdev,
 			 * increase dp_vdev ref_cnt
 			 */
 			mld_peer->vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
-							       DP_MOD_ID_CDP);
+							       DP_MOD_ID_CHILD);
 		}
 
 		/* associate mld and link peer */
@@ -7323,6 +7307,35 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	}
 
 	return status;
+}
+
+/*
+ * dp_peer_get_authorize() - get peer authorize status
+ * @soc: soc handle
+ * @vdev_id: id of dp handle
+ * @peer_mac: mac of datapath PEER handle
+ *
+ * Retusn: true is peer is authorized, false otherwise
+ */
+static bool
+dp_peer_get_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		      uint8_t *peer_mac)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	bool authorize = false;
+	struct dp_peer *peer = dp_peer_find_hash_find(soc, peer_mac,
+						      0, vdev_id,
+						      DP_MOD_ID_CDP);
+
+	if (!peer) {
+		dp_cdp_debug("%pK: Peer is NULL!\n", soc);
+		return authorize;
+	}
+
+	authorize = peer->authorize;
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+
+	return authorize;
 }
 
 /**
@@ -11288,6 +11301,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_peer_authorize = dp_peer_authorize,
+	.txrx_peer_get_authorize = dp_peer_get_authorize,
 #ifdef VDEV_PEER_PROTOCOL_COUNT
 	.txrx_enable_peer_protocol_count = dp_enable_vdev_peer_protocol_count,
 	.txrx_set_peer_protocol_drop_mask =
@@ -12235,7 +12249,6 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		dp_err("wlan_cfg_ctx failed\n");
 		goto fail1;
 	}
-
 	dp_soc_cfg_attach(soc);
 
 	if (dp_hw_link_desc_pool_banks_alloc(soc, WLAN_INVALID_PDEV_ID)) {

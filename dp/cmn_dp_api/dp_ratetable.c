@@ -3524,3 +3524,310 @@ int dp_rate_idx_to_kbps(uint8_t rate_idx, uint8_t gintval)
 }
 
 qdf_export_symbol(dp_rate_idx_to_kbps);
+
+/* dp_get_start_index - get start index as per bw, mode and nss
+ * @ch_width - channel bandwidth
+ * @mode - operating mode
+ * @nss - no. of spatial streams
+ *
+ * return - start index
+ */
+static int dp_get_start_index(int ch_width, int mode, int nss)
+{
+	if (mode == HW_RATECODE_PREAM_HT) {
+		if (nss >= NUM_HT_SPATIAL_STREAM)
+			nss = NUM_HT_SPATIAL_STREAM;
+
+		if (ch_width == CMN_BW_20MHZ)
+			return HT_20_RATE_TABLE_INDEX + (nss - 1) * NUM_HT_MCS;
+		else if (ch_width == CMN_BW_40MHZ)
+			return HT_40_RATE_TABLE_INDEX + (nss - 1) * NUM_HT_MCS;
+	} else if (mode == HW_RATECODE_PREAM_VHT) {
+		if (nss >= NUM_SPATIAL_STREAMS)
+			nss = NUM_SPATIAL_STREAMS;
+
+		if (ch_width == CMN_BW_20MHZ) {
+			return VHT_20_RATE_TABLE_INDEX + (nss - 1) * NUM_VHT_MCS;
+		} else if (ch_width == CMN_BW_40MHZ) {
+			return VHT_40_RATE_TABLE_INDEX + (nss - 1) * NUM_VHT_MCS;
+		} else if (ch_width == CMN_BW_80MHZ) {
+			return VHT_80_RATE_TABLE_INDEX + (nss - 1) * NUM_VHT_MCS;
+		} else if ((ch_width == CMN_BW_160MHZ) ||
+			   (ch_width == CMN_BW_80_80MHZ)) {
+			if (nss >= MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ)
+				nss = MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ;
+
+			return VHT_160_RATE_TABLE_INDEX + (nss - 1) * NUM_VHT_MCS;
+		}
+	} else if (mode == HW_RATECODE_PREAM_HE) {
+		if (nss >= NUM_SPATIAL_STREAMS)
+			nss = NUM_SPATIAL_STREAMS;
+
+		if (ch_width == CMN_BW_20MHZ) {
+			return HE_20_RATE_TABLE_INDEX + (nss - 1) * NUM_HE_MCS;
+		} else if (ch_width == CMN_BW_40MHZ) {
+			return HE_40_RATE_TABLE_INDEX + (nss - 1) * NUM_HE_MCS;
+		} else if (ch_width == CMN_BW_80MHZ) {
+			return HE_80_RATE_TABLE_INDEX + (nss - 1) * NUM_HE_MCS;
+		} else if ((ch_width == CMN_BW_160MHZ) ||
+			 (ch_width == CMN_BW_80_80MHZ)) {
+			if (nss >= MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ)
+				nss = MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ;
+
+			return HE_160_RATE_TABLE_INDEX + (nss - 1) * NUM_HE_MCS;
+		}
+	}
+
+	return -1;
+}
+
+/* dp_get_end_index - get end index as per bw, mode and nss
+ * @ch_width - channel bandwidth
+ * @mode - operating mode
+ * @nss - no. of spatial streams
+ *
+ * return - end index
+ */
+static int dp_get_end_index(int ch_width, int mode, int nss)
+{
+	if (mode == HW_RATECODE_PREAM_HT) {
+		if (nss >= NUM_HT_SPATIAL_STREAM)
+			nss = NUM_HT_SPATIAL_STREAM;
+
+		if (ch_width == CMN_BW_20MHZ)
+			return HT_20_RATE_TABLE_INDEX + nss * NUM_HT_MCS - 1;
+		else if (ch_width == CMN_BW_40MHZ)
+			return HT_40_RATE_TABLE_INDEX + nss * NUM_HT_MCS - 1;
+	} else if (mode == HW_RATECODE_PREAM_VHT) {
+		if (nss >= NUM_SPATIAL_STREAMS)
+			nss = NUM_SPATIAL_STREAMS;
+
+		if (ch_width == CMN_BW_20MHZ) {
+			return VHT_20_RATE_TABLE_INDEX + nss * NUM_VHT_MCS - 1;
+		} else if (ch_width == CMN_BW_40MHZ) {
+			return VHT_40_RATE_TABLE_INDEX + nss * NUM_VHT_MCS - 1;
+		} else if (ch_width == CMN_BW_80MHZ) {
+			return VHT_80_RATE_TABLE_INDEX + nss * NUM_VHT_MCS - 1;
+		} else if ((ch_width == CMN_BW_160MHZ) ||
+			   (ch_width == CMN_BW_80_80MHZ)) {
+			if (nss >= MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ)
+				nss = MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ;
+
+			return VHT_160_RATE_TABLE_INDEX + nss * NUM_VHT_MCS - 1;
+		}
+	} else if (mode == HW_RATECODE_PREAM_HE) {
+		if (nss >= NUM_SPATIAL_STREAMS)
+			nss = NUM_SPATIAL_STREAMS;
+
+		if (ch_width == CMN_BW_20MHZ) {
+			return HE_20_RATE_TABLE_INDEX + nss * NUM_HE_MCS - 1;
+		} else if (ch_width == CMN_BW_40MHZ) {
+			return HE_40_RATE_TABLE_INDEX + nss * NUM_HE_MCS - 1;
+		} else if (ch_width == CMN_BW_80MHZ) {
+			return HE_80_RATE_TABLE_INDEX + nss * NUM_HE_MCS - 1;
+		} else if ((ch_width == CMN_BW_160MHZ) ||
+			   (ch_width == CMN_BW_80_80MHZ)) {
+			if (nss >= MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ)
+				nss = MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ;
+
+			return HE_160_RATE_TABLE_INDEX + nss * NUM_HE_MCS - 1;
+		}
+	}
+
+	return -1;
+}
+
+/* __dp_get_supported_rates - get supported rates as per start and end index
+ * @shortgi - gi setting
+ * @start_index - starting index
+ * @end_index - ending index
+ * @rates - array to copy the rates into
+ *
+ * return - no. of rate entries copied
+ */
+static int __dp_get_supported_rates(int shortgi, int start_index,
+				    int end_index, int **rates)
+{
+	int i, j = 1;
+	int *ratelist = *rates;
+
+	/* Check if the index calculation is out of array bounds */
+	if (start_index < 0 || start_index >= DP_RATE_TABLE_SIZE  ||
+	    end_index < 0 || end_index >= DP_RATE_TABLE_SIZE)
+		return 0;
+
+	if (!shortgi) {
+		for (i = start_index; i <= end_index; i++) {
+			if (dp_11abgnratetable.info[i].validmodemask) {
+				ratelist[j] = dp_11abgnratetable.info[i].
+								ratekbps;
+				j++;
+			}
+		}
+	} else {
+		switch (shortgi) {
+		case CDP_SGI_0_4_US:
+			for (i = start_index; i <= end_index; i++) {
+				if (dp_11abgnratetable.info[i].validmodemask) {
+					ratelist[j] = dp_11abgnratetable.
+							info[i].ratekbpssgi;
+					j++;
+				}
+			}
+			break;
+
+		case CDP_SGI_1_6_US:
+			for (i = start_index; i <= end_index; i++) {
+				if (dp_11abgnratetable.info[i].validmodemask) {
+					ratelist[j] = dp_11abgnratetable.
+							info[i].ratekbpsdgi;
+					j++;
+				}
+			}
+			break;
+
+		case CDP_SGI_3_2_US:
+			for (i = start_index; i <= end_index; i++) {
+				if (dp_11abgnratetable.info[i].validmodemask) {
+					ratelist[j] = dp_11abgnratetable.
+							info[i].ratekbpsqgi;
+					j++;
+				}
+			}
+			break;
+		}
+	}
+
+	ratelist[0] = j;
+	return j;
+}
+
+#if ALL_POSSIBLE_RATES_SUPPORTED
+/* dp_get_supported_rates -get all supported rates as per mode and gi setting
+ * @mode - operating mode
+ * @shortgi - gi setting
+ * @rates - array to copy the rate entries into
+ *
+ * return - no. of rate entries copied
+ */
+int dp_get_supported_rates(int mode, int shortgi, int **rates)
+{
+	int start_index = -1, end_index = -1;
+
+	switch (mode) {
+	/* 11b CCK Rates */
+	case CMN_IEEE80211_MODE_B:
+		start_index = CCK_RATE_TABLE_INDEX;
+		end_index = CCK_RATE_TABLE_END_INDEX;
+		break;
+
+	/* 11a OFDM Rates */
+	case CMN_IEEE80211_MODE_A:
+		start_index = OFDM_RATE_TABLE_INDEX;
+		end_index = OFDMA_RATE_TABLE_END_INDEX;
+		break;
+
+	/* 11g CCK/OFDM Rates */
+	case CMN_IEEE80211_MODE_G:
+		start_index = CCK_RATE_TABLE_INDEX;
+		end_index = OFDMA_RATE_TABLE_END_INDEX;
+		break;
+
+	/* HT rates only */
+	case CMN_IEEE80211_MODE_NA:
+	case CMN_IEEE80211_MODE_NG:
+		start_index = dp_get_start_index(CMN_BW_20MHZ,
+						 HW_RATECODE_PREAM_HT, 1);
+		end_index = dp_get_end_index(CMN_BW_40MHZ,
+					     HW_RATECODE_PREAM_HT,
+					     NUM_HT_SPATIAL_STREAM);
+		break;
+
+	/* VHT rates only */
+	case CMN_IEEE80211_MODE_AC:
+		start_index = dp_get_start_index(CMN_BW_20MHZ,
+						 HW_RATECODE_PREAM_VHT, 1);
+		end_index = dp_get_end_index(CMN_BW_160MHZ,
+					     HW_RATECODE_PREAM_VHT,
+					     MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ);
+		break;
+
+	/* HE rates only */
+	case CMN_IEEE80211_MODE_AXA:
+	case CMN_IEEE80211_MODE_AXG:
+		start_index = dp_get_start_index(CMN_BW_20MHZ,
+						 HW_RATECODE_PREAM_HE, 1);
+		end_index = dp_get_end_index(CMN_BW_160MHZ,
+					     HW_RATECODE_PREAM_HE,
+					     MAX_SPATIAL_STREAMS_SUPPORTED_AT_160MHZ);
+		break;
+	}
+
+	return __dp_get_supported_rates(shortgi, start_index, end_index, rates);
+}
+#else
+/* dp_get_supported_rates - get all supported rates as per mode, bw, gi and nss
+ * @mode - operating mode
+ * @shortgi - gi setting
+ * @nss - no. of spatial streams
+ * @ch_width - channel bandwidth
+ * @rates - array to copy the rates into
+ *
+ * return - no. of rate entries copied
+ */
+int dp_get_supported_rates(int mode, int shortgi, int nss,
+			   int ch_width, int **rates)
+{
+	int start_index = -1, end_index = -1;
+
+	switch (mode) {
+	/* 11b CCK Rates */
+	case CMN_IEEE80211_MODE_B:
+		start_index = CCK_RATE_TABLE_INDEX;
+		end_index = CCK_RATE_TABLE_END_INDEX;
+		break;
+
+	/* 11a OFDM Rates */
+	case CMN_IEEE80211_MODE_A:
+		start_index = OFDM_RATE_TABLE_INDEX;
+		end_index = OFDMA_RATE_TABLE_END_INDEX;
+		break;
+
+	/* 11g CCK/OFDM Rates */
+	case CMN_IEEE80211_MODE_G:
+		start_index = CCK_RATE_TABLE_INDEX;
+		end_index = OFDMA_RATE_TABLE_END_INDEX;
+		break;
+
+	/* HT rates only */
+	case CMN_IEEE80211_MODE_NA:
+	case CMN_IEEE80211_MODE_NG:
+		start_index = dp_get_start_index(ch_width,
+						 HW_RATECODE_PREAM_HT, nss);
+		end_index = dp_get_end_index(ch_width,
+					     HW_RATECODE_PREAM_HT, nss);
+		break;
+
+	/* VHT rates only */
+	case CMN_IEEE80211_MODE_AC:
+		start_index = dp_get_start_index(ch_width,
+						 HW_RATECODE_PREAM_VHT, nss);
+		end_index = dp_get_end_index(ch_width,
+					     HW_RATECODE_PREAM_VHT, nss);
+		break;
+
+	/* HE rates only */
+	case CMN_IEEE80211_MODE_AXA:
+	case CMN_IEEE80211_MODE_AXG:
+		start_index = dp_get_start_index(ch_width,
+						 HW_RATECODE_PREAM_HE, nss);
+		end_index = dp_get_end_index(ch_width,
+					     HW_RATECODE_PREAM_HE, nss);
+		break;
+	}
+
+	return __dp_get_supported_rates(shortgi, start_index, end_index, rates);
+}
+#endif
+
+qdf_export_symbol(dp_get_supported_rates);

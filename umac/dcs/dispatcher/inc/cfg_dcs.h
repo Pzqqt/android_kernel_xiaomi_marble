@@ -292,6 +292,27 @@
 		0, 0xFFFFFFFF, 30,\
 		CFG_VALUE_OR_DEFAULT, "dcs restart delay")
 
+/*
+ * <ini>
+ * dcs_disable_algorithm - Some feature like SON only need dcs stats,
+ * then disable dcs algorithm for SON.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to disable dcs algorithm
+ *
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DCS_DISABLE_ALGORITHM CFG_INI_BOOL(\
+		"dcs_disable_algorithm", false,\
+		"dcs disable algorithm")
+
 #define CFG_DCS_ALL \
 	CFG(CFG_DCS_ENABLE) \
 	CFG(CFG_DCS_DEBUG) \
@@ -304,6 +325,7 @@
 	CFG(CFG_DCS_INTFR_DETECTION_THRESHOLD) \
 	CFG(CFG_DCS_INTFR_DETECTION_WINDOW) \
 	CFG(CFG_DCS_DISABLE_THRESHOLD_PER_5MINS) \
-	CFG(CFG_DCS_RESTART_DELAY)
+	CFG(CFG_DCS_RESTART_DELAY) \
+	CFG(CFG_DCS_DISABLE_ALGORITHM)
 
 #endif /* __CONFIG_DCS_H */

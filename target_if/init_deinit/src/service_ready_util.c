@@ -560,6 +560,29 @@ exit:
 }
 #endif
 
+int init_deinit_populate_dbs_or_sbs_cap_ext2(struct wlan_objmgr_psoc *psoc,
+					     wmi_unified_t handle,
+					     uint8_t *event,
+					     struct tgt_info *info)
+{
+	uint32_t sbs_lower_band_end_freq;
+	struct target_psoc_info *psoc_info;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = wmi_extract_dbs_or_sbs_cap_service_ready_ext2(handle, event,
+						&sbs_lower_band_end_freq);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Extraction of twt capability failed");
+		goto exit;
+	}
+	psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+	target_psoc_set_sbs_lower_band_end(psoc_info, sbs_lower_band_end_freq);
+
+exit:
+	return qdf_status_to_os_return(status);
+}
+
+
 QDF_STATUS init_deinit_dbr_ring_cap_free(
 		struct target_psoc_info *tgt_psoc_info)
 {

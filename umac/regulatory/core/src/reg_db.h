@@ -171,6 +171,9 @@ struct reg_domain_pair {
  * @APL1_6G_04: Super domain APL1_6G_04 for Korea
  * @FCC1_6G_05: Super domain FCC1_6G_05 for Chile
  * @APL2_6G_06: Super domain APL2_6G_06 for Guatemala
+ * @FCC1_6G_07: Super domain FCC1_6G_07 for Brazil
+ * @APL3_6G_08: Super domain APL3_6G_08 for UAE
+ * @FCC1_6G_09: Super domain FCC1_6G_09 for US AFC Testing
  */
 enum reg_super_domain_6g {
 	FCC1_6G_01 = 0x01,
@@ -179,6 +182,9 @@ enum reg_super_domain_6g {
 	APL1_6G_04 = 0x04,
 	FCC1_6G_05 = 0x05,
 	APL2_6G_06 = 0x06,
+	FCC1_6G_07 = 0x07,
+	APL3_6G_08 = 0x08,
+	FCC1_6G_09 = 0x09,
 };
 
 #if defined(COMPILE_REGDB_6G)

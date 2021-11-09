@@ -25,6 +25,9 @@
 #include <linux/vmalloc.h>
 #include <wlan_logging_sock_svc.h>
 #include <linux/kthread.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 14, 0))
+#include <linux/panic_notifier.h>
+#endif
 #include <qdf_time.h>
 #include <qdf_trace.h>
 #include <qdf_mc_timer.h>

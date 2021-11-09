@@ -187,6 +187,7 @@ struct target_version_info {
  * @mem_chunks: allocated memory blocks for FW
  * @scan_radio_caps: scan radio capabilities
  * @device_mode: Global Device mode
+ * @sbs_lower_band_end_freq: sbs lower band end frequency
  */
 struct tgt_info {
 	struct host_fw_ver version;
@@ -220,6 +221,7 @@ struct tgt_info {
 	bool is_pdevid_to_phyid_map;
 	struct wlan_psoc_host_scan_radio_caps *scan_radio_caps;
 	uint32_t device_mode;
+	uint32_t sbs_lower_band_end_freq;
 };
 
 /**
@@ -2664,6 +2666,25 @@ static inline enum QDF_GLOBAL_MODE target_psoc_get_device_mode
  */
 void target_if_set_reg_cc_ext_supp(struct target_psoc_info *tgt_hdl,
 				   struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_psoc_set_sbs_lower_band_end() - Set lower band end sbs frequency
+ *
+ * @psoc_info: Pointer to struct target_psoc_info.
+ * @val: sbs lower band end cap value
+ *
+ * Return: None
+ *
+ */
+static inline
+void target_psoc_set_sbs_lower_band_end(struct target_psoc_info *psoc_info,
+				    uint32_t val)
+{
+	if (!psoc_info)
+		return;
+
+	psoc_info->info.sbs_lower_band_end_freq = val;
+}
 
 /**
  * target_psoc_set_twt_ack_cap() - Set twt ack capability

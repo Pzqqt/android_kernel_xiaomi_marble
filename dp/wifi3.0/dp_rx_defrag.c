@@ -1376,20 +1376,21 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	qdf_mem_zero(ent_mpdu_desc_info, sizeof(uint32_t));
 
 	mpdu_wrd = (uint32_t *)dst_mpdu_desc_info;
-	seq_no = HAL_RX_MPDU_SEQUENCE_NUMBER_GET(mpdu_wrd);
+	seq_no = hal_rx_get_rx_sequence(soc->hal_soc, qdf_nbuf_data(head));
 
 	hal_mpdu_desc_info_set(soc->hal_soc, ent_mpdu_desc_info, seq_no);
 	/* qdesc addr */
-	ent_qdesc_addr = (uint8_t *)ent_ring_desc +
-		REO_ENTRANCE_RING_4_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET;
+	ent_qdesc_addr = hal_get_reo_ent_desc_qdesc_addr(soc->hal_soc,
+						(uint8_t *)ent_ring_desc);
 
-	dst_qdesc_addr = (uint8_t *)dst_ring_desc +
-		REO_DESTINATION_RING_6_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET;
+	dst_qdesc_addr = hal_rx_get_qdesc_addr(soc->hal_soc,
+					       (uint8_t *)dst_ring_desc,
+					       qdf_nbuf_data(head));
 
-	qdf_mem_copy(ent_qdesc_addr, dst_qdesc_addr, 8);
+	qdf_mem_copy(ent_qdesc_addr, dst_qdesc_addr, 5);
 
-	HAL_RX_FLD_SET(ent_ring_desc, REO_ENTRANCE_RING_5,
-			REO_DESTINATION_INDICATION, dst_ind);
+	hal_set_reo_ent_desc_reo_dest_ind(soc->hal_soc,
+					  (uint8_t *)ent_ring_desc, dst_ind);
 
 	hal_srng_access_end(soc->hal_soc, hal_srng);
 

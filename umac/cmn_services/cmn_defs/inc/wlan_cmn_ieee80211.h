@@ -25,6 +25,77 @@
 #include <qdf_types.h>
 #include <osdep.h>
 
+/* Subfields in Frame Control field (except Type and Subtype) */
+#define WLAN_FC0_PVER      0x0003
+#define WLAN_FC1_DIR_MASK  0x03
+#define WLAN_FC1_TODS      0x01
+#define WLAN_FC1_FROMDS    0x02
+#define WLAN_FC1_DSTODS    0x03
+#define WLAN_FC1_MOREFRAG  0x04
+#define WLAN_FC1_RETRY     0x08
+#define WLAN_FC1_PWRMGT    0x10
+#define WLAN_FC1_MOREDATA  0x20
+#define WLAN_FC1_ISWEP     0x40
+#define WLAN_FC1_ORDER     0x80
+
+/* Definitions for Type subfield in Frame Control field */
+#define WLAN_FC0_TYPE_MGMT        0
+#define WLAN_FC0_TYPE_CTRL        1
+#define WLAN_FC0_TYPE_DATA        2
+
+/* Definitions for management frame subtypes in Frame Control field */
+#define WLAN_FC0_STYPE_ASSOC_REQ      0
+#define WLAN_FC0_STYPE_ASSOC_RESP     1
+#define WLAN_FC0_STYPE_REASSOC_REQ    2
+#define WLAN_FC0_STYPE_REASSOC_RESP   3
+#define WLAN_FC0_STYPE_PROBE_REQ      4
+#define WLAN_FC0_STYPE_PROBE_RESP     5
+#define WLAN_FC0_STYPE_BEACON         8
+#define WLAN_FC0_STYPE_ATIM           9
+#define WLAN_FC0_STYPE_DISASSOC      10
+#define WLAN_FC0_STYPE_AUTH          11
+#define WLAN_FC0_STYPE_DEAUTH        12
+#define WLAN_FC0_STYPE_ACTION        13
+
+/* Definitions for control frame subtypes in Frame Control field */
+#define WLAN_FC0_STYPE_PSPOLL        10
+#define WLAN_FC0_STYPE_RTS           11
+#define WLAN_FC0_STYPE_CTS           12
+#define WLAN_FC0_STYPE_ACK           13
+#define WLAN_FC0_STYPE_CFEND         14
+#define WLAN_FC0_STYPE_CFENDACK      15
+
+/* Definitions for data frame subtypes in Frame Control field */
+#define WLAN_FC0_STYPE_DATA                0
+#define WLAN_FC0_STYPE_DATA_CFACK          1
+#define WLAN_FC0_STYPE_DATA_CFPOLL         2
+#define WLAN_FC0_STYPE_DATA_CFACKPOLL      3
+#define WLAN_FC0_STYPE_NULLFUNC            4
+#define WLAN_FC0_STYPE_CFACK               5
+#define WLAN_FC0_STYPE_CFPOLL              6
+#define WLAN_FC0_STYPE_CFACKPOLL           7
+#define WLAN_FC0_STYPE_QOS_DATA            8
+#define WLAN_FC0_STYPE_QOS_DATA_CFACK      9
+#define WLAN_FC0_STYPE_QOS_DATA_CFPOLL    10
+#define WLAN_FC0_STYPE_QOS_DATA_CFACKPOLL 11
+#define WLAN_FC0_STYPE_QOS_NULL           12
+#define WLAN_FC0_STYPE_QOS_CFPOLL         14
+#define WLAN_FC0_STYPE_QOS_CFACKPOLL      15
+
+/* Get Type/Subtype subfields in Frame Control field */
+#define WLAN_FC0_GET_TYPE(fc)    (((fc) & 0x0c) >> 2)
+#define WLAN_FC0_GET_STYPE(fc)   (((fc) & 0xf0) >> 4)
+
+/* Definitions related to sequence number processing, TID, etc. */
+#define WLAN_INVALID_MGMT_SEQ   0xffff
+#define WLAN_SEQ_MASK           0x0fff
+#define WLAN_GET_SEQ_FRAG(seq) ((seq) & (BIT(3) | BIT(2) | BIT(1) | BIT(0)))
+#define WLAN_GET_SEQ_SEQ(seq) \
+	(((seq) & (~(BIT(3) | BIT(2) | BIT(1) | BIT(0)))) >> 4)
+#define WLAN_QOS_TID_MASK       0x0f
+#define WLAN_TID_SIZE           17
+#define WLAN_NONQOS_SEQ         16
+
 /* Length of Timestamp field */
 #define WLAN_TIMESTAMP_LEN         8
 
@@ -504,9 +575,9 @@ enum element_ie {
  * @WLAN_EXTN_ELEMID_HE_6G_CAP: HE 6GHz Band Capabilities IE
  * @WLAN_EXTN_ELEMID_SRP:    spatial reuse parameter IE
  * @WLAN_EXTN_ELEMID_NONINHERITANCE: Non inheritance IE
- * @WLAN_EXTN_ELEMID_MULTI_LINK: Multi link IE
- * @WLAN_EXTN_ELEMID_EHTCAP: EHT Capabilities IE
  * @WLAN_EXTN_ELEMID_EHTOP: EHT Operation IE
+ * @WLAN_EXTN_ELEMID_MULTI_LINK: Multi-Link IE
+ * @WLAN_EXTN_ELEMID_EHTCAP: EHT Capabilities IE
  */
 enum extn_element_ie {
 	WLAN_EXTN_ELEMID_MAX_CHAN_SWITCH_TIME = 34,
@@ -517,12 +588,14 @@ enum extn_element_ie {
 	WLAN_EXTN_ELEMID_NONINHERITANCE = 56,
 	WLAN_EXTN_ELEMID_HE_6G_CAP   = 59,
 	WLAN_EXTN_ELEMID_ESP         = 11,
+#ifdef WLAN_FEATURE_11BE
+	WLAN_EXTN_ELEMID_EHTOP       = 106,
+#endif
 #ifdef WLAN_FEATURE_11BE_MLO
-	WLAN_EXTN_ELEMID_MULTI_LINK  = 94,
+	WLAN_EXTN_ELEMID_MULTI_LINK  = 107,
 #endif
 #ifdef WLAN_FEATURE_11BE
-	WLAN_EXTN_ELEMID_EHTCAP      = 253,
-	WLAN_EXTN_ELEMID_EHTOP       = 254,
+	WLAN_EXTN_ELEMID_EHTCAP      = 108,
 #endif
 };
 
@@ -1679,6 +1752,11 @@ enum wlan_ml_variant {
 
 /* Definitions related to Basic variant Multi-Link element Common Info field */
 
+/* Size in octets of Link ID Info subfield in Basic variant Multi-Link element
+ * Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_LINKIDINFO_SIZE                            1
+
 /* Definitions for sub-sub fields in Link ID Info subfield in Basic variant
  * Multi-Link element Common Info field. Any unused bits are reserved.
  */
@@ -1686,10 +1764,15 @@ enum wlan_ml_variant {
 #define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_IDX                      0
 #define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_BITS                     4
 
-/* Size in octets of Link ID Info subfield in Basic variant Multi-Link element
- * Common Info field.
+/* Size in octets of BSS Parameters Change Count subfield in Basic variant
+ * Multi-Link element Common Info field.
  */
-#define WLAN_ML_BV_CINFO_LINKIDINFO_SIZE                            1
+#define WLAN_ML_BV_CINFO_BSSPARAMCHNGCNT_SIZE                       1
+
+/* Size in octets of Medium Synchronization Delay Information subfield in Basic
+ * variant Multi-Link element Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_SIZE                      2
 
 /* Definitions for sub-sub fields in Medium Synchronization Delay Information
  * subfield in Basic variant Multi-Link element Common Info field.
@@ -1703,6 +1786,11 @@ enum wlan_ml_variant {
 /* Medium Synchronization Maximum Number Of TXOPs  */
 #define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_MAXTXOPS_IDX             12
 #define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_MAXTXOPS_BITS            4
+
+/* Size in octets of EML Capabilities subfield in Basic variant Multi-Link
+ * element Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_EMLCAP_SIZE                                2
 
 /* Definitions for sub-sub fields in EML Capabilities subfield in Basic variant
  * Multi-Link element Common Info field. Any unused bits are reserved.
@@ -1812,6 +1900,11 @@ enum wlan_ml_bv_cinfo_emlcap_transtimeout {
 	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_128TU = 8,
 	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_INVALIDSTART,
 };
+
+/* Size in octets of MLD Capabilities subfield in Basic variant Multi-Link
+ * element Common Info field.
+ */
+#define WLAN_ML_BV_CINFO_MLDCAP_SIZE                                2
 
 /* Definitions for sub-sub fields in MLD Capabilities subfield in Basic variant
  * Multi-Link element Common Info field. Any unused bits are reserved.

@@ -1,6 +1,7 @@
 
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -114,6 +115,8 @@ enum cfrradiotype {
 	CFR_CAPTURE_RADIO_MAPLE,
 	CFR_CAPTURE_RADIO_MOSELLE,
 	CFR_CAPTURE_RADIO_SPRUCE,
+	CFR_CAPTURE_RADIO_ALDER,
+	CFR_CAPTURE_RADIO_WAIKIKI,
 	CFR_CAPTURE_RADIO_MAX = 0xFF,
 };
 
@@ -266,6 +269,9 @@ struct cfr_capture_params {
 	u_int8_t   bandwidth;
 	u_int32_t  period;
 	u_int8_t   method;
+#ifdef WLAN_FEATURE_11BE
+	uint32_t   puncture_bitmap;
+#endif
 };
 
 /**
@@ -413,9 +419,9 @@ struct unassoc_pool_entry {
  */
 struct ta_ra_cfr_cfg {
 	uint8_t filter_group_id;
-	uint16_t bw                          :5,
+	uint16_t bw                          :6,
 		 nss                         :8,
-		 rsvd0                       :3;
+		 rsvd0                       :2;
 	uint16_t valid_ta                    :1,
 		 valid_ta_mask               :1,
 		 valid_ra                    :1,
@@ -659,6 +665,9 @@ struct peer_cfr {
 	u_int8_t   bandwidth;
 	u_int32_t  period;
 	u_int8_t   capture_method;
+#ifdef WLAN_FEATURE_11BE
+	uint32_t   puncture_bitmap;
+#endif
 };
 
 /**

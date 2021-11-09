@@ -2905,6 +2905,26 @@ static QDF_STATUS reg_fill_max_psd_in_afc_chan_list(
 }
 
 /**
+ * reg_is_afc_mas_chan_list_valid() - Check if the AFC master channel list
+ * is non-empty
+ * @afc_mas_chan_list: Pointer to afc_mas_chan_list.
+ *
+ * Return: True, if atleast one channel has the state "CHANNEL_STATE_ENABLE",
+ * else false.
+ */
+static bool
+reg_is_afc_mas_chan_list_valid(struct regulatory_channel *afc_mas_chan_list)
+{
+	uint8_t i;
+
+	for (i = 0; i < NUM_6GHZ_CHANNELS; i++)
+		if (afc_mas_chan_list[i].state == CHANNEL_STATE_ENABLE)
+			return true;
+
+	return false;
+}
+
+/**
  * reg_process_afc_power_event() - Process the afc event and compute the 6G AFC
  * channel list based on the frequency range and channel frequency indice set.
  * @afc_info: Pointer to afc info
@@ -2962,6 +2982,8 @@ reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
 	reg_debug("process reg afc master chan list");
 	this_mchan_params = &soc_reg->mas_chan_params[phy_id];
 	afc_mas_chan_list = this_mchan_params->mas_chan_list_6g_afc;
+	qdf_mem_zero(afc_mas_chan_list,
+		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
 	reg_init_6g_master_chan(afc_mas_chan_list, soc_reg);
 	soc_reg->mas_chan_params[phy_id].is_6g_afc_power_event_received = true;
 	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, dbg_id);
@@ -3004,7 +3026,8 @@ reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
 	reg_modify_6g_afc_chan_list(pdev_priv_obj);
 
 	if (tx_ops->trigger_acs_for_afc &&
-	    !wlan_reg_is_noaction_on_afc_pwr_evt(pdev))
+	    !wlan_reg_is_noaction_on_afc_pwr_evt(pdev) &&
+	    reg_is_afc_mas_chan_list_valid(pdev_priv_obj->mas_chan_list_6g_afc))
 		tx_ops->trigger_acs_for_afc(pdev);
 
 	wlan_objmgr_pdev_release_ref(pdev, dbg_id);

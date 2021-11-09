@@ -84,9 +84,9 @@
 	 (((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m. \
 	 ipa_smmu_map)
 
-#define  QDF_NBUF_CB_RX_PACKET_REO_DEST_IND(skb) \
+#define  QDF_NBUF_CB_RX_PACKET_REO_DEST_IND_OR_SW_EXCPT(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m. \
-	reo_dest_ind)
+	reo_dest_ind_or_sw_excpt)
 
 #define __qdf_nbuf_ipa_owned_get(skb) \
 	QDF_NBUF_CB_TX_IPA_OWNED(skb)

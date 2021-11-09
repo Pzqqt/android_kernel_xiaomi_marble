@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +22,7 @@
 #include "wlan_objmgr_peer_obj.h"
 #include "wlan_mlo_mgr_peer.h"
 #include "wlan_mlo_mgr_ap.h"
+#include "qdf_module.h"
 
 static void mlo_partner_peer_create_post(struct wlan_mlo_dev_context *ml_dev,
 					 struct wlan_objmgr_vdev *vdev_link,
@@ -642,4 +644,22 @@ QDF_STATUS wlan_mlo_link_peer_delete(struct wlan_objmgr_peer *peer)
 	wlan_mlo_peer_release_ref(ml_peer);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(wlan_mlo_link_peer_delete);
+
+qdf_nbuf_t mlo_peer_get_link_peer_assoc_req_buf(
+			struct wlan_mlo_peer_context *ml_peer,
+			uint8_t link_ix)
+{
+	struct wlan_objmgr_peer *peer = NULL;
+	qdf_nbuf_t assocbuf = NULL;
+
+	peer = wlan_mlo_peer_get_assoc_peer(ml_peer);
+	if (!peer)
+		return NULL;
+
+	assocbuf = mlo_mlme_get_link_assoc_req(peer, link_ix);
+
+	return assocbuf;
 }

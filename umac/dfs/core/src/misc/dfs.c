@@ -678,6 +678,21 @@ bad:
 	return error;
 }
 
+#ifdef WLAN_FEATURE_11BE
+static inline bool
+dfs_is_chan_punc_same_as_given_punc(struct dfs_channel *dfs_curchan,
+				    uint16_t dfs_chan_punc_pattern)
+{
+	return (dfs_curchan->dfs_ch_punc_pattern == dfs_chan_punc_pattern);
+}
+#else
+static inline bool
+dfs_is_chan_punc_same_as_given_punc(struct dfs_channel *dfs_curchan,
+				    uint16_t dfs_chan_punc_pattern)
+{
+	return true;
+}
+#endif
 /**
  * dfs_is_curchan_same_as_given_chan() - Find if dfs_curchan has the same
  * channel parameters provided.
@@ -697,7 +712,8 @@ dfs_is_curchan_same_as_given_chan(struct dfs_channel *dfs_curchan,
 				  uint64_t dfs_ch_flags,
 				  uint16_t dfs_ch_flagext,
 				  uint8_t dfs_ch_vhtop_ch_freq_seg1,
-				  uint8_t dfs_ch_vhtop_ch_freq_seg2)
+				  uint8_t dfs_ch_vhtop_ch_freq_seg2,
+				  uint16_t dfs_chan_punc_pattern)
 {
 	if ((dfs_curchan->dfs_ch_freq == dfs_ch_freq) &&
 	    (dfs_curchan->dfs_ch_flags == dfs_ch_flags) &&
@@ -705,11 +721,28 @@ dfs_is_curchan_same_as_given_chan(struct dfs_channel *dfs_curchan,
 	    (dfs_curchan->dfs_ch_vhtop_ch_freq_seg1 ==
 	     dfs_ch_vhtop_ch_freq_seg1) &&
 	    (dfs_curchan->dfs_ch_vhtop_ch_freq_seg2 ==
-	     dfs_ch_vhtop_ch_freq_seg2))
+	     dfs_ch_vhtop_ch_freq_seg2) &&
+	    (dfs_is_chan_punc_same_as_given_punc(dfs_curchan,
+						 dfs_chan_punc_pattern)))
 		return true;
 
 	return false;
 }
+
+#ifdef WLAN_FEATURE_11BE
+static inline void
+dfs_set_cur_chan_punc_pattern(struct wlan_dfs *dfs,
+			      uint16_t dfs_ch_punc_pattern)
+{
+	dfs->dfs_curchan->dfs_ch_punc_pattern = dfs_ch_punc_pattern;
+}
+#else
+static inline void
+dfs_set_cur_chan_punc_pattern(struct wlan_dfs *dfs,
+			      uint16_t dfs_ch_punc_pattern)
+{
+}
+#endif
 
 #ifdef CONFIG_CHAN_FREQ_API
 void dfs_set_current_channel_for_freq(struct wlan_dfs *dfs,
@@ -721,6 +754,7 @@ void dfs_set_current_channel_for_freq(struct wlan_dfs *dfs,
 				      uint8_t dfs_chan_vhtop_freq_seg2,
 				      uint16_t dfs_chan_mhz_freq_seg1,
 				      uint16_t dfs_chan_mhz_freq_seg2,
+				      uint16_t dfs_ch_punc_pattern,
 				      bool *is_channel_updated)
 {
 	if (is_channel_updated)
@@ -737,7 +771,8 @@ void dfs_set_current_channel_for_freq(struct wlan_dfs *dfs,
 					      dfs_chan_flags,
 					      dfs_chan_flagext,
 					      dfs_chan_vhtop_freq_seg1,
-					      dfs_chan_vhtop_freq_seg2)) {
+					      dfs_chan_vhtop_freq_seg2,
+					      dfs_ch_punc_pattern)) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			 "dfs_curchan already updated");
 		return;
@@ -757,6 +792,7 @@ void dfs_set_current_channel_for_freq(struct wlan_dfs *dfs,
 	dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2 = dfs_chan_vhtop_freq_seg2;
 	dfs->dfs_curchan->dfs_ch_mhz_freq_seg1 = dfs_chan_mhz_freq_seg1;
 	dfs->dfs_curchan->dfs_ch_mhz_freq_seg2 = dfs_chan_mhz_freq_seg2;
+	dfs_set_cur_chan_punc_pattern(dfs, dfs_ch_punc_pattern);
 
 	if (is_channel_updated)
 		*is_channel_updated = true;

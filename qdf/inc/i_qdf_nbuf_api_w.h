@@ -168,14 +168,15 @@ static inline uint8_t qdf_nbuf_is_rx_ipa_smmu_map(qdf_nbuf_t buf)
 }
 
 /**
- * qdf_nbuf_set_rx_reo_dest_ind() - set reo destination indication
+ * qdf_nbuf_set_rx_reo_dest_ind_or_sw_excpt() - set reo destination indication
+						or sw exception flag
  * @buf: Network buffer
- * @value: reo destination indication value to set
+ * @value: value to set
  *
  * Return: none
  */
-static inline void qdf_nbuf_set_rx_reo_dest_ind(qdf_nbuf_t buf,
-						uint8_t value)
+static inline void qdf_nbuf_set_rx_reo_dest_ind_or_sw_excpt(qdf_nbuf_t buf,
+							    uint8_t value)
 {
 }
 

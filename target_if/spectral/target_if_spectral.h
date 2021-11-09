@@ -98,8 +98,12 @@
 #define INVALID_FFT_SIZE                          (0xFFFF)
 #define SPECTRAL_PARAM_RPT_MODE_MIN               (0)
 #define SPECTRAL_PARAM_RPT_MODE_MAX               (3)
-#define MAX_FFTBIN_VALUE                          (255)
 #define SPECTRAL_DWORD_SIZE                       (4)
+
+#define MAX_FFTBIN_VALUE_LINEAR_MODE              (U8_MAX)
+#define MAX_FFTBIN_VALUE_DBM_MODE                 (S8_MAX)
+#define MIN_FFTBIN_VALUE_DBM_MODE                 (S8_MIN)
+#define MAX_FFTBIN_VALUE                          (255)
 
 /* DBR ring debug size for Spectral */
 #define SPECTRAL_DBR_RING_DEBUG_SIZE 512
@@ -2320,6 +2324,52 @@ bool is_secondaryseg_rx_inprog(struct target_if_spectral *spectral,
 #endif
 
 /**
+ * clamp_fft_bin_value() - Clamp the FFT bin value between min and max
+ * @fft_bin_value: FFT bin value as reported by HW
+ * @pwr_format: FFT bin format (linear or dBm format)
+ *
+ * Each FFT bin value is represented as an 8 bit integer in SAMP message. But
+ * depending on the configuration, the FFT bin value reported by HW might
+ * exceed 8 bits. Clamp the FFT bin value between the min and max value
+ * which can be represented by 8 bits. For linear mode, min and max FFT bin
+ * value which can be represented by 8 bit is 0 and U8_MAX respectively. For
+ * dBm mode,  min and max FFT bin value which can be represented by 8 bit is
+ * S8_MIN and S8_MAX respectively.
+ *
+ * Return: Clamped FFT bin value
+ */
+static inline uint8_t
+clamp_fft_bin_value(uint16_t fft_bin_value, uint16_t pwr_format)
+{
+	uint8_t clamped_fft_bin_value = 0;
+
+	switch (pwr_format) {
+	case SPECTRAL_PWR_FORMAT_LINEAR:
+		if (qdf_unlikely(fft_bin_value > MAX_FFTBIN_VALUE_LINEAR_MODE))
+			clamped_fft_bin_value = MAX_FFTBIN_VALUE_LINEAR_MODE;
+		else
+			clamped_fft_bin_value = fft_bin_value;
+		break;
+
+	case SPECTRAL_PWR_FORMAT_DBM:
+		if (qdf_unlikely((int16_t)fft_bin_value >
+		    MAX_FFTBIN_VALUE_DBM_MODE))
+			clamped_fft_bin_value = MAX_FFTBIN_VALUE_DBM_MODE;
+		else if (qdf_unlikely((int16_t)fft_bin_value <
+			 MIN_FFTBIN_VALUE_DBM_MODE))
+			clamped_fft_bin_value = MIN_FFTBIN_VALUE_DBM_MODE;
+		else
+			clamped_fft_bin_value = fft_bin_value;
+		break;
+
+	default:
+		qdf_assert_always(0);
+	}
+
+	return clamped_fft_bin_value;
+}
+
+/**
  * target_if_160mhz_delivery_state_change() - State transition for 160Mhz
  *                                            Spectral
  * @spectral: Pointer to spectral object
@@ -2909,6 +2959,7 @@ spectral_is_session_info_expected_from_target(struct wlan_objmgr_pdev *pdev,
  * @dest_fft_buf: Pointer to destination FFT buffer
  * @fft_bin_count: Number of FFT bins to copy
  * @bytes_copied: Number of bytes copied by this API
+ * @pwr_format: Spectral FFT bin format (linear/dBm mode)
  *
  * Different targets supports different FFT bin widths. This API encapsulates
  * all those details and copies 8-bit FFT value into the destination buffer.
@@ -2925,6 +2976,7 @@ target_if_spectral_copy_fft_bins(struct target_if_spectral *spectral,
 				 const void *src_fft_buf,
 				 void *dest_fft_buf,
 				 uint32_t fft_bin_count,
-				 uint32_t *bytes_copied);
+				 uint32_t *bytes_copied,
+				 uint16_t pwr_format);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 #endif /* _TARGET_IF_SPECTRAL_H_ */

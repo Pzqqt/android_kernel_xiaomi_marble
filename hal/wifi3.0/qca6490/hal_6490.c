@@ -1532,7 +1532,6 @@ hal_rx_flow_setup_fse_6490(uint8_t *rx_fst, uint32_t table_offset,
 	struct hal_rx_fst *fst = (struct hal_rx_fst *)rx_fst;
 	struct hal_rx_flow *flow = (struct hal_rx_flow *)rx_flow;
 	uint8_t *fse;
-	bool fse_valid;
 
 	if (table_offset >= fst->max_entries) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1544,14 +1543,8 @@ hal_rx_flow_setup_fse_6490(uint8_t *rx_fst, uint32_t table_offset,
 	fse = (uint8_t *)fst->base_vaddr +
 		(table_offset * HAL_RX_FST_ENTRY_SIZE);
 
-	fse_valid = HAL_GET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
-
-	if (fse_valid) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-				"HAL FSE %pK already valid", fse);
-		return NULL;
-	}
-
+	/* clear the valid bit before starting the deletion*/
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
 	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_0, SRC_IP_127_96) =
 		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_0, SRC_IP_127_96,
 			(flow->tuple_info.src_ip_127_96));

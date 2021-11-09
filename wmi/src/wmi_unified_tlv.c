@@ -11726,6 +11726,39 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * extract_dbs_or_sbs_cap_service_ready_ext2_tlv() - extract dbs_or_sbs cap from
+ *                                                   service ready ext 2
+ *
+ * @wmi_handle: wmi handle
+ * @event: pointer to event buffer
+ * @sbs_lower_band_end_freq: If sbs_lower_band_end_freq is set to non-zero,
+ *                           it indicates async SBS mode is supported, and
+ *                           lower-band/higher band to MAC mapping is
+ *                           switch-able. unit: mhz. examples 5180, 5320
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS extract_dbs_or_sbs_cap_service_ready_ext2_tlv(
+				wmi_unified_t wmi_handle, uint8_t *event,
+				uint32_t *sbs_lower_band_end_freq)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	wmi_dbs_or_sbs_cap_ext *dbs_or_sbs_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	dbs_or_sbs_caps = param_buf->dbs_or_sbs_cap_ext;
+	if (!dbs_or_sbs_caps)
+		return QDF_STATUS_E_INVAL;
+
+	*sbs_lower_band_end_freq = dbs_or_sbs_caps->sbs_lower_band_end_freq;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_sar_cap_service_ready_ext_tlv() -
  *       extract SAR cap from service ready event
@@ -15490,6 +15523,7 @@ extract_roam_result_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	dst->status = src_data->roam_status;
 	dst->timestamp = src_data->timestamp;
 	dst->fail_reason = src_data->roam_fail_reason;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_data->bssid, dst->fail_bssid.bytes);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15556,6 +15590,47 @@ extract_roam_11kv_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ *  send_roam_set_param_cmd_tlv() - WMI roam set parameter function
+ *  @wmi_handle      : handle to WMI.
+ *  @roam_param    : pointer to hold roam set parameter
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+static QDF_STATUS
+send_roam_set_param_cmd_tlv(wmi_unified_t wmi_handle,
+			    struct vdev_set_params *roam_param)
+{
+	QDF_STATUS ret;
+	wmi_roam_set_param_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_roam_set_param_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_set_param_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_set_param_cmd_fixed_param));
+	cmd->vdev_id = roam_param->vdev_id;
+	cmd->param_id = roam_param->param_id;
+	cmd->param_value = roam_param->param_value;
+	wmi_debug("Setting vdev %d roam_param = %x, value = %u",
+		  cmd->vdev_id, cmd->param_id, cmd->param_value);
+	wmi_mtrace(WMI_ROAM_SET_PARAM_CMDID, cmd->vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_ROAM_SET_PARAM_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send roam set param command, ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
 }
 #else
 static inline QDF_STATUS
@@ -16434,6 +16509,8 @@ struct wmi_ops tlv_ops =  {
 	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 	.extract_service_ready_ext = extract_service_ready_ext_tlv,
 	.extract_service_ready_ext2 = extract_service_ready_ext2_tlv,
+	.extract_dbs_or_sbs_service_ready_ext2 =
+				extract_dbs_or_sbs_cap_service_ready_ext2_tlv,
 	.extract_hw_mode_cap_service_ready_ext =
 				extract_hw_mode_cap_service_ready_ext_tlv,
 	.extract_mac_phy_cap_service_ready_ext =
@@ -16634,6 +16711,9 @@ struct wmi_ops tlv_ops =  {
 	.send_mgmt_rx_reo_filter_config_cmd =
 		send_mgmt_rx_reo_filter_config_cmd_tlv,
 #endif
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	.send_roam_set_param_cmd = send_roam_set_param_cmd_tlv,
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 };
 
 /**
@@ -17064,6 +17144,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_MLO_SETUP_COMPLETE_EVENTID;
 	event_ids[wmi_mlo_teardown_complete_event_id] =
 			WMI_MLO_TEARDOWN_COMPLETE_EVENTID;
+	event_ids[wmi_mlo_link_set_active_resp_eventid] =
+			WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID;
 #endif
 }
 

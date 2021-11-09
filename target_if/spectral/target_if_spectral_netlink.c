@@ -40,6 +40,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 	QDF_STATUS ret;
 	uint16_t dest_det_idx;
 	enum spectral_scan_mode spectral_mode;
+	uint16_t pwr_format;
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
@@ -70,6 +71,8 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		spectral_err_rl("Invalid spectral msg type");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	pwr_format = spectral->params[spectral_mode].ss_pwr_format;
 
 	qdf_spin_lock_bh(&spectral->session_det_map_lock);
 
@@ -165,7 +168,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 					&spec_samp_msg->bin_pwr[
 					lb_edge_bins->start_bin_idx],
 					lb_edge_bins->num_bins,
-					&bytes_copied);
+					&bytes_copied, pwr_format);
 
 			if (QDF_IS_STATUS_ERROR(ret)) {
 				qdf_spin_unlock_bh(
@@ -183,7 +186,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 				spectral, bin_pwr_data,
 				&spec_samp_msg->bin_pwr[start_bin_index],
 				pwr_count,
-				&bytes_copied);
+				&bytes_copied, pwr_format);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			qdf_spin_unlock_bh(
@@ -201,7 +204,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 					&spec_samp_msg->bin_pwr[
 					rb_edge_bins->start_bin_idx],
 					rb_edge_bins->num_bins,
-					&bytes_copied);
+					&bytes_copied, pwr_format);
 
 			if (QDF_IS_STATUS_ERROR(ret)) {
 				qdf_spin_unlock_bh(

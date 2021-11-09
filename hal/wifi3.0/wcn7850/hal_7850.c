@@ -1060,7 +1060,6 @@ hal_rx_flow_setup_fse_7850(uint8_t *rx_fst, uint32_t table_offset,
 	struct hal_rx_fst *fst = (struct hal_rx_fst *)rx_fst;
 	struct hal_rx_flow *flow = (struct hal_rx_flow *)rx_flow;
 	uint8_t *fse;
-	bool fse_valid;
 
 	if (table_offset >= fst->max_entries) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1072,13 +1071,8 @@ hal_rx_flow_setup_fse_7850(uint8_t *rx_fst, uint32_t table_offset,
 	fse = (uint8_t *)fst->base_vaddr +
 		(table_offset * HAL_RX_FST_ENTRY_SIZE);
 
-	fse_valid = HAL_GET_FLD(fse, RX_FLOW_SEARCH_ENTRY, VALID);
-
-	if (fse_valid) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			  "HAL FSE %pK already valid", fse);
-		return NULL;
-	}
+	/* clear the valid bit before starting the deletion*/
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY, VALID);
 
 	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY, SRC_IP_127_96) =
 		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY, SRC_IP_127_96,
@@ -1514,6 +1508,12 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 				hal_rx_tlv_populate_mpdu_desc_info_7850;
 	hal_soc->ops->hal_rx_tlv_get_pn_num =
 				hal_rx_tlv_get_pn_num_be;
+	hal_soc->ops->hal_get_reo_ent_desc_qdesc_addr =
+				hal_get_reo_ent_desc_qdesc_addr_be;
+	hal_soc->ops->hal_rx_get_qdesc_addr =
+				hal_rx_get_qdesc_addr_be;
+	hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind =
+				hal_set_reo_ent_desc_reo_dest_ind_be;
 };
 
 struct hal_hw_srng_config hw_srng_table_7850[] = {

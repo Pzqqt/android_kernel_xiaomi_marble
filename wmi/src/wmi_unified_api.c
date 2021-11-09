@@ -408,6 +408,19 @@ wmi_unified_vdev_set_param_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+wmi_unified_roam_set_param_send(wmi_unified_t wmi_handle,
+				struct vdev_set_params *roam_param)
+{
+	if (wmi_handle->ops->send_roam_set_param_cmd)
+		return wmi_handle->ops->send_roam_set_param_cmd(wmi_handle,
+								roam_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS wmi_unified_sifs_trigger_send(wmi_unified_t wmi_handle,
 					 struct sifs_trigger_param *param)
 {
@@ -2444,6 +2457,18 @@ QDF_STATUS wmi_extract_service_ready_ext2(
 	if (wmi_handle->ops->extract_service_ready_ext2)
 		return wmi_handle->ops->extract_service_ready_ext2(wmi_handle,
 				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_dbs_or_sbs_cap_service_ready_ext2(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint32_t *sbs_lower_band_end_freq)
+{
+	if (wmi_handle->ops->extract_dbs_or_sbs_service_ready_ext2)
+		return wmi_handle->ops->extract_dbs_or_sbs_service_ready_ext2(
+				wmi_handle,
+				evt_buf, sbs_lower_band_end_freq);
 
 	return QDF_STATUS_E_FAILURE;
 }

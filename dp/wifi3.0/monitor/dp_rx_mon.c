@@ -1419,8 +1419,6 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 		mon_pdev->ppdu_info.rx_status.device_id = soc->device_id;
 		mon_pdev->ppdu_info.rx_status.chan_noise_floor =
 			pdev->chan_noise_floor;
-		/* convert rssi_comb from dBm to positive dB value */
-		dp_rx_mon_rssi_convert(&mon_pdev->ppdu_info.rx_status);
 
 		dp_handle_tx_capture(soc, pdev, mon_mpdu);
 

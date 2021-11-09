@@ -286,6 +286,7 @@ enum WMI_HOST_TWT_COMMAND {
  * @b_twt_recommendation: defines types of frames tx during bTWT SP
  * @b_twt_persistence: Countdown VAL frames to param update/teardown
  * @wake_time_tsf: Absolute TSF value to start first TWT service period
+ * @annouce_timeout_us: Timeout value before sending QoS NULL frame.
  */
 struct wmi_twt_add_dialog_param {
 	uint32_t vdev_id;
@@ -310,6 +311,7 @@ struct wmi_twt_add_dialog_param {
 		b_twt_persistence:8,
 		b_twt_recommendation:3;
 	uint64_t wake_time_tsf;
+	uint32_t announce_timeout_us;
 };
 
 /* enum - status code of Get stats TWT dialog

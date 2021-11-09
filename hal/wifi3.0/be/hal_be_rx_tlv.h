@@ -698,6 +698,50 @@ static inline uint32_t hal_rx_tlv_mic_err_get_be(uint8_t *buf)
 }
 
 /**
+ * hal_get_reo_ent_desc_qdesc_addr_be(): API to get qdesc address of reo
+ * entrance ring desc
+ *
+ * @desc: reo entrance ring descriptor
+ * Return: qdesc adrress
+ */
+static inline uint8_t *hal_get_reo_ent_desc_qdesc_addr_be(uint8_t *desc)
+{
+	return desc + REO_ENTRANCE_RING_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET;
+}
+
+/**
+ * hal_rx_get_qdesc_addr_be(): API to get qdesc address of reo
+ * entrance ring desc
+ *
+ * @dst_ring_desc: reo dest ring descriptor (used for Lithium DP)
+ * @buf: pointer to the start of RX PKT TLV headers
+ * Return: qdesc adrress in reo destination ring buffer
+ */
+static inline uint8_t *hal_rx_get_qdesc_addr_be(uint8_t *dst_ring_desc,
+						uint8_t *buf)
+{
+	struct rx_pkt_tlvs *rx_pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	return (uint8_t *)(&HAL_RX_MPDU_START(rx_pkt_tlvs) +
+			RX_MPDU_INFO_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET);
+}
+
+/**
+ * hal_set_reo_ent_desc_reo_dest_ind_be(): API to set reo destination
+ * indication of reo entrance ring desc
+ *
+ * @desc: reo ent ring descriptor
+ * @dst_ind: reo destination indication value
+ * Return: None
+ */
+static inline void
+hal_set_reo_ent_desc_reo_dest_ind_be(uint8_t *desc, uint32_t dst_ind)
+{
+	HAL_RX_FLD_SET(desc, REO_ENTRANCE_RING,
+		       REO_DESTINATION_INDICATION, dst_ind);
+}
+
+/**
  * hal_rx_mpdu_sequence_number_get() - Get mpdu sequence number
  * @buf: pointer to packet buffer
  *

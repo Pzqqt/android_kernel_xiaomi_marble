@@ -83,6 +83,103 @@ static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
 #endif
 #endif
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLE
+static bool
+dp_rx_intrabss_ucast_check_li(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			      struct dp_peer *ta_peer,
+			      struct hal_rx_msdu_metadata *msdu_metadata)
+{
+	uint16_t da_peer_id;
+	struct dp_peer *da_peer;
+	struct dp_ast_entry *ast_entry;
+
+	if (!(qdf_nbuf_is_da_valid(nbuf) || qdf_nbuf_is_da_mcbc(nbuf)))
+		return false;
+
+	ast_entry = soc->ast_table[msdu_metadata->da_idx];
+	if (!ast_entry)
+		return false;
+
+	if (ast_entry->type == CDP_TXRX_AST_TYPE_DA) {
+		ast_entry->is_active = TRUE;
+		return false;
+	}
+
+	da_peer_id = ast_entry->peer_id;
+	/* TA peer cannot be same as peer(DA) on which AST is present
+	 * this indicates a change in topology and that AST entries
+	 * are yet to be updated.
+	 */
+	if ((da_peer_id == ta_peer->peer_id) ||
+	    (da_peer_id == HTT_INVALID_PEER))
+		return false;
+
+	da_peer = dp_peer_get_ref_by_id(soc, da_peer_id,
+					DP_MOD_ID_RX);
+	if (!da_peer)
+		return false;
+
+	/* If the source or destination peer in the isolation
+	 * list then dont forward instead push to bridge stack.
+	 */
+	if (dp_get_peer_isolation(ta_peer) ||
+	    dp_get_peer_isolation(da_peer) ||
+	    (da_peer->vdev->vdev_id != ta_peer->vdev->vdev_id)) {
+		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+		return false;
+	}
+
+	if (da_peer->bss_peer) {
+		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+		return false;
+	}
+
+	dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+	return true;
+}
+
+/*
+ * dp_rx_intrabss_fwd_li() - Implements the Intra-BSS forwarding logic
+ *
+ * @soc: core txrx main context
+ * @ta_peer	: source peer entry
+ * @rx_tlv_hdr	: start address of rx tlvs
+ * @nbuf	: nbuf that has to be intrabss forwarded
+ *
+ * Return: bool: true if it is forwarded else false
+ */
+static bool
+dp_rx_intrabss_fwd_li(struct dp_soc *soc,
+		      struct dp_peer *ta_peer,
+		      uint8_t *rx_tlv_hdr,
+		      qdf_nbuf_t nbuf,
+		      struct hal_rx_msdu_metadata msdu_metadata)
+{
+	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
+	uint8_t ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+	struct cdp_tid_rx_stats *tid_stats = &ta_peer->vdev->pdev->stats.
+					tid_stats.tid_rx_stats[ring_id][tid];
+
+	/* if it is a broadcast pkt (eg: ARP) and it is not its own
+	 * source, then clone the pkt and send the cloned pkt for
+	 * intra BSS forwarding and original pkt up the network stack
+	 * Note: how do we handle multicast pkts. do we forward
+	 * all multicast pkts as is or let a higher layer module
+	 * like igmpsnoop decide whether to forward or not with
+	 * Mcast enhancement.
+	 */
+	if (qdf_nbuf_is_da_mcbc(nbuf) && !ta_peer->bss_peer)
+		return dp_rx_intrabss_mcbc_fwd(soc, ta_peer, rx_tlv_hdr,
+					       nbuf, tid_stats);
+
+	if (dp_rx_intrabss_ucast_check_li(soc, nbuf, ta_peer, &msdu_metadata))
+		return dp_rx_intrabss_ucast_fwd(soc, ta_peer, rx_tlv_hdr,
+						nbuf, tid_stats);
+
+	return false;
+}
+#endif
+
 /**
  * dp_rx_process_li() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -376,7 +473,9 @@ more_data:
 
 		qdf_nbuf_set_tid_val(rx_desc->nbuf,
 				     HAL_RX_REO_QUEUE_NUMBER_GET(ring_desc));
-		qdf_nbuf_set_rx_reo_dest_ind(
+
+		/* set reo dest indication */
+		qdf_nbuf_set_rx_reo_dest_ind_or_sw_excpt(
 				rx_desc->nbuf,
 				HAL_RX_REO_MSDU_REO_DST_IND_GET(ring_desc));
 
@@ -455,6 +554,8 @@ done:
 	nbuf = nbuf_head;
 	while (nbuf) {
 		next = nbuf->next;
+		dp_rx_prefetch_nbuf_data(nbuf, next);
+
 		if (qdf_unlikely(dp_rx_is_raw_frame_dropped(nbuf))) {
 			nbuf = next;
 			DP_STATS_INC(soc, rx.err.raw_frm_drop, 1);
@@ -752,8 +853,9 @@ done:
 
 			/* Intrabss-fwd */
 			if (dp_rx_check_ap_bridge(vdev))
-				if (dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr,
-						       nbuf, msdu_metadata)) {
+				if (dp_rx_intrabss_fwd_li(soc, peer, rx_tlv_hdr,
+							  nbuf,
+							  msdu_metadata)) {
 					nbuf = next;
 					tid_stats->intrabss_cnt++;
 					continue; /* Get next desc */

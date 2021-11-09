@@ -245,6 +245,9 @@ enum qca_nl80211_vendor_subcmds_index {
 #ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
 	QCA_NL80211_VENDOR_SUBCMD_DIAG_EVENT_INDEX,
 #endif
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	QCA_NL80211_VENDOR_SUBCMD_ROAM_EVENTS_INDEX,
+#endif
 };
 
 #if !defined(SUPPORT_WDEV_CFG80211_VENDOR_EVENT_ALLOC) && \
@@ -452,6 +455,20 @@ static inline int
 wlan_cfg80211_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
 {
 	return nla_put_u64_64bit(skb, attrtype, value, NL80211_ATTR_PAD);
+}
+#endif
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 11, 0))
+static inline ssize_t
+wlan_cfg80211_nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize)
+{
+	return nla_strlcpy(dst, nla, dstsize);
+}
+#else
+static inline ssize_t
+wlan_cfg80211_nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize)
+{
+	return nla_strscpy(dst, nla, dstsize);
 }
 #endif
 #endif

@@ -991,6 +991,11 @@ struct hal_hw_txrx_ops {
 	void (*hal_rx_tlv_msdu_len_set)(uint8_t *buf, uint32_t len);
 	void (*hal_rx_tlv_populate_mpdu_desc_info)(uint8_t *buf,
 						   void *mpdu_desc_info_hdl);
+	uint8_t *(*hal_get_reo_ent_desc_qdesc_addr)(uint8_t *desc);
+	uint8_t *(*hal_rx_get_qdesc_addr)(uint8_t *dst_ring_desc,
+					  uint8_t *buf);
+	void (*hal_set_reo_ent_desc_reo_dest_ind)(uint8_t *desc,
+						  uint32_t dst_ind);
 
 	/* REO CMD and STATUS */
 	int (*hal_reo_send_cmd)(hal_soc_handle_t hal_soc_hdl,

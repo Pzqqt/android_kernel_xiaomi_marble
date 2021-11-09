@@ -55,6 +55,7 @@ enum wlan_dcs_debug_level {
  *                            stats in pdev object
  * @prev_dcs_im_stats: previous statistics at last time
  * @user_dcs_im_stats: statistics requested from userspace
+ * @dcs_ch_util_im_stats: chan utilization statistics
  * @im_intfr_cnt: number of times the interference is
  *                detected within detection window
  * @im_sample_cnt: sample counter
@@ -62,6 +63,7 @@ enum wlan_dcs_debug_level {
 struct pdev_dcs_im_stats {
 	struct wlan_host_dcs_im_tgt_stats prev_dcs_im_stats;
 	struct wlan_host_dcs_im_user_stats user_dcs_im_stats;
+	struct wlan_host_dcs_ch_util_stats dcs_ch_util_im_stats;
 	uint8_t im_intfr_cnt;
 	uint8_t im_samp_cnt;
 };
@@ -71,6 +73,7 @@ struct pdev_dcs_im_stats {
  * @dcs_enable_cfg: dcs enable from ini config
  * @dcs_enable: dcs enable from ucfg config
  * @dcs_algorithm_process: do dcs algorithm process or not
+ * @force_disable_algorithm: disable dcs algorithm forcely
  * @dcs_debug: dcs debug trace level
  * @phy_err_penalty: phy error penalty
  * @phy_err_threshold: phy error threshold
@@ -87,6 +90,7 @@ struct pdev_dcs_params {
 	uint8_t dcs_enable_cfg;
 	uint8_t dcs_enable;
 	bool dcs_algorithm_process;
+	bool force_disable_algorithm;
 	enum wlan_dcs_debug_level dcs_debug;
 	uint32_t phy_err_penalty;
 	uint32_t phy_err_threshold;

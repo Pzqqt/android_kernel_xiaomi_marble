@@ -1120,6 +1120,8 @@ struct cdp_tx_stats {
 		 bw_info:4,
 		 gi_info:4,
 		 preamble_info:4;
+	/* mpdu retry count in case of successful transmission */
+	uint32_t mpdu_success_with_retries;
 };
 
 /* struct cdp_rx_stats - rx Level Stats

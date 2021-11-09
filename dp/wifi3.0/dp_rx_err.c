@@ -535,12 +535,12 @@ static inline QDF_STATUS
 dp_rx_err_nbuf_pn_check(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 			qdf_nbuf_t nbuf)
 {
-	uint64_t prev_pn, curr_pn;
+	uint64_t prev_pn, curr_pn[2];
 
 	hal_rx_reo_prev_pn_get(soc->hal_soc, ring_desc, &prev_pn);
-	hal_rx_tlv_get_pn_num(soc->hal_soc, qdf_nbuf_data(nbuf), &curr_pn);
+	hal_rx_tlv_get_pn_num(soc->hal_soc, qdf_nbuf_data(nbuf), curr_pn);
 
-	if (curr_pn > prev_pn)
+	if (curr_pn[0] > prev_pn)
 		return QDF_STATUS_SUCCESS;
 
 	return QDF_STATUS_E_FAILURE;

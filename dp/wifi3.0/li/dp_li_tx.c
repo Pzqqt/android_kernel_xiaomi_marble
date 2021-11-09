@@ -63,13 +63,20 @@ void dp_tx_comp_get_params_from_hal_desc_li(struct dp_soc *soc,
  *
  * Return - HAL ring handle
  */
+#ifdef IPA_OFFLOAD
+static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return (ring_id + soc->wbm_sw0_bm_id);
+}
+#else
 static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
 					  uint8_t ring_id)
 {
 	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
 			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
 }
-
+#endif
 #else
 static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
 					  uint8_t ring_id)

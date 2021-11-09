@@ -543,6 +543,8 @@ typedef enum {
  * @WMI_HOST_CHAN_WIDTH_5: 5 MHz channel operating width
  * @WMI_HOST_CHAN_WIDTH_10: 10 MHz channel operating width
  * @WMI_HOST_CHAN_WIDTH_165: 165 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_160P160: 160 MHz + 160 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_320: 320 MHz channel operating width
  */
 typedef enum {
 	WMI_HOST_CHAN_WIDTH_20    = 0,
@@ -553,9 +555,8 @@ typedef enum {
 	WMI_HOST_CHAN_WIDTH_5     = 5,
 	WMI_HOST_CHAN_WIDTH_10    = 6,
 	WMI_HOST_CHAN_WIDTH_165   = 7,
-#ifdef WLAN_FEATURE_11BE
-	WMI_HOST_CHAN_WIDTH_320   = 8,
-#endif
+	WMI_HOST_CHAN_WIDTH_160P160 = 8,
+	WMI_HOST_CHAN_WIDTH_320   = 9,
 } wmi_host_channel_width;
 
 #define ATH_EXPONENT_TO_VALUE(v)	((1<<v)-1)
@@ -4654,6 +4655,7 @@ typedef enum {
 #ifdef WLAN_FEATURE_11BE_MLO
 	wmi_mlo_setup_complete_event_id,
 	wmi_mlo_teardown_complete_event_id,
+	wmi_mlo_link_set_active_resp_eventid,
 #endif
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -7663,12 +7665,14 @@ struct wmi_roam_scan_data {
  * @status:             0 - Roaming is success ; 1 - Roaming failed ;
  * 2 - No roam
  * @fail_reason:        One of WMI_ROAM_FAIL_REASON_ID
+ * @fail_bssid:         BSSID of the last attempted roam failed AP
  */
 struct wmi_roam_result {
 	bool present;
 	uint32_t timestamp;
 	uint32_t status;
 	uint32_t fail_reason;
+	struct qdf_mac_addr fail_bssid;
 };
 
 #define WLAN_11KV_TYPE_BTM_REQ  1

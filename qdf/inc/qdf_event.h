@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,35 @@ typedef __qdf_event_t qdf_event_t;
 
 QDF_STATUS qdf_event_create(qdf_event_t *event);
 
+/**
+ * qdf_event_set() - sets a QDF event for single waiting threads
+ * @event: The event to set to the signalled state
+ *
+ * The state of the specified event is set to signalled by calling
+ * qdf_event_set().
+ *
+ * Single thread waiting on the event as a result of a qdf_event_wait() will
+ * be unblocked and available to be scheduled for execution when the event
+ * is signaled by a call to qdf_event_set().
+ *
+ * Return: QDF status
+ */
 QDF_STATUS qdf_event_set(qdf_event_t *event);
+
+/**
+ * qdf_event_set_all() - sets a QDF event for all waiting threads
+ * @event: The event to set to the signalled state
+ *
+ * The state of the specified event is set to signalled by calling
+ * qdf_event_set_all().
+ *
+ * Any threads waiting on the event as a result of a qdf_event_wait() will
+ * be unblocked and available to be scheduled for execution when the event
+ * is signaled by a call to qdf_event_set().
+ *
+ * Return: QDF status
+ */
+QDF_STATUS qdf_event_set_all(qdf_event_t *event);
 
 QDF_STATUS qdf_event_reset(qdf_event_t *event);
 

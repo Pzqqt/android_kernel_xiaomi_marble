@@ -570,20 +570,27 @@ mgmt_rx_reo_list_display(struct mgmt_rx_reo_list *reo_list,
  * mgmt_rx_reo_list_entry_get_release_reason() - Helper API to get the reason
  * for releasing the reorder list entry to upper layer.
  * reorder list.
+ * @reo_list: Pointer to reorder list
  * @entry: List entry
- * @ts_latest_aged_out_frame: Global time stamp of latest aged out frame
+ *
+ * This API expects the caller to acquire the spin lock protecting the reorder
+ * list.
  *
  * Return: Reason for releasing the frame.
  */
 static uint8_t
 mgmt_rx_reo_list_entry_get_release_reason(
-		struct mgmt_rx_reo_list_entry *entry,
-		struct mgmt_rx_reo_global_ts_info *ts_latest_aged_out_frame)
+		struct mgmt_rx_reo_list *reo_list,
+		struct mgmt_rx_reo_list_entry *entry)
 {
 	uint8_t release_reason = 0;
 
-	if (!entry || !ts_latest_aged_out_frame)
+	if (!reo_list || !entry)
 		return 0;
+
+	if (mgmt_rx_reo_list_max_size_exceeded(reo_list))
+		release_reason |=
+		   MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_LIST_MAX_SIZE_EXCEEDED;
 
 	if (!MGMT_RX_REO_LIST_ENTRY_IS_WAITING_FOR_FRAME_ON_OTHER_LINK(entry))
 		release_reason |=
@@ -593,9 +600,9 @@ mgmt_rx_reo_list_entry_get_release_reason(
 		release_reason |=
 				MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_AGED_OUT;
 
-	if (ts_latest_aged_out_frame->valid &&
+	if (reo_list->ts_latest_aged_out_frame.valid &&
 	    MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(
-				ts_latest_aged_out_frame, entry))
+				&reo_list->ts_latest_aged_out_frame, entry))
 		release_reason |=
 		MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_OLDER_THAN_AGED_OUT_FRAME;
 
@@ -633,7 +640,7 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 	ts_last_delivered_frame = &reo_list->ts_last_delivered_frame;
 
 	release_reason = mgmt_rx_reo_list_entry_get_release_reason(
-				entry, &reo_list->ts_latest_aged_out_frame);
+					reo_list, entry);
 
 	qdf_assert_always(release_reason != 0);
 
@@ -704,7 +711,8 @@ mgmt_rx_reo_list_is_ready_to_send_up_entry(struct mgmt_rx_reo_list *reo_list,
 	if (!reo_list || !entry)
 		return false;
 
-	return !MGMT_RX_REO_LIST_ENTRY_IS_WAITING_FOR_FRAME_ON_OTHER_LINK(
+	return mgmt_rx_reo_list_max_size_exceeded(reo_list) ||
+	       !MGMT_RX_REO_LIST_ENTRY_IS_WAITING_FOR_FRAME_ON_OTHER_LINK(
 	       entry) || MGMT_RX_REO_LIST_ENTRY_IS_AGED_OUT(entry) ||
 	       (reo_list->ts_latest_aged_out_frame.valid &&
 		MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(
@@ -791,7 +799,7 @@ mgmt_rx_reo_list_ageout_timer_handler(void *arg)
 
 	qdf_list_for_each(&reo_list->list, cur_entry, node) {
 		if (cur_ts - cur_entry->insertion_ts >=
-		    MGMT_RX_REO_LIST_TIMEOUT) {
+		    reo_list->list_entry_timeout_us) {
 			uint32_t cur_entry_global_ts;
 			struct mgmt_rx_reo_global_ts_info *ts_ageout;
 
@@ -1130,7 +1138,9 @@ mgmt_rx_reo_list_init(struct mgmt_rx_reo_list *reo_list)
 {
 	QDF_STATUS status;
 
-	reo_list->max_list_size = MGMT_RX_REO_MAX_LIST_SIZE;
+	reo_list->max_list_size = MGMT_RX_REO_LIST_MAX_SIZE;
+	reo_list->list_entry_timeout_us = MGMT_RX_REO_LIST_TIMEOUT_US;
+
 	qdf_list_create(&reo_list->list, reo_list->max_list_size);
 	qdf_spinlock_create(&reo_list->list_lock);
 

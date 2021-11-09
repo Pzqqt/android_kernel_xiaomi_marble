@@ -257,6 +257,11 @@ fail1:
 	return QDF_STATUS_E_NOMEM;
 }
 #else
+inline
+void dp_flush_monitor_rings(struct dp_soc *soc)
+{
+}
+
 static inline
 void dp_mon_rings_deinit_1_0(struct dp_pdev *pdev)
 {
@@ -690,15 +695,6 @@ QDF_STATUS dp_mon_htt_srng_setup_1_0(struct dp_soc *soc,
 	return status;
 }
 #endif
-#else
-static
-QDF_STATUS dp_mon_htt_srng_setup_1_0(struct dp_soc *soc,
-				     struct dp_pdev *pdev,
-				     int mac_id,
-				     int mac_for_pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 /* MCL specific functions */
@@ -1244,9 +1240,6 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type].mpdu_tried,
 		     mpdu_tried);
 
-	DP_STATS_INC_PKT(peer, tx.comp_pkt,
-			 num_msdu, (ppdu->success_bytes +
-				    ppdu->retry_bytes + ppdu->failed_bytes));
 	DP_STATS_UPD(peer, tx.tx_rate, ppdu->tx_rate);
 	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], num_msdu);
 	DP_STATS_INC(peer, tx.bw[ppdu->bw], num_msdu);
@@ -3210,13 +3203,6 @@ dp_rx_mon_process_1_0(struct dp_soc *soc, struct dp_intr *int_ctx,
 		return dp_rx_mon_process(soc, int_ctx, mac_id, quota);
 
 	return dp_rx_mon_status_process(soc, int_ctx, mac_id, quota);
-}
-#else
-static uint32_t
-dp_rx_mon_process_1_0(struct dp_soc *soc, struct dp_intr *int_ctx,
-	              uint32_t mac_id, uint32_t quota)
-{
-	return 0;
 }
 #endif
 

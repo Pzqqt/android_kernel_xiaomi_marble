@@ -330,6 +330,23 @@ int init_deinit_populate_twt_cap_ext2(struct wlan_objmgr_psoc *psoc,
 #endif
 
 /**
+ * init_deinit_populate_dbs_or_sbs_cap_ext2() - populate dbs or sbs capability
+ * from service ready ext2 event
+ *
+ * @psoc: PSOC object
+ * @handle: WMI handle pointer
+ * @event: event buffer received from FW
+ * @info: tgt_info object
+ *
+ * API to populate dbs or sbs capability from service ready ext2 event.
+ * Return: zero on successful dbs or sbs capability or failure
+ */
+int init_deinit_populate_dbs_or_sbs_cap_ext2(struct wlan_objmgr_psoc *psoc,
+					     wmi_unified_t handle,
+					     uint8_t *event,
+					     struct tgt_info *info);
+
+/**
  * init_deinit_validate_160_80p80_fw_caps() - validate 160 80p80 fw caps
  * @psoc: PSOC object
  * @tgt_info: target_psoc_info object

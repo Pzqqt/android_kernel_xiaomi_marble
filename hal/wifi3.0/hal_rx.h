@@ -216,6 +216,7 @@ enum hal_rx_msdu_desc_flags {
  *			[3] raw_ampdu
  * @peer_meta_data:	Upper bits containing peer id, vdev id
  * @bar_frame: indicates if received frame is a bar frame
+ * @tid: tid value of received MPDU
  */
 struct hal_rx_mpdu_desc_info {
 	uint16_t msdu_count;
@@ -223,6 +224,8 @@ struct hal_rx_mpdu_desc_info {
 	uint32_t mpdu_flags;
 	uint32_t peer_meta_data; /* sw progamed meta-data:MAC Id & peer Id */
 	uint16_t bar_frame;
+	uint8_t tid:4,
+		reserved:4;
 };
 
 /**
@@ -232,12 +235,14 @@ struct hal_rx_mpdu_desc_info {
  * @ HAL_MPDU_F_RETRY_BIT: Retry bit is set in FC of MPDU
  * @ HAL_MPDU_F_AMPDU_FLAG: MPDU received as part of A-MPDU
  * @ HAL_MPDU_F_RAW_AMPDU: MPDU is a Raw MDPU
+ * @ HAL_MPDU_F_QOS_CONTROL_VALID: MPDU has a QoS control field
  */
 enum hal_rx_mpdu_desc_flags {
 	HAL_MPDU_F_FRAGMENT = (0x1 << 20),
 	HAL_MPDU_F_RETRY_BIT = (0x1 << 21),
 	HAL_MPDU_F_AMPDU_FLAG = (0x1 << 22),
-	HAL_MPDU_F_RAW_AMPDU = (0x1 << 30)
+	HAL_MPDU_F_RAW_AMPDU = (0x1 << 30),
+	HAL_MPDU_F_QOS_CONTROL_VALID = (0x1 << 31)
 };
 
 /* Return Buffer manager ID */
@@ -2548,6 +2553,39 @@ hal_rx_tlv_get_pn_num(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	hal_soc->ops->hal_rx_tlv_get_pn_num(buf, pn_num);
+}
+
+static inline uint8_t *
+hal_get_reo_ent_desc_qdesc_addr(hal_soc_handle_t hal_soc_hdl, uint8_t *desc)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_get_reo_ent_desc_qdesc_addr)
+		return hal_soc->ops->hal_get_reo_ent_desc_qdesc_addr(desc);
+
+	return NULL;
+}
+
+static inline uint8_t *
+hal_rx_get_qdesc_addr(hal_soc_handle_t hal_soc_hdl, uint8_t *dst_ring_desc,
+		      uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_get_qdesc_addr)
+		return hal_soc->ops->hal_rx_get_qdesc_addr(dst_ring_desc, buf);
+
+	return NULL;
+}
+
+static inline void
+hal_set_reo_ent_desc_reo_dest_ind(hal_soc_handle_t hal_soc_hdl,
+				  uint8_t *desc, uint32_t dst_ind)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind)
+		hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind(desc, dst_ind);
 }
 
 static inline uint32_t

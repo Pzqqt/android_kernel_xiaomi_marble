@@ -2180,7 +2180,8 @@ target_if_spectral_copy_fft_bins(struct target_if_spectral *spectral,
 				 const void *src_fft_buf,
 				 void *dest_fft_buf,
 				 uint32_t fft_bin_count,
-				 uint32_t *bytes_copied)
+				 uint32_t *bytes_copied,
+				 uint16_t pwr_format)
 {
 	uint16_t idx, dword_idx, fft_bin_idx;
 	uint8_t num_bins_per_dword, hw_fft_bin_width_bits;
@@ -2223,19 +2224,9 @@ target_if_spectral_copy_fft_bins(struct target_if_spectral *spectral,
 					dword,
 					idx * hw_fft_bin_width_bits,
 					hw_fft_bin_width_bits);
-			/**
-			 * To check whether FFT bin values exceed 8 bits,
-			 * we add a check before copying values to fft_bin_buf.
-			 * If it crosses 8 bits, we cap the values to maximum
-			 * value supported by 8 bits ie. 255. This needs to be
-			 * done as the destination array in SAMP message is
-			 * 8 bits. This is a temporary solution till an array
-			 * of 16 bits is used for SAMP message.
-			 */
-			if (qdf_unlikely(fft_bin_val > MAX_FFTBIN_VALUE))
-				fft_bin_val = MAX_FFTBIN_VALUE;
 
-			fft_bin_buf[fft_bin_idx++] = fft_bin_val;
+			fft_bin_buf[fft_bin_idx++] =
+				clamp_fft_bin_value(fft_bin_val, pwr_format);
 		}
 	}
 
@@ -2518,7 +2509,8 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 
 		status = target_if_spectral_copy_fft_bins(
 				spectral, &p_fft_report->buf,
-				fft_bin_buf, fft_bin_count, &bytes_copied);
+				fft_bin_buf, fft_bin_count, &bytes_copied,
+				spectral->params[smode].ss_pwr_format);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			spectral_err_rl("Unable to populate FFT bins");
 			qdf_mem_free(fft_bin_buf);

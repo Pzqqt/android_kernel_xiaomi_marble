@@ -399,6 +399,12 @@ QDF_STATUS osif_cm_napi_serialize(bool action);
  */
 QDF_STATUS osif_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_cm_connect_resp *rsp);
+#else
+static inline QDF_STATUS osif_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
+					  struct wlan_cm_connect_resp *rsp)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 #ifdef WLAN_FEATURE_FILS_SK
@@ -416,6 +422,13 @@ QDF_STATUS osif_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS osif_cm_set_hlp_data(struct net_device *dev,
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_resp *rsp);
+#else
+static inline QDF_STATUS osif_cm_set_hlp_data(struct net_device *dev,
+					      struct wlan_objmgr_vdev *vdev,
+					      struct wlan_cm_connect_resp *rsp)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**

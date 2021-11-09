@@ -290,6 +290,57 @@ static void dump_freeze_tlv_v3(void *freeze_tlv, uint32_t cookie)
 }
 
 /**
+ * dump_freeze_tlv_v5() - Dump freeze TLV sent in enhanced DMA header
+ * @freeze_tlv: Freeze TLV sent from MAC to PHY
+ * @cookie: Index into lookup table
+ *
+ * Return: none
+ */
+static void dump_freeze_tlv_v5(void *freeze_tlv, uint32_t cookie)
+{
+	struct macrx_freeze_capture_channel_v5 *freeze =
+		(struct macrx_freeze_capture_channel_v5 *)freeze_tlv;
+
+	cfr_debug("<DBRCOMP><FREEZE><%u>\n"
+		  "freeze: %d capture_reason: %d packet_type: 0x%x\n"
+		  "packet_subtype: 0x%x sw_peer_id_valid: %d sw_peer_id: %d\n"
+		  "phy_ppdu_id: 0x%04x packet_ta_lower_16: 0x%04x\n"
+		  "packet_ta_mid_16: 0x%04x packet_ta_upper_16: 0x%04x\n"
+		  "packet_ra_lower_16: 0x%04x packet_ra_mid_16: 0x%04x\n"
+		  "packet_ra_upper_16: 0x%04x\n"
+		  "tsf_timestamp_15_0: 0x%04x\n"
+		  "tsf_timestamp_31_16: 0x%04x\n"
+		  "tsf_timestamp_47_32: 0x%04x\n"
+		  "tsf_timestamp_63_48: 0x%04x\n"
+		  "user_index_or_user_mask_5_0: 0x%04x\n"
+		  "directed: %d\n"
+		  "user_mask_21_6: 0x%04x\n"
+		  "user_mask_36_22: 0x%04x\n",
+		  cookie,
+		  freeze->freeze,
+		  freeze->capture_reason,
+		  freeze->packet_type,
+		  freeze->packet_sub_type,
+		  freeze->sw_peer_id_valid,
+		  freeze->sw_peer_id,
+		  freeze->phy_ppdu_id,
+		  freeze->packet_ta_lower_16,
+		  freeze->packet_ta_mid_16,
+		  freeze->packet_ta_upper_16,
+		  freeze->packet_ra_lower_16,
+		  freeze->packet_ra_mid_16,
+		  freeze->packet_ra_upper_16,
+		  freeze->tsf_timestamp_15_0,
+		  freeze->tsf_timestamp_31_16,
+		  freeze->tsf_timestamp_47_32,
+		  freeze->tsf_timestamp_63_48,
+		  freeze->user_index_or_user_mask_5_0,
+		  freeze->directed,
+		  freeze->user_mask_21_6,
+		  freeze->user_mask_36_22);
+}
+
+/**
  * dump_mu_rx_info() - Dump MU info in enhanced DMA header
  * @mu_rx_user_info: MU info sent by ucode
  * @mu_rx_num_users: Number of MU users in UL-MU-PPDU
@@ -329,6 +380,61 @@ static void dump_mu_rx_info(void *mu_rx_user_info,
 			  ul_mu_user_info->sta_coding,
 			  ul_mu_user_info->ru_start_index);
 		ul_mu_user_info += sizeof(struct uplink_user_setup_info);
+	}
+}
+
+/**
+ * dump_mu_rx_info_v2() - Dump MU info in enhanced DMA header
+ * @mu_rx_user_info: MU info sent by ucode
+ * @mu_rx_num_users: Number of MU users in UL-MU-PPDU
+ * @cookie: Index into lookup table
+ *
+ * Return: none
+ */
+static void dump_mu_rx_info_v2(void *mu_rx_user_info,
+			       uint8_t mu_rx_num_users,
+			       uint32_t cookie)
+{
+	uint8_t i;
+	struct uplink_user_setup_info_v2 *ul_mu_user_info =
+		(struct uplink_user_setup_info_v2 *)mu_rx_user_info;
+
+	for (i = 0 ; i < mu_rx_num_users; i++) {
+		cfr_debug("<DBRCOMP><MU><%u>\n"
+			  "<user_id:%d>\n"
+			  "bw_info_valid = %d\n"
+			  "uplink_receive_type = %d\n"
+			  "uplink_11ax_mcs = %d\n"
+			  "nss = %d\n"
+			  "stream_offset = %d\n"
+			  "sta_dcm = %d\n"
+			  "sta_coding = %d\n"
+			  "ru_type_80_0 = %d\n"
+			  "ru_type_80_1 = %d\n"
+			  "ru_type_80_2 = %d\n"
+			  "ru_type_80_3 = %d\n"
+			  "ru_start_index_80_0 = %d\n"
+			  "ru_start_index_80_1 = %d\n"
+			  "ru_start_index_80_2 = %d\n"
+			  "ru_start_index_80_3 = %d\n",
+			  cookie,
+			  i,
+			  ul_mu_user_info->bw_info_valid,
+			  ul_mu_user_info->uplink_receive_type,
+			  ul_mu_user_info->uplink_11ax_mcs,
+			  ul_mu_user_info->nss,
+			  ul_mu_user_info->stream_offset,
+			  ul_mu_user_info->sta_dcm,
+			  ul_mu_user_info->sta_coding,
+			  ul_mu_user_info->ru_type_80_0,
+			  ul_mu_user_info->ru_type_80_1,
+			  ul_mu_user_info->ru_type_80_2,
+			  ul_mu_user_info->ru_type_80_3,
+			  ul_mu_user_info->ru_start_index_80_0,
+			  ul_mu_user_info->ru_start_index_80_1,
+			  ul_mu_user_info->ru_start_index_80_2,
+			  ul_mu_user_info->ru_start_index_80_3);
+		ul_mu_user_info += sizeof(struct uplink_user_setup_info_v2);
 	}
 }
 
@@ -444,49 +550,98 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 			     uint32_t cookie)
 {
 	if (!error) {
-		cfr_debug("<DBRCOMP><%u>\n"
-			  "Tag: 0x%02x Length: %d udone: %d\n"
-			  "ctype: %d preamble: %d Nss: %d\n"
-			  "num_chains: %d bw: %d peervalid: %d\n"
-			  "peer_id: %d ppdu_id: 0x%04x total_bytes: %d\n"
-			  "header_version: %d target_id: %d cfr_fmt: %d\n"
-			  "mu_rx_data_incl: %d freeze_data_incl: %d\n"
-			  "mu_rx_num_users: %d decimation_factor: %d\n"
-			  "freeze_tlv_version: %d\n",
-			  cookie,
-			  dma_hdr->tag,
-			  dma_hdr->length,
-			  dma_hdr->upload_done,
-			  dma_hdr->capture_type,
-			  dma_hdr->preamble_type,
-			  dma_hdr->nss,
-			  dma_hdr->num_chains,
-			  dma_hdr->upload_pkt_bw,
-			  dma_hdr->sw_peer_id_valid,
-			  dma_hdr->sw_peer_id,
-			  dma_hdr->phy_ppdu_id,
-			  dma_hdr->total_bytes,
-			  dma_hdr->header_version,
-			  dma_hdr->target_id,
-			  dma_hdr->cfr_fmt,
-			  dma_hdr->mu_rx_data_incl,
-			  dma_hdr->freeze_data_incl,
-			  dma_hdr->mu_rx_num_users,
-			  dma_hdr->decimation_factor,
-			  dma_hdr->freeze_tlv_version);
+		if (dma_hdr->header_version == UPLOAD_HEADER_VERSION_9) {
+			cfr_debug("<DBRCOMP><%u>\n"
+				  "Tag: 0x%02x Length: %d udone: %d\n"
+				  "ctype: %d preamble: %d Nss: %d\n"
+				  "num_chains: %d bw: %d peervalid: %d\n"
+				  "peer_id: %d ppdu_id: 0x%04x\n"
+				  "total_bytes: %d header_version: %d\n"
+				  "target_id: %d cfr_fmt: %d\n"
+				  "mu_rx_data_incl: %d freeze_data_incl: %d\n"
+				  "mu_rx_num_users: %d decimation_factor: %d\n"
+				  "freeze_tlv_version: %d\n"
+				  "he_ltf_type: %u ext_preamble_type = %u\n",
+				  cookie,
+				  dma_hdr->tag,
+				  dma_hdr->length,
+				  dma_hdr->upload_done,
+				  dma_hdr->capture_type,
+				  dma_hdr->preamble_type,
+				  dma_hdr->nss,
+				  dma_hdr->num_chains,
+				  dma_hdr->upload_pkt_bw,
+				  dma_hdr->sw_peer_id_valid,
+				  dma_hdr->sw_peer_id,
+				  dma_hdr->phy_ppdu_id,
+				  dma_hdr->total_bytes,
+				  dma_hdr->header_version,
+				  dma_hdr->target_id,
+				  dma_hdr->cfr_fmt,
+				  dma_hdr->mu_rx_data_incl,
+				  dma_hdr->freeze_data_incl,
+				  dma_hdr->mu_rx_num_users,
+				  dma_hdr->decimation_factor,
+				  dma_hdr->freeze_tlv_version,
+				  dma_hdr->rsvd3,
+				  dma_hdr->rsvd4);
+
+		} else {
+			cfr_debug("<DBRCOMP><%u>\n"
+				  "Tag: 0x%02x Length: %d udone: %d\n"
+				  "ctype: %d preamble: %d Nss: %d\n"
+				  "num_chains: %d bw: %d peervalid: %d\n"
+				  "peer_id: %d ppdu_id: 0x%04x\n"
+				  "total_bytes: %d header_version: %d\n"
+				  "target_id: %d cfr_fmt: %d\n"
+				  "mu_rx_data_incl: %d freeze_data_incl: %d\n"
+				  "mu_rx_num_users: %d decimation_factor: %d\n"
+				  "freeze_tlv_version: %d\n",
+				  cookie,
+				  dma_hdr->tag,
+				  dma_hdr->length,
+				  dma_hdr->upload_done,
+				  dma_hdr->capture_type,
+				  dma_hdr->preamble_type,
+				  dma_hdr->nss,
+				  dma_hdr->num_chains,
+				  dma_hdr->upload_pkt_bw,
+				  dma_hdr->sw_peer_id_valid,
+				  dma_hdr->sw_peer_id,
+				  dma_hdr->phy_ppdu_id,
+				  dma_hdr->total_bytes,
+				  dma_hdr->header_version,
+				  dma_hdr->target_id,
+				  dma_hdr->cfr_fmt,
+				  dma_hdr->mu_rx_data_incl,
+				  dma_hdr->freeze_data_incl,
+				  dma_hdr->mu_rx_num_users,
+				  dma_hdr->decimation_factor,
+				  dma_hdr->freeze_tlv_version);
+		}
 
 		if (dma_hdr->freeze_data_incl) {
 			if (dma_hdr->freeze_tlv_version ==
 					MACRX_FREEZE_TLV_VERSION_3)
 				dump_freeze_tlv_v3(freeze_tlv, cookie);
+			else if (dma_hdr->freeze_tlv_version ==
+					MACRX_FREEZE_TLV_VERSION_5)
+				dump_freeze_tlv_v5(freeze_tlv, cookie);
 			else
 				dump_freeze_tlv(freeze_tlv, cookie);
 		}
 
-		if (dma_hdr->mu_rx_data_incl)
+		if ((dma_hdr->mu_rx_data_incl) &&
+		    (dma_hdr->freeze_tlv_version ==
+		     MACRX_FREEZE_TLV_VERSION_5)) {
+			dump_mu_rx_info_v2(mu_rx_user_info,
+					   dma_hdr->mu_rx_num_users,
+					   cookie);
+		} else if (dma_hdr->mu_rx_data_incl) {
 			dump_mu_rx_info(mu_rx_user_info,
 					dma_hdr->mu_rx_num_users,
 					cookie);
+		}
 	} else {
 		cfr_err("<DBRCOMP><%u>\n"
 			"Tag: 0x%02x Length: %d udone: %d\n"
@@ -568,6 +723,11 @@ static QDF_STATUS check_dma_length(struct look_up_table *lut,
 	} else if (target_type == TARGET_TYPE_QCA5018) {
 		if (lut->header_length <= MAPLE_MAX_HEADER_LENGTH_WORDS &&
 		    lut->payload_length <= MAPLE_MAX_DATA_LENGTH_BYTES) {
+			return QDF_STATUS_SUCCESS;
+		}
+	} else if (target_type == TARGET_TYPE_QCN9224) {
+		if (lut->header_length <= WAIKIKI_MAX_HEADER_LENGTH_WORDS &&
+		    lut->payload_length <= WAIKIKI_MAX_DATA_LENGTH_BYTES) {
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
@@ -1077,6 +1237,10 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 		if (dma_hdr.freeze_tlv_version == MACRX_FREEZE_TLV_VERSION_3) {
 			freeze_tlv_len =
 				sizeof(struct macrx_freeze_capture_channel_v3);
+		} else if (dma_hdr.freeze_tlv_version ==
+				MACRX_FREEZE_TLV_VERSION_5) {
+			freeze_tlv_len =
+				sizeof(struct macrx_freeze_capture_channel_v5);
 		} else {
 			freeze_tlv_len =
 				sizeof(struct macrx_freeze_capture_channel);
@@ -2040,6 +2204,11 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_SPRUCE;
 		pcfr->chip_type = CFR_CAPTURE_RADIO_SPRUCE;
 		pcfr->max_mu_users = SPRUCE_CFR_MU_USERS;
+	} else if (target_type == TARGET_TYPE_QCN9224) {
+		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_WAIKIKI;
+		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_WAIKIKI;
+		pcfr->chip_type = CFR_CAPTURE_RADIO_WAIKIKI;
+		pcfr->max_mu_users = WAIKIKI_CFR_MU_USERS;
 	} else {
 		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_CYP;
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_CYP;

@@ -122,6 +122,9 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 		pe->period = params->period;
 		pe->capture_method = params->method;
 		pe->request = PEER_CFR_CAPTURE_ENABLE;
+#ifdef WLAN_FEATURE_11BE
+		pe->puncture_bitmap = params->puncture_bitmap;
+#endif
 	} else
 		pa->cfr_current_sta_count--;
 

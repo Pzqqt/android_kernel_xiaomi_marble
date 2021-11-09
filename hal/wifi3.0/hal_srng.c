@@ -799,8 +799,8 @@ static void hal_reg_write_work(void *arg)
 
 static void __hal_flush_reg_write_work(struct hal_soc *hal)
 {
-	qdf_cancel_work(&hal->reg_write_work);
-
+	qdf_flush_work(&hal->reg_write_work);
+	qdf_disable_work(&hal->reg_write_work);
 }
 
 void hal_flush_reg_write_work(hal_soc_handle_t hal_handle)
@@ -1275,6 +1275,8 @@ void hal_reo_read_write_ctrl_ix(hal_soc_handle_t hal_soc_hdl, bool read,
 	}
 }
 
+qdf_export_symbol(hal_reo_read_write_ctrl_ix);
+
 /**
  * hal_srng_dst_set_hp_paddr_confirm() - Set physical address to dest ring head
  *  pointer and confirm that write went through by reading back the value
@@ -1288,6 +1290,8 @@ void hal_srng_dst_set_hp_paddr_confirm(struct hal_srng *srng, uint64_t paddr)
 	SRNG_DST_REG_WRITE_CONFIRM(srng, HP_ADDR_LSB, paddr & 0xffffffff);
 	SRNG_DST_REG_WRITE_CONFIRM(srng, HP_ADDR_MSB, paddr >> 32);
 }
+
+qdf_export_symbol(hal_srng_dst_set_hp_paddr_confirm);
 
 /**
  * hal_srng_dst_init_hp() - Initialize destination ring head
@@ -1320,6 +1324,8 @@ void hal_srng_dst_init_hp(struct hal_soc_handle *hal_soc,
 			  *srng->u.dst_ring.hp_addr);
 	}
 }
+
+qdf_export_symbol(hal_srng_dst_init_hp);
 
 /**
  * hal_srng_hw_init - Private function to initialize SRNG HW
@@ -1741,7 +1747,6 @@ void hal_set_low_threshold(hal_ring_handle_t hal_ring_hdl,
 	srng->u.src_ring.low_threshold = low_threshold * srng->entry_size;
 }
 qdf_export_symbol(hal_set_low_threshold);
-
 
 #ifdef FORCE_WAKE
 void hal_set_init_phase(hal_soc_handle_t soc, bool init_phase)
