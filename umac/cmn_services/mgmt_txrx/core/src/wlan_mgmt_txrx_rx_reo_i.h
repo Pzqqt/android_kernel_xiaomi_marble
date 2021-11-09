@@ -27,6 +27,8 @@
 #include <qdf_timer.h>
 #include <qdf_lock.h>
 #include <qdf_nbuf.h>
+#include <qdf_threads.h>
+#include <qdf_defer.h>
 #include <wlan_mgmt_txrx_rx_reo_utils_api.h>
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
 #include <wlan_objmgr_pdev_obj.h>
@@ -44,6 +46,8 @@
  */
 #define MGMT_RX_REO_MAX_LINKS (16)
 #define MGMT_RX_REO_INVALID_NUM_LINKS (-1)
+#define MGMT_RX_REO_INVALID_LINK_ID   (-1)
+
 /* Reason to release an entry from the reorder list */
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_ZERO_WAIT_COUNT           (BIT(0))
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_AGED_OUT                  (BIT(1))
@@ -194,19 +198,159 @@ struct mgmt_rx_reo_list_entry {
 	uint32_t status;
 };
 
+#ifdef WLAN_MGMT_RX_REO_SIM_SUPPORT
+
+#define MGMT_RX_REO_SIM_INTER_FRAME_DELAY_MIN             (300 * USEC_PER_MSEC)
+#define MGMT_RX_REO_SIM_INTER_FRAME_DELAY_MIN_MAX_DELTA   (200 * USEC_PER_MSEC)
+
+#define MGMT_RX_REO_SIM_DELAY_MAC_HW_TO_FW_MIN            (1000 * USEC_PER_MSEC)
+#define MGMT_RX_REO_SIM_DELAY_MAC_HW_TO_FW_MIN_MAX_DELTA  (500 * USEC_PER_MSEC)
+
+#define MGMT_RX_REO_SIM_DELAY_FW_TO_HOST_MIN              (1000 * USEC_PER_MSEC)
+#define MGMT_RX_REO_SIM_DELAY_FW_TO_HOST_MIN_MAX_DELTA    (500 * USEC_PER_MSEC)
+
+#define MGMT_RX_REO_SIM_PERCENTAGE_FW_CONSUMED_FRAMES  (10)
+#define MGMT_RX_REO_SIM_PERCENTAGE_ERROR_FRAMES        (10)
+
+#define MGMT_RX_REO_SIM_PENDING_FRAME_LIST_MAX_SIZE  (1000)
+
+/**
+ * struct mgmt_rx_frame_params - Parameters associated with a management frame.
+ * This structure is used by the simulation framework.
+ * @link_id: MLO HW link id
+ * @mgmt_pkt_ctr: Management packet counter
+ * @global_timestamp: Global time stamp in micro seconds
+ */
+struct mgmt_rx_frame_params {
+	uint8_t link_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+};
+
+/**
+ * struct mgmt_rx_reo_pending_frame_list - List which contains all the
+ * management frames received and not yet consumed by FW/Host. Order of frames
+ * in the list is same as the order in which they are received in the air.
+ * This is used by the simulation framework.
+ * @list: list data structure
+ * @lock: lock used to protect the list
+ */
+struct mgmt_rx_reo_pending_frame_list {
+	qdf_list_t list;
+	qdf_spinlock_t lock;
+};
+
+/**
+ * struct mgmt_rx_reo_pending_frame_list_entry - Structure used to represent an
+ * entry in the pending frame list.
+ * @params: parameters related to the management frame
+ * @node: linked list node
+ */
+struct mgmt_rx_reo_pending_frame_list_entry {
+	struct mgmt_rx_frame_params params;
+	qdf_list_node_t node;
+};
+
+/**
+ * struct mgmt_rx_frame_mac_hw - Structure used to represent the management
+ * frame at MAC HW level
+ * @params: parameters related to the management frame
+ * @frame_handler_fw: Work structure to queue the frame to the FW
+ * @sim_context: pointer management rx-reorder simulation context
+ */
+struct mgmt_rx_frame_mac_hw {
+	struct mgmt_rx_frame_params params;
+	qdf_work_t frame_handler_fw;
+	struct mgmt_rx_reo_sim_context *sim_context;
+};
+
+/**
+ * struct mgmt_rx_frame_fw - Structure used to represent the management
+ * frame at FW level
+ * @params: parameters related to the management frame
+ * @is_consumed_by_fw: indicates whether the frame is consumed by FW
+ * @frame_handler_host: Work structure to queue the frame to the host
+ * @sim_context: pointer management rx-reorder simulation context
+ */
+struct mgmt_rx_frame_fw {
+	struct mgmt_rx_frame_params params;
+	bool is_consumed_by_fw;
+	qdf_work_t frame_handler_host;
+	struct mgmt_rx_reo_sim_context *sim_context;
+};
+
+/**
+ * struct mgmt_rx_reo_sim_mac_hw - Structure used to represent the MAC HW
+ * @mgmt_pkt_ctr: Stores the last management packet counter for all the links
+ */
+struct mgmt_rx_reo_sim_mac_hw {
+	uint16_t mgmt_pkt_ctr[MGMT_RX_REO_MAX_LINKS];
+};
+
+/**
+ * struct mgmt_rx_reo_sim_link_id_to_pdev_map - Map from link id to pdev
+ * object. This is used for simulation purpose only.
+ * @map: link id to pdev map. Link id is the array index.
+ * @lock: lock used to protect this structure
+ * @num_mlo_links: Total number of MLO HW links. In case of simulation all the
+ * pdevs are assumed to have MLO capability and number of MLO links is same as
+ * the number of pdevs in the system.
+ */
+struct mgmt_rx_reo_sim_link_id_to_pdev_map {
+	struct wlan_objmgr_pdev *map[MGMT_RX_REO_MAX_LINKS];
+	qdf_spinlock_t lock;
+	uint8_t num_mlo_links;
+};
+
+/**
+ * struct mgmt_rx_reo_mac_hw_simulator - Structure which stores the members
+ * required for the MAC HW simulation
+ * @mac_hw_info: MAC HW info
+ * @mac_hw_thread: kthread which simulates MAC HW
+ */
+struct mgmt_rx_reo_mac_hw_simulator {
+	struct mgmt_rx_reo_sim_mac_hw mac_hw_info;
+	qdf_thread_t *mac_hw_thread;
+};
+
+/**
+ * struct mgmt_rx_reo_sim_context - Management rx-reorder simulation context
+ * @host_mgmt_frame_handler: Per link work queue to simulate the host layer
+ * @fw_mgmt_frame_handler: Per link work queue to simulate the FW layer
+ * @pending_frame_list: List used to store pending frames
+ * @mac_hw_sim:  MAC HW simulation object
+ * @snapshot: snapshots required for reo algorithm
+ * @link_id_to_pdev_map: link_id to pdev object map
+ */
+struct mgmt_rx_reo_sim_context {
+	struct workqueue_struct *host_mgmt_frame_handler[MGMT_RX_REO_MAX_LINKS];
+	struct workqueue_struct *fw_mgmt_frame_handler[MGMT_RX_REO_MAX_LINKS];
+	struct mgmt_rx_reo_pending_frame_list pending_frame_list;
+	struct mgmt_rx_reo_mac_hw_simulator mac_hw_sim;
+	struct mgmt_rx_reo_snapshot snapshot[MGMT_RX_REO_MAX_LINKS]
+					    [MGMT_RX_REO_SHARED_SNAPSHOT_MAX];
+	struct mgmt_rx_reo_sim_link_id_to_pdev_map link_id_to_pdev_map;
+};
+#endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
+
 /**
  * struct mgmt_rx_reo_context - This structure holds the info required for
  * management rx-reordering. Reordering is done across all the psocs.
  * So there should be only one instance of this structure defined.
  * @reo_list: Linked list used for reordering
- * @num_mlo_links: Number of MLO links on the system
  * @reo_algo_entry_lock: Spin lock to protect reo algorithm entry critical
  * section execution
+ * @num_mlo_links: Number of MLO links on the system
+ * @sim_context: Management rx-reorder simulation context
  */
 struct mgmt_rx_reo_context {
 	struct mgmt_rx_reo_list reo_list;
-	uint8_t num_mlo_links;
 	qdf_spinlock_t reo_algo_entry_lock;
+#ifndef WLAN_MGMT_RX_REO_SIM_SUPPORT
+	uint8_t num_mlo_links;
+#else
+	struct mgmt_rx_reo_sim_context sim_context;
+#endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
 };
 
 /**
@@ -308,6 +452,123 @@ mgmt_rx_reo_init_context(void);
  */
 QDF_STATUS
 mgmt_rx_reo_deinit_context(void);
+
+#ifdef WLAN_MGMT_RX_REO_SIM_SUPPORT
+/**
+ * mgmt_rx_reo_sim_start() - Helper API to start management Rx reorder
+ * simulation
+ *
+ * This API starts the simulation framework which mimics the management frame
+ * generation by target. MAC HW is modelled as a kthread. FW and host layers
+ * are modelled as an ordered work queues.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_start(void);
+
+/**
+ * mgmt_rx_reo_sim_stop() - Helper API to stop management Rx reorder
+ * simulation
+ *
+ * This API stops the simulation framework which mimics the management frame
+ * generation by target. MAC HW is modelled as a kthread. FW and host layers
+ * are modelled as an ordered work queues.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_stop(void);
+
+/**
+ * mgmt_rx_reo_sim_process_rx_frame() - API to process the management frame
+ * in case of simulation
+ * @pdev: pointer to pdev object
+ * @buf: pointer to management frame buffer
+ * @mgmt_rx_params: pointer to management frame parameters
+ *
+ * This API validates whether the reo algorithm has reordered frames correctly.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_process_rx_frame(struct wlan_objmgr_pdev *pdev,
+				 qdf_nbuf_t buf,
+				 struct mgmt_rx_event_params *mgmt_rx_params);
+
+/**
+ * mgmt_rx_reo_sim_get_snapshot_address() - Get snapshot address
+ * @pdev: pointer to pdev
+ * @id: snapshot identifier
+ * @address: pointer to snapshot address
+ *
+ * Helper API to get address of snapshot @id for pdev @pdev. For simulation
+ * purpose snapshots are allocated in the simulation context object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_get_snapshot_address(
+			struct wlan_objmgr_pdev *pdev,
+			enum mgmt_rx_reo_shared_snapshot_id id,
+			struct mgmt_rx_reo_snapshot **address);
+
+/**
+ * mgmt_rx_reo_sim_pdev_object_create_notification() - pdev create handler for
+ * management rx-reorder simulation framework
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being created and
+ * builds the link id to pdev map in simulation context object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_pdev_object_create_notification(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * mgmt_rx_reo_sim_pdev_object_destroy_notification() - pdev destroy handler for
+ * management rx-reorder simulation framework
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being destroyed
+ * and destroys the link id to pdev map in simulation context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_pdev_object_destroy_notification(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * mgmt_rx_reo_sim_get_mlo_link_id_from_pdev() - Helper API to get the MLO HW
+ * link id from the pdev object.
+ * @pdev: Pointer to pdev object
+ *
+ * This API is applicable for simulation only. A static map from MLO HW link id
+ * to the pdev object is created at the init time. This API uses the map to
+ * find the MLO HW link id for a given pdev.
+ *
+ * Return: On success returns the MLO HW link id corresponding to the pdev
+ * object. On failure returns -1.
+ */
+int8_t
+mgmt_rx_reo_sim_get_mlo_link_id_from_pdev(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * mgmt_rx_reo_sim_get_pdev_from_mlo_link_id() - Helper API to get the pdev
+ * object from the MLO HW link id.
+ * @mlo_link_id: MLO HW link id
+ *
+ * This API is applicable for simulation only. A static map from MLO HW link id
+ * to the pdev object is created at the init time. This API uses the map to
+ * find the pdev object from the MLO HW link id.
+ *
+ * Return: On success returns the pdev object corresponding to the MLO HW
+ * link id. On failure returns NULL.
+ */
+struct wlan_objmgr_pdev *
+mgmt_rx_reo_sim_get_pdev_from_mlo_link_id(uint8_t mlo_link_id);
+#endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
 
 /**
  * is_mgmt_rx_reo_required() - Whether MGMT REO required for this frame/event
