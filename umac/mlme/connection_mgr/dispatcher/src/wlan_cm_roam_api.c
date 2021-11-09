@@ -3148,6 +3148,10 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 				goto err;
 		}
 
+		if (stats_info->data_11kv[i].present)
+			cm_roam_stats_print_11kv_info(&stats_info->data_11kv[i],
+						      stats_info->vdev_id);
+
 		/*
 		 * Print BTM resp TLV info (wmi_roam_btm_response_info) only
 		 * when trigger reason is BTM or WTC_BTM. As for other roam
@@ -3177,10 +3181,6 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 			cm_roam_stats_print_roam_msg_info(
 						  &stats_info->roam_msg_info[i],
 						  stats_info->vdev_id);
-			if (stats_info->data_11kv[i].present)
-				cm_roam_stats_print_11kv_info(
-						      &stats_info->data_11kv[i],
-						      stats_info->vdev_id);
 		}
 
 		cm_report_roam_rt_stats(psoc, stats_info->vdev_id,
