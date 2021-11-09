@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -183,10 +184,12 @@ struct wlan_roam_trigger_info {
 
 /**
  * struct wlan_btm_cand_info  - BTM candidate information
+ * @index: Candidate index
  * @preference: Candidate preference
  * @bssid: candidate bssid
  */
 struct wlan_btm_cand_info {
+	uint8_t idx;
 	uint8_t preference;
 	struct qdf_mac_addr bssid;
 };
@@ -219,9 +222,9 @@ struct wlan_roam_btm_info {
 	uint8_t btm_status_code;
 	uint8_t btm_delay;
 	bool is_disassoc_imminent;
-	uint16_t token;
-	uint32_t validity_timer;
-	uint32_t disassoc_timer;
+	uint8_t token;
+	uint8_t validity_timer;
+	uint16_t disassoc_timer;
 	uint32_t wtc_duration;
 	struct qdf_mac_addr target_bssid;
 };
@@ -297,7 +300,7 @@ struct wlan_connect_info {
 #define WLAN_MAX_LOG_RECORDS 45
 #define WLAN_MAX_LOG_LEN     256
 #define WLAN_RECORDS_PER_SEC 20
-#define MAX_RECORD_IN_SINGLE_EVT 7
+#define MAX_RECORD_IN_SINGLE_EVT 5
 
 /**
  * struct wlan_log_record  - Structure for indvidual records in the ring
