@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1299,7 +1300,7 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 	int i;
 	bool found = false;
 	uint16_t j;
-	uint16_t freq_list[NUM_CHANNELS_160MHZ];
+	uint16_t freq_list[MAX_20MHZ_SUBCHANS];
 	uint8_t num_channels = 0;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN, "flags %d", flags);
