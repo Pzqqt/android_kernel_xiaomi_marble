@@ -11,6 +11,7 @@
 #include "dp_pll.h"
 
 #define DP_CLIENT_NAME_SIZE	20
+#define XO_CLK_KHZ	19200
 
 struct dp_power_private {
 	struct dp_parser *parser;
@@ -19,6 +20,7 @@ struct dp_power_private {
 	struct clk *pixel_clk_rcg;
 	struct clk *pixel_parent;
 	struct clk *pixel1_clk_rcg;
+	struct clk *xo_clk;
 
 	struct dp_power dp_power;
 
@@ -26,6 +28,8 @@ struct dp_power_private {
 	bool link_clks_on;
 	bool strm0_clks_on;
 	bool strm1_clks_on;
+	bool strm0_clks_parked;
+	bool strm1_clks_parked;
 };
 
 static int dp_power_regulator_init(struct dp_power_private *power)
@@ -220,6 +224,14 @@ static int dp_power_clk_init(struct dp_power_private *power, bool enable)
 			goto err_pixel_parent;
 		}
 
+		power->xo_clk = clk_get(dev, "rpmh_cxo_clk");
+		if (IS_ERR(power->xo_clk)) {
+			DP_ERR("Unable to get XO clk: %d\n", PTR_ERR(power->xo_clk));
+			rc = PTR_ERR(power->xo_clk);
+			power->xo_clk = NULL;
+			goto err_xo_clk;
+		}
+
 		if (power->parser->has_mst) {
 			power->pixel1_clk_rcg = clk_get(dev, "pixel1_clk_rcg");
 			if (IS_ERR(power->pixel1_clk_rcg)) {
@@ -244,8 +256,9 @@ static int dp_power_clk_init(struct dp_power_private *power, bool enable)
 	}
 
 	return rc;
-
 err_pixel1_clk_rcg:
+	clk_put(power->xo_clk);
+err_xo_clk:
 	clk_put(power->pixel_parent);
 err_pixel_parent:
 	clk_put(power->pixel_clk_rcg);
@@ -254,6 +267,59 @@ err_pixel_clk_rcg:
 exit:
 	return rc;
 }
+
+static int dp_power_park_module(struct dp_power_private *power, enum dp_pm_type module)
+{
+	struct dss_module_power *mp;
+	struct clk *clk = NULL;
+	int rc = 0;
+	bool *parked;
+
+	mp = &power->parser->mp[module];
+
+	if (module == DP_STREAM0_PM) {
+		clk = power->pixel_clk_rcg;
+		parked = &power->strm0_clks_parked;
+	} else if (module == DP_STREAM1_PM) {
+		clk = power->pixel1_clk_rcg;
+		parked = &power->strm1_clks_parked;
+	} else {
+		goto exit;
+	}
+
+	if (!clk) {
+		DP_WARN("clk type %d not supported\n", module);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	if (!power->xo_clk) {
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	if (*parked)
+		goto exit;
+
+	rc = clk_set_parent(clk, power->xo_clk);
+	if (rc) {
+		DP_ERR("unable to set xo parent on clk %d\n", module);
+		goto exit;
+	}
+
+	mp->clk_config->rate = XO_CLK_KHZ;
+	rc = msm_dss_clk_set_rate(mp->clk_config, mp->num_clk);
+	if (rc) {
+		DP_ERR("failed to set clk rate.\n");
+		goto exit;
+	}
+
+	*parked = true;
+
+exit:
+	return rc;
+}
+
 
 static int dp_power_clk_set_rate(struct dp_power_private *power,
 		enum dp_pm_type module, bool enable)
@@ -287,6 +353,8 @@ static int dp_power_clk_set_rate(struct dp_power_private *power,
 			DP_ERR("failed to disable clks\n");
 				goto exit;
 		}
+
+		dp_power_park_module(power, module);
 	}
 exit:
 	return rc;
@@ -366,6 +434,11 @@ static int dp_power_clk_enable(struct dp_power *dp_power,
 		power->strm1_clks_on = enable;
 	else if (pm_type == DP_LINK_PM)
 		power->link_clks_on = enable;
+
+	if (pm_type == DP_STREAM0_PM)
+		power->strm0_clks_parked = false;
+	if (pm_type == DP_STREAM1_PM)
+		power->strm1_clks_parked = false;
 
 	/*
 	 * This log is printed only when user connects or disconnects
@@ -581,6 +654,34 @@ static void dp_power_client_deinit(struct dp_power *dp_power)
 	dp_power_regulator_deinit(power);
 }
 
+static int dp_power_park_clocks(struct dp_power *dp_power)
+{
+	int rc = 0;
+	struct dp_power_private *power;
+
+	if (!dp_power) {
+		DP_ERR("invalid power data\n");
+		return -EINVAL;
+	}
+
+	power = container_of(dp_power, struct dp_power_private, dp_power);
+
+	rc = dp_power_park_module(power, DP_STREAM0_PM);
+	if (rc) {
+		DP_ERR("failed to park stream 0. err=%d\n", rc);
+		goto error;
+	}
+
+	rc = dp_power_park_module(power, DP_STREAM1_PM);
+	if (rc) {
+		DP_ERR("failed to park stream 1. err=%d\n", rc);
+		goto error;
+	}
+
+error:
+	return rc;
+}
+
 static int dp_power_set_pixel_clk_parent(struct dp_power *dp_power, u32 strm_id)
 {
 	int rc = 0;
@@ -764,6 +865,7 @@ struct dp_power *dp_power_get(struct dp_parser *parser, struct dp_pll *pll)
 	dp_power->clk_enable = dp_power_clk_enable;
 	dp_power->clk_status = dp_power_clk_status;
 	dp_power->set_pixel_clk_parent = dp_power_set_pixel_clk_parent;
+	dp_power->park_clocks = dp_power_park_clocks;
 	dp_power->clk_get_rate = dp_power_clk_get_rate;
 	dp_power->power_client_init = dp_power_client_init;
 	dp_power->power_client_deinit = dp_power_client_deinit;

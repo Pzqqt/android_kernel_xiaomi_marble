@@ -312,7 +312,7 @@ static u32 sde_rsc_timer_calculate(struct sde_rsc_priv *rsc,
 
 	default_prefill_lines = (rsc->cmd_config.fps *
 		DEFAULT_PANEL_MIN_V_PREFILL) / DEFAULT_PANEL_FPS;
-	if ((state == SDE_RSC_CMD_STATE) || !rsc->cmd_config.prefill_lines)
+	if (!rsc->cmd_config.prefill_lines)
 		rsc->cmd_config.prefill_lines = default_prefill_lines;
 
 	pr_debug("frame fps:%d jitter_numer:%d jitter_denom:%d vtotal:%d prefill lines:%d\n",
@@ -333,12 +333,7 @@ static u32 sde_rsc_timer_calculate(struct sde_rsc_priv *rsc,
 	line_time_ns = div_u64(line_time_ns, rsc->cmd_config.vtotal);
 	prefill_time_ns = line_time_ns * rsc->cmd_config.prefill_lines;
 
-	/* only take jitter into account for CMD mode */
-	if (state == SDE_RSC_CMD_STATE)
-		total = frame_time_ns - frame_jitter - prefill_time_ns;
-	else
-		total = frame_time_ns - prefill_time_ns;
-
+	total = frame_time_ns - frame_jitter - prefill_time_ns;
 	if (total < 0) {
 		pr_err("invalid total time period time:%llu jiter_time:%llu blanking time:%llu\n",
 			frame_time_ns, frame_jitter, prefill_time_ns);

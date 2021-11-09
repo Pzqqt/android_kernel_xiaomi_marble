@@ -843,6 +843,11 @@ void sde_core_perf_crtc_reserve_res(struct drm_crtc *crtc, u64 reserve_rate)
 	/* use current perf, which are the values voted */
 	sde_crtc = to_sde_crtc(crtc);
 	kms = _sde_crtc_get_kms(crtc);
+	if (!kms || !kms->dev) {
+		SDE_ERROR("invalid kms\n");
+		return;
+	}
+
 	priv = kms->dev->dev_private;
 
 	kms->perf.core_clk_reserve_rate = max(kms->perf.core_clk_reserve_rate, reserve_rate);

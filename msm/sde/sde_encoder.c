@@ -1559,20 +1559,9 @@ static int _sde_encoder_update_rsc_client(
 	    (rsc_config->prefill_lines != mode_info->prefill_lines) ||
 	    (rsc_config->jitter_numer != mode_info->jitter_numer) ||
 	    (rsc_config->jitter_denom != mode_info->jitter_denom)) {
-
 		rsc_config->fps = mode_info->frame_rate;
 		rsc_config->vtotal = mode_info->vtotal;
-		/*
-		 * for video mode, prefill lines should not go beyond vertical
-		 * front porch for RSCC configuration. This will ensure bw
-		 * downvotes are not sent within the active region. Additional
-		 * -1 is to give one line time for rscc mode min_threshold.
-		 */
-		if (is_vid_mode && (mode_info->prefill_lines >= v_front_porch))
-			rsc_config->prefill_lines = v_front_porch - 1;
-		else
-			rsc_config->prefill_lines = mode_info->prefill_lines;
-
+		rsc_config->prefill_lines = mode_info->prefill_lines;
 		rsc_config->jitter_numer = mode_info->jitter_numer;
 		rsc_config->jitter_denom = mode_info->jitter_denom;
 		sde_enc->rsc_state_init = false;

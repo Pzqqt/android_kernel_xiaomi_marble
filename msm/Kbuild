@@ -12,6 +12,11 @@ else
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_NEO), y)
+	include $(DISPLAY_ROOT)/config/gki_neodisp.conf
+	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_neodispconf.h
+endif
+
 LINUX_INC +=	-Iinclude/linux \
 		-Iinclude/linux/drm
 
