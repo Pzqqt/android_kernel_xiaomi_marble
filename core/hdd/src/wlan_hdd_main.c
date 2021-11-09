@@ -5443,6 +5443,54 @@ void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 }
 
 /**
+ * hdd_set_derived_multicast_list(): Add derived peer multicast address list in
+ *                                   multicast list request to the FW
+ * @psoc: Pointer to psoc
+ * @adapter: Pointer to hdd adapter
+ * @mc_list_request: Multicast list request to the FW
+ * @mc_count: number of multicast addresses received from the kernel
+ *
+ * Return: None
+ */
+static void
+hdd_set_derived_multicast_list(struct wlan_objmgr_psoc *psoc,
+			       struct hdd_adapter *adapter,
+			       struct pmo_mc_addr_list_params *mc_list_request,
+			       int *mc_count)
+{
+	int i = 0, j = 0, list_count = *mc_count;
+	struct qdf_mac_addr *peer_mc_addr_list = NULL;
+	uint8_t  driver_mc_cnt = 0;
+	uint32_t max_ndp_sessions = 0;
+
+	cfg_nan_get_ndp_max_sessions(psoc, &max_ndp_sessions);
+
+	ucfg_nan_get_peer_mc_list(adapter->vdev, &peer_mc_addr_list);
+
+	for (j = 0; j < max_ndp_sessions; j++) {
+		for (i = 0; i < list_count; i++) {
+			if (qdf_is_macaddr_zero(&peer_mc_addr_list[j]) ||
+			    qdf_is_macaddr_equal(&mc_list_request->mc_addr[i],
+						 &peer_mc_addr_list[j]))
+				break;
+		}
+		if (i == list_count) {
+			qdf_mem_copy(
+			   &(mc_list_request->mc_addr[list_count +
+						driver_mc_cnt].bytes),
+			   peer_mc_addr_list[j].bytes, ETH_ALEN);
+			hdd_debug("mlist[%d] = " QDF_MAC_ADDR_FMT,
+				  list_count + driver_mc_cnt,
+				  QDF_MAC_ADDR_REF(
+					mc_list_request->mc_addr[list_count +
+					driver_mc_cnt].bytes));
+			driver_mc_cnt++;
+		}
+	}
+	*mc_count += driver_mc_cnt;
+}
+
+/**
  * __hdd_set_multicast_list() - set the multicast address list
  * @dev:	Pointer to the WLAN device.
  * @skb:	Pointer to OS packet (sk_buff).
@@ -5517,6 +5565,11 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 				  QDF_MAC_ADDR_REF(mc_list_request->mc_addr[i].bytes));
 			i++;
 		}
+
+		if (adapter->device_mode == QDF_NDI_MODE)
+			hdd_set_derived_multicast_list(psoc, adapter,
+						       mc_list_request,
+						       &mc_count);
 	}
 
 	adapter->mc_addr_list.mc_cnt = mc_count;

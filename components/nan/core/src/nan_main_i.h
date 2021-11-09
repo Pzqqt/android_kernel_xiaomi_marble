@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -150,6 +151,8 @@ struct nan_psoc_priv_obj {
  * @disable_context: Disable all NDP's operation context
  * @ndp_init_done: Flag to indicate NDP initialization complete after first peer
  *		   connection.
+ * @peer_mc_addr_list: Peer multicast address list
+ * @num_peer_mc_addr: Number of entries in peer multicast list
  */
 struct nan_vdev_priv_obj {
 	qdf_spinlock_t lock;
@@ -162,6 +165,8 @@ struct nan_vdev_priv_obj {
 	struct qdf_mac_addr primary_peer_mac;
 	void *disable_context;
 	bool ndp_init_done;
+	struct qdf_mac_addr *peer_mc_addr_list;
+	uint8_t num_peer_mc_addr;
 };
 
 /**
