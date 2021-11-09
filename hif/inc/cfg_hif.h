@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,7 +23,11 @@
 /* Min/Max/default CE status srng timer threshold */
 #define WLAN_CFG_CE_STATUS_RING_TIMER_THRESH_MIN 0
 #define WLAN_CFG_CE_STATUS_RING_TIMER_THRESH_MAX 4096
+#ifdef WLAN_WAR_CE_DISABLE_SRNG_TIMER_IRQ
+#define WLAN_CFG_CE_STATUS_RING_TIMER_THRESH_DEFAULT 0
+#else
 #define WLAN_CFG_CE_STATUS_RING_TIMER_THRESH_DEFAULT 4096
+#endif
 
 /* Min/Max/default CE status srng batch count threshold */
 #define WLAN_CFG_CE_STATUS_RING_BATCH_COUNT_THRESH_MIN 0

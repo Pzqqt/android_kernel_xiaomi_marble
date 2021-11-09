@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -771,6 +772,40 @@ static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			&ring_params);
 }
 
+#ifdef WLAN_WAR_CE_DISABLE_SRNG_TIMER_IRQ
+static void
+ce_srng_initialize_dest_ring_thresh(struct CE_ring_state *dest_ring,
+				    struct hal_srng_params *ring_params)
+{
+	ring_params->low_threshold = dest_ring->nentries >> 3;
+	ring_params->intr_timer_thres_us = 0;
+	ring_params->intr_batch_cntr_thres_entries = 1;
+	ring_params->flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
+}
+#else
+static void
+ce_srng_initialize_dest_ring_thresh(struct CE_ring_state *dest_ring,
+				    struct hal_srng_params *ring_params)
+{
+	ring_params->low_threshold = dest_ring->nentries >> 3;
+	ring_params->intr_timer_thres_us = 100000;
+	ring_params->intr_batch_cntr_thres_entries = 0;
+	ring_params->flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
+}
+#endif
+
+#ifdef WLAN_DISABLE_STATUS_RING_TIMER_WAR
+static inline bool ce_is_status_ring_timer_thresh_war_needed(void)
+{
+	return false;
+}
+#else
+static inline bool ce_is_status_ring_timer_thresh_war_needed(void)
+{
+	return true;
+}
+#endif
+
 /**
  * ce_srng_initialize_dest_timer_interrupt_war() - war initialization
  * @dest_ring: ring being initialized
@@ -807,7 +842,6 @@ static void ce_srng_dest_ring_setup(struct hif_softc *scn,
 				    struct CE_attr *attr)
 {
 	struct hal_srng_params ring_params = {0};
-	bool status_ring_timer_thresh_work_arround = true;
 
 	hif_debug("ce_id: %d", ce_id);
 
@@ -818,15 +852,13 @@ static void ce_srng_dest_ring_setup(struct hif_softc *scn,
 
 	if (!(CE_ATTR_DISABLE_INTR & attr->flags)) {
 		ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
-		if (status_ring_timer_thresh_work_arround) {
+		if (ce_is_status_ring_timer_thresh_war_needed()) {
 			ce_srng_initialize_dest_timer_interrupt_war(
 					dest_ring, &ring_params);
 		} else {
 			/* normal behavior for future chips */
-			ring_params.low_threshold = dest_ring->nentries >> 3;
-			ring_params.intr_timer_thres_us = 100000;
-			ring_params.intr_batch_cntr_thres_entries = 0;
-			ring_params.flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
+			ce_srng_initialize_dest_ring_thresh(dest_ring,
+							    &ring_params);
 		}
 		ring_params.prefetch_timer = HAL_SRNG_PREFETCH_TIMER;
 	}
