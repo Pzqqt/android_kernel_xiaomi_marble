@@ -1970,6 +1970,43 @@ QDF_STATUS
 wmi_unified_pdev_fips_cmd_send(wmi_unified_t wmi_handle,
 			       struct fips_params *param);
 
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+/**
+ *  wmi_unified_pdev_fips_extend_cmd_send() - WMI pdev fips extend cmd function
+ *  @wmi_handle: handle to WMI.
+ *  @param: pointer to hold pdev fips extend param
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_pdev_fips_extend_cmd_send(wmi_unified_t wmi_handle,
+				      struct fips_extend_params *param);
+
+/**
+ *  wmi_unified_pdev_fips_mode_set_cmd() - WMI pdev fips mode enable cmd
+ *  @wmi_handle: handle to WMI.
+ *  @param: pointer to hold pdev fips mode param
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_pdev_fips_mode_set_cmd(wmi_unified_t wmi_handle,
+				   struct fips_mode_set_params *param);
+
+/**
+ * wmi_extract_fips_extend_event_data() - extract fips extend event data
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: pointer to FIPS extend event param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_fips_extend_event_data(wmi_unified_t wmi_handle, void *evt_buf,
+				   struct wmi_host_fips_extend_event_param
+				   *param);
+#endif
+
 #ifdef WLAN_FEATURE_DISA
 /**
  * wmi_unified_encrypt_decrypt_send_cmd() - send encryptdecrypt cmd to fw

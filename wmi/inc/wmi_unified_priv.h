@@ -1252,6 +1252,14 @@ QDF_STATUS (*send_set_bwf_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_pdev_fips_cmd)(wmi_unified_t wmi_handle,
 		struct fips_params *param);
 
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+QDF_STATUS (*send_pdev_fips_extend_cmd)(wmi_unified_t wmi_handle,
+					struct fips_extend_params *param);
+
+QDF_STATUS (*send_pdev_fips_mode_set_cmd)(wmi_unified_t wmi_handle,
+					  struct fips_mode_set_params *param);
+#endif
+
 QDF_STATUS (*send_wlan_profile_enable_cmd)(wmi_unified_t wmi_handle,
 		struct wlan_profile_params *param);
 
@@ -1762,6 +1770,14 @@ QDF_STATUS (*extract_dcs_awgn_info)(
 
 QDF_STATUS (*extract_fips_event_data)(wmi_unified_t wmi_handle,
 	void *evt_buf, struct wmi_host_fips_event_param *param);
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+QDF_STATUS
+(*extract_fips_extend_ev_data)(wmi_unified_t wmi_handle,
+			       void *evt_buf,
+			       struct wmi_host_fips_extend_event_param
+			       *param);
+#endif
 
 #ifdef WLAN_FEATURE_DISA
 QDF_STATUS

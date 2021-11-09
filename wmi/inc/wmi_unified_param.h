@@ -3270,6 +3270,64 @@ struct fips_params {
 	uint32_t pdev_id;
 };
 
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+#define MAX_KEY_LEN_FIPS_EXTEND 64
+#define MAX_NONCEIV_LEN_FIPS_EXTEND 16
+/**
+ * struct fips_extend_cmd_params - FIPS extend params config for first frag
+ * @fips_cmd:  1 - Encrypt, 2 - Decrypt
+ * key_cipher: 0 - CCM, 1 - GCM
+ * @key_len: length of key
+ * @key: key_data
+ * @nonce_iv_len: length of nonce or iv
+ * @nonce_iv: nonce_iv
+ * @tag_len: length of tag/mic
+ * @aad_len: length of aad
+ * @payload_len: length of payload
+ */
+struct fips_extend_cmd_params {
+	u_int32_t fips_cmd;
+	u_int32_t key_cipher;
+	u_int32_t key_len;
+	u_int8_t  key[MAX_KEY_LEN_FIPS_EXTEND];
+	u_int32_t nonce_iv_len;
+	u_int8_t  nonce_iv[MAX_NONCEIV_LEN_FIPS_EXTEND];
+	u_int32_t tag_len;
+	u_int32_t aad_len;
+	u_int32_t payload_len;
+};
+
+/**
+ * struct fips_extend_params - FIPS extend params config
+ * @pdev_id: pdev_id for identifying the MAC
+ * @cookie: cookie value
+ * @frag_idx: fragment index
+ * @more_bit: more bit
+ * @data_len: length of data buf
+ * @cmd_params: cmd_params set for first fragment
+ * @data: pointer data buf
+ */
+struct fips_extend_params {
+	uint32_t pdev_id;
+	u_int32_t cookie;
+	u_int32_t frag_idx;
+	u_int32_t more_bit;
+	u_int32_t data_len;
+	struct fips_extend_cmd_params cmd_params;
+	u_int32_t *data;
+};
+
+/**
+ * struct fips_mode_set_params - FIPS mode enable param
+ * @pdev_id: pdev_id for identifying the MAC
+ * @mode: value to disable or enable fips extend mode
+ */
+struct fips_mode_set_params {
+	uint32_t pdev_id;
+	uint32_t mode;
+};
+#endif
+
 #ifdef WLAN_FEATURE_DISA_FIPS
 /**
  * struct disa_encrypt_decrypt_req_params - disa encrypt request
@@ -4660,6 +4718,7 @@ typedef enum {
 	wmi_mlo_teardown_complete_event_id,
 	wmi_mlo_link_set_active_resp_eventid,
 #endif
+	wmi_pdev_fips_extend_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -6930,6 +6989,28 @@ struct wmi_host_fips_event_param {
 	uint32_t data_len;
 	uint32_t *data;
 };
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+/*
+ * struct wmi_host_fips_extend_event_param: FIPS extend event param
+ * @pdev_id: pdev id
+ * @fips_cookie: fips_cookie
+ * @cmd_frag_idx: cmd_frag_idx
+ * @more_bit: more_bit
+ * @error_status: Error status: 0 (no err), 1, or OPER_TIMEOUR
+ * @data_len: FIPS data length
+ * @data: pointer to data
+ */
+struct wmi_host_fips_extend_event_param {
+	uint32_t pdev_id;
+	uint32_t fips_cookie;
+	uint32_t cmd_frag_idx;
+	uint32_t more_bit;
+	uint32_t error_status;
+	uint32_t data_len;
+	uint32_t *data;
+};
+#endif
 
 #ifdef WLAN_FEATURE_DISA_FIPS
 /**
