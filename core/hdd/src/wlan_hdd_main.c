@@ -10066,6 +10066,165 @@ static inline void hdd_low_tput_gro_flush_skip_handler(
 }
 
 /**
+ * hdd_bus_bandwidth_work_tune_rx() - Function to tune for RX
+ * @hdd_ctx - handle to hdd context
+ * @rx_packets - receive packet count in last bus bandwidth interval
+ * @next_rx_level - pointer to next_rx_level to be filled
+ * @is_rx_pm_qos_high - pointer indicating if high qos is needed, to be filled
+ *
+ * The function tunes various aspects of the driver based on a running average
+ * of RX packets received in last bus bandwidth interval.
+ *
+ * Returns: true if RX level has changed, else returns false
+ */
+static
+bool hdd_bus_bandwidth_work_tune_rx(struct hdd_context *hdd_ctx,
+				    const uint64_t rx_packets,
+				    enum wlan_tp_level *next_rx_level,
+				    bool *is_rx_pm_qos_high)
+{
+	bool rx_level_change = false;
+	bool rxthread_high_tput_req;
+	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
+	uint64_t avg_rx;
+	uint64_t no_rx_offload_pkts, avg_no_rx_offload_pkts;
+	uint64_t rx_offload_pkts, avg_rx_offload_pkts;
+
+	/*
+	 * Includes tcp+udp, if perf core is required for tcp, then
+	 * perf core is also required for udp.
+	 */
+	no_rx_offload_pkts = hdd_ctx->no_rx_offload_pkt_cnt;
+	hdd_ctx->no_rx_offload_pkt_cnt = 0;
+	rx_offload_pkts = rx_packets - no_rx_offload_pkts;
+
+	avg_no_rx_offload_pkts = (no_rx_offload_pkts +
+				  hdd_ctx->prev_no_rx_offload_pkts) / 2;
+	hdd_ctx->prev_no_rx_offload_pkts = no_rx_offload_pkts;
+
+	avg_rx_offload_pkts = (rx_offload_pkts +
+			       hdd_ctx->prev_rx_offload_pkts) / 2;
+	hdd_ctx->prev_rx_offload_pkts = rx_offload_pkts;
+
+	avg_rx = avg_no_rx_offload_pkts + avg_rx_offload_pkts;
+	/*
+	 * Takes care to set Rx_thread affinity for below case
+	 * 1)LRO/GRO not supported ROME case
+	 * 2)when rx_ol is disabled in cases like concurrency etc
+	 * 3)For UDP cases
+	 */
+	if (avg_no_rx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold) {
+		rxthread_high_tput_req = true;
+		*is_rx_pm_qos_high = true;
+	} else {
+		rxthread_high_tput_req = false;
+		*is_rx_pm_qos_high = false;
+	}
+
+	if (cds_sched_handle_throughput_req(rxthread_high_tput_req))
+		hdd_warn("Rx thread high_tput(%d) affinity request failed",
+			 rxthread_high_tput_req);
+
+	/* fine-tuning parameters for RX Flows */
+	if (avg_rx > hdd_ctx->config->tcp_delack_thres_high) {
+		if (hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH &&
+		    ++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt) {
+			*next_rx_level = WLAN_SVC_TP_HIGH;
+		}
+	} else {
+		hdd_ctx->rx_high_ind_cnt = 0;
+		*next_rx_level = WLAN_SVC_TP_LOW;
+	}
+
+	if (hdd_ctx->cur_rx_level != *next_rx_level) {
+		struct wlan_rx_tp_data rx_tp_data = {0};
+
+		hdd_ctx->cur_rx_level = *next_rx_level;
+		rx_level_change = true;
+		/* Send throughput indication only if it is enabled.
+		 * Disabling tcp_del_ack will revert the tcp stack behavior
+		 * to default delayed ack. Note that this will disable the
+		 * dynamic delayed ack mechanism across the system
+		 */
+		if (hdd_ctx->en_tcp_delack_no_lro)
+			rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
+
+		if (hdd_ctx->config->enable_tcp_adv_win_scale)
+			rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
+
+		rx_tp_data.level = *next_rx_level;
+		wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
+	}
+
+	return rx_level_change;
+}
+
+/**
+ * hdd_bus_bandwidth_work_tune_tx() - Function to tune for TX
+ * @hdd_ctx - handle to hdd context
+ * @tx_packets - transmit packet count in last bus bandwidth interval
+ * @next_tx_level - pointer to next_tx_level to be filled
+ * @is_tx_pm_qos_high - pointer indicating if high qos is needed, to be filled
+ *
+ * The function tunes various aspects of the driver based on a running average
+ * of TX packets received in last bus bandwidth interval.
+ *
+ * Returns: true if TX level has changed, else returns false
+ */
+static
+bool hdd_bus_bandwidth_work_tune_tx(struct hdd_context *hdd_ctx,
+				    const uint64_t tx_packets,
+				    enum wlan_tp_level *next_tx_level,
+				    bool *is_tx_pm_qos_high)
+{
+	bool tx_level_change = false;
+	uint64_t no_tx_offload_pkts, avg_no_tx_offload_pkts;
+	uint64_t tx_offload_pkts, avg_tx_offload_pkts;
+	uint64_t avg_tx;
+
+	no_tx_offload_pkts = hdd_ctx->no_tx_offload_pkt_cnt;
+	hdd_ctx->no_tx_offload_pkt_cnt = 0;
+	tx_offload_pkts = tx_packets - no_tx_offload_pkts;
+
+	avg_no_tx_offload_pkts = (no_tx_offload_pkts +
+				  hdd_ctx->prev_no_tx_offload_pkts) / 2;
+	hdd_ctx->prev_no_tx_offload_pkts = no_tx_offload_pkts;
+
+	avg_tx_offload_pkts = (tx_offload_pkts +
+			       hdd_ctx->prev_tx_offload_pkts) / 2;
+	hdd_ctx->prev_tx_offload_pkts = tx_offload_pkts;
+
+	avg_tx = avg_no_tx_offload_pkts + avg_tx_offload_pkts;
+
+	/* fine-tuning parameters for TX Flows */
+	hdd_ctx->prev_tx = tx_packets;
+
+	if (avg_no_tx_offload_pkts >
+		hdd_ctx->config->bus_bw_high_threshold)
+		*is_tx_pm_qos_high = true;
+	else
+		*is_tx_pm_qos_high = false;
+
+	if (avg_tx > hdd_ctx->config->tcp_tx_high_tput_thres)
+		*next_tx_level = WLAN_SVC_TP_HIGH;
+	else
+		*next_tx_level = WLAN_SVC_TP_LOW;
+
+	if (hdd_ctx->config->enable_tcp_limit_output &&
+	    hdd_ctx->cur_tx_level != *next_tx_level) {
+		struct wlan_tx_tp_data tx_tp_data = {0};
+
+		hdd_ctx->cur_tx_level = *next_tx_level;
+		tx_level_change = true;
+		tx_tp_data.level = *next_tx_level;
+		tx_tp_data.tcp_limit_output = true;
+		wlan_hdd_update_tcp_tx_param(hdd_ctx, &tx_tp_data);
+	}
+
+	return tx_level_change;
+}
+
+/**
  * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth
  * @hdd_ctx - handle to hdd context
  * @tx_packets - transmit packet count
@@ -10076,36 +10235,31 @@ static inline void hdd_low_tput_gro_flush_skip_handler(
  *
  * Returns: None
  */
-
 static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 					  const uint64_t tx_packets,
 					  const uint64_t rx_packets)
 {
-	uint16_t index = 0;
+	uint16_t index;
 	bool vote_level_change = false;
-	bool rx_level_change = false;
-	bool tx_level_change = false;
-	bool rxthread_high_tput_req = false;
+	bool rx_level_change;
+	bool tx_level_change;
 	bool dptrace_high_tput_req;
 	u64 total_pkts = tx_packets + rx_packets;
-	uint64_t avg_tx = 0, avg_rx = 0;
-	uint64_t no_rx_offload_pkts = 0, avg_no_rx_offload_pkts = 0;
-	uint64_t rx_offload_pkts = 0, avg_rx_offload_pkts = 0;
-	uint64_t no_tx_offload_pkts = 0, avg_no_tx_offload_pkts = 0;
-	uint64_t tx_offload_pkts = 0, avg_tx_offload_pkts = 0;
 	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_IDLE;
 	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
-	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
 	cpumask_t pm_qos_cpu_mask;
-	bool is_rx_pm_qos_high = false;
-	bool is_tx_pm_qos_high = false;
+	bool is_rx_pm_qos_high;
+	bool is_tx_pm_qos_high;
 	enum tput_level tput_level;
 	struct bbm_params param = {0};
 	bool legacy_client = false;
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	static enum tput_level prev_tput_level = TPUT_LEVEL_NONE;
+
+	if (!soc)
+		return;
 
 	cpumask_clear(&pm_qos_cpu_mask);
 
@@ -10234,113 +10388,18 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	qdf_dp_trace_apply_tput_policy(dptrace_high_tput_req);
 
-	/*
-	 * Includes tcp+udp, if perf core is required for tcp, then
-	 * perf core is also required for udp.
-	 */
-	no_rx_offload_pkts = hdd_ctx->no_rx_offload_pkt_cnt;
-	hdd_ctx->no_rx_offload_pkt_cnt = 0;
-	rx_offload_pkts = rx_packets - no_rx_offload_pkts;
+	rx_level_change = hdd_bus_bandwidth_work_tune_rx(hdd_ctx,
+							 rx_packets,
+							 &next_rx_level,
+							 &is_rx_pm_qos_high);
 
-	avg_no_rx_offload_pkts = (no_rx_offload_pkts +
-				  hdd_ctx->prev_no_rx_offload_pkts) / 2;
-	hdd_ctx->prev_no_rx_offload_pkts = no_rx_offload_pkts;
+	tx_level_change = hdd_bus_bandwidth_work_tune_tx(hdd_ctx,
+							 tx_packets,
+							 &next_tx_level,
+							 &is_tx_pm_qos_high);
 
-	avg_rx_offload_pkts = (rx_offload_pkts +
-			       hdd_ctx->prev_rx_offload_pkts) / 2;
-	hdd_ctx->prev_rx_offload_pkts = rx_offload_pkts;
-
-	avg_rx = avg_no_rx_offload_pkts + avg_rx_offload_pkts;
-	/*
-	 * Takes care to set Rx_thread affinity for below case
-	 * 1)LRO/GRO not supported ROME case
-	 * 2)when rx_ol is disabled in cases like concurrency etc
-	 * 3)For UDP cases
-	 */
-	if (avg_no_rx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold) {
-		rxthread_high_tput_req = true;
-		is_rx_pm_qos_high = true;
-	} else {
-		rxthread_high_tput_req = false;
-		is_rx_pm_qos_high = false;
-	}
-
-	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, is_rx_pm_qos_high);
-
-	if (cds_sched_handle_throughput_req(rxthread_high_tput_req))
-		hdd_warn("Rx thread high_tput(%d) affinity request failed",
-			 rxthread_high_tput_req);
-
-	/* fine-tuning parameters for RX Flows */
-	if (avg_rx > hdd_ctx->config->tcp_delack_thres_high) {
-		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
-		   (++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
-			next_rx_level = WLAN_SVC_TP_HIGH;
-		}
-	} else {
-		hdd_ctx->rx_high_ind_cnt = 0;
-		next_rx_level = WLAN_SVC_TP_LOW;
-	}
-
-	if (hdd_ctx->cur_rx_level != next_rx_level) {
-		struct wlan_rx_tp_data rx_tp_data = {0};
-
-		hdd_ctx->cur_rx_level = next_rx_level;
-		rx_level_change = true;
-		/* Send throughput indication only if it is enabled.
-		 * Disabling tcp_del_ack will revert the tcp stack behavior
-		 * to default delayed ack. Note that this will disable the
-		 * dynamic delayed ack mechanism across the system
-		 */
-		if (hdd_ctx->en_tcp_delack_no_lro) {
-			rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
-		}
-
-		if (hdd_ctx->config->enable_tcp_adv_win_scale)
-			rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
-
-		rx_tp_data.level = next_rx_level;
-		wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
-	}
-
-	no_tx_offload_pkts = hdd_ctx->no_tx_offload_pkt_cnt;
-	hdd_ctx->no_tx_offload_pkt_cnt = 0;
-	tx_offload_pkts = tx_packets - no_tx_offload_pkts;
-
-	avg_no_tx_offload_pkts = (no_tx_offload_pkts +
-				  hdd_ctx->prev_no_tx_offload_pkts) / 2;
-	hdd_ctx->prev_no_tx_offload_pkts = no_tx_offload_pkts;
-
-	avg_tx_offload_pkts = (tx_offload_pkts +
-			       hdd_ctx->prev_tx_offload_pkts) / 2;
-	hdd_ctx->prev_tx_offload_pkts = tx_offload_pkts;
-
-	avg_tx = avg_no_tx_offload_pkts + avg_tx_offload_pkts;
-
-	/* fine-tuning parameters for TX Flows */
-	hdd_ctx->prev_tx = tx_packets;
-
-	if (avg_no_tx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold)
-		is_tx_pm_qos_high = true;
-	else
-		is_tx_pm_qos_high = false;
-
-	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, is_tx_pm_qos_high);
-
-	if (avg_tx > hdd_ctx->config->tcp_tx_high_tput_thres)
-		next_tx_level = WLAN_SVC_TP_HIGH;
-	else
-		next_tx_level = WLAN_SVC_TP_LOW;
-
-	if ((hdd_ctx->config->enable_tcp_limit_output) &&
-	    (hdd_ctx->cur_tx_level != next_tx_level)) {
-		struct wlan_tx_tp_data tx_tp_data = {0};
-		hdd_ctx->cur_tx_level = next_tx_level;
-		tx_level_change = true;
-		tx_tp_data.level = next_tx_level;
-		tx_tp_data.tcp_limit_output = true;
-		wlan_hdd_update_tcp_tx_param(hdd_ctx, &tx_tp_data);
-	}
+	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask,
+				   is_tx_pm_qos_high | is_rx_pm_qos_high);
 
 	index = hdd_ctx->hdd_txrx_hist_idx;
 	if (vote_level_change || tx_level_change || rx_level_change) {
@@ -10364,9 +10423,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		hdd_ctx->hdd_txrx_hist_idx++;
 		hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
 
-		/* Clear all the mask if no silver/gold vote is required */
-		if (next_vote_level < PLD_BUS_WIDTH_MEDIUM)
-			cpumask_clear(&pm_qos_cpu_mask);
 
 		if (!hdd_ctx->pm_qos_request)
 			hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
