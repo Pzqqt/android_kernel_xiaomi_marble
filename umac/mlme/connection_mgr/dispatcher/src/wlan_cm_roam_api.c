@@ -2646,16 +2646,17 @@ cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
 		break;
 	case ROAM_TRIGGER_REASON_BTM:
 		cm_roam_btm_req_event(&ptr->btm_trig_data, vdev_id);
-		buf_cons = qdf_snprint(temp, buf_left,
-				       "Req_mode: %d Disassoc_timer: %d",
-				       ptr->btm_trig_data.btm_request_mode,
-				       ptr->btm_trig_data.disassoc_timer);
+		buf_cons = qdf_snprint(
+				temp, buf_left,
+				"Req_mode: %d Disassoc_timer: %d",
+				ptr->btm_trig_data.btm_request_mode,
+				ptr->btm_trig_data.disassoc_timer / 1000);
 		temp += buf_cons;
 		buf_left -= buf_cons;
 
 		buf_cons = qdf_snprint(temp, buf_left,
 				"validity_interval: %d candidate_list_cnt: %d resp_status: %d, bss_termination_timeout: %d, mbo_assoc_retry_timeout: %d",
-				ptr->btm_trig_data.validity_interval,
+				ptr->btm_trig_data.validity_interval / 1000,
 				ptr->btm_trig_data.candidate_list_count,
 				ptr->btm_trig_data.btm_resp_status,
 				ptr->btm_trig_data.btm_bss_termination_timeout,
@@ -3188,14 +3189,25 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (!stats_info->num_tlv) {
+		/*
+		 * wmi_roam_trigger_reason TLV is sent only for userspace
+		 * logging of BTM/WTC frame without roam scans.
+		 */
+		if (stats_info->trigger[0].present &&
+		    stats_info->trigger[0].trigger_reason ==
+		    ROAM_TRIGGER_REASON_BTM)
+			cm_roam_btm_req_event(
+				&stats_info->trigger[0].btm_trig_data,
+				stats_info->vdev_id);
+		else if (stats_info->trigger[0].present &&
+			 stats_info->trigger[0].trigger_reason ==
+			 ROAM_TRIGGER_REASON_WTC_BTM)
+			cm_roam_btm_resp_event(&stats_info->trigger[0], NULL,
+					       stats_info->vdev_id, true);
+
 		if (stats_info->data_11kv[0].present)
 			cm_roam_stats_print_11kv_info(&stats_info->data_11kv[0],
 						      stats_info->vdev_id);
-
-		if (stats_info->trigger[0].present)
-			cm_roam_stats_print_trigger_info(
-						&stats_info->trigger[0],
-						stats_info->vdev_id, 1);
 
 		if (stats_info->scan[0].present &&
 		    stats_info->trigger[0].present)

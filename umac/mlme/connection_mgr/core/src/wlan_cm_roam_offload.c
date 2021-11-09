@@ -5259,6 +5259,43 @@ cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 	return status;
 }
 
+#define WTC_BTM_RESPONSE_SUBCODE 0xFF
+static void
+cm_roam_wtc_btm_event(struct wmi_roam_trigger_info *trigger_info,
+		      struct roam_btm_response_data *btm_data,
+		      uint8_t vdev_id, bool is_wtc)
+{
+	struct wlan_log_record *log_record = NULL;
+	struct wmi_roam_wtc_btm_trigger_data *wtc_data =
+			&trigger_info->wtc_btm_trig_data;
+
+	log_record = qdf_mem_malloc(sizeof(*log_record));
+	if (!log_record)
+		return;
+
+	log_record->log_subtype = WLAN_ROAM_WTC;
+
+	log_record->timestamp_us = qdf_get_time_of_the_day_us();
+	log_record->fw_timestamp_us = trigger_info->timestamp * 1000;
+	log_record->vdev_id = vdev_id;
+	if (is_wtc) {
+		log_record->btm_info.reason = wtc_data->vsie_trigger_reason;
+		log_record->btm_info.sub_reason = wtc_data->sub_code;
+		log_record->btm_info.wtc_duration = wtc_data->duration;
+	} else {
+		if (!btm_data) {
+			qdf_mem_free(log_record);
+			return;
+		}
+
+		log_record->btm_info.reason = btm_data->vsie_reason;
+		log_record->btm_info.sub_reason = WTC_BTM_RESPONSE_SUBCODE;
+	}
+
+	wlan_connectivity_log_enqueue(log_record);
+	qdf_mem_free(log_record);
+}
+
 QDF_STATUS
 cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
 		       struct roam_btm_response_data *btm_data,
@@ -5267,37 +5304,37 @@ cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
 	struct wlan_log_record *log_record = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	log_record = qdf_mem_malloc(sizeof(*log_record));
-	if (!log_record)
-		return QDF_STATUS_E_NOMEM;
-
 	if (is_wtc) {
-		struct wmi_roam_wtc_btm_trigger_data *wtc_data =
-				&trigger_info->wtc_btm_trig_data;
-
-		log_record->log_subtype = WLAN_ROAM_WTC;
-		log_record->btm_info.reason = wtc_data->vsie_trigger_reason;
-		log_record->btm_info.sub_reason = wtc_data->sub_code;
+		cm_roam_wtc_btm_event(trigger_info, btm_data, vdev_id, is_wtc);
 	} else {
-		log_record->log_subtype = WLAN_BTM_RESP;
-
-		if (btm_data) {
-			log_record->btm_info.token =
-					btm_data->btm_resp_dialog_token;
-			log_record->btm_info.btm_status_code =
-					btm_data->btm_status;
-			log_record->btm_info.btm_delay = btm_data->btm_delay;
-			log_record->btm_info.target_bssid =
-					btm_data->target_bssid;
+		if (!btm_data) {
+			mlme_err("vdev_id:%d btm data is NULL", vdev_id);
+			return QDF_STATUS_E_FAILURE;
 		}
+
+		log_record = qdf_mem_malloc(sizeof(*log_record));
+		if (!log_record)
+			return QDF_STATUS_E_NOMEM;
+
+		log_record->log_subtype = WLAN_BTM_RESP;
+		log_record->timestamp_us = qdf_get_time_of_the_day_us();
+		log_record->fw_timestamp_us = trigger_info->timestamp * 1000;
+		log_record->vdev_id = vdev_id;
+
+		log_record->btm_info.token =
+				btm_data->btm_resp_dialog_token;
+		log_record->btm_info.btm_status_code =
+				btm_data->btm_status;
+		log_record->btm_info.btm_delay = btm_data->btm_delay;
+		log_record->btm_info.target_bssid =
+				btm_data->target_bssid;
+		status = wlan_connectivity_log_enqueue(log_record);
+		qdf_mem_free(log_record);
+
+		if (btm_data->vsie_reason)
+			cm_roam_wtc_btm_event(trigger_info, btm_data,
+					      vdev_id, is_wtc);
 	}
-
-	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = trigger_info->timestamp * 1000;
-	log_record->vdev_id = vdev_id;
-
-	status = wlan_connectivity_log_enqueue(log_record);
-	qdf_mem_free(log_record);
 
 	return status;
 }
@@ -5311,7 +5348,7 @@ cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
  */
 static QDF_STATUS
 cm_roam_btm_candidate_event(struct wmi_btm_req_candidate_info *btm_data,
-			    uint8_t vdev_id)
+			    uint8_t vdev_id, uint8_t idx)
 {
 	struct wlan_log_record *log_record = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -5326,6 +5363,7 @@ cm_roam_btm_candidate_event(struct wmi_btm_req_candidate_info *btm_data,
 	log_record->vdev_id = vdev_id;
 	log_record->btm_cand.preference = btm_data->preference;
 	log_record->btm_cand.bssid = btm_data->candidate_bssid;
+	log_record->btm_cand.idx = idx;
 
 	status = wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
@@ -5352,14 +5390,21 @@ cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
 
 	log_record->btm_info.token = btm_data->token;
 	log_record->btm_info.mode = btm_data->btm_request_mode;
-	log_record->btm_info.disassoc_timer = btm_data->disassoc_timer;
-	log_record->btm_info.validity_timer = btm_data->validity_interval;
+	/*
+	 * Diassoc Timer and Validity interval are in secs in the frame
+	 * firmware sends it in millisecs to the host.
+	 * Send it in secs to the userspace.
+	 */
+	log_record->btm_info.disassoc_timer =
+			btm_data->disassoc_timer / 1000;
+	log_record->btm_info.validity_timer =
+			btm_data->validity_interval / 1000;
 	log_record->btm_info.candidate_list_count =
 				btm_data->candidate_list_count;
 
 	status = wlan_connectivity_log_enqueue(log_record);
 	for (i = 0; i < log_record->btm_info.candidate_list_count; i++)
-		cm_roam_btm_candidate_event(&btm_data->btm_cand[i], vdev_id);
+		cm_roam_btm_candidate_event(&btm_data->btm_cand[i], vdev_id, i);
 
 	qdf_mem_free(log_record);
 
