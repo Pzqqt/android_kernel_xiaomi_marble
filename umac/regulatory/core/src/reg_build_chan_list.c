@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -324,8 +325,10 @@ static void reg_modify_chan_list_for_indoor_channels(
 
 	if (!pdev_priv_obj->indoor_chan_enabled) {
 		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-			if (REGULATORY_CHAN_INDOOR_ONLY &
-			    chan_list[chan_enum].chan_flags) {
+			if (!(REGULATORY_CHAN_DISABLED &
+			      chan_list[chan_enum].chan_flags) &&
+			    (REGULATORY_CHAN_INDOOR_ONLY &
+			     chan_list[chan_enum].chan_flags)) {
 				chan_list[chan_enum].state =
 					CHANNEL_STATE_DFS;
 				chan_list[chan_enum].chan_flags |=
@@ -337,8 +340,10 @@ static void reg_modify_chan_list_for_indoor_channels(
 	if (pdev_priv_obj->force_ssc_disable_indoor_channel &&
 	    pdev_priv_obj->sap_state) {
 		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-			if (REGULATORY_CHAN_INDOOR_ONLY &
-			    chan_list[chan_enum].chan_flags) {
+			if (!(REGULATORY_CHAN_DISABLED &
+			      chan_list[chan_enum].chan_flags) &&
+			    (REGULATORY_CHAN_INDOOR_ONLY &
+			    chan_list[chan_enum].chan_flags)) {
 				chan_list[chan_enum].state =
 					CHANNEL_STATE_DISABLE;
 				chan_list[chan_enum].chan_flags |=
