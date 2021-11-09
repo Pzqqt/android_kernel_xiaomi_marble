@@ -1223,6 +1223,9 @@ enum ipa_client_type ipa_eth_get_ipa_client_type_from_eth_type_internal(
 		break;
 	case IPA_ETH_CLIENT_NTN:
 	case IPA_ETH_CLIENT_EMAC:
+#if IPA_ETH_API_VER >= 2
+	case IPA_ETH_CLIENT_NTN3:
+#endif
 			if (dir == IPA_ETH_PIPE_DIR_TX) {
 				ipa_client_type =
 					IPA_CLIENT_ETHERNET_CONS;

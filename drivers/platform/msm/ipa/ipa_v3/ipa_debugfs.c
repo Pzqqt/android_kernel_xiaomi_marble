@@ -40,6 +40,7 @@ static const char * const ipa_eth_clients_strings[] = {
 	__stringify(RTK8111K),
 	__stringify(RTK8125B),
 	__stringify(NTN),
+	__stringify(NTN3),
 	__stringify(EMAC),
 };
 
@@ -1084,25 +1085,14 @@ static ssize_t ipa3_read_rt(struct file *file, char __user *ubuf, size_t count,
 
 	mutex_lock(&ipa3_ctx->lock);
 
-	if (ip ==  IPA_IP_v6) {
-		if (ipa3_ctx->ip6_rt_tbl_hash_lcl)
-			pr_err("Hashable table resides on local memory\n");
-		else
-			pr_err("Hashable table resides on system (ddr) memory\n");
-		if (ipa3_ctx->ip6_rt_tbl_nhash_lcl)
-			pr_err("Non-Hashable table resides on local memory\n");
-		else
-			pr_err("Non-Hashable table resides on system (ddr) memory\n");
-	} else if (ip == IPA_IP_v4) {
-		if (ipa3_ctx->ip4_rt_tbl_hash_lcl)
-			pr_err("Hashable table resides on local memory\n");
-		else
-			pr_err("Hashable table resides on system (ddr) memory\n");
-		if (ipa3_ctx->ip4_rt_tbl_nhash_lcl)
-			pr_err("Non-Hashable table resides on local memory\n");
-		else
-			pr_err("Non-Hashable table resides on system (ddr) memory\n");
-	}
+	if (ipa3_ctx->rt_tbl_hash_lcl[ip])
+		pr_err("Hashable table resides on local memory\n");
+	else
+		pr_err("Hashable table resides on system (ddr) memory\n");
+	if (ipa3_ctx->rt_tbl_nhash_lcl[ip])
+		pr_err("Non-Hashable table resides on local memory\n");
+	else
+		pr_err("Non-Hashable table resides on system (ddr) memory\n");
 
 	list_for_each_entry(tbl, &set->head_rt_tbl_list, link) {
 		i = 0;
@@ -1343,25 +1333,14 @@ static ssize_t ipa3_read_flt(struct file *file, char __user *ubuf, size_t count,
 
 	mutex_lock(&ipa3_ctx->lock);
 
-	if (ip == IPA_IP_v6) {
-		if (ipa3_ctx->ip6_flt_tbl_hash_lcl)
-			pr_err("Hashable table resides on local memory\n");
-		else
-			pr_err("Hashable table resides on system (ddr) memory\n");
-		if (ipa3_ctx->ip6_flt_tbl_nhash_lcl)
-			pr_err("Non-Hashable table resides on local memory\n");
-		else
-			pr_err("Non-Hashable table resides on system (ddr) memory\n");
-	} else if (ip == IPA_IP_v4) {
-		if (ipa3_ctx->ip4_flt_tbl_hash_lcl)
-			pr_err("Hashable table resides on local memory\n");
-		else
-			pr_err("Hashable table resides on system (ddr) memory\n");
-		if (ipa3_ctx->ip4_flt_tbl_nhash_lcl)
-			pr_err("Non-Hashable table resides on local memory\n");
-		else
-			pr_err("Non-Hashable table resides on system (ddr) memory\n");
-	}
+	if (ipa3_ctx->flt_tbl_hash_lcl[ip])
+		pr_err("Hashable table resides on local memory\n");
+	else
+		pr_err("Hashable table resides on system (ddr) memory\n");
+	if (ipa3_ctx->flt_tbl_nhash_lcl[ip])
+		pr_err("Non-Hashable table resides on local memory\n");
+	else
+		pr_err("Non-Hashable table resides on system (ddr) memory\n");
 
 	for (j = 0; j < ipa3_ctx->ipa_num_pipes; j++) {
 		if (!ipa_is_ep_support_flt(j))
@@ -1451,25 +1430,14 @@ static ssize_t ipa3_read_flt_hw(struct file *file, char __user *ubuf,
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 	mutex_lock(&ipa3_ctx->lock);
 
-	if (ip == IPA_IP_v6) {
-		if (ipa3_ctx->ip6_flt_tbl_hash_lcl)
-			pr_err("Hashable table resides on local memory\n");
-		else
-			pr_err("Hashable table resides on system (ddr) memory\n");
-		if (ipa3_ctx->ip6_flt_tbl_nhash_lcl)
-			pr_err("Non-Hashable table resides on local memory\n");
-		else
-			pr_err("Non-Hashable table resides on system (ddr) memory\n");
-	} else if (ip == IPA_IP_v4) {
-		if (ipa3_ctx->ip4_flt_tbl_hash_lcl)
-			pr_err("Hashable table resides on local memory\n");
-		else
-			pr_err("Hashable table resides on system (ddr) memory\n");
-		if (ipa3_ctx->ip4_flt_tbl_nhash_lcl)
-			pr_err("Non-Hashable table resides on local memory\n");
-		else
-			pr_err("Non-Hashable table resides on system (ddr) memory\n");
-	}
+	if (ipa3_ctx->flt_tbl_hash_lcl[ip])
+		pr_err("Hashable table resides on local memory\n");
+	else
+		pr_err("Hashable table resides on system (ddr) memory\n");
+	if (ipa3_ctx->flt_tbl_nhash_lcl[ip])
+		pr_err("Non-Hashable table resides on local memory\n");
+	else
+		pr_err("Non-Hashable table resides on system (ddr) memory\n");
 
 	for (pipe = 0; pipe < ipa3_ctx->ipa_num_pipes; pipe++) {
 		if (!ipa_is_ep_support_flt(pipe))
@@ -1586,7 +1554,13 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		"lan_repl_rx_empty=%u\n"
 		"flow_enable=%u\n"
 		"flow_disable=%u\n"
-		"rx_page_drop_cnt=%u\n",
+		"rx_page_drop_cnt=%u\n"
+		"lower_order=%u\n"
+		"rmnet_notifier_enabled=%u\n"
+		"num_buff_above_thresh_for_def_pipe_notified=%u\n"
+		"num_buff_below_thresh_for_def_pipe_notified=%u\n"
+		"num_buff_above_thresh_for_coal_pipe_notified=%u\n"
+		"num_buff_below_thresh_for_coal_pipe_notified=%u\n",
 		ipa3_ctx->stats.tx_sw_pkts,
 		ipa3_ctx->stats.tx_hw_pkts,
 		ipa3_ctx->stats.tx_non_linear,
@@ -1606,8 +1580,13 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		ipa3_ctx->stats.lan_repl_rx_empty,
 		ipa3_ctx->stats.flow_enable,
 		ipa3_ctx->stats.flow_disable,
-		ipa3_ctx->stats.rx_page_drop_cnt
-		);
+		ipa3_ctx->stats.rx_page_drop_cnt,
+		ipa3_ctx->stats.lower_order,
+		ipa3_ctx->ipa_rmnet_notifier_enabled,
+		atomic_read(&ipa3_ctx->stats.num_buff_above_thresh_for_def_pipe_notified),
+		atomic_read(&ipa3_ctx->stats.num_buff_below_thresh_for_def_pipe_notified),
+		atomic_read(&ipa3_ctx->stats.num_buff_above_thresh_for_coal_pipe_notified),
+		atomic_read(&ipa3_ctx->stats.num_buff_below_thresh_for_coal_pipe_notified));
 	cnt += nbytes;
 
 	for (i = 0; i < IPAHAL_PKT_STATUS_EXCEPTION_MAX; i++) {
@@ -3669,6 +3648,55 @@ done:
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
 }
 
+#if IPA_ETH_API_VER >= 2
+static void __ipa_ntn3_client_stats_read(int *cnt, struct ipa_ntn3_client_stats *s,
+	const char *str_client_tx, const char *str_client_rx)
+{
+	int nbytes;
+
+	nbytes = scnprintf(dbg_buff + *cnt, IPA_MAX_MSG_LEN - *cnt,
+		"%s_RP=0x%x\n"
+		"%s_WP=0x%x\n"
+		"%s_ntn_pending_db_after_rollback:%u\n"
+		"%s_msi_db_idx_val:%u\n"
+		"%s_tx_derr_counter:%u\n"
+		"%s_ntn_tx_oob_counter:%u\n"
+		"%s_ntn_accumulated_tres_handled:%u\n"
+		"%s_ntn_rollbacks_counter:%u\n"
+		"%s_ntn_msi_db_count:%u\n",
+		str_client_tx, s->tx_stats.rp,
+		str_client_tx, s->tx_stats.wp,
+		str_client_tx, s->tx_stats.pending_db_after_rollback,
+		str_client_tx, s->tx_stats.msi_db_idx,
+		str_client_tx, s->tx_stats.derr_cnt,
+		str_client_tx, s->tx_stats.oob_cnt,
+		str_client_tx, s->tx_stats.tres_handled,
+		str_client_tx, s->tx_stats.rollbacks_cnt,
+		str_client_tx, s->tx_stats.msi_db_cnt);
+	*cnt += nbytes;
+	nbytes = scnprintf(dbg_buff + *cnt, IPA_MAX_MSG_LEN - *cnt,
+		"%s_RP=0x%x\n"
+		"%s_WP=0x%x\n"
+		"%s_ntn_pending_db_after_rollback:%u\n"
+		"%s_msi_db_idx_val:%u\n"
+		"%s_ntn_rx_chain_counter:%u\n"
+		"%s_ntn_rx_err_counter:%u\n"
+		"%s_ntn_accumulated_tres_handled:%u\n"
+		"%s_ntn_rollbacks_counter:%u\n"
+		"%s_ntn_msi_db_count:%u\n",
+		str_client_rx, s->rx_stats.rp,
+		str_client_rx, s->rx_stats.wp,
+		str_client_rx, s->rx_stats.pending_db_after_rollback,
+		str_client_rx, s->rx_stats.msi_db_idx,
+		str_client_rx, s->rx_stats.chain_cnt,
+		str_client_rx, s->rx_stats.err_cnt,
+		str_client_rx, s->rx_stats.tres_handled,
+		str_client_rx, s->rx_stats.rollbacks_cnt,
+		str_client_rx, s->rx_stats.msi_db_cnt);
+	*cnt += nbytes;
+}
+#endif
+
 static ssize_t ipa3_eth_read_err_status(struct file *file,
 	char __user *ubuf, size_t count, loff_t *ppos)
 {
@@ -3679,6 +3707,10 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	struct ipa3_eth_error_stats tx_stats;
 	struct ipa3_eth_error_stats rx_stats;
 	int scratch_num;
+#if IPA_ETH_API_VER >= 2
+	struct ipa_ntn3_client_stats ntn3_stats;
+	const char *str_client_tx, *str_client_rx;
+#endif
 
 	memset(&tx_stats, 0, sizeof(struct ipa3_eth_error_stats));
 	memset(&rx_stats, 0, sizeof(struct ipa3_eth_error_stats));
@@ -3692,6 +3724,7 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 		goto done;
 	}
 	client = (struct ipa_eth_client *)file->private_data;
+
 	switch (client->client_type) {
 	case IPA_ETH_CLIENT_AQC107:
 	case IPA_ETH_CLIENT_AQC113:
@@ -3708,6 +3741,22 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 		tx_ep = IPA_CLIENT_ETHERNET_CONS;
 		rx_ep = IPA_CLIENT_ETHERNET_PROD;
 		scratch_num = 6;
+#if IPA_ETH_API_VER >= 2
+	case IPA_ETH_CLIENT_NTN3:
+
+		memset(&ntn3_stats, 0, sizeof(ntn3_stats));
+		if (strstr(file->f_path.dentry->d_name.name, "0_status")) {
+			ipa_eth_ntn3_get_status(&ntn3_stats, 0);
+			str_client_tx = ipa_clients_strings[IPA_CLIENT_ETHERNET_CONS];
+			str_client_rx = ipa_clients_strings[IPA_CLIENT_ETHERNET_PROD];
+		} else {
+			ipa_eth_ntn3_get_status(&ntn3_stats, 1);
+			str_client_tx = ipa_clients_strings[IPA_CLIENT_ETHERNET2_CONS];
+			str_client_rx = ipa_clients_strings[IPA_CLIENT_ETHERNET2_PROD];
+		}
+		__ipa_ntn3_client_stats_read(&cnt, &ntn3_stats, str_client_tx, str_client_rx);
+		goto done;
+#endif
 	default:
 		IPAERR("Not supported\n");
 		return 0;

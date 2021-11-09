@@ -60,6 +60,11 @@
 #define GSI_FC_STATE_INDEX_SHRAM			(7)
 #define GSI_FC_PENDING_MASK					(0x00080000)
 
+#define GSI_NTN3_PENDING_DB_AFTER_RB_MASK 18
+#define GSI_NTN3_PENDING_DB_AFTER_RB_SHIFT 1
+/* FOR_SEQ_HIGH channel scratch: (((8 * (pipe_id * ctx_size + offset_lines)) + 4) / 4) */
+#define GSI_GSI_SHRAM_n_EP_FOR_SEQ_HIGH_N_GET(ep_id) (((8 * (ep_id * 10 + 9)) + 4) / 4)
+
 #ifndef CONFIG_DEBUG_FS
 void gsi_debugfs_init(void)
 {
@@ -5308,6 +5313,80 @@ int gsi_get_refetch_reg(unsigned long chan_hdl, bool is_rp)
 }
 EXPORT_SYMBOL(gsi_get_refetch_reg);
 
+/*
+ * ; +------------------------------------------------------+
+ * ; | NTN3 Rx Channel Scratch                              |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 32-bit word | Field                          | Bits  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 4           | NTN_PENDING_DB_AFTER_ROLLBACK  | 18-18 |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 5           | NTN_MSI_DB_INDEX_VALUE         | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 6           | NTN_RX_CHAIN_COUNTER           | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 7           | NTN_RX_ERR_COUNTER             | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 8           | NTN_ACCUMULATED_TRES_HANDLED   | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 9           | NTN_ROLLBACKS_COUNTER          | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | FOR_SEQ_HIGH| NTN_MSI_DB_COUNT               | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ *
+ * ; +------------------------------------------------------+
+ * ; | NTN3 Tx Channel Scratch                              |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 32-bit word | Field                          | Bits  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 4           | NTN_PENDING_DB_AFTER_ROLLBACK  | 18-18 |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 5           | NTN_MSI_DB_INDEX_VALUE         | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 6           | TX_DERR_COUNTER                | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 7           | NTN_TX_OOB_COUNTER             | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 8           | NTN_ACCUMULATED_TRES_HANDLED   | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | 9           | NTN_ROLLBACKS_COUNTER          | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ * ; | FOR_SEQ_HIGH| NTN_MSI_DB_COUNT               | 0-31  |
+ * ; +-------------+--------------------------------+-------+
+ */
+int gsi_ntn3_client_stats_get(unsigned ep_id, int scratch_id, unsigned chan_hdl)
+{
+	switch (scratch_id) {
+	case -1:
+		return gsihal_read_reg_n(GSI_GSI_SHRAM_n, GSI_GSI_SHRAM_n_EP_FOR_SEQ_HIGH_N_GET(ep_id));
+	case 4:
+		return (gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_4, gsi_ctx->per.ee,
+			chan_hdl) >> GSI_NTN3_PENDING_DB_AFTER_RB_MASK) &
+			GSI_NTN3_PENDING_DB_AFTER_RB_SHIFT;
+		break;
+	case 5:
+		return gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_5, gsi_ctx->per.ee, chan_hdl);
+		break;
+	case 6:
+		return gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_6, gsi_ctx->per.ee, chan_hdl);
+		break;
+	case 7:
+		return gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_7, gsi_ctx->per.ee, chan_hdl);
+		break;
+	case 8:
+		return gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_8, gsi_ctx->per.ee, chan_hdl);
+		break;
+	case 9:
+		return gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_9, gsi_ctx->per.ee, chan_hdl);
+		break;
+	default:
+		GSIERR("invalid scratch id %d\n", scratch_id);
+		return 0;
+	}
+	return 0;
+}
+EXPORT_SYMBOL(gsi_ntn3_client_stats_get);
+
 int gsi_get_drop_stats(unsigned long ep_id, int scratch_id,
 	unsigned long chan_hdl)
 {
@@ -5611,6 +5690,13 @@ uint32_t gsi_get_evt_ring_len(int evt_hdl)
 }
 EXPORT_SYMBOL(gsi_get_evt_ring_len);
 
+void gsi_update_almst_empty_thrshold(unsigned long chan_hdl, unsigned short threshold)
+{
+	gsihal_write_reg_nk(GSI_EE_n_CH_k_CH_ALMST_EMPTY_THRSHOLD,
+		gsi_ctx->per.ee, chan_hdl, threshold);
+}
+EXPORT_SYMBOL(gsi_update_almst_empty_thrshold);
+
 static union __packed gsi_channel_scratch __gsi_update_mhi_channel_scratch(
 	unsigned long chan_hdl, struct __packed gsi_mhi_channel_scratch mscr)
 {
@@ -5716,13 +5802,6 @@ int gsi_get_fw_version(struct gsi_fw_version *ver)
 
 	return 0;
 }
-
-void gsi_update_almst_empty_thrshold(unsigned long chan_hdl, unsigned short threshold)
-{
-	gsihal_write_reg_nk(GSI_EE_n_CH_k_CH_ALMST_EMPTY_THRSHOLD,
-		gsi_ctx->per.ee, chan_hdl, threshold);
-}
-EXPORT_SYMBOL(gsi_update_almst_empty_thrshold);
 
 static int msm_gsi_probe(struct platform_device *pdev)
 {

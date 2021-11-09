@@ -69,6 +69,8 @@
 #define DEFAULT_MPM_TETH_AGGR_SIZE 24
 #define DEFAULT_MPM_UC_THRESH_SIZE 4
 
+RAW_NOTIFIER_HEAD(ipa_rmnet_notifier_list);
+
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.
  */
@@ -3935,6 +3937,7 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 
 	case IPA_IOC_ADD_EoGRE_MAPPING:
+		IPADBG("Got IPA_IOC_ADD_EoGRE_MAPPING\n");
 		if (copy_from_user(
 				&eogre_info,
 				(const void __user *) arg,
@@ -3945,6 +3948,8 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+
+		ipa3_ctx->eogre_enabled = (retval == 0);
 
 		if (retval == 0 && send2uC == true) {
 			/*
@@ -3961,13 +3966,15 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			retval = ipa3_send_eogre_info(IPA_EoGRE_UP_EVENT, &eogre_info);
 		}
 
-		if (retval == 0) {
-			ipa3_ctx->eogre_enabled = true;
+		if (retval != 0) {
+			ipa3_ctx->eogre_enabled = false;
 		}
 
 		break;
 
 	case IPA_IOC_DEL_EoGRE_MAPPING:
+		IPADBG("Got IPA_IOC_DEL_EoGRE_MAPPING\n");
+
 		memset(&eogre_info, 0, sizeof(eogre_info));
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
@@ -3992,7 +3999,13 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		break;
-
+#ifdef IPA_IOC_FLT_MEM_PERIPHERAL_SET_PRIO_HIGH
+	case IPA_IOC_FLT_MEM_PERIPHERAL_SET_PRIO_HIGH:
+		retval = ipa_flt_sram_set_client_prio_high((enum ipa_client_type) arg);
+		if (retval)
+			IPAERR("ipa_flt_sram_set_client_prio_high failed! retval=%d\n", retval);
+		break;
+#endif
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		return -ENOTTY;
@@ -7261,6 +7274,10 @@ static inline void ipa3_register_to_fmwk(void)
 	data.ipa_rmnet_ll_xmit = ipa3_rmnet_ll_xmit;
 	data.ipa_register_rmnet_ll_cb = ipa3_register_rmnet_ll_cb;
 	data.ipa_unregister_rmnet_ll_cb = ipa3_unregister_rmnet_ll_cb;
+	data.ipa_register_notifier =
+		ipa3_register_notifier;
+	data.ipa_unregister_notifier =
+		ipa3_unregister_notifier;
 
 	if (ipa_fmwk_register_ipa(&data)) {
 		IPAERR("couldn't register to IPA framework\n");
@@ -7339,9 +7356,11 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	struct gsi_per_props gsi_props;
 	struct ipa3_uc_hdlrs uc_hdlrs = { 0 };
 	struct ipa3_flt_tbl *flt_tbl;
+	struct ipa3_flt_tbl_nhash_lcl *lcl_tbl;
 	int i;
 	struct idr *idr;
 	bool reg = false;
+	enum ipa_ip_type ip;
 
 	if (ipa3_ctx == NULL) {
 		IPADBG("IPA driver haven't initialized\n");
@@ -7397,18 +7416,18 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		ipa3_ctx->smem_sz, ipa3_ctx->smem_restricted_bytes);
 
 	IPADBG("ip4_rt_hash=%u ip4_rt_nonhash=%u\n",
-		ipa3_ctx->ip4_rt_tbl_hash_lcl, ipa3_ctx->ip4_rt_tbl_nhash_lcl);
+		ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v4], ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v4]);
 
 	IPADBG("ip6_rt_hash=%u ip6_rt_nonhash=%u\n",
-		ipa3_ctx->ip6_rt_tbl_hash_lcl, ipa3_ctx->ip6_rt_tbl_nhash_lcl);
+		ipa3_ctx->rt_tbl_hash_lcl[IPA_IP_v6], ipa3_ctx->rt_tbl_nhash_lcl[IPA_IP_v6]);
 
 	IPADBG("ip4_flt_hash=%u ip4_flt_nonhash=%u\n",
-		ipa3_ctx->ip4_flt_tbl_hash_lcl,
-		ipa3_ctx->ip4_flt_tbl_nhash_lcl);
+		ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v4],
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v4]);
 
 	IPADBG("ip6_flt_hash=%u ip6_flt_nonhash=%u\n",
-		ipa3_ctx->ip6_flt_tbl_hash_lcl,
-		ipa3_ctx->ip6_flt_tbl_nhash_lcl);
+		ipa3_ctx->flt_tbl_hash_lcl[IPA_IP_v6],
+		ipa3_ctx->flt_tbl_nhash_lcl[IPA_IP_v6]);
 
 	if (ipa3_ctx->smem_reqd_sz > ipa3_ctx->smem_sz) {
 		IPAERR("SW expect more core memory, needed %d, avail %d\n",
@@ -7475,51 +7494,43 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	idr = &(ipa3_ctx->flt_rule_ids[IPA_IP_v6]);
 	idr_init(idr);
 
+	INIT_LIST_HEAD(&ipa3_ctx->flt_tbl_nhash_lcl_list[IPA_IP_v4]);
+	INIT_LIST_HEAD(&ipa3_ctx->flt_tbl_nhash_lcl_list[IPA_IP_v6]);
+
 	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
 		if (!ipa_is_ep_support_flt(i))
 			continue;
 
-		flt_tbl = &ipa3_ctx->flt_tbl[i][IPA_IP_v4];
-		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
-		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
-			!ipa3_ctx->ip4_flt_tbl_hash_lcl;
+		for (ip = IPA_IP_v4; ip < IPA_IP_MAX; ip++) {
+			flt_tbl = &ipa3_ctx->flt_tbl[i][ip];
+			INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
+			flt_tbl->in_sys[IPA_RULE_HASHABLE] = !ipa3_ctx->flt_tbl_hash_lcl[ip];
 
-		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
-			all other EPs always place the table in DDR */
-		if (IPA_CLIENT_IS_ETH_PROD(i) ||
-			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
-			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
-			!ipa3_ctx->ip4_flt_tbl_nhash_lcl;
-		else
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
+			/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
+				all other EPs always place the table in DDR */
+			if (ipa3_ctx->flt_tbl_nhash_lcl[ip] &&
+			    (IPA_CLIENT_IS_ETH_PROD(i) ||
+			     ((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
+			      (i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))) {
+				flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = false;
+				lcl_tbl = kcalloc(1, sizeof(struct ipa3_flt_tbl_nhash_lcl),
+						  GFP_KERNEL);
+				WARN_ON(lcl_tbl);
+				if (likely(lcl_tbl)) {
+					lcl_tbl->tbl = flt_tbl;
+					/* Add to the head of the list, to be pulled first */
+					list_add(&lcl_tbl->link,
+						 &ipa3_ctx->flt_tbl_nhash_lcl_list[ip]);
+				}
+			} else
+				flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
 
-		/* Init force sys to false */
-		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
-		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
+			/* Init force sys to false */
+			flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
+			flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
 
-		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v4];
-
-		flt_tbl = &ipa3_ctx->flt_tbl[i][IPA_IP_v6];
-		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
-		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
-			!ipa3_ctx->ip6_flt_tbl_hash_lcl;
-
-		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
-			all other EPs always place the table in DDR */
-		if (IPA_CLIENT_IS_ETH_PROD(i) ||
-			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
-			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
-			!ipa3_ctx->ip6_flt_tbl_nhash_lcl;
-		else
-			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
-
-		/* Init force sys to false */
-		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
-		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
-
-		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v6];
+			flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[ip];
+		}
 	}
 
 	if (!ipa3_ctx->apply_rg10_wa) {
@@ -9124,6 +9135,12 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 			goto fail_rmnet_ll_init;
 		}
 	}
+	ipa3_ctx->ipa_rmnet_notifier_list_internal = &ipa_rmnet_notifier_list;
+	spin_lock_init(&ipa3_ctx->notifier_lock);
+	ipa3_ctx->buff_above_thresh_for_def_pipe_notified = false;
+	ipa3_ctx->buff_above_thresh_for_coal_pipe_notified = false;
+	ipa3_ctx->buff_below_thresh_for_def_pipe_notified = false;
+	ipa3_ctx->buff_below_thresh_for_coal_pipe_notified = false;
 
 	mutex_init(&ipa3_ctx->app_clock_vote.mutex);
 	ipa3_ctx->is_modem_up = false;

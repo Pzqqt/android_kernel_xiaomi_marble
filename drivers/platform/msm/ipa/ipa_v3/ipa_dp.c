@@ -14,6 +14,7 @@
 #include <net/sock.h>
 #include <net/ipv6.h>
 #include <asm/page.h>
+#include <linux/mutex.h>
 #include "gsi.h"
 #include "ipa_i.h"
 #include "ipa_trace.h"
@@ -79,6 +80,8 @@
 #define IPA_GSI_CH_20_WA_VIRT_CHAN 29
 
 #define IPA_DEFAULT_SYS_YELLOW_WM 32
+/* High threshold is set for 50% of the buffer */
+#define IPA_BUFF_THRESHOLD_HIGH 112
 #define IPA_REPL_XFER_THRESH 20
 #define IPA_REPL_XFER_MAX 36
 
@@ -2286,6 +2289,27 @@ fail_kmem_cache_alloc:
 	}
 }
 
+static struct page *ipa3_alloc_page(
+	gfp_t flag, u32 *page_order, bool try_lower)
+{
+	struct page *page = NULL;
+	u32 p_order = *page_order;
+
+	page = __dev_alloc_pages(flag, p_order);
+	/* We will only try 1 page order lower. */
+	if (unlikely(!page)) {
+		if (try_lower && p_order > 0) {
+			p_order = p_order - 1;
+			page = __dev_alloc_pages(flag, p_order);
+			if (likely(page))
+				ipa3_ctx->stats.lower_order++;
+		}
+	}
+	*page_order = p_order;
+	return page;
+}
+
+
 static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
 	gfp_t flag, bool is_tmp_alloc, struct ipa3_sys_context *sys)
 {
@@ -2296,12 +2320,17 @@ static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
 		flag);
 	if (unlikely(!rx_pkt))
 		return NULL;
-	rx_pkt->len = PAGE_SIZE << sys->page_order;
-	rx_pkt->page_data.page = __dev_alloc_pages(flag,
-				sys->page_order);
+
+	rx_pkt->page_data.page_order = sys->page_order;
+	/* Try a lower order page for order 3 pages in case allocation fails. */
+	rx_pkt->page_data.page = ipa3_alloc_page(flag,
+				&rx_pkt->page_data.page_order,
+				(is_tmp_alloc && rx_pkt->page_data.page_order == 3));
 
 	if (unlikely(!rx_pkt->page_data.page))
 		goto fail_page_alloc;
+
+	rx_pkt->len = PAGE_SIZE << rx_pkt->page_data.page_order;
 
 	rx_pkt->page_data.dma_addr = dma_map_page(ipa3_ctx->pdev,
 			rx_pkt->page_data.page, 0,
@@ -2320,7 +2349,7 @@ static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
 	return rx_pkt;
 
 fail_dma_mapping:
-	__free_pages(rx_pkt->page_data.page, sys->page_order);
+	__free_pages(rx_pkt->page_data.page, rx_pkt->page_data.page_order);
 fail_page_alloc:
 	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 	return NULL;
@@ -2440,6 +2469,43 @@ static struct ipa3_rx_pkt_wrapper * ipa3_get_free_page
 	return NULL;
 }
 
+int ipa3_register_notifier(void *fn_ptr)
+{
+	if (fn_ptr == NULL)
+		return -EFAULT;
+	spin_lock(&ipa3_ctx->notifier_lock);
+	atomic_set(&ipa3_ctx->stats.num_buff_above_thresh_for_def_pipe_notified, 0);
+	atomic_set(&ipa3_ctx->stats.num_buff_above_thresh_for_coal_pipe_notified, 0);
+	atomic_set(&ipa3_ctx->stats.num_buff_below_thresh_for_def_pipe_notified, 0);
+	atomic_set(&ipa3_ctx->stats.num_buff_below_thresh_for_coal_pipe_notified, 0);
+	ipa3_ctx->ipa_rmnet_notifier.notifier_call = fn_ptr;
+	if (!ipa3_ctx->ipa_rmnet_notifier_enabled)
+		raw_notifier_chain_register(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+			&ipa3_ctx->ipa_rmnet_notifier);
+	else {
+		IPAWANERR("rcvd notifier reg again, changing the cb function\n");
+		ipa3_ctx->ipa_rmnet_notifier.notifier_call = fn_ptr;
+	}
+	ipa3_ctx->ipa_rmnet_notifier_enabled = true;
+	spin_unlock(&ipa3_ctx->notifier_lock);
+	return 0;
+}
+
+int ipa3_unregister_notifier(void *fn_ptr)
+{
+	if (fn_ptr == NULL)
+		return -EFAULT;
+	spin_lock(&ipa3_ctx->notifier_lock);
+	ipa3_ctx->ipa_rmnet_notifier.notifier_call = fn_ptr;
+	if (ipa3_ctx->ipa_rmnet_notifier_enabled)
+		raw_notifier_chain_unregister(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+			&ipa3_ctx->ipa_rmnet_notifier);
+	else IPAWANERR("rcvd notifier unreg again\n");
+	ipa3_ctx->ipa_rmnet_notifier_enabled = false;
+	spin_unlock(&ipa3_ctx->notifier_lock);
+	return 0;
+}
+
 static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 {
 	struct ipa3_rx_pkt_wrapper *rx_pkt;
@@ -2538,16 +2604,64 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 		__trigger_repl_work(sys);
 
 	if (rx_len_cached <= IPA_DEFAULT_SYS_YELLOW_WM) {
-		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS)
+		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS) {
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty);
-		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if (ipa3_ctx->ipa_rmnet_notifier_enabled
+				&& !ipa3_ctx->buff_below_thresh_for_def_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_below_thresh_for_def_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_BELOW_LOW_THRESHOLD_FOR_DEFAULT_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_def_pipe_notified = false;
+				ipa3_ctx->buff_below_thresh_for_def_pipe_notified = true;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		}
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) {
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty_coal);
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if (ipa3_ctx->ipa_rmnet_notifier_enabled
+				&& !ipa3_ctx->buff_below_thresh_for_coal_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_below_thresh_for_coal_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_BELOW_LOW_THRESHOLD_FOR_COAL_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_coal_pipe_notified = false;
+				ipa3_ctx->buff_below_thresh_for_coal_pipe_notified = true;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		}
 		else if (sys->ep->client == IPA_CLIENT_APPS_LAN_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_rx_empty);
 		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.rmnet_ll_rx_empty);
 		else
 			WARN_ON(1);
+	}
+
+	if (rx_len_cached >= IPA_BUFF_THRESHOLD_HIGH) {
+		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS) {
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if(ipa3_ctx->ipa_rmnet_notifier_enabled &&
+				!ipa3_ctx->buff_above_thresh_for_def_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_above_thresh_for_def_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_ABOVE_HIGH_THRESHOLD_FOR_DEFAULT_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_def_pipe_notified = true;
+				ipa3_ctx->buff_below_thresh_for_def_pipe_notified = false;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		} else if (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) {
+			spin_lock(&ipa3_ctx->notifier_lock);
+			if(ipa3_ctx->ipa_rmnet_notifier_enabled &&
+				!ipa3_ctx->buff_above_thresh_for_coal_pipe_notified) {
+				atomic_inc(&ipa3_ctx->stats.num_buff_above_thresh_for_coal_pipe_notified);
+				raw_notifier_call_chain(ipa3_ctx->ipa_rmnet_notifier_list_internal,
+					BUFF_ABOVE_HIGH_THRESHOLD_FOR_COAL_PIPE, &rx_len_cached);
+				ipa3_ctx->buff_above_thresh_for_coal_pipe_notified = true;
+				ipa3_ctx->buff_below_thresh_for_coal_pipe_notified = false;
+			}
+			spin_unlock(&ipa3_ctx->notifier_lock);
+		}
 	}
 
 	return;
@@ -3052,7 +3166,7 @@ static void free_rx_page(void *chan_user_data, void *xfer_user_data)
 	}
 	dma_unmap_page(ipa3_ctx->pdev, rx_pkt->page_data.dma_addr,
 		rx_pkt->len, DMA_FROM_DEVICE);
-	__free_pages(rx_pkt->page_data.page, rx_pkt->sys->page_order);
+	__free_pages(rx_pkt->page_data.page, rx_pkt->page_data.page_order);
 	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 }
 
@@ -3102,7 +3216,7 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 					rx_pkt->page_data.dma_addr,
 					rx_pkt->len,
 					DMA_FROM_DEVICE);
-				__free_pages(rx_pkt->page_data.page, sys->page_order);
+				__free_pages(rx_pkt->page_data.page, rx_pkt->page_data.page_order);
 			}
 			kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache,
 				rx_pkt);
@@ -3122,7 +3236,7 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 				rx_pkt->len,
 				DMA_FROM_DEVICE);
 			__free_pages(rx_pkt->page_data.page,
-				sys->page_order);
+				rx_pkt->page_data.page_order);
 			kmem_cache_free(
 				ipa3_ctx->rx_pkt_wrapper_cache,
 				rx_pkt);
@@ -3922,7 +4036,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 		} else {
 			dma_unmap_page(ipa3_ctx->pdev, rx_page.dma_addr,
 					rx_pkt->len, DMA_FROM_DEVICE);
-			__free_pages(rx_pkt->page_data.page, sys->page_order);
+			__free_pages(rx_pkt->page_data.page, rx_pkt->page_data.page_order);
 		}
 		rx_pkt->sys->free_rx_wrapper(rx_pkt);
 		IPA_STATS_INC_CNT(ipa3_ctx->stats.rx_page_drop_cnt);
@@ -3954,7 +4068,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 				} else {
 					dma_unmap_page(ipa3_ctx->pdev, rx_page.dma_addr,
 						rx_pkt->len, DMA_FROM_DEVICE);
-					__free_pages(rx_pkt->page_data.page, sys->page_order);
+					__free_pages(rx_pkt->page_data.page, rx_pkt->page_data.page_order);
 				}
 				rx_pkt->sys->free_rx_wrapper(rx_pkt);
 			}
@@ -3985,7 +4099,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 				skb_shinfo(rx_skb)->nr_frags,
 				rx_page.page, 0,
 				size,
-				PAGE_SIZE << sys->page_order);
+				PAGE_SIZE << rx_page.page_order);
 		}
 	} else {
 		return NULL;

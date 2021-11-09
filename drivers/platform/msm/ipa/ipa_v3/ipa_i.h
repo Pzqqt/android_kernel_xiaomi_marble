@@ -127,6 +127,8 @@ enum {
 #define IPA_PAGE_POLL_DEFAULT_THRESHOLD 15
 #define IPA_PAGE_POLL_THRESHOLD_MAX 30
 
+#define NTN3_CLIENTS_NUM 2
+
 
 #define IPA_WDI2_OVER_GSI() (ipa3_ctx->ipa_wdi2_over_gsi \
 		&& (ipa_get_wdi_version() == IPA_WDI_2))
@@ -568,11 +570,13 @@ enum ipa_icc_type {
  * @page: skb page
  * @dma_addr: DMA address of this Rx packet
  * @is_tmp_alloc: skb page from tmp_alloc or recycle_list
+ * @page_order: page order associated with the page.
  */
 struct ipa_rx_page_data {
 	struct page *page;
 	dma_addr_t dma_addr;
 	bool is_tmp_alloc;
+	u32 page_order;
 };
 
 struct ipa3_active_client_htable_entry {
@@ -887,7 +891,6 @@ struct ipa3_hdr_proc_ctx_tbl {
  * @rule_cnt: number of filter rules
  * @in_sys: flag indicating if filter table is located in system memory
  * @sz: the size of the filter tables
- * @end: the last header index
  * @curr_mem: current filter tables block in sys memory
  * @prev_mem: previous filter table block in sys memory
  * @rule_ids: common idr structure that holds the rule_id for each rule
@@ -904,6 +907,11 @@ struct ipa3_flt_tbl {
 	bool sticky_rear;
 	struct idr *rule_ids;
 	bool force_sys[IPA_RULE_TYPE_MAX];
+};
+
+struct ipa3_flt_tbl_nhash_lcl {
+	struct list_head link;
+	struct ipa3_flt_tbl *tbl;
 };
 
 /**
@@ -1541,8 +1549,13 @@ struct ipa3_stats {
 	u32 flow_disable;
 	u32 tx_non_linear;
 	u32 rx_page_drop_cnt;
+	u64 lower_order;
 	struct ipa3_page_recycle_stats page_recycle_stats[3];
 	u64 page_recycle_cnt[3][IPA_PAGE_POLL_THRESHOLD_MAX];
+	atomic_t num_buff_above_thresh_for_def_pipe_notified;
+	atomic_t num_buff_above_thresh_for_coal_pipe_notified;
+	atomic_t num_buff_below_thresh_for_def_pipe_notified;
+	atomic_t num_buff_below_thresh_for_coal_pipe_notified;
 };
 
 /* offset for each stats */
@@ -1982,6 +1995,35 @@ struct ipa3_eth_error_stats {
 	u32 err;
 };
 
+struct ipa_ntn3_stats_rx {
+	int rp;
+	int wp;
+	bool pending_db_after_rollback;
+	u32 msi_db_idx;
+	u32 chain_cnt;
+	u32 err_cnt;
+	u32 tres_handled;
+	u32 rollbacks_cnt;
+	u32 msi_db_cnt;
+};
+
+struct ipa_ntn3_stats_tx {
+	int rp;
+	int wp;
+	bool pending_db_after_rollback;
+	u32 msi_db_idx;
+	u32 derr_cnt;
+	u32 oob_cnt;
+	u32 tres_handled;
+	u32 rollbacks_cnt;
+	u32 msi_db_cnt;
+};
+
+struct ipa_ntn3_client_stats {
+	struct ipa_ntn3_stats_rx rx_stats;
+	struct ipa_ntn3_stats_tx tx_stats;
+};
+
 
 /**
  * struct ipa3_context - IPA context
@@ -2145,14 +2187,11 @@ struct ipa3_context {
 	bool hdr_proc_ctx_tbl_lcl;
 	struct ipa_mem_buffer hdr_sys_mem;
 	struct ipa_mem_buffer hdr_proc_ctx_mem;
-	bool ip4_rt_tbl_hash_lcl;
-	bool ip4_rt_tbl_nhash_lcl;
-	bool ip6_rt_tbl_hash_lcl;
-	bool ip6_rt_tbl_nhash_lcl;
-	bool ip4_flt_tbl_hash_lcl;
-	bool ip4_flt_tbl_nhash_lcl;
-	bool ip6_flt_tbl_hash_lcl;
-	bool ip6_flt_tbl_nhash_lcl;
+	bool rt_tbl_hash_lcl[IPA_IP_MAX];
+	bool rt_tbl_nhash_lcl[IPA_IP_MAX];
+	bool flt_tbl_hash_lcl[IPA_IP_MAX];
+	bool flt_tbl_nhash_lcl[IPA_IP_MAX];
+	struct list_head flt_tbl_nhash_lcl_list[IPA_IP_MAX];
 	struct ipa3_active_clients ipa3_active_clients;
 	struct ipa3_active_clients_log_ctx ipa3_active_clients_logging;
 	struct workqueue_struct *power_mgmt_wq;
@@ -2323,7 +2362,6 @@ struct ipa3_context {
 	u16 ulso_ip_id_max;
 	bool use_pm_wrapper;
 	u8 page_poll_threshold;
-	u32 non_hash_flt_lcl_sys_switch;
 	bool wan_common_page_pool;
 	bool use_tput_est_ep;
 	struct ipa_ioc_eogre_info eogre_cache;
@@ -2331,6 +2369,14 @@ struct ipa3_context {
 	bool is_device_crashed;
 	bool ulso_wa;
 	u64 gsi_msi_addr;
+	spinlock_t notifier_lock;
+	struct raw_notifier_head *ipa_rmnet_notifier_list_internal;
+	struct notifier_block ipa_rmnet_notifier;
+	bool ipa_rmnet_notifier_enabled;
+	bool buff_above_thresh_for_def_pipe_notified;
+	bool buff_above_thresh_for_coal_pipe_notified;
+	bool buff_below_thresh_for_def_pipe_notified;
+	bool buff_below_thresh_for_coal_pipe_notified;
 };
 
 struct ipa3_plat_drv_res {
@@ -2818,6 +2864,8 @@ int ipa3_mdfy_flt_rule_v2(struct ipa_ioc_mdfy_flt_rule_v2 *rules);
 int ipa3_commit_flt(enum ipa_ip_type ip);
 
 int ipa3_reset_flt(enum ipa_ip_type ip, bool user_only);
+
+int ipa_flt_sram_set_client_prio_high(enum ipa_client_type client);
 
 /*
  * NAT
@@ -3355,6 +3403,8 @@ int ipa3_register_rmnet_ll_cb(
 	void *user_data3);
 int ipa3_unregister_rmnet_ll_cb(void);
 int ipa3_rmnet_ll_xmit(struct sk_buff *skb);
+int ipa3_register_notifier(void *fn_ptr);
+int ipa3_unregister_notifier(void *fn_ptr);
 int ipa3_setup_apps_low_lat_data_prod_pipe(
 	struct rmnet_egress_param *egress_param,
 	struct net_device *dev);
@@ -3422,6 +3472,7 @@ int ipa3_eth_disconnect(
 int ipa3_eth_client_conn_evt(struct ipa_ecm_msg *msg);
 int ipa3_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
 #endif
+void ipa_eth_ntn3_get_status(struct ipa_ntn3_client_stats *s, unsigned inst_id);
 void ipa3_eth_get_status(u32 client, int scratch_id,
 	struct ipa3_eth_error_stats *stats);
 int ipa3_get_gsi_chan_info(struct gsi_chan_info *gsi_chan_info,
