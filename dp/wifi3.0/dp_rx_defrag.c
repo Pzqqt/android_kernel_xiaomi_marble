@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1913,7 +1914,6 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	/* Re-inject the fragments back to REO for further processing */
 	status = dp_rx_defrag_reo_reinject(peer, tid,
 			rx_reorder_array_elem->head);
-	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		rx_reorder_array_elem->head = NULL;
 		rx_reorder_array_elem->tail = NULL;
@@ -1926,6 +1926,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	}
 
 	dp_rx_defrag_cleanup(peer, tid);
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 
 	dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 
