@@ -5252,6 +5252,8 @@ cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
 	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
 	log_record->vdev_id = vdev_id;
+	log_record->btm_info.token = btm_data->btm_query_token;
+	log_record->btm_info.reason = btm_data->btm_query_reason;
 
 	status = wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);

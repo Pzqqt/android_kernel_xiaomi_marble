@@ -2976,6 +2976,9 @@ cm_roam_stats_print_roam_result(struct wmi_roam_result *res,
 	qdf_mem_free(buf);
 }
 
+#define WLAN_ROAM_11KV_REQ_TYPE_BTM        1
+#define WLAN_ROAM_11KV_REQ_TYPE_NEIGH_RPT  2
+
 /**
  * cm_roam_stats_print_11kv_info  - Print neighbor report/BTM related data
  * @neigh_rpt: Pointer to the extracted TLV structure
@@ -3023,17 +3026,23 @@ cm_roam_stats_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 
 	mlme_get_converted_timestamp(neigh_rpt->req_time, time);
 	mlme_nofl_info("%s [%s] VDEV[%d]", time,
-		       (type == 1) ? "BTM_QUERY" : "NEIGH_RPT_REQ", vdev_id);
+		       (type == WLAN_ROAM_11KV_REQ_TYPE_BTM) ?
+		       "BTM_QUERY" : "NEIGH_RPT_REQ", vdev_id);
+
+	if (type == WLAN_ROAM_11KV_REQ_TYPE_BTM)
+		cm_roam_btm_query_event(neigh_rpt, vdev_id);
 
 	if (neigh_rpt->resp_time) {
 		mlme_get_converted_timestamp(neigh_rpt->resp_time, time1);
 		mlme_nofl_info("%s [%s] VDEV[%d] %s", time1,
-			       (type == 1) ? "BTM_REQ" : "NEIGH_RPT_RSP",
+			       (type == WLAN_ROAM_11KV_REQ_TYPE_BTM) ?
+			       "BTM_REQ" : "NEIGH_RPT_RSP",
 			       vdev_id,
 			       (num_ch > 0) ? buf : "NO Ch update");
 	} else {
 		mlme_nofl_info("%s No response received from AP",
-			       (type == 1) ? "BTM" : "NEIGH_RPT");
+			       (type == WLAN_ROAM_11KV_REQ_TYPE_BTM) ?
+			       "BTM" : "NEIGH_RPT");
 	}
 	qdf_mem_free(buf);
 }
