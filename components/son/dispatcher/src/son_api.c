@@ -203,3 +203,112 @@ uint32_t wlan_son_get_chan_flag(struct wlan_objmgr_pdev *pdev,
 
 	return flags;
 }
+
+QDF_STATUS wlan_son_peer_set_kickout_allow(struct wlan_objmgr_vdev *vdev,
+					   struct wlan_objmgr_peer *peer,
+					   bool kickout_allow)
+{
+	struct peer_mlme_priv_obj *peer_priv;
+
+	if (!peer) {
+		qdf_err("invalid peer");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!vdev) {
+		qdf_err("invalid vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		qdf_err("invalid vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	peer_priv->allow_kickout = kickout_allow;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool wlan_son_peer_is_kickout_allow(struct wlan_objmgr_vdev *vdev,
+				    uint8_t *macaddr)
+{
+	bool kickout_allow = true;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_psoc *psoc;
+	struct peer_mlme_priv_obj *peer_priv;
+
+	if (!vdev) {
+		qdf_err("invalid vdev");
+		return kickout_allow;
+	}
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		qdf_err("invalid psoc");
+		return kickout_allow;
+	}
+	peer = wlan_objmgr_get_peer_by_mac(psoc, macaddr,
+					   WLAN_SON_ID);
+
+	if (!peer) {
+		qdf_err("peer is null");
+		return kickout_allow;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		qdf_err("invalid vdev");
+		wlan_objmgr_peer_release_ref(peer, WLAN_SON_ID);
+		return kickout_allow;
+	}
+	kickout_allow = peer_priv->allow_kickout;
+	wlan_objmgr_peer_release_ref(peer, WLAN_SON_ID);
+
+	return kickout_allow;
+}
+
+void wlan_son_ind_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
+				uint8_t *macaddr, bool is_reassoc,
+				uint8_t *frame, uint16_t frame_len,
+				QDF_STATUS status)
+{
+	struct wlan_objmgr_peer *peer;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+	uint16_t assocstatus = IEEE80211_STATUS_UNSPECIFIED;
+	uint16_t sub_type = IEEE80211_FC0_SUBTYPE_ASSOC_REQ;
+
+	if (!vdev) {
+		qdf_err("invalid vdev");
+		return;
+	}
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		qdf_err("invalid psoc");
+		return;
+	}
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops || !rx_ops->son_rx_ops.process_mgmt_frame) {
+		qdf_err("invalid rx ops");
+		return;
+	}
+	peer = wlan_objmgr_get_peer_by_mac(psoc, macaddr,
+					   WLAN_SON_ID);
+	if (!peer) {
+		qdf_err("peer is null");
+		return;
+	}
+
+	if (is_reassoc)
+		sub_type = IEEE80211_FC0_SUBTYPE_REASSOC_REQ;
+	if (QDF_IS_STATUS_SUCCESS(status))
+		assocstatus = IEEE80211_STATUS_SUCCESS;
+	qdf_debug("subtype %u frame_len %u assocstatus %u",
+		  sub_type, frame_len, assocstatus);
+	rx_ops->son_rx_ops.process_mgmt_frame(vdev, peer, sub_type,
+					      frame, frame_len,
+					      &assocstatus);
+	wlan_objmgr_peer_release_ref(peer, WLAN_SON_ID);
+}

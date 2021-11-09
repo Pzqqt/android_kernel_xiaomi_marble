@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -312,7 +312,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 
 	if (!peer) {
 		if (p2p_soc_obj->cur_roc_vdev_id == P2P_INVALID_VDEV_ID) {
-			p2p_err("vdev id of current roc invalid");
+			p2p_debug("vdev id of current roc invalid");
 			qdf_nbuf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		} else {

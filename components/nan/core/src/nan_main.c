@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +37,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "qdf_platform.h"
 #include "wlan_osif_request_manager.h"
+#include "wlan_p2p_api.h"
 
 QDF_STATUS nan_set_discovery_state(struct wlan_objmgr_psoc *psoc,
 				   enum nan_disc_state new_state)
@@ -550,6 +552,7 @@ static QDF_STATUS nan_handle_confirm(struct nan_datapath_confirm_event *confirm)
 	struct wlan_objmgr_psoc *psoc;
 	struct nan_psoc_priv_obj *psoc_nan_obj;
 	struct nan_vdev_priv_obj *vdev_nan_obj;
+	struct wlan_objmgr_peer *peer;
 
 	vdev_id = wlan_vdev_get_id(confirm->vdev);
 	psoc = wlan_vdev_get_psoc(confirm->vdev);
@@ -557,6 +560,15 @@ static QDF_STATUS nan_handle_confirm(struct nan_datapath_confirm_event *confirm)
 		nan_err("psoc is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc,
+					   confirm->peer_ndi_mac_addr.bytes,
+					   WLAN_NAN_ID);
+	if (!peer) {
+		nan_debug("Drop NDP confirm as peer isn't available");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
 
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
 	if (!psoc_nan_obj) {
@@ -1166,10 +1178,11 @@ pre_enable_failure:
 	return status;
 }
 
-QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_pdev *pdev,
 				    uint32_t nan_ch_freq)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	status = nan_set_discovery_state(psoc, NAN_DISC_ENABLE_IN_PROGRESS);
 
@@ -1186,6 +1199,8 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 		status = QDF_STATUS_E_INVAL;
 		goto pre_enable_failure;
 	}
+
+	wlan_p2p_abort_scan(pdev);
 
 	if (policy_mgr_is_hw_dbs_capable(psoc)) {
 		status = nan_set_hw_mode(psoc, nan_ch_freq);

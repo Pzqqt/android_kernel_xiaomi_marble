@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +37,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 	struct sk_buff *skb;
 	struct sk_buff *skb_next;
 	unsigned int cpu_index;
+	struct hdd_tx_rx_stats *stats;
 
 	qdf_assert(context);
 	qdf_assert(rxbuf);
@@ -48,6 +50,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 	}
 
 	cpu_index = wlan_hdd_get_cpu();
+	stats = &adapter->hdd_stats.tx_rx_stats;
 
 	/* walk the chain until all are processed */
 	skb = (struct sk_buff *)rxbuf;
@@ -55,7 +58,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 		skb_next = skb->next;
 		skb->dev = adapter->dev;
 
-		++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
+		++stats->per_cpu[cpu_index].rx_packets;
 		++adapter->stats.rx_packets;
 		adapter->stats.rx_bytes += skb->len;
 
@@ -79,10 +82,9 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 		}
 
 		if (NET_RX_SUCCESS == rxstat)
-			++adapter->
-				hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
+			++stats->per_cpu[cpu_index].rx_delivered;
 		else
-			++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
+			++stats->per_cpu[cpu_index].rx_refused;
 
 		skb = skb_next;
 	}

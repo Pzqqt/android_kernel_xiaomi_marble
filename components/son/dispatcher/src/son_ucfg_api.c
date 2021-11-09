@@ -70,3 +70,10 @@ uint32_t ucfg_son_get_chan_flag(struct wlan_objmgr_pdev *pdev,
 	return wlan_son_get_chan_flag(pdev, freq, flag_160,
 				      chan_params);
 }
+
+QDF_STATUS ucfg_son_set_peer_kickout_allow(struct wlan_objmgr_vdev *vdev,
+					   struct wlan_objmgr_peer *peer,
+					   bool kickout_allow)
+{
+	return wlan_son_peer_set_kickout_allow(vdev, peer, kickout_allow);
+}

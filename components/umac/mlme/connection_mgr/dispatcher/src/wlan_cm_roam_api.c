@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1284,11 +1285,13 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					   REASON_ROAM_CONTROL_CONFIG_ENABLED);
 		break;
 	case ROAM_PREFERRED_CHAN:
-		if (dst_cfg->specific_chan_info.num_chan) {
-			mlme_err("Specific channel list is already configured");
-			status = QDF_STATUS_E_INVAL;
-			break;
-		}
+		/*
+		 * In RSO update command, the specific channel list is
+		 * given priority. So flush the Specific channel list if
+		 * preferred channel list is received. Else the channel list
+		 * type will be filled as static instead of dynamic.
+		 */
+		cm_flush_roam_channel_list(&dst_cfg->specific_chan_info);
 		status = cm_update_roam_scan_channel_list(psoc, vdev, rso_cfg,
 					vdev_id, &dst_cfg->pref_chan_info,
 					src_config->chan_info.freq_list,
@@ -2579,6 +2582,7 @@ cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
 	case ROAM_TRIGGER_REASON_UNIT_TEST:
 		break;
 	case ROAM_TRIGGER_REASON_BTM:
+		cm_roam_btm_req_event(&ptr->btm_trig_data, vdev_id);
 		buf_cons = qdf_snprint(temp, buf_left,
 				       "Req_mode: %d Disassoc_timer: %d",
 				       ptr->btm_trig_data.btm_request_mode,
@@ -2883,13 +2887,14 @@ cm_roam_stats_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
  */
 static void
 cm_roam_stats_print_roam_result(struct wmi_roam_result *res,
+				struct wmi_roam_scan_data *scan_data,
 				uint8_t vdev_id)
 {
 	char *buf;
 	char time[TIME_STRING_LEN];
 
 	/* Update roam result info to userspace */
-	cm_roam_result_info_event(res, vdev_id, 0);
+	cm_roam_result_info_event(res, scan_data, vdev_id);
 
 	buf = qdf_mem_malloc(ROAM_FAILURE_BUF_SIZE);
 	if (!buf)
@@ -3005,6 +3010,7 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 
 		if (stats_info->result[i].present) {
 			cm_roam_stats_print_roam_result(&stats_info->result[i],
+							&stats_info->scan[i],
 							stats_info->vdev_id);
 			status = wlan_cm_update_roam_states(psoc,
 					      stats_info->vdev_id,
@@ -3020,9 +3026,11 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 		 * triggers this TLV contains zeros, so host should not print.
 		 */
 		if (stats_info->btm_rsp[i].present &&
-		    (stats_info->trigger[i].present &&
+		    stats_info->trigger[i].present &&
+		    (stats_info->trigger[i].trigger_reason ==
+		     ROAM_TRIGGER_REASON_BTM ||
 		     stats_info->trigger[i].trigger_reason ==
-		     ROAM_TRIGGER_REASON_BTM)) {
+		     ROAM_TRIGGER_REASON_WTC_BTM)) {
 			cm_roam_stats_print_btm_rsp_info(
 						&stats_info->trigger[i],
 						&stats_info->btm_rsp[i],

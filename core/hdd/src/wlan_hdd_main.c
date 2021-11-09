@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,9 +89,6 @@
 #include "qdf_periodic_work.h"
 #endif
 
-#ifdef MSM_PLATFORM
-#include <soc/qcom/subsystem_restart.h>
-#endif
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <wlan_hdd_green_ap.h>
@@ -1147,7 +1145,7 @@ static int pcie_gen_speed;
 /* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static enum phy_ch_width hdd_get_eht_phy_ch_width_from_target(void)
 {
 	uint32_t max_fw_bw = sme_get_eht_ch_width();
@@ -3376,7 +3374,7 @@ static bool hdd_max_sta_interface_up_count_reached(struct hdd_adapter *adapter)
 	return false;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_IFTYPE_MLO_LINK_SUPPORT)
 static int hdd_start_link_adapter(struct hdd_adapter *sta_adapter)
 {
 	int i, ret = 0;
@@ -5415,13 +5413,15 @@ static netdev_features_t __hdd_fix_features(struct net_device *net_dev,
 	}
 
 	feature_tso_csum = hdd_get_tso_csum_feature_flags();
-	if (hdd_is_legacy_connection(adapter))
+	if (hdd_is_legacy_connection(adapter)) {
 		/* Disable checksum and TSO */
 		feature_change_req &= ~feature_tso_csum;
-	else
+		adapter->tso_csum_feature_enabled = 0;
+	} else {
 		/* Enable checksum and TSO */
 		feature_change_req |= feature_tso_csum;
-
+		adapter->tso_csum_feature_enabled = 1;
+	}
 	hdd_debug("vdev mode %d current features 0x%llx, requesting feature change 0x%llx",
 		  adapter->device_mode, net_dev->features,
 		  feature_change_req);
@@ -7720,7 +7720,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		hdd_abort_ongoing_sta_connection(hdd_ctx);
 		/* Diassociate with all the peers before stop ap post */
 		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-			if (wlan_hdd_del_station(adapter))
+			if (wlan_hdd_del_station(adapter, NULL))
 				hdd_sap_indicate_disconnect_for_sta(adapter);
 		}
 		status = wlan_hdd_flush_pmksa_cache(adapter);
@@ -7775,14 +7775,14 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 
 		mutex_lock(&hdd_ctx->sap_lock);
 		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+			struct hdd_hostapd_state *hostapd_state =
+				WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+
+			qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 			status = wlansap_stop_bss(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 
 			if (QDF_IS_STATUS_SUCCESS(status)) {
-				struct hdd_hostapd_state *hostapd_state =
-					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-				qdf_event_reset(&hostapd_state->
-						qdf_stop_bss_event);
 				status = qdf_wait_single_event(
 					&hostapd_state->qdf_stop_bss_event,
 					SME_CMD_STOP_BSS_TIMEOUT);
@@ -8009,8 +8009,10 @@ void hdd_set_netdev_flags(struct hdd_adapter *adapter)
 		adapter->dev->features |=
 			(NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM);
 
-	if (cdp_cfg_get(soc, cfg_dp_tso_enable) && enable_csum)
+	if (cdp_cfg_get(soc, cfg_dp_tso_enable) && enable_csum) {
 		adapter->dev->features |= TSO_FEATURE_FLAGS;
+		adapter->tso_csum_feature_enabled = 1;
+	}
 
 	if (cdp_cfg_get(soc, cfg_dp_sg_enable))
 		adapter->dev->features |= NETIF_F_SG;
@@ -9178,6 +9180,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
+	hdd_wait_for_dp_tx();
 	wlan_hdd_destroy_mib_stats_lock();
 	hdd_debugfs_ini_config_deinit(hdd_ctx);
 	hdd_debugfs_mws_coex_info_deinit(hdd_ctx);
@@ -10270,7 +10273,9 @@ void hdd_send_mscs_action_frame(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter)
 {
 	uint64_t mscs_vo_pkt_delta;
-	unsigned long tx_vo_pkts;
+	unsigned long tx_vo_pkts = 0;
+	uint8_t cpu;
+	struct hdd_tx_rx_stats *stats = &adapter->hdd_stats.tx_rx_stats;
 
 	/*
 	 * To disable MSCS feature in driver set mscs_pkt_threshold = 0
@@ -10279,7 +10284,8 @@ void hdd_send_mscs_action_frame(struct hdd_context *hdd_ctx,
 	if (!hdd_ctx->config->mscs_pkt_threshold)
 		return;
 
-	tx_vo_pkts = adapter->hdd_stats.tx_rx_stats.tx_classified_ac[SME_AC_VO];
+	for (cpu = 0; cpu < NUM_CPUS; cpu++)
+		tx_vo_pkts += stats->per_cpu[cpu].tx_classified_ac[SME_AC_VO];
 
 	if (!adapter->mscs_counter)
 		adapter->mscs_prev_tx_vo_pkts = tx_vo_pkts;
@@ -13923,10 +13929,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
 		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
 					       ALLOWED_KEYMGMT_6G_MASK);
-	} else {
-		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
-		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
-					       DEFAULT_KEYMGMT_6G_MASK);
 	}
 	hdd_thermal_stats_cmd_init(hdd_ctx);
 
@@ -16049,7 +16051,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
-		wlan_hdd_del_station(ap_adapter);
+		wlan_hdd_del_station(ap_adapter, NULL);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		hdd_debug("Now doing SAP STOPBSS");
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
@@ -16801,11 +16803,11 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	return status;
 
 err_nan:
-	ucfg_nan_psoc_close(psoc);
-err_tdls:
 	ucfg_tdls_psoc_close(psoc);
-err_p2p:
+err_tdls:
 	ucfg_p2p_psoc_close(psoc);
+err_p2p:
+	ucfg_policy_mgr_psoc_close(psoc);
 err_plcy_mgr:
 	ucfg_pmo_psoc_close(psoc);
 err_pmo:
@@ -18509,7 +18511,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
-		wlan_hdd_del_station(ap_adapter);
+		wlan_hdd_del_station(ap_adapter, NULL);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
@@ -19133,7 +19135,7 @@ static const struct hdd_chwidth_info chwidth_info[] = {
 		.ch_bw_str = "10MHz",
 		.phy_chwidth = CH_WIDTH_10MHZ,
 	},
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	[NL80211_CHAN_WIDTH_320] = {
 		.sir_chwidth_valid = true,
 		.sir_chwidth = eHT_CHANNEL_WIDTH_320MHZ,
@@ -19293,6 +19295,32 @@ out:
 	osif_driver_sync_op_stop(driver_sync);
 
 	return ret;
+}
+
+void hdd_wait_for_dp_tx(void)
+{
+	int count = MAX_SSR_WAIT_ITERATIONS;
+	int r;
+
+	hdd_enter();
+
+	while (count) {
+		r = atomic_read(&dp_protect_entry_count);
+
+		if (!r)
+			break;
+
+		if (--count) {
+			hdd_err_rl("Waiting for Packet tx to complete: %d",
+				   count);
+			msleep(SSR_WAIT_SLEEP_TIME);
+		}
+	}
+
+	if (!count)
+		hdd_err("Timed-out waiting for packet tx");
+
+	hdd_exit();
 }
 
 static const struct kernel_param_ops pcie_gen_speed_ops = {

@@ -169,6 +169,7 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  *           Broadcast uses station ID zero by default.
  * @sta_type: Type of station i.e. p2p client or infrastructure station
  * @sta_mac: MAC address of the station
+ * @mld_addr: MLD address of the station
  * @peer_state: Current Station state so HDD knows how to deal with packet
  *              queue. Most recent states used to change TLSHIM STA state.
  * @is_qos_enabled: Track QoS status of station
@@ -236,6 +237,7 @@ struct hdd_station_info {
 	uint8_t sta_id;
 	eStationType sta_type;
 	struct qdf_mac_addr sta_mac;
+	struct qdf_mac_addr mld_addr;
 	enum ol_txrx_peer_state peer_state;
 	bool is_qos_enabled;
 	bool is_deauth_in_progress;

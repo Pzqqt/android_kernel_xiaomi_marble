@@ -44,6 +44,7 @@
 #include "wlan_utility.h"
 #include "wlan_crypto_global_api.h"
 #include "lim_mlo.h"
+#include <son_api.h>
 
 /**
  * lim_convert_supported_channels - Parses channel support IE
@@ -2175,6 +2176,21 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 		goto send_ind_to_sme;
 	}
 
+	if (LIM_IS_AP_ROLE(session)) {
+		if ((assoc_req->wpaPresent || assoc_req->rsnPresent) &&
+		    !session->privacy) {
+			pe_debug("reject assoc. wpa: %d, rsn: %d, privacy: %d",
+				 assoc_req->wpaPresent,
+				 assoc_req->rsnPresent,
+				 session->privacy);
+			lim_reject_association(mac_ctx, sa, sub_type, true,
+					       auth_type, peer_idx, false,
+					       STATUS_UNSPECIFIED_FAILURE,
+					       session);
+			return false;
+		}
+	}
+
 	/* check if sta is allowed per QoS AC rules */
 	if (!lim_chk_wmm(mac_ctx, sa, session, assoc_req, sub_type, qos_mode))
 		return false;
@@ -2253,18 +2269,6 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 		lim_set_mlo_recv_assoc(sta_ds, true);
 	else
 		lim_set_mlo_recv_assoc(sta_ds, false);
-
-	if (LIM_IS_AP_ROLE(session)) {
-		if ((assoc_req->wpaPresent || assoc_req->rsnPresent) &&
-		    !session->privacy) {
-			lim_reject_association(mac_ctx, sa, sub_type,
-					       true, auth_type, peer_idx,
-					       true,
-					       STATUS_UNSPECIFIED_FAILURE,
-					       session);
-			return false;
-		}
-	}
 
 send_ind_to_sme:
 	if (!lim_update_sta_ds(mac_ctx, sa, session, assoc_req,
@@ -2900,7 +2904,7 @@ lim_convert_channel_width_enum(enum phy_ch_width ch_width)
 		return eHT_CHANNEL_WIDTH_160MHZ;
 	case CH_WIDTH_80P80MHZ:
 		return eHT_CHANNEL_WIDTH_80P80MHZ;
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	case CH_WIDTH_320MHZ:
 		return eHT_CHANNEL_WIDTH_320MHZ;
 #endif
@@ -3208,6 +3212,12 @@ QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 		 QDF_MAC_ADDR_FMT, session_entry->peSessionId,
 		 assoc_req->ssId.ssId, sub_type, sta_ds->assocId,
 		 QDF_MAC_ADDR_REF(sta_ds->staAddr));
+
+	wlan_son_ind_assoc_req_frm(session_entry->vdev, sta_ds->staAddr,
+				   assoc_req->reassocRequest,
+				   qdf_nbuf_data(assoc_req->assoc_req_buf),
+				   qdf_nbuf_len(assoc_req->assoc_req_buf),
+				   QDF_STATUS_SUCCESS);
 
 	if (sub_type == LIM_ASSOC || sub_type == LIM_REASSOC) {
 		temp = sizeof(tLimMlmAssocInd);

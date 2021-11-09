@@ -861,7 +861,7 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter)
 	return errno;
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static void
 wlan_hdd_set_chandef_320mhz(struct cfg80211_chan_def *chandef,
 			    struct hdd_chan_change_params chan_change)
@@ -1632,6 +1632,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		}
 	}
 
+	qdf_mem_copy(&stainfo->mld_addr, &event->sta_mld, QDF_MAC_ADDR_SIZE);
+
 	cache_sta_info =
 		hdd_get_sta_info_by_mac(&adapter->cache_sta_info_list,
 					event->staMac.bytes,
@@ -1909,7 +1911,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	tSap_StationSetKeyCompleteEvent *key_complete;
 	int ret = 0;
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
-	struct hdd_station_info *stainfo, *cache_stainfo, *tmp = NULL;
+	struct hdd_station_info *stainfo, *cache_stainfo, *tmp = NULL,
+				*mld_sta_info;
 	mac_handle_t mac_handle;
 	struct sap_config *sap_config;
 	struct sap_context *sap_ctx = NULL;
@@ -2571,6 +2574,22 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		if (!stainfo) {
 			hdd_err("Failed to find the right station");
 			return QDF_STATUS_E_INVAL;
+		}
+
+		if (wlan_vdev_mlme_is_mlo_vdev(adapter->vdev)) {
+			mld_sta_info = hdd_get_sta_info_by_mac(
+						&adapter->sta_info_list,
+						stainfo->mld_addr.bytes,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
+			if (!mld_sta_info) {
+				hdd_debug("Failed to find the MLD station");
+			} else {
+				hdd_softap_deregister_sta(adapter,
+							  &mld_sta_info);
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						&mld_sta_info, true,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
+			}
 		}
 
 		/* Send DHCP STOP indication to FW */
@@ -3837,6 +3856,9 @@ void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
 	if (qdf_atomic_read(&adapter->ch_switch_in_progress)) {
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		policy_mgr_set_chan_switch_complete_evt(hdd_ctx->psoc);
+
+		/* Re-enable roaming on all connected STA vdev */
+		wlan_hdd_enable_roaming(adapter, RSO_SAP_CHANNEL_CHANGE);
 	}
 
 	hdd_softap_deinit_tx_rx(adapter);
@@ -6192,7 +6214,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	hdd_abort_ongoing_sta_connection(hdd_ctx);
 
 	if (adapter->device_mode == QDF_SAP_MODE) {
-		wlan_hdd_del_station(adapter);
+		wlan_hdd_del_station(adapter, NULL);
 		mac_handle = hdd_ctx->mac_handle;
 		status = wlan_hdd_flush_pmksa_cache(adapter);
 		if (QDF_IS_STATUS_ERROR(status))

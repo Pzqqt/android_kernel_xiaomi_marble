@@ -3269,7 +3269,7 @@ IE he_6ghz_band_cap (EID_EXTN_ID_ELEMENT) OUI (0x3B)
     }
 }
 
-IE eht_cap (EID_EXTN_ID_ELEMENT) OUI (0xFD)
+IE eht_cap (EID_EXTN_ID_ELEMENT) OUI (0x6C)
 {
     {
 	nsep_pri_access: 1;
@@ -3335,7 +3335,7 @@ IE eht_cap (EID_EXTN_ID_ELEMENT) OUI (0xFD)
     };
 }
 
-IE eht_op (EID_EXTN_ID_ELEMENT) OUI (0xFE)
+IE eht_op (EID_EXTN_ID_ELEMENT) OUI (0x6A)
 {
     basic_mcs_nss_set[2];
     primary_channel, 1;
@@ -3847,7 +3847,7 @@ IE sta_profile (0)
   OPTIE IE non_inheritance;
 }
 
-IE mlo_ie (EID_EXTN_ID_ELEMENT) OUI (0x5e)
+IE mlo_ie (EID_EXTN_ID_ELEMENT) OUI (0x6B)
 {
     {
         type: 3;

@@ -46,6 +46,7 @@
 #include <wlan_cm_api.h>
 #include <lim_mlo.h>
 #include "wlan_mlo_mgr_peer.h"
+#include <son_api.h>
 
 static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
 static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
@@ -1522,9 +1523,18 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 	mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = mlm_deauth_req;
 
 	/* Send Deauthentication frame to peer entity */
-	lim_send_deauth_mgmt_frame(mac_ctx, mlm_deauth_req->reasonCode,
-				   mlm_deauth_req->peer_macaddr.bytes,
-				   session, true);
+	if (mlm_deauth_req->reasonCode != REASON_DISASSOC_DUE_TO_INACTIVITY ||
+	    wlan_son_peer_is_kickout_allow(session->vdev, sta_ds->staAddr)) {
+		lim_send_deauth_mgmt_frame(mac_ctx, mlm_deauth_req->reasonCode,
+					   mlm_deauth_req->peer_macaddr.bytes,
+					   session, true);
+	} else {
+		pe_err("peer " QDF_MAC_ADDR_FMT " is in band steering, do not send deauth frame",
+		       QDF_MAC_ADDR_REF(mlm_deauth_req->peer_macaddr.bytes));
+		mlm_deauth_cnf.resultCode = eSIR_SME_SUCCESS;
+		goto end;
+	}
+
 	return;
 end:
 	qdf_copy_macaddr(&mlm_deauth_cnf.peer_macaddr,

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,14 +40,29 @@ static void hdd_sysfs_get_stats(struct hdd_adapter *adapter, ssize_t *length,
 	uint32_t len = 0;
 	uint32_t total_rx_pkt = 0, total_rx_dropped = 0;
 	uint32_t total_rx_delv = 0, total_rx_refused = 0;
+	uint32_t total_tx_pkt = 0;
+	uint32_t total_tx_dropped = 0;
+	uint32_t total_tx_orphaned = 0;
+	uint32_t total_tx_classified_ac[WLAN_MAX_AC] = {0};
+	uint32_t total_tx_dropped_ac[WLAN_MAX_AC] = {0};
 	int i = 0;
+	uint8_t ac;
 	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 
 	for (; i < NUM_CPUS; i++) {
-		total_rx_pkt += stats->rx_packets[i];
-		total_rx_dropped += stats->rx_dropped[i];
-		total_rx_delv += stats->rx_delivered[i];
-		total_rx_refused += stats->rx_refused[i];
+		total_rx_pkt += stats->per_cpu[i].rx_packets;
+		total_rx_dropped += stats->per_cpu[i].rx_dropped;
+		total_rx_delv += stats->per_cpu[i].rx_delivered;
+		total_rx_refused += stats->per_cpu[i].rx_refused;
+		total_tx_pkt += stats->per_cpu[i].tx_called;
+		total_tx_dropped += stats->per_cpu[i].tx_dropped;
+		total_tx_orphaned += stats->per_cpu[i].tx_orphaned;
+		for (ac = 0; ac < WLAN_MAX_AC; ac++) {
+			total_tx_classified_ac[ac] +=
+					 stats->per_cpu[i].tx_classified_ac[ac];
+			total_tx_dropped_ac[ac] +=
+					    stats->per_cpu[i].tx_dropped_ac[ac];
+		}
 	}
 
 	len = scnprintf(buffer, buf_len,
@@ -58,17 +74,17 @@ static void hdd_sysfs_get_stats(struct hdd_adapter *adapter, ssize_t *length,
 			"packets %u, dropped %u, unsolict_arp_n_mcast_drp %u, delivered %u, refused %u\n"
 			"GRO - agg %u non-agg %u flush_skip %u low_tput_flush %u disabled(conc %u low-tput %u)\n",
 			qdf_system_ticks(),
-			stats->tx_called,
-			stats->tx_dropped,
-			stats->tx_orphaned,
-			stats->tx_dropped_ac[SME_AC_BK],
-			stats->tx_dropped_ac[SME_AC_BE],
-			stats->tx_dropped_ac[SME_AC_VI],
-			stats->tx_dropped_ac[SME_AC_VO],
-			stats->tx_classified_ac[SME_AC_BK],
-			stats->tx_classified_ac[SME_AC_BE],
-			stats->tx_classified_ac[SME_AC_VI],
-			stats->tx_classified_ac[SME_AC_VO],
+			total_tx_pkt,
+			total_tx_dropped,
+			total_tx_orphaned,
+			total_tx_dropped_ac[SME_AC_BK],
+			total_tx_dropped_ac[SME_AC_BE],
+			total_tx_dropped_ac[SME_AC_VI],
+			total_tx_dropped_ac[SME_AC_VO],
+			total_tx_classified_ac[SME_AC_BK],
+			total_tx_classified_ac[SME_AC_BE],
+			total_tx_classified_ac[SME_AC_VI],
+			total_tx_classified_ac[SME_AC_VO],
 			qdf_system_ticks(),
 			total_rx_pkt, total_rx_dropped,
 			qdf_atomic_read(&stats->rx_usolict_arp_n_mcast_drp),
@@ -81,13 +97,15 @@ static void hdd_sysfs_get_stats(struct hdd_adapter *adapter, ssize_t *length,
 			qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_low_tput));
 
 	for (i = 0; i < NUM_CPUS; i++) {
-		if (stats->rx_packets[i] == 0)
+		if (stats->per_cpu[i].rx_packets == 0)
 			continue;
 		len += scnprintf(buffer + len, buf_len - len,
 				 "Rx CPU[%d]:"
 				 "packets %u, dropped %u, delivered %u, refused %u\n",
-				 i, stats->rx_packets[i], stats->rx_dropped[i],
-				 stats->rx_delivered[i], stats->rx_refused[i]);
+				 i, stats->per_cpu[i].rx_packets,
+				 stats->per_cpu[i].rx_dropped,
+				 stats->per_cpu[i].rx_delivered,
+				 stats->per_cpu[i].rx_refused);
 	}
 
 	len += scnprintf(buffer + len, buf_len - len,

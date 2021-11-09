@@ -338,9 +338,9 @@ QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 	if (req && req->pbssDescription) {
 		lim_fill_ft_session(mac,
 				    req->pbssDescription, ft_session,
-				    pe_session, WLAN_PHYMODE_AUTO, NULL);
+				    pe_session, WLAN_PHYMODE_AUTO);
 		lim_ft_prepare_add_bss_req(mac, ft_session,
-					   req->pbssDescription, NULL);
+					   req->pbssDescription);
 	}
 
 	return QDF_STATUS_SUCCESS;

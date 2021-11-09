@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -124,6 +125,13 @@
 /*
  * Preprocessor definitions and constants
  */
+
+static qdf_atomic_t dp_protect_entry_count;
+/* Milli seconds to delay SSR thread when an packet is getting processed */
+#define SSR_WAIT_SLEEP_TIME 200
+/* MAX iteration count to wait for dp tx to complete */
+#define MAX_SSR_WAIT_ITERATIONS 100
+#define MAX_SSR_PROTECT_LOG (16)
 
 #ifdef FEATURE_WLAN_APF
 /**
@@ -315,9 +323,6 @@ enum hdd_nb_cmd_id {
 
 #define P2P_OUI_TYPE   "\x50\x6f\x9a\x09"
 #define P2P_OUI_TYPE_SIZE  4
-
-#define HS20_OUI_TYPE   "\x50\x6f\x9a\x10"
-#define HS20_OUI_TYPE_SIZE  4
 
 #define OSEN_OUI_TYPE   "\x50\x6f\x9a\x12"
 #define OSEN_OUI_TYPE_SIZE  4
@@ -567,18 +572,21 @@ struct hdd_tx_rx_histogram {
 };
 
 struct hdd_tx_rx_stats {
-	/* start_xmit stats */
-	__u32    tx_called;
-	__u32    tx_dropped;
-	__u32    tx_orphaned;
-	__u32    tx_classified_ac[NUM_TX_QUEUES];
-	__u32    tx_dropped_ac[NUM_TX_QUEUES];
+	struct {
+		/* start_xmit stats */
+		__u32    tx_called;
+		__u32    tx_dropped;
+		__u32    tx_orphaned;
+		__u32    tx_classified_ac[WLAN_MAX_AC];
+		__u32    tx_dropped_ac[WLAN_MAX_AC];
 
-	/* rx stats */
-	__u32 rx_packets[NUM_CPUS];
-	__u32 rx_dropped[NUM_CPUS];
-	__u32 rx_delivered[NUM_CPUS];
-	__u32 rx_refused[NUM_CPUS];
+		/* rx stats */
+		__u32 rx_packets;
+		__u32 rx_dropped;
+		__u32 rx_delivered;
+		__u32 rx_refused;
+	} per_cpu[NUM_CPUS];
+
 	qdf_atomic_t rx_usolict_arp_n_mcast_drp;
 
 	/* rx gro */
@@ -1523,6 +1531,8 @@ struct hdd_adapter {
 	uint8_t gro_disallowed[DP_MAX_RX_THREADS];
 	uint8_t gro_flushed[DP_MAX_RX_THREADS];
 	bool handle_feature_update;
+	/* Indicate if TSO and checksum offload features are enabled or not */
+	bool tso_csum_feature_enabled;
 	bool runtime_disable_rx_thread;
 	ol_txrx_rx_fp rx_stack;
 
@@ -2126,6 +2136,7 @@ struct hdd_context {
 #endif
 	uint8_t bt_a2dp_active:1;
 	uint8_t bt_vo_active:1;
+	uint8_t bt_profile_con:1;
 	enum band_info curr_band;
 	bool imps_enabled;
 #ifdef WLAN_FEATURE_PACKET_FILTERING
@@ -4807,6 +4818,35 @@ hdd_monitor_mode_qdf_create_event(struct hdd_adapter *adapter,
 }
 #endif
 
+static inline bool hdd_is_mac_addr_same(uint8_t *addr1, uint8_t *addr2)
+{
+	return !qdf_mem_cmp(addr1, addr2, QDF_MAC_ADDR_SIZE);
+}
+
+#ifdef DP_FEATURE_11BE_MLO
+static inline bool hdd_nbuf_dst_addr_is_mld_addr(struct hdd_adapter *adapter,
+						 struct sk_buff *nbuf)
+{
+	return hdd_is_mac_addr_same(adapter->mld_addr.bytes,
+				    qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+#else
+static inline bool hdd_nbuf_dst_addr_is_mld_addr(struct hdd_adapter *adapter,
+						 struct sk_buff *nbuf)
+{
+	return false;
+}
+#endif
+
+static inline bool hdd_nbuf_dst_addr_is_self_addr(struct hdd_adapter *adapter,
+						  struct sk_buff *nbuf)
+{
+	return hdd_is_mac_addr_same(adapter->mac_addr.bytes,
+				    qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
      defined(WLAN_FEATURE_11AX)
 /**
@@ -5019,4 +5059,23 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
  * released.
  */
 void hdd_check_for_net_dev_ref_leak(struct hdd_adapter *adapter);
+
+/**
+ * hdd_wait_for_dp_tx: Wait for packet tx to complete
+ *
+ * This function waits for dp packet tx to complete
+ *
+ * Return: None
+ */
+void hdd_wait_for_dp_tx(void);
+
+static inline void hdd_dp_ssr_protect(void)
+{
+	qdf_atomic_inc_return(&dp_protect_entry_count);
+}
+
+static inline void hdd_dp_ssr_unprotect(void)
+{
+	qdf_atomic_dec(&dp_protect_entry_count);
+}
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

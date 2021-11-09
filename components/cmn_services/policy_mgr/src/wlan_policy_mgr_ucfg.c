@@ -49,6 +49,8 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_ALLOW_MCC_GO_DIFF_BI);
 	cfg->dual_mac_feature =
 		cfg_get(psoc, CFG_DUAL_MAC_FEATURE_DISABLE);
+	cfg->sbs_enable =
+		cfg_get(psoc, CFG_ENABLE_SBS);
 	cfg->is_force_1x1_enable =
 		cfg_get(psoc, CFG_FORCE_1X1_FEATURE);
 	cfg->sta_sap_scc_on_dfs_chnl =

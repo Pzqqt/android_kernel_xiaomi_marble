@@ -910,6 +910,7 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 		0, NULL, psoc);
 
 	cm_check_and_set_sae_single_pmk_cap(psoc, vdev_id);
+	cm_csr_send_set_ie(cm_ctx->vdev);
 
 	if (ucfg_pkt_capture_get_pktcap_mode(psoc))
 		ucfg_pkt_capture_record_channel(cm_ctx->vdev);

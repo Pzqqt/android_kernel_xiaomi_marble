@@ -93,7 +93,7 @@ static int __wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 		return -EAGAIN;
 	}
 
-	return os_if_process_nan_req(hdd_ctx->psoc, adapter->vdev_id,
+	return os_if_process_nan_req(hdd_ctx->pdev, adapter->vdev_id,
 				     data, data_len);
 }
 

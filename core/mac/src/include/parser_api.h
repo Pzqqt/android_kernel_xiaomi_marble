@@ -303,6 +303,7 @@ typedef struct sSirProbeRespBeacon {
 	tDot11fIEtransmit_power_env transmit_power_env[MAX_TPE_IES];
 	uint8_t ap_power_type;
 	tSirMultiLink_IE mlo_ie;
+	tDot11fIEWMMParams wmm_params;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */

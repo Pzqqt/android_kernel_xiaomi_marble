@@ -45,6 +45,14 @@
  * @os_if_get_candidate_freq: get freq to switch after radar detection
  * @os_if_set_phymode: set phy mode
  * @os_if_get_phymode: get phy mode
+ * @os_if_get_rx_nss: Gets number of RX spatial streams
+ * @os_if_set_acl_policy: set acl policy
+ * @os_if_get_acl_policy: get acl policy
+ * @os_if_add_acl_mac: add mac to acl
+ * @os_if_del_acl_mac: del mac from acl
+ * @os_if_kickout_mac: kickout sta with given mac
+ * @os_if_set_chwidth: set chan width
+ * @os_if_get_chwidth: get chan width
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -68,6 +76,21 @@ struct son_callbacks {
 				 enum ieee80211_phymode mode);
 	enum ieee80211_phymode (*os_if_get_phymode)(
 					struct wlan_objmgr_vdev *vdev);
+	uint8_t (*os_if_get_rx_nss)(struct wlan_objmgr_vdev *vdev);
+	QDF_STATUS (*os_if_set_acl_policy)(struct wlan_objmgr_vdev *vdev,
+					   ieee80211_acl_cmd son_acl_policy);
+	ieee80211_acl_cmd (*os_if_get_acl_policy)(
+						struct wlan_objmgr_vdev *vdev);
+	int (*os_if_add_acl_mac)(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *acl_mac);
+	int (*os_if_del_acl_mac)(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *acl_mac);
+	int (*os_if_kickout_mac)(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *acl_mac);
+	int (*os_if_set_chwidth)(struct wlan_objmgr_vdev *vdev,
+				 enum ieee80211_cwm_width son_chwidth);
+	enum ieee80211_cwm_width (*os_if_get_chwidth)(
+				struct wlan_objmgr_vdev *vdev);
 };
 
 /**
@@ -280,4 +303,166 @@ enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev);
  */
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode);
+
+/**
+ * os_if_son_get_chan_util() - get chan utilization
+ * @vdev: vdev
+ *
+ * Return: chan utilization (0 - 100)
+ */
+uint8_t os_if_son_get_chan_util(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_pdev_ops() - Handles PDEV specific SON commands
+ * @pdev: pdev
+ * @type: SON command to handle
+ * @data: Input Data
+ * @ret: Output Data
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_pdev_ops(struct wlan_objmgr_pdev *pdev,
+			      enum wlan_mlme_pdev_param type,
+			      void *data, void *ret);
+
+/**
+ * os_if_son_vdev_ops() - Handles VDEV specific SON commands
+ * @vdev: vdev
+ * @type: SON command to handle
+ * @data: Input Data
+ * @ret: Output Data
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_vdev_ops(struct wlan_objmgr_vdev *pdev,
+			      enum wlan_mlme_vdev_param type,
+			      void *data, void *ret);
+
+/**
+ * os_if_son_peer_ops() - Handles PEER specific SON commands
+ * @peer: peer
+ * @type: SON command to handle
+ * @data: Input Data. Pointer to wlan_mlme_peer_data
+ * @ret: Output Data. Pointer to wlan_mlme_peer_data
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_peer_ops(struct wlan_objmgr_peer *peer,
+			      enum wlan_mlme_peer_param type,
+			      union wlan_mlme_peer_data *data,
+			      union wlan_mlme_peer_data *ret);
+
+/**
+ * os_if_son_scan_db_iterate() - get country code
+ * @pdev: pdev
+ * @handler: scan_iterator
+ * @arg: argument to be passed to handler
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_scan_db_iterate(struct wlan_objmgr_pdev *pdev,
+				     scan_iterator_func handler, void *arg);
+
+/**
+ * os_if_son_acl_is_probe_wh_set() - Withheld probes for given mac_addr,
+ *				     not supported
+ * @vdev: vdev
+ * @mac_addr: 6-Byte MAC address
+ * @probe_rssi: Probe Request RSSI
+ *
+ * Return: true / false
+ */
+bool os_if_son_acl_is_probe_wh_set(struct wlan_objmgr_vdev *vdev,
+				   const uint8_t *mac_addr,
+				   uint8_t probe_rssi);
+
+/**
+ * os_if_son_get_rx_streams() - Gets number of RX spatial streams
+ * @vdev: target vdev
+ *
+ * Return: number of spatial stream
+ */
+uint8_t os_if_son_get_rx_streams(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_cfg80211_reply() - replies to cfg80211
+ * @sk_buf: sk_buff to uper layer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS os_if_son_cfg80211_reply(qdf_nbuf_t sk_buf);
+
+/**
+ * os_if_son_vdev_is_wds() - checks if wds capability is supported or not
+ * @vdev: Pointer to vdev
+ *
+ * Return: true if wds is supported
+ */
+bool os_if_son_vdev_is_wds(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * os_if_son_set_acl_policy() - set acl policy
+ * @vdev: vdev
+ * @son_acl_policy: son acl policy. enum ieee80211_acl_cmd
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS os_if_son_set_acl_policy(struct wlan_objmgr_vdev *vdev,
+				    ieee80211_acl_cmd son_acl_policy);
+
+/**
+ * os_if_son_get_acl_policy() - get acl policy
+ * @vdev: vdev
+ *
+ * Return: acl policy. enum ieee80211_acl_cmd
+ */
+ieee80211_acl_cmd os_if_son_get_acl_policy(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_add_acl_mac() - add mac to acl
+ * @vdev: vdev
+ * @acl_mac: mac to add
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_add_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac);
+
+/**
+ * os_if_son_del_acl_mac() - del mac from acl
+ * @vdev: vdev
+ * @acl_mac: mac to del
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_del_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac);
+
+/**
+ * os_if_son_kickout_mac() - kickout sta with given mac
+ * @vdev: vdev
+ * @acl_mac: sta mac to kickout
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_kickout_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *mac);
+
+/**
+ * os_if_son_set_chwidth() - set chan width
+ * @vdev: vdev
+ * @son_chwidth: son chan width
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_set_chwidth(struct wlan_objmgr_vdev *vdev,
+			  enum ieee80211_cwm_width son_chwidth);
+
+/**
+ * os_if_son_get_chwidth() - get chan width
+ * @vdev: vdev
+ *
+ * Return: son chan width
+ */
+enum ieee80211_cwm_width os_if_son_get_chwidth(struct wlan_objmgr_vdev *vdev);
 #endif

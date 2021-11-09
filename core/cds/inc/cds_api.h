@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,9 +85,12 @@ enum cds_driver_state {
  * struce cds_vdev_dp_stats - vdev stats populated from DP
  * @tx_retries: packet number of successfully transmitted after more
  *              than one retransmission attempt
+ * @tx_mpdu_success_with_retries: Number of MPDU transmission retries done
+ *				  in case of successful transmission.
  */
 struct cds_vdev_dp_stats {
 	uint32_t tx_retries;
+	uint32_t tx_mpdu_success_with_retries;
 };
 
 #define __CDS_IS_DRIVER_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
@@ -606,4 +610,20 @@ QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present);
  * Return: Status of map operation
  */
 int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
+
+/**
+ * cds_is_driver_transitioning() - Is driver transitioning
+ *
+ * Return: true if driver is loading/unloading/recovering and false otherwise.
+ */
+static inline bool cds_is_driver_transitioning(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_UNLOADING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_RECOVERING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_BAD);
+}
+
 #endif /* if !defined __CDS_API_H */

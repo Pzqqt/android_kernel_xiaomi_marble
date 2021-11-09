@@ -158,14 +158,14 @@ static inline QDF_STATUS os_if_nan_set_ndp_delete_transaction_id(
 /**
  * os_if_process_nan_req: os_if api to handle NAN requests attached to the
  * vendor command QCA_NL80211_VENDOR_SUBCMD_NAN_EXT
- * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
  * @vdev_id: NAN vdev id
  * @data: request data. contains vendor cmd tlvs
  * @data_len: length of data
  *
  * Return: status of operation
  */
-int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+int os_if_process_nan_req(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			  const void *data, int data_len);
 #else
 

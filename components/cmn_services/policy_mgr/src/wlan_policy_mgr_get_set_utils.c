@@ -1023,11 +1023,11 @@ policy_mgr_dump_curr_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
 	for (i = 0; i < MAX_MAC; i++)
 		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
-					    i, freq_range[i].low_2ghz_freq,
-					    freq_range[i].high_2ghz_freq,
-					    freq_range[i].low_5ghz_freq,
-					    freq_range[i].high_5ghz_freq);
+			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					     i, freq_range[i].low_2ghz_freq,
+					     freq_range[i].high_2ghz_freq,
+					     freq_range[i].low_5ghz_freq,
+					     freq_range[i].high_5ghz_freq);
 }
 
 static const char *policy_mgr_hw_mode_to_str(enum policy_mgr_mode hw_mode)
@@ -1054,13 +1054,13 @@ policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
 
 	for (i = 0; i < MAX_MAC; i++)
 		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_info("PLCY_MGR_FREQ_RANGE: %s(%d): mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
-					    policy_mgr_hw_mode_to_str(hw_mode),
-					    hw_mode, i,
-					    freq_range[i].low_2ghz_freq,
-					    freq_range[i].high_2ghz_freq,
-					    freq_range[i].low_5ghz_freq,
-					    freq_range[i].high_5ghz_freq);
+			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE: %s(%d): mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+					     policy_mgr_hw_mode_to_str(hw_mode),
+					     hw_mode, i,
+					     freq_range[i].low_2ghz_freq,
+					     freq_range[i].high_2ghz_freq,
+					     freq_range[i].low_5ghz_freq,
+					     freq_range[i].high_5ghz_freq);
 }
 
 static void
@@ -1109,6 +1109,16 @@ policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	policy_mgr_dump_curr_freq_range(pm_ctx);
 }
 
+static void
+policy_mgr_update_sbs_lowr_band_end_frq(struct policy_mgr_psoc_priv_obj *pm_ctx,
+					struct tgt_info *info)
+{
+	if (wlan_reg_is_5ghz_ch_freq(info->sbs_lower_band_end_freq) ||
+	    wlan_reg_is_6ghz_chan_freq(info->sbs_lower_band_end_freq))
+		pm_ctx->hw_mode.sbs_lower_band_end_freq =
+						info->sbs_lower_band_end_freq;
+}
+
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 					  struct target_psoc_info *tgt_hdl)
 {
@@ -1144,6 +1154,7 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("DBS list is freed");
 	}
 
+	policy_mgr_update_sbs_lowr_band_end_frq(pm_ctx, info);
 	pm_ctx->num_dbs_hw_modes = info->service_ext_param.num_hw_modes;
 	pm_ctx->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
@@ -1604,6 +1615,40 @@ done:
 		pm_ctx->dual_mac_cfg.cur_fw_mode_config);
 }
 
+void policy_mgr_init_sbs_fw_config(struct wlan_objmgr_psoc *psoc,
+				   uint32_t fw_config)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool sbs_enabled;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	/*
+	 * If SBS is not enabled from ini, no need to set SBS bits in fw config
+	 */
+	sbs_enabled = pm_ctx->cfg.sbs_enable;
+	if (!sbs_enabled) {
+		policy_mgr_debug("SBS not enabled from ini");
+		return;
+	}
+
+	/* Initialize fw_mode_config_bits with default FW value */
+	WMI_DBS_FW_MODE_CFG_ASYNC_SBS_SET(
+			pm_ctx->dual_mac_cfg.cur_fw_mode_config,
+			WMI_DBS_FW_MODE_CFG_ASYNC_SBS_GET(fw_config));
+
+	policy_mgr_rl_debug("fw_mode config updated from %x to %x",
+			    pm_ctx->dual_mac_cfg.prev_fw_mode_config,
+			    pm_ctx->dual_mac_cfg.cur_fw_mode_config);
+	/* Initialize the previous scan/fw mode config */
+	pm_ctx->dual_mac_cfg.prev_fw_mode_config =
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config;
+}
+
 void policy_mgr_update_dbs_scan_config(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1898,14 +1943,40 @@ bool policy_mgr_is_interband_mcc_supported(struct wlan_objmgr_psoc *psoc)
 				    wmi_service_no_interband_mcc_support);
 }
 
+static bool policy_mgr_is_sbs_enable(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	/*
+	 * if gEnableSBS is not set then policy_mgr_init_sbs_fw_config won't
+	 * enable Async SBS fw config bit
+	 */
+	if (WMI_DBS_FW_MODE_CFG_ASYNC_SBS_GET(
+			pm_ctx->dual_mac_cfg.cur_fw_mode_config))
+		return true;
+
+	return false;
+}
+
 bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 {
+	if (!policy_mgr_is_sbs_enable(psoc)) {
+		policy_mgr_rl_debug("SBS INI is disabled");
+		return false;
+	}
+
 	if (!policy_mgr_find_if_fw_supports_dbs(psoc)) {
 		return false;
 	}
 
 	if (!policy_mgr_find_if_hwlist_has_sbs(psoc)) {
-		policymgr_nofl_debug("HW mode list has no SBS");
+		policy_mgr_rl_debug("HW mode list has no SBS");
 		return false;
 	}
 
@@ -3439,6 +3510,72 @@ bool policy_mgr_is_p2p_p2p_conc_supported(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+/**
+ * policy_mgr_is_third_conn_sta_p2p_p2p_valid: This API checks the firmware
+ * capability and allows STA + P2P + P2P combination. It can be in SCC/MCC/DBS
+ * @psoc: psoc pointer
+ * @new_conn_mode: third connection mode
+ *
+ * Return: true if support else false
+ */
+static bool policy_mgr_is_third_conn_sta_p2p_p2p_valid(
+					struct wlan_objmgr_psoc *psoc,
+					enum policy_mgr_con_mode new_conn_mode)
+{
+	int num_sta, num_go, num_cli;
+
+	num_sta = policy_mgr_mode_specific_connection_count(psoc,
+							    PM_STA_MODE,
+							    NULL);
+
+	num_go = policy_mgr_mode_specific_connection_count(psoc,
+							   PM_P2P_GO_MODE,
+							   NULL);
+
+	num_cli = policy_mgr_mode_specific_connection_count(psoc,
+							    PM_P2P_CLIENT_MODE,
+							    NULL);
+
+	if (num_sta + num_go + num_cli != 2)
+		return true;
+
+	/* If STA + P2P + another STA comes up then return true
+	 * as this API is only for two port P2P + single STA combo
+	 * checks
+	 */
+	if (num_sta == 1 && new_conn_mode == PM_STA_MODE)
+		return true;
+
+	if ((((PM_STA_MODE == pm_conc_connection_list[0].mode &&
+	       PM_P2P_GO_MODE == pm_conc_connection_list[1].mode) ||
+	      (PM_P2P_GO_MODE == pm_conc_connection_list[0].mode &&
+	       PM_STA_MODE == pm_conc_connection_list[1].mode))
+	      ||
+	      (PM_P2P_GO_MODE == pm_conc_connection_list[0].mode &&
+	       PM_P2P_GO_MODE == pm_conc_connection_list[1].mode)
+	      ||
+	      ((PM_STA_MODE == pm_conc_connection_list[0].mode &&
+		PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode) ||
+	       (PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode &&
+		PM_STA_MODE == pm_conc_connection_list[1].mode))
+	      ||
+	      (PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode &&
+	       PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode)
+	      ||
+	      ((PM_P2P_GO_MODE == pm_conc_connection_list[0].mode &&
+		PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode) ||
+	       (PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode &&
+		PM_P2P_GO_MODE == pm_conc_connection_list[1].mode))) &&
+	      num_sta <= 1) {
+		if ((new_conn_mode == PM_STA_MODE ||
+		     new_conn_mode == PM_P2P_CLIENT_MODE ||
+		     new_conn_mode == PM_P2P_GO_MODE) &&
+		    !policy_mgr_is_p2p_p2p_conc_supported(psoc))
+			return false;
+	}
+
+	return true;
+}
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint32_t ch_freq,
@@ -3581,6 +3718,12 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 	if (!policy_mgr_allow_wapi_concurrency(pm_ctx)) {
 		policy_mgr_rl_debug("Don't allow new conn when wapi security conn existing");
+		return status;
+	}
+
+	/* Allow sta+p2p+p2p only if firmware supports the capablity */
+	if (!policy_mgr_is_third_conn_sta_p2p_p2p_valid(psoc, mode)) {
+		policy_mgr_err("Don't allow third connection as GO or GC or STA with old fw");
 		return status;
 	}
 

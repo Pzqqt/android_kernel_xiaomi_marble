@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -164,7 +165,7 @@ enum wlan_wds_mode {
  * rf_test_mode_enabled - Enable rf test mode support
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This cfg is used to set rf test mode support flag
  *
@@ -174,7 +175,7 @@ enum wlan_wds_mode {
  */
 #define CFG_RF_TEST_MODE_SUPP_ENABLED CFG_BOOL( \
 		"rf_test_mode_enabled", \
-		0, \
+		1, \
 		"rf test mode Enable Flag")
 
 /*
@@ -626,29 +627,6 @@ enum wlan_wds_mode {
 
 /*
  * <ini>
- * gRemoveTimeStampSyncCmd - Enable/Disable to remove time stamp sync cmd
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable the removal of time stamp sync cmd.
- * If we disable this periodic time sync update to firmware then roaming
- * timestamp updates to kmsg will have invalid timestamp as firmware will
- * use this timestamp to capture when roaming has happened with respect
- * to host timestamp.
- *
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_REMOVE_TIME_STAMP_SYNC_CMD CFG_INI_BOOL( \
-	"gRemoveTimeStampSyncCmd", \
-	1, \
-	"Enable to remove time stamp sync cmd")
-
-/*
- * <ini>
  * disable_4way_hs_offload - Enable/Disable 4 way handshake offload to firmware
  * @Min: 0
  * @Max: 0x2
@@ -924,7 +902,6 @@ enum wlan_wds_mode {
 	CFG(CFG_DROPPED_PKT_DISCONNECT_THRESHOLD) \
 	CFG(CFG_ITO_REPEAT_COUNT) \
 	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS) \
-	CFG(CFG_REMOVE_TIME_STAMP_SYNC_CMD) \
 	CFG(CFG_MGMT_RETRY_MAX) \
 	CFG(CFG_BMISS_SKIP_FULL_SCAN) \
 	CFG(CFG_ENABLE_RING_BUFFER) \

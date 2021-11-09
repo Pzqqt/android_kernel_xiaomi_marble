@@ -543,7 +543,9 @@ void sap_dfs_set_current_channel(void *ctx)
 		return;
 	}
 
-	is_dfs = wlan_reg_is_dfs_for_freq(pdev, sap_ctx->chan_freq);
+	is_dfs = wlan_mlme_check_chan_param_has_dfs(pdev,
+						    &sap_ctx->ch_params,
+						    sap_ctx->chan_freq);
 
 	sap_debug("freq=%d, dfs %d seg0=%d, seg1=%d, bw %d",
 		  sap_ctx->chan_freq, is_dfs, vht_seg0, vht_seg1,
@@ -566,6 +568,7 @@ void sap_dfs_set_current_channel(void *ctx)
 			tgt_dfs_get_radars(pdev);
 		}
 		tgt_dfs_set_phyerr_filter_offload(pdev);
+
 		if (mac_ctx->mlme_cfg->dfs_cfg.dfs_disable_channel_switch)
 			tgt_dfs_control(pdev, DFS_SET_USENOL, &use_nol,
 					sizeof(uint32_t), NULL, NULL, &error);

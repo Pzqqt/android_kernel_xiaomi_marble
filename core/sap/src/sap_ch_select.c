@@ -1826,7 +1826,7 @@ static void sap_sort_chl_weight_160_mhz(struct mac_context *mac_ctx,
 	}
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 /**
  * sap_sort_chl_weight_320_mhz() - to sort the channels with the least weight
  * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
@@ -2418,7 +2418,7 @@ static void sap_sort_chl_weight_all(struct mac_context *mac_ctx,
 	case CH_WIDTH_160MHZ:
 		sap_sort_chl_weight_160_mhz(mac_ctx, pSpectInfoParams);
 		break;
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 	case CH_WIDTH_320MHZ:
 		sap_sort_chl_weight_320_mhz(mac_ctx, pSpectInfoParams);
 		break;

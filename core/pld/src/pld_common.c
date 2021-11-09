@@ -2180,6 +2180,58 @@ int pld_get_user_msi_assignment(struct device *dev, char *user_name,
 }
 
 /**
+ * pld_srng_devm_request_irq() - Register IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ * @handler: IRQ callback function
+ * @flags: IRQ flags
+ * @name: IRQ name
+ * @ctx: IRQ context
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_srng_devm_request_irq(struct device *dev, int irq,
+			      irq_handler_t handler,
+			      unsigned long irqflags,
+			      const char *devname,
+			      void *dev_data)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = devm_request_irq(dev, irq, handler, irqflags,
+				       devname, dev_data);
+		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+		ret = pld_pcie_fw_sim_request_irq(dev, irq, handler,
+						  irqflags, devname,
+						  dev_data);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+		pr_err("Not supported on type %d\n", type);
+		ret = -ENODEV;
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		ret = devm_request_irq(dev, irq, handler, irqflags,
+				       devname, dev_data);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
  * pld_srng_request_irq() - Register IRQ for SRNG
  * @dev: device
  * @irq: IRQ number

@@ -3072,6 +3072,20 @@ void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
 		uint32_t scan_config, uint32_t fw_config);
 
 /**
+ * policy_mgr_init_sbs_fw_config() - Function to initialize SBS
+ * fw mode config in policy manager component
+ * @psoc: PSOC object information
+ * @fw_config: FW config
+ *
+ * This function initialize SBS fw mode config in policy manager component
+ *
+ * Return: void
+ *
+ */
+void policy_mgr_init_sbs_fw_config(struct wlan_objmgr_psoc *psoc,
+				   uint32_t fw_config);
+
+/**
  * policy_mgr_update_dbs_scan_config() - Function to update
  * DBS scan config in policy manager component
  * @psoc: PSOC object information

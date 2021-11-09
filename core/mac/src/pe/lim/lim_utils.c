@@ -7325,7 +7325,13 @@ lim_revise_req_he_cap_per_band(struct mlme_legacy_priv *mlme_priv,
 			mac->he_cap_2g.tx_he_mcs_map_lt_80;
 		he_config->rx_he_mcs_map_lt_80 =
 			mac->he_cap_2g.rx_he_mcs_map_lt_80;
-
+		he_config->ul_2x996_tone_ru_supp = 0;
+		he_config->num_sounding_gt_80 = 0;
+		he_config->bfee_sts_gt_80 = 0;
+		he_config->tb_ppdu_tx_stbc_gt_80mhz = 0;
+		he_config->rx_stbc_gt_80mhz = 0;
+		he_config->he_ppdu_20_in_160_80p80Mhz = 0;
+		he_config->he_ppdu_80_in_160_80p80Mhz = 0;
 	} else {
 		he_config->bfee_sts_lt_80 =
 			mac->he_cap_5g.bfee_sts_lt_80;
@@ -7346,6 +7352,12 @@ lim_revise_req_he_cap_per_band(struct mlme_legacy_priv *mlme_priv,
 				mac->he_cap_5g.he_ppdu_20_in_160_80p80Mhz;
 			he_config->he_ppdu_80_in_160_80p80Mhz =
 				mac->he_cap_5g.he_ppdu_80_in_160_80p80Mhz;
+			he_config->rx_stbc_gt_80mhz =
+				mac->he_cap_5g.rx_stbc_gt_80mhz;
+			he_config->tb_ppdu_tx_stbc_gt_80mhz =
+				mac->he_cap_5g.tb_ppdu_tx_stbc_gt_80mhz;
+			he_config->ul_2x996_tone_ru_supp =
+				 mac->he_cap_5g.ul_2x996_tone_ru_supp;
 		}
 	}
 }
@@ -7576,7 +7588,11 @@ void lim_update_session_he_capable(struct mac_context *mac, struct pe_session *s
 	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band)
 		session->vhtCapability = 0;
 
-	pe_debug("he_capable: %d", session->he_capable);
+	if (!wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
+		session->he_config.ul_mu = mac->he_cap_5g.ul_mu;
+
+	pe_debug("he_capable: %d ul mu %d",
+		 session->he_capable, session->he_config.ul_mu);
 }
 
 void lim_update_session_he_capable_chan_switch(struct mac_context *mac,

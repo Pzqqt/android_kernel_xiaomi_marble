@@ -433,7 +433,7 @@ static const uint8_t *cm_diag_get_akm_str(enum mgmt_auth_type auth_type,
 		return "NONE";
 }
 
-#ifdef WLAN_FEATURE_11BE
+#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
 static enum mgmt_dot11_mode
 cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 {
@@ -1000,6 +1000,7 @@ QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct rso_config *rso_cfg;
+	struct cm_roam_values_copy src_cfg;
 
 	if (!vdev || !req) {
 		mlme_err("vdev or req is NULL");
@@ -1017,6 +1018,16 @@ QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (rso_cfg)
 		rso_cfg->rsn_cap = req->crypto.rsn_caps;
+
+	if (wlan_get_ext_ie_ptr_from_ext_id(HS20_OUI_TYPE,
+					    HS20_OUI_TYPE_SIZE,
+					    req->assoc_ie.ptr,
+					    req->assoc_ie.len)) {
+		src_cfg.bool_value = true;
+		wlan_cm_roam_cfg_set_value(wlan_vdev_get_psoc(vdev),
+					   wlan_vdev_get_id(vdev),
+					   HS_20_AP, &src_cfg);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

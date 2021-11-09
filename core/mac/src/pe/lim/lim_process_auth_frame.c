@@ -44,6 +44,7 @@
 #include "lim_process_fils.h"
 #include "wlan_mlme_api.h"
 #include "wlan_connectivity_logging.h"
+#include "lim_types.h"
 
 /**
  * is_auth_valid
@@ -414,6 +415,8 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 	uint8_t *body_ptr;
 	enum rxmgmt_flags rx_flags = RXMGMT_FLAG_NONE;
 	struct sae_auth_retry *sae_retry;
+	uint16_t sae_auth_seq = 0, sae_status_code = 0;
+	uint16_t auth_algo;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -459,6 +462,24 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 			lim_sae_auth_cleanup_retry(mac_ctx,
 						   pe_session->vdev_id);
 	}
+
+	if (LIM_IS_STA_ROLE(pe_session)) {
+		auth_algo = *(uint16_t *)body_ptr;
+		if (frame_len >= (SAE_AUTH_STATUS_CODE_OFFSET + 2)) {
+			sae_auth_seq =
+				*(uint16_t *)(body_ptr +
+					      SAE_AUTH_SEQ_NUM_OFFSET);
+			sae_status_code =
+				*(uint16_t *)(body_ptr +
+					      SAE_AUTH_STATUS_CODE_OFFSET);
+		}
+		wlan_connectivity_mgmt_event(
+			(struct wlan_frame_hdr *)mac_hdr, pe_session->vdev_id,
+			sae_status_code, 0,
+			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info), auth_algo,
+			sae_auth_seq, sae_auth_seq, WLAN_AUTH_RESP);
+	}
+
 	lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
 				    (uint8_t *)mac_hdr,
 				    frame_len + sizeof(tSirMacMgmtHdr),
@@ -1648,10 +1669,6 @@ free:
 		qdf_mem_free(plainbody);
 }
 
-#define SAE_AUTH_SEQ_NUM_OFFSET       2
-#define SAE_AUTH_STATUS_CODE_OFFSET   4
-#define SAE_MESSAGE_TYPE_OFFSET       6
-
 /**
  * lim_process_sae_preauth_frame() - Send the WPA3 preauth SAE frame received
  * to the user space.
@@ -1668,7 +1685,7 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 {
 	tpSirMacMgmtHdr dot11_hdr;
 	uint16_t auth_alg, frm_len;
-	uint16_t sae_auth_seq = 0, sae_status_code = 0, sae_type = 0;
+	uint16_t sae_auth_seq = 0, sae_status_code = 0;
 	uint8_t *frm_body, pdev_id, vdev_id = 0;
 	struct wlan_objmgr_vdev *vdev;
 
@@ -1685,12 +1702,11 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 	if (auth_alg != eSIR_AUTH_TYPE_SAE)
 		return false;
 
-	if (frm_len > (SAE_MESSAGE_TYPE_OFFSET + 2)) {
+	if (frm_len >= (SAE_AUTH_STATUS_CODE_OFFSET + 2)) {
 		sae_auth_seq =
 			*(uint16_t *)(frm_body + SAE_AUTH_SEQ_NUM_OFFSET);
 		sae_status_code =
 			*(uint16_t *)(frm_body + SAE_AUTH_STATUS_CODE_OFFSET);
-		sae_type = *(uint16_t *)(frm_body + SAE_MESSAGE_TYPE_OFFSET);
 	}
 
 	pe_debug("LFR3: SAE auth frame: seq_ctrl:0x%X auth_transaction_num:%d",
@@ -1710,7 +1726,7 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 	wlan_connectivity_mgmt_event((struct wlan_frame_hdr *)dot11_hdr,
 				     vdev_id, sae_status_code,
 				     0, WMA_GET_RX_RSSI_NORMALIZED(rx_pkt),
-				     auth_alg, sae_type,
+				     auth_alg, sae_auth_seq,
 				     sae_auth_seq, WLAN_AUTH_RESP);
 
 	lim_send_sme_mgmt_frame_ind(mac, dot11_hdr->fc.subType,

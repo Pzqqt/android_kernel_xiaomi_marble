@@ -25,6 +25,8 @@
 #include <cdp_txrx_cmn_struct.h>
 #include <cdp_txrx_cmn.h>
 
+
+#define INVALID_NAPI 0Xff
 /**
  * struct dp_txrx_config - dp txrx configuration passed to dp txrx modules
  * @enable_dp_rx_threads: enable DP rx threads or not

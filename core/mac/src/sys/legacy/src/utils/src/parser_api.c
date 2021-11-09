@@ -4398,6 +4398,8 @@ sir_parse_beacon_ie(struct mac_context *mac,
 		pBeaconStruct->wmeEdcaPresent = 1;
 		convert_wmm_params(mac, &pBeaconStruct->edcaParams,
 				   &pBies->WMMParams);
+		qdf_mem_copy(&pBeaconStruct->wmm_params, &pBies->WMMParams,
+			     sizeof(tDot11fIEWMMParams));
 	}
 
 	if (pBies->WMMInfoAp.present) {

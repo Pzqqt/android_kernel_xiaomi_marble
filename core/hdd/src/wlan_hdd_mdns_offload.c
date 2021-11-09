@@ -66,8 +66,8 @@ static int hdd_extract_mdns_attr(struct nlattr *tb[],
 	len = nla_len(tb[MDNS_FQDN]);
 	mdns_info->fqdn_len = len;
 	mdns_info->fqdn_type = MDNS_FQDN_TYPE_GENERAL;
-	nla_strlcpy(mdns_info->fqdn_data, tb[MDNS_FQDN],
-		    sizeof(mdns_info->fqdn_data));
+	wlan_cfg80211_nla_strscpy(mdns_info->fqdn_data, tb[MDNS_FQDN],
+				  sizeof(mdns_info->fqdn_data));
 
 	/* Configure mDNS Answer Payload*/
 

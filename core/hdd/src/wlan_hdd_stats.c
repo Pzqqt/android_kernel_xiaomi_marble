@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3900,6 +3901,7 @@ static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
 	int i;
 	struct cds_vdev_dp_stats dp_stats;
 	uint32_t orig_cnt;
+	uint32_t orig_fail_cnt;
 
 	info->rx_packets = stats->rx_frm_cnt;
 	info->tx_packets = 0;
@@ -3914,9 +3916,13 @@ static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
 
 	if (cds_dp_get_vdev_stats(vdev_id, &dp_stats)) {
 		orig_cnt = info->tx_retries;
+		orig_fail_cnt = info->tx_failed;
 		info->tx_retries = dp_stats.tx_retries;
+		info->tx_failed += dp_stats.tx_mpdu_success_with_retries;
 		hdd_debug("vdev %d tx retries adjust from %d to %d",
 			  vdev_id, orig_cnt, info->tx_retries);
+		hdd_debug("tx failed adjust from %d to %d",
+			  orig_fail_cnt, info->tx_failed);
 	}
 
 	info->filled |= HDD_INFO_TX_PACKETS |
@@ -6710,6 +6716,9 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 	uint32_t total_rx_pkt, total_rx_dropped,
 		 total_rx_delv, total_rx_refused;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_CACHE_STATION_STATS_CB;
+	uint32_t total_tx_pkt;
+	uint32_t total_tx_dropped;
+	uint32_t total_tx_orphaned;
 
 	hdd_for_each_adapter_dev_held_safe(ctx, adapter, next_adapter,
 					   dbgid) {
@@ -6717,6 +6726,9 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 		total_rx_dropped = 0;
 		total_rx_delv = 0;
 		total_rx_refused = 0;
+		total_tx_pkt = 0;
+		total_tx_dropped = 0;
+		total_tx_orphaned = 0;
 		stats = &adapter->hdd_stats.tx_rx_stats;
 
 		if (adapter->vdev_id == INVAL_VDEV_ID) {
@@ -6725,27 +6737,43 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 		}
 
 		hdd_debug("adapter: %u", adapter->vdev_id);
-		for (; i < NUM_CPUS; i++) {
-			total_rx_pkt += stats->rx_packets[i];
-			total_rx_dropped += stats->rx_dropped[i];
-			total_rx_delv += stats->rx_delivered[i];
-			total_rx_refused += stats->rx_refused[i];
+		for (i = 0; i < NUM_CPUS; i++) {
+			total_rx_pkt += stats->per_cpu[i].rx_packets;
+			total_rx_dropped += stats->per_cpu[i].rx_dropped;
+			total_rx_delv += stats->per_cpu[i].rx_delivered;
+			total_rx_refused += stats->per_cpu[i].rx_refused;
+			total_tx_pkt += stats->per_cpu[i].tx_called;
+			total_tx_dropped += stats->per_cpu[i].tx_dropped;
+			total_tx_orphaned += stats->per_cpu[i].tx_orphaned;
 		}
 
 		/* dev_put has to be done here */
 		hdd_adapter_dev_put_debug(adapter, dbgid);
 
+		for (i = 0; i < NUM_CPUS; i++) {
+			if (!stats->per_cpu[i].tx_called)
+				continue;
+
+			hdd_debug("Tx CPU[%d]: called %u, dropped %u, orphaned %u",
+				  i, stats->per_cpu[i].tx_called,
+				  stats->per_cpu[i].tx_dropped,
+				  stats->per_cpu[i].tx_orphaned);
+		}
+
 		hdd_debug("TX - called %u, dropped %u orphan %u",
-			  stats->tx_called, stats->tx_dropped,
-			  stats->tx_orphaned);
+			  total_tx_pkt, total_tx_dropped,
+			  total_tx_orphaned);
 
 		for (i = 0; i < NUM_CPUS; i++) {
-			if (stats->rx_packets[i] == 0)
+			if (stats->per_cpu[i].rx_packets == 0)
 				continue;
 			hdd_debug("Rx CPU[%d]: packets %u, dropped %u, delivered %u, refused %u",
-				  i, stats->rx_packets[i], stats->rx_dropped[i],
-				  stats->rx_delivered[i], stats->rx_refused[i]);
+				  i, stats->per_cpu[i].rx_packets,
+				  stats->per_cpu[i].rx_dropped,
+				  stats->per_cpu[i].rx_delivered,
+				  stats->per_cpu[i].rx_refused);
 		}
+
 		hdd_debug("RX - packets %u, dropped %u, unsolict_arp_n_mcast_drp %u, delivered %u, refused %u GRO - agg %u drop %u non-agg %u flush_skip %u low_tput_flush %u disabled(conc %u low-tput %u)",
 			  total_rx_pkt, total_rx_dropped,
 			  qdf_atomic_read(&stats->rx_usolict_arp_n_mcast_drp),

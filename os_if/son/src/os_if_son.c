@@ -32,6 +32,8 @@
 #include <wlan_vdev_mgr_ucfg_api.h>
 #include <wlan_mlme_ucfg_api.h>
 #include <wlan_reg_services_api.h>
+#include <wlan_scan_ucfg_api.h>
+#include <wlan_dcs_ucfg_api.h>
 
 static struct son_callbacks g_son_os_if_cb;
 
@@ -624,6 +626,121 @@ qdf_freq_t os_if_son_get_candidate_freq(struct wlan_objmgr_vdev *vdev)
 }
 qdf_export_symbol(os_if_son_get_candidate_freq);
 
+QDF_STATUS os_if_son_set_acl_policy(struct wlan_objmgr_vdev *vdev,
+				    ieee80211_acl_cmd son_acl_policy)
+{
+	QDF_STATUS ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ret = g_son_os_if_cb.os_if_set_acl_policy(vdev, son_acl_policy);
+	osif_debug("set acl policy %d status %d", son_acl_policy, ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_set_acl_policy);
+
+ieee80211_acl_cmd os_if_son_get_acl_policy(struct wlan_objmgr_vdev *vdev)
+{
+	ieee80211_acl_cmd son_acl_policy;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return IEEE80211_MACCMD_DETACH;
+	}
+	son_acl_policy = g_son_os_if_cb.os_if_get_acl_policy(vdev);
+	osif_debug("get acl policy %d", son_acl_policy);
+
+	return son_acl_policy;
+}
+qdf_export_symbol(os_if_son_get_acl_policy);
+
+int os_if_son_add_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+	ret = g_son_os_if_cb.os_if_add_acl_mac(vdev, acl_mac);
+	osif_debug("add_acl_mac " QDF_MAC_ADDR_FMT " ret %d",
+		   QDF_MAC_ADDR_REF(acl_mac->bytes), ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_add_acl_mac);
+
+int os_if_son_del_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+	ret = g_son_os_if_cb.os_if_del_acl_mac(vdev, acl_mac);
+	osif_debug("del_acl_mac " QDF_MAC_ADDR_FMT " ret %d",
+		   QDF_MAC_ADDR_REF(acl_mac->bytes), ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_del_acl_mac);
+
+int os_if_son_kickout_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *mac)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+	ret = g_son_os_if_cb.os_if_kickout_mac(vdev, mac);
+	osif_debug("kickout mac " QDF_MAC_ADDR_FMT " ret %d",
+		   QDF_MAC_ADDR_REF(mac->bytes), ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_kickout_mac);
+
+uint8_t os_if_son_get_chan_util(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_host_dcs_ch_util_stats dcs_son_stats = {};
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t mac_id;
+	QDF_STATUS status;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("null psoc");
+		return 0;
+	}
+	status = policy_mgr_get_mac_id_by_session_id(psoc,
+						     wlan_vdev_get_id(vdev),
+						     &mac_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to get mac_id");
+		return 0;
+	}
+
+	ucfg_dcs_get_ch_util(psoc, mac_id, &dcs_son_stats);
+	osif_debug("get_chan_util %d", dcs_son_stats.total_cu);
+
+	return dcs_son_stats.total_cu;
+}
+qdf_export_symbol(os_if_son_get_chan_util);
+
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode)
 {
@@ -658,3 +775,139 @@ enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev)
 	return phymode;
 }
 qdf_export_symbol(os_if_son_get_phymode);
+
+QDF_STATUS os_if_son_pdev_ops(struct wlan_objmgr_pdev *pdev,
+			      enum wlan_mlme_pdev_param type,
+			      void *data, void *ret)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(os_if_son_pdev_ops);
+
+QDF_STATUS os_if_son_vdev_ops(struct wlan_objmgr_vdev *vdev,
+			      enum wlan_mlme_vdev_param type,
+			      void *data, void *ret)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(os_if_son_vdev_ops);
+
+QDF_STATUS os_if_son_peer_ops(struct wlan_objmgr_peer *peer,
+			      enum wlan_mlme_peer_param type,
+			      union wlan_mlme_peer_data *in,
+			      union wlan_mlme_peer_data *out)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!peer) {
+		osif_err("null peer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = wlan_peer_get_vdev(peer);
+	if (!vdev) {
+		osif_err("null vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		osif_err("null pdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		osif_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+	osif_debug("type %d", type);
+	/* All PEER MLME operations exported to SON component */
+	switch (type) {
+	case PEER_SET_KICKOUT_ALLOW:
+		if (!in) {
+			osif_err("invalid input parameter");
+			return QDF_STATUS_E_INVAL;
+		}
+		status = ucfg_son_set_peer_kickout_allow(vdev, peer,
+							 in->enable);
+		break;
+	default:
+		osif_err("invalid type: %d", type);
+		status = QDF_STATUS_E_INVAL;
+	}
+
+	return status;
+}
+
+qdf_export_symbol(os_if_son_peer_ops);
+
+QDF_STATUS os_if_son_scan_db_iterate(struct wlan_objmgr_pdev *pdev,
+				     scan_iterator_func handler, void *arg)
+{
+	return ucfg_scan_db_iterate(pdev, handler, arg);
+}
+
+qdf_export_symbol(os_if_son_scan_db_iterate);
+
+bool os_if_son_acl_is_probe_wh_set(struct wlan_objmgr_vdev *vdev,
+				   const uint8_t *mac_addr,
+				   uint8_t probe_rssi)
+{
+	return false;
+}
+
+qdf_export_symbol(os_if_son_acl_is_probe_wh_set);
+
+int os_if_son_set_chwidth(struct wlan_objmgr_vdev *vdev,
+			  enum ieee80211_cwm_width son_chwidth)
+{
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+
+	return g_son_os_if_cb.os_if_set_chwidth(vdev, son_chwidth);
+}
+qdf_export_symbol(os_if_son_set_chwidth);
+
+enum ieee80211_cwm_width os_if_son_get_chwidth(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	return g_son_os_if_cb.os_if_get_chwidth(vdev);
+}
+qdf_export_symbol(os_if_son_get_chwidth);
+
+u_int8_t os_if_son_get_rx_streams(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	return g_son_os_if_cb.os_if_get_rx_nss(vdev);
+}
+
+qdf_export_symbol(os_if_son_get_rx_streams);
+
+QDF_STATUS os_if_son_cfg80211_reply(qdf_nbuf_t sk_buf)
+{
+	return wlan_cfg80211_qal_devcfg_send_response(sk_buf);
+}
+
+qdf_export_symbol(os_if_son_cfg80211_reply);
+
+bool os_if_son_vdev_is_wds(struct wlan_objmgr_vdev *vdev)
+{
+	return true;
+}
+
+qdf_export_symbol(os_if_son_vdev_is_wds);

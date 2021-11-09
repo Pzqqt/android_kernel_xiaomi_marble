@@ -487,43 +487,24 @@ lim_is_medium_time_valid(struct mac_context *mac, struct pe_session *pe_session,
 	struct mac_ts_info *ts_info = &addts.tspec.tsinfo;
 	uint16_t user_priority = ts_info->traffic.userPrio;
 	uint8_t ac = upToAc(user_priority);
-	struct bss_description *bss_desc;
-	tDot11fBeaconIEs *ie_local;
 	bool is_acm = false;
-	QDF_STATUS status;
 
-	if (!pe_session->lim_join_req && !pe_session->pLimReAssocReq) {
-		pe_err("Join Request is NULL");
-		return false;
-	}
-
-	if (pe_session->lim_join_req)
-		bss_desc = &pe_session->lim_join_req->bssDescription;
-	else
-		bss_desc = &pe_session->pLimReAssocReq->bssDescription;
-
-	status = wlan_get_parsed_bss_description_ies(mac, bss_desc, &ie_local);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_debug("bss parsing failed");
-		return false;
-	}
-
-	if (ie_local && LIM_IS_QOS_BSS(ie_local)) {
+	if (pe_session->wmm_params.present) {
 		switch (ac) {
 		case QCA_WLAN_AC_BE:
-			if (ie_local->WMMParams.acbe_acm)
+			if (pe_session->wmm_params.acbe_acm)
 				is_acm = true;
 			break;
 		case QCA_WLAN_AC_BK:
-			if (ie_local->WMMParams.acbk_acm)
+			if (pe_session->wmm_params.acbk_acm)
 				is_acm = true;
 			break;
 		case QCA_WLAN_AC_VI:
-			if (ie_local->WMMParams.acvi_acm)
+			if (pe_session->wmm_params.acvi_acm)
 				is_acm = true;
 			break;
 		case QCA_WLAN_AC_VO:
-			if (ie_local->WMMParams.acvo_acm)
+			if (pe_session->wmm_params.acvo_acm)
 				is_acm = true;
 			break;
 		default:

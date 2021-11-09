@@ -29,8 +29,6 @@
 /* Timeout in milliseconds to wait for CMEM FST HTT response */
 #define DP_RX_FST_CMEM_RESP_TIMEOUT 2000
 
-#define INVALID_NAPI 0Xff
-
 #ifdef WLAN_SUPPORT_RX_FISA
 void dp_fisa_rx_fst_update_work(void *arg);
 
@@ -386,7 +384,6 @@ static void dp_rx_fst_check_cmem_support(struct dp_soc *soc)
 	hal_rx_fst_detach(fst->hal_rx_fst, soc->osdev);
 	fst->hal_rx_fst = NULL;
 	fst->hal_rx_fst_base_paddr = 0;
-	fst->flow_deletion_supported = true;
 	fst->fst_in_cmem = true;
 }
 

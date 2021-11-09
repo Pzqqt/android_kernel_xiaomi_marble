@@ -390,6 +390,7 @@ static void lim_copy_ml_partner_info(struct cm_vdev_join_rsp *rsp,
 	int i;
 	struct mlo_partner_info *partner_info;
 	struct mlo_partner_info *rsp_partner_info;
+	uint8_t chan, op_class, link_id;
 
 	partner_info = &pe_session->ml_partner_info;
 	rsp_partner_info = &rsp->connect_rsp.ml_parnter_info;
@@ -397,11 +398,23 @@ static void lim_copy_ml_partner_info(struct cm_vdev_join_rsp *rsp,
 	rsp_partner_info->num_partner_links = partner_info->num_partner_links;
 
 	for (i = 0; i < rsp_partner_info->num_partner_links; i++) {
-		rsp_partner_info->partner_link_info[i].link_id =
-			partner_info->partner_link_info[i].link_id;
+		link_id = partner_info->partner_link_info[i].link_id;
+		rsp_partner_info->partner_link_info[i].link_id = link_id;
 		qdf_copy_macaddr(
 			&rsp_partner_info->partner_link_info[i].link_addr,
 			&partner_info->partner_link_info[i].link_addr);
+
+		wlan_get_chan_by_link_id_from_rnr(pe_session->vdev,
+						  pe_session->cm_id,
+						  link_id, &chan, &op_class);
+		if (chan) {
+			rsp_partner_info->partner_link_info[i].chan_freq =
+				wlan_reg_chan_opclass_to_freq(chan, op_class,
+							      true);
+		} else {
+			pe_debug("Failed to get channel info for link ID:%d",
+				 link_id);
+		}
 	}
 }
 #endif

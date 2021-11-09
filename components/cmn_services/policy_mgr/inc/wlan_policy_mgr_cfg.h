@@ -361,6 +361,32 @@ CFG_INI_UINT("gDualMacFeatureDisable", 0, 6, 6, CFG_VALUE_OR_DEFAULT, \
 	     "This INI is used to enable/disable Dual MAC feature")
 
 /*
+ *
+ * <ini>
+ * enable_sbs - Enable/Disable SBS.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable SBS feature.
+ * 0 - disable SBS
+ * 1 - enable SBS
+ *
+ *
+ * Related: None.
+ *
+ * Supported Feature: SBS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SBS CFG_INI_BOOL(\
+					"enable_sbs", \
+					true, \
+					"Enable/Disable SBS")
+
+/*
  * <ini>
  * g_sta_sap_scc_on_dfs_chan - Allow STA+SAP SCC on DFS channel with master
  * mode support disabled.
@@ -588,6 +614,7 @@ CFG_INI_UINT("g_pcl_band_priority", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
 		CFG(CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME)\
 		CFG(CFG_ENABLE_STA_CONNECTION_IN_5GHZ)\
 		CFG(CFG_DUAL_MAC_FEATURE_DISABLE)\
+		CFG(CFG_ENABLE_SBS)\
 		CFG(CFG_STA_SAP_SCC_ON_DFS_CHAN)\
 		CFG(CFG_FORCE_1X1_FEATURE)\
 		CFG(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST)\

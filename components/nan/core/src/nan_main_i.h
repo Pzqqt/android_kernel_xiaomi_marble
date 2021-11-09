@@ -239,12 +239,12 @@ QDF_STATUS nan_set_discovery_state(struct wlan_objmgr_psoc *psoc,
 
 /*
  * nan_discovery_pre_enable: Takes steps before sending NAN Enable to Firmware
- * @psoc: PSOC object
+ * @pdev: pdev object
  * @nan_ch_freq: Primary social channel for NAN Discovery
  *
  * Return: status of operation
  */
-QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_pdev *pdev,
 				    uint32_t nan_ch_freq);
 
 /*

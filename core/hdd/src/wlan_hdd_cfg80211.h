@@ -440,7 +440,15 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
  * Return: true or false based on findings
  */
 bool wlan_hdd_is_ap_supports_immediate_power_save(uint8_t *ies, int length);
-int wlan_hdd_del_station(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_del_station() - delete station wrapper
+ * @adapter: pointer to the hdd adapter
+ * @mac: pointer to mac addr
+ *
+ * Return: Errno
+ */
+int wlan_hdd_del_station(struct hdd_adapter *adapter, const uint8_t *mac);
 
 #if defined(USE_CFG80211_DEL_STA_V2)
 int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
@@ -788,6 +796,16 @@ int hdd_set_phy_mode(struct hdd_adapter *adapter,
 		     enum qca_wlan_vendor_phy_mode vendor_phy_mode);
 
 /**
+ * hdd_set_mac_chan_width() - set channel width
+ * @adapter: Handle to hdd_adapter
+ * @chwidth: given channel width
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_mac_chan_width(struct hdd_adapter *adapter,
+			   enum eSirMacHTChannelWidth chwidth);
+
+/**
  * hdd_is_legacy_connection() - Is adapter connection is legacy
  * @adapter: Handle to hdd_adapter
  *
@@ -808,4 +826,23 @@ struct hdd_hostapd_state;
 QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
 				     struct hdd_hostapd_state *hapd_state,
 				     struct csr_del_sta_params *param);
+
+/**
+ * wlan_hdd_cfg80211_rx_control_port() - notification about a received control
+ * port frame
+ *
+ * @dev: net device pointer
+ * @ta_addr: transmitter address
+ * @skb: skbuf with the control port frame
+ * @unencrypted: Whether the frame is unencrypted
+ *
+ * Wrapper function for call to kernel function cfg80211_rx_control_port()
+ *
+ * Return: none
+ */
+bool wlan_hdd_cfg80211_rx_control_port(struct net_device *dev,
+				       u8 *ta_addr,
+				       struct sk_buff *skb,
+				       bool unencrypted);
+
 #endif

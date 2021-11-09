@@ -1300,7 +1300,6 @@ struct dual_sta_policy {
  * @enabled_11h: enable 11h flag
  * @enabled_11d: enable 11d flag
  * @enable_beacon_reception_stats: enable beacon reception stats
- * @enable_remove_time_stamp_sync_cmd: Enable remove time stamp sync cmd
  * @data_stall_recovery_fw_support: whether FW supports Data stall recovery.
  * @enable_change_channel_bandwidth: enable/disable change channel bw in mission
  * mode
@@ -1350,7 +1349,6 @@ struct wlan_mlme_generic {
 	bool enabled_11d;
 	bool enable_deauth_to_disassoc_map;
 	bool enable_beacon_reception_stats;
-	bool enable_remove_time_stamp_sync_cmd;
 	bool data_stall_recovery_fw_support;
 	uint32_t disable_4way_hs_offload;
 	bool as_enabled;
