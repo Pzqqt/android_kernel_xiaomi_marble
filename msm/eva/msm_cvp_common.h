@@ -22,7 +22,6 @@ int msm_cvp_deinit_core(struct msm_cvp_inst *inst);
 int msm_cvp_comm_suspend(int core_id);
 void msm_cvp_comm_session_clean(struct msm_cvp_inst *inst);
 int msm_cvp_comm_kill_session(struct msm_cvp_inst *inst);
-void msm_cvp_comm_generate_session_error(struct msm_cvp_inst *inst);
 void msm_cvp_comm_generate_sys_error(struct msm_cvp_inst *inst);
 int msm_cvp_comm_smem_cache_operations(struct msm_cvp_inst *inst,
 		struct msm_cvp_smem *mem, enum smem_cache_ops cache_ops);

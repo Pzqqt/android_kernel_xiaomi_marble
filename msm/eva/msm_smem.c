@@ -8,7 +8,6 @@
 #include <linux/dma-direction.h>
 #include <linux/iommu.h>
 #include <linux/msm_dma_iommu_mapping.h>
-#include <linux/msm_ion.h>
 #include <soc/qcom/secure_buffer.h>
 #include <linux/mem-buf.h>
 #include <linux/slab.h>

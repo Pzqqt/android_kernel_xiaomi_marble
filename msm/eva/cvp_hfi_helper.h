@@ -15,40 +15,63 @@
 #define  HFI_CMD_START_OFFSET		(0x00010000)
 #define  HFI_MSG_START_OFFSET		(0x00020000)
 
-#define HFI_ERR_NONE						HFI_COMMON_BASE
-#define HFI_ERR_SYS_FATAL				(HFI_COMMON_BASE + 0x1)
-#define HFI_ERR_SYS_INVALID_PARAMETER		(HFI_COMMON_BASE + 0x2)
-#define HFI_ERR_SYS_VERSION_MISMATCH		(HFI_COMMON_BASE + 0x3)
-#define HFI_ERR_SYS_INSUFFICIENT_RESOURCES	(HFI_COMMON_BASE + 0x4)
-#define HFI_ERR_SYS_MAX_SESSIONS_REACHED	(HFI_COMMON_BASE + 0x5)
-#define HFI_ERR_SYS_UNSUPPORTED_CODEC		(HFI_COMMON_BASE + 0x6)
-#define HFI_ERR_SYS_SESSION_IN_USE			(HFI_COMMON_BASE + 0x7)
-#define HFI_ERR_SYS_SESSION_ID_OUT_OF_RANGE	(HFI_COMMON_BASE + 0x8)
-#define HFI_ERR_SYS_UNSUPPORTED_DOMAIN		(HFI_COMMON_BASE + 0x9)
-#define HFI_ERR_SYS_NOC_ERROR			(HFI_COMMON_BASE + 0x11)
-#define HFI_ERR_SESSION_FATAL			(HFI_COMMON_BASE + 0x1001)
-#define HFI_ERR_SESSION_INVALID_PARAMETER	(HFI_COMMON_BASE + 0x1002)
-#define HFI_ERR_SESSION_BAD_POINTER		(HFI_COMMON_BASE + 0x1003)
-#define HFI_ERR_SESSION_INVALID_SESSION_ID	(HFI_COMMON_BASE + 0x1004)
-#define HFI_ERR_SESSION_INVALID_STREAM_ID	(HFI_COMMON_BASE + 0x1005)
-#define HFI_ERR_SESSION_INCORRECT_STATE_OPERATION		\
-	(HFI_COMMON_BASE + 0x1006)
-#define HFI_ERR_SESSION_UNSUPPORTED_PROPERTY	(HFI_COMMON_BASE + 0x1007)
+#define  HFI_ERR_NONE                                   (HFI_COMMON_BASE)        /**< Status: No error */
+#define  HFI_ERR_SYS_FATAL                              (HFI_COMMON_BASE + 0x1)  /**< Fatal system error */
+#define  HFI_ERR_SYS_INVALID_PARAMETER                  (HFI_COMMON_BASE + 0x2)  /**< Invalid system parameter encountered */
+#define  HFI_ERR_SYS_VERSION_MISMATCH                   (HFI_COMMON_BASE + 0x3)  /**< Interface version mismatch */
+#define  HFI_ERR_SYS_INSUFFICIENT_RESOURCES             (HFI_COMMON_BASE + 0x4)  /**< Insufficient system resources */
+#define  HFI_ERR_SYS_MAX_SESSIONS_REACHED               (HFI_COMMON_BASE + 0x5)  /**< Maximum number of sessions reached */
+#define  HFI_ERR_SYS_SESSION_IN_USE                     (HFI_COMMON_BASE + 0x7)  /**< Session ID specified is in use */
+#define  HFI_ERR_SYS_SESSION_ID_OUT_OF_RANGE            (HFI_COMMON_BASE + 0x8)  /**< ID is out of range */
+#define  HFI_ERR_SYS_UNSUPPORTED_TRIGCMD                (HFI_COMMON_BASE + 0xA)  /**< Unsupported TRIGCMD command*/
+#define  HFI_ERR_SYS_UNSUPPORTED_RESOURCES              (HFI_COMMON_BASE + 0xB)  /**< Unsupported resource*/
+#define  HFI_ERR_SYS_UNSUPPORT_CMD                      (HFI_COMMON_BASE + 0xC)  /**< Command is not supported*/
+#define  HFI_ERR_SYS_CMDSIZE                            (HFI_COMMON_BASE + 0xD)  /**< command size err*/
+#define  HFI_ERR_SYS_UNSUPPORT_PROPERTY                 (HFI_COMMON_BASE + 0xE)  /**< Unsupported property*/
+#define  HFI_ERR_SYS_INIT_EXPECTED                      (HFI_COMMON_BASE + 0xF)  /**< Upon FW start, first command must be SYS_INIT*/
+#define  HFI_ERR_SYS_INIT_IGNORED                       (HFI_COMMON_BASE + 0x10) /**< After FW started, SYS_INIT will be ignored*/
+#define  HFI_ERR_SYS_MAX_DME_SESSIONS_REACHED           (HFI_COMMON_BASE + 0x11) /**< Maximum DME sessions Reached */
+#define  HFI_ERR_SYS_MAX_FD_SESSIONS_REACHED            (HFI_COMMON_BASE + 0x12) /**< Maximum FD sessions Reached */
+#define  HFI_ERR_SYS_MAX_ODT_SESSIONS_REACHED           (HFI_COMMON_BASE + 0x13) /**< Maximum ODT sessions Reached*/
+#define  HFI_ERR_SYS_MAX_CV_SESSIONS_REACHED            (HFI_COMMON_BASE + 0x14) /**< Maximum CV sessions Reached*/
+#define  HFI_ERR_SYS_INVALID_SESSION_TYPE               (HFI_COMMON_BASE + 0x15) /**< Invalid session TYPE. */
+#define  HFI_ERR_SYS_NOC_ERROR							(HFI_COMMON_BASE + 0x16) /**< NOC Error encountered */
 
-#define HFI_ERR_SESSION_UNSUPPORTED_SETTING	(HFI_COMMON_BASE + 0x1008)
-
-#define HFI_ERR_SESSION_INSUFFICIENT_RESOURCES	(HFI_COMMON_BASE + 0x1009)
-
-#define HFI_ERR_SESSION_STREAM_CORRUPT		(HFI_COMMON_BASE + 0x100B)
-#define HFI_ERR_SESSION_ENC_OVERFLOW		(HFI_COMMON_BASE + 0x100C)
-#define HFI_ERR_SESSION_UNSUPPORTED_STREAM	(HFI_COMMON_BASE + 0x100D)
-#define HFI_ERR_SESSION_CMDSIZE			(HFI_COMMON_BASE + 0x100E)
-#define HFI_ERR_SESSION_UNSUPPORT_CMD		(HFI_COMMON_BASE + 0x100F)
-#define HFI_ERR_SESSION_UNSUPPORT_BUFFERTYPE	(HFI_COMMON_BASE + 0x1010)
-#define HFI_ERR_SESSION_BUFFERCOUNT_TOOSMALL	(HFI_COMMON_BASE + 0x1011)
-#define HFI_ERR_SESSION_INVALID_SCALE_FACTOR	(HFI_COMMON_BASE + 0x1012)
-#define HFI_ERR_SESSION_UPSCALE_NOT_SUPPORTED	(HFI_COMMON_BASE + 0x1013)
-#define HFI_ERR_SESSION_FLUSHED			(HFI_COMMON_BASE + 0x101C)
+									/**
+									Level 2 Comment: "Session Level Error types"
+									Common HFI_ERROR_SESSION_X values to be used as session level error/warning
+									for event and messages
+									*/
+#define  HFI_ERR_SESSION_FATAL                          (HFI_COMMON_BASE + 0x1001)  /**< Fatal session error */
+#define  HFI_ERR_SESSION_INVALID_PARAMETER              (HFI_COMMON_BASE + 0x1002)  /**< Invalid session parameter */
+#define  HFI_ERR_SESSION_BAD_POINTER                    (HFI_COMMON_BASE + 0x1003)  /**< Bad pointer encountered */
+#define  HFI_ERR_SESSION_INVALID_SESSION_ID             (HFI_COMMON_BASE + 0x1004)  /**< Invalid session ID. eventData2 specifies the session ID. */
+#define  HFI_ERR_SESSION_INVALID_STREAM_ID              (HFI_COMMON_BASE + 0x1005)  /**< Invalid stream ID. eventData2 specifies the stream ID. */
+#define  HFI_ERR_SESSION_INCORRECT_STATE_OPERATION      (HFI_COMMON_BASE + 0x1006)  /**< Incorrect state for specified operation */
+#define  HFI_ERR_SESSION_UNSUPPORTED_PROPERTY           (HFI_COMMON_BASE + 0x1007)  /**< Unsupported property. eventData2 specifies the property index. */
+#define  HFI_ERR_SESSION_UNSUPPORTED_SETTING            (HFI_COMMON_BASE + 0x1008)  /**< Unsupported property setting. eventData2 specifies the property index. */
+#define  HFI_ERR_SESSION_INSUFFICIENT_RESOURCES         (HFI_COMMON_BASE + 0x1009)  /**< Insufficient resources for session */
+#define  HFI_ERR_SESSION_STREAM_CORRUPT_OUTPUT_STALLED  (HFI_COMMON_BASE + 0x100A)  /**< Stream is found to be corrupt; processing is stalled */
+#define  HFI_ERR_SESSION_STREAM_CORRUPT                 (HFI_COMMON_BASE + 0x100B)  /**< Stream is found to be corrupt; processing is recoverable */
+#define  HFI_ERR_SESSION_RESERVED                       (HFI_COMMON_BASE + 0x100C)  /**< Reserved  */
+#define  HFI_ERR_SESSION_UNSUPPORTED_STREAM             (HFI_COMMON_BASE + 0x100D)  /**< Unsupported stream */
+#define  HFI_ERR_SESSION_CMDSIZE                        (HFI_COMMON_BASE + 0x100E)  /**< Command packet size err*/
+#define  HFI_ERR_SESSION_UNSUPPORT_CMD                  (HFI_COMMON_BASE + 0x100F)  /**< Command is not supported*/
+#define  HFI_ERR_SESSION_UNSUPPORT_BUFFERTYPE           (HFI_COMMON_BASE + 0x1010)  /**< BufferType is not supported*/
+#define  HFI_ERR_SESSION_BUFFERCOUNT_TOOSMALL           (HFI_COMMON_BASE + 0x1011)  /**< Buffer Count is less than default*/
+#define  HFI_ERR_SESSION_INVALID_SCALE_FACTOR           (HFI_COMMON_BASE + 0x1012)  /**< Downscaling not possible */
+#define  HFI_ERR_SESSION_UPSCALE_NOT_SUPPORTED          (HFI_COMMON_BASE + 0x1013)  /**< Upscaling not possible */
+#define  HFI_ERR_SESSION_CANNOT_KEEP_ASPECT_RATIO       (HFI_COMMON_BASE + 0x1014)  /**< Cannot maintain aspect ratio */
+#define  HFI_ERR_SESSION_ADDRESS_NOT_ALIGNED            (HFI_COMMON_BASE + 0x1016)   /**Address is not aligned */
+#define  HFI_ERR_SESSION_BUFFERSIZE_TOOSMALL            (HFI_COMMON_BASE + 0x1017)  /**< Buffer Count is less than default*/
+#define  HFI_ERR_SESSION_ABORTED                        (HFI_COMMON_BASE + 0x1018)  /**< error caused by session abort*/
+#define  HFI_ERR_SESSION_BUFFER_ALREADY_SET             (HFI_COMMON_BASE + 0x1019)  /**< Cannot set buffer multiple times without releasing in between. */
+#define  HFI_ERR_SESSION_BUFFER_ALREADY_RELEASED        (HFI_COMMON_BASE + 0x101A)  /**< Cannot release buffer multiple times without setting in between. */
+#define  HFI_ERR_SESSION_END_BUFFER_NOT_RELEASED        (HFI_COMMON_BASE + 0x101B)  /**< Session was ended without properly releasing all buffers */
+#define  HFI_ERR_SESSION_FLUSHED                        (HFI_COMMON_BASE + 0x101C)  /**< Cannot set buffer multiple times without releasing in between. */
+#define  HFI_ERR_SESSION_KERNEL_MAX_STREAMS_REACHED     (HFI_COMMON_BASE + 0x101D) /*Maximum Streams per Kernel reached in a session*/
+#define  HFI_ERR_SESSION_MAX_STREAMS_REACHED            (HFI_COMMON_BASE + 0x101E) /*Maximum Streams Reached in a session*/
+#define  HFI_ERR_SESSION_HW_HANG_DETECTED               (HFI_COMMON_BASE + 0x101F) /*HW hang was detected in one of the HW blocks for a frame*/
 
 #define HFI_EVENT_SYS_ERROR				(HFI_COMMON_BASE + 0x1)
 #define HFI_EVENT_SESSION_ERROR			(HFI_COMMON_BASE + 0x2)

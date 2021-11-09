@@ -23,7 +23,6 @@
 #include <linux/soc/qcom/smem.h>
 #include <linux/dma-mapping.h>
 #include <linux/reset.h>
-#include <soc/qcom/minidump.h>
 #include "hfi_packetization.h"
 #include "msm_cvp_debug.h"
 #include "cvp_core_hfi.h"
@@ -33,17 +32,40 @@
 #include "msm_cvp_clocks.h"
 #include "cvp_dump.h"
 
+#ifdef CVP_MINIDUMP_ENABLED
 /*Declare and init the head node of the linked list
 for queue va_md dump*/
-LIST_HEAD(head_node_hfi_queue);
+static LIST_HEAD(head_node_hfi_queue);
 
 /*Declare and init the head node of the linked list
  for debug struct va_md dump*/
-LIST_HEAD(head_node_dbg_struct);
+static LIST_HEAD(head_node_dbg_struct);
+
+static int eva_struct_list_notif_handler(struct notifier_block *this,
+                unsigned long event, void *ptr);
+
+static int eva_hfiq_list_notif_handler(struct notifier_block *this,
+		unsigned long event, void *ptr);
+
+static struct notifier_block eva_struct_list_notif_blk = {
+		.notifier_call = eva_struct_list_notif_handler,
+		.priority = INT_MAX-1,
+};
+
+static struct notifier_block eva_hfiq_list_notif_blk = {
+		.notifier_call = eva_hfiq_list_notif_handler,
+		.priority = INT_MAX,
+};
+
+struct list_head *dump_array[CVP_MAX_DUMP] = {
+	[CVP_QUEUE_DUMP] = &head_node_hfi_queue,
+	[CVP_DBG_DUMP] = &head_node_dbg_struct,
+};
 
 int md_eva_dump(const char* name, u64 virt, u64 phys, u64 size)
 {
 	struct md_region md_entry;
+
 	if (msm_minidump_enabled()) {
 		dprintk(CVP_INFO, "Minidump is enabled!\n");
 
@@ -73,6 +95,7 @@ void cvp_va_md_register(char* name, void* notf_blk_ptr)
 {
 	int rc = 0;
 	struct notifier_block* notf_blk = (struct notifier_block*)notf_blk_ptr;
+
 	rc = qcom_va_md_register(name, notf_blk);
 	if (rc) {
 		dprintk(CVP_ERR,
@@ -109,12 +132,18 @@ void cvp_free_va_md_list(void)
 	}
 }
 
-void add_va_node_to_list(void *list_head_node, void *buff_va, u32 buff_size,
+void add_va_node_to_list(enum cvp_dump_type type, void *buff_va, u32 buff_size,
 			const char *region_name, bool copy)
 {
-	struct list_head *head_node = (struct list_head *)list_head_node;
+	struct list_head *head_node;
 	struct eva_va_md_queue *temp_node = NULL;
 
+	if (type >= CVP_MAX_DUMP)
+		return;
+
+	head_node = dump_array[type];
+
+	/*Creating Node*/
 	temp_node = kzalloc(sizeof(struct eva_va_md_queue), GFP_KERNEL);
 	if (!temp_node) {
 		dprintk(CVP_ERR, "Memory allocation failed for list node\n");
@@ -144,23 +173,23 @@ void add_hfi_queue_to_va_md_list(void *device)
 	dev = (struct iris_hfi_device*)device;
 
 	iface_q = &dev->iface_queues[CVP_IFACEQ_CMDQ_IDX];
-	add_va_node_to_list(&head_node_hfi_queue,
+	add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_cmdq_cpu", false);
 	iface_q = &dev->iface_queues[CVP_IFACEQ_MSGQ_IDX];
-	add_va_node_to_list(&head_node_hfi_queue,
+	add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_msgq_cpu", false);
 
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_CMDQ_IDX];
-	add_va_node_to_list(&head_node_hfi_queue,
+	add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_cmdq_dsp", false);
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_MSGQ_IDX];
-	add_va_node_to_list(&head_node_hfi_queue,
+	add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_msgq_dsp", false);
@@ -176,30 +205,30 @@ void add_queue_header_to_va_md_list(void *device)
 
 	iface_q = &dev->iface_queues[CVP_IFACEQ_CMDQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(&head_node_dbg_struct,
+	add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-cpucmdQ", false);
 
 	iface_q = &dev->iface_queues[CVP_IFACEQ_MSGQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(&head_node_dbg_struct,
+	add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-cpumsgQ", false);
 
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_CMDQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(&head_node_dbg_struct,
+	add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-dspcmdQ", false);
 
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_MSGQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(&head_node_dbg_struct,
+	add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-dspmsgQ", false);
 }
 
-int eva_hfiq_list_notif_handler(struct notifier_block *this,
+static int eva_hfiq_list_notif_handler(struct notifier_block *this,
 				unsigned long event, void *ptr)
 {
 	struct va_md_entry entry;
@@ -240,7 +269,7 @@ int eva_hfiq_list_notif_handler(struct notifier_block *this,
 	return NOTIFY_OK;
 }
 
-int eva_struct_list_notif_handler(struct notifier_block *this,
+static int eva_struct_list_notif_handler(struct notifier_block *this,
 		unsigned long event, void *ptr)
 {
 	struct va_md_entry entry;
@@ -282,12 +311,4 @@ int eva_struct_list_notif_handler(struct notifier_block *this,
 	return NOTIFY_OK;
 }
 
-struct notifier_block eva_struct_list_notif_blk = {
-		.notifier_call = eva_struct_list_notif_handler,
-		.priority = INT_MAX-1,
-};
-
-struct notifier_block eva_hfiq_list_notif_blk = {
-		.notifier_call = eva_hfiq_list_notif_handler,
-		.priority = INT_MAX,
-};
+#endif

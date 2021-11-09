@@ -10,7 +10,6 @@
 #include <linux/types.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-heap.h>
-#include <linux/msm_ion.h>
 #include <linux/refcount.h>
 #include <media/msm_eva_private.h>
 

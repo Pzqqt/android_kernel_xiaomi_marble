@@ -215,6 +215,7 @@ static int delete_dsp_session(struct msm_cvp_inst *inst,
 	struct list_head *ptr_dsp_buf = NULL, *next_dsp_buf = NULL;
 	struct cvp_internal_buf *buf = NULL;
 	struct task_struct *task = NULL;
+	struct cvp_hfi_device *hdev;
 	int rc;
 
 	if (!inst)
@@ -264,6 +265,18 @@ static int delete_dsp_session(struct msm_cvp_inst *inst,
 		dprintk(CVP_ERR, "Warning: send Delete Session failed\n");
 
 	task = inst->task;
+
+	spin_lock(&inst->core->resources.pm_qos.lock);
+	if (inst->core->resources.pm_qos.off_vote_cnt > 0)
+		inst->core->resources.pm_qos.off_vote_cnt--;
+	else
+		dprintk(CVP_WARN, "%s Unexpected pm_qos off vote %d\n",
+			__func__,
+			inst->core->resources.pm_qos.off_vote_cnt);
+	spin_unlock(&inst->core->resources.pm_qos.lock);
+
+	hdev = inst->core->device;
+	call_hfi_op(hdev, pm_qos_update, hdev->hfi_device_data);
 
 	rc = msm_cvp_close(inst);
 	if (rc)
@@ -1287,6 +1300,7 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 	struct pid *pid_s = NULL;
 	struct task_struct *task = NULL;
+	struct cvp_hfi_device *hdev;
 
 	cmd->ret = 0;
 
@@ -1361,6 +1375,12 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 		__func__, cmd->session_id, cmd->session_cpu_low,
 		cmd->session_cpu_high);
 
+	spin_lock(&inst->core->resources.pm_qos.lock);
+	inst->core->resources.pm_qos.off_vote_cnt++;
+	spin_unlock(&inst->core->resources.pm_qos.lock);
+	hdev = inst->core->device;
+	call_hfi_op(hdev, pm_qos_update, hdev->hfi_device_data);
+
 	return;
 
 fail_get_pid:
@@ -1382,6 +1402,7 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 	struct task_struct *task = NULL;
+	struct cvp_hfi_device *hdev;
 
 	cmd->ret = 0;
 
@@ -1417,6 +1438,18 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	}
 
 	task = inst->task;
+
+	spin_lock(&inst->core->resources.pm_qos.lock);
+	if (inst->core->resources.pm_qos.off_vote_cnt > 0)
+		inst->core->resources.pm_qos.off_vote_cnt--;
+	else
+		dprintk(CVP_WARN, "%s Unexpected pm_qos off vote %d\n",
+			__func__,
+			inst->core->resources.pm_qos.off_vote_cnt);
+	spin_unlock(&inst->core->resources.pm_qos.lock);
+
+	hdev = inst->core->device;
+	call_hfi_op(hdev, pm_qos_update, hdev->hfi_device_data);
 
 	rc = msm_cvp_close(inst);
 	if (rc) {
@@ -1916,8 +1949,7 @@ int cvp_dsp_device_init(void)
 	int i;
 	char name[CVP_FASTRPC_DRIVER_NAME_SIZE] = "qcom,fastcv0\0";
 
-    add_va_node_to_list(&head_node_dbg_struct,
-        &gfa_cv, sizeof(struct cvp_dsp_apps),
+	add_va_node_to_list(CVP_DBG_DUMP, &gfa_cv, sizeof(struct cvp_dsp_apps),
         "cvp_dsp_apps-gfa_cv", false);
 
 	mutex_init(&me->tx_lock);

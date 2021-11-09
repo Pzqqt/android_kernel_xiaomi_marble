@@ -15,7 +15,7 @@
 #include <linux/types.h>
 #include <linux/version.h>
 #include <linux/io.h>
-#include <linux/of_fdt.h>
+#include <soc/qcom/of_common.h>
 #include "msm_cvp_internal.h"
 #include "msm_cvp_debug.h"
 #include "cvp_hfi_api.h"
@@ -38,7 +38,7 @@
 
 static struct msm_cvp_common_data default_common_data[] = {
 	{
-		.key = "qcom,never-unload-fw",
+		.key = "qcom,auto-pil",
 		.value = 1,
 	},
 };
@@ -49,8 +49,8 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 		.value = 1,
 	},
 	{
-		.key = "qcom,never-unload-fw",
-		.value = 1,
+		.key = "qcom,pm-qos-latency-us",
+		.value = 50,
 	},
 	{
 		.key = "qcom,sw-power-collapse",
@@ -102,11 +102,11 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 static struct msm_cvp_common_data sm8550_common_data[] = {
 	{
 		.key = "qcom,auto-pil",
-		.value = 0,
+		.value = 1,
 	},
 	{
-		.key = "qcom,never-unload-fw",
-		.value = 1,
+		.key = "qcom,pm-qos-latency-us",
+		.value = 50,
 	},
 	{
 		.key = "qcom,sw-power-collapse",
@@ -194,8 +194,8 @@ static struct msm_cvp_platform_data sm8550_data = {
 	.common_data_length =  ARRAY_SIZE(sm8550_common_data),
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_5,
-	.ubwc_config = kona_ubwc_data,
-	.noc_qos = 0x0,
+	.ubwc_config = kona_ubwc_data,	/*Reuse Kona setting*/
+	.noc_qos = &waipio_noc_qos,	/*Reuse Waipio setting*/
 };
 
 static const struct of_device_id msm_cvp_dt_match[] = {
@@ -204,7 +204,7 @@ static const struct of_device_id msm_cvp_dt_match[] = {
 		.data = &sm8450_data,
 	},
 	{
-		.compatible = "qcom,kailua-cvp",
+		.compatible = "qcom,kalama-cvp",
 		.data = &sm8550_data,
 	},
 

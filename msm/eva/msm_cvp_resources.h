@@ -8,6 +8,7 @@
 
 #include <linux/devfreq.h>
 #include <linux/platform_device.h>
+#include <linux/pm_qos.h>
 #include "msm_cvp_core.h"
 #include <linux/soc/qcom/llcc-qcom.h>
 
@@ -134,6 +135,19 @@ struct msm_cvp_mem_cdsp {
 	struct device *dev;
 };
 
+#define MAX_SILVER_CORE_NUM 8
+#define HFI_SESSION_FD 4
+#define HFI_SESSION_DMM 2
+
+struct cvp_pm_qos {
+	u32 silver_count;
+	u32 latency_us;
+	u32 off_vote_cnt;
+	spinlock_t lock;
+	int silver_cores[MAX_SILVER_CORE_NUM];
+	struct dev_pm_qos_request *pm_qos_hdls;
+};
+
 struct msm_cvp_platform_resources {
 	phys_addr_t firmware_base;
 	phys_addr_t register_base;
@@ -166,9 +180,8 @@ struct msm_cvp_platform_resources {
 	bool thermal_mitigable;
 	const char *fw_name;
 	const char *hfi_version;
-	bool never_unload_fw;
 	bool debug_timeout;
-	uint32_t pm_qos_latency_us;
+	struct cvp_pm_qos pm_qos;
 	uint32_t max_inst_count;
 	uint32_t max_secure_inst_count;
 	int msm_cvp_hw_rsp_timeout;

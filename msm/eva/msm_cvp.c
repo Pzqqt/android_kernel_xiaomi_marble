@@ -28,11 +28,9 @@ int msm_cvp_get_session_info(struct msm_cvp_inst *inst, u32 *session)
 	if (!s)
 		return -ECONNRESET;
 
-	s->cur_cmd_type = EVA_KMD_GET_SESSION_INFO;
 	*session = hash32_ptr(inst->session);
 	dprintk(CVP_SESS, "%s: id 0x%x\n", __func__, *session);
 
-	s->cur_cmd_type = 0;
 	cvp_put_inst(s);
 	return rc;
 }
@@ -143,13 +141,11 @@ static int msm_cvp_session_receive_hfi(struct msm_cvp_inst *inst,
 	if (!s)
 		return -ECONNRESET;
 
-	s->cur_cmd_type = EVA_KMD_RECEIVE_MSG_PKT;
 	wait_time = msecs_to_jiffies(CVP_MAX_WAIT_TIME);
 	sq = &inst->session_queue;
 
 	rc = cvp_wait_process_message(inst, sq, NULL, wait_time, out_pkt);
 
-	s->cur_cmd_type = 0;
 	cvp_put_inst(inst);
 	return rc;
 }
@@ -178,7 +174,6 @@ static int msm_cvp_session_process_hfi(
 	if (!s)
 		return -ECONNRESET;
 
-	inst->cur_cmd_type = EVA_KMD_SEND_CMD_PKT;
 	hdev = inst->core->device;
 
 	pkt_idx = get_pkt_index((struct cvp_hal_session_cmd_pkt *)in_pkt);
@@ -251,7 +246,6 @@ static int msm_cvp_session_process_hfi(
 			__func__, signal);
 
 exit:
-	inst->cur_cmd_type = 0;
 	cvp_put_inst(inst);
 	return rc;
 }
@@ -1005,13 +999,11 @@ int msm_cvp_update_power(struct msm_cvp_inst *inst)
 	if (!s)
 		return -ECONNRESET;
 
-	inst->cur_cmd_type = EVA_KMD_UPDATE_POWER;
 	core = inst->core;
 
 	mutex_lock(&core->clk_lock);
 	rc = adjust_bw_freqs();
 	mutex_unlock(&core->clk_lock);
-	inst->cur_cmd_type = 0;
 	cvp_put_inst(s);
 
 	return rc;
@@ -1154,6 +1146,7 @@ static int msm_cvp_session_start(struct msm_cvp_inst *inst,
 		struct eva_kmd_arg *arg)
 {
 	struct cvp_session_queue *sq;
+	struct cvp_hfi_device *hdev;
 
 	sq = &inst->session_queue;
 	spin_lock(&sq->lock);
@@ -1166,6 +1159,14 @@ static int msm_cvp_session_start(struct msm_cvp_inst *inst,
 	sq->state = QUEUE_START;
 	spin_unlock(&sq->lock);
 
+	if (inst->prop.type == HFI_SESSION_FD
+		|| inst->prop.type == HFI_SESSION_DMM) {
+		spin_lock(&inst->core->resources.pm_qos.lock);
+		inst->core->resources.pm_qos.off_vote_cnt++;
+		spin_unlock(&inst->core->resources.pm_qos.lock);
+		hdev = inst->core->device;
+		call_hfi_op(hdev, pm_qos_update, hdev->hfi_device_data);
+	}
 	return cvp_fence_thread_start(inst);
 }
 
@@ -1497,63 +1498,6 @@ static int msm_cvp_set_sysprop(struct msm_cvp_inst *inst,
 	return rc;
 }
 
-static int cvp_drain_fence_cmd_queue_partial(struct msm_cvp_inst *inst)
-{
-	unsigned long wait_time;
-	struct cvp_fence_queue *q;
-	struct cvp_fence_command *f;
-	int rc = 0;
-	int count = 0, max_count = 0;
-
-	q = &inst->fence_cmd_queue;
-
-	mutex_lock(&q->lock);
-
-	list_for_each_entry(f, &q->sched_list, list) {
-		if (f->mode == OP_FLUSH)
-			continue;
-		++count;
-	}
-
-	list_for_each_entry(f, &q->wait_list, list) {
-		if (f->mode == OP_FLUSH)
-			continue;
-		++count;
-	}
-
-	mutex_unlock(&q->lock);
-	wait_time = count * CVP_MAX_WAIT_TIME * 1000;
-
-	dprintk(CVP_SYNX, "%s: wait %d us for %d fence command\n",
-			__func__, wait_time, count);
-
-	count = 0;
-	max_count = wait_time / 100;
-
-retry:
-	mutex_lock(&q->lock);
-	f = list_first_entry(&q->sched_list, struct cvp_fence_command, list);
-
-	/* Wait for all normal frames to finish before return */
-	if ((f && f->mode == OP_FLUSH) ||
-		(list_empty(&q->sched_list) && list_empty(&q->wait_list))) {
-		mutex_unlock(&q->lock);
-		return rc;
-	}
-
-	mutex_unlock(&q->lock);
-	usleep_range(100, 200);
-	++count;
-	if (count < max_count) {
-		goto retry;
-	} else {
-		rc = -ETIMEDOUT;
-		dprintk(CVP_ERR, "%s: timed out!\n", __func__);
-	}
-
-	return rc;
-}
-
 static int cvp_drain_fence_sched_list(struct msm_cvp_inst *inst)
 {
 	unsigned long wait_time;
@@ -1650,11 +1594,20 @@ int cvp_clean_session_queues(struct msm_cvp_inst *inst)
 	struct cvp_session_queue *sq;
 	u32 count = 0, max_retries = 100;
 
+	q = &inst->fence_cmd_queue;
+	mutex_lock(&q->lock);
+	if (q->state == QUEUE_START) {
+		mutex_unlock(&q->lock);
 	cvp_clean_fence_queue(inst, SYNX_STATE_SIGNALED_ERROR);
+	} else {
+		dprintk(CVP_WARN, "Incorrect fence cmd queue state %d\n",
+			q->state);
+		mutex_unlock(&q->lock);
+	}
+
 	cvp_fence_thread_stop(inst);
 
 	/* Waiting for all output synx sent */
-	q = &inst->fence_cmd_queue;
 retry:
 	mutex_lock(&q->lock);
 	if (list_empty(&q->sched_list)) {
@@ -1723,107 +1676,6 @@ exit:
 	mutex_lock(&q->lock);
 	q->mode = OP_NORMAL;
 	mutex_unlock(&q->lock);
-
-	cvp_put_inst(s);
-	return rc;
-}
-
-static void cvp_mark_fence_command(struct msm_cvp_inst *inst, u64 frame_id)
-{
-	int found = false;
-	struct cvp_fence_queue *q;
-	struct cvp_fence_command *f;
-
-	q = &inst->fence_cmd_queue;
-
-	list_for_each_entry(f, &q->sched_list, list) {
-		if (found) {
-			f->mode = OP_FLUSH;
-			continue;
-		}
-
-		if (f->frame_id >= frame_id) {
-			found = true;
-			f->mode = OP_FLUSH;
-		}
-	}
-
-	list_for_each_entry(f, &q->wait_list, list) {
-		if (found) {
-			f->mode = OP_FLUSH;
-			continue;
-		}
-
-		if (f->frame_id >= frame_id) {
-			found = true;
-			f->mode = OP_FLUSH;
-		}
-	}
-}
-
-static int cvp_flush_frame(struct msm_cvp_inst *inst, u64 frame_id)
-{
-	int rc = 0;
-	struct msm_cvp_inst *s;
-	struct cvp_fence_queue *q;
-	struct cvp_fence_command *f, *d;
-	u64 ktid;
-
-	if (!inst || !inst->core) {
-		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	s = cvp_get_inst_validate(inst->core, inst);
-	if (!s)
-		return -ECONNRESET;
-
-	dprintk(CVP_SESS, "Session %llx, flush frame with id %llu\n",
-			inst, frame_id);
-	q = &inst->fence_cmd_queue;
-
-	mutex_lock(&q->lock);
-	q->mode = OP_DRAINING;
-
-	cvp_mark_fence_command(inst, frame_id);
-
-	list_for_each_entry_safe(f, d, &q->wait_list, list) {
-		if (f->mode != OP_FLUSH)
-			continue;
-
-		ktid = f->pkt->client_data.kdata & (FENCE_BIT - 1);
-
-		dprintk(CVP_SYNX, "%s: flush frame %llu %llu from wait_list\n",
-			__func__, ktid, f->frame_id);
-
-		list_del_init(&f->list);
-		msm_cvp_unmap_frame(inst, f->pkt->client_data.kdata);
-		cvp_cancel_synx(inst, CVP_OUTPUT_SYNX, f,
-				SYNX_STATE_SIGNALED_CANCEL);
-		cvp_release_synx(inst, f);
-		cvp_free_fence_data(f);
-	}
-
-	list_for_each_entry(f, &q->sched_list, list) {
-		if (f->mode != OP_FLUSH)
-			continue;
-
-		ktid = f->pkt->client_data.kdata & (FENCE_BIT - 1);
-
-		dprintk(CVP_SYNX, "%s: flush frame %llu %llu from sched_list\n",
-			__func__, ktid, f->frame_id);
-		cvp_cancel_synx(inst, CVP_INPUT_SYNX, f,
-				SYNX_STATE_SIGNALED_CANCEL);
-	}
-
-	mutex_unlock(&q->lock);
-
-	rc = cvp_drain_fence_cmd_queue_partial(inst);
-	if (rc)
-		dprintk(CVP_WARN, "%s: continue flush. rc %d\n",
-		__func__, rc);
-
-	rc = cvp_flush_all(inst);
 
 	cvp_put_inst(s);
 	return rc;
@@ -1916,7 +1768,8 @@ int msm_cvp_handle_syscall(struct msm_cvp_inst *inst, struct eva_kmd_arg *arg)
 		rc = cvp_flush_all(inst);
 		break;
 	case EVA_KMD_FLUSH_FRAME:
-		rc = cvp_flush_frame(inst, arg->data.frame_id);
+		dprintk(CVP_WARN, "EVA_KMD_FLUSH_FRAME IOCTL deprecated\n");
+		rc = 0;
 		break;
 	default:
 		dprintk(CVP_HFI, "%s: unknown arg type %#x\n",
