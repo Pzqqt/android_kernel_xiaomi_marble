@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2013-2022 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1712,6 +1712,36 @@ ssize_t hif_ce_en_desc_hist(struct hif_softc *scn,
 				const char *buf, size_t size);
 ssize_t hif_disp_ce_enable_desc_data_hist(struct hif_softc *scn, char *buf);
 ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf);
+/**
+ * hif_ce_debug_history_prealloc_init() - alloc ce debug history memory
+ *
+ * alloc ce debug history memory with driver init, so such memory can
+ * be existed even after stop module.
+ * on ini value.
+ *
+ * Return: QDF_STATUS_SUCCESS for success, other for fail.
+ */
+QDF_STATUS hif_ce_debug_history_prealloc_init(void);
+/**
+ * hif_ce_debug_history_prealloc_deinit() - free ce debug history memory
+ *
+ * free ce debug history memory when driver deinit.
+ *
+ * Return: QDF_STATUS_SUCCESS for success, other for fail.
+ */
+QDF_STATUS hif_ce_debug_history_prealloc_deinit(void);
+#else
+static inline
+QDF_STATUS hif_ce_debug_history_prealloc_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS hif_ce_debug_history_prealloc_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif/*#if defined(HIF_CONFIG_SLUB_DEBUG_ON)||defined(HIF_CE_DEBUG_DATA_BUF)*/
 
 /**
