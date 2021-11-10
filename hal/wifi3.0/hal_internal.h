@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -819,6 +820,7 @@ struct hal_hw_txrx_ops {
 	uint8_t (*hal_rx_msdu_end_last_msdu_get)(uint8_t *buf);
 	bool (*hal_rx_get_mpdu_mac_ad4_valid)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_start_sw_peer_id_get)(uint8_t *buf);
+	uint32_t (*hal_rx_mpdu_peer_meta_data_get)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_get_to_ds)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_get_fr_ds)(uint8_t *buf);
 	uint8_t (*hal_rx_get_mpdu_frame_control_valid)(uint8_t *buf);

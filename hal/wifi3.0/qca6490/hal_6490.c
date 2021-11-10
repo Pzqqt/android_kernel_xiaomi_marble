@@ -1766,6 +1766,8 @@ static void hal_hw_txrx_ops_attach_qca6490(struct hal_soc *hal_soc)
 					hal_rx_get_mpdu_mac_ad4_valid_6490;
 	hal_soc->ops->hal_rx_mpdu_start_sw_peer_id_get =
 		hal_rx_mpdu_start_sw_peer_id_get_6490;
+	hal_soc->ops->hal_rx_mpdu_peer_meta_data_get =
+		hal_rx_mpdu_peer_meta_data_get_li;
 	hal_soc->ops->hal_rx_mpdu_get_to_ds = hal_rx_mpdu_get_to_ds_6490;
 	hal_soc->ops->hal_rx_mpdu_get_fr_ds = hal_rx_mpdu_get_fr_ds_6490;
 	hal_soc->ops->hal_rx_get_mpdu_frame_control_valid =

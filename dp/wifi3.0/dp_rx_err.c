@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2650,6 +2651,7 @@ done:
 		uint16_t peer_id;
 		uint8_t err_code;
 		uint8_t *tlv_hdr;
+		uint32_t peer_meta_data;
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
 
 		/*
@@ -2660,8 +2662,9 @@ done:
 					      (uint8_t *)&wbm_err_info,
 					      sizeof(wbm_err_info));
 
-		peer_id = hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
-							   rx_tlv_hdr);
+		peer_meta_data = hal_rx_mpdu_peer_meta_data_get(soc->hal_soc,
+								rx_tlv_hdr);
+		peer_id = dp_rx_peer_metadata_peer_id_get(soc, peer_meta_data);
 		peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 
 		if (!peer)
@@ -2725,9 +2728,6 @@ done:
 
 					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
 									   rx_tlv_hdr)) {
-						peer_id =
-						hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
-										 rx_tlv_hdr);
 						tid =
 						hal_rx_mpdu_start_tid_get(hal_soc, rx_tlv_hdr);
 					}
@@ -2745,9 +2745,6 @@ done:
 							     rx.err.oor_err, 1);
 					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
 									   rx_tlv_hdr)) {
-						peer_id =
-							hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
-											 rx_tlv_hdr);
 						tid =
 							hal_rx_mpdu_start_tid_get(hal_soc, rx_tlv_hdr);
 					}
