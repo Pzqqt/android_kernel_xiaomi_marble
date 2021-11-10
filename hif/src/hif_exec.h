@@ -76,6 +76,7 @@ struct hif_execution_ops {
  * @force_break: flag to indicate if HIF execution context was forced to return
  *		 to HIF. This means there is more work to be done. Hence do not
  *		 call napi_complete.
+ * @force_napi_complete: do a force napi_complete when this flag is set to -1
  */
 struct hif_exec_context {
 	struct hif_execution_ops *sched_ops;
@@ -107,9 +108,14 @@ struct hif_exec_context {
 	enum hif_exec_type type;
 	unsigned long long poll_start_time;
 	bool force_break;
+#if defined(FEATURE_IRQ_AFFINITY) || defined(HIF_CPU_PERF_AFFINE_MASK) || \
+	defined(HIF_CPU_CLEAR_AFFINITY)
 	/* Stores the affinity hint mask for each WLAN IRQ */
 	qdf_cpu_mask new_cpu_mask[HIF_MAX_GRP_IRQ];
+#endif
+#ifdef FEATURE_IRQ_AFFINITY
 	qdf_atomic_t force_napi_complete;
+#endif
 };
 
 /**
@@ -160,6 +166,7 @@ struct hif_exec_context *hif_exec_get_ctx(struct hif_opaque_softc *hif,
 					  uint8_t id);
 void hif_exec_kill(struct hif_opaque_softc *scn);
 
+#if defined(HIF_CPU_PERF_AFFINE_MASK) || defined(FEATURE_IRQ_AFFINITY)
 /**
  * hif_pci_irq_set_affinity_hint() - API to set IRQ affinity
  * @hif_ext_group: hif_ext_group to extract the irq info
@@ -172,6 +179,13 @@ void hif_exec_kill(struct hif_opaque_softc *scn);
  */
 void hif_pci_irq_set_affinity_hint(struct hif_exec_context *hif_ext_group,
 				   bool perf);
+#else
+static inline
+void hif_pci_irq_set_affinity_hint(struct hif_exec_context *hif_ext_group,
+				   bool perf)
+{
+}
+#endif
 
 #ifdef HIF_CPU_PERF_AFFINE_MASK
 

@@ -99,7 +99,9 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_config_irq_clear_cpu_affinity =
 		&hif_pci_config_irq_clear_cpu_affinity;
 	bus_ops->hif_log_bus_info = &hif_log_pcie_info;
+#ifdef FEATURE_IRQ_AFFINITY
 	bus_ops->hif_set_grp_intr_affinity = &hif_pci_set_grp_intr_affinity;
+#endif
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -3020,6 +3020,7 @@ const char *hif_pci_get_irq_name(int irq_no)
 	return "pci-dummy";
 }
 
+#if defined(FEATURE_IRQ_AFFINITY) || defined(HIF_CPU_PERF_AFFINE_MASK)
 void hif_pci_irq_set_affinity_hint(struct hif_exec_context *hif_ext_group,
 				   bool perf)
 {
@@ -3064,6 +3065,7 @@ void hif_pci_irq_set_affinity_hint(struct hif_exec_context *hif_ext_group,
 		}
 	}
 }
+#endif
 
 #ifdef HIF_CPU_PERF_AFFINE_MASK
 void hif_pci_ce_irq_set_affinity_hint(
@@ -3217,6 +3219,7 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 	return 0;
 }
 
+#ifdef FEATURE_IRQ_AFFINITY
 void hif_pci_set_grp_intr_affinity(struct hif_softc *scn,
 				   uint32_t grp_intr_bitmask, bool perf)
 {
@@ -3233,6 +3236,7 @@ void hif_pci_set_grp_intr_affinity(struct hif_softc *scn,
 		qdf_atomic_set(&hif_ext_group->force_napi_complete, -1);
 	}
 }
+#endif
 
 #if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
 	defined(QCA_WIFI_WCN7850))

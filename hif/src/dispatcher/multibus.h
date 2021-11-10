@@ -100,8 +100,10 @@ struct hif_bus_ops {
 				 unsigned int *offset);
 	int (*hif_enable_grp_irqs)(struct hif_softc *scn);
 	int (*hif_disable_grp_irqs)(struct hif_softc *scn);
+#ifdef FEATURE_IRQ_AFFINITY
 	void (*hif_set_grp_intr_affinity)(struct hif_softc *scn,
 					  uint32_t grp_intr_bitmask, bool perf);
+#endif
 };
 
 #ifdef HIF_SNOC

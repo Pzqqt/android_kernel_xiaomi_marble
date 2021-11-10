@@ -98,6 +98,7 @@ const char *hif_pci_get_irq_name(int irq_no);
 void hif_pci_config_irq_affinity(struct hif_softc *scn);
 int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id);
 
+#ifdef FEATURE_IRQ_AFFINITY
 /*
  * hif_pci_set_grp_intr_affinity() - Set irq affinity hint for grp
  *  intrs based on bitmask
@@ -109,4 +110,5 @@ int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id);
  */
 void hif_pci_set_grp_intr_affinity(struct hif_softc *scn,
 				   uint32_t grp_intr_bitmask, bool perf);
+#endif
 #endif /* _PCI_API_H_ */

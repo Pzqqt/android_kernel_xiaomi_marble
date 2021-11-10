@@ -96,5 +96,7 @@ int hif_dummy_enable_grp_irqs(struct hif_softc *scn);
 int hif_dummy_disable_grp_irqs(struct hif_softc *scn);
 void hif_dummy_config_irq_clear_cpu_affinity(struct hif_softc *scn,
 					     int intr_ctxt_id, int cpu);
+#ifdef FEATURE_IRQ_AFFINITY
 void hif_dummy_set_grp_intr_affinity(struct hif_softc *scn,
 				     uint32_t grp_intr_bitmask, bool perf);
+#endif

@@ -67,7 +67,9 @@ static void hif_initialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_disable_grp_irqs = &hif_dummy_enable_grp_irqs;
 	bus_ops->hif_config_irq_clear_cpu_affinity =
 		&hif_dummy_config_irq_clear_cpu_affinity;
+#ifdef FEATURE_IRQ_AFFINITY
 	bus_ops->hif_set_grp_intr_affinity = &hif_dummy_set_grp_intr_affinity;
+#endif
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
@@ -711,6 +713,7 @@ int hif_enable_grp_irqs(struct hif_opaque_softc *scn)
 	return hif_sc->bus_ops.hif_enable_grp_irqs(hif_sc);
 }
 
+#ifdef FEATURE_IRQ_AFFINITY
 void hif_set_grp_intr_affinity(struct hif_opaque_softc *scn,
 			       uint32_t grp_intr_bitmask, bool perf)
 {
@@ -722,3 +725,4 @@ void hif_set_grp_intr_affinity(struct hif_opaque_softc *scn,
 	hif_sc->bus_ops.hif_set_grp_intr_affinity(hif_sc, grp_intr_bitmask,
 						  perf);
 }
+#endif

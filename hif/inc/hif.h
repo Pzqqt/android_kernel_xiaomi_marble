@@ -2092,6 +2092,7 @@ static inline int hif_system_pm_state_check(struct hif_opaque_softc *hif)
 }
 #endif
 
+#ifdef FEATURE_IRQ_AFFINITY
 /**
  * hif_set_grp_intr_affinity() - API to set affinity for grp
  *  intrs set in the bitmap
@@ -2104,4 +2105,11 @@ static inline int hif_system_pm_state_check(struct hif_opaque_softc *hif)
  */
 void hif_set_grp_intr_affinity(struct hif_opaque_softc *scn,
 			       uint32_t grp_intr_bitmask, bool perf);
+#else
+static inline
+void hif_set_grp_intr_affinity(struct hif_opaque_softc *scn,
+			       uint32_t grp_intr_bitmask, bool perf)
+{
+}
+#endif
 #endif /* _HIF_H_ */

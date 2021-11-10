@@ -92,7 +92,6 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_log_bus_info = &hif_dummy_log_bus_info;
 	bus_ops->hif_enable_grp_irqs = hif_ipci_enable_grp_irqs;
 	bus_ops->hif_disable_grp_irqs = hif_ipci_disable_grp_irqs;
-	bus_ops->hif_set_grp_intr_affinity = &hif_dummy_set_grp_intr_affinity;
 
 	return QDF_STATUS_SUCCESS;
 }
