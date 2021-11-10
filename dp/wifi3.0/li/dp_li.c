@@ -358,6 +358,14 @@ static bool dp_reo_remap_config_li(struct dp_soc *soc,
 	return dp_reo_remap_config(soc, remap0, remap1, remap2);
 }
 
+static QDF_STATUS dp_txrx_set_vdev_param_li(struct dp_soc *soc,
+					    struct dp_vdev *vdev,
+					    enum cdp_vdev_param_type param,
+					    cdp_config_param_type val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -401,5 +409,6 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_li;
 	arch_ops->peer_get_reo_hash = dp_peer_get_reo_hash_li;
 	arch_ops->reo_remap_config = dp_reo_remap_config_li;
+	arch_ops->txrx_set_vdev_param = dp_txrx_set_vdev_param_li;
 }
 

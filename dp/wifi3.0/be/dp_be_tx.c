@@ -286,7 +286,7 @@ QDF_STATUS dp_tx_init_bank_profiles(struct dp_soc_be *be_soc)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mutex_create(&be_soc->tx_bank_lock);
+	qdf_spinlock_create(&be_soc->tx_bank_lock);
 
 	for (i = 0; i < num_tcl_banks; i++) {
 		be_soc->bank_profiles[i].is_configured = false;
@@ -299,7 +299,7 @@ QDF_STATUS dp_tx_init_bank_profiles(struct dp_soc_be *be_soc)
 void dp_tx_deinit_bank_profiles(struct dp_soc_be *be_soc)
 {
 	qdf_mem_free(be_soc->bank_profiles);
-	qdf_mutex_destroy(&be_soc->tx_bank_lock);
+	qdf_spinlock_destroy(&be_soc->tx_bank_lock);
 }
 
 static
@@ -364,7 +364,7 @@ int dp_tx_get_bank_profile(struct dp_soc_be *be_soc,
 	/* convert vdev params into hal_tx_bank_config */
 	dp_tx_get_vdev_bank_config(be_vdev, &vdev_config);
 
-	qdf_mutex_acquire(&be_soc->tx_bank_lock);
+	qdf_spin_lock_bh(&be_soc->tx_bank_lock);
 	/* go over all banks and find a matching/unconfigured/unsed bank */
 	for (i = 0; i < be_soc->num_bank_profiles; i++) {
 		if (be_soc->bank_profiles[i].is_configured &&
@@ -410,7 +410,7 @@ configure_and_return:
 				      bank_id);
 inc_ref_and_return:
 	qdf_atomic_inc(&be_soc->bank_profiles[bank_id].ref_count);
-	qdf_mutex_release(&be_soc->tx_bank_lock);
+	qdf_spin_unlock_bh(&be_soc->tx_bank_lock);
 
 	dp_info("found %s slot at index %d, input:0x%x match:0x%x ref_count %u",
 		temp_str, bank_id, vdev_config.val,
@@ -436,9 +436,9 @@ inc_ref_and_return:
 void dp_tx_put_bank_profile(struct dp_soc_be *be_soc,
 			    struct dp_vdev_be *be_vdev)
 {
-	qdf_mutex_acquire(&be_soc->tx_bank_lock);
+	qdf_spin_lock_bh(&be_soc->tx_bank_lock);
 	qdf_atomic_dec(&be_soc->bank_profiles[be_vdev->bank_id].ref_count);
-	qdf_mutex_release(&be_soc->tx_bank_lock);
+	qdf_spin_unlock_bh(&be_soc->tx_bank_lock);
 }
 
 void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,

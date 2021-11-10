@@ -187,7 +187,7 @@ struct dp_tx_bank_profile {
 struct dp_soc_be {
 	struct dp_soc soc;
 	uint8_t num_bank_profiles;
-	qdf_mutex_t tx_bank_lock;
+	qdf_spinlock_t tx_bank_lock;
 	struct dp_tx_bank_profile *bank_profiles;
 	struct dp_spt_page_desc *page_desc_base;
 	uint32_t cc_cmem_base;
@@ -617,4 +617,19 @@ void dp_pdev_mlo_fill_params(struct dp_pdev *pdev,
 {
 }
 #endif
+
+/*
+ * dp_txrx_set_vdev_param_be: target specific ops while setting vdev params
+ * @soc : DP soc handle
+ * @vdev: pointer to vdev structure
+ * @param: parameter type to get value
+ * @val: value
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS dp_txrx_set_vdev_param_be(struct dp_soc *soc,
+				     struct dp_vdev *vdev,
+				     enum cdp_vdev_param_type param,
+				     cdp_config_param_type val);
+
 #endif

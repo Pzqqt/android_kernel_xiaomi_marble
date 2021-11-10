@@ -9287,6 +9287,7 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		break;
 	}
 
+	dsoc->arch_ops.txrx_set_vdev_param(dsoc, vdev, param, val);
 	dp_tx_vdev_update_search_flags((struct dp_vdev *)vdev);
 	dp_vdev_unref_delete(dsoc, vdev, DP_MOD_ID_CDP);
 
@@ -9396,11 +9397,17 @@ static QDF_STATUS dp_set_vdev_dscp_tid_map_wifi3(ol_txrx_soc_handle cdp_soc,
 						 uint8_t vdev_id,
 						 uint8_t map_id)
 {
+	cdp_config_param_type val;
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(cdp_soc);
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
 						     DP_MOD_ID_CDP);
 	if (vdev) {
 		vdev->dscp_tid_map_id = map_id;
+		val.cdp_vdev_param_dscp_tid_map_id = map_id;
+		soc->arch_ops.txrx_set_vdev_param(soc,
+						  vdev,
+						  CDP_UPDATE_DSCP_TO_TID_MAP,
+						  val);
 		/* Updatr flag for transmit tid classification */
 		if (vdev->dscp_tid_map_id < soc->num_hw_dscp_tid_map)
 			vdev->skip_sw_tid_classification |=
