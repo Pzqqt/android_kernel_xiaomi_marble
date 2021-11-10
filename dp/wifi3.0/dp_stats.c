@@ -6710,6 +6710,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("Reo2rel route drop:%d",
 		       soc->stats.rx.reo2rel_route_drop);
 	DP_PRINT_STATS("Rx Flush count:%d", soc->stats.rx.err.rx_flush_count);
+	DP_PRINT_STATS("Rx invalid TID count:%d",
+		       soc->stats.rx.err.rx_invalid_tid_err);
 }
 
 #ifdef FEATURE_TSO_STATS

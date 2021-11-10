@@ -1121,6 +1121,8 @@ struct dp_soc_stats {
 			uint32_t msdu_len_err;
 			/* Rx flush count */
 			uint32_t rx_flush_count;
+			/* Rx invalid tid count */
+			uint32_t rx_invalid_tid_err;
 		} err;
 
 		/* packet count per core - per ring */
