@@ -3988,6 +3988,11 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 		       pe_session->vdev_id);
 		goto fail;
 	}
+	if (wlan_vdev_mlme_is_mlo_vdev(pe_session->vdev) &&
+	    !wlan_vdev_mlme_is_mlo_link_vdev(pe_session->vdev))
+		lim_send_mlo_caps_ie(mac_ctx, pe_session,
+				     QDF_STA_MODE,
+				     pe_session->vdev_id);
 
 	return QDF_STATUS_SUCCESS;
 

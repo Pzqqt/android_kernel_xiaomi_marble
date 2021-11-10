@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -271,6 +272,14 @@ lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
  */
 void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
 			     tpDphHashNode sta_ds);
+
+void lim_set_mlo_caps(struct mac_context *mac, struct pe_session *session,
+		      uint8_t *ie_start, uint32_t num_bytes);
+
+QDF_STATUS lim_send_mlo_caps_ie(struct mac_context *mac_ctx,
+				struct pe_session *session,
+				enum QDF_OPMODE device_mode,
+				uint8_t vdev_id);
 #else
 static inline uint16_t lim_assign_mlo_conn_idx(struct mac_context *mac,
 					       struct pe_session *pe_session,
@@ -288,6 +297,21 @@ lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
 static inline void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
 					   tpDphHashNode sta_ds)
 {
+}
+
+static inline
+void lim_set_mlo_caps(struct mac_context *mac, struct pe_session *session,
+		      uint8_t *ie_start, uint32_t num_bytes)
+{
+}
+
+static inline
+QDF_STATUS lim_send_mlo_caps_ie(struct mac_context *mac_ctx,
+				struct pe_session *session,
+				enum QDF_OPMODE device_mode,
+				uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
 

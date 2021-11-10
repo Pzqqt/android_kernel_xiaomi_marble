@@ -7628,6 +7628,29 @@ populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 }
 
 QDF_STATUS
+populate_dot11f_mlo_caps(struct mac_context *mac_ctx,
+			 struct pe_session *session,
+			 tDot11fIEmlo_ie *mlo_ie)
+{
+	uint8_t *mld_addr;
+
+	mlo_ie->present = 1;
+	mlo_ie->type = 0;
+	mlo_ie->mld_mac_addr_present = 1;
+	mld_addr = wlan_vdev_mlme_get_mldaddr(session->vdev);
+	qdf_mem_copy(&mlo_ie->mld_mac_addr.info.mld_mac_addr, mld_addr,
+		     sizeof(mlo_ie->mld_mac_addr.info.mld_mac_addr));
+	mlo_ie->link_id_info_present = 0;
+
+	mlo_ie->bss_param_change_cnt_present = 0;
+	mlo_ie->medium_sync_delay_info_present = 0;
+	mlo_ie->eml_capab_present = 0;
+	mlo_ie->mld_capab_present = 1;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 					tpSirMultiLink_IE mlo_ie_ptr)
 {
