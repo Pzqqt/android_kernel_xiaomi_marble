@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -69,3 +69,23 @@ bool is_multi_link_roam(struct roam_offload_synch_ind *sync_ind)
 
 	return false;
 }
+
+QDF_STATUS mlo_enable_rso(struct wlan_objmgr_pdev *pdev,
+			  struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_vdev *assoc_vdev;
+
+	if (wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
+		assoc_vdev = wlan_mlo_get_assoc_link_vdev(vdev);
+		if (!assoc_vdev) {
+			mlo_err("Assoc vdev is null");
+			return QDF_STATUS_E_NULL_VALUE;
+		}
+
+		cm_roam_start_init_on_connect(pdev,
+					      wlan_vdev_get_id(assoc_vdev));
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+

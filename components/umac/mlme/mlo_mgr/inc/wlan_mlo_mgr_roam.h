@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -88,6 +88,19 @@ mlo_get_sta_link_mac_addr(uint8_t vdev_id,
 bool
 is_multi_link_roam(struct roam_offload_synch_ind *sync_ind);
 
+/**
+ * mlo_enable_rso - Enable rso on assoc vdev
+ *
+ * @pdev: pdev pointer
+ * @vdev: assoc vdev pointer
+ *
+ * This api will be called to enable RSO for MLO connection.
+ *
+ * Return: qdf_status success or fail
+ */
+QDF_STATUS mlo_enable_rso(struct wlan_objmgr_pdev *pdev,
+			  struct wlan_objmgr_vdev *vdev);
+
 #else
 static inline QDF_STATUS
 mlo_get_sta_link_mac_addr(uint8_t vdev_id,
@@ -103,5 +116,11 @@ is_multi_link_roam(struct roam_offload_synch_ind *sync_ind)
 	return false;
 }
 
+static inline
+QDF_STATUS mlo_enable_rso(struct wlan_objmgr_pdev *pdev,
+			  struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_FEATURE_11BE_MLO */
 #endif
