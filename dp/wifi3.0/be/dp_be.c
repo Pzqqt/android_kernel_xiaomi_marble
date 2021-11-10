@@ -1314,6 +1314,31 @@ static bool dp_reo_remap_config_be(struct dp_soc *soc,
 }
 #endif
 
+QDF_STATUS dp_txrx_set_vdev_param_be(struct dp_soc *soc,
+				     struct dp_vdev *vdev,
+				     enum cdp_vdev_param_type param,
+				     cdp_config_param_type val)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_vdev_be *be_vdev = dp_get_be_vdev_from_dp_vdev(vdev);
+
+	switch (param) {
+	case CDP_TX_ENCAP_TYPE:
+	case CDP_UPDATE_DSCP_TO_TID_MAP:
+		dp_tx_update_bank_profile(be_soc, be_vdev);
+		break;
+	case CDP_ENABLE_CIPHER:
+		if (vdev->tx_encap_type == htt_cmn_pkt_type_raw)
+			dp_tx_update_bank_profile(be_soc, be_vdev);
+		break;
+	default:
+		dp_warn("invalid param %d", param);
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -1351,6 +1376,7 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_be;
 	arch_ops->peer_get_reo_hash = dp_peer_get_reo_hash_be;
 	arch_ops->reo_remap_config = dp_reo_remap_config_be;
+	arch_ops->txrx_set_vdev_param = dp_txrx_set_vdev_param_be;
 
 #ifdef WLAN_FEATURE_11BE_MLO
 	arch_ops->mlo_peer_find_hash_detach =
@@ -1361,5 +1387,6 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->mlo_peer_find_hash_remove = dp_mlo_peer_find_hash_remove_be;
 	arch_ops->mlo_peer_find_hash_find = dp_mlo_peer_find_hash_find_be;
 #endif
+
 	dp_init_near_full_arch_ops_be(arch_ops);
 }
