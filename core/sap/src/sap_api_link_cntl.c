@@ -938,6 +938,38 @@ sap_check_and_process_go_force_ssc(struct sap_context *cur_sap_ctx)
 {}
 #endif
 
+/**
+ * sap_is_csa_restart_state() - check if sap is in csa restart state
+ * @psoc: PSOC object
+ * @sap_ctx: sap context to check
+ *
+ * Return: true if sap is in csa restart state
+ */
+static bool sap_is_csa_restart_state(struct wlan_objmgr_psoc *psoc,
+				     struct sap_context *sap_ctx)
+{
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	if (!psoc || !sap_ctx) {
+		sap_err("Invalid params");
+		return false;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    sap_ctx->sessionId,
+						    WLAN_DFS_ID);
+	if (!vdev) {
+		sap_err("vdev is NULL for vdev_id: %u", sap_ctx->sessionId);
+		return false;
+	}
+
+	status = wlan_vdev_mlme_is_csa_restart(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
+
+	return QDF_IS_STATUS_SUCCESS(status);
+}
+
 QDF_STATUS wlansap_roam_callback(void *ctx,
 				 struct csr_roam_info *csr_roam_info,
 				 uint32_t roam_id,
@@ -1026,6 +1058,12 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 			sap_debug("Ignore Radar event in sap state %d cac wait state %d",
 				  sap_ctx->fsm_state,
 				  sap_is_dfs_cac_wait_state(sap_ctx));
+			goto EXIT;
+		}
+
+		if (sap_ctx->fsm_state == SAP_STARTED &&
+		    sap_is_csa_restart_state(mac_ctx->psoc, sap_ctx)) {
+			sap_debug("Ignore Radar event in csa restart state");
 			goto EXIT;
 		}
 
