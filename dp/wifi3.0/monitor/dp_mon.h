@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
-
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
-
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -2045,12 +2045,19 @@ static inline void dp_monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
 
 /*
  * dp_monitor_tx_add_to_comp_queue() - add completion msdu to queue
+ *
+ * This API returns QDF_STATUS_SUCCESS in case where buffer is added
+ * to txmonitor queue successfuly caller will not free the buffer in
+ * this case. In other cases this API return QDF_STATUS_E_FAILURE and
+ * caller frees the buffer
+ *
  * @soc: point to soc
  * @desc: point to tx desc
  * @ts: Tx completion status from HAL/HTT descriptor
  * @peer: DP peer
  *
- * Return: None
+ * Return: QDF_STATUS
+ *
  */
 static inline
 QDF_STATUS dp_monitor_tx_add_to_comp_queue(struct dp_soc *soc,
@@ -2063,7 +2070,7 @@ QDF_STATUS dp_monitor_tx_add_to_comp_queue(struct dp_soc *soc,
 
 	if (!mon_soc) {
 		dp_mon_debug("monitor soc is NULL");
-		return QDF_STATUS_SUCCESS;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
