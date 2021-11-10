@@ -4859,30 +4859,6 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 }
 #endif
 
-static void dp_tx_vdev_update_feature_flags(struct dp_vdev *vdev)
-{
-	struct wlan_cfg_dp_soc_ctxt *cfg;
-
-	struct dp_soc *soc;
-
-	soc = vdev->pdev->soc;
-	if (!soc)
-		return;
-
-	cfg = soc->wlan_cfg_ctx;
-	if (!cfg)
-		return;
-
-	if (vdev->opmode == wlan_op_mode_ndi)
-		vdev->csum_enabled = wlan_cfg_get_nan_checksum_offload(cfg);
-	else if ((vdev->subtype == wlan_op_subtype_p2p_device) ||
-		 (vdev->subtype == wlan_op_subtype_p2p_cli) ||
-		 (vdev->subtype == wlan_op_subtype_p2p_go))
-		vdev->csum_enabled = wlan_cfg_get_p2p_checksum_offload(cfg);
-	else
-		vdev->csum_enabled = wlan_cfg_get_checksum_offload(cfg);
-}
-
 /**
  * dp_tx_vdev_attach() - attach vdev to dp tx
  * @vdev: virtual device instance
@@ -4913,8 +4889,6 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
 
 	dp_tx_vdev_update_search_flags(vdev);
-
-	dp_tx_vdev_update_feature_flags(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

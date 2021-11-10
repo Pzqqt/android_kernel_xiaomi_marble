@@ -9071,11 +9071,6 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 				      val.cdp_vdev_param_mesh_mode);
 		break;
 #endif
-	case CDP_ENABLE_CSUM:
-		dp_info("vdev_id %d enable Checksum %d", vdev_id,
-			val.cdp_enable_tx_checksum);
-		vdev->csum_enabled = val.cdp_enable_tx_checksum;
-		break;
 	case CDP_ENABLE_HLOS_TID_OVERRIDE:
 		dp_info("vdev_id %d enable hlod tid override %d", vdev_id,
 			val.cdp_vdev_param_hlos_tid_override);

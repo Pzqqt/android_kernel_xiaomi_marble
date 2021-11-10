@@ -2753,9 +2753,6 @@ struct dp_vdev {
 	/* IGMP multicast enhancement enabled */
 	uint8_t igmp_mcast_enhanc_en;
 
-	/* HW TX Checksum Enabled Flag */
-	uint8_t csum_enabled;
-
 	/* vdev_id - ID used to specify a particular vdev to the target */
 	uint8_t vdev_id;
 

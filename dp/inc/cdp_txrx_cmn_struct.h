@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1261,8 +1262,6 @@ enum cdp_pdev_param_type {
  *
  * @cdp_psoc_param_en_rate_stats: set rate stats enable/disable
  * @cdp_psoc_param_en_nss_cfg: set nss cfg
- *
- * @cdp_enable_tx_checksum: Flag to specify if HW Tx checksum enabled
  */
 typedef union cdp_config_param_t {
 	/* peer params */
@@ -1336,8 +1335,6 @@ typedef union cdp_config_param_t {
 	int cdp_psoc_param_en_nss_cfg;
 	int cdp_psoc_param_preferred_hw_mode;
 	bool cdp_psoc_param_pext_stats;
-
-	bool cdp_enable_tx_checksum;
 
 	bool cdp_skip_bar_update;
 } cdp_config_param_type;
@@ -1440,7 +1437,6 @@ enum cdp_vdev_param_type {
 #endif
 	CDP_SAFEMODE,
 	CDP_DROP_UNENC,
-	CDP_ENABLE_CSUM,
 	CDP_ENABLE_IGMP_MCAST_EN,
 	CDP_ENABLE_HLOS_TID_OVERRIDE,
 #ifdef QCA_SUPPORT_WDS_EXTENDED
