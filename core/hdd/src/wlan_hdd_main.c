@@ -5624,7 +5624,7 @@ static netdev_features_t hdd_fix_features(struct net_device *net_dev,
 	return changed_features;
 }
 /**
- * __hdd_set_features - Update device config for resultant change in feature
+ * __hdd_set_features - Notify device about change in features
  * @net_dev: Handle to net_device
  * @features: Existing + requested feature after resolving the dependency
  *
@@ -5634,7 +5634,6 @@ static int __hdd_set_features(struct net_device *net_dev,
 			      netdev_features_t features)
 {
 	struct hdd_adapter *adapter = netdev_priv(net_dev);
-	cdp_config_param_type vdev_param;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!adapter->handle_feature_update) {
@@ -5648,15 +5647,6 @@ static int __hdd_set_features(struct net_device *net_dev,
 	hdd_debug("vdev mode %d vdev_id %d current features 0x%llx, changed features 0x%llx",
 		  adapter->device_mode, adapter->vdev_id, net_dev->features,
 		  features);
-
-	if (features & (NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM))
-		vdev_param.cdp_enable_tx_checksum = true;
-	else
-		vdev_param.cdp_enable_tx_checksum = false;
-
-	if (cdp_txrx_set_vdev_param(soc, adapter->vdev_id, CDP_ENABLE_CSUM,
-				    vdev_param))
-		hdd_debug("Failed to set DP vdev params");
 
 	return 0;
 }
