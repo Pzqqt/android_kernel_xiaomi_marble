@@ -2456,6 +2456,14 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+    /* Represents the count for 11BE UL MU MIMO sequences with Basic Triggers */
+    A_UINT32 be_ul_mu_mimo_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
+    /* Represents the count for 11BE UL MU MIMO sequences with BRP Triggers */
+    A_UINT32 be_ul_mu_mimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
+} htt_tx_pdev_be_ul_mu_mimo_sch_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
     A_UINT32 mu_mimo_mpdus_queued_usr;      /* 11AC DL MU MIMO number of mpdus queued to HW, per user */
     A_UINT32 mu_mimo_mpdus_tried_usr;       /* 11AC DL MU MIMO number of mpdus tried over the air, per user */
     A_UINT32 mu_mimo_mpdus_failed_usr;      /* 11AC DL MU MIMO number of mpdus failed acknowledgement, per user */
@@ -4233,6 +4241,16 @@ typedef struct {
     A_UINT32 rx_ulmumimo_mpdu_ok;       /* mpdu level */
     A_UINT32 rx_ulmumimo_mpdu_fail;     /* mpdu level */
 } htt_rx_pdev_ul_mimo_user_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 user_index;
+    A_UINT32 be_rx_ulmumimo_non_data_ppdu; /* ppdu level */
+    A_UINT32 be_rx_ulmumimo_data_ppdu;     /* ppdu level */
+    A_UINT32 be_rx_ulmumimo_mpdu_ok;       /* mpdu level */
+    A_UINT32 be_rx_ulmumimo_mpdu_fail;     /* mpdu level */
+} htt_rx_pdev_be_ul_mimo_user_stats_tlv;
 
 /* == RX PDEV/SOC STATS == */
 

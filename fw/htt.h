@@ -669,6 +669,8 @@ typedef enum {
     HTT_STATS_TX_SELFGEN_BE_ERR_STATS_TAG          = 137, /* htt_tx_selfgen_be_err_stats_tlv */
     HTT_STATS_TX_SELFGEN_BE_STATS_TAG              = 138, /* htt_tx_selfgen_be_stats_tlv */
     HTT_STATS_TX_SELFGEN_BE_SCHED_STATUS_STATS_TAG = 139, /* htt_tx_selfgen_be_sched_status_stats_tlv */
+    HTT_STATS_TX_PDEV_BE_UL_MU_MIMO_STATS_TAG      = 140, /* htt_tx_pdev_be_ul_mu_mimo_sch_stats_tlv */
+    HTT_STATS_RX_PDEV_BE_UL_MIMO_USER_STATS_TAG    = 141, /* htt_rx_pdev_be_ul_mimo_user_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
