@@ -4428,7 +4428,9 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 	 * descriptor in case of MEC notify.
 	 */
 	if (tx_status == HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY) {
-		qdf_assert_always(!soc->mec_fw_offload);
+		if (soc->mec_fw_offload)
+			return;
+
 		/*
 		 * Get vdev id from HTT status word in case of MEC
 		 * notification
