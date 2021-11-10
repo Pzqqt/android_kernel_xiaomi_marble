@@ -742,6 +742,11 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 
+	if (!(buf->attr & MSM_VIDC_ATTR_QUEUED)) {
+		print_vidc_buffer(VIDC_ERR, "err ", "not queued", inst, buf);
+		return 0;
+	}
+
 	buf->data_size = buffer->data_size;
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
@@ -793,6 +798,11 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	}
 	if (!found)
 		return 0;
+
+	if (!(buf->attr & MSM_VIDC_ATTR_QUEUED)) {
+		print_vidc_buffer(VIDC_ERR, "err ", "not queued", inst, buf);
+		return 0;
+	}
 
 	buf->data_offset = buffer->data_offset;
 	buf->data_size = buffer->data_size;
@@ -928,6 +938,12 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 			return 0;
 		}
 	}
+
+	if (!(buf->attr & MSM_VIDC_ATTR_QUEUED)) {
+		print_vidc_buffer(VIDC_ERR, "err ", "not queued", inst, buf);
+		return 0;
+	}
+
 	buf->data_size = buffer->data_size;
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
@@ -963,6 +979,11 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 			__func__, buffer->index, buffer->base_address,
 			buffer->data_offset);
 		return -EINVAL;
+	}
+
+	if (!(buf->attr & MSM_VIDC_ATTR_QUEUED)) {
+		print_vidc_buffer(VIDC_ERR, "err ", "not queued", inst, buf);
+		return 0;
 	}
 
 	buf->data_size = buffer->data_size;
