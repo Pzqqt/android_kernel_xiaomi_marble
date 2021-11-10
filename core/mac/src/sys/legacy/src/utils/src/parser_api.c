@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2978,6 +2979,11 @@ QDF_STATUS sir_convert_probe_frame2_struct(struct mac_context *mac,
 			     sizeof(tDot11fIEhe_op));
 	}
 
+	if (pr->eht_cap.present) {
+		qdf_mem_copy(&pProbeResp->eht_cap, &pr->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+	}
+
 	update_bss_color_change_ie_from_probe_rsp(pr, pProbeResp);
 	sir_convert_mlo_probe_rsp_frame2_struct(pr, &pProbeResp->mlo_ie);
 
@@ -4505,6 +4511,11 @@ sir_parse_beacon_ie(struct mac_context *mac,
 	if (pBies->he_op.present) {
 		qdf_mem_copy(&pBeaconStruct->he_op, &pBies->he_op,
 			     sizeof(tDot11fIEhe_op));
+	}
+
+	if (pBies->eht_cap.present) {
+		qdf_mem_copy(&pBeaconStruct->eht_cap, &pBies->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
 	}
 
 	update_bss_color_change_from_beacon_ies(pBies, pBeaconStruct);
