@@ -11202,6 +11202,9 @@ static uint32_t dp_get_cfg(struct cdp_soc_t *soc, enum cdp_dp_cfg cfg)
 	case cfg_dp_gro_enable:
 		value = dpsoc->wlan_cfg_ctx->gro_enabled;
 		break;
+	case cfg_dp_force_gro_enable:
+		value = dpsoc->wlan_cfg_ctx->force_gro_enabled;
+		break;
 	case cfg_dp_sg_enable:
 		value = dpsoc->wlan_cfg_ctx->sg_enabled;
 		break;

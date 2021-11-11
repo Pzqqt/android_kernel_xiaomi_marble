@@ -704,9 +704,34 @@
 	CFG_INI_BOOL("dp_sg_support", false, \
 	"DP SG Enable")
 
+#define WLAN_CFG_GRO_ENABLE_MIN 0
+#define WLAN_CFG_GRO_ENABLE_MAX 3
+#define WLAN_CFG_GRO_ENABLE_DEFAULT 0
+#define DP_GRO_ENABLE_BIT_SET     BIT(0)
+#define DP_FORCE_USE_GRO_BIT_SET  BIT(1)
+/*
+ * <ini>
+ * CFG_DP_GRO - Enable the GRO feature standalonely
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini entry is used to enable/disable GRO feature standalonely.
+ * Value 0: Disable GRO feature
+ * Value 1: Enable Dynamic GRO feature, TC rule can control GRO
+ *          behavior of STA mode
+ * Value 3: Enable GRO feature forcibly
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_DP_GRO \
-	CFG_INI_BOOL("GROEnable", false, \
-	"DP GRO Enable")
+		CFG_INI_UINT("GROEnable", \
+		WLAN_CFG_GRO_ENABLE_MIN, \
+		WLAN_CFG_GRO_ENABLE_MAX, \
+		WLAN_CFG_GRO_ENABLE_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, "DP GRO Enable")
 
 #define CFG_DP_OL_TX_CSUM \
 	CFG_INI_BOOL("dp_offload_tx_csum_support", false, \
