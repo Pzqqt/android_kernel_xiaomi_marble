@@ -680,7 +680,7 @@ static int dp_hdcp2p2_cp_irq(void *input)
 
 	if (atomic_read(&ctrl->auth_state) == HDCP_STATE_AUTH_FAIL ||
 		atomic_read(&ctrl->auth_state) == HDCP_STATE_INACTIVE) {
-		DP_ERR("invalid hdcp state\n");
+		DP_DEBUG("invalid hdcp state\n");
 		return -EINVAL;
 	}
 
