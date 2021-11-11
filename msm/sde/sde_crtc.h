@@ -1063,4 +1063,9 @@ void sde_crtc_cancel_delayed_work(struct drm_crtc *crtc);
  */
 struct drm_encoder *sde_crtc_get_src_encoder_of_clone(struct drm_crtc *crtc);
 
+/*
+ * _sde_crtc_vm_release_notify- send event to usermode on vm release
+ */
+void _sde_crtc_vm_release_notify(struct drm_crtc *crtc);
+
 #endif /* _SDE_CRTC_H_ */

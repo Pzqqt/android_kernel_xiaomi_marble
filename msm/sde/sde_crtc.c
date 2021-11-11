@@ -70,6 +70,9 @@ static int sde_crtc_pm_event_handler(struct drm_crtc *crtc, bool en,
 static int _sde_crtc_set_noise_layer(struct sde_crtc *sde_crtc,
 				struct sde_crtc_state *cstate,
 				void __user *usr_ptr);
+static int sde_crtc_vm_release_handler(struct drm_crtc *crtc_drm,
+	bool en, struct sde_irq_callback *irq);
+
 
 static struct sde_crtc_custom_events custom_events[] = {
 	{DRM_EVENT_AD_BACKLIGHT, sde_cp_ad_interrupt},
@@ -81,6 +84,7 @@ static struct sde_crtc_custom_events custom_events[] = {
 	{DRM_EVENT_LTM_WB_PB, sde_cp_ltm_wb_pb_interrupt},
 	{DRM_EVENT_LTM_OFF, sde_cp_ltm_off_event_handler},
 	{DRM_EVENT_MMRM_CB, sde_crtc_mmrm_interrupt_handler},
+	{DRM_EVENT_VM_RELEASE, sde_crtc_vm_release_handler},
 };
 
 /* default input fence timeout, in ms */
@@ -7506,6 +7510,11 @@ static int sde_crtc_mmrm_interrupt_handler(struct drm_crtc *crtc_drm,
 	return 0;
 }
 
+static int sde_crtc_vm_release_handler(struct drm_crtc *crtc_drm,
+	bool en, struct sde_irq_callback *irq)
+{
+	return 0;
+}
 /**
  * sde_crtc_update_cont_splash_settings - update mixer settings
  *	and initial clk during device bootup for cont_splash use case
@@ -7661,4 +7670,9 @@ static void sde_cp_crtc_apply_noise(struct drm_crtc *crtc,
 void sde_crtc_disable_cp_features(struct drm_crtc *crtc)
 {
 	sde_cp_disable_features(crtc);
+}
+
+void _sde_crtc_vm_release_notify(struct drm_crtc *crtc)
+{
+	sde_crtc_event_notify(crtc, DRM_EVENT_VM_RELEASE, sizeof(uint32_t), 1);
 }

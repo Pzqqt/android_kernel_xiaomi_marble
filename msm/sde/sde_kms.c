@@ -1466,6 +1466,8 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 	}
 	sde_vm_unlock(sde_kms);
 
+	_sde_crtc_vm_release_notify(crtc);
+
 exit:
 	return rc;
 }
