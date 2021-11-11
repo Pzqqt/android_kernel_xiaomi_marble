@@ -10994,6 +10994,15 @@ typedef struct {
      * Use @vdevid_trans in vdev start instead.
      */
     A_UINT32 vdevid_trans;
+    /* vdev_stats_id_valid indicates whether vdev_stats_id is valid */
+    A_UINT32 vdev_stats_id_valid;
+    /**
+     * vdev_stats_id indicates the ID for the REO Rx stats collection
+     * For Beryllium: 0-47 is the valid range and >=48 is invalid
+     * This vdev_stats_id field should be ignored unless the
+     * vdev_stats_id_valid field is non-zero.
+     */
+    A_UINT32 vdev_stats_id;
 /* This TLV is followed by another TLV of array of structures
  *   wmi_vdev_txrx_streams cfg_txrx_streams[];
  *   wmi_vdev_create_mlo_params mlo_params[0,1];
