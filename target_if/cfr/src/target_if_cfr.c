@@ -271,6 +271,10 @@ void target_if_cfr_fill_header(struct csi_cfr_header *hdr,
 			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_SPRUCE;
 		else if (target_type == TARGET_TYPE_QCN9224)
 			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_WAIKIKI;
+		else if (target_type == TARGET_TYPE_QCA6490)
+			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_HSP;
+		else if (target_type == TARGET_TYPE_QCA6750)
+			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_MOSELLE;
 		else
 			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_CYP;
 	}
