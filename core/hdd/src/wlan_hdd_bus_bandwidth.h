@@ -48,6 +48,7 @@ enum bus_bw_level {
 	BUS_BW_LEVEL_5,
 	BUS_BW_LEVEL_6,
 	BUS_BW_LEVEL_7,
+	BUS_BW_LEVEL_8,
 	BUS_BW_LEVEL_MAX,
 };
 
@@ -63,6 +64,7 @@ enum bus_bw_level {
  * @TPUT_LEVEL_HIGH: high throughput level
  * @TPUT_LEVEL_VERY_HIGH: very high throughput level
  * @TPUT_LEVEL_ULTRA_HIGH: ultra high throughput level
+ * @TPUT_LEVEL_SUPER_HIGH: super high throughput level
  */
 enum tput_level {
 	TPUT_LEVEL_NONE,
@@ -72,6 +74,7 @@ enum tput_level {
 	TPUT_LEVEL_HIGH,
 	TPUT_LEVEL_VERY_HIGH,
 	TPUT_LEVEL_ULTRA_HIGH,
+	TPUT_LEVEL_SUPER_HIGH,
 	TPUT_LEVEL_MAX,
 };
 
