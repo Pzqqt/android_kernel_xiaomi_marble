@@ -120,112 +120,50 @@ static int ipa_stats_ioctl_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-static bool ipa_stats_struct_mismatch(enum ipa_lnx_stats_ioc_cmd_type type)
+static bool ipa_stats_struct_mismatch()
 {
-	switch (type) {
-	case IPA_LNX_CMD_GET_ALLOC_INFO:
-		if (IPA_LNX_EACH_INST_ALLOC_INFO_STRUCT_LEN_INT !=
-				IPA_LNX_EACH_INST_ALLOC_INFO_STRUCT_LEN ||
-			IPA_LNX_STATS_ALL_INFO_STRUCT_LEN_INT !=
-				IPA_LNX_STATS_ALL_INFO_STRUCT_LEN ||
-			IPA_LNX_STATS_SPEARHEAD_CTX_STRUCT_LEN_INT !=
-				IPA_LNX_STATS_SPEARHEAD_CTX_STRUCT_LEN) {
-				IPA_STATS_ERR("IPA_LNX_CMD_GET_ALLOC_INFO size mismatch");
-				return true;
-		} else return false;
-	case IPA_LNX_CMD_GENERIC_STATS:
-		if (IPA_LNX_PG_RECYCLE_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_PG_RECYCLE_STATS_STRUCT_LEN ||
-			IPA_LNX_EXCEPTION_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_EXCEPTION_STATS_STRUCT_LEN ||
-			IPA_LNX_ODL_EP_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_ODL_EP_STATS_STRUCT_LEN ||
-			IPA_LNX_HOLB_DISCARD_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_HOLB_DISCARD_STATS_STRUCT_LEN ||
-			IPA_LNX_HOLB_MONITOR_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_HOLB_MONITOR_STATS_STRUCT_LEN ||
-			IPA_LNX_HOLB_DROP_AND_MON_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_HOLB_DROP_AND_MON_STATS_STRUCT_LEN ||
-			IPA_LNX_GENERIC_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GENERIC_STATS_STRUCT_LEN) {
-				IPA_STATS_ERR("IPA_LNX_CMD_GENERIC_STATS size mismatch");
-				return true;
-		} else return false;
-	case IPA_LNX_CMD_CLOCK_STATS:
-		if (IPA_LNX_PM_CLIENT_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_PM_CLIENT_STATS_STRUCT_LEN ||
-			IPA_LNX_CLOCK_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_CLOCK_STATS_STRUCT_LEN) {
-				IPA_STATS_ERR("IPA_LNX_CMD_CLOCK_STATS size mismatch");
-				return true;
-		} else return false;
-	case IPA_LNX_CMD_WLAN_INST_STATS:
-		if (IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN ||
-			IPA_LNX_WLAN_INSTANCE_INFO_STRUCT_LEN_INT !=
-				IPA_LNX_WLAN_INSTANCE_INFO_STRUCT_LEN ||
-			IPA_LNX_WLAN_INST_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_WLAN_INST_STATS_STRUCT_LEN) {
-				IPA_STATS_ERR("IPA_LNX_CMD_WLAN_INST_STATS size mismatch");
-				return true;
-		} else return false;
-	case IPA_LNX_CMD_ETH_INST_STATS:
-		if (IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN ||
-			IPA_LNX_ETH_INSTANCE_INFO_STRUCT_LEN_INT !=
-				IPA_LNX_ETH_INSTANCE_INFO_STRUCT_LEN ||
-			IPA_LNX_ETH_INST_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_ETH_INST_STATS_STRUCT_LEN) {
-				IPA_STATS_ERR("IPA_LNX_CMD_ETH_INST_STATS size mismatch");
-				return true;
-		} else return false;
-	case IPA_LNX_CMD_USB_INST_STATS:
-		if (IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN ||
-			IPA_LNX_USB_INSTANCE_INFO_STRUCT_LEN_INT !=
-				IPA_LNX_USB_INSTANCE_INFO_STRUCT_LEN ||
-			IPA_LNX_USB_INST_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_USB_INST_STATS_STRUCT_LEN) {
-				IPA_STATS_ERR("IPA_LNX_CMD_USB_INST_STATS ize mismatch");
-				return true;
-		} else return false;
-	case IPA_LNX_CMD_MHIP_INST_STATS:
-		if (IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN ||
-			IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN ||
-			IPA_LNX_MHIP_INSTANCE_INFO_STRUCT_LEN_INT !=
-				IPA_LNX_MHIP_INSTANCE_INFO_STRUCT_LEN ||
-			IPA_LNX_MHIP_INST_STATS_STRUCT_LEN_INT !=
-				IPA_LNX_MHIP_INST_STATS_STRUCT_LEN) {
-				IPA_STATS_ERR("IPA_LNX_CMD_MHIP_INST_STATS size mismatch");
-				return true;
-		} else return false;
-	default:
-		return true;
-	}
+	if (IPA_LNX_EACH_INST_ALLOC_INFO_STRUCT_LEN_INT != IPA_LNX_EACH_INST_ALLOC_INFO_STRUCT_LEN ||
+		IPA_LNX_STATS_ALL_INFO_STRUCT_LEN_INT != IPA_LNX_STATS_ALL_INFO_STRUCT_LEN ||
+		IPA_LNX_STATS_SPEARHEAD_CTX_STRUCT_LEN_INT != IPA_LNX_STATS_SPEARHEAD_CTX_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_GET_ALLOC_INFO structure size mismatch\n");
+			return true;
+	} else if (IPA_LNX_CONSOLIDATED_STATS_STRUCT_LEN_INT != IPA_LNX_CONSOLIDATED_STATS_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_GET_CONSOLIDATED_STATS structure size mismatch\n");
+			return true;
+	} else if (IPA_LNX_PG_RECYCLE_STATS_STRUCT_LEN_INT != IPA_LNX_PG_RECYCLE_STATS_STRUCT_LEN ||
+		IPA_LNX_EXCEPTION_STATS_STRUCT_LEN_INT != IPA_LNX_EXCEPTION_STATS_STRUCT_LEN ||
+		IPA_LNX_ODL_EP_STATS_STRUCT_LEN_INT != IPA_LNX_ODL_EP_STATS_STRUCT_LEN ||
+		IPA_LNX_HOLB_DISCARD_STATS_STRUCT_LEN_INT != IPA_LNX_HOLB_DISCARD_STATS_STRUCT_LEN ||
+		IPA_LNX_HOLB_MONITOR_STATS_STRUCT_LEN_INT != IPA_LNX_HOLB_MONITOR_STATS_STRUCT_LEN ||
+		IPA_LNX_HOLB_DROP_AND_MON_STATS_STRUCT_LEN_INT != IPA_LNX_HOLB_DROP_AND_MON_STATS_STRUCT_LEN ||
+		IPA_LNX_GENERIC_STATS_STRUCT_LEN_INT != IPA_LNX_GENERIC_STATS_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_GENERIC_STATS structure size mismatch\n");
+			return true;
+	} else if (IPA_LNX_PM_CLIENT_STATS_STRUCT_LEN_INT != IPA_LNX_PM_CLIENT_STATS_STRUCT_LEN ||
+		IPA_LNX_CLOCK_STATS_STRUCT_LEN_INT != IPA_LNX_CLOCK_STATS_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_CLOCK_STATS structure size mismatch\n");
+			return true;
+	} else if (IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN_INT != IPA_LNX_GSI_RX_DEBUG_STATS_STRUCT_LEN ||
+		IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN_INT != IPA_LNX_GSI_TX_DEBUG_STATS_STRUCT_LEN ||
+		IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN_INT != IPA_LNX_GSI_DEBUG_STATS_STRUCT_LEN ||
+		IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN_INT != IPA_LNX_PIPE_INFO_STATS_STRUCT_LEN ||
+		IPA_LNX_WLAN_INSTANCE_INFO_STRUCT_LEN_INT != IPA_LNX_WLAN_INSTANCE_INFO_STRUCT_LEN ||
+		IPA_LNX_WLAN_INST_STATS_STRUCT_LEN_INT != IPA_LNX_WLAN_INST_STATS_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_WLAN_INST_STATS structure size mismatch\n");
+			return true;
+	} else if (IPA_LNX_ETH_INSTANCE_INFO_STRUCT_LEN_INT != IPA_LNX_ETH_INSTANCE_INFO_STRUCT_LEN ||
+		IPA_LNX_ETH_INST_STATS_STRUCT_LEN_INT != IPA_LNX_ETH_INST_STATS_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_ETH_INST_STATS structure size mismatch\n");
+			return true;
+	} else if (IPA_LNX_USB_INSTANCE_INFO_STRUCT_LEN_INT != IPA_LNX_USB_INSTANCE_INFO_STRUCT_LEN ||
+		IPA_LNX_USB_INST_STATS_STRUCT_LEN_INT != IPA_LNX_USB_INST_STATS_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_USB_INST_STATS structure size mismatch\n");
+			return true;
+	} else if (IPA_LNX_MHIP_INSTANCE_INFO_STRUCT_LEN_INT != IPA_LNX_MHIP_INSTANCE_INFO_STRUCT_LEN ||
+		IPA_LNX_MHIP_INST_STATS_STRUCT_LEN_INT != IPA_LNX_MHIP_INST_STATS_STRUCT_LEN) {
+			IPA_STATS_ERR("IPA_LNX_CMD_MHIP_INST_STATS structure size mismatch\n");
+			return true;
+	} else return false;
 }
 
 static int ipa_get_generic_stats(unsigned long arg)
@@ -1711,6 +1649,10 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 	/* For MHIP instance */
 	if (ipa_lnx_agent_ctx.log_type_mask & SPRHD_IPA_LOG_TYPE_MHIP_STATS) {
 #if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
+		if (!ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio) {
+			ipa_lnx_agent_ctx.alloc_info.num_mhip_instances = 0;
+			goto success;
+		}
 		if (ipa_usb_is_teth_prot_connected(IPA_USB_RNDIS))
 			ipa_lnx_agent_ctx.usb_teth_prot[0] = IPA_USB_RNDIS;
 		else if(ipa_usb_is_teth_prot_connected(IPA_USB_RMNET))
@@ -1742,6 +1684,7 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 #endif
 	}
 
+success:
 	if(copy_to_user((u8 *)arg,
 		&ipa_lnx_agent_ctx,
 		sizeof(struct ipa_lnx_stats_spearhead_ctx))) {
@@ -1755,8 +1698,8 @@ static long ipa_lnx_stats_ioctl(struct file *filp,
 	unsigned int cmd,
 	unsigned long arg)
 {
-	int retval = 0;
-	u8 *param = NULL;
+	int retval = IPA_LNX_STATS_SUCCESS;
+	struct ipa_lnx_consolidated_stats *consolidated_stats;
 
 	if (_IOC_TYPE(cmd) != IPA_LNX_STATS_IOC_MAGIC) {
 		IPA_STATS_ERR("IOC type mismatch %d\n", cmd);
@@ -1770,79 +1713,100 @@ static long ipa_lnx_stats_ioctl(struct file *filp,
 
 	switch (cmd) {
 	case IPA_LNX_IOC_GET_ALLOC_INFO:
-		if (!ipa_stats_struct_mismatch(IPA_LNX_CMD_GET_ALLOC_INFO)) {
-			retval = ipa_stats_get_alloc_info(arg);
-			if (retval) {
-				IPA_STATS_ERR("ipa get alloc info fail");
-				break;
-			}
-		}
-		else retval = -EPERM;
+		retval = ipa_stats_get_alloc_info(arg);
+		if (retval)
+			IPA_STATS_ERR("ipa get alloc info fail");
 		break;
 	case IPA_LNX_IOC_GET_GENERIC_STATS:
-		if (!ipa_stats_struct_mismatch(IPA_LNX_CMD_GENERIC_STATS)) {
-			retval = ipa_get_generic_stats(arg);
+		retval = ipa_get_generic_stats(arg);
+		if (retval)
+			IPA_STATS_ERR("ipa get generic stats fail");
+		break;
+	case IPA_LNX_IOC_GET_CLOCK_STATS:
+		retval = ipa_get_clock_stats(arg);
+		if (retval)
+			IPA_STATS_ERR("ipa get clock stats fail");
+		break;
+	case IPA_LNX_IOC_GET_WLAN_INST_STATS:
+		retval = ipa_get_wlan_inst_stats(arg);
+		if (retval)
+			IPA_STATS_ERR("ipa get wlan inst stats fail");
+		break;
+	case IPA_LNX_IOC_GET_ETH_INST_STATS:
+		retval = ipa_get_eth_inst_stats(arg);
+		if (retval)
+			IPA_STATS_ERR("ipa get eth inst stats fail");
+		break;
+	case IPA_LNX_IOC_GET_USB_INST_STATS:
+		retval = ipa_get_usb_inst_stats(arg);
+		if (retval)
+			IPA_STATS_ERR("ipa get usb inst stats fail");
+		break;
+	case IPA_LNX_IOC_GET_MHIP_INST_STATS:
+#if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
+		retval = ipa_get_mhip_inst_stats(arg);
+		if (retval)
+			IPA_STATS_ERR("ipa get mhip inst stats fail");
+#else
+		retval = IPA_LNX_STATS_SUCCESS;
+#endif
+		break;
+	case IPA_LNX_IOC_GET_CONSOLIDATED_STATS:
+		consolidated_stats = (struct ipa_lnx_consolidated_stats *) memdup_user((
+				const void __user *)arg, sizeof(struct ipa_lnx_consolidated_stats));
+		if (IS_ERR(consolidated_stats)) {
+			IPA_STATS_ERR("copy from user failed");
+			return -ENOMEM;
+		}
+
+		if (consolidated_stats->log_type_mask & SPRHD_IPA_LOG_TYPE_GENERIC_STATS) {
+			retval = ipa_get_generic_stats((unsigned long) consolidated_stats->generic_stats);
 			if (retval) {
 				IPA_STATS_ERR("ipa get generic stats fail");
 				break;
 			}
 		}
-		else retval = -EPERM;
-		break;
-	case IPA_LNX_IOC_GET_CLOCK_STATS:
-		if (!ipa_stats_struct_mismatch(IPA_LNX_CMD_CLOCK_STATS)) {
-			retval = ipa_get_clock_stats(arg);
+		if (consolidated_stats->log_type_mask & SPRHD_IPA_LOG_TYPE_CLOCK_STATS) {
+			retval = ipa_get_clock_stats((unsigned long) consolidated_stats->clock_stats);
 			if (retval) {
 				IPA_STATS_ERR("ipa get clock stats fail");
 				break;
 			}
-		} else retval = -EPERM;
-		break;
-	case IPA_LNX_IOC_GET_WLAN_INST_STATS:
-		if (!ipa_stats_struct_mismatch(IPA_LNX_CMD_WLAN_INST_STATS)) {
-			retval = ipa_get_wlan_inst_stats(arg);
+		}
+		if (consolidated_stats->log_type_mask & SPRHD_IPA_LOG_TYPE_WLAN_STATS) {
+			retval = ipa_get_wlan_inst_stats((unsigned long) consolidated_stats->wlan_stats);
 			if (retval) {
 				IPA_STATS_ERR("ipa get wlan inst stats fail");
 				break;
 			}
-		} else retval = -EPERM;
-		break;
-	case IPA_LNX_IOC_GET_ETH_INST_STATS:
-		if (!ipa_stats_struct_mismatch(IPA_LNX_CMD_ETH_INST_STATS)) {
-			retval = ipa_get_eth_inst_stats(arg);
+		}
+		if (consolidated_stats->log_type_mask & SPRHD_IPA_LOG_TYPE_ETH_STATS) {
+			retval = ipa_get_eth_inst_stats((unsigned long) consolidated_stats->eth_stats);
 			if (retval) {
 				IPA_STATS_ERR("ipa get eth inst stats fail");
 				break;
 			}
-		} else retval = -EPERM;
-		break;
-	case IPA_LNX_IOC_GET_USB_INST_STATS:
-		if (!ipa_stats_struct_mismatch(IPA_LNX_CMD_USB_INST_STATS)) {
-			retval = ipa_get_usb_inst_stats(arg);
+		}
+		if (consolidated_stats->log_type_mask & SPRHD_IPA_LOG_TYPE_USB_STATS) {
+			retval = ipa_get_usb_inst_stats((unsigned long) consolidated_stats->usb_stats);
 			if (retval) {
 				IPA_STATS_ERR("ipa get usb inst stats fail");
 				break;
 			}
-		} else retval = -EPERM;
-		break;
-	case IPA_LNX_IOC_GET_MHIP_INST_STATS:
+		}
+		if (consolidated_stats->log_type_mask & SPRHD_IPA_LOG_TYPE_MHIP_STATS) {
 #if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
-		if (!ipa_stats_struct_mismatch(IPA_LNX_CMD_MHIP_INST_STATS)) {
-			retval = ipa_get_mhip_inst_stats(arg);
+			retval = ipa_get_mhip_inst_stats((unsigned long) consolidated_stats->mhip_stats);
 			if (retval) {
 				IPA_STATS_ERR("ipa get mhip inst stats fail");
 				break;
 			}
-		} else retval = -EPERM;
-#else
-		retval = IPA_LNX_STATS_SUCCESS;
 #endif
+		}
 		break;
 	default:
 		retval = -ENOTTY;
 	}
-	if (param)
-		vfree(param);
 	return retval;
 }
 
@@ -1905,6 +1869,11 @@ dev_alloc_err:
 int ipa_spearhead_stats_init()
 {
 	int ret;
+
+	if (ipa_stats_struct_mismatch()) {
+		IPA_STATS_ERR("ipa stats structure mismatch\n");
+		return -1;
+	}
 
 	ret = ipa_spearhead_stats_ioctl_init();
 	if(ret) {
