@@ -1684,9 +1684,17 @@ static void dp_catalog_ctrl_enable_irq(struct dp_catalog_ctrl *ctrl,
 		dp_write(DP_INTR_STATUS2, DP_INTR_MASK2);
 		dp_write(DP_INTR_STATUS5, DP_INTR_MASK5);
 	} else {
+		/* disable interrupts */
 		dp_write(DP_INTR_STATUS, 0x00);
 		dp_write(DP_INTR_STATUS2, 0x00);
 		dp_write(DP_INTR_STATUS5, 0x00);
+		wmb();
+
+		/* clear all pending interrupts */
+		dp_write(DP_INTR_STATUS, DP_INTERRUPT_STATUS1 << 1);
+		dp_write(DP_INTR_STATUS2, DP_INTERRUPT_STATUS2 << 1);
+		dp_write(DP_INTR_STATUS5, DP_INTERRUPT_STATUS5 << 1);
+		wmb();
 	}
 }
 
