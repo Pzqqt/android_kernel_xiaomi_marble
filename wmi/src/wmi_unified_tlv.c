@@ -15363,6 +15363,8 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 					src_data->vendor_specific2[1];
 		trig->wtc_btm_trig_data.wtc_candi_rssi_th_6g =
 					src_data->vendor_specific2[2];
+		trig->wtc_btm_trig_data.duration =
+					src_data->vendor_specific2[3];
 
 		return QDF_STATUS_SUCCESS;
 	default:

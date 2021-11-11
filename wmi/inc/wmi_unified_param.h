@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -7586,6 +7587,7 @@ struct wmi_roam_deauth_trigger_data {
  * threshold for 5g & 6g AP to host or not
  * @wtc_candi_rssi_th_5g: 5g candidate AP rssi threshold
  * @wtc_candi_rssi_th_6g: 6g candidate AP rssi threshold
+ * @duration: WTC duration
  */
 struct wmi_roam_wtc_btm_trigger_data {
 	uint32_t roaming_mode;
@@ -7598,6 +7600,7 @@ struct wmi_roam_wtc_btm_trigger_data {
 	uint32_t wtc_candi_rssi_ext_present;
 	uint32_t wtc_candi_rssi_th_5g;
 	uint32_t wtc_candi_rssi_th_6g;
+	uint32_t duration;
 };
 
 /**
