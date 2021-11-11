@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,7 +41,7 @@
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
     defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750) || \
-    defined(QCA_WIFI_WCN7850)
+    defined(QCA_WIFI_KIWI)
 #ifdef WLAN_FEATURE_LRO_CTX_IN_CB
 static qdf_lro_ctx_t wlan_hdd_get_lro_ctx(struct sk_buff *skb)
 {

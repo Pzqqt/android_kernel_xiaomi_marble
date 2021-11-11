@@ -1,4 +1,4 @@
-CONFIG_CNSS_WCN7850 := y
+CONFIG_CNSS_KIWI := y
 
 include $(WLAN_ROOT)/configs/default_defconfig
 
