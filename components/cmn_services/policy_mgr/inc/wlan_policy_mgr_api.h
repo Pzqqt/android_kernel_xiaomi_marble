@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3183,6 +3184,8 @@ void policy_mgr_init_dbs_hw_mode(struct wlan_objmgr_psoc *psoc,
 				uint32_t num_dbs_hw_modes,
 				uint32_t *ev_wlan_dbs_hw_mode_list);
 
+QDF_STATUS policy_mgr_update_sbs_freq(struct wlan_objmgr_psoc *psoc,
+				      struct target_psoc_info *tgt_hdl);
 /**
  * policy_mgr_update_hw_mode_list() - Function to initialize DBS
  * HW modes in policy manager component

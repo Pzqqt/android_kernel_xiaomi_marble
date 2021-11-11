@@ -2023,6 +2023,9 @@ static int wma_legacy_service_ready_event_handler(uint32_t event_id,
 						      length);
 	case wmi_ready_event_id:
 		return wma_rx_ready_event(handle, event_data, length);
+	case wmi_service_ready_ext2_event_id:
+		return wma_rx_service_ready_ext2_event(handle, event_data,
+						      length);
 	default:
 		wma_err("Legacy callback invoked with invalid event_id:%d",
 			 event_id);
@@ -6575,6 +6578,66 @@ static void wma_set_coex_res_cfg(t_wma_handle *wma_handle,
 }
 #endif
 
+static void wma_update_hw_mode_config(tp_wma_handle wma_handle,
+				      struct target_psoc_info *tgt_hdl)
+{
+	uint32_t conc_scan_config_bits, fw_config_bits;
+	uint8_t sta_sap_scc_on_dfs_chnl;
+
+	fw_config_bits = target_if_get_fw_config_bits(tgt_hdl);
+	conc_scan_config_bits = target_if_get_conc_scan_config_bits(tgt_hdl);
+
+	wma_debug("Defaults: scan config:%x FW mode config:%x",
+		  conc_scan_config_bits, fw_config_bits);
+
+	if (wma_is_dbs_mandatory(wma_handle->psoc, tgt_hdl) &&
+	    (policy_mgr_is_dual_mac_disabled_in_ini(wma_handle->psoc))) {
+		policy_mgr_set_dual_mac_feature(wma_handle->psoc,
+				ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN);
+		policy_mgr_set_ch_select_plcy(wma_handle->psoc,
+					      POLICY_MGR_CH_SELECT_POLICY_DEF);
+	}
+	wma_init_scan_fw_mode_config(wma_handle->psoc, conc_scan_config_bits,
+				     fw_config_bits);
+
+	policy_mgr_get_sta_sap_scc_on_dfs_chnl(wma_handle->psoc,
+					       &sta_sap_scc_on_dfs_chnl);
+
+	/*
+	 * For non-dbs HW, disallow sta+sap on DFS channel as if SAP comes
+	 * on DFS master mode enable (sta_sap_scc_on_dfs_chnl = 2), scan will
+	 * be disabled and STA cannot connect to any other channel
+	 */
+	if (!policy_mgr_is_hw_dbs_capable(wma_handle->psoc) &&
+	    sta_sap_scc_on_dfs_chnl == 2)
+		policy_mgr_set_sta_sap_scc_on_dfs_chnl(wma_handle->psoc, 1);
+}
+
+int wma_rx_service_ready_ext2_event(void *handle, uint8_t *ev, uint32_t len)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+	struct target_psoc_info *tgt_hdl;
+	QDF_STATUS status;
+
+	wma_debug("Enter");
+
+	if (wma_validate_handle(wma_handle))
+		return -EINVAL;
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		wma_err("target psoc info is NULL");
+		return -EINVAL;
+	}
+	status = policy_mgr_update_sbs_freq(wma_handle->psoc, tgt_hdl);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	wma_update_hw_mode_config(wma_handle, tgt_hdl);
+
+	return 0;
+}
+
 /**
  * wma_rx_service_ready_ext_event() - evt handler for sevice ready ext event.
  * @handle: wma handle
@@ -6592,11 +6655,9 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	QDF_STATUS ret;
 	struct target_psoc_info *tgt_hdl;
 	struct wlan_psoc_target_capability_info *tgt_cap_info;
-	uint32_t conc_scan_config_bits, fw_config_bits;
 	struct wmi_unified *wmi_handle;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	target_resource_config *wlan_res_cfg;
-	uint8_t sta_sap_scc_on_dfs_chnl;
 
 	wma_debug("Enter");
 
@@ -6627,12 +6688,6 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	wma_debug("WMA <-- WMI_SERVICE_READY_EXT_EVENTID");
 
 	tgt_cap_info = target_psoc_get_target_caps(tgt_hdl);
-	fw_config_bits = target_if_get_fw_config_bits(tgt_hdl);
-	conc_scan_config_bits = target_if_get_conc_scan_config_bits(tgt_hdl);
-
-	wma_debug("Defaults: scan config:%x FW mode config:%x",
-		 conc_scan_config_bits, fw_config_bits);
-
 	ret = qdf_mc_timer_stop(&wma_handle->service_ready_ext_timer);
 	if (!QDF_IS_STATUS_SUCCESS(ret)) {
 		wma_err("Failed to stop the service ready ext timer");
@@ -6648,27 +6703,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	wma_debug("WMA --> WMI_INIT_CMDID");
 
-	if (wma_is_dbs_mandatory(wma_handle->psoc, tgt_hdl) &&
-	   (policy_mgr_is_dual_mac_disabled_in_ini(wma_handle->psoc))) {
-		policy_mgr_set_dual_mac_feature(wma_handle->psoc,
-				ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN);
-		policy_mgr_set_ch_select_plcy(wma_handle->psoc,
-					      POLICY_MGR_CH_SELECT_POLICY_DEF);
-	}
-	wma_init_scan_fw_mode_config(wma_handle->psoc, conc_scan_config_bits,
-				     fw_config_bits);
-
-	policy_mgr_get_sta_sap_scc_on_dfs_chnl(wma_handle->psoc,
-					       &sta_sap_scc_on_dfs_chnl);
-
-	/*
-	 * For non-dbs HW, disallow sta+sap on DFS channel as if SAP comes
-	 * on DFS master mode enable (sta_sap_scc_on_dfs_chnl = 2), scan will
-	 * be disabled and STA cannot connect to any other channel
-	 */
-	if (!policy_mgr_is_hw_dbs_capable(wma_handle->psoc) &&
-	    sta_sap_scc_on_dfs_chnl == 2)
-		policy_mgr_set_sta_sap_scc_on_dfs_chnl(wma_handle->psoc, 1);
+	wma_update_hw_mode_config(wma_handle, tgt_hdl);
 
 	target_psoc_set_num_radios(tgt_hdl, 1);
 

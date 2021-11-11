@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,6 +133,16 @@ int wma_rx_ready_event(void *handle, uint8_t *ev, uint32_t len);
 int  wma_rx_service_ready_event(void *handle, uint8_t *ev, uint32_t len);
 
 int wma_rx_service_ready_ext_event(void *handle, uint8_t *ev, uint32_t len);
+
+/**
+ * wma_rx_service_ready_ext2_event() - evt handler for sevice ready ext2 event.
+ * @handle: wma handle
+ * @event: params of the service ready extended event
+ * @length: param length
+ *
+ * Return: none
+ */
+int wma_rx_service_ready_ext2_event(void *handle, uint8_t *ev, uint32_t len);
 
 QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle);
 
