@@ -3402,6 +3402,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		hdd_err("sap_context is invalid");
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_hdd_set_sap_csa_reason(psoc, vdev_id, csa_reason);
 
 	/* Initialized ch_width to CH_WIDTH_MAX */
 	ch_params.ch_width = CH_WIDTH_MAX;
