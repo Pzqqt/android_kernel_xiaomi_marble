@@ -685,10 +685,6 @@ sir_convert_qos_map_configure_frame2_struct(struct mac_context *mac,
 
 #ifdef WLAN_FEATURE_11BE_MLO
 QDF_STATUS
-mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
-				     tpSirMultiLink_IE pMloIe);
-
-QDF_STATUS
 populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 				 struct pe_session *session,
 				 tDot11fIEmlo_ie *mlo_ie);
@@ -697,13 +693,6 @@ QDF_STATUS
 sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 					tpSirMultiLink_IE mlo_ie_ptr);
 #else
-static inline QDF_STATUS
-mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
-				       tpSirMultiLink_IE pMloIe)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
 static inline QDF_STATUS
 populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 				 struct pe_session *session,
@@ -1588,4 +1577,22 @@ QDF_STATUS dot11f_parse_assoc_response(struct mac_context *mac_ctx,
 				       tDot11fAssocResponse *p_frm,
 				       bool append_ie);
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * dot11f_parse_assoc_rsp_mlo_partner_info() - get mlo partner info in assoc rsp
+ * @pe_session: pointer to PE session
+ * @pframe: pointer of assoc response buffer
+ * @nframe: length of assoc response buffer
+ *
+ * Return: none
+ */
+void dot11f_parse_assoc_rsp_mlo_partner_info(struct pe_session *pe_session,
+					     uint8_t *pframe, uint32_t nframe);
+#else
+static inline void
+dot11f_parse_assoc_rsp_mlo_partner_info(struct pe_session *pe_session,
+					uint8_t *pframe, uint32_t nframe)
+{
+}
+#endif
 #endif /* __PARSE_H__ */
