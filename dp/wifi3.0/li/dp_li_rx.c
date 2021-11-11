@@ -95,7 +95,7 @@ dp_rx_intrabss_ucast_check_li(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	struct dp_peer *da_peer;
 	struct dp_ast_entry *ast_entry;
 
-	if (!(qdf_nbuf_is_da_valid(nbuf) || qdf_nbuf_is_da_mcbc(nbuf)))
+	if (!qdf_nbuf_is_da_valid(nbuf) || qdf_nbuf_is_da_mcbc(nbuf))
 		return false;
 
 	ast_entry = soc->ast_table[msdu_metadata->da_idx];

@@ -1183,7 +1183,7 @@ dp_rx_intrabss_ucast_check_be(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	struct dp_peer *da_peer;
 	bool ret = false;
 
-	if (!(qdf_nbuf_is_da_valid(nbuf) || qdf_nbuf_is_da_mcbc(nbuf)))
+	if (!qdf_nbuf_is_da_valid(nbuf) || qdf_nbuf_is_da_mcbc(nbuf))
 		return false;
 
 	da_peer_id = dp_rx_peer_metadata_peer_id_get_be(
