@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -991,10 +992,10 @@ policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 			policy_mgr_update_freq_info(pm_ctx, mac_cap, MODE_SBS,
 						    phy_id);
 
-		/* Modify the SBS/DBS list once both phy info are filled */
+		/* Modify the DBS list once both phy info are filled */
 		if (policy_mgr_both_phy_range_updated(pm_ctx, MODE_DBS))
 			policy_mgr_update_dbs_freq_info(pm_ctx);
-		/* Modify the SBS/DBS list once both phy info are filled */
+		/* Modify the SBS list once both phy info are filled */
 		if (policy_mgr_both_phy_range_updated(pm_ctx, MODE_SBS))
 			policy_mgr_update_sbs_freq_info(pm_ctx);
 		break;
@@ -1158,7 +1159,6 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("DBS list is freed");
 	}
 
-	policy_mgr_update_sbs_lowr_band_end_frq(pm_ctx, info);
 	pm_ctx->num_dbs_hw_modes = info->service_ext_param.num_hw_modes;
 	pm_ctx->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
@@ -1218,6 +1218,31 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 	 */
 	policy_mgr_fill_curr_mac_freq_by_hwmode(pm_ctx, MODE_SMM);
 	policy_mgr_dump_freq_range(pm_ctx);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS policy_mgr_update_sbs_freq(struct wlan_objmgr_psoc *psoc,
+				      struct target_psoc_info *tgt_hdl)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct tgt_info *info;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	info = &tgt_hdl->info;
+	policy_mgr_debug("sbs_lower_band_end_freq %d",
+			 info->sbs_lower_band_end_freq);
+	policy_mgr_update_sbs_lowr_band_end_frq(pm_ctx, info);
+	/* no need to update if sbs_lower_band_end_freq is not set */
+	if (!pm_ctx->hw_mode.sbs_lower_band_end_freq)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	policy_mgr_update_hw_mode_list(psoc, tgt_hdl);
 
 	return QDF_STATUS_SUCCESS;
 }
