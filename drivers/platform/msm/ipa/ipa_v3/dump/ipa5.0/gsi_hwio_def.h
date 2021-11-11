@@ -4987,5 +4987,166 @@ union gsi_hwio_def_ipa_0_gsi_top_xpu3_rgn_wacr_u
   u32 value;
 };
 
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_BP_CNT_LSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_lsb_s
+{
+  u32 bp_cnt_lsb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_lsb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_lsb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_BP_CNT_MSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_msb_s
+{
+  u32 bp_cnt_msb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_msb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_msb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_BP_AND_PENDING_CNT_LSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_lsb_s
+{
+  u32 bp_and_pending_cnt_lsb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_lsb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_lsb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_BP_AND_PENDING_CNT_MSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_msb_s
+{
+  u32 bp_and_pending_cnt_msb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_msb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_msb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_MCS_BUSY_CNT_LSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_lsb_s
+{
+  u32 mcs_busy_cnt_lsb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_lsb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_lsb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_MCS_BUSY_CNT_MSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_msb_s
+{
+  u32 mcs_busy_cnt_msb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_msb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_msb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_MCS_IDLE_CNT_LSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_lsb_s
+{
+  u32 mcs_idle_cnt_lsb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_lsb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_lsb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_MCS_PROFILING_MCS_IDLE_CNT_MSB
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_msb_s
+{
+  u32 mcs_idle_cnt_msb : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_msb_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_msb_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_GSI_TOP_GSI_DEBUG_SW_MSK_REG_n_SEC_k_RD
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct gsi_hwio_def_ipa_0_gsi_top_gsi_debug_sw_msk_reg_n_sec_k_rd_s
+{
+  u32 msk_reg : 32;
+};
+
+/* Union definition of register */
+union gsi_hwio_def_ipa_0_gsi_top_gsi_debug_sw_msk_reg_n_sec_k_rd_u
+{
+  struct gsi_hwio_def_ipa_0_gsi_top_gsi_debug_sw_msk_reg_n_sec_k_rd_s def;
+  u32 value;
+};
 
 #endif /* __GSI_HWIO_DEF_H__ */

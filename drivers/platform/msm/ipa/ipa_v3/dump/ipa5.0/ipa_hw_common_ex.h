@@ -488,7 +488,11 @@ enum ipa_hw_irq_srcs_e {
 /*
  * SHRAM Bytes per ch
  */
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+#define IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM         20
+#else
 #define IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM         12
+#endif
 
 /*
  * Total number of rx splt cmdq's see:
