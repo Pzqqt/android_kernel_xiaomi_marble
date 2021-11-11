@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -277,6 +278,7 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 	struct target_psoc_info *tgt_hdl;
 	struct wmi_unified *wmi_handle;
 	struct tgt_info *info;
+	wmi_legacy_service_ready_callback legacy_callback;
 
 	if (!scn_handle) {
 		target_if_err("scn handle NULL in service ready ext2 handler");
@@ -357,6 +359,11 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 							    event, info);
 	if (err_code)
 		target_if_debug("failed to populate dbs_or_sbs cap ext2");
+
+	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+	if (legacy_callback)
+		legacy_callback(wmi_service_ready_ext2_event_id,
+				scn_handle, event, data_len);
 
 	target_if_regulatory_set_ext_tpc(psoc);
 
