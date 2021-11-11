@@ -436,7 +436,7 @@ static void dp_display_hdcp_register_streams(struct dp_display_private *dp)
 static void dp_display_hdcp_deregister_stream(struct dp_display_private *dp,
 		enum dp_stream_id stream_id)
 {
-	if (dp->hdcp.ops->deregister_streams) {
+	if (dp->hdcp.ops->deregister_streams && dp->active_panels[stream_id]) {
 		struct stream_info stream = {stream_id,
 				dp->active_panels[stream_id]->vcpi};
 
