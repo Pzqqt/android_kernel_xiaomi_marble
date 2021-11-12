@@ -453,7 +453,8 @@ QDF_STATUS
 wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 				HTC_HANDLE htc_handle);
 
-#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+#if defined(WLAN_FEATURE_WMI_DIAG_OVER_CE7) || \
+	defined(WLAN_DIAG_AND_DBR_OVER_SEPARATE_CE)
 /**
  * wmi_diag_connect_pdev_htc_service()
  * WMI DIAG API to get connect to HTC service

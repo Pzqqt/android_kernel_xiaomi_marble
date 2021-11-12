@@ -2612,7 +2612,8 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	wmi_process_control_rx(wmi_handle, evt_buf);
 }
 
-#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+#if defined(WLAN_FEATURE_WMI_DIAG_OVER_CE7) || \
+	defined(WLAN_DIAG_AND_DBR_OVER_SEPARATE_CE)
 /**
  * wmi_control_diag_rx() - process diag fw events callbacks
  * @ctx: handle to wmi
@@ -2628,7 +2629,8 @@ static void wmi_control_diag_rx(void *ctx, HTC_PACKET *htc_packet)
 
 	evt_buf = (wmi_buf_t)htc_packet->pPktContext;
 
-	wmi_handle = soc->wmi_pdev[0];
+	wmi_handle = wmi_get_pdev_ep(soc, htc_packet->Endpoint);
+
 	if (!wmi_handle) {
 		wmi_err("unable to get wmi_handle for diag event end point id:%d", htc_packet->Endpoint);
 		qdf_nbuf_free(evt_buf);
@@ -3542,7 +3544,8 @@ wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+#if defined(WLAN_FEATURE_WMI_DIAG_OVER_CE7) || \
+	defined(WLAN_DIAG_AND_DBR_OVER_SEPARATE_CE)
 QDF_STATUS wmi_diag_connect_pdev_htc_service(struct wmi_unified *wmi_handle,
 					     HTC_HANDLE htc_handle)
 {
@@ -3567,7 +3570,7 @@ QDF_STATUS wmi_diag_connect_pdev_htc_service(struct wmi_unified *wmi_handle,
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wmi_err("Failed to connect to WMI DIAG service status:%d",
-			 status);
+			status);
 		return status;
 	}
 
