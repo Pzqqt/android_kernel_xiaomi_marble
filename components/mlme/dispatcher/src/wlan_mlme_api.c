@@ -1060,7 +1060,8 @@ bool wlan_mlme_configure_chain_mask_supported(struct wlan_objmgr_psoc *psoc)
 	enable2x2 = mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2;
 
 	if ((enable2x2 && !enable_bt_chain_sep) || as_enabled ||
-	   (!hw_dbs_2x2_cap && dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN)) {
+	   (!hw_dbs_2x2_cap && (dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN) &&
+	    enable2x2)) {
 		mlme_legacy_debug("Cannot configure chainmask enable_bt_chain_sep %d as_enabled %d enable2x2 %d hw_dbs_2x2_cap %d dual_mac_feature %d",
 				  enable_bt_chain_sep, as_enabled, enable2x2,
 				  hw_dbs_2x2_cap, dual_mac_feature);
