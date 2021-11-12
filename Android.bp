@@ -1,0 +1,5 @@
+cc_library_headers {
+    name: "qti_cvp_kernel_headers",
+    export_include_dirs: ["include/uapi/eva/media"],
+    vendor_available: true
+}
