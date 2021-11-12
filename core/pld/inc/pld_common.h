@@ -592,7 +592,7 @@ int pld_get_audio_wlan_timestamp(struct device *dev,
 				 uint64_t *ts);
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 
-#if IS_ENABLED(CONFIG_CNSS_UTILS)
+#ifdef CNSS_UTILS
 #ifdef CNSS_UTILS_VENDOR_UNSAFE_CHAN_API_SUPPORT
 /**
  * pld_get_wlan_unsafe_channel_sap() - Get vendor unsafe ch freq ranges
