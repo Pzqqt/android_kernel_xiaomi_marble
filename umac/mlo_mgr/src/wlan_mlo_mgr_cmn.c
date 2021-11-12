@@ -297,6 +297,7 @@ wlan_mlo_get_pdev_by_hw_link_id(uint16_t hw_link_id,
 
 	return itr.pdev;
 }
+#endif /*WLAN_MLO_MULTI_CHIP*/
 
 void mlo_get_ml_vdev_list(struct wlan_objmgr_vdev *vdev,
 			  uint16_t *vdev_count,
@@ -332,4 +333,3 @@ void mlo_get_ml_vdev_list(struct wlan_objmgr_vdev *vdev,
 	}
 	mlo_dev_lock_release(dev_ctx);
 }
-#endif /*WLAN_MLO_MULTI_CHIP*/
