@@ -104,6 +104,15 @@ void mlo_sta_link_disconn_notify(struct wlan_objmgr_vdev *vdev,
  */
 bool mlo_is_mld_sta(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * ucfg_mlo_is_mld_disconnected - Check whether MLD is disconnected
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: true if mld is disconnected, false otherwise
+ */
+bool ucfg_mlo_is_mld_disconnected(struct wlan_objmgr_vdev *vdev);
+
 #ifndef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
 /**
  * ucfg_mlo_is_mld_connected - Check whether MLD is connected
@@ -113,15 +122,6 @@ bool mlo_is_mld_sta(struct wlan_objmgr_vdev *vdev);
  * Return: true if mld is connected, false otherwise
  */
 bool ucfg_mlo_is_mld_connected(struct wlan_objmgr_vdev *vdev);
-
-/**
- * ucfg_mlo_is_mld_disconnected - Check whether MLD is disconnected
- *
- * @vdev: pointer to vdev
- *
- * Return: true if mld is disconnected, false otherwise
- */
-bool ucfg_mlo_is_mld_disconnected(struct wlan_objmgr_vdev *vdev);
 
 /**
  * ucfg_mlo_mld_clear_mlo_cap - Clear MLO cap for all vdevs in MLD
