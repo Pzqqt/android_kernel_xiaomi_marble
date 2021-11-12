@@ -193,7 +193,7 @@
 /*
  * Android CTS verifier needs atleast this much wait time (in msec)
  */
-#define MAX_REMAIN_ON_CHANNEL_DURATION (5000)
+#define MAX_REMAIN_ON_CHANNEL_DURATION (2000)
 
 #define HDD2GHZCHAN(freq, chan, flag)   {     \
 		.band = HDD_NL80211_BAND_2GHZ, \
