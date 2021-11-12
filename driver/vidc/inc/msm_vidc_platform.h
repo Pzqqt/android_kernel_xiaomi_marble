@@ -44,7 +44,7 @@ struct msm_vidc_csc_coeff {
 struct msm_vidc_efuse_data {
 	u32 start_address;
 	u32 size;
-	unsigned long mask;
+	u32 mask;
 	u32 shift;
 	enum efuse_purpose purpose;
 };

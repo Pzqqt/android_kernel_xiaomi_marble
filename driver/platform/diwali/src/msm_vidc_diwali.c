@@ -4864,9 +4864,9 @@ static u32 bus_bw_nrt[] = {
 
 static struct msm_vidc_efuse_data efuse_data_diwali[] = {
 	/* IRIS_4K60_FMAX_LIMIT_EFUSE - max 4K@60 */
-	EFUSE_ENTRY(0x221C0274, 4, 0x8000000000, 0x27, SKU_VERSION),
+	EFUSE_ENTRY(0x221C811C, 4, 0x80, 0x7, SKU_VERSION),
 	/* IRIS_MULTIPIPE_DISABLE - max 4K@30 */
-	EFUSE_ENTRY(0x221C0270, 4, 0x0000000080, 0x06, SKU_VERSION),
+	EFUSE_ENTRY(0x221C8118, 4, 0x80, 0x6, SKU_VERSION),
 };
 
 static struct msm_vidc_platform_data diwali_data = {
