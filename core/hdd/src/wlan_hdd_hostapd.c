@@ -1921,6 +1921,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct wlan_objmgr_peer *peer;
 #endif
+	bool notify_new_sta = true;
+
 	dev = context;
 	if (!dev) {
 		hdd_err("context is null");
@@ -2407,6 +2409,19 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA MLD %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+
+			peer = wlan_objmgr_get_peer_by_mac(hdd_ctx->psoc,
+							   event->staMac.bytes,
+							   WLAN_OSIF_ID);
+			if (!peer) {
+				hdd_err("Peer object not found");
+				return QDF_STATUS_E_INVAL;
+			}
+
+			if (!wlan_peer_mlme_is_assoc_peer(peer)) {
+				hdd_err("skip userspace notification");
+				notify_new_sta = false;
+			}
 #endif
 		} else {
 			qdf_status = hdd_softap_register_sta(
@@ -2434,21 +2449,23 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA MLD %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
-		peer = wlan_objmgr_get_peer_by_mac(hdd_ctx->psoc,
-						   event->staMac.bytes,
-						   WLAN_OSIF_ID);
-		if (!peer) {
-			hdd_err("Peer object not found");
-			return QDF_STATUS_E_INVAL;
-		}
+			peer = wlan_objmgr_get_peer_by_mac(hdd_ctx->psoc,
+							   event->staMac.bytes,
+							   WLAN_OSIF_ID);
+			if (!peer) {
+				hdd_err("Peer object not found");
+				return QDF_STATUS_E_INVAL;
+			}
 
-		if (!qdf_is_macaddr_zero((struct qdf_mac_addr *)peer->mldaddr)
-		    && !wlan_peer_mlme_is_assoc_peer(peer)) {
+			if (!qdf_is_macaddr_zero((struct qdf_mac_addr *)
+							peer->mldaddr) &&
+			    !wlan_peer_mlme_is_assoc_peer(peer)) {
+				wlan_objmgr_peer_release_ref(peer,
+							     WLAN_OSIF_ID);
+				break;
+			}
+
 			wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
-			break;
-		}
-
-		wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
 #endif
 		}
 
@@ -2507,9 +2524,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			 */
 			sta_info->filled |= STATION_INFO_ASSOC_REQ_IES;
 #endif
-			cfg80211_new_sta(dev,
-				(const u8 *)&event->staMac.bytes[0],
-				sta_info, GFP_KERNEL);
+			if (notify_new_sta)
+				cfg80211_new_sta(dev,
+						 (const u8 *)&event->
+						 staMac.bytes[0],
+						 sta_info, GFP_KERNEL);
 			qdf_mem_free(sta_info);
 		}
 		/* Lets abort scan to ensure smooth authentication for client */
