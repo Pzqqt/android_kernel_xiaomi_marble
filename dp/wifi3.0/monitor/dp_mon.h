@@ -178,7 +178,9 @@ void dp_mon_cdp_ops_deregister(struct dp_soc *soc);
  */
 void dp_mon_ops_register(struct dp_soc *soc);
 
+#ifndef DISABLE_MON_CONFIG
 void dp_mon_register_intr_ops(struct dp_soc *soc);
+#endif
 
 /*
  * dp_mon_htt_srng_setup() - DP mon htt srng setup

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2334,6 +2335,7 @@ QDF_STATUS dp_mon_peer_detach(struct dp_peer *peer)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef DISABLE_MON_CONFIG
 void dp_mon_register_intr_ops(struct dp_soc *soc)
 {
 	struct dp_mon_ops *mon_ops = NULL;
@@ -2346,6 +2348,7 @@ void dp_mon_register_intr_ops(struct dp_soc *soc)
 	if (mon_ops->mon_register_intr_ops)
 		mon_ops->mon_register_intr_ops(soc);
 }
+#endif
 
 void dp_mon_ops_register(struct dp_soc *soc)
 {
