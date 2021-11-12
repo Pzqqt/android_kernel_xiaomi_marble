@@ -16,10 +16,7 @@
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
 
-#define VIDC_MAX_NAME_LENGTH 		64
 #define VIDC_MAX_PC_SKIP_COUNT 		10
-#define VIDC_MAX_SUBCACHES 			4
-#define VIDC_MAX_SUBCACHE_SIZE 		52
 
 struct vidc_buffer_addr_info {
 	enum msm_vidc_buffer_type buffer_type;
