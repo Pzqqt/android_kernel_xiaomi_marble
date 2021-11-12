@@ -189,11 +189,6 @@ static inline bool is_rgba_colorformat(enum msm_vidc_colorformat_type colorforma
 		colorformat == MSM_VIDC_FMT_RGBA8888C;
 }
 
-static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)
-{
-	return false; // TODO: inst->stream_output_mode == HAL_VIDEO_DECODER_SECONDARY;
-}
-
 static inline bool is_thumbnail_session(struct msm_vidc_inst *inst)
 {
 	return !!(inst->capabilities->cap[THUMBNAIL_MODE].value);
@@ -322,7 +317,6 @@ int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 int msm_vidc_trigger_ssr(struct msm_vidc_core *core,
 		u64 trigger_ssr_val);
 void msm_vidc_ssr_handler(struct work_struct *work);
-void msm_vidc_pm_work_handler(struct work_struct *work);
 void msm_vidc_fw_unload_handler(struct work_struct *work);
 int msm_vidc_suspend(struct msm_vidc_core *core);
 void msm_vidc_batch_handler(struct work_struct *work);

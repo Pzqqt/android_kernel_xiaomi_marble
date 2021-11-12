@@ -207,7 +207,7 @@ int msm_vidc_query_menu(void *instance, struct v4l2_querymenu *qmenu)
 		rc = -EINVAL;
 
 	i_vpr_h(inst,
-		"%s: ctrl: %s: min %d, max %d, menu_skip_mask %#x, qmenu: id %d, index %d, %s\n",
+		"%s: ctrl: %s: min %lld, max %lld, menu_skip_mask %#x, qmenu: id %u, index %d, %s\n",
 		__func__, ctrl->name, ctrl->minimum, ctrl->maximum,
 		ctrl->menu_skip_mask, qmenu->id, qmenu->index,
 		rc ? "not supported" : "supported");
@@ -647,7 +647,7 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 		return -EINVAL;
 	}
 	if (!inst->capabilities) {
-		i_vpr_e(inst, "capabilities not available\n", __func__);
+		i_vpr_e(inst, "%s: capabilities not available\n", __func__);
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
@@ -702,7 +702,7 @@ int msm_vidc_enum_frameintervals(void *instance, struct v4l2_frmivalenum *fival)
 	core = inst->core;
 
 	if (!inst->capabilities || !core->capabilities) {
-		i_vpr_e(inst, "capabilities not available\n", __func__);
+		i_vpr_e(inst, "%s: capabilities not available\n", __func__);
 		return -EINVAL;
 	}
 	capability = inst->capabilities;

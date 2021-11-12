@@ -76,10 +76,6 @@ int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt);
 int __scale_clocks(struct msm_vidc_core *core);
 int __set_clk_rate(struct msm_vidc_core *core,
 	struct clock_info *cl, u64 rate);
-void __disable_unprepare_clks(struct msm_vidc_core *core);
-int __prepare_enable_clks(struct msm_vidc_core *core);
-int __disable_regulators(struct msm_vidc_core *core);
-int __enable_regulators(struct msm_vidc_core *core);
 int __acquire_regulator(struct msm_vidc_core *core,
 	struct regulator_info *rinfo);
 int __unvote_buses(struct msm_vidc_core *core);

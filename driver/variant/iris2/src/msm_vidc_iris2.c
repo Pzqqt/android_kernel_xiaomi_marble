@@ -296,7 +296,7 @@ static int __disable_regulator_iris2(struct msm_vidc_core *core,
 		rc = __acquire_regulator(core, rinfo);
 		if (rc) {
 			d_vpr_e("%s: failed to acquire %s, rc = %d\n",
-				rinfo->name, rc);
+				__func__, rinfo->name, rc);
 			/* Bring attention to this issue */
 			WARN_ON(true);
 			return rc;
@@ -306,7 +306,7 @@ static int __disable_regulator_iris2(struct msm_vidc_core *core,
 		rc = regulator_disable(rinfo->regulator);
 		if (rc) {
 			d_vpr_e("%s: failed to disable %s, rc = %d\n",
-				rinfo->name, rc);
+				__func__, rinfo->name, rc);
 			return rc;
 		}
 		d_vpr_h("%s: disabled regulator %s\n", __func__, rinfo->name);
@@ -1064,12 +1064,8 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 				CODED_FRAMES_INTERLACE)
 			work_route = MSM_VIDC_PIPE_1;
 	} else if (is_encode_session(inst)) {
-		u32 slice_mode, width, height;
-		struct v4l2_format* f;
+		u32 slice_mode;
 
-		f = &inst->fmts[INPUT_PORT];
-		height = f->fmt.pix_mp.height;
-		width = f->fmt.pix_mp.width;
 		slice_mode = inst->capabilities->cap[SLICE_MODE].value;
 
 		/*TODO Pipe=1 for legacy CBR*/

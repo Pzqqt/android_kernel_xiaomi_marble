@@ -206,7 +206,7 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 		payload_size);
 	if (rc) {
 		i_vpr_e(inst, "%s: failed to set cap[%d] %s to fw\n",
-			__func__, cap_id, cap_name(cap_id));
+			func, cap_id, cap_name(cap_id));
 		return rc;
 	}
 
@@ -328,7 +328,7 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 {
 	int rc = 0;
 
-	if (is_parent_available(inst, cap, parent, __func__)) {
+	if (is_parent_available(inst, cap, parent, func)) {
 		switch (parent) {
 		case BITRATE_MODE:
 			*value = inst->hfi_rc_type;

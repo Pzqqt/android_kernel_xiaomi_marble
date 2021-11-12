@@ -259,7 +259,7 @@ static bool check_for_packet_payload(struct msm_vidc_inst *inst,
 	u32 payload_size = 0;
 
 	if (!inst || !pkt) {
-		d_vpr_e("%s: invalid params %d\n", __func__);
+		d_vpr_e("%s: invalid params\n", __func__);
 		return false;
 	}
 
@@ -307,7 +307,7 @@ static bool check_last_flag(struct msm_vidc_inst *inst,
 	struct hfi_buffer *buffer;
 
 	if (!inst || !pkt) {
-		d_vpr_e("%s: invalid params %d\n", __func__);
+		d_vpr_e("%s: invalid params\n", __func__);
 		return false;
 	}
 

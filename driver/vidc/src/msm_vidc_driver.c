@@ -2265,7 +2265,7 @@ int msm_vidc_flush_ts(struct msm_vidc_inst *inst)
 	}
 
 	list_for_each_entry_safe(ts, temp, &inst->timestamps.list, sort.list) {
-		i_vpr_l(inst, "%s: flushing ts: val %lld, rank %%lld\n",
+		i_vpr_l(inst, "%s: flushing ts: val %llu, rank %llu\n",
 			__func__, ts->sort.val, ts->rank);
 		list_del(&ts->sort.list);
 		msm_memory_free(inst, ts);
@@ -4590,10 +4590,6 @@ void msm_vidc_ssr_handler(struct work_struct *work)
 		d_vpr_e("%s: video core not initialized\n", __func__);
 	}
 	core_unlock(core, __func__);
-}
-
-void msm_vidc_pm_work_handler(struct work_struct *work)
-{
 }
 
 void msm_vidc_fw_unload_handler(struct work_struct *work)
