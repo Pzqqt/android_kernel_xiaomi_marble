@@ -121,6 +121,7 @@ typedef enum {
   WLAN_MODULE_MLO_MGR,                  /* 0x57 */ /* MLO manager */
   WLAN_MODULE_PEER_INIT,                /* 0x58 */ /* peer init connection handling */
   WLAN_MODULE_STA_MLO_PS,               /* 0x59 */ /* MLO PS manager */
+  WLAN_MODULE_MLO_SYNC_SEQ_NUM,         /* 0x5a */ /* sync seq num after rm MPDU */
 
 
   WLAN_MODULE_ID_MAX,
