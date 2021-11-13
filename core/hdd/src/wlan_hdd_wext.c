@@ -4761,7 +4761,7 @@ static int hdd_we_set_modulated_dtim(struct hdd_adapter *adapter, int value)
 	if (!hdd_ctx->psoc)
 		return -EINVAL;
 
-	if ((value < cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM)) ||
+	if ((value < cfg_min(CFG_PMO_ENABLE_MODULATED_DTIM)) ||
 	    (value > cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM))) {
 		hdd_err("Invalid value %d", value);
 		return -EINVAL;
