@@ -10830,6 +10830,33 @@ void sme_update_tgt_he_cap(mac_handle_t mac_handle,
 	mac_ctx->he_cap_5g.bfee_sts_lt_80 =
 			QDF_MIN(cfg->he_cap_5g.bfee_sts_lt_80,
 				he_cap_ini->bfee_sts_lt_80);
+
+	if (!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2) {
+		mac_ctx->he_cap_2g.rx_he_mcs_map_lt_80 = HE_SET_MCS_4_NSS(
+				mac_ctx->he_cap_2g.rx_he_mcs_map_lt_80,
+				HE_MCS_DISABLE, 2);
+		mac_ctx->he_cap_2g.tx_he_mcs_map_lt_80 = HE_SET_MCS_4_NSS(
+				mac_ctx->he_cap_2g.tx_he_mcs_map_lt_80,
+				HE_MCS_DISABLE, 2);
+		mac_ctx->he_cap_5g.rx_he_mcs_map_lt_80 = HE_SET_MCS_4_NSS(
+				mac_ctx->he_cap_5g.rx_he_mcs_map_lt_80,
+				HE_MCS_DISABLE, 2);
+		mac_ctx->he_cap_5g.tx_he_mcs_map_lt_80 = HE_SET_MCS_4_NSS(
+				mac_ctx->he_cap_5g.tx_he_mcs_map_lt_80,
+				HE_MCS_DISABLE, 2);
+	}
+	mac_ctx->he_cap_2g.rx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(
+		mac_ctx->he_cap_2g.rx_he_mcs_map_lt_80,
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80);
+	mac_ctx->he_cap_2g.tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(
+		mac_ctx->he_cap_2g.tx_he_mcs_map_lt_80,
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80);
+	mac_ctx->he_cap_5g.rx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(
+		mac_ctx->he_cap_5g.rx_he_mcs_map_lt_80,
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80);
+	mac_ctx->he_cap_5g.tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(
+		mac_ctx->he_cap_5g.tx_he_mcs_map_lt_80,
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80);
 }
 
 void sme_update_he_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
