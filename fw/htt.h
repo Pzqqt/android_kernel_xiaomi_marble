@@ -220,9 +220,10 @@
  * 3.95 Add HTT_H2T_MSG_TYPE_TX_MONITOR_CFG def.
  * 3.96 Modify HTT_H2T_MSG_TYPE_TX_MONITOR_CFG def.
  * 3.97 Add tx MSDU drop byte count fields in vdev_txrx_stats_hw_stats TLV.
+ * 3.98 Add htt_tx_tcl_metadata_v2 def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 97
+#define HTT_CURRENT_VERSION_MINOR 98
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -325,6 +326,8 @@ enum HTT_OPTION_TLV_TAGS {
     HTT_OPTION_TLV_TAG_HL_SUPPRESS_TX_COMPL_IND = 0x2,
     HTT_OPTION_TLV_TAG_MAX_TX_QUEUE_GROUPS      = 0x3,
     HTT_OPTION_TLV_TAG_SUPPORT_TX_MSDU_DESC_EXT = 0x4,
+    /* TCL_METADATA_VER: added to support V2 and higher of the TCL Data Cmd */
+    HTT_OPTION_TLV_TAG_TCL_METADATA_VER         = 0x5,
 };
 
 PREPACK struct htt_option_tlv_header_t {
@@ -505,6 +508,47 @@ PREPACK struct htt_option_tlv_support_tx_msdu_desc_ext_t {
     struct htt_option_tlv_header_t hdr;
     A_UINT16 tx_msdu_desc_ext_support; /* SUPPORT_TX_MSDU_DESC_EXT enum */
 } POSTPACK;
+
+/*
+ * For the tcl data command V2 and higher support added a new
+ * version tag HTT_OPTION_TLV_TAG_TCL_METADATA_VER.
+ * This will be used as a TLV in HTT_H2T_MSG_TYPE_VERSION_REQ and
+ * HTT_T2H_MSG_TYPE_VERSION_CONF.
+ * HTT option TLV for specifying which version of the TCL metadata struct
+ * should be used:
+ *     V1 -> use htt_tx_tcl_metadata struct
+ *     V2 -> use htt_tx_tcl_metadata_v2 struct
+ * Old FW will only support V1.
+ * New FW will support V2. New FW will still support V1, at least during
+ * a transition period.
+ * Similarly, old host will only support V1, and new host will support V1 + V2.
+ *
+ * The host can provide a HTT_OPTION_TLV_TAG_TCL_METADATA_VER in the
+ * HTT_H2T_MSG_TYPE_VERSION_REQ to indicate to the target which version(s)
+ * of TCL metadata the host supports.  If the host doesn't provide a
+ * HTT_OPTION_TLV_TAG_TCL_METADATA_VER in the VERSION_REQ message, it
+ * is implicitly understood that the host only supports V1.
+ * The target can provide a HTT_OPTION_TLV_TAG_TCL_METADATA_VER in the
+ * HTT_T2H_MSG_TYPE_VERSION_CONF to indicate which version of TCL metadata
+ * the host shall use.  The target shall only select one of the versions
+ * supported by the host.  If the target doesn't provide a
+ * HTT_OPTION_TLV_TAG_TCL_METADATA_VER in the VERSION_CONF message, it
+ * is implicitly understood that the V1 TCL metadata shall be used.
+ */
+enum HTT_OPTION_TLV_TCL_METADATA_VER_VALUES {
+    HTT_OPTION_TLV_TCL_METADATA_V1 = 1,
+    HTT_OPTION_TLV_TCL_METADATA_V2 = 2,
+};
+
+PREPACK struct htt_option_tlv_tcl_metadata_ver_t {
+    struct htt_option_tlv_header_t hdr;
+    A_UINT16 tcl_metadata_ver; /* TCL_METADATA_VER_VALUES enum */
+} POSTPACK;
+
+#define HTT_OPTION_TLV_TCL_METADATA_VER_SET(word, value) \
+    HTT_OPTION_TLV_VALUE0_SET(word, value)
+#define HTT_OPTION_TLV_TCL_METADATA_VER_GET(word) \
+    HTT_OPTION_TLV_VALUE0_GET(word)
 
 typedef struct {
     union {
@@ -2401,6 +2445,193 @@ PREPACK struct htt_tx_tcl_metadata {
          ((_var) |= ((_val) << HTT_TX_TCL_METADATA_PEER_ID_S)); \
      } while (0)
 
+/*------------------------------------------------------------------
+ *                 V2 Version of TCL Data Command
+ * V2 Version to support peer_id, vdev_id, svc_class_id and
+ * MLO global_seq all flavours of TCL Data Cmd.
+ *-----------------------------------------------------------------*/
+
+typedef enum {
+    HTT_TCL_METADATA_V2_TYPE_PEER_BASED         = 0,
+    HTT_TCL_METADATA_V2_TYPE_VDEV_BASED         = 1,
+    HTT_TCL_METADATA_V2_TYPE_SVC_ID_BASED       = 2,
+    HTT_TCL_METADATA_V2_TYPE_GLOBAL_SEQ_BASED   = 3,
+} htt_tcl_metadata_type_v2;
+
+/**
+ * @brief HTT TCL command number format
+ * @details
+ *  This structure is passed from host as tcl_data_cmd->tcl_cmd_number and
+ *  available to firmware as tcl_exit_base->tcl_status_number.
+ *  A_UINT32 is used to avoid endianness conversion problems.
+ *  tcl_status_number size is 16 bits, hence only 16 bits can be used.
+ */
+typedef struct {
+    A_UINT32
+        type:          2, /* vdev_id based or peer_id or svc_id or global seq based */
+        valid_htt_ext: 1, /* If set, tcl_exit_base->host_meta_info is valid */
+        vdev_id:       8,
+        pdev_id:       2,
+        host_inspected:1,
+        rsvd:          2,
+        padding:      16; /* These 16 bits cannot be used by FW for the tcl command */
+} htt_tx_tcl_vdev_metadata_v2;
+
+typedef struct {
+    A_UINT32
+        type:          2, /* vdev_id based or peer_id or svc_id or global seq based */
+        valid_htt_ext: 1, /* If set, tcl_exit_base->host_meta_info is valid */
+        peer_id:       13,
+        padding:       16; /* These 16 bits cannot be used by FW for the tcl command */
+} htt_tx_tcl_peer_metadata_v2;
+
+typedef struct {
+    A_UINT32
+        type:          2, /* vdev_id based or peer_id or svc_id or global seq based */
+        valid_htt_ext: 1, /* If set, tcl_exit_base->host_meta_info is valid */
+        svc_class_id:  8,
+        rsvd:          5,
+        padding:      16; /* These 16 bits cannot be used by FW for the tcl command */
+} htt_tx_tcl_svc_class_id_metadata;
+
+typedef struct {
+    A_UINT32
+        type:           2, /* vdev_id based or peer_id or svc_id or global seq based */
+        host_inspected: 1,
+        global_seq_no: 12,
+        rsvd:           1,
+        padding:       16; /* These 16 bits cannot be used by FW for the tcl command */
+} htt_tx_tcl_global_seq_metadata;
+
+PREPACK struct htt_tx_tcl_metadata_v2 {
+    union {
+        htt_tx_tcl_vdev_metadata_v2 vdev_meta_v2;
+        htt_tx_tcl_peer_metadata_v2 peer_meta_v2;
+        htt_tx_tcl_svc_class_id_metadata svc_class_id_meta;
+        htt_tx_tcl_global_seq_metadata global_seq_meta;
+    };
+} POSTPACK;
+
+/* DWORD 0 */
+#define HTT_TX_TCL_METADATA_TYPE_V2_M                      0x00000003
+#define HTT_TX_TCL_METADATA_TYPE_V2_S                      0
+
+/* Valid htt ext for V2 tcl data cmd used by VDEV, PEER and SVC_ID meta */
+#define HTT_TX_TCL_METADATA_V2_VALID_HTT_EXT_ID_M          0x00000004
+#define HTT_TX_TCL_METADATA_V2_VALID_HTT_EXT_ID_S          2
+
+/* VDEV V2 metadata */
+#define HTT_TX_TCL_METADATA_V2_VDEV_ID_M                   0x000007f8
+#define HTT_TX_TCL_METADATA_V2_VDEV_ID_S                   3
+#define HTT_TX_TCL_METADATA_V2_PDEV_ID_M                   0x00001800
+#define HTT_TX_TCL_METADATA_V2_PDEV_ID_S                   11
+#define HTT_TX_TCL_METADATA_V2_HOST_INSPECTED_M            0x00002000
+#define HTT_TX_TCL_METADATA_V2_HOST_INSPECTED_S            13
+
+/* PEER V2 metadata */
+#define HTT_TX_TCL_METADATA_V2_PEER_ID_M                   0x0000fff8
+#define HTT_TX_TCL_METADATA_V2_PEER_ID_S                   3
+
+/* SVC_CLASS_ID metadata */
+#define HTT_TX_TCL_METADATA_SVC_CLASS_ID_M                 0x000007f8
+#define HTT_TX_TCL_METADATA_SVC_CLASS_ID_S                 3
+
+/* Global Seq no metadata */
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED_M      0x00000004
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED_S      2
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_NO_M                  0x00007ff8
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_NO_S                  3
+
+
+/*----- Get and Set V2 type field in Vdev, Peer, Svc_Class_Id, Global_seq_no */
+#define HTT_TX_TCL_METADATA_TYPE_V2_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_TYPE_V2_M) >> \
+    HTT_TX_TCL_METADATA_TYPE_V2_S)
+#define HTT_TX_TCL_METADATA_TYPE_V2_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_TYPE_V2, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_TYPE_V2_S)); \
+     } while (0)
+
+#define HTT_TX_TCL_METADATA_V2_VALID_HTT_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_V2_VALID_HTT_EXT_ID_M) >> \
+    HTT_TX_TCL_METADATA_V2_VALID_HTT_EXT_ID_S)
+#define HTT_TX_TCL_METADATA_V2_VALID_HTT_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_V2_VALID_HTT_EXT_ID, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_V2_VALID_HTT_EXT_ID_S)); \
+     } while (0)
+
+/*----- Get and Set V2 type field in Vdev meta fields ----*/
+#define HTT_TX_TCL_METADATA_V2_VDEV_ID_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_V2_VDEV_ID_M) >> \
+    HTT_TX_TCL_METADATA_V2_VDEV_ID_S)
+#define HTT_TX_TCL_METADATA_V2_VDEV_ID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_V2_VDEV_ID, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_V2_VDEV_ID_S)); \
+     } while (0)
+
+#define HTT_TX_TCL_METADATA_V2_PDEV_ID_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_V2_PDEV_ID_M) >> \
+    HTT_TX_TCL_METADATA_V2_PDEV_ID_S)
+#define HTT_TX_TCL_METADATA_V2_PDEV_ID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_V2_PDEV_ID, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_V2_PDEV_ID_S)); \
+     } while (0)
+
+#define HTT_TX_TCL_METADATA_V2_HOST_INSPECTED_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_V2_HOST_INSPECTED_M) >> \
+    HTT_TX_TCL_METADATA_V2_HOST_INSPECTED_S)
+#define HTT_TX_TCL_METADATA_V2_HOST_INSPECTED_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_V2_HOST_INSPECTED, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_V2_HOST_INSPECTED_S)); \
+     } while (0)
+
+/*----- Get and Set V2 type field in Peer meta fields ----*/
+#define HTT_TX_TCL_METADATA_V2_PEER_ID_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_V2_PEER_ID_M) >> \
+    HTT_TX_TCL_METADATA_V2_PEER_ID_S)
+#define HTT_TX_TCL_METADATA_V2_PEER_ID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_V2_PEER_ID, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_V2_PEER_ID_S)); \
+     } while (0)
+
+/*----- Get and Set V2 type field in Service Class fields ----*/
+#define HTT_TX_TCL_METADATA_SVC_CLASS_ID_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_SVC_CLASS_ID_M) >> \
+    HTT_TX_TCL_METADATA_SVC_CLASS_ID_S)
+#define HTT_TX_TCL_METADATA_SVC_CLASS_ID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_SVC_CLASS_ID, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_SVC_CLASS_ID_S)); \
+     } while (0)
+
+/*----- Get and Set V2 type field in Global sequence fields ----*/
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED_M) >> \
+    HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED_S)
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_GLBL_SEQ_HOST_INSPECTED_S)); \
+     } while (0)
+
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_NO_GET(_var) \
+    (((_var) & HTT_TX_TCL_METADATA_GLBL_SEQ_NO_M) >> \
+    HTT_TX_TCL_METADATA_GLBL_SEQ_NO_S)
+#define HTT_TX_TCL_METADATA_GLBL_SEQ_NO_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_GLBL_SEQ_NO, _val); \
+         ((_var) |= ((_val) << HTT_TX_TCL_METADATA_GLBL_SEQ_NO_S)); \
+     } while (0)
+
+/*------------------------------------------------------------------
+ *                 End V2 Version of TCL Data Command
+ *-----------------------------------------------------------------*/
 
 typedef enum {
    HTT_TX_FW2WBM_TX_STATUS_OK,
