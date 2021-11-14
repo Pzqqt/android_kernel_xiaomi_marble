@@ -120,6 +120,8 @@ static void sde_dimming_bl_notify(struct sde_connector *conn, struct dsi_backlig
 	bl_info.bl_scale_sv = config->bl_scale_sv;
 	bl_info.status = config->dimming_status;
 	bl_info.min_bl = config->dimming_min_bl;
+	bl_info.bl_scale_max = MAX_BL_SCALE_LEVEL;
+	bl_info.bl_scale_sv_max = SV_BL_SCALE_CAP;
 	event.type = DRM_EVENT_DIMMING_BL;
 	event.length = sizeof(bl_info);
 	SDE_DEBUG("dimming BL event bl_level %d bl_scale %d, bl_scale_sv = %d "
@@ -833,7 +835,8 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 
 	bl_config->bl_scale = c_conn->bl_scale > MAX_BL_SCALE_LEVEL ?
 			MAX_BL_SCALE_LEVEL : c_conn->bl_scale;
-	bl_config->bl_scale_sv = c_conn->bl_scale_sv;
+	bl_config->bl_scale_sv = c_conn->bl_scale_sv > SV_BL_SCALE_CAP ?
+			SV_BL_SCALE_CAP : c_conn->bl_scale_sv;
 
 	SDE_DEBUG("bl_scale = %u, bl_scale_sv = %u, bl_level = %u\n",
 		bl_config->bl_scale, bl_config->bl_scale_sv,
