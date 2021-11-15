@@ -507,7 +507,7 @@ CONFIG_LFR_SUBNET_DETECTION := y
 # Flag to enable MCC to SCC switch feature
 CONFIG_MCC_TO_SCC_SWITCH := y
 
-ifeq ($(CONFIG_SLUB_DEBUG), y)
+ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 	# Enable Obj Mgr Degug services if slub build
 	CONFIG_WLAN_OBJMGR_DEBUG:= y
 	CONFIG_MPC_UT_FRAMEWORK := y
