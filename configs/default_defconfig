@@ -1377,7 +1377,7 @@ endif
 ifeq ($(CONFIG_CNSS_WCN7850), y)
 #Enable 6 GHz Band
 CONFIG_BAND_6GHZ := y
-CONFIG_RX_FISA := n
+CONFIG_RX_FISA := y
 CONFIG_MORE_TX_DESC := y
 endif
 
