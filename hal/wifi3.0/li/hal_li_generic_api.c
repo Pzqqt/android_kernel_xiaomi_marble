@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -245,7 +246,7 @@ static int hal_rx_get_proto_params_li(uint8_t *buf, void *proto_params)
 	struct hal_proto_params *param =
 				(struct hal_proto_params *)proto_params;
 
-	param->tcp_proto = HAL_RX_TLV_GET_IP_OFFSET(buf);
+	param->tcp_proto = HAL_RX_TLV_GET_TCP_PROTO(buf);
 	param->udp_proto = HAL_RX_TLV_GET_UDP_PROTO(buf);
 	param->ipv6_proto = HAL_RX_TLV_GET_IPV6(buf);
 
