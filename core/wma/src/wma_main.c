@@ -6130,7 +6130,7 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	struct target_psoc_info *tgt_hdl;
 	int ht_cap_info, vht_cap_info;
-	uint8_t our_hw_mode = hw_mode, num_hw_modes;
+	uint8_t our_hw_mode = hw_mode, num_hw_modes, hw_mode_config_type;
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
 	struct wlan_psoc_target_capability_info *tgt_cap_info;
 	uint8_t total_mac_phy_cnt, i;
@@ -6192,8 +6192,10 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	for (i = 0; i < total_mac_phy_cnt; i++) {
+		hw_mode_config_type = mac_phy_cap[i].hw_mode_config_type;
 		if (our_hw_mode == HW_MODE_DBS &&
-		    mac_phy_cap[i].hw_mode_config_type != WMI_HW_MODE_DBS)
+		    !(hw_mode_config_type == WMI_HW_MODE_DBS ||
+		    hw_mode_config_type == WMI_HW_MODE_DBS_OR_SBS))
 			continue;
 
 		if ((band == CDS_BAND_2GHZ || band == CDS_BAND_ALL) &&
