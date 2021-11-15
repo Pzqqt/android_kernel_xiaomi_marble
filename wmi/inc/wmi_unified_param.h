@@ -4721,6 +4721,7 @@ typedef enum {
 	wmi_mlo_link_set_active_resp_eventid,
 #endif
 	wmi_pdev_fips_extend_event_id,
+	wmi_roam_frame_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 

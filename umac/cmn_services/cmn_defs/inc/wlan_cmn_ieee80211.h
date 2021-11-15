@@ -271,6 +271,8 @@
 #define WLAN_MAX_MUEDCA_IE_LEN                   14
 #define WLAN_MAX_HE_6G_CAP_IE_LEN                3
 #define WLAN_MAX_HEOP_IE_LEN                     16
+#define WLAN_HEOP_OUI_TYPE                       "\x24"
+#define WLAN_HEOP_OUI_SIZE                       1
 
 /* HT capability flags */
 #define WLAN_HTCAP_C_ADVCODING             0x0001
