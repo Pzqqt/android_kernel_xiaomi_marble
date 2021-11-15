@@ -1128,6 +1128,17 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			     enum roam_rt_stats_type events,
 			     struct roam_stats_event *roam_info,
 			     uint32_t value, uint8_t idx);
+/**
+ * cm_roam_candidate_event_handler() - CM callback to save roam
+ * candidate entry in scan db
+ *
+ * @psoc - psoc objmgr ptr
+ * @frame - roam scan candidate info
+ */
+QDF_STATUS
+cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
+				struct roam_scan_candidate_frame *candidate);
+
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1294,6 +1305,13 @@ cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			struct roam_stats_event *roam_info,
 			uint32_t value, uint8_t idx)
 {}
+
+static inline QDF_STATUS
+cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
+				struct roam_scan_candidate_frame *candidate)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #ifdef WLAN_FEATURE_FIPS

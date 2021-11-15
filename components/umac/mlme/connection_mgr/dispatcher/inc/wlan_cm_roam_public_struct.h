@@ -2433,6 +2433,18 @@ struct roam_offload_synch_ind {
 #endif
 };
 
+/*
+ * struct roam_scan_candidate_frame Roam candidate scan entry
+ * vdev_id : vdev id
+ * frame_len : Length of the beacon/probe rsp frame
+ * frame : Pointer to the frame
+ */
+struct roam_scan_candidate_frame {
+	uint8_t vdev_id;
+	uint32_t frame_length;
+	uint8_t *frame;
+};
+
 /**
  * wlan_cm_roam_rx_ops  - structure of rx function pointers for
  * roaming related commands
@@ -2445,6 +2457,7 @@ struct roam_offload_synch_ind {
  * @roam_stats_event_rx: Rx ops function pointer for roam stats event
  * @roam_auth_offload_event: Rx ops function pointer for auth offload event
  * @roam_pmkid_request_event_rx: Rx ops function pointer for roam pmkid event
+ * @roam_candidate_frame_event : Rx ops function pointer for roam frame event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -2467,5 +2480,8 @@ struct wlan_cm_roam_rx_ops {
 	(*roam_auth_offload_event)(struct auth_offload_event *auth_event);
 	QDF_STATUS
 	(*roam_pmkid_request_event_rx)(struct roam_pmkid_req_event *list);
+	QDF_STATUS
+	(*roam_candidate_frame_event)(struct wlan_objmgr_psoc *psoc,
+				      struct roam_scan_candidate_frame *frame);
 };
 #endif

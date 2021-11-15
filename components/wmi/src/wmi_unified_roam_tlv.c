@@ -3234,6 +3234,52 @@ extract_roam_pmkid_request_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+extract_roam_candidate_frame_tlv(wmi_unified_t wmi_handle, uint8_t *event,
+				 uint32_t len,
+				 struct roam_scan_candidate_frame *data)
+{
+	WMI_ROAM_FRAME_EVENTID_param_tlvs *param_buf = NULL;
+	wmi_roam_frame_event_fixed_param *frame_params = NULL;
+
+	if (!event || !len) {
+		wmi_debug("Empty roam candidate frame event");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	param_buf = (WMI_ROAM_FRAME_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wmi_err("received null buf from target");
+		return -EINVAL;
+	}
+
+	frame_params =
+		(wmi_roam_frame_event_fixed_param *)param_buf->fixed_param;
+
+	if (frame_params->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_debug("Invalid VDEV id %d", frame_params->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (frame_params->frame_length > param_buf->num_frame) {
+		wmi_debug("Invalid frame length %d expected : %d",
+			  frame_params->frame_length,
+			  param_buf->num_frame);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!param_buf->frame) {
+		wmi_debug("Frame pointer is Null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	data->vdev_id = frame_params->vdev_id;
+	data->frame_length = frame_params->frame_length;
+	data->frame = (uint8_t *)param_buf->frame;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -3258,6 +3304,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_roam_invoke_cmd = send_roam_invoke_cmd_tlv;
 	ops->send_vdev_set_pcl_cmd = send_vdev_set_pcl_cmd_tlv;
 	ops->send_set_roam_trigger_cmd = send_set_roam_trigger_cmd_tlv;
+	ops->extract_roam_candidate_frame = extract_roam_candidate_frame_tlv;
 }
 #else
 static inline QDF_STATUS

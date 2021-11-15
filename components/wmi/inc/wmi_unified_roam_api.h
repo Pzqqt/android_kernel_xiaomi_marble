@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -408,6 +409,19 @@ QDF_STATUS
 wmi_extract_roam_pmkid_request(wmi_unified_t wmi_handle,
 			       uint8_t *event, uint32_t data_len,
 			       struct roam_pmkid_req_event **data);
+
+/**
+ * wmi_extract_roam_candidate_frame_event() - Extract the roam candidate
+ * scan entry and update the scan db
+ * @wmi_handle: wmi handle
+ * @event: Event data received from firmware
+ * @len: Event data length received from firmware
+ * @data: Extract the event and fill in data
+ */
+QDF_STATUS
+wmi_extract_roam_candidate_frame_event(wmi_unified_t wmi_handle, uint8_t *event,
+				       uint32_t len,
+				       struct roam_scan_candidate_frame *data);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 /**
