@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -576,6 +577,71 @@ const char *hif_ipci_get_irq_name(int irq_no)
 {
 	return "pci-dummy";
 }
+
+#ifdef FEATURE_IRQ_AFFINITY
+static
+void hif_ipci_irq_set_affinity_hint(struct hif_exec_context *hif_ext_group,
+				    bool perf)
+{
+	int i, ret;
+	unsigned int cpus;
+	bool mask_set = false;
+	int cpu_cluster = perf ? CPU_CLUSTER_TYPE_PERF :
+						CPU_CLUSTER_TYPE_LITTLE;
+
+	for (i = 0; i < hif_ext_group->numirq; i++)
+		qdf_cpumask_clear(&hif_ext_group->new_cpu_mask[i]);
+
+	for (i = 0; i < hif_ext_group->numirq; i++) {
+		qdf_for_each_online_cpu(cpus) {
+			if (qdf_topology_physical_package_id(cpus) ==
+			    cpu_cluster) {
+				qdf_cpumask_set_cpu(cpus,
+						    &hif_ext_group->
+						    new_cpu_mask[i]);
+				mask_set = true;
+			}
+		}
+	}
+	for (i = 0; i < hif_ext_group->numirq; i++) {
+		if (mask_set) {
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  IRQ_NO_BALANCING, 0);
+			ret = qdf_dev_set_irq_affinity(hif_ext_group->os_irq[i],
+						       (struct qdf_cpu_mask *)
+						       &hif_ext_group->
+						       new_cpu_mask[i]);
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  0, IRQ_NO_BALANCING);
+			if (ret)
+				qdf_debug("Set affinity %*pbl fails for IRQ %d ",
+					  qdf_cpumask_pr_args(&hif_ext_group->
+							      new_cpu_mask[i]),
+					  hif_ext_group->os_irq[i]);
+		} else {
+			qdf_err("Offline CPU: Set affinity fails for IRQ: %d",
+				hif_ext_group->os_irq[i]);
+		}
+	}
+}
+
+void hif_ipci_set_grp_intr_affinity(struct hif_softc *scn,
+				    uint32_t grp_intr_bitmask, bool perf)
+{
+	int i;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+
+	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+		if (!(grp_intr_bitmask & BIT(i)))
+			continue;
+
+		hif_ext_group = hif_state->hif_ext_group[i];
+		hif_ipci_irq_set_affinity_hint(hif_ext_group, perf);
+		qdf_atomic_set(&hif_ext_group->force_napi_complete, -1);
+	}
+}
+#endif
 
 #ifdef HIF_CPU_PERF_AFFINE_MASK
 static void hif_ipci_ce_irq_set_affinity_hint(struct hif_softc *scn)
