@@ -3130,6 +3130,10 @@ struct dp_vdev {
 
 	/* vdev_stats_id - ID used for stats collection by FW from HW*/
 	uint8_t vdev_stats_id;
+#ifdef HW_TX_DELAY_STATS_ENABLE
+	/* hw tx delay stats enable */
+	uint8_t hw_tx_delay_stats_enabled;
+#endif
 };
 
 enum {

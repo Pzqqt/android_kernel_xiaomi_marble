@@ -151,7 +151,18 @@ const char *fw_to_hw_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 	"81 to 90 ms", "91 to 100 ms",
 	"101 to 250 ms", "251 to 500 ms", "500+ ms"
 };
+#elif defined(HW_TX_DELAY_STATS_ENABLE)
+const char *fw_to_hw_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
+	"0 to 2 ms", "2 to 4 ms",
+	"4 to 6 ms", "6 to 8 ms",
+	"8 to 10 ms", "10 to 20 ms",
+	"20 to 30 ms", "30 to 40 ms",
+	"40 to 50 ms", "50 to 100 ms",
+	"100 to 250 ms", "250 to 500 ms", "500+ ms"
+};
+#endif
 
+#ifdef QCA_ENH_V3_STATS_SUPPORT
 const char *sw_enq_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 	"0 to 1 ms", "1 to 2 ms",
 	"2 to 3 ms", "3 to 4 ms",
@@ -4409,7 +4420,7 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc_hdl,
 }
 #endif
 
-#ifdef QCA_ENH_V3_STATS_SUPPORT
+#if defined(QCA_ENH_V3_STATS_SUPPORT) || defined(HW_TX_DELAY_STATS_ENABLE)
 /**
  * dp_vow_str_fw_to_hw_delay() - Return string for a delay
  * @index: Index of delay
@@ -4424,6 +4435,28 @@ static inline const char *dp_vow_str_fw_to_hw_delay(uint8_t index)
 	return fw_to_hw_delay_bucket[index];
 }
 
+/**
+ * dp_accumulate_delay_stats() - Update delay stats members
+ * @total: Update stats total structure
+ * @per_ring: per ring structures from where stats need to be accumulated
+ *
+ * Return: void
+ */
+static void
+dp_accumulate_delay_stats(struct cdp_delay_stats *total,
+			  struct cdp_delay_stats *per_ring)
+{
+	uint8_t index;
+
+	for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++)
+		total->delay_bucket[index] += per_ring->delay_bucket[index];
+	total->min_delay = QDF_MIN(total->min_delay, per_ring->min_delay);
+	total->max_delay = QDF_MAX(total->max_delay, per_ring->max_delay);
+	total->avg_delay = ((total->avg_delay + per_ring->avg_delay) >> 1);
+}
+#endif
+
+#ifdef QCA_ENH_V3_STATS_SUPPORT
 /**
  * dp_vow_str_sw_enq_delay() - Return string for a delay
  * @index: Index of delay
@@ -4450,26 +4483,6 @@ static inline const char *dp_vow_str_intfrm_delay(uint8_t index)
 		return "Invalid index";
 	}
 	return intfrm_delay_bucket[index];
-}
-
-/**
- * dp_accumulate_delay_stats() - Update delay stats members
- * @total: Update stats total structure
- * @per_ring: per ring structures from where stats need to be accumulated
- *
- * Return: void
- */
-static void
-dp_accumulate_delay_stats(struct cdp_delay_stats *total,
-			  struct cdp_delay_stats *per_ring)
-{
-	uint8_t index;
-
-	for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++)
-		total->delay_bucket[index] += per_ring->delay_bucket[index];
-	total->min_delay = QDF_MIN(total->min_delay, per_ring->min_delay);
-	total->max_delay = QDF_MAX(total->max_delay, per_ring->max_delay);
-	total->avg_delay = (total->avg_delay + per_ring->avg_delay) / 2;
 }
 
 /**
@@ -4777,6 +4790,153 @@ void dp_pdev_print_rx_error_stats(struct dp_pdev *pdev)
 			DP_PRINT_STATS("err src dma codes: %d = %llu", index, total_rx.rxdma_err.err_dma_codes[index]);
 		}
 	}
+}
+#endif
+
+#ifdef HW_TX_DELAY_STATS_ENABLE
+static void dp_vdev_print_tx_delay_stats(struct dp_vdev *vdev)
+{
+	struct cdp_delay_stats delay_stats;
+	struct cdp_tid_tx_stats *per_ring;
+	uint8_t tid, index;
+	uint64_t count = 0;
+	uint8_t ring_id;
+
+	if (!vdev)
+		return;
+
+	DP_PRINT_STATS("vdev_id: %d Per TID Delay Non-Zero Stats:\n",
+		       vdev->vdev_id);
+	for (tid = 0; tid < CDP_MAX_DATA_TIDS; tid++) {
+		qdf_mem_zero(&delay_stats, sizeof(delay_stats));
+		for (ring_id = 0; ring_id < CDP_MAX_TX_COMP_RINGS; ring_id++) {
+			per_ring = &vdev->stats.tid_tx_stats[ring_id][tid];
+			dp_accumulate_delay_stats(&delay_stats,
+						  &per_ring->hwtx_delay);
+		}
+
+		DP_PRINT_STATS("Hardware Tx completion latency stats TID: %d",
+			       tid);
+		for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++) {
+			count = delay_stats.delay_bucket[index];
+			if (count) {
+				DP_PRINT_STATS("%s:  Packets = %llu",
+					       dp_vow_str_fw_to_hw_delay(index),
+					       count);
+			}
+		}
+
+		DP_PRINT_STATS("Min = %u", delay_stats.min_delay);
+		DP_PRINT_STATS("Max = %u", delay_stats.max_delay);
+		DP_PRINT_STATS("Avg = %u\n", delay_stats.avg_delay);
+	}
+}
+
+void dp_pdev_print_tx_delay_stats(struct dp_soc *soc)
+{
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, 0);
+	struct dp_vdev *vdev;
+	struct dp_vdev **vdev_array = NULL;
+	int index = 0, num_vdev = 0;
+
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return;
+	}
+
+	vdev_array =
+		qdf_mem_malloc(sizeof(struct dp_vdev *) * WLAN_PDEV_MAX_VDEVS);
+	if (!vdev_array)
+		return;
+
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		if (dp_vdev_get_ref(soc, vdev, DP_MOD_ID_GENERIC_STATS))
+			continue;
+		vdev_array[index] = vdev;
+		index = index + 1;
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
+	num_vdev = index;
+
+	for (index = 0; index < num_vdev; index++) {
+		vdev = vdev_array[index];
+		dp_vdev_print_tx_delay_stats(vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_GENERIC_STATS);
+	}
+	qdf_mem_free(vdev_array);
+}
+
+/**
+ * dp_reset_delay_stats() - reset delay stats
+ * @per_ring: per ring structures from where stats need to be accumulated
+ *
+ * Return: void
+ */
+static void dp_reset_delay_stats(struct cdp_delay_stats *per_ring)
+{
+	qdf_mem_zero(per_ring, sizeof(struct cdp_delay_stats));
+}
+
+/**
+ * dp_vdev_init_tx_delay_stats() - Clear tx delay stats
+ * @vdev: vdev handle
+ *
+ * Return: None
+ */
+static void dp_vdev_init_tx_delay_stats(struct dp_vdev *vdev)
+{
+	struct cdp_tid_tx_stats *per_ring;
+	uint8_t tid;
+	uint8_t ring_id;
+
+	if (!vdev)
+		return;
+
+	for (tid = 0; tid < CDP_MAX_DATA_TIDS; tid++) {
+		for (ring_id = 0; ring_id < CDP_MAX_TX_COMP_RINGS; ring_id++) {
+			per_ring = &vdev->stats.tid_tx_stats[ring_id][tid];
+			dp_reset_delay_stats(&per_ring->hwtx_delay);
+		}
+	}
+}
+
+void dp_pdev_clear_tx_delay_stats(struct dp_soc *soc)
+{
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, 0);
+	struct dp_vdev *vdev;
+	struct dp_vdev **vdev_array = NULL;
+	int index = 0, num_vdev = 0;
+
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return;
+	}
+
+	vdev_array =
+		qdf_mem_malloc(sizeof(struct dp_vdev *) * WLAN_PDEV_MAX_VDEVS);
+	if (!vdev_array)
+		return;
+
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		if (dp_vdev_get_ref(soc, vdev, DP_MOD_ID_GENERIC_STATS) !=
+		    QDF_STATUS_SUCCESS)
+			continue;
+		vdev_array[index] = vdev;
+		index = index + 1;
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
+	num_vdev = index;
+
+	for (index = 0; index < num_vdev; index++) {
+		vdev = vdev_array[index];
+		dp_vdev_init_tx_delay_stats(vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_GENERIC_STATS);
+	}
+	qdf_mem_free(vdev_array);
 }
 #endif
 

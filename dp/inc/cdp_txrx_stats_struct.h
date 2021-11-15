@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1618,6 +1618,7 @@ struct cdp_rx_ingress_stats {
  * @tx: cdp tx stats
  * @rx: cdp rx stats
  * @tso_stats: tso stats
+ * @tid_tx_stats: tid tx stats
  */
 struct cdp_vdev_stats {
 	struct cdp_tx_ingress_stats tx_i;
@@ -1625,6 +1626,10 @@ struct cdp_vdev_stats {
 	struct cdp_tx_stats tx;
 	struct cdp_rx_stats rx;
 	struct cdp_tso_stats tso_stats;
+#ifdef HW_TX_DELAY_STATS_ENABLE
+	struct cdp_tid_tx_stats tid_tx_stats[CDP_MAX_TX_COMP_RINGS]
+					    [CDP_MAX_DATA_TIDS];
+#endif
 };
 
 /* struct cdp_peer_stats - peer stats structure

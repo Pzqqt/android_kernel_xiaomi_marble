@@ -92,6 +92,7 @@
 #define CDP_DISCONNECT_STATS       25
 #define CDP_DP_RX_FISA_STATS	   26
 #define CDP_DP_SWLM_STATS	   27
+#define CDP_DP_TX_HW_LATENCY_STATS 28
 
 #define WME_AC_TO_TID(_ac) (       \
 		((_ac) == WME_AC_VO) ? 6 : \

@@ -183,7 +183,8 @@ void dp_tx_process_htt_completion_li(struct dp_soc *soc,
 
 		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[ring_id][tid];
 
-		if (qdf_unlikely(pdev->delay_stats_flag))
+		if (qdf_unlikely(pdev->delay_stats_flag) ||
+		    qdf_unlikely(dp_is_vdev_tx_delay_stats_enabled(vdev)))
 			dp_tx_compute_delay(vdev, tx_desc, tid, ring_id);
 		if (tx_status < CDP_MAX_TX_HTT_STATUS)
 			tid_stats->htt_status_cnt[tx_status]++;
@@ -395,12 +396,7 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (tx_desc->flags & DP_TX_DESC_FLAG_MESH)
 		hal_tx_desc_set_mesh_en(soc->hal_soc, hal_tx_desc_cached, 1);
 
-	if (qdf_unlikely(vdev->pdev->delay_stats_flag) ||
-	    qdf_unlikely(
-		       wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx)) ||
-	    dp_tx_pkt_tracepoints_enabled())
-		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
-	else
+	if (!dp_tx_desc_set_ktimestamp(vdev, tx_desc))
 		dp_tx_desc_set_timestamp(tx_desc);
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",

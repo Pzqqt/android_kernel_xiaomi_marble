@@ -934,4 +934,41 @@ void dp_tx_desc_check_corruption(struct dp_tx_desc_s *tx_desc)
 }
 #endif
 
+#ifdef HW_TX_DELAY_STATS_ENABLE
+/**
+ * dp_tx_desc_set_ktimestamp() - set kernel timestamp in tx descriptor
+ * @vdev: DP vdev handle
+ * @tx_desc: tx descriptor
+ *
+ * Return: true when descriptor is timestamped, false otherwise
+ */
+static inline
+bool dp_tx_desc_set_ktimestamp(struct dp_vdev *vdev,
+			       struct dp_tx_desc_s *tx_desc)
+{
+	if (qdf_unlikely(vdev->pdev->delay_stats_flag) ||
+	    qdf_unlikely(vdev->pdev->soc->wlan_cfg_ctx->pext_stats_enabled) ||
+	    qdf_unlikely(dp_tx_pkt_tracepoints_enabled()) ||
+	    qdf_unlikely(vdev->pdev->soc->rdkstats_enabled) ||
+	    qdf_unlikely(dp_is_vdev_tx_delay_stats_enabled(vdev))) {
+		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
+		return true;
+	}
+	return false;
+}
+#else
+static inline
+bool dp_tx_desc_set_ktimestamp(struct dp_vdev *vdev,
+			       struct dp_tx_desc_s *tx_desc)
+{
+	if (qdf_unlikely(vdev->pdev->delay_stats_flag) ||
+	    qdf_unlikely(vdev->pdev->soc->wlan_cfg_ctx->pext_stats_enabled) ||
+	    qdf_unlikely(dp_tx_pkt_tracepoints_enabled()) ||
+	    qdf_unlikely(vdev->pdev->soc->rdkstats_enabled)) {
+		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
+		return true;
+	}
+	return false;
+}
+#endif
 #endif
