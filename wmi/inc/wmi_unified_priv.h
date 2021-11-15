@@ -447,6 +447,10 @@ QDF_STATUS
 (*extract_roam_pmkid_request)(wmi_unified_t wmi_handle,
 			      uint8_t *event, uint32_t data_len,
 			      struct roam_pmkid_req_event **list);
+QDF_STATUS
+(*extract_roam_candidate_frame)(wmi_unified_t wmi_handle,
+				uint8_t *event, uint32_t data_len,
+				struct roam_scan_candidate_frame *data);
 #endif
 #ifdef FEATURE_MEC_OFFLOAD
 QDF_STATUS
