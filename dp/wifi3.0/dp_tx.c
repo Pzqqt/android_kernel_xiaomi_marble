@@ -4457,8 +4457,16 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 	 * If the descriptor is already freed in vdev_detach,
 	 * continue to next descriptor
 	 */
-	if ((tx_desc->vdev_id == DP_INVALID_VDEV_ID) && !tx_desc->flags) {
+	if (qdf_unlikely(!tx_desc->flags)) {
 		dp_tx_comp_info_rl("Descriptor freed in vdev_detach %d", tx_desc->id);
+		return;
+	}
+
+	if (qdf_unlikely(tx_desc->vdev_id == DP_INVALID_VDEV_ID)) {
+		dp_tx_comp_info_rl("Invalid vdev_id %d", tx_desc->id);
+		tx_desc->flags |= DP_TX_DESC_FLAG_TX_COMP_ERR;
+		dp_tx_comp_free_buf(soc, tx_desc);
+		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 		return;
 	}
 
@@ -4478,8 +4486,13 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 	vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
 			DP_MOD_ID_HTT_COMP);
 
-	if (!vdev)
+	if (qdf_unlikely(!vdev)) {
+		dp_tx_comp_info_rl("Unable to get vdev ref  %d", tx_desc->id);
+		tx_desc->flags |= DP_TX_DESC_FLAG_TX_COMP_ERR;
+		dp_tx_comp_free_buf(soc, tx_desc);
+		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 		return;
+	}
 
 	switch (tx_status) {
 	case HTT_TX_FW2WBM_TX_STATUS_OK:
