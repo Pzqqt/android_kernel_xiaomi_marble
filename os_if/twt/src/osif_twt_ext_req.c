@@ -756,7 +756,66 @@ end:
 int osif_twt_sap_teardown_req(struct wlan_objmgr_vdev *vdev,
 			      struct nlattr *twt_param_attr)
 {
-	return 0;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wlan_objmgr_psoc *psoc;
+	int id, id1, ret = 0;
+	uint8_t vdev_id;
+	struct twt_del_dialog_param params = {0};
+	QDF_STATUS status;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("NULL psoc");
+		return -EINVAL;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	params.vdev_id = vdev_id;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+					 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					 twt_param_attr,
+					 qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	id1 = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (tb[id] && tb[id1]) {
+		params.dialog_id = nla_get_u8(tb[id]);
+		nla_memcpy(params.peer_macaddr.bytes, tb[id1],
+			   QDF_MAC_ADDR_SIZE);
+	} else if (!tb[id] && !tb[id1]) {
+		struct qdf_mac_addr bcast_addr = QDF_MAC_ADDR_BCAST_INIT;
+
+		params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+		qdf_copy_macaddr(&params.peer_macaddr, &bcast_addr);
+	} else {
+		osif_err_rl("get_params dialog_id or mac_addr is missing");
+		return -EINVAL;
+	}
+
+	if (!params.dialog_id)
+		params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+
+	if (params.dialog_id != TWT_ALL_SESSIONS_DIALOG_ID &&
+	    qdf_is_macaddr_broadcast(&params.peer_macaddr)) {
+		osif_err("Bcast MAC valid with dlg_id:%d but here dlg_id is:%d",
+			TWT_ALL_SESSIONS_DIALOG_ID, params.dialog_id);
+		return -EINVAL;
+	}
+
+	osif_debug("vdev_id %d dialog_id %d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
+		  QDF_MAC_ADDR_REF(params.peer_macaddr.bytes));
+
+	status = ucfg_twt_teardown_req(psoc, &params, NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send del dialog command");
+		ret = qdf_status_to_os_return(status);
+	}
+
+	return ret;
 }
 
 int osif_twt_sta_teardown_req(struct wlan_objmgr_vdev *vdev,
