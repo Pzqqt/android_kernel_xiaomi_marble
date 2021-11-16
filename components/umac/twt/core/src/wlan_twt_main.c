@@ -173,7 +173,30 @@ wlan_twt_init_context(struct wlan_objmgr_psoc *psoc,
 static bool
 wlan_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc, uint32_t vdev_id)
 {
-	return false;
+	struct wlan_objmgr_vdev *vdev;
+	struct twt_vdev_priv_obj *twt_vdev_priv;
+	bool is_twt_notify_in_progress;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_TWT_ID);
+	if (!vdev) {
+		twt_err("vdev object not found");
+		return false;
+	}
+
+	twt_vdev_priv = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+							WLAN_UMAC_COMP_TWT);
+	if (!twt_vdev_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
+		twt_err("twt vdev private object is NULL");
+		return false;
+	}
+
+	is_twt_notify_in_progress = twt_vdev_priv->twt_wait_for_notify;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
+
+	twt_debug("is_twt_notify_in_progress: %d", is_twt_notify_in_progress);
+	return is_twt_notify_in_progress;
 }
 
 /**
@@ -188,6 +211,27 @@ static QDF_STATUS
 wlan_twt_set_wait_for_notify(struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 			     bool is_set)
 {
+	struct wlan_objmgr_vdev *vdev;
+	struct twt_vdev_priv_obj *twt_vdev_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_TWT_ID);
+	if (!vdev) {
+		twt_err("vdev object not found");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	twt_vdev_priv = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+							WLAN_UMAC_COMP_TWT);
+	if (!twt_vdev_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
+		twt_err("twt vdev private object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	twt_vdev_priv->twt_wait_for_notify = is_set;
+	twt_debug("twt_wait_for_notify: %d", is_set);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1336,5 +1380,8 @@ QDF_STATUS
 wlan_twt_notify_event_handler(struct wlan_objmgr_psoc *psoc,
 			      struct twt_notify_event_param *event)
 {
+	wlan_twt_set_wait_for_notify(psoc, event->vdev_id, false);
+	mlme_twt_osif_notify_complete_ind(psoc, event);
+
 	return QDF_STATUS_SUCCESS;
 }
