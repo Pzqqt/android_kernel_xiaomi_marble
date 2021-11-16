@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  */
 
 #include "msm_drv.h"
@@ -23,6 +23,7 @@ enum sde_dsc_ratio_type {
 	DSC_V12_422_8BPC_7BPP,
 	DSC_V12_422_8BPC_8BPP,
 	DSC_V12_422_10BPC_7BPP,
+	DSC_V12_422_10BPC_8BPP,
 	DSC_V12_422_10BPC_10BPP,
 	DSC_V12_420_8BPC_6BPP,
 	DSC_V12_420_10BPC_6BPP,
@@ -50,6 +51,7 @@ static char sde_dsc_rc_range_min_qp[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 11},
 	{0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
 	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
+	{0, 2, 3, 4, 6, 7, 7, 7, 7, 7, 9, 9, 9, 11, 14},
 	{0, 2, 3, 4, 5, 5, 5, 6, 6, 7, 8, 8, 9, 11, 12},
 	/* DSC v1.2 YUV420 */
 	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 10},
@@ -73,6 +75,7 @@ static char sde_dsc_rc_range_max_qp[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{3, 4, 5, 6, 7, 7, 7, 8, 9, 9, 10, 10, 11, 11, 12},
 	{2, 4, 5, 6, 7, 7, 7, 8, 8, 9, 9, 9, 9, 10, 11},
 	{7, 8, 9, 10, 11, 11, 11, 12, 13, 13, 14, 14, 15, 15, 16},
+	{2, 5, 7, 8, 9, 10, 11, 12, 12, 13, 13, 13, 13, 14, 15},
 	{2, 5, 5, 6, 6, 7, 7, 8, 9, 9, 10, 11, 11, 12, 13},
 	/* DSC v1.2 YUV420 */
 	{2, 4, 5, 6, 7, 7, 7, 8, 8, 9, 9, 9, 9, 10, 12},
@@ -96,6 +99,7 @@ static char sde_dsc_rc_range_bpg[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -10, -12, -12, -12},
 	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
 	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -10, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
 	{10, 8, 6, 4, 2, 0, -2, -4, -6, -8, -10, -10, -12, -12, -12},
 	/* DSC v1.2 YUV420 */
 	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
@@ -125,6 +129,7 @@ static struct sde_dsc_rc_init_params_lut {
 	{11, 11, 5632, 410, 0, 0, 3, 12}, /* DSC_V12_422_8BPC_7BPP */
 	{11, 11, 2048, 341, 0, 0, 3, 12}, /* DSC_V12_422_8BPC_8BPP */
 	{15, 15, 5632, 410, 0, 0, 7, 16}, /* DSC_V12_422_10BPC_7BPP */
+	{15, 15, 2048, 341, 0, 0, 7, 16}, /* DSC_V12_422_10BPC_8BPP */
 	{15, 15, 2048, 273, 0, 0, 7, 16}, /* DSC_V12_422_10BPC_10BPP */
 	/* DSC v1.2 YUV420 */
 	{11, 11, 5632, 410, 0, 0, 3, 12},    /* DSC_V12_422_8BPC_7BPP */
@@ -161,6 +166,7 @@ static struct sde_dsc_table_index_lut {
 	{MSM_CHROMA_422, -1, 2, 8, 7, DSC_V12_422_8BPC_7BPP},
 	{MSM_CHROMA_422, -1, 2, 8, 8, DSC_V12_422_8BPC_8BPP},
 	{MSM_CHROMA_422, -1, 2, 10, 7, DSC_V12_422_10BPC_7BPP},
+	{MSM_CHROMA_422, -1, 2, 10, 8, DSC_V12_422_10BPC_8BPP},
 	{MSM_CHROMA_422, -1, 2, 10, 10, DSC_V12_422_10BPC_10BPP},
 
 	{MSM_CHROMA_420, -1, 2, 8, 6, DSC_V12_420_8BPC_6BPP},
