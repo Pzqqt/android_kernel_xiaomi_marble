@@ -77,12 +77,140 @@ wlan_twt_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS wlan_twt_init(void)
 {
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	status = wlan_objmgr_register_psoc_create_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_psoc_obj_create_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("Failed to register psoc create handler");
+		goto wlan_twt_psoc_init_fail1;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_psoc_obj_destroy_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("Failed to register psoc destroy handler");
+		goto wlan_twt_psoc_init_fail2;
+	}
+
+	status = wlan_objmgr_register_vdev_create_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_vdev_obj_create_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("Failed to register vdev create handler");
+		goto wlan_twt_vdev_init_fail1;
+	}
+
+	status = wlan_objmgr_register_vdev_destroy_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_vdev_obj_destroy_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("Failed to register vdev destroy handler");
+		goto wlan_twt_vdev_init_fail2;
+	}
+
+	status = wlan_objmgr_register_peer_create_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_peer_obj_create_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("Failed to register peer create handler");
+		goto wlan_twt_peer_init_fail1;
+	}
+
+	status = wlan_objmgr_register_peer_destroy_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_peer_obj_destroy_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("Failed to register peer destroy handler");
+		goto wlan_twt_peer_init_fail2;
+	}
+
 	return QDF_STATUS_SUCCESS;
+
+wlan_twt_peer_init_fail2:
+	wlan_objmgr_unregister_peer_create_handler
+		(WLAN_UMAC_COMP_TWT,
+		 wlan_twt_peer_obj_create_handler,
+		 NULL);
+wlan_twt_peer_init_fail1:
+	wlan_objmgr_unregister_vdev_destroy_handler
+		(WLAN_UMAC_COMP_TWT,
+		wlan_twt_vdev_obj_destroy_handler,
+		NULL);
+wlan_twt_vdev_init_fail2:
+	wlan_objmgr_unregister_vdev_create_handler
+		(WLAN_UMAC_COMP_TWT,
+		wlan_twt_vdev_obj_create_handler,
+		NULL);
+wlan_twt_vdev_init_fail1:
+	wlan_objmgr_unregister_psoc_destroy_handler
+		(WLAN_UMAC_COMP_TWT,
+		 wlan_twt_psoc_obj_destroy_handler,
+		 NULL);
+wlan_twt_psoc_init_fail2:
+	wlan_objmgr_unregister_psoc_create_handler
+		(WLAN_UMAC_COMP_TWT,
+		 wlan_twt_psoc_obj_create_handler,
+		 NULL);
+wlan_twt_psoc_init_fail1:
+	return status;
 }
 
 QDF_STATUS wlan_twt_deinit(void)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	status = wlan_objmgr_unregister_psoc_create_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_psoc_obj_create_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("Failed to unregister psoc create handler");
+
+	status = wlan_objmgr_unregister_psoc_destroy_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_psoc_obj_destroy_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("Failed to unregister psoc destroy handler");
+
+	status = wlan_objmgr_unregister_vdev_create_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_vdev_obj_create_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("Failed to unregister vdev create handler");
+
+	status = wlan_objmgr_unregister_vdev_destroy_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_vdev_obj_destroy_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("Failed to unregister vdev destroy handler");
+
+	status = wlan_objmgr_unregister_peer_create_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_peer_obj_create_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("Failed to unregister peer create handler");
+
+	status = wlan_objmgr_unregister_peer_destroy_handler
+				(WLAN_UMAC_COMP_TWT,
+				 wlan_twt_peer_obj_destroy_handler,
+				 NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("Failed to unregister peer destroy handler");
+
+	return status;
 }
 
 QDF_STATUS twt_psoc_enable(struct wlan_objmgr_psoc *psoc)
