@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -945,6 +946,38 @@ scm_update_channel_list(struct scan_start_request *req,
 }
 
 /**
+ * scm_req_update_dwell_time_as_per_scan_mode() - update scan req params
+ * dwell time as per scan mode.
+ * @req: scan request
+ *
+ * Return: void
+ */
+static void
+scm_req_update_dwell_time_as_per_scan_mode(
+				struct wlan_objmgr_vdev *vdev,
+				struct scan_start_request *req)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (req->scan_req.scan_policy_low_span &&
+	    wlan_scan_cfg_honour_nl_scan_policy_flags(psoc)) {
+		req->scan_req.adaptive_dwell_time_mode =
+					SCAN_DWELL_MODE_STATIC;
+		req->scan_req.dwell_time_active =
+				QDF_MIN(req->scan_req.dwell_time_active,
+					LOW_SPAN_ACTIVE_DWELL_TIME);
+		req->scan_req.dwell_time_active_2g =
+				QDF_MIN(req->scan_req.dwell_time_active_2g,
+					LOW_SPAN_ACTIVE_DWELL_TIME);
+		req->scan_req.dwell_time_passive =
+				QDF_MIN(req->scan_req.dwell_time_passive,
+					LOW_SPAN_PASSIVE_DWELL_TIME);
+	}
+}
+
+/**
  * scm_scan_req_update_params() - update scan req params depending on modes
  * and scan type.
  * @vdev: vdev object pointer
@@ -1050,6 +1083,8 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 
 	if (req->scan_req.scan_type == SCAN_TYPE_RRM)
 		req->scan_req.scan_ctrl_flags_ext |= SCAN_FLAG_EXT_RRM_SCAN_IND;
+
+	scm_req_update_dwell_time_as_per_scan_mode(vdev, req);
 
 	scm_debug("scan_ctrl_flags_ext %0x", req->scan_req.scan_ctrl_flags_ext);
 	/*
