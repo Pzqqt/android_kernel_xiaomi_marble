@@ -15,7 +15,7 @@ LOCAL_MODULE_PATH := $(KERNEL_MODULES_OUT)
 LOCAL_ADDITIONAL_DEPENDENCY      := synx-driver.ko
 
 # export to kbuild
-KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(shell pwd)/$(call intermediates-dir-for,DLKM,mmrm-module-symvers)/Module.symvers
+KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(abspath .)/$(call intermediates-dir-for,DLKM,mmrm-module-symvers)/Module.symvers
 
 LOCAL_REQUIRED_MODULES    := mmrm-module-symvers
 LOCAL_ADDITIONAL_DEPENDENCIES := $(call intermediates-dir-for,DLKM,mmrm-module-symvers)/Module.symvers
