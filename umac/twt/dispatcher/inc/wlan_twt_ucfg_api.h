@@ -101,6 +101,18 @@ ucfg_twt_get_all_twt_enabled(struct wlan_objmgr_psoc *psoc,
 			     bool *val);
 
 /**
+ * ucfg_twt_check_all_twt_support() - Check if all TWT sessions capability is
+ * supported or not
+ * @psoc: Pointer to psoc object
+ * @dialog_id: dialod id
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_twt_check_all_twt_support(struct wlan_objmgr_psoc *psoc,
+			       uint32_t dialog_id);
+
+/**
  * ucfg_twt_get_twt_stats_enabled() - get twt stats enabled
  * @psoc: psoc handle
  * @val: pointer to the output variable

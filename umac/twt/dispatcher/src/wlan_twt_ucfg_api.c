@@ -23,54 +23,60 @@
 
 QDF_STATUS ucfg_twt_get_requestor(struct wlan_objmgr_psoc *psoc, bool *val)
 {
-	return wlan_twt_get_requestor(psoc, val);
+	return wlan_twt_tgt_caps_get_requestor(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_get_responder(struct wlan_objmgr_psoc *psoc, bool *val)
 {
-	return wlan_twt_get_responder(psoc, val);
+	return wlan_twt_tgt_caps_get_responder(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_get_legacy_bcast_twt_support(struct wlan_objmgr_psoc *psoc,
 						bool *val)
 {
-	return wlan_twt_get_legacy_bcast_twt_support(psoc, val);
+	return wlan_twt_tgt_caps_get_legacy_bcast_support(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_get_twt_bcast_req_support(struct wlan_objmgr_psoc *psoc,
 						bool *val)
 {
-	return wlan_twt_get_twt_bcast_req_support(psoc, val);
+	return wlan_twt_tgt_caps_get_bcast_req_support(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_get_twt_bcast_res_support(struct wlan_objmgr_psoc *psoc,
 						bool *val)
 {
-	return wlan_twt_get_twt_bcast_res_support(psoc, val);
+	return wlan_twt_tgt_caps_get_bcast_res_support(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_get_twt_nudge_enabled(struct wlan_objmgr_psoc *psoc,
 					bool *val)
 {
-	return wlan_twt_get_twt_nudge_enabled(psoc, val);
+	return wlan_twt_tgt_caps_get_nudge_enabled(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_get_all_twt_enabled(struct wlan_objmgr_psoc *psoc,
 					bool *val)
 {
-	return wlan_twt_get_all_twt_enabled(psoc, val);
+	return wlan_twt_tgt_caps_get_all_twt_enabled(psoc, val);
+}
+
+QDF_STATUS ucfg_twt_check_all_twt_support(struct wlan_objmgr_psoc *psoc,
+					  uint32_t dialog_id)
+{
+	return wlan_twt_check_all_twt_support(psoc, dialog_id);
 }
 
 QDF_STATUS ucfg_twt_get_twt_stats_enabled(struct wlan_objmgr_psoc *psoc,
 					bool *val)
 {
-	return wlan_twt_get_twt_stats_enabled(psoc, val);
+	return wlan_twt_tgt_caps_get_stats_enabled(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_get_twt_ack_supported(struct wlan_objmgr_psoc *psoc,
 					bool *val)
 {
-	return wlan_twt_get_twt_ack_supported(psoc, val);
+	return wlan_twt_tgt_caps_get_ack_supported(psoc, val);
 }
 
 QDF_STATUS ucfg_twt_requestor_disable(struct wlan_objmgr_psoc *psoc,

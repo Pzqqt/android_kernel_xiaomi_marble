@@ -22,101 +22,112 @@
 #include <wlan_twt_public_structs.h>
 
 /**
- * wlan_twt_get_requestor() - twt get requestor
+ * wlan_twt_tgt_caps_get_requestor() - twt get requestor
  * @psoc: psoc handle
  * @val: pointer to the output variable
  *
  * return: QDF_STATUS
  */
 QDF_STATUS
-wlan_twt_get_requestor(struct wlan_objmgr_psoc *psoc, bool *val);
+wlan_twt_tgt_caps_get_requestor(struct wlan_objmgr_psoc *psoc, bool *val);
 
 /**
- * wlan_twt_get_responder() - twt get responder
+ * wlan_twt_tgt_caps_get_responder() - twt get responder
  * @psoc: psoc handle
  * @val: pointer to the output variable
  *
  * return: QDF_STATUS
  */
 QDF_STATUS
-wlan_twt_get_responder(struct wlan_objmgr_psoc *psoc, bool *val);
+wlan_twt_tgt_caps_get_responder(struct wlan_objmgr_psoc *psoc, bool *val);
 
 /**
- * wlan_twt_get_legacy_bcast_twt_support() - get legacy bcast support
+ * wlan_twt_tgt_caps_get_legacy_bcast_support() - get legacy bcast support
  * @psoc: psoc handle
  * @val: pointer to the output variable
  *
  * return: QDF_STATUS
  */
 QDF_STATUS
-wlan_twt_get_legacy_bcast_twt_support(struct wlan_objmgr_psoc *psoc,
+wlan_twt_tgt_caps_get_legacy_bcast_support(struct wlan_objmgr_psoc *psoc,
+					   bool *val);
+
+/**
+ * wlan_twt_tgt_caps_get_bcast_req_support() - get bcast requestor support
+ * @psoc: psoc handle
+ * @val: pointer to the output variable
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_twt_tgt_caps_get_bcast_req_support(struct wlan_objmgr_psoc *psoc,
+					bool *val);
+
+/**
+ * wlan_twt_tgt_caps_get_bcast_res_support() - get bcast responder support
+ * @psoc: psoc handle
+ * @val: pointer to the output variable
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_twt_tgt_caps_get_bcast_res_support(struct wlan_objmgr_psoc *psoc,
+					bool *val);
+
+/**
+ * wlan_twt_tgt_caps_get_nudge_enabled() - get nudge enabled
+ * @psoc: psoc handle
+ * @val: pointer to the output variable
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_twt_tgt_caps_get_nudge_enabled(struct wlan_objmgr_psoc *psoc,
+				    bool *val);
+
+/**
+ * wlan_twt_tgt_caps_get_all_twt_enabled() - get all twt enabled
+ * @psoc: psoc handle
+ * @val: pointer to the output variable
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_twt_tgt_caps_get_all_twt_enabled(struct wlan_objmgr_psoc *psoc,
 				      bool *val);
 
 /**
- * wlan_twt_get_twt_bcast_req_support() - get bcast requestor support
+ * wlan_twt_tgt_caps_get_stats_enabled() - get twt stats enabled
  * @psoc: psoc handle
  * @val: pointer to the output variable
  *
  * return: QDF_STATUS
  */
 QDF_STATUS
-wlan_twt_get_twt_bcast_req_support(struct wlan_objmgr_psoc *psoc,
-				   bool *val);
+wlan_twt_tgt_caps_get_stats_enabled(struct wlan_objmgr_psoc *psoc,
+				    bool *val);
 
 /**
- * wlan_twt_get_twt_bcast_res_support() - get bcast responder support
+ * wlan_twt_tgt_caps_get_ack_supported() - get twt ack supported
  * @psoc: psoc handle
  * @val: pointer to the output variable
  *
  * return: QDF_STATUS
  */
 QDF_STATUS
-wlan_twt_get_twt_bcast_res_support(struct wlan_objmgr_psoc *psoc,
-				   bool *val);
+wlan_twt_tgt_caps_get_ack_supported(struct wlan_objmgr_psoc *psoc,
+				    bool *val);
 
 /**
- * wlan_twt_get_twt_nudge_enabled() - get nudge enabled
- * @psoc: psoc handle
- * @val: pointer to the output variable
+ * wlan_twt_check_all_twt_support() - Check if all TWT sessions capability is
+ * supported or not
+ * @psoc: Pointer to psoc object
+ * @dialog_id: dialod id
  *
- * return: QDF_STATUS
+ * Return: QDF Status
  */
-QDF_STATUS
-wlan_twt_get_twt_nudge_enabled(struct wlan_objmgr_psoc *psoc,
-			       bool *val);
-
-/**
- * wlan_twt_get_all_twt_enabled() - get all twt enabled
- * @psoc: psoc handle
- * @val: pointer to the output variable
- *
- * return: QDF_STATUS
- */
-QDF_STATUS
-wlan_twt_get_all_twt_enabled(struct wlan_objmgr_psoc *psoc,
-			     bool *val);
-
-/**
- * wlan_twt_get_twt_stats_enabled() - get twt stats enabled
- * @psoc: psoc handle
- * @val: pointer to the output variable
- *
- * return: QDF_STATUS
- */
-QDF_STATUS
-wlan_twt_get_twt_stats_enabled(struct wlan_objmgr_psoc *psoc,
-			       bool *val);
-
-/**
- * wlan_twt_get_twt_ack_supported() - get twt ack supported
- * @psoc: psoc handle
- * @val: pointer to the output variable
- *
- * return: QDF_STATUS
- */
-QDF_STATUS
-wlan_twt_get_twt_ack_supported(struct wlan_objmgr_psoc *psoc,
-			       bool *val);
+QDF_STATUS wlan_twt_check_all_twt_support(struct wlan_objmgr_psoc *psoc,
+					  uint32_t dialog_id);
 
 /**
  * wlan_twt_disable() - twt disable
