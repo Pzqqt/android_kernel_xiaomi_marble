@@ -2237,7 +2237,7 @@
  */
 #define CFG_LFR3_ENABLE_SELF_BSS_ROAM CFG_INI_BOOL( \
 	"enable_self_bss_roam", \
-	0, \
+	1, \
 	"enable self bss roam")
 
 /*
