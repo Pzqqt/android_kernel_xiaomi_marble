@@ -1253,6 +1253,7 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_SUPPORT_TWT
 static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_cfg_twt *twt_cfg)
 {
@@ -1264,6 +1265,12 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 	twt_cfg->is_bcast_requestor_enabled = CFG_TWT_GET_BCAST_REQ(bcast_conf);
 	twt_cfg->is_bcast_responder_enabled = CFG_TWT_GET_BCAST_RES(bcast_conf);
 }
+#else
+static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_cfg_twt *twt_cfg)
+{
+}
+#endif
 
 #ifdef WLAN_FEATURE_11BE
 static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,

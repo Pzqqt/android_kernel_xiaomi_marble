@@ -25,6 +25,11 @@ QDF_STATUS ucfg_twt_psoc_open(struct wlan_objmgr_psoc *psoc)
 	return wlan_twt_cfg_init(psoc);
 }
 
+QDF_STATUS ucfg_twt_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_twt_cfg_deinit(psoc);
+}
+
 QDF_STATUS ucfg_twt_update_psoc_config(struct wlan_objmgr_psoc *psoc)
 {
 	return wlan_twt_cfg_update(psoc);

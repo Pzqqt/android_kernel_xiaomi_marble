@@ -61,6 +61,7 @@
 #include "cfg_mlme_mwc.h"
 #include "cfg_mlme_reg.h"
 #include "cfg_mlme_eht_caps.h"
+#include "cfg_twt.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \

@@ -29,6 +29,16 @@
 QDF_STATUS wlan_twt_cfg_init(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * wlan_twt_cfg_deinit() - De-initialize twt config params
+ * @psoc: Pointer to global psoc
+ *
+ * This function de-initializes the twt private cfg params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_twt_cfg_deinit(struct wlan_objmgr_psoc *psoc);
+
+/**
  * wlan_twt_cfg_update() - Update twt config params
  * @psoc: Pointer to global psoc
  *

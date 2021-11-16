@@ -216,6 +216,8 @@
 #include <wlan_objmgr_psoc_obj_i.h>
 #include <wlan_objmgr_vdev_obj_i.h>
 #include "osif_vdev_mgr_util.h"
+#include "osif_twt_util.h"
+#include "wlan_twt_ucfg_ext_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -17546,8 +17548,14 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_nan;
 
+	status = ucfg_twt_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_twt;
+
 	return status;
 
+err_twt:
+	ucfg_nan_psoc_close(psoc);
 err_nan:
 	ucfg_tdls_psoc_close(psoc);
 err_tdls:
@@ -17568,6 +17576,8 @@ err_blm:
 
 void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_twt_psoc_close(psoc);
+	ucfg_nan_psoc_close(psoc);
 	ucfg_tdls_psoc_close(psoc);
 	ucfg_p2p_psoc_close(psoc);
 	ucfg_policy_mgr_psoc_close(psoc);
@@ -18998,6 +19008,8 @@ int hdd_update_components_config(struct hdd_context *hdd_ctx)
 		return ret;
 
 	ret = hdd_update_regulatory_config(hdd_ctx);
+	if (ret)
+		return ret;
 
 	return ret;
 }

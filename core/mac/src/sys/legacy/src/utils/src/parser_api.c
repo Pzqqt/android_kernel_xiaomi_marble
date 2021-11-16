@@ -54,6 +54,11 @@
 #include <utils_mlo.h>
 #endif
 
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) && \
+	defined(WLAN_TWT_CONV_SUPPORTED)
+#include "wlan_twt_cfg_ext_api.h"
+#endif
+
 #define RSN_OUI_SIZE 4
 /* ////////////////////////////////////////////////////////////////////// */
 void swap_bit_field16(uint16_t in, uint16_t *out)
@@ -6602,6 +6607,40 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX)
+#ifdef WLAN_TWT_CONV_SUPPORTED
+static bool
+twt_get_requestor_flag(struct mac_context *mac)
+{
+	bool req_flag = false;
+
+	wlan_twt_cfg_get_req_flag(mac->psoc, &req_flag);
+	return req_flag;
+}
+
+static bool
+twt_get_responder_flag(struct mac_context *mac)
+{
+	bool res_flag = false;
+
+	wlan_twt_cfg_get_res_flag(mac->psoc, &res_flag);
+	return res_flag;
+}
+#else
+static bool
+twt_get_requestor_flag(struct mac_context *mac)
+{
+	return mac->mlme_cfg->twt_cfg.req_flag;
+}
+
+static bool
+twt_get_responder_flag(struct mac_context *mac)
+{
+	return mac->mlme_cfg->twt_cfg.res_flag;
+}
+#endif
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 #ifdef WLAN_SUPPORT_TWT
 static void
@@ -6617,12 +6656,12 @@ populate_dot11f_twt_he_cap(struct mac_context *mac,
 
 	he_cap->broadcast_twt = 0;
 	if (session->opmode == QDF_STA_MODE &&
-	    !(mac->mlme_cfg->twt_cfg.req_flag)) {
+	    !twt_get_requestor_flag(mac)) {
 		/* Set twt_request as 0 if any SCC/MCC concurrency exist */
 		he_cap->twt_request = 0;
 		return;
 	} else if (session->opmode == QDF_SAP_MODE &&
-		   !(mac->mlme_cfg->twt_cfg.res_flag)) {
+		   !twt_get_responder_flag(mac)) {
 		/** Set twt_responder as 0 if any SCC/MCC concurrency exist */
 		he_cap->twt_responder = 0;
 		return;
@@ -7711,12 +7750,12 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 	if (pe_session->opmode == QDF_STA_MODE)
 		p_ext_cap->twt_requestor_support =
 			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request &&
-			mac_ctx->mlme_cfg->twt_cfg.req_flag;
+			twt_get_requestor_flag(mac_ctx);
 
 	if (pe_session->opmode == QDF_SAP_MODE)
 		p_ext_cap->twt_responder_support =
 			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_responder &&
-			mac_ctx->mlme_cfg->twt_cfg.res_flag;
+			twt_get_responder_flag(mac_ctx);
 
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
 

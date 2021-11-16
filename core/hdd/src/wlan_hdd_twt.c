@@ -39,6 +39,30 @@
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_mlme_twt_ucfg_api.h>
 #include <target_if.h>
+#include "wlan_hdd_object_manager.h"
+#include "osif_twt_ext_req.h"
+#include "wlan_twt_ucfg_ext_api.h"
+#include "wlan_twt_ucfg_ext_cfg.h"
+#include "osif_twt_internal.h"
+
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+QDF_STATUS hdd_get_twt_requestor(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	return ucfg_twt_cfg_get_requestor(psoc, val);
+}
+
+QDF_STATUS hdd_get_twt_responder(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	return ucfg_twt_cfg_get_responder(psoc, val);
+}
+
+void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
+			    struct wma_tgt_cfg *cfg)
+{
+	ucfg_twt_update_psoc_config(hdd_ctx->psoc);
+}
+
+#elif defined(WLAN_SUPPORT_TWT)
 
 #define TWT_DISABLE_COMPLETE_TIMEOUT 1000
 #define TWT_ENABLE_COMPLETE_TIMEOUT  1000
@@ -4619,3 +4643,15 @@ void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 
 	hdd_ctx->twt_state = TWT_CLOSED;
 }
+
+QDF_STATUS hdd_get_twt_requestor(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	return ucfg_mlme_get_twt_requestor(psoc, val);
+}
+
+QDF_STATUS hdd_get_twt_responder(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	return ucfg_mlme_get_twt_responder(psoc, val);
+}
+
+#endif

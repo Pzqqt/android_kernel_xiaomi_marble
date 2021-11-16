@@ -25,7 +25,8 @@
 #include "cfg_mlme_twt.h"
 #include "wlan_mlme_twt_ucfg_api.h"
 
-#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX)
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) && \
+	!defined(WLAN_TWT_CONV_SUPPORTED)
 QDF_STATUS
 ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
 			    bool *val)

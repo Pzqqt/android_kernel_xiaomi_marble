@@ -31,7 +31,111 @@
 #include <wlan_mlme_main.h>
 #include <wlan_mlme_twt_api.h>
 
-#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX)
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) && \
+	defined(WLAN_TWT_CONV_SUPPORTED)
+static inline
+QDF_STATUS ucfg_mlme_init_twt_context(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline bool
+ucfg_mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
+			    bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_requestor(struct wlan_objmgr_psoc *psoc,
+			    bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_twt_responder(struct wlan_objmgr_psoc *psoc,
+			    bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_responder(struct wlan_objmgr_psoc *psoc,
+			    bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline bool
+ucfg_mlme_is_twt_setup_done(struct wlan_objmgr_psoc *psoc,
+			    struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
+{
+	return 0;
+}
+
+static inline void
+ucfg_mlme_set_twt_setup_done(struct wlan_objmgr_psoc *psoc,
+			     struct qdf_mac_addr *peer_mac,
+			     uint8_t dialog_id, bool is_set)
+{}
+
+static inline
+void ucfg_mlme_set_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_session_state state)
+{}
+
+static inline enum wlan_twt_session_state
+ucfg_mlme_get_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				struct qdf_mac_addr *peer_mac,
+				uint8_t dialog_id)
+{
+	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_res_service_cap(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_twt_res_service_cap(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_reset_twt_active_cmd(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t dialog_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id,
+				      enum wlan_twt_commands cmd)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+#elif defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX)
 /**
  * ucfg_mlme_get_twt_requestor() - Get twt requestor
  * @psoc: pointer to psoc object
