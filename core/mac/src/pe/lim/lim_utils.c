@@ -1878,10 +1878,7 @@ static void __lim_process_channel_switch_timeout(struct pe_session *pe_session)
 		 * then we cannot switch the channel. Just disassociate from AP.
 		 * We will find a better AP !!!
 		 */
-		if ((pe_session->limMlmState ==
-		   eLIM_MLM_LINK_ESTABLISHED_STATE) &&
-		   (pe_session->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
-		   (pe_session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
+		if (lim_is_sb_disconnect_allowed(pe_session)) {
 			pe_err("Invalid channel! Disconnect");
 			lim_tear_down_link_with_ap(mac, pe_session->peSessionId,
 					   REASON_UNSUPPORTED_CHANNEL_CSA,
@@ -4585,18 +4582,13 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac_ctx)
 		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_HB_FAILURE_TIMEOUT,
 					psession_entry, 0, 0);
 #endif
-		if ((psession_entry->limMlmState ==
-					eLIM_MLM_LINK_ESTABLISHED_STATE) &&
-			(psession_entry->limSmeState !=
-					eLIM_SME_WT_DISASSOC_STATE) &&
-			(psession_entry->limSmeState !=
-					eLIM_SME_WT_DEAUTH_STATE) &&
-			((!LIM_IS_CONNECTION_ACTIVE(psession_entry)) ||
-			/*
-			 * Disconnect even if we have not received a single
-			 * beacon after connection.
-			 */
-			 (psession_entry->currentBssBeaconCnt == 0))) {
+		if (lim_is_sb_disconnect_allowed(psession_entry) &&
+		    (!LIM_IS_CONNECTION_ACTIVE(psession_entry) ||
+		     /*
+		      * Disconnect even if we have not received a single
+		      * beacon after connection.
+		      */
+		     !psession_entry->currentBssBeaconCnt)) {
 			pe_nofl_info("HB fail vdev %d",psession_entry->vdev_id);
 			lim_send_deauth_mgmt_frame(mac_ctx,
 				REASON_DISASSOC_DUE_TO_INACTIVITY,
