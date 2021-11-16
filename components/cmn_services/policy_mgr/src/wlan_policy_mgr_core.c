@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1646,7 +1647,7 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 {
 	uint32_t band_mask;
 	struct wlan_objmgr_vdev *vdev;
-	bool dual_sta_roam_active;
+	bool dual_sta_roam_active, is_pcl_per_vdev;
 	struct wlan_channel *chan;
 	uint32_t roam_band_mask;
 
@@ -1658,14 +1659,24 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 	}
 
 	chan = wlan_vdev_get_active_channel(vdev);
-
-	ucfg_reg_get_band(wlan_vdev_get_pdev(vdev), &band_mask);
-	roam_band_mask = wlan_cm_get_roam_band_value(psoc, vdev);
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	if (!chan) {
 		policy_mgr_err("no active channel");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 		return 0;
+	}
+
+	is_pcl_per_vdev = wlan_cm_roam_is_pcl_per_vdev_active(psoc, vdev_id);
+	dual_sta_roam_active = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+
+	policy_mgr_debug("connected STA (vdev_id:%d, freq:%d), pcl_per_vdev:%d, dual_sta_roam_active:%d",
+			 vdev_id, chan->ch_freq, is_pcl_per_vdev,
+			 dual_sta_roam_active);
+
+	if (dual_sta_roam_active && is_pcl_per_vdev) {
+		band_mask = BIT(wlan_reg_freq_to_band(chan->ch_freq));
+		policy_mgr_debug("connected vdev band mask:%d", band_mask);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+		return band_mask;
 	}
 
 	/*
@@ -1673,23 +1684,24 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 	 * take this as priority instead of drv cmd "SETROAMINTRABAND" or
 	 * active connection band.
 	 */
-	if (roam_band_mask != band_mask)
-		return roam_band_mask;
+	ucfg_reg_get_band(wlan_vdev_get_pdev(vdev), &band_mask);
+	roam_band_mask = wlan_cm_get_roam_band_value(psoc, vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 
+	if (roam_band_mask != band_mask) {
+		policy_mgr_debug("roam_band_mask:%d", roam_band_mask);
+		return roam_band_mask;
+	}
 	/*
 	 * If PCL command is PDEV level, only one sta is active.
 	 * So fill the band mask if intra band roaming is enabled
 	 */
-	if (!wlan_cm_roam_is_pcl_per_vdev_active(psoc, vdev_id)) {
-		if (ucfg_mlme_is_roam_intra_band(psoc))
+	if (!is_pcl_per_vdev)
+		if (ucfg_mlme_is_roam_intra_band(psoc)) {
 			band_mask = BIT(wlan_reg_freq_to_band(chan->ch_freq));
-
-		return band_mask;
-	}
-
-	dual_sta_roam_active = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
-	if (dual_sta_roam_active)
-		band_mask = BIT(wlan_reg_freq_to_band(chan->ch_freq));
+			policy_mgr_debug("connected STA band mask:%d",
+					 band_mask);
+		}
 
 	return band_mask;
 }
@@ -1720,9 +1732,6 @@ QDF_STATUS policy_mgr_set_pcl(struct wlan_objmgr_psoc *psoc,
 
 	req_msg->band_mask =
 		policy_mgr_get_connected_roaming_vdev_band_mask(psoc, vdev_id);
-	policy_mgr_debug("RSO_CFG: vdev:%d Connected STA band_mask:%d",
-			 vdev_id, req_msg->band_mask);
-
 	for (i = 0; i < msg->pcl_len; i++) {
 		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];
 		req_msg->chan_weights.weight_list[i] =  msg->weight_list[i];
