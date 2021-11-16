@@ -4925,7 +4925,7 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
 	log_record->fw_timestamp_us = ap->timestamp * 1000;
 
-	log_record->ap.is_current_ap = (ap->type == 2);
+	log_record->ap.is_current_ap = (ap->type == 1);
 	if (log_record->ap.is_current_ap)
 		log_record->log_subtype = WLAN_ROAM_SCORE_CURR_AP;
 	else
