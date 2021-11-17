@@ -367,6 +367,79 @@ hdd_update_station_stats_cached_timestamp(struct hdd_adapter *adapter)
 }
 #endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
 
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+/**
+ * wlan_hdd_qmi_get_sync_resume() - Get operation to trigger RTPM
+ * sync resume without WoW exit
+ *
+ * call qmi_get before sending qmi, and do qmi_put after all the
+ * qmi response rececived from fw. so this request wlan host to
+ * wait for the last qmi response, if it doesn't wait, qmi put
+ * which cause MHI enter M3(suspend) before all the qmi response,
+ * and MHI will trigger a RTPM resume, this violated design of by
+ * sending cmd by qmi without wow resume.
+ *
+ * Returns: 0 for success, non-zero for failure
+ */
+int wlan_hdd_qmi_get_sync_resume(void)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	if (!hdd_ctx->config->is_qmi_stats_enabled) {
+		hdd_debug("periodic stats over qmi is disabled");
+		return 0;
+	}
+
+	if (!qdf_ctx) {
+		hdd_err("qdf_ctx is null");
+		return -EINVAL;
+	}
+
+	return pld_qmi_send_get(qdf_ctx->dev);
+}
+
+/**
+ * wlan_hdd_qmi_put_suspend() - Put operation to trigger RTPM suspend
+ * without WoW entry
+ *
+ * Returns: 0 for success, non-zero for failure
+ */
+int wlan_hdd_qmi_put_suspend(void)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	if (!hdd_ctx->config->is_qmi_stats_enabled) {
+		hdd_debug("periodic stats over qmi is disabled");
+		return 0;
+	}
+
+	if (!qdf_ctx) {
+		hdd_err("qdf_ctx is null");
+		return -EINVAL;
+	}
+
+	return pld_qmi_send_put(qdf_ctx->dev);
+}
+#else
+int wlan_hdd_qmi_get_sync_resume(void)
+{
+	return 0;
+}
+
+int wlan_hdd_qmi_put_suspend(void)
+{
+	return 0;
+}
+#endif /* end if of WLAN_FEATURE_WMI_SEND_RECV_QMI */
+
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 
 /**
@@ -2178,61 +2251,6 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
-/**
- * wlan_hdd_qmi_get_sync_resume() - Get operation to trigger RTPM
- * sync resume without WoW exit
- * @hdd_ctx: hdd context
- * @dev: device context
- *
- * Returns: 0 for success, non-zero for failure
- */
-static inline
-int wlan_hdd_qmi_get_sync_resume(struct hdd_context *hdd_ctx,
-				 struct device *dev)
-{
-	if (!hdd_ctx->config->is_qmi_stats_enabled) {
-		hdd_debug("periodic stats over qmi is disabled");
-		return 0;
-	}
-
-	return pld_qmi_send_get(dev);
-}
-
-/**
- * wlan_hdd_qmi_put_suspend() - Put operation to trigger RTPM suspend
- * without WoW entry
- * @hdd_ctx: hdd context
- * @dev: device context
- *
- * Returns: 0 for success, non-zero for failure
- */
-static inline
-int wlan_hdd_qmi_put_suspend(struct hdd_context *hdd_ctx,
-			     struct device *dev)
-{
-	if (!hdd_ctx->config->is_qmi_stats_enabled) {
-		hdd_debug("periodic stats over qmi is disabled");
-		return 0;
-	}
-
-	return pld_qmi_send_put(dev);
-}
-#else
-static inline
-int wlan_hdd_qmi_get_sync_resume(struct hdd_context *hdd_ctx,
-				 struct device *dev)
-{
-	return 0;
-}
-
-static inline int wlan_hdd_qmi_put_suspend(struct hdd_context *hdd_ctx,
-					   struct device *dev)
-{
-	return 0;
-}
-#endif /* end if of WLAN_FEATURE_WMI_SEND_RECV_QMI */
-
 /**
  * wlan_hdd_cfg80211_ll_stats_get() - get ll stats
  * @wiphy: Pointer to wiphy
@@ -2250,20 +2268,16 @@ int wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct osif_vdev_sync *vdev_sync;
 	int errno;
-	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != errno)
-		return -EINVAL;
-
-	if (!qdf_ctx)
 		return -EINVAL;
 
 	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
 	if (errno)
 		return errno;
 
-	errno = wlan_hdd_qmi_get_sync_resume(hdd_ctx, qdf_ctx->dev);
+	errno = wlan_hdd_qmi_get_sync_resume();
 	if (errno) {
 		hdd_err("qmi sync resume failed: %d", errno);
 		goto end;
@@ -2271,7 +2285,7 @@ int wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 
 	errno = __wlan_hdd_cfg80211_ll_stats_get(wiphy, wdev, data, data_len);
 
-	wlan_hdd_qmi_put_suspend(hdd_ctx, qdf_ctx->dev);
+	wlan_hdd_qmi_put_suspend();
 
 end:
 	osif_vdev_sync_op_stop(vdev_sync);
@@ -3660,19 +3674,6 @@ int wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 static QDF_STATUS wlan_hdd_stats_request_needed(struct hdd_adapter *adapter)
 {
 	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-int wlan_hdd_qmi_get_sync_resume(struct hdd_context *hdd_ctx,
-				 struct device *dev)
-{
-	return 0;
-}
-
-static inline int wlan_hdd_qmi_put_suspend(struct hdd_context *hdd_ctx,
-					   struct device *dev)
-{
-	return 0;
 }
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
@@ -6041,16 +6042,12 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	int errno;
 	QDF_STATUS status;
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)
 		return errno;
-
-	if (!qdf_ctx)
-		return -EINVAL;
 
 	status = wlan_hdd_stats_request_needed(adapter);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -6061,7 +6058,7 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	}
 
 	if (get_station_fw_request_needed) {
-		errno = wlan_hdd_qmi_get_sync_resume(hdd_ctx, qdf_ctx->dev);
+		errno = wlan_hdd_qmi_get_sync_resume();
 		if (errno) {
 			hdd_err("qmi sync resume failed: %d", errno);
 			return errno;
@@ -6071,7 +6068,7 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	errno = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
 
 	if (get_station_fw_request_needed)
-		wlan_hdd_qmi_put_suspend(hdd_ctx, qdf_ctx->dev);
+		wlan_hdd_qmi_put_suspend();
 
 	get_station_fw_request_needed = true;
 

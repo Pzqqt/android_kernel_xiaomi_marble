@@ -494,6 +494,9 @@ int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed);
  */
 int wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
 
+int wlan_hdd_qmi_get_sync_resume(void);
+int wlan_hdd_qmi_put_suspend(void);
+
 #ifdef WLAN_FEATURE_BIG_DATA_STATS
 /**
  * wlan_hdd_get_big_data_station_stats() - Get big data station statistics
