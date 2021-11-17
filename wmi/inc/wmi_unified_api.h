@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -361,6 +362,7 @@ static inline int wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
  * @buf: wmi command buffer
  * @buflen: wmi command buffer length
  * @cmd_id: WMI cmd id
+ * @is_qmi_send_support:send by qmi is supported
  *
  * Note, it is NOT safe to access buf after calling this function!
  *
@@ -368,7 +370,8 @@ static inline int wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
  */
 QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
 				       wmi_buf_t buf, uint32_t buflen,
-				       uint32_t cmd_id);
+				       uint32_t cmd_id,
+				       bool is_qmi_send_support);
 
 /**
  * wmi_unified_register_event() - WMI event handler
