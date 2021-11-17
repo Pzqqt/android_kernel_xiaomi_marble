@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -92,7 +93,6 @@ static bool cm_state_init_event(void *ctx, uint16_t event,
 	struct cnx_mgr *cm_ctx = ctx;
 	bool event_handled = true;
 	QDF_STATUS status;
-	struct cm_disconnect_req *req;
 
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_REQ:
@@ -113,15 +113,13 @@ static bool cm_state_init_event(void *ctx, uint16_t event,
 		cm_disconnect_complete(cm_ctx, data);
 		break;
 	case WLAN_CM_SM_EV_DISCONNECT_REQ:
-		status = cm_add_disconnect_req_to_list(cm_ctx, data);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			/* if fail to add req return failure */
-			event_handled = false;
-			break;
-		}
-
-		req = data;
-		cm_send_disconnect_resp(cm_ctx, req->cm_id);
+		cm_handle_discon_req_in_non_connected_state(cm_ctx, data,
+							    WLAN_CM_S_INIT);
+		/*
+		 * Return not handled as this req need to be dropped and return
+		 * failure to the requester
+		 */
+		event_handled = false;
 		break;
 	default:
 		event_handled = false;

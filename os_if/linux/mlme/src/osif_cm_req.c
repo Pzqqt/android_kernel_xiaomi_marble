@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -554,20 +555,6 @@ connect_start_fail:
 	return qdf_status_to_os_return(status);
 }
 
-static QDF_STATUS osif_cm_send_disconnect(struct wlan_objmgr_vdev *vdev,
-					  uint16_t reason)
-{
-	QDF_STATUS status;
-
-	status = osif_cm_reset_id_and_src(vdev);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
-
-	status = mlo_disconnect(vdev, CM_OSIF_DISCONNECT, reason, NULL);
-
-	return status;
-}
-
 int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 		       uint16_t reason)
 {
@@ -578,7 +565,7 @@ int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 		  dev->name, vdev_id, reason,
 		  ucfg_cm_reason_code_to_str(reason));
 
-	status = osif_cm_send_disconnect(vdev, reason);
+	status = mlo_disconnect(vdev, CM_OSIF_DISCONNECT, reason, NULL);
 	if (QDF_IS_STATUS_ERROR(status))
 		osif_err("Disconnect failed with status %d", status);
 
