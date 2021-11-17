@@ -1010,6 +1010,7 @@ struct sde_mdp_cfg {
  *                          logging
  * @debugfs_ctrl:           uidle is enabled/disabled through debugfs
  * @perf_cntr_en:           performance counters are enabled/disabled
+ * @dirty:                  dirty flag for uidle update
  */
 struct sde_uidle_cfg {
 	SDE_HW_BLK_INFO;
@@ -1029,6 +1030,7 @@ struct sde_uidle_cfg {
 	u32 debugfs_perf;
 	bool debugfs_ctrl;
 	bool perf_cntr_en;
+	bool dirty;
 };
 
 /* struct sde_mdp_cfg : MDP TOP-BLK instance info
