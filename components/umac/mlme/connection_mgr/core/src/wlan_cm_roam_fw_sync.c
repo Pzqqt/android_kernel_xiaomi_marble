@@ -927,8 +927,6 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 	}
 	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
-	policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
-
 	wlan_cm_handle_sta_sta_roaming_enablement(psoc, vdev_id);
 
 	if (roam_synch_data->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED)
@@ -951,6 +949,7 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 		wlan_cm_roam_state_change(pdev, vdev_id,
 					  WLAN_ROAM_RSO_STOPPED,
 					  REASON_DISCONNECTED);
+	policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
 end:
 	return status;
 }
