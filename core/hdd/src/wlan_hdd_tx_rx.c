@@ -1085,11 +1085,9 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool granted;
 	struct hdd_station_ctx *sta_ctx = &adapter->session.station;
-	struct qdf_mac_addr mac_addr;
 	struct qdf_mac_addr mac_addr_tx_allowed = QDF_MAC_ADDR_ZERO_INIT;
 	uint8_t pkt_type = 0;
 	bool is_arp = false;
-	struct wlan_objmgr_vdev *vdev;
 	struct hdd_context *hdd_ctx;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
@@ -1107,7 +1105,6 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	++stats->per_cpu[cpu].tx_called;
 	stats->cont_txtimeout_cnt = 0;
-	qdf_mem_copy(mac_addr.bytes, skb->data, sizeof(mac_addr.bytes));
 
 	if (cds_is_driver_transitioning()) {
 		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD_DATA,
@@ -1270,12 +1267,6 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	adapter->stats.tx_bytes += skb->len;
 
-	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
-	if (vdev) {
-		ucfg_tdls_update_tx_pkt_cnt(vdev, &mac_addr);
-		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
-	}
-
 	if (qdf_nbuf_is_tso(skb)) {
 		adapter->stats.tx_packets += qdf_nbuf_get_tso_num_seg(skb);
 	} else {
@@ -1329,10 +1320,8 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	wlan_hdd_fix_broadcast_eapol(adapter, skb);
 
 	if (adapter->tx_fn(soc, adapter->vdev_id, (qdf_nbuf_t)skb)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Failed to send packet to txrx for sta_id: "
-			  QDF_MAC_ADDR_FMT,
-			  __func__, QDF_MAC_ADDR_REF(mac_addr.bytes));
+		hdd_dp_debug_rl("Failed to send packet from adapter %u",
+				adapter->vdev_id);
 		++stats->per_cpu[cpu].tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
@@ -3908,9 +3897,13 @@ void hdd_sta_notify_tx_comp_cb(qdf_nbuf_t skb, void *ctx, uint16_t flag)
 {
 	struct hdd_adapter *adapter = ctx;
 	enum qdf_proto_subtype subtype;
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr *dest_mac_addr;
 
 	if (hdd_validate_adapter(adapter))
 		return;
+
+	dest_mac_addr = (struct qdf_mac_addr *)skb->data;
 
 	switch (QDF_NBUF_CB_GET_PACKET_TYPE(skb)) {
 	case QDF_NBUF_CB_PACKET_TYPE_ARP:
@@ -3937,5 +3930,11 @@ void hdd_sta_notify_tx_comp_cb(qdf_nbuf_t skb, void *ctx, uint16_t flag)
 		break;
 	default:
 		break;
+	}
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
+	if (vdev) {
+		ucfg_tdls_update_tx_pkt_cnt(vdev, dest_mac_addr);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 	}
 }
