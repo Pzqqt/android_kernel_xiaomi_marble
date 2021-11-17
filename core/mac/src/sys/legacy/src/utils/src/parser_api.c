@@ -3760,6 +3760,8 @@ sir_convert_reassoc_req_frame2_struct(struct mac_context *mac,
 {
 	tDot11fReAssocRequest *ar;
 	uint32_t status;
+	int i;
+	struct mlo_link_info *info;
 
 	ar = qdf_mem_malloc(sizeof(*ar));
 	if (!ar)
@@ -3942,6 +3944,30 @@ sir_convert_reassoc_req_frame2_struct(struct mac_context *mac,
 		qdf_mem_copy(&pAssocReq->he_6ghz_band_cap,
 			     &ar->he_6ghz_band_cap,
 			     sizeof(tDot11fIEhe_6ghz_band_cap));
+	}
+
+	if (ar->eht_cap.present) {
+		qdf_mem_copy(&pAssocReq->eht_cap, &ar->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+		pe_debug("Received Assoc Req with EHT Capability IE");
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &pAssocReq->eht_cap,
+				   sizeof(tDot11fIEeht_cap));
+	}
+	if (ar->mlo_ie.present) {
+		pAssocReq->mlo_info.num_partner_links =
+					ar->mlo_ie.num_sta_profile;
+		for (i = 0; i < ar->mlo_ie.num_sta_profile; i++) {
+			info = &pAssocReq->mlo_info.partner_link_info[i];
+			info->link_id = ar->mlo_ie.sta_profile[i].link_id;
+			qdf_mem_copy(
+				&info->link_addr,
+				&ar->mlo_ie.sta_profile[i].sta_mac_addr.info,
+				sizeof(info->link_addr));
+		}
+		qdf_mem_copy(pAssocReq->mld_mac,
+			     ar->mlo_ie.mld_mac_addr.info.mld_mac_addr,
+			     QDF_MAC_ADDR_SIZE);
 	}
 
 	qdf_mem_free(ar);

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -75,6 +76,7 @@
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <lim_mlo.h>
 #endif
+#include "wlan_cmn_ieee80211.h"
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -8341,12 +8343,103 @@ void lim_log_eht_op(struct mac_context *mac, tDot11fIEeht_op *eht_ops,
 void lim_set_eht_caps(struct mac_context *mac, struct pe_session *session,
 		      uint8_t *ie_start, uint32_t num_bytes)
 {
+	const uint8_t *ie = NULL;
 	tDot11fIEeht_cap dot11_cap;
+	struct wlan_eht_cap_info *eht_cap;
 
 	populate_dot11f_eht_caps(mac, session, &dot11_cap);
 	lim_log_eht_cap(mac, &dot11_cap);
 
-	/* TODO: Update */
+	ie = wlan_get_ext_ie_ptr_from_ext_id(EHT_CAP_OUI_TYPE,
+					     EHT_CAP_OUI_SIZE,
+					     ie_start, num_bytes);
+
+	if (ie) {
+		/* convert from unpacked to packed structure */
+		eht_cap = (struct wlan_eht_cap_info *)&ie[2 + EHT_CAP_OUI_SIZE];
+
+		eht_cap->nsep_pri_access = dot11_cap.nsep_pri_access;
+		eht_cap->eht_om_ctl = dot11_cap.eht_om_ctl;
+		eht_cap->triggered_txop_sharing =
+			dot11_cap.triggered_txop_sharing;
+		eht_cap->support_320mhz_6ghz = dot11_cap.support_320mhz_6ghz;
+		eht_cap->ru_242tone_wt_20mhz = dot11_cap.ru_242tone_wt_20mhz;
+		eht_cap->ndp_4x_eht_ltf_3dot2_us_gi =
+			dot11_cap.ndp_4x_eht_ltf_3dot2_us_gi;
+		eht_cap->partial_bw_mu_mimo = dot11_cap.partial_bw_mu_mimo;
+		eht_cap->su_beamformer = dot11_cap.su_beamformer;
+		eht_cap->su_beamformee = dot11_cap.su_beamformee;
+		eht_cap->bfee_ss_le_80mhz = dot11_cap.bfee_ss_le_80mhz;
+		eht_cap->bfee_ss_160mhz = dot11_cap.bfee_ss_160mhz;
+		eht_cap->bfee_ss_320mhz = dot11_cap.bfee_ss_320mhz;
+		eht_cap->num_sounding_dim_le_80mhz =
+			dot11_cap.num_sounding_dim_le_80mhz;
+		eht_cap->num_sounding_dim_160mhz =
+			dot11_cap.num_sounding_dim_160mhz;
+		eht_cap->num_sounding_dim_320mhz =
+			dot11_cap.num_sounding_dim_320mhz;
+		eht_cap->ng_16_su_feedback = dot11_cap.ng_16_su_feedback;
+		eht_cap->ng_16_mu_feedback = dot11_cap.ng_16_mu_feedback;
+		eht_cap->cb_sz_4_2_su_feedback =
+			dot11_cap.cb_sz_4_2_su_feedback;
+		eht_cap->cb_sz_7_5_su_feedback =
+			dot11_cap.cb_sz_7_5_su_feedback;
+		eht_cap->trig_su_bforming_feedback =
+			dot11_cap.trig_su_bforming_feedback;
+		eht_cap->trig_mu_bforming_partial_bw_feedback =
+			dot11_cap.trig_mu_bforming_partial_bw_feedback;
+		eht_cap->triggered_cqi_feedback =
+			dot11_cap.triggered_cqi_feedback;
+		eht_cap->partial_bw_dl_mu_mimo =
+			dot11_cap.partial_bw_dl_mu_mimo;
+		eht_cap->psr_based_sr = dot11_cap.psr_based_sr;
+		eht_cap->power_boost_factor = dot11_cap.power_boost_factor;
+		eht_cap->eht_mu_ppdu_4x_ltf_0_8_us_gi =
+			dot11_cap.eht_mu_ppdu_4x_ltf_0_8_us_gi;
+		eht_cap->max_nc = dot11_cap.max_nc;
+		eht_cap->non_trig_cqi_feedback =
+			dot11_cap.non_trig_cqi_feedback;
+		eht_cap->tx_1024_4096_qam_lt_242_tone_ru =
+			dot11_cap.tx_1024_4096_qam_lt_242_tone_ru;
+		eht_cap->rx_1024_4096_qam_lt_242_tone_ru =
+			dot11_cap.rx_1024_4096_qam_lt_242_tone_ru;
+		eht_cap->ppet_present = dot11_cap.ppet_present;
+		eht_cap->common_nominal_pkt_padding =
+			dot11_cap.common_nominal_pkt_padding;
+		eht_cap->max_num_eht_ltf = dot11_cap.max_num_eht_ltf;
+		eht_cap->mcs_15 = dot11_cap.mcs_15;
+		eht_cap->eht_dup_6ghz = dot11_cap.eht_dup_6ghz;
+		eht_cap->op_sta_rx_ndp_wider_bw_20mhz =
+			dot11_cap.op_sta_rx_ndp_wider_bw_20mhz;
+		eht_cap->non_ofdma_ul_mu_mimo_le_80mhz =
+			dot11_cap.non_ofdma_ul_mu_mimo_le_80mhz;
+		eht_cap->non_ofdma_ul_mu_mimo_160mhz =
+			dot11_cap.non_ofdma_ul_mu_mimo_160mhz;
+		eht_cap->non_ofdma_ul_mu_mimo_320mhz =
+			dot11_cap.non_ofdma_ul_mu_mimo_320mhz;
+		eht_cap->mu_bformer_le_80mhz =
+			dot11_cap.mu_bformer_le_80mhz;
+		eht_cap->mu_bformer_160mhz = dot11_cap.mu_bformer_160mhz;
+		eht_cap->mu_bformer_320mhz = dot11_cap.mu_bformer_320mhz;
+		eht_cap->num_eht_mcs_map_20 = dot11_cap.num_eht_mcs_map_20;
+		eht_cap->num_eht_mcs_map_le_80 =
+			dot11_cap.num_eht_mcs_map_le_80;
+		eht_cap->num_eht_mcs_map_160 =
+			dot11_cap.num_eht_mcs_map_160;
+		eht_cap->eht_mcs_map_20 =
+			*((uint32_t *)dot11_cap.eht_mcs_map_20);
+		ie_start[1] += EHT_CAP_20M_MCS_MAP_LEN;
+		eht_cap->eht_mcs_map_le_80 =
+			*((uint32_t *)dot11_cap.eht_mcs_map_le_80);
+		ie_start[1] += EHT_CAP_80M_MCS_MAP_LEN;
+		eht_cap->eht_mcs_map_160 =
+			*((uint32_t *)dot11_cap.eht_mcs_map_160);
+		ie_start[1] += EHT_CAP_160M_MCS_MAP_LEN;
+		eht_cap->eht_mcs_map_320 =
+			*((uint32_t *)dot11_cap.eht_mcs_map_320);
+		ie_start[1] += EHT_CAP_320M_MCS_MAP_LEN;
+	}
+
 }
 
 QDF_STATUS lim_send_eht_caps_ie(struct mac_context *mac_ctx,
@@ -8354,6 +8447,36 @@ QDF_STATUS lim_send_eht_caps_ie(struct mac_context *mac_ctx,
 				enum QDF_OPMODE device_mode,
 				uint8_t vdev_id)
 {
+	uint8_t eht_cap_total_len = DOT11F_IE_EHT_CAP_MIN_LEN +
+				    EHT_CAP_OUI_LEN + EHT_CAP_20M_MCS_MAP_LEN +
+				    EHT_CAP_80M_MCS_MAP_LEN +
+				    EHT_CAP_160M_MCS_MAP_LEN +
+				    EHT_CAP_320M_MCS_MAP_LEN;
+	QDF_STATUS status_2g, status_5g;
+	uint8_t eht_caps[DOT11F_IE_EHT_CAP_MIN_LEN +
+			 EHT_CAP_OUI_LEN + EHT_CAP_20M_MCS_MAP_LEN +
+			 EHT_CAP_80M_MCS_MAP_LEN +
+			 EHT_CAP_160M_MCS_MAP_LEN +
+			 EHT_CAP_320M_MCS_MAP_LEN] = {0};
+
+	eht_caps[0] = DOT11F_EID_EHT_CAP;
+	eht_caps[1] = DOT11F_IE_EHT_CAP_MIN_LEN + 1;
+
+	qdf_mem_copy(&eht_caps[2], EHT_CAP_OUI_TYPE, EHT_CAP_OUI_SIZE);
+	lim_set_eht_caps(mac_ctx, session, eht_caps, eht_cap_total_len);
+
+	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_EHT_CAP,
+				CDS_BAND_2GHZ, &eht_caps[2],
+				DOT11F_IE_EHT_CAP_MIN_LEN + 1);
+
+	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_EHT_CAP,
+				CDS_BAND_5GHZ, &eht_caps[2],
+				DOT11F_IE_EHT_CAP_MIN_LEN + 1);
+
+	if (QDF_IS_STATUS_SUCCESS(status_2g) &&
+	    QDF_IS_STATUS_SUCCESS(status_5g)) {
+		return QDF_STATUS_SUCCESS;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
