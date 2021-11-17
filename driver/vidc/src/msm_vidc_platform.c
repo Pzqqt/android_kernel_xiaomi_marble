@@ -9,6 +9,7 @@
 #include "msm_vidc_v4l2.h"
 #include "msm_vidc_vb2.h"
 #include "msm_vidc_control.h"
+#include "msm_vidc_core.h"
 #if defined(CONFIG_MSM_VIDC_WAIPIO)
 #include "msm_vidc_waipio.h"
 #endif
@@ -159,7 +160,7 @@ static int msm_vidc_deinit_platform_variant(struct msm_vidc_core *core, struct d
 		if (rc)
 			d_vpr_e("%s: failed msm-vidc-waipio with %d\n",
 				__func__, rc);
-		goto end_target_config;
+		return rc;
 	}
 #endif
 #if defined(CONFIG_MSM_VIDC_DIWALI)
@@ -168,11 +169,10 @@ static int msm_vidc_deinit_platform_variant(struct msm_vidc_core *core, struct d
 		if (rc)
 			d_vpr_e("%s: failed msm-vidc-diwali with %d\n",
 				__func__, rc);
-		goto end_target_config;
+		return rc;
 	}
 #endif
 
-end_target_config:
 	return rc;
 }
 
@@ -193,7 +193,7 @@ static int msm_vidc_init_platform_variant(struct msm_vidc_core *core, struct dev
 		if (rc)
 			d_vpr_e("%s: failed msm-vidc-waipio with %d\n",
 				__func__, rc);
-		goto end_target_config;
+		return rc;
 	}
 #endif
 #if defined(CONFIG_MSM_VIDC_DIWALI)
@@ -202,11 +202,10 @@ static int msm_vidc_init_platform_variant(struct msm_vidc_core *core, struct dev
 		if (rc)
 			d_vpr_e("%s: failed msm-vidc-diwali with %d\n",
 				__func__, rc);
-		goto end_target_config;
+		return rc;
 	}
 #endif
 
-end_target_config:
 	return rc;
 }
 
