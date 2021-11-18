@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -71,6 +71,19 @@ static void wlan_cfg80211_infra_cp_stats_twt_dealloc(void *priv)
 }
 #endif /* WLAN_SUPPORT_TWT */
 
+#ifdef CONFIG_WLAN_BMISS
+static void wlan_cfg80211_infra_cp_stats_bmiss_dealloc(void *priv)
+{
+	struct infra_cp_stats_event *stats = priv;
+
+	qdf_mem_free(stats->bmiss_infra_cp_stats);
+	stats->bmiss_infra_cp_stats = NULL;
+}
+#else /* CONFIG_WLAN_BMISS */
+static void wlan_cfg80211_infra_cp_stats_bmiss_dealloc(void *priv)
+{
+}
+#endif /* CONFIG_WLAN_BMISS */
 /**
  * wlan_cfg80211_mc_infra_cp_stats_dealloc() - callback to free priv
  * allocations for infra cp stats
@@ -88,6 +101,7 @@ void wlan_cfg80211_mc_infra_cp_stats_dealloc(void *priv)
 		return;
 	}
 	wlan_cfg80211_infra_cp_stats_twt_dealloc(priv);
+	wlan_cfg80211_infra_cp_stats_bmiss_dealloc(priv);
 }
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
@@ -636,6 +650,19 @@ wlan_cfg80211_mc_infra_cp_free_twt_stats(struct infra_cp_stats_event *stats)
 }
 #endif /* WLAN_SUPPORT_TWT */
 
+#ifdef CONFIG_WLAN_BMISS
+static void
+wlan_cfg80211_mc_infra_cp_free_bmiss_stats(struct infra_cp_stats_event *stats)
+{
+	qdf_mem_free(stats->bmiss_infra_cp_stats);
+	qdf_mem_free(stats);
+}
+#else /* CONFIG_WLAN_BMISS */
+static void
+wlan_cfg80211_mc_infra_cp_free_bmiss_stats(struct infra_cp_stats_event *stats)
+{
+}
+#endif/* CONFIG_WLAN_BMISS */
 static inline void
 wlan_cfg80211_mc_infra_cp_stats_free_stats_event(
 					struct infra_cp_stats_event *stats)
@@ -643,6 +670,7 @@ wlan_cfg80211_mc_infra_cp_stats_free_stats_event(
 	if (!stats)
 		return;
 	wlan_cfg80211_mc_infra_cp_free_twt_stats(stats);
+	wlan_cfg80211_mc_infra_cp_free_bmiss_stats(stats);
 	qdf_mem_free(stats);
 }
 
@@ -1428,11 +1456,8 @@ wlan_cfg80211_mc_cp_stats_get_peer_stats(struct wlan_objmgr_vdev *vdev,
 	out->peer_adv_stats = priv->peer_adv_stats;
 	priv->peer_adv_stats = NULL;
 	osif_request_put(request);
-
 	osif_debug("Exit");
-
 	return out;
-
 get_peer_stats_fail:
 	osif_request_put(request);
 	wlan_cfg80211_mc_cp_stats_free_stats_event(out);
@@ -1469,3 +1494,218 @@ wlan_cfg80211_mc_cp_stats_free_big_data_stats_event(
 	qdf_mem_free(stats);
 }
 #endif
+
+#ifdef CONFIG_WLAN_BMISS
+static void get_bmiss_infra_cp_stats(struct infra_cp_stats_event *ev,
+				     struct infra_cp_stats_event *priv)
+
+{
+	int idx = 0;
+
+	if (!ev || !ev->bmiss_infra_cp_stats) {
+		osif_err("got bmiss_infra_cp_stats as NULL");
+		return;
+	}
+	priv->bmiss_infra_cp_stats->num_pre_bmiss =
+					ev->bmiss_infra_cp_stats->num_pre_bmiss;
+	for (idx = 0; idx < BMISS_STATS_RSSI_SAMPLES_MAX; idx++) {
+		priv->bmiss_infra_cp_stats->rssi_samples[idx].rssi =
+			ev->bmiss_infra_cp_stats->rssi_samples[idx].rssi;
+		priv->bmiss_infra_cp_stats->rssi_samples[idx].sample_time =
+			ev->bmiss_infra_cp_stats->rssi_samples[idx].sample_time;
+	}
+	priv->bmiss_infra_cp_stats->rssi_sample_curr_index =
+			ev->bmiss_infra_cp_stats->rssi_sample_curr_index;
+	priv->bmiss_infra_cp_stats->num_first_bmiss =
+			ev->bmiss_infra_cp_stats->num_first_bmiss;
+	priv->bmiss_infra_cp_stats->num_final_bmiss =
+			ev->bmiss_infra_cp_stats->num_final_bmiss;
+	priv->bmiss_infra_cp_stats->num_null_sent_in_first_bmiss =
+		ev->bmiss_infra_cp_stats->num_null_sent_in_first_bmiss;
+	priv->bmiss_infra_cp_stats->num_null_failed_in_first_bmiss =
+		ev->bmiss_infra_cp_stats->num_null_failed_in_first_bmiss;
+	priv->bmiss_infra_cp_stats->num_null_sent_in_final_bmiss =
+		ev->bmiss_infra_cp_stats->num_null_sent_in_final_bmiss;
+	priv->bmiss_infra_cp_stats->num_null_failed_in_final_bmiss =
+		ev->bmiss_infra_cp_stats->num_null_failed_in_final_bmiss;
+	priv->bmiss_infra_cp_stats->cons_bmiss_stats.num_of_bmiss_sequences =
+	ev->bmiss_infra_cp_stats->cons_bmiss_stats.num_of_bmiss_sequences;
+	priv->bmiss_infra_cp_stats->cons_bmiss_stats.num_bitmask_wraparound =
+	ev->bmiss_infra_cp_stats->cons_bmiss_stats.num_bitmask_wraparound;
+	priv->bmiss_infra_cp_stats->cons_bmiss_stats.num_bcn_hist_lost =
+	ev->bmiss_infra_cp_stats->cons_bmiss_stats.num_bcn_hist_lost;
+}
+
+/**
+ * infra_cp_stats_bmiss_response_cb() - callback function to handle stats event
+ * @ev: stats event buffer
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static inline
+void infra_cp_stats_bmiss_response_cb(struct infra_cp_stats_event *ev,
+				      void *cookie)
+{
+	struct infra_cp_stats_event *priv;
+	struct osif_request *request;
+
+	osif_debug("Enter");
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+
+	priv->action = ev->action;
+	priv->request_id = ev->request_id;
+	priv->status = ev->status;
+	get_bmiss_infra_cp_stats(ev, priv);
+
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+#define MAX_BMISS_STAT_VDEV_ENTRIES 1
+#define MAX_BMISS_STAT_MAC_ADDR_ENTRIES 1
+
+struct infra_cp_stats_event *
+wlan_cfg80211_mc_bmiss_get_infra_cp_stats(struct wlan_objmgr_vdev *vdev,
+					  uint8_t *bmiss_peer_mac, int *errno)
+{
+	void *cookie;
+	int idx = 0;
+	QDF_STATUS status;
+	struct infra_cp_stats_event *priv, *out;
+	struct bmiss_infra_cp_stats_event *bmiss_event;
+	struct wlan_objmgr_peer *peer;
+	struct osif_request *request;
+	struct infra_cp_stats_cmd_info info = {0};
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
+		.dealloc = wlan_cfg80211_mc_infra_cp_stats_dealloc,
+	};
+
+	osif_debug("Enter");
+
+	out = qdf_mem_malloc(sizeof(*out));
+	if (!out) {
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	out->bmiss_infra_cp_stats =
+			qdf_mem_malloc(sizeof(*out->bmiss_infra_cp_stats));
+	if (!out->bmiss_infra_cp_stats) {
+		qdf_mem_free(out);
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		qdf_mem_free(out->bmiss_infra_cp_stats);
+		qdf_mem_free(out);
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+
+	priv->bmiss_infra_cp_stats =
+			qdf_mem_malloc(sizeof(*priv->bmiss_infra_cp_stats));
+	if (!priv->bmiss_infra_cp_stats) {
+		qdf_mem_free(out->bmiss_infra_cp_stats);
+		qdf_mem_free(out);
+		*errno = -ENOMEM;
+		return NULL;
+	}
+	bmiss_event = priv->bmiss_infra_cp_stats;
+	info.request_cookie = cookie;
+	info.stats_id = TYPE_REQ_CTRL_PATH_BMISS_STAT;
+	info.action = ACTION_REQ_CTRL_PATH_STAT_GET;
+	info.infra_cp_stats_resp_cb = infra_cp_stats_bmiss_response_cb;
+	info.num_pdev_ids = 0;
+	info.num_vdev_ids = MAX_BMISS_STAT_VDEV_ENTRIES;
+	info.vdev_id[0] = wlan_vdev_get_id(vdev);
+	info.num_mac_addr_list = MAX_TWT_STAT_MAC_ADDR_ENTRIES;
+	info.num_pdev_ids = 0;
+
+	qdf_mem_copy(&info.peer_mac_addr[0], bmiss_peer_mac, QDF_MAC_ADDR_SIZE);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
+	if (!peer) {
+		osif_err("peer is null");
+		*errno = -EINVAL;
+		goto get_bmiss_stats_fail;
+	}
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	status = ucfg_infra_cp_stats_register_resp_cb(wlan_vdev_get_psoc(vdev),
+						      &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to register resp callback: %d", status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_bmiss_stats_fail;
+	}
+
+	status = ucfg_send_infra_cp_stats_request(vdev, &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send bmiss stats request status: %d",
+			 status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_bmiss_stats_fail;
+	}
+
+	*errno = osif_request_wait_for_response(request);
+	if (*errno) {
+		osif_err("wait failed or timed out ret: %d", *errno);
+		goto get_bmiss_stats_fail;
+	}
+
+	out->request_id = priv->request_id;
+	out->bmiss_infra_cp_stats->num_pre_bmiss = bmiss_event->num_pre_bmiss;
+	out->bmiss_infra_cp_stats->num_pre_bmiss =
+					bmiss_event->num_pre_bmiss;
+	for (idx = 0; idx < BMISS_STATS_RSSI_SAMPLES_MAX; idx++) {
+		out->bmiss_infra_cp_stats->rssi_samples[idx].rssi =
+			bmiss_event->rssi_samples[idx].rssi;
+		out->bmiss_infra_cp_stats->rssi_samples[idx].sample_time =
+			bmiss_event->rssi_samples[idx].sample_time;
+	}
+	out->bmiss_infra_cp_stats->rssi_sample_curr_index =
+					bmiss_event->rssi_sample_curr_index;
+	out->bmiss_infra_cp_stats->num_first_bmiss =
+					bmiss_event->num_first_bmiss;
+	out->bmiss_infra_cp_stats->num_null_sent_in_first_bmiss =
+				bmiss_event->num_null_sent_in_first_bmiss;
+	out->bmiss_infra_cp_stats->num_null_failed_in_first_bmiss =
+				bmiss_event->num_null_failed_in_first_bmiss;
+	out->bmiss_infra_cp_stats->num_null_sent_in_final_bmiss =
+				bmiss_event->num_null_sent_in_final_bmiss;
+	out->bmiss_infra_cp_stats->num_null_failed_in_final_bmiss =
+				bmiss_event->num_null_failed_in_final_bmiss;
+	out->bmiss_infra_cp_stats->cons_bmiss_stats.num_of_bmiss_sequences =
+			bmiss_event->cons_bmiss_stats.num_of_bmiss_sequences;
+	out->bmiss_infra_cp_stats->cons_bmiss_stats.num_bitmask_wraparound =
+			bmiss_event->cons_bmiss_stats.num_bitmask_wraparound;
+	out->bmiss_infra_cp_stats->cons_bmiss_stats.num_bcn_hist_lost =
+			bmiss_event->cons_bmiss_stats.num_bcn_hist_lost;
+
+	qdf_mem_copy(&out->bmiss_infra_cp_stats->peer_macaddr, bmiss_peer_mac,
+		     QDF_MAC_ADDR_SIZE);
+	osif_request_put(request);
+	osif_debug("Exit");
+	return out;
+get_bmiss_stats_fail:
+	osif_request_put(request);
+	wlan_cfg80211_mc_infra_cp_stats_free_stats_event(out);
+	osif_debug("Exit");
+	return NULL;
+}
+#endif /* CONFIG_WLAN_BMISS */
+

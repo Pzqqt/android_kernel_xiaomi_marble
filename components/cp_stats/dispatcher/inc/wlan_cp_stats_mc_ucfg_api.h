@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -358,7 +358,33 @@ ucfg_mc_cp_get_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
 {}
 #endif
 
-#else
+#ifdef CONFIG_WLAN_BMISS
+/**
+ * wlan_cfg80211_mc_bmiss_get_infra_cp_stats() - API to get bmiss stats
+ * @vdev: pointer to vdev object
+ * @bmiss_peer_mac: mac address of the peer
+ * @errno: error code
+ *
+ * Return: pointer to infra cp stats event for success or NULL for failure
+ */
+struct infra_cp_stats_event*
+wlan_cfg80211_mc_bmiss_get_infra_cp_stats(
+				struct wlan_objmgr_vdev *vdev,
+				uint8_t bmiss_peer_mac[QDF_MAC_ADDR_SIZE],
+				int *errno);
+#else /* CONFIG_WLAN_BMISS */
+static inline struct infra_cp_stats_event*
+wlan_cfg80211_mc_bmiss_get_infra_cp_stats(
+				struct wlan_objmgr_vdev *vdev,
+				uint8_t bmiss_peer_mac[QDF_MAC_ADDR_SIZE],
+				int *errno)
+{
+	return NULL;
+}
+#endif /* CONFIG_WLAN_BMISS */
+
+#else /* QCA_SUPPORT_CP_STATS */
+
 void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
 static inline QDF_STATUS ucfg_mc_cp_stats_send_stats_request(
 				struct wlan_objmgr_vdev *vdev,
@@ -429,6 +455,14 @@ static inline void
 ucfg_mc_cp_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
 			       bool *enable)
 {}
-#endif /* QCA_SUPPORT_CP_STATS */
 
+static inline struct infra_cp_stats_event*
+wlan_cfg80211_mc_bmiss_get_infra_cp_stats(
+				struct wlan_objmgr_vdev *vdev,
+				uint8_t bmiss_peer_mac[QDF_MAC_ADDR_SIZE],
+				int *errno)
+{
+	return NULL;
+}
+#endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */
