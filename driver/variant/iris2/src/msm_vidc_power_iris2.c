@@ -292,8 +292,16 @@ static u64 __calculate_decoder(struct vidc_bus_vote_data *d)
 	dpb_factor = FP(1, 50, 100);
 	dpb_write_factor = FP(1, 5, 100);
 
-	tnbr_per_lcu = lcu_size == 16 ? 128 :
-		lcu_size == 32 ? 64 : 128;
+	/* This change is applicable for all IRIS2 targets,
+	 * But currently being done only for IRIS2 with 2 pipe
+	 * and 1 pipe due to timeline constraints.
+	 */
+	if (num_vpp_pipes != 4)
+		tnbr_per_lcu = lcu_size == 16 ? 64 :
+			lcu_size == 32 ? 64 : 128;
+	else
+		tnbr_per_lcu = lcu_size == 16 ? 128 :
+			lcu_size == 32 ? 64 : 128;
 
 	/* .... For DDR & LLC  ...... */
 	ddr.vsp_read = fp_div(fp_mult(FP_INT(bitrate),
@@ -343,14 +351,7 @@ static u64 __calculate_decoder(struct vidc_bus_vote_data *d)
 	ddr.line_buffer_read =
 		fp_div(FP_INT(tnbr_per_lcu * lcu_per_frame * fps),
 			FP_INT(bps(1)));
-	/* This change is applicable for all IRIS2 targets,
-	 * but currently being done for IRIS2 with 2 pipes
-	 * only due to timeline constraints.
-	 */
-	if((num_vpp_pipes == 2) && (is_h264_category))
-		ddr.line_buffer_write = fp_div(ddr.line_buffer_read,FP_INT(2));
-	else
-		ddr.line_buffer_write = ddr.line_buffer_read;
+	ddr.line_buffer_write = ddr.line_buffer_read;
 	if (llc_top_line_buf_enabled) {
 		llc.line_buffer_read = ddr.line_buffer_read;
 		llc.line_buffer_write = ddr.line_buffer_write;
