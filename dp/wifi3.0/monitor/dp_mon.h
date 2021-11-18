@@ -506,6 +506,10 @@ struct dp_mon_ops {
 	void (*mon_filter_reset_rx_pkt_log_lite)(struct dp_pdev *pdev);
 	void (*mon_filter_setup_rx_pkt_log_cbf)(struct dp_pdev *pdev);
 	void (*mon_filter_reset_rx_pkt_log_cbf)(struct dp_pdev *pdev);
+#ifdef QCA_WIFI_QCN9224
+	void (*mon_filter_setup_pktlog_hybrid)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_pktlog_hybrid)(struct dp_pdev *pdev);
+#endif
 #endif
 	QDF_STATUS (*mon_filter_update)(struct dp_pdev *pdev);
 
@@ -677,6 +681,10 @@ struct  dp_mon_pdev {
 	/* Enable pktlog logging cbf */
 	bool rx_pktlog_cbf;
 
+	/* Enable pktlog logging hybrid */
+#ifdef QCA_WIFI_QCN9224
+	bool pktlog_hybrid_mode;
+#endif
 	bool tx_sniffer_enable;
 	/* mirror copy mode */
 	enum m_copy_mode mcopy_mode;

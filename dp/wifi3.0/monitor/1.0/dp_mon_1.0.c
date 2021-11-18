@@ -3333,6 +3333,12 @@ struct dp_mon_ops monitor_ops_1_0 = {
 		dp_mon_filter_setup_rx_pkt_log_cbf_1_0,
 	.mon_filter_reset_rx_pkt_log_cbf =
 		dp_mon_filter_reset_rx_pktlog_cbf_1_0,
+#ifdef QCA_WIFI_QCN9224
+	.mon_filter_setup_pktlog_hybrid =
+		dp_mon_filter_setup_pktlog_hybrid_1_0,
+	.mon_filter_reset_pktlog_hybrid =
+		dp_mon_filter_reset_pktlog_hybrid_1_0,
+#endif
 #endif
 	.mon_filter_update = dp_mon_filter_update_1_0,
 	.rx_mon_desc_pool_init = dp_rx_pdev_mon_desc_pool_init,

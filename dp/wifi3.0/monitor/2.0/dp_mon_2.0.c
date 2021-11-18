@@ -883,6 +883,10 @@ struct dp_mon_ops monitor_ops_2_0 = {
 		dp_mon_filter_setup_rx_pkt_log_cbf_2_0,
 	.mon_filter_reset_rx_pkt_log_cbf =
 		dp_mon_filter_reset_rx_pktlog_cbf_2_0,
+	.mon_filter_setup_pktlog_hybrid =
+		dp_mon_filter_setup_pktlog_hybrid_2_0,
+	.mon_filter_reset_pktlog_hybrid =
+		dp_mon_filter_reset_pktlog_hybrid_2_0,
 #endif
 	.mon_filter_update = dp_mon_filter_update_2_0,
 	.mon_rings_alloc = dp_pdev_mon_rings_alloc_2_0,

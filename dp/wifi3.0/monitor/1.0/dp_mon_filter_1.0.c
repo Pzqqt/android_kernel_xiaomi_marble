@@ -941,6 +941,17 @@ void dp_mon_filter_reset_rx_pktlog_cbf_1_0(struct dp_pdev *pdev)
 	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
 	mon_pdev->filter[mode][srng_type] = filter;
 }
+
+#ifdef QCA_WIFI_QCN9224
+void dp_mon_filter_setup_pktlog_hybrid_1_0(struct dp_pdev *pdev)
+{
+	dp_mon_filter_err("This mode is only supported for QCN9224");
+}
+
+void dp_mon_filter_reset_pktlog_hybrid_1_0(struct dp_pdev *pdev)
+{
+}
+#endif
 #endif /* WDI_EVENT_ENABLE */
 
 #ifdef WLAN_DP_RESET_MON_BUF_RING_FILTER
