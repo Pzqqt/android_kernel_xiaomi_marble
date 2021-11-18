@@ -4876,7 +4876,13 @@ void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 
 	qdf_copy_macaddr(&log_record->bssid, &ap->bssid);
 
-	log_record->roam_scan.cand_ap_count = scan->num_ap;
+	/*
+	 * scan->num_ap includes current connected AP also
+	 * so subtract 1 from the count to get total candidate APs
+	 */
+	if (scan->num_ap)
+		log_record->roam_scan.cand_ap_count = scan->num_ap - 1;
+
 	if (scan->num_chan > MAX_ROAM_SCAN_CHAN)
 		scan->num_chan = MAX_ROAM_SCAN_CHAN;
 
@@ -4944,7 +4950,6 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 	qdf_mem_free(log_record);
 }
 
-#define TYPE_ROAMED_AP 2
 void cm_roam_result_info_event(struct wmi_roam_result *res,
 			       struct wmi_roam_scan_data *scan_data,
 			       uint8_t vdev_id)
@@ -4973,7 +4978,13 @@ void cm_roam_result_info_event(struct wmi_roam_result *res,
 			if (i >= MAX_ROAM_CANDIDATE_AP)
 				break;
 
-			if (scan_data->ap[i].type == TYPE_ROAMED_AP) {
+			if (scan_data->ap[i].type == WLAN_ROAM_SCAN_ROAMED_AP &&
+			    log_record->roam_result.is_roam_successful) {
+				log_record->bssid = scan_data->ap[i].bssid;
+				break;
+			} else if (scan_data->ap[i].type ==
+				   WLAN_ROAM_SCAN_CURRENT_AP &&
+				   !log_record->roam_result.is_roam_successful) {
 				log_record->bssid = scan_data->ap[i].bssid;
 				break;
 			}
