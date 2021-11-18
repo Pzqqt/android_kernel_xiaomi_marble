@@ -15212,7 +15212,7 @@ extract_roam_11kv_candidate_info(wmi_unified_t wmi_handle, void *evt_buf,
 	if (!param_buf || !param_buf->roam_btm_request_candidate_info ||
 	    !param_buf->num_roam_btm_request_candidate_info ||
 	    (btm_idx +
-	     num_cand) >= param_buf->num_roam_btm_request_candidate_info)
+	     num_cand) > param_buf->num_roam_btm_request_candidate_info)
 		return QDF_STATUS_SUCCESS;
 
 	src_data = &param_buf->roam_btm_request_candidate_info[btm_idx];
