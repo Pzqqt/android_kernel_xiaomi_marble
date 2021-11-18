@@ -891,6 +891,36 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 			}
 			break;
 
+#ifdef QCA_WIFI_QCN9224
+		case WDI_EVENT_HYBRID_TX:
+			if (mon_pdev->mvdev) {
+				/* Nothing needs to be done if monitor mode is
+				 * enabled
+				 */
+				mon_pdev->pktlog_hybrid_mode = true;
+				return 0;
+			}
+
+			if (!mon_pdev->pktlog_hybrid_mode) {
+				mon_pdev->pktlog_hybrid_mode = true;
+				dp_mon_filter_setup_pktlog_hybrid(pdev);
+				if (dp_mon_filter_update(pdev) !=
+				    QDF_STATUS_SUCCESS) {
+					dp_cdp_err("Set hybrid filters failed");
+					dp_mon_filter_reset_pktlog_hybrid(pdev);
+					mon_pdev->rx_pktlog_mode =
+						DP_RX_PKTLOG_DISABLED;
+					return 0;
+				}
+
+				if (mon_soc->reap_timer_init &&
+				    !dp_mon_is_enable_reap_timer_non_pkt(pdev))
+					qdf_timer_mod(&mon_soc->mon_reap_timer,
+						      DP_INTR_POLL_TIMER_MS);
+			}
+			break;
+#endif
+
 		default:
 			/* Nothing needs to be done for other pktlog types */
 			break;
@@ -962,6 +992,12 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 		case WDI_EVENT_RX_CBF:
 			mon_pdev->rx_pktlog_cbf = false;
 			break;
+
+#ifdef QCA_WIFI_QCN9224
+		case WDI_EVENT_HYBRID_TX:
+			mon_pdev->pktlog_hybrid_mode = false;
+			break;
+#endif
 
 		default:
 			/* Nothing needs to be done for other pktlog types */

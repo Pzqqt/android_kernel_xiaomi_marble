@@ -997,6 +997,14 @@ void dp_mon_filter_setup_rx_pkt_log_cbf_2_0(struct dp_pdev *pdev)
 void dp_mon_filter_reset_rx_pktlog_cbf_2_0(struct dp_pdev *pdev)
 {
 }
+
+void dp_mon_filter_setup_pktlog_hybrid_2_0(struct dp_pdev *pdev)
+{
+}
+
+void dp_mon_filter_reset_pktlog_hybrid_2_0(struct dp_pdev *pdev)
+{
+}
 #endif /* WDI_EVENT_ENABLE */
 
 QDF_STATUS dp_mon_filter_update_2_0(struct dp_pdev *pdev)

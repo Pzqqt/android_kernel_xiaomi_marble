@@ -80,6 +80,9 @@ enum dp_mon_filter_mode {
 	DP_MON_FILTER_PKT_LOG_FULL_MODE,
 	DP_MON_FILTER_PKT_LOG_LITE_MODE,
 	DP_MON_FILTER_PKT_LOG_CBF_MODE,
+#ifdef QCA_WIFI_QCN9224
+	DP_MON_FILTER_PKT_LOG_HYBRID_MODE,
+#endif
 #endif /* WDI_EVENT_ENABLE */
 	DP_MON_FILTER_MAX_MODE
 };
@@ -220,6 +223,21 @@ void dp_mon_filter_setup_rx_pkt_log_cbf(struct dp_pdev *pdev);
  * @pdev: DP pdev handle
  */
 void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev);
+
+#ifdef QCA_WIFI_QCN9224
+/**
+ * dp_mon_filter_setup_pktlog_hybrid() - Setup the pktlog hybrid mode filter
+ * in the radio object.
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_setup_pktlog_hybrid(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_reset_pktlog_hybrid() - Reset the pktlog hybrid mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_reset_pktlog_hybrid(struct dp_pdev *pdev);
+#endif
 #endif /* WDI_EVENT_ENABLE */
 
 /**
