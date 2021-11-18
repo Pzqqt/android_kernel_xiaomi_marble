@@ -57,6 +57,7 @@ static const u32 msm_vdec_subscribe_for_psc_vp9[] = {
 
 static const u32 msm_vdec_input_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
+	HFI_PROP_SUBFRAME_INPUT,
 };
 
 static const u32 msm_vdec_output_subscribe_for_properties[] = {

@@ -491,6 +491,8 @@ enum hfi_nal_length_field_type {
 
 #define HFI_PROP_MAINTAIN_MIN_QUALITY                           0x0300017D
 
+#define HFI_PROP_SUBFRAME_INPUT                                 0x03000183
+
 #define HFI_PROP_END                                            0x03FFFFFF
 
 #define HFI_SESSION_ERROR_BEGIN                                 0x04000000
