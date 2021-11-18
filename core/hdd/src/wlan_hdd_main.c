@@ -14438,14 +14438,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto cds_disable;
 
-	/*
-	 * Donot disable rx offload on concurrency for lithium and
-	 * beryllium based targets
-	 */
-	if (!hdd_ctx->is_wifi3_0_target)
-		if (hdd_ctx->ol_enable)
-			dp_cbs.hdd_disable_rx_ol_in_concurrency =
-					hdd_disable_rx_ol_in_concurrency;
+	dp_cbs.hdd_rx_handle_concurrency = hdd_rx_handle_concurrency;
 	dp_cbs.hdd_set_rx_mode_rps_cb = hdd_set_rx_mode_rps;
 	dp_cbs.hdd_ipa_set_mcc_mode_cb = hdd_ipa_set_mcc_mode;
 	dp_cbs.hdd_v2_flow_pool_map = hdd_v2_flow_pool_map;

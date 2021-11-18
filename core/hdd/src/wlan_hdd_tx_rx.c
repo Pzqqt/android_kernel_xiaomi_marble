@@ -2084,14 +2084,30 @@ int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-void hdd_disable_rx_ol_in_concurrency(bool disable)
+void hdd_rx_handle_concurrency(bool is_concurrency)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx)
 		return;
 
-	if (disable) {
+	if (hdd_ctx->is_wifi3_0_target) {
+		/*
+		 * Donot disable rx offload on concurrency for lithium and
+		 * beryllium based targets
+		 */
+		if (is_concurrency)
+			qdf_atomic_set(&hdd_ctx->rx_skip_qdisc_chk_conc, 1);
+		else
+			qdf_atomic_set(&hdd_ctx->rx_skip_qdisc_chk_conc, 0);
+
+		return;
+	}
+
+	if (!hdd_ctx->ol_enable)
+		return;
+
+	if (is_concurrency) {
 		if (HDD_MSM_CFG(hdd_ctx->config->enable_tcp_delack)) {
 			struct wlan_rx_tp_data rx_tp_data;
 
@@ -2127,7 +2143,7 @@ int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 	return -EPERM;
 }
 
-void hdd_disable_rx_ol_in_concurrency(bool disable)
+void hdd_rx_handle_concurrency(bool is_concurrency)
 {
 }
 
@@ -2299,6 +2315,15 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter, uint8_t rx_ctx_id)
 
 	if (qdf_unlikely(!soc))
 		return;
+
+	/*
+	 * Restrict the qdisc based dynamic GRO enable/disable to
+	 * standalone STA mode only. Reset the configuration for
+	 * any other device mode or concurrency.
+	 */
+	if (adapter->device_mode != QDF_STA_MODE ||
+	    (qdf_atomic_read(&adapter->hdd_ctx->rx_skip_qdisc_chk_conc)))
+		goto reset_wl;
 
 	if (!adapter->dev->ingress_queue)
 		goto reset_wl;
