@@ -212,7 +212,7 @@ static struct msm_platform_core_capability core_data_diwali_v2[] = {
 	{PAGEFAULT_NON_FATAL, 1},
 	{PAGETABLE_CACHING, 0},
 	{DCVS, 1},
-	{DECODE_BATCH, 1},
+	{DECODE_BATCH, 0},
 	{DECODE_BATCH_TIMEOUT, 200},
 	{STATS_TIMEOUT_MS, 2000},
 	{AV_SYNC_WINDOW_SIZE, 40},
@@ -319,10 +319,9 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 	/* (4096 * 2176) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 34816, 1, 34816},
 	/* Batch Mode Decode */
-	/* TODO: update with new values based on updated voltage corner */
 	/* (1920 * 1088) / 256 */
 	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 8160},
-	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 60, 1, 60},
+	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 120, 1, 60},
 	/* (4096 * 2176) / 256 */
 	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 34816, 1, 34816},
 	/* ((4096 * 2176) / 256) * 60 fps */
@@ -1856,10 +1855,9 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 	/* (4096 * 2176) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 34816, 1, 34816},
 	/* Batch Mode Decode */
-	/* TODO: update with new values based on updated voltage corner */
 	/* (1920 * 1088) / 256 */
 	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 8160},
-	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 60, 1, 60},
+	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 120, 1, 60},
 	/* (4096 * 2176) / 256 */
 	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 34816, 1, 34816},
 	/* ((4096 * 2176) / 256) * 60 fps */
@@ -3387,11 +3385,6 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 	{MBPF, DEC, CODECS_ALL, 36, 34816, 1, 34816},
 	/* (4096 * 2176) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 34816, 1, 34816},
-	/* Batch Mode Decode */
-	/* TODO: update with new values based on updated voltage corner */
-	/* (1920 * 1088) / 256 */
-	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 8160},
-	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 30, 1, 60},
 	/* (4096 * 2176) / 256 */
 	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 34816, 1, 34816},
 	/* ((4096 * 2176) / 256) * 30 fps */
