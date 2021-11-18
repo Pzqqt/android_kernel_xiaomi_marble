@@ -23288,10 +23288,13 @@ static int __wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 	struct ethhdr *ehdr;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
-	nbuf = qdf_nbuf_alloc(NULL, (len + sizeof(struct ethhdr)), 0, 4, false);
+	hdd_enter();
+
+	nbuf = dev_alloc_skb(len + sizeof(struct ethhdr));
 	if (!nbuf)
 		return -ENOMEM;
-	qdf_nbuf_reserve(nbuf, sizeof(struct ethhdr));
+
+	skb_reserve(nbuf, sizeof(struct ethhdr));
 	skb_put_data(nbuf, buf, len);
 	ehdr = skb_push(nbuf, sizeof(struct ethhdr));
 	qdf_mem_copy(ehdr->h_dest, dest, ETH_ALEN);
@@ -23307,12 +23310,13 @@ static int __wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 	nbuf->protocol = htons(ETH_P_PAE);
 	skb_reset_network_header(nbuf);
 	skb_reset_mac_header(nbuf);
-	wlan_hdd_select_queue(dev, nbuf);
 
 	netif_tx_lock(dev);
+	wlan_hdd_select_queue(dev, nbuf);
 	dev->netdev_ops->ndo_start_xmit(nbuf, dev);
 	netif_tx_unlock(dev);
 
+	hdd_exit();
 	return 0;
 }
 
