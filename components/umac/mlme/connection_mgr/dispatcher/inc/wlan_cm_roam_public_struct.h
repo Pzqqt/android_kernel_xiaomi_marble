@@ -1796,6 +1796,10 @@ enum roam_offload_state {
 	WLAN_ROAM_SYNCH_IN_PROG,
 };
 
+#define WLAN_ROAM_SCAN_CANDIDATE_AP 0
+#define WLAN_ROAM_SCAN_CURRENT_AP   1
+#define WLAN_ROAM_SCAN_ROAMED_AP    2
+
 /**
  *  struct roam_btm_response_data - BTM response related data
  *  @present:       Flag to check if the roam btm_rsp tlv is present

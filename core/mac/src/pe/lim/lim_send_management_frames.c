@@ -2737,6 +2737,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	if (pe_session->opmode == QDF_STA_MODE) {
 		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)mac_hdr;
+		mgmt_data.vdev_id = pe_session->vdev_id;
 		mgmt_data.status_code = STATUS_SUCCESS;
 		mgmt_data.frame_subtype = MGMT_SUBTYPE_ASSOC_REQ;
 		mgmt_data.rssi = peer_rssi;
@@ -3250,6 +3251,7 @@ alloc_packet:
 
 	if (session->opmode == QDF_STA_MODE) {
 		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)mac_hdr;
+		mgmt_data.vdev_id = session->vdev_id;
 		mgmt_data.status_code = auth_frame->authStatusCode;
 		mgmt_data.rssi = peer_rssi;
 		mgmt_data.frame_subtype = MGMT_SUBTYPE_AUTH;
@@ -3793,6 +3795,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 
 		if (pe_session->opmode == QDF_STA_MODE) {
 			mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)pMacHdr;
+			mgmt_data.vdev_id = pe_session->vdev_id;
 			mgmt_data.status_code = nReason;
 			mgmt_data.frame_subtype = MGMT_SUBTYPE_DISASSOC;
 			mgmt_data.rssi = mac->lim.bss_rssi;
@@ -4032,6 +4035,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 
 		if (pe_session->opmode == QDF_STA_MODE) {
 			mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)pMacHdr;
+			mgmt_data.vdev_id = pe_session->vdev_id;
 			mgmt_data.status_code = nReason;
 			mgmt_data.rssi = mac->lim.bss_rssi;
 			mgmt_data.frame_subtype = MGMT_SUBTYPE_DEAUTH;
@@ -5949,6 +5953,7 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 	    msg_len >= (sizeof(struct wlan_frame_hdr) +
 			MAC_AUTH_FRAME_STATUS_CODE_OFFSET + 2)) {
 		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)frame;
+		mgmt_data.vdev_id = vdev_id;
 		mgmt_data.status_code =
 			*(uint16_t *)(frame + sizeof(struct wlan_frame_hdr) +
 				      MAC_AUTH_FRAME_STATUS_CODE_OFFSET);
