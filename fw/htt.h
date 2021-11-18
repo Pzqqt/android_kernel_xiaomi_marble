@@ -221,9 +221,11 @@
  * 3.96 Modify HTT_H2T_MSG_TYPE_TX_MONITOR_CFG def.
  * 3.97 Add tx MSDU drop byte count fields in vdev_txrx_stats_hw_stats TLV.
  * 3.98 Add htt_tx_tcl_metadata_v2 def.
+ * 3.99 Add HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ, _UNMAP_REQ, _MAP_REPORT_REQ and
+ *      HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 98
+#define HTT_CURRENT_VERSION_MINOR 99
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -776,6 +778,9 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG   = 0x19,
     HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG  = 0x1a,
     HTT_H2T_MSG_TYPE_TX_MONITOR_CFG        = 0x1b,
+    HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ        = 0x1c,
+    HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ      = 0x1d,
+    HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ = 0x1e,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -8730,6 +8735,164 @@ PREPACK struct htt_h2t_vdevs_txrx_stats_cfg {
         } while (0)
 
 
+/*
+ * MSG_TYPE => HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ
+ *
+ * @details
+ * The SAWF_DEF_QUEUES_MAP_REQ message is sent by the host to link
+ * the default MSDU queues for one of the TIDs within the specified peer
+ * to the specified service class.
+ * The TID is indirectly specified - each service class is associated
+ * with a TID.  All default MSDU queues for this peer-TID will be
+ * linked to the service class in question.
+ *
+ * |31                          16|15           8|7            0|
+ * |------------------------------+--------------+--------------|
+ * |             peer ID          | svc class ID |   msg type   |
+ * |------------------------------------------------------------|
+ * Header fields:
+ * dword0 - b'7:0       - msg_type: This will be set to
+ *                        0x1c (HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ)
+ *          b'15:8      - service class ID
+ *          b'31:16     - peer ID
+ */
+
+PREPACK struct htt_h2t_sawf_def_queues_map_req {
+    A_UINT32 msg_type          :8,
+             svc_class_id      :8,
+             peer_id           :16;
+} POSTPACK;
+
+#define HTT_SAWF_DEF_QUEUES_MAP_REQ_BYTES 4
+
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID_M               0x0000FF00
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID_S               8
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID_GET(_var) \
+    (((_var) & HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID_M) >> \
+     HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID, _val); \
+        ((_var) |= ((_val) << HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_SVC_CLASS_ID_S));\
+    } while (0)
+
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID_M                    0xFFFF0000
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID_S                    16
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID_GET(_var) \
+    (((_var) & HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID_M) >> \
+     HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID, _val); \
+        ((_var) |= ((_val) << HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ_PEER_ID_S)); \
+    } while (0)
+
+
+/*
+ * MSG_TYPE => HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ
+ *
+ * @details
+ * The SAWF_DEF_QUEUES_UNMAP_REQ message is sent by the host to
+ * remove the linkage of the specified peer-TID's MSDU queues to
+ * service classes.
+ *
+ * |31                          16|15  12|11    8|7            0|
+ * |------------------------------+------+-------+--------------|
+ * |             peer ID          | rsvd |  TID  |   msg type   |
+ * |------------------------------------------------------------|
+ * Header fields:
+ * dword0 - b'7:0       - msg_type: This will be set to
+ *                        0x1d (HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ)
+ *          b'11:8      - TID
+ * dword1 - b'31:16     - peer ID
+ */
+
+PREPACK struct htt_h2t_sawf_def_queues_unmap_req {
+    A_UINT32 msg_type          :8,
+             tid               :4,
+             reserved          :4,
+             peer_id           :16;
+} POSTPACK;
+
+#define HTT_SAWF_DEF_QUEUES_UNMAP_REQ_BYTES 4
+
+#define HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_TID_M                      0x00000F00
+#define HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_TID_S                      8
+#define HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_TID_GET(_var) \
+    (((_var) & HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_TID_M) >> \
+     HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_TID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_UNMAP_REQ_TID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_TID, _val); \
+        ((_var) |= ((_val) << HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_TID_S));\
+    } while (0)
+
+#define HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID_M                  0xFFFF0000
+#define HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID_S                  16
+#define HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID_GET(_var) \
+    (((_var) & HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID_M) >> \
+     HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID, _val); \
+        ((_var) |= ((_val) << HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ_PEER_ID_S)); \
+    } while (0)
+
+
+/*
+ * MSG_TYPE => HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ
+ *
+ * @details
+ * The SAWF_DEF_QUEUES_MAP_REPORT_REQ message is sent by the host to
+ * request the target to report what service class the default MSDU queues
+ * of the specified peer-TID are linked to.
+ * The target will respond with a SAWF_DEF_QUEUES_MAP_REPORT_CONF message
+ * to report what service class (if any) the peer-TID's default MSDU queues
+ * are linked to.
+ *
+ * |31                          16|15  12|11    8|7            0|
+ * |------------------------------+------+-------+--------------|
+ * |             peer ID          | rsvd |  TID  |   msg type   |
+ * |------------------------------------------------------------|
+ * Header fields:
+ * dword0 - b'7:0       - msg_type: This will be set to
+ *                        0x1e (HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ)
+ *          b'11:8      - TID
+ * dword1 - b'31:16     - peer ID
+ */
+
+PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
+    A_UINT32 msg_type          :8,
+             tid               :4,
+             reserved          :4,
+             peer_id           :16;
+} POSTPACK;
+
+#define HTT_SAWF_DEF_QUEUES_MAP_REPORT_REQ_BYTES 4
+
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID_M                 0x00000F00
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID_S                 8
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID_GET(_var) \
+    (((_var) & HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID_M) >> \
+     HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID, _val); \
+        ((_var) |= ((_val) << HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_TID_S));\
+    } while (0)
+
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID_M             0xFFFF0000
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID_S             16
+#define HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID_GET(_var) \
+    (((_var) & HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID_M) >> \
+     HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID, _val); \
+        ((_var) |= ((_val) << HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_PEER_ID_S)); \
+    } while (0)
+
+
 
 /*=== target -> host messages ===============================================*/
 
@@ -8785,6 +8948,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_MLO_RX_PEER_UNMAP             = 0x2a,
     HTT_T2H_MSG_TYPE_PEER_MAP_V3                   = 0x2b,
     HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND = 0x2c,
+    HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF        = 0x2d,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -17206,5 +17370,109 @@ typedef struct {
     A_UINT32 tx_msdu_ttl_expire_drop_byte_cnt_lo;
     A_UINT32 tx_msdu_ttl_expire_drop_byte_cnt_hi;
 } htt_t2h_vdev_txrx_stats_hw_stats_tlv;
+
+/*
+ * MSG_TYPE => HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF
+ *
+ * @details
+ * The SAWF_DEF_QUEUES_MAP_REPORT_CONF message is sent by the target in
+ * response to a SAWF_DEF_QUEUES_MAP_REPORT_REQ from the host.
+ * The SAWF_DEF_QUEUES_MAP_REPORT_CONF will show which service class
+ * the default MSDU queues of the peer-TID specified in the
+ * SAWF_DEF_QUEUES_MAP_REPORT_REQ message are linked to.
+ * If the default MSDU queues of the specified peer-TID are not linked to
+ * a service class, the status field of the SAWF_DEF_QUEUES_MAP_REPORT_CONF
+ * will specify that no such mapping exists of the default MSDU queues to a
+ * service class.
+ *
+ * |31                          16|15  12|11    8|7            0|
+ * |------------------------------+------+-------+--------------|
+ * |             peer ID          | rsvd |  TID  |   msg type   |
+ * |------------------------------+--------------+--------------|
+ * |             reserved         | svc class ID |    status    |
+ * |------------------------------------------------------------|
+ * Header fields:
+ * dword0 - b'7:0       - msg_type: This will be set to
+ *                        0x2d (HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF)
+ *          b'11:8      - TID
+ *          b'31:16     - peer ID
+ * dword1 - b'7:0       - status (htt_t2h_sawf_def_queues_map_report_status)
+ *          b'15:8      - svc class ID (only valid if status == MAPPED)
+ */
+
+enum htt_t2h_sawf_def_queues_map_report_status {
+    /* MAPPED:
+     * The default MSDU queues for the peer-TID are linked to a service class.
+     * The svc_class_id field shows which service class the default MSDU queues
+     * are associated with.
+     */
+    HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_STATUS_MAPPED = 0,
+    /* UNMAPPED:
+     * The default MSDU queues for the peer-TID are not linked to any
+     * service class.
+     */
+    HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_STATUS_UNMAPPED = 1,
+    /* INVALID_IDS:
+     * One or more of pdev_id, vdev_id, peer_id, and TID were invalid.
+     */
+    HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_INVALID_IDS = 2,
+};
+
+PREPACK struct htt_t2h_sawf_def_queues_map_report_conf {
+    A_UINT32 msg_type          :8,
+             tid               :4,
+             reserved0         :4,
+             peer_id           :16;
+    A_UINT32 status            :8,
+             svc_class_id      :8,
+             reserved1         :16;
+} POSTPACK;
+
+#define HTT_SAWF_DEF_QUEUES_MAP_REPORT_CONF_BYTES 8
+
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID_M                0x00000F00
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID_S                8
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID_M) >> \
+     HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_TID_S));\
+    } while (0)
+
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID_M            0xFFFF0000
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID_S            16
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID_M) >> \
+     HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS_M             0x000000FF
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS_S             0
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS_M) >> \
+     HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_STATUS_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_M       0x0000FF00
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_S       8
+#define HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_M) >> \
+     HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_S)
+#define HTT_RX_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_S)); \
+    } while (0)
+
 
 #endif
