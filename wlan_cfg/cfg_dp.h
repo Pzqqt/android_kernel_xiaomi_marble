@@ -1197,24 +1197,6 @@
 
 /*
  * <ini>
- * gForceRX64BA - enable force 64 blockack mode for RX
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to control DP Software to use 64 blockack
- * for RX direction forcibly
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_FORCE_RX_64_BA \
-		CFG_INI_BOOL("gForceRX64BA", \
-		false, "Enable/Disable force 64 blockack in RX side")
-
-/*
- * <ini>
  * ghw_cc_enable - enable HW cookie conversion by register
  * @Min: 0
  * @Max: 1
@@ -1477,7 +1459,6 @@
 		CFG(CFG_DP_RX_RADIO_2_DEFAULT_REO) \
 		CFG(CFG_DP_WOW_CHECK_RX_PENDING) \
 		CFG(CFG_DP_HW_CC_ENABLE) \
-		CFG(CFG_FORCE_RX_64_BA) \
 		CFG(CFG_DP_DELAY_MON_REPLENISH) \
 		CFG(CFG_DP_TX_MONITOR_BUF_RING) \
 		CFG(CFG_DP_TX_MONITOR_DST_RING) \
