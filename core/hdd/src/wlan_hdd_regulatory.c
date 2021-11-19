@@ -1637,8 +1637,8 @@ static void hdd_restart_sap_with_new_phymode(struct hdd_context *hdd_ctx,
 		hdd_err("SAP Start Bss fail");
 		return;
 	}
-	status = qdf_wait_for_event_completion(&hostapd_state->qdf_event,
-					       SME_CMD_START_BSS_TIMEOUT);
+	status = qdf_wait_single_event(&hostapd_state->qdf_event,
+				       SME_CMD_START_BSS_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		mutex_unlock(&hdd_ctx->sap_lock);
 		hdd_err("SAP Start timeout");

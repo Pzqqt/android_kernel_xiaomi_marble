@@ -2872,7 +2872,7 @@ static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
 }
 
 /**
- * sap_fsm_handle_start_failure() - handle start failure or stop during cac wait
+ * sap_fsm_handle_start_failure() - handle sap start failure
  * @sap_ctx: SAP context
  * @msg: event msg
  * @mac_handle: Opaque handle to the global MAC context
@@ -2885,13 +2885,11 @@ static QDF_STATUS sap_fsm_handle_start_failure(struct sap_context *sap_ctx,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
-	if (msg == eSAP_HDD_STOP_INFRA_BSS &&
-	    (QDF_IS_STATUS_SUCCESS(wlan_vdev_is_dfs_cac_wait(sap_ctx->vdev)) ||
-	     QDF_IS_STATUS_SUCCESS(
-	     wlan_vdev_is_restart_progress(sap_ctx->vdev)))) {
+	if (msg == eSAP_HDD_STOP_INFRA_BSS) {
 		/* Transition from SAP_STARTING to SAP_STOPPING */
-		sap_debug("In cac wait state from state %s => %s",
+		sap_debug("SAP start is in progress, state from state %s => %s",
 			  "SAP_STARTING", "SAP_STOPPING");
+
 		/*
 		 * Stop the CAC timer only in following conditions
 		 * single AP: if there is a single AP then stop timer

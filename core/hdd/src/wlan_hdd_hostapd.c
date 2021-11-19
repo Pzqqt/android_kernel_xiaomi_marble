@@ -6106,7 +6106,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto error;
 	}
 
-	qdf_status = qdf_wait_for_event_completion(&hostapd_state->qdf_event,
+	qdf_status = qdf_wait_single_event(&hostapd_state->qdf_event,
 					SME_CMD_START_BSS_TIMEOUT);
 
 	wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_ALL);
@@ -6123,7 +6123,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		hdd_set_connection_in_progress(false);
 		sme_get_command_q_status(mac_handle);
 		wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-		QDF_ASSERT(0);
+		if (!cds_is_driver_recovering())
+			QDF_ASSERT(0);
 		ret = -EINVAL;
 		goto error;
 	}
