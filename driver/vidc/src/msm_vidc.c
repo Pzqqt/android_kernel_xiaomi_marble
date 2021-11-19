@@ -28,10 +28,15 @@
 
 #define MAX_EVENTS 30
 
-bool valid_v4l2_buffer(struct v4l2_buffer *b,
+static inline bool valid_v4l2_buffer(struct v4l2_buffer *b,
 		struct msm_vidc_inst *inst)
 {
-	return true;
+	if (b->type == INPUT_MPLANE || b->type == OUTPUT_MPLANE)
+		return b->length > 0;
+	else if (b->type == INPUT_META_PLANE || b->type == OUTPUT_META_PLANE)
+		return true;
+
+	return false;
 }
 
 static int get_poll_flags(struct msm_vidc_inst *inst, u32 port)
