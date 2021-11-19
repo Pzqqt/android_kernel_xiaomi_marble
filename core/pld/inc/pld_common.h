@@ -1080,12 +1080,13 @@ int pld_thermal_register(struct device *dev, unsigned long state, int mon_id);
 void pld_thermal_unregister(struct device *dev, int mon_id);
 
 /**
- * pld_level_to_str() - Helper function to convert PLD bandwidth level to str
+ * pld_bus_width_type_to_str() - Helper function to convert PLD bandwidth level
+ *				 to string
  * @level: PLD bus width level
  *
  * Return: String corresponding to input "level"
  */
-uint8_t *pld_level_to_str(uint32_t level);
+const char *pld_bus_width_type_to_str(enum pld_bus_width_type level);
 
 /**
  * pld_get_thermal_state() - Get the current thermal state from the PLD

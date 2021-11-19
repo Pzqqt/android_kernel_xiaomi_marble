@@ -9897,7 +9897,7 @@ static inline void _hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 		}
 		hdd_debug("Empty mask %*pb: Set latency %u",
 			  qdf_cpumask_pr_args(&hdd_ctx->qos_cpu_mask),
-			  wlan_hdd_get_default_pm_qos_cpu_latency());
+			  default_latency);
 	} else { /* Set latency to default for CPUs not included in mask */
 		qdf_for_each_cpu_not(cpu, &hdd_ctx->qos_cpu_mask) {
 			dev_pm_qos_update_request(
@@ -10136,43 +10136,53 @@ static inline void hdd_low_tput_gro_flush_skip_handler(
 
 /**
  * hdd_bus_bandwidth_work_tune_rx() - Function to tune for RX
- * @hdd_ctx - handle to hdd context
- * @rx_packets - receive packet count in last bus bandwidth interval
- * @next_rx_level - pointer to next_rx_level to be filled
- * @cpu_mask - pm_qos cpu_mask needed for RX, to be filled
- * @is_rx_pm_qos_high - pointer indicating if high qos is needed, to be filled
+ * @hdd_ctx: handle to hdd context
+ * @rx_packets: receive packet count in last bus bandwidth interval
+ * @diff_us: delta time since last invocation.
+ * @next_rx_level: pointer to next_rx_level to be filled
+ * @cpu_mask: pm_qos cpu_mask needed for RX, to be filled
+ * @is_rx_pm_qos_high: pointer indicating if high qos is needed, to be filled
  *
- * The function tunes various aspects of the driver based on a running average
+ * The function tunes various aspects of driver based on a running average
  * of RX packets received in last bus bandwidth interval.
  *
- * Returns: true if RX level has changed, else returns false
+ * Returns: true if RX level has changed, else return false
  */
 static
 bool hdd_bus_bandwidth_work_tune_rx(struct hdd_context *hdd_ctx,
 				    const uint64_t rx_packets,
+				    uint64_t diff_us,
 				    enum wlan_tp_level *next_rx_level,
 				    cpumask_t *cpu_mask,
 				    bool *is_rx_pm_qos_high)
 {
 	bool rx_level_change = false;
 	bool rxthread_high_tput_req;
+	uint32_t bw_interval_us;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
 	uint64_t avg_rx;
 	uint64_t no_rx_offload_pkts, avg_no_rx_offload_pkts;
 	uint64_t rx_offload_pkts, avg_rx_offload_pkts;
 
-	/*
-	 * Includes tcp+udp, if perf core is required for tcp, then
-	 * perf core is also required for udp.
-	 */
+	bw_interval_us = hdd_ctx->config->bus_bw_compute_interval * 1000;
 	no_rx_offload_pkts = hdd_ctx->no_rx_offload_pkt_cnt;
 	hdd_ctx->no_rx_offload_pkt_cnt = 0;
-	rx_offload_pkts = rx_packets - no_rx_offload_pkts;
 
+	/* adjust for any sched delays */
+	no_rx_offload_pkts = no_rx_offload_pkts * bw_interval_us;
+	no_rx_offload_pkts = qdf_do_div(no_rx_offload_pkts, (uint32_t)diff_us);
+
+	/* average no-offload RX packets over last 2 BW intervals */
 	avg_no_rx_offload_pkts = (no_rx_offload_pkts +
 				  hdd_ctx->prev_no_rx_offload_pkts) / 2;
 	hdd_ctx->prev_no_rx_offload_pkts = no_rx_offload_pkts;
 
+	if (rx_packets >= no_rx_offload_pkts)
+		rx_offload_pkts = rx_packets - no_rx_offload_pkts;
+	else
+		rx_offload_pkts = 0;
+
+	/* average offloaded RX packets over last 2 BW intervals */
 	avg_rx_offload_pkts = (rx_offload_pkts +
 			       hdd_ctx->prev_rx_offload_pkts) / 2;
 	hdd_ctx->prev_rx_offload_pkts = rx_offload_pkts;
@@ -10240,37 +10250,51 @@ bool hdd_bus_bandwidth_work_tune_rx(struct hdd_context *hdd_ctx,
 
 /**
  * hdd_bus_bandwidth_work_tune_tx() - Function to tune for TX
- * @hdd_ctx - handle to hdd context
- * @tx_packets - transmit packet count in last bus bandwidth interval
- * @next_tx_level - pointer to next_tx_level to be filled
- * @cpu_mask - pm_qos cpu_mask needed for TX, to be filled
- * @is_tx_pm_qos_high - pointer indicating if high qos is needed, to be filled
+ * @hdd_ctx: handle to hdd context
+ * @tx_packets: transmit packet count in last bus bandwidth interval
+ * @diff_us: delta time since last invocation.
+ * @next_tx_level: pointer to next_tx_level to be filled
+ * @cpu_mask: pm_qos cpu_mask needed for TX, to be filled
+ * @is_tx_pm_qos_high: pointer indicating if high qos is needed, to be filled
  *
  * The function tunes various aspects of the driver based on a running average
  * of TX packets received in last bus bandwidth interval.
  *
- * Returns: true if TX level has changed, else returns false
+ * Returns: true if TX level has changed, else return false
  */
 static
 bool hdd_bus_bandwidth_work_tune_tx(struct hdd_context *hdd_ctx,
 				    const uint64_t tx_packets,
+				    uint64_t diff_us,
 				    enum wlan_tp_level *next_tx_level,
 				    cpumask_t *cpu_mask,
 				    bool *is_tx_pm_qos_high)
 {
 	bool tx_level_change = false;
+	uint32_t bw_interval_us;
 	uint64_t no_tx_offload_pkts, avg_no_tx_offload_pkts;
 	uint64_t tx_offload_pkts, avg_tx_offload_pkts;
 	uint64_t avg_tx;
 
+	bw_interval_us = hdd_ctx->config->bus_bw_compute_interval * 1000;
 	no_tx_offload_pkts = hdd_ctx->no_tx_offload_pkt_cnt;
-	hdd_ctx->no_tx_offload_pkt_cnt = 0;
-	tx_offload_pkts = tx_packets - no_tx_offload_pkts;
 
+	/* adjust for any sched delays */
+	no_tx_offload_pkts = no_tx_offload_pkts * bw_interval_us;
+	no_tx_offload_pkts = qdf_do_div(no_tx_offload_pkts, (uint32_t)diff_us);
+
+	/* average no-offload TX packets over last 2 BW intervals */
 	avg_no_tx_offload_pkts = (no_tx_offload_pkts +
 				  hdd_ctx->prev_no_tx_offload_pkts) / 2;
+	hdd_ctx->no_tx_offload_pkt_cnt = 0;
 	hdd_ctx->prev_no_tx_offload_pkts = no_tx_offload_pkts;
 
+	if (tx_packets >= no_tx_offload_pkts)
+		tx_offload_pkts = tx_packets - no_tx_offload_pkts;
+	else
+		tx_offload_pkts = 0;
+
+	/* average offloaded TX packets over last 2 BW intervals */
 	avg_tx_offload_pkts = (tx_offload_pkts +
 			       hdd_ctx->prev_tx_offload_pkts) / 2;
 	hdd_ctx->prev_tx_offload_pkts = tx_offload_pkts;
@@ -10314,18 +10338,20 @@ bool hdd_bus_bandwidth_work_tune_tx(struct hdd_context *hdd_ctx,
 
 /**
  * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth
- * @hdd_ctx - handle to hdd context
- * @tx_packets - transmit packet count
- * @rx_packets - receive packet count
+ * @hdd_ctx: handle to hdd context
+ * @tx_packets: transmit packet count received in BW interval
+ * @rx_packets: receive packet count received in BW interval
+ * @diff_us: delta time since last invocation.
  *
  * The function controls the bus bandwidth and dynamic control of
- * tcp delayed ack configuration
+ * tcp delayed ack configuration.
  *
  * Returns: None
  */
 static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 					  const uint64_t tx_packets,
-					  const uint64_t rx_packets)
+					  const uint64_t rx_packets,
+					  const uint64_t diff_us)
 {
 	uint16_t index;
 	bool vote_level_change = false;
@@ -10400,9 +10426,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 					    legacy_client);
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
-		hdd_debug("tx_packets: %lld, rx_packets: %lld",
-			  tx_packets, rx_packets);
-
 		/* Set affinity for tx completion grp interrupts */
 		if (tput_level >= TPUT_LEVEL_VERY_HIGH &&
 		    prev_tput_level < TPUT_LEVEL_VERY_HIGH)
@@ -10472,18 +10495,21 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	rx_level_change = hdd_bus_bandwidth_work_tune_rx(hdd_ctx,
 							 rx_packets,
+							 diff_us,
 							 &next_rx_level,
 							 &pm_qos_cpu_mask_rx,
 							 &is_rx_pm_qos_high);
 
 	tx_level_change = hdd_bus_bandwidth_work_tune_tx(hdd_ctx,
 							 tx_packets,
+							 diff_us,
 							 &next_tx_level,
 							 &pm_qos_cpu_mask_tx,
 							 &is_tx_pm_qos_high);
 
 	index = hdd_ctx->hdd_txrx_hist_idx;
-	if (vote_level_change || tx_level_change || rx_level_change) {
+
+	if (vote_level_change) {
 		/* Clear mask if BW is not HIGH or more */
 		if (next_vote_level < PLD_BUS_WIDTH_HIGH) {
 			is_rx_pm_qos_high = false;
@@ -10505,6 +10531,21 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		if (!hdd_ctx->pm_qos_request)
 			hdd_pm_qos_update_request(hdd_ctx,
 						  &pm_qos_cpu_mask);
+	}
+
+	if (vote_level_change || tx_level_change || rx_level_change) {
+		hdd_debug("tx:%llu[%llu(off)+%llu(no-off)] rx:%llu[%llu(off)+%llu(no-off)] next_level(vote %u rx %u tx %u) pm_qos(rx:%u,%*pb tx:%u,%*pb)",
+			  tx_packets,
+			  hdd_ctx->prev_tx_offload_pkts,
+			  hdd_ctx->prev_no_tx_offload_pkts,
+			  rx_packets,
+			  hdd_ctx->prev_rx_offload_pkts,
+			  hdd_ctx->prev_no_rx_offload_pkts,
+			  next_vote_level, next_rx_level, next_tx_level,
+			  is_rx_pm_qos_high,
+			  cpumask_pr_args(&pm_qos_cpu_mask_rx),
+			  is_tx_pm_qos_high,
+			  cpumask_pr_args(&pm_qos_cpu_mask_tx));
 
 		hdd_ctx->hdd_txrx_hist[index].next_tx_level = next_tx_level;
 		hdd_ctx->hdd_txrx_hist[index].next_rx_level = next_rx_level;
@@ -10792,7 +10833,7 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 	rx_packets = rx_packets * bw_interval_us;
 	rx_packets = qdf_do_div(rx_packets, (uint32_t)diff_us);
 
-	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
+	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets, diff_us);
 
 	return;
 
@@ -11127,7 +11168,7 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 		hdd_nofl_debug("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s, %s:%s",
 			       i, hist->qtime, hist->interval_rx,
 			       hist->interval_tx,
-			       pld_level_to_str(hist->next_vote_level),
+			       pld_bus_width_type_to_str(hist->next_vote_level),
 			       hdd_tp_level_to_str(hist->next_rx_level),
 			       hdd_tp_level_to_str(hist->next_tx_level),
 			       hist->is_rx_pm_qos_high ? "HIGH" : "LOW",
