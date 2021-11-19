@@ -2527,6 +2527,15 @@ typedef struct _wmi_ppe_threshold {
 #define WMI_MAX_EHTCAP_MAC_SIZE  2
 #define WMI_MAX_EHTCAP_PHY_SIZE  3
 
+/*
+ * 0 – index indicated EHT-MCS map for 20Mhz only sta (4 bytes valid)
+ * 1 – index for <= 80MHz bw  (only 3 bytes are valid and other is reserved)
+ * 2 – index for == 160Mhz bw (only 3 bytes are valid and other is reserved)
+ * 3 – index for == 320Mhz bw (only 3 bytes are valid and other is reserved)
+ */
+#define WMI_MAX_EHT_SUPP_MCS_2G_SIZE  2
+#define WMI_MAX_EHT_SUPP_MCS_5G_SIZE  4
+
 /* WMI_SYS_CAPS_* refer to the capabilities that system support
  */
 #define WMI_SYS_CAP_ENABLE                       0x00000001
@@ -28666,14 +28675,35 @@ typedef struct {
     /* EHT capability mac info field of 802.11be */
     A_UINT32 eht_cap_mac_info_2G[WMI_MAX_EHTCAP_MAC_SIZE];
     A_UINT32 eht_cap_mac_info_5G[WMI_MAX_EHTCAP_MAC_SIZE];
-    A_UINT32 eht_supp_mcs_2G;
-    A_UINT32 eht_supp_mcs_5G;
+    A_UINT32 eht_supp_mcs_2G; /* deprecated (c.f. eht_supp_mcs_ext_2G) */
+    A_UINT32 eht_supp_mcs_5G; /* deprecated (c.f. eht_supp_mcs_ext_5G) */
     /* EHT capability phy field of 802.11be, WMI_EHT_CAP defines */
     A_UINT32 eht_cap_phy_info_2G[WMI_MAX_EHTCAP_PHY_SIZE];
     A_UINT32 eht_cap_phy_info_5G[WMI_MAX_EHTCAP_PHY_SIZE];
     wmi_ppe_threshold eht_ppet2G;
     wmi_ppe_threshold eht_ppet5G;
     A_UINT32 eht_cap_info_internal;
+    /* eht_supp_mcs_ext_2G, eht_supp_mcs_ext_5G:
+     * array index interpretation:
+     * 0 – index indicated EHT-MCS map for 20Mhz only sta (4 bytes valid)
+     * 1 – index for <= 80MHz bw (only 3 bytes are valid and other is reserved)
+     * 2 – index for 160Mhz bw (only 3 bytes are valid and other is reserved)
+     * 3 – index for 320Mhz bw (only 3 bytes are valid and other is reserved)
+     *
+     * The format of the data stored in each array index element is defined
+     * by IEEE802.11 9.4.2.295c.4
+     * For example, for the 20 MHz / index 0 element:
+     *     B0 -- B3: Rx Max Nss that Supports EHT-MCS 0–7
+     *     B4 -- B7: Tx Max Nss that Supports EHT-MCS 0–7
+     *     B8 -- B11: Rx Max Nss that Supports EHT-MCS 8–9
+     *     B12 -- B15: Tx Max Nss that Supports EHT-MCS 8–9
+     *     B16 -- B19: Rx Max Nss that Supports EHT-MCS 10–11
+     *     B20 -- B23: Tx Max Nss that Supports EHT-MCS 10–11
+     *     B24 -- B27: Rx Max Nss that Supports EHT-MCS 12–13
+     *     B28 -- B31: Tx Max Nss that Supports EHT-MCS 12–13
+     */
+    A_UINT32 eht_supp_mcs_ext_2G[WMI_MAX_EHT_SUPP_MCS_2G_SIZE];
+    A_UINT32 eht_supp_mcs_ext_5G[WMI_MAX_EHT_SUPP_MCS_5G_SIZE];
     /**************************************************************************
      * Currently pls do not add any new param after EHT
      * as still under development.
