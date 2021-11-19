@@ -88,7 +88,7 @@ static void sde_encoder_phys_wb_set_ot_limit(
 	ot_params.num = hw_wb->idx - WB_0;
 	ot_params.width = wb_enc->wb_roi.w;
 	ot_params.height = wb_enc->wb_roi.h;
-	ot_params.is_wfd = true;
+	ot_params.is_wfd = !(phys_enc->in_clone_mode);
 	ot_params.frame_rate = drm_mode_vrefresh(&phys_enc->cached_mode);
 	ot_params.vbif_idx = hw_wb->caps->vbif_idx;
 	ot_params.clk_ctrl = hw_wb->caps->clk_ctrl;
