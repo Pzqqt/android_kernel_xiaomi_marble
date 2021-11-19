@@ -18,6 +18,7 @@
 #include <dp_htt.h>
 #include <hal_be_api.h>
 #include "dp_mlo.h"
+#include <dp_be.h>
 
 /*
  * dp_mlo_ctxt_attach_wifi3 () – Attach DP MLO context
@@ -96,4 +97,19 @@ dp_mlo_get_soc_ref_by_chip_id(struct dp_mlo_ctxt *ml_ctxt,
 	qdf_spin_unlock_bh(&ml_ctxt->ml_soc_list_lock);
 
 	return soc;
+}
+
+void dp_soc_mlo_fill_params(struct dp_soc *soc,
+			    struct cdp_soc_attach_params *params)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+
+	if (!params->mlo_enabled) {
+		dp_warn("MLO not enabled on SOC");
+		return;
+	}
+
+	be_soc->mlo_chip_id = params->mlo_chip_id;
+	be_soc->ml_ctxt = cdp_mlo_ctx_to_dp(params->ml_context);
+	be_soc->mlo_enabled = 1;
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,7 +63,8 @@ qdf_size_t dp_get_context_size_li(enum dp_context_type context_type)
 	}
 }
 
-static QDF_STATUS dp_soc_attach_li(struct dp_soc *soc)
+static QDF_STATUS dp_soc_attach_li(struct dp_soc *soc,
+				   struct cdp_soc_attach_params *params)
 {
 	soc->wbm_sw0_bm_id = hal_tx_get_wbm_sw0_bm_id();
 

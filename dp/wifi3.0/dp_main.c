@@ -209,10 +209,7 @@ static QDF_STATUS dp_pdev_detach_wifi3(struct cdp_soc_t *psoc,
 				       int force);
 static struct dp_soc *
 dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-	      struct hif_opaque_softc *hif_handle,
-	      HTC_HANDLE htc_handle,
-	      qdf_device_t qdf_osdev,
-	      struct ol_if_ops *ol_ops, uint16_t device_id);
+	      struct cdp_soc_attach_params *params);
 static inline QDF_STATUS dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl,
 					      uint8_t vdev_id,
 					      uint8_t *peer_mac_addr,
@@ -3537,7 +3534,8 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 
 			hal_set_link_desc_addr(soc->hal_soc, desc, cookie,
 					       dma_pages[page_idx].page_p_addr
-					       + (offset * link_desc_size));
+					       + (offset * link_desc_size),
+					       soc->idle_link_bm_id);
 			count++;
 		}
 		hal_srng_access_end_unlocked(soc->hal_soc, desc_srng);
@@ -3567,7 +3565,8 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 					       (void *)scatter_buf_ptr,
 					       cookie,
 					       dma_pages[page_idx].page_p_addr +
-					       (offset * link_desc_size));
+					       (offset * link_desc_size),
+					       soc->idle_link_bm_id);
 			rem_entries--;
 			if (rem_entries) {
 				scatter_buf_ptr += link_desc_size;
@@ -12404,24 +12403,18 @@ qdf_export_symbol(dp_soc_set_txrx_ring_map);
 /**
  * dp_soc_attach_wifi3() - Attach txrx SOC
  * @ctrl_psoc: Opaque SOC handle from control plane
- * @htc_handle: Opaque HTC handle
- * @hif_handle: Opaque HIF handle
- * @qdf_osdev: QDF device
- * @ol_ops: Offload Operations
- * @device_id: Device ID
+ * @params: SOC attach params
  *
  * Return: DP SOC handle on success, NULL on failure
  */
 struct cdp_soc_t *
 dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-		    struct hif_opaque_softc *hif_handle,
-		    HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-		    struct ol_if_ops *ol_ops, uint16_t device_id)
+		    struct cdp_soc_attach_params *params)
 {
 	struct dp_soc *dp_soc = NULL;
 
-	dp_soc = dp_soc_attach(ctrl_psoc, hif_handle, htc_handle, qdf_osdev,
-			       ol_ops, device_id);
+	dp_soc = dp_soc_attach(ctrl_psoc, params);
+
 	return dp_soc_to_cdp_soc_t(dp_soc);
 }
 
@@ -12454,23 +12447,21 @@ dp_get_link_desc_id_start(uint16_t arch_id)
 /**
  * dp_soc_attach() - Attach txrx SOC
  * @ctrl_psoc: Opaque SOC handle from control plane
- * @hif_handle: Opaque HIF handle
- * @htc_handle: Opaque HTC handle
- * @qdf_osdev: QDF device
- * @ol_ops: Offload Operations
- * @device_id: Device ID
+ * @params: SOC attach params
  *
  * Return: DP SOC handle on success, NULL on failure
  */
 static struct dp_soc *
 dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-	      struct hif_opaque_softc *hif_handle, HTC_HANDLE htc_handle,
-	      qdf_device_t qdf_osdev, struct ol_if_ops *ol_ops,
-	      uint16_t device_id)
+	      struct cdp_soc_attach_params *params)
 {
 	int int_ctx;
 	struct dp_soc *soc =  NULL;
 	uint16_t arch_id;
+	struct hif_opaque_softc *hif_handle = params->hif_handle;
+	qdf_device_t qdf_osdev = params->qdf_osdev;
+	struct ol_if_ops *ol_ops = params->ol_ops;
+	uint16_t device_id = params->device_id;
 
 	if (!hif_handle) {
 		dp_err("HIF handle is NULL");
@@ -12501,7 +12492,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS;
 	hal_rx_get_tlv_size(soc->hal_soc, &soc->rx_pkt_tlv_size,
 			    &soc->rx_mon_pkt_tlv_size);
-
+	soc->idle_link_bm_id = hal_get_idle_link_bm_id(soc->hal_soc,
+						       params->mlo_chip_id);
 	soc->arch_id = arch_id;
 	soc->link_desc_id_start =
 			dp_get_link_desc_id_start(soc->arch_id);
@@ -12531,7 +12523,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		goto fail3;
 	}
 
-	if (!QDF_IS_STATUS_SUCCESS(soc->arch_ops.txrx_soc_attach(soc))) {
+	if (!QDF_IS_STATUS_SUCCESS(soc->arch_ops.txrx_soc_attach(soc,
+								 params))) {
 		dp_err("unable to do target specific attach");
 		goto fail4;
 	}

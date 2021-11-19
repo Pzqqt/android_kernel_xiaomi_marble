@@ -369,7 +369,8 @@ static QDF_STATUS dp_soc_detach_be(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS dp_soc_attach_be(struct dp_soc *soc)
+static QDF_STATUS dp_soc_attach_be(struct dp_soc *soc,
+				   struct cdp_soc_attach_params *params)
 {
 	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -397,6 +398,8 @@ static QDF_STATUS dp_soc_attach_be(struct dp_soc *soc)
 	qdf_status = dp_hw_cc_cmem_addr_init(soc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		goto fail;
+
+	dp_soc_mlo_fill_params(soc, params);
 
 	for (i = 0; i < MAX_TXDESC_POOLS; i++) {
 		num_entries = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);

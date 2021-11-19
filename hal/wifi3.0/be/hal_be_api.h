@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,10 +73,12 @@ void *hal_rx_msdu_ext_desc_info_get_ptr_be(void *msdu_details_ptr);
  * @desc: Descriptor entry (from WBM_IDLE_LINK ring)
  * @cookie: SW cookie for the buffer/descriptor
  * @link_desc_paddr: Physical address of link descriptor entry
+ * @bm_id: idle link BM id
  *
  */
 void hal_set_link_desc_addr_be(void *desc, uint32_t cookie,
-			       qdf_dma_addr_t link_desc_paddr);
+			       qdf_dma_addr_t link_desc_paddr,
+			       uint8_t bm_id);
 
 /**
  * hal_hw_txrx_default_ops_attach_be(): Add default ops for BE chips
