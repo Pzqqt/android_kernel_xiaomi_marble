@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -40,7 +41,7 @@
 
 
 #define GRP_VIG_HW_BLK_SELECT (VIG0 | VIG1 | VIG2 | VIG3)
-#define GRP_DMA_HW_BLK_SELECT (DMA0 | DMA1 | DMA2 | DMA3)
+#define GRP_DMA_HW_BLK_SELECT (DMA0 | DMA1 | DMA2 | DMA3 | DMA4 | DMA5)
 #define GRP_DSPP_HW_BLK_SELECT (DSPP0 | DSPP1 | DSPP2 | DSPP3)
 #define GRP_LTM_HW_BLK_SELECT (LTM0 | LTM1)
 #define GRP_MDSS_HW_BLK_SELECT (MDSS)
@@ -209,6 +210,12 @@ static void get_decode_sel(unsigned long blk, u32 *decode_sel)
 			break;
 		case DMA3:
 			*decode_sel |= BIT(8);
+			break;
+		case DMA4:
+			*decode_sel |= BIT(9);
+			break;
+		case DMA5:
+			*decode_sel |= BIT(10);
 			break;
 		case DSPP0:
 			*decode_sel |= BIT(17);
