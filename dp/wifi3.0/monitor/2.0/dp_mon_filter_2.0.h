@@ -20,18 +20,6 @@
 #include <dp_htt.h>
 
 /**
- * struct dp_mon_filter_be - Monitor TLV filter
- * @rx_tlv_filter: Rx MON TLV filter
- * @tx_tlv_filter: Tx MON TLV filter
- * @tx_valid: enable/disable Tx Mon TLV filter
- */
-struct dp_mon_filter_be {
-	struct dp_mon_filter rx_tlv_filter;
-	struct htt_tx_ring_tlv_filter tx_tlv_filter;
-	int tx_valid;
-};
-
-/**
  * dp_rx_mon_packet_length_set() - Setup rx monitor per packet type length
  * @msg_word: msg word
  * @htt_tlv_filter: rx ring filter configuration

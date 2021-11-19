@@ -60,6 +60,8 @@ struct dp_mon_filter {
  * @DP_MON_FILTER_RX_CAPTURE_MODE: Rx Capture mode
  * @DP_MON_FILTER_PKT_LOG_FULL_MODE: Packet log full mode
  * @DP_MON_FILTER_PKT_LOG_LITE_MODE: Packet log lite mode
+ * @DP_MON_FILTER_PKT_LOG_CBF_MODE: Packet log cbf mode
+ * @DP_MON_FILTER_PKT_LOG_HYBRID_MODE: Packet log hybrid mode
  */
 enum dp_mon_filter_mode {
 #ifdef QCA_ENHANCED_STATS_SUPPORT

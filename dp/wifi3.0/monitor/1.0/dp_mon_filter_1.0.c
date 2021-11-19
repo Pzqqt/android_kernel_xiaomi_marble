@@ -28,7 +28,7 @@
 
 /**
  * dp_mon_filter_mode_type_to_str
- *	Monitor Filter mode to string
+ *  Monitor Filter mode to string
  */
 int8_t *dp_mon_filter_mode_type_to_str[DP_MON_FILTER_MAX_MODE] = {
 #ifdef QCA_ENHANCED_STATS_SUPPORT
@@ -41,12 +41,16 @@ int8_t *dp_mon_filter_mode_type_to_str[DP_MON_FILTER_MAX_MODE] = {
 	"DP MON FILTER SMART MONITOR MODE",
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
 	"DP_MON FILTER MONITOR MODE",
-#ifdef	WLAN_RX_PKT_CAPTURE_ENH
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
 	"DP MON FILTER RX CAPTURE MODE",
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
 #ifdef WDI_EVENT_ENABLE
 	"DP MON FILTER PKT LOG FULL MODE",
-	"DP MON FILTER PKT LOG LITE_MODE",
+	"DP MON FILTER PKT LOG LITE MODE",
+	"DP MON FILTER PKT LOG CBF MODE",
+#ifdef QCA_WIFI_QCN9224
+	"DP MON FILTER PKT LOG HYBRID MODE",
+#endif
 #endif /* WDI_EVENT_ENABLE */
 };
 

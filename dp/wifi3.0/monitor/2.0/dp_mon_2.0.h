@@ -25,6 +25,18 @@
 #define DP_MON_DATA_BUFFER_SIZE     2048
 
 /**
+ * struct dp_mon_filter_be - Monitor TLV filter
+ * @rx_tlv_filter: Rx MON TLV filter
+ * @tx_tlv_filter: Tx MON TLV filter
+ * @tx_valid: enable/disable Tx Mon TLV filter
+ */
+struct dp_mon_filter_be {
+	struct dp_mon_filter rx_tlv_filter;
+	struct htt_tx_ring_tlv_filter tx_tlv_filter;
+	bool tx_valid;
+};
+
+/**
  * struct dp_mon_desc
  *
  * @buf_addr: virtual address
@@ -74,9 +86,11 @@ struct dp_mon_desc_pool {
 
 /**
  * struct dp_mon_pdev_be - BE specific monitor pdev object
+ * @filter_be: Monitor Filter pointer
  * @mon_pdev: monitor pdev structure
  */
 struct dp_mon_pdev_be {
+	struct dp_mon_filter_be **filter_be;
 	struct dp_mon_pdev mon_pdev;
 };
 
@@ -175,4 +189,13 @@ QDF_STATUS dp_mon_buffers_replenish(struct dp_soc *dp_soc,
 				union dp_mon_desc_list_elem_t **desc_list,
 				union dp_mon_desc_list_elem_t **tail);
 
+/**
+ * dp_mon_filter_show_filter_be() - Show the set filters
+ * @pdev: DP pdev handle
+ * @mode: The filter modes
+ * @tlv_filter: tlv filter
+ */
+void dp_mon_filter_show_filter_be(struct dp_mon_pdev *mon_pdev,
+				  enum dp_mon_filter_mode mode,
+				  struct dp_mon_filter_be *filter);
 #endif /* _DP_MON_2_0_H_ */
