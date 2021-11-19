@@ -183,9 +183,7 @@ static void dp_soc_cfg_attach(struct dp_soc *soc);
 
 static inline
 QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
-				HTC_HANDLE htc_handle,
-				qdf_device_t qdf_osdev,
-				uint8_t pdev_id);
+				struct cdp_pdev_attach_params *params);
 
 static int dp_pdev_post_attach_wifi3(struct cdp_soc_t *psoc, uint8_t pdev_id);
 
@@ -4972,20 +4970,18 @@ static inline void dp_soc_tx_history_detach(struct dp_soc *soc)
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @txrx_soc: Datapath SOC handle
-* @htc_handle: HTC handle for host-target interface
-* @qdf_osdev: QDF OS device
-* @pdev_id: PDEV ID
+* @params: Params for PDEV attach
 *
 * Return: QDF_STATUS
 */
-static inline QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
-					      HTC_HANDLE htc_handle,
-					      qdf_device_t qdf_osdev,
-					      uint8_t pdev_id)
+static inline
+QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
+				struct cdp_pdev_attach_params *params)
 {
 	qdf_size_t pdev_context_size;
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = NULL;
+	uint8_t pdev_id = params->pdev_id;
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
 	int nss_cfg;
 
@@ -5044,6 +5040,8 @@ static inline QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		dp_init_err("%pK: dp_monitor_pdev_attach failed", soc);
 		goto fail4;
 	}
+
+	soc->arch_ops.txrx_pdev_attach(pdev, params);
 
 	return QDF_STATUS_SUCCESS;
 fail4:

@@ -2666,4 +2666,19 @@ struct cdp_soc_attach_params {
 	uint8_t mlo_chip_id;
 	uint8_t mlo_enabled;
 };
+
+/*
+ * cdp_pdev_attach_params
+ *
+ * @htc_handle: HTC handle for host-target interface
+ * @qdf_osdev: QDF OS device
+ * @pdev_id: PDEV ID
+ * @mlo_link_id: ML link id
+ */
+struct cdp_pdev_attach_params {
+	HTC_HANDLE htc_handle;
+	qdf_device_t qdf_osdev;
+	uint8_t pdev_id;
+	uint32_t mlo_link_id;
+};
 #endif

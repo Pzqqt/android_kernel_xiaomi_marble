@@ -86,7 +86,8 @@ static QDF_STATUS dp_soc_deinit_li(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS dp_pdev_attach_li(struct dp_pdev *pdev)
+static QDF_STATUS dp_pdev_attach_li(struct dp_pdev *pdev,
+				    struct cdp_pdev_attach_params *params)
 {
 	return QDF_STATUS_SUCCESS;
 }

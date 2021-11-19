@@ -127,8 +127,8 @@ struct cdp_cmn_ops {
 			    void *cb_context);
 
 	QDF_STATUS (*txrx_pdev_attach)
-		(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev,
-		 qdf_device_t osdev, uint8_t pdev_id);
+		(ol_txrx_soc_handle soc,
+		 struct cdp_pdev_attach_params *params);
 
 	int (*txrx_pdev_post_attach)(struct cdp_soc_t *soc, uint8_t pdev_id);
 

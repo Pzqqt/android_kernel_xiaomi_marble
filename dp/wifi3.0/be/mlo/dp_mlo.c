@@ -113,3 +113,17 @@ void dp_soc_mlo_fill_params(struct dp_soc *soc,
 	be_soc->ml_ctxt = cdp_mlo_ctx_to_dp(params->ml_context);
 	be_soc->mlo_enabled = 1;
 }
+
+void dp_pdev_mlo_fill_params(struct dp_pdev *pdev,
+			     struct cdp_pdev_attach_params *params)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(pdev->soc);
+	struct dp_pdev_be *be_pdev = dp_get_be_pdev_from_dp_pdev(pdev);
+
+	if (!be_soc->mlo_enabled) {
+		dp_info("MLO not enabled on SOC");
+		return;
+	}
+
+	be_pdev->mlo_link_id = params->mlo_link_id;
+}
