@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -461,7 +462,8 @@ QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-wlan_reg_get_6g_power_type_for_ctry(uint8_t *ap_ctry, uint8_t *sta_ctry,
+wlan_reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *ap_ctry, uint8_t *sta_ctry,
 				    enum reg_6g_ap_type *pwr_type_6g,
 				    bool *ctry_code_match);
 #endif
