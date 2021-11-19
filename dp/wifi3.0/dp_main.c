@@ -4984,12 +4984,15 @@ static inline QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 					      qdf_device_t qdf_osdev,
 					      uint8_t pdev_id)
 {
+	qdf_size_t pdev_context_size;
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = NULL;
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
 	int nss_cfg;
 
-	pdev = dp_context_alloc_mem(soc, DP_PDEV_TYPE, sizeof(*pdev));
+	pdev_context_size =
+		soc->arch_ops.txrx_get_context_size(DP_CONTEXT_TYPE_PDEV);
+	pdev = dp_context_alloc_mem(soc, DP_PDEV_TYPE, pdev_context_size);
 	if (!pdev) {
 		dp_init_err("%pK: DP PDEV memory allocation failed",
 			    soc);
