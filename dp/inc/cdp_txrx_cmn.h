@@ -253,8 +253,7 @@ cdp_pdev_attach_target(ol_txrx_soc_handle soc, uint8_t pdev_id)
 }
 
 static inline QDF_STATUS cdp_pdev_attach
-	(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev, qdf_device_t osdev,
-	 uint8_t pdev_id)
+	(ol_txrx_soc_handle soc, struct cdp_pdev_attach_params *params)
 {
 	if (!soc || !soc->ops) {
 		dp_cdp_debug("Invalid Instance:");
@@ -266,8 +265,7 @@ static inline QDF_STATUS cdp_pdev_attach
 	    !soc->ops->cmn_drv_ops->txrx_pdev_attach)
 		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->cmn_drv_ops->txrx_pdev_attach(soc, htc_pdev, osdev,
-						       pdev_id);
+	return soc->ops->cmn_drv_ops->txrx_pdev_attach(soc, params);
 }
 
 /**

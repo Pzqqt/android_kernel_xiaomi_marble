@@ -210,11 +210,15 @@ struct dp_soc_be {
  * struct dp_pdev_be - Extended DP pdev for BE targets
  * @pdev: dp pdev structure
  * @monitor_pdev_be: BE specific monitor object
+ * @mlo_link_id: MLO link id for PDEV
  */
 struct dp_pdev_be {
 	struct dp_pdev pdev;
 #if !defined(DISABLE_MON_CONFIG)
 	struct dp_mon_pdev_be *monitor_pdev_be;
+#endif
+#ifdef WLAN_MLO_MULTI_CHIP
+	uint8_t mlo_link_id;
 #endif
 };
 
@@ -539,6 +543,12 @@ uint32_t dp_desc_pool_get_cmem_base(uint8_t chip_id, uint8_t desc_pool_id,
 static inline
 void dp_soc_mlo_fill_params(struct dp_soc *soc,
 			    struct cdp_soc_attach_params *params)
+{
+}
+
+static inline
+void dp_pdev_mlo_fill_params(struct dp_pdev *pdev,
+			     struct cdp_pdev_attach_params *params)
 {
 }
 #endif

@@ -80,4 +80,14 @@ struct dp_mlo_ctxt *cdp_mlo_ctx_to_dp(struct cdp_mlo_ctxt *mlo_ctxt)
  */
 void dp_soc_mlo_fill_params(struct dp_soc *soc,
 			    struct cdp_soc_attach_params *params);
+
+/**
+ * dp_pdev_mlo_fill_params() - update PDEV mlo params
+ * @pdev: DP PDEV
+ * @params: PDEV attach params
+ *
+ * Return: struct dp_soc pointer
+ */
+void dp_pdev_mlo_fill_params(struct dp_pdev *pdev,
+			     struct cdp_pdev_attach_params *params);
 #endif /* __DP_MLO_H */

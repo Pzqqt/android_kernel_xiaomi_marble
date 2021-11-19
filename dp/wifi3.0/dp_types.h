@@ -1608,7 +1608,8 @@ struct dp_arch_ops {
 	QDF_STATUS (*txrx_soc_srng_init)(struct dp_soc *soc);
 	void (*txrx_soc_srng_deinit)(struct dp_soc *soc);
 	void (*txrx_soc_srng_free)(struct dp_soc *soc);
-	QDF_STATUS (*txrx_pdev_attach)(struct dp_pdev *pdev);
+	QDF_STATUS (*txrx_pdev_attach)(struct dp_pdev *pdev,
+				       struct cdp_pdev_attach_params *params);
 	QDF_STATUS (*txrx_pdev_detach)(struct dp_pdev *pdev);
 	QDF_STATUS (*txrx_vdev_attach)(struct dp_soc *soc,
 				       struct dp_vdev *vdev);
