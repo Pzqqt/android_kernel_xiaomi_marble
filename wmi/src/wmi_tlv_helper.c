@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -588,9 +589,11 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 		/* Validating Tag order */
 		if (curr_tlv_tag != attr_struct_ptr.tag_id) {
 			wmi_tlv_print_error
-				("%s: ERROR: TLV has wrong tag in order for Cmd=0x%x. Given=%d, Expected=%d.\n",
+				("%s: ERROR: TLV has wrong tag in order for Cmd=0x%x. Given=%d, Expected=%d, total_tlv=%d, remaining tlv=%d.\n",
 				__func__, wmi_cmd_event_id, curr_tlv_tag,
-				attr_struct_ptr.tag_id);
+				attr_struct_ptr.tag_id,
+				attr_struct_ptr.cmd_num_tlv,
+				remaining_expected_tlvs);
 			goto Error_wmitlv_check_and_pad_tlvs;
 		}
 
