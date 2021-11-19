@@ -2448,11 +2448,8 @@ cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data)
 	QDF_STATUS status;
 
 	status = cm_roam_pmkid_req_ind(data->psoc, data->vdev_id, data);
-	if (QDF_IS_STATUS_ERROR(status)) {
+	if (QDF_IS_STATUS_ERROR(status))
 		mlme_err("Pmkid request failed");
-		qdf_mem_free(data);
-		return status;
-	}
 
 	return status;
 }

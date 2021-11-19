@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -513,7 +514,8 @@ target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 	qdf_status = roam_rx_ops->roam_pmkid_request_event_rx(data);
 
 done:
-	qdf_mem_free(data);
+	if (data)
+		qdf_mem_free(data);
 	return qdf_status_to_os_return(qdf_status);
 }
 
