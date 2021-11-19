@@ -574,10 +574,10 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		d_vpr_h("%s: debug bridge release failed\n", __func__);
 
-	/* power down process */
-	rc = __disable_regulator_iris2(core, "iris-ctl");
+	/* Turn off MVP MVS0C core clock */
+	rc = __disable_unprepare_clock_iris2(core, "core_clk");
 	if (rc) {
-		d_vpr_e("%s: disable regulator iris-ctl failed\n", __func__);
+		d_vpr_e("%s: disable unprepare core_clk failed\n", __func__);
 		rc = 0;
 	}
 
@@ -588,17 +588,23 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		rc = 0;
 	}
 
-	/* Turn off MVP MVS0C core clock */
-	rc = __disable_unprepare_clock_iris2(core, "core_clk");
-	if (rc) {
-		d_vpr_e("%s: disable unprepare core_clk failed\n", __func__);
-		rc = 0;
-	}
-
 	/* Turn off MVP MVS0 SRC clock */
 	rc = __disable_unprepare_clock_iris2(core, "video_cc_mvs0_clk_src");
 	if (rc) {
 		d_vpr_e("%s: disable unprepare video_cc_mvs0_clk_src failed\n", __func__);
+		rc = 0;
+	}
+
+	rc = call_venus_op(core, reset_ahb2axi_bridge, core);
+	if (rc) {
+		d_vpr_e("%s: reset ahb2axi bridge failed\n", __func__);
+		rc = 0;
+	}
+
+	/* power down process */
+	rc = __disable_regulator_iris2(core, "iris-ctl");
+	if (rc) {
+		d_vpr_e("%s: disable regulator iris-ctl failed\n", __func__);
 		rc = 0;
 	}
 
