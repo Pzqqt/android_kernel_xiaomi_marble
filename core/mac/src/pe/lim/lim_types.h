@@ -427,8 +427,6 @@ QDF_STATUS lim_check_assoc_req(struct mac_context *mac_ctx,
 /**
  * lim_proc_assoc_req_frm_cmn() - process assoc req frame
  * @mac_ctx: pointer to Global MAC structure
- * @frm_body: frame body
- * @frame_len: frame len
  * @sub_type: Assoc(=0) or Reassoc(=1) Requestframe
  * @session: pointer to pe session entry
  * @sa: Mac address of requesting peer
@@ -438,36 +436,11 @@ QDF_STATUS lim_check_assoc_req(struct mac_context *mac_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS lim_proc_assoc_req_frm_cmn(struct mac_context *mac_ctx,
-				      uint8_t *frm_body, uint32_t frame_len,
 				      uint8_t sub_type,
 				      struct pe_session *session,
 				      tSirMacAddr sa,
 				      tpSirAssocReq assoc_req,
 				      uint16_t peer_aid);
-
-/**
- * lim_mlo_partner_assoc_req_parse() - checks for error in assoc req frame
- *                                     parsing for mlo partner link
- * @mac_ctx: pointer to Global MAC structure
- * @sa: Mac address of requesting peer
- * @session: pointer to pe session entry
- * @assoc_req: pointer to ASSOC/REASSOC Request frame
- * @sub_type: Assoc(=0) or Reassoc(=1) Requestframe
- * @frm_body: frame body
- * @frame_len: frame len
- *
- * Checks for error in frame parsing
- *
- * Return: QDF_STATUS
- */
-#ifdef WLAN_FEATURE_11BE_MLO
-QDF_STATUS lim_mlo_partner_assoc_req_parse(struct mac_context *mac_ctx,
-					   tSirMacAddr sa,
-					   struct pe_session *session,
-					   tpSirAssocReq assoc_req,
-					   uint8_t sub_type, uint8_t *frm_body,
-					   uint32_t frame_len);
-#endif
 
 void lim_process_assoc_req_frame(struct mac_context *, uint8_t *, uint8_t, struct pe_session *);
 

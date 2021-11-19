@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1330,44 +1331,6 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
- * sir_convert_mlo_reassoc_req_frame2_struct() - convert mlo reassoc req from
- *                                               frame to struct for given
- *                                               link id
- * @mac_ctx: Global MAC context
- * @pFrame: mlo reassoc req frame body
- * @nFrame: mlo reassoc req frame length
- * @pAssocReq: pointer to REASSOC Request frame
- * @link_id: link id
- *
- * Return: QDF_STATUS_SUCCESS of no error
- */
-QDF_STATUS
-sir_convert_mlo_reassoc_req_frame2_struct(struct mac_context *mac,
-					  uint8_t *pFrame,
-					  uint32_t nFrame,
-					  tpSirAssocReq pAssocReq,
-					  uint8_t link_id);
-
-/**
- * sir_convert_mlo_assoc_req_frame2_struct() - convert mlo assoc req from
- *                                             frame to struct for given
- *                                             link id
- * @mac_ctx: Global MAC context
- * @pFrame: mlo assoc req frame body
- * @nFrame: mlo assoc req frame length
- * @pAssocReq: pointer to ASSOC Request frame
- * @link_id: link id
- *
- * Return: QDF_STATUS_SUCCESS of no error
- */
-QDF_STATUS
-sir_convert_mlo_assoc_req_frame2_struct(struct mac_context *mac,
-					uint8_t *pFrame,
-					uint32_t nFrame,
-					tpSirAssocReq pAssocReq,
-					uint8_t link_id);
-
-/**
  * populate_dot11f_assoc_rsp_mlo_ie() - populate mlo ie for assoc response
  * @mac_ctx: Global MAC context
  * @session: PE session
@@ -1419,26 +1382,6 @@ void populate_dot11f_rnr_tbtt_info_10(struct mac_context *mac_ctx,
 				      tDot11fIEreduced_neighbor_report *dot11f);
 
 #else
-static inline QDF_STATUS
-sir_convert_mlo_reassoc_req_frame2_struct(struct mac_context *mac,
-					  uint8_t *pFrame,
-					  uint32_t nFrame,
-					  tpSirAssocReq pAssocReq,
-					  uint8_t link_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-sir_convert_mlo_assoc_req_frame2_struct(struct mac_context *mac,
-					uint8_t *pFrame,
-					uint32_t nFrame,
-					tpSirAssocReq pAssocReq,
-					uint8_t link_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static inline QDF_STATUS
 populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 				 struct pe_session *session,
