@@ -702,4 +702,18 @@ struct rx_desc_pool *dp_rx_get_mon_desc_pool(struct dp_soc *soc,
 	return &soc->rx_desc_buf[pdev_id];
 }
 
+/**
+ * dp_rx_process_peer_based_pktlog() - Process Rx pktlog if peer based
+ *                                     filtering enabled
+ * @soc: core txrx main context
+ * @ppdu_info: Structure for rx ppdu info
+ * @status_nbuf: Qdf nbuf abstraction for linux skb
+ * @pdev_id: mac_id/pdev_id correspondinggly for MCL and WIN
+ *
+ * Return: none
+ */
+void
+dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
+				struct hal_rx_ppdu_info *ppdu_info,
+				qdf_nbuf_t status_nbuf, uint32_t pdev_id);
 #endif /* _DP_RX_MON_H_ */

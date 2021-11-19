@@ -36,6 +36,10 @@
 #include "dp_ratetable.h"
 #endif
 
+#ifndef IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK
+#define IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK 0xe0
+#endif
+
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
 void
 dp_rx_mon_handle_cfr_mu_info(struct dp_pdev *pdev,
@@ -1403,6 +1407,50 @@ dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
 }
 #endif /* QCA_MCOPY_SUPPORT */
 
+QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
+					 uint32_t mac_id,
+					 qdf_nbuf_t mpdu)
+{
+	uint32_t event, msdu_timestamp = 0;
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
+	void *data;
+	struct ieee80211_frame *wh;
+	uint8_t type, subtype;
+	struct dp_mon_pdev *mon_pdev;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	mon_pdev = pdev->monitor_pdev;
+
+	if (mon_pdev->rx_pktlog_cbf) {
+		if (qdf_nbuf_get_nr_frags(mpdu))
+			data = qdf_nbuf_get_frag_addr(mpdu, 0);
+		else
+			data = qdf_nbuf_data(mpdu);
+
+		/* CBF logging required, doesn't matter if it is a full mode
+		 * or lite mode.
+		 * Need to look for mpdu with:
+		 * TYPE = ACTION, SUBTYPE = NO ACK in the header
+		 */
+		event = WDI_EVENT_RX_CBF;
+
+		wh = (struct ieee80211_frame *)data;
+		type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+		subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+		if (type == IEEE80211_FC0_TYPE_MGT &&
+		    subtype == IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK) {
+			msdu_timestamp = mon_pdev->ppdu_info.rx_status.tsft;
+			dp_rx_populate_cbf_hdr(soc,
+					       mac_id, event,
+					       mpdu,
+					       msdu_timestamp);
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 			     qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
 {
@@ -1549,4 +1597,51 @@ allocate_dummy_msdu_fail:
 
 mon_deliver_non_std_fail:
 	return QDF_STATUS_E_INVAL;
+}
+
+/**
+ * dp_rx_process_peer_based_pktlog() - Process Rx pktlog if peer based
+ *                                     filtering enabled
+ * @soc: core txrx main context
+ * @ppdu_info: Structure for rx ppdu info
+ * @status_nbuf: Qdf nbuf abstraction for linux skb
+ * @pdev_id: mac_id/pdev_id correspondinggly for MCL and WIN
+ *
+ * Return: none
+ */
+void
+dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
+				struct hal_rx_ppdu_info *ppdu_info,
+				qdf_nbuf_t status_nbuf, uint32_t pdev_id)
+{
+	struct dp_peer *peer;
+	struct mon_rx_user_status *rx_user_status;
+	uint32_t num_users = ppdu_info->com_info.num_users;
+	uint16_t sw_peer_id;
+
+	/* Sanity check for num_users */
+	if (!num_users)
+		return;
+
+	qdf_assert_always(num_users <= CDP_MU_MAX_USERS);
+	rx_user_status = &ppdu_info->rx_user_status[num_users - 1];
+
+	sw_peer_id = rx_user_status->sw_peer_id;
+
+	peer = dp_peer_get_ref_by_id(soc, sw_peer_id,
+				     DP_MOD_ID_RX_PPDU_STATS);
+
+	if (!peer)
+		return;
+
+	if ((peer->peer_id != HTT_INVALID_PEER) &&
+	    (peer->peer_based_pktlog_filter)) {
+		dp_wdi_event_handler(
+				     WDI_EVENT_RX_DESC, soc,
+				     status_nbuf,
+				     peer->peer_id,
+				     WDI_NO_VAL, pdev_id);
+	}
+	dp_peer_unref_delete(peer,
+			     DP_MOD_ID_RX_PPDU_STATS);
 }
