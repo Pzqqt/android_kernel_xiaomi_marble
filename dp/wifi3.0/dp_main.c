@@ -6800,6 +6800,49 @@ QDF_STATUS dp_peer_mlo_setup(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/*
+ * dp_mlo_peer_authorize() - authorize MLO peer
+ * @soc: soc handle
+ * @peer: pointer to link peer
+ *
+ * return void
+ */
+static void dp_mlo_peer_authorize(struct dp_soc *soc,
+				  struct dp_peer *peer)
+{
+	int i;
+	struct dp_peer *link_peer = NULL;
+	struct dp_peer *mld_peer = peer->mld_peer;
+	struct dp_mld_link_peers link_peers_info;
+
+	if (!mld_peer)
+		return;
+
+	/* get link peers with reference */
+	dp_get_link_peers_ref_from_mld_peer(soc, mld_peer,
+					    &link_peers_info,
+					    DP_MOD_ID_CDP);
+
+	for (i = 0; i < link_peers_info.num_links; i++) {
+		link_peer = link_peers_info.link_peers[i];
+
+		if (!link_peer->authorize) {
+			dp_release_link_peers_ref(&link_peers_info,
+						  DP_MOD_ID_CDP);
+			mld_peer->authorize = false;
+			return;
+		}
+	}
+
+	/* if we are here all link peers are authorized,
+	 * authorize ml_peer also
+	 */
+	mld_peer->authorize = true;
+
+	/* release link peers reference */
+	dp_release_link_peers_ref(&link_peers_info, DP_MOD_ID_CDP);
+}
 #endif
 
 /*
@@ -7402,6 +7445,7 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		if (!peer->authorize)
 			dp_peer_flush_frags(soc_hdl, vdev_id, peer_mac);
 
+		dp_mlo_peer_authorize(soc, peer);
 		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 	}
 

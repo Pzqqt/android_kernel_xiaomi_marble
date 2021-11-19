@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1410,6 +1411,12 @@ void dp_link_peer_del_mld_peer(struct dp_peer *link_peer)
 static inline
 void dp_peer_mlo_delete(struct dp_soc *soc,
 			struct dp_peer *peer)
+{
+}
+
+static inline
+void dp_mlo_peer_authorize(struct dp_soc *soc,
+			   struct dp_peer *link_peer)
 {
 }
 #endif /* WLAN_FEATURE_11BE_MLO */
