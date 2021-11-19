@@ -3717,6 +3717,7 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 	hw_mode_resp->cfgd_hw_mode_index = wmi_event->cfgd_hw_mode_index;
 	hw_mode_resp->num_vdev_mac_entries = wmi_event->num_vdev_mac_entries;
 
+	wma->set_hw_mode_resp_status = wmi_event->status;
 	wma_debug("status:%d cfgd_hw_mode_index:%d num_vdev_mac_entries:%d",
 			wmi_event->status,
 			wmi_event->cfgd_hw_mode_index,

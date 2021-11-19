@@ -903,6 +903,7 @@ struct wma_wlm_stats_data {
  * @wma_fw_time_sync_timer: timer used for firmware time sync
  * * @fw_therm_throt_support: FW Supports thermal throttling?
  * @eht_cap: 802.11be capabilities
+ * @set_hw_mode_resp_status: Set HW mode response status
  *
  * This structure is the global wma context.  It contains global wma
  * module parameters and handles of other modules.
@@ -1037,6 +1038,7 @@ typedef struct {
 	qdf_atomic_t go_num_clients_connected;
 	qdf_wake_lock_t sap_d3_wow_wake_lock;
 	qdf_wake_lock_t go_d3_wow_wake_lock;
+	enum set_hw_mode_status set_hw_mode_resp_status;
 } t_wma_handle, *tp_wma_handle;
 
 /**
