@@ -21,6 +21,9 @@
 
 #include <dp_types.h>
 #include <hal_be_tx.h>
+#ifdef WLAN_MLO_MULTI_CHIP
+#include "mlo/dp_mlo.h"
+#endif
 
 /* maximum number of entries in one page of secondary page table */
 #define DP_CC_SPT_PAGE_MAX_ENTRIES 512
@@ -173,8 +176,8 @@ struct dp_tx_bank_profile {
  * @rx_cc_ctx: Cookie conversion context for rx desc pools
  * @monitor_soc_be: BE specific monitor object
  * @mlo_enabled: Flag to indicate MLO is enabled or not
- * @ml_ctxt: pointer to global ml_context
  * @mlo_chip_id: MLO chip_id
+ * @ml_ctxt: pointer to global ml_context
  */
 struct dp_soc_be {
 	struct dp_soc soc;
@@ -195,8 +198,8 @@ struct dp_soc_be {
 #endif
 #ifdef WLAN_MLO_MULTI_CHIP
 	uint8_t mlo_enabled;
-	struct dp_mlo_context *ml_context;
 	uint8_t mlo_chip_id;
+	struct dp_mlo_ctxt *ml_ctxt;
 #endif
 };
 
@@ -531,4 +534,12 @@ uint32_t dp_desc_pool_get_cmem_base(uint8_t chip_id, uint8_t desc_pool_id,
 	}
 	return 0;
 }
+
+#ifndef WLAN_MLO_MULTI_CHIP
+static inline
+void dp_soc_mlo_fill_params(struct dp_soc *soc,
+			    struct cdp_soc_attach_params *params)
+{
+}
+#endif
 #endif

@@ -912,7 +912,8 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_get_reo_qdesc_size)(uint32_t ba_window_size, int tid);
 
 	void (*hal_set_link_desc_addr)(void *desc, uint32_t cookie,
-				       qdf_dma_addr_t link_desc_paddr);
+				       qdf_dma_addr_t link_desc_paddr,
+				       uint8_t bm_id);
 	void (*hal_tx_init_data_ring)(hal_soc_handle_t hal_soc_hdl,
 				      hal_ring_handle_t hal_ring_hdl);
 	void* (*hal_rx_msdu_ext_desc_info_get_ptr)(void *msdu_details_ptr);
@@ -1012,6 +1013,7 @@ struct hal_hw_txrx_ops {
 					    void *st_handle,
 					    uint32_t tlv, int *num_ref);
 	uint8_t (*hal_get_tlv_hdr_size)(void);
+	uint8_t (*hal_get_idle_link_bm_id)(uint8_t chip_id);
 };
 
 /**

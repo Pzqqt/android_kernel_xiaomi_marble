@@ -17,7 +17,6 @@
 #define __DP_MLO_H
 
 #include <dp_types.h>
-#include <dp_be.h>
 
 /* Max number of chips that can participate in MLO */
 #define DP_MAX_MLO_CHIPS 3
@@ -71,4 +70,14 @@ struct dp_mlo_ctxt *cdp_mlo_ctx_to_dp(struct cdp_mlo_ctxt *mlo_ctxt)
 {
 	return (struct dp_mlo_ctxt *)mlo_ctxt;
 }
+
+/**
+ * dp_soc_mlo_fill_params() - update SOC mlo params
+ * @soc: DP soc
+ * @params: soc attach params
+ *
+ * Return: struct dp_soc pointer
+ */
+void dp_soc_mlo_fill_params(struct dp_soc *soc,
+			    struct cdp_soc_attach_params *params);
 #endif /* __DP_MLO_H */

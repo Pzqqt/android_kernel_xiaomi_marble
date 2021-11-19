@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -142,7 +143,8 @@ void hal_reo_setup_generic_be(struct hal_soc *soc, void *reoparams)
 }
 
 void hal_set_link_desc_addr_be(void *desc, uint32_t cookie,
-			       qdf_dma_addr_t link_desc_paddr)
+			       qdf_dma_addr_t link_desc_paddr,
+			       uint8_t bm_id)
 {
 	uint32_t *buf_addr = (uint32_t *)desc;
 
@@ -151,7 +153,7 @@ void hal_set_link_desc_addr_be(void *desc, uint32_t cookie,
 	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO, BUFFER_ADDR_39_32,
 			   (uint64_t)link_desc_paddr >> 32);
 	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO, RETURN_BUFFER_MANAGER,
-			   WBM_IDLE_DESC_LIST);
+			   bm_id);
 	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO, SW_BUFFER_COOKIE,
 			   cookie);
 }

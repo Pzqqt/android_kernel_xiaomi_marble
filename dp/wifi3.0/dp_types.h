@@ -1599,7 +1599,8 @@ enum dp_context_type {
  */
 struct dp_arch_ops {
 	/* INIT/DEINIT Arch Ops */
-	QDF_STATUS (*txrx_soc_attach)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_soc_attach)(struct dp_soc *soc,
+				      struct cdp_soc_attach_params *params);
 	QDF_STATUS (*txrx_soc_detach)(struct dp_soc *soc);
 	QDF_STATUS (*txrx_soc_init)(struct dp_soc *soc);
 	QDF_STATUS (*txrx_soc_deinit)(struct dp_soc *soc);
@@ -2213,6 +2214,8 @@ struct dp_soc {
 	/* flag to indicate vote for runtime_pm for high tput castt*/
 	qdf_atomic_t rtpm_high_tput_flag;
 #endif
+	/* Buffer manager ID for idle link descs */
+	uint8_t idle_link_bm_id;
 	qdf_atomic_t ref_count;
 };
 

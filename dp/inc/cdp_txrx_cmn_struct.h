@@ -2643,4 +2643,27 @@ struct cdp_scan_spcl_vap_stats {
 	uint64_t rx_data_pkts;
 };
 #endif
+
+/**
+ * cdp_soc_attach_params
+ *
+ * @hif_handle: Opaque HIF handle
+ * @htc_handle: Opaque HTC handle
+ * @qdf_osdev: QDF device
+ * @ol_ops: Offload Operations
+ * @device_id: Device ID
+ * @ml_context: DP ML object conext
+ * @mlo_chip_id: MLO chip id, for legacy SOCs chip_id need to 0
+ * @mlo_enabled: MLO enable bit
+ */
+struct cdp_soc_attach_params {
+	struct hif_opaque_softc *hif_handle;
+	HTC_HANDLE htc_handle;
+	qdf_device_t qdf_osdev;
+	struct ol_if_ops *ol_ops;
+	uint16_t device_id;
+	struct cdp_mlo_ctxt *ml_context;
+	uint8_t mlo_chip_id;
+	uint8_t mlo_enabled;
+};
 #endif
