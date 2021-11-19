@@ -2213,6 +2213,7 @@ struct dp_soc {
 	/* flag to indicate vote for runtime_pm for high tput castt*/
 	qdf_atomic_t rtpm_high_tput_flag;
 #endif
+	qdf_atomic_t ref_count;
 };
 
 #ifdef IPA_OFFLOAD

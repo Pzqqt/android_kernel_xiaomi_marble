@@ -172,6 +172,9 @@ struct dp_tx_bank_profile {
  * @tx_cc_ctx: Cookie conversion context for tx desc pools
  * @rx_cc_ctx: Cookie conversion context for rx desc pools
  * @monitor_soc_be: BE specific monitor object
+ * @mlo_enabled: Flag to indicate MLO is enabled or not
+ * @ml_ctxt: pointer to global ml_context
+ * @mlo_chip_id: MLO chip_id
  */
 struct dp_soc_be {
 	struct dp_soc soc;
@@ -189,6 +192,11 @@ struct dp_soc_be {
 #endif
 #if !defined(DISABLE_MON_CONFIG)
 	struct dp_mon_soc_be *monitor_soc_be;
+#endif
+#ifdef WLAN_MLO_MULTI_CHIP
+	uint8_t mlo_enabled;
+	struct dp_mlo_context *ml_context;
+	uint8_t mlo_chip_id;
 #endif
 };
 
