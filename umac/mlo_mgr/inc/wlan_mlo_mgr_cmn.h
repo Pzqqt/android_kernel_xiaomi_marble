@@ -287,6 +287,7 @@ struct hw_link_id_iterator {
 struct wlan_objmgr_pdev *
 wlan_mlo_get_pdev_by_hw_link_id(uint16_t hw_link_id,
 				wlan_objmgr_ref_dbgid refdbgid);
+
 #else
 static inline struct wlan_objmgr_pdev *
 wlan_mlo_get_pdev_by_hw_link_id(uint16_t hw_link_id,

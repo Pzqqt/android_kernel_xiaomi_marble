@@ -79,6 +79,7 @@ struct mlo_setup_info {
  * @msgq_ctx: Context switch mgr
  * @mlo_is_force_primary_umac: Force Primary UMAC enable
  * @mlo_forced_primary_umac_id: Force Primary UMAC ID
+ * @dp_handle: pointer to DP ML context
  */
 struct mlo_mgr_context {
 #ifdef WLAN_MLO_USE_SPINLOCK
@@ -98,6 +99,7 @@ struct mlo_mgr_context {
 	struct ctxt_switch_mgr *msgq_ctx;
 	bool mlo_is_force_primary_umac;
 	uint8_t mlo_forced_primary_umac_id;
+	void *dp_handle;
 };
 
 /*
