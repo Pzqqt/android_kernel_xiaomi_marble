@@ -2488,6 +2488,45 @@ struct dp_soc_srngs_state {
 	TAILQ_ENTRY(dp_soc_srngs_state) list_elem;
 };
 
+#if defined(QCA_WIFI_QCN9224) && defined(WLAN_FEATURE_11BE_MLO)
+/* struct dp_mlo_sync_timestamp - PDEV level data structure for storing
+ * MLO timestamp received via HTT msg.
+ * msg_type: This would be set to HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND
+ * pdev_id: pdev_id
+ * chip_id: chip_id
+ * mac_clk_freq: mac clock frequency of the mac HW block in MHz
+ * sync_tstmp_lo_us: lower 32 bits of the WLAN global time stamp (in us) at
+ *                   which last sync interrupt was received
+ * sync_tstmp_hi_us: upper 32 bits of the WLAN global time stamp (in us) at
+ *                   which last sync interrupt was received
+ * mlo_offset_lo_us: lower 32 bits of the MLO time stamp offset in us
+ * mlo_offset_hi_us: upper 32 bits of the MLO time stamp offset in us
+ * mlo_offset_clks:  MLO time stamp offset in clock ticks for sub us
+ * mlo_comp_us:      MLO time stamp compensation applied in us
+ * mlo_comp_clks:    MLO time stamp compensation applied in clock ticks
+ *                   for sub us resolution
+ * mlo_comp_timer:   period of MLO compensation timer at which compensation
+ *                   is applied, in us
+ */
+struct dp_mlo_sync_timestamp {
+	uint32_t msg_type:8,
+		 pdev_id:2,
+		 chip_id:2,
+		 rsvd1:4,
+		 mac_clk_freq:16;
+	uint32_t sync_tstmp_lo_us;
+	uint32_t sync_tstmp_hi_us;
+	uint32_t mlo_offset_lo_us;
+	uint32_t mlo_offset_hi_us;
+	uint32_t mlo_offset_clks;
+	uint32_t mlo_comp_us:16,
+		 mlo_comp_clks:10,
+		 rsvd2:6;
+	uint32_t mlo_comp_timer:22,
+		 rsvd3:10;
+};
+#endif
+
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/**
@@ -2727,6 +2766,9 @@ struct dp_pdev {
 	} bkp_stats;
 #ifdef WIFI_MONITOR_SUPPORT
 	struct dp_mon_pdev *monitor_pdev;
+#endif
+#if defined(QCA_WIFI_QCN9224) && defined(WLAN_FEATURE_11BE_MLO)
+	struct dp_mlo_sync_timestamp timestamp;
 #endif
 };
 

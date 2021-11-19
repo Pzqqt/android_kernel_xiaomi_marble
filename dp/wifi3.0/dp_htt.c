@@ -2567,6 +2567,61 @@ static void dp_htt_mlo_peer_unmap_handler(struct htt_soc *soc,
 	mlo_peer_id = HTT_RX_MLO_PEER_UNMAP_MLO_PEER_ID_GET(*msg_word);
 	dp_rx_mlo_peer_unmap_handler(soc->dp_soc, mlo_peer_id);
 }
+
+static void
+dp_rx_mlo_timestamp_ind_handler(struct dp_soc *soc,
+				uint32_t *msg_word)
+{
+	uint8_t pdev_id;
+	uint8_t target_pdev_id;
+	struct dp_pdev *pdev;
+
+	if (!soc)
+		return;
+
+	target_pdev_id = HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_GET(*msg_word);
+	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(soc,
+							 target_pdev_id);
+
+	if (pdev_id >= MAX_PDEV_CNT) {
+		dp_htt_debug("%pK: pdev id %d is invalid", soc, pdev_id);
+		return;
+	}
+
+	pdev = (struct dp_pdev *)soc->pdev_list[pdev_id];
+
+	if (!pdev) {
+		dp_err("Invalid pdev");
+		return;
+	}
+	dp_wdi_event_handler(WDI_EVENT_MLO_TSTMP, soc,
+			     msg_word, HTT_INVALID_PEER, WDI_NO_VAL,
+			     pdev_id);
+
+	qdf_spin_lock_bh(&soc->htt_stats.lock);
+	pdev->timestamp.msg_type =
+		HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_GET(*msg_word);
+	pdev->timestamp.pdev_id = pdev_id;
+	pdev->timestamp.chip_id =
+		HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_GET(*msg_word);
+	pdev->timestamp.mac_clk_freq =
+		HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_GET(*msg_word);
+	pdev->timestamp.sync_tstmp_lo_us = *(msg_word + 1);
+	pdev->timestamp.sync_tstmp_hi_us = *(msg_word + 2);
+	pdev->timestamp.mlo_offset_lo_us = *(msg_word + 3);
+	pdev->timestamp.mlo_offset_hi_us = *(msg_word + 4);
+	pdev->timestamp.mlo_offset_clks  = *(msg_word + 5);
+	pdev->timestamp.mlo_comp_us =
+	HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_GET(
+							*(msg_word + 6));
+	pdev->timestamp.mlo_comp_clks =
+	HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_GET(
+							*(msg_word + 6));
+	pdev->timestamp.mlo_comp_timer =
+	HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_GET(
+							*(msg_word + 7));
+	qdf_spin_unlock_bh(&soc->htt_stats.lock);
+}
 #else
 static void dp_htt_mlo_peer_map_handler(struct htt_soc *soc,
 					uint32_t *msg_word)
@@ -2576,6 +2631,13 @@ static void dp_htt_mlo_peer_map_handler(struct htt_soc *soc,
 
 static void dp_htt_mlo_peer_unmap_handler(struct htt_soc *soc,
 					 uint32_t *msg_word)
+{
+	qdf_assert_always(0);
+}
+
+static void
+dp_rx_mlo_timestamp_ind_handler(void *soc_handle,
+				uint32_t *msg_word)
 {
 	qdf_assert_always(0);
 }
@@ -2983,6 +3045,11 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	case HTT_T2H_MSG_TYPE_MLO_RX_PEER_UNMAP:
 	{
 		dp_htt_mlo_peer_unmap_handler(soc, msg_word);
+		break;
+	}
+	case HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND:
+	{
+		dp_rx_mlo_timestamp_ind_handler(soc->dp_soc, msg_word);
 		break;
 	}
 	default:

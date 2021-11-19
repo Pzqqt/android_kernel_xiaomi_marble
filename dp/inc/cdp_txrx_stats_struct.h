@@ -569,6 +569,9 @@ enum WDI_EVENT {
 	WDI_EVENT_HOST_SW_EVENT,
 #ifdef QCA_WIFI_QCN9224
 	WDI_EVENT_HYBRID_TX,
+#ifdef WLAN_FEATURE_11BE_MLO
+	WDI_EVENT_MLO_TSTMP,
+#endif
 #endif
 	/* End of new event items */
 	WDI_EVENT_LAST
