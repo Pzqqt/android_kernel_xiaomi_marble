@@ -43,6 +43,9 @@
 #endif
 
 #define RX_BUFFER_RESERVATION   0
+#ifdef QCA_WIFI_QCN9224
+#define RX_MON_MIN_HEAD_ROOM   64
+#endif
 
 #define DP_DEFAULT_NOISEFLOOR	(-96)
 

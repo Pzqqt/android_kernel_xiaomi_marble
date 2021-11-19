@@ -145,53 +145,6 @@ dp_send_ack_frame_to_stack(struct dp_soc *soc,
 }
 #endif
 
-/**
-* dp_rx_process_peer_based_pktlog() - Process Rx pktlog if peer based
-* filtering enabled
-* @soc: core txrx main context
-* @ppdu_info: Structure for rx ppdu info
-* @status_nbuf: Qdf nbuf abstraction for linux skb
-* @pdev_id: mac_id/pdev_id correspondinggly for MCL and WIN
-*
-* Return: none
-*/
-static inline void
-dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
-				struct hal_rx_ppdu_info *ppdu_info,
-				qdf_nbuf_t status_nbuf, uint32_t pdev_id)
-{
-	struct dp_peer *peer;
-	struct mon_rx_user_status *rx_user_status;
-	uint32_t num_users = ppdu_info->com_info.num_users;
-	uint16_t sw_peer_id;
-
-	/* Sanity check for num_users */
-	if (!num_users)
-		return;
-
-	qdf_assert_always(num_users <= CDP_MU_MAX_USERS);
-	rx_user_status = &ppdu_info->rx_user_status[num_users - 1];
-
-	sw_peer_id = rx_user_status->sw_peer_id;
-
-	peer = dp_peer_get_ref_by_id(soc, sw_peer_id,
-				     DP_MOD_ID_RX_PPDU_STATS);
-
-	if (!peer)
-		return;
-
-	if ((peer->peer_id != HTT_INVALID_PEER) &&
-	    (peer->peer_based_pktlog_filter)) {
-		dp_wdi_event_handler(
-			WDI_EVENT_RX_DESC, soc,
-			status_nbuf,
-			peer->peer_id,
-			WDI_NO_VAL, pdev_id);
-	}
-	dp_peer_unref_delete(peer,
-			     DP_MOD_ID_RX_PPDU_STATS);
-}
-
 #if defined(HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_M)
 static inline void
 dp_rx_ul_ofdma_ru_size_to_width(
