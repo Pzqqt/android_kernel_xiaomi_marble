@@ -196,6 +196,9 @@ struct cdp_soc_rate_stats_ctx;
 struct dp_rx_fst;
 struct dp_mon_filter;
 struct dp_mon_mpdu;
+#ifdef QCA_WIFI_QCN9224
+struct dp_mon_filter_be;
+#endif
 
 /**
  * enum for DP peer state
