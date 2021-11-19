@@ -453,10 +453,12 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 				   uint8_t pool_id)
 {
 	struct dp_tx_desc_pool_s *tx_desc_pool;
+	struct dp_hw_cookie_conversion_t *cc_ctx;
 	struct dp_soc_be *be_soc;
 	struct dp_spt_page_desc *page_desc;
-	struct dp_spt_page_desc_list *page_desc_list;
 	struct dp_tx_desc_s *tx_desc;
+	uint32_t ppt_idx = 0;
+	uint32_t avail_entry_index = 0;
 
 	if (!num_elem) {
 		dp_err("desc_num 0 !!");
@@ -465,37 +467,31 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
 	tx_desc_pool = &soc->tx_desc[pool_id];
-	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+	cc_ctx  = &be_soc->tx_cc_ctx[pool_id];
 
-	/* allocate SPT pages from page desc pool */
-	page_desc_list->num_spt_pages =
-		dp_cc_spt_page_desc_alloc(be_soc,
-					  &page_desc_list->spt_page_list_head,
-					  &page_desc_list->spt_page_list_tail,
-					  num_elem);
-
-	if (!page_desc_list->num_spt_pages) {
-		dp_err("fail to allocate cookie conversion spt pages");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* put each TX Desc VA to SPT pages and get corresponding ID */
-	page_desc = page_desc_list->spt_page_list_head;
 	tx_desc = tx_desc_pool->freelist;
 	while (tx_desc) {
+		if (avail_entry_index == 0) {
+			if (ppt_idx >= cc_ctx->total_page_num) {
+				dp_alert("insufficient secondary page tables");
+				qdf_assert_always(0);
+			}
+			/* put each TX Desc VA to SPT pages and
+			 * get corresponding ID
+			 */
+			page_desc = &cc_ctx->page_desc_base[ppt_idx++];
+		}
 		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
-					 page_desc->avail_entry_index,
+					 avail_entry_index,
 					 tx_desc);
 		tx_desc->id =
 			dp_cc_desc_id_generate(page_desc->ppt_index,
-					       page_desc->avail_entry_index);
+					       avail_entry_index);
 		tx_desc->pool_id = pool_id;
-		tx_desc = tx_desc->next;
 
-		page_desc->avail_entry_index++;
-		if (page_desc->avail_entry_index >=
-				DP_CC_SPT_PAGE_MAX_ENTRIES)
-			page_desc = page_desc->next;
+		tx_desc = tx_desc->next;
+		avail_entry_index = (avail_entry_index + 1) &
+					DP_CC_SPT_PAGE_MAX_ENTRIES_MASK;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -505,32 +501,18 @@ void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
 			       struct dp_tx_desc_pool_s *tx_desc_pool,
 			       uint8_t pool_id)
 {
-	struct dp_soc_be *be_soc;
 	struct dp_spt_page_desc *page_desc;
-	struct dp_spt_page_desc_list *page_desc_list;
+	struct dp_soc_be *be_soc;
+	int i = 0;
+	struct dp_hw_cookie_conversion_t *cc_ctx;
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
-	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+	cc_ctx  = &be_soc->tx_cc_ctx[pool_id];
 
-	if (!page_desc_list->num_spt_pages) {
-		dp_warn("page_desc_list is empty for pool_id %d", pool_id);
-		return;
-	}
-
-	/* cleanup for each page */
-	page_desc = page_desc_list->spt_page_list_head;
-	while (page_desc) {
-		page_desc->avail_entry_index = 0;
+	for (i = 0; i < cc_ctx->total_page_num; i++) {
+		page_desc = &cc_ctx->page_desc_base[i];
 		qdf_mem_zero(page_desc->page_v_addr, qdf_page_size);
-		page_desc = page_desc->next;
 	}
-
-	/* free pages desc back to pool */
-	dp_cc_spt_page_desc_free(be_soc,
-				 &page_desc_list->spt_page_list_head,
-				 &page_desc_list->spt_page_list_tail,
-				 page_desc_list->num_spt_pages);
-	page_desc_list->num_spt_pages = 0;
 }
 
 #ifdef WLAN_FEATURE_NEAR_FULL_IRQ

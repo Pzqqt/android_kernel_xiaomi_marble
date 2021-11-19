@@ -866,45 +866,47 @@ dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
 			   struct rx_desc_pool *rx_desc_pool,
 			   uint32_t pool_id)
 {
+	struct dp_hw_cookie_conversion_t *cc_ctx;
 	struct dp_soc_be *be_soc;
 	union dp_rx_desc_list_elem_t *rx_desc_elem;
 	struct dp_spt_page_desc *page_desc;
-	struct dp_spt_page_desc_list *page_desc_list;
+	uint32_t ppt_idx = 0;
+	uint32_t avail_entry_index = 0;
 
-	be_soc = dp_get_be_soc_from_dp_soc(soc);
-	page_desc_list = &be_soc->rx_spt_page_desc[pool_id];
-
-	/* allocate SPT pages from page desc pool */
-	page_desc_list->num_spt_pages =
-		dp_cc_spt_page_desc_alloc(be_soc,
-					  &page_desc_list->spt_page_list_head,
-					  &page_desc_list->spt_page_list_tail,
-					  rx_desc_pool->pool_size);
-
-	if (!page_desc_list->num_spt_pages) {
-		dp_err("fail to allocate cookie conversion spt pages");
+	if (!rx_desc_pool->pool_size) {
+		dp_err("desc_num 0 !!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* put each RX Desc VA to SPT pages and get corresponding ID */
-	page_desc = page_desc_list->spt_page_list_head;
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	cc_ctx  = &be_soc->rx_cc_ctx[pool_id];
+
+	page_desc = &cc_ctx->page_desc_base[0];
 	rx_desc_elem = rx_desc_pool->freelist;
 	while (rx_desc_elem) {
-		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
-					 page_desc->avail_entry_index,
-					 &rx_desc_elem->rx_desc);
+		if (avail_entry_index == 0) {
+			if (ppt_idx >= cc_ctx->total_page_num) {
+				dp_alert("insufficient secondary page tables");
+				qdf_assert_always(0);
+			}
+			/* put each RX Desc VA to SPT pages and
+			 * get corresponding ID
+			 */
+			page_desc = &cc_ctx->page_desc_base[ppt_idx++];
+		}
 
+		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
+					 avail_entry_index,
+					 &rx_desc_elem->rx_desc);
 		rx_desc_elem->rx_desc.cookie =
 			dp_cc_desc_id_generate(page_desc->ppt_index,
-					       page_desc->avail_entry_index);
+					       avail_entry_index);
 		rx_desc_elem->rx_desc.pool_id = pool_id;
 		rx_desc_elem->rx_desc.in_use = 0;
 		rx_desc_elem = rx_desc_elem->next;
 
-		page_desc->avail_entry_index++;
-		if (page_desc->avail_entry_index >=
-				DP_CC_SPT_PAGE_MAX_ENTRIES)
-			page_desc = page_desc->next;
+		avail_entry_index = (avail_entry_index + 1) &
+					DP_CC_SPT_PAGE_MAX_ENTRIES_MASK;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -915,29 +917,22 @@ dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
 			   struct rx_desc_pool *rx_desc_pool,
 			   uint32_t pool_id)
 {
+	struct dp_hw_cookie_conversion_t *cc_ctx;
 	struct dp_soc_be *be_soc;
 	struct dp_spt_page_desc *page_desc;
-	struct dp_spt_page_desc_list *page_desc_list;
-	int i;
+	uint32_t ppt_idx = 0;
+	uint32_t avail_entry_index = 0;
+	int i = 0;
 
-	be_soc = dp_get_be_soc_from_dp_soc(soc);
-	page_desc_list = &be_soc->rx_spt_page_desc[pool_id];
-
-	/* allocate SPT pages from page desc pool */
-	page_desc_list->num_spt_pages =
-			dp_cc_spt_page_desc_alloc(
-					be_soc,
-					&page_desc_list->spt_page_list_head,
-					&page_desc_list->spt_page_list_tail,
-					rx_desc_pool->pool_size);
-
-	if (!page_desc_list->num_spt_pages) {
-		dp_err("fail to allocate cookie conversion spt pages");
+	if (!rx_desc_pool->pool_size) {
+		dp_err("desc_num 0 !!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* put each RX Desc VA to SPT pages and get corresponding ID */
-	page_desc = page_desc_list->spt_page_list_head;
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	cc_ctx  = &be_soc->rx_cc_ctx[pool_id];
+
+	page_desc = &cc_ctx->page_desc_base[0];
 	for (i = 0; i <= rx_desc_pool->pool_size - 1; i++) {
 		if (i == rx_desc_pool->pool_size - 1)
 			rx_desc_pool->array[i].next = NULL;
@@ -945,23 +940,29 @@ dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
 			rx_desc_pool->array[i].next =
 				&rx_desc_pool->array[i + 1];
 
-		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
-					 page_desc->avail_entry_index,
-					 &rx_desc_pool->array[i].rx_desc);
+		if (avail_entry_index == 0) {
+			if (ppt_idx >= cc_ctx->total_page_num) {
+				dp_alert("insufficient secondary page tables");
+				qdf_assert_always(0);
+			}
+			/* put each RX Desc VA to SPT pages and
+			 * get corresponding ID
+			 */
+			page_desc = &cc_ctx->page_desc_base[ppt_idx++];
+		}
 
+		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
+					 avail_entry_index,
+					 &rx_desc_pool->array[i].rx_desc);
 		rx_desc_pool->array[i].rx_desc.cookie =
 			dp_cc_desc_id_generate(page_desc->ppt_index,
-					       page_desc->avail_entry_index);
-
+					       avail_entry_index);
 		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
 		rx_desc_pool->array[i].rx_desc.in_use = 0;
 
-		page_desc->avail_entry_index++;
-		if (page_desc->avail_entry_index >=
-				DP_CC_SPT_PAGE_MAX_ENTRIES)
-			page_desc = page_desc->next;
+		avail_entry_index = (avail_entry_index + 1) &
+					DP_CC_SPT_PAGE_MAX_ENTRIES_MASK;
 	}
-
 	return QDF_STATUS_SUCCESS;
 }
 #endif
@@ -971,32 +972,18 @@ dp_rx_desc_pool_deinit_be_cc(struct dp_soc *soc,
 			     struct rx_desc_pool *rx_desc_pool,
 			     uint32_t pool_id)
 {
-	struct dp_soc_be *be_soc;
 	struct dp_spt_page_desc *page_desc;
-	struct dp_spt_page_desc_list *page_desc_list;
+	struct dp_soc_be *be_soc;
+	int i = 0;
+	struct dp_hw_cookie_conversion_t *cc_ctx;
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
-	page_desc_list = &be_soc->rx_spt_page_desc[pool_id];
+	cc_ctx  = &be_soc->rx_cc_ctx[pool_id];
 
-	if (!page_desc_list->num_spt_pages) {
-		dp_warn("page_desc_list is empty for pool_id %d", pool_id);
-		return;
-	}
-
-	/* cleanup for each page */
-	page_desc = page_desc_list->spt_page_list_head;
-	while (page_desc) {
-		page_desc->avail_entry_index = 0;
+	for (i = 0; i < cc_ctx->total_page_num; i++) {
+		page_desc = &cc_ctx->page_desc_base[i];
 		qdf_mem_zero(page_desc->page_v_addr, qdf_page_size);
-		page_desc = page_desc->next;
 	}
-
-	/* free pages desc back to pool */
-	dp_cc_spt_page_desc_free(be_soc,
-				 &page_desc_list->spt_page_list_head,
-				 &page_desc_list->spt_page_list_tail,
-				 page_desc_list->num_spt_pages);
-	page_desc_list->num_spt_pages = 0;
 }
 
 QDF_STATUS dp_rx_desc_pool_init_be(struct dp_soc *soc,
@@ -1013,7 +1000,8 @@ QDF_STATUS dp_rx_desc_pool_init_be(struct dp_soc *soc,
 						    pool_id);
 	} else {
 		dp_info("non_rx_desc_buf_pool init");
-		status = dp_rx_desc_pool_init_generic(soc, rx_desc_pool, pool_id);
+		status = dp_rx_desc_pool_init_generic(soc, rx_desc_pool,
+						      pool_id);
 	}
 
 	return status;

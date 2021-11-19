@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +24,9 @@
 
 /* maximum number of entries in one page of secondary page table */
 #define DP_CC_SPT_PAGE_MAX_ENTRIES 512
+
+/* maximum number of entries in one page of secondary page table */
+#define DP_CC_SPT_PAGE_MAX_ENTRIES_MASK (DP_CC_SPT_PAGE_MAX_ENTRIES - 1)
 
 /* maximum number of entries in primary page table */
 #define DP_CC_PPT_MAX_ENTRIES 1024
@@ -76,6 +80,27 @@
 /* WBM2SW ring id for rx release */
 #define WBM2SW_REL_ERR_RING_NUM 5
 #endif
+
+/* tx descriptor are programmed at start of CMEM region*/
+#define DP_TX_DESC_CMEM_OFFSET	0
+
+/* size of CMEM needed for a tx desc pool*/
+#define DP_TX_DESC_POOL_CMEM_SIZE \
+	((WLAN_CFG_NUM_TX_DESC_MAX / DP_CC_SPT_PAGE_MAX_ENTRIES) * \
+	 DP_CC_PPT_ENTRY_SIZE_4K_ALIGNED)
+
+/* Offset of rx descripotor pool */
+#define DP_RX_DESC_CMEM_OFFSET \
+	DP_TX_DESC_CMEM_OFFSET + (MAX_TXDESC_POOLS * DP_TX_DESC_POOL_CMEM_SIZE)
+
+/* size of CMEM needed for a rx desc pool */
+#define DP_RX_DESC_POOL_CMEM_SIZE \
+	((WLAN_CFG_RX_SW_DESC_NUM_SIZE_MAX / DP_CC_SPT_PAGE_MAX_ENTRIES) * \
+	 DP_CC_PPT_ENTRY_SIZE_4K_ALIGNED)
+
+/* get ppt_id from CMEM_OFFSET */
+#define DP_CMEM_OFFSET_TO_PPT_ID(offset) \
+	((offset) / DP_CC_PPT_ENTRY_SIZE_4K_ALIGNED)
 /**
  * struct dp_spt_page_desc - secondary page table page descriptors
  * @next: pointer to next linked SPT page Desc
@@ -86,28 +111,23 @@
  * @avail_entry_index: index for available entry that store TX/RX Desc VA
  */
 struct dp_spt_page_desc {
-	struct dp_spt_page_desc *next;
 	uint8_t *page_v_addr;
 	qdf_dma_addr_t page_p_addr;
-	uint16_t ppt_index;
-	uint16_t avail_entry_index;
+	uint32_t ppt_index;
 };
 
 /**
  * struct dp_hw_cookie_conversion_t - main context for HW cookie conversion
- * @cmem_base: CMEM base address for primary page table setup
+ * @cmem_offset: CMEM offset from base address for primary page table setup
  * @total_page_num: total DDR page allocated
- * @free_page_num: available DDR page number for TX/RX Desc ID initialization
  * @page_desc_freelist: available page Desc list
  * @page_desc_base: page Desc buffer base address.
  * @page_pool: DDR pages pool
  * @cc_lock: locks for page acquiring/free
  */
 struct dp_hw_cookie_conversion_t {
-	uint32_t cmem_base;
+	uint32_t cmem_offset;
 	uint32_t total_page_num;
-	uint32_t free_page_num;
-	struct dp_spt_page_desc *page_desc_freelist;
 	struct dp_spt_page_desc *page_desc_base;
 	struct qdf_mem_multi_page_t page_pool;
 	qdf_spinlock_t cc_lock;
@@ -148,9 +168,9 @@ struct dp_tx_bank_profile {
  * @soc: dp soc structure
  * @num_bank_profiles: num TX bank profiles
  * @bank_profiles: bank profiles for various TX banks
- * @hw_cc_ctx: core context of HW cookie conversion
- * @tx_spt_page_desc: spt page desc allocated for TX desc pool
- * @rx_spt_page_desc: spt page desc allocated for RX desc pool
+ * @cc_cmem_base: cmem offset reserved for CC
+ * @tx_cc_ctx: Cookie conversion context for tx desc pools
+ * @rx_cc_ctx: Cookie conversion context for rx desc pools
  * @monitor_soc_be: BE specific monitor object
  */
 struct dp_soc_be {
@@ -158,9 +178,10 @@ struct dp_soc_be {
 	uint8_t num_bank_profiles;
 	qdf_mutex_t tx_bank_lock;
 	struct dp_tx_bank_profile *bank_profiles;
-	struct dp_hw_cookie_conversion_t hw_cc_ctx;
-	struct dp_spt_page_desc_list tx_spt_page_desc[MAX_TXDESC_POOLS];
-	struct dp_spt_page_desc_list rx_spt_page_desc[MAX_RXDESC_POOLS];
+	struct dp_spt_page_desc *page_desc_base;
+	uint32_t cc_cmem_base;
+	struct dp_hw_cookie_conversion_t tx_cc_ctx[MAX_TXDESC_POOLS];
+	struct dp_hw_cookie_conversion_t rx_cc_ctx[MAX_RXDESC_POOLS];
 #ifdef WLAN_SUPPORT_PPEDS
 	struct dp_srng reo2ppe_ring;
 	struct dp_srng ppe2tcl_ring;
@@ -276,6 +297,22 @@ struct dp_peer_be *dp_get_be_peer_from_dp_peer(struct dp_peer *peer)
 	return (struct dp_peer_be *)peer;
 }
 
+QDF_STATUS
+dp_hw_cookie_conversion_attach(struct dp_soc_be *be_soc,
+			       struct dp_hw_cookie_conversion_t *cc_ctx,
+			       uint32_t num_descs,
+			       enum dp_desc_type desc_type,
+			       uint8_t desc_pool_id);
+
+QDF_STATUS
+dp_hw_cookie_conversion_detach(struct dp_soc_be *be_soc,
+			       struct dp_hw_cookie_conversion_t *cc_ctx);
+QDF_STATUS
+dp_hw_cookie_conversion_init(struct dp_soc_be *be_soc,
+			     struct dp_hw_cookie_conversion_t *cc_ctx);
+QDF_STATUS
+dp_hw_cookie_conversion_deinit(struct dp_soc_be *be_soc,
+			       struct dp_hw_cookie_conversion_t *cc_ctx);
 /**
  * dp_cc_spt_page_desc_alloc() - allocate SPT DDR page descriptor from pool
  * @be_soc: beryllium soc handler
@@ -311,7 +348,7 @@ void dp_cc_spt_page_desc_free(struct dp_soc_be *be_soc,
  *
  * Return: cookie ID
  */
-static inline uint32_t dp_cc_desc_id_generate(uint16_t ppt_index,
+static inline uint32_t dp_cc_desc_id_generate(uint32_t ppt_index,
 					      uint16_t spt_index)
 {
 	/*
@@ -337,12 +374,10 @@ static inline uintptr_t dp_cc_desc_find(struct dp_soc *soc,
 					uint32_t desc_id)
 {
 	struct dp_soc_be *be_soc;
-	struct dp_hw_cookie_conversion_t *cc_ctx;
 	uint16_t ppt_page_id, spt_va_id;
 	uint8_t *spt_page_va;
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
-	cc_ctx = &be_soc->hw_cc_ctx;
 	ppt_page_id = (desc_id & DP_CC_DESC_ID_PPT_PAGE_OS_MASK) >>
 			DP_CC_DESC_ID_PPT_PAGE_OS_SHIFT;
 
@@ -355,7 +390,7 @@ static inline uintptr_t dp_cc_desc_find(struct dp_soc *soc,
 	 * entry size in DDR page is 64 bits, for 32 bits system,
 	 * only lower 32 bits VA value is needed.
 	 */
-	spt_page_va = cc_ctx->page_desc_base[ppt_page_id].page_v_addr;
+	spt_page_va = be_soc->page_desc_base[ppt_page_id].page_v_addr;
 
 	return (*((uintptr_t *)(spt_page_va  +
 				spt_va_id * DP_CC_HW_READ_BYTES)));
@@ -471,4 +506,21 @@ _dp_srng_test_and_update_nf_params(struct dp_soc *soc,
 }
 #endif
 
+static inline
+uint32_t dp_desc_pool_get_cmem_base(uint8_t chip_id, uint8_t desc_pool_id,
+				    enum dp_desc_type desc_type)
+{
+	switch (desc_type) {
+	case DP_TX_DESC_TYPE:
+		return (DP_TX_DESC_CMEM_OFFSET +
+			(desc_pool_id * DP_TX_DESC_POOL_CMEM_SIZE));
+	case DP_RX_DESC_BUF_TYPE:
+		return (DP_RX_DESC_CMEM_OFFSET +
+			((chip_id * MAX_RXDESC_POOLS) + desc_pool_id) *
+			DP_RX_DESC_POOL_CMEM_SIZE);
+	default:
+			QDF_BUG(0);
+	}
+	return 0;
+}
 #endif
