@@ -1802,7 +1802,9 @@ static int iris_pm_qos_update(void *device)
 
 	dev = device;
 
+	mutex_lock(&dev->lock);
 	cvp_pm_qos_update(dev, true);
+	mutex_unlock(&dev->lock);
 
 	return 0;
 }
@@ -4463,6 +4465,12 @@ static void __noc_error_info_iris2(struct iris_hfi_device *device)
 
 	noc_log = &core->log.noc_log;
 
+	if (noc_log->used) {
+		dprintk(CVP_WARN, "Data already in NoC log, skip logging\n");
+		return;
+	}
+	noc_log->used = 1;
+
 	val = __read_register(device, CVP_NOC_ERR_SWID_LOW_OFFS);
 	__err_log(log_required, &noc_log->err_ctrl_swid_low,
 			"CVP_NOC_ERL_MAIN_SWID_LOW", val);
@@ -4559,7 +4567,6 @@ static void __noc_error_info_iris2(struct iris_hfi_device *device)
 		__write_register(device, CVP_SS_ARP_TEST_BUS_CONTROL, regi);
 		val = __read_register(device, CVP_SS_ARP_TEST_BUS_REGISTER);
 		noc_log->arp_test_bus[i] = val;
-		dprintk(CVP_ERR, "ARP_CTL:%x - %x\n", regi, val);
 	}
 
 	for (i = 0; i < 512; i++) {
@@ -4567,7 +4574,6 @@ static void __noc_error_info_iris2(struct iris_hfi_device *device)
 		__write_register(device, CVP_DMA_TEST_BUS_CONTROL, regi);
 		val = __read_register(device, CVP_DMA_TEST_BUS_REGISTER);
 		noc_log->dma_test_bus[i] = val;
-		dprintk(CVP_ERR, "DMA_CTL:%x - %x\n", regi, val);
 	}
 }
 

@@ -304,6 +304,7 @@ struct inst_snapshot {
 };
 
 struct cvp_noc_log {
+	u32 used;
 	u32 err_ctrl_swid_low;
 	u32 err_ctrl_swid_high;
 	u32 err_ctrl_mainctl_low;

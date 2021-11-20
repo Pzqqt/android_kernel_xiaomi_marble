@@ -79,6 +79,7 @@ static int hfi_process_sys_error(u32 device_id,
 
 	info->response_type = HAL_SYS_ERROR;
 	info->response.cmd = cmd_done;
+	dprintk(CVP_ERR, "Received FW sys error %#x\n", pkt->event_data1);
 
 	return 0;
 }

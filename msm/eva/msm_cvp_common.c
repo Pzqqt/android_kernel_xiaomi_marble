@@ -582,6 +582,7 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 	struct msm_cvp_cb_cmd_done *response = data;
 	struct msm_cvp_core *core = NULL;
 	struct cvp_hfi_device *hdev = NULL;
+	struct iris_hfi_device *hfi_device;
 	struct msm_cvp_inst *inst = NULL;
 	int i, rc = 0;
 	unsigned long flags = 0;
@@ -612,11 +613,14 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 
 	cur_state = core->state;
 	core->state = CVP_CORE_UNINIT;
+	dprintk(CVP_WARN, "SYS_ERROR received for core %pK cmd %x\n",
+			core, cmd);
 	mutex_lock(&core->clk_lock);
-	dprintk(CVP_WARN, "SYS_ERROR received for core %pK\n", core);
-	if (response->status == CVP_ERR_NOC_ERROR) {
+	hfi_device = hdev->hfi_device_data;
+	if (hfi_device->error == CVP_ERR_NOC_ERROR) {
 		dprintk(CVP_WARN, "Got NOC error");
 		msm_cvp_noc_error_info(core);
+		hfi_device->error = 0xdead;
 		MSM_CVP_ERROR(true);
 	}
 	call_hfi_op(hdev, flush_debug_queue, hdev->hfi_device_data);
