@@ -28,7 +28,7 @@ $(info LOCAL_ADDITIONAL_DEPENDENCIES = $(LOCAL_ADDITIONAL_DEPENDENCIES))
 $(info LOCAL_REQUIRED_MODULES = $(LOCAL_REQUIRED_MODULES))
 $(info DLKM_DIR = $(DLKM_DIR))
 
-# include $(DLKM_DIR)/Build_external_kernelmodule.mk
+include $(DLKM_DIR)/Build_external_kernelmodule.mk
 
 endif # End of check for board platform
 endif # End of check for target product

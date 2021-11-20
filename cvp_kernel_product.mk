@@ -1,1 +1,1 @@
-# PRODUCT_PACKAGES += msm-cvp.ko
+PRODUCT_PACKAGES += msm-cvp.ko
