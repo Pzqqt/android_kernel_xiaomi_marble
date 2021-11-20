@@ -80,7 +80,6 @@ enum sde_crtc_idle_pc_state {
  * CACHE_STATE_DISABLED: sys cache has been disabled
  * CACHE_STATE_ENABLED: sys cache has been enabled
  * CACHE_STATE_NORMAL: sys cache is normal state
- * CACHE_STATE_PRE_CACHE: frame cache is being prepared
  * CACHE_STATE_FRAME_WRITE: sys cache is being written to
  * CACHE_STATE_FRAME_READ: sys cache is being read
  */
@@ -88,7 +87,6 @@ enum sde_crtc_cache_state {
 	CACHE_STATE_DISABLED,
 	CACHE_STATE_ENABLED,
 	CACHE_STATE_NORMAL,
-	CACHE_STATE_PRE_CACHE,
 	CACHE_STATE_FRAME_WRITE,
 	CACHE_STATE_FRAME_READ
 };
@@ -304,7 +302,6 @@ struct sde_frame_data {
  * @misr_reconfigure : boolean entry indicates misr reconfigure status
  * @misr_frame_count  : misr frame count provided by client
  * @misr_data     : store misr data before turning off the clocks.
- * @idle_notify_work: delayed worker to notify idle timeout to user space
  * @power_event   : registered power event handle
  * @cur_perf      : current performance committed to clock/bandwidth driver
  * @plane_mask_old: keeps track of the planes used in the previous commit
@@ -394,7 +391,6 @@ struct sde_crtc {
 	bool misr_enable_debugfs;
 	bool misr_reconfigure;
 	u32 misr_frame_count;
-	struct kthread_delayed_work idle_notify_work;
 
 	struct sde_power_event *power_event;
 
