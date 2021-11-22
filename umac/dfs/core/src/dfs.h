@@ -2240,6 +2240,22 @@ void dfs_cac_timer_reset(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_cac_timer_detach(struct wlan_dfs *dfs);
+
+/**
+ * dfs_deliver_cac_state_events() - Deliver the DFS CAC events namely
+ * WLAN_EV_CAC_STARTED on cac started channel(current channel) and
+ * WLAN_EV_CAC_RESET on previous dfs channel.
+ *
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DISP_CHAN_INFO)
+void dfs_deliver_cac_state_events(struct wlan_dfs *dfs);
+#else
+static inline
+void dfs_deliver_cac_state_events(struct wlan_dfs *dfs)
+{
+}
+#endif
 #else
 static inline
 void dfs_stacac_stop(struct wlan_dfs *dfs)
@@ -2312,6 +2328,11 @@ void dfs_cac_timer_reset(struct wlan_dfs *dfs)
 
 static inline
 void dfs_cac_timer_detach(struct wlan_dfs *dfs)
+{
+}
+
+static inline
+void dfs_deliver_cac_state_events(struct wlan_dfs *dfs)
 {
 }
 #endif
