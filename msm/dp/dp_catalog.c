@@ -124,6 +124,7 @@ struct dp_catalog_private {
 
 	char exe_mode[SZ_4];
 	u32 dp_core_version;
+	u32 dp_phy_version;
 };
 
 static u32 dp_read_sw(struct dp_catalog_private *catalog,
@@ -452,11 +453,19 @@ static void dp_catalog_aux_get_irq(struct dp_catalog_aux *aux, bool cmd_busy)
 static bool dp_catalog_ctrl_wait_for_phy_ready(
 		struct dp_catalog_private *catalog)
 {
-	u32 reg = DP_PHY_STATUS, state;
+	u32 phy_version;
+	u32 reg, state;
 	void __iomem *base = catalog->io.dp_phy->io.base;
 	bool success = true;
 	u32 const poll_sleep_us = 500;
 	u32 const pll_timeout_us = 10000;
+
+	phy_version = dp_catalog_get_dp_phy_version(&catalog->dp_catalog);
+	if (phy_version >= 60000000) {
+		reg = DP_PHY_STATUS_V600;
+	} else {
+		reg = DP_PHY_STATUS;
+	}
 
 	if (readl_poll_timeout_atomic((base + reg), state,
 			((state & DP_PHY_READY) > 0),
@@ -1973,6 +1982,29 @@ u32 dp_catalog_get_dp_core_version(struct dp_catalog *dp_catalog)
 	io_data = catalog->io.dp_ahb;
 
 	return dp_read(DP_HW_VERSION);
+}
+
+u32 dp_catalog_get_dp_phy_version(struct dp_catalog *dp_catalog)
+{
+	struct dp_catalog_private *catalog;
+	struct dp_io_data *io_data;
+
+	if (!dp_catalog) {
+		DP_ERR("invalid input\n");
+		return 0;
+	}
+
+	catalog = container_of(dp_catalog, struct dp_catalog_private, dp_catalog);
+	if (catalog->dp_phy_version)
+		return catalog->dp_phy_version;
+
+	io_data = catalog->io.dp_phy;
+	catalog->dp_phy_version = (dp_read(DP_PHY_REVISION_ID3) << 24) |
+				(dp_read(DP_PHY_REVISION_ID2) << 16) |
+				(dp_read(DP_PHY_REVISION_ID1) << 8) |
+				dp_read(DP_PHY_REVISION_ID0);
+
+	return catalog->dp_phy_version;
 }
 
 static int dp_catalog_reg_dump(struct dp_catalog *dp_catalog,
