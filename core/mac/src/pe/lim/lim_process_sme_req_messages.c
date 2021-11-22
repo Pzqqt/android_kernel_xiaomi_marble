@@ -2923,7 +2923,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 			pe_debug("Channel is 6G but country IE not present");
 		wlan_reg_read_current_country(mac_ctx->psoc,
 					      programmed_country);
-		status = wlan_reg_get_6g_power_type_for_ctry(
+		status = wlan_reg_get_6g_power_type_for_ctry(mac_ctx->psoc,
 					ie_struct->Country.country,
 					programmed_country, &power_type_6g,
 					&ctry_code_match);
