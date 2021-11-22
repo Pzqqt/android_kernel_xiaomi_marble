@@ -4247,7 +4247,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 				bytes = 0;
 				/* TO DO: specify how many bytes are present */
 				/* TO DO: add copying to the requestor's buf */
-
+				/* fallthrough */
 			case HTT_DBG_STATS_RX_REMOTE_RING_BUFFER_INFO:
 				bytes = sizeof(struct
 						rx_remote_buffer_mgmt_stats);
