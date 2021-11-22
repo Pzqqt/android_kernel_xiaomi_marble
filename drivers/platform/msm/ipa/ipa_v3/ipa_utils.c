@@ -11702,12 +11702,15 @@ int ipa3_load_fws(const struct firmware *firmware, phys_addr_t gsi_mem_base,
 
 	ehdr = (struct elf32_hdr *) firmware->data;
 	ipa_assert_on(!ehdr);
-	if (ehdr->e_phnum != 3) {
+	if (ehdr->e_phnum != 3 && ehdr->e_phnum != 5) {
 		IPAERR("Unexpected number of ELF program headers\n");
 		return -EINVAL;
 	}
+
 	phdr = (struct elf32_phdr *)(firmware->data + sizeof(*ehdr));
 
+	if (ehdr->e_phnum == 5)
+		phdr = phdr + 2;
 	/*
 	 * Each ELF program header represents a FW image and contains:
 	 *  p_vaddr : The starting address to which the FW needs to loaded.
