@@ -305,8 +305,9 @@ u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 	f = &inst->fmts[OUTPUT_PORT];
 	/*
 	 * Encoder output size calculation: 32 Align width/height
-	 * For resolution < 720p : YUVsize * 4
-	 * For resolution > 720p & <= 4K : YUVsize / 2
+	 * For heic session : YUVsize * 2
+	 * For resolution <= 480x360p : YUVsize * 2
+	 * For resolution > 360p & <= 4K : YUVsize / 2
 	 * For resolution > 4k : YUVsize / 4
 	 * Initially frame_size = YUVsize * 2;
 	 */
@@ -320,8 +321,8 @@ u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 	if (is_image_session(inst))
 		goto skip_calc;
 
-	if (mbs_per_frame < NUM_MBS_720P)
-		frame_size = frame_size << 1;
+	if (mbs_per_frame <= NUM_MBS_360P)
+		(void)frame_size; /* Default frame_size = YUVsize * 2 */
 	else if (mbs_per_frame <= NUM_MBS_4k)
 		frame_size = frame_size >> 2;
 	else
