@@ -704,9 +704,34 @@
 	CFG_INI_BOOL("dp_sg_support", false, \
 	"DP SG Enable")
 
+#define WLAN_CFG_GRO_ENABLE_MIN 0
+#define WLAN_CFG_GRO_ENABLE_MAX 3
+#define WLAN_CFG_GRO_ENABLE_DEFAULT 0
+#define DP_GRO_ENABLE_BIT_SET     BIT(0)
+#define DP_FORCE_USE_GRO_BIT_SET  BIT(1)
+/*
+ * <ini>
+ * CFG_DP_GRO - Enable the GRO feature standalonely
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini entry is used to enable/disable GRO feature standalonely.
+ * Value 0: Disable GRO feature
+ * Value 1: Enable Dynamic GRO feature, TC rule can control GRO
+ *          behavior of STA mode
+ * Value 3: Enable GRO feature forcibly
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_DP_GRO \
-	CFG_INI_BOOL("GROEnable", false, \
-	"DP GRO Enable")
+		CFG_INI_UINT("GROEnable", \
+		WLAN_CFG_GRO_ENABLE_MIN, \
+		WLAN_CFG_GRO_ENABLE_MAX, \
+		WLAN_CFG_GRO_ENABLE_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, "DP GRO Enable")
 
 #define CFG_DP_OL_TX_CSUM \
 	CFG_INI_BOOL("dp_offload_tx_csum_support", false, \
@@ -1172,24 +1197,6 @@
 
 /*
  * <ini>
- * gForceRX64BA - enable force 64 blockack mode for RX
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to control DP Software to use 64 blockack
- * for RX direction forcibly
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_FORCE_RX_64_BA \
-		CFG_INI_BOOL("gForceRX64BA", \
-		false, "Enable/Disable force 64 blockack in RX side")
-
-/*
- * <ini>
  * ghw_cc_enable - enable HW cookie conversion by register
  * @Min: 0
  * @Max: 1
@@ -1452,7 +1459,6 @@
 		CFG(CFG_DP_RX_RADIO_2_DEFAULT_REO) \
 		CFG(CFG_DP_WOW_CHECK_RX_PENDING) \
 		CFG(CFG_DP_HW_CC_ENABLE) \
-		CFG(CFG_FORCE_RX_64_BA) \
 		CFG(CFG_DP_DELAY_MON_REPLENISH) \
 		CFG(CFG_DP_TX_MONITOR_BUF_RING) \
 		CFG(CFG_DP_TX_MONITOR_DST_RING) \
