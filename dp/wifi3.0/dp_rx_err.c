@@ -1376,8 +1376,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		goto drop_nbuf;
 	}
 	/* WDS Source Port Learning */
-	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet &&
-		vdev->wds_enabled))
+	if (!soc->ast_offload_support &&
+	    qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet &&
+		       vdev->wds_enabled))
 		dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf,
 					msdu_metadata);
 
