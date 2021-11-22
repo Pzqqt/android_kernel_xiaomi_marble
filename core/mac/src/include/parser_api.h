@@ -761,6 +761,22 @@ populate_dot11f_max_chan_switch_time(struct mac_context *mac,
 				     tDot11fIEmax_chan_switch_time *pDot11f,
 				     struct pe_session *pe_session);
 
+/**
+ * populate_dot11f_non_inheritance() - populate non inheritance
+ * @mac_ctx: pointer to mac
+ * @non_inheritance: pointer to tDot11fIEnon_inheritance
+ * @non_inher_ie_lists: non inheritance IE list
+ * @non_inher_ext_ie_lists: non inheritance extend IE list
+ * @non_inher_len: non inheritance IE list length
+ * @non_inher_ext_len: non inheritance Extend IE list length
+ */
+void populate_dot11f_non_inheritance(
+			struct mac_context *mac_ctx,
+			tDot11fIEnon_inheritance *non_inheritance,
+			uint8_t *non_inher_ie_lists,
+			uint8_t *non_inher_ext_ie_lists,
+			uint8_t non_inher_len, uint8_t non_inher_ext_len);
+
 /* / Populate a tDot11fIEChanSwitchAnn */
 void
 populate_dot11f_chan_switch_ann(struct mac_context *mac,
