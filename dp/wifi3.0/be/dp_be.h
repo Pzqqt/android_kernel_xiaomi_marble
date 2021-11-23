@@ -178,6 +178,9 @@ struct dp_tx_bank_profile {
  * @mlo_enabled: Flag to indicate MLO is enabled or not
  * @mlo_chip_id: MLO chip_id
  * @ml_ctxt: pointer to global ml_context
+ * @mld_peer_hash: peer hash table for ML peers
+ *           Associated peer with this MAC address)
+ * @mld_peer_hash_lock: lock to protect mld_peer_hash
  */
 struct dp_soc_be {
 	struct dp_soc soc;
@@ -196,10 +199,21 @@ struct dp_soc_be {
 #if !defined(DISABLE_MON_CONFIG)
 	struct dp_mon_soc_be *monitor_soc_be;
 #endif
+#ifdef WLAN_FEATURE_11BE_MLO
 #ifdef WLAN_MLO_MULTI_CHIP
 	uint8_t mlo_enabled;
 	uint8_t mlo_chip_id;
 	struct dp_mlo_ctxt *ml_ctxt;
+#else
+	/* Protect mld peer hash table */
+	DP_MUTEX_TYPE mld_peer_hash_lock;
+	struct {
+		uint32_t mask;
+		uint32_t idx_bits;
+
+		TAILQ_HEAD(, dp_peer) * bins;
+	} mld_peer_hash;
+#endif
 #endif
 };
 
@@ -275,6 +289,55 @@ static inline struct dp_soc_be *dp_get_be_soc_from_dp_soc(struct dp_soc *soc)
 {
 	return (struct dp_soc_be *)soc;
 }
+
+#ifdef WLAN_MLO_MULTI_CHIP
+typedef struct dp_mlo_ctxt *dp_mld_peer_hash_obj_t;
+
+/*
+ * dp_mlo_get_peer_hash_obj() - return the container struct of MLO hash table
+ *
+ * @soc: soc handle
+ *
+ * return: MLD peer hash object
+ */
+static inline dp_mld_peer_hash_obj_t
+dp_mlo_get_peer_hash_obj(struct dp_soc *soc)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+
+	return be_soc->ml_ctxt;
+}
+
+#else
+typedef struct dp_soc_be *dp_mld_peer_hash_obj_t;
+
+static inline dp_mld_peer_hash_obj_t
+dp_mlo_get_peer_hash_obj(struct dp_soc *soc)
+{
+	return dp_get_be_soc_from_dp_soc(soc);
+}
+#endif
+
+/*
+ * dp_mlo_peer_find_hash_attach_be() - API to initialize ML peer hash table
+ *
+ * @mld_hash_obj: Peer has object
+ * @hash_elems: number of entries in hash table
+ *
+ * return: QDF_STATUS_SUCCESS when attach is success else QDF_STATUS_FAILURE
+ */
+QDF_STATUS
+dp_mlo_peer_find_hash_attach_be(dp_mld_peer_hash_obj_t mld_hash_obj,
+				int hash_elems);
+
+/*
+ * dp_mlo_peer_find_hash_detach_be() - API to de-initialize ML peer hash table
+ *
+ * @mld_hash_obj: Peer has object
+ *
+ * return: void
+ */
+void dp_mlo_peer_find_hash_detach_be(dp_mld_peer_hash_obj_t mld_hash_obj);
 
 /**
  * dp_get_be_pdev_from_dp_pdev() - get dp_pdev_be from dp_pdev

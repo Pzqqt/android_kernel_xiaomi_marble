@@ -15,6 +15,8 @@
  */
 #ifndef _CDP_TXRX_MLO_H_
 #define _CDP_TXRX_MLO_H_
+#include "cdp_txrx_ops.h"
+
 struct cdp_mlo_ctxt;
 
 /**
@@ -36,5 +38,35 @@ static inline
 void cdp_mlo_ctxt_detach(struct cdp_mlo_ctxt *ml_ctxt)
 {
 	dp_mlo_ctxt_detach_wifi3(ml_ctxt);
+}
+
+static inline void cdp_soc_mlo_soc_setup(ol_txrx_soc_handle soc,
+					 struct cdp_mlo_ctxt *mlo_ctx)
+{
+	if (!soc || !soc->ops) {
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mlo_ops ||
+	    !soc->ops->mlo_ops->mlo_soc_setup)
+		return;
+
+	soc->ops->mlo_ops->mlo_soc_setup(soc, mlo_ctx);
+}
+
+static inline void cdp_soc_mlo_soc_teardown(ol_txrx_soc_handle soc,
+					    struct cdp_mlo_ctxt *mlo_ctx)
+{
+	if (!soc || !soc->ops) {
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mlo_ops ||
+	    !soc->ops->mlo_ops->mlo_soc_teardown)
+		return;
+
+	soc->ops->mlo_ops->mlo_soc_teardown(soc, mlo_ctx);
 }
 #endif /*_CDP_TXRX_MLO_H_*/
