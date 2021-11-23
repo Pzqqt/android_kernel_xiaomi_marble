@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1747,7 +1748,37 @@ enum host_log_level {
 			"001018 06 0201009c0000 FC 01 001018 06 0201001c0000 FC 01 001018 06 0200009c0000 FC 01", \
 			"Used to specify action OUIs for forcing max NSS connection")
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/*
+ * <ini>
+ * dynamic_mac_addr_update_supported - Flag to configure dynamic MAC address
+ *                                     support in the driver
+ *
+ * @Min: 0
+ * @Max: 1
+ * Default: 1
+ *
+ * This ini param is used to enable/disable the dynamic MAC address support
+ * in the driver.
+ *
+ * Supported Feature: STA/SAP/P2P_Device
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED CFG_INI_BOOL( \
+			"dynamic_mac_addr_update_supported", \
+			1, \
+			"Dynamic MAC address update support")
+#define CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED_ALL \
+	CFG(CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED)
+#else
+#define CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED_ALL
+#endif
+
 #define CFG_HDD_ALL \
+	CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_ENABLE_RUNTIME_PM_ALL \
 	CFG_ENABLE_QMI_STATS_ALL \

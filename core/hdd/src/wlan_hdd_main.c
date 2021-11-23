@@ -1819,7 +1819,9 @@ hdd_set_dynamic_macaddr_update_capability(struct hdd_context *hdd_ctx,
 					  struct wma_tgt_services *cfg)
 {
 	hdd_ctx->is_vdev_macaddr_dynamic_update_supported =
-					cfg->dynamic_vdev_macaddr_support;
+				cfg->dynamic_vdev_macaddr_support &&
+				cfg_get(hdd_ctx->psoc,
+					CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED);
 }
 #else
 static inline void
