@@ -353,6 +353,49 @@ static void mlme_init_wds_config_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+/**
+ * mlme_init_mgmt_hw_tx_retry_count_cfg() - initialize mgmt hw tx retry count
+ * @psoc: Pointer to PSOC
+ * @gen: pointer to generic CFG items
+ *
+ * Return: None
+ */
+static void mlme_init_mgmt_hw_tx_retry_count_cfg(
+			struct wlan_objmgr_psoc *psoc,
+			struct wlan_mlme_generic *gen)
+{
+	uint32_t i;
+	qdf_size_t out_size = 0;
+	uint8_t count_array[MGMT_FRM_HW_TX_RETRY_COUNT_STR_LEN];
+
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_MGMT_FRAME_HW_TX_RETRY_COUNT),
+			      count_array,
+			      MGMT_FRM_HW_TX_RETRY_COUNT_STR_LEN,
+			      &out_size);
+
+	for (i = 0; i + 1 < out_size; i += 2) {
+		if (count_array[i] >= CFG_FRAME_TYPE_MAX) {
+			mlme_legacy_debug("invalid frm type %d",
+					  count_array[i]);
+			continue;
+		}
+		if (count_array[i + 1] >= MAX_MGMT_HW_TX_RETRY_COUNT) {
+			mlme_legacy_debug("mgmt hw tx retry count %d for frm %d, limit to %d",
+					  count_array[i + 1],
+					  count_array[i],
+					  MAX_MGMT_HW_TX_RETRY_COUNT);
+			gen->mgmt_hw_tx_retry_count[count_array[i]] =
+						MAX_MGMT_HW_TX_RETRY_COUNT;
+		} else {
+			mlme_legacy_debug("mgmt hw tx retry count %d for frm %d",
+					  count_array[i + 1],
+					  count_array[i]);
+			gen->mgmt_hw_tx_retry_count[count_array[i]] =
+							count_array[i + 1];
+		}
+	}
+}
+
 static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_generic *gen)
 {
@@ -416,6 +459,7 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_MONITOR_MODE_CONCURRENCY);
 	gen->tx_retry_multiplier = cfg_get(psoc, CFG_TX_RETRY_MULTIPLIER);
 	mlme_init_wds_config_cfg(psoc, gen);
+	mlme_init_mgmt_hw_tx_retry_count_cfg(psoc, gen);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_objmgr_psoc *psoc,

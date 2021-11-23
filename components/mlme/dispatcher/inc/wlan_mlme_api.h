@@ -3398,6 +3398,18 @@ wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc)
 enum phy_ch_width mlme_get_vht_ch_width(void);
 
 /**
+ * wlan_mlme_get_mgmt_hw_tx_retry_count() - Get mgmt frame hw tx retry count
+ *
+ * @psoc: pointer to psoc object
+ * @frm_type: frame type of the query
+ *
+ * Return: hw tx retry count
+ */
+uint8_t
+wlan_mlme_get_mgmt_hw_tx_retry_count(struct wlan_objmgr_psoc *psoc,
+				     enum mlme_cfg_frame_type frm_type);
+
+/**
  * wlan_mlme_get_tx_retry_multiplier() - Get the tx retry multiplier percentage
  *
  * @psoc: pointer to psoc object

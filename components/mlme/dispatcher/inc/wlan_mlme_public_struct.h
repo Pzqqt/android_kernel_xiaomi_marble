@@ -1275,6 +1275,21 @@ struct dual_sta_policy {
 	uint8_t primary_vdev_id;
 };
 
+/**
+ * enum mlme_cfg_frame_type  - frame type to configure mgmt hw tx retry count
+ * @CFG_GO_NEGOTIATION_REQ_FRAME_TYPE: p2p go negotiation request fame
+ * @CFG_P2P_INVITATION_REQ_FRAME_TYPE: p2p invitation request frame
+ * @CFG_PROVISION_DISCOVERY_REQ_FRAME_TYPE: p2p provision discovery request
+ */
+enum mlme_cfg_frame_type {
+	CFG_GO_NEGOTIATION_REQ_FRAME_TYPE = 0,
+	CFG_P2P_INVITATION_REQ_FRAME_TYPE = 1,
+	CFG_PROVISION_DISCOVERY_REQ_FRAME_TYPE = 2,
+	CFG_FRAME_TYPE_MAX,
+};
+
+#define MAX_MGMT_HW_TX_RETRY_COUNT 127
+
 /* struct wlan_mlme_generic - Generic CFG config items
  *
  * @band_capability: HW Band Capability - Both or 2.4G only or 5G only
@@ -1324,6 +1339,7 @@ struct dual_sta_policy {
  * @wds_mode: wds mode supported
  * @dual_sta_policy_cfg: Dual STA policies configuration
  * @tx_retry_multiplier: TX xretry extension parameter
+ * @mgmt_hw_tx_retry_count: MGMT HW tx retry count for frames
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1370,6 +1386,7 @@ struct wlan_mlme_generic {
 	enum wlan_wds_mode wds_mode;
 	struct dual_sta_policy dual_sta_policy;
 	uint32_t tx_retry_multiplier;
+	uint8_t mgmt_hw_tx_retry_count[CFG_FRAME_TYPE_MAX];
 };
 
 /*
