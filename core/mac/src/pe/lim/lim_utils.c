@@ -77,6 +77,7 @@
 #include <lim_mlo.h>
 #endif
 #include "wlan_cmn_ieee80211.h"
+#include <wlan_cm_api.h>
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -3787,8 +3788,8 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		return;
 	}
 
-	if (pe_session->ftPEContext.ftPreAuthSession) {
-		pe_err("FT PREAUTH channel change is in progress");
+	if (wlan_cm_is_vdev_roaming(pe_session->vdev)) {
+		pe_err("Roaming is in progress");
 		return;
 	}
 
@@ -3809,11 +3810,6 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 	if (pHTInfo->primaryChannel != wlan_reg_freq_to_chan(
 			mac->pdev, pe_session->curr_op_freq)) {
 		pe_debug("Current channel doesnt match HT info ignore");
-		return;
-	}
-
-	if (lim_is_roam_synch_in_progress(mac->psoc, pe_session)) {
-		pe_debug("Roaming in progress, ignore HT IE BW update");
 		return;
 	}
 
