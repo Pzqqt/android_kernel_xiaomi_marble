@@ -537,6 +537,7 @@ struct dp_mon_ops {
 #ifndef DISABLE_MON_CONFIG
 	void (*mon_register_intr_ops)(struct dp_soc *soc);
 #endif
+	void (*mon_register_feature_ops)(struct dp_soc *soc);
 };
 
 struct dp_mon_soc {
@@ -3250,5 +3251,25 @@ struct dp_mon_ops *dp_mon_ops_get_2_0(void);
  */
 struct cdp_mon_ops *dp_mon_cdp_ops_get_2_0(void);
 #endif
+
+/**
+ * dp_mon_register_feature_ops(): Register mon feature ops
+ * @soc: Datapath soc context
+ *
+ * return: void
+ */
+static inline
+void dp_mon_register_feature_ops(struct dp_soc *soc)
+{
+	struct dp_mon_ops *mon_ops = NULL;
+
+	mon_ops = dp_mon_ops_get(soc);
+	if (!mon_ops) {
+		dp_mon_err("Monitor ops is NULL");
+		return;
+	}
+	if (mon_ops->mon_register_feature_ops)
+		mon_ops->mon_register_feature_ops(soc);
+}
 
 #endif /* _DP_MON_H_ */
