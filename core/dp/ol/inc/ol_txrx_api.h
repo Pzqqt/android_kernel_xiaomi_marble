@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2014,2016-2017,2019,2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +23,8 @@
  */
 #ifndef _OL_TXRX_API__H_
 #define _OL_TXRX_API__H_
+
+#include "ol_txrx_htt_api.h"
 
 /**
  * @brief ADDBA negotiation status, used both during requests and confirmations
@@ -52,7 +55,8 @@ enum ol_sec_type {
 };
 
 #ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
-typedef int (*tp_ol_timestamp_cb)(qdf_nbuf_t netbuf, uint64_t target_time);
+typedef int (*tp_ol_timestamp_cb)(enum htt_tx_status status,
+				  qdf_nbuf_t netbuf, uint64_t target_time);
 
 /**
  * ol_register_timestamp_callback() - set callbacks for timestamp tx msdu.

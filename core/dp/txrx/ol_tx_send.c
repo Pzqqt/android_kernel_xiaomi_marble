@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -829,13 +829,14 @@ struct htt_tx_compl_ind_append_tx_tsf64 *ol_tx_get_txtstamp64s(
 }
 
 static inline void ol_tx_timestamp(ol_txrx_pdev_handle pdev,
+				   enum htt_tx_status status,
 				   qdf_nbuf_t netbuf, u_int64_t ts)
 {
 	if (!netbuf)
 		return;
 
 	if (pdev->ol_tx_timestamp_cb)
-		pdev->ol_tx_timestamp_cb(netbuf, ts);
+		pdev->ol_tx_timestamp_cb(status, netbuf, ts);
 }
 #else
 static inline struct htt_tx_compl_ind_append_tx_tstamp *ol_tx_get_txtstamps(
@@ -854,10 +855,11 @@ struct htt_tx_compl_ind_append_tx_tsf64 *ol_tx_get_txtstamp64s(
 }
 
 static inline void ol_tx_timestamp(ol_txrx_pdev_handle pdev,
+				   enum htt_tx_status status,
 				   qdf_nbuf_t netbuf, u_int64_t ts)
 {
 }
-#endif
+#endif /* WLAN_FEATURE_TSF_PLUS_SOCK_TS */
 
 static void ol_tx_update_ack_count(struct ol_tx_desc_t *tx_desc,
 				   enum htt_tx_status status)
@@ -1042,7 +1044,9 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	tid = HTT_TX_COMPL_IND_TID_GET(*msg_word);
 
 	ol_tx_delay_compute(pdev, status, desc_ids, num_msdus);
-	if (status == htt_tx_status_ok) {
+	if (status == htt_tx_status_ok ||
+	    status == htt_tx_status_discard ||
+	    status == htt_tx_status_no_ack) {
 		txtstamp_list = ol_tx_get_txtstamps(
 			msg_word_header, &msg_word_payload, num_msdus);
 		if (pdev->enable_tx_compl_tsf64)
@@ -1076,9 +1080,9 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 			(u_int64_t)txtstamp64_list[i].tx_tsf64_high << 32 |
 			txtstamp64_list[i].tx_tsf64_low;
 
-			ol_tx_timestamp(pdev, netbuf, tx_tsf64);
+			ol_tx_timestamp(pdev, status, netbuf, tx_tsf64);
 		} else if (txtstamp_list)
-			ol_tx_timestamp(pdev, netbuf,
+			ol_tx_timestamp(pdev, status, netbuf,
 					(u_int64_t)txtstamp_list->timestamp[i]
 					);
 
