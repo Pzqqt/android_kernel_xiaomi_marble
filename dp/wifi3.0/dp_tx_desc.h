@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -220,6 +221,58 @@ dp_tx_is_threshold_reached(struct dp_tx_desc_pool_s *pool, uint16_t avail_desc)
 }
 
 /**
+ * dp_tx_adjust_flow_pool_state() - Adjust flow pool state
+ *
+ * @soc: dp soc
+ * @pool: flow pool
+ */
+static inline void
+dp_tx_adjust_flow_pool_state(struct dp_soc *soc,
+			     struct dp_tx_desc_pool_s *pool)
+{
+	if (pool->avail_desc > pool->stop_th[DP_TH_BE_BK]) {
+		pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
+		return;
+	} else if (pool->avail_desc <= pool->stop_th[DP_TH_BE_BK] &&
+		   pool->avail_desc > pool->stop_th[DP_TH_VI]) {
+		pool->status = FLOW_POOL_BE_BK_PAUSED;
+	} else if (pool->avail_desc <= pool->stop_th[DP_TH_VI] &&
+		   pool->avail_desc > pool->stop_th[DP_TH_VO]) {
+		pool->status = FLOW_POOL_VI_PAUSED;
+	} else if (pool->avail_desc <= pool->stop_th[DP_TH_VO] &&
+		   pool->avail_desc > pool->stop_th[DP_TH_HI]) {
+		pool->status = FLOW_POOL_VO_PAUSED;
+	} else if (pool->avail_desc <= pool->stop_th[DP_TH_HI]) {
+		pool->status = FLOW_POOL_ACTIVE_PAUSED;
+	}
+
+	switch (pool->status) {
+	case FLOW_POOL_ACTIVE_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_PRIORITY_QUEUE_OFF,
+			      WLAN_DATA_FLOW_CTRL_PRI);
+
+	case FLOW_POOL_VO_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_VO_QUEUE_OFF,
+			      WLAN_DATA_FLOW_CTRL_VO);
+
+	case FLOW_POOL_VI_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_VI_QUEUE_OFF,
+			      WLAN_DATA_FLOW_CTRL_VI);
+
+	case FLOW_POOL_BE_BK_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_BE_BK_QUEUE_OFF,
+			      WLAN_DATA_FLOW_CTRL_BE_BK);
+		break;
+	default:
+		dp_err("Invalid pool staus:%u to adjust", pool->status);
+	}
+}
+
+/**
  * dp_tx_desc_alloc() - Allocate a Software Tx descriptor from given pool
  *
  * @soc: Handle to DP SoC structure
@@ -235,39 +288,53 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 	bool is_pause = false;
 	enum netif_action_type act = WLAN_NETIF_ACTION_TYPE_NONE;
 	enum dp_fl_ctrl_threshold level = DP_TH_BE_BK;
+	enum netif_reason_type reason;
 
 	if (qdf_likely(pool)) {
 		qdf_spin_lock_bh(&pool->flow_pool_lock);
-		if (qdf_likely(pool->avail_desc)) {
+		if (qdf_likely(pool->avail_desc &&
+		    pool->status != FLOW_POOL_INVALID &&
+		    pool->status != FLOW_POOL_INACTIVE)) {
 			tx_desc = dp_tx_get_desc_flow_pool(pool);
 			tx_desc->pool_id = desc_pool_id;
 			tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
+
 			is_pause = dp_tx_is_threshold_reached(pool,
 							      pool->avail_desc);
+
+			if (qdf_unlikely(pool->status ==
+					 FLOW_POOL_ACTIVE_UNPAUSED_REATTACH)) {
+				dp_tx_adjust_flow_pool_state(soc, pool);
+				is_pause = false;
+			}
 
 			if (qdf_unlikely(is_pause)) {
 				switch (pool->status) {
 				case FLOW_POOL_ACTIVE_UNPAUSED:
 					/* pause network BE\BK queue */
 					act = WLAN_NETIF_BE_BK_QUEUE_OFF;
+					reason = WLAN_DATA_FLOW_CTRL_BE_BK;
 					level = DP_TH_BE_BK;
 					pool->status = FLOW_POOL_BE_BK_PAUSED;
 					break;
 				case FLOW_POOL_BE_BK_PAUSED:
 					/* pause network VI queue */
 					act = WLAN_NETIF_VI_QUEUE_OFF;
+					reason = WLAN_DATA_FLOW_CTRL_VI;
 					level = DP_TH_VI;
 					pool->status = FLOW_POOL_VI_PAUSED;
 					break;
 				case FLOW_POOL_VI_PAUSED:
 					/* pause network VO queue */
 					act = WLAN_NETIF_VO_QUEUE_OFF;
+					reason = WLAN_DATA_FLOW_CTRL_VO;
 					level = DP_TH_VO;
 					pool->status = FLOW_POOL_VO_PAUSED;
 					break;
 				case FLOW_POOL_VO_PAUSED:
 					/* pause network HI PRI queue */
 					act = WLAN_NETIF_PRIORITY_QUEUE_OFF;
+					reason = WLAN_DATA_FLOW_CTRL_PRI;
 					level = DP_TH_HI;
 					pool->status = FLOW_POOL_ACTIVE_PAUSED;
 					break;
@@ -285,7 +352,7 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 						qdf_get_system_timestamp();
 					soc->pause_cb(desc_pool_id,
 						      act,
-						      WLAN_DATA_FLOW_CONTROL);
+						      reason);
 				}
 			}
 		} else {
@@ -315,6 +382,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
 	qdf_time_t unpause_time = qdf_get_system_timestamp(), pause_dur;
 	enum netif_action_type act = WLAN_WAKE_ALL_NETIF_QUEUE;
+	enum netif_reason_type reason;
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
 	tx_desc->vdev_id = DP_INVALID_VDEV_ID;
@@ -325,6 +393,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	case FLOW_POOL_ACTIVE_PAUSED:
 		if (pool->avail_desc > pool->start_th[DP_TH_HI]) {
 			act = WLAN_NETIF_PRIORITY_QUEUE_ON;
+			reason = WLAN_DATA_FLOW_CTRL_PRI;
 			pool->status = FLOW_POOL_VO_PAUSED;
 
 			/* Update maxinum pause duration for HI queue */
@@ -337,6 +406,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	case FLOW_POOL_VO_PAUSED:
 		if (pool->avail_desc > pool->start_th[DP_TH_VO]) {
 			act = WLAN_NETIF_VO_QUEUE_ON;
+			reason = WLAN_DATA_FLOW_CTRL_VO;
 			pool->status = FLOW_POOL_VI_PAUSED;
 
 			/* Update maxinum pause duration for VO queue */
@@ -349,6 +419,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	case FLOW_POOL_VI_PAUSED:
 		if (pool->avail_desc > pool->start_th[DP_TH_VI]) {
 			act = WLAN_NETIF_VI_QUEUE_ON;
+			reason = WLAN_DATA_FLOW_CTRL_VI;
 			pool->status = FLOW_POOL_BE_BK_PAUSED;
 
 			/* Update maxinum pause duration for VI queue */
@@ -360,7 +431,8 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 		break;
 	case FLOW_POOL_BE_BK_PAUSED:
 		if (pool->avail_desc > pool->start_th[DP_TH_BE_BK]) {
-			act = WLAN_WAKE_NON_PRIORITY_QUEUE;
+			act = WLAN_NETIF_BE_BK_QUEUE_ON;
+			reason = WLAN_DATA_FLOW_CTRL_BE_BK;
 			pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
 
 			/* Update maxinum pause duration for BE_BK queue */
@@ -393,7 +465,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 
 	if (act != WLAN_WAKE_ALL_NETIF_QUEUE)
 		soc->pause_cb(pool->flow_pool_id,
-			      act, WLAN_DATA_FLOW_CONTROL);
+			      act, reason);
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 }
 #else /* QCA_AC_BASED_FLOW_CONTROL */
