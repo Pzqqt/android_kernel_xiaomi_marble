@@ -683,6 +683,8 @@ struct shadow_reg_config {
 struct hal_reo_params {
 	/** rx hash steering enabled or disabled */
 	bool rx_hash_enabled;
+	/** reo remap 0 register */
+	uint32_t remap0;
 	/** reo remap 1 register */
 	uint32_t remap1;
 	/** reo remap 2 register */

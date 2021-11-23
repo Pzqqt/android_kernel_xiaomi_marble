@@ -289,3 +289,26 @@ dp_link_peer_hash_find_by_chip_id(struct dp_soc *soc,
 }
 
 qdf_export_symbol(dp_link_peer_hash_find_by_chip_id);
+
+struct dp_soc *
+dp_rx_replensih_soc_get(struct dp_soc *soc, uint8_t reo_ring_num)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct dp_mlo_ctxt *mlo_ctxt = be_soc->ml_ctxt;
+	uint8_t chip_id;
+	uint8_t rx_ring_mask;
+
+	if (!be_soc->mlo_enabled || !mlo_ctxt)
+		return soc;
+
+	for (chip_id = 0; chip_id < WLAN_MAX_MLO_CHIPS; chip_id++) {
+		rx_ring_mask =
+			wlan_cfg_mlo_rx_ring_map_get_by_chip_id
+					(soc->wlan_cfg_ctx, chip_id);
+
+		if (rx_ring_mask & (1 << reo_ring_num))
+			return dp_mlo_get_soc_ref_by_chip_id(mlo_ctxt, chip_id);
+	}
+
+	return soc;
+}

@@ -176,6 +176,7 @@ uint32_t dp_rx_process_be(struct dp_intr *int_ctx,
 	uint8_t pkt_capture_offload = 0;
 	struct dp_srng *rx_ring = &soc->reo_dest_ring[reo_ring_num];
 	int max_reap_limit, ring_near_full;
+	struct dp_soc *replenish_soc;
 
 	DP_HIST_INIT();
 
@@ -468,6 +469,7 @@ more_data:
 done:
 	dp_rx_srng_access_end(int_ctx, soc, hal_ring_hdl);
 
+	replenish_soc = dp_rx_replensih_soc_get(soc, reo_ring_num);
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		/*
 		 * continue with next mac_id if no pkts were reaped
@@ -476,11 +478,11 @@ done:
 		if (!rx_bufs_reaped[mac_id])
 			continue;
 
-		dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
+		dp_rxdma_srng = &replenish_soc->rx_refill_buf_ring[mac_id];
 
-		rx_desc_pool = &soc->rx_desc_buf[mac_id];
+		rx_desc_pool = &replenish_soc->rx_desc_buf[mac_id];
 
-		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
+		dp_rx_buffers_replenish(replenish_soc, mac_id, dp_rxdma_srng,
 					rx_desc_pool, rx_bufs_reaped[mac_id],
 					&head[mac_id], &tail[mac_id]);
 	}

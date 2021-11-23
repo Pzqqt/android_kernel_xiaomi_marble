@@ -23,6 +23,8 @@
 #include <hal_be_tx.h>
 #ifdef WLAN_MLO_MULTI_CHIP
 #include "mlo/dp_mlo.h"
+#else
+#include <dp_peer.h>
 #endif
 
 /* maximum number of entries in one page of secondary page table */

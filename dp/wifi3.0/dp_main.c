@@ -3958,22 +3958,8 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 }
 
 #ifdef IPA_OFFLOAD
-/**
- * dp_reo_remap_config() - configure reo remap register value based
- *                         nss configuration.
- *		based on offload_radio value below remap configuration
- *		get applied.
- *		0 - both Radios handled by host (remap rings 1, 2, 3 & 4)
- *		1 - 1st Radio handled by NSS (remap rings 2, 3 & 4)
- *		2 - 2nd Radio handled by NSS (remap rings 1, 2 & 4)
- *		3 - both Radios handled by NSS (remap not required)
- *		4 - IPA OFFLOAD enabled (remap rings 1,2 & 3)
- *
- * @remap1: output parameter indicates reo remap 1 register value
- * @remap2: output parameter indicates reo remap 2 register value
- * Return: bool type, true if remap is configured else false.
- */
-bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap1, uint32_t *remap2)
+bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap0,
+			 uint32_t *remap1, uint32_t *remap2)
 {
 	uint32_t ring[8] = {REO_REMAP_SW1, REO_REMAP_SW2, REO_REMAP_SW3};
 	int target_type;
@@ -4154,9 +4140,10 @@ static uint8_t dp_reo_ring_selection(uint32_t value, uint32_t *ring)
 	return num;
 }
 
-static bool dp_reo_remap_config(struct dp_soc *soc,
-				uint32_t *remap1,
-				uint32_t *remap2)
+bool dp_reo_remap_config(struct dp_soc *soc,
+			 uint32_t *remap0,
+			 uint32_t *remap1,
+			 uint32_t *remap2)
 {
 	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 	uint32_t reo_config = wlan_cfg_get_reo_rings_mapping(soc->wlan_cfg_ctx);
@@ -6843,15 +6830,6 @@ static void dp_mlo_peer_authorize(struct dp_soc *soc,
 }
 #endif
 
-/*
- * dp_vdev_get_default_reo_hash() - get reo dest ring and hash values for a vdev
- * @vdev: Datapath VDEV handle
- * @reo_dest: pointer to default reo_dest ring for vdev to be populated
- * @hash_based: pointer to hash value (enabled/disabled) to be populated
- *
- * Return: None
- */
-static
 void dp_vdev_get_default_reo_hash(struct dp_vdev *vdev,
 				  enum cdp_host_reo_dest_ring *reo_dest,
 				  bool *hash_based)
@@ -6904,8 +6882,10 @@ static inline bool dp_is_vdev_subtype_p2p(struct dp_vdev *vdev)
  * Return: None
  */
 static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
+				       struct cdp_peer_setup_info *setup_info,
 				       enum cdp_host_reo_dest_ring *reo_dest,
-				       bool *hash_based)
+				       bool *hash_based,
+				       uint8_t *lmac_peer_id_msb)
 {
 	struct dp_soc *soc;
 	struct dp_pdev *pdev;
@@ -6952,12 +6932,16 @@ static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
  * Use system config values for hash based steering.
  * Return: None
  */
-
 static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
+				       struct cdp_peer_setup_info *setup_info,
 				       enum cdp_host_reo_dest_ring *reo_dest,
-				       bool *hash_based)
+				       bool *hash_based,
+				       uint8_t *lmac_peer_id_msb)
 {
-	dp_vdev_get_default_reo_hash(vdev, reo_dest, hash_based);
+	struct dp_soc *soc = vdev->pdev->soc;
+
+	soc->arch_ops.peer_get_reo_hash(vdev, setup_info, reo_dest, hash_based,
+					lmac_peer_id_msb);
 }
 #endif /* IPA_OFFLOAD */
 
@@ -6985,6 +6969,7 @@ dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			dp_peer_find_hash_find(soc, peer_mac, 0, vdev_id,
 					       DP_MOD_ID_CDP);
 	enum wlan_op_mode vdev_opmode;
+	uint8_t lmac_peer_id_msb = 0;
 
 	if (!peer)
 		return QDF_STATUS_E_FAILURE;
@@ -6998,7 +6983,9 @@ dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	/* save vdev related member in case vdev freed */
 	vdev_opmode = vdev->opmode;
 	pdev = vdev->pdev;
-	dp_peer_setup_get_reo_hash(vdev, &reo_dest, &hash_based);
+	dp_peer_setup_get_reo_hash(vdev, setup_info,
+				   &reo_dest, &hash_based,
+				   &lmac_peer_id_msb);
 
 	dp_info("pdev: %d vdev :%d opmode:%u hash-based-steering:%d default-reo_dest:%u",
 		pdev->pdev_id, vdev->vdev_id,
@@ -7023,7 +7010,8 @@ dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 				soc->ctrl_psoc,
 				peer->vdev->pdev->pdev_id,
 				peer->mac_addr.raw,
-				peer->vdev->vdev_id, hash_based, reo_dest);
+				peer->vdev->vdev_id, hash_based, reo_dest,
+				lmac_peer_id_msb);
 	}
 
 	qdf_atomic_set(&peer->is_default_route_set, 1);
@@ -12731,9 +12719,9 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 		 * Reo ring remap is not required if both radios
 		 * are offloaded to NSS
 		 */
-		if (dp_reo_remap_config(soc,
-					&reo_params.remap1,
-					&reo_params.remap2))
+		if (soc->arch_ops.reo_remap_config(soc, &reo_params.remap0,
+						   &reo_params.remap1,
+						   &reo_params.remap2))
 			reo_params.rx_hash_enabled = true;
 		else
 			reo_params.rx_hash_enabled = false;

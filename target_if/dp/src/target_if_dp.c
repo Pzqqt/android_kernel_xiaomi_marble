@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +29,8 @@ void
 target_if_peer_set_default_routing(struct cdp_ctrl_objmgr_psoc *psoc,
 				   uint8_t pdev_id, uint8_t *peer_macaddr,
 				   uint8_t vdev_id,
-				   bool hash_based, uint8_t ring_num)
+				   bool hash_based, uint8_t ring_num,
+				   uint8_t lmac_peer_id_msb)
 {
 	uint32_t value;
 	struct peer_set_params param;
@@ -55,6 +57,10 @@ target_if_peer_set_default_routing(struct cdp_ctrl_objmgr_psoc *psoc,
 	 * fields in common wmi header file
 	 */
 	value = ((hash_based) ? 1 : 0) | (ring_num << 1);
+
+	if (lmac_peer_id_msb)
+		QDF_SET_BITS(value, PEER_ROUTING_LMAC_ID_INDEX,
+			     PEER_ROUTING_LMAC_ID_BITS, lmac_peer_id_msb);
 
 	param.param_id = WMI_HOST_PEER_SET_DEFAULT_ROUTING;
 	param.vdev_id = vdev_id;

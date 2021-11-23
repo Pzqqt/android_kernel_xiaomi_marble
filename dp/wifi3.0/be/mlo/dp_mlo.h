@@ -20,7 +20,7 @@
 #include <dp_peer.h>
 
 /* Max number of chips that can participate in MLO */
-#define DP_MAX_MLO_CHIPS 3
+#define DP_MAX_MLO_CHIPS WLAN_MAX_MLO_CHIPS
 
 /* Max number of peers supported */
 #define DP_MAX_MLO_PEER 512

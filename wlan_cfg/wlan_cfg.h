@@ -87,6 +87,13 @@
 #endif
 #endif
 
+/* Max number of chips that can participate in MLO */
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+#define WLAN_MAX_MLO_CHIPS 3
+#else
+#define WLAN_MAX_MLO_CHIPS 1
+#endif
+
 struct wlan_cfg_dp_pdev_ctxt;
 
 /**
@@ -234,6 +241,9 @@ struct wlan_srng_cfg {
  * @tx_mon_buf_ring_size: Tx monitor buf ring size
  * @tx_rings_grp_bitmap: bitmap of group intr contexts which have
  *  non-zero tx ring mask
+ * @mlo_chip_rx_ring_map: map of chip_id to rx ring map
+ * @mlo_chip_default_rx_ring_id: default rx_ring of chip when hash is not found
+ * @lmac_peer_id_msb: value used for hash based routing
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -382,6 +392,11 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t tx_mon_buf_ring_size;
 	uint8_t rx_rel_wbm2sw_ring_id;
 	uint32_t tx_rings_grp_bitmap;
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+	uint8_t mlo_chip_rx_ring_map[WLAN_MAX_MLO_CHIPS];
+	uint8_t mlo_chip_default_rx_ring_id[WLAN_MAX_MLO_CHIPS];
+	uint8_t lmac_peer_id_msb[WLAN_MAX_MLO_CHIPS];
+#endif
 };
 
 /**
@@ -1932,4 +1947,39 @@ wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg);
 void
 wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 			    uint8_t wbm2sw_ring_id);
+#endif
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+/**
+ * wlan_cfg_mlo_rx_ring_map_get_by_chip_id() - get rx ring map
+ * @cfg: soc configuration context
+ * @chip_id: mlo_chip_id
+ *
+ * Return: rx_ring_map
+ */
+uint8_t
+wlan_cfg_mlo_rx_ring_map_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+					uint8_t chip_id);
+
+/**
+ * wlan_cfg_mlo_default_rx_ring_get_by_chip_id() - get default RX ring
+ * @cfg: soc configuration context
+ * @chip_id: mlo_chip_id
+ *
+ * Return: default rx ring
+ */
+uint8_t
+wlan_cfg_mlo_default_rx_ring_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+					    uint8_t chip_id);
+
+/**
+ * wlan_cfg_mlo_lmac_peer_id_msb_get_by_chip_id() - get chip's lmac_peer_id_msb
+ * @cfg: soc configuration context
+ * @chip_id: mlo_chip_id
+ *
+ * Return: lmac_peer_id_msb
+ */
+uint8_t
+wlan_cfg_mlo_lmac_peer_id_msb_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+					     uint8_t chip_id);
 #endif

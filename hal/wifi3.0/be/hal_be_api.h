@@ -120,4 +120,36 @@ void hal_reo_qdesc_setup_be(hal_soc_handle_t hal_soc_hdl,
 void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
 				      struct hal_hw_cc_config *cc_cfg);
 
+/**
+ * hal_reo_ix_remap_value_get() - Calculate reo remap register value from
+ *				  ring_id_mask which is used for hash based
+ *				  reo distribution
+ *
+ * @hal_soc: Handle to HAL SoC structure
+ * @ring_id_mask: mask value indicating the rx rings 0th bit set indicate
+ * REO2SW1 is included in hash distribution
+ *
+ * Return: REO remap value
+ */
+uint32_t
+hal_reo_ix_remap_value_get_be(hal_soc_handle_t hal_soc_hdl,
+			      uint8_t rx_ring_mask);
+
+/**
+ * hal_reo_ring_remap_value_get_be() - return REO remap value
+ *
+ * @ring_id: REO2SW ring id
+ *
+ * Return: REO remap value
+ */
+uint8_t
+hal_reo_ring_remap_value_get_be(uint8_t rx_ring_id);
+
+/**
+ * hal_setup_reo_swap() - Set the swap flag for big endian machines
+ * @soc: HAL soc handle
+ *
+ * Return: None
+ */
+void hal_setup_reo_swap(struct hal_soc *soc);
 #endif /* _HAL_BE_API_H_ */

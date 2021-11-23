@@ -440,6 +440,12 @@
 #define WLAN_CFG_PPE_RELEASE_RING_SIZE_MIN 64
 #define WLAN_CFG_PPE_RELEASE_RING_SIZE_MAX 1024
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+#define WLAN_CFG_MLO_RX_RING_MAP 0xF
+#define WLAN_CFG_MLO_RX_RING_MAP_MIN 0x0
+#define WLAN_CFG_MLO_RX_RING_MAP_MAX 0xFF
+#endif
+
 /* DP INI Declerations */
 #define CFG_DP_HTT_PACKET_TYPE \
 		CFG_INI_UINT("dp_htt_packet_type", \
@@ -1364,6 +1370,75 @@
 #define CFG_DP_PPE_CONFIG
 #endif
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+/*
+ * <ini>
+ * dp_chip0_rx_ring_map - Set Rx ring map for CHIP 0
+ * @Min: 0x0
+ * @Max: 0xFF
+ * @Default: 0xF
+ *
+ * This ini sets Rx ring map for CHIP 0
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_MLO_CHIP0_RX_RING_MAP \
+		CFG_INI_UINT("dp_chip0_rx_ring_map", \
+		WLAN_CFG_MLO_RX_RING_MAP_MIN, \
+		WLAN_CFG_MLO_RX_RING_MAP_MAX, \
+		WLAN_CFG_MLO_RX_RING_MAP, \
+		CFG_VALUE_OR_DEFAULT, "DP Rx ring map chip0")
+
+/*
+ * <ini>
+ * dp_chip1_rx_ring_map - Set Rx ring map for CHIP 1
+ * @Min: 0x0
+ * @Max: 0xFF
+ * @Default: 0xF
+ *
+ * This ini sets Rx ring map for CHIP 1
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_MLO_CHIP1_RX_RING_MAP \
+		CFG_INI_UINT("dp_chip1_rx_ring_map", \
+		WLAN_CFG_MLO_RX_RING_MAP_MIN, \
+		WLAN_CFG_MLO_RX_RING_MAP_MAX, \
+		WLAN_CFG_MLO_RX_RING_MAP, \
+		CFG_VALUE_OR_DEFAULT, "DP Rx ring map chip1")
+
+/*
+ * <ini>
+ * dp_chip2_rx_ring_map - Set Rx ring map for CHIP 2
+ * @Min: 0x0
+ * @Max: 0xFF
+ * @Default: 0xF
+ *
+ * This ini sets Rx ring map for CHIP 2
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_MLO_CHIP2_RX_RING_MAP \
+		CFG_INI_UINT("dp_chip2_rx_ring_map", \
+		WLAN_CFG_MLO_RX_RING_MAP_MIN, \
+		WLAN_CFG_MLO_RX_RING_MAP_MAX, \
+		WLAN_CFG_MLO_RX_RING_MAP, \
+		CFG_VALUE_OR_DEFAULT, "DP Rx ring map chip2")
+
+#define CFG_DP_MLO_CONFIG \
+	CFG(CFG_DP_MLO_CHIP0_RX_RING_MAP) \
+	CFG(CFG_DP_MLO_CHIP1_RX_RING_MAP) \
+	CFG(CFG_DP_MLO_CHIP2_RX_RING_MAP)
+#else
+#define CFG_DP_MLO_CONFIG
+#endif
+
 #define CFG_DP \
 		CFG(CFG_DP_HTT_PACKET_TYPE) \
 		CFG(CFG_DP_INT_BATCH_THRESHOLD_OTHER) \
@@ -1464,5 +1539,6 @@
 		CFG(CFG_DP_TX_MONITOR_DST_RING) \
 		CFG_DP_IPA_TX_RING_CFG \
 		CFG_DP_PPE_CONFIG \
-		CFG_DP_IPA_TX_ALT_RING_CFG
+		CFG_DP_IPA_TX_ALT_RING_CFG \
+		CFG_DP_MLO_CONFIG
 #endif /* _CFG_DP_H_ */

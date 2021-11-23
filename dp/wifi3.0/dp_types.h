@@ -1619,6 +1619,13 @@ struct dp_arch_ops {
 	void (*txrx_peer_detach)(struct dp_soc *soc);
 	QDF_STATUS (*dp_rxdma_ring_sel_cfg)(struct dp_soc *soc);
 	void (*soc_cfg_attach)(struct dp_soc *soc);
+	void (*peer_get_reo_hash)(struct dp_vdev *vdev,
+				  struct cdp_peer_setup_info *setup_info,
+				  enum cdp_host_reo_dest_ring *reo_dest,
+				  bool *hash_based,
+				  uint8_t *lmac_peer_id_msb);
+	bool (*reo_remap_config)(struct dp_soc *soc, uint32_t *remap0,
+				 uint32_t *remap1, uint32_t *remap2);
 
 	/* TX RX Arch Ops */
 	QDF_STATUS (*tx_hw_enqueue)(struct dp_soc *soc, struct dp_vdev *vdev,
@@ -3622,4 +3629,36 @@ void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 enum timer_yield_status
 dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
 			  uint64_t start_time);
+
+/*
+ * dp_vdev_get_default_reo_hash() - get reo dest ring and hash values for a vdev
+ * @vdev: Datapath VDEV handle
+ * @reo_dest: pointer to default reo_dest ring for vdev to be populated
+ * @hash_based: pointer to hash value (enabled/disabled) to be populated
+ *
+ * Return: None
+ */
+void dp_vdev_get_default_reo_hash(struct dp_vdev *vdev,
+				  enum cdp_host_reo_dest_ring *reo_dest,
+				  bool *hash_based);
+
+/**
+ * dp_reo_remap_config() - configure reo remap register value based
+ *                         nss configuration.
+ *		based on offload_radio value below remap configuration
+ *		get applied.
+ *		0 - both Radios handled by host (remap rings 1, 2, 3 & 4)
+ *		1 - 1st Radio handled by NSS (remap rings 2, 3 & 4)
+ *		2 - 2nd Radio handled by NSS (remap rings 1, 2 & 4)
+ *		3 - both Radios handled by NSS (remap not required)
+ *		4 - IPA OFFLOAD enabled (remap rings 1,2 & 3)
+ *
+ * @remap0: output parameter indicates reo remap 0 register value
+ * @remap1: output parameter indicates reo remap 1 register value
+ * @remap2: output parameter indicates reo remap 2 register value
+ * Return: bool type, true if remap is configured else false.
+ */
+
+bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap0,
+			 uint32_t *remap1, uint32_t *remap2);
 #endif /* _DP_TYPES_H_ */
