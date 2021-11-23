@@ -1325,6 +1325,10 @@ struct seg_hdr_info {
  *              0:disable 1:enable
  * @en_beamforming: flag to enable tx beamforming
  *              0:disable 1:enable
+ * @retry_limit_ext: 3 bits of extended retry limit.
+ *              Combined with 4 bits "retry_limit"
+ *              to create 7 bits hw retry count.
+ *              Maximum 127 retries for specific frames.
  */
 struct tx_send_params {
 	uint32_t pwr:8,
@@ -1337,7 +1341,8 @@ struct tx_send_params {
 		 frame_type:1,
 		 cfr_enable:1,
 		 en_beamforming:1,
-		 reserved:9;
+		 retry_limit_ext:3,
+		 reserved:6;
 };
 
 /**

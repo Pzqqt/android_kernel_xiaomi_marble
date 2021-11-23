@@ -3699,6 +3699,8 @@ static inline QDF_STATUS populate_tx_send_params(uint8_t *bufp,
 					  param.cfr_enable);
 	WMI_TX_SEND_PARAM_BEAMFORM_SET(tx_param->tx_param_dword1,
 				       param.en_beamforming);
+	WMI_TX_SEND_PARAM_RETRY_LIMIT_EXT_SET(tx_param->tx_param_dword1,
+					      param.retry_limit_ext);
 
 	return status;
 }
