@@ -2522,6 +2522,7 @@ QDF_STATUS dp_mon_soc_attach(struct dp_soc *soc)
 	/* register monitor ops */
 	soc->monitor_soc = mon_soc;
 	dp_mon_ops_register(soc);
+	dp_mon_register_intr_ops(soc);
 
 	dp_mon_cdp_ops_register(soc);
 	return QDF_STATUS_SUCCESS;
