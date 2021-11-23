@@ -2765,14 +2765,16 @@ static bool lim_fill_assoc_he_info(struct mac_context *mac_ctx,
 			else if (session_entry->ch_width == CH_WIDTH_40MHZ &&
 				 assoc_req->he_cap.chan_width_0 == 1)
 				assoc_ind->chan_info.info = MODE_11AX_HE40;
+			else
+				assoc_ind->chan_info.info = MODE_11AX_HE20;
 		} else {
 			if (session_entry->ch_width == CH_WIDTH_160MHZ &&
 				assoc_req->he_cap.chan_width_2 == 1)
 				assoc_ind->chan_info.info = MODE_11AX_HE160;
-			else if (session_entry->ch_width == CH_WIDTH_80MHZ &&
+			else if (session_entry->ch_width >= CH_WIDTH_80MHZ &&
 				 assoc_req->he_cap.chan_width_1 == 1)
 				assoc_ind->chan_info.info = MODE_11AX_HE80;
-			else if (session_entry->ch_width == CH_WIDTH_40MHZ &&
+			else if (session_entry->ch_width >= CH_WIDTH_40MHZ &&
 				 assoc_req->he_cap.chan_width_1 == 1)
 				assoc_ind->chan_info.info = MODE_11AX_HE40;
 			else
