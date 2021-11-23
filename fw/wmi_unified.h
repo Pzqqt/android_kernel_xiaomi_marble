@@ -5957,6 +5957,9 @@ typedef struct {
 #define WMI_TX_SEND_PARAM_BEAMFORM_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 22, 1)
 #define WMI_TX_SEND_PARAM_BEAMFORM_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 22, 1, value)
 
+#define WMI_TX_SEND_PARAM_RETRY_LIMIT_EXT_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 23, 3)
+#define WMI_TX_SEND_PARAM_RETRY_LIMIT_EXT_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 23, 3, value)
+
 
 /* TX_SEND flags:
  * Bit 0: set wrong txkey
@@ -6103,7 +6106,13 @@ typedef struct {
                 /* Enables Beamforming when bit is set */
                 en_beamforming: 1,
 
-                reserved1_31_23: 9;
+                /*
+                 * Extra 3 bits of retry limit defined in tx_param_dword0,
+                 * to allow maximum 127 retries for specific frames.
+                 */
+                retry_limit_ext: 3,
+
+                reserved1_31_26: 6;
         };
         A_UINT32 tx_param_dword1;
     };
