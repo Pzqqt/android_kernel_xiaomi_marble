@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +23,7 @@
 #include "qdf_trace.h"
 #include "qdf_types.h"
 
+#if defined(CONFIG_LEAK_DETECTION) && defined(WLAN_TRACKER_TEST)
 #define qdf_ut_tracker_bits 4 /* 16 buckets */
 #define qdf_ut_tracker_item_count 3
 #define qdf_ut_tracker_declare(name) \
@@ -92,4 +95,4 @@ uint32_t qdf_tracker_unit_test(void)
 
 	return errors;
 }
-
+#endif

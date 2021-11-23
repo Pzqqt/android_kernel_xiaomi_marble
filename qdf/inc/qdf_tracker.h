@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,6 +62,7 @@ struct qdf_tracker name = { \
 	.ht = qdf_ptr_hash_ptr(name ## _ht), \
 }
 
+#ifdef CONFIG_LEAK_DETECTION
 /**
  * qdf_tracker_init() - initialize a qdf_tracker
  * @tracker: the qdf_tracker to initialize
@@ -125,6 +128,42 @@ qdf_must_check bool
 qdf_tracker_lookup(struct qdf_tracker *tracker, void *ptr,
 		   char (*out_func)[QDF_TRACKER_FUNC_SIZE],
 		   uint32_t *out_line);
+#else
+static inline
+void qdf_tracker_init(struct qdf_tracker *tracker)
+{
+}
 
+static inline
+void qdf_tracker_deinit(struct qdf_tracker *tracker)
+{
+}
+
+static inline qdf_must_check QDF_STATUS
+qdf_tracker_track(struct qdf_tracker *tracker, void *ptr,
+		  const char *func, uint32_t line)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+void qdf_tracker_untrack(struct qdf_tracker *tracker, void *ptr,
+			 const char *func, uint32_t line)
+{
+}
+
+static inline
+void qdf_tracker_check_for_leaks(struct qdf_tracker *tracker)
+{
+}
+
+static inline qdf_must_check bool
+qdf_tracker_lookup(struct qdf_tracker *tracker, void *ptr,
+		   char (*out_func)[QDF_TRACKER_FUNC_SIZE],
+		   uint32_t *out_line)
+{
+	return false;
+}
+#endif
 #endif /* __QDF_TRACKER_H */
 
