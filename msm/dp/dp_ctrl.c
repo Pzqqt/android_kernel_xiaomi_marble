@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2021, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1421,7 +1422,7 @@ static void dp_ctrl_off(struct dp_ctrl *dp_ctrl)
 
 	ctrl->catalog->fec_config(ctrl->catalog, false);
 	dp_ctrl_configure_source_link_params(ctrl, false);
-	ctrl->catalog->reset(ctrl->catalog);
+	dp_ctrl_state_ctrl(ctrl, 0);
 
 	/* Make sure DP is disabled before clk disable */
 	wmb();
