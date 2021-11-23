@@ -105,6 +105,20 @@ enum vdev_ll_conn_actions {
 	CDP_VDEV_LL_CONN_DEL
 };
 
+/**
+ * struct cdp_mlo_ops - MLO ops for multichip
+ * @mlo_soc_setup: setup DP mlo for SOC
+ * @mlo_soc_teardown: teardown DP mlo for SOC
+ */
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+struct cdp_mlo_ops {
+	void (*mlo_soc_setup)(struct cdp_soc_t *cdp_soc,
+			      struct cdp_mlo_ctxt *mlo_ctxt);
+	void (*mlo_soc_teardown)(struct cdp_soc_t *cdp_soc,
+				 struct cdp_mlo_ctxt *mlo_ctxt);
+};
+#endif
+
 /******************************************************************************
  *
  * Control Interface (A Interface)
@@ -1874,6 +1888,8 @@ struct cdp_ops {
 #ifdef WLAN_SUPPORT_MESH_LATENCY
 	struct cdp_mesh_latency_ops         *mesh_latency_ops;
 #endif
-
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+	struct cdp_mlo_ops  *mlo_ops;
+#endif
 };
 #endif

@@ -1675,6 +1675,20 @@ struct dp_arch_ops {
 	int (*dp_srng_test_and_update_nf_params)(struct dp_soc *soc,
 						 struct dp_srng *dp_srng,
 						 int *max_reap_limit);
+
+	/* MLO ops */
+#ifdef WLAN_FEATURE_11BE_MLO
+	void (*mlo_peer_find_hash_detach)(struct dp_soc *soc);
+	QDF_STATUS (*mlo_peer_find_hash_attach)(struct dp_soc *soc);
+	void (*mlo_peer_find_hash_add)(struct dp_soc *soc,
+				       struct dp_peer *peer);
+	void (*mlo_peer_find_hash_remove)(struct dp_soc *soc,
+					  struct dp_peer *peer);
+	struct dp_peer *(*mlo_peer_find_hash_find)(struct dp_soc *soc,
+						   uint8_t *peer_mac_addr,
+						   int mac_addr_is_aligned,
+						   enum dp_mod_id mod_id);
+#endif
 };
 
 /**
@@ -1911,15 +1925,6 @@ struct dp_soc {
 		TAILQ_HEAD(, dp_peer) * bins;
 	} peer_hash;
 
-#ifdef WLAN_FEATURE_11BE_MLO
-	/* Protect mld peer hash table */
-	DP_MUTEX_TYPE mld_peer_hash_lock;
-	struct {
-		unsigned mask;
-		unsigned idx_bits;
-		TAILQ_HEAD(, dp_peer) * bins;
-	} mld_peer_hash;
-#endif
 	/* rx defrag state – TBD: do we need this per radio? */
 	struct {
 		struct {
@@ -3176,11 +3181,13 @@ struct dp_peer_mesh_latency_parameter {
  * @mac_add: Mac address
  * @vdev_id: Vdev ID for current link peer
  * @is_valid: flag for link peer info valid or not
+ * @chip_id: chip id
  */
 struct dp_peer_link_info {
 	union dp_align_mac_addr mac_addr;
 	uint8_t vdev_id;
 	uint8_t is_valid;
+	uint8_t chip_id;
 };
 
 /**

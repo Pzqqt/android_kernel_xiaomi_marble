@@ -5515,6 +5515,7 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 		dp_mon_soc_detach_wrapper(soc);
 	}
 
+	qdf_mem_free(soc->cdp_soc.ops);
 	qdf_mem_free(soc);
 }
 
@@ -12341,42 +12342,43 @@ static struct cdp_peer_ops dp_ops_peer = {
 };
 #endif
 
-static struct cdp_ops dp_txrx_ops = {
-	.cmn_drv_ops = &dp_ops_cmn,
-	.ctrl_ops = &dp_ops_ctrl,
-	.me_ops = &dp_ops_me,
-	.host_stats_ops = &dp_ops_host_stats,
-	.wds_ops = &dp_ops_wds,
-	.raw_ops = &dp_ops_raw,
+static void dp_soc_txrx_ops_attach(struct dp_soc *soc)
+{
+	soc->cdp_soc.ops->cmn_drv_ops = &dp_ops_cmn;
+	soc->cdp_soc.ops->ctrl_ops = &dp_ops_ctrl;
+	soc->cdp_soc.ops->me_ops = &dp_ops_me;
+	soc->cdp_soc.ops->host_stats_ops = &dp_ops_host_stats;
+	soc->cdp_soc.ops->wds_ops = &dp_ops_wds;
+	soc->cdp_soc.ops->raw_ops = &dp_ops_raw;
 #ifdef PEER_FLOW_CONTROL
-	.pflow_ops = &dp_ops_pflow,
+	soc->cdp_soc.ops->pflow_ops = &dp_ops_pflow;
 #endif /* PEER_FLOW_CONTROL */
 #ifdef DP_PEER_EXTENDED_API
-	.misc_ops = &dp_ops_misc,
-	.ocb_ops = &dp_ops_ocb,
-	.peer_ops = &dp_ops_peer,
-	.mob_stats_ops = &dp_ops_mob_stats,
+	soc->cdp_soc.ops->misc_ops = &dp_ops_misc;
+	soc->cdp_soc.ops->ocb_ops = &dp_ops_ocb;
+	soc->cdp_soc.ops->peer_ops = &dp_ops_peer;
+	soc->cdp_soc.ops->mob_stats_ops = &dp_ops_mob_stats;
 #endif
 #ifdef DP_FLOW_CTL
-	.cfg_ops = &dp_ops_cfg,
-	.flowctl_ops = &dp_ops_flowctl,
-	.l_flowctl_ops = &dp_ops_l_flowctl,
-	.throttle_ops = &dp_ops_throttle,
+	soc->cdp_soc.ops->cfg_ops = &dp_ops_cfg;
+	soc->cdp_soc.ops->flowctl_ops = &dp_ops_flowctl;
+	soc->cdp_soc.ops->l_flowctl_ops = &dp_ops_l_flowctl;
+	soc->cdp_soc.ops->throttle_ops = &dp_ops_throttle;
 #endif
 #ifdef IPA_OFFLOAD
-	.ipa_ops = &dp_ops_ipa,
+	soc->cdp_soc.ops->ipa_ops = &dp_ops_ipa;
 #endif
 #ifdef DP_POWER_SAVE
-	.bus_ops = &dp_ops_bus,
+	soc->cdp_soc.ops->bus_ops = &dp_ops_bus;
 #endif
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
-	.cfr_ops = &dp_ops_cfr,
+	soc->cdp_soc.ops->cfr_ops = &dp_ops_cfr;
 #endif
 #ifdef WLAN_SUPPORT_MSCS
-	.mscs_ops = &dp_ops_mscs,
+	soc->cdp_soc.ops->mscs_ops = &dp_ops_mscs;
 #endif
 #ifdef WLAN_SUPPORT_MESH_LATENCY
-	.mesh_latency_ops = &dp_ops_mesh_latency,
+	soc->cdp_soc.ops->mesh_latency_ops = &dp_ops_mesh_latency;
 #endif
 };
 
@@ -12483,7 +12485,12 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			  &soc->cmem_size);
 	int_ctx = 0;
 	soc->device_id = device_id;
-	soc->cdp_soc.ops = &dp_txrx_ops;
+	soc->cdp_soc.ops =
+		(struct cdp_ops *)qdf_mem_malloc(sizeof(struct cdp_ops));
+	if (!soc->cdp_soc.ops)
+		goto fail1;
+
+	dp_soc_txrx_ops_attach(soc);
 	soc->cdp_soc.ol_ops = ol_ops;
 	soc->ctrl_psoc = ctrl_psoc;
 	soc->osdev = qdf_osdev;
@@ -12507,40 +12514,40 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach(soc->ctrl_psoc);
 	if (!soc->wlan_cfg_ctx) {
 		dp_err("wlan_cfg_ctx failed\n");
-		goto fail1;
+		goto fail2;
 	}
 	dp_soc_cfg_attach(soc);
 
 	if (dp_hw_link_desc_pool_banks_alloc(soc, WLAN_INVALID_PDEV_ID)) {
 		dp_err("failed to allocate link desc pool banks");
-		goto fail2;
+		goto fail3;
 	}
 
 	if (dp_hw_link_desc_ring_alloc(soc)) {
 		dp_err("failed to allocate link_desc_ring");
-		goto fail3;
+		goto fail4;
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(soc->arch_ops.txrx_soc_attach(soc,
 								 params))) {
 		dp_err("unable to do target specific attach");
-		goto fail4;
+		goto fail5;
 	}
 
 	if (dp_soc_srng_alloc(soc)) {
 		dp_err("failed to allocate soc srng rings");
-		goto fail5;
+		goto fail6;
 	}
 
 	if (dp_soc_tx_desc_sw_pools_alloc(soc)) {
 		dp_err("dp_soc_tx_desc_sw_pools_alloc failed");
-		goto fail6;
+		goto fail7;
 	}
 
 	if (!dp_monitor_modularized_enable()) {
 		if (dp_mon_soc_attach_wrapper(soc)) {
 			dp_err("failed to attach monitor");
-			goto fail7;
+			goto fail8;
 		}
 	}
 
@@ -12559,18 +12566,20 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		qdf_skb_total_mem_stats_read());
 
 	return soc;
-fail7:
+fail8:
 	dp_soc_tx_desc_sw_pools_free(soc);
-fail6:
+fail7:
 	dp_soc_srng_free(soc);
-fail5:
+fail6:
 	soc->arch_ops.txrx_soc_detach(soc);
-fail4:
+fail5:
 	dp_hw_link_desc_ring_free(soc);
-fail3:
+fail4:
 	dp_hw_link_desc_pool_banks_free(soc, WLAN_INVALID_PDEV_ID);
-fail2:
+fail3:
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
+fail2:
+	qdf_mem_free(soc->cdp_soc.ops);
 fail1:
 	qdf_mem_free(soc);
 fail0:

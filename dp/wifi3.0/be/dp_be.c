@@ -1012,6 +1012,213 @@ fail:
 	return QDF_STATUS_E_NOMEM;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline unsigned
+dp_mlo_peer_find_hash_index(dp_mld_peer_hash_obj_t mld_hash_obj,
+			    union dp_align_mac_addr *mac_addr)
+{
+	uint32_t index;
+
+	index =
+		mac_addr->align2.bytes_ab ^
+		mac_addr->align2.bytes_cd ^
+		mac_addr->align2.bytes_ef;
+
+	index ^= index >> mld_hash_obj->mld_peer_hash.idx_bits;
+	index &= mld_hash_obj->mld_peer_hash.mask;
+
+	return index;
+}
+
+QDF_STATUS
+dp_mlo_peer_find_hash_attach_be(dp_mld_peer_hash_obj_t mld_hash_obj,
+				int hash_elems)
+{
+	int i, log2;
+
+	if (!mld_hash_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	hash_elems *= DP_PEER_HASH_LOAD_MULT;
+	hash_elems >>= DP_PEER_HASH_LOAD_SHIFT;
+	log2 = dp_log2_ceil(hash_elems);
+	hash_elems = 1 << log2;
+
+	mld_hash_obj->mld_peer_hash.mask = hash_elems - 1;
+	mld_hash_obj->mld_peer_hash.idx_bits = log2;
+	/* allocate an array of TAILQ peer object lists */
+	mld_hash_obj->mld_peer_hash.bins = qdf_mem_malloc(
+		hash_elems * sizeof(TAILQ_HEAD(anonymous_tail_q, dp_peer)));
+	if (!mld_hash_obj->mld_peer_hash.bins)
+		return QDF_STATUS_E_NOMEM;
+
+	for (i = 0; i < hash_elems; i++)
+		TAILQ_INIT(&mld_hash_obj->mld_peer_hash.bins[i]);
+
+	qdf_spinlock_create(&mld_hash_obj->mld_peer_hash_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void
+dp_mlo_peer_find_hash_detach_be(dp_mld_peer_hash_obj_t mld_hash_obj)
+{
+	if (!mld_hash_obj)
+		return;
+
+	if (mld_hash_obj->mld_peer_hash.bins) {
+		qdf_mem_free(mld_hash_obj->mld_peer_hash.bins);
+		mld_hash_obj->mld_peer_hash.bins = NULL;
+		qdf_spinlock_destroy(&mld_hash_obj->mld_peer_hash_lock);
+	}
+}
+
+#ifdef WLAN_MLO_MULTI_CHIP
+static QDF_STATUS dp_mlo_peer_find_hash_attach_wrapper(struct dp_soc *soc)
+{
+	/* In case of MULTI chip MLO peer hash table when MLO global object
+	 * is created, avoid from SOC attach path
+	 */
+	return QDF_STATUS_SUCCESS;
+}
+
+static void dp_mlo_peer_find_hash_detach_wrapper(struct dp_soc *soc)
+{
+}
+#else
+static QDF_STATUS dp_mlo_peer_find_hash_attach_wrapper(struct dp_soc *soc)
+{
+	dp_mld_peer_hash_obj_t mld_hash_obj;
+
+	mld_hash_obj = dp_mlo_get_peer_hash_obj(soc);
+
+	if (!mld_hash_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	return dp_mlo_peer_find_hash_attach_be(mld_hash_obj, soc->max_peers);
+}
+
+static void dp_mlo_peer_find_hash_detach_wrapper(struct dp_soc *soc)
+{
+	dp_mld_peer_hash_obj_t mld_hash_obj;
+
+	mld_hash_obj = dp_mlo_get_peer_hash_obj(soc);
+
+	if (!mld_hash_obj)
+		return;
+
+	return dp_mlo_peer_find_hash_detach_be(mld_hash_obj);
+}
+#endif
+
+static struct dp_peer *
+dp_mlo_peer_find_hash_find_be(struct dp_soc *soc,
+			      uint8_t *peer_mac_addr,
+			      int mac_addr_is_aligned,
+			      enum dp_mod_id mod_id)
+{
+	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
+	uint32_t index;
+	struct dp_peer *peer;
+	dp_mld_peer_hash_obj_t mld_hash_obj;
+
+	mld_hash_obj = dp_mlo_get_peer_hash_obj(soc);
+	if (!mld_hash_obj)
+		return NULL;
+
+	if (!mld_hash_obj->mld_peer_hash.bins)
+		return NULL;
+
+	if (mac_addr_is_aligned) {
+		mac_addr = (union dp_align_mac_addr *)peer_mac_addr;
+	} else {
+		qdf_mem_copy(
+			&local_mac_addr_aligned.raw[0],
+			peer_mac_addr, QDF_MAC_ADDR_SIZE);
+		mac_addr = &local_mac_addr_aligned;
+	}
+
+	/* search mld peer table if no link peer for given mac address */
+	index = dp_mlo_peer_find_hash_index(mld_hash_obj, mac_addr);
+	qdf_spin_lock_bh(&mld_hash_obj->mld_peer_hash_lock);
+	TAILQ_FOREACH(peer, &mld_hash_obj->mld_peer_hash.bins[index],
+		      hash_list_elem) {
+		/* do not check vdev ID for MLD peer */
+		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0) {
+			/* take peer reference before returning */
+			if (dp_peer_get_ref(NULL, peer, mod_id) !=
+						QDF_STATUS_SUCCESS)
+				peer = NULL;
+
+			qdf_spin_unlock_bh(&mld_hash_obj->mld_peer_hash_lock);
+			return peer;
+		}
+	}
+	qdf_spin_unlock_bh(&mld_hash_obj->mld_peer_hash_lock);
+
+	return NULL; /* failure */
+}
+
+static void
+dp_mlo_peer_find_hash_remove_be(struct dp_soc *soc, struct dp_peer *peer)
+{
+	uint32_t index;
+	struct dp_peer *tmppeer = NULL;
+	int found = 0;
+	dp_mld_peer_hash_obj_t mld_hash_obj;
+
+	mld_hash_obj = dp_mlo_get_peer_hash_obj(soc);
+
+	if (!mld_hash_obj)
+		return;
+
+	index = dp_mlo_peer_find_hash_index(mld_hash_obj, &peer->mac_addr);
+	QDF_ASSERT(!TAILQ_EMPTY(&mld_hash_obj->mld_peer_hash.bins[index]));
+
+	qdf_spin_lock_bh(&mld_hash_obj->mld_peer_hash_lock);
+	TAILQ_FOREACH(tmppeer, &mld_hash_obj->mld_peer_hash.bins[index],
+		      hash_list_elem) {
+		if (tmppeer == peer) {
+			found = 1;
+			break;
+		}
+	}
+	QDF_ASSERT(found);
+	TAILQ_REMOVE(&mld_hash_obj->mld_peer_hash.bins[index], peer,
+		     hash_list_elem);
+
+	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
+	qdf_spin_unlock_bh(&mld_hash_obj->mld_peer_hash_lock);
+}
+
+static void
+dp_mlo_peer_find_hash_add_be(struct dp_soc *soc, struct dp_peer *peer)
+{
+	uint32_t index;
+	dp_mld_peer_hash_obj_t mld_hash_obj;
+
+	mld_hash_obj = dp_mlo_get_peer_hash_obj(soc);
+
+	if (!mld_hash_obj)
+		return;
+
+	index = dp_mlo_peer_find_hash_index(mld_hash_obj, &peer->mac_addr);
+
+	qdf_spin_lock_bh(&mld_hash_obj->mld_peer_hash_lock);
+
+	if (QDF_IS_STATUS_ERROR(dp_peer_get_ref(NULL, peer,
+						DP_MOD_ID_CONFIG))) {
+		dp_err("fail to get peer ref:" QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(peer->mac_addr.raw));
+		qdf_spin_unlock_bh(&mld_hash_obj->mld_peer_hash_lock);
+		return;
+	}
+	TAILQ_INSERT_TAIL(&mld_hash_obj->mld_peer_hash.bins[index], peer,
+			  hash_list_elem);
+	qdf_spin_unlock_bh(&mld_hash_obj->mld_peer_hash_lock);
+}
+#endif
+
 #ifdef DP_TX_IMPLICIT_RBM_MAPPING
 static void dp_tx_implicit_rbm_set_be(struct dp_soc *soc,
 				      uint8_t tx_ring_id,
@@ -1065,5 +1272,14 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_be;
 	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_be;
 
+#ifdef WLAN_FEATURE_11BE_MLO
+	arch_ops->mlo_peer_find_hash_detach =
+		dp_mlo_peer_find_hash_detach_wrapper;
+	arch_ops->mlo_peer_find_hash_attach =
+		dp_mlo_peer_find_hash_attach_wrapper;
+	arch_ops->mlo_peer_find_hash_add = dp_mlo_peer_find_hash_add_be;
+	arch_ops->mlo_peer_find_hash_remove = dp_mlo_peer_find_hash_remove_be;
+	arch_ops->mlo_peer_find_hash_find = dp_mlo_peer_find_hash_find_be;
+#endif
 	dp_init_near_full_arch_ops_be(arch_ops);
 }

@@ -17,10 +17,13 @@
 #define __DP_MLO_H
 
 #include <dp_types.h>
+#include <dp_peer.h>
 
 /* Max number of chips that can participate in MLO */
 #define DP_MAX_MLO_CHIPS 3
 
+/* Max number of peers supported */
+#define DP_MAX_MLO_PEER 512
 /*
  * dp_mlo_ctxt
  *
@@ -28,9 +31,9 @@
  * @ml_soc_list: list of socs which are mlo enabled. This also maintains
  *               mlo_chip_id to dp_soc mapping
  * @ml_soc_list_lock: lock to protect ml_soc_list
- * @ml_peer_hash: peer hash table for ML peers
+ * @mld_peer_hash: peer hash table for ML peers
  *           Associated peer with this MAC address)
- * @ml_peer_hash_lock: lock to protect ml_peer_hash
+ * @mld_peer_hash_lock: lock to protect mld_peer_hash
  */
 struct dp_mlo_ctxt {
 	struct cdp_ctrl_mlo_mgr *ctrl_ctxt;
@@ -41,9 +44,9 @@ struct dp_mlo_ctxt {
 		uint32_t idx_bits;
 
 		TAILQ_HEAD(, dp_peer) * bins;
-	} ml_peer_hash;
+	} mld_peer_hash;
 
-	qdf_spinlock_t ml_peer_hash_lock;
+	qdf_spinlock_t mld_peer_hash_lock;
 };
 
 /**
