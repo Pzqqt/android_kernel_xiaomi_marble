@@ -2561,6 +2561,7 @@ QDF_STATUS dp_mon_soc_attach(struct dp_soc *soc)
 	dp_mon_register_intr_ops(soc);
 
 	dp_mon_cdp_ops_register(soc);
+	dp_mon_register_feature_ops(soc);
 	return QDF_STATUS_SUCCESS;
 }
 
