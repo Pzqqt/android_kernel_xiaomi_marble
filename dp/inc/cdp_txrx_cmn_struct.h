@@ -403,12 +403,14 @@ enum cdp_peer_type {
  * @mld_peer_mac: mld peer mac address pointer
  * @is_assoc_link: set true for first MLO link peer association
  * @is_primary_link: for MCC, the first link will always be primary link,
-		     for WIN,  other link might be primary link.
+ *		     for WIN,  other link might be primary link.
+ * @primary_umac_id: primary umac_id
  */
 struct cdp_peer_setup_info {
 	uint8_t *mld_peer_mac;
 	uint8_t is_assoc_link:1,
 		is_primary_link:1;
+	uint8_t primary_umac_id;
 };
 
 /**

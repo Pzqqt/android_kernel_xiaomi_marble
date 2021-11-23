@@ -1094,7 +1094,8 @@ struct ol_if_ops {
 	(*peer_set_default_routing)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 				    uint8_t pdev_id, uint8_t *peer_macaddr,
 				    uint8_t vdev_id,
-				    bool hash_based, uint8_t ring_num);
+				    bool hash_based, uint8_t ring_num,
+				    uint8_t lmac_peer_id_msb);
 	QDF_STATUS
 	(*peer_rx_reorder_queue_setup)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 				       uint8_t pdev_id,

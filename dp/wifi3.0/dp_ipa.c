@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1762,6 +1763,7 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	uint8_t ix0_map[8];
 	uint32_t ix0;
+	uint32_t ix1;
 	uint32_t ix2;
 	uint32_t ix3;
 
@@ -1790,7 +1792,7 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 				    ix0_map);
 
 	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
-		dp_reo_remap_config(soc, &ix2, &ix3);
+		dp_reo_remap_config(soc, &ix1, &ix2, &ix3);
 
 		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
 					   &ix2, &ix3);

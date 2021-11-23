@@ -341,6 +341,23 @@ static void dp_tx_implicit_rbm_set_li(struct dp_soc *soc,
 {
 }
 
+static void dp_peer_get_reo_hash_li(struct dp_vdev *vdev,
+				    struct cdp_peer_setup_info *setup_info,
+				    enum cdp_host_reo_dest_ring *reo_dest,
+				    bool *hash_based,
+				    uint8_t *lmac_peer_id_msb)
+{
+	dp_vdev_get_default_reo_hash(vdev, reo_dest, hash_based);
+}
+
+static bool dp_reo_remap_config_li(struct dp_soc *soc,
+				   uint32_t *remap0,
+				   uint32_t *remap1,
+				   uint32_t *remap2)
+{
+	return dp_reo_remap_config(soc, remap0, remap1, remap2);
+}
+
 void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -382,5 +399,7 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 					dp_rx_peer_metadata_peer_id_get_li;
 	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_li;
 	arch_ops->tx_implicit_rbm_set = dp_tx_implicit_rbm_set_li;
+	arch_ops->peer_get_reo_hash = dp_peer_get_reo_hash_li;
+	arch_ops->reo_remap_config = dp_reo_remap_config_li;
 }
 

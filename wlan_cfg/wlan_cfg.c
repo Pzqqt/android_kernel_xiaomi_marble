@@ -1695,6 +1695,92 @@ wlan_soc_ppe_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
 }
 #endif
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+/**
+ * wlan_cfg_get_lsb_set_pos() - returns position of LSB which is set
+ *
+ * Return: position of LSB which is set
+ */
+static uint8_t wlan_cfg_get_lsb_set_pos(uint8_t val)
+{
+	uint8_t pos = 0;
+
+	while (pos < 8) {
+		if (val & (1 << pos))
+			return pos;
+
+		pos++;
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_multi_soc_mlo_cfg_attach() - Update multi soc mlo config in dp soc
+ *  cfg context
+ * @psoc - Object manager psoc
+ * @wlan_cfg_ctx - dp soc cfg ctx
+ *
+ * Return: None
+ */
+static void
+wlan_multi_soc_mlo_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+			      struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+	uint8_t rx_ring_map;
+
+	rx_ring_map =
+		cfg_get(psoc, CFG_DP_MLO_CHIP0_RX_RING_MAP);
+	wlan_cfg_ctx->mlo_chip_rx_ring_map[0] = rx_ring_map;
+	wlan_cfg_ctx->mlo_chip_default_rx_ring_id[0] =
+			wlan_cfg_get_lsb_set_pos(rx_ring_map);
+	wlan_cfg_ctx->lmac_peer_id_msb[0] = 1;
+
+	rx_ring_map =
+		cfg_get(psoc, CFG_DP_MLO_CHIP1_RX_RING_MAP);
+	wlan_cfg_ctx->mlo_chip_rx_ring_map[1] = rx_ring_map;
+	wlan_cfg_ctx->mlo_chip_default_rx_ring_id[1] =
+			wlan_cfg_get_lsb_set_pos(rx_ring_map);
+	wlan_cfg_ctx->lmac_peer_id_msb[1] = 2;
+
+	rx_ring_map =
+		cfg_get(psoc, CFG_DP_MLO_CHIP2_RX_RING_MAP);
+	wlan_cfg_ctx->mlo_chip_rx_ring_map[2] = rx_ring_map;
+	wlan_cfg_ctx->mlo_chip_default_rx_ring_id[2] =
+			wlan_cfg_get_lsb_set_pos(rx_ring_map);
+	wlan_cfg_ctx->lmac_peer_id_msb[2] = 3;
+}
+#else
+static inline void
+wlan_multi_soc_mlo_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+			      struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_soc_mlo_cfg_attach() - Update mlo config in dp soc
+ *  cfg context
+ * @psoc - Object manager psoc
+ * @wlan_cfg_ctx - dp soc cfg ctx
+ *
+ * Return: None
+ */
+static void
+wlan_soc_mlo_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+			struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+	wlan_multi_soc_mlo_cfg_attach(psoc, wlan_cfg_ctx);
+}
+#else
+static inline void
+wlan_soc_mlo_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+			struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+}
+#endif
+
 /**
  * wlan_cfg_soc_attach() - Allocate and prepare SoC configuration
  * @psoc - Object manager psoc
@@ -1884,6 +1970,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_soc_ipa_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_hw_cc_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_ppe_cfg_attach(psoc, wlan_cfg_ctx);
+	wlan_soc_mlo_cfg_attach(psoc, wlan_cfg_ctx);
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 	wlan_cfg_ctx->pkt_capture_mode = cfg_get(psoc, CFG_PKT_CAPTURE_MODE) &
 						 PKT_CAPTURE_MODE_DATA_ONLY;
@@ -2992,3 +3079,26 @@ wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 {
 	cfg->rx_rel_wbm2sw_ring_id = wbm2sw_ring_id;
 }
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+uint8_t
+wlan_cfg_mlo_rx_ring_map_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+					uint8_t chip_id)
+{
+	return cfg->mlo_chip_rx_ring_map[chip_id];
+}
+
+uint8_t
+wlan_cfg_mlo_default_rx_ring_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+					    uint8_t chip_id)
+{
+	return cfg->mlo_chip_default_rx_ring_id[chip_id];
+}
+
+uint8_t
+wlan_cfg_mlo_lmac_peer_id_msb_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+					     uint8_t chip_id)
+{
+	return cfg->lmac_peer_id_msb[chip_id];
+}
+#endif
