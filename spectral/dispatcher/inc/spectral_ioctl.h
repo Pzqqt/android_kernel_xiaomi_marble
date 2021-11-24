@@ -408,7 +408,7 @@ struct spectral_caps {
 #define SPECTRAL_MAC_ADDR_SIZE        (6)
 #define MAX_NUM_FREQ_SPANS            (3)
 #define MAX_NUM_DETECTORS             (2)
-#define MAX_SPECTRAL_PAYLOAD          (2004)
+#define MAX_SPECTRAL_PAYLOAD          (3028)
 
 /**
  * enum dcs_int_type - Interference type indicated by DCS
