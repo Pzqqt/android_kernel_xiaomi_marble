@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -713,6 +714,14 @@ void wma_print_he_ppet(void *he_ppet)
 	for (ru_count = 0; ru_bit_mask; ru_bit_mask >>= 1)
 		if (ru_bit_mask & 0x1)
 			ru_count++;
+	if (numss > WMI_HOST_MAX_NUM_SS) {
+		wma_err("invalid numss_m1 %d", ppet->numss_m1);
+		return;
+	}
+	if (ru_count > HE_PEPT_RU_IDX_LEN) {
+		wma_err("invalid ru_count 0x%08x", ppet->ru_bit_mask);
+		return;
+	}
 
 	if (ru_count > 0) {
 		wma_debug("PPET has following RU INDEX,");
