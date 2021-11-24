@@ -12544,6 +12544,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			    &soc->rx_mon_pkt_tlv_size);
 	soc->idle_link_bm_id = hal_get_idle_link_bm_id(soc->hal_soc,
 						       params->mlo_chip_id);
+	soc->features.dmac_cmn_src_rxbuf_ring_enabled =
+		hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc);
 	soc->arch_id = arch_id;
 	soc->link_desc_id_start =
 			dp_get_link_desc_id_start(soc->arch_id);
@@ -13267,7 +13269,7 @@ static void dp_pdev_srng_deinit(struct dp_pdev *pdev)
 	struct dp_soc *soc = pdev->soc;
 	uint8_t i;
 
-	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc))
+	if (!soc->features.dmac_cmn_src_rxbuf_ring_enabled)
 		dp_srng_deinit(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
 			       RXDMA_BUF,
 			       pdev->lmac_id);
@@ -13308,7 +13310,7 @@ static QDF_STATUS dp_pdev_srng_init(struct dp_pdev *pdev)
 
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
 
-	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+	if (!soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
 		if (dp_srng_init(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
 				 RXDMA_BUF, 0, pdev->lmac_id)) {
 			dp_init_err("%pK: dp_srng_init failed rx refill ring",
@@ -13363,7 +13365,7 @@ static void dp_pdev_srng_free(struct dp_pdev *pdev)
 	struct dp_soc *soc = pdev->soc;
 	uint8_t i;
 
-	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc))
+	if (!soc->features.dmac_cmn_src_rxbuf_ring_enabled)
 		dp_srng_free(soc, &soc->rx_refill_buf_ring[pdev->lmac_id]);
 
 	if (!soc->rxdma2sw_rings_not_supported) {
@@ -13394,7 +13396,7 @@ static QDF_STATUS dp_pdev_srng_alloc(struct dp_pdev *pdev)
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
 
 	ring_size = wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx);
-	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+	if (!soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
 		if (dp_srng_alloc(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
 				  RXDMA_BUF, ring_size, 0)) {
 			dp_init_err("%pK: dp_srng_alloc failed rx refill ring",

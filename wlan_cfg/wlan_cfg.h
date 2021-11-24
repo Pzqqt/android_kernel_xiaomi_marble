@@ -1947,7 +1947,6 @@ wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg);
 void
 wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 			    uint8_t wbm2sw_ring_id);
-#endif
 
 #if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
 /**
@@ -1983,3 +1982,4 @@ uint8_t
 wlan_cfg_mlo_lmac_peer_id_msb_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 					     uint8_t chip_id);
 #endif
+#endif /*__WLAN_CFG_H*/

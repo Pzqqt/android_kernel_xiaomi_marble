@@ -1701,9 +1701,12 @@ struct dp_arch_ops {
 /**
  * struct dp_soc_features: Data structure holding the SOC level feature flags.
  * @pn_in_reo_dest: PN provided by hardware in the REO destination ring.
+ * @dmac_cmn_src_rxbuf_ring_enabled: Flag to indicate DMAC mode common Rx
+ *				     buffer source rings
  */
 struct dp_soc_features {
-	uint8_t pn_in_reo_dest;
+	uint8_t pn_in_reo_dest:1,
+		dmac_cmn_src_rxbuf_ring_enabled:1;
 };
 
 enum sysfs_printing_mode {
