@@ -935,7 +935,7 @@ static void dp_soc_srng_deinit_be(struct dp_soc *soc)
 
 	dp_soc_ppe_srng_deinit(soc);
 
-	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+	if (soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
 		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
 			dp_srng_deinit(soc, &soc->rx_refill_buf_ring[i],
 				       RXDMA_BUF, 0);
@@ -949,7 +949,7 @@ static void dp_soc_srng_free_be(struct dp_soc *soc)
 
 	dp_soc_ppe_srng_free(soc);
 
-	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+	if (soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
 		for (i = 0; i < soc->num_rx_refill_buf_rings; i++)
 			dp_srng_free(soc, &soc->rx_refill_buf_ring[i]);
 	}
@@ -964,7 +964,7 @@ static QDF_STATUS dp_soc_srng_alloc_be(struct dp_soc *soc)
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
 
 	ring_size = wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx);
-	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+	if (soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
 		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
 			if (dp_srng_alloc(soc, &soc->rx_refill_buf_ring[i],
 					  RXDMA_BUF, ring_size, 0)) {
@@ -991,7 +991,7 @@ static QDF_STATUS dp_soc_srng_init_be(struct dp_soc *soc)
 {
 	int i = 0;
 
-	if (hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc)) {
+	if (soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
 		for (i = 0; i < soc->num_rx_refill_buf_rings; i++) {
 			if (dp_srng_init(soc, &soc->rx_refill_buf_ring[i],
 					 RXDMA_BUF, 0, 0)) {
