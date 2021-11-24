@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -37,7 +37,6 @@ void os_if_spectral_nl_data_ready(struct sk_buff *skb);
 #ifndef SPECTRAL_NETLINK
 #define SPECTRAL_NETLINK              (NETLINK_GENERIC + 1)
 #endif
-#define MAX_SPECTRAL_PAYLOAD         (2004)
 
 /* Init's network namespace */
 extern struct net init_net;
