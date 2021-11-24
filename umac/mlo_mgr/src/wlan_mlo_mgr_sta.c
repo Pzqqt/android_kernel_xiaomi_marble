@@ -678,14 +678,12 @@ void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
 	if (mlo_dev_ctx)
 		sta_ctx = mlo_dev_ctx->sta_ctx;
 
-	if (wlan_cm_is_vdev_disconnected(vdev) &&
-	    vdev == mlo_get_assoc_link_vdev(mlo_dev_ctx)) {
+	if (wlan_cm_is_vdev_disconnected(vdev)) {
 		if (sta_ctx && sta_ctx->orig_conn_req) {
 			mlo_free_connect_ies(sta_ctx->orig_conn_req);
 			qdf_mem_free(sta_ctx->orig_conn_req);
 			sta_ctx->orig_conn_req = NULL;
 		}
-		return;
 	}
 
 	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
