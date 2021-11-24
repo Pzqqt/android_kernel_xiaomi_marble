@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -145,7 +146,6 @@ static void dp_rx_fst_cmem_deinit(struct dp_rx_fst *fst)
 {
 	struct dp_fisa_rx_fst_update_elem *elem;
 	qdf_list_node_t *node;
-	int i;
 
 	qdf_cancel_work(&fst->fst_update_work);
 	qdf_flush_work(&fst->fst_update_work);
@@ -163,9 +163,6 @@ static void dp_rx_fst_cmem_deinit(struct dp_rx_fst *fst)
 
 	qdf_list_destroy(&fst->fst_update_list);
 	qdf_event_destroy(&fst->cmem_resp_event);
-
-	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
-		qdf_spinlock_destroy(&fst->dp_rx_sw_ft_lock[i]);
 }
 
 /**
@@ -176,8 +173,6 @@ static void dp_rx_fst_cmem_deinit(struct dp_rx_fst *fst)
  */
 static QDF_STATUS dp_rx_fst_cmem_init(struct dp_rx_fst *fst)
 {
-	int i;
-
 	fst->fst_update_wq =
 		qdf_alloc_high_prior_ordered_workqueue("dp_rx_fst_update_wq");
 	if (!fst->fst_update_wq) {
@@ -189,9 +184,6 @@ static QDF_STATUS dp_rx_fst_cmem_init(struct dp_rx_fst *fst)
 			dp_fisa_rx_fst_update_work, fst);
 	qdf_list_create(&fst->fst_update_list, 128);
 	qdf_event_create(&fst->cmem_resp_event);
-
-	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
-		qdf_spinlock_create(&fst->dp_rx_sw_ft_lock[i]);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -325,6 +317,8 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	}
 
 	qdf_spinlock_create(&fst->dp_rx_fst_lock);
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
+		qdf_spinlock_create(&fst->dp_rx_sw_ft_lock[i]);
 
 	status = qdf_timer_init(soc->osdev, &fst->fse_cache_flush_timer,
 				dp_fisa_fse_cache_flush_timer, (void *)soc,
@@ -350,6 +344,8 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 
 timer_init_fail:
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
+		qdf_spinlock_destroy(&fst->dp_rx_sw_ft_lock[i]);
 	qdf_spinlock_destroy(&fst->dp_rx_fst_lock);
 	hal_rx_fst_detach(fst->hal_rx_fst, soc->osdev);
 free_hist:
@@ -440,6 +436,7 @@ QDF_STATUS dp_rx_flow_send_fst_fw_setup(struct dp_soc *soc,
 void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	struct dp_rx_fst *dp_fst;
+	int i;
 
 	dp_fst = soc->rx_fst;
 	if (qdf_likely(dp_fst)) {
@@ -452,6 +449,8 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 		dp_rx_sw_ft_hist_deinit((struct dp_fisa_rx_sw_ft *)dp_fst->base,
 					dp_fst->max_entries);
 		dp_context_free_mem(soc, DP_FISA_RX_FT_TYPE, dp_fst->base);
+		for (i = 0; i < MAX_REO_DEST_RINGS; i++)
+			qdf_spinlock_destroy(&dp_fst->dp_rx_sw_ft_lock[i]);
 		qdf_spinlock_destroy(&dp_fst->dp_rx_fst_lock);
 		qdf_mem_free(dp_fst);
 	}
