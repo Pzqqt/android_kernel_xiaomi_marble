@@ -337,6 +337,7 @@ static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 	mutex_unlock(&me->tx_lock);
 
 	ptr = &me->fastrpc_driver_list.list;
+	mutex_lock(&me->fastrpc_driver_list.lock);
 	list_for_each_safe(ptr, next, &me->fastrpc_driver_list.list) {
 		frpc_node = list_entry(ptr,
 				struct cvp_dsp_fastrpc_driver_entry, list);
@@ -368,7 +369,7 @@ static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 			frpc_node = NULL;
 		}
 	}
-
+	mutex_unlock(&me->fastrpc_driver_list.lock);
 	dprintk(CVP_WARN, "%s: CDSP SSR handled\n", __func__);
 }
 
