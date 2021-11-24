@@ -63,6 +63,28 @@ int osif_twt_send_responder_enable_cmd(struct wlan_objmgr_psoc *psoc,
 	return osif_twt_responder_enable(psoc, &req);
 }
 
+int osif_twt_send_requestor_disable_cmd(struct wlan_objmgr_psoc *psoc,
+					uint8_t pdev_id)
+{
+	struct twt_disable_param req = {0};
+
+	req.pdev_id = pdev_id;
+	req.ext_conf_present = true;
+
+	return osif_twt_requestor_disable(psoc, &req);
+}
+
+int osif_twt_send_responder_disable_cmd(struct wlan_objmgr_psoc *psoc,
+					uint8_t pdev_id)
+{
+	struct twt_disable_param req = {0};
+
+	req.pdev_id = pdev_id;
+	req.ext_conf_present = true;
+
+	return osif_twt_responder_disable(psoc, &req);
+}
+
 int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 		       struct nlattr *twt_param_attr)
 {
