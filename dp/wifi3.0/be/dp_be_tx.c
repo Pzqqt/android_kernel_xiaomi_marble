@@ -470,17 +470,19 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 	cc_ctx  = &be_soc->tx_cc_ctx[pool_id];
 
 	tx_desc = tx_desc_pool->freelist;
+	page_desc = &cc_ctx->page_desc_base[0];
 	while (tx_desc) {
 		if (avail_entry_index == 0) {
 			if (ppt_idx >= cc_ctx->total_page_num) {
 				dp_alert("insufficient secondary page tables");
 				qdf_assert_always(0);
 			}
-			/* put each TX Desc VA to SPT pages and
-			 * get corresponding ID
-			 */
 			page_desc = &cc_ctx->page_desc_base[ppt_idx++];
 		}
+
+		/* put each TX Desc VA to SPT pages and
+		 * get corresponding ID
+		 */
 		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
 					 avail_entry_index,
 					 tx_desc);

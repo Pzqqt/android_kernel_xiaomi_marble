@@ -891,12 +891,12 @@ dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
 				dp_alert("insufficient secondary page tables");
 				qdf_assert_always(0);
 			}
-			/* put each RX Desc VA to SPT pages and
-			 * get corresponding ID
-			 */
 			page_desc = &cc_ctx->page_desc_base[ppt_idx++];
 		}
 
+		/* put each RX Desc VA to SPT pages and
+		 * get corresponding ID
+		 */
 		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
 					 avail_entry_index,
 					 &rx_desc_elem->rx_desc);
@@ -947,12 +947,12 @@ dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
 				dp_alert("insufficient secondary page tables");
 				qdf_assert_always(0);
 			}
-			/* put each RX Desc VA to SPT pages and
-			 * get corresponding ID
-			 */
 			page_desc = &cc_ctx->page_desc_base[ppt_idx++];
 		}
 
+		/* put each RX Desc VA to SPT pages and
+		 * get corresponding ID
+		 */
 		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
 					 avail_entry_index,
 					 &rx_desc_pool->array[i].rx_desc);
