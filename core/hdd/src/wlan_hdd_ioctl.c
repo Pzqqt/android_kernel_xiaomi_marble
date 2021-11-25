@@ -6005,7 +6005,7 @@ static int drv_cmd_set_fcc_channel(struct hdd_adapter *adapter,
 		return err;
 	}
 
-	fcc_constraint = input_value ? false : true;
+	fcc_constraint = (input_value == -1) ? false : true;
 	hdd_debug("input_value = %d && fcc_constraint = %u",
 		  input_value, fcc_constraint);
 
@@ -6019,7 +6019,7 @@ static int drv_cmd_set_fcc_channel(struct hdd_adapter *adapter,
 	}
 
 	if (!rf_test_mode) {
-		if (fcc_constraint) {
+		if (!input_value) {
 			band_bitmap |= (BIT(REG_BAND_5G) | BIT(REG_BAND_2G));
 		} else {
 			if (wlan_reg_is_6ghz_supported(hdd_ctx->psoc))
