@@ -736,8 +736,10 @@ target_if_cm_roam_scan_filter(wmi_unified_t wmi_handle, uint8_t command,
 			}
 			break;
 		default:
-			target_if_debug("Roam Filter need not be sent");
-			return QDF_STATUS_SUCCESS;
+			if (command != ROAM_SCAN_OFFLOAD_START) {
+				target_if_debug("Roam Filter need not be sent");
+				return QDF_STATUS_SUCCESS;
+			}
 		}
 	}
 
