@@ -11100,6 +11100,8 @@ typedef struct {
 #define WMI_MLO_FLAGS_SET_LINK_INDEX_VALID(mlo_flags, value) WMI_SET_BITS(mlo_flags, 3, 1, value)
 #define WMI_MLO_FLAGS_GET_PEER_ID_VALID(mlo_flags)          WMI_GET_BITS(mlo_flags, 4, 1)
 #define WMI_MLO_FLAGS_SET_PEER_ID_VALID(mlo_flags, value)   WMI_SET_BITS(mlo_flags, 4, 1, value)
+#define WMI_MLO_FLAGS_GET_MCAST_VDEV(mlo_flags)             WMI_GET_BITS(mlo_flags, 5, 1)
+#define WMI_MLO_FLAGS_SET_MCAST_VDEV(mlo_flags, value)      WMI_SET_BITS(mlo_flags, 5, 1, value)
 
 /* this structure used for pass mlo flags*/
 typedef struct {
@@ -11110,7 +11112,8 @@ typedef struct {
                      mlo_primary_umac:1, /* indicate is the link on primary UMAC, WIN only flag */
                      mlo_logical_link_index_valid:1, /* indicate if the logial link index in wmi_peer_assoc_mlo_params is valid */
                      mlo_peer_id_valid:1, /* indicate if the mlo peer id in wmi_peer_assoc_mlo_params is valid */
-                     unused: 27;
+                     mlo_mcast_vdev:1, /* indicate this is the MLO mcast primary vdev */
+                     unused: 26;
         };
         A_UINT32 mlo_flags;
     };
