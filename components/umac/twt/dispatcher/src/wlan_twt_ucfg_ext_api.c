@@ -141,3 +141,8 @@ ucfg_twt_reset_active_command(struct wlan_objmgr_psoc *psoc,
 						WLAN_TWT_NONE);
 }
 
+QDF_STATUS ucfg_twt_update_beacon_template(void)
+{
+	return wlan_twt_update_beacon_template();
+}
+

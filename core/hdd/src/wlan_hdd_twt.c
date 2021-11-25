@@ -79,6 +79,26 @@ QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
+void wlan_twt_concurrency_update(struct hdd_context *hdd_ctx)
+{
+	qdf_sched_work(0, &hdd_ctx->twt_en_dis_work);
+}
+
+void hdd_twt_update_work_handler(void *data)
+{
+	struct hdd_context *hdd_ctx = (struct hdd_context *)data;
+	struct osif_psoc_sync *psoc_sync;
+	int ret;
+
+	ret = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
+	if (ret)
+		return;
+
+	osif_twt_concurrency_update_handler(hdd_ctx->psoc, hdd_ctx->pdev);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+}
+
 QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
@@ -109,6 +129,8 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
 
 void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 {
+	qdf_flush_work(&hdd_ctx->twt_en_dis_work);
+	qdf_destroy_work(NULL, &hdd_ctx->twt_en_dis_work);
 }
 
 void
@@ -128,6 +150,13 @@ QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
 
 	osif_twt_send_responder_disable_cmd(hdd_ctx->psoc, pdev_id);
 	return QDF_STATUS_SUCCESS;
+}
+
+void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
+{
+	osif_twt_send_requestor_enable_cmd(hdd_ctx->psoc, 0);
+	qdf_create_work(0, &hdd_ctx->twt_en_dis_work,
+			hdd_twt_update_work_handler, hdd_ctx);
 }
 
 /**

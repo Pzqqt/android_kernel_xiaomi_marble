@@ -26,6 +26,7 @@
 #include "twt/core/src/wlan_twt_priv.h"
 #include "twt/core/src/wlan_twt_common.h"
 #include <wlan_twt_tgt_if_ext_tx_api.h>
+#include <wlan_serialization_api.h>
 
 /**
  * wlan_twt_add_session()  - Add TWT session entry in the TWT context
@@ -1384,4 +1385,18 @@ wlan_twt_notify_event_handler(struct wlan_objmgr_psoc *psoc,
 	mlme_twt_osif_notify_complete_ind(psoc, event);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_twt_update_beacon_template(void)
+{
+	struct scheduler_msg msg = { 0 };
+	QDF_STATUS status;
+
+	msg.type = SIR_LIM_UPDATE_BEACON;
+	status = scheduler_post_message(QDF_MODULE_ID_TWT, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("scheduler_post_message failed, status = %u", status);
+
+	return status;
 }

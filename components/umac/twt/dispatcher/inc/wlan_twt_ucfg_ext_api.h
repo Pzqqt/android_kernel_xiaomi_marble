@@ -162,6 +162,25 @@ ucfg_twt_init_context(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS
 ucfg_twt_set_osif_cb(osif_twt_get_global_ops_cb osif_twt_ops);
+
+/**
+ * ucfg_twt_update_beacon_template() - update beacon template
+ *
+ * SoftAP (SAP) is the beaconing entity, as per current requirement
+ * during Single Channel Concurrency (SCC) or Multi-Channel Concurrency (MCC)
+ * TWT is not supported on STA as well as SAP.
+ *
+ * Whenever SAP is forming SCC/MCC, this function shall be called to update the
+ * beacon, underlying LIM layer based the TWT responder flag, it disables the
+ * TWT responder advertisement bit in the beacon.
+ *
+ * When SAP moves from SCC/MCC to Standalone, this function shall be called
+ * to update the beacon, underlying LIM layer based the TWT responder flag,
+ * it enables  the TWT responder advertisement bit in the beacon.
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS ucfg_twt_update_beacon_template(void);
 #else
 static inline
 QDF_STATUS ucfg_twt_psoc_open(struct wlan_objmgr_psoc *psoc)

@@ -28,7 +28,6 @@
 #include <wlan_cm_api.h>
 #include <wlan_cfg80211.h>
 #include <wlan_cm_roam_api.h>
-#include <wlan_serialization_api.h>
 #include <osif_twt_internal.h>
 #include <wlan_osif_request_manager.h>
 
@@ -814,3 +813,139 @@ int osif_twt_sta_teardown_req(struct wlan_objmgr_vdev *vdev,
 
 	return osif_send_sta_twt_teardown_req(vdev, psoc, &params);
 }
+
+static void
+osif_twt_concurrency_update_on_scc_mcc(struct wlan_objmgr_pdev *pdev,
+				       void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = object;
+	struct twt_conc_context *twt_arg = arg;
+	QDF_STATUS status;
+	uint8_t pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		osif_debug("Concurrency exist on SAP vdev");
+		status = osif_twt_send_responder_disable_cmd(twt_arg->psoc,
+							     pdev_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			osif_err("TWT responder disable cmd to fw failed");
+			return;
+		}
+		ucfg_twt_update_beacon_template();
+	}
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		osif_debug("Concurrency exist on STA vdev");
+		status = osif_twt_send_requestor_disable_cmd(twt_arg->psoc,
+							     pdev_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			osif_err("TWT requestor disable cmd to fw failed");
+			return;
+		}
+	}
+}
+
+static void
+osif_twt_concurrency_update_on_dbs(struct wlan_objmgr_pdev *pdev,
+				   void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = object;
+	struct twt_conc_context *twt_arg = arg;
+	QDF_STATUS status;
+	uint8_t pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		osif_debug("SAP vdev exist");
+		status = osif_twt_send_responder_enable_cmd(twt_arg->psoc,
+							    pdev_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			osif_err("TWT responder enable cmd to firmware failed");
+			return;
+		}
+		ucfg_twt_update_beacon_template();
+	}
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		osif_debug("STA vdev exist");
+		status = osif_twt_send_requestor_enable_cmd(twt_arg->psoc,
+							    pdev_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			osif_err("TWT requestor enable cmd to firmware failed");
+			return;
+		}
+	}
+}
+
+void osif_twt_concurrency_update_handler(struct wlan_objmgr_psoc *psoc,
+					 struct wlan_objmgr_pdev *pdev)
+{
+	uint32_t num_connections, sap_count, sta_count;
+	QDF_STATUS status;
+	struct twt_conc_context twt_arg;
+	uint8_t pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	num_connections = policy_mgr_get_connection_count(psoc);
+	sta_count = policy_mgr_mode_specific_connection_count(psoc,
+							      PM_STA_MODE,
+							      NULL);
+	sap_count = policy_mgr_mode_specific_connection_count(psoc,
+							      PM_SAP_MODE,
+							      NULL);
+	twt_arg.psoc = psoc;
+
+	osif_debug("Total connection %d, sta_count %d, sap_count %d",
+		  num_connections, sta_count, sap_count);
+	switch (num_connections) {
+	case 1:
+		if (sta_count == 1) {
+			osif_twt_send_requestor_enable_cmd(psoc, pdev_id);
+		} else if (sap_count == 1) {
+			osif_twt_send_responder_enable_cmd(psoc, pdev_id);
+			ucfg_twt_update_beacon_template();
+		}
+		break;
+	case 2:
+		if (policy_mgr_current_concurrency_is_scc(psoc) ||
+		    policy_mgr_current_concurrency_is_mcc(psoc)) {
+			status = wlan_objmgr_pdev_iterate_obj_list(
+					pdev,
+					WLAN_VDEV_OP,
+					osif_twt_concurrency_update_on_scc_mcc,
+					&twt_arg, 0,
+					WLAN_TWT_ID);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				osif_err("SAP not in SCC/MCC concurrency");
+				return;
+			}
+		} else if (policy_mgr_is_current_hwmode_dbs(psoc)) {
+			status = wlan_objmgr_pdev_iterate_obj_list(
+					pdev,
+					WLAN_VDEV_OP,
+					osif_twt_concurrency_update_on_dbs,
+					&twt_arg, 0,
+					WLAN_TWT_ID);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				osif_err("SAP not in DBS case");
+				return;
+			}
+		}
+		break;
+	case 3:
+		status = wlan_objmgr_pdev_iterate_obj_list(
+					pdev,
+					WLAN_VDEV_OP,
+					osif_twt_concurrency_update_on_scc_mcc,
+					&twt_arg, 0,
+					WLAN_TWT_ID);
+		break;
+	default:
+		osif_err("Unexpected number of connections: %d",
+			 num_connections);
+		break;
+	}
+}
+
