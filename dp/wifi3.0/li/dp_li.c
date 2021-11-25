@@ -111,6 +111,7 @@ static QDF_STATUS dp_vdev_detach_li(struct dp_soc *soc, struct dp_vdev *vdev)
 static void dp_peer_detach_li(struct dp_soc *soc)
 {
 	dp_soc_wds_detach(soc);
+	dp_peer_ast_table_detach(soc);
 	dp_peer_ast_hash_detach(soc);
 	dp_peer_mec_hash_detach(soc);
 }
@@ -121,17 +122,19 @@ static QDF_STATUS dp_peer_attach_li(struct dp_soc *soc)
 
 	status = dp_peer_ast_table_attach(soc);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto hash_detach;
+		return status;
 
 	status = dp_peer_ast_hash_attach(soc);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto ast_table_detach;
 
 	status = dp_peer_mec_hash_attach(soc);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		dp_soc_wds_attach(soc);
-		return status;
-	}
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto hash_detach;
+
+	dp_soc_wds_attach(soc);
+
+	return QDF_STATUS_SUCCESS;
 
 hash_detach:
 	dp_peer_ast_hash_detach(soc);
