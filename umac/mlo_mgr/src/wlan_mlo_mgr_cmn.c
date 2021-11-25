@@ -572,3 +572,15 @@ out:
 
 	return status;
 }
+
+void mlo_mlme_handle_sta_csa_param(struct wlan_objmgr_vdev *vdev,
+				   struct csa_offload_params *csa_param)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (!mlo_ctx || !mlo_ctx->mlme_ops ||
+	    !mlo_ctx->mlme_ops->mlo_mlme_ext_handle_sta_csa_param)
+		return;
+
+	mlo_ctx->mlme_ops->mlo_mlme_ext_handle_sta_csa_param(vdev, csa_param);
+}

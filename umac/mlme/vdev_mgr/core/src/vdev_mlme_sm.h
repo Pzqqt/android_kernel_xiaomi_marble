@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +26,7 @@
 
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_ap.h>
+#include <wlan_mlo_mgr_sta.h>
 #endif
 #include <wlan_dfs_utils_api.h>
 
@@ -677,6 +679,20 @@ static inline void mlme_vdev_down_cmpl_notify_mlo_mgr(
 	if (wlan_vdev_mlme_is_mlo_ap(vdev_mlme->vdev))
 		mlo_ap_link_down_cmpl_notify(vdev_mlme->vdev);
 }
+
+/**
+ * mlme_vdev_up_active_notify_mlo_mgr - notify mlo link is up active
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ *
+ * Return: VOID.
+ */
+static inline void mlme_vdev_up_active_notify_mlo_mgr(
+					struct vdev_mlme_obj *vdev_mlme)
+{
+	if ((wlan_vdev_mlme_get_opmode(vdev_mlme->vdev) == QDF_STA_MODE) &&
+	    wlan_vdev_mlme_is_mlo_vdev(vdev_mlme->vdev))
+		mlo_sta_up_active_notify(vdev_mlme->vdev);
+}
 #else
 static inline void mlme_vdev_up_notify_mlo_mgr(struct vdev_mlme_obj *vdev_mlme)
 {
@@ -688,6 +704,11 @@ static inline void mlme_vdev_start_rsp_notify_mlo_mgr(
 }
 
 static inline void mlme_vdev_down_cmpl_notify_mlo_mgr(
+					struct vdev_mlme_obj *vdev_mlme)
+{
+}
+
+static inline void mlme_vdev_up_active_notify_mlo_mgr(
 					struct vdev_mlme_obj *vdev_mlme)
 {
 }

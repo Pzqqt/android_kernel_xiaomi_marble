@@ -167,6 +167,28 @@ struct wlan_mlo_key_mgmt {
 	uint32_t gtk;
 };
 
+/**
+ * struct mlo_sta_csa _params - CSA request parameters in mlo mgr
+ * @csa_param: csa parameters
+ * @link_id: the link index of AP which triggers CSA
+ * @mlo_csa_synced: Before vdev is up, csa information is only saved but not
+ *                  handled, and this value is false. Once vdev is up, the saved
+ *                  csa information is handled, and this value is changed to
+ *                  true. Note this value will be true if the vdev is doing
+ *                  restart.
+ * @csa_offload_event_recvd: True if WMI_CSA_HANDLING_EVENTID is already
+ *                           received. False if this is the first
+ *                           WMI_CSA_HANDLING_EVENTID.
+ * @valid_csa_param: True once csa_param is filled.
+ */
+struct mlo_sta_csa_params {
+	struct csa_offload_params csa_param;
+	uint8_t link_id;
+	bool mlo_csa_synced;
+	bool csa_offload_event_recvd;
+	bool valid_csa_param;
+};
+
 /*
  * struct mlo_sta_quiet_status - MLO sta quiet status
  * @link_id: link id
@@ -187,6 +209,7 @@ struct mlo_sta_quiet_status {
  * @copied_conn_req: original connect req
  * @copied_conn_req_lock: lock for the original connect request
  * @assoc_rsp: Raw assoc response frame
+ * @mlo_csa_param: CSA request parameters for mlo sta
  */
 struct wlan_mlo_sta {
 	qdf_bitmap(wlan_connect_req_links, WLAN_UMAC_MLO_MAX_VDEVS);
@@ -201,6 +224,7 @@ struct wlan_mlo_sta {
 #endif
 	struct element_info assoc_rsp;
 	struct mlo_sta_quiet_status mlo_quiet_status[WLAN_UMAC_MLO_MAX_VDEVS];
+	struct mlo_sta_csa_params mlo_csa_param[WLAN_UMAC_MLO_MAX_VDEVS];
 };
 
 /*
@@ -385,6 +409,7 @@ struct mlo_tgt_partner_info {
  * @mlo_mlme_get_link_assoc_req: Calback to get link assoc req buffer
  * @mlo_mlme_ext_deauth: Callback to initiate deauth
  * @mlo_mlme_ext_clone_security_param: Callback to clone mlo security params
+ * @mlo_mlme_ext_handle_sta_csa_param: Callback to handle sta csa param
  */
 struct mlo_mlme_ext_ops {
 	QDF_STATUS (*mlo_mlme_ext_validate_conn_req)(
@@ -405,6 +430,9 @@ struct mlo_mlme_ext_ops {
 	QDF_STATUS (*mlo_mlme_ext_clone_security_param)(
 		    struct vdev_mlme_obj *vdev_mlme,
 		    struct wlan_cm_connect_req *req);
+	void (*mlo_mlme_ext_handle_sta_csa_param)(
+				struct wlan_objmgr_vdev *vdev,
+				struct csa_offload_params *csa_param);
 };
 
 /* maximum size of vdev bitmap array for MLO link set active command */

@@ -3214,4 +3214,42 @@ wlan_parse_oce_ap_tx_pwr_ie(uint8_t *mbo_oce_ie, int8_t *ap_tx_pwr_dbm)
 
 	return false;
 }
+
+/**
+ * enum mlme_csa_event_ies_present_flag - IE present flag in CSA event
+ * @MLME_CSA_IE_PRESENT: CSA IE is present
+ * @MLME_XCSA_IE_PRESENT: extend CSA IE is present
+ * @MLME_WBW_IE_PRESENT: wide bandwidth channel switch IE is present
+ * @MLME_CSWRAP_IE_EXTENDED_PRESENT: channel switch wrapper IE is present
+ */
+enum mlme_csa_event_ies_present_flag {
+	MLME_CSA_IE_PRESENT    = 0x00000001,
+	MLME_XCSA_IE_PRESENT   = 0x00000002,
+	MLME_WBW_IE_PRESENT    = 0x00000004,
+	MLME_CSWRAP_IE_EXTENDED_PRESENT = 0x00000008,
+};
+
+/**
+ * struct csa_offload_params - STA CSA offload request parameters
+ * @channel: channel
+ * @switch_mode: switch mode
+ * @sec_chan_offset: secondary channel offset
+ * @new_ch_width: new channel width
+ * @new_ch_freq_seg1: channel center freq 1
+ * @new_ch_freq_seg2: channel center freq 2
+ * @ies_present_flag: BIT MAP of MLME_CSA_EVENT_IES_PRESENT_FLAG
+ * @bssid: BSSID which triggers CSA
+ */
+struct csa_offload_params {
+	uint8_t channel;
+	uint32_t csa_chan_freq;
+	uint8_t switch_mode;
+	uint8_t sec_chan_offset;
+	uint8_t new_ch_width;
+	uint8_t new_op_class;
+	uint8_t new_ch_freq_seg1;
+	uint8_t new_ch_freq_seg2;
+	uint32_t ies_present_flag;
+	struct qdf_mac_addr bssid;
+};
 #endif /* _WLAN_CMN_IEEE80211_DEFS_H_ */

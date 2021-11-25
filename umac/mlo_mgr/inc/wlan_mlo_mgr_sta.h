@@ -431,6 +431,47 @@ bool mlo_is_sta_inactivity_allowed_with_quiet(struct wlan_objmgr_psoc *psoc,
 					      uint8_t num_mlo, uint8_t *mlo_idx,
 					      uint8_t affected_links,
 					      uint8_t *affected_list);
+
+/**
+ * mlo_is_sta_csa_synced - Is mlo sta csa parameters are synced or not
+ *
+ * @mlo_dev_ctx: mlo context
+ * @link_id: link id
+ *
+ * Return: true if mlo sta csa parameters of given link id is synced
+ */
+bool mlo_is_sta_csa_synced(struct wlan_mlo_dev_context *mlo_dev_ctx,
+			   uint8_t link_id);
+
+/**
+ * mlo_sta_csa_save_params - Save csa parameters for mlo station
+ * @mlo_dev_ctx: mlo context
+ * @link_id: link id
+ * @csa_param: csa parameters to be saved
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_sta_csa_save_params(struct wlan_mlo_dev_context *mlo_dev_ctx,
+				   uint8_t link_id,
+				   struct csa_offload_params *csa_param);
+
+/**
+ * mlo_sta_up_active_notify - mlo sta up active notify
+ * @vdev: vdev obj mgr
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_sta_up_active_notify(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_is_sta_csa_param_handled - Is given csa_param handled or not
+ * @vdev: vdev obj mgr
+ * @csa_param: csa parameters to be checked
+ *
+ * Return: true if given csa parameters is handled
+ */
+bool mlo_is_sta_csa_param_handled(struct wlan_objmgr_vdev *vdev,
+				  struct csa_offload_params *csa_param);
 #else
 static inline
 QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
@@ -545,6 +586,13 @@ static inline void
 mlo_get_assoc_rsp(struct wlan_objmgr_vdev *vdev,
 		  struct element_info *assoc_rsp_frame)
 {
+}
+
+static inline bool
+mlo_is_sta_csa_param_handled(struct wlan_objmgr_vdev *vdev,
+			     struct csa_offload_params *csa_param)
+{
+	return false;
 }
 #endif
 #endif

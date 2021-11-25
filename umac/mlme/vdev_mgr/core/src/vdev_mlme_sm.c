@@ -1789,13 +1789,15 @@ static bool mlme_vdev_subst_up_active_event(void *ctx, uint16_t event,
 		mlme_vdev_update_beacon(vdev_mlme, BEACON_INIT,
 					event_data_len, event_data);
 		if (mlme_vdev_up_send(vdev_mlme, event_data_len,
-				      event_data) != QDF_STATUS_SUCCESS)
+				      event_data) != QDF_STATUS_SUCCESS) {
 			mlme_vdev_sm_deliver_event(vdev_mlme,
 						   WLAN_VDEV_SM_EV_UP_FAIL,
 						   event_data_len, event_data);
-		else
+		} else {
 			mlme_vdev_notify_up_complete(vdev_mlme, event_data_len,
 						     event_data);
+			mlme_vdev_up_active_notify_mlo_mgr(vdev_mlme);
+		}
 		status = true;
 		break;
 

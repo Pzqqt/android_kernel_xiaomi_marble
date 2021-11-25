@@ -261,6 +261,16 @@ void mlo_get_ml_vdev_list(struct wlan_objmgr_vdev *vdev,
 			  uint16_t *vdev_count,
 			  struct wlan_objmgr_vdev **wlan_vdev_list);
 
+/**
+ * mlo_mlme_handle_sta_csa_param() - process saved mlo sta csa param
+ * @vdev: vdev pointer
+ * @csa_param: saved csa_param
+ *
+ * Return: None
+ */
+void mlo_mlme_handle_sta_csa_param(struct wlan_objmgr_vdev *vdev,
+				   struct csa_offload_params *csa_param);
+
 #define INVALID_HW_LINK_ID 0xFFFF
 #ifdef WLAN_MLO_MULTI_CHIP
 /**

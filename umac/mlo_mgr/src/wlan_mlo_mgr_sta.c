@@ -1298,4 +1298,231 @@ bool mlo_is_sta_inactivity_allowed_with_quiet(struct wlan_objmgr_psoc *psoc,
 
 	return allowed;
 }
+
+bool mlo_is_sta_csa_synced(struct wlan_mlo_dev_context *mlo_dev_ctx,
+			   uint8_t link_id)
+{
+	struct wlan_mlo_sta *sta_ctx;
+	int i;
+	bool sta_csa_synced = false;
+
+	if (!mlo_dev_ctx) {
+		mlo_err("invalid mlo_dev_ctx");
+		return sta_csa_synced;
+	}
+
+	mlo_dev_lock_acquire(mlo_dev_ctx);
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx) {
+		mlo_err("invalid sta_ctx");
+		mlo_dev_lock_release(mlo_dev_ctx);
+		return sta_csa_synced;
+	}
+	for (i = 0; i < QDF_ARRAY_SIZE(sta_ctx->mlo_csa_param); i++) {
+		if (link_id == sta_ctx->mlo_csa_param[i].link_id &&
+		    (sta_ctx->mlo_csa_param[i].valid_csa_param ||
+		     sta_ctx->mlo_csa_param[i].mlo_csa_synced)) {
+			mlo_dev_lock_release(mlo_dev_ctx);
+			sta_csa_synced =
+				sta_ctx->mlo_csa_param[i].mlo_csa_synced;
+			break;
+		}
+	}
+	mlo_dev_lock_release(mlo_dev_ctx);
+
+	return sta_csa_synced;
+}
+
+QDF_STATUS mlo_sta_csa_save_params(struct wlan_mlo_dev_context *mlo_dev_ctx,
+				   uint8_t link_id,
+				   struct csa_offload_params *csa_param)
+{
+	struct wlan_mlo_sta *sta_ctx;
+	int i;
+	bool find_free_buffer = false;
+	int free_idx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!mlo_dev_ctx) {
+		mlo_err("invalid mlo_dev_ctx");
+		status = QDF_STATUS_E_INVAL;
+		goto done;
+	}
+
+	mlo_dev_lock_acquire(mlo_dev_ctx);
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx) {
+		mlo_err("invalid sta_ctx");
+		status = QDF_STATUS_E_INVAL;
+		goto rel_lock;
+	}
+	for (i = 0; i < QDF_ARRAY_SIZE(sta_ctx->mlo_csa_param); i++) {
+		if (!sta_ctx->mlo_csa_param[i].valid_csa_param &&
+		    !sta_ctx->mlo_csa_param[i].mlo_csa_synced) {
+			if (!find_free_buffer) {
+				free_idx = i;
+				find_free_buffer = true;
+			}
+		} else if (link_id == sta_ctx->mlo_csa_param[i].link_id) {
+			qdf_mem_copy(&sta_ctx->mlo_csa_param[i].csa_param,
+				     csa_param, sizeof(*csa_param));
+			mlo_debug("mld mac " QDF_MAC_ADDR_FMT " link id %d update csa",
+				  QDF_MAC_ADDR_REF(mlo_dev_ctx->mld_addr.bytes),
+				  link_id);
+			goto rel_lock;
+		}
+	}
+	if (!find_free_buffer) {
+		mlo_err("no free buffer of csa param for link %d in sta_ctx",
+			link_id);
+		status = QDF_STATUS_E_INVAL;
+		goto rel_lock;
+	}
+	qdf_mem_copy(&sta_ctx->mlo_csa_param[free_idx].csa_param,
+		     csa_param, sizeof(*csa_param));
+	sta_ctx->mlo_csa_param[free_idx].link_id = link_id;
+	sta_ctx->mlo_csa_param[free_idx].valid_csa_param = true;
+	mlo_debug("mld mac " QDF_MAC_ADDR_FMT " link id %d RX csa",
+		  QDF_MAC_ADDR_REF(mlo_dev_ctx->mld_addr.bytes),
+		  link_id);
+
+rel_lock:
+	mlo_dev_lock_release(mlo_dev_ctx);
+
+done:
+
+	return status;
+}
+
+QDF_STATUS mlo_sta_up_active_notify(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_sta *sta_ctx;
+	struct wlan_mlo_dev_context *mlo_dev_ctx;
+	uint8_t link_id;
+	int i;
+	bool find_free_buffer = false;
+	int free_idx;
+	struct csa_offload_params csa_param;
+	struct wlan_channel *chan;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!vdev) {
+		mlo_err("invalid vdev");
+		status = QDF_STATUS_E_INVAL;
+		goto done;
+	}
+	link_id = wlan_vdev_get_link_id(vdev);
+	mlo_dev_ctx = vdev->mlo_dev_ctx;
+	if (!mlo_dev_ctx) {
+		mlo_err("invalid mlo_dev_ctx");
+		status = QDF_STATUS_E_INVAL;
+		goto done;
+	}
+	mlo_dev_lock_acquire(mlo_dev_ctx);
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx) {
+		mlo_err("invalid sta_ctx");
+		status = QDF_STATUS_E_INVAL;
+		goto rel_lock;
+	}
+
+	for (i = 0; i < QDF_ARRAY_SIZE(sta_ctx->mlo_csa_param); i++) {
+		if (!sta_ctx->mlo_csa_param[i].valid_csa_param &&
+		    !sta_ctx->mlo_csa_param[i].mlo_csa_synced) {
+			if (!find_free_buffer) {
+				free_idx = i;
+				find_free_buffer = true;
+			}
+		} else if (link_id == sta_ctx->mlo_csa_param[i].link_id) {
+			if (sta_ctx->mlo_csa_param[i].valid_csa_param &&
+			    !sta_ctx->mlo_csa_param[i].mlo_csa_synced) {
+				mlo_debug("mld mac " QDF_MAC_ADDR_FMT " vdev id %d link id %d handle csa",
+					  QDF_MAC_ADDR_REF(
+						mlo_dev_ctx->mld_addr.bytes),
+					  wlan_vdev_get_id(vdev), link_id);
+				csa_param = sta_ctx->mlo_csa_param[i].csa_param;
+				sta_ctx->mlo_csa_param[i].mlo_csa_synced = true;
+				mlo_dev_lock_release(mlo_dev_ctx);
+				chan = wlan_vdev_mlme_get_bss_chan(vdev);
+				if (csa_param.csa_chan_freq && chan &&
+				    csa_param.csa_chan_freq != chan->ch_freq)
+					mlo_mlme_handle_sta_csa_param(
+						vdev, &csa_param);
+				goto done;
+			}
+			sta_ctx->mlo_csa_param[i].mlo_csa_synced = true;
+			goto rel_lock;
+		}
+	}
+	if (!find_free_buffer) {
+		mlo_err("no free buffer of csa param for link %d in sta_ctx",
+			link_id);
+		goto rel_lock;
+	}
+	sta_ctx->mlo_csa_param[free_idx].mlo_csa_synced = true;
+	sta_ctx->mlo_csa_param[free_idx].link_id = link_id;
+	mlo_debug("mld mac " QDF_MAC_ADDR_FMT " link id %d UP Active",
+		  QDF_MAC_ADDR_REF(mlo_dev_ctx->mld_addr.bytes),
+		  link_id);
+
+rel_lock:
+	mlo_dev_lock_release(mlo_dev_ctx);
+
+done:
+
+	return status;
+}
+
+bool mlo_is_sta_csa_param_handled(struct wlan_objmgr_vdev *vdev,
+				  struct csa_offload_params *csa_param)
+{
+	struct wlan_mlo_sta *sta_ctx;
+	struct wlan_mlo_dev_context *mlo_dev_ctx;
+	uint8_t link_id;
+	int i;
+	bool handled = false;
+
+	if (!vdev) {
+		mlo_err("invalid vdev");
+		goto done;
+	}
+	link_id = wlan_vdev_get_link_id(vdev);
+	mlo_dev_ctx = vdev->mlo_dev_ctx;
+	if (!mlo_dev_ctx) {
+		mlo_err("invalid mlo_dev_ctx");
+		goto done;
+	}
+	mlo_dev_lock_acquire(mlo_dev_ctx);
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx) {
+		mlo_err("invalid sta_ctx");
+		goto rel_lock;
+	}
+
+	for (i = 0; i < QDF_ARRAY_SIZE(sta_ctx->mlo_csa_param); i++) {
+		if (link_id == sta_ctx->mlo_csa_param[i].link_id &&
+		    (sta_ctx->mlo_csa_param[i].valid_csa_param ||
+		     sta_ctx->mlo_csa_param[i].mlo_csa_synced))
+			break;
+	}
+
+	if (i >= QDF_ARRAY_SIZE(sta_ctx->mlo_csa_param)) {
+		mlo_debug("mlo csa synced does not happen before csa FW event");
+		goto rel_lock;
+	}
+	if (!sta_ctx->mlo_csa_param[i].csa_offload_event_recvd) {
+		sta_ctx->mlo_csa_param[i].csa_offload_event_recvd = true;
+		if (sta_ctx->mlo_csa_param[i].valid_csa_param &&
+		    !qdf_mem_cmp(&sta_ctx->mlo_csa_param[i].csa_param,
+				 csa_param, sizeof(*csa_param)))
+			handled = true;
+	}
+
+rel_lock:
+	mlo_dev_lock_release(mlo_dev_ctx);
+
+done:
+
+	return handled;
+}
 #endif
