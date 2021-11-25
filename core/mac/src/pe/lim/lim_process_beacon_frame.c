@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,6 +38,99 @@
 #include "lim_assoc_utils.h"
 #include "lim_prop_exts_utils.h"
 #include "lim_ser_des_utils.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_sta.h>
+#include <cds_ieee80211_common.h>
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+void lim_process_beacon_mlo(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tSchBeaconStruct *bcn_ptr)
+{
+	struct csa_offload_params csa_param;
+	int i;
+	uint8_t link_id;
+	uint8_t *per_sta_pro;
+	uint32_t per_sta_pro_len;
+	uint8_t *sta_pro;
+	uint32_t sta_pro_len;
+	uint16_t stacontrol;
+	struct ieee80211_channelswitch_ie *csa_ie;
+	struct ieee80211_extendedchannelswitch_ie *xcsa_ie;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_mlo_dev_context *mlo_ctx;
+
+	if (!session || !bcn_ptr || !mac_ctx) {
+		pe_err("invalid input parameters");
+		return;
+	}
+	vdev = session->vdev;
+	if (!vdev || !wlan_vdev_mlme_is_mlo_vdev(vdev))
+		return;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		pe_err("null pdev");
+		return;
+	}
+	mlo_ctx = vdev->mlo_dev_ctx;
+	if (!mlo_ctx) {
+		pe_err("null mlo_dev_ctx");
+		return;
+	}
+
+	for (i = 0; i < bcn_ptr->mlo_ie.mlo_ie.num_sta_profile; i++) {
+		csa_ie = NULL;
+		xcsa_ie = NULL;
+		qdf_mem_zero(&csa_param, sizeof(csa_param));
+		per_sta_pro = bcn_ptr->mlo_ie.mlo_ie.sta_profile[i].data;
+		per_sta_pro_len =
+			bcn_ptr->mlo_ie.mlo_ie.sta_profile[i].num_data;
+		stacontrol = *(uint16_t *)per_sta_pro;
+		sta_pro = per_sta_pro + 2; /* sta control */
+		sta_pro_len = per_sta_pro_len - 2;
+		link_id = QDF_GET_BITS(
+			    stacontrol,
+			    WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_LINKID_IDX,
+			    WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_LINKID_BITS);
+		if (!mlo_is_sta_csa_synced(mlo_ctx, link_id)) {
+			csa_ie = (struct ieee80211_channelswitch_ie *)
+					wlan_get_ie_ptr_from_eid(
+						DOT11F_EID_CHANSWITCHANN,
+						sta_pro, sta_pro_len);
+			xcsa_ie = (struct ieee80211_extendedchannelswitch_ie *)
+					wlan_get_ie_ptr_from_eid(
+						DOT11F_EID_EXT_CHAN_SWITCH_ANN,
+						sta_pro, sta_pro_len);
+		}
+		if (csa_ie) {
+			csa_param.channel = csa_ie->newchannel;
+			csa_param.csa_chan_freq = wlan_reg_legacy_chan_to_freq(
+						pdev, csa_ie->newchannel);
+			csa_param.switch_mode = csa_ie->switchmode;
+			csa_param.ies_present_flag |= MLME_CSA_IE_PRESENT;
+			mlo_sta_csa_save_params(mlo_ctx, link_id, &csa_param);
+		} else if (xcsa_ie) {
+			csa_param.channel = xcsa_ie->newchannel;
+			csa_param.switch_mode = xcsa_ie->switchmode;
+			csa_param.new_op_class = xcsa_ie->newClass;
+			if (wlan_reg_is_6ghz_op_class(pdev, xcsa_ie->newClass))
+				csa_param.csa_chan_freq =
+					wlan_reg_chan_band_to_freq(
+						pdev, xcsa_ie->newchannel,
+						BIT(REG_BAND_6G));
+			else
+				csa_param.csa_chan_freq =
+					wlan_reg_legacy_chan_to_freq(
+						pdev, xcsa_ie->newchannel);
+			csa_param.ies_present_flag |= MLME_XCSA_IE_PRESENT;
+			mlo_sta_csa_save_params(mlo_ctx, link_id, &csa_param);
+		}
+	}
+}
+#endif
 
 /**
  * lim_process_beacon_frame() - to process beacon frames
@@ -99,6 +193,8 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		qdf_mem_free(bcn_ptr);
 		return;
 	}
+
+	lim_process_beacon_mlo(mac_ctx, session, bcn_ptr);
 
 	/*
 	 * during scanning, when any session is active, and

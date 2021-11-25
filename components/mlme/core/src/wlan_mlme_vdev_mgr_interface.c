@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1928,5 +1928,6 @@ static struct mlo_mlme_ext_ops mlo_ext_ops = {
 	.mlo_mlme_ext_peer_delete = lim_mlo_cleanup_partner_peer,
 	.mlo_mlme_ext_peer_assoc_fail = lim_mlo_ap_sta_assoc_fail,
 	.mlo_mlme_ext_assoc_resp = lim_mlo_ap_sta_assoc_suc,
+	.mlo_mlme_ext_handle_sta_csa_param = lim_handle_mlo_sta_csa_param,
 };
 #endif

@@ -16047,8 +16047,7 @@ QDF_STATUS sme_switch_channel(mac_handle_t mac_handle,
 	if (!csa_offload_event)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_copy(csa_offload_event->bssId, bssid->bytes,
-		     QDF_MAC_ADDR_SIZE);
+	qdf_copy_macaddr(&csa_offload_event->bssid, bssid);
 	csa_offload_event->csa_chan_freq = (uint32_t)chan_freq;
 	csa_offload_event->new_ch_width = (uint8_t)chan_width;
 	csa_offload_event->channel =
@@ -16057,7 +16056,7 @@ QDF_STATUS sme_switch_channel(mac_handle_t mac_handle,
 	csa_offload_event->switch_mode = 1;
 
 	sme_debug("bssid " QDF_MAC_ADDR_FMT " freq %u width %u",
-		  QDF_MAC_ADDR_REF(csa_offload_event->bssId),
+		  QDF_MAC_ADDR_REF(csa_offload_event->bssid.bytes),
 		  csa_offload_event->csa_chan_freq,
 		  csa_offload_event->new_ch_width);
 

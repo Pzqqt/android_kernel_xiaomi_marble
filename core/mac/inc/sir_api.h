@@ -3989,29 +3989,6 @@ struct adaptive_dwelltime_params {
 };
 
 /**
- * struct csa_offload_params - CSA offload request parameters
- * @channel: channel
- * @switch_mode: switch mode
- * @sec_chan_offset: second channel offset
- * @new_ch_width: new channel width
- * @new_ch_freq_seg1: channel center freq 1
- * @new_ch_freq_seg2: channel center freq 2
- * @ies_present_flag: IE present flag
- */
-struct csa_offload_params {
-	uint8_t channel;
-	uint32_t csa_chan_freq;
-	uint8_t switch_mode;
-	uint8_t sec_chan_offset;
-	uint8_t new_ch_width;
-	uint8_t new_op_class;
-	uint8_t new_ch_freq_seg1;
-	uint8_t new_ch_freq_seg2;
-	uint32_t ies_present_flag;
-	tSirMacAddr bssId;
-};
-
-/**
  * enum obss_ht40_scancmd_type - obss scan command type
  * @HT40_OBSS_SCAN_PARAM_START: OBSS scan start
  * @HT40_OBSS_SCAN_PARAM_UPDATE: OBSS scan param update
