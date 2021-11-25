@@ -8713,6 +8713,7 @@ send_pdev_fips_extend_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf;
 	uint8_t *buf_ptr;
 	uint32_t len = sizeof(wmi_pdev_fips_extend_cmd_fixed_param);
+	uint32_t data_len_aligned;
 	QDF_STATUS retval = QDF_STATUS_SUCCESS;
 
 	len += WMI_TLV_HDR_SIZE;
@@ -8721,8 +8722,10 @@ send_pdev_fips_extend_cmd_tlv(wmi_unified_t wmi_handle,
 
 	/* Length TLV placeholder for array of bytes */
 	len += WMI_TLV_HDR_SIZE;
-	if (param->data_len)
-		len += (param->data_len * sizeof(uint8_t));
+	if (param->data_len) {
+		data_len_aligned = roundup(param->data_len, sizeof(uint32_t));
+		len += (data_len_aligned * sizeof(uint8_t));
+	}
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
@@ -8785,8 +8788,9 @@ send_pdev_fips_extend_cmd_tlv(wmi_unified_t wmi_handle,
 		buf_ptr += WMI_TLV_HDR_SIZE;
 	}
 
-	if (param->data) {
-		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, param->data_len);
+	if (param->data_len && param->data) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+			       data_len_aligned);
 
 		buf_ptr += WMI_TLV_HDR_SIZE;
 		if (param->data_len)
