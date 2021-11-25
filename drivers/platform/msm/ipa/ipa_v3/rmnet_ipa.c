@@ -1655,34 +1655,6 @@ static void apps_ipa_packet_receive_notify(void *priv,
 	}
 }
 
-/* Send MHI endpoint info to modem using QMI indication message */
-static int ipa_send_mhi_endp_ind_to_modem(void)
-{
-	struct ipa_endp_desc_indication_msg_v01 req;
-	struct ipa_ep_id_type_v01 *ep_info;
-	int ipa_mhi_prod_ep_idx =
-		ipa3_get_ep_mapping(IPA_CLIENT_MHI_LOW_LAT_PROD);
-	int ipa_mhi_cons_ep_idx =
-		ipa3_get_ep_mapping(IPA_CLIENT_MHI_LOW_LAT_CONS);
-
-	memset(&req, 0, sizeof(struct ipa_endp_desc_indication_msg_v01));
-	req.ep_info_len = 2;
-	req.ep_info_valid = true;
-	req.num_eps_valid = true;
-	req.num_eps = 2;
-	ep_info = &req.ep_info[0];
-	ep_info->ep_id = ipa_mhi_cons_ep_idx;
-	ep_info->ic_type = DATA_IC_TYPE_MHI_V01;
-	ep_info->ep_type = DATA_EP_DESC_TYPE_EMB_FLOW_CTL_PROD_V01;
-	ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
-	ep_info = &req.ep_info[1];
-	ep_info->ep_id = ipa_mhi_prod_ep_idx;
-	ep_info->ic_type = DATA_IC_TYPE_MHI_V01;
-	ep_info->ep_type = DATA_EP_DESC_TYPE_EMB_FLOW_CTL_CONS_V01;
-	ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
-	return ipa3_qmi_send_endp_desc_indication(&req);
-}
-
 /* Send RSC endpoint info to modem using QMI indication message */
 static int ipa_send_wan_pipe_ind_to_modem(int ingress_eps_mask)
 {
@@ -3961,6 +3933,7 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 #endif
 		IPAWANINFO("IPA received MPSS BEFORE_SHUTDOWN\n");
 		/* send SSR before-shutdown notification to IPACM */
+		ipa3_set_modem_up(false);
 		rmnet_ipa_send_ssr_notification(false);
 		atomic_set(&rmnet_ipa3_ctx->is_ssr, 1);
 		ipa3_q6_pre_shutdown_cleanup();
@@ -3985,7 +3958,6 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 	case SUBSYS_AFTER_SHUTDOWN:
 #endif
 		IPAWANINFO("IPA Received MPSS AFTER_SHUTDOWN\n");
-		ipa3_set_modem_up(false);
 		/* Clean up netdev resources in AFTER_SHUTDOWN for remoteproc
 		 * enabled targets. */
 #if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
@@ -4027,7 +3999,6 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 	case SUBSYS_AFTER_POWERUP:
 #endif
 		IPAWANINFO("IPA received MPSS AFTER_POWERUP\n");
-		ipa3_set_modem_up(true);
 		if (!atomic_read(&rmnet_ipa3_ctx->is_initialized) &&
 		       atomic_read(&rmnet_ipa3_ctx->is_ssr))
 			platform_driver_register(&rmnet_ipa_driver);
@@ -5646,6 +5617,7 @@ void ipa3_q6_handshake_complete(bool ssr_bootup)
 	if (ipa3_ctx->ipa_mhi_proxy)
 		imp_handle_modem_ready();
 
+	ipa3_set_modem_up(true);
 	if (ipa3_ctx->ipa_config_is_mhi)
 		ipa_send_mhi_endp_ind_to_modem();
 }
