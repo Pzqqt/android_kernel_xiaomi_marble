@@ -512,11 +512,13 @@ struct vdev_scan_nac_rssi_params {
  * @mlo_enabled: indicate is MLO enabled
  * @mlo_assoc_link: indicate is the link used to initialize
  *                  the association of mlo connection
+ * @mlo_mcast_vdev: MLO cast vdev
  */
 struct mlo_vdev_start_flags {
 	uint32_t mlo_enabled:1,
 		 mlo_assoc_link:1,
-		 rsvd:30;
+		 mlo_mcast_vdev:1,
+		 rsvd:29;
 };
 
 /**

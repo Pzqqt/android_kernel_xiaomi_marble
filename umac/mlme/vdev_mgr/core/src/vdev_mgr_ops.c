@@ -150,6 +150,17 @@ vdev_mgr_set_cur_chan_punc_pattern(struct wlan_channel *des_chan,
 #endif
 
 #ifdef WLAN_FEATURE_11BE_MLO
+#ifdef WLAN_MLO_MCAST
+static inline void
+vdev_mgr_start_param_update_mlo_mcast(struct wlan_objmgr_vdev *vdev,
+				      struct vdev_start_params *param)
+{
+	if (wlan_vdev_mlme_is_mlo_mcast_vdev(vdev))
+		param->mlo_flags.mlo_macst_vdev = 1;
+}
+#else
+#define vdev_mgr_start_param_update_mlo_mcast(vdev, param)
+#endif
 static void
 vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *mlme_obj,
 				struct vdev_start_params *param)
@@ -169,6 +180,8 @@ vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *mlme_obj,
 
 	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
 		param->mlo_flags.mlo_assoc_link = 1;
+
+	vdev_mgr_start_param_update_mlo_mcast(vdev, param);
 }
 #else
 static void
