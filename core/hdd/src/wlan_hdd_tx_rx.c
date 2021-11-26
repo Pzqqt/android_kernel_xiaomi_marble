@@ -2696,6 +2696,9 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 						    WLAN_OSIF_TDLS_ID);
 		}
 
+		if (hdd_rx_pkt_tracepoints_enabled())
+			qdf_trace_dp_packet(skb, QDF_RX, NULL, 0);
+
 		skb->dev = adapter->dev;
 		skb->protocol = eth_type_trans(skb, skb->dev);
 		++stats->per_cpu[cpu_index].rx_packets;
