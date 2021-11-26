@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -49,6 +50,23 @@
 		((*((uint32_t *)(rx_status_tlv_ptr)) & \
 		HAL_RX_USER_TLV32_USERID_MASK) >> \
 		HAL_RX_USER_TLV32_USERID_LSB)
+
+#define HAL_RX_TLV64_HDR_SIZE			8
+
+#define HAL_RX_GET_USER_TLV64_TYPE(rx_status_tlv_ptr) \
+		((*((uint64_t *)(rx_status_tlv_ptr)) & \
+		HAL_RX_USER_TLV64_TYPE_MASK) >> \
+		HAL_RX_USER_TLV64_TYPE_LSB)
+
+#define HAL_RX_GET_USER_TLV64_LEN(rx_status_tlv_ptr) \
+		((*((uint64_t *)(rx_status_tlv_ptr)) & \
+		HAL_RX_USER_TLV64_LEN_MASK) >> \
+		HAL_RX_USER_TLV64_LEN_LSB)
+
+#define HAL_RX_GET_USER_TLV64_USERID(rx_status_tlv_ptr) \
+		((*((uint64_t *)(rx_status_tlv_ptr)) & \
+		HAL_RX_USER_TLV64_USERID_MASK) >> \
+		HAL_RX_USER_TLV64_USERID_LSB)
 
 #define HAL_TLV_STATUS_PPDU_NOT_DONE 0
 #define HAL_TLV_STATUS_PPDU_DONE 1
@@ -721,11 +739,20 @@ hal_get_rx_status_buf_size(void) {
 }
 
 static inline uint8_t*
-hal_rx_status_get_next_tlv(uint8_t *rx_tlv) {
-	uint32_t tlv_len, tlv_tag;
+hal_rx_status_get_next_tlv(uint8_t *rx_tlv, bool is_tlv_hdr_64_bit) {
+	uint32_t tlv_len, tlv_tag, tlv_hdr_size;
 
-	tlv_len = HAL_RX_GET_USER_TLV32_LEN(rx_tlv);
-	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv);
+	if (is_tlv_hdr_64_bit) {
+		tlv_len = HAL_RX_GET_USER_TLV32_LEN(rx_tlv);
+		tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv);
+
+		tlv_hdr_size = HAL_RX_TLV64_HDR_SIZE;
+	} else {
+		tlv_len = HAL_RX_GET_USER_TLV32_LEN(rx_tlv);
+		tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv);
+
+		tlv_hdr_size = HAL_RX_TLV32_HDR_SIZE;
+	}
 
 	/* The actual length of PPDU_END is the combined length of many PHY
 	 * TLVs that follow. Skip the TLV header and
@@ -735,8 +762,10 @@ hal_rx_status_get_next_tlv(uint8_t *rx_tlv) {
 	if (tlv_tag == WIFIRX_PPDU_END_E)
 		tlv_len = sizeof(struct rx_rxpcu_classification_overview);
 
-	return (uint8_t *)(((unsigned long)(rx_tlv + tlv_len +
-			HAL_RX_TLV32_HDR_SIZE + 3)) & (~((unsigned long)3)));
+	return (uint8_t *)(uintptr_t)qdf_align((uint64_t)((uintptr_t)rx_tlv +
+							  tlv_len +
+							  tlv_hdr_size),
+					       tlv_hdr_size);
 }
 
 /**

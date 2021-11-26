@@ -759,6 +759,7 @@ struct  dp_mon_pdev {
 	/* enable spcl vap stats reset on ch change */
 	bool reset_scan_spcl_vap_stats_enable;
 #endif
+	bool is_tlv_hdr_64_bit;
 };
 
 struct  dp_mon_vdev {

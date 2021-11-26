@@ -368,7 +368,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
 							      ppdu_info,
 							      tlv_status);
 
-				rx_tlv = hal_rx_status_get_next_tlv(rx_tlv);
+				rx_tlv = hal_rx_status_get_next_tlv(rx_tlv,
+						mon_pdev->is_tlv_hdr_64_bit);
 
 				if ((rx_tlv - rx_tlv_start) >=
 					RX_MON_STATUS_BUF_SIZE)
