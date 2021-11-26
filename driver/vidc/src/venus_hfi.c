@@ -140,36 +140,21 @@ static void __dump_packet(u8 *packet, const char *function, void *qinfo)
 {
 	u32 c = 0, session_id, packet_size = *(u32 *)packet;
 	const int row_size = 32;
-	struct msm_vidc_inst *inst = NULL;
-	bool matches = false;
 	/*
 	 * row must contain enough for 0xdeadbaad * 8 to be converted into
 	 * "de ad ba ab " * 8 + '\0'
 	 */
 	char row[3 * 32];
-
 	session_id = *((u32 *)packet + 1);
-	list_for_each_entry(inst, &g_core->instances, list) {
-		if (inst->session_id == session_id) {
-			matches = true;
-			break;
-		}
-	}
 
-	if (matches)
-		i_vpr_t(inst, "%s: %pK\n", function, qinfo);
-	else
-		d_vpr_t("%s: %pK\n", function, qinfo);
+	d_vpr_t("%08x: %s: %pK\n", session_id, function, qinfo);
 
 	for (c = 0; c * row_size < packet_size; ++c) {
 		int bytes_to_read = ((c + 1) * row_size > packet_size) ?
 			packet_size % row_size : row_size;
 		hex_dump_to_buffer(packet + c * row_size, bytes_to_read,
 				row_size, 4, row, sizeof(row), false);
-		if (matches)
-			i_vpr_t(inst, "%s\n", row);
-		else
-			d_vpr_t("%s\n", row);
+		d_vpr_t("%08x: %s\n", session_id, row);
 	}
 }
 
