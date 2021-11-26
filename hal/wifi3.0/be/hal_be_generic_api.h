@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1414,10 +1415,10 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 		uint8_t filter_category = 0;
 
 		ppdu_info->nac_info.fc_valid =
-				HAL_RX_GET_FC_VALID(rx_tlv);
+				HAL_RX_MON_GET_FC_VALID(rx_tlv);
 
 		ppdu_info->nac_info.to_ds_flag =
-				HAL_RX_GET_TO_DS_FLAG(rx_tlv);
+				HAL_RX_MON_GET_TO_DS_FLAG(rx_tlv);
 
 		ppdu_info->nac_info.frame_control =
 			HAL_RX_GET(rx_mpdu_start,
@@ -1444,7 +1445,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				  ppdu_info);
 
 		ppdu_info->nac_info.mac_addr2_valid =
-				HAL_RX_TLV_MPDU_MAC_ADDR_AD2_VALID_GET(rx_tlv);
+				HAL_RX_MON_GET_MAC_ADDR2_VALID(rx_mpdu_start);
 
 		*(uint16_t *)&ppdu_info->nac_info.mac_addr2[0] =
 			HAL_RX_GET(rx_mpdu_start,
