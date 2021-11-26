@@ -2002,6 +2002,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_cfg_ctx->pkt_capture_mode = cfg_get(psoc, CFG_PKT_CAPTURE_MODE) &
 						 PKT_CAPTURE_MODE_DATA_ONLY;
 #endif
+	wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev = NUM_RXDMA_RINGS_PER_PDEV;
 
 	return wlan_cfg_ctx;
 }

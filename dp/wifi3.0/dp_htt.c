@@ -2380,6 +2380,7 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 	int mac_id;
 	int lmac_id;
 	uint32_t j = 0;
+	struct dp_soc *soc = pdev->soc;
 	struct dp_soc_srngs_state * soc_srngs_state = NULL;
 	struct dp_soc_srngs_state *drop_srngs_state = NULL;
 	QDF_STATUS status;
@@ -2544,7 +2545,7 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 			qdf_assert_always(++j < DP_MAX_SRNGS);
 	}
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++)	{
+	for (i = 0; i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc,
 						     i, pdev->pdev_id);
 

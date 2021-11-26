@@ -5164,6 +5164,7 @@ void dp_print_mon_ring_stat_from_hal(struct dp_pdev *pdev, uint8_t mac_id)
 void
 dp_print_ring_stats(struct dp_pdev *pdev)
 {
+	struct dp_soc *soc = pdev->soc;
 	uint32_t i;
 	int mac_id;
 	int lmac_id;
@@ -5243,7 +5244,7 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 		dp_print_mon_ring_stat_from_hal(pdev, lmac_id);
 	}
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++)	{
+	for (i = 0; i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc,
 						     i, pdev->pdev_id);
 

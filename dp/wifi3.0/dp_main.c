@@ -5643,6 +5643,16 @@ static void dp_soc_detach_wifi3(struct cdp_soc_t *txrx_soc)
  * Return: zero on success, non-zero on failure
  */
 #ifdef QCA_HOST2FW_RXBUF_RING
+static inline void
+dp_htt_setup_rxdma_err_dst_ring(struct dp_soc *soc, int mac_id,
+				int lmac_id)
+{
+	if (soc->rxdma_err_dst_ring[lmac_id].hal_srng)
+		htt_srng_setup(soc->htt_handle, mac_id,
+			       soc->rxdma_err_dst_ring[lmac_id].hal_srng,
+			       RXDMA_DST);
+}
+
 static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 {
 	int i;
@@ -5716,11 +5726,8 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 					 RXDMA_BUF);
 
 				if (!soc->rxdma2sw_rings_not_supported)
-					htt_srng_setup(soc->htt_handle,
-						       mac_for_pdev,
-						       soc->rxdma_err_dst_ring[lmac_id]
-						       .hal_srng,
-						       RXDMA_DST);
+					dp_htt_setup_rxdma_err_dst_ring(soc,
+						mac_for_pdev, lmac_id);
 
 				/* Configure monitor mode rings */
 				status = dp_monitor_htt_srng_setup(soc, pdev,
@@ -13492,7 +13499,8 @@ static void dp_pdev_srng_deinit(struct dp_pdev *pdev)
 			       pdev->lmac_id);
 
 	if (!soc->rxdma2sw_rings_not_supported) {
-		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+		for (i = 0;
+		     i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
 								 pdev->pdev_id);
 
@@ -13542,7 +13550,8 @@ static QDF_STATUS dp_pdev_srng_init(struct dp_pdev *pdev)
 		pdev = soc->pdev_list[0];
 
 	if (!soc->rxdma2sw_rings_not_supported) {
-		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+		for (i = 0;
+		     i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
 								 pdev->pdev_id);
 			struct dp_srng *srng =
@@ -13586,7 +13595,8 @@ static void dp_pdev_srng_free(struct dp_pdev *pdev)
 		dp_srng_free(soc, &soc->rx_refill_buf_ring[pdev->lmac_id]);
 
 	if (!soc->rxdma2sw_rings_not_supported) {
-		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+		for (i = 0;
+		     i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
 								 pdev->pdev_id);
 
@@ -13629,7 +13639,8 @@ static QDF_STATUS dp_pdev_srng_alloc(struct dp_pdev *pdev)
 		pdev = soc->pdev_list[0];
 
 	if (!soc->rxdma2sw_rings_not_supported) {
-		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
+		for (i = 0;
+		     i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
 								 pdev->pdev_id);
 			struct dp_srng *srng =
@@ -14142,6 +14153,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		}
 
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;
+		soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev = 1;
 		break;
 	case TARGET_TYPE_QCA8074:
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);

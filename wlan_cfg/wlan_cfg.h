@@ -403,6 +403,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool vdev_stats_hw_offload_config;
 	int vdev_stats_hw_offload_timer;
 #endif
+	uint8_t num_rxdma_dst_rings_per_pdev;
 };
 
 /**
