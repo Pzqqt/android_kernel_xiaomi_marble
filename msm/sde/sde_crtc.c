@@ -3606,7 +3606,7 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	if (crtc->state->mode_changed || sde_kms->perf.catalog->uidle_cfg.dirty) {
 		sde_core_perf_crtc_update_uidle(crtc, true);
 	} else if (!test_bit(SDE_CRTC_DIRTY_UIDLE, &sde_crtc->revalidate_mask) &&
-			sde_kms->perf.uidle_enabled)
+			!sde_kms->perf.uidle_enabled)
 		sde_core_perf_uidle_setup_ctl(crtc, false);
 
 	test_and_clear_bit(SDE_CRTC_DIRTY_UIDLE, &sde_crtc->revalidate_mask);
