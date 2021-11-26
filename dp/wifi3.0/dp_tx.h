@@ -27,6 +27,7 @@
 #endif
 #include "dp_internal.h"
 #include "hal_tx.h"
+#include <qdf_tracepoint.h>
 
 #define DP_INVALID_VDEV_ID 0xFF
 
@@ -848,4 +849,16 @@ QDF_STATUS dp_get_uplink_delay(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			       uint32_t *val);
 #endif /* WLAN_FEATURE_TSF_UPLINK_TSF */
 
+/**
+ * dp_tx_pkt_tracepoints_enabled() - Get the state of tx pkt tracepoint
+ *
+ * Return: True if any tx pkt tracepoint is enabled else false
+ */
+static inline
+bool dp_tx_pkt_tracepoints_enabled(void)
+{
+	return (qdf_trace_dp_tx_comp_tcp_pkt_enabled() ||
+		qdf_trace_dp_tx_comp_udp_pkt_enabled() ||
+		qdf_trace_dp_tx_comp_pkt_enabled());
+}
 #endif

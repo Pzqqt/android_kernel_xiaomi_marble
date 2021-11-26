@@ -3882,6 +3882,12 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 
 	dp_send_completion_to_pkt_capture(soc, desc, ts);
 
+	if (dp_tx_pkt_tracepoints_enabled())
+		qdf_trace_dp_packet(desc->nbuf, QDF_TX,
+				    desc->msdu_ext_desc ?
+				    desc->msdu_ext_desc->tso_desc : NULL,
+				    desc->timestamp);
+
 	if (!(desc->msdu_ext_desc)) {
 		dp_tx_enh_unmap(soc, desc);
 

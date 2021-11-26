@@ -23,6 +23,7 @@
 #include "hal_rx.h"
 #include "dp_peer.h"
 #include "dp_internal.h"
+#include <qdf_tracepoint.h>
 
 #ifdef RXDMA_OPTIMIZATION
 #ifndef RX_DATA_BUFFER_ALIGNMENT
@@ -2078,4 +2079,16 @@ void dp_rx_desc_pool_deinit_generic(struct dp_soc *soc,
 				  struct rx_desc_pool *rx_desc_pool,
 				  uint32_t pool_id);
 
+/**
+ * dp_rx_pkt_tracepoints_enabled() - Get the state of rx pkt tracepoint
+ *
+ * Return: True if any rx pkt tracepoint is enabled else false
+ */
+static inline
+bool dp_rx_pkt_tracepoints_enabled(void)
+{
+	return (qdf_trace_dp_rx_tcp_pkt_enabled() ||
+		qdf_trace_dp_rx_udp_pkt_enabled() ||
+		qdf_trace_dp_rx_pkt_enabled());
+}
 #endif /* _DP_RX_H */
