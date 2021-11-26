@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -497,8 +498,8 @@ static void lim_process_hw_mode_trans_ind(struct mac_context *mac, void *body)
 
 	param->num_freq_map = ind->num_freq_map;
 	for (i = 0; i < param->num_freq_map; i++) {
-		param->mac_freq_map[i].pdev_id =
-			ind->mac_freq_map[i].pdev_id;
+		param->mac_freq_map[i].mac_id =
+			ind->mac_freq_map[i].mac_id;
 		param->mac_freq_map[i].start_freq =
 			ind->mac_freq_map[i].start_freq;
 		param->mac_freq_map[i].end_freq =

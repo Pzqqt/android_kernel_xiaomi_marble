@@ -3881,8 +3881,8 @@ wma_process_mac_freq_mapping(struct cm_hw_mode_trans_ind *hw_mode_trans_ind,
 
 	hw_mode_trans_ind->num_freq_map = num_mac_freq;
 	for (i = 0; i < num_mac_freq; i++) {
-		hw_mode_trans_ind->mac_freq_map[i].pdev_id =
-							mac_freq[i].pdev_id;
+		hw_mode_trans_ind->mac_freq_map[i].mac_id =
+				WMA_PDEV_TO_MAC_MAP(mac_freq[i].pdev_id);
 		hw_mode_trans_ind->mac_freq_map[i].start_freq =
 							mac_freq[i].start_freq;
 		hw_mode_trans_ind->mac_freq_map[i].end_freq =

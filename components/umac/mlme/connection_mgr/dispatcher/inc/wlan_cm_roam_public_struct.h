@@ -2323,12 +2323,12 @@ struct policy_mgr_vdev_mac_map {
 
 /**
  * struct policy_mgr_pdev_mac_freq_map - vdev id-mac id map
- * @pdev_id: Pdev id, macros starting with WMI_PDEV_ID_
+ * @mac_id: mac_id mapped to pdev id (macros starting with WMI_PDEV_ID_)
  * @start_freq: Start Frequency in Mhz
  * @end_freq: End Frequency in Mhz
  */
 struct policy_mgr_pdev_mac_freq_map {
-	uint32_t pdev_id;
+	uint32_t mac_id;
 	qdf_freq_t start_freq;
 	qdf_freq_t end_freq;
 };

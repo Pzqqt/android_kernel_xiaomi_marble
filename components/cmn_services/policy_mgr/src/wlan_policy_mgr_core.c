@@ -879,24 +879,24 @@ policy_mgr_is_freq_range_2ghz(qdf_freq_t start_freq, qdf_freq_t end_freq)
 }
 
 static void
-policy_mgr_fill_curr_mac_2ghz_freq(uint32_t pdev_id,
+policy_mgr_fill_curr_mac_2ghz_freq(uint32_t mac_id,
 				   struct policy_mgr_pdev_mac_freq_map *freq,
 				   struct policy_mgr_psoc_priv_obj *pm_ctx)
 {
-	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].low_2ghz_freq =
+	pm_ctx->hw_mode.cur_mac_freq_range[mac_id].low_2ghz_freq =
 							freq->start_freq;
-	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].high_2ghz_freq =
+	pm_ctx->hw_mode.cur_mac_freq_range[mac_id].high_2ghz_freq =
 							freq->end_freq;
 }
 
 static void
-policy_mgr_fill_curr_mac_5ghz_freq(uint32_t pdev_id,
+policy_mgr_fill_curr_mac_5ghz_freq(uint32_t mac_id,
 				   struct policy_mgr_pdev_mac_freq_map *freq,
 				   struct policy_mgr_psoc_priv_obj *pm_ctx)
 {
-	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].low_5ghz_freq =
+	pm_ctx->hw_mode.cur_mac_freq_range[mac_id].low_5ghz_freq =
 							freq->start_freq;
-	pm_ctx->hw_mode.cur_mac_freq_range[pdev_id].high_5ghz_freq =
+	pm_ctx->hw_mode.cur_mac_freq_range[mac_id].high_5ghz_freq =
 							freq->end_freq;
 }
 
@@ -934,32 +934,31 @@ policy_mgr_fill_curr_freq_by_pdev_freq(int32_t num_mac_freq,
 				struct policy_mgr_psoc_priv_obj *pm_ctx,
 				struct policy_mgr_hw_mode_params hw_mode)
 {
-	uint32_t pdev_id, i;
+	uint32_t mac_id, i;
 
 	/* memzero before filling it */
 	qdf_mem_zero(pm_ctx->hw_mode.cur_mac_freq_range,
 		     sizeof(pm_ctx->hw_mode.cur_mac_freq_range));
 	for (i = 0; i < num_mac_freq; i++) {
-		pdev_id = freq[i].pdev_id;
+		mac_id = freq[i].mac_id;
 
-		if (pdev_id >= MAX_MAC) {
-			policy_mgr_debug("Invalid pdev id %d", pdev_id);
+		if (mac_id >= MAX_MAC) {
+			policy_mgr_debug("Invalid pdev id %d", mac_id);
 			return;
 		}
 
 		policy_mgr_debug("pdev_id %d start freq %d end_freq %d",
-				 pdev_id, freq[i].start_freq,
+				 mac_id, freq[i].start_freq,
 				 freq[i].end_freq);
 
 		if (policy_mgr_is_freq_range_2ghz(freq[i].start_freq,
 						  freq[i].end_freq))
-			policy_mgr_fill_curr_mac_2ghz_freq(pdev_id,
+			policy_mgr_fill_curr_mac_2ghz_freq(mac_id,
 							   &freq[i],
 							   pm_ctx);
 		else if (policy_mgr_is_freq_range_5_6ghz(freq[i].start_freq,
 							 freq[i].end_freq))
-			policy_mgr_fill_curr_mac_5ghz_freq(pdev_id,
-							   &freq[i],
+			policy_mgr_fill_curr_mac_5ghz_freq(mac_id, &freq[i],
 							   pm_ctx);
 		else
 			policy_mgr_fill_legacy_freq_range(pm_ctx, hw_mode);

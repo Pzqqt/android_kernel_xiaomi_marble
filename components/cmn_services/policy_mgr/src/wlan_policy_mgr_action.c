@@ -71,8 +71,8 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 
 	if (mac_freq_range)
 		for (i = 0; i < num_mac_freq; i++)
-			policy_mgr_debug("pdev_id:%d start_freq:%d end_freq %d",
-					 mac_freq_range[i].pdev_id,
+			policy_mgr_debug("mac_id:%d start_freq:%d end_freq %d",
+					 mac_freq_range[i].mac_id,
 					 mac_freq_range[i].start_freq,
 					 mac_freq_range[i].end_freq);
 

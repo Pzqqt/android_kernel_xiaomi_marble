@@ -1096,7 +1096,8 @@ policy_mgr_dump_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	}
 }
 
-static bool polocy_mgr_sbs_range_present(struct policy_mgr_psoc_priv_obj *pm_ctx)
+static bool
+policy_mgr_sbs_range_present(struct policy_mgr_psoc_priv_obj *pm_ctx)
 {
 	if (policy_mgr_both_phy_range_updated(pm_ctx, MODE_SBS) ||
 	    (pm_ctx->hw_mode.sbs_lower_band_end_freq &&
@@ -1200,7 +1201,7 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 			if (hw_config_type == WMI_HW_MODE_DBS ||
 			    hw_config_type == WMI_HW_MODE_DBS_OR_SBS)
 				dbs_mode = HW_MODE_DBS;
-			if (polocy_mgr_sbs_range_present(pm_ctx) &&
+			if (policy_mgr_sbs_range_present(pm_ctx) &&
 			    ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
 			    (hw_config_type == WMI_HW_MODE_SBS) ||
 			    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS)))
