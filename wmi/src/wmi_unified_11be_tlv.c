@@ -62,6 +62,17 @@ size_t vdev_start_mlo_params_size(struct vdev_start_params *req)
 	return vdev_start_mlo_size;
 }
 
+#ifdef WLAN_MCAST_MLO
+static bool vdev_start_add_mlo_mcast_params(uint32_t mlo_flags,
+					    struct vdev_start_params *req)
+{
+	WMI_MLO_FLAGS_SET_MCAST_VDEV(mlo_flags,
+				     req->mlo_flags.mlo_mcast_vdev);
+}
+#else
+#define vdev_start_add_mlo_mcast_params(mlo_flags, req)
+#endif
+
 uint8_t *vdev_start_add_mlo_params(uint8_t *buf_ptr,
 				   struct vdev_start_params *req)
 {
@@ -81,6 +92,8 @@ uint8_t *vdev_start_add_mlo_params(uint8_t *buf_ptr,
 				  req->mlo_flags.mlo_enabled);
 	WMI_MLO_FLAGS_SET_ASSOC_LINK(mlo_params->mlo_flags.mlo_flags,
 				     req->mlo_flags.mlo_assoc_link);
+
+	vdev_start_add_mlo_mcast_params(mlo_params->mlo_flags.mlo_flags, req);
 
 	return buf_ptr + sizeof(wmi_vdev_start_mlo_params);
 }
