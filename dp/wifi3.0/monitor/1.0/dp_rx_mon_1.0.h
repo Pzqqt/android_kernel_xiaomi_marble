@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -850,6 +851,13 @@ QDF_STATUS dp_rx_monitor_link_desc_return(struct dp_pdev *pdev,
 				      bm_action);
 }
 
+static inline bool dp_is_rxdma_dst_ring_common(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	return (soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev == 1);
+}
+
 /**
  * dp_rxdma_get_mon_dst_ring() - Return the pointer to rxdma_err_dst_ring
  *					or mon_dst_ring based on the target
@@ -864,6 +872,10 @@ void *dp_rxdma_get_mon_dst_ring(struct dp_pdev *pdev,
 {
 	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
 		return pdev->soc->rxdma_mon_dst_ring[mac_for_pdev].hal_srng;
+
+	/* For targets with 1 RXDMA DST ring for both mac */
+	if (dp_is_rxdma_dst_ring_common(pdev))
+		return pdev->soc->rxdma_err_dst_ring[0].hal_srng;
 
 	return pdev->soc->rxdma_err_dst_ring[mac_for_pdev].hal_srng;
 }
@@ -901,7 +913,7 @@ struct dp_rx_desc *dp_rx_get_mon_desc(struct dp_soc *soc,
 	if (soc->wlan_cfg_ctx->rxdma1_enable)
 		return dp_rx_cookie_2_va_mon_buf(soc, cookie);
 
-	return dp_rx_cookie_2_va_rxdma_buf(soc, cookie);
+	return soc->arch_ops.dp_rx_desc_cookie_2_va(soc, cookie);
 }
 
 #ifdef QCA_MONITOR_PKT_SUPPORT

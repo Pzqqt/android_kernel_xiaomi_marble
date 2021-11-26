@@ -998,9 +998,8 @@ struct dp_srng *dp_get_rxdma_ring(struct dp_pdev *pdev, int lmac_id)
  */
 #define DP_INVALID_LMAC_ID	(-1)
 #define DP_MON_INVALID_LMAC_ID	(-1)
-#define DP_MON_2G_LMAC_ID	1
-#define DP_MON_5G_LMAC_ID	0
-#define DP_MON_6G_LMAC_ID	0
+#define DP_MAC0_LMAC_ID	0
+#define DP_MAC1_LMAC_ID	1
 
 #ifdef FEATURE_TSO_STATS
 /**
