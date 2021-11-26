@@ -2538,7 +2538,6 @@ void wma_set_keepalive_req(tp_wma_handle wma,
 void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 {
 	struct missed_beacon_ind *beacon_miss_ind;
-	struct qdf_mac_addr connected_bssid;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	beacon_miss_ind = qdf_mem_malloc(sizeof(*beacon_miss_ind));
@@ -2552,17 +2551,13 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 	beacon_miss_ind->messageType = WMA_MISSED_BEACON_IND;
 	beacon_miss_ind->length = sizeof(*beacon_miss_ind);
 	beacon_miss_ind->bss_idx = vdev_id;
+	beacon_miss_ind->rssi = rssi;
 
 	wma_send_msg(wma, WMA_MISSED_BEACON_IND, beacon_miss_ind, 0);
 	if (!wmi_service_enabled(wma->wmi_handle,
 				 wmi_service_hw_db2dbm_support))
 		rssi += WMA_TGT_NOISE_FLOOR_DBM;
 	wma_lost_link_info_handler(wma, vdev_id, rssi);
-
-	/* Send BMISS Logging event */
-	wlan_vdev_get_bss_peer_mac(wma->interfaces[vdev_id].vdev,
-				   &connected_bssid);
-	cm_roam_beacon_loss_disconnect_event(connected_bssid, rssi, vdev_id);
 }
 
 void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi)

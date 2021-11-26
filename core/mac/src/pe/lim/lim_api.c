@@ -1730,6 +1730,7 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 
 	/* Set Beacon Miss in Powersave Offload */
 	pe_session->pmmOffloadInfo.bcnmiss = true;
+	pe_session->hb_failure_ap_rssi = missed_beacon_ind->rssi;
 	pe_err("Received Heart Beat Failure");
 
 	/*  Do AP probing immediately */

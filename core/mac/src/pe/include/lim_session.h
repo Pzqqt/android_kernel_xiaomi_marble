@@ -440,6 +440,8 @@ struct pe_session {
 
 	/*Flag to Track Status/Indicate HBFailure on this session */
 	bool LimHBFailureStatus;
+	int32_t hb_failure_ap_rssi;
+
 	uint32_t gLimPhyMode;
 	uint8_t txLdpcIniFeatureEnabled;
 	/**
