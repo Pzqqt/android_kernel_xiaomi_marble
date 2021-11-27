@@ -4797,6 +4797,7 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 	struct vdev_mlme_obj *vdev_mlme;
 	uint8_t i, local_tpe_count = 0, reg_tpe_count = 0, num_octets;
 	uint8_t psd_index = 0, non_psd_index = 0;
+	uint8_t bw_num;
 	uint16_t bw_val, ch_width;
 	qdf_freq_t curr_op_freq, curr_freq;
 	enum reg_6g_client_type client_mobility_type;
@@ -4880,6 +4881,13 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 		single_tpe = tpe_ies[non_psd_index];
 		vdev_mlme->reg_tpc_obj.is_psd_power = false;
 		vdev_mlme->reg_tpc_obj.eirp_power = 0;
+		bw_num = sizeof(get_next_higher_bw) /
+				sizeof(get_next_higher_bw[0]);
+		if (single_tpe.max_tx_pwr_count >= bw_num) {
+			pe_debug("tx pwr count: %d, larger than bw num: %d",
+				 single_tpe.max_tx_pwr_count, bw_num);
+			single_tpe.max_tx_pwr_count = bw_num - 1;
+		}
 		vdev_mlme->reg_tpc_obj.num_pwr_levels =
 					single_tpe.max_tx_pwr_count + 1;
 
