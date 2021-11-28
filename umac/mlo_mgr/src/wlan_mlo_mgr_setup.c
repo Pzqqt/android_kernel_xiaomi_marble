@@ -54,10 +54,11 @@ void mlo_setup_update_soc_ready(struct wlan_objmgr_psoc *psoc)
 	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
 	uint8_t chip_idx;
 
-	if (!mlo_ctx)
+	if (!mlo_ctx || !mlo_ctx->setup_info.tot_socs)
 		return;
 
 	chip_idx = mlo_ctx->setup_info.num_soc;
+	qdf_assert_always(chip_idx < MAX_MLO_CHIPS);
 	mlo_ctx->setup_info.soc_list[chip_idx] = psoc;
 	mlo_ctx->setup_info.num_soc++;
 
@@ -81,11 +82,12 @@ void mlo_setup_link_ready(struct wlan_objmgr_pdev *pdev)
 	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
 	uint8_t link_idx;
 
-	if (!mlo_ctx)
+	if (!mlo_ctx || !mlo_ctx->setup_info.tot_links)
 		return;
 
 	link_idx = mlo_ctx->setup_info.num_links;
 	/* TODO: Get reference to PDEV */
+	qdf_assert_always(link_idx < MAX_MLO_LINKS);
 	mlo_ctx->setup_info.pdev_list[link_idx] = pdev;
 	mlo_ctx->setup_info.state[link_idx] = MLO_LINK_SETUP_INIT;
 	mlo_ctx->setup_info.num_links++;
