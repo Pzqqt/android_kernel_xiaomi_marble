@@ -180,6 +180,9 @@ void dp_mon_ops_register(struct dp_soc *soc);
 
 #ifndef DISABLE_MON_CONFIG
 void dp_mon_register_intr_ops(struct dp_soc *soc);
+#else
+static inline void dp_mon_register_intr_ops(struct dp_soc *soc)
+{}
 #endif
 
 /*
