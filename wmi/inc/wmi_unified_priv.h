@@ -2789,6 +2789,11 @@ QDF_STATUS
 (*extract_inst_rssi_stats_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 			struct wmi_host_inst_rssi_stats_resp *inst_rssi_resp);
 #endif
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS (*send_set_mac_address_cmd)(wmi_unified_t wmi,
+				       struct set_mac_addr_params *params);
+#endif
 };
 
 /* Forward declartion for psoc*/

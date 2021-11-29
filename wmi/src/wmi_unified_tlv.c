@@ -16770,6 +16770,51 @@ send_set_halphy_cal_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * send_set_mac_address_cmd_tlv() - send set MAC address command to fw
+ * @wmi: wmi handle
+ * @params: set MAC address command params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+send_set_mac_address_cmd_tlv(wmi_unified_t wmi,
+			     struct set_mac_addr_params *params)
+{
+	wmi_vdev_update_mac_addr_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_vdev_update_mac_addr_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(
+		&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_update_mac_addr_cmd_fixed_param));
+	cmd->vdev_id = params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->mac_addr.bytes, &cmd->vdev_macaddr);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->mld_addr.bytes, &cmd->mld_macaddr);
+
+	wmi_debug("vdev %d mac_addr " QDF_MAC_ADDR_FMT " mld_addr "
+		  QDF_MAC_ADDR_FMT, cmd->vdev_id,
+		  QDF_MAC_ADDR_REF(params->mac_addr.bytes),
+		  QDF_MAC_ADDR_REF(params->mld_addr.bytes));
+	wmi_mtrace(WMI_VDEV_UPDATE_MAC_ADDR_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi, buf, len,
+				 WMI_VDEV_UPDATE_MAC_ADDR_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -17178,9 +17223,14 @@ struct wmi_ops tlv_ops =  {
 	.send_mgmt_rx_reo_filter_config_cmd =
 		send_mgmt_rx_reo_filter_config_cmd_tlv,
 #endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	.send_roam_set_param_cmd = send_roam_set_param_cmd_tlv,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	.send_set_mac_address_cmd = send_set_mac_address_cmd_tlv,
+#endif
 };
 
 /**
@@ -17619,6 +17669,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #endif
 	event_ids[wmi_roam_frame_event_id] =
 				WMI_ROAM_FRAME_EVENTID;
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	event_ids[wmi_vdev_update_mac_addr_conf_eventid] =
+			WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -18058,6 +18112,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_spectral_session_info_support] =
 			WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_mu_snif] = WMI_SERVICE_MU_SNIF;
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	wmi_service[wmi_service_dynamic_update_vdev_macaddr_support] =
+			WMI_SERVICE_DYNAMIC_VDEV_MAC_ADDR_UPDATE_SUPPORT;
+#endif
 }
 
 /**
