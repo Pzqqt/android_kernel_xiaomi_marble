@@ -1154,8 +1154,7 @@ static inline int __boot_firmware(struct iris_hfi_device *device)
 	if (!loop)
 		dprintk(CVP_ERR, "fail to power off CORE during resume\n");
 
-	// ctrl_init_val = BIT(0);
-    ctrl_init_val = BIT(0) + BIT(1);   //TODO: Fillmore-BU
+	ctrl_init_val = BIT(0);
 	__write_register(device, CVP_CTRL_INIT, ctrl_init_val);
 	while (!ctrl_status && count < max_tries) {
 		ctrl_status = __read_register(device, CVP_CTRL_STATUS);
@@ -1494,7 +1493,7 @@ static void __interface_dsp_queues_release(struct iris_hfi_device *device)
 	device->dsp_iface_q_table.align_device_addr = 0;
 }
 
-/*static int __interface_dsp_queues_init(struct iris_hfi_device *dev)
+static int __interface_dsp_queues_init(struct iris_hfi_device *dev)
 {
 	int rc = 0;
 	u32 i;
@@ -1566,7 +1565,7 @@ fail_dma_map:
 	dma_free_coherent(dev->res->mem_cdsp.dev, q_size, kvaddr, dma_handle);
 fail_dma_alloc:
 	return -ENOMEM;
-} TODO: Fillmore-BU*/
+}
 
 static void __interface_queues_release(struct iris_hfi_device *device)
 {
@@ -1696,7 +1695,7 @@ static void __setup_ucregion_memory_map(struct iris_hfi_device *device)
 	if (device->qdss.align_device_addr)
 		__write_register(device, CVP_MMAP_ADDR,
 				(u32)device->qdss.align_device_addr);
-	// call_iris_op(device, setup_dsp_uc_memmap, device);  // TODO : Fillmore-BU
+	call_iris_op(device, setup_dsp_uc_memmap, device);
 }
 
 static int __interface_queues_init(struct iris_hfi_device *dev)
@@ -1839,11 +1838,11 @@ static int __interface_queues_init(struct iris_hfi_device *dev)
 	if (vsfr)
 		vsfr->bufSize = ALIGNED_SFR_SIZE;
 
-	/* rc = __interface_dsp_queues_init(dev);
+	rc = __interface_dsp_queues_init(dev);
 	if (rc) {
 		dprintk(CVP_ERR, "dsp_queues_init failed\n");
 		goto fail_alloc_queue;
-	} TODO : Fillmore-BU */
+	}
 
 	__setup_ucregion_memory_map(dev);
 	return 0;
@@ -2035,7 +2034,7 @@ static int iris_hfi_core_init(void *device)
 
 	mutex_unlock(&dev->lock);
 
-	// cvp_dsp_send_hfi_queue();	TODO: Fillmore-BU
+	cvp_dsp_send_hfi_queue();
 
 	dprintk(CVP_CORE, "Core inited successfully\n");
 

@@ -44,7 +44,7 @@ static struct msm_cvp_common_data default_common_data[] = {
 static struct msm_cvp_common_data sm8450_common_data[] = {
 	{
 		.key = "qcom,auto-pil",
-		.value = 0,//0,		//TODO: Fillmore-BU
+		.value = 0,//1,		//TODO: Fillmore-BU
 	},
 	{
 		.key = "qcom,never-unload-fw",
@@ -52,7 +52,7 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 	},
 	{
 		.key = "qcom,sw-power-collapse",
-		.value = 0,//1,		// TODO: Fillmore-BU
+		.value = 1,
 	},
 	{
 		.key = "qcom,domain-attr-non-fatal-faults",
@@ -84,7 +84,7 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 	},
 	{
 		.key = "qcom,hw-resp-timeout",
-		.value = 2000,				//TODO: Fillmore-BU
+		.value = 2000,
 	},
 	{
 		.key = "qcom,dsp-resp-timeout",
@@ -96,7 +96,7 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 	},
 	{
 		.key = "qcom,dsp-enabled",
-		.value = 1,                 //TODO: Fillmore-BU
+		.value = 1,
 	}
 };
 

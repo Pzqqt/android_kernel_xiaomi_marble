@@ -436,8 +436,7 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 
 	atomic64_set(&core->kernel_trans_id, 0);
 
-	if (0) {
-	// if (core->resources.dsp_enabled) 	TODO: Fillmore-BU{
+	if (core->resources.dsp_enabled) {
 		rc = cvp_dsp_device_init();
 		if (rc)
 			dprintk(CVP_WARN, "Failed to initialize DSP driver\n");

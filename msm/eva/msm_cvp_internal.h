@@ -190,7 +190,6 @@ enum msm_cvp_modes {
 
 #define MAX_NUM_MSGS_PER_SESSION	128
 #define CVP_MAX_WAIT_TIME	2000
-// #define CVP_MAX_WAIT_TIME	20000	TODO: Fillmore-BU
 
 struct cvp_session_msg {
 	struct list_head node;
