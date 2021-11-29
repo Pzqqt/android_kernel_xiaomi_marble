@@ -384,4 +384,94 @@ struct mlo_mlme_ext_ops {
 	void (*mlo_mlme_ext_deauth)(struct wlan_objmgr_peer *peer);
 };
 
+/* maximum size of vdev bitmap array for MLO link set active command */
+#define MLO_VDEV_BITMAP_SZ 2
+
+/* maximum size of link number param array for MLO link set active command */
+#define MLO_LINK_NUM_SZ 2
+
+/**
+ * enum mlo_link_force_mode: MLO link force modes
+ * @MLO_LINK_FORCE_MODE_ACTIVE:
+ *  Force specific links active
+ * @MLO_LINK_FORCE_MODE_INACTIVE:
+ *  Force specific links inactive
+ * @MLO_LINK_FORCE_MODE_ACTIVE_NUM:
+ *  Force active a number of links, firmware to decide which links to inactive
+ * @MLO_LINK_FORCE_MODE_INACTIVE_NUM:
+ *  Force inactive a number of links, firmware to decide which links to inactive
+ * @MLO_LINK_FORCE_MODE_NO_FORCE:
+ *  Cancel the force operation of specific links, allow firmware to decide
+ */
+enum mlo_link_force_mode {
+	MLO_LINK_FORCE_MODE_ACTIVE       = 1,
+	MLO_LINK_FORCE_MODE_INACTIVE     = 2,
+	MLO_LINK_FORCE_MODE_ACTIVE_NUM   = 3,
+	MLO_LINK_FORCE_MODE_INACTIVE_NUM = 4,
+	MLO_LINK_FORCE_MODE_NO_FORCE     = 5,
+};
+
+/**
+ * enum mlo_link_force_reason: MLO link force reasons
+ * @MLO_LINK_FORCE_REASON_CONNECT:
+ *  Set force specific links because of new connection
+ * @MLO_LINK_FORCE_REASON_DISCONNECT:
+ *  Set force specific links because of new dis-connection
+ */
+enum mlo_link_force_reason {
+	MLO_LINK_FORCE_REASON_CONNECT    = 1,
+	MLO_LINK_FORCE_REASON_DISCONNECT = 2,
+};
+
+/**
+ * struct mlo_link_set_active_resp: MLO link set active response structure
+ * @status: Return status, 0 for success, non-zero otherwise
+ * @active_sz: size of current active vdev bitmap array
+ * @active: current active vdev bitmap array
+ * @inactive_sz: size of current inactive vdev bitmap array
+ * @inactive: current inactive vdev bitmap array
+ */
+struct mlo_link_set_active_resp {
+	uint32_t status;
+	uint32_t active_sz;
+	uint32_t active[MLO_VDEV_BITMAP_SZ];
+	uint32_t inactive_sz;
+	uint32_t inactive[MLO_VDEV_BITMAP_SZ];
+};
+
+/**
+ * struct mlo_link_num_param: MLO link set active number params
+ * @num_of_link: number of links to active/inactive
+ * @vdev_type: type of vdev
+ * @vdev_subtype: subtype of vdev
+ * @home_freq: home frequency of the link
+ */
+struct mlo_link_num_param {
+	uint32_t num_of_link;
+	uint32_t vdev_type;
+	uint32_t vdev_subtype;
+	uint32_t home_freq;
+};
+
+/**
+ * struct mlo_link_set_active_param: MLO link set active params
+ * @force_mode: operation to take (enum mlo_link_force_mode)
+ * @reason: reason for the operation (enum mlo_link_force_reason)
+ * @entry_num: number of the valid entries for link_num/vdev_bitmap
+ * @link_num: link number param array
+ *  It's present only when force_mode is MLO_LINK_FORCE_MODE_ACTIVE_NUM or
+ *  MLO_LINK_FORCE_MODE_INACTIVE_NUM
+ * @vdev_bitmap: active/inactive vdev bitmap array
+ *  It's present only when force_mode is MLO_LINK_FORCE_MODE_ACTIVE,
+ *  MLO_LINK_FORCE_MODE_INACTIVE or MLO_LINK_FORCE_MODE_NO_FORCE.
+ */
+struct mlo_link_set_active_param {
+	uint32_t force_mode;
+	uint32_t reason;
+	uint32_t entry_num;
+	union {
+		struct mlo_link_num_param link_num[MLO_LINK_NUM_SZ];
+		uint32_t vdev_bitmap[MLO_VDEV_BITMAP_SZ];
+	};
+};
 #endif

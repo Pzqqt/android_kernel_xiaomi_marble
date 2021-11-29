@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +32,7 @@
 QDF_STATUS
 wmi_extract_mlo_link_set_active_resp(wmi_unified_t wmi,
 				     void *evt_buf,
-				     struct wmi_mlo_link_set_active_resp *resp)
+				     struct mlo_link_set_active_resp *resp)
 {
 	if (wmi->ops->extract_mlo_link_set_active_resp) {
 		return wmi->ops->extract_mlo_link_set_active_resp(wmi,
@@ -50,7 +51,7 @@ wmi_extract_mlo_link_set_active_resp(wmi_unified_t wmi,
  */
 QDF_STATUS
 wmi_send_mlo_link_set_active_cmd(wmi_unified_t wmi,
-				 struct wmi_mlo_link_set_active_param *param)
+				 struct mlo_link_set_active_param *param)
 {
 	if (wmi->ops->send_mlo_link_set_active_cmd)
 		return wmi->ops->send_mlo_link_set_active_cmd(wmi, param);

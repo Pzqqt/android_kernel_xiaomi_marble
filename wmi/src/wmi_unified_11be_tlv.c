@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -280,23 +281,23 @@ uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_INVAL otherwise
  */
 static inline QDF_STATUS
-force_mode_host_to_fw(enum wmi_mlo_link_force_mode host_mode,
+force_mode_host_to_fw(enum mlo_link_force_mode host_mode,
 		      WMI_MLO_LINK_FORCE_MODE *fw_mode)
 {
 	switch (host_mode) {
-	case WMI_MLO_LINK_FORCE_MODE_ACTIVE:
+	case MLO_LINK_FORCE_MODE_ACTIVE:
 		*fw_mode = WMI_MLO_LINK_FORCE_ACTIVE;
 		break;
-	case WMI_MLO_LINK_FORCE_MODE_INACTIVE:
+	case MLO_LINK_FORCE_MODE_INACTIVE:
 		*fw_mode = WMI_MLO_LINK_FORCE_INACTIVE;
 		break;
-	case WMI_MLO_LINK_FORCE_MODE_ACTIVE_NUM:
+	case MLO_LINK_FORCE_MODE_ACTIVE_NUM:
 		*fw_mode = WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM;
 		break;
-	case WMI_MLO_LINK_FORCE_MODE_INACTIVE_NUM:
+	case MLO_LINK_FORCE_MODE_INACTIVE_NUM:
 		*fw_mode = WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM;
 		break;
-	case WMI_MLO_LINK_FORCE_MODE_NO_FORCE:
+	case MLO_LINK_FORCE_MODE_NO_FORCE:
 		*fw_mode = WMI_MLO_LINK_NO_FORCE;
 		break;
 	default:
@@ -316,14 +317,14 @@ force_mode_host_to_fw(enum wmi_mlo_link_force_mode host_mode,
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_INVAL otherwise
  */
 static inline QDF_STATUS
-force_reason_host_to_fw(enum wmi_mlo_link_force_reason host_reason,
+force_reason_host_to_fw(enum mlo_link_force_reason host_reason,
 			WMI_MLO_LINK_FORCE_REASON *fw_reason)
 {
 	switch (host_reason) {
-	case WMI_MLO_LINK_FORCE_REASON_CONNECT:
+	case MLO_LINK_FORCE_REASON_CONNECT:
 		*fw_reason = WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT;
 		break;
-	case WMI_MLO_LINK_FORCE_REASON_DISCONNECT:
+	case MLO_LINK_FORCE_REASON_DISCONNECT:
 		*fw_reason =  WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT;
 		break;
 	default:
@@ -343,7 +344,7 @@ force_reason_host_to_fw(enum wmi_mlo_link_force_reason host_reason,
  */
 static QDF_STATUS
 send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
-				 struct wmi_mlo_link_set_active_param *param)
+				 struct mlo_link_set_active_param *param)
 {
 	QDF_STATUS status;
 	wmi_mlo_link_set_active_cmd_fixed_param *cmd;
@@ -471,7 +472,7 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 extract_mlo_link_set_active_resp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
-				     struct wmi_mlo_link_set_active_resp *resp)
+				     struct mlo_link_set_active_resp *resp)
 {
 	wmi_mlo_link_set_active_resp_event_fixed_param *evt;
 	WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID_param_tlvs *param_buf;
@@ -490,7 +491,7 @@ extract_mlo_link_set_active_resp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	bitmap = param_buf->force_active_vdev_bitmap;
 	entry_num = qdf_min(param_buf->num_force_active_vdev_bitmap,
-			    (uint32_t)WMI_MLO_VDEV_BITMAP_SZ);
+			    (uint32_t)MLO_VDEV_BITMAP_SZ);
 	resp->active_sz = entry_num;
 	for (i = 0; i < entry_num; i++) {
 		resp->active[i] = bitmap[i];
@@ -499,7 +500,7 @@ extract_mlo_link_set_active_resp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	bitmap = param_buf->force_inactive_vdev_bitmap;
 	entry_num = qdf_min(param_buf->num_force_inactive_vdev_bitmap,
-			    (uint32_t)WMI_MLO_VDEV_BITMAP_SZ);
+			    (uint32_t)MLO_VDEV_BITMAP_SZ);
 	resp->inactive_sz = entry_num;
 	for (i = 0; i < entry_num; i++) {
 		resp->inactive[i] = bitmap[i];
