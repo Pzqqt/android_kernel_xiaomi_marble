@@ -1585,7 +1585,8 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 {
 	struct policy_mgr_pcl_list msg = { {0} };
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t roam_enabled_vdev_id;
+	uint8_t roam_enabled_vdev_id, count;
+	bool sta_concurrency_is_dbs, dual_sta_roam_enabled;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_POLICY_MGR_ID);
@@ -1600,16 +1601,29 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 	}
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 
+	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+							  NULL);
+	sta_concurrency_is_dbs = (count == 2) &&
+			!(policy_mgr_current_concurrency_is_mcc(psoc) ||
+			policy_mgr_current_concurrency_is_scc(psoc));
+
+	dual_sta_roam_enabled = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+
 	/*
 	 * Get the vdev id of the STA on which roaming is already
 	 * initialized and set the vdev PCL for that STA vdev if dual
-	 * STA roaming feature is enabled.
+	 * STA roaming feature is enabled and concurrency is STA + STA.
 	 */
 	roam_enabled_vdev_id = policy_mgr_get_roam_enabled_sta_session_id(psoc,
 								       vdev_id);
+	if (roam_enabled_vdev_id == WLAN_UMAC_VDEV_ID_MAX)
+		return;
 
-	if (wlan_mlme_get_dual_sta_roaming_enabled(psoc) &&
-	    roam_enabled_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+	policy_mgr_debug("count:%d, dual_sta_roam:%d, is_dbs:%d, clear_pcl:%d",
+			 count, dual_sta_roam_enabled, sta_concurrency_is_dbs,
+			 clear_pcl);
+
+	if (dual_sta_roam_enabled && sta_concurrency_is_dbs) {
 		if (clear_pcl) {
 			/*
 			 * Here the PCL level should be at vdev level already

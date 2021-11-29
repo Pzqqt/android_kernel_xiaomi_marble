@@ -9090,6 +9090,9 @@ QDF_STATUS wma_send_set_pcl_cmd(tp_wma_handle wma_handle,
 	if (msg->vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 		return wlan_cm_roam_send_set_vdev_pcl(wma_handle->psoc, msg);
 
+
+	wma_debug("RSO_CFG: BandCapability:%d, band_mask:%d",
+		  wma_handle->bandcapability, msg->band_mask);
 	for (i = 0; i < wma_handle->saved_chan.num_channels; i++) {
 		msg->chan_weights.saved_chan_list[i] =
 					wma_handle->saved_chan.ch_freq_list[i];
@@ -9123,7 +9126,7 @@ QDF_STATUS wma_send_set_pcl_cmd(tp_wma_handle wma_handle,
 		wma_err("Error in creating weighed pcl");
 		return status;
 	}
-	wma_debug("Dump channel list send to wmi");
+	wma_debug("RSO_CFG: Dump PDEV PCL weights for vdev[%d]", msg->vdev_id);
 	policy_mgr_dump_channel_list(msg->chan_weights.saved_num_chan,
 				     msg->chan_weights.saved_chan_list,
 				     msg->chan_weights.weighed_valid_list);

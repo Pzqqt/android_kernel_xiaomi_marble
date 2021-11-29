@@ -117,9 +117,10 @@ QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 		    wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_CLIENT_MODE) {
 			ifmgr_debug("p2p client active, keep roam disabled");
 		} else {
+			ifmgr_debug("set pcl when connection on vdev id:%d",
+				     vdev->vdev_objmgr.vdev_id);
 			policy_mgr_set_pcl_for_connected_vdev(psoc,
-							      vdev->vdev_objmgr.
-							      vdev_id, false);
+					      vdev->vdev_objmgr.vdev_id, false);
 			/*
 			 * Enable roaming on other STA iface except this one.
 			 * Firmware doesn't support connection on one STA iface

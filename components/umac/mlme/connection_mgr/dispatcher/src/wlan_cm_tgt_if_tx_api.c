@@ -78,6 +78,9 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status))
 		return QDF_STATUS_E_FAILURE;
 
+	mlme_debug("RSO_CFG: band_capability:%d band_mask:%d for vdev[%d]",
+		   band_capability, pcl_req->band_mask, pcl_req->vdev_id);
+
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, pcl_req->vdev_id,
 						    WLAN_MLME_SB_ID);
 	if (!vdev) {
@@ -141,7 +144,8 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	mlme_debug("RSO_CFG: vdev[%d] Dump Vdev PCL weights", pcl_req->vdev_id);
+	mlme_debug("RSO_CFG: Dump Vdev PCL weights for vdev[%d]",
+		   pcl_req->vdev_id);
 	policy_mgr_dump_channel_list(weights->saved_num_chan,
 				     weights->saved_chan_list,
 				     weights->weighed_valid_list);
