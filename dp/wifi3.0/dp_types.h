@@ -3578,8 +3578,6 @@ struct dp_fisa_rx_sw_ft {
 	uint32_t cur_aggr_gso_size;
 	struct udphdr *head_skb_udp_hdr;
 	uint16_t frags_cumulative_len;
-	/* debug delete count */
-	uint32_t del_count;
 	/* CMEM parameters */
 	uint32_t cmem_offset;
 	uint32_t metadata;
@@ -3593,7 +3591,6 @@ struct dp_fisa_rx_sw_ft {
 
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_fisa_rx_sw_ft)
 #define MAX_FSE_CACHE_FL_HST 10
-#define MAX_FSE_LRU_DELETE_HISTORY 16
 /**
  * struct fse_cache_flush_history - Debug history cache flush
  * @timestamp: Entry update timestamp
@@ -3605,32 +3602,6 @@ struct fse_cache_flush_history {
 	uint32_t flows_added;
 	uint32_t flows_deleted;
 };
-
-#ifdef WLAN_SUPPORT_RX_FISA_HIST
-/**
- * struct fse_lru_delete_history_entry - lru deletion history
- * hashed_idx - hased index to be deleted and updated
- *
- */
-struct fse_lru_delete_history_entry {
-	uint32_t hashed_idx;
-	uint64_t eviction_timestamp;
-	struct cdp_rx_flow_tuple_info evicted_flow_tuple_info;
-	struct cdp_rx_flow_tuple_info added_flow_tuple_info;
-};
-
-/**
- * struct fse_lru_delete_history - fse lru delete debug history
- * current_index - current index to be updated
- * entry - array of history index
- */
-
-struct fse_lru_delete_history {
-	uint32_t current_index;
-	struct fse_lru_delete_history_entry entry[MAX_FSE_LRU_DELETE_HISTORY];
-};
-
-#endif
 
 struct dp_rx_fst {
 	/* Software (DP) FST */
@@ -3658,9 +3629,6 @@ struct dp_rx_fst {
 	/* Allow FSE cache flush cmd to FW */
 	bool fse_cache_flush_allow;
 	struct fse_cache_flush_history cache_fl_rec[MAX_FSE_CACHE_FL_HST];
-#ifdef WLAN_SUPPORT_RX_FISA_HIST
-	struct fse_lru_delete_history lru_delete_history;
-#endif
 	/* FISA DP stats */
 	struct dp_fisa_stats stats;
 
@@ -3672,6 +3640,7 @@ struct dp_rx_fst {
 	uint32_t cmem_ba;
 	qdf_spinlock_t dp_rx_sw_ft_lock[MAX_REO_DEST_RINGS];
 	qdf_event_t cmem_resp_event;
+	bool flow_deletion_supported;
 	bool fst_in_cmem;
 	bool pm_suspended;
 };
