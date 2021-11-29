@@ -3151,7 +3151,7 @@ hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 			break;
 		case WMI_HOST_RESUME_TWT_STATUS_DIALOG_ID_NOT_EXIST:
 		case WMI_HOST_RESUME_TWT_STATUS_NOT_PAUSED:
-			ret = EAGAIN;
+			ret = -EAGAIN;
 			break;
 		case WMI_HOST_RESUME_TWT_STATUS_DIALOG_ID_BUSY:
 			ret = -EINPROGRESS;
