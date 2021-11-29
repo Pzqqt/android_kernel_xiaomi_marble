@@ -1276,6 +1276,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 
 	txrx_ops.tx.tx_comp = hdd_sta_notify_tx_comp_cb;
 	txrx_ops.tx.tx = NULL;
+	txrx_ops.get_tsf_time = hdd_get_tsf_time;
 	cdp_vdev_register(soc, adapter->vdev_id, (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
 	if (!txrx_ops.tx.tx) {

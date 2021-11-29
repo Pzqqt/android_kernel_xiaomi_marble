@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1003,6 +1004,33 @@ hdd_get_tsftime_from_qtime(struct hdd_adapter *adapter, uint64_t qtime,
 		qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
 
 	return ret;
+}
+
+QDF_STATUS hdd_get_tsf_time(void *adapter_ctx, uint64_t input_time,
+			    uint64_t *tsf_time)
+{
+	struct hdd_adapter *adapter;
+	uint64_t tsf_sync_qtime, qtime;
+
+	/* Sanity check on inputs */
+	if (unlikely((!adapter_ctx) || (!input_time))) {
+		hdd_err("Invalid param passed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	adapter = (struct hdd_adapter *)adapter_ctx;
+	if (unlikely(adapter->magic != WLAN_HDD_ADAPTER_MAGIC)) {
+		hdd_err("Magic cookie(%x) for adapter sanity verification is invalid",
+			adapter->magic);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	tsf_sync_qtime = adapter->last_tsf_sync_soc_time;
+	tsf_sync_qtime = qdf_do_div(tsf_sync_qtime, NSEC_PER_USEC);
+
+	qtime = qdf_log_timestamp_to_usecs(input_time);
+	hdd_get_tsftime_from_qtime(adapter, qtime, tsf_sync_qtime, tsf_time);
+	return QDF_STATUS_SUCCESS;
 }
 
 static void hdd_capture_tsf_timer_expired_handler(void *arg)
@@ -2030,6 +2058,7 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 {
 	return HDD_TSF_OP_SUCC;
 }
+
 #endif /* WLAN_FEATURE_TSF_PLUS */
 
 int hdd_capture_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len)

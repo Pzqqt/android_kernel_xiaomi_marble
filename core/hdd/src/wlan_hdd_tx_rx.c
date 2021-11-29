@@ -1064,6 +1064,20 @@ static void hdd_mark_icmp_req_to_fw(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#ifdef CONFIG_DP_PKT_ADD_TIMESTAMP
+void hdd_pkt_add_timestamp(struct hdd_adapter *adapter,
+			   enum qdf_pkt_timestamp_index index, uint64_t time,
+			   struct sk_buff *skb)
+{
+	if (unlikely(qdf_is_dp_pkt_timestamp_enabled())) {
+		uint64_t tsf_time;
+
+		hdd_get_tsf_time(adapter, time, &tsf_time);
+		qdf_add_dp_pkt_timestamp(skb, index, tsf_time);
+	}
+}
+#endif
+
 /**
  * __hdd_hard_start_xmit() - Transmit a frame
  * @skb: pointer to OS packet (sk_buff)
@@ -1159,6 +1173,9 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		   QDF_NBUF_CB_PACKET_TYPE_ICMPv6)) {
 		hdd_mark_icmp_req_to_fw(hdd_ctx, skb);
 	}
+
+	hdd_pkt_add_timestamp(adapter, QDF_PKT_TX_DRIVER_ENTRY,
+			      qdf_get_log_timestamp(), skb);
 
 	/* track connectivity stats */
 	if (adapter->pkt_type_bitmap)
@@ -2652,6 +2669,10 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 				is_dhcp = true;
 			}
 		}
+
+		hdd_pkt_add_timestamp(adapter, QDF_PKT_RX_DRIVER_EXIT,
+				      qdf_get_log_timestamp(), skb);
+
 		/* track connectivity stats */
 		if (adapter->pkt_type_bitmap)
 			hdd_tx_rx_collect_connectivity_stats_info(skb, adapter,

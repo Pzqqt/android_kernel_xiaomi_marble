@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,6 +32,7 @@
 #include <linux/skbuff.h>
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <qdf_tracepoint.h>
+#include <qdf_pkt_add_timestamp.h>
 
 struct hdd_netif_queue_history;
 struct hdd_context;
@@ -601,4 +602,29 @@ static inline bool hdd_rx_pkt_tracepoints_enabled(void)
 		qdf_trace_dp_rx_udp_pkt_enabled() ||
 		qdf_trace_dp_rx_pkt_enabled());
 }
+
+#ifdef CONFIG_DP_PKT_ADD_TIMESTAMP
+
+/**
+ * hdd_pkt_add_timestamp() - add timestamp in data payload
+ *
+ * @adapter - adapter context
+ * @index - timestamp index which decides offset in payload
+ * @time - time to update in payload
+ * @skb - socket buffer
+ *
+ * Return: none
+ */
+void hdd_pkt_add_timestamp(struct hdd_adapter *adapter,
+			   enum qdf_pkt_timestamp_index index, uint64_t time,
+			   struct sk_buff *skb);
+#else
+static inline
+void hdd_pkt_add_timestamp(struct hdd_adapter *adapter,
+			   enum qdf_pkt_timestamp_index index, uint64_t time,
+			   struct sk_buff *skb)
+{
+}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

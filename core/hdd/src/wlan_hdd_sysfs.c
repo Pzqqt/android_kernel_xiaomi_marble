@@ -78,6 +78,7 @@
 #include <wlan_hdd_sysfs_swlm.h>
 #include <wlan_hdd_sysfs_dump_in_progress.h>
 #include <wlan_hdd_sysfs_txrx_stats_console.h>
+#include <wlan_hdd_sysfs_add_timestamp.h>
 #include "wma_api.h"
 #include "wlan_hdd_eht.h"
 #include <wlan_hdd_sysfs_bmiss.h>
@@ -856,12 +857,14 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 		hdd_sysfs_create_wakeup_logs_to_console();
 		hdd_sysfs_dp_txrx_stats_sysfs_create(driver_kobject);
 		hdd_sysfs_get_valid_freq_for_power_create(driver_kobject);
+		hdd_sysfs_dp_pkt_add_ts_create(driver_kobject);
 	}
 }
 
 void hdd_destroy_sysfs_files(void)
 {
 	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
+		hdd_sysfs_dp_pkt_add_ts_destroy(driver_kobject);
 		hdd_sysfs_get_valid_freq_for_power_destroy(driver_kobject);
 		hdd_sysfs_dp_txrx_stats_sysfs_destroy(driver_kobject);
 		hdd_sysfs_destroy_wakeup_logs_to_console();

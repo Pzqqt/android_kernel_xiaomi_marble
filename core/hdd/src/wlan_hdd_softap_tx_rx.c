@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -49,6 +49,7 @@
 #include "wlan_hdd_sta_info.h"
 #include "ol_defines.h"
 #include <wlan_hdd_sar_limits.h>
+#include "wlan_hdd_tsf.h"
 
 /* Preprocessor definitions and constants */
 #undef QCA_HDD_SAP_DUMP_SK_BUFF
@@ -727,6 +728,9 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 
 	wlan_hdd_classify_pkt(skb);
 
+	hdd_pkt_add_timestamp(adapter, QDF_PKT_TX_DRIVER_ENTRY,
+			      qdf_get_log_timestamp(), skb);
+
 	if (QDF_IS_STATUS_ERROR(hdd_softap_validate_peer_state(adapter, skb)))
 		goto drop_pkt;
 
@@ -1196,6 +1200,9 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 			continue;
 		}
 
+		hdd_pkt_add_timestamp(adapter, QDF_PKT_RX_DRIVER_EXIT,
+				      qdf_get_log_timestamp(), skb);
+
 		hdd_event_eapol_log(skb, QDF_RX);
 		qdf_dp_trace_log_pkt(adapter->vdev_id,
 				     skb, QDF_RX, QDF_TRACE_DEFAULT_PDEV_ID);
@@ -1381,6 +1388,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		txrx_ops.rx.rx_flush = NULL;
 	}
 
+	txrx_ops.get_tsf_time = hdd_get_tsf_time;
 	cdp_vdev_register(soc,
 			  adapter->vdev_id,
 			  (ol_osif_vdev_handle)adapter,
