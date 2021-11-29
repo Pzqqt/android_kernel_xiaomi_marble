@@ -499,15 +499,16 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 
 	dp_tx_outstanding_dec(pdev);
 
-	if (tx_desc->frm_type == dp_tx_frm_tso)
-		dp_tx_tso_desc_release(soc, tx_desc);
+	if (tx_desc->msdu_ext_desc) {
+		if (tx_desc->frm_type == dp_tx_frm_tso)
+			dp_tx_tso_desc_release(soc, tx_desc);
 
-	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG)
+		if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
+			dp_tx_me_free_buf(tx_desc->pdev,
+					  tx_desc->msdu_ext_desc->me_buffer);
+
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
-
-	if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
-		dp_tx_me_free_buf(tx_desc->pdev, tx_desc->msdu_ext_desc->
-				  me_buffer);
+	}
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		qdf_atomic_dec(&soc->num_tx_exception);
@@ -1202,9 +1203,6 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->vdev_id = vdev->vdev_id;
 	tx_desc->pdev = pdev;
 	tx_desc->pkt_offset = 0;
-	tx_desc->msdu_ext_desc->tso_desc = msdu_info->u.tso_info.curr_seg;
-	tx_desc->msdu_ext_desc->tso_num_desc = msdu_info->u.tso_info.
-					       tso_num_seg_list;
 
 	dp_tx_trace_pkt(soc, nbuf, tx_desc->id, vdev->vdev_id);
 
@@ -1226,6 +1224,9 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 
 	tx_desc->msdu_ext_desc = msdu_ext_desc;
 	tx_desc->flags |= DP_TX_DESC_FLAG_FRAG;
+
+	msdu_ext_desc->tso_desc = msdu_info->u.tso_info.curr_seg;
+	msdu_ext_desc->tso_num_desc = msdu_info->u.tso_info.tso_num_seg_list;
 
 	tx_desc->dma_addr = msdu_ext_desc->paddr;
 
