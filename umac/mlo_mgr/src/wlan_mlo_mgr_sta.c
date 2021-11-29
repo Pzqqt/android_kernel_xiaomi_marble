@@ -154,11 +154,19 @@ mlo_send_link_disconnect(struct wlan_mlo_dev_context *mlo_dev_ctx,
 			 struct qdf_mac_addr *bssid)
 {
 	uint8_t i = 0;
+	enum wlan_cm_source link_source = source;
 	struct wlan_objmgr_vdev *assoc_vdev =
 			mlo_get_assoc_link_vdev(mlo_dev_ctx);
 
 	if (!assoc_vdev)
 		return QDF_STATUS_E_FAILURE;
+
+	/*
+	 * Change the source for the link vdev to make sure it's handled as a
+	 * Northbound disconnect in VDEV/PEER state machine.
+	 */
+	if (source != CM_OSIF_DISCONNECT)
+		link_source = CM_MLO_LINK_VDEV_DISCONNECT;
 
 	for (i =  0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
 		if (!mlo_dev_ctx->wlan_vdev_list[i])
@@ -167,7 +175,7 @@ mlo_send_link_disconnect(struct wlan_mlo_dev_context *mlo_dev_ctx,
 		if (qdf_test_bit(i, mlo_dev_ctx->sta_ctx->wlan_connected_links) &&
 		    mlo_dev_ctx->wlan_vdev_list[i] != mlo_get_assoc_link_vdev(mlo_dev_ctx))
 			wlan_cm_disconnect(mlo_dev_ctx->wlan_vdev_list[i],
-					   CM_MLO_DISCONNECT, reason_code,
+					   link_source, reason_code,
 					   NULL);
 	}
 
@@ -785,7 +793,7 @@ mlo_send_link_disconnect_sync(struct wlan_mlo_dev_context *mlo_dev_ctx,
 		if (mlo_dev_ctx->wlan_vdev_list[i] !=
 				mlo_get_assoc_link_vdev(mlo_dev_ctx))
 			wlan_cm_disconnect_sync(mlo_dev_ctx->wlan_vdev_list[i],
-						CM_MLO_DISCONNECT, reason_code);
+						source, reason_code);
 	}
 
 	wlan_cm_disconnect_sync(assoc_vdev,
