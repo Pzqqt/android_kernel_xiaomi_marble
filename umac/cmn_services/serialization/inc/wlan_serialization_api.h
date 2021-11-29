@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -192,6 +193,7 @@ typedef QDF_STATUS (*wlan_ser_umac_cmd_cb)(void *umac_cmd);
  * @WLAN_SER_CMD_PDEV_CSA_RESTART: Cmd to CSA restart all AP VDEVs of a PDEV
  * @WLAN_SER_CMD_GET_DISCONNECT_STATS: Cmd to get peer stats on disconnection
  * @WLAN_SER_CMD_VDEV_ROAM: Cmd to roam a STA VDEV
+ * @WLAN_SER_CMD_SET_MLO_LINK: Cmd to force mlo link active/inactive
  */
 enum wlan_serialization_cmd_type {
 	/* all scan command before non-scan */
@@ -225,6 +227,7 @@ enum wlan_serialization_cmd_type {
 	WLAN_SER_CMD_PDEV_CSA_RESTART,
 	WLAN_SER_CMD_GET_DISCONNECT_STATS,
 	WLAN_SER_CMD_VDEV_ROAM,
+	WLAN_SER_CMD_SET_MLO_LINK,
 	WLAN_SER_CMD_MAX
 };
 

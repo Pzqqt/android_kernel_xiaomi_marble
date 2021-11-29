@@ -196,9 +196,9 @@ target_if_mlo_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlo_tx_ops->mlo_attach =
+	mlo_tx_ops->register_events =
 		target_if_mlo_register_event_handler;
-	mlo_tx_ops->mlo_detach =
+	mlo_tx_ops->unregister_events =
 		target_if_mlo_unregister_event_handler;
 	mlo_tx_ops->link_set_active = target_if_mlo_link_set_active;
 

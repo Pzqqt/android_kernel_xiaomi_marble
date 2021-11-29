@@ -313,4 +313,24 @@ uint16_t wlan_mlo_get_pdev_hw_link_id(struct wlan_objmgr_pdev *pdev)
 }
 #endif/*WLAN_MLO_MULTI_CHIP*/
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * mlo_process_link_set_active_resp() - handler for mlo link set active response
+ * @psoc: psoc pointer
+ * @event: pointer to mlo link set active response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlo_process_link_set_active_resp(struct wlan_objmgr_psoc *psoc,
+				 struct mlo_link_set_active_resp *event);
+
+/**
+ * mlo_ser_set_link_req() - add mlo link set active cmd to serialization
+ * @req: mlo link set active request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_ser_set_link_req(struct mlo_link_set_active_req *req);
+#endif
 #endif

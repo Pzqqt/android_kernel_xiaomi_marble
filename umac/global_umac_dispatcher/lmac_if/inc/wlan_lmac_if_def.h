@@ -1262,13 +1262,13 @@ struct wlan_lmac_if_son_rx_ops {
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
  * struct wlan_lmac_if_mlo_tx_ops - south bound tx function pointers for mlo
- * @mlo_attach: function to register event handlers with FW
- * @mlo_detach: function to de-register event handlers with FW
+ * @register_events: function to register event handlers with FW
+ * @unregister_events: function to de-register event handlers with FW
  * @link_set_active: function to send mlo link set active command to FW
  */
 struct wlan_lmac_if_mlo_tx_ops {
-	QDF_STATUS (*mlo_attach)(struct wlan_objmgr_psoc *psoc);
-	QDF_STATUS (*mlo_detach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*register_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*unregister_events)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*link_set_active)(struct wlan_objmgr_psoc *psoc,
 		struct mlo_link_set_active_param *param);
 };

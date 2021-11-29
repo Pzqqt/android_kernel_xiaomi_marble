@@ -786,6 +786,8 @@ static void
 wlan_lmac_if_mlo_mgr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	/* register handler for received mlo related events */
+	rx_ops->mlo_rx_ops.process_link_set_active_resp =
+		mlo_process_link_set_active_resp;
 }
 #else
 static void

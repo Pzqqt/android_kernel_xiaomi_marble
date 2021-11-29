@@ -27,6 +27,7 @@
 #include <wlan_mlo_mgr_peer.h>
 #include <wlan_cm_public_struct.h>
 #include "wlan_mlo_mgr_msgq.h"
+#include <target_if_mlo_mgr.h>
 
 static void mlo_global_ctx_deinit(void)
 {
@@ -73,6 +74,52 @@ static void mlo_global_ctx_init(void)
 	ml_aid_lock_create(mlo_mgr_ctx);
 	mlo_mgr_ctx->mlo_is_force_primary_umac = 0;
 	mlo_msgq_init();
+}
+
+QDF_STATUS wlan_mlo_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_mlo_tx_ops *mlo_tx_ops;
+
+	if (!psoc) {
+		mlo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mlo_tx_ops = target_if_mlo_get_tx_ops(psoc);
+	if (!mlo_tx_ops) {
+		mlo_err("tx_ops is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!mlo_tx_ops->register_events) {
+		mlo_err("register_events function is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return mlo_tx_ops->register_events(psoc);
+}
+
+QDF_STATUS wlan_mlo_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_mlo_tx_ops *mlo_tx_ops;
+
+	if (!psoc) {
+		mlo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mlo_tx_ops = target_if_mlo_get_tx_ops(psoc);
+	if (!mlo_tx_ops) {
+		mlo_err("tx_ops is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!mlo_tx_ops->unregister_events) {
+		mlo_err("unregister_events function is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return mlo_tx_ops->unregister_events(psoc);
 }
 
 QDF_STATUS wlan_mlo_mgr_init(void)

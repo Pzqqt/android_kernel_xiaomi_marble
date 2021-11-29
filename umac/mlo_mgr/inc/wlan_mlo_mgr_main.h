@@ -28,6 +28,7 @@
 
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_public_structs.h>
+
 /**
  * wlan_mlo_mgr_init() - Initialize the MLO data structures
  *
@@ -628,6 +629,25 @@ void copied_conn_req_lock_release(struct wlan_mlo_sta *sta_ctx)
 }
 #endif /* WLAN_MLO_USE_SPINLOCK */
 
+/**
+ * wlan_mlo_mgr_psoc_enable() - MLO psoc enable handler
+ * @psoc: psoc pointer
+ *
+ * API to execute operations on psoc enable
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlo_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlo_mgr_psoc_disable() - MLO psoc disable handler
+ * @psoc: psoc pointer
+ *
+ * API to execute operations on psoc disable
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlo_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc);
 #else
 static inline QDF_STATUS wlan_mlo_mgr_init(void)
 {

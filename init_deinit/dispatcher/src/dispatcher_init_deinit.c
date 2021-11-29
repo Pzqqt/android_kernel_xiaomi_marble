@@ -915,6 +915,28 @@ dispatcher_coex_psoc_close(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* FEATURE_COEX */
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static QDF_STATUS mlo_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlo_mgr_psoc_enable(psoc);
+}
+
+static QDF_STATUS mlo_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlo_mgr_psoc_disable(psoc);
+}
+#else
+static QDF_STATUS mlo_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS mlo_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -1289,8 +1311,13 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_psoc_enable(psoc))
 		goto mgmt_txrx_psoc_enable_fail;
 
+	if (QDF_STATUS_SUCCESS != mlo_mgr_psoc_enable(psoc))
+		goto mlo_mgr_psoc_enable_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+mlo_mgr_psoc_enable_fail:
+	wlan_mgmt_txrx_psoc_disable(psoc);
 mgmt_txrx_psoc_enable_fail:
 	spectral_psoc_disable(psoc);
 spectral_psoc_enable_fail:
@@ -1325,6 +1352,8 @@ qdf_export_symbol(dispatcher_psoc_enable);
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+
+	QDF_BUG(QDF_STATUS_SUCCESS == mlo_mgr_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_psoc_disable(psoc));
 

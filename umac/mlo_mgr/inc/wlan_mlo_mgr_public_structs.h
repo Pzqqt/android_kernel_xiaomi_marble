@@ -484,4 +484,27 @@ struct mlo_link_set_active_param {
 		uint32_t vdev_bitmap[MLO_VDEV_BITMAP_SZ];
 	};
 };
+
+/*
+ * struct mlo_link_set_active_ctx - Context for MLO link set active request
+ * @vdev: pointer to vdev on which the request issued
+ * @cb: callback function for MLO link set active request
+ * @cb_arg: callback context
+ */
+struct mlo_link_set_active_ctx {
+	struct wlan_objmgr_vdev *vdev;
+	void (*set_mlo_link_cb)(struct wlan_objmgr_vdev *vdev, void *arg,
+				struct mlo_link_set_active_resp *evt);
+	void *cb_arg;
+};
+
+/*
+ * struct mlo_link_set_active_req - MLO link set active request
+ * @ctx: context for MLO link set active request
+ * @param: MLO link set active params
+ */
+struct mlo_link_set_active_req {
+	struct mlo_link_set_active_ctx ctx;
+	struct mlo_link_set_active_param param;
+};
 #endif
