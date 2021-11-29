@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,8 +26,6 @@
 #include <cdp_txrx_cmn_struct.h>
 #include <cdp_txrx_cmn.h>
 
-
-#define INVALID_NAPI 0Xff
 /**
  * struct dp_txrx_config - dp txrx configuration passed to dp txrx modules
  * @enable_dp_rx_threads: enable DP rx threads or not
