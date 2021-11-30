@@ -1026,7 +1026,7 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
  * Return: Length of twt setup nl response
  */
 static uint32_t
-hdd_get_twt_setup_event_len(struct twt_add_dialog_complete_event *ev_params)
+hdd_get_twt_setup_event_len(struct wma_twt_add_dialog_complete_event *ev_params)
 {
 	uint32_t len = 0;
 
@@ -1321,7 +1321,7 @@ wmi_twt_add_status_to_vendor_twt_status(enum WMI_HOST_ADD_TWT_STATUS status)
  */
 static QDF_STATUS
 hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
-			      struct twt_add_dialog_complete_event *event)
+			      struct wma_twt_add_dialog_complete_event *event)
 {
 	struct nlattr *config_attr;
 	uint64_t sp_offset_tsf;
@@ -1499,7 +1499,7 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
  */
 static QDF_STATUS hdd_send_twt_setup_response(
 		struct hdd_adapter *adapter,
-		struct twt_add_dialog_complete_event *add_dialog_comp_ev_params)
+		struct wma_twt_add_dialog_complete_event *add_dialog_comp_ev_params)
 {
 	struct hdd_context *hdd_ctx;
 	struct sk_buff *twt_vendor_event;
@@ -1548,7 +1548,7 @@ static QDF_STATUS hdd_send_twt_setup_response(
  */
 static void
 hdd_twt_handle_renego_failure(struct hdd_adapter *adapter,
-			      struct twt_add_dialog_complete_event *add_dialog_event)
+			      struct wma_twt_add_dialog_complete_event *add_dialog_event)
 {
 	struct wmi_twt_del_dialog_param params = {0};
 
@@ -1666,7 +1666,7 @@ hdd_twt_ack_wait_response(struct hdd_context *hdd_ctx,
  */
 static void
 hdd_twt_add_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
-			   struct twt_add_dialog_complete_event *add_dialog_event,
+			   struct wma_twt_add_dialog_complete_event *add_dialog_event,
 			   bool renego_fail)
 {
 	struct hdd_adapter *adapter;

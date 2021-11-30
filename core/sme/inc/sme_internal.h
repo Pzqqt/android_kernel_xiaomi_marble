@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,7 +40,7 @@
 #include "wmi_unified.h"
 #include "wmi_unified_param.h"
 
-struct twt_add_dialog_complete_event;
+struct wma_twt_add_dialog_complete_event;
 struct wmi_twt_add_dialog_complete_event_param;
 struct wmi_twt_enable_complete_event_param;
 /*--------------------------------------------------------------------------
@@ -169,7 +169,7 @@ typedef void (*twt_disable_cb)(hdd_handle_t hdd_handle);
  */
 typedef
 void (*twt_add_dialog_cb)(struct wlan_objmgr_psoc *psoc,
-			  struct twt_add_dialog_complete_event *add_dialog_evt,
+			  struct wma_twt_add_dialog_complete_event *add_dialog_evt,
 			  bool renego_fail);
 
 /**
@@ -243,7 +243,7 @@ struct twt_callbacks {
 			      struct wmi_twt_enable_complete_event_param *params);
 	void (*twt_disable_cb)(hdd_handle_t hdd_handle);
 	void (*twt_add_dialog_cb)(struct wlan_objmgr_psoc *psoc,
-				  struct twt_add_dialog_complete_event *add_dialog_event,
+				  struct wma_twt_add_dialog_complete_event *add_dialog_event,
 				  bool renego);
 	void (*twt_del_dialog_cb)(struct wlan_objmgr_psoc *psoc,
 				  struct wmi_twt_del_dialog_complete_event_param *params);

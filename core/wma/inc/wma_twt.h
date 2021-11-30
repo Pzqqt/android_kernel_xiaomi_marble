@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,14 +40,14 @@ struct twt_enable_disable_conf {
 };
 
 /**
- * struct twt_add_dialog_complete_event - TWT add dialog complete event
+ * struct wma_twt_add_dialog_complete_event - TWT add dialog complete event
  * @params: Fixed parameters for TWT add dialog complete event
  * @additional_params: additional parameters for TWT add dialog complete event
  *
  * Holds the fixed and additional parameters from add dialog
  * complete event
  */
-struct twt_add_dialog_complete_event {
+struct wma_twt_add_dialog_complete_event {
 	struct wmi_twt_add_dialog_complete_event_param params;
 	struct wmi_twt_add_dialog_additional_params additional_params;
 };

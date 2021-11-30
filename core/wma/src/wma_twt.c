@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +27,70 @@
 #include "wma_internal.h"
 #include "wmi_unified_priv.h"
 
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+
+void wma_update_bcast_twt_support(tp_wma_handle wh,
+				  struct wma_tgt_cfg *tgt_cfg)
+{
+}
+
+void wma_register_twt_events(tp_wma_handle wma_handle)
+{
+}
+
+void wma_set_twt_peer_caps(tpAddStaParams params, struct peer_assoc_params *cmd)
+{
+}
+
+void wma_update_twt_tgt_cap(tp_wma_handle wh, struct wma_tgt_cfg *tgt_cfg)
+{
+}
+
+void wma_send_twt_enable_cmd(uint32_t pdev_id,
+			     struct twt_enable_disable_conf *conf)
+{
+}
+
+void wma_send_twt_disable_cmd(uint32_t pdev_id,
+			      struct twt_enable_disable_conf *conf)
+{
+}
+
+QDF_STATUS wma_twt_process_add_dialog(t_wma_handle *wma_handle,
+				      struct wmi_twt_add_dialog_param *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wma_twt_process_del_dialog(t_wma_handle *wma_handle,
+			   struct wmi_twt_del_dialog_param *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wma_twt_process_pause_dialog(t_wma_handle *wma_handle,
+			     struct wmi_twt_pause_dialog_cmd_param *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wma_twt_process_nudge_dialog(t_wma_handle *wma_handle,
+			     struct wmi_twt_nudge_dialog_cmd_param *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wma_twt_process_resume_dialog(t_wma_handle *wma_handle,
+			      struct wmi_twt_resume_dialog_cmd_param *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#elif WLAN_SUPPORT_TWT
 void wma_send_twt_enable_cmd(uint32_t pdev_id,
 			     struct twt_enable_disable_conf *conf)
 {
@@ -119,16 +184,34 @@ void wma_send_twt_disable_cmd(uint32_t pdev_id,
  * Return: 0 on success, negative value on failure
  */
 static
-int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
+int wma_twt_disable_comp_event_handler(void *handle, uint8_t *data,
 				       uint32_t len)
 {
 	struct mac_context *mac;
+	struct wmi_twt_disable_complete_event event;
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+	QDF_STATUS status;
 
 	mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac)
 		return -EINVAL;
 
+	if (wma_validate_handle(wma_handle))
+		return -EINVAL;
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
+		return -EINVAL;
+
 	wma_debug("TWT: Rcvd TWT disable comp event");
+	status = wmi_extract_twt_disable_comp_event(wmi_handle, data, &event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("TWT disable extract event failed(status=%d)", status);
+		return -EINVAL;
+	}
+
+	wma_debug("pdev_id: %d", event.pdev_id);
 
 	if (mac->sme.twt_disable_cb)
 		mac->sme.twt_disable_cb(mac->hdd_handle);
@@ -172,7 +255,7 @@ static
 int wma_twt_add_dialog_complete_event_handler(void *handle,
 					      uint8_t *event, uint32_t len)
 {
-	struct twt_add_dialog_complete_event *add_dialog_event;
+	struct wma_twt_add_dialog_complete_event *add_dialog_event;
 	struct scheduler_msg sme_msg = {0};
 	tp_wma_handle wma_handle = handle;
 	wmi_unified_t wmi_handle;
@@ -681,3 +764,4 @@ void wma_register_twt_events(tp_wma_handle wma_handle)
 				 wma_twt_ack_complete_event_handler,
 				 WMA_RX_WORK_CTX);
 }
+#endif
