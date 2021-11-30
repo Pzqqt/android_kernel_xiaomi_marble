@@ -1041,7 +1041,8 @@ static void hdd_mark_icmp_req_to_fw(struct hdd_context *hdd_ctx,
 	if (!hdd_ctx->config->icmp_req_to_fw_mark_interval)
 		return;
 
-	if (qdf_nbuf_get_icmp_subtype(skb) != QDF_PROTO_ICMP_REQ)
+	if ((qdf_nbuf_get_icmp_subtype(skb) != QDF_PROTO_ICMP_REQ) &&
+	    (qdf_nbuf_get_icmpv6_subtype(skb) != QDF_PROTO_ICMPV6_REQ))
 		return;
 
 	/* Mark all ICMP request to be sent to FW */
@@ -1154,8 +1155,10 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 			QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
 			is_dhcp = true;
 		}
-	} else if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
-		   QDF_NBUF_CB_PACKET_TYPE_ICMP) {
+	} else if ((QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
+		   QDF_NBUF_CB_PACKET_TYPE_ICMP) ||
+		   (QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
+		   QDF_NBUF_CB_PACKET_TYPE_ICMPv6)) {
 		hdd_mark_icmp_req_to_fw(hdd_ctx, skb);
 	}
 
