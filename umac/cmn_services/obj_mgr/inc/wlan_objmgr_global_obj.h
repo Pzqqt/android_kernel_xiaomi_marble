@@ -539,6 +539,24 @@ QDF_STATUS wlan_objmgr_iterate_psoc_list(
 		wlan_objmgr_psoc_handler handler,
 		void *arg, wlan_objmgr_ref_dbgid dbg_id);
 
+/**
+ * wlan_objmgr_get_psoc_by_id() - find psoc by psoc id
+ *
+ * @psoc_id: Id of PSOC to be retrieved
+ * @dbg_id: id of the caller
+ *
+ * API to find psoc object pointer by psoc id
+ *
+ * This API increments the ref count of the psoc object internally, the
+ * caller has to invoke the wlan_objmgr_psoc_release_ref() to decrement
+ * ref count
+ *
+ * Return: psoc pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_psoc
+*wlan_objmgr_get_psoc_by_id(uint8_t psoc_id, wlan_objmgr_ref_dbgid dbg_id);
+
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
  * wlan_objmgr_get_mlo_ctx() - Get MLO context from global umac object
