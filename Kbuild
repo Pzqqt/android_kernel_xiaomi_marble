@@ -2265,6 +2265,53 @@ endif
 
 $(call add-wlan-objs,wifi_pos,$(WIFI_POS_OBJS))
 
+###### TWT CONVERGED ########
+TWT_CONV_CMN_OSIF_SRC := $(WLAN_COMMON_ROOT)/os_if/linux/twt/src
+TWT_CONV_CMN_DISPATCHER_SRC := $(WLAN_COMMON_ROOT)/umac/twt/dispatcher/src
+TWT_CONV_CMN_CORE_SRC := $(WLAN_COMMON_ROOT)/umac/twt/core/src
+TWT_CONV_CMN_TGT_SRC := $(WLAN_COMMON_ROOT)/target_if/twt/src
+TWT_CONV_OSIF_SRC := os_if/twt/src
+TWT_CONV_DISPATCHER_SRC := components/umac/twt/dispatcher/src
+TWT_CONV_CORE_SRC := components/umac/twt/core/src
+TWT_CONV_TGT_SRC := components/target_if/twt/src
+
+TWT_CONV_INCS := -I$(WLAN_COMMON_INC)/umac \
+		 -I$(WLAN_ROOT)/components/umac \
+		 -I$(WLAN_COMMON_INC)/os_if/linux/twt/inc \
+		 -I$(WLAN_COMMON_INC)/umac/twt/dispatcher/inc \
+		 -I$(WLAN_COMMON_INC)/target_if/twt/inc \
+		 -I$(WLAN_ROOT)/os_if/twt/inc \
+		 -I$(WLAN_ROOT)/components/umac/twt/dispatcher/inc \
+		 -I$(WLAN_ROOT)/components/target_if/twt/inc
+
+
+ifeq ($(CONFIG_WLAN_TWT_CONVERGED), y)
+TWT_CONV_OBJS := $(TWT_CONV_CMN_OSIF_SRC)/osif_twt_req.o \
+		 $(TWT_CONV_CMN_OSIF_SRC)/osif_twt_rsp.o \
+		 $(TWT_CONV_CMN_DISPATCHER_SRC)/wlan_twt_api.o \
+		 $(TWT_CONV_CMN_DISPATCHER_SRC)/wlan_twt_tgt_if_rx_api.o \
+		 $(TWT_CONV_CMN_DISPATCHER_SRC)/wlan_twt_tgt_if_tx_api.o \
+		 $(TWT_CONV_CMN_DISPATCHER_SRC)/wlan_twt_ucfg_api.o \
+		 $(TWT_CONV_CMN_CORE_SRC)/wlan_twt_common.o \
+		 $(TWT_CONV_CMN_CORE_SRC)/wlan_twt_objmgr.o \
+		 $(TWT_CONV_CMN_TGT_SRC)/target_if_twt_cmd.o \
+		 $(TWT_CONV_CMN_TGT_SRC)/target_if_twt_evt.o \
+		 $(TWT_CONV_CMN_TGT_SRC)/target_if_twt.o \
+		 $(TWT_CONV_OSIF_SRC)/osif_twt_ext_req.o \
+		 $(TWT_CONV_OSIF_SRC)/osif_twt_ext_rsp.o \
+		 $(TWT_CONV_OSIF_SRC)/osif_twt_ext_util.o \
+		 $(TWT_CONV_DISPATCHER_SRC)/wlan_twt_ucfg_ext_api.o \
+		 $(TWT_CONV_DISPATCHER_SRC)/wlan_twt_cfg_ext_api.o \
+		 $(TWT_CONV_DISPATCHER_SRC)/wlan_twt_tgt_if_ext_rx_api.o \
+		 $(TWT_CONV_DISPATCHER_SRC)/wlan_twt_tgt_if_ext_tx_api.o \
+		 $(TWT_CONV_CORE_SRC)/wlan_twt_cfg.o \
+		 $(TWT_CONV_CORE_SRC)/wlan_twt_main.o \
+		 $(TWT_CONV_TGT_SRC)/target_if_ext_twt_cmd.o \
+		 $(TWT_CONV_TGT_SRC)/target_if_ext_twt_evt.o
+endif
+
+$(call add-wlan-objs,twt_conv,$(TWT_CONV_OBJS))
+
 ###### CP STATS ########
 CP_MC_STATS_OS_IF_SRC           := os_if/cp_stats/src
 CP_STATS_TGT_SRC                := $(WLAN_COMMON_ROOT)/target_if/cp_stats/src
@@ -2838,6 +2885,8 @@ INCS +=		$(CP_STATS_TGT_INC)
 INCS +=		$(CP_STATS_DISPATCHER_INC)
 INCS +=		$(CP_MC_STATS_COMPONENT_INC)
 INCS +=		$(CP_STATS_CFG80211_OS_IF_INC)
+################ TWT CONVERGED ################
+INCS +=		$(TWT_CONV_INCS)
 ################ Dynamic ACS ####################
 INCS +=		$(DCS_TGT_IF_INC)
 INCS +=		$(DCS_DISP_INC)
@@ -2979,6 +3028,7 @@ endif
 cppflags-$(CONFIG_WLAN_TWT_SAP_PDEV_COUNT) += -DWLAN_TWT_AP_PDEV_COUNT_NUM_PHY
 cppflags-$(CONFIG_WLAN_DISABLE_EXPORT_SYMBOL) += -DWLAN_DISABLE_EXPORT_SYMBOL
 cppflags-$(CONFIG_WIFI_POS_CONVERGED) += -DWIFI_POS_CONVERGED
+cppflags-$(CONFIG_WLAN_TWT_CONVERGED) += -DWLAN_TWT_CONV_SUPPORTED
 cppflags-$(CONFIG_WIFI_POS_LEGACY) += -DFEATURE_OEM_DATA_SUPPORT
 cppflags-$(CONFIG_FEATURE_HTC_CREDIT_HISTORY) += -DFEATURE_HTC_CREDIT_HISTORY
 cppflags-$(CONFIG_WLAN_FEATURE_P2P_DEBUG) += -DWLAN_FEATURE_P2P_DEBUG
