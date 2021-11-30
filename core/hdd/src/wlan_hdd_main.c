@@ -17327,9 +17327,17 @@ static QDF_STATUS hdd_component_cb_init(void)
 
 	status = hdd_vdev_mgr_register_cb();
 	if (QDF_IS_STATUS_ERROR(status))
-		return status;
+		goto cm_unregister_cb;
+
+	status = osif_twt_register_cb();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto cm_unregister_cb;
 
 	return QDF_STATUS_SUCCESS;
+
+cm_unregister_cb:
+	hdd_cm_unregister_cb();
+	return status;
 }
 
 /**
