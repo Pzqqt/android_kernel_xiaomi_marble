@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +33,7 @@
 #include <init_cmd_api.h>
 #include <target_if_scan.h>
 #include <target_if_reg.h>
+#include <target_if_twt.h>
 
 /**
  *  init_deinit_alloc_host_mem_chunk() - allocates chunk of memory requested
@@ -466,8 +467,10 @@ void init_deinit_prepare_send_init_cmd(
 		QDF_MIN(info->wlan_res_cfg.max_ndp_sessions,
 			info->service_ext2_param.max_ndp_sessions);
 
-	if (info->service_ext2_param.twt_ack_support_cap)
+	if (info->service_ext2_param.twt_ack_support_cap) {
 		info->wlan_res_cfg.twt_ack_support_cap = true;
+		target_if_twt_set_twt_ack_support(psoc, true);
+	}
 
 	info->wlan_res_cfg.target_cap_flags =
 		target_psoc_get_target_cap_flags(tgt_hdl);
