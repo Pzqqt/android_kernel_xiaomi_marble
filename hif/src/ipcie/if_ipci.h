@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -69,11 +70,10 @@ struct hif_ipci_stats {
 #define EP_VOTE_POLL_TIME_CNT 2
 #ifdef HAL_CONFIG_SLUB_DEBUG_ON
 #define EP_WAKE_RESET_DELAY_TIMEOUT_MS 3
-#define EP_WAKE_DELAY_TIMEOUT_MS 7
 #else
 #define EP_WAKE_RESET_DELAY_TIMEOUT_MS 10
-#define EP_WAKE_DELAY_TIMEOUT_MS 10
 #endif
+#define EP_WAKE_DELAY_TIMEOUT_MS 10
 #define EP_WAKE_RESET_DELAY_US 50
 #define EP_WAKE_DELAY_US 200
 #endif
