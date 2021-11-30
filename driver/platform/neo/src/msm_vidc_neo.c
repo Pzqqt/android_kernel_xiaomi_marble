@@ -47,6 +47,7 @@ static struct msm_platform_core_capability core_data_neo[] = {
 	{MAX_MBPF, 16320}, /* (1920x1088)/256 * 2*/
 	{MAX_MBPS, 979200},	/* max_load 1920x1088@60fps */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
+	//TODO Need to update tuning info
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
 	{MAX_MBPS_HQ, 489600}, /* ((1920x1088)/256)@60fps */
 	{MAX_MBPF_B_FRAME, 8160}, /* ((1920x1088)/256) */
@@ -97,10 +98,8 @@ static struct msm_platform_inst_capability instance_data_neo[] = {
 
 	{FRAME_WIDTH, ENC, CODECS_ALL, 128, 1920, 1, 1920},
 	{LOSSLESS_FRAME_WIDTH, ENC, H264|HEVC, 128, 1920, 1, 1920},
-	{SECURE_FRAME_WIDTH, ENC, H264|HEVC, 128, 1920, 1, 1920},
 	{FRAME_HEIGHT, ENC, CODECS_ALL, 128, 1080, 1, 1080},
 	{LOSSLESS_FRAME_HEIGHT, ENC, H264|HEVC, 128, 1080, 1, 1080},
-	{SECURE_FRAME_HEIGHT, ENC, H264|HEVC, 128, 1080, 1, 1080},
 	{PIX_FMTS, ENC, H264,
 		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_NV12C,
@@ -116,9 +115,8 @@ static struct msm_platform_inst_capability instance_data_neo[] = {
 		{META_ROI_INFO}},
 	{PIX_FMTS, ENC, HEVC,
 		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_TP10C,
-		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
-		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C,
+		MSM_VIDC_FMT_NV21,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C,
 		/* Since CTSEncodeDecode test cannot handle BT 709LR,
 		 * disabled HW RGBA encoding.
 		 * | MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
@@ -148,7 +146,6 @@ static struct msm_platform_inst_capability instance_data_neo[] = {
 	{MBPF, ENC, CODECS_ALL, 64, 8160, 1, 8160},
 	/* (1920 * 1088) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 8160, 1, 8160},
-	{SECURE_MBPF, ENC, H264|HEVC, 64, 8160, 1, 8160},
 	/* ((1920 * 1088) / 256) * 60 fps */
 	{MBPS, ENC, CODECS_ALL, 64, 489600, 1, 489600},
 	/* ((1920 * 1088) / 256) * 60 fps */
@@ -169,18 +166,10 @@ static struct msm_platform_inst_capability instance_data_neo[] = {
 
 	{SCALE_FACTOR, ENC, H264|HEVC, 1, 8, 1, 8},
 
+	//TODO These values need to be updated from go/vperf2
 	{MB_CYCLES_VSP, ENC, CODECS_ALL, 25, 25, 1, 25},
 	{MB_CYCLES_VPP, ENC, CODECS_ALL, 675, 675, 1, 675},
 	{MB_CYCLES_LP, ENC, CODECS_ALL, 320, 320, 1, 320},
-	{SECURE_MODE, ENC, H264|HEVC,
-		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
-		1, V4L2_MPEG_MSM_VIDC_DISABLE,
-		V4L2_CID_MPEG_VIDC_SECURE,
-		HFI_PROP_SECURE,
-		CAP_FLAG_NONE,
-		{0},
-		{0},
-		NULL, msm_vidc_set_u32},
 	{MB_CYCLES_FW, ENC, CODECS_ALL, 326389, 326389, 1, 326389},
 	{MB_CYCLES_FW_VPP, ENC, CODECS_ALL, 44156, 44156, 1, 44156},
 
@@ -1256,8 +1245,8 @@ static struct msm_platform_inst_capability instance_data_neo[] = {
 		NULL, msm_vidc_set_u32},
 	{PIX_FMTS, ENC, HEIC,
 		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_P010,
-		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_P010,
+		MSM_VIDC_FMT_NV12,
+		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_NV12,
 		0, 0,
 		CAP_FLAG_ROOT,
@@ -1295,7 +1284,7 @@ static struct msm_platform_inst_capability instance_data_neo[] = {
 
 /* Default UBWC config for LPDDR5 */
 static struct msm_vidc_ubwc_config_data ubwc_config_neo[] = {
-	UBWC_CONFIG(8, 32, 16, 0, 1, 1, 1),
+	UBWC_CONFIG(8, 32, 13, 0, 1, 1, 1),
 };
 
 /* Default bus bandwidth for non_real time session based on priority */

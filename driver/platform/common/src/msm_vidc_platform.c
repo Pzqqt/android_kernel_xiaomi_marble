@@ -30,7 +30,6 @@
 #include "msm_vidc_iris2.h"
 #endif
 
-
 /*
  * Custom conversion coefficients for resolution: 176x144 negative
  * coeffs are converted to s4.9 format
