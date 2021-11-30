@@ -21728,7 +21728,7 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 	case WLAN_HDD_TM_CMD_WLAN_FTM:
 	{
 		if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam()) {
-			hdd_err("Command not allowed in FTM mode, mode %d",
+			hdd_err("FTM Command not allowed in mission mode, mode %d",
 				hdd_get_conparam());
 			return -EINVAL;
 		}
