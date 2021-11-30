@@ -1339,6 +1339,46 @@ QDF_STATUS dp_txrx_set_vdev_param_be(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef DP_USE_REDUCED_PEER_ID_FIELD_WIDTH
+static inline void
+dp_soc_max_peer_id_set(struct dp_soc *soc)
+{
+	soc->peer_id_shift = dp_log2_ceil(soc->max_peers);
+	soc->peer_id_mask = (1 << soc->peer_id_shift) - 1;
+	/*
+	 * Double the peers since we use ML indication bit
+	 * alongwith peer_id to find peers.
+	 */
+	soc->max_peer_id = 1 << (soc->peer_id_shift + 1);
+}
+#else
+static inline void
+dp_soc_max_peer_id_set(struct dp_soc *soc)
+{
+	soc->max_peer_id =
+		(1 << (HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_S + 1)) - 1;
+}
+#endif /* DP_USE_REDUCED_PEER_ID_FIELD_WIDTH */
+#else
+static inline void
+dp_soc_max_peer_id_set(struct dp_soc *soc)
+{
+	soc->max_peer_id = soc->max_peers;
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
+
+static void dp_peer_map_detach_be(struct dp_soc *soc)
+{
+}
+
+static QDF_STATUS dp_peer_map_attach_be(struct dp_soc *soc)
+{
+	dp_soc_max_peer_id_set(soc);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -1369,6 +1409,8 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_pdev_detach = dp_pdev_detach_be;
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_be;
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_be;
+	arch_ops->txrx_peer_map_attach = dp_peer_map_attach_be;
+	arch_ops->txrx_peer_map_detach = dp_peer_map_detach_be;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_be;
 	arch_ops->dp_rx_peer_metadata_peer_id_get =
 					dp_rx_peer_metadata_peer_id_get_be;

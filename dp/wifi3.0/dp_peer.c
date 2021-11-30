@@ -186,7 +186,7 @@ static QDF_STATUS dp_peer_find_map_attach(struct dp_soc *soc)
 {
 	uint32_t max_peers, peer_map_size;
 
-	max_peers = soc->max_peers;
+	max_peers = soc->max_peer_id;
 	/* allocate the peer ID -> peer object map */
 	dp_peer_info("\n%pK:<=== cfg max peer id %d ====>", soc, max_peers);
 	peer_map_size = max_peers * sizeof(soc->peer_id_to_obj_map[0]);
@@ -714,7 +714,7 @@ void dp_peer_find_id_to_obj_add(struct dp_soc *soc,
 				struct dp_peer *peer,
 				uint16_t peer_id)
 {
-	QDF_ASSERT(peer_id <= soc->max_peers);
+	QDF_ASSERT(peer_id <= soc->max_peer_id);
 
 	qdf_spin_lock_bh(&soc->peer_map_lock);
 
@@ -747,7 +747,7 @@ void dp_peer_find_id_to_obj_remove(struct dp_soc *soc,
 				   uint16_t peer_id)
 {
 	struct dp_peer *peer = NULL;
-	QDF_ASSERT(peer_id <= soc->max_peers);
+	QDF_ASSERT(peer_id <= soc->max_peer_id);
 
 	qdf_spin_lock_bh(&soc->peer_map_lock);
 	peer = soc->peer_id_to_obj_map[peer_id];
@@ -2460,7 +2460,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 {
 	struct dp_peer *peer;
 
-	QDF_ASSERT(peer_id <= soc->max_peers);
+	QDF_ASSERT(peer_id <= soc->max_peer_id);
 	/* check if there's already a peer object with this MAC address */
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr,
 		0 /* is aligned */, vdev_id, DP_MOD_ID_CONFIG);

@@ -1866,7 +1866,7 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 				FRAME_MASK_IPV4_EAPOL | FRAME_MASK_IPV6_DHCP;
 
 	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
-	if (peer_id > soc->max_peers)
+	if (peer_id > soc->max_peer_id)
 		goto deliver_fail;
 
 	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
