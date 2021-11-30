@@ -1649,8 +1649,8 @@ struct dp_arch_ops {
 				       struct dp_vdev *vdev);
 	QDF_STATUS (*txrx_vdev_detach)(struct dp_soc *soc,
 				       struct dp_vdev *vdev);
-	QDF_STATUS (*txrx_peer_attach)(struct dp_soc *soc);
-	void (*txrx_peer_detach)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_peer_map_attach)(struct dp_soc *soc);
+	void (*txrx_peer_map_detach)(struct dp_soc *soc);
 	QDF_STATUS (*dp_rxdma_ring_sel_cfg)(struct dp_soc *soc);
 	void (*soc_cfg_attach)(struct dp_soc *soc);
 	void (*peer_get_reo_hash)(struct dp_vdev *vdev,
@@ -2007,11 +2007,15 @@ struct dp_soc {
 	/* Protect peer_id_to_objmap */
 	DP_MUTEX_TYPE peer_map_lock;
 
-	/* maximum value for peer_id */
+	/* maximum number of suppoerted peers */
 	uint32_t max_peers;
+	/* maximum value for peer_id */
+	uint32_t max_peer_id;
 
+#ifdef DP_USE_REDUCED_PEER_ID_FIELD_WIDTH
 	uint32_t peer_id_shift;
 	uint32_t peer_id_mask;
+#endif
 
 	/* SoC level data path statistics */
 	struct dp_soc_stats stats;

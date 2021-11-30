@@ -5524,9 +5524,8 @@ static void dp_soc_deinit(void *txrx_soc)
 
 	/* free peer tables & AST tables allocated during peer_map_attach */
 	if (soc->peer_map_attach_success) {
-		if (soc->arch_ops.txrx_peer_detach)
-			soc->arch_ops.txrx_peer_detach(soc);
 		dp_peer_find_detach(soc);
+		soc->arch_ops.txrx_peer_map_detach(soc);
 		soc->peer_map_attach_success = FALSE;
 	}
 
@@ -6373,7 +6372,7 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 		dp_vdev_iterate_peer_lock_safe(vdev, dp_peer_delete, NULL,
 					       DP_MOD_ID_CDP);
 
-	for (i = 0; i < soc->max_peers ; i++) {
+	for (i = 0; i < soc->max_peer_id ; i++) {
 		peer = __dp_peer_get_ref_by_id(soc, i, DP_MOD_ID_CDP);
 
 		if (!peer)
@@ -9221,7 +9220,7 @@ static void dp_rx_update_peer_delay_stats(struct dp_soc *soc,
 	struct cdp_peer_ext_stats *pext_stats = NULL;
 
 	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
-	if (peer_id > soc->max_peers)
+	if (peer_id > soc->max_peer_id)
 		return;
 
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_CDP);
@@ -11280,34 +11279,35 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 					   uint8_t peer_map_unmap_versions)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	QDF_STATUS status;
 
-	soc->peer_id_shift = dp_log2_ceil(max_peers);
-	soc->peer_id_mask = (1 << soc->peer_id_shift) - 1;
-	/*
-	 * Double the peers since we use ML indication bit
-	 * alongwith peer_id to find peers.
-	 */
-	soc->max_peers = 1 << (soc->peer_id_shift + 1);
+	soc->max_peers = max_peers;
 
-	dp_info("max_peers %u, calculated max_peers %u max_ast_index: %u\n",
-		max_peers, soc->max_peers, max_ast_index);
 	wlan_cfg_set_max_ast_idx(soc->wlan_cfg_ctx, max_ast_index);
 
-	if (dp_peer_find_attach(soc))
+	status = soc->arch_ops.txrx_peer_map_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("failure in allocating peer tables");
 		return QDF_STATUS_E_FAILURE;
-
-	if (soc->arch_ops.txrx_peer_attach) {
-		QDF_STATUS status;
-		status = soc->arch_ops.txrx_peer_attach(soc);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			dp_peer_find_detach(soc);
-			return QDF_STATUS_E_FAILURE;
-		}
 	}
+
+	dp_info("max_peers %u, calculated max_peers %u max_ast_index: %u\n",
+		max_peers, soc->max_peer_id, max_ast_index);
+
+	status = dp_peer_find_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("Peer find attach failure");
+		goto fail;
+	}
+
 	soc->peer_map_unmap_versions = peer_map_unmap_versions;
 	soc->peer_map_attach_success = TRUE;
 
 	return QDF_STATUS_SUCCESS;
+fail:
+	soc->arch_ops.txrx_peer_map_detach(soc);
+
+	return status;
 }
 
 static QDF_STATUS dp_soc_set_param(struct cdp_soc_t  *soc_hdl,
