@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -383,6 +384,18 @@ uint8_t ucfg_mlme_get_twt_peer_capabilities(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_twt_peer_responder_capabilities() - Get peer responder
+ * capabilities
+ * @psoc: Pointer to global psoc object
+ * @peer_mac: Pointer to peer mac address
+ *
+ * Return: Return True if peer responder capabilities support else False
+ */
+bool ucfg_mlme_get_twt_peer_responder_capabilities(
+						struct wlan_objmgr_psoc *psoc,
+						struct qdf_mac_addr *peer_mac);
+
+/**
  * ucfg_mlme_init_twt_context() - Initialize TWT context
  * @psoc: Pointer to global psoc object
  * @peer_mac: Pointer to peer mac address
@@ -676,6 +689,14 @@ uint8_t ucfg_mlme_get_twt_peer_capabilities(struct wlan_objmgr_psoc *psoc,
 					    struct qdf_mac_addr *peer_mac)
 {
 	return 0;
+}
+
+static inline
+bool ucfg_mlme_get_twt_peer_responder_capabilities(
+						struct wlan_objmgr_psoc *psoc,
+						struct qdf_mac_addr *peer_mac)
+{
+	return false;
 }
 
 static inline
