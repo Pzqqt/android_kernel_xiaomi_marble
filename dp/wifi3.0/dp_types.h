@@ -2522,7 +2522,7 @@ struct dp_soc_srngs_state {
 	TAILQ_ENTRY(dp_soc_srngs_state) list_elem;
 };
 
-#if defined(QCA_WIFI_QCN9224) && defined(WLAN_FEATURE_11BE_MLO)
+#ifdef WLAN_FEATURE_11BE_MLO
 /* struct dp_mlo_sync_timestamp - PDEV level data structure for storing
  * MLO timestamp received via HTT msg.
  * msg_type: This would be set to HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND
@@ -2801,7 +2801,7 @@ struct dp_pdev {
 #ifdef WIFI_MONITOR_SUPPORT
 	struct dp_mon_pdev *monitor_pdev;
 #endif
-#if defined(QCA_WIFI_QCN9224) && defined(WLAN_FEATURE_11BE_MLO)
+#ifdef WLAN_FEATURE_11BE_MLO
 	struct dp_mlo_sync_timestamp timestamp;
 #endif
 };
