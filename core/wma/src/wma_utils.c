@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2185,6 +2186,9 @@ __wma_unified_link_radio_stats_event_handler(tp_wma_handle wma_handle,
 			fixed_param->num_radio);
 		return -EINVAL;
 	}
+	if (wma_handle->link_stats_results &&
+	    !wma_handle->link_stats_results->num_radio)
+		__wma_unified_radio_tx_mem_free(wma_handle);
 
 	if (!wma_handle->link_stats_results) {
 		wma_handle->link_stats_results = qdf_mem_malloc(
