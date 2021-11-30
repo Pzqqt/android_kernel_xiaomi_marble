@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <wlan_mlo_mgr_cmn.h>
 #include <wlan_mlo_mgr_public_structs.h>
 #include "wlan_mlo_mgr_main.h"
 #include "qdf_types.h"
@@ -156,15 +157,22 @@ wlan_find_mlpeer_link_mac_addr(struct wlan_mlo_dev_context *ml_dev,
 	uint8_t i;
 
 	ml_peer = (struct wlan_mlo_peer_context *)iter_ml_peer;
+	mlo_debug("MLD ID %d ML Peer mac " QDF_MAC_ADDR_FMT,
+		  ml_dev->mld_id,
+		  QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
 	for (i = 0; i < MAX_MLO_LINK_PEERS; i++) {
 		link_peer = &ml_peer->peer_list[i];
 
+		mlo_debug("MLD ID %d, index %d ML Peer exists with mac " QDF_MAC_ADDR_FMT,
+			  i, ml_dev->mld_id,
+			  QDF_MAC_ADDR_REF(link_peer->link_addr.bytes));
 		if (qdf_is_macaddr_equal(&link_mac_arg->mac_addr,
 					 &link_peer->link_addr)) {
 			link_mac_arg->ml_peer = ml_peer;
 			return QDF_STATUS_SUCCESS;
 		}
 	}
+
 	return QDF_STATUS_E_NOENT;
 }
 
@@ -210,6 +218,8 @@ struct wlan_mlo_peer_context *wlan_mlo_get_mlpeer_by_linkmac(
 	struct link_mac_search link_mac_arg;
 	QDF_STATUS status;
 
+	mlo_debug("MLD ID %d ML Peer search with link mac " QDF_MAC_ADDR_FMT,
+		  ml_dev->mld_id, QDF_MAC_ADDR_REF(link_mac->bytes));
 	qdf_copy_macaddr(&link_mac_arg.mac_addr, link_mac);
 	status = wlan_mlo_iterate_ml_peerlist(ml_dev,
 					      wlan_find_mlpeer_link_mac_addr,
@@ -267,6 +277,8 @@ struct wlan_mlo_peer_context *wlan_mlo_get_mlpeer(
 	struct wlan_mlo_peer_context *ml_peer;
 	struct wlan_mlo_peer_list *mlo_peer_list;
 
+	mlo_debug("MLD ID %d ML Peer search mac " QDF_MAC_ADDR_FMT,
+		  ml_dev->mld_id, QDF_MAC_ADDR_REF(ml_addr->bytes));
 	mlo_peer_list = &ml_dev->mlo_peer_list;
 	ml_peerlist_lock_acquire(mlo_peer_list);
 	ml_peer = mlo_get_mlpeer(ml_dev, ml_addr);
@@ -313,6 +325,9 @@ QDF_STATUS mlo_dev_mlpeer_attach(struct wlan_mlo_dev_context *ml_dev,
 	ml_peerlist_lock_acquire(mlo_peer_list);
 	if (mlo_get_mlpeer(ml_dev, &ml_peer->peer_mld_addr)) {
 		ml_peerlist_lock_release(mlo_peer_list);
+		mlo_err("MLD ID %d ML Peer exists with mac " QDF_MAC_ADDR_FMT,
+			ml_dev->mld_id,
+			QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
 		return QDF_STATUS_E_EXISTS;
 	}
 
@@ -320,6 +335,10 @@ QDF_STATUS mlo_dev_mlpeer_attach(struct wlan_mlo_dev_context *ml_dev,
 	wlan_mlo_peerlist_add_tail(&mlo_peer_list->peer_hash[hash_index],
 				   ml_peer);
 	ml_peerlist_lock_release(mlo_peer_list);
+
+	mlo_debug("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " is attached",
+		  ml_dev->mld_id,
+		  QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -338,6 +357,10 @@ QDF_STATUS mlo_dev_mlpeer_detach(struct wlan_mlo_dev_context *ml_dev,
 					&mlo_peer_list->peer_hash[hash_index],
 					ml_peer);
 	ml_peerlist_lock_release(mlo_peer_list);
+
+	mlo_debug("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " is detached",
+		  ml_dev->mld_id,
+		  QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
 
 	return status;
 }

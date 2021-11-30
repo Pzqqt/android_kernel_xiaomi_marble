@@ -227,6 +227,8 @@ uint16_t mlo_ap_ml_peerid_alloc(void)
 	if (i == mlo_ctx->max_mlo_peer_id)
 		return MLO_INVALID_PEER_ID;
 
+	mlo_debug(" ML peee id %d is allocated", i + 1);
+
 	return i + 1;
 }
 
@@ -242,6 +244,8 @@ void mlo_ap_ml_peerid_free(uint16_t mlo_peer_id)
 		qdf_clear_bit(mlo_peer_id - 1, mlo_ctx->mlo_peer_id_bmap);
 
 	ml_peerid_lock_release(mlo_ctx);
+
+	mlo_debug(" ML peee id %d is freed", mlo_peer_id);
 }
 
 void mlo_ap_vdev_quiet_set(struct wlan_objmgr_vdev *vdev)
