@@ -30,6 +30,7 @@
 #include "qdf_status.h"
 #include "nan_public_structs.h"
 #include "wlan_objmgr_cmn.h"
+#include "cfg_nan.h"
 
 struct wlan_objmgr_vdev;
 struct wlan_objmgr_psoc;
@@ -152,7 +153,6 @@ struct nan_psoc_priv_obj {
  * @ndp_init_done: Flag to indicate NDP initialization complete after first peer
  *		   connection.
  * @peer_mc_addr_list: Peer multicast address list
- * @num_peer_mc_addr: Number of entries in peer multicast list
  */
 struct nan_vdev_priv_obj {
 	qdf_spinlock_t lock;
@@ -165,8 +165,7 @@ struct nan_vdev_priv_obj {
 	struct qdf_mac_addr primary_peer_mac;
 	void *disable_context;
 	bool ndp_init_done;
-	struct qdf_mac_addr *peer_mc_addr_list;
-	uint8_t num_peer_mc_addr;
+	struct qdf_mac_addr peer_mc_addr_list[MAX_NDP_SESSIONS];
 };
 
 /**

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,6 +169,9 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"Keep alive timeout of a peer")
 
+/* MAX NDP sessions supported */
+#define MAX_NDP_SESSIONS 8
+
 /*
  * <ini>
  * ndp_max_sessions - To configure max ndp sessions
@@ -189,7 +193,7 @@
 #define CFG_NDP_MAX_SESSIONS CFG_INI_UINT( \
 			"ndp_max_sessions", \
 			1, \
-			8, \
+			MAX_NDP_SESSIONS, \
 			8, \
 			CFG_VALUE_OR_DEFAULT, \
 			"max ndp sessions host supports")

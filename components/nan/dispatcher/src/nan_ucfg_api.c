@@ -203,37 +203,24 @@ inline void ucfg_nan_set_peer_mc_list(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	qdf_spin_lock_bh(&priv_obj->lock);
-	if (!priv_obj->peer_mc_addr_list) {
-		cfg_nan_get_ndp_max_sessions(psoc, &max_ndp_sessions);
+	cfg_nan_get_ndp_max_sessions(psoc, &max_ndp_sessions);
 
-		priv_obj->peer_mc_addr_list =
-				qdf_mem_malloc(max_ndp_sessions *
-					       sizeof(struct qdf_mac_addr));
-		if (!priv_obj->peer_mc_addr_list) {
-			nan_err("Failed to allocate multicast address list");
-			goto end;
+	qdf_spin_lock_bh(&priv_obj->lock);
+	for (i = 0; i < max_ndp_sessions; i++) {
+		if (qdf_is_macaddr_zero(&priv_obj->peer_mc_addr_list[i])) {
+			list_idx = i;
+			break;
 		}
-		priv_obj->num_peer_mc_addr = 0;
-	} else {
-		for (i = 0; i < max_ndp_sessions; i++) {
-			if (qdf_is_macaddr_zero(
-					&priv_obj->peer_mc_addr_list[i])) {
-				list_idx = i;
-				break;
-			}
-		}
-		if (list_idx == max_ndp_sessions) {
-			nan_err("Peer multicast address list is full");
-			goto end;
-		}
+	}
+	if (list_idx == max_ndp_sessions) {
+		nan_err("Peer multicast address list is full");
+		goto end;
 	}
 	/* Derive peer multicast addr */
 	peer_mac_addr.bytes[0] = 0x33;
 	peer_mac_addr.bytes[1] = 0x33;
 	peer_mac_addr.bytes[2] = 0xff;
 	priv_obj->peer_mc_addr_list[list_idx] = peer_mac_addr;
-	priv_obj->num_peer_mc_addr++;
 
 end:
 	qdf_spin_unlock_bh(&priv_obj->lock);
@@ -260,28 +247,25 @@ inline void ucfg_nan_clear_peer_mc_list(struct wlan_objmgr_psoc *psoc,
 	struct nan_vdev_priv_obj *priv_obj = nan_get_vdev_priv_obj(vdev);
 	int i;
 	uint32_t max_ndp_sessions = 0;
+	struct qdf_mac_addr derived_peer_mc_addr;
 
 	if (!priv_obj) {
 		nan_err("priv_obj is null");
 		return;
 	}
 
+	/* Derive peer multicast addr */
+	derived_peer_mc_addr = *peer_mac_addr;
+	derived_peer_mc_addr.bytes[0] = 0x33;
+	derived_peer_mc_addr.bytes[1] = 0x33;
+	derived_peer_mc_addr.bytes[2] = 0xff;
 	qdf_spin_lock_bh(&priv_obj->lock);
-	if (priv_obj->peer_mc_addr_list) {
-		cfg_nan_get_ndp_max_sessions(psoc, &max_ndp_sessions);
-		for (i = 0; i < max_ndp_sessions; i++) {
-			if (qdf_is_macaddr_equal(
-				&priv_obj->peer_mc_addr_list[i],
-				peer_mac_addr)) {
-				qdf_zero_macaddr(
-					   &priv_obj->peer_mc_addr_list[i]);
-				priv_obj->num_peer_mc_addr--;
-				break;
-			}
-		}
-		if (priv_obj->num_peer_mc_addr == 0) {
-			qdf_mem_free(priv_obj->peer_mc_addr_list);
-			priv_obj->peer_mc_addr_list = NULL;
+	cfg_nan_get_ndp_max_sessions(psoc, &max_ndp_sessions);
+	for (i = 0; i < max_ndp_sessions; i++) {
+		if (qdf_is_macaddr_equal(&priv_obj->peer_mc_addr_list[i],
+					 &derived_peer_mc_addr)) {
+			qdf_zero_macaddr(&priv_obj->peer_mc_addr_list[i]);
+			break;
 		}
 	}
 	qdf_spin_unlock_bh(&priv_obj->lock);
