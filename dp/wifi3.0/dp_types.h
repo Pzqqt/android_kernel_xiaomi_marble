@@ -74,10 +74,7 @@
 #define DP_VDEV_ALL 0xff
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
-#define MAX_PDEV_CNT 1
 #define WLAN_DP_RESET_MON_BUF_RING_FILTER
-#else
-#define MAX_PDEV_CNT 3
 #endif
 
 /* Max no. of VDEV per PSOC */

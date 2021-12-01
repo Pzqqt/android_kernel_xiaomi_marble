@@ -5208,15 +5208,24 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->soc->tcl_data_ring[i],
 					    TCL_DATA);
-	for (i = 0; i < MAX_TCL_DATA_RINGS; i++)
+	for (i = 0; i < pdev->soc->num_tcl_data_rings; i++)
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->soc->tx_comp_ring[i],
 					    WBM2SW_RELEASE);
 
-	lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc, 0, pdev->pdev_id);
-	dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->soc->rx_refill_buf_ring[lmac_id],
-				RXDMA_BUF);
+	if (pdev->soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
+		for (i = 0; i < pdev->soc->num_rx_refill_buf_rings; i++) {
+			dp_print_ring_stat_from_hal
+				(pdev->soc, &pdev->soc->rx_refill_buf_ring[i],
+				 RXDMA_BUF);
+		}
+	} else {
+		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc, 0,
+						     pdev->pdev_id);
+		dp_print_ring_stat_from_hal
+			(pdev->soc, &pdev->soc->rx_refill_buf_ring[lmac_id],
+			 RXDMA_BUF);
+	}
 
 	dp_print_ring_stat_from_hal(pdev->soc,
 				    &pdev->rx_refill_buf_ring2,
