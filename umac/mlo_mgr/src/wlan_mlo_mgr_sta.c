@@ -718,6 +718,10 @@ void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
 					mlo_dev_ctx->sta_ctx->assoc_rsp.ptr,
 					rsp->connect_ies.assoc_rsp.ptr,
 					rsp->connect_ies.assoc_rsp.len);
+			/* Update connected_links_bmap for all vdev taking
+			 * part in association
+			 */
+			mlo_update_connected_links(vdev, 1);
 			mlo_update_connected_links_bmap(mlo_dev_ctx,
 							rsp->ml_parnter_info);
 		}
