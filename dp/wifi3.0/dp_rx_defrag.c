@@ -1365,7 +1365,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	/* buf addr */
 	hal_rxdma_buff_addr_info_set(soc->hal_soc, ent_ring_desc, paddr,
 				     buf_info.sw_cookie,
-				     HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST);
+				     soc->idle_link_bm_id);
 	/* mpdu desc info */
 	ent_mpdu_desc_info = hal_ent_mpdu_desc_info(soc->hal_soc,
 						    ent_ring_desc);
