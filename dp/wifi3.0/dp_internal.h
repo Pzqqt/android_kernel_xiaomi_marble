@@ -2859,6 +2859,14 @@ static inline QDF_STATUS dp_runtime_init(struct dp_soc *soc)
 }
 #endif
 
+static inline enum QDF_GLOBAL_MODE dp_soc_get_con_mode(struct dp_soc *soc)
+{
+	if (soc->cdp_soc.ol_ops->get_con_mode)
+		return soc->cdp_soc.ol_ops->get_con_mode();
+
+	return QDF_GLOBAL_MAX_MODE;
+}
+
 /*
  * dp_pdev_bkp_stats_detach() - detach resources for back pressure stats
  *				processing

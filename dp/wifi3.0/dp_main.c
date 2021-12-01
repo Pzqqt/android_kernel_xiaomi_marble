@@ -395,6 +395,8 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 
 /* MCL specific functions */
 #if defined(DP_CON_MON)
+
+#ifdef DP_CON_MON_MSI_ENABLED
 /**
  * dp_soc_get_mon_mask_for_interrupt_mode() - get mon mode mask for intr mode
  * @soc: pointer to dp_soc handle
@@ -410,11 +412,33 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
  *
  * Return: 0
  */
-static inline
-uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx_num)
+static inline uint32_t
+dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx_num)
+{
+	return wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, intr_ctx_num);
+}
+#else
+/**
+ * dp_soc_get_mon_mask_for_interrupt_mode() - get mon mode mask for intr mode
+ * @soc: pointer to dp_soc handle
+ * @intr_ctx_num: interrupt context number for which mon mask is needed
+ *
+ * For MCL, monitor mode rings are being processed in timer contexts (polled).
+ * This function is returning 0, since in interrupt mode(softirq based RX),
+ * we donot want to process monitor mode rings in a softirq.
+ *
+ * So, in case packet log is enabled for SAP/STA/P2P modes,
+ * regular interrupt processing will not process monitor mode rings. It would be
+ * done in a separate timer context.
+ *
+ * Return: 0
+ */
+static inline uint32_t
+dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx_num)
 {
 	return 0;
 }
+#endif
 
 /**
  * dp_get_num_rx_contexts() - get number of RX contexts
@@ -2015,7 +2039,7 @@ qdf_export_symbol(dp_srng_free);
  *
  * Return: True if msi cfg should be skipped for srng type else false
  */
-static inline bool dp_skip_msi_cfg(int ring_type)
+static inline bool dp_skip_msi_cfg(struct dp_soc *soc, int ring_type)
 {
 	if (ring_type == RXDMA_MONITOR_STATUS)
 		return true;
@@ -2023,11 +2047,26 @@ static inline bool dp_skip_msi_cfg(int ring_type)
 	return false;
 }
 #else
-static inline bool dp_skip_msi_cfg(int ring_type)
+#ifdef DP_CON_MON_MSI_ENABLED
+static inline bool dp_skip_msi_cfg(struct dp_soc *soc, int ring_type)
+{
+	if (soc->cdp_soc.ol_ops->get_con_mode &&
+	    soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_MONITOR_MODE) {
+		if (ring_type == REO_DST)
+			return true;
+	} else if (ring_type == RXDMA_MONITOR_STATUS) {
+		return true;
+	}
+
+	return false;
+}
+#else
+static inline bool dp_skip_msi_cfg(struct dp_soc *soc, int ring_type)
 {
 	return false;
 }
-#endif
+#endif /* DP_CON_MON_MSI_ENABLED */
+#endif /* DISABLE_MON_RING_MSI_CFG */
 
 /*
  * dp_srng_init() - Initialize SRNG
@@ -2066,7 +2105,7 @@ QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
 		(void *)ring_params.ring_base_paddr,
 		ring_params.num_entries);
 
-	if (soc->intr_mode == DP_INTR_MSI && !dp_skip_msi_cfg(ring_type)) {
+	if (soc->intr_mode == DP_INTR_MSI && !dp_skip_msi_cfg(soc, ring_type)) {
 		dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
 		dp_verbose_debug("Using MSI for ring_type: %d, ring_num %d",
 				 ring_type, ring_num);
@@ -2270,6 +2309,30 @@ dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
 
 qdf_export_symbol(dp_should_timer_irq_yield);
 
+#ifdef DP_CON_MON_MSI_ENABLED
+static int dp_process_rxdma_dst_ring(struct dp_soc *soc,
+				     struct dp_intr *int_ctx,
+				     int mac_for_pdev,
+				     int total_budget)
+{
+	if (dp_soc_get_con_mode(soc) == QDF_GLOBAL_MONITOR_MODE)
+		return dp_monitor_process(soc, int_ctx, mac_for_pdev,
+					  total_budget);
+	else
+		return dp_rxdma_err_process(int_ctx, soc, mac_for_pdev,
+					    total_budget);
+}
+#else
+static int dp_process_rxdma_dst_ring(struct dp_soc *soc,
+				     struct dp_intr *int_ctx,
+				     int mac_for_pdev,
+				     int total_budget)
+{
+	return dp_rxdma_err_process(int_ctx, soc, mac_for_pdev,
+				    total_budget);
+}
+#endif
+
 /**
  * dp_process_lmac_rings() - Process LMAC rings
  * @int_ctx: interrupt context
@@ -2320,9 +2383,9 @@ static int dp_process_lmac_rings(struct dp_intr *int_ctx, int total_budget)
 
 		if (int_ctx->rxdma2host_ring_mask &
 				(1 << mac_for_pdev)) {
-			work_done = dp_rxdma_err_process(int_ctx, soc,
-							 mac_for_pdev,
-							 remaining_quota);
+			work_done = dp_process_rxdma_dst_ring(soc, int_ctx,
+							      mac_for_pdev,
+							      remaining_quota);
 			if (work_done)
 				intr_stats->num_rxdma2host_ring_masks++;
 			budget -=  work_done;
@@ -2735,7 +2798,8 @@ static void dp_soc_set_interrupt_mode(struct dp_soc *soc)
 	soc->intr_mode = DP_INTR_INTEGRATED;
 
 	if (!(soc->wlan_cfg_ctx->napi_enabled) ||
-	    (soc->cdp_soc.ol_ops->get_con_mode &&
+	    (dp_is_monitor_mode_using_poll(soc) &&
+	     soc->cdp_soc.ol_ops->get_con_mode &&
 	     soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_MONITOR_MODE)) {
 		soc->intr_mode = DP_INTR_POLL;
 	} else {
@@ -2766,7 +2830,8 @@ static QDF_STATUS dp_soc_interrupt_attach_wrapper(struct cdp_soc_t *txrx_soc)
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
 	if (!(soc->wlan_cfg_ctx->napi_enabled) ||
-	    (soc->cdp_soc.ol_ops->get_con_mode &&
+	    (dp_is_monitor_mode_using_poll(soc) &&
+	     soc->cdp_soc.ol_ops->get_con_mode &&
 	     soc->cdp_soc.ol_ops->get_con_mode() ==
 	     QDF_GLOBAL_MONITOR_MODE)) {
 		dp_info("Poll mode");
@@ -6191,8 +6256,10 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 		if ((pdev->vdev_count == 0) ||
 		    (wlan_op_mode_monitor == vdev->opmode))
 			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
-	} else if (soc->intr_mode == DP_INTR_MSI &&
+	} else if (dp_soc_get_con_mode(soc) == QDF_GLOBAL_MISSION_MODE &&
+		   soc->intr_mode == DP_INTR_MSI &&
 		   wlan_op_mode_monitor == vdev->opmode) {
+		/* Timer to reap status ring in mission mode */
 		dp_monitor_vdev_timer_start(soc);
 	}
 
@@ -14153,7 +14220,8 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 			for (int_ctx = 0; int_ctx < WLAN_CFG_INT_NUM_CONTEXTS;
 			     int_ctx++) {
 				soc->wlan_cfg_ctx->int_rx_ring_mask[int_ctx] = 0;
-				soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[int_ctx] = 0;
+				if (dp_is_monitor_mode_using_poll(soc))
+					soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[int_ctx] = 0;
 			}
 		}
 

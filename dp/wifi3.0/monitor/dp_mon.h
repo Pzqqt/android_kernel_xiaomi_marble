@@ -50,6 +50,18 @@ struct dp_peer_tx_capture {
 };
 #endif
 
+#ifdef DP_CON_MON_MSI_ENABLED
+static inline bool dp_is_monitor_mode_using_poll(struct dp_soc *soc)
+{
+	return false;
+}
+#else
+static inline bool dp_is_monitor_mode_using_poll(struct dp_soc *soc)
+{
+	return true;
+}
+#endif
+
 /*
  * dp_mon_soc_attach() - DP monitor soc attach
  * @soc: Datapath SOC handle

@@ -1516,7 +1516,11 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 							reo_status_ring_mask_msi[i];
 		if (is_monitor_mode) {
 			wlan_cfg_ctx->int_rx_ring_mask[i] = 0;
-			wlan_cfg_ctx->int_rxdma2host_ring_mask[i] = 0;
+			if (interrupt_mode == DP_INTR_POLL)
+				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] = 0;
+			else
+				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
+						rxdma2host_ring_mask_msi[i];
 		} else {
 			wlan_cfg_ctx->int_rx_ring_mask[i] =
 							rx_ring_mask_msi[i];
