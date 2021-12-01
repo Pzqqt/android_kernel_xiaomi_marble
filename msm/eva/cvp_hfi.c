@@ -950,6 +950,20 @@ static void __set_registers(struct iris_hfi_device *device)
 					reg_set->reg_tbl[i].reg,
 					reg_set->reg_tbl[i].value);
 	}
+
+	/* CVP NOC QoS Settings */
+	__write_register(device,
+			CVP_NOC_QOSGENERATOR_MAINCTL_LOW, 0x48);
+	__write_register(device,
+			CVP_NOC_DMA_MAIN_PRIORITYLUT_LOW, 0x22222222);
+	__write_register(device,
+			CVP_NOC_DMA_MAIN_PRIORITYLUT_HIGH, 0x33332222);
+	__write_register(device,
+			CVP_NOC_DMA_MAIN_URGENCY_LOW, 0x1022);
+	__write_register(device,
+			CVP_NOC_DMA_MAIN_DANGERLUT_LOW, 0x5500);
+	__write_register(device,
+			CVP_NOC_DMA_MAIN_SAFELUT_LOW, 0xffff);
 }
 
 /*
@@ -1128,7 +1142,7 @@ static inline int __boot_firmware(struct iris_hfi_device *device)
 {
 	int rc = 0, loop = 10;
 	u32 ctrl_init_val = 0, ctrl_status = 0, count = 0, max_tries = 1000;
-	// u32 reg_gdsc;		//TODO: Fillmore-BU
+	u32 reg_gdsc;
 
 	/*
 	 * Hand off control of regulators to h/w _after_ enabling clocks.
@@ -1139,7 +1153,6 @@ static inline int __boot_firmware(struct iris_hfi_device *device)
 	if (__enable_hw_power_collapse(device))
 		dprintk(CVP_ERR, "Failed to enabled inter-frame PC\n");
 
-/*
 	while (loop) {
 		reg_gdsc = __read_register(device, CVP_CC_MVS1_GDSCR);
 		if (reg_gdsc & 0x80000000) {
@@ -1148,8 +1161,7 @@ static inline int __boot_firmware(struct iris_hfi_device *device)
 		} else {
 			break;
 		}
-	}		//TODO: Fillmore-BU
-*/
+	}
 
 	if (!loop)
 		dprintk(CVP_ERR, "fail to power off CORE during resume\n");
@@ -3976,8 +3988,8 @@ err_tzbsp_suspend:
 static void power_off_iris2(struct iris_hfi_device *device)
 {
 	u32 lpi_status, reg_status = 0, count = 0, max_count = 1000;
-	//u32 pc_ready, wfi_status, sbm_ln0_low;
-	//u32 main_sbm_ln0_low, main_sbm_ln1_high;
+	u32 pc_ready, wfi_status, sbm_ln0_low;
+	u32 main_sbm_ln0_low, main_sbm_ln1_high;
 
 	if (!device->power_enabled || !device->res->sw_power_collapsible)
 		return;
@@ -4004,40 +4016,41 @@ static void power_off_iris2(struct iris_hfi_device *device)
 		"Noc: lpi_status %x noc_status %x (count %d)\n",
 		lpi_status, reg_status, count);
 	if (count == max_count) {
-		u32 pc_ready, wfi_status, sbm_ln0_low;
-		u32 main_sbm_ln0_low, main_sbm_ln1_high;
-		u32 cpu_cs_x2rpmh;
-
 		wfi_status = __read_register(device, CVP_WRAPPER_CPU_STATUS);
 		pc_ready = __read_register(device, CVP_CTRL_STATUS);
 		sbm_ln0_low =
 			__read_register(device, CVP_NOC_SBM_SENSELN0_LOW);
-
-		cpu_cs_x2rpmh = __read_register(device,
-			CVP_CPU_CS_X2RPMh);
-
-		__write_register(device, CVP_CPU_CS_X2RPMh,
-			(cpu_cs_x2rpmh | CVP_CPU_CS_X2RPMh_SWOVERRIDE_BMSK));
-		cpu_cs_x2rpmh = __read_register(device,
-			CVP_CPU_CS_X2RPMh);
-		dprintk(CVP_PWR, "cpu_cs_x2rpmh (%#x)\n",
-			cpu_cs_x2rpmh);
-
 		main_sbm_ln0_low = __read_register(device,
 				CVP_NOC_MAIN_SIDEBANDMANAGER_SENSELN0_LOW);
 		main_sbm_ln1_high = __read_register(device,
 				CVP_NOC_MAIN_SIDEBANDMANAGER_SENSELN1_HIGH);
-
-		__write_register(device, CVP_CPU_CS_X2RPMh,
-			(cpu_cs_x2rpmh & (~CVP_CPU_CS_X2RPMh_SWOVERRIDE_BMSK)));
-
 		dprintk(CVP_WARN,
-			"NOC not in qaccept status %x %x %x %x %x\n",
+			"NOC not in qaccept status %x %x %x %x %x %x %x\n",
 			reg_status, lpi_status, wfi_status, pc_ready,
-			sbm_ln0_low);
+			sbm_ln0_low, main_sbm_ln0_low, main_sbm_ln1_high);
 	}
 
-	/* HPG 6.1.2 Step 3, debug bridge to low power BYPASSED*/
+	/* HPG 6.1.2 Step 3, debug bridge to low power */
+	__write_register(device,
+		CVP_WRAPPER_DEBUG_BRIDGE_LPI_CONTROL, 0x7);
+
+	reg_status = 0;
+	count = 0;
+	while ((reg_status != 0x7) && count < max_count) {
+		lpi_status = __read_register(device,
+			CVP_WRAPPER_DEBUG_BRIDGE_LPI_STATUS);
+		reg_status = lpi_status & 0x7;
+		/* Wait for debug bridge lpi status to be set */
+		usleep_range(50, 100);
+		count++;
+	}
+	dprintk(CVP_PWR,
+		"DBLP Set : lpi_status %d reg_status %d (count %d)\n",
+		lpi_status, reg_status, count);
+	if (count == max_count) {
+		dprintk(CVP_WARN,
+			"DBLP Set: status %x %x\n", reg_status, lpi_status);
+	}
 
 	/* HPG 6.1.2 Step 4, debug bridge to lpi release */
 	__write_register(device,
