@@ -1684,8 +1684,9 @@ hdd_suspend_wlan(void)
 		if (adapter->device_mode == QDF_STA_MODE)
 			status = hdd_enable_default_pkt_filters(adapter);
 
-		if (adapter->device_mode == QDF_SAP_MODE ||
-		    adapter->device_mode == QDF_P2P_GO_MODE)
+		if (adapter->session.ap.disable_intrabss_fwd &&
+		    (adapter->device_mode == QDF_SAP_MODE ||
+		     adapter->device_mode == QDF_P2P_GO_MODE))
 			cdp_txrx_set_vdev_param(soc, adapter->vdev_id,
 						CDP_ENABLE_AP_BRIDGE, val);
 
@@ -1759,8 +1760,9 @@ static int hdd_resume_wlan(void)
 		if (adapter->device_mode == QDF_STA_MODE)
 			status = hdd_disable_default_pkt_filters(adapter);
 
-		if (adapter->device_mode == QDF_SAP_MODE ||
-		    adapter->device_mode == QDF_P2P_GO_MODE) {
+		if (adapter->session.ap.disable_intrabss_fwd &&
+		    (adapter->device_mode == QDF_SAP_MODE ||
+		     adapter->device_mode == QDF_P2P_GO_MODE)) {
 			val.cdp_vdev_param_ap_brdg_en = true;
 			cdp_txrx_set_vdev_param(soc, adapter->vdev_id,
 						CDP_ENABLE_AP_BRIDGE, val);
