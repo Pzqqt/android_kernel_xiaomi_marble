@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -396,7 +396,7 @@ struct sde_drm_scaler_v2 {
 };
 
 /* Number of dest scalers supported */
-#define SDE_MAX_DS_COUNT 2
+#define SDE_MAX_DS_COUNT 4
 
 /*
  * Destination scaler flag config
