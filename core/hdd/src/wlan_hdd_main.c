@@ -12376,6 +12376,7 @@ list_destroy:
 void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 {
 	uint32_t timeout_ms = hdd_ctx->config->iface_change_wait_time;
+	uint32_t suspend_timeout_ms;
 	enum wake_lock_reason reason =
 		WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER;
 
@@ -12385,7 +12386,6 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_debug("Starting psoc idle timer");
-	timeout_ms += HDD_PSOC_IDLE_SHUTDOWN_SUSPEND_DELAY;
 
 	/* If PCIe gen speed change is requested, reduce idle shutdown
 	 * timeout to 100 ms
@@ -12396,7 +12396,8 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 	}
 
 	qdf_delayed_work_start(&hdd_ctx->psoc_idle_timeout_work, timeout_ms);
-	hdd_prevent_suspend_timeout(timeout_ms, reason);
+	suspend_timeout_ms = timeout_ms + HDD_PSOC_IDLE_SHUTDOWN_SUSPEND_DELAY;
+	hdd_prevent_suspend_timeout(suspend_timeout_ms, reason);
 }
 
 void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
