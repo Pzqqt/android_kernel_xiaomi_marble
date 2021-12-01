@@ -3651,6 +3651,42 @@ policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 	return ret;
 }
+
+bool policy_mgr_is_mlo_sta_present(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t conn_index = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_vdev *vdev;
+	bool mlo_sta_present = false;
+	uint8_t vdev_id;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0;
+	     conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS && !mlo_sta_present;
+	     conn_index++) {
+		if (pm_conc_connection_list[conn_index].mode != PM_STA_MODE ||
+		    !pm_conc_connection_list[conn_index].in_use)
+			continue;
+
+		vdev_id = pm_conc_connection_list[conn_index].vdev_id;
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+							    WLAN_POLICY_MGR_ID);
+		if (!vdev)
+			continue;
+
+		mlo_sta_present = wlan_vdev_mlme_is_mlo_vdev(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+	}
+
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	return mlo_sta_present;
+}
 #else
 static bool
 policy_mgr_allow_sta_concurrency(struct wlan_objmgr_psoc *psoc,

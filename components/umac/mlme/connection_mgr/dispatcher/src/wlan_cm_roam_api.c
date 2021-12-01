@@ -496,6 +496,13 @@ wlan_cm_dual_sta_is_freq_allowed(struct wlan_objmgr_psoc *psoc,
 	    opmode != QDF_STA_MODE)
 		return true;
 
+	/*
+	 * For MLO STA scenario, allow further STA connections to all available
+	 * bands/channels irrespective of existing STA connection band.
+	 */
+	if (policy_mgr_is_mlo_sta_present(psoc))
+		return true;
+
 	connected_sta_freq = op_ch_freq_list[0];
 	band = wlan_reg_freq_to_band(connected_sta_freq);
 	if ((band == REG_BAND_2G && WLAN_REG_IS_24GHZ_CH_FREQ(freq)) ||
