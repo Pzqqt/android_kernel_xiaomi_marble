@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1121,11 +1121,13 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	}
 
 	wlan_hdd_classify_pkt(skb);
+
+	QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
+
 	if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) == QDF_NBUF_CB_PACKET_TYPE_ARP) {
 		if (qdf_nbuf_data_is_arp_req(skb) &&
 		    (adapter->track_arp_ip == qdf_nbuf_get_arp_tgt_ip(skb))) {
 			is_arp = true;
-			QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
 			++adapter->hdd_stats.hdd_arp_stats.tx_arp_req_count;
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1136,11 +1138,9 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		subtype = qdf_nbuf_get_eapol_subtype(skb);
 		if (subtype == QDF_PROTO_EAPOL_M2) {
 			++adapter->hdd_stats.hdd_eapol_stats.eapol_m2_count;
-			QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
 			is_eapol = true;
 		} else if (subtype == QDF_PROTO_EAPOL_M4) {
 			++adapter->hdd_stats.hdd_eapol_stats.eapol_m4_count;
-			QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
 			is_eapol = true;
 		}
 	} else if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
@@ -1148,11 +1148,9 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		subtype = qdf_nbuf_get_dhcp_subtype(skb);
 		if (subtype == QDF_PROTO_DHCP_DISCOVER) {
 			++adapter->hdd_stats.hdd_dhcp_stats.dhcp_dis_count;
-			QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
 			is_dhcp = true;
 		} else if (subtype == QDF_PROTO_DHCP_REQUEST) {
 			++adapter->hdd_stats.hdd_dhcp_stats.dhcp_req_count;
-			QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
 			is_dhcp = true;
 		}
 	} else if ((QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
