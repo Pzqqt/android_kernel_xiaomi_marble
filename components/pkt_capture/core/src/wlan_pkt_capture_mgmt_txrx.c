@@ -505,6 +505,14 @@ pkt_capture_is_beacon_forward_enable(struct wlan_objmgr_vdev *vdev,
 	return true;
 }
 
+#ifdef DP_MON_RSSI_IN_DBM
+#define PKT_CAPTURE_FILL_RSSI(rx_params) \
+((rx_params)->snr + NORMALIZED_TO_NOISE_FLOOR)
+#else
+#define PKT_CAPTURE_FILL_RSSI(rx_status) \
+((rx_params)->snr)
+#endif
+
 /**
  * process_pktcapture_mgmt_rx_data_cb() -  process management rx packets
  * @rx_params: mgmt rx event params
@@ -604,8 +612,8 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	/* rx_params->rate is in Kbps, convert into Mbps */
 	txrx_status.rate = (rx_params->rate / 1000);
 	txrx_status.ant_signal_db = rx_params->snr;
-	txrx_status.rssi_comb = rx_params->snr;
 	txrx_status.chan_noise_floor = NORMALIZED_TO_NOISE_FLOOR;
+	txrx_status.rssi_comb = PKT_CAPTURE_FILL_RSSI(rx_params);
 	txrx_status.nr_ant = 1;
 	txrx_status.rtap_flags |=
 		((txrx_status.rate == 6 /* Mbps */) ? BIT(1) : 0);
