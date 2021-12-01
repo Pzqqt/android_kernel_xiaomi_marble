@@ -1920,6 +1920,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	uint8_t pdev_id;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct wlan_objmgr_peer *peer;
+	uint8_t *mld;
 #endif
 	bool notify_new_sta = true;
 
@@ -2418,10 +2419,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				return QDF_STATUS_E_INVAL;
 			}
 
-			if (!wlan_peer_mlme_is_assoc_peer(peer)) {
+			mld = wlan_peer_mlme_get_mldaddr(peer);
+			if (!wlan_peer_mlme_is_assoc_peer(peer) &&
+			    !qdf_is_macaddr_zero((struct qdf_mac_addr *)mld)) {
 				hdd_err("skip userspace notification");
 				notify_new_sta = false;
 			}
+
+			wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
 #endif
 		} else {
 			qdf_status = hdd_softap_register_sta(
