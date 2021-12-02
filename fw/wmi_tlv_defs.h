@@ -1218,6 +1218,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_frame_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_debug_mesg_fw_cal_failure_param,
+    WMITLV_TAG_STRUC_wmi_quiet_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1976,6 +1977,7 @@ typedef enum {
     OP(WMI_PDEV_FIPS_EXTEND_EVENTID) \
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID) \
     OP(WMI_ROAM_FRAME_EVENTID) \
+    OP(WMI_QUIET_HANDLING_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6572,6 +6574,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID);
 #define WMITLV_TABLE_WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param, wmi_vdev_update_mac_addr_conf_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID);
+
+/* Set the WMI Quiet handling EventID  */
+#define WMITLV_TABLE_WMI_QUIET_HANDLING_EVENTID(id,op,buf,len)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_quiet_event_fixed_param, wmi_quiet_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_QUIET_HANDLING_EVENTID);
 
 
 #ifdef __cplusplus

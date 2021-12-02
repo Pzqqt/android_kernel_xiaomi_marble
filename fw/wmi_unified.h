@@ -284,6 +284,7 @@ typedef enum {
     WMI_GRP_LATENCY,        /* 0x47 TID/AC level latency config */
     WMI_GRP_MLO,            /* 0x48 MLO(Multiple Link Operation) management */
     WMI_GRP_SAWF,           /* 0x49 SAWF (Service Aware WiFi) */
+    WMI_GRP_QUIET_OFL,      /* 0x4a Quiet offloads */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -2172,6 +2173,9 @@ typedef enum {
     WMI_MLO_SETUP_COMPLETE_EVENTID,
     /* Response event for MLO teardown cmd */
     WMI_MLO_TEARDOWN_COMPLETE_EVENTID,
+
+    /* WMI event specific to Quiet handling */
+    WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -6861,6 +6865,39 @@ typedef struct {
      */
     A_UINT32 cswrap_ie_extended[5];
 } wmi_csa_event_fixed_param;
+
+#define WMI_GET_MLD_MAC_ADDRESS_PRESENT(mld_mac_address_present) \
+    WMI_GET_BITS(mld_mac_address_present, 0, 1)
+#define WMI_SET_MLD_MAC_ADDRESS_PRESENT(mld_mac_address_present, value) \
+    WMI_SET_BITS(mld_mac_address_present, 0, 1, value)
+
+#define WMI_GET_LINK_ADDRESS_PRESENT(link_mac_address_present) \
+    WMI_GET_BITS(link_mac_address_present, 1, 1)
+#define WMI_SET_LINK_ADDRESS_PRESENT(link_mac_address_present, value) \
+    WMI_SET_BITS(link_mac_address_present, 1, 1, value)
+
+#define WMI_GET_LINK_ID_PRESENT(link_id_present) \
+    WMI_GET_BITS(link_id_present, 2, 1)
+#define WMI_SET_LINK_ID_PRESENT(link_id_present, value) \
+    WMI_SET_BITS(link_id_present, 2, 1, value)
+
+typedef enum {
+    WMI_QUIET_EVENT_START = 0,
+    WMI_QUIET_EVENT_STOP  = 1,
+} WMI_QUIET_EVENT_FLAG;
+
+/* WMI Quiet receive event from beacon frame */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_quiet_event_fixed_param */
+    wmi_mac_addr mld_mac_address; /* AP mld mac address */
+    wmi_mac_addr link_mac_address; /* AP link mac address */
+    A_UINT32 linkid; /* Link id associated with AP */
+    A_UINT32 mld_mac_address_present :1,
+             link_mac_address_present :1,
+             linkid_present :1,
+             reserved :29;
+    A_UINT32 quiet_status; /* WMI_QUIET_EVENT_FLAG: quiet start or stop */
+} wmi_quiet_event_fixed_param;
 
 typedef enum {
     WAL_PEER_MCAST2UCAST_DISABLED    = 0,
