@@ -7853,6 +7853,13 @@ static int hdd_config_vdev_chains(struct hdd_adapter *adapter,
 	if (!tx_attr && !rx_attr)
 		return 0;
 
+	/* if one is present, both must be present */
+	if (!tx_attr || !rx_attr) {
+		hdd_err("Missing attribute for %s",
+			tx_attr ? "RX" : "TX");
+		return -EINVAL;
+	}
+
 	tx_chains = nla_get_u8(tx_attr);
 	rx_chains = nla_get_u8(rx_attr);
 
@@ -7875,6 +7882,13 @@ static int hdd_config_tx_rx_nss(struct hdd_adapter *adapter,
 
 	if (!tx_attr && !rx_attr)
 		return 0;
+
+	/* if one is present, both must be present */
+	if (!tx_attr || !rx_attr) {
+		hdd_err("Missing attribute for %s",
+			tx_attr ? "RX" : "TX");
+		return -EINVAL;
+	}
 
 	tx_nss = nla_get_u8(tx_attr);
 	rx_nss = nla_get_u8(rx_attr);
