@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -84,7 +85,6 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 		 * this scenario.
 		 */
 		if_mgr_disable_roaming(pdev, vdev, RSO_CONNECT_START);
-		wlan_tdls_teardown_links_sync(psoc);
 	}
 
 	return QDF_STATUS_SUCCESS;
