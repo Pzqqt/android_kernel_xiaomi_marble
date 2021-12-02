@@ -695,6 +695,8 @@ struct wlan_ssid {
 #ifdef WLAN_FEATURE_11BE
 #define PSOC_HOST_MAX_EHT_MAC_SIZE 1
 #define PSOC_HOST_MAX_EHT_PHY_SIZE 2
+#define PSOC_HOST_EHT_MCS_NSS_MAP_2G_SIZE 2
+#define PSOC_HOST_EHT_MCS_NSS_MAP_5G_SIZE 4
 #endif
 
 #endif /* _WLAN_OBJMGR_CMN_H_*/
