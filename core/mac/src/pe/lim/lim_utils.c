@@ -9245,6 +9245,63 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	return status;
 }
 
+QDF_STATUS lim_ap_mlme_vdev_rnr_notify(struct pe_session *session)
+{
+	struct mac_context *mac_ctx;
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	qdf_freq_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_num;
+	uint8_t i;
+	struct pe_session *co_session;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac ctx is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!session) {
+		pe_err("session is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!mlme_is_notify_co_located_ap_update_rnr(session->vdev))
+		return status;
+	mlme_set_notify_co_located_ap_update_rnr(session->vdev, false);
+	// Only 6G SAP need to notify co-located SAP to add RNR
+	if (!wlan_reg_is_6ghz_chan_freq(session->curr_op_freq))
+		return status;
+	pe_debug("vdev id %d non mlo 6G AP notify co-located AP to update RNR",
+		 wlan_vdev_get_id(session->vdev));
+	vdev_num = policy_mgr_get_mode_specific_conn_info(
+			mac_ctx->psoc, freq_list, vdev_id_list,
+			PM_SAP_MODE);
+	for (i = 0; i < vdev_num; i++) {
+		if (vdev_id_list[i] == session->vdev_id)
+			continue;
+		if (wlan_reg_is_6ghz_chan_freq(freq_list[i]))
+			continue;
+		co_session = pe_find_session_by_vdev_id(mac_ctx,
+							vdev_id_list[i]);
+		if (!co_session)
+			continue;
+
+		status = sch_set_fixed_beacon_fields(mac_ctx, co_session);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pe_err("Unable to update 6g co located RNR in beacon");
+			return status;
+		}
+
+		status = lim_send_beacon_ind(mac_ctx, co_session,
+					     REASON_RNR_UPDATE);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pe_err("Unable to send beacon indication");
+			return status;
+		}
+	}
+
+	return status;
+}
+
 QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len, void *data)
 {
@@ -9283,6 +9340,10 @@ QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (!wlan_vdev_mlme_is_mlo_ap(vdev_mlme->vdev)) {
+		mlme_set_notify_co_located_ap_update_rnr(vdev_mlme->vdev, true);
+		lim_ap_mlme_vdev_rnr_notify(session);
+	}
 	status =  lim_send_vdev_stop(session);
 
 	return status;

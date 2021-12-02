@@ -202,6 +202,8 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 	if (QDF_IS_STATUS_SUCCESS(retCode)) {
 		if (wlan_vdev_mlme_is_mlo_ap(pe_session->vdev))
 			lim_notify_link_info(pe_session);
+		else
+			lim_ap_mlme_vdev_rnr_notify(pe_session);
 	}
 
 	return retCode;

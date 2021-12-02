@@ -810,6 +810,14 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 			populate_dot11f_mlo_rnr(
 				mac_ctx, session,
 				&bcn_2->reduced_neighbor_report);
+		} else if (!wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
+			/*
+			 * TD: If current AP is MLO, RNR IE is already populated
+			 *     More effor to populate RNR IE for
+			 *     MLO SAP + 6G legacy SAP
+			 */
+			populate_dot11f_6g_rnr(mac_ctx, session,
+					       &bcn_2->reduced_neighbor_report);
 		}
 		/*
 		 * Can be efficiently updated whenever new IE added  in Probe

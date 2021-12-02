@@ -8832,4 +8832,122 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+void populate_dot11f_rnr_tbtt_info_7(struct mac_context *mac_ctx,
+				     struct pe_session *pe_session,
+				     struct pe_session *rnr_session,
+				     tDot11fIEreduced_neighbor_report *dot11f)
+{
+	uint8_t reg_class;
+	uint8_t ch_offset;
+
+	dot11f->present = 1;
+	dot11f->tbtt_type = 0;
+	if (rnr_session->ch_width == CH_WIDTH_80MHZ) {
+		ch_offset = BW80;
+	} else {
+		switch (rnr_session->htSecondaryChannelOffset) {
+		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+			ch_offset = BW40_HIGH_PRIMARY;
+			break;
+		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+			ch_offset = BW40_LOW_PRIMARY;
+			break;
+		default:
+			ch_offset = BW20;
+			break;
+		}
+	}
+
+	reg_class = lim_op_class_from_bandwidth(mac_ctx,
+						rnr_session->curr_op_freq,
+						rnr_session->ch_width,
+						ch_offset);
+
+	dot11f->op_class = reg_class;
+	dot11f->channel_num = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						    rnr_session->curr_op_freq);
+	dot11f->tbtt_info_count = 0;
+	dot11f->tbtt_info_len = 7;
+	dot11f->tbtt_info.tbtt_info_7.tbtt_offset =
+			WLAN_RNR_TBTT_OFFSET_INVALID;
+	qdf_mem_copy(dot11f->tbtt_info.tbtt_info_7.bssid,
+		     rnr_session->self_mac_addr, sizeof(tSirMacAddr));
+}
+
+/**
+ * lim_is_6g_vdev() - loop every vdev to populate 6g vdev id
+ * @psoc: pointer to psoc
+ * @obj: vdev
+ * @args: vdev list to record 6G vdev id
+ *
+ * Return: void
+ */
+static void lim_is_6g_vdev(struct wlan_objmgr_psoc *psoc, void *obj, void *args)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)obj;
+	uint8_t *vdev_id_list = (uint8_t *)args;
+	int i;
+
+	if (!vdev || (wlan_vdev_mlme_get_opmode(vdev) != QDF_SAP_MODE))
+		return;
+	if (QDF_IS_STATUS_ERROR(wlan_vdev_chan_config_valid(vdev)))
+		return;
+	if (!wlan_reg_is_6ghz_chan_freq(wlan_get_operation_chan_freq(vdev)))
+		return;
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (vdev_id_list[i] == INVALID_VDEV_ID) {
+			vdev_id_list[i] = wlan_vdev_get_id(vdev);
+			break;
+		}
+	}
+}
+
+void populate_dot11f_6g_rnr(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tDot11fIEreduced_neighbor_report *dot11f)
+{
+	struct pe_session *co_session;
+	struct wlan_objmgr_psoc *psoc;
+	int vdev_id;
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+
+	if (!session || !mac_ctx || !dot11f || !session->vdev) {
+		pe_err("Invalid params");
+		return;
+	}
+
+	psoc = wlan_vdev_get_psoc(session->vdev);
+	if (!psoc) {
+		pe_err("Invalid psoc");
+		return;
+	}
+
+	for (vdev_id = 0; vdev_id < MAX_NUMBER_OF_CONC_CONNECTIONS; vdev_id++)
+		vdev_id_list[vdev_id] = INVALID_VDEV_ID;
+
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     lim_is_6g_vdev,
+				     vdev_id_list, 1,
+				     WLAN_LEGACY_MAC_ID);
+
+	if (vdev_id_list[0] == INVALID_VDEV_ID) {
+		pe_debug("vdev id %d no 6G vdev, no need to populate RNR IE",
+			 wlan_vdev_get_id(session->vdev));
+		return;
+	}
+
+	co_session = pe_find_session_by_vdev_id(mac_ctx,
+						vdev_id_list[0]);
+	if (!co_session) {
+		pe_err("Invalid co located session");
+		return;
+	}
+	populate_dot11f_rnr_tbtt_info_7(mac_ctx, session, co_session, dot11f);
+	pe_debug("vdev id %d populate RNR IE with 6G vdev id %d op class %d chan num %d",
+		 wlan_vdev_get_id(session->vdev),
+		 wlan_vdev_get_id(co_session->vdev),
+		 dot11f->op_class, dot11f->channel_num);
+}
 /* parser_api.c ends here. */
