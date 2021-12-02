@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1019,7 +1020,7 @@ QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 	if (rso_cfg)
 		rso_cfg->rsn_cap = req->crypto.rsn_caps;
 
-	if (wlan_get_ext_ie_ptr_from_ext_id(HS20_OUI_TYPE,
+	if (wlan_get_vendor_ie_ptr_from_oui(HS20_OUI_TYPE,
 					    HS20_OUI_TYPE_SIZE,
 					    req->assoc_ie.ptr,
 					    req->assoc_ie.len)) {

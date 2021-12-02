@@ -2481,12 +2481,18 @@ cm_update_btm_offload_config(struct wlan_objmgr_psoc *psoc,
 	/* Return if INI is disabled */
 	if (!(*btm_offload_config))
 		return;
+
 	vdev_id = wlan_vdev_get_id(vdev);
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id, HS_20_AP, &temp);
 	is_hs_20_ap = temp.bool_value;
-	/* For RSO Stop Disable BTM offload to firmware */
+
+	/*
+	 * For RSO Stop/Passpoint R2 cert test case 5.11(when STA is connected
+	 * to Hotspot-2.0 AP), disable BTM offload to firmware
+	 */
 	if (command == ROAM_SCAN_OFFLOAD_STOP || is_hs_20_ap) {
-		mlme_debug("RSO cmd: %d", command);
+		mlme_debug("RSO cmd: %d is_hs_20_ap:%d", command,
+			   is_hs_20_ap);
 		*btm_offload_config = 0;
 		return;
 	}
