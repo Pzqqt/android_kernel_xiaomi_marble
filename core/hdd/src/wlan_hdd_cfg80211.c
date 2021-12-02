@@ -19819,6 +19819,20 @@ void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
 	hdd_debug("Dot11Mode is %u", ini_dot11_mode);
 	switch (ini_dot11_mode) {
 	case eHDD_DOT11_MODE_AUTO:
+#ifdef WLAN_FEATURE_11BE
+	case eHDD_DOT11_MODE_11be:
+	case eHDD_DOT11_MODE_11be_ONLY:
+		if (sme_is_feature_supported_by_fw(DOT11BE))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11be;
+		else
+#endif
+		if (sme_is_feature_supported_by_fw(DOT11AX))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11ax;
+		else if (sme_is_feature_supported_by_fw(DOT11AC))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
+		else
+			hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+		break;
 	case eHDD_DOT11_MODE_11ax:
 	case eHDD_DOT11_MODE_11ax_ONLY:
 		if (sme_is_feature_supported_by_fw(DOT11AX))
