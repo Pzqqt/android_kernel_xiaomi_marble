@@ -2918,29 +2918,6 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		goto send;
 	}
 
-	if (wlan_reg_is_6ghz_chan_freq(bss_desc->chan_freq)) {
-		if (!ie_struct->Country.present)
-			pe_debug("Channel is 6G but country IE not present");
-		wlan_reg_read_current_country(mac_ctx->psoc,
-					      programmed_country);
-		status = wlan_reg_get_6g_power_type_for_ctry(mac_ctx->psoc,
-					ie_struct->Country.country,
-					programmed_country, &power_type_6g,
-					&ctry_code_match);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			status = QDF_STATUS_E_NOSUPPORT;
-			goto send;
-		}
-		session->ap_power_type_6g = power_type_6g;
-		session->same_ctry_code = ctry_code_match;
-
-		lim_iterate_triplets(ie_struct->Country);
-
-		if (!ie_struct->num_transmit_power_env ||
-		    !ie_struct->transmit_power_env[0].present)
-			pe_debug("TPE not present for 6G channel");
-	}
-
 	/*
 	 * Join timeout: if we find a BeaconInterval in the BssDescription,
 	 * then set the Join Timeout to be 10 x the BeaconInterval.
@@ -3086,6 +3063,29 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		&session->limCurrentBssQosCaps,
 		&session->gLimCurrentBssUapsd,
 		&local_power_constraint, session, &is_pwr_constraint);
+
+	if (wlan_reg_is_6ghz_chan_freq(bss_desc->chan_freq)) {
+		if (!ie_struct->Country.present)
+			pe_debug("Channel is 6G but country IE not present");
+		wlan_reg_read_current_country(mac_ctx->psoc,
+					      programmed_country);
+		status = wlan_reg_get_6g_power_type_for_ctry(
+				mac_ctx->psoc, ie_struct->Country.country,
+				programmed_country, &power_type_6g,
+				&ctry_code_match, session->ap_power_type);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			status = QDF_STATUS_E_NOSUPPORT;
+			goto send;
+		}
+		session->ap_power_type_6g = power_type_6g;
+		session->same_ctry_code = ctry_code_match;
+
+		lim_iterate_triplets(ie_struct->Country);
+
+		if (!ie_struct->num_transmit_power_env ||
+		    !ie_struct->transmit_power_env[0].present)
+			pe_debug("TPE not present for 6G channel");
+	}
 
 	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
 		mlme_obj->reg_tpc_obj.ap_constraint_power =
