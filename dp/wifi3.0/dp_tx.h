@@ -760,6 +760,12 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 			      hal_ring_handle_t hal_ring_hdl,
 			      int coalesce);
 #else
+#ifdef DP_POWER_SAVE
+void
+dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
+			      hal_ring_handle_t hal_ring_hdl,
+			      int coalesce);
+#else
 static inline void
 dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 			      hal_ring_handle_t hal_ring_hdl,
@@ -767,6 +773,7 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 {
 	dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
 }
+#endif
 
 static inline void
 dp_set_rtpm_tput_policy_requirement(struct cdp_soc_t *soc_hdl,
