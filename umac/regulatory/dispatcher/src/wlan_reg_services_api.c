@@ -90,10 +90,12 @@ QDF_STATUS
 wlan_reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *ap_ctry, uint8_t *sta_ctry,
 				    enum reg_6g_ap_type *pwr_type_6g,
-				    bool *ctry_code_match)
+				    bool *ctry_code_match,
+				    enum reg_6g_ap_type ap_pwr_type)
 {
 	return reg_get_6g_power_type_for_ctry(psoc, ap_ctry, sta_ctry,
-					      pwr_type_6g, ctry_code_match);
+					      pwr_type_6g, ctry_code_match,
+					      ap_pwr_type);
 }
 #endif
 

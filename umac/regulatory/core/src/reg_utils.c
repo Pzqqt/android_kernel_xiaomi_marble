@@ -330,7 +330,8 @@ QDF_STATUS
 reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 			       uint8_t *ap_ctry, uint8_t *sta_ctry,
 			       enum reg_6g_ap_type *pwr_type_6g,
-			       bool *ctry_code_match)
+			       bool *ctry_code_match,
+			       enum reg_6g_ap_type ap_pwr_type)
 {
 	*pwr_type_6g = REG_INDOOR_AP;
 
@@ -355,6 +356,12 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 			reg_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
 				  sta_ctry[0], sta_ctry[1]);
 			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+		}
+
+		if (wlan_reg_is_us(ap_ctry) && ap_pwr_type == REG_INDOOR_AP) {
+			reg_debug("AP ctry:%c%c, AP power type:%d, allow STA IN LPI",
+				  ap_ctry[0], ap_ctry[1], ap_pwr_type);
+			*pwr_type_6g = REG_INDOOR_AP;
 		}
 	} else {
 		*ctry_code_match = true;
