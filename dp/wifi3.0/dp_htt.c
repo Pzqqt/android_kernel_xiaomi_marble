@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2174,27 +2175,27 @@ static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_SUCCESS_PKT_CNT);
 			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
-			tx_comp.num += pkt_count;
+			tx_comp.num = pkt_count;
 
 			/* Extract tx success packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_SUCCESS_BYTE_CNT);
 			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
-			tx_comp.bytes += byte_count;
+			tx_comp.bytes = byte_count;
 
 			/* Extract tx retry packet count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_RETRY_PKT_CNT);
 			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.num += pkt_count;
-			tx_failed.num += pkt_count;
+			tx_failed.num = pkt_count;
 
 			/* Extract tx retry packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_RETRY_BYTE_CNT);
-			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.bytes += byte_count;
-			tx_failed.bytes += byte_count;
+			tx_failed.bytes = byte_count;
 
 			/* Extract tx drop packet count from buffer */
 			tag_buf = tlv_buf_temp +
@@ -2206,7 +2207,7 @@ static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
 			/* Extract tx drop packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_DROP_BYTE_CNT);
-			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.bytes += byte_count;
 			tx_failed.bytes += byte_count;
 
@@ -2220,7 +2221,7 @@ static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
 			/* Extract tx age-out packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_AGE_OUT_BYTE_CNT);
-			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.bytes += byte_count;
 			tx_failed.bytes += byte_count;
 

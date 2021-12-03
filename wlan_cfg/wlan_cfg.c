@@ -3141,6 +3141,13 @@ int wlan_cfg_get_vdev_stats_hw_offload_timer(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->vdev_stats_hw_offload_timer;
 }
+
+void
+wlan_cfg_set_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  bool val)
+{
+	cfg->vdev_stats_hw_offload_config = val;
+}
 #else
 bool
 wlan_cfg_get_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg)
@@ -3152,4 +3159,9 @@ int wlan_cfg_get_vdev_stats_hw_offload_timer(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return 0;
 }
+
+void
+wlan_cfg_set_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  bool val)
+{}
 #endif

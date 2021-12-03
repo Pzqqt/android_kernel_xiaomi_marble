@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -147,12 +148,12 @@ void htt_htc_pkt_pool_free(struct htt_soc *soc);
 #define HTT_VDEV_STATS_TLV_RX_PKT_CNT_OFFSET          4
 #define HTT_VDEV_STATS_TLV_TX_SUCCESS_BYTE_CNT_OFFSET 6
 #define HTT_VDEV_STATS_TLV_TX_SUCCESS_PKT_CNT_OFFSET  8
-#define HTT_VDEV_STATS_TLV_TX_RETRY_BYTE_CNT_OFFSET   10
-#define HTT_VDEV_STATS_TLV_TX_RETRY_PKT_CNT_OFFSET    12
-#define HTT_VDEV_STATS_TLV_TX_DROP_BYTE_CNT_OFFSET    14
-#define HTT_VDEV_STATS_TLV_TX_DROP_PKT_CNT_OFFSET     16
-#define HTT_VDEV_STATS_TLV_TX_AGE_OUT_BYTE_CNT_OFFSET 18
-#define HTT_VDEV_STATS_TLV_TX_AGE_OUT_PKT_CNT_OFFSET  20
+#define HTT_VDEV_STATS_TLV_TX_RETRY_PKT_CNT_OFFSET    10
+#define HTT_VDEV_STATS_TLV_TX_DROP_PKT_CNT_OFFSET     12
+#define HTT_VDEV_STATS_TLV_TX_AGE_OUT_PKT_CNT_OFFSET  14
+#define HTT_VDEV_STATS_TLV_TX_RETRY_BYTE_CNT_OFFSET   16
+#define HTT_VDEV_STATS_TLV_TX_DROP_BYTE_CNT_OFFSET    18
+#define HTT_VDEV_STATS_TLV_TX_AGE_OUT_BYTE_CNT_OFFSET 20
 
 #define HTT_VDEV_STATS_GET_INDEX(index) \
 	HTT_VDEV_STATS_TLV_##index##_OFFSET

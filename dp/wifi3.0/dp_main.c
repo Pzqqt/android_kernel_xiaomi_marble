@@ -6411,11 +6411,11 @@ static QDF_STATUS dp_txrx_alloc_vdev_stats_id(struct cdp_soc_t *soc_hdl,
 	uint8_t id = 0;
 
 	if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) {
-		*vdev_stats_id = DP_INVALID_VDEV_STATS_ID;
+		*vdev_stats_id = CDP_INVALID_VDEV_STATS_ID;
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	while (id < DP_MAX_VDEV_STATS_ID) {
+	while (id < CDP_MAX_VDEV_STATS_ID) {
 		if (!qdf_atomic_test_and_set_bit(id, &soc->vdev_stats_id_map)) {
 			*vdev_stats_id = id;
 			return QDF_STATUS_SUCCESS;
@@ -6423,7 +6423,7 @@ static QDF_STATUS dp_txrx_alloc_vdev_stats_id(struct cdp_soc_t *soc_hdl,
 		id++;
 	}
 
-	*vdev_stats_id = DP_INVALID_VDEV_STATS_ID;
+	*vdev_stats_id = CDP_INVALID_VDEV_STATS_ID;
 	return QDF_STATUS_E_FAILURE;
 }
 
@@ -6440,7 +6440,7 @@ static void dp_txrx_reset_vdev_stats_id(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 
 	if ((!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) ||
-	    (vdev_stats_id >= DP_MAX_VDEV_STATS_ID))
+	    (vdev_stats_id >= CDP_MAX_VDEV_STATS_ID))
 		return;
 
 	qdf_atomic_clear_bit(vdev_stats_id, &soc->vdev_stats_id_map);
@@ -6665,7 +6665,10 @@ void dp_peer_hw_txrx_stats_init(struct dp_soc *soc, struct dp_peer *peer)
 }
 #else
 static inline
-void dp_peer_hw_txrx_stats_init(struct dp_soc *soc, struct dp_peer *peer) {}
+void dp_peer_hw_txrx_stats_init(struct dp_soc *soc, struct dp_peer *peer)
+{
+	peer->hw_txrx_stats_en = 0;
+}
 #endif
 /*
  * dp_peer_create_wifi3() - attach txrx peer
@@ -9536,12 +9539,10 @@ dp_set_psoc_param(struct cdp_soc_t *cdp_soc,
 	case CDP_IPA_ENABLE:
 		soc->wlan_cfg_ctx->ipa_enabled = val.cdp_ipa_enabled;
 		break;
-#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
 	case CDP_SET_VDEV_STATS_HW_OFFLOAD:
-		wlan_cfg_ctx->vdev_stats_hw_offload_config =
-				val.cdp_psoc_param_vdev_stats_hw_offload;
+		wlan_cfg_set_vdev_stats_hw_offload_config(wlan_cfg_ctx,
+				val.cdp_psoc_param_vdev_stats_hw_offload);
 		break;
-#endif
 	default:
 		break;
 	}
