@@ -12719,6 +12719,32 @@ uint32_t dp_get_tx_rings_grp_bitmap(struct cdp_soc_t *soc_hdl)
 	return soc->wlan_cfg_ctx->tx_rings_grp_bitmap;
 }
 
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+/**
+ * dp_mark_first_wakeup_packet() - set flag to indicate that
+ *    fw is compatible for marking first packet after wow wakeup
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ * @value: 1 for enabled/ 0 for disabled
+ *
+ * Return: None
+ */
+static void dp_mark_first_wakeup_packet(struct cdp_soc_t *soc_hdl,
+					uint8_t pdev_id, uint8_t value)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return;
+	}
+
+	pdev->is_first_wakeup_packet = value;
+}
+#endif
+
 #ifdef DP_PEER_EXTENDED_API
 static struct cdp_misc_ops dp_ops_misc = {
 #ifdef FEATURE_WLAN_TDLS
@@ -12749,6 +12775,9 @@ static struct cdp_misc_ops dp_ops_misc = {
 #endif
 	.display_txrx_hw_info = dp_display_srng_info,
 	.get_tx_rings_grp_bitmap = dp_get_tx_rings_grp_bitmap,
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+	.mark_first_wakeup_packet = dp_mark_first_wakeup_packet,
+#endif
 };
 #endif
 
