@@ -461,7 +461,7 @@ static bool dp_catalog_ctrl_wait_for_phy_ready(
 	u32 const pll_timeout_us = 10000;
 
 	phy_version = dp_catalog_get_dp_phy_version(&catalog->dp_catalog);
-	if (phy_version >= 60000000) {
+	if (phy_version >= 0x60000000) {
 		reg = DP_PHY_STATUS_V600;
 	} else {
 		reg = DP_PHY_STATUS;
