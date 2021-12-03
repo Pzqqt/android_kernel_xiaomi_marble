@@ -2066,3 +2066,73 @@ int osif_twt_get_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
 
 	return qdf_status_to_os_return(qdf_status);
 }
+
+int osif_twt_clear_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
+					 struct nlattr *twt_param_attr)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX + 1];
+	int ret, id;
+	uint32_t dialog_id;
+	bool is_stats_tgt_cap_enabled;
+	QDF_STATUS status;
+	struct qdf_mac_addr peer_mac;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+				QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX,
+				twt_param_attr,
+				qca_wlan_vendor_twt_stats_dialog_policy);
+
+	if (ret)
+		return ret;
+
+	ucfg_twt_get_twt_stats_enabled(psoc, &is_stats_tgt_cap_enabled);
+	if (!is_stats_tgt_cap_enabled) {
+		osif_debug("TWT Stats not supported by target");
+		return -EOPNOTSUPP;
+	}
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_STATS_FLOW_ID;
+	if (!tb[id]) {
+		osif_err_rl("TWT Clear stats - dialog id param is must");
+		return -EINVAL;
+	}
+
+	if (osif_fill_peer_macaddr(vdev, peer_mac.bytes))
+		return -EINVAL;
+
+	dialog_id = (uint32_t)nla_get_u8(tb[id]);
+	osif_debug("dialog_id %d peer mac_addr "QDF_MAC_ADDR_FMT,
+		   dialog_id, QDF_MAC_ADDR_REF(peer_mac.bytes));
+
+	status = ucfg_twt_check_all_twt_support(psoc, dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_debug("All TWT sessions not supported by target");
+		return -EOPNOTSUPP;
+	}
+
+	if (ucfg_twt_is_command_in_progress(psoc, &peer_mac,
+					    TWT_ALL_SESSIONS_DIALOG_ID,
+					    WLAN_TWT_STATISTICS, NULL) ||
+	    ucfg_twt_is_command_in_progress(psoc, &peer_mac,
+					    TWT_ALL_SESSIONS_DIALOG_ID,
+					    WLAN_TWT_CLEAR_STATISTICS,
+					    NULL)) {
+		osif_warn("Already TWT statistics or clear statistics exists");
+		return -EALREADY;
+	}
+
+	if (!ucfg_twt_is_setup_done(psoc, &peer_mac, dialog_id)) {
+		osif_debug("TWT session %d setup incomplete", dialog_id);
+		return -EAGAIN;
+	}
+
+	ret = wlan_cfg80211_mc_twt_clear_infra_cp_stats(vdev, dialog_id,
+							peer_mac.bytes);
+
+	return ret;
+}

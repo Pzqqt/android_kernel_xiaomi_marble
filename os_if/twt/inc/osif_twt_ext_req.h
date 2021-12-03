@@ -208,6 +208,9 @@ QDF_STATUS osif_twt_get_stats_response(struct wlan_objmgr_vdev *vdev,
 				       struct twt_infra_cp_stats_event *params,
 				       uint32_t num_session_stats);
 
+int osif_twt_clear_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
+					 struct nlattr *twt_param_attr);
+
 #else
 static inline
 int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
@@ -267,6 +270,13 @@ int osif_twt_get_session_req(struct wlan_objmgr_vdev *vdev,
 static inline
 int osif_twt_get_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
 				       struct nlattr *twt_param_attr)
+{
+	return 0;
+}
+
+static inline
+int osif_twt_clear_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
+					 struct nlattr *twt_param_attr)
 {
 	return 0;
 }
