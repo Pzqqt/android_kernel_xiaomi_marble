@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -2487,6 +2488,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct drm_connector *conn;
 	struct sde_connector_state *c_state;
 	struct msm_display_mode *msm_mode;
+	struct sde_crtc *sde_crtc;
 	int i = 0, ret;
 	int num_lm, num_intf, num_pp_per_intf;
 
@@ -2518,6 +2520,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 
 	sde_enc->crtc = drm_enc->crtc;
+	sde_crtc = to_sde_crtc(drm_enc->crtc);
 	sde_crtc_set_qos_dirty(drm_enc->crtc);
 
 	/* get and store the mode_info */
@@ -2577,7 +2580,8 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 			phys->hw_pp = sde_enc->hw_pp[i * num_pp_per_intf];
 			phys->connector = conn;
 			if (phys->ops.mode_set)
-				phys->ops.mode_set(phys, mode, adj_mode);
+				phys->ops.mode_set(phys, mode, adj_mode,
+				&sde_crtc->reinit_crtc_mixers);
 		}
 	}
 
