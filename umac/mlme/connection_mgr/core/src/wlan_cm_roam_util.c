@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +31,19 @@ void cm_free_roam_req_mem(struct cm_roam_req *roam_req)
 	if (roam_req->candidate_list)
 		wlan_scan_purge_results(roam_req->candidate_list);
 }
+
+#ifndef CONN_MGR_ADV_FEATURE
+static void cm_fill_roam_vdev_crypto_params(struct cnx_mgr *cm_ctx,
+					    struct wlan_cm_connect_req *req)
+{
+	cm_fill_vdev_crypto_params(cm_ctx, req);
+}
+#else
+static void cm_fill_roam_vdev_crypto_params(struct cnx_mgr *cm_ctx,
+					    struct wlan_cm_connect_req *req)
+{
+}
+#endif /* CONN_MGR_ADV_FEATURE */
 
 QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 					 struct cm_connect_req *connect_req,
@@ -96,6 +110,7 @@ QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 				 &req->bssid_hint);
 
 	qdf_copy_macaddr(&req_ptr->roam_req.req.prev_bssid, &req->prev_bssid);
+	cm_fill_roam_vdev_crypto_params(cm_ctx, &connect_req->req);
 	req_ptr->roam_req.req.chan_freq = freq;
 	req_ptr->roam_req.req.source = CM_ROAMING_HOST;
 

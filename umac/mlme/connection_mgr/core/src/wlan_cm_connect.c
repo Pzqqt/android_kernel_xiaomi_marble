@@ -1697,8 +1697,8 @@ bool cm_connect_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
 	return cm_check_cmid_match_list_head(cm_ctx, &resp->cm_id);
 }
 
-static void cm_fill_vdev_crypto_params(struct cnx_mgr *cm_ctx,
-				       struct wlan_cm_connect_req *req)
+void cm_fill_vdev_crypto_params(struct cnx_mgr *cm_ctx,
+				struct wlan_cm_connect_req *req)
 {
 	/* fill vdev crypto from the connect req */
 	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_AUTH_MODE,
