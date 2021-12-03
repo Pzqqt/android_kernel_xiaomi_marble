@@ -98,21 +98,18 @@ static void dp_catalog_aux_setup_v420(struct dp_catalog_aux *aux,
 	}
 
 	catalog = dp_catalog_get_priv_v420(aux);
-	phy_version = dp_catalog_get_dp_phy_version(catalog->dpc);
-	if (phy_version >= 60000000) {
-		io_data = catalog->io->dp_phy;
-		dp_write(DP_PHY_PD_CTL, 0x79);
-		wmb(); /* make sure PD programming happened */
 
+	io_data = catalog->io->dp_phy;
+	dp_write(DP_PHY_PD_CTL, 0x67);
+	wmb(); /* make sure PD programming happened */
+
+	phy_version = dp_catalog_get_dp_phy_version(catalog->dpc);
+	if (phy_version >= 0x60000000) {
 		/* Turn on BIAS current for PHY/PLL */
 		io_data = catalog->io->dp_pll;
 		dp_write(QSERDES_COM_BIAS_EN_CLKBUFLR_EN_V600, 0x1D);
 		wmb(); /* make sure BIAS programming happened */
 	} else {
-		io_data = catalog->io->dp_phy;
-		dp_write(DP_PHY_PD_CTL, 0x67);
-		wmb(); /* make sure PD programming happened */
-
 		/* Turn on BIAS current for PHY/PLL */
 		io_data = catalog->io->dp_pll;
 		dp_write(QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x17);
@@ -146,7 +143,7 @@ static void dp_catalog_aux_clear_hw_int_v420(struct dp_catalog_aux *aux)
 	catalog = dp_catalog_get_priv_v420(aux);
 	phy_version = dp_catalog_get_dp_phy_version(catalog->dpc);
 	io_data = catalog->io->dp_phy;
-	if (phy_version >= 60000000)
+	if (phy_version >= 0x60000000)
 		data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V600);
 	else
 		data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V420);
