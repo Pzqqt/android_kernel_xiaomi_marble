@@ -1741,6 +1741,17 @@ int cancel_response_work(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+int cancel_response_work_sync(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: Invalid arguments\n", __func__);
+		return -EINVAL;
+	}
+	cancel_delayed_work_sync(&inst->response_work);
+
+	return 0;
+}
+
 static int handle_session_response(struct msm_vidc_core *core,
 	struct hfi_header *hdr)
 {
