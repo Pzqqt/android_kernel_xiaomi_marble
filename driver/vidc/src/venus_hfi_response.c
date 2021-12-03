@@ -1253,6 +1253,14 @@ static int handle_session_resume(struct msm_vidc_inst *inst,
 	return 0;
 }
 
+static int handle_session_stability(struct msm_vidc_inst *inst,
+	struct hfi_packet *pkt)
+{
+	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
+		i_vpr_h(inst, "%s: successful\n", __func__);
+	return 0;
+}
+
 static int handle_session_command(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -1268,6 +1276,7 @@ static int handle_session_command(struct msm_vidc_inst *inst,
 		{HFI_CMD_SUBSCRIBE_MODE,    handle_session_subscribe_mode     },
 		{HFI_CMD_DELIVERY_MODE,     handle_session_delivery_mode      },
 		{HFI_CMD_RESUME,            handle_session_resume             },
+		{HFI_CMD_STABILITY,         handle_session_stability          },
 	};
 
 	/* handle session pkt */

@@ -541,6 +541,11 @@ enum msm_vidc_ssr_trigger_type {
 	SSR_HW_WDOG_IRQ,
 };
 
+enum msm_vidc_stability_trigger_type {
+	STABILITY_VCODEC_HUNG = 1,
+	STABILITY_ENC_BUFFER_FULL,
+};
+
 enum msm_vidc_cache_op {
 	MSM_VIDC_CACHE_CLEAN,
 	MSM_VIDC_CACHE_INVALIDATE,
@@ -852,6 +857,12 @@ struct msm_vidc_ssr {
 	enum msm_vidc_ssr_trigger_type     ssr_type;
 	u32                                sub_client_id;
 	u32                                test_addr;
+};
+
+struct msm_vidc_stability {
+	enum msm_vidc_stability_trigger_type     stability_type;
+	u32                                      sub_client_id;
+	u32                                      value;
 };
 
 struct msm_vidc_sfr {
