@@ -1029,6 +1029,10 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
 						0x20, 0x00);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+						0x40, 0x40);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+						0x40, 0x00);
 		snd_soc_component_update_bits(component,
 			dec_cfg_reg, 0x06, 0x00);
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,

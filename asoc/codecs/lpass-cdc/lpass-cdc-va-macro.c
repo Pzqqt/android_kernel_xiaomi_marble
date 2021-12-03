@@ -1329,6 +1329,10 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
 					0x20, 0x00);
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					0x40, 0x40);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					0x40, 0x00);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
 					0x10, 0x00);
 		break;
 	}
