@@ -25,12 +25,39 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_twt_public_structs.h>
 #include <wlan_twt_tgt_if_tx_api.h>
+#include <wlan_lmac_if_def.h>
+#include <wlan_twt_api.h>
 
 QDF_STATUS
 tgt_twt_enable_req_send(struct wlan_objmgr_psoc *psoc,
 			struct twt_enable_param *req)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_twt_tx_ops *tx_ops;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		twt_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!req) {
+		twt_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tx_ops = wlan_twt_get_tx_ops(psoc);
+	if (!tx_ops || !tx_ops->enable_req) {
+		twt_err("twt enable_req tx_ops is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	status = tx_ops->enable_req(psoc, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("tx_ops enable_req failed (status=%d)", status);
+		return status;
+	}
+
+	return status;
 }
 
 QDF_STATUS

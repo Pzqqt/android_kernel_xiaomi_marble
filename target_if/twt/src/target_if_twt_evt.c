@@ -29,7 +29,48 @@ int
 target_if_twt_en_complete_event_handler(ol_scn_t scn,
 					uint8_t *data, uint32_t datalen)
 {
-	return 0;
+	wmi_unified_t wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_twt_rx_ops *rx_ops;
+	struct twt_enable_complete_event_param event;
+	QDF_STATUS status;
+
+	TARGET_IF_ENTER();
+
+	if (!scn || !data) {
+		target_if_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	rx_ops = wlan_twt_get_rx_ops(psoc);
+	if (!rx_ops || !rx_ops->twt_enable_comp_cb) {
+		target_if_err("TWT rx_ops is NULL");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_twt_enable_comp_event(wmi_handle, data, &event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("TWT enable extract event failed(status=%d)",
+				status);
+		goto end;
+	}
+
+	status = rx_ops->twt_enable_comp_cb(psoc, &event);
+
+end:
+	return qdf_status_to_os_return(status);
 }
 
 int

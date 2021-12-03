@@ -17,11 +17,13 @@
 /**
  *  DOC: wlan_twt_common.c
  */
+#include "include/wlan_mlme_cmn.h"
 #include "wlan_twt_common.h"
 #include "wlan_twt_priv.h"
 #include <wlan_twt_public_structs.h>
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_twt_tgt_if_tx_api.h>
+#include "twt/core/src/wlan_twt_cfg.h"
 
 QDF_STATUS
 wlan_twt_tgt_caps_get_requestor(struct wlan_objmgr_psoc *psoc, bool *val)
@@ -263,7 +265,45 @@ wlan_twt_requestor_enable(struct wlan_objmgr_psoc *psoc,
 			  struct twt_enable_param *req,
 			  void *context)
 {
-	return QDF_STATUS_SUCCESS;
+	struct twt_psoc_priv_obj *twt_psoc;
+	bool requestor_en = false, twt_bcast_requestor = false;
+
+	if (!psoc) {
+		twt_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							 WLAN_UMAC_COMP_TWT);
+	if (!twt_psoc) {
+		twt_err("null twt psoc priv obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_twt_cfg_get_requestor(psoc, &requestor_en);
+	if (!requestor_en) {
+		twt_warn("twt requestor ini is not enabled");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc->enable_context.twt_role = TWT_ROLE_REQUESTOR;
+	twt_psoc->enable_context.context = context;
+
+	wlan_twt_cfg_get_congestion_timeout(psoc, &req->sta_cong_timer_ms);
+	wlan_twt_cfg_get_bcast_requestor(psoc, &twt_bcast_requestor);
+	req->b_twt_enable = twt_bcast_requestor;
+	req->twt_role = TWT_ROLE_REQUESTOR;
+	if (twt_bcast_requestor)
+		req->twt_oper = TWT_OPERATION_BROADCAST;
+	else
+		req->twt_oper = TWT_OPERATION_INDIVIDUAL;
+
+	twt_debug("TWT req enable: pdev_id:%d cong:%d bcast:%d",
+		  req->pdev_id, req->sta_cong_timer_ms, req->b_twt_enable);
+	twt_debug("TWT req enable: role:%d ext:%d oper:%d",
+		  req->twt_role, req->ext_conf_present, req->twt_oper);
+
+	return tgt_twt_enable_req_send(psoc, req);
 }
 
 QDF_STATUS
@@ -271,14 +311,88 @@ wlan_twt_responder_enable(struct wlan_objmgr_psoc *psoc,
 			  struct twt_enable_param *req,
 			  void *context)
 {
-	return QDF_STATUS_SUCCESS;
+	struct twt_psoc_priv_obj *twt_psoc;
+	bool responder_en = false, twt_bcast_responder = false;
+
+	if (!psoc) {
+		twt_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							 WLAN_UMAC_COMP_TWT);
+	if (!twt_psoc) {
+		twt_err("null twt psoc priv obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_twt_cfg_get_responder(psoc, &responder_en);
+	if (!responder_en) {
+		twt_warn("twt responder ini is not enabled");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc->enable_context.twt_role = TWT_ROLE_RESPONDER;
+	twt_psoc->enable_context.context = context;
+
+	wlan_twt_cfg_get_bcast_responder(psoc, &twt_bcast_responder);
+	req->b_twt_enable = twt_bcast_responder;
+	req->twt_role = TWT_ROLE_RESPONDER;
+	if (twt_bcast_responder)
+		req->twt_oper = TWT_OPERATION_BROADCAST;
+	else
+		req->twt_oper = TWT_OPERATION_INDIVIDUAL;
+
+	twt_debug("TWT res enable: pdev_id:%d bcast:%d",
+		  req->pdev_id, req->b_twt_enable);
+	twt_debug("TWT res enable: role:%d ext:%d oper:%d",
+		  req->twt_role, req->ext_conf_present, req->twt_oper);
+
+	return tgt_twt_enable_req_send(psoc, req);
 }
 
 QDF_STATUS
 wlan_twt_enable_event_handler(struct wlan_objmgr_psoc *psoc,
 			      struct twt_enable_complete_event_param *event)
 {
-	return QDF_STATUS_SUCCESS;
+	struct twt_psoc_priv_obj *twt_psoc;
+	struct twt_en_dis_context *twt_context;
+
+	if (!psoc) {
+		twt_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							 WLAN_UMAC_COMP_TWT);
+	if (!twt_psoc) {
+		twt_err("null twt psoc priv obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_context = &twt_psoc->enable_context;
+
+	twt_debug("pdev_id:%d status:%d twt_role:%d",
+		  event->pdev_id, event->status, twt_context->twt_role);
+	switch (event->status) {
+	case HOST_TWT_ENABLE_STATUS_OK:
+	case HOST_TWT_ENABLE_STATUS_ALREADY_ENABLED:
+		if (twt_context->twt_role == TWT_ROLE_REQUESTOR)
+			wlan_twt_cfg_set_requestor_flag(psoc, true);
+		else if (twt_context->twt_role == TWT_ROLE_RESPONDER)
+			wlan_twt_cfg_set_responder_flag(psoc, true);
+		else
+			twt_err("Invalid role:%d", twt_context->twt_role);
+
+		break;
+
+	default:
+		twt_err("twt enable status:%d", event->status);
+		break;
+	}
+
+	return mlme_twt_osif_enable_complete_ind(psoc, event,
+						 twt_context->context);
 }
 
 QDF_STATUS

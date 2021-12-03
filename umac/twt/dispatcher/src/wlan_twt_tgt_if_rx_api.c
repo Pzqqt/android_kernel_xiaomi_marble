@@ -31,7 +31,7 @@ static QDF_STATUS
 tgt_twt_enable_complete_resp_handler(struct wlan_objmgr_psoc *psoc,
 			     struct twt_enable_complete_event_param *event)
 {
-	return QDF_STATUS_SUCCESS;
+	return wlan_twt_enable_event_handler(psoc, event);
 }
 
 static QDF_STATUS
