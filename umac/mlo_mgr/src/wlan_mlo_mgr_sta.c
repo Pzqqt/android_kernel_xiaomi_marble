@@ -154,6 +154,11 @@ mlo_send_link_disconnect(struct wlan_mlo_dev_context *mlo_dev_ctx,
 			 struct qdf_mac_addr *bssid)
 {
 	uint8_t i = 0;
+	struct wlan_objmgr_vdev *assoc_vdev =
+			mlo_get_assoc_link_vdev(mlo_dev_ctx);
+
+	if (!assoc_vdev)
+		return QDF_STATUS_E_FAILURE;
 
 	for (i =  0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
 		if (!mlo_dev_ctx->wlan_vdev_list[i])
@@ -166,7 +171,7 @@ mlo_send_link_disconnect(struct wlan_mlo_dev_context *mlo_dev_ctx,
 					   NULL);
 	}
 
-	wlan_cm_disconnect(mlo_get_assoc_link_vdev(mlo_dev_ctx),
+	wlan_cm_disconnect(assoc_vdev,
 			   source, reason_code, NULL);
 	return QDF_STATUS_SUCCESS;
 }
@@ -748,6 +753,11 @@ mlo_send_link_disconnect_sync(struct wlan_mlo_dev_context *mlo_dev_ctx,
 			      struct qdf_mac_addr *bssid)
 {
 	uint8_t i = 0;
+	struct wlan_objmgr_vdev *assoc_vdev =
+			mlo_get_assoc_link_vdev(mlo_dev_ctx);
+
+	if (!assoc_vdev)
+		return QDF_STATUS_E_FAILURE;
 
 	for (i =  0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
 		if (!mlo_dev_ctx->wlan_vdev_list[i])
@@ -759,7 +769,7 @@ mlo_send_link_disconnect_sync(struct wlan_mlo_dev_context *mlo_dev_ctx,
 						CM_MLO_DISCONNECT, reason_code);
 	}
 
-	wlan_cm_disconnect_sync(mlo_get_assoc_link_vdev(mlo_dev_ctx),
+	wlan_cm_disconnect_sync(assoc_vdev,
 				source, reason_code);
 	return QDF_STATUS_SUCCESS;
 }
