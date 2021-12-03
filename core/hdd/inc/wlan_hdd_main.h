@@ -1571,7 +1571,7 @@ struct hdd_adapter {
 #ifdef WLAN_FEATURE_PKT_CAPTURE
 	struct hdd_adapter *mon_adapter;
 #endif
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 	struct hdd_mlo_adapter_info mlo_adapter_info;
 #endif
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
@@ -2307,7 +2307,7 @@ struct hdd_context {
 	bool dump_in_progress;
 	uint64_t bw_vote_time;
 	struct hdd_dual_sta_policy dual_sta_policy;
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 	struct hdd_mld_mac_info mld_mac_info;
 #endif
 #ifdef THERMAL_STATS_SUPPORT

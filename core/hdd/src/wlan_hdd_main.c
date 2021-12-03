@@ -5240,7 +5240,7 @@ void hdd_update_dynamic_mac(struct hdd_context *hdd_ctx,
 	hdd_exit();
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 static void
 hdd_set_mld_address(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 		    struct qdf_mac_addr *mac_addr)
@@ -6479,7 +6479,7 @@ bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 static void
 hdd_populate_vdev_create_params(struct hdd_adapter *adapter,
 				struct wlan_vdev_create_params *vdev_params)
@@ -15387,7 +15387,7 @@ destroy_sync:
 	return status;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 static
 uint8_t *wlan_hdd_get_mlo_intf_addr(struct hdd_context *hdd_ctx,
 				    enum QDF_OPMODE interface_type)
@@ -16718,7 +16718,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 	mutex_unlock(&hdd_ctx->sap_lock);
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 /**
  * wlan_hdd_mlo_sap_reinit() - handle mlo scenario for ssr
  * @hdd_ctx: Pointer to hdd context

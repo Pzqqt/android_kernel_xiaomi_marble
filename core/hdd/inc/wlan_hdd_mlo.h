@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +39,7 @@ struct hdd_adapter_create_param {
 		 unused:29;
 };
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 #define hdd_adapter_is_link_adapter(x) ((x)->mlo_adapter_info.is_link_adapter)
 #define hdd_adapter_is_ml_adapter(x)   ((x)->mlo_adapter_info.is_ml_adapter)
 #define hdd_adapter_is_associated_with_ml_adapter(x) \
@@ -49,7 +50,7 @@ struct hdd_adapter_create_param {
 #define hdd_adapter_is_associated_with_ml_adapter(x) (0)
 #endif
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 /**
  * struct hdd_mld_mac - hdd structure to hold mld address
  * @mld_mac: mld addr

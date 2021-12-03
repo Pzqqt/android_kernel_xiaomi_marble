@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +26,7 @@
 #include "wlan_hdd_mlo.h"
 #include "osif_vdev_sync.h"
 
+#if defined(CFG80211_11BE_BASIC)
 void hdd_update_mld_mac_addr(struct hdd_context *hdd_ctx,
 			     struct qdf_mac_addr hw_macaddr)
 {
@@ -347,4 +349,5 @@ int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
 	}
 	return ret;
 }
+#endif
 #endif
