@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -521,7 +522,7 @@ hal_tx_populate_bank_register(hal_soc_handle_t hal_soc_hdl,
 			HWIO_TCL_R0_SW_CONFIG_BANK_n_VDEV_ID_CHECK_EN_SHFT);
 	reg_val |= (config->pmac_id <<
 			HWIO_TCL_R0_SW_CONFIG_BANK_n_PMAC_ID_SHFT);
-	reg_val |= (config->mcast_pkt_ctrl <<
+	reg_val |= (config->dscp_tid_map_id <<
 			HWIO_TCL_R0_SW_CONFIG_BANK_n_DSCP_TID_TABLE_NUM_SHFT);
 
 	HAL_REG_WRITE(hal_soc, reg_addr, reg_val);
