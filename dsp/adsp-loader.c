@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2014, 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -137,6 +138,20 @@ load_adsp:
 	{
 		adsp_state = spf_core_is_apm_ready();
 		if (adsp_state == SPF_SUBSYS_DOWN) {
+			if (!priv->adsp_fw_name) {
+				dev_info(&pdev->dev, "%s: Load default ADSP\n",
+					__func__);
+			} else {
+				dev_info(&pdev->dev, "%s: Load ADSP with fw name %s\n",
+					__func__, priv->adsp_fw_name);
+				rc = rproc_set_firmware(priv->pil_h,
+					priv->adsp_fw_name);
+				if (rc) {
+					dev_err(&pdev->dev, "%s: rproc set firmware failed,\n",
+						__func__);
+					goto fail;
+				}
+			}
 			rc = rproc_boot(priv->pil_h);
 			if (rc) {
 				dev_err(&pdev->dev, "%s: pil get failed,\n",
@@ -144,8 +159,8 @@ load_adsp:
 				goto fail;
 			}
 		} else if (adsp_state == SPF_SUBSYS_LOADED) {
-		dev_dbg(&pdev->dev,
-			"%s: ADSP state = %x\n", __func__, adsp_state);
+			dev_dbg(&pdev->dev,
+				"%s: ADSP state = %x\n", __func__, adsp_state);
 		}
 
 		dev_dbg(&pdev->dev, "%s: Q6/ADSP image is loaded\n", __func__);
@@ -409,6 +424,8 @@ static int adsp_loader_probe(struct platform_device *pdev)
 		goto wqueue;
 	}
 	memcpy(&adsp_var_idx, buf, len);
+	dev_info(&pdev->dev, "%s: adsp variant fuse reg value: 0x%x\n",
+		__func__, adsp_var_idx);
 	kfree(buf);
 
 	/* Get count of fw images */
