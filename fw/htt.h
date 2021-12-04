@@ -223,9 +223,10 @@
  * 3.98 Add htt_tx_tcl_metadata_v2 def.
  * 3.99 Add HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ, _UNMAP_REQ, _MAP_REPORT_REQ and
  *      HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF defs.
+ * 3.100 Add htt_tx_wbm_completion_v3 def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 99
+#define HTT_CURRENT_VERSION_MINOR 100
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -2833,6 +2834,88 @@ PREPACK struct htt_tx_wbm_completion_v2 {
          HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_EXP_FRAME, _val); \
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S)); \
      } while (0)
+
+/**
+ * @brief HTT TX WBM Completion from firmware to host (V3)
+ * @details
+ *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
+ *  (WBM) offload HW.
+ *  This structure is passed from firmware to host overlayed on wbm_release_ring
+ *  For software based completions, release_source_module will
+ *  be set to WIFIRELEASE_SOURCE_FW_E. Host SW is expected to inspect using
+ *  struct wbm_release_ring and then switch to this after looking at
+ *  release_source_module.
+ *  Due to overlap with WBM block, htt_tx_wbm_completion_v3 will be used
+ *  by new generations of targets.
+ */
+PREPACK struct htt_tx_wbm_completion_v3 {
+    A_UINT32
+        used_by_hw0;              /* Refer to struct wbm_release_ring */
+    A_UINT32
+        used_by_hw1;              /* Refer to struct wbm_release_ring */
+    A_UINT32
+        used_by_hw2:           13, /* Refer to struct wbm_release_ring */
+        tx_status:             4,  /* Takes enum values of htt_tx_fw2wbm_tx_status_t */
+        used_by_hw3:           15;
+    A_UINT32
+        reinject_reason:       4,  /* Takes enum values of htt_tx_fw2wbm_reinject_reason_t */
+        exception_frame:       1,
+        rsvd0:                 27; /* For future use */
+    A_UINT32
+        data0:                 32; /* data0,1 and 2 changes based on tx_status type
+                                    * if HTT_TX_FW2WBM_TX_STATUS_OK or HTT_TX_FW2WBM_TX_STATUS_DROP
+                                    * or HTT_TX_FW2WBM_TX_STATUS_TTL, struct htt_tx_wbm_transmit_status will be used.
+                                    * if HTT_TX_FW2WBM_TX_STATUS_REINJECT, struct htt_tx_wbm_reinject_status will be used.
+                                    * if HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY, struct htt_tx_wbm_mec_addr_notify will be used.
+                                    */
+    A_UINT32
+        data1:                 32;
+    A_UINT32
+        data2:                 32;
+    A_UINT32
+        rsvd1:                 20,
+        used_by_hw4:           12; /* Refer to struct wbm_release_ring */
+} POSTPACK;
+
+
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_M                 0x0001E000
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_S                 13
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_M           0x0000000F
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_S           0
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_M                 0x00000010
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S                 4
+
+
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V3_TX_STATUS_M) >> \
+    HTT_TX_WBM_COMPLETION_V3_TX_STATUS_S)
+
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_TX_STATUS, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_TX_STATUS_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_M) >> \
+    HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_S)
+
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_M) >> \
+    HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S)
+
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_EXP_FRAME, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S)); \
+     } while (0)
+
 
 typedef enum {
     TX_FRAME_TYPE_UNDEFINED = 0,
