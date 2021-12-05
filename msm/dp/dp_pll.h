@@ -34,6 +34,7 @@ enum dp_pll_revision {
 	DP_PLL_UNKNOWN,
 	DP_PLL_5NM_V1,
 	DP_PLL_5NM_V2,
+	DP_PLL_4NM_V1,
 };
 
 static inline const char *dp_pll_get_revision(enum dp_pll_revision rev)
@@ -42,6 +43,7 @@ static inline const char *dp_pll_get_revision(enum dp_pll_revision rev)
 	case DP_PLL_UNKNOWN:	return "DP_PLL_UNKNOWN";
 	case DP_PLL_5NM_V1:	return "DP_PLL_5NM_V1";
 	case DP_PLL_5NM_V2:	return "DP_PLL_5NM_V2";
+	case DP_PLL_4NM_V1:	return "DP_PLL_4NM_V1";
 	default:		return "???";
 	}
 }
@@ -107,7 +109,9 @@ struct dp_pll_db {
 	u32 lock_cmp_en;
 	u32 ssc_step_size1_mode0;
 	u32 ssc_step_size2_mode0;
-
+	u32 ssc_per1;
+	u32 cmp_code1_mode0;
+	u32 cmp_code2_mode0;
 	/* PHY vco divider */
 	u32 phy_vco_div;
 };
@@ -124,6 +128,8 @@ static inline bool is_gdsc_disabled(struct dp_pll *pll)
 
 int dp_pll_clock_register_5nm(struct dp_pll *pll);
 void dp_pll_clock_unregister_5nm(struct dp_pll *pll);
+int dp_pll_clock_register_4nm(struct dp_pll *pll);
+void dp_pll_clock_unregister_4nm(struct dp_pll *pll);
 
 struct dp_pll_in {
 	struct platform_device *pdev;
