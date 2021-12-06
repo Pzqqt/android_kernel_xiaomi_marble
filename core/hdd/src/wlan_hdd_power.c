@@ -2998,7 +2998,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 
 	status = ucfg_mlme_set_current_tx_power_level(hdd_ctx->psoc, dbm);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("sme_cfg_set_int failed for tx power %hu, %d",
+		hdd_err("sme_cfg_set_int failed for tx power %d, %d",
 			dbm, status);
 		return -EIO;
 	}

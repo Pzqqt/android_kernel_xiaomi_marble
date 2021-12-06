@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -780,7 +781,7 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 		/* Vht Disable from ini in 2.4 GHz */
 		vhtCap->present = 0;
 	}
-	pe_debug("VHT present: %hu, Chan Width: %hu",
+	pe_debug("VHT present: %hu, Chan Width: %u",
 		 vhtCap->present, vhtCap->supportedChannelWidthSet);
 }
 
