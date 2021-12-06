@@ -37,6 +37,9 @@
 #include <wlan_vdev_mgr_ucfg_api.h>
 #include <qdf_module.h>
 #include <cdp_txrx_ctrl.h>
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_ap.h>
+#endif
 
 #ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
 /**
@@ -242,6 +245,51 @@ vdev_mgr_start_param_update_mlo_mcast(struct wlan_objmgr_vdev *vdev,
 #else
 #define vdev_mgr_start_param_update_mlo_mcast(vdev, param)
 #endif
+
+static void
+vdev_mgr_start_param_update_mlo_partner(struct wlan_objmgr_vdev *vdev,
+					struct vdev_start_params *param)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct mlo_vdev_start_partner_links *mlo_ptr = &param->mlo_partner;
+	struct wlan_objmgr_vdev *vdev_list[WLAN_UMAC_MLO_MAX_VDEVS] = {NULL};
+	uint16_t num_links = 0;
+	uint8_t i = 0, p_idx = 0;
+
+	mlo_ap_get_vdev_list(vdev, &num_links, vdev_list);
+	if (!num_links) {
+		mlme_err("No VDEVs under AP-MLD");
+		return;
+	}
+
+	if (num_links > QDF_ARRAY_SIZE(vdev_list)) {
+		mlme_err("Invalid number of VDEVs under AP-MLD num_links:%u",
+			 num_links);
+		for (i = 0; i < QDF_ARRAY_SIZE(vdev_list); i++)
+			mlo_release_vdev_ref(vdev_list[i]);
+		return;
+	}
+
+	for (i = 0; i < num_links; i++) {
+		if (vdev_list[i] == vdev) {
+			mlo_release_vdev_ref(vdev_list[i]);
+			continue;
+		}
+
+		pdev = wlan_vdev_get_pdev(vdev_list[i]);
+		mlo_ptr->partner_info[p_idx].vdev_id =
+			wlan_vdev_get_id(vdev_list[i]);
+		mlo_ptr->partner_info[p_idx].hw_mld_link_id =
+			wlan_mlo_get_pdev_hw_link_id(pdev);
+		qdf_mem_copy(mlo_ptr->partner_info[p_idx].mac_addr,
+			     wlan_vdev_mlme_get_macaddr(vdev_list[i]),
+			     QDF_MAC_ADDR_SIZE);
+		mlo_release_vdev_ref(vdev_list[i]);
+		p_idx++;
+	}
+	mlo_ptr->num_links = p_idx;
+}
+
 static void
 vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *mlme_obj,
 				struct vdev_start_params *param)
@@ -259,10 +307,14 @@ vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *mlme_obj,
 
 	param->mlo_flags.mlo_enabled = 1;
 
-	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE &&
+	    !wlan_vdev_mlme_is_mlo_link_vdev(vdev))
 		param->mlo_flags.mlo_assoc_link = 1;
 
 	vdev_mgr_start_param_update_mlo_mcast(vdev, param);
+
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
+		vdev_mgr_start_param_update_mlo_partner(vdev, param);
 }
 #else
 static void
