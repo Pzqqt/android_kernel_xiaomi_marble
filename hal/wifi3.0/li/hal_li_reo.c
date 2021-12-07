@@ -42,7 +42,7 @@ void hal_reo_qdesc_setup_li(hal_soc_handle_t hal_soc_hdl, int tid,
 			    uint32_t ba_window_size,
 			    uint32_t start_seq, void *hw_qdesc_vaddr,
 			    qdf_dma_addr_t hw_qdesc_paddr,
-			    int pn_type)
+			    int pn_type, uint8_t vdev_stats_id)
 {
 	uint32_t *reo_queue_desc = (uint32_t *)hw_qdesc_vaddr;
 	uint32_t *reo_queue_ext_desc;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +35,8 @@
 #define WLAN_MLME_VDEV_SLOT_TIME_LONG   0x1
 /** slot time short */
 #define WLAN_MLME_VDEV_SLOT_TIME_SHORT  0x2
+
+#define WLAN_MU_SNIF_MAX_AIDS 4
 
 /**
  * enum MLME_bcn_tx_rate_code - beacon tx rate code
@@ -511,11 +514,13 @@ struct vdev_scan_nac_rssi_params {
  * @mlo_enabled: indicate is MLO enabled
  * @mlo_assoc_link: indicate is the link used to initialize
  *                  the association of mlo connection
+ * @mlo_mcast_vdev: MLO cast vdev
  */
 struct mlo_vdev_start_flags {
 	uint32_t mlo_enabled:1,
 		 mlo_assoc_link:1,
-		 rsvd:30;
+		 mlo_mcast_vdev:1,
+		 rsvd:29;
 };
 
 /**
@@ -609,8 +614,27 @@ struct vdev_set_params {
 };
 
 /**
+ * struct vdev_set_mu_snif_params - vdev set mu sniffer cmd parameter
+ * @vdev_id: vdev id
+ * @mode: mu snif mode
+ * @num_user: max number of user
+ * @num_aid: number of set sta aid
+ * @aid: sta aids
+ */
+
+struct vdev_set_mu_snif_param {
+	uint32_t vdev_id;
+	uint32_t mode;
+	uint32_t num_user;
+	uint32_t num_aid;
+	uint32_t aid[WLAN_MU_SNIF_MAX_AIDS];
+};
+
+/**
  * struct vdev_create_params - vdev create cmd parameter
  * @vdev_id: interface id
+ * @vdev_stats_id_valid: flag to indicate valid stats id
+ * @vdev_stats_id: stats_id for stats collection
  * @type: interface type
  * @subtype: interface subtype
  * @nss_2g: NSS for 2G
@@ -622,6 +646,8 @@ struct vdev_set_params {
  */
 struct vdev_create_params {
 	uint8_t vdev_id;
+	bool vdev_stats_id_valid;
+	uint8_t vdev_stats_id;
 	uint32_t type;
 	uint32_t subtype;
 	uint8_t nss_2g;
@@ -704,4 +730,37 @@ struct muedca_params {
 	uint8_t muedca_timer[AC_MAX];       /* MU EDCA timer value */
 };
 
+/* Total 10 BSSIDs can be packed in a single measurement request buffer */
+#define RTT_MAX_BSSIDS_TO_SCAN  10
+
+/**
+ * struct rtt_bssid_info - Store the parsed macaddr and BW from the measurement
+ *                         request buffer.
+ * @macaddr: Destination macaddr to scan
+ * @bw: packet bandwidth
+ */
+struct rtt_bssid_info {
+	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t bw;
+};
+
+/**
+ * struct rtt_channel_info - Store the parsed channel info from LOWI measurement
+ *                           request buffer.
+ * @freq: Channel frequency
+ * @cfreq1: Center frequency1
+ * @cfreq2: Center frequency2
+ * @phymode: Phymode
+ * @num_bssids: Number of bssids present in the measurement request buffer
+ * @bssid_info: Array to store BW and macaddr present in the measurement request
+ *              buffer.
+ */
+struct rtt_channel_info {
+	uint16_t freq;
+	uint16_t cfreq1;
+	uint16_t cfreq2;
+	uint16_t phymode;
+	uint16_t num_bssids;
+	struct rtt_bssid_info bssid_info[RTT_MAX_BSSIDS_TO_SCAN];
+};
 #endif /* __WLAN_VDEV_MGR_TX_OPS_DEFS_H__ */

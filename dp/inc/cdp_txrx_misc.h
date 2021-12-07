@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -938,5 +939,25 @@ cdp_display_txrx_hw_info(ol_txrx_soc_handle soc)
 
 	if (soc->ops->misc_ops->display_txrx_hw_info)
 		return soc->ops->misc_ops->display_txrx_hw_info(soc);
+}
+
+/**
+ * cdp_get_tx_rings_grp_bitmap() - Get tx rings grp bitmap
+ * @soc: soc handle
+ *
+ * Return: tx rings bitmap
+ */
+static inline uint32_t
+cdp_get_tx_rings_grp_bitmap(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		dp_cdp_debug("Invalid Instance:");
+		return 0;
+	}
+
+	if (soc->ops->misc_ops->get_tx_rings_grp_bitmap)
+		return soc->ops->misc_ops->get_tx_rings_grp_bitmap(soc);
+
+	return 0;
 }
 #endif /* _CDP_TXRX_MISC_H_ */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,6 +64,12 @@
 #define OL_TXRX_INVALID_PDEV_ID 0xff
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
+
+/* Max vdev_stats_id(48) is as per the max vdevs supported by HW */
+#define CDP_MAX_VDEV_STATS_ID     0x30
+/* Invalid vdev_stats_id */
+#define CDP_INVALID_VDEV_STATS_ID 0xFF
+
 /* Options for Dump Statistics */
 #define CDP_HDD_STATS               0
 #define CDP_TXRX_PATH_STATS         1
@@ -108,7 +115,11 @@
 #define CDP_DATA_TID_MAX 8
 #define CDP_DATA_NON_QOS_TID 16
 
+#ifdef WLAN_FEATURE_11BE
+#define CDP_NUM_SA_BW 5
+#else
 #define CDP_NUM_SA_BW 4
+#endif
 #define CDP_PERCENT_MACRO 100
 #define CDP_NUM_KB_IN_MB 1000
 /*
@@ -402,12 +413,14 @@ enum cdp_peer_type {
  * @mld_peer_mac: mld peer mac address pointer
  * @is_assoc_link: set true for first MLO link peer association
  * @is_primary_link: for MCC, the first link will always be primary link,
-		     for WIN,  other link might be primary link.
+ *		     for WIN,  other link might be primary link.
+ * @primary_umac_id: primary umac_id
  */
 struct cdp_peer_setup_info {
 	uint8_t *mld_peer_mac;
 	uint8_t is_assoc_link:1,
 		is_primary_link:1;
+	uint8_t primary_umac_id;
 };
 
 /**
@@ -680,6 +693,7 @@ enum wlan_op_subtype {
  * struct cdp_vdev_info - Vdev information
  * @vdev_mac_addr: mac address of the vdev
  * @vdev_id: ID of the vdev
+ * @vdev_stats_id: Stats ID of the vdev
  * @op_mode: Operation mode of the vdev
  * @subtype: subtype of the vdev
  * @mld_mac_addr: MLD mac addr of the current vdev.
@@ -687,6 +701,7 @@ enum wlan_op_subtype {
 struct cdp_vdev_info {
 	uint8_t *vdev_mac_addr;
 	uint8_t vdev_id;
+	uint8_t vdev_stats_id;
 	enum wlan_op_mode op_mode;
 	enum wlan_op_subtype subtype;
 #ifdef WLAN_FEATURE_11BE_MLO
@@ -1228,6 +1243,7 @@ enum cdp_pdev_param_type {
  * @cdp_vdev_param_peer_authorize: set peer authorize
  * @cdp_vdev_param_peer_tid_latency_enable: set peer tid latency enable flag
  * @cdp_vdev_param_mesh_tid: config tatency tid on vdev
+ * @cdp_vdev_param_dscp_tid_map_id: set dscp to tid map id
  *
  * @cdp_pdev_param_dbg_snf: Enable debug sniffer feature
  * @cdp_pdev_param_bpr_enable: Enable bcast probe feature
@@ -1261,8 +1277,8 @@ enum cdp_pdev_param_type {
  *
  * @cdp_psoc_param_en_rate_stats: set rate stats enable/disable
  * @cdp_psoc_param_en_nss_cfg: set nss cfg
- *
- * @cdp_enable_tx_checksum: Flag to specify if HW Tx checksum enabled
+ * @cdp_ipa_enabled : set ipa mode
+ * @cdp_psoc_param_vdev_stats_hw_offload: Configure HW vdev stats offload
  */
 typedef union cdp_config_param_t {
 	/* peer params */
@@ -1298,6 +1314,7 @@ typedef union cdp_config_param_t {
 	uint8_t cdp_vdev_param_peer_authorize;
 	uint8_t cdp_vdev_param_peer_tid_latency_enable;
 	uint8_t cdp_vdev_param_mesh_tid;
+	uint8_t cdp_vdev_param_dscp_tid_map_id;
 
 	/* pdev params */
 	bool cdp_pdev_param_cptr_latcy;
@@ -1337,9 +1354,9 @@ typedef union cdp_config_param_t {
 	int cdp_psoc_param_preferred_hw_mode;
 	bool cdp_psoc_param_pext_stats;
 
-	bool cdp_enable_tx_checksum;
-
 	bool cdp_skip_bar_update;
+	bool cdp_ipa_enabled;
+	bool cdp_psoc_param_vdev_stats_hw_offload;
 } cdp_config_param_type;
 
 /**
@@ -1416,6 +1433,7 @@ enum cdp_pdev_bpr_param {
  * @CDP_ENABLE_PEER_AUTHORIZE: enable peer authorize flag
  * @CDP_ENABLE_PEER_TID_LATENCY: set peer tid latency enable flag
  * @CDP_SET_VAP_MESH_TID : Set latency tid in vap
+ * @CDP_UPDATE_DSCP_TO_TID_MAP: Set DSCP to TID map id
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -1440,7 +1458,6 @@ enum cdp_vdev_param_type {
 #endif
 	CDP_SAFEMODE,
 	CDP_DROP_UNENC,
-	CDP_ENABLE_CSUM,
 	CDP_ENABLE_IGMP_MCAST_EN,
 	CDP_ENABLE_HLOS_TID_OVERRIDE,
 #ifdef QCA_SUPPORT_WDS_EXTENDED
@@ -1454,6 +1471,7 @@ enum cdp_vdev_param_type {
 #ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
 	CDP_SKIP_BAR_UPDATE_AP,
 #endif
+	CDP_UPDATE_DSCP_TO_TID_MAP
 };
 
 /*
@@ -1463,12 +1481,16 @@ enum cdp_vdev_param_type {
  * @CDP_SET_NSS_CFG: set nss cfg
  * @CDP_SET_PREFERRED_HW_MODE: set preferred hw mode
  * @CDP_CFG_PEER_EXT_STATS: Peer extended stats mode.
+ * @CDP_IPA_ENABLE : set IPA enable mode.
+ * @CDP_SET_VDEV_STATS_HW_OFFLOAD: HW Vdev stats enable/disable
  */
 enum cdp_psoc_param_type {
 	CDP_ENABLE_RATE_STATS,
 	CDP_SET_NSS_CFG,
 	CDP_SET_PREFERRED_HW_MODE,
 	CDP_CFG_PEER_EXT_STATS,
+	CDP_IPA_ENABLE,
+	CDP_SET_VDEV_STATS_HW_OFFLOAD,
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1
@@ -2488,6 +2510,7 @@ struct cdp_monitor_filter {
  * @cfg_dp_tso_enable: get TSO enable config
  * @cfg_dp_lro_enable: get LRO enable config
  * @cfg_dp_gro_enable: get GRP enable config
+ * @cfg_dp_force_gro_enable: get Force GRP enable config
  * @cfg_dp_tx_flow_start_queue_offset: get DP TX flow start queue offset
  * @cfg_dp_tx_flow_stop_queue_threshold: get DP TX flow stop queue threshold
  * @cfg_dp_ipa_uc_tx_buf_size: get IPA TX buf size config
@@ -2510,6 +2533,7 @@ enum cdp_dp_cfg {
 	cfg_dp_tso_enable,
 	cfg_dp_lro_enable,
 	cfg_dp_gro_enable,
+	cfg_dp_force_gro_enable,
 	cfg_dp_sg_enable,
 	cfg_dp_tx_flow_start_queue_offset,
 	cfg_dp_tx_flow_stop_queue_threshold,
@@ -2645,4 +2669,42 @@ struct cdp_scan_spcl_vap_stats {
 	uint64_t rx_data_pkts;
 };
 #endif
+
+/**
+ * cdp_soc_attach_params
+ *
+ * @hif_handle: Opaque HIF handle
+ * @htc_handle: Opaque HTC handle
+ * @qdf_osdev: QDF device
+ * @ol_ops: Offload Operations
+ * @device_id: Device ID
+ * @ml_context: DP ML object conext
+ * @mlo_chip_id: MLO chip id, for legacy SOCs chip_id need to 0
+ * @mlo_enabled: MLO enable bit
+ */
+struct cdp_soc_attach_params {
+	struct hif_opaque_softc *hif_handle;
+	HTC_HANDLE htc_handle;
+	qdf_device_t qdf_osdev;
+	struct ol_if_ops *ol_ops;
+	uint16_t device_id;
+	struct cdp_mlo_ctxt *ml_context;
+	uint8_t mlo_chip_id;
+	uint8_t mlo_enabled;
+};
+
+/*
+ * cdp_pdev_attach_params
+ *
+ * @htc_handle: HTC handle for host-target interface
+ * @qdf_osdev: QDF OS device
+ * @pdev_id: PDEV ID
+ * @mlo_link_id: ML link id
+ */
+struct cdp_pdev_attach_params {
+	HTC_HANDLE htc_handle;
+	qdf_device_t qdf_osdev;
+	uint8_t pdev_id;
+	uint32_t mlo_link_id;
+};
 #endif

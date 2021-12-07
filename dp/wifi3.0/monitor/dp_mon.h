@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
-
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
-
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -177,6 +177,10 @@ void dp_mon_cdp_ops_deregister(struct dp_soc *soc);
  *
  */
 void dp_mon_ops_register(struct dp_soc *soc);
+
+#ifndef DISABLE_MON_CONFIG
+void dp_mon_register_intr_ops(struct dp_soc *soc);
+#endif
 
 /*
  * dp_mon_htt_srng_setup() - DP mon htt srng setup
@@ -502,6 +506,10 @@ struct dp_mon_ops {
 	void (*mon_filter_reset_rx_pkt_log_lite)(struct dp_pdev *pdev);
 	void (*mon_filter_setup_rx_pkt_log_cbf)(struct dp_pdev *pdev);
 	void (*mon_filter_reset_rx_pkt_log_cbf)(struct dp_pdev *pdev);
+#ifdef QCA_WIFI_QCN9224
+	void (*mon_filter_setup_pktlog_hybrid)(struct dp_pdev *pdev);
+	void (*mon_filter_reset_pktlog_hybrid)(struct dp_pdev *pdev);
+#endif
 #endif
 	QDF_STATUS (*mon_filter_update)(struct dp_pdev *pdev);
 
@@ -526,6 +534,10 @@ struct dp_mon_ops {
 				   struct htt_rx_ring_tlv_filter *tlv_filter);
 	void (*rx_enable_mpdu_logging)(uint32_t *msg_word,
 				       struct htt_rx_ring_tlv_filter *tlv_filter);
+#ifndef DISABLE_MON_CONFIG
+	void (*mon_register_intr_ops)(struct dp_soc *soc);
+#endif
+	void (*mon_register_feature_ops)(struct dp_soc *soc);
 };
 
 struct dp_mon_soc {
@@ -556,6 +568,12 @@ struct dp_mon_soc {
 
 	struct dp_mon_ops *mon_ops;
 	bool monitor_mode_v2;
+#ifndef DISABLE_MON_CONFIG
+	uint32_t (*mon_rx_process)(struct dp_soc *soc,
+				   struct dp_intr *int_ctx,
+				   uint32_t mac_id,
+				   uint32_t quota);
+#endif
 };
 
 struct  dp_mon_pdev {
@@ -664,6 +682,10 @@ struct  dp_mon_pdev {
 	/* Enable pktlog logging cbf */
 	bool rx_pktlog_cbf;
 
+	/* Enable pktlog logging hybrid */
+#ifdef QCA_WIFI_QCN9224
+	bool pktlog_hybrid_mode;
+#endif
 	bool tx_sniffer_enable;
 	/* mirror copy mode */
 	enum m_copy_mode mcopy_mode;
@@ -1777,7 +1799,6 @@ static inline
 uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			    uint32_t mac_id, uint32_t quota)
 {
-	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
@@ -1785,13 +1806,12 @@ uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 		return 0;
 	}
 
-	monitor_ops = mon_soc->mon_ops;
-	if (!monitor_ops || !monitor_ops->mon_rx_process) {
+	if (!mon_soc->mon_rx_process) {
 		dp_mon_debug("callback not registered");
 		return 0;
 	}
 
-	return monitor_ops->mon_rx_process(soc, int_ctx, mac_id, quota);
+	return mon_soc->mon_rx_process(soc, int_ctx, mac_id, quota);
 }
 
 static inline uint32_t
@@ -2045,12 +2065,19 @@ static inline void dp_monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
 
 /*
  * dp_monitor_tx_add_to_comp_queue() - add completion msdu to queue
+ *
+ * This API returns QDF_STATUS_SUCCESS in case where buffer is added
+ * to txmonitor queue successfuly caller will not free the buffer in
+ * this case. In other cases this API return QDF_STATUS_E_FAILURE and
+ * caller frees the buffer
+ *
  * @soc: point to soc
  * @desc: point to tx desc
  * @ts: Tx completion status from HAL/HTT descriptor
  * @peer: DP peer
  *
- * Return: None
+ * Return: QDF_STATUS
+ *
  */
 static inline
 QDF_STATUS dp_monitor_tx_add_to_comp_queue(struct dp_soc *soc,
@@ -2063,7 +2090,7 @@ QDF_STATUS dp_monitor_tx_add_to_comp_queue(struct dp_soc *soc,
 
 	if (!mon_soc) {
 		dp_mon_debug("monitor soc is NULL");
-		return QDF_STATUS_SUCCESS;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
@@ -3224,5 +3251,25 @@ struct dp_mon_ops *dp_mon_ops_get_2_0(void);
  */
 struct cdp_mon_ops *dp_mon_cdp_ops_get_2_0(void);
 #endif
+
+/**
+ * dp_mon_register_feature_ops(): Register mon feature ops
+ * @soc: Datapath soc context
+ *
+ * return: void
+ */
+static inline
+void dp_mon_register_feature_ops(struct dp_soc *soc)
+{
+	struct dp_mon_ops *mon_ops = NULL;
+
+	mon_ops = dp_mon_ops_get(soc);
+	if (!mon_ops) {
+		dp_mon_err("Monitor ops is NULL");
+		return;
+	}
+	if (mon_ops->mon_register_feature_ops)
+		mon_ops->mon_register_feature_ops(soc);
+}
 
 #endif /* _DP_MON_H_ */

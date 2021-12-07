@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -361,6 +362,7 @@ static inline int wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
  * @buf: wmi command buffer
  * @buflen: wmi command buffer length
  * @cmd_id: WMI cmd id
+ * @is_qmi_send_support:send by qmi is supported
  *
  * Note, it is NOT safe to access buf after calling this function!
  *
@@ -368,7 +370,8 @@ static inline int wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
  */
 QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
 				       wmi_buf_t buf, uint32_t buflen,
-				       uint32_t cmd_id);
+				       uint32_t cmd_id,
+				       bool is_qmi_send_support);
 
 /**
  * wmi_unified_register_event() - WMI event handler
@@ -453,7 +456,8 @@ QDF_STATUS
 wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 				HTC_HANDLE htc_handle);
 
-#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+#if defined(WLAN_FEATURE_WMI_DIAG_OVER_CE7) || \
+	defined(WLAN_DIAG_AND_DBR_OVER_SEPARATE_CE)
 /**
  * wmi_diag_connect_pdev_htc_service()
  * WMI DIAG API to get connect to HTC service
@@ -882,6 +886,18 @@ wmi_unified_roam_set_param_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * wmi_unified_vdev_set_param_send() - WMI vdev set parameter function
+ * @wmi_handle: handle to WMI.
+ * @macaddr: MAC address
+ * @param: pointer to hold vdev set parameter
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_vdev_set_mu_snif_send(wmi_unified_t wmi_handle,
+				  struct vdev_set_mu_snif_param *param);
 
 /**
  * wmi_unified_sifs_trigger_send() - WMI vdev sifs trigger parameter function
@@ -1965,6 +1981,43 @@ wmi_unified_send_coex_config_cmd(wmi_unified_t wmi_handle,
 QDF_STATUS
 wmi_unified_pdev_fips_cmd_send(wmi_unified_t wmi_handle,
 			       struct fips_params *param);
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+/**
+ *  wmi_unified_pdev_fips_extend_cmd_send() - WMI pdev fips extend cmd function
+ *  @wmi_handle: handle to WMI.
+ *  @param: pointer to hold pdev fips extend param
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_pdev_fips_extend_cmd_send(wmi_unified_t wmi_handle,
+				      struct fips_extend_params *param);
+
+/**
+ *  wmi_unified_pdev_fips_mode_set_cmd() - WMI pdev fips mode enable cmd
+ *  @wmi_handle: handle to WMI.
+ *  @param: pointer to hold pdev fips mode param
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_pdev_fips_mode_set_cmd(wmi_unified_t wmi_handle,
+				   struct fips_mode_set_params *param);
+
+/**
+ * wmi_extract_fips_extend_event_data() - extract fips extend event data
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: pointer to FIPS extend event param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_fips_extend_event_data(wmi_unified_t wmi_handle, void *evt_buf,
+				   struct wmi_host_fips_extend_event_param
+				   *param);
+#endif
 
 #ifdef WLAN_FEATURE_DISA
 /**
@@ -4099,7 +4152,21 @@ QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_convert_pdev_id_target_to_host(wmi_unified_t wmi_handle,
 					      uint32_t target_pdev_id,
 					      uint32_t *host_pdev_id);
-#endif
+
+#ifdef WLAN_RTT_MEASUREMENT_NOTIFICATION
+/**
+ * wmi_unified_extract_measreq_chan_info() - Extract the channel info from the
+ * LOWI measurement request buffer.
+ * @wmi_handle: wmi handle
+ * @data_len: the length of @data
+ * @data: the pointer to data buf
+ * @chinfo: Pointer to a structure to save channel info
+ */
+QDF_STATUS wmi_unified_extract_measreq_chan_info(
+		wmi_unified_t wmi_handle, uint32_t data_len, uint8_t *data,
+		struct rtt_channel_info *chinfo);
+#endif /* WLAN_RTT_MEASUREMENT_NOTIFICATION */
+#endif /* CNSS_GENL */
 
 /**
  * wmi_unified_send_bss_color_change_enable_cmd() - WMI function to send bss

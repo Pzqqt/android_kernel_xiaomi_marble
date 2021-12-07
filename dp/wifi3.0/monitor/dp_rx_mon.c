@@ -36,6 +36,10 @@
 #include "dp_ratetable.h"
 #endif
 
+#ifndef IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK
+#define IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK 0xe0
+#endif
+
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
 void
 dp_rx_mon_handle_cfr_mu_info(struct dp_pdev *pdev,
@@ -95,12 +99,15 @@ dp_rx_mon_populate_cfr_ppdu_info(struct dp_pdev *pdev,
 				 struct hal_rx_ppdu_info *ppdu_info,
 				 struct cdp_rx_indication_ppdu *cdp_rx_ppdu)
 {
+	struct dp_peer *peer;
+	struct dp_ast_entry *ast_entry;
+	struct dp_soc *soc = pdev->soc;
+	uint32_t ast_index;
 	int chain;
 
 	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
 	cdp_rx_ppdu->timestamp = ppdu_info->rx_status.tsft;
 	cdp_rx_ppdu->u.ppdu_type = ppdu_info->rx_status.reception_type;
-	cdp_rx_ppdu->num_users = ppdu_info->com_info.num_users;
 
 	for (chain = 0; chain < MAX_CHAIN; chain++)
 		cdp_rx_ppdu->per_chain_rssi[chain] =
@@ -109,6 +116,12 @@ dp_rx_mon_populate_cfr_ppdu_info(struct dp_pdev *pdev,
 	cdp_rx_ppdu->u.ltf_size = ppdu_info->rx_status.ltf_size;
 	cdp_rx_ppdu->beamformed = ppdu_info->rx_status.beamformed;
 	cdp_rx_ppdu->u.ldpc = ppdu_info->rx_status.ldpc;
+
+	if ((ppdu_info->rx_status.sgi == VHT_SGI_NYSM) &&
+	    (ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC))
+		cdp_rx_ppdu->u.gi = CDP_SGI_0_4_US;
+	else
+		cdp_rx_ppdu->u.gi = ppdu_info->rx_status.sgi;
 
 	if (ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC) {
 		cdp_rx_ppdu->u.stbc = ppdu_info->rx_status.is_stbc;
@@ -121,6 +134,31 @@ dp_rx_mon_populate_cfr_ppdu_info(struct dp_pdev *pdev,
 	}
 
 	dp_rx_mon_handle_cfr_mu_info(pdev, ppdu_info, cdp_rx_ppdu);
+	ast_index = ppdu_info->rx_status.ast_index;
+	if (ast_index >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		cdp_rx_ppdu->num_users = 0;
+		return;
+	}
+
+	ast_entry = soc->ast_table[ast_index];
+	if (!ast_entry || ast_entry->peer_id == HTT_INVALID_PEER) {
+		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		cdp_rx_ppdu->num_users = 0;
+		return;
+	}
+
+	peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+				     DP_MOD_ID_RX_PPDU_STATS);
+	if (!peer) {
+		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		cdp_rx_ppdu->num_users = 0;
+		return;
+	}
+
+	cdp_rx_ppdu->peer_id = peer->peer_id;
+	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
+	cdp_rx_ppdu->num_users = ppdu_info->com_info.num_users;
 }
 
 bool
@@ -1288,11 +1326,10 @@ uint32_t
 dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	       uint32_t mac_id, uint32_t quota)
 {
-	struct dp_mon_ops *mon_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
-	mon_ops = dp_mon_ops_get(soc);
-	if (mon_ops && mon_ops->mon_rx_process)
-		return mon_ops->mon_rx_process(soc, int_ctx,
+	if (mon_soc && mon_soc->mon_rx_process)
+		return mon_soc->mon_rx_process(soc, int_ctx,
 					       mac_id, quota);
 	return 0;
 }
@@ -1369,6 +1406,50 @@ dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* QCA_MCOPY_SUPPORT */
+
+QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
+					 uint32_t mac_id,
+					 qdf_nbuf_t mpdu)
+{
+	uint32_t event, msdu_timestamp = 0;
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
+	void *data;
+	struct ieee80211_frame *wh;
+	uint8_t type, subtype;
+	struct dp_mon_pdev *mon_pdev;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	mon_pdev = pdev->monitor_pdev;
+
+	if (mon_pdev->rx_pktlog_cbf) {
+		if (qdf_nbuf_get_nr_frags(mpdu))
+			data = qdf_nbuf_get_frag_addr(mpdu, 0);
+		else
+			data = qdf_nbuf_data(mpdu);
+
+		/* CBF logging required, doesn't matter if it is a full mode
+		 * or lite mode.
+		 * Need to look for mpdu with:
+		 * TYPE = ACTION, SUBTYPE = NO ACK in the header
+		 */
+		event = WDI_EVENT_RX_CBF;
+
+		wh = (struct ieee80211_frame *)data;
+		type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+		subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+		if (type == IEEE80211_FC0_TYPE_MGT &&
+		    subtype == IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK) {
+			msdu_timestamp = mon_pdev->ppdu_info.rx_status.tsft;
+			dp_rx_populate_cbf_hdr(soc,
+					       mac_id, event,
+					       mpdu,
+					       msdu_timestamp);
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 			     qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
@@ -1516,4 +1597,51 @@ allocate_dummy_msdu_fail:
 
 mon_deliver_non_std_fail:
 	return QDF_STATUS_E_INVAL;
+}
+
+/**
+ * dp_rx_process_peer_based_pktlog() - Process Rx pktlog if peer based
+ *                                     filtering enabled
+ * @soc: core txrx main context
+ * @ppdu_info: Structure for rx ppdu info
+ * @status_nbuf: Qdf nbuf abstraction for linux skb
+ * @pdev_id: mac_id/pdev_id correspondinggly for MCL and WIN
+ *
+ * Return: none
+ */
+void
+dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
+				struct hal_rx_ppdu_info *ppdu_info,
+				qdf_nbuf_t status_nbuf, uint32_t pdev_id)
+{
+	struct dp_peer *peer;
+	struct mon_rx_user_status *rx_user_status;
+	uint32_t num_users = ppdu_info->com_info.num_users;
+	uint16_t sw_peer_id;
+
+	/* Sanity check for num_users */
+	if (!num_users)
+		return;
+
+	qdf_assert_always(num_users <= CDP_MU_MAX_USERS);
+	rx_user_status = &ppdu_info->rx_user_status[num_users - 1];
+
+	sw_peer_id = rx_user_status->sw_peer_id;
+
+	peer = dp_peer_get_ref_by_id(soc, sw_peer_id,
+				     DP_MOD_ID_RX_PPDU_STATS);
+
+	if (!peer)
+		return;
+
+	if ((peer->peer_id != HTT_INVALID_PEER) &&
+	    (peer->peer_based_pktlog_filter)) {
+		dp_wdi_event_handler(
+				     WDI_EVENT_RX_DESC, soc,
+				     status_nbuf,
+				     peer->peer_id,
+				     WDI_NO_VAL, pdev_id);
+	}
+	dp_peer_unref_delete(peer,
+			     DP_MOD_ID_RX_PPDU_STATS);
 }

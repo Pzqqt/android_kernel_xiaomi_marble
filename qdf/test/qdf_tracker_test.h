@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,7 +21,7 @@
 #ifndef __QDF_TRACKER_TEST
 #define __QDF_TRACKER_TEST
 
-#ifdef WLAN_TRACKER_TEST
+#if defined(CONFIG_LEAK_DETECTION) && defined(WLAN_TRACKER_TEST)
 /**
  * qdf_tracker_unit_test() - run the qdf tracker unit test suite
  *

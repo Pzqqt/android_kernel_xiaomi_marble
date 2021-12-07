@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -764,12 +765,14 @@ typedef struct {
  * @vdev_id: vdev id
  * @pdev_id: pdev_id
  * @wmi_host_inst_rssi_args: Instantaneous rssi stats args
+ * @is_qmi_send_support: support to send by qmi or not
  */
 struct stats_request_params {
 	uint32_t stats_id;
 	uint8_t vdev_id;
 	uint8_t pdev_id;
 	wmi_host_inst_rssi_args rssi_args;
+	bool is_qmi_send_support;
 };
 
 /**
@@ -1130,6 +1133,8 @@ struct peer_assoc_params {
 	struct peer_assoc_mlo_params mlo_params;
 	struct peer_assoc_ml_partner_links ml_links;
 #endif
+	uint8_t peer_dms_capable:1,
+		reserved:7;
 };
 
 /**
@@ -3267,6 +3272,64 @@ struct fips_params {
 	uint32_t pdev_id;
 };
 
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+#define MAX_KEY_LEN_FIPS_EXTEND 64
+#define MAX_NONCEIV_LEN_FIPS_EXTEND 16
+/**
+ * struct fips_extend_cmd_params - FIPS extend params config for first frag
+ * @fips_cmd:  1 - Encrypt, 2 - Decrypt
+ * key_cipher: 0 - CCM, 1 - GCM
+ * @key_len: length of key
+ * @key: key_data
+ * @nonce_iv_len: length of nonce or iv
+ * @nonce_iv: nonce_iv
+ * @tag_len: length of tag/mic
+ * @aad_len: length of aad
+ * @payload_len: length of payload
+ */
+struct fips_extend_cmd_params {
+	u_int32_t fips_cmd;
+	u_int32_t key_cipher;
+	u_int32_t key_len;
+	u_int8_t  key[MAX_KEY_LEN_FIPS_EXTEND];
+	u_int32_t nonce_iv_len;
+	u_int8_t  nonce_iv[MAX_NONCEIV_LEN_FIPS_EXTEND];
+	u_int32_t tag_len;
+	u_int32_t aad_len;
+	u_int32_t payload_len;
+};
+
+/**
+ * struct fips_extend_params - FIPS extend params config
+ * @pdev_id: pdev_id for identifying the MAC
+ * @cookie: cookie value
+ * @frag_idx: fragment index
+ * @more_bit: more bit
+ * @data_len: length of data buf
+ * @cmd_params: cmd_params set for first fragment
+ * @data: pointer data buf
+ */
+struct fips_extend_params {
+	uint32_t pdev_id;
+	u_int32_t cookie;
+	u_int32_t frag_idx;
+	u_int32_t more_bit;
+	u_int32_t data_len;
+	struct fips_extend_cmd_params cmd_params;
+	u_int32_t *data;
+};
+
+/**
+ * struct fips_mode_set_params - FIPS mode enable param
+ * @pdev_id: pdev_id for identifying the MAC
+ * @mode: value to disable or enable fips extend mode
+ */
+struct fips_mode_set_params {
+	uint32_t pdev_id;
+	uint32_t mode;
+};
+#endif
+
 #ifdef WLAN_FEATURE_DISA_FIPS
 /**
  * struct disa_encrypt_decrypt_req_params - disa encrypt request
@@ -4657,6 +4720,8 @@ typedef enum {
 	wmi_mlo_teardown_complete_event_id,
 	wmi_mlo_link_set_active_resp_eventid,
 #endif
+	wmi_pdev_fips_extend_event_id,
+	wmi_roam_frame_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5270,6 +5335,7 @@ typedef enum {
 	wmi_service_mgmt_rx_reo_supported,
 	wmi_service_phy_dma_byte_swap_support,
 	wmi_service_spectral_session_info_support,
+	wmi_service_mu_snif,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5427,6 +5493,7 @@ struct wmi_host_fw_abi_ver {
  *                                       inclusive of SP power mode.
  * @afc_timer_check_disable: Disables AFC Timer related checks in FW
  * @afc_req_id_check_disable: Disables AFC Request ID check in FW
+ * @carrier_profile_config: Configuration for per-carrier profile
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5546,6 +5613,7 @@ typedef struct {
 	bool is_6ghz_sp_pwrmode_supp_enabled;
 	bool afc_timer_check_disable;
 	bool afc_req_id_check_disable;
+	uint32_t carrier_profile_config;
 } target_resource_config;
 
 /**
@@ -6273,6 +6341,9 @@ enum {
 	WMI_HOST_PKTLOG_EVENT_TX_DATA_CAPTURE_BIT,
 	WMI_HOST_PKTLOG_EVENT_PHY_LOGGING_BIT,
 	WMI_HOST_PKTLOG_EVENT_CBF_BIT,
+#ifdef QCA_WIFI_QCN9224
+	WMI_HOST_PKTLOG_EVENT_HYBRID_TX_BIT,
+#endif
 };
 
 typedef enum {
@@ -6299,6 +6370,10 @@ typedef enum {
 		BIT(WMI_HOST_PKTLOG_EVENT_PHY_LOGGING_BIT),
 	WMI_HOST_PKTLOG_EVENT_CBF =
 		BIT(WMI_HOST_PKTLOG_EVENT_CBF_BIT),
+#ifdef QCA_WIFI_QCN9224
+	WMI_HOST_PKTLOG_EVENT_HYBRID_TX =
+		BIT(WMI_HOST_PKTLOG_EVENT_HYBRID_TX_BIT),
+#endif
 } WMI_HOST_PKTLOG_EVENT;
 
 /**
@@ -6925,6 +7000,28 @@ struct wmi_host_fips_event_param {
 	uint32_t data_len;
 	uint32_t *data;
 };
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+/*
+ * struct wmi_host_fips_extend_event_param: FIPS extend event param
+ * @pdev_id: pdev id
+ * @fips_cookie: fips_cookie
+ * @cmd_frag_idx: cmd_frag_idx
+ * @more_bit: more_bit
+ * @error_status: Error status: 0 (no err), 1, or OPER_TIMEOUR
+ * @data_len: FIPS data length
+ * @data: pointer to data
+ */
+struct wmi_host_fips_extend_event_param {
+	uint32_t pdev_id;
+	uint32_t fips_cookie;
+	uint32_t cmd_frag_idx;
+	uint32_t more_bit;
+	uint32_t error_status;
+	uint32_t data_len;
+	uint32_t *data;
+};
+#endif
 
 #ifdef WLAN_FEATURE_DISA_FIPS
 /**
@@ -7586,6 +7683,7 @@ struct wmi_roam_deauth_trigger_data {
  * threshold for 5g & 6g AP to host or not
  * @wtc_candi_rssi_th_5g: 5g candidate AP rssi threshold
  * @wtc_candi_rssi_th_6g: 6g candidate AP rssi threshold
+ * @duration: WTC duration
  */
 struct wmi_roam_wtc_btm_trigger_data {
 	uint32_t roaming_mode;
@@ -7598,6 +7696,7 @@ struct wmi_roam_wtc_btm_trigger_data {
 	uint32_t wtc_candi_rssi_ext_present;
 	uint32_t wtc_candi_rssi_th_5g;
 	uint32_t wtc_candi_rssi_th_6g;
+	uint32_t duration;
 };
 
 /**
@@ -8199,6 +8298,20 @@ struct set_mec_timer_params {
 	uint32_t pdev_id;
 	uint32_t vdev_id;
 	uint32_t mec_aging_timer_threshold;
+};
+#endif
+
+#ifdef WLAN_FEATURE_SON
+/**
+ * struct wmi_host_inst_rssi_stats_resp - inst rssi stats
+ * @inst_rssi: instantaneous rssi above the noise floor in dB unit
+ * @peer_macaddr: peer mac address
+ * @vdev_id: vdev_id
+ */
+struct wmi_host_inst_rssi_stats_resp {
+	uint32_t inst_rssi;
+	struct qdf_mac_addr peer_macaddr;
+	uint32_t vdev_id;
 };
 #endif
 #endif /* _WMI_UNIFIED_PARAM_H_ */

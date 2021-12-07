@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -611,6 +612,7 @@ enum wifi_traffic_ac {
  * @WLAN_PEER_STA_TEMP: STA Peer Temp (its host only node)
  * @WLAN_PEER_IBSS:     IBSS Peer
  * @WLAN_PEER_NDP:      NDP Peer
+ * @WLAN_PEER_MLO_TEMP: MLO Peer Temp (host only node)
  */
 enum wlan_peer_type {
 	WLAN_PEER_SELF     = 1,
@@ -623,6 +625,7 @@ enum wlan_peer_type {
 	WLAN_PEER_STA_TEMP = 8,
 	WLAN_PEER_IBSS     = 9,
 	WLAN_PEER_NDP      = 10,
+	WLAN_PEER_MLO_TEMP = 11,
 };
 
 /**

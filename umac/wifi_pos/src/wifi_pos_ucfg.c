@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,12 +21,14 @@
  * This file defines the important dispatcher APIs pertinent to
  * wifi positioning.
  */
+#include <wlan_lmac_if_def.h>
 #include "wifi_pos_utils_i.h"
 #include "wifi_pos_api.h"
 #include "wifi_pos_ucfg_i.h"
 #include "wlan_ptt_sock_svc.h"
 #ifndef CNSS_GENL
 #include <wlan_objmgr_psoc_obj.h>
+#include "wifi_pos_main_i.h"
 #endif
 
 #ifndef CNSS_GENL
@@ -55,6 +58,55 @@ QDF_STATUS ucfg_wifi_psoc_get_pdev_id_by_dev_name(
 	return wifi_pos_psoc_obj->wifi_pos_get_pdev_id_by_dev_name(
 			dev_name, pdev_id, psoc);
 }
+
+#ifdef WLAN_RTT_MEASUREMENT_NOTIFICATION
+QDF_STATUS ucfg_wifi_pos_measurement_request_notification(
+		struct wlan_objmgr_pdev *pdev,
+		struct wifi_pos_req_msg *req)
+{
+	struct wlan_objmgr_psoc *psoc = wifi_pos_get_psoc();
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc_obj;
+	struct wlan_lmac_if_wifi_pos_tx_ops *tx_ops;
+	struct rtt_channel_info chinfo = {0};
+
+	if (!psoc) {
+		wifi_pos_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wifi_pos_psoc_obj = wifi_pos_get_psoc_priv_obj(psoc);
+	if (!wifi_pos_psoc_obj) {
+		wifi_pos_err("wifi_pos_psoc_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!wifi_pos_psoc_obj->wifi_pos_measurement_request_notification) {
+		wifi_pos_debug("wifi_pos_measurement_request_notification is not registered");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	tx_ops = wifi_pos_get_tx_ops(psoc);
+	if (!tx_ops) {
+		wifi_pos_err("tx_ops null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!tx_ops->wifi_pos_parse_measreq_chan_info) {
+		wifi_pos_err("wifi_pos_parse_measreq_chan_info is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops->wifi_pos_parse_measreq_chan_info(pdev, req->buf_len, req->buf,
+						 &chinfo);
+	if (!chinfo.freq) {
+		wifi_pos_debug("Not a measurement request buffer, proceed");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return wifi_pos_psoc_obj->wifi_pos_measurement_request_notification(
+			pdev, &chinfo);
+}
+#endif /* WLAN_RTT_MEASUREMENT_NOTIFICATION */
 #endif
 
 QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,

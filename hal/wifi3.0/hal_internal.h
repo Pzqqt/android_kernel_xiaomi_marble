@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -510,6 +511,9 @@ struct hal_srng {
 	/* Virtual base address of the ring */
 	uint32_t *ring_base_vaddr;
 
+	/* virtual address end */
+	uint32_t *ring_vaddr_end;
+
 	/* Number of entries in ring */
 	uint32_t num_entries;
 
@@ -679,6 +683,8 @@ struct shadow_reg_config {
 struct hal_reo_params {
 	/** rx hash steering enabled or disabled */
 	bool rx_hash_enabled;
+	/** reo remap 0 register */
+	uint32_t remap0;
 	/** reo remap 1 register */
 	uint32_t remap1;
 	/** reo remap 2 register */
@@ -746,7 +752,7 @@ struct hal_hw_txrx_ops {
 				    uint32_t ba_window_size,
 				    uint32_t start_seq, void *hw_qdesc_vaddr,
 				    qdf_dma_addr_t hw_qdesc_paddr,
-				    int pn_type);
+				    int pn_type, uint8_t vdev_stats_id);
 	uint32_t (*hal_gen_reo_remap_val)(enum hal_reo_remap_reg,
 					  uint8_t *ix0_map);
 
@@ -819,6 +825,7 @@ struct hal_hw_txrx_ops {
 	uint8_t (*hal_rx_msdu_end_last_msdu_get)(uint8_t *buf);
 	bool (*hal_rx_get_mpdu_mac_ad4_valid)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_start_sw_peer_id_get)(uint8_t *buf);
+	uint32_t (*hal_rx_mpdu_peer_meta_data_get)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_get_to_ds)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_get_fr_ds)(uint8_t *buf);
 	uint8_t (*hal_rx_get_mpdu_frame_control_valid)(uint8_t *buf);
@@ -907,7 +914,8 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_get_reo_qdesc_size)(uint32_t ba_window_size, int tid);
 
 	void (*hal_set_link_desc_addr)(void *desc, uint32_t cookie,
-				       qdf_dma_addr_t link_desc_paddr);
+				       qdf_dma_addr_t link_desc_paddr,
+				       uint8_t bm_id);
 	void (*hal_tx_init_data_ring)(hal_soc_handle_t hal_soc_hdl,
 				      hal_ring_handle_t hal_ring_hdl);
 	void* (*hal_rx_msdu_ext_desc_info_get_ptr)(void *msdu_details_ptr);
@@ -1007,6 +1015,7 @@ struct hal_hw_txrx_ops {
 					    void *st_handle,
 					    uint32_t tlv, int *num_ref);
 	uint8_t (*hal_get_tlv_hdr_size)(void);
+	uint8_t (*hal_get_idle_link_bm_id)(uint8_t chip_id);
 };
 
 /**

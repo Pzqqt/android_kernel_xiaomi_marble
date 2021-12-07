@@ -27,6 +27,8 @@
 #include <qdf_timer.h>
 #include <qdf_lock.h>
 #include <qdf_nbuf.h>
+#include <qdf_threads.h>
+#include <qdf_defer.h>
 #include <wlan_mgmt_txrx_rx_reo_utils_api.h>
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
 #include <wlan_objmgr_pdev_obj.h>
@@ -34,8 +36,10 @@
 
 #define MGMT_RX_REO_LIST_MAX_SIZE        (100)
 #define MGMT_RX_REO_LIST_TIMEOUT_US      (10 * USEC_PER_MSEC)
-#define MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS  (BIT(0))
-#define MGMT_RX_REO_STATUS_AGED_OUT                       (BIT(1))
+#define MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS         (BIT(0))
+#define MGMT_RX_REO_STATUS_AGED_OUT                              (BIT(1))
+#define MGMT_RX_REO_STATUS_OLDER_THAN_LATEST_AGED_OUT_FRAME      (BIT(2))
+#define MGMT_RX_REO_STATUS_LIST_MAX_SIZE_EXCEEDED                (BIT(3))
 
 /**
  * TODO: Dummy macro for Maximum MLO links on the system
@@ -44,6 +48,8 @@
  */
 #define MGMT_RX_REO_MAX_LINKS (16)
 #define MGMT_RX_REO_INVALID_NUM_LINKS (-1)
+#define MGMT_RX_REO_INVALID_LINK_ID   (-1)
+
 /* Reason to release an entry from the reorder list */
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_ZERO_WAIT_COUNT           (BIT(0))
 #define MGMT_RX_REO_LIST_ENTRY_RELEASE_REASON_AGED_OUT                  (BIT(1))
@@ -54,9 +60,15 @@
 	((entry)->status & MGMT_RX_REO_STATUS_WAIT_FOR_FRAME_ON_OTHER_LINKS)
 #define MGMT_RX_REO_LIST_ENTRY_IS_AGED_OUT(entry)   \
 	((entry)->status & MGMT_RX_REO_STATUS_AGED_OUT)
-#define MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(ts, entry)  \
-	(mgmt_rx_reo_compare_global_timestamps_gte(                            \
-	 (ts)->global_ts, mgmt_rx_reo_get_global_ts((entry)->rx_params)))
+#define MGMT_RX_REO_LIST_ENTRY_IS_OLDER_THAN_LATEST_AGED_OUT_FRAME(entry)  \
+	((entry)->status & MGMT_RX_REO_STATUS_OLDER_THAN_LATEST_AGED_OUT_FRAME)
+#define MGMT_RX_REO_LIST_ENTRY_IS_MAX_SIZE_EXCEEDED(entry)  \
+	((entry)->status & MGMT_RX_REO_STATUS_LIST_MAX_SIZE_EXCEEDED)
+
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+#define MGMT_RX_REO_INGRESS_FRAME_DEBUG_ENTRIES_MAX             (1000)
+#define MGMT_RX_REO_EGRESS_FRAME_DEBUG_ENTRIES_MAX              (1000)
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT*/
 
 /*
  * struct mgmt_rx_reo_pdev_info - Pdev information required by the Management
@@ -147,11 +159,8 @@ struct mgmt_rx_reo_global_ts_info {
  * @list_entry_timeout_us: Time out value(microsecond) for the reorder list
  * entries
  * @ageout_timer: Periodic timer to age-out the list entries
- * @ts_latest_aged_out_frame: Stores the global time stamp for the latest aged
- * out frame. Latest aged out frame is the aged out frame in reorder list which
- * has the largest global time stamp value.
- * @ts_last_delivered_frame: Stores the global time stamp for the last frame
- * delivered to the upper layer
+ * @ts_last_released_frame: Stores the global time stamp for the last frame
+ * removed from the reorder list
  */
 struct mgmt_rx_reo_list {
 	qdf_list_t list;
@@ -159,8 +168,7 @@ struct mgmt_rx_reo_list {
 	uint32_t max_list_size;
 	uint32_t list_entry_timeout_us;
 	qdf_timer_t ageout_timer;
-	struct mgmt_rx_reo_global_ts_info ts_latest_aged_out_frame;
-	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
+	struct mgmt_rx_reo_global_ts_info ts_last_released_frame;
 };
 
 /*
@@ -183,6 +191,8 @@ struct mgmt_rx_reo_wait_count {
  * @wait_count: Wait counts for the frame
  * @insertion_ts: Host time stamp when this entry is inserted to
  * the list.
+ * @ingress_timestamp: Host time stamp when this frame has arrived reorder
+ * module
  * @status: Status for this entry
  */
 struct mgmt_rx_reo_list_entry {
@@ -191,22 +201,285 @@ struct mgmt_rx_reo_list_entry {
 	struct mgmt_rx_event_params *rx_params;
 	struct mgmt_rx_reo_wait_count wait_count;
 	uint64_t insertion_ts;
+	uint64_t ingress_timestamp;
 	uint32_t status;
 };
+
+#ifdef WLAN_MGMT_RX_REO_SIM_SUPPORT
+
+#define MGMT_RX_REO_SIM_INTER_FRAME_DELAY_MIN             (300 * USEC_PER_MSEC)
+#define MGMT_RX_REO_SIM_INTER_FRAME_DELAY_MIN_MAX_DELTA   (200 * USEC_PER_MSEC)
+
+#define MGMT_RX_REO_SIM_DELAY_MAC_HW_TO_FW_MIN            (1000 * USEC_PER_MSEC)
+#define MGMT_RX_REO_SIM_DELAY_MAC_HW_TO_FW_MIN_MAX_DELTA  (500 * USEC_PER_MSEC)
+
+#define MGMT_RX_REO_SIM_DELAY_FW_TO_HOST_MIN              (1000 * USEC_PER_MSEC)
+#define MGMT_RX_REO_SIM_DELAY_FW_TO_HOST_MIN_MAX_DELTA    (500 * USEC_PER_MSEC)
+
+#define MGMT_RX_REO_SIM_PERCENTAGE_FW_CONSUMED_FRAMES  (10)
+#define MGMT_RX_REO_SIM_PERCENTAGE_ERROR_FRAMES        (10)
+
+#define MGMT_RX_REO_SIM_PENDING_FRAME_LIST_MAX_SIZE    (1000)
+#define MGMT_RX_REO_SIM_STALE_FRAME_LIST_MAX_SIZE      \
+				(MGMT_RX_REO_SIM_PENDING_FRAME_LIST_MAX_SIZE)
+#define MGMT_RX_REO_SIM_STALE_FRAME_TEMP_LIST_MAX_SIZE (100)
+
+/**
+ * struct mgmt_rx_frame_params - Parameters associated with a management frame.
+ * This structure is used by the simulation framework.
+ * @link_id: MLO HW link id
+ * @mgmt_pkt_ctr: Management packet counter
+ * @global_timestamp: Global time stamp in micro seconds
+ */
+struct mgmt_rx_frame_params {
+	uint8_t link_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+};
+
+/**
+ * struct mgmt_rx_reo_pending_frame_list - List which contains all the
+ * management frames received and not yet consumed by FW/Host. Order of frames
+ * in the list is same as the order in which they are received in the air.
+ * This is used by the simulation framework.
+ * @list: list data structure
+ * @lock: lock used to protect the list
+ */
+struct mgmt_rx_reo_pending_frame_list {
+	qdf_list_t list;
+	qdf_spinlock_t lock;
+};
+
+/**
+ * struct mgmt_rx_reo_pending_frame_list_entry - Structure used to represent an
+ * entry in the pending frame list.
+ * @params: parameters related to the management frame
+ * @node: linked list node
+ */
+struct mgmt_rx_reo_pending_frame_list_entry {
+	struct mgmt_rx_frame_params params;
+	qdf_list_node_t node;
+};
+
+/**
+ * struct mgmt_rx_reo_stale_frame_list - List which contains all the
+ * stale management frames.
+ * @list: list data structure
+ * @lock: lock used to protect the list
+ */
+struct mgmt_rx_reo_stale_frame_list {
+	qdf_list_t list;
+	qdf_spinlock_t lock;
+};
+
+/**
+ * struct mgmt_rx_reo_stale_frame_list_entry - Structure used to represent an
+ * entry in the stale frame list.
+ * @params: parameters related to the management frame
+ * @node: linked list node
+ */
+struct mgmt_rx_reo_stale_frame_list_entry {
+	struct mgmt_rx_frame_params params;
+	qdf_list_node_t node;
+};
+
+/**
+ * struct mgmt_rx_frame_mac_hw - Structure used to represent the management
+ * frame at MAC HW level
+ * @params: parameters related to the management frame
+ * @frame_handler_fw: Work structure to queue the frame to the FW
+ * @sim_context: pointer management rx-reorder simulation context
+ */
+struct mgmt_rx_frame_mac_hw {
+	struct mgmt_rx_frame_params params;
+	qdf_work_t frame_handler_fw;
+	struct mgmt_rx_reo_sim_context *sim_context;
+};
+
+/**
+ * struct mgmt_rx_frame_fw - Structure used to represent the management
+ * frame at FW level
+ * @params: parameters related to the management frame
+ * @is_consumed_by_fw: indicates whether the frame is consumed by FW
+ * @frame_handler_host: Work structure to queue the frame to the host
+ * @sim_context: pointer management rx-reorder simulation context
+ */
+struct mgmt_rx_frame_fw {
+	struct mgmt_rx_frame_params params;
+	bool is_consumed_by_fw;
+	qdf_work_t frame_handler_host;
+	struct mgmt_rx_reo_sim_context *sim_context;
+};
+
+/**
+ * struct mgmt_rx_reo_sim_mac_hw - Structure used to represent the MAC HW
+ * @mgmt_pkt_ctr: Stores the last management packet counter for all the links
+ */
+struct mgmt_rx_reo_sim_mac_hw {
+	uint16_t mgmt_pkt_ctr[MGMT_RX_REO_MAX_LINKS];
+};
+
+/**
+ * struct mgmt_rx_reo_sim_link_id_to_pdev_map - Map from link id to pdev
+ * object. This is used for simulation purpose only.
+ * @map: link id to pdev map. Link id is the array index.
+ * @lock: lock used to protect this structure
+ * @num_mlo_links: Total number of MLO HW links. In case of simulation all the
+ * pdevs are assumed to have MLO capability and number of MLO links is same as
+ * the number of pdevs in the system.
+ */
+struct mgmt_rx_reo_sim_link_id_to_pdev_map {
+	struct wlan_objmgr_pdev *map[MGMT_RX_REO_MAX_LINKS];
+	qdf_spinlock_t lock;
+	uint8_t num_mlo_links;
+};
+
+/**
+ * struct mgmt_rx_reo_mac_hw_simulator - Structure which stores the members
+ * required for the MAC HW simulation
+ * @mac_hw_info: MAC HW info
+ * @mac_hw_thread: kthread which simulates MAC HW
+ */
+struct mgmt_rx_reo_mac_hw_simulator {
+	struct mgmt_rx_reo_sim_mac_hw mac_hw_info;
+	qdf_thread_t *mac_hw_thread;
+};
+
+/**
+ * struct mgmt_rx_reo_sim_context - Management rx-reorder simulation context
+ * @host_mgmt_frame_handler: Per link work queue to simulate the host layer
+ * @fw_mgmt_frame_handler: Per link work queue to simulate the FW layer
+ * @pending_frame_list: List used to store pending frames
+ * @stale_frame_list: List used to store stale frames
+ * @mac_hw_sim:  MAC HW simulation object
+ * @snapshot: snapshots required for reo algorithm
+ * @link_id_to_pdev_map: link_id to pdev object map
+ */
+struct mgmt_rx_reo_sim_context {
+	struct workqueue_struct *host_mgmt_frame_handler[MGMT_RX_REO_MAX_LINKS];
+	struct workqueue_struct *fw_mgmt_frame_handler[MGMT_RX_REO_MAX_LINKS];
+	struct mgmt_rx_reo_pending_frame_list pending_frame_list;
+	struct mgmt_rx_reo_stale_frame_list stale_frame_list;
+	struct mgmt_rx_reo_mac_hw_simulator mac_hw_sim;
+	struct mgmt_rx_reo_snapshot snapshot[MGMT_RX_REO_MAX_LINKS]
+					    [MGMT_RX_REO_SHARED_SNAPSHOT_MAX];
+	struct mgmt_rx_reo_sim_link_id_to_pdev_map link_id_to_pdev_map;
+};
+#endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
+
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+/**
+ * struct reo_ingress_debug_frame_info - Debug information about a frame
+ * entering reorder algorithm
+ * @link_id: link id
+ * @mgmt_pkt_ctr: management packet counter
+ * @global_timestamp: MLO global time stamp
+ * @type: Type of the frame descriptor
+ * @ingress_timestamp: Host time stamp when the frames enters the reorder
+ * algorithm
+ * @wait_count: Wait count calculated for the current frame
+ */
+struct reo_ingress_debug_frame_info {
+	uint8_t link_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+	enum mgmt_rx_reo_frame_descriptor_type type;
+	uint64_t ingress_timestamp;
+	struct mgmt_rx_reo_wait_count wait_count;
+};
+
+/**
+ * struct reo_egress_debug_frame_info - Debug information about a frame
+ * leaving the reorder module
+ * @is_delivered: Indicates whether the frame is delivered to upper layers
+ * @link_id: link id
+ * @mgmt_pkt_ctr: management packet counter
+ * @global_timestamp: MLO global time stamp
+ * @ingress_timestamp: Host time stamp when the frame enters the reorder module
+ * @insertion_ts: Host time stamp when the frame is inserted into the reorder
+ * list
+ * @egress_begin_timestamp: Host time stamp just before delivery of the frame
+ * to upper layer
+ * @egress_end_timestamp: Host time stamp just after delivery of the frame
+ * to upper layer
+ * @wait_count: Wait count calculated for the current frame
+ * @release_reason: Reason for delivering the frame to upper layers
+ */
+struct reo_egress_debug_frame_info {
+	bool is_delivered;
+	uint8_t link_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+	uint64_t ingress_timestamp;
+	uint64_t insertion_ts;
+	uint64_t egress_begin_timestamp;
+	uint64_t egress_end_timestamp;
+	struct mgmt_rx_reo_wait_count wait_count;
+	uint8_t release_reason;
+};
+
+/**
+ * struct reo_ingress_debug_info - Circular array to store the
+ * debug information about the frames entering the reorder algorithm.
+ * @frame_list: Circular array to store the debug info about frames
+ * @next_index: The index at which information about next frame will be logged
+ */
+struct reo_ingress_debug_info {
+	struct reo_ingress_debug_frame_info
+			frame_list[MGMT_RX_REO_INGRESS_FRAME_DEBUG_ENTRIES_MAX];
+	uint32_t next_index;
+};
+
+/**
+ * struct reo_egress_debug_info - Circular array to store the
+ * debug information about the frames leaving the reorder module.
+ * @debug_info: Circular array to store the debug info
+ * @next_index: The index at which information about next frame will be logged
+ */
+struct reo_egress_debug_info {
+	struct reo_egress_frame_debug_info
+			debug_info[MGMT_RX_REO_EGRESS_FRAME_DEBUG_ENTRIES_MAX];
+	uint32_t next_index;
+};
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT */
 
 /**
  * struct mgmt_rx_reo_context - This structure holds the info required for
  * management rx-reordering. Reordering is done across all the psocs.
  * So there should be only one instance of this structure defined.
  * @reo_list: Linked list used for reordering
- * @num_mlo_links: Number of MLO links on the system
  * @reo_algo_entry_lock: Spin lock to protect reo algorithm entry critical
  * section execution
+ * @frame_release_lock: Spin lock to serialize the frame delivery to the
+ * upper layers. This could prevent race conditions like the one given in
+ * the following example.
+ * Lets take an example of 2 links (Link A & B) and each has received
+ * a management frame A1(deauth) and B1(auth) such that MLO global time
+ * stamp of A1 < MLO global time stamp of B1. Host is concurrently
+ * executing "mgmt_rx_reo_list_release_entries" for A1 and B1 in
+ * 2 different CPUs. It is possible that frame B1 gets processed by
+ * upper layers before frame A1 and this could result in unwanted
+ * disconnection. Hence it is required to serialize the delivery
+ * of management frames to upper layers in the strict order of MLO
+ * global time stamp.
+ * @num_mlo_links: Number of MLO links on the system
+ * @sim_context: Management rx-reorder simulation context
+ * @ingress_frame_debug_info: Debug object to log incoming frames
+ * @egress_frame_debug_info: Debug object to log outgoing frames
  */
 struct mgmt_rx_reo_context {
 	struct mgmt_rx_reo_list reo_list;
-	uint8_t num_mlo_links;
 	qdf_spinlock_t reo_algo_entry_lock;
+	qdf_spinlock_t frame_release_lock;
+#ifndef WLAN_MGMT_RX_REO_SIM_SUPPORT
+	uint8_t num_mlo_links;
+#else
+	struct mgmt_rx_reo_sim_context sim_context;
+#endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
+#ifdef WLAN_MGMT_RX_REO_DEBUG_SUPPORT
+	struct  reo_ingress_debug_info ingress_frame_debug_info;
+	struct  reo_egress_debug_info egress_frame_debug_info;
+#endif /* WLAN_MGMT_RX_REO_DEBUG_SUPPORT */
 };
 
 /**
@@ -216,13 +489,37 @@ struct mgmt_rx_reo_context {
  * @nbuf: nbuf corresponding to this frame
  * @rx_params: Management rx event parameters
  * @wait_count: Wait counts for the frame
+ * @ingress_timestamp: Host time stamp when the frames enters the reorder
+ * algorithm
+ * @is_stale: Indicates whether this frame is stale. Any frame older than the
+ * last frame delivered to upper layer is a stale frame. Stale frames should not
+ * be delivered to the upper layers. These frames can be discarded after
+ * updating the host snapshot and wait counts of entries currently residing in
+ * the reorder list.
  */
 struct mgmt_rx_reo_frame_descriptor {
 	enum mgmt_rx_reo_frame_descriptor_type type;
 	qdf_nbuf_t nbuf;
 	struct mgmt_rx_event_params *rx_params;
 	struct mgmt_rx_reo_wait_count wait_count;
+	uint64_t ingress_timestamp;
+	bool is_stale;
 };
+
+/**
+ * mgmt_rx_reo_get_context_from_reo_list() - Helper API to get pointer to
+ * management rx reorder context from pointer to management reorder list
+ * @reo_list: Pointer to management rx reorder list
+ *
+ * Return: Pointer to management rx reorder context
+ */
+static inline struct mgmt_rx_reo_context *
+mgmt_rx_reo_get_context_from_reo_list(struct mgmt_rx_reo_list *reo_list) {
+	qdf_assert_always(reo_list);
+
+	return qdf_container_of(reo_list, struct mgmt_rx_reo_context,
+				reo_list);
+}
 
 /**
  * mgmt_rx_reo_get_global_ts() - Helper API to get global time stamp
@@ -308,6 +605,123 @@ mgmt_rx_reo_init_context(void);
  */
 QDF_STATUS
 mgmt_rx_reo_deinit_context(void);
+
+#ifdef WLAN_MGMT_RX_REO_SIM_SUPPORT
+/**
+ * mgmt_rx_reo_sim_start() - Helper API to start management Rx reorder
+ * simulation
+ *
+ * This API starts the simulation framework which mimics the management frame
+ * generation by target. MAC HW is modelled as a kthread. FW and host layers
+ * are modelled as an ordered work queues.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_start(void);
+
+/**
+ * mgmt_rx_reo_sim_stop() - Helper API to stop management Rx reorder
+ * simulation
+ *
+ * This API stops the simulation framework which mimics the management frame
+ * generation by target. MAC HW is modelled as a kthread. FW and host layers
+ * are modelled as an ordered work queues.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_stop(void);
+
+/**
+ * mgmt_rx_reo_sim_process_rx_frame() - API to process the management frame
+ * in case of simulation
+ * @pdev: pointer to pdev object
+ * @buf: pointer to management frame buffer
+ * @mgmt_rx_params: pointer to management frame parameters
+ *
+ * This API validates whether the reo algorithm has reordered frames correctly.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_process_rx_frame(struct wlan_objmgr_pdev *pdev,
+				 qdf_nbuf_t buf,
+				 struct mgmt_rx_event_params *mgmt_rx_params);
+
+/**
+ * mgmt_rx_reo_sim_get_snapshot_address() - Get snapshot address
+ * @pdev: pointer to pdev
+ * @id: snapshot identifier
+ * @address: pointer to snapshot address
+ *
+ * Helper API to get address of snapshot @id for pdev @pdev. For simulation
+ * purpose snapshots are allocated in the simulation context object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_get_snapshot_address(
+			struct wlan_objmgr_pdev *pdev,
+			enum mgmt_rx_reo_shared_snapshot_id id,
+			struct mgmt_rx_reo_snapshot **address);
+
+/**
+ * mgmt_rx_reo_sim_pdev_object_create_notification() - pdev create handler for
+ * management rx-reorder simulation framework
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being created and
+ * builds the link id to pdev map in simulation context object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_pdev_object_create_notification(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * mgmt_rx_reo_sim_pdev_object_destroy_notification() - pdev destroy handler for
+ * management rx-reorder simulation framework
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being destroyed
+ * and destroys the link id to pdev map in simulation context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mgmt_rx_reo_sim_pdev_object_destroy_notification(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * mgmt_rx_reo_sim_get_mlo_link_id_from_pdev() - Helper API to get the MLO HW
+ * link id from the pdev object.
+ * @pdev: Pointer to pdev object
+ *
+ * This API is applicable for simulation only. A static map from MLO HW link id
+ * to the pdev object is created at the init time. This API uses the map to
+ * find the MLO HW link id for a given pdev.
+ *
+ * Return: On success returns the MLO HW link id corresponding to the pdev
+ * object. On failure returns -1.
+ */
+int8_t
+mgmt_rx_reo_sim_get_mlo_link_id_from_pdev(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * mgmt_rx_reo_sim_get_pdev_from_mlo_link_id() - Helper API to get the pdev
+ * object from the MLO HW link id.
+ * @mlo_link_id: MLO HW link id
+ *
+ * This API is applicable for simulation only. A static map from MLO HW link id
+ * to the pdev object is created at the init time. This API uses the map to
+ * find the pdev object from the MLO HW link id.
+ *
+ * Return: On success returns the pdev object corresponding to the MLO HW
+ * link id. On failure returns NULL.
+ */
+struct wlan_objmgr_pdev *
+mgmt_rx_reo_sim_get_pdev_from_mlo_link_id(uint8_t mlo_link_id);
+#endif /* WLAN_MGMT_RX_REO_SIM_SUPPORT */
 
 /**
  * is_mgmt_rx_reo_required() - Whether MGMT REO required for this frame/event

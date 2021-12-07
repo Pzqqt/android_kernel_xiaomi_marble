@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -478,7 +479,7 @@ hal_rx_msdu_cce_match_get(uint8_t *buf)
 		RX_MPDU_INFO_8_PEER_META_DATA_LSB))
 
 static inline uint32_t
-hal_rx_mpdu_peer_meta_data_get(uint8_t *buf)
+hal_rx_mpdu_peer_meta_data_get_li(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
 	struct rx_mpdu_start *mpdu_start =

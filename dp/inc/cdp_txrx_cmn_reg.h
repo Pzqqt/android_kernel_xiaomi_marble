@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +26,7 @@
 #define _CDP_TXRX_CMN_REG_H_
 
 #include "hif_main.h"
+#include "cdp_txrx_cmn_struct.h"
 
 #define MOB_DRV_LEGACY_DP 0xdeed
 /* Lithium device IDs */
@@ -58,11 +60,7 @@ ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
 /**
  * dp_soc_attach_wifi3() - Attach txrx SOC
  * @ctrl_psoc:	Opaque SOC handle from Ctrl plane
- * @htc_handle:	Opaque HTC handle
- * @hif_handle:	Opaque HIF handle
- * @qdf_osdev:	QDF device
- * @ol_ops:	Offload Operations
- * @device_id:	Device ID
+ * @params: soc attach params
  *
  * Return: DP SOC handle on success, NULL on failure
  */
@@ -83,9 +81,7 @@ ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
 	defined(QCA_WIFI_QCA5018) || defined(QCA_WIFI_QCA9574)
 struct cdp_soc_t *
 dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-		    struct hif_opaque_softc *hif_handle,
-		    HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-		    struct ol_if_ops *ol_ops, uint16_t device_id);
+		    struct cdp_soc_attach_params *params);
 void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
 			struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			struct hif_opaque_softc *hif_handle,
@@ -94,11 +90,7 @@ void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
 #else
 static inline struct cdp_soc_t *
 dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-		    struct hif_opaque_softc *hif_handle,
-		    HTC_HANDLE htc_handle,
-		    qdf_device_t qdf_osdev,
-		    struct ol_if_ops *ol_ops,
-		    uint16_t device_id)
+		    struct cdp_soc_attach_params *params)
 {
 	return NULL;
 }
@@ -153,6 +145,14 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 				  qdf_device_t qdf_dev,
 				  struct ol_if_ops *dp_ol_if_ops)
 {
+	struct cdp_soc_attach_params params = {0};
+
+	params.hif_handle = hif_handle;
+	params.device_id = devid;
+	params.htc_handle = htc_handle;
+	params.qdf_osdev = qdf_dev;
+	params.ol_ops = dp_ol_if_ops;
+
 	switch (devid) {
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
 	case BERYLLIUM_DP:
@@ -174,8 +174,7 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
 	case WCN7850_DEVICE_ID:
 	case QCN9224_DEVICE_ID:
-		return dp_soc_attach_wifi3(psoc, hif_handle, htc_handle,
-			qdf_dev, dp_ol_if_ops, devid);
+		return dp_soc_attach_wifi3(psoc, &params);
 	break;
 	default:
 		return ol_txrx_soc_attach(psoc, dp_ol_if_ops);

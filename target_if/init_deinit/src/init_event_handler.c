@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +34,10 @@
 #include <init_cmd_api.h>
 #include <cdp_txrx_cmn.h>
 #include <wlan_reg_ucfg_api.h>
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+#include <wlan_mlo_mgr_cmn.h>
+#include <wlan_mlo_mgr_setup.h>
+#endif
 
 static void init_deinit_set_send_init_cmd(struct wlan_objmgr_psoc *psoc,
 					  struct target_psoc_info *tgt_hdl)
@@ -277,6 +282,7 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 	struct target_psoc_info *tgt_hdl;
 	struct wmi_unified *wmi_handle;
 	struct tgt_info *info;
+	wmi_legacy_service_ready_callback legacy_callback;
 
 	if (!scn_handle) {
 		target_if_err("scn handle NULL in service ready ext2 handler");
@@ -357,6 +363,11 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 							    event, info);
 	if (err_code)
 		target_if_debug("failed to populate dbs_or_sbs cap ext2");
+
+	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+	if (legacy_callback)
+		legacy_callback(wmi_service_ready_ext2_event_id,
+				scn_handle, event, data_len);
 
 	target_if_regulatory_set_ext_tpc(psoc);
 
@@ -524,6 +535,38 @@ static int init_deinit_service_available_handler(ol_scn_t scn_handle,
 	return 0;
 }
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+static void init_deinit_mlo_update_soc_ready(struct wlan_objmgr_psoc *psoc)
+{
+	mlo_setup_update_soc_ready(psoc);
+}
+
+static void init_deinit_send_ml_link_ready(struct wlan_objmgr_psoc *psoc,
+					   void *object, void *arg)
+{
+	struct wlan_objmgr_pdev *pdev = object;
+
+	qdf_assert_always(psoc);
+	qdf_assert_always(pdev);
+
+	mlo_setup_link_ready(pdev);
+}
+
+static void init_deinit_mlo_update_pdev_ready(struct wlan_objmgr_psoc *psoc,
+					      uint8_t num_radios)
+{
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
+				     init_deinit_send_ml_link_ready,
+				     NULL, 0, WLAN_INIT_DEINIT_ID);
+}
+#else
+static void init_deinit_mlo_update_soc_ready(struct wlan_objmgr_psoc *psoc)
+{}
+static void init_deinit_mlo_update_pdev_ready(struct wlan_objmgr_psoc *psoc,
+					      uint8_t num_radios)
+{}
+#endif /*WLAN_FEATURE_11BE_MLO && WLAN_MLO_MULTI_CHIP*/
+
 /* MAC address fourth byte index */
 #define MAC_BYTE_4 4
 
@@ -601,6 +644,8 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 			tgt_hdl->info.wmi_ready = FALSE;
 			goto exit;
 		}
+
+	init_deinit_mlo_update_soc_ready(psoc);
 
 	num_radios = target_psoc_get_num_radios(tgt_hdl);
 
@@ -719,6 +764,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 			wlan_psoc_set_hw_macaddr(psoc, myaddr);
 	}
 
+	init_deinit_mlo_update_pdev_ready(psoc, num_radios);
 out:
 	target_if_btcoex_cfg_enable(psoc, tgt_hdl, event);
 	tgt_hdl->info.wmi_ready = TRUE;
@@ -728,6 +774,108 @@ exit:
 	return 0;
 }
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+static int init_deinit_mlo_setup_comp_event_handler(ol_scn_t scn_handle,
+						    uint8_t *event,
+						    uint32_t data_len)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct target_psoc_info *tgt_hdl;
+	struct wmi_unified *wmi_handle;
+	struct wmi_mlo_setup_complete_params params;
+
+	if (!scn_handle) {
+		target_if_err("scn handle NULL");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn_handle);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null");
+		return -EINVAL;
+	}
+	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+
+	if (wmi_extract_mlo_setup_cmpl_event(wmi_handle, event, &params) !=
+			QDF_STATUS_SUCCESS)
+		return -EINVAL;
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, params.pdev_id,
+					  WLAN_INIT_DEINIT_ID);
+	if (pdev) {
+		mlo_link_setup_complete(pdev);
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_INIT_DEINIT_ID);
+	}
+
+	return 0;
+}
+
+static int init_deinit_mlo_teardown_comp_event_handler(ol_scn_t scn_handle,
+						       uint8_t *event,
+						       uint32_t data_len)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct target_psoc_info *tgt_hdl;
+	struct wmi_unified *wmi_handle;
+	struct wmi_mlo_teardown_cmpl_params params;
+
+	if (!scn_handle) {
+		target_if_err("scn handle NULL");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn_handle);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null");
+		return -EINVAL;
+	}
+	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+
+	if (wmi_extract_mlo_teardown_cmpl_event(wmi_handle, event, &params) !=
+			QDF_STATUS_SUCCESS)
+		return -EINVAL;
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, params.pdev_id,
+					  WLAN_INIT_DEINIT_ID);
+	if (pdev) {
+		mlo_link_teardown_complete(pdev);
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_INIT_DEINIT_ID);
+	}
+
+	return 0;
+}
+
+static QDF_STATUS init_deinit_register_mlo_ev_handlers(wmi_unified_t wmi_handle)
+{
+	wmi_unified_register_event(wmi_handle,
+				   wmi_mlo_setup_complete_event_id,
+				   init_deinit_mlo_setup_comp_event_handler);
+	wmi_unified_register_event(wmi_handle,
+				   wmi_mlo_teardown_complete_event_id,
+				   init_deinit_mlo_teardown_comp_event_handler);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS init_deinit_register_mlo_ev_handlers(wmi_unified_t wmi_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /*WLAN_FEATURE_11BE_MLO && WLAN_MLO_MULTI_CHIP*/
 
 QDF_STATUS init_deinit_register_tgt_psoc_ev_handlers(
 				struct wlan_objmgr_psoc *psoc)
@@ -770,6 +918,7 @@ QDF_STATUS init_deinit_register_tgt_psoc_ev_handlers(
 				wmi_service_ready_ext2_event_id,
 				init_deinit_service_ext2_ready_event_handler,
 				WMI_RX_WORK_CTX);
+	retval = init_deinit_register_mlo_ev_handlers(wmi_handle);
 
 
 	return retval;

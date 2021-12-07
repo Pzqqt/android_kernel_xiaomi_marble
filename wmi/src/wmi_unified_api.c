@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -420,6 +421,16 @@ wmi_unified_roam_set_param_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+QDF_STATUS
+wmi_unified_vdev_set_mu_snif_send(wmi_unified_t wmi_handle,
+				  struct vdev_set_mu_snif_param *param)
+{
+	if (wmi_handle->ops->send_vdev_set_mu_snif_cmd)
+		return wmi_handle->ops->send_vdev_set_mu_snif_cmd(wmi_handle,
+				  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
 
 QDF_STATUS wmi_unified_sifs_trigger_send(wmi_unified_t wmi_handle,
 					 struct sifs_trigger_param *param)
@@ -1141,6 +1152,30 @@ wmi_unified_pdev_fips_cmd_send(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+QDF_STATUS
+wmi_unified_pdev_fips_extend_cmd_send(wmi_unified_t wmi_handle,
+				      struct fips_extend_params *param)
+{
+	if (wmi_handle->ops->send_pdev_fips_extend_cmd)
+		return wmi_handle->ops->send_pdev_fips_extend_cmd(wmi_handle,
+								  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_pdev_fips_mode_set_cmd(wmi_unified_t wmi_handle,
+				   struct fips_mode_set_params *param)
+{
+	if (wmi_handle->ops->send_pdev_fips_mode_set_cmd)
+		return wmi_handle->ops->send_pdev_fips_mode_set_cmd(wmi_handle,
+								    param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 #ifdef WLAN_FEATURE_DISA
 QDF_STATUS
@@ -1922,6 +1957,21 @@ wmi_extract_fips_event_data(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_FIPS_BER_CCMGCM
+QDF_STATUS
+wmi_extract_fips_extend_event_data(wmi_unified_t wmi_handle, void *evt_buf,
+				   struct wmi_host_fips_extend_event_param
+				   *param)
+{
+	if (wmi_handle->ops->extract_fips_extend_ev_data) {
+		return wmi_handle->ops->extract_fips_extend_ev_data(wmi_handle,
+								    evt_buf,
+								    param);
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 /**
  * wmi_unified_extract_pn() - extract pn event data
@@ -3202,6 +3252,20 @@ QDF_STATUS wmi_convert_pdev_id_target_to_host(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_RTT_MEASUREMENT_NOTIFICATION
+QDF_STATUS wmi_unified_extract_measreq_chan_info(
+		wmi_unified_t wmi_handle, uint32_t data_len, uint8_t *data,
+		struct rtt_channel_info *chinfo)
+{
+	if (wmi_handle->ops->extract_measreq_chan_info)
+		return wmi_handle->ops->extract_measreq_chan_info(
+								data_len,
+								data, chinfo);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_RTT_MEASUREMENT_NOTIFICATION */
 #endif
 
 QDF_STATUS

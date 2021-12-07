@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1929,6 +1930,8 @@ static void hal_hw_txrx_ops_attach_qca6750(struct hal_soc *hal_soc)
 					hal_rx_get_mpdu_mac_ad4_valid_6750;
 	hal_soc->ops->hal_rx_mpdu_start_sw_peer_id_get =
 		hal_rx_mpdu_start_sw_peer_id_get_6750;
+	hal_soc->ops->hal_rx_mpdu_peer_meta_data_get =
+		hal_rx_mpdu_peer_meta_data_get_li;
 	hal_soc->ops->hal_rx_mpdu_get_to_ds = hal_rx_mpdu_get_to_ds_6750;
 	hal_soc->ops->hal_rx_mpdu_get_fr_ds = hal_rx_mpdu_get_fr_ds_6750;
 	hal_soc->ops->hal_rx_get_mpdu_frame_control_valid =
@@ -2299,7 +2302,11 @@ struct hal_hw_srng_config hw_srng_table_6750[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
+#ifdef TX_MULTI_TCL
+		.max_rings = 5,
+#else
 		.max_rings = 4,
+#endif
 		.entry_size = sizeof(struct wbm_release_ring) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_DST_RING,

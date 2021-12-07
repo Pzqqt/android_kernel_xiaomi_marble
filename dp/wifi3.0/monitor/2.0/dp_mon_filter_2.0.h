@@ -20,18 +20,6 @@
 #include <dp_htt.h>
 
 /**
- * struct dp_mon_filter_be - Monitor TLV filter
- * @rx_tlv_filter: Rx MON TLV filter
- * @tx_tlv_filter: Tx MON TLV filter
- * @tx_valid: enable/disable Tx Mon TLV filter
- */
-struct dp_mon_filter_be {
-	struct dp_mon_filter rx_tlv_filter;
-	struct htt_tx_ring_tlv_filter tx_tlv_filter;
-	int tx_valid;
-};
-
-/**
  * dp_rx_mon_packet_length_set() - Setup rx monitor per packet type length
  * @msg_word: msg word
  * @htt_tlv_filter: rx ring filter configuration
@@ -204,6 +192,18 @@ void dp_mon_filter_setup_rx_pkt_log_cbf_2_0(struct dp_pdev *pdev);
  * @pdev: DP pdev handle
  */
 void dp_mon_filter_reset_rx_pktlog_cbf_2_0(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_setup_pktlog_hybrid_2_0() - Setup the pktlog hybrid mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_setup_pktlog_hybrid_2_0(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_reset_pktlog_hybrid_2_0() - Reset pktlog hybrid mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_reset_pktlog_hybrid_2_0(struct dp_pdev *pdev);
 #else
 static inline void
 dp_mon_filter_setup_rx_pkt_log_full_2_0(struct dp_pdev *pdev)
@@ -232,6 +232,16 @@ dp_mon_filter_setup_rx_pkt_log_cbf_2_0(struct dp_pdev *pdev)
 
 static inline void
 dp_mon_filter_reset_rx_pktlog_cbf_2_0(struct dp_pdev *pdev)
+{
+}
+
+static inline void
+dp_mon_filter_setup_pktlog_hybrid_2_0(struct dp_pdev *pdev)
+{
+}
+
+static inline void
+dp_mon_filter_reset_pktlog_hybrid_2_0(struct dp_pdev *pdev)
 {
 }
 #endif

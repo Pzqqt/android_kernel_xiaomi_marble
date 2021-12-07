@@ -4922,6 +4922,12 @@ reg_get_reg_rules_for_pdev(struct wlan_objmgr_pdev *pdev)
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	psoc_reg_priv = reg_get_psoc_obj(psoc);
+
+	if (!psoc_reg_priv) {
+		reg_debug("Regulatory psoc private object is NULL");
+		return NULL;
+	}
+
 	phy_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	psoc_reg_rules = &psoc_reg_priv->mas_chan_params[phy_id].reg_rules;
 
@@ -5045,6 +5051,12 @@ static void reg_iterate_sp_rules(struct wlan_objmgr_pdev *pdev,
 	struct freq_range chip_range;
 
 	psoc_reg_rules = reg_get_reg_rules_for_pdev(pdev);
+
+	if (!psoc_reg_rules) {
+		reg_debug("psoc reg rule pointer is NULL");
+		return;
+	}
+
 	n_6g_sp_ap_reg_rules = psoc_reg_rules->num_of_6g_ap_reg_rules[REG_STANDARD_POWER_AP];
 	p_sp_reg_rule = psoc_reg_rules->reg_rules_6g_ap[REG_STANDARD_POWER_AP];
 
@@ -5905,6 +5917,11 @@ reg_get_num_rules_of_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 				 enum reg_6g_ap_type ap_pwr_type)
 {
 	struct reg_rule_info *psoc_reg_rules = reg_get_reg_rules_for_pdev(pdev);
+
+	if (!psoc_reg_rules) {
+		reg_debug("No psoc_reg_rules");
+		return 0;
+	}
 
 	if (ap_pwr_type > REG_MAX_SUPP_AP_TYPE) {
 		reg_err("Unsupported 6G AP power type");

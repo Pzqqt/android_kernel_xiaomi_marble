@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2764,6 +2765,27 @@ uint16_t  target_if_pdev_get_hw_link_id
  */
 void target_pdev_set_hw_link_id
 		(struct wlan_objmgr_pdev *pdev, uint16_t hw_link_id);
+
+/**
+ * target_if_mlo_setup_req - API to trigger MLO setup sequence
+ * @pdev: Array of pointers to pdev object that are part of ML group
+ * @num_pdevs: Number of pdevs in above array
+ * @grp_id: ML Group ID
+ *
+ * Return: QDF_STATUS codes
+ */
+QDF_STATUS target_if_mlo_setup_req(struct wlan_objmgr_pdev **pdev,
+				   uint8_t num_pdevs, uint8_t grp_id);
+
+/**
+ * target_if_mlo_ready - API to send MLO ready
+ * @pdev: Array of pointers to pdev object that are part of ML group
+ * @num_pdevs: Number of pdevs in above array
+ *
+ * Return: QDF_STATUS codes
+ */
+QDF_STATUS target_if_mlo_ready(struct wlan_objmgr_pdev **pdev,
+			       uint8_t num_pdevs);
 #endif /*WLAN_FEATURE_11BE_MLO && WLAN_MLO_MULTI_CHIP*/
 
 #endif

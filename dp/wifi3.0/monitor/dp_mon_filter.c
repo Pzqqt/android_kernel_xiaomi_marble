@@ -254,6 +254,26 @@ void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev)
 	if (mon_ops && mon_ops->mon_filter_reset_rx_pkt_log_cbf)
 		mon_ops->mon_filter_reset_rx_pkt_log_cbf(pdev);
 }
+
+#ifdef QCA_WIFI_QCN9224
+void dp_mon_filter_setup_pktlog_hybrid(struct dp_pdev *pdev)
+{
+	struct dp_mon_ops *mon_ops = NULL;
+
+	mon_ops = dp_mon_ops_get(pdev->soc);
+	if (mon_ops && mon_ops->mon_filter_setup_pktlog_hybrid)
+		mon_ops->mon_filter_setup_pktlog_hybrid(pdev);
+}
+
+void dp_mon_filter_reset_pktlog_hybrid(struct dp_pdev *pdev)
+{
+	struct dp_mon_ops *mon_ops = NULL;
+
+	mon_ops = dp_mon_ops_get(pdev->soc);
+	if (mon_ops && mon_ops->mon_filter_reset_pktlog_hybrid)
+		mon_ops->mon_filter_reset_pktlog_hybrid(pdev);
+}
+#endif
 #endif /* WDI_EVENT_ENABLE */
 
 QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)

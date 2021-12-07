@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -948,6 +949,22 @@ hal_rx_mpdu_start_sw_peer_id_get(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_mpdu_start_sw_peer_id_get(buf);
+}
+
+/**
+ * hal_rx_mpdu_peer_meta_data_get() - Retrieve PEER_META_DATA
+ * @hal_soc_hdl: hal soc handle
+ * @buf: pointer to rx pkt TLV.
+ *
+ * Return: peer meta data
+ */
+static inline uint32_t
+hal_rx_mpdu_peer_meta_data_get(hal_soc_handle_t hal_soc_hdl,
+			       uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_mpdu_peer_meta_data_get(buf);
 }
 
 /*

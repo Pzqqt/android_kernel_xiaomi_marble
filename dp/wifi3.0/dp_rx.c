@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -560,14 +561,16 @@ bool dp_rx_intrabss_mcbc_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
  * dp_rx_intrabss_ucast_fwd() - Does intrabss forward for unicast packets
  *
  * @soc: core txrx main context
- * @ta_peer	: source peer entry
- * @rx_tlv_hdr	: start address of rx tlvs
- * @nbuf	: nbuf that has to be intrabss forwarded
- * @tid_stats	: tid stats pointer
+ * @ta_peer: source peer entry
+ * @tx_vdev_id: VDEV ID for Intra-BSS TX
+ * @rx_tlv_hdr: start address of rx tlvs
+ * @nbuf: nbuf that has to be intrabss forwarded
+ * @tid_stats: tid stats pointer
  *
  * Return: bool: true if it is forwarded else false
  */
 bool dp_rx_intrabss_ucast_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
+			      uint8_t tx_vdev_id,
 			      uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
 			      struct cdp_tid_rx_stats *tid_stats)
 {
@@ -601,7 +604,7 @@ bool dp_rx_intrabss_ucast_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
 	}
 
 	if (!dp_tx_send((struct cdp_soc_t *)soc,
-			ta_peer->vdev->vdev_id, nbuf)) {
+			tx_vdev_id, nbuf)) {
 		DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1,
 				 len);
 	} else {
@@ -1592,7 +1595,8 @@ dp_rx_validate_rx_callbacks(struct dp_soc *soc,
 		} else {
 			num_nbuf = dp_rx_drop_nbuf_list(vdev->pdev,
 							nbuf_head);
-			DP_STATS_DEC(peer, rx.to_stack.num, num_nbuf);
+			DP_PEER_TO_STACK_DECC(peer, num_nbuf,
+					      vdev->pdev->enhanced_stats_en);
 		}
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1683,6 +1687,7 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	bool is_ampdu, is_not_amsdu;
 	uint32_t sgi, mcs, tid, nss, bw, reception_type, pkt_type;
 	struct dp_vdev *vdev = peer->vdev;
+	bool enh_flag;
 	qdf_ether_header_t *eh;
 	uint16_t msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 
@@ -1699,10 +1704,11 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (qdf_unlikely(qdf_nbuf_is_da_mcbc(nbuf) &&
 			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
-		DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
+		enh_flag = vdev->pdev->enhanced_stats_en;
+		DP_PEER_MC_INCC_PKT(peer, 1, msdu_len, enh_flag);
 		tid_stats->mcast_msdu_cnt++;
 		if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
-			DP_STATS_INC_PKT(peer, rx.bcast, 1, msdu_len);
+			DP_PEER_BC_INCC_PKT(peer, 1, msdu_len, enh_flag);
 			tid_stats->bcast_msdu_cnt++;
 		}
 	}
@@ -1713,6 +1719,8 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	 */
 	if (!soc->process_rx_status)
 		return;
+
+	peer->stats.rx.last_rx_ts = qdf_system_ticks();
 
 	/*
 	 * TODO - For WCN7850 this field is present in ring_desc
@@ -1858,7 +1866,7 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 				FRAME_MASK_IPV4_EAPOL | FRAME_MASK_IPV6_DHCP;
 
 	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
-	if (peer_id > soc->max_peers)
+	if (peer_id > soc->max_peer_id)
 		goto deliver_fail;
 
 	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);

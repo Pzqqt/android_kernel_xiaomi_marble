@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,10 +208,9 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
 
 	/* verify checksum offload configuration*/
-	if (vdev->csum_enabled &&
-	    ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) ==
-					QDF_NBUF_TX_CKSUM_TCP_UDP) ||
-	      qdf_nbuf_is_tso(tx_desc->nbuf))) {
+	if ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) ==
+				   QDF_NBUF_TX_CKSUM_TCP_UDP) ||
+	      qdf_nbuf_is_tso(tx_desc->nbuf)) {
 		hal_tx_desc_set_l3_checksum_en(hal_tx_desc_cached, 1);
 		hal_tx_desc_set_l4_checksum_en(hal_tx_desc_cached, 1);
 	}
@@ -286,7 +286,7 @@ QDF_STATUS dp_tx_init_bank_profiles(struct dp_soc_be *be_soc)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mutex_create(&be_soc->tx_bank_lock);
+	qdf_spinlock_create(&be_soc->tx_bank_lock);
 
 	for (i = 0; i < num_tcl_banks; i++) {
 		be_soc->bank_profiles[i].is_configured = false;
@@ -299,7 +299,7 @@ QDF_STATUS dp_tx_init_bank_profiles(struct dp_soc_be *be_soc)
 void dp_tx_deinit_bank_profiles(struct dp_soc_be *be_soc)
 {
 	qdf_mem_free(be_soc->bank_profiles);
-	qdf_mutex_destroy(&be_soc->tx_bank_lock);
+	qdf_spinlock_destroy(&be_soc->tx_bank_lock);
 }
 
 static
@@ -364,7 +364,7 @@ int dp_tx_get_bank_profile(struct dp_soc_be *be_soc,
 	/* convert vdev params into hal_tx_bank_config */
 	dp_tx_get_vdev_bank_config(be_vdev, &vdev_config);
 
-	qdf_mutex_acquire(&be_soc->tx_bank_lock);
+	qdf_spin_lock_bh(&be_soc->tx_bank_lock);
 	/* go over all banks and find a matching/unconfigured/unsed bank */
 	for (i = 0; i < be_soc->num_bank_profiles; i++) {
 		if (be_soc->bank_profiles[i].is_configured &&
@@ -410,7 +410,7 @@ configure_and_return:
 				      bank_id);
 inc_ref_and_return:
 	qdf_atomic_inc(&be_soc->bank_profiles[bank_id].ref_count);
-	qdf_mutex_release(&be_soc->tx_bank_lock);
+	qdf_spin_unlock_bh(&be_soc->tx_bank_lock);
 
 	dp_info("found %s slot at index %d, input:0x%x match:0x%x ref_count %u",
 		temp_str, bank_id, vdev_config.val,
@@ -436,9 +436,9 @@ inc_ref_and_return:
 void dp_tx_put_bank_profile(struct dp_soc_be *be_soc,
 			    struct dp_vdev_be *be_vdev)
 {
-	qdf_mutex_acquire(&be_soc->tx_bank_lock);
+	qdf_spin_lock_bh(&be_soc->tx_bank_lock);
 	qdf_atomic_dec(&be_soc->bank_profiles[be_vdev->bank_id].ref_count);
-	qdf_mutex_release(&be_soc->tx_bank_lock);
+	qdf_spin_unlock_bh(&be_soc->tx_bank_lock);
 }
 
 void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,
@@ -453,10 +453,12 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 				   uint8_t pool_id)
 {
 	struct dp_tx_desc_pool_s *tx_desc_pool;
+	struct dp_hw_cookie_conversion_t *cc_ctx;
 	struct dp_soc_be *be_soc;
 	struct dp_spt_page_desc *page_desc;
-	struct dp_spt_page_desc_list *page_desc_list;
 	struct dp_tx_desc_s *tx_desc;
+	uint32_t ppt_idx = 0;
+	uint32_t avail_entry_index = 0;
 
 	if (!num_elem) {
 		dp_err("desc_num 0 !!");
@@ -465,37 +467,33 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
 	tx_desc_pool = &soc->tx_desc[pool_id];
-	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+	cc_ctx  = &be_soc->tx_cc_ctx[pool_id];
 
-	/* allocate SPT pages from page desc pool */
-	page_desc_list->num_spt_pages =
-		dp_cc_spt_page_desc_alloc(be_soc,
-					  &page_desc_list->spt_page_list_head,
-					  &page_desc_list->spt_page_list_tail,
-					  num_elem);
-
-	if (!page_desc_list->num_spt_pages) {
-		dp_err("fail to allocate cookie conversion spt pages");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* put each TX Desc VA to SPT pages and get corresponding ID */
-	page_desc = page_desc_list->spt_page_list_head;
 	tx_desc = tx_desc_pool->freelist;
+	page_desc = &cc_ctx->page_desc_base[0];
 	while (tx_desc) {
+		if (avail_entry_index == 0) {
+			if (ppt_idx >= cc_ctx->total_page_num) {
+				dp_alert("insufficient secondary page tables");
+				qdf_assert_always(0);
+			}
+			page_desc = &cc_ctx->page_desc_base[ppt_idx++];
+		}
+
+		/* put each TX Desc VA to SPT pages and
+		 * get corresponding ID
+		 */
 		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
-					 page_desc->avail_entry_index,
+					 avail_entry_index,
 					 tx_desc);
 		tx_desc->id =
 			dp_cc_desc_id_generate(page_desc->ppt_index,
-					       page_desc->avail_entry_index);
+					       avail_entry_index);
 		tx_desc->pool_id = pool_id;
-		tx_desc = tx_desc->next;
 
-		page_desc->avail_entry_index++;
-		if (page_desc->avail_entry_index >=
-				DP_CC_SPT_PAGE_MAX_ENTRIES)
-			page_desc = page_desc->next;
+		tx_desc = tx_desc->next;
+		avail_entry_index = (avail_entry_index + 1) &
+					DP_CC_SPT_PAGE_MAX_ENTRIES_MASK;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -505,32 +503,18 @@ void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
 			       struct dp_tx_desc_pool_s *tx_desc_pool,
 			       uint8_t pool_id)
 {
-	struct dp_soc_be *be_soc;
 	struct dp_spt_page_desc *page_desc;
-	struct dp_spt_page_desc_list *page_desc_list;
+	struct dp_soc_be *be_soc;
+	int i = 0;
+	struct dp_hw_cookie_conversion_t *cc_ctx;
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
-	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+	cc_ctx  = &be_soc->tx_cc_ctx[pool_id];
 
-	if (!page_desc_list->num_spt_pages) {
-		dp_warn("page_desc_list is empty for pool_id %d", pool_id);
-		return;
-	}
-
-	/* cleanup for each page */
-	page_desc = page_desc_list->spt_page_list_head;
-	while (page_desc) {
-		page_desc->avail_entry_index = 0;
+	for (i = 0; i < cc_ctx->total_page_num; i++) {
+		page_desc = &cc_ctx->page_desc_base[i];
 		qdf_mem_zero(page_desc->page_v_addr, qdf_page_size);
-		page_desc = page_desc->next;
 	}
-
-	/* free pages desc back to pool */
-	dp_cc_spt_page_desc_free(be_soc,
-				 &page_desc_list->spt_page_list_head,
-				 &page_desc_list->spt_page_list_tail,
-				 page_desc_list->num_spt_pages);
-	page_desc_list->num_spt_pages = 0;
 }
 
 #ifdef WLAN_FEATURE_NEAR_FULL_IRQ

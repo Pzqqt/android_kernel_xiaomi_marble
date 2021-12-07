@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -90,20 +91,7 @@ dp_tx_flow_pool_reattach(struct dp_tx_desc_pool_s *pool)
 		  "%s: flow pool already allocated, attached %d times",
 		  __func__, pool->pool_create_cnt);
 
-	if (pool->avail_desc > pool->start_th[DP_TH_BE_BK])
-		pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
-	else if (pool->avail_desc <= pool->start_th[DP_TH_BE_BK] &&
-		 pool->avail_desc > pool->start_th[DP_TH_VI])
-		pool->status = FLOW_POOL_BE_BK_PAUSED;
-	else if (pool->avail_desc <= pool->start_th[DP_TH_VI] &&
-		 pool->avail_desc > pool->start_th[DP_TH_VO])
-		pool->status = FLOW_POOL_VI_PAUSED;
-	else if (pool->avail_desc <= pool->start_th[DP_TH_VO] &&
-		 pool->avail_desc > pool->start_th[DP_TH_HI])
-		pool->status = FLOW_POOL_VO_PAUSED;
-	else
-		pool->status = FLOW_POOL_ACTIVE_PAUSED;
-
+	pool->status = FLOW_POOL_ACTIVE_UNPAUSED_REATTACH;
 	pool->pool_create_cnt++;
 }
 
@@ -128,6 +116,44 @@ dp_tx_flow_pool_dump_threshold(struct dp_tx_desc_pool_s *pool)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "Level %d :: Latest pause timestamp %lu",
 			  i, pool->latest_pause_time[i]);
+	}
+}
+
+/**
+ * dp_tx_flow_ctrl_reset_subqueues() - Reset subqueues to orginal state
+ * @soc: dp soc
+ * @pool: flow pool
+ * @pool_status: flow pool status
+ *
+ * Return: none
+ */
+static inline void
+dp_tx_flow_ctrl_reset_subqueues(struct dp_soc *soc,
+				struct dp_tx_desc_pool_s *pool,
+				enum flow_pool_status pool_status)
+{
+	switch (pool_status) {
+	case FLOW_POOL_ACTIVE_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_PRIORITY_QUEUE_ON,
+			      WLAN_DATA_FLOW_CTRL_PRI);
+
+	case FLOW_POOL_VO_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_VO_QUEUE_ON,
+			      WLAN_DATA_FLOW_CTRL_VO);
+
+	case FLOW_POOL_VI_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_VI_QUEUE_ON,
+			      WLAN_DATA_FLOW_CTRL_VI);
+
+	case FLOW_POOL_BE_BK_PAUSED:
+		soc->pause_cb(pool->flow_pool_id,
+			      WLAN_NETIF_BE_BK_QUEUE_ON,
+			      WLAN_DATA_FLOW_CTRL_BE_BK);
+	default:
+		break;
 	}
 }
 
@@ -164,6 +190,13 @@ dp_tx_flow_pool_dump_threshold(struct dp_tx_desc_pool_s *pool)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		  "Start threshold %d :: Stop threshold %d",
 	pool->start_th, pool->stop_th);
+}
+
+static inline void
+dp_tx_flow_ctrl_reset_subqueues(struct dp_soc *soc,
+				struct dp_tx_desc_pool_s *pool,
+				enum flow_pool_status pool_status)
+{
 }
 
 #endif
@@ -356,6 +389,7 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	bool force)
 {
 	struct dp_vdev *vdev;
+	enum flow_pool_status pool_status;
 
 	if (!soc || !pool) {
 		dp_err("pool or soc is NULL");
@@ -381,7 +415,10 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	}
 
 	if (pool->avail_desc < pool->pool_size) {
+		pool_status = pool->status;
 		pool->status = FLOW_POOL_INVALID;
+		dp_tx_flow_ctrl_reset_subqueues(soc, pool, pool_status);
+
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		/* Reset TX desc associated to this Vdev as NULL */
 		vdev = dp_vdev_get_ref_by_id(soc, pool->flow_pool_id,

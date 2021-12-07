@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,6 +33,9 @@
 #define DP_PEER_MAX_MEC_ENTRY 4096	/* maximum MEC entries in MEC table */
 
 #define DP_FW_PEER_STATS_CMP_TIMEOUT_MSEC 5000
+
+#define DP_PEER_HASH_LOAD_MULT  2
+#define DP_PEER_HASH_LOAD_SHIFT 0
 
 #define dp_peer_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_PEER, params)
 #define dp_peer_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_PEER, params)
@@ -110,7 +114,7 @@ __dp_peer_get_ref_by_id(struct dp_soc *soc,
 	struct dp_peer *peer;
 
 	qdf_spin_lock_bh(&soc->peer_map_lock);
-	peer = (peer_id >= soc->max_peers) ? NULL :
+	peer = (peer_id >= soc->max_peer_id) ? NULL :
 				soc->peer_id_to_obj_map[peer_id];
 	if (!peer ||
 	    (dp_peer_get_ref(soc, peer, mod_id) != QDF_STATUS_SUCCESS)) {
@@ -140,7 +144,7 @@ struct dp_peer *dp_peer_get_ref_by_id(struct dp_soc *soc,
 	struct dp_peer *peer;
 
 	qdf_spin_lock_bh(&soc->peer_map_lock);
-	peer = (peer_id >= soc->max_peers) ? NULL :
+	peer = (peer_id >= soc->max_peer_id) ? NULL :
 				soc->peer_id_to_obj_map[peer_id];
 
 	if (!peer || peer->peer_state >= DP_PEER_STATE_LOGICAL_DELETE ||
@@ -1043,6 +1047,36 @@ void dp_peer_delete(struct dp_soc *soc,
 #define IS_MLO_DP_MLD_PEER(_peer) \
 	((_peer)->peer_type == CDP_MLD_PEER_TYPE)
 
+#ifdef WLAN_MLO_MULTI_CHIP
+uint8_t dp_mlo_get_chip_id(struct dp_soc *soc);
+
+struct dp_peer *
+dp_link_peer_hash_find_by_chip_id(struct dp_soc *soc,
+				  uint8_t *peer_mac_addr,
+				  int mac_addr_is_aligned,
+				  uint8_t vdev_id,
+				  uint8_t chip_id,
+				  enum dp_mod_id mod_id);
+#else
+static inline uint8_t dp_mlo_get_chip_id(struct dp_soc *soc)
+{
+	return 0;
+}
+
+static inline struct dp_peer *
+dp_link_peer_hash_find_by_chip_id(struct dp_soc *soc,
+				  uint8_t *peer_mac_addr,
+				  int mac_addr_is_aligned,
+				  uint8_t vdev_id,
+				  uint8_t chip_id,
+				  enum dp_mod_id mod_id)
+{
+	return dp_peer_find_hash_find(soc, peer_mac_addr,
+				      mac_addr_is_aligned,
+				      vdev_id, mod_id);
+}
+#endif
+
 /**
  * dp_link_peer_add_mld_peer() - add mld peer pointer to link peer,
 				 increase mld peer ref_cnt
@@ -1126,6 +1160,8 @@ void dp_mld_peer_add_link_peer(struct dp_peer *mld_peer,
 				     QDF_MAC_ADDR_SIZE);
 			link_peer_info->is_valid = true;
 			link_peer_info->vdev_id = link_peer->vdev->vdev_id;
+			link_peer_info->chip_id =
+				dp_mlo_get_chip_id(link_peer->vdev->pdev->soc);
 			mld_peer->num_links++;
 			break;
 		}
@@ -1199,11 +1235,12 @@ void dp_get_link_peers_ref_from_mld_peer(
 	for (i = 0; i < DP_MAX_MLO_LINKS; i++)  {
 		link_peer_info = &mld_peer->link_peers[i];
 		if (link_peer_info->is_valid) {
-			peer = dp_peer_find_hash_find(
+			peer = dp_link_peer_hash_find_by_chip_id(
 						soc,
 						link_peer_info->mac_addr.raw,
 						true,
 						link_peer_info->vdev_id,
+						link_peer_info->chip_id,
 						mod_id);
 			if (peer)
 				mld_link_peers->link_peers[j++] = peer;
@@ -1357,6 +1394,7 @@ QDF_STATUS dp_peer_mlo_setup(
 			struct dp_peer *peer,
 			uint8_t vdev_id,
 			struct cdp_peer_setup_info *setup_info);
+
 #else
 #define DP_PEER_SET_TYPE(_peer, _type_val) /* no op */
 #define IS_MLO_DP_LINK_PEER(_peer) false
@@ -1412,7 +1450,64 @@ void dp_peer_mlo_delete(struct dp_soc *soc,
 			struct dp_peer *peer)
 {
 }
+
+static inline
+void dp_mlo_peer_authorize(struct dp_soc *soc,
+			   struct dp_peer *link_peer)
+{
+}
+
+static inline uint8_t dp_mlo_get_chip_id(struct dp_soc *soc)
+{
+	return 0;
+}
+
+static inline struct dp_peer *
+dp_link_peer_hash_find_by_chip_id(struct dp_soc *soc,
+				  uint8_t *peer_mac_addr,
+				  int mac_addr_is_aligned,
+				  uint8_t vdev_id,
+				  uint8_t chip_id,
+				  enum dp_mod_id mod_id)
+{
+	return dp_peer_find_hash_find(soc, peer_mac_addr,
+				      mac_addr_is_aligned,
+				      vdev_id, mod_id);
+}
 #endif /* WLAN_FEATURE_11BE_MLO */
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+/**
+ * dp_mlo_partner_chips_map() - Map MLO peers to partner SOCs
+ * @soc: Soc handle
+ * @peer: DP peer handle for ML peer
+ * @peer_id: peer_id
+ * Return: None
+ */
+void dp_mlo_partner_chips_map(struct dp_soc *soc,
+			      struct dp_peer *peer,
+			      uint16_t peer_id);
+
+/**
+ * dp_mlo_partner_chips_unmap() - Unmap MLO peers to partner SOCs
+ * @soc: Soc handle
+ * @peer_id: peer_id
+ * Return: None
+ */
+void dp_mlo_partner_chips_unmap(struct dp_soc *soc,
+				uint16_t peer_id);
+#else
+static inline void dp_mlo_partner_chips_map(struct dp_soc *soc,
+					    struct dp_peer *peer,
+					    uint16_t peer_id)
+{
+}
+
+static inline void dp_mlo_partner_chips_unmap(struct dp_soc *soc,
+					      uint16_t peer_id)
+{
+}
+#endif
 
 static inline
 QDF_STATUS dp_peer_rx_tids_create(struct dp_peer *peer)

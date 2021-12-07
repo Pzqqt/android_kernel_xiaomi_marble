@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -145,6 +146,31 @@ struct wlan_objmgr_peer *wlan_mlo_peer_get_assoc_peer(
 					struct wlan_mlo_peer_context *ml_peer);
 
 /**
+ * mlo_peer_is_assoc_peer() - check whether the peer is assoc peer
+ * @ml_peer: MLO peer
+ * @peer: Link peer
+ *
+ * This function checks whether the peer is assoc peer of MLO peer,
+ * This API doesn't have lock protection, caller needs to take the lock
+ *
+ * Return: true, if it is assoc peer
+ */
+bool mlo_peer_is_assoc_peer(struct wlan_mlo_peer_context *ml_peer,
+			    struct wlan_objmgr_peer *peer);
+
+/**
+ * wlan_mlo_peer_is_assoc_peer() - check whether the peer is assoc peer
+ * @ml_peer: MLO peer
+ * @peer: Link peer
+ *
+ * This function checks whether the peer is assoc peer of MLO peer
+ *
+ * Return: true, if it is assoc peer
+ */
+bool wlan_mlo_peer_is_assoc_peer(struct wlan_mlo_peer_context *ml_peer,
+				 struct wlan_objmgr_peer *peer);
+
+/**
  * wlan_mlo_partner_peer_assoc_post() - Notify partner peer assoc
  * @peer: Link peer
  *
@@ -153,6 +179,16 @@ struct wlan_objmgr_peer *wlan_mlo_peer_get_assoc_peer(
  * Return: void
  */
 void wlan_mlo_partner_peer_assoc_post(struct wlan_objmgr_peer *assoc_peer);
+
+/**
+ * wlan_mlo_peer_deauth_init() - Initiate Deauth of MLO peer
+ * @ml_peer: MLO peer
+ *
+ * This function initiates deauth on MLO peer and its links peers
+ *
+ * Return: void
+ */
+void wlan_mlo_peer_deauth_init(struct wlan_mlo_peer_context *ml_peer);
 
 /**
  * wlan_mlo_partner_peer_create_failed_notify() - Notify peer creation fail
@@ -195,7 +231,7 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 				uint16_t aid);
 
 /**
- * mlo_peer_free() - Free MLO peer
+ * mlo_peer_cleanup() - Free MLO peer
  * @ml_peer: MLO peer
  *
  * This function frees MLO peer and resets MLO peer associations
@@ -204,7 +240,7 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
  *
  * Return: void
  */
-void mlo_peer_free(struct wlan_mlo_peer_context *ml_peer);
+void mlo_peer_cleanup(struct wlan_mlo_peer_context *ml_peer);
 
 /**
  * wlan_mlo_peer_get_ref() - Get ref of MLO peer
@@ -231,20 +267,22 @@ static inline void wlan_mlo_peer_release_ref(
 					struct wlan_mlo_peer_context *ml_peer)
 {
 	if (qdf_atomic_dec_and_test(&ml_peer->ref_cnt))
-		mlo_peer_free(ml_peer);
+		mlo_peer_cleanup(ml_peer);
 }
 
 /**
  * wlan_mlo_link_peer_attach() - MLO link peer attach
  * @ml_peer: MLO peer
  * @peer: Link peer
+ * @frm_buf: Assoc resp buffer of non-assoc link
  *
  * This function attaches link peer to MLO peer
  *
  * Return: SUCCESS, if peer is successfully attached to MLO peer
  */
 QDF_STATUS wlan_mlo_link_peer_attach(struct wlan_mlo_peer_context *ml_peer,
-				     struct wlan_objmgr_peer *peer);
+				     struct wlan_objmgr_peer *peer,
+				     qdf_nbuf_t frm_buf);
 
 /**
  * wlan_mlo_link_peer_delete() - MLO link peer delete
@@ -267,6 +305,42 @@ QDF_STATUS wlan_mlo_link_peer_delete(struct wlan_objmgr_peer *peer);
 qdf_nbuf_t mlo_peer_get_link_peer_assoc_req_buf(
 			struct wlan_mlo_peer_context *ml_peer,
 			uint8_t link_ix);
+
+/**
+ * mlo_peer_get_link_peer_assoc_resp_buf() - get MLO link peer assoc resp buf
+ * @ml_peer: MLO peer
+ * @link_ix: Link index of the link peer
+ *
+ * This function retrieves stored assoc resp buffer of link peer
+ *
+ * Return: resp_buf, if link_peer is available
+ *         NULL, if link_peer is not present
+ */
+qdf_nbuf_t mlo_peer_get_link_peer_assoc_resp_buf(
+		struct wlan_mlo_peer_context *ml_peer,
+		uint8_t link_ix);
+
+/**
+ * wlan_mlo_peer_free_all_link_assoc_resp_buf() - Free all assoc resp buffers
+ * @peer: Link peer
+ *
+ * This function frees all assoc resp link buffers
+ *
+ * Return: void
+ */
+void wlan_mlo_peer_free_all_link_assoc_resp_buf(struct wlan_objmgr_peer *peer);
+
+/**
+ * wlan_mlo_peer_get_links_info() - get MLO peer partner links info
+ * @peer: Link peer
+ * @ml_links: structure to be filled with partner link info
+ *
+ * This function retrieves partner link info of link peer
+ *
+ * Return: void
+ */
+void wlan_mlo_peer_get_links_info(struct wlan_objmgr_peer *peer,
+				  struct mlo_tgt_partner_info *ml_links);
 
 /**
  ** APIs to operations on ML peer object

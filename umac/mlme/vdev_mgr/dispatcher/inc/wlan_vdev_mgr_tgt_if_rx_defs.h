@@ -75,6 +75,12 @@ static inline char *string_from_rsp_bit(enum wlan_vdev_mgr_tgt_if_rsp_bit bit)
 #define STOP_RESPONSE_TIMER            (4000 + PMO_RESUME_TIMEOUT)
 #define DELETE_RESPONSE_TIMER          (4000 + PMO_RESUME_TIMEOUT)
 #define PEER_DELETE_ALL_RESPONSE_TIMER (6000 + PMO_RESUME_TIMEOUT)
+#elif defined(QCA_LOWMEM_CONFIG) || defined(QCA_512M_CONFIG) || \
+defined(QCA_WIFI_QCA5018)
+#define START_RESPONSE_TIMER           15000
+#define STOP_RESPONSE_TIMER            15000
+#define DELETE_RESPONSE_TIMER          15000
+#define PEER_DELETE_ALL_RESPONSE_TIMER 15000
 #else
 #define START_RESPONSE_TIMER           8000
 #define STOP_RESPONSE_TIMER            6000

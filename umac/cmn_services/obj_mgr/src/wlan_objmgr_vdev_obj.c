@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -830,7 +831,8 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
 	/* If Max VDEV peer count exceeds, return failure */
-	if (peer->peer_mlme.peer_type != WLAN_PEER_STA_TEMP) {
+	if (peer->peer_mlme.peer_type != WLAN_PEER_STA_TEMP &&
+	    peer->peer_mlme.peer_type != WLAN_PEER_MLO_TEMP) {
 		if (objmgr->wlan_peer_count >= objmgr->max_peer_count) {
 			wlan_vdev_obj_unlock(vdev);
 			return QDF_STATUS_E_FAILURE;
@@ -840,7 +842,8 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 
 	/* If Max PDEV peer count exceeds, return failure */
 	wlan_pdev_obj_lock(pdev);
-	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP) {
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP ||
+	    peer->peer_mlme.peer_type == WLAN_PEER_MLO_TEMP) {
 		if (wlan_pdev_get_temp_peer_count(pdev) >=
 			WLAN_MAX_PDEV_TEMP_PEERS) {
 			wlan_pdev_obj_unlock(pdev);
@@ -854,7 +857,8 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 
-	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP ||
+	    peer->peer_mlme.peer_type == WLAN_PEER_MLO_TEMP)
 		wlan_pdev_incr_temp_peer_count(wlan_vdev_get_pdev(vdev));
 	else
 		wlan_pdev_incr_peer_count(wlan_vdev_get_pdev(vdev));
@@ -941,7 +945,8 @@ QDF_STATUS wlan_objmgr_vdev_peer_detach(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 
 	wlan_pdev_obj_lock(pdev);
-	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP ||
+	    peer->peer_mlme.peer_type == WLAN_PEER_MLO_TEMP)
 		wlan_pdev_decr_temp_peer_count(pdev);
 	else
 		wlan_pdev_decr_peer_count(pdev);

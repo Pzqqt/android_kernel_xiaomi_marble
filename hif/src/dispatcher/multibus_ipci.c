@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -91,6 +92,9 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_log_bus_info = &hif_dummy_log_bus_info;
 	bus_ops->hif_enable_grp_irqs = hif_ipci_enable_grp_irqs;
 	bus_ops->hif_disable_grp_irqs = hif_ipci_disable_grp_irqs;
+#ifdef FEATURE_IRQ_AFFINITY
+	bus_ops->hif_set_grp_intr_affinity = &hif_ipci_set_grp_intr_affinity;
+#endif
 
 	return QDF_STATUS_SUCCESS;
 }

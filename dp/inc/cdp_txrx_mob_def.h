@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,8 +109,9 @@ enum netif_action_type {
 	WLAN_NETIF_VI_QUEUE_ON = 14,
 	WLAN_NETIF_VI_QUEUE_OFF = 15,
 	WLAN_NETIF_BE_BK_QUEUE_OFF = 16,
-	WLAN_WAKE_NON_PRIORITY_QUEUE = 17,
-	WLAN_STOP_NON_PRIORITY_QUEUE = 18,
+	WLAN_NETIF_BE_BK_QUEUE_ON = 17,
+	WLAN_WAKE_NON_PRIORITY_QUEUE = 18,
+	WLAN_STOP_NON_PRIORITY_QUEUE = 19,
 	WLAN_NETIF_ACTION_TYPE_MAX,
 };
 
@@ -132,6 +134,10 @@ enum netif_reason_type {
 	WLAN_PEER_UNAUTHORISED,
 	WLAN_THERMAL_MITIGATION,
 	WLAN_DATA_FLOW_CONTROL_PRIORITY,
+	WLAN_DATA_FLOW_CTRL_BE_BK,
+	WLAN_DATA_FLOW_CTRL_VI,
+	WLAN_DATA_FLOW_CTRL_VO,
+	WLAN_DATA_FLOW_CTRL_PRI,
 	WLAN_REASON_TYPE_MAX,
 };
 

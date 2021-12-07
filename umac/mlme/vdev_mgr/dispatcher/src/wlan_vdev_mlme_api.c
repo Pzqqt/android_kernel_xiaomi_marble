@@ -209,6 +209,8 @@ QDF_STATUS wlan_vdev_mlme_is_csa_restart(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_E_FAILURE;
 }
 
+qdf_export_symbol(wlan_vdev_mlme_is_csa_restart);
+
 QDF_STATUS wlan_vdev_is_going_down(struct wlan_objmgr_vdev *vdev)
 {
 	enum wlan_vdev_state state;
@@ -331,3 +333,5 @@ QDF_STATUS wlan_vdev_is_up_active_state(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+qdf_export_symbol(wlan_vdev_is_up_active_state);

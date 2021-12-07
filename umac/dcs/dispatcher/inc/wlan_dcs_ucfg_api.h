@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -264,7 +265,7 @@ ucfg_dcs_set_user_request(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 }
 
 static inline QDF_STATUS
-ucfg_dcs_get_ch_util(struct wlan_objmgr_vdev *vdev,
+ucfg_dcs_get_ch_util(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 		     struct wlan_host_dcs_ch_util_stats *dcs_stats)
 {
 	return QDF_STATUS_SUCCESS;

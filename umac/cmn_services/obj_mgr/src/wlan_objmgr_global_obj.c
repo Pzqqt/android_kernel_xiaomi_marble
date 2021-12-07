@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -871,8 +872,34 @@ struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void)
 	return g_umac_glb_obj->mlo_ctx;
 }
 
+qdf_export_symbol(wlan_objmgr_get_mlo_ctx);
+
 void wlan_objmgr_set_mlo_ctx(struct mlo_mgr_context *ctx)
 {
 	g_umac_glb_obj->mlo_ctx = ctx;
 }
+
+void wlan_objmgr_set_dp_mlo_ctx(void *dp_handle)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (!mlo_ctx)
+		return;
+
+	mlo_ctx->dp_handle = dp_handle;
+}
+
+qdf_export_symbol(wlan_objmgr_set_dp_mlo_ctx);
+
+void *wlan_objmgr_get_dp_mlo_ctx(void)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (!mlo_ctx)
+		return NULL;
+
+	return mlo_ctx->dp_handle;
+}
+
+qdf_export_symbol(wlan_objmgr_get_dp_mlo_ctx);
 #endif

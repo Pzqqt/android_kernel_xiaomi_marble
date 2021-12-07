@@ -28,7 +28,7 @@
 
 /**
  * dp_mon_filter_mode_type_to_str
- *	Monitor Filter mode to string
+ *  Monitor Filter mode to string
  */
 int8_t *dp_mon_filter_mode_type_to_str[DP_MON_FILTER_MAX_MODE] = {
 #ifdef QCA_ENHANCED_STATS_SUPPORT
@@ -41,12 +41,16 @@ int8_t *dp_mon_filter_mode_type_to_str[DP_MON_FILTER_MAX_MODE] = {
 	"DP MON FILTER SMART MONITOR MODE",
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
 	"DP_MON FILTER MONITOR MODE",
-#ifdef	WLAN_RX_PKT_CAPTURE_ENH
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
 	"DP MON FILTER RX CAPTURE MODE",
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
 #ifdef WDI_EVENT_ENABLE
 	"DP MON FILTER PKT LOG FULL MODE",
-	"DP MON FILTER PKT LOG LITE_MODE",
+	"DP MON FILTER PKT LOG LITE MODE",
+	"DP MON FILTER PKT LOG CBF MODE",
+#ifdef QCA_WIFI_QCN9224
+	"DP MON FILTER PKT LOG HYBRID MODE",
+#endif
 #endif /* WDI_EVENT_ENABLE */
 };
 
@@ -941,6 +945,17 @@ void dp_mon_filter_reset_rx_pktlog_cbf_1_0(struct dp_pdev *pdev)
 	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
 	mon_pdev->filter[mode][srng_type] = filter;
 }
+
+#ifdef QCA_WIFI_QCN9224
+void dp_mon_filter_setup_pktlog_hybrid_1_0(struct dp_pdev *pdev)
+{
+	dp_mon_filter_err("This mode is only supported for QCN9224");
+}
+
+void dp_mon_filter_reset_pktlog_hybrid_1_0(struct dp_pdev *pdev)
+{
+}
+#endif
 #endif /* WDI_EVENT_ENABLE */
 
 #ifdef WLAN_DP_RESET_MON_BUF_RING_FILTER

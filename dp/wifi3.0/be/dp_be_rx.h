@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -186,4 +187,15 @@ uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
 	return 0;
 }
 #endif /*WLAN_FEATURE_NEAR_FULL_IRQ */
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+struct dp_soc *
+dp_rx_replensih_soc_get(struct dp_soc *soc, uint8_t reo_ring_num);
+#else
+static inline struct dp_soc *
+dp_rx_replensih_soc_get(struct dp_soc *soc, uint8_t reo_ring_num)
+{
+	return soc;
+}
+#endif
 #endif

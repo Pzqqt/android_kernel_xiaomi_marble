@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -96,4 +97,18 @@ const char *hif_pci_get_irq_name(int irq_no);
  */
 void hif_pci_config_irq_affinity(struct hif_softc *scn);
 int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id);
+
+#ifdef FEATURE_IRQ_AFFINITY
+/*
+ * hif_pci_set_grp_intr_affinity() - Set irq affinity hint for grp
+ *  intrs based on bitmask
+ * @scn: hif context
+ * @grp_intr_bitmask:
+ * @perf: affine to perf or non-perf cluster
+ *
+ * Return: None
+ */
+void hif_pci_set_grp_intr_affinity(struct hif_softc *scn,
+				   uint32_t grp_intr_bitmask, bool perf);
+#endif
 #endif /* _PCI_API_H_ */

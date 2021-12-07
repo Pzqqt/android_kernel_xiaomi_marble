@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -235,7 +236,7 @@
 #define WLAN_CFG_RX_DEFRAG_TIMEOUT_MAX 100
 
 #define WLAN_CFG_NUM_TCL_DATA_RINGS 3
-#define WLAN_CFG_NUM_TCL_DATA_RINGS_MIN 3
+#define WLAN_CFG_NUM_TCL_DATA_RINGS_MIN 1
 #define WLAN_CFG_NUM_TCL_DATA_RINGS_MAX MAX_TCL_DATA_RINGS
 
 #if defined(CONFIG_BERYLLIUM)
@@ -368,7 +369,7 @@
  * Allocate as many RX descriptors as buffers in the SW2RXDMA
  * ring. This value may need to be tuned later.
  */
-#if defined(QCA_HOST2FW_RXBUF_RING)
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 #define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE 1
 #define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MIN 1
 #define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MAX 1
@@ -401,7 +402,7 @@
 #define WLAN_CFG_RX_SW_DESC_NUM_SIZE 12288
 #define WLAN_CFG_RX_SW_DESC_NUM_SIZE_MIN 4096
 #define WLAN_CFG_RX_SW_DESC_NUM_SIZE_MAX 12288
-#endif //QCA_HOST2FW_RXBUF_RING
+#endif
 
 #define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE 16384
 #define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MIN 1
@@ -438,6 +439,12 @@
 #define WLAN_CFG_PPE_RELEASE_RING_SIZE 1024
 #define WLAN_CFG_PPE_RELEASE_RING_SIZE_MIN 64
 #define WLAN_CFG_PPE_RELEASE_RING_SIZE_MAX 1024
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+#define WLAN_CFG_MLO_RX_RING_MAP 0xF
+#define WLAN_CFG_MLO_RX_RING_MAP_MIN 0x0
+#define WLAN_CFG_MLO_RX_RING_MAP_MAX 0xFF
+#endif
 
 /* DP INI Declerations */
 #define CFG_DP_HTT_PACKET_TYPE \
@@ -703,9 +710,34 @@
 	CFG_INI_BOOL("dp_sg_support", false, \
 	"DP SG Enable")
 
+#define WLAN_CFG_GRO_ENABLE_MIN 0
+#define WLAN_CFG_GRO_ENABLE_MAX 3
+#define WLAN_CFG_GRO_ENABLE_DEFAULT 0
+#define DP_GRO_ENABLE_BIT_SET     BIT(0)
+#define DP_FORCE_USE_GRO_BIT_SET  BIT(1)
+/*
+ * <ini>
+ * CFG_DP_GRO - Enable the GRO feature standalonely
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini entry is used to enable/disable GRO feature standalonely.
+ * Value 0: Disable GRO feature
+ * Value 1: Enable Dynamic GRO feature, TC rule can control GRO
+ *          behavior of STA mode
+ * Value 3: Enable GRO feature forcibly
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_DP_GRO \
-	CFG_INI_BOOL("GROEnable", false, \
-	"DP GRO Enable")
+		CFG_INI_UINT("GROEnable", \
+		WLAN_CFG_GRO_ENABLE_MIN, \
+		WLAN_CFG_GRO_ENABLE_MAX, \
+		WLAN_CFG_GRO_ENABLE_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, "DP GRO Enable")
 
 #define CFG_DP_OL_TX_CSUM \
 	CFG_INI_BOOL("dp_offload_tx_csum_support", false, \
@@ -1169,23 +1201,27 @@
 		CFG_INI_BOOL("delay_mon_replenish", \
 		true, "Delay Monitor Replenish")
 
-/*
- * <ini>
- * gForceRX64BA - enable force 64 blockack mode for RX
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to control DP Software to use 64 blockack
- * for RX direction forcibly
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_FORCE_RX_64_BA \
-		CFG_INI_BOOL("gForceRX64BA", \
-		false, "Enable/Disable force 64 blockack in RX side")
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+#define WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MIN 500
+#define WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MAX 2000
+#define WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER 500
+
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD_CONFIG \
+		CFG_INI_BOOL("vdev_stats_hw_offload_config", \
+		false, "Offload vdev stats to HW")
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD_TIMER \
+		CFG_INI_UINT("vdev_stats_hw_offload_timer", \
+		WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MIN, \
+		WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MAX, \
+		WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER, \
+		CFG_VALUE_OR_DEFAULT, \
+		"vdev stats hw offload timer duration")
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD \
+	CFG(CFG_DP_VDEV_STATS_HW_OFFLOAD_CONFIG) \
+	CFG(CFG_DP_VDEV_STATS_HW_OFFLOAD_TIMER)
+#else
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD
+#endif
 
 /*
  * <ini>
@@ -1356,6 +1392,75 @@
 #define CFG_DP_PPE_CONFIG
 #endif
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+/*
+ * <ini>
+ * dp_chip0_rx_ring_map - Set Rx ring map for CHIP 0
+ * @Min: 0x0
+ * @Max: 0xFF
+ * @Default: 0xF
+ *
+ * This ini sets Rx ring map for CHIP 0
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_MLO_CHIP0_RX_RING_MAP \
+		CFG_INI_UINT("dp_chip0_rx_ring_map", \
+		WLAN_CFG_MLO_RX_RING_MAP_MIN, \
+		WLAN_CFG_MLO_RX_RING_MAP_MAX, \
+		WLAN_CFG_MLO_RX_RING_MAP, \
+		CFG_VALUE_OR_DEFAULT, "DP Rx ring map chip0")
+
+/*
+ * <ini>
+ * dp_chip1_rx_ring_map - Set Rx ring map for CHIP 1
+ * @Min: 0x0
+ * @Max: 0xFF
+ * @Default: 0xF
+ *
+ * This ini sets Rx ring map for CHIP 1
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_MLO_CHIP1_RX_RING_MAP \
+		CFG_INI_UINT("dp_chip1_rx_ring_map", \
+		WLAN_CFG_MLO_RX_RING_MAP_MIN, \
+		WLAN_CFG_MLO_RX_RING_MAP_MAX, \
+		WLAN_CFG_MLO_RX_RING_MAP, \
+		CFG_VALUE_OR_DEFAULT, "DP Rx ring map chip1")
+
+/*
+ * <ini>
+ * dp_chip2_rx_ring_map - Set Rx ring map for CHIP 2
+ * @Min: 0x0
+ * @Max: 0xFF
+ * @Default: 0xF
+ *
+ * This ini sets Rx ring map for CHIP 2
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_MLO_CHIP2_RX_RING_MAP \
+		CFG_INI_UINT("dp_chip2_rx_ring_map", \
+		WLAN_CFG_MLO_RX_RING_MAP_MIN, \
+		WLAN_CFG_MLO_RX_RING_MAP_MAX, \
+		WLAN_CFG_MLO_RX_RING_MAP, \
+		CFG_VALUE_OR_DEFAULT, "DP Rx ring map chip2")
+
+#define CFG_DP_MLO_CONFIG \
+	CFG(CFG_DP_MLO_CHIP0_RX_RING_MAP) \
+	CFG(CFG_DP_MLO_CHIP1_RX_RING_MAP) \
+	CFG(CFG_DP_MLO_CHIP2_RX_RING_MAP)
+#else
+#define CFG_DP_MLO_CONFIG
+#endif
+
 #define CFG_DP \
 		CFG(CFG_DP_HTT_PACKET_TYPE) \
 		CFG(CFG_DP_INT_BATCH_THRESHOLD_OTHER) \
@@ -1451,11 +1556,12 @@
 		CFG(CFG_DP_RX_RADIO_2_DEFAULT_REO) \
 		CFG(CFG_DP_WOW_CHECK_RX_PENDING) \
 		CFG(CFG_DP_HW_CC_ENABLE) \
-		CFG(CFG_FORCE_RX_64_BA) \
 		CFG(CFG_DP_DELAY_MON_REPLENISH) \
 		CFG(CFG_DP_TX_MONITOR_BUF_RING) \
 		CFG(CFG_DP_TX_MONITOR_DST_RING) \
 		CFG_DP_IPA_TX_RING_CFG \
 		CFG_DP_PPE_CONFIG \
-		CFG_DP_IPA_TX_ALT_RING_CFG
+		CFG_DP_IPA_TX_ALT_RING_CFG \
+		CFG_DP_MLO_CONFIG \
+		CFG_DP_VDEV_STATS_HW_OFFLOAD
 #endif /* _CFG_DP_H_ */

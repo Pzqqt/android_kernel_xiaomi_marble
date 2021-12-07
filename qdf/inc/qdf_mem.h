@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -807,6 +808,7 @@ static inline qdf_mem_info_t *qdf_mem_map_table_alloc(uint32_t num)
 	return mem_info_arr;
 }
 
+#ifdef ENHANCED_OS_ABSTRACTION
 /**
  * qdf_update_mem_map_table() - Update DMA memory map info
  * @osdev: Parent device instance
@@ -818,29 +820,10 @@ static inline qdf_mem_info_t *qdf_mem_map_table_alloc(uint32_t num)
  *
  * Return: none
  */
-static inline void qdf_update_mem_map_table(qdf_device_t osdev,
-					    qdf_mem_info_t *mem_info,
-					    qdf_dma_addr_t dma_addr,
-					    uint32_t mem_size)
-{
-	if (!mem_info) {
-		qdf_nofl_err("%s: NULL mem_info", __func__);
-		return;
-	}
-
-	__qdf_update_mem_map_table(osdev, mem_info, dma_addr, mem_size);
-}
-
-/**
- * qdf_mem_smmu_s1_enabled() - Return SMMU stage 1 translation enable status
- * @osdev parent device instance
- *
- * Return: true if smmu s1 enabled, false if smmu s1 is bypassed
- */
-static inline bool qdf_mem_smmu_s1_enabled(qdf_device_t osdev)
-{
-	return __qdf_mem_smmu_s1_enabled(osdev);
-}
+void qdf_update_mem_map_table(qdf_device_t osdev,
+			      qdf_mem_info_t *mem_info,
+			      qdf_dma_addr_t dma_addr,
+			      uint32_t mem_size);
 
 /**
  * qdf_mem_paddr_from_dmaaddr() - get actual physical address from dma address
@@ -854,10 +837,40 @@ static inline bool qdf_mem_smmu_s1_enabled(qdf_device_t osdev)
  *
  * Return: dmaable physical address
  */
-static inline qdf_dma_addr_t qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
-							qdf_dma_addr_t dma_addr)
+qdf_dma_addr_t qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
+					  qdf_dma_addr_t dma_addr);
+#else
+static inline
+void qdf_update_mem_map_table(qdf_device_t osdev,
+			      qdf_mem_info_t *mem_info,
+			      qdf_dma_addr_t dma_addr,
+			      uint32_t mem_size)
+{
+	if (!mem_info) {
+		qdf_nofl_err("%s: NULL mem_info", __func__);
+		return;
+	}
+
+	__qdf_update_mem_map_table(osdev, mem_info, dma_addr, mem_size);
+}
+
+static inline
+qdf_dma_addr_t qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
+					  qdf_dma_addr_t dma_addr)
 {
 	return __qdf_mem_paddr_from_dmaaddr(osdev, dma_addr);
+}
+#endif
+
+/**
+ * qdf_mem_smmu_s1_enabled() - Return SMMU stage 1 translation enable status
+ * @osdev parent device instance
+ *
+ * Return: true if smmu s1 enabled, false if smmu s1 is bypassed
+ */
+static inline bool qdf_mem_smmu_s1_enabled(qdf_device_t osdev)
+{
+	return __qdf_mem_smmu_s1_enabled(osdev);
 }
 
 /**
@@ -1200,4 +1213,24 @@ void qdf_mem_tx_desc_cnt_update(qdf_atomic_t pending_tx_descs,
  * Return: Pointer to the starting address of the allocated virtual memory
  */
 #define qdf_mem_valloc(size) __qdf_mem_valloc(size, __func__, __LINE__)
+
+#if IS_ENABLED(CONFIG_ARM_SMMU) && defined(ENABLE_SMMU_S1_TRANSLATION)
+/*
+ * typedef qdf_iommu_domain_t: Platform indepedent iommu domain
+ * abstraction
+ */
+typedef __qdf_iommu_domain_t qdf_iommu_domain_t;
+
+/**
+ * qdf_iommu_domain_get_attr() - API to get iommu domain attributes
+ * @domain: iommu domain
+ * @attr: iommu attribute
+ * @data: data pointer
+ *
+ * Return: 0 on success, else errno
+ */
+int
+qdf_iommu_domain_get_attr(qdf_iommu_domain_t *domain,
+			  enum qdf_iommu_attr attr, void *data);
+#endif
 #endif /* __QDF_MEMORY_H */

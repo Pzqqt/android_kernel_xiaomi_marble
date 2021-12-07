@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1532,6 +1533,7 @@ hal_rx_flow_setup_fse_6490(uint8_t *rx_fst, uint32_t table_offset,
 	struct hal_rx_fst *fst = (struct hal_rx_fst *)rx_fst;
 	struct hal_rx_flow *flow = (struct hal_rx_flow *)rx_flow;
 	uint8_t *fse;
+	bool fse_valid;
 
 	if (table_offset >= fst->max_entries) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1543,8 +1545,14 @@ hal_rx_flow_setup_fse_6490(uint8_t *rx_fst, uint32_t table_offset,
 	fse = (uint8_t *)fst->base_vaddr +
 		(table_offset * HAL_RX_FST_ENTRY_SIZE);
 
-	/* clear the valid bit before starting the deletion*/
-	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
+	fse_valid = HAL_GET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
+
+	if (fse_valid) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+				"HAL FSE %pK already valid", fse);
+		return NULL;
+	}
+
 	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_0, SRC_IP_127_96) =
 		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_0, SRC_IP_127_96,
 			(flow->tuple_info.src_ip_127_96));
@@ -1765,6 +1773,8 @@ static void hal_hw_txrx_ops_attach_qca6490(struct hal_soc *hal_soc)
 					hal_rx_get_mpdu_mac_ad4_valid_6490;
 	hal_soc->ops->hal_rx_mpdu_start_sw_peer_id_get =
 		hal_rx_mpdu_start_sw_peer_id_get_6490;
+	hal_soc->ops->hal_rx_mpdu_peer_meta_data_get =
+		hal_rx_mpdu_peer_meta_data_get_li;
 	hal_soc->ops->hal_rx_mpdu_get_to_ds = hal_rx_mpdu_get_to_ds_6490;
 	hal_soc->ops->hal_rx_mpdu_get_fr_ds = hal_rx_mpdu_get_fr_ds_6490;
 	hal_soc->ops->hal_rx_get_mpdu_frame_control_valid =
@@ -2134,7 +2144,8 @@ struct hal_hw_srng_config hw_srng_table_6490[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-#ifdef IPA_WDI3_TX_TWO_PIPES
+#if defined(IPA_WDI3_TX_TWO_PIPES) || defined(TX_MULTI_TCL) || \
+	defined(CONFIG_PLD_PCIE_FW_SIM)
 		.max_rings = 5,
 #else
 		.max_rings = 4,

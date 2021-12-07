@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,6 +105,20 @@ enum vdev_ll_conn_actions {
 	CDP_VDEV_LL_CONN_DEL
 };
 
+/**
+ * struct cdp_mlo_ops - MLO ops for multichip
+ * @mlo_soc_setup: setup DP mlo for SOC
+ * @mlo_soc_teardown: teardown DP mlo for SOC
+ */
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+struct cdp_mlo_ops {
+	void (*mlo_soc_setup)(struct cdp_soc_t *cdp_soc,
+			      struct cdp_mlo_ctxt *mlo_ctxt);
+	void (*mlo_soc_teardown)(struct cdp_soc_t *cdp_soc,
+				 struct cdp_mlo_ctxt *mlo_ctxt);
+};
+#endif
+
 /******************************************************************************
  *
  * Control Interface (A Interface)
@@ -127,8 +141,8 @@ struct cdp_cmn_ops {
 			    void *cb_context);
 
 	QDF_STATUS (*txrx_pdev_attach)
-		(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev,
-		 qdf_device_t osdev, uint8_t pdev_id);
+		(ol_txrx_soc_handle soc,
+		 struct cdp_pdev_attach_params *params);
 
 	int (*txrx_pdev_post_attach)(struct cdp_soc_t *soc, uint8_t pdev_id);
 
@@ -590,6 +604,10 @@ struct cdp_cmn_ops {
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 	void (*set_pkt_capture_mode)(struct cdp_soc_t *soc, bool val);
 #endif
+
+#ifdef FEATURE_RUNTIME_PM
+	void (*set_rtpm_tput_policy)(struct cdp_soc_t *soc, bool val);
+#endif
 };
 
 struct cdp_ctrl_ops {
@@ -851,7 +869,7 @@ struct cdp_me_ops {
 	uint16_t (*tx_me_convert_ucast)(struct cdp_soc_t *soc, uint8_t vdev_id,
 					qdf_nbuf_t wbuf, u_int8_t newmac[][6],
 					uint8_t newmaccnt, uint8_t tid,
-					bool is_igmp);
+					bool is_igmp, bool is_dms_pkt);
 };
 
 struct cdp_mon_ops {
@@ -1008,6 +1026,23 @@ struct cdp_host_stats_ops {
 	(*txrx_get_scan_spcl_vap_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
 					struct cdp_scan_spcl_vap_stats *stats);
 #endif
+
+	QDF_STATUS
+	(*txrx_get_peer_delay_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				     uint8_t *peer_mac,
+				     struct cdp_delay_tid_stats *delay_stats);
+
+	QDF_STATUS
+	(*txrx_get_peer_jitter_stats)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				      uint8_t vdev_id, uint8_t *peer_mac,
+				      struct cdp_peer_tid_stats *tid_stats);
+
+	QDF_STATUS
+	(*txrx_alloc_vdev_stats_id)(struct cdp_soc_t *soc,
+				    uint8_t *vdev_stats_id);
+
+	void (*txrx_reset_vdev_stats_id)(struct cdp_soc_t *soc,
+					 uint8_t vdev_stats_id);
 };
 
 struct cdp_wds_ops {
@@ -1066,7 +1101,8 @@ struct ol_if_ops {
 	(*peer_set_default_routing)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 				    uint8_t pdev_id, uint8_t *peer_macaddr,
 				    uint8_t vdev_id,
-				    bool hash_based, uint8_t ring_num);
+				    bool hash_based, uint8_t ring_num,
+				    uint8_t lmac_peer_id_msb);
 	QDF_STATUS
 	(*peer_rx_reorder_queue_setup)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 				       uint8_t pdev_id,
@@ -1369,6 +1405,7 @@ struct cdp_misc_ops {
 				      uint8_t val);
 	uint8_t (*is_swlm_enabled)(struct cdp_soc_t *soc_hdl);
 	void (*display_txrx_hw_info)(struct cdp_soc_t *soc_hdl);
+	uint32_t (*get_tx_rings_grp_bitmap)(struct cdp_soc_t *soc_hdl);
 };
 
 /**
@@ -1859,6 +1896,8 @@ struct cdp_ops {
 #ifdef WLAN_SUPPORT_MESH_LATENCY
 	struct cdp_mesh_latency_ops         *mesh_latency_ops;
 #endif
-
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+	struct cdp_mlo_ops  *mlo_ops;
+#endif
 };
 #endif

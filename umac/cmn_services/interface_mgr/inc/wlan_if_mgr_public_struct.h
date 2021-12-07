@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,6 +48,7 @@
  * WLAN_IF_MGR_EV_AP_STOP_HT40: Event to handle HT40 scan stop
  * WLAN_IF_MGR_EV_AP_DONE_HT40: Event to handle HT40 scan completion
  * WLAN_IF_MGR_EV_AP_CANCEL_HT40: Event to handle HT40 scan cancel
+ * WLAN_IF_MGR_EV_CSA_COMPLETE: Event to handle csa complete
  */
 enum wlan_if_mgr_evt {
 	WLAN_IF_MGR_EV_CONNECT_START = 0,
@@ -66,7 +68,8 @@ enum wlan_if_mgr_evt {
 	WLAN_IF_MGR_EV_AP_STOP_HT40 = 14,
 	WLAN_IF_MGR_EV_AP_DONE_HT40 = 15,
 	WLAN_IF_MGR_EV_AP_CANCEL_HT40 = 16,
-	WLAN_IF_MGR_EV_MAX = 17,
+	WLAN_IF_MGR_EV_CSA_COMPLETE = 17,
+	WLAN_IF_MGR_EV_MAX = 18,
 };
 
 /**
@@ -74,11 +77,15 @@ enum wlan_if_mgr_evt {
  * @peer_addr: MAC address of the BSS
  * @chan_freq: Frequency of the potential BSS connection
  * @beacon_interval: beacon interval of BSS
+ * @is_mlo: indicate whether MLO is supported by the BSS or not
  */
 struct validate_bss_data {
 	struct qdf_mac_addr peer_addr;
 	qdf_freq_t chan_freq;
 	uint16_t beacon_interval;
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool is_mlo;
+#endif
 };
 
 /**

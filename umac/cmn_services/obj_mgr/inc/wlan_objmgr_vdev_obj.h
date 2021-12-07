@@ -163,6 +163,8 @@
 #define WLAN_VDEV_FEXT2_MLO                 0x00000001
 	/* STA VDEV is link type */
 #define WLAN_VDEV_FEXT2_MLO_STA_LINK        0x00000002
+	/* VDEV is MLO mcast primary*/
+#define WLAN_VDEV_FEXT2_MLO_MCAST           0x00000004
 
 /* VDEV OP flags  */
   /* if the vap destroyed by user */
@@ -1391,6 +1393,27 @@ bool wlan_vdev_mlme_is_mlo_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	return wlan_vdev_mlme_feat_ext2_cap_get(vdev, WLAN_VDEV_FEXT2_MLO);
 }
+
+#ifdef WLAN_MLO_MCAST
+/**
+ * wlan_vdev_mlme_is_mlo_mcast_vdev() - whether it is mlo mcast vdev or not
+ * @vdev: VDEV object
+ *
+ * Return: True if it is mlo mcast vdev, otherwise false.
+ */
+static inline
+bool wlan_vdev_mlme_is_mlo_mcast_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return wlan_vdev_mlme_feat_ext2_cap_get(vdev,
+						WLAN_VDEV_FEXT2_MLO_MCAST);
+}
+#else
+static inline
+bool wlan_vdev_mlme_is_mlo_mcast_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+#endif
 
 /**
  * wlan_vdev_mlme_is_mlo_vdev() - whether it is mlo sta link vdev or not

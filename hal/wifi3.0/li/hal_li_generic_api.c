@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -53,7 +54,8 @@ static uint32_t hal_get_reo_qdesc_size_li(uint32_t ba_window_size, int tid)
 }
 
 void hal_set_link_desc_addr_li(void *desc, uint32_t cookie,
-			       qdf_dma_addr_t link_desc_paddr)
+			       qdf_dma_addr_t link_desc_paddr,
+			       uint8_t bm_id)
 {
 	uint32_t *buf_addr = (uint32_t *)desc;
 
@@ -62,7 +64,7 @@ void hal_set_link_desc_addr_li(void *desc, uint32_t cookie,
 	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, BUFFER_ADDR_39_32,
 			   (uint64_t)link_desc_paddr >> 32);
 	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, RETURN_BUFFER_MANAGER,
-			   WBM_IDLE_DESC_LIST);
+			   bm_id);
 	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, SW_BUFFER_COOKIE,
 			   cookie);
 }
@@ -245,7 +247,7 @@ static int hal_rx_get_proto_params_li(uint8_t *buf, void *proto_params)
 	struct hal_proto_params *param =
 				(struct hal_proto_params *)proto_params;
 
-	param->tcp_proto = HAL_RX_TLV_GET_IP_OFFSET(buf);
+	param->tcp_proto = HAL_RX_TLV_GET_TCP_PROTO(buf);
 	param->udp_proto = HAL_RX_TLV_GET_UDP_PROTO(buf);
 	param->ipv6_proto = HAL_RX_TLV_GET_IPV6(buf);
 
@@ -1134,6 +1136,17 @@ static QDF_STATUS hal_reo_status_update_li(hal_soc_handle_t hal_soc_hdl,
 }
 
 /**
+ * hal_get_idle_link_bm_id_li() - Get idle link BM id from chid_id
+ * @chip_id: mlo chip_id
+ *
+ * Returns: RBM ID
+ */
+static uint8_t hal_get_idle_link_bm_id_li(uint8_t chip_id)
+{
+	return WBM_IDLE_DESC_LIST;
+}
+
+/**
  * hal_hw_txrx_default_ops_attach_li() - Attach the default hal ops for
  *		lithium chipsets.
  * @hal_soc_hdl: HAL soc handle
@@ -1229,4 +1242,5 @@ void hal_hw_txrx_default_ops_attach_li(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_get_qdesc_addr = hal_rx_get_qdesc_addr_li;
 	hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind =
 			hal_set_reo_ent_desc_reo_dest_ind_li;
+	hal_soc->ops->hal_get_idle_link_bm_id = hal_get_idle_link_bm_id_li;
 }

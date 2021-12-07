@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,13 +36,16 @@
 #define RX_MONITOR_BUFFER_ALIGNMENT     4
 #endif /* RXDMA_OPTIMIZATION */
 
-#ifdef QCA_HOST2FW_RXBUF_RING
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 #define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW1_BM(sw0_bm_id)
 /* RBM value used for re-injecting defragmented packets into REO */
 #define DP_DEFRAG_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
-#endif /* QCA_HOST2FW_RXBUF_RING */
+#endif
 
 #define RX_BUFFER_RESERVATION   0
+#ifdef QCA_WIFI_QCN9224
+#define RX_MON_MIN_HEAD_ROOM   64
+#endif
 
 #define DP_DEFAULT_NOISEFLOOR	(-96)
 
@@ -1147,6 +1151,7 @@ bool dp_rx_intrabss_mcbc_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
 			     struct cdp_tid_rx_stats *tid_stats);
 
 bool dp_rx_intrabss_ucast_fwd(struct dp_soc *soc, struct dp_peer *ta_peer,
+			      uint8_t tx_vdev_id,
 			      uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
 			      struct cdp_tid_rx_stats *tid_stats);
 
@@ -2018,7 +2023,7 @@ dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
 }
 #endif
 
-#ifdef QCA_HOST2FW_RXBUF_RING
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 static inline uint8_t
 dp_rx_get_defrag_bm_id(struct dp_soc *soc)
 {

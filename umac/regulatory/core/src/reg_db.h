@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -174,6 +175,10 @@ struct reg_domain_pair {
  * @FCC1_6G_07: Super domain FCC1_6G_07 for Brazil
  * @APL3_6G_08: Super domain APL3_6G_08 for UAE
  * @FCC1_6G_09: Super domain FCC1_6G_09 for US AFC Testing
+ * @FCC2_6G_10: Super domain FCC1_6G_10 for Canada LPI &
+		SP(VLP to be added later)
+ * @APL4_6G_11: Super domain APL3_6G_11 for Costa Rica LPI and VLP
+ * @APL5_6G_12: Super domain APL3_6G_12 for CHILE LPI and VLP
  */
 enum reg_super_domain_6g {
 	FCC1_6G_01 = 0x01,
@@ -185,6 +190,9 @@ enum reg_super_domain_6g {
 	FCC1_6G_07 = 0x07,
 	APL3_6G_08 = 0x08,
 	FCC1_6G_09 = 0x09,
+	FCC2_6G_10 = 0x10,
+	APL4_6G_11 = 0x11,
+	APL5_6G_12 = 0x12,
 };
 
 #if defined(COMPILE_REGDB_6G)

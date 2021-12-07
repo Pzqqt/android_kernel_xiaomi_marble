@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -992,8 +993,8 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 			   void __iomem *addr,
 			   uint32_t value)
 {
-	if (pld_is_device_awake(hal_soc->qdf_dev->dev) ||
-	    hal_is_reg_write_tput_level_high(hal_soc)) {
+	if (hal_is_reg_write_tput_level_high(hal_soc) ||
+	    pld_is_device_awake(hal_soc->qdf_dev->dev)) {
 		qdf_atomic_inc(&hal_soc->stats.wstats.direct);
 		srng->wstats.direct++;
 		hal_write_address_32_mb(hal_soc, addr, value, false);
@@ -1509,6 +1510,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	srng->num_entries = ring_params->num_entries;
 	srng->ring_size = srng->num_entries * srng->entry_size;
 	srng->ring_size_mask = srng->ring_size - 1;
+	srng->ring_vaddr_end = srng->ring_base_vaddr + srng->ring_size;
 	srng->msi_addr = ring_params->msi_addr;
 	srng->msi_data = ring_params->msi_data;
 	srng->intr_timer_thres_us = ring_params->intr_timer_thres_us;

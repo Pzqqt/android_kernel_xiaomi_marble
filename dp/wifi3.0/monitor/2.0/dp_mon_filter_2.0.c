@@ -973,29 +973,348 @@ void dp_mon_filter_reset_mon_mode_2_0(struct dp_pdev *pdev)
 {
 }
 
+void dp_mon_filter_show_filter_be(struct dp_mon_pdev_be *mon_pdev,
+				  enum dp_mon_filter_mode mode,
+				  struct dp_mon_filter_be *filter)
+{
+	struct htt_rx_ring_tlv_filter *rx_tlv_filter =
+		&filter->rx_tlv_filter.tlv_filter;
+	struct htt_tx_ring_tlv_filter *tx_tlv_filter =
+		&filter->tx_tlv_filter;
+
+	DP_MON_FILTER_PRINT("RX MON RING TLV FILTER CONFIG:");
+	DP_MON_FILTER_PRINT("[Mode%d]: Valid: %d",
+			    mode, filter->rx_tlv_filter.valid);
+	DP_MON_FILTER_PRINT("mpdu_start: %d", rx_tlv_filter->mpdu_start);
+	DP_MON_FILTER_PRINT("msdu_start: %d", rx_tlv_filter->msdu_start);
+	DP_MON_FILTER_PRINT("packet: %d", rx_tlv_filter->packet);
+	DP_MON_FILTER_PRINT("msdu_end: %d", rx_tlv_filter->msdu_end);
+	DP_MON_FILTER_PRINT("mpdu_end: %d", rx_tlv_filter->mpdu_end);
+	DP_MON_FILTER_PRINT("packet_header: %d",
+			    rx_tlv_filter->packet_header);
+	DP_MON_FILTER_PRINT("attention: %d", rx_tlv_filter->attention);
+	DP_MON_FILTER_PRINT("ppdu_start: %d", rx_tlv_filter->ppdu_start);
+	DP_MON_FILTER_PRINT("ppdu_end: %d", rx_tlv_filter->ppdu_end);
+	DP_MON_FILTER_PRINT("ppdu_end_user_stats: %d",
+			    rx_tlv_filter->ppdu_end_user_stats);
+	DP_MON_FILTER_PRINT("ppdu_end_user_stats_ext: %d",
+			    rx_tlv_filter->ppdu_end_user_stats_ext);
+	DP_MON_FILTER_PRINT("ppdu_end_status_done: %d",
+			    rx_tlv_filter->ppdu_end_status_done);
+	DP_MON_FILTER_PRINT("header_per_msdu: %d",
+			    rx_tlv_filter->header_per_msdu);
+	DP_MON_FILTER_PRINT("enable_fp: %d", rx_tlv_filter->enable_fp);
+	DP_MON_FILTER_PRINT("enable_md: %d", rx_tlv_filter->enable_md);
+	DP_MON_FILTER_PRINT("enable_mo: %d", rx_tlv_filter->enable_mo);
+	DP_MON_FILTER_PRINT("fp_mgmt_filter: 0x%x",
+			    rx_tlv_filter->fp_mgmt_filter);
+	DP_MON_FILTER_PRINT("mo_mgmt_filter: 0x%x",
+			    rx_tlv_filter->mo_mgmt_filter);
+	DP_MON_FILTER_PRINT("fp_ctrl_filter: 0x%x",
+			    rx_tlv_filter->fp_ctrl_filter);
+	DP_MON_FILTER_PRINT("mo_ctrl_filter: 0x%x",
+			    rx_tlv_filter->mo_ctrl_filter);
+	DP_MON_FILTER_PRINT("fp_data_filter: 0x%x",
+			    rx_tlv_filter->fp_data_filter);
+	DP_MON_FILTER_PRINT("mo_data_filter: 0x%x",
+			    rx_tlv_filter->mo_data_filter);
+	DP_MON_FILTER_PRINT("md_data_filter: 0x%x",
+			    rx_tlv_filter->md_data_filter);
+	DP_MON_FILTER_PRINT("md_mgmt_filter: 0x%x",
+			    rx_tlv_filter->md_mgmt_filter);
+	DP_MON_FILTER_PRINT("md_ctrl_filter: 0x%x",
+			    rx_tlv_filter->md_ctrl_filter);
+	DP_MON_FILTER_PRINT("\nTX MON RING TLV FILTER CONFIG:");
+	DP_MON_FILTER_PRINT("[Mode%d]: Valid: %d", mode, filter->tx_valid);
+	DP_MON_FILTER_PRINT("tx_fes_status_start: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_start);
+	DP_MON_FILTER_PRINT("tx_fes_status_start_prot: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_start_prot);
+	DP_MON_FILTER_PRINT("tx_fes_status_prot: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_prot);
+	DP_MON_FILTER_PRINT("tx_fes_status_start_ppdu: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_start_ppdu);
+	DP_MON_FILTER_PRINT("tx_fes_status_user_ppdu: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_user_ppdu);
+	DP_MON_FILTER_PRINT("tx_fes_status_ack_or_ba: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_ack_or_ba);
+	DP_MON_FILTER_PRINT("tx_fes_status_1k_ba: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_1k_ba);
+	DP_MON_FILTER_PRINT("tx_fes_status_user_response: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_user_response);
+	DP_MON_FILTER_PRINT("tx_fes_status_end: %d",
+			    tx_tlv_filter->utlvs.tx_fes_status_end);
+	DP_MON_FILTER_PRINT("response_start_status: %d",
+			    tx_tlv_filter->utlvs.response_start_status);
+	DP_MON_FILTER_PRINT("response_end_status: %d",
+			    tx_tlv_filter->utlvs.response_end_status);
+	DP_MON_FILTER_PRINT("recevied_response_info: %d",
+			    tx_tlv_filter->utlvs.recevied_response_info);
+	DP_MON_FILTER_PRINT("recevied_response_info_p2: %d",
+			    tx_tlv_filter->utlvs.recevied_response_info_p2);
+}
+
 #ifdef WDI_EVENT_ENABLE
 void dp_mon_filter_setup_rx_pkt_log_full_2_0(struct dp_pdev *pdev)
 {
+	struct dp_mon_filter_be filter = {0};
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_FULL_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	struct dp_pdev_be *pdev_be;
+	struct dp_mon_pdev_be *mon_pdev_be;
+	struct htt_rx_ring_tlv_filter *rx_tlv_filter =
+		&filter.rx_tlv_filter.tlv_filter;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+	/* Enabled the filter */
+	filter.rx_tlv_filter.valid = true;
+	dp_mon_filter_set_status_cmn(mon_pdev_be->mon_pdev,
+				     &filter.rx_tlv_filter);
+
+	/* Setup the filter */
+	rx_tlv_filter->packet_header = 1;
+	rx_tlv_filter->msdu_start = 1;
+	rx_tlv_filter->msdu_end = 1;
+	rx_tlv_filter->mpdu_end = 1;
+	rx_tlv_filter->attention = 1;
+
+	dp_mon_filter_show_filter_be(mon_pdev_be, mode, &filter);
+	mon_pdev_be->filter_be[mode][srng_type] = filter;
 }
 
 void dp_mon_filter_reset_rx_pkt_log_full_2_0(struct dp_pdev *pdev)
 {
+	struct dp_mon_filter_be filter = {0};
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_FULL_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	struct dp_pdev_be *pdev_be;
+	struct dp_mon_pdev_be *mon_pdev_be;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+
+	mon_pdev_be->filter_be[mode][srng_type] = filter;
 }
 
 void dp_mon_filter_setup_rx_pkt_log_lite_2_0(struct dp_pdev *pdev)
 {
+	struct dp_mon_filter_be filter = {0};
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_LITE_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	struct dp_pdev_be *pdev_be;
+	struct dp_mon_pdev_be *mon_pdev_be;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+	/* Enabled the filter */
+	filter.rx_tlv_filter.valid = true;
+	dp_mon_filter_set_status_cmn(mon_pdev_be->mon_pdev,
+				     &filter.rx_tlv_filter);
+
+	dp_mon_filter_show_filter_be(mon_pdev_be, mode, &filter);
+	mon_pdev_be->filter[mode][srng_type] = filter;
 }
 
 void dp_mon_filter_reset_rx_pkt_log_lite_2_0(struct dp_pdev *pdev)
 {
+	struct dp_mon_filter_be filter = {0};
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_LITE_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	struct dp_pdev_be *pdev_be;
+	struct dp_mon_pdev_be *mon_pdev_be;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+
+	mon_pdev_be->filter_be[mode][srng_type] = filter;
 }
+
+#ifdef QCA_MONITOR_PKT_SUPPORT
+static void
+dp_mon_filter_set_reset_rx_pkt_log_cbf_dest_2_0(struct dp_pdev_be *pdev_be,
+						struct dp_mon_filter_be *filter)
+{
+	struct dp_soc *soc = pdev_be->pdev->soc;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
+	enum dp_mon_filter_srng_type srng_type;
+	struct dp_mon_pdev_be *mon_pdev_be;
+	struct htt_rx_ring_tlv_filter *rx_tlv_filter =
+		&filter->rx_tlv_filter->tlv_filter;
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+		     DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+		     DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+
+	/*set the filter */
+	if (filter->rx_tlv_filter->valid) {
+		dp_mon_filter_set_cbf_cmn(pdev_be->pdev, filter->rx_tlv_filter);
+
+		dp_mon_filter_show_filter_be(mon_pdev_be, mode, filter);
+		mon_pdev_be->filter[mode][srng_type] = *filter;
+	} else /* reset the filter */
+		mon_pdev_be->filter[mode][srng_type] = *filter;
+}
+#else
+static void
+dp_mon_filter_set_reset_rx_pkt_log_cbf_dest_2_0(struct dp_pdev_be *pdev,
+						struct dp_mon_filter_be *filter)
+{
+}
+#endif
 
 void dp_mon_filter_setup_rx_pkt_log_cbf_2_0(struct dp_pdev *pdev)
 {
+	struct dp_mon_filter_be filter = {0};
+	struct dp_soc *soc;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	struct dp_pdev_be *pdev_be;
+	struct dp_mon_pdev_be *mon_pdev_be;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	soc = pdev->soc;
+	if (!soc) {
+		dp_mon_filter_err("Soc Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+	/* Enabled the filter */
+	filter.rx_tlv_filter.valid = true;
+
+	dp_mon_filter_set_status_cbf(pdev_be->pdev, &filter.rx_tlv_filter);
+	dp_mon_filter_show_filter_be(mon_pdev_be, mode, &filter);
+	mon_pdev_be->filter[mode][srng_type] = filter;
+
+	/* Clear the filter as the same filter will be used to set the
+	 * monitor status ring
+	 */
+	qdf_mem_zero(&filter, sizeof(struct dp_mon_filter_be));
+
+	filter.rx_tlv_filter.valid = true;
+	dp_mon_filter_set_reset_rx_pkt_log_cbf_dest_2_0(pdev_be, &filter);
 }
 
 void dp_mon_filter_reset_rx_pktlog_cbf_2_0(struct dp_pdev *pdev)
 {
+	struct dp_mon_filter_be filter = {0};
+	struct dp_soc *soc;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF;
+	struct dp_mon_pdev_be *mon_pdev_be;
+
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_MON_FILTER, QDF_TRACE_LEVEL_ERROR,
+			  FL("pdev Context is null"));
+		return;
+	}
+
+	soc = pdev->soc;
+	if (!soc) {
+		dp_mon_filter_err("Soc Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+	/* Enabled the filter */
+	filter.rx_tlv_filter.valid = true;
+
+	dp_mon_filter_set_reset_rx_pkt_log_cbf_dest_2_0(pdev_be, &filter);
+
+	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	mon_pdev_be->filter[mode][srng_type] = filter;
+}
+
+void dp_mon_filter_setup_pktlog_hybrid_2_0(struct dp_pdev *pdev)
+{
+	struct dp_mon_filter_be filter = {0};
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_HYBRID_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_TXMON_DEST;
+	struct dp_pdev_be *pdev_be;
+	struct dp_mon_pdev_be *mon_pdev_be;
+	struct htt_tx_ring_tlv_filter *tlv_filter = &filter.tx_tlv_filter;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+	/* Enabled the filter */
+	filter.tx_valid = true;
+
+	/* Setup the filter */
+	tlv_filter->utlvs.tx_fes_status_start = 1;
+	tlv_filter->utlvs.tx_fes_status_start_prot = 1;
+	tlv_filter->utlvs.tx_fes_status_prot = 1;
+	tlv_filter->utlvs.tx_fes_status_start_ppdu = 1;
+	tlv_filter->utlvs.tx_fes_status_user_ppdu = 1;
+	tlv_filter->utlvs.tx_fes_status_ack_or_ba = 1;
+	tlv_filter->utlvs.tx_fes_status_1k_ba = 1;
+	tlv_filter->utlvs.tx_fes_status_user_response = 1;
+	tlv_filter->utlvs.tx_fes_status_end = 1;
+	tlv_filter->utlvs.response_start_status = 1;
+	tlv_filter->utlvs.recevied_response_info = 1;
+	tlv_filter->utlvs.recevied_response_info_p2 = 1;
+	tlv_filter->utlvs.response_end_status = 1;
+
+	dp_mon_filter_show_filter_be(mon_pdev_be, mode, &filter);
+	mon_pdev_be->filter_be[mode][srng_type] = filter;
+}
+
+void dp_mon_filter_reset_pktlog_hybrid_2_0(struct dp_pdev *pdev)
+{
+	struct dp_mon_filter_be filter = {0};
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_HYBRID_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+		DP_MON_FILTER_SRNG_TYPE_TXMON_DEST;
+	struct dp_pdev_be *pdev_be;
+	struct dp_mon_pdev_be *mon_pdev_be;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	pdev_be = (struct dp_pdev_be *)pdev;
+	mon_pdev_be = pdev_be->monitor_pdev_be;
+
+	mon_pdev_be->filter_be[mode][srng_type] = filter;
 }
 #endif /* WDI_EVENT_ENABLE */
 

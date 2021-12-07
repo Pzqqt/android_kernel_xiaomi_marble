@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -114,6 +115,15 @@ typedef uint32_t wlan_scan_id;
 #define ELEM_ID_EXTN_POS 2
 #define ELEM_ID_LIST_LEN_POS 3
 #define ELEM_ID_LIST_POS 4
+
+/* Active dwell time in low span scan mode(NL80211_SCAN_FLAG_LOW_SPAN)
+ * in msec
+ */
+#define LOW_SPAN_ACTIVE_DWELL_TIME 40
+/* passive dwell time in low span scan mode (NL80211_SCAN_FLAG_LOW_SPAN)
+ * in msec
+ */
+#define LOW_SPAN_PASSIVE_DWELL_TIME 110
 
 /* forward declaration */
 struct wlan_objmgr_vdev;

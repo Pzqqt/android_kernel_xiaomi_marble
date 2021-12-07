@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +29,7 @@
 #include "wlan_ptt_sock_svc.h"
 #include "wlan_nlink_common.h"
 #include "os_if_wifi_pos.h"
+#include <wlan_lmac_if_def.h>
 #include "wifi_pos_api.h"
 #include "wlan_cfg80211.h"
 #include "wlan_objmgr_psoc_obj.h"

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -207,6 +208,17 @@ qdf_nbuf_t mlo_mlme_get_link_assoc_req(struct wlan_objmgr_peer *peer,
 	return mlo_ctx->mlme_ops->mlo_mlme_get_link_assoc_req(peer, link_ix);
 }
 
+void mlo_mlme_peer_deauth(struct wlan_objmgr_peer *peer)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (!mlo_ctx || !mlo_ctx->mlme_ops ||
+	    !mlo_ctx->mlme_ops->mlo_mlme_ext_deauth)
+		return;
+
+	mlo_ctx->mlme_ops->mlo_mlme_ext_deauth(peer);
+}
+
 uint8_t mlo_get_link_vdev_ix(struct wlan_mlo_dev_context *ml_dev,
 			     struct wlan_objmgr_vdev *vdev)
 {
@@ -285,6 +297,7 @@ wlan_mlo_get_pdev_by_hw_link_id(uint16_t hw_link_id,
 
 	return itr.pdev;
 }
+#endif /*WLAN_MLO_MULTI_CHIP*/
 
 void mlo_get_ml_vdev_list(struct wlan_objmgr_vdev *vdev,
 			  uint16_t *vdev_count,
@@ -320,4 +333,3 @@ void mlo_get_ml_vdev_list(struct wlan_objmgr_vdev *vdev,
 	}
 	mlo_dev_lock_release(dev_ctx);
 }
-#endif /*WLAN_MLO_MULTI_CHIP*/

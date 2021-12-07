@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -493,9 +494,7 @@ static void dp_mon_reap_timer_handler(void *arg)
 
 	qdf_timer_mod(&mon_soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
 }
-#endif
 
-#ifdef QCA_HOST2FW_RXBUF_RING
 static void dp_mon_reap_timer_init(struct dp_soc *soc)
 {
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
@@ -630,7 +629,7 @@ static void dp_mon_neighbour_peer_add_ast(struct dp_pdev *pdev,
  *
  * Return: non-zero for failure, zero for success
  */
-#ifdef QCA_HOST2FW_RXBUF_RING
+#if defined(DP_CON_MON)
 static
 QDF_STATUS dp_mon_htt_srng_setup_1_0(struct dp_soc *soc,
 				     struct dp_pdev *pdev,
@@ -1282,8 +1281,8 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 	DP_STATS_INCC(peer,
 		      tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 		      ((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
-	DP_STATS_INCC(peer, tx.ampdu_cnt, num_msdu, ppdu->is_ampdu);
-	DP_STATS_INCC(peer, tx.non_ampdu_cnt, num_msdu, !(ppdu->is_ampdu));
+	DP_STATS_INCC(peer, tx.ampdu_cnt, num_mpdu, ppdu->is_ampdu);
+	DP_STATS_INCC(peer, tx.non_ampdu_cnt, num_mpdu, !(ppdu->is_ampdu));
 	DP_STATS_INCC(peer, tx.pream_punct_cnt, 1, ppdu->pream_punct);
 
 	dp_peer_stats_notify(pdev, peer);
@@ -3204,7 +3203,130 @@ dp_rx_mon_process_1_0(struct dp_soc *soc, struct dp_intr *int_ctx,
 
 	return dp_rx_mon_status_process(soc, int_ctx, mac_id, quota);
 }
+
+static void dp_mon_register_intr_ops_1_0(struct dp_soc *soc)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	mon_soc->mon_rx_process = dp_rx_mon_process_1_0;
+}
 #endif
+
+/**
+ * dp_mon_register_feature_ops_1_0() - register feature ops
+ *
+ * @soc: dp soc context
+ *
+ * @return: void
+ */
+static void
+dp_mon_register_feature_ops_1_0(struct dp_soc *soc)
+{
+	struct dp_mon_ops *mon_ops = dp_mon_ops_get(soc);
+
+	if (!mon_ops) {
+		dp_err("mon_ops is NULL, feature ops registration failed");
+		return;
+	}
+
+	mon_ops->mon_config_debug_sniffer = dp_config_debug_sniffer;
+	mon_ops->mon_peer_tx_init = dp_peer_tx_init;
+	mon_ops->mon_peer_tx_cleanup = dp_peer_tx_cleanup;
+	mon_ops->mon_htt_ppdu_stats_attach = dp_htt_ppdu_stats_attach;
+	mon_ops->mon_htt_ppdu_stats_detach = dp_htt_ppdu_stats_detach;
+	mon_ops->mon_print_pdev_rx_mon_stats = dp_print_pdev_rx_mon_stats;
+	mon_ops->mon_set_bsscolor = dp_mon_set_bsscolor;
+	mon_ops->mon_pdev_get_filter_ucast_data =
+				dp_pdev_get_filter_ucast_data;
+	mon_ops->mon_pdev_get_filter_mcast_data =
+				dp_pdev_get_filter_mcast_data;
+	mon_ops->mon_pdev_get_filter_non_data = dp_pdev_get_filter_non_data;
+	mon_ops->mon_neighbour_peer_add_ast = dp_mon_neighbour_peer_add_ast;
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+	mon_ops->mon_peer_tid_peer_id_update = dp_peer_tid_peer_id_update;
+	mon_ops->mon_tx_ppdu_stats_attach = dp_tx_ppdu_stats_attach;
+	mon_ops->mon_tx_ppdu_stats_detach = dp_tx_ppdu_stats_detach;
+	mon_ops->mon_tx_capture_debugfs_init = dp_tx_capture_debugfs_init;
+	mon_ops->mon_tx_add_to_comp_queue = dp_tx_add_to_comp_queue;
+	mon_ops->mon_peer_tx_capture_filter_check =
+				dp_peer_tx_capture_filter_check;
+	mon_ops->mon_print_pdev_tx_capture_stats =
+				dp_print_pdev_tx_capture_stats;
+	mon_ops->mon_config_enh_tx_capture = dp_config_enh_tx_capture;
+#endif
+#if defined(WDI_EVENT_ENABLE) &&\
+	(defined(QCA_ENHANCED_STATS_SUPPORT) || !defined(REMOVE_PKT_LOG))
+	mon_ops->mon_ppdu_stats_ind_handler = dp_ppdu_stats_ind_handler;
+#endif
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
+	mon_ops->mon_config_enh_rx_capture = dp_config_enh_rx_capture;
+#endif
+#ifdef QCA_SUPPORT_BPR
+	mon_ops->mon_set_bpr_enable = dp_set_bpr_enable_1_0;
+#endif
+#ifdef ATH_SUPPORT_NAC
+	mon_ops->mon_set_filter_neigh_peers = dp_set_filter_neigh_peers;
+#endif
+#ifdef WLAN_ATF_ENABLE
+	mon_ops->mon_set_atf_stats_enable = dp_set_atf_stats_enable;
+#endif
+#ifdef FEATURE_NAC_RSSI
+	mon_ops->mon_filter_neighbour_peer = dp_filter_neighbour_peer;
+#endif
+#ifdef QCA_MCOPY_SUPPORT
+	mon_ops->mon_filter_setup_mcopy_mode =
+				dp_mon_filter_setup_mcopy_mode_1_0;
+	mon_ops->mon_filter_reset_mcopy_mode =
+				dp_mon_filter_reset_mcopy_mode_1_0;
+	mon_ops->mon_mcopy_check_deliver = dp_mcopy_check_deliver;
+#endif
+#ifdef QCA_ENHANCED_STATS_SUPPORT
+	mon_ops->mon_filter_setup_enhanced_stats =
+				dp_mon_filter_setup_enhanced_stats_1_0;
+	mon_ops->mon_filter_reset_enhanced_stats =
+				dp_mon_filter_reset_enhanced_stats_1_0;
+#endif
+#if defined(ATH_SUPPORT_NAC_RSSI) || defined(ATH_SUPPORT_NAC)
+	mon_ops->mon_filter_setup_smart_monitor =
+				dp_mon_filter_setup_smart_monitor_1_0;
+#endif
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
+	mon_ops->mon_filter_setup_rx_enh_capture =
+				dp_mon_filter_setup_rx_enh_capture_1_0;
+#endif
+#ifdef WDI_EVENT_ENABLE
+	mon_ops->mon_set_pktlog_wifi3 = dp_set_pktlog_wifi3;
+	mon_ops->mon_filter_setup_rx_pkt_log_full =
+				dp_mon_filter_setup_rx_pkt_log_full_1_0;
+	mon_ops->mon_filter_reset_rx_pkt_log_full =
+				dp_mon_filter_reset_rx_pkt_log_full_1_0;
+	mon_ops->mon_filter_setup_rx_pkt_log_lite =
+				dp_mon_filter_setup_rx_pkt_log_lite_1_0;
+	mon_ops->mon_filter_reset_rx_pkt_log_lite =
+				dp_mon_filter_reset_rx_pkt_log_lite_1_0;
+	mon_ops->mon_filter_setup_rx_pkt_log_cbf =
+				dp_mon_filter_setup_rx_pkt_log_cbf_1_0;
+	mon_ops->mon_filter_reset_rx_pkt_log_cbf =
+				dp_mon_filter_reset_rx_pktlog_cbf_1_0;
+#ifdef QCA_WIFI_QCN9224
+	mon_ops->mon_filter_setup_pktlog_hybrid =
+				dp_mon_filter_setup_pktlog_hybrid_1_0;
+	mon_ops->mon_filter_reset_pktlog_hybrid =
+				dp_mon_filter_reset_pktlog_hybrid_1_0;
+#endif
+#endif
+#if defined(DP_CON_MON) && !defined(REMOVE_PKT_LOG)
+	mon_ops->mon_pktlogmod_exit = dp_pktlogmod_exit;
+#endif
+	mon_ops->rx_packet_length_set = NULL;
+	mon_ops->rx_wmask_subscribe = NULL;
+	mon_ops->rx_enable_mpdu_logging = NULL;
+	mon_ops->mon_neighbour_peers_detach = dp_neighbour_peers_detach;
+	mon_ops->mon_vdev_set_monitor_mode_buf_rings =
+				dp_vdev_set_monitor_mode_buf_rings;
+	mon_ops->mon_vdev_set_monitor_mode_rings =
+				dp_vdev_set_monitor_mode_rings;
+}
 
 struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_soc_cfg_init = dp_mon_soc_cfg_init,
@@ -3218,7 +3340,6 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_vdev_detach = dp_mon_vdev_detach,
 	.mon_peer_attach = dp_mon_peer_attach,
 	.mon_peer_detach = dp_mon_peer_detach,
-	.mon_config_debug_sniffer = dp_config_debug_sniffer,
 	.mon_flush_rings = dp_flush_monitor_rings,
 #if !defined(DISABLE_MON_CONFIG)
 	.mon_pdev_htt_srng_setup = dp_mon_htt_srng_setup_1_0,
@@ -3227,62 +3348,10 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_service_rings = dp_service_mon_rings,
 #endif
 #ifndef DISABLE_MON_CONFIG
-	.mon_rx_process = dp_rx_mon_process_1_0,
+	.mon_rx_process = NULL,
 #endif
 #if !defined(DISABLE_MON_CONFIG) && defined(MON_ENABLE_DROP_FOR_MAC)
 	.mon_drop_packets_for_mac = dp_mon_drop_packets_for_mac,
-#endif
-	.mon_peer_tx_init = dp_peer_tx_init,
-	.mon_peer_tx_cleanup = dp_peer_tx_cleanup,
-#ifdef WLAN_TX_PKT_CAPTURE_ENH
-	.mon_peer_tid_peer_id_update = dp_peer_tid_peer_id_update,
-	.mon_tx_ppdu_stats_attach = dp_tx_ppdu_stats_attach,
-	.mon_tx_ppdu_stats_detach = dp_tx_ppdu_stats_detach,
-	.mon_tx_capture_debugfs_init = dp_tx_capture_debugfs_init,
-	.mon_tx_add_to_comp_queue = dp_tx_add_to_comp_queue,
-	.mon_peer_tx_capture_filter_check = dp_peer_tx_capture_filter_check,
-#endif
-#if defined(WDI_EVENT_ENABLE) &&\
-	(defined(QCA_ENHANCED_STATS_SUPPORT) || !defined(REMOVE_PKT_LOG))
-	.mon_ppdu_stats_ind_handler = dp_ppdu_stats_ind_handler,
-#endif
-	.mon_htt_ppdu_stats_attach = dp_htt_ppdu_stats_attach,
-	.mon_htt_ppdu_stats_detach = dp_htt_ppdu_stats_detach,
-	.mon_print_pdev_rx_mon_stats = dp_print_pdev_rx_mon_stats,
-#ifdef WLAN_TX_PKT_CAPTURE_ENH
-	.mon_print_pdev_tx_capture_stats = dp_print_pdev_tx_capture_stats,
-	.mon_config_enh_tx_capture = dp_config_enh_tx_capture,
-#endif
-#ifdef WLAN_RX_PKT_CAPTURE_ENH
-	.mon_config_enh_rx_capture = dp_config_enh_rx_capture,
-#endif
-#ifdef QCA_SUPPORT_BPR
-	.mon_set_bpr_enable = dp_set_bpr_enable_1_0,
-#endif
-
-#ifdef ATH_SUPPORT_NAC
-	.mon_set_filter_neigh_peers = dp_set_filter_neigh_peers,
-#endif
-#ifdef WLAN_ATF_ENABLE
-	.mon_set_atf_stats_enable = dp_set_atf_stats_enable,
-#endif
-	.mon_set_bsscolor = dp_mon_set_bsscolor,
-	.mon_pdev_get_filter_ucast_data = dp_pdev_get_filter_ucast_data,
-	.mon_pdev_get_filter_mcast_data = dp_pdev_get_filter_mcast_data,
-	.mon_pdev_get_filter_non_data = dp_pdev_get_filter_non_data,
-#ifdef WDI_EVENT_ENABLE
-	.mon_set_pktlog_wifi3 = dp_set_pktlog_wifi3,
-#endif
-#if defined(DP_CON_MON) && !defined(REMOVE_PKT_LOG)
-	.mon_pktlogmod_exit = dp_pktlogmod_exit,
-#endif
-	.mon_vdev_set_monitor_mode_buf_rings =
-			dp_vdev_set_monitor_mode_buf_rings,
-	.mon_vdev_set_monitor_mode_rings =
-			dp_vdev_set_monitor_mode_rings,
-	.mon_neighbour_peers_detach = dp_neighbour_peers_detach,
-#ifdef FEATURE_NAC_RSSI
-	.mon_filter_neighbour_peer = dp_filter_neighbour_peer,
 #endif
 	.mon_vdev_timer_init = dp_mon_vdev_timer_init,
 	.mon_vdev_timer_start = dp_mon_vdev_timer_start,
@@ -3292,43 +3361,8 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_reap_timer_start = dp_mon_reap_timer_start,
 	.mon_reap_timer_stop = dp_mon_reap_timer_stop,
 	.mon_reap_timer_deinit = dp_mon_reap_timer_deinit,
-#ifdef QCA_MCOPY_SUPPORT
-	.mon_mcopy_check_deliver = dp_mcopy_check_deliver,
-#endif
-	.mon_neighbour_peer_add_ast = dp_mon_neighbour_peer_add_ast,
-#ifdef QCA_ENHANCED_STATS_SUPPORT
-	.mon_filter_setup_enhanced_stats =
-		dp_mon_filter_setup_enhanced_stats_1_0,
-	.mon_filter_reset_enhanced_stats =
-		dp_mon_filter_reset_enhanced_stats_1_0,
-#endif
-#ifdef QCA_MCOPY_SUPPORT
-	.mon_filter_setup_mcopy_mode = dp_mon_filter_setup_mcopy_mode_1_0,
-	.mon_filter_reset_mcopy_mode = dp_mon_filter_reset_mcopy_mode_1_0,
-#endif
-#if defined(ATH_SUPPORT_NAC_RSSI) || defined(ATH_SUPPORT_NAC)
-	.mon_filter_setup_smart_monitor = dp_mon_filter_setup_smart_monitor_1_0,
-#endif
-#ifdef WLAN_RX_PKT_CAPTURE_ENH
-	.mon_filter_setup_rx_enh_capture =
-		dp_mon_filter_setup_rx_enh_capture_1_0,
-#endif
 	.mon_filter_setup_mon_mode = dp_mon_filter_setup_mon_mode_1_0,
 	.mon_filter_reset_mon_mode = dp_mon_filter_reset_mon_mode_1_0,
-#ifdef WDI_EVENT_ENABLE
-	.mon_filter_setup_rx_pkt_log_full =
-		dp_mon_filter_setup_rx_pkt_log_full_1_0,
-	.mon_filter_reset_rx_pkt_log_full =
-		dp_mon_filter_reset_rx_pkt_log_full_1_0,
-	.mon_filter_setup_rx_pkt_log_lite =
-		dp_mon_filter_setup_rx_pkt_log_lite_1_0,
-	.mon_filter_reset_rx_pkt_log_lite =
-		dp_mon_filter_reset_rx_pkt_log_lite_1_0,
-	.mon_filter_setup_rx_pkt_log_cbf =
-		dp_mon_filter_setup_rx_pkt_log_cbf_1_0,
-	.mon_filter_reset_rx_pkt_log_cbf =
-		dp_mon_filter_reset_rx_pktlog_cbf_1_0,
-#endif
 	.mon_filter_update = dp_mon_filter_update_1_0,
 	.rx_mon_desc_pool_init = dp_rx_pdev_mon_desc_pool_init,
 	.rx_mon_desc_pool_deinit = dp_rx_pdev_mon_desc_pool_deinit,
@@ -3344,9 +3378,10 @@ struct dp_mon_ops monitor_ops_1_0 = {
 	.mon_rings_free = dp_mon_rings_free_1_0,
 	.mon_rings_init = dp_mon_rings_init_1_0,
 	.mon_rings_deinit = dp_mon_rings_deinit_1_0,
-	.rx_packet_length_set = NULL,
-	.rx_wmask_subscribe = NULL,
-	.rx_enable_mpdu_logging = NULL,
+#if !defined(DISABLE_MON_CONFIG)
+	.mon_register_intr_ops = dp_mon_register_intr_ops_1_0,
+#endif
+	.mon_register_feature_ops = dp_mon_register_feature_ops_1_0,
 };
 
 struct cdp_mon_ops dp_ops_mon_1_0 = {

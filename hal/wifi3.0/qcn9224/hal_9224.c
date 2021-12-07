@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -795,9 +796,7 @@ void hal_rx_get_rtt_info_9224(void *rx_tlv, void *ppdu_info_hdl)
 		   RTT_CHE_BUFFER_POINTER_HIGH8);
 
 	ppdu_info->cfr_info.chan_capture_status =
-	HAL_RX_GET(rx_tlv,
-		   PHYRX_LOCATION_RX_LOCATION_INFO_DETAILS,
-		   RTT_CFR_STATUS);
+	HAL_GET_RX_LOCATION_INFO_CHAN_CAPTURE_STATUS(rx_tlv);
 
 	ppdu_info->cfr_info.rx_start_ts =
 	HAL_RX_GET(rx_tlv,
@@ -1538,6 +1537,103 @@ static uint8_t hal_tx_get_num_tcl_banks_9224(void)
 	return HAL_NUM_TCL_BANKS_9224;
 }
 
+/**
+ * hal_get_idle_link_bm_id_9224() - Get idle link BM id from chid_id
+ * @chip_id: mlo chip_id
+ *
+ * Returns: RBM ID
+ */
+static uint8_t hal_get_idle_link_bm_id_9224(uint8_t chip_id)
+{
+	return (WBM_IDLE_DESC_LIST + chip_id);
+}
+
+static void hal_reo_setup_generic_9224(struct hal_soc *soc, void *reoparams)
+{
+	uint32_t reg_val;
+	struct hal_reo_params *reo_params = (struct hal_reo_params *)reoparams;
+
+	reg_val = HAL_REG_READ(soc, HWIO_REO_R0_GENERAL_ENABLE_ADDR(
+		REO_REG_REG_BASE));
+
+	hal_reo_config_9224(soc, reg_val, reo_params);
+	/* Other ring enable bits and REO_ENABLE will be set by FW */
+
+	/* TODO: Setup destination ring mapping if enabled */
+
+	/* TODO: Error destination ring setting is left to default.
+	 * Default setting is to send all errors to release ring.
+	 */
+
+	/* Set the reo descriptor swap bits in case of BIG endian platform */
+	hal_setup_reo_swap(soc);
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_0_ADDR(REO_REG_REG_BASE),
+		      HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_MS * 1000);
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_1_ADDR(REO_REG_REG_BASE),
+		      (HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_MS * 1000));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_2_ADDR(REO_REG_REG_BASE),
+		      (HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_MS * 1000));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_3_ADDR(REO_REG_REG_BASE),
+		      (HAL_DEFAULT_VO_REO_TIMEOUT_MS * 1000));
+
+	/*
+	 * When hash based routing is enabled, routing of the rx packet
+	 * is done based on the following value: 1 _ _ _ _ The last 4
+	 * bits are based on hash[3:0]. This means the possible values
+	 * are 0x10 to 0x1f. This value is used to look-up the
+	 * ring ID configured in Destination_Ring_Ctrl_IX_* register.
+	 * The Destination_Ring_Ctrl_IX_2 and Destination_Ring_Ctrl_IX_3
+	 * registers need to be configured to set-up the 16 entries to
+	 * map the hash values to a ring number. There are 3 bits per
+	 * hash entry  which are mapped as follows:
+	 * 0: TCL, 1:SW1, 2:SW2, * 3:SW3, 4:SW4, 5:Release, 6:FW(WIFI),
+	 * 7: NOT_USED.
+	 */
+	if (reo_params->rx_hash_enabled) {
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_DESTINATION_RING_CTRL_IX_1_ADDR
+			      (REO_REG_REG_BASE), reo_params->remap0);
+
+		hal_debug("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR 0x%x",
+			  HAL_REG_READ(soc,
+				       HWIO_REO_R0_DESTINATION_RING_CTRL_IX_1_ADDR(
+				       REO_REG_REG_BASE)));
+
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR
+			      (REO_REG_REG_BASE), reo_params->remap1);
+
+		hal_debug("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR 0x%x",
+			  HAL_REG_READ(soc,
+				       HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
+				       REO_REG_REG_BASE)));
+
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR
+			      (REO_REG_REG_BASE), reo_params->remap2);
+
+		hal_debug("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR 0x%x",
+			  HAL_REG_READ(soc,
+				       HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
+				       REO_REG_REG_BASE)));
+	}
+
+	/* TODO: Check if the following registers shoould be setup by host:
+	 * AGING_CONTROL
+	 * HIGH_MEMORY_THRESHOLD
+	 * GLOBAL_LINK_DESC_COUNT_THRESH_IX_0[1,2]
+	 * GLOBAL_LINK_DESC_COUNT_CTRL
+	 */
+}
+
 static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -1613,6 +1709,8 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 					hal_rx_get_mpdu_mac_ad4_valid_be;
 	hal_soc->ops->hal_rx_mpdu_start_sw_peer_id_get =
 		hal_rx_mpdu_start_sw_peer_id_get_be;
+	hal_soc->ops->hal_rx_mpdu_peer_meta_data_get =
+		hal_rx_mpdu_peer_meta_data_get_be;
 	hal_soc->ops->hal_rx_mpdu_get_to_ds = hal_rx_mpdu_get_to_ds_be;
 	hal_soc->ops->hal_rx_mpdu_get_fr_ds = hal_rx_mpdu_get_fr_ds_be;
 	hal_soc->ops->hal_rx_get_mpdu_frame_control_valid =
@@ -1730,6 +1828,8 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_priv_info_get_from_tlv =
 			hal_rx_priv_info_get_from_tlv_be;
 	hal_soc->ops->hal_rx_pkt_hdr_get = hal_rx_pkt_hdr_get_be;
+	hal_soc->ops->hal_get_idle_link_bm_id = hal_get_idle_link_bm_id_9224;
+	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_9224;
 };
 
 struct hal_hw_srng_config hw_srng_table_9224[] = {

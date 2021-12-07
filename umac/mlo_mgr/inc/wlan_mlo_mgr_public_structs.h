@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,12 +59,49 @@ struct vdev_mlme_obj;
 #define STA_PROFILE_SUB_ELEM_ID 0
 #define PER_STA_PROF_MAC_ADDR_START 4
 
+#ifdef WLAN_MLO_MULTI_CHIP
 /*
- * struct mlo_setup_info
- * To store the MLO setup related information
+ * enum MLO_LINK_STATE – MLO link state enums
+ * @MLO_LINK_SETUP_INIT - MLO link SETUP exchange not yet done
+ * @MLO_LINK_SETUP_DONE - MLO link SETUP exchange started
+ * @MLO_LINK_READY - MLO link SETUP done and READY sent
+ * @MLO_LINK_TEARDOWN - MLO teardown done.
  */
-struct mlo_setup_info {
+enum MLO_LINK_STATE {
+	MLO_LINK_SETUP_INIT,
+	MLO_LINK_SETUP_DONE,
+	MLO_LINK_READY,
+	MLO_LINK_TEARDOWN
 };
+
+/**
+ * struct mlo_setup_info: MLO setup status per link
+ * @ml_grp_id: Unique id for ML grouping of Pdevs/links
+ * @tot_socs: Total number of soc participating in ML group
+ * @num_soc: Number of soc ready or probed
+ * @tot_links: Total links in ML group
+ * @num_links: Number of links probed in ML group
+ * @pdev_list[MAX_MLO_LINKS]: pdev pointers belonging to this group
+ * @soc_list[MAX_MLO_CHIPS]: psoc pointers belonging to this group
+ * @state[MAX_MLO_LINKS]: MLO link state
+ * @state_lock: lock to protect access to link state
+ */
+#define MAX_MLO_LINKS 6
+#define MAX_MLO_CHIPS 3
+struct mlo_setup_info {
+	uint8_t ml_grp_id;
+	uint8_t tot_socs;
+	uint8_t num_soc;
+	uint8_t tot_links;
+	uint8_t num_links;
+	struct wlan_objmgr_pdev *pdev_list[MAX_MLO_LINKS];
+	struct wlan_objmgr_psoc *soc_list[MAX_MLO_CHIPS];
+	enum MLO_LINK_STATE state[MAX_MLO_LINKS];
+	qdf_spinlock_t state_lock;
+};
+
+#define MAX_MLO_GROUP 1
+#endif
 
 /*
  * struct mlo_mgr_context - MLO manager context
@@ -78,6 +116,7 @@ struct mlo_setup_info {
  * @msgq_ctx: Context switch mgr
  * @mlo_is_force_primary_umac: Force Primary UMAC enable
  * @mlo_forced_primary_umac_id: Force Primary UMAC ID
+ * @dp_handle: pointer to DP ML context
  */
 struct mlo_mgr_context {
 #ifdef WLAN_MLO_USE_SPINLOCK
@@ -92,21 +131,26 @@ struct mlo_mgr_context {
 	qdf_list_t ml_dev_list;
 	qdf_bitmap(mlo_peer_id_bmap, MAX_MLO_PEER_ID);
 	uint16_t max_mlo_peer_id;
-	struct mlo_setup_info info;
+#ifdef WLAN_MLO_MULTI_CHIP
+	struct mlo_setup_info setup_info;
+#endif
 	struct mlo_mlme_ext_ops *mlme_ops;
 	struct ctxt_switch_mgr *msgq_ctx;
 	bool mlo_is_force_primary_umac;
 	uint8_t mlo_forced_primary_umac_id;
+	void *dp_handle;
 };
 
 /*
  * struct wlan_ml_vdev_aid_mgr – ML AID manager
  * @aid_bitmap: AID bitmap array
+ * @start_aid: start of AID index
  * @max_aid: Max allowed AID
  * @aid_mgr[]:  Array of link vdev aid mgr
  */
 struct wlan_ml_vdev_aid_mgr {
 	qdf_bitmap(aid_bitmap, WLAN_UMAC_MAX_AID);
+	uint16_t start_aid;
 	uint16_t max_aid;
 	struct wlan_vdev_aid_mgr *aid_mgr[WLAN_UMAC_MLO_MAX_VDEVS];
 };
@@ -207,6 +251,7 @@ struct wlan_mlo_dev_context {
  * @link_ix: Link index
  * @is_primary: sets true if the peer is primary UMAC’s peer
  * @hw_link_id: HW Link id of peer
+ * @assoc_rsp_buf: Assoc resp buffer
  */
 struct wlan_mlo_link_peer_entry {
 	struct wlan_objmgr_peer *link_peer;
@@ -214,6 +259,7 @@ struct wlan_mlo_link_peer_entry {
 	uint8_t link_ix;
 	bool is_primary;
 	uint8_t hw_link_id;
+	qdf_nbuf_t assoc_rsp_buf;
 };
 
 /*
@@ -243,6 +289,7 @@ enum mlo_peer_state {
  * @ref_cnt: Reference counter to avoid use after free
  * @ml_dev: MLO dev context
  * @mlpeer_state: MLO peer state
+ * @avg_link_rssi: avg RSSI of ML peer
  */
 struct wlan_mlo_peer_context {
 	qdf_list_node_t peer_node;
@@ -262,6 +309,7 @@ struct wlan_mlo_peer_context {
 	qdf_atomic_t ref_cnt;
 	struct wlan_mlo_dev_context *ml_dev;
 	enum mlo_peer_state mlpeer_state;
+	int8_t avg_link_rssi;
 };
 
 /*
@@ -287,6 +335,26 @@ struct mlo_partner_info {
 };
 
 /*
+ * struct mlo_tgt_link_info – ML target link info
+ * @vdev_id: link peer vdev id
+ * @hw_mld_link_id: HW link id
+ */
+struct mlo_tgt_link_info {
+	uint8_t vdev_id;
+	uint8_t hw_mld_link_id;
+};
+
+/*
+ * struct mlo_tgt_partner_info – mlo target partner link info
+ * @num_partner_links: no. of partner links
+ * @link_info: per partner link info
+ */
+struct mlo_tgt_partner_info {
+	uint8_t num_partner_links;
+	struct mlo_tgt_link_info link_info[WLAN_UMAC_MLO_MAX_VDEVS];
+};
+
+/*
  * struct mlo_mlme_ext_ops - MLME callback functions
  * @mlo_mlme_ext_validate_conn_req: Callback to validate connect request
  * @mlo_mlme_ext_create_link_vdev: Callback to create link vdev for ML STA
@@ -296,6 +364,7 @@ struct mlo_partner_info {
  * @mlo_mlme_ext_peer_delete: Callback to initiate link peer delete
  * @mlo_mlme_ext_assoc_resp: Callback to initiate assoc resp
  * @mlo_mlme_get_link_assoc_req: Calback to get link assoc req buffer
+ * @mlo_mlme_ext_deauth: Callback to initiate deauth
  */
 struct mlo_mlme_ext_ops {
 	QDF_STATUS (*mlo_mlme_ext_validate_conn_req)(
@@ -312,5 +381,7 @@ struct mlo_mlme_ext_ops {
 	void (*mlo_mlme_ext_assoc_resp)(struct wlan_objmgr_peer *peer);
 	qdf_nbuf_t (*mlo_mlme_get_link_assoc_req)(struct wlan_objmgr_peer *peer,
 						  uint8_t link_ix);
+	void (*mlo_mlme_ext_deauth)(struct wlan_objmgr_peer *peer);
 };
+
 #endif

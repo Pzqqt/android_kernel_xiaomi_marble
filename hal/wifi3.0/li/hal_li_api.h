@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,10 +30,11 @@
  * @desc: Descriptor entry (from WBM_IDLE_LINK ring)
  * @cookie: SW cookie for the buffer/descriptor
  * @link_desc_paddr: Physical address of link descriptor entry
- *
+ * @bm_id: idle link BM id
  */
 void hal_set_link_desc_addr_li(void *desc, uint32_t cookie,
-			       qdf_dma_addr_t link_desc_paddr);
+			       qdf_dma_addr_t link_desc_paddr,
+			       uint8_t bm_id);
 
 /**
  * hal_tx_init_data_ring_li() - Initialize all the TCL Descriptors in SRNG
@@ -64,12 +66,12 @@ uint8_t hal_rx_ret_buf_manager_get_li(hal_ring_desc_t ring_desc);
  * @hw_qdesc_vaddr: Virtual address of REO queue descriptor memory
  * @hw_qdesc_paddr: Physical address of REO queue descriptor memory
  * @pn_type: PN type (one of the types defined in 'enum hal_pn_type')
- *
+ * @vdev_stats_id: vdev_stats_id
  */
 void hal_reo_qdesc_setup_li(hal_soc_handle_t hal_soc_hdl,
 			    int tid, uint32_t ba_window_size,
 			    uint32_t start_seq, void *hw_qdesc_vaddr,
 			    qdf_dma_addr_t hw_qdesc_paddr,
-			    int pn_type);
+			    int pn_type, uint8_t vdev_stats_id);
 
 #endif /* _HAL_LI_API_H_ */

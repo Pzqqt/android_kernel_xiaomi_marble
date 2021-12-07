@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +25,24 @@
 #include "hal_reo.h"
 
 #define HAL_REO_QUEUE_EXT_DESC 10
+#define HAL_MAX_REO2SW_RINGS 8
+#define HAL_NUM_RX_RING_PER_IX_MAP 8
+
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+static inline void hal_update_stats_counter_index(uint32_t *reo_queue_desc,
+						  uint8_t vdev_stats_id)
+{
+#ifdef RX_REO_QUEUE_STATISTICS_COUNTER_INDEX_MASK
+	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE,
+			   STATISTICS_COUNTER_INDEX, vdev_stats_id);
+#endif
+}
+#else
+static inline void hal_update_stats_counter_index(uint32_t *reo_queue_desc,
+						  uint8_t vdev_stats_id)
+{
+}
+#endif
 
 /* Proto-types */
 void hal_get_ba_aging_timeout_be(hal_soc_handle_t hal_soc_hdl, uint8_t ac,

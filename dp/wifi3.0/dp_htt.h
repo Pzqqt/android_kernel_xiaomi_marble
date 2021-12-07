@@ -139,6 +139,35 @@ void htt_htc_pkt_pool_free(struct htt_soc *soc);
 #define HTT_GET_STATS_CMN_INDEX(index) \
 	HTT_PPDU_STATS_COMMON_TLV_##index##_OFFSET
 
+#define HTT_VDEV_STATS_TLV_SOC_DROP_CNT_OFFSET        1
+
+#define HTT_VDEV_STATS_TLV_HDR_OFFSET                 0
+#define HTT_VDEV_STATS_TLV_VDEV_ID_OFFSET             1
+#define HTT_VDEV_STATS_TLV_RX_BYTE_CNT_OFFSET         2
+#define HTT_VDEV_STATS_TLV_RX_PKT_CNT_OFFSET          4
+#define HTT_VDEV_STATS_TLV_TX_SUCCESS_BYTE_CNT_OFFSET 6
+#define HTT_VDEV_STATS_TLV_TX_SUCCESS_PKT_CNT_OFFSET  8
+#define HTT_VDEV_STATS_TLV_TX_RETRY_BYTE_CNT_OFFSET   10
+#define HTT_VDEV_STATS_TLV_TX_RETRY_PKT_CNT_OFFSET    12
+#define HTT_VDEV_STATS_TLV_TX_DROP_BYTE_CNT_OFFSET    14
+#define HTT_VDEV_STATS_TLV_TX_DROP_PKT_CNT_OFFSET     16
+#define HTT_VDEV_STATS_TLV_TX_AGE_OUT_BYTE_CNT_OFFSET 18
+#define HTT_VDEV_STATS_TLV_TX_AGE_OUT_PKT_CNT_OFFSET  20
+
+#define HTT_VDEV_STATS_GET_INDEX(index) \
+	HTT_VDEV_STATS_TLV_##index##_OFFSET
+
+#define HTT_VDEV_STATS_U32_SHIFT 0x20
+#define HTT_VDEV_STATS_U32_MASK  0xFFFFFFFF00000000
+#define HTT_VDEV_STATS_L32_MASK  0x00000000FFFFFFFF
+
+#define HTT_VDEV_GET_STATS_U64(msg_word) \
+	(((((uint64_t)(*(((uint32_t *)msg_word) + 1))) & HTT_VDEV_STATS_L32_MASK) << \
+	HTT_VDEV_STATS_U32_SHIFT) | ((*(uint32_t *)msg_word) & HTT_VDEV_STATS_L32_MASK))
+
+#define HTT_VDEV_GET_STATS_U32(msg_word) \
+	((*(uint32_t *)msg_word) & HTT_VDEV_STATS_L32_MASK)
+
 #define MAX_SCHED_STARVE 100000
 #define WRAP_DROP_TSF_DELTA 10000
 #define MAX_TSF_32 0xFFFFFFFF
@@ -885,4 +914,19 @@ dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
 int htt_h2t_full_mon_cfg(struct htt_soc *htt_soc,
 			 uint8_t pdev_id,
 			 enum dp_full_mon_config);
+
+/**
+ * dp_h2t_hw_vdev_stats_config_send: Send HTT command to FW for config
+				     of HW vdev stats
+ * @dpsoc: Datapath soc handle
+ * @pdev_id: INVALID_PDEV_ID for all pdevs or 0,1,2 for individual pdev
+ * @enable: flag to specify enable/disable of stats
+ * @reset: flag to specify if command is for reset of stats
+ * @reset_bitmask: bitmask of vdev_id(s) for reset of HW stats
+ *
+ *  Return: QDF_STATUS
+ */
+QDF_STATUS dp_h2t_hw_vdev_stats_config_send(struct dp_soc *dpsoc,
+					    uint8_t pdev_id, bool enable,
+					    bool reset, uint64_t reset_bitmask);
 #endif /* _DP_HTT_H_ */

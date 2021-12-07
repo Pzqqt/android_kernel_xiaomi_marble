@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,10 +73,12 @@ void *hal_rx_msdu_ext_desc_info_get_ptr_be(void *msdu_details_ptr);
  * @desc: Descriptor entry (from WBM_IDLE_LINK ring)
  * @cookie: SW cookie for the buffer/descriptor
  * @link_desc_paddr: Physical address of link descriptor entry
+ * @bm_id: idle link BM id
  *
  */
 void hal_set_link_desc_addr_be(void *desc, uint32_t cookie,
-			       qdf_dma_addr_t link_desc_paddr);
+			       qdf_dma_addr_t link_desc_paddr,
+			       uint8_t bm_id);
 
 /**
  * hal_hw_txrx_default_ops_attach_be(): Add default ops for BE chips
@@ -98,13 +101,13 @@ void hal_rx_wbm_err_info_get_generic_be(void *wbm_desc, void *wbm_er_info1);
  * @hw_qdesc_vaddr: Virtual address of REO queue descriptor memory
  * @hw_qdesc_paddr: Physical address of REO queue descriptor memory
  * @pn_type: PN type (one of the types defined in 'enum hal_pn_type')
- *
+ * @vdev_stats_id: vdev_stats_id to be programmed in REO Queue Descriptor
  */
 void hal_reo_qdesc_setup_be(hal_soc_handle_t hal_soc_hdl,
 			    int tid, uint32_t ba_window_size,
 			    uint32_t start_seq, void *hw_qdesc_vaddr,
 			    qdf_dma_addr_t hw_qdesc_paddr,
-			    int pn_type);
+			    int pn_type, uint8_t vdev_stats_id);
 
 /**
  * hal_cookie_conversion_reg_cfg_be() - set cookie conversion relevant register
@@ -117,4 +120,36 @@ void hal_reo_qdesc_setup_be(hal_soc_handle_t hal_soc_hdl,
 void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
 				      struct hal_hw_cc_config *cc_cfg);
 
+/**
+ * hal_reo_ix_remap_value_get() - Calculate reo remap register value from
+ *				  ring_id_mask which is used for hash based
+ *				  reo distribution
+ *
+ * @hal_soc: Handle to HAL SoC structure
+ * @ring_id_mask: mask value indicating the rx rings 0th bit set indicate
+ * REO2SW1 is included in hash distribution
+ *
+ * Return: REO remap value
+ */
+uint32_t
+hal_reo_ix_remap_value_get_be(hal_soc_handle_t hal_soc_hdl,
+			      uint8_t rx_ring_mask);
+
+/**
+ * hal_reo_ring_remap_value_get_be() - return REO remap value
+ *
+ * @ring_id: REO2SW ring id
+ *
+ * Return: REO remap value
+ */
+uint8_t
+hal_reo_ring_remap_value_get_be(uint8_t rx_ring_id);
+
+/**
+ * hal_setup_reo_swap() - Set the swap flag for big endian machines
+ * @soc: HAL soc handle
+ *
+ * Return: None
+ */
+void hal_setup_reo_swap(struct hal_soc *soc);
 #endif /* _HAL_BE_API_H_ */

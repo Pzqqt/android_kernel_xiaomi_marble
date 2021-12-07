@@ -404,6 +404,41 @@ cdp_txrx_get_psoc_param(ol_txrx_soc_handle soc,
 	return soc->ops->ctrl_ops->txrx_get_psoc_param(soc, type, val);
 }
 
+static inline
+QDF_STATUS cdp_vdev_alloc_vdev_stats_id(ol_txrx_soc_handle soc,
+					uint8_t *vdev_stats_id)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance:");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_alloc_vdev_stats_id)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->txrx_alloc_vdev_stats_id
+			(soc, vdev_stats_id);
+}
+
+static inline
+void cdp_vdev_reset_vdev_stats_id(ol_txrx_soc_handle soc,
+				  uint8_t vdev_stats_id)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance:");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_reset_vdev_stats_id)
+		return;
+
+	soc->ops->host_stats_ops->txrx_reset_vdev_stats_id(soc, vdev_stats_id);
+}
+
 #ifdef VDEV_PEER_PROTOCOL_COUNT
 /**
  * cdp_set_vdev_peer_protocol_count() - set per-peer protocol count tracking
