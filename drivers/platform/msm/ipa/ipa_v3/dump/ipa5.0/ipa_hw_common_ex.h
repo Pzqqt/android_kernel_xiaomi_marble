@@ -468,6 +468,11 @@ enum ipa_hw_irq_srcs_e {
 #define IPA_HW_REG_SAVE_GSI_NUM_EVT_CNTXT_UC         2
 
 /*
+ * Total number of event ring contexts that need to be saved for Q6
+ */
+#define IPA_HW_REG_SAVE_GSI_NUM_EVT_CNTXT_Q6         11
+
+/*
  * Total number of endpoints for which ipa_reg_save.pipes[endp_number]
  * are not saved by default (only if ipa_cfg.gen.full_reg_trace =
  * true) There is no extra endpoints in Stingray
@@ -483,7 +488,11 @@ enum ipa_hw_irq_srcs_e {
 /*
  * SHRAM Bytes per ch
  */
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+#define IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM         20
+#else
 #define IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM         12
+#endif
 
 /*
  * Total number of rx splt cmdq's see:
@@ -497,19 +506,19 @@ enum ipa_hw_irq_srcs_e {
  * have to be a multiple of four bytes, because the IPA memory reads
  * that they drive are always 32 bits...
  */
-#define IPA_IU_ADDR   0x000A0000
+#define IPA_IU_ADDR   0x001A0000
 #define IPA_IU_SIZE   round_up(40704, sizeof(u32))
 
-#define IPA_SRAM_ADDR 0x00050000
+#define IPA_SRAM_ADDR 0x00150000
 #define IPA_SRAM_SIZE round_up(19232, sizeof(u32))
 
-#define IPA_MBOX_ADDR 0x000C2000
+#define IPA_MBOX_ADDR 0x001C2000
 #define IPA_MBOX_SIZE round_up(256, sizeof(u32))
 
-#define IPA_HRAM_ADDR 0x00060000
+#define IPA_HRAM_ADDR 0x00160000
 #define IPA_HRAM_SIZE round_up(47536, sizeof(u32))
 
-#define IPA_SEQ_ADDR  0x00081000
+#define IPA_SEQ_ADDR  0x00181000
 #define IPA_SEQ_SIZE  round_up(768, sizeof(u32))
 
 #define IPA_GSI_ADDR  0x00006000

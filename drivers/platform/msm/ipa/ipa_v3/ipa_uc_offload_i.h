@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPA_UC_OFFLOAD_I_H_
@@ -13,8 +13,8 @@
  * Neutrino protocol related data structures
  */
 
-#define IPA_UC_MAX_NTN_TX_CHANNELS 1
-#define IPA_UC_MAX_NTN_RX_CHANNELS 1
+#define IPA_UC_MAX_NTN_TX_CHANNELS 2
+#define IPA_UC_MAX_NTN_RX_CHANNELS 2
 
 #define IPA_NTN_TX_DIR 1
 #define IPA_NTN_RX_DIR 2
@@ -287,6 +287,8 @@ struct ipa3_uc_ntn_ctx {
 	struct Ipa3HwStatsNTNInfoData_t *ntn_uc_stats_mmio;
 	void *priv;
 	ipa_uc_ready_cb uc_ready_cb;
+	phys_addr_t ntn_reg_base_ptr_pa_rd;
+	u32 smmu_mapped;
 };
 
 /**
@@ -365,6 +367,9 @@ struct Ipa3HwNtnSetUpCmdData_t {
 	u8  ipa_pipe_number;
 	u8  dir;
 	u16 data_buff_size;
+	u8 db_mode;
+	u8 reserved1;
+	u16 reserved2;
 
 } __packed;
 

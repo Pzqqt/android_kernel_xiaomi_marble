@@ -25,84 +25,85 @@
 #include "gsi_hwio_def.h"
 #include "ipa_gcc_hwio_def.h"
 
-#define IPA_DEBUG_CMDQ_DPS_SELECT_NUM_GROUPS     0x6
-#define IPA_DEBUG_CMDQ_HPS_SELECT_NUM_GROUPS     0x4
-#define IPA_DEBUG_TESTBUS_RSRC_NUM_EP            7
-#define IPA_DEBUG_TESTBUS_RSRC_NUM_GRP           3
-#define IPA_TESTBUS_SEL_EP_MAX                   0x1F
-#define IPA_TESTBUS_SEL_EXTERNAL_MAX             0x40
-#define IPA_TESTBUS_SEL_INTERNAL_MAX             0xFF
-#define IPA_TESTBUS_SEL_INTERNAL_PIPE_MAX        0x40
-#define IPA_DEBUG_CMDQ_ACK_SELECT_NUM_GROUPS     0x9
-#define IPA_RSCR_MNGR_DB_RSRC_ID_MAX             0x3F
-#define IPA_RSCR_MNGR_DB_RSRC_TYPE_MAX           0xA
-
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_ZEROS   (0x0)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_0   (0x1)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_1   (0x2)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_2   (0x3)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_3   (0x4)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_4   (0x5)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_DB_ENG  (0x9)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_0   (0xB)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_1   (0xC)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_2   (0xD)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_3   (0xE)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_4   (0xF)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_5   (0x10)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_6   (0x11)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_7   (0x12)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_0   (0x13)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_1   (0x14)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_2   (0x15)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_3   (0x16)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_4   (0x17)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_5   (0x18)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IE_0    (0x1B)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IE_1    (0x1C)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_0    (0x1F)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_1    (0x20)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_2    (0x21)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_3    (0x22)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_4    (0x23)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_0  (0x27)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_1  (0x28)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_2  (0x29)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_3  (0x2A)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_0   (0x2B)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_1   (0x2C)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_2   (0x2D)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_3   (0x2E)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_0 (0x33)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_1 (0x34)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_2 (0x35)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_3 (0x36)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR     (0x3A)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_SDMA_0  (0x3C)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_SDMA_1  (0x3D)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IE_2    (0x1D)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR_1   (0x3E)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR_2   (0x3F)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_5   (0x40)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_5    (0x41)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR_3   (0x42)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TLV_0   (0x43)
-#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_8   (0x44)
-
-#define IPA_DEBUG_TESTBUS_DEF_EXTERNAL           50
-#define IPA_DEBUG_TESTBUS_DEF_INTERNAL           6
-
-#define IPA_REG_SAVE_GSI_NUM_EE                  3
-
-#define IPA_REG_SAVE_NUM_EXTRA_ENDP_REGS         22
-
-#define IPA_GSI_OFFSET_WORDS_SCRATCH4            6
-#define IPA_GSI_OFFSET_WORDS_SCRATCH5            7
-
-#define IPA_DEBUG_TESTBUS_RSRC_TYPE_CNT_BIT_MASK 0x7E000
-#define IPA_DEBUG_TESTBUS_RSRC_TYPE_CNT_SHIFT    13
-
-#define IPA_REG_SAVE_HWP_GSI_EE                  2
+#define IPA_DEBUG_CMDQ_DPS_SELECT_NUM_GROUPS              0x6
+#define IPA_DEBUG_CMDQ_HPS_SELECT_NUM_GROUPS              0x4
+#define IPA_DEBUG_TESTBUS_RSRC_NUM_EP                     7
+#define IPA_DEBUG_TESTBUS_RSRC_NUM_GRP                    3
+#define IPA_TESTBUS_SEL_EP_MAX                            0x1F
+#define IPA_TESTBUS_SEL_EXTERNAL_MAX                      0x40
+#define IPA_TESTBUS_SEL_INTERNAL_MAX                      0xFF
+#define IPA_TESTBUS_SEL_INTERNAL_PIPE_MAX                 0x40
+#define IPA_DEBUG_CMDQ_ACK_SELECT_NUM_GROUPS              0x9
+#define IPA_RSCR_MNGR_DB_RSRC_ID_MAX                      0x3F
+#define IPA_RSCR_MNGR_DB_RSRC_TYPE_MAX                    0xA
+#define IPA_REG_SAVE_FC_STATE_OFFSET                      7
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_ZEROS            (0x0)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_0            (0x1)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_1            (0x2)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_2            (0x3)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_3            (0x4)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_4            (0x5)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_DB_ENG           (0x9)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_0            (0xB)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_1            (0xC)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_2            (0xD)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_3            (0xE)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_4            (0xF)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_5            (0x10)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_6            (0x11)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_7            (0x12)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_0            (0x13)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_1            (0x14)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_2            (0x15)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_3            (0x16)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_4            (0x17)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_EVE_5            (0x18)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IE_0             (0x1B)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IE_1             (0x1C)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_0             (0x1F)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_1             (0x20)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_2             (0x21)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_3             (0x22)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_4             (0x23)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_0           (0x27)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_1           (0x28)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_2           (0x29)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MOQA_3           (0x2A)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_0            (0x2B)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_1            (0x2C)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_2            (0x2D)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TMR_3            (0x2E)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_0          (0x33)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_1          (0x34)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_2          (0x35)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_RD_WR_3          (0x36)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR              (0x3A)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_SDMA_0           (0x3C)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_SDMA_1           (0x3D)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IE_2             (0x1D)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR_1            (0x3E)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR_2            (0x3F)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_MCS_5            (0x40)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_IC_5             (0x41)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_CSR_3            (0x42)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_TLV_0            (0x43)
+#define HWIO_GSI_DEBUG_TEST_BUS_SELECTOR_REE_8            (0x44)
+#define IPA_DEBUG_TESTBUS_DEF_EXTERNAL                    50
+#define IPA_DEBUG_TESTBUS_DEF_INTERNAL                    6
+#define IPA_REG_SAVE_GSI_NUM_EE                           3
+#define IPA_REG_SAVE_NUM_EXTRA_ENDP_REGS                  22
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+#define IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_LOW          18
+#define IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_HIGH         19
+#else
+#define IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_LOW          6
+#define IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_HIGH         7
+#endif
+#define IPA_DEBUG_TESTBUS_RSRC_TYPE_CNT_BIT_MASK          0x7E000
+#define IPA_DEBUG_TESTBUS_RSRC_TYPE_CNT_SHIFT             13
+#define IPA_REG_SAVE_HWP_GSI_EE                           2
+#define GSI_HW_DEBUG_SW_MSK_REG_ARRAY_LENGTH              9
+#define GSI_HW_DEBUG_SW_MSK_REG_MAXk                      2
 
 /*
  * A structure used to map a source address to destination address...
@@ -474,6 +475,99 @@ struct map_src_dst_addr_s {
 		GEN_REG_ATTR(reg_name) }, \
 	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_REG_SAVE_HWP_GSI_EE, 3), \
 		(u32 *)&ipa_reg_save.gsi.ch_cntxt.uc[1].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 0),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[0].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 1),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[1].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 2),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[2].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 3),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[3].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 4),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[4].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 5),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[5].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 6),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[6].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 7),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[7].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 8),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[8].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 9),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[9].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 10),	\
+		(u32 *)&ipa_reg_save.gsi.ch_cntxt.q6[10].var_name, \
+		GEN_REG_ATTR(reg_name) }
+
+/*
+ * Macro to define a debug SW MSK register entry for all (n, k)
+ * k bound by GSI_HW_DEBUG_SW_MSK_REG_MAXk
+ */
+#define IPA_REG_SAVE_GSI_DEBUG_MSK_REG_ENTRY(reg_name, var_name) \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 0, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[0].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 0, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[0].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 1, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[1].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 1, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[1].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 2, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[2].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 2, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[2].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 3, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[3].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 3, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[3].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 4, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[4].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 4, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[4].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 5, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[5].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 5, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[5].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 6, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[6].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 6, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[6].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 7, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[7].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 7, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[7].var_name[1], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 8, 0), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[8].var_name[0], \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, 8, 1), \
+		(u32 *)&ipa_reg_save.gsi.debug.debug_sw_msk.mask_reg[8].var_name[1], \
 		GEN_REG_ATTR(reg_name) }
 
 #define IPA_REG_SAVE_CFG_ENTRY_GSI_EVT_CNTXT(reg_name, var_name) \
@@ -536,6 +630,39 @@ struct map_src_dst_addr_s {
 		GEN_REG_ATTR(reg_name) }, \
 	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_REG_SAVE_HWP_GSI_EE, 1), \
 		(u32 *)&ipa_reg_save.gsi.evt_cntxt.uc[0].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 0),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[0].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 1),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[1].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 2),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[2].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 3),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[3].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 4),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[4].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 5),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[5].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 6),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[6].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 7),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[7].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 8),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[8].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 9),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[9].var_name, \
+		GEN_REG_ATTR(reg_name) }, \
+	{ GEN_2xVECTOR_REG_OFST(reg_name, IPA_HW_Q6_EE, 10),	\
+		(u32 *)&ipa_reg_save.gsi.evt_cntxt.q6[10].var_name, \
 		GEN_REG_ATTR(reg_name) }
 
 /*
@@ -936,6 +1063,10 @@ struct ipa_gen_regs_s {
 	  ipa_local_pkt_proc_cntxt_base;
 	struct ipa_hwio_def_ipa_rsrc_grp_cfg_s
 	  ipa_rsrc_grp_cfg;
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	struct ipa_hwio_def_ipa_0_ipa_rsrc_grp_cfg_ext_s
+	  ipa_rsrc_grp_cfg_ext;
+#endif
 	struct ipa_hwio_def_ipa_comp_cfg_s
 	  ipa_comp_cfg;
 	struct ipa_hwio_def_ipa_state_dpl_fifo_s
@@ -1573,6 +1704,25 @@ struct ipa_reg_save_gsi_mcs_regs_s {
 		mcs_reg[HWIO_GSI_DEBUG_SW_RF_n_READ_MAXn + 1];
 };
 
+struct ipa_reg_save_gsi_mcs_prof_regs_s {
+        struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_lsb_s
+	       gsi_top_gsi_mcs_profiling_bp_cnt_lsb;
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_cnt_msb_s
+	       gsi_top_gsi_mcs_profiling_bp_cnt_msb;
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_lsb_s
+	       gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_lsb;
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_msb_s
+	       gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_msb;
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_lsb_s
+	       gsi_top_gsi_mcs_profiling_mcs_busy_cnt_lsb;
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_busy_cnt_msb_s
+	       gsi_top_gsi_mcs_profiling_mcs_busy_cnt_msb;
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_lsb_s
+	       gsi_top_gsi_mcs_profiling_mcs_idle_cnt_lsb;
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_mcs_profiling_mcs_idle_cnt_msb_s
+	       gsi_top_gsi_mcs_profiling_mcs_idle_cnt_msb;
+};
+
 /* GSI debug counters save data struct */
 struct ipa_reg_save_gsi_debug_cnt_s {
 	struct
@@ -1615,6 +1765,17 @@ struct ipa_reg_save_gsi_iram_ptr_regs_s {
 #endif
 };
 
+/* GSI Debug SW registers save data struct */
+struct gsi_hwio_gsi_top_gsi_debug_sw_msk_regs_entry_rd_s{
+	struct gsi_hwio_def_ipa_0_gsi_top_gsi_debug_sw_msk_reg_n_sec_k_rd_s
+		regs[GSI_HW_DEBUG_SW_MSK_REG_MAXk];
+};
+
+struct gsi_hwio_gsi_top_gsi_debug_sw_msk_regs_rd_s{
+	struct gsi_hwio_gsi_top_gsi_debug_sw_msk_regs_entry_rd_s
+		mask_reg[GSI_HW_DEBUG_SW_MSK_REG_ARRAY_LENGTH];
+};
+
 /* GSI SHRAM pointers save data struct */
 struct ipa_reg_save_gsi_shram_ptr_regs_s {
 	struct ipa_hwio_def_ipa_gsi_top_gsi_shram_ptr_ch_cntxt_base_addr_s
@@ -1651,20 +1812,27 @@ struct ipa_reg_save_gsi_debug_s {
 	  ipa_gsi_top_gsi_debug_pc_for_debug;
 	struct ipa_hwio_def_ipa_gsi_top_gsi_debug_qsb_log_err_trns_id_s
 	  ipa_gsi_top_gsi_debug_qsb_log_err_trns_id;
-	struct ipa_reg_save_gsi_qsb_debug_s	gsi_qsb_debug;
+	struct ipa_reg_save_gsi_qsb_debug_s		gsi_qsb_debug;
 	struct ipa_reg_save_gsi_test_bus_s		gsi_test_bus;
 	struct ipa_reg_save_gsi_mcs_regs_s		gsi_mcs_regs;
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	struct ipa_reg_save_gsi_mcs_prof_regs_s		gsi_mcs_prof_regs;
+#endif
 	struct ipa_reg_save_gsi_debug_cnt_s		gsi_cnt_regs;
 	struct ipa_reg_save_gsi_iram_ptr_regs_s		gsi_iram_ptrs;
 	struct ipa_reg_save_gsi_shram_ptr_regs_s	gsi_shram_ptrs;
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	struct gsi_hwio_gsi_top_gsi_debug_sw_msk_regs_rd_s
+	       debug_sw_msk;
+#endif
 };
 
 /* GSI MCS channel scratch registers save data struct */
 struct ipa_reg_save_gsi_mcs_channel_scratch_regs_s {
 	struct gsi_hwio_def_gsi_shram_n_s
-	  scratch4;
+	  scratch_for_seq_low;
 	struct gsi_hwio_def_gsi_shram_n_s
-	  scratch5;
+	  scratch_for_seq_high;
 };
 
 /* GSI Channel Context register save data struct */
@@ -1699,9 +1867,28 @@ struct ipa_reg_save_gsi_ch_cntxt_per_ep_s {
 	  ee_n_gsi_ch_k_scratch_2;
 	struct gsi_hwio_def_ee_n_gsi_ch_k_scratch_3_s
 	  ee_n_gsi_ch_k_scratch_3;
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	struct gsi_hwio_def_ee_n_gsi_ch_k_scratch_4_s
+	  ee_n_gsi_ch_k_scratch_4;
+	struct gsi_hwio_def_ee_n_gsi_ch_k_scratch_5_s
+	  ee_n_gsi_ch_k_scratch_5;
+	struct gsi_hwio_def_ee_n_gsi_ch_k_scratch_6_s
+	  ee_n_gsi_ch_k_scratch_6;
+	struct gsi_hwio_def_ee_n_gsi_ch_k_scratch_7_s
+	  ee_n_gsi_ch_k_scratch_7;
+	struct gsi_hwio_def_ee_n_gsi_ch_k_scratch_8_s
+	  ee_n_gsi_ch_k_scratch_8;
+	struct gsi_hwio_def_ee_n_gsi_ch_k_scratch_9_s
+	  ee_n_gsi_ch_k_scratch_9;
+#endif
 	struct gsi_hwio_def_gsi_map_ee_n_ch_k_vp_table_s
 	  gsi_map_ee_n_ch_k_vp_table;
-	struct ipa_reg_save_gsi_mcs_channel_scratch_regs_s mcs_channel_scratch;
+	struct ipa_reg_save_gsi_mcs_channel_scratch_regs_s
+	  mcs_channel_scratch;
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	union ipa_hwio_def_fc_stats_state_u
+	  fc_stats_state;
+#endif
 };
 
 /* GSI Event Context register save data struct */
@@ -1770,6 +1957,10 @@ struct ipa_reg_save_gsi_evt_cntxt_s {
 		a7[IPA_HW_REG_SAVE_GSI_NUM_EVT_CNTXT_A7];
 	struct ipa_reg_save_gsi_evt_cntxt_per_ep_s
 		uc[IPA_HW_REG_SAVE_GSI_NUM_EVT_CNTXT_UC];
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+    struct ipa_reg_save_gsi_evt_cntxt_per_ep_s
+		q6[IPA_HW_REG_SAVE_GSI_NUM_EVT_CNTXT_Q6];
+#endif
 };
 
 /* Top level IPA register save data struct */

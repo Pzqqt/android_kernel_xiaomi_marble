@@ -121,7 +121,7 @@ void testIpv4Tcp(){
     using L3Type = TcpHeader;
     using PacketType = UlsoPacket<L3Type, L2Type>;
     size_t payloadSize = 91, segmentSize = 32;
-    size_t packetSize = QmapHeader::size() + L2Type::size() + L3Type::size() + payloadSize;
+    size_t packetSize = QmapHeader::mSize + L2Type::mSize + L3Type::mSize + payloadSize;
 
     PacketType p1(segmentSize, payloadSize);
     cout << p1 << endl;
@@ -143,13 +143,13 @@ void testIpv4Udp(){
     using L3Type = UdpHeader;
     using PacketType = UlsoPacket<L3Type, L2Type>;
     size_t payloadSize = 80, segmentSize = 32;
-    size_t packetSize = QmapHeader::size() + L2Type::size() + L3Type::size() + payloadSize;
+    size_t packetSize = QmapHeader::mSize + L2Type::mSize + L3Type::mSize + payloadSize;
 
     PacketType p1(segmentSize, payloadSize);
     cout << p1 << endl;
     uint8_t ipv4UdpHeaderBuf[packetSize];
     p1.asArray(ipv4UdpHeaderBuf);
-    uint8_t *udpHeaderPtr = ipv4UdpHeaderBuf + QmapHeader::size() + L2Type::size();
+    uint8_t *udpHeaderPtr = ipv4UdpHeaderBuf + QmapHeader::mSize + L2Type::mSize;
     uint8_t *goldBuf = udpPacket.l3Packet();
     for(unsigned int i=0; i<udpPacket.l3PacketSize(); i++){
         if(udpHeaderPtr[i] != goldBuf[i]){
@@ -162,7 +162,7 @@ void testIpv4Udp(){
 
 template<typename L3Type, typename L2Type>
 size_t packetTestOffset(const struct Packet& p){
-    return QmapHeader::size() + (p.l2Size == 0) * L2Type::size() + (p.l3Size == 0) * L3Type::size();
+    return QmapHeader::mSize + (p.l2Size == 0) * L2Type::mSize + (p.l3Size == 0) * L3Type::mSize;
 }
 
 template<typename L3Type, typename L2Type>

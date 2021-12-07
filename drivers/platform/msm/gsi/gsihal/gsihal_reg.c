@@ -1209,10 +1209,10 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	0x0001f180, 0x4000, 0},
 	[GSI_VER_1_0][GSI_EE_n_CNTXT_MSI_BASE_LSB] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x0001f180, 0x4000, 0},
+	0x0001f188, 0x4000, 0},
 	[GSI_VER_1_0][GSI_EE_n_CNTXT_MSI_BASE_MSB] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x0001f180, 0x4000, 0},
+	0x0001f18c, 0x4000, 0},
 	[GSI_VER_1_0][GSI_EE_n_GSI_STATUS] = {
 	gsireg_construct_dummy, gsireg_parse_gsi_status,
 	0x0001f000, 0x4000, 0},

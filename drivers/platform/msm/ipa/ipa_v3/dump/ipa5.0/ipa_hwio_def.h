@@ -19044,5 +19044,48 @@ union ipa_hwio_def_ipa_ms_mpu_cfg_xpu3_rgn_end0_u
   u32 value;
 };
 
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of register: IPA_0_IPA_RSRC_GRP_CFG_EXT
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct ipa_hwio_def_ipa_0_ipa_rsrc_grp_cfg_ext_s
+{
+  u32 src_grp_2nd_priority_special_valid : 1;
+  u32 reserved0 : 3;
+  u32 src_grp_2nd_priority_special_index : 3;
+  u32 reserved1 : 25;
+};
+
+/* Union definition of register */
+union ipa_hwio_def_ipa_0_ipa_rsrc_grp_cfg_ext_u
+{
+  struct ipa_hwio_def_ipa_0_ipa_rsrc_grp_cfg_ext_s def;
+  u32 value;
+};
+
+/*===========================================================================*/
+/*!
+  @brief Bit Field definition of fc_stats
+*/
+/*===========================================================================*/
+/* Structure definition of register */
+struct ipa_hwio_def_fc_stats_state_s
+{
+  u32 reserved0 : 16;
+  u32 flow_control : 1;
+  u32 flow_control_primary : 1;
+  u32 flow_control_secondary : 1;
+  u32 pending_flow_control : 1;
+  u32 reserved1 : 12;
+};
+
+/* Union definition of register */
+union ipa_hwio_def_fc_stats_state_u
+{
+  struct ipa_hwio_def_fc_stats_state_s def;
+  u32 value;
+};
 
 #endif /* __IPA_HWIO_DEF_H__ */

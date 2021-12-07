@@ -148,7 +148,7 @@ public:
     UlsoPacket(){
         mQmapHeader.setmPacketLength(mInternetHeader.size() + mTransportHeader.size() + mPayload.size());
         mInternetHeader.adjust(mTransportHeader.size() + mPayload.size(), mTransportHeader.protocolNum());
-        adjustHeader(mTransportHeader);
+        adjustHeader(mTransportHeader, 0, true);
     }
 
     vector<bool> asVector() const {

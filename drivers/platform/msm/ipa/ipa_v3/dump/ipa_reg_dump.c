@@ -325,6 +325,11 @@ static struct map_src_dst_addr_s ipa_regs_to_save_array[] = {
 	GEN_SRC_DST_ADDR_MAP(IPA_FILT_ROUT_CFG,
 			     ipa.gen,
 			     ipa_filt_rout_cfg),
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	GEN_SRC_DST_ADDR_MAP(IPA_RSRC_GRP_CFG_EXT,
+			     ipa.gen,
+			     ipa_rsrc_grp_cfg_ext),
+#endif
 #endif
 
 	/* Debug Registers */
@@ -644,7 +649,32 @@ static struct map_src_dst_addr_s ipa_regs_to_save_array[] = {
 	GEN_SRC_DST_ADDR_MAP(IPA_GSI_TOP_GSI_DEBUG_QSB_LOG_ERR_TRNS_ID,
 			     gsi.debug,
 			     ipa_gsi_top_gsi_debug_qsb_log_err_trns_id),
-
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_BP_CNT_LSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_bp_cnt_lsb),
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_BP_CNT_MSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_bp_cnt_msb),
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_BP_AND_PENDING_CNT_LSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_lsb),
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_BP_AND_PENDING_CNT_MSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_bp_and_pending_cnt_msb),
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_MCS_BUSY_CNT_LSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_mcs_busy_cnt_lsb),
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_MCS_BUSY_CNT_MSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_mcs_busy_cnt_msb),
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_MCS_IDLE_CNT_LSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_mcs_idle_cnt_lsb),
+	GEN_SRC_DST_ADDR_MAP(GSI_MCS_PROFILING_MCS_IDLE_CNT_MSB,
+			     gsi.debug.gsi_mcs_prof_regs,
+			     gsi_top_gsi_mcs_profiling_mcs_idle_cnt_msb),
+#endif
 	IPA_REG_SAVE_CFG_ENTRY_GSI_QSB_DEBUG(
 		GSI_DEBUG_QSB_LOG_LAST_MISC_IDn, qsb_log_last_misc),
 
@@ -811,6 +841,20 @@ static struct map_src_dst_addr_s ipa_regs_to_save_array[] = {
 					    ee_n_gsi_ch_k_scratch_2),
 	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(EE_n_GSI_CH_k_SCRATCH_3,
 					    ee_n_gsi_ch_k_scratch_3),
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(EE_n_GSI_CH_k_SCRATCH_4,
+					    ee_n_gsi_ch_k_scratch_4),
+	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(EE_n_GSI_CH_k_SCRATCH_5,
+					    ee_n_gsi_ch_k_scratch_5),
+	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(EE_n_GSI_CH_k_SCRATCH_6,
+					    ee_n_gsi_ch_k_scratch_6),
+	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(EE_n_GSI_CH_k_SCRATCH_7,
+					    ee_n_gsi_ch_k_scratch_7),
+	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(EE_n_GSI_CH_k_SCRATCH_8,
+					    ee_n_gsi_ch_k_scratch_8),
+	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(EE_n_GSI_CH_k_SCRATCH_9,
+					    ee_n_gsi_ch_k_scratch_9),
+#endif
 	IPA_REG_SAVE_CFG_ENTRY_GSI_CH_CNTXT(GSI_MAP_EE_n_CH_k_VP_TABLE,
 					    gsi_map_ee_n_ch_k_vp_table),
 
@@ -849,6 +893,12 @@ static struct map_src_dst_addr_s ipa_regs_to_save_array[] = {
 					     ee_n_ev_ch_k_scratch_1),
 	IPA_REG_SAVE_CFG_ENTRY_GSI_EVT_CNTXT(GSI_DEBUG_EE_n_EV_k_VP_TABLE,
 					     gsi_debug_ee_n_ev_k_vp_table),
+
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+/* GSI Debug SW MSK Registers */
+	IPA_REG_SAVE_GSI_DEBUG_MSK_REG_ENTRY(GSI_DEBUG_SW_MSK_REG_n_SEC_k_RD,
+			                    regs),
+#endif
 
 #if defined(CONFIG_IPA3_REGDUMP_NUM_EXTRA_ENDP_REGS) && \
 	CONFIG_IPA3_REGDUMP_NUM_EXTRA_ENDP_REGS > 0
@@ -1047,6 +1097,8 @@ void ipa_save_gsi_ver(void)
 void ipa_save_registers(void)
 {
 	u32 i = 0;
+	u32 phys_ch_idx = 0;
+	u32 n = 0;
 	/* Fetch the number of registers configured to be saved */
 	u32 num_regs = ARRAY_SIZE(ipa_regs_to_save_array);
 	u32 num_uc_per_regs = ARRAY_SIZE(ipa_uc_regs_to_save_array);
@@ -1156,48 +1208,90 @@ void ipa_save_registers(void)
 			(u16)IPA_READ_1xVECTOR_REG(GSI_DEBUG_COUNTERn, i);
 
 	for (i = 0; i < IPA_HW_REG_SAVE_GSI_NUM_CH_CNTXT_A7; i++) {
-		u32 phys_ch_idx = ipa_reg_save.gsi.ch_cntxt.a7[
+		phys_ch_idx = ipa_reg_save.gsi.ch_cntxt.a7[
 			i].gsi_map_ee_n_ch_k_vp_table.phy_ch;
-		u32 n = phys_ch_idx * IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM;
+		n = phys_ch_idx * IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM;
 
 		if (!ipa_reg_save.gsi.ch_cntxt.a7[
 				i].gsi_map_ee_n_ch_k_vp_table.valid)
 			continue;
 
 		ipa_reg_save.gsi.ch_cntxt.a7[
-			i].mcs_channel_scratch.scratch4.shram =
+			i].mcs_channel_scratch.scratch_for_seq_low.shram =
 			IPA_READ_1xVECTOR_REG(
 				GSI_SHRAM_n,
-				n + IPA_GSI_OFFSET_WORDS_SCRATCH4);
+				n + IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_LOW);
 
 		ipa_reg_save.gsi.ch_cntxt.a7[
-			i].mcs_channel_scratch.scratch5.shram =
+			i].mcs_channel_scratch.scratch_for_seq_high.shram =
 			IPA_READ_1xVECTOR_REG(
 				GSI_SHRAM_n,
-				n + IPA_GSI_OFFSET_WORDS_SCRATCH5);
+				n + IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_HIGH);
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+		ipa_reg_save.gsi.ch_cntxt.a7[
+			i].fc_stats_state.value = IPA_READ_1xVECTOR_REG(
+				GSI_SHRAM_n,
+				n + IPA_REG_SAVE_FC_STATE_OFFSET);
 	}
+#endif
 
 	for (i = 0; i < IPA_HW_REG_SAVE_GSI_NUM_CH_CNTXT_UC; i++) {
-		u32 phys_ch_idx = ipa_reg_save.gsi.ch_cntxt.uc[
+		phys_ch_idx = ipa_reg_save.gsi.ch_cntxt.uc[
 			i].gsi_map_ee_n_ch_k_vp_table.phy_ch;
-		u32 n = phys_ch_idx * IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM;
+		n = phys_ch_idx * IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM;
 
 		if (!ipa_reg_save.gsi.ch_cntxt.uc[
 				i].gsi_map_ee_n_ch_k_vp_table.valid)
 			continue;
 
 		ipa_reg_save.gsi.ch_cntxt.uc[
-			i].mcs_channel_scratch.scratch4.shram =
+			i].mcs_channel_scratch.scratch_for_seq_low.shram =
 			IPA_READ_1xVECTOR_REG(
 				GSI_SHRAM_n,
-				n + IPA_GSI_OFFSET_WORDS_SCRATCH4);
+				n + IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_LOW);
 
 		ipa_reg_save.gsi.ch_cntxt.uc[
-			i].mcs_channel_scratch.scratch5.shram =
+			i].mcs_channel_scratch.scratch_for_seq_high.shram =
 			IPA_READ_1xVECTOR_REG(
 				GSI_SHRAM_n,
-				n + IPA_GSI_OFFSET_WORDS_SCRATCH5);
+				n + IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_HIGH);
+
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+		ipa_reg_save.gsi.ch_cntxt.uc[
+			i].fc_stats_state.value = IPA_READ_1xVECTOR_REG(
+				GSI_SHRAM_n,
+				n + IPA_REG_SAVE_FC_STATE_OFFSET);
 	}
+#endif
+
+	for (i = 0; i < IPA_HW_REG_SAVE_GSI_NUM_CH_CNTXT_Q6; i++) {
+		phys_ch_idx = ipa_reg_save.gsi.ch_cntxt.q6[
+			i].gsi_map_ee_n_ch_k_vp_table.phy_ch;
+		n = phys_ch_idx * IPA_REG_SAVE_BYTES_PER_CHNL_SHRAM;
+
+		if (!ipa_reg_save.gsi.ch_cntxt.q6[
+				i].gsi_map_ee_n_ch_k_vp_table.valid)
+			continue;
+
+		ipa_reg_save.gsi.ch_cntxt.q6[
+			i].mcs_channel_scratch.scratch_for_seq_low.shram =
+			IPA_READ_1xVECTOR_REG(
+				GSI_SHRAM_n,
+				n + IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_LOW);
+
+		ipa_reg_save.gsi.ch_cntxt.q6[
+			i].mcs_channel_scratch.scratch_for_seq_high.shram =
+			IPA_READ_1xVECTOR_REG(
+				GSI_SHRAM_n,
+				n + IPA_GSI_OFFSET_WORDS_SCRATCH_FOR_SEQ_HIGH);
+
+#ifdef CONFIG_IPA3_REGDUMP_IPA_5_0
+		ipa_reg_save.gsi.ch_cntxt.q6[
+			i].fc_stats_state.value = IPA_READ_1xVECTOR_REG(
+				GSI_SHRAM_n,
+				n + IPA_REG_SAVE_FC_STATE_OFFSET);
+	}
+#endif
 
 	/*
 	 * On targets that support SSR, we generally want to disable
@@ -1307,20 +1401,17 @@ void ipa_save_registers(void)
  */
 static void ipa_reg_save_gsi_fifo_status(void)
 {
-	union ipa_hwio_def_ipa_gsi_fifo_status_ctrl_u gsi_fifo_status_ctrl;
 	u8 i;
-
-	memset(&gsi_fifo_status_ctrl, 0, sizeof(gsi_fifo_status_ctrl));
-
 	for (i = 0; i < IPA_HW_PIPE_ID_MAX; i++) {
-		gsi_fifo_status_ctrl.def.ipa_gsi_fifo_status_en = 1;
-		gsi_fifo_status_ctrl.def.ipa_gsi_fifo_status_port_sel = i;
+		memset(&ipa_reg_save.gsi_fifo_status[i].gsi_fifo_status_ctrl,
+		       0, sizeof(ipa_reg_save.gsi_fifo_status[i].gsi_fifo_status_ctrl));
+
+		ipa_reg_save.gsi_fifo_status[i].gsi_fifo_status_ctrl.def.ipa_gsi_fifo_status_en = 1;
+		ipa_reg_save.gsi_fifo_status[i].gsi_fifo_status_ctrl.def.ipa_gsi_fifo_status_port_sel = i;
 
 		IPA_MASKED_WRITE_SCALER_REG(IPA_GSI_FIFO_STATUS_CTRL,
-				     gsi_fifo_status_ctrl.value);
+				     ipa_reg_save.gsi_fifo_status[i].gsi_fifo_status_ctrl.value);
 
-		ipa_reg_save.gsi_fifo_status[i].gsi_fifo_status_ctrl.value =
-			IPA_READ_SCALER_REG(IPA_GSI_FIFO_STATUS_CTRL);
 		ipa_reg_save.gsi_fifo_status[i].gsi_tlv_fifo_status.value =
 			IPA_READ_SCALER_REG(IPA_GSI_TLV_FIFO_STATUS);
 		ipa_reg_save.gsi_fifo_status[i].gsi_aos_fifo_status.value =
