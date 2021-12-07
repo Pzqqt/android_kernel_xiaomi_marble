@@ -588,13 +588,6 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		rc = 0;
 	}
 
-	/* Turn off MVP MVS0 SRC clock */
-	rc = __disable_unprepare_clock_iris2(core, "video_cc_mvs0_clk_src");
-	if (rc) {
-		d_vpr_e("%s: disable unprepare video_cc_mvs0_clk_src failed\n", __func__);
-		rc = 0;
-	}
-
 	rc = call_venus_op(core, reset_ahb2axi_bridge, core);
 	if (rc) {
 		d_vpr_e("%s: reset ahb2axi bridge failed\n", __func__);
@@ -661,14 +654,8 @@ static int __power_on_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		goto fail_clk_controller;
 
-	rc = __prepare_enable_clock_iris2(core, "video_cc_mvs0_clk_src");
-	if (rc)
-		goto fail_clk_src;
-
 	return 0;
 
-fail_clk_src:
-	__disable_unprepare_clock_iris2(core, "core_clk");
 fail_clk_controller:
 	__disable_unprepare_clock_iris2(core, "gcc_video_axi0");
 fail_clk_axi:
