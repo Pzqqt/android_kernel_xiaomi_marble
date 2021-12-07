@@ -1628,10 +1628,11 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 		/* Check AMIC2 is connected to ADC2 to take an action on BCS */
 		if (w->shift == ADC2 && !(snd_soc_component_read(component,
 			WCD938X_TX_NEW_AMIC_MUX_CFG) & 0x80)) {
-			if (!wcd938x->bcs_dis)
+			if (!wcd938x->bcs_dis) {
 				wcd938x_tx_connect_port(component, MBHC,
 					SWR_CLK_RATE_4P8MHZ, true);
-			set_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
+				set_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
+			}
 		}
 		if (strnstr(w->name, "ADC", sizeof("ADC"))) {
 			set_bit(w->shift - ADC1, &wcd938x->status_mask);
@@ -1831,8 +1832,7 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 		wcd938x_tx_connect_port(component, ADC1 + w->shift, 0, false);
 		if (w->shift + ADC1 == ADC2 &&
 			test_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask)) {
-			if (!wcd938x->bcs_dis)
-				wcd938x_tx_connect_port(component, MBHC, 0,
+			wcd938x_tx_connect_port(component, MBHC, 0,
 					false);
 			clear_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
 		}

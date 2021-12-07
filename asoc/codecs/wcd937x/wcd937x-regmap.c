@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/regmap.h>
@@ -461,4 +461,5 @@ struct regmap_config wcd937x_regmap_config = {
 	.writeable_reg = wcd937x_writeable_register,
 	.volatile_reg = wcd937x_volatile_register,
 	.can_multi_write = true,
+	.use_single_read = true,
 };
