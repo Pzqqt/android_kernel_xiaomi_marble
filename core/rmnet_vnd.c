@@ -38,9 +38,12 @@
 #include "rmnet_trace.h"
 
 typedef void (*rmnet_perf_tether_egress_hook_t)(struct sk_buff *skb);
-
 rmnet_perf_tether_egress_hook_t rmnet_perf_tether_egress_hook __rcu __read_mostly;
 EXPORT_SYMBOL(rmnet_perf_tether_egress_hook);
+
+typedef void (*rmnet_perf_egress_hook1_t)(struct sk_buff *skb);
+rmnet_perf_egress_hook1_t rmnet_perf_egress_hook1 __rcu __read_mostly;
+EXPORT_SYMBOL(rmnet_perf_egress_hook1);
 
 /* RX/TX Fixup */
 
@@ -102,7 +105,11 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 			return NETDEV_TX_OK;
 		}
 
-		if (low_latency && skb_is_gso(skb)) {
+		if (RMNET_APS_LLC(skb->priority))
+			low_latency = true;
+
+		if ((low_latency || RMNET_APS_LLB(skb->priority)) &&
+		    skb_is_gso(skb)) {
 			netdev_features_t features;
 			struct sk_buff *segs, *tmp;
 
@@ -253,6 +260,9 @@ static void rmnet_get_stats64(struct net_device *dev,
 	s->tx_dropped = total_stats.tx_drops;
 }
 
+void (*rmnet_aps_set_prio)(struct net_device *dev, struct sk_buff *skb);
+EXPORT_SYMBOL(rmnet_aps_set_prio);
+
 static u16 rmnet_vnd_select_queue(struct net_device *dev,
 				  struct sk_buff *skb,
 				  struct net_device *sb_dev)
@@ -261,6 +271,13 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	u64 boost_period = 0;
 	int boost_trigger = 0;
 	int txq = 0;
+	rmnet_perf_egress_hook1_t rmnet_perf_egress1;
+	void (*aps_set_prio)(struct net_device *dev, struct sk_buff *skb);
+
+	rmnet_perf_egress1 = rcu_dereference(rmnet_perf_egress_hook1);
+	if (rmnet_perf_egress1) {
+		rmnet_perf_egress1(skb);
+	}
 
 	if (trace_print_icmp_tx_enabled()) {
 		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
@@ -418,6 +435,12 @@ skip_trace:
 			(void) boost_period;
 	}
 
+	rcu_read_lock();
+	aps_set_prio = READ_ONCE(rmnet_aps_set_prio);
+	if (aps_set_prio)
+		aps_set_prio(dev, skb);
+	rcu_read_unlock();
+
 	return (txq < dev->real_num_tx_queues) ? txq : 0;
 }
 
@@ -477,6 +500,7 @@ static const char rmnet_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"TSO segment skip",
 	"LL TSO segment success",
 	"LL TSO segment fail",
+	"APS priority packets",
 };
 
 static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {

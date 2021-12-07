@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -493,13 +494,20 @@ sw_csum:
 
 static void rmnet_map_v5_check_priority(struct sk_buff *skb,
 					struct net_device *orig_dev,
-					struct rmnet_map_v5_csum_header *hdr)
+					struct rmnet_map_v5_csum_header *hdr,
+					bool tso)
 {
 	struct rmnet_priv *priv = netdev_priv(orig_dev);
 
-	if (skb->priority) {
+	if (RMNET_LLM(skb->priority)) {
 		priv->stats.ul_prio++;
 		hdr->priority = 1;
+	}
+
+	/* APS priority bit is only valid for csum header */
+	if (!tso && RMNET_APS_LLB(skb->priority)) {
+		priv->stats.aps_prio++;
+		hdr->aps_prio = 1;
 	}
 }
 
@@ -516,7 +524,7 @@ void rmnet_map_v5_checksum_uplink_packet(struct sk_buff *skb,
 	ul_header->header_type = RMNET_MAP_HEADER_TYPE_CSUM_OFFLOAD;
 
 	if (port->data_format & RMNET_EGRESS_FORMAT_PRIORITY)
-		rmnet_map_v5_check_priority(skb, orig_dev, ul_header);
+		rmnet_map_v5_check_priority(skb, orig_dev, ul_header, false);
 
 	/* Allow priority w/o csum offload */
 	if (!(port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV5))
@@ -1468,7 +1476,7 @@ new_packet:
 	ktime_get_real_ts64(&state->agg_last);
 
 	if ((port->data_format & RMNET_EGRESS_FORMAT_PRIORITY) &&
-	    skb->priority) {
+	    (RMNET_LLM(skb->priority) || RMNET_APS_LLB(skb->priority))) {
 		/* Send out any aggregated SKBs we have */
 		rmnet_map_send_agg_skb(state, flags);
 		/* Send out the priority SKB. Not holding agg_lock anymore */
@@ -1690,7 +1698,8 @@ int rmnet_map_add_tso_header(struct sk_buff *skb, struct rmnet_port *port,
 
 	if (port->data_format & RMNET_EGRESS_FORMAT_PRIORITY)
 		rmnet_map_v5_check_priority(skb, orig_dev,
-					    (struct rmnet_map_v5_csum_header *)ul_header);
+					    (struct rmnet_map_v5_csum_header *)ul_header,
+					    true);
 
 	ul_header->segment_size = htons(skb_shinfo(skb)->gso_size);
 

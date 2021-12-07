@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -81,7 +82,8 @@ struct rmnet_map_header {
 struct rmnet_map_v5_csum_header {
 	u8  next_hdr:1;
 	u8  header_type:7;
-	u8  hw_reserved:5;
+	u8  hw_reserved:4;
+	u8  aps_prio:1;
 	u8  priority:1;
 	u8  hw_reserved_bit:1;
 	u8  csum_valid_required:1;
