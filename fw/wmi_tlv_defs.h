@@ -1213,6 +1213,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_set_active_link_number_param,
+    WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_frame_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1694,6 +1698,8 @@ typedef enum {
     OP(WMI_PDEV_FIPS_EXTEND_CMDID) \
     OP(WMI_PDEV_FIPS_MODE_SET_CMDID) \
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CMDID) \
+    OP(WMI_SAWF_SVC_CLASS_CFG_CMDID) \
+    OP(WMI_SAWF_SVC_CLASS_DISABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1968,6 +1974,7 @@ typedef enum {
     OP(WMI_PDEV_AOA_PHASEDELTA_EVENTID) \
     OP(WMI_PDEV_FIPS_EXTEND_EVENTID) \
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID) \
+    OP(WMI_ROAM_FRAME_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4860,6 +4867,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_MU_SNIF_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_set_param_cmd_fixed_param, wmi_roam_set_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SET_PARAM_CMDID);
 
+#define WMITLV_TABLE_WMI_SAWF_SVC_CLASS_CFG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param, wmi_sawf_svc_class_cfg_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_CFG_CMDID);
+
+#define WMITLV_TABLE_WMI_SAWF_SVC_CLASS_DISABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param, wmi_sawf_svc_class_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -5187,9 +5202,15 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, reassoc_req_frame, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_FRAME_EVENTID);
 
+/* Roam frame Event */
+#define WMITLV_TABLE_WMI_ROAM_FRAME_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_frame_event_fixed_param, wmi_roam_frame_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, frame, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_FRAME_EVENTID);
+
 /* WOW Wakeup Host Event */
 /* NOTE: Make sure wow_bitmap_info can be zero or one elements only */
-#define WMITLV_TABLE_WMI_WOW_WAKEUP_HOST_EVENTID(id,op,buf,len)                                                         \
+#define WMITLV_TABLE_WMI_WOW_WAKEUP_HOST_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WOW_EVENT_INFO_fixed_param, WOW_EVENT_INFO_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WOW_EVENT_INFO_SECTION_BITMAP, wow_bitmap_info, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, wow_packet_buffer, WMITLV_SIZE_VAR) \
