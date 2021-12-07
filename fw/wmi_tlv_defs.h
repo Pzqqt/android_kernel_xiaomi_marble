@@ -1220,6 +1220,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_debug_mesg_fw_cal_failure_param,
     WMITLV_TAG_STRUC_wmi_quiet_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_ctrl_path_bmiss_stats_struct,
+    WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_changed_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_tlv,
 } WMITLV_TAG_ID;
 
 /*
@@ -1979,6 +1981,7 @@ typedef enum {
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID) \
     OP(WMI_ROAM_FRAME_EVENTID) \
     OP(WMI_QUIET_HANDLING_EVENTID) \
+    OP(WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6581,6 +6584,15 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID);
 #define WMITLV_TABLE_WMI_QUIET_HANDLING_EVENTID(id,op,buf,len)\
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_quiet_event_fixed_param, wmi_quiet_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_QUIET_HANDLING_EVENTID);
+
+/* Resmgr Channel Time Quota changed event */
+#define WMITLV_TABLE_WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, \
+        WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_changed_event_fixed_param, \
+        wmi_resmgr_chan_time_quota_changed_event_fixed_param, \
+        fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_resmgr_chan_time_quota_tlv, chan_quota, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID);
 
 
 #ifdef __cplusplus

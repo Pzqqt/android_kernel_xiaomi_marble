@@ -2037,6 +2037,10 @@ typedef enum {
     /* TDLS Event */
     WMI_TDLS_PEER_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TDLS),
 
+    /* Resmgr Event */
+    /* deliver the new channel time quota for home channels */
+    WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_RESMGR),
+
     /** STA SMPS Event */
     /** force SMPS mode */
     WMI_STA_SMPS_FORCE_MODE_COMPLETE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_STA_SMPS),
@@ -20226,6 +20230,12 @@ typedef struct {
 } wmi_resmgr_chan_time_quota;
 
 typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_tlv */
+    A_UINT32 tlv_header;
+    wmi_resmgr_chan_time_quota chan_time_quota;
+} wmi_resmgr_chan_time_quota_tlv;
+
+typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_resmgr_set_chan_time_quota_cmd_fixed_param */
     A_UINT32 tlv_header;
     /** number of channel time quota command structures
@@ -20238,6 +20248,27 @@ typedef struct {
  * num_chans * size of(struct wmi_resmgr_chan_time_quota)
  */
 } wmi_resmgr_set_chan_time_quota_cmd_fixed_param;
+
+typedef enum {
+    WMI_RESMGR_QUOTA_TYPE_CLEAR   = 0,
+    WMI_RESMGR_QUOTA_TYPE_FIXED   = 1,
+    WMI_RESMGR_QUOTA_TYPE_DYNAMIC = 2,
+} wmi_resmgr_quota_type;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_changed_event_fixed_param */
+    A_UINT32 tlv_header;
+    /** quota_type: refer to wmi_resmgr_quota_type
+     *  0 :  clear  quota
+     *  1 :  fixed  quota
+     *  2 : dynamic quota
+     */
+    A_UINT32 quota_type;
+
+/* This TLV is followed by another TLV of array of struct
+ * wmi_resmgr_chan_time_quota_tlv chan_quota[num_chans];
+ */
+} wmi_resmgr_chan_time_quota_changed_event_fixed_param;
 
 /* WMI_RESMGR_SET_CHAN_LATENCY_CMDID */
 typedef struct {
