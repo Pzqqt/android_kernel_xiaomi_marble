@@ -224,9 +224,10 @@
  * 3.99 Add HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ, _UNMAP_REQ, _MAP_REPORT_REQ and
  *      HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF defs.
  * 3.100 Add htt_tx_wbm_completion_v3 def.
+ * 3.101 Add HTT_UL_OFDMA_USER_INFO_V1_BITMAP defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 100
+#define HTT_CURRENT_VERSION_MINOR 101
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -16427,7 +16428,28 @@ struct htt_ul_ofdma_user_info_v0_bitmap_w1 {
     HTT_UL_OFDMA_USER_INFO_V0_BITMAP_W1
 };
 
-/* htt_up_ofdma_user_info_v0_bitmap shows what bitfields are within the info */
+
+#define HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0 \
+    A_UINT32 w0_fw_rsvd:27; \
+    A_UINT32 w0_sub_version:3;  /* set to a value of “0” on WKK/Beryllium targets (future expansion) */ \
+    A_UINT32 w0_valid:1; /* field aligns with V0 definition */ \
+    A_UINT32 w0_version:1;  /* set to a value of “1” to indicate picking htt_ul_ofdma_user_info_v1_bitmap (field aligns with V0 definition) */
+
+struct htt_ul_ofdma_user_info_v1_bitmap_w0 {
+    HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0
+};
+
+#define HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W1 \
+    A_UINT32 w1_unused_0_to_18:19; /* Guaranteed to be set to 0, can be used for future expansion without bumping version again. */ \
+    A_UINT32 w1_trig_type:4; \
+    A_UINT32 w1_unused_23_to_31:9; /* Guaranteed to be set to 0, can be used for future expansion without bumping version again. */
+
+struct htt_ul_ofdma_user_info_v1_bitmap_w1 {
+    HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W1
+};
+
+
+/* htt_ul_ofdma_user_info_v0_bitmap shows what bitfields are within the info */
 PREPACK struct htt_ul_ofdma_user_info_v0_bitmap {
     union {
         A_UINT32 word0;
@@ -16442,6 +16464,27 @@ PREPACK struct htt_ul_ofdma_user_info_v0_bitmap {
         };
     };
 } POSTPACK;
+
+/*
+ * htt_ul_ofdma_user_info_v1_bitmap bits are aligned to
+ * htt_ul_ofdma_user_info_v0_bitmap, based on the w0_version
+ * this should be picked.
+ */
+PREPACK struct htt_ul_ofdma_user_info_v1_bitmap {
+    union {
+        A_UINT32 word0;
+        struct {
+            HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0
+        };
+    };
+    union {
+        A_UINT32 word1;
+        struct {
+            HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W1
+        };
+    };
+} POSTPACK;
+
 
 enum HTT_UL_OFDMA_TRIG_TYPE {
     HTT_UL_OFDMA_USER_INFO_V0_TRIG_TYPE_BASIC = 0,
