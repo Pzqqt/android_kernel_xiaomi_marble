@@ -8872,7 +8872,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	if (!ipa3_ctx->power_mgmt_wq) {
 		IPAERR("failed to create power mgmt wq\n");
 		result = -ENOMEM;
-		goto fail_init_hw;
+		goto fail_gsi_map;
 	}
 
 	ipa3_ctx->transport_power_mgmt_wq =
@@ -9209,8 +9209,6 @@ fail_flt_rule_cache:
 	destroy_workqueue(ipa3_ctx->transport_power_mgmt_wq);
 fail_create_transport_wq:
 	destroy_workqueue(ipa3_ctx->power_mgmt_wq);
-fail_init_hw:
-	gsi_unmap_base();
 fail_gsi_map:
 	if (ipa3_ctx->reg_collection_base)
 		iounmap(ipa3_ctx->reg_collection_base);
@@ -9218,6 +9216,7 @@ fail_gsi_map:
 fail_remap:
 	ipa3_disable_clks();
 	ipa3_active_clients_log_destroy();
+	gsi_unmap_base();
 fail_init_active_client:
 	if (ipa3_clk)
 		clk_put(ipa3_clk);
