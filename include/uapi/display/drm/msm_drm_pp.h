@@ -732,6 +732,8 @@ struct drm_msm_backlight_info {
 	__u32 bl_scale_sv;
 	__u32 status;
 	__u32 min_bl;
+	__u32 bl_scale_max;
+	__u32 bl_scale_sv_max;
 };
 
 #define DIMMING_BL_LUT_LEN 8192

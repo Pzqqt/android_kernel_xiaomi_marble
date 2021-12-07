@@ -91,22 +91,33 @@ static void dp_catalog_aux_setup_v420(struct dp_catalog_aux *aux,
 	struct dp_catalog_private_v420 *catalog;
 	struct dp_io_data *io_data;
 	int i = 0;
-
+	u32 phy_version;
 	if (!aux || !cfg) {
 		DP_ERR("invalid input\n");
 		return;
 	}
 
 	catalog = dp_catalog_get_priv_v420(aux);
+	phy_version = dp_catalog_get_dp_phy_version(catalog->dpc);
+	if (phy_version >= 60000000) {
+		io_data = catalog->io->dp_phy;
+		dp_write(DP_PHY_PD_CTL, 0x79);
+		wmb(); /* make sure PD programming happened */
 
-	io_data = catalog->io->dp_phy;
-	dp_write(DP_PHY_PD_CTL, 0x67);
-	wmb(); /* make sure PD programming happened */
+		/* Turn on BIAS current for PHY/PLL */
+		io_data = catalog->io->dp_pll;
+		dp_write(QSERDES_COM_BIAS_EN_CLKBUFLR_EN_V600, 0x1D);
+		wmb(); /* make sure BIAS programming happened */
+	} else {
+		io_data = catalog->io->dp_phy;
+		dp_write(DP_PHY_PD_CTL, 0x67);
+		wmb(); /* make sure PD programming happened */
 
-	/* Turn on BIAS current for PHY/PLL */
-	io_data = catalog->io->dp_pll;
-	dp_write(QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x17);
-	wmb(); /* make sure BIAS programming happened */
+		/* Turn on BIAS current for PHY/PLL */
+		io_data = catalog->io->dp_pll;
+		dp_write(QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x17);
+		wmb(); /* make sure BIAS programming happened */
+	}
 
 	io_data = catalog->io->dp_phy;
 	/* DP AUX CFG register programming */
@@ -126,16 +137,19 @@ static void dp_catalog_aux_clear_hw_int_v420(struct dp_catalog_aux *aux)
 	struct dp_catalog_private_v420 *catalog;
 	struct dp_io_data *io_data;
 	u32 data = 0;
-
+	u32 phy_version;
 	if (!aux) {
 		DP_ERR("invalid input\n");
 		return;
 	}
 
 	catalog = dp_catalog_get_priv_v420(aux);
+	phy_version = dp_catalog_get_dp_phy_version(catalog->dpc);
 	io_data = catalog->io->dp_phy;
-
-	data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V420);
+	if (phy_version >= 60000000)
+		data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V600);
+	else
+		data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V420);
 
 	dp_write(DP_PHY_AUX_INTERRUPT_CLEAR_V420, 0x1f);
 	wmb(); /* make sure 0x1f is written before next write */

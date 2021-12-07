@@ -480,7 +480,11 @@ void *sde_debugfs_get_root(struct sde_kms *sde_kms);
  * These functions/definitions allow for building up a 'sde_info' structure
  * containing one or more "key=value\n" entries.
  */
-#define SDE_KMS_INFO_MAX_SIZE	4096
+#if IS_ENABLED(CONFIG_DRM_LOW_MSM_MEM_FOOTPRINT)
+#define SDE_KMS_INFO_MAX_SIZE	(1 << 12)
+#else
+#define SDE_KMS_INFO_MAX_SIZE	(1 << 14)
+#endif
 
 /**
  * struct sde_kms_info - connector information structure container

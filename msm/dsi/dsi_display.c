@@ -1124,6 +1124,8 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 		goto end;
 	}
 
+	SDE_EVT32(dsi_display->tx_cmd_buf_ndx, cmd_buf_len);
+
 	/*
 	 * Reset the dbgfs buffer if the commands sent exceed the available
 	 * buffer size. For video mode, limiting the buffer size to 2K to
@@ -1255,6 +1257,8 @@ int dsi_display_cmd_receive(void *display, const char *cmd_buf,
 		rc = -EPERM;
 		goto end;
 	}
+
+	SDE_EVT32(cmd_buf_len, recv_buf_len);
 
 	rc = dsi_display_cmd_rx(dsi_display, &cmd);
 	if (rc <= 0)

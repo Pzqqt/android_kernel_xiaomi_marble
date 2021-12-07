@@ -742,6 +742,26 @@ static void dp_parser_dsc(struct dp_parser *parser)
 			parser->dsc_continuous_pps);
 }
 
+static void dp_parser_qos(struct dp_parser *parser)
+{
+	struct device *dev = &parser->pdev->dev;
+	u32 mask, latency;
+	int rc;
+
+	rc = of_property_read_u32(dev->of_node, "qcom,qos-cpu-latency-us", &latency);
+	if (rc)
+		return;
+
+	rc = of_property_read_u32(dev->of_node, "qcom,qos-cpu-mask", &mask);
+	if (rc)
+		return;
+
+	parser->qos_cpu_mask = mask;
+	parser->qos_cpu_latency = latency;
+
+	DP_DEBUG("qos parsing successful. mask:%x latency:%ld\n", mask, latency);
+}
+
 static void dp_parser_fec(struct dp_parser *parser)
 {
 	struct device *dev = &parser->pdev->dev;
@@ -817,6 +837,7 @@ static int dp_parser_parse(struct dp_parser *parser)
 	dp_parser_dsc(parser);
 	dp_parser_fec(parser);
 	dp_parser_widebus(parser);
+	dp_parser_qos(parser);
 err:
 	return rc;
 }

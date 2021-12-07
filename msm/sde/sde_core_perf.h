@@ -148,6 +148,13 @@ void sde_core_perf_crtc_reserve_res(struct drm_crtc *crtc, u64 reserve_rate);
 void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc, bool enable);
 
 /**
+ * sde_core_perf_uidle_setup_ctl - enable uidle DB control
+ * @crtc: Pointer to crtc
+ * @enable: enable/disable uidle DB
+ */
+void sde_core_perf_uidle_setup_ctl(struct drm_crtc *crtc, bool enable);
+
+/**
  * sde_core_perf_destroy - destroy the given core performance context
  * @perf: Pointer to core performance context
  */
