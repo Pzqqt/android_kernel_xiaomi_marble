@@ -5284,7 +5284,7 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
+int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 {
 	u32 video_mbpf = 0, image_mbpf = 0, video_rt_mbpf = 0;
 	struct msm_vidc_core *core;

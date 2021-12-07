@@ -671,22 +671,6 @@ static int msm_vidc_load_reset_table(struct msm_vidc_core *core)
 	return 0;
 }
 
-static int msm_decide_dt_node(struct msm_vidc_core *core)
-{
-	int rc = 0;
-	struct platform_device *pdev = core->pdev;
-	u32 sku_index = 0;
-
-	rc = of_property_read_u32(pdev->dev.of_node, "sku-index",
-			&sku_index);
-	if (rc) {
-		d_vpr_h("'sku_index' not found in node\n");
-		return 0;
-	}
-
-	return 0;
-}
-
 static int msm_vidc_read_resources_from_dt(struct platform_device *pdev)
 {
 	int rc = 0;
@@ -706,10 +690,6 @@ static int msm_vidc_read_resources_from_dt(struct platform_device *pdev)
 		return -EINVAL;
 	}
 	dt = core->dt;
-
-	rc = msm_decide_dt_node(core);
-	if (rc)
-		return rc;
 
 	INIT_LIST_HEAD(&dt->context_banks);
 

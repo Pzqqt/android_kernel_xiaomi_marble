@@ -203,7 +203,6 @@ struct msm_vidc_dt {
 	phys_addr_t register_base;
 	u32 register_size;
 	u32 irq;
-	u32 sku_version;
 	struct allowed_clock_rates_table *allowed_clks_tbl;
 	u32 allowed_clks_tbl_size;
 	struct clock_freq_table clock_freq_tbl;

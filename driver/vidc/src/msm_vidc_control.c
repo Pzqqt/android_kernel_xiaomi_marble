@@ -1346,7 +1346,7 @@ int msm_vidc_adjust_slice_count(void *instance, struct v4l2_ctrl *ctrl)
 	mbpf = NUM_MBS_PER_FRAME(output_height, output_width);
 	mbps = NUM_MBS_PER_SEC(output_height, output_width, fps);
 	max_mbpf = NUM_MBS_PER_FRAME(max_height, max_width);
-	max_mbps = NUM_MBS_PER_SEC(max_height, max_width, fps);
+	max_mbps = NUM_MBS_PER_SEC(max_height, max_width, MAX_SLICES_FRAME_RATE);
 
 	if (mbpf > max_mbpf || mbps > max_mbps) {
 		adjusted_value = V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE;
@@ -2350,6 +2350,12 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 				capability->cap[OPERATING_RATE].value >> 16,
 				capability->cap[OPERATING_RATE].max >> 16);
 			rc = -ENOMEM;
+			goto exit;
+		}
+
+		rc = msm_vidc_check_core_mbpf(inst);
+		if (rc) {
+			i_vpr_e(inst, "%s: unsupported load\n", __func__);
 			goto exit;
 		}
 	}
