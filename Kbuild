@@ -3,15 +3,4 @@
 CONFIG_BUILD_VENDORSI := true
 
 # auto-detect subdirs
-ifneq ($(CONFIG_BUILD_VENDORSI), true)
-ifneq ($(CONFIG_ARCH_QTI_VM), y)
-include $(srctree)/techpack/eva/config/waipioeva.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/eva/config/waipioevaconf.h
-endif
-
-LINUXINCLUDE    += -I$(srctree)/techpack/eva/include \
-                   -I$(srctree)/techpack/eva/include/uapi \
-		   -I$(srctree)/techpack/eva/include/uapi/eva
-endif
-
 obj-y +=msm/

@@ -8,6 +8,18 @@
 #include "msm_cvp_debug.h"
 #include "msm_cvp_clocks.h"
 
+static bool __mmrm_client_check_scaling_supported(
+				struct mmrm_client_desc *client)
+{
+#ifdef CVP_MMRM_ENABLED
+	return mmrm_client_check_scaling_supported(
+				client->client_type,
+				client->client_info.desc.client_domain);
+#else
+	return false;
+#endif
+}
+
 static struct mmrm_client *__mmrm_client_register(
 				struct mmrm_client_desc *client)
 {
@@ -87,6 +99,7 @@ int msm_cvp_mmrm_register(struct iris_hfi_device *device)
 	int rc = 0;
 	struct clock_info *cl = NULL;
 	char *name;
+	bool isSupport;
 
 	if (!device) {
 		dprintk(CVP_ERR, "%s invalid device\n", __func__);
@@ -108,6 +121,14 @@ int msm_cvp_mmrm_register(struct iris_hfi_device *device)
 			strlcpy(name, cl->name,
 			sizeof(device->mmrm_desc.client_info.desc.name));
 		}
+	}
+
+	isSupport = __mmrm_client_check_scaling_supported(&(device->mmrm_desc));
+
+	if (!isSupport) {
+		dprintk(CVP_PWR, "%s: mmrm not supported, flag: %d\n",
+			__func__, isSupport);
+		return rc;
 	}
 
 	dprintk(CVP_PWR,
@@ -137,11 +158,18 @@ int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
 	int rc = 0;
 	struct clock_info *cl = NULL;
 
-	if (!device || !device->mmrm_cvp) {
+	if (!device) {
 		dprintk(CVP_ERR,
-			"%s invalid args: device %pK, or device->mmrm_cvp \n",
+			"%s invalid args: device %pK \n",
 			__func__, device);
 		return -EINVAL;
+	}
+
+	if (!device->mmrm_cvp) {	// when mmrm not supported
+		dprintk(CVP_ERR,
+			"%s device->mmrm_cvp not initialized \n",
+			__func__);
+		return rc;
 	}
 
 	/* set clk value to 0 before deregister	*/

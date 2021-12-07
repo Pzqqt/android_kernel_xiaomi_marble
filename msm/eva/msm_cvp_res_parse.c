@@ -11,6 +11,7 @@
 #include "msm_cvp_debug.h"
 #include "msm_cvp_resources.h"
 #include "msm_cvp_res_parse.h"
+#include "cvp_core_hfi.h"
 #include "soc/qcom/secure_buffer.h"
 
 enum clock_properties {
@@ -954,6 +955,7 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *token)
 {
 	struct msm_cvp_core *core = token;
+	struct iris_hfi_device *hdev;
 	struct msm_cvp_inst *inst;
 	bool log = false;
 
@@ -974,6 +976,9 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 	list_for_each_entry(inst, &core->instances, list) {
 		msm_cvp_print_inst_bufs(inst, log);
 	}
+	hdev = core->device->hfi_device_data;
+	if (hdev)
+		hdev->error = CVP_ERR_NOC_ERROR;
 	mutex_unlock(&core->lock);
 	/*
 	 * Return -EINVAL to elicit the default behaviour of smmu driver.
