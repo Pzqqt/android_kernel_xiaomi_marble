@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +37,7 @@
  * @BUS_BW_LEVEL_4: vote for level-4 bus bandwidth
  * @BUS_BW_LEVEL_5: vote for level-5 bus bandwidth
  * @BUS_BW_LEVEL_6: vote for level-6 bus bandwidth
+ * @BUS_BW_LEVEL_7: vote for level-7 bus bandwidth
  */
 enum bus_bw_level {
 	BUS_BW_LEVEL_NONE,
@@ -45,6 +47,8 @@ enum bus_bw_level {
 	BUS_BW_LEVEL_4,
 	BUS_BW_LEVEL_5,
 	BUS_BW_LEVEL_6,
+	BUS_BW_LEVEL_7,
+	BUS_BW_LEVEL_8,
 	BUS_BW_LEVEL_MAX,
 };
 
@@ -59,6 +63,8 @@ enum bus_bw_level {
  * @TPUT_LEVEL_MEDIUM: medium throughtput level
  * @TPUT_LEVEL_HIGH: high throughput level
  * @TPUT_LEVEL_VERY_HIGH: very high throughput level
+ * @TPUT_LEVEL_ULTRA_HIGH: ultra high throughput level
+ * @TPUT_LEVEL_SUPER_HIGH: super high throughput level
  */
 enum tput_level {
 	TPUT_LEVEL_NONE,
@@ -67,6 +73,8 @@ enum tput_level {
 	TPUT_LEVEL_MEDIUM,
 	TPUT_LEVEL_HIGH,
 	TPUT_LEVEL_VERY_HIGH,
+	TPUT_LEVEL_ULTRA_HIGH,
+	TPUT_LEVEL_SUPER_HIGH,
 	TPUT_LEVEL_MAX,
 };
 

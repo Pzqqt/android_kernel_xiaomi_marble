@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1729,10 +1730,29 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 
 	/* Set Beacon Miss in Powersave Offload */
 	pe_session->pmmOffloadInfo.bcnmiss = true;
+	pe_session->hb_failure_ap_rssi = missed_beacon_ind->rssi;
 	pe_err("Received Heart Beat Failure");
 
 	/*  Do AP probing immediately */
 	lim_send_heart_beat_timeout_ind(mac, pe_session);
+}
+
+bool lim_is_sb_disconnect_allowed_fl(struct pe_session *session,
+				     const char *func, uint32_t line)
+{
+	if (session->limMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE &&
+	    session->limSmeState != eLIM_SME_WT_DISASSOC_STATE &&
+	    session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)
+		return true;
+
+	pe_nofl_info("%s:%u: Vdev %d (%d): limMlmState %s(%x) limSmeState %s(%x)",
+		     func, line, session->vdev_id, session->peSessionId,
+		     lim_mlm_state_str(session->limMlmState),
+		     session->limMlmState,
+		     lim_sme_state_str(session->limSmeState),
+		     session->limSmeState);
+
+	return false;
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -2312,13 +2332,8 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!((session->limMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE) &&
-	      (session->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
-	      (session->limSmeState != eLIM_SME_WT_DEAUTH_STATE))) {
-		pe_info("Cannot handle in mlmstate %d sme state %d as vdev_id:%d is not in connected state",
-			session->limMlmState, session->limSmeState, vdev_id);
+	if (!lim_is_sb_disconnect_allowed(session))
 		return QDF_STATUS_SUCCESS;
-	}
 
 	if (!(deauth_disassoc_frame ||
 	      deauth_disassoc_frame_len > SIR_MAC_MIN_IE_LEN))

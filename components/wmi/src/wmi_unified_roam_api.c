@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -485,6 +486,19 @@ wmi_extract_roam_pmkid_request(wmi_unified_t wmi_handle,
 								   data_len,
 								   list);
 
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_roam_candidate_frame_event(wmi_unified_t wmi_handle, uint8_t *event,
+				       uint32_t len,
+				       struct roam_scan_candidate_frame *data)
+{
+	if (wmi_handle->ops->extract_roam_candidate_frame)
+		return wmi_handle->ops->extract_roam_candidate_frame(
+								  wmi_handle,
+								  event,
+								  len, data);
 	return QDF_STATUS_E_FAILURE;
 }
 #endif

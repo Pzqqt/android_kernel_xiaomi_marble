@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,6 +60,19 @@ QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 				     uint8_t vdev_id, uint8_t rso_command,
 				     uint8_t reason);
 
+/*
+ * wlan_cm_handle_sta_sta_roaming_enablement() - Handle roaming in case
+ * of STA + STA
+ * @psoc: psoc common object
+ * @vdev_id: Vdev id
+ *
+ * Wrapper function to cm_handle_sta_sta_roaming_enablement
+ *
+ * Return: none
+ */
+void wlan_cm_handle_sta_sta_roaming_enablement(struct wlan_objmgr_psoc *psoc,
+					       uint8_t vdev_id);
+
 /**
  * wlan_cm_roam_state_change() - Post roam state change to roam state machine
  * @pdev: pdev pointer
@@ -111,6 +125,12 @@ QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 				     uint8_t reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline void
+wlan_cm_handle_sta_sta_roaming_enablement(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id)
+{
 }
 
 static inline QDF_STATUS
@@ -1065,6 +1085,60 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 					 uint8_t *event,
 					 uint32_t len);
+
+/**
+ * wlan_cm_update_roam_rt_stats() - Store roam event stats command params
+ * @psoc: PSOC pointer
+ * @value: Value to update
+ * @stats: type of value to update
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t value, enum roam_rt_stats_params stats);
+
+/**
+ * wlan_cm_get_roam_rt_stats() - Get roam event stats value
+ * @psoc: PSOC pointer
+ * @stats: Get roam event command param for specific attribute
+ *
+ * Return: Roam events stats param value
+ */
+uint8_t
+wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			  enum roam_rt_stats_params stats);
+
+/**
+ * cm_report_roam_rt_stats - Gathers/Sends the roam events stats
+ * @psoc:      Pointer to psoc structure
+ * @vdev_id:   Vdev ID
+ * @events:    Event/Notif type from roam event/roam stats event
+ * @roam_info: Roam stats from the roam stats event
+ * @value:     Notif param value from the roam event
+ * @idx:       TLV index in roam stats event
+ *
+ * Gathers the roam stats from the roam event and the roam stats event and
+ * sends them to hdd for filling the vendor attributes.
+ *
+ * Return: none
+ */
+void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id,
+			     enum roam_rt_stats_type events,
+			     struct roam_stats_event *roam_info,
+			     uint32_t value, uint8_t idx);
+/**
+ * cm_roam_candidate_event_handler() - CM callback to save roam
+ * candidate entry in scan db
+ *
+ * @psoc - psoc objmgr ptr
+ * @frame - roam scan candidate info
+ */
+QDF_STATUS
+cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
+				struct roam_scan_candidate_frame *candidate);
+
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1209,6 +1283,34 @@ static inline QDF_STATUS
 cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
 {
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+wlan_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t value, enum roam_rt_stats_params stats)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint8_t
+wlan_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			  enum roam_rt_stats_params stats)
+{
+	return 0;
+}
+
+static inline void
+cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			uint8_t vdev_id, enum roam_rt_stats_type events,
+			struct roam_stats_event *roam_info,
+			uint32_t value, uint8_t idx)
+{}
+
+static inline QDF_STATUS
+cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
+				struct roam_scan_candidate_frame *candidate)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

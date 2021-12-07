@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -224,12 +225,13 @@ QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter_context,
 int hdd_rx_ol_init(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_disable_rx_ol_in_concurrency() - Disable Rx offload due to concurrency
- * @disable: true/false to disable/enable the Rx offload
+ * hdd_rx_handle_concurrency() - Handle concurrency related operations
+ *  for rx
+ * @is_concurrency: true if there are concurrenct connections else false
  *
  * Return: none
  */
-void hdd_disable_rx_ol_in_concurrency(bool disable);
+void hdd_rx_handle_concurrency(bool is_concurrency);
 
 /**
  * hdd_disable_rx_ol_for_low_tput() - Disable Rx offload in low TPUT scenario

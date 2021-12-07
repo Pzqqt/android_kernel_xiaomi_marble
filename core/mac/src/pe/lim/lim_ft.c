@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,6 +40,7 @@
 #include <lim_security_utils.h>
 #include "wmm_apsd.h"
 #include "wma.h"
+#include "wlan_cmn.h"
 
 /*--------------------------------------------------------------------------
    Initialize the FT variables.
@@ -366,6 +368,11 @@ static uint8_t lim_convert_phymode_to_dot11mode(enum wlan_phymode phymode)
 
 	if (IS_WLAN_PHYMODE_HT(phymode))
 		return MLME_DOT11_MODE_11N;
+
+#ifdef WLAN_FEATURE_11BE
+	if (IS_WLAN_PHYMODE_EHT(phymode))
+		return MLME_DOT11_MODE_11BE;
+#endif
 
 	if (phymode == WLAN_PHYMODE_11G)
 		return MLME_DOT11_MODE_11G;

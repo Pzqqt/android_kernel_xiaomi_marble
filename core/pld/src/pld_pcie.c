@@ -659,6 +659,35 @@ struct cnss_wlan_runtime_ops runtime_pm_ops = {
 };
 #endif
 
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+static enum cnss_suspend_mode pld_pcie_suspend_mode = CNSS_SUSPEND_LEGACY;
+
+int pld_pcie_set_suspend_mode(enum pld_suspend_mode mode)
+{
+	struct pld_context *pld_ctx =  pld_get_global_context();
+	enum cnss_suspend_mode suspend_mode;
+
+	if (!pld_ctx)
+		return -ENOMEM;
+
+	switch (pld_ctx->suspend_mode) {
+	case PLD_SUSPEND:
+		suspend_mode = CNSS_SUSPEND_LEGACY;
+		break;
+	case PLD_FULL_POWER_DOWN:
+		suspend_mode = CNSS_SUSPEND_POWER_DOWN;
+		break;
+	default:
+		suspend_mode = CNSS_SUSPEND_LEGACY;
+		break;
+	}
+
+	pld_pcie_suspend_mode = suspend_mode;
+
+	return 0;
+}
+#endif
+
 struct cnss_wlan_driver pld_pcie_ops = {
 	.name       = PLD_PCIE_OPS_NAME,
 	.id_table   = pld_pcie_id_table,
@@ -685,6 +714,9 @@ struct cnss_wlan_driver pld_pcie_ops = {
 #endif
 #ifdef FEATURE_GET_DRIVER_MODE
 	.get_driver_mode  = pld_pcie_get_mode,
+#endif
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+	.suspend_mode = &pld_pcie_suspend_mode,
 #endif
 };
 

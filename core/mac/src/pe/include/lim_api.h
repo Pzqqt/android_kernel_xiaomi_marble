@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -274,6 +275,20 @@ void lim_send_heart_beat_timeout_ind(struct mac_context *mac, struct pe_session 
 tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 						 uint8_t *pRxPacketInfo,
 						 uint32_t subType);
+
+bool lim_is_sb_disconnect_allowed_fl(struct pe_session *session,
+				     const char *func, uint32_t line);
+
+/**
+ * lim_is_sb_disconnect_allowed() - check pe session state to see if disconnect
+ * is already in progress.
+ * @session: pe session
+ *
+ * Return: false if disconnect is already in progress
+ */
+#define lim_is_sb_disconnect_allowed(session) \
+	lim_is_sb_disconnect_allowed_fl(session, __func__, __LINE__)
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * pe_roam_synch_callback() - Callback registered at wma, gets invoked when

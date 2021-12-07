@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,8 +101,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	}
 
 	if (LIM_IS_STA_ROLE(pe_session) &&
-		((eLIM_SME_WT_DISASSOC_STATE == pe_session->limSmeState) ||
-		(eLIM_SME_WT_DEAUTH_STATE == pe_session->limSmeState))) {
+	    !lim_is_sb_disconnect_allowed(pe_session)) {
 		if (!(mac->lim.disassocMsgCnt & 0xF)) {
 			pe_debug("received Disassoc frame in %s"
 				"already processing previously received Disassoc frame, dropping this %d",

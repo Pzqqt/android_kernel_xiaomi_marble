@@ -717,6 +717,29 @@ static void if_mgr_get_vdev_id_from_bssid(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_peer_release_ref(peer, WLAN_IF_MGR_ID);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * if_mgr_get_conc_ext_flags() - get extended flags for concurrency check
+ * @vdev: pointer to vdev on which new connection is coming up
+ * @candidate_info: interface manager validate candidate data
+ *
+ * Return: extended flags for concurrency check
+ */
+static inline uint32_t
+if_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev,
+			  struct validate_bss_data *candidate_info)
+{
+	return policy_mgr_get_conc_ext_flags(vdev, candidate_info->is_mlo);
+}
+#else
+static inline uint32_t
+if_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev,
+			  struct validate_bss_data *candidate_info)
+{
+	return 0;
+}
+#endif
+
 QDF_STATUS if_mgr_validate_candidate(struct wlan_objmgr_vdev *vdev,
 				     struct if_mgr_event_data *event_data)
 {
@@ -728,7 +751,7 @@ QDF_STATUS if_mgr_validate_candidate(struct wlan_objmgr_vdev *vdev,
 	struct validate_bss_data *candidate_info =
 		&event_data->validate_bss_info;
 	uint32_t chan_freq = candidate_info->chan_freq;
-	uint32_t conc_freq = 0;
+	uint32_t conc_freq = 0, conc_ext_flags;
 
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 
@@ -764,9 +787,12 @@ QDF_STATUS if_mgr_validate_candidate(struct wlan_objmgr_vdev *vdev,
 	 * Valid multichannel concurrent sessions exempted
 	 */
 	mode = policy_mgr_convert_device_mode_to_qdf_type(op_mode);
+
 	/* If concurrency is not allowed select next bss */
+	conc_ext_flags = if_mgr_get_conc_ext_flags(vdev, candidate_info);
 	if (!policy_mgr_is_concurrency_allowed(psoc, mode, chan_freq,
-					       HW_MODE_20_MHZ)) {
+					       HW_MODE_20_MHZ,
+					       conc_ext_flags)) {
 		ifmgr_info("Concurrency not allowed for this channel freq %d bssid "QDF_MAC_ADDR_FMT", selecting next",
 			   chan_freq,
 			   QDF_MAC_ADDR_REF(bssid_arg.peer_addr.bytes));

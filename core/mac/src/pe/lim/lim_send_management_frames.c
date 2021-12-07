@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2736,6 +2737,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	if (pe_session->opmode == QDF_STA_MODE) {
 		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)mac_hdr;
+		mgmt_data.vdev_id = pe_session->vdev_id;
 		mgmt_data.status_code = STATUS_SUCCESS;
 		mgmt_data.frame_subtype = MGMT_SUBTYPE_ASSOC_REQ;
 		mgmt_data.rssi = peer_rssi;
@@ -3249,6 +3251,7 @@ alloc_packet:
 
 	if (session->opmode == QDF_STA_MODE) {
 		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)mac_hdr;
+		mgmt_data.vdev_id = session->vdev_id;
 		mgmt_data.status_code = auth_frame->authStatusCode;
 		mgmt_data.rssi = peer_rssi;
 		mgmt_data.frame_subtype = MGMT_SUBTYPE_AUTH;
@@ -3792,6 +3795,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 
 		if (pe_session->opmode == QDF_STA_MODE) {
 			mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)pMacHdr;
+			mgmt_data.vdev_id = pe_session->vdev_id;
 			mgmt_data.status_code = nReason;
 			mgmt_data.frame_subtype = MGMT_SUBTYPE_DISASSOC;
 			mgmt_data.rssi = mac->lim.bss_rssi;
@@ -3840,6 +3844,12 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 					      pe_session,
 					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
+		wlan_connectivity_mgmt_event((struct wlan_frame_hdr *)pMacHdr,
+					     pe_session->vdev_id, nReason,
+					     QDF_TX_RX_STATUS_OK,
+					     mac->lim.bss_rssi, 0, 0, 0,
+					     WLAN_DISASSOC_TX);
+
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status = wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 					TXRX_FRM_802_11_MGMT,
@@ -3894,24 +3904,37 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 #endif
 	uint8_t smeSessionId = 0;
 	struct element_info *discon_ie;
+	bool drop_deauth = false;
 
 	if (!pe_session) {
 		return;
 	}
 
 	/*
-	 * In case when cac timer is running for this SAP session then
-	 * avoid deauth frame out. It is violation of dfs specification.
+	 * Avoid sending deauth frame out when
+	 * 1. CAC timer is running for this SAP session,
+	 *    It is avoid violation of dfs specification.
+	 * 2. Silent deauth is requested for a particular peer
 	 */
-	if (((pe_session->opmode == QDF_SAP_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE)) &&
-	    (true == mac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL
+	if ((pe_session->opmode == QDF_SAP_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE)) {
+		if (mac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL
 				  ("CAC timer is running, drop the deauth from going out"));
-		if (waitForAck)
-			lim_send_deauth_cnf(mac);
-		return;
+			drop_deauth = true;
+		}
+		if (nReason == REASON_HOST_TRIGGERED_SILENT_DEAUTH) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL
+				  ("Silent deauth, remove the peer"));
+			drop_deauth = true;
+		}
+		if (drop_deauth) {
+			if (waitForAck)
+				lim_send_deauth_cnf(mac);
+			return;
+		}
 	}
 	smeSessionId = pe_session->smeSessionId;
 
@@ -4012,6 +4035,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 
 		if (pe_session->opmode == QDF_STA_MODE) {
 			mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)pMacHdr;
+			mgmt_data.vdev_id = pe_session->vdev_id;
 			mgmt_data.status_code = nReason;
 			mgmt_data.rssi = mac->lim.bss_rssi;
 			mgmt_data.frame_subtype = MGMT_SUBTYPE_DEAUTH;
@@ -4080,6 +4104,13 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 					      pe_session,
 					      QDF_STATUS_SUCCESS,
 					      QDF_STATUS_SUCCESS);
+
+		wlan_connectivity_mgmt_event((struct wlan_frame_hdr *)pMacHdr,
+					     pe_session->vdev_id, nReason,
+					     QDF_TX_RX_STATUS_OK,
+					     mac->lim.bss_rssi, 0, 0, 0,
+					     WLAN_DEAUTH_TX);
+
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
 			wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
@@ -5922,6 +5953,7 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 	    msg_len >= (sizeof(struct wlan_frame_hdr) +
 			MAC_AUTH_FRAME_STATUS_CODE_OFFSET + 2)) {
 		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)frame;
+		mgmt_data.vdev_id = vdev_id;
 		mgmt_data.status_code =
 			*(uint16_t *)(frame + sizeof(struct wlan_frame_hdr) +
 				      MAC_AUTH_FRAME_STATUS_CODE_OFFSET);

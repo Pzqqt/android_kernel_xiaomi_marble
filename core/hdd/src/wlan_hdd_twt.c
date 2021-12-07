@@ -1841,6 +1841,13 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 	if (ret)
 		return ret;
 
+	if (!ucfg_mlme_get_twt_peer_responder_capabilities(
+					adapter->hdd_ctx->psoc,
+					&hdd_sta_ctx->conn_info.bssid)) {
+		hdd_err_rl("TWT setup reject: TWT responder not supported");
+		return -EOPNOTSUPP;
+	}
+
 	ret = hdd_twt_get_add_dialog_values(tb2, &params);
 	if (ret)
 		return ret;
@@ -3144,7 +3151,7 @@ hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 			break;
 		case WMI_HOST_RESUME_TWT_STATUS_DIALOG_ID_NOT_EXIST:
 		case WMI_HOST_RESUME_TWT_STATUS_NOT_PAUSED:
-			ret = EAGAIN;
+			ret = -EAGAIN;
 			break;
 		case WMI_HOST_RESUME_TWT_STATUS_DIALOG_ID_BUSY:
 			ret = -EINPROGRESS;

@@ -144,5 +144,10 @@ static inline void hdd_sysfs_11be_rate_create(struct hdd_adapter *adapter)
 static inline void hdd_sysfs_11be_rate_destroy(struct hdd_adapter *adapter)
 {
 }
+
+static inline void wlan_hdd_get_mlo_link_id(struct hdd_beacon_data *beacon,
+					    uint8_t *link_id, uint8_t *num_link)
+{
+}
 #endif
 #endif /* if !defined(WLAN_HDD_EHT_H)*/

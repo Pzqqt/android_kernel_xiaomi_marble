@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,6 +49,7 @@
 #ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
 #include <cdp_txrx_ctrl.h>
 #endif
+#include "wlan_hdd_stats.h"
 
 /*
  * define short names for the global vendor params
@@ -1412,6 +1414,10 @@ static int hdd_get_connected_station_info(struct hdd_context *hdd_ctx,
 	if (txrx_rate) {
 		stainfo->tx_rate = stats->peer_stats_info_ext->tx_rate;
 		stainfo->rx_rate = stats->peer_stats_info_ext->rx_rate;
+		stainfo->tx_packets = stats->peer_stats_info_ext->tx_packets;
+		stainfo->tx_bytes = stats->peer_stats_info_ext->tx_bytes;
+		stainfo->rx_packets = stats->peer_stats_info_ext->rx_packets;
+		stainfo->rx_bytes = stats->peer_stats_info_ext->rx_bytes;
 		nl_buf_len += (sizeof(stainfo->tx_rate) + NLA_HDRLEN) +
 			(sizeof(stainfo->rx_rate) + NLA_HDRLEN);
 		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
@@ -2438,8 +2444,17 @@ int32_t hdd_cfg80211_get_sta_info_cmd(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
+	errno = wlan_hdd_qmi_get_sync_resume();
+	if (errno) {
+		hdd_err("qmi sync resume failed: %d", errno);
+		goto end;
+	}
+
 	errno = __hdd_cfg80211_get_sta_info_cmd(wiphy, wdev, data, data_len);
 
+	wlan_hdd_qmi_put_suspend();
+
+end:
 	osif_vdev_sync_op_stop(vdev_sync);
 
 	return errno;

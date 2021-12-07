@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -154,6 +155,19 @@ ucfg_cm_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
 	return cm_roam_is_change_in_band_allowed(psoc, vdev_id, roam_band_mask);
 }
 
+static inline QDF_STATUS
+ucfg_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t value, enum roam_rt_stats_params stats)
+{
+	return wlan_cm_update_roam_rt_stats(psoc, value, stats);
+}
+
+static inline uint8_t
+ucfg_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			  enum roam_rt_stats_params stats)
+{
+	return wlan_cm_get_roam_rt_stats(psoc, stats);
+}
 #else
 static inline QDF_STATUS
 ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
@@ -181,6 +195,20 @@ ucfg_cm_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id, uint32_t roam_band_mask)
 {
 	return true;
+}
+
+static inline QDF_STATUS
+ucfg_cm_update_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			     uint8_t value, enum roam_rt_stats_params stats)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint8_t
+ucfg_cm_get_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
+			  enum roam_rt_stats_params stats)
+{
+	return 0;
 }
 
 #endif
@@ -281,9 +309,31 @@ static inline void ucfg_cm_set_ft_pre_auth_state(struct wlan_objmgr_vdev *vdev,
  * Return: None
  */
 void ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * ucfg_cm_roam_send_rt_stats_config() - Enable/Disable Roam event stats from FW
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @param_value: Value set based on the userspace attributes.
+ * param_value - 0: if configure attribute is 0
+ *               1: if configure is 1 and suspend_state is not set
+ *               3: if configure is 1 and suspend_state is set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_cm_roam_send_rt_stats_config(struct wlan_objmgr_pdev *pdev,
+				  uint8_t vdev_id, uint8_t param_value);
 #else
 static inline void
 ucfg_cm_reset_key(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id) {}
+
+static inline QDF_STATUS
+ucfg_cm_roam_send_rt_stats_config(struct wlan_objmgr_pdev *pdev,
+				  uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #endif /* _WLAN_CM_ROAM_UCFG_API_H_ */

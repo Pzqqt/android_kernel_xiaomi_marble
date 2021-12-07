@@ -28,6 +28,7 @@
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_tdls_ucfg_api.h"
 #include "wlan_tdls_api.h"
+#include <wlan_cm_api.h>
 
 QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 				struct if_mgr_event_data *event_data)
@@ -140,7 +141,8 @@ QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 
 	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
-	policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
+	if (!wlan_cm_is_vdev_roaming(vdev))
+		policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }

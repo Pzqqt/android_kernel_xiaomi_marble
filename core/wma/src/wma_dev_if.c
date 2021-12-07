@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,6 +102,8 @@
 #ifdef FEATURE_STA_MODE_VOTE_LINK
 #include "wlan_ipa_ucfg_api.h"
 #endif
+
+#include "son_api.h"
 
 /*
  * FW only supports 8 clients in SAP/GO mode for D3 WoW feature
@@ -2494,6 +2497,8 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 		}
 		/* initiate CM to delete bss peer */
 		return wlan_cm_bss_peer_delete_ind(iface->vdev,  &bssid);
+	} else if (mode == QDF_SAP_MODE) {
+		wlan_son_deliver_vdev_stop(iface->vdev);
 	}
 
 	return wma_delete_peer_on_vdev_stop(wma, resp_event->vdev_id);
@@ -3780,7 +3785,7 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id)
 
 	wma_vdev_set_he_bss_params(wma, vdev_id,
 				   &mlme_obj->proto.he_ops_info);
-#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
+#if defined(WLAN_FEATURE_11BE)
 	wma_vdev_set_eht_bss_params(wma, vdev_id,
 				    &mlme_obj->proto.eht_ops_info);
 #endif

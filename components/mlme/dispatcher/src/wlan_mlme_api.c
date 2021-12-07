@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1059,7 +1060,8 @@ bool wlan_mlme_configure_chain_mask_supported(struct wlan_objmgr_psoc *psoc)
 	enable2x2 = mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2;
 
 	if ((enable2x2 && !enable_bt_chain_sep) || as_enabled ||
-	   (!hw_dbs_2x2_cap && dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN)) {
+	   (!hw_dbs_2x2_cap && (dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN) &&
+	    enable2x2)) {
 		mlme_legacy_debug("Cannot configure chainmask enable_bt_chain_sep %d as_enabled %d enable2x2 %d hw_dbs_2x2_cap %d dual_mac_feature %d",
 				  enable_bt_chain_sep, as_enabled, enable2x2,
 				  hw_dbs_2x2_cap, dual_mac_feature);
@@ -4462,6 +4464,25 @@ wlan_mlme_get_idle_roam_band(struct wlan_objmgr_psoc *psoc, uint32_t *val)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+wlan_mlme_get_self_bss_roam(struct wlan_objmgr_psoc *psoc,
+			    uint8_t *enable_self_bss_roam)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*enable_self_bss_roam =
+			cfg_get(psoc, CFG_LFR3_ENABLE_SELF_BSS_ROAM);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_self_bss_roam = mlme_obj->cfg.lfr.enable_self_bss_roam;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 QDF_STATUS
@@ -5268,4 +5289,22 @@ enum phy_ch_width mlme_get_vht_ch_width(void)
 		bandwidth = CH_WIDTH_80MHZ;
 
 	return bandwidth;
+}
+
+QDF_STATUS
+wlan_mlme_get_tx_retry_multiplier(struct wlan_objmgr_psoc *psoc,
+				  uint32_t *tx_retry_multiplier)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*tx_retry_multiplier =
+				cfg_default(CFG_TX_RETRY_MULTIPLIER);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*tx_retry_multiplier = mlme_obj->cfg.gen.tx_retry_multiplier;
+	return QDF_STATUS_SUCCESS;
 }

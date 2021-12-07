@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -186,7 +187,6 @@
 #define WMA_VDEV_SET_KEY_WAKELOCK_TIMEOUT	WAKELOCK_DURATION_RECOMMENDED
 
 #define WMA_TX_Q_RECHECK_TIMER_WAIT      2      /* 2 ms */
-#define WMA_MAX_NUM_ARGS 8
 
 #define WMA_SMPS_PARAM_VALUE_S 29
 
@@ -855,8 +855,6 @@ struct wma_wlm_stats_data {
  * @hw_bd_info: hardware board info
  * @miracast_value: miracast value
  * @log_completion_timer: log completion timer
- * @num_dbs_hw_modes: Number of HW modes supported by the FW
- * @hw_mode: DBS HW mode list
  * @old_hw_mode_index: Previous configured HW mode index
  * @new_hw_mode_index: Current configured HW mode index
  * @peer_authorized_cb: peer authorized hdd callback
@@ -905,6 +903,7 @@ struct wma_wlm_stats_data {
  * @wma_fw_time_sync_timer: timer used for firmware time sync
  * * @fw_therm_throt_support: FW Supports thermal throttling?
  * @eht_cap: 802.11be capabilities
+ * @set_hw_mode_resp_status: Set HW mode response status
  *
  * This structure is the global wma context.  It contains global wma
  * module parameters and handles of other modules.
@@ -981,8 +980,6 @@ typedef struct {
 	uint32_t hw_bd_info[HW_BD_INFO_SIZE];
 	uint32_t miracast_value;
 	qdf_mc_timer_t log_completion_timer;
-	uint32_t num_dbs_hw_modes;
-	struct dbs_hw_mode_info hw_mode;
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
 	wma_peer_authorized_fp peer_authorized_cb;
@@ -1041,6 +1038,7 @@ typedef struct {
 	qdf_atomic_t go_num_clients_connected;
 	qdf_wake_lock_t sap_d3_wow_wake_lock;
 	qdf_wake_lock_t go_d3_wow_wake_lock;
+	enum set_hw_mode_status set_hw_mode_resp_status;
 } t_wma_handle, *tp_wma_handle;
 
 /**

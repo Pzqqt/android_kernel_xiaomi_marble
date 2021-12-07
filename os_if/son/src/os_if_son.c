@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -741,6 +742,49 @@ uint8_t os_if_son_get_chan_util(struct wlan_objmgr_vdev *vdev)
 }
 qdf_export_symbol(os_if_son_get_chan_util);
 
+void os_if_son_get_phy_stats(struct wlan_objmgr_vdev *vdev,
+			     struct ol_ath_radiostats *phy_stats)
+{
+	struct wlan_host_dcs_ch_util_stats dcs_son_stats = {};
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t mac_id;
+	QDF_STATUS status;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("null psoc");
+		return;
+	}
+	status = policy_mgr_get_mac_id_by_session_id(psoc,
+						     wlan_vdev_get_id(vdev),
+						     &mac_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to get mac_id");
+		return;
+	}
+
+	ucfg_dcs_get_ch_util(psoc, mac_id, &dcs_son_stats);
+
+	phy_stats->ap_rx_util = dcs_son_stats.rx_cu;
+	phy_stats->ap_tx_util = dcs_son_stats.tx_cu;
+	phy_stats->obss_rx_util = dcs_son_stats.obss_rx_cu;
+	if (dcs_son_stats.total_cu < 100)
+		phy_stats->free_medium = 100 - dcs_son_stats.total_cu;
+	else
+		phy_stats->free_medium = 0;
+	phy_stats->chan_nf = dcs_son_stats.chan_nf;
+	osif_debug("rx_util %d tx_util %d obss_rx_util %d free_medium %d noise floor %d",
+		   phy_stats->ap_rx_util, phy_stats->ap_tx_util,
+		   phy_stats->obss_rx_util, phy_stats->free_medium,
+		   phy_stats->chan_nf);
+}
+qdf_export_symbol(os_if_son_get_phy_stats);
+
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode)
 {
@@ -775,15 +819,6 @@ enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev)
 	return phymode;
 }
 qdf_export_symbol(os_if_son_get_phymode);
-
-QDF_STATUS os_if_son_pdev_ops(struct wlan_objmgr_pdev *pdev,
-			      enum wlan_mlme_pdev_param type,
-			      void *data, void *ret)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-qdf_export_symbol(os_if_son_pdev_ops);
 
 QDF_STATUS os_if_son_vdev_ops(struct wlan_objmgr_vdev *vdev,
 			      enum wlan_mlme_vdev_param type,
@@ -911,3 +946,309 @@ bool os_if_son_vdev_is_wds(struct wlan_objmgr_vdev *vdev)
 }
 
 qdf_export_symbol(os_if_son_vdev_is_wds);
+
+void os_if_son_deauth_peer_sta(struct wlan_objmgr_vdev *vdev,
+			       uint8_t *peer_mac,
+			       bool ignore_frame)
+{
+	if (!vdev || !peer_mac) {
+		osif_err("null vdev / peer_mac");
+		return;
+	}
+	if (g_son_os_if_cb.os_if_deauth_sta)
+		g_son_os_if_cb.os_if_deauth_sta(vdev, peer_mac, ignore_frame);
+}
+
+qdf_export_symbol(os_if_son_deauth_peer_sta);
+
+void os_if_son_modify_acl(struct wlan_objmgr_vdev *vdev,
+			  uint8_t *peer_mac,
+			  bool allow_auth)
+{
+	if (!vdev || !peer_mac) {
+		osif_err("null vdev / peer_mac");
+		return;
+	}
+	if (g_son_os_if_cb.os_if_modify_acl)
+		g_son_os_if_cb.os_if_modify_acl(vdev, peer_mac, allow_auth);
+}
+
+qdf_export_symbol(os_if_son_modify_acl);
+
+static
+int os_if_son_reg_get_ap_hw_cap(struct wlan_objmgr_pdev *pdev,
+				struct wlan_radio_basic_capabilities *hwcap)
+{
+	QDF_STATUS status;
+	uint8_t idx;
+	uint8_t max_supp_op_class = REG_MAX_SUPP_OPER_CLASSES;
+	uint8_t n_opclasses = 0;
+	/* nsoc = Number of supported operating classes */
+	uint8_t nsoc = 0;
+	struct regdmn_ap_cap_opclass_t *reg_ap_cap;
+
+	if (!pdev || !hwcap)
+		return nsoc;
+
+	reg_ap_cap = qdf_mem_malloc(max_supp_op_class * sizeof(*reg_ap_cap));
+	if (!reg_ap_cap) {
+		osif_err("Memory allocation failure");
+		return nsoc;
+	}
+	status = wlan_reg_get_opclass_details(pdev, reg_ap_cap, &n_opclasses,
+					      max_supp_op_class, true);
+	if (status == QDF_STATUS_E_FAILURE) {
+		osif_err("Failed to get SAP regulatory capabilities");
+		goto end_reg_get_ap_hw_cap;
+	}
+	osif_debug("n_opclasses: %u", n_opclasses);
+
+	for (idx = 0; reg_ap_cap[idx].op_class && idx < n_opclasses; idx++) {
+		osif_debug("idx: %d op_class: %u ch_width: %d  max_tx_pwr_dbm: %u",
+			   idx, reg_ap_cap[idx].op_class,
+			   reg_ap_cap[idx].ch_width,
+			   reg_ap_cap[idx].max_tx_pwr_dbm);
+		if (reg_ap_cap[idx].ch_width == BW_160_MHZ)
+			continue;
+		hwcap->opclasses[nsoc].opclass = reg_ap_cap[idx].op_class;
+		hwcap->opclasses[nsoc].max_tx_pwr_dbm =
+					reg_ap_cap[idx].max_tx_pwr_dbm;
+		hwcap->opclasses[nsoc].num_non_oper_chan =
+					reg_ap_cap[idx].num_non_supported_chan;
+		qdf_mem_copy(hwcap->opclasses[nsoc].non_oper_chan_num,
+			     reg_ap_cap[idx].non_sup_chan_list,
+			     reg_ap_cap[idx].num_non_supported_chan);
+		hwcap->wlan_radio_basic_capabilities_valid = 1;
+		nsoc++;
+	}
+	hwcap->num_supp_op_classes = nsoc;
+
+end_reg_get_ap_hw_cap:
+
+	qdf_mem_free(reg_ap_cap);
+	return nsoc;
+}
+
+static void os_if_son_reg_get_op_channels(struct wlan_objmgr_pdev *pdev,
+					  struct wlan_op_chan *op_chan,
+					  bool dfs_required)
+{
+	QDF_STATUS status;
+	uint8_t idx;
+	uint8_t max_supp_op_class = REG_MAX_SUPP_OPER_CLASSES;
+	uint8_t n_opclasses = 0;
+	/* nsoc = Number of supported operating classes */
+	uint8_t nsoc = 0;
+	struct regdmn_ap_cap_opclass_t *reg_ap_cap =
+		qdf_mem_malloc(max_supp_op_class * sizeof(*reg_ap_cap));
+
+	if (!reg_ap_cap) {
+		osif_err("Memory allocation failure");
+		return;
+	}
+	status = wlan_reg_get_opclass_details(pdev, reg_ap_cap, &n_opclasses,
+					      max_supp_op_class, true);
+	if (status == QDF_STATUS_E_FAILURE) {
+		osif_err("Failed to get SAP regulatory capabilities");
+		goto end_reg_get_op_channels;
+	}
+	osif_debug("n_opclasses: %u op_chan->opclass: %u",
+		   n_opclasses, op_chan->opclass);
+	for (idx = 0; reg_ap_cap[idx].op_class && idx < n_opclasses; idx++) {
+		osif_debug("idx: %d op_class: %u ch_width: %d  max_tx_pwr_dbm: %u",
+			   idx, reg_ap_cap[idx].op_class,
+			   reg_ap_cap[idx].ch_width,
+			   reg_ap_cap[idx].max_tx_pwr_dbm);
+		if ((reg_ap_cap[idx].ch_width == BW_160_MHZ) ||
+		    (op_chan->opclass != reg_ap_cap[idx].op_class))
+			continue;
+		if (reg_ap_cap[idx].op_class == op_chan->opclass) {
+			switch (reg_ap_cap[idx].ch_width) {
+			case BW_20_MHZ:
+			case BW_25_MHZ:
+				op_chan->ch_width = CH_WIDTH_20MHZ;
+				break;
+			case BW_40_MHZ:
+				op_chan->ch_width = CH_WIDTH_40MHZ;
+				break;
+			case BW_80_MHZ:
+				if (reg_ap_cap[idx].behav_limit ==
+				    BIT(BEHAV_BW80_PLUS))
+					op_chan->ch_width = CH_WIDTH_80P80MHZ;
+				else
+					op_chan->ch_width = CH_WIDTH_80MHZ;
+				break;
+			case BW_160_MHZ:
+				op_chan->ch_width  = CH_WIDTH_160MHZ;
+				break;
+			default:
+				op_chan->ch_width = INVALID_WIDTH;
+				break;
+			}
+			op_chan->num_oper_chan =
+					reg_ap_cap[idx].num_supported_chan;
+			qdf_mem_copy(op_chan->oper_chan_num,
+				     reg_ap_cap[idx].sup_chan_list,
+				     reg_ap_cap[idx].num_supported_chan);
+			osif_debug("num of supported channel: %u",
+				   op_chan->num_oper_chan);
+		}
+	}
+	/*
+	 * TBD: DFS channel support needs to be added
+	 * Variable nsoc will be update whenever we add DFS
+	 * channel support for Easymesh.
+	 */
+	op_chan->num_supp_op_classes = nsoc;
+
+end_reg_get_op_channels:
+
+	qdf_mem_free(reg_ap_cap);
+}
+
+/* size of sec chan offset element */
+#define IEEE80211_SEC_CHAN_OFFSET_BYTES             3
+/* no secondary channel */
+#define IEEE80211_SEC_CHAN_OFFSET_SCN               0
+/* secondary channel above */
+#define IEEE80211_SEC_CHAN_OFFSET_SCA               1
+/* secondary channel below */
+#define IEEE80211_SEC_CHAN_OFFSET_SCB               3
+
+static void os_if_son_reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
+					      struct wlan_op_class *op_class)
+{
+	QDF_STATUS status;
+	uint8_t i;
+	uint8_t idx;
+	uint8_t n_opclasses = 0;
+	uint8_t chan_idx;
+	uint8_t max_supp_op_class = REG_MAX_SUPP_OPER_CLASSES;
+	struct regdmn_ap_cap_opclass_t *reg_ap_cap =
+			qdf_mem_malloc(max_supp_op_class * sizeof(*reg_ap_cap));
+
+	if (!reg_ap_cap) {
+		osif_err("Memory allocation failure");
+		return;
+	}
+	status = wlan_reg_get_opclass_details(pdev, reg_ap_cap, &n_opclasses,
+					      max_supp_op_class, true);
+	if (status == QDF_STATUS_E_FAILURE) {
+		osif_err("Failed to get SAP regulatory capabilities");
+		goto end_reg_get_opclass_details;
+	}
+	osif_debug("n_opclasses: %u", n_opclasses);
+
+	for (idx = 0; reg_ap_cap[idx].op_class && idx < n_opclasses; idx++) {
+		osif_debug("idx: %d op_class: %u ch_width: %d",
+			   idx, reg_ap_cap[idx].op_class,
+			   reg_ap_cap[idx].ch_width);
+		if ((op_class->opclass != reg_ap_cap[idx].op_class) ||
+		    (reg_ap_cap[idx].ch_width == BW_160_MHZ))
+			continue;
+		switch (reg_ap_cap[idx].ch_width) {
+		case BW_20_MHZ:
+		case BW_25_MHZ:
+			op_class->ch_width = CH_WIDTH_20MHZ;
+			break;
+		case BW_40_MHZ:
+			op_class->ch_width = CH_WIDTH_40MHZ;
+			break;
+		case BW_80_MHZ:
+			if (reg_ap_cap[idx].behav_limit == BIT(BEHAV_BW80_PLUS))
+				op_class->ch_width = CH_WIDTH_80P80MHZ;
+			else
+				op_class->ch_width = CH_WIDTH_80MHZ;
+			break;
+		case BW_160_MHZ:
+			op_class->ch_width  = CH_WIDTH_160MHZ;
+			break;
+		default:
+			op_class->ch_width = CH_WIDTH_INVALID;
+			break;
+		}
+		switch (reg_ap_cap[idx].behav_limit) {
+		case BIT(BEHAV_NONE):
+			op_class->sc_loc = IEEE80211_SEC_CHAN_OFFSET_SCN;
+			break;
+		case BIT(BEHAV_BW40_LOW_PRIMARY):
+			op_class->sc_loc = IEEE80211_SEC_CHAN_OFFSET_SCA;
+			break;
+		case BIT(BEHAV_BW40_HIGH_PRIMARY):
+			op_class->sc_loc = IEEE80211_SEC_CHAN_OFFSET_SCB;
+			break;
+		case BIT(BEHAV_BW80_PLUS):
+			op_class->sc_loc = IEEE80211_SEC_CHAN_OFFSET_SCN;
+			break;
+		default:
+			op_class->sc_loc = IEEE80211_SEC_CHAN_OFFSET_SCN;
+			break;
+		}
+		osif_debug("num_supported_chan: %u num_non_supported_chan: %u",
+			   reg_ap_cap[idx].num_supported_chan,
+			   reg_ap_cap[idx].num_non_supported_chan);
+		i = 0;
+		chan_idx = 0;
+		while ((i < reg_ap_cap[idx].num_supported_chan) &&
+		       (chan_idx < MAX_CHANNELS_PER_OP_CLASS))
+			op_class->channels[chan_idx++] =
+				reg_ap_cap[idx].sup_chan_list[i++];
+		i = 0;
+		while ((i < reg_ap_cap[idx].num_non_supported_chan) &&
+		       (chan_idx < MAX_CHANNELS_PER_OP_CLASS))
+			op_class->channels[chan_idx++] =
+				reg_ap_cap[idx].non_sup_chan_list[i++];
+
+		 op_class->num_chan = chan_idx;
+	}
+
+end_reg_get_opclass_details:
+
+	qdf_mem_free(reg_ap_cap);
+}
+
+QDF_STATUS os_if_son_pdev_ops(struct wlan_objmgr_pdev *pdev,
+			      enum wlan_mlme_pdev_param type,
+			      void *data, void *ret)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	union wlan_mlme_pdev_data *in = (union wlan_mlme_pdev_data *)data;
+	union wlan_mlme_pdev_data *out = (union wlan_mlme_pdev_data *)ret;
+	wlan_esp_data *esp_info;
+
+	if (!out)
+		return QDF_STATUS_E_INVAL;
+
+	osif_debug("Type: %d", type);
+	switch (type) {
+	case PDEV_GET_ESP_INFO:
+		esp_info = &out->esp_info;
+		/* BA Window Size of 16 */
+		esp_info->per_ac[WME_AC_BE].ba_window_size = ba_window_size_16;
+		esp_info->per_ac[WME_AC_BE].est_air_time_fraction = 0;
+		/* Default : 250us PPDU Duration in native format */
+		esp_info->per_ac[WME_AC_BE].data_ppdu_dur_target =
+			MAP_DEFAULT_PPDU_DURATION * MAP_PPDU_DURATION_UNITS;
+		break;
+	case PDEV_GET_CAPABILITY:
+		os_if_son_reg_get_ap_hw_cap(pdev, &out->cap);
+		break;
+	case PDEV_GET_OPERABLE_CHAN:
+		memcpy(&out->op_chan, &in->op_chan,
+		       sizeof(struct wlan_op_chan));
+		os_if_son_reg_get_op_channels(pdev, &out->op_chan,
+					      in->op_chan.dfs_required);
+		break;
+	case PDEV_GET_OPERABLE_CLASS:
+		memcpy(&out->op_class, &in->op_class,
+		       sizeof(struct wlan_op_class));
+		os_if_son_reg_get_opclass_details(pdev, &out->op_class);
+		break;
+	default:
+		break;
+	}
+
+	return status;
+}
+
+qdf_export_symbol(os_if_son_pdev_ops);

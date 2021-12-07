@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -116,7 +117,7 @@ static const enum phy_ch_width get_next_higher_bw[] = {
 	[CH_WIDTH_20MHZ] = CH_WIDTH_40MHZ,
 	[CH_WIDTH_40MHZ] = CH_WIDTH_80MHZ,
 	[CH_WIDTH_80MHZ] = CH_WIDTH_160MHZ,
-#if !defined(WLAN_FEATURE_11BE) || !defined(CFG80211_11BE_BASIC)
+#if !defined(WLAN_FEATURE_11BE)
 	[CH_WIDTH_160MHZ] = CH_WIDTH_INVALID
 #else
 	[CH_WIDTH_160MHZ] = CH_WIDTH_320MHZ,
@@ -2922,7 +2923,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 			pe_debug("Channel is 6G but country IE not present");
 		wlan_reg_read_current_country(mac_ctx->psoc,
 					      programmed_country);
-		status = wlan_reg_get_6g_power_type_for_ctry(
+		status = wlan_reg_get_6g_power_type_for_ctry(mac_ctx->psoc,
 					ie_struct->Country.country,
 					programmed_country, &power_type_6g,
 					&ctry_code_match);
@@ -3544,7 +3545,7 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 			      NULL, 0, rsn_ie, DOT11F_IE_RSN_MAX_LEN);
 
 	if (req->force_rsne_override && QDF_IS_STATUS_SUCCESS(status)) {
-		rsn_ie_len = rsn_ie[1];
+		rsn_ie_len = rsn_ie[1] + 2;
 		if (rsn_ie_len < DOT11F_IE_RSN_MIN_LEN ||
 		    rsn_ie_len > DOT11F_IE_RSN_MAX_LEN) {
 			pe_err("RSN length %d not within limits", rsn_ie_len);
@@ -3554,7 +3555,7 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 
 		session->lim_join_req->rsnIE.length = rsn_ie_len;
 		qdf_mem_copy(session->lim_join_req->rsnIE.rsnIEdata,
-			     rsn_ie, rsn_ie_len + 2);
+			     rsn_ie, rsn_ie_len);
 
 		qdf_mem_free(rsn_ie);
 		return QDF_STATUS_SUCCESS;
@@ -4796,6 +4797,7 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 	struct vdev_mlme_obj *vdev_mlme;
 	uint8_t i, local_tpe_count = 0, reg_tpe_count = 0, num_octets;
 	uint8_t psd_index = 0, non_psd_index = 0;
+	uint8_t bw_num;
 	uint16_t bw_val, ch_width;
 	qdf_freq_t curr_op_freq, curr_freq;
 	enum reg_6g_client_type client_mobility_type;
@@ -4879,6 +4881,13 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 		single_tpe = tpe_ies[non_psd_index];
 		vdev_mlme->reg_tpc_obj.is_psd_power = false;
 		vdev_mlme->reg_tpc_obj.eirp_power = 0;
+		bw_num = sizeof(get_next_higher_bw) /
+				sizeof(get_next_higher_bw[0]);
+		if (single_tpe.max_tx_pwr_count >= bw_num) {
+			pe_debug("tx pwr count: %d, larger than bw num: %d",
+				 single_tpe.max_tx_pwr_count, bw_num);
+			single_tpe.max_tx_pwr_count = bw_num - 1;
+		}
 		vdev_mlme->reg_tpc_obj.num_pwr_levels =
 					single_tpe.max_tx_pwr_count + 1;
 

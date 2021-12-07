@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1917,6 +1918,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	struct sap_config *sap_config;
 	struct sap_context *sap_ctx = NULL;
 	uint8_t pdev_id;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct wlan_objmgr_peer *peer;
+#endif
+	bool notify_new_sta = true;
 
 	dev = context;
 	if (!dev) {
@@ -2404,6 +2409,19 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA MLD %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+
+			peer = wlan_objmgr_get_peer_by_mac(hdd_ctx->psoc,
+							   event->staMac.bytes,
+							   WLAN_OSIF_ID);
+			if (!peer) {
+				hdd_err("Peer object not found");
+				return QDF_STATUS_E_INVAL;
+			}
+
+			if (!wlan_peer_mlme_is_assoc_peer(peer)) {
+				hdd_err("skip userspace notification");
+				notify_new_sta = false;
+			}
 #endif
 		} else {
 			qdf_status = hdd_softap_register_sta(
@@ -2431,6 +2449,23 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_err("Failed to register STA MLD %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(event->sta_mld.bytes));
+			peer = wlan_objmgr_get_peer_by_mac(hdd_ctx->psoc,
+							   event->staMac.bytes,
+							   WLAN_OSIF_ID);
+			if (!peer) {
+				hdd_err("Peer object not found");
+				return QDF_STATUS_E_INVAL;
+			}
+
+			if (!qdf_is_macaddr_zero((struct qdf_mac_addr *)
+							peer->mldaddr) &&
+			    !wlan_peer_mlme_is_assoc_peer(peer)) {
+				wlan_objmgr_peer_release_ref(peer,
+							     WLAN_OSIF_ID);
+				break;
+			}
+
+			wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
 #endif
 		}
 
@@ -2489,9 +2524,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			 */
 			sta_info->filled |= STATION_INFO_ASSOC_REQ_IES;
 #endif
-			cfg80211_new_sta(dev,
-				(const u8 *)&event->staMac.bytes[0],
-				sta_info, GFP_KERNEL);
+			if (notify_new_sta)
+				cfg80211_new_sta(dev,
+						 (const u8 *)&event->
+						 staMac.bytes[0],
+						 sta_info, GFP_KERNEL);
 			qdf_mem_free(sta_info);
 		}
 		/* Lets abort scan to ensure smooth authentication for client */
@@ -3384,6 +3421,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		hdd_err("sap_context is invalid");
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_hdd_set_sap_csa_reason(psoc, vdev_id, csa_reason);
 
 	/* Initialized ch_width to CH_WIDTH_MAX */
 	ch_params.ch_width = CH_WIDTH_MAX;
@@ -3469,6 +3507,34 @@ sap_restart:
 	hdd_sap_restart_chan_switch_cb(psoc, vdev_id, *ch_freq,
 				       ch_params.ch_width, false);
 	wlansap_context_put(sap_context);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_get_sap_acs_band(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		      uint32_t *acs_band)
+{
+	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(psoc,
+								vdev_id);
+	struct sap_config *sap_config;
+
+	if (!ap_adapter || (ap_adapter->device_mode != QDF_SAP_MODE &&
+			    ap_adapter->device_mode != QDF_P2P_GO_MODE)) {
+		hdd_err("invalid adapter");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/*
+	 * If acs mode is false, that means acs is disabled and acs band can be
+	 * QCA_ACS_MODE_IEEE80211ANY
+	 */
+	sap_config = &ap_adapter->session.ap.sap_config;
+	if (sap_config->acs_cfg.acs_mode == false) {
+		*acs_band = QCA_ACS_MODE_IEEE80211ANY;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	*acs_band = sap_config->acs_cfg.band;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3893,11 +3959,11 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 
 	hdd_debug("iface_name = %s", iface_name);
 
-	dev = alloc_netdev_mq(sizeof(struct hdd_adapter), iface_name,
+	dev = alloc_netdev_mqs(sizeof(struct hdd_adapter), iface_name,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
-					  name_assign_type,
+			       name_assign_type,
 #endif
-					  ether_setup, NUM_TX_QUEUES);
+			       ether_setup, NUM_TX_QUEUES, NUM_RX_QUEUES);
 
 	if (!dev)
 		return NULL;
@@ -6001,7 +6067,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
-					config->chan_freq, HW_MODE_20_MHZ)) {
+				config->chan_freq, HW_MODE_20_MHZ,
+				policy_mgr_get_conc_ext_flags(adapter->vdev,
+							      false))) {
 			mutex_unlock(&hdd_ctx->sap_lock);
 
 			hdd_err("This concurrency combination is not allowed");
@@ -6833,7 +6901,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				policy_mgr_convert_device_mode_to_qdf_type(
 				adapter->device_mode),
 				freq,
-				channel_width)) {
+				channel_width,
+				policy_mgr_get_conc_ext_flags(adapter->vdev,
+							      false))) {
 		hdd_err("Connection failed due to concurrency check failure");
 		return -EINVAL;
 	}

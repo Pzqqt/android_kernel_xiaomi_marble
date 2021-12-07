@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -115,6 +116,23 @@ cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
 		     uint8_t vdev_id,
 		     enum roam_offload_state requested_state,
 		     uint8_t reason);
+
+/**
+ * cm_handle_sta_sta_roaming_enablement() - To handle roaming in case
+ * of STA + STA
+ * @psoc: psoc common object
+ * @curr_vdev_id: Vdev id
+ *
+ * This function is to process STA + STA concurrency scenarios after roaming
+ * and take care of following:
+ * 1. Set PCL to vdev/pdev as per DBS, SCC or MCC
+ * 2. Enable/disable roaming based on the concurrency (DBS vs SCC/MCC) after
+ * roaming
+ *
+ * Return: none
+ */
+void cm_handle_sta_sta_roaming_enablement(struct wlan_objmgr_psoc *psoc,
+					  uint8_t curr_vdev_id);
 
 /**
  * cm_roam_send_rso_cmd() - send rso command
@@ -280,6 +298,27 @@ void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id, uint8_t cfg);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * cm_roam_send_rt_stats_config() - Send roam event stats cfg value to FW
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ * @param_value: roam stats enable/disable cfg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_send_rt_stats_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint8_t param_value);
+#else
+static inline QDF_STATUS
+cm_roam_send_rt_stats_config(struct wlan_objmgr_psoc *psoc,
+			     uint8_t vdev_id, uint8_t param_value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void

@@ -1254,6 +1254,63 @@ static uint8_t hdd_son_get_rx_nss(struct wlan_objmgr_vdev *vdev)
 	return rx_nss;
 }
 
+static void hdd_son_deauth_sta(struct wlan_objmgr_vdev *vdev,
+			       uint8_t *peer_mac,
+			       bool ignore_frame)
+{
+	struct hdd_adapter *adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	struct csr_del_sta_params param;
+
+	if (!adapter) {
+		hdd_err("null adapter");
+		return;
+	}
+
+	qdf_mem_copy(param.peerMacAddr.bytes, peer_mac, QDF_MAC_ADDR_SIZE);
+	param.subtype = SIR_MAC_MGMT_DEAUTH;
+	param.reason_code = ignore_frame ? REASON_HOST_TRIGGERED_SILENT_DEAUTH
+					 : REASON_UNSPEC_FAILURE;
+	hdd_debug("Peer - "QDF_MAC_ADDR_FMT" Ignore Frame - %u",
+		  QDF_FULL_MAC_REF(peer_mac), ignore_frame);
+
+	if (hdd_softap_sta_deauth(adapter, &param) != QDF_STATUS_SUCCESS)
+		hdd_err("Error in deauthenticating peer");
+}
+
+static void hdd_son_modify_acl(struct wlan_objmgr_vdev *vdev,
+			       uint8_t *peer_mac,
+			       bool allow_auth)
+{
+	QDF_STATUS status;
+	struct hdd_adapter *adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+
+	if (!adapter) {
+		hdd_err("null adapter");
+		return;
+	}
+	hdd_debug("Peer - " QDF_MAC_ADDR_FMT " Allow Auth - %u",
+		  QDF_MAC_ADDR_REF(peer_mac), allow_auth);
+	if (allow_auth) {
+		status = wlansap_modify_acl(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					    peer_mac,
+					    eSAP_BLACK_LIST,
+					    DELETE_STA_FROM_ACL);
+		status = wlansap_modify_acl(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					    peer_mac,
+					    eSAP_WHITE_LIST,
+					    ADD_STA_TO_ACL);
+	} else {
+		status = wlansap_modify_acl(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					    peer_mac,
+					    eSAP_WHITE_LIST,
+					    DELETE_STA_FROM_ACL);
+		status = wlansap_modify_acl(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					    peer_mac,
+					    eSAP_BLACK_LIST,
+					    ADD_STA_TO_ACL);
+	}
+}
+
 void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 {
 	struct son_callbacks cb_obj = {0};
@@ -1277,6 +1334,8 @@ void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.os_if_get_rx_nss = hdd_son_get_rx_nss;
 	cb_obj.os_if_set_chwidth = hdd_son_set_chwidth;
 	cb_obj.os_if_get_chwidth = hdd_son_get_chwidth;
+	cb_obj.os_if_deauth_sta = hdd_son_deauth_sta;
+	cb_obj.os_if_modify_acl = hdd_son_modify_acl;
 
 	os_if_son_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
 }

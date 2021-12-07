@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,8 +38,6 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	tDot11fIEhe_cap he_cap_ini = {0};
 	uint8_t value = 0;
 
-	ucfg_mlme_update_tgt_he_cap(hdd_ctx->psoc, cfg);
-
 	status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
 							&value);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -46,6 +45,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 
 	he_cap_ini.bfee_sts_lt_80 = value;
 	sme_update_tgt_he_cap(hdd_ctx->mac_handle, cfg, &he_cap_ini);
+
+	ucfg_mlme_update_tgt_he_cap(hdd_ctx->psoc, cfg);
 }
 
 void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,

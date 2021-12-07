@@ -269,6 +269,11 @@ hdd_populate_mld_vdev_params(struct hdd_adapter *adapter,
 	QDF_STATUS qdf_status;
 	uint8_t device_mode = adapter->device_mode;
 
+	if (device_mode != QDF_SAP_MODE &&
+	    !adapter->mlo_adapter_info.is_ml_adapter &&
+	    !adapter->mlo_adapter_info.is_link_adapter)
+		return;
+
 	mld_addr = wlan_hdd_get_mld_addr(adapter->hdd_ctx,
 					 adapter->device_mode);
 	if (mld_addr) {

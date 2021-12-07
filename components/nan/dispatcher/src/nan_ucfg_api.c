@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +34,7 @@
 #include "cfg_ucfg_api.h"
 #include "cfg_nan.h"
 #include "wlan_mlme_api.h"
+#include "cfg_nan_api.h"
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -181,6 +183,92 @@ inline QDF_STATUS ucfg_nan_set_active_peers(struct wlan_objmgr_vdev *vdev,
 	qdf_spin_unlock_bh(&priv_obj->lock);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+inline void ucfg_nan_set_peer_mc_list(struct wlan_objmgr_vdev *vdev,
+				      struct qdf_mac_addr peer_mac_addr)
+{
+	struct nan_vdev_priv_obj *priv_obj = nan_get_vdev_priv_obj(vdev);
+	uint32_t max_ndp_sessions = 0;
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	int i, list_idx = 0;
+
+	if (!priv_obj) {
+		nan_err("priv_obj is null");
+		return;
+	}
+
+	if (!psoc) {
+		nan_err("psoc is null");
+		return;
+	}
+
+	cfg_nan_get_ndp_max_sessions(psoc, &max_ndp_sessions);
+
+	qdf_spin_lock_bh(&priv_obj->lock);
+	for (i = 0; i < max_ndp_sessions; i++) {
+		if (qdf_is_macaddr_zero(&priv_obj->peer_mc_addr_list[i])) {
+			list_idx = i;
+			break;
+		}
+	}
+	if (list_idx == max_ndp_sessions) {
+		nan_err("Peer multicast address list is full");
+		goto end;
+	}
+	/* Derive peer multicast addr */
+	peer_mac_addr.bytes[0] = 0x33;
+	peer_mac_addr.bytes[1] = 0x33;
+	peer_mac_addr.bytes[2] = 0xff;
+	priv_obj->peer_mc_addr_list[list_idx] = peer_mac_addr;
+
+end:
+	qdf_spin_unlock_bh(&priv_obj->lock);
+}
+
+inline void ucfg_nan_get_peer_mc_list(
+				struct wlan_objmgr_vdev *vdev,
+				struct qdf_mac_addr **peer_mc_addr_list)
+{
+	struct nan_vdev_priv_obj *priv_obj = nan_get_vdev_priv_obj(vdev);
+
+	if (!priv_obj) {
+		nan_err("priv_obj is null");
+		return;
+	}
+
+	*peer_mc_addr_list = priv_obj->peer_mc_addr_list;
+}
+
+inline void ucfg_nan_clear_peer_mc_list(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_vdev *vdev,
+					struct qdf_mac_addr *peer_mac_addr)
+{
+	struct nan_vdev_priv_obj *priv_obj = nan_get_vdev_priv_obj(vdev);
+	int i;
+	uint32_t max_ndp_sessions = 0;
+	struct qdf_mac_addr derived_peer_mc_addr;
+
+	if (!priv_obj) {
+		nan_err("priv_obj is null");
+		return;
+	}
+
+	/* Derive peer multicast addr */
+	derived_peer_mc_addr = *peer_mac_addr;
+	derived_peer_mc_addr.bytes[0] = 0x33;
+	derived_peer_mc_addr.bytes[1] = 0x33;
+	derived_peer_mc_addr.bytes[2] = 0xff;
+	qdf_spin_lock_bh(&priv_obj->lock);
+	cfg_nan_get_ndp_max_sessions(psoc, &max_ndp_sessions);
+	for (i = 0; i < max_ndp_sessions; i++) {
+		if (qdf_is_macaddr_equal(&priv_obj->peer_mc_addr_list[i],
+					 &derived_peer_mc_addr)) {
+			qdf_zero_macaddr(&priv_obj->peer_mc_addr_list[i]);
+			break;
+		}
+	}
+	qdf_spin_unlock_bh(&priv_obj->lock);
 }
 
 inline uint32_t ucfg_nan_get_active_peers(struct wlan_objmgr_vdev *vdev)
@@ -1069,7 +1157,7 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 {
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint32_t ndi_cnt, sta_cnt, id;
+	uint32_t ndi_cnt, sta_cnt, id, conc_ext_flags;
 
 	sta_cnt = policy_mgr_mode_specific_connection_count(psoc,
 							    PM_STA_MODE, NULL);
@@ -1113,9 +1201,11 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	if (!ucfg_nan_is_sta_nan_ndi_4_port_allowed(psoc))
 		return false;
 
+	conc_ext_flags = policy_mgr_get_conc_ext_flags(vdev, false);
+
 	/* The final freq would be provided by FW, it is not known now */
 	return policy_mgr_allow_concurrency(psoc, PM_NDI_MODE, 0,
-					    HW_MODE_20_MHZ);
+					    HW_MODE_20_MHZ, conc_ext_flags);
 }
 
 bool

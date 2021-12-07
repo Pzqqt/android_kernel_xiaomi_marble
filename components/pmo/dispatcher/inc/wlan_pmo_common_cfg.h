@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -339,13 +340,14 @@
  * <ini>
  * gSuspendMode - Suspend mode configuration
  * @Min: 0
- * @Max: 2
+ * @Max: 3
  * @Default: 2
  *
  * This ini is used to set suspend mode. Configurations are as follows:
  * 0 - Does not support suspend.
  * 1 - Legency suspend mode, PDEV suspend.
  * 2 - WOW suspend mode.
+ * 3 - Full power down while suspend.
  *
  * Related: None
  *
@@ -356,7 +358,7 @@
  * </ini>
  */
 #define CFG_PMO_SUSPEND_MODE CFG_INI_UINT("gSuspendMode", \
-					  0, 2, 2, \
+					  0, 3, 2, \
 					  CFG_VALUE_OR_DEFAULT, \
 					  "Suspend mode")
 
@@ -530,27 +532,6 @@
 
 /*
  * <ini>
- * enable_dynamic_pcie_gen_speed_switch - enable dynamic PCIe gen speed change
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable dynamic PCIe gen speed change
- *
- * 0: Dynamic PCIe gen speed change is not enabled
- * 1: Dynamic PCIe gen speed change is enabled
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH CFG_INI_BOOL( \
-		"enable_dynamic_pcie_gen_speed_switch", \
-		0, \
-		"This ini is used to enable dynamic PCIe gen speed change")
-
-/*
- * <ini>
  * igmp_version_support - Configure igmp version
  * @Min: 0x00000000
  * @Max: 0x7
@@ -637,7 +618,6 @@
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)\
 	CFG(CFG_DISCONNECT_SAP_TDLS_IN_WOW) \
-	CFG(CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH) \
 	CFG(CFG_IGMP_VERSION_SUPPORT) \
 	CFG(CFG_ENABLE_ICMP_OFFLOAD)
 

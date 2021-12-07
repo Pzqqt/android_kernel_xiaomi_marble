@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1046,6 +1047,7 @@ static QDF_STATUS ol_fw_populate_clk_settings(enum a_refclk_speed_t refclk,
 		clock_s->wlan_pll.outdiv = 0;
 		clock_s->pll_settling_time = 1024;
 		clock_s->refclk_hz = 0;
+		/* fallthrough */
 	default:
 		return QDF_STATUS_E_FAILURE;
 	}

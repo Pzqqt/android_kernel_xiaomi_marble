@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +28,39 @@
 
 #include <wlan_hdd_hostapd.h>
 #include <cdp_txrx_peer_ops.h>
+
+#define hdd_sapd_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_HDD_SAP_DATA, params)
+
+#define hdd_sapd_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+
+#define hdd_sapd_alert_rl(params...) \
+	QDF_TRACE_FATAL_RL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_err_rl(params...) \
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_warn_rl(params...) \
+	QDF_TRACE_WARN_RL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_info_rl(params...) \
+	QDF_TRACE_INFO_RL(QDF_MODULE_ID_HDD_SAP_DATA, params)
+#define hdd_sapd_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD_SAP_DATA, params)
 
 /**
  * hdd_softap_hard_start_xmit() - Transmit a frame

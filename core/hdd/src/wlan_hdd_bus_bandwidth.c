@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,22 +35,28 @@
 static bus_bw_table_type bus_bw_table_default = {
 	[QCA_WLAN_802_11_MODE_11B] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_1,
 				      BUS_BW_LEVEL_2, BUS_BW_LEVEL_3,
-				      BUS_BW_LEVEL_4, BUS_BW_LEVEL_6},
+				      BUS_BW_LEVEL_4, BUS_BW_LEVEL_6,
+				      BUS_BW_LEVEL_7, BUS_BW_LEVEL_8},
 	[QCA_WLAN_802_11_MODE_11G] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_5,
+				      BUS_BW_LEVEL_5, BUS_BW_LEVEL_5,
 				      BUS_BW_LEVEL_5, BUS_BW_LEVEL_5,
 				      BUS_BW_LEVEL_5, BUS_BW_LEVEL_5},
 	[QCA_WLAN_802_11_MODE_11A] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_5,
 				      BUS_BW_LEVEL_5, BUS_BW_LEVEL_5,
+				      BUS_BW_LEVEL_5, BUS_BW_LEVEL_5,
 				      BUS_BW_LEVEL_5, BUS_BW_LEVEL_5},
 	[QCA_WLAN_802_11_MODE_11N] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_1,
 				      BUS_BW_LEVEL_2, BUS_BW_LEVEL_3,
-				      BUS_BW_LEVEL_4, BUS_BW_LEVEL_6},
+				      BUS_BW_LEVEL_4, BUS_BW_LEVEL_6,
+				      BUS_BW_LEVEL_7, BUS_BW_LEVEL_8},
 	[QCA_WLAN_802_11_MODE_11AC] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_1,
 				       BUS_BW_LEVEL_2, BUS_BW_LEVEL_3,
-				       BUS_BW_LEVEL_4, BUS_BW_LEVEL_6},
+				       BUS_BW_LEVEL_4, BUS_BW_LEVEL_6,
+				       BUS_BW_LEVEL_7, BUS_BW_LEVEL_8},
 	[QCA_WLAN_802_11_MODE_11AX] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_1,
 				       BUS_BW_LEVEL_2, BUS_BW_LEVEL_3,
-				       BUS_BW_LEVEL_4, BUS_BW_LEVEL_6},
+				       BUS_BW_LEVEL_4, BUS_BW_LEVEL_6,
+				       BUS_BW_LEVEL_7, BUS_BW_LEVEL_8},
 };
 
 /**
@@ -58,24 +65,30 @@ static bus_bw_table_type bus_bw_table_default = {
  *  latency setting.
  */
 static bus_bw_table_type bus_bw_table_low_latency = {
-	[QCA_WLAN_802_11_MODE_11B] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6},
-	[QCA_WLAN_802_11_MODE_11G] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6},
-	[QCA_WLAN_802_11_MODE_11A] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6},
-	[QCA_WLAN_802_11_MODE_11N] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6,
-				      BUS_BW_LEVEL_6, BUS_BW_LEVEL_6},
-	[QCA_WLAN_802_11_MODE_11AC] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_6,
-				       BUS_BW_LEVEL_6, BUS_BW_LEVEL_6,
-				       BUS_BW_LEVEL_6, BUS_BW_LEVEL_6},
-	[QCA_WLAN_802_11_MODE_11AX] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_6,
-				       BUS_BW_LEVEL_6, BUS_BW_LEVEL_6,
-				       BUS_BW_LEVEL_6, BUS_BW_LEVEL_6},
+	[QCA_WLAN_802_11_MODE_11B] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8},
+	[QCA_WLAN_802_11_MODE_11G] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8},
+	[QCA_WLAN_802_11_MODE_11A] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8},
+	[QCA_WLAN_802_11_MODE_11N] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				      BUS_BW_LEVEL_8, BUS_BW_LEVEL_8},
+	[QCA_WLAN_802_11_MODE_11AC] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8},
+	[QCA_WLAN_802_11_MODE_11AX] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8}
 };
 
 /**
@@ -101,6 +114,10 @@ bbm_convert_to_pld_bus_lvl(enum bus_bw_level vote_lvl)
 		return PLD_BUS_WIDTH_LOW_LATENCY;
 	case BUS_BW_LEVEL_6:
 		return PLD_BUS_WIDTH_VERY_HIGH;
+	case BUS_BW_LEVEL_7:
+		return PLD_BUS_WIDTH_ULTRA_HIGH;
+	case BUS_BW_LEVEL_8:
+		return PLD_BUS_WIDTH_MAX;
 	case BUS_BW_LEVEL_NONE:
 	default:
 		return PLD_BUS_WIDTH_NONE;

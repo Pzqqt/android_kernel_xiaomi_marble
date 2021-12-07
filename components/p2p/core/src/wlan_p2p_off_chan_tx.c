@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -875,15 +876,20 @@ static QDF_STATUS p2p_tx_update_connection_status(
 			  QDF_MAC_ADDR_REF(mac_to));
 
 	if ((tx_frame_info->public_action_type ==
-	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) &&
-	    (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
-		p2p_soc_obj->connection_status = P2P_GO_NEG_PROCESS;
+	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) ||
+	    (tx_frame_info->public_action_type ==
+	     P2P_PUBLIC_ACTION_INVIT_REQ) ||
+	    (tx_frame_info->public_action_type ==
+	     P2P_PUBLIC_ACTION_NEG_REQ) ||
+	     (tx_frame_info->public_action_type ==
+	     P2P_PUBLIC_ACTION_NEG_RSP)) {
+		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_PROCESS);
 		p2p_debug("[P2P State]Inactive state to GO negotiation progress state");
 	} else if ((tx_frame_info->public_action_type ==
-		    P2P_PUBLIC_ACTION_NEG_CNF) &&
-		   (p2p_soc_obj->connection_status ==
-		    P2P_GO_NEG_PROCESS)) {
-		p2p_soc_obj->connection_status = P2P_GO_NEG_COMPLETED;
+		    P2P_PUBLIC_ACTION_NEG_CNF) ||
+		   (tx_frame_info->public_action_type ==
+		    P2P_PUBLIC_ACTION_INVIT_RSP)) {
+		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_COMPLETED);
 		p2p_debug("[P2P State]GO nego progress to GO nego completed state");
 	}
 
@@ -919,20 +925,25 @@ static QDF_STATUS p2p_rx_update_connection_status(
 			  QDF_MAC_ADDR_REF(mac_from));
 
 	if ((rx_frame_info->public_action_type ==
-	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) &&
-	    (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
-		p2p_soc_obj->connection_status = P2P_GO_NEG_PROCESS;
+			P2P_PUBLIC_ACTION_PROV_DIS_REQ) ||
+	    (rx_frame_info->public_action_type ==
+			P2P_PUBLIC_ACTION_NEG_REQ) ||
+	    (rx_frame_info->public_action_type ==
+			P2P_PUBLIC_ACTION_NEG_RSP)) {
+		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_PROCESS);
 		p2p_info("[P2P State]Inactive state to GO negotiation progress state");
-	} else if ((rx_frame_info->public_action_type ==
-		    P2P_PUBLIC_ACTION_NEG_CNF) &&
+	} else if (((rx_frame_info->public_action_type ==
+		     P2P_PUBLIC_ACTION_NEG_CNF) ||
+		   (rx_frame_info->public_action_type ==
+		     P2P_PUBLIC_ACTION_INVIT_RSP)) &&
 		   (p2p_soc_obj->connection_status ==
 		    P2P_GO_NEG_PROCESS)) {
-		p2p_soc_obj->connection_status = P2P_GO_NEG_COMPLETED;
+		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_COMPLETED);
 		p2p_info("[P2P State]GO negotiation progress to GO negotiation completed state");
 	} else if ((rx_frame_info->public_action_type ==
 		    P2P_PUBLIC_ACTION_INVIT_REQ) &&
 		   (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
-		p2p_soc_obj->connection_status = P2P_GO_NEG_COMPLETED;
+		p2p_status_update(p2p_soc_obj, P2P_GO_NEG_COMPLETED);
 		p2p_info("[P2P State]Inactive state to GO negotiation completed state Autonomous GO formation");
 	}
 

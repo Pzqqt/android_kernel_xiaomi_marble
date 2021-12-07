@@ -19,7 +19,7 @@
 
 #include "wma.h"
 
-#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
+#if defined(WLAN_FEATURE_11BE)
 /*
  * wma_eht_update_tgt_services() - update tgt cfg to indicate 11be support
  * @wmi_handle: pointer to WMI handle

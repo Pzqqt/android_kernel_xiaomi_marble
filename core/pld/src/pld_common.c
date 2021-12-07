@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,6 +130,39 @@ int pld_set_mode(u8 mode)
 	pld_ctx->mode = mode;
 	return 0;
 }
+
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+int pld_set_suspend_mode(enum pld_suspend_mode mode)
+{
+	struct pld_context *pld_context;
+	int ret;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -ENOMEM;
+
+	pld_context->suspend_mode = mode;
+
+	ret = pld_pcie_set_suspend_mode(mode);
+
+	return ret;
+}
+
+bool pld_is_full_power_down_enable(void)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		goto out;
+
+	if (pld_context->suspend_mode == PLD_FULL_POWER_DOWN)
+		return true;
+
+out:
+	return false;
+}
+#endif
 
 /**
  * pld_get_global_context() - Get global context of PLD
@@ -3176,6 +3210,34 @@ void pld_thermal_unregister(struct device *dev, int mon_id)
 	}
 }
 
+const char *pld_bus_width_type_to_str(enum pld_bus_width_type level)
+{
+	switch (level) {
+	/* initialize the wlan sub system */
+	case PLD_BUS_WIDTH_NONE:
+		return "NONE";
+	case PLD_BUS_WIDTH_IDLE:
+		return "IDLE";
+	case PLD_BUS_WIDTH_LOW:
+		return "LOW";
+	case PLD_BUS_WIDTH_MEDIUM:
+		return "MEDIUM";
+	case PLD_BUS_WIDTH_HIGH:
+		return "HIGH";
+	case PLD_BUS_WIDTH_VERY_HIGH:
+		return "VERY_HIGH";
+	case PLD_BUS_WIDTH_ULTRA_HIGH:
+		return "ULTRA_HIGH";
+	case PLD_BUS_WIDTH_LOW_LATENCY:
+		return "LOW_LAT";
+	default:
+		if (level > PLD_BUS_WIDTH_ULTRA_HIGH)
+			return "ULTRA_HIGH+";
+		else
+			return "INVAL";
+	}
+}
+
 int pld_get_thermal_state(struct device *dev, unsigned long *thermal_state,
 			  int mon_id)
 {
@@ -3206,6 +3268,38 @@ int pld_get_thermal_state(struct device *dev, unsigned long *thermal_state,
 
 	return errno;
 }
+
+#ifdef CNSS_UTILS_VENDOR_UNSAFE_CHAN_API_SUPPORT
+int pld_get_wlan_unsafe_channel_sap(
+	struct device *dev, struct pld_ch_avoid_ind_type *ch_avoid_ranges)
+{
+	struct cnss_ch_avoid_ind_type cnss_ch_avoid;
+	int ret;
+	int i;
+
+	if (!ch_avoid_ranges)
+		return -EINVAL;
+	cnss_ch_avoid.ch_avoid_range_cnt = 0;
+	ret = cnss_utils_get_wlan_unsafe_channel_sap(dev, &cnss_ch_avoid);
+	if (ret)
+		return ret;
+
+	for (i = 0;
+	     i < PLD_CH_AVOID_MAX_RANGE &&
+	     i < cnss_ch_avoid.ch_avoid_range_cnt; i++) {
+		ch_avoid_ranges->avoid_freq_range[i].start_freq =
+			cnss_ch_avoid.avoid_freq_range[i].start_freq;
+		ch_avoid_ranges->avoid_freq_range[i].end_freq =
+			cnss_ch_avoid.avoid_freq_range[i].end_freq;
+	}
+	ch_avoid_ranges->ch_avoid_range_cnt = i;
+	if (i < cnss_ch_avoid.ch_avoid_range_cnt)
+		pr_err("unexpected cnss ch_avoid_range_cnt %d",
+		       cnss_ch_avoid.ch_avoid_range_cnt);
+
+	return 0;
+}
+#endif
 
 #ifdef FEATURE_WLAN_TIME_SYNC_FTM
 /**

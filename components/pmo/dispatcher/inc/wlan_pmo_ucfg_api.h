@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -543,6 +544,79 @@ ucfg_pmo_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_core_enhanced_mc_filter_disable(vdev);
 }
+
+#ifdef FEATURE_WLAN_DYNAMIC_ARP_NS_OFFLOAD
+/**
+ * ucfg_pmo_dynamic_arp_ns_offload_enable() - enable arp/ns offload
+ * @vdev: vdev objmgr handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_pmo_dynamic_arp_ns_offload_enable(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_pmo_dynamic_arp_ns_offload_disable() - disable arp/ns offload
+ * @vdev: vdev objmgr handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_pmo_dynamic_arp_ns_offload_disable(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_pmo_get_arp_ns_offload_dynamic_disable() - get arp/ns offload state
+ * @vdev: vdev objmgr handle
+ *
+ * Return: QDF_STATUS
+ */
+bool
+ucfg_pmo_get_arp_ns_offload_dynamic_disable(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_pmo_dynamic_arp_ns_offload_runtime_prevent() - prevent runtime suspend
+ * @vdev: vdev objmgr handle
+ *
+ * Return: none
+ */
+void
+ucfg_pmo_dynamic_arp_ns_offload_runtime_prevent(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_pmo_dynamic_arp_ns_offload_runtime_allow() - allow runtime suspend
+ * @vdev: vdev objmgr handle
+ *
+ * Return: none
+ */
+void
+ucfg_pmo_dynamic_arp_ns_offload_runtime_allow(struct wlan_objmgr_vdev *vdev);
+#else
+static inline QDF_STATUS
+ucfg_pmo_dynamic_arp_ns_offload_enable(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_pmo_dynamic_arp_ns_offload_disable(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool
+ucfg_pmo_get_arp_ns_offload_dynamic_disable(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline void
+ucfg_pmo_dynamic_arp_ns_offload_runtime_prevent(struct wlan_objmgr_vdev *vdev)
+{
+}
+
+static inline void
+ucfg_pmo_dynamic_arp_ns_offload_runtime_allow(struct wlan_objmgr_vdev *vdev) {}
+#endif
 
 /**
  * ucfg_pmo_enable_mc_addr_filtering_in_fwr(): Enable cached mc add list in fwr
@@ -2268,16 +2342,6 @@ ucfg_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
  */
 enum pmo_suspend_mode
 ucfg_pmo_get_suspend_mode(struct wlan_objmgr_psoc *psoc);
-
-/**
- * ucfg_pmo_get_dynamic_pcie_gen_switch_cfg() - get PMO config for
- * dynamic PCIe gen speed change
- * @psoc: pointer to psoc object
- *
- * Return: bool
- */
-bool
-ucfg_pmo_get_dynamic_pcie_gen_switch_cfg(struct wlan_objmgr_psoc *psoc);
 
 #ifdef SYSTEM_PM_CHECK
 /**

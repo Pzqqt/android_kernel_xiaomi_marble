@@ -4761,7 +4761,7 @@ static int hdd_we_set_modulated_dtim(struct hdd_adapter *adapter, int value)
 	if (!hdd_ctx->psoc)
 		return -EINVAL;
 
-	if ((value < cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM)) ||
+	if ((value < cfg_min(CFG_PMO_ENABLE_MODULATED_DTIM)) ||
 	    (value > cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM))) {
 		hdd_err("Invalid value %d", value);
 		return -EINVAL;
@@ -5814,7 +5814,7 @@ static int hdd_set_fwtest(int argc, int cmd, int value)
 	struct set_fwtest_params *fw_test;
 
 	/* check for max number of arguments */
-	if (argc > (WMA_MAX_NUM_ARGS) ||
+	if (argc > WMI_UNIT_TEST_MAX_NUM_ARGS ||
 	    argc != HDD_FWTEST_PARAMS) {
 		hdd_err("Too Many args %d", argc);
 		return -EINVAL;
@@ -6778,10 +6778,11 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		hdd_debug("<iwpriv wlan0 pm_dbs> is called");
 		if (apps_args[0] == 0)
-			wma_set_dbs_capability_ut(0);
+			policy_mgr_set_dbs_cap_ut(hdd_ctx->psoc, 0);
 		else
-			wma_set_dbs_capability_ut(1);
+			policy_mgr_set_dbs_cap_ut(hdd_ctx->psoc, 1);
 
+		wma_enable_dbs_service_ut();
 		if (apps_args[1] >= PM_THROUGHPUT &&
 			apps_args[1] <= PM_LATENCY) {
 			hdd_debug("setting system pref to [%d]\n",
@@ -6850,7 +6851,9 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 				hdd_ctx->psoc, apps_args[0],
 				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
 							     apps_args[1]),
-							     apps_args[2]);
+				apps_args[2],
+				policy_mgr_get_conc_ext_flags(adapter->vdev,
+							      false));
 		hdd_debug("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
 	break;
@@ -7192,8 +7195,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			hdd_err_rl("Invalid MODULE ID %d", apps_args[0]);
 			return -EINVAL;
 		}
-		if ((apps_args[1] > (WMA_MAX_NUM_ARGS)) ||
-		    (apps_args[1] < 0)) {
+		if (apps_args[1] > WMI_UNIT_TEST_MAX_NUM_ARGS ||
+		    apps_args[1] < 0) {
 			hdd_err_rl("Too Many/Few args %d", apps_args[1]);
 			return -EINVAL;
 		}
@@ -8443,8 +8446,17 @@ static int iw_get_statistics(struct net_device *dev,
 	if (errno)
 		return errno;
 
+	errno = wlan_hdd_qmi_get_sync_resume();
+	if (errno) {
+		hdd_err("qmi sync resume failed: %d", errno);
+		goto end;
+	}
+
 	errno = __iw_get_statistics(dev, info, wrqu, extra);
 
+	wlan_hdd_qmi_put_suspend();
+
+end:
 	osif_vdev_sync_op_stop(vdev_sync);
 
 	return errno;

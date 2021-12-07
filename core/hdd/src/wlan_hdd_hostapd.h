@@ -111,6 +111,21 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				uint8_t vdev_id, uint32_t *ch_freq);
 
 /**
+ * wlan_get_sap_acs_band() - Get  sap acs band
+ *
+ * @psoc: pointer to psoc
+ * @vdev_id: vdev id
+ * @acs_band: Pointer to acs_band
+ *
+ * This function is used to get sap acs band from sap config
+ *
+ * Return: QDF_STATUS_SUCCESS if successful
+ */
+uint32_t
+wlan_get_sap_acs_band(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		      uint32_t *acs_band);
+
+/**
  * wlan_get_ap_prefer_conc_ch_params() - Get prefer sap target channel
  *  bw parameters
  * @psoc: pointer to psoc

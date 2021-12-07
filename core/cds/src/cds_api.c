@@ -442,6 +442,7 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 	struct txrx_pdev_cfg_param_t cdp_cfg = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct hdd_context *hdd_ctx = gp_cds_context->hdd_context;
+	uint32_t gro_bit_set;
 
 	cdp_cfg.is_full_reorder_offload = DP_REORDER_OFFLOAD_SUPPORT;
 	cdp_cfg.is_uc_offload_enabled = ucfg_ipa_uc_is_enabled();
@@ -468,7 +469,9 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 	cdp_cfg.sg_enable = cfg_get(psoc, CFG_DP_SG);
 	cdp_cfg.enable_data_stall_detection =
 		cfg_get(psoc, CFG_DP_ENABLE_DATA_STALL_DETECTION);
-	cdp_cfg.gro_enable = cfg_get(psoc, CFG_DP_GRO);
+	gro_bit_set = cfg_get(psoc, CFG_DP_GRO);
+	if (gro_bit_set & DP_GRO_ENABLE_BIT_SET)
+		cdp_cfg.gro_enable = true;
 	cdp_cfg.enable_flow_steering =
 		cfg_get(psoc, CFG_DP_FLOW_STEERING_ENABLED);
 	cdp_cfg.disable_intra_bss_fwd =
@@ -932,6 +935,7 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS qdf_status;
 	struct dp_txrx_config dp_config;
 	struct hdd_context *hdd_ctx;
+	struct cdp_pdev_attach_params pdev_params = { 0 };
 
 
 	hdd_ctx = gp_cds_context->hdd_context;
@@ -940,9 +944,11 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	pdev_params.htc_handle = gp_cds_context->htc_ctx;
+	pdev_params.qdf_osdev = gp_cds_context->qdf_ctx;
+	pdev_params.pdev_id = 0;
 	qdf_status = cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
-				     gp_cds_context->htc_ctx,
-				     gp_cds_context->qdf_ctx, 0);
+				     &pdev_params);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_alert("Failed to open TXRX");
@@ -986,7 +992,15 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	ucfg_pmo_psoc_set_txrx_pdev_id(psoc, OL_TXRX_PDEV_ID);
 	ucfg_ocb_set_txrx_pdev_id(psoc, OL_TXRX_PDEV_ID);
 
+	cdp_set_rtpm_tput_policy_requirement(cds_get_context(QDF_MODULE_ID_SOC),
+					     false);
+
 	cds_debug("CDS successfully Opened");
+
+	if (cdp_cfg_get(gp_cds_context->dp_soc, cfg_dp_force_gro_enable))
+		hdd_ctx->dp_agg_param.force_gro_enable = true;
+	else
+		hdd_ctx->dp_agg_param.force_gro_enable = false;
 
 	return 0;
 

@@ -1114,7 +1114,8 @@ bool nan_is_enable_allowed(struct wlan_objmgr_psoc *psoc, uint32_t nan_ch_freq)
 	return (NAN_DISC_DISABLED == nan_get_discovery_state(psoc) &&
 		ucfg_is_nan_conc_control_supported(psoc) &&
 		policy_mgr_allow_concurrency(psoc, PM_NAN_DISC_MODE,
-					     nan_ch_freq, HW_MODE_20_MHZ));
+					     nan_ch_freq, HW_MODE_20_MHZ,
+					     0));
 }
 
 bool nan_is_disc_active(struct wlan_objmgr_psoc *psoc)

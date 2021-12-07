@@ -56,6 +56,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "pld_common.h"
 
 #define SAP_DEBUG
 static struct sap_context *gp_sap_ctx[SAP_MAX_NUM_SESSION];
@@ -454,6 +455,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 	struct mac_context *mac;
 	uint16_t intf_ch_freq;
 	eCsrPhyMode phy_mode;
+	uint8_t vdev_id;
 
 	mac = sap_get_mac_context();
 	if (!mac) {
@@ -461,11 +463,13 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 		return 0;
 	}
 	phy_mode = sap_ctx->phyMode;
+	vdev_id = sap_ctx->sessionId;
 	intf_ch_freq = sme_check_concurrent_channel_overlap(
 						MAC_HANDLE(mac),
 						sap_ctx->chan_freq,
 						phy_mode,
-						sap_ctx->cc_switch_mode);
+						sap_ctx->cc_switch_mode,
+						vdev_id);
 	return intf_ch_freq;
 }
 #endif
@@ -750,6 +754,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->isCacEndNotified = false;
 	sap_ctx->is_chan_change_inprogress = false;
 	sap_ctx->phyMode = config->SapHw_mode;
+	sap_ctx->csa_reason = CSA_REASON_UNKNOWN;
 
 	/* Set the BSSID to your "self MAC Addr" read the mac address
 		from Configuation ITEM received from HDD */
@@ -1190,7 +1195,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 				   params);
 }
 
-#if defined(WLAN_FEATURE_11BE) && defined(CFG80211_11BE_BASIC)
+#if defined(WLAN_FEATURE_11BE)
 static enum phy_ch_width
 wlansap_get_target_eht_phy_ch_width(void)
 {
@@ -1210,6 +1215,21 @@ wlansap_get_target_eht_phy_ch_width(void)
 	return CH_WIDTH_20MHZ;
 }
 #endif /* WLAN_FEATURE_11BE */
+
+static enum phy_ch_width
+wlansap_5g_original_bw_validate(
+	struct sap_context *sap_context,
+	uint32_t chan_freq,
+	enum phy_ch_width ch_width)
+{
+	if (sap_context->csa_reason != CSA_REASON_USER_INITIATED &&
+	    WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq) &&
+	    ch_width >= CH_WIDTH_160MHZ &&
+	    sap_context->ch_width_orig < CH_WIDTH_160MHZ)
+		ch_width = CH_WIDTH_80MHZ;
+
+	return ch_width;
+}
 
 enum phy_ch_width
 wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
@@ -1235,6 +1255,8 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 		ch_width = CH_WIDTH_20MHZ;
 	} else {
 		ch_width = wlansap_get_max_bw_by_phymode(sap_context);
+		ch_width = wlansap_5g_original_bw_validate(
+				sap_context, chan_freq, ch_width);
 		concurrent_bw = wlan_sap_get_concurrent_bw(
 				mac->pdev, mac->psoc, chan_freq,
 				ch_width);
@@ -1248,11 +1270,13 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 	ch_width = ch_params.ch_width;
 	if (tgt_ch_params)
 		*tgt_ch_params = ch_params;
-	sap_nofl_debug("freq %d bw %d (phymode %d, con bw %d, tgt bw %d)",
+	sap_nofl_debug("csa freq %d bw %d (phymode %d con bw %d tgt bw %d orig %d reason %d)",
 		       chan_freq, ch_width,
 		       sap_context->phyMode,
 		       concurrent_bw,
-		       tgt_ch_params ? tgt_ch_params->ch_width : CH_WIDTH_MAX);
+		       tgt_ch_params ? tgt_ch_params->ch_width : CH_WIDTH_MAX,
+		       sap_context->ch_width_orig,
+		       sap_context->csa_reason);
 
 	return ch_width;
 }
@@ -3250,17 +3274,80 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 
 	cc_mode = sap_ctx->cc_switch_mode;
 	phy_mode = sap_ctx->phyMode;
+	vdev_id = wlan_vdev_get_id(sap_ctx->vdev);
 	intf_ch_freq = sme_check_concurrent_channel_overlap(
 						       MAC_HANDLE(mac),
 						       restart_freq,
 						       phy_mode,
-						       cc_mode);
+						       cc_mode, vdev_id);
 	if (intf_ch_freq)
 		restart_freq = intf_ch_freq;
-	vdev_id = sap_ctx->vdev->vdev_objmgr.vdev_id;
 	sap_debug("vdev: %d, CSA target freq: %d", vdev_id, restart_freq);
 
 	return restart_freq;
+}
+
+static inline bool
+wlansap_ch_in_avoid_ranges(uint32_t ch_freq,
+			   struct pld_ch_avoid_ind_type *ch_avoid_ranges)
+{
+	uint32_t i;
+
+	for (i = 0; i < ch_avoid_ranges->ch_avoid_range_cnt; i++) {
+		if (ch_freq >=
+			ch_avoid_ranges->avoid_freq_range[i].start_freq &&
+		    ch_freq <=
+			ch_avoid_ranges->avoid_freq_range[i].end_freq)
+			return true;
+	}
+
+	return false;
+}
+
+bool wlansap_filter_vendor_unsafe_ch_freq(
+	struct sap_context *sap_context, struct sap_config *sap_config)
+{
+	struct pld_ch_avoid_ind_type ch_avoid_ranges;
+	uint32_t i, j;
+	int ret;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	struct mac_context *mac;
+	uint32_t count;
+
+	if (!qdf_ctx)
+		return false;
+	mac = sap_get_mac_context();
+	if (!mac)
+		return false;
+
+	count = policy_mgr_mode_specific_connection_count(mac->psoc,
+							  PM_SAP_MODE, NULL);
+	if (count != policy_mgr_get_connection_count(mac->psoc))
+		return false;
+
+	ch_avoid_ranges.ch_avoid_range_cnt = 0;
+	ret = pld_get_wlan_unsafe_channel_sap(qdf_ctx->dev, &ch_avoid_ranges);
+	if (ret) {
+		sap_debug("failed to get vendor unsafe ch range, ret %d", ret);
+		return false;
+	}
+	if (!ch_avoid_ranges.ch_avoid_range_cnt)
+		return false;
+	for (i = 0; i < ch_avoid_ranges.ch_avoid_range_cnt; i++) {
+		sap_debug("vendor unsafe range[%d] %d %d", i,
+			  ch_avoid_ranges.avoid_freq_range[i].start_freq,
+			  ch_avoid_ranges.avoid_freq_range[i].end_freq);
+	}
+	for (i = 0, j = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
+		if (!wlansap_ch_in_avoid_ranges(
+				sap_config->acs_cfg.freq_list[i],
+				&ch_avoid_ranges))
+			sap_config->acs_cfg.freq_list[j++] =
+				sap_config->acs_cfg.freq_list[i];
+	}
+	sap_config->acs_cfg.ch_list_count = j;
+
+	return true;
 }
 
 #ifdef DCS_INTERFERENCE_DETECTION

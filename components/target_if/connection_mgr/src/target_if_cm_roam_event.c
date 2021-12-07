@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -62,6 +63,7 @@ target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops)
 	rx_ops->roam_stats_event_rx = cm_roam_stats_event_handler;
 	rx_ops->roam_auth_offload_event = cm_roam_auth_offload_event_handler;
 	rx_ops->roam_pmkid_request_event_rx = cm_roam_pmkid_request_handler;
+	rx_ops->roam_candidate_frame_event = cm_roam_candidate_event_handler;
 }
 
 int
@@ -513,8 +515,52 @@ target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 	qdf_status = roam_rx_ops->roam_pmkid_request_event_rx(data);
 
 done:
-	qdf_mem_free(data);
+	if (data)
+		qdf_mem_free(data);
 	return qdf_status_to_os_return(qdf_status);
+}
+
+int
+target_if_roam_frame_event_handler(ol_scn_t scn, uint8_t *event,
+				   uint32_t len)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct roam_scan_candidate_frame frame = {0};
+	struct wlan_cm_roam_rx_ops *roam_rx_ops;
+	QDF_STATUS qdf_status;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	qdf_status = wmi_extract_roam_candidate_frame_event(wmi_handle, event,
+							    len, &frame);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		target_if_err("parsing of event failed, %d", qdf_status);
+		return -EINVAL;
+	}
+
+	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
+	if (!roam_rx_ops || !roam_rx_ops->roam_candidate_frame_event) {
+		target_if_err("No valid roam rx ops");
+		return -EINVAL;
+	}
+
+	qdf_status = roam_rx_ops->roam_candidate_frame_event(psoc,
+							     &frame);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return -EINVAL;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS
@@ -611,6 +657,16 @@ target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("wmi event(%u) registration failed, ret: %d",
 			      wmi_roam_stats_event_id, ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wmi_unified_register_event_handler(handle,
+				wmi_roam_frame_event_id,
+				target_if_roam_frame_event_handler,
+				WMI_RX_SERIALIZER_CTX);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		target_if_err("wmi event(%u) registration failed, ret: %d",
+			      wmi_roam_frame_event_id, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 

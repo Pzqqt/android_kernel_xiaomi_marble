@@ -1,6 +1,7 @@
 
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +33,8 @@
 #include <wlan_reg_ucfg_api.h>
 #include <ieee80211_external.h>
 
+#define INVALID_WIDTH 0xFF
+
 /**
  * struct son_callbacks - struct containing callback to non-converged driver
  * @os_if_is_acs_in_progress: whether acs is in progress or not
@@ -53,6 +56,8 @@
  * @os_if_kickout_mac: kickout sta with given mac
  * @os_if_set_chwidth: set chan width
  * @os_if_get_chwidth: get chan width
+ * @os_if_deauth_sta: Deauths the target peer
+ * @os_if_modify_acl: Add/Del target peer in ACL
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -91,6 +96,12 @@ struct son_callbacks {
 				 enum ieee80211_cwm_width son_chwidth);
 	enum ieee80211_cwm_width (*os_if_get_chwidth)(
 				struct wlan_objmgr_vdev *vdev);
+	void (*os_if_deauth_sta)(struct wlan_objmgr_vdev *vdev,
+				 uint8_t *peer_mac,
+				 bool ignore_frame);
+	void (*os_if_modify_acl)(struct wlan_objmgr_vdev *vdev,
+				 uint8_t *peer_mac,
+				 bool allow_auth);
 };
 
 /**
@@ -305,6 +316,16 @@ int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode);
 
 /**
+ * os_if_son_get_phy_stats() - get phy stats
+ * @vdev: vdev
+ * @phy_stats: phy stats
+ *
+ * Return: void
+ */
+void os_if_son_get_phy_stats(struct wlan_objmgr_vdev *vdev,
+			     struct ol_ath_radiostats *phy_stats);
+
+/**
  * os_if_son_get_chan_util() - get chan utilization
  * @vdev: vdev
  *
@@ -465,4 +486,28 @@ int os_if_son_set_chwidth(struct wlan_objmgr_vdev *vdev,
  * Return: son chan width
  */
 enum ieee80211_cwm_width os_if_son_get_chwidth(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_deauth_peer_sta - Deauths specified STA
+ * @vdev: vdev
+ * @peer_mac: Target peer MAC address
+ * @ignore_frame: True to silently deauth the peer
+ *
+ * Return: void
+ */
+void os_if_son_deauth_peer_sta(struct wlan_objmgr_vdev *vdev,
+			       uint8_t *peer_mac,
+			       bool ignore_frame);
+
+/**
+ * os_if_son_modify_acl - Updates ACL with given peer
+ * @vdev: vdev
+ * @peer_mac: Target peer MAC address
+ * @allow_auth: True to allow specified peer to connect
+ *
+ * Return: void
+ */
+void os_if_son_modify_acl(struct wlan_objmgr_vdev *vdev,
+			  uint8_t *peer_mac,
+			  bool allow_auth);
 #endif

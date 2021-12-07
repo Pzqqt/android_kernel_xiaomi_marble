@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,6 +92,39 @@ QDF_STATUS ucfg_nan_set_active_peers(struct wlan_objmgr_vdev *vdev,
  * Return: active ndi peer
  */
 uint32_t ucfg_nan_get_active_peers(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_nan_set_peer_mc_list: API to derive peer multicast address and add it
+ *                            to the list
+ * @vdev: pointer to vdev object
+ * @peer_mac_addr: Peer MAC address
+ *
+ * Return: None
+ */
+void ucfg_nan_set_peer_mc_list(struct wlan_objmgr_vdev *vdev,
+			       struct qdf_mac_addr peer_mac_addr);
+
+/**
+ * ucfg_nan_get_peer_mc_list: API to get peer multicast address list
+ * @vdev: pointer to vdev object
+ * @peer_mc_addr_list: Out pointer to the peer multicast address list
+ *
+ * Return: None
+ */
+void ucfg_nan_get_peer_mc_list(struct wlan_objmgr_vdev *vdev,
+			       struct qdf_mac_addr **peer_mc_addr_list);
+
+/**
+ * ucfg_nan_clear_peer_mc_list: Clear peer multicast address list
+ * @psoc: pointer to psoc object
+ * @vdev: pointer to vdev object
+ * @peer_mac_addr: Pointer to peer MAC address
+ *
+ * Return: None
+ */
+void ucfg_nan_clear_peer_mc_list(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *peer_mac_addr);
 
 /**
  * ucfg_nan_set_ndp_create_transaction_id: set ndp create transaction id
@@ -623,6 +657,12 @@ bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 static inline bool ucfg_get_disable_6g_nan(struct wlan_objmgr_psoc *psoc)
 {
 	return true;
+}
+
+static inline void
+ucfg_nan_get_peer_mc_list(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr **peer_mc_addr_list)
+{
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */

@@ -621,6 +621,25 @@ static inline int wlan_hdd_rx_thread_suspend(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
+/**
+ * wlan_hdd_is_full_power_down_enable()- Check wlan full power down
+ * @hdd_ctx: HDD context
+ *
+ * check whether the wlan full power down is enabled or not.
+ *
+ * Return: true if wlan full power enabled else false
+ */
+bool
+wlan_hdd_is_full_power_down_enable(struct hdd_context *hdd_ctx);
+#else
+static inline bool
+wlan_hdd_is_full_power_down_enable(struct hdd_context *hdd_ctx)
+{
+	return false;
+}
+#endif
+
 #ifdef FEATURE_ANI_LEVEL_REQUEST
 /**
  * wlan_hdd_get_ani_level() - Wrapper to call API to fetch ani level

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2557,6 +2558,8 @@ wmi_convert_fw_notif_to_cm_notif(uint32_t fw_notif)
 		return CM_ROAM_NOTIF_DEAUTH_RECV;
 	case WMI_ROAM_NOTIF_DISASSOC_RECV:
 		return CM_ROAM_NOTIF_DISASSOC_RECV;
+	case WMI_ROAM_NOTIF_SCAN_END:
+		return CM_ROAM_NOTIF_SCAN_END;
 	default:
 		return CM_ROAM_NOTIF_INVALID;
 	}
@@ -2829,6 +2832,38 @@ extract_roam_scan_chan_list_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+extract_roam_stats_with_single_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
+				   struct roam_stats_event *stats_info)
+{
+	QDF_STATUS status;
+	uint8_t vdev_id = stats_info->vdev_id;
+
+	status = wmi_unified_extract_roam_11kv_stats(
+			wmi_handle, evt_buf, &stats_info->data_11kv[0], 0, 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_debug("Roam 11kv stats extract failed vdev %d", vdev_id);
+
+	status = wmi_unified_extract_roam_trigger_stats(
+			wmi_handle, evt_buf, &stats_info->trigger[0], 0, 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_debug("Extract roamtrigger stats failed vdev %d",
+			  vdev_id);
+
+	status = wmi_unified_extract_roam_scan_stats(
+			wmi_handle, evt_buf, &stats_info->scan[0], 0, 0, 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_debug("Roam scan stats extract failed vdev %d", vdev_id);
+
+	status = wmi_unified_extract_roam_btm_response(
+			wmi_handle, evt_buf, &stats_info->btm_rsp[0], 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_debug("Roam btm rsp stats extract fail vdev %d",
+			  vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_roam_stats_event_tlv() - Extract the roam stats event
  * from the wmi_roam_stats_event_id
@@ -2960,6 +2995,10 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	stats_info->num_roam_msg_info = param_buf->num_roam_msg_info;
 	stats_info->num_tlv = num_tlv;
 
+	if (!num_tlv)
+		extract_roam_stats_with_single_tlv(wmi_handle, evt_buf,
+						   stats_info);
+
 	for (i = 0; i < num_tlv; i++) {
 		/*
 		 * Roam Trigger id and that specific roam trigger related
@@ -3005,6 +3044,19 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 			goto err;
 		}
 
+		/* BTM req/resp or Neighbor report/response info */
+		status = wmi_unified_extract_roam_11kv_stats(
+				      wmi_handle,
+				      evt_buf,
+				      &stats_info->data_11kv[i],
+				      i, num_rpt);
+		if (QDF_IS_STATUS_ERROR(status))
+			wmi_debug_rl("Roam 11kv stats extract fail vdev %d iter %d",
+				     vdev_id, i);
+
+		if (stats_info->data_11kv[i].present)
+			num_rpt += stats_info->data_11kv[i].num_freq;
+
 		/* BTM resp info */
 		status = wmi_unified_extract_roam_btm_response(wmi_handle,
 							evt_buf,
@@ -3028,50 +3080,6 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 			goto err;
 		}
 	}
-	if (!num_tlv) {
-		status = wmi_unified_extract_roam_11kv_stats(wmi_handle,
-					       evt_buf,
-					       &stats_info->data_11kv[0], 0, 0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_err("Roam 11kv stats extract failed vdev %d",
-				vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-
-		status = wmi_unified_extract_roam_trigger_stats(wmi_handle,
-						    evt_buf,
-						    &stats_info->trigger[0],
-						    0, 0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_debug_rl("Extract roamtrigger stats failed vdev %d",
-				     vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-
-		status = wmi_unified_extract_roam_scan_stats(wmi_handle,
-							   evt_buf,
-							   &stats_info->scan[0],
-							   0, 0, 0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_debug_rl("Roam scan stats extract failed vdev %d",
-				     vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-
-		status = wmi_unified_extract_roam_btm_response(wmi_handle,
-							evt_buf,
-							&stats_info->btm_rsp[0],
-							0);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			wmi_debug_rl("Roam btm rsp stats extract fail vdev %d",
-				     vdev_id);
-			status = QDF_STATUS_E_INVAL;
-			goto err;
-		}
-	}
 
 	if (param_buf->roam_msg_info && param_buf->num_roam_msg_info) {
 		roam_msg_info = qdf_mem_malloc(param_buf->num_roam_msg_info *
@@ -3091,21 +3099,6 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 				status = QDF_STATUS_E_INVAL;
 				goto err;
 			}
-			if (roam_msg_info[i].present && i < num_tlv) {
-			     /* BTM req/resp or Neighbor report/response info */
-				status = wmi_unified_extract_roam_11kv_stats(
-						      wmi_handle,
-						      evt_buf,
-						      &stats_info->data_11kv[i],
-						      i, num_rpt);
-				if (QDF_IS_STATUS_ERROR(status)) {
-					wmi_debug_rl("Roam 11kv stats extract fail vdev %d iter %d",
-						     vdev_id, i);
-					status = QDF_STATUS_E_INVAL;
-					goto err;
-				}
-				num_rpt += stats_info->data_11kv[i].num_freq;
-			}
 		}
 	}
 	return QDF_STATUS_SUCCESS;
@@ -3117,6 +3110,7 @@ err:
 	}
 	return status;
 }
+
 static QDF_STATUS
 extract_auth_offload_event_tlv(wmi_unified_t wmi_handle,
 			       uint8_t *event, uint32_t len,
@@ -3177,19 +3171,19 @@ extract_roam_pmkid_request_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 
 	if (!evt_buf || !len) {
 		wmi_err("received null event from target");
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	param_buf = (WMI_ROAM_PMKID_REQUEST_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
 		wmi_err("received null buf from target");
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	roam_pmkid_req_ev = param_buf->fixed_param;
 	if (!roam_pmkid_req_ev) {
 		wmi_err("received null event data from target");
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (roam_pmkid_req_ev->vdev_id >= WLAN_MAX_VDEVS) {
@@ -3201,20 +3195,20 @@ extract_roam_pmkid_request_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	if (num_entries > MAX_RSSI_AVOID_BSSID_LIST) {
 		wmi_err("num bssid entries:%d exceeds maximum value",
 			num_entries);
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	src_list = param_buf->pmkid_request;
 	if (len < (sizeof(*roam_pmkid_req_ev) +
 		(num_entries * sizeof(*src_list)))) {
 		wmi_err("Invalid length: %d", len);
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	dst_list = qdf_mem_malloc(sizeof(struct roam_pmkid_req_event) +
 				  (sizeof(struct qdf_mac_addr) * num_entries));
 	if (!dst_list)
-		return -ENOMEM;
+		return QDF_STATUS_E_NOMEM;
 
 	dst_list->vdev_id = roam_pmkid_req_ev->vdev_id;
 
@@ -3227,7 +3221,7 @@ extract_roam_pmkid_request_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 		    qdf_is_macaddr_group(roam_bsslist)) {
 			wmi_err("Invalid bssid");
 			qdf_mem_free(dst_list);
-			return -EINVAL;
+			return QDF_STATUS_E_INVAL;
 		}
 		wmi_debug("Received pmkid fallback for bssid: " QDF_MAC_ADDR_FMT" vdev_id:%d",
 			  QDF_MAC_ADDR_REF(roam_bsslist->bytes),
@@ -3236,6 +3230,52 @@ extract_roam_pmkid_request_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	}
 	dst_list->num_entries = num_entries;
 	*list = dst_list;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+extract_roam_candidate_frame_tlv(wmi_unified_t wmi_handle, uint8_t *event,
+				 uint32_t len,
+				 struct roam_scan_candidate_frame *data)
+{
+	WMI_ROAM_FRAME_EVENTID_param_tlvs *param_buf = NULL;
+	wmi_roam_frame_event_fixed_param *frame_params = NULL;
+
+	if (!event || !len) {
+		wmi_debug("Empty roam candidate frame event");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	param_buf = (WMI_ROAM_FRAME_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wmi_err("received null buf from target");
+		return -EINVAL;
+	}
+
+	frame_params =
+		(wmi_roam_frame_event_fixed_param *)param_buf->fixed_param;
+
+	if (frame_params->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_debug("Invalid VDEV id %d", frame_params->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (frame_params->frame_length > param_buf->num_frame) {
+		wmi_debug("Invalid frame length %d expected : %d",
+			  frame_params->frame_length,
+			  param_buf->num_frame);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!param_buf->frame) {
+		wmi_debug("Frame pointer is Null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	data->vdev_id = frame_params->vdev_id;
+	data->frame_length = frame_params->frame_length;
+	data->frame = (uint8_t *)param_buf->frame;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3264,6 +3304,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_roam_invoke_cmd = send_roam_invoke_cmd_tlv;
 	ops->send_vdev_set_pcl_cmd = send_vdev_set_pcl_cmd_tlv;
 	ops->send_set_roam_trigger_cmd = send_set_roam_trigger_cmd_tlv;
+	ops->extract_roam_candidate_frame = extract_roam_candidate_frame_tlv;
 }
 #else
 static inline QDF_STATUS

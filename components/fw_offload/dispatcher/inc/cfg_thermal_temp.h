@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2018,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -180,7 +181,7 @@
  * gThermalMitigationEnable - Set Thermal mitigation feature control
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * Usage: External
  *
@@ -188,7 +189,7 @@
  */
 #define CFG_THERMAL_MITIGATION_ENABLE CFG_INI_BOOL( \
 			"gThermalMitigationEnable", \
-			0, \
+			1, \
 			"Thermal mitigation feature control")
 
 /*

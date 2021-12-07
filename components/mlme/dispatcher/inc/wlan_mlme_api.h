@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2790,6 +2791,17 @@ wlan_mlme_get_idle_roam_min_rssi(struct wlan_objmgr_psoc *psoc, uint32_t *val);
  */
 QDF_STATUS
 wlan_mlme_get_idle_roam_band(struct wlan_objmgr_psoc *psoc, uint32_t *val);
+
+/**
+ * wlan_mlme_get_self_bss_roam() - Get self bss roam enable status
+ * @psoc: pointer to psoc object
+ * @enable_self_bss_roam:  Pointer to self bss roam enable status
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_self_bss_roam(struct wlan_objmgr_psoc *psoc,
+			    uint8_t *enable_self_bss_roam);
 #else
 static inline QDF_STATUS
 wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
@@ -3384,4 +3396,17 @@ wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc)
  * Return: vht channel width
  */
 enum phy_ch_width mlme_get_vht_ch_width(void);
+
+/**
+ * wlan_mlme_get_tx_retry_multiplier() - Get the tx retry multiplier percentage
+ *
+ * @psoc: pointer to psoc object
+ * @tx_retry_multiplier: pointer to hold user config value of
+ * tx_retry_multiplier
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_tx_retry_multiplier(struct wlan_objmgr_psoc *psoc,
+				  uint32_t *tx_retry_multiplier);
 #endif /* _WLAN_MLME_API_H_ */

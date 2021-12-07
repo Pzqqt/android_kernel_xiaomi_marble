@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -77,6 +78,36 @@ void wlan_son_ind_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
 				uint8_t *macaddr, bool is_reassoc,
 				uint8_t *frame, uint16_t frame_len,
 				QDF_STATUS status);
+/**
+ * wlan_son_deliver_tx_power() - notify son module of tx power
+ * @vdev: vdev
+ * @max_pwr: max power in dBm unit
+ *
+ * Return: 0 if event is sent successfully
+ */
+int wlan_son_deliver_tx_power(struct wlan_objmgr_vdev *vdev,
+			      int32_t max_pwr);
+
+/**
+ * wlan_son_deliver_vdev_stop() - notify son module of vdev stop
+ * @vdev: vdev
+ *
+ * Return: 0 if event is sent successfully
+ */
+int wlan_son_deliver_vdev_stop(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_son_deliver_inst_rssi() - notify son module of inst rssi
+ * @vdev: vdev
+ * @peer: peer device
+ * @irssi: inst rssi above the noise floor in dB unit
+ *
+ * Return: 0 if event is sent successfully
+ */
+int wlan_son_deliver_inst_rssi(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_objmgr_peer *peer,
+			       uint32_t irssi);
+
 #else
 
 static inline bool wlan_son_peer_is_kickout_allow(struct wlan_objmgr_vdev *vdev,
@@ -91,6 +122,27 @@ void wlan_son_ind_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
 				uint8_t *frame, uint16_t frame_len,
 				QDF_STATUS status)
 {
+}
+
+static inline
+int wlan_son_deliver_tx_power(struct wlan_objmgr_vdev *vdev,
+			      int32_t max_pwr)
+{
+	return -EINVAL;
+}
+
+static inline
+int wlan_son_deliver_vdev_stop(struct wlan_objmgr_vdev *vdev)
+{
+	return -EINVAL;
+}
+
+static inline
+int wlan_son_deliver_inst_rssi(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_objmgr_peer *peer,
+			       uint32_t irssi)
+{
+	return -EINVAL;
 }
 #endif /*WLAN_FEATURE_SON*/
 #endif

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -976,7 +977,8 @@ sap_validate_chan(struct sap_context *sap_context,
 					mac_handle,
 					sap_context->chan_freq,
 					sap_context->phyMode,
-					sap_context->cc_switch_mode);
+					sap_context->cc_switch_mode,
+					sap_context->sessionId);
 			sap_debug("After check overlap: sap freq %d con freq:%d",
 				  sap_context->chan_freq, con_ch_freq);
 			ch_params = sap_context->ch_params;
@@ -1768,6 +1770,78 @@ sap_update_cac_history(struct mac_context *mac_ctx,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline
+bool sap_check_peer_for_peer_null_mldaddr(struct wlan_objmgr_peer *peer)
+{
+	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)peer->mldaddr))
+		return true;
+	else
+		return false;
+}
+#else
+static inline
+bool sap_check_peer_for_peer_null_mldaddr(struct wlan_objmgr_peer *peer)
+{
+	return true;
+}
+#endif
+
+static
+QDF_STATUS sap_populate_peer_assoc_info(struct mac_context *mac_ctx,
+					struct csr_roam_info *csr_roaminfo,
+					struct sap_event *sap_ap_event)
+{
+	struct wlan_objmgr_peer *peer;
+	tSap_StationAssocReassocCompleteEvent *reassoc_complete;
+
+	reassoc_complete =
+		&sap_ap_event->sapevt.sapStationAssocReassocCompleteEvent;
+
+	peer = wlan_objmgr_get_peer_by_mac(mac_ctx->psoc,
+					   csr_roaminfo->peerMac.bytes,
+					   WLAN_LEGACY_MAC_ID);
+	if (!peer) {
+		sap_err("Peer object not found");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sap_debug("mlo peer assoc:%d", wlan_peer_mlme_is_assoc_peer(peer));
+
+	if (sap_check_peer_for_peer_null_mldaddr(peer) ||
+	    wlan_peer_mlme_is_assoc_peer(peer)) {
+		if (csr_roaminfo->assocReqLength < ASSOC_REQ_IE_OFFSET) {
+			sap_err("Invalid assoc request length:%d",
+				csr_roaminfo->assocReqLength);
+			wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+			return QDF_STATUS_E_INVAL;
+		}
+		reassoc_complete->ies_len = (csr_roaminfo->assocReqLength -
+					    ASSOC_REQ_IE_OFFSET);
+		reassoc_complete->ies = (csr_roaminfo->assocReqPtr +
+					 ASSOC_REQ_IE_OFFSET);
+		/* skip current AP address in reassoc frame */
+		if (csr_roaminfo->fReassocReq) {
+			reassoc_complete->ies_len -= QDF_MAC_ADDR_SIZE;
+			reassoc_complete->ies += QDF_MAC_ADDR_SIZE;
+		}
+	}
+
+	if (csr_roaminfo->addIELen) {
+		if (wlan_get_vendor_ie_ptr_from_oui(
+		    SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE,
+		    csr_roaminfo->paddIE, csr_roaminfo->addIELen)) {
+			reassoc_complete->staType = eSTA_TYPE_P2P_CLI;
+		} else {
+			reassoc_complete->staType = eSTA_TYPE_INFRA;
+		}
+	}
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * sap_signal_hdd_event() - send event notification
  * @sap_ctx: Sap Context
@@ -1931,6 +2005,13 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			return QDF_STATUS_E_ABORTED;
 		}
 
+		qdf_status = sap_populate_peer_assoc_info(mac_ctx, csr_roaminfo,
+							  sap_ap_event);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			qdf_mem_free(sap_ap_event);
+			return QDF_STATUS_E_INVAL;
+		}
+
 		reassoc_complete =
 		    &sap_ap_event->sapevt.sapStationAssocReassocCompleteEvent;
 
@@ -1949,33 +2030,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 #endif
 		reassoc_complete->staId = csr_roaminfo->staId;
 		reassoc_complete->status_code = csr_roaminfo->status_code;
-
-		if (csr_roaminfo->assocReqLength < ASSOC_REQ_IE_OFFSET) {
-			sap_err("Invalid assoc request length:%d",
-				 csr_roaminfo->assocReqLength);
-			qdf_mem_free(sap_ap_event);
-			return QDF_STATUS_E_INVAL;
-		}
-		reassoc_complete->ies_len = (csr_roaminfo->assocReqLength -
-					    ASSOC_REQ_IE_OFFSET);
-		reassoc_complete->ies = (csr_roaminfo->assocReqPtr +
-					 ASSOC_REQ_IE_OFFSET);
-
-		/* skip current AP address in reassoc frame */
-		if (csr_roaminfo->fReassocReq) {
-			reassoc_complete->ies_len -= QDF_MAC_ADDR_SIZE;
-			reassoc_complete->ies += QDF_MAC_ADDR_SIZE;
-		}
-
-		if (csr_roaminfo->addIELen) {
-			if (wlan_get_vendor_ie_ptr_from_oui(
-			    SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE,
-			    csr_roaminfo->paddIE, csr_roaminfo->addIELen)) {
-				reassoc_complete->staType = eSTA_TYPE_P2P_CLI;
-			} else {
-				reassoc_complete->staType = eSTA_TYPE_INFRA;
-			}
-		}
 
 		/* also fill up the channel info from the csr_roamInfo */
 		chaninfo = &reassoc_complete->chan_info;

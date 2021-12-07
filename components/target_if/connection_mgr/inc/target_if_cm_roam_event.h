@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -142,6 +143,19 @@ target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
  */
 void
 target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops);
+
+/**
+ * target_if_roam_frame_event_handler - Target IF API to receive
+ * Beacon/probe for the roaming candidate.
+ * @scn: target handle
+ * @event: event buffer
+ * @len: event buffer length
+ *
+ * Return: int for success or error code
+ */
+int
+target_if_roam_frame_event_handler(ol_scn_t scn, uint8_t *event,
+				   uint32_t len);
 #else /* WLAN_FEATURE_ROAM_OFFLOAD */
 static inline
 void
@@ -179,6 +193,13 @@ target_if_cm_roam_scan_chan_list_event_handler(ol_scn_t scn, uint8_t *event,
 static inline int
 target_if_pmkid_request_event_handler(ol_scn_t scn, uint8_t *event,
 				      uint32_t len)
+{
+	return 0;
+}
+
+static inline int
+target_if_roam_frame_event_handler(ol_scn_t scn, uint8_t *event,
+				   uint32_t len)
 {
 	return 0;
 }

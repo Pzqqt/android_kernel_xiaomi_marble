@@ -80,6 +80,8 @@ static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 	pe_info("Need to create NDI Peer :" QDF_MAC_ADDR_FMT,
 		QDF_MAC_ADDR_REF(peer_mac_addr.bytes));
 
+	ucfg_nan_set_peer_mc_list(session->vdev, peer_mac_addr);
+
 	peer_idx = lim_assign_peer_idx(mac_ctx, session);
 	if (!peer_idx) {
 		pe_err("Invalid peer_idx: %d", peer_idx);

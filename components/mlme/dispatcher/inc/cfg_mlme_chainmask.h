@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2019, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,7 +208,7 @@
  * <ini>
  * tx_chain_mask_2g - tx chain mask for 2g
  * @Min: 0
- * @Max: 3
+ * @Max: 4
  * @Default: 0
  *
  * This ini will set tx chain mask for 2g. To use the ini, make sure:
@@ -220,6 +221,12 @@
  * tx_chain_mask_2g=2 : for 2g tx use chain 1
  * tx_chain_mask_2g=3 : for 2g tx can use either chain
  *
+ * QCN7605 DBS chip has 3 RF chains.
+ * Chain0 for 2G, Chain1 for 2G/5G, Chain2 for 5G.
+ * DBS mode need 3 bits to map chainmask and halphy.
+ * In HW design, PHYA0 always Connects to shared RF chain1.
+ * tx_chain_mask_2g=4 : for 2g tx chain use PHYB and chain 0
+ *
  * Related: None
  *
  * Supported Feature: All profiles
@@ -231,7 +238,7 @@
 #define CFG_TX_CHAIN_MASK_2G CFG_INI_UINT( \
 			"tx_chain_mask_2g", \
 			0, \
-			3, \
+			4, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"2.4G Tx Chainmask")
@@ -240,7 +247,7 @@
  * <ini>
  * rx_chain_mask_2g - rx chain mask for 2g
  * @Min: 0
- * @Max: 3
+ * @Max: 4
  * @Default: 0
  *
  * This ini will set rx chain mask for 2g. To use the ini, make sure:
@@ -253,6 +260,12 @@
  * rx_chain_mask_2g=2 : for 2g rx use chain 1
  * rx_chain_mask_2g=3 : for 2g rx can use either chain
  *
+ * QCN7605 DBS chip has 3 RF chains.
+ * Chain0 for 2G, Chain1 for 2G/5G, Chain2 for 5G.
+ * DBS mode need 3 bits to map chainmask and halphy.
+ * In HW design, PHYA0 always Connects to shared RF chain1.
+ * rx_chain_mask_2g=4 : for 2g rx chain use PHYB and chain 0
+ *
  * Related: None
  *
  * Supported Feature: All profiles
@@ -264,7 +277,7 @@
 #define CFG_RX_CHAIN_MASK_2G CFG_INI_UINT( \
 			"rx_chain_mask_2g", \
 			0, \
-			3, \
+			4, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"2.4G Rx Chainmask")
@@ -273,7 +286,7 @@
  * <ini>
  * tx_chain_mask_5g - tx chain mask for 5g
  * @Min: 0
- * @Max: 3
+ * @Max: 6
  * @Default: 0
  *
  * This ini will set tx chain mask for 5g. To use the ini, make sure:
@@ -282,9 +295,17 @@
  * gEnable2x2 = 0
  *
  * tx_chain_mask_5g=0 : don't care
- * tx_chain_mask_5g=1 : for 5g tx use chain 0
- * tx_chain_mask_5g=2 : for 5g tx use chain 1
+ * tx_chain_mask_5g=1 : for 5g tx use chain 0, Genoa use chain 1
+ * tx_chain_mask_5g=2 : for 5g tx use chain 1, Genoa use chain 2
  * tx_chain_mask_5g=3 : for 5g tx can use either chain
+ *
+ * QCN7605 DBS chip has 3 RF chains.
+ * Chain0 for 2G, Chain1 for 2G/5G, Chain2 for 5G.
+ * DBS mode need 3 bits to map chainmask and halphy.
+ * In HW design, PHYA0 always Connects to shared RF chain1.
+ * tx_chain_mask_5g=4 : for 5g tx chain use PHYB and chain 2
+ * tx_chain_mask_5g=5 : for 5g tx chain use PHYA and chain 1
+ * tx_chain_mask_5g=6 : for 5g tx chain use PHYA and chain 2
  *
  * Related: None
  *
@@ -297,7 +318,7 @@
 #define CFG_TX_CHAIN_MASK_5G CFG_INI_UINT( \
 			"tx_chain_mask_5g", \
 			0, \
-			3, \
+			6, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"5Ghz Tx Chainmask")
@@ -306,7 +327,7 @@
  * <ini>
  * rx_chain_mask_5g - rx chain mask for 5g
  * @Min: 0
- * @Max: 3
+ * @Max: 6
  * @Default: 0
  *
  * This ini will set rx chain mask for 5g. To use the ini, make sure:
@@ -315,9 +336,17 @@
  * gEnable2x2 = 0
  *
  * rx_chain_mask_5g=0 : don't care
- * rx_chain_mask_5g=1 : for 5g rx use chain 0
- * rx_chain_mask_5g=2 : for 5g rx use chain 1
+ * rx_chain_mask_5g=1 : for 5g rx use chain 0, Genoa use chain 1
+ * rx_chain_mask_5g=2 : for 5g rx use chain 1, Genoa use chain 2
  * rx_chain_mask_5g=3 : for 5g rx can use either chain
+ *
+ * QCN7605 DBS chip has 3 RF chains.
+ * Chain0 for 2G, Chain1 for 2G/5G, Chain2 for 5G.
+ * DBS mode need 3 bits to map halphy and chain.
+ * HW design, PHYA0 always Connects to shared RF chain1.
+ * rx_chain_mask_5g=4 : for 5g rx chain use PHYB and chain 2
+ * rx_chain_mask_5g=5 : for 5g rx chain use PHYA and chain 1
+ * rx_chain_mask_5g=6 : for 5g rx chain use PHYB and chain 2
  *
  * Related: None
  *
@@ -330,10 +359,10 @@
 #define CFG_RX_CHAIN_MASK_5G CFG_INI_UINT( \
 			"rx_chain_mask_5g", \
 			0, \
-			3, \
+			6, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
-			"5Ghz Tx Chainmask")
+			"5Ghz Rx Chainmask")
 
 /*
  * <ini>

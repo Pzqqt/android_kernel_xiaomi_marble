@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +27,7 @@
 #include "wlan_if_mgr_main.h"
 #include "wlan_p2p_cfg_api.h"
 #include "wlan_tdls_api.h"
+#include "wlan_p2p_api.h"
 
 QDF_STATUS if_mgr_ap_start_bss(struct wlan_objmgr_vdev *vdev,
 			       struct if_mgr_event_data *event_data)
@@ -128,3 +130,25 @@ if_mgr_ap_stop_bss_complete(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+QDF_STATUS
+if_mgr_csa_complete(struct wlan_objmgr_vdev *vdev,
+		    struct if_mgr_event_data *event_data)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	status = wlan_p2p_check_and_force_scc_go_plus_go(psoc, vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		ifmgr_err("force scc failure with status: %d", status);
+	return status;
+}
+#endif

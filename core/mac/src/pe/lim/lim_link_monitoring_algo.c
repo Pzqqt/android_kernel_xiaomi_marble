@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -201,17 +202,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 	case HAL_DEL_STA_REASON_CODE_SA_QUERY_TIMEOUT:
 	case HAL_DEL_STA_REASON_CODE_XRETRY:
 		if (LIM_IS_STA_ROLE(session_entry) && !msg->is_tdls) {
-			if (!((session_entry->limMlmState ==
-			    eLIM_MLM_LINK_ESTABLISHED_STATE) &&
-			    (session_entry->limSmeState !=
-			    eLIM_SME_WT_DISASSOC_STATE) &&
-			    (session_entry->limSmeState !=
-			    eLIM_SME_WT_DEAUTH_STATE))) {
-				pe_err("Do not process in limMlmState %s(%x) limSmeState %s(%x)",
-				  lim_mlm_state_str(session_entry->limMlmState),
-				  session_entry->limMlmState,
-				  lim_sme_state_str(session_entry->limSmeState),
-				  session_entry->limSmeState);
+			if (!lim_is_sb_disconnect_allowed(session_entry)) {
 				qdf_mem_free(msg);
 				return;
 			}
@@ -262,10 +253,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 		break;
 
 	case HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT:
-		if (session_entry->limMlmState !=
-		    eLIM_MLM_LINK_ESTABLISHED_STATE) {
-			pe_err("BTM request received in state %s",
-				lim_mlm_state_str(session_entry->limMlmState));
+		if (!lim_is_sb_disconnect_allowed(session_entry)) {
 			qdf_mem_free(msg);
 			lim_msg->bodyptr = NULL;
 			return;
@@ -357,16 +345,21 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
+
+	pe_info("Session %d Vdev %d reason code %d trigger %d",
+		pe_session->peSessionId, pe_session->vdev_id, reasonCode,
+		trigger);
+
+	/* Add the check here in case caller missed the check */
+	if (!lim_is_sb_disconnect_allowed(pe_session))
+		return;
+
 	/**
 	 * Heart beat failed for upto threshold value
 	 * and AP did not respond for Probe request.
 	 * Trigger link tear down.
 	 */
 	pe_session->pmmOffloadInfo.bcnmiss = false;
-
-	pe_info("Session %d Vdev %d reason code %d trigger %d",
-		pe_session->peSessionId, pe_session->vdev_id, reasonCode,
-		trigger);
 
 	/* Announce loss of link to Roaming algorithm */
 	/* and cleanup by sending SME_DISASSOC_REQ to SME */
@@ -377,6 +370,7 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 
 	if (sta) {
 		tLimMlmDeauthInd mlmDeauthInd;
+		struct qdf_mac_addr connected_bssid;
 
 		if ((sta->mlmStaContext.disassocReason ==
 		    REASON_DEAUTH_NETWORK_LEAVING) ||
@@ -425,9 +419,21 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 		mlmDeauthInd.deauthTrigger =
 			sta->mlmStaContext.cleanupTrigger;
 
-		if (LIM_IS_STA_ROLE(pe_session))
+		if (LIM_IS_STA_ROLE(pe_session)) {
+			if (reasonCode == REASON_BEACON_MISSED) {
+				qdf_copy_macaddr(
+					&connected_bssid,
+					(struct qdf_mac_addr *)sta->staAddr);
+				cm_roam_beacon_loss_disconnect_event(
+					connected_bssid,
+					pe_session->hb_failure_ap_rssi,
+					pe_session->vdev_id);
+			}
+;
 			lim_post_sme_message(mac, LIM_MLM_DEAUTH_IND,
 				     (uint32_t *) &mlmDeauthInd);
+		}
+
 		if (mac->mlme_cfg->gen.fatal_event_trigger)
 			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 					WLAN_LOG_INDICATOR_HOST_DRIVER,
@@ -471,9 +477,7 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 	session->LimHBFailureStatus = false;
 
 	if (LIM_IS_STA_ROLE(session) &&
-	    (session->limMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE) &&
-	    (session->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
-	    (session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
+	    lim_is_sb_disconnect_allowed(session)) {
 		if (!mac_ctx->sys.gSysEnableLinkMonitorMode) {
 			goto hb_handler_fail;
 		}

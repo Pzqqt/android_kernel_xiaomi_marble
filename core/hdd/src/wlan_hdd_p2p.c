@@ -269,36 +269,6 @@ int wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	return errno;
 }
 
-/**
- * wlan_hdd_validate_and_override_offchan() - To validate and override offchan
- * @adapter: hdd adapter of vdev
- * @chan: channel info of mgmt to be sent
- * @offchan: off channel flag to check and override
- *
- * This function is to validate the channel info against adapter current state
- * and home channel, if off channel not needed, override offchan flag.
- *
- * Return: None
- */
-static void
-wlan_hdd_validate_and_override_offchan(struct hdd_adapter *adapter,
-				       struct ieee80211_channel *chan,
-				       bool *offchan)
-{
-	qdf_freq_t home_ch_freq;
-
-	if (!offchan || !chan || !(*offchan))
-		return;
-
-	home_ch_freq = hdd_get_adapter_home_channel(adapter);
-
-	if (chan->center_freq == home_ch_freq) {
-		hdd_debug("override offchan to 0 at home channel %d",
-			  home_ch_freq);
-		*offchan = false;
-	}
-}
-
 static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 			      struct ieee80211_channel *chan, bool offchan,
 			      unsigned int wait,
@@ -360,8 +330,6 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		  chan ? chan->center_freq : 0);
 	hdd_debug("wait:%d offchan:%d do_not_wait_ack:%d",
 		  wait, offchan, dont_wait_for_ack);
-
-	wlan_hdd_validate_and_override_offchan(adapter, chan, &offchan);
 
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_P2P_ID);
 	if (!vdev) {
