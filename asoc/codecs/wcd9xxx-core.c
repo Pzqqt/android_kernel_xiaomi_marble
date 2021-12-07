@@ -631,12 +631,12 @@ static int wcd9xxx_device_init(struct wcd9xxx *wcd9xxx)
 	return ret;
 err_irq:
 	wcd9xxx_irq_exit(&wcd9xxx->core_res);
+err:
+    wcd9xxx_core_res_deinit(&wcd9xxx->core_res);
 fail_cdc_fill:
 	devm_kfree(wcd9xxx->dev, wcd9xxx->codec_type);
-	wcd9xxx->codec_type = NULL;
-err:
 	wcd9xxx_bringdown(wcd9xxx->dev);
-	wcd9xxx_core_res_deinit(&wcd9xxx->core_res);
+	wcd9xxx->codec_type = NULL;
 err_bring_up:
 	mutex_destroy(&wcd9xxx->io_lock);
 	mutex_destroy(&wcd9xxx->xfer_lock);
