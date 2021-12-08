@@ -3181,6 +3181,26 @@ typedef struct {
     A_UINT32 vdev_id_mismatch_cnt;
 } htt_tx_de_cmn_stats_tlv;
 
+#define HTT_STATS_RX_FW_RING_SIZE_NUM_ENTRIES(dword) ((dword >> 0)  & 0xffff)
+#define HTT_STATS_RX_FW_RING_CURR_NUM_ENTRIES(dword) ((dword >> 16) & 0xffff)
+
+/* Rx debug info for status rings */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* BIT [15 :  0] :- max possible number of entries in respective ring (size of the ring in terms of entries)
+     * BIT [16 : 31] :- current number of entries occupied in respective ring
+     */
+    A_UINT32 entry_status_sw2rxdma;
+    A_UINT32 entry_status_rxdma2reo;
+    A_UINT32 entry_status_reo2sw1;
+    A_UINT32 entry_status_reo2sw4;
+    A_UINT32 entry_status_refillringipa;
+    A_UINT32 entry_status_refillringhost;
+    /* datarate - Moving Average of Number of Entries */
+    A_UINT32 datarate_refillringipa;
+    A_UINT32 datarate_refillringhost;
+} htt_rx_fw_ring_stats_tlv_v;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
  * TLV_TAGS:
  *     - HTT_STATS_TX_DE_CMN_TAG
