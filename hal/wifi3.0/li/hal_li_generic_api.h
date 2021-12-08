@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -907,6 +908,7 @@ hal_rx_status_get_tlv_info_generic_li(void *rx_tlv_hdr, void *ppduinfo,
 #ifdef QCA_WIFI_QCA6390
 		case TARGET_TYPE_QCA6390:
 #endif
+		case TARGET_TYPE_QCA6490:
 			ppdu_info->rx_status.is_stbc =
 				HAL_RX_GET(vht_sig_a_info,
 					   VHT_SIG_A_INFO_0, STBC);
@@ -935,7 +937,6 @@ hal_rx_status_get_tlv_info_generic_li(void *rx_tlv_hdr, void *ppduinfo,
 			ppdu_info->rx_status.nss = 0;
 #endif
 			break;
-		case TARGET_TYPE_QCA6490:
 		case TARGET_TYPE_QCA6750:
 			ppdu_info->rx_status.nss = 0;
 			break;
