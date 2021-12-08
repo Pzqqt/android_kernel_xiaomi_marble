@@ -1222,6 +1222,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ctrl_path_bmiss_stats_struct,
     WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_changed_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_tlv,
+    WMITLV_TAG_STRUC_wmi_sw_cal_ver_cap,
 } WMITLV_TAG_ID;
 
 /*
@@ -4934,7 +4935,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_twt_caps_params, twt_caps, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_htt_msdu_idx_to_htt_msdu_qtype, htt_msdu_idx_to_qtype_map, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dbs_or_sbs_cap_ext, dbs_or_sbs_cap_ext, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_cust_bdf_version_capabilities, cust_bdf_version_capabilities, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_cust_bdf_version_capabilities, cust_bdf_version_capabilities, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_sw_cal_ver_cap, sw_cal_ver_cap, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT2_EVENTID);
 
 #define WMITLV_TABLE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID(id,op,buf,len) \

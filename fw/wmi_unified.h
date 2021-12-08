@@ -36887,6 +36887,13 @@ typedef struct {
     A_UINT32 svc_class_id; /* which service class is being disabled */
 } wmi_sawf_svc_class_disable_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sw_cal_ver_cap */
+    A_UINT32 bdf_cal_ver; /* SW cal version in BDF */
+    A_UINT32 ftm_cal_ver; /* SW cal version in factory data */
+    A_UINT32 status;      /* Return status. 0 for success, non-zero otherwise */
+} wmi_sw_cal_ver_cap;
+
 
 
 /* ADD NEW DEFS HERE */
