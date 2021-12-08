@@ -467,22 +467,23 @@ struct mlo_link_num_param {
  * struct mlo_link_set_active_param: MLO link set active params
  * @force_mode: operation to take (enum mlo_link_force_mode)
  * @reason: reason for the operation (enum mlo_link_force_reason)
- * @entry_num: number of the valid entries for link_num/vdev_bitmap
+ * @num_link_entry: number of the valid entries for link_num
+ * @num_vdev_bitmap: number of the valid entries for vdev_bitmap
  * @link_num: link number param array
  *  It's present only when force_mode is MLO_LINK_FORCE_MODE_ACTIVE_NUM or
  *  MLO_LINK_FORCE_MODE_INACTIVE_NUM
  * @vdev_bitmap: active/inactive vdev bitmap array
- *  It's present only when force_mode is MLO_LINK_FORCE_MODE_ACTIVE,
- *  MLO_LINK_FORCE_MODE_INACTIVE or MLO_LINK_FORCE_MODE_NO_FORCE.
+ *  It will be present when force_mode is MLO_LINK_FORCE_MODE_ACTIVE,
+ *  MLO_LINK_FORCE_MODE_INACTIVE, MLO_LINK_FORCE_MODE_NO_FORCE,
+ *  MLO_LINK_FORCE_MODE_ACTIVE_NUM or MLO_LINK_FORCE_MODE_INACTIVE_NUM
  */
 struct mlo_link_set_active_param {
 	uint32_t force_mode;
 	uint32_t reason;
-	uint32_t entry_num;
-	union {
-		struct mlo_link_num_param link_num[MLO_LINK_NUM_SZ];
-		uint32_t vdev_bitmap[MLO_VDEV_BITMAP_SZ];
-	};
+	uint32_t num_link_entry;
+	uint32_t num_vdev_bitmap;
+	struct mlo_link_num_param link_num[MLO_LINK_NUM_SZ];
+	uint32_t vdev_bitmap[MLO_VDEV_BITMAP_SZ];
 };
 
 /*

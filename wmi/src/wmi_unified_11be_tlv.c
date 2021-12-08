@@ -359,8 +359,10 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_MLO_LINK_FORCE_MODE force_mode;
 	WMI_MLO_LINK_FORCE_REASON force_reason;
 
-	if (!param->entry_num) {
-		wmi_err("No entry is provided");
+	if (!param->num_vdev_bitmap && !param->num_link_entry) {
+		wmi_err("No entry is provided vdev bit map %d link entry %d",
+			param->num_vdev_bitmap,
+			param->num_link_entry);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -375,12 +377,12 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	switch (force_mode) {
 	case WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM:
 	case WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM:
-		num_link_num_param = param->entry_num;
-		break;
+		num_link_num_param = param->num_link_entry;
+		/* fallthrough */
 	case WMI_MLO_LINK_FORCE_ACTIVE:
 	case WMI_MLO_LINK_FORCE_INACTIVE:
 	case WMI_MLO_LINK_NO_FORCE:
-		num_vdev_bitmap = param->entry_num;
+		num_vdev_bitmap = param->num_vdev_bitmap;
 		break;
 	}
 
@@ -401,7 +403,9 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(&cmd->tlv_header, tag_id, tlv_len);
 	cmd->force_mode = force_mode;
 	cmd->reason = force_reason;
-	wmi_debug("mode %d reason %d", cmd->force_mode, cmd->reason);
+	wmi_debug("mode %d reason %d num_link_num_param %d num_vdev_bitmap %d",
+		  cmd->force_mode, cmd->reason, num_link_num_param,
+		  num_vdev_bitmap);
 	buf_ptr += sizeof(*cmd);
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
