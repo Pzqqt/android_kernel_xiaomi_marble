@@ -486,7 +486,7 @@ static void dp_tx_tso_desc_release(struct dp_soc *soc,
  *
  * Return:
  */
-static void
+void
 dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 {
 	struct dp_pdev *pdev = tx_desc->pdev;
@@ -2016,8 +2016,7 @@ fail_return:
  *
  * Return: none
  */
-static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
-				       struct dp_tx_desc_s *desc)
+void dp_tx_comp_free_buf(struct dp_soc *soc, struct dp_tx_desc_s *desc)
 {
 	qdf_nbuf_t nbuf = desc->nbuf;
 	enum dp_tx_event_type type = dp_tx_get_event_type(desc->flags);
@@ -3232,7 +3231,6 @@ int dp_tx_proxy_arp(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
  *
  * Return: none
  */
-static
 void dp_tx_reinject_handler(struct dp_soc *soc,
 			    struct dp_vdev *vdev,
 			    struct dp_tx_desc_s *tx_desc,
@@ -3351,10 +3349,10 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
  *
  * Return: none
  */
-static void dp_tx_inspect_handler(struct dp_soc *soc,
-				  struct dp_vdev *vdev,
-				  struct dp_tx_desc_s *tx_desc,
-				  uint8_t *status)
+void dp_tx_inspect_handler(struct dp_soc *soc,
+			   struct dp_vdev *vdev,
+			   struct dp_tx_desc_s *tx_desc,
+			   uint8_t *status)
 {
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
@@ -3489,9 +3487,8 @@ static inline void dp_tx_update_peer_ext_stats(struct dp_peer *peer,
  * @ring_id: TCL or WBM ring number for transmit path
  * Return: none
  */
-static void dp_tx_compute_delay(struct dp_vdev *vdev,
-				struct dp_tx_desc_s *tx_desc,
-				uint8_t tid, uint8_t ring_id)
+void dp_tx_compute_delay(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
+			 uint8_t tid, uint8_t ring_id)
 {
 	int64_t current_timestamp, timestamp_ingress, timestamp_hw_enqueue;
 	uint32_t sw_enqueue_delay, fwhw_transmit_delay, interframe_delay;
@@ -3865,7 +3862,7 @@ void dp_send_completion_to_pkt_capture(struct dp_soc *soc,
  *
  * Return: none
  */
-static inline void
+void
 dp_tx_comp_process_desc(struct dp_soc *soc,
 			struct dp_tx_desc_s *desc,
 			struct hal_tx_completion_status *ts,
@@ -4103,7 +4100,6 @@ void dp_tx_update_uplink_delay(struct dp_soc *soc, struct dp_vdev *vdev,
  *
  * Return: none
  */
-static inline
 void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 				  struct dp_tx_desc_s *tx_desc,
 				  struct hal_tx_completion_status *ts,
@@ -4226,7 +4222,6 @@ out:
  *
  * Return: none
  */
-static inline
 void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
 				   uint8_t tx_status, bool update)
 {
@@ -4237,7 +4232,6 @@ void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
 	}
 }
 #elif defined(QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT)
-static inline
 void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
 				   uint8_t tx_status, bool update)
 {
@@ -4249,7 +4243,6 @@ void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
 }
 
 #else
-static inline
 void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
 				   uint8_t tx_status, bool update)
 {
@@ -4340,192 +4333,6 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 	}
 	if (peer)
 		dp_peer_unref_delete(peer, DP_MOD_ID_TX_COMP);
-}
-
-/**
- * dp_tx_process_htt_completion() - Tx HTT Completion Indication Handler
- * @soc: Handle to DP soc structure
- * @tx_desc: software descriptor head pointer
- * @status : Tx completion status from HTT descriptor
- * @ring_id: ring number
- *
- * This function will process HTT Tx indication messages from Target
- *
- * Return: none
- */
-static
-void dp_tx_process_htt_completion(struct dp_soc *soc,
-				  struct dp_tx_desc_s *tx_desc, uint8_t *status,
-				  uint8_t ring_id)
-{
-	uint8_t tx_status;
-	struct dp_pdev *pdev;
-	struct dp_vdev *vdev;
-	struct hal_tx_completion_status ts = {0};
-	uint32_t *htt_desc = (uint32_t *)status;
-	struct dp_peer *peer;
-	struct cdp_tid_tx_stats *tid_stats = NULL;
-	struct htt_soc *htt_handle;
-	uint8_t vdev_id;
-
-	tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_desc[0]);
-	htt_handle = (struct htt_soc *)soc->htt_handle;
-	htt_wbm_event_record(htt_handle->htt_logger_handle, tx_status, status);
-
-	/*
-	 * There can be scenario where WBM consuming descriptor enqueued
-	 * from TQM2WBM first and TQM completion can happen before MEC
-	 * notification comes from FW2WBM. Avoid access any field of tx
-	 * descriptor in case of MEC notify.
-	 */
-	if (tx_status == HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY) {
-		if (soc->mec_fw_offload)
-			return;
-
-		/*
-		 * Get vdev id from HTT status word in case of MEC
-		 * notification
-		 */
-		vdev_id = HTT_TX_WBM_COMPLETION_V2_VDEV_ID_GET(htt_desc[3]);
-		if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
-			return;
-
-		vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
-				DP_MOD_ID_HTT_COMP);
-		if (!vdev)
-			return;
-		dp_tx_mec_handler(vdev, status);
-		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
-		return;
-	}
-
-	/*
-	 * If the descriptor is already freed in vdev_detach,
-	 * continue to next descriptor
-	 */
-	if (qdf_unlikely(!tx_desc->flags)) {
-		dp_tx_comp_info_rl("Descriptor freed in vdev_detach %d", tx_desc->id);
-		return;
-	}
-
-	if (qdf_unlikely(tx_desc->vdev_id == DP_INVALID_VDEV_ID)) {
-		dp_tx_comp_info_rl("Invalid vdev_id %d", tx_desc->id);
-		tx_desc->flags |= DP_TX_DESC_FLAG_TX_COMP_ERR;
-		dp_tx_comp_free_buf(soc, tx_desc);
-		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
-		return;
-	}
-
-	pdev = tx_desc->pdev;
-
-	if (qdf_unlikely(tx_desc->pdev->is_pdev_down)) {
-		dp_tx_comp_info_rl("pdev in down state %d", tx_desc->id);
-		tx_desc->flags |= DP_TX_DESC_FLAG_TX_COMP_ERR;
-		dp_tx_comp_free_buf(soc, tx_desc);
-		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
-		return;
-	}
-
-	qdf_assert(tx_desc->pdev);
-
-	vdev_id = tx_desc->vdev_id;
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
-			DP_MOD_ID_HTT_COMP);
-
-	if (qdf_unlikely(!vdev)) {
-		dp_tx_comp_info_rl("Unable to get vdev ref  %d", tx_desc->id);
-		tx_desc->flags |= DP_TX_DESC_FLAG_TX_COMP_ERR;
-		dp_tx_comp_free_buf(soc, tx_desc);
-		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
-		return;
-	}
-
-	switch (tx_status) {
-	case HTT_TX_FW2WBM_TX_STATUS_OK:
-	case HTT_TX_FW2WBM_TX_STATUS_DROP:
-	case HTT_TX_FW2WBM_TX_STATUS_TTL:
-	{
-		uint8_t tid;
-		if (HTT_TX_WBM_COMPLETION_V2_VALID_GET(htt_desc[2])) {
-			ts.peer_id =
-				HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_GET(
-						htt_desc[2]);
-			ts.tid =
-				HTT_TX_WBM_COMPLETION_V2_TID_NUM_GET(
-						htt_desc[2]);
-		} else {
-			ts.peer_id = HTT_INVALID_PEER;
-			ts.tid = HTT_INVALID_TID;
-		}
-		ts.release_src = HAL_TX_COMP_RELEASE_SOURCE_FW;
-		ts.ppdu_id =
-			HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_GET(
-					htt_desc[1]);
-		ts.ack_frame_rssi =
-			HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_GET(
-					htt_desc[1]);
-
-		ts.tsf = htt_desc[3];
-		ts.first_msdu = 1;
-		ts.last_msdu = 1;
-		tid = ts.tid;
-		if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
-			tid = CDP_MAX_DATA_TIDS - 1;
-
-		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[ring_id][tid];
-
-		if (qdf_unlikely(pdev->delay_stats_flag))
-			dp_tx_compute_delay(vdev, tx_desc, tid, ring_id);
-		if (tx_status < CDP_MAX_TX_HTT_STATUS) {
-			tid_stats->htt_status_cnt[tx_status]++;
-		}
-
-		peer = dp_peer_get_ref_by_id(soc, ts.peer_id,
-					     DP_MOD_ID_HTT_COMP);
-
-		if (qdf_likely(peer))
-			dp_tx_update_peer_basic_stats(peer,
-						      qdf_nbuf_len(tx_desc->nbuf),
-						      tx_status,
-						      pdev->enhanced_stats_en);
-
-		dp_tx_comp_process_tx_status(soc, tx_desc, &ts, peer, ring_id);
-		dp_tx_comp_process_desc(soc, tx_desc, &ts, peer);
-		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
-
-		if (qdf_likely(peer))
-			dp_peer_unref_delete(peer, DP_MOD_ID_HTT_COMP);
-
-		break;
-	}
-	case HTT_TX_FW2WBM_TX_STATUS_REINJECT:
-	{
-		dp_tx_reinject_handler(soc, vdev, tx_desc, status);
-		break;
-	}
-	case HTT_TX_FW2WBM_TX_STATUS_INSPECT:
-	{
-		dp_tx_inspect_handler(soc, vdev, tx_desc, status);
-		break;
-	}
-	case HTT_TX_FW2WBM_TX_STATUS_VDEVID_MISMATCH:
-	{
-		DP_STATS_INC(vdev, tx_i.dropped.fail_per_pkt_vdev_id_check, 1);
-		goto release_tx_desc;
-	}
-	default:
-		dp_tx_comp_err("Invalid HTT tx_status %d\n",
-			       tx_status);
-		goto release_tx_desc;
-	}
-
-	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
-	return;
-
-release_tx_desc:
-	dp_tx_comp_free_buf(soc, tx_desc);
-	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
-	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
 }
 
 #ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
@@ -4713,8 +4520,11 @@ more_data:
 			uint8_t htt_tx_status[HAL_TX_COMP_HTT_STATUS_LEN];
 			hal_tx_comp_get_htt_desc(tx_comp_hal_desc,
 					htt_tx_status);
-			dp_tx_process_htt_completion(soc, tx_desc,
-					htt_tx_status, ring_id);
+			soc->arch_ops.dp_tx_process_htt_completion(
+							soc,
+							tx_desc,
+							htt_tx_status,
+							ring_id);
 		} else {
 			tx_desc->tx_status =
 				hal_tx_comp_get_tx_status(tx_comp_hal_desc);

@@ -389,6 +389,8 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 	arch_ops->dp_rx_process = dp_rx_process_li;
 	arch_ops->tx_comp_get_params_from_hal_desc =
 		dp_tx_comp_get_params_from_hal_desc_li;
+	arch_ops->dp_tx_process_htt_completion =
+			dp_tx_process_htt_completion_li;
 	arch_ops->dp_wbm_get_rx_desc_from_hal_desc =
 			dp_wbm_get_rx_desc_from_hal_desc_li;
 	arch_ops->dp_tx_desc_pool_init = dp_tx_desc_pool_init_li;

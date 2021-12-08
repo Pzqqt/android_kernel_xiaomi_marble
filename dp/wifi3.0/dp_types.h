@@ -1671,6 +1671,10 @@ struct dp_arch_ops {
 	 void (*tx_comp_get_params_from_hal_desc)(struct dp_soc *soc,
 						  void *tx_comp_hal_desc,
 						  struct dp_tx_desc_s **desc);
+	void (*dp_tx_process_htt_completion)(struct dp_soc *soc,
+					     struct dp_tx_desc_s *tx_desc,
+					     uint8_t *status,
+					     uint8_t ring_id);
 	uint32_t (*dp_rx_process)(struct dp_intr *int_ctx,
 				  hal_ring_handle_t hal_ring_hdl,
 				  uint8_t reo_ring_num, uint32_t quota);
