@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -94,6 +95,17 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 reg_process_master_chan_list_ext(struct cur_regulatory_info *reg_info);
 
+/**
+ * reg_get_6g_ap_master_chan_list() - Get  an ap  master channel list depending
+ * on * ap power type
+ * @ap_pwr_type: Power type (LPI/VLP/SP)
+ * @chan_list: Pointer to the channel list. The output channel list
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
+					  enum reg_6g_ap_type ap_pwr_type,
+					  struct regulatory_channel *chan_list);
 #ifdef CONFIG_AFC_SUPPORT
 /**
  * reg_process_afc_event() - Process the afc event and compute the 6G AFC
@@ -105,7 +117,16 @@ reg_process_master_chan_list_ext(struct cur_regulatory_info *reg_info);
 QDF_STATUS
 reg_process_afc_event(struct afc_regulatory_info *afc_info);
 #endif
-#endif
+
+#else /* CONFIG_BAND_6GHZ */
+static inline QDF_STATUS
+reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
+			       enum reg_6g_ap_type ap_pwr_type,
+			       struct regulatory_channel *chan_list)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* CONFIG_BAND_6GHZ */
 /**
  * reg_process_master_chan_list() - Compute master channel list based on the
  * regulatory rules.
@@ -126,18 +147,6 @@ QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				     struct regulatory_channel *chan_list);
 
 #if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
-/**
- * reg_get_6g_ap_master_chan_list() - Get  an ap  master channel list depending
- * on * ap power type
- * @ap_pwr_type: Power type (LPI/VLP/SP)
- * @chan_list: Pointer to the channel list. The output channel list
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
-					  enum reg_6g_ap_type ap_pwr_type,
-					  struct regulatory_channel *chan_list);
-
 /**
  * reg_get_6g_afc_chan_list() - provide the pdev afc channel list
  * @pdev: pdev pointer
