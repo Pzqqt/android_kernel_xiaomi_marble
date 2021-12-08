@@ -6918,21 +6918,21 @@ QDF_STATUS dp_peer_mlo_setup(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* if this is the first assoc link */
-	if (setup_info->is_assoc_link)
+	/* if this is the first link peer */
+	if (setup_info->is_first_link)
 		/* create MLD peer */
 		dp_peer_create_wifi3((struct cdp_soc_t *)soc,
 				     vdev_id,
 				     setup_info->mld_peer_mac,
 				     CDP_MLD_PEER_TYPE);
 
-	peer->assoc_link = setup_info->is_assoc_link;
+	peer->first_link = setup_info->is_first_link;
 	peer->primary_link = setup_info->is_primary_link;
 	mld_peer = dp_peer_find_hash_find(soc,
 					  setup_info->mld_peer_mac,
 					  0, DP_VDEV_ALL, DP_MOD_ID_CDP);
 	if (mld_peer) {
-		if (setup_info->is_assoc_link) {
+		if (setup_info->is_first_link) {
 			/* assign rx_tid to mld peer */
 			mld_peer->rx_tid = peer->rx_tid;
 			/* no cdp_peer_setup for MLD peer,
@@ -6947,7 +6947,7 @@ QDF_STATUS dp_peer_mlo_setup(
 		}
 
 		if (setup_info->is_primary_link &&
-		    !setup_info->is_assoc_link) {
+		    !setup_info->is_first_link) {
 			/*
 			 * if first link is not the primary link,
 			 * then need to change mld_peer->vdev as

@@ -3335,7 +3335,7 @@ struct dp_peer {
 		hw_txrx_stats_en:1; /*Indicate HW offload vdev stats */
 
 #ifdef WLAN_FEATURE_11BE_MLO
-	uint8_t assoc_link:1, /* first assoc link peer for MLO */
+	uint8_t first_link:1, /* first link peer for MLO */
 		primary_link:1; /* primary link for MLO */
 #endif
 
