@@ -28,19 +28,111 @@
 QDF_STATUS
 target_if_twt_register_events(struct wlan_objmgr_psoc *psoc)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
+
+	if (!psoc) {
+		target_if_err("psoc obj is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_register_event_handler(wmi_handle,
+					wmi_twt_enable_complete_event_id,
+					target_if_twt_en_complete_event_handler,
+					WMI_RX_WORK_CTX);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to register twt enable event cb");
+		return status;
+	}
+
+	status = wmi_unified_register_event_handler(wmi_handle,
+				wmi_twt_disable_complete_event_id,
+				target_if_twt_disable_comp_event_handler,
+				WMI_RX_WORK_CTX);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to register twt disable event cb");
+		return status;
+	}
+
+	status = target_if_twt_register_ext_events(psoc);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to register twt ext events");
+		return status;
+	}
+
+	return status;
 }
 
 QDF_STATUS
 target_if_twt_deregister_events(struct wlan_objmgr_psoc *psoc)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
+
+	if (!psoc) {
+		target_if_err("psoc is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	status = wmi_unified_unregister_event_handler(wmi_handle,
+					wmi_twt_enable_complete_event_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to deregister twt enable event cb");
+		return status;
+	}
+
+	status = wmi_unified_unregister_event_handler(wmi_handle,
+					 wmi_twt_disable_complete_event_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to deregister twt disable event cb");
+		return status;
+	}
+
+	status = target_if_twt_deregister_ext_events(psoc);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to deregister twt ext events");
+		return status;
+	}
+
+	return status;
 }
 
 QDF_STATUS
 target_if_twt_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_twt_tx_ops *twt_tx_ops;
+	QDF_STATUS status;
+
+	if (!tx_ops) {
+		target_if_err("txops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_tx_ops = &tx_ops->twt_tx_ops;
+	twt_tx_ops->enable_req = target_if_twt_enable_req;
+	twt_tx_ops->disable_req = target_if_twt_disable_req;
+	twt_tx_ops->register_events = target_if_twt_register_events;
+	twt_tx_ops->deregister_events = target_if_twt_deregister_events;
+
+	status = target_if_twt_register_ext_tx_ops(twt_tx_ops);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to register twt ext tx ops");
+		return status;
+	}
+
+	return status;
 }
 
 QDF_STATUS

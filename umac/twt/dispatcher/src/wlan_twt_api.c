@@ -215,11 +215,44 @@ QDF_STATUS wlan_twt_deinit(void)
 
 QDF_STATUS twt_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_E_NULL_VALUE;
+	struct wlan_lmac_if_twt_tx_ops *tx_ops;
+
+	tx_ops = wlan_twt_get_tx_ops(psoc);
+	if (!tx_ops) {
+		twt_err("tx_ops is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (tx_ops->register_events) {
+		status = tx_ops->register_events(psoc);
+
+		if (QDF_IS_STATUS_ERROR(status))
+			twt_err("twt_register_events failed (status=%d)",
+				status);
+	}
+
+	return status;
 }
 
 QDF_STATUS twt_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_E_NULL_VALUE;
+	struct wlan_lmac_if_twt_tx_ops *tx_ops;
+
+	tx_ops = wlan_twt_get_tx_ops(psoc);
+	if (!tx_ops) {
+		twt_err("tx_ops is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (tx_ops->deregister_events) {
+		status = tx_ops->deregister_events(psoc);
+
+		if (QDF_IS_STATUS_ERROR(status))
+			twt_err("twt_deregister_events failed (status=%d)",
+				status);
+	}
+	return status;
 }
 

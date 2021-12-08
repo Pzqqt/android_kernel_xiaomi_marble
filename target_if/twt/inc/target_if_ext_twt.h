@@ -27,7 +27,7 @@
 #if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
 
 /**
- * target_if_twt_register_ext_events() - Register twt wmi events
+ * target_if_twt_register_ext_events() - Register twt ext wmi events
  * @psoc: psoc handle
  *
  * Register TWT ext (outside of qcacmn) WMI events
@@ -36,6 +36,17 @@
  */
 QDF_STATUS
 target_if_twt_register_ext_events(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_twt_deregister_ext_events() - De-register twt ext wmi events
+ * @psoc: psoc handle
+ *
+ * Register TWT ext (outside of qcacmn) WMI events
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+target_if_twt_deregister_ext_events(struct wlan_objmgr_psoc *psoc);
 
 /**
  * target_if_twt_register_ext_tx_ops() - Register twt tx ops
@@ -109,6 +120,12 @@ target_if_twt_register_ext_tx_ops(struct wlan_lmac_if_twt_tx_ops *twt_tx_ops)
 
 static inline QDF_STATUS
 target_if_twt_register_ext_events(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_if_twt_deregister_ext_events(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
