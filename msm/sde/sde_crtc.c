@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -3578,6 +3579,9 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 		_sde_crtc_setup_is_ppsplit(crtc->state);
 		_sde_crtc_setup_lm_bounds(crtc, crtc->state);
 		_sde_crtc_clear_all_blend_stages(sde_crtc);
+	} else if (sde_crtc->num_mixers && sde_crtc->reinit_crtc_mixers) {
+		_sde_crtc_setup_mixers(crtc);
+		sde_crtc->reinit_crtc_mixers = false;
 	}
 
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {

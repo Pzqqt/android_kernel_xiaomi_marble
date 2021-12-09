@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -146,7 +147,7 @@ struct sde_encoder_phys_ops {
 			struct drm_display_mode *adjusted_mode);
 	void (*mode_set)(struct sde_encoder_phys *encoder,
 			struct drm_display_mode *mode,
-			struct drm_display_mode *adjusted_mode);
+			struct drm_display_mode *adjusted_mode, bool *reinit_mixers);
 	void (*cont_splash_mode_set)(struct sde_encoder_phys *encoder,
 			struct drm_display_mode *adjusted_mode);
 	void (*enable)(struct sde_encoder_phys *encoder);
