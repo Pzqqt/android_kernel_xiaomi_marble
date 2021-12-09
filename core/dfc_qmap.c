@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <net/pkt_sched.h>
@@ -38,7 +39,8 @@ struct qmap_dfc_ind {
 	u8			bearer_id;
 	u8			tcp_bidir:1;
 	u8			bearer_status:3;
-	u8			reserved4:4;
+	u8			ll_status:1;
+	u8			reserved4:3;
 	__be32			grant;
 	__be32			rx_bytes;
 	u32			reserved6;
@@ -146,6 +148,7 @@ static int dfc_qmap_handle_ind(struct dfc_qmi_data *dfc,
 	qmap_flow_ind.flow_status[0].bearer_id = cmd->bearer_id;
 	qmap_flow_ind.flow_status[0].num_bytes = ntohl(cmd->grant);
 	qmap_flow_ind.flow_status[0].seq_num = ntohs(cmd->seq_num);
+	qmap_flow_ind.flow_status[0].ll_status = cmd->ll_status;
 
 	if (cmd->rx_bytes_valid) {
 		qmap_flow_ind.flow_status[0].rx_bytes_valid = 1;
