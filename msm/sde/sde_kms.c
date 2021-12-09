@@ -2865,7 +2865,7 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	struct sde_vm_ops *vm_ops;
 	enum sde_crtc_vm_req old_vm_req = VM_REQ_NONE, new_vm_req = VM_REQ_NONE;
 	int i, rc = 0;
-	bool vm_req_active = false;
+	bool vm_req_active = false, prev_vm_req = false;
 	bool vm_owns_hw;
 
 	if (!kms || !state)
@@ -2878,6 +2878,14 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 
 	if (!vm_ops->vm_request_valid || !vm_ops->vm_owns_hw || !vm_ops->vm_acquire)
 		return -EINVAL;
+
+	drm_for_each_crtc(crtc, state->dev) {
+		if (crtc->state && (sde_crtc_get_property(to_sde_crtc_state(crtc->state),
+				CRTC_PROP_VM_REQ_STATE) == VM_REQ_RELEASE)) {
+			prev_vm_req = true;
+			break;
+		}
+	}
 
 	/* check for an active vm request */
 	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
@@ -2892,8 +2900,12 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		old_state = to_sde_crtc_state(old_cstate);
 		old_vm_req = sde_crtc_get_property(old_state, CRTC_PROP_VM_REQ_STATE);
 
-		/* No active request if the transition is from VM_REQ_NONE to VM_REQ_NONE */
-		if (old_vm_req || new_vm_req) {
+		/*
+		 * VM request should be validated in the following usecases
+		 * - There is a vm request(other than VM_REQ_NONE) on current/prev crtc state.
+		 * - Previously, vm transition has taken place on one of the crtc's.
+		 */
+		if (old_vm_req || new_vm_req || prev_vm_req) {
 			if (!vm_req_active) {
 				sde_vm_lock(sde_kms);
 				vm_owns_hw = sde_vm_owns_hw(sde_kms);
