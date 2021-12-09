@@ -934,3 +934,55 @@ void wlan_mlo_peer_get_links_info(struct wlan_objmgr_peer *peer,
 }
 
 qdf_export_symbol(wlan_mlo_peer_get_links_info);
+
+void wlan_mlo_peer_get_partner_links_info(struct wlan_objmgr_peer *peer,
+					  struct mlo_partner_info *ml_links)
+{
+	struct wlan_mlo_peer_context *ml_peer;
+	struct wlan_mlo_link_peer_entry *peer_entry;
+	struct wlan_objmgr_peer *link_peer;
+	struct wlan_objmgr_vdev *link_vdev;
+	uint8_t i, ix;
+
+	ml_peer = peer->mlo_peer_ctx;
+	ml_links->num_partner_links = 0;
+
+	if (!ml_peer)
+		return;
+
+	mlo_peer_lock_acquire(ml_peer);
+
+	if ((ml_peer->mlpeer_state != ML_PEER_CREATED) &&
+	    (ml_peer->mlpeer_state != ML_PEER_ASSOC_DONE)) {
+		mlo_peer_lock_release(ml_peer);
+		return;
+	}
+
+	for (i = 0; i < MAX_MLO_LINK_PEERS; i++) {
+		peer_entry = &ml_peer->peer_list[i];
+		link_peer = peer_entry->link_peer;
+
+		if (!link_peer)
+			continue;
+
+		if (link_peer == peer)
+			continue;
+
+		link_vdev = wlan_peer_get_vdev(link_peer);
+		if (!link_vdev)
+			continue;
+
+		if (ml_links->num_partner_links >= WLAN_UMAC_MLO_MAX_VDEVS)
+			break;
+
+		ix = ml_links->num_partner_links;
+		ml_links->partner_link_info[ix].link_id = peer_entry->link_ix;
+
+		qdf_copy_macaddr(&ml_links->partner_link_info[ix].link_addr,
+				 &peer_entry->link_addr);
+		ml_links->num_partner_links++;
+	}
+	mlo_peer_lock_release(ml_peer);
+}
+
+qdf_export_symbol(wlan_mlo_peer_get_partner_links_info);

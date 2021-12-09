@@ -136,6 +136,7 @@ QDF_STATUS mlo_msgq_post(enum mlo_msg_type type,
 	struct peer_assoc_notify_s *peer_assoc, *peer_assoc_l;
 	struct peer_assoc_fail_notify_s *peer_assoc_fail, *peer_assoc_fail_l;
 	struct peer_discon_notify_s *peer_disconn, *peer_disconn_l;
+	struct peer_deauth_notify_s *peer_deauth, *peer_deauth_l;
 	struct ctxt_switch_mgr *msgq_ctx;
 	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
 
@@ -207,6 +208,7 @@ static void mlo_msgq_msg_process_hdlr(struct mlo_ctxt_switch_msg_s *msg)
 	struct peer_assoc_notify_s *peer_assoc;
 	struct peer_assoc_fail_notify_s *peer_assoc_fail;
 	struct peer_discon_notify_s *peer_disconn;
+	struct peer_deauth_notify_s *peer_deauth;
 
 	type = msg->type;
 	switch (type) {
@@ -262,6 +264,7 @@ static void mlo_msgq_msg_flush_hdlr(struct mlo_ctxt_switch_msg_s *msg)
 	struct peer_assoc_notify_s *peer_assoc;
 	struct peer_assoc_fail_notify_s *peer_assoc_fail;
 	struct peer_discon_notify_s *peer_disconn;
+	struct peer_deauth_notify_s *peer_deauth;
 
 	type = msg->type;
 	switch (type) {
@@ -356,7 +359,7 @@ static void mlo_msgq_msg_handler(void *arg)
 					     &msgbuf_node);
 		if (status != QDF_STATUS_E_EMPTY) {
 			qdf_list_remove_node(&msgq_ctx->msgq_list,
-					     &msgbuf_node);
+					     msgbuf_node);
 			msg = qdf_container_of(msgbuf_node,
 					       struct mlo_ctxt_switch_msg_s,
 					       node);
