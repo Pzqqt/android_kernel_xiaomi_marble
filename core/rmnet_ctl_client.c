@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * RMNET_CTL client handlers
  *
@@ -180,8 +181,10 @@ int rmnet_ctl_send_client(void *handle, struct sk_buff *skb)
 	struct rmnet_ctl_dev *dev;
 	int rc = -EINVAL;
 
-	if (client != rcu_dereference(ctl_ep.client))
+	if (client != rcu_dereference(ctl_ep.client)) {
+		kfree_skb(skb);
 		return rc;
+	}
 
 	rmnet_ctl_log_info("TX", skb->data, skb->len);
 
@@ -190,11 +193,13 @@ int rmnet_ctl_send_client(void *handle, struct sk_buff *skb)
 	dev = rcu_dereference(ctl_ep.dev);
 	if (dev && dev->xmit)
 		rc = dev->xmit(dev, skb);
+	else
+		kfree_skb(skb);
 
 	rcu_read_unlock();
 
 	if (rc)
-		rmnet_ctl_log_err("TXE", rc, skb->data, skb->len);
+		rmnet_ctl_log_err("TXE", rc, NULL, 0);
 
 	return rc;
 }
