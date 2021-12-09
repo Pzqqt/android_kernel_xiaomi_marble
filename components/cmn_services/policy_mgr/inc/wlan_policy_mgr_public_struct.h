@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1268,7 +1269,6 @@ enum policy_mgr_mode {
 
 /**
  * struct dbs_hw_mode_info - WLAN_DBS_HW_MODES_TLV Format
- * @tlv_header: TLV header, TLV tag and len; tag equals WMITLV_TAG_ARRAY_UINT32
  * @hw_mode_list: WLAN_DBS_HW_MODE_LIST entries
  * @sbs_lower_band_end_freq: value with which range will be divided
  * @freq_range_caps: Initial capability and range for different modes for both
@@ -1278,7 +1278,6 @@ enum policy_mgr_mode {
  *                      and current HW mode.
  */
 struct dbs_hw_mode_info {
-	uint32_t tlv_header;
 	uint32_t *hw_mode_list;
 	qdf_freq_t sbs_lower_band_end_freq;
 	struct policy_mgr_freq_range freq_range_caps[MODE_HW_MAX][MAX_MAC];

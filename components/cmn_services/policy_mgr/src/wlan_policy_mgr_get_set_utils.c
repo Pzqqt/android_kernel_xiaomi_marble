@@ -1080,8 +1080,7 @@ policy_mgr_dump_hw_modes_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	}
 }
 
-static void
-policy_mgr_dump_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
+void policy_mgr_dump_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 {
 	uint32_t i;
 	struct policy_mgr_freq_range *freq_range;
@@ -1160,6 +1159,11 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("DBS list is freed");
 	}
 
+	/* Reset old freq ranges */
+	qdf_mem_zero(pm_ctx->hw_mode.freq_range_caps,
+		     sizeof(pm_ctx->hw_mode.freq_range_caps));
+	qdf_mem_zero(pm_ctx->hw_mode.cur_mac_freq_range,
+		     sizeof(pm_ctx->hw_mode.cur_mac_freq_range));
 	pm_ctx->num_dbs_hw_modes = info->service_ext_param.num_hw_modes;
 	pm_ctx->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
@@ -1272,7 +1276,6 @@ policy_mgr_are_2_freq_in_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	struct policy_mgr_freq_range *sbs_uppr_share;
 	struct policy_mgr_freq_range *sbs_range;
 
-	policy_mgr_dump_sbs_freq_range(pm_ctx);
 	if (pm_ctx->hw_mode.sbs_lower_band_end_freq) {
 		sbs_uppr_share =
 			pm_ctx->hw_mode.freq_range_caps[MODE_SBS_UPPER_SHARE];

@@ -3529,7 +3529,7 @@ sbs_check:
 	 * and set SBS/SCC.
 	 */
 	num_connections = policy_mgr_get_connection_count(psoc);
-
+	policy_mgr_dump_sbs_freq_range(pm_ctx);
 	switch (num_connections) {
 	case 0:
 		/* use sap channel */
