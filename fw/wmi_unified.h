@@ -4485,6 +4485,21 @@ typedef struct {
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_SET(carrier_config, val) \
     WMI_SET_BITS(carrier_config, 0, 1, val)
 
+/** Top nibble can be used to diff between HE and EHT: 0xVXXXXXXX
+ *  If V == 0b0000: format is HE.
+ *  If V == 0b0001: format is EHT.
+ */
+#define WMI_RSRC_CFG_IS_EHT_GET(param_value) \
+    WMI_GET_BITS(param_value, 28, 4)
+#define WMI_RSRC_CFG_IS_EHT_SET(param_value, val) \
+    WMI_SET_BITS(param_value, 28, 4, val)
+
+/* Used along with the above macro to set the value. */
+#define WMI_RSRC_CFG_PARAM_VALUE_GET(param_value) \
+    WMI_GET_BITS(param_value, 0, 28)
+#define WMI_RSRC_CFG_PARAM_VALUE_SET(param_value, val) \
+    WMI_SET_BITS(param_value, 0, 28, val)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
 
@@ -12932,6 +12947,8 @@ typedef enum {
      * the rate specification: 0xVXXXXXXX, V must be 1 for the UL
      * format.
      * If V == 0b0001: format is: 0x1000RRRR.
+     *                 ("RRRR" ratecode already has those preamble bits,
+     *                 which can specify HE or EHT)
      *                 This will be output of WMI_ASSEMBLE_RATECODE_V1
      *
      * This parameter controls the UL OFDMA and UL MU-MIMO vdev fixed rate.
@@ -12944,15 +12961,31 @@ typedef enum {
      *     WMI_GI_400_NS, WMI_GI_800_NS, WMI_GI_1600_NS, or WMI_GI_3200_NS
      * 11N: SGI=WMI_GI_400_NS
      */
+    /** Top nibble can be used to distinguish between HE and EHT: 0xVXXXXXXX
+     *  If V == 0b0000: format is HE.
+     *  If V == 0b0001: format is EHT.
+     */
     WMI_VDEV_PARAM_UL_GI,                                 /* 0x89 */
 
     /** Enable/Disable LDPC in UL Trigger */
+    /** Top nibble can be used to distinguish between HE and EHT: 0xVXXXXXXX
+     *  If V == 0b0000: format is HE.
+     *  If V == 0b0001: format is EHT.
+     */
     WMI_VDEV_PARAM_UL_LDPC,                               /* 0x8A */
 
     /** Max NSS allowed in UL Trigger */
+    /** Top nibble can be used to distinguish between HE and EHT: 0xVXXXXXXX
+     *  If V == 0b0000: format is HE.
+     *  If V == 0b0001: format is EHT.
+     */
     WMI_VDEV_PARAM_UL_NSS,                                /* 0x8B */
 
     /** Enable/Disable STBC in UL Trigger */
+    /** Top nibble can be used to distinguish between HE and EHT: 0xVXXXXXXX
+     *  If V == 0b0000: format is HE.
+     *  If V == 0b0001: format is EHT.
+     */
     WMI_VDEV_PARAM_UL_STBC,                               /* 0x8C */
 
     /** specify the HE LTF setting that should be used for fixed rate
@@ -12963,7 +12996,13 @@ typedef enum {
      */
     WMI_VDEV_PARAM_UL_HE_LTF,                             /* 0x8D */
 
-    /** Uplink OFDMA PPDU bandwidth (0: 20MHz, 1: 40MHz, 2: 80Mhz, 3: 160MHz)*/
+    /** Uplink OFDMA PPDU bandwidth */
+    /** Top nibble can be used to distinguish between HE and EHT: 0xVXXXXXXX
+     *  If V == 0b0000: format is HE.
+     *                  (0: 20MHz, 1: 40MHz, 2: 80Mhz, 3: 160MHz)
+     *  If V == 0b0001: format is EHT.
+     *                  (0: 20MHz, 1: 40MHz, 2: 80Mhz, 3: 160MHz, 4: 320MHz)
+     */
     WMI_VDEV_PARAM_UL_PPDU_BW,                            /* 0x8E */
 
     /** Enable/Disable FW handling MU EDCA change from AP (1: En, 0:Dis)  */
@@ -15033,6 +15072,8 @@ typedef struct {
  * The top nibble is used to select which format to use for encoding
  * the rate specification: 0xVXXXXXXX, V must be 1 for this parameter.
  * If V == 0b0001: format is: 0x1000RRRR.
+ *                 ("RRRR" rate code already has those preamble bits,
+ *                 which can specify EHT or HE)
  *                 This will be output of WMI_ASSEMBLE_RATECODE_V1
  *
  * This parameter controls the UL OFDMA and UL MU-MIMO peer fixed rate.
