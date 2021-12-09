@@ -118,6 +118,7 @@ struct msm_vidc_inst {
 	struct msm_vidc_mappings_info      mappings;
 	struct msm_vidc_allocations_info   allocations;
 	struct msm_vidc_timestamps         timestamps;
+	struct msm_vidc_timestamps         ts_reorder; /* list of struct msm_vidc_timestamp */
 	bool                               subscribed_input_psc;
 	bool                               subscribed_output_psc;
 	bool                               subscribed_input_prop;

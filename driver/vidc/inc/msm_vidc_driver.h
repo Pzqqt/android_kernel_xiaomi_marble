@@ -67,6 +67,12 @@ static inline is_output_meta_buffer(enum msm_vidc_buffer_type buffer_type)
 	return buffer_type == MSM_VIDC_BUF_OUTPUT_META;
 }
 
+static inline is_ts_reorder_allowed(struct msm_vidc_inst *inst)
+{
+	return !!(inst->capabilities->cap[TS_REORDER].value &&
+		is_decode_session(inst) && !is_image_session(inst));
+}
+
 static inline is_scaling_enabled(struct msm_vidc_inst *inst)
 {
 	return inst->crop.left != inst->compose.left ||
@@ -422,6 +428,10 @@ int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp);
 int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp);
 int msm_vidc_calc_window_avg_framerate(struct msm_vidc_inst *inst);
 int msm_vidc_flush_ts(struct msm_vidc_inst *inst);
+int msm_vidc_ts_reorder_insert_timestamp(struct msm_vidc_inst *inst, u64 timestamp);
+int msm_vidc_ts_reorder_remove_timestamp(struct msm_vidc_inst *inst, u64 timestamp);
+int msm_vidc_ts_reorder_get_first_timestamp(struct msm_vidc_inst *inst, u64 *timestamp);
+int msm_vidc_ts_reorder_flush(struct msm_vidc_inst *inst);
 const char *buf_name(enum msm_vidc_buffer_type type);
 void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,
 	enum msm_vidc_ctrl_list_type list_type);

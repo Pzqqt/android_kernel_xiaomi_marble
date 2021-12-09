@@ -1459,6 +1459,10 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
+	rc = msm_vidc_ts_reorder_flush(inst);
+	if (rc)
+		goto error;
+
 	return 0;
 
 error:

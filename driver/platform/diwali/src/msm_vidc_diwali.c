@@ -380,6 +380,11 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		{0},
 		NULL, msm_vidc_set_u32},
 
+	{TS_REORDER, DEC, H264|HEVC,
+		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
+		1, V4L2_MPEG_MSM_VIDC_DISABLE,
+		V4L2_CID_MPEG_VIDC_TS_REORDER},
+
 	{HFLIP, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_ENABLE,
