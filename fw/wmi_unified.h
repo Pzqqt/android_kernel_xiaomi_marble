@@ -1311,6 +1311,8 @@ typedef enum {
     WMI_SOC_SET_HW_MODE_CMDID,
     WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID,
     WMI_SOC_SET_ANTENNA_MODE_CMDID,
+    /** enable/disable TQM reset (SOC level) feature */
+    WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID,
 
     /* packet filter commands */
     WMI_PACKET_FILTER_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_PKT_FILTER),
@@ -30232,6 +30234,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_SAWF_SVC_CLASS_CFG_CMDID);
         WMI_RETURN_STRING(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_UPDATE_MAC_ADDR_CMDID);
+        WMI_RETURN_STRING(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -36934,6 +36937,15 @@ typedef struct {
     A_UINT32 ftm_cal_ver; /* SW cal version in factory data */
     A_UINT32 status;      /* Return status. 0 for success, non-zero otherwise */
 } wmi_sw_cal_ver_cap;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+      * WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param
+      */
+    A_UINT32 tlv_header;
+    /** 0 - disable TQM-reset feature, 1 - enable TQM-reset feature */
+    A_UINT32 enable;
+} wmi_soc_tqm_reset_enable_disable_cmd_fixed_param;
 
 
 

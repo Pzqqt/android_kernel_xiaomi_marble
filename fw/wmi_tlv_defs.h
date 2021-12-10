@@ -1223,6 +1223,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_changed_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_tlv,
     WMITLV_TAG_STRUC_wmi_sw_cal_ver_cap,
+    WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1706,6 +1707,7 @@ typedef enum {
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CMDID) \
     OP(WMI_SAWF_SVC_CLASS_CFG_CMDID) \
     OP(WMI_SAWF_SVC_CLASS_DISABLE_CMDID) \
+    OP(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4882,6 +4884,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_CFG_CMDID);
 #define WMITLV_TABLE_WMI_SAWF_SVC_CLASS_DISABLE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param, wmi_sawf_svc_class_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
+
+/* WMI CMD used to Enable/Disable Cmd for TQM reset feature */
+#define WMITLV_TABLE_WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID);
 
 
 
