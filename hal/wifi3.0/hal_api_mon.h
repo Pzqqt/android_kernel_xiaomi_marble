@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -691,6 +691,23 @@ struct hal_rx_frm_type_info {
 struct hal_rx_frm_type_info {};
 #endif
 
+#define HAL_RX_MON_MAX_AGGR_SIZE	128
+
+/**
+ * struct hal_rx_tlv_aggr_info - Data structure to hold
+ *		metadata for aggregatng repeated TLVs
+ * @in_progress: Flag to indicate if TLV aggregation is in progress
+ * @cur_len: Total length of currently aggregated TLV
+ * @tlv_tag: TLV tag which is currently being aggregated
+ * @buf: Buffer containing aggregated TLV data
+ */
+struct hal_rx_tlv_aggr_info {
+	uint8_t in_progress;
+	uint16_t cur_len;
+	uint32_t tlv_tag;
+	uint8_t buf[HAL_RX_MON_MAX_AGGR_SIZE];
+};
+
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
 	struct mon_rx_status rx_status;
@@ -730,6 +747,8 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_cfr_info cfr_info;
 	/* per frame type counts */
 	struct hal_rx_frm_type_info frm_type_info;
+	/* TLV aggregation metadata context */
+	struct hal_rx_tlv_aggr_info tlv_aggr;
 };
 
 static inline uint32_t

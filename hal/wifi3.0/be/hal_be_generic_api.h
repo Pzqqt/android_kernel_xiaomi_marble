@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1521,6 +1521,121 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				rx_tlv, tlv_len);
 
 	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+
+static uint32_t
+hal_rx_status_process_aggr_tlv(struct hal_soc *hal_soc,
+			       struct hal_rx_ppdu_info *ppdu_info)
+{
+	uint32_t aggr_tlv_tag = ppdu_info->tlv_aggr.tlv_tag;
+
+	switch (aggr_tlv_tag) {
+	case WIFIPHYRX_GENERIC_EHT_SIG_E:
+		break;
+	default:
+		/* Aggregated TLV cannot be handled */
+		qdf_assert(0);
+		break;
+	}
+
+	ppdu_info->tlv_aggr.in_progress = 0;
+	ppdu_info->tlv_aggr.cur_len = 0;
+
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+
+static inline bool
+hal_rx_status_tlv_should_aggregate(struct hal_soc *hal_soc, uint32_t tlv_tag)
+{
+	switch (tlv_tag) {
+	case WIFIPHYRX_GENERIC_EHT_SIG_E:
+		return true;
+	}
+
+	return false;
+}
+
+static inline uint32_t
+hal_rx_status_aggr_tlv(struct hal_soc *hal_soc, void *rx_tlv_hdr,
+		       struct hal_rx_ppdu_info *ppdu_info,
+		       qdf_nbuf_t nbuf)
+{
+	uint32_t tlv_tag, user_id, tlv_len;
+	void *rx_tlv;
+
+	tlv_tag = HAL_RX_GET_USER_TLV64_TYPE(rx_tlv_hdr);
+	user_id = HAL_RX_GET_USER_TLV64_USERID(rx_tlv_hdr);
+	tlv_len = HAL_RX_GET_USER_TLV64_LEN(rx_tlv_hdr);
+
+	rx_tlv = (uint8_t *)rx_tlv_hdr + HAL_RX_TLV64_HDR_SIZE;
+
+	if (tlv_len <= HAL_RX_MON_MAX_AGGR_SIZE - ppdu_info->tlv_aggr.cur_len) {
+		qdf_mem_copy(ppdu_info->tlv_aggr.buf +
+			     ppdu_info->tlv_aggr.cur_len,
+			     rx_tlv, tlv_len);
+		ppdu_info->tlv_aggr.cur_len += tlv_len;
+	} else {
+		dp_err("Length of TLV exceeds max aggregation length");
+		qdf_assert(0);
+	}
+
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+
+static inline uint32_t
+hal_rx_status_start_new_aggr_tlv(struct hal_soc *hal_soc, void *rx_tlv_hdr,
+				 struct hal_rx_ppdu_info *ppdu_info,
+				 qdf_nbuf_t nbuf)
+{
+	uint32_t tlv_tag, user_id, tlv_len;
+
+	tlv_tag = HAL_RX_GET_USER_TLV64_TYPE(rx_tlv_hdr);
+	user_id = HAL_RX_GET_USER_TLV64_USERID(rx_tlv_hdr);
+	tlv_len = HAL_RX_GET_USER_TLV64_LEN(rx_tlv_hdr);
+
+	ppdu_info->tlv_aggr.in_progress = 1;
+	ppdu_info->tlv_aggr.tlv_tag = tlv_tag;
+	ppdu_info->tlv_aggr.cur_len = 0;
+
+	return hal_rx_status_aggr_tlv(hal_soc, rx_tlv_hdr, ppdu_info, nbuf);
+}
+
+static inline uint32_t
+hal_rx_status_get_tlv_info_wrapper_be(void *rx_tlv_hdr, void *ppduinfo,
+				      hal_soc_handle_t hal_soc_hdl,
+				      qdf_nbuf_t nbuf)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+	uint32_t tlv_tag, user_id, tlv_len;
+	struct hal_rx_ppdu_info *ppdu_info =
+			(struct hal_rx_ppdu_info *)ppduinfo;
+
+	tlv_tag = HAL_RX_GET_USER_TLV64_TYPE(rx_tlv_hdr);
+	user_id = HAL_RX_GET_USER_TLV64_USERID(rx_tlv_hdr);
+	tlv_len = HAL_RX_GET_USER_TLV64_LEN(rx_tlv_hdr);
+
+	/*
+	 * Handle the case where aggregation is in progress
+	 * or the current TLV is one of the TLVs which should be
+	 * aggregated
+	 */
+	if (ppdu_info->tlv_aggr.in_progress) {
+		if (ppdu_info->tlv_aggr.tlv_tag == tlv_tag) {
+			return hal_rx_status_aggr_tlv(hal, rx_tlv_hdr,
+						      ppdu_info, nbuf);
+		} else {
+			/* Finish aggregation of current TLV */
+			hal_rx_status_process_aggr_tlv(hal, ppdu_info);
+		}
+	}
+
+	if (hal_rx_status_tlv_should_aggregate(hal, tlv_tag)) {
+		return hal_rx_status_start_new_aggr_tlv(hal, rx_tlv_hdr,
+							ppduinfo, nbuf);
+	}
+
+	return hal_rx_status_get_tlv_info_generic_be(rx_tlv_hdr, ppduinfo,
+						     hal_soc_hdl, nbuf);
 }
 
 /**
