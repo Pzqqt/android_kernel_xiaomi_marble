@@ -390,6 +390,147 @@ hal_get_mac_addr1(uint8_t *rx_mpdu_start,
 }
 #endif
 
+static inline uint32_t
+hal_rx_parse_u_sig_cmn(struct hal_soc *hal_soc, void *rx_tlv,
+		       struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct hal_mon_usig_hdr *usig = (struct hal_mon_usig_hdr *)rx_tlv;
+	struct hal_mon_usig_cmn *usig_1 = &usig->usig_1;
+	uint8_t bad_usig_crc;
+
+	bad_usig_crc = HAL_RX_MON_USIG_GET_RX_INTEGRITY_CHECK_PASSED(rx_tlv) ?
+			0 : 1;
+	ppdu_info->rx_status.usig_common |=
+			QDF_MON_STATUS_USIG_PHY_VERSION_KNOWN |
+			QDF_MON_STATUS_USIG_BW_KNOWN |
+			QDF_MON_STATUS_USIG_UL_DL_KNOWN |
+			QDF_MON_STATUS_USIG_BSS_COLOR_KNOWN |
+			QDF_MON_STATUS_USIG_TXOP_KNOWN;
+
+	ppdu_info->rx_status.usig_common |= (usig_1->phy_version <<
+				   QDF_MON_STATUS_USIG_PHY_VERSION_SHIFT);
+	ppdu_info->rx_status.usig_common |= (usig_1->bw <<
+					   QDF_MON_STATUS_USIG_BW_SHIFT);
+	ppdu_info->rx_status.usig_common |= (usig_1->ul_dl <<
+					   QDF_MON_STATUS_USIG_UL_DL_SHIFT);
+	ppdu_info->rx_status.usig_common |= (usig_1->bss_color <<
+					   QDF_MON_STATUS_USIG_BSS_COLOR_SHIFT);
+	ppdu_info->rx_status.usig_common |= (usig_1->txop <<
+					   QDF_MON_STATUS_USIG_TXOP_SHIFT);
+	ppdu_info->rx_status.usig_common |= bad_usig_crc;
+
+	ppdu_info->u_sig_info.ul_dl = usig_1->ul_dl;
+	ppdu_info->u_sig_info.bw = usig_1->bw;
+
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+
+static inline uint32_t
+hal_rx_parse_u_sig_tb(struct hal_soc *hal_soc, void *rx_tlv,
+		      struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct hal_mon_usig_hdr *usig = (struct hal_mon_usig_hdr *)rx_tlv;
+	struct hal_mon_usig_tb *usig_tb = &usig->usig_2.tb;
+
+	ppdu_info->rx_status.usig_mask |=
+			QDF_MON_STATUS_USIG_DISREGARD_KNOWN |
+			QDF_MON_STATUS_USIG_PPDU_TYPE_N_COMP_MODE_KNOWN |
+			QDF_MON_STATUS_USIG_VALIDATE_KNOWN |
+			QDF_MON_STATUS_USIG_TB_SPATIAL_REUSE_1_KNOWN |
+			QDF_MON_STATUS_USIG_TB_SPATIAL_REUSE_2_KNOWN |
+			QDF_MON_STATUS_USIG_TB_DISREGARD1_KNOWN |
+			QDF_MON_STATUS_USIG_CRC_KNOWN |
+			QDF_MON_STATUS_USIG_TAIL_KNOWN;
+
+	ppdu_info->rx_status.usig_value |= (0x3F <<
+				QDF_MON_STATUS_USIG_DISREGARD_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_tb->ppdu_type_comp_mode <<
+			QDF_MON_STATUS_USIG_PPDU_TYPE_N_COMP_MODE_SHIFT);
+	ppdu_info->rx_status.usig_value |= (0x1 <<
+				QDF_MON_STATUS_USIG_VALIDATE_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_tb->spatial_reuse_1 <<
+				QDF_MON_STATUS_USIG_TB_SPATIAL_REUSE_1_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_tb->spatial_reuse_2 <<
+				QDF_MON_STATUS_USIG_TB_SPATIAL_REUSE_2_SHIFT);
+	ppdu_info->rx_status.usig_value |= (0x1F <<
+				QDF_MON_STATUS_USIG_TB_DISREGARD1_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_tb->crc <<
+				QDF_MON_STATUS_USIG_CRC_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_tb->tail <<
+				QDF_MON_STATUS_USIG_TAIL_SHIFT);
+
+	ppdu_info->u_sig_info.ppdu_type_comp_mode =
+						usig_tb->ppdu_type_comp_mode;
+
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+
+static inline uint32_t
+hal_rx_parse_u_sig_mu(struct hal_soc *hal_soc, void *rx_tlv,
+		      struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct hal_mon_usig_hdr *usig = (struct hal_mon_usig_hdr *)rx_tlv;
+	struct hal_mon_usig_mu *usig_mu = &usig->usig_2.mu;
+
+	ppdu_info->rx_status.usig_mask |=
+			QDF_MON_STATUS_USIG_DISREGARD_KNOWN |
+			QDF_MON_STATUS_USIG_PPDU_TYPE_N_COMP_MODE_KNOWN |
+			QDF_MON_STATUS_USIG_VALIDATE_KNOWN |
+			QDF_MON_STATUS_USIG_MU_VALIDATE1_SHIFT |
+			QDF_MON_STATUS_USIG_MU_PUNCTURE_CH_INFO_KNOWN |
+			QDF_MON_STATUS_USIG_MU_VALIDATE2_SHIFT |
+			QDF_MON_STATUS_USIG_MU_EHT_SIG_MCS_KNOWN |
+			QDF_MON_STATUS_USIG_MU_NUM_EHT_SIG_SYM_KNOWN |
+			QDF_MON_STATUS_USIG_CRC_KNOWN |
+			QDF_MON_STATUS_USIG_TAIL_KNOWN;
+
+	ppdu_info->rx_status.usig_value |= (0x1F <<
+				QDF_MON_STATUS_USIG_DISREGARD_SHIFT);
+	ppdu_info->rx_status.usig_value |= (0x1 <<
+				QDF_MON_STATUS_USIG_MU_VALIDATE1_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_mu->ppdu_type_comp_mode <<
+			QDF_MON_STATUS_USIG_PPDU_TYPE_N_COMP_MODE_SHIFT);
+	ppdu_info->rx_status.usig_value |= (0x1 <<
+				QDF_MON_STATUS_USIG_VALIDATE_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_mu->punc_ch_info <<
+				QDF_MON_STATUS_USIG_MU_PUNCTURE_CH_INFO_SHIFT);
+	ppdu_info->rx_status.usig_value |= (0x1 <<
+				QDF_MON_STATUS_USIG_MU_VALIDATE2_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_mu->eht_sig_mcs <<
+				QDF_MON_STATUS_USIG_MU_EHT_SIG_MCS_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_mu->num_eht_sig_sym <<
+				QDF_MON_STATUS_USIG_MU_NUM_EHT_SIG_SYM_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_mu->crc <<
+				QDF_MON_STATUS_USIG_CRC_SHIFT);
+	ppdu_info->rx_status.usig_value |= (usig_mu->tail <<
+				QDF_MON_STATUS_USIG_TAIL_SHIFT);
+
+	ppdu_info->u_sig_info.ppdu_type_comp_mode =
+						usig_mu->ppdu_type_comp_mode;
+	ppdu_info->u_sig_info.eht_sig_mcs = usig_mu->eht_sig_mcs;
+	ppdu_info->u_sig_info.num_eht_sig_sym = usig_mu->num_eht_sig_sym;
+
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+
+static inline uint32_t
+hal_rx_parse_u_sig_hdr(struct hal_soc *hal_soc, void *rx_tlv,
+		       struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct hal_mon_usig_hdr *usig = (struct hal_mon_usig_hdr *)rx_tlv;
+	struct hal_mon_usig_cmn *usig_1 = &usig->usig_1;
+
+	ppdu_info->rx_status.usig_flags = 1;
+
+	hal_rx_parse_u_sig_cmn(hal_soc, rx_tlv, ppdu_info);
+
+	if (HAL_RX_MON_USIG_GET_PPDU_TYPE_N_COMP_MODE(rx_tlv) == 0 &&
+	    usig_1->ul_dl == 1)
+		return hal_rx_parse_u_sig_tb(hal_soc, rx_tlv, ppdu_info);
+	else
+		return hal_rx_parse_u_sig_mu(hal_soc, rx_tlv, ppdu_info);
+}
+
 /**
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
@@ -1377,6 +1518,9 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 	case WIFIPHYRX_OTHER_RECEIVE_INFO_E:
 		hal_rx_proc_phyrx_other_receive_info_tlv(hal, rx_tlv_hdr,
 								ppdu_info);
+		break;
+	case WIFIPHYRX_GENERIC_U_SIG_E:
+		hal_rx_parse_u_sig_hdr(hal, rx_tlv, ppdu_info);
 		break;
 	case WIFIRX_HEADER_E:
 	{

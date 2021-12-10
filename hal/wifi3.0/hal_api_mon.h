@@ -691,6 +691,78 @@ struct hal_rx_frm_type_info {
 struct hal_rx_frm_type_info {};
 #endif
 
+struct hal_mon_usig_cmn {
+	uint32_t phy_version : 3,
+		 bw : 3,
+		 ul_dl : 1,
+		 bss_color : 6,
+		 txop : 7,
+		 disregard : 5,
+		 validate_0 : 1,
+		 reserved : 6;
+};
+
+struct hal_mon_usig_tb {
+	uint32_t ppdu_type_comp_mode : 2,
+		 validate_1 : 1,
+		 spatial_reuse_1 : 4,
+		 spatial_reuse_2 : 4,
+		 disregard_1 : 5,
+		 crc : 4,
+		 tail : 6,
+		 reserved : 5,
+		 rx_integrity_check_passed : 1;
+};
+
+struct hal_mon_usig_mu {
+	uint32_t ppdu_type_comp_mode : 2,
+		 validate_1 : 1,
+		 punc_ch_info : 5,
+		 validate_2 : 1,
+		 eht_sig_mcs : 2,
+		 num_eht_sig_sym : 5,
+		 crc : 4,
+		 tail : 6,
+		 reserved : 5,
+		 rx_integrity_check_passed : 1;
+};
+
+/**
+ * union hal_mon_usig_non_cmn: Version dependent USIG fields
+ * @tb: trigger based frame USIG header
+ * @mu: MU frame USIG header
+ */
+union hal_mon_usig_non_cmn {
+	struct hal_mon_usig_tb tb;
+	struct hal_mon_usig_mu mu;
+};
+
+/**
+ * struct hal_mon_usig_hdr: U-SIG header for EHT (and subsequent) frames
+ * @usig_1: USIG common header fields
+ * @usig_2: USIG version dependent fields
+ */
+struct hal_mon_usig_hdr {
+	struct hal_mon_usig_cmn usig_1;
+	union hal_mon_usig_non_cmn usig_2;
+};
+
+#define HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_MASK	0x0000000300000000
+#define HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_LSB	32
+
+#define HAL_RX_MON_USIG_GET_PPDU_TYPE_N_COMP_MODE(usig_tlv_ptr)	\
+		((*((uint64_t *)(usig_tlv_ptr)) & \
+		 HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_MASK) >> \
+		 HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_LSB)
+
+#define HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_MASK	0x8000000000000000
+#define HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_LSB	63
+
+#define HAL_RX_MON_USIG_GET_RX_INTEGRITY_CHECK_PASSED(usig_tlv_ptr)	\
+		((*((uint64_t *)(usig_tlv_ptr)) & \
+		 HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_MASK) >> \
+		 HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_LSB)
+
 #define HAL_RX_MON_MAX_AGGR_SIZE	128
 
 /**
@@ -708,8 +780,25 @@ struct hal_rx_tlv_aggr_info {
 	uint8_t buf[HAL_RX_MON_MAX_AGGR_SIZE];
 };
 
+/* struct hal_rx_u_sig_info - Certain fields from U-SIG header which are used
+ *		for other header field parsing.
+ * @ul_dl: UL or DL
+ * @bw: EHT BW
+ * @ppdu_type_comp_mode: PPDU TYPE
+ * @eht_sig_mcs: EHT SIG MCS
+ * @num_eht_sig_sym: Number of EHT SIG symbols
+ */
+struct hal_rx_u_sig_info {
+	uint32_t ul_dl : 1,
+		 bw : 3,
+		 ppdu_type_comp_mode : 2,
+		 eht_sig_mcs : 2,
+		 num_eht_sig_sym : 5;
+};
+
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
+	struct hal_rx_u_sig_info u_sig_info;
 	struct mon_rx_status rx_status;
 	struct mon_rx_user_status rx_user_status[HAL_MAX_UL_MU_USERS];
 	struct mon_rx_info rx_info;
