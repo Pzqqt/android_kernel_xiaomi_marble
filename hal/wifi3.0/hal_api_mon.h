@@ -763,6 +763,107 @@ struct hal_mon_usig_hdr {
 		 HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_MASK) >> \
 		 HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_LSB)
 
+/**
+ * enum hal_eht_bw: Reception bandwidth
+ * @HAL_EHT_BW_20: 20Mhz
+ * @HAL_EHT_BW_40: 40Mhz
+ * @HAL_EHT_BW_80: 80Mhz
+ * @HAL_EHT_BW_160: 160Mhz
+ * @HAL_EHT_BW_320_1: 320_1 band
+ * @HAL_EHT_BW_320_2: 320_2 band
+ */
+enum hal_eht_bw {
+	HAL_EHT_BW_20 = 0,
+	HAL_EHT_BW_40,
+	HAL_EHT_BW_80,
+	HAL_EHT_BW_160,
+	HAL_EHT_BW_320_1,
+	HAL_EHT_BW_320_2,
+};
+
+struct hal_eht_sig_mu_mimo_user_info {
+	uint32_t sta_id : 11,
+		 mcs : 4,
+		 coding : 1,
+		 spatial_coding : 6,
+		 crc : 4;
+};
+
+struct hal_eht_sig_non_mu_mimo_user_info {
+	uint32_t sta_id : 11,
+		 mcs : 4,
+		 validate : 1,
+		 nss : 4,
+		 beamformed : 1,
+		 coding : 1,
+		 crc : 4;
+};
+
+/**
+ * union hal_eht_sig_user_field: User field in EHTSIG
+ * @mu_mimo_usr: MU-MIMO user field information in EHTSIG
+ * @non_mu_mimo_usr: Non MU-MIMO user field information in EHTSIG
+ */
+union hal_eht_sig_user_field {
+	struct hal_eht_sig_mu_mimo_user_info mu_mimo_usr;
+	struct hal_eht_sig_non_mu_mimo_user_info non_mu_mimo_usr;
+};
+
+struct hal_eht_sig_ofdma_cmn_eb1 {
+	uint64_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 ldpc_extra_sym : 1,
+		 pre_fec_pad_factor : 2,
+		 pe_disambiguity : 1,
+		 disregard : 4,
+		 ru_allocation1_1 : 9,
+		 ru_allocation1_2 : 9,
+		 crc : 4;
+};
+
+struct hal_eht_sig_ofdma_cmn_eb2 {
+	uint64_t ru_allocation2_1 : 9,
+		 ru_allocation2_2 : 9,
+		 ru_allocation2_3 : 9,
+		 ru_allocation2_4 : 9,
+		 ru_allocation2_5 : 9,
+		 ru_allocation2_6 : 9,
+		 crc : 4;
+};
+
+struct hal_eht_sig_cc_usig_overflow {
+	uint32_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 ldpc_extra_sym : 1,
+		 pre_fec_pad_factor : 2,
+		 pe_disambiguity : 1,
+		 disregard : 4;
+};
+
+struct hal_eht_sig_non_ofdma_cmn_eb {
+	uint32_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 ldpc_extra_sym : 1,
+		 pre_fec_pad_factor : 2,
+		 pe_disambiguity : 1,
+		 disregard : 4,
+		 num_users : 3;
+	union hal_eht_sig_user_field user_field;
+};
+
+struct hal_eht_sig_ndp_cmn_eb {
+	uint32_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 nss : 4,
+		 beamformed : 1,
+		 disregard : 2,
+		 crc : 4;
+};
+
 #define HAL_RX_MON_MAX_AGGR_SIZE	128
 
 /**
@@ -838,6 +939,8 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_frm_type_info frm_type_info;
 	/* TLV aggregation metadata context */
 	struct hal_rx_tlv_aggr_info tlv_aggr;
+	/* EHT SIG user info */
+	uint32_t eht_sig_user_info;
 };
 
 static inline uint32_t
