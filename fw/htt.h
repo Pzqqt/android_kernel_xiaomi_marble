@@ -225,9 +225,10 @@
  *      HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF defs.
  * 3.100 Add htt_tx_wbm_completion_v3 def.
  * 3.101 Add HTT_UL_OFDMA_USER_INFO_V1_BITMAP defs.
+ * 3.102 Add HTT_H2T_MSG_TYPE_MSI_SETUP def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 101
+#define HTT_CURRENT_VERSION_MINOR 102
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -784,6 +785,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ        = 0x1c,
     HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ      = 0x1d,
     HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ = 0x1e,
+    HTT_H2T_MSG_TYPE_MSI_SETUP             = 0x1f,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -4850,6 +4852,112 @@ PREPACK struct htt_wdi_ipa_op_request_t
         HTT_CHECK_SET_VAL(HTT_WDI_IPA_OP_REQUEST_OP_CODE, _val);  \
         ((_var) |= ((_val) << HTT_WDI_IPA_OP_REQUEST_OP_CODE_S)); \
     } while (0)
+
+/*
+ * @brief  host -> target HTT_MSI_SETUP message
+ *
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_MSI_SETUP
+ *
+ * @details
+ * After target is booted up, host can send MSI setup message so that
+ * target sets up HW registers based on setup message.
+ *
+ *    The message would appear as follows:
+ *    |31           24|23             16|15|14           8|7               0|
+ *    |---------------+-----------------+-----------------+-----------------|
+ *    |    reserved   |      msi_type   |    pdev_id      |    msg_type     |
+ *    |---------------------------------------------------------------------|
+ *    |                          msi_addr_lo                                |
+ *    |---------------------------------------------------------------------|
+ *    |                          msi_addr_hi                                |
+ *    |---------------------------------------------------------------------|
+ *    |                          msi_data                                   |
+ *    |---------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0  - b'0:7   - msg_type: This will be set to
+ *                     0x1f (HTT_H2T_MSG_TYPE_MSI_SETUP)
+ *           b'8:15  - pdev_id:
+ *                     0 (for rings at SOC/UMAC level),
+ *                     1/2/3 mac id (for rings at LMAC level)
+ *           b'16:23 - msi_type: identify which msi registers need to be setup
+ *                     more details can be got from enum htt_msi_setup_type
+ *           b'24:31 - reserved
+ * dword8  - b'0:31  - ring_msi_addr_lo: Lower 32bits of MSI cfg address
+ * dword9  - b'0:31  - ring_msi_addr_hi: Upper 32bits of MSI cfg address
+ * dword10 - b'0:31  - ring_msi_data: MSI data configured by host
+ */
+PREPACK struct htt_msi_setup_t {
+    A_UINT32 msg_type:  8,
+             pdev_id:   8,
+             msi_type:  8,
+             reserved:  8;
+    A_UINT32 msi_addr_lo;
+    A_UINT32 msi_addr_hi;
+    A_UINT32 msi_data;
+} POSTPACK;
+
+enum htt_msi_setup_type {
+    HTT_PPDU_END_MSI_SETUP_TYPE,
+
+    /* Insert new types here*/
+};
+
+#define HTT_MSI_SETUP_SZ    (sizeof(struct htt_msi_setup_t))
+#define HTT_MSI_SETUP_PDEV_ID_M                  0x0000ff00
+#define HTT_MSI_SETUP_PDEV_ID_S                  8
+#define HTT_MSI_SETUP_PDEV_ID_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_PDEV_ID_M) >> \
+                HTT_MSI_SETUP_PDEV_ID_S)
+#define HTT_MSI_SETUP_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_PDEV_ID_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_TYPE_M                  0x00ff0000
+#define HTT_MSI_SETUP_MSI_TYPE_S                  16
+#define HTT_MSI_SETUP_MSI_TYPE_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_TYPE_M) >> \
+                HTT_MSI_SETUP_MSI_TYPE_S)
+#define HTT_MSI_SETUP_MSI_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_TYPE_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_ADDR_LO_M        0xffffffff
+#define HTT_MSI_SETUP_MSI_ADDR_LO_S        0
+#define HTT_MSI_SETUP_MSI_ADDR_LO_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_ADDR_LO_M) >> \
+                HTT_MSI_SETUP_MSI_ADDR_LO_S)
+#define HTT_MSI_SETUP_MSI_ADDR_LO_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_ADDR_LO, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_ADDR_LO_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_ADDR_HI_M        0xffffffff
+#define HTT_MSI_SETUP_MSI_ADDR_HI_S        0
+#define HTT_MSI_SETUP_MSI_ADDR_HI_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_ADDR_HI_M) >> \
+                HTT_MSI_SETUP_MSI_ADDR_HI_S)
+#define HTT_MSI_SETUP_MSI_ADDR_HI_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_ADDR_HI, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_ADDR_HI_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_DATA_M          0xffffffff
+#define HTT_MSI_SETUP_MSI_DATA_S          0
+#define HTT_MSI_SETUP_MSI_DATA_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_DATA_M) >> \
+                HTT_MSI_SETUP_MSI_DATA_S)
+#define HTT_MSI_SETUP_MSI_DATA_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_DATA, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_DATA_S)); \
+        } while (0)
 
 /*
  * @brief  host -> target  HTT_SRING_SETUP message
