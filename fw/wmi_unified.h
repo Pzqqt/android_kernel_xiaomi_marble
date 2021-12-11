@@ -17873,6 +17873,7 @@ typedef enum wake_reason_e {
     WOW_REASON_FATAL_EVENT_WAKE,
     WOW_REASON_DCS_INT_DET,
     WOW_REASON_ROAM_STATS,
+    WOW_REASON_MDNS_WAKEUP,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
