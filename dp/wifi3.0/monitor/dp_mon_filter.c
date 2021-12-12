@@ -91,6 +91,9 @@ dp_mon_ht2_rx_ring_cfg(struct dp_soc *soc,
 			return QDF_STATUS_E_FAILURE;
 		}
 
+		if (!hal_ring_hdl)
+			continue;
+
 		status = htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
 					     hal_ring_hdl, hal_ring_type,
 					     ring_buf_size,

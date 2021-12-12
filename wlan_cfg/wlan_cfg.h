@@ -246,6 +246,7 @@ struct wlan_srng_cfg {
  * @lmac_peer_id_msb: value used for hash based routing
  * @vdev_stats_hw_offload_config: HW vdev stats config
  * @vdev_stats_hw_offload_timer: HW vdev stats timer duration
+ * @num_rxdma_status_rings_per_pdev: Num RXDMA status rings
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -404,6 +405,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int vdev_stats_hw_offload_timer;
 #endif
 	uint8_t num_rxdma_dst_rings_per_pdev;
+	uint8_t num_rxdma_status_rings_per_pdev;
 };
 
 /**

@@ -1402,7 +1402,9 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 		htt_tlv_filter.mo_data_filter = filter_val->mo_data;
 	}
 
-	for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
+	for (mac_id = 0;
+	     mac_id  < soc->wlan_cfg_ctx->num_rxdma_status_rings_per_pdev;
+	     mac_id++) {
 		int mac_for_pdev =
 			dp_get_mac_id_for_pdev(mac_id,
 					       pdev->pdev_id);

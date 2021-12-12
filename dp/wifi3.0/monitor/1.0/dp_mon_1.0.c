@@ -167,7 +167,9 @@ void dp_mon_rings_deinit_1_0(struct dp_pdev *pdev)
 
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+	for (mac_id = 0;
+	     mac_id  < soc->wlan_cfg_ctx->num_rxdma_status_rings_per_pdev;
+	     mac_id++) {
 		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id,
 							 pdev->pdev_id);
 
@@ -187,7 +189,9 @@ void dp_mon_rings_free_1_0(struct dp_pdev *pdev)
 
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+	for (mac_id = 0;
+	     mac_id  < soc->wlan_cfg_ctx->num_rxdma_status_rings_per_pdev;
+	     mac_id++) {
 		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id,
 							 pdev->pdev_id);
 
@@ -206,7 +210,9 @@ QDF_STATUS dp_mon_rings_init_1_0(struct dp_pdev *pdev)
 
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+	for (mac_id = 0;
+	     mac_id  < soc->wlan_cfg_ctx->num_rxdma_status_rings_per_pdev;
+	     mac_id++) {
 		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id,
 							 pdev->pdev_id);
 
@@ -237,7 +243,9 @@ QDF_STATUS dp_mon_rings_alloc_1_0(struct dp_pdev *pdev)
 
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+	for (mac_id = 0;
+	     mac_id  < soc->wlan_cfg_ctx->num_rxdma_status_rings_per_pdev;
+	     mac_id++) {
 		int lmac_id =
 		dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev->pdev_id);
 		entries = wlan_cfg_get_dma_mon_stat_ring_size(pdev_cfg_ctx);
@@ -641,6 +649,9 @@ QDF_STATUS dp_mon_htt_srng_setup_1_0(struct dp_soc *soc,
 	status = dp_mon_htt_dest_srng_setup(soc, pdev, mac_id, mac_for_pdev);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
+
+	if (!soc->rxdma_mon_status_ring[mac_id].hal_srng)
+		return QDF_STATUS_SUCCESS;
 
 	status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
 				soc->rxdma_mon_status_ring[mac_id]
