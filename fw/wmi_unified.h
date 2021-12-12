@@ -1583,6 +1583,10 @@ typedef enum {
 
     WMI_PDEV_FIPS_EXTEND_EVENTID,
 
+    /* Event to send packet log decode information */
+    WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID,
+
+
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
     WMI_VDEV_START_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_VDEV),
@@ -8627,6 +8631,27 @@ typedef struct {
      * wmi_pdev_pktlog_filter_info pdev_pktlog_filter_info[];
      */
 } wmi_pdev_pktlog_filter_cmd_fixed_param;
+
+/**
+ * WMI event to send packet log decode information to Host.
+ * This sends the metadata which will be embedded by Host in the file-level
+ * header of the pktlog trace file (i.e. the ath_pktlog_bufhdr struct).
+ * This will be later used by the pktlog post-processing scripts to get
+ * prerequisite pktlog_defs*.JSON files for decoding the trace.
+ */
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_pktlog_decode_info_evt_fixed_param */
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+    /** Forty byte field for storing software image as null terminated string */
+    A_UINT8  software_image[40];
+    /** Forty byte field for storing chip info as null terminated string */
+    A_UINT8  chip_info[40];
+    /** Four byte field for storing JSON version */
+    A_UINT32 pktlog_defs_json_version;
+} wmi_pdev_pktlog_decode_info_evt_fixed_param;
 
 typedef enum {
     WMI_ROGUE_AP_ON_STA_PS  = 1, /* rogue ap on sta ps module */

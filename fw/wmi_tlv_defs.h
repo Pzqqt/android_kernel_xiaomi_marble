@@ -1224,6 +1224,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_tlv,
     WMITLV_TAG_STRUC_wmi_sw_cal_ver_cap,
     WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_pktlog_decode_info_evt_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1985,6 +1986,7 @@ typedef enum {
     OP(WMI_ROAM_FRAME_EVENTID) \
     OP(WMI_QUIET_HANDLING_EVENTID) \
     OP(WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID) \
+    OP(WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6602,6 +6604,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_QUIET_HANDLING_EVENTID);
         fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_resmgr_chan_time_quota_tlv, chan_quota, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID);
+
+/* PDev Packet Log Decode Info Event */
+#define WMITLV_TABLE_WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_pktlog_decode_info_evt_fixed_param, wmi_pdev_pktlog_decode_info_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID);
 
 
 #ifdef __cplusplus
