@@ -261,8 +261,6 @@ static ssize_t boot_store(struct device *dev,
 	if (val > 0 && booted == 0) {
 		struct msm_cvp_inst *inst;
 
-		dprintk(CVP_CORE,
-			"Creating cvp instance with session type CVP BOOT\n");
 		inst = msm_cvp_open21(MSM_CORE_CVP, MSM_CVP_BOOT);
 		if (!inst) {
 			dprintk(CVP_ERR,
@@ -278,8 +276,6 @@ static ssize_t boot_store(struct device *dev,
 	} else if ((val == 2) && booted) {
 		struct msm_cvp_inst *inst;
 
-		dprintk(CVP_CORE,
-			"Creating cvp instance with session type CVP USER\n");
 		inst = msm_cvp_open21(MSM_CORE_CVP, MSM_CVP_USER);
 		if (!inst) {
 			dprintk(CVP_ERR,
