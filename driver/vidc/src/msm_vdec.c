@@ -1918,8 +1918,19 @@ int msm_vdec_handle_release_buffer(struct msm_vidc_inst *inst,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
-	print_vidc_buffer(VIDC_LOW, "low ", "release done", inst, buf);
+	/**
+	 * RO & release list doesnot take dma ref_count using dma_buf_get().
+	 * Dmabuf ptr willbe obsolete when its last ref was last.
+	 * Use direct api to print logs instead of calling print_vidc_buffer()
+	 * api, which will attempt to dereferrence dmabuf ptr.
+	 */
+	i_vpr_l(inst,
+		"release done: %s: idx %2d fd %3d off %d daddr %#llx size %8d filled %8d flags %#x ts %8lld attr %#x counts(etb ebd ftb fbd) %4llu %4llu %4llu %4llu\n",
+		buf_name(buf->type),
+		buf->index, buf->fd, buf->data_offset,
+		buf->device_addr, buf->buffer_size, buf->data_size,
+		buf->flags, buf->timestamp, buf->attr, inst->debug_count.etb,
+		inst->debug_count.ebd, inst->debug_count.ftb, inst->debug_count.fbd);
 	/* delete the buffer from release list */
 	list_del(&buf->list);
 	msm_memory_free(inst, buf);
