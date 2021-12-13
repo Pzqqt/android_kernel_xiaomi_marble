@@ -344,6 +344,8 @@ enum {
 
 #define IPA3_ACTIVE_CLIENTS_TABLE_BUF_SIZE 4096
 
+#define IPA_UC_ACT_TBL_SIZE 1000
+
 #define IPA3_ACTIVE_CLIENT_LOG_TYPE_EP 0
 #define IPA3_ACTIVE_CLIENT_LOG_TYPE_SIMPLE 1
 #define IPA3_ACTIVE_CLIENT_LOG_TYPE_RESOURCE 2
@@ -2386,6 +2388,11 @@ struct ipa3_context {
 	bool buff_below_thresh_for_def_pipe_notified;
 	bool buff_below_thresh_for_coal_pipe_notified;
 	u8 mhi_ctrl_state;
+	struct ipa_mem_buffer uc_act_tbl;
+	bool uc_act_tbl_valid;
+	struct mutex act_tbl_lock;
+	int uc_act_tbl_total;
+	int uc_act_tbl_next_index;
 };
 
 struct ipa3_plat_drv_res {
@@ -2795,6 +2802,12 @@ int ipa3_cfg_ep_holb_by_client(enum ipa_client_type client,
 int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl);
 
 int ipa3_cfg_ep_ulso(u32 clnt_hdl, const struct ipa_ep_cfg_ulso *ep_ulso);
+
+int ipa3_setup_uc_act_tbl(void);
+
+int ipa3_add_socksv5_conn(struct ipa_socksv5_info *info);
+
+int ipa3_del_socksv5_conn(uint32_t handle);
 
 /*
  * Header removal / addition
