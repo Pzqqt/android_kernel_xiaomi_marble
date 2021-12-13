@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,10 +65,12 @@ static void lim_notify_link_info(struct pe_session *pe_session)
 	int link;
 
 	if (!pe_session->mlo_link_info.upt_bcn_mlo_ie &&
-	    pe_session->mlo_link_info.mlo_rnr_updated)
+	    !mlme_is_notify_co_located_ap_update_rnr(pe_session->vdev))
 		return;
-	pe_session->mlo_link_info.mlo_rnr_updated = true;
-	pe_debug("mlo notify beacon change info to partner link");
+	pe_session->mlo_link_info.upt_bcn_mlo_ie = false;
+	mlme_set_notify_co_located_ap_update_rnr(pe_session->vdev, false);
+	pe_debug("vdev id %d mlo notify beacon change info to partner link",
+		 wlan_vdev_get_id(pe_session->vdev));
 	lim_get_mlo_vdev_list(pe_session, &vdev_count,
 			      wlan_vdev_list);
 	for (link = 0; link < vdev_count; link++) {

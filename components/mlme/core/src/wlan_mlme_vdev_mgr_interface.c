@@ -400,6 +400,8 @@ static QDF_STATUS ap_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
 {
 	mlme_legacy_debug("vdev id = %d ",
 			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_set_notify_co_located_ap_update_rnr(vdev_mlme->vdev, true);
+
 	return wma_ap_mlme_vdev_start_continue(vdev_mlme, data_len, data);
 }
 
@@ -994,6 +996,33 @@ QDF_STATUS mlme_set_vdev_stop_type(struct wlan_objmgr_vdev *vdev,
 	mlme_priv->vdev_stop_type = vdev_stop_type;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void mlme_set_notify_co_located_ap_update_rnr(struct wlan_objmgr_vdev *vdev,
+					      bool upt_rnr)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return;
+	}
+
+	mlme_priv->notify_co_located_ap_upt_rnr = upt_rnr;
+}
+
+bool mlme_is_notify_co_located_ap_update_rnr(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return false;
+	}
+
+	return mlme_priv->notify_co_located_ap_upt_rnr;
 }
 
 enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev)

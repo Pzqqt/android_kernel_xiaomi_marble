@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -412,6 +413,25 @@ QDF_STATUS mlme_get_vdev_stop_type(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS mlme_set_vdev_stop_type(struct wlan_objmgr_vdev *vdev,
 				   uint32_t vdev_stop_type);
+
+/**
+ * mlme_is_notify_co_located_ap_update_rnr() - Need co-located ap update rnr
+ * @vdev: vdev pointer
+ *
+ * Return: True if vdev need notify co-located ap to update rnr.
+ */
+bool mlme_is_notify_co_located_ap_update_rnr(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_notify_co_located_ap_update_rnr() - notify co-located ap to update
+ *                                              rnr
+ * @vdev: vdev pointer
+ * @update_rnr: whether to notify co-located ap to update rnr
+ *
+ * Return: Void
+ */
+void mlme_set_notify_co_located_ap_update_rnr(struct wlan_objmgr_vdev *vdev,
+					      bool update_rnr);
 
 /**
  * mlme_get_assoc_type() - get associate type

@@ -7535,7 +7535,11 @@ void populate_dot11f_mlo_rnr(struct mac_context *mac_ctx,
 		if (!rnr_populated) {
 			populate_dot11f_rnr_tbtt_info_10(mac_ctx, session,
 							 link_session, dot11f);
-			pe_err("TD: we only populate one RNR IE for one link");
+			pe_debug("mlo vdev id %d populate vdev id %d link id %d op class %d chan num %d in RNR IE",
+				 wlan_vdev_get_id(session->vdev),
+				 wlan_vdev_get_id(wlan_vdev_list[link]),
+				 dot11f->tbtt_info.tbtt_info_10.link_id,
+				 dot11f->op_class, dot11f->channel_num);
 			rnr_populated = true;
 		}
 		lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
