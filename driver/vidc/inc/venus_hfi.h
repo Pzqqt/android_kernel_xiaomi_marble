@@ -70,6 +70,7 @@ int __iface_cmdq_write(struct msm_vidc_core *core,
 	void *pkt);
 int __iface_msgq_read(struct msm_vidc_core *core, void *pkt);
 int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt);
+int __set_clocks(struct msm_vidc_core *core, u32 freq);
 int __scale_clocks(struct msm_vidc_core *core);
 int __set_clk_rate(struct msm_vidc_core *core,
 	struct clock_info *cl, u64 rate);

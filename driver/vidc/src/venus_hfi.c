@@ -693,7 +693,7 @@ int __set_clk_rate(struct msm_vidc_core *core,
 	return rc;
 }
 
-static int __set_clocks(struct msm_vidc_core *core, u32 freq)
+int __set_clocks(struct msm_vidc_core *core, u32 freq)
 {
 	int rc = 0;
 	struct clock_info *cl;

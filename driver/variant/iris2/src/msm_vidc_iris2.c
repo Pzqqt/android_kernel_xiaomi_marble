@@ -616,6 +616,14 @@ static int __power_off_iris2(struct msm_vidc_core *core)
 	if (!core->power_enabled)
 		return 0;
 
+	/**
+	 * Reset video_cc_mvs0_clk_src value to resolve MMRM high video
+	 * clock projection issue.
+	 */
+	rc = __set_clocks(core, 0);
+	if (rc)
+		d_vpr_e("%s: resetting clocks failed\n", __func__);
+
 	if (__power_off_iris2_hardware(core))
 		d_vpr_e("%s: failed to power off hardware\n", __func__);
 
