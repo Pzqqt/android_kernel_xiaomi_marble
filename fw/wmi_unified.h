@@ -4063,8 +4063,13 @@ typedef struct {
      *      2 - WMM_AC_VI
      *      3 - WMM_AC_VO
      *      Refer to WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_GET/SET macros.
+     * Bit 13 - sawf_sched
+     *      SAWF feature flag for scheduler
+     *      0  -> disable SAWF based scheduling
+     *      1  -> enable SAWF based scheduling
+     *      Refer to WMI_RSRC_CFG_FLAGS2_SAWF_CONFIG_ENABLE_GET/SET macros.
      *
-     *  Bits 31:13 - Reserved
+     *  Bits 31:14 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4458,6 +4463,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 11, 2)
 #define WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_SET(flags2, value) \
     WMI_SET_BITS(flags2, 11, 2, value)
+
+#define WMI_RSRC_CFG_FLAGS2_SAWF_CONFIG_ENABLE_GET(flags2) \
+    WMI_GET_BITS(flags2, 13, 1)
+#define WMI_RSRC_CFG_FLAGS2_SAWF_CONFIG_ENABLE_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 13, 1, value)
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
