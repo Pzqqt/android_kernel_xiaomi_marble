@@ -27,8 +27,6 @@
 #include "venus_hfi_response.h"
 #include "msm_vidc_events.h"
 
-#define MIN_PAYLOAD_SIZE 3
-
 #define MAX_FIRMWARE_NAME_SIZE 128
 
 #define update_offset(offset, val)		((offset) += (val))

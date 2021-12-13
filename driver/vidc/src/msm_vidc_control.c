@@ -123,13 +123,6 @@ static const char *const mpeg_video_hevc_profile[] = {
 	NULL,
 };
 
-static const char *const roi_map_type[] = {
-	"None",
-	"2-bit",
-	"2-bit",
-	NULL,
-};
-
 static u32 msm_vidc_get_port_info(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id)
 {
