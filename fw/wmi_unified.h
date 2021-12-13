@@ -4051,7 +4051,20 @@ typedef struct {
      *           for MBSSID_NON_TX_VAP
      *      Refer to WMI_RSRC_CFG_FLAGS2_CALC_NEXT_DTIM_COUNT_GET/SET macros.
      *
-     *  Bits 31:10 - Reserved
+     * Bit 10 - arp_ac_override_valid
+     *      0 -> arp_ac_override field is invalid
+     *      1 -> arp_ac_override field is valid
+     *      Refer to WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_VALID_GET/SET macros.
+     * Bit 12:11 - arp_ac_override
+     *      If the AC override valid bit is set then this field will specify the
+     *      access category to use for ARP frames
+     *      0 - WMM_AC_BE
+     *      1 - WMM_AC_BK
+     *      2 - WMM_AC_VI
+     *      3 - WMM_AC_VO
+     *      Refer to WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_GET/SET macros.
+     *
+     *  Bits 31:13 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4435,6 +4448,16 @@ typedef struct {
     WMI_GET_BITS(flags2, 9, 1)
 #define WMI_RSRC_CFG_FLAGS2_CALC_NEXT_DTIM_COUNT_SET(flags2, value) \
     WMI_SET_BITS(flags2, 9, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_VALID_GET(flags2) \
+    WMI_GET_BITS(flags2, 10, 1)
+#define WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_VALID_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 10, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_GET(flags2) \
+    WMI_GET_BITS(flags2, 11, 2)
+#define WMI_RSRC_CFG_FLAGS2_ARP_AC_OVERRIDE_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 11, 2, value)
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
