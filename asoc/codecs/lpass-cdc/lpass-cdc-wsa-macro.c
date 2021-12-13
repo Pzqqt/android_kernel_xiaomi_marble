@@ -294,6 +294,7 @@ struct lpass_cdc_wsa_macro_priv {
 	uint32_t thermal_cur_state;
 	uint32_t thermal_max_state;
 	struct work_struct lpass_cdc_wsa_macro_cooling_work;
+	bool pre_dev_up;
 };
 
 static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[];
@@ -969,6 +970,7 @@ static int lpass_cdc_wsa_macro_event_handler(struct snd_soc_component *component
 
 	switch (event) {
 	case LPASS_CDC_MACRO_EVT_SSR_DOWN:
+		wsa_priv->pre_dev_up = false;
 		trace_printk("%s, enter SSR down\n", __func__);
 		if (wsa_priv->swr_ctrl_data) {
 			swrm_wcd_notify(
@@ -989,6 +991,7 @@ static int lpass_cdc_wsa_macro_event_handler(struct snd_soc_component *component
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
+		wsa_priv->pre_dev_up = true;
 		/* reset swr after ssr/pdr */
 		wsa_priv->reset_swr = true;
 		if (wsa_priv->swr_ctrl_data)
@@ -2758,6 +2761,11 @@ static int lpass_cdc_wsa_macro_core_vote(void *handle, bool enable)
 		pr_err("%s: wsa priv data is NULL\n", __func__);
 		return -EINVAL;
 	}
+	if (!wsa_priv->pre_dev_up && enable) {
+		pr_debug("%s: adsp is not up\n", __func__);
+		return -EINVAL;
+	}
+
 	if (enable) {
 		pm_runtime_get_sync(wsa_priv->dev);
 		if (lpass_cdc_check_core_votes(wsa_priv->dev))
@@ -3188,6 +3196,7 @@ static int lpass_cdc_wsa_macro_probe(struct platform_device *pdev)
 	if (!wsa_priv)
 		return -ENOMEM;
 
+	wsa_priv->pre_dev_up = true;
 	wsa_priv->dev = &pdev->dev;
 	ret = of_property_read_u32(pdev->dev.of_node, "reg",
 				   &wsa_base_addr);
