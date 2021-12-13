@@ -29,6 +29,7 @@
 #include "wlan_vdev_mlme_api.h"
 #include "wlan_mlme_api.h"
 #include <wlan_crypto_global_api.h>
+#include <wlan_mlo_mgr_cmn.h>
 
 #define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
 
@@ -3634,6 +3635,76 @@ QDF_STATUS mlme_get_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
 		freq_list[i] = lfr->saved_freq_list.freq[i];
 
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static void
+wlan_mlo_fill_active_link_vdev_bitmap(struct mlo_link_set_active_req *req,
+				      uint8_t *mlo_vdev_lst,
+				      uint32_t num_mlo_vdev)
+{
+	uint32_t entry_idx, entry_offset, vdev_idx;
+	uint8_t vdev_id;
+
+	for (vdev_idx = 0; vdev_idx < num_mlo_vdev; vdev_idx++) {
+		vdev_id = mlo_vdev_lst[vdev_idx];
+		entry_idx = vdev_id / 32;
+		entry_offset = vdev_id % 32;
+		if (entry_idx >= MLO_LINK_NUM_SZ) {
+			mlme_err("Invalid entry_idx %d num_mlo_vdev %d vdev %d",
+				 entry_idx, num_mlo_vdev, vdev_id);
+			continue;
+		}
+		req->param.vdev_bitmap[entry_idx] |= (1 << entry_offset);
+		/* update entry number if entry index changed */
+		if (req->param.num_vdev_bitmap < entry_idx + 1)
+			req->param.num_vdev_bitmap = entry_idx + 1;
+	}
+
+	mlme_debug("num_vdev_bitmap %d vdev_bitmap[0] = 0x%x, vdev_bitmap[1] = 0x%x",
+		   req->param.num_vdev_bitmap, req->param.vdev_bitmap[0],
+		   req->param.vdev_bitmap[1]);
+}
+
+void
+wlan_mlo_sta_mlo_concurency_set_link(struct wlan_objmgr_vdev *vdev,
+				     enum mlo_link_force_reason reason,
+				     enum mlo_link_force_mode mode,
+				     uint8_t num_mlo_vdev,
+				     uint8_t *mlo_vdev_lst)
+{
+	struct mlo_link_set_active_req *req;
+	QDF_STATUS status;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return;
+
+	mlme_debug("vdev %d: mode %d num_mlo_vdev %d reason %d",
+		   wlan_vdev_get_id(vdev), mode, num_mlo_vdev, reason);
+
+	req->ctx.vdev = vdev;
+	req->param.reason = reason;
+	req->param.force_mode = mode;
+
+	/* set MLO vdev bit mask for all case */
+	wlan_mlo_fill_active_link_vdev_bitmap(req, mlo_vdev_lst, num_mlo_vdev);
+
+	/* fill num of links for MLO_LINK_FORCE_MODE_ACTIVE_NUM */
+	if (mode == MLO_LINK_FORCE_MODE_ACTIVE_NUM) {
+		req->param.force_mode = MLO_LINK_FORCE_MODE_ACTIVE_NUM;
+		req->param.num_link_entry = 1;
+		req->param.link_num[0].num_of_link = num_mlo_vdev - 1;
+	}
+
+	status = mlo_ser_set_link_req(req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("vdev %d: Failed to set link mode %d num_mlo_vdev %d reason %d",
+			 wlan_vdev_get_id(vdev), mode, num_mlo_vdev,
+			 reason);
+
+	qdf_mem_free(req);
 }
 #endif
 

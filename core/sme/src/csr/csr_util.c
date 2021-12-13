@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +36,8 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_cm_roam_api.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
+#include <wlan_mlo_mgr_public_structs.h>
+#include "wlan_objmgr_vdev_obj.h"
 
 #define CASE_RETURN_STR(n) {\
 	case (n): return (# n);\
@@ -1446,6 +1449,90 @@ QDF_STATUS csr_mlme_vdev_stop_bss(uint8_t vdev_id)
 				      eCSR_ROAM_SEND_P2P_STOP_BSS,
 				      eCSR_ROAM_RESULT_NONE);
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+void csr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_vdev *vdev,
+					bool is_ap_up)
+{
+	uint8_t num_mlo = 0;
+	qdf_freq_t sap_chan = 0;
+	struct wlan_channel *bss_chan = NULL;
+	uint8_t mlo_vdev_lst[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	bool are_both_mlo_5g = false;
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+
+	if (!mac_ctx)
+		return;
+
+	are_both_mlo_5g = policy_mgr_is_mlo_sta_sbs_link(mac_ctx->psoc,
+							 mlo_vdev_lst,
+							 &num_mlo);
+
+	if (num_mlo < 2) {
+		sme_debug("vdev %d AP_state %d MLO Sta links %d",
+			  wlan_vdev_get_id(vdev), is_ap_up, num_mlo);
+		return;
+	}
+
+	bss_chan = wlan_vdev_mlme_get_bss_chan(vdev);
+	if (bss_chan)
+		sap_chan = bss_chan->ch_freq;
+	if (!sap_chan) {
+		sme_debug("Invalid SAP Chan");
+		return;
+	}
+
+	sme_debug("vdev %d: is_ap_up %d num_mlo %d are_both_mlo_5g %d sap_chan %d",
+		  wlan_vdev_get_id(vdev), is_ap_up, num_mlo, are_both_mlo_5g,
+		  sap_chan);
+
+	/*
+	 * if MLO STA exist with 2.4 + 5/6 ghz links, then there will be SCC
+	 * with one of the links.
+	 */
+	if (!are_both_mlo_5g)
+		goto enable_both_lnks_on_disc;
+
+	if (is_ap_up) {
+		/*
+		 * 1) If MLO STA is present with both links in 5/6 Ghz then SAP
+		 *    comes up on 2.4 Ghz, then Disable one of the links.
+		 *
+		 * 2) If there is channel switch for sap from 2.4 ghz to 5 ghz,
+		 *    then enable both the links as they were disabled by
+		 *    previous operations when sap was on 2.4 ghz
+		 */
+		if (wlan_reg_is_24ghz_ch_freq(sap_chan))
+			wlan_mlo_sta_mlo_concurency_set_link(vdev,
+						MLO_LINK_FORCE_REASON_CONNECT,
+						MLO_LINK_FORCE_MODE_ACTIVE_NUM,
+						num_mlo, mlo_vdev_lst);
+		else
+			wlan_mlo_sta_mlo_concurency_set_link(vdev,
+						MLO_LINK_FORCE_REASON_CONNECT,
+						MLO_LINK_FORCE_MODE_NO_FORCE,
+						num_mlo, mlo_vdev_lst);
+
+		return;
+	}
+
+	/*
+	 * If MLO STA is present with both links in 5/6 Ghz and SAP,
+	 * which was present on 2.4 ghz, stops then renable both the
+	 * as one of the links were disabled because of sap on 2.4
+	 * ghz.
+	 * Also, in case where MLO STA roamed from 5 + 6 link to 2.4 + 5/6 link
+	 * force scc will happen and the disabled link has to be enabled.
+	 * Both links should only be enabled if mlo sta has more than one links.
+	 */
+enable_both_lnks_on_disc:
+	if (wlan_reg_is_24ghz_ch_freq(sap_chan))
+		wlan_mlo_sta_mlo_concurency_set_link(vdev,
+					MLO_LINK_FORCE_REASON_DISCONNECT,
+					MLO_LINK_FORCE_MODE_NO_FORCE,
+					num_mlo, mlo_vdev_lst);
+}
+#endif
 
 qdf_freq_t csr_mlme_get_concurrent_operation_freq(void)
 {

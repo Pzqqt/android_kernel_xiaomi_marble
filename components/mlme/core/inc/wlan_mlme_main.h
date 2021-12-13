@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1045,6 +1046,28 @@ QDF_STATUS mlme_get_cfg_wlm_reset(struct wlan_objmgr_psoc *psoc,
  */
 void mlme_reinit_control_config_lfr_params(struct wlan_objmgr_psoc *psoc,
 					   struct wlan_mlme_lfr_cfg *lfr);
+
+/**
+ * wlan_mlme_mlo_sta_mlo_concurency_set_link() - Set links for MLO STA
+ *
+ * @vdev: vdev object
+ * @reason: Reason for which link is forced
+ * @mode: Force reason
+ * @num_mlo_vdev: number of mlo vdev
+ * @mlo_vdev_lst: MLO STA vdev list
+
+ * Interface manager Set links for MLO STA
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_11BE_MLO
+void
+wlan_mlo_sta_mlo_concurency_set_link(struct wlan_objmgr_vdev *vdev,
+				     enum mlo_link_force_reason reason,
+				     enum mlo_link_force_mode mode,
+				     uint8_t num_mlo_vdev,
+				     uint8_t *mlo_vdev_lst);
+#endif
 
 /**
  * wlan_mlme_get_mac_vdev_id() - get vdev self mac address using vdev id

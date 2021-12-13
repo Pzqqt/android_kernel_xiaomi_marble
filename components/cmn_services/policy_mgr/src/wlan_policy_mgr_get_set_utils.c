@@ -3688,6 +3688,51 @@ bool policy_mgr_is_mlo_sta_present(struct wlan_objmgr_psoc *psoc)
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	return mlo_sta_present;
 }
+
+bool policy_mgr_is_mlo_sta_sbs_link(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *mlo_vdev_lst,
+				    uint8_t *num_mlo)
+{
+	uint32_t sta_num = 0;
+	uint8_t i, mlo_idx = 0;
+	struct wlan_objmgr_vdev *temp_vdev;
+	qdf_freq_t mlo_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	bool is_sbs_link = true;
+
+	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, NULL,
+							 vdev_id_list,
+							 PM_STA_MODE);
+	if (!sta_num)
+		return false;
+
+	for (i = 0; i < sta_num; i++) {
+		temp_vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+							vdev_id_list[i],
+							WLAN_POLICY_MGR_ID);
+		if (!temp_vdev) {
+			sme_err("invalid vdev for id %d", vdev_id_list[i]);
+			return false;
+		}
+
+		if (wlan_vdev_mlme_is_mlo_vdev(temp_vdev)) {
+			mlo_vdev_lst[mlo_idx] = vdev_id_list[i];
+			mlo_freq_list[mlo_idx] =
+				wlan_get_operation_chan_freq(temp_vdev);
+			if (wlan_reg_is_24ghz_ch_freq(mlo_freq_list[mlo_idx]))
+				is_sbs_link = false;
+
+			mlo_idx++;
+		}
+		wlan_objmgr_vdev_release_ref(temp_vdev, WLAN_POLICY_MGR_ID);
+	}
+
+	*num_mlo = mlo_idx;
+	if (mlo_idx < 2)
+		is_sbs_link = false;
+
+	return is_sbs_link;
+}
 #else
 static bool
 policy_mgr_allow_sta_concurrency(struct wlan_objmgr_psoc *psoc,

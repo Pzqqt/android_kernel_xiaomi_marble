@@ -930,6 +930,25 @@ QDF_STATUS csr_mlme_vdev_disconnect_all_p2p_client_event(uint8_t vdev_id);
 QDF_STATUS csr_mlme_vdev_stop_bss(uint8_t vdev_id);
 
 /*
+ * csr_mlme_handle_sap_mlo_sta_concurrency() - Handle SAP MLO STA concurrency
+ *                                             such as:
+ *       1) If MLO STA is present with both links in 5/6 Ghz then SAP comes up
+ *          on 2.4 Ghz, then Disable one of the links
+ *       2) If MLO STA is present with both links in 5/6 Ghz and SAP, which was
+ *          present on 2.4 ghz, stops then renable both the as one of the links
+ *          were disabled because of sap on 2.4 ghz.
+ *
+ * @vdev: vdev mlme object
+ * @is_ap_up: bool to represent sap state
+ *
+ * Return: Void
+ */
+#ifdef WLAN_FEATURE_11BE_MLO
+void csr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_vdev *vdev,
+					bool is_ap_up);
+#endif
+
+/*
  * csr_mlme_get_concurrent_operation_freq() - Callback for MLME module to
  *	get the concurrent operation frequency
  *
