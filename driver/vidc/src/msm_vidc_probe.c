@@ -82,7 +82,33 @@ exit:
 	return rc;
 }
 
+static ssize_t sku_version_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct msm_vidc_core *core;
+
+	/*
+	 * Default sku version: 0
+	 * driver possibly not probed yet or not the main device.
+	 */
+	if (!dev || !dev->driver ||
+		!of_device_is_compatible(dev->of_node, "qcom,msm-vidc"))
+		return 0;
+
+	core = dev_get_drvdata(dev);
+	if (!core || !core->platform) {
+		d_vpr_e("%s: invalid core\n", __func__);
+		return 0;
+	}
+
+	return scnprintf(buf, PAGE_SIZE, "%d",
+			core->platform->data.sku_version);
+}
+
+static DEVICE_ATTR_RO(sku_version);
+
 static struct attribute *msm_vidc_core_attrs[] = {
+	&dev_attr_sku_version.attr,
 	NULL
 };
 
