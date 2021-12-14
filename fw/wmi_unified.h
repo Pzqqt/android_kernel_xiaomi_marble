@@ -31543,6 +31543,7 @@ typedef struct {
     /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0 */
     A_UINT32 pdev_id;       /* host should never set it to WMI_PDEV_ID_SOC  */
     A_UINT32 flags;         /* enable/disable flags, refer to MACROs TWT_EN_DIS_FLAGS_* (TWT_EN_DIS_FLAGS_GET_BTWT etc.) */
+    A_UINT32 reason_code;   /* refer to WMI_DISABLE_TWT_REASON_T */
 } wmi_twt_disable_cmd_fixed_param;
 
 typedef struct {
@@ -31558,6 +31559,16 @@ typedef enum _WMI_DISABLE_TWT_STATUS_T {
     WMI_DISABLE_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
     WMI_DISABLE_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
 } WMI_DISABLE_TWT_STATUS_T;
+
+/* Host reason code of TWT Disable command : Set by Host */
+typedef enum _WMI_DISABLE_TWT_REASON_T {
+    /* Host will set one of below reason code while disabling TWT */
+    WMI_DISABLE_TWT_REASON_NONE,                        /* Normal case */
+    WMI_DISABLE_TWT_REASON_CONCURRENCY_SCC,             /* Concurrency case SCC */
+    WMI_DISABLE_TWT_REASON_CONCURRENCY_MCC,             /* Concurrency case MCC */
+    WMI_DISABLE_TWT_REASON_CHANGE_CONGESTION_TIMEOUT,   /* To change congestion time */
+    WMI_DISABLE_TWT_REASON_P2P_GO_NOA,                  /* P2P GO NOA reason */
+} WMI_DISABLE_TWT_REASON_T;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param */
@@ -31770,6 +31781,8 @@ typedef enum _WMI_DEL_TWT_STATUS_T {
     WMI_DEL_TWT_STATUS_CONCURRENCY,         /* Teardown due to concurrency */
     WMI_DEL_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
     WMI_DEL_TWT_STATUS_SCAN_IN_PROGRESS,    /* Reason Scan in progress */
+    WMI_DEL_TWT_STATUS_CHANGE_CONGESTION_TIMEOUT,   /* Congestion timeout changed */
+    WMI_DEL_TWT_STATUS_P2P_GO_NOA,                  /* P2P GO NOA */
 } WMI_DEL_TWT_STATUS_T;
 
 typedef struct {
