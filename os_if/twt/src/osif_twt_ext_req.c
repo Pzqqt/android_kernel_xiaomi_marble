@@ -21,6 +21,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_twt_ucfg_api.h>
 #include <wlan_twt_ucfg_ext_api.h>
+#include <osif_twt_req.h>
 #include <osif_twt_ext_req.h>
 #include <wlan_policy_mgr_api.h>
 #include <wlan_cm_api.h>
@@ -39,6 +40,28 @@
 #define TWT_SETUP_WAKE_DURATION_MAX             0xFFFF
 #define TWT_SETUP_WAKE_INTVL_EXP_MAX            31
 #define TWT_MAX_NEXT_TWT_SIZE                   3
+
+int osif_twt_send_requestor_enable_cmd(struct wlan_objmgr_psoc *psoc,
+				       uint8_t pdev_id)
+{
+	struct twt_enable_param req = {0};
+
+	req.pdev_id = pdev_id;
+	req.ext_conf_present = true;
+
+	return osif_twt_requestor_enable(psoc, &req);
+}
+
+int osif_twt_send_responder_enable_cmd(struct wlan_objmgr_psoc *psoc,
+				       uint8_t pdev_id)
+{
+	struct twt_enable_param req = {0};
+
+	req.pdev_id = pdev_id;
+	req.ext_conf_present = true;
+
+	return osif_twt_responder_enable(psoc, &req);
+}
 
 int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 		       struct nlattr *twt_param_attr)

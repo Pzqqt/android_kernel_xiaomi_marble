@@ -62,6 +62,22 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 	ucfg_twt_update_psoc_config(hdd_ctx->psoc);
 }
 
+QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx)
+{
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+
+	osif_twt_send_responder_enable_cmd(hdd_ctx->psoc, pdev_id);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx)
+{
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+
+	osif_twt_send_requestor_enable_cmd(hdd_ctx->psoc, pdev_id);
+	return QDF_STATUS_SUCCESS;
+}
+
 #elif defined(WLAN_SUPPORT_TWT)
 
 #define TWT_DISABLE_COMPLETE_TIMEOUT 1000

@@ -20,9 +20,11 @@
  */
 #include <wlan_cfg80211.h>
 #include <osif_twt_ext_req.h>
+#include <osif_twt_rsp.h>
 #include <osif_twt_ext_rsp.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_osif_priv.h>
+#include <wlan_osif_request_manager.h>
 
 QDF_STATUS
 osif_twt_setup_complete_cb(struct wlan_objmgr_psoc *psoc,
