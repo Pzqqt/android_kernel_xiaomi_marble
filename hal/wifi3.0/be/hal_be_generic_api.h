@@ -858,6 +858,34 @@ hal_rx_parse_eht_sig_hdr(struct hal_soc *hal_soc, uint8_t *tlv,
 	return HAL_TLV_STATUS_PPDU_NOT_DONE;
 }
 
+#ifdef WLAN_RX_MON_PARSE_CMN_USER_INFO
+static inline uint32_t
+hal_rx_parse_cmn_usr_info(struct hal_soc *hal_soc, uint8_t *tlv,
+			  struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct phyrx_common_user_info *cmn_usr_info =
+				(struct phyrx_common_user_info *)tlv;
+
+	ppdu_info->rx_status.eht_known |=
+				QDF_MON_STATUS_EHT_GUARD_INTERVAL_KNOWN |
+				QDF_MON_STATUS_EHT_LTF_KNOWN;
+
+	ppdu_info->rx_status.eht_data[0] |= (cmn_usr_info->cp_setting <<
+					     QDF_MON_STATUS_EHT_GI_SHIFT);
+	ppdu_info->rx_status.eht_data[0] |= (cmn_usr_info->ltf_size <<
+					     QDF_MON_STATUS_EHT_LTF_SHIFT);
+
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+#else
+static inline uint32_t
+hal_rx_parse_cmn_usr_info(struct hal_soc *hal_soc, uint8_t *tlv,
+			  struct hal_rx_ppdu_info *ppdu_info)
+{
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+#endif
+
 /**
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
@@ -1848,6 +1876,9 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 		break;
 	case WIFIPHYRX_GENERIC_U_SIG_E:
 		hal_rx_parse_u_sig_hdr(hal, rx_tlv, ppdu_info);
+		break;
+	case WIFIPHYRX_COMMON_USER_INFO_E:
+		hal_rx_parse_cmn_usr_info(hal, rx_tlv, ppdu_info);
 		break;
 	case WIFIRX_HEADER_E:
 	{
