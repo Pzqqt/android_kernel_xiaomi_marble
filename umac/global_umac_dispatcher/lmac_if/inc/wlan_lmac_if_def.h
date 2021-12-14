@@ -2000,6 +2000,8 @@ struct wlan_lmac_if_dfs_rx_ops {
  * @psoc_get_vdev_response_timer_info: function to get vdev response timer
  * structure for a specific vdev id
  * @vdev_mgr_multi_vdev_restart_resp: function to handle mvr response
+ * @vdev_mgr_set_mac_addr_response: Callback to get response for set MAC address
+ *                                  command
  */
 struct wlan_lmac_if_mlme_rx_ops {
 	QDF_STATUS (*vdev_mgr_start_response)(
@@ -2030,6 +2032,9 @@ struct wlan_lmac_if_mlme_rx_ops {
 	struct vdev_response_timer *(*psoc_get_vdev_response_timer_info)(
 						struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id);
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	void (*vdev_mgr_set_mac_addr_response)(uint8_t vdev_id, uint8_t status);
+#endif
 };
 
 #ifdef WLAN_SUPPORT_GREEN_AP

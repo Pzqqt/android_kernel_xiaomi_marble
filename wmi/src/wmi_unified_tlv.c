@@ -16815,6 +16815,33 @@ send_set_mac_address_cmd_tlv(wmi_unified_t wmi,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * extract_update_mac_address_event_tlv() - extract update MAC address event
+ * @wmi_handle: WMI handle
+ * @evt_buf: event buffer
+ * @vdev_id: VDEV ID
+ * @status: FW status of the set MAC address operation
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_update_mac_address_event_tlv(
+				wmi_unified_t wmi_handle, void *evt_buf,
+				uint8_t *vdev_id, uint8_t *status)
+{
+	WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_update_mac_addr_conf_event_fixed_param *event;
+
+	param_buf =
+		(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID_param_tlvs *)evt_buf;
+
+	event = param_buf->fixed_param;
+
+	*vdev_id = event->vdev_id;
+	*status = event->status;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 struct wmi_ops tlv_ops =  {
@@ -17232,6 +17259,8 @@ struct wmi_ops tlv_ops =  {
 
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	.send_set_mac_address_cmd = send_set_mac_address_cmd_tlv,
+	.extract_update_mac_address_event =
+					extract_update_mac_address_event_tlv,
 #endif
 };
 

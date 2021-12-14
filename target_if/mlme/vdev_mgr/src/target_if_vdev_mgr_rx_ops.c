@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -817,6 +818,89 @@ static int target_if_pdev_csa_status_event_handler(
 	return target_if_csa_switch_count_status(psoc, tgt_hdl, csa_status);
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * target_if_update_macaddr_conf_evt_handler() - Set MAC address confirmation
+ *                                               event handler
+ * @scn: Pointer to scn structure
+ * @event_buff: event data
+ * @len: length
+ *
+ * Response handler for set MAC address request command.
+ *
+ * Return: 0 for success or error code
+ */
+static int target_if_update_macaddr_conf_evt_handler(ol_scn_t scn,
+						     uint8_t *event_buff,
+						     uint32_t len)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	uint8_t vdev_id, resp_status;
+	QDF_STATUS status;
+	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
+
+	if (!event_buff) {
+		mlme_err("Received NULL event ptr from FW");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		mlme_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_update_mac_address_event(wmi_handle, event_buff,
+						      &vdev_id, &resp_status);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to extract update MAC address event");
+		return -EINVAL;
+	}
+
+	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
+	if (!rx_ops || !rx_ops->vdev_mgr_set_mac_addr_response) {
+		mlme_err("No Rx Ops");
+		return -EINVAL;
+	}
+
+	rx_ops->vdev_mgr_set_mac_addr_response(vdev_id, resp_status);
+
+	return 0;
+}
+
+static inline void
+target_if_register_set_mac_addr_evt_cbk(struct wmi_unified *wmi_handle)
+{
+	wmi_unified_register_event_handler(
+		   wmi_handle, wmi_vdev_update_mac_addr_conf_eventid,
+		   target_if_update_macaddr_conf_evt_handler, VDEV_RSP_RX_CTX);
+}
+
+static inline void
+target_if_unregister_set_mac_addr_evt_cbk(struct wmi_unified *wmi_handle)
+{
+	wmi_unified_unregister_event_handler(
+			wmi_handle, wmi_vdev_update_mac_addr_conf_eventid);
+}
+#else
+static inline void
+target_if_register_set_mac_addr_evt_cbk(struct wmi_unified *wmi_handle)
+{
+}
+
+static inline void
+target_if_unregister_set_mac_addr_evt_cbk(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
 QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 				struct wlan_objmgr_psoc *psoc)
 {
@@ -884,6 +968,8 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 			mlme_err("failed to register for csa event handler");
 	}
 
+	target_if_register_set_mac_addr_evt_cbk(wmi_handle);
+
 	return retval;
 }
 
@@ -902,6 +988,8 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
 		mlme_err("wmi_handle is null");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	target_if_unregister_set_mac_addr_evt_cbk(wmi_handle);
 
 	wmi_unified_unregister_event_handler(
 			wmi_handle,

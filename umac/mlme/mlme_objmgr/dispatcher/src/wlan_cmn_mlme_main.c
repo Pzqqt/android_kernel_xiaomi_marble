@@ -47,6 +47,21 @@ static void mlme_cm_ops_deinit(void)
 		glbl_cm_ops = NULL;
 }
 
+struct mlme_vdev_mgr_ops *glbl_vdev_mgr_ops;
+osif_vdev_mgr_get_global_ops_cb glbl_vdev_mgr_ops_cb;
+
+static void mlme_vdev_mgr_ops_init(void)
+{
+	if (glbl_vdev_mgr_ops_cb)
+		glbl_vdev_mgr_ops = glbl_vdev_mgr_ops_cb();
+}
+
+static void mlme_vdev_mgr_ops_deinit(void)
+{
+	if (glbl_vdev_mgr_ops_cb)
+		glbl_vdev_mgr_ops = NULL;
+}
+
 QDF_STATUS wlan_cmn_mlme_init(void)
 {
 	QDF_STATUS status;
@@ -68,6 +83,8 @@ QDF_STATUS wlan_cmn_mlme_init(void)
 
 	mlme_cm_ops_init();
 
+	mlme_vdev_mgr_ops_init();
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -75,6 +92,7 @@ QDF_STATUS wlan_cmn_mlme_deinit(void)
 {
 	QDF_STATUS status;
 
+	mlme_vdev_mgr_ops_deinit();
 	status = wlan_vdev_mlme_deinit();
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
@@ -575,6 +593,12 @@ bool mlme_max_chan_switch_is_set(struct wlan_objmgr_vdev *vdev)
 	return phy_config->max_chan_switch_ie;
 }
 
+void mlme_set_osif_vdev_mgr_cb(
+			osif_vdev_mgr_get_global_ops_cb mlme_vdev_mgr_osif_ops)
+{
+	glbl_vdev_mgr_ops_cb = mlme_vdev_mgr_osif_ops;
+}
+
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 QDF_STATUS mlme_vdev_ops_send_set_mac_address(struct qdf_mac_addr mac_addr,
 					      struct qdf_mac_addr mld_addr,
@@ -587,5 +611,14 @@ QDF_STATUS mlme_vdev_ops_send_set_mac_address(struct qdf_mac_addr mac_addr,
 							    vdev);
 
 	return ret;
+}
+
+void mlme_vdev_mgr_notify_set_mac_addr_response(uint8_t vdev_id,
+						uint8_t resp_status)
+{
+	if (glbl_vdev_mgr_ops &&
+	    glbl_vdev_mgr_ops->mlme_vdev_mgr_set_mac_addr_response)
+		glbl_vdev_mgr_ops->mlme_vdev_mgr_set_mac_addr_response(
+							vdev_id, resp_status);
 }
 #endif

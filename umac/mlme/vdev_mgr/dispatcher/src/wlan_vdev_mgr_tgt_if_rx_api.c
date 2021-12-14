@@ -240,6 +240,20 @@ tgt_psoc_reg_wakelock_info_rx_op(struct wlan_lmac_if_mlme_rx_ops
 }
 #endif
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+static inline void tgt_vdev_mgr_reg_set_mac_address_response(
+				struct wlan_lmac_if_mlme_rx_ops *mlme_rx_ops)
+{
+	mlme_rx_ops->vdev_mgr_set_mac_addr_response =
+				mlme_vdev_mgr_notify_set_mac_addr_response;
+}
+#else
+static inline void tgt_vdev_mgr_reg_set_mac_address_response(
+				struct wlan_lmac_if_mlme_rx_ops *mlme_rx_ops)
+{
+}
+#endif
+
 void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	struct wlan_lmac_if_mlme_rx_ops *mlme_rx_ops = &rx_ops->mops;
@@ -261,4 +275,5 @@ void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 	mlme_rx_ops->vdev_mgr_multi_vdev_restart_resp =
 		tgt_vdev_mgr_multi_vdev_restart_resp_handler;
 	tgt_psoc_reg_wakelock_info_rx_op(&rx_ops->mops);
+	tgt_vdev_mgr_reg_set_mac_address_response(mlme_rx_ops);
 }

@@ -2793,6 +2793,9 @@ QDF_STATUS
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 QDF_STATUS (*send_set_mac_address_cmd)(wmi_unified_t wmi,
 				       struct set_mac_addr_params *params);
+QDF_STATUS (*extract_update_mac_address_event)(wmi_unified_t wmi_handle,
+					       void *evt_buf, uint8_t *vdev_id,
+					       uint8_t *status);
 #endif
 };
 
