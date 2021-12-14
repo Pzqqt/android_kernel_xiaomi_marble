@@ -2525,25 +2525,31 @@ bool policy_mgr_current_concurrency_is_scc(struct wlan_objmgr_psoc *psoc)
 		if (pm_conc_connection_list[0].freq ==
 		    pm_conc_connection_list[1].freq &&
 		    pm_conc_connection_list[0].mac ==
-		    pm_conc_connection_list[1].mac) {
+		    pm_conc_connection_list[1].mac)
 			is_scc = true;
-		}
 		break;
 	case 3:
-		if (policy_mgr_is_current_hwmode_dbs(psoc) &&
+		/*
+		 * In DBS/SBS mode 2 freq are different and on different mac.
+		 * Thus if any of 2 freq are same that mean one of the MAC is
+		 * in SCC.
+		 * For non DBS/SBS, if all 3 freq are same then its SCC
+		 */
+		if ((policy_mgr_is_current_hwmode_dbs(psoc) ||
+		     policy_mgr_is_current_hwmode_sbs(psoc)) &&
 		    (pm_conc_connection_list[0].freq ==
 		     pm_conc_connection_list[1].freq ||
 		     pm_conc_connection_list[0].freq ==
 		     pm_conc_connection_list[2].freq ||
 		     pm_conc_connection_list[1].freq ==
-		     pm_conc_connection_list[2].freq)) {
+		     pm_conc_connection_list[2].freq))
 			is_scc = true;
-		} else if ((pm_conc_connection_list[0].freq ==
-			    pm_conc_connection_list[1].freq) &&
-			   (pm_conc_connection_list[0].freq ==
-			   pm_conc_connection_list[2].freq)) {
+		else if ((pm_conc_connection_list[0].freq ==
+			  pm_conc_connection_list[1].freq) &&
+			 (pm_conc_connection_list[0].freq ==
+			  pm_conc_connection_list[2].freq))
 			is_scc = true;
-		}
+
 		break;
 	default:
 		policy_mgr_debug("unexpected num_connections value %d",
@@ -2577,19 +2583,27 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 		if (pm_conc_connection_list[0].freq !=
 		    pm_conc_connection_list[1].freq &&
 		    pm_conc_connection_list[0].mac ==
-		    pm_conc_connection_list[1].mac) {
+		    pm_conc_connection_list[1].mac)
 			is_mcc = true;
-		}
 		break;
 	case 3:
-		if (pm_conc_connection_list[0].freq !=
-		    pm_conc_connection_list[1].freq ||
-		    pm_conc_connection_list[0].freq !=
-		    pm_conc_connection_list[2].freq ||
-		    pm_conc_connection_list[1].freq !=
-		    pm_conc_connection_list[2].freq){
+		/*
+		 * Check if any 2 different freq is on same MAC.
+		 * Return true if any of the different freq is on same MAC.
+		 */
+		if ((pm_conc_connection_list[0].freq !=
+		     pm_conc_connection_list[1].freq &&
+		     pm_conc_connection_list[0].mac ==
+		     pm_conc_connection_list[1].mac) ||
+		    (pm_conc_connection_list[0].freq !=
+		     pm_conc_connection_list[2].freq &&
+		     pm_conc_connection_list[0].mac ==
+		     pm_conc_connection_list[2].mac) ||
+		    (pm_conc_connection_list[1].freq !=
+		     pm_conc_connection_list[2].freq &&
+		     pm_conc_connection_list[1].mac ==
+		     pm_conc_connection_list[2].mac))
 			is_mcc = true;
-		}
 		break;
 	default:
 		policy_mgr_debug("unexpected num_connections value %d",
