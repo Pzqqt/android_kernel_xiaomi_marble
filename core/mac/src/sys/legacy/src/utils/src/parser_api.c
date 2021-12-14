@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3304,6 +3304,11 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 		qdf_mem_copy(pAssocReq->mld_mac,
 			     ar->mlo_ie.mld_mac_addr.info.mld_mac_addr,
 			     QDF_MAC_ADDR_SIZE);
+		pe_debug("Received Assoc Req with MLO IE");
+		pe_debug("Partner link count: %d, MLD mac addr: " QDF_MAC_ADDR_FMT,
+			 ar->mlo_ie.num_sta_profile,
+			 QDF_MAC_ADDR_REF(
+				ar->mlo_ie.mld_mac_addr.info.mld_mac_addr));
 	}
 	qdf_mem_free(ar);
 	return QDF_STATUS_SUCCESS;
@@ -3791,6 +3796,9 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 	if (ar->eht_cap.present) {
 		qdf_mem_copy(&pAssocRsp->eht_cap, &ar->eht_cap,
 			     sizeof(tDot11fIEeht_cap));
+		pe_debug("Received Assoc Response with EHT Cap");
+		pe_debug("320MHz support: %d",
+			 pAssocRsp->eht_cap.support_320mhz_6ghz);
 	}
 
 	if (ar->he_6ghz_band_cap.present) {
@@ -3829,10 +3837,14 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 					ar->mlo_ie.link_id_info_present;
 		pAssocRsp->mlo_ie.mlo_ie.link_id_info.info.link_id =
 					ar->mlo_ie.link_id_info.info.link_id;
-		pe_debug("ar->mlo_ie.num_sta_profile:%d",
-			 ar->mlo_ie.num_sta_profile);
 		pAssocRsp->mlo_ie.mlo_ie.num_sta_profile =
 					ar->mlo_ie.num_sta_profile;
+		pe_debug("Received Assoc Response with MLO IE");
+		pe_debug("Partner link count: %d, Link id: %d, MLD mac addr: " QDF_MAC_ADDR_FMT,
+			 ar->mlo_ie.num_sta_profile,
+			 ar->mlo_ie.link_id_info.info.link_id,
+			 QDF_MAC_ADDR_REF(
+				ar->mlo_ie.mld_mac_addr.info.mld_mac_addr));
 	}
 
 	qdf_mem_free(ar);
