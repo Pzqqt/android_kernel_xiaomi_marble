@@ -45,6 +45,15 @@
 #include "wlan_twt_ucfg_ext_cfg.h"
 #include "osif_twt_internal.h"
 
+const struct nla_policy
+wlan_hdd_wifi_twt_config_policy[
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX + 1] = {
+		[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS] = {
+			.type = NLA_NESTED},
+};
+
 #if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
 QDF_STATUS hdd_get_twt_requestor(struct wlan_objmgr_psoc *psoc, bool *val)
 {
@@ -86,6 +95,27 @@ void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
 	osif_twt_send_responder_disable_cmd(hdd_ctx->psoc, pdev_id);
 }
 
+int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
+				      struct nlattr **tb)
+{
+	return 0;
+}
+
+void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
+{
+}
+
+void
+hdd_send_twt_del_all_sessions_to_userspace(struct hdd_adapter *adapter)
+{
+}
+
+int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
+					  struct nlattr **tb)
+{
+	return 0;
+}
+
 QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
@@ -94,6 +124,73 @@ QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
+static int hdd_twt_configure(struct hdd_adapter *adapter,
+			     struct nlattr **tb)
+{
+	enum qca_wlan_twt_operation twt_oper;
+	struct nlattr *twt_oper_attr;
+	struct nlattr *twt_param_attr;
+	uint32_t id;
+	int ret = 0;
+	struct wlan_objmgr_vdev *vdev;
+
+	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION;
+	twt_oper_attr = tb[id];
+
+	if (!twt_oper_attr) {
+		hdd_err("TWT operation NOT specified");
+		return -EINVAL;
+	}
+
+	twt_oper = nla_get_u8(twt_oper_attr);
+
+	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS;
+	twt_param_attr = tb[id];
+
+	if (!twt_param_attr &&
+	    twt_oper != QCA_WLAN_TWT_GET_CAPABILITIES &&
+	    twt_oper != QCA_WLAN_TWT_SUSPEND) {
+		hdd_err("TWT parameters NOT specified");
+		return -EINVAL;
+	}
+
+	hdd_debug("TWT Operation 0x%x", twt_oper);
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_TWT_ID);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		return -EINVAL;
+	}
+
+	switch (twt_oper) {
+	case QCA_WLAN_TWT_SET:
+		ret = osif_twt_setup_req(vdev, twt_param_attr);
+		break;
+	case QCA_WLAN_TWT_GET:
+		break;
+	case QCA_WLAN_TWT_TERMINATE:
+		break;
+	case QCA_WLAN_TWT_SUSPEND:
+		break;
+	case QCA_WLAN_TWT_RESUME:
+		break;
+	case QCA_WLAN_TWT_NUDGE:
+		break;
+	case QCA_WLAN_TWT_GET_CAPABILITIES:
+		break;
+	case QCA_WLAN_TWT_GET_STATS:
+		break;
+	case QCA_WLAN_TWT_CLEAR_STATS:
+		break;
+	default:
+		hdd_err("Invalid TWT Operation");
+		ret = -EINVAL;
+		break;
+	}
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_TWT_ID);
+	return ret;
+}
 #elif defined(WLAN_SUPPORT_TWT)
 
 #define TWT_DISABLE_COMPLETE_TIMEOUT 1000
@@ -146,15 +243,6 @@ qca_wlan_vendor_twt_resume_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAX + 1
 static const struct nla_policy
 qca_wlan_vendor_twt_stats_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_TWT_STATS_FLOW_ID] = {.type = NLA_U8 },
-};
-
-const struct nla_policy
-wlan_hdd_wifi_twt_config_policy[
-	QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX + 1] = {
-		[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION] = {
-			.type = NLA_U8},
-		[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS] = {
-			.type = NLA_NESTED},
 };
 
 static const struct nla_policy
@@ -3998,75 +4086,6 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 	return ret;
 }
 
-/**
- * __wlan_hdd_cfg80211_wifi_twt_config() - Wifi TWT configuration
- * vendor command
- * @wiphy: wiphy device pointer
- * @wdev: wireless device pointer
- * @data: Vendor command data buffer
- * @data_len: Buffer length
- *
- * Handles QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX.
- *
- * Return: 0 for Success and negative value for failure
- */
-static int
-__wlan_hdd_cfg80211_wifi_twt_config(struct wiphy *wiphy,
-				    struct wireless_dev *wdev,
-				    const void *data, int data_len)
-{
-	struct net_device *dev = wdev->netdev;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX + 1];
-	int errno;
-
-	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
-		hdd_err("Command not allowed in FTM mode");
-		return -EPERM;
-	}
-
-	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno)
-		return errno;
-
-	errno = hdd_validate_adapter(adapter);
-	if (errno)
-		return errno;
-
-	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX,
-				    data,
-				    data_len,
-				    wlan_hdd_wifi_twt_config_policy)) {
-		hdd_err("invalid twt attr");
-		return -EINVAL;
-	}
-
-	errno = hdd_twt_configure(adapter, tb);
-
-	return errno;
-}
-
-int wlan_hdd_cfg80211_wifi_twt_config(struct wiphy *wiphy,
-				      struct wireless_dev *wdev,
-				      const void *data,
-				      int data_len)
-{
-	int errno;
-	struct osif_vdev_sync *vdev_sync;
-
-	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
-	if (errno)
-		return errno;
-
-	errno = __wlan_hdd_cfg80211_wifi_twt_config(wiphy, wdev, data,
-						    data_len);
-
-	osif_vdev_sync_op_stop(vdev_sync);
-
-	return errno;
-}
-
 void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 			    struct wma_tgt_cfg *cfg)
 {
@@ -4193,6 +4212,7 @@ QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx)
 
 		ucfg_mlme_set_twt_requestor_flag(hdd_ctx->psoc, true);
 		qdf_event_reset(&hdd_ctx->twt_enable_comp_evt);
+
 		wma_send_twt_enable_cmd(pdev_id, &twt_en_dis);
 		status = qdf_wait_single_event(&hdd_ctx->twt_enable_comp_evt,
 					       TWT_ENABLE_COMPLETE_TIMEOUT);
@@ -4277,6 +4297,7 @@ QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx)
 	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
 	twt_en_dis.ext_conf_present = true;
 	qdf_event_reset(&hdd_ctx->twt_disable_comp_evt);
+
 	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
 
 	status = qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
@@ -4687,3 +4708,73 @@ QDF_STATUS hdd_get_twt_responder(struct wlan_objmgr_psoc *psoc, bool *val)
 }
 
 #endif
+
+/**
+ * __wlan_hdd_cfg80211_wifi_twt_config() - Wifi TWT configuration
+ * vendor command
+ * @wiphy: wiphy device pointer
+ * @wdev: wireless device pointer
+ * @data: Vendor command data buffer
+ * @data_len: Buffer length
+ *
+ * Handles QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX.
+ *
+ * Return: 0 for Success and negative value for failure
+ */
+static int
+__wlan_hdd_cfg80211_wifi_twt_config(struct wiphy *wiphy,
+				    struct wireless_dev *wdev,
+				    const void *data, int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX + 1];
+	int errno;
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	errno = hdd_validate_adapter(adapter);
+	if (errno)
+		return errno;
+
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX,
+				    data,
+				    data_len,
+				    wlan_hdd_wifi_twt_config_policy)) {
+		hdd_err("invalid twt attr");
+		return -EINVAL;
+	}
+
+	errno = hdd_twt_configure(adapter, tb);
+
+	return errno;
+}
+
+int wlan_hdd_cfg80211_wifi_twt_config(struct wiphy *wiphy,
+				      struct wireless_dev *wdev,
+				      const void *data,
+				      int data_len)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_wifi_twt_config(wiphy, wdev, data,
+						    data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+

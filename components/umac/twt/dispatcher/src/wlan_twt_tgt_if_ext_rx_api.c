@@ -24,12 +24,13 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_twt_public_structs.h>
 #include <wlan_twt_tgt_if_ext_rx_ops.h>
+#include "twt/core/src/wlan_twt_main.h"
 
 static QDF_STATUS
 tgt_twt_setup_complete_resp_handler(struct wlan_objmgr_psoc *psoc,
 			     struct twt_add_dialog_complete_event *event)
 {
-	return QDF_STATUS_SUCCESS;
+	return wlan_twt_setup_complete_event_handler(psoc, event);
 }
 
 static QDF_STATUS
@@ -71,7 +72,7 @@ static QDF_STATUS
 tgt_twt_ack_complete_resp_handler(struct wlan_objmgr_psoc *psoc,
 			    struct twt_ack_complete_event_param *event)
 {
-	return QDF_STATUS_SUCCESS;
+	return wlan_twt_ack_event_handler(psoc, event);
 }
 
 void tgt_twt_register_ext_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)

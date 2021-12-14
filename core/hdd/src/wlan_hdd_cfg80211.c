@@ -4269,8 +4269,9 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 					  QCA_WLAN_VENDOR_FEATURE_ADAPTIVE_11R);
 	}
 
-	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
-	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &twt_res);
+	hdd_get_twt_requestor(hdd_ctx->psoc, &twt_req);
+	hdd_get_twt_responder(hdd_ctx->psoc, &twt_res);
+	hdd_debug("twt_req:%d twt_res:%d", twt_req, twt_res);
 
 	if (twt_req || twt_res) {
 		wlan_hdd_cfg80211_set_feature(feature_flags,

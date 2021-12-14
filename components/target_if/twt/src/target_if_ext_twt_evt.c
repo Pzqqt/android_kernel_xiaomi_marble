@@ -30,7 +30,57 @@ static int
 target_if_twt_setup_complete_event_handler(ol_scn_t scn, uint8_t *event,
 					   uint32_t len)
 {
-	return 0;
+	QDF_STATUS qdf_status;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	struct twt_add_dialog_complete_event *data;
+	struct wlan_lmac_if_twt_rx_ops *twt_rx_ops;
+
+	TARGET_IF_ENTER();
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	twt_rx_ops = wlan_twt_get_rx_ops(psoc);
+	if (!twt_rx_ops || !twt_rx_ops->twt_setup_comp_cb) {
+		target_if_err("No valid twt setup complete rx ops");
+		return -EINVAL;
+	}
+
+	data = qdf_mem_malloc(sizeof(*data));
+	if (!data)
+		return -ENOMEM;
+
+	qdf_status = wmi_extract_twt_add_dialog_comp_event(wmi_handle,
+						event, &data->params);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		target_if_err("extract twt add dialog event failed (status=%d)",
+			      qdf_status);
+		goto done;
+	}
+
+	if (data->params.num_additional_twt_params) {
+		qdf_status = wmi_extract_twt_add_dialog_comp_additional_params(
+						wmi_handle, event, len, 0,
+						&data->additional_params);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			goto done;
+	}
+
+	qdf_status = twt_rx_ops->twt_setup_comp_cb(psoc, data);
+
+done:
+	qdf_mem_free(data);
+	return qdf_status_to_os_return(qdf_status);
 }
 
 static int
@@ -72,7 +122,48 @@ static int
 target_if_twt_ack_complete_event_handler(ol_scn_t scn, uint8_t *event,
 					 uint32_t len)
 {
-	return 0;
+	QDF_STATUS qdf_status;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	struct twt_ack_complete_event_param *data;
+	struct wlan_lmac_if_twt_rx_ops *twt_rx_ops;
+
+	TARGET_IF_ENTER();
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	twt_rx_ops = wlan_twt_get_rx_ops(psoc);
+	if (!twt_rx_ops || !twt_rx_ops->twt_ack_comp_cb) {
+		target_if_err("No valid twt ack rx ops");
+		return -EINVAL;
+	}
+
+	data = qdf_mem_malloc(sizeof(*data));
+	if (!data)
+		return -ENOMEM;
+
+	qdf_status = wmi_extract_twt_ack_comp_event(wmi_handle, event, data);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		target_if_err("extract twt ack event failed (status=%d)",
+			      qdf_status);
+		goto done;
+	}
+
+	qdf_status = twt_rx_ops->twt_ack_comp_cb(psoc, data);
+
+done:
+	qdf_mem_free(data);
+	return qdf_status_to_os_return(qdf_status);
 }
 
 QDF_STATUS
