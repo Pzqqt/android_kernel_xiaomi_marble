@@ -25,6 +25,12 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_osif_priv.h>
 #include <wlan_osif_request_manager.h>
+#include <wlan_cm_api.h>
+#include <wlan_twt_ucfg_api.h>
+#include <wlan_cm_ucfg_api.h>
+#include <wlan_reg_ucfg_api.h>
+#include <wlan_twt_ucfg_ext_api.h>
+#include <wlan_twt_ucfg_ext_cfg.h>
 
 /**
  * osif_twt_get_setup_event_len() - Calculates the length of twt
@@ -439,6 +445,109 @@ osif_twt_teardown_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	nla_nest_end(reply_skb, config_attr);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+osif_twt_send_get_capabilities_response(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_osif_priv *osif_priv;
+	struct nlattr *config_attr;
+	struct sk_buff *reply_skb;
+	size_t skb_len = NLMSG_HDRLEN;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	enum band_info connected_band;
+	uint8_t peer_cap = 0, self_cap = 0;
+	bool twt_req = false, twt_bcast_req = false;
+	bool is_twt_24ghz_allowed = true, val;
+	struct qdf_mac_addr peer_mac;
+	int ret;
+
+	/*
+	 * Userspace will query the TWT get capabilities before
+	 * issuing a get capabilities request. If the STA is
+	 * connected, then check the "enable_twt_24ghz" ini
+	 * value to advertise the TWT requestor capability.
+	 */
+	connected_band = ucfg_cm_get_connected_band(vdev);
+	ucfg_twt_cfg_get_24ghz_enabled(psoc, &val);
+
+	osif_debug("connected_band: %d val: %d", connected_band, val);
+	if (connected_band == BAND_2G && !val)
+		is_twt_24ghz_allowed = false;
+
+	/* fill the self_capability bitmap  */
+	ucfg_twt_cfg_get_requestor(psoc, &twt_req);
+	osif_debug("is_twt_24ghz_allowed: %d twt_req: %d",
+		   is_twt_24ghz_allowed, twt_req);
+	if (twt_req && is_twt_24ghz_allowed)
+		self_cap |= QCA_WLAN_TWT_CAPA_REQUESTOR;
+
+	ucfg_twt_cfg_get_bcast_requestor(psoc, &twt_bcast_req);
+	osif_debug("twt_bcast_req: %d", twt_bcast_req);
+	self_cap |= (twt_bcast_req ? QCA_WLAN_TWT_CAPA_BROADCAST : 0);
+
+	ucfg_twt_cfg_get_flex_sched(psoc, &val);
+	osif_debug("flex sched: %d", val);
+	if (val)
+		self_cap |= QCA_WLAN_TWT_CAPA_FLEXIBLE;
+
+	ret = osif_fill_peer_macaddr(vdev, peer_mac.bytes);
+	if (ret)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_status = ucfg_twt_get_peer_capabilities(psoc, &peer_mac, &peer_cap);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return qdf_status;
+
+	osif_debug("self_cap: 0x%x peer_cap: 0x%x", self_cap, peer_cap);
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	/*
+	 * Length of attribute QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF &
+	 * QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_PEER
+	 */
+	skb_len += 2 * nla_total_size(sizeof(u16)) + NLA_HDRLEN;
+
+	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(
+							osif_priv->wdev->wiphy,
+							skb_len);
+	if (!reply_skb) {
+		osif_err("TWT: get_caps alloc reply skb failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		osif_err("TWT: nla_nest_start error");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto free_skb;
+	}
+
+	if (nla_put_u16(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF,
+	    self_cap)) {
+		osif_err("TWT: Failed to fill capabilities");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto free_skb;
+	}
+
+	if (nla_put_u16(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_PEER,
+	    peer_cap)) {
+		osif_err("TWT: Failed to fill capabilities");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto free_skb;
+	}
+
+	nla_nest_end(reply_skb, config_attr);
+
+	if (cfg80211_vendor_cmd_reply(reply_skb))
+		qdf_status = QDF_STATUS_E_INVAL;
+
+free_skb:
+	if (QDF_IS_STATUS_ERROR(qdf_status) && reply_skb)
+		kfree_skb(reply_skb);
+
+	return qdf_status;
 }
 
 static void

@@ -119,6 +119,10 @@ QDF_STATUS wlan_twt_cfg_update(struct wlan_objmgr_psoc *psoc)
 				tgt_caps->legacy_bcast_twt_support),
 				(enable_twt &&
 					twt_cfg->bcast_responder_enabled));
+	twt_debug("req: %d resp: %d bcast_req: %d bcast_resp: %d",
+		  twt_cfg->twt_requestor, twt_cfg->twt_responder,
+		  twt_cfg->bcast_requestor_enabled,
+		  twt_cfg->bcast_responder_enabled);
 	return QDF_STATUS_SUCCESS;
 }
 

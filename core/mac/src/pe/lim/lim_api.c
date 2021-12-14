@@ -85,6 +85,7 @@
 #include "utils_mlo.h"
 #include "wlan_mlo_mgr_sta.h"
 #include "wlan_mlo_mgr_peer.h"
+#include <wlan_twt_api.h>
 
 struct pe_hang_event_fixed_param {
 	uint16_t tlv_header;
@@ -1759,6 +1760,44 @@ bool lim_is_sb_disconnect_allowed_fl(struct pe_session *session,
 	return false;
 }
 
+#ifdef WLAN_SUPPORT_TWT
+#ifdef WLAN_TWT_CONV_SUPPORTED
+void lim_set_twt_peer_capabilities(struct mac_context *mac_ctx,
+				   struct qdf_mac_addr *peer_mac,
+				   tDot11fIEhe_cap *he_cap,
+				   tDot11fIEhe_op *he_op)
+{
+	uint8_t caps = 0;
+
+	if (he_cap->twt_request)
+		caps |= WLAN_TWT_CAPA_REQUESTOR;
+
+	if (he_cap->twt_responder)
+		caps |= WLAN_TWT_CAPA_RESPONDER;
+
+	if (he_cap->broadcast_twt)
+		caps |= WLAN_TWT_CAPA_BROADCAST;
+
+	if (he_cap->flex_twt_sched)
+		caps |= WLAN_TWT_CAPA_FLEXIBLE;
+
+	if (he_op->twt_required)
+		caps |= WLAN_TWT_CAPA_REQUIRED;
+
+	wlan_set_peer_twt_capabilities(mac_ctx->psoc, peer_mac, caps);
+}
+#else
+void lim_set_twt_peer_capabilities(struct mac_context *mac_ctx,
+				   struct qdf_mac_addr *peer_mac,
+				   tDot11fIEhe_cap *he_cap,
+				   tDot11fIEhe_op *he_op)
+{
+	mlme_set_twt_peer_capabilities(mac_ctx->psoc, peer_mac,
+					he_cap, he_op);
+}
+#endif /* WLAN_TWT_CONV_SUPPORTED */
+#endif /* WLAN_SUPPORT_TWT */
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void pe_set_rmf_caps(struct mac_context *mac_ctx,
 			    struct pe_session *ft_session,
@@ -2458,10 +2497,10 @@ lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx,
 	}
 
 	if (lim_is_session_he_capable(pe_session))
-		mlme_set_twt_peer_capabilities(mac_ctx->psoc,
-					       &roam_synch->bssid,
-					       &reassoc_rsp->he_cap,
-					       &reassoc_rsp->he_op);
+		lim_set_twt_peer_capabilities(mac_ctx,
+					      &roam_synch->bssid,
+					      &reassoc_rsp->he_cap,
+					      &reassoc_rsp->he_op);
 	qdf_mem_free(reassoc_rsp);
 }
 #endif

@@ -363,8 +363,7 @@ osif_twt_parse_del_dialog_attrs(struct nlattr **tb,
 	return 0;
 }
 
-static int osif_fill_peer_macaddr(struct wlan_objmgr_vdev *vdev,
-				  uint8_t *mac_addr)
+int osif_fill_peer_macaddr(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 {
 	struct wlan_objmgr_peer *peer;
 
@@ -374,8 +373,7 @@ static int osif_fill_peer_macaddr(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 	wlan_peer_obj_lock(peer);
-	qdf_mem_copy(mac_addr, wlan_peer_get_macaddr(peer),
-				 QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(mac_addr, wlan_peer_get_macaddr(peer), QDF_MAC_ADDR_SIZE);
 	wlan_peer_obj_unlock(peer);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
@@ -625,6 +623,37 @@ int osif_twt_send_responder_disable_cmd(struct wlan_objmgr_psoc *psoc,
 	req.ext_conf_present = true;
 
 	return osif_twt_responder_disable(psoc, &req);
+}
+
+int osif_twt_get_capabilities(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	enum QDF_OPMODE mode;
+	QDF_STATUS status;
+	uint8_t vdev_id;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode != QDF_STA_MODE && mode != QDF_P2P_CLIENT_MODE)
+		return -EOPNOTSUPP;
+
+	if (!wlan_cm_is_vdev_connected(vdev)) {
+		osif_err_rl("Not associated!, vdev %d mode %d", vdev_id, mode);
+		return -EAGAIN;
+	}
+
+	if (wlan_cm_host_roam_in_progress(psoc, vdev_id))
+		return -EBUSY;
+
+	status = osif_twt_send_get_capabilities_response(psoc, vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		osif_err_rl("TWT: Get capabilities failed");
+
+	return qdf_status_to_os_return(status);
 }
 
 int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,

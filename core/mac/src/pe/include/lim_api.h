@@ -494,10 +494,33 @@ enum ani_akm_type lim_translate_rsn_oui_to_akm_type(uint8_t auth_suite[4]);
  */
 void lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
 				   struct roam_offload_synch_ind *roam_synch);
+
+/**
+ * lim_set_twt_peer_capabilities() - Update Peer TWT capabilities
+ * @mac_ctx: Pointer to mac context
+ * @peer_mac: peer mac address
+ * @he_cap: pointer to HE capabilities IE
+ * @he_op: pointer to HE IE
+ *
+ * Based on the peer IE capabilities, update the TWT peer private object
+ *
+ * Return: None
+ */
+void lim_set_twt_peer_capabilities(struct mac_context *mac_ctx,
+				   struct qdf_mac_addr *peer_mac,
+				   tDot11fIEhe_cap *he_cap,
+				   tDot11fIEhe_op *he_op);
 #else
 static inline
 void lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
 				   struct roam_offload_synch_ind *roam_synch)
+{}
+
+static inline
+void lim_set_twt_peer_capabilities(struct mac_context *mac_ctx,
+				    struct qdf_mac_addr *peer_mac,
+				    tDot11fIEhe_cap *he_cap,
+				    tDot11fIEhe_op *he_op)
 {}
 #endif
 

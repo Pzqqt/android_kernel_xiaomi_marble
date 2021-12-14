@@ -92,10 +92,51 @@ int osif_twt_sap_teardown_req(struct wlan_objmgr_vdev *vdev,
 void
 osif_twt_handle_renego_failure(struct wlan_objmgr_psoc *psoc,
 		       struct twt_add_dialog_complete_event *add_dialog_event);
+
+/**
+ * osif_twt_get_capabilities() - Process TWT get capabilities
+ * in the received vendor command.
+ * @vdev: vdev
+ *
+ * Handles QCA_WLAN_TWT_GET_CAPABILITIES
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int osif_twt_get_capabilities(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * osif_twt_send_get_capabilities_response  - TWT pack and send response to
+ * userspace for get capabilities command
+ * @psoc: pointer to global psoc
+ * @vdev: pointer to vdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+osif_twt_send_get_capabilities_response(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_vdev *vdev);
+
+/**
+ * osif_fill_peer_macaddr  - find peer from vdev and fill mac address
+ * @vdev: vdev pointer
+ * @mac_addr: output buffer to copy mac address
+ *
+ * This is the utility function, which finds peer bss info from the vdev
+ * and fill the output buffer with mac address
+ *
+ * Return: errno
+ */
+int osif_fill_peer_macaddr(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr);
 #else
 static inline
 int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 		       struct nlattr *twt_param_attr)
+{
+	return 0;
+}
+
+static inline
+int osif_twt_get_capabilities(struct wlan_objmgr_vdev *vdev)
 {
 	return 0;
 }
