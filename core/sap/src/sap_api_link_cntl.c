@@ -573,10 +573,10 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 	 * Fetch the number of SAP interfaces. If the number of sap Interface
 	 * more than one then we will make is_sap_ready_for_chnl_chng to true
 	 * for that sapctx. If there is only one SAP interface then process
-	 * immediately. If Dual BAND SAP is enabled then also process
-	 * immediately, as in this case the both SAP will be in different band
-	 * and channel change on one SAP doesn't mean channel change on
-	 * other interface.
+	 * immediately. If Dual BAND SAP OR SBS in different mac, is enabled
+	 * then also process immediately, as in this case the both SAP will be
+	 * in different band and channel change on one SAP doesn't mean channel
+	 * change on other interface.
 	 *
 	 * For example,
 	 * Let's say SAP(2G) + SAP(5G-DFS) is initial connection which triggered
@@ -594,6 +594,7 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 	sap_scc_dfs = sap_is_conc_sap_doing_scc_dfs(mac_handle, sap_ctx);
 	if (sap_get_total_number_sap_intf(mac_handle) <= 1 ||
 	    policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) ||
+	    policy_mgr_is_current_hwmode_sbs(mac_ctx->psoc) ||
 	    sap_ctx->csa_reason == CSA_REASON_DCS ||
 	    !sap_scc_dfs) {
 		/*
