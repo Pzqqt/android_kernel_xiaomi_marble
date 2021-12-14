@@ -170,3 +170,16 @@ QDF_STATUS ucfg_twt_update_beacon_template(void)
 	return wlan_twt_update_beacon_template();
 }
 
+bool
+ucfg_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
+		       struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
+{
+	return wlan_twt_is_setup_done(psoc, peer_mac, dialog_id);
+}
+
+enum wlan_twt_session_state
+ucfg_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
+			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
+{
+	return wlan_twt_get_session_state(psoc, peer_mac, dialog_id);
+}

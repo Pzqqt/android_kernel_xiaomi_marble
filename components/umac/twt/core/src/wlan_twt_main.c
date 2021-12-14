@@ -804,7 +804,6 @@ end:
  *
  * Return: Return true if TWT session exists for given dialog ID.
  */
-static
 bool wlan_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
 			    struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
 {
@@ -1600,6 +1599,47 @@ wlan_twt_set_session_state(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_release(&peer_priv->twt_peer_lock);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+}
+
+enum wlan_twt_session_state
+wlan_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
+			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
+{
+	struct wlan_objmgr_peer *peer;
+	struct twt_peer_priv_obj *peer_priv;
+	uint8_t i;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_TWT_ID);
+
+	if (!peer) {
+		twt_err("Peer object not found");
+		return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_TWT);
+
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+		twt_err(" peer twt component object is NULL");
+		return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+	}
+
+	qdf_mutex_acquire(&peer_priv->twt_peer_lock);
+	for (i = 0; i < peer_priv->num_twt_sessions; i++) {
+		if (peer_priv->session_info[i].dialog_id == dialog_id &&
+		    dialog_id != TWT_ALL_SESSIONS_DIALOG_ID) {
+		    qdf_mutex_release(&peer_priv->twt_peer_lock);
+		    wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+			return peer_priv->session_info[i].state;
+		}
+	}
+
+	qdf_mutex_release(&peer_priv->twt_peer_lock);
+	wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+
+	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
 }
 
 /**

@@ -226,6 +226,32 @@ ucfg_twt_set_osif_cb(osif_twt_get_global_ops_cb osif_twt_ops);
  * Return: QDF_STATUS_SUCCESS
  */
 QDF_STATUS ucfg_twt_update_beacon_template(void);
+
+/**
+ * ucfg_twt_is_setup_done() - check if TWT setup is done or not
+ * for given dialog id
+ * @psoc: Pointer to global psoc object
+ * @peer_mac: Global peer mac address
+ * @dialog_id: Dialog ID
+ *
+ * Return: True if Setup is done, false otherwise
+ */
+bool
+ucfg_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
+		       struct qdf_mac_addr *peer_mac,
+		       uint8_t dialog_id);
+
+/**
+ * ucfg_twt_get_session_state() - get TWT session state for a given dialog id
+ * @psoc: Pointer to global psoc object
+ * @peer_mac: Global peer mac address
+ * @dialog_id: Dialog ID
+ *
+ * Return: TWT session state
+ */
+enum wlan_twt_session_state
+ucfg_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
+			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id);
 #else
 static inline
 QDF_STATUS ucfg_twt_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -290,6 +316,20 @@ ucfg_twt_set_osif_cb(osif_twt_get_global_ops_cb osif_twt_ops)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-#endif
 
+static inline bool
+ucfg_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
+		       struct qdf_mac_addr *peer_mac,
+		       uint8_t dialog_id)
+{
+	return false;
+}
+
+static inline enum wlan_twt_session_state
+ucfg_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
+			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
+{
+	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+}
+#endif
 #endif

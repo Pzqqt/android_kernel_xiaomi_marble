@@ -239,3 +239,25 @@ wlan_twt_init_context(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_twt_update_beacon_template(void);
 
+/**
+ * wlan_twt_is_setup_done() - Check if TWT setup exists for a given dialog id
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ *
+ * Return: true if TWT setup exists, false otherwise
+ */
+bool wlan_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
+			    struct qdf_mac_addr *peer_mac, uint8_t dialog_id);
+
+/**
+ * wlan_twt_get_session_state() - Get TWT session state
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ *
+ * Return: enum wlan_twt_session_state
+ */
+enum wlan_twt_session_state
+wlan_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
+			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id);

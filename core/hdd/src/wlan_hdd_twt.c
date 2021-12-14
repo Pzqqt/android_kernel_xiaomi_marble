@@ -231,6 +231,7 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 		ret = osif_twt_setup_req(vdev, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_GET:
+		ret = osif_twt_get_session_req(vdev, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_TERMINATE:
 		ret = hdd_twt_terminate_session(adapter, vdev, twt_param_attr);
@@ -1045,7 +1046,6 @@ hdd_twt_get_peer_session_params(struct hdd_context *hdd_ctx,
 
 	if (!hdd_ctx || !params)
 		return qdf_status;
-
 	num_twt_session = ucfg_twt_get_peer_session_params(hdd_ctx->psoc,
 							   params);
 	if (num_twt_session)

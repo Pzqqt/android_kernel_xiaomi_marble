@@ -30,6 +30,10 @@
 #include <wlan_cm_roam_api.h>
 #include <osif_twt_internal.h>
 #include <wlan_osif_request_manager.h>
+#include <wlan_osif_priv.h>
+#include "wlan_cp_stats_mc_ucfg_api.h"
+#include "wlan_mlme_ucfg_api.h"
+#include "wlan_cp_stats_ucfg_api.h"
 
 #define TWT_ACK_COMPLETE_TIMEOUT 1000
 
@@ -1476,4 +1480,478 @@ int osif_twt_nudge_req(struct wlan_objmgr_vdev *vdev,
 		   QDF_MAC_ADDR_REF(params.peer_macaddr.bytes));
 
 	return osif_send_twt_nudge_req(vdev, psoc, &params);
+}
+
+static uint32_t
+osif_twt_get_params_resp_len(struct twt_session_stats_info *params)
+{
+	uint32_t len = nla_total_size(0);
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR */
+	len += nla_total_size(QDF_MAC_ADDR_SIZE);
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_ANNOUNCE */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION */
+	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA */
+	len += nla_total_size(sizeof(u32));
+
+	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP*/
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF */
+	len += nla_total_size(sizeof(u64));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATE */
+	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL2_MANTISSA */
+	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESPONDER_PM_MODE */
+	if (params->pm_responder_bit_valid)
+		len += nla_total_size(sizeof(u8));
+
+	return len;
+}
+
+static enum qca_wlan_twt_setup_state
+osif_get_converted_twt_state(enum wlan_twt_session_state state)
+{
+	switch (state) {
+	case WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED:
+		return QCA_WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+	case WLAN_TWT_SETUP_STATE_ACTIVE:
+		return QCA_WLAN_TWT_SETUP_STATE_ACTIVE;
+	case WLAN_TWT_SETUP_STATE_SUSPEND:
+		return QCA_WLAN_TWT_SETUP_STATE_SUSPEND;
+	default:
+		return QCA_WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+	}
+}
+
+static QDF_STATUS
+osif_twt_pack_get_params_resp_nlmsg(struct wlan_objmgr_psoc *psoc,
+				    struct sk_buff *reply_skb,
+				    struct twt_session_stats_info *params,
+				    int num_twt_session)
+{
+	struct nlattr *config_attr, *nla_params;
+	enum wlan_twt_session_state state;
+	enum qca_wlan_twt_setup_state converted_state;
+	uint64_t tsf_val;
+	uint32_t wake_duration;
+	uint32_t wake_intvl_mantis_us, wake_intvl_mantis_tu;
+	int i, attr;
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		osif_err("TWT: get_params nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	for (i = 0; i < num_twt_session; i++) {
+		if (params[i].event_type != HOST_TWT_SESSION_SETUP &&
+		    params[i].event_type != HOST_TWT_SESSION_UPDATE)
+			continue;
+
+		nla_params = nla_nest_start(reply_skb, i);
+		if (!nla_params) {
+			osif_err("TWT: get_params nla_nest_start error");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+		if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+			    params[i].peer_mac.bytes)) {
+			osif_err("TWT: get_params failed to put mac_addr");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		osif_debug("TWT: get_params peer mac_addr " QDF_MAC_ADDR_FMT,
+			   QDF_MAC_ADDR_REF(params[i].peer_mac.bytes));
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+		if (nla_put_u8(reply_skb, attr, params[i].dialog_id)) {
+			osif_err("TWT: get_params failed to put dialog_id");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		if (params[i].bcast) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
+			if (nla_put_flag(reply_skb, attr)) {
+				osif_err("TWT: get_params fail to put bcast");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].trig) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
+			if (nla_put_flag(reply_skb, attr)) {
+				osif_err("TWT: get_params fail to put Trigger");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].announ) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
+			if (nla_put_flag(reply_skb, attr)) {
+				osif_err("TWT: get_params fail to put Announce");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].protection) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
+			if (nla_put_flag(reply_skb, attr)) {
+				osif_err("TWT: get_params fail to put Protect");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].pm_responder_bit_valid) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESPONDER_PM_MODE;
+			if (nla_put_u8(reply_skb, attr,
+				       params[i].pm_responder_bit)) {
+				osif_err("TWT: fail to put pm responder mode");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (!params[i].info_frame_disabled) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED;
+			if (nla_put_flag(reply_skb, attr)) {
+				osif_err("TWT: get_params put Info Enable fail");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
+		wake_duration = (params[i].wake_dura_us /
+				TWT_WAKE_DURATION_MULTIPLICATION_FACTOR);
+		if (nla_put_u32(reply_skb, attr, wake_duration)) {
+			osif_err("TWT: get_params failed to put Wake duration");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		wake_intvl_mantis_us = params[i].wake_intvl_us;
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL2_MANTISSA;
+		if (nla_put_u32(reply_skb, attr, wake_intvl_mantis_us)) {
+			osif_err("TWT: get_params failed to put Wake Interval in us");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		wake_intvl_mantis_tu = params[i].wake_intvl_us /
+					TWT_WAKE_INTVL_MULTIPLICATION_FACTOR;
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
+		if (nla_put_u32(reply_skb, attr, wake_intvl_mantis_tu)) {
+			osif_err("TWT: get_params failed to put Wake Interval");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		osif_debug("TWT: Send mantissa_us:%d, mantissa_tu:%d to userspace",
+			   wake_intvl_mantis_us, wake_intvl_mantis_tu);
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
+		if (nla_put_u8(reply_skb, attr, 0)) {
+			osif_err("TWT: get_params put Wake Interval Exp failed");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		tsf_val = ((uint64_t)params[i].sp_tsf_us_hi << 32) |
+			   params[i].sp_tsf_us_lo;
+		osif_debug("TWT: get_params dialog_id %d TSF = 0x%llx",
+			   params[i].dialog_id, tsf_val);
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF;
+		if (wlan_cfg80211_nla_put_u64(reply_skb, attr, tsf_val)) {
+			osif_err("TWT: get_params failed to put TSF Value");
+			return QDF_STATUS_E_INVAL;
+		}
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATE;
+		state = ucfg_twt_get_session_state(psoc,
+				   &params[i].peer_mac,
+				   params[i].dialog_id);
+		converted_state = osif_get_converted_twt_state(state);
+		if (nla_put_u32(reply_skb, attr, converted_state)) {
+			osif_err("TWT: get_params failed to put TWT state");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		nla_nest_end(reply_skb, nla_params);
+	}
+	nla_nest_end(reply_skb, config_attr);
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+osif_twt_send_get_params_resp(struct wlan_objmgr_vdev *vdev,
+			      struct twt_session_stats_info *params,
+			      int num_twt_session)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct vdev_osif_priv *osif_priv;
+	struct sk_buff *reply_skb;
+	uint32_t skb_len = NLMSG_HDRLEN, i;
+	QDF_STATUS qdf_status;
+	struct wireless_dev *wdev;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv) {
+		osif_err("osif_priv is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		osif_err("wireless dev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	/* Length of attribute QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS */
+	skb_len += NLA_HDRLEN;
+
+	/* Length of twt session parameters */
+	for (i = 0; i < num_twt_session; i++) {
+		if (params[i].event_type == HOST_TWT_SESSION_SETUP ||
+		    params[i].event_type == HOST_TWT_SESSION_UPDATE)
+			skb_len += osif_twt_get_params_resp_len(params + i);
+	}
+
+	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(wdev->wiphy,
+							     skb_len);
+	if (!reply_skb) {
+		osif_err("TWT: get_params alloc reply skb failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_status = osif_twt_pack_get_params_resp_nlmsg(psoc, reply_skb,
+							 params,
+							 num_twt_session);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		goto fail;
+
+	if (cfg80211_vendor_cmd_reply(reply_skb))
+		qdf_status = QDF_STATUS_E_INVAL;
+
+	return qdf_status;
+fail:
+	kfree_skb(reply_skb);
+	return qdf_status;
+}
+
+static QDF_STATUS
+osif_twt_get_peer_session_params(struct wlan_objmgr_vdev *vdev,
+				 struct twt_session_stats_info *params)
+{
+	struct wlan_objmgr_psoc *psoc;
+	int num_twt_session = 0;
+	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc)
+		return qdf_status;
+
+	num_twt_session = ucfg_cp_stats_twt_get_peer_session_params(psoc,
+								    params);
+
+	if (num_twt_session)
+		qdf_status = osif_twt_send_get_params_resp(vdev, params,
+							   num_twt_session);
+
+	return qdf_status;
+}
+
+static QDF_STATUS
+osif_send_inactive_session_reply(struct wlan_objmgr_vdev *vdev,
+				 struct twt_session_stats_info *params)
+{
+	QDF_STATUS qdf_status;
+	int num_twt_session = 0;
+
+	params[num_twt_session].event_type = HOST_TWT_SESSION_UPDATE;
+	num_twt_session++;
+
+	qdf_status = osif_twt_send_get_params_resp(vdev, params,
+						   num_twt_session);
+
+	return qdf_status;
+}
+
+static int
+osif_twt_sap_get_session_params(struct wlan_objmgr_vdev *vdev,
+				struct nlattr *twt_param_attr)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	uint16_t num_peer;
+	struct twt_session_stats_info *params;
+	int ret, id, id1;
+	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
+	uint8_t vdev_id;
+
+	ret = wlan_cfg80211_nla_parse_nested(
+			tb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+			twt_param_attr,
+			qca_wlan_vendor_twt_add_dialog_policy);
+
+	if (ret)
+		return ret;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	num_peer = wlan_vdev_get_peer_count(vdev);
+	params = qdf_mem_malloc(TWT_PEER_MAX_SESSIONS * num_peer *
+				sizeof(*params));
+
+	if (!params)
+		return -ENOMEM;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	params[0].vdev_id = vdev_id;
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	id1 = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+
+	if (!tb[id] || !tb[id1]) {
+		osif_err_rl("TWT: get_params dialog_id or mac_addr is missing");
+		goto done;
+	}
+
+	params[0].dialog_id = nla_get_u8(tb[id]);
+	nla_memcpy(params[0].peer_mac.bytes, tb[id1], QDF_MAC_ADDR_SIZE);
+
+	if (qdf_is_macaddr_broadcast(&params[0].peer_mac) &&
+	    params[0].dialog_id != TWT_ALL_SESSIONS_DIALOG_ID) {
+		osif_err_rl("Bcast MAC valid with dlg_id:%d but here dlg_id is:%d",
+			TWT_ALL_SESSIONS_DIALOG_ID, params[0].dialog_id);
+		goto done;
+	}
+
+	if (!params[0].dialog_id)
+		params[0].dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+
+	osif_debug("TWT: get_params dialog_id %d and mac_addr "QDF_MAC_ADDR_FMT,
+		   params[0].dialog_id,
+		   QDF_MAC_ADDR_REF(params[0].peer_mac.bytes));
+	qdf_status = osif_twt_get_peer_session_params(vdev, params);
+
+done:
+	qdf_mem_free(params);
+	return qdf_status_to_os_return(qdf_status);
+}
+
+static int
+osif_twt_sta_get_session_params(struct wlan_objmgr_vdev *vdev,
+				struct nlattr *twt_param_attr)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct twt_session_stats_info
+		params[TWT_PSOC_MAX_SESSIONS] = { {0} };
+	int ret, id;
+	QDF_STATUS qdf_status;
+	struct qdf_mac_addr bcast_addr = QDF_MAC_ADDR_BCAST_INIT;
+	struct qdf_mac_addr peer_mac;
+	uint8_t vdev_id;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+					 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					 twt_param_attr,
+					 qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	params[0].vdev_id = vdev_id;
+
+	/*
+	 * Currently twt_get_params nl cmd is sending only dialog_id(STA), fill
+	 * mac_addr of STA in params and call osif_twt_get_peer_session_params.
+	 * When twt_get_params passes mac_addr and dialog_id of STA/SAP, update
+	 * both mac_addr and dialog_id in params before calling
+	 * osif_twt_get_peer_session_params. dialog_id if not received,
+	 * dialog_id of value 0 will be used as default.
+	 */
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (tb[id])
+		params[0].dialog_id = (uint32_t)nla_get_u8(tb[id]);
+	else
+		params[0].dialog_id = 0;
+
+	if (osif_fill_peer_macaddr(vdev, peer_mac.bytes))
+		return -EINVAL;
+
+	if (params[0].dialog_id <= TWT_MAX_DIALOG_ID) {
+		qdf_copy_macaddr(&params[0].peer_mac, &peer_mac);
+		osif_debug("TWT: get_params peer mac_addr " QDF_MAC_ADDR_FMT,
+			   QDF_MAC_ADDR_REF(params[0].peer_mac.bytes));
+	} else {
+		qdf_copy_macaddr(&params[0].peer_mac, &bcast_addr);
+	}
+
+	if (!ucfg_twt_is_setup_done(psoc, &params[0].peer_mac,
+				    params[0].dialog_id)) {
+		osif_debug("vdev%d: TWT session %d setup incomplete", vdev_id,
+			   params[0].dialog_id);
+		qdf_status = osif_send_inactive_session_reply(vdev, params);
+		return qdf_status_to_os_return(qdf_status);
+	}
+
+	osif_debug("TWT: get_params dialog_id %d and mac_addr "QDF_MAC_ADDR_FMT,
+		   params[0].dialog_id,
+		   QDF_MAC_ADDR_REF(params[0].peer_mac.bytes));
+
+	qdf_status = osif_twt_get_peer_session_params(vdev, params);
+
+	return qdf_status_to_os_return(qdf_status);
+}
+
+int osif_twt_get_session_req(struct wlan_objmgr_vdev *vdev,
+			     struct nlattr *twt_param_attr)
+{
+	enum QDF_OPMODE device_mode;
+
+	device_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	switch (device_mode) {
+	case QDF_STA_MODE:
+		return osif_twt_sta_get_session_params(vdev, twt_param_attr);
+	case QDF_SAP_MODE:
+		return osif_twt_sap_get_session_params(vdev, twt_param_attr);
+	default:
+		osif_err_rl("TWT get session params is not supported on %s",
+			    qdf_opmode_str(device_mode));
+	}
+
+	return -EOPNOTSUPP;
 }
