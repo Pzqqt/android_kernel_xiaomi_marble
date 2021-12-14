@@ -759,6 +759,7 @@ static int ipa_flt_gen_hw_rule_ipav5_0(
 * @flt_parse_hw_rule: Parse flt rule read from H/W
 * @eq_bitfield: Array of the bit fields of the support equations.
 *	0xFF means the equation is not supported
+* @prefetech_buf_size: Prefetch buf size;
 */
 struct ipahal_fltrt_obj {
 	bool support_hash;
@@ -788,6 +789,7 @@ struct ipahal_fltrt_obj {
 	int(*rt_parse_hw_rule)(u8 *addr, struct ipahal_rt_rule_entry *rule);
 	int(*flt_parse_hw_rule)(u8 *addr, struct ipahal_flt_rule_entry *rule);
 	u8 eq_bitfield[IPA_EQ_MAX];
+	u32 prefetech_buf_size;
 };
 
 /*
@@ -842,6 +844,7 @@ static struct ipahal_fltrt_obj ipahal_fltrt_objs[IPA_HW_MAX] = {
 			[IPA_IS_FRAG]			= 15,
 			[IPA_IS_PURE_ACK]		= 0xFF,
 		},
+		IPA3_0_HW_RULE_PREFETCH_BUF_SIZE,
 	},
 
 	/* IPAv4 */
@@ -887,6 +890,7 @@ static struct ipahal_fltrt_obj ipahal_fltrt_objs[IPA_HW_MAX] = {
 			[IPA_IS_FRAG]			= 15,
 			[IPA_IS_PURE_ACK]		= 0xFF,
 		},
+		IPA3_0_HW_RULE_PREFETCH_BUF_SIZE,
 	},
 
 	/* IPAv4.2 */
@@ -932,6 +936,7 @@ static struct ipahal_fltrt_obj ipahal_fltrt_objs[IPA_HW_MAX] = {
 			[IPA_IS_FRAG]			= 15,
 			[IPA_IS_PURE_ACK]		= 0xFF,
 		},
+		IPA3_0_HW_RULE_PREFETCH_BUF_SIZE,
 	},
 
 	/* IPAv4.5 */
@@ -977,51 +982,53 @@ static struct ipahal_fltrt_obj ipahal_fltrt_objs[IPA_HW_MAX] = {
 			[IPA_IS_FRAG]			= 15,
 			[IPA_IS_PURE_ACK]		= 0,
 		},
+		IPA3_0_HW_RULE_PREFETCH_BUF_SIZE,
 	},
 
 	/* IPAv5 */
 	[IPA_HW_v5_0] = {
-			true,
-			IPA3_0_HW_TBL_WIDTH,
-			IPA3_0_HW_TBL_SYSADDR_ALIGNMENT,
-			IPA3_0_HW_TBL_LCLADDR_ALIGNMENT,
-			IPA3_0_HW_TBL_BLK_SIZE_ALIGNMENT,
-			IPA3_0_HW_RULE_START_ALIGNMENT,
-			IPA3_0_HW_TBL_HDR_WIDTH,
-			IPA3_0_HW_TBL_ADDR_MASK,
-			IPA5_0_RULE_MAX_PRIORITY,
-			IPA5_0_RULE_MIN_PRIORITY,
-			IPA3_0_LOW_RULE_ID,
-			IPA3_0_RULE_ID_BIT_LEN,
-			IPA3_0_HW_RULE_BUF_SIZE,
-			ipa_write_64,
-			ipa_fltrt_create_flt_bitmap_v5_0,
-			ipa_fltrt_create_tbl_addr,
-			ipa_fltrt_parse_tbl_addr,
-			ipa_rt_gen_hw_rule_ipav5_0,
-			ipa_flt_gen_hw_rule_ipav5_0,
-			ipa_flt_generate_eq,
-			ipa_rt_parse_hw_rule_ipav5_0,
-			ipa_flt_parse_hw_rule_ipav5_0,
-			{
-				[IPA_TOS_EQ] = 0xFF,
-				[IPA_PROTOCOL_EQ] = 1,
-				[IPA_TC_EQ] = 2,
-				[IPA_OFFSET_MEQ128_0] = 3,
-				[IPA_OFFSET_MEQ128_1] = 4,
-				[IPA_OFFSET_MEQ32_0] = 5,
-				[IPA_OFFSET_MEQ32_1] = 6,
-				[IPA_IHL_OFFSET_MEQ32_0] = 7,
-				[IPA_IHL_OFFSET_MEQ32_1] = 8,
-				[IPA_METADATA_COMPARE] = 9,
-				[IPA_IHL_OFFSET_RANGE16_0] = 10,
-				[IPA_IHL_OFFSET_RANGE16_1] = 11,
-				[IPA_IHL_OFFSET_EQ_32] = 12,
-				[IPA_IHL_OFFSET_EQ_16] = 13,
-				[IPA_FL_EQ] = 14,
-				[IPA_IS_FRAG] = 15,
-				[IPA_IS_PURE_ACK] = 0,
-			},
+		true,
+		IPA3_0_HW_TBL_WIDTH,
+		IPA3_0_HW_TBL_SYSADDR_ALIGNMENT,
+		IPA3_0_HW_TBL_LCLADDR_ALIGNMENT,
+		IPA3_0_HW_TBL_BLK_SIZE_ALIGNMENT,
+		IPA3_0_HW_RULE_START_ALIGNMENT,
+		IPA3_0_HW_TBL_HDR_WIDTH,
+		IPA3_0_HW_TBL_ADDR_MASK,
+		IPA5_0_RULE_MAX_PRIORITY,
+		IPA5_0_RULE_MIN_PRIORITY,
+		IPA3_0_LOW_RULE_ID,
+		IPA3_0_RULE_ID_BIT_LEN,
+		IPA3_0_HW_RULE_BUF_SIZE,
+		ipa_write_64,
+		ipa_fltrt_create_flt_bitmap_v5_0,
+		ipa_fltrt_create_tbl_addr,
+		ipa_fltrt_parse_tbl_addr,
+		ipa_rt_gen_hw_rule_ipav5_0,
+		ipa_flt_gen_hw_rule_ipav5_0,
+		ipa_flt_generate_eq,
+		ipa_rt_parse_hw_rule_ipav5_0,
+		ipa_flt_parse_hw_rule_ipav5_0,
+		{
+			[IPA_TOS_EQ] = 0xFF,
+			[IPA_PROTOCOL_EQ] = 1,
+			[IPA_TC_EQ] = 2,
+			[IPA_OFFSET_MEQ128_0] = 3,
+			[IPA_OFFSET_MEQ128_1] = 4,
+			[IPA_OFFSET_MEQ32_0] = 5,
+			[IPA_OFFSET_MEQ32_1] = 6,
+			[IPA_IHL_OFFSET_MEQ32_0] = 7,
+			[IPA_IHL_OFFSET_MEQ32_1] = 8,
+			[IPA_METADATA_COMPARE] = 9,
+			[IPA_IHL_OFFSET_RANGE16_0] = 10,
+			[IPA_IHL_OFFSET_RANGE16_1] = 11,
+			[IPA_IHL_OFFSET_EQ_32] = 12,
+			[IPA_IHL_OFFSET_EQ_16] = 13,
+			[IPA_FL_EQ] = 14,
+			[IPA_IS_FRAG] = 15,
+			[IPA_IS_PURE_ACK] = 0,
+		},
+		IPA3_0_HW_RULE_PREFETCH_BUF_SIZE,
 	},
 };
 
@@ -4107,6 +4114,12 @@ u32 ipahal_get_hw_tbl_hdr_width(void)
 u32 ipahal_get_lcl_tbl_addr_alignment(void)
 {
 	return ipahal_fltrt_objs[ipahal_ctx->hw_type].lcladdr_alignment;
+}
+
+/* Get the H/W (flt/rt) prefetch buf size */
+u32 ipahal_get_hw_prefetch_buf_size(void)
+{
+	return ipahal_fltrt_objs[ipahal_ctx->hw_type].prefetech_buf_size;
 }
 
 /*
