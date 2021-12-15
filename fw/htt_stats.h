@@ -506,6 +506,25 @@ typedef enum {
     HTT_TX_RATE_STATS_UPLOAD_11BE_OFDMA,
 } htt_tx_rate_stats_upload_t;
 
+/* htt_rx_ul_trigger_stats_upload_t
+ * Enumerations for specifying which stats to upload in response to
+ * HTT_DBG_EXT_STATS_PDEV_TX_RATE.
+ */
+typedef enum {
+    /* Upload 11ax UL OFDMA RX Trigger stats
+     *
+     * TLV: htt_rx_pdev_ul_trigger_stats_tlv
+     */
+    HTT_RX_UL_TRIGGER_STATS_UPLOAD_11AX_OFDMA,
+
+    /*
+     * Upload 11be UL OFDMA RX Trigger stats
+     *
+     * TLV: htt_rx_pdev_be_ul_trigger_stats_tlv
+     */
+    HTT_RX_UL_TRIGGER_STATS_UPLOAD_11BE_OFDMA,
+} htt_rx_ul_trigger_stats_upload_t;
+
 #define HTT_STATS_MAX_STRING_SZ32 4
 #define HTT_STATS_MACID_INVALID 0xff
 #define HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS 10
@@ -3973,6 +3992,26 @@ typedef struct {
  */
 #define HTT_RX_PDEV_STATS_NUM_RU_SIZE_160MHZ_CNTRS 7 /* includes 996x2 */
 
+typedef enum {
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_26,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_52,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_52_26,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_106,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_106_26,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_242,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_484,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_484_242,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996_484,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996_484_242,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996x2,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996x2_484,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996x3,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996x3_484,
+    HTT_RX_PDEV_STATS_BE_RU_SIZE_996x4,
+    HTT_RX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS,
+} HTT_RX_PDEV_STATS_BE_RU_SIZE;
+
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_M 0x000000ff
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_S 0
 
@@ -4239,6 +4278,68 @@ typedef struct {
 typedef struct {
     htt_rx_pdev_ul_trigger_stats_tlv ul_trigger_tlv;
 } htt_rx_pdev_ul_trigger_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    A_UINT32 mac_id__word;
+
+    A_UINT32 rx_11be_ul_ofdma;
+
+    A_UINT32 be_ul_ofdma_rx_mcs[HTT_RX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    A_UINT32 be_ul_ofdma_rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    A_UINT32 be_ul_ofdma_rx_nss[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 be_ul_ofdma_rx_bw[HTT_RX_PDEV_STATS_NUM_BE_BW_COUNTERS];
+    A_UINT32 be_ul_ofdma_rx_stbc;
+    A_UINT32 be_ul_ofdma_rx_ldpc;
+
+    /*
+     * These are arrays to hold the number of PPDUs that we received per RU.
+     * E.g. PPDUs (data or non data) received in RU26 will be incremented in
+     * array offset 0 and similarly RU52 will be incremented in array offset 1
+     */
+    A_UINT32 be_rx_ulofdma_data_ru_size_ppdu[HTT_RX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS];      /* ppdu level */
+    A_UINT32 be_rx_ulofdma_non_data_ru_size_ppdu[HTT_RX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS];  /* ppdu level */
+
+    /*
+     * These arrays hold Target RSSI (rx power the AP wants),
+     * FD RSSI (rx power the AP sees) & Power headroom values of STAs
+     * which can be identified by AIDs, during trigger based RX.
+     * Array acts a circular buffer and holds values for last 5 STAs
+     * in the same order as RX.
+     */
+    /* uplink_sta_aid:
+     * STA AID array for identifying which STA the
+     * Target-RSSI / FD-RSSI / pwr headroom stats are for
+     */
+    A_UINT32 be_uplink_sta_aid[HTT_RX_UL_MAX_UPLINK_RSSI_TRACK];
+    /* uplink_sta_target_rssi:
+     * Trig Target RSSI for STA AID in same index - UNIT(dBm)
+     */
+    A_INT32 be_uplink_sta_target_rssi[HTT_RX_UL_MAX_UPLINK_RSSI_TRACK];
+    /* uplink_sta_fd_rssi:
+     * Trig FD RSSI from STA AID in same index - UNIT(dBm)
+     */
+    A_INT32 be_uplink_sta_fd_rssi[HTT_RX_UL_MAX_UPLINK_RSSI_TRACK];
+    /* uplink_sta_power_headroom:
+     * Trig power headroom for STA AID in same idx - UNIT(dB)
+     */
+    A_UINT32 be_uplink_sta_power_headroom[HTT_RX_UL_MAX_UPLINK_RSSI_TRACK];
+} htt_rx_pdev_be_ul_trigger_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
+ * TLV_TAGS:
+ *      - HTT_STATS_RX_PDEV_BE_UL_TRIG_STATS_TAG
+ * NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_rx_pdev_be_ul_trigger_stats_tlv ul_trigger_tlv;
+} htt_rx_pdev_be_ul_trigger_stats_t;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
