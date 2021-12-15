@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2006-2007, 2014-2018, 2020-2021 The Linux Foundation.
  * All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4413,6 +4413,7 @@ FRAME Authentication                      // 7.2.3.10
     OPTIE  fils_session;
     OPTIE  fils_wrapped_data;
     OPTIE  fils_assoc_delay_info;
+    OPTIE  mlo_ie;
 } // End frame Auth.
 
 FRAME DeAuth                              // 7.2.3.11
