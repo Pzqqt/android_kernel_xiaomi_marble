@@ -39,7 +39,7 @@ protocol==htons(ETH_P_IP)){if(ip_hdr(DATARMNET543491eb0f)->protocol!=IPPROTO_UDP
 (DATARMNET543491eb0f->protocol==htons(ETH_P_IPV6)){if(ipv6_hdr(
 DATARMNET543491eb0f)->nexthdr!=IPPROTO_UDP)return;if(DATARMNET77ab42949f(
 DATARMNET543491eb0f))goto DATARMNETb261f33b7b;}return;DATARMNETb261f33b7b:
-DATARMNET543491eb0f->priority=55834;}void DATARMNET49c17a32bc(void){
+DATARMNET543491eb0f->priority=14286874;}void DATARMNET49c17a32bc(void){
 rcu_assign_pointer(rmnet_perf_ingress_hook1,DATARMNETee9214ce9b);
 rcu_assign_pointer(rmnet_perf_egress_hook1,DATARMNET05c4bf8af9);}void 
 DATARMNET41e8cc085c(void){rcu_assign_pointer(rmnet_perf_ingress_hook1,NULL);
