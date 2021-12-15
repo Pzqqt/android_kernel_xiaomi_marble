@@ -95,11 +95,8 @@ static int iser_prepare_read_cmd(struct iscsi_task *task)
  *  task->data[ISER_DIR_OUT].data_len, Protection size
  *  is stored at task->prot[ISER_DIR_OUT].data_len
  */
-static int
-iser_prepare_write_cmd(struct iscsi_task *task,
-		       unsigned int imm_sz,
-		       unsigned int unsol_sz,
-		       unsigned int edtl)
+static int iser_prepare_write_cmd(struct iscsi_task *task, unsigned int imm_sz,
+				  unsigned int unsol_sz, unsigned int edtl)
 {
 	struct iscsi_iser_task *iser_task = task->dd_data;
 	struct iser_mem_reg *mem_reg;
@@ -160,8 +157,8 @@ iser_prepare_write_cmd(struct iscsi_task *task,
 }
 
 /* creates a new tx descriptor and adds header regd buffer */
-static void iser_create_send_desc(struct iser_conn	*iser_conn,
-				  struct iser_tx_desc	*tx_desc)
+static void iser_create_send_desc(struct iser_conn *iser_conn,
+				  struct iser_tx_desc *tx_desc)
 {
 	struct iser_device *device = iser_conn->ib_conn.device;
 
@@ -360,8 +357,7 @@ static inline bool iser_signal_comp(u8 sig_count)
  * @conn: link to matching iscsi connection
  * @task: SCSI command task
  */
-int iser_send_command(struct iscsi_conn *conn,
-		      struct iscsi_task *task)
+int iser_send_command(struct iscsi_conn *conn, struct iscsi_task *task)
 {
 	struct iser_conn *iser_conn = conn->dd_data;
 	struct iscsi_iser_task *iser_task = task->dd_data;
@@ -434,8 +430,7 @@ send_command_error:
  * @task: SCSI command task
  * @hdr: pointer to the LLD's iSCSI message header
  */
-int iser_send_data_out(struct iscsi_conn *conn,
-		       struct iscsi_task *task,
+int iser_send_data_out(struct iscsi_conn *conn, struct iscsi_task *task,
 		       struct iscsi_data *hdr)
 {
 	struct iser_conn *iser_conn = conn->dd_data;
@@ -497,8 +492,7 @@ send_data_out_error:
 	return err;
 }
 
-int iser_send_control(struct iscsi_conn *conn,
-		      struct iscsi_task *task)
+int iser_send_control(struct iscsi_conn *conn, struct iscsi_task *task)
 {
 	struct iser_conn *iser_conn = conn->dd_data;
 	struct iscsi_iser_task *iser_task = task->dd_data;
@@ -593,8 +587,7 @@ void iser_login_rsp(struct ib_cq *cq, struct ib_wc *wc)
 	ib_conn->post_recv_buf_count--;
 }
 
-static inline int
-iser_inv_desc(struct iser_fr_desc *desc, u32 rkey)
+static inline int iser_inv_desc(struct iser_fr_desc *desc, u32 rkey)
 {
 	if (unlikely((!desc->sig_protected && rkey != desc->rsc.mr->rkey) ||
 		     (desc->sig_protected && rkey != desc->rsc.sig_mr->rkey))) {
@@ -610,10 +603,8 @@ iser_inv_desc(struct iser_fr_desc *desc, u32 rkey)
 	return 0;
 }
 
-static int
-iser_check_remote_inv(struct iser_conn *iser_conn,
-		      struct ib_wc *wc,
-		      struct iscsi_hdr *hdr)
+static int iser_check_remote_inv(struct iser_conn *iser_conn, struct ib_wc *wc,
+				 struct iscsi_hdr *hdr)
 {
 	if (wc->wc_flags & IB_WC_WITH_INVALIDATE) {
 		struct iscsi_task *task;
