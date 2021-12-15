@@ -1225,6 +1225,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_sw_cal_ver_cap,
     WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_pktlog_decode_info_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_spectral_scan_bw_capabilities,
+    WMITLV_TAG_STRUC_wmi_spectral_fft_size_capabilities,
+    WMITLV_TAG_STRUC_wmi_pdev_sscan_chan_info,
+    WMITLV_TAG_STRUC_wmi_pdev_sscan_per_detector_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1987,6 +1991,7 @@ typedef enum {
     OP(WMI_QUIET_HANDLING_EVENTID) \
     OP(WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID) \
     OP(WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID) \
+    OP(WMI_SPECTRAL_CAPABILITIES_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4948,6 +4953,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_sw_cal_ver_cap, sw_cal_ver_cap, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT2_EVENTID);
 
+#define WMITLV_TABLE_WMI_SPECTRAL_CAPABILITIES_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_spectral_scan_bw_capabilities, sscan_bw_caps, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_spectral_fft_size_capabilities, fft_size_caps, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_SPECTRAL_CAPABILITIES_EVENTID);
+
 #define WMITLV_TABLE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID(id,op,buf,len) \
      WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param, wmi_chan_rf_characterization_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
      WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_CHAN_RF_CHARACTERIZATION_INFO, wmi_chan_rf_characterization_info, WMITLV_SIZE_VAR)
@@ -6508,7 +6518,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_AGGR_SCHED_METHOD_EVENTID);
 /* Send sscan fw params to host */
 #define WMITLV_TABLE_WMI_PDEV_SSCAN_FW_PARAM_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_sscan_fw_cmd_fixed_param, wmi_pdev_sscan_fw_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_sscan_fft_bin_index, fft_bin_index, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_sscan_fft_bin_index, fft_bin_index, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_sscan_chan_info, wmi_pdev_sscan_chan_info,chan_info, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_sscan_per_detector_info, det_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SSCAN_FW_PARAM_EVENTID);
 
 /* Send sscan related event start/stop trigger to host */

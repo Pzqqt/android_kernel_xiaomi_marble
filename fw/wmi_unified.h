@@ -1467,6 +1467,9 @@ typedef enum {
     /** Spectral scan related event start/stop trigger to host  */
     WMI_SSCAN_EVT_MESSAGE_EVENTID,
 
+    /** Spectral scan capabilities advertisement */
+    WMI_SPECTRAL_CAPABILITIES_EVENTID,
+
 
     /* PDEV specific events */
     /** TPC config for the current operating channel */
@@ -6803,6 +6806,51 @@ typedef struct {
     A_UINT32 mid_5mhz_bins;
 } wmi_pdev_sscan_fft_bin_index;
 
+#define WMI_SPECTRAL_CHAN_PUNCTURE_BMAP_GET(puncture_bmap) WMI_GET_BITS(puncture_bmap, 0, 16)
+#define WMI_SPECTRAL_CHAN_PUNCTURE_BMAP_SET(puncture_bmap, value) WMI_SET_BITS(puncture_bmap, 0 , 16, value)
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sscan_chan_info */
+    /*
+     *  For contiguous channels, cfreq1 should be represent the center of the entire span and
+     *  cfreq2 should be 0 whereas for non-contiguous channels, cfreq1 should represent the
+     *  center of primary segment whereas cfreq2 should represent the center of secondary segment
+    */
+    /* Information corresponding to operating channel */
+    A_UINT32 operating_pri20_freq; /* In MHz */
+    A_UINT32 operating_cfreq1;     /* In MHz */
+    A_UINT32 operating_cfreq2;     /* In MHz */
+    A_UINT32 operating_bw;         /* as per enum wmi_channel_width */
+    /*
+     * bits [15:0] are used to represent puncture modes where each bit indicates
+     * whether that 20MHz channel is punctured.
+     * bits [31:16] are reserved.
+     */
+    A_UINT32 operating_puncture_20mhz_bitmap;
+
+    /* Information corresponding to channel in which spectral scan is done */
+    A_UINT32 sscan_cfreq1; /* In MHz */
+    A_UINT32 sscan_cfreq2; /* In MHz */
+    A_UINT32 sscan_bw; /*  as per enum wmi_channel_width */
+    /*
+     * bits [15:0] are used to represent puncture modes where each bit indicates
+     * whether that 20MHz channel is punctured.
+     * bits [31:16] are reserved.
+     */
+    A_UINT32 sscan_puncture_20mhz_bitmap;
+} wmi_pdev_sscan_chan_info;
+
+typedef struct
+{
+     A_UINT32 tlv_header;  /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sscan_per_detector_info */
+     A_UINT32 detector_id; /** ID of the detector involved in the spectral scan */
+     /*
+      * Start/End frequency (in MHz) to indicate the frequency range to which the detector is listening
+     */
+     A_UINT32 start_freq;       /* in MHz */
+     A_UINT32 end_freq;         /* in MHz */
+} wmi_pdev_sscan_per_detector_info;
+
 typedef enum {
     /** Enum to indicate bmsk of spectral scan stop evt on scan count max out */
     WMI_SSCAN_EVT_BMSK_SCAN_STOP_SCOUNT = 0X00000001,
@@ -9123,6 +9171,8 @@ typedef enum {
     WMI_CHAN_WIDTH_165   = 7,
     WMI_CHAN_WIDTH_160P160 = 8,
     WMI_CHAN_WIDTH_320   = 9,
+
+    WMI_CHAN_WIDTH_MAX,
 } wmi_channel_width;
 
 /*Clear stats*/
@@ -29119,6 +29169,9 @@ typedef struct {
 #define WMI_SUPPORT_ADFS_320_GET(flags) WMI_GET_BITS(flags, 9, 1)
 #define WMI_SUPPORT_ADFS_320_SET(flags, value) WMI_SET_BITS(flags, 9, 1, value)
 
+#define WMI_SUPPORT_AGILE_SPECTRAL_320_GET(flags) WMI_GET_BITS(flags, 10, 1)
+#define WMI_SUPPORT_AGILE_SPECTRAL_320_SET(flags, value) WMI_SET_BITS(flags, 10, 1, value)
+
 #define WMI_SUPPORT_CHAIN_MASK_2G_GET(flags) WMI_GET_BITS(flags, 27, 1)
 #define WMI_SUPPORT_CHAIN_MASK_2G_SET(flags, value) WMI_SET_BITS(flags, 27, 1, value)
 
@@ -29150,7 +29203,8 @@ typedef struct {
                      supports_aDFS_160:1,
                      supports_chan_width_320:1,
                      supports_aDFS_320:1,
-                     reserved:17, /* bits 26:10 */
+                     supports_agile_spectral_320:1,
+                     reserved:16, /* bits 26:11 */
                      chain_mask_2G:1,
                      chain_mask_5G:1,
                      chain_mask_tx:1,
@@ -32172,6 +32226,54 @@ typedef struct {
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
 } wmi_spectral_bin_scaling_params;
+
+#define WMI_SPECTRAL_BW_CAPS_GET(bw_caps, index) WMI_GET_BITS(bw_caps, index, 1)
+#define WMI_SPECTRAL_BW_CAPS_SET(bw_caps, index, value) WMI_SET_BITS(bw_caps, index, 1, value)
+
+#define WMI_SPECTRAL_FFT_SIZE_CAPS_GET(fft_size_caps, index) WMI_GET_BITS(ft_size_caps, index, 1)
+#define WMI_SPECTRAL_FFT_SIZE_CAPS_SET(fft_size_caps, index, value) WMI_SET_BITS(fft_size_caps, index, 1, value)
+
+typedef struct {
+    A_UINT32 tlv_header;   /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_spectral_scan_bw_capabilities */
+    A_UINT32 pdev_id;      /* ID of pdev for which the bandwidth capabilities are advertised */
+    A_UINT32 sscan_mode;   /* scan mode to denote whether this is a normal/agile scan (refer to wmi_spectral_scan_mode) */
+    A_UINT32 operating_bw; /* Operating bandwidth which supports the bandwidth capabilities,  as per enum wmi_channel_width */
+    union {
+        struct {           /* To indicate the scan bandwidths support for the operating bandwidth and scan mode */
+            A_UINT32 supports_sscan_bw_20:1,
+                     supports_sscan_bw_40:1,
+                     supports_sscan_bw_80:1,
+                     supports_sscan_bw_160:1,
+                     supports_sscan_bw_80p80:1,
+                     supports_sscan_bw_320:1,
+                     reserved:26;
+        };
+        A_UINT32 supported_flags;
+    };
+} wmi_spectral_scan_bw_capabilities;
+
+typedef struct {
+    A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_spectral_fft_size_capabilities */
+    A_UINT32 pdev_id;     /* ID of pdev for which the bandwidth capabilities are advertised */
+    A_UINT32 sscan_bw;    /* sscan bandwidth, as per enum wmi_channel_width */
+    union {
+        struct {          /* To indicate the scan FFT sizes supported in the sscan bandwidth */
+            A_UINT32 supports_fft_size_1:1,
+                     supports_fft_size_2:1,
+                     supports_fft_size_3:1,
+                     supports_fft_size_4:1,
+                     supports_fft_size_5:1,
+                     supports_fft_size_6:1,
+                     supports_fft_size_7:1,
+                     supports_fft_size_8:1,
+                     supports_fft_size_9:1,
+                     supports_fft_size_10:1,
+                     supports_fft_size_11:1,
+                     reserved:21;
+        };
+        A_UINT32 supported_flags;
+    };
+} wmi_spectral_fft_size_capabilities;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_ctl_failsafe_event_params */
