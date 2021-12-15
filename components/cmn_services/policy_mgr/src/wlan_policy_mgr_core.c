@@ -3563,8 +3563,11 @@ sbs_check:
 	case 1:
 		/* Do not overwrite if the channel can create SBS */
 		if (policy_mgr_are_sbs_chan(psoc, sap_ch_freq,
-					    *intf_ch_freq))
+					    *intf_ch_freq)) {
+			policy_mgr_debug("Do not overwrite as sap_ch_freq %d intf_ch_freq %d are SBS freq",
+					 sap_ch_freq, *intf_ch_freq);
 			*intf_ch_freq = 0;
+		}
 		break;
 	case 2:
 		if (policy_mgr_is_current_hwmode_sbs(psoc)) {

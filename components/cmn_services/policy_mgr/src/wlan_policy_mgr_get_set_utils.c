@@ -958,7 +958,7 @@ policy_mgr_update_mac_freq_info(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	policy_mgr_debug("Hw_Mode: %d Phy_id: %d band: %x SBS low band end freq %d low_2g %d high_2g %d low_5g %d high_5g %d",
+	policy_mgr_debug("hw_mode_cfg: %d mac: %d band: 0x%x, SBS cutoff freq %d, 2Ghz: %d -> %d 5Ghz: %d -> %d",
 			 hw_config_type, phy_id, mac_cap->supported_bands,
 			 pm_ctx->hw_mode.sbs_lower_band_end_freq,
 			 mac_cap->reg_cap_ext.low_2ghz_chan,
@@ -1028,7 +1028,7 @@ policy_mgr_dump_curr_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
 	for (i = 0; i < MAX_MAC; i++)
 		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE_CUR: mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE_CUR: mac %d: 2Ghz: %d -> %d, 5Ghz: %d -> %d",
 					     i, freq_range[i].low_2ghz_freq,
 					     freq_range[i].high_2ghz_freq,
 					     freq_range[i].low_5ghz_freq,
@@ -1059,7 +1059,7 @@ policy_mgr_dump_freq_range_per_mac(struct policy_mgr_freq_range *freq_range,
 
 	for (i = 0; i < MAX_MAC; i++)
 		if (freq_range[i].low_2ghz_freq || freq_range[i].low_5ghz_freq)
-			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE: %s(%d): mac_id %d: 2Ghz: low %d high %d, 5Ghz: low %d high %d",
+			policymgr_nofl_debug("PLCY_MGR_FREQ_RANGE: %s(%d): mac %d: 2Ghz: %d -> %d, 5Ghz: %d -> %d",
 					     policy_mgr_hw_mode_to_str(hw_mode),
 					     hw_mode, i,
 					     freq_range[i].low_2ghz_freq,
@@ -1480,8 +1480,6 @@ bool policy_mgr_are_sbs_chan(struct wlan_objmgr_psoc *psoc, qdf_freq_t freq_1,
 	if (!policy_mgr_is_hw_sbs_capable(psoc))
 		return false;
 
-	policy_mgr_debug("freq_1 %d freq_2 %d", freq_1, freq_2);
-
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq_1) ||
 	    WLAN_REG_IS_24GHZ_CH_FREQ(freq_2))
 		return false;
@@ -1500,7 +1498,6 @@ policy_mgr_is_cur_freq_range_sbs(struct wlan_objmgr_psoc *psoc)
 	if (!pm_ctx)
 		return false;
 
-	policy_mgr_dump_curr_freq_range(pm_ctx);
 	/* Check if any of the mac is shared */
 	for (i = 0 ; i < MAX_MAC; i++) {
 		freq_range = &pm_ctx->hw_mode.cur_mac_freq_range[i];
