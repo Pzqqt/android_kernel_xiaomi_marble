@@ -352,10 +352,14 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 			return QDF_STATUS_E_NOSUPPORT;
 		}
 
-		if (wlan_reg_is_etsi(sta_ctry)) {
-			reg_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
-				  sta_ctry[0], sta_ctry[1]);
-			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+		if (wlan_reg_is_etsi(sta_ctry) &&
+		    ap_pwr_type != REG_MAX_AP_TYPE) {
+			if (!(wlan_reg_is_us(ap_ctry) &&
+			      ap_pwr_type == REG_INDOOR_AP)) {
+				reg_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
+					  sta_ctry[0], sta_ctry[1]);
+				*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+			}
 		}
 
 		if (wlan_reg_is_us(ap_ctry) && ap_pwr_type == REG_INDOOR_AP) {
