@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  */
@@ -118,6 +119,12 @@ struct sde_hw_uidle_ops {
 	 */
 	void (*active_override_enable)(struct sde_hw_uidle *uidle,
 			bool enable);
+	/**
+	 * uidle_fal10_overrride - enable/disable fal10 override
+	 * @uidle: uidle context driver
+	 * @enable: enable/disable
+	 */
+	void (*uidle_fal10_override)(struct sde_hw_uidle *uidle, bool enable);
 };
 
 struct sde_hw_uidle {
