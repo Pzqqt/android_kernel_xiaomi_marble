@@ -1651,8 +1651,6 @@ hdd_suspend_wlan(void)
 	QDF_STATUS status;
 	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
 	uint32_t conn_state_mask = 0;
-	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
-	cdp_config_param_type val = {0};
 
 	hdd_info("WLAN being suspended by OS");
 
@@ -1684,12 +1682,6 @@ hdd_suspend_wlan(void)
 		if (adapter->device_mode == QDF_STA_MODE)
 			status = hdd_enable_default_pkt_filters(adapter);
 
-		if (adapter->session.ap.disable_intrabss_fwd &&
-		    (adapter->device_mode == QDF_SAP_MODE ||
-		     adapter->device_mode == QDF_P2P_GO_MODE))
-			cdp_txrx_set_vdev_param(soc, adapter->vdev_id,
-						CDP_ENABLE_AP_BRIDGE, val);
-
 		/* Configure supported OffLoads */
 		hdd_enable_host_offloads(adapter, pmo_apps_suspend);
 		hdd_update_conn_state_mask(adapter, &conn_state_mask);
@@ -1720,8 +1712,6 @@ static int hdd_resume_wlan(void)
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	QDF_STATUS status;
-	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
-	cdp_config_param_type val = {0};
 
 	hdd_info("WLAN being resumed by OS");
 
@@ -1759,14 +1749,6 @@ static int hdd_resume_wlan(void)
 
 		if (adapter->device_mode == QDF_STA_MODE)
 			status = hdd_disable_default_pkt_filters(adapter);
-
-		if (adapter->session.ap.disable_intrabss_fwd &&
-		    (adapter->device_mode == QDF_SAP_MODE ||
-		     adapter->device_mode == QDF_P2P_GO_MODE)) {
-			val.cdp_vdev_param_ap_brdg_en = true;
-			cdp_txrx_set_vdev_param(soc, adapter->vdev_id,
-						CDP_ENABLE_AP_BRIDGE, val);
-		}
 
 		hdd_adapter_dev_put_debug(adapter, NET_DEV_HOLD_RESUME_WLAN);
 	}
