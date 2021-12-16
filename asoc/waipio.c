@@ -203,6 +203,9 @@ static void msm_set_upd_config(struct snd_soc_pcm_runtime *rtd)
 					"wsa-codec.1");
 				return;
 			}
+		} else {
+			pr_info("%s wsa_max_devs are NULL\n", __func__);
+			return;
 		}
 	} else {
 		component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
@@ -217,12 +220,11 @@ static void msm_set_upd_config(struct snd_soc_pcm_runtime *rtd)
 
 	if (!strcmp(pdata->upd_config.backend_used, "wsa")) {
 		pdata->get_dev_num = wsa883x_codec_get_dev_num;
-	}
-	else {
-		if(!strncmp(component->driver->name, WCD937X_DRV_NAME,
+	} else {
+		if (!strncmp(component->driver->name, WCD937X_DRV_NAME,
 				strlen(WCD937X_DRV_NAME))){
 			pdata->get_dev_num = wcd937x_codec_get_dev_num;
-		} else if(!strncmp(component->driver->name, WCD938X_DRV_NAME,
+		} else if (!strncmp(component->driver->name, WCD938X_DRV_NAME,
 				strlen(WCD938X_DRV_NAME))){
 			pdata->get_dev_num = wcd938x_codec_get_dev_num;
 		}
