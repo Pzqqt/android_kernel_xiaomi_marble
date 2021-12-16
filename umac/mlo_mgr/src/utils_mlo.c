@@ -537,7 +537,7 @@ QDF_STATUS util_get_noninheritlists(uint8_t *buff, qdf_size_t buff_len,
 			*ninherit_elemextlist = ninherit_ie +
 				ELEM_ID_LIST_LEN_POS + (*ninherit_elemlist_len)
 				+ 2;
-			unparsed_len -= *ninherit_elemlist_len;
+			unparsed_len -= *ninherit_elemextlist_len;
 		}
 
 		if (unparsed_len > 0) {
