@@ -2325,7 +2325,7 @@ int wma_dp_send_delba_ind(uint8_t vdev_id,
  * is_roam_inprogress() - Is vdev in progress
  * @vdev_id: vdev of interest
  *
- * Return: true if roaming, false otherwise
+ * Return: true if roaming started,  false during roam sync and otherwise
  */
 bool wma_is_roam_in_progress(uint32_t vdev_id);
 
