@@ -86,6 +86,25 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
+static WMI_DISABLE_TWT_REASON_T
+wmi_convert_dis_reason_code(enum HOST_TWT_DISABLE_REASON reason)
+{
+	switch (reason) {
+	case HOST_TWT_DISABLE_REASON_NONE:
+		return WMI_DISABLE_TWT_REASON_NONE;
+	case HOST_TWT_DISABLE_REASON_CONCURRENCY_SCC:
+		return WMI_DISABLE_TWT_REASON_CONCURRENCY_SCC;
+	case HOST_TWT_DISABLE_REASON_CONCURRENCY_MCC:
+		return WMI_DISABLE_TWT_REASON_CONCURRENCY_MCC;
+	case HOST_TWT_DISABLE_REASON_CHANGE_CONGESTION_TIMEOUT:
+		return WMI_DISABLE_TWT_REASON_CHANGE_CONGESTION_TIMEOUT;
+	case HOST_TWT_DISABLE_REASON_P2P_GO_NOA:
+		return WMI_DISABLE_TWT_REASON_P2P_GO_NOA;
+	default:
+		return WMI_DISABLE_TWT_REASON_NONE;
+	}
+}
+
 static QDF_STATUS send_twt_disable_cmd_tlv(wmi_unified_t wmi_handle,
 			struct twt_disable_param *params)
 {
@@ -115,6 +134,8 @@ static QDF_STATUS send_twt_disable_cmd_tlv(wmi_unified_t wmi_handle,
 		TWT_EN_DIS_FLAGS_SET_I_B_TWT(cmd->flags, params->twt_oper);
 	}
 
+	cmd->reason_code = wmi_convert_dis_reason_code(
+					params->dis_reason_code);
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				      WMI_TWT_DISABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1215,7 +1236,6 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return status;
 }
-
 
 static QDF_STATUS send_twt_disable_cmd_tlv(wmi_unified_t wmi_handle,
 			struct wmi_twt_disable_param *params)
