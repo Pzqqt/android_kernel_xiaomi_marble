@@ -116,9 +116,11 @@ void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
 void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
 				   enum twt_role role)
 {
+	uint32_t reason;
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 
-	osif_twt_send_responder_disable_cmd(hdd_ctx->psoc, pdev_id);
+	reason = HOST_TWT_DISABLE_REASON_NONE;
+	osif_twt_send_responder_disable_cmd(hdd_ctx->psoc, pdev_id, reason);
 }
 
 int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
@@ -144,11 +146,12 @@ int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
 	return 0;
 }
 
-QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
+QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx,
+					      uint32_t reason)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 
-	osif_twt_send_responder_disable_cmd(hdd_ctx->psoc, pdev_id);
+	osif_twt_send_responder_disable_cmd(hdd_ctx->psoc, pdev_id, reason);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -607,7 +610,8 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
 						     &congestion_timeout);
 		if (congestion_timeout) {
 			ret = qdf_status_to_os_return(
-			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx));
+			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx,
+							   0));
 			if (ret) {
 				hdd_err("Failed to disable TWT");
 				return ret;
@@ -2079,7 +2083,8 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 
 	if (congestion_timeout) {
 		ret = qdf_status_to_os_return(
-			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx));
+			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx,
+							   0));
 		if (ret) {
 			hdd_err("Failed to disable TWT");
 			return ret;
@@ -4351,7 +4356,8 @@ QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx)
 	return status;
 }
 
-QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx)
+QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx,
+					      uint32_t reason)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 	struct twt_enable_disable_conf twt_en_dis = {0};
@@ -4385,7 +4391,8 @@ timeout:
 	return status;
 }
 
-QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
+QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx,
+					      uint32_t reason)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 	struct twt_enable_disable_conf twt_en_dis = {0};
@@ -4533,8 +4540,8 @@ void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
 	}
 }
 
-void hdd_twt_concurrency_update_on_scc_mcc(struct wlan_objmgr_pdev *pdev,
-					   void *object, void *arg)
+void hdd_twt_concurrency_update_on_scc(struct wlan_objmgr_pdev *pdev,
+				       void *object, void *arg)
 {
 	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
 	struct twt_conc_arg *twt_arg = arg;
@@ -4543,7 +4550,8 @@ void hdd_twt_concurrency_update_on_scc_mcc(struct wlan_objmgr_pdev *pdev,
 	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE &&
 	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
 		hdd_debug("Concurrency exist on SAP vdev");
-		status = hdd_send_twt_responder_disable_cmd(twt_arg->hdd_ctx);
+		status = hdd_send_twt_responder_disable_cmd(twt_arg->hdd_ctx,
+							    0);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("TWT responder disable cmd to firmware failed");
 			return;
@@ -4554,7 +4562,39 @@ void hdd_twt_concurrency_update_on_scc_mcc(struct wlan_objmgr_pdev *pdev,
 	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE &&
 	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
 		hdd_debug("Concurrency exist on STA vdev");
-		status = hdd_send_twt_requestor_disable_cmd(twt_arg->hdd_ctx);
+		status = hdd_send_twt_requestor_disable_cmd(twt_arg->hdd_ctx,
+							    0);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("TWT requestor disable cmd to firmware failed");
+			return;
+		}
+	}
+}
+
+void hdd_twt_concurrency_update_on_mcc(struct wlan_objmgr_pdev *pdev,
+				       void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	struct twt_conc_arg *twt_arg = arg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		hdd_debug("Concurrency exist on SAP vdev");
+		status = hdd_send_twt_responder_disable_cmd(twt_arg->hdd_ctx,
+							    0);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("TWT responder disable cmd to firmware failed");
+			return;
+		}
+		sme_twt_update_beacon_template(twt_arg->hdd_ctx->mac_handle);
+	}
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		hdd_debug("Concurrency exist on STA vdev");
+		status = hdd_send_twt_requestor_disable_cmd(twt_arg->hdd_ctx,
+							    0);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("TWT requestor disable cmd to firmware failed");
 			return;
@@ -4624,16 +4664,27 @@ void __hdd_twt_update_work_handler(struct hdd_context *hdd_ctx)
 		}
 		break;
 	case 2:
-		if (policy_mgr_current_concurrency_is_scc(hdd_ctx->psoc) ||
-		    policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
+		if (policy_mgr_current_concurrency_is_scc(hdd_ctx->psoc)) {
 			status = wlan_objmgr_pdev_iterate_obj_list(
 					hdd_ctx->pdev,
 					WLAN_VDEV_OP,
-					hdd_twt_concurrency_update_on_scc_mcc,
+					hdd_twt_concurrency_update_on_scc,
 					&twt_arg, 0,
 					WLAN_HDD_ID_OBJ_MGR);
 			if (QDF_IS_STATUS_ERROR(status)) {
-				hdd_err("SAP not in SCC/MCC concurrency");
+				hdd_err("2port concurrency,SAP/STA not in SCC");
+				return;
+			}
+		}
+		if (policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
+			status = wlan_objmgr_pdev_iterate_obj_list(
+					hdd_ctx->pdev,
+					WLAN_VDEV_OP,
+					hdd_twt_concurrency_update_on_mcc,
+					&twt_arg, 0,
+					WLAN_HDD_ID_OBJ_MGR);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("2port concurrency,SAP/STA not in MCC");
 				return;
 			}
 		} else if (policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc)) {
@@ -4644,18 +4695,36 @@ void __hdd_twt_update_work_handler(struct hdd_context *hdd_ctx)
 					&twt_arg, 0,
 					WLAN_HDD_ID_OBJ_MGR);
 			if (QDF_IS_STATUS_ERROR(status)) {
-				hdd_err("SAP not in DBS case");
+				hdd_err("2port concurrency,SAP/STA not in DBS");
 				return;
 			}
 		}
 		break;
 	case 3:
-		status = wlan_objmgr_pdev_iterate_obj_list(
+		if (policy_mgr_current_concurrency_is_scc(hdd_ctx->psoc)) {
+			status = wlan_objmgr_pdev_iterate_obj_list(
 					hdd_ctx->pdev,
 					WLAN_VDEV_OP,
-					hdd_twt_concurrency_update_on_scc_mcc,
+					hdd_twt_concurrency_update_on_scc,
 					&twt_arg, 0,
 					WLAN_HDD_ID_OBJ_MGR);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("3port concurrency,SAP/STA not in SCC");
+				return;
+			}
+		}
+		if (policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
+			status = wlan_objmgr_pdev_iterate_obj_list(
+					hdd_ctx->pdev,
+					WLAN_VDEV_OP,
+					hdd_twt_concurrency_update_on_mcc,
+					&twt_arg, 0,
+					WLAN_HDD_ID_OBJ_MGR);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("3port concurrency,SAP/STA not in MCC");
+				return;
+			}
+		}
 		break;
 	default:
 		hdd_err("Unexpected number of connection");
