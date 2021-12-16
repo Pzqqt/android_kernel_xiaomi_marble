@@ -2872,6 +2872,53 @@ exit:
 	return rc;
 }
 
+int venus_hfi_trigger_stability(struct msm_vidc_inst *inst, u32 type,
+	u32 client_id, u32 val)
+{
+	struct msm_vidc_core *core;
+	u32 payload[2];
+	int rc = 0;
+
+	if (!inst || !inst->core || !inst->packet) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	payload[0] = client_id << 4 | type;
+	payload[1] = val;
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			   inst->session_id, core->header_id++);
+	if (rc)
+		goto unlock;
+
+	/* HFI_CMD_STABILITY */
+	rc = hfi_create_packet(inst->packet, inst->packet_size,
+				   HFI_CMD_STABILITY,
+				   HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+				   HFI_HOST_FLAGS_INTR_REQUIRED,
+				   HFI_PAYLOAD_U64,
+				   HFI_PORT_NONE,
+				   core->packet_id++,
+				   &payload, sizeof(u64));
+	if (rc)
+		goto unlock;
+
+	rc = __iface_cmdq_write(core, inst->packet);
+	if (rc)
+		goto unlock;
+
+unlock:
+	core_unlock(core, __func__);
+	return rc;
+}
+
 int venus_hfi_session_open(struct msm_vidc_inst *inst)
 {
 	int rc = 0;

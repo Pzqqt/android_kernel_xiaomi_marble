@@ -42,6 +42,13 @@ extern struct msm_vidc_core *g_core;
 #define SSR_ADDR_ID 0xFFFFFFFF00000000
 #define SSR_ADDR_SHIFT 32
 
+#define STABILITY_TYPE 0x0000000F
+#define STABILITY_TYPE_SHIFT 0
+#define STABILITY_SUB_CLIENT_ID 0x000000F0
+#define STABILITY_SUB_CLIENT_ID_SHIFT 4
+#define STABILITY_PAYLOAD_ID 0xFFFFFFFF00000000
+#define STABILITY_PAYLOAD_SHIFT 32
+
 struct msm_vidc_cap_name {
 	enum msm_vidc_inst_capability_type cap;
 	char *name;
@@ -4590,6 +4597,77 @@ void msm_vidc_ssr_handler(struct work_struct *work)
 		d_vpr_e("%s: video core not initialized\n", __func__);
 	}
 	core_unlock(core, __func__);
+}
+
+int msm_vidc_trigger_stability(struct msm_vidc_core *core,
+		u64 trigger_stability_val)
+{
+	struct msm_vidc_inst *inst = NULL;
+	struct msm_vidc_stability stability;
+
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/*
+	 * <payload><sub_client_id><stability_type>
+	 * stability_type: 0-3 bits
+	 * sub_client_id: 4-7 bits
+	 * reserved: 8-31 bits
+	 * payload: 32-63 bits
+	 */
+	memset(&stability, 0, sizeof(struct msm_vidc_stability));
+	stability.stability_type = (trigger_stability_val &
+			(unsigned long)STABILITY_TYPE) >> STABILITY_TYPE_SHIFT;
+	stability.sub_client_id = (trigger_stability_val &
+			(unsigned long)STABILITY_SUB_CLIENT_ID) >> STABILITY_SUB_CLIENT_ID_SHIFT;
+	stability.value = (trigger_stability_val &
+			(unsigned long)STABILITY_PAYLOAD_ID) >> STABILITY_PAYLOAD_SHIFT;
+
+	core_lock(core, __func__);
+	list_for_each_entry(inst, &core->instances, list) {
+		memcpy(&inst->stability, &stability, sizeof(struct msm_vidc_stability));
+		schedule_work(&inst->stability_work);
+	}
+	core_unlock(core, __func__);
+
+	return 0;
+}
+
+void msm_vidc_stability_handler(struct work_struct *work)
+{
+	int rc;
+	struct msm_vidc_inst *inst;
+	struct msm_vidc_stability *stability;
+
+	inst = container_of(work, struct msm_vidc_inst, stability_work);
+	inst = get_inst_ref(g_core, inst);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	inst_lock(inst, __func__);
+	stability = &inst->stability;
+	rc = venus_hfi_trigger_stability(inst, stability->stability_type,
+		stability->sub_client_id, stability->value);
+	if (rc)
+		i_vpr_e(inst, "%s: trigger_stability failed\n", __func__);
+	inst_unlock(inst, __func__);
+
+	put_inst(inst);
+}
+
+int cancel_stability_work_sync(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: Invalid arguments\n", __func__);
+		return -EINVAL;
+	}
+	cancel_work_sync(&inst->stability_work);
+
+	return 0;
 }
 
 void msm_vidc_fw_unload_handler(struct work_struct *work)
