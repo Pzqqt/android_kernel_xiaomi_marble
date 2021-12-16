@@ -1667,6 +1667,8 @@ struct wlan_ie_ehtcaps {
  * @basic_mcs_nss_set: Basic MCS NSS set
  * @primary_channel: primary channel number
  * @width: EHT BSS Channel Width
+ * @puncture_pattern_present: Bit indicates whether puncture_pattern field
+ * is included or not in ehtop ie
  * @reserved: Reserved bits
  * @chan_freq_seg0: EHT Channel Centre Frequency Segment 0
  * @chan_freq_seg1: EHT Channel Centre Frequency Segment 1
@@ -1680,7 +1682,8 @@ struct wlan_ie_ehtops {
 	uint8_t basic_mcs_nss_set[2];
 	uint8_t primary_channel;
 	uint8_t width:3,
-		reserved:5;
+		puncture_pattern_present:1,
+		reserved:4;
 	uint8_t chan_freq_seg0;
 	uint8_t chan_freq_seg1;
 	uint8_t minimum_rate;
