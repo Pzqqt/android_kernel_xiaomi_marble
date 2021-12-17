@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -421,12 +422,7 @@ static void sde_hw_wb_program_cwb_dither_ctrl(struct sde_hw_wb *ctx,
 		return;
 	}
 
-	/* map to pp_id from dcwb id */
-	if (dcwb_idx == DCWB_0) {
-		pp_id = PINGPONG_CWB_0;
-	} else if (dcwb_idx == DCWB_1) {
-		pp_id = PINGPONG_CWB_1;
-	} else {
+	if (dcwb_idx >= DCWB_MAX) {
 		DRM_ERROR("Invalid dcwb_idx %d\n", dcwb_idx);
 		return;
 	}
@@ -434,7 +430,8 @@ static void sde_hw_wb_program_cwb_dither_ctrl(struct sde_hw_wb *ctx,
 	/* find pp blk with pp_id */
 	for (idx = 0; idx < DCWB_MAX - DCWB_0; ++idx) {
 		pp = &ctx->dcwb_pp_hw[idx];
-		if (pp && pp->idx == pp_id) {
+		if (pp && dcwb_idx == idx + 1) {
+			pp_id = pp->idx;
 			found = true;
 			break;
 		}
