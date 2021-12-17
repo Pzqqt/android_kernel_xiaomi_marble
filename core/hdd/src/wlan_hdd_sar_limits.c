@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -993,13 +994,28 @@ static void hdd_send_sar_unsolicited_event(struct hdd_context *hdd_ctx)
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 }
 
-static void hdd_sar_unsolicited_timer_cb(void *user_data)
+static void hdd_sar_unsolicited_work_cb(void *user_data)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *)user_data;
 	uint8_t i = 0;
 	QDF_STATUS status;
+	int errno;
+	struct osif_psoc_sync *psoc_sync;
 
 	hdd_nofl_debug("Sar unsolicited timer expired");
+
+	errno = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
+
+	if (errno == -EAGAIN) {
+		hdd_nofl_debug("rescheduling sar unsolicited work");
+		qdf_delayed_work_create(&hdd_ctx->sar_safety_unsolicited_work,
+					hdd_sar_unsolicited_work_cb,
+					hdd_ctx);
+		return;
+	} else if (errno) {
+		hdd_err("cannot handle sar unsolicited work");
+		return;
+	}
 
 	qdf_atomic_set(&hdd_ctx->sar_safety_req_resp_event_in_progress, 1);
 
@@ -1017,6 +1033,8 @@ static void hdd_sar_unsolicited_timer_cb(void *user_data)
 	if (i >= hdd_ctx->config->sar_safety_req_resp_retry)
 		hdd_configure_sar_index(hdd_ctx,
 					hdd_ctx->config->sar_safety_index);
+
+	osif_psoc_sync_op_stop(psoc_sync);
 }
 
 static void hdd_sar_safety_timer_cb(void *user_data)
@@ -1029,8 +1047,6 @@ static void hdd_sar_safety_timer_cb(void *user_data)
 
 void wlan_hdd_sar_unsolicited_timer_start(struct hdd_context *hdd_ctx)
 {
-	QDF_STATUS status;
-
 	if (!hdd_ctx->config->enable_sar_safety)
 		return;
 
@@ -1038,16 +1054,10 @@ void wlan_hdd_sar_unsolicited_timer_start(struct hdd_context *hdd_ctx)
 			&hdd_ctx->sar_safety_req_resp_event_in_progress) > 0)
 		return;
 
-	if (QDF_TIMER_STATE_RUNNING !=
-		qdf_mc_timer_get_current_state(
-				&hdd_ctx->sar_safety_unsolicited_timer)) {
-		status = qdf_mc_timer_start(
-			&hdd_ctx->sar_safety_unsolicited_timer,
-			hdd_ctx->config->sar_safety_unsolicited_timeout);
+	qdf_delayed_work_start(&hdd_ctx->sar_safety_unsolicited_work,
+			       hdd_ctx->config->sar_safety_unsolicited_timeout);
 
-		if (QDF_IS_STATUS_SUCCESS(status))
-			hdd_nofl_debug("sar unsolicited timer started");
-	}
+	hdd_nofl_debug("sar safety unsolicited work started");
 }
 
 void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx)
@@ -1072,14 +1082,8 @@ void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_SUCCESS(status))
 		hdd_nofl_debug("sar safety timer started");
 
-	if (QDF_TIMER_STATE_RUNNING ==
-		qdf_mc_timer_get_current_state(
-				&hdd_ctx->sar_safety_unsolicited_timer)) {
-		status = qdf_mc_timer_stop(
-				&hdd_ctx->sar_safety_unsolicited_timer);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			hdd_nofl_debug("sar unsolicited timer stopped");
-	}
+	qdf_delayed_work_stop_sync(&hdd_ctx->sar_safety_unsolicited_work);
+	hdd_nofl_debug("sar safety unsolicited work stopped");
 
 	qdf_event_set(&hdd_ctx->sar_safety_req_resp_event);
 }
@@ -1094,9 +1098,9 @@ void wlan_hdd_sar_timers_init(struct hdd_context *hdd_ctx)
 	qdf_mc_timer_init(&hdd_ctx->sar_safety_timer, QDF_TIMER_TYPE_SW,
 			  hdd_sar_safety_timer_cb, hdd_ctx);
 
-	qdf_mc_timer_init(&hdd_ctx->sar_safety_unsolicited_timer,
-			  QDF_TIMER_TYPE_SW,
-			  hdd_sar_unsolicited_timer_cb, hdd_ctx);
+	qdf_delayed_work_create(&hdd_ctx->sar_safety_unsolicited_work,
+				hdd_sar_unsolicited_work_cb,
+				hdd_ctx);
 
 	qdf_atomic_init(&hdd_ctx->sar_safety_req_resp_event_in_progress);
 	qdf_event_create(&hdd_ctx->sar_safety_req_resp_event);
@@ -1117,12 +1121,7 @@ void wlan_hdd_sar_timers_deinit(struct hdd_context *hdd_ctx)
 
 	qdf_mc_timer_destroy(&hdd_ctx->sar_safety_timer);
 
-	if (QDF_TIMER_STATE_RUNNING ==
-		qdf_mc_timer_get_current_state(
-				&hdd_ctx->sar_safety_unsolicited_timer))
-		qdf_mc_timer_stop(&hdd_ctx->sar_safety_unsolicited_timer);
-
-	qdf_mc_timer_destroy(&hdd_ctx->sar_safety_unsolicited_timer);
+	qdf_delayed_work_destroy(&hdd_ctx->sar_safety_unsolicited_work);
 
 	qdf_event_destroy(&hdd_ctx->sar_safety_req_resp_event);
 

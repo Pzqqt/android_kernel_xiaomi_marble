@@ -2245,7 +2245,7 @@ struct hdd_context {
 	struct sar_limit_cmd_params *sar_cmd_params;
 #ifdef SAR_SAFETY_FEATURE
 	qdf_mc_timer_t sar_safety_timer;
-	qdf_mc_timer_t sar_safety_unsolicited_timer;
+	struct qdf_delayed_work sar_safety_unsolicited_work;
 	qdf_event_t sar_safety_req_resp_event;
 	qdf_atomic_t sar_safety_req_resp_event_in_progress;
 #endif
