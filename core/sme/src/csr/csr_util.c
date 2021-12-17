@@ -1458,15 +1458,14 @@ void csr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_vdev *vdev,
 	qdf_freq_t sap_chan = 0;
 	struct wlan_channel *bss_chan = NULL;
 	uint8_t mlo_vdev_lst[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
-	bool are_both_mlo_5g = false;
+	bool is_mlo_sbs;
 	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
 
 	if (!mac_ctx)
 		return;
 
-	are_both_mlo_5g = policy_mgr_is_mlo_sta_sbs_link(mac_ctx->psoc,
-							 mlo_vdev_lst,
-							 &num_mlo);
+	is_mlo_sbs = policy_mgr_is_mlo_sta_sbs_link(mac_ctx->psoc, mlo_vdev_lst,
+						    &num_mlo);
 
 	if (num_mlo < 2) {
 		sme_debug("vdev %d AP_state %d MLO Sta links %d",
@@ -1482,31 +1481,28 @@ void csr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	sme_debug("vdev %d: is_ap_up %d num_mlo %d are_both_mlo_5g %d sap_chan %d",
-		  wlan_vdev_get_id(vdev), is_ap_up, num_mlo, are_both_mlo_5g,
+	sme_debug("vdev %d: is_ap_up %d num_mlo %d is_mlo_sbs %d sap_chan %d",
+		  wlan_vdev_get_id(vdev), is_ap_up, num_mlo, is_mlo_sbs,
 		  sap_chan);
 
-	/*
-	 * if MLO STA exist with 2.4 + 5/6 ghz links, then there will be SCC
-	 * with one of the links.
-	 */
-	if (!are_both_mlo_5g)
-		goto enable_both_lnks_on_disc;
+	if (!is_mlo_sbs)
+		return;
 
 	if (is_ap_up) {
 		/*
-		 * 1) If MLO STA is present with both links in 5/6 Ghz then SAP
-		 *    comes up on 2.4 Ghz, then Disable one of the links.
-		 *
-		 * 2) If there is channel switch for sap from 2.4 ghz to 5 ghz,
-		 *    then enable both the links as they were disabled by
-		 *    previous operations when sap was on 2.4 ghz
+		 * During 2.4Ghz SAP up, If SBS MLO STA is present,
+		 * then Disable one of the links.
 		 */
 		if (wlan_reg_is_24ghz_ch_freq(sap_chan))
 			wlan_mlo_sta_mlo_concurency_set_link(vdev,
 						MLO_LINK_FORCE_REASON_CONNECT,
 						MLO_LINK_FORCE_MODE_ACTIVE_NUM,
 						num_mlo, mlo_vdev_lst);
+		/*
+		 * During 2.4Ghz SAP up, If there is channel switch for sap from
+		 * 2.4 ghz to 5 ghz, enable both the links, as one of them was
+		 * disabled by previous up operations when sap was on 2.4 ghz
+		 */
 		else
 			wlan_mlo_sta_mlo_concurency_set_link(vdev,
 						MLO_LINK_FORCE_REASON_CONNECT,
@@ -1517,15 +1513,9 @@ void csr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_vdev *vdev,
 	}
 
 	/*
-	 * If MLO STA is present with both links in 5/6 Ghz and SAP,
-	 * which was present on 2.4 ghz, stops then renable both the
-	 * as one of the links were disabled because of sap on 2.4
-	 * ghz.
-	 * Also, in case where MLO STA roamed from 5 + 6 link to 2.4 + 5/6 link
-	 * force scc will happen and the disabled link has to be enabled.
-	 * Both links should only be enabled if mlo sta has more than one links.
+	 * During 2.4Ghz SAP down, if SBS MLO STA is present, renable both the
+	 * links, as one of them was disabled during up.
 	 */
-enable_both_lnks_on_disc:
 	if (wlan_reg_is_24ghz_ch_freq(sap_chan))
 		wlan_mlo_sta_mlo_concurency_set_link(vdev,
 					MLO_LINK_FORCE_REASON_DISCONNECT,

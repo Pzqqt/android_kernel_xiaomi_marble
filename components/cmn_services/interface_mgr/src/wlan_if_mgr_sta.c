@@ -310,7 +310,60 @@ if_mgr_mlo_get_concurrent_num_links(struct wlan_objmgr_vdev *vdev,
 }
 
 static void
-if_mgr_sta_mlo_concurency_on_connect(struct wlan_objmgr_vdev *vdev,
+if_mgr_handle_sap_plus_sta_mlo_connect(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_objmgr_vdev *vdev)
+{
+	uint32_t sap_num = 0;
+	qdf_freq_t sap_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t sap_vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	bool is_mlo_sbs;
+	uint8_t mlo_vdev_lst[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t num_mlo;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	sap_num = policy_mgr_get_mode_specific_conn_info(psoc, sap_freq_list,
+							 sap_vdev_id_list,
+							 PM_SAP_MODE);
+
+	ifmgr_debug("vdev %d: sap_num %d sap_chan %d", vdev_id, sap_num,
+		    sap_freq_list[0]);
+	if (sap_num != 1)
+		return;
+
+	if (!wlan_reg_is_24ghz_ch_freq(sap_freq_list[0]))
+		return;
+	is_mlo_sbs = policy_mgr_is_mlo_sta_sbs_link(psoc, mlo_vdev_lst,
+						    &num_mlo);
+	if (num_mlo < 2)
+		return;
+
+	ifmgr_debug("vdev %d: num_mlo %d is_mlo_sbs %d sap_chan %d", vdev_id,
+		    num_mlo, is_mlo_sbs, sap_freq_list[0]);
+
+	if (!is_mlo_sbs) {
+		/*
+		 * re-enable both link in case if this was roaming from sbs to
+		 * dbs MLO, with sap on 2.4Ghz.
+		 */
+		if (wlan_cm_is_vdev_roaming(vdev))
+			wlan_mlo_sta_mlo_concurency_set_link(vdev,
+					MLO_LINK_FORCE_REASON_DISCONNECT,
+					MLO_LINK_FORCE_MODE_NO_FORCE,
+					num_mlo, mlo_vdev_lst);
+
+		return;
+	}
+
+	/* If MLO STA is SBS and SAP is 2.4Ghz, Disable one of the links. */
+	wlan_mlo_sta_mlo_concurency_set_link(vdev,
+					     MLO_LINK_FORCE_REASON_CONNECT,
+					     MLO_LINK_FORCE_MODE_ACTIVE_NUM,
+					     num_mlo, mlo_vdev_lst);
+}
+
+static void
+if_mgr_sta_mlo_concurency_on_connect(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_objmgr_vdev *vdev,
 				     uint8_t num_mlo, uint8_t *mlo_idx,
 				     uint8_t num_legacy, uint8_t *legacy_idx,
 				     qdf_freq_t *freq_list,
@@ -324,8 +377,11 @@ if_mgr_sta_mlo_concurency_on_connect(struct wlan_objmgr_vdev *vdev,
 	enum mlo_link_force_mode mode = MLO_LINK_FORCE_MODE_ACTIVE_NUM;
 
 	/* Legacy STA doesn't exist, no need to change to link.*/
-	if (!num_legacy)
+	if (!num_legacy) {
+		/* Check if SAP exist and any link change is required */
+		if_mgr_handle_sap_plus_sta_mlo_connect(psoc, vdev);
 		return;
+	}
 
 	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
 		freq = freq_list[legacy_idx[0]];
@@ -417,9 +473,9 @@ if_mgr_handle_sta_mlo_link_concurrency(struct wlan_objmgr_psoc *psoc,
 		return;
 
 	if (is_connect)
-		if_mgr_sta_mlo_concurency_on_connect(vdev, num_mlo, mlo_idx,
-						     num_legacy, legacy_idx,
-						     freq_list,
+		if_mgr_sta_mlo_concurency_on_connect(psoc, vdev, num_mlo,
+						     mlo_idx, num_legacy,
+						     legacy_idx, freq_list,
 						     vdev_id_list);
 	else
 		if_mgr_sta_mlo_concurency_on_disconnect(vdev, num_mlo, mlo_idx,
