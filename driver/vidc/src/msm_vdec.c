@@ -156,7 +156,9 @@ static int msm_vdec_set_linear_stride_scanline(struct msm_vidc_inst *inst)
 	if (inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat !=
 		V4L2_PIX_FMT_NV12 &&
 		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat !=
-		V4L2_PIX_FMT_VIDC_P010)
+		V4L2_PIX_FMT_VIDC_P010 &&
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat !=
+		V4L2_PIX_FMT_NV21)
 		return 0;
 
 	stride_y = inst->fmts[OUTPUT_PORT].fmt.pix_mp.width;

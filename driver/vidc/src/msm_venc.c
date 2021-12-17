@@ -162,7 +162,8 @@ static int msm_venc_set_stride_scanline(struct msm_vidc_inst *inst,
 	stride_y = inst->fmts[INPUT_PORT].fmt.pix_mp.width;
 	scanline_y = inst->fmts[INPUT_PORT].fmt.pix_mp.height;
 	if (color_format == MSM_VIDC_FMT_NV12 ||
-		color_format == MSM_VIDC_FMT_P010) {
+		color_format == MSM_VIDC_FMT_P010 ||
+		color_format == MSM_VIDC_FMT_NV21) {
 		stride_uv = stride_y;
 		scanline_uv = scanline_y / 2;
 	}
