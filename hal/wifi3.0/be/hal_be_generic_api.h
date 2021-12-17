@@ -455,12 +455,10 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				ppdu_info->rx_status.chan_num,
 				 ppdu_info->rx_status.chan_freq);
 		}
-#ifdef DP_BE_NOTYET_WAR
-		// TODO -  timestamp is changed to 64-bit for wcn7850
+
 		ppdu_info->com_info.ppdu_timestamp =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START,
-				PPDU_START_TIMESTAMP);
-#endif
+				PPDU_START_TIMESTAMP_31_0);
 		ppdu_info->rx_status.ppdu_timestamp =
 			ppdu_info->com_info.ppdu_timestamp;
 		ppdu_info->rx_state = HAL_RX_MON_PPDU_START;
