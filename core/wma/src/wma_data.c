@@ -1032,7 +1032,7 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 		goto free_nbuf;
 	}
 
-	if (wma_handle && wma_handle->umac_data_ota_ack_cb) {
+	if (wma_handle->umac_data_ota_ack_cb) {
 		struct wma_tx_ack_work_ctx *ack_work;
 
 		ack_work = qdf_mem_malloc(sizeof(struct wma_tx_ack_work_ctx));
