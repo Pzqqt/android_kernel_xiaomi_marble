@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2009-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -866,6 +867,7 @@ static void _sde_dbg_vbif_disable_block(void __iomem *mem_base, u32 wr_addr)
 			MMSS_VBIF_TEST_BUS2_CTRL0 : MMSS_VBIF_TEST_BUS1_CTRL0;
 	writel_relaxed(0, mem_base + disable_addr);
 	writel_relaxed(BIT(0), mem_base + MMSS_VBIF_TEST_BUS_OUT_CTRL);
+	wmb(); /* update test bus */
 }
 
 static u32 _sde_dbg_vbif_read_test_point(void __iomem *mem_base, u32 wr_addr, u32 rd_addr,
@@ -881,6 +883,7 @@ static void _sde_dbg_vbif_clear_test_point(void __iomem *mem_base, u32 wr_addr)
 {
 	writel_relaxed(0, mem_base + wr_addr);
 	writel_relaxed(0, mem_base + wr_addr + 0x4);
+	wmb(); /* update test point clear */
 }
 
 static u32 _sde_dbg_sde_read_test_point(void __iomem *mem_base, u32 wr_addr, u32 rd_addr,
