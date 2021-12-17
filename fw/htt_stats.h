@@ -413,6 +413,14 @@ enum htt_dbg_ext_stats_type {
 
     HTT_DBG_EXT_AST_ENTRIES = 41,
 
+    /* HTT_DBG_EXT_RX_RING_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_rx_fw_ring_stats_tlv_v
+     */
+    HTT_DBG_EXT_RX_RING_STATS = 42,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -3218,6 +3226,14 @@ typedef struct {
     /* datarate - Moving Average of Number of Entries */
     A_UINT32 datarate_refillringipa;
     A_UINT32 datarate_refillringhost;
+    /*
+     * Number of times refill rings are back pressured in recent time periods
+     * element 0: in last 0 to 50ms
+     * element 1: 50ms to 100ms
+     * element 2: above 100ms
+     */
+    A_UINT32 refillringhost_backpress_hist[3];
+    A_UINT32 refillringipa_backpress_hist[3];
 } htt_rx_fw_ring_stats_tlv_v;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
