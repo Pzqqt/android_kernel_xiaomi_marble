@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -46,6 +46,8 @@ uint32_t get_infra_cp_stats_id(enum infra_cp_stats_id type)
 		return WMI_REQUEST_CTRL_PATH_MEM_STAT;
 	case TYPE_REQ_CTRL_PATH_TWT_STAT:
 		return WMI_REQUEST_CTRL_PATH_TWT_STAT;
+	case TYPE_REQ_CTRL_PATH_BMISS_STAT:
+		return WMI_REQUEST_CTRL_PATH_BMISS_STAT;
 	default:
 		return -EINVAL;
 	}
@@ -102,6 +104,7 @@ target_if_infra_cp_stats_twt_event_alloc(struct infra_cp_stats_event *ev)
 
 	return QDF_STATUS_SUCCESS;
 }
+
 #else
 static inline
 void target_if_infra_cp_stats_twt_event_free(struct infra_cp_stats_event *ev)
@@ -119,6 +122,92 @@ void target_if_infra_cp_stats_free_stats_event(struct infra_cp_stats_event *ev)
 {
 }
 #endif /* WLAN_SUPPORT_TWT */
+
+#ifdef CONFIG_WLAN_BMISS
+
+/**
+ * target_if_infra_cp_stats_bmiss_event_free() - Free event buffer
+ * @ev: pointer to infra cp stats event structure
+ *
+ * Return: None
+ */
+static
+void target_if_infra_cp_stats_bmiss_event_free(struct infra_cp_stats_event *ev)
+{
+	qdf_mem_free(ev->bmiss_infra_cp_stats);
+	ev->bmiss_infra_cp_stats = NULL;
+}
+
+/**
+ * target_if_infra_cp_stats_bmiss_event_alloc() - Allocate buffer for bmiss
+ * parameters
+ * @ev: pointer to infra cp stats event structure
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+static QDF_STATUS
+target_if_infra_cp_stats_bmiss_event_alloc(struct infra_cp_stats_event *ev)
+{
+	ev->bmiss_infra_cp_stats =
+	qdf_mem_malloc(sizeof(*ev->bmiss_infra_cp_stats));
+	if (!ev->bmiss_infra_cp_stats) {
+		cp_stats_err("mem alloc failed for ev.bmiss_infra_cp_stats");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+
+static inline
+void target_if_infra_cp_stats_bmiss_event_free(struct infra_cp_stats_event *ev)
+{
+}
+
+static inline QDF_STATUS
+target_if_infra_cp_stats_bmiss_event_alloc(struct infra_cp_stats_event *ev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* CONFIG_WLAN_BMISS */
+
+/**
+ * target_if_infra_cp_stats_event_free() - Free event buffer
+ * @ev: pointer to infra cp stats event structure
+ *
+ * Return : None
+ */
+static
+void target_if_infra_cp_stats_event_free(struct infra_cp_stats_event *ev)
+{
+	target_if_infra_cp_stats_twt_event_free(ev);
+	target_if_infra_cp_stats_bmiss_event_free(ev);
+}
+
+/**
+ * target_if_infra_cp_stats_event_alloc() - Allocate buffer for event
+ * parameters
+ * @ev: pointer to infra cp stats event structure
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+static QDF_STATUS
+target_if_infra_cp_stats_event_alloc(struct infra_cp_stats_event *ev)
+{
+	QDF_STATUS status;
+
+	status = target_if_infra_cp_stats_twt_event_alloc(ev);
+	if (status)
+		return QDF_STATUS_E_NOMEM;
+
+	status = target_if_infra_cp_stats_bmiss_event_alloc(ev);
+	if (status)
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * target_if_extract_infra_cp_stats_event() - Extract data from stats event
@@ -192,9 +281,9 @@ int target_if_infra_cp_stats_event_handler(ol_scn_t scn, uint8_t *data,
 		cp_stats_err("wmi_handle is null");
 		return -EINVAL;
 	}
-	status = target_if_infra_cp_stats_twt_event_alloc(&ev);
+	status = target_if_infra_cp_stats_event_alloc(&ev);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cp_stats_err("Alloc TWT event mem failed");
+		cp_stats_err("Alloc event mem failed");
 		goto end;
 	}
 
@@ -208,8 +297,7 @@ int target_if_infra_cp_stats_event_handler(ol_scn_t scn, uint8_t *data,
 	status = rx_ops->process_infra_stats_event(psoc, &ev);
 
 end:
-	target_if_infra_cp_stats_twt_event_free(&ev);
-
+	target_if_infra_cp_stats_event_free(&ev);
 	return qdf_status_to_os_return(status);
 }
 #else

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
@@ -68,6 +68,60 @@ struct twt_infra_cp_stats_event {
 };
 #endif /* WLAN_SUPPORT_TWT */
 
+#ifdef CONFIG_WLAN_BMISS
+/**
+ * struct bmiss_stats_rssi_samples - bmiss rssi samples structure
+ * @rssi: dBm units
+ * @sample_time: timestamp from host/target shared qtimer
+ */
+struct bmiss_stats_rssi_samples {
+	int32_t rssi;
+	uint32_t sample_time;
+};
+
+/**
+ * struct consecutive_bmiss_stats - consecutive bmiss sats structure
+ * @num_of_bmiss_sequences:number of consecutive bmiss > 2
+ * @num_bitmask_wraparound:number of times bitmask wrapped around
+ * @num_bcn_hist_lost:number of beacons history we have lost
+ */
+struct consecutive_bmiss_stats {
+	uint32_t num_of_bmiss_sequences;
+	uint32_t num_bitmask_wraparound;
+	uint32_t num_bcn_hist_lost;
+};
+
+#define BMISS_STATS_RSSI_SAMPLES_MAX 10
+/**
+ * struct bmiss_infra_cp_stats_event -  bmiss statistics event structure
+ * @vdev_id: virtual interface id
+ * @peer_mac_addr: peer mac address
+ * @num_pre_bmiss: number of pre_bmiss
+ * @rssi_samples: Rssi samples at pre bmiss
+ * @rssi_sample_curr_index: current index of Rssi sampelse at pre bmiss
+ * @num_first_bmiss: number of first bmiss
+ * @num_final_bmiss: number of final bmiss
+ * @num_null_sent_in_first_bmiss: number of null frames sent in first bmiss
+ * @num_null_failed_in_first_bmiss: number of failed null frames in first bmiss
+ * @num_null_sent_in_final_bmiss: number of null frames sent in final bmiss
+ * @num_null_failed_in_final_bmiss: number of failed null frames in final bmiss
+ * @cons_bmiss_stats: consecutive bmiss status
+ */
+struct bmiss_infra_cp_stats_event  {
+	uint8_t vdev_id;
+	struct qdf_mac_addr peer_macaddr;
+	uint32_t num_pre_bmiss;
+	struct bmiss_stats_rssi_samples rssi_samples[BMISS_STATS_RSSI_SAMPLES_MAX];
+	uint32_t rssi_sample_curr_index;
+	uint32_t num_first_bmiss;
+	uint32_t num_final_bmiss;
+	uint32_t num_null_sent_in_first_bmiss;
+	uint32_t num_null_failed_in_first_bmiss;
+	uint32_t num_null_sent_in_final_bmiss;
+	uint32_t num_null_failed_in_final_bmiss;
+	struct consecutive_bmiss_stats cons_bmiss_stats;
+};
+#endif /* CONFIG_WLAN_BMISS */
 /**
  * struct infra_cp_stats_event - Event structure to store stats
  * @action: action for which this response was recevied
@@ -89,6 +143,9 @@ struct infra_cp_stats_event {
 	uint32_t num_twt_infra_cp_stats;
 	struct twt_infra_cp_stats_event *twt_infra_cp_stats;
 #endif
+#ifdef CONFIG_WLAN_BMISS
+	struct bmiss_infra_cp_stats_event *bmiss_infra_cp_stats;
+#endif
 	/* Extend with other required infra_cp_stats structs */
 };
 
@@ -104,6 +161,7 @@ enum infra_cp_stats_id {
 	TYPE_REQ_CTRL_PATH_VDEV_EXTD_STAT,
 	TYPE_REQ_CTRL_PATH_MEM_STAT,
 	TYPE_REQ_CTRL_PATH_TWT_STAT,
+	TYPE_REQ_CTRL_PATH_BMISS_STAT,
 };
 
 /**

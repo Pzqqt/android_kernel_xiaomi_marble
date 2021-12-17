@@ -103,6 +103,79 @@ static void wmi_twt_extract_stats_struct(void *tag_buf,
 }
 #endif /* WLAN_SUPPORT_TWT */
 
+#ifdef CONFIG_WLAN_BMISS
+static void
+wmi_extract_ctrl_path_bmiss_stats_tlv(void *tag_buf,
+				      struct bmiss_infra_cp_stats_event *param)
+{
+	int idx = 0;
+
+	wmi_ctrl_path_bmiss_stats_struct *wmi_stats_buf =
+			(wmi_ctrl_path_bmiss_stats_struct *)tag_buf;
+	param->num_pre_bmiss = wmi_stats_buf->num_pre_bmiss;
+	for (idx = 0; idx < BMISS_STATS_RSSI_SAMPLES_MAX; idx++) {
+		param->rssi_samples[idx].rssi =
+				wmi_stats_buf->rssi_samples[idx].rssi;
+		param->rssi_samples[idx].sample_time =
+				wmi_stats_buf->rssi_samples[idx].sample_time;
+	}
+	param->rssi_sample_curr_index = wmi_stats_buf->rssi_sample_curr_index;
+	param->num_first_bmiss = wmi_stats_buf->num_first_bmiss;
+	param->num_final_bmiss = wmi_stats_buf->num_final_bmiss;
+	param->num_null_sent_in_first_bmiss =
+	wmi_stats_buf->num_null_sent_in_first_bmiss;
+	param->num_null_failed_in_first_bmiss =
+	wmi_stats_buf->num_null_failed_in_first_bmiss;
+	param->num_null_failed_in_final_bmiss =
+	wmi_stats_buf->num_null_failed_in_final_bmiss;
+	param->cons_bmiss_stats.num_of_bmiss_sequences =
+	wmi_stats_buf->cons_bmiss_stats.num_of_bmiss_sequences;
+	param->cons_bmiss_stats.num_bitmask_wraparound =
+	wmi_stats_buf->cons_bmiss_stats.num_bitmask_wraparound;
+	param->cons_bmiss_stats.num_bcn_hist_lost =
+	wmi_stats_buf->cons_bmiss_stats.num_bcn_hist_lost;
+	wmi_debug("num_pre_bmiss = %u", wmi_stats_buf->num_pre_bmiss);
+	wmi_debug("num_first_bmiss = %u num_final_bmiss = %u, num_null_sent_in_first_bmiss = %u, num_null_failed_in_first_bmiss = %u",
+		  wmi_stats_buf->num_first_bmiss,
+		  wmi_stats_buf->num_final_bmiss,
+		  wmi_stats_buf->num_null_sent_in_first_bmiss,
+		  wmi_stats_buf->num_null_failed_in_first_bmiss);
+	wmi_debug("num_null_sent_in_final_bmiss %u null_fail_cnt_final_bmiss = %u rssi_sample_curr_index = %u",
+		  wmi_stats_buf->num_null_sent_in_final_bmiss,
+		  wmi_stats_buf->num_null_failed_in_final_bmiss,
+		  wmi_stats_buf->rssi_sample_curr_index);
+	for (idx = 0; idx < BMISS_STATS_RSSI_SAMPLES_MAX; idx++) {
+		wmi_debug("rssi_sample-%u: rssi=%u", idx,
+			  wmi_stats_buf->rssi_samples[idx].rssi);
+		wmi_debug("rssi_sample-%u: sampletime=%u", idx,
+			  wmi_stats_buf->rssi_samples[idx].sample_time);
+	}
+	wmi_debug("num_of_bmiss_sequences %u num_bitmask_wraparound = %u num_bcn_hist_lost = %u",
+		  wmi_stats_buf->cons_bmiss_stats.num_of_bmiss_sequences,
+		  wmi_stats_buf->cons_bmiss_stats.num_bitmask_wraparound,
+		  wmi_stats_buf->cons_bmiss_stats.num_bcn_hist_lost);
+}
+
+static void wmi_bmiss_extract_stats_struct(void *tag_buf,
+					   struct infra_cp_stats_event *params)
+{
+	struct bmiss_infra_cp_stats_event *bmiss_params;
+
+	bmiss_params = params->bmiss_infra_cp_stats;
+	wmi_debug("BMISS stats struct found");
+	wmi_extract_ctrl_path_bmiss_stats_tlv(tag_buf, bmiss_params);
+}
+
+#else /* CONFIG_WLAN_BMISS */
+static inline
+void wmi_bmiss_extract_stats_struct(void *tag_buf,
+				    struct infra_cp_stats_event *params)
+
+{
+}
+
+#endif/* CONFIG_WLAN_BMISS */
+
 /*
  * wmi_stats_extract_tag_struct: function to extract tag structs
  * @tag_type: tag type that is to be printed
@@ -125,6 +198,10 @@ static void wmi_stats_extract_tag_struct(uint32_t tag_type, void *tag_buf,
 
 	case WMITLV_TAG_STRUC_wmi_ctrl_path_twt_stats_struct:
 		wmi_twt_extract_stats_struct(tag_buf, params);
+		break;
+
+	case WMITLV_TAG_STRUC_wmi_ctrl_path_bmiss_stats_struct:
+		wmi_bmiss_extract_stats_struct(tag_buf, params);
 		break;
 
 	default:
@@ -197,11 +274,10 @@ QDF_STATUS wmi_stats_handler(void *buff, int32_t len,
 			wmi_stats_extract_tag_struct(curr_tlv_tag,
 						     (void *)tag_start_ptr,
 						     params);
+			/* Move to next tag */
+			buf_ptr += curr_tlv_len + WMI_TLV_HDR_SIZE;
+			len -= (curr_tlv_len + WMI_TLV_HDR_SIZE);
 		}
-		/* Move to next tag */
-		buf_ptr += curr_tlv_len + WMI_TLV_HDR_SIZE;
-		len -= (curr_tlv_len + WMI_TLV_HDR_SIZE);
-
 		if (len <= 0)
 			break;
 	}
