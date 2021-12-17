@@ -209,7 +209,7 @@ vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *mlme_obj,
 				 struct wlan_channel *des_chan)
 {
 	param->eht_ops = mlme_obj->proto.eht_ops_info.eht_ops;
-	param->channel.puncture_pattern = des_chan->puncture_bitmap;
+	param->channel.puncture_pattern = ~des_chan->puncture_bitmap;
 }
 
 static inline void
