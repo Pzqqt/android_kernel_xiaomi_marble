@@ -566,6 +566,7 @@ typedef  enum  {
     WMI_SERVICE_RTT_11AZ_MAC_SEC_SUPPORT = 314, /* FW support for 11AZ secure FTM */
     WMI_SERVICE_RTT_11AZ_MAC_PHY_SEC_SUPPORT = 315, /* FW support for 11AZ secure LTF + FTM */
     WMI_SERVICE_SPECTRAL_SESSION_INFO_SUPPORT = 316, /* Information corresponding to each Spectral scan session will be sent by the FW before the reports corresponding to that session are sent */
+    WMI_SERVICE_PDEV_RATE_CONFIG_SUPPORT = 317, /* Support rate configurations per PDEV */
 
     WMI_MAX_EXT2_SERVICE
 

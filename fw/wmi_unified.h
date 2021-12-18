@@ -7960,7 +7960,63 @@ typedef enum {
      */
     WMI_PDEV_PARAM_PDEV_STATS_TX_XRETRY_EXT,
 
+    /*
+     * Per PDEV level, set the highest rate cap allowed.
+     * The accepted input values NSS are between 1-8, inclusive.
+     * The accepted input values MCS are between 0-15, inclusive.
+     * FW will use the input values as is.
+     * The rate cap is specified in NSS, MCS format each 4bits.
+     * i.e., NSS and MCS combined as shown below:
+     * b'0-b'7  indicate the NSS (NSS value can be from 1-8)
+     * b'8-b'15 indicate the MCS (MCS value can be from 0-15)
+     * b'16 Enable or disable nss cap
+     * b'17 Enable or disable mcs cap
+     */
+    WMI_PDEV_PARAM_RATE_UPPER_CAP,
 
+    /*
+     * Per PDEV level, set number of MCS to be dropped based
+     * on configured retries.
+     *  bit | config_mode
+     *  -----------------
+     *  0-7 | param value for number MCS to be dropped
+     *  8-15| param value for excess retries
+     *  16  | If set to 0, number of MCS to be dropped is disabled, i.e.
+     *      | fall back to default mode.
+     *      | The default value of MCS to be dropped is 1.
+     *  17  | if set to 0, retries is disabled/use default retries.
+     *      | The default value of retries is 3.
+     */
+    WMI_PDEV_PARAM_SET_RATE_DROP_DOWN_RETRY_THRESH,
+
+    /*
+     * Param value to configure min/max probe interval for MCS of current NSS.
+     * If probe interval expired, ratectrl will probe for MCS of current NSS.
+     * If probe was successful, rate control updates the probe time with a
+     * min of probe interval.
+     * If probe failed for MCS of current NSS, rate control updates the probe
+     * time by multiplying the probe period with 2, which is not greater than
+     * max probe interval.
+     * units = milliseconds
+     *  bits | config_mode
+     *  0-15 | mimimum probe time for MCS
+     *  16-31| maximum probe time for MCS
+     */
+    WMI_PDEV_PARAM_MIN_MAX_MCS_PROBE_INTERVAL,
+
+    /* Param value to configure min/max probe interval for NSS.
+     * Rate control will probe for alternate NSS if probe time is expired.
+     * If probe for an alternate NSS was successful, rate control updates
+     * the probe time with a min of probe interval.
+     * If probe failed for alternate NSS, rate control updates the probe time
+     * by multiplying the probe period with 2, which is not greater than
+     * max probe interval.
+     * units = milliseconds
+     *  bits | config_mode
+     *  0-15 | minimum probe time for alternate NSS
+     *  16-32| maximum probe time for alternate NSS
+     */
+    WMI_PDEV_PARAM_MIN_MAX_NSS_PROBE_INTERVAL,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -8031,6 +8087,36 @@ typedef enum {
 #define WMI_PDEV_SRG_SEP_PD_THRESH_CTRL_FRAME_DISABLE(pd_threshold_cfg) WMI_SET_BITS(pd_threshold_cfg, 30, 1, 0)
 #define WMI_PDEV_SRG_SEP_PD_THRESH_CTRL_FRAME_SET(pd_threshold_cfg, value) WMI_SET_BITS(pd_threshold_cfg, 8, 8, value)
 #define WMI_PDEV_SRG_SEP_PD_THRESH_CTRL_FRAME_GET(pd_threshold_cfg) WMI_GET_BITS(pd_threshold_cfg, 8, 8)
+
+
+#define WMI_PDEV_UPPER_CAP_NSS_GET(value) WMI_GET_BITS(value, 0, 8)
+#define WMI_PDEV_UPPER_CAP_NSS_SET(_value, value) WMI_SET_BITS(_value, 0, 8, value)
+#define WMI_PDEV_UPPER_CAP_MCS_GET(value) WMI_GET_BITS(value, 8, 8)
+#define WMI_PDEV_UPPER_CAP_MCS_SET(_value, value) WMI_SET_BITS(_value, 8, 8, value)
+#define WMI_PDEV_UPPER_CAP_NSS_VALID_GET(value) WMI_GET_BITS(value, 16, 1)
+#define WMI_PDEV_UPPER_CAP_NSS_VALID_SET(_value, value) WMI_SET_BITS(_value, 16, 1, value)
+#define WMI_PDEV_UPPER_CAP_MCS_VALID_GET(value) WMI_GET_BITS(value, 17, 1)
+#define WMI_PDEV_UPPER_CAP_MCS_VALID_SET(_value, value) WMI_SET_BITS(_value, 17, 1, value)
+
+#define WMI_PDEV_RATE_DROP_NUM_MCS_GET(value) WMI_GET_BITS(value, 0, 8)
+#define WMI_PDEV_RATE_DROP_NUM_MCS_SET(_value, value) WMI_SET_BITS(_value, 0, 8, value)
+#define WMI_PDEV_RATE_DROP_RETRY_THRSH_GET(value) WMI_GET_BITS(value, 8, 8)
+#define WMI_PDEV_RATE_DROP_RETRY_THRSH_SET(_value, value) WMI_SET_BITS(_value, 8, 8, value)
+#define WMI_PDEV_RATE_DROP_NUM_MCS_VALID_GET(value) WMI_GET_BITS(value, 16, 1)
+#define WMI_PDEV_RATE_DROP_NUM_MCS_VALID_SET(_value, value) WMI_SET_BITS(_value, 16, 1, value)
+#define WMI_PDEV_RATE_DROP_RETRY_THRSH_VALID_GET(value) WMI_GET_BITS(value, 17, 1)
+#define WMI_PDEV_RATE_DROP_RETRY_THRSH_VALID_SET(_value, value) WMI_SET_BITS(_value, 17, 1, value)
+
+#define WMI_PDEV_RATE_MIN_MCS_PROBE_INTERVAL_GET(value) WMI_GET_BITS(value, 0, 16)
+#define WMI_PDEV_RATE_MIN_MCS_PROBE_INTERVAL_SET(_value, value) WMI_SET_BITS(_value, 0, 16, value)
+#define WMI_PDEV_RATE_MAX_MCS_PROBE_INTERVAL_GET(value) WMI_GET_BITS(value, 16, 16)
+#define WMI_PDEV_RATE_MAX_MCS_PROBE_INTERVAL_SET(_value, value) WMI_SET_BITS(_value, 16, 16, value)
+
+#define WMI_PDEV_RATE_MIN_NSS_PROBE_INTERVAL_GET(value) WMI_GET_BITS(value, 0, 16)
+#define WMI_PDEV_RATE_MIN_NSS_PROBE_INTERVAL_SET(_value, value) WMI_SET_BITS(_value, 0, 16, value)
+#define WMI_PDEV_RATE_MAX_NSS_PROBE_INTERVAL_GET(value) WMI_GET_BITS(value, 16, 16)
+#define WMI_PDEV_RATE_MAX_NSS_PROBE_INTERVAL_SET(_value, value) WMI_SET_BITS(_value, 16, 16, value)
+
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param */
