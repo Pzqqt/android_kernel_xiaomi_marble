@@ -1046,17 +1046,6 @@ err:
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wlan_twt_is_command_in_progress() - Check if given command is in progress
- * @psoc: Pointer to psoc object
- * @peer_mac: Pointer to peer mac address
- * @dialog_id: Dialog id
- * @cmd: TWT command
- * @active_cmd: Fill the active command in this output parameter
- *
- * Return: True if given command is in progress.
- */
-static
 bool wlan_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,

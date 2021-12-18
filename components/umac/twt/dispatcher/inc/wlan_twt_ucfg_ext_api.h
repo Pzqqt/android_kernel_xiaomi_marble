@@ -252,6 +252,13 @@ ucfg_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
 enum wlan_twt_session_state
 ucfg_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
 			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id);
+
+bool ucfg_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *pactive_cmd);
+
 #else
 static inline
 QDF_STATUS ucfg_twt_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -330,6 +337,16 @@ ucfg_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
 			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
 {
 	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+}
+
+static inline bool
+ucfg_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				struct qdf_mac_addr *peer_mac,
+				uint8_t dialog_id,
+				enum wlan_twt_commands cmd,
+				enum wlan_twt_commands *pactive_cmd)
+{
+	return false;
 }
 #endif
 #endif

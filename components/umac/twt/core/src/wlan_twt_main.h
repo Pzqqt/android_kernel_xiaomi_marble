@@ -261,3 +261,19 @@ bool wlan_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
 enum wlan_twt_session_state
 wlan_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
 			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id);
+
+/**
+ * wlan_twt_is_command_in_progress() - Check if given command is in progress
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ * @cmd: TWT command
+ * @active_cmd: Fill the active command in this output parameter
+ *
+ * Return: True if given command is in progress.
+ */
+bool wlan_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *pactive_cmd);

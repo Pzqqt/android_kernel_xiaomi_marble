@@ -86,6 +86,11 @@ qca_wlan_vendor_twt_nudge_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAX + 1] 
 	[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAC_ADDR] = VENDOR_NLA_POLICY_MAC_ADDR,
 };
 
+static const struct nla_policy
+qca_wlan_vendor_twt_stats_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_TWT_STATS_FLOW_ID] = {.type = NLA_U8 },
+};
+
 static int osif_is_twt_command_allowed(struct wlan_objmgr_vdev *vdev,
 				       uint8_t vdev_id,
 				       struct wlan_objmgr_psoc *psoc)
@@ -1954,4 +1959,110 @@ int osif_twt_get_session_req(struct wlan_objmgr_vdev *vdev,
 	}
 
 	return -EOPNOTSUPP;
+}
+
+/**
+ * osif_twt_request_session_traffic_stats() - Obtains twt session traffic
+ * statistics and sends response to the user space
+ * @vdev: vdev
+ * @dialog_id: dialog id of the twt session
+ * @peer_mac: Mac address of the peer
+ *
+ * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
+ */
+static QDF_STATUS
+osif_twt_request_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
+				       uint32_t dialog_id, uint8_t *peer_mac)
+{
+	int errno;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct infra_cp_stats_event *event;
+
+	if (!peer_mac)
+		return status;
+	event = wlan_cfg80211_mc_twt_get_infra_cp_stats(vdev, dialog_id,
+							peer_mac, &errno);
+
+	if (!event)
+		return errno;
+
+	status = osif_twt_get_stats_response(vdev, event->twt_infra_cp_stats,
+					     event->num_twt_infra_cp_stats);
+	if (QDF_IS_STATUS_ERROR(status))
+		osif_err("TWT: Get_traffic_stats failed status: %d", status);
+
+	qdf_mem_free(event->twt_infra_cp_stats);
+	qdf_mem_free(event);
+
+	return status;
+}
+
+int osif_twt_get_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
+				       struct nlattr *twt_param_attr)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX + 1];
+	int ret, id;
+	QDF_STATUS qdf_status;
+	uint32_t dialog_id;
+	bool is_stats_tgt_cap_enabled;
+	struct qdf_mac_addr peer_mac;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+					     QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX,
+					     twt_param_attr,
+					     qca_wlan_vendor_twt_stats_dialog_policy);
+
+	if (ret)
+		return ret;
+
+	ucfg_twt_get_twt_stats_enabled(psoc, &is_stats_tgt_cap_enabled);
+	if (!is_stats_tgt_cap_enabled) {
+		osif_debug("TWT Stats not supported by target");
+		return -EOPNOTSUPP;
+	}
+
+	if (osif_fill_peer_macaddr(vdev, peer_mac.bytes))
+		return -EINVAL;
+
+	if (ucfg_twt_is_command_in_progress(psoc, &peer_mac,
+					    TWT_ALL_SESSIONS_DIALOG_ID,
+					    WLAN_TWT_STATISTICS,
+					    NULL) ||
+	    ucfg_twt_is_command_in_progress(psoc, &peer_mac,
+					    TWT_ALL_SESSIONS_DIALOG_ID,
+					    WLAN_TWT_CLEAR_STATISTICS,
+					    NULL)) {
+		osif_warn("Already TWT statistics or clear statistics exists");
+		return -EALREADY;
+	}
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_STATS_FLOW_ID;
+	if (tb[id])
+		dialog_id = (uint32_t)nla_get_u8(tb[id]);
+	else
+		dialog_id = 0;
+
+	osif_debug("get_stats dialog_id %d", dialog_id);
+	osif_debug("get_stats peer mac_addr " QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(peer_mac.bytes));
+
+	if (!ucfg_twt_is_setup_done(psoc, &peer_mac, dialog_id)) {
+		osif_debug("TWT session %d setup incomplete", dialog_id);
+		return -EAGAIN;
+	}
+
+	ucfg_twt_set_command_in_progress(psoc, &peer_mac, dialog_id,
+					 WLAN_TWT_STATISTICS);
+
+	qdf_status = osif_twt_request_session_traffic_stats(vdev, dialog_id,
+							    peer_mac.bytes);
+	ucfg_twt_set_command_in_progress(psoc, &peer_mac,
+					 dialog_id, WLAN_TWT_NONE);
+
+	return qdf_status_to_os_return(qdf_status);
 }

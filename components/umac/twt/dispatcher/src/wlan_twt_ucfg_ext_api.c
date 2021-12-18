@@ -183,3 +183,13 @@ ucfg_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
 {
 	return wlan_twt_get_session_state(psoc, peer_mac, dialog_id);
 }
+
+bool ucfg_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *pactive_cmd)
+{
+	return wlan_twt_is_command_in_progress(psoc, peer_mac, dialog_id, cmd,
+					       pactive_cmd);
+}

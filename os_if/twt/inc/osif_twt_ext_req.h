@@ -185,6 +185,29 @@ int osif_fill_peer_macaddr(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr);
  */
 int osif_twt_get_session_req(struct wlan_objmgr_vdev *vdev,
 			     struct nlattr *twt_param_attr);
+
+/**
+ * osif_twt_get_session_traffic_stats() - Extract traffic stats NL attributes
+ * @vdev: vdev pointer
+ * @twt_param_attr: TWT NL attributes coming from the user space
+ *
+ * Return: errno
+ */
+int osif_twt_get_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
+				       struct nlattr *twt_param_attr);
+
+/**
+ * osif_twt_get_stats_response() - Post get stats response to user space
+ * @vdev: vdev pointer
+ * @params: cp stats event params
+ * @num_session_stats: number of session stats
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_twt_get_stats_response(struct wlan_objmgr_vdev *vdev,
+				       struct twt_infra_cp_stats_event *params,
+				       uint32_t num_session_stats);
+
 #else
 static inline
 int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
@@ -237,6 +260,13 @@ int osif_twt_nudge_req(struct wlan_objmgr_vdev *vdev,
 static inline
 int osif_twt_get_session_req(struct wlan_objmgr_vdev *vdev,
 			     struct nlattr *twt_param_attr)
+{
+	return 0;
+}
+
+static inline
+int osif_twt_get_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
+				       struct nlattr *twt_param_attr)
 {
 	return 0;
 }
