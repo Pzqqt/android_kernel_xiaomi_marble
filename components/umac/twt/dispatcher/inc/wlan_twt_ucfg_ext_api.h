@@ -82,6 +82,21 @@ QDF_STATUS ucfg_twt_teardown_req(struct wlan_objmgr_psoc *psoc,
 				 void *context);
 
 /**
+ * ucfg_twt_pause_req() - Process TWT pause req
+ * @psoc: psoc
+ * @params: pause dialog cmd param
+ * @context: context
+ *
+ * Perform validations and set WLAN_TWT_SUSPEND
+ * in progress
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_twt_pause_req(struct wlan_objmgr_psoc *psoc,
+			      struct twt_pause_dialog_cmd_param *params,
+			      void *context);
+
+/**
  * ucfg_twt_is_max_sessions_reached() - Check if the maximum number of
  * TWT sessions reached or not excluding the given dialog_id
  * @psoc: Pointer to global PSOC object
@@ -212,6 +227,14 @@ static inline
 QDF_STATUS ucfg_twt_teardown_req(struct wlan_objmgr_psoc *psoc,
 				     struct twt_del_dialog_param *params,
 				     void *context)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_twt_pause_req(struct wlan_objmgr_psoc *psoc,
+			      struct twt_pause_dialog_cmd_param *params,
+			      void *context)
 {
 	return QDF_STATUS_SUCCESS;
 }

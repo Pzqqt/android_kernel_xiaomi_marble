@@ -236,6 +236,7 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 		ret = hdd_twt_terminate_session(adapter, vdev, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_SUSPEND:
+		ret = osif_twt_pause_req(vdev, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_RESUME:
 		break;

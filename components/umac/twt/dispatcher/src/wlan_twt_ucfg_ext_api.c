@@ -62,6 +62,14 @@ QDF_STATUS ucfg_twt_teardown_req(struct wlan_objmgr_psoc *psoc,
 	return wlan_twt_teardown_req(psoc, params, context);
 }
 
+QDF_STATUS
+ucfg_twt_pause_req(struct wlan_objmgr_psoc *psoc,
+		   struct twt_pause_dialog_cmd_param *params,
+		   void *context)
+{
+	return wlan_twt_pause_req(psoc, params, context);
+}
+
 bool ucfg_twt_is_max_sessions_reached(struct wlan_objmgr_psoc *psoc,
 				      struct qdf_mac_addr *peer_mac,
 				      uint8_t dialog_id)

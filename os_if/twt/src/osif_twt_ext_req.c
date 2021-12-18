@@ -503,6 +503,87 @@ cleanup:
 	return ret;
 }
 
+/**
+ * osif_send_twt_pause_req() - Send TWT pause dialog command to target
+ * @vdev: vdev
+ * @psoc: psoc
+ * @twt_params: Pointer to pause dialog cmd params structure
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int
+osif_send_twt_pause_req(struct wlan_objmgr_vdev *vdev,
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_pause_dialog_cmd_param *twt_params)
+{
+	QDF_STATUS status;
+	int ret = 0, twt_cmd;
+	struct osif_request *request;
+	struct twt_ack_context *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		osif_err("Request allocation failure");
+		return -ENOMEM;
+	}
+
+	context = osif_request_cookie(request);
+
+	status = ucfg_twt_pause_req(psoc, twt_params, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send pause dialog command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	twt_cmd = HOST_TWT_PAUSE_DIALOG_CMDID;
+	status = osif_twt_ack_wait_response(psoc, request, twt_cmd);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status != HOST_TWT_PAUSE_STATUS_OK) {
+		osif_err("Received TWT ack error:%d. Reset twt command",
+			 ack_priv->status);
+
+		switch (ack_priv->status) {
+		case HOST_TWT_PAUSE_STATUS_INVALID_PARAM:
+		case HOST_TWT_PAUSE_STATUS_ALREADY_PAUSED:
+		case HOST_TWT_PAUSE_STATUS_UNKNOWN_ERROR:
+			ret = -EINVAL;
+			break;
+		case HOST_TWT_PAUSE_STATUS_DIALOG_ID_NOT_EXIST:
+			ret = -EAGAIN;
+			break;
+		case HOST_TWT_PAUSE_STATUS_DIALOG_ID_BUSY:
+			ret = -EINPROGRESS;
+			break;
+		case HOST_TWT_PAUSE_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		case HOST_TWT_PAUSE_STATUS_CHAN_SW_IN_PROGRESS:
+		case HOST_TWT_PAUSE_STATUS_ROAM_IN_PROGRESS:
+		case HOST_TWT_PAUSE_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		default:
+			ret = -EAGAIN;
+			break;
+		}
+	}
+
+cleanup:
+	osif_request_put(request);
+	return ret;
+}
+
 static int
 osif_send_sta_twt_teardown_req(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_objmgr_psoc *psoc,
@@ -1035,5 +1116,53 @@ void osif_twt_concurrency_update_handler(struct wlan_objmgr_psoc *psoc,
 			 num_connections);
 		break;
 	}
+}
+
+int osif_twt_pause_req(struct wlan_objmgr_vdev *vdev,
+		       struct nlattr *twt_param_attr)
+{
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wlan_objmgr_psoc *psoc;
+	int ret = 0, id;
+	uint32_t vdev_id;
+	struct  twt_pause_dialog_cmd_param params = {0};
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("NULL psoc");
+		return -EINVAL;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	ret = osif_is_twt_command_allowed(vdev, vdev_id, psoc);
+	if (ret)
+		return ret;
+
+	ret = osif_fill_peer_macaddr(vdev, params.peer_macaddr.bytes);
+	if (ret)
+		return ret;
+
+	if (twt_param_attr) {
+		ret = wlan_cfg80211_nla_parse_nested(tb,
+					QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					twt_param_attr,
+					qca_wlan_vendor_twt_add_dialog_policy);
+		if (ret)
+			return ret;
+
+		id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+		if (tb[id])
+			params.dialog_id = nla_get_u8(tb[id]);
+		else
+			osif_debug("TWT: FLOW_ID not specified. set to zero");
+	} else {
+		osif_debug("TWT param not present. flow id set to zero");
+	}
+
+	osif_debug("twt_pause: vdev_id %d dialog_id %d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, vdev_id, params.dialog_id,
+		  QDF_MAC_ADDR_REF(params.peer_macaddr.bytes));
+
+	return osif_send_twt_pause_req(vdev, psoc, &params);
 }
 
