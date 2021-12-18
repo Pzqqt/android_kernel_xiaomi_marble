@@ -306,4 +306,31 @@ ucfg_twt_responder_enable(struct wlan_objmgr_psoc *psoc,
 			  struct twt_enable_param *req,
 			  void *context);
 
+/**
+ * ucfg_twt_set_peer_capabilities() - set twt peer capabilities
+ * @psoc: psoc handle
+ * @peer_mac: peer mac address
+ * @peer_cap: TWT peer capability bitmap. Refer enum
+ * wlan_twt_capabilities for representation.
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_twt_set_peer_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t peer_cap);
+
+/**
+ * ucfg_twt_get_peer_capabilities() - get twt peer capabilities
+ * @psoc: psoc handle
+ * @peer_mac: peer mac address
+ * @peer_cap: Pointer to output variable to hold TWT peer capability bitmap.
+ * Refer enum wlan_twt_capabilities for representation.
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_twt_get_peer_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t *peer_cap);
 #endif /* _WLAN_TWT_UCFG_API_H_ */

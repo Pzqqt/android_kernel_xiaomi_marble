@@ -396,6 +396,72 @@ wlan_twt_responder_enable(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+wlan_twt_set_peer_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t peer_cap)
+{
+	struct twt_peer_priv_obj *peer_priv;
+	struct wlan_objmgr_peer *peer;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_TWT_ID);
+	if (!peer) {
+		twt_err("Peer object not found");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_TWT);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+		twt_err("peer twt component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mutex_acquire(&peer_priv->twt_peer_lock);
+	peer_priv->peer_capability = peer_cap;
+	qdf_mutex_release(&peer_priv->twt_peer_lock);
+
+	twt_debug("set peer cap: 0x%x", peer_cap);
+	wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_twt_get_peer_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t *peer_cap)
+{
+	struct twt_peer_priv_obj *peer_priv;
+	struct wlan_objmgr_peer *peer;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_TWT_ID);
+	if (!peer) {
+		twt_err("Peer object not found");
+		*peer_cap = 0;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_TWT);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+		*peer_cap = 0;
+		twt_err("peer twt component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mutex_acquire(&peer_priv->twt_peer_lock);
+	*peer_cap = peer_priv->peer_capability;
+	qdf_mutex_release(&peer_priv->twt_peer_lock);
+
+	twt_debug("get peer cap: 0x%x", *peer_cap);
+	wlan_objmgr_peer_release_ref(peer, WLAN_TWT_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlan_twt_enable_event_handler(struct wlan_objmgr_psoc *psoc,
 			      struct twt_enable_complete_event_param *event)
 {

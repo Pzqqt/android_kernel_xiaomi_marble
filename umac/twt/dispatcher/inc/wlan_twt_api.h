@@ -106,6 +106,21 @@ wlan_twt_get_rx_ops(struct wlan_objmgr_psoc *psoc);
  */
 struct twt_psoc_priv_obj*
 wlan_twt_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_set_peer_twt_capabilities() - set peer twt capabilities
+ * @psoc: psoc handle
+ * @peer_mac: peer mac address
+ * @peer_cap: TWT peer capability bitmap. Refer enum
+ * wlan_twt_capabilities for representation.
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_set_peer_twt_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t peer_cap);
+
 #else
 static inline
 QDF_STATUS twt_psoc_enable(struct wlan_objmgr_psoc *psoc)

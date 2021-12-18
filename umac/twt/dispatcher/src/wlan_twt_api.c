@@ -21,6 +21,7 @@
  */
 #include <wlan_twt_api.h>
 #include "twt/core/src/wlan_twt_objmgr_handler.h"
+#include "twt/core/src/wlan_twt_common.h"
 
 struct wlan_lmac_if_twt_tx_ops *
 wlan_twt_get_tx_ops(struct wlan_objmgr_psoc *psoc)
@@ -256,3 +257,10 @@ QDF_STATUS twt_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
+QDF_STATUS
+wlan_set_peer_twt_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t peer_cap)
+{
+	return wlan_twt_set_peer_capabilities(psoc, peer_mac, peer_cap);
+}

@@ -107,3 +107,18 @@ QDF_STATUS ucfg_twt_responder_enable(struct wlan_objmgr_psoc *psoc,
 	return wlan_twt_responder_enable(psoc, req, context);
 }
 
+QDF_STATUS
+ucfg_twt_set_peer_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t peer_cap)
+{
+	return wlan_twt_set_peer_capabilities(psoc, peer_mac, peer_cap);
+}
+
+QDF_STATUS
+ucfg_twt_get_peer_capabilities(struct wlan_objmgr_psoc *psoc,
+			       struct qdf_mac_addr *peer_mac,
+			       uint8_t *peer_cap)
+{
+	return wlan_twt_get_peer_capabilities(psoc, peer_mac, peer_cap);
+}
