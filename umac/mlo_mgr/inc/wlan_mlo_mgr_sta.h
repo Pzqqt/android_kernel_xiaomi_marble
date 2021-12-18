@@ -472,6 +472,15 @@ QDF_STATUS mlo_sta_up_active_notify(struct wlan_objmgr_vdev *vdev);
  */
 bool mlo_is_sta_csa_param_handled(struct wlan_objmgr_vdev *vdev,
 				  struct csa_offload_params *csa_param);
+
+/**
+ * mlo_internal_disconnect_links - Internal disconnect for connection manager
+ *
+ * @vdev: vdev obj mgr
+ *
+ * Return: none
+ */
+void mlo_internal_disconnect_links(struct wlan_objmgr_vdev *vdev);
 #else
 static inline
 QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
@@ -593,6 +602,10 @@ mlo_is_sta_csa_param_handled(struct wlan_objmgr_vdev *vdev,
 			     struct csa_offload_params *csa_param)
 {
 	return false;
+}
+
+static inline void mlo_internal_disconnect_links(struct wlan_objmgr_vdev *vdev)
+{
 }
 #endif
 #endif

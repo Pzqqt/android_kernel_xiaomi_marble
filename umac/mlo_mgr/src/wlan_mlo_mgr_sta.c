@@ -1525,4 +1525,63 @@ done:
 
 	return handled;
 }
+
+void mlo_internal_disconnect_links(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlo_dev_context *mlo_dev_ctx = NULL;
+	struct wlan_mlo_sta *sta_ctx = NULL;
+	uint8_t i;
+
+	if (!vdev)
+		return;
+
+	if (!wlan_vdev_mlme_is_assoc_sta_vdev(vdev)) {
+		mlo_debug("Not an assoc vdev, so ignore disconnect req");
+		return;
+	}
+
+	mlo_dev_ctx = vdev->mlo_dev_ctx;
+	if (mlo_dev_ctx) {
+		sta_ctx = mlo_dev_ctx->sta_ctx;
+	} else {
+		mlo_err("Invalid mlo_dev_ctx");
+		return;
+	}
+
+	if (sta_ctx) {
+		copied_conn_req_lock_acquire(sta_ctx);
+		if (sta_ctx->copied_conn_req) {
+			mlo_free_connect_ies(sta_ctx->copied_conn_req);
+			qdf_mem_free(sta_ctx->copied_conn_req);
+			sta_ctx->copied_conn_req = NULL;
+		}
+		copied_conn_req_lock_release(sta_ctx);
+	} else {
+		mlo_err("Invalid sta_ctx");
+		return;
+	}
+
+	mlo_dev_lock_acquire(mlo_dev_ctx);
+	if (sta_ctx->connect_req) {
+		mlo_free_connect_ies(sta_ctx->connect_req);
+		qdf_mem_free(sta_ctx->connect_req);
+		sta_ctx->connect_req = NULL;
+	}
+
+	for (i =  0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
+		if (!mlo_dev_ctx->wlan_vdev_list[i])
+			continue;
+
+		if (qdf_test_bit(i,
+				 mlo_dev_ctx->sta_ctx->wlan_connected_links) &&
+		    mlo_dev_ctx->wlan_vdev_list[i] !=
+		    mlo_get_assoc_link_vdev(mlo_dev_ctx))
+			wlan_cm_disconnect(mlo_dev_ctx->wlan_vdev_list[i],
+					   CM_INTERNAL_DISCONNECT,
+					   REASON_UNSPEC_FAILURE,
+					   NULL);
+	}
+
+	mlo_dev_lock_release(mlo_dev_ctx);
+}
 #endif
