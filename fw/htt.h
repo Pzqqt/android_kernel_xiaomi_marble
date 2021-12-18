@@ -5609,6 +5609,32 @@ enum htt_srng_ring_id {
  *                    by host. 1 -> subscribed
  *        - b`11    - mo_ndp: Flag to indicate MO NDP status tlv is subscribed
  *                    by host. 1 -> subscribed
+ *        - b`12    - fp_phy_err: Flag to indicate FP PHY status tlv is
+ *                    subscribed by host. 1 -> subscribed
+ *        - b`13:14 - fp_phy_err_buf_src: This indicates the source ring
+ *                    selection for the FP PHY ERR status tlv.
+ *                    0 - wbm2rxdma_buf_source_ring
+ *                    1 - fw2rxdma_buf_source_ring
+ *                    2 - sw2rxdma_buf_source_ring
+ *                    3 - no_buffer_ring
+ *        - b`15:16 - fp_phy_err_buf_dest: This indicates the destination ring
+ *                    selection for the FP PHY ERR status tlv.
+ *                    0 - rxdma_release_ring
+ *                    1 - rxdma2fw_ring
+ *                    2 - rxdma2sw_ring
+ *                    3 - rxdma2reo_ring
+ * dword12 - b'0:31 - phy_err_mask: This field is to select the fp phy errors
+ *                    which have to be posted to host from phy.
+ *                    Corresponding to errors defined in
+ *                    phyrx_abort_request_reason enums 0 to 31.
+ *                    Refer to RXPCU register definition header files for the
+ *                    phyrx_abort_request_reason enum definition.
+ * dword13 - b'0:31 - phy_err_mask_cont: This field is to select the fp phy
+ *                    errors which have to be posted to host from phy.
+ *                    Corresponding to errors defined in
+ *                    phyrx_abort_request_reason enums 32 to 63.
+ *                    Refer to RXPCU register definition header files for the
+ *                    phyrx_abort_request_reason enum definition.
  */
 PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 msg_type:          8,
@@ -5637,7 +5663,12 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 rx_drop_threshold:    10,
              fp_ndp:               1,
              mo_ndp:               1,
-             rsvd4:                20;
+             fp_phy_err:           1,
+             fp_phy_err_buf_src:   2,
+             fp_phy_err_buf_dest:  2,
+             rsvd4:                15;
+    A_UINT32 phy_err_mask;
+    A_UINT32 phy_err_mask_cont;
 } POSTPACK;
 
 #define HTT_RX_RING_SELECTION_CFG_SZ    (sizeof(struct htt_rx_ring_selection_cfg_t))
@@ -5882,6 +5913,61 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_MO_NDP, _val); \
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_MO_NDP_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_M         0x00001000
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_S         12
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_S)
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC_M         0x00006000
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC_S         13
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC_S)
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_SRC_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_M         0x00018000
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_S         15
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_S)
+#define HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_M         0xffffffff
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_S         0
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_S)
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_M         0xffffffff
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_S         0
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_S)
+#define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_S)); \
             } while (0)
 
 
