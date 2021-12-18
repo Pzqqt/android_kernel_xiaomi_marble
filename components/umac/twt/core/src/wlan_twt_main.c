@@ -24,6 +24,7 @@
 #include <wlan_mlme_main.h>
 #include "wlan_twt_main.h"
 #include "twt/core/src/wlan_twt_priv.h"
+#include "twt/core/src/wlan_twt_common.h"
 #include <wlan_twt_tgt_if_ext_tx_api.h>
 
 /**
@@ -76,16 +77,7 @@ wlan_twt_add_session(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_twt_set_command_in_progress() - Set TWT command is in progress
- * @psoc: Pointer to psoc object
- * @peer_mac: Pointer to peer mac address
- * @dialog_id: Dialog id
- * @cmd: TWT command
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
+QDF_STATUS
 wlan_twt_set_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				 struct qdf_mac_addr *peer_mac,
 				 uint8_t dialog_id,
@@ -846,7 +838,40 @@ wlan_twt_sta_teardown_req(struct wlan_objmgr_psoc *psoc,
 			  struct twt_del_dialog_param *req,
 			  void *context)
 {
-	return QDF_STATUS_SUCCESS;
+	bool cmd_in_progress;
+	enum wlan_twt_commands active_cmd = WLAN_TWT_NONE;
+	QDF_STATUS status;
+
+	if (!wlan_twt_is_setup_done(psoc, &req->peer_macaddr, req->dialog_id)) {
+		twt_err("vdev%d: TWT session %d setup incomplete",
+			  req->vdev_id, req->dialog_id);
+		return QDF_STATUS_E_AGAIN;
+	}
+
+	cmd_in_progress =
+		wlan_twt_is_command_in_progress(psoc, &req->peer_macaddr,
+			req->dialog_id, WLAN_TWT_SETUP, &active_cmd) ||
+		wlan_twt_is_command_in_progress(
+			psoc, &req->peer_macaddr, req->dialog_id,
+			WLAN_TWT_TERMINATE, &active_cmd);
+	if (cmd_in_progress) {
+		twt_debug("Already TWT command:%d is in progress", active_cmd);
+		return QDF_STATUS_E_PENDING;
+	}
+
+	wlan_twt_set_ack_context(psoc, &req->peer_macaddr,
+				 req->dialog_id, context);
+	wlan_twt_set_command_in_progress(psoc, &req->peer_macaddr,
+					 req->dialog_id, WLAN_TWT_TERMINATE);
+
+	status = tgt_twt_teardown_req_send(psoc, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("tgt_twt_teardown_req_send failed (status=%d)", status);
+		wlan_twt_set_command_in_progress(psoc, &req->peer_macaddr,
+						 req->dialog_id, WLAN_TWT_NONE);
+	}
+
+	return status;
 }
 
 /**
@@ -869,7 +894,47 @@ wlan_twt_teardown_req(struct wlan_objmgr_psoc *psoc,
 		      struct twt_del_dialog_param *req,
 		      void *context)
 {
-	return QDF_STATUS_SUCCESS;
+	enum QDF_OPMODE opmode;
+	uint32_t pdev_id;
+	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status;
+
+	pdev_id = wlan_get_pdev_id_from_vdev_id(psoc, req->vdev_id,
+						WLAN_TWT_ID);
+	if (pdev_id == WLAN_INVALID_PDEV_ID) {
+		twt_err("Invalid pdev id");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, WLAN_TWT_ID);
+	if (!pdev) {
+		twt_err("Invalid pdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_twt_check_all_twt_support(psoc, req->dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("All TWT sessions not supported by target");
+		return status;
+	}
+
+	opmode = wlan_get_opmode_from_vdev_id(pdev, req->vdev_id);
+
+	switch (opmode) {
+	case QDF_SAP_MODE:
+		status = wlan_twt_sap_teardown_req(psoc, req);
+		break;
+	case QDF_STA_MODE:
+		status = wlan_twt_sta_teardown_req(psoc, req, context);
+		break;
+	default:
+		twt_err("TWT teardown not supported in mode: %d", opmode);
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_TWT_ID);
+	return status;
 }
 
 QDF_STATUS
@@ -1132,6 +1197,18 @@ cleanup:
 static bool
 wlan_is_twt_teardown_failed(enum HOST_TWT_DEL_STATUS teardown_status)
 {
+	switch (teardown_status) {
+	case HOST_TWT_DEL_STATUS_DIALOG_ID_NOT_EXIST:
+	case HOST_TWT_DEL_STATUS_INVALID_PARAM:
+	case HOST_TWT_DEL_STATUS_DIALOG_ID_BUSY:
+	case HOST_TWT_DEL_STATUS_NO_RESOURCE:
+	case HOST_TWT_DEL_STATUS_NO_ACK:
+	case HOST_TWT_DEL_STATUS_UNKNOWN_ERROR:
+		return true;
+	default:
+		return false;
+	}
+
 	return false;
 }
 
@@ -1139,12 +1216,98 @@ static void
 wlan_twt_handle_sta_del_dialog_event(struct wlan_objmgr_psoc *psoc,
 			      struct twt_del_dialog_complete_event_param *event)
 {
+	bool is_evt_allowed, usr_cfg_ps_enable;
+	enum wlan_twt_commands active_cmd = WLAN_TWT_NONE;
+
+	is_evt_allowed = wlan_twt_is_command_in_progress(
+					psoc, &event->peer_macaddr,
+					event->dialog_id,
+					WLAN_TWT_TERMINATE, &active_cmd);
+	if (!is_evt_allowed &&
+	    event->dialog_id != TWT_ALL_SESSIONS_DIALOG_ID &&
+	    event->status != HOST_TWT_DEL_STATUS_ROAMING &&
+	    event->status != HOST_TWT_DEL_STATUS_PEER_INIT_TEARDOWN &&
+	    event->status != HOST_TWT_DEL_STATUS_CONCURRENCY) {
+		twt_err("Drop TWT Del dialog event for dialog_id:%d status:%d active_cmd:%d",
+			event->dialog_id, event->status, active_cmd);
+
+		return;
+	}
+
+	usr_cfg_ps_enable = mlme_get_user_ps(psoc, event->vdev_id);
+	if (!usr_cfg_ps_enable &&
+	    event->status == HOST_TWT_DEL_STATUS_OK)
+		event->status = HOST_TWT_DEL_STATUS_PS_DISABLE_TEARDOWN;
+
+	mlme_twt_osif_teardown_complete_ind(psoc, event);
+
+	if (event->status == HOST_TWT_DEL_STATUS_ROAMING ||
+	    event->status == HOST_TWT_DEL_STATUS_CONCURRENCY)
+		wlan_twt_set_wait_for_notify(psoc, event->vdev_id, true);
+
+	wlan_twt_set_command_in_progress(psoc, &event->peer_macaddr,
+					 event->dialog_id, WLAN_TWT_NONE);
+
+	if (wlan_is_twt_teardown_failed(event->status))
+		return;
+
+	wlan_twt_set_setup_done(psoc, &event->peer_macaddr,
+				event->dialog_id, false);
+	wlan_twt_set_session_state(psoc, &event->peer_macaddr, event->dialog_id,
+				   WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED);
+	wlan_twt_init_context(psoc, &event->peer_macaddr, event->dialog_id);
 }
 
 QDF_STATUS
 wlan_twt_teardown_complete_event_handler(struct wlan_objmgr_psoc *psoc,
 			      struct twt_del_dialog_complete_event_param *event)
 {
+	enum QDF_OPMODE opmode;
+	uint32_t pdev_id, vdev_id;
+	struct wlan_objmgr_pdev *pdev;
+
+	vdev_id = event->vdev_id;
+	pdev_id = wlan_get_pdev_id_from_vdev_id(psoc, vdev_id, WLAN_TWT_ID);
+	if (pdev_id == WLAN_INVALID_PDEV_ID) {
+		twt_err("Invalid pdev id");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, WLAN_TWT_ID);
+	if (!pdev) {
+		twt_err("Invalid pdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	opmode = wlan_get_opmode_from_vdev_id(pdev, vdev_id);
+
+	switch (opmode) {
+	case QDF_SAP_MODE:
+		mlme_twt_osif_teardown_complete_ind(psoc, event);
+
+		/*
+		 * If this is an unsolicited TWT del event initiated from the
+		 * peer, then no need to clear the active command in progress
+		 */
+		if (event->status != HOST_TWT_DEL_STATUS_PEER_INIT_TEARDOWN) {
+			/* Reset the active TWT command to none */
+			wlan_twt_sap_set_command_in_progress(psoc,
+				event->vdev_id, &event->peer_macaddr,
+				event->dialog_id, WLAN_TWT_NONE);
+			wlan_twt_sap_init_context(psoc, event->vdev_id,
+				&event->peer_macaddr, event->dialog_id);
+		}
+		break;
+	case QDF_STA_MODE:
+		wlan_twt_handle_sta_del_dialog_event(psoc, event);
+		break;
+	default:
+		twt_debug("TWT Teardown is not supported on %s",
+				  qdf_opmode_str(opmode));
+		break;
+	}
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_TWT_ID);
 	return QDF_STATUS_SUCCESS;
 }
 

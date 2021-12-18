@@ -87,6 +87,12 @@ QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
+void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
+				      struct qdf_mac_addr *mac_addr,
+				      uint8_t vdev_id)
+{
+}
+
 void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
 				   enum twt_role role)
 {
@@ -122,6 +128,35 @@ QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
 
 	osif_twt_send_responder_disable_cmd(hdd_ctx->psoc, pdev_id);
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_twt_terminate_session - Process TWT terminate
+ * operation in the received vendor command and
+ * send it to firmare
+ * @adapter: adapter pointer
+ * @twt_param_attr: nl attributes
+ *
+ * Handles QCA_WLAN_TWT_TERMINATE
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
+				     struct wlan_objmgr_vdev *vdev,
+				     struct nlattr *twt_param_attr)
+{
+	enum QDF_OPMODE device_mode = adapter->device_mode;
+
+	switch (device_mode) {
+	case QDF_STA_MODE:
+		return osif_twt_sta_teardown_req(vdev, twt_param_attr);
+	case QDF_SAP_MODE:
+		return osif_twt_sap_teardown_req(vdev, twt_param_attr);
+	default:
+		hdd_err_rl("TWT terminate is not supported on %s",
+			   qdf_opmode_str(adapter->device_mode));
+		return -EOPNOTSUPP;
+	}
 }
 
 static int hdd_twt_configure(struct hdd_adapter *adapter,
@@ -169,6 +204,7 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 	case QCA_WLAN_TWT_GET:
 		break;
 	case QCA_WLAN_TWT_TERMINATE:
+		ret = hdd_twt_terminate_session(adapter, vdev, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_SUSPEND:
 		break;

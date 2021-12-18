@@ -87,7 +87,50 @@ static int
 target_if_twt_teardown_complete_event_handler(ol_scn_t scn, uint8_t *event,
 					      uint32_t len)
 {
-	return 0;
+	QDF_STATUS qdf_status;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	struct twt_del_dialog_complete_event_param *data;
+	struct wlan_lmac_if_twt_rx_ops *twt_rx_ops;
+
+	TARGET_IF_ENTER();
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	twt_rx_ops = wlan_twt_get_rx_ops(psoc);
+	if (!twt_rx_ops || !twt_rx_ops->twt_teardown_comp_cb) {
+		target_if_err("No valid twt teardown complete rx ops");
+		return -EINVAL;
+	}
+
+	data = qdf_mem_malloc(sizeof(*data));
+	if (!data)
+		return -ENOMEM;
+
+	qdf_status = wmi_extract_twt_del_dialog_comp_event(wmi_handle,
+							   event, data);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		target_if_err("extract twt del dialog event failed (status=%d)",
+			      qdf_status);
+		goto done;
+	}
+
+	qdf_status = twt_rx_ops->twt_teardown_comp_cb(psoc, data);
+
+done:
+	qdf_mem_free(data);
+	return qdf_status_to_os_return(qdf_status);
+
 }
 
 static int

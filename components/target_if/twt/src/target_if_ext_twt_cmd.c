@@ -43,7 +43,15 @@ QDF_STATUS
 target_if_twt_teardown_req(struct wlan_objmgr_psoc *psoc,
 			   struct twt_del_dialog_param *req)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wmi_unified *wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return wmi_unified_twt_del_dialog_cmd(wmi_handle, req);
 }
 
 QDF_STATUS

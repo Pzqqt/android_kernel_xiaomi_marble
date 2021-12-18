@@ -327,6 +327,43 @@ osif_twt_parse_add_dialog_attrs(struct nlattr **tb,
 	return 0;
 }
 
+/**
+ * osif_twt_parse_del_dialog_attrs() - Parse TWT del dialog parameters
+ * values from QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS
+ * @tb: nl attributes
+ * @params: twt del dialog parameters
+ *
+ * Handles QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX
+ *
+ * Return: 0 or -EINVAL.
+ */
+static int
+osif_twt_parse_del_dialog_attrs(struct nlattr **tb,
+				struct twt_del_dialog_param *params)
+{
+	int cmd_id;
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (tb[cmd_id]) {
+		params->dialog_id = nla_get_u8(tb[cmd_id]);
+	} else {
+		params->dialog_id = 0;
+		osif_debug("TWT_TERMINATE_FLOW_ID not specified. set to zero");
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_ID;
+	if (tb[cmd_id]) {
+		params->dialog_id = nla_get_u8(tb[cmd_id]);
+		osif_debug("TWT_SETUP_BCAST_ID %d", params->dialog_id);
+	}
+
+	osif_debug("twt: dialog_id %d vdev %d peer mac_addr "QDF_MAC_ADDR_FMT,
+		   params->dialog_id, params->vdev_id,
+		   QDF_MAC_ADDR_REF(params->peer_macaddr.bytes));
+
+	return 0;
+}
+
 static int osif_fill_peer_macaddr(struct wlan_objmgr_vdev *vdev,
 				  uint8_t *mac_addr)
 {
@@ -460,6 +497,84 @@ osif_send_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 			break;
 		default:
 			ret = -EINVAL;
+			break;
+		}
+	}
+
+cleanup:
+	osif_request_put(request);
+	return ret;
+}
+
+static int
+osif_send_sta_twt_teardown_req(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_objmgr_psoc *psoc,
+			       struct twt_del_dialog_param *twt_params)
+{
+	QDF_STATUS status;
+	int twt_cmd, ret = 0;
+	struct osif_request *request;
+	struct twt_ack_context *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		osif_err("Request allocation failure");
+		return -ENOMEM;
+	}
+
+	context = osif_request_cookie(request);
+
+	status = ucfg_twt_teardown_req(psoc, twt_params, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		osif_err("Failed to send del dialog command");
+		goto cleanup;
+	}
+
+	twt_cmd = HOST_TWT_DEL_DIALOG_CMDID;
+
+	status = osif_twt_ack_wait_response(psoc, request, twt_cmd);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ucfg_twt_reset_active_command(psoc, &twt_params->peer_macaddr,
+					      twt_params->dialog_id);
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status != HOST_TWT_DEL_STATUS_OK) {
+		osif_err("Received TWT ack error:%d. Reset twt command",
+			  ack_priv->status);
+
+		switch (ack_priv->status) {
+		case HOST_TWT_DEL_STATUS_INVALID_PARAM:
+		case HOST_TWT_DEL_STATUS_UNKNOWN_ERROR:
+			ret = -EINVAL;
+			break;
+		case HOST_TWT_DEL_STATUS_DIALOG_ID_NOT_EXIST:
+			ret = -EAGAIN;
+			break;
+		case HOST_TWT_DEL_STATUS_DIALOG_ID_BUSY:
+			ret = -EINPROGRESS;
+			break;
+		case HOST_TWT_DEL_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		case HOST_TWT_DEL_STATUS_ROAMING:
+		case HOST_TWT_DEL_STATUS_CHAN_SW_IN_PROGRESS:
+		case HOST_TWT_DEL_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		case HOST_TWT_DEL_STATUS_CONCURRENCY:
+			ret = -EAGAIN;
+			break;
+		default:
+			ret = -EAGAIN;
 			break;
 		}
 	}
@@ -648,6 +763,54 @@ int osif_twt_sap_teardown_req(struct wlan_objmgr_vdev *vdev,
 int osif_twt_sta_teardown_req(struct wlan_objmgr_vdev *vdev,
 			      struct nlattr *twt_param_attr)
 {
-	return 0;
-}
+	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wlan_objmgr_psoc *psoc;
+	int ret = 0;
+	uint8_t vdev_id, pdev_id;
+	struct twt_del_dialog_param params = {0};
 
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("NULL psoc");
+		return -EINVAL;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	if (!wlan_cm_is_vdev_connected(vdev)) {
+		osif_err_rl("Not associated!, vdev %d", vdev_id);
+		/*
+		 * Return success, since STA is not associated and there is
+		 * no TWT session.
+		 */
+		return 0;
+	}
+
+	if (wlan_cm_host_roam_in_progress(psoc, vdev_id))
+		return -EBUSY;
+
+	if (wlan_get_vdev_status(vdev)) {
+		osif_err_rl("Scan in progress");
+		return -EBUSY;
+	}
+
+	ret = wlan_cfg80211_nla_parse_nested(tb2,
+					 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					 twt_param_attr,
+					 qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	ret = osif_fill_peer_macaddr(vdev, params.peer_macaddr.bytes);
+	if (ret)
+		return ret;
+
+	params.vdev_id = vdev_id;
+	pdev_id = wlan_get_pdev_id_from_vdev_id(psoc, vdev_id, WLAN_TWT_ID);
+
+	ret = osif_twt_parse_del_dialog_attrs(tb2, &params);
+	if (ret)
+		return ret;
+
+	return osif_send_sta_twt_teardown_req(vdev, psoc, &params);
+}

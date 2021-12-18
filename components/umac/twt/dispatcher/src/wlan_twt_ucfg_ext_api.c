@@ -121,3 +121,23 @@ ucfg_twt_set_osif_cb(osif_twt_get_global_ops_cb osif_twt_ops)
 	mlme_set_osif_twt_cb(osif_twt_ops);
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_twt_set_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				 struct qdf_mac_addr *peer_mac,
+				 uint8_t dialog_id,
+				 enum wlan_twt_commands cmd)
+{
+	return wlan_twt_set_command_in_progress(psoc, peer_mac,
+						dialog_id, cmd);
+}
+
+QDF_STATUS
+ucfg_twt_reset_active_command(struct wlan_objmgr_psoc *psoc,
+			      struct qdf_mac_addr *peer_mac,
+			      uint8_t dialog_id)
+{
+	return wlan_twt_set_command_in_progress(psoc, peer_mac, dialog_id,
+						WLAN_TWT_NONE);
+}
+

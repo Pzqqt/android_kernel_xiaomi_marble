@@ -37,6 +37,21 @@ wlan_twt_is_max_sessions_reached(struct wlan_objmgr_psoc *psoc,
 				 uint8_t dialog_id);
 
 /**
+ * wlan_twt_set_command_in_progress() - Set TWT command is in progress
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ * @cmd: TWT command
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_twt_set_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				 struct qdf_mac_addr *peer_mac,
+				 uint8_t dialog_id,
+				 enum wlan_twt_commands cmd);
+
+/**
  * wlan_twt_setup_req() - twt setup request
  * @psoc: Pointer to psoc object
  * @req: TWT setup request

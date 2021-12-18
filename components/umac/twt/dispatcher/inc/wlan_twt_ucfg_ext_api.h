@@ -114,6 +114,34 @@ bool ucfg_twt_is_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 				   uint8_t dialog_id);
 
 /**
+ * ucfg_twt_set_command_in_progress() - Set TWT command is in progress
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ * @cmd: TWT command
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_twt_set_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				 struct qdf_mac_addr *peer_mac,
+				 uint8_t dialog_id,
+				 enum wlan_twt_commands cmd);
+
+/**
+ * ucfg_twt_reset_active_command() - Reset active command to WLAN_TWT_NONE
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_twt_reset_active_command(struct wlan_objmgr_psoc *psoc,
+			      struct qdf_mac_addr *peer_mac,
+			      uint8_t dialog_id);
+
+/**
  * ucfg_twt_init_context() - Initialize TWT context
  * @psoc: Pointer to global psoc object
  * @peer_mac: Global peer mac address

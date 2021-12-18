@@ -132,6 +132,49 @@ twt_add_status_to_vendor_twt_status(enum HOST_ADD_TWT_STATUS status)
 }
 
 /**
+ * twt_del_status_to_vendor_twt_status() - convert from
+ * HOST_DEL_TWT_STATUS to qca_wlan_vendor_twt_status
+ * @status: HOST_DEL_TWT_STATUS value from firmare
+ *
+ * Return: qca_wlan_vendor_twt_status values corresponding
+ * to HOST_DEL_TWT_STATUS.
+ */
+static enum qca_wlan_vendor_twt_status
+twt_del_status_to_vendor_twt_status(enum HOST_TWT_DEL_STATUS status)
+{
+	switch (status) {
+	case HOST_TWT_DEL_STATUS_OK:
+		return QCA_WLAN_VENDOR_TWT_STATUS_OK;
+	case HOST_TWT_DEL_STATUS_DIALOG_ID_NOT_EXIST:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SESSION_NOT_EXIST;
+	case HOST_TWT_DEL_STATUS_INVALID_PARAM:
+		return QCA_WLAN_VENDOR_TWT_STATUS_INVALID_PARAM;
+	case HOST_TWT_DEL_STATUS_DIALOG_ID_BUSY:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SESSION_BUSY;
+	case HOST_TWT_DEL_STATUS_NO_RESOURCE:
+		return QCA_WLAN_VENDOR_TWT_STATUS_NO_RESOURCE;
+	case HOST_TWT_DEL_STATUS_NO_ACK:
+		return QCA_WLAN_VENDOR_TWT_STATUS_NO_ACK;
+	case HOST_TWT_DEL_STATUS_UNKNOWN_ERROR:
+		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	case HOST_TWT_DEL_STATUS_PEER_INIT_TEARDOWN:
+		return QCA_WLAN_VENDOR_TWT_STATUS_PEER_INITIATED_TERMINATE;
+	case HOST_TWT_DEL_STATUS_ROAMING:
+		return QCA_WLAN_VENDOR_TWT_STATUS_ROAM_INITIATED_TERMINATE;
+	case HOST_TWT_DEL_STATUS_CONCURRENCY:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SCC_MCC_CONCURRENCY_TERMINATE;
+	case HOST_TWT_DEL_STATUS_CHAN_SW_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_CHANNEL_SWITCH_IN_PROGRESS;
+	case HOST_TWT_DEL_STATUS_SCAN_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SCAN_IN_PROGRESS;
+	case HOST_TWT_DEL_STATUS_PS_DISABLE_TEARDOWN:
+		return QCA_WLAN_VENDOR_TWT_STATUS_POWER_SAVE_EXIT_TERMINATE;
+	default:
+		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	}
+}
+
+/**
  * twt_add_cmd_to_vendor_twt_resp_type() - convert from
  * HOST_TWT_COMMAND to qca_wlan_vendor_twt_setup_resp_type
  * @status: HOST_TWT_COMMAND value from firmare
@@ -332,6 +375,60 @@ osif_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * osif_twt_teardown_pack_resp_nlmsg() - pack nlmsg response for teardown
+ * @reply_skb: pointer to the response skb structure
+ * @event: twt event buffer with firmware response
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
+static QDF_STATUS
+osif_twt_teardown_pack_resp_nlmsg(struct sk_buff *reply_skb,
+			     struct twt_del_dialog_complete_event_param *event)
+{
+	struct nlattr *config_attr;
+	enum qca_wlan_vendor_twt_status vendor_status;
+	int attr;
+
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
+		       QCA_WLAN_TWT_TERMINATE)) {
+		osif_err("Failed to put TWT operation");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		osif_err("nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, event->dialog_id)) {
+		osif_debug("Failed to put dialog_id");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
+	vendor_status = twt_del_status_to_vendor_twt_status(event->status);
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		osif_err("Failed to put QCA_WLAN_TWT_TERMINATE");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    event->peer_macaddr.bytes)) {
+		osif_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	nla_nest_end(reply_skb, config_attr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static void
 osif_twt_setup_response(struct wlan_objmgr_psoc *psoc,
 			struct twt_add_dialog_complete_event *event)
@@ -390,6 +487,82 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
 }
 
+/**
+ * osif_get_twt_event_len() - calculate length of skb
+ * required for sending twt terminate, pause and resume
+ * command responses.
+ *
+ * Return: length of skb
+ */
+static uint32_t osif_get_twt_event_len(void)
+{
+	uint32_t len = 0;
+
+	len += NLMSG_HDRLEN;
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID */
+	len += nla_total_size(sizeof(u8));
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS */
+	len += nla_total_size(sizeof(u8));
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR*/
+	len += nla_total_size(QDF_MAC_ADDR_SIZE);
+
+	return len;
+}
+
+static void
+osif_twt_teardown_response(struct wlan_objmgr_psoc *psoc,
+			   struct twt_del_dialog_complete_event_param *event)
+{
+	struct sk_buff *twt_vendor_event;
+	struct wireless_dev *wdev;
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_osif_priv *osif_priv;
+	size_t data_len;
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						event->vdev_id, WLAN_TWT_ID);
+	if (!vdev) {
+		osif_err("vdev is null");
+		return;
+	}
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv) {
+		osif_err("osif_priv is null");
+		goto fail;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		osif_err("wireless dev is null");
+		goto fail;
+	}
+
+	data_len = osif_get_twt_event_len() + nla_total_size(sizeof(u8));
+	data_len += NLA_HDRLEN;
+	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
+				wdev->wiphy, wdev, data_len,
+				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
+				GFP_KERNEL);
+	if (!twt_vendor_event) {
+		osif_err("TWT: Alloc teardown resp skb fail");
+		goto fail;
+	}
+
+	status = osif_twt_teardown_pack_resp_nlmsg(twt_vendor_event, event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to pack nl del dialog response");
+		wlan_cfg80211_vendor_free_skb(twt_vendor_event);
+		goto fail;
+	}
+
+	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
+
+fail:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
+}
+
 QDF_STATUS
 osif_twt_setup_complete_cb(struct wlan_objmgr_psoc *psoc,
 			   struct twt_add_dialog_complete_event *event,
@@ -414,6 +587,15 @@ QDF_STATUS
 osif_twt_teardown_complete_cb(struct wlan_objmgr_psoc *psoc,
 			      struct twt_del_dialog_complete_event_param *event)
 {
+	uint32_t vdev_id = event->vdev_id;
+
+	osif_debug("TWT: del dialog_id:%d status:%d vdev_id:%d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, event->dialog_id,
+		  event->status, vdev_id,
+		  QDF_MAC_ADDR_REF(event->peer_macaddr.bytes));
+
+	osif_twt_teardown_response(psoc, event);
+
 	return QDF_STATUS_SUCCESS;
 }
 
