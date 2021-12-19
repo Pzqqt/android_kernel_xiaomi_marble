@@ -820,7 +820,7 @@ int cvp_read_platform_resources_from_dt(
 	res->irq = kres ? kres->start : -1;
 
 	rc = msm_cvp_load_fw_name(res);
-	dprintk(CVP_CORE, "Fillmore: EVA fw: %s found.\n", res->fw_name);
+	dprintk(CVP_CORE, "EVA fw: %s found.\n", res->fw_name);
 	if (rc)
 		dprintk(CVP_WARN, "Failed to load fw name info: %d\n", rc);
 
