@@ -501,7 +501,7 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 		      struct mlo_partner_info ml_parnter_info)
 {
 	/* Create the secondary interface, Send keys if the last link */
-	uint8_t i;
+	uint8_t i, partner_idx = 0;
 	struct wlan_ssid ssid = {0};
 
 	mlo_debug("Sending link connect on partner interface");
@@ -525,11 +525,15 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 						 WLAN_VDEV_FEXT2_MLO);
 		wlan_vdev_mlme_feat_ext2_cap_set(mlo_dev_ctx->wlan_vdev_list[i],
 						 WLAN_VDEV_FEXT2_MLO_STA_LINK);
+		wlan_vdev_set_link_id(
+			mlo_dev_ctx->wlan_vdev_list[i],
+			ml_parnter_info.partner_link_info[partner_idx].link_id);
 		mlo_prepare_and_send_connect(
 				mlo_dev_ctx->wlan_vdev_list[i],
 				ml_parnter_info,
-				ml_parnter_info.partner_link_info[i],
+				ml_parnter_info.partner_link_info[partner_idx],
 				ssid);
+		partner_idx++;
 	}
 }
 #else
