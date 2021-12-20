@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1109,7 +1109,7 @@ static struct service_to_pipe target_service_to_ce_map_kiwi[] = {
 	{ HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4, },
 	{ HTT_DATA_MSG_SVC, PIPEDIR_IN, 1, },
 #ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
-	{ PACKET_LOG_SVC, PIPEDIR_IN, 5, },
+	{ WMI_CONTROL_DIAG_SVC, PIPEDIR_IN, 7, },
 #endif
 	/* (Additions here) */
 	{ 0, 0, 0, },
