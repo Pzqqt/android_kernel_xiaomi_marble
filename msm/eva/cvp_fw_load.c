@@ -39,7 +39,7 @@ static int __load_fw_to_memory(struct platform_device *pdev,
 		dprintk(CVP_ERR, "%s: Invalid fw name\n", __func__);
 		return -EINVAL;
 	}
-	scnprintf(firmware_name, ARRAY_SIZE(firmware_name), "%s.mdt", fw_name);
+	scnprintf(firmware_name, ARRAY_SIZE(firmware_name), "%s.mbn", fw_name);
 
 	rc = of_property_read_u32(pdev->dev.of_node, "pas-id", &pas_id);
 	if (rc) {
