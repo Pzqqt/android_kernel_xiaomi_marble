@@ -2475,6 +2475,54 @@ struct wlan_eht_cap_info {
 } qdf_packed;
 
 /**
+ * struct wlan_mlo_ie_info - struct for mlo IE information
+ * mld_mac_addr: MLD MAC address
+ * reserved_1: reserved bits
+ * mld_capab_present: MLD capability present
+ * eml_capab_present: EML capability present
+ * medium_sync_delay_info_present: Medium sync delay information present
+ * bss_param_change_cnt_present: BSS parameter change count present
+ * link_id_info_present: Link ID information present
+ * mld_mac_addr_present: MLD MAC address present
+ * reserved: reserved bit
+ * type: Type bits
+ */
+
+struct wlan_mlo_ie_info {
+#ifndef ANI_LITTLE_BIT_ENDIAN
+	union {
+		struct {
+			uint8_t mld_mac_addr[6];
+		} info; /* mld_mac_addr_present = 1 */
+	} mld_mac_addr;
+	uint16_t reserved_1:6;
+	uint16_t mld_capab_present:1;
+	uint16_t eml_capab_present:1;
+	uint16_t medium_sync_delay_info_present:1;
+	uint16_t bss_param_change_cnt_present:1;
+	uint16_t link_id_info_present:1;
+	uint16_t mld_mac_addr_present:1;
+	uint16_t reserved:1;
+	uint16_t type:3;
+#else
+	uint16_t type:3;
+	uint16_t reserved:1;
+	uint16_t mld_mac_addr_present:1;
+	uint16_t link_id_info_present:1;
+	uint16_t bss_param_change_cnt_present:1;
+	uint16_t medium_sync_delay_info_present:1;
+	uint16_t eml_capab_present:1;
+	uint16_t mld_capab_present:1;
+	uint16_t reserved_1:6;
+	union {
+		struct {
+			uint8_t mld_mac_addr[6];
+		} info; /* mld_mac_addr_present = 1 */
+	} mld_mac_addr;
+#endif
+} qdf_packed;
+
+/**
  * struct oce_reduced_wan_metrics: struct for oce wan metrics
  * @downlink_av_cap: Download available capacity
  * @uplink_av_cap: Upload available capacity
