@@ -3670,7 +3670,11 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 			swrm_device_down(&pdev->dev);
 		mutex_lock(&swrm->devlock);
 		swrm->dev_up = false;
+		if (swrm->hw_core_clk_en)
+			digital_cdc_rsc_mgr_hw_vote_disable(swrm->lpass_core_hw_vote);
 		swrm->hw_core_clk_en = 0;
+		if (swrm->aud_core_clk_en)
+			digital_cdc_rsc_mgr_hw_vote_disable(swrm->lpass_core_audio);
 		swrm->aud_core_clk_en = 0;
 		mutex_unlock(&swrm->devlock);
 		mutex_lock(&swrm->reslock);
