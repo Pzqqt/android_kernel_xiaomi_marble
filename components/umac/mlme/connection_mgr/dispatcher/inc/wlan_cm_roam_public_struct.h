@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1786,6 +1786,8 @@ struct wlan_roam_update_config {
  * transitioned after candidate selection is done at fw and preauth to
  * the AP is started.
  * @WLAN_ROAM_SYNCH_IN_PROG: Roaming handoff complete
+ * @WLAN_MLO_ROAM_SYNCH_IN_PROG: MLO Roam sync is ongoing,
+ * only used for ml links.
  */
 enum roam_offload_state {
 	WLAN_ROAM_DEINIT,
@@ -1794,6 +1796,7 @@ enum roam_offload_state {
 	WLAN_ROAM_RSO_STOPPED,
 	WLAN_ROAMING_IN_PROG,
 	WLAN_ROAM_SYNCH_IN_PROG,
+	WLAN_MLO_ROAM_SYNCH_IN_PROG,
 };
 
 #define WLAN_ROAM_SCAN_CANDIDATE_AP 0

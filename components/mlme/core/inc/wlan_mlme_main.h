@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1034,6 +1034,13 @@ QDF_STATUS mlme_get_cfg_wlm_reset(struct wlan_objmgr_psoc *psoc,
 #else
 #define MLME_IS_ROAMING_IN_PROG(psoc, vdev_id) (false)
 #define MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) (false)
+#endif
+
+#if defined (WLAN_FEATURE_11BE_MLO) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+#define MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) \
+		(mlme_get_roam_state(psoc, vdev_id) == WLAN_MLO_ROAM_SYNCH_IN_PROG)
+#else
+#define MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) (false)
 #endif
 
 /**
