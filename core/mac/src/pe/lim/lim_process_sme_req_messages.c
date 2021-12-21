@@ -2127,8 +2127,16 @@ lim_handle_11ac_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 static QDF_STATUS
 lim_handle_11ax_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
-			   enum mlme_dot11_mode *intersected_mode)
+			   enum mlme_dot11_mode *intersected_mode,
+			   tDot11fBeaconIEs *ie_struct,
+			   struct bss_description *bss_desc)
 {
+	bool vht_capable = false;
+
+	if (IS_BSS_VHT_CAPABLE(ie_struct->VHTCaps) ||
+	    IS_BSS_VHT_CAPABLE(ie_struct->vendor_vht_ie.VHTCaps))
+		vht_capable = true;
+
 	switch (bss_dot11_mode) {
 	case MLME_DOT11_MODE_11N:
 		*intersected_mode = MLME_DOT11_MODE_11N;
@@ -2138,6 +2146,29 @@ lim_handle_11ax_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		break;
 	case MLME_DOT11_MODE_11AX:
 		*intersected_mode = MLME_DOT11_MODE_11AX;
+		break;
+	case MLME_DOT11_MODE_11BE:
+		if (ie_struct->he_cap.present) {
+			*intersected_mode = MLME_DOT11_MODE_11AX;
+			break;
+		}
+		if (vht_capable) {
+			*intersected_mode = MLME_DOT11_MODE_11AC;
+			break;
+		}
+		if (ie_struct->HTCaps.present) {
+			*intersected_mode = MLME_DOT11_MODE_11N;
+			break;
+		}
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
+			*intersected_mode = MLME_DOT11_MODE_11A;
+		} else if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq)) {
+			*intersected_mode = MLME_DOT11_MODE_11G;
+		} else {
+			pe_err("Invalid bss dot11mode %d freq %d",
+			       bss_dot11_mode, bss_desc->chan_freq);
+			return QDF_STATUS_E_FAILURE;
+		}
 		break;
 	case MLME_DOT11_MODE_11G:
 		*intersected_mode = MLME_DOT11_MODE_11G;
@@ -2316,12 +2347,19 @@ lim_handle_11ac_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 static QDF_STATUS
 lim_handle_11ax_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
-				enum mlme_dot11_mode *intersected_mode)
+				enum mlme_dot11_mode *intersected_mode,
+				tDot11fBeaconIEs *ie_struct)
 {
 	switch (bss_dot11_mode) {
 	case MLME_DOT11_MODE_11AX:
 		*intersected_mode = MLME_DOT11_MODE_11AX;
 		break;
+	case MLME_DOT11_MODE_11BE:
+		if (ie_struct->he_cap.present) {
+			*intersected_mode = MLME_DOT11_MODE_11AX;
+			break;
+		}
+		/* fallthrough */
 	case MLME_DOT11_MODE_11N:
 		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
@@ -2417,10 +2455,13 @@ lim_get_intersected_dot11_mode_sta_ap(struct mac_context *mac_ctx,
 						       bss_desc);
 	case MLME_DOT11_MODE_11AX:
 		return lim_handle_11ax_dot11_mode(bss_dot11_mode,
-						  intersected_mode);
+						  intersected_mode,
+						  ie_struct,
+						  bss_desc);
 	case MLME_DOT11_MODE_11AX_ONLY:
 		return lim_handle_11ax_only_dot11_mode(bss_dot11_mode,
-						       intersected_mode);
+						       intersected_mode,
+						       ie_struct);
 	case MLME_DOT11_MODE_11BE:
 		return lim_handle_11be_dot11_mode(bss_dot11_mode,
 						  intersected_mode);
