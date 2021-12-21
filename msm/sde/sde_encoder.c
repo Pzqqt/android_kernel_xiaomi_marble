@@ -3069,6 +3069,7 @@ void sde_encoder_virt_reset(struct drm_encoder *drm_enc)
 static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
+	struct sde_connector *sde_conn;
 	struct sde_kms *sde_kms;
 	enum sde_intf_mode intf_mode;
 	int ret, i = 0;
@@ -3090,6 +3091,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
+	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
 	SDE_DEBUG_ENC(sde_enc, "\n");
 
 	sde_kms = sde_encoder_get_kms(&sde_enc->base);
@@ -3106,6 +3108,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 
 	_sde_encoder_input_handler_unregister(drm_enc);
 
+	flush_delayed_work(&sde_conn->status_work);
 	/*
 	 * For primary command mode and video mode encoders, execute the
 	 * resource control pre-stop operations before the physical encoders
