@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2001,7 +2001,9 @@ wmi_fill_roam_mlo_info(WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf,
 			roam_sync_ind->ml_link[i].vdev_id = setup_links->vdev_id;
 			roam_sync_ind->ml_link[i].channel = setup_links->channel;
 			roam_sync_ind->ml_link[i].flags = setup_links->flags;
-			setup_links += sizeof(wmi_roam_ml_setup_links_param);
+			WMI_MAC_ADDR_TO_CHAR_ARRAY(&setup_links->link_addr,
+						   roam_sync_ind->ml_link[i].link_addr.bytes);
+			setup_links++;
 		}
 	}
 	if (param_buf->num_ml_key_material) {
@@ -2016,7 +2018,7 @@ wmi_fill_roam_mlo_info(WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf,
 				     ml_key_param->pn, WMI_MAX_PN_LEN);
 			qdf_mem_copy(roam_sync_ind->ml_key[i].key_buff,
 				     ml_key_param->key_buff, WMI_MAX_KEY_LEN);
-			ml_key_param += sizeof(wmi_roam_ml_key_material_param);
+			ml_key_param++;
 		}
 	}
 }

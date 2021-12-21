@@ -37,6 +37,7 @@
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
 #include "wlan_roam_debug.h"
+#include "wlan_mlo_mgr_roam.h"
 
 #define FW_ROAM_SYNC_TIMEOUT 7000
 
@@ -353,7 +354,7 @@ cm_roam_sync_event_handler(struct wlan_objmgr_psoc *psoc,
 			   uint32_t len,
 			   struct roam_offload_synch_ind *sync_ind)
 {
-	return cm_fw_roam_sync_req(psoc, sync_ind->roamed_vdev_id,
+	return mlo_fw_roam_sync_req(psoc, sync_ind->roamed_vdev_id,
 				   sync_ind, sizeof(sync_ind));
 }
 

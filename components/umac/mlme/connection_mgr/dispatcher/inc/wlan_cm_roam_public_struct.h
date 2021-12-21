@@ -2358,12 +2358,14 @@ struct cm_hw_mode_trans_ind {
  * @link_id: link id of the link
  * @channel: wmi channel
  * @flags: link flags
+ * @link_addr: link mac addr
  */
 struct ml_setup_link_param {
 	uint32_t vdev_id;
 	uint32_t link_id;
 	wmi_channel channel;
 	uint32_t flags;
+	struct qdf_mac_addr link_addr;
 };
 
 /*

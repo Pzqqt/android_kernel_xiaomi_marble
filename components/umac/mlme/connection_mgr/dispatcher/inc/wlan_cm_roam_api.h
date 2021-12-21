@@ -1572,4 +1572,16 @@ wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
  */
 bool wlan_cm_same_band_sta_allowed(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * cm_cleanup_mlo_link() - Cleanup the MLO link
+ *
+ * @vdev: MLO link vdev
+ *
+ * This posts the event WLAN_CM_SM_EV_ROAM_LINK_DOWN to CM to cleanup the
+ * resources allocated for MLO link e.g. vdev, pe_session, etc..
+ * This gets called when MLO to non-MLO roaming happens
+ *
+ * Return: qdf_status
+ */
+QDF_STATUS cm_cleanup_mlo_link(struct wlan_objmgr_vdev *vdev);
 #endif  /* WLAN_CM_ROAM_API_H__ */
