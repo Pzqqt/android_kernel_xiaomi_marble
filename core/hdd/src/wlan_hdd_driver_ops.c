@@ -1732,7 +1732,7 @@ static int wlan_hdd_runtime_resume(struct device *dev)
 
 	hdd_debug("Runtime resume done");
 
-	return 0;
+	return qdf_status_to_os_return(status);
 }
 #endif
 
