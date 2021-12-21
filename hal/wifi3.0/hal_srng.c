@@ -427,7 +427,6 @@ static void hal_target_based_configure(struct hal_soc *hal)
 	case TARGET_TYPE_WCN7850:
 		hal->use_register_windowing = true;
 		hal_wcn7850_attach(hal);
-		hal->init_phase = false;
 		break;
 #endif
 #if defined(QCA_WIFI_QCA8074) && defined(WIFI_TARGET_TYPE_3_0)

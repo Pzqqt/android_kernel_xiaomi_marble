@@ -3485,6 +3485,7 @@ static void hif_pci_init_reg_windowing_support(struct hif_pci_softc *sc,
 	case TARGET_TYPE_QCN7605:
 	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6390:
+	case TARGET_TYPE_WCN7850:
 		sc->use_register_windowing = true;
 		qdf_spinlock_create(&sc->register_access_lock);
 		sc->register_window = 0;
@@ -3739,7 +3740,7 @@ bool hif_pci_needs_bmi(struct hif_softc *scn)
 }
 
 #ifdef FORCE_WAKE
-#ifdef DEVICE_FORCE_WAKE_ENABLE
+#if defined(DEVICE_FORCE_WAKE_ENABLE) && !defined(CONFIG_PLD_PCIE_FW_SIM)
 
 /**
  * HIF_POLL_UMAC_WAKE poll value to indicate if UMAC is powered up
