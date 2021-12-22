@@ -3622,4 +3622,10 @@ int ipa3_send_eogre_info(
 void ipa3_update_mhi_ctrl_state(u8 state, bool set);
 /* Send MHI endpoint info to modem using QMI indication message */
 int ipa_send_mhi_endp_ind_to_modem(void);
+
+/*
+ * To pass macsec mapping to the IPACM
+ */
+int ipa3_send_macsec_info(enum ipa_macsec_event event_type, struct ipa_macsec_map *map);
+
 #endif /* _IPA3_I_H_ */
