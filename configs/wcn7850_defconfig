@@ -3,3 +3,6 @@ CONFIG_CNSS_WCN7850 := y
 include $(WLAN_ROOT)/configs/default_defconfig
 
 CONFIG_WLAN_FEATURE_11BE := y
+
+# Max Sta Vdev Config
+CONFIG_CFG_MAX_STA_VDEVS := 4
