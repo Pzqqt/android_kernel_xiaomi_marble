@@ -294,6 +294,7 @@ bool lim_is_sb_disconnect_allowed_fl(struct pe_session *session,
  * pe_roam_synch_callback() - Callback registered at wma, gets invoked when
  * ROAM SYNCH event is received from firmware
  * @mac_ctx: global mac context
+ * @vdev_id: VDEV id
  * @roam_sync_ind_ptr: Structure with roam synch parameters
  * @ie_len: ie length
  * @reason: Operation to be done by the callback
@@ -306,6 +307,7 @@ bool lim_is_sb_disconnect_allowed_fl(struct pe_session *session,
  */
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
+		       uint8_t vdev_id,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		       uint16_t ie_len,
 		       enum sir_roam_op_code reason);
@@ -335,6 +337,7 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 #else
 static inline QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
+		       uint8_t vdev_id,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		       uint16_t ie_len,
 		       enum sir_roam_op_code reason)

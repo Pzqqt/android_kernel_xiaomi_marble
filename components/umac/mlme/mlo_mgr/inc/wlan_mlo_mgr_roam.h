@@ -143,6 +143,19 @@ QDF_STATUS mlo_enable_rso(struct wlan_objmgr_pdev *pdev,
 void mlo_roam_copy_partner_info(struct wlan_cm_connect_resp *connect_rsp,
 				struct roam_offload_synch_ind *sync_ind);
 
+/**
+ * mlo_roam_update_connected_links - update connected links bitmap after roaming
+ *
+ * @vdev: vdev pointer
+ * @connect_rsp: connect resp structure pointer
+ *
+ * This api will be called to copy partner link info to connect response.
+ *
+ * Return: none
+ */
+void mlo_roam_update_connected_links(struct wlan_objmgr_vdev *vdev,
+				     struct wlan_cm_connect_resp *connect_rsp);
+
 #ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
 /**
  * mlo_cm_roam_sync_cb - Callback function from CM to MLO mgr
@@ -213,6 +226,11 @@ QDF_STATUS mlo_enable_rso(struct wlan_objmgr_pdev *pdev,
 static inline void
 mlo_roam_copy_partner_info(struct wlan_cm_connect_resp *connect_rsp,
 			   struct roam_offload_synch_ind *sync_ind)
+{}
+
+static inline void
+mlo_roam_update_connected_links(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_resp *connect_rsp)
 {}
 #endif /* WLAN_FEATURE_11BE_MLO */
 #endif

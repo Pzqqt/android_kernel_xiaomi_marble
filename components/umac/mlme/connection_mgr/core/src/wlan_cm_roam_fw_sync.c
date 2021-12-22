@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,7 @@
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include <wlan_mlo_mgr_sta.h>
+#include "wlan_mlo_mgr_roam.h"
 
 QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			       void *event, uint32_t event_data_len)
@@ -127,15 +128,32 @@ error:
 
 QDF_STATUS
 cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
-			  uint8_t roam_reason)
+			  struct roam_offload_synch_ind *sync_ind)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_pdev *pdev;
 	struct qdf_mac_addr connected_bssid;
 	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
+		if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc,
+					sync_ind->roamed_vdev_id))
+			status = wlan_cm_roam_state_change(pdev,
+					sync_ind->roamed_vdev_id,
+					WLAN_ROAM_SYNCH_IN_PROG,
+					REASON_ROAM_HANDOFF_DONE);
+
+		status = wlan_cm_roam_state_change(pdev,
+					vdev_id,
+					WLAN_MLO_ROAM_SYNCH_IN_PROG,
+					REASON_ROAM_HANDOFF_DONE);
+		return status;
+	}
 
 	/*
 	 * Get old bssid as, new AP is not updated yet and do cleanup
@@ -148,7 +166,7 @@ cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
 	wlan_blm_update_bssid_connect_params(pdev,
 					     connected_bssid,
 					     BLM_AP_DISCONNECTED);
-	if (IS_ROAM_REASON_STA_KICKOUT(roam_reason)) {
+	if (IS_ROAM_REASON_STA_KICKOUT(sync_ind->roam_reason)) {
 		struct reject_ap_info ap_info;
 
 		qdf_mem_zero(&ap_info, sizeof(struct reject_ap_info));
@@ -162,9 +180,11 @@ cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
 	cm_update_scan_mlme_on_roam(vdev, &connected_bssid,
 				    SCAN_ENTRY_CON_STATE_NONE);
 
-	status = wlan_cm_roam_state_change(pdev, vdev_id,
-					   WLAN_ROAM_SYNCH_IN_PROG,
-					   REASON_ROAM_HANDOFF_DONE);
+	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id))
+		status = wlan_cm_roam_state_change(pdev,
+						   vdev_id,
+						   WLAN_ROAM_SYNCH_IN_PROG,
+						   REASON_ROAM_HANDOFF_DONE);
 
 	mlme_init_twt_context(wlan_pdev_get_psoc(pdev), &connected_bssid,
 			      TWT_ALL_SESSIONS_DIALOG_ID);
@@ -400,7 +420,7 @@ cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
 	rsp->connect_rsp.roaming_info = qdf_mem_malloc(sizeof(*roaming_info));
 	if (!rsp->connect_rsp.roaming_info)
 			return QDF_STATUS_E_NOMEM;
-	rsp->connect_rsp.vdev_id = roam_synch_data->roamed_vdev_id;
+	rsp->connect_rsp.vdev_id = wlan_vdev_get_id(vdev);
 	qdf_copy_macaddr(&rsp->connect_rsp.bssid, &roam_synch_data->bssid);
 
 	if (!util_scan_is_null_ssid(&roam_synch_data->ssid))
@@ -814,28 +834,36 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	}
 
 	cm_process_roam_keys(vdev, rsp, cm_id);
-
 	mlme_cm_osif_connect_complete(vdev, connect_rsp);
-	cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
-					  connect_rsp->connect_status);
-	cm_inform_blm_connect_complete(cm_ctx->vdev, connect_rsp);
-	cm_update_owe_info(vdev, connect_rsp, vdev_id);
+
+	/**
+	 * Don't send roam_sync complete for MLO link vdevs.
+	 * Send only for legacy STA/MLO STA vdev.
+	 */
+	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
+		cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
+						  connect_rsp->connect_status);
+		cm_inform_blm_connect_complete(cm_ctx->vdev, connect_rsp);
+		wlan_tdls_notify_sta_connect(vdev_id,
+					mlme_get_tdls_chan_switch_prohibited(vdev),
+					mlme_get_tdls_prohibited(vdev), vdev);
+		wlan_p2p_status_connect(vdev);
+
+		if (!cm_csr_is_ss_wait_for_key(vdev_id)) {
+			mlme_debug(CM_PREFIX_FMT "WLAN link up with AP = "
+				   QDF_MAC_ADDR_FMT,
+				   CM_PREFIX_REF(vdev_id, cm_id),
+				   QDF_MAC_ADDR_REF(connect_rsp->bssid.bytes));
+			cm_roam_start_init_on_connect(pdev, vdev_id);
+		}
+		wlan_cm_tgt_send_roam_sync_complete_cmd(psoc, vdev_id);
+
+		mlo_roam_copy_partner_info(connect_rsp, roam_synch_data);
+		mlo_roam_update_connected_links(vdev, connect_rsp);
+	}
 	cm_connect_info(vdev, true, &connect_rsp->bssid, &connect_rsp->ssid,
 			connect_rsp->freq);
-	wlan_tdls_notify_sta_connect(vdev_id,
-				     mlme_get_tdls_chan_switch_prohibited(vdev),
-				     mlme_get_tdls_prohibited(vdev), vdev);
-	wlan_p2p_status_connect(vdev);
 
-	if (!cm_csr_is_ss_wait_for_key(vdev_id)) {
-		mlme_debug(CM_PREFIX_FMT "WLAN link up with AP = "
-			   QDF_MAC_ADDR_FMT,
-			   CM_PREFIX_REF(vdev_id, cm_id),
-			   QDF_MAC_ADDR_REF(connect_rsp->bssid.bytes));
-		cm_roam_start_init_on_connect(pdev, vdev_id);
-	}
-
-	wlan_cm_tgt_send_roam_sync_complete_cmd(psoc, vdev_id);
 	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_ROAM_DONE,
 					  sizeof(*roam_synch_data),
 					  roam_synch_data);
@@ -855,6 +883,7 @@ error:
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cm_roam_stop_req(psoc, vdev_id, REASON_ROAM_SYNCH_FAILED);
 		cm_abort_fw_roam(cm_ctx, cm_id);
+		mlo_update_connected_links(vdev, 0);
 	}
 rel_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
@@ -936,6 +965,13 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
 	wlan_cm_handle_sta_sta_roaming_enablement(psoc, vdev_id);
+
+	if (wlan_vdev_mlme_is_mlo_link_vdev(cm_ctx->vdev)) {
+		status = wlan_cm_roam_state_change(pdev,
+						   vdev_id,
+						   WLAN_ROAM_DEINIT,
+						   REASON_ROAM_HANDOFF_DONE);
+	}
 
 	if (roam_synch_data->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED)
 		wlan_cm_roam_state_change(pdev, vdev_id,

@@ -361,3 +361,11 @@ mlo_roam_copy_partner_info(struct wlan_cm_connect_resp *connect_rsp,
 	}
 }
 
+void
+mlo_roam_update_connected_links(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_resp *connect_rsp)
+{
+	mlo_update_connected_links_bmap(vdev->mlo_dev_ctx,
+					connect_rsp->ml_parnter_info);
+}
+

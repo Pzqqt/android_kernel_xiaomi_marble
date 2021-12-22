@@ -1499,6 +1499,7 @@ cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data);
 /**
  * cm_roam_update_vdev() - Update the STA and BSS
  * @sync_ind: Information needed for roam sync propagation
+ * @vdev_id: vdev id
  *
  * This function will perform all the vdev related operations with
  * respect to the self sta and the peer after roaming and completes
@@ -1506,12 +1507,14 @@ cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data);
  *
  * Return: None
  */
-void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind);
+void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind,
+			 uint8_t vdev_id);
 
 /**
  * cm_roam_pe_sync_callback() - Callback registered at pe, gets invoked when
  * ROAM SYNCH event is received from firmware
  * @sync_ind: Structure with roam synch parameters
+ * @vdev_id: vdev id
  * @len: length for bss_description
  *
  * This is a PE level callback called from CM to complete the roam synch
@@ -1522,7 +1525,7 @@ void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind);
  */
 QDF_STATUS
 cm_roam_pe_sync_callback(struct roam_offload_synch_ind *sync_ind,
-			 uint16_t len);
+			 uint8_t vdev_id, uint16_t len);
 
 /**
  * cm_update_phymode_on_roam() - Update new phymode after

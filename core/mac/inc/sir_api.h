@@ -535,6 +535,7 @@ struct roam_pmkid_req_event;
 /**
  * typedef pe_roam_synch_fn_t - PE roam synch callback routine pointer
  * @mac_ctx: Global MAC context
+ * @vdev_id: vdev id
  * @roam_sync_ind_ptr: Structure with roam synch parameters
  * @ie_len: ie length
  * @reason: Reason for calling the callback
@@ -547,6 +548,7 @@ struct roam_pmkid_req_event;
  */
 typedef QDF_STATUS
 (*pe_roam_synch_fn_t)(struct mac_context *mac_ctx,
+		      uint8_t vdev_id,
 		      struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		      uint16_t ie_len,
 		      enum sir_roam_op_code reason);
