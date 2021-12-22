@@ -81,6 +81,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{MB_CYCLES_FW,                   "MB_CYCLES_FW"               },
 	{MB_CYCLES_FW_VPP,               "MB_CYCLES_FW_VPP"           },
 	{SECURE_MODE,                    "SECURE_MODE"                },
+	{TS_REORDER,                     "TS_REORDER"                 },
 	{HFLIP,                          "HFLIP"                      },
 	{VFLIP,                          "VFLIP"                      },
 	{ROTATION,                       "ROTATION"                   },
@@ -2328,6 +2329,102 @@ int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
 	return 0;
 }
 
+int msm_vidc_ts_reorder_insert_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
+{
+	struct msm_vidc_timestamp *ts;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* allocate ts from pool */
+	ts = msm_memory_alloc(inst, MSM_MEM_POOL_TIMESTAMP);
+	if (!ts) {
+		i_vpr_e(inst, "%s: ts alloc failed\n", __func__);
+		return -ENOMEM;
+	}
+
+	/* initialize ts node */
+	INIT_LIST_HEAD(&ts->sort.list);
+	ts->sort.val = timestamp;
+	inst->ts_reorder.count++;
+	list_add_tail(&ts->sort.list, &inst->ts_reorder.list);
+
+	return 0;
+}
+
+int msm_vidc_ts_reorder_remove_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
+{
+	struct msm_vidc_timestamp *ts, *temp;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* remove matching node */
+	list_for_each_entry_safe(ts, temp, &inst->ts_reorder.list, sort.list) {
+		if (ts->sort.val == timestamp) {
+			list_del_init(&ts->sort.list);
+			inst->ts_reorder.count--;
+			msm_memory_free(inst, ts);
+			break;
+		}
+	}
+
+	return 0;
+}
+
+int msm_vidc_ts_reorder_get_first_timestamp(struct msm_vidc_inst *inst, u64 *timestamp)
+{
+	struct msm_vidc_timestamp *ts;
+
+	if (!inst || !timestamp) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* check if list empty */
+	if (list_empty(&inst->ts_reorder.list)) {
+		i_vpr_e(inst, "%s: list empty. ts %lld\n", __func__, timestamp);
+		return -EINVAL;
+	}
+
+	/* get 1st node from reorder list */
+	ts = list_first_entry(&inst->ts_reorder.list,
+		struct msm_vidc_timestamp, sort.list);
+	list_del_init(&ts->sort.list);
+
+	/* copy timestamp */
+	*timestamp = ts->sort.val;
+
+	inst->ts_reorder.count--;
+	msm_memory_free(inst, ts);
+
+	return 0;
+}
+
+int msm_vidc_ts_reorder_flush(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_timestamp *temp, *ts = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* flush all entries */
+	list_for_each_entry_safe(ts, temp, &inst->ts_reorder.list, sort.list) {
+		i_vpr_l(inst, "%s: flushing ts: val %lld\n", __func__, ts->sort.val);
+		list_del(&ts->sort.list);
+		msm_memory_free(inst, ts);
+	}
+	inst->ts_reorder.count = 0;
+
+	return 0;
+}
+
 int msm_vidc_get_delayed_unmap(struct msm_vidc_inst *inst, struct msm_vidc_map *map)
 {
 	int rc = 0;
@@ -3016,6 +3113,13 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 	if (meta) {
 		meta->attr &= ~MSM_VIDC_ATTR_DEFERRED;
 		meta->attr |= MSM_VIDC_ATTR_QUEUED;
+	}
+
+	/* insert timestamp for ts_reorder enable case */
+	if (is_ts_reorder_allowed(inst) && is_input_buffer(buf->type)) {
+		rc = msm_vidc_ts_reorder_insert_timestamp(inst, buf->timestamp);
+		if (rc)
+			i_vpr_e(inst, "%s: insert timestamp failed\n", __func__);
 	}
 
 	if (is_input_buffer(buf->type))
@@ -4930,6 +5034,13 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(ts, dummy_ts, &inst->timestamps.list, sort.list) {
 		i_vpr_e(inst, "%s: removing ts: val %lld, rank %lld\n",
 			__func__, ts->sort.val, ts->rank);
+		list_del(&ts->sort.list);
+		msm_memory_free(inst, ts);
+	}
+
+	list_for_each_entry_safe(ts, dummy_ts, &inst->ts_reorder.list, sort.list) {
+		i_vpr_e(inst, "%s: removing reorder ts: val %lld\n",
+			__func__, ts->sort.val);
 		list_del(&ts->sort.list);
 		msm_memory_free(inst, ts);
 	}

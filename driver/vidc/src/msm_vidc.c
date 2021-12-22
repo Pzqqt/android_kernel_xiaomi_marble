@@ -853,6 +853,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	}
 	INIT_LIST_HEAD(&inst->response_works);
 	INIT_LIST_HEAD(&inst->timestamps.list);
+	INIT_LIST_HEAD(&inst->ts_reorder.list);
 	INIT_LIST_HEAD(&inst->buffers.input.list);
 	INIT_LIST_HEAD(&inst->buffers.input_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.output.list);

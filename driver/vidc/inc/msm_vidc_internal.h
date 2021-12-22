@@ -354,6 +354,7 @@ enum msm_vidc_inst_capability_type {
 	MB_CYCLES_FW,
 	MB_CYCLES_FW_VPP,
 	SECURE_MODE,
+	TS_REORDER,
 	HFLIP,
 	VFLIP,
 	ROTATION,
