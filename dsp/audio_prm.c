@@ -84,12 +84,12 @@ static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 	int ret = 0;
 	int retry;
 
+	mutex_lock(&g_prm.lock);
+	pr_debug("%s: enter",__func__);
+
 	if (wait)
 		atomic_set(&g_prm.state, 1);
 	atomic_set(&g_prm.status, 0);
-
-	mutex_lock(&g_prm.lock);
-	pr_debug("%s: enter",__func__);
 
 	if (g_prm.adev == NULL) {
 		pr_err("%s: apr is unregistered\n", __func__);
