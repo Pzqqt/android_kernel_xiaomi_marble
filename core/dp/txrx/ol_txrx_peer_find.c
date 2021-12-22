@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -787,9 +788,11 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 	}
 	qdf_atomic_init(&peer->del_ref_cnt);
-	qdf_atomic_add(num_deleted_maps, &peer->del_ref_cnt);
-	TAILQ_INSERT_TAIL(&pdev->inactive_peer_list, peer,
-			  inactive_peer_list_elem);
+	if (num_deleted_maps != 0) {
+		qdf_atomic_add(num_deleted_maps, &peer->del_ref_cnt);
+		TAILQ_INSERT_TAIL(&pdev->inactive_peer_list, peer,
+				  inactive_peer_list_elem);
+	}
 	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 
 	/* Debug print the information after releasing bh spinlock */
