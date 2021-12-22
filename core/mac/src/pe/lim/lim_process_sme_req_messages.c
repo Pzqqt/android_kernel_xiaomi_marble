@@ -3939,6 +3939,10 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	struct mac_context *mac_ctx;
 	struct pe_session *pe_session;
 	QDF_STATUS status;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma)
+		return QDF_STATUS_E_INVAL;
 
 	if (!req)
 		return QDF_STATUS_E_INVAL;
@@ -3989,10 +3993,13 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 fail:
 	if (pe_session)
 		pe_delete_session(mac_ctx, pe_session);
-
+	status = wma_remove_bss_peer_before_join(wma, req->vdev_id, req);
+	if (status == QDF_STATUS_E_PENDING)
+		return status;
 	lim_cm_send_connect_rsp(mac_ctx, NULL, req, CM_GENERIC_FAILURE,
-				QDF_STATUS_E_FAILURE, 0, false);
-	return QDF_STATUS_E_FAILURE;
+					QDF_STATUS_E_FAILURE, 0, false);
+
+	return status;
 }
 
 QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
@@ -4008,8 +4015,8 @@ QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
 	req = msg->bodyptr;
 
 	status = lim_cm_handle_join_req(req);
-
-	cm_free_join_req(req);
+	if (status != QDF_STATUS_E_PENDING)
+		cm_free_join_req(req);
 
 	return status;
 }

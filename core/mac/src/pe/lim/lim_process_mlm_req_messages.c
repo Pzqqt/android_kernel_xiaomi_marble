@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -348,44 +349,6 @@ end:
 		lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
 }
 
-void
-lim_post_join_set_link_state_callback(struct mac_context *mac, uint32_t vdev_id,
-				      QDF_STATUS status)
-{
-	tLimMlmJoinCnf mlm_join_cnf;
-	struct pe_session *session_entry;
-
-	session_entry = pe_find_session_by_vdev_id(mac, vdev_id);
-	if (!session_entry) {
-		pe_err("vdev_id:%d PE session is NULL", vdev_id);
-		return;
-	}
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("vdev%d: Failed to create peer", session_entry->vdev_id);
-		goto failure;
-	}
-
-	/*
-	 * store the channel switch session_entry in the lim
-	 * global variable
-	 */
-	session_entry->channelChangeReasonCode = LIM_SWITCH_CHANNEL_JOIN;
-	session_entry->pLimMlmReassocRetryReq = NULL;
-	lim_send_switch_chnl_params(mac, session_entry);
-
-	return;
-
-failure:
-	MTRACE(mac_trace(mac, TRACE_CODE_MLM_STATE, session_entry->peSessionId,
-			 session_entry->limMlmState));
-	session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
-	mlm_join_cnf.resultCode = eSIR_SME_PEER_CREATE_FAILED;
-	mlm_join_cnf.sessionId = session_entry->peSessionId;
-	mlm_join_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
-	lim_post_sme_message(mac, LIM_MLM_JOIN_CNF, (uint32_t *) &mlm_join_cnf);
-}
-
 void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 			       QDF_STATUS qdf_status, uint8_t *peer_mac)
 {
@@ -451,8 +414,13 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 	mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId =
 		session->peSessionId;
 
-	lim_post_join_set_link_state_callback(mac_ctx, session->vdev_id,
-					      QDF_STATUS_SUCCESS);
+	/*
+	 * store the channel switch session_entry in the lim
+	 * global variable
+	 */
+	session->channelChangeReasonCode = LIM_SWITCH_CHANNEL_JOIN;
+	session->pLimMlmReassocRetryReq = NULL;
+	lim_send_switch_chnl_params(mac_ctx, session);
 }
 
 /**

@@ -176,6 +176,9 @@
 #define WMA_PEER_CREATE_RESPONSE 0x08
 #define WMA_PEER_CREATE_RESPONSE_TIMEOUT SIR_PEER_CREATE_RESPONSE_TIMEOUT
 
+/* send connect respone after bss peer is deleted */
+#define WMA_DELETE_STA_CONNECT_RSP 0x09
+
 /* FW response timeout values in milli seconds */
 #define WMA_VDEV_PLCY_MGR_TIMEOUT        SIR_VDEV_PLCY_MGR_TIMEOUT
 #define WMA_VDEV_HW_MODE_REQUEST_TIMEOUT WMA_VDEV_PLCY_MGR_TIMEOUT
@@ -2511,6 +2514,24 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart);
  * Return: None;
  */
 void wma_remove_bss_peer_on_failure(tp_wma_handle wma, uint8_t vdev_id);
+
+/**
+ * wma_remove_bss_peer_before_join() - remove the bss peers in case of
+ * failure before join (vdev start) for sta mode
+ * @wma: wma handle.
+ * @vdev_id: vdev id
+ * @cm_join_req: join cm context
+ *
+ * This API deletes the BSS peer if any failure before "join" (vdev start).
+ * And indicate connection failure to CM after bss peer delete event comes
+ * from FW.
+ *
+ * Return: QDF_STATUS_SUCCESS if success, QDF_STATUS_E_PENDING if peer delete
+ *  event will be indicated later from target.
+ */
+QDF_STATUS wma_remove_bss_peer_before_join(
+		tp_wma_handle wma, uint8_t vdev_id,
+		void *cm_join_req);
 
 /**
  * wma_send_add_bss_resp() - send add bss failure
