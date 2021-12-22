@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -501,5 +501,145 @@ void lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
 {}
 #endif
 
+/**
+ * lim_fill_pe_session() - Lim fill pe session
+ * @mac_ctx: Pointer to mac context
+ * @session: pe session
+ * @bss_desc: Pointer to bss description
+ *
+ * This api will fill lim pe session with info
+ * from bss description
+ *
+ * Return: qdf status
+ */
+QDF_STATUS
+lim_fill_pe_session(struct mac_context *mac_ctx,
+		    struct pe_session *session,
+		    struct bss_description *bss_desc);
+
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_11BE_MLO)
+/**
+ * lim_cm_roam_create_session() - Create pe session for legacy to MLO roaming
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id: vdev id
+ * @roam_synch: Pointer to roam synch indication
+ *
+ * This api will check if vdev is link vdev and create a new pe session
+ * for legacy to MLO roaming case.
+ *
+ * Return: pe session
+ */
+struct pe_session *
+lim_cm_roam_create_session(struct mac_context *mac_ctx,
+			   uint8_t vdev_id,
+			   struct roam_offload_synch_ind *sync_ind);
+
+/**
+ * lim_create_and_fill_link_session() - handler for legacy to mlo roaming
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id: vdev id
+ * @roam_synch: Pointer to roam synch indication
+ * @ie_len: ie length
+ *
+ * This is a lim level api called to handle legacy to MLO roaming scenario.
+ *
+ * Return: qdf status
+ */
+QDF_STATUS
+lim_create_and_fill_link_session(struct mac_context *mac_ctx,
+				 uint8_t vdev_id,
+				 struct roam_offload_synch_ind *sync_ind,
+				 uint16_t ie_len);
+
+/**
+ * lim_cm_fill_link_session() - Update link session parameters
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id: vdev id
+ * @pe_session: Pointer to pe session
+ * @roam_synch: Pointer to roam synch indication
+ * @ie_len: ie length
+ *
+ * This api will fill pe session and also fill the BSS descriptor
+ * which will be helpful further to complete the roam synch propagation.
+ *
+ * Return: qdf status
+ */
+QDF_STATUS
+lim_cm_fill_link_session(struct mac_context *mac_ctx,
+			 uint8_t vdev_id,
+			 struct pe_session *pe_session,
+			 struct roam_offload_synch_ind *sync_ind,
+			 uint16_t ie_len);
+
+/**
+ * lim_roam_mlo_create_peer() - Create roam mlo peer
+ * @mac_ctx: Pointer to mac context
+ * @sync_ind: Pointer to roam synch indication
+ * @vdev_id: vdev id
+ * @peer_mac: Peer mac pointer
+ *
+ * This api will create mlo peer called during mlo roaming scenario
+ *
+ * Return: none
+ */
+void lim_roam_mlo_create_peer(struct mac_context *mac,
+			      struct roam_offload_synch_ind *sync_ind,
+			      uint8_t vdev_id,
+			      uint8_t *peer_mac);
+
+/**
+ * lim_mlo_roam_delete_link_peer() - Delete mlo link peer
+ * @pe_session: Pointer to pe session
+ * @sta_ds: sta state node
+ *
+ * This api will delete mlo link peer called during mlo roaming scenario
+ *
+ * Return: none
+ */
+void
+lim_mlo_roam_delete_link_peer(struct pe_session *pe_session,
+			      tpDphHashNode sta_ds);
+#else
+static inline struct pe_session *
+lim_cm_roam_create_session(struct mac_context *mac_ctx,
+			   uint8_t vdev_id,
+			   struct roam_offload_synch_ind *sync_ind)
+{
+	return NULL;
+}
+
+static inline QDF_STATUS
+lim_create_and_fill_link_session(struct mac_context *mac_ctx,
+				 uint8_t vdev_id,
+				 struct roam_offload_synch_ind *sync_ind,
+				 uint16_t ie_len)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+lim_cm_fill_link_session(struct mac_context *mac_ctx,
+			 uint8_t vdev_id,
+			 struct pe_session *pe_session,
+			 struct roam_offload_synch_ind *sync_ind,
+			 uint16_t ie_len)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline void
+lim_roam_mlo_create_peer(struct mac_context *mac,
+			 struct roam_offload_synch_ind *sync_ind,
+			 uint8_t vdev_id,
+			 uint8_t *peer_mac)
+{
+}
+
+static inline void
+lim_mlo_roam_delete_link_peer(struct pe_session *pe_session,
+			      tpDphHashNode sta_ds)
+{
+}
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD && WLAN_FEATURE_11BE_MLO */
 /************************************************************/
 #endif /* __LIM_API_H */
