@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -422,6 +423,7 @@ static void dsi_ctrl_clear_dma_status(struct dsi_ctrl *dsi_ctrl)
 static void dsi_ctrl_post_cmd_transfer(struct dsi_ctrl *dsi_ctrl)
 {
 	int rc = 0;
+	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
 	struct dsi_clk_ctrl_info clk_info;
 	u32 mask = BIT(DSI_FIFO_OVERFLOW);
 
@@ -437,6 +439,10 @@ static void dsi_ctrl_post_cmd_transfer(struct dsi_ctrl *dsi_ctrl)
 		/* Wait for read command transfer to complete is done in dsi_message_rx. */
 		dsi_ctrl_dma_cmd_wait_for_done(dsi_ctrl);
 	}
+
+	if (dsi_ctrl->hw.reset_trig_ctrl)
+		dsi_hw_ops.reset_trig_ctrl(&dsi_ctrl->hw,
+				&dsi_ctrl->host_config.common_config);
 
 	/* Command engine disable, unmask overflow, remove vote on clocks and gdsc */
 	rc = dsi_ctrl_set_cmd_engine_state(dsi_ctrl, DSI_CTRL_ENGINE_OFF, false);
@@ -1376,10 +1382,6 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 
 	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, flags,
 		msg->flags);
-
-	if (dsi_ctrl->hw.reset_trig_ctrl)
-		dsi_hw_ops.reset_trig_ctrl(&dsi_ctrl->hw,
-				&dsi_ctrl->host_config.common_config);
 
 	if (dsi_hw_ops.splitlink_cmd_setup && split_link->enabled)
 		dsi_hw_ops.splitlink_cmd_setup(&dsi_ctrl->hw,
