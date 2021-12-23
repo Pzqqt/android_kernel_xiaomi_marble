@@ -225,7 +225,7 @@
  *
  * @Min: 1
  * @Max: 2
- * @Default: 1
+ * @Default: 2
  *
  * Related: None
  *
@@ -239,7 +239,7 @@
 			"ndi_max_support", \
 			1, \
 			2, \
-			1, \
+			2, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Max number of NDI host supports")
 
