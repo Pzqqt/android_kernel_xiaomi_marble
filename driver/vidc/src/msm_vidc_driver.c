@@ -2332,6 +2332,7 @@ int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
 int msm_vidc_ts_reorder_insert_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
 {
 	struct msm_vidc_timestamp *ts;
+	int rc = 0;
 
 	if (!inst) {
 		d_vpr_e("%s: Invalid params\n", __func__);
@@ -2348,8 +2349,10 @@ int msm_vidc_ts_reorder_insert_timestamp(struct msm_vidc_inst *inst, u64 timesta
 	/* initialize ts node */
 	INIT_LIST_HEAD(&ts->sort.list);
 	ts->sort.val = timestamp;
+	rc = msm_vidc_insert_sort(&inst->ts_reorder.list, &ts->sort);
+	if (rc)
+		return rc;
 	inst->ts_reorder.count++;
-	list_add_tail(&ts->sort.list, &inst->ts_reorder.list);
 
 	return 0;
 }
