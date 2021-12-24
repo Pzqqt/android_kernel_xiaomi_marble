@@ -144,28 +144,24 @@ void dp_tx_process_mec_notify_be(struct dp_soc *soc, uint8_t *status)
 {
 	struct dp_vdev *vdev;
 	uint8_t vdev_id;
-	uint8_t tx_status;
 	uint32_t *htt_desc = (uint32_t *)status;
 
-	tx_status = HTT_TX_WBM_COMPLETION_V3_TX_STATUS_GET(htt_desc[0]);
-	if (tx_status == HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY) {
-		qdf_assert_always(!soc->mec_fw_offload);
+	qdf_assert_always(!soc->mec_fw_offload);
 
-		/*
-		 * Get vdev id from HTT status word in case of MEC
-		 * notification
-		 */
-		vdev_id = DP_TX_WBM_COMPLETION_V3_VDEV_ID_GET(htt_desc[4]);
-		if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
-			return;
+	/*
+	 * Get vdev id from HTT status word in case of MEC
+	 * notification
+	 */
+	vdev_id = DP_TX_WBM_COMPLETION_V3_VDEV_ID_GET(htt_desc[4]);
+	if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
+		return;
 
-		vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
-					     DP_MOD_ID_HTT_COMP);
-		if (!vdev)
-			return;
-		dp_tx_mec_handler(vdev, status);
-		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
-	}
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+				     DP_MOD_ID_HTT_COMP);
+	if (!vdev)
+		return;
+	dp_tx_mec_handler(vdev, status);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_HTT_COMP);
 }
 
 void dp_tx_process_htt_completion_be(struct dp_soc *soc,
@@ -193,7 +189,8 @@ void dp_tx_process_htt_completion_be(struct dp_soc *soc,
 	 * notification comes from FW2WBM. Avoid access any field of tx
 	 * descriptor in case of MEC notify.
 	 */
-	dp_tx_process_mec_notify_be(soc, status);
+	if (tx_status == HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY)
+		return dp_tx_process_mec_notify_be(soc, status);
 
 	/*
 	 * If the descriptor is already freed in vdev_detach,
