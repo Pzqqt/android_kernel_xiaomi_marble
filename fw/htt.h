@@ -226,9 +226,10 @@
  * 3.100 Add htt_tx_wbm_completion_v3 def.
  * 3.101 Add HTT_UL_OFDMA_USER_INFO_V1_BITMAP defs.
  * 3.102 Add HTT_H2T_MSG_TYPE_MSI_SETUP def.
+ * 3.103 Add HTT_T2H_SAWF_MSDUQ_INFO_IND defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 102
+#define HTT_CURRENT_VERSION_MINOR 103
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -9230,6 +9231,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_PEER_MAP_V3                   = 0x2b,
     HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND = 0x2c,
     HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF        = 0x2d,
+    HTT_T2H_SAWF_MSDUQ_INFO_IND                    = 0x2e,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -17795,6 +17797,147 @@ PREPACK struct htt_t2h_sawf_def_queues_map_report_conf {
     do { \
         HTT_CHECK_SET_VAL(HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID, _val); \
         ((_var) |= ((_val) << HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF_SVC_CLASS_ID_S)); \
+    } while (0)
+
+
+/*
+ * MSG_TYPE => HTT_T2H_SAWF_MSDUQ_INFO_IND
+ *
+ * @details
+ * When SAWF is enabled and a flow is mapped to a policy during the traffic
+ * flow if the flow is seen the associated service class is conveyed to the
+ * target via TCL Data Command. Target on the other hand internally creates the
+ * MSDUQ. Once the target creates the MSDUQ the target sends the information
+ * of the newly created MSDUQ and some other identifiers to uniquely identity
+ * the newly created MSDUQ
+ *
+ * |31    27|          24|23    16|15           11|10|9 8|7     4|3    0|
+ * |------------------------------+----------------------+--------------|
+ * |             peer ID          |       HTT qtype      |   msg type   |
+ * |--------+---------------------+---------------+--+---+-------+------|
+ * |reserved|               Ast Index             |FO|WC | HLOS  | remap|
+ * |        |                                     |  |   | TID   | TID  |
+ * |---------------------+----------------------------------------------|
+ * |    reserved1        |             tgt_opaque_id                    |
+ * |---------------------+----------------------------------------------|
+ *
+ * Header fields:
+ *
+ * dword0 - b'7:0       - msg_type: This will be set to
+ *                        0x2e (HTT_T2H_SAWF_MSDUQ_INFO_IND)
+ *          b'15:8      - HTT qtype
+ *          b'31:16     - peer ID
+ *
+ * dword1 - b'3:0       - remap TID, as assigned in firmware
+ *          b'7:4       - HLOS TID, as sent by host in TCL Data Command
+ *                        hlos_tid : Common to Lithium and Beryllium
+ *          b'9:8       - who_classify_info_sel (WC), as sent by host in
+ *                        TCL Data Command : Beryllium
+ *          b10         - flow_override (FO), as sent by host in
+ *                        TCL Data Command: Beryllium
+ *          b11:26      - ast_index
+ *                        Dummy AST Index in case of Lithium,
+ *                        Default AST Index in case of Beryllium
+ *          b27:32      - reserved
+ *
+ * dword2 - b'23:0      - tgt_opaque_id Opaque Tx flow number which is a
+ *                        unique MSDUQ id in firmware
+ *          b'24:31     - reserved1
+ */
+PREPACK struct htt_t2h_sawf_msduq_event {
+    A_UINT32 msg_type                : 8,
+             htt_qtype               : 8,
+             peer_id                 :16;
+
+    A_UINT32 remap_tid               : 4,
+             hlos_tid                : 4,
+             who_classify_info_sel   : 2,
+             flow_override           : 1,
+             ast_index               :16,
+             reserved                : 5;
+
+    A_UINT32 tgt_opaque_id           :24,
+             reserved1               : 8;
+} POSTPACK;
+
+#define HTT_SAWF_MSDUQ_INFO_SIZE (sizeof(struct htt_t2h_sawf_msduq_event))
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE_M                 0x0000FF00
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE_S                          8
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_QTYPE_S));\
+    } while (0)
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID_M                0xFFFF0000
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID_S                        16
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID_M              0x0000000F
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID_S                       0
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_REMAP_TID_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID_M              0x000000F0
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID_S                       4
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_HLOS_TID_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL_M    0x00000300
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL_S             8
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_WHO_CLASS_INFO_SEL_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_M              0x00000400
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_S                      10
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_M              0x07FFF800
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S                      11
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S)); \
     } while (0)
 
 
