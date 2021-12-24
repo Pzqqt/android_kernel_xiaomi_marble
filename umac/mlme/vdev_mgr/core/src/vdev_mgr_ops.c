@@ -584,6 +584,12 @@ QDF_STATUS vdev_mgr_up_send(struct vdev_mlme_obj *mlme_obj)
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
+	/* Reset the max channel switch time and last beacon sent time as the
+	 * VDEV UP command sent to FW.
+	 */
+	mlme_obj->mgmt.ap.max_chan_switch_time = 0;
+	mlme_obj->mgmt.ap.last_bcn_ts_ms = 0;
+
 	is_6g_sap_fd_enabled = wlan_vdev_mlme_feat_ext_cap_get(vdev,
 					WLAN_VDEV_FEXT_FILS_DISC_6G_SAP);
 	mlme_debug("SAP FD enabled %d", is_6g_sap_fd_enabled);

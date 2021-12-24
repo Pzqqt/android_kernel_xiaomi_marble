@@ -775,6 +775,7 @@ static int target_if_pdev_csa_status_event_handler(
 	struct target_psoc_info *tgt_hdl;
 	int i;
 	QDF_STATUS status;
+	struct wlan_lmac_if_mlme_rx_ops *rx_ops = NULL;
 
 	if (!scn || !data) {
 		mlme_err("Invalid input");
@@ -784,6 +785,12 @@ static int target_if_pdev_csa_status_event_handler(
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
 		mlme_err("PSOC is NULL");
+		return -EINVAL;
+	}
+
+	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
+	if (!rx_ops || !rx_ops->vdev_mgr_set_max_channel_switch_time) {
+		mlme_err("No Rx Ops");
 		return -EINVAL;
 	}
 
@@ -806,6 +813,10 @@ static int target_if_pdev_csa_status_event_handler(
 		mlme_err("Extracting CSA switch count status event failed");
 		return -EINVAL;
 	}
+
+	if (csa_status.current_switch_count == 1)
+		rx_ops->vdev_mgr_set_max_channel_switch_time
+			(psoc, csa_status.vdev_ids, csa_status.num_vdevs);
 
 	if (wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_CSA_TX_OFFLOAD)) {
 		for (i = 0; i < csa_status.num_vdevs; i++) {

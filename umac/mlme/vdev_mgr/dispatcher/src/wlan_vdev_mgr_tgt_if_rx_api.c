@@ -32,6 +32,7 @@
 #include <wlan_psoc_mlme_main.h>
 #include <include/wlan_psoc_mlme.h>
 #include <include/wlan_mlme_cmn.h>
+#include <wlan_vdev_mgr_utils_api.h>
 
 struct vdev_response_timer *
 tgt_vdev_mgr_get_response_timer_info(struct wlan_objmgr_psoc *psoc,
@@ -254,6 +255,54 @@ static inline void tgt_vdev_mgr_reg_set_mac_address_response(
 }
 #endif
 
+static void tgt_vdev_mgr_set_max_channel_switch_time(
+		struct wlan_objmgr_psoc *psoc, uint32_t *vdev_ids,
+		uint32_t num_vdevs)
+{
+	struct wlan_objmgr_vdev *vdev = NULL;
+	struct vdev_mlme_obj *vdev_mlme = NULL;
+	unsigned long current_time = qdf_mc_timer_get_system_time();
+	uint32_t max_chan_switch_time = 0;
+	int i = 0;
+	QDF_STATUS status;
+
+	/* Compute and populate the max channel switch time and time of the last
+	 * beacon sent on the CSA triggered channel for all the vdevs.
+	 */
+	for (i = 0; i < num_vdevs; i++) {
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc
+		    (psoc, vdev_ids[i], WLAN_VDEV_TARGET_IF_ID);
+		if (!vdev) {
+			mlme_err("VDEV is NULL");
+			continue;
+		}
+
+		vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+		if (!vdev_mlme) {
+			mlme_err("VDEV_%d: PSOC_%d VDEV_MLME is NULL",
+				 vdev_ids[i],
+				 wlan_psoc_get_id(psoc));
+			wlan_objmgr_vdev_release_ref(vdev,
+						     WLAN_VDEV_TARGET_IF_ID);
+			continue;
+		}
+
+		status = wlan_util_vdev_mgr_compute_max_channel_switch_time
+			(vdev, &max_chan_switch_time);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			mlme_err("Failed to get the max channel switch time value");
+			wlan_objmgr_vdev_release_ref(vdev,
+						     WLAN_VDEV_TARGET_IF_ID);
+			continue;
+		}
+
+		vdev_mlme->mgmt.ap.last_bcn_ts_ms = current_time;
+		vdev_mlme->mgmt.ap.max_chan_switch_time = max_chan_switch_time;
+
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+	}
+}
+
 void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	struct wlan_lmac_if_mlme_rx_ops *mlme_rx_ops = &rx_ops->mops;
@@ -274,6 +323,8 @@ void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 		tgt_vdev_mgr_get_response_timer_info;
 	mlme_rx_ops->vdev_mgr_multi_vdev_restart_resp =
 		tgt_vdev_mgr_multi_vdev_restart_resp_handler;
+	mlme_rx_ops->vdev_mgr_set_max_channel_switch_time =
+		tgt_vdev_mgr_set_max_channel_switch_time;
 	tgt_psoc_reg_wakelock_info_rx_op(&rx_ops->mops);
 	tgt_vdev_mgr_reg_set_mac_address_response(mlme_rx_ops);
 }

@@ -370,11 +370,16 @@ struct wlan_vdev_aid_mgr {
  * @hidden_ssid: flag to indicate whether it is hidden ssid
  * @cac_duration_ms: cac duration in millseconds
  * @aid_mgr: AID bitmap mgr
+ * @max_chan_switch_time: Max channel switch time in milliseconds.
+ * @last_bcn_ts_ms: Timestamp (in milliseconds) of the last beacon sent on the
+ *                  CSA triggered channel.
  */
 struct vdev_mlme_mgmt_ap {
 	bool hidden_ssid;
 	uint32_t cac_duration_ms;
 	struct wlan_vdev_aid_mgr *aid_mgr;
+	uint32_t max_chan_switch_time;
+	unsigned long last_bcn_ts_ms;
 };
 
 /**
