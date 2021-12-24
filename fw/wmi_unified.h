@@ -2370,8 +2370,8 @@ typedef enum {
 #define WMI_VHT_CAP_MAX_AMPDU_LEN_EXP_SHIFT      23
 #define WMI_VHT_CAP_RX_FIXED_ANT                 0x10000000
 #define WMI_VHT_CAP_TX_FIXED_ANT                 0x20000000
-#define WMI_VHT_CAP_TX_LDPC                      0x40000000
-
+#define WMI_VHT_EXTENDED_NSS_BW_MASK             0xC0000000
+#define WMI_VHT_EXTENDED_NSS_BW_MASK_SHIFT       30
 
 /* TEMPORARY:
  * Preserve the incorrect old name as an alias for the correct new name
@@ -2393,6 +2393,14 @@ typedef enum {
  * and targets.
  */
 #define WMI_vHT_CAP_RX_STBC_3SS WMI_VHT_CAP_RX_STBC_3SS
+
+/* TEMPORARY:
+ * Spec does not have VHT TX LDPC capability bit. To Maintain backward
+ * compatibility due to previous incorrect definition, the value is moved
+ * from 0x4 to 0x0. No new use of WMI_VHT_CAP_TX_LDPC should be added.
+ */
+#define WMI_VHT_CAP_TX_LDPC 0x0
+
 
 #define WMI_VHT_CAP_DEFAULT_ALL (WMI_VHT_CAP_MAX_MPDU_LEN_11454  |      \
                                  WMI_VHT_CAP_SGI_80MHZ           |      \
