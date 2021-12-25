@@ -3667,7 +3667,7 @@ reg_get_320_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
 								 chan_cfreq);
 		if (reg_is_state_allowed(temp_chan_state)) {
 			max_cont_bw += SUB_CHAN_BW;
-			*out_punc_pat |= BIT(i);
+			*out_punc_pat &= ~BIT(i);
 		}
 
 		if (temp_chan_state < chan_state)
@@ -3852,9 +3852,9 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 
 /**
  * No subchannels are punctured
- * binary 0:- Punctured 1:- Not-Punctured.
+ * binary 1:- Punctured 0:- Not-Punctured.
  */
-#define NO_SCHANS_PUNC 0xFFFF
+#define NO_SCHANS_PUNC 0x0000
 
 /**
  * reg_fill_pre320mhz_channel() - Fill channel params for channel width

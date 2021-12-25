@@ -153,7 +153,7 @@ extern const struct chan_map channel_map_china[];
 extern const struct chan_map channel_map_global[];
 
 #ifdef WLAN_FEATURE_11BE
-#define ALL_SCHANS_PUNC 0x0000 /* all subchannels punctured */
+#define ALL_SCHANS_PUNC 0xFFFF /* all subchannels punctured */
 #endif
 
 #ifdef CONFIG_AFC_SUPPORT
