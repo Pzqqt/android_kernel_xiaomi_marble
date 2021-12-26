@@ -753,8 +753,6 @@ void ipahal_cp_hdr_to_hw_buff(void *base, u32 offset, u8 *hdr, u32 hdr_len);
  * @base: dma base address
  * @offset: offset from base address where the data will be copied
  * @hdr_len: the length of the header
- * @is_hdr_proc_ctx: header is located in phys_base (true) or hdr_base_addr
- * @phys_base: memory location in DDR
  * @hdr_base_addr: base address in table
  * @offset_entry: offset from hdr_base_addr in table
  * @l2tp_params: l2tp parameters
@@ -764,7 +762,6 @@ void ipahal_cp_hdr_to_hw_buff(void *base, u32 offset, u8 *hdr, u32 hdr_len);
  */
 int ipahal_cp_proc_ctx_to_hw_buff(enum ipa_hdr_proc_type type,
 		void *base, u32 offset, u32 hdr_len,
-		bool is_hdr_proc_ctx, dma_addr_t phys_base,
 		u64 hdr_base_addr,
 		struct ipa_hdr_offset_entry *offset_entry,
 		struct ipa_l2tp_hdr_proc_ctx_params *l2tp_params,
