@@ -86,19 +86,19 @@ static void if_mgr_disable_roaming_on_vdev(struct wlan_objmgr_pdev *pdev,
 	vdev_id = wlan_vdev_get_id(vdev);
 	curr_vdev_id = roam_arg->curr_vdev_id;
 
-	if (curr_vdev_id != vdev_id &&
-	    wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE &&
-	    !wlan_cm_is_vdev_roam_sync_inprogress(vdev) &&
-	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
-		/* IFMGR Verification: Temporary call to sme_stop_roaming api,
-		 * will be replaced by converged roaming api
-		 * once roaming testing is complete.
-		 */
-		ifmgr_debug("Roaming disabled on vdev_id %d", vdev_id);
-		wlan_cm_disable_rso(pdev, vdev_id,
-				    roam_arg->requestor,
-				    REASON_DRIVER_DISABLED);
-	}
+	if (curr_vdev_id == vdev_id ||
+	    wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE ||
+	    wlan_cm_is_vdev_roam_sync_inprogress(vdev) ||
+	    vdev->vdev_mlme.mlme_state != WLAN_VDEV_S_UP)
+		return;
+
+	/*
+	 * Disable roaming only for the STA vdev which is not is roam sync state
+	 * and VDEV is in UP state.
+	 */
+	ifmgr_debug("Roaming disabled on vdev_id %d", vdev_id);
+	wlan_cm_disable_rso(pdev, vdev_id, roam_arg->requestor,
+			    REASON_DRIVER_DISABLED);
 }
 
 QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_pdev *pdev,
