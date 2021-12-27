@@ -609,13 +609,22 @@ static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user,
 	mem_size = entry->is_lcl ? IPA_MEM_PART(apps_hdr_size) : IPA_MEM_PART(apps_hdr_size_ddr);
 
 	if (list_empty(&htbl->head_free_offset_list[bin])) {
-		/* if header does not fit to table, place it in DDR */
-		if (htbl->end + ipa_hdr_bin_sz[bin] > mem_size) {
+		/*
+		 * In case of a local header entry,
+		 * first iteration will check against SRAM partition space,
+		 * and the second iteration will check against DDR partition space.
+		 * In case of a system header entry, the loop will iterate only once,
+		 * and check against DDR partition space.
+		 */
+		while (htbl->end + ipa_hdr_bin_sz[bin] > mem_size) {
 			if (entry->is_lcl) {
+				/* if header does not fit to SRAM table, place it in DDR */
 				htbl = &ipa3_ctx->hdr_tbl[HDR_TBL_SYS];
 				mem_size = IPA_MEM_PART(apps_hdr_size_ddr);
 				entry->is_lcl = false;
 			} else {
+				/* if the entry is intended to be in DDR,
+				   and there is no space -> error */
 				IPAERR("No space in DDR header buffer! Requested: %d Left: %d\n",
 				       ipa_hdr_bin_sz[bin], mem_size - htbl->end);
 				goto bad_hdr_len;
