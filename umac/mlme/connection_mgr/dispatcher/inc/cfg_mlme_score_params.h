@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -624,6 +624,42 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"RSSI Pref 5G Threshold")
 
+#ifdef WLAN_FEATURE_11BE
+/*
+ * <ini>
+ * bandwidth_weight_per_index - percentage as per bandwidth
+ * @Min: 0x00000000
+ * @Max: 0x64646464
+ * @Default: 0x552A150A
+ *
+ * This INI give percentage value of chan_width_weightage to be used as per
+ * peer bandwidth. Self BW is also considered while calculating score. Eg if
+ * self BW is 20 MHZ 10% will be given for all AP irrespective of the AP
+ * capability.
+ *
+ * Indexes are defined in this way.
+ *     0 Index (BITS 0-7): 20 MHz - Def 10%
+ *     1 Index (BITS 8-15): 40 MHz - Def 21%
+ *     2 Index (BITS 16-23): 80 MHz - Def 42%
+ *     3 Index (BITS 24-31): 160 MHz - Def 85%
+ * These percentage values are stored in HEX. For any index max value, can be 64
+ *
+ * Related: chan_width_weightage
+ *
+ * Supported Feature: STA Candidate selection
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SCORING_BW_WEIGHT_PER_IDX CFG_INI_UINT( \
+	"bandwidth_weight_per_index", \
+	0x00000000, \
+	0x64646464, \
+	0x552A150A, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Bandwidth weight per index")
+#else
 /*
  * <ini>
  * bandwidth_weight_per_index - percentage as per bandwidth
@@ -658,6 +694,7 @@
 	0x6432190C, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Bandwidth weight per index")
+#endif
 
 /*
  * <ini>
@@ -1164,6 +1201,86 @@
 #define CFG_6GHZ_CONFIG
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/*
+ * <ini>
+ * bandwidth_weight_per_index_4_to_7 - percentage as per bandwidth
+ * @Min: 0x00000000
+ * @Max: 0x64646464
+ * @Default: 0x4B402064
+ *
+ * This INI give percentage value of chan_width_weightage to be used as per
+ * peer bandwidth. Self BW is also considered while calculating score. Eg if
+ * self BW is 20 MHZ 10% will be given for all AP irrespective of the AP
+ * capability.
+ *
+ * Indexes are defined in this way.
+ *     4 Index (BITS 0-7): 320 MHz - Def 100%
+ *     5 Index (BITS 8-15): 80 MHz with 20MHZ punctured - Def 32%
+ *     6 Index (BITS 16-23): 160 MHz with 40MHZ punctured - Def 64%
+ *     7 Index (BITS 24-31): 160 MHz with 20MHZ punctured - Def 75%
+ * These percentage values are stored in HEX. For any index max value, can be 64
+ *
+ * Indexes 0-3 are considered as part of the INI bandwidth_weight_per_index
+ *
+ * Related: chan_width_weightage
+ *
+ * Supported Feature: STA Candidate selection
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_4_TO_7 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_4_to_7", \
+	0x00000000, \
+	0x64646464, \
+	0x4B402064, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Bandwidth weight per index 4 to 7")
+
+/*
+ * <ini>
+ * bandwidth_weight_per_index_8_to_11 - percentage as per bandwidth
+ * @Min: 0x00000000
+ * @Max: 0x64646464
+ * @Default: 0x15584B3F
+ *
+ * This INI give percentage value of chan_width_weightage to be used as per
+ * peer bandwidth. Self BW is also considered while calculating score. Eg if
+ * self BW is 20 MHZ 10% will be given for all AP irrespective of the AP
+ * capability.
+ *
+ * Indexes are defined in this way.
+ *     8 Index (BITS 0-7): 320 MHz with 40MHZ and 80MHZ punctured - Def 63%
+ *     9 Index (BITS 8-15): 320 MHz with 80MHZ punctured - Def 75%
+ *     10 Index (BITS 16-23): 320 MHz with 40MHZ punctured - Def 88%
+ *     11 Index (BITS 24-31): 20+20 MHz - Def 21%
+ * These percentage values are stored in HEX. For any index max value, can be 64
+ *
+ * Related: chan_width_weightage
+ *
+ * Supported Feature: STA Candidate selection
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_8_TO_11 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_8_to_11", \
+	0x00000000, \
+	0x64646464, \
+	0x15584B3F, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Bandwidth weight per index 8 to 11")
+
+#define CFG_11BE_CONFIG \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_4_TO_7) \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_8_TO_11)
+#else
+#define CFG_11BE_CONFIG
+#endif
+
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
  * <ini>
@@ -1488,10 +1605,10 @@
 
 /*
  * <ini>
- * ml_bandwidth_weight_per_index_4_to_7 - percentage as per bandwidth
+ * bandwidth_weight_per_index_12_to_15 - percentage as per bandwidth
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x342A1F14
+ * @Default: 0x342A2A1F
  *
  * This INI give percentage value of chan_width_weightage to be used as per
  * peer bandwidth for two links. Self BW is also considered while calculating
@@ -1499,13 +1616,11 @@
  * of the AP  capability.
  *
  * Indexes are defined in this way.
- *     4 Index (BITS 0-7): 20+20 MHz - Def 20%
- *     5 Index (BITS 8-15): 20+40 MHz - Def 31%
- *     6 Index (BITS 16-23): 40+40 MHz - Def 42%
- *     7 Index (BITS 24-31): 20+80 MHz - Def 52%
+ *     12 Index (BITS 0-7): 20+40 MHz - Def 31%
+ *     13 Index (BITS 8-15): 40+40 MHz - Def 42%
+ *     14 Index (BITS 16-23): 20+80 MHz with 20MHZ punctured - Def 42%
+ *     15 Index (BITS 24-31): 20+80 MHz - Def 52%
  * These percentage values are stored in HEX. For any index max value, can be 64
- *
- * Indexes 0-3 are considered as part of the INI bandwidth_weight_per_index
  *
  * Related: chan_width_weightage
  *
@@ -1515,20 +1630,20 @@
  *
  * </ini>
  */
-#define CFG_SCORING_ML_BW_WEIGHT_PER_IDX_4_TO_7 CFG_INI_UINT( \
-	"ml_bandwidth_weight_per_index_4_to_7", \
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_12_TO_15 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_12_to_15", \
 	0x00000000, \
 	0x64646464, \
-	0x342A1F14, \
+	0x342A2A1F, \
 	CFG_VALUE_OR_DEFAULT, \
-	"ML Bandwidth weight per index 4 to 7")
+	"Bandwidth weight per index 12 to 15")
 
 /*
  * <ini>
- * ml_bandwidth_weight_per_index_8_to_11 - percentage as per bandwidth
+ * bandwidth_weight_per_index_16_to_19 - percentage as per bandwidth
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x5A57553F
+ * @Default: 0x4B403F35
  *
  * This INI give percentage value of chan_width_weightage to be used as per
  * peer bandwidth for two links. Self BW is also considered while calculating
@@ -1536,10 +1651,10 @@
  * of the AP  capability.
  *
  * Indexes are defined in this way.
- *     8 Index (BITS 0-7): 40+80 MHz - Def 63%
- *     9 Index (BITS 8-15): 80+80 MHz - Def 85%
- *     10 Index (BITS 16-23): 20+160 MHz - Def 87%
- *     11 Index (BITS 24-31): 40+160 MHz - Def 90%
+ *     16 Index (BITS 0-7): 40+80 MHz with 20MHZ punctured - Def 53%
+ *     17 Index (BITS 8-15): 40+80 MHz - Def 63%
+ *     18 Index (BITS 16-23): 80+80 MHz with 40MHZ punctured - Def 64%
+ *     19 Index (BITS 24-31): 80+80 MHz with 20MHZ punctured - Def 75%
  * These percentage values are stored in HEX. For any index max value, can be 64
  *
  * Related: chan_width_weightage
@@ -1550,20 +1665,20 @@
  *
  * </ini>
  */
-#define CFG_SCORING_ML_BW_WEIGHT_PER_IDX_8_TO_11 CFG_INI_UINT( \
-	"ml_bandwidth_weight_per_index_8_to_11", \
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_16_TO_19 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_16_to_19", \
 	0x00000000, \
 	0x64646464, \
-	0x5A57553F, \
+	0x4B403F35, \
 	CFG_VALUE_OR_DEFAULT, \
-	"ML Bandwidth weight per index 8 to 11")
+	"Bandwidth weight per index 16 to 19")
 
 /*
  * <ini>
- * ml_bandwidth_weight_per_index_12_to_15 - percentage as per bandwidth
+ * bandwidth_weight_per_index_20_to_23 - percentage as per bandwidth
  * @Min: 0x00000000
- * @Max: 0x00646464
- * @Default: 0x0064645F
+ * @Max: 0x64646464
+ * @Default: 0x574E4455
  *
  * This INI give percentage value of chan_width_weightage to be used as per
  * peer bandwidth for two links. Self BW is also considered while calculating
@@ -1571,10 +1686,10 @@
  * of the AP  capability.
  *
  * Indexes are defined in this way.
- *     12 Index (BITS 0-7): 80+160 MHz - Def 95%
- *     13 Index (BITS 8-15): 160+160 MHz - Def 100%
- *     14 Index (BITS 16-23): 320 MHz - Def 100%
- *     15 Index (BITS 24-31): Reserved - Def 0
+ *     20 Index (BITS 0-7): 80+80 MHz - Def 85%
+ *     21 Index (BITS 8-15): 20+160 MHz with 40MHZ punctured - Def 68%
+ *     22 Index (BITS 16-23): 20+160 MHz with 20MHZ punctured - Def 78%
+ *     23 Index (BITS 24-31): 20+160 MHz - Def 87%
  * These percentage values are stored in HEX. For any index max value, can be 64
  *
  * Related: chan_width_weightage
@@ -1585,13 +1700,118 @@
  *
  * </ini>
  */
-#define CFG_SCORING_ML_BW_WEIGHT_PER_IDX_12_TO_15 CFG_INI_UINT( \
-	"ml_bandwidth_weight_per_index_12_to_15", \
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_20_TO_23 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_20_to_23", \
 	0x00000000, \
-	0x00646464, \
-	0x0064645F, \
+	0x64646464, \
+	0x574E4455, \
 	CFG_VALUE_OR_DEFAULT, \
-	"ML Bandwidth weight per index 12 to 15")
+	"Bandwidth weight per index 20 to 23")
+
+/*
+ * <ini>
+ * bandwidth_weight_per_index_24_to_27 - percentage as per bandwidth
+ * @Min: 0x00000000
+ * @Max: 0x64646464
+ * @Default: 0x485A5148
+ *
+ * This INI give percentage value of chan_width_weightage to be used as per
+ * peer bandwidth for two links. Self BW is also considered while calculating
+ * score. Eg if self BW is 20+20 MHZ 20% will be given for all AP irrespective
+ * of the AP  capability.
+ *
+ * Indexes are defined in this way.
+ *     24 Index (BITS 0-7): 40+160 MHz with 40MHZ punctured - Def 72%
+ *     25 Index (BITS 8-15): 40+160 MHz with 20MHZ punctured - Def 81%
+ *     26 Index (BITS 16-23): 40+160 MHz - Def 90%
+ *     27 Index (BITS 24-31): 80+160 MHz with 60MHZ punctured - Def 72%
+ * These percentage values are stored in HEX. For any index max value, can be 64
+ *
+ * Related: chan_width_weightage
+ *
+ * Supported Feature: STA Candidate selection
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_24_TO_27 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_24_to_27", \
+	0x00000000, \
+	0x64646464, \
+	0x485A5148, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Bandwidth weight per index 24 to 27")
+
+/*
+ * <ini>
+ * bandwidth_weight_per_index_28_to_31 - percentage as per bandwidth
+ * @Min: 0x00000000
+ * @Max: 0x64646464
+ * @Default: 0x4B5F5850
+ *
+ * This INI give percentage value of chan_width_weightage to be used as per
+ * peer bandwidth for two links. Self BW is also considered while calculating
+ * score. Eg if self BW is 20+20 MHZ 20% will be given for all AP irrespective
+ * of the AP  capability.
+ *
+ * Indexes are defined in this way.
+ *     28 Index (BITS 0-7): 80+160 MHz with 40MHZ punctured - Def 80%
+ *     29 Index (BITS 8-15): 80+160 MHz with 20MHZ punctured - Def 88%
+ *     30 Index (BITS 16-23): 80+160 MHz - Def 95%
+ *     31 Index (BITS 24-31): 160+160 MHz with 80MHZ punctured - Def 75%
+ * These percentage values are stored in HEX. For any index max value, can be 64
+ *
+ * Related: chan_width_weightage
+ *
+ * Supported Feature: STA Candidate selection
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_28_TO_31 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_28_to_31", \
+	0x00000000, \
+	0x64646464, \
+	0x4B5F5850, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Bandwidth weight per index 28 to 31")
+
+/*
+ * <ini>
+ * bandwidth_weight_per_index_32_to_35 - percentage as per bandwidth
+ * @Min: 0x00000000
+ * @Max: 0x64646464
+ * @Default: 0x645E5852
+ *
+ * This INI give percentage value of chan_width_weightage to be used as per
+ * peer bandwidth for two links. Self BW is also considered while calculating
+ * score. Eg if self BW is 20+20 MHZ 20% will be given for all AP irrespective
+ * of the AP  capability.
+ *
+ * Indexes are defined in this way.
+ *     32 Index (BITS 0-7): 160+160 MHz with 60MHZ punctured - Def 82%
+ *     33 Index (BITS 8-15): 160+160 MHz with 40MHZ punctured - Def 88%
+ *     34 Index (BITS 16-23): 160+160 MHz with 20MHZ punctured - Def 94%
+ *     35 Index (BITS 24-31): 160+160 MHz - Def 100%
+ * These percentage values are stored in HEX. For any index max value, can be 64
+ *
+ * Related: chan_width_weightage
+ *
+ * Supported Feature: STA Candidate selection
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SCORING_BW_WEIGHT_PER_IDX_32_TO_35 CFG_INI_UINT( \
+	"bandwidth_weight_per_index_32_to_35", \
+	0x00000000, \
+	0x64646464, \
+	0x645E5852, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Bandwidth weight per index 32 to 35")
 
 /*
  * <ini>
@@ -1638,9 +1858,12 @@
 	CFG(CFG_SCORING_LOW_BAND_ESP_BOOST) \
 	CFG(CFG_SCORING_LOW_BAND_OCE_BOOST) \
 	CFG(CFG_SCORING_LOW_BAND_RSSI_BOOST) \
-	CFG(CFG_SCORING_ML_BW_WEIGHT_PER_IDX_4_TO_7) \
-	CFG(CFG_SCORING_ML_BW_WEIGHT_PER_IDX_8_TO_11) \
-	CFG(CFG_SCORING_ML_BW_WEIGHT_PER_IDX_12_TO_15) \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_12_TO_15) \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_16_TO_19) \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_20_TO_23) \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_24_TO_27) \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_28_TO_31) \
+	CFG(CFG_SCORING_BW_WEIGHT_PER_IDX_32_TO_35) \
 	CFG(CFG_SCORING_ML_NSS_WEIGHT_PER_IDX_4_TO_7) \
 	CFG(CFG_SCORING_MLO_WEIGHTAGE) \
 	CFG(CFG_SCORING_MLSR_LINK_SELECTION) \
@@ -1688,6 +1911,7 @@
 	CFG(CFG_IS_BSSID_HINT_PRIORITY) \
 	CFG(CFG_VENDOR_ROAM_SCORE_ALGORITHM) \
 	CFG_6GHZ_CONFIG \
+	CFG_11BE_CONFIG \
 	CFG_MLO_CONFIG
 
 #endif /* __CFG_MLME_SCORE_PARAMS_H */
