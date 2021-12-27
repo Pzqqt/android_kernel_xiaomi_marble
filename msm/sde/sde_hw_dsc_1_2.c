@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2020-2022, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -60,19 +61,21 @@
 static int _dsc_calc_ob_max_addr(struct sde_hw_dsc *hw_dsc, int num_ss)
 {
 	enum sde_dsc idx;
+	bool reduced_ob_max;
 
 	idx = hw_dsc->idx;
+	reduced_ob_max = hw_dsc->caps->features & BIT(SDE_DSC_REDUCED_OB_MAX);
 
 	if (!(hw_dsc->caps->features & BIT(SDE_DSC_NATIVE_422_EN))) {
 		if (num_ss == 1)
-			return 2399;
+			return reduced_ob_max ? 1199 : 2399;
 		else if (num_ss == 2)
-			return 1199;
+			return reduced_ob_max ? 599 : 1199;
 	} else {
 		if (num_ss == 1)
-			return 1199;
+			return reduced_ob_max ? 599 : 1199;
 		else if (num_ss == 2)
-			return 599;
+			return reduced_ob_max ? 299 : 599;
 	}
 	return 0;
 }
