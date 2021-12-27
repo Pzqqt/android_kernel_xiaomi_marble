@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -97,6 +97,19 @@ static inline bool sap_acs_cfg_is_chwidth_320mhz(uint16_t width)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+static void sap_acs_set_puncture_bitmap(struct sap_context *sap_ctx,
+					struct ch_params *ch_params)
+{
+	sap_ctx->acs_cfg->acs_puncture_bitmap = ch_params->reg_punc_bitmap;
+}
+#else
+static void sap_acs_set_puncture_bitmap(struct sap_context *sap_ctx,
+					struct ch_params *ch_params)
+{
+}
+#endif /* WLAN_FEATURE_11BE */
+
 /**
  * sap_config_acs_result : Generate ACS result params based on ch constraints
  * @sap_ctx: pointer to SAP context data struct
@@ -117,6 +130,7 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
+	sap_acs_set_puncture_support(sap_ctx, &ch_params);
 	wlan_reg_set_channel_params_for_freq(
 			mac_ctx->pdev, sap_ctx->acs_cfg->pri_ch_freq,
 			sec_ch_freq, &ch_params);
@@ -144,6 +158,8 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 				sap_ctx->acs_cfg->pri_ch_freq + 20;
 	else
 		sap_ctx->acs_cfg->ht_sec_ch_freq = 0;
+
+	sap_acs_set_puncture_bitmap(sap_ctx, &ch_params);
 }
 
 /**

@@ -3438,3 +3438,40 @@ void wlansap_set_acs_ch_freq(struct sap_context *sap_context,
 	sap_debug("ACS configuring ch_freq=%d", sap_context->chan_freq);
 }
 #endif
+
+#ifdef WLAN_FEATURE_11BE
+bool sap_acs_is_puncture_applicable(struct sap_acs_cfg *acs_cfg)
+{
+	bool is_eht_bw_80 = false;
+
+	if (!acs_cfg) {
+		sap_err("Invalid parameters");
+		return is_eht_bw_80;
+	}
+
+	switch (acs_cfg->ch_width) {
+	case CH_WIDTH_80MHZ:
+	case CH_WIDTH_80P80MHZ:
+	case CH_WIDTH_160MHZ:
+	case CH_WIDTH_320MHZ:
+		is_eht_bw_80 = acs_cfg->is_eht_enabled;
+		break;
+	default:
+		break;
+	}
+
+	return is_eht_bw_80;
+}
+
+void sap_acs_set_puncture_support(struct sap_context *sap_ctx,
+				  struct ch_params *ch_params)
+{
+	if (!sap_ctx || !ch_params) {
+		sap_err("Invalid parameters");
+		return;
+	}
+
+	if (sap_acs_is_puncture_applicable(sap_ctx->acs_cfg))
+		ch_params->is_create_punc_bitmap = true;
+}
+#endif

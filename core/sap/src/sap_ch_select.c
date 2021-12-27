@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -414,6 +415,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	bool include_dfs_ch = true;
 	uint8_t sta_sap_scc_on_dfs_chnl_config_value;
+	bool ch_support_puncture;
 
 	pSpectInfoParams->numSpectChans =
 		mac->scan.base_channels.numChannels;
@@ -443,6 +445,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	for (channelnum = 0;
 	     channelnum < pSpectInfoParams->numSpectChans;
 	     channelnum++, pChans++, pSpectCh++) {
+		ch_support_puncture = false;
 		pSpectCh->chan_freq = *pChans;
 		/* Initialise for all channels */
 		pSpectCh->rssiAgr = SOFTAP_MIN_RSSI;
@@ -453,8 +456,14 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 		if (sap_dfs_is_channel_in_nol_list(
 					sap_ctx, *pChans,
 					PHY_SINGLE_CHANNEL_CENTERED)) {
-			sap_debug_rl("Ch freq %d is in NOL list", *pChans);
-			continue;
+			if (sap_acs_is_puncture_applicable(sap_ctx->acs_cfg)) {
+				sap_debug_rl("freq %d is in NOL list, can be punctured",
+					     *pChans);
+				ch_support_puncture = true;
+			} else {
+				sap_debug_rl("freq %d is in NOL list", *pChans);
+				continue;
+			}
 		}
 
 		if (!include_dfs_ch ||
@@ -469,9 +478,14 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 		}
 
 		if (!policy_mgr_is_sap_freq_allowed(mac->psoc, *pChans)) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: Skip freq %d", __func__, *pChans);
-			continue;
+			if (sap_acs_is_puncture_applicable(sap_ctx->acs_cfg)) {
+				sap_info("freq %d is not allowed, can be punctured",
+					 *pChans);
+				ch_support_puncture = true;
+			} else {
+				sap_info("Skip freq %d", *pChans);
+				continue;
+			}
 		}
 
 		/* OFDM rates are not supported on frequency 2484 */
@@ -493,7 +507,8 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			continue;
 
 		pSpectCh->valid = true;
-		pSpectCh->weight = 0;
+		if (!ch_support_puncture)
+			pSpectCh->weight = 0;
 	}
 
 	return true;
@@ -1535,12 +1550,15 @@ static void sap_sort_chl_weight(tSapChSelSpectInfo *pSpectInfoParams)
 
 /**
  * sap_sort_chl_weight_80_mhz() - to sort the channels with the least weight
+ * @mac_ctx: pointer to max context
+ * @sap_ctx: Pointer to the struct sap_context *structure
  * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
  * Function to sort the channels with the least weight first for HT80 channels
  *
  * Return: none
  */
 static void sap_sort_chl_weight_80_mhz(struct mac_context *mac_ctx,
+				       struct sap_context *sap_ctx,
 				       tSapChSelSpectInfo *pSpectInfoParams)
 {
 	uint8_t i, j;
@@ -1559,6 +1577,7 @@ static void sap_sort_chl_weight_80_mhz(struct mac_context *mac_ctx,
 			continue;
 
 		acs_ch_params.ch_width = CH_WIDTH_80MHZ;
+		sap_acs_set_puncture_support(sap_ctx, &acs_ch_params);
 
 		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
 						     pSpectInfo[j].chan_freq,
@@ -1663,6 +1682,8 @@ static void sap_sort_chl_weight_80_mhz(struct mac_context *mac_ctx,
 
 /**
  * sap_sort_chl_weight_vht160() - to sort the channels with the least weight
+ * @mac_ctx: pointer to max context
+ * @sap_ctx: Pointer to the struct sap_context *structure
  * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
  *
  * Function to sort the channels with the least weight first for VHT160 channels
@@ -1670,6 +1691,7 @@ static void sap_sort_chl_weight_80_mhz(struct mac_context *mac_ctx,
  * Return: none
  */
 static void sap_sort_chl_weight_160_mhz(struct mac_context *mac_ctx,
+					struct sap_context *sap_ctx,
 					tSapChSelSpectInfo *pSpectInfoParams)
 {
 	uint8_t i, j;
@@ -1688,6 +1710,7 @@ static void sap_sort_chl_weight_160_mhz(struct mac_context *mac_ctx,
 			continue;
 
 		acs_ch_params.ch_width = CH_WIDTH_160MHZ;
+		sap_acs_set_puncture_support(sap_ctx, &acs_ch_params);
 
 		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
 						     pSpectInfo[j].chan_freq,
@@ -1829,6 +1852,8 @@ static void sap_sort_chl_weight_160_mhz(struct mac_context *mac_ctx,
 #if defined(WLAN_FEATURE_11BE)
 /**
  * sap_sort_chl_weight_320_mhz() - to sort the channels with the least weight
+ * @mac_ctx: pointer to max context
+ * @sap_ctx: Pointer to the struct sap_context *structure
  * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
  *
  * Function to sort the channels with the least weight first for 320MHz channels
@@ -1836,6 +1861,7 @@ static void sap_sort_chl_weight_160_mhz(struct mac_context *mac_ctx,
  * Return: none
  */
 static void sap_sort_chl_weight_320_mhz(struct mac_context *mac_ctx,
+					struct sap_context *sap_ctx,
 					tSapChSelSpectInfo *pSpectInfoParams)
 {
 	uint8_t i, j;
@@ -1853,6 +1879,7 @@ static void sap_sort_chl_weight_320_mhz(struct mac_context *mac_ctx,
 			continue;
 
 		acs_ch_params.ch_width = CH_WIDTH_320MHZ;
+		sap_acs_set_puncture_support(sap_ctx, &acs_ch_params);
 
 		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
 						     pSpectInfo[j].chan_freq,
@@ -2413,14 +2440,14 @@ static void sap_sort_chl_weight_all(struct mac_context *mac_ctx,
 		break;
 	case CH_WIDTH_80MHZ:
 	case CH_WIDTH_80P80MHZ:
-		sap_sort_chl_weight_80_mhz(mac_ctx, pSpectInfoParams);
+		sap_sort_chl_weight_80_mhz(mac_ctx, sap_ctx, pSpectInfoParams);
 		break;
 	case CH_WIDTH_160MHZ:
-		sap_sort_chl_weight_160_mhz(mac_ctx, pSpectInfoParams);
+		sap_sort_chl_weight_160_mhz(mac_ctx, sap_ctx, pSpectInfoParams);
 		break;
 #if defined(WLAN_FEATURE_11BE)
 	case CH_WIDTH_320MHZ:
-		sap_sort_chl_weight_320_mhz(mac_ctx, pSpectInfoParams);
+		sap_sort_chl_weight_320_mhz(mac_ctx, sap_ctx, pSpectInfoParams);
 		break;
 #endif
 	case CH_WIDTH_20MHZ:
@@ -2588,6 +2615,7 @@ next_bw:
 				== SAP_CHANNEL_NOT_SELECTED)
 				continue;
 			ch_params.ch_width = pref_bw;
+			sap_acs_set_puncture_support(sap_ctx, &ch_params);
 			wlan_reg_set_channel_params_for_freq(
 				mac_ctx->pdev, cal_chan_freq, 0, &ch_params);
 			if (ch_params.ch_width != pref_bw)
