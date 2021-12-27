@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +33,7 @@
 #include "wlan_vdev_mgr_utils_api.h"
 #include "wni_api.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "wlan_cm_api.h"
 
 static void if_mgr_enable_roaming_on_vdev(struct wlan_objmgr_pdev *pdev,
 					  void *object, void *arg)
@@ -86,6 +88,7 @@ static void if_mgr_disable_roaming_on_vdev(struct wlan_objmgr_pdev *pdev,
 
 	if (curr_vdev_id != vdev_id &&
 	    wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE &&
+	    !wlan_cm_is_vdev_roam_sync_inprogress(vdev) &&
 	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
 		/* IFMGR Verification: Temporary call to sme_stop_roaming api,
 		 * will be replaced by converged roaming api
