@@ -21,6 +21,7 @@
 #include <asoc/msm-cdc-pinctrl.h>
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include <asoc/msm-cdc-supply.h>
+#include <linux/qti-regmap-debugfs.h>
 
 #include "wcd937x-registers.h"
 #include "wcd937x.h"
@@ -2882,6 +2883,9 @@ static int wcd937x_soc_codec_probe(struct snd_soc_component *component)
 
 	wcd937x->component = component;
 	snd_soc_component_init_regmap(component, wcd937x->regmap);
+
+	devm_regmap_qti_debugfs_register(&wcd937x->tx_swr_dev->dev, wcd937x->regmap);
+
 	variant = (snd_soc_component_read(
 			component, WCD937X_DIGITAL_EFUSE_REG_0) & 0x1E) >> 1;
 	wcd937x->variant = variant;
