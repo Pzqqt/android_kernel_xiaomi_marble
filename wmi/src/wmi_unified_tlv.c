@@ -18192,6 +18192,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #endif
 	wmi_service[wmi_service_pno_scan_conf_per_ch_support] =
 			WMI_SERVICE_PNO_SCAN_CONFIG_PER_CHANNEL;
+#ifdef WLAN_FEATURE_11BE_MLO
+	wmi_service[wmi_service_mlo_sta_nan_ndi_support] =
+			WMI_SERVICE_MLO_STA_NAN_NDI_SUPPORT;
+#endif
 }
 
 /**
