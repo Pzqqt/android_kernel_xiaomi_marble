@@ -2683,6 +2683,9 @@ $(call add-wlan-objs,wma,$(WMA_OBJS))
 
 #######DIRECT_BUFFER_RX#########
 ifeq ($(CONFIG_DIRECT_BUF_RX_ENABLE), y)
+ifeq ($(CONFIG_DBR_HOLD_LARGE_MEM), y)
+cppflags-y += -DDBR_HOLD_LARGE_MEM
+endif
 DBR_DIR = $(WLAN_COMMON_ROOT)/target_if/direct_buf_rx
 UMAC_DBR_INC := -I$(WLAN_COMMON_INC)/target_if/direct_buf_tx/inc
 UMAC_DBR_OBJS := $(DBR_DIR)/src/target_if_direct_buf_rx_api.o \
