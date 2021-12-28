@@ -4716,6 +4716,7 @@ static long ipa_test_ioctl(struct file *filp,
 		break;
 	case IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM:
 		retval = ipa_is_test_prod_flt_in_sram_internal(arg);
+		break;
 	case IPA_TEST_IOC_GET_MEM_PART:
 		retval = ipa_test_get_mem_part(arg);
 		break;
