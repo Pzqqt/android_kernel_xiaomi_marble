@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -494,6 +495,302 @@ QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 	return status;
 }
 
+#if defined(DBR_HOLD_LARGE_MEM) && defined(CNSS_MEM_PRE_ALLOC)
+/**
+ * struct direct_buf_rx_large_mem - large memory for DBR
+ * @node: large memory node
+ * @size: Size of the memory
+ * @vaddr_unaligned: unaligned base address of the memory
+ * @offset: offset between unaligned vaddr and aligned vaddr
+ * @align: Base address alignment
+ */
+struct direct_buf_rx_large_mem {
+	qdf_list_node_t node;
+	uint32_t size;
+	void *vaddr_unaligned;
+	uint8_t offset;
+	uint32_t align;
+};
+
+/* check if the actual buffer_size/base_address_alignment match the request */
+#define DBR_MEM_NODE_MATCH(_actual_align, _actual_size, _req_align, _req_size) \
+	((_actual_align) == (_req_align) && \
+	 ((_actual_size) == (_req_size) || \
+	  (_actual_size) == ((_req_size) + (_req_align) - 1)))
+
+/*
+ * Memory with a size(in bytes) equal or larger than this threshold will be
+ * hold during the entire PSOC lifetime.
+ * MUST equal or larger than the allocation threshold in cnss_prealloc module.
+ */
+#define TARGET_IF_DBR_HOLD_MEM_THRESHOLD (8 * 1024)
+
+/**
+ * target_if_dbr_init_mem_list() - init the large memory list for DBR
+ * @dbr_psoc_obj: pointer to direct buffer rx module psoc obj
+ *
+ * Return: None
+ */
+static void
+target_if_dbr_init_mem_list(struct direct_buf_rx_psoc_obj *dbr_psoc_obj)
+{
+	int i;
+
+	qdf_spinlock_create(&dbr_psoc_obj->mem_list_lock);
+	qdf_spin_lock_bh(&dbr_psoc_obj->mem_list_lock);
+	for (i = 0; i < QDF_ARRAY_SIZE(dbr_psoc_obj->mem_list); i++)
+		qdf_list_create(&dbr_psoc_obj->mem_list[i], 0);
+
+	qdf_spin_unlock_bh(&dbr_psoc_obj->mem_list_lock);
+}
+
+/**
+ * target_if_dbr_deinit_mem_list() - deinit the large memory list for DBR
+ * @dbr_psoc_obj: pointer to direct buffer rx module psoc obj
+ *
+ * Return: None
+ */
+static void
+target_if_dbr_deinit_mem_list(struct direct_buf_rx_psoc_obj *dbr_psoc_obj)
+{
+	struct direct_buf_rx_large_mem *cur, *next;
+	qdf_list_t *mem_list;
+	int i;
+
+	qdf_spin_lock_bh(&dbr_psoc_obj->mem_list_lock);
+	for (i = 0; i < QDF_ARRAY_SIZE(dbr_psoc_obj->mem_list); i++) {
+		mem_list = &dbr_psoc_obj->mem_list[i];
+		qdf_list_for_each_del(mem_list, cur, next, node) {
+			qdf_mem_free(cur->vaddr_unaligned);
+			qdf_list_remove_node(mem_list, &cur->node);
+		}
+
+		qdf_list_destroy(mem_list);
+	}
+
+	qdf_spin_unlock_bh(&dbr_psoc_obj->mem_list_lock);
+	qdf_spinlock_destroy(&dbr_psoc_obj->mem_list_lock);
+}
+
+/**
+ * target_if_dbr_mem_add() - allocate a new element for large memory list
+ * @dbr_psoc_obj: pointer to direct buffer rx module psoc obj
+ * @pdev_id: PDEV id
+ * @size: Size of the memory to be assigned to the new element
+ * @vaddr_unaligned: unaligned base address of the memory
+ * @offset: offset between unaligned vaddr and aligned vaddr
+ * @align: Base address alignment
+ *
+ * Return: None
+ */
+static void
+target_if_dbr_mem_add(struct direct_buf_rx_psoc_obj *dbr_psoc_obj,
+		      uint8_t pdev_id, uint32_t size, void *vaddr_unaligned,
+		      uint8_t offset, uint32_t align)
+{
+	struct direct_buf_rx_large_mem *new_node;
+	uint32_t list_size;
+
+	new_node = vaddr_unaligned;
+	qdf_mem_zero(new_node, sizeof(*new_node));
+	new_node->size = size;
+	new_node->vaddr_unaligned = vaddr_unaligned;
+	new_node->offset = offset;
+	new_node->align = align;
+
+	qdf_spin_lock_bh(&dbr_psoc_obj->mem_list_lock);
+	qdf_list_insert_back(&dbr_psoc_obj->mem_list[pdev_id],
+			     &new_node->node);
+	list_size = qdf_list_size(&dbr_psoc_obj->mem_list[pdev_id]);
+	qdf_spin_unlock_bh(&dbr_psoc_obj->mem_list_lock);
+}
+
+/**
+ * target_if_dbr_mem_get() - get aligned memory
+ * @pdev: pointer to pdev object
+ * @size: Size to be allocated
+ * @offset: offset between unaligned vaddr and aligned vaddr
+ * @align: Base address alignment
+ * @mod_id: DBR module id (enum DBR_MODULE)
+ *
+ * If size to be allocated is equal or smaller than the threshold, this
+ * function will allocate the aligned memory dynamically;
+ * If NOT, it will search the saved memory list, return the one which meet the
+ * requirement, otherwise, allocate the aligned memory dynamically.
+ *
+ * Return:
+ * Unaligned base address of the memory on succeed, NULL otherwise.
+ */
+static void *
+target_if_dbr_mem_get(struct wlan_objmgr_pdev *pdev, uint32_t *size,
+		      uint8_t *offset, uint32_t align, uint32_t mod_id)
+{
+	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
+	struct wlan_objmgr_psoc *psoc;
+	struct direct_buf_rx_large_mem *cur, *next;
+	void *vaddr_unaligned = NULL, *vaddr_aligned;
+	dma_addr_t paddr_aligned, paddr_unaligned;
+	QDF_STATUS status;
+	qdf_list_t *mem_list;
+	uint8_t pdev_id;
+
+	if (*size < TARGET_IF_DBR_HOLD_MEM_THRESHOLD) {
+		vaddr_aligned = qdf_aligned_malloc(size, &vaddr_unaligned,
+						   &paddr_unaligned,
+						   &paddr_aligned, align);
+		if (!vaddr_aligned)
+			return NULL;
+
+		*offset = vaddr_aligned - vaddr_unaligned;
+
+		return vaddr_unaligned;
+	}
+
+	if (!pdev) {
+		direct_buf_rx_err("pdev context passed is null");
+		return vaddr_unaligned;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		direct_buf_rx_err("psoc is null");
+		return vaddr_unaligned;
+	}
+
+	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+
+	if (!dbr_psoc_obj) {
+		direct_buf_rx_err("dir buf rx psoc object is null");
+		return vaddr_unaligned;
+	}
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	qdf_spin_lock_bh(&dbr_psoc_obj->mem_list_lock);
+	mem_list = &dbr_psoc_obj->mem_list[pdev_id];
+	qdf_list_for_each_del(mem_list, cur, next, node) {
+		if (DBR_MEM_NODE_MATCH(cur->align, cur->size, align, *size)) {
+			status = qdf_list_remove_node(mem_list, &cur->node);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				direct_buf_rx_err("failed to remove node: %d",
+						  status);
+				break;
+			}
+
+			*offset = cur->offset;
+			*size = cur->size;
+			vaddr_unaligned = cur->vaddr_unaligned;
+			break;
+		}
+	}
+	qdf_spin_unlock_bh(&dbr_psoc_obj->mem_list_lock);
+
+	if (vaddr_unaligned) {
+		qdf_mem_zero(vaddr_unaligned, *size);
+		return vaddr_unaligned;
+	}
+
+	vaddr_aligned =
+		qdf_aligned_malloc(size, &vaddr_unaligned, &paddr_unaligned,
+				   &paddr_aligned, align);
+	if (!vaddr_aligned)
+		return NULL;
+
+	*offset = vaddr_aligned - vaddr_unaligned;
+	return vaddr_unaligned;
+}
+
+/**
+ * target_if_dbr_mem_put() - put aligned memory
+ * @pdev: pointer to pdev object
+ * @size: size of the memory to be put
+ * @vaddr_unaligned: unaligned base address of the memory
+ * @offset: offset between unaligned vaddr and aligned vaddr
+ * @align: Base address alignment
+ * @mod_id: DBR module id (enum DBR_MODULE)
+ *
+ * If size to be allocated is equal or smaller than the threshold, this
+ * function will free the memory directly;
+ * If NOT, it will search the saved memory list, mark the one which meet the
+ * requirement as NOT in use; and if no element is found, free the memory.
+ *
+ * Return: None
+ */
+static void
+target_if_dbr_mem_put(struct wlan_objmgr_pdev *pdev, uint32_t size,
+		      void *vaddr_unaligned, uint8_t offset,
+		      uint32_t align, uint32_t mod_id)
+{
+	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!vaddr_unaligned)
+		return;
+
+	if (size < TARGET_IF_DBR_HOLD_MEM_THRESHOLD) {
+		qdf_mem_free(vaddr_unaligned);
+		return;
+	}
+
+	if (!pdev) {
+		direct_buf_rx_err("pdev context passed is null");
+		return;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		direct_buf_rx_err("psoc is null");
+		return;
+	}
+
+	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+	if (!dbr_psoc_obj) {
+		direct_buf_rx_err("dir buf rx psoc object is null");
+		return;
+	}
+
+	target_if_dbr_mem_add(dbr_psoc_obj, wlan_objmgr_pdev_get_pdev_id(pdev),
+			      size, vaddr_unaligned, offset, align);
+}
+#else
+static inline void
+target_if_dbr_init_mem_list(struct direct_buf_rx_psoc_obj *dbr_psoc_obj)
+{
+}
+
+static inline void
+target_if_dbr_deinit_mem_list(struct direct_buf_rx_psoc_obj *dbr_psoc_obj)
+{
+}
+
+static void *
+target_if_dbr_mem_get(struct wlan_objmgr_pdev *pdev, uint32_t *size,
+		      uint8_t *offset, uint32_t align, uint32_t mod_id)
+{
+	void *vaddr_unaligned = NULL, *vaddr_aligned;
+	dma_addr_t paddr_aligned, paddr_unaligned;
+
+	vaddr_aligned = qdf_aligned_malloc(size, &vaddr_unaligned,
+					   &paddr_unaligned, &paddr_aligned,
+					   align);
+	if (!vaddr_aligned)
+		return NULL;
+
+	*offset = vaddr_aligned - vaddr_unaligned;
+	return vaddr_unaligned;
+}
+
+static inline void
+target_if_dbr_mem_put(struct wlan_objmgr_pdev *pdev, uint32_t size,
+		      void *vaddr_unaligned, uint8_t offset,
+		      uint32_t align, uint32_t mod_id)
+{
+	qdf_mem_free(vaddr_unaligned);
+}
+#endif /* DBR_HOLD_LARGE_MEM */
+
 QDF_STATUS target_if_direct_buf_rx_psoc_create_handler(
 	struct wlan_objmgr_psoc *psoc, void *data)
 {
@@ -513,6 +810,8 @@ QDF_STATUS target_if_direct_buf_rx_psoc_create_handler(
 		return QDF_STATUS_E_NOMEM;
 
 	direct_buf_rx_debug("Dbr psoc obj %pK", dbr_psoc_obj);
+
+	target_if_dbr_init_mem_list(dbr_psoc_obj);
 
 	status = wlan_objmgr_psoc_component_obj_attach(psoc,
 			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX, dbr_psoc_obj,
@@ -548,6 +847,7 @@ QDF_STATUS target_if_direct_buf_rx_psoc_destroy_handler(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	target_if_dbr_deinit_mem_list(dbr_psoc_obj);
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
 				dbr_psoc_obj);
@@ -1082,7 +1382,9 @@ static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_buf_info *dbr_buf_pool;
+	void *buf_vaddr_unaligned, *buf_vaddr_aligned;
 	QDF_STATUS status;
+	uint8_t offset;
 
 	direct_buf_rx_enter();
 
@@ -1091,28 +1393,29 @@ static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_buf_pool = mod_param->dbr_buf_pool;
 
 	for (idx = 0; idx < dbr_ring_cfg->num_ptr - 1; idx++) {
-		void *buf_vaddr_unaligned = NULL, *buf_vaddr_aligned;
-		dma_addr_t buf_paddr_aligned, buf_paddr_unaligned;
-
-		buf_vaddr_aligned = qdf_aligned_malloc(
-			&dbr_ring_cap->min_buf_size, &buf_vaddr_unaligned,
-			&buf_paddr_unaligned, &buf_paddr_aligned,
-			dbr_ring_cap->min_buf_align);
-
-		if (!buf_vaddr_aligned) {
+		buf_vaddr_unaligned =
+			target_if_dbr_mem_get(pdev, &dbr_ring_cap->min_buf_size,
+					      &offset,
+					      dbr_ring_cap->min_buf_align,
+					      mod_param->mod_id);
+		if (!buf_vaddr_unaligned) {
 			direct_buf_rx_err("dir buf rx ring alloc failed");
 			return QDF_STATUS_E_NOMEM;
 		}
+
 		dbr_buf_pool[idx].vaddr = buf_vaddr_unaligned;
-		dbr_buf_pool[idx].offset = buf_vaddr_aligned -
-		    buf_vaddr_unaligned;
+		dbr_buf_pool[idx].offset = offset;
 		dbr_buf_pool[idx].cookie = idx;
+		buf_vaddr_aligned = buf_vaddr_unaligned + offset;
 		status = target_if_dbr_replenish_ring(pdev, mod_param,
 						      buf_vaddr_aligned, idx);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			direct_buf_rx_err("replenish failed with status : %d",
 					  status);
-			qdf_mem_free(buf_vaddr_unaligned);
+			target_if_dbr_mem_put(pdev, dbr_ring_cap->min_buf_size,
+					      buf_vaddr_unaligned, offset,
+					      dbr_ring_cap->min_buf_align,
+					      mod_param->mod_id);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -1940,7 +2243,11 @@ static QDF_STATUS target_if_dbr_empty_ring(struct wlan_objmgr_pdev *pdev,
 			(qdf_dma_addr_t)dbr_buf_pool[idx].paddr,
 			QDF_DMA_FROM_DEVICE,
 			dbr_ring_cap->min_buf_size);
-		qdf_mem_free(dbr_buf_pool[idx].vaddr);
+		target_if_dbr_mem_put(pdev, dbr_ring_cap->min_buf_size,
+				      dbr_buf_pool[idx].vaddr,
+				      dbr_buf_pool[idx].offset,
+				      dbr_ring_cap->min_buf_align,
+				      mod_param->mod_id);
 	}
 
 	return QDF_STATUS_SUCCESS;
