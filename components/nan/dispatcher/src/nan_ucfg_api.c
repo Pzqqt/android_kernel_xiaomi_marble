@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1401,4 +1401,9 @@ QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc)
 bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 {
 	return wlan_is_nan_allowed_on_freq(pdev, freq);
+}
+
+bool ucfg_is_mlo_sta_nan_ndi_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_is_mlo_sta_nan_ndi_allowed(psoc);
 }
