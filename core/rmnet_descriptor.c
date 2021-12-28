@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1558,7 +1559,7 @@ static int rmnet_frag_checksum_pkt(struct rmnet_frag_descriptor *frag_desc)
 
 		csum_len -= frag_desc->ip_len;
 		/* IPv4 checksum must be valid */
-		if (ip_fast_csum((u8 *)iph, frag_desc->ip_len)) {
+		if (ip_fast_csum((u8 *)iph, iph->ihl)) {
 			priv->stats.csum_sw++;
 			return 0;
 		}
