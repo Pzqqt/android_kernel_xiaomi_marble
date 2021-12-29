@@ -906,7 +906,7 @@ sap_validate_chan(struct sap_context *sap_context,
 	uint32_t sta_sap_bit_mask = QDF_STA_MASK | QDF_SAP_MASK;
 	uint32_t concurrent_state;
 	bool go_force_scc;
-	struct ch_params ch_params;
+	struct ch_params ch_params = {0};
 	bool is_go_scc_strict = false;
 	bool start_sap_on_provided_freq = false;
 
@@ -981,7 +981,15 @@ sap_validate_chan(struct sap_context *sap_context,
 					sap_context->sessionId);
 			sap_debug("After check overlap: sap freq %d con freq:%d",
 				  sap_context->chan_freq, con_ch_freq);
-			ch_params = sap_context->ch_params;
+			/*
+			 * For non-DBS platform, a 2.4Ghz can become a 5Ghz freq
+			 * so lets used max BW in that case, if it remain 2.4Ghz
+			 * then BW will be limited to 20 anyway
+			 */
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(sap_context->chan_freq))
+				ch_params.ch_width = CH_WIDTH_MAX;
+			else
+				ch_params = sap_context->ch_params;
 
 			if (sap_context->cc_switch_mode !=
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) {
@@ -995,6 +1003,9 @@ sap_validate_chan(struct sap_context *sap_context,
 					return QDF_STATUS_E_ABORTED;
 				}
 			}
+			/* if CH width didn't change fallback to original */
+			if (ch_params.ch_width == CH_WIDTH_MAX)
+				ch_params = sap_context->ch_params;
 
 			sap_debug("After check concurrency: con freq:%d",
 				  con_ch_freq);
