@@ -5085,9 +5085,7 @@ static int sde_encoder_setup_display(struct sde_encoder_virt *sde_enc,
 
 	SDE_DEBUG("dsi_info->num_of_h_tiles %d\n", disp_info->num_of_h_tiles);
 
-	if ((disp_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE) ||
-	    (disp_info->capabilities & MSM_DISPLAY_CAP_VID_MODE))
-		sde_enc->idle_pc_enabled = sde_kms->catalog->has_idle_pc;
+	sde_enc->idle_pc_enabled = sde_kms->catalog->has_idle_pc;
 
 	sde_enc->input_event_enabled = sde_kms->catalog->wakeup_with_touch;
 
