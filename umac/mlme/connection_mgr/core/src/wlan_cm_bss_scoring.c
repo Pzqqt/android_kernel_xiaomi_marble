@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -75,7 +76,7 @@
 #define CM_OCE_WAN_WEIGHTAGE 2
 #define CM_OCE_AP_TX_POWER_WEIGHTAGE 5
 #define CM_OCE_SUBNET_ID_WEIGHTAGE 3
-#define CM_SAE_PK_AP_WEIGHTAGE 3
+#define CM_SAE_PK_AP_WEIGHTAGE 30
 #define CM_BEST_CANDIDATE_MAX_WEIGHT 200
 #define CM_MAX_PCT_SCORE 100
 #define CM_MAX_INDEX_PER_INI 4
