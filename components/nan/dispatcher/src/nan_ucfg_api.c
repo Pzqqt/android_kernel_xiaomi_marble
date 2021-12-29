@@ -1165,8 +1165,13 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	if (!sta_cnt)
 		return true;
 
-	/* Reject if STA+STA is present */
-	if (sta_cnt > 1) {
+	/* Reject STA+STA in below case
+	 * Non-ML STA: STA+STA+NDP concurrency is not supported
+	 * ML STA: As both links would be treated as separate STAs from
+	 * policy mgr perspective, don't reject here and continue with further
+	 * checks
+	 */
+	if (sta_cnt > 1 && !policy_mgr_is_mlo_sta_present(psoc)) {
 		nan_err("STA+STA+NDP concurrency is not allowed");
 		return false;
 	}
@@ -1178,6 +1183,13 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	 */
 	if (is_sap_ndp_concurrency_allowed())
 		return true;
+
+	/* ML STA + NAN + NDP concurrency is allowed only if firmware
+	 * support is present
+	 */
+	if (policy_mgr_is_mlo_sta_present(psoc) &&
+	    !wlan_is_mlo_sta_nan_ndi_allowed(psoc))
+		return false;
 
 	ndi_cnt = policy_mgr_get_mode_specific_conn_info(psoc,
 							 freq_list,
