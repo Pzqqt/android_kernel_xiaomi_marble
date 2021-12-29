@@ -34,6 +34,9 @@
 #include <wlan_mlo_mgr_cmn.h>
 #include <wlan_cm_roam_api.h>
 #include "wlan_nan_api.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_sta.h>
+#endif
 
 QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 				struct if_mgr_event_data *event_data)
@@ -386,8 +389,19 @@ if_mgr_ml_sta_concurency_on_connect(struct wlan_objmgr_psoc *psoc,
 	 * If affected link is less than num_ml, ie not all link are affected,
 	 * send MLO_LINK_FORCE_MODE_INACTIVE.
 	 */
-	if (affected_links < num_ml)
-		mode = MLO_LINK_FORCE_MODE_INACTIVE;
+	if (affected_links < num_ml &&
+	    affected_links <= MAX_NUMBER_OF_CONC_CONNECTIONS) {
+		if (mlo_is_sta_inactivity_allowed_with_quiet(psoc, vdev_id_list,
+							     num_ml, ml_idx,
+							     affected_links,
+							     ml_vdev_lst)) {
+			mode = MLO_LINK_FORCE_MODE_INACTIVE;
+		} else {
+			ifmgr_debug("vdev %d: force inactivity is not allowed",
+				    ml_vdev_lst[0]);
+			return;
+		}
+	}
 
 	wlan_mlo_sta_mlo_concurency_set_link(vdev,
 					     MLO_LINK_FORCE_REASON_CONNECT,
@@ -446,7 +460,7 @@ if_mgr_handle_ml_sta_link_concurrency(struct wlan_objmgr_psoc *psoc,
 	ifmgr_debug("vdev %d: num_ml %d num_non_ml %d is_connect %d",
 		    wlan_vdev_get_id(vdev), num_ml, num_non_ml, is_connect);
 	/* ML STA is not up */
-	if (num_ml < 2)
+	if (num_ml < 2 || num_ml > MAX_NUMBER_OF_CONC_CONNECTIONS)
 		return;
 
 	if (is_connect)
