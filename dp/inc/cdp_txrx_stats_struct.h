@@ -1143,6 +1143,7 @@ struct protocol_trace_count {
  * @stbc: Packets in STBC
  * @ldpc: Packets in LDPC
  * @retries: Packet retries
+ * @retries_mpdu: mpdu number of successfully transmitted after retries
  * @non_amsdu_cnt: Number of MSDUs with no MSDU level aggregation
  * @amsdu_cnt: Number of MSDUs part of AMSDU
  * @tx_rate: Tx Rate
@@ -1237,6 +1238,7 @@ struct cdp_tx_stats {
 	uint32_t stbc;
 	uint32_t ldpc;
 	uint32_t retries;
+	uint32_t retries_mpdu;
 	uint32_t non_amsdu_cnt;
 	uint32_t amsdu_cnt;
 	uint32_t tx_rate;

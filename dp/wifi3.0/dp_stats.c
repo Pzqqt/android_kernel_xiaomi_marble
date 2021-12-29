@@ -7000,6 +7000,7 @@ void dp_update_vdev_stats(struct dp_soc *soc,
 	tgtobj->tx.ldpc += srcobj->stats.tx.ldpc;
 	tgtobj->tx.pream_punct_cnt += srcobj->stats.tx.pream_punct_cnt;
 	tgtobj->tx.retries += srcobj->stats.tx.retries;
+	tgtobj->tx.retries_mpdu += srcobj->stats.tx.retries_mpdu;
 	tgtobj->tx.non_amsdu_cnt += srcobj->stats.tx.non_amsdu_cnt;
 	tgtobj->tx.amsdu_cnt += srcobj->stats.tx.amsdu_cnt;
 	tgtobj->tx.non_ampdu_cnt += srcobj->stats.tx.non_ampdu_cnt;
