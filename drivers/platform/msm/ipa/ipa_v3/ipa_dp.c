@@ -100,6 +100,7 @@ static int ipa3_rx_switch_to_intr_mode(struct ipa3_sys_context *sys);
 static struct sk_buff *ipa3_get_skb_ipa_rx(unsigned int len, gfp_t flags);
 static void ipa3_replenish_wlan_rx_cache(struct ipa3_sys_context *sys);
 static void ipa3_replenish_rx_cache(struct ipa3_sys_context *sys);
+static void ipa3_first_replenish_rx_cache(struct ipa3_sys_context *sys);
 static void ipa3_replenish_rx_work_func(struct work_struct *work);
 static void ipa3_fast_replenish_rx_cache(struct ipa3_sys_context *sys);
 static void ipa3_replenish_rx_page_cache(struct ipa3_sys_context *sys);
@@ -1523,7 +1524,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 			ipa3_ctx->ipa_wan_skb_page) {
 			ipa3_replenish_rx_page_recycle(ep->sys);
 		} else
-			ipa3_replenish_rx_cache(ep->sys);
+			ipa3_first_replenish_rx_cache(ep->sys);
 		for (i = 0; i < GSI_VEID_MAX; i++)
 			INIT_LIST_HEAD(&ep->sys->pending_pkts[i]);
 	}
@@ -2822,6 +2823,111 @@ fail_kmem_cache_alloc:
 	return;
 }
 
+/**
+ * ipa3_first_replenish_rx_cache() - Replenish the Rx packets cache for the first time.
+ *
+ * The function allocates buffers in the rx_pkt_wrapper_cache cache until there
+ * are IPA_RX_POOL_CEIL buffers in the cache.
+ *   - Allocate a buffer in the cache
+ *   - Initialized the packets link
+ *   - Initialize the packets work struct
+ *   - Allocate the packets socket buffer (skb)
+ *   - Fill the packets skb with data
+ *   - Make the packet DMAable
+ *   - Add the packet to the system pipe linked list
+ */
+static void ipa3_first_replenish_rx_cache(struct ipa3_sys_context *sys)
+{
+	void *ptr;
+	struct ipa3_rx_pkt_wrapper *rx_pkt;
+	int ret;
+	int idx = 0;
+	int rx_len_cached = 0;
+	struct gsi_xfer_elem gsi_xfer_elem_array[IPA_REPL_XFER_MAX];
+	gfp_t flag = GFP_NOWAIT | __GFP_NOWARN;
+
+	rx_len_cached = sys->len;
+
+	/* start replenish only when buffers go lower than the threshold */
+	if (sys->rx_pool_sz - sys->len < IPA_REPL_XFER_THRESH)
+		return;
+
+	while (rx_len_cached < sys->rx_pool_sz) {
+		rx_pkt = kmem_cache_zalloc(ipa3_ctx->rx_pkt_wrapper_cache,
+					   flag);
+		if (!rx_pkt) {
+			IPAERR("failed to alloc cache\n");
+			goto fail_kmem_cache_alloc;
+		}
+
+		INIT_WORK(&rx_pkt->work, ipa3_wq_rx_avail);
+		rx_pkt->sys = sys;
+
+		rx_pkt->data.skb = sys->get_skb(sys->rx_buff_sz, flag);
+		if (rx_pkt->data.skb == NULL) {
+			IPAERR("failed to alloc skb\n");
+			goto fail_skb_alloc;
+		}
+		ptr = skb_put(rx_pkt->data.skb, sys->rx_buff_sz);
+		rx_pkt->data.dma_addr = dma_map_single(ipa3_ctx->pdev, ptr,
+						     sys->rx_buff_sz,
+						     DMA_FROM_DEVICE);
+		if (dma_mapping_error(ipa3_ctx->pdev, rx_pkt->data.dma_addr)) {
+			IPAERR("dma_map_single failure %pK for %pK\n",
+			       (void *)rx_pkt->data.dma_addr, ptr);
+			goto fail_dma_mapping;
+		}
+
+		gsi_xfer_elem_array[idx].addr = rx_pkt->data.dma_addr;
+		gsi_xfer_elem_array[idx].len = sys->rx_buff_sz;
+		gsi_xfer_elem_array[idx].flags = GSI_XFER_FLAG_EOT;
+		gsi_xfer_elem_array[idx].flags |= GSI_XFER_FLAG_EOB;
+		gsi_xfer_elem_array[idx].flags |= GSI_XFER_FLAG_BEI;
+		gsi_xfer_elem_array[idx].type = GSI_XFER_ELEM_DATA;
+		gsi_xfer_elem_array[idx].xfer_user_data = rx_pkt;
+		idx++;
+		rx_len_cached++;
+		/*
+		 * gsi_xfer_elem_buffer has a size of IPA_REPL_XFER_MAX.
+		 * If this size is reached we need to queue the xfers.
+		 */
+		if (idx == IPA_REPL_XFER_MAX) {
+			ret = gsi_queue_xfer(sys->ep->gsi_chan_hdl, idx,
+				gsi_xfer_elem_array, false);
+			if (ret != GSI_STATUS_SUCCESS) {
+				/* we don't expect this will happen */
+				IPAERR("failed to provide buffer: %d\n", ret);
+				WARN_ON(1);
+				break;
+			}
+			idx = 0;
+		}
+	}
+	goto done;
+
+fail_dma_mapping:
+	sys->free_skb(rx_pkt->data.skb);
+fail_skb_alloc:
+	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
+fail_kmem_cache_alloc:
+	/* Ensuring minimum buffers are submitted to HW */
+	if (rx_len_cached < IPA_REPL_XFER_THRESH) {
+		queue_delayed_work(sys->wq, &sys->replenish_rx_work,
+				msecs_to_jiffies(1));
+		return;
+	}
+done:
+	/* only ring doorbell once here */
+	ret = gsi_queue_xfer(sys->ep->gsi_chan_hdl, idx,
+		gsi_xfer_elem_array, true);
+	if (ret == GSI_STATUS_SUCCESS) {
+		sys->len = rx_len_cached;
+	} else {
+		/* we don't expect this will happen */
+		IPAERR("failed to provide buffer: %d\n", ret);
+		WARN_ON(1);
+	}
+}
 
 /**
  * ipa3_replenish_rx_cache() - Replenish the Rx packets cache.
