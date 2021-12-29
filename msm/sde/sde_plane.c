@@ -952,8 +952,8 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 	scale_cfg->uv_filter_cfg = SDE_SCALE_BIL;
 	scale_cfg->alpha_filter_cfg = SDE_SCALE_ALPHA_BIL;
 	scale_cfg->lut_flag = 0;
-	scale_cfg->blend_cfg = 1;
-	scale_cfg->enable = 1;
+	scale_cfg->blend_cfg = SDE_FORMAT_IS_FSC(fmt) ? 0 : 1;
+	scale_cfg->enable = SDE_FORMAT_IS_FSC(fmt) ? 0 : 1;
 	scale_cfg->dyn_exp_disabled = SDE_QSEED_DEFAULT_DYN_EXP;
 }
 
@@ -2420,6 +2420,10 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 		return -EINVAL;
 	}
 
+	/* scaling checks are not needed for fsc formats*/
+	if (SDE_FORMAT_IS_FSC(fmt))
+		return 0;
+
 	deci_w = sde_plane_get_property(pstate, PLANE_PROP_H_DECIMATE);
 	deci_h = sde_plane_get_property(pstate, PLANE_PROP_V_DECIMATE);
 
@@ -2680,6 +2684,13 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 			height);
 	if (ret)
 		return ret;
+
+	if (SDE_FORMAT_IS_FSC(fmt) && (width % 3 != 0)) {
+		SDE_ERROR_PLANE(psde,
+				"fsc width must be multiple of 3, width %d\n",
+				width);
+		return -EINVAL;
+	}
 
 	ret = _sde_atomic_check_decimation_scaler(state, psde, fmt, pstate,
 		&src, &dst, width, height);
