@@ -4044,20 +4044,21 @@ policy_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev, bool force_mlo);
 bool policy_mgr_is_mlo_sta_present(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_is_mlo_sta_sbs_link() - Check whether MLO STA is present with both
- *                                    links on 5 or 6 ghz band (SBS link)
- *
+ * policy_mgr_is_mlo_in_mode_sbs() - Check whether MLO present is SBS (with both
+ * links on 5/6 ghz band)
  * @psoc: PSOC object information
+ * @mode: mlo mode to check
  * @mlo_vdev_lst: Pointer to mlo vdev list, this function wil fill this with
  *                list of mlo vdev
  * @num_mlo: Pointer to number of mlo link, this function will fill this with
  *           number of mlo links
  *
- * Return: True if MLO STA is present with both links on 5 and 6ghz band
+ * Return: True if MLO is present with both links on 5 and 6ghz band
  */
-bool policy_mgr_is_mlo_sta_sbs_link(struct wlan_objmgr_psoc *psoc,
-				    uint8_t *mlo_vdev_lst,
-				    uint8_t *num_mlo);
+bool policy_mgr_is_mlo_in_mode_sbs(struct wlan_objmgr_psoc *psoc,
+				   enum policy_mgr_con_mode mode,
+				   uint8_t *mlo_vdev_lst, uint8_t *num_mlo);
+
 #else
 
 static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
@@ -4074,6 +4075,14 @@ policy_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev, bool force_mlo)
 }
 
 static inline bool policy_mgr_is_mlo_sta_present(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+bool policy_mgr_is_mlo_in_mode_sbs(struct wlan_objmgr_psoc *psoc,
+				   enum policy_mgr_con_mode mode,
+				   uint8_t *mlo_vdev_lst, uint8_t *num_mlo)
 {
 	return false;
 }

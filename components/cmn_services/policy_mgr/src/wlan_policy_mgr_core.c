@@ -3486,6 +3486,174 @@ policy_mgr_get_same_band_iface_frq(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_get_iface_5g_freq(psoc));
 }
 
+static void
+policy_mgr_check_force_scc_two_connection(struct wlan_objmgr_psoc *psoc,
+					  qdf_freq_t *intf_ch_freq,
+					  qdf_freq_t sap_ch_freq,
+					  uint8_t cc_mode,
+					  bool same_band_present,
+					  uint32_t acs_band)
+{
+	bool sbs_mlo_present = false;
+
+	/*
+	 * 1st:    2nd:           3rd(SAP):      Action:
+	 * -------------------------------------------------
+	 * 2Ghz    2Ghz(SMM/DBS)  5Ghz           Start on 5Ghz
+	 * 2Ghz    5Ghz(DBS)      5Ghz           Force SCC to 5Ghz
+	 * 2Ghz    5Ghz(DBS)      2Ghz           Force SCC to 5Ghz
+	 * 5Ghz    5Ghz(SBS)      2Ghz           If acs is ALL band force SCC
+	 *                                       else start on 2.4Ghz
+	 * 5Ghz    5Ghz(SBS)      5Ghz           Force SCC to one of 5Ghz
+	 * 5Ghz    5Ghz(SMM)      2Ghz           Start on 2.4Ghz
+	 * 5Ghz    5Ghz(SMM)      5Ghz           Allow SAP on sap_ch_freq if all
+	 *                                       3, 5Ghz freq does't end up
+	 *                                       on same mac, ie 2 of them lead
+	 *                                       to SBS. Else force SCC on
+	 *                                       one of the freq (3 home channel
+	 *                                       will not be allowed)
+	 * 2Ghz    2Ghz(SMM/DBS)  2Ghz           force SCC on one of the freq
+	 *                                       (3 home channel
+	 *                                       will not be allowed)
+	 */
+
+	/* Check if STA or SAP SBS MLO is present */
+	if (policy_mgr_is_hw_sbs_capable(psoc) &&
+	    (policy_mgr_is_mlo_in_mode_sbs(psoc, PM_STA_MODE,
+					   NULL, NULL) ||
+	     policy_mgr_is_mlo_in_mode_sbs(psoc, PM_SAP_MODE,
+					   NULL, NULL)))
+		sbs_mlo_present = true;
+
+	/*
+	 * Check for SBS mlo present as if 1 link is inactive the
+	 * HW mode will be SMM and not SBS.
+	 */
+	if (policy_mgr_is_current_hwmode_sbs(psoc) || sbs_mlo_present) {
+		/*
+		 * 1st:    2nd:        3rd(SAP):   Action:
+		 * -------------------------------------------------
+		 * 5Ghz    5Ghz(SBS)   2Ghz        If acs is ALL band force SCC
+		 *                                 else start on 2.4Ghz
+		 * 5Ghz    5Ghz(SBS)   5Ghz        Force SCC to one of 5Ghz
+		 */
+		if (acs_band == QCA_ACS_MODE_IEEE80211ANY ||
+		    !WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq))
+			*intf_ch_freq =
+				policy_mgr_get_iface_5g_freq(psoc);
+		else
+			*intf_ch_freq =
+				policy_mgr_get_same_band_iface_frq(psoc,
+								   sap_ch_freq);
+		return;
+	}
+	if (policy_mgr_is_current_hwmode_dbs(psoc)) {
+		/*
+		 * 1st:    2nd:           3rd(SAP):      Action:
+		 * -------------------------------------------------
+		 * 2Ghz    2Ghz(DBS)      5Ghz           Start on 5Ghz
+		 * 2Ghz    5Ghz(DBS)      5Ghz           Force SCC to 5Ghz
+		 * 2Ghz    5Ghz(DBS)      2Ghz           Force SCC to 5Ghz
+		 * 2Ghz    2Ghz(DBS)      2Ghz           force SCC on one of
+		 *                                       the freq (3 home
+		 *                                       channel will not be
+		 *                                       allowed)
+		 */
+		*intf_ch_freq =
+			policy_mgr_get_same_band_iface_frq(psoc,
+							   sap_ch_freq);
+		return;
+	}
+
+	if (!same_band_present) {
+		/*
+		 * 1st:    2nd:           3rd(SAP):      Action:
+		 * -------------------------------------------------
+		 * 2Ghz    2Ghz(SMM)      5Ghz           Start on 5Ghz(DBS)
+		 * 5Ghz    5Ghz(SMM)      2Ghz           Start on 2.4Ghz(DBS)
+		 */
+		if (policy_mgr_is_hw_dbs_capable(psoc))
+			*intf_ch_freq = 0;
+		return;
+	}
+
+	if (!policy_mgr_are_3_freq_on_same_mac(psoc, sap_ch_freq,
+					pm_conc_connection_list[0].freq,
+					pm_conc_connection_list[1].freq)) {
+		/*
+		 * 1st:    2nd:           3rd(SAP):     Action:
+		 * -------------------------------------------------
+		 * 5Ghz    5Ghz(SMM)      5Ghz          Allow SAP on sap_ch_freq
+		 *                                      if all 3, 5Ghz freq
+		 *                                      does't end up, on same
+		 *                                      mac, ie 2 of them lead
+		 *                                      to SBS, ie at least one
+		 *                                      of them is high 5Ghz and
+		 *                                      one low 5Ghz.
+		 */
+		*intf_ch_freq = 0;
+		return;
+	}
+
+	/*
+	 * 1st:    2nd:           3rd(SAP):     Action:
+	 * -------------------------------------------------
+	 * 5Ghz    5Ghz(SMM)      5Ghz          force SCC on one of the freq
+	 *                                      (3 home channel will not be
+	 *                                      allowed)
+	 * 2Ghz    2Ghz(SMM)      2Ghz          force SCC on one of the freq
+	 *                                      (3 home channel will not be
+	 *                                      allowed)
+	 */
+	policy_mgr_debug("%d Can lead to 3 home channel on same MAC",
+			 sap_ch_freq);
+}
+
+static void
+policy_mgr_check_force_scc_one_connection(struct wlan_objmgr_psoc *psoc,
+					  qdf_freq_t *intf_ch_freq,
+					  qdf_freq_t sap_ch_freq,
+					  bool same_band_present,
+					  uint8_t cc_mode)
+{
+	/*
+	 * 1st:    2nd(SAP):      Action:
+	 * ------------------------------------
+	 * 2Ghz     2Ghz          Force SCC on 2Ghz
+	 * 5Ghz     5Ghz          Force SCC on 5Ghz for non SBS, for SBS freq
+	 *                        allow sap freq
+	 * 2Ghz     5Ghz          Start on 5Ghz (DBS)
+	 * 5Ghz     2Ghz          Start on 2.4Ghz(DBS)
+	 */
+
+	if (same_band_present) {
+		/*
+		 * 1st:    2nd(SAP):      Action:
+		 * ------------------------------------
+		 * 2Ghz     2Ghz          Force SCC on 2Ghz
+		 * 5Ghz     5Ghz          Force SCC on 5Ghz for non SBS,
+		 *                        for SBS freq allow sap freq
+		 */
+		if (policy_mgr_are_sbs_chan(psoc, sap_ch_freq, *intf_ch_freq)) {
+			policy_mgr_debug("Do not overwrite as sap_ch_freq %d intf_ch_freq %d are SBS freq",
+					 sap_ch_freq, *intf_ch_freq);
+			*intf_ch_freq = 0;
+		}
+		return;
+	}
+	if (policy_mgr_is_hw_dbs_capable(psoc) ||
+	    cc_mode ==  QDF_MCC_TO_SCC_WITH_PREFERRED_BAND) {
+		/*
+		 * 1st:    2nd(SAP):      Action:
+		 * ------------------------------------
+		 * 2Ghz     5Ghz          Start on 5Ghz (DBS)
+		 * 5Ghz     2Ghz          Start on 2.4Ghz(DBS)
+		 */
+		/* Different bands can do DBS so dont overwrite */
+		*intf_ch_freq = 0;
+	}
+}
+
 void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 				      qdf_freq_t *intf_ch_freq,
 				      qdf_freq_t sap_ch_freq,
@@ -3497,6 +3665,8 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_conc_connection_info
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
 	uint8_t num_cxn_del = 0;
+	bool same_band_present = false;
+	bool sbs_mlo_present = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -3504,25 +3674,58 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	if (pm_ctx->hdd_cbacks.wlan_get_sap_acs_band) {
-		status = pm_ctx->hdd_cbacks.wlan_get_sap_acs_band(psoc,
-								  vdev_id,
-								  &acs_band);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			policy_mgr_debug("acs_band: %d", acs_band);
-	}
-
+	/* Always do force SCC on non-DBS platforms */
+	if (!policy_mgr_is_hw_dbs_capable(psoc) &&
+	    cc_mode !=  QDF_MCC_TO_SCC_WITH_PREFERRED_BAND)
+		return;
 	/*
-	 * Different band, this also means that there is only one interface
-	 * which is not on same band as csr_check_concurrent_channel_overlap
-	 * try to find same band vdev if available
+	 * If same band interface is present, as
+	 * csr_check_concurrent_channel_overlap try to find same band vdev
+	 * if available
 	 */
 	if ((WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq) &&
-	     !WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq)) ||
-	    (WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq) &&
-	     !WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq))) {
-		if (policy_mgr_is_current_hwmode_sbs(psoc))
+	     WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq)) ||
+	    (!WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq) &&
+	     !WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq)))
+		same_band_present = true;
+
+	/* Check if STA or SAP SBS MLO is present */
+	if (policy_mgr_is_hw_sbs_capable(psoc) &&
+	    (policy_mgr_is_mlo_in_mode_sbs(psoc, PM_STA_MODE,
+					   NULL, NULL) ||
+	     policy_mgr_is_mlo_in_mode_sbs(psoc, PM_SAP_MODE,
+					   NULL, NULL)))
+		sbs_mlo_present = true;
+
+	/*
+	 * Different band, this also mean that there is no other interface on
+	 * on same band as csr_check_concurrent_channel_overlap
+	 * try to find same band vdev if available.
+	 * this mean for DBS HW we can use the other available band and thus
+	 * set *intf_ch_freq = 0, to bring sap on sap_ch_freq.
+	 */
+	if (!same_band_present) {
+		if (policy_mgr_is_current_hwmode_sbs(psoc) || sbs_mlo_present)
 			goto sbs_check;
+		/*
+		 * #1 port:
+		 * 1st:    2nd(SAP):      Action:
+		 * ------------------------------------
+		 * 2Ghz     5Ghz          Start on 5Ghz(DBS)
+		 * 5Ghz     2Ghz          Start on 2.4Ghz(DBS)
+		 *
+		 * #2 port:
+		 * 1st:    2nd:           3rd(SAP):      Action:
+		 * -------------------------------------------------
+		 * 2Ghz    2Ghz(SMM/DBS)  5Ghz           Start on 5Ghz(DBS)
+		 * 5Ghz    5Ghz(SMM)      2Ghz           Start on 2.4Ghz(DBS)
+		 *
+		 * #3 port:
+		 * 1st:    2nd:    3rd:    4th(SAP)      Action:
+		 * -------------------------------------------------
+		 * 2Ghz    2Ghz    2Ghz   5Ghz           Start on 5Ghz(DBS)
+		 * 5Ghz    5Ghz    5Ghz   2Ghz           Start on 2.4Ghz(DBS)
+		 */
 		if (policy_mgr_is_hw_dbs_capable(psoc) ||
 		    cc_mode ==  QDF_MCC_TO_SCC_WITH_PREFERRED_BAND) {
 			*intf_ch_freq = 0;
@@ -3541,6 +3744,15 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("no mandatory channels (%d, %d)", sap_ch_freq,
 				 *intf_ch_freq);
 	}
+
+	if (pm_ctx->hdd_cbacks.wlan_get_sap_acs_band) {
+		status = pm_ctx->hdd_cbacks.wlan_get_sap_acs_band(psoc,
+								  vdev_id,
+								  &acs_band);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			policy_mgr_debug("acs_band: %d", acs_band);
+	}
+
 sbs_check:
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	/*
@@ -3549,9 +3761,10 @@ sbs_check:
 	 */
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id, info,
 						      &num_cxn_del);
+
 	/*
-	 * If at least one interface is in same band as the required freq, try
-	 * and set SBS/SCC.
+	 * If at least one interface is in same band OR HW mode is SBS OR
+	 * SBS MLO is present, try set SBS/DBS/SCC.
 	 */
 	num_connections = policy_mgr_get_connection_count(psoc);
 	policy_mgr_dump_sbs_freq_range(pm_ctx);
@@ -3561,38 +3774,23 @@ sbs_check:
 		*intf_ch_freq = 0;
 		break;
 	case 1:
-		/* Do not overwrite if the channel can create SBS */
-		if (policy_mgr_are_sbs_chan(psoc, sap_ch_freq,
-					    *intf_ch_freq)) {
-			policy_mgr_debug("Do not overwrite as sap_ch_freq %d intf_ch_freq %d are SBS freq",
-					 sap_ch_freq, *intf_ch_freq);
-			*intf_ch_freq = 0;
-		}
+		policy_mgr_check_force_scc_one_connection(psoc, intf_ch_freq,
+							  sap_ch_freq,
+							  same_band_present,
+							  cc_mode);
 		break;
 	case 2:
-		if (policy_mgr_is_current_hwmode_sbs(psoc)) {
-			if (WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq)) {
-				if (acs_band == QCA_ACS_MODE_IEEE80211ANY)
-					*intf_ch_freq =
-					policy_mgr_get_iface_5g_freq(psoc);
-				else
-				/* keep the sap req unchanged, MCC on MAC 0 */
-					*intf_ch_freq = 0;
-			} else {
-				*intf_ch_freq =
-					policy_mgr_get_iface_5g_freq(psoc);
-			}
-		} else if (policy_mgr_is_current_hwmode_dbs(psoc)) {
-			*intf_ch_freq =
-				policy_mgr_get_same_band_iface_frq(psoc,
-								   sap_ch_freq);
-		}
-		/* This mean Force SCC on *intf_ch_freq */
+		policy_mgr_check_force_scc_two_connection(psoc, intf_ch_freq,
+							  sap_ch_freq,
+							  cc_mode,
+							  same_band_present,
+							  acs_band);
 		break;
 	default:
+		policy_mgr_debug("invalid num_connections: %d",
+				 num_connections);
 		break;
 	}
-
 	/* Restore the connection entry */
 	if (num_cxn_del > 0)
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);

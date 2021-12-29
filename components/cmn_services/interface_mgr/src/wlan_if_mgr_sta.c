@@ -332,8 +332,8 @@ if_mgr_handle_sap_plus_sta_mlo_connect(struct wlan_objmgr_psoc *psoc,
 
 	if (!wlan_reg_is_24ghz_ch_freq(sap_freq_list[0]))
 		return;
-	is_mlo_sbs = policy_mgr_is_mlo_sta_sbs_link(psoc, mlo_vdev_lst,
-						    &num_mlo);
+	is_mlo_sbs = policy_mgr_is_mlo_in_mode_sbs(psoc, PM_STA_MODE,
+						   mlo_vdev_lst, &num_mlo);
 	if (num_mlo < 2)
 		return;
 
