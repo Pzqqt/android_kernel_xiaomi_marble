@@ -227,9 +227,10 @@
  * 3.101 Add HTT_UL_OFDMA_USER_INFO_V1_BITMAP defs.
  * 3.102 Add HTT_H2T_MSG_TYPE_MSI_SETUP def.
  * 3.103 Add HTT_T2H_SAWF_MSDUQ_INFO_IND defs.
+ * 3.104 Add mgmt/ctrl/data specs in rx ring cfg.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 103
+#define HTT_CURRENT_VERSION_MINOR 104
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -5538,10 +5539,31 @@ enum htt_srng_ring_id {
  *          b'27    - drop_thresh_valid (DT): flag to indicate if the
  *                    rx_drop_threshold field is valid
  *          b'28:31 - rsvd1:  reserved for future use
- * dword1 - b'0:16  - ring_buffer_size: size of bufferes referenced by rx ring,
+ * dword1 - b'0:15  - ring_buffer_size: size of bufferes referenced by rx ring,
  *                    in byte units.
  *                    Valid only for HW_TO_SW_RING and SW_TO_HW_RING
- *        - b'16:31 - rsvd2: Reserved for future use
+ *          b'16:18 - config_length_mgmt (MGMT):
+ *                    Represents the length of mpdu bytes for mgmt pkt.
+ *                    valid values:
+ *                    001 - 64bytes
+ *                    010 - 128bytes
+ *                    100 - 256bytes
+ *                    111 - Full mpdu bytes
+ *          b'19:21 - config_length_ctrl (CTRL):
+ *                    Represents the length of mpdu bytes for ctrl pkt.
+ *                    valid values:
+ *                    001 - 64bytes
+ *                    010 - 128bytes
+ *                    100 - 256bytes
+ *                    111 - Full mpdu bytes
+ *          b'22:24 - config_length_data (DATA):
+ *                    Represents the length of mpdu bytes for data pkt.
+ *                    valid values:
+ *                    001 - 64bytes
+ *                    010 - 128bytes
+ *                    100 - 256bytes
+ *                    111 - Full mpdu bytes
+ *          b'25:31 - rsvd2: Reserved for future use
  * dword2 - b'0:31  - packet_type_enable_flags_0:
  *                    Enable MGMT packet from 0b0000 to 0b1001
  *                    bits from low to high: FP, MD, MO - 3 bits
@@ -5608,34 +5630,61 @@ enum htt_srng_ring_id {
  *                    value.
  *        - b'10    - fp_ndp: Flag to indicate FP NDP status tlv is subscribed
  *                    by host. 1 -> subscribed
- *        - b`11    - mo_ndp: Flag to indicate MO NDP status tlv is subscribed
+ *        - b'11    - mo_ndp: Flag to indicate MO NDP status tlv is subscribed
  *                    by host. 1 -> subscribed
- *        - b`12    - fp_phy_err: Flag to indicate FP PHY status tlv is
+ *        - b'12    - fp_phy_err: Flag to indicate FP PHY status tlv is
  *                    subscribed by host. 1 -> subscribed
- *        - b`13:14 - fp_phy_err_buf_src: This indicates the source ring
+ *        - b'13:14 - fp_phy_err_buf_src: This indicates the source ring
  *                    selection for the FP PHY ERR status tlv.
  *                    0 - wbm2rxdma_buf_source_ring
  *                    1 - fw2rxdma_buf_source_ring
  *                    2 - sw2rxdma_buf_source_ring
  *                    3 - no_buffer_ring
- *        - b`15:16 - fp_phy_err_buf_dest: This indicates the destination ring
+ *        - b'15:16 - fp_phy_err_buf_dest: This indicates the destination ring
  *                    selection for the FP PHY ERR status tlv.
  *                    0 - rxdma_release_ring
  *                    1 - rxdma2fw_ring
  *                    2 - rxdma2sw_ring
  *                    3 - rxdma2reo_ring
- * dword12 - b'0:31 - phy_err_mask: This field is to select the fp phy errors
+ *        - b'17:19 - pkt_type_en_msdu_or_mpdu_logging
+ *                    b'17 - Enables MSDU/MPDU logging for frames of MGMT type
+ *                    b'18 - Enables MSDU/MPDU logging for frames of CTRL type
+ *                    b'19 - Enables MSDU/MPDU logging for frames of DATA type
+ *        - b'20    - dma_mpdu_mgmt: 1: MPDU level logging
+ *                                   0: MSDU level logging
+ *        - b'21    - dma_mpdu_ctrl: 1: MPDU level logging
+ *                                   0: MSDU level logging
+ *        - b'22    - dma_mpdu_data: 1: MPDU level logging
+ *                                   0: MSDU level logging
+ *        - b'23    - word_mask_compaction: enable/disable word mask for
+ *                    mpdu/msdu start/end tlvs
+ *        - b'24    - rbm_override_enable: enabling/disabling return buffer
+ *                    manager override
+ *        - b'25:28 - rbm_override_val: return buffer manager override value
+ * dword12- b'0:31  - phy_err_mask: This field is to select the fp phy errors
  *                    which have to be posted to host from phy.
  *                    Corresponding to errors defined in
  *                    phyrx_abort_request_reason enums 0 to 31.
  *                    Refer to RXPCU register definition header files for the
  *                    phyrx_abort_request_reason enum definition.
- * dword13 - b'0:31 - phy_err_mask_cont: This field is to select the fp phy
+ * dword13- b'0:31  - phy_err_mask_cont: This field is to select the fp phy
  *                    errors which have to be posted to host from phy.
  *                    Corresponding to errors defined in
  *                    phyrx_abort_request_reason enums 32 to 63.
  *                    Refer to RXPCU register definition header files for the
  *                    phyrx_abort_request_reason enum definition.
+ * dword14- b'0:15  - rx_mpdu_start_word_mask: word mask for rx mpdu start,
+ *                    applicable if word mask enabled
+ *        - b'16:31 - rx_mpdu_end_word_mask: word mask value for rx mpdu end,
+ *                    applicable if word mask enabled
+ * dword15- b'0:16  - rx_msdu_end_word_mask
+            b'17:31 - rsvd5
+ * dword17- b'0     - en_rx_tlv_pkt_offset:
+ *                    0:  RX_PKT TLV logging at offset 0 for the subsequent
+ *                        buffer
+ *                    1:  RX_PKT TLV logging at specified offset for the
+ *                        subsequent buffer
+ *          b`15:1  - rx_pkt_tlv_offset: Qword offset for rx_packet TLVs.
  */
 PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 msg_type:          8,
@@ -5647,7 +5696,10 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
              drop_thresh_valid: 1,
              rsvd1:             4;
     A_UINT32 ring_buffer_size: 16,
-             rsvd2:            16;
+             config_length_mgmt:3,
+             config_length_ctrl:3,
+             config_length_data:3,
+             rsvd2:             7;
     A_UINT32 packet_type_enable_flags_0;
     A_UINT32 packet_type_enable_flags_1;
     A_UINT32 packet_type_enable_flags_2;
@@ -5667,9 +5719,23 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
              fp_phy_err:           1,
              fp_phy_err_buf_src:   2,
              fp_phy_err_buf_dest:  2,
-             rsvd4:                15;
+             pkt_type_enable_msdu_or_mpdu_logging:3,
+             dma_mpdu_mgmt:        1,
+             dma_mpdu_ctrl:        1,
+             dma_mpdu_data:        1,
+             word_mask_compaction_enable:1,
+             rbm_override_enable:  1,
+             rbm_override_val:     4,
+             rsvd4:                3;
     A_UINT32 phy_err_mask;
     A_UINT32 phy_err_mask_cont;
+    A_UINT32 rx_mpdu_start_word_mask:16,
+             rx_mpdu_end_word_mask:  16;
+    A_UINT32 rx_msdu_end_word_mask:  17,
+             rsvd5:                  15;
+    A_UINT32 en_rx_tlv_pkt_offset:   1,
+             rx_pkt_tlv_offset:      15,
+             rsvd6:                  16;
 } POSTPACK;
 
 #define HTT_RX_RING_SELECTION_CFG_SZ    (sizeof(struct htt_rx_ring_selection_cfg_t))
@@ -5750,6 +5816,40 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
                 HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE, _val);  \
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_S)); \
             } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_M         0x00070000
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_S         16
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_S)
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_M         0x00380000
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_S         19
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_S)
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA_M         0x01C00000
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA_S         22
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA_S)
+#define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_DATA_S)); \
+            } while (0)
+
 
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG_0_M     0xffffffff
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG_0_S     0
@@ -5949,6 +6049,87 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_FP_PHY_ERR_BUF_DEST_S)); \
             } while (0)
 
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING_M   0x000E0000
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING_S   17
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING_GET(_var) \
+        (((_var) & HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING_M) >> \
+            HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING_S)
+#define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING_SET(_var, _val) \
+       do { \
+        HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING, _val); \
+        ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_MSDU_MPDU_LOGGING_S)); \
+       } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT_M   0x00100000
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT_S   20
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT_M) >> \
+                        HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT_S)
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT_SET(_var, _val) \
+           do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_DMA_MPDU_MGMT_S)); \
+           } while (0)
+
+
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL_M   0x00200000
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL_S   21
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL_M) >> \
+                        HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL_S)
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL_SET(_var, _val) \
+           do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_DMA_MPDU_CTRL_S)); \
+           } while (0)
+
+
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA_M   0x00400000
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA_S   22
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA_M) >> \
+                        HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA_S)
+#define HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA_SET(_var, _val) \
+           do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_DMA_MPDU_DATA_S)); \
+           } while (0)
+
+
+#define HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE_M   0x00800000
+#define HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE_S   23
+#define HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE_GET(_var) \
+         (((_var) & HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE_M) >> \
+            HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE_S)
+#define HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE_SET(_var, _val) \
+        do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE, _val); \
+        ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_WORD_MASK_COMPACTION_ENABLE_S)); \
+        } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE_M   0x01000000
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE_S   24
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE_GET(_var) \
+         (((_var) &  HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE_M) >> \
+            HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE_S)
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE_SET(_var, _val) \
+         do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE, _val);\
+        ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_ENABLE_S)); \
+             } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE_M 0x1E000000
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE_S 25
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE_GET(_var) \
+        (((_var) & HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE_M) >> \
+        HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE_S)
+#define HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE_SET(_var, _val) \
+         do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE, _val);\
+         ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RBM_OVERRIDE_VALUE_S));\
+         } while (0)
+
+
 #define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_M         0xffffffff
 #define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_S         0
 #define HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_GET(_var) \
@@ -5970,6 +6151,61 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
                 HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT, _val); \
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_PHY_ERR_MASK_CONT_S)); \
             } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_M 0x0000FFFF
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S 0
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_GET(_var) \
+       (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_M)>> \
+        HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_SET(_var, _val) \
+       do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)); \
+       } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M 0xFFFF0000
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_S 16
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_GET(_var) \
+       (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M)>> \
+        HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_SET(_var, _val) \
+       do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)); \
+       } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_M 0x0001FFFF
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_S 0
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_GET(_var) \
+           (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_M)>> \
+                HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_SET(_var, _val) \
+           do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK, _val);\
+                 ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_S)); \
+           } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET_M 0x00000001
+#define HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET_S 0
+#define HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET_GET(_var) \
+    (((_var) & HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET_M)>> \
+        HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET_S)
+#define HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET, _val); \
+        ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_ENABLE_RX_PKT_TLV_OFFSET_S)); \
+    } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_M 0x0000FFFE
+#define HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_S 1
+#define HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_GET(_var) \
+    (((_var) & HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_M)>> \
+        HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET, _val); \
+        ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_PKT_TLV_OFFSET_S)); \
+    } while (0)
 
 
 /*
