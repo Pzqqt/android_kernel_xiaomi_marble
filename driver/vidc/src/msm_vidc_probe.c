@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2022, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/workqueue.h>
@@ -291,6 +291,7 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	}
 
 	mutex_init(&core->lock);
+	init_completion(&core->init_done);
 	INIT_LIST_HEAD(&core->instances);
 	INIT_LIST_HEAD(&core->dangling_instances);
 
