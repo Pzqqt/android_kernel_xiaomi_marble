@@ -2341,16 +2341,7 @@ static int proc_sram_info_rqst(
 	return 0;
 }
 
-static void ipa3_mac_flt_list_free_cb(void *buff, u32 len, u32 type)
-{
-	if (!buff) {
-		IPAERR("Null buffer\n");
-		return;
-	}
-	kfree(buff);
-}
-
-static void ipa3_pkt_threshold_free_cb(void *buff, u32 len, u32 type)
+static void ipa3_general_free_cb(void *buff, u32 len, u32 type)
 {
 	if (!buff) {
 		IPAERR("Null buffer\n");
@@ -2384,7 +2375,7 @@ static int ipa3_send_mac_flt_list(unsigned long usr_param)
 		((struct ipa_ioc_mac_client_list_type *)buff)->flt_state);
 
 	retval = ipa3_send_msg(&msg_meta, buff,
-		ipa3_mac_flt_list_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2448,7 +2439,7 @@ static int ipa3_send_pkt_threshold(unsigned long usr_param)
 		((struct ipa_set_pkt_threshold *)buff2)->pkt_threshold);
 
 	retval = ipa3_send_msg(&msg_meta, buff2,
-		ipa3_pkt_threshold_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2512,7 +2503,7 @@ static int ipa3_send_sw_flt_list(unsigned long usr_param)
 		((struct ipa_sw_flt_list_type *)buff)->iface_enable);
 
 	retval = ipa3_send_msg(&msg_meta, buff,
-		ipa3_mac_flt_list_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2571,7 +2562,7 @@ static int ipa3_send_ippt_sw_flt_list(unsigned long usr_param)
 		((struct ipa_ippt_sw_flt_list_type *)buff)->port_enable);
 
 	retval = ipa3_send_msg(&msg_meta, buff,
-		ipa3_mac_flt_list_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2580,6 +2571,46 @@ static int ipa3_send_ippt_sw_flt_list(unsigned long usr_param)
 		return retval;
 	}
 	return 0;
+}
+
+/**
+ * ipa3_send_macsec_info() - Pass macsec mapping to the IPACM
+ * @event_type: Type of the event - UP or DOWN
+ * @map: pointer to macsec to eth mapping structure
+ *
+ * Returns: 0 on success, negative on failure
+ */
+int ipa3_send_macsec_info(enum ipa_macsec_event event_type, struct ipa_macsec_map *map)
+{
+	struct ipa_msg_meta msg_meta;
+	int res = 0;
+
+	if (!map) {
+		IPAERR("Bad arg: info is NULL\n");
+		res = -EIO;
+		goto done;
+	}
+
+	/*
+	 * Prep and send msg to ipacm
+	 */
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = event_type;
+	msg_meta.msg_len  = sizeof(struct ipa_macsec_map);
+
+	/*
+	 * Post event to ipacm
+	 */
+	res = ipa3_send_msg(&msg_meta, map, ipa3_general_free_cb);
+
+	if (res) {
+		IPAERR_RL("ipa3_send_msg failed: %d\n", res);
+		kfree(map);
+		goto done;
+	}
+
+done:
+	return res;
 }
 
 static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -2600,6 +2631,8 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	struct ipa_ioc_get_vlan_mode vlan_mode;
 	struct ipa_ioc_wigig_fst_switch fst_switch;
 	struct ipa_ioc_eogre_info eogre_info;
+	struct ipa_ioc_macsec_info macsec_info;
+	struct ipa_macsec_map *macsec_map;
 	bool send2uC, send2ipacm;
 	size_t sz;
 	int pre_entry;
@@ -3982,6 +4015,47 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			IPAERR("ipa_flt_sram_set_client_prio_high failed! retval=%d\n", retval);
 		break;
 #endif
+
+	case IPA_IOC_ADD_MACSEC_MAPPING:
+	case IPA_IOC_DEL_MACSEC_MAPPING:
+		IPADBG("Got %s\n", cmd == IPA_IOC_ADD_MACSEC_MAPPING ?
+			"IPA_IOC_ADD_MACSEC_MAPPING" : "IPA_IOC_DEL_MACSEC_MAPPING");
+		if (copy_from_user(&macsec_info, (const void __user *) arg,
+			sizeof(struct ipa_ioc_macsec_info))) {
+			IPAERR_RL("copy_from_user for ipa_ioc_macsec_info fails\n");
+			retval = -EFAULT;
+			break;
+		}
+
+		/* Validate the input */
+		if (macsec_info.ioctl_data_size != sizeof(struct ipa_macsec_map)) {
+			IPAERR_RL("data size missmatch\n");
+			retval = -EFAULT;
+			break;
+		}
+
+		macsec_map = kzalloc(sizeof(struct ipa_macsec_map), GFP_KERNEL);
+		if (!macsec_map) {
+			IPAERR("macsec_map memory allocation failed !\n");
+			retval = -ENOMEM;
+			break;
+		}
+
+		if (copy_from_user(macsec_map, (const void __user *)(macsec_info.ioctl_ptr),
+			sizeof(struct ipa_macsec_map))) {
+			IPAERR_RL("copy_from_user for ipa_macsec_map fails\n");
+			retval = -EFAULT;
+			kfree(macsec_map);
+			break;
+		}
+
+		/* Send message to the IPACM */
+		ipa3_send_macsec_info(
+			(cmd == IPA_IOC_ADD_MACSEC_MAPPING) ?
+			IPA_MACSEC_ADD_EVENT : IPA_MACSEC_DEL_EVENT,
+			macsec_map);
+		break;
+
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		return -ENOTTY;
