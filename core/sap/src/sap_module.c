@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1745,79 +1745,6 @@ void wlansap_get_sec_channel(uint8_t sec_ch_offset,
 	}
 }
 
-static void
-wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
-				  struct sap_context *sap_ctx)
-{
-	bool is_ch_dfs = false;
-	bool cac_required;
-	uint32_t chan_freq;
-	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint32_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint8_t sta_cnt, i;
-
-	chan_freq = sap_ctx->chan_freq;
-	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
-		is_ch_dfs = true;
-	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
-		if (wlan_reg_get_channel_state_for_freq(
-						mac_ctx->pdev,
-						sap_ctx->chan_freq) ==
-		    CHANNEL_STATE_DFS ||
-		    wlan_reg_get_channel_state_for_freq(
-					mac_ctx->pdev,
-					sap_ctx->ch_params.mhz_freq_seg1) ==
-				CHANNEL_STATE_DFS)
-			is_ch_dfs = true;
-	} else {
-		if (wlan_reg_get_channel_state_for_freq(
-						mac_ctx->pdev,
-						sap_ctx->chan_freq) ==
-		    CHANNEL_STATE_DFS)
-			is_ch_dfs = true;
-	}
-	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ctx->chan_freq))
-		is_ch_dfs = false;
-
-	sap_debug("vdev id %d chan %d is_ch_dfs %d pre_cac_complete %d ignore_cac %d cac_state %d",
-		  sap_ctx->sessionId, chan_freq, is_ch_dfs,
-		  sap_ctx->pre_cac_complete, mac_ctx->sap.SapDfsInfo.ignore_cac,
-		  mac_ctx->sap.SapDfsInfo.cac_state);
-
-	if (!is_ch_dfs || sap_ctx->pre_cac_complete ||
-	    mac_ctx->sap.SapDfsInfo.ignore_cac ||
-	    (mac_ctx->sap.SapDfsInfo.cac_state == eSAP_DFS_SKIP_CAC))
-		cac_required = false;
-	else
-		cac_required = true;
-
-	if (cac_required) {
-		sta_cnt =
-		  policy_mgr_get_mode_specific_conn_info(mac_ctx->psoc,
-							 freq_list,
-							 vdev_id_list,
-							 PM_STA_MODE);
-
-		for (i = 0; i < sta_cnt; i++) {
-			if (sap_ctx->chan_freq == freq_list[i]) {
-				sap_debug("STA vdev id %d exists, ignore CAC",
-					  vdev_id_list[i]);
-				cac_required = false;
-			}
-		}
-	}
-
-	/* Update cac_duration_ms & dfs_region in sap_ctx for new channel,
-	 * no matter CAC required or not.
-	 * For ETSI, CAC duration is different between DFS and weather channel.
-	 */
-	sap_get_cac_dur_dfs_region(sap_ctx,
-				   &sap_ctx->csr_roamProfile.cac_duration_ms,
-				   &sap_ctx->csr_roamProfile.dfs_regdomain);
-
-	mlme_set_cac_required(sap_ctx->vdev, cac_required);
-}
-
 QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 					  uint32_t target_chan_freq)
 {
@@ -1880,7 +1807,13 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 				&sap_ctx->sec_ch_freq);
 	sap_ctx->csr_roamProfile.ch_params = *ch_params;
 	sap_dfs_set_current_channel(sap_ctx);
-	wlansap_set_cac_required_for_chan(mac_ctx, sap_ctx);
+
+	sap_get_cac_dur_dfs_region(sap_ctx,
+				   &sap_ctx->csr_roamProfile.cac_duration_ms,
+				   &sap_ctx->csr_roamProfile.dfs_regdomain,
+				   sap_ctx->chan_freq, &sap_ctx->ch_params);
+	mlme_set_cac_required(sap_ctx->vdev,
+			      !!sap_ctx->csr_roamProfile.cac_duration_ms);
 
 	status = sme_roam_channel_change_req(MAC_HANDLE(mac_ctx),
 					     sap_ctx->bssid,
@@ -1929,6 +1862,8 @@ QDF_STATUS wlansap_start_beacon_req(struct sap_context *sap_ctx)
 QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
+	uint32_t new_cac_ms;
+	uint32_t dfs_region;
 
 	if (!sap_ctx) {
 		sap_err("Invalid SAP pointer");
@@ -1947,17 +1882,23 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 			mac->sap.SapDfsInfo.target_chan_freq,
 			0, &mac->sap.SapDfsInfo.new_ch_params);
 
-	sap_debug("chan freq:%d req:%d width:%d off:%d",
+	sap_get_cac_dur_dfs_region(sap_ctx, &new_cac_ms, &dfs_region,
+				   mac->sap.SapDfsInfo.target_chan_freq,
+				   &mac->sap.SapDfsInfo.new_ch_params);
+	mlme_set_cac_required(sap_ctx->vdev, !!new_cac_ms);
+	sap_debug("chan freq:%d req:%d width:%d off:%d cac %d",
 		  mac->sap.SapDfsInfo.target_chan_freq,
 		  mac->sap.SapDfsInfo.csaIERequired,
 		  mac->sap.SapDfsInfo.new_ch_params.ch_width,
-		  mac->sap.SapDfsInfo.new_ch_params.sec_ch_offset);
+		  mac->sap.SapDfsInfo.new_ch_params.sec_ch_offset,
+		  new_cac_ms);
 
 	return sme_roam_csa_ie_request(MAC_HANDLE(mac),
 				       sap_ctx->bssid,
 				       mac->sap.SapDfsInfo.target_chan_freq,
 				       mac->sap.SapDfsInfo.csaIERequired,
-				       &mac->sap.SapDfsInfo.new_ch_params);
+				       &mac->sap.SapDfsInfo.new_ch_params,
+				       new_cac_ms);
 }
 
 QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,

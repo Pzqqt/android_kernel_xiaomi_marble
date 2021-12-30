@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,6 +78,7 @@
 #endif
 #include "wlan_cmn_ieee80211.h"
 #include <wlan_cm_api.h>
+#include <wlan_vdev_mgr_utils_api.h>
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -9778,7 +9779,8 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 				session->beaconParams.beaconInterval;
 	if (mlme_obj->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_AP) {
 		mlme_obj->mgmt.ap.hidden_ssid = session->ssidHidden;
-		mlme_obj->mgmt.ap.cac_duration_ms = session->cac_duration_ms;
+		wlan_util_vdev_mgr_set_cac_timeout_for_vdev(
+				mlme_obj->vdev, session->cac_duration_ms);
 	}
 	mlme_obj->proto.generic.dtim_period = session->dtimPeriod;
 	mlme_obj->proto.generic.slot_time = session->shortSlotTimeSupported;

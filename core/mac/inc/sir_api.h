@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2367,6 +2367,7 @@ typedef struct sSirDfsCsaIeRequest {
 	uint8_t  ch_switch_beacon_cnt;
 	uint8_t  ch_switch_mode;
 	uint8_t  dfs_ch_switch_disable;
+	uint32_t new_chan_cac_ms;
 } tSirDfsCsaIeRequest, *tpSirDfsCsaIeRequest;
 
 /* Indication from lower layer indicating the completion of first beacon send

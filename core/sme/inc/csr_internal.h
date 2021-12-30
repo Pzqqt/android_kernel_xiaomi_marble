@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -582,11 +583,27 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 QDF_STATUS csr_roam_start_beacon_req(struct mac_context *mac,
 		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
 
+/**
+ * csr_roam_send_chan_sw_ie_request() - Request to transmit CSA IE
+ * @mac_ctx:        Global MAC context
+ * @bssid:          BSSID
+ * @target_chan_freq: Channel frequency on which to send the IE
+ * @csa_ie_reqd:    Include/Exclude CSA IE.
+ * @ch_params:  operating Channel related information
+ * @new_cac_ms: cac duration of new channel
+ *
+ * This function sends request to transmit channel switch announcement
+ * IE to lower layers
+ *
+ * Return: success or failure
+ **/
 QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac,
 					    struct qdf_mac_addr bssid,
 					    uint32_t target_chan_freq,
 					    uint8_t csaIeReqd,
-					    struct ch_params *ch_params);
+					    struct ch_params *ch_params,
+					    uint32_t new_cac_ms);
+
 QDF_STATUS csr_roam_modify_add_ies(struct mac_context *mac,
 					tSirModifyIE *pModifyIE,
 				   eUpdateIEsType updateType);

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,6 +66,7 @@
 #include "wlan_lmac_if_def.h"
 #include "wlan_reg_services_api.h"
 #include <lim_mlo.h>
+#include <wlan_vdev_mgr_utils_api.h>
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
@@ -8688,6 +8689,9 @@ skip_vht:
 				      MAX_WAKELOCK_FOR_CSA);
 	qdf_runtime_pm_prevent_suspend(&session_entry->ap_ecsa_runtime_lock);
 
+	session_entry->cac_duration_ms = dfs_csa_ie_req->new_chan_cac_ms;
+	wlan_util_vdev_mgr_set_cac_timeout_for_vdev(
+		session_entry->vdev, dfs_csa_ie_req->new_chan_cac_ms);
 	/* Send CSA IE request from here */
 	lim_send_dfs_chan_sw_ie_update(mac_ctx, session_entry);
 
