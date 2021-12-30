@@ -5347,6 +5347,7 @@ typedef enum {
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	wmi_service_dynamic_update_vdev_macaddr_support,
 #endif
+	wmi_service_pno_scan_conf_per_ch_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

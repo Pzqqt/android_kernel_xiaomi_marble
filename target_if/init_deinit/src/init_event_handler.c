@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -208,6 +208,11 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 				wmi_service_scan_conf_per_ch_support))
 		wlan_psoc_nif_fw_ext_cap_set(psoc,
 					     WLAN_SOC_CEXT_SCAN_PER_CH_CONFIG);
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_pno_scan_conf_per_ch_support))
+		wlan_psoc_nif_fw_ext_cap_set(psoc,
+					WLAN_SOC_PNO_SCAN_CONFIG_PER_CHANNEL);
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_csa_beacon_template))
 		wlan_psoc_nif_fw_ext_cap_set(psoc,
