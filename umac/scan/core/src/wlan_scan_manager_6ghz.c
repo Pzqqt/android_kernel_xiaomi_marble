@@ -250,6 +250,7 @@ scm_is_scan_type_exempted_from_optimization(struct scan_start_request *req)
  * @vdev: vdev on which scan request is issued
  * @req: Scan start request
  * @num_scan_ch: Total number of scan channels
+ * @is_colocated_6ghz_scan_enabled: colocated 6ghz scan flag enabled in scan req
  *
  * If colocated 6ghz scan flag present in host scan request or at least one 6G
  * channel is present in the host scan request, then this API
@@ -260,13 +261,13 @@ scm_is_scan_type_exempted_from_optimization(struct scan_start_request *req)
  *
  * Return: None
  */
-static void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
-					  struct scan_start_request *req,
-					  uint8_t *num_scan_ch)
+void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
+				   struct chan_list *chan_list,
+				   uint8_t *num_scan_ch,
+				   bool is_colocated_6ghz_scan_enabled)
 {
 	uint8_t i, j;
 	enum channel_enum freq_idx;
-	struct chan_list *chan_list = &req->scan_req.chan_list;
 	struct regulatory_channel *cur_chan_list;
 	bool is_6g_ch_present = false, found;
 	QDF_STATUS status;
@@ -281,8 +282,7 @@ static void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
 		}
 	}
 
-	if (!is_6g_ch_present &&
-	    !req->scan_req.scan_policy_colocated_6ghz) {
+	if (!is_6g_ch_present && !is_colocated_6ghz_scan_enabled) {
 		scm_debug("Neither 6G chan present nor flag set in scan req");
 		return;
 	}
@@ -329,6 +329,18 @@ static void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
 		  chan_list->num_chan);
 	*num_scan_ch = chan_list->num_chan;
 	qdf_mem_free(cur_chan_list);
+}
+
+static void scm_scan_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
+					       struct scan_start_request *req,
+					       uint8_t *num_scan_ch)
+{
+	bool is_colocated_6ghz_scan_enabled =
+		req->scan_req.scan_policy_colocated_6ghz;
+
+	scm_add_all_valid_6g_channels(pdev, &req->scan_req.chan_list,
+				      num_scan_ch,
+				      is_colocated_6ghz_scan_enabled);
 }
 
 static void
@@ -513,7 +525,7 @@ scm_update_6ghz_channel_list(struct scan_start_request *req,
 		 * set the flag FLAG_SCAN_ONLY_IF_RNR_FOUND for each remaining
 		 * channels.
 		 */
-		scm_add_all_valid_6g_channels(pdev, req, &num_scan_ch);
+		scm_scan_add_all_valid_6g_channels(pdev, req, &num_scan_ch);
 		break;
 	default:
 		/*
