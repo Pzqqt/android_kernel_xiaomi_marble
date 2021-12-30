@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -430,8 +431,10 @@ static int msm_drm_uninit(struct device *dev)
 	drm_atomic_helper_shutdown(ddev);
 	drm_irq_uninstall(ddev);
 
-	if (kms && kms->funcs)
+	if (kms && kms->funcs) {
 		kms->funcs->destroy(kms);
+		priv->kms = NULL;
+	}
 
 	if (priv->vram.paddr) {
 		unsigned long attrs = DMA_ATTR_NO_KERNEL_MAPPING;
@@ -1006,11 +1009,13 @@ static void msm_postclose(struct drm_device *dev, struct drm_file *file)
 static void msm_lastclose(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
+	struct msm_kms *kms;
 	int i, rc;
 
-	if (!kms)
+	if (!priv || !priv->kms)
 		return;
+
+	kms = priv->kms;
 
 	/* check for splash status before triggering cleanup
 	 * if we end up here with splash status ON i.e before first
