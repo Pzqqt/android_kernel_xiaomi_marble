@@ -84,6 +84,7 @@
 #include <qdf_notifier.h>
 #include <qwlan_version.h>
 #include <qdf_trace.h>
+#include <qdf_nbuf.h>
 
 /* Preprocessor Definitions and Constants */
 
@@ -1451,6 +1452,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 {
 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
+
+	qdf_nbuf_stop_replenish_timer();
 
 	dp_txrx_deinit(cds_get_context(QDF_MODULE_ID_SOC));
 
