@@ -4218,4 +4218,13 @@ static inline void qdf_set_smmu_fault_state(bool smmu_fault_state)
 #else
 #include <i_qdf_nbuf_api_m.h>
 #endif
+
+/**
+ * qdf_nbuf_stop_replenish_timer - Stop alloc fail replenish timer
+ *
+ * This function stops the alloc fail replenish timer.
+ *
+ * Return: void
+ */
+void qdf_nbuf_stop_replenish_timer(void);
 #endif /* _QDF_NBUF_H */
