@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -648,6 +648,18 @@ QDF_STATUS wlan_mlo_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc);
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlo_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlo_mgr_update_mld_addr() - Update MLD MAC address
+ * @old_mac: Old MLD MAC address
+ * @new_mac: New MLD MAC address
+ *
+ * API to update MLD MAC address once ML dev context is created.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlo_mgr_update_mld_addr(struct qdf_mac_addr *old_mac,
+					struct qdf_mac_addr *new_mac);
 #else
 static inline QDF_STATUS wlan_mlo_mgr_init(void)
 {
@@ -655,6 +667,13 @@ static inline QDF_STATUS wlan_mlo_mgr_init(void)
 }
 
 static inline QDF_STATUS wlan_mlo_mgr_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+wlan_mlo_mgr_update_mld_addr(struct qdf_mac_addr *old_mac,
+			     struct qdf_mac_addr *new_mac)
 {
 	return QDF_STATUS_SUCCESS;
 }
