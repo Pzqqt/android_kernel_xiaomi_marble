@@ -78,6 +78,7 @@
 #include "wlan_cm_roam_ucfg_api.h"
 #include <cm_utf.h>
 #include <wlan_mlo_mgr_sta.h>
+#include <wlan_mlo_mgr_main.h>
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -16192,10 +16193,19 @@ QDF_STATUS sme_update_vdev_mac_addr(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* Update VDEV MAC address */
-	if ((vdev_opmode == QDF_STA_MODE) && sme_is_11be_capable())
+	if ((vdev_opmode == QDF_STA_MODE) && sme_is_11be_capable()) {
+		if (update_sta_self_peer) {
+			qdf_ret_status = wlan_mlo_mgr_update_mld_addr(
+					    (struct qdf_mac_addr *)
+					       wlan_vdev_mlme_get_mldaddr(vdev),
+					    &mac_addr);
+			if (QDF_IS_STATUS_ERROR(qdf_ret_status))
+				return qdf_ret_status;
+		}
 		wlan_vdev_mlme_set_mldaddr(vdev, mac_addr.bytes);
-	else
+	} else {
 		wlan_vdev_mlme_set_macaddr(vdev, mac_addr.bytes);
+	}
 
 p2p_self_peer_create:
 	if (vdev_opmode == QDF_P2P_DEVICE_MODE) {
