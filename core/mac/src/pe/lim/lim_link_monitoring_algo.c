@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -459,8 +459,6 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 				   struct pe_session *session)
 {
-	tpSirAddie scan_ie = NULL;
-
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	host_log_beacon_update_pkt_type *log_ptr = NULL;
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -494,49 +492,19 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 		mac_ctx->lim.gLimHBfailureCntInLinkEstState++;
 
 		/*
-		 * Check if connected on the DFS channel, if not connected on
-		 * DFS channel then only send the probe request otherwise tear
-		 * down the link
+		 * Before host received beacon miss, firmware has checked link
+		 * by sending QoS NULL data, don't need host send probe req.
+		 * Some IoT AP can send probe response, but can't send beacon
+		 * sometimes, need disconnect too, or firmware will assert.
 		 */
-		if (!lim_isconnected_on_dfs_freq(mac_ctx,
-						 session->curr_op_freq)) {
-			/* Detected continuous Beacon Misses */
-			session->LimHBFailureStatus = true;
-
-			/*Reset the HB packet count before sending probe*/
-			limResetHBPktCount(session);
-			/**
-			 * Send Probe Request frame to AP to see if
-			 * it is still around. Wait until certain
-			 * timeout for Probe Response from AP.
-			 */
-			pe_debug("HB missed from AP. Sending Probe Req");
-			/* for searching AP, we don't include any more IE */
-			if (session->lim_join_req) {
-				scan_ie = &session->lim_join_req->addIEScan;
-				lim_send_probe_req_mgmt_frame(mac_ctx,
-					&session->ssId,
-					session->bssId, session->curr_op_freq,
-					session->self_mac_addr,
-					session->dot11mode,
-					&scan_ie->length, scan_ie->addIEdata);
-			} else {
-				lim_send_probe_req_mgmt_frame(mac_ctx,
-					&session->ssId,
-					session->bssId, session->curr_op_freq,
-					session->self_mac_addr,
-					session->dot11mode, NULL, NULL);
-			}
-		} else {
-			/*
-			 * Connected on DFS channel so should not send the
-			 * probe request tear down the link directly
-			 */
-			lim_tear_down_link_with_ap(mac_ctx,
-				session->peSessionId,
-				REASON_BEACON_MISSED,
-				eLIM_LINK_MONITORING_DEAUTH);
-		}
+		lim_send_deauth_mgmt_frame(mac_ctx,
+					   REASON_DISASSOC_DUE_TO_INACTIVITY,
+					   session->bssId,
+					   session, false);
+		lim_tear_down_link_with_ap(mac_ctx,
+					   session->peSessionId,
+					   REASON_BEACON_MISSED,
+					   eLIM_LINK_MONITORING_DEAUTH);
 	} else {
 		/**
 		 * Heartbeat timer may have timed out
