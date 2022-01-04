@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,6 +40,7 @@
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_ap.h>
 #endif
+#include <wlan_vdev_mgr_utils_api.h>
 
 #ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
 /**
@@ -324,6 +325,22 @@ vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *mlme_obj,
 }
 #endif
 
+#ifdef MOBILE_DFS_SUPPORT
+static void
+vdev_mgr_start_param_update_cac_ms(struct wlan_objmgr_vdev *vdev,
+				   struct vdev_start_params *param)
+{
+	param->cac_duration_ms =
+			wlan_util_vdev_mgr_get_cac_timeout_for_vdev(vdev);
+}
+#else
+static void
+vdev_mgr_start_param_update_cac_ms(struct wlan_objmgr_vdev *vdev,
+				   struct vdev_start_params *param)
+{
+}
+#endif
+
 static QDF_STATUS vdev_mgr_start_param_update(
 					struct vdev_mlme_obj *mlme_obj,
 					struct vdev_start_params *param)
@@ -437,7 +454,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 
 	if (mlme_obj->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_AP) {
 		param->hidden_ssid = mlme_obj->mgmt.ap.hidden_ssid;
-		param->cac_duration_ms = mlme_obj->mgmt.ap.cac_duration_ms;
+		vdev_mgr_start_param_update_cac_ms(vdev, param);
 	}
 	wlan_vdev_mlme_get_ssid(vdev, param->ssid.ssid, &param->ssid.length);
 
