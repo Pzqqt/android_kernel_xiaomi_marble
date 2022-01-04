@@ -78,7 +78,7 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_QCA6750 23
 #define HIF_TYPE_QCA5018 24
 #define HIF_TYPE_QCN6122 25
-#define HIF_TYPE_WCN7850 26
+#define HIF_TYPE_KIWI 26
 #define HIF_TYPE_QCN9224 27
 #define HIF_TYPE_QCA9574 28
 

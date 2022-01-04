@@ -1466,8 +1466,8 @@ static struct CE_pipe_config target_ce_config_wlan_qca6750[] = {
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 
-#define WCN_7850_CE_COUNT 9
-static struct CE_attr host_ce_config_wlan_wcn7850[] = {
+#define KIWI_CE_COUNT 9
+static struct CE_attr host_ce_config_wlan_kiwi[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
 	/* target->host HTT + HTC control */
@@ -1495,7 +1495,7 @@ static struct CE_attr host_ce_config_wlan_wcn7850[] = {
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 
-static struct CE_pipe_config target_ce_config_wlan_wcn7850[] = {
+static struct CE_pipe_config target_ce_config_wlan_kiwi[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host HTT */

@@ -129,7 +129,7 @@ static inline int cdp_get_arch_type_from_devid(uint16_t devid)
 	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
 		return CDP_ARCH_TYPE_LI;
 	case BERYLLIUM_DP:
-	case WCN7850_DEVICE_ID:
+	case KIWI_DEVICE_ID:
 	case QCN9224_DEVICE_ID:
 		return CDP_ARCH_TYPE_BE;
 	default:
@@ -172,7 +172,7 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE4: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
-	case WCN7850_DEVICE_ID:
+	case KIWI_DEVICE_ID:
 	case QCN9224_DEVICE_ID:
 		return dp_soc_attach_wifi3(psoc, &params);
 	break;

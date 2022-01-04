@@ -1266,7 +1266,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		qdf_mem_dp_tx_skb_inc(qdf_nbuf_get_end_offset(nbuf));
 
 		/*
-		 * TODO - WCN7850 code can directly call the be handler
+		 * TODO - KIWI code can directly call the be handler
 		 * instead of hal soc ops.
 		 */
 		hal_rxdma_buff_addr_info_set(soc->hal_soc, ring_entry,
@@ -1881,7 +1881,7 @@ static void dp_ipa_wdi_tx_params(struct dp_soc *soc,
 		(uint8_t *)QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx);
 	desc_size = sizeof(struct tcl_data_cmd);
 #ifndef DP_BE_WAR
-	/* TODO - WCN7850 does not have these fields */
+	/* TODO - KIWI does not have these fields */
 	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
 #endif
 	tcl_desc_ptr = (struct tcl_data_cmd *)
@@ -1889,7 +1889,7 @@ static void dp_ipa_wdi_tx_params(struct dp_soc *soc,
 	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
 		HAL_RX_BUF_RBM_SW2_BM(soc->wbm_sw0_bm_id);
 #ifndef DP_BE_WAR
-	/* TODO - WCN7850 does not have these fields */
+	/* TODO - KIWI does not have these fields */
 	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
 	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
 	tcl_desc_ptr->packet_offset = 2;	/* padding for alignment */
@@ -1984,7 +1984,7 @@ dp_ipa_wdi_tx_smmu_params(struct dp_soc *soc,
 			tx_smmu);
 	desc_size = sizeof(struct tcl_data_cmd);
 #ifndef DP_BE_WAR
-	/* TODO - WCN7850 does not have these fields */
+	/* TODO - KIWI does not have these fields */
 	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
 #endif
 	tcl_desc_ptr = (struct tcl_data_cmd *)
@@ -1992,7 +1992,7 @@ dp_ipa_wdi_tx_smmu_params(struct dp_soc *soc,
 	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
 		HAL_RX_BUF_RBM_SW2_BM(soc->wbm_sw0_bm_id);
 #ifndef DP_BE_WAR
-	/* TODO - WCN7850 does not have these fields */
+	/* TODO - KIWI does not have these fields */
 	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
 	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
 	tcl_desc_ptr->packet_offset = 2;	/* padding for alignment */

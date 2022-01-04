@@ -45,7 +45,7 @@
 #include "hif_debug.h"
 
 #if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
-	defined(QCA_WIFI_WCN7850))
+	defined(QCA_WIFI_KIWI))
 #include "hal_api.h"
 #endif
 
@@ -3239,7 +3239,7 @@ void hif_pci_set_grp_intr_affinity(struct hif_softc *scn,
 #endif
 
 #if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
-	defined(QCA_WIFI_WCN7850))
+	defined(QCA_WIFI_KIWI))
 uint32_t hif_pci_reg_read32(struct hif_softc *hif_sc,
 			    uint32_t offset)
 {
@@ -3457,7 +3457,7 @@ static bool hif_is_pld_based_target(struct hif_pci_softc *sc,
 	case QCA6490_DEVICE_ID:
 	case AR6320_DEVICE_ID:
 	case QCN7605_DEVICE_ID:
-	case WCN7850_DEVICE_ID:
+	case KIWI_DEVICE_ID:
 		return true;
 	}
 	return false;
@@ -3485,7 +3485,7 @@ static void hif_pci_init_reg_windowing_support(struct hif_pci_softc *sc,
 	case TARGET_TYPE_QCN7605:
 	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6390:
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 		sc->use_register_windowing = true;
 		qdf_spinlock_create(&sc->register_access_lock);
 		sc->register_window = 0;
@@ -3707,7 +3707,7 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 	    tgt_info->target_type == TARGET_TYPE_QCA6490 ||
 	    tgt_info->target_type == TARGET_TYPE_QCN7605 ||
 	    tgt_info->target_type == TARGET_TYPE_QCA8074 ||
-	    tgt_info->target_type == TARGET_TYPE_WCN7850) {
+	    tgt_info->target_type == TARGET_TYPE_KIWI) {
 		/*
 		 * Need to consider offset's memtype for QCA6290/QCA8074,
 		 * also mem_len and DRAM_BASE_ADDRESS/DRAM_SIZE need to be

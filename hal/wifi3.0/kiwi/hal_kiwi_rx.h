@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,8 +17,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _HAL_7850_RX_H_
-#define _HAL_7850_RX_H_
+#ifndef _HAL_KIWI_RX_H_
+#define _HAL_KIWI_RX_H_
 #include "qdf_util.h"
 #include "qdf_types.h"
 #include "qdf_lock.h"
@@ -106,10 +107,10 @@ RX_MSDU_DETAILS_RX_MSDU_DESC_INFO_DETAILS_RESERVED_0A_OFFSET))
 	 _OFFSET_TO_BYTE_PTR((link_desc),\
 	RX_MSDU_LINK_MSDU_0_BUFFER_ADDR_INFO_DETAILS_BUFFER_ADDR_31_0_OFFSET))
 
-#if defined(QCA_WIFI_WCN7850) && defined(WLAN_CFR_ENABLE) && \
+#if defined(QCA_WIFI_KIWI) && defined(WLAN_CFR_ENABLE) && \
 	defined(WLAN_ENH_CFR_ENABLE)
 static inline
-void hal_rx_get_bb_info_7850(void *rx_tlv,
+void hal_rx_get_bb_info_kiwi(void *rx_tlv,
 			     void *ppdu_info_hdl)
 {
 	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
@@ -125,7 +126,7 @@ void hal_rx_get_bb_info_7850(void *rx_tlv,
 }
 
 static inline
-void hal_rx_get_rtt_info_7850(void *rx_tlv,
+void hal_rx_get_rtt_info_kiwi(void *rx_tlv,
 			      void *ppdu_info_hdl)
 {
 	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
@@ -145,7 +146,7 @@ void hal_rx_get_rtt_info_7850(void *rx_tlv,
 		   RTT_CHE_BUFFER_POINTER_HIGH8);
 
 	// TODO Beryllium - Changed reserved8 to reserved3 to avoid
-	// compilation failure for wcn7850
+	// compilation failure for kiwi
 	ppdu_info->cfr_info.chan_capture_status =
 	HAL_RX_GET(rx_tlv,
 		   RX_LOCATION_INFO,

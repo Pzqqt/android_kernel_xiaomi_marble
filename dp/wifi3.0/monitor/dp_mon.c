@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
-
+ *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
-
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -2036,7 +2036,7 @@ QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
 	case TARGET_TYPE_QCA6390:
 	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6750:
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 		/* do nothing */
 		break;
 	case TARGET_TYPE_QCA8074:
@@ -2097,7 +2097,7 @@ static void dp_mon_pdev_per_target_config(struct dp_pdev *pdev)
 
 	target_type = hal_get_target_type(soc->hal_soc);
 	switch (target_type) {
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 		mon_pdev->is_tlv_hdr_64_bit = true;
 		break;
 	default:
@@ -2423,7 +2423,7 @@ void dp_mon_ops_register(struct dp_soc *soc)
 	case TARGET_TYPE_QCA6390:
 	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6750:
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 	case TARGET_TYPE_QCA8074:
 	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6018:
@@ -2461,7 +2461,7 @@ void dp_mon_cdp_ops_register(struct dp_soc *soc)
 	case TARGET_TYPE_QCA6390:
 	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6750:
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 	case TARGET_TYPE_QCA8074:
 	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6018:

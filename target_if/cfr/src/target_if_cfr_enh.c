@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,7 +43,7 @@ static u_int32_t end_magic = 0xBEAFDEAD;
  *
  * Return: signal strength in dBm
  */
-#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_WCN7850)
+#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_KIWI)
 static inline
 u_int32_t snr_to_signal_strength(uint8_t snr)
 {

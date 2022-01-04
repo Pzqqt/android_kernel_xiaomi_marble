@@ -1472,7 +1472,7 @@ static inline void hal_rx_dump_pkt_hdr_tlv_9224(struct rx_pkt_tlvs *pkt_tlvs,
 }
 
 /**
- * hal_rx_dump_pkt_tlvs_9224(): API to print RX Pkt TLVS for 7850
+ * hal_rx_dump_pkt_tlvs_9224(): API to print RX Pkt TLVS QCN9224
  * @hal_soc_hdl: hal_soc handle
  * @buf: pointer the pkt buffer
  * @dbg_level: log level
@@ -2339,7 +2339,7 @@ struct hal_hw_srng_config hw_srng_table_9224[] = {
 
 /**
  * hal_srng_hw_reg_offset_init_qcn9224() - Initialize the HW srng reg offset
- *				applicable only for WCN7850
+ *				applicable only for QCN9224
  * @hal_soc: HAL Soc handle
  *
  * Return: None

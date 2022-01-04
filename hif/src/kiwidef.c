@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if defined(WCN7850_HEADERS_DEF)
+#if defined(KIWI_HEADERS_DEF)
 
 #undef UMAC
 #define WLAN_HEADERS 1
@@ -206,20 +207,20 @@
 #define A_WIFI_APB_3_A_WCMN_APPS_CE_INTR_ENABLES MISSING
 #define A_WIFI_APB_3_A_WCMN_APPS_CE_INTR_STATUS MISSING
 
-#define WCN7850_BOARD_DATA_SZ MISSING
-#define WCN7850_BOARD_EXT_DATA_SZ MISSING
+#define KIWI_BOARD_DATA_SZ MISSING
+#define KIWI_BOARD_EXT_DATA_SZ MISSING
 
-#define MY_TARGET_DEF WCN7850_TARGETdef
-#define MY_HOST_DEF WCN7850_HOSTdef
-#define MY_CEREG_DEF WCN7850_CE_TARGETdef
-#define MY_TARGET_BOARD_DATA_SZ WCN7850_BOARD_DATA_SZ
-#define MY_TARGET_BOARD_EXT_DATA_SZ WCN7850_BOARD_EXT_DATA_SZ
+#define MY_TARGET_DEF KIWI_TARGETdef
+#define MY_HOST_DEF KIWI_HOSTdef
+#define MY_CEREG_DEF KIWI_CE_TARGETdef
+#define MY_TARGET_BOARD_DATA_SZ KIWI_BOARD_DATA_SZ
+#define MY_TARGET_BOARD_EXT_DATA_SZ KIWI_BOARD_EXT_DATA_SZ
 #include "targetdef.h"
 #include "hostdef.h"
 #else
 #include "common_drv.h"
 #include "targetdef.h"
 #include "hostdef.h"
-struct targetdef_s *WCN7850_TARGETdef;
-struct hostdef_s *WCN7850_HOSTdef;
-#endif /*WCN7850_HEADERS_DEF */
+struct targetdef_s *KIWI_TARGETdef;
+struct hostdef_s *KIWI_HOSTdef;
+#endif /*KIWI_HEADERS_DEF */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,10 +27,10 @@
 #ifndef _TARGET_IF_CFR_6490_H
 #define _TARGET_IF_CFR_6490_H
 
-#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_WCN7850)
+#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_KIWI)
 #define CFR_MAC_ID_24G 1
 #define CFR_MAC_ID_5G  0
-#endif /* QCA_WIFI_QCA6490 */
+#endif /* QCA_WIFI_QCA6490 || QCA_WIFI_KIWI */
 
 /**
  * target_if_cfr_subscribe_ppdu_desc() - subscribe ppdu description
