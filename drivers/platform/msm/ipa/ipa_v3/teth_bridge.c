@@ -30,6 +30,8 @@
 	pr_debug(TETH_BRIDGE_DRV_NAME " %s:%d EXIT\n", __func__, __LINE__)
 #define TETH_ERR(fmt, args...) \
 	pr_err(TETH_BRIDGE_DRV_NAME " %s:%d " fmt, __func__, __LINE__, ## args)
+#define TETH_ERR_RL(fmt, args...) \
+	pr_err_ratelimited_ipa(TETH_BRIDGE_DRV_NAME " %s:%d " fmt, __func__, __LINE__, ## args)
 
 enum ipa_num_teth_iface {
 	IPA_TETH_IFACE_1 = 0,
@@ -76,7 +78,7 @@ static void teth_bridge_ipa_cb(void *priv, enum ipa_dp_evt_type evt,
 		return;
 	}
 
-	TETH_ERR("Unexpected exception packet from USB, dropping packet\n");
+	TETH_ERR_RL("Unexpected exception packet from USB, dropping packet\n");
 	dev_kfree_skb_any(skb);
 	TETH_DBG_FUNC_EXIT();
 }
