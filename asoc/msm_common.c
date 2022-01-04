@@ -1031,16 +1031,20 @@ int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	pdata = devm_kzalloc(dev, sizeof(struct chmap_pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	if (!pdata) {
+		ret = -ENOMEM;
+		goto free_backend;
+	}
 
 	if ((!strncmp(backend_name, "SLIM", strlen("SLIM"))) ||
 		(!strncmp(backend_name, "CODEC_DMA", strlen("CODEC_DMA")))) {
 		ctl_len = strlen(dai_link->stream_name) + 1 +
 				strlen(mixer_ctl_name) + 1;
 		mixer_str = kzalloc(ctl_len, GFP_KERNEL);
-		if (!mixer_str)
-			return -ENOMEM;
+		if (!mixer_str) {
+			ret = -ENOMEM;
+			goto free_backend;
+		}
 
 		snprintf(mixer_str, ctl_len, "%s %s", dai_link->stream_name,
 				mixer_ctl_name);
@@ -1078,13 +1082,15 @@ int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 free_mixer_str:
-	if (backend_name) {
-		kfree(backend_name);
-		backend_name = NULL;
-	}
 	if (mixer_str) {
 		kfree(mixer_str);
 		mixer_str = NULL;
+	}
+
+free_backend:
+	if (backend_name) {
+		kfree(backend_name);
+		backend_name = NULL;
 	}
 
 	return ret;
