@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3420,7 +3420,8 @@ bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 }
 
 static qdf_freq_t
-policy_mgr_get_iface_5g_freq(struct wlan_objmgr_psoc *psoc)
+policy_mgr_get_iface_5g_freq(struct wlan_objmgr_psoc *psoc,
+			     bool allow_6ghz)
 {
 	qdf_freq_t if_freq = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -3438,8 +3439,8 @@ policy_mgr_get_iface_5g_freq(struct wlan_objmgr_psoc *psoc)
 		if (pm_conc_connection_list[conn_index].in_use &&
 		    (WLAN_REG_IS_5GHZ_CH_FREQ(
 				pm_conc_connection_list[conn_index].freq) ||
-		     WLAN_REG_IS_6GHZ_CHAN_FREQ(
-				pm_conc_connection_list[conn_index].freq))) {
+		     (allow_6ghz && WLAN_REG_IS_6GHZ_CHAN_FREQ(
+				pm_conc_connection_list[conn_index].freq)))) {
 			if_freq = pm_conc_connection_list[conn_index].freq;
 			break;
 		}
@@ -3479,11 +3480,11 @@ policy_mgr_get_iface_2g_freq(struct wlan_objmgr_psoc *psoc)
 
 static qdf_freq_t
 policy_mgr_get_same_band_iface_frq(struct wlan_objmgr_psoc *psoc,
-				    qdf_freq_t ch_freq)
+				   qdf_freq_t ch_freq, bool allow_6ghz)
 {
 	return (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq) ?
 		policy_mgr_get_iface_2g_freq(psoc) :
-		policy_mgr_get_iface_5g_freq(psoc));
+		policy_mgr_get_iface_5g_freq(psoc, allow_6ghz));
 }
 
 static void
@@ -3492,7 +3493,8 @@ policy_mgr_check_force_scc_two_connection(struct wlan_objmgr_psoc *psoc,
 					  qdf_freq_t sap_ch_freq,
 					  uint8_t cc_mode,
 					  bool same_band_present,
-					  uint32_t acs_band)
+					  uint32_t acs_band,
+					  bool allow_6ghz)
 {
 	bool sbs_mlo_present = false;
 
@@ -3540,11 +3542,12 @@ policy_mgr_check_force_scc_two_connection(struct wlan_objmgr_psoc *psoc,
 		if (acs_band == QCA_ACS_MODE_IEEE80211ANY ||
 		    !WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq))
 			*intf_ch_freq =
-				policy_mgr_get_iface_5g_freq(psoc);
+				policy_mgr_get_iface_5g_freq(psoc, allow_6ghz);
 		else
 			*intf_ch_freq =
 				policy_mgr_get_same_band_iface_frq(psoc,
-								   sap_ch_freq);
+								   sap_ch_freq,
+								   allow_6ghz);
 		return;
 	}
 	if (policy_mgr_is_current_hwmode_dbs(psoc)) {
@@ -3559,9 +3562,15 @@ policy_mgr_check_force_scc_two_connection(struct wlan_objmgr_psoc *psoc,
 		 *                                       channel will not be
 		 *                                       allowed)
 		 */
+		/*
+		 * For DBS allow the 6Ghz as we may only have 1 5Ghz freq.
+		 * policy_mgr_valid_sap_conc_channel_check->
+		 * policy_mgr_check_6ghz_sap_conc will take care of switching to
+		 * other channel if 6Ghz is not allowed
+		 */
 		*intf_ch_freq =
-			policy_mgr_get_same_band_iface_frq(psoc,
-							   sap_ch_freq);
+			policy_mgr_get_same_band_iface_frq(psoc, sap_ch_freq,
+							   true);
 		return;
 	}
 
@@ -3667,6 +3676,7 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 	uint8_t num_cxn_del = 0;
 	bool same_band_present = false;
 	bool sbs_mlo_present = false;
+	bool allow_6ghz = true;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -3745,6 +3755,13 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 				 *intf_ch_freq);
 	}
 
+sbs_check:
+
+	/* Get allow 6Gz before interface entry is temporary deleted */
+	if (sap_ch_freq && !WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq) &&
+	    !policy_mgr_get_ap_6ghz_capable(psoc, vdev_id, NULL))
+		allow_6ghz = false;
+
 	if (pm_ctx->hdd_cbacks.wlan_get_sap_acs_band) {
 		status = pm_ctx->hdd_cbacks.wlan_get_sap_acs_band(psoc,
 								  vdev_id,
@@ -3753,7 +3770,6 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 			policy_mgr_debug("acs_band: %d", acs_band);
 	}
 
-sbs_check:
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	/*
 	 * For SAP restart case SAP entry might be present in table,
@@ -3784,7 +3800,8 @@ sbs_check:
 							  sap_ch_freq,
 							  cc_mode,
 							  same_band_present,
-							  acs_band);
+							  acs_band,
+							  allow_6ghz);
 		break;
 	default:
 		policy_mgr_debug("invalid num_connections: %d",
