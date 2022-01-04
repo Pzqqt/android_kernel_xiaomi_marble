@@ -502,6 +502,7 @@ struct lpass_cdc_rx_macro_priv {
 	bool is_fir_coeff_written[FIR_PATH_MAX][GRP_MAX];
 	bool is_fir_capable;
 	bool dev_up;
+	bool pre_dev_up;
 	bool hph_pwr_mode;
 	bool hph_hd2_mode;
 	struct mutex mclk_lock;
@@ -1423,7 +1424,8 @@ static int lpass_cdc_rx_macro_mclk_enable(
 						 rx_priv->default_clk_id,
 						 rx_priv->clk_id,
 						 false);
-			lpass_cdc_rx_macro_core_vote(rx_priv, false);
+			if (!ret)
+				lpass_cdc_rx_macro_core_vote(rx_priv, false);
 			rx_priv->clk_id = rx_priv->default_clk_id;
 		}
 	}
@@ -1516,6 +1518,7 @@ static int lpass_cdc_rx_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_DOWN:
 		trace_printk("%s, enter SSR down\n", __func__);
+		rx_priv->pre_dev_up = false;
 		rx_priv->dev_up = false;
 		if (rx_priv->swr_ctrl_data) {
 			swrm_wcd_notify(
@@ -1533,6 +1536,7 @@ static int lpass_cdc_rx_macro_event_handler(struct snd_soc_component *component,
 		}
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
+		rx_priv->pre_dev_up = true;
 		ret = lpass_cdc_rx_macro_core_vote(rx_priv, true);
 		if (ret < 0) {
 			dev_err(rx_priv->dev,
@@ -4343,6 +4347,12 @@ static int lpass_cdc_rx_macro_core_vote(void *handle, bool enable)
 		pr_err("%s: rx priv data is NULL\n", __func__);
 		return -EINVAL;
 	}
+
+	if (!rx_priv->pre_dev_up && enable) {
+		pr_debug("%s: adsp is not up\n", __func__);
+		return -EINVAL;
+	}
+
 	if (enable) {
 		pm_runtime_get_sync(rx_priv->dev);
 		if (lpass_cdc_check_core_votes(rx_priv->dev))
@@ -4712,6 +4722,7 @@ static int lpass_cdc_rx_macro_probe(struct platform_device *pdev)
 	if (!rx_priv)
 		return -ENOMEM;
 
+	rx_priv->pre_dev_up = true;
 	rx_priv->dev = &pdev->dev;
 	ret = of_property_read_u32(pdev->dev.of_node, "reg",
 				   &rx_base_addr);
