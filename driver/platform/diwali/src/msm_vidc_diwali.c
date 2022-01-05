@@ -6,6 +6,7 @@
 
 #include <linux/of.h>
 #include <linux/io.h>
+#include <linux/sort.h>
 
 #include "msm_vidc_diwali.h"
 #include "msm_vidc_platform.h"
@@ -4997,6 +4998,8 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 	}
 
 	if (platform_data->sku_version) {
+		sort(core->dt->allowed_clks_tbl, core->dt->allowed_clks_tbl_size,
+			sizeof(*core->dt->allowed_clks_tbl), cmp, NULL);
 		d_vpr_h("Updated allowed clock rates\n");
 		for (i = 0; i < core->dt->allowed_clks_tbl_size; i++)
 			d_vpr_h("    %d\n", core->dt->allowed_clks_tbl[i]);
