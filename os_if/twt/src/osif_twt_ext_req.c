@@ -74,6 +74,14 @@ qca_wlan_vendor_twt_resume_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAX + 1
 	[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_NEXT2_TWT] = {.type = NLA_U32 },
 };
 
+static const struct nla_policy
+qca_wlan_vendor_twt_nudge_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_FLOW_ID] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_WAKE_TIME] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_NEXT_TWT_SIZE] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAC_ADDR] = VENDOR_NLA_POLICY_MAC_ADDR,
+};
+
 static int osif_is_twt_command_allowed(struct wlan_objmgr_vdev *vdev,
 				       uint8_t vdev_id,
 				       struct wlan_objmgr_psoc *psoc)
@@ -751,6 +759,87 @@ cleanup:
 	return ret;
 }
 
+/**
+ * osif_send_twt_nudge_req() - Send TWT nudge dialog command to target
+ * @vdev: vdev
+ * @psoc: psoc
+ * @twt_params: Pointer to nudge dialog cmd params structure
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int
+osif_send_twt_nudge_req(struct wlan_objmgr_vdev *vdev,
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_nudge_dialog_cmd_param *twt_params)
+{
+	QDF_STATUS status;
+	int ret = 0, twt_cmd;
+	struct osif_request *request;
+	struct twt_ack_context *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		osif_err("Request allocation failure");
+		return -ENOMEM;
+	}
+
+	context = osif_request_cookie(request);
+
+	status = ucfg_twt_nudge_req(psoc, twt_params, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send nudge dialog command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	twt_cmd = HOST_TWT_NUDGE_DIALOG_CMDID;
+
+	status = osif_twt_ack_wait_response(psoc, request, twt_cmd);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status != HOST_TWT_NUDGE_STATUS_OK) {
+		osif_err("Received TWT ack error:%d. Reset twt command",
+			 ack_priv->status);
+
+		switch (ack_priv->status) {
+		case HOST_TWT_NUDGE_STATUS_INVALID_PARAM:
+		case HOST_TWT_NUDGE_STATUS_UNKNOWN_ERROR:
+			ret = -EINVAL;
+			break;
+		case HOST_TWT_NUDGE_STATUS_DIALOG_ID_NOT_EXIST:
+			ret = -EAGAIN;
+			break;
+		case HOST_TWT_NUDGE_STATUS_DIALOG_ID_BUSY:
+			ret = -EINPROGRESS;
+			break;
+		case HOST_TWT_NUDGE_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		case HOST_TWT_NUDGE_STATUS_CHAN_SW_IN_PROGRESS:
+		case HOST_TWT_NUDGE_STATUS_ROAM_IN_PROGRESS:
+		case HOST_TWT_NUDGE_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
+	}
+
+cleanup:
+	osif_request_put(request);
+	return ret;
+}
+
 int osif_twt_send_requestor_enable_cmd(struct wlan_objmgr_psoc *psoc,
 				       uint8_t pdev_id)
 {
@@ -1320,3 +1409,71 @@ int osif_twt_resume_req(struct wlan_objmgr_vdev *vdev,
 	return osif_send_twt_resume_req(vdev, psoc, &params);
 }
 
+int osif_twt_nudge_req(struct wlan_objmgr_vdev *vdev,
+		       struct nlattr *twt_param_attr)
+{
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wlan_objmgr_psoc *psoc;
+	int ret = 0, id;
+	uint32_t vdev_id;
+	struct  twt_nudge_dialog_cmd_param params = {0};
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("NULL psoc");
+		return -EINVAL;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	ret = osif_is_twt_command_allowed(vdev, vdev_id, psoc);
+	if (ret)
+		return ret;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+				QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAX,
+				twt_param_attr,
+				qca_wlan_vendor_twt_nudge_dialog_policy);
+	if (ret)
+		return ret;
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAC_ADDR;
+	if (tb[id]) {
+		nla_memcpy(params.peer_macaddr.bytes, tb[id],
+			   QDF_MAC_ADDR_SIZE);
+	} else {
+		ret = osif_fill_peer_macaddr(vdev, params.peer_macaddr.bytes);
+		if (ret)
+			return ret;
+	}
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_FLOW_ID;
+	if (!tb[id]) {
+		osif_debug("TWT: FLOW_ID not specified");
+		return -EINVAL;
+	}
+	params.dialog_id = nla_get_u8(tb[id]);
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_WAKE_TIME;
+	if (!tb[id]) {
+		osif_debug("TWT: NEXT_TWT_SIZE not specified");
+		return -EINVAL;
+	}
+
+	params.suspend_duration = nla_get_u32(tb[id]);
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_NEXT_TWT_SIZE;
+	if (!tb[id]) {
+		osif_debug("TWT: NEXT_TWT_SIZE not specified");
+		return -EINVAL;
+	}
+	params.next_twt_size = nla_get_u32(tb[id]);
+
+	osif_debug("twt_nudge: vdev_id %d dialog_id %d ", params.vdev_id,
+		   params.dialog_id);
+	osif_debug("twt_nudge: suspend_duration %d next_twt_size %d",
+		   params.suspend_duration, params.next_twt_size);
+	osif_debug("peer mac_addr " QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(params.peer_macaddr.bytes));
+
+	return osif_send_twt_nudge_req(vdev, psoc, &params);
+}

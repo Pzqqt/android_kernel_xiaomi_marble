@@ -242,6 +242,7 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 		ret = osif_twt_resume_req(vdev, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_NUDGE:
+		ret = osif_twt_nudge_req(vdev, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_GET_CAPABILITIES:
 		ret = osif_twt_get_capabilities(vdev);

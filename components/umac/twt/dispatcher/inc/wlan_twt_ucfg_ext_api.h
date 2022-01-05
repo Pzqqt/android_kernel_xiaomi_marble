@@ -112,6 +112,21 @@ QDF_STATUS ucfg_twt_resume_req(struct wlan_objmgr_psoc *psoc,
 			      void *context);
 
 /**
+ * ucfg_twt_nudge_req() - Process TWT nudge req
+ * @psoc: psoc
+ * @params: nudge dialog cmd param
+ * @context: context
+ *
+ * Perform validations and set WLAN_TWT_NUDGE
+ * in progress
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
+			      struct twt_nudge_dialog_cmd_param *params,
+			      void *context);
+
+/**
  * ucfg_twt_is_max_sessions_reached() - Check if the maximum number of
  * TWT sessions reached or not excluding the given dialog_id
  * @psoc: Pointer to global PSOC object
