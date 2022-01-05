@@ -17,6 +17,11 @@ ifeq ($(CONFIG_ARCH_NEO), y)
 	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_neodispconf.h
 endif
 
+ifeq ($(CONFIG_ARCH_PARROT), y)
+	include $(DISPLAY_ROOT)/config/gki_parrotdisp.conf
+	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_parrotdispconf.h
+endif
+
 LINUX_INC +=	-Iinclude/linux \
 		-Iinclude/linux/drm
 
@@ -117,7 +122,8 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_altmode.o \
 				sde_hdcp_1x.o \
 				sde_hdcp_2x.o \
 				dp/dp_pll.o \
-				dp/dp_pll_5nm.o
+				dp/dp_pll_5nm.o \
+				dp/dp_pll_4nm.o
 
 msm_drm-$(CONFIG_DRM_MSM_DP_MST) += dp/dp_mst_drm.o
 

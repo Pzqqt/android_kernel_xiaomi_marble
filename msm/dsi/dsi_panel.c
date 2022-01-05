@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -953,6 +954,9 @@ static int dsi_panel_parse_pixel_format(struct dsi_host_common_cfg *host,
 	case 18:
 		fmt = DSI_PIXEL_FORMAT_RGB666;
 		break;
+	case 30:
+		fmt = DSI_PIXEL_FORMAT_RGB101010;
+		break;
 	case 24:
 	default:
 		fmt = DSI_PIXEL_FORMAT_RGB888;
@@ -1334,8 +1338,10 @@ static int dsi_panel_parse_qsync_caps(struct dsi_panel *panel,
 	 */
 	qsync_caps->qsync_min_fps_list_len = utils->count_u32_elems(utils->data,
 				  "qcom,dsi-supported-qsync-min-fps-list");
-	if (qsync_caps->qsync_min_fps_list_len < 1)
+	if (qsync_caps->qsync_min_fps_list_len < 1) {
+		qsync_caps->qsync_min_fps_list_len = 0;
 		goto qsync_support;
+	}
 
 	/**
 	 * qcom,dsi-supported-qsync-min-fps-list cannot be defined
@@ -3943,6 +3949,7 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	struct dsi_mode_info *timing = &mode->timing;
 	struct dsi_display_mode *display_mode;
 	u32 jitter_numer, jitter_denom, prefill_lines;
+	u32 default_prefill_lines, actual_prefill_lines;
 	u32 min_threshold_us, prefill_time_us, max_transfer_us, packet_overhead;
 	u16 bpp;
 
@@ -4006,8 +4013,12 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	 * Increase the prefill_lines proportionately as recommended
 	 * 40lines for 60fps, 60 for 90fps, 120lines for 120fps, and so on.
 	 */
-	prefill_lines = mult_frac(MIN_PREFILL_LINES,
-			timing->refresh_rate, 60);
+	default_prefill_lines = mult_frac(MIN_PREFILL_LINES, timing->refresh_rate, 60);
+
+	actual_prefill_lines = timing->v_back_porch + timing->v_front_porch + timing->v_sync_width;
+
+	/* consider the max of default prefill lines and actual prefill lines */
+	prefill_lines = max(actual_prefill_lines, default_prefill_lines);
 
 	prefill_time_us = mult_frac(frame_time_us, prefill_lines,
 			(timing->v_active));

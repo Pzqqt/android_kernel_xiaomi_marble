@@ -1341,9 +1341,11 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 	/* if vm_req is enabled, once CRTC on the commit is guaranteed */
 	sde_kms_wait_for_frame_transfer_complete(&sde_kms->base, crtc);
 
+	sde_dbg_set_hw_ownership_status(false);
+
 	sde_kms_cancel_delayed_work(crtc);
 
-	/* disable SDE irq's */
+	/* disable SDE encoder irq's */
 	drm_for_each_encoder_mask(encoder, crtc->dev,
 					crtc->state->encoder_mask) {
 		if (sde_encoder_in_clone_mode(encoder))
@@ -1353,8 +1355,6 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 	}
 
 	if (is_primary) {
-		/* disable IRQ line */
-		sde_irq_update(&sde_kms->base, false);
 
 		/* disable vblank events */
 		drm_crtc_vblank_off(crtc);
@@ -1362,8 +1362,6 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 		/* reset sw state */
 		sde_crtc_reset_sw_state(crtc);
 	}
-
-	sde_dbg_set_hw_ownership_status(false);
 
 	return rc;
 }
@@ -1448,17 +1446,22 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 	/* properly handoff color processing features */
 	sde_cp_crtc_vm_primary_handoff(crtc);
 
+	sde_vm_lock(sde_kms);
+
 	/* handle non-SDE clients pre-release */
 	if (vm_ops->vm_client_pre_release) {
 		rc = vm_ops->vm_client_pre_release(sde_kms);
 		if (rc) {
 			SDE_ERROR("sde vm client pre_release failed, rc=%d\n",
 					rc);
+			sde_vm_unlock(sde_kms);
 			goto exit;
 		}
 	}
 
-	sde_vm_lock(sde_kms);
+	/* disable IRQ line */
+	sde_irq_update(&sde_kms->base, false);
+
 	/* release HW */
 	if (vm_ops->vm_release) {
 		rc = vm_ops->vm_release(sde_kms);
