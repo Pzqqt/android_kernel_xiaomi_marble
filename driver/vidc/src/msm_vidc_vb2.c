@@ -20,7 +20,7 @@ struct vb2_queue *msm_vidc_get_vb2q(struct msm_vidc_inst *inst,
 	struct vb2_queue *q = NULL;
 
 	if (!inst) {
-		d_vpr_e("%s: invalid buffer type %d\n", func);
+		d_vpr_e("%s: invalid params\n", func);
 		return NULL;
 	}
 	if (type == INPUT_MPLANE) {
@@ -154,7 +154,7 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	enum msm_vidc_buffer_type buf_type;
 
 	if (!q || !q->drv_priv) {
-		d_vpr_e("%s: invalid input, q = %pK\n", q);
+		d_vpr_e("%s: invalid input, q = %pK\n", __func__, q);
 		return -EINVAL;
 	}
 	inst = q->drv_priv;
@@ -222,7 +222,7 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		else
 			goto error;
 	} else {
-		i_vpr_e(inst, "%s: invalid type %d\n", q->type);
+		i_vpr_e(inst, "%s: invalid type %d\n", __func__, q->type);
 		goto error;
 	}
 	if (rc)
@@ -271,7 +271,7 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 	struct msm_vidc_inst *inst;
 
 	if (!q || !q->drv_priv) {
-		d_vpr_e("%s: invalid input, q = %pK\n", q);
+		d_vpr_e("%s: invalid input, q = %pK\n", __func__, q);
 		return;
 	}
 	inst = q->drv_priv;
@@ -302,7 +302,7 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 		else if (is_encode_session(inst))
 			rc = msm_venc_streamoff_output(inst);
 	} else {
-		i_vpr_e(inst, "%s: invalid type %d\n", q->type);
+		i_vpr_e(inst, "%s: invalid type %d\n", __func__, q->type);
 		goto error;
 	}
 	if (rc)

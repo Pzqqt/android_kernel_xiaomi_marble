@@ -14,7 +14,6 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 {
 	u64 freq = 0;
 	struct msm_vidc_core* core;
-	struct msm_vidc_power* power;
 	u64 vsp_cycles = 0, vpp_cycles = 0, fw_cycles = 0;
 	u64 fw_vpp_cycles = 0, bitrate = 0;
 	u32 vpp_cycles_per_mb;
@@ -30,7 +29,6 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		return freq;
 	}
 
-	power = &inst->power;
 	core = inst->core;
 	if (!core->dt) {
 		d_vpr_e("%s: invalid params\n", __func__);

@@ -263,7 +263,7 @@ int msm_vidc_deinit_platform(struct platform_device *pdev)
 	core = dev_get_drvdata(&pdev->dev);
 	if (!core) {
 		d_vpr_e("%s: core not found in device %s",
-			dev_name(&pdev->dev));
+			__func__, dev_name(&pdev->dev));
 		return -EINVAL;
 	}
 
@@ -292,7 +292,7 @@ int msm_vidc_init_platform(struct platform_device *pdev)
 	core = dev_get_drvdata(&pdev->dev);
 	if (!core) {
 		d_vpr_e("%s: core not found in device %s",
-			dev_name(&pdev->dev));
+			__func__, dev_name(&pdev->dev));
 		return -EINVAL;
 	}
 

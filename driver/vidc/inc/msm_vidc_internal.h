@@ -22,26 +22,14 @@
 #define MAX_BIAS_COEFFS   3
 #define MAX_LIMIT_COEFFS  6
 #define MAX_DEBUGFS_NAME  50
-#define DEFAULT_TIMEOUT   3
 #define DEFAULT_HEIGHT    240
 #define DEFAULT_WIDTH     320
-#define MAX_HEIGHT        4320
-#define MAX_WIDTH         8192
-#define MIN_SUPPORTED_WIDTH   32
-#define MIN_SUPPORTED_HEIGHT  32
 #define DEFAULT_FPS       30
 #define MAXIMUM_VP9_FPS   60
-#define SINGLE_INPUT_BUFFER   1
-#define SINGLE_OUTPUT_BUFFER  1
-#define MAX_NUM_INPUT_BUFFERS    VIDEO_MAX_FRAME // same as VB2_MAX_FRAME
-#define MAX_NUM_OUTPUT_BUFFERS   VIDEO_MAX_FRAME // same as VB2_MAX_FRAME
 #define MAX_SUPPORTED_INSTANCES  16
-#define MAX_BSE_VPP_DELAY        6
 #define DEFAULT_BSE_VPP_DELAY    2
 #define MAX_CAP_PARENTS          20
 #define MAX_CAP_CHILDREN         20
-#define DEFAULT_BITSTREM_ALIGNMENT  16
-#define H265_BITSTREM_ALIGNMENT     32
 #define DEFAULT_MAX_HOST_BUF_COUNT  64
 #define DEFAULT_MAX_HOST_BURST_BUF_COUNT 256
 #define BIT_DEPTH_8 (8 << 16 | 8)
@@ -72,11 +60,7 @@
 #define DCVS_WINDOW 16
 #define ENC_FPS_WINDOW 3
 #define DEC_FPS_WINDOW 10
-/* Superframe can have maximum of 32 frames */
-#define VIDC_SUPERFRAME_MAX 32
-#define COLOR_RANGE_UNSPECIFIED (-1)
 
-#define V4L2_EVENT_VIDC_BASE  10
 #define INPUT_MPLANE V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
 #define OUTPUT_MPLANE V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
 #define INPUT_META_PLANE V4L2_BUF_TYPE_META_OUTPUT
@@ -370,6 +354,7 @@ enum msm_vidc_inst_capability_type {
 	MB_CYCLES_FW,
 	MB_CYCLES_FW_VPP,
 	SECURE_MODE,
+	TS_REORDER,
 	HFLIP,
 	VFLIP,
 	ROTATION,
@@ -555,6 +540,11 @@ enum msm_vidc_ssr_trigger_type {
 	SSR_ERR_FATAL = 1,
 	SSR_SW_DIV_BY_ZERO,
 	SSR_HW_WDOG_IRQ,
+};
+
+enum msm_vidc_stability_trigger_type {
+	STABILITY_VCODEC_HUNG = 1,
+	STABILITY_ENC_BUFFER_FULL,
 };
 
 enum msm_vidc_cache_op {
@@ -868,6 +858,12 @@ struct msm_vidc_ssr {
 	enum msm_vidc_ssr_trigger_type     ssr_type;
 	u32                                sub_client_id;
 	u32                                test_addr;
+};
+
+struct msm_vidc_stability {
+	enum msm_vidc_stability_trigger_type     stability_type;
+	u32                                      sub_client_id;
+	u32                                      value;
 };
 
 struct msm_vidc_sfr {

@@ -39,7 +39,7 @@ u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 	allowed_clks_tbl = core->dt->allowed_clks_tbl;
 	freq = allowed_clks_tbl[0].clock_rate;
 
-	i_vpr_l(inst, "%s: rate = %lu\n", __func__, freq);
+	i_vpr_l(inst, "%s: rate = %llu\n", __func__, freq);
 	return freq;
 }
 
@@ -366,7 +366,7 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	}
 	core->power.clk_freq = (u32)rate;
 
-	i_vpr_p(inst, "%s: clock rate %lu requested %lu increment %d decrement %d\n",
+	i_vpr_p(inst, "%s: clock rate %llu requested %llu increment %d decrement %d\n",
 		__func__, rate, freq, increment, decrement);
 	mutex_unlock(&core->lock);
 

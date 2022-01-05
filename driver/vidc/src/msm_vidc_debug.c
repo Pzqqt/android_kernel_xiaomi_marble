@@ -15,6 +15,7 @@
 extern struct msm_vidc_core *g_core;
 
 #define MAX_SSR_STRING_LEN         64
+#define MAX_STABILITY_STRING_LEN   64
 #define MAX_DEBUG_LEVEL_STRING_LEN 15
 #define MSM_VIDC_MIN_STATS_DELAY_MS     200
 #define MSM_VIDC_MAX_STATS_DELAY_MS     10000
@@ -212,7 +213,7 @@ static ssize_t stats_delay_write_ms(struct file *filp, const char __user *buf,
 
 	/* filter partial writes and invalid commands */
 	if (*ppos != 0 || count >= sizeof(kbuf) || count == 0) {
-		d_vpr_e("returning error - pos %d, count %d\n", *ppos, count);
+		d_vpr_e("returning error - pos %lld, count %lu\n", *ppos, count);
 		rc = -EINVAL;
 	}
 
@@ -296,6 +297,47 @@ static const struct file_operations ssr_fops = {
 	.write = trigger_ssr_write,
 };
 
+static ssize_t trigger_stability_write(struct file *filp, const char __user *buf,
+	size_t count, loff_t *ppos)
+{
+	unsigned long stability_trigger_val = 0;
+	int rc = 0;
+	struct msm_vidc_core *core = filp->private_data;
+	size_t size = MAX_STABILITY_STRING_LEN;
+	char kbuf[MAX_STABILITY_STRING_LEN + 1] = { 0 };
+
+	if (!buf)
+		return -EINVAL;
+
+	if (!count)
+		goto exit;
+
+	if (count < size)
+		size = count;
+
+	if (copy_from_user(kbuf, buf, size)) {
+		d_vpr_e("%s: User memory fault\n", __func__);
+		rc = -EFAULT;
+		goto exit;
+	}
+
+	rc = kstrtoul(kbuf, 0, &stability_trigger_val);
+	if (rc) {
+		d_vpr_e("%s: returning error err %d\n", __func__, rc);
+		rc = -EINVAL;
+	} else {
+		msm_vidc_trigger_stability(core, stability_trigger_val);
+		rc = count;
+	}
+exit:
+	return rc;
+}
+
+static const struct file_operations stability_fops = {
+	.open = simple_open,
+	.write = trigger_stability_write,
+};
+
 struct dentry* msm_vidc_debugfs_init_drv()
 {
 	struct dentry *dir = NULL;
@@ -357,6 +399,10 @@ struct dentry *msm_vidc_debugfs_init_core(void *core_in)
 	if (!debugfs_create_file("trigger_ssr", 0200,
 			dir, core, &ssr_fops)) {
 		d_vpr_e("debugfs_create_file: fail\n");
+		goto failed_create_dir;
+	}
+	if (!debugfs_create_file("trigger_stability", 0200, dir, core, &stability_fops)) {
+		d_vpr_e("trigger_stability debugfs_create_file: fail\n");
 		goto failed_create_dir;
 	}
 	if (!debugfs_create_file("stats_delay_ms", 0644, dir, core, &stats_delay_fops)) {

@@ -573,8 +573,7 @@ static int msm_vidc_input_min_count_iris2(struct msm_vidc_inst* inst)
 		HFI_IRIS2_ENC_MIN_INPUT_BUF_COUNT(input_min_count,
 			total_hb_layer);
 	} else {
-		i_vpr_e(inst, "%s: invalid domain\n",
-			__func__, inst->domain);
+		i_vpr_e(inst, "%s: invalid domain %d\n", __func__, inst->domain);
 		return 0;
 	}
 

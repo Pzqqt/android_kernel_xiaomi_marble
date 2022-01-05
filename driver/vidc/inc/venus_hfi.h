@@ -16,10 +16,7 @@
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
 
-#define VIDC_MAX_NAME_LENGTH 		64
 #define VIDC_MAX_PC_SKIP_COUNT 		10
-#define VIDC_MAX_SUBCACHES 			4
-#define VIDC_MAX_SUBCACHE_SIZE 		52
 
 struct vidc_buffer_addr_info {
 	enum msm_vidc_buffer_type buffer_type;
@@ -55,6 +52,8 @@ int venus_hfi_noc_error_info(struct msm_vidc_core *core);
 int venus_hfi_suspend(struct msm_vidc_core *core);
 int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 	u32 client_id, u32 addr);
+int venus_hfi_trigger_stability(struct msm_vidc_inst *inst, u32 type,
+	u32 client_id, u32 val);
 int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq);
 int venus_hfi_scale_buses(struct msm_vidc_inst* inst, u64 bw_ddr, u64 bw_llcc);
 
@@ -73,13 +72,10 @@ int __iface_cmdq_write(struct msm_vidc_core *core,
 	void *pkt);
 int __iface_msgq_read(struct msm_vidc_core *core, void *pkt);
 int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt);
+int __set_clocks(struct msm_vidc_core *core, u32 freq);
 int __scale_clocks(struct msm_vidc_core *core);
 int __set_clk_rate(struct msm_vidc_core *core,
 	struct clock_info *cl, u64 rate);
-void __disable_unprepare_clks(struct msm_vidc_core *core);
-int __prepare_enable_clks(struct msm_vidc_core *core);
-int __disable_regulators(struct msm_vidc_core *core);
-int __enable_regulators(struct msm_vidc_core *core);
 int __acquire_regulator(struct msm_vidc_core *core,
 	struct regulator_info *rinfo);
 int __unvote_buses(struct msm_vidc_core *core);

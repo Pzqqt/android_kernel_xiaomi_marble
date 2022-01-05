@@ -118,6 +118,7 @@ struct msm_vidc_inst {
 	struct msm_vidc_mappings_info      mappings;
 	struct msm_vidc_allocations_info   allocations;
 	struct msm_vidc_timestamps         timestamps;
+	struct msm_vidc_timestamps         ts_reorder; /* list of struct msm_vidc_timestamp */
 	bool                               subscribed_input_psc;
 	bool                               subscribed_output_psc;
 	bool                               subscribed_input_prop;
@@ -129,6 +130,8 @@ struct msm_vidc_inst {
 	struct msm_vidc_session_idle       session_idle;
 	struct delayed_work                response_work;
 	struct delayed_work                stats_work;
+	struct work_struct                 stability_work;
+	struct msm_vidc_stability          stability;
 	struct workqueue_struct           *response_workq;
 	struct list_head                   response_works; /* list of struct response_work */
 	struct list_head                   enc_input_crs;

@@ -123,13 +123,6 @@ static const char *const mpeg_video_hevc_profile[] = {
 	NULL,
 };
 
-static const char *const roi_map_type[] = {
-	"None",
-	"2-bit",
-	"2-bit",
-	NULL,
-};
-
 static u32 msm_vidc_get_port_info(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id)
 {
@@ -206,7 +199,7 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 		payload_size);
 	if (rc) {
 		i_vpr_e(inst, "%s: failed to set cap[%d] %s to fw\n",
-			__func__, cap_id, cap_name(cap_id));
+			func, cap_id, cap_name(cap_id));
 		return rc;
 	}
 
@@ -328,7 +321,7 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 {
 	int rc = 0;
 
-	if (is_parent_available(inst, cap, parent, __func__)) {
+	if (is_parent_available(inst, cap, parent, func)) {
 		switch (parent) {
 		case BITRATE_MODE:
 			*value = inst->hfi_rc_type;

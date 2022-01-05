@@ -208,11 +208,10 @@ static int msm_vidc_check_mmrm_support(struct msm_vidc_core *core)
 	if (!core->capabilities[MMRM].value)
 		goto exit;
 
-	/* Todo: Dependency on MMRM driver changes */
-	// if (!mmrm_client_check_scaling_supported(MMRM_CLIENT_CLOCK, 0)) {
-	// 	d_vpr_e("%s: MMRM not supported\n", __func__);
-	// 	core->capabilities[MMRM].value = 0;
-	// }
+	if (!mmrm_client_check_scaling_supported(MMRM_CLIENT_CLOCK, 0)) {
+		d_vpr_e("%s: MMRM not supported\n", __func__);
+		core->capabilities[MMRM].value = 0;
+	}
 
 exit:
 	d_vpr_h("%s: %d\n", __func__, core->capabilities[MMRM].value);

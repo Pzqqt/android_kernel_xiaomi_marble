@@ -27,8 +27,6 @@
 #include "venus_hfi_response.h"
 #include "msm_vidc_events.h"
 
-#define MIN_PAYLOAD_SIZE 3
-
 #define MAX_FIRMWARE_NAME_SIZE 128
 
 #define update_offset(offset, val)		((offset) += (val))
@@ -540,10 +538,10 @@ static int __vote_bandwidth(struct bus_info *bus,
 		return -EINVAL;
 	}
 
-	d_vpr_p("Voting bus %s to ab %llu kBps\n", bus->name, bw_kbps);
+	d_vpr_p("Voting bus %s to ab %lu kBps\n", bus->name, bw_kbps);
 	rc = icc_set_bw(bus->path, bw_kbps, 0);
 	if (rc)
-		d_vpr_e("Failed voting bus %s to ab %llu, rc=%d\n",
+		d_vpr_e("Failed voting bus %s to ab %lu, rc=%d\n",
 				bus->name, bw_kbps, rc);
 
 	return rc;
@@ -606,7 +604,7 @@ int __vote_buses(struct msm_vidc_core *core,
 				bus->range[0], bus->range[1]);
 
 			if (TRIVIAL_BW_CHANGE(bw_kbps, bw_prev) && bw_prev) {
-				d_vpr_l("Skip voting bus %s to %llu kBps\n",
+				d_vpr_l("Skip voting bus %s to %lu kBps\n",
 					bus->name, bw_kbps);
 				continue;
 			}
@@ -695,7 +693,7 @@ int __set_clk_rate(struct msm_vidc_core *core,
 	return rc;
 }
 
-static int __set_clocks(struct msm_vidc_core *core, u32 freq)
+int __set_clocks(struct msm_vidc_core *core, u32 freq)
 {
 	int rc = 0;
 	struct clock_info *cl;
@@ -1575,32 +1573,6 @@ failed_to_reset:
 	return rc;
 }
 
-void __disable_unprepare_clks(struct msm_vidc_core *core)
-{
-	struct clock_info *cl;
-
-	if (!core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return;
-	}
-
-	venus_hfi_for_each_clock_reverse(core, cl) {
-		if (!cl->clk)
-			continue;
-		d_vpr_h("Clock: %s disable and unprepare\n",
-				cl->name);
-
-		if (!__clk_is_enabled(cl->clk))
-			d_vpr_e("%s: clock %s already disabled\n",
-				__func__, cl->name);
-
-		clk_disable_unprepare(cl->clk);
-		if (cl->has_scaling)
-			__set_clk_rate(core, cl, 0);
-		cl->prev = 0;
-	}
-}
-
 int __reset_ahb2axi_bridge(struct msm_vidc_core *core)
 {
 	int rc, i;
@@ -1632,71 +1604,6 @@ int __reset_ahb2axi_bridge(struct msm_vidc_core *core)
 	return 0;
 
 failed_to_reset:
-	return rc;
-}
-
-int __prepare_enable_clks(struct msm_vidc_core *core)
-{
-	struct clock_info *cl = NULL;
-	int rc = 0, c = 0;
-	u64 rate = 0;
-
-	if (!core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	venus_hfi_for_each_clock(core, cl) {
-		if (!cl->clk) {
-			d_vpr_e("%s: invalid clock\n", __func__);
-			rc = -EINVAL;
-			goto fail_clk_enable;
-		}
-		/*
-		 * For the clocks we control, set the rate prior to preparing
-		 * them.  Since we don't really have a load at this point, scale
-		 * it to the lowest frequency possible
-		 */
-		if (cl->has_scaling) {
-			rate = clk_round_rate(cl->clk, 0);
-			/**
-			 * source clock is already multipled with scaling ratio and __set_clk_rate
-			 * attempts to multiply again. So divide scaling ratio before calling
-			 * __set_clk_rate.
-			 */
-			rate = rate / MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
-			__set_clk_rate(core, cl, rate);
-		}
-
-		rc = clk_prepare_enable(cl->clk);
-		if (rc) {
-			d_vpr_e("Failed to enable clocks\n");
-			goto fail_clk_enable;
-		}
-
-		if (!__clk_is_enabled(cl->clk))
-			d_vpr_e("%s: clock %s not enabled\n",
-				__func__, cl->name);
-
-		c++;
-		d_vpr_h("Clock: %s prepared and enabled\n", cl->name);
-	}
-
-	call_venus_op(core, clock_config_on_enable, core);
-	return rc;
-
-fail_clk_enable:
-	venus_hfi_for_each_clock_reverse_continue(core, cl, c) {
-		if (!cl->clk)
-			continue;
-		d_vpr_e("Clock: %s disable and unprepare\n",
-			cl->name);
-		clk_disable_unprepare(cl->clk);
-		if (cl->has_scaling)
-			__set_clk_rate(core, cl, 0);
-		cl->prev = 0;
-	}
-
 	return rc;
 }
 
@@ -1921,113 +1828,6 @@ static void __deinit_resources(struct msm_vidc_core *core)
 	__deinit_regulators(core);
 }
 
-static int __disable_regulator(struct regulator_info *rinfo,
-				struct msm_vidc_core *core)
-{
-	int rc = 0;
-
-	if (!rinfo->regulator) {
-		d_vpr_e("%s: invalid regulator\n", __func__);
-		return -EINVAL;
-	}
-
-	d_vpr_h("Disabling regulator %s\n", rinfo->name);
-
-	/*
-	 * This call is needed. Driver needs to acquire the control back
-	 * from HW in order to disable the regualtor. Else the behavior
-	 * is unknown.
-	 */
-
-	rc = __acquire_regulator(core, rinfo);
-	if (rc) {
-		/*
-		 * This is somewhat fatal, but nothing we can do
-		 * about it. We can't disable the regulator w/o
-		 * getting it back under s/w control
-		 */
-		d_vpr_e("Failed to acquire control on %s\n",
-			rinfo->name);
-
-		goto disable_regulator_failed;
-	}
-
-	if (!regulator_is_enabled(rinfo->regulator))
-		d_vpr_e("%s: regulator %s already disabled\n",
-			__func__, rinfo->name);
-
-	rc = regulator_disable(rinfo->regulator);
-	if (rc) {
-		d_vpr_e("Failed to disable %s: %d\n",
-			rinfo->name, rc);
-		goto disable_regulator_failed;
-	}
-
-	return 0;
-disable_regulator_failed:
-
-	/* Bring attention to this issue */
-	__fatal_error(true);
-	return rc;
-}
-
-int __enable_regulators(struct msm_vidc_core *core)
-{
-	int rc = 0, c = 0;
-	struct regulator_info *rinfo;
-
-	if (!core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-	d_vpr_h("Enabling regulators\n");
-
-	venus_hfi_for_each_regulator(core, rinfo) {
-		if (!rinfo->regulator) {
-			d_vpr_e("%s: invalid regulator\n", __func__);
-			rc = -EINVAL;
-			goto err_reg_enable_failed;
-		}
-
-		rc = regulator_enable(rinfo->regulator);
-		if (rc) {
-			d_vpr_e("Failed to enable %s: %d\n",
-					rinfo->name, rc);
-			goto err_reg_enable_failed;
-		}
-
-		if (!regulator_is_enabled(rinfo->regulator))
-			d_vpr_e("%s: regulator %s not enabled\n",
-				__func__, rinfo->name);
-
-		d_vpr_h("Enabled regulator %s\n",
-				rinfo->name);
-		c++;
-	}
-
-	return 0;
-
-err_reg_enable_failed:
-	venus_hfi_for_each_regulator_reverse_continue(core, rinfo, c) {
-		if (!rinfo->regulator)
-			continue;
-		__disable_regulator(rinfo, core);
-	}
-
-	return rc;
-}
-
-int __disable_regulators(struct msm_vidc_core *core)
-{
-	struct regulator_info *rinfo;
-
-	d_vpr_h("Disabling regulators\n");
-	venus_hfi_for_each_regulator_reverse(core, rinfo)
-		__disable_regulator(rinfo, core);
-
-	return 0;
-}
-
 static int __release_subcaches(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -2078,7 +1878,7 @@ static int __release_subcaches(struct msm_vidc_core *core)
 	venus_hfi_for_each_subcache_reverse(core, sinfo) {
 		if (sinfo->isactive) {
 			sinfo->isset = false;
-			d_vpr_h("Release Subcache id %d size %d done\n",
+			d_vpr_h("Release Subcache id %d size %lu done\n",
 				sinfo->subcache->slice_id,
 				sinfo->subcache->slice_size);
 		}
@@ -2199,7 +1999,7 @@ static int __set_subcaches(struct msm_vidc_core *core)
 	venus_hfi_for_each_subcache(core, sinfo) {
 		if (sinfo->isactive) {
 			sinfo->isset = true;
-			d_vpr_h("Set Subcache id %d size %d done\n",
+			d_vpr_h("Set Subcache id %d size %lu done\n",
 				sinfo->subcache->slice_id,
 				sinfo->subcache->slice_size);
 		}
@@ -3069,6 +2869,53 @@ exit:
 	if (rc)
 		d_vpr_e("%s(): failed\n", __func__);
 
+	return rc;
+}
+
+int venus_hfi_trigger_stability(struct msm_vidc_inst *inst, u32 type,
+	u32 client_id, u32 val)
+{
+	struct msm_vidc_core *core;
+	u32 payload[2];
+	int rc = 0;
+
+	if (!inst || !inst->core || !inst->packet) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	payload[0] = client_id << 4 | type;
+	payload[1] = val;
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			   inst->session_id, core->header_id++);
+	if (rc)
+		goto unlock;
+
+	/* HFI_CMD_STABILITY */
+	rc = hfi_create_packet(inst->packet, inst->packet_size,
+				   HFI_CMD_STABILITY,
+				   HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+				   HFI_HOST_FLAGS_INTR_REQUIRED,
+				   HFI_PAYLOAD_U64,
+				   HFI_PORT_NONE,
+				   core->packet_id++,
+				   &payload, sizeof(u64));
+	if (rc)
+		goto unlock;
+
+	rc = __iface_cmdq_write(core, inst->packet);
+	if (rc)
+		goto unlock;
+
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 

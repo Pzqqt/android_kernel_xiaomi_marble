@@ -586,7 +586,7 @@ int msm_memory_pools_init(struct msm_vidc_inst *inst)
 	}
 
 	if (ARRAY_SIZE(buftype_size_name_arr) != MSM_MEM_POOL_MAX) {
-		i_vpr_e(inst, "%s: num elements mismatch %u %u\n", __func__,
+		i_vpr_e(inst, "%s: num elements mismatch %lu %u\n", __func__,
 			ARRAY_SIZE(buftype_size_name_arr), MSM_MEM_POOL_MAX);
 		return -EINVAL;
 	}
