@@ -1264,6 +1264,8 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 	req_score_params->bw_weightage = weight_config->chan_width_weightage;
 	req_score_params->band_weightage = weight_config->chan_band_weightage;
 	req_score_params->nss_weightage = weight_config->nss_weightage;
+	req_score_params->security_weightage =
+					weight_config->security_weightage;
 	req_score_params->esp_qbss_weightage =
 		weight_config->channel_congestion_weightage;
 	req_score_params->beamforming_weightage =
@@ -1293,10 +1295,10 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 		score_config->band_weight_per_index;
 	req_score_params->nss_index_score =
 		score_config->nss_weight_per_index[0];
-
+	req_score_params->security_index_score =
+		score_config->security_weight_per_index;
 	req_score_params->vendor_roam_score_algorithm =
 			score_config->vendor_roam_score_algorithm;
-
 
 	req_score_params->roam_score_delta =
 				roam_score_params->roam_score_delta;
