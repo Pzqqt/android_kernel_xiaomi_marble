@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _DFC_DEFS_H
@@ -55,6 +56,7 @@ struct dfc_flow_status_info_type_v01 {
 	struct dfc_qos_id_type_v01 qos_ids[DFC_MAX_QOS_ID_V01];
 	u8 rx_bytes_valid;
 	u32 rx_bytes;
+	u8 ll_status;
 };
 
 struct dfc_ancillary_info_type_v01 {

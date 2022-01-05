@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1025,6 +1026,14 @@ static int dfc_update_fc_map(struct net_device *dev, struct qos_info *qos,
 		/* If TX is OFF but we received grant, ignore it */
 		if (itm->tx_off  && fc_info->num_bytes > 0)
 			return 0;
+
+		if (fc_info->ll_status &&
+		    itm->ch_switch.current_ch != RMNET_CH_LL) {
+			itm->ch_switch.current_ch = RMNET_CH_LL;
+			itm->ch_switch.auto_switched = true;
+			if (itm->mq_idx < MAX_MQ_NUM)
+				qos->mq[itm->mq_idx].is_ll_ch = RMNET_CH_LL;
+		}
 
 		/* Adjuste grant for query */
 		if (dfc_qmap && is_query) {

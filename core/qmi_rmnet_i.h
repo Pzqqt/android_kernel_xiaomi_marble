@@ -62,6 +62,7 @@ struct rmnet_ch_switch {
 	u8 switch_to_ch;
 	u8 retry_left;
 	u8 status_code;
+	bool auto_switched;
 	enum rmnet_ch_switch_state state;
 	__be32 switch_txid;
 	u32 flags;
