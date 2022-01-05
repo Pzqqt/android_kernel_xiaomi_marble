@@ -90,6 +90,7 @@
 #endif /* kernel version less than 4.0.0 && no_backport */
 
 #define HDD_LINK_STATS_MAX		5
+#define HDD_MAX_ALLOWED_LL_STATS_FAILURE	5
 
 /* 11B, 11G Rate table include Basic rate and Extended rate
  * The IDX field is the rate index
@@ -2096,8 +2097,10 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	}
 	ret = osif_request_wait_for_response(request);
 	if (ret) {
-		hdd_err("Target response timed out request id %d request bitmap 0x%x",
-			priv->request_id, priv->request_bitmap);
+		adapter->ll_stats_failure_count++;
+		hdd_err("Target response timed out request id %d request bitmap 0x%x ll_stats failure count %d",
+			priv->request_id, priv->request_bitmap,
+			adapter->ll_stats_failure_count);
 		qdf_spin_lock(&priv->ll_stats_lock);
 		priv->request_bitmap = 0;
 		qdf_spin_unlock(&priv->ll_stats_lock);
@@ -2105,6 +2108,7 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 		ret = -ETIMEDOUT;
 	} else {
 		hdd_update_station_stats_cached_timestamp(adapter);
+		adapter->ll_stats_failure_count = 0;
 	}
 
 	qdf_spin_lock(&priv->ll_stats_lock);
@@ -2127,6 +2131,12 @@ exit:
 	osif_request_put(request);
 
 	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.stats);
+
+	if (adapter->ll_stats_failure_count >=
+					HDD_MAX_ALLOWED_LL_STATS_FAILURE) {
+		cds_trigger_recovery(QDF_STATS_REQ_TIMEDOUT);
+		adapter->ll_stats_failure_count = 0;
+	}
 
 	return ret;
 }
