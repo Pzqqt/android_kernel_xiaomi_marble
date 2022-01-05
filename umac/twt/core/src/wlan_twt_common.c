@@ -249,7 +249,29 @@ wlan_twt_requestor_disable(struct wlan_objmgr_psoc *psoc,
 			   struct twt_disable_param *req,
 			   void *context)
 {
-	return QDF_STATUS_SUCCESS;
+	struct twt_psoc_priv_obj *twt_psoc;
+
+	if (!psoc) {
+		twt_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							 WLAN_UMAC_COMP_TWT);
+	if (!twt_psoc) {
+		twt_err("null twt psoc priv obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc->disable_context.twt_role = TWT_ROLE_REQUESTOR;
+	twt_psoc->disable_context.context = context;
+
+	req->twt_role = TWT_ROLE_REQUESTOR;
+
+	twt_debug("TWT req disable: pdev_id:%d role:%d ext:%d",
+		  req->pdev_id, req->twt_role, req->ext_conf_present);
+
+	return tgt_twt_disable_req_send(psoc, req);
 }
 
 QDF_STATUS
@@ -257,7 +279,29 @@ wlan_twt_responder_disable(struct wlan_objmgr_psoc *psoc,
 			   struct twt_disable_param *req,
 			   void *context)
 {
-	return QDF_STATUS_SUCCESS;
+	struct twt_psoc_priv_obj *twt_psoc;
+
+	if (!psoc) {
+		twt_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							 WLAN_UMAC_COMP_TWT);
+	if (!twt_psoc) {
+		twt_err("null twt psoc priv obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc->disable_context.twt_role = TWT_ROLE_RESPONDER;
+	twt_psoc->disable_context.context = context;
+
+	req->twt_role = TWT_ROLE_RESPONDER;
+
+	twt_debug("TWT res disable: pdev_id:%d role:%d ext:%d",
+		  req->pdev_id, req->twt_role, req->ext_conf_present);
+
+	return tgt_twt_disable_req_send(psoc, req);
 }
 
 QDF_STATUS
@@ -399,6 +443,42 @@ QDF_STATUS
 wlan_twt_disable_event_handler(struct wlan_objmgr_psoc *psoc,
 			       struct twt_disable_complete_event_param *event)
 {
-	return QDF_STATUS_SUCCESS;
+	struct twt_psoc_priv_obj *twt_psoc;
+	struct twt_en_dis_context *twt_context;
+
+	if (!psoc) {
+		twt_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_psoc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							 WLAN_UMAC_COMP_TWT);
+	if (!twt_psoc) {
+		twt_err("null twt psoc priv obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	twt_context = &twt_psoc->disable_context;
+
+	twt_debug("pdev_id:%d status:%d twt_role:%d",
+		  event->pdev_id, event->status, twt_context->twt_role);
+	switch (event->status) {
+	case HOST_TWT_DISABLE_STATUS_OK:
+		if (twt_context->twt_role == TWT_ROLE_REQUESTOR)
+			wlan_twt_cfg_set_requestor_flag(psoc, false);
+		else if (twt_context->twt_role == TWT_ROLE_RESPONDER)
+			wlan_twt_cfg_set_responder_flag(psoc, false);
+		else
+			twt_err("Invalid role:%d", twt_context->twt_role);
+
+		break;
+
+	default:
+		twt_err("twt disable status:%d", event->status);
+		break;
+	}
+
+	return mlme_twt_osif_disable_complete_ind(psoc, event,
+						  twt_context->context);
 }
 

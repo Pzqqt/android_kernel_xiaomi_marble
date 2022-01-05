@@ -52,6 +52,24 @@ QDF_STATUS
 target_if_twt_disable_req(struct wlan_objmgr_psoc *psoc,
 			  struct twt_disable_param *req)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS ret;
+	struct wmi_unified *wmi_handle;
+
+	if (!psoc) {
+		target_if_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("null wmi handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wmi_unified_twt_disable_cmd(wmi_handle, req);
+	if (QDF_IS_STATUS_ERROR(ret))
+		target_if_err("Failed to disable TWT(ret=%d)", ret);
+
+	return ret;
 }
 

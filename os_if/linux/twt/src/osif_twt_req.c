@@ -109,12 +109,78 @@ cleanup:
 int osif_twt_requestor_disable(struct wlan_objmgr_psoc *psoc,
 			       struct twt_disable_param *req)
 {
-	return 0;
+	struct osif_request *request;
+	int ret;
+	QDF_STATUS status;
+	struct twt_en_dis_priv *twt_en_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*twt_en_priv),
+				.timeout_ms = TWT_DISABLE_COMPLETE_TIMEOUT,
+	};
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		osif_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	context = osif_request_cookie(request);
+
+	status = ucfg_twt_requestor_disable(psoc, req, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_warn("Failed to send TWT requestor disable command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ret = osif_request_wait_for_response(request);
+	if (ret) {
+		osif_warn("TWT Requestor disable timedout ret:%d", ret);
+		ret = -ETIMEDOUT;
+		goto cleanup;
+	}
+
+cleanup:
+	osif_request_put(request);
+	return ret;
 }
 
 int osif_twt_responder_disable(struct wlan_objmgr_psoc *psoc,
 			       struct twt_disable_param *req)
 {
-	return 0;
+	struct osif_request *request;
+	int ret;
+	QDF_STATUS status;
+	struct twt_en_dis_priv *twt_en_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*twt_en_priv),
+				.timeout_ms = TWT_DISABLE_COMPLETE_TIMEOUT,
+	};
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		osif_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	context = osif_request_cookie(request);
+
+	status = ucfg_twt_responder_disable(psoc, req, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_warn("Failed to send TWT responder disable command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ret = osif_request_wait_for_response(request);
+	if (ret) {
+		osif_warn("TWT Responder disable timedout ret:%d", ret);
+		ret = -ETIMEDOUT;
+		goto cleanup;
+	}
+
+cleanup:
+	osif_request_put(request);
+	return ret;
 }
 

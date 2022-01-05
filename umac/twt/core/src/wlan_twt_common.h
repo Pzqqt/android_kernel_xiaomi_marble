@@ -130,7 +130,7 @@ QDF_STATUS wlan_twt_check_all_twt_support(struct wlan_objmgr_psoc *psoc,
 					  uint32_t dialog_id);
 
 /**
- * wlan_twt_disable() - twt disable
+ * wlan_twt_requestor_disable() - twt requestor disable
  * @psoc: psoc handle
  * @req: twt disable request structure
  * @context: context
@@ -138,9 +138,22 @@ QDF_STATUS wlan_twt_check_all_twt_support(struct wlan_objmgr_psoc *psoc,
  * return: QDF_STATUS
  */
 QDF_STATUS
-wlan_twt_disable(struct wlan_objmgr_psoc *psoc,
-		 struct twt_disable_param *req,
-		 void *context);
+wlan_twt_requestor_disable(struct wlan_objmgr_psoc *psoc,
+			   struct twt_disable_param *req,
+			   void *context);
+
+/**
+ * wlan_twt_responder_disable() - twt responder disable
+ * @psoc: psoc handle
+ * @req: twt disable request structure
+ * @context: context
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_twt_responder_disable(struct wlan_objmgr_psoc *psoc,
+			   struct twt_disable_param *req,
+			   void *context);
 
 /**
  * wlan_twt_requestor_enable() - twt requestor enable
