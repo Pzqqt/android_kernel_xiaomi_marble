@@ -1364,6 +1364,15 @@ cm_handle_roam_reason_invoke_roam_fail(uint8_t vdev_id,	uint32_t notif_params,
 				       struct cm_hw_mode_trans_ind *trans_ind);
 
 /**
+ * cm_handle_roam_sync_update_hw_mode() - Handler for roam sync hw mode update
+ * @trans_ind: hw_mode transition indication
+ *
+ * Return: None
+ */
+void
+cm_handle_roam_sync_update_hw_mode(struct cm_hw_mode_trans_ind *trans_ind);
+
+/**
  * cm_handle_roam_reason_deauth() - Handler for roam due to deauth from AP
  * @vdev_id: vdev id
  * @notif_params: contains roam invoke fail reason from wmi_roam_invoke_error_t

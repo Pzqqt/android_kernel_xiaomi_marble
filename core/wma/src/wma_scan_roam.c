@@ -2785,6 +2785,23 @@ cm_handle_roam_reason_invoke_roam_fail(uint8_t vdev_id,	uint32_t notif_params,
 				NULL, notif_params, 0);
 }
 
+void
+cm_handle_roam_sync_update_hw_mode(struct cm_hw_mode_trans_ind *trans_ind)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	struct cm_hw_mode_trans_ind *trans_ind_data;
+
+	if (!wma_handle) {
+		wma_err("invalid wma handle");
+		return;
+	}
+	trans_ind_data = qdf_mem_malloc(sizeof(*trans_ind_data));
+	if (!trans_ind_data)
+		return;
+	qdf_mem_copy(trans_ind_data, trans_ind, sizeof(*trans_ind_data));
+	wma_handle_hw_mode_trans_ind(wma_handle, trans_ind_data);
+}
+
 static void
 wma_handle_roam_reason_deauth(uint8_t vdev_id, uint32_t notif_params,
 			      uint32_t notif_params1,

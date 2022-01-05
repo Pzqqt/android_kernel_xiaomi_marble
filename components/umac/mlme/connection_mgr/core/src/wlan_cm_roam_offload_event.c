@@ -361,8 +361,12 @@ cm_roam_sync_event_handler(struct wlan_objmgr_psoc *psoc,
 			   uint32_t len,
 			   struct roam_offload_synch_ind *sync_ind)
 {
+	if (sync_ind && sync_ind->hw_mode_trans_present)
+		cm_handle_roam_sync_update_hw_mode(
+			&sync_ind->hw_mode_trans_ind);
+
 	return mlo_fw_roam_sync_req(psoc, sync_ind->roamed_vdev_id,
-				   sync_ind, sizeof(sync_ind));
+				    sync_ind, sizeof(sync_ind));
 }
 
 QDF_STATUS

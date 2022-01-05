@@ -2137,13 +2137,15 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 			     REPLAY_CTR_LEN);
 	}
 
-	if (param_buf->hw_mode_transition_fixed_param)
+	if (param_buf->hw_mode_transition_fixed_param) {
 		wmi_extract_pdev_hw_mode_trans_ind(
 		    param_buf->hw_mode_transition_fixed_param,
 		    param_buf->wmi_pdev_set_hw_mode_response_vdev_mac_mapping,
 		    &roam_sync_ind->hw_mode_trans_ind);
-	else
+		roam_sync_ind->hw_mode_trans_present = true;
+	} else {
 		wmi_debug("hw_mode transition fixed param is NULL");
+	}
 
 	fils_info = param_buf->roam_fils_synch_info;
 	if (fils_info) {
