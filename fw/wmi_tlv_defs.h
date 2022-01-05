@@ -1217,6 +1217,18 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_frame_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_debug_mesg_fw_cal_failure_param,
+    WMITLV_TAG_STRUC_wmi_quiet_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_bmiss_stats_struct,
+    WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_changed_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_tlv,
+    WMITLV_TAG_STRUC_wmi_sw_cal_ver_cap,
+    WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_pktlog_decode_info_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_spectral_scan_bw_capabilities,
+    WMITLV_TAG_STRUC_wmi_spectral_fft_size_capabilities,
+    WMITLV_TAG_STRUC_wmi_pdev_sscan_chan_info,
+    WMITLV_TAG_STRUC_wmi_pdev_sscan_per_detector_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1700,6 +1712,7 @@ typedef enum {
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CMDID) \
     OP(WMI_SAWF_SVC_CLASS_CFG_CMDID) \
     OP(WMI_SAWF_SVC_CLASS_DISABLE_CMDID) \
+    OP(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1975,6 +1988,10 @@ typedef enum {
     OP(WMI_PDEV_FIPS_EXTEND_EVENTID) \
     OP(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID) \
     OP(WMI_ROAM_FRAME_EVENTID) \
+    OP(WMI_QUIET_HANDLING_EVENTID) \
+    OP(WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID) \
+    OP(WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID) \
+    OP(WMI_SPECTRAL_CAPABILITIES_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4875,6 +4892,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_CFG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sawf_svc_class_disable_cmd_fixed_param, wmi_sawf_svc_class_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
 
+/* WMI CMD used to Enable/Disable Cmd for TQM reset feature */
+#define WMITLV_TABLE_WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -4927,8 +4949,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_twt_caps_params, twt_caps, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_htt_msdu_idx_to_htt_msdu_qtype, htt_msdu_idx_to_qtype_map, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dbs_or_sbs_cap_ext, dbs_or_sbs_cap_ext, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_cust_bdf_version_capabilities, cust_bdf_version_capabilities, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_cust_bdf_version_capabilities, cust_bdf_version_capabilities, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_sw_cal_ver_cap, sw_cal_ver_cap, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT2_EVENTID);
+
+#define WMITLV_TABLE_WMI_SPECTRAL_CAPABILITIES_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_spectral_scan_bw_capabilities, sscan_bw_caps, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_spectral_fft_size_capabilities, fft_size_caps, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_SPECTRAL_CAPABILITIES_EVENTID);
 
 #define WMITLV_TABLE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID(id,op,buf,len) \
      WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param, wmi_chan_rf_characterization_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -5284,7 +5312,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DEBUG_MESG_EVENTID);
 
 #define WMITLV_TABLE_WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID(id,op,buf,len)\
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_debug_mesg_flush_complete_fixed_param, wmi_debug_mesg_flush_complete_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_debug_mesg_fw_data_stall_param, data_stall, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_debug_mesg_fw_data_stall_param, data_stall, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_debug_mesg_fw_cal_failure_param, cal_failure, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID);
 
 #define WMITLV_TABLE_WMI_RSSI_BREACH_EVENTID(id,op,buf,len)\
@@ -6252,7 +6281,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_calibration_stats_struct, ctrl_path_calibration_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_dfs_channel_stats_struct, ctrl_path_dfs_channel_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_awgn_stats_struct, ctrl_path_awgn_stats, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_btcoex_stats_struct, ctrl_path_btcoex_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_btcoex_stats_struct, ctrl_path_btcoex_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_bmiss_stats_struct, ctrl_path_bmiss_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_RADIO_CHAN_STATS_EVENTID(id, op, buf, len) \
@@ -6488,7 +6518,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_AGGR_SCHED_METHOD_EVENTID);
 /* Send sscan fw params to host */
 #define WMITLV_TABLE_WMI_PDEV_SSCAN_FW_PARAM_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_sscan_fw_cmd_fixed_param, wmi_pdev_sscan_fw_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_sscan_fft_bin_index, fft_bin_index, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_sscan_fft_bin_index, fft_bin_index, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_sscan_chan_info, wmi_pdev_sscan_chan_info,chan_info, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_sscan_per_detector_info, det_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SSCAN_FW_PARAM_EVENTID);
 
 /* Send sscan related event start/stop trigger to host */
@@ -6570,6 +6602,25 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID);
 #define WMITLV_TABLE_WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_conf_event_fixed_param, wmi_vdev_update_mac_addr_conf_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID);
+
+/* Set the WMI Quiet handling EventID  */
+#define WMITLV_TABLE_WMI_QUIET_HANDLING_EVENTID(id,op,buf,len)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_quiet_event_fixed_param, wmi_quiet_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_QUIET_HANDLING_EVENTID);
+
+/* Resmgr Channel Time Quota changed event */
+#define WMITLV_TABLE_WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, \
+        WMITLV_TAG_STRUC_wmi_resmgr_chan_time_quota_changed_event_fixed_param, \
+        wmi_resmgr_chan_time_quota_changed_event_fixed_param, \
+        fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_resmgr_chan_time_quota_tlv, chan_quota, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_RESMGR_CHAN_TIME_QUOTA_CHANGED_EVENTID);
+
+/* PDev Packet Log Decode Info Event */
+#define WMITLV_TABLE_WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_pktlog_decode_info_evt_fixed_param, wmi_pdev_pktlog_decode_info_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID);
 
 
 #ifdef __cplusplus

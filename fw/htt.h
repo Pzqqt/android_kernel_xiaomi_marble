@@ -223,9 +223,12 @@
  * 3.98 Add htt_tx_tcl_metadata_v2 def.
  * 3.99 Add HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ, _UNMAP_REQ, _MAP_REPORT_REQ and
  *      HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF defs.
+ * 3.100 Add htt_tx_wbm_completion_v3 def.
+ * 3.101 Add HTT_UL_OFDMA_USER_INFO_V1_BITMAP defs.
+ * 3.102 Add HTT_H2T_MSG_TYPE_MSI_SETUP def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 99
+#define HTT_CURRENT_VERSION_MINOR 102
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -717,6 +720,8 @@ typedef enum {
     HTT_STATS_TX_SELFGEN_BE_SCHED_STATUS_STATS_TAG = 139, /* htt_tx_selfgen_be_sched_status_stats_tlv */
     HTT_STATS_TX_PDEV_BE_UL_MU_MIMO_STATS_TAG      = 140, /* htt_tx_pdev_be_ul_mu_mimo_sch_stats_tlv */
     HTT_STATS_RX_PDEV_BE_UL_MIMO_USER_STATS_TAG    = 141, /* htt_rx_pdev_be_ul_mimo_user_stats_tlv */
+    HTT_STATS_RX_RING_STATS_TAG                    = 142, /* htt_rx_fw_ring_stats_tlv_v */
+    HTT_STATS_RX_PDEV_BE_UL_TRIG_STATS_TAG         = 143, /* htt_rx_pdev_be_ul_trigger_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -781,6 +786,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_SAWF_DEF_QUEUES_MAP_REQ        = 0x1c,
     HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ      = 0x1d,
     HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ = 0x1e,
+    HTT_H2T_MSG_TYPE_MSI_SETUP             = 0x1f,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -2659,6 +2665,7 @@ typedef enum {
    HTT_TX_FW2WBM_REINJECT_REASON_ARP,
    HTT_TX_FW2WBM_REINJECT_REASON_DHCP,
    HTT_TX_FW2WBM_REINJECT_REASON_FLOW_CONTROL,
+   HTT_TX_FW2WBM_REINJECT_REASON_MLO_MCAST,
 
    HTT_TX_FW2WBM_REINJECT_REASON_MAX,
 } htt_tx_fw2wbm_reinject_reason_t;
@@ -2832,6 +2839,88 @@ PREPACK struct htt_tx_wbm_completion_v2 {
          HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_EXP_FRAME, _val); \
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S)); \
      } while (0)
+
+/**
+ * @brief HTT TX WBM Completion from firmware to host (V3)
+ * @details
+ *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
+ *  (WBM) offload HW.
+ *  This structure is passed from firmware to host overlayed on wbm_release_ring
+ *  For software based completions, release_source_module will
+ *  be set to WIFIRELEASE_SOURCE_FW_E. Host SW is expected to inspect using
+ *  struct wbm_release_ring and then switch to this after looking at
+ *  release_source_module.
+ *  Due to overlap with WBM block, htt_tx_wbm_completion_v3 will be used
+ *  by new generations of targets.
+ */
+PREPACK struct htt_tx_wbm_completion_v3 {
+    A_UINT32
+        used_by_hw0;              /* Refer to struct wbm_release_ring */
+    A_UINT32
+        used_by_hw1;              /* Refer to struct wbm_release_ring */
+    A_UINT32
+        used_by_hw2:           13, /* Refer to struct wbm_release_ring */
+        tx_status:             4,  /* Takes enum values of htt_tx_fw2wbm_tx_status_t */
+        used_by_hw3:           15;
+    A_UINT32
+        reinject_reason:       4,  /* Takes enum values of htt_tx_fw2wbm_reinject_reason_t */
+        exception_frame:       1,
+        rsvd0:                 27; /* For future use */
+    A_UINT32
+        data0:                 32; /* data0,1 and 2 changes based on tx_status type
+                                    * if HTT_TX_FW2WBM_TX_STATUS_OK or HTT_TX_FW2WBM_TX_STATUS_DROP
+                                    * or HTT_TX_FW2WBM_TX_STATUS_TTL, struct htt_tx_wbm_transmit_status will be used.
+                                    * if HTT_TX_FW2WBM_TX_STATUS_REINJECT, struct htt_tx_wbm_reinject_status will be used.
+                                    * if HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY, struct htt_tx_wbm_mec_addr_notify will be used.
+                                    */
+    A_UINT32
+        data1:                 32;
+    A_UINT32
+        data2:                 32;
+    A_UINT32
+        rsvd1:                 20,
+        used_by_hw4:           12; /* Refer to struct wbm_release_ring */
+} POSTPACK;
+
+
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_M                 0x0001E000
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_S                 13
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_M           0x0000000F
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_S           0
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_M                 0x00000010
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S                 4
+
+
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V3_TX_STATUS_M) >> \
+    HTT_TX_WBM_COMPLETION_V3_TX_STATUS_S)
+
+#define HTT_TX_WBM_COMPLETION_V3_TX_STATUS_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_TX_STATUS, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_TX_STATUS_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_M) >> \
+    HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_S)
+
+#define HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_REINJECT_REASON_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_M) >> \
+    HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S)
+
+#define HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V3_EXP_FRAME, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V3_EXP_FRAME_S)); \
+     } while (0)
+
 
 typedef enum {
     TX_FRAME_TYPE_UNDEFINED = 0,
@@ -4764,6 +4853,112 @@ PREPACK struct htt_wdi_ipa_op_request_t
         HTT_CHECK_SET_VAL(HTT_WDI_IPA_OP_REQUEST_OP_CODE, _val);  \
         ((_var) |= ((_val) << HTT_WDI_IPA_OP_REQUEST_OP_CODE_S)); \
     } while (0)
+
+/*
+ * @brief  host -> target HTT_MSI_SETUP message
+ *
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_MSI_SETUP
+ *
+ * @details
+ * After target is booted up, host can send MSI setup message so that
+ * target sets up HW registers based on setup message.
+ *
+ *    The message would appear as follows:
+ *    |31           24|23             16|15|14           8|7               0|
+ *    |---------------+-----------------+-----------------+-----------------|
+ *    |    reserved   |      msi_type   |    pdev_id      |    msg_type     |
+ *    |---------------------------------------------------------------------|
+ *    |                          msi_addr_lo                                |
+ *    |---------------------------------------------------------------------|
+ *    |                          msi_addr_hi                                |
+ *    |---------------------------------------------------------------------|
+ *    |                          msi_data                                   |
+ *    |---------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0  - b'0:7   - msg_type: This will be set to
+ *                     0x1f (HTT_H2T_MSG_TYPE_MSI_SETUP)
+ *           b'8:15  - pdev_id:
+ *                     0 (for rings at SOC/UMAC level),
+ *                     1/2/3 mac id (for rings at LMAC level)
+ *           b'16:23 - msi_type: identify which msi registers need to be setup
+ *                     more details can be got from enum htt_msi_setup_type
+ *           b'24:31 - reserved
+ * dword8  - b'0:31  - ring_msi_addr_lo: Lower 32bits of MSI cfg address
+ * dword9  - b'0:31  - ring_msi_addr_hi: Upper 32bits of MSI cfg address
+ * dword10 - b'0:31  - ring_msi_data: MSI data configured by host
+ */
+PREPACK struct htt_msi_setup_t {
+    A_UINT32 msg_type:  8,
+             pdev_id:   8,
+             msi_type:  8,
+             reserved:  8;
+    A_UINT32 msi_addr_lo;
+    A_UINT32 msi_addr_hi;
+    A_UINT32 msi_data;
+} POSTPACK;
+
+enum htt_msi_setup_type {
+    HTT_PPDU_END_MSI_SETUP_TYPE,
+
+    /* Insert new types here*/
+};
+
+#define HTT_MSI_SETUP_SZ    (sizeof(struct htt_msi_setup_t))
+#define HTT_MSI_SETUP_PDEV_ID_M                  0x0000ff00
+#define HTT_MSI_SETUP_PDEV_ID_S                  8
+#define HTT_MSI_SETUP_PDEV_ID_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_PDEV_ID_M) >> \
+                HTT_MSI_SETUP_PDEV_ID_S)
+#define HTT_MSI_SETUP_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_PDEV_ID_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_TYPE_M                  0x00ff0000
+#define HTT_MSI_SETUP_MSI_TYPE_S                  16
+#define HTT_MSI_SETUP_MSI_TYPE_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_TYPE_M) >> \
+                HTT_MSI_SETUP_MSI_TYPE_S)
+#define HTT_MSI_SETUP_MSI_TYPE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_TYPE, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_TYPE_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_ADDR_LO_M        0xffffffff
+#define HTT_MSI_SETUP_MSI_ADDR_LO_S        0
+#define HTT_MSI_SETUP_MSI_ADDR_LO_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_ADDR_LO_M) >> \
+                HTT_MSI_SETUP_MSI_ADDR_LO_S)
+#define HTT_MSI_SETUP_MSI_ADDR_LO_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_ADDR_LO, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_ADDR_LO_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_ADDR_HI_M        0xffffffff
+#define HTT_MSI_SETUP_MSI_ADDR_HI_S        0
+#define HTT_MSI_SETUP_MSI_ADDR_HI_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_ADDR_HI_M) >> \
+                HTT_MSI_SETUP_MSI_ADDR_HI_S)
+#define HTT_MSI_SETUP_MSI_ADDR_HI_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_ADDR_HI, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_ADDR_HI_S)); \
+        } while (0)
+
+#define HTT_MSI_SETUP_MSI_DATA_M          0xffffffff
+#define HTT_MSI_SETUP_MSI_DATA_S          0
+#define HTT_MSI_SETUP_MSI_DATA_GET(_var) \
+        (((_var) & HTT_MSI_SETUP_MSI_DATA_M) >> \
+                HTT_MSI_SETUP_MSI_DATA_S)
+#define HTT_MSI_SETUP_MSI_DATA_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_MSI_SETUP_MSI_DATA, _val); \
+            ((_var) |= ((_val) << HTT_MSI_SETUP_MSI_DATA_S)); \
+        } while (0)
 
 /*
  * @brief  host -> target  HTT_SRING_SETUP message
@@ -16343,7 +16538,28 @@ struct htt_ul_ofdma_user_info_v0_bitmap_w1 {
     HTT_UL_OFDMA_USER_INFO_V0_BITMAP_W1
 };
 
-/* htt_up_ofdma_user_info_v0_bitmap shows what bitfields are within the info */
+
+#define HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0 \
+    A_UINT32 w0_fw_rsvd:27; \
+    A_UINT32 w0_sub_version:3;  /* set to a value of “0” on WKK/Beryllium targets (future expansion) */ \
+    A_UINT32 w0_valid:1; /* field aligns with V0 definition */ \
+    A_UINT32 w0_version:1;  /* set to a value of “1” to indicate picking htt_ul_ofdma_user_info_v1_bitmap (field aligns with V0 definition) */
+
+struct htt_ul_ofdma_user_info_v1_bitmap_w0 {
+    HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0
+};
+
+#define HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W1 \
+    A_UINT32 w1_unused_0_to_18:19; /* Guaranteed to be set to 0, can be used for future expansion without bumping version again. */ \
+    A_UINT32 w1_trig_type:4; \
+    A_UINT32 w1_unused_23_to_31:9; /* Guaranteed to be set to 0, can be used for future expansion without bumping version again. */
+
+struct htt_ul_ofdma_user_info_v1_bitmap_w1 {
+    HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W1
+};
+
+
+/* htt_ul_ofdma_user_info_v0_bitmap shows what bitfields are within the info */
 PREPACK struct htt_ul_ofdma_user_info_v0_bitmap {
     union {
         A_UINT32 word0;
@@ -16358,6 +16574,27 @@ PREPACK struct htt_ul_ofdma_user_info_v0_bitmap {
         };
     };
 } POSTPACK;
+
+/*
+ * htt_ul_ofdma_user_info_v1_bitmap bits are aligned to
+ * htt_ul_ofdma_user_info_v0_bitmap, based on the w0_version
+ * this should be picked.
+ */
+PREPACK struct htt_ul_ofdma_user_info_v1_bitmap {
+    union {
+        A_UINT32 word0;
+        struct {
+            HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W0
+        };
+    };
+    union {
+        A_UINT32 word1;
+        struct {
+            HTT_UL_OFDMA_USER_INFO_V1_BITMAP_W1
+        };
+    };
+} POSTPACK;
+
 
 enum HTT_UL_OFDMA_TRIG_TYPE {
     HTT_UL_OFDMA_USER_INFO_V0_TRIG_TYPE_BASIC = 0,
