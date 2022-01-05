@@ -326,8 +326,19 @@ QDF_STATUS cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 		cm_id = roam_req->cm_id;
 
 	/* continue even if no roam command is found */
-	status = wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_ENABLED,
-					   REASON_ROAM_ABORT);
+
+	/*
+	 * Switch to RSO enabled state only if the current state is
+	 * WLAN_ROAMING_IN_PROG or WLAN_ROAM_SYNCH_IN_PROG.
+	 * This API can be called in internal roam aborts also when
+	 * RSO state is deinit and cause RSO start to be sent in
+	 * disconnected state.
+	 */
+	if (MLME_IS_ROAMING_IN_PROG(psoc, vdev_id) ||
+	    MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id))
+		status = wlan_cm_roam_state_change(pdev, vdev_id,
+						   WLAN_ROAM_RSO_ENABLED,
+						   REASON_ROAM_ABORT);
 
 	cm_abort_fw_roam(cm_ctx, cm_id);
 rel_ref:

@@ -2481,12 +2481,18 @@ cm_update_btm_offload_config(struct wlan_objmgr_psoc *psoc,
 	/* Return if INI is disabled */
 	if (!(*btm_offload_config))
 		return;
+
 	vdev_id = wlan_vdev_get_id(vdev);
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id, HS_20_AP, &temp);
 	is_hs_20_ap = temp.bool_value;
-	/* For RSO Stop Disable BTM offload to firmware */
+
+	/*
+	 * For RSO Stop/Passpoint R2 cert test case 5.11(when STA is connected
+	 * to Hotspot-2.0 AP), disable BTM offload to firmware
+	 */
 	if (command == ROAM_SCAN_OFFLOAD_STOP || is_hs_20_ap) {
-		mlme_debug("RSO cmd: %d", command);
+		mlme_debug("RSO cmd: %d is_hs_20_ap:%d", command,
+			   is_hs_20_ap);
 		*btm_offload_config = 0;
 		return;
 	}
@@ -2944,8 +2950,6 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_fill_stop_reason(stop_req, reason);
 	if (wlan_cm_host_roam_in_progress(psoc, vdev_id))
 		stop_req->middle_of_roaming = 1;
-	else
-		wlan_roam_reset_roam_params(psoc);
 	/*
 	 * If roam synch propagation is in progress and an user space
 	 * disconnect is requested, then there is no need to send the
@@ -3530,7 +3534,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	enum roam_offload_state cur_state;
 	uint8_t temp_vdev_id, roam_enabled_vdev_id;
 	uint32_t roaming_bitmap, count;
-	bool dual_sta_roam_active, usr_disabled_roaming;
+	bool dual_sta_roam_active, usr_disabled_roaming, sta_concurrency_is_dbs;
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
@@ -3548,8 +3552,18 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 	dual_sta_roam_active =
 		wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+							  NULL);
+	sta_concurrency_is_dbs = (count == 2) &&
+		    !(policy_mgr_current_concurrency_is_mcc(psoc) ||
+		      policy_mgr_current_concurrency_is_scc(psoc));
 
 	cur_state = mlme_get_roam_state(psoc, vdev_id);
+
+	mlme_info("sta count:%d, dual_sta_roam_active:%d, is_dbs:%d, state:%d",
+		  count, dual_sta_roam_active, sta_concurrency_is_dbs,
+		  cur_state);
+
 	switch (cur_state) {
 	case WLAN_ROAM_DEINIT:
 		roaming_bitmap = mlme_get_roam_trigger_bitmap(psoc, vdev_id);
@@ -3563,12 +3577,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 		 * Enable roaming on other interface only if STA + STA
 		 * concurrency is in DBS.
 		 */
-		count = policy_mgr_mode_specific_connection_count(psoc,
-								  PM_STA_MODE,
-								  NULL);
-		if (dual_sta_roam_active && (count == 2 &&
-		    !(policy_mgr_current_concurrency_is_mcc(psoc) ||
-		      policy_mgr_current_concurrency_is_scc(psoc)))) {
+		if (dual_sta_roam_active && sta_concurrency_is_dbs) {
 			mlme_info("STA + STA concurrency is in DBS");
 			break;
 		}
@@ -3655,7 +3664,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	 * PCL type to vdev level
 	 */
 	if (roam_enabled_vdev_id != WLAN_UMAC_VDEV_ID_MAX &&
-	    dual_sta_roam_active)
+	    dual_sta_roam_active && sta_concurrency_is_dbs)
 		wlan_cm_roam_activate_pcl_per_vdev(psoc, vdev_id, true);
 
 	/* Set PCL before sending RSO start */

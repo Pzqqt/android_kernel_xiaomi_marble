@@ -1963,8 +1963,8 @@ static void wma_cdp_peer_setup(tp_wma_handle wma,
 	qdf_mem_zero(&peer_info, sizeof(peer_info));
 
 	peer_info.mld_peer_mac = mld_mac;
-	peer_info.is_assoc_link = wlan_peer_mlme_is_assoc_peer(obj_peer);
-	peer_info.is_primary_link = peer_info.is_assoc_link;
+	peer_info.is_first_link = wlan_peer_mlme_is_assoc_peer(obj_peer);
+	peer_info.is_primary_link = peer_info.is_first_link;
 	cdp_peer_setup(dp_soc, vdev_id, peer_addr, &peer_info);
 	wlan_objmgr_peer_release_ref(obj_peer, WLAN_LEGACY_WMA_ID);
 }

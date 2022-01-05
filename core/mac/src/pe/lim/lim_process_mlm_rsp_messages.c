@@ -2787,10 +2787,11 @@ static void lim_process_switch_channel_join_req(
 			pe_debug("MLO: Generate and process assoc rsp for link vdev");
 
 			if (QDF_IS_STATUS_SUCCESS(
-				util_gen_link_assoc_rsp(assoc_rsp.ptr,
-							assoc_rsp.len,
-							sta_link_addr,
-							link_assoc_rsp.ptr))) {
+				util_gen_link_assoc_rsp(
+					assoc_rsp.ptr, assoc_rsp.len - 24,
+					false, sta_link_addr,
+					link_assoc_rsp.ptr, assoc_rsp.len,
+					(qdf_size_t *)&link_assoc_rsp.len))) {
 				pe_debug("MLO: process assoc rsp for link vdev");
 				lim_process_assoc_rsp_frame(mac_ctx,
 							    link_assoc_rsp.ptr,

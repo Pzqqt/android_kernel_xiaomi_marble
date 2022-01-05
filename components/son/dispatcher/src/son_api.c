@@ -25,6 +25,43 @@
 #include <ieee80211_external.h>
 
 /**
+ * struct son_mlme_deliver_cbs - son mlme deliver callbacks
+ * @deliver_opmode: cb to deliver opmode
+ * @deliver_smps: cb to deliver smps
+ */
+struct son_mlme_deliver_cbs {
+	mlme_deliver_cb deliver_opmode;
+	mlme_deliver_cb deliver_smps;
+};
+
+static struct son_mlme_deliver_cbs g_son_mlme_deliver_cbs;
+
+QDF_STATUS
+wlan_son_register_mlme_deliver_cb(struct wlan_objmgr_psoc *psoc,
+				  mlme_deliver_cb cb,
+				  enum SON_MLME_DELIVER_CB_TYPE type)
+{
+	if (!psoc) {
+		qdf_err("invalid psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (type) {
+	case SON_MLME_DELIVER_CB_TYPE_OPMODE:
+		g_son_mlme_deliver_cbs.deliver_opmode = cb;
+		break;
+	case SON_MLME_DELIVER_CB_TYPE_SMPS:
+		g_son_mlme_deliver_cbs.deliver_smps = cb;
+		break;
+	default:
+		qdf_err("invalid type");
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wlan_son_is_he_supported() - is he supported or not
  * @psoc: pointer to psoc
  * @he_supported: he supported or not
@@ -396,4 +433,154 @@ int wlan_son_deliver_inst_rssi(struct wlan_objmgr_vdev *vdev,
 					  &event);
 
 	return ret;
+}
+
+int wlan_son_deliver_opmode(struct wlan_objmgr_vdev *vdev,
+			    uint8_t bw,
+			    uint8_t nss,
+			    uint8_t *addr)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct ieee80211_opmode_update_data opmode;
+
+	if (!vdev)
+		return -EINVAL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	opmode.max_chwidth = bw;
+	opmode.num_streams = nss;
+	qdf_mem_copy(opmode.macaddr, addr, QDF_MAC_ADDR_SIZE);
+
+	qdf_debug("bw %d, nss %d, addr " QDF_FULL_MAC_FMT,
+		  bw, nss, QDF_FULL_MAC_REF(addr));
+
+	if (!g_son_mlme_deliver_cbs.deliver_opmode) {
+		qdf_err("invalid deliver opmode cb");
+		return -EINVAL;
+	}
+
+	g_son_mlme_deliver_cbs.deliver_opmode(vdev,
+					      sizeof(opmode),
+					      (uint8_t *)&opmode);
+
+	return 0;
+}
+
+int wlan_son_deliver_smps(struct wlan_objmgr_vdev *vdev,
+			  uint8_t is_static,
+			  uint8_t *addr)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct ieee80211_smps_update_data smps;
+
+	if (!vdev)
+		return -EINVAL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -EINVAL;
+
+	smps.is_static = is_static;
+	qdf_mem_copy(smps.macaddr, addr, QDF_MAC_ADDR_SIZE);
+
+	qdf_debug("is_static %d, addr" QDF_FULL_MAC_FMT,
+		  is_static, QDF_FULL_MAC_REF(addr));
+
+	if (!g_son_mlme_deliver_cbs.deliver_smps) {
+		qdf_err("invalid deliver smps cb");
+		return -EINVAL;
+	}
+
+	g_son_mlme_deliver_cbs.deliver_smps(vdev,
+					    sizeof(smps),
+					    (uint8_t *)&smps);
+
+	return 0;
+}
+
+int wlan_son_deliver_rrm_rpt(struct wlan_objmgr_vdev *vdev,
+			     uint8_t *mac_addr,
+			     uint8_t *frm,
+			     uint32_t flen)
+{
+	struct wlan_act_frm_info rrm_info;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_peer *peer;
+	uint8_t sub_type = IEEE80211_FC0_SUBTYPE_ACTION;
+	struct ieee80211_action ia;
+	const uint8_t *ie, *pos, *end;
+	uint8_t total_bcnrpt_count = 0;
+
+	if (!vdev) {
+		qdf_err("invalid vdev");
+		return -EINVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		qdf_err("invalid psoc");
+		return -EINVAL;
+	}
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops || !rx_ops->son_rx_ops.process_mgmt_frame) {
+		qdf_err("invalid rx ops");
+		return -EINVAL;
+	}
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, mac_addr, WLAN_SON_ID);
+	if (!peer) {
+		qdf_err("peer is null");
+		return -EINVAL;
+	}
+
+	ia.ia_category = ACTION_CATEGORY_RRM;
+	ia.ia_action = RRM_RADIO_MEASURE_RPT;
+	qdf_mem_zero(&rrm_info, sizeof(rrm_info));
+	rrm_info.ia = &ia;
+	rrm_info.ald_info = 0;
+	qdf_mem_copy(rrm_info.data.rrm_data.macaddr,
+		     mac_addr,
+		     QDF_MAC_ADDR_SIZE);
+	/* IEEE80211_ACTION_RM_TOKEN */
+	rrm_info.data.rrm_data.dialog_token = *frm;
+
+	/* Points to Measurement Report Element */
+	++frm;
+	--flen;
+	pos = frm;
+	end = pos + flen;
+
+	while ((ie = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_MEASREP,
+					      pos, end - pos))) {
+		if (ie[1] < 3) {
+			qdf_err("Bad Measurement Report element");
+			wlan_objmgr_peer_release_ref(peer, WLAN_SON_ID);
+			return -EINVAL;
+		}
+		if (ie[4] == SIR_MAC_RRM_BEACON_TYPE)
+			++total_bcnrpt_count;
+		pos = ie + ie[1] + 2;
+	}
+
+	rrm_info.data.rrm_data.num_meas_rpts = total_bcnrpt_count;
+
+	qdf_debug("Sta: " QDF_FULL_MAC_FMT
+		  "Category %d Action %d Num_Report %d Rptlen %d",
+		  QDF_FULL_MAC_REF(mac_addr),
+		  ACTION_CATEGORY_RRM,
+		  RRM_RADIO_MEASURE_RPT,
+		  total_bcnrpt_count,
+		  flen);
+
+	rx_ops->son_rx_ops.process_mgmt_frame(vdev, peer, sub_type,
+					      frm, flen, &rrm_info);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_SON_ID);
+
+	return 0;
 }

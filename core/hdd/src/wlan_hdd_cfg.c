@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -500,6 +501,12 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode)
 		return eCSR_DOT11_MODE_11ax_ONLY;
 	case (eHDD_DOT11_MODE_11ax):
 		return eCSR_DOT11_MODE_11ax;
+#ifdef WLAN_FEATURE_11BE
+	case (eHDD_DOT11_MODE_11be):
+		return eCSR_DOT11_MODE_11be;
+	case (eHDD_DOT11_MODE_11be_ONLY):
+		return eCSR_DOT11_MODE_11be_ONLY;
+#endif
 	}
 
 }

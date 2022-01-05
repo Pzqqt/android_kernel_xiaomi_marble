@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -684,10 +685,6 @@ sir_convert_qos_map_configure_frame2_struct(struct mac_context *mac,
 
 #ifdef WLAN_FEATURE_11BE_MLO
 QDF_STATUS
-mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
-				     tpSirMultiLink_IE pMloIe);
-
-QDF_STATUS
 populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 				 struct pe_session *session,
 				 tDot11fIEmlo_ie *mlo_ie);
@@ -696,13 +693,6 @@ QDF_STATUS
 sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 					tpSirMultiLink_IE mlo_ie_ptr);
 #else
-static inline QDF_STATUS
-mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
-				       tpSirMultiLink_IE pMloIe)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
 static inline QDF_STATUS
 populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 				 struct pe_session *session,
@@ -759,6 +749,22 @@ void
 populate_dot11f_max_chan_switch_time(struct mac_context *mac,
 				     tDot11fIEmax_chan_switch_time *pDot11f,
 				     struct pe_session *pe_session);
+
+/**
+ * populate_dot11f_non_inheritance() - populate non inheritance
+ * @mac_ctx: pointer to mac
+ * @non_inheritance: pointer to tDot11fIEnon_inheritance
+ * @non_inher_ie_lists: non inheritance IE list
+ * @non_inher_ext_ie_lists: non inheritance extend IE list
+ * @non_inher_len: non inheritance IE list length
+ * @non_inher_ext_len: non inheritance Extend IE list length
+ */
+void populate_dot11f_non_inheritance(
+			struct mac_context *mac_ctx,
+			tDot11fIEnon_inheritance *non_inheritance,
+			uint8_t *non_inher_ie_lists,
+			uint8_t *non_inher_ext_ie_lists,
+			uint8_t non_inher_len, uint8_t non_inher_ext_len);
 
 /* / Populate a tDot11fIEChanSwitchAnn */
 void
@@ -1330,44 +1336,6 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
- * sir_convert_mlo_reassoc_req_frame2_struct() - convert mlo reassoc req from
- *                                               frame to struct for given
- *                                               link id
- * @mac_ctx: Global MAC context
- * @pFrame: mlo reassoc req frame body
- * @nFrame: mlo reassoc req frame length
- * @pAssocReq: pointer to REASSOC Request frame
- * @link_id: link id
- *
- * Return: QDF_STATUS_SUCCESS of no error
- */
-QDF_STATUS
-sir_convert_mlo_reassoc_req_frame2_struct(struct mac_context *mac,
-					  uint8_t *pFrame,
-					  uint32_t nFrame,
-					  tpSirAssocReq pAssocReq,
-					  uint8_t link_id);
-
-/**
- * sir_convert_mlo_assoc_req_frame2_struct() - convert mlo assoc req from
- *                                             frame to struct for given
- *                                             link id
- * @mac_ctx: Global MAC context
- * @pFrame: mlo assoc req frame body
- * @nFrame: mlo assoc req frame length
- * @pAssocReq: pointer to ASSOC Request frame
- * @link_id: link id
- *
- * Return: QDF_STATUS_SUCCESS of no error
- */
-QDF_STATUS
-sir_convert_mlo_assoc_req_frame2_struct(struct mac_context *mac,
-					uint8_t *pFrame,
-					uint32_t nFrame,
-					tpSirAssocReq pAssocReq,
-					uint8_t link_id);
-
-/**
  * populate_dot11f_assoc_rsp_mlo_ie() - populate mlo ie for assoc response
  * @mac_ctx: Global MAC context
  * @session: PE session
@@ -1419,26 +1387,6 @@ void populate_dot11f_rnr_tbtt_info_10(struct mac_context *mac_ctx,
 				      tDot11fIEreduced_neighbor_report *dot11f);
 
 #else
-static inline QDF_STATUS
-sir_convert_mlo_reassoc_req_frame2_struct(struct mac_context *mac,
-					  uint8_t *pFrame,
-					  uint32_t nFrame,
-					  tpSirAssocReq pAssocReq,
-					  uint8_t link_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-sir_convert_mlo_assoc_req_frame2_struct(struct mac_context *mac,
-					uint8_t *pFrame,
-					uint32_t nFrame,
-					tpSirAssocReq pAssocReq,
-					uint8_t link_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static inline QDF_STATUS
 populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 				 struct pe_session *session,
@@ -1629,4 +1577,22 @@ QDF_STATUS dot11f_parse_assoc_response(struct mac_context *mac_ctx,
 				       tDot11fAssocResponse *p_frm,
 				       bool append_ie);
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * dot11f_parse_assoc_rsp_mlo_partner_info() - get mlo partner info in assoc rsp
+ * @pe_session: pointer to PE session
+ * @pframe: pointer of assoc response buffer
+ * @nframe: length of assoc response buffer
+ *
+ * Return: none
+ */
+void dot11f_parse_assoc_rsp_mlo_partner_info(struct pe_session *pe_session,
+					     uint8_t *pframe, uint32_t nframe);
+#else
+static inline void
+dot11f_parse_assoc_rsp_mlo_partner_info(struct pe_session *pe_session,
+					uint8_t *pframe, uint32_t nframe)
+{
+}
+#endif
 #endif /* __PARSE_H__ */

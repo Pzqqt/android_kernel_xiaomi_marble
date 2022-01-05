@@ -100,6 +100,7 @@
 
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
+#include <cdp_txrx_ctrl.h>
 #include <qca_vendor.h>
 #include "wlan_pmo_ucfg_api.h"
 #include "os_if_wifi_pos.h"
@@ -3920,6 +3921,9 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 
 	if (hdd_is_wlm_latency_manager_supported(hdd_ctx))
 		fset |= WIFI_FEATURE_SET_LATENCY_MODE;
+
+	if (hdd_dynamic_mac_addr_supported(hdd_ctx))
+		fset |= WIFI_FEATURE_DYNAMIC_SET_MAC;
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(fset) +
 						  NLMSG_HDRLEN);
@@ -7849,6 +7853,13 @@ static int hdd_config_vdev_chains(struct hdd_adapter *adapter,
 	if (!tx_attr && !rx_attr)
 		return 0;
 
+	/* if one is present, both must be present */
+	if (!tx_attr || !rx_attr) {
+		hdd_err("Missing attribute for %s",
+			tx_attr ? "RX" : "TX");
+		return -EINVAL;
+	}
+
 	tx_chains = nla_get_u8(tx_attr);
 	rx_chains = nla_get_u8(rx_attr);
 
@@ -7871,6 +7882,13 @@ static int hdd_config_tx_rx_nss(struct hdd_adapter *adapter,
 
 	if (!tx_attr && !rx_attr)
 		return 0;
+
+	/* if one is present, both must be present */
+	if (!tx_attr || !rx_attr) {
+		hdd_err("Missing attribute for %s",
+			tx_attr ? "RX" : "TX");
+		return -EINVAL;
+	}
 
 	tx_nss = nla_get_u8(tx_attr);
 	rx_nss = nla_get_u8(rx_attr);
@@ -18539,6 +18557,8 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	int ret = 0;
 	QDF_STATUS qdf_ret_status;
 	mac_handle_t mac_handle;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	cdp_config_param_type vdev_param;
 
 	hdd_enter();
 
@@ -18588,6 +18608,12 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 					 adapter->vdev_id,
 					 adapter->session.ap.
 					 disable_intrabss_fwd);
+
+		vdev_param.cdp_vdev_param_ap_brdg_en =
+			!adapter->session.ap.disable_intrabss_fwd;
+		cdp_txrx_set_vdev_param(soc, adapter->vdev_id,
+					CDP_ENABLE_AP_BRIDGE,
+					vdev_param);
 	}
 
 	hdd_exit();
@@ -19793,6 +19819,20 @@ void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
 	hdd_debug("Dot11Mode is %u", ini_dot11_mode);
 	switch (ini_dot11_mode) {
 	case eHDD_DOT11_MODE_AUTO:
+#ifdef WLAN_FEATURE_11BE
+	case eHDD_DOT11_MODE_11be:
+	case eHDD_DOT11_MODE_11be_ONLY:
+		if (sme_is_feature_supported_by_fw(DOT11BE))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11be;
+		else
+#endif
+		if (sme_is_feature_supported_by_fw(DOT11AX))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11ax;
+		else if (sme_is_feature_supported_by_fw(DOT11AC))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
+		else
+			hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+		break;
 	case eHDD_DOT11_MODE_11ax:
 	case eHDD_DOT11_MODE_11ax_ONLY:
 		if (sme_is_feature_supported_by_fw(DOT11AX))

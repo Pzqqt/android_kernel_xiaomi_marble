@@ -60,6 +60,14 @@ QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	if (cm_is_vdev_connecting(vdev) || cm_is_vdev_disconnecting(vdev)) {
+		mlme_err("vdev %d Roam sync not handled in conneting/disconneting state",
+			 vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+		return cm_roam_stop_req(psoc, vdev_id,
+					REASON_ROAM_SYNCH_FAILED);
+	}
+
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_SYNC,
 				     event_data_len, event);
 

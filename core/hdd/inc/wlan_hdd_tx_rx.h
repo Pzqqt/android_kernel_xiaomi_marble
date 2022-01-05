@@ -31,6 +31,7 @@
 #include <cds_api.h>
 #include <linux/skbuff.h>
 #include "cdp_txrx_flow_ctrl_legacy.h"
+#include <qdf_tracepoint.h>
 
 struct hdd_netif_queue_history;
 struct hdd_context;
@@ -588,4 +589,16 @@ bool wlan_hdd_rx_rpm_mark_last_busy(struct hdd_context *hdd_ctx,
  * Return: None
  */
 void hdd_sta_notify_tx_comp_cb(qdf_nbuf_t skb, void *ctx, uint16_t flag);
+
+/**
+ * hdd_rx_pkt_tracepoints_enabled() - Get the state of rx pkt tracepoint
+ *
+ * Return: True if any rx pkt tracepoint is enabled else false
+ */
+static inline bool hdd_rx_pkt_tracepoints_enabled(void)
+{
+	return (qdf_trace_dp_rx_tcp_pkt_enabled() ||
+		qdf_trace_dp_rx_udp_pkt_enabled() ||
+		qdf_trace_dp_rx_pkt_enabled());
+}
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

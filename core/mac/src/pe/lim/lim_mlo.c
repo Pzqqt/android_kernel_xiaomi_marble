@@ -31,6 +31,7 @@
 #include <lim_assoc_utils.h>
 #include <wlan_mlo_mgr_peer.h>
 #include <lim_utils.h>
+#include <utils_mlo.h>
 
 /**
  * lim_send_mlo_ie_update - mlo ie is changed, populate new beacon template
@@ -437,6 +438,8 @@ QDF_STATUS lim_mlo_proc_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
 	tSirMacFrameCtl fc;
 	tpSirAssocReq assoc_req;
 	QDF_STATUS status;
+	qdf_size_t link_frame_len;
+	struct qdf_mac_addr link_bssid;
 
 	if (!vdev) {
 		pe_err("vdev is null");
@@ -507,19 +510,36 @@ QDF_STATUS lim_mlo_proc_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
 	if (!assoc_req)
 		return QDF_STATUS_E_NOMEM;
 
-	status = lim_mlo_partner_assoc_req_parse(mac_ctx, sa, session,
-						 assoc_req, sub_type,
-						 frm_body, frame_len);
+	assoc_req->assoc_req_buf = qdf_nbuf_clone(buf);
+	if (!assoc_req->assoc_req_buf) {
+		pe_err("partner link assoc request buf clone failed");
+		qdf_mem_free(assoc_req);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_copy_macaddr(&link_bssid, (struct qdf_mac_addr *)session->bssId);
+	status = util_gen_link_assoc_req(
+				frm_body, frame_len, sub_type == LIM_REASSOC,
+				link_bssid,
+				qdf_nbuf_data(assoc_req->assoc_req_buf),
+				qdf_nbuf_len(assoc_req->assoc_req_buf),
+				&link_frame_len);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_warn("Assoc Req rejected: frame parsing error. source addr:"
+		pe_warn("Partner Assoc Req frame gen error. source addr:"
 			QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(sa));
+		lim_free_assoc_req_frm_buf(assoc_req);
 		qdf_mem_free(assoc_req);
 		return status;
 	}
 
-	return lim_proc_assoc_req_frm_cmn(mac_ctx, frm_body, frame_len,
-					  sub_type, session, sa, assoc_req,
-					  peer_aid);
+	qdf_nbuf_set_len(assoc_req->assoc_req_buf, link_frame_len);
+	assoc_req->assocReqFrame = qdf_nbuf_data(assoc_req->assoc_req_buf) +
+				   sizeof(*pHdr);
+	assoc_req->assocReqFrameLength = link_frame_len - sizeof(*pHdr);
+
+	qdf_copy_macaddr((struct qdf_mac_addr *)assoc_req->mld_mac,
+			 &ml_peer->peer_mld_addr);
+	return lim_proc_assoc_req_frm_cmn(mac_ctx, sub_type, session, sa,
+					  assoc_req, peer_aid);
 }
 
 void lim_mlo_ap_sta_assoc_suc(struct wlan_objmgr_peer *peer)
@@ -804,7 +824,7 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 
 		sme_assoc_ind->messageType = eWNI_SME_ASSOC_IND_UPPER_LAYER;
 		lim_fill_sme_assoc_ind_params(mac, lim_assoc_ind, sme_assoc_ind,
-					      lk_session, false);
+					      lk_session, true);
 
 		qdf_mem_zero(&msg, sizeof(struct scheduler_msg));
 		msg.type = eWNI_SME_ASSOC_IND_UPPER_LAYER;
@@ -817,6 +837,8 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 		lim_sys_process_mmh_msg_api(mac, &msg);
 
 		qdf_mem_free(lim_assoc_ind);
+		lim_free_assoc_req_frm_buf(
+				lk_session->parsedAssocReq[sta->assocId]);
 		qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
 		lk_session->parsedAssocReq[sta->assocId] = NULL;
 		status = QDF_STATUS_SUCCESS;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1311,6 +1312,83 @@ static void hdd_son_modify_acl(struct wlan_objmgr_vdev *vdev,
 	}
 }
 
+static int hdd_son_send_cfg_event(struct wlan_objmgr_vdev *vdev,
+				  uint32_t event_id,
+				  uint32_t event_len,
+				  const uint8_t *event_buf)
+{
+	struct hdd_adapter *adapter;
+	uint32_t len;
+	uint32_t idx;
+	struct sk_buff *skb;
+
+	if (!event_buf) {
+		hdd_err("invalid event buf");
+		return -EINVAL;
+	}
+
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return -EINVAL;
+	}
+
+	len = nla_total_size(sizeof(event_id)) +
+			nla_total_size(event_len) +
+			NLMSG_HDRLEN;
+	idx = QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_CONFIGURATION_INDEX;
+	skb = cfg80211_vendor_event_alloc(adapter->hdd_ctx->wiphy,
+					  &adapter->wdev,
+					  len,
+					  idx,
+					  GFP_KERNEL);
+	if (!skb) {
+		hdd_err("failed to alloc cfg80211 vendor event");
+		return -EINVAL;
+	}
+
+	if (nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_COMMAND,
+			event_id)) {
+		hdd_err("failed to put attr config generic command");
+		kfree_skb(skb);
+		return -EINVAL;
+	}
+
+	if (nla_put(skb,
+		    QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA,
+		    event_len,
+		    event_buf)) {
+		hdd_err("failed to put attr config generic data");
+		kfree_skb(skb);
+		return -EINVAL;
+	}
+
+	cfg80211_vendor_event(skb, GFP_KERNEL);
+
+	return 0;
+}
+
+static int hdd_son_deliver_opmode(struct wlan_objmgr_vdev *vdev,
+				  uint32_t event_len,
+				  const uint8_t *event_buf)
+{
+	return hdd_son_send_cfg_event(vdev,
+				      QCA_NL80211_VENDOR_SUBCMD_OPMODE_UPDATE,
+				      event_len,
+				      event_buf);
+}
+
+static int hdd_son_deliver_smps(struct wlan_objmgr_vdev *vdev,
+				uint32_t event_len,
+				const uint8_t *event_buf)
+{
+	return hdd_son_send_cfg_event(vdev,
+				      QCA_NL80211_VENDOR_SUBCMD_SMPS_UPDATE,
+				      event_len,
+				      event_buf);
+}
+
 void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 {
 	struct son_callbacks cb_obj = {0};
@@ -1338,4 +1416,9 @@ void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.os_if_modify_acl = hdd_son_modify_acl;
 
 	os_if_son_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
+
+	ucfg_son_register_deliver_opmode_cb(hdd_ctx->psoc,
+					    hdd_son_deliver_opmode);
+	ucfg_son_register_deliver_smps_cb(hdd_ctx->psoc,
+					  hdd_son_deliver_smps);
 }

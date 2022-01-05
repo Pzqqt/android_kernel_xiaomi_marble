@@ -3187,5 +3187,5 @@ bool wma_is_roam_in_progress(uint32_t vdev_id)
 	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE)
 		return false;
 
-	return wlan_cm_is_vdev_roaming(wma->interfaces[vdev_id].vdev);
+	return wlan_cm_is_vdev_roam_started(wma->interfaces[vdev_id].vdev);
 }

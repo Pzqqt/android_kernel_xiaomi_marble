@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -748,6 +749,17 @@ policy_mgr_fill_curr_mac_freq_by_hwmode(struct policy_mgr_psoc_priv_obj *pm_ctx,
  */
 void
 policy_mgr_dump_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx);
+
+/**
+ * policy_mgr_dump_sbs_freq_range() - Function to print SBS frequency range
+ * for both MAC 0 and MAC1
+ *
+ * @pm_ctx: Policy Mgr context
+ *
+ * Return: void
+ */
+void
+policy_mgr_dump_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx);
 
 /**
  * policy_mgr_dump_curr_freq_range() - Function to print current frequency range

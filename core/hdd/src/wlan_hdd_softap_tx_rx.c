@@ -1207,6 +1207,9 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
 				QDF_DP_TRACE_RX_PACKET_RECORD, 0, QDF_RX));
 
+		if (hdd_rx_pkt_tracepoints_enabled())
+			qdf_trace_dp_packet(skb, QDF_RX, NULL, 0);
+
 		skb->protocol = eth_type_trans(skb, skb->dev);
 
 		/* hold configurable wakelock for unicast traffic */

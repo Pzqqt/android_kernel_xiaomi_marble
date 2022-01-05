@@ -4480,6 +4480,14 @@ static void hdd_rtpm_tput_policy_apply(struct hdd_context *hdd_ctx,
 		QDF_BUG(0);
 	}
 }
+
+static int hdd_rtpm_tput_policy_get_vote(struct hdd_context *hdd_ctx)
+{
+	struct hdd_rtpm_tput_policy_context *ctx;
+
+	ctx = &hdd_ctx->rtpm_tput_policy_ctx;
+	return qdf_atomic_read(&ctx->high_tput_vote);
+}
 #else
 static inline
 void hdd_rtpm_tput_policy_init(struct hdd_context *hdd_ctx)
@@ -4495,6 +4503,11 @@ static inline
 void hdd_rtpm_tput_policy_apply(struct hdd_context *hdd_ctx,
 				enum tput_level tput_level)
 {
+}
+
+static inline int hdd_rtpm_tput_policy_get_vote(struct hdd_context *hdd_ctx)
+{
+	return -EINVAL;
 }
 #endif
 
@@ -10534,7 +10547,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	}
 
 	if (vote_level_change || tx_level_change || rx_level_change) {
-		hdd_debug("tx:%llu[%llu(off)+%llu(no-off)] rx:%llu[%llu(off)+%llu(no-off)] next_level(vote %u rx %u tx %u) pm_qos(rx:%u,%*pb tx:%u,%*pb)",
+		hdd_debug("tx:%llu[%llu(off)+%llu(no-off)] rx:%llu[%llu(off)+%llu(no-off)] next_level(vote %u rx %u tx %u rtpm %d) pm_qos(rx:%u,%*pb tx:%u,%*pb)",
 			  tx_packets,
 			  hdd_ctx->prev_tx_offload_pkts,
 			  hdd_ctx->prev_no_tx_offload_pkts,
@@ -10542,6 +10555,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			  hdd_ctx->prev_rx_offload_pkts,
 			  hdd_ctx->prev_no_rx_offload_pkts,
 			  next_vote_level, next_rx_level, next_tx_level,
+			  hdd_rtpm_tput_policy_get_vote(hdd_ctx),
 			  is_rx_pm_qos_high,
 			  cpumask_pr_args(&pm_qos_cpu_mask_rx),
 			  is_tx_pm_qos_high,
@@ -12362,6 +12376,7 @@ list_destroy:
 void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 {
 	uint32_t timeout_ms = hdd_ctx->config->iface_change_wait_time;
+	uint32_t suspend_timeout_ms;
 	enum wake_lock_reason reason =
 		WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER;
 
@@ -12371,7 +12386,6 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_debug("Starting psoc idle timer");
-	timeout_ms += HDD_PSOC_IDLE_SHUTDOWN_SUSPEND_DELAY;
 
 	/* If PCIe gen speed change is requested, reduce idle shutdown
 	 * timeout to 100 ms
@@ -12382,7 +12396,8 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 	}
 
 	qdf_delayed_work_start(&hdd_ctx->psoc_idle_timeout_work, timeout_ms);
-	hdd_prevent_suspend_timeout(timeout_ms, reason);
+	suspend_timeout_ms = timeout_ms + HDD_PSOC_IDLE_SHUTDOWN_SUSPEND_DELAY;
+	hdd_prevent_suspend_timeout(suspend_timeout_ms, reason);
 }
 
 void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
@@ -14199,6 +14214,31 @@ static void hdd_thermal_stats_cmd_init(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef WLAN_FEATURE_CAL_FAILURE_TRIGGER
+/**
+ * hdd_cal_fail_send_event()- send calibration failure information
+ * @cal_type: calibration type
+ * @reason: reason for calibration failure
+ *
+ * This Function sends calibration failure diag event
+ *
+ * Return: void.
+ */
+static void hdd_cal_fail_send_event(uint8_t cal_type, uint8_t reason)
+{
+	/*
+	 * For now we are going with the print. Once CST APK has support to
+	 * read the diag events then we will add the diag event here.
+	 */
+	hdd_debug("Received cal failure event with cal_type:%x reason:%x",
+		  cal_type, reason);
+}
+#else
+static inline void hdd_cal_fail_send_event(uint8_t cal_type, uint8_t reason)
+{
+}
+#endif
+
 /**
  * hdd_features_init() - Init features
  * @hdd_ctx:	HDD context
@@ -14315,6 +14355,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 					       ALLOWED_KEYMGMT_6G_MASK);
 	}
 	hdd_thermal_stats_cmd_init(hdd_ctx);
+	sme_set_cal_failure_event_cb(hdd_ctx->mac_handle,
+				     hdd_cal_fail_send_event);
 
 	hdd_exit();
 	return 0;
@@ -16323,12 +16365,16 @@ exit:
 	 * stopped. We should remove the bus bw voting, if no adapter is
 	 * connected
 	 */
+	if (!is_any_adapter_conn) {
+		uint64_t interval_us =
+			hdd_ctx->config->bus_bw_compute_interval * 1000;
+		qdf_atomic_set(&hdd_ctx->num_latency_critical_clients, 0);
+		hdd_pld_request_bus_bandwidth(hdd_ctx, 0, 0, interval_us);
+	}
 	param.policy = BBM_TPUT_POLICY;
 	param.policy_info.tput_level = TPUT_LEVEL_NONE;
 	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
-	if (!is_any_adapter_conn)
-		qdf_atomic_set(&hdd_ctx->num_latency_critical_clients, 0);
 }
 
 void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
@@ -16556,7 +16602,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 		goto end;
 
 	hdd_debug("Waiting for SAP to start");
-	qdf_status = qdf_wait_for_event_completion(&hostapd_state->qdf_event,
+	qdf_status = qdf_wait_single_event(&hostapd_state->qdf_event,
 					SME_CMD_START_BSS_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("SAP Start failed");
@@ -18946,7 +18992,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 
 		hdd_info("Waiting for SAP to start");
 		qdf_status =
-			qdf_wait_for_event_completion(&hostapd_state->qdf_event,
+			qdf_wait_single_event(&hostapd_state->qdf_event,
 					SME_CMD_START_BSS_TIMEOUT);
 		wlansap_reset_sap_config_add_ie(sap_config,
 				eUPDATE_IE_ALL);

@@ -2435,6 +2435,27 @@ sme_set_del_peers_ind_callback(mac_handle_t mac_handle,
 void sme_set_chan_info_callback(mac_handle_t mac_handle,
 			void (*callback)(struct scan_chan_info *chan_info));
 
+#ifdef WLAN_FEATURE_CAL_FAILURE_TRIGGER
+/**
+ * sme_set_cal_failure_event_cb() - Register calibration failure event callback
+ * @mac_handle - MAC global handle
+ * @callback   - calibration failure event callback from HDD
+ *
+ * This API is invoked by HDD to register its callback to mac
+ *
+ * Return: None
+ */
+void sme_set_cal_failure_event_cb(
+			mac_handle_t mac_handle,
+			void (*callback)(uint8_t cal_type, uint8_t reason));
+#else
+static inline void
+sme_set_cal_failure_event_cb(mac_handle_t mac_handle,
+			     void (*callback)(uint8_t cal_type, uint8_t reason))
+{
+}
+#endif
+
 /**
  * sme_get_rssi_snr_by_bssid() - gets the rssi and snr by bssid from scan cache
  * @mac_handle: handle returned by mac_open

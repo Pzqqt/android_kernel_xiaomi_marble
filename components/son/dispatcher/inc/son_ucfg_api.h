@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +24,7 @@
 #include <qdf_trace.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_mlme_ucfg_api.h>
+#include <son_api.h>
 
 /**
  * ucfg_son_get_operation_chan_freq_vdev_id() - get operating chan freq of
@@ -106,4 +108,25 @@ static inline void ucfg_son_get_he_supported(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_son_set_peer_kickout_allow(struct wlan_objmgr_vdev *vdev,
 					   struct wlan_objmgr_peer *peer,
 					   bool kickout_allow);
+
+/**
+ * ucfg_son_register_deliver_opmode_cb() - register deliver opmode cb
+ * psoc: pointer to psoc
+ * cb: deliver opmode callback
+ *
+ * Return: QDF_STATUS_SUCCESS on Success else failure.
+ */
+QDF_STATUS ucfg_son_register_deliver_opmode_cb(struct wlan_objmgr_psoc *psoc,
+					       mlme_deliver_cb cb);
+
+/**
+ * ucfg_son_register_deliver_smps_cb() - register deliver smps cb
+ * psoc: pointer to psoc
+ * cb: deliver smps callback
+ *
+ * Return: QDF_STATUS_SUCCESS on Success else failure.
+ */
+
+QDF_STATUS ucfg_son_register_deliver_smps_cb(struct wlan_objmgr_psoc *psoc,
+					     mlme_deliver_cb cb);
 #endif

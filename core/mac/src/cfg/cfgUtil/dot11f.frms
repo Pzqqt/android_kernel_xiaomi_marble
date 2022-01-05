@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2006-2007, 2014-2018, 2020-2021 The Linux Foundation.
  * All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3753,98 +3754,9 @@ IE non_inheritance (EID_EXTN_ID_ELEMENT) OUI (0x38)
     data[0..255];
 }
 
-IE mlo_capabilities (0)
-{
-    {
-        ess:                1;
-        ibss:               1;
-        cfPollable:         1;
-        cfPollReq:          1;
-        privacy:            1;
-        shortPreamble:      1;
-        criticalUpdateFlag: 1;
-        channelAgility:     1;
-        spectrumMgt:        1;
-        qos:                1;
-        shortSlotTime:      1;
-        apsd:               1;
-        rrm:                1;
-        dsssOfdm:           1;
-        delayedBA:          1;
-        immediateBA:        1;
-    }
-}
-
 IE sta_profile (0)
 {
-  {
-    link_id:  4;
-    complete_profile:  1;
-    sta_mac_addr_present:  1;
-    beacon_interval_present: 1;
-    dtim_info_present: 1;
-    nstr_link_pair_present: 1;
-    nstr_bitmap_size: 1;
-    reserved: 6;
-  }
-  OPTIONAL UNION sta_mac_addr (DISCRIMINATOR sta_mac_addr_present)
-  {
-        info (sta_mac_addr_present IS 1)
-        {
-            sta_mac_addr[6];
-        }
-  };
-  OPTIONAL UNION beacon_interval (DISCRIMINATOR beacon_interval_present)
-  {
-      info (beacon_interval_present IS 1)
-      {
-          beacon_interval, 2;
-      }
-  };
-  OPTIONAL UNION dtim_info (DISCRIMINATOR dtim_info_present)
-  {
-      info (dtim_info_present IS 1)
-      {
-          dtim_count,  1;
-          dtim_period, 1;
-      }
-  };
-  OPTIONAL UNION nstr_link_pair (DISCRIMINATOR nstr_link_pair_present)
-  {
-      info (nstr_link_pair_present IS 1)
-      {
-          nstr_link_pair_num, 1;
-      }
-  };
-  OPTIE IE mlo_capabilities;
-  MANDIE IE SuppRates;
-  OPTIE IE ExtSuppRates;
-  OPTIE IE SuppOperatingClasses;
-  OPTIE IE WPA;
-  OPTIE IE ChanSwitchAnn;
-  OPTIE IE Quiet;
-  OPTIE IE ext_chan_switch_ann;
-  OPTIE IE RSN;
-  OPTIE IE EDCAParamSet;
-  OPTIE IE P2PAssocRes;
-  OPTIE IE HTCaps;
-  OPTIE IE HTInfo;
-  OPTIE IE WMMParams;
-  OPTIE IE WMMCaps;
-  OPTIE IE WMMInfoStation;
-  OPTIE IE VHTCaps;
-  OPTIE IE VHTOperation;
-  OPTIE IE ExtCap;
-  OPTIE IE OperatingMode;
-  OPTIE IE fils_indication;
-  OPTIE IE qcn_ie;
-  OPTIE IE he_cap;
-  OPTIE IE he_op;
-  OPTIE IE he_6ghz_band_cap;
-  OPTIE IE eht_cap;
-  OPTIE IE eht_op;
-  OPTIE IE max_chan_switch_time;
-  OPTIE IE non_inheritance;
+    data[0..255];
 }
 
 IE mlo_ie (EID_EXTN_ID_ELEMENT) OUI (0x6B)

@@ -27,6 +27,41 @@
 #include <reg_services_public_struct.h>
 
 /**
+ * mlme_deliver_cb - cb to deliver mlme event
+ * @vdev: pointer to vdev
+ * @event_len: event length
+ * @event_buf: event buffer
+ *
+ * @Return: 0 if event is sent successfully
+ */
+typedef int (*mlme_deliver_cb)(struct wlan_objmgr_vdev *vdev,
+			       uint32_t event_len,
+			       const uint8_t *event_buf);
+
+/**
+ * enum SON_MLME_DELIVER_CB_TYPE - mlme deliver cb type
+ * @SON_MLME_DELIVER_CB_TYPE_OPMODE: cb to deliver opmode
+ * @SON_MLME_DELIVER_CB_TYPE_SMPS: cb to deliver smps
+ */
+enum SON_MLME_DELIVER_CB_TYPE {
+	SON_MLME_DELIVER_CB_TYPE_OPMODE,
+	SON_MLME_DELIVER_CB_TYPE_SMPS,
+};
+
+/**
+ * wlan_son_register_mlme_deliver_cb - register mlme deliver cb
+ * @psoc: pointer to psoc
+ * @cb: mlme deliver cb
+ * @type: mlme deliver cb type
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_son_register_mlme_deliver_cb(struct wlan_objmgr_psoc *psoc,
+				  mlme_deliver_cb cb,
+				  enum SON_MLME_DELIVER_CB_TYPE type);
+
+/**
  * wlan_son_get_chan_flag() - get chan flag
  * @pdev: pointer to pdev
  * @freq: qdf_freq_t
@@ -108,6 +143,46 @@ int wlan_son_deliver_inst_rssi(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_objmgr_peer *peer,
 			       uint32_t irssi);
 
+/**
+ * wlan_son_deliver_opmode() - notity user app of opmode
+ * @vdev: vdev objmgr
+ * @bw: channel width defined in enum eSirMacHTChannelWidth
+ * @nss: supported rx nss
+ * @addr: source addr
+ *
+ * Return: 0 if event is sent successfully
+ */
+int wlan_son_deliver_opmode(struct wlan_objmgr_vdev *vdev,
+			    uint8_t bw,
+			    uint8_t nss,
+			    uint8_t *addr);
+
+/**
+ * wlan_son_deliver_smps() - notity user app of smps
+ * @vdev: vdev objmgr
+ * @is_static: is_static
+ * @addr: source addr
+ *
+ * Return: 0 if event is sent successfully
+ */
+int wlan_son_deliver_smps(struct wlan_objmgr_vdev *vdev,
+			  uint8_t is_static,
+			  uint8_t *addr);
+
+/**
+ * wlan_son_deliver_rrm_rpt() - notity son module of rrm rpt
+ * @vdev: vdev objmgr
+ * @addr: sender addr
+ * @frm: points to measurement report
+ * @flen: frame length
+ *
+ * Return: 0 if event is sent successfully
+ */
+int wlan_son_deliver_rrm_rpt(struct wlan_objmgr_vdev *vdev,
+			     uint8_t *addr,
+			     uint8_t *frm,
+			     uint32_t flen);
+
 #else
 
 static inline bool wlan_son_peer_is_kickout_allow(struct wlan_objmgr_vdev *vdev,
@@ -141,6 +216,32 @@ static inline
 int wlan_son_deliver_inst_rssi(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_objmgr_peer *peer,
 			       uint32_t irssi)
+{
+	return -EINVAL;
+}
+
+static inline
+int wlan_son_deliver_opmode(struct wlan_objmgr_vdev *vdev,
+			    uint8_t bw,
+			    uint8_t nss,
+			    uint8_t *addr)
+{
+	return -EINVAL;
+}
+
+static inline
+int wlan_son_deliver_smps(struct wlan_objmgr_vdev *vdev,
+			  uint8_t is_static,
+			  uint8_t *addr)
+{
+	return -EINVAL;
+}
+
+static inline
+int wlan_son_deliver_rrm_rpt(struct wlan_objmgr_vdev *vdev,
+			     uint8_t *mac_addr,
+			     uint8_t *frm,
+			     uint32_t flen)
 {
 	return -EINVAL;
 }

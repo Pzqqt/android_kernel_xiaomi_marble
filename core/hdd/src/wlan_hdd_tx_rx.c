@@ -2205,6 +2205,13 @@ QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
 		return hdd_adapter->rx_stack(adapter, nbuf_list);
 
 	vdev_id = hdd_adapter->vdev_id;
+
+	if (vdev_id >= WLAN_UMAC_VDEV_ID_MAX) {
+		hdd_info_rl("Vdev invalid. Dropping packets");
+		qdf_nbuf_list_free(nbuf_list);
+		return QDF_STATUS_E_NETDOWN;
+	}
+
 	head_ptr = nbuf_list;
 	while (head_ptr) {
 		qdf_nbuf_cb_update_vdev_id(head_ptr, vdev_id);
@@ -2688,6 +2695,9 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 			hdd_objmgr_put_vdev_by_user(vdev,
 						    WLAN_OSIF_TDLS_ID);
 		}
+
+		if (hdd_rx_pkt_tracepoints_enabled())
+			qdf_trace_dp_packet(skb, QDF_RX, NULL, 0);
 
 		skb->dev = adapter->dev;
 		skb->protocol = eth_type_trans(skb, skb->dev);

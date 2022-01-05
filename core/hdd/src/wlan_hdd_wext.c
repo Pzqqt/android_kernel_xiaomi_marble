@@ -7180,8 +7180,9 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			conn_info++;
 		}
 
-		pr_info("|\t|current state dbs - %-10d|\n",
-			policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc));
+		pr_info("|\t|current state dbs - %-10d, sbs - %-10d|\n",
+			policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc),
+			policy_mgr_is_current_hwmode_sbs(hdd_ctx->psoc));
 	}
 	break;
 

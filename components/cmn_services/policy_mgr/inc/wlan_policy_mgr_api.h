@@ -4034,6 +4034,30 @@ bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
  */
 uint32_t
 policy_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev, bool force_mlo);
+
+/**
+ * policy_mgr_is_mlo_sta_present() - Check whether MLO STA is present
+ * @psoc: PSOC object information
+ *
+ * Return: True if MLO STA is present, otherwise false.
+ */
+bool policy_mgr_is_mlo_sta_present(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_is_mlo_sta_sbs_link() - Check whether MLO STA is present with both
+ *                                    links on 5 or 6 ghz band (SBS link)
+ *
+ * @psoc: PSOC object information
+ * @mlo_vdev_lst: Pointer to mlo vdev list, this function wil fill this with
+ *                list of mlo vdev
+ * @num_mlo: Pointer to number of mlo link, this function will fill this with
+ *           number of mlo links
+ *
+ * Return: True if MLO STA is present with both links on 5 and 6ghz band
+ */
+bool policy_mgr_is_mlo_sta_sbs_link(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *mlo_vdev_lst,
+				    uint8_t *num_mlo);
 #else
 
 static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
@@ -4047,6 +4071,11 @@ static inline uint32_t
 policy_mgr_get_conc_ext_flags(struct wlan_objmgr_vdev *vdev, bool force_mlo)
 {
 	return 0;
+}
+
+static inline bool policy_mgr_is_mlo_sta_present(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 #endif
 
