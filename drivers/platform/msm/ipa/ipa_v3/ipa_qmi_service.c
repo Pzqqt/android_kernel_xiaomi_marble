@@ -933,18 +933,37 @@ int ipa3_qmi_filter_request_ex_send(
 	if (req->filter_spec_ex_list_len == 0) {
 		IPAWANDBG("IPACM pass zero rules to Q6\n");
 	} else {
-		IPAWANDBG("IPACM pass %u rules to Q6\n",
-		req->filter_spec_ex_list_len);
+		IPAWANDBG(
+		"IPACM pass %u rule to Q6\n",req->filter_spec_ex_list_len);
 	}
-
-	if (req->filter_spec_ex_list_len >= QMI_IPA_MAX_FILTERS_EX_V01) {
+	if (req->filter_spec_ex_list_valid && req->filter_spec_ex_list_len >
+					QMI_IPA_MAX_FILTERS_EX_V01) {
 		IPAWANDBG(
 		"IPACM pass the number of filtering rules exceed limit\n");
 		return -EINVAL;
 	} else if (req->source_pipe_index_valid != 0) {
 		IPAWANDBG(
-		"IPACM passes source_pipe_index_valid not zero 0 != %d\n",
+		"IPACM passes source_pipe_index_valid not zero 0 !=%d\n",
 			req->source_pipe_index_valid);
+		return -EINVAL;
+	}
+	if (req->xlat_filter_indices_list_valid &&
+		(req->xlat_filter_indices_list_len >
+				QMI_IPA_MAX_FILTERS_EX_V01)) {
+		IPAWANDBG(
+		"IPACM pass the number of filtering rules exceed limit\n");
+		return -EINVAL;
+	}
+	if (req->filter_spec_ex2_list_valid &&
+		(req->filter_spec_ex2_list_len > QMI_IPA_MAX_FILTERS_V01)) {
+		IPAWANDBG(
+		"IPACM pass the number of filtering rules exceed limit\n");
+		return -EINVAL;
+	}
+	if (req->ul_firewall_indices_list_valid &&
+		(req->ul_firewall_indices_list_len > QMI_IPA_MAX_FILTERS_V01)) {
+		IPAWANDBG(
+		"IPACM pass the number of filtering rules exceed limit\n");
 		return -EINVAL;
 	}
 
@@ -978,7 +997,14 @@ int ipa3_qmi_filter_request_ex_send(
 	mutex_unlock(&ipa3_qmi_lock);
 
 	req_desc.max_msg_len = ipa3_qmi_filter_request_ex_calc_length(req);
-	IPAWANDBG("QMI send request length = %d\n", req_desc.max_msg_len);
+	if( req_desc.max_msg_len < 0 ){
+		IPAWANDBG(
+		"QMI send request length = %d\n", req_desc.max_msg_len);
+		return -EINVAL;
+	} else {
+		IPAWANDBG("QMI send request length = %d\n",
+		req_desc.max_msg_len);
+	}
 
 	req_desc.msg_id = QMI_IPA_INSTALL_FILTER_RULE_EX_REQ_V01;
 	req_desc.ei_array = ipa3_install_fltr_rule_req_ex_msg_data_v01_ei;
@@ -1747,10 +1773,13 @@ static void ipa3_q6_clnt_svc_arrive(struct work_struct *work)
 		"ipa3_qmi_init_modem_send_sync_msg failed due to SSR!\n");
 		/* Cleanup when ipa3_wwan_remove is called */
 		mutex_lock(&ipa3_qmi_lock);
-		qmi_handle_release(ipa_q6_clnt);
-		vfree(ipa_q6_clnt);
-		ipa_q6_clnt = NULL;
+		if (ipa_q6_clnt != NULL) {
+			qmi_handle_release(ipa_q6_clnt);
+			vfree(ipa_q6_clnt);
+			ipa_q6_clnt = NULL;
+		}
 		mutex_unlock(&ipa3_qmi_lock);
+		IPAWANERR("Exit from service arrive fun\n");
 		return;
 	}
 
@@ -2444,6 +2473,8 @@ int ipa3_qmi_enable_per_client_stats(
 
 	IPAWANDBG("Sending QMI_IPA_ENABLE_PER_CLIENT_STATS_REQ_V01\n");
 
+	if (unlikely(!ipa_q6_clnt))
+		return -ETIMEDOUT;
 	rc = ipa3_qmi_send_req_wait(ipa_q6_clnt,
 		&req_desc, req,
 		&resp_desc, resp,
@@ -2481,6 +2512,8 @@ int ipa3_qmi_get_per_client_packet_stats(
 
 	IPAWANDBG("Sending QMI_IPA_GET_STATS_PER_CLIENT_REQ_V01\n");
 
+	if (unlikely(!ipa_q6_clnt))
+		return -ETIMEDOUT;
 	rc = ipa3_qmi_send_req_wait(ipa_q6_clnt,
 		&req_desc, req,
 		&resp_desc, resp,
@@ -2538,6 +2571,8 @@ int ipa3_qmi_send_mhi_cleanup_request(struct ipa_mhi_cleanup_req_msg_v01 *req)
 	resp_desc.msg_id = QMI_IPA_MHI_CLEANUP_RESP_V01;
 	resp_desc.ei_array = ipa_mhi_cleanup_resp_msg_v01_ei;
 
+	if (unlikely(!ipa_q6_clnt))
+		return -ETIMEDOUT;
 	rc = ipa3_qmi_send_req_wait(ipa_q6_clnt,
 		&req_desc, req,
 		&resp_desc, &resp,

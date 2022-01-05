@@ -4956,8 +4956,7 @@ static int ipa3_q6_set_ex_path_to_apps(void)
 	}
 
 	/* Will wait 500msecs for IPA tag process completion */
-	retval = ipa3_tag_process(desc, num_descs,
-		msecs_to_jiffies(CLEANUP_TAG_PROCESS_TIMEOUT));
+	retval = ipa3_tag_process(desc, num_descs, CLEANUP_TAG_PROCESS_TIMEOUT);
 	if (retval) {
 		IPAERR("TAG process failed! (error %d)\n", retval);
 		/* For timeout error ipa3_destroy_imm cb will destroy user1 */
@@ -7278,6 +7277,8 @@ static inline void ipa3_register_to_fmwk(void)
 		ipa3_register_notifier;
 	data.ipa_unregister_notifier =
 		ipa3_unregister_notifier;
+	data.ipa_add_socksv5_conn = ipa3_add_socksv5_conn;
+	data.ipa_del_socksv5_conn = ipa3_del_socksv5_conn;
 
 	if (ipa_fmwk_register_ipa(&data)) {
 		IPAERR("couldn't register to IPA framework\n");
@@ -7703,6 +7704,10 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		IPADBG("register to fmwk\n");
 		ipa3_register_to_fmwk();
 	}
+
+	/* init uc-activation tbl*/
+	ipa3_setup_uc_act_tbl();
+
 	complete_all(&ipa3_ctx->init_completion_obj);
 
 	ipa_ut_module_init();
@@ -8638,6 +8643,9 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->mpm_ring_size_dl = DEFAULT_MPM_RING_SIZE_DL;
 	ipa3_ctx->mpm_teth_aggr_size = DEFAULT_MPM_TETH_AGGR_SIZE;
 	ipa3_ctx->mpm_uc_thresh = DEFAULT_MPM_UC_THRESH_SIZE;
+	ipa3_ctx->uc_act_tbl_valid = false;
+	ipa3_ctx->uc_act_tbl_total = 0;
+	ipa3_ctx->uc_act_tbl_next_index = 0;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -8998,6 +9006,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 
 	mutex_init(&ipa3_ctx->q6_proxy_clk_vote_mutex);
 	mutex_init(&ipa3_ctx->ipa_cne_evt_lock);
+	mutex_init(&ipa3_ctx->act_tbl_lock);
 
 	idr_init(&ipa3_ctx->ipa_idr);
 	spin_lock_init(&ipa3_ctx->idr_lock);
@@ -10863,22 +10872,23 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p)
 
 	if (of_property_read_bool(pdev_p->dev.of_node, "qcom,arm-smmu")) {
 		if (of_property_read_bool(pdev_p->dev.of_node,
-			"qcom,use-64-bit-dma-mask"))
+			"qcom,use-64-bit-dma-mask")) {
 			smmu_info.use_64_bit_dma_mask = true;
+			if (dma_set_mask_and_coherent(&pdev_p->dev, DMA_BIT_MASK(64))) {
+				IPAERR("DMA set 64bit mask failed\n");
+				return -EOPNOTSUPP;
+			}
+		}
 		smmu_info.arm_smmu = true;
 	} else {
 		if (of_property_read_bool(pdev_p->dev.of_node,
 			"qcom,use-64-bit-dma-mask")) {
-			if (dma_set_mask(&pdev_p->dev, DMA_BIT_MASK(64)) ||
-			    dma_set_coherent_mask(&pdev_p->dev,
-			    DMA_BIT_MASK(64))) {
+			if (dma_set_mask_and_coherent(&pdev_p->dev, DMA_BIT_MASK(64))) {
 				IPAERR("DMA set 64bit mask failed\n");
 				return -EOPNOTSUPP;
 			}
 		} else {
-			if (dma_set_mask(&pdev_p->dev, DMA_BIT_MASK(32)) ||
-			    dma_set_coherent_mask(&pdev_p->dev,
-			    DMA_BIT_MASK(32))) {
+			if (dma_set_mask_and_coherent(&pdev_p->dev, DMA_BIT_MASK(32))) {
 				IPAERR("DMA set 32bit mask failed\n");
 				return -EOPNOTSUPP;
 			}

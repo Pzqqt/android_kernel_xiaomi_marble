@@ -3686,7 +3686,7 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 		ipareg_construct_single_ndp_mode, ipareg_parse_single_ndp_mode,
 		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_QSB_MAX_READS] = {
-		ipareg_construct_qsb_max_reads_v4_0, ipareg_parse_dummy,
+		ipareg_construct_qsb_max_reads_v4_0, ipareg_parse_qsb_max_reads,
 		0x00000078, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_FILT_ROUT_HASH_FLUSH] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
