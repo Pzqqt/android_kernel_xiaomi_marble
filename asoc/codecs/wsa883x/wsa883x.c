@@ -1186,6 +1186,11 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 						wsa883x->comp_offset);
 		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR);
 		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
+		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR);
+		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF);
+		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_DISABLE);
+		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP);
+		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLK_WD);
 		snd_soc_component_update_bits(component,
 				WSA883X_VBAT_ADC_FLT_CTL,
 				0x0E, 0x06);
@@ -1216,6 +1221,11 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 				0x10, 0x00);
 		snd_soc_component_update_bits(component, WSA883X_PDM_WD_CTL,
 				0x01, 0x00);
+		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLK_WD);
+		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP);
+		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_DISABLE);
+		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF);
+		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR);
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR);
 		clear_bit(SPKR_STATUS, &wsa883x->status_mask);

@@ -21,6 +21,7 @@
 #include <asoc/msm-cdc-pinctrl.h>
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include <asoc/msm-cdc-supply.h>
+#include <linux/qti-regmap-debugfs.h>
 
 #include "wcd937x-registers.h"
 #include "wcd937x.h"
@@ -1978,6 +1979,29 @@ static int wcd937x_ear_pa_gain_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+/* wcd937x_codec_get_dev_num - returns swr device number
+ * @component: Codec instance
+ *
+ * Return: swr device number on success or negative error
+ * code on failure.
+ */
+int wcd937x_codec_get_dev_num(struct snd_soc_component *component)
+{
+	struct wcd937x_priv *wcd937x;
+
+	if (!component)
+		return -EINVAL;
+
+	wcd937x = snd_soc_component_get_drvdata(component);
+	if (!wcd937x || !wcd937x->rx_swr_dev) {
+		pr_err("%s: wcd937x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	return wcd937x->rx_swr_dev->dev_num;
+}
+EXPORT_SYMBOL(wcd937x_codec_get_dev_num);
+
 static int wcd937x_get_compander(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
@@ -2859,6 +2883,9 @@ static int wcd937x_soc_codec_probe(struct snd_soc_component *component)
 
 	wcd937x->component = component;
 	snd_soc_component_init_regmap(component, wcd937x->regmap);
+
+	devm_regmap_qti_debugfs_register(&wcd937x->tx_swr_dev->dev, wcd937x->regmap);
+
 	variant = (snd_soc_component_read(
 			component, WCD937X_DIGITAL_EFUSE_REG_0) & 0x1E) >> 1;
 	wcd937x->variant = variant;
