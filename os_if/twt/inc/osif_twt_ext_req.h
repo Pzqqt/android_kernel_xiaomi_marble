@@ -110,6 +110,22 @@ int osif_twt_pause_req(struct wlan_objmgr_vdev *vdev,
 		       struct nlattr *twt_param_attr);
 
 /**
+ * osif_twt_resume_req() - Process TWT resume operation
+ * in the received vendor command and send it to firmware
+ * @vdev: vdev
+ * @twt_param_attr: nl attributes
+ *
+ * sets up TWT resume request from HDD. request is passed
+ * to TWT core
+ *
+ * Handles QCA_WLAN_TWT_RESUME
+ *
+ * Return: success on 0, failure on non-zero
+ */
+int osif_twt_resume_req(struct wlan_objmgr_vdev *vdev,
+		       struct nlattr *twt_param_attr);
+
+/**
  * osif_twt_get_capabilities() - Process TWT get capabilities
  * in the received vendor command.
  * @vdev: vdev
@@ -173,6 +189,13 @@ int osif_twt_sap_teardown_req(struct wlan_objmgr_vdev *vdev,
 
 static inline
 int osif_twt_pause_req(struct wlan_objmgr_vdev *vdev,
+		       struct nlattr *twt_param_attr)
+{
+	return 0;
+}
+
+static inline
+int osif_twt_resume_req(struct wlan_objmgr_vdev *vdev,
 		       struct nlattr *twt_param_attr)
 {
 	return 0;

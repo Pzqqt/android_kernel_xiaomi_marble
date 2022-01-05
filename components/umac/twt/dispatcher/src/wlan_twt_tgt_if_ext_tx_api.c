@@ -119,7 +119,29 @@ QDF_STATUS
 tgt_twt_resume_req_send(struct wlan_objmgr_psoc *psoc,
 			struct twt_resume_dialog_cmd_param *req)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_twt_tx_ops *tx_ops;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		twt_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!req) {
+		twt_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tx_ops = wlan_twt_get_tx_ops(psoc);
+	if (!tx_ops || !tx_ops->resume_req) {
+		twt_err("resume tx_ops is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		return status;
+	}
+
+	status = tx_ops->resume_req(psoc, req);
+
+	return status;
 }
 
 QDF_STATUS

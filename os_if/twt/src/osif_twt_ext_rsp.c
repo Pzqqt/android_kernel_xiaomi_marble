@@ -203,6 +203,45 @@ twt_del_status_to_vendor_twt_status(enum HOST_TWT_DEL_STATUS status)
 }
 
 /**
+ * twt_resume_status_to_vendor_twt_status() - convert from
+ * HOST_TWT_RESUME_STATUS to qca_wlan_vendor_twt_status
+ * @status: HOST_TWT_RESUME_STATUS value from firmware
+ *
+ * Return: qca_wlan_vendor_twt_status values corresponding
+ * to the firmware failure status
+ */
+static int
+twt_resume_status_to_vendor_twt_status(enum HOST_TWT_RESUME_STATUS status)
+{
+	switch (status) {
+	case HOST_TWT_RESUME_STATUS_OK:
+		return QCA_WLAN_VENDOR_TWT_STATUS_OK;
+	case HOST_TWT_RESUME_STATUS_DIALOG_ID_NOT_EXIST:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SESSION_NOT_EXIST;
+	case HOST_TWT_RESUME_STATUS_INVALID_PARAM:
+		return QCA_WLAN_VENDOR_TWT_STATUS_INVALID_PARAM;
+	case HOST_TWT_RESUME_STATUS_DIALOG_ID_BUSY:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SESSION_BUSY;
+	case HOST_TWT_RESUME_STATUS_NOT_PAUSED:
+		return QCA_WLAN_VENDOR_TWT_STATUS_NOT_SUSPENDED;
+	case HOST_TWT_RESUME_STATUS_NO_RESOURCE:
+		return QCA_WLAN_VENDOR_TWT_STATUS_NO_RESOURCE;
+	case HOST_TWT_RESUME_STATUS_NO_ACK:
+		return QCA_WLAN_VENDOR_TWT_STATUS_NO_ACK;
+	case HOST_TWT_RESUME_STATUS_UNKNOWN_ERROR:
+		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	case HOST_TWT_RESUME_STATUS_CHAN_SW_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_CHANNEL_SWITCH_IN_PROGRESS;
+	case HOST_TWT_RESUME_STATUS_ROAM_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_ROAMING_IN_PROGRESS;
+	case HOST_TWT_RESUME_STATUS_SCAN_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SCAN_IN_PROGRESS;
+	default:
+		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	}
+}
+
+/**
  * twt_add_cmd_to_vendor_twt_resp_type() - convert from
  * HOST_TWT_COMMAND to qca_wlan_vendor_twt_setup_resp_type
  * @status: HOST_TWT_COMMAND value from firmare
@@ -469,6 +508,59 @@ osif_twt_teardown_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * osif_twt_resume_pack_resp_nlmsg() - pack the skb with
+ * firmware response for twt resume command
+ * @reply_skb: skb to store the response
+ * @event: Pointer to resume dialog complete event buffer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+osif_twt_resume_pack_resp_nlmsg(struct sk_buff *reply_skb,
+			   struct twt_resume_dialog_complete_event_param *event)
+{
+	struct nlattr *config_attr;
+	int vendor_status, attr;
+
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
+		       QCA_WLAN_TWT_RESUME)) {
+		osif_err("Failed to put TWT operation");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		osif_err("nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_RESUME_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, event->dialog_id)) {
+		osif_debug("Failed to put dialog_id");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
+	vendor_status = twt_resume_status_to_vendor_twt_status(event->status);
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		osif_err("Failed to put QCA_WLAN_TWT_RESUME status");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    event->peer_macaddr.bytes)) {
+		osif_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	nla_nest_end(reply_skb, config_attr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS
 osif_twt_send_get_capabilities_response(struct wlan_objmgr_psoc *psoc,
 					struct wlan_objmgr_vdev *vdev)
@@ -724,7 +816,61 @@ QDF_STATUS
 osif_twt_resume_complete_cb(struct wlan_objmgr_psoc *psoc,
 			   struct twt_resume_dialog_complete_event_param *event)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wireless_dev *wdev;
+	struct vdev_osif_priv *osif_priv;
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t vdev_id = event->vdev_id;
+	struct sk_buff *twt_vendor_event;
+	size_t data_len;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, event->vdev_id,
+						    WLAN_TWT_ID);
+	if (!vdev) {
+		osif_err("vdev is null");
+		return status;
+	}
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv) {
+		osif_err("osif_priv is null");
+		goto fail;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		osif_err("wireless dev is null");
+		goto fail;
+	}
+
+	osif_debug("TWT: resume dialog_id:%d status:%d vdev_id:%d peer macaddr "
+		   QDF_MAC_ADDR_FMT, event->dialog_id,
+		   event->status, vdev_id,
+		   QDF_MAC_ADDR_REF(event->peer_macaddr.bytes));
+
+	data_len = osif_twt_get_event_len() + nla_total_size(sizeof(u8));
+	data_len += NLA_HDRLEN;
+
+	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
+				wdev->wiphy, wdev, data_len,
+				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
+				GFP_KERNEL);
+	if (!twt_vendor_event) {
+		osif_err("TWT: Alloc resume resp skb fail");
+		goto fail;
+	}
+
+	status = osif_twt_resume_pack_resp_nlmsg(twt_vendor_event, event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to pack nl resume dialog response");
+		wlan_cfg80211_vendor_free_skb(twt_vendor_event);
+		goto fail;
+	}
+	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
+
+fail:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
+	return status;
 }
 
 QDF_STATUS

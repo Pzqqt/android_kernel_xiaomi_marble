@@ -1272,6 +1272,53 @@ QDF_STATUS wlan_twt_pause_req(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+QDF_STATUS wlan_twt_resume_req(struct wlan_objmgr_psoc *psoc,
+			       struct twt_resume_dialog_cmd_param *req,
+			       void *context)
+{
+	QDF_STATUS status;
+	bool cmd_in_progress;
+	bool is_twt_setup_done;
+	enum wlan_twt_commands active_cmd = WLAN_TWT_NONE;
+
+	status = wlan_twt_check_all_twt_support(psoc, req->dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("All TWT sessions not supported by target");
+		return status;
+	}
+
+	is_twt_setup_done = wlan_twt_is_setup_done(psoc, &req->peer_macaddr,
+						   req->dialog_id);
+	if (!is_twt_setup_done) {
+		twt_err("TWT setup is not complete for dialog_id:%d",
+			req->dialog_id);
+		return QDF_STATUS_E_AGAIN;
+	}
+
+	cmd_in_progress = wlan_twt_is_command_in_progress(psoc,
+					&req->peer_macaddr,
+					req->dialog_id, WLAN_TWT_ANY,
+					&active_cmd);
+	if (cmd_in_progress) {
+		twt_debug("Already TWT command:%d is in progress", active_cmd);
+		return QDF_STATUS_E_PENDING;
+	}
+
+	wlan_twt_set_command_in_progress(psoc, &req->peer_macaddr,
+					 req->dialog_id, WLAN_TWT_RESUME);
+	wlan_twt_set_ack_context(psoc, &req->peer_macaddr,
+				 req->dialog_id, context);
+
+	status = tgt_twt_resume_req_send(psoc, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("tgt_twt_resume_req_send failed (status=%d)", status);
+		wlan_twt_set_command_in_progress(psoc, &req->peer_macaddr,
+						 req->dialog_id, WLAN_TWT_NONE);
+	}
+
+	return status;
+}
+
 /**
  * wlan_twt_sap_teardown_req() - sap TWT teardown request
  * @psoc: Pointer to psoc object
@@ -1811,7 +1858,50 @@ QDF_STATUS
 wlan_twt_resume_complete_event_handler(struct wlan_objmgr_psoc *psoc,
 			   struct twt_resume_dialog_complete_event_param *event)
 {
-	return QDF_STATUS_SUCCESS;
+	enum QDF_OPMODE opmode;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+	uint32_t pdev_id, vdev_id;
+	struct wlan_objmgr_pdev *pdev;
+
+	vdev_id = event->vdev_id;
+	pdev_id = wlan_get_pdev_id_from_vdev_id(psoc, vdev_id, WLAN_TWT_ID);
+	if (pdev_id == WLAN_INVALID_PDEV_ID) {
+		twt_err("Invalid pdev id");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, WLAN_TWT_ID);
+	if (!pdev) {
+		twt_err("Invalid pdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	opmode = wlan_get_opmode_from_vdev_id(pdev, vdev_id);
+
+	switch (opmode) {
+	case QDF_SAP_MODE:
+		qdf_status = mlme_twt_osif_resume_complete_ind(psoc, event);
+		break;
+	case QDF_STA_MODE:
+		qdf_status = mlme_twt_osif_resume_complete_ind(psoc, event);
+
+		wlan_twt_set_session_state(psoc, &event->peer_macaddr,
+					   event->dialog_id,
+					   WLAN_TWT_SETUP_STATE_ACTIVE);
+
+		qdf_status = wlan_twt_set_command_in_progress(psoc,
+						&event->peer_macaddr,
+						event->dialog_id,
+						WLAN_TWT_NONE);
+		break;
+	default:
+		twt_debug("TWT Resume is not supported on %s",
+			  qdf_opmode_str(opmode));
+		break;
+	}
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_TWT_ID);
+	return qdf_status;
 }
 
 QDF_STATUS

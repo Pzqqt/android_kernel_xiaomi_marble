@@ -91,6 +91,19 @@ wlan_twt_pause_req(struct wlan_objmgr_psoc *psoc,
 		   void *context);
 
 /**
+ * wlan_twt_resume_req() - Process TWT resume req
+ * @psoc: psoc
+ * @req: resume dialog cmd param
+ * @context: context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_twt_resume_req(struct wlan_objmgr_psoc *psoc,
+		    struct twt_resume_dialog_cmd_param *req,
+		    void *context);
+
+/**
  * wlan_twt_is_setup_in_progress() - Get if TWT setup command is in progress
  * for given dialog id
  * @psoc: Pointer to global psoc object
