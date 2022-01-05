@@ -25,7 +25,8 @@
 #define MAX_BASE_LAYER_PRIORITY_ID 63
 #define MIN_CHROMA_QP_OFFSET    -12
 #define MAX_CHROMA_QP_OFFSET    0
-#define MAX_BITRATE             100000000
+#define MAX_BITRATE             160000000
+#define MAX_BITRATE_V1          100000000
 #define DEFAULT_BITRATE         20000000
 #define MIN_QP_10BIT            -12
 #define MIN_QP_8BIT             0
@@ -35,6 +36,8 @@
 #define MIN_SLICE_BYTE_SIZE     512
 #define MAX_SLICE_BYTE_SIZE       \
 	((MAX_BITRATE) >> 3)
+#define MAX_SLICE_BYTE_SIZE_V1       \
+	((MAX_BITRATE_V1) >> 3)
 #define MAX_SLICE_MB_SIZE         \
 	(((4096 + 15) >> 4) * ((2304 + 15) >> 4))
 
@@ -2022,7 +2025,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 	 * Dec: there's no use of Bitrate cap
 	 */
 	{BIT_RATE, ENC, H264|HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_BITRATE,
 		HFI_PROP_TOTAL_BITRATE,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2297,7 +2300,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 
 	{PEAK_BITRATE, ENC, H264|HEVC,
 		/* default peak bitrate is 10% larger than avrg bitrate */
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_BITRATE_PEAK,
 		HFI_PROP_TOTAL_PEAK_BITRATE,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2493,7 +2496,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 	 * is handled in bitrate adjust and set functions
 	 */
 	{L0_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L0_BR,
 		HFI_PROP_BITRATE_LAYER1,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2503,7 +2506,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L1_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L1_BR,
 		HFI_PROP_BITRATE_LAYER2,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2513,7 +2516,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L2_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L2_BR,
 		HFI_PROP_BITRATE_LAYER3,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2523,7 +2526,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L3_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L3_BR,
 		HFI_PROP_BITRATE_LAYER4,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2533,7 +2536,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L4_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L4_BR,
 		HFI_PROP_BITRATE_LAYER5,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2543,7 +2546,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L5_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L5_BR,
 		HFI_PROP_BITRATE_LAYER6,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2553,7 +2556,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L0_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L0_BR,
 		HFI_PROP_BITRATE_LAYER1,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2563,7 +2566,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L1_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L1_BR,
 		HFI_PROP_BITRATE_LAYER2,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2573,7 +2576,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L2_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L2_BR,
 		HFI_PROP_BITRATE_LAYER3,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2583,7 +2586,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L3_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L3_BR,
 		HFI_PROP_BITRATE_LAYER4,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2593,7 +2596,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L4_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L4_BR,
 		HFI_PROP_BITRATE_LAYER5,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2603,7 +2606,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L5_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L5_BR,
 		HFI_PROP_BITRATE_LAYER6,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -2885,7 +2888,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_adjust_slice_count, msm_vidc_set_slice_count},
 
 	{SLICE_MAX_BYTES, ENC, H264|HEVC|HEIC,
-		MIN_SLICE_BYTE_SIZE, MAX_SLICE_BYTE_SIZE,
+		MIN_SLICE_BYTE_SIZE, MAX_SLICE_BYTE_SIZE_V1,
 		1, MIN_SLICE_BYTE_SIZE,
 		V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MAX_BYTES,
 		HFI_PROP_MULTI_SLICE_BYTES_COUNT,
@@ -3199,9 +3202,9 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 	{FRAME_HEIGHT, ENC, HEIC, 128, 16384, 1, 16384},
 	{MIN_BUFFERS_INPUT, ENC|DEC, HEIC, 0, 64, 1, 1,
 		V4L2_CID_MIN_BUFFERS_FOR_OUTPUT},
-	{MBPF, DEC, HEIC, 36, 262144,  1, 262144 }, /* ((8192x8192)/256) */
+	{MBPF, DEC, HEIC, 36, 65536, 1, 65536 },    /* ((4096x4096)/256) */
 	{MBPF, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256) */
-	{MBPS, DEC, HEIC, 36, 262144,  1, 262144 }, /* ((8192x8192)/256)@1fps */
+	{MBPS, DEC, HEIC, 36, 65536, 1, 65536 },    /* ((4096x4096)/256)@1fps */
 	{MBPS, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256)@1fps */
 	{BITRATE_MODE, ENC, HEIC,
 		V4L2_MPEG_VIDEO_BITRATE_MODE_CQ,
@@ -3549,7 +3552,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 	 * Dec: there's no use of Bitrate cap
 	 */
 	{BIT_RATE, ENC, H264|HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_BITRATE,
 		HFI_PROP_TOTAL_BITRATE,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -3824,7 +3827,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 
 	{PEAK_BITRATE, ENC, H264|HEVC,
 		/* default peak bitrate is 10% larger than avrg bitrate */
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_BITRATE_PEAK,
 		HFI_PROP_TOTAL_PEAK_BITRATE,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4020,7 +4023,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 	 * is handled in bitrate adjust and set functions
 	 */
 	{L0_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L0_BR,
 		HFI_PROP_BITRATE_LAYER1,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4030,7 +4033,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L1_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L1_BR,
 		HFI_PROP_BITRATE_LAYER2,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4040,7 +4043,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L2_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L2_BR,
 		HFI_PROP_BITRATE_LAYER3,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4050,7 +4053,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L3_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L3_BR,
 		HFI_PROP_BITRATE_LAYER4,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4060,7 +4063,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L4_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L4_BR,
 		HFI_PROP_BITRATE_LAYER5,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4070,7 +4073,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L5_BR, ENC, HEVC,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L5_BR,
 		HFI_PROP_BITRATE_LAYER6,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4080,7 +4083,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L0_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L0_BR,
 		HFI_PROP_BITRATE_LAYER1,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4090,7 +4093,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L1_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L1_BR,
 		HFI_PROP_BITRATE_LAYER2,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4100,7 +4103,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L2_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L2_BR,
 		HFI_PROP_BITRATE_LAYER3,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4110,7 +4113,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L3_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L3_BR,
 		HFI_PROP_BITRATE_LAYER4,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4120,7 +4123,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L4_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L4_BR,
 		HFI_PROP_BITRATE_LAYER5,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4130,7 +4133,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L5_BR, ENC, H264,
-		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
+		1, MAX_BITRATE_V1, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L5_BR,
 		HFI_PROP_BITRATE_LAYER6,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
@@ -4409,7 +4412,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_adjust_slice_count, msm_vidc_set_slice_count},
 
 	{SLICE_MAX_BYTES, ENC, H264|HEVC|HEIC,
-		MIN_SLICE_BYTE_SIZE, MAX_SLICE_BYTE_SIZE,
+		MIN_SLICE_BYTE_SIZE, MAX_SLICE_BYTE_SIZE_V1,
 		1, MIN_SLICE_BYTE_SIZE,
 		V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MAX_BYTES,
 		HFI_PROP_MULTI_SLICE_BYTES_COUNT,
@@ -4723,9 +4726,9 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 	{FRAME_HEIGHT, ENC, HEIC, 128, 16384, 1, 16384},
 	{MIN_BUFFERS_INPUT, ENC|DEC, HEIC, 0, 64, 1, 1,
 		V4L2_CID_MIN_BUFFERS_FOR_OUTPUT},
-	{MBPF, DEC, HEIC, 36, 262144,  1, 262144 }, /* ((8192x8192)/256) */
+	{MBPF, DEC, HEIC, 36, 65536, 1, 65536 },    /* ((4096x4096)/256) */
 	{MBPF, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256) */
-	{MBPS, DEC, HEIC, 36, 262144,  1, 262144 }, /* ((8192x8192)/256)@1fps */
+	{MBPS, DEC, HEIC, 36, 65536, 1, 65536 },    /* ((4096x4096)/256)@1fps */
 	{MBPS, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256)@1fps */
 	{BITRATE_MODE, ENC, HEIC,
 		V4L2_MPEG_VIDEO_BITRATE_MODE_CQ,
