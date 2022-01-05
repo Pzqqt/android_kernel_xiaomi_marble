@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,7 @@
 #include <wlan_cm_api.h>
 #include <wlan_mlo_mgr_public_structs.h>
 #include <wlan_mlo_mgr_cmn.h>
-#include <wlan_mlme_main.h>
+#include <wlan_cm_roam_api.h>
 
 QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 				struct if_mgr_event_data *event_data)
@@ -155,24 +155,26 @@ if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
 				      uint8_t *mlo_idx, qdf_freq_t freq)
 {
 	uint8_t i = 0;
+	bool same_band_sta_allowed;
 
 	/*
-	 * STA freq:      STA ML combo:  SBS Action
+	 * STA freq:      ML STA combo:  SBS Action
 	 * ---------------------------------------------------
 	 * 2Ghz           2Ghz+5/6Ghz    Disable 2Ghz(Same MAC)
-	 * 5Ghz           2Ghz+5/6Ghz    Disable 2.4Ghz  if 5Ghz lead to SBS
-	 *                               (SBS, same MAC), else disable 5/6Ghz
+	 * 5Ghz           2Ghz+5/6Ghz    Disable 2.4Ghz if 5Ghz lead to SBS
+	 *                               (SBS, same MAC) and same band STA
+	 *                               allowed, else disable 5/6Ghz
 	 *                               (NON SBS, same MAC)
 	 * 5Ghz(lower)    5Ghz+6Ghz      Disable 5Ghz (NON SBS, same MAC)
 	 * 5Ghz(higher)   5Ghz+6Ghz      Disable 6Ghz (NON SBS, Same MAC)
 	 * 2Ghz           5Ghz+6Ghz      Disable Any
 	 */
 
-	/* If legacy STA is 2.4Ghz disable 2.4Ghz if present OR disable any */
+	/* If non-ML STA is 2.4Ghz disable 2.4Ghz if present OR disable any */
 	if (wlan_reg_is_24ghz_ch_freq(freq)) {
 		while (i < num_mlo) {
 			if (wlan_reg_is_24ghz_ch_freq(freq_list[mlo_idx[i]])) {
-				/* Affected MLO link on 2.4Ghz */
+				/* Affected ML STA link on 2.4Ghz */
 				mlo_vdev_lst[0] = vdev_id_list[mlo_idx[i]];
 				return 1;
 			}
@@ -184,7 +186,23 @@ if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
 		return i;
 	}
 
-	/* This mean legasy STA is 5Ghz */
+	/* This mean non-ML STA is 5Ghz */
+
+	/* check if ML STA is DBS */
+	i = 0;
+	while (i < num_mlo &&
+	       !wlan_reg_is_24ghz_ch_freq(freq_list[mlo_idx[i]]))
+		i++;
+
+	same_band_sta_allowed = wlan_cm_same_band_sta_allowed(psoc);
+
+	/*
+	 * if ML STA is DBS ie 2.4Ghz link present and if same_band_sta_allowed
+	 * is false, disable 5/6Ghz link to make sure we dont have all link
+	 * on 5Ghz
+	 */
+	if (i < num_mlo && !same_band_sta_allowed)
+		goto check_dbs_mlo;
 
 	/* check if any link lead to SBS, so that we can disable the other*/
 	i = 0;
@@ -194,14 +212,14 @@ if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
 
 	/*
 	 * if i < num_mlo then i is the SBS link, in this case disable the other
-	 * non SBS link, this mean MLO is 5+6 or 2+5/6.
+	 * non SBS link, this mean ML STA is 5+6 or 2+5/6.
 	 */
 	if (i < num_mlo) {
 		i = 0;
 		while (i < num_mlo) {
 			if (!policy_mgr_are_sbs_chan(psoc, freq,
 						     freq_list[mlo_idx[i]])) {
-				/* Affected non SBS MLO link */
+				/* Affected non SBS ML STA link */
 				mlo_vdev_lst[0] = vdev_id_list[mlo_idx[i]];
 				return 1;
 			}
@@ -213,14 +231,15 @@ if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
 		return i;
 	}
 
+check_dbs_mlo:
 	/*
-	 * None of the link can lead to SBS, i.e. its 2+ 5/6 MLO in this case
-	 * disabel 5Ghz link.
+	 * None of the link can lead to SBS, i.e. its 2+ 5/6 ML STA in this case
+	 * disable 5Ghz link.
 	 */
 	i = 0;
 	while (i < num_mlo) {
 		if (!wlan_reg_is_24ghz_ch_freq(freq_list[mlo_idx[i]])) {
-			/* Affected 5/6Ghz MLO link */
+			/* Affected 5/6Ghz ML STA link */
 			mlo_vdev_lst[0] = vdev_id_list[mlo_idx[i]];
 			return 1;
 		}
