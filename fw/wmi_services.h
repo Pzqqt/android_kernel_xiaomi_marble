@@ -569,6 +569,7 @@ typedef  enum  {
     WMI_SERVICE_PDEV_RATE_CONFIG_SUPPORT = 317, /* Support rate configurations per PDEV */
     MI_SERVICE_MLO_STA_NAN_NDI_SUPPORT = 318, /* FW support for NAN and NDP support with MLO STA */
     WMI_SERVICE_PROBE_ALL_BW_SUPPORT = 319, /* FW support to probe on higher BW even if the probe fails on lower BW - IOT issue */
+    WMI_SERVICE_PKTLOG_DECODE_INFO_SUPPORT = 320, /* FW supports embedding Pktlog decode info in the Pktlog trace file level header */
 
     WMI_MAX_EXT2_SERVICE
 
