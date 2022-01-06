@@ -251,14 +251,15 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
  * @sta_ctry: ptr to sta programmed country
  * @pwr_type_6g: ptr to 6G power type
  * @ctry_code_match: Check for country IE and sta country code match
- *
+ * @ap_pwr_type: AP's power type as advertised in HE ops IE
  * Return: QDF_STATUS
  */
 QDF_STATUS
 reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 			       uint8_t *ap_ctry, uint8_t *sta_ctry,
 			       enum reg_6g_ap_type *pwr_type_6g,
-			       bool *ctry_code_match);
+			       bool *ctry_code_match,
+			       enum reg_6g_ap_type ap_pwr_type);
 #endif
 
 /**

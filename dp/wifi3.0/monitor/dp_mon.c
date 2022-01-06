@@ -2081,6 +2081,29 @@ QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_mon_pdev_per_target_config() - Target specific monitor pdev configuration
+ * @pdev: PDEV handle [Should be valid]
+ *
+ * Return: None
+ */
+static void dp_mon_pdev_per_target_config(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	int target_type;
+
+	target_type = hal_get_target_type(soc->hal_soc);
+	switch (target_type) {
+	case TARGET_TYPE_WCN7850:
+		mon_pdev->is_tlv_hdr_64_bit = true;
+		break;
+	default:
+		mon_pdev->is_tlv_hdr_64_bit = false;
+		break;
+	}
+}
+
 QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev)
 {
 	struct dp_soc *soc;
@@ -2129,6 +2152,7 @@ QDF_STATUS dp_mon_pdev_attach(struct dp_pdev *pdev)
 	}
 
 	pdev->monitor_pdev = mon_pdev;
+	dp_mon_pdev_per_target_config(pdev);
 
 	return QDF_STATUS_SUCCESS;
 fail3:

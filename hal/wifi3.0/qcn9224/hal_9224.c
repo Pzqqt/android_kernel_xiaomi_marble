@@ -1537,18 +1537,7 @@ static uint8_t hal_tx_get_num_tcl_banks_9224(void)
 	return HAL_NUM_TCL_BANKS_9224;
 }
 
-/**
- * hal_get_idle_link_bm_id_9224() - Get idle link BM id from chid_id
- * @chip_id: mlo chip_id
- *
- * Returns: RBM ID
- */
-static uint8_t hal_get_idle_link_bm_id_9224(uint8_t chip_id)
-{
-	return (WBM_IDLE_DESC_LIST + chip_id);
-}
-
-static void hal_reo_setup_generic_9224(struct hal_soc *soc, void *reoparams)
+static void hal_reo_setup_9224(struct hal_soc *soc, void *reoparams)
 {
 	uint32_t reg_val;
 	struct hal_reo_params *reo_params = (struct hal_reo_params *)reoparams;
@@ -1828,8 +1817,7 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_priv_info_get_from_tlv =
 			hal_rx_priv_info_get_from_tlv_be;
 	hal_soc->ops->hal_rx_pkt_hdr_get = hal_rx_pkt_hdr_get_be;
-	hal_soc->ops->hal_get_idle_link_bm_id = hal_get_idle_link_bm_id_9224;
-	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_9224;
+	hal_soc->ops->hal_reo_setup = hal_reo_setup_9224;
 };
 
 struct hal_hw_srng_config hw_srng_table_9224[] = {

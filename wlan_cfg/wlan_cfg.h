@@ -403,6 +403,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool vdev_stats_hw_offload_config;
 	int vdev_stats_hw_offload_timer;
 #endif
+	uint8_t num_rxdma_dst_rings_per_pdev;
 };
 
 /**
@@ -1953,6 +1954,18 @@ wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg);
 void
 wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 			    uint8_t wbm2sw_ring_id);
+
+/**
+ * wlan_cfg_set_vdev_stats_hw_offload_config() - Set hw vdev stats offload
+ *						 config
+ * @cfg: config context
+ * @value: value to be set
+ *
+ * Return: none
+ */
+void
+wlan_cfg_set_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  bool value);
 
 /**
  * wlan_cfg_get_vdev_stats_hw_offload_config() - Get hw vdev stats offload

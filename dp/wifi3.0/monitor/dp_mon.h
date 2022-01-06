@@ -50,6 +50,18 @@ struct dp_peer_tx_capture {
 };
 #endif
 
+#ifdef DP_CON_MON_MSI_ENABLED
+static inline bool dp_is_monitor_mode_using_poll(struct dp_soc *soc)
+{
+	return false;
+}
+#else
+static inline bool dp_is_monitor_mode_using_poll(struct dp_soc *soc)
+{
+	return true;
+}
+#endif
+
 /*
  * dp_mon_soc_attach() - DP monitor soc attach
  * @soc: Datapath SOC handle
@@ -180,6 +192,9 @@ void dp_mon_ops_register(struct dp_soc *soc);
 
 #ifndef DISABLE_MON_CONFIG
 void dp_mon_register_intr_ops(struct dp_soc *soc);
+#else
+static inline void dp_mon_register_intr_ops(struct dp_soc *soc)
+{}
 #endif
 
 /*
@@ -756,6 +771,7 @@ struct  dp_mon_pdev {
 	/* enable spcl vap stats reset on ch change */
 	bool reset_scan_spcl_vap_stats_enable;
 #endif
+	bool is_tlv_hdr_64_bit;
 };
 
 struct  dp_mon_vdev {

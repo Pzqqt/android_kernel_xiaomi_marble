@@ -192,6 +192,20 @@ static inline bool wlan_reg_is_range_overlap_6g(qdf_freq_t low_freq,
 #endif
 
 /**
+ * wlan_reg_get_6g_ap_master_chan_list() - provide  the appropriate ap master
+ * channel list
+ * @pdev: pdev pointer
+ * @ap_pwr_type: The ap power type (LPI/VLP/SP)
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(
+					struct wlan_objmgr_pdev *pdev,
+					enum reg_6g_ap_type ap_pwr_type,
+					struct regulatory_channel *chan_list);
+
+/**
  * wlan_reg_is_6ghz_psc_chan_freq() - Check if the given 6GHz channel frequency
  * is preferred scanning channel frequency.
  * @freq: Channel frequency
@@ -304,6 +318,14 @@ wlan_reg_get_max_txpower_for_6g_tpe(struct wlan_objmgr_pdev *pdev,
 				    enum reg_6g_client_type reg_client,
 				    bool is_psd,
 				    uint8_t *tx_power)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+wlan_reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
+				    enum reg_6g_ap_type ap_pwr_type,
+				    struct regulatory_channel *chan_list)
 {
 	return QDF_STATUS_E_FAILURE;
 }
@@ -458,14 +480,15 @@ QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
  * @sta_ctry: ptr to sta programmed country
  * @pwr_type_6g: ptr to 6G power type
  * @ctry_code_match: Check for country IE and sta country code match
- *
+ * @ap_pwr_type: AP's power type for 6G as advertised in HE ops IE
  * Return: QDF_STATUS
  */
 QDF_STATUS
 wlan_reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *ap_ctry, uint8_t *sta_ctry,
 				    enum reg_6g_ap_type *pwr_type_6g,
-				    bool *ctry_code_match);
+				    bool *ctry_code_match,
+				    enum reg_6g_ap_type ap_pwr_type);
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API
@@ -543,19 +566,6 @@ QDF_STATUS wlan_reg_get_secondary_current_chan_list(
 #endif
 
 #if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
-/**
- * wlan_reg_get_6g_ap_master_chan_list() - provide  the appropriate ap master
- * channel list
- * @pdev: pdev pointer
- * @ap_pwr_type: The ap power type (LPI/VLP/SP)
- * @chan_list: channel list pointer
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
-					       enum reg_6g_ap_type ap_pwr_type,
-					       struct regulatory_channel *chan_list);
-
 /**
  * wlan_reg_get_6g_afc_chan_list() - provide the pdev afc channel list
  * @pdev: pdev pointer

@@ -5164,6 +5164,7 @@ void dp_print_mon_ring_stat_from_hal(struct dp_pdev *pdev, uint8_t mac_id)
 void
 dp_print_ring_stats(struct dp_pdev *pdev)
 {
+	struct dp_soc *soc = pdev->soc;
 	uint32_t i;
 	int mac_id;
 	int lmac_id;
@@ -5208,15 +5209,24 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->soc->tcl_data_ring[i],
 					    TCL_DATA);
-	for (i = 0; i < MAX_TCL_DATA_RINGS; i++)
+	for (i = 0; i < pdev->soc->num_tcl_data_rings; i++)
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->soc->tx_comp_ring[i],
 					    WBM2SW_RELEASE);
 
-	lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc, 0, pdev->pdev_id);
-	dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->soc->rx_refill_buf_ring[lmac_id],
-				RXDMA_BUF);
+	if (pdev->soc->features.dmac_cmn_src_rxbuf_ring_enabled) {
+		for (i = 0; i < pdev->soc->num_rx_refill_buf_rings; i++) {
+			dp_print_ring_stat_from_hal
+				(pdev->soc, &pdev->soc->rx_refill_buf_ring[i],
+				 RXDMA_BUF);
+		}
+	} else {
+		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc, 0,
+						     pdev->pdev_id);
+		dp_print_ring_stat_from_hal
+			(pdev->soc, &pdev->soc->rx_refill_buf_ring[lmac_id],
+			 RXDMA_BUF);
+	}
 
 	dp_print_ring_stat_from_hal(pdev->soc,
 				    &pdev->rx_refill_buf_ring2,
@@ -5234,7 +5244,7 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 		dp_print_mon_ring_stat_from_hal(pdev, lmac_id);
 	}
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++)	{
+	for (i = 0; i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc,
 						     i, pdev->pdev_id);
 
@@ -6884,3 +6894,405 @@ void dp_txrx_clear_tso_stats(struct dp_soc *soc)
 	}
 }
 #endif /* FEATURE_TSO_STATS */
+
+/**
+ * dp_is_wds_extended(): Check if wds ext is enabled
+ * @vdev: DP VDEV handle
+ *
+ * return: true if enabled, false if not
+ */
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+static bool dp_is_wds_extended(struct dp_peer *peer)
+{
+	if (qdf_atomic_test_bit(WDS_EXT_PEER_INIT_BIT,
+				&peer->wds_ext.init))
+		return true;
+
+	return false;
+}
+#else
+static bool dp_is_wds_extended(struct dp_peer *peer)
+{
+	return false;
+}
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
+
+void dp_update_vdev_stats(struct dp_soc *soc,
+			  struct dp_peer *srcobj,
+			  void *arg)
+{
+	struct cdp_vdev_stats *tgtobj = (struct cdp_vdev_stats *)arg;
+	uint8_t i;
+	uint8_t pream_type;
+
+	if (qdf_unlikely(dp_is_wds_extended(srcobj)))
+		return;
+
+	for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) {
+		for (i = 0; i < MAX_MCS; i++) {
+			tgtobj->tx.pkt_type[pream_type].
+				mcs_count[i] +=
+			srcobj->stats.tx.pkt_type[pream_type].
+				mcs_count[i];
+			tgtobj->rx.pkt_type[pream_type].
+				mcs_count[i] +=
+			srcobj->stats.rx.pkt_type[pream_type].
+				mcs_count[i];
+		}
+	}
+
+	for (i = 0; i < MAX_BW; i++) {
+		tgtobj->tx.bw[i] += srcobj->stats.tx.bw[i];
+		tgtobj->rx.bw[i] += srcobj->stats.rx.bw[i];
+	}
+
+	for (i = 0; i < SS_COUNT; i++) {
+		tgtobj->tx.nss[i] += srcobj->stats.tx.nss[i];
+		tgtobj->rx.nss[i] += srcobj->stats.rx.nss[i];
+	}
+
+	for (i = 0; i < WME_AC_MAX; i++) {
+		tgtobj->tx.wme_ac_type[i] +=
+			srcobj->stats.tx.wme_ac_type[i];
+		tgtobj->rx.wme_ac_type[i] +=
+			srcobj->stats.rx.wme_ac_type[i];
+		tgtobj->tx.excess_retries_per_ac[i] +=
+			srcobj->stats.tx.excess_retries_per_ac[i];
+	}
+
+	for (i = 0; i < MAX_GI; i++) {
+		tgtobj->tx.sgi_count[i] +=
+			srcobj->stats.tx.sgi_count[i];
+		tgtobj->rx.sgi_count[i] +=
+			srcobj->stats.rx.sgi_count[i];
+	}
+
+	for (i = 0; i < MAX_RECEPTION_TYPES; i++)
+		tgtobj->rx.reception_type[i] +=
+			srcobj->stats.rx.reception_type[i];
+
+	if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) {
+		tgtobj->tx.comp_pkt.bytes += srcobj->stats.tx.comp_pkt.bytes;
+		tgtobj->tx.comp_pkt.num += srcobj->stats.tx.comp_pkt.num;
+		tgtobj->tx.tx_failed += srcobj->stats.tx.tx_failed;
+	}
+	tgtobj->tx.ucast.num += srcobj->stats.tx.ucast.num;
+	tgtobj->tx.ucast.bytes += srcobj->stats.tx.ucast.bytes;
+	tgtobj->tx.mcast.num += srcobj->stats.tx.mcast.num;
+	tgtobj->tx.mcast.bytes += srcobj->stats.tx.mcast.bytes;
+	tgtobj->tx.bcast.num += srcobj->stats.tx.bcast.num;
+	tgtobj->tx.bcast.bytes += srcobj->stats.tx.bcast.bytes;
+	tgtobj->tx.tx_success.num += srcobj->stats.tx.tx_success.num;
+	tgtobj->tx.tx_success.bytes +=
+		srcobj->stats.tx.tx_success.bytes;
+	tgtobj->tx.nawds_mcast.num +=
+		srcobj->stats.tx.nawds_mcast.num;
+	tgtobj->tx.nawds_mcast.bytes +=
+		srcobj->stats.tx.nawds_mcast.bytes;
+	tgtobj->tx.nawds_mcast_drop +=
+		srcobj->stats.tx.nawds_mcast_drop;
+	tgtobj->tx.num_ppdu_cookie_valid +=
+		srcobj->stats.tx.num_ppdu_cookie_valid;
+	tgtobj->tx.ofdma += srcobj->stats.tx.ofdma;
+	tgtobj->tx.stbc += srcobj->stats.tx.stbc;
+	tgtobj->tx.ldpc += srcobj->stats.tx.ldpc;
+	tgtobj->tx.pream_punct_cnt += srcobj->stats.tx.pream_punct_cnt;
+	tgtobj->tx.retries += srcobj->stats.tx.retries;
+	tgtobj->tx.non_amsdu_cnt += srcobj->stats.tx.non_amsdu_cnt;
+	tgtobj->tx.amsdu_cnt += srcobj->stats.tx.amsdu_cnt;
+	tgtobj->tx.non_ampdu_cnt += srcobj->stats.tx.non_ampdu_cnt;
+	tgtobj->tx.ampdu_cnt += srcobj->stats.tx.ampdu_cnt;
+	tgtobj->tx.dropped.fw_rem.num += srcobj->stats.tx.dropped.fw_rem.num;
+	tgtobj->tx.dropped.fw_rem.bytes +=
+			srcobj->stats.tx.dropped.fw_rem.bytes;
+	tgtobj->tx.dropped.fw_rem_tx +=
+			srcobj->stats.tx.dropped.fw_rem_tx;
+	tgtobj->tx.dropped.fw_rem_notx +=
+			srcobj->stats.tx.dropped.fw_rem_notx;
+	tgtobj->tx.dropped.fw_reason1 +=
+			srcobj->stats.tx.dropped.fw_reason1;
+	tgtobj->tx.dropped.fw_reason2 +=
+			srcobj->stats.tx.dropped.fw_reason2;
+	tgtobj->tx.dropped.fw_reason3 +=
+			srcobj->stats.tx.dropped.fw_reason3;
+	tgtobj->tx.dropped.age_out += srcobj->stats.tx.dropped.age_out;
+	tgtobj->tx.mpdu_success_with_retries +=
+			srcobj->stats.tx.mpdu_success_with_retries;
+	tgtobj->rx.err.mic_err += srcobj->stats.rx.err.mic_err;
+	tgtobj->rx.err.decrypt_err += srcobj->stats.rx.err.decrypt_err;
+	tgtobj->rx.err.fcserr += srcobj->stats.rx.err.fcserr;
+	tgtobj->rx.err.pn_err += srcobj->stats.rx.err.pn_err;
+	tgtobj->rx.err.oor_err += srcobj->stats.rx.err.oor_err;
+	tgtobj->rx.err.jump_2k_err += srcobj->stats.rx.err.jump_2k_err;
+	tgtobj->rx.err.rxdma_wifi_parse_err +=
+				srcobj->stats.rx.err.rxdma_wifi_parse_err;
+	if (srcobj->stats.rx.snr != 0)
+		tgtobj->rx.snr = srcobj->stats.rx.snr;
+	tgtobj->rx.rx_rate = srcobj->stats.rx.rx_rate;
+	tgtobj->rx.non_ampdu_cnt += srcobj->stats.rx.non_ampdu_cnt;
+	tgtobj->rx.amsdu_cnt += srcobj->stats.rx.ampdu_cnt;
+	tgtobj->rx.non_amsdu_cnt += srcobj->stats.rx.non_amsdu_cnt;
+	tgtobj->rx.amsdu_cnt += srcobj->stats.rx.amsdu_cnt;
+	tgtobj->rx.nawds_mcast_drop += srcobj->stats.rx.nawds_mcast_drop;
+	tgtobj->rx.to_stack.num += srcobj->stats.rx.to_stack.num;
+	tgtobj->rx.to_stack.bytes += srcobj->stats.rx.to_stack.bytes;
+
+	for (i = 0; i <  CDP_MAX_RX_RINGS; i++) {
+		tgtobj->rx.rcvd_reo[i].num +=
+			srcobj->stats.rx.rcvd_reo[i].num;
+		tgtobj->rx.rcvd_reo[i].bytes +=
+			srcobj->stats.rx.rcvd_reo[i].bytes;
+	}
+
+	srcobj->stats.rx.unicast.num =
+		srcobj->stats.rx.to_stack.num -
+				srcobj->stats.rx.multicast.num;
+	srcobj->stats.rx.unicast.bytes =
+		srcobj->stats.rx.to_stack.bytes -
+				srcobj->stats.rx.multicast.bytes;
+
+	tgtobj->rx.unicast.num += srcobj->stats.rx.unicast.num;
+	tgtobj->rx.unicast.bytes += srcobj->stats.rx.unicast.bytes;
+	tgtobj->rx.multicast.num += srcobj->stats.rx.multicast.num;
+	tgtobj->rx.multicast.bytes += srcobj->stats.rx.multicast.bytes;
+	tgtobj->rx.bcast.num += srcobj->stats.rx.bcast.num;
+	tgtobj->rx.bcast.bytes += srcobj->stats.rx.bcast.bytes;
+	tgtobj->rx.raw.num += srcobj->stats.rx.raw.num;
+	tgtobj->rx.raw.bytes += srcobj->stats.rx.raw.bytes;
+	tgtobj->rx.intra_bss.pkts.num +=
+			srcobj->stats.rx.intra_bss.pkts.num;
+	tgtobj->rx.intra_bss.pkts.bytes +=
+			srcobj->stats.rx.intra_bss.pkts.bytes;
+	tgtobj->rx.intra_bss.fail.num +=
+			srcobj->stats.rx.intra_bss.fail.num;
+	tgtobj->rx.intra_bss.fail.bytes +=
+			srcobj->stats.rx.intra_bss.fail.bytes;
+	tgtobj->tx.last_ack_rssi =
+		srcobj->stats.tx.last_ack_rssi;
+	tgtobj->rx.mec_drop.num += srcobj->stats.rx.mec_drop.num;
+	tgtobj->rx.mec_drop.bytes += srcobj->stats.rx.mec_drop.bytes;
+	tgtobj->rx.multipass_rx_pkt_drop +=
+		srcobj->stats.rx.multipass_rx_pkt_drop;
+	tgtobj->rx.peer_unauth_rx_pkt_drop +=
+		srcobj->stats.rx.peer_unauth_rx_pkt_drop;
+	tgtobj->rx.policy_check_drop +=
+		srcobj->stats.rx.policy_check_drop;
+}
+
+void dp_update_pdev_stats(struct dp_pdev *tgtobj,
+			  struct cdp_vdev_stats *srcobj)
+{
+	uint8_t i;
+	uint8_t pream_type;
+
+	for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) {
+		for (i = 0; i < MAX_MCS; i++) {
+			tgtobj->stats.tx.pkt_type[pream_type].
+				mcs_count[i] +=
+			srcobj->tx.pkt_type[pream_type].
+				mcs_count[i];
+			tgtobj->stats.rx.pkt_type[pream_type].
+				mcs_count[i] +=
+			srcobj->rx.pkt_type[pream_type].
+				mcs_count[i];
+		}
+	}
+
+	for (i = 0; i < MAX_BW; i++) {
+		tgtobj->stats.tx.bw[i] += srcobj->tx.bw[i];
+		tgtobj->stats.rx.bw[i] += srcobj->rx.bw[i];
+	}
+
+	for (i = 0; i < SS_COUNT; i++) {
+		tgtobj->stats.tx.nss[i] += srcobj->tx.nss[i];
+		tgtobj->stats.rx.nss[i] += srcobj->rx.nss[i];
+	}
+
+	for (i = 0; i < WME_AC_MAX; i++) {
+		tgtobj->stats.tx.wme_ac_type[i] +=
+			srcobj->tx.wme_ac_type[i];
+		tgtobj->stats.rx.wme_ac_type[i] +=
+			srcobj->rx.wme_ac_type[i];
+		tgtobj->stats.tx.excess_retries_per_ac[i] +=
+			srcobj->tx.excess_retries_per_ac[i];
+	}
+
+	for (i = 0; i < MAX_GI; i++) {
+		tgtobj->stats.tx.sgi_count[i] +=
+			srcobj->tx.sgi_count[i];
+		tgtobj->stats.rx.sgi_count[i] +=
+			srcobj->rx.sgi_count[i];
+	}
+
+	for (i = 0; i < MAX_RECEPTION_TYPES; i++)
+		tgtobj->stats.rx.reception_type[i] +=
+			srcobj->rx.reception_type[i];
+
+	tgtobj->stats.tx.comp_pkt.bytes += srcobj->tx.comp_pkt.bytes;
+	tgtobj->stats.tx.comp_pkt.num += srcobj->tx.comp_pkt.num;
+	tgtobj->stats.tx.ucast.num += srcobj->tx.ucast.num;
+	tgtobj->stats.tx.ucast.bytes += srcobj->tx.ucast.bytes;
+	tgtobj->stats.tx.mcast.num += srcobj->tx.mcast.num;
+	tgtobj->stats.tx.mcast.bytes += srcobj->tx.mcast.bytes;
+	tgtobj->stats.tx.bcast.num += srcobj->tx.bcast.num;
+	tgtobj->stats.tx.bcast.bytes += srcobj->tx.bcast.bytes;
+	tgtobj->stats.tx.tx_success.num += srcobj->tx.tx_success.num;
+	tgtobj->stats.tx.tx_success.bytes +=
+		srcobj->tx.tx_success.bytes;
+	tgtobj->stats.tx.nawds_mcast.num +=
+		srcobj->tx.nawds_mcast.num;
+	tgtobj->stats.tx.nawds_mcast.bytes +=
+		srcobj->tx.nawds_mcast.bytes;
+	tgtobj->stats.tx.nawds_mcast_drop +=
+		srcobj->tx.nawds_mcast_drop;
+	tgtobj->stats.tx.num_ppdu_cookie_valid +=
+		srcobj->tx.num_ppdu_cookie_valid;
+	tgtobj->stats.tx.tx_failed += srcobj->tx.tx_failed;
+	tgtobj->stats.tx.ofdma += srcobj->tx.ofdma;
+	tgtobj->stats.tx.stbc += srcobj->tx.stbc;
+	tgtobj->stats.tx.ldpc += srcobj->tx.ldpc;
+	tgtobj->stats.tx.pream_punct_cnt += srcobj->tx.pream_punct_cnt;
+	tgtobj->stats.tx.retries += srcobj->tx.retries;
+	tgtobj->stats.tx.non_amsdu_cnt += srcobj->tx.non_amsdu_cnt;
+	tgtobj->stats.tx.amsdu_cnt += srcobj->tx.amsdu_cnt;
+	tgtobj->stats.tx.non_ampdu_cnt += srcobj->tx.non_ampdu_cnt;
+	tgtobj->stats.tx.ampdu_cnt += srcobj->tx.ampdu_cnt;
+	tgtobj->stats.tx.dropped.fw_rem.num += srcobj->tx.dropped.fw_rem.num;
+	tgtobj->stats.tx.dropped.fw_rem.bytes +=
+			srcobj->tx.dropped.fw_rem.bytes;
+	tgtobj->stats.tx.dropped.fw_rem_tx +=
+			srcobj->tx.dropped.fw_rem_tx;
+	tgtobj->stats.tx.dropped.fw_rem_notx +=
+			srcobj->tx.dropped.fw_rem_notx;
+	tgtobj->stats.tx.dropped.fw_reason1 +=
+			srcobj->tx.dropped.fw_reason1;
+	tgtobj->stats.tx.dropped.fw_reason2 +=
+			srcobj->tx.dropped.fw_reason2;
+	tgtobj->stats.tx.dropped.fw_reason3 +=
+			srcobj->tx.dropped.fw_reason3;
+	tgtobj->stats.tx.dropped.age_out += srcobj->tx.dropped.age_out;
+	tgtobj->stats.rx.err.mic_err += srcobj->rx.err.mic_err;
+	tgtobj->stats.rx.err.decrypt_err += srcobj->rx.err.decrypt_err;
+	tgtobj->stats.rx.err.fcserr += srcobj->rx.err.fcserr;
+	tgtobj->stats.rx.err.pn_err += srcobj->rx.err.pn_err;
+	tgtobj->stats.rx.err.oor_err += srcobj->rx.err.oor_err;
+	tgtobj->stats.rx.err.jump_2k_err += srcobj->rx.err.jump_2k_err;
+	tgtobj->stats.rx.err.rxdma_wifi_parse_err +=
+				srcobj->rx.err.rxdma_wifi_parse_err;
+	if (srcobj->rx.snr != 0)
+		tgtobj->stats.rx.snr = srcobj->rx.snr;
+	tgtobj->stats.rx.rx_rate = srcobj->rx.rx_rate;
+	tgtobj->stats.rx.non_ampdu_cnt += srcobj->rx.non_ampdu_cnt;
+	tgtobj->stats.rx.amsdu_cnt += srcobj->rx.ampdu_cnt;
+	tgtobj->stats.rx.non_amsdu_cnt += srcobj->rx.non_amsdu_cnt;
+	tgtobj->stats.rx.amsdu_cnt += srcobj->rx.amsdu_cnt;
+	tgtobj->stats.rx.nawds_mcast_drop += srcobj->rx.nawds_mcast_drop;
+	tgtobj->stats.rx.to_stack.num += srcobj->rx.to_stack.num;
+	tgtobj->stats.rx.to_stack.bytes += srcobj->rx.to_stack.bytes;
+
+	for (i = 0; i <  CDP_MAX_RX_RINGS; i++) {
+		tgtobj->stats.rx.rcvd_reo[i].num +=
+			srcobj->rx.rcvd_reo[i].num;
+		tgtobj->stats.rx.rcvd_reo[i].bytes +=
+			srcobj->rx.rcvd_reo[i].bytes;
+	}
+
+	srcobj->rx.unicast.num =
+		srcobj->rx.to_stack.num -
+				(srcobj->rx.multicast.num);
+	srcobj->rx.unicast.bytes =
+		srcobj->rx.to_stack.bytes -
+				(srcobj->rx.multicast.bytes);
+
+	tgtobj->stats.rx.unicast.num += srcobj->rx.unicast.num;
+	tgtobj->stats.rx.unicast.bytes += srcobj->rx.unicast.bytes;
+	tgtobj->stats.rx.multicast.num += srcobj->rx.multicast.num;
+	tgtobj->stats.rx.multicast.bytes += srcobj->rx.multicast.bytes;
+	tgtobj->stats.rx.bcast.num += srcobj->rx.bcast.num;
+	tgtobj->stats.rx.bcast.bytes += srcobj->rx.bcast.bytes;
+	tgtobj->stats.rx.raw.num += srcobj->rx.raw.num;
+	tgtobj->stats.rx.raw.bytes += srcobj->rx.raw.bytes;
+	tgtobj->stats.rx.intra_bss.pkts.num +=
+			srcobj->rx.intra_bss.pkts.num;
+	tgtobj->stats.rx.intra_bss.pkts.bytes +=
+			srcobj->rx.intra_bss.pkts.bytes;
+	tgtobj->stats.rx.intra_bss.fail.num +=
+			srcobj->rx.intra_bss.fail.num;
+	tgtobj->stats.rx.intra_bss.fail.bytes +=
+			srcobj->rx.intra_bss.fail.bytes;
+
+	tgtobj->stats.tx.last_ack_rssi =
+		srcobj->tx.last_ack_rssi;
+	tgtobj->stats.rx.mec_drop.num += srcobj->rx.mec_drop.num;
+	tgtobj->stats.rx.mec_drop.bytes += srcobj->rx.mec_drop.bytes;
+	tgtobj->stats.rx.multipass_rx_pkt_drop +=
+		srcobj->rx.multipass_rx_pkt_drop;
+	tgtobj->stats.rx.peer_unauth_rx_pkt_drop +=
+		srcobj->rx.peer_unauth_rx_pkt_drop;
+	tgtobj->stats.rx.policy_check_drop +=
+		srcobj->rx.policy_check_drop;
+}
+
+void dp_update_vdev_ingress_stats(struct dp_vdev *tgtobj)
+{
+	tgtobj->stats.tx_i.dropped.dropped_pkt.num =
+		tgtobj->stats.tx_i.dropped.dma_error +
+		tgtobj->stats.tx_i.dropped.ring_full +
+		tgtobj->stats.tx_i.dropped.enqueue_fail +
+		tgtobj->stats.tx_i.dropped.fail_per_pkt_vdev_id_check +
+		tgtobj->stats.tx_i.dropped.desc_na.num +
+		tgtobj->stats.tx_i.dropped.res_full +
+		tgtobj->stats.tx_i.dropped.headroom_insufficient;
+}
+
+void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
+				  struct dp_vdev *srcobj)
+{
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.nawds_mcast);
+
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.rcvd);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.processed);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.reinject_pkts);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.inspect_pkts);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.raw.raw_pkt);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.raw.dma_map_error);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.raw.num_frags_overflow_err);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.sg.dropped_host.num);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.sg.dropped_target);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.sg.sg_pkt);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.mcast_en.mcast_pkt);
+	DP_STATS_AGGR(tgtobj, srcobj,
+		      tx_i.mcast_en.dropped_map_error);
+	DP_STATS_AGGR(tgtobj, srcobj,
+		      tx_i.mcast_en.dropped_self_mac);
+	DP_STATS_AGGR(tgtobj, srcobj,
+		      tx_i.mcast_en.dropped_send_fail);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.mcast_en.ucast);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.igmp_mcast_en.igmp_rcvd);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.igmp_mcast_en.igmp_ucast_converted);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.dma_error);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.ring_full);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.enqueue_fail);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.fail_per_pkt_vdev_id_check);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.desc_na.num);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.res_full);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.headroom_insufficient);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.cce_classified);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.cce_classified_raw);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.sniffer_rcvd);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.mesh.exception_fw);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.mesh.completion_fw);
+
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, rx_i.reo_rcvd_pkt);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, rx_i.null_q_desc_pkt);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, rx_i.routed_eapol_pkt);
+
+	tgtobj->stats.tx_i.dropped.dropped_pkt.num =
+		tgtobj->stats.tx_i.dropped.dma_error +
+		tgtobj->stats.tx_i.dropped.ring_full +
+		tgtobj->stats.tx_i.dropped.enqueue_fail +
+		tgtobj->stats.tx_i.dropped.fail_per_pkt_vdev_id_check +
+		tgtobj->stats.tx_i.dropped.desc_na.num +
+		tgtobj->stats.tx_i.dropped.res_full +
+		tgtobj->stats.tx_i.dropped.headroom_insufficient;
+}

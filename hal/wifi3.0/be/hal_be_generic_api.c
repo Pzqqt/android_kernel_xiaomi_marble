@@ -950,6 +950,11 @@ uint8_t hal_reo_ring_remap_value_get_be(uint8_t rx_ring_id)
 
 qdf_export_symbol(hal_reo_ring_remap_value_get_be);
 
+uint8_t hal_get_idle_link_bm_id_be(uint8_t chip_id)
+{
+	return (WBM_IDLE_DESC_LIST + chip_id);
+}
+
 /**
  * hal_hw_txrx_default_ops_attach_be() - Attach the default hal ops for
  *		beryllium chipsets.
@@ -1000,4 +1005,5 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_get_tlv_hdr_size = hal_get_tlv_hdr_size_be;
 	hal_soc->ops->hal_rx_msdu_reo_dst_ind_get =
 						hal_rx_msdu_reo_dst_ind_get_be;
+	hal_soc->ops->hal_get_idle_link_bm_id = hal_get_idle_link_bm_id_be;
 }

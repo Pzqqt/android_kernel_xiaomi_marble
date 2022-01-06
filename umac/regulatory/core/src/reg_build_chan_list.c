@@ -2463,6 +2463,30 @@ QDF_STATUS reg_process_master_chan_list_ext(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
+					  enum reg_6g_ap_type ap_pwr_type,
+					  struct regulatory_channel *chan_list)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct regulatory_channel *master_chan_list_6g;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (ap_pwr_type >= REG_CURRENT_MAX_AP_TYPE)
+		return QDF_STATUS_E_FAILURE;
+
+	master_chan_list_6g = pdev_priv_obj->mas_chan_list_6g_ap[ap_pwr_type];
+	qdf_mem_copy(chan_list, master_chan_list_6g,
+		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef CONFIG_AFC_SUPPORT
 static void reg_disable_afc_mas_chan_list_channels(
 		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
@@ -3307,30 +3331,6 @@ reg_get_secondary_current_chan_list(struct wlan_objmgr_pdev *pdev,
 #endif
 
 #if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
-QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
-					  enum reg_6g_ap_type ap_pwr_type,
-					  struct regulatory_channel *chan_list)
-{
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	struct regulatory_channel *master_chan_list_6g;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev private obj is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (ap_pwr_type >= REG_CURRENT_MAX_AP_TYPE)
-		return QDF_STATUS_E_FAILURE;
-
-	master_chan_list_6g = pdev_priv_obj->mas_chan_list_6g_ap[ap_pwr_type];
-	qdf_mem_copy(chan_list, master_chan_list_6g,
-		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 				    struct regulatory_channel *chan_list)
 {

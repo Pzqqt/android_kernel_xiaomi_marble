@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +30,7 @@
 #ifdef CONN_MGR_ADV_FEATURE
 #include "wlan_blm_api.h"
 #include "wlan_cm_roam_api.h"
+#include "wlan_tdls_api.h"
 #endif
 #include <wlan_utility.h>
 #include <wlan_mlo_mgr_sta.h>
@@ -462,6 +464,8 @@ void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
 static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 					struct cm_connect_req *req)
 {
+	struct qdf_mac_addr *mac;
+
 	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) != QDF_STA_MODE)
 		return;
 
@@ -475,11 +479,16 @@ static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 		mlme_debug("set link address for ML connection");
 	} else {
 		/* Use net_dev address for non-ML connection */
-		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
-					   cm_ctx->vdev->vdev_mlme.mldaddr);
+		mac = (struct qdf_mac_addr *)cm_ctx->vdev->vdev_mlme.mldaddr;
+		if (!qdf_is_macaddr_zero(mac)) {
+			wlan_vdev_mlme_set_macaddr(cm_ctx->vdev, mac->bytes);
+			mlme_debug(QDF_MAC_ADDR_FMT " for non-ML connection",
+				   QDF_MAC_ADDR_REF(mac->bytes));
+		}
+
 		wlan_vdev_mlme_feat_ext2_cap_clear(cm_ctx->vdev,
 						   WLAN_VDEV_FEXT2_MLO);
-		mlme_debug("set net_dev address for non-ML connection");
+		mlme_debug("clear MLO cap for non-ML connection");
 	}
 	wlan_vdev_obj_unlock(cm_ctx->vdev);
 }
@@ -978,6 +987,18 @@ static void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 	cm_set_key(cm_ctx, true, 0, &resp->bssid);
 	cm_set_key(cm_ctx, false, 0, &broadcast_mac);
 }
+
+static void cm_teardown_tdls(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return;
+
+	wlan_tdls_teardown_links_sync(psoc);
+}
+
 #else
 
 static inline
@@ -1111,6 +1132,8 @@ post_err:
 	cm_connect_handle_event_post_fail(cm_ctx, cm_id);
 	return qdf_status;
 }
+
+static inline void cm_teardown_tdls(struct wlan_objmgr_vdev *vdev) {}
 
 #endif /* CONN_MGR_ADV_FEATURE */
 
@@ -1681,8 +1704,8 @@ bool cm_connect_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
 	return cm_check_cmid_match_list_head(cm_ctx, &resp->cm_id);
 }
 
-static void cm_fill_vdev_crypto_params(struct cnx_mgr *cm_ctx,
-				       struct wlan_cm_connect_req *req)
+void cm_fill_vdev_crypto_params(struct cnx_mgr *cm_ctx,
+				struct wlan_cm_connect_req *req)
 {
 	/* fill vdev crypto from the connect req */
 	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_AUTH_MODE,
@@ -2318,6 +2341,9 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 		goto err;
 
 	cm_set_crypto_params_from_ie(&connect_req->req);
+
+	if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		cm_teardown_tdls(vdev);
 
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_CONNECT_REQ,
 				     sizeof(*connect_req), connect_req);

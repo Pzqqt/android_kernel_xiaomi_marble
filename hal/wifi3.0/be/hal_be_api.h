@@ -152,4 +152,12 @@ hal_reo_ring_remap_value_get_be(uint8_t rx_ring_id);
  * Return: None
  */
 void hal_setup_reo_swap(struct hal_soc *soc);
+
+/**
+ * hal_get_idle_link_bm_id_be() - Get idle link BM id from chid_id
+ * @chip_id: mlo chip_id
+ *
+ * Returns: RBM ID
+ */
+uint8_t hal_get_idle_link_bm_id_be(uint8_t chip_id);
 #endif /* _HAL_BE_API_H_ */

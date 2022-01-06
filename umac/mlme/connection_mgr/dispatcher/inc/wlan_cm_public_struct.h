@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -143,7 +144,7 @@ struct wlan_fils_con_info {
  * @CM_ROAM_DISCONNECT: Disconnect req due to HO failure
  * @CM_OSIF_CFG_CONNECT: Connect request initiated due to config change
  * @CM_OSIF_CFG_DISCONNECT: Disconnect request initiated due to config change
- * @CM_MLO_DISCONNECT: Disconnect req initiated from MLO manager
+ * @CM_MLO_LINK_VDEV_DISCONNECT: Disconnect req for ML link
  * @CM_SOURCE_MAX: max value of connection manager source
  * @CM_SOURCE_INVALID: Invalid connection manager req source
  */
@@ -160,7 +161,7 @@ enum wlan_cm_source {
 	CM_ROAM_DISCONNECT,
 	CM_OSIF_CFG_CONNECT,
 	CM_OSIF_CFG_DISCONNECT,
-	CM_MLO_DISCONNECT,
+	CM_MLO_LINK_VDEV_DISCONNECT,
 	CM_SOURCE_MAX,
 	CM_SOURCE_INVALID = CM_SOURCE_MAX,
 };

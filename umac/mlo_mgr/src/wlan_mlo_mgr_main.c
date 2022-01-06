@@ -27,6 +27,7 @@
 #include <wlan_mlo_mgr_peer.h>
 #include <wlan_cm_public_struct.h>
 #include "wlan_mlo_mgr_msgq.h"
+#include <target_if_mlo_mgr.h>
 
 static void mlo_global_ctx_deinit(void)
 {
@@ -73,6 +74,52 @@ static void mlo_global_ctx_init(void)
 	ml_aid_lock_create(mlo_mgr_ctx);
 	mlo_mgr_ctx->mlo_is_force_primary_umac = 0;
 	mlo_msgq_init();
+}
+
+QDF_STATUS wlan_mlo_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_mlo_tx_ops *mlo_tx_ops;
+
+	if (!psoc) {
+		mlo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mlo_tx_ops = target_if_mlo_get_tx_ops(psoc);
+	if (!mlo_tx_ops) {
+		mlo_err("tx_ops is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!mlo_tx_ops->register_events) {
+		mlo_err("register_events function is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return mlo_tx_ops->register_events(psoc);
+}
+
+QDF_STATUS wlan_mlo_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_mlo_tx_ops *mlo_tx_ops;
+
+	if (!psoc) {
+		mlo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mlo_tx_ops = target_if_mlo_get_tx_ops(psoc);
+	if (!mlo_tx_ops) {
+		mlo_err("tx_ops is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!mlo_tx_ops->unregister_events) {
+		mlo_err("unregister_events function is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return mlo_tx_ops->unregister_events(psoc);
 }
 
 QDF_STATUS wlan_mlo_mgr_init(void)
@@ -277,6 +324,7 @@ static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 			qdf_mem_free(ml_dev);
 			return QDF_STATUS_E_NOMEM;
 		}
+		copied_conn_req_lock_create(ml_dev->sta_ctx);
 	} else if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {
 		if (mlo_ap_ctx_init(ml_dev) != QDF_STATUS_SUCCESS) {
 			mlo_dev_lock_destroy(ml_dev);
@@ -353,6 +401,8 @@ static QDF_STATUS mlo_dev_ctx_deinit(struct wlan_objmgr_vdev *vdev)
 			}
 			if (ml_dev->sta_ctx->assoc_rsp.ptr)
 				qdf_mem_free(ml_dev->sta_ctx->assoc_rsp.ptr);
+
+			copied_conn_req_lock_destroy(ml_dev->sta_ctx);
 
 			qdf_mem_free(ml_dev->sta_ctx);
 		}

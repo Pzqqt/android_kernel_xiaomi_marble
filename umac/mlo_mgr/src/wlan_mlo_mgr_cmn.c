@@ -23,6 +23,8 @@
 #ifdef WLAN_MLO_MULTI_CHIP
 #include "wlan_lmac_if_def.h"
 #endif
+#include "wlan_serialization_api.h"
+#include <target_if_mlo_mgr.h>
 
 void mlo_get_link_information(struct qdf_mac_addr *mld_addr,
 			      struct mlo_link_info *info)
@@ -93,6 +95,30 @@ QDF_STATUS mlo_unreg_mlme_ext_cb(struct mlo_mgr_context *ctx)
 
 	ctx->mlme_ops = NULL;
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlo_mlme_clone_sta_security(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_connect_req *req)
+{
+	struct mlo_mgr_context *mlo_ctx = wlan_objmgr_get_mlo_ctx();
+	struct vdev_mlme_obj *vdev_mlme;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!mlo_ctx || !mlo_ctx->mlme_ops ||
+	    !mlo_ctx->mlme_ops->mlo_mlme_ext_validate_conn_req)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return QDF_STATUS_E_FAILURE;
+
+	if (mlo_ctx->mlme_ops->mlo_mlme_ext_clone_security_param) {
+		status =
+			mlo_ctx->mlme_ops->mlo_mlme_ext_clone_security_param(
+				vdev_mlme, req);
+	}
+
+	return status;
 }
 
 QDF_STATUS mlo_mlme_validate_conn_req(struct wlan_objmgr_vdev *vdev,
@@ -332,4 +358,217 @@ void mlo_get_ml_vdev_list(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 	mlo_dev_lock_release(dev_ctx);
+}
+
+/**
+ * mlo_link_set_active() - send MLO link set active command
+ * @psoc: PSOC object
+ * @param: MLO link set active params
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+mlo_link_set_active(struct wlan_objmgr_psoc *psoc,
+		    struct mlo_link_set_active_param *param)
+{
+	struct wlan_lmac_if_mlo_tx_ops *mlo_tx_ops;
+
+	if (!psoc) {
+		mlo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mlo_tx_ops = target_if_mlo_get_tx_ops(psoc);
+	if (!mlo_tx_ops) {
+		mlo_err("tx_ops is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!mlo_tx_ops->link_set_active) {
+		mlo_err("link_set_active function is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return mlo_tx_ops->link_set_active(psoc, param);
+}
+
+/**
+ * mlo_release_ser_link_set_active_cmd() - relases serialization command for
+ *  forcing MLO link active/inactive
+ * @vdev: Object manager vdev
+ *
+ * Return: None
+ */
+static void
+mlo_release_ser_link_set_active_cmd(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_serialization_queued_cmd_info cmd = {0};
+
+	cmd.cmd_type = WLAN_SER_CMD_SET_MLO_LINK;
+	cmd.requestor = WLAN_UMAC_COMP_MLO_MGR;
+	cmd.cmd_id = 0;
+	cmd.vdev = vdev;
+
+	mlo_debug("release serialization command");
+	wlan_serialization_remove_cmd(&cmd);
+}
+
+/**
+ * mlo_link_set_active_resp_vdev_handler() - vdev handler for mlo link set
+ * active response event.
+ * @psoc: psoc object
+ * @obj: vdev object
+ * @arg: mlo link set active response
+ *
+ * Return: None
+ */
+static void
+mlo_link_set_active_resp_vdev_handler(struct wlan_objmgr_psoc *psoc,
+				      void *obj, void *arg)
+{
+	struct mlo_link_set_active_req *req;
+	struct wlan_objmgr_vdev *vdev = obj;
+	struct mlo_link_set_active_resp *event = arg;
+
+	req = wlan_serialization_get_active_cmd(wlan_vdev_get_psoc(vdev),
+						wlan_vdev_get_id(vdev),
+						WLAN_SER_CMD_SET_MLO_LINK);
+	if (!req)
+		return;
+
+	if (req->ctx.set_mlo_link_cb)
+		req->ctx.set_mlo_link_cb(vdev, req->ctx.cb_arg, event);
+
+	mlo_release_ser_link_set_active_cmd(vdev);
+}
+
+QDF_STATUS
+mlo_process_link_set_active_resp(struct wlan_objmgr_psoc *psoc,
+				 struct mlo_link_set_active_resp *event)
+{
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     mlo_link_set_active_resp_vdev_handler,
+				     event, true, WLAN_MLO_MGR_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * mlo_ser_set_link_cb() - Serialization callback function
+ * @cmd: Serialization command info
+ * @reason: Serialization reason for callback execution
+ *
+ * Return: Status of callback execution
+ */
+static QDF_STATUS
+mlo_ser_set_link_cb(struct wlan_serialization_command *cmd,
+		    enum wlan_serialization_cb_reason reason)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct mlo_link_set_active_req *req;
+	struct mlo_mgr_context *mlo_ctx;
+
+	if (!cmd || !cmd->vdev)
+		return QDF_STATUS_E_FAILURE;
+
+	mlo_ctx = wlan_objmgr_get_mlo_ctx();
+	if (!mlo_ctx)
+		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_vdev_get_psoc(cmd->vdev);
+	if (!psoc) {
+		mlo_err("psoc is NULL, reason: %d", reason);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	req = cmd->umac_cmd;
+	if (!req)
+		return QDF_STATUS_E_INVAL;
+
+	vdev = cmd->vdev;
+	switch (reason) {
+	case WLAN_SER_CB_ACTIVATE_CMD:
+		status = mlo_link_set_active(psoc, &req->param);
+		break;
+	case WLAN_SER_CB_CANCEL_CMD:
+	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
+		mlo_err("vdev %d command not execute: %d",
+			wlan_vdev_get_id(vdev), reason);
+		if (req->ctx.set_mlo_link_cb)
+			req->ctx.set_mlo_link_cb(vdev, req->ctx.cb_arg, NULL);
+		break;
+	case WLAN_SER_CB_RELEASE_MEM_CMD:
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLO_MGR_ID);
+		qdf_mem_free(req);
+		break;
+	default:
+		QDF_ASSERT(0);
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
+}
+
+#define MLO_SER_CMD_TIMEOUT_MS 5000
+QDF_STATUS mlo_ser_set_link_req(struct mlo_link_set_active_req *req)
+{
+	struct wlan_serialization_command cmd = {0, };
+	enum wlan_serialization_status ser_cmd_status;
+	QDF_STATUS status;
+	void *umac_cmd;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!req)
+		return QDF_STATUS_E_INVAL;
+
+	vdev = req->ctx.vdev;
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_MLO_MGR_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlo_err("vdev %d unable to get reference",
+			wlan_vdev_get_id(vdev));
+		return status;
+	}
+
+	umac_cmd = qdf_mem_malloc(sizeof(*req));
+	if (!umac_cmd) {
+		status = QDF_STATUS_E_NOMEM;
+		goto out;
+	}
+	qdf_mem_copy(umac_cmd, req, sizeof(*req));
+
+	cmd.cmd_type = WLAN_SER_CMD_SET_MLO_LINK;
+	cmd.cmd_id = 0;
+	cmd.cmd_cb = mlo_ser_set_link_cb;
+	cmd.source = WLAN_UMAC_COMP_MLO_MGR;
+	cmd.is_high_priority = false;
+	cmd.cmd_timeout_duration = MLO_SER_CMD_TIMEOUT_MS;
+	cmd.vdev = vdev;
+	cmd.is_blocking = true;
+	cmd.umac_cmd = umac_cmd;
+
+	ser_cmd_status = wlan_serialization_request(&cmd);
+	switch (ser_cmd_status) {
+	case WLAN_SER_CMD_PENDING:
+		/* command moved to pending list.Do nothing */
+		break;
+	case WLAN_SER_CMD_ACTIVE:
+		/* command moved to active list. Do nothing */
+		break;
+	default:
+		mlo_err("vdev %d ser cmd status %d",
+			wlan_vdev_get_id(vdev), ser_cmd_status);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+out:
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return status;
+
+	if (umac_cmd)
+		qdf_mem_free(umac_cmd);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLO_MGR_ID);
+
+	return status;
 }

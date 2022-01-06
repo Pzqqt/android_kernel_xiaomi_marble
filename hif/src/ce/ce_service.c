@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +29,7 @@
 #include "hif_debug.h"
 #include "hif_napi.h"
 #include "qdf_module.h"
+#include <qdf_tracepoint.h>
 
 #ifdef IPA_OFFLOAD
 #ifdef QCA_WIFI_3_0
@@ -1149,6 +1151,28 @@ more_watermarks:
 	qdf_atomic_set(&CE_state->rx_pending, 0);
 }
 
+#ifdef WLAN_TRACEPOINTS
+/**
+ * ce_trace_tasklet_sched_latency() - Trace ce tasklet scheduling
+ *  latency
+ * @ce_state: CE context
+ *
+ * Return: None
+ */
+static inline
+void ce_trace_tasklet_sched_latency(struct CE_state *ce_state)
+{
+	qdf_trace_dp_ce_tasklet_sched_latency(ce_state->id,
+					      ce_state->ce_service_start_time -
+					      ce_state->ce_tasklet_sched_time);
+}
+#else
+static inline
+void ce_trace_tasklet_sched_latency(struct CE_state *ce_state)
+{
+}
+#endif
+
 /*
  * Guts of interrupt handler for per-engine interrupts on a particular CE.
  *
@@ -1177,6 +1201,8 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 		CE_state->ce_service_start_time +
 		hif_get_ce_service_max_yield_time(
 			(struct hif_opaque_softc *)scn);
+
+	ce_trace_tasklet_sched_latency(CE_state);
 
 	qdf_spin_lock(&CE_state->ce_index_lock);
 

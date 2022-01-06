@@ -3699,6 +3699,8 @@ static inline QDF_STATUS populate_tx_send_params(uint8_t *bufp,
 					  param.cfr_enable);
 	WMI_TX_SEND_PARAM_BEAMFORM_SET(tx_param->tx_param_dword1,
 				       param.en_beamforming);
+	WMI_TX_SEND_PARAM_RETRY_LIMIT_EXT_SET(tx_param->tx_param_dword1,
+					      param.retry_limit_ext);
 
 	return status;
 }
@@ -12434,6 +12436,13 @@ static void extract_mac_phy_cap_ehtcaps(
 		     &mac_phy_caps->eht_cap_phy_info_5G,
 		     sizeof(param->eht_cap_phy_info_5G));
 
+	qdf_mem_copy(&param->eht_supp_mcs_ext_2G,
+		     &mac_phy_caps->eht_supp_mcs_ext_2G,
+		     sizeof(param->eht_supp_mcs_ext_2G));
+	qdf_mem_copy(&param->eht_supp_mcs_ext_5G,
+		     &mac_phy_caps->eht_supp_mcs_ext_5G,
+		     sizeof(param->eht_supp_mcs_ext_5G));
+
 	wmi_debug("EHT mac caps: mac cap_info_2G %x, mac cap_info_5G %x, supp_mcs_2G %x, supp_mcs_5G %x, info_internal %x",
 		  mac_phy_caps->eht_cap_mac_info_2G[0],
 		  mac_phy_caps->eht_cap_mac_info_5G[0],
@@ -12442,15 +12451,25 @@ static void extract_mac_phy_cap_ehtcaps(
 
 	wmi_nofl_debug("EHT phy caps: ");
 
-	wmi_nofl_debug("2G: ");
+	wmi_nofl_debug("2G:");
 	for (i = 0; i < PSOC_HOST_MAX_EHT_PHY_SIZE; i++) {
 		wmi_nofl_debug("index %d value %d",
 			       i, param->eht_cap_phy_info_2G[i]);
 	}
-	wmi_nofl_debug("5G: ");
+	wmi_nofl_debug("5G:");
 	for (i = 0; i < PSOC_HOST_MAX_EHT_PHY_SIZE; i++) {
 		wmi_nofl_debug("index %d value %d",
 			       i, param->eht_cap_phy_info_5G[i]);
+	}
+	wmi_nofl_debug("2G MCS ext Map:");
+	for (i = 0; i < PSOC_HOST_EHT_MCS_NSS_MAP_2G_SIZE; i++) {
+		wmi_nofl_debug("index %d value %d",
+			       i, param->eht_supp_mcs_ext_2G[i]);
+	}
+	wmi_nofl_debug("5G MCS ext Map:");
+	for (i = 0; i < PSOC_HOST_EHT_MCS_NSS_MAP_5G_SIZE; i++) {
+		wmi_nofl_debug("index %d value %d",
+			       i, param->eht_supp_mcs_ext_5G[i]);
 	}
 }
 #else
@@ -16753,6 +16772,51 @@ send_set_halphy_cal_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * send_set_mac_address_cmd_tlv() - send set MAC address command to fw
+ * @wmi: wmi handle
+ * @params: set MAC address command params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+send_set_mac_address_cmd_tlv(wmi_unified_t wmi,
+			     struct set_mac_addr_params *params)
+{
+	wmi_vdev_update_mac_addr_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_vdev_update_mac_addr_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(
+		&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_update_mac_addr_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_update_mac_addr_cmd_fixed_param));
+	cmd->vdev_id = params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->mac_addr.bytes, &cmd->vdev_macaddr);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->mld_addr.bytes, &cmd->mld_macaddr);
+
+	wmi_debug("vdev %d mac_addr " QDF_MAC_ADDR_FMT " mld_addr "
+		  QDF_MAC_ADDR_FMT, cmd->vdev_id,
+		  QDF_MAC_ADDR_REF(params->mac_addr.bytes),
+		  QDF_MAC_ADDR_REF(params->mld_addr.bytes));
+	wmi_mtrace(WMI_VDEV_UPDATE_MAC_ADDR_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi, buf, len,
+				 WMI_VDEV_UPDATE_MAC_ADDR_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -17161,9 +17225,14 @@ struct wmi_ops tlv_ops =  {
 	.send_mgmt_rx_reo_filter_config_cmd =
 		send_mgmt_rx_reo_filter_config_cmd_tlv,
 #endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	.send_roam_set_param_cmd = send_roam_set_param_cmd_tlv,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	.send_set_mac_address_cmd = send_set_mac_address_cmd_tlv,
+#endif
 };
 
 /**
@@ -17602,6 +17671,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #endif
 	event_ids[wmi_roam_frame_event_id] =
 				WMI_ROAM_FRAME_EVENTID;
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	event_ids[wmi_vdev_update_mac_addr_conf_eventid] =
+			WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -18041,6 +18114,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_spectral_session_info_support] =
 			WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_mu_snif] = WMI_SERVICE_MU_SNIF;
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	wmi_service[wmi_service_dynamic_update_vdev_macaddr_support] =
+			WMI_SERVICE_DYNAMIC_VDEV_MAC_ADDR_UPDATE_SUPPORT;
+#endif
 }
 
 /**

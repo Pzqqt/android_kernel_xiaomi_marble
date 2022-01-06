@@ -931,6 +931,8 @@ static bool scm_is_bss_allowed_for_country(struct wlan_objmgr_psoc *psoc,
 
 	if (wlan_reg_is_6ghz_chan_freq(scan_entry->channel.chan_freq)) {
 		cc_ie = util_scan_entry_country(scan_entry);
+		if (!cc_ie)
+			return false;
 		wlan_reg_read_current_country(psoc, programmed_country);
 		if (cc_ie && qdf_mem_cmp(cc_ie->cc, programmed_country,
 					 REG_ALPHA2_LEN)) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,6 +76,10 @@
 #endif
 
 #include "wlan_mgmt_txrx_rx_reo_tgt_api.h"
+
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_cmn.h"
+#endif
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
@@ -769,6 +773,29 @@ wlan_lmac_if_umac_ftm_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_lmac_if_mlo_mgr_rx_ops_register() - API to register mlo mgr Rx Ops
+ * @rx_ops: pointer to lmac rx ops
+ *
+ * This API will be used to register function pointers for FW events
+ *
+ * Return: void
+ */
+static void
+wlan_lmac_if_mlo_mgr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	/* register handler for received mlo related events */
+	rx_ops->mlo_rx_ops.process_link_set_active_resp =
+		mlo_process_link_set_active_resp;
+}
+#else
+static void
+wlan_lmac_if_mlo_mgr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -831,6 +858,8 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* MLME rx_ops */
 	tgt_vdev_mgr_rx_ops_register(rx_ops);
+
+	wlan_lmac_if_mlo_mgr_rx_ops_register(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

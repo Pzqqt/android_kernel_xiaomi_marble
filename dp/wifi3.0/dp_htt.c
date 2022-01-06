@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2174,27 +2175,27 @@ static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_SUCCESS_PKT_CNT);
 			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
-			tx_comp.num += pkt_count;
+			tx_comp.num = pkt_count;
 
 			/* Extract tx success packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_SUCCESS_BYTE_CNT);
 			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
-			tx_comp.bytes += byte_count;
+			tx_comp.bytes = byte_count;
 
 			/* Extract tx retry packet count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_RETRY_PKT_CNT);
 			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.num += pkt_count;
-			tx_failed.num += pkt_count;
+			tx_failed.num = pkt_count;
 
 			/* Extract tx retry packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_RETRY_BYTE_CNT);
-			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.bytes += byte_count;
-			tx_failed.bytes += byte_count;
+			tx_failed.bytes = byte_count;
 
 			/* Extract tx drop packet count from buffer */
 			tag_buf = tlv_buf_temp +
@@ -2206,7 +2207,7 @@ static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
 			/* Extract tx drop packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_DROP_BYTE_CNT);
-			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.bytes += byte_count;
 			tx_failed.bytes += byte_count;
 
@@ -2220,7 +2221,7 @@ static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
 			/* Extract tx age-out packet byte count from buffer */
 			tag_buf = tlv_buf_temp +
 				HTT_VDEV_STATS_GET_INDEX(TX_AGE_OUT_BYTE_CNT);
-			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
 			tx_comp.bytes += byte_count;
 			tx_failed.bytes += byte_count;
 
@@ -2379,6 +2380,7 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 	int mac_id;
 	int lmac_id;
 	uint32_t j = 0;
+	struct dp_soc *soc = pdev->soc;
 	struct dp_soc_srngs_state * soc_srngs_state = NULL;
 	struct dp_soc_srngs_state *drop_srngs_state = NULL;
 	QDF_STATUS status;
@@ -2543,7 +2545,7 @@ static void dp_queue_ring_stats(struct dp_pdev *pdev)
 			qdf_assert_always(++j < DP_MAX_SRNGS);
 	}
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++)	{
+	for (i = 0; i < soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev; i++) {
 		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc,
 						     i, pdev->pdev_id);
 

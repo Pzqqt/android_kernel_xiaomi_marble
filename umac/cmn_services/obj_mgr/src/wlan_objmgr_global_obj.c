@@ -866,6 +866,30 @@ QDF_STATUS wlan_objmgr_iterate_psoc_list(
 
 qdf_export_symbol(wlan_objmgr_iterate_psoc_list);
 
+struct wlan_objmgr_psoc
+*wlan_objmgr_get_psoc_by_id(uint8_t psoc_id, wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	if (psoc_id >= WLAN_OBJMGR_MAX_DEVICES) {
+		obj_mgr_err(" PSOC id[%d] is invalid", psoc_id);
+		return NULL;
+	}
+
+	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
+
+	psoc = g_umac_glb_obj->psoc[psoc_id];
+	if (psoc) {
+		if (QDF_IS_STATUS_ERROR(wlan_objmgr_psoc_try_get_ref(psoc,
+								     dbg_id)))
+			psoc = NULL;
+	}
+
+	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
+
+	return psoc;
+}
+
 #ifdef WLAN_FEATURE_11BE_MLO
 struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void)
 {

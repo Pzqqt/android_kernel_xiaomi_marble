@@ -101,6 +101,10 @@ qdf-objs += \
 $(HOST_CMN_CONVG_LOGGING)/src/wlan_logging_sock_svc.o
 endif
 
+ifeq ($(WLAN_TRACEPOINTS),1)
+qdf-objs += linux/src/qdf_tracepoint.o
+endif
+
 ifeq ($(WLAN_DEBUGFS),1)
 qdf-objs += linux/src/qdf_debugfs.o
 endif

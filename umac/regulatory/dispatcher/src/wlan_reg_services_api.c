@@ -90,10 +90,12 @@ QDF_STATUS
 wlan_reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *ap_ctry, uint8_t *sta_ctry,
 				    enum reg_6g_ap_type *pwr_type_6g,
-				    bool *ctry_code_match)
+				    bool *ctry_code_match,
+				    enum reg_6g_ap_type ap_pwr_type)
 {
 	return reg_get_6g_power_type_for_ctry(psoc, ap_ctry, sta_ctry,
-					      pwr_type_6g, ctry_code_match);
+					      pwr_type_6g, ctry_code_match,
+					      ap_pwr_type);
 }
 #endif
 
@@ -132,15 +134,6 @@ QDF_STATUS wlan_reg_get_secondary_current_chan_list(
 #endif
 
 #if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
-QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
-					       enum reg_6g_ap_type ap_pwr_type,
-					       struct regulatory_channel *chan_list)
-{
-	return  reg_get_6g_ap_master_chan_list(pdev, ap_pwr_type, chan_list);
-}
-
-qdf_export_symbol(wlan_reg_get_6g_ap_master_chan_list);
-
 QDF_STATUS wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 					 struct regulatory_channel *chan_list)
 {
@@ -398,6 +391,16 @@ regulatory_assign_unregister_master_ext_handler(struct wlan_objmgr_psoc *psoc,
 	if (tx_ops->unregister_master_ext_handler)
 		tx_ops->unregister_master_ext_handler(psoc, NULL);
 }
+
+QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(
+					struct wlan_objmgr_pdev *pdev,
+					enum reg_6g_ap_type ap_pwr_type,
+					struct regulatory_channel *chan_list)
+{
+	return  reg_get_6g_ap_master_chan_list(pdev, ap_pwr_type, chan_list);
+}
+
+qdf_export_symbol(wlan_reg_get_6g_ap_master_chan_list);
 
 #ifdef CONFIG_AFC_SUPPORT
 static void regulatory_assign_register_afc_event_handler(

@@ -2853,7 +2853,7 @@ static bool dp_get_peer_vdev_roaming_in_progress(struct dp_peer *peer)
 static inline
 bool dp_rx_tid_setup_allow(struct dp_peer *peer)
 {
-	if (IS_MLO_DP_LINK_PEER(peer) && !peer->assoc_link)
+	if (IS_MLO_DP_LINK_PEER(peer) && !peer->first_link)
 		return false;
 
 	return true;
@@ -3712,7 +3712,7 @@ static void dp_peer_rx_tids_init(struct dp_peer *peer)
 	/* if not first assoc link peer or MLD peer,
 	 * not to initialize rx_tids again.
 	 */
-	if ((IS_MLO_DP_LINK_PEER(peer) && !peer->assoc_link) ||
+	if ((IS_MLO_DP_LINK_PEER(peer) && !peer->first_link) ||
 	    IS_MLO_DP_MLD_PEER(peer))
 		return;
 
@@ -4745,7 +4745,7 @@ QDF_STATUS dp_register_peer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	if (!IS_MLO_DP_LINK_PEER(peer))
 		dp_rx_flush_rx_cached(peer, false);
 
-	if (IS_MLO_DP_LINK_PEER(peer) && peer->assoc_link) {
+	if (IS_MLO_DP_LINK_PEER(peer) && peer->first_link) {
 		dp_peer_info("register for mld peer" QDF_MAC_ADDR_FMT,
 			     QDF_MAC_ADDR_REF(peer->mld_peer->mac_addr.raw));
 		qdf_spin_lock_bh(&peer->mld_peer->peer_info_lock);
@@ -4779,7 +4779,7 @@ QDF_STATUS dp_peer_state_update(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
 		     QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 		     peer->state);
 
-	if (IS_MLO_DP_LINK_PEER(peer) && peer->assoc_link) {
+	if (IS_MLO_DP_LINK_PEER(peer) && peer->first_link) {
 		peer->mld_peer->state = peer->state;
 		peer->mld_peer->authorize = peer->authorize;
 		dp_peer_info("mld peer" QDF_MAC_ADDR_FMT "state %d",

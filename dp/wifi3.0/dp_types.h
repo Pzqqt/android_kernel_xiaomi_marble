@@ -74,10 +74,7 @@
 #define DP_VDEV_ALL 0xff
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
-#define MAX_PDEV_CNT 1
 #define WLAN_DP_RESET_MON_BUF_RING_FILTER
-#else
-#define MAX_PDEV_CNT 3
 #endif
 
 /* Max no. of VDEV per PSOC */
@@ -163,9 +160,6 @@
 #ifdef WLAN_VENDOR_SPECIFIC_BAR_UPDATE
 #define DP_SKIP_BAR_UPDATE_TIMEOUT 5000
 #endif
-
-#define DP_MAX_VDEV_STATS_ID        CDP_MAX_VDEV_STATS_ID
-#define DP_INVALID_VDEV_STATS_ID    CDP_INVALID_VDEV_STATS_ID
 
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
@@ -3341,7 +3335,7 @@ struct dp_peer {
 		hw_txrx_stats_en:1; /*Indicate HW offload vdev stats */
 
 #ifdef WLAN_FEATURE_11BE_MLO
-	uint8_t assoc_link:1, /* first assoc link peer for MLO */
+	uint8_t first_link:1, /* first link peer for MLO */
 		primary_link:1; /* primary link for MLO */
 #endif
 

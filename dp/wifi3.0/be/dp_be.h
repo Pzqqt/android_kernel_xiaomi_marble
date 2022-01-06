@@ -187,7 +187,11 @@ struct dp_tx_bank_profile {
 struct dp_soc_be {
 	struct dp_soc soc;
 	uint8_t num_bank_profiles;
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+	qdf_mutex_t tx_bank_lock;
+#else
 	qdf_spinlock_t tx_bank_lock;
+#endif
 	struct dp_tx_bank_profile *bank_profiles;
 	struct dp_spt_page_desc *page_desc_base;
 	uint32_t cc_cmem_base;

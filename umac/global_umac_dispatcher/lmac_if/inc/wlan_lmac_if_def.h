@@ -83,6 +83,10 @@ struct dbr_module_config;
 #include <wlan_dcs_tgt_api.h>
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_public_structs.h"
+#endif
+
 #ifdef QCA_SUPPORT_CP_STATS
 #include <wlan_cp_stats_public_structs.h>
 
@@ -1255,6 +1259,31 @@ struct wlan_lmac_if_son_rx_ops {
 				  void *wri);
 };
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * struct wlan_lmac_if_mlo_tx_ops - south bound tx function pointers for mlo
+ * @register_events: function to register event handlers with FW
+ * @unregister_events: function to de-register event handlers with FW
+ * @link_set_active: function to send mlo link set active command to FW
+ */
+struct wlan_lmac_if_mlo_tx_ops {
+	QDF_STATUS (*register_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*unregister_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*link_set_active)(struct wlan_objmgr_psoc *psoc,
+		struct mlo_link_set_active_param *param);
+};
+
+/**
+ * struct wlan_lmac_if_mlo_rx_ops - defines southbound rx callbacks for mlo
+ * @process_link_set_active_resp: function pointer to rx FW events
+ */
+struct wlan_lmac_if_mlo_rx_ops {
+	QDF_STATUS
+	(*process_link_set_active_resp)(struct wlan_objmgr_psoc *psoc,
+		struct mlo_link_set_active_resp *event);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -1345,6 +1374,10 @@ struct wlan_lmac_if_tx_ops {
 
 #ifdef WLAN_FEATURE_GPIO_CFG
 	struct wlan_lmac_if_gpio_tx_ops gpio_ops;
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct wlan_lmac_if_mlo_tx_ops mlo_ops;
 #endif
 };
 
@@ -2072,6 +2105,9 @@ struct wlan_lmac_if_rx_ops {
 
 	struct wlan_lmac_if_ftm_rx_ops ftm_rx_ops;
 	struct wlan_lmac_if_son_rx_ops son_rx_ops;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct wlan_lmac_if_mlo_rx_ops mlo_rx_ops;
+#endif
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.

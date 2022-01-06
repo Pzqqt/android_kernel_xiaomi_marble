@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -344,4 +345,15 @@ QDF_STATUS cm_sm_deliver_event_sync(struct cnx_mgr *cm_ctx,
 QDF_STATUS  cm_sm_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_cm_sm_evt event,
 				uint16_t data_len, void *data);
+
+/**
+ * cm_fill_vdev_crypto_params() - Update the vdev crypto params
+ * from the connect req structure
+ * @cm_ctx: connection manager SM ctx
+ * @req: connect request structure
+ *
+ * Return: void
+ */
+void cm_fill_vdev_crypto_params(struct cnx_mgr *cm_ctx,
+				struct wlan_cm_connect_req *req);
 #endif /* __WLAN_CM_SM_H__ */

@@ -343,6 +343,19 @@ void wlan_mlo_peer_get_links_info(struct wlan_objmgr_peer *peer,
 				  struct mlo_tgt_partner_info *ml_links);
 
 /**
+ * wlan_mlo_peer_get_partner_links_info() - get MLO peer partner links info
+ * @peer: Link peer
+ * @ml_links: structure to be filled with partner link info
+ *
+ * This function retrieves partner link info of link peer such as link id,
+ * mac address
+ *
+ * Return: void
+ */
+void wlan_mlo_peer_get_partner_links_info(struct wlan_objmgr_peer *peer,
+					  struct mlo_partner_info *ml_links);
+
+/**
  ** APIs to operations on ML peer object
  */
 typedef QDF_STATUS (*wlan_mlo_op_handler)(struct wlan_mlo_dev_context *ml_dev,

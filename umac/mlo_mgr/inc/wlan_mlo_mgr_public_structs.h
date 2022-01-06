@@ -172,7 +172,8 @@ struct wlan_mlo_key_mgmt {
  * @wlan_connect_req_links: list of vdevs selected for connection with the MLAP
  * @wlan_connected_links: list of vdevs associated with this MLO connection
  * @connect req: connect params
- * @orig_conn_req: original connect req
+ * @copied_conn_req: original connect req
+ * @copied_conn_req_lock: lock for the original connect request
  * @assoc_rsp: Raw assoc response frame
  */
 struct wlan_mlo_sta {
@@ -180,7 +181,12 @@ struct wlan_mlo_sta {
 	qdf_bitmap(wlan_connected_links, WLAN_UMAC_MLO_MAX_VDEVS);
 	struct wlan_mlo_key_mgmt key_mgmt[WLAN_UMAC_MLO_MAX_VDEVS - 1];
 	struct wlan_cm_connect_req *connect_req;
-	struct wlan_cm_connect_req *orig_conn_req;
+	struct wlan_cm_connect_req *copied_conn_req;
+#ifdef WLAN_MLO_USE_SPINLOCK
+	qdf_spinlock_t copied_conn_req_lock;
+#else
+	qdf_mutex_t copied_conn_req_lock;
+#endif
 	struct element_info assoc_rsp;
 };
 
@@ -365,6 +371,7 @@ struct mlo_tgt_partner_info {
  * @mlo_mlme_ext_assoc_resp: Callback to initiate assoc resp
  * @mlo_mlme_get_link_assoc_req: Calback to get link assoc req buffer
  * @mlo_mlme_ext_deauth: Callback to initiate deauth
+ * @mlo_mlme_ext_clone_security_param: Callback to clone mlo security params
  */
 struct mlo_mlme_ext_ops {
 	QDF_STATUS (*mlo_mlme_ext_validate_conn_req)(
@@ -382,6 +389,123 @@ struct mlo_mlme_ext_ops {
 	qdf_nbuf_t (*mlo_mlme_get_link_assoc_req)(struct wlan_objmgr_peer *peer,
 						  uint8_t link_ix);
 	void (*mlo_mlme_ext_deauth)(struct wlan_objmgr_peer *peer);
+	QDF_STATUS (*mlo_mlme_ext_clone_security_param)(
+		    struct vdev_mlme_obj *vdev_mlme,
+		    struct wlan_cm_connect_req *req);
 };
 
+/* maximum size of vdev bitmap array for MLO link set active command */
+#define MLO_VDEV_BITMAP_SZ 2
+
+/* maximum size of link number param array for MLO link set active command */
+#define MLO_LINK_NUM_SZ 2
+
+/**
+ * enum mlo_link_force_mode: MLO link force modes
+ * @MLO_LINK_FORCE_MODE_ACTIVE:
+ *  Force specific links active
+ * @MLO_LINK_FORCE_MODE_INACTIVE:
+ *  Force specific links inactive
+ * @MLO_LINK_FORCE_MODE_ACTIVE_NUM:
+ *  Force active a number of links, firmware to decide which links to inactive
+ * @MLO_LINK_FORCE_MODE_INACTIVE_NUM:
+ *  Force inactive a number of links, firmware to decide which links to inactive
+ * @MLO_LINK_FORCE_MODE_NO_FORCE:
+ *  Cancel the force operation of specific links, allow firmware to decide
+ */
+enum mlo_link_force_mode {
+	MLO_LINK_FORCE_MODE_ACTIVE       = 1,
+	MLO_LINK_FORCE_MODE_INACTIVE     = 2,
+	MLO_LINK_FORCE_MODE_ACTIVE_NUM   = 3,
+	MLO_LINK_FORCE_MODE_INACTIVE_NUM = 4,
+	MLO_LINK_FORCE_MODE_NO_FORCE     = 5,
+};
+
+/**
+ * enum mlo_link_force_reason: MLO link force reasons
+ * @MLO_LINK_FORCE_REASON_CONNECT:
+ *  Set force specific links because of new connection
+ * @MLO_LINK_FORCE_REASON_DISCONNECT:
+ *  Set force specific links because of new dis-connection
+ */
+enum mlo_link_force_reason {
+	MLO_LINK_FORCE_REASON_CONNECT    = 1,
+	MLO_LINK_FORCE_REASON_DISCONNECT = 2,
+};
+
+/**
+ * struct mlo_link_set_active_resp: MLO link set active response structure
+ * @status: Return status, 0 for success, non-zero otherwise
+ * @active_sz: size of current active vdev bitmap array
+ * @active: current active vdev bitmap array
+ * @inactive_sz: size of current inactive vdev bitmap array
+ * @inactive: current inactive vdev bitmap array
+ */
+struct mlo_link_set_active_resp {
+	uint32_t status;
+	uint32_t active_sz;
+	uint32_t active[MLO_VDEV_BITMAP_SZ];
+	uint32_t inactive_sz;
+	uint32_t inactive[MLO_VDEV_BITMAP_SZ];
+};
+
+/**
+ * struct mlo_link_num_param: MLO link set active number params
+ * @num_of_link: number of links to active/inactive
+ * @vdev_type: type of vdev
+ * @vdev_subtype: subtype of vdev
+ * @home_freq: home frequency of the link
+ */
+struct mlo_link_num_param {
+	uint32_t num_of_link;
+	uint32_t vdev_type;
+	uint32_t vdev_subtype;
+	uint32_t home_freq;
+};
+
+/**
+ * struct mlo_link_set_active_param: MLO link set active params
+ * @force_mode: operation to take (enum mlo_link_force_mode)
+ * @reason: reason for the operation (enum mlo_link_force_reason)
+ * @num_link_entry: number of the valid entries for link_num
+ * @num_vdev_bitmap: number of the valid entries for vdev_bitmap
+ * @link_num: link number param array
+ *  It's present only when force_mode is MLO_LINK_FORCE_MODE_ACTIVE_NUM or
+ *  MLO_LINK_FORCE_MODE_INACTIVE_NUM
+ * @vdev_bitmap: active/inactive vdev bitmap array
+ *  It will be present when force_mode is MLO_LINK_FORCE_MODE_ACTIVE,
+ *  MLO_LINK_FORCE_MODE_INACTIVE, MLO_LINK_FORCE_MODE_NO_FORCE,
+ *  MLO_LINK_FORCE_MODE_ACTIVE_NUM or MLO_LINK_FORCE_MODE_INACTIVE_NUM
+ */
+struct mlo_link_set_active_param {
+	uint32_t force_mode;
+	uint32_t reason;
+	uint32_t num_link_entry;
+	uint32_t num_vdev_bitmap;
+	struct mlo_link_num_param link_num[MLO_LINK_NUM_SZ];
+	uint32_t vdev_bitmap[MLO_VDEV_BITMAP_SZ];
+};
+
+/*
+ * struct mlo_link_set_active_ctx - Context for MLO link set active request
+ * @vdev: pointer to vdev on which the request issued
+ * @cb: callback function for MLO link set active request
+ * @cb_arg: callback context
+ */
+struct mlo_link_set_active_ctx {
+	struct wlan_objmgr_vdev *vdev;
+	void (*set_mlo_link_cb)(struct wlan_objmgr_vdev *vdev, void *arg,
+				struct mlo_link_set_active_resp *evt);
+	void *cb_arg;
+};
+
+/*
+ * struct mlo_link_set_active_req - MLO link set active request
+ * @ctx: context for MLO link set active request
+ * @param: MLO link set active params
+ */
+struct mlo_link_set_active_req {
+	struct mlo_link_set_active_ctx ctx;
+	struct mlo_link_set_active_param param;
+};
 #endif

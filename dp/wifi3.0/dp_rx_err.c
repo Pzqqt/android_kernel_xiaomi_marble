@@ -2229,7 +2229,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		if (qdf_unlikely((msdu_list.rbm[0] !=
 					dp_rx_get_rx_bm_id(soc)) &&
 				 (msdu_list.rbm[0] !=
-				  HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST) &&
+				  soc->idle_link_bm_id) &&
 				 (msdu_list.rbm[0] !=
 					dp_rx_get_defrag_bm_id(soc)))) {
 			/* TODO */

@@ -229,6 +229,7 @@ void dfs_start_cac_timer(struct wlan_dfs *dfs)
 
 	dfs->dfs_cac_started_chan = *chan;
 
+	dfs_deliver_cac_state_events(dfs);
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		  "chan = %d cfreq2 = %d timeout = %d sec, curr_time = %d sec",
 		  chan->dfs_ch_ieee, chan->dfs_ch_vhtop_ch_freq_seg2,

@@ -1516,7 +1516,11 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 							reo_status_ring_mask_msi[i];
 		if (is_monitor_mode) {
 			wlan_cfg_ctx->int_rx_ring_mask[i] = 0;
-			wlan_cfg_ctx->int_rxdma2host_ring_mask[i] = 0;
+			if (interrupt_mode == DP_INTR_POLL)
+				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] = 0;
+			else
+				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
+						rxdma2host_ring_mask_msi[i];
 		} else {
 			wlan_cfg_ctx->int_rx_ring_mask[i] =
 							rx_ring_mask_msi[i];
@@ -2002,6 +2006,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_cfg_ctx->pkt_capture_mode = cfg_get(psoc, CFG_PKT_CAPTURE_MODE) &
 						 PKT_CAPTURE_MODE_DATA_ONLY;
 #endif
+	wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev = NUM_RXDMA_RINGS_PER_PDEV;
 
 	return wlan_cfg_ctx;
 }
@@ -3141,6 +3146,13 @@ int wlan_cfg_get_vdev_stats_hw_offload_timer(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->vdev_stats_hw_offload_timer;
 }
+
+void
+wlan_cfg_set_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  bool val)
+{
+	cfg->vdev_stats_hw_offload_config = val;
+}
 #else
 bool
 wlan_cfg_get_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg)
@@ -3152,4 +3164,9 @@ int wlan_cfg_get_vdev_stats_hw_offload_timer(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return 0;
 }
+
+void
+wlan_cfg_set_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  bool val)
+{}
 #endif

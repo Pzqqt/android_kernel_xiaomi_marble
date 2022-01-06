@@ -480,7 +480,13 @@ QDF_STATUS cm_notify_disconnect_complete(struct cnx_mgr *cm_ctx,
 	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
 	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
-	cm_clear_vdev_mlo_cap(cm_ctx->vdev);
+
+	/* Clear MLO cap only when it is the last disconnect req
+	 * as osif would not have informed userspace for other disconnect
+	 * req because of cm_id mismatch
+	 */
+	if (cm_ctx->disconnect_count == 1)
+		cm_clear_vdev_mlo_cap(cm_ctx->vdev);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -530,11 +536,15 @@ cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
 	/*
 	 * South bound and peer disconnect requests are meant for only in
 	 * connected state, so if the state is connecting a new connect has
-	 * been received, hence skip the non-osif disconnect request.
+	 * been received, hence skip the non-osif disconnect request. Also allow
+	 * MLO link vdev disconnect in connecting state, as this can be
+	 * initiated due to disconnect on assoc vdev, which may be in connected
+	 * state.
 	 */
 	if (cur_state == WLAN_CM_S_CONNECTING &&
 	    (cm_req->req.source != CM_OSIF_DISCONNECT &&
-	    cm_req->req.source != CM_OSIF_CFG_DISCONNECT)) {
+	    cm_req->req.source != CM_OSIF_CFG_DISCONNECT &&
+	    cm_req->req.source != CM_MLO_LINK_VDEV_DISCONNECT)) {
 		mlme_info("Vdev %d ignore disconnect req from source %d in state %d",
 			  wlan_vdev_get_id(cm_ctx->vdev), cm_req->req.source,
 			  cm_state_substate);

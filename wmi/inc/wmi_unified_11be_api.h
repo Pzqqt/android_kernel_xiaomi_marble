@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +24,6 @@
 
 #include <wmi_unified_api.h>
 #include <wmi_unified_priv.h>
-#include <wmi_unified_11be_param.h>
 
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
@@ -40,7 +40,7 @@
 QDF_STATUS
 wmi_extract_mlo_link_set_active_resp(wmi_unified_t wmi,
 				     void *evt_buf,
-				     struct wmi_mlo_link_set_active_resp *evt);
+				     struct mlo_link_set_active_resp *evt);
 
 /**
  * wmi_send_mlo_link_set_active_cmd() - send mlo link set active command
@@ -51,6 +51,6 @@ wmi_extract_mlo_link_set_active_resp(wmi_unified_t wmi,
  */
 QDF_STATUS
 wmi_send_mlo_link_set_active_cmd(wmi_unified_t wmi_handle,
-				 struct wmi_mlo_link_set_active_param *param);
+				 struct mlo_link_set_active_param *param);
 #endif /*WLAN_FEATURE_11BE_MLO*/
 #endif /*_WMI_UNIFIED_11BE_API_H_*/

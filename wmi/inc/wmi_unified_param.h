@@ -1325,6 +1325,10 @@ struct seg_hdr_info {
  *              0:disable 1:enable
  * @en_beamforming: flag to enable tx beamforming
  *              0:disable 1:enable
+ * @retry_limit_ext: 3 bits of extended retry limit.
+ *              Combined with 4 bits "retry_limit"
+ *              to create 7 bits hw retry count.
+ *              Maximum 127 retries for specific frames.
  */
 struct tx_send_params {
 	uint32_t pwr:8,
@@ -1337,7 +1341,8 @@ struct tx_send_params {
 		 frame_type:1,
 		 cfr_enable:1,
 		 en_beamforming:1,
-		 reserved:9;
+		 retry_limit_ext:3,
+		 reserved:6;
 };
 
 /**
@@ -4722,6 +4727,9 @@ typedef enum {
 #endif
 	wmi_pdev_fips_extend_event_id,
 	wmi_roam_frame_event_id,
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	wmi_vdev_update_mac_addr_conf_eventid,
+#endif
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5336,6 +5344,9 @@ typedef enum {
 	wmi_service_phy_dma_byte_swap_support,
 	wmi_service_spectral_session_info_support,
 	wmi_service_mu_snif,
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	wmi_service_dynamic_update_vdev_macaddr_support,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -8298,6 +8309,20 @@ struct set_mec_timer_params {
 	uint32_t pdev_id;
 	uint32_t vdev_id;
 	uint32_t mec_aging_timer_threshold;
+};
+#endif
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * struct set_mac_addr_params - Set MAC address command parameter
+ * @vdev_id: vdev id
+ * @mac_addr: VDEV MAC address
+ * @mmld_addr: MLD address of the vdev
+ */
+struct set_mac_addr_params {
+	uint8_t vdev_id;
+	struct qdf_mac_addr mac_addr;
+	struct qdf_mac_addr mld_addr;
 };
 #endif
 
