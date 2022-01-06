@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2022 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -8026,6 +8026,9 @@ typedef enum {
      *  16-32| maximum probe time for alternate NSS
      */
     WMI_PDEV_PARAM_MIN_MAX_NSS_PROBE_INTERVAL,
+
+    /* Param to enable/disable probing on all BW */
+    WMI_PDEV_PARAM_EN_PROBE_ALL_BW,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)

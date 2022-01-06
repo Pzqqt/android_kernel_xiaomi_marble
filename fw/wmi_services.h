@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2022 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -568,6 +568,7 @@ typedef  enum  {
     WMI_SERVICE_SPECTRAL_SESSION_INFO_SUPPORT = 316, /* Information corresponding to each Spectral scan session will be sent by the FW before the reports corresponding to that session are sent */
     WMI_SERVICE_PDEV_RATE_CONFIG_SUPPORT = 317, /* Support rate configurations per PDEV */
     MI_SERVICE_MLO_STA_NAN_NDI_SUPPORT = 318, /* FW support for NAN and NDP support with MLO STA */
+    WMI_SERVICE_PROBE_ALL_BW_SUPPORT = 319, /* FW support to probe on higher BW even if the probe fails on lower BW - IOT issue */
 
     WMI_MAX_EXT2_SERVICE
 
