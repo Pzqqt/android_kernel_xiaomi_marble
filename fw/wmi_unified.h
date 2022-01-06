@@ -84,6 +84,7 @@ extern "C" {
 #define MAX_RSSI_VALUES         10 /*Max Rssi values*/
 #define WMI_MAX_CHAINS 8
 #define WMI_MAX_CHAINS_FOR_AOA_RCC 2
+#define WMI_MAX_ADDRESS_SPACE   10
 
 #define MAX_AOA_PHASEDELTA      31  /* 62 gain values */
 
@@ -10609,6 +10610,14 @@ typedef enum _WMI_GET_STATS_TWT_STATUS_T {
     WMI_GET_STATS_TWT_STATUS_INVALID_PARAM,      /* invalid parameters */
 } WMI_GET_STATS_TWT_STATUS_T;
 
+/* Resp type of ODD command operation */
+typedef enum _WMI_ODD_ADDR_READ_OPTION_TYPE_T {
+    WMI_ODD_ADDR_READ_OPTION_TYPE_ADD_ADDR_COMMAND,  /* Resp for the command to add/configure address space */
+    WMI_ODD_ADDR_READ_OPTION_TYPE_DEL_ADDR_COMMAND,  /* Resp for the command to del/reset address space */
+    WMI_ODD_ADDR_READ_OPTION_TYPE_DISP_ADDR_COMMAND, /* Resp for the command to display address space */
+    WMI_ODD_ADDR_READ_OPTION_TYPE_DISP_VAL_COMMAND,  /* Resp for the command to display value at address space */
+} WMI_ODD_ADDR_READ_OPTION_TYPE_T;
+
 typedef struct {
     /** TLV tag and len; tag equals
      *  WMITLV_TAG_STRUC_wmi_ctrl_path_twt_stats_struct */
@@ -10969,6 +10978,31 @@ typedef struct {
     /** Time left for the channel to remain in NOL list (in seconds) */
     A_UINT32 timeleft;
 } wmi_ctrl_path_dfs_channel_stats_struct;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_path_odd_addr_read_struct*/
+    A_UINT32 tlv_header;
+    /* resp_type:
+     * Response type for each sub option:
+     * Add address space, display address, display data, delete address space.
+     * Refer to WMI_ODD_ADDR_READ_OPTION_TYPE_T.
+     */
+    A_UINT32 resp_type;
+    /* User configured Entry id */
+    A_UINT32 entry_id;
+    /* address:
+     * User configured Address Space.
+     * Any unused elements will be filled with 0x0.
+     */
+    A_UINT32 address[WMI_MAX_ADDRESS_SPACE];
+    /* data
+     * Data/Value at the User configured Address Space.
+     * Any unused elements will be filled with 0x0.
+     */
+    A_UINT32 data[WMI_MAX_ADDRESS_SPACE];
+    /* Status of the operation performed: 0 = failure, 1 = success */
+    A_UINT32 is_success;
+} wmi_ctrl_path_odd_addr_read_struct;
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -28576,6 +28610,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_AWGN_STAT         = 7,
     WMI_REQUEST_CTRL_PATH_BTCOEX_STAT       = 8,
     WMI_REQUEST_CTRL_PATH_BMISS_STAT        = 9,
+    WMI_REQUEST_CTRL_PATH_ODD_ADDR_READ     = 10,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
