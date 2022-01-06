@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2022 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3227,13 +3227,19 @@ typedef struct {
     A_UINT32 datarate_refillringipa;
     A_UINT32 datarate_refillringhost;
     /*
-     * Number of times refill rings are back pressured in recent time periods
-     * element 0: in last 0 to 50ms
-     * element 1: 50ms to 100ms
-     * element 2: above 100ms
+     * refillringhost_backpress_hist and refillringipa_backpress_hist are
+     * deprecated, and will be filled with 0x0 by the target.
      */
     A_UINT32 refillringhost_backpress_hist[3];
     A_UINT32 refillringipa_backpress_hist[3];
+    /* reo2sw4ringipa_backpress_hist:
+     * Number of times reo2sw4(IPA_DEST_RING) ring is back-pressured
+     * in recent time periods
+     * element 0: in last 0 to 250ms
+     * element 1: 250ms to 500ms
+     * element 2: above 500ms
+     */
+    A_UINT32 reo2sw4ringipa_backpress_hist[3];
 } htt_rx_fw_ring_stats_tlv_v;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
