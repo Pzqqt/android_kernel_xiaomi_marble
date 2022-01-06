@@ -7543,7 +7543,13 @@ void populate_dot11f_mlo_rnr(struct mac_context *mac_ctx,
 			continue;
 		}
 		link_session = pe_find_session_by_vdev_id(
-			mac_ctx, wlan_vdev_list[link]->vdev_objmgr.vdev_id);
+			mac_ctx, wlan_vdev_get_id(wlan_vdev_list[link]));
+		if (!link_session) {
+			pe_debug("vdev id %d pe session is not created",
+				 wlan_vdev_get_id(wlan_vdev_list[link]));
+			lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
+			continue;
+		}
 		if (!rnr_populated) {
 			populate_dot11f_rnr_tbtt_info_10(mac_ctx, session,
 							 link_session, dot11f);
