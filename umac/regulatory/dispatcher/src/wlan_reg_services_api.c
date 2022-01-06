@@ -1063,13 +1063,18 @@ wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					      qdf_freq_t freq,
 					      enum phy_ch_width bw)
 {
+	struct ch_params params = {0};
+
 	if (bw == CH_WIDTH_320MHZ) {
 		const struct bonded_channel_freq *bonded_chan_ptr_ptr = NULL;
 
 		return reg_get_5g_bonded_channel_for_freq(pdev, freq, bw,
 							  &bonded_chan_ptr_ptr);
 	}
-	return reg_get_5g_bonded_channel_state_for_freq(pdev, freq, bw);
+
+	params.ch_width = bw;
+
+	return reg_get_5g_bonded_channel_state_for_freq(pdev, freq, &params);
 }
 
 qdf_export_symbol(wlan_reg_get_5g_bonded_channel_state_for_freq);
@@ -1081,7 +1086,11 @@ wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					      qdf_freq_t freq,
 					      enum phy_ch_width bw)
 {
-	return reg_get_5g_bonded_channel_state_for_freq(pdev, freq, bw);
+	struct ch_params params = {0};
+
+	params.ch_width = bw;
+
+	return reg_get_5g_bonded_channel_state_for_freq(pdev, freq, &params);
 }
 
 qdf_export_symbol(wlan_reg_get_5g_bonded_channel_state_for_freq);
@@ -1119,6 +1128,18 @@ void wlan_reg_fill_channel_list(struct wlan_objmgr_pdev *pdev,
 {
 	reg_fill_channel_list(pdev, freq, sec_ch_2g_freq, ch_width,
 			      band_center_320, chan_list);
+}
+
+bool wlan_reg_is_punc_bitmap_valid(enum phy_ch_width bw,
+				   uint16_t puncture_bitmap)
+{
+	return reg_is_punc_bitmap_valid(bw, puncture_bitmap);
+}
+
+void wlan_reg_set_create_punc_bitmap(struct ch_params *ch_params,
+				     bool is_create_punc_bitmap)
+{
+	reg_set_create_punc_bitmap(ch_params, is_create_punc_bitmap);
 }
 #endif
 
@@ -1246,8 +1267,12 @@ wlan_reg_get_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 		return reg_get_5g_bonded_channel_for_freq(pdev, freq, bw,
 							  &bonded_chan_ptr_ptr);
 	} else {
+		struct ch_params params = {0};
+
+		params.ch_width = bw;
+
 		return reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
-								bw);
+								&params);
 	}
 }
 
@@ -1260,12 +1285,17 @@ wlan_reg_get_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					   enum phy_ch_width bw,
 					   qdf_freq_t sec_freq)
 {
-	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq)) {
 		return reg_get_2g_bonded_channel_state_for_freq(pdev, freq,
 						       sec_freq, bw);
-	else
+	} else {
+		struct ch_params params = {0};
+
+		params.ch_width = bw;
+
 		return reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
-						       bw);
+								&params);
+	}
 }
 
 qdf_export_symbol(wlan_reg_get_5g_bonded_channel_and_state_for_freq);

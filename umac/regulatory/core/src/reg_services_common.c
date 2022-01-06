@@ -185,6 +185,137 @@ struct bw_bonded_array_pair bw_bonded_array_pair_map[] = {
 		QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq)},
 };
 
+#ifdef WLAN_FEATURE_11BE
+/** Binary bitmap pattern
+ * 1: Punctured 20Mhz chan 0:non-Punctured 20Mhz Chan
+ *
+ * Band: 80MHz  Puncturing Unit: 20Mhz
+ *  B0001 = 0x1  : BIT(0)
+ *  B0010 = 0x2  : BIT(1)
+ *  B0100 = 0x4  : BIT(2)
+ *  B1000 = 0x8  : BIT(3)
+ *
+ * Band: 160MHz  Puncturing Unit: 20Mhz
+ *  B0000_0001 = 0x01  : BIT(0)
+ *  B0000_0010 = 0x02  : BIT(1)
+ *  B0000_0100 = 0x04  : BIT(2)
+ *  B0000_1000 = 0x08  : BIT(3)
+ *  B0001_0000 = 0x10  : BIT(4)
+ *  B0010_0000 = 0x20  : BIT(5)
+ *  B0100_0000 = 0x40  : BIT(6)
+ *  B1000_0000 = 0x80  : BIT(7)
+ *
+ * Band: 160MHz  Puncturing Unit: 40Mhz
+ *  B0000_0011 = 0x03  : BIT(0) | BIT(1)
+ *  B0000_1100 = 0x0C  : BIT(2) | BIT(3)
+ *  B0011_0000 = 0x30  : BIT(4) | BIT(5)
+ *  B1100_0000 = 0xC0  : BIT(6) | BIT(7)
+ *
+ * Band: 320MHz  Puncturing Unit: 40Mhz
+ *  B0000_0000_0000_0011 = 0x0003  : BIT(0)  | BIT(1)
+ *  B0000_0000_0000_1100 = 0x000C  : BIT(2)  | BIT(3)
+ *  B0000_0000_0011_0000 = 0x0030  : BIT(4)  | BIT(5)
+ *  B0000_0000_1100_0000 = 0x00C0  : BIT(6)  | BIT(7)
+ *  B0000_0011_0000_0000 = 0x0300  : BIT(8)  | BIT(9)
+ *  B0000_1100_0000_0000 = 0x0C00  : BIT(10) | BIT(11)
+ *  B0011_0000_0000_0000 = 0x3000  : BIT(12) | BIT(13)
+ *  B1100_0000_0000_0000 = 0xC000  : BIT(13) | BIT(15)
+ *
+ * Band: 320MHz  Puncturing Unit: 80Mhz
+ *  B0000_0000_0000_1111 = 0x000F  : BIT(0)  | BIT(1) | BIT(2) | BIT(3)
+ *  B0000_0000_1111_0000 = 0x00F0  : BIT(4)  | BIT(5) | BIT(6) | BIT(7)
+ *  B0000_1111_0000_0000 = 0x0F00  : BIT(8)  | BIT(9) | BIT(10) | BIT(11)
+ *  B1111_0000_0000_0000 = 0xF000  : BIT(12) | BIT(13) | BIT(14) | BIT(15)
+ *
+ * Band: 320MHz  Puncturing Unit: 80Mhz+40Mhz (Right 80Mhz punctured)
+ *  B0000_0000_0011_1111 = 0x003F  : BIT(4)  | BIT(5)   [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0000_0000_1100_1111 = 0x00CF  : BIT(6)  | BIT(7)   [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0000_0011_0000_1111 = 0x030F  : BIT(8)  | BIT(9)   [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0000_1100_0000_1111 = 0x0C0F  : BIT(10) | BIT(11)  [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0011_0000_0000_1111 = 0x300F  : BIT(12) | BIT(13)  [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B1100_0000_0000_1111 = 0xC00F  : BIT(14) | BIT(15)  [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *
+ * Band: 320MHz  Puncturing Unit: 80Mhz+40Mhz (Left 80Mhz punctured)
+ *  B1111_0000_0000_0011 = 0xF003  : BIT(4)  | BIT(5)   [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0000_0000_1100 = 0xF00C  : BIT(6)  | BIT(7)   [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0000_0011_0000 = 0xF030  : BIT(8)  | BIT(9)   [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0000_1100_0000 = 0xF0C0  : BIT(10) | BIT(11)  [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0011_0000_0000 = 0xF300  : BIT(12) | BIT(13)  [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_1100_0000_0000 = 0xFC00  : BIT(14) | BIT(15)  [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ */
+static const uint16_t chan_80mhz_puncture_bitmap[] = {
+	/* 20Mhz puncturing pattern */
+	0x1,
+	0x2,
+	0x4,
+	0x8
+};
+
+static const uint16_t chan_160mhz_puncture_bitmap[] = {
+	/* 20Mhz puncturing pattern */
+	0x1,
+	0x2,
+	0x4,
+	0x8,
+	0x10,
+	0x20,
+	0x40,
+	0x80,
+	/* 40Mhz puncturing pattern */
+	0x3,
+	0xc,
+	0x30,
+	0xc0
+};
+
+static const uint16_t chan_320mhz_puncture_bitmap[] = {
+	/* 40Mhz puncturing pattern */
+	0x3,
+	0xc,
+	0x30,
+	0xc0,
+	0x300,
+	0xc00,
+	0x3000,
+	0xc000,
+	/* 80Mhz puncturing pattern */
+	0xf,
+	0xf0,
+	0xf00,
+	0xf000,
+	/* 80+40Mhz puncturing pattern: Right 80MHz punctured */
+	0x3f,
+	0xcf,
+	0x30f,
+	0xc0f,
+	0x300f,
+	0xc00f,
+	/* 80+40Mhz puncturing pattern: Left 80MHz punctured */
+	0xf003,
+	0xf00c,
+	0xf030,
+	0xf0c0,
+	0xf300,
+	0xfc00
+};
+
+struct bw_puncture_bitmap_pair {
+	enum phy_ch_width chwidth;
+	const uint16_t *puncture_bitmap_arr;
+	uint16_t array_size;
+};
+
+static const
+struct bw_puncture_bitmap_pair bw_puncture_bitmap_pair_map[] = {
+	{CH_WIDTH_320MHZ, chan_320mhz_puncture_bitmap,
+		QDF_ARRAY_SIZE(chan_320mhz_puncture_bitmap)},
+	{CH_WIDTH_160MHZ, chan_160mhz_puncture_bitmap,
+		QDF_ARRAY_SIZE(chan_160mhz_puncture_bitmap)},
+	{CH_WIDTH_80MHZ, chan_80mhz_puncture_bitmap,
+		QDF_ARRAY_SIZE(chan_80mhz_puncture_bitmap)},
+};
+#endif /* WLAN_FEATURE_11BE */
+
 const struct bonded_channel_freq *
 reg_get_bonded_chan_entry(qdf_freq_t freq,
 			  enum phy_ch_width chwidth)
@@ -3429,11 +3560,102 @@ reg_get_5g_bonded_chan_array_for_freq(struct wlan_objmgr_pdev *pdev,
 	return chan_state;
 }
 
+#ifdef WLAN_FEATURE_11BE
+void reg_set_create_punc_bitmap(struct ch_params *ch_params,
+				bool is_create_punc_bitmap)
+{
+	ch_params->is_create_punc_bitmap = is_create_punc_bitmap;
+}
+
+bool reg_is_punc_bitmap_valid(enum phy_ch_width bw, uint16_t puncture_bitmap)
+{
+	int i, num_bws;
+	const uint16_t *bonded_puncture_bitmap = NULL;
+	uint16_t array_size = 0;
+	bool is_punc_bitmap_valid = false;
+
+	num_bws = QDF_ARRAY_SIZE(bw_puncture_bitmap_pair_map);
+	for (i = 0; i < num_bws; i++) {
+		if (bw == bw_puncture_bitmap_pair_map[i].chwidth) {
+			bonded_puncture_bitmap =
+			    bw_puncture_bitmap_pair_map[i].puncture_bitmap_arr;
+			array_size = bw_puncture_bitmap_pair_map[i].array_size;
+			break;
+		}
+	}
+
+	if (array_size && bonded_puncture_bitmap) {
+		for (i = 0; i < array_size; i++) {
+			if (puncture_bitmap == bonded_puncture_bitmap[i]) {
+				is_punc_bitmap_valid = true;
+				break;
+			}
+		}
+	}
+
+	return is_punc_bitmap_valid;
+}
+
+/**
+ * reg_update_5g_bonded_channel_state_punc() - update channel state with
+ *                                             static puncturing feature
+ * @pdev: pointer to pdev
+ * @bonded_chan_ptr: Pointer to bonded_channel_freq.
+ * @ch_params: pointer to ch_params
+ * @chan_state: chan_state to be updated
+ *
+ * Return: void
+ */
+static void reg_update_5g_bonded_channel_state_punc(
+			struct wlan_objmgr_pdev *pdev,
+			const struct bonded_channel_freq *bonded_chan_ptr,
+			struct ch_params *ch_params,
+			enum channel_state *chan_state)
+{
+	qdf_freq_t chan_cfreq;
+	enum channel_state temp_chan_state;
+	uint16_t puncture_bitmap = 0;
+	int i = 0;
+	enum channel_state update_state = CHANNEL_STATE_ENABLE;
+
+	if (!pdev || !bonded_chan_ptr || !ch_params || !chan_state ||
+	    !ch_params->is_create_punc_bitmap)
+		return;
+
+	chan_cfreq =  bonded_chan_ptr->start_freq;
+	while (chan_cfreq <= bonded_chan_ptr->end_freq) {
+		temp_chan_state = reg_get_channel_state_for_freq(pdev,
+								 chan_cfreq);
+		if (!reg_is_state_allowed(temp_chan_state))
+			puncture_bitmap |= BIT(i);
+		/* Remember of any of the sub20 channel is a DFS channel */
+		if (temp_chan_state == CHANNEL_STATE_DFS)
+			update_state = CHANNEL_STATE_DFS;
+		chan_cfreq = chan_cfreq + BW_20_MHZ;
+		i++;
+	}
+	/* Validate puncture bitmap. Update channel state. */
+	if (reg_is_punc_bitmap_valid(ch_params->ch_width, puncture_bitmap)) {
+		*chan_state = update_state;
+		ch_params->reg_punc_bitmap = puncture_bitmap;
+	}
+}
+#else
+static void reg_update_5g_bonded_channel_state_punc(
+			struct wlan_objmgr_pdev *pdev,
+			const struct bonded_channel_freq *bonded_chan_ptr,
+			struct ch_params *ch_params,
+			enum channel_state *chan_state)
+{
+}
+#endif
+
 enum channel_state
 reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					 qdf_freq_t freq,
-					 enum phy_ch_width bw)
+					 struct ch_params *ch_params)
 {
+	enum phy_ch_width bw;
 	enum channel_enum ch_indx;
 	enum channel_state chan_state;
 	struct regulatory_channel *reg_channels;
@@ -3441,6 +3663,11 @@ reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 	bool bw_enabled = false;
 	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 
+	if (!ch_params) {
+		reg_err_rl("Invalid ch_params");
+		return CHANNEL_STATE_INVALID;
+	}
+	bw = ch_params->ch_width;
 	if (bw > CH_WIDTH_80P80MHZ) {
 		reg_err_rl("bw (%d) passed is not good", bw);
 		return CHANNEL_STATE_INVALID;
@@ -3448,6 +3675,9 @@ reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	chan_state = reg_get_5g_bonded_channel_for_freq(pdev, freq, bw,
 							&bonded_chan_ptr);
+
+	reg_update_5g_bonded_channel_state_punc(pdev, bonded_chan_ptr,
+						ch_params, &chan_state);
 
 	if ((chan_state == CHANNEL_STATE_INVALID) ||
 	    (chan_state == CHANNEL_STATE_DISABLE))
@@ -4070,13 +4300,18 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 				&bonded_chan_ptr);
 
 		chan_state = reg_get_5g_bonded_channel_state_for_freq(
-				pdev, freq, ch_params->ch_width);
+				pdev, freq, ch_params);
 
 		if (ch_params->ch_width == CH_WIDTH_80P80MHZ) {
+			struct ch_params temp_ch_params = {0};
+
+			temp_ch_params.ch_width = CH_WIDTH_80MHZ;
+			/* Puncturing patter is not needed for 80+80 */
+			reg_set_create_punc_bitmap(&temp_ch_params, false);
 			chan_state2 = reg_get_5g_bonded_channel_state_for_freq(
 					pdev, ch_params->mhz_freq_seg1 -
 					NEAREST_20MHZ_CHAN_FREQ_OFFSET,
-					CH_WIDTH_80MHZ);
+					&temp_ch_params);
 
 			chan_state = reg_combine_channel_states(
 					chan_state, chan_state2);

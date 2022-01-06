@@ -1258,6 +1258,31 @@ void wlan_reg_fill_channel_list(struct wlan_objmgr_pdev *pdev,
 				enum phy_ch_width ch_width,
 				qdf_freq_t band_center_320,
 				struct reg_channel_list *chan_list);
+
+/**
+ * wlan_reg_is_punc_bitmap_valid() - is puncture bitmap valid or not
+ * @bw: Input channel width.
+ * @puncture_bitmap Input puncture bitmap.
+ *
+ * Return: true if given puncture bitmap is valid
+ */
+bool wlan_reg_is_punc_bitmap_valid(enum phy_ch_width bw,
+				   uint16_t puncture_bitmap);
+
+/**
+ * wlan_reg_set_create_punc_bitmap() - set is_create_punc_bitmap of ch_params
+ * @ch_params: ch_params to set
+ * @is_create_punc_bitmap: is create punc bitmap
+ *
+ * Return: NULL
+ */
+void wlan_reg_set_create_punc_bitmap(struct ch_params *ch_params,
+				     bool is_create_punc_bitmap);
+#else
+static inline void wlan_reg_set_create_punc_bitmap(struct ch_params *ch_params,
+						   bool is_create_punc_bitmap)
+{
+}
 #endif
 
 /**

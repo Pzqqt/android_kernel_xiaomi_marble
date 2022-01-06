@@ -637,6 +637,9 @@ struct freq_range {
  * @mhz_freq_seg0: Center frequency for segment 0
  * @mhz_freq_seg1: Center frequency for segment 1
  * @reg_punc_bitmap: Output puncturing bitmap
+ * @is_create_punc_bitmap: Whether puncturing bitmap is to be created or not
+ *                         Parameter 'reg_punc_bitmap' is valid only if
+ *                         is_create_punc_bitmap is true
  */
 struct ch_params {
 	enum phy_ch_width ch_width;
@@ -647,6 +650,7 @@ struct ch_params {
 	qdf_freq_t mhz_freq_seg1;
 #ifdef WLAN_FEATURE_11BE
 	uint16_t reg_punc_bitmap;
+	bool is_create_punc_bitmap;
 #endif
 };
 
