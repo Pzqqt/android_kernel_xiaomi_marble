@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2022 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1230,6 +1230,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_sscan_chan_info,
     WMITLV_TAG_STRUC_wmi_pdev_sscan_per_detector_info,
     WMITLV_TAG_STRUC_wmi_ctrl_path_odd_addr_read_struct,
+    WMITLV_TAG_STRUC_wmi_vdev_multiple_peer_group_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1714,6 +1715,7 @@ typedef enum {
     OP(WMI_SAWF_SVC_CLASS_CFG_CMDID) \
     OP(WMI_SAWF_SVC_CLASS_DISABLE_CMDID) \
     OP(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID) \
+    OP(WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4898,6 +4900,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
 #define WMITLV_TABLE_WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID);
+
+/* WMI CMD used to operate command on multiple peers */
+#define WMITLV_TABLE_WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_multiple_peer_group_cmd_fixed_param, wmi_vdev_multiple_peer_group_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, wds_macaddr, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID);
 
 
 

@@ -579,6 +579,8 @@ typedef enum {
     WMI_VDEV_ICMP_OFFLOAD_CMDID,
     /** Update vdev mac address */
     WMI_VDEV_UPDATE_MAC_ADDR_CMDID,
+    /* WMI cmd to perform operation on multiple peer based on subcmd type */
+    WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID,
 
     /* peer specific commands */
 
@@ -30487,6 +30489,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_UPDATE_MAC_ADDR_CMDID);
         WMI_RETURN_STRING(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -37259,6 +37262,18 @@ typedef struct {
     /** 0 - disable TQM-reset feature, 1 - enable TQM-reset feature */
     A_UINT32 enable;
 } wmi_soc_tqm_reset_enable_disable_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_multiple_peer_group_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    /** Sub command id - Currently supported command ids are
+     *  WMI_PEER_REMOVE_WDS_ENTRY_CMDID
+     */
+    WMI_CMD_ID sub_cmd_id;
+    /* The TLVs follows this structure:
+     * wmi_mac_addr wds_macaddr[]; <--- Array of wds mac addresses.
+     */
+} wmi_vdev_multiple_peer_group_cmd_fixed_param;
 
 
 
