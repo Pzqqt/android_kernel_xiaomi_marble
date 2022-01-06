@@ -19095,6 +19095,13 @@ typedef struct wmi_nlo_config {
 /* The TLVs will follow.
  * nlo_configured_parameters nlo_list[];
  * A_UINT32 channel_list[num_of_channels]; // in MHz
+ *     channel_list:
+ *     If FW supports WMI_SERVICE_PNO_SCAN_CONFIG_PER_CHANNEL,
+ *         then channel_list may fill the upper 12 bits with channel flags,
+ *         while using only the lower 20 bits for channel frequency.
+ *         Check WMI_SCAN_CHANNEL_FLAG macros for the channel flags
+ *     If FW doesn't support WMI_SERVICE_PNO_SCAN_CONFIG_PER_CHANNEL,
+ *         then channel_list only holds the frequency value
  * nlo_channel_prediction_cfg ch_prediction_cfg;
  * enlo_candidate_score_params candidate_score_params;
  * wmi_vendor_oui vendor_oui[num_vendor_oui];
