@@ -94,65 +94,12 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
-/*
- * if_mgr_get_mlo_and_legacy_sta_count() - get mlo and legacy sta count
- * also fills the freq and legacy/mlo list
- * @psoc: Objmgr psoc
- * @num_mlo: num mlo as output
- * @mlo_idx: mlo vdev index as output
- * @num_legacy: num legacy as output
- * @legacy_idx: legacy vdev index as output
- * @freq_list: freq list of each sta vdev
- * @vdev_id_list: vdev id list
- *
- * Return: void
- */
-static void if_mgr_get_mlo_and_legacy_sta_count(struct wlan_objmgr_psoc *psoc,
-						uint8_t *num_mlo,
-						uint8_t *mlo_idx,
-						uint8_t *num_legacy,
-						uint8_t *legacy_idx,
-						qdf_freq_t *freq_list,
-						uint8_t *vdev_id_list)
-{
-	uint32_t sta_num = 0;
-	uint8_t i;
-	struct wlan_objmgr_vdev *temp_vdev;
-
-	*num_mlo = 0;
-	*num_legacy = 0;
-
-	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, freq_list,
-							 vdev_id_list,
-							 PM_STA_MODE);
-	if (!sta_num)
-		return;
-
-	for (i = 0; i < sta_num; i++) {
-		temp_vdev =
-			wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-							     vdev_id_list[i],
-							     WLAN_IF_MGR_ID);
-		if (!temp_vdev) {
-			ifmgr_err("invalid vdev for id %d", vdev_id_list[i]);
-			return;
-		}
-
-		if (wlan_vdev_mlme_is_mlo_vdev(temp_vdev))
-			mlo_idx[(*num_mlo)++] = i;
-		else
-			legacy_idx[(*num_legacy)++] = i;
-
-		wlan_objmgr_vdev_release_ref(temp_vdev, WLAN_IF_MGR_ID);
-	}
-}
-
 static uint8_t
-if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
-				      uint8_t num_mlo, qdf_freq_t *freq_list,
-				      uint8_t *vdev_id_list,
-				      uint8_t *mlo_vdev_lst,
-				      uint8_t *mlo_idx, qdf_freq_t freq)
+if_mgr_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
+				  uint8_t num_ml, qdf_freq_t *freq_list,
+				  uint8_t *vdev_id_list,
+				  uint8_t *ml_vdev_lst,
+				  uint8_t *ml_idx, qdf_freq_t freq)
 {
 	uint8_t i = 0;
 	bool same_band_sta_allowed;
@@ -172,17 +119,17 @@ if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
 
 	/* If non-ML STA is 2.4Ghz disable 2.4Ghz if present OR disable any */
 	if (wlan_reg_is_24ghz_ch_freq(freq)) {
-		while (i < num_mlo) {
-			if (wlan_reg_is_24ghz_ch_freq(freq_list[mlo_idx[i]])) {
+		while (i < num_ml) {
+			if (wlan_reg_is_24ghz_ch_freq(freq_list[ml_idx[i]])) {
 				/* Affected ML STA link on 2.4Ghz */
-				mlo_vdev_lst[0] = vdev_id_list[mlo_idx[i]];
+				ml_vdev_lst[0] = vdev_id_list[ml_idx[i]];
 				return 1;
 			}
 			/* Fill non effected vdev in list */
-			mlo_vdev_lst[i] = vdev_id_list[mlo_idx[i]];
+			ml_vdev_lst[i] = vdev_id_list[ml_idx[i]];
 			i++;
 		}
-		/* No link affected return mlo_num to disable any */
+		/* No link affected return num_ml to disable any */
 		return i;
 	}
 
@@ -190,8 +137,8 @@ if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
 
 	/* check if ML STA is DBS */
 	i = 0;
-	while (i < num_mlo &&
-	       !wlan_reg_is_24ghz_ch_freq(freq_list[mlo_idx[i]]))
+	while (i < num_ml &&
+	       !wlan_reg_is_24ghz_ch_freq(freq_list[ml_idx[i]]))
 		i++;
 
 	same_band_sta_allowed = wlan_cm_same_band_sta_allowed(psoc);
@@ -201,50 +148,50 @@ if_mgr_mlo_get_affected_links_for_sbs(struct wlan_objmgr_psoc *psoc,
 	 * is false, disable 5/6Ghz link to make sure we dont have all link
 	 * on 5Ghz
 	 */
-	if (i < num_mlo && !same_band_sta_allowed)
-		goto check_dbs_mlo;
+	if (i < num_ml && !same_band_sta_allowed)
+		goto check_dbs_ml;
 
 	/* check if any link lead to SBS, so that we can disable the other*/
 	i = 0;
-	while (i < num_mlo &&
-	       !policy_mgr_are_sbs_chan(psoc, freq, freq_list[mlo_idx[i]]))
+	while (i < num_ml &&
+	       !policy_mgr_are_sbs_chan(psoc, freq, freq_list[ml_idx[i]]))
 		i++;
 
 	/*
-	 * if i < num_mlo then i is the SBS link, in this case disable the other
+	 * if i < num_ml then i is the SBS link, in this case disable the other
 	 * non SBS link, this mean ML STA is 5+6 or 2+5/6.
 	 */
-	if (i < num_mlo) {
+	if (i < num_ml) {
 		i = 0;
-		while (i < num_mlo) {
+		while (i < num_ml) {
 			if (!policy_mgr_are_sbs_chan(psoc, freq,
-						     freq_list[mlo_idx[i]])) {
+						     freq_list[ml_idx[i]])) {
 				/* Affected non SBS ML STA link */
-				mlo_vdev_lst[0] = vdev_id_list[mlo_idx[i]];
+				ml_vdev_lst[0] = vdev_id_list[ml_idx[i]];
 				return 1;
 			}
 			/* Fill non effected vdev in list */
-			mlo_vdev_lst[i] = vdev_id_list[mlo_idx[i]];
+			ml_vdev_lst[i] = vdev_id_list[ml_idx[i]];
 			i++;
 		}
 		/* All link lead to SBS, disable any, This should not happen */
 		return i;
 	}
 
-check_dbs_mlo:
+check_dbs_ml:
 	/*
 	 * None of the link can lead to SBS, i.e. its 2+ 5/6 ML STA in this case
 	 * disable 5Ghz link.
 	 */
 	i = 0;
-	while (i < num_mlo) {
-		if (!wlan_reg_is_24ghz_ch_freq(freq_list[mlo_idx[i]])) {
+	while (i < num_ml) {
+		if (!wlan_reg_is_24ghz_ch_freq(freq_list[ml_idx[i]])) {
 			/* Affected 5/6Ghz ML STA link */
-			mlo_vdev_lst[0] = vdev_id_list[mlo_idx[i]];
+			ml_vdev_lst[0] = vdev_id_list[ml_idx[i]];
 			return 1;
 		}
 		/* Fill non effected vdev in list */
-		mlo_vdev_lst[i] = vdev_id_list[mlo_idx[i]];
+		ml_vdev_lst[i] = vdev_id_list[ml_idx[i]];
 		i++;
 	}
 
@@ -253,23 +200,23 @@ check_dbs_mlo:
 }
 
 /*
- * if_mgr_mlo_get_concurrent_num_links() - get MLO links which are affected
- * if no affected then return mlo num. Also fills the mlo_vdev_id to send.
- * @num_mlo: number of mlo vdev
+ * if_mgr_get_concurrent_num_links() - get links which are affected
+ * if no affected then return num ml. Also fills the ml_vdev_lst to send.
+ * @num_ml: number of ML vdev
  * @freq_list: freq list of all vdev
  * @vdev_id_list: vdev id list
- * @mlo_vdev_lst: mlo vdev list
- * @mlo_idx: mlo index
- * @freq: legacy sta freq
+ * @ml_vdev_lst: ML vdev list
+ * @ml_idx: ML index
+ * @freq: non ML STA freq
  *
- * Return: number of the affected links, else total link and mlo_vdev_id list.
+ * Return: number of the affected links, else total link and ml_vdev_lst list.
  */
 static uint8_t
-if_mgr_mlo_get_concurrent_num_links(struct wlan_objmgr_vdev *vdev,
-				    uint8_t num_mlo, qdf_freq_t *freq_list,
-				    uint8_t *vdev_id_list,
-				    uint8_t *mlo_vdev_lst,
-				    uint8_t *mlo_idx, qdf_freq_t freq)
+if_mgr_get_concurrent_num_links(struct wlan_objmgr_vdev *vdev,
+				uint8_t num_ml, qdf_freq_t *freq_list,
+				uint8_t *vdev_id_list,
+				uint8_t *ml_vdev_lst,
+				uint8_t *ml_idx, qdf_freq_t freq)
 {
 	uint8_t i = 0;
 	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
@@ -277,23 +224,23 @@ if_mgr_mlo_get_concurrent_num_links(struct wlan_objmgr_vdev *vdev,
 	if (!psoc)
 		return 0;
 
-	while (i < num_mlo && (freq_list[mlo_idx[i]] != freq))
+	while (i < num_ml && (freq_list[ml_idx[i]] != freq))
 		i++;
 
-	if (i < num_mlo) {
+	if (i < num_ml) {
 		/* if one link is SCC then no need to disable any link */
-		ifmgr_debug("vdev %d: link vdev %d lead to SCC, STA freq %d ML freq %d, no need to disable link",
-			    wlan_vdev_get_id(vdev), vdev_id_list[mlo_idx[i]],
-			    freq, freq_list[mlo_idx[i]]);
+		ifmgr_debug("vdev %d: ML vdev %d lead to SCC, STA freq %d ML freq %d, no need to disable link",
+			    wlan_vdev_get_id(vdev), vdev_id_list[ml_idx[i]],
+			    freq, freq_list[ml_idx[i]]);
 		return 0;
 	}
 
 	if (policy_mgr_is_hw_sbs_capable(psoc))
-		return if_mgr_mlo_get_affected_links_for_sbs(psoc, num_mlo,
-							     freq_list,
-							     vdev_id_list,
-							     mlo_vdev_lst,
-							     mlo_idx, freq);
+		return if_mgr_get_affected_links_for_sbs(psoc, num_ml,
+							 freq_list,
+							 vdev_id_list,
+							 ml_vdev_lst,
+							 ml_idx, freq);
 
 	/*
 	 * STA freq:      STA ML combo:  NON SBS Action:
@@ -304,40 +251,40 @@ if_mgr_mlo_get_concurrent_num_links(struct wlan_objmgr_vdev *vdev,
 	 * 2Ghz           5Ghz+6Ghz      Disable Any
 	 */
 	/*
-	 * Check if any of the link is on same MAC/band(for non SBS) as legacy
+	 * Check if any of the link is on same MAC/band(for non SBS) as non ML
 	 * STA's freq. Same MAC/band mean both are either 5Ghz/6Ghz/2.4Ghz
 	 * OR both are non 2.4Ghz (ie one is 5Ghz and other is 6Ghz)
 	 */
 	i = 0;
-	while (i < num_mlo &&
-	       !(wlan_reg_is_same_band_freqs(freq_list[mlo_idx[i]], freq) ||
-		 (!wlan_reg_is_24ghz_ch_freq(freq_list[mlo_idx[i]]) &&
+	while (i < num_ml &&
+	       !(wlan_reg_is_same_band_freqs(freq_list[ml_idx[i]], freq) ||
+		 (!wlan_reg_is_24ghz_ch_freq(freq_list[ml_idx[i]]) &&
 		  !wlan_reg_is_24ghz_ch_freq(freq)))) {
 		/* Fill non effected vdev in list */
-		mlo_vdev_lst[i] = vdev_id_list[mlo_idx[i]];
+		ml_vdev_lst[i] = vdev_id_list[ml_idx[i]];
 		i++;
 	}
 
-	if (i < num_mlo) {
-		/* affected MLO link on the same MAC/band with legacy STA */
-		mlo_vdev_lst[0] = vdev_id_list[mlo_idx[i]];
+	if (i < num_ml) {
+		/* affected ML link on the same MAC/band with non ML STA */
+		ml_vdev_lst[0] = vdev_id_list[ml_idx[i]];
 		return 1;
 	}
 
-	/* No link affected return mlo_num to disable any */
+	/* No link affected return num_ml to disable any */
 	return i;
 }
 
 static void
-if_mgr_handle_sap_plus_sta_mlo_connect(struct wlan_objmgr_psoc *psoc,
-				       struct wlan_objmgr_vdev *vdev)
+if_mgr_handle_sap_plus_ml_sta_connect(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_objmgr_vdev *vdev)
 {
 	uint32_t sap_num = 0;
 	qdf_freq_t sap_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint8_t sap_vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
-	bool is_mlo_sbs;
-	uint8_t mlo_vdev_lst[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
-	uint8_t num_mlo;
+	bool is_ml_sbs;
+	uint8_t ml_vdev_lst[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t num_ml;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 
 	sap_num = policy_mgr_get_mode_specific_conn_info(psoc, sap_freq_list,
@@ -351,73 +298,74 @@ if_mgr_handle_sap_plus_sta_mlo_connect(struct wlan_objmgr_psoc *psoc,
 
 	if (!wlan_reg_is_24ghz_ch_freq(sap_freq_list[0]))
 		return;
-	is_mlo_sbs = policy_mgr_is_mlo_in_mode_sbs(psoc, PM_STA_MODE,
-						   mlo_vdev_lst, &num_mlo);
-	if (num_mlo < 2)
+	is_ml_sbs = policy_mgr_is_mlo_in_mode_sbs(psoc, PM_STA_MODE,
+						  ml_vdev_lst, &num_ml);
+	if (num_ml < 2)
 		return;
 
-	ifmgr_debug("vdev %d: num_mlo %d is_mlo_sbs %d sap_chan %d", vdev_id,
-		    num_mlo, is_mlo_sbs, sap_freq_list[0]);
+	ifmgr_debug("vdev %d: num_ml %d is_ml_sbs %d sap_chan %d", vdev_id,
+		    num_ml, is_ml_sbs, sap_freq_list[0]);
 
-	if (!is_mlo_sbs) {
+	if (!is_ml_sbs) {
 		/*
 		 * re-enable both link in case if this was roaming from sbs to
-		 * dbs MLO, with sap on 2.4Ghz.
+		 * dbs ML STA, with sap on 2.4Ghz.
 		 */
 		if (wlan_cm_is_vdev_roaming(vdev))
 			wlan_mlo_sta_mlo_concurency_set_link(vdev,
 					MLO_LINK_FORCE_REASON_DISCONNECT,
 					MLO_LINK_FORCE_MODE_NO_FORCE,
-					num_mlo, mlo_vdev_lst);
+					num_ml, ml_vdev_lst);
 
 		return;
 	}
 
-	/* If MLO STA is SBS and SAP is 2.4Ghz, Disable one of the links. */
+	/* If ML STA is SBS and SAP is 2.4Ghz, Disable one of the links. */
 	wlan_mlo_sta_mlo_concurency_set_link(vdev,
 					     MLO_LINK_FORCE_REASON_CONNECT,
 					     MLO_LINK_FORCE_MODE_ACTIVE_NUM,
-					     num_mlo, mlo_vdev_lst);
+					     num_ml, ml_vdev_lst);
 }
 
 static void
-if_mgr_sta_mlo_concurency_on_connect(struct wlan_objmgr_psoc *psoc,
-				     struct wlan_objmgr_vdev *vdev,
-				     uint8_t num_mlo, uint8_t *mlo_idx,
-				     uint8_t num_legacy, uint8_t *legacy_idx,
-				     qdf_freq_t *freq_list,
-				     uint8_t *vdev_id_list)
+if_mgr_ml_sta_concurency_on_connect(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_objmgr_vdev *vdev,
+				    uint8_t num_ml, uint8_t *ml_idx,
+				    uint8_t num_non_ml, uint8_t *non_ml_idx,
+				    qdf_freq_t *freq_list,
+				    uint8_t *vdev_id_list)
 {
 	qdf_freq_t freq = 0;
 	struct wlan_channel *bss_chan;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	uint8_t mlo_vdev_lst[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t ml_vdev_lst[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint8_t affected_links = 0;
 	enum mlo_link_force_mode mode = MLO_LINK_FORCE_MODE_ACTIVE_NUM;
 
-	/* Legacy STA doesn't exist, no need to change to link.*/
-	if (!num_legacy) {
+	/* non ML STA doesn't exist, no need to change to link.*/
+	if (!num_non_ml) {
 		/* Check if SAP exist and any link change is required */
-		if_mgr_handle_sap_plus_sta_mlo_connect(psoc, vdev);
+		if_mgr_handle_sap_plus_ml_sta_connect(psoc, vdev);
 		return;
 	}
 
 	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
-		freq = freq_list[legacy_idx[0]];
+		freq = freq_list[non_ml_idx[0]];
 	} else {
 		bss_chan = wlan_vdev_mlme_get_bss_chan(vdev);
 		if (bss_chan)
 			freq = bss_chan->ch_freq;
 	}
-	ifmgr_debug("vdev %d: Freq %d (legacy vdev id %d), is MLO %d", vdev_id,
-		    freq, legacy_idx[0], wlan_vdev_mlme_is_mlo_vdev(vdev));
+	ifmgr_debug("vdev %d: Freq %d (non ML vdev id %d), is ML STA %d",
+		    vdev_id, freq, non_ml_idx[0],
+		    wlan_vdev_mlme_is_mlo_vdev(vdev));
 	if (!freq)
 		return;
 
 	affected_links =
-		if_mgr_mlo_get_concurrent_num_links(vdev, num_mlo, freq_list,
-						    vdev_id_list, mlo_vdev_lst,
-						    mlo_idx, freq);
+		if_mgr_get_concurrent_num_links(vdev, num_ml, freq_list,
+						vdev_id_list, ml_vdev_lst,
+						ml_idx, freq);
 
 	if (!affected_links) {
 		ifmgr_debug("vdev %d: no affected link found", vdev_id);
@@ -425,87 +373,87 @@ if_mgr_sta_mlo_concurency_on_connect(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/*
-	 * If affected link is less than mlo_num, ie not all link are affected,
+	 * If affected link is less than num_ml, ie not all link are affected,
 	 * send MLO_LINK_FORCE_MODE_INACTIVE.
 	 */
-	if (affected_links < num_mlo)
+	if (affected_links < num_ml)
 		mode = MLO_LINK_FORCE_MODE_INACTIVE;
 
 	wlan_mlo_sta_mlo_concurency_set_link(vdev,
 					     MLO_LINK_FORCE_REASON_CONNECT,
 					     mode, affected_links,
-					     mlo_vdev_lst);
+					     ml_vdev_lst);
 }
 
 static void
-if_mgr_sta_mlo_concurency_on_disconnect(struct wlan_objmgr_vdev *vdev,
-					uint8_t num_mlo, uint8_t *mlo_idx,
-					uint8_t num_legacy,
-					uint8_t *vdev_id_list)
+if_mgr_ml_sta_concurency_on_disconnect(struct wlan_objmgr_vdev *vdev,
+				       uint8_t num_ml, uint8_t *ml_idx,
+				       uint8_t num_non_ml,
+				       uint8_t *vdev_id_list)
 {
 	uint8_t i = 0;
-	uint8_t mlo_vdev_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t ml_vdev_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 
 	/*
-	 * If Legacy STA exist, no need to change to link.
+	 * If non ML STA exist, no need to change to link.
 	 * Only change when legasy sta is disconnected and
 	 * only ML STA is present.
 	 */
-	if (num_legacy)
+	if (num_non_ml)
 		return;
 
 	/*
-	 * On legacy STA disconnect if  MLO has >= 2 links, need to send
+	 * On non ML STA disconnect if  MLO has >= 2 links, need to send
 	 * MLO_LINK_FORCE_MODE_NO_FORCE for all MLO Vdevs for letting FW enable
 	 * all the links.
 	 */
-	while (i < num_mlo) {
-		mlo_vdev_list[i] = vdev_id_list[mlo_idx[i]];
+	while (i < num_ml) {
+		ml_vdev_list[i] = vdev_id_list[ml_idx[i]];
 		i++;
 	}
 
 	wlan_mlo_sta_mlo_concurency_set_link(vdev,
 					     MLO_LINK_FORCE_REASON_DISCONNECT,
 					     MLO_LINK_FORCE_MODE_NO_FORCE,
-					     num_mlo, mlo_vdev_list);
+					     num_ml, ml_vdev_list);
 }
 
 static void
-if_mgr_handle_sta_mlo_link_concurrency(struct wlan_objmgr_psoc *psoc,
-				       struct wlan_objmgr_vdev *vdev,
-				       bool is_connect)
+if_mgr_handle_ml_sta_link_concurrency(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_objmgr_vdev *vdev,
+				      bool is_connect)
 {
-	uint8_t num_mlo = 0, num_legacy = 0;
-	uint8_t mlo_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
-	uint8_t legacy_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t num_ml = 0, num_non_ml = 0;
+	uint8_t ml_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t non_ml_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	qdf_freq_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 
-	if_mgr_get_mlo_and_legacy_sta_count(psoc, &num_mlo, mlo_idx,
-					    &num_legacy, legacy_idx, freq_list,
-					    vdev_id_list);
+	policy_mgr_get_ml_and_non_ml_sta_count(psoc, &num_ml, ml_idx,
+					       &num_non_ml, non_ml_idx,
+					       freq_list, vdev_id_list);
 
-	ifmgr_debug("vdev %d: num_mlo %d num_legacy %d is_connect %d",
-		    wlan_vdev_get_id(vdev), num_mlo, num_legacy, is_connect);
+	ifmgr_debug("vdev %d: num_ml %d num_non_ml %d is_connect %d",
+		    wlan_vdev_get_id(vdev), num_ml, num_non_ml, is_connect);
 	/* ML STA is not up */
-	if (num_mlo < 2)
+	if (num_ml < 2)
 		return;
 
 	if (is_connect)
-		if_mgr_sta_mlo_concurency_on_connect(psoc, vdev, num_mlo,
-						     mlo_idx, num_legacy,
-						     legacy_idx, freq_list,
-						     vdev_id_list);
+		if_mgr_ml_sta_concurency_on_connect(psoc, vdev, num_ml,
+						    ml_idx, num_non_ml,
+						    non_ml_idx, freq_list,
+						    vdev_id_list);
 	else
-		if_mgr_sta_mlo_concurency_on_disconnect(vdev, num_mlo, mlo_idx,
-							num_legacy,
-							vdev_id_list);
+		if_mgr_ml_sta_concurency_on_disconnect(vdev, num_ml, ml_idx,
+						       num_non_ml,
+						       vdev_id_list);
 }
 #else
 static inline void
-if_mgr_handle_sta_mlo_link_concurrency(struct wlan_objmgr_psoc *psoc,
-				       struct wlan_objmgr_vdev *vdev,
-				       bool is_connect)
+if_mgr_handle_ml_sta_link_concurrency(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_objmgr_vdev *vdev,
+				      bool is_connect)
 {}
 #endif
 
@@ -548,8 +496,7 @@ QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 			if_mgr_enable_roaming(pdev, vdev, RSO_CONNECT_START);
 		}
 		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
-			if_mgr_handle_sta_mlo_link_concurrency(psoc, vdev,
-							       true);
+			if_mgr_handle_ml_sta_link_concurrency(psoc, vdev, true);
 	} else {
 		/* notify connect failure on final failure */
 		ucfg_tdls_notify_connect_failure(psoc);
@@ -620,7 +567,7 @@ QDF_STATUS if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
-		if_mgr_handle_sta_mlo_link_concurrency(psoc, vdev, false);
+		if_mgr_handle_ml_sta_link_concurrency(psoc, vdev, false);
 
 	return QDF_STATUS_SUCCESS;
 }

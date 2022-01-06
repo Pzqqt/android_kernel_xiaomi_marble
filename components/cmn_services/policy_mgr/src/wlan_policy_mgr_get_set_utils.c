@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3251,6 +3251,73 @@ uint32_t policy_mgr_get_mode_specific_conn_info(
 
 	return count;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *num_ml, uint8_t *ml_idx,
+					    uint8_t *num_non_ml,
+					    uint8_t *non_ml_idx,
+					    qdf_freq_t *freq_list,
+					    uint8_t *vdev_id_list)
+{
+	uint32_t sta_num = 0;
+	uint8_t i;
+	struct wlan_objmgr_vdev *temp_vdev;
+
+	*num_ml = 0;
+	*num_non_ml = 0;
+
+	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, freq_list,
+							 vdev_id_list,
+							 PM_STA_MODE);
+	if (!sta_num)
+		return;
+
+	for (i = 0; i < sta_num; i++) {
+		temp_vdev =
+			wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+							    vdev_id_list[i],
+							    WLAN_POLICY_MGR_ID);
+		if (!temp_vdev) {
+			policy_mgr_err("invalid vdev for id %d",
+				       vdev_id_list[i]);
+			return;
+		}
+
+		if (wlan_vdev_mlme_is_mlo_vdev(temp_vdev))
+			ml_idx[(*num_ml)++] = i;
+		else
+			non_ml_idx[(*num_non_ml)++] = i;
+
+		wlan_objmgr_vdev_release_ref(temp_vdev, WLAN_POLICY_MGR_ID);
+	}
+}
+
+#else
+
+void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *num_ml, uint8_t *ml_idx,
+					    uint8_t *num_non_ml,
+					    uint8_t *non_ml_idx,
+					    qdf_freq_t *freq_list,
+					    uint8_t *vdev_id_list)
+{
+	uint32_t sta_num = 0;
+
+	*num_ml = 0;
+	*num_non_ml = 0;
+
+	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, freq_list,
+							 vdev_id_list,
+							 PM_STA_MODE);
+	if (!sta_num)
+		return;
+
+	*num_non_ml = sta_num;
+	/* copy vdev_id_list to non_ml_idx */
+	*non_ml_idx = *vdev_id_list;
+}
+#endif
 
 bool policy_mgr_max_concurrent_connections_reached(
 		struct wlan_objmgr_psoc *psoc)

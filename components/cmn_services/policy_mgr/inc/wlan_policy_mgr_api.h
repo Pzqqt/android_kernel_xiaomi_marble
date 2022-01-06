@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3907,6 +3907,26 @@ uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 						uint32_t *ch_freq_list,
 						uint8_t *vdev_id,
 						enum policy_mgr_con_mode mode);
+
+/*
+ * policy_mgr_get_ml_and_non_ml_sta_count() - get ML and non ML STA count
+ * also fills the freq and non ML/ML list
+ * @psoc: Objmgr psoc
+ * @num_ml: num ML as output
+ * @ml_idx: ML vdev index as output
+ * @num_non_ml: num non ML as output
+ * @non_ml_idx: non ML vdev index as output
+ * @freq_list: freq list of each sta vdev
+ * @vdev_id_list: vdev id list
+ *
+ * Return: void
+ */
+void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *num_ml, uint8_t *ml_idx,
+					    uint8_t *num_non_ml,
+					    uint8_t *non_ml_idx,
+					    qdf_freq_t *freq_list,
+					    uint8_t *vdev_id_list);
 
 /**
  * policy_mgr_is_sap_go_on_2g() - check if sap/go is on 2g
