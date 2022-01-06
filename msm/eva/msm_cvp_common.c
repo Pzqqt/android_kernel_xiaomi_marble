@@ -1338,13 +1338,15 @@ int msm_cvp_noc_error_info(struct msm_cvp_core *core)
 		return -EINVAL;
 	}
 
+	if (!core->resources.non_fatal_pagefaults)
+		return 0;
+
 	if (!core->smmu_fault_handled)
 		return 0;
 
 	hdev = core->device;
 	call_hfi_op(hdev, noc_error_info, hdev->hfi_device_data);
 
-    BUG_ON(!core->resources.non_fatal_pagefaults);
 	return 0;
 }
 
