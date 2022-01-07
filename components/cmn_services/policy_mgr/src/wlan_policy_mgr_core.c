@@ -35,6 +35,11 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_cm_api.h"
 #include "wlan_reg_ucfg_api.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_cmn.h"
+#include "wlan_mlo_mgr_public_structs.h"
+#endif
+#include "wlan_cm_ucfg_api.h"
 
 #define POLICY_MGR_MAX_CON_STRING_LEN   100
 #define LOWER_END_FREQ_5GHZ 4900
@@ -731,6 +736,7 @@ void policy_mgr_store_and_del_conn_info_by_vdev_id(
 		policy_mgr_err("Invalid parameters");
 		return;
 	}
+
 	*num_cxn_del = 0;
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -758,6 +764,8 @@ void policy_mgr_store_and_del_conn_info_by_vdev_id(
 			psoc,
 			pm_conc_connection_list[conn_index].vdev_id);
 	}
+
+	policy_mgr_debug("vdev id %d, num_cxn_del %d", vdev_id, *num_cxn_del);
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
@@ -827,6 +835,7 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 {
 	uint32_t conn_index;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	int i;
 
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS < num_cxn_del || 0 == num_cxn_del) {
 		policy_mgr_err("Failed to restore %d/%d deleted information",
@@ -841,20 +850,21 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	conn_index = policy_mgr_get_connection_count(psoc);
-	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= conn_index) {
+	if (MAX_NUMBER_OF_CONC_CONNECTIONS - num_cxn_del <= conn_index) {
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-		policy_mgr_err("Failed to restore the deleted information %d/%d",
-			conn_index, MAX_NUMBER_OF_CONC_CONNECTIONS);
+		policy_mgr_err("Failed to restore the deleted information %d/%d/%d",
+			       conn_index, num_cxn_del,
+			       MAX_NUMBER_OF_CONC_CONNECTIONS);
 		return;
 	}
 
 	qdf_mem_copy(&pm_conc_connection_list[conn_index], info,
-			num_cxn_del * sizeof(*info));
+		     num_cxn_del * sizeof(*info));
 	pm_ctx->no_of_active_sessions[info->mode] += num_cxn_del;
+	for (i = 0; i < num_cxn_del; i++)
+		policy_mgr_debug("Restored the deleleted conn info, vdev:%d, index:%d",
+				 info[i].vdev_id, conn_index++);
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	policy_mgr_debug("Restored the deleleted conn info, vdev:%d, index:%d",
-		info->vdev_id, conn_index);
 }
 
 static bool
@@ -1568,35 +1578,13 @@ void policy_mgr_set_pcl_for_existing_combo(struct wlan_objmgr_psoc *psoc,
 					   uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct policy_mgr_conc_connection_info
-			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
-	enum QDF_OPMODE pcl_mode;
-	uint8_t num_cxn_del = 0;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	struct policy_mgr_pcl_list pcl;
 
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return;
-	}
-
-	pcl_mode = policy_mgr_get_qdf_mode_from_pm(mode);
-	if (pcl_mode == QDF_MAX_NO_OF_MODE)
-		return;
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
-		/* Check, store and temp delete the mode's parameter */
-		policy_mgr_store_and_del_conn_info(psoc, mode, false,
-						info, &num_cxn_del);
-		/* Set the PCL to the FW since connection got updated */
-		status = policy_mgr_pdev_get_pcl(psoc, pcl_mode, &pcl);
-		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
-		/* Restore the connection info */
-		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
-	}
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
+	status = policy_mgr_get_pcl_for_vdev_id(psoc, mode, pcl.pcl_list,
+						&pcl.pcl_len,
+						pcl.weight_list,
+						QDF_ARRAY_SIZE(pcl.weight_list),
+						vdev_id);
 	/* Send PCL only if policy_mgr_pdev_get_pcl returned success */
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = policy_mgr_set_pcl(psoc, &pcl, vdev_id, false);
@@ -1610,7 +1598,7 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 {
 	struct policy_mgr_pcl_list msg = { {0} };
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t roam_enabled_vdev_id, count;
+	uint8_t roam_enabled_vdev_id;
 	bool sta_concurrency_is_dbs, dual_sta_roam_enabled;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
@@ -1626,14 +1614,6 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 	}
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 
-	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
-							  NULL);
-	sta_concurrency_is_dbs = (count == 2) &&
-			!(policy_mgr_current_concurrency_is_mcc(psoc) ||
-			policy_mgr_current_concurrency_is_scc(psoc));
-
-	dual_sta_roam_enabled = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
-
 	/*
 	 * Get the vdev id of the STA on which roaming is already
 	 * initialized and set the vdev PCL for that STA vdev if dual
@@ -1644,8 +1624,10 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 	if (roam_enabled_vdev_id == WLAN_UMAC_VDEV_ID_MAX)
 		return;
 
-	policy_mgr_debug("count:%d, dual_sta_roam:%d, is_dbs:%d, clear_pcl:%d",
-			 count, dual_sta_roam_enabled, sta_concurrency_is_dbs,
+	sta_concurrency_is_dbs = policy_mgr_concurrent_sta_doing_dbs(psoc);
+	dual_sta_roam_enabled = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+	policy_mgr_debug("dual_sta_roam:%d, is_dbs:%d, clear_pcl:%d",
+			 dual_sta_roam_enabled, sta_concurrency_is_dbs,
 			 clear_pcl);
 
 	if (dual_sta_roam_enabled && sta_concurrency_is_dbs) {
@@ -1671,6 +1653,77 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static uint32_t
+policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev) {
+	struct wlan_channel *chan;
+	uint32_t band_mask = 0;
+	struct wlan_objmgr_vdev *ml_vdev_list[WLAN_UMAC_MLO_MAX_VDEVS] = {0};
+	uint16_t ml_vdev_cnt = 0;
+	struct wlan_objmgr_vdev *t_vdev;
+	int i;
+
+	if (!vdev) {
+		policy_mgr_err("vdev is NULL");
+		return band_mask;
+	}
+
+	if (wlan_vdev_mlme_is_link_sta_vdev(vdev)) {
+		policy_mgr_debug("skip mlo link sta");
+		return band_mask;
+	}
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE ||
+	    !wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+		chan = wlan_vdev_get_active_channel(vdev);
+		if (!chan) {
+			policy_mgr_err("no active channel");
+			return band_mask;
+		}
+
+		band_mask |= BIT(wlan_reg_freq_to_band(chan->ch_freq));
+		return band_mask;
+	}
+
+	mlo_get_ml_vdev_list(vdev, &ml_vdev_cnt, ml_vdev_list);
+	for (i = 0; i < ml_vdev_cnt; i++) {
+		t_vdev = ml_vdev_list[i];
+		if (!ucfg_cm_is_vdev_connected(t_vdev))
+			goto next;
+
+		chan = wlan_vdev_get_active_channel(t_vdev);
+		if (!chan)
+			goto next;
+
+		band_mask |= BIT(wlan_reg_freq_to_band(chan->ch_freq));
+next:
+		mlo_release_vdev_ref(t_vdev);
+	}
+
+	return band_mask;
+}
+#else
+static uint32_t
+policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev) {
+	struct wlan_channel *chan;
+	uint32_t band_mask = 0;
+
+	if (!vdev) {
+		policy_mgr_err("vdev is NULL");
+		return band_mask;
+	}
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	if (!chan) {
+		policy_mgr_err("no active channel");
+		return band_mask;
+	}
+
+	band_mask |= BIT(wlan_reg_freq_to_band(chan->ch_freq));
+	return band_mask;
+}
+#endif
+
 /**
  * policy_mgr_get_connected_roaming_vdev_band_mask() - get connected vdev
  * band mask
@@ -1683,11 +1736,9 @@ static uint32_t
 policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id)
 {
-	uint32_t band_mask;
+	uint32_t band_mask = 0, roam_band_mask, band_mask_for_vdev;
 	struct wlan_objmgr_vdev *vdev;
 	bool dual_sta_roam_active, is_pcl_per_vdev;
-	struct wlan_channel *chan;
-	uint32_t roam_band_mask;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_POLICY_MGR_ID);
@@ -1696,25 +1747,20 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 		return 0;
 	}
 
-	chan = wlan_vdev_get_active_channel(vdev);
-	if (!chan) {
-		policy_mgr_err("no active channel");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
-		return 0;
-	}
+	band_mask_for_vdev = policy_mgr_get_connected_vdev_band_mask(vdev);
 
 	is_pcl_per_vdev = wlan_cm_roam_is_pcl_per_vdev_active(psoc, vdev_id);
 	dual_sta_roam_active = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
 
-	policy_mgr_debug("connected STA (vdev_id:%d, freq:%d), pcl_per_vdev:%d, dual_sta_roam_active:%d",
-			 vdev_id, chan->ch_freq, is_pcl_per_vdev,
+	policy_mgr_debug("connected STA vdev_id:%d, pcl_per_vdev:%d, dual_sta_roam_active:%d",
+			 vdev_id, is_pcl_per_vdev,
 			 dual_sta_roam_active);
 
 	if (dual_sta_roam_active && is_pcl_per_vdev) {
-		band_mask = BIT(wlan_reg_freq_to_band(chan->ch_freq));
-		policy_mgr_debug("connected vdev band mask:%d", band_mask);
+		policy_mgr_debug("connected vdev band mask:%d",
+				 band_mask_for_vdev);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
-		return band_mask;
+		return band_mask_for_vdev;
 	}
 
 	/*
@@ -1730,17 +1776,18 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("roam_band_mask:%d", roam_band_mask);
 		return roam_band_mask;
 	}
+
 	/*
 	 * If PCL command is PDEV level, only one sta is active.
 	 * So fill the band mask if intra band roaming is enabled
 	 */
-	if (!is_pcl_per_vdev)
-		if (ucfg_mlme_is_roam_intra_band(psoc)) {
-			band_mask = BIT(wlan_reg_freq_to_band(chan->ch_freq));
-			policy_mgr_debug("connected STA band mask:%d",
-					 band_mask);
-		}
+	if ((!is_pcl_per_vdev) && ucfg_mlme_is_roam_intra_band(psoc)) {
+		policy_mgr_debug("connected STA band mask:%d",
+				 band_mask_for_vdev);
+		return band_mask_for_vdev;
+	}
 
+	policy_mgr_debug("band_mask:%d", band_mask);
 	return band_mask;
 }
 

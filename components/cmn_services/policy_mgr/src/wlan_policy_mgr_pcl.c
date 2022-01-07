@@ -34,6 +34,11 @@
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_utility.h"
 #include "wlan_mlme_ucfg_api.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_cmn.h"
+#endif
+#include "wlan_cm_ucfg_api.h"
+#include "wlan_cm_roam_api.h"
 
 /**
  * first_connection_pcl_table - table which provides PCL for the
@@ -107,6 +112,155 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn(
 	return status;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * policy_mgr_get_pcl_concurrent_connetions() - Get concurrent connections
+ * those will affect PCL fetching for the given vdev id
+ * @psoc: PSOC object information
+ * @mode: Connection Mode
+ * @vdev_id: vdev id
+ * @vdev_ids: vdev id list of the concurrent connections
+ * @vdev_ids_size: size of the vdev id list
+ *
+ * Return: number of the concurrent connections
+ */
+static uint32_t
+policy_mgr_get_pcl_concurrent_connetions(struct wlan_objmgr_psoc *psoc,
+					 enum policy_mgr_con_mode mode,
+					 uint8_t vdev_id, uint8_t *vdev_ids,
+					 uint32_t vdev_ids_size)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t num_related = 0;
+	bool is_ml_sta, has_same_band = false;
+	uint8_t vdev_id_with_diff_band = WLAN_INVALID_VDEV_ID;
+	uint8_t num_ml = 0, num_non_ml = 0, ml_vdev_id;
+	uint8_t ml_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t non_ml_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	qdf_freq_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	qdf_freq_t freq = 0, ml_freq;
+	int i;
+
+	if (!vdev_ids || !vdev_ids_size) {
+		policy_mgr_err("Invalid parameters");
+		return num_related;
+	}
+
+	if (mode != PM_STA_MODE) {
+		vdev_ids[0] = vdev_id;
+		return 1;
+	}
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return 0;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_POLICY_MGR_ID);
+	if (!vdev) {
+		policy_mgr_err("vdev %d is not present", vdev_id);
+		goto out;
+	}
+
+	if (wlan_vdev_mlme_is_link_sta_vdev(vdev)) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+		policy_mgr_debug("ignore ML STA link vdev %d", vdev_id);
+		goto out;
+	}
+
+	is_ml_sta = wlan_vdev_mlme_is_mlo_vdev(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+
+	policy_mgr_get_ml_and_non_ml_sta_count(psoc, &num_ml, ml_idx,
+					       &num_non_ml, non_ml_idx,
+					       freq_list, vdev_id_list);
+	for (i = 0;
+	     i < num_non_ml + num_ml && num_related < vdev_ids_size; i++) {
+		if (vdev_id_list[i] == vdev_id) {
+			vdev_ids[num_related++] = vdev_id;
+			freq = freq_list[i];
+			break;
+		}
+	}
+
+	/* No existing connection for the vdev id */
+	if (!freq)
+		goto out;
+
+	for (i = 0; i < num_ml && num_related < vdev_ids_size; i++) {
+		ml_vdev_id = vdev_id_list[ml_idx[i]];
+		if (ml_vdev_id == vdev_id)
+			continue;
+
+		/* If it's ML STA, return vdev ids for all links */
+		if (is_ml_sta) {
+			policy_mgr_debug("vdev_ids[%d]: %d",
+					 num_related, ml_vdev_id);
+			vdev_ids[num_related++] = ml_vdev_id;
+			continue;
+		}
+
+		ml_freq = freq_list[ml_idx[i]];
+		if (wlan_reg_is_24ghz_ch_freq(ml_freq) ==
+		    wlan_reg_is_24ghz_ch_freq(freq)) {
+			if (policy_mgr_are_sbs_chan(psoc, freq, ml_freq) &&
+			    wlan_cm_same_band_sta_allowed(psoc))
+				continue;
+
+			/*
+			 * If it's Non-ML STA, and its freq is within the same
+			 * band with one of the existing ML link, but can NOT
+			 * lead to SBS, return the original vdev id and vdev id
+			 * of the ML link within same band.
+			 */
+			policy_mgr_debug("vdev_ids[%d]: %d",
+					 num_related, ml_vdev_id);
+			vdev_ids[num_related++] = ml_vdev_id;
+			has_same_band = true;
+			break;
+		}
+
+		vdev_id_with_diff_band = ml_vdev_id;
+	}
+
+	/*
+	 * If it's Non-ML STA, and ML STA is present but the links are
+	 * within different band or (within same band but can lead to SBS and
+	 * same band STA is allowed), return original vdev id and vdev id of
+	 * any ML link within different band.
+	 */
+	if (!has_same_band && vdev_id_with_diff_band != WLAN_INVALID_VDEV_ID) {
+		policy_mgr_debug("vdev_ids[%d]: %d",
+				 num_related, vdev_id_with_diff_band);
+		vdev_ids[num_related++] = vdev_id_with_diff_band;
+	}
+
+out:
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	return num_related;
+}
+#else
+static inline uint32_t
+policy_mgr_get_pcl_concurrent_connetions(struct wlan_objmgr_psoc *psoc,
+					 enum policy_mgr_con_mode mode,
+					 uint8_t vdev_id, uint8_t *vdev_ids,
+					 uint32_t vdev_ids_size)
+{
+	if (!vdev_ids || !vdev_ids_size) {
+		policy_mgr_err("Invalid parameters");
+		return 0;
+	}
+
+	vdev_ids[0] = vdev_id;
+	return 1;
+}
+#endif
+
 QDF_STATUS policy_mgr_get_pcl_for_vdev_id(struct wlan_objmgr_psoc *psoc,
 					  enum policy_mgr_con_mode mode,
 					  uint32_t *pcl_ch, uint32_t *len,
@@ -116,32 +270,48 @@ QDF_STATUS policy_mgr_get_pcl_for_vdev_id(struct wlan_objmgr_psoc *psoc,
 {
 	struct policy_mgr_conc_connection_info
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
-	uint8_t num_cxn_del = 0;
-
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t ids[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t num_del = 0, total_del = 0, id_num = 0;
+	int i;
 
-	policy_mgr_debug("get pcl for existing conn:%d", mode);
+	policy_mgr_debug("get pcl for existing conn:%d vdev id %d",
+			 mode, vdev_id);
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return QDF_STATUS_E_FAILURE;
 	}
-	*len = 0;
+
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
-		/* Check, store and temp delete the mode's parameter */
-		policy_mgr_store_and_del_conn_info_by_vdev_id(psoc,
-							      vdev_id,
-							      info,
-							      &num_cxn_del);
-		/* Get the PCL */
-		status = policy_mgr_get_pcl(psoc, mode, pcl_ch, len,
-					    pcl_weight, weight_len);
-		policy_mgr_debug("Get PCL to FW for mode:%d", mode);
-		/* Restore the connection info */
-		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
+	id_num = policy_mgr_get_pcl_concurrent_connetions(psoc, mode,
+							  vdev_id, ids,
+							  QDF_ARRAY_SIZE(ids));
+	if (!id_num) {
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
 	}
+
+	*len = 0;
+
+	/* Check, store and temp delete the mode's parameter */
+	for (i = 0; i < id_num; i++) {
+		policy_mgr_store_and_del_conn_info_by_vdev_id(psoc,
+							      ids[i],
+							      &info[i],
+							      &num_del);
+		total_del += num_del;
+	}
+
+	/* Get the PCL */
+	status = policy_mgr_get_pcl(psoc, mode, pcl_ch, len,
+				    pcl_weight, weight_len);
+	policy_mgr_debug("Get PCL to FW for mode:%d", mode);
+	/* Restore the connection info */
+	policy_mgr_restore_deleted_conn_info(psoc, info, total_del);
+
+out:
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return status;
@@ -2385,7 +2555,7 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 	uint32_t i, j;
 	struct policy_mgr_conc_connection_info
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
-	uint8_t num_cxn_del = 0;
+	uint8_t num_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -2407,10 +2577,17 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		 * check can be used as though a new connection is coming up,
 		 * allowing to detect the disallowed channels.
 		 */
-		if (mode == PM_STA_MODE)
-			policy_mgr_store_and_del_conn_info(psoc, mode,
-							   false, info,
-							   &num_cxn_del);
+		if (mode == PM_STA_MODE) {
+			if (vdev)
+				policy_mgr_store_and_del_conn_info_by_vdev_id(
+					psoc, wlan_vdev_get_id(vdev),
+					info, &num_del);
+			else
+				policy_mgr_store_and_del_conn_info(psoc,
+								   mode, true,
+								   info,
+								   &num_del);
+		}
 		/*
 		 * There is a small window between releasing the above lock
 		 * and acquiring the same in policy_mgr_allow_concurrency,
@@ -2428,7 +2605,7 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		/* Restore the connection info */
 		if (mode == PM_STA_MODE)
 			policy_mgr_restore_deleted_conn_info(psoc, info,
-							     num_cxn_del);
+							     num_del);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 

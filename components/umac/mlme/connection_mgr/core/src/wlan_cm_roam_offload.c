@@ -618,7 +618,6 @@ cm_roam_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id, uint32_t roam_band_mask)
 {
 	struct wlan_objmgr_vdev *vdev;
-	uint32_t count;
 	bool concurrency_is_dbs;
 	struct wlan_channel *chan;
 
@@ -636,14 +635,7 @@ cm_roam_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
-	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
-							  NULL);
-	if (count != 2)
-		return true;
-
-	concurrency_is_dbs = !(policy_mgr_current_concurrency_is_mcc(psoc) ||
-	      policy_mgr_current_concurrency_is_scc(psoc));
-
+	concurrency_is_dbs = policy_mgr_concurrent_sta_doing_dbs(psoc);
 	if (!concurrency_is_dbs)
 		return true;
 
@@ -3314,14 +3306,13 @@ void cm_handle_sta_sta_roaming_enablement(struct wlan_objmgr_psoc *psoc,
 							   vdev_id_list,
 							   PM_STA_MODE);
 
-	if (!(wlan_mlme_get_dual_sta_roaming_enabled(psoc) && sta_count == 2)) {
+	if (!(wlan_mlme_get_dual_sta_roaming_enabled(psoc) && sta_count >= 2)) {
 		mlme_debug("Dual sta roaming is not enabled or count:%d",
 			   sta_count);
 		goto rel_ref;
 	}
 
-	if (!(policy_mgr_current_concurrency_is_mcc(psoc) ||
-	    policy_mgr_current_concurrency_is_scc(psoc))) {
+	if (policy_mgr_concurrent_sta_doing_dbs(psoc)) {
 		mlme_debug("After roam on vdev_id:%d, STA + STA concurrency is in DBS:%d",
 			   curr_vdev_id, sta_count);
 		for (conn_idx = 0; conn_idx < sta_count; conn_idx++) {
@@ -3533,7 +3524,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 {
 	enum roam_offload_state cur_state;
 	uint8_t temp_vdev_id, roam_enabled_vdev_id;
-	uint32_t roaming_bitmap, count;
+	uint32_t roaming_bitmap;
 	bool dual_sta_roam_active, usr_disabled_roaming, sta_concurrency_is_dbs;
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
@@ -3550,18 +3541,12 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 
 	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
-	dual_sta_roam_active =
-		wlan_mlme_get_dual_sta_roaming_enabled(psoc);
-	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
-							  NULL);
-	sta_concurrency_is_dbs = (count == 2) &&
-		    !(policy_mgr_current_concurrency_is_mcc(psoc) ||
-		      policy_mgr_current_concurrency_is_scc(psoc));
-
+	dual_sta_roam_active = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+	sta_concurrency_is_dbs = policy_mgr_concurrent_sta_doing_dbs(psoc);
 	cur_state = mlme_get_roam_state(psoc, vdev_id);
 
-	mlme_info("sta count:%d, dual_sta_roam_active:%d, is_dbs:%d, state:%d",
-		  count, dual_sta_roam_active, sta_concurrency_is_dbs,
+	mlme_info("dual_sta_roam_active:%d, is_dbs:%d, state:%d",
+		  dual_sta_roam_active, sta_concurrency_is_dbs,
 		  cur_state);
 
 	switch (cur_state) {
