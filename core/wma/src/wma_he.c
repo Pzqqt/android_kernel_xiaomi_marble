@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1118,10 +1118,11 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	uint32_t mac_cap[PSOC_HOST_MAX_MAC_SIZE] = {0}, he_ops = 0;
 	uint8_t temp, i, chan_width;
 
-	if (params->he_capable)
-		peer->he_flag = 1;
-	else
+	if (!params->he_capable)
 		return;
+
+	peer->he_flag = 1;
+	peer->qos_flag = 1;
 
 	/* HE MAC capabilities */
 	WMI_HECAP_MAC_HECTRL_SET(mac_cap[0], he_cap->htc_he);

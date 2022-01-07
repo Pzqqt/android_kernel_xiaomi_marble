@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -386,10 +387,11 @@ void wma_populate_peer_eht_cap(struct peer_assoc_params *peer,
 	uint32_t *phy_cap = peer->peer_eht_cap_phyinfo;
 	uint32_t *mac_cap = peer->peer_eht_cap_macinfo;
 
-	if (params->eht_capable)
-		peer->eht_flag = 1;
-	else
+	if (!params->eht_capable)
 		return;
+
+	peer->eht_flag = 1;
+	peer->qos_flag = 1;
 
 	/* EHT MAC Capabilities */
 	WMI_EHTCAP_MAC_NSEPPRIACCESS_SET(mac_cap, eht_cap->nsep_pri_access);
