@@ -2376,7 +2376,7 @@ typedef struct {
     A_UINT32 ax_ul_mumimo_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
     /* Represents the count for 11AX UL MU MIMO sequences with BRP Triggers */
     A_UINT32 ax_ul_mumimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
-    /* Number of 11AC DL MU MIMO schedules posted per group size */
+    /* Number of 11AC DL MU MIMO schedules posted per group size (0-3) */
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
@@ -2384,6 +2384,8 @@ typedef struct {
     A_UINT32 be_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
     /* Number of 11BE DL MU MIMO schedules posted per group size */
     A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /* Number of 11AC DL MU MIMO schedules posted per group size (4-7) */
+    A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz_ext[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
@@ -2427,7 +2429,7 @@ typedef struct {
     A_UINT32 ac_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Represents the count for 11AX DL MU MIMO sequences */
     A_UINT32 ax_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
-    /* Number of 11AC DL MU MIMO schedules posted per group size */
+    /* Number of 11AC DL MU MIMO schedules posted per group size (0-3) */
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
@@ -2435,6 +2437,8 @@ typedef struct {
     A_UINT32 be_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
     /* Number of 11BE DL MU MIMO schedules posted per group size */
     A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /* Number of 11AC DL MU MIMO schedules posted per group size (4 - 7)*/
+    A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz_ext[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
 } htt_tx_pdev_dl_mu_mimo_sch_stats_tlv;
 
 typedef struct {
