@@ -369,3 +369,21 @@ mlo_roam_update_connected_links(struct wlan_objmgr_vdev *vdev,
 					connect_rsp->ml_parnter_info);
 }
 
+QDF_STATUS
+wlan_mlo_roam_abort_on_link(struct wlan_objmgr_psoc *psoc,
+			    struct roam_offload_synch_ind *sync_ind)
+{
+	uint8_t i;
+	QDF_STATUS status;
+
+	for (i = 0; i < sync_ind->num_setup_links; i++)
+		if (sync_ind->ml_link[i].vdev_id != sync_ind->roamed_vdev_id) {
+			status = cm_fw_roam_abort_req(psoc,
+						      sync_ind->roamed_vdev_id);
+			if (QDF_IS_STATUS_ERROR(status))
+				mlme_err("LFR3: Fail to abort roam on vdev: %u",
+					 sync_ind->ml_link[i].vdev_id);
+		}
+
+	return QDF_STATUS_SUCCESS;
+}
