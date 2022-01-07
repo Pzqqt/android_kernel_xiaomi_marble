@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -6609,8 +6609,8 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 			continue;
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc))
 			break;
-		if (wlan_reg_is_same_band_freqs(freq,
-						op_freq[i]))
+		if (wlan_reg_is_same_band_freqs(freq, op_freq[i]) &&
+		    !policy_mgr_are_sbs_chan(hdd_ctx->psoc, freq, op_freq[i]))
 			break;
 	}
 	if (i >= cc_count)
