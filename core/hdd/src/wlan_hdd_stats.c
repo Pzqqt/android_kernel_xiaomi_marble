@@ -2050,6 +2050,10 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 
 	hdd_enter_dev(adapter->dev);
 
+	status = wlan_hdd_set_station_stats_request_pending(adapter);
+	if (status == QDF_STATUS_E_ALREADY)
+		return qdf_status_to_os_return(status);
+
 	/*
 	 * FW can send radio stats with multiple events and for the first event
 	 * host allocates memory in wma and processes the events, there is a
@@ -2063,10 +2067,6 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	 * previous command
 	 */
 	sme_radio_tx_mem_free();
-
-	status = wlan_hdd_set_station_stats_request_pending(adapter);
-	if (status == QDF_STATUS_E_ALREADY)
-		return qdf_status_to_os_return(status);
 
 	request = osif_request_alloc(&params);
 	if (!request) {
