@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +23,7 @@
 
 #include <wlan_cm_ucfg_api.h>
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
+#include <wlan_reg_services_api.h>
 
 QDF_STATUS ucfg_cm_start_connect(struct wlan_objmgr_vdev *vdev,
 				 struct wlan_cm_connect_req *req)
@@ -96,3 +98,20 @@ bool ucfg_cm_is_vdev_roam_reassoc_state(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
+enum band_info ucfg_cm_get_connected_band(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_channel *bss_chan;
+	uint32_t sta_freq = 0;
+
+	if (wlan_cm_is_vdev_connected(vdev)) {
+		bss_chan = wlan_vdev_mlme_get_bss_chan(vdev);
+		sta_freq = bss_chan->ch_freq;
+	}
+
+	if (wlan_reg_is_24ghz_ch_freq(sta_freq))
+		return BAND_2G;
+	else if (wlan_reg_is_5ghz_ch_freq(sta_freq))
+		return BAND_5G;
+	else	/* If station is not connected return as BAND_ALL */
+		return BAND_ALL;
+}
