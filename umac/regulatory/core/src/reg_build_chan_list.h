@@ -35,6 +35,7 @@
 #define MAX_AFC_BW 160
 #endif
 
+#include "reg_priv_objs.h"
 /**
  * reg_reset_reg_rules() - provides the reg domain rules info
  * @reg_rules: reg rules pointer
@@ -208,4 +209,16 @@ QDF_STATUS
 reg_get_secondary_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				    struct regulatory_channel *chan_list);
 #endif
+
+/**
+ * reg_is_chan_disabled_and_not_nol() - In the regulatory channel list, a
+ * channel may be disabled by the regulatory/device or by radar. Radar is
+ * temporary and a radar disabled channel does not mean that the channel is
+ * permanently disabled. The API checks if the channel is disabled, but not due
+ * to radar.
+ * @chan - Regulatory channel object
+ *
+ * Return - True,  the channel is disabled, but not due to radar, else false.
+ */
+bool reg_is_chan_disabled_and_not_nol(struct regulatory_channel *chan);
 #endif

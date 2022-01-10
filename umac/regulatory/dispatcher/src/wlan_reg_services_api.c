@@ -116,6 +116,11 @@ QDF_STATUS wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool wlan_reg_is_chan_disabled_and_not_nol(struct regulatory_channel *chan)
+{
+	return reg_is_chan_disabled_and_not_nol(chan);
+}
+
 QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 		struct regulatory_channel *chan_list)
 {

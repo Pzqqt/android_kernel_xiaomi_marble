@@ -42,6 +42,18 @@
 #define MAX_PWR_FCC_CHAN_13 2
 #define CHAN_144_CENT_FREQ 5720
 
+static inline bool
+reg_nol_and_history_not_set(struct regulatory_channel *chan)
+{
+	return ((!chan->nol_chan) && (!chan->nol_history));
+}
+
+bool reg_is_chan_disabled_and_not_nol(struct regulatory_channel *chan)
+{
+	return (!reg_is_state_allowed(chan->state) &&
+		(chan->chan_flags & REGULATORY_CHAN_DISABLED) &&
+		reg_nol_and_history_not_set(chan));
+}
 #ifdef CONFIG_BAND_6GHZ
 static void reg_fill_psd_info(enum channel_enum chan_enum,
 			      struct cur_reg_rule *reg_rule,

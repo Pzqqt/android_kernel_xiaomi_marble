@@ -3843,12 +3843,6 @@ reg_get_320_bonded_chan_array(struct wlan_objmgr_pdev *pdev,
 	return num_bonded_pairs;
 }
 
-static inline bool reg_is_state_allowed(enum channel_state chan_state)
-{
-	return !((chan_state == CHANNEL_STATE_INVALID) ||
-		 (chan_state == CHANNEL_STATE_DISABLE));
-}
-
 /**
  * reg_get_320_bonded_channel_state() - Given a bonded channel
  * pointer and freq, determine if the subchannels of the bonded pair
@@ -6717,4 +6711,10 @@ QDF_STATUS reg_is_chwidth_supported(struct wlan_objmgr_pdev *pdev,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool reg_is_state_allowed(enum channel_state chan_state)
+{
+	return !((chan_state == CHANNEL_STATE_INVALID) ||
+		 (chan_state == CHANNEL_STATE_DISABLE));
 }

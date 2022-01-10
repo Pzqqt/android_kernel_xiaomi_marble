@@ -29,6 +29,7 @@
 #ifdef CONFIG_AFC_SUPPORT
 #include "reg_services_common.h"
 #endif
+#include <wlan_objmgr_psoc_obj.h>
 
 #define reg_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_REGULATORY, params)

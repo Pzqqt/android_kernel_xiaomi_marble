@@ -552,6 +552,18 @@ QDF_STATUS wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 			     enum dfs_reg *dfs_reg);
 
 /**
+ * wlan_reg_is_chan_disabled_and_not_nol() - In the regulatory channel list, a
+ * channel may be disabled by the regulatory/device or by radar. Radar is
+ * temporary and a radar disabled channel does not mean that the channel is
+ * permanently disabled. The API checks if the channel is disabled, but not due
+ * to radar.
+ * @chan - Regulatory channel object
+ *
+ * Return - True,  the channel is disabled, but not due to radar, else false.
+ */
+bool wlan_reg_is_chan_disabled_and_not_nol(struct regulatory_channel *chan);
+
+/**
  * wlan_reg_get_current_chan_list() - provide the pdev current channel list
  * @pdev: pdev pointer
  * @chan_list: channel list pointer

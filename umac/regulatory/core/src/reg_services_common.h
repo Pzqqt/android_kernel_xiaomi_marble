@@ -1862,4 +1862,14 @@ void reg_dmn_set_afc_req_id(struct wlan_afc_host_partial_request *afc_req,
 QDF_STATUS reg_is_chwidth_supported(struct wlan_objmgr_pdev *pdev,
 				    enum phy_ch_width ch_width,
 				    bool *is_supported);
+
+/**
+ * reg_is_state_allowed() - Check the state of the regulatory channel if it
+ * is invalid or disabled.
+ * @chan_state: Channel state.
+ *
+ * Return bool: true if the channel is not an invalid channel or disabled
+ * channel.
+ */
+bool reg_is_state_allowed(enum channel_state chan_state);
 #endif
