@@ -4222,6 +4222,8 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_roam_cnd_min_rssi_param *min_rssi_param;
 	wmi_owe_ap_profile *owe_ap_profile;
 	enum roam_trigger_reason trig_reason;
+	uint32_t *authmode_list;
+	int i;
 
 	len = sizeof(wmi_roam_ap_profile_fixed_param) + sizeof(wmi_ap_profile);
 	len += sizeof(*score_param) + WMI_TLV_HDR_SIZE;
@@ -4239,6 +4241,16 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	if (ap_profile->owe_ap_profile.is_owe_transition_conn) {
 		len += WMI_TLV_HDR_SIZE;
 		len += sizeof(*owe_ap_profile);
+	} else {
+		len += WMI_TLV_HDR_SIZE;
+	}
+
+	if (ap_profile->profile.num_allowed_authmode) {
+		len += WMI_TLV_HDR_SIZE;
+		len += ap_profile->profile.num_allowed_authmode *
+						sizeof(uint32_t);
+	} else {
+		len += WMI_TLV_HDR_SIZE;
 	}
 
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -4532,6 +4544,32 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 		buf_ptr += sizeof(*owe_ap_profile);
 	} else {
 		/* set zero TLV's for owe_ap_profile */
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       WMITLV_GET_STRUCT_TLVLEN(0));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
+	/* List of Allowed authmode other than the connected akm */
+	if (ap_profile->profile.num_allowed_authmode) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+			       (ap_profile->profile.num_allowed_authmode *
+			       sizeof(uint32_t)));
+
+		buf_ptr += WMI_TLV_HDR_SIZE;
+
+		authmode_list = (uint32_t *)buf_ptr;
+		for (i = 0; i < ap_profile->profile.num_allowed_authmode; i++)
+			authmode_list[i] =
+				ap_profile->profile.allowed_authmode[i];
+
+		wmi_debug("[Allowed Authmode]: num_allowed_authmode: %d",
+			  ap_profile->profile.num_allowed_authmode);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+				   authmode_list,
+				   ap_profile->profile.num_allowed_authmode *
+				   sizeof(uint32_t));
+	} else {
+		/* set zero TLV's for allowed_authmode */
 		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 			       WMITLV_GET_STRUCT_TLVLEN(0));
 		buf_ptr += WMI_TLV_HDR_SIZE;
@@ -5366,4 +5404,3 @@ void wmi_roam_attach_tlv(wmi_unified_t wmi_handle)
 	wmi_roam_offload_attach_tlv(wmi_handle);
 	wmi_fils_sk_attach_tlv(wmi_handle);
 }
-

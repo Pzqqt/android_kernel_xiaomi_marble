@@ -490,7 +490,7 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 	 * Instead of making another infra, send the RSN-CAPS in MSB of
 	 * beacon Caps.
 	 */
-	rsn_caps = rso_cfg->rsn_cap;
+	rsn_caps = rso_cfg->orig_sec_info.rsn_caps;
 
 	/* Fill LFR3 specific self capabilities for roam scan mode TLV */
 	self_caps.ess = 1;
@@ -1081,7 +1081,7 @@ cm_roam_scan_offload_scan_period(uint8_t vdev_id,
 
 static void
 cm_roam_fill_11w_params(struct wlan_objmgr_vdev *vdev,
-			struct ap_profile_params *req)
+			struct ap_profile *profile)
 {
 	uint32_t group_mgmt_cipher;
 	bool peer_rmf_capable = false;
@@ -1114,10 +1114,10 @@ cm_roam_fill_11w_params(struct wlan_objmgr_vdev *vdev,
 		group_mgmt_cipher = WMI_CIPHER_NONE;
 
 	if (peer_rmf_capable) {
-		req->profile.rsn_mcastmgmtcipherset = group_mgmt_cipher;
-		req->profile.flags |= WMI_AP_PROFILE_FLAG_PMF;
+		profile->rsn_mcastmgmtcipherset = group_mgmt_cipher;
+		profile->flags |= WMI_AP_PROFILE_FLAG_PMF;
 	} else {
-		req->profile.rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
+		profile->rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
 	}
 }
 
@@ -1465,6 +1465,57 @@ uint32_t cm_crypto_authmode_to_wmi_authmode(int32_t authmodeset,
 	return WMI_AUTH_OPEN;
 }
 
+static void cm_update_crypto_params(struct wlan_objmgr_vdev *vdev,
+				    struct ap_profile *profile)
+{
+	int32_t keymgmt, connected_akm, authmode, uccipher, mccipher;
+	enum wlan_crypto_key_mgmt i;
+	int32_t num_allowed_authmode = 0;
+	struct rso_config *rso_cfg;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return;
+
+	/* Pairwise cipher suite */
+	uccipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	profile->rsn_ucastcipherset = cm_crpto_cipher_wmi_cipher(uccipher);
+
+	/* Group cipher suite */
+	mccipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+	profile->rsn_mcastcipherset = cm_crpto_cipher_wmi_cipher(mccipher);
+
+	/* Group management cipher suite */
+	cm_roam_fill_11w_params(vdev, profile);
+
+	authmode = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
+	/* Get connected akm */
+	connected_akm = wlan_crypto_get_param(vdev,
+					WLAN_CRYPTO_PARAM_KEY_MGMT);
+	profile->rsn_authmode =
+			cm_crypto_authmode_to_wmi_authmode(authmode,
+							   connected_akm,
+							   uccipher);
+	/* Get keymgmt from self security info */
+	keymgmt = rso_cfg->orig_sec_info.key_mgmt;
+
+	for (i = 0; i < WLAN_CRYPTO_KEY_MGMT_MAX; i++) {
+		/*
+		 * Send AKM in allowed list which are not present in connected
+		 * akm
+		 */
+		if (QDF_HAS_PARAM(keymgmt, i) &&
+		    num_allowed_authmode < WLAN_CRYPTO_AUTH_MAX) {
+			profile->allowed_authmode[num_allowed_authmode++] =
+			cm_crypto_authmode_to_wmi_authmode(authmode,
+							   (keymgmt & (1 << i)),
+							   uccipher);
+		}
+	}
+
+	profile->num_allowed_authmode = num_allowed_authmode;
+}
+
 /**
  * cm_roam_scan_offload_ap_profile() - set roam ap profile parameters
  * @psoc: psoc ctx
@@ -1484,7 +1535,6 @@ cm_roam_scan_offload_ap_profile(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	int32_t uccipher, authmode, mccipher, akm;
 	struct ap_profile *profile = &params->profile;
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
@@ -1494,18 +1544,8 @@ cm_roam_scan_offload_ap_profile(struct wlan_objmgr_psoc *psoc,
 	params->vdev_id = vdev_id;
 	wlan_vdev_mlme_get_ssid(vdev, profile->ssid.ssid,
 				&profile->ssid.length);
-	/* Pairwise cipher suite */
-	uccipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	profile->rsn_ucastcipherset = cm_crpto_cipher_wmi_cipher(uccipher);
-	/* Group cipher suite */
-	mccipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
-	profile->rsn_mcastcipherset = cm_crpto_cipher_wmi_cipher(mccipher);
-	/* Group management cipher suite */
-	cm_roam_fill_11w_params(vdev, params);
-	authmode = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
-	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
-	profile->rsn_authmode =
-		cm_crypto_authmode_to_wmi_authmode(authmode, akm, uccipher);
+
+	cm_update_crypto_params(vdev, profile);
 
 	profile->rssi_threshold = rso_cfg->cfg_param.roam_rssi_diff;
 	profile->bg_rssi_threshold = rso_cfg->cfg_param.bg_rssi_threshold;

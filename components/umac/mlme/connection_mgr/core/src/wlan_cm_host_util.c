@@ -121,9 +121,11 @@ QDF_STATUS cm_update_advance_roam_scan_filter(
 	filter->enable_adaptive_11r =
 		wlan_mlme_adaptive_11r_enabled(psoc);
 
-	if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
+	if (rso_cfg->orig_sec_info.rsn_caps &
+	    WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
 		filter->pmf_cap = WLAN_PMF_REQUIRED;
-	else if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
+	else if (rso_cfg->orig_sec_info.rsn_caps &
+		 WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
 		filter->pmf_cap = WLAN_PMF_CAPABLE;
 
 	return QDF_STATUS_SUCCESS;
