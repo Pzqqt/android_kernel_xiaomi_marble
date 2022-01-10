@@ -12362,6 +12362,8 @@ dp_txrx_ext_stats_request(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	int i = 0;
+	int tcl_ring_full = 0;
 
 	if (!pdev) {
 		dp_err("pdev is null");
@@ -12370,13 +12372,26 @@ dp_txrx_ext_stats_request(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 
 	dp_aggregate_pdev_stats(pdev);
 
+	for(i = 0 ; i < MAX_TCL_DATA_RINGS; i++)
+		tcl_ring_full += soc->stats.tx.tcl_ring_full[i];
+
 	req->tx_msdu_enqueue = pdev->stats.tx_i.processed.num;
-	req->tx_msdu_overflow = pdev->stats.tx_i.dropped.ring_full;
+	req->tx_msdu_overflow = tcl_ring_full;
 	req->rx_mpdu_received = soc->ext_stats.rx_mpdu_received;
 	req->rx_mpdu_delivered = soc->ext_stats.rx_mpdu_received;
-	req->rx_mpdu_missed = soc->ext_stats.rx_mpdu_missed;
+	req->rx_mpdu_missed = pdev->stats.err.reo_error;
 	/* only count error source from RXDMA */
 	req->rx_mpdu_error = pdev->stats.err.rxdma_error;
+
+	dp_info("ext stats: tx_msdu_enq = %u, tx_msdu_overflow = %u, "
+		"tx_mpdu_recieve = %u, rx_mpdu_delivered = %u, "
+		"rx_mpdu_missed = %u, rx_mpdu_error = %u",
+		req->tx_msdu_enqueue,
+		req->tx_msdu_overflow,
+		req->rx_mpdu_received,
+		req->rx_mpdu_delivered,
+		req->rx_mpdu_missed,
+		req->rx_mpdu_error);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -12472,7 +12487,6 @@ dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 	last_rx_mpdu_received = soc->ext_stats.rx_mpdu_received;
 	last_rx_mpdu_missed = soc->ext_stats.rx_mpdu_missed;
 	soc->ext_stats.rx_mpdu_received = 0;
-	soc->ext_stats.rx_mpdu_missed = 0;
 
 	rx_stats_sent_cnt =
 		dp_peer_rxtid_stats(peer, dp_rx_hw_stats_cb, rx_hw_stats);
