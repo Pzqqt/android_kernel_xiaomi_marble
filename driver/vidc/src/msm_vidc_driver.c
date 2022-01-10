@@ -5007,6 +5007,22 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 		}
 	}
 
+	/* read_only and release list does not take dma ref_count using dma_buf_get().
+	   dma_buf ptr will be obselete when its ref_count reaches zero. Hence print
+	   the dma_buf info before releasing the ref count.
+	*/
+	list_for_each_entry_safe(buf, dummy, &inst->buffers.read_only.list, list) {
+		print_vidc_buffer(VIDC_ERR, "err ", "destroying ro buffer", inst, buf);
+		list_del(&buf->list);
+		msm_memory_free(inst, buf);
+	}
+
+	list_for_each_entry_safe(buf, dummy, &inst->buffers.release.list, list) {
+		print_vidc_buffer(VIDC_ERR, "err ", "destroying release buffer", inst, buf);
+		list_del(&buf->list);
+		msm_memory_free(inst, buf);
+	}
+
 	for (i = 0; i < ARRAY_SIZE(ext_buf_types); i++) {
 		buffers = msm_vidc_get_buffers(inst, ext_buf_types[i], __func__);
 		if (!buffers)
@@ -5019,18 +5035,6 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 			msm_vidc_put_driver_buf(inst, buf);
 		}
 		msm_vidc_unmap_buffers(inst, ext_buf_types[i]);
-	}
-
-	list_for_each_entry_safe(buf, dummy, &inst->buffers.read_only.list, list) {
-		print_vidc_buffer(VIDC_ERR, "err ", "destroying ro buffer", inst, buf);
-		list_del(&buf->list);
-		msm_memory_free(inst, buf);
-	}
-
-	list_for_each_entry_safe(buf, dummy, &inst->buffers.release.list, list) {
-		print_vidc_buffer(VIDC_ERR, "err ", "destroying release buffer", inst, buf);
-		list_del(&buf->list);
-		msm_memory_free(inst, buf);
 	}
 
 	list_for_each_entry_safe(ts, dummy_ts, &inst->timestamps.list, sort.list) {
