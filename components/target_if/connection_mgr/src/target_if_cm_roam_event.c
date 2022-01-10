@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,6 +66,28 @@ target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops)
 	rx_ops->roam_candidate_frame_event = cm_roam_candidate_event_handler;
 }
 
+static void
+target_if_free_roam_synch_frame_ind(struct roam_synch_frame_ind *frame_ind)
+{
+	if (frame_ind->bcn_probe_rsp) {
+		qdf_mem_free(frame_ind->bcn_probe_rsp);
+		frame_ind->bcn_probe_rsp_len = 0;
+		frame_ind->bcn_probe_rsp = NULL;
+	}
+	if (frame_ind->reassoc_req) {
+		qdf_mem_free(frame_ind->reassoc_req);
+		frame_ind->reassoc_req_len = 0;
+		frame_ind->reassoc_req = NULL;
+	}
+	if (frame_ind->reassoc_rsp) {
+		qdf_mem_free(frame_ind->reassoc_rsp);
+		frame_ind->reassoc_rsp_len = 0;
+		frame_ind->reassoc_rsp = NULL;
+	}
+
+	qdf_mem_free(frame_ind);
+}
+
 int
 target_if_cm_roam_sync_frame_event(ol_scn_t scn,
 				   uint8_t *event,
@@ -115,11 +137,17 @@ target_if_cm_roam_sync_frame_event(ol_scn_t scn,
 	qdf_status = roam_rx_ops->roam_sync_frame_event(psoc,
 						    frame_ind_ptr);
 
-	if (QDF_IS_STATUS_ERROR(qdf_status))
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		status = -EINVAL;
+		goto err;
+	}
+	qdf_mem_free(frame_ind_ptr);
+
+	return 0;
 
 err:
-	qdf_mem_free(frame_ind_ptr);
+	target_if_free_roam_synch_frame_ind(frame_ind_ptr);
+
 	return status;
 }
 

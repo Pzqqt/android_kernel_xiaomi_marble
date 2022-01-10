@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -363,15 +363,13 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct rso_config *rso_cfg;
-	struct roam_synch_frame_ind *sync_frame_ind = frame_ind;
-	struct roam_synch_frame_ind *roam_synch_frame_ind;
 	uint8_t vdev_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!sync_frame_ind)
+	if (!frame_ind)
 		return QDF_STATUS_E_NULL_VALUE;
 
-	vdev_id = sync_frame_ind->vdev_id;
+	vdev_id = frame_ind->vdev_id;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_SB_ID);
@@ -386,8 +384,6 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 		goto err;
 	}
 
-	roam_synch_frame_ind = &rso_cfg->roam_sync_frame_ind;
-
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id)) {
 		mlme_err("Ignoring this event as it is unexpected");
 		wlan_cm_free_roam_synch_frame_ind(rso_cfg);
@@ -395,67 +391,8 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 		goto err;
 	}
 
-	if (sync_frame_ind->bcn_probe_rsp_len) {
-		roam_synch_frame_ind->bcn_probe_rsp_len =
-			sync_frame_ind->bcn_probe_rsp_len;
-
-		roam_synch_frame_ind->is_beacon =
-			sync_frame_ind->is_beacon;
-
-		if (roam_synch_frame_ind->bcn_probe_rsp)
-			qdf_mem_free(roam_synch_frame_ind->bcn_probe_rsp);
-
-		roam_synch_frame_ind->bcn_probe_rsp =
-			qdf_mem_malloc(roam_synch_frame_ind->bcn_probe_rsp_len);
-		if (!roam_synch_frame_ind->bcn_probe_rsp) {
-			QDF_ASSERT(roam_synch_frame_ind->bcn_probe_rsp);
-			wlan_cm_free_roam_synch_frame_ind(rso_cfg);
-			status = QDF_STATUS_E_NOMEM;
-			goto err;
-		}
-		qdf_mem_copy(roam_synch_frame_ind->bcn_probe_rsp,
-			     sync_frame_ind->bcn_probe_rsp,
-			     roam_synch_frame_ind->bcn_probe_rsp_len);
-	}
-
-	if (sync_frame_ind->reassoc_req_len) {
-		roam_synch_frame_ind->reassoc_req_len =
-				sync_frame_ind->reassoc_req_len;
-
-		if (roam_synch_frame_ind->reassoc_req)
-			qdf_mem_free(roam_synch_frame_ind->reassoc_req);
-		roam_synch_frame_ind->reassoc_req =
-			qdf_mem_malloc(roam_synch_frame_ind->reassoc_req_len);
-		if (!roam_synch_frame_ind->reassoc_req) {
-			QDF_ASSERT(roam_synch_frame_ind->reassoc_req);
-			wlan_cm_free_roam_synch_frame_ind(rso_cfg);
-			status = QDF_STATUS_E_NOMEM;
-			goto err;
-		}
-		qdf_mem_copy(roam_synch_frame_ind->reassoc_req,
-			     sync_frame_ind->reassoc_req,
-			     roam_synch_frame_ind->reassoc_req_len);
-	}
-
-	if (sync_frame_ind->reassoc_rsp_len) {
-		roam_synch_frame_ind->reassoc_rsp_len =
-				sync_frame_ind->reassoc_rsp_len;
-
-		if (roam_synch_frame_ind->reassoc_rsp)
-			qdf_mem_free(roam_synch_frame_ind->reassoc_rsp);
-
-		roam_synch_frame_ind->reassoc_rsp =
-			qdf_mem_malloc(roam_synch_frame_ind->reassoc_rsp_len);
-		if (!roam_synch_frame_ind->reassoc_rsp) {
-			QDF_ASSERT(roam_synch_frame_ind->reassoc_rsp);
-			wlan_cm_free_roam_synch_frame_ind(rso_cfg);
-			status = QDF_STATUS_E_NOMEM;
-			goto err;
-		}
-		qdf_mem_copy(roam_synch_frame_ind->reassoc_rsp,
-			     sync_frame_ind->reassoc_rsp,
-			     roam_synch_frame_ind->reassoc_rsp_len);
-	}
+	wlan_cm_free_roam_synch_frame_ind(rso_cfg);
+	rso_cfg->roam_sync_frame_ind = *frame_ind;
 
 err:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
