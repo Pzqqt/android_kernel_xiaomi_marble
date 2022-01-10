@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -497,7 +497,9 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 				wb_cfg->dest.plane_addr[2],
 				wb_cfg->dest.plane_size[2],
 				wb_cfg->dest.plane_addr[3],
-				wb_cfg->dest.plane_size[3]);
+				wb_cfg->dest.plane_size[3],
+				wb_cfg->roi.x, wb_cfg->roi.y,
+				wb_cfg->roi.w, wb_cfg->roi.h);
 		hw_wb->ops.setup_outaddress(hw_wb, wb_cfg);
 	}
 }
@@ -770,9 +772,10 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 	}
 
 	if (((wb_roi.w < out_width) || (wb_roi.h < out_height)) &&
-			(wb_roi.w * wb_roi.h * fmt->bpp) % 256) {
-		SDE_ERROR("invalid stride w = %d h = %d bpp =%d out_width = %d, out_height = %d\n",
-				wb_roi.w, wb_roi.h, fmt->bpp, out_width, out_height);
+			((wb_roi.w * wb_roi.h * fmt->bpp) % 256) && !SDE_FORMAT_IS_LINEAR(fmt)) {
+		SDE_ERROR("invalid stride w=%d h=%d bpp=%d out_width=%d, out_height=%d lin=%d\n",
+				wb_roi.w, wb_roi.h, fmt->bpp, out_width, out_height,
+				SDE_FORMAT_IS_LINEAR(fmt));
 		return -EINVAL;
 	}
 
