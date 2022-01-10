@@ -618,6 +618,7 @@ struct ipa_smmu_cb_ctx {
 	u32 va_end;
 	bool shared;
 	bool is_cache_coherent;
+	bool done;
 };
 
 /**
@@ -2393,6 +2394,8 @@ struct ipa3_context {
 	struct mutex act_tbl_lock;
 	int uc_act_tbl_total;
 	int uc_act_tbl_next_index;
+	int ipa_pil_load;
+
 };
 
 struct ipa3_plat_drv_res {
