@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,7 +47,15 @@ static inline uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) \
 				(WMI_VDEV_TYPE_NDI == intf[vdev_id].type)
 
-void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta);
+/**
+ * wma_add_sta_ndi_mode() - Process ADD_STA for NaN Data path
+ * @wma: wma handle
+ * @add_sta: Parameters of ADD_STA command
+ *
+ * Sends CREATE_PEER command to firmware
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta);
 
 /**
  * wma_update_hdd_cfg_ndp() - Update target device NAN datapath capability
@@ -61,8 +70,17 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 	tgt_cfg->nan_datapath_enabled = wma_handle->nan_datapath_enabled;
 }
 
-void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
-					tpDeleteStaParams del_sta);
+/**
+ * wma_delete_sta_req_ndi_mode() - Process DEL_STA request for NDI data peer
+ * @wma: WMA context
+ * @del_sta: DEL_STA parameters from LIM
+ *
+ * Removes wma/txrx peer entry for the NDI STA
+ *
+ * Returns: QDF_STATUS_SUCCESS if peer deletion is successful
+ */
+QDF_STATUS wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
+				       tpDeleteStaParams del_sta);
 
 /**
  * wma_is_ndi_active() - Determines of the nan data iface is active
@@ -89,12 +107,19 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 	return;
 }
 
-static inline void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
-					tpDeleteStaParams del_sta)
+static inline
+QDF_STATUS wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
+				       tpDeleteStaParams del_sta)
 {
+	return QDF_STATUS_E_NOSUPPORT;
 }
-static inline void wma_add_sta_ndi_mode(tp_wma_handle wma,
-					tpAddStaParams add_sta) {}
+
+static inline
+QDF_STATUS wma_add_sta_ndi_mode(tp_wma_handle wma,
+				tpAddStaParams add_sta)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 
 static inline bool wma_is_ndi_active(tp_wma_handle wma_handle) { return false; }
 #endif /* WLAN_FEATURE_NAN */

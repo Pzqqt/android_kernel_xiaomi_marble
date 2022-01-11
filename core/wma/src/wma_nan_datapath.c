@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,15 +35,7 @@
 #include "cdp_txrx_misc.h"
 #include <cdp_txrx_handle.h>
 
-/**
- * wma_add_sta_ndi_mode() - Process ADD_STA for NaN Data path
- * @wma: wma handle
- * @add_sta: Parameters of ADD_STA command
- *
- * Sends CREATE_PEER command to firmware
- * Return: void
- */
-void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
+QDF_STATUS wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	enum ol_txrx_peer_state state = OL_TXRX_PEER_STATE_CONN;
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
@@ -106,22 +99,17 @@ send_rsp:
 	wma_debug("Sending add sta rsp to umac (mac:"QDF_MAC_ADDR_FMT", status:%d)",
 		  QDF_MAC_ADDR_REF(add_sta->staMac), add_sta->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
+
+	return add_sta->status;
 }
 
-/**
- * wma_delete_sta_req_ndi_mode() - Process DEL_STA request for NDI data peer
- * @wma: WMA context
- * @del_sta: DEL_STA parameters from LIM
- *
- * Removes wma/txrx peer entry for the NDI STA
- *
- * Return: None
- */
-void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
-					tpDeleteStaParams del_sta)
+QDF_STATUS wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
+				       tpDeleteStaParams del_sta)
 {
-	wma_remove_peer(wma, del_sta->staMac,
-			del_sta->smesessionId, false);
+	QDF_STATUS status;
+
+	status = wma_remove_peer(wma, del_sta->staMac,
+				 del_sta->smesessionId, false);
 	del_sta->status = QDF_STATUS_SUCCESS;
 
 	if (del_sta->respReqd) {
@@ -133,4 +121,5 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 		qdf_mem_free(del_sta);
 	}
 
+	return status;
 }
