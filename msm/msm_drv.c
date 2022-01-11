@@ -829,8 +829,12 @@ static int msm_drm_component_init(struct device *dev)
 
 	/* Bind all our sub-components: */
 	ret = msm_component_bind_all(dev, ddev);
-	if (ret)
+	if (ret == -EPROBE_DEFER) {
+		destroy_workqueue(priv->wq);
+		return ret;
+	} else if (ret) {
 		goto bind_fail;
+	}
 
 	ret = msm_init_vram(ddev);
 	if (ret)
