@@ -2318,6 +2318,9 @@ struct hdd_context {
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	bool is_vdev_macaddr_dynamic_update_supported;
 #endif
+#ifdef CONFIG_WLAN_FREQ_LIST
+	uint8_t power_type;
+#endif
 };
 
 /**
