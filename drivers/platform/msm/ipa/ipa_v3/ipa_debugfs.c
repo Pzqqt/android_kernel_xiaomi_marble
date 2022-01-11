@@ -776,26 +776,14 @@ static ssize_t ipa3_read_hdr(struct file *file, char __user *ubuf, size_t count,
 			nbytes = scnprintf(
 				dbg_buff,
 				IPA_MAX_MSG_LEN,
-				"name:%s len=%d ref=%d partial=%d type=%s ",
+				"name:%s len=%d ref=%d partial=%d type=%s ofst=%u ",
 				entry->name,
 				entry->hdr_len,
 				entry->ref_cnt,
 				entry->is_partial,
-				ipa3_hdr_l2_type_name[entry->type]);
+				ipa3_hdr_l2_type_name[entry->type],
+				entry->offset_entry->offset >> 2);
 
-			if (entry->is_hdr_proc_ctx) {
-				nbytes += scnprintf(
-					dbg_buff + nbytes,
-					IPA_MAX_MSG_LEN - nbytes,
-					"phys_base=0x%pa ",
-					&entry->phys_base);
-			} else {
-				nbytes += scnprintf(
-					dbg_buff + nbytes,
-					IPA_MAX_MSG_LEN - nbytes,
-					"ofst=%u ",
-					entry->offset_entry->offset >> 2);
-			}
 			for (i = 0; i < entry->hdr_len; i++) {
 				scnprintf(dbg_buff + nbytes + i * 2,
 					  IPA_MAX_MSG_LEN - nbytes - i * 2,
@@ -1288,29 +1276,16 @@ static ssize_t ipa3_read_proc_ctx(struct file *file, char __user *ubuf,
 		ofst_words = (entry->offset_entry->offset +
 			ipa3_ctx->hdr_proc_ctx_tbl.start_offset)
 			>> 5;
-		if (entry->hdr->is_hdr_proc_ctx) {
-			nbytes += scnprintf(dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"id:%u hdr_proc_type:%s proc_ctx[32B]:%u ",
-				entry->id,
-				ipa3_hdr_proc_type_name[entry->type],
-				ofst_words);
-			nbytes += scnprintf(dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"hdr_phys_base:0x%pa\n",
-				&entry->hdr->phys_base);
-		} else {
-			nbytes += scnprintf(dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"id:%u hdr_proc_type:%s proc_ctx[32B]:%u ",
-				entry->id,
-				ipa3_hdr_proc_type_name[entry->type],
-				ofst_words);
-			nbytes += scnprintf(dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"hdr[words]:%u\n",
-				entry->hdr->offset_entry->offset >> 2);
-		}
+		nbytes += scnprintf(dbg_buff + nbytes,
+			IPA_MAX_MSG_LEN - nbytes,
+			"id:%u hdr_proc_type:%s proc_ctx[32B]:%u ",
+			entry->id,
+			ipa3_hdr_proc_type_name[entry->type],
+			ofst_words);
+		nbytes += scnprintf(dbg_buff + nbytes,
+			IPA_MAX_MSG_LEN - nbytes,
+			"hdr[words]:%u\n",
+			entry->hdr->offset_entry->offset >> 2);
 	}
 	mutex_unlock(&ipa3_ctx->lock);
 

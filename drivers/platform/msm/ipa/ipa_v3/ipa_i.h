@@ -781,10 +781,6 @@ struct ipa3_rt_tbl {
  * @name: name of header table entry
  * @type: l2 header type
  * @is_partial: flag indicating if header table entry is partial
- * @is_hdr_proc_ctx: false - hdr entry resides in hdr table,
- * true - hdr entry resides in DDR and pointed to by proc ctx
- * @phys_base: physical address of entry in DDR when is_hdr_proc_ctx is true,
- * else 0
  * @proc_ctx: processing context header
  * @offset_entry: entry's offset
  * @cookie: cookie used for validity check
@@ -804,8 +800,6 @@ struct ipa3_hdr_entry {
 	char name[IPA_RESOURCE_NAME_MAX];
 	enum ipa_hdr_l2_type type;
 	u8 is_partial;
-	bool is_hdr_proc_ctx;
-	dma_addr_t phys_base;
 	struct ipa3_hdr_proc_ctx_entry *proc_ctx;
 	struct ipa_hdr_offset_entry *offset_entry;
 	u32 ref_cnt;

@@ -94,7 +94,7 @@ static int ipa_generate_rt_hw_rule(enum ipa_ip_type ip,
 		}
 	}
 
-	if (entry->proc_ctx || (entry->hdr && entry->hdr->is_hdr_proc_ctx)) {
+	if (entry->proc_ctx) {
 		struct ipa3_hdr_proc_ctx_entry *proc_ctx;
 
 		proc_ctx = (entry->proc_ctx) ? : entry->hdr->proc_ctx;
