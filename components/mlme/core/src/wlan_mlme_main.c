@@ -2219,21 +2219,64 @@ mlme_init_roam_score_config(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_fe_wlm_in_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_fe_wlm *wlm_config)
 {
+	uint64_t flags = 0;
+	QDF_STATUS status;
+
 	wlm_config->latency_enable = cfg_get(psoc, CFG_LATENCY_ENABLE);
 	wlm_config->latency_reset = cfg_get(psoc, CFG_LATENCY_RESET);
 	wlm_config->latency_level = cfg_get(psoc, CFG_LATENCY_LEVEL);
-	wlm_config->latency_flags[0] = cfg_get(psoc, CFG_LATENCY_FLAGS_NORMAL);
-	wlm_config->latency_flags[1] = cfg_get(psoc, CFG_LATENCY_FLAGS_MOD);
-	wlm_config->latency_flags[2] = cfg_get(psoc, CFG_LATENCY_FLAGS_LOW);
-	wlm_config->latency_flags[3] = cfg_get(psoc, CFG_LATENCY_FLAGS_ULTLOW);
-	wlm_config->latency_host_flags[0] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_NORMAL);
-	wlm_config->latency_host_flags[1] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_MOD);
-	wlm_config->latency_host_flags[2] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_LOW);
-	wlm_config->latency_host_flags[3] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_ULTLOW);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_NORMAL),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("normal latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[0] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[0] = flags >> 32;
+	mlme_legacy_debug("normal latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[0],
+			  wlm_config->latency_host_flags[0]);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_MOD),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("moderate latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[1] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[1] = flags >> 32;
+	mlme_legacy_debug("moderate latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[1],
+			  wlm_config->latency_host_flags[1]);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_LOW),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("low latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[2] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[2] = flags >> 32;
+	mlme_legacy_debug("low latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[2],
+			  wlm_config->latency_host_flags[2]);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_ULTLOW),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("ultra-low latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[3] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[3] = flags >> 32;
+	mlme_legacy_debug("ultra-low latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[3],
+			  wlm_config->latency_host_flags[3]);
 }
 
 /**
