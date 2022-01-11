@@ -172,7 +172,7 @@
  *
  * @min: 0x0
  * @max: 0xffffffffffffffff
- * @default: 0x8
+ * @default: 0x3000100000083
  *
  * |31  12|  11  |  10  |9    8|7    6|5    4|3    2|  1  |  0  |
  * +------+------+------+------+------+------+------+-----+-----+
@@ -217,7 +217,7 @@
  *
  * </ini>
  */
-#define CFG_DEFAULT_MODERATE_FLAGS "0x8"
+#define CFG_DEFAULT_MODERATE_FLAGS "0x3000100000083"
 #define CFG_LATENCY_FLAGS_MOD \
 		CFG_INI_STRING("wlm_latency_flags_moderate",\
 			       0, \
