@@ -636,7 +636,7 @@ struct freq_range {
  * @center_freq_seg1: channel number segment 1
  * @mhz_freq_seg0: Center frequency for segment 0
  * @mhz_freq_seg1: Center frequency for segment 1
- * @reg_punc_pattern: Output puncturing pattern
+ * @reg_punc_bitmap: Output puncturing bitmap
  */
 struct ch_params {
 	enum phy_ch_width ch_width;
@@ -646,7 +646,7 @@ struct ch_params {
 	qdf_freq_t mhz_freq_seg0;
 	qdf_freq_t mhz_freq_seg1;
 #ifdef WLAN_FEATURE_11BE
-	uint16_t reg_punc_pattern;
+	uint16_t reg_punc_bitmap;
 #endif
 };
 

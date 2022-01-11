@@ -3628,7 +3628,7 @@ static inline bool reg_is_state_allowed(enum channel_state chan_state)
  * @freq: Frequency in MHZ.
  * @bonded_chan_ptr: Pointer to const struct bonded_channel_freq.
  * @bw: channel bandwidth
- * @out_punc_pat: Output puncturing pattern
+ * @out_punc_bitmap: Output puncturing bitmap
  *
  * Return - The channel state of the bonded pair.
  */
@@ -3645,14 +3645,14 @@ reg_get_320_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
 				 const struct bonded_channel_freq
 				 *bonded_chan_ptr,
 				 enum phy_ch_width bw,
-				 uint16_t *out_punc_pat)
+				 uint16_t *out_punc_bitmap)
 {
 	enum channel_state chan_state = CHANNEL_STATE_INVALID;
 	enum channel_state temp_chan_state;
 	uint16_t chan_cfreq;
 	uint16_t max_cont_bw, i;
 
-	*out_punc_pat = ALL_SCHANS_PUNC;
+	*out_punc_bitmap = ALL_SCHANS_PUNC;
 
 	if (!bonded_chan_ptr)
 		return chan_state;
@@ -3667,7 +3667,7 @@ reg_get_320_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
 								 chan_cfreq);
 		if (reg_is_state_allowed(temp_chan_state)) {
 			max_cont_bw += SUB_CHAN_BW;
-			*out_punc_pat &= ~BIT(i);
+			*out_punc_bitmap &= ~BIT(i);
 		}
 
 		if (temp_chan_state < chan_state)
@@ -3757,7 +3757,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 	uint8_t num_bonded_pairs, i, num_ch_params;
 	enum channel_state chan_state;
 	uint16_t array_size = QDF_ARRAY_SIZE(bonded_chan_320mhz_list_freq);
-	uint16_t out_punc_pat;
+	uint16_t out_punc_bitmap;
 	uint16_t max_reg_bw;
 	enum channel_enum chan_enum;
 	const struct bonded_channel_freq *bonded_ch_ptr[2] = {NULL, NULL};
@@ -3819,7 +3819,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 		    reg_get_320_bonded_channel_state(pdev, freq,
 						     bonded_ch_ptr[i],
 						     *in_ch_width,
-						     &out_punc_pat);
+						     &out_punc_bitmap);
 		if (chan_state == CHANNEL_STATE_ENABLE) {
 			struct ch_params *t_chan_param =
 			    &chan_list->chan_param[num_ch_params];
@@ -3831,7 +3831,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 				reg_freq_to_chan(pdev,
 						 t_chan_param->mhz_freq_seg1);
 			t_chan_param->ch_width = *in_ch_width;
-			t_chan_param->reg_punc_pattern = out_punc_pat;
+			t_chan_param->reg_punc_bitmap = out_punc_bitmap;
 
 			reg_fill_primary_160mhz_centers(pdev,
 							t_chan_param,
@@ -3874,7 +3874,7 @@ reg_fill_pre320mhz_channel(struct wlan_objmgr_pdev *pdev,
 {
 	chan_list->num_ch_params = 1;
 	chan_list->chan_param[0].ch_width = ch_width;
-	chan_list->chan_param[0].reg_punc_pattern = NO_SCHANS_PUNC;
+	chan_list->chan_param[0].reg_punc_bitmap = NO_SCHANS_PUNC;
 	reg_set_channel_params_for_freq(pdev, freq, sec_ch_2g_freq,
 					&chan_list->chan_param[0]);
 }
@@ -4277,7 +4277,7 @@ static void reg_copy_ch_params(struct ch_params *ch_params,
 	ch_params->mhz_freq_seg1 = chan_list.chan_param[0].mhz_freq_seg1;
 	ch_params->ch_width = chan_list.chan_param[0].ch_width;
 	ch_params->sec_ch_offset = chan_list.chan_param[0].sec_ch_offset;
-	ch_params->reg_punc_pattern = chan_list.chan_param[0].reg_punc_pattern;
+	ch_params->reg_punc_bitmap = chan_list.chan_param[0].reg_punc_bitmap;
 }
 
 void reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
