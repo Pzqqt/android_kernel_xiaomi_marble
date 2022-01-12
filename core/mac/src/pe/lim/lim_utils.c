@@ -8407,9 +8407,11 @@ void lim_set_eht_caps(struct mac_context *mac, struct pe_session *session,
 {
 	const uint8_t *ie = NULL;
 	tDot11fIEeht_cap dot11_cap;
+	tDot11fIEhe_cap dot11_he_cap;
 	struct wlan_eht_cap_info *eht_cap;
 
 	populate_dot11f_eht_caps(mac, session, &dot11_cap);
+	populate_dot11f_he_caps(mac, session, &dot11_he_cap);
 	lim_log_eht_cap(mac, &dot11_cap);
 
 	ie = wlan_get_ext_ie_ptr_from_ext_id(EHT_CAP_OUI_TYPE,
@@ -8483,25 +8485,35 @@ void lim_set_eht_caps(struct mac_context *mac, struct pe_session *session,
 			dot11_cap.mu_bformer_le_80mhz;
 		eht_cap->mu_bformer_160mhz = dot11_cap.mu_bformer_160mhz;
 		eht_cap->mu_bformer_320mhz = dot11_cap.mu_bformer_320mhz;
-		eht_cap->num_eht_mcs_map_20 = dot11_cap.num_eht_mcs_map_20;
-		eht_cap->num_eht_mcs_map_le_80 =
-			dot11_cap.num_eht_mcs_map_le_80;
-		eht_cap->num_eht_mcs_map_160 =
-			dot11_cap.num_eht_mcs_map_160;
-		eht_cap->eht_mcs_map_20 =
-			*((uint32_t *)dot11_cap.eht_mcs_map_20);
-		ie_start[1] += EHT_CAP_20M_MCS_MAP_LEN;
-		eht_cap->eht_mcs_map_le_80 =
-			*((uint32_t *)dot11_cap.eht_mcs_map_le_80);
-		ie_start[1] += EHT_CAP_80M_MCS_MAP_LEN;
-		eht_cap->eht_mcs_map_160 =
-			*((uint32_t *)dot11_cap.eht_mcs_map_160);
-		ie_start[1] += EHT_CAP_160M_MCS_MAP_LEN;
-		eht_cap->eht_mcs_map_320 =
-			*((uint32_t *)dot11_cap.eht_mcs_map_320);
-		ie_start[1] += EHT_CAP_320M_MCS_MAP_LEN;
-	}
 
+		if (!dot11_he_cap.chan_width_0 ||
+		    (!dot11_he_cap.chan_width_1 &&
+		     !dot11_he_cap.chan_width_2 &&
+		     !dot11_he_cap.chan_width_3)) {
+			qdf_mem_copy(eht_cap->eht_mcs_map_20,
+				     dot11_cap.eht_mcs_map_20,
+				     EHT_CAP_20M_MCS_MAP_LEN);
+			ie_start[1] += EHT_CAP_20M_MCS_MAP_LEN;
+		}
+		if (dot11_he_cap.chan_width_0 || dot11_he_cap.chan_width_1) {
+			qdf_mem_copy(eht_cap->eht_mcs_map_le_80,
+				     dot11_cap.eht_mcs_map_le_80,
+				     EHT_CAP_80M_MCS_MAP_LEN);
+			ie_start[1] += EHT_CAP_80M_MCS_MAP_LEN;
+		}
+		if (dot11_he_cap.chan_width_2) {
+			qdf_mem_copy(eht_cap->eht_mcs_map_160,
+				     dot11_cap.eht_mcs_map_160,
+				     EHT_CAP_160M_MCS_MAP_LEN);
+			ie_start[1] += EHT_CAP_160M_MCS_MAP_LEN;
+		}
+		if (eht_cap->support_320mhz_6ghz) {
+			qdf_mem_copy(eht_cap->eht_mcs_map_320,
+				     dot11_cap.eht_mcs_map_320,
+				     EHT_CAP_320M_MCS_MAP_LEN);
+			ie_start[1] += EHT_CAP_320M_MCS_MAP_LEN;
+		}
+	}
 }
 
 QDF_STATUS lim_send_eht_caps_ie(struct mac_context *mac_ctx,
@@ -8529,11 +8541,11 @@ QDF_STATUS lim_send_eht_caps_ie(struct mac_context *mac_ctx,
 
 	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_EHT_CAP,
 				CDS_BAND_2GHZ, &eht_caps[2],
-				DOT11F_IE_EHT_CAP_MIN_LEN + 1);
+				eht_caps[1]);
 
 	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_EHT_CAP,
 				CDS_BAND_5GHZ, &eht_caps[2],
-				DOT11F_IE_EHT_CAP_MIN_LEN + 1);
+				eht_caps[1]);
 
 	if (QDF_IS_STATUS_SUCCESS(status_2g) &&
 	    QDF_IS_STATUS_SUCCESS(status_5g)) {
