@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -133,10 +133,10 @@ if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 	if (!psoc)
 		return QDF_STATUS_E_FAILURE;
 
-	vdev_id = wlan_vdev_get_id(vdev);
-
 	if (policy_mgr_is_sta_active_connection_exists(psoc) &&
-	    wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
+	    wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE &&
+	    !wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
+		vdev_id = wlan_vdev_get_id(vdev);
 		ifmgr_debug("Enable roaming on connected sta for vdev_id %d", vdev_id);
 		wlan_cm_enable_roaming_on_connected_sta(pdev, vdev_id);
 		policy_mgr_set_pcl_for_connected_vdev(psoc, vdev_id, true);

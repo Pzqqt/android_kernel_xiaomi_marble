@@ -40,9 +40,8 @@
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
-#ifdef WLAN_FEATURE_11BE_MLO
 #include "wlan_mlo_mgr_sta.h"
-#endif
+#include "wlan_cm_ucfg_api.h"
 
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
@@ -6068,12 +6067,30 @@ uint8_t policy_mgr_get_roam_enabled_sta_session_id(
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t index, count;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_vdev *vdev, *assoc_vdev;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_POLICY_MGR_ID);
+	if (!vdev) {
+		policy_mgr_err("Invalid vdev");
+		return false;
+	}
+
+	if (wlan_vdev_mlme_is_link_sta_vdev(vdev)) {
+		assoc_vdev = ucfg_mlo_get_assoc_link_vdev(vdev);
+		if (assoc_vdev && ucfg_cm_is_vdev_active(assoc_vdev)) {
+			policy_mgr_debug("replace link vdev %d with assoc vdev %d",
+					 vdev_id, wlan_vdev_get_id(assoc_vdev));
+			vdev_id = wlan_vdev_get_id(assoc_vdev);
+		}
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 
 	count = policy_mgr_mode_specific_connection_count(
 		psoc, PM_STA_MODE, list);
