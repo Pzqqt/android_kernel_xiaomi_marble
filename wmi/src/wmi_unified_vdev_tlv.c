@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,6 +49,11 @@ send_vdev_config_ratemask_cmd_tlv(struct wmi_unified *wmi_handle,
 	cmd->mask_lower32_2 = param->lower32_2;
 	cmd->mask_higher32_2 = param->higher32_2;
 
+	wmi_debug("vdev_id %d type %d lower32 0x%x lower32_2 0x%x",
+		  cmd->vdev_id, cmd->type, cmd->mask_lower32,
+		  cmd->mask_lower32_2);
+	wmi_debug("higher32 0x%x higher32_2 0x%x", cmd->mask_higher32,
+		  cmd->mask_higher32_2);
 	wmi_mtrace(WMI_VDEV_RATEMASK_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_RATEMASK_CMDID)) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -409,6 +409,36 @@ struct vdev_mlme_inactivity_params {
 };
 
 /**
+ * enum vdev_ratemask_type - ratemask phy type
+ * @WLAN_VDEV_RATEMASK_TYPE_CCK: phy type CCK
+ * @WLAN_VDEV_RATEMASK_TYPE_HT: phy type ht
+ * @WLAN_VDEV_RATEMASK_TYPE_VHT: phy type vht
+ * WLAN_VDEV_RATEMASK_TYPE_HE: phy type he
+ */
+enum vdev_ratemask_type {
+	WLAN_VDEV_RATEMASK_TYPE_CCK,
+	WLAN_VDEV_RATEMASK_TYPE_HT,
+	WLAN_VDEV_RATEMASK_TYPE_VHT,
+	WLAN_VDEV_RATEMASK_TYPE_HE,
+	WLAN_VDEV_RATEMASK_TYPE_MAX,
+};
+
+/**
+ * struct vdev_ratemask_params -  vdev ratemask parameters
+ * @type: ratemask phy type
+ * @lower32: ratemask lower32 bitmask
+ * @higher32: ratemask higher32 bitmask
+ * @lower32_2: ratemask lower32_2 bitmask
+ * @higher32_2: rtaemask higher32_2 bitmask
+ */
+struct vdev_ratemask_params {
+	uint32_t lower32;
+	uint32_t higher32;
+	uint32_t lower32_2;
+	uint32_t higher32_2;
+};
+
+/**
  * struct vdev_mlme_rate_info - vdev mlme rate information
  * @rate_flags: dynamic bandwidth info
  * @per_band_tx_mgmt_rate: per band Tx mgmt rate
@@ -416,10 +446,7 @@ struct vdev_mlme_inactivity_params {
  * @tx_mgmt_rate: Tx Mgmt rate
  * @bcn_tx_rate: beacon Tx rate
  * @bcn_tx_rate_code: beacon Tx rate code
- * @type: Type of ratemask configuration
- * @lower32: Lower 32 bits in the 1st 64-bit value
- * @higher32: Higher 32 bits in the 1st 64-bit value
- * @lower32_2: Lower 32 bits in the 2nd 64-bit value
+ * @ratemask_params: vdev ratemask params per phy type
  * @half_rate: Half rate
  * @quarter_rate: quarter rate
  */
@@ -433,10 +460,8 @@ struct vdev_mlme_rate_info {
 	uint32_t bcn_tx_rate_code;
 #endif
 	uint32_t rtscts_tx_rate;
-	uint8_t  type;
-	uint32_t lower32;
-	uint32_t higher32;
-	uint32_t lower32_2;
+	struct vdev_ratemask_params ratemask_params[
+					WLAN_VDEV_RATEMASK_TYPE_MAX];
 	bool     half_rate;
 	bool     quarter_rate;
 };
