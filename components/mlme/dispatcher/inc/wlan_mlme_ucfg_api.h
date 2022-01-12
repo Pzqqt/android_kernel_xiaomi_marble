@@ -4417,4 +4417,22 @@ bool ucfg_mlme_get_coex_unsafe_chan_reg_disable(
 	return false;
 }
 #endif
+
+/**
+ * ucfg_set_ratemask_params() - Set ratemask config
+ * @vdev:   pointer to vdev object
+ * @num_ratemask: number of ratemask params
+ * @rate_params: ratemask params
+ *
+ * Return: QDF_STATUS
+ */
+
+static inline QDF_STATUS
+ucfg_set_ratemask_params(struct wlan_objmgr_vdev *vdev,
+			 uint8_t num_ratemask,
+			 struct config_ratemask_params *rate_params)
+{
+	return wlan_mlme_update_ratemask_params(vdev, num_ratemask,
+						rate_params);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */

@@ -3433,4 +3433,18 @@ wlan_mlme_get_tx_retry_multiplier(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_get_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 				   uint32_t *value);
+
+/**
+ * wlan_mlme_update_ratemask_params() - Update ratemask params
+ *
+ * @vdev: pointer to vdev object
+ * @num_ratemask: number of rate masks
+ * @rate_params: pointer to ratemask structure
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_update_ratemask_params(struct wlan_objmgr_vdev *vdev,
+				 uint8_t num_ratemask,
+				 struct config_ratemask_params *rate_params);
 #endif /* _WLAN_MLME_API_H_ */

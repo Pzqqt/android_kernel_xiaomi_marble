@@ -30,6 +30,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_utility.h"
 #include "wlan_policy_mgr_ucfg.h"
+#include "wlan_vdev_mgr_utils_api.h"
 
 /* quota in milliseconds */
 #define MCC_DUTY_CYCLE 70
@@ -5389,5 +5390,58 @@ wlan_mlme_get_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 	}
 
 	*value = mlme_obj->cfg.feature_flags.channel_bonding_mode_5ghz;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_update_ratemask_params(struct wlan_objmgr_vdev *vdev,
+				 uint8_t num_ratemask,
+				 struct config_ratemask_params *rate_params)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct vdev_mlme_rate_info *rate_info;
+	QDF_STATUS ret;
+	uint8_t i = 0;
+	uint8_t index;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return QDF_STATUS_E_FAILURE;
+
+	rate_info = &vdev_mlme->mgmt.rate_info;
+	while (i < num_ratemask) {
+		index = rate_params[i].type;
+		if (index >= WLAN_VDEV_RATEMASK_TYPE_MAX) {
+			mlme_legacy_err("Invalid ratemask type");
+			++i;
+			continue;
+		}
+
+		if (rate_info->ratemask_params[index].lower32 !=
+		    rate_params[i].lower32 ||
+		    rate_info->ratemask_params[index].lower32_2 !=
+		    rate_params[i].lower32_2 ||
+		    rate_info->ratemask_params[index].higher32 !=
+		    rate_params[i].higher32 ||
+		    rate_info->ratemask_params[index].higher32_2 !=
+		    rate_params[i].higher32_2) {
+			rate_info->ratemask_params[index].lower32 =
+						rate_params[i].lower32;
+			rate_info->ratemask_params[index].higher32 =
+						rate_params[i].higher32;
+			rate_info->ratemask_params[index].lower32_2 =
+						rate_params[i].lower32_2;
+			rate_info->ratemask_params[index].higher32_2 =
+						rate_params[i].higher32_2;
+			ret = wlan_util_vdev_mlme_set_ratemask_config(vdev_mlme,
+								      index);
+			if (ret != QDF_STATUS_SUCCESS)
+				mlme_legacy_err("ratemask config failed");
+		} else {
+			mlme_legacy_debug("Ratemask same as configured mask");
+		}
+		++i;
+	}
 	return QDF_STATUS_SUCCESS;
 }
