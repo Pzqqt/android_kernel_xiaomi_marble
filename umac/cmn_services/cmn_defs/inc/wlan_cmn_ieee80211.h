@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2346,17 +2346,14 @@ struct wlan_ext_cap_ie {
  * mu_bformer_160mhz: MU Beamformer (BW ≤ 160 MHz)
  * mu_bformer_320mhz: MU Beamformer (BW ≤ 320 MHz)
  * reserved3: reserved bits
- * num_eht_mcs_map_20: number of EHT MCS map
  * eht_mcs_map_20: EHT-MCS Map
-  (20 MHz-Only STA)
- * num_eht_mcs_map_le_80: number of EHT MCS map
+ * (20 MHz-Only STA)
  * eht_mcs_map_le_80: EHT-MCS Map
-  (80 MHz-Only STA)
- * num_eht_mcs_map_160: number of EHT MCS map
+ * (less than 80 MHz)
  * eht_mcs_map_160: EHT-MCS Map
-  (160 MHz-Only STA)
+ * (160 MHz)
  * eht_mcs_map_320: EHT-MCS Map
-  (320 MHz-Only STA)
+ * (320 MHz)
  */
 struct wlan_eht_cap_info {
 #ifndef ANI_LITTLE_BIT_ENDIAN
@@ -2408,13 +2405,10 @@ struct wlan_eht_cap_info {
 	uint32_t psr_based_sr:1;
 	uint32_t partial_bw_dl_mu_mimo:1;
 
-	uint32_t eht_mcs_map_320;
-	uint32_t eht_mcs_map_160;
-	uint8_t num_eht_mcs_map_160;
-	uint32_t eht_mcs_map_le_80;
-	uint8_t num_eht_mcs_map_le_80;
-	uint32_t eht_mcs_map_20;
-	uint8_t num_eht_mcs_map_20;
+	uint8_t eht_mcs_map_320[3];
+	uint8_t eht_mcs_map_160[3];
+	uint8_t eht_mcs_map_le_80[3];
+	uint8_t eht_mcs_map_20[4];
 #else
 	uint16_t nsep_pri_access:1;
 	uint16_t eht_om_ctl:1;
@@ -2464,13 +2458,10 @@ struct wlan_eht_cap_info {
 	uint32_t mu_bformer_320mhz:1;
 	uint32_t reserved3:1;
 
-	uint8_t num_eht_mcs_map_20;
-	uint32_t eht_mcs_map_20;
-	uint8_t num_eht_mcs_map_le_80;
-	uint32_t eht_mcs_map_le_80;
-	uint8_t num_eht_mcs_map_160;
-	uint32_t eht_mcs_map_160;
-	uint32_t eht_mcs_map_320;
+	uint8_t eht_mcs_map_20[4];
+	uint8_t eht_mcs_map_le_80[3];
+	uint8_t eht_mcs_map_160[3];
+	uint8_t eht_mcs_map_320[3];
 #endif
 } qdf_packed;
 
