@@ -30535,6 +30535,7 @@ typedef enum {
      */
     AFC_SERV_RESP_FORMAT_JSON = 0,
     AFC_SERV_RESP_FORMAT_BINARY = 1,
+    AFC_SERV_RESP_FORMAT_IGNORE = 2, /* When cmd type is reset,server response is set to FORMAT_IGNORE */
 } WMI_AFC_SERV_RESP_FORMAT_TYPE;
 
 typedef enum {
@@ -30545,6 +30546,7 @@ typedef enum {
      * This type can be expanded in future as per requirements.
      */
     WMI_AFC_CMD_SERV_RESP_READY = 1,
+    WMI_AFC_CMD_RESET = 2, /* Added cmd type to handle AFC reset */
 } WMI_AFC_CMD_TYPE;
 
 /** Host indicating AFC info availability to FW */
