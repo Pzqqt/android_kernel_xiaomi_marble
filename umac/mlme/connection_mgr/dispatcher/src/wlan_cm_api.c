@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -369,4 +370,13 @@ struct reduced_neighbor_report *wlan_cm_get_rnr(struct wlan_objmgr_vdev *vdev,
 		return &cm_req->connect_req.cur_candidate->entry->rnr;
 
 	return NULL;
+}
+
+QDF_STATUS
+wlan_cm_disc_cont_after_rso_stop(struct wlan_objmgr_vdev *vdev,
+				 bool is_ho_fail,
+				 struct wlan_cm_vdev_discon_req *req)
+{
+	return cm_disconnect_continue_after_rso_stop(vdev, is_ho_fail,
+						     req);
 }

@@ -33,6 +33,9 @@
 #include <wlan_vdev_mlme_main.h>
 #include <wmi_unified_vdev_api.h>
 #include <target_if_psoc_wake_lock.h>
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#include <target_if_cm_roam_offload.h>
+#endif
 
 static inline
 void target_if_vdev_mgr_handle_recovery(struct wlan_objmgr_psoc *psoc,
@@ -48,6 +51,22 @@ void target_if_vdev_mgr_handle_recovery(struct wlan_objmgr_psoc *psoc,
 		mlme_nofl_debug("PSOC_%d VDEV_%d: Panic not allowed",
 				wlan_psoc_get_id(psoc), vdev_id);
 }
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static inline QDF_STATUS
+target_if_send_rso_stop_failure_rsp(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id)
+{
+	return target_if_cm_send_rso_stop_failure_rsp(psoc, vdev_id);
+}
+#else
+static inline QDF_STATUS
+target_if_send_rso_stop_failure_rsp(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
 void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 {
@@ -83,9 +102,10 @@ void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 	    !qdf_atomic_test_bit(RESTART_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
 	    !qdf_atomic_test_bit(STOP_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
 	    !qdf_atomic_test_bit(DELETE_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
-	    !qdf_atomic_test_bit(
-			PEER_DELETE_ALL_RESPONSE_BIT,
-			&vdev_rsp->rsp_status)) {
+	    !qdf_atomic_test_bit(PEER_DELETE_ALL_RESPONSE_BIT,
+				 &vdev_rsp->rsp_status) &&
+	    !qdf_atomic_test_bit(RSO_STOP_RESPONSE_BIT,
+				 &vdev_rsp->rsp_status)) {
 		mlme_debug("No response bit is set, ignoring actions :%d",
 			   vdev_rsp->vdev_id);
 		return;
@@ -151,6 +171,14 @@ void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 						   recovery_reason, rsp_pos);
 		rx_ops->vdev_mgr_peer_delete_all_response(psoc,
 							  &peer_del_all_rsp);
+	} else if (qdf_atomic_test_bit(RSO_STOP_RESPONSE_BIT,
+				       &vdev_rsp->rsp_status)) {
+		rsp_pos = RSO_STOP_RESPONSE_BIT;
+		recovery_reason = QDF_RSO_STOP_RSP_TIMEOUT;
+		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
+		target_if_vdev_mgr_handle_recovery(psoc, vdev_id,
+						   recovery_reason, rsp_pos);
+		target_if_send_rso_stop_failure_rsp(psoc, vdev_id);
 	} else {
 		mlme_err("PSOC_%d VDEV_%d: Unknown error",
 			 wlan_psoc_get_id(psoc), vdev_id);
