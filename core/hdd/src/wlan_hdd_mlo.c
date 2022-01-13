@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,28 +31,19 @@ void hdd_update_mld_mac_addr(struct hdd_context *hdd_ctx,
 			     struct qdf_mac_addr hw_macaddr)
 {
 	uint8_t i;
-	uint8_t mldaddr_b2, tmp_br2;
 	struct hdd_mld_mac_info *mac_info;
+	struct qdf_mac_addr temp_addr;
+
+	qdf_mem_copy(temp_addr.bytes, hw_macaddr.bytes,
+		     sizeof(struct qdf_mac_addr));
 
 	mac_info = &hdd_ctx->mld_mac_info;
 	for (i = 0; i < WLAN_MAX_MLD; i++) {
+		eth_random_addr(temp_addr.bytes);
 		qdf_mem_copy(mac_info->mld_mac_list[i].mld_addr.bytes,
-			     hw_macaddr.bytes, QDF_MAC_ADDR_SIZE);
-		mldaddr_b2 = mac_info->mld_mac_list[i].mld_addr.bytes[2];
-		tmp_br2 = ((mldaddr_b2 >> 4 & INTF_MACADDR_MASK) + i) &
-			  INTF_MACADDR_MASK;
-		mldaddr_b2 += tmp_br2;
+			     temp_addr.bytes, QDF_MAC_ADDR_SIZE);
 
-		/* XOR-ing bit-24 of the mac address. This will give enough
-		 * mac address range before collision
-		 */
-		mldaddr_b2 ^= (1 << 7);
-
-		/* Set locally administered bit */
-		mac_info->mld_mac_list[i].mld_addr.bytes[0] |= 0x02;
-		mac_info->mld_mac_list[i].mld_addr.bytes[2] = mldaddr_b2;
-		hdd_debug("mld addr[%d]: "
-			QDF_MAC_ADDR_FMT, i,
+		hdd_debug("mld addr[%d]: " QDF_MAC_ADDR_FMT, i,
 		    QDF_MAC_ADDR_REF(mac_info->mld_mac_list[i].mld_addr.bytes));
 
 		mac_info->mld_mac_list[i].device_mode = QDF_MAX_NO_OF_MODE;
