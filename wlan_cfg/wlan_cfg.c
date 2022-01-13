@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -143,8 +143,8 @@ static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 
 #ifdef TX_MULTI_TCL
 static const uint8_t multi_tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	[0] = WLAN_CFG_TX_RING_MASK_0, [7] = WLAN_CFG_TX_RING_MASK_2,
-	[8] = WLAN_CFG_TX_RING_MASK_4};
+	[0] = WLAN_CFG_TX_RING_MASK_0, [4] = WLAN_CFG_TX_RING_MASK_2,
+	[5] = WLAN_CFG_TX_RING_MASK_4};
 
 #ifdef IPA_OFFLOAD
 static inline const
@@ -192,7 +192,7 @@ static const uint8_t rx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 #else
 static const uint8_t rx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[1] = WLAN_CFG_RX_RING_MASK_0, [2] = WLAN_CFG_RX_RING_MASK_1,
-	[3] = WLAN_CFG_RX_RING_MASK_2, [4] = WLAN_CFG_RX_RING_MASK_3};
+	[3] = WLAN_CFG_RX_RING_MASK_2 | WLAN_CFG_RX_RING_MASK_3};
 #endif
 #endif /* CONFIG_BERYLLIUM */
 
@@ -201,8 +201,8 @@ static const  uint8_t rxdma2host_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[13] = WLAN_CFG_RXDMA2HOST_RING_MASK_0};
 #else
 static const  uint8_t rxdma2host_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	[5] = WLAN_CFG_RXDMA2HOST_RING_MASK_0,
-	[6] = WLAN_CFG_RXDMA2HOST_RING_MASK_1};
+	[6] = WLAN_CFG_RXDMA2HOST_RING_MASK_0 |
+	      WLAN_CFG_RXDMA2HOST_RING_MASK_1};
 #endif /* CONFIG_BERYLLIUM */
 
 #ifdef CONFIG_BERYLLIUM
