@@ -2573,6 +2573,12 @@ typedef struct _wmi_ppe_threshold {
  * 2 – index for == 160Mhz bw (only 3 bytes are valid and other is reserved)
  * 3 – index for == 320Mhz bw (only 3 bytes are valid and other is reserved)
  */
+enum {
+    WMI_EHT_SUPP_MCS_20MHZ_ONLY,
+    WMI_EHT_SUPP_MCS_LE_80MHZ,
+    WMI_EHT_SUPP_MCS_160MHZ,
+    WMI_EHT_SUPP_MCS_320MHZ,
+};
 #define WMI_MAX_EHT_SUPP_MCS_2G_SIZE  2
 #define WMI_MAX_EHT_SUPP_MCS_5G_SIZE  4
 
