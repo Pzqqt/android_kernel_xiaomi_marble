@@ -10785,7 +10785,6 @@ static int ipa_smmu_update_fw_loader(void)
 			ipa3_ctx->num_smmu_cb_probed ==
 			ipa3_ctx->max_num_smmu_cb) {
 			IPADBG("All %d CBs probed\n", IPA_SMMU_CB_MAX);
-			ipa_fw_load_sm_handle_event(IPA_FW_LOAD_EVNT_SMMU_DONE);
 
 			if (ipa3_ctx->use_xbl_boot) {
 				IPAERR("Using XBL boot load for IPA FW\n");
@@ -10805,6 +10804,9 @@ static int ipa_smmu_update_fw_loader(void)
 					IPAERR("IPA post init failed %d\n", result);
 					return result;
 				}
+			} else {
+
+				ipa_fw_load_sm_handle_event(IPA_FW_LOAD_EVNT_SMMU_DONE);
 			}
 		}
 	} else {
