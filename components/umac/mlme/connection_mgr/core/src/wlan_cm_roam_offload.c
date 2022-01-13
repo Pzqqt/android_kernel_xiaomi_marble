@@ -4828,8 +4828,7 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 	if (source == CM_ROAMING_FW)
 		goto send_evt;
 
-	if (qdf_is_macaddr_zero(bssid) ||
-	    cm_req->roam_req.req.source == CM_ROAMING_NUD_FAILURE) {
+	if (qdf_is_macaddr_zero(bssid)) {
 		if (!wlan_mlme_is_data_stall_recovery_fw_supported(psoc)) {
 			mlme_debug("FW does not support data stall recovery, aborting roam invoke");
 			qdf_mem_free(cm_req);
@@ -4837,6 +4836,12 @@ QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 		}
 		cm_req->roam_req.req.forced_roaming = true;
 		source = CM_ROAMING_NUD_FAILURE;
+		goto send_evt;
+	}
+
+	if (qdf_is_macaddr_broadcast(bssid)) {
+		qdf_copy_macaddr(&cm_req->roam_req.req.bssid, bssid);
+		mlme_debug("Roam only if better candidate found else stick to current AP");
 		goto send_evt;
 	}
 
@@ -5147,6 +5152,11 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 		goto send_cmd;
 	}
 
+	if (qdf_is_macaddr_broadcast(&roam_req->req.bssid)) {
+		qdf_copy_macaddr(&roam_invoke_req->target_bssid,
+				 &roam_req->req.bssid);
+		goto send_cmd;
+	}
 	if (qdf_is_macaddr_equal(&roam_req->req.bssid, &connected_bssid))
 		roam_invoke_req->is_same_bssid = true;
 

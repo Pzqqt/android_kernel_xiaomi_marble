@@ -1002,9 +1002,17 @@ QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_remove_cmd(cm_ctx, &cm_id);
-
-	if (source == CM_ROAMING_HOST ||
-	    source == CM_ROAMING_NUD_FAILURE)
+	/*
+	 * If reassoc MAC from user space is broadcast MAC as:
+	 * "wpa_cli DRIVER FASTREASSOC ff:ff:ff:ff:ff:ff 0",
+	 * user space invoked roaming candidate selection will base on firmware
+	 * score algorithm, current connection will be kept if current AP has
+	 * highest score. It is requirement from customer which can avoid
+	 * ping-pong roaming.
+	 */
+	if (qdf_is_macaddr_broadcast(&roam_req->req.bssid))
+		mlme_debug("Keep current connection");
+	else if (source == CM_ROAMING_HOST || source == CM_ROAMING_NUD_FAILURE)
 		status = mlo_disconnect(vdev, CM_ROAM_DISCONNECT,
 					REASON_USER_TRIGGERED_ROAM_FAILURE,
 					NULL);
