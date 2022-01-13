@@ -1063,6 +1063,56 @@ enum wlan_status_code {
 #define RSN_CAP_MFP_CAPABLE 0x80
 #define RSN_CAP_MFP_REQUIRED 0x40
 
+/* FILS Discovery */
+#define WLAN_ACTION_FILS_DISCOVERY         34
+#define WLAN_FD_FRAMECNTL_CAP              0x0020
+#define WLAN_FD_FRAMECNTL_SHORTSSID        0x0040
+#define WLAN_FD_FRAMECNTL_CH_CENTERFREQ    0x0200
+#define WLAN_FD_FRAMECNTL_LEN_PRES         0x1000
+#define WLAN_FD_FRAMECNTL_SHORTSSID_LEN    0x0003
+
+#define WLAN_FD_SSID_LEN_PRES(_v)          ((_v) & 0x1F)
+#define WLAN_FD_IS_CAP_PRESENT(_v)         ((_v) & WLAN_FD_FRAMECNTL_CAP)
+#define WLAN_FD_IS_LEN_PRESENT(_v)         ((_v) & WLAN_FD_FRAMECNTL_LEN_PRES)
+#define WLAN_FD_IS_FRAMECNTL_CH_CENTERFREQ(_v)\
+					((_v) & WLAN_FD_FRAMECNTL_CH_CENTERFREQ)
+
+#define WLAN_FD_CAP_LEN                    2
+#define WLAN_FD_CAP_ESS_S                  0
+#define WLAN_FD_CAP_PRIVACY_S              1
+#define WLAN_FD_CAP_BSS_CHWIDTH_S          2
+#define WLAN_FD_CAP_NSS_S                  5
+#define WLAN_FD_CAP_PHY_INDEX_S            2
+#define WLAN_FD_CAP_MIN_RATE_S             5
+
+#define WLAN_FD_CHWIDTH_20                 0
+#define WLAN_FD_CHWIDTH_40                 1
+#define WLAN_FD_CHWIDTH_80                 2
+#define WLAN_FD_CHWIDTH_160_80_80          3
+#define WLAN_FD_CHWIDTH_320                4
+
+#define WLAN_FD_CAP_NSS_GTE_5              4
+#define WLAN_FD_CAP_NSS_MODE_1             1
+#define WLAN_FD_CAP_NSS_MODE_2             2
+#define WLAN_FD_CAP_NSS_MODE_3             3
+#define WLAN_FD_CAP_NSS_MODE_4             4
+#define WLAN_FD_CAP_NSS_MODE_5             5
+#define WLAN_FD_CAP_NSS_MODE_6             6
+#define WLAN_FD_CAP_NSS_MODE_7             7
+#define WLAN_FD_CAP_NSS_MODE_8             8
+
+#define WLAN_FD_CAP_ESS_ENABLE             1
+
+#define WLAN_FD_CAP_PHY_INDEX_NON_HT_OFDM  1
+#define WLAN_FD_CAP_PHY_INDEX_HT           2
+#define WLAN_FD_CAP_PHY_INDEX_VHT          3
+#define WLAN_FD_CAP_PHY_INDEX_HE           4
+#ifdef WLAN_FEATURE_11BE
+#define WLAN_FD_CAP_PHY_INDEX_EHT          5
+#endif /* WLAN_FEATURE_11BE */
+
+#define WLAN_FD_CAP_MIN_RATE               0
+
 /**
  * struct element_info - defines length of a memory block and memory block
  * @len: length of memory block

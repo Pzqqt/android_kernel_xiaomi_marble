@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -51,6 +52,16 @@ struct wlan_op_mode_peer_count {
 	enum QDF_OPMODE opmode;
 	uint16_t peer_count;
 };
+
+/**
+ * wlan_construct_shortssid() - construct the short ssid with the help of
+ * shortssid table
+ * @ssid: pointer to ssid
+ * @ssid_len: ssid length
+ *
+ * return: short ssid length
+ */
+uint32_t wlan_construct_shortssid(uint8_t *ssid, uint8_t ssid_len);
 
 /**
  * wlan_chan_to_freq() - converts channel to frequency
