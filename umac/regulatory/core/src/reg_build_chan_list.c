@@ -1471,7 +1471,9 @@ reg_modify_5g_maxbw(struct regulatory_channel *chan,
 		    struct ch_avoid_freq_type *avoid_freq)
 {
 	int i;
-	qdf_freq_t start, end, cur;
+	qdf_freq_t start = 0;
+	qdf_freq_t end = 0;
+	qdf_freq_t cur;
 	bool found = false;
 
 	for (i = 0; i < MAX_5G_CHAN_NUM; i++) {
