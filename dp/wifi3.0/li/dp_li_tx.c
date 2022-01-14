@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -219,6 +219,8 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 		       wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx)) ||
 	    dp_tx_pkt_tracepoints_enabled())
 		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
+	else
+		dp_tx_desc_set_timestamp(tx_desc);
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
 			 tx_desc->length,
@@ -289,6 +291,7 @@ QDF_STATUS dp_tx_desc_pool_init_li(struct dp_soc *soc,
 
 		tx_desc->id = id;
 		tx_desc->pool_id = pool_id;
+		dp_tx_desc_set_magic(tx_desc, DP_TX_MAGIC_PATTERN_FREE);
 		tx_desc = tx_desc->next;
 		count++;
 	}

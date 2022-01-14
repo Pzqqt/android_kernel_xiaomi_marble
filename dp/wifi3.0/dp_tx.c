@@ -4591,6 +4591,17 @@ dp_srng_test_and_update_nf_params(struct dp_soc *soc, struct dp_srng *dp_srng,
 }
 #endif
 
+#ifdef DP_TX_TRACKING
+void dp_tx_desc_check_corruption(struct dp_tx_desc_s *tx_desc)
+{
+	if ((tx_desc->magic != DP_TX_MAGIC_PATTERN_INUSE) &&
+	    (tx_desc->magic != DP_TX_MAGIC_PATTERN_FREE)) {
+		dp_err_rl("tx_desc %u is corrupted", tx_desc->id);
+		qdf_trigger_self_recovery(NULL, QDF_TX_DESC_LEAK);
+	}
+}
+#endif
+
 uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
 			    hal_ring_handle_t hal_ring_hdl, uint8_t ring_id,
 			    uint32_t quota)
@@ -4726,6 +4737,7 @@ more_data:
 				dp_tx_comp_info_rl("Descriptor freed in vdev_detach %d",
 						   tx_desc->id);
 				DP_STATS_INC(soc, tx.tx_comp_exception, 1);
+				dp_tx_desc_check_corruption(tx_desc);
 				continue;
 			}
 
