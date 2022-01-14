@@ -861,4 +861,40 @@ bool dp_tx_pkt_tracepoints_enabled(void)
 		qdf_trace_dp_tx_comp_udp_pkt_enabled() ||
 		qdf_trace_dp_tx_comp_pkt_enabled());
 }
+
+#ifdef DP_TX_TRACKING
+/**
+ * dp_tx_desc_set_timestamp() - set timestamp in tx descriptor
+ * @tx_desc - tx descriptor
+ *
+ * Return: None
+ */
+static inline
+void dp_tx_desc_set_timestamp(struct dp_tx_desc_s *tx_desc)
+{
+	tx_desc->timestamp = qdf_system_ticks();
+}
+
+/**
+ * dp_tx_desc_check_corruption() - Verify magic pattern in tx descriptor
+ * @tx_desc: tx descriptor
+ *
+ * Check for corruption in tx descriptor, if magic pattern is not matching
+ * trigger self recovery
+ *
+ * Return: none
+ */
+void dp_tx_desc_check_corruption(struct dp_tx_desc_s *tx_desc);
+#else
+static inline
+void dp_tx_desc_set_timestamp(struct dp_tx_desc_s *tx_desc)
+{
+}
+
+static inline
+void dp_tx_desc_check_corruption(struct dp_tx_desc_s *tx_desc)
+{
+}
+#endif
+
 #endif

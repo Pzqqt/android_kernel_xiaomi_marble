@@ -161,6 +161,9 @@
 #define DP_SKIP_BAR_UPDATE_TIMEOUT 5000
 #endif
 
+#define DP_TX_MAGIC_PATTERN_INUSE	0xABCD1234
+#define DP_TX_MAGIC_PATTERN_FREE	0xDEADBEEF
+
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
@@ -547,6 +550,9 @@ struct dp_tx_desc_s {
 	struct dp_tx_desc_s *next;
 	qdf_nbuf_t nbuf;
 	uint16_t length;
+#ifdef DP_TX_TRACKING
+	uint32_t magic;
+#endif
 	uint16_t flags;
 	uint32_t id;
 	qdf_dma_addr_t dma_addr;

@@ -12032,6 +12032,91 @@ void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 }
 #endif
 
+#ifdef DP_TX_TRACKING
+
+#define DP_TX_COMP_MAX_LATENCY_MS 120000
+/**
+ * dp_tx_comp_delay() - calculate time latency for tx completion per pkt
+ * @timestamp - tx descriptor timestamp
+ *
+ * Calculate time latency for tx completion per pkt and trigger self recovery
+ * when the delay is more than threshold value.
+ *
+ * Return: None.
+ */
+static void dp_tx_comp_delay(uint64_t timestamp)
+{
+	uint64_t time_latency;
+
+	if (dp_tx_pkt_tracepoints_enabled())
+		time_latency = qdf_ktime_to_ms(qdf_ktime_real_get()) -
+								timestamp;
+	else
+		time_latency = qdf_system_ticks_to_msecs(qdf_system_ticks() -
+								timestamp);
+
+	if (time_latency >= DP_TX_COMP_MAX_LATENCY_MS) {
+		dp_err_rl("tx completion not rcvd for %llu ms.", time_latency);
+		qdf_trigger_self_recovery(NULL, QDF_TX_DESC_LEAK);
+	}
+}
+
+/**
+ * dp_find_missing_tx_comp() - check for leaked descriptor in tx path
+ * @soc - DP SOC context
+ *
+ * Parse through descriptors in all pools and validate magic number and
+ * completion time. Trigger self recovery if magic value is corrupted.
+ *
+ * Return: None.
+ */
+static void dp_find_missing_tx_comp(struct dp_soc *soc)
+{
+	uint8_t i;
+	uint32_t j;
+	uint32_t num_desc, page_id, offset;
+	uint16_t num_desc_per_page;
+	struct dp_tx_desc_s *tx_desc = NULL;
+	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
+
+	for (i = 0; i < MAX_TXDESC_POOLS; i++) {
+		tx_desc_pool = &soc->tx_desc[i];
+		if (!(tx_desc_pool->pool_size) ||
+		    IS_TX_DESC_POOL_STATUS_INACTIVE(tx_desc_pool) ||
+		    !(tx_desc_pool->desc_pages.cacheable_pages))
+			continue;
+
+		num_desc = tx_desc_pool->pool_size;
+		num_desc_per_page =
+			tx_desc_pool->desc_pages.num_element_per_page;
+		for (j = 0; j < num_desc; j++) {
+			page_id = j / num_desc_per_page;
+			offset = j % num_desc_per_page;
+
+			if (qdf_unlikely(!(tx_desc_pool->
+					 desc_pages.cacheable_pages)))
+				break;
+
+			tx_desc = dp_tx_desc_find(soc, i, page_id, offset);
+			if (tx_desc->magic == DP_TX_MAGIC_PATTERN_FREE) {
+				continue;
+			} else if (tx_desc->magic ==
+						DP_TX_MAGIC_PATTERN_INUSE) {
+				dp_tx_comp_delay(tx_desc->timestamp);
+			} else {
+				dp_err("tx desc %d corrupted", tx_desc->id);
+				qdf_trigger_self_recovery(NULL,
+							  QDF_TX_DESC_LEAK);
+			}
+		}
+	}
+}
+#else
+static inline void dp_find_missing_tx_comp(struct dp_soc *soc)
+{
+}
+#endif
+
 #ifdef FEATURE_RUNTIME_PM
 /**
  * dp_runtime_suspend() - ensure DP is ready to runtime suspend
@@ -12058,9 +12143,9 @@ static QDF_STATUS dp_runtime_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	/* Abort if there are any pending TX packets */
 	tx_pending = dp_get_tx_pending(dp_pdev_to_cdp_pdev(pdev));
 	if (tx_pending) {
-		dp_init_info("%pK: Abort suspend due to pending TX packets %d",
-			     soc, tx_pending);
-
+		dp_info_rl("%pK: Abort suspend due to pending TX packets %d",
+			   soc, tx_pending);
+		dp_find_missing_tx_comp(soc);
 		/* perform a force flush if tx is pending */
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
 			hal_srng_set_event(soc->tcl_data_ring[i].hal_srng,
@@ -12551,6 +12636,7 @@ static QDF_STATUS dp_bus_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		if (timeout <= 0) {
 			dp_info("TX frames are pending %d, abort suspend",
 				tx_pending);
+			dp_find_missing_tx_comp(soc);
 			return QDF_STATUS_E_TIMEOUT;
 		}
 		timeout = timeout - drain_wait_delay;

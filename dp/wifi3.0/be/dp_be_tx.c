@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -502,7 +502,7 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 			dp_cc_desc_id_generate(page_desc->ppt_index,
 					       avail_entry_index);
 		tx_desc->pool_id = pool_id;
-
+		dp_tx_desc_set_magic(tx_desc, DP_TX_MAGIC_PATTERN_FREE);
 		tx_desc = tx_desc->next;
 		avail_entry_index = (avail_entry_index + 1) &
 					DP_CC_SPT_PAGE_MAX_ENTRIES_MASK;
