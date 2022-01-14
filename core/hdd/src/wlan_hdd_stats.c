@@ -2077,8 +2077,6 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 		return -ENOMEM;
 	}
 
-	qdf_runtime_pm_prevent_suspend(&hdd_ctx->runtime_context.stats);
-
 	cookie = osif_request_cookie(request);
 
 	priv = osif_request_priv(request);
@@ -2129,8 +2127,6 @@ exit:
 	wlan_hdd_reset_station_stats_request_pending(hdd_ctx->psoc, adapter);
 	hdd_exit();
 	osif_request_put(request);
-
-	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.stats);
 
 	if (adapter->ll_stats_failure_count >=
 					HDD_MAX_ALLOWED_LL_STATS_FAILURE) {
@@ -6953,22 +6949,15 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	int ret = 0;
 	struct stats_event *stats;
 	struct wlan_objmgr_vdev *vdev;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (!get_station_fw_request_needed) {
 		hdd_debug("return cached get_station stats");
 		return 0;
 	}
 
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
-		return ret;
-
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_STATS_ID);
 	if (!vdev)
 		return -EINVAL;
-
-	qdf_runtime_pm_prevent_suspend(&hdd_ctx->runtime_context.stats);
 
 	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(vdev, &ret);
 	if (ret || !stats) {
@@ -6982,7 +6971,6 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 
 out:
-	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.stats);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
 	return ret;
 }
