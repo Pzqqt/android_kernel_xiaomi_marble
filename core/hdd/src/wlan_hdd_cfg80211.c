@@ -2127,8 +2127,9 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		uint32_t i;
 
 		conc_connection_info = policy_mgr_get_conn_info(&i);
-		if (conc_connection_info[0].mac ==
-			conc_connection_info[1].mac) {
+		if (policy_mgr_are_2_freq_on_same_mac(hdd_ctx->psoc,
+			conc_connection_info[0].freq,
+			conc_connection_info[1].freq)) {
 			if (!WLAN_REG_IS_24GHZ_CH_FREQ(
 				sap_config->acs_cfg.pcl_chan_freq[0])) {
 				sap_config->acs_cfg.band =
@@ -2665,9 +2666,9 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		struct policy_mgr_conc_connection_info	*conc_connection_info;
 
 		conc_connection_info = policy_mgr_get_conn_info(&i);
-		if (conc_connection_info[0].mac ==
-			conc_connection_info[1].mac) {
-
+		if (policy_mgr_are_2_freq_on_same_mac(hdd_ctx->psoc,
+			conc_connection_info[0].freq,
+			conc_connection_info[1].freq)) {
 			if (!WLAN_REG_IS_24GHZ_CH_FREQ(
 				sap_config->acs_cfg.pcl_chan_freq[0])) {
 				sap_config->acs_cfg.band =

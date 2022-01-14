@@ -1349,8 +1349,10 @@ policy_mgr_dump_dual_mac_concurrency(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	char buf[4] = {0};
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	if (pm_conc_connection_list[0].mac ==
-		pm_conc_connection_list[1].mac) {
+	if (policy_mgr_are_2_freq_on_same_mac(pm_ctx->psoc,
+					      pm_conc_connection_list[0].freq,
+					      pm_conc_connection_list[1].freq)
+					     ) {
 		if (pm_conc_connection_list[0].freq ==
 			pm_conc_connection_list[1].freq)
 			strlcat(cc_mode,
@@ -1362,7 +1364,11 @@ policy_mgr_dump_dual_mac_concurrency(struct policy_mgr_psoc_priv_obj *pm_ctx,
 				length);
 		mac = pm_conc_connection_list[0].mac;
 	}
-	if (pm_conc_connection_list[0].mac == pm_conc_connection_list[2].mac) {
+
+	if (policy_mgr_are_2_freq_on_same_mac(pm_ctx->psoc,
+					      pm_conc_connection_list[0].freq,
+					      pm_conc_connection_list[2].freq)
+					     ) {
 		if (pm_conc_connection_list[0].freq ==
 			pm_conc_connection_list[2].freq)
 			strlcat(cc_mode,
@@ -1374,7 +1380,11 @@ policy_mgr_dump_dual_mac_concurrency(struct policy_mgr_psoc_priv_obj *pm_ctx,
 				length);
 		mac = pm_conc_connection_list[0].mac;
 	}
-	if (pm_conc_connection_list[1].mac == pm_conc_connection_list[2].mac) {
+
+	if (policy_mgr_are_2_freq_on_same_mac(pm_ctx->psoc,
+					      pm_conc_connection_list[1].freq,
+					      pm_conc_connection_list[2].freq)
+					     ) {
 		if (pm_conc_connection_list[1].freq ==
 			pm_conc_connection_list[2].freq)
 			strlcat(cc_mode,
@@ -1494,15 +1504,13 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 		    pm_conc_connection_list[0].freq ==
 		    pm_conc_connection_list[2].freq){
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-				strlcat(cc_mode, " SCC",
-						sizeof(cc_mode));
-		} else if ((pm_conc_connection_list[0].mac ==
-				pm_conc_connection_list[1].mac)
-				&& (pm_conc_connection_list[0].mac ==
-					pm_conc_connection_list[2].mac)) {
+			strlcat(cc_mode, " SCC", sizeof(cc_mode));
+		} else if (policy_mgr_are_3_freq_on_same_mac(psoc,
+				pm_conc_connection_list[0].freq,
+				pm_conc_connection_list[1].freq,
+				pm_conc_connection_list[2].freq)) {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-					strlcat(cc_mode, " MCC on single MAC",
-						sizeof(cc_mode));
+			strlcat(cc_mode, " MCC on single MAC", sizeof(cc_mode));
 		} else {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 			if (policy_mgr_is_current_hwmode_dbs(psoc))
@@ -3370,50 +3378,45 @@ bool policy_mgr_allow_new_home_channel(
 {
 	bool status = true;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	uint32_t mcc_to_scc_switch;
+	bool on_same_mac = false, force_switch_without_dis = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
-	mcc_to_scc_switch =
-		policy_mgr_get_mcc_to_scc_switch_mode(psoc);
+
+	force_switch_without_dis =
+		policy_mgr_get_mcc_to_scc_switch_mode(psoc) ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION;
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (num_connections == 2) {
 	/* No SCC or MCC combination is allowed with / on DFS channel */
-		if ((mcc_to_scc_switch ==
-		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
-		is_dfs_ch &&
-		((pm_conc_connection_list[0].ch_flagext &
-		  (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) ||
-		 (pm_conc_connection_list[1].ch_flagext &
-		  (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)))) {
+		on_same_mac = policy_mgr_are_2_freq_on_same_mac(psoc,
+				pm_conc_connection_list[0].freq,
+				pm_conc_connection_list[1].freq);
+		if (force_switch_without_dis && is_dfs_ch &&
+		    ((pm_conc_connection_list[0].ch_flagext &
+		      (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) ||
+		     (pm_conc_connection_list[1].ch_flagext &
+		      (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)))) {
 			policy_mgr_rl_debug("Existing DFS connection, new 3-port DFS connection is not allowed");
 			status = false;
-
 		} else if (((pm_conc_connection_list[0].freq !=
-				pm_conc_connection_list[1].freq)
-		|| (mcc_to_scc_switch ==
-		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
-		) && (pm_conc_connection_list[0].mac ==
-			pm_conc_connection_list[1].mac)) {
+			     pm_conc_connection_list[1].freq) ||
+			    force_switch_without_dis) && on_same_mac) {
 			status = policy_mgr_allow_same_mac_diff_freq(psoc,
 								     ch_freq);
-		} else if (pm_conc_connection_list[0].mac ==
-			   pm_conc_connection_list[1].mac) {
+		} else if (on_same_mac) {
 			status = policy_mgr_allow_same_mac_same_freq(psoc,
 								     ch_freq,
 								     mode);
 		}
-	} else if ((num_connections == 1) &&
-		   (mcc_to_scc_switch ==
-		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
-		is_dfs_ch &&
-		(pm_conc_connection_list[0].ch_flagext &
-		 (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2))) {
-
+	} else if (num_connections == 1 && force_switch_without_dis &&
+		   is_dfs_ch &&
+		   (pm_conc_connection_list[0].ch_flagext &
+		    (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2))) {
 		policy_mgr_rl_debug("Existing DFS connection, new 2-port DFS connection is not allowed");
 		status = false;
 	} else if ((num_connections == 1) &&

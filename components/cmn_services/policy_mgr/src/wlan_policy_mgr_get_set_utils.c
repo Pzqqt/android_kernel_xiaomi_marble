@@ -718,7 +718,7 @@ policy_mgr_update_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx,
 		policy_mgr_update_5Ghz_freq_info(mac_range, mac_cap);
 }
 
-static void
+static QDF_STATUS
 policy_mgr_modify_sbs_freq(struct policy_mgr_psoc_priv_obj *pm_ctx,
 			   uint8_t phy_id)
 {
@@ -733,11 +733,11 @@ policy_mgr_modify_sbs_freq(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	 * keep the range as it is in SBS
 	 */
 	if (sbs_mac_range->low_2ghz_freq && sbs_mac_range->low_5ghz_freq)
-		return;
+		return QDF_STATUS_SUCCESS;
 	if (sbs_mac_range->low_2ghz_freq && !sbs_mac_range->low_5ghz_freq) {
 		policy_mgr_err("Invalid DBS/SBS mode with only 2.4Ghz");
 		policy_mgr_dump_freq_range_per_mac(sbs_mac_range, MODE_SBS);
-		return;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	non_shared_range = sbs_mac_range;
@@ -777,8 +777,11 @@ policy_mgr_modify_sbs_freq(struct policy_mgr_psoc_priv_obj *pm_ctx,
 				QDF_MIN(shared_mac_range->high_5ghz_freq + 10,
 					non_shared_range->high_5ghz_freq);
 	} else {
-		policy_mgr_debug("All 5Ghz shared, Do nothing");
+		policy_mgr_info("Invalid SBS range with all 5Ghz shared");
+		return QDF_STATUS_E_INVAL;
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static qdf_freq_t
@@ -901,6 +904,7 @@ policy_mgr_update_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	uint16_t sbs_range_sep;
 	struct policy_mgr_freq_range *mac_range;
 	uint8_t phy_id;
+	QDF_STATUS status;
 
 	mac_range = pm_ctx->hw_mode.freq_range_caps[MODE_SBS];
 
@@ -923,8 +927,14 @@ policy_mgr_update_sbs_freq_info(struct policy_mgr_psoc_priv_obj *pm_ctx)
 	 * If sbs_lower_band_end_freq is not set that means FW will send one
 	 * shared mac range and one non-shared mac range. so update that freq.
 	 */
-	for (phy_id = 0; phy_id < MAX_MAC; phy_id++)
-		policy_mgr_modify_sbs_freq(pm_ctx, phy_id);
+	for (phy_id = 0; phy_id < MAX_MAC; phy_id++) {
+		status = policy_mgr_modify_sbs_freq(pm_ctx, phy_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			/* Reset the SBS range */
+			qdf_mem_zero(mac_range, sizeof(*mac_range) * MAX_MAC);
+			break;
+		}
+	}
 }
 
 static void
@@ -2524,8 +2534,9 @@ bool policy_mgr_current_concurrency_is_scc(struct wlan_objmgr_psoc *psoc)
 	case 2:
 		if (pm_conc_connection_list[0].freq ==
 		    pm_conc_connection_list[1].freq &&
-		    pm_conc_connection_list[0].mac ==
-		    pm_conc_connection_list[1].mac)
+		    policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[1].freq))
 			is_scc = true;
 		break;
 	case 3:
@@ -2582,8 +2593,9 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 	case 2:
 		if (pm_conc_connection_list[0].freq !=
 		    pm_conc_connection_list[1].freq &&
-		    pm_conc_connection_list[0].mac ==
-		    pm_conc_connection_list[1].mac)
+		    policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[1].freq))
 			is_mcc = true;
 		break;
 	case 3:
@@ -2593,16 +2605,19 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 		 */
 		if ((pm_conc_connection_list[0].freq !=
 		     pm_conc_connection_list[1].freq &&
-		     pm_conc_connection_list[0].mac ==
-		     pm_conc_connection_list[1].mac) ||
+		     policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[1].freq)) ||
 		    (pm_conc_connection_list[0].freq !=
 		     pm_conc_connection_list[2].freq &&
-		     pm_conc_connection_list[0].mac ==
-		     pm_conc_connection_list[2].mac) ||
+		     policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[2].freq)) ||
 		    (pm_conc_connection_list[1].freq !=
 		     pm_conc_connection_list[2].freq &&
-		     pm_conc_connection_list[1].mac ==
-		     pm_conc_connection_list[2].mac))
+		     policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[1].freq,
+			pm_conc_connection_list[2].freq)))
 			is_mcc = true;
 		break;
 	default:
@@ -4296,12 +4311,13 @@ QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
  *
  * Return: true or false
  */
-static bool policy_mgr_is_two_connection_mcc(void)
+static bool policy_mgr_is_two_connection_mcc(struct wlan_objmgr_psoc *psoc)
 {
 	return ((pm_conc_connection_list[0].freq !=
 		 pm_conc_connection_list[1].freq) &&
-		(pm_conc_connection_list[0].mac ==
-		 pm_conc_connection_list[1].mac) &&
+		(policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[1].freq)) &&
 		(pm_conc_connection_list[0].freq <=
 		 WLAN_REG_MAX_24GHZ_CHAN_FREQ) &&
 		(pm_conc_connection_list[1].freq <=
@@ -4343,7 +4359,7 @@ bool policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
 	case 1:
 		break;
 	case 2:
-		if (policy_mgr_is_two_connection_mcc())
+		if (policy_mgr_is_two_connection_mcc(psoc))
 			is_24G_mcc = true;
 		break;
 	case 3:
@@ -5667,8 +5683,9 @@ bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 			policy_mgr_debug("DBS unsupported, mcc and scc unsupported too, don't allow 2nd AP");
 			return false;
 		}
+
 		if (policy_mgr_are_2_freq_on_same_mac(psoc, ch_freq,
-						      con_freq)){
+						      con_freq)) {
 			policy_mgr_debug("DBS supported, 2 SAP on same band, reject 2nd AP");
 			return false;
 		}
@@ -6069,10 +6086,9 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 					qdf_freq_t freq,
 					tQDF_MCC_TO_SCC_SWITCH_MODE scc_mode)
 {
-	uint8_t i, mac = 0;
+	uint8_t i;
 	bool restart_required = false;
 	bool is_sta_p2p_cli;
-	bool is_same_mac;
 	bool sap_on_dfs = false;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	struct policy_mgr_conc_connection_info *connection;
@@ -6093,8 +6109,6 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
 		if (connection[i].vdev_id == vdev_id &&
 		    connection[i].in_use) {
-			mac = connection[i].mac;
-
 			if (WLAN_REG_IS_5GHZ_CH_FREQ(connection[i].freq) &&
 			    (connection[i].ch_flagext & (IEEE80211_CHAN_DFS |
 					      IEEE80211_CHAN_DFS_CFREQ2)))
@@ -6116,10 +6130,10 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 			connection[i].mode == PM_P2P_CLIENT_MODE);
 		if (!is_sta_p2p_cli)
 			continue;
-		is_same_mac = connection[i].freq != freq &&
-			      (connection[i].mac == mac ||
-			       !policy_mgr_is_hw_dbs_capable(psoc));
-		if (is_same_mac) {
+
+		if (connection[i].freq != freq &&
+		    policy_mgr_are_2_freq_on_same_mac(psoc, freq,
+						      connection[i].freq)) {
 			restart_required = true;
 			break;
 		}
