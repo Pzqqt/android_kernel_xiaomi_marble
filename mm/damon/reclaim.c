@@ -27,7 +27,7 @@
  * condition.  Refer to below descriptions for the watermarks parameter for
  * this.
  */
-static bool enabled __read_mostly;
+static bool enabled __read_mostly = true;
 
 /*
  * Time threshold for cold memory regions identification in microseconds.
