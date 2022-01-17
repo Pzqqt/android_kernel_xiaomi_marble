@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -106,6 +106,17 @@ reg_process_master_chan_list_ext(struct cur_regulatory_info *reg_info);
 QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
 					  enum reg_6g_ap_type ap_pwr_type,
 					  struct regulatory_channel *chan_list);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_get_power_string() - get power string from power enum type
+ * @power_type: power type enum value
+ *
+ * Return: power type string
+ */
+const char *reg_get_power_string(enum reg_6g_ap_type power_type);
+#endif
+
 #ifdef CONFIG_AFC_SUPPORT
 /**
  * reg_process_afc_event() - Process the afc event and compute the 6G AFC

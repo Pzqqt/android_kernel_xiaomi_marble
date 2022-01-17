@@ -2577,6 +2577,22 @@ QDF_STATUS reg_process_master_chan_list_ext(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_REG_CLIENT
+const char *reg_get_power_string(enum reg_6g_ap_type power_type)
+{
+	switch (power_type) {
+	case REG_INDOOR_AP:
+		return "LP";
+	case REG_STANDARD_POWER_AP:
+		return "SP";
+	case REG_VERY_LOW_POWER_AP:
+		return "VLP";
+	default:
+		return "INVALID";
+	}
+}
+#endif
+
 QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
 					  enum reg_6g_ap_type ap_pwr_type,
 					  struct regulatory_channel *chan_list)

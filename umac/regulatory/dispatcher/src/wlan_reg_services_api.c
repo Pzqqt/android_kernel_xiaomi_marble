@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -399,6 +399,13 @@ QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(
 {
 	return  reg_get_6g_ap_master_chan_list(pdev, ap_pwr_type, chan_list);
 }
+
+#ifdef CONFIG_REG_CLIENT
+const char *wlan_reg_get_power_string(enum reg_6g_ap_type power_type)
+{
+	return reg_get_power_string(power_type);
+}
+#endif
 
 qdf_export_symbol(wlan_reg_get_6g_ap_master_chan_list);
 

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -204,6 +204,16 @@ QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(
 					struct wlan_objmgr_pdev *pdev,
 					enum reg_6g_ap_type ap_pwr_type,
 					struct regulatory_channel *chan_list);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * wlan_reg_get_power_string () - wlan reg get power type string
+ * @power_type: power type enum
+ *
+ * Return: power type string
+ */
+const char *wlan_reg_get_power_string(enum reg_6g_ap_type power_type);
+#endif
 
 /**
  * wlan_reg_is_6ghz_psc_chan_freq() - Check if the given 6GHz channel frequency
