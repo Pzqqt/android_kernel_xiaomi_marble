@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2449,6 +2449,8 @@ enum mlme_reg_srd_master_modes {
  * list command to FW till the current scan is complete.
  * @retain_nol_across_regdmn_update: Retain the NOL list across the regdomain.
  * @enable_nan_on_indoor_channels: Enable nan on Indoor channels
+ * @coex_unsafe_chan_nb_user_prefer: Honor coex unsafe freq event from firmware
+ * or not
  */
 struct wlan_mlme_reg {
 	uint32_t self_gen_frm_pwr;
@@ -2469,6 +2471,9 @@ struct wlan_mlme_reg {
 	bool enable_pending_chan_list_req;
 	bool retain_nol_across_regdmn_update;
 	bool enable_nan_on_indoor_channels;
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+	bool coex_unsafe_chan_nb_user_prefer;
+#endif
 };
 
 #define IOT_AGGR_INFO_MAX_NUM 32

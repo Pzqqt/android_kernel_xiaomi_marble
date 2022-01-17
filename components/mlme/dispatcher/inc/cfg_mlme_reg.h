@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -333,7 +334,33 @@
 		1, \
 		"Retain NOL even if the regdomain changes")
 
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+/*
+ * <ini>
+ * coex_unsafe_chan_nb_user_prefer- Used to handle coex unsafe freq
+ * event
+ *
+ * @Min: 0 (Honor Firmware event)
+ * @Max: 1 (Don't honor Firmware event)
+ * Default: 0
+ *
+ * This ini is used to handle coex unsafe freq event
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER  CFG_INI_BOOL( \
+		"coex_unsafe_chan_nb_user_prefer", \
+		0, \
+		"Honor coex unsafe freq event from firmware")
+#define CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER_ALL \
+	CFG(CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER)
+#else
+#define CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER_ALL
+#endif
+
 #define CFG_REG_ALL \
+	CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER_ALL \
 	CFG(CFG_SELF_GEN_FRM_PWR) \
 	CFG(CFG_ENABLE_PENDING_CHAN_LIST_REQ) \
 	CFG(CFG_ENABLE_11D_IN_WORLD_MODE) \
