@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/math64.h>
@@ -247,6 +248,7 @@ static void dsi_phy_hw_cphy_enable(struct dsi_phy_hw *phy,
 	u32 minor_ver = 0;
 	/* For C-PHY, no low power settings for lower clk rate */
 	u32 vreg_ctrl_0 = 0x51;
+	u32 vreg_ctrl_1 = 0x55;
 	u32 glbl_str_swi_cal_sel_ctrl = 0;
 	u32 glbl_hstx_str_ctrl_0 = 0;
 	u32 glbl_rescode_top_ctrl = 0;
@@ -272,6 +274,11 @@ static void dsi_phy_hw_cphy_enable(struct dsi_phy_hw *phy,
 		glbl_rescode_bot_ctrl = 0x3c;
 	}
 
+	if (phy->version == DSI_PHY_VERSION_4_3_2) {
+		vreg_ctrl_0 = 0x45;
+		vreg_ctrl_1 = 0x41;
+	}
+
 	/* de-assert digital and pll power down */
 	data = BIT(6) | BIT(5);
 	DSI_W32(phy, DSIPHY_CMN_CTRL_0, data);
@@ -295,7 +302,7 @@ static void dsi_phy_hw_cphy_enable(struct dsi_phy_hw *phy,
 
 	/* Enable LDO */
 	DSI_W32(phy, DSIPHY_CMN_VREG_CTRL_0, vreg_ctrl_0);
-	DSI_W32(phy, DSIPHY_CMN_VREG_CTRL_1, 0x55);
+	DSI_W32(phy, DSIPHY_CMN_VREG_CTRL_1, vreg_ctrl_1);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_STR_SWI_CAL_SEL_CTRL,
 					glbl_str_swi_cal_sel_ctrl);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_HSTX_STR_CTRL_0, glbl_hstx_str_ctrl_0);
@@ -356,6 +363,7 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 	u32 minor_ver = 0;
 	bool less_than_1500_mhz = false;
 	u32 vreg_ctrl_0 = 0;
+	u32 vreg_ctrl_1 = 0x5c;
 	u32 glbl_str_swi_cal_sel_ctrl = 0;
 	u32 glbl_hstx_str_ctrl_0 = 0;
 	u32 glbl_rescode_top_ctrl = 0;
@@ -390,6 +398,11 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 	if (phy->version >= DSI_PHY_VERSION_4_3)
 		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3d : 0x01;
 
+	if (phy->version == DSI_PHY_VERSION_4_3_2){
+		vreg_ctrl_0 = 0x19;
+		vreg_ctrl_1 = 0x44;
+	}
+
 	split_link_enabled = cfg->split_link.enabled;
 	lanes_per_sublink = cfg->split_link.lanes_per_sublink;
 	/* de-assert digital and pll power down */
@@ -418,7 +431,7 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 
 	/* Enable LDO */
 	DSI_W32(phy, DSIPHY_CMN_VREG_CTRL_0, vreg_ctrl_0);
-	DSI_W32(phy, DSIPHY_CMN_VREG_CTRL_1, 0x5c);
+	DSI_W32(phy, DSIPHY_CMN_VREG_CTRL_1, vreg_ctrl_1);
 	DSI_W32(phy, DSIPHY_CMN_CTRL_3, 0x00);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_STR_SWI_CAL_SEL_CTRL,
 					glbl_str_swi_cal_sel_ctrl);
@@ -491,7 +504,7 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 		pr_warn("PLL turned on before configuring PHY\n");
 
 	/* Request for REFGEN ready */
-	if (phy->version == DSI_PHY_VERSION_4_3) {
+	if (phy->version >= DSI_PHY_VERSION_4_3) {
 		DSI_W32(phy, DSIPHY_CMN_GLBL_DIGTOP_SPARE10, 0x1);
 		udelay(500);
 	}

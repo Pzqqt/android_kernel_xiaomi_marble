@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _DSI_PHY_HW_H_
@@ -34,6 +35,7 @@
  * @DSI_PHY_VERSION_4_1:	7nm
  * @DSI_PHY_VERSION_4_2:        5nm
  * @DSI_PHY_VERSION_4_3:        5nm
+ * @DSI_PHY_VERSION_4_3_2:	4nm (v4.3 specific to SM8475)
  * @DSI_PHY_VERSION_MAX:
  */
 enum dsi_phy_version {
@@ -43,6 +45,7 @@ enum dsi_phy_version {
 	DSI_PHY_VERSION_4_1, /* 7nm */
 	DSI_PHY_VERSION_4_2, /* 5nm */
 	DSI_PHY_VERSION_4_3, /* 5nm */
+	DSI_PHY_VERSION_4_3_2, /* 4nm */
 	DSI_PHY_VERSION_MAX
 };
 
