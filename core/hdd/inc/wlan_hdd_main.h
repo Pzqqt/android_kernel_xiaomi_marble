@@ -5176,6 +5176,15 @@ int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter,
 				struct qdf_mac_addr mac_addr);
 
+/**
+ * hdd_is_dynamic_set_mac_addr_allowed() - API to check dynamic MAC address
+ *				           update is allowed or not
+ * @adapter: Pointer to the adapter structure
+ *
+ * Return: true or false
+ */
+bool hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter);
+
 #if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 /**
  * hdd_update_vdev_mac_address() - Update VDEV MAC address dynamically
@@ -5212,6 +5221,13 @@ static inline int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
 {
 	return 0;
 }
+
+static inline bool
+hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter)
+{
+	return false;
+}
+
 #endif /* WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE */
 
 #ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT

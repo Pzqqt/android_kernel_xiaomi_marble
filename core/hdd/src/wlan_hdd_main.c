@@ -5280,35 +5280,6 @@ static void hdd_update_set_mac_addr_req_ctx(struct hdd_adapter *adapter,
 #endif
 
 /**
- * hdd_is_dynamic_set_mac_addr_allowed() - API to check dynamic MAC address
- *				           update is allowed or not
- * @adapter: Pointer to the adapter structure
- *
- * Return: true or false
- */
-static bool hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter)
-{
-	if (!adapter->vdev) {
-		hdd_err("VDEV is NULL");
-		return false;
-	}
-
-	switch (adapter->device_mode) {
-	case QDF_STA_MODE:
-		if (!cm_is_vdev_disconnected(adapter->vdev)) {
-			hdd_err("VDEV is not in disconnected state, set mac address isn't supported");
-			return false;
-		}
-	case QDF_P2P_DEVICE_MODE:
-		return true;
-	default:
-		hdd_err("Dynamic set mac address isn't supported for opmode:%d",
-			adapter->device_mode);
-		return false;
-	}
-}
-
-/**
  * hdd_is_dynamic_set_mac_addr_supported() - API to check dynamic MAC address
  *				             update is supported or not
  * @hdd_ctx: Pointer to the HDD context
@@ -5319,6 +5290,40 @@ static inline bool
 hdd_is_dynamic_set_mac_addr_supported(struct hdd_context *hdd_ctx)
 {
 	return hdd_ctx->is_vdev_macaddr_dynamic_update_supported;
+}
+
+bool hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter)
+{
+	if (!adapter->vdev) {
+		hdd_err("VDEV is NULL");
+		return false;
+	}
+
+	if (!hdd_is_dynamic_set_mac_addr_supported(adapter->hdd_ctx)) {
+		hdd_info_rl("On iface up, set mac address change isn't supported");
+		return false;
+	}
+
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+		if (!cm_is_vdev_disconnected(adapter->vdev)) {
+			hdd_info_rl("VDEV is not in disconnected state, set mac address isn't supported");
+			return false;
+		}
+	case QDF_P2P_DEVICE_MODE:
+		return true;
+	case QDF_SAP_MODE:
+		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+			hdd_info_rl("SAP is in up state, set mac address isn't supported");
+			return false;
+		} else {
+			return true;
+		}
+	default:
+		hdd_info_rl("Dynamic set mac address isn't supported for opmode:%d",
+			adapter->device_mode);
+		return false;
+	}
 }
 
 int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
@@ -5427,12 +5432,6 @@ static void hdd_set_mac_addr_event_cb(uint8_t vdev_id, uint8_t status)
 }
 #else
 static inline bool
-hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter)
-{
-	return false;
-}
-
-static inline bool
 hdd_is_dynamic_set_mac_addr_supported(struct hdd_context *hdd_ctx)
 {
 	return false;
@@ -5468,13 +5467,8 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 		return ret;
 
 	if (net_if_running) {
-		if (hdd_is_dynamic_set_mac_addr_supported(hdd_ctx)) {
-			if (!hdd_is_dynamic_set_mac_addr_allowed(adapter))
-				return -ENOTSUPP;
-		} else {
-			hdd_err("On iface up, set mac address change isn't supported");
+		if (!hdd_is_dynamic_set_mac_addr_allowed(adapter))
 			return -ENOTSUPP;
-		}
 	}
 
 	qdf_mem_copy(&mac_addr, psta_mac_addr->sa_data, sizeof(mac_addr));

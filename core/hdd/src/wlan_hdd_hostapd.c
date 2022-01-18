@@ -770,6 +770,9 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 		  dev->name);
 
 	if (adapter->vdev) {
+		if (!hdd_is_dynamic_set_mac_addr_allowed(adapter))
+			return -ENOTSUPP;
+
 		ret = hdd_dynamic_mac_address_set(hdd_ctx, adapter, mac_addr);
 		if (ret)
 			return ret;
