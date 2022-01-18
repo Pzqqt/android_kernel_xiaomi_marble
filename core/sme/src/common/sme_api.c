@@ -15162,10 +15162,8 @@ void sme_update_score_config(mac_handle_t mac_handle, eCsrPhyMode phy_mode,
 	    phy_mode == eCSR_DOT11_MODE_11n_ONLY)
 		config.ht_cap = 1;
 
-#ifdef WLAN_FEATURE_11BE
-	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11BE))
+	if (!IS_FEATURE_11BE_SUPPORTED_BY_FW)
 		config.eht_cap = 0;
-#endif
 
 	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
 		config.he_cap = 0;

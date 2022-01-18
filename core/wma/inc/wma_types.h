@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,11 @@
 
 #define IS_FEATURE_SUPPORTED_BY_FW(feat_enum_value) \
 				wma_get_fw_wlan_feat_caps(feat_enum_value)
+#ifdef WLAN_FEATURE_11BE
+#define IS_FEATURE_11BE_SUPPORTED_BY_FW IS_FEATURE_SUPPORTED_BY_FW(DOT11BE)
+#else
+#define IS_FEATURE_11BE_SUPPORTED_BY_FW 0
+#endif
 
 #define DPU_FEEDBACK_UNPROTECTED_ERROR 0x0F
 

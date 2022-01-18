@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,6 +60,7 @@
 #include "cfg_mlme_fe_rrm.h"
 #include "cfg_mlme_mwc.h"
 #include "cfg_mlme_reg.h"
+#include "cfg_mlme_eht_caps.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
@@ -98,6 +100,7 @@
 	CFG_WEP_PARAMS_ALL \
 	CFG_WIFI_POS_ALL \
 	CFG_WMM_PARAMS_ALL\
-	CFG_WPS_ALL
+	CFG_WPS_ALL \
+	CFG_EHT_CAPS_ALL
 
 #endif /* __CFG_MLME_H */

@@ -5026,7 +5026,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 #ifdef WLAN_FEATURE_11BE
 	case eCSR_CFG_DOT11_MODE_11BE:
 	case eCSR_CFG_DOT11_MODE_11BE_ONLY:
-		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11BE)) {
+		if (IS_FEATURE_11BE_SUPPORTED_BY_FW) {
 			*dot11_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 		} else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11AX;
@@ -5049,7 +5049,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 #endif
 	case eCSR_CFG_DOT11_MODE_AUTO:
 #ifdef WLAN_FEATURE_11BE
-		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11BE)) {
+		if (IS_FEATURE_11BE_SUPPORTED_BY_FW) {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11BE;
 		} else
 #endif
@@ -5193,7 +5193,7 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 		  profile->privacy, bss_op_ch_freq,
 		  IS_FEATURE_SUPPORTED_BY_FW(DOT11AX));
 #ifdef WLAN_FEATURE_11BE
-	sme_debug("BE :%d", IS_FEATURE_SUPPORTED_BY_FW(DOT11BE));
+	sme_debug("BE :%d", IS_FEATURE_11BE_SUPPORTED_BY_FW);
 #endif
 	return cfg_dot11_mode;
 }

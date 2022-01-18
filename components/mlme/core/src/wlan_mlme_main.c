@@ -1269,6 +1269,30 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_mlme_cfg *mlme_cfg)
 {
+	struct wlan_mlme_eht_caps *eht_caps = &mlme_cfg->eht_caps;
+
+	eht_caps->dot11_eht_cap.su_beamformer =
+			cfg_default(CFG_EHT_SU_BEAMFORMER);
+	eht_caps->dot11_eht_cap.su_beamformee =
+			cfg_default(CFG_EHT_SU_BEAMFORMEE);
+	eht_caps->dot11_eht_cap.mu_bformer_le_80mhz =
+			cfg_default(CFG_EHT_MU_BFORMER_LE_80MHZ);
+	eht_caps->dot11_eht_cap.mu_bformer_160mhz =
+			cfg_default(CFG_EHT_MU_BFORMER_160MHZ);
+	eht_caps->dot11_eht_cap.mu_bformer_320mhz =
+			cfg_default(CFG_EHT_MU_BFORMER_320MHZ);
+	eht_caps->dot11_eht_cap.bfee_ss_le_80mhz =
+			cfg_default(CFG_EHT_BFEE_SS_LE_80MHZ);
+	eht_caps->dot11_eht_cap.bfee_ss_160mhz =
+			cfg_default(CFG_EHT_BFEE_SS_160MHZ);
+	eht_caps->dot11_eht_cap.bfee_ss_320mhz =
+			cfg_default(CFG_EHT_BFEE_SS_320MHZ);
+	eht_caps->dot11_eht_cap.num_sounding_dim_le_80mhz =
+			cfg_default(CFG_EHT_NUM_SOUNDING_DIM_LE_80MHZ);
+	eht_caps->dot11_eht_cap.num_sounding_dim_160mhz =
+			cfg_default(CFG_EHT_NUM_SOUNDING_DIM_160MHZ);
+	eht_caps->dot11_eht_cap.num_sounding_dim_320mhz =
+			cfg_default(CFG_EHT_NUM_SOUNDING_DIM_320MHZ);
 }
 #else
 static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,

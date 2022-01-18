@@ -8187,11 +8187,125 @@ static void lim_intersect_eht_caps(tDot11fIEeht_cap *rcvd_eht,
 				   tDot11fIEeht_cap *peer_eht,
 				   struct pe_session *session)
 {
+	tDot11fIEeht_cap *session_eht = &session->eht_config;
+
+	qdf_mem_copy(peer_eht, rcvd_eht, sizeof(*peer_eht));
+
+	peer_eht->su_beamformer = session_eht->su_beamformee ?
+					peer_eht->su_beamformer : 0;
+	peer_eht->su_beamformee = (session_eht->su_beamformer ||
+				   session_eht->mu_bformer_le_80mhz ||
+				   session_eht->mu_bformer_160mhz ||
+				   session_eht->mu_bformer_320mhz) ?
+					peer_eht->su_beamformee : 0;
+	peer_eht->mu_bformer_le_80mhz = session_eht->su_beamformee ?
+					peer_eht->mu_bformer_le_80mhz : 0;
+	peer_eht->mu_bformer_160mhz = session_eht->su_beamformee ?
+					peer_eht->mu_bformer_160mhz : 0;
+	peer_eht->mu_bformer_320mhz = session_eht->su_beamformee ?
+					peer_eht->mu_bformer_320mhz : 0;
 }
 
 void lim_update_usr_eht_cap(struct mac_context *mac_ctx,
 			    struct pe_session *session)
 {
+	struct add_ie_params *add_ie = &session->add_ie_params;
+	tDot11fIEeht_cap *eht_cap = &session->eht_config;
+	struct wlan_eht_cap_info_network_endian *eht_cap_from_ie;
+	uint8_t extracted_buff[DOT11F_IE_EHT_CAP_MAX_LEN + 2];
+	QDF_STATUS status;
+	struct wlan_vht_config *vht_cfg = &session->vht_config;
+	tDot11fIEhe_cap *he_cap = &session->he_config;
+	struct mlme_legacy_priv *mlme_priv;
+
+	qdf_mem_zero(extracted_buff, sizeof(extracted_buff));
+	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
+			      &add_ie->probeRespBCNDataLen,
+			      DOT11F_EID_EHT_CAP, ONE_BYTE,
+			      EHT_CAP_OUI_TYPE, (uint8_t)EHT_CAP_OUI_SIZE,
+			      extracted_buff, DOT11F_IE_EHT_CAP_MAX_LEN);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_debug("Failed to strip EHT cap IE status: %d", status);
+		return;
+	}
+
+	pe_debug("Before update: su_bformer: %d, su_bformee: %d, mu_bformer <= 80MHZ: %d 160MHZ: %d 320MHZ: %d",
+		 eht_cap->su_beamformer, eht_cap->su_beamformee,
+		 eht_cap->mu_bformer_le_80mhz, eht_cap->mu_bformer_160mhz,
+		 eht_cap->mu_bformer_320mhz);
+
+	eht_cap_from_ie = (struct wlan_eht_cap_info_network_endian *)
+					&extracted_buff[EHT_CAP_OUI_SIZE + 2];
+
+	eht_cap->su_beamformer =
+		eht_cap->su_beamformer & eht_cap_from_ie->su_beamformer;
+	eht_cap->su_beamformee =
+		eht_cap->su_beamformee & eht_cap_from_ie->su_beamformee;
+	eht_cap->mu_bformer_le_80mhz =
+		eht_cap->mu_bformer_le_80mhz &
+		eht_cap_from_ie->mu_bformer_le_80mhz;
+	eht_cap->mu_bformer_160mhz =
+		eht_cap->mu_bformer_160mhz &
+		eht_cap_from_ie->mu_bformer_160mhz;
+	eht_cap->mu_bformer_320mhz =
+		eht_cap->mu_bformer_320mhz &
+		eht_cap_from_ie->mu_bformer_320mhz;
+
+	pe_debug("After update: su_bformer: %d, su_bformee: %d, mu_bformer <= 80MHZ: %d 160MHZ: %d 320MHZ: %d",
+		 eht_cap->su_beamformer, eht_cap->su_beamformee,
+		 eht_cap->mu_bformer_le_80mhz, eht_cap->mu_bformer_160mhz,
+		 eht_cap->mu_bformer_320mhz);
+	if (!eht_cap->su_beamformer) {
+		eht_cap->mu_bformer_le_80mhz = 0;
+		eht_cap->mu_bformer_160mhz = 0;
+		eht_cap->mu_bformer_320mhz = 0;
+		eht_cap->num_sounding_dim_le_80mhz = 0;
+		eht_cap->num_sounding_dim_160mhz = 0;
+		eht_cap->num_sounding_dim_320mhz = 0;
+		he_cap->mu_beamformer = 0;
+		he_cap->num_sounding_lt_80 = 0;
+		he_cap->num_sounding_gt_80 = 0;
+		vht_cfg->su_beam_former = 0;
+		vht_cfg->mu_beam_former = 0;
+		vht_cfg->num_soundingdim = 0;
+	}
+	if (!eht_cap->su_beamformee) {
+		eht_cap->bfee_ss_le_80mhz = 0;
+		eht_cap->bfee_ss_160mhz = 0;
+		eht_cap->bfee_ss_320mhz = 0;
+		he_cap->bfee_sts_lt_80 = 0;
+		he_cap->bfee_sts_gt_80 = 0;
+		vht_cfg->su_beam_formee = 0;
+		vht_cfg->mu_beam_formee = 0;
+		vht_cfg->csnof_beamformer_antSup = 0;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (mlme_priv) {
+		mlme_priv->eht_config.mu_bformer_le_80mhz =
+			eht_cap->mu_bformer_le_80mhz;
+		mlme_priv->eht_config.mu_bformer_160mhz =
+			eht_cap->mu_bformer_160mhz;
+		mlme_priv->eht_config.mu_bformer_320mhz =
+			eht_cap->mu_bformer_320mhz;
+		mlme_priv->eht_config.su_beamformer = eht_cap->su_beamformer;
+		mlme_priv->eht_config.su_beamformee = eht_cap->su_beamformee;
+		mlme_priv->eht_config.bfee_ss_le_80mhz =
+			eht_cap->bfee_ss_le_80mhz;
+		mlme_priv->eht_config.bfee_ss_160mhz = eht_cap->bfee_ss_160mhz;
+		mlme_priv->eht_config.bfee_ss_320mhz = eht_cap->bfee_ss_320mhz;
+		mlme_priv->eht_config.num_sounding_dim_le_80mhz =
+			eht_cap->num_sounding_dim_le_80mhz;
+		mlme_priv->eht_config.num_sounding_dim_160mhz =
+			eht_cap->num_sounding_dim_160mhz;
+		mlme_priv->eht_config.num_sounding_dim_320mhz =
+			eht_cap->num_sounding_dim_320mhz;
+	}
+	wma_set_eht_txbf_params(session->vdev_id, eht_cap->su_beamformer,
+				eht_cap->su_beamformee,
+				eht_cap->mu_bformer_le_80mhz ||
+				eht_cap->mu_bformer_160mhz ||
+				eht_cap->mu_bformer_320mhz);
 }
 
 static void
@@ -8226,6 +8340,11 @@ void lim_copy_join_req_eht_cap(struct pe_session *session)
 void lim_add_eht_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
 		     tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
 {
+	if (!add_sta_params->eht_capable || !assoc_req)
+		return;
+
+	qdf_mem_copy(&add_sta_params->eht_config, &assoc_req->eht_cap,
+		     sizeof(add_sta_params->eht_config));
 }
 
 void lim_intersect_ap_eht_caps(struct pe_session *session,
