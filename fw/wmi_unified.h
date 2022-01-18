@@ -17407,7 +17407,11 @@ typedef struct{
 #define WMI_ROAM_INVOKE_FLAG_NO_NULL_FRAME_TO_AP       2
 /* start extra full scan if no candidate found in previous scan */
 #define WMI_ROAM_INVOKE_FLAG_FULL_SCAN_IF_NO_CANDIDATE 3
-/* from bit 4 to bit 31 are reserved */
+/* when bit is set: candidate selection algo will based on fw score algo.
+ * when bit is not set: candidate selection algo will ignore score.
+ */
+#define WMI_ROAM_INVOKE_FLAG_SELECT_CANDIDATE_CONSIDER_SCORE 4
+/* from bit 5 to bit 31 are reserved */
 
 #define WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE(flag) do { \
         (flag) |=  (1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE);      \
