@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/errno.h>
@@ -265,6 +266,7 @@ int dsi_catalog_phy_setup(struct dsi_phy_hw *phy,
 	case DSI_PHY_VERSION_4_1:
 	case DSI_PHY_VERSION_4_2:
 	case DSI_PHY_VERSION_4_3:
+	case DSI_PHY_VERSION_4_3_2:
 		dsi_catalog_phy_4_0_init(phy);
 		break;
 	default:
