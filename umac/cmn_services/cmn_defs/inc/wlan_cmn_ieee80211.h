@@ -2564,6 +2564,121 @@ struct wlan_mlo_ie_info {
 } qdf_packed;
 
 /**
+ * wlan_eht_cap_info_network_endian - struct for eht capabilities information
+ * nsep_pri_access: NSEP priority access support
+ * eht_om_ctl: EHT OM control support
+ * triggered_txop_sharing: Triggered TXOP sharing support
+ * reserved3: reserved bits
+ * reserved2: reserved bits
+ * support_320mhz_6ghz: support 320mhz in 6gz
+ * ru_242tone_wt_20mhz: Support For 242-tone RU In BW Wider Than 20 MHz
+ * ndp_4x_eht_ltf_3dot2_us_gi: NDP With 4 EHT-LTF And 3.2 μs GI
+ * partial_bw_mu_mimo: Partial Bandwidth UL MU-MIMO
+ * su_beamformer: SU Beamformer
+ * su_beamformee: SU Beamformer
+ * bfee_ss_le_80mhz: Beamformee SS (≤ 80 MHz)
+ * bfee_ss_160mhz: Beamformee SS (= 160 MHz)
+ * bfee_ss_320mhz: Beamformee SS (= 320 MHz)
+ * num_sounding_dim_le_80mhz: Number Of Sounding Dimensions (≤ 80 MHz)
+ * num_sounding_dim_160mhz: Number Of Sounding Dimensions (= 160 MHz)
+ * num_sounding_dim_320mhz: Number Of Sounding Dimensions (= 320 MHz)
+ * ng_16_su_feedback: Ng = 16 SU Feedback
+ * ng_16_mu_feedback: Ng = 16 MU Feedback
+ * cb_sz_4_2_su_feedback: Codebook Size SU Feedback
+ * cb_sz_7_5_su_feedback: Codebook Size SU Feedback
+ * trig_su_bforming_feedback: Triggered SU Beamforming Feedback
+ * trig_mu_bforming_partial_bw_feedback: Triggered MU Partial
+   Beamforming Feedback
+ * triggered_cqi_feedback: Triggered SU Beamforming Feedback
+ * partial_bw_dl_mu_mimo: Partial Bandwidth DL MU-MIMO
+ * psr_based_sr: PSR-based SR Support
+ * power_boost_factor: Power Boost Factor Support
+ * eht_mu_ppdu_4x_ltf_0_8_us_gi: EHT MU PPDU With 4 EHT-LTF And 0.8 μs GI
+ * max_nc: Max Nc
+ * non_trig_cqi_feedback: Non-Triggered CQI Feedback
+ * tx_1024_4096_qam_lt_242_tone_ru: Tx 1024-QAM And 4096-QAM < 242-tone
+   RU Support
+ * rx_1024_4096_qam_lt_242_tone_ru: Rx 1024-QAM And 4096-QAM < 242-tone
+   RU Support
+ * ppet_present: PPE Thresholds Present
+ * common_nominal_pkt_padding: Common Nominal Packet Padding
+ * max_num_eht_ltf: Maximum Number Of Supported EHT-LTFs
+ * mcs_15: Support Of MCS 15
+ * eht_dup_6ghz: Support Of EHT DUP In 6 GHz
+ * op_sta_rx_ndp_wider_bw_20mhz: Support For 20 MHz Operating STA
+   Receiving NDP With Wider Bandwidth
+ * non_ofdma_ul_mu_mimo_le_80mhz: Non-OFDMA UL MU-MIMO (BW ≤ 80 MHz)
+ * non_ofdma_ul_mu_mimo_160mhz: Non-OFDMA UL MU-MIMO (BW ≤ 160 MHz)
+ * non_ofdma_ul_mu_mimo_320mhz: Non-OFDMA UL MU-MIMO (BW ≤ 320 MHz)
+ * mu_bformer_le_80mhz: MU Beamformer (BW ≤ 80 MHz)
+ * mu_bformer_160mhz: MU Beamformer (BW ≤ 160 MHz)
+ * mu_bformer_320mhz: MU Beamformer (BW ≤ 320 MHz)
+ * reserved3: reserved bits
+ * eht_mcs_map_20: EHT-MCS Map
+ * (20 MHz-Only STA)
+ * eht_mcs_map_le_80: EHT-MCS Map
+ * (less than 80 MHz)
+ * eht_mcs_map_160: EHT-MCS Map
+ * (160 MHz)
+ * eht_mcs_map_320: EHT-MCS Map
+ * (320 MHz)
+ */
+struct wlan_eht_cap_info_network_endian {
+	uint16_t nsep_pri_access:1;
+	uint16_t eht_om_ctl:1;
+	uint16_t triggered_txop_sharing:1;
+	uint16_t reserved:13;
+
+	uint32_t reserved2:1;
+	uint32_t support_320mhz_6ghz:1;
+	uint32_t ru_242tone_wt_20mhz:1;
+	uint32_t ndp_4x_eht_ltf_3dot2_us_gi:1;
+	uint32_t partial_bw_mu_mimo:1;
+	uint32_t su_beamformer:1;
+	uint32_t su_beamformee:1;
+	uint32_t bfee_ss_le_80mhz:3;
+	uint32_t bfee_ss_160mhz:3;
+	uint32_t bfee_ss_320mhz:3;
+	uint32_t num_sounding_dim_le_80mhz:3;
+	uint32_t num_sounding_dim_160mhz:3;
+	uint32_t num_sounding_dim_320mhz:3;
+	uint32_t ng_16_su_feedback:1;
+	uint32_t ng_16_mu_feedback:1;
+	uint32_t cb_sz_4_2_su_feedback:1;
+	uint32_t cb_sz_7_5_su_feedback:1;
+	uint32_t trig_su_bforming_feedback:1;
+	uint32_t trig_mu_bforming_partial_bw_feedback:1;
+	uint32_t triggered_cqi_feedback:1;
+
+	uint32_t partial_bw_dl_mu_mimo:1;
+	uint32_t psr_based_sr:1;
+	uint32_t power_boost_factor:1;
+	uint32_t eht_mu_ppdu_4x_ltf_0_8_us_gi:1;
+	uint32_t max_nc:4;
+	uint32_t non_trig_cqi_feedback:1;
+	uint32_t tx_1024_4096_qam_lt_242_tone_ru:1;
+	uint32_t rx_1024_4096_qam_lt_242_tone_ru:1;
+	uint32_t ppet_present:1;
+	uint32_t common_nominal_pkt_padding:2;
+	uint32_t max_num_eht_ltf:5;
+	uint32_t mcs_15:4;
+	uint32_t eht_dup_6ghz:1;
+	uint32_t op_sta_rx_ndp_wider_bw_20mhz:1;
+	uint32_t non_ofdma_ul_mu_mimo_le_80mhz:1;
+	uint32_t non_ofdma_ul_mu_mimo_160mhz:1;
+	uint32_t non_ofdma_ul_mu_mimo_320mhz:1;
+	uint32_t mu_bformer_le_80mhz:1;
+	uint32_t mu_bformer_160mhz:1;
+	uint32_t mu_bformer_320mhz:1;
+	uint32_t reserved3:1;
+
+	uint8_t eht_mcs_map_20[4];
+	uint8_t eht_mcs_map_le_80[3];
+	uint8_t eht_mcs_map_160[3];
+	uint8_t eht_mcs_map_320[3];
+} qdf_packed;
+
+/**
  * struct oce_reduced_wan_metrics: struct for oce wan metrics
  * @downlink_av_cap: Download available capacity
  * @uplink_av_cap: Upload available capacity
