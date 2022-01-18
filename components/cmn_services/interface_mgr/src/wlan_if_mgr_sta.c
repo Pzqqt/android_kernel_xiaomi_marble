@@ -33,6 +33,7 @@
 #include <wlan_mlo_mgr_public_structs.h>
 #include <wlan_mlo_mgr_cmn.h>
 #include <wlan_cm_roam_api.h>
+#include "wlan_nan_api.h"
 
 QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 				struct if_mgr_event_data *event_data)
@@ -65,9 +66,18 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 							 PM_SAP_MODE);
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	if (op_mode == QDF_P2P_CLIENT_MODE || sap_cnt || sta_cnt) {
-		for (i = 0; i < sta_cnt + sap_cnt; i++)
+		for (i = 0; i < sta_cnt + sap_cnt; i++) {
 			if (vdev_id_list[i] == wlan_vdev_get_id(vdev))
 				disable_nan = false;
+			/* 1. Don't disable nan if firmware supports
+			 *    ML STA + NAN + NDP.
+			 * 2. Disable nan if legacy sta + nan +
+			 *    ML STA(primary link) comes up.
+			 */
+			if (wlan_vdev_mlme_is_mlo_link_vdev(vdev) &&
+			    wlan_is_mlo_sta_nan_ndi_allowed(psoc))
+				disable_nan = false;
+		}
 		if (disable_nan)
 			ucfg_nan_disable_concurrency(psoc);
 	}
