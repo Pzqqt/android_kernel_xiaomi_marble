@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -253,6 +254,11 @@ void wlan_cfg80211_init_interop_issues_ap(struct wlan_objmgr_pdev *pdev)
 	struct wlan_interop_issues_ap_info interop_issues_ap = {0};
 	struct wlan_interop_issues_ap_event data;
 	struct wlan_objmgr_psoc *psoc;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Operation not supported in FTM mode");
+		return;
+	}
 
 	wlan_interop_issues_ap_register_cbk(pdev);
 
