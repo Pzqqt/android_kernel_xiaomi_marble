@@ -20,6 +20,12 @@ LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/neo_video.h \
                    -I$(VIDEO_ROOT)/driver/platform/neo/inc
 endif
 
+ifeq ($(CONFIG_ARCH_PARROT), y)
+include $(VIDEO_ROOT)/config/parrot_video.conf
+LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/parrot_video.h \
+                   -I$(VIDEO_ROOT)/driver/platform/parrot/inc
+endif
+
 LINUXINCLUDE    += -I$(VIDEO_ROOT)/driver/vidc/inc \
                    -I$(VIDEO_ROOT)/driver/platform/common/inc \
                    -I$(VIDEO_ROOT)/include/uapi/vidc
@@ -39,6 +45,10 @@ endif
 
 ifeq ($(CONFIG_MSM_VIDC_NEO), y)
 msm_video-objs += driver/platform/neo/src/msm_vidc_neo.o
+endif
+
+ifeq ($(CONFIG_MSM_VIDC_PARROT), y)
+msm_video-objs += driver/platform/parrot/src/msm_vidc_parrot.o
 endif
 
 ifeq ($(CONFIG_MSM_VIDC_IRIS2), y)
