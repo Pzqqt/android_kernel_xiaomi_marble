@@ -89,7 +89,7 @@ ifeq ($(CONFIG_CNSS_QCA6750), y)
 	CONFIG_TX_MULTI_TCL := y
 endif
 
-ifeq ($(CONFIG_CNSS_KIWI), y)
+ifeq (y,$(findstring y,$(CONFIG_CNSS_KIWI) $(CONFIG_CNSS_KIWI_V2)))
 	ifeq ($(CONFIG_CNSS_EMULATION), y)
 		CONFIG_QCA_WIFI_EMULATION := y
 	endif
@@ -650,7 +650,7 @@ ifeq ($(CONFIG_CNSS_QCA6750), y)
 	CONFIG_BUS_AUTO_SUSPEND := y
 endif
 
-ifeq ($(CONFIG_CNSS_KIWI), y)
+ifeq (y,$(findstring y,$(CONFIG_CNSS_KIWI) $(CONFIG_CNSS_KIWI_V2)))
 	CONFIG_KIWI_HEADERS_DEF := y
 	CONFIG_QCA_WIFI_KIWI := y
 endif
@@ -1394,7 +1394,7 @@ CONFIG_MORE_TX_DESC := y
 
 endif
 
-ifeq ($(CONFIG_CNSS_KIWI), y)
+ifeq (y,$(findstring y,$(CONFIG_CNSS_KIWI) $(CONFIG_CNSS_KIWI_V2)))
 #Enable 6 GHz Band
 CONFIG_BAND_6GHZ := y
 CONFIG_RX_FISA := y
