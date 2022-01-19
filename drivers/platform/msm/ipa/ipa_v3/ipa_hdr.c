@@ -616,11 +616,20 @@ static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user,
 				mem_size = IPA_MEM_PART(apps_hdr_size_ddr);
 				entry->is_lcl = false;
 			} else {
-				/* if the entry is intended to be in DDR,
-				   and there is no space -> error */
-				IPAERR("No space in DDR header buffer! Requested: %d Left: %d\n",
-				       ipa_hdr_bin_sz[bin], mem_size - htbl->end);
-				goto bad_hdr_len;
+				/* check if DDR free list */
+				if (list_empty(&htbl->head_free_offset_list[bin])) {
+					IPAERR("No space in DDR header buffer! Requested: %d Left: %d name %s, end %d\n",
+						ipa_hdr_bin_sz[bin], mem_size - htbl->end, entry->name, htbl->end);
+					goto bad_hdr_len;
+				} else {
+					/* get the first free slot */
+					offset = list_first_entry(&htbl->head_free_offset_list[bin],
+						struct ipa_hdr_offset_entry, link);
+					list_move(&offset->link, &htbl->head_offset_list[bin]);
+					entry->offset_entry = offset;
+					offset->ipacm_installed = user;
+					goto free_list;
+				}
 			}
 		}
 		offset = kmem_cache_zalloc(ipa3_ctx->hdr_offset_cache,
@@ -649,6 +658,8 @@ static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user,
 		entry->offset_entry = offset;
 		offset->ipacm_installed = user;
 	}
+
+free_list:
 
 	list_add(&entry->link, &htbl->head_hdr_entry_list);
 	htbl->hdr_cnt++;
