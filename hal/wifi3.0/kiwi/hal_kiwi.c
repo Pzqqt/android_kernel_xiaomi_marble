@@ -138,6 +138,334 @@ static uint32_t hal_get_link_desc_size_kiwi(void)
  *
  * Return: void
  */
+#ifdef QCA_WIFI_KIWI_V2
+static void hal_rx_dump_msdu_end_tlv_kiwi(void *msduend,
+					  uint8_t dbg_level)
+{
+	struct rx_msdu_end *msdu_end = (struct rx_msdu_end *)msduend;
+
+	__QDF_TRACE_RL(dbg_level, QDF_MODULE_ID_HAL,
+			"rx_msdu_end tlv (1/5)- "
+			"rxpcu_mpdu_filter_in_category :%x "
+			"sw_frame_group_id :%x "
+			"reserved_0 :%x "
+			"phy_ppdu_id :%x "
+			"ip_hdr_chksum :%x "
+			"reported_mpdu_length :%x "
+			"reserved_1a :%x "
+			"reserved_2a :%x "
+			"cce_super_rule :%x "
+			"cce_classify_not_done_truncate :%x "
+			"cce_classify_not_done_cce_dis :%x "
+			"cumulative_l3_checksum :%x "
+			"rule_indication_31_0 :%x "
+			"ipv6_options_crc :%x "
+			"da_offset :%x "
+			"sa_offset :%x "
+			"da_offset_valid :%x "
+			"sa_offset_valid :%x "
+			"reserved_5a :%x "
+			"l3_type :%x",
+			msdu_end->rxpcu_mpdu_filter_in_category,
+			msdu_end->sw_frame_group_id,
+			msdu_end->reserved_0,
+			msdu_end->phy_ppdu_id,
+			msdu_end->ip_hdr_chksum,
+			msdu_end->reported_mpdu_length,
+			msdu_end->reserved_1a,
+			msdu_end->reserved_2a,
+			msdu_end->cce_super_rule,
+			msdu_end->cce_classify_not_done_truncate,
+			msdu_end->cce_classify_not_done_cce_dis,
+			msdu_end->cumulative_l3_checksum,
+			msdu_end->rule_indication_31_0,
+			msdu_end->ipv6_options_crc,
+			msdu_end->da_offset,
+			msdu_end->sa_offset,
+			msdu_end->da_offset_valid,
+			msdu_end->sa_offset_valid,
+			msdu_end->reserved_5a,
+			msdu_end->l3_type);
+
+	__QDF_TRACE_RL(dbg_level, QDF_MODULE_ID_HAL,
+			"rx_msdu_end tlv (2/5)- "
+			"rule_indication_63_32 :%x "
+			"tcp_seq_number :%x "
+			"tcp_ack_number :%x "
+			"tcp_flag :%x "
+			"lro_eligible :%x "
+			"reserved_9a :%x "
+			"window_size :%x "
+			"sa_sw_peer_id :%x "
+			"sa_idx_timeout :%x "
+			"da_idx_timeout :%x "
+			"to_ds :%x "
+			"tid :%x "
+			"sa_is_valid :%x "
+			"da_is_valid :%x "
+			"da_is_mcbc :%x "
+			"l3_header_padding :%x "
+			"first_msdu :%x "
+			"last_msdu :%x "
+			"fr_ds :%x "
+			"ip_chksum_fail_copy :%x "
+			"sa_idx :%x "
+			"da_idx_or_sw_peer_id :%x",
+			msdu_end->rule_indication_63_32,
+			msdu_end->tcp_seq_number,
+			msdu_end->tcp_ack_number,
+			msdu_end->tcp_flag,
+			msdu_end->lro_eligible,
+			msdu_end->reserved_9a,
+			msdu_end->window_size,
+			msdu_end->sa_sw_peer_id,
+			msdu_end->sa_idx_timeout,
+			msdu_end->da_idx_timeout,
+			msdu_end->to_ds,
+			msdu_end->tid,
+			msdu_end->sa_is_valid,
+			msdu_end->da_is_valid,
+			msdu_end->da_is_mcbc,
+			msdu_end->l3_header_padding,
+			msdu_end->first_msdu,
+			msdu_end->last_msdu,
+			msdu_end->fr_ds,
+			msdu_end->ip_chksum_fail_copy,
+			msdu_end->sa_idx,
+			msdu_end->da_idx_or_sw_peer_id);
+
+	__QDF_TRACE_RL(dbg_level, QDF_MODULE_ID_HAL,
+			"rx_msdu_end tlv (3/5)- "
+			"msdu_drop :%x "
+			"reo_destination_indication :%x "
+			"flow_idx :%x "
+			"use_ppe :%x "
+			"__reserved_g_0003 :%x "
+			"vlan_ctag_stripped :%x "
+			"vlan_stag_stripped :%x "
+			"fragment_flag :%x "
+			"fse_metadata :%x "
+			"cce_metadata :%x "
+			"tcp_udp_chksum :%x "
+			"aggregation_count :%x "
+			"flow_aggregation_continuation :%x "
+			"fisa_timeout :%x "
+			"tcp_udp_chksum_fail_copy :%x "
+			"msdu_limit_error :%x "
+			"flow_idx_timeout :%x "
+			"flow_idx_invalid :%x "
+			"cce_match :%x "
+			"amsdu_parser_error :%x "
+			"cumulative_ip_length :%x "
+			"key_id_octet :%x "
+			"reserved_16a :%x "
+			"reserved_17a :%x "
+			"service_code :%x "
+			"priority_valid :%x "
+			"intra_bss :%x "
+			"dest_chip_id :%x "
+			"multicast_echo :%x "
+			"wds_learning_event :%x "
+			"wds_roaming_event :%x "
+			"wds_keep_alive_event :%x "
+			"reserved_17b :%x",
+			msdu_end->msdu_drop,
+			msdu_end->reo_destination_indication,
+			msdu_end->flow_idx,
+			msdu_end->use_ppe,
+			msdu_end->__reserved_g_0003,
+			msdu_end->vlan_ctag_stripped,
+			msdu_end->vlan_stag_stripped,
+			msdu_end->fragment_flag,
+			msdu_end->fse_metadata,
+			msdu_end->cce_metadata,
+			msdu_end->tcp_udp_chksum,
+			msdu_end->aggregation_count,
+			msdu_end->flow_aggregation_continuation,
+			msdu_end->fisa_timeout,
+			msdu_end->tcp_udp_chksum_fail_copy,
+			msdu_end->msdu_limit_error,
+			msdu_end->flow_idx_timeout,
+			msdu_end->flow_idx_invalid,
+			msdu_end->cce_match,
+			msdu_end->amsdu_parser_error,
+			msdu_end->cumulative_ip_length,
+			msdu_end->key_id_octet,
+			msdu_end->reserved_16a,
+			msdu_end->reserved_17a,
+			msdu_end->service_code,
+			msdu_end->priority_valid,
+			msdu_end->intra_bss,
+			msdu_end->dest_chip_id,
+			msdu_end->multicast_echo,
+			msdu_end->wds_learning_event,
+			msdu_end->wds_roaming_event,
+			msdu_end->wds_keep_alive_event,
+			msdu_end->reserved_17b);
+
+	__QDF_TRACE_RL(dbg_level, QDF_MODULE_ID_HAL,
+			"rx_msdu_end tlv (4/5)- "
+			"msdu_length :%x "
+			"stbc :%x "
+			"ipsec_esp :%x "
+			"l3_offset :%x "
+			"ipsec_ah :%x "
+			"l4_offset :%x "
+			"msdu_number :%x "
+			"decap_format :%x "
+			"ipv4_proto :%x "
+			"ipv6_proto :%x "
+			"tcp_proto :%x "
+			"udp_proto :%x "
+			"ip_frag :%x "
+			"tcp_only_ack :%x "
+			"da_is_bcast_mcast :%x "
+			"toeplitz_hash_sel :%x "
+			"ip_fixed_header_valid :%x "
+			"ip_extn_header_valid :%x "
+			"tcp_udp_header_valid :%x "
+			"mesh_control_present :%x "
+			"ldpc :%x "
+			"ip4_protocol_ip6_next_header :%x "
+			"vlan_ctag_ci :%x "
+			"vlan_stag_ci :%x "
+			"peer_meta_data :%x "
+			"user_rssi :%x "
+			"pkt_type :%x "
+			"sgi :%x "
+			"rate_mcs :%x "
+			"receive_bandwidth :%x "
+			"reception_type :%x "
+			"mimo_ss_bitmap :%x "
+			"msdu_done_copy :%x "
+			"flow_id_toeplitz :%x",
+			msdu_end->msdu_length,
+			msdu_end->stbc,
+			msdu_end->ipsec_esp,
+			msdu_end->l3_offset,
+			msdu_end->ipsec_ah,
+			msdu_end->l4_offset,
+			msdu_end->msdu_number,
+			msdu_end->decap_format,
+			msdu_end->ipv4_proto,
+			msdu_end->ipv6_proto,
+			msdu_end->tcp_proto,
+			msdu_end->udp_proto,
+			msdu_end->ip_frag,
+			msdu_end->tcp_only_ack,
+			msdu_end->da_is_bcast_mcast,
+			msdu_end->toeplitz_hash_sel,
+			msdu_end->ip_fixed_header_valid,
+			msdu_end->ip_extn_header_valid,
+			msdu_end->tcp_udp_header_valid,
+			msdu_end->mesh_control_present,
+			msdu_end->ldpc,
+			msdu_end->ip4_protocol_ip6_next_header,
+			msdu_end->vlan_ctag_ci,
+			msdu_end->vlan_stag_ci,
+			msdu_end->peer_meta_data,
+			msdu_end->user_rssi,
+			msdu_end->pkt_type,
+			msdu_end->sgi,
+			msdu_end->rate_mcs,
+			msdu_end->receive_bandwidth,
+			msdu_end->reception_type,
+			msdu_end->mimo_ss_bitmap,
+			msdu_end->msdu_done_copy,
+			msdu_end->flow_id_toeplitz);
+
+	__QDF_TRACE_RL(dbg_level, QDF_MODULE_ID_HAL,
+			"rx_msdu_end tlv (5/5)- "
+			"ppdu_start_timestamp_63_32 :%x "
+			"sw_phy_meta_data :%x "
+			"ppdu_start_timestamp_31_0 :%x "
+			"toeplitz_hash_2_or_4 :%x "
+			"reserved_28a :%x "
+			"sa_15_0 :%x "
+			"sa_47_16 :%x "
+			"first_mpdu :%x "
+			"reserved_30a :%x "
+			"mcast_bcast :%x "
+			"ast_index_not_found :%x "
+			"ast_index_timeout :%x "
+			"power_mgmt :%x "
+			"non_qos :%x "
+			"null_data :%x "
+			"mgmt_type :%x "
+			"ctrl_type :%x "
+			"more_data :%x "
+			"eosp :%x "
+			"a_msdu_error :%x "
+			"reserved_30b :%x "
+			"order :%x "
+			"wifi_parser_error :%x "
+			"overflow_err :%x "
+			"msdu_length_err :%x "
+			"tcp_udp_chksum_fail :%x "
+			"ip_chksum_fail :%x "
+			"sa_idx_invalid :%x "
+			"da_idx_invalid :%x "
+			"amsdu_addr_mismatch :%x "
+			"rx_in_tx_decrypt_byp :%x "
+			"encrypt_required :%x "
+			"directed :%x "
+			"buffer_fragment :%x "
+			"mpdu_length_err :%x "
+			"tkip_mic_err :%x "
+			"decrypt_err :%x "
+			"unencrypted_frame_err :%x "
+			"fcs_err :%x "
+			"reserved_31a :%x "
+			"decrypt_status_code :%x "
+			"rx_bitmap_not_updated :%x "
+			"reserved_31b :%x "
+			"msdu_done :%x",
+			msdu_end->ppdu_start_timestamp_63_32,
+			msdu_end->sw_phy_meta_data,
+			msdu_end->ppdu_start_timestamp_31_0,
+			msdu_end->toeplitz_hash_2_or_4,
+			msdu_end->reserved_28a,
+			msdu_end->sa_15_0,
+			msdu_end->sa_47_16,
+			msdu_end->first_mpdu,
+			msdu_end->reserved_30a,
+			msdu_end->mcast_bcast,
+			msdu_end->ast_index_not_found,
+			msdu_end->ast_index_timeout,
+			msdu_end->power_mgmt,
+			msdu_end->non_qos,
+			msdu_end->null_data,
+			msdu_end->mgmt_type,
+			msdu_end->ctrl_type,
+			msdu_end->more_data,
+			msdu_end->eosp,
+			msdu_end->a_msdu_error,
+			msdu_end->reserved_30b,
+			msdu_end->order,
+			msdu_end->wifi_parser_error,
+			msdu_end->overflow_err,
+			msdu_end->msdu_length_err,
+			msdu_end->tcp_udp_chksum_fail,
+			msdu_end->ip_chksum_fail,
+			msdu_end->sa_idx_invalid,
+			msdu_end->da_idx_invalid,
+			msdu_end->amsdu_addr_mismatch,
+			msdu_end->rx_in_tx_decrypt_byp,
+			msdu_end->encrypt_required,
+			msdu_end->directed,
+			msdu_end->buffer_fragment,
+			msdu_end->mpdu_length_err,
+			msdu_end->tkip_mic_err,
+			msdu_end->decrypt_err,
+			msdu_end->unencrypted_frame_err,
+			msdu_end->fcs_err,
+			msdu_end->reserved_31a,
+			msdu_end->decrypt_status_code,
+			msdu_end->rx_bitmap_not_updated,
+			msdu_end->reserved_31b,
+			msdu_end->msdu_done);
+}
+#else
 static void hal_rx_dump_msdu_end_tlv_kiwi(void *msduend,
 					  uint8_t dbg_level)
 {
@@ -432,6 +760,7 @@ static void hal_rx_dump_msdu_end_tlv_kiwi(void *msduend,
 		       msdu_end->reserved_31b,
 		       msdu_end->msdu_done);
 }
+#endif
 
 /**
  * hal_rx_dump_pkt_hdr_tlv: dump RX pkt header TLV in hex format
