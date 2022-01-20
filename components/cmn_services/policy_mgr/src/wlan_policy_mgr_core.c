@@ -3727,6 +3727,7 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 	bool same_band_present = false;
 	bool sbs_mlo_present = false;
 	bool allow_6ghz = true;
+	uint8_t sta_count;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -3738,6 +3739,9 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 	if (!policy_mgr_is_hw_dbs_capable(psoc) &&
 	    cc_mode !=  QDF_MCC_TO_SCC_WITH_PREFERRED_BAND)
 		return;
+
+	sta_count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+							      NULL);
 	/*
 	 * If same band interface is present, as
 	 * csr_check_concurrent_channel_overlap try to find same band vdev
@@ -3791,9 +3795,10 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 			*intf_ch_freq = 0;
 			return;
 		}
-	} else if (policy_mgr_is_hw_dbs_capable(psoc) &&
+	} else if (sta_count &&
+		   policy_mgr_is_hw_dbs_capable(psoc) &&
 		   cc_mode == QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
-		/* Same band with Fav channel */
+		/* Same band with Fav channel if STA is present */
 		status = policy_mgr_get_sap_mandatory_channel(psoc,
 							      sap_ch_freq,
 							      intf_ch_freq);

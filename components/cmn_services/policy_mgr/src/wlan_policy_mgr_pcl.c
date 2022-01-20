@@ -2550,7 +2550,39 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/*
+	 * If both freq leads to SBS, and sap_ch_freq is a mandatory freq,
+	 * allow it as they are not interfering.
+	 */
+	if (policy_mgr_are_sbs_chan(psoc, sap_ch_freq, *intf_ch_freq)) {
+		for (i = 0; i < pcl.pcl_len; i++) {
+			if (pcl.pcl_list[i] == sap_ch_freq) {
+				policy_mgr_debug("As both freq, %d and %d are SBS, allow sap on mandatory freq %d",
+						 sap_ch_freq, *intf_ch_freq,
+						 sap_ch_freq);
+				*intf_ch_freq = 0;
+				return QDF_STATUS_SUCCESS;
+			}
+		}
+	}
+
+	/*
+	 * If intf_ch_freq is non-2.4Ghz, First try to get a mandatory freq
+	 * which can cause SBS with intf_ch_freq. i.e if STA is in lower 5Ghz,
+	 * allow higher 5Ghz mandatory freq.
+	 */
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq)) {
+		for (i = 0; i < pcl.pcl_len; i++) {
+			if (policy_mgr_are_sbs_chan(psoc, pcl.pcl_list[i],
+						    *intf_ch_freq)) {
+				sap_new_freq = pcl.pcl_list[i];
+				goto update_freq;
+			}
+		}
+	}
+
 	sap_new_freq = pcl.pcl_list[0];
+	/* If no SBS Try get SCC freq */
 	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq) ||
 	    (WLAN_REG_IS_5GHZ_CH_FREQ(sap_ch_freq) &&
 	     WLAN_REG_IS_5GHZ_CH_FREQ(*intf_ch_freq))) {
@@ -2562,6 +2594,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
+update_freq:
 	*intf_ch_freq = sap_new_freq;
 	policy_mgr_debug("mandatory channel:%d org sap ch %d", *intf_ch_freq,
 			 sap_ch_freq);
