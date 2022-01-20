@@ -1503,10 +1503,11 @@ int wlan_hdd_bus_resume(enum qdf_suspend_type type)
 out:
 	hif_system_pm_set_state_suspended(hif_ctx);
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
-		cds_is_fw_down())
+	    cds_is_fw_down())
 		return 0;
 
-	QDF_BUG(false);
+	if (status != -ETIMEDOUT)
+		QDF_BUG(false);
 
 	return status;
 }
