@@ -9914,6 +9914,26 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * lim_update_des_chan_puncture() - set puncture_bitmap of des_chan
+ * @des_chan: pointer to wlan_channel
+ * @ch_params: pointer to ch_params
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_11BE
+static void lim_update_des_chan_puncture(struct wlan_channel *des_chan,
+					 struct ch_params *ch_params)
+{
+	des_chan->puncture_bitmap = ch_params->reg_punc_bitmap;
+}
+#else
+static void lim_update_des_chan_puncture(struct wlan_channel *des_chan,
+					 struct ch_params *ch_params)
+{
+}
+#endif
+
 QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 			      struct vdev_mlme_obj *mlme_obj,
 			      struct pe_session *session)
@@ -9946,6 +9966,9 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 			sec_chan_freq = session->curr_op_freq - 20;
 	}
 
+	if (IS_DOT11_MODE_EHT(session->dot11mode))
+		wlan_reg_set_create_punc_bitmap(&ch_params, true);
+
 	wlan_reg_set_channel_params_for_freq(mac->pdev, session->curr_op_freq,
 					     sec_chan_freq, &ch_params);
 
@@ -9974,6 +9997,7 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 	des_chan->ch_freq_seg1 = ch_params.center_freq_seg0;
 	des_chan->ch_freq_seg2 = ch_params.center_freq_seg1;
 	des_chan->ch_ieee = wlan_reg_freq_to_chan(mac->pdev, des_chan->ch_freq);
+	lim_update_des_chan_puncture(des_chan, &ch_params);
 	session->ch_width = ch_params.ch_width;
 	session->ch_center_freq_seg0 = ch_params.center_freq_seg0;
 	session->ch_center_freq_seg1 = ch_params.center_freq_seg1;
