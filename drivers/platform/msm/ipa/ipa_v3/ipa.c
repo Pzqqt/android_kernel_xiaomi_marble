@@ -9287,7 +9287,10 @@ fail_init_active_client:
 	ipa3_clk = NULL;
 fail_bus_reg:
 	for (i = 0; i < ipa3_ctx->icc_num_paths; i++)
-		if (ipa3_ctx->ctrl->icc_path[i]) {
+		if (IS_ERR_OR_NULL(ipa3_ctx->ctrl->icc_path[i])) {
+			ipa3_ctx->ctrl->icc_path[i] = NULL;
+			break;
+		} else {
 			icc_put(ipa3_ctx->ctrl->icc_path[i]);
 			ipa3_ctx->ctrl->icc_path[i] = NULL;
 		}
