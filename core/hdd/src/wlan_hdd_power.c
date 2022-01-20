@@ -2616,7 +2616,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (ucfg_ipa_suspend(hdd_ctx->pdev)) {
 		hdd_err("IPA not ready to suspend!");
 		wlan_hdd_inc_suspend_stats(hdd_ctx, SUSPEND_FAIL_IPA);
-		return -EAGAIN;
+		goto resume_all_components;
 	}
 
 	/* Suspend control path scheduler */
@@ -2705,6 +2705,9 @@ resume_ol_rx:
 	hdd_ctx->is_scheduler_suspended = false;
 resume_tx:
 	hdd_resume_wlan();
+resume_all_components:
+	ucfg_pmo_resume_all_components(hdd_ctx->psoc, QDF_SYSTEM_SUSPEND);
+
 	return -ETIME;
 
 }
