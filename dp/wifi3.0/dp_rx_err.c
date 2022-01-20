@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1763,7 +1763,6 @@ dp_rx_deliver_to_osif_stack(struct dp_soc *soc,
 }
 #endif
 
-#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /**
  * dp_rx_err_route_hdl() - Function to send EAPOL frames to stack
  *                            Free any other packet which comes in
@@ -1882,21 +1881,6 @@ drop_nbuf:
 
 	qdf_nbuf_free(nbuf);
 }
-#else
-
-static void
-dp_rx_err_route_hdl(struct dp_soc *soc, qdf_nbuf_t nbuf,
-		    struct dp_peer *peer, uint8_t *rx_tlv_hdr,
-		    enum hal_rx_wbm_error_source err_src)
-{
-	DP_STATS_INCC(soc, rx.reo2rel_route_drop, 1,
-		      err_src == HAL_RX_WBM_ERR_SRC_REO);
-	DP_STATS_INCC(soc, rx.rxdma2rel_route_drop, 1,
-		      err_src == HAL_RX_WBM_ERR_SRC_RXDMA);
-
-	qdf_nbuf_free(nbuf);
-}
-#endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
