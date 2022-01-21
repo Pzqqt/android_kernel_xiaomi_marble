@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2022, The Linux Foundation. All rights reserved.
  */
 
 
@@ -107,7 +107,7 @@ static void dp_catalog_aux_setup_v420(struct dp_catalog_aux *aux,
 	if (phy_version >= 0x60000000) {
 		/* Turn on BIAS current for PHY/PLL */
 		io_data = catalog->io->dp_pll;
-		dp_write(QSERDES_COM_BIAS_EN_CLKBUFLR_EN_V600, 0x1D);
+		dp_write(QSERDES_COM_BIAS_EN_CLKBUFLR_EN_V600, 0x17);
 		wmb(); /* make sure BIAS programming happened */
 	} else {
 		/* Turn on BIAS current for PHY/PLL */

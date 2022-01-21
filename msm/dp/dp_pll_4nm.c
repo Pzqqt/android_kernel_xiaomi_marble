@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 /*
@@ -236,9 +236,9 @@ static int dp_vco_pll_init_db_4nm(struct dp_pll_db *pdb,
 		pdb->lock_cmp2_mode0 = 0x0e;
 		pdb->phy_vco_div = 0x1;
 		pdb->lock_cmp_en = 0x08;
-		pdb->ssc_step_size1_mode0 = 0x13;
+		pdb->ssc_step_size1_mode0 = 0x45;
 		pdb->ssc_step_size2_mode0 = 0x06;
-		pdb->ssc_per1 = 0x40;
+		pdb->ssc_per1 = 0x36;
 		pdb->cmp_code1_mode0 = 0xE2;
 		pdb->cmp_code2_mode0 = 0x18;
 		break;
@@ -252,9 +252,9 @@ static int dp_vco_pll_init_db_4nm(struct dp_pll_db *pdb,
 		pdb->lock_cmp2_mode0 = 0x1c;
 		pdb->phy_vco_div = 0x2;
 		pdb->lock_cmp_en = 0x08;
-		pdb->ssc_step_size1_mode0 = 0x1a;
+		pdb->ssc_step_size1_mode0 = 0x5C;
 		pdb->ssc_step_size2_mode0 = 0x08;
-		pdb->ssc_per1 = 0x40;
+		pdb->ssc_per1 = 0x36;
 		pdb->cmp_code1_mode0 = 0x2E;
 		pdb->cmp_code2_mode0 = 0x21;
 		break;
@@ -268,9 +268,9 @@ static int dp_vco_pll_init_db_4nm(struct dp_pll_db *pdb,
 		pdb->lock_cmp2_mode0 = 0x2a;
 		pdb->phy_vco_div = 0x0;
 		pdb->lock_cmp_en = 0x08;
-		pdb->ssc_step_size1_mode0 = 0x13;
+		pdb->ssc_step_size1_mode0 = 0x45;
 		pdb->ssc_step_size2_mode0 = 0x06;
-		pdb->ssc_per1 = 0x40;
+		pdb->ssc_per1 = 0x36;
 		pdb->cmp_code1_mode0 = 0xE2;
 		pdb->cmp_code2_mode0 = 0x18;
 		break;
@@ -354,9 +354,9 @@ static int dp_config_vco_rate_4nm(struct dp_pll *pll,
 	if (pll->bonding_en)
 		dp_pll_write(dp_pll, QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x1f);
 	else
-		dp_pll_write(dp_pll, QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x1D);
+		dp_pll_write(dp_pll, QSERDES_COM_BIAS_EN_CLKBUFLR_EN, 0x17);
 
-	dp_pll_write(dp_pll, QSERDES_COM_CORE_CLK_EN, 0x1f);
+	dp_pll_write(dp_pll, QSERDES_COM_CORE_CLK_EN, 0x0f);
 	dp_pll_write(dp_pll, QSERDES_COM_BIN_VCOCAL_CMP_CODE1_MODE0, pdb->cmp_code1_mode0);
 	dp_pll_write(dp_pll, QSERDES_COM_BIN_VCOCAL_CMP_CODE2_MODE0, pdb->cmp_code2_mode0);
 	/* Make sure the PHY register writes are done */
@@ -393,8 +393,8 @@ static int dp_config_vco_rate_4nm(struct dp_pll *pll,
 	dp_pll_write(dp_ln_tx0, DP_TRAN_DRVR_EMP_EN, 0xf);
 	dp_pll_write(dp_ln_tx0, TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
 	dp_pll_write(dp_ln_tx0, DP_TX_INTERFACE_MODE, 0x00);
-	dp_pll_write(dp_ln_tx0, TXn_RES_CODE_LANE_OFFSET_TX, 0x0A);
-	dp_pll_write(dp_ln_tx0, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
+	dp_pll_write(dp_ln_tx0, TXn_RES_CODE_LANE_OFFSET_TX, 0x0C);
+	dp_pll_write(dp_ln_tx0, TXn_RES_CODE_LANE_OFFSET_RX, 0x0C);
 	dp_pll_write(dp_ln_tx0, TXn_TX_BAND, 0x04);
 	/* Make sure the PLL register writes are done */
 	wmb();
@@ -409,8 +409,8 @@ static int dp_config_vco_rate_4nm(struct dp_pll *pll,
 	dp_pll_write(dp_ln_tx1, DP_TRAN_DRVR_EMP_EN, 0xf);
 	dp_pll_write(dp_ln_tx1, TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
 	dp_pll_write(dp_ln_tx1, DP_TX_INTERFACE_MODE, 0x00);
-	dp_pll_write(dp_ln_tx1, TXn_RES_CODE_LANE_OFFSET_TX, 0x0A);
-	dp_pll_write(dp_ln_tx1, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
+	dp_pll_write(dp_ln_tx1, TXn_RES_CODE_LANE_OFFSET_TX, 0x0C);
+	dp_pll_write(dp_ln_tx1, TXn_RES_CODE_LANE_OFFSET_RX, 0x0C);
 	dp_pll_write(dp_ln_tx1, TXn_TX_BAND, 0x04);
 	/* Make sure the PHY register writes are done */
 	wmb();
