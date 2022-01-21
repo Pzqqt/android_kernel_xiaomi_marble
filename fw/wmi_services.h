@@ -573,6 +573,7 @@ typedef  enum  {
     WMI_SERVICE_PNO_SCAN_CONFIG_PER_CHANNEL = 321, /* Indicates that FW supports per channel configuration support in the PNO scan start command */
     WMI_SERVICE_MULTIPLE_PEER_GROUP_CMD_SUPPORT = 322, /* FW support for multiple peer group command */
     WMI_SERVICE_AFC_RESET_SUPPORT = 323, /* Indicates FW supports AFC reset */
+    WMI_SERVICE_FP_PHY_ERR_FILTER_SUPPORT = 324, /* FW supports monitor ring configurations for filtering in PHY error packets */
 
     WMI_MAX_EXT2_SERVICE
 
