@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -419,6 +420,10 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	list_add_tail(&core->list, &cvp_driver->cores);
 	mutex_unlock(&cvp_driver->lock);
 
+	cvp_driver->debugfs_root = msm_cvp_debugfs_init_drv();
+	if (!cvp_driver->debugfs_root)
+		dprintk(CVP_ERR, "Failed to create debugfs for msm_cvp\n");
+
 	core->debugfs_root = msm_cvp_debugfs_init_core(
 		core, cvp_driver->debugfs_root);
 
@@ -452,6 +457,7 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 
 err_fail_sub_device_probe:
 	cvp_hfi_deinitialize(core->hfi_type, core->device);
+	debugfs_remove_recursive(cvp_driver->debugfs_root);
 err_hfi_initialize:
 err_cores_exceeded:
 	cdev_del(&core->cdev);
@@ -601,16 +607,11 @@ static int __init msm_cvp_init(void)
 
 	INIT_LIST_HEAD(&cvp_driver->cores);
 	mutex_init(&cvp_driver->lock);
-	cvp_driver->debugfs_root = msm_cvp_debugfs_init_drv();
-	if (!cvp_driver->debugfs_root)
-		dprintk(CVP_ERR,
-			"Failed to create debugfs for msm_cvp\n");
 
 	rc = platform_driver_register(&msm_cvp_driver);
 	if (rc) {
 		dprintk(CVP_ERR,
 			"Failed to register platform driver\n");
-		debugfs_remove_recursive(cvp_driver->debugfs_root);
 		kfree(cvp_driver);
 		cvp_driver = NULL;
 		return rc;
