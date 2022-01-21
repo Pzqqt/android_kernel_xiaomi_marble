@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -465,6 +466,45 @@ void hal_rx_get_rtt_info_6750(void *rx_tlv,
 	HAL_RX_GET(rx_tlv,
 		   PHYRX_PKT_END_13_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
 		   RESERVED_8);
+	ppdu_info->cfr_info.rx_start_ts =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_9_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RX_START_TS);
+
+	ppdu_info->cfr_info.rtt_cfo_measurement = (int16_t)
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_13_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_CFO_MEASUREMENT);
+
+	ppdu_info->cfr_info.agc_gain_info0 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_1_RX_PKT_END_DETAILS,
+		   PHY_TIMESTAMP_1_LOWER_32);
+
+	ppdu_info->cfr_info.agc_gain_info1 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_2_RX_PKT_END_DETAILS,
+		   PHY_TIMESTAMP_1_UPPER_32);
+
+	ppdu_info->cfr_info.agc_gain_info2 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_3_RX_PKT_END_DETAILS,
+		   PHY_TIMESTAMP_2_LOWER_32);
+
+	ppdu_info->cfr_info.agc_gain_info3 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_4_RX_PKT_END_DETAILS,
+		   PHY_TIMESTAMP_2_UPPER_32);
+
+	ppdu_info->cfr_info.mcs_rate =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_8_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_MCS_RATE);
+
+	ppdu_info->cfr_info.gi_type =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_8_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_GI_TYPE);
 }
 #endif
 #endif
