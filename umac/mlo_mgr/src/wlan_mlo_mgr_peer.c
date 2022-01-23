@@ -495,6 +495,9 @@ static QDF_STATUS mlo_peer_attach_link_peer(
 
 	if (ml_peer->mlpeer_state != ML_PEER_CREATED) {
 		mlo_peer_lock_release(ml_peer);
+		mlo_err("ML Peer " QDF_MAC_ADDR_FMT " is not in created state (state %d)",
+			QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes),
+			ml_peer->mlpeer_state);
 		return status;
 	}
 
@@ -504,9 +507,13 @@ static QDF_STATUS mlo_peer_attach_link_peer(
 			continue;
 
 		if (wlan_objmgr_peer_try_get_ref(link_peer, WLAN_MLO_MGR_ID) !=
-						QDF_STATUS_SUCCESS)
+						QDF_STATUS_SUCCESS) {
+			mlo_err("ML Peer " QDF_MAC_ADDR_FMT ", link peer " QDF_MAC_ADDR_FMT " is not in valid state",
+				QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes),
+				QDF_MAC_ADDR_REF
+					(wlan_peer_get_macaddr(link_peer)));
 			break;
-
+		}
 		peer_entry->link_peer = link_peer;
 		qdf_copy_macaddr(&peer_entry->link_addr,
 				 (struct qdf_mac_addr *)&link_peer->macaddr[0]);
@@ -709,8 +716,12 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {
 		status = mlo_dev_get_link_vdevs(vdev, ml_dev,
 						ml_info, link_vdevs);
-		if (QDF_IS_STATUS_ERROR(status))
+		if (QDF_IS_STATUS_ERROR(status)) {
+			mlo_err("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " get link vdevs failed",
+				ml_dev->mld_id,
+				QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
 			return QDF_STATUS_E_FAILURE;
+		}
 
 		for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
 			vdev_link = link_vdevs[i];
@@ -722,6 +733,12 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 			if (wlan_vdev_is_peer_create_allowed(vdev_link)
 					!= QDF_STATUS_SUCCESS) {
 				mlo_dev_release_link_vdevs(link_vdevs);
+
+				mlo_err("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " create not allowed on link vdev %d",
+					ml_dev->mld_id,
+					QDF_MAC_ADDR_REF
+						(ml_peer->peer_mld_addr.bytes),
+					wlan_vdev_get_id(vdev_link));
 				return QDF_STATUS_E_INVAL;
 			}
 		}
@@ -730,8 +747,13 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 			vdev_link = link_vdevs[i];
 			if (vdev_link && (vdev_link != vdev) &&
 			    (wlan_vdev_get_peer_count(vdev_link) >
-			    wlan_vdev_get_max_peer_count(vdev_link))) {
+			     wlan_vdev_get_max_peer_count(vdev_link))) {
 				mlo_dev_release_link_vdevs(link_vdevs);
+				mlo_err("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " Max peer count reached on link vdev %d",
+					ml_dev->mld_id,
+					QDF_MAC_ADDR_REF
+						(ml_peer->peer_mld_addr.bytes),
+					wlan_vdev_get_id(vdev_link));
 				return QDF_STATUS_E_RESOURCES;
 			}
 		}
@@ -747,6 +769,9 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 		/* Allocate MLO peer */
 		ml_peer = qdf_mem_malloc(sizeof(*ml_peer));
 		if (!ml_peer) {
+			mlo_err("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " mem alloc failed",
+				ml_dev->mld_id,
+				QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
 			mlo_dev_release_link_vdevs(link_vdevs);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -765,6 +790,10 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 			if (aid == (uint16_t)-1) {
 				status = mlo_peer_allocate_aid(ml_dev, ml_peer);
 				if (status != QDF_STATUS_SUCCESS) {
+					mlo_err("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " aid alloc failed",
+						ml_dev->mld_id,
+						QDF_MAC_ADDR_REF
+						(ml_peer->peer_mld_addr.bytes));
 					mlo_peer_free(ml_peer);
 					mlo_dev_release_link_vdevs(link_vdevs);
 					return status;
@@ -795,6 +824,9 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 			mlo_reset_link_peer(ml_peer, link_peer);
 			mlo_peer_free(ml_peer);
 			mlo_dev_release_link_vdevs(link_vdevs);
+			mlo_err("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " attach failed",
+				ml_dev->mld_id,
+				QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
 			return status;
 		}
 	}
@@ -814,7 +846,10 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 	mlo_dev_release_link_vdevs(link_vdevs);
-
+	mlo_info("MLD ID %d ML Peer " QDF_MAC_ADDR_FMT " allocated %pK",
+		 ml_dev->mld_id,
+		 QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes),
+		 ml_peer);
 	return QDF_STATUS_SUCCESS;
 }
 

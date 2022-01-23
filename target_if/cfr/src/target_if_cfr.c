@@ -495,7 +495,7 @@ target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 #endif
 
 #ifdef WLAN_ENH_CFR_ENABLE
-#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_WCN7850)
+#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_KIWI)
 static uint8_t target_if_cfr_get_mac_id(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_vdev *vdev;
@@ -554,7 +554,7 @@ static uint8_t target_if_cfr_get_pdev_id(struct wlan_objmgr_pdev *pdev)
 {
 	return wlan_objmgr_pdev_get_pdev_id(pdev);
 }
-#endif /* QCA_WIFI_QCA6490 */
+#endif /* QCA_WIFI_QCA6490 || QCA_WIFI_KIWI */
 
 QDF_STATUS target_if_cfr_config_rcc(struct wlan_objmgr_pdev *pdev,
 				    struct cfr_rcc_param *rcc_info)

@@ -2898,6 +2898,10 @@ static QDF_STATUS dp_peer_rx_reorder_queue_setup(struct dp_soc *soc,
 	struct dp_rx_tid *rx_tid;
 	struct dp_soc *link_peer_soc;
 
+	rx_tid = &peer->rx_tid[tid];
+	if (!rx_tid->hw_qdesc_paddr)
+		return QDF_STATUS_E_INVAL;
+
 	if (IS_MLO_DP_MLD_PEER(peer)) {
 		/* get link peers with reference */
 		dp_get_link_peers_ref_from_mld_peer(soc, peer,
@@ -2906,7 +2910,6 @@ static QDF_STATUS dp_peer_rx_reorder_queue_setup(struct dp_soc *soc,
 		/* send WMI cmd to each link peers */
 		for (i = 0; i < link_peers_info.num_links; i++) {
 			link_peer = link_peers_info.link_peers[i];
-			rx_tid = &link_peer->rx_tid[tid];
 			link_peer_soc = link_peer->vdev->pdev->soc;
 			if (link_peer_soc->cdp_soc.ol_ops->
 					peer_rx_reorder_queue_setup) {
@@ -2928,7 +2931,6 @@ static QDF_STATUS dp_peer_rx_reorder_queue_setup(struct dp_soc *soc,
 		/* release link peers reference */
 		dp_release_link_peers_ref(&link_peers_info, DP_MOD_ID_CDP);
 	} else if (peer->peer_type == CDP_LINK_PEER_TYPE) {
-			rx_tid = &peer->rx_tid[tid];
 			if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
 				if (soc->cdp_soc.ol_ops->
 					peer_rx_reorder_queue_setup(
@@ -2970,6 +2972,9 @@ static QDF_STATUS dp_peer_rx_reorder_queue_setup(struct dp_soc *soc,
 						 uint32_t ba_window_size)
 {
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+
+	if (!rx_tid->hw_qdesc_paddr)
+		return QDF_STATUS_E_INVAL;
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
 		if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
@@ -3336,12 +3341,12 @@ try_desc_alloc:
 		}
 	}
 
+send_wmi_reo_cmd:
 	if (dp_get_peer_vdev_roaming_in_progress(peer)) {
 		status = QDF_STATUS_E_PERM;
 		goto error;
 	}
 
-send_wmi_reo_cmd:
 	status = dp_peer_rx_reorder_queue_setup(soc, peer,
 						tid, ba_window_size);
 	if (QDF_IS_STATUS_SUCCESS(status))
@@ -3358,6 +3363,7 @@ error:
 				rx_tid->hw_qdesc_alloc_size);
 		qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);
 		rx_tid->hw_qdesc_vaddr_unaligned = NULL;
+		rx_tid->hw_qdesc_paddr = 0;
 	}
 	return status;
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1419,7 +1420,7 @@ uint16_t reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	uint16_t max_chan_range = MAX_5GHZ_CHANNEL;
 
 	if (chan_num == 0) {
-		reg_err_rl("Invalid channel %d", chan_num);
+		reg_debug_rl("Invalid channel %d", chan_num);
 		return 0;
 	}
 
@@ -2308,7 +2309,7 @@ qdf_freq_t reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
 	uint16_t freq;
 
 	if (chan_num == 0) {
-		reg_err_rl("Invalid channel %d", chan_num);
+		reg_debug_rl("Invalid channel %d", chan_num);
 		return 0;
 	}
 
@@ -2726,7 +2727,7 @@ enum channel_enum reg_get_chan_enum_for_freq(qdf_freq_t freq)
 		if (channel_map[count].center_freq == freq)
 			return count;
 
-	reg_err_rl("invalid channel center frequency %d", freq);
+	reg_debug_rl("invalid channel center frequency %d", freq);
 
 	return INVALID_CHANNEL;
 }
@@ -3666,7 +3667,7 @@ reg_get_320_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
 								 chan_cfreq);
 		if (reg_is_state_allowed(temp_chan_state)) {
 			max_cont_bw += SUB_CHAN_BW;
-			*out_punc_pat |= BIT(i);
+			*out_punc_pat &= ~BIT(i);
 		}
 
 		if (temp_chan_state < chan_state)
@@ -3851,9 +3852,9 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 
 /**
  * No subchannels are punctured
- * binary 0:- Punctured 1:- Not-Punctured.
+ * binary 1:- Punctured 0:- Not-Punctured.
  */
-#define NO_SCHANS_PUNC 0xFFFF
+#define NO_SCHANS_PUNC 0x0000
 
 /**
  * reg_fill_pre320mhz_channel() - Fill channel params for channel width

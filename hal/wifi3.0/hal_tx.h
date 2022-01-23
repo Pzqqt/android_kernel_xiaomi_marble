@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -553,7 +554,7 @@ static inline uint32_t hal_tx_comp_get_buffer_type(void *hal_desc)
 		HAL_TX_COMP_BUFFER_OR_DESC_TYPE_LSB;
 }
 
-#ifdef QCA_WIFI_WCN7850
+#ifdef QCA_WIFI_KIWI
 /**
  * hal_tx_comp_get_buffer_source() - Get buffer release source value
  * @hal_desc: completion ring descriptor pointer

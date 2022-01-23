@@ -329,7 +329,7 @@ static inline uint32_t
 hal_rx_update_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
 			 uint8_t *rssi_info_tlv)
 {
-	// TODO - Find all these registers for wcn7850
+	// TODO - Find all these registers for kiwi
 #if 0
 	HAL_RX_PPDU_UPDATE_RSSI(ppdu_info, rssi_info_tlv)
 #endif
@@ -455,12 +455,10 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				ppdu_info->rx_status.chan_num,
 				 ppdu_info->rx_status.chan_freq);
 		}
-#ifdef DP_BE_NOTYET_WAR
-		// TODO -  timestamp is changed to 64-bit for wcn7850
+
 		ppdu_info->com_info.ppdu_timestamp =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START,
-				PPDU_START_TIMESTAMP);
-#endif
+				PPDU_START_TIMESTAMP_31_0);
 		ppdu_info->rx_status.ppdu_timestamp =
 			ppdu_info->com_info.ppdu_timestamp;
 		ppdu_info->rx_state = HAL_RX_MON_PPDU_START;
@@ -815,7 +813,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 			break;
 		case TARGET_TYPE_QCA6490:
 		case TARGET_TYPE_QCA6750:
-		case TARGET_TYPE_WCN7850:
+		case TARGET_TYPE_KIWI:
 			ppdu_info->rx_status.nss = 0;
 			break;
 		default:
@@ -1346,7 +1344,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 			  "RSSI_PRI20_CHAIN3: %d\n", rssi_value);
 
 #ifdef DP_BE_NOTYET_WAR
-		// TODO - this is not preset for wcn7850
+		// TODO - this is not preset for kiwi
 		rssi_value = HAL_RX_GET(rssi_info_tlv,
 					RECEIVE_RSSI_INFO, RSSI_PRI20_CHAIN4);
 		ppdu_info->rx_status.rssi[4] = rssi_value;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1466,8 +1466,8 @@ static struct CE_pipe_config target_ce_config_wlan_qca6750[] = {
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 
-#define WCN_7850_CE_COUNT 9
-static struct CE_attr host_ce_config_wlan_wcn7850[] = {
+#define KIWI_CE_COUNT 9
+static struct CE_attr host_ce_config_wlan_kiwi[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
 	/* target->host HTT + HTC control */
@@ -1487,15 +1487,20 @@ static struct CE_attr host_ce_config_wlan_wcn7850[] = {
 #endif
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+	/* target->host WMI_DIAG */
+	{ /* CE7 */ CE_ATTR_FLAGS, 0, 0,  2048, 32, NULL,},
+#else
 	/* ce_diag, the Diagnostic Window */
 	{ /* CE7 */ (CE_ATTR_DIAG_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		0, DIAG_TRANSFER_LIMIT, 0, NULL,},
+#endif
 	/* Reserved for target */
 	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 
-static struct CE_pipe_config target_ce_config_wlan_wcn7850[] = {
+static struct CE_pipe_config target_ce_config_wlan_kiwi[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host HTT */
@@ -1516,9 +1521,14 @@ static struct CE_pipe_config target_ce_config_wlan_wcn7850[] = {
 
 	/* Reserved for target autonomous HIF_memcpy */
 	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
+#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+	/* target->host WMI_DIAG */
+	{ /* CE7 */ 7, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
+#else
 	/* CE7 used only by Host */
 	{ /* CE7 */ 7, PIPEDIR_INOUT_H2H, 0, 0,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
+#endif
 	/* Reserved for target */
 	{ /* CE8 */ 8, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */

@@ -1723,7 +1723,7 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	peer->stats.rx.last_rx_ts = qdf_system_ticks();
 
 	/*
-	 * TODO - For WCN7850 this field is present in ring_desc
+	 * TODO - For KIWI this field is present in ring_desc
 	 * Try to use ring desc instead of tlv.
 	 */
 	is_ampdu = hal_rx_mpdu_info_ampdu_flag_get(soc->hal_soc, rx_tlv_hdr);

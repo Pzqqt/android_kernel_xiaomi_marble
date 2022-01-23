@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -75,7 +76,7 @@
 #define CM_OCE_WAN_WEIGHTAGE 2
 #define CM_OCE_AP_TX_POWER_WEIGHTAGE 5
 #define CM_OCE_SUBNET_ID_WEIGHTAGE 3
-#define CM_SAE_PK_AP_WEIGHTAGE 3
+#define CM_SAE_PK_AP_WEIGHTAGE 30
 #define CM_BEST_CANDIDATE_MAX_WEIGHT 200
 #define CM_MAX_PCT_SCORE 100
 #define CM_MAX_INDEX_PER_INI 4
@@ -291,6 +292,63 @@ static int8_t cm_roam_calculate_prorated_pcnt_by_rssi(
 }
 
 /**
+ * cm_update_ch_width_index_puncturing() - Update channel width index with
+ *                                         puncture bitmap
+ * @entry: scan entry
+ * @ch_width_index: original channel width index
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_11BE
+static void cm_update_ch_width_index_puncturing(struct scan_cache_entry *entry,
+						uint8_t *ch_width_index)
+{
+	uint16_t tmp_bitmap = entry->channel.puncture_bitmap;
+	uint8_t num_puncture_bw = 0;
+	enum cm_bw_idx original_ch_width_index = *ch_width_index;
+
+	while (tmp_bitmap) {
+		if (tmp_bitmap & 1)
+			++num_puncture_bw;
+		tmp_bitmap >>= 1;
+	}
+
+	switch (original_ch_width_index) {
+	case CM_80MHZ_BW_INDEX:
+		if (num_puncture_bw == 1)
+			*ch_width_index = CM_80MHZ_BW_20MHZ_PUNCTURE_INDEX;
+		break;
+	case CM_160MHZ_BW_INDEX:
+		if (num_puncture_bw == 1)
+			*ch_width_index = CM_160MHZ_BW_20MHZ_PUNCTURE_INDEX;
+		else if (num_puncture_bw == 2)
+			*ch_width_index = CM_160MHZ_BW_40MHZ_PUNCTURE_INDEX;
+		break;
+	case CM_320MHZ_BW_INDEX:
+		if (num_puncture_bw == 2)
+			*ch_width_index = CM_320MHZ_BW_40MHZ_PUNCTURE_INDEX;
+		else if (num_puncture_bw == 4)
+			*ch_width_index = CM_320MHZ_BW_80MHZ_PUNCTURE_INDEX;
+		else if (num_puncture_bw == 6)
+			*ch_width_index =
+				CM_320MHZ_BW_40MHZ_80MHZ_PUNCTURE_INDEX;
+		break;
+	default:
+		break;
+	}
+
+	mlme_debug("scan entry bssid: " QDF_MAC_ADDR_FMT " bw idx %d, punctured bw %d * 20MHZ, output bw idx %d",
+		   QDF_MAC_ADDR_REF(entry->bssid.bytes),
+		   original_ch_width_index, num_puncture_bw, *ch_width_index);
+}
+#else
+static void cm_update_ch_width_index_puncturing(struct scan_cache_entry *entry,
+						uint8_t *ch_width_index)
+{
+}
+#endif
+
+/**
  * cm_calculate_bandwidth_score() - Calculate BW score
  * @entry: scan entry
  * @score_config: scoring config
@@ -309,8 +367,8 @@ static int32_t cm_calculate_bandwidth_score(struct scan_cache_entry *entry,
 	uint8_t bw_above_20 = 0;
 	uint8_t ch_width_index;
 	bool is_vht = false;
-
-	bw_weight_per_idx = score_config->bandwidth_weight_per_index[0];
+	uint8_t array_idx;
+	uint8_t byte_idx;
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(entry->channel.chan_freq)) {
 		bw_above_20 = phy_config->bw_above_20_24ghz;
@@ -337,9 +395,15 @@ static int32_t cm_calculate_bandwidth_score(struct scan_cache_entry *entry,
 	if (!is_vht && ch_width_index > CM_40MHZ_BW_INDEX)
 		ch_width_index = CM_40MHZ_BW_INDEX;
 
+	cm_update_ch_width_index_puncturing(entry, &ch_width_index);
+
+	array_idx = qdf_do_div(ch_width_index, 4);
+	byte_idx = qdf_do_div_rem(ch_width_index, 4);
+	bw_weight_per_idx = score_config->bandwidth_weight_per_index[array_idx];
+
 	if (bw_above_20 && ch_width_index > CM_20MHZ_BW_INDEX)
 		score = CM_GET_SCORE_PERCENTAGE(bw_weight_per_idx,
-						ch_width_index);
+						byte_idx);
 	else
 		score = CM_GET_SCORE_PERCENTAGE(bw_weight_per_idx,
 						CM_20MHZ_BW_INDEX);
@@ -2142,15 +2206,35 @@ static void cm_init_bw_weight_per_index(struct wlan_objmgr_psoc *psoc,
 
 	score_cfg->bandwidth_weight_per_index[1] =
 		cm_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_ML_BW_WEIGHT_PER_IDX_4_TO_7));
+			cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_4_TO_7));
 
 	score_cfg->bandwidth_weight_per_index[2] =
 		cm_limit_max_per_index_score(
-		     cfg_get(psoc, CFG_SCORING_ML_BW_WEIGHT_PER_IDX_8_TO_11));
+		     cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_8_TO_11));
 
 	score_cfg->bandwidth_weight_per_index[3] =
 		cm_limit_max_per_index_score(
-		    cfg_get(psoc, CFG_SCORING_ML_BW_WEIGHT_PER_IDX_12_TO_15));
+		    cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_12_TO_15));
+
+	score_cfg->bandwidth_weight_per_index[4] =
+		cm_limit_max_per_index_score(
+		    cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_16_TO_19));
+
+	score_cfg->bandwidth_weight_per_index[5] =
+		cm_limit_max_per_index_score(
+		    cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_20_TO_23));
+
+	score_cfg->bandwidth_weight_per_index[6] =
+		cm_limit_max_per_index_score(
+		    cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_24_TO_27));
+
+	score_cfg->bandwidth_weight_per_index[7] =
+		cm_limit_max_per_index_score(
+		    cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_28_TO_31));
+
+	score_cfg->bandwidth_weight_per_index[8] =
+		cm_limit_max_per_index_score(
+		    cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_32_TO_35));
 }
 
 static void cm_init_nss_weight_per_index(struct wlan_objmgr_psoc *psoc,
@@ -2175,6 +2259,23 @@ static void cm_set_default_mlo_weights(struct scoring_cfg *score_cfg)
 {
 }
 
+#ifdef WLAN_FEATURE_11BE
+static void cm_init_bw_weight_per_index(struct wlan_objmgr_psoc *psoc,
+					struct scoring_cfg *score_cfg)
+{
+	score_cfg->bandwidth_weight_per_index[0] =
+		cm_limit_max_per_index_score(
+			cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX));
+
+	score_cfg->bandwidth_weight_per_index[1] =
+		cm_limit_max_per_index_score(
+			cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_4_TO_7));
+
+	score_cfg->bandwidth_weight_per_index[2] =
+		cm_limit_max_per_index_score(
+		     cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX_8_TO_11));
+}
+#else
 static void cm_init_bw_weight_per_index(struct wlan_objmgr_psoc *psoc,
 					struct scoring_cfg *score_cfg)
 {
@@ -2182,6 +2283,7 @@ static void cm_init_bw_weight_per_index(struct wlan_objmgr_psoc *psoc,
 		cm_limit_max_per_index_score(
 			cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX));
 }
+#endif
 
 static void cm_init_nss_weight_per_index(struct wlan_objmgr_psoc *psoc,
 					 struct scoring_cfg *score_cfg)

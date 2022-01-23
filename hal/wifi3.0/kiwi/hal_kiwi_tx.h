@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,7 +32,7 @@
 #define NUM_WORDS_PER_DSCP_TID_TABLE (DSCP_TID_TABLE_SIZE / 4)
 
 /**
- * hal_tx_set_dscp_tid_map_7850() - Configure default DSCP to TID map table
+ * hal_tx_set_dscp_tid_map_kiwi() - Configure default DSCP to TID map table
  * @soc: HAL SoC context
  * @map: DSCP-TID mapping table
  * @id: mapping table ID - 0-31
@@ -41,7 +42,7 @@
  *
  * Return: none
  */
-static void hal_tx_set_dscp_tid_map_7850(struct hal_soc *hal_soc, uint8_t *map,
+static void hal_tx_set_dscp_tid_map_kiwi(struct hal_soc *hal_soc, uint8_t *map,
 					 uint8_t id)
 {
 	int i;
@@ -100,7 +101,7 @@ static void hal_tx_set_dscp_tid_map_7850(struct hal_soc *hal_soc, uint8_t *map,
 }
 
 /**
- * hal_tx_update_dscp_tid_7850() - Update the dscp tid map table as updated
+ * hal_tx_update_dscp_tid_kiwi() - Update the dscp tid map table as updated
  *					by the user
  * @soc: HAL SoC context
  * @map: DSCP-TID mapping table
@@ -109,7 +110,7 @@ static void hal_tx_set_dscp_tid_map_7850(struct hal_soc *hal_soc, uint8_t *map,
  *
  * Return: void
  */
-static void hal_tx_update_dscp_tid_7850(struct hal_soc *hal_soc, uint8_t tid,
+static void hal_tx_update_dscp_tid_kiwi(struct hal_soc *hal_soc, uint8_t tid,
 					uint8_t id, uint8_t dscp)
 {
 	int index;
@@ -133,14 +134,14 @@ static void hal_tx_update_dscp_tid_7850(struct hal_soc *hal_soc, uint8_t tid,
 }
 
 /**
- * hal_tx_init_cmd_credit_ring_7850() - Initialize command/credit SRNG
+ * hal_tx_init_cmd_credit_ring_kiwi() - Initialize command/credit SRNG
  * @hal_soc_hdl: Handle to HAL SoC structure
  * @hal_srng: Handle to HAL SRNG structure
  *
  * Return: none
  */
 static inline void
-hal_tx_init_cmd_credit_ring_7850(hal_soc_handle_t hal_soc_hdl,
+hal_tx_init_cmd_credit_ring_kiwi(hal_soc_handle_t hal_soc_hdl,
 				 hal_ring_handle_t hal_ring_hdl)
 {
 }

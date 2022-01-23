@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -244,6 +245,92 @@ scm_is_scan_type_exempted_from_optimization(struct scan_start_request *req)
 	return (req->scan_req.scan_type == SCAN_TYPE_RRM);
 }
 
+/**
+ * scm_add_all_valid_6g_channels() - Add all valid 6g channels to scan request
+ * @vdev: vdev on which scan request is issued
+ * @req: Scan start request
+ * @num_scan_ch: Total number of scan channels
+ *
+ * If colocated 6ghz scan flag present in host scan request or at least one 6G
+ * channel is present in the host scan request, then this API
+ * fills all remaining (other than channel(s) resent in host scan req) valid
+ * 6 GHz channel(s) to scan requests channel list and set the flag
+ * FLAG_SCAN_ONLY_IF_RNR_FOUND for each of those added channels.
+ * By this driver allows Firmware to scan 6G channels based on RNR IEs only.
+ *
+ * Return: None
+ */
+static void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
+					  struct scan_start_request *req,
+					  uint8_t *num_scan_ch)
+{
+	uint8_t i, j;
+	enum channel_enum freq_idx;
+	struct chan_list *chan_list = &req->scan_req.chan_list;
+	struct regulatory_channel *cur_chan_list;
+	bool is_6g_ch_present = false, found;
+	QDF_STATUS status;
+	uint8_t temp_num_chan = 0;
+
+	for (i = 0; i < chan_list->num_chan; i++) {
+		if (wlan_reg_is_6ghz_chan_freq(chan_list->chan[i].freq)) {
+			scm_debug("At least one 6G chan present in scan req:%d",
+				  chan_list->chan[i].freq);
+			is_6g_ch_present = true;
+			break;
+		}
+	}
+
+	if (!is_6g_ch_present &&
+	    !req->scan_req.scan_policy_colocated_6ghz) {
+		scm_debug("Neither 6G chan present nor flag set in scan req");
+		return;
+	}
+
+	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+				sizeof(struct regulatory_channel));
+	if (!cur_chan_list)
+		return;
+
+	status = wlan_reg_get_current_chan_list(pdev, cur_chan_list);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(cur_chan_list);
+		scm_debug("Failed to get cur_chan list");
+		return;
+	}
+
+	freq_idx =
+		wlan_reg_get_chan_enum_for_freq(wlan_reg_min_6ghz_chan_freq());
+	if (freq_idx == INVALID_CHANNEL)
+		return;
+
+	scm_debug("freq_idx:%d", freq_idx);
+	temp_num_chan = chan_list->num_chan;
+	for (i = freq_idx; i < NUM_CHANNELS; i++) {
+		found = false;
+		for (j = 0; j < temp_num_chan; j++) {
+			if (cur_chan_list[i].center_freq ==
+			    chan_list->chan[j].freq) {
+				found = true;
+				break;
+			}
+		}
+		if (!found && cur_chan_list[i].state != CHANNEL_STATE_DISABLE &&
+		    cur_chan_list[i].state != CHANNEL_STATE_INVALID) {
+			chan_list->chan[chan_list->num_chan].freq =
+						cur_chan_list[i].center_freq;
+			chan_list->chan[chan_list->num_chan].flags =
+						FLAG_SCAN_ONLY_IF_RNR_FOUND;
+			chan_list->num_chan++;
+		}
+	}
+
+	scm_debug("prev num_chan:%d, current num_chan:%d", temp_num_chan,
+		  chan_list->num_chan);
+	*num_scan_ch = chan_list->num_chan;
+	qdf_mem_free(cur_chan_list);
+}
+
 static void
 scm_copy_valid_channels(struct wlan_objmgr_psoc *psoc,
 			enum scan_mode_6ghz scan_mode,
@@ -417,6 +504,16 @@ scm_update_6ghz_channel_list(struct scan_start_request *req,
 		else if (scan_mode == SCAN_MODE_6G_PSC_DUTY_CYCLE)
 			scm_set_rnr_flag_non_psc_6g_ch(&chan_list->chan[0],
 						       num_scan_ch);
+		break;
+	case SCAN_MODE_6G_ALL_CHANNEL:
+		/*
+		 * When the ini is set to SCAN_MODE_6G_ALL_CHANNEL,
+		 * Host fills all remaining (other than channel(s) present in
+		 * host scan req) valid 6 GHz channel(s) to scan requests and
+		 * set the flag FLAG_SCAN_ONLY_IF_RNR_FOUND for each remaining
+		 * channels.
+		 */
+		scm_add_all_valid_6g_channels(pdev, req, &num_scan_ch);
 		break;
 	default:
 		/*

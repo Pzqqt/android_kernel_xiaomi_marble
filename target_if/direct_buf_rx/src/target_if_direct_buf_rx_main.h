@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -211,11 +212,18 @@ struct direct_buf_rx_pdev_obj {
  * @hal_soc: Opaque HAL SOC handle
  * @osdev: QDF os device handle
  * @dbr_pdev_objs: array of DBR pdev objects
+ * @mem_list: list for holding the large memories during the entire
+ *  PSOC lifetime
+ * @mem_list_lock: spin lock for the memory list
  */
 struct direct_buf_rx_psoc_obj {
 	void *hal_soc;
 	qdf_device_t osdev;
 	struct direct_buf_rx_pdev_obj *dbr_pdev_obj[WLAN_UMAC_MAX_PDEVS];
+#if defined(DBR_HOLD_LARGE_MEM) && defined(CNSS_MEM_PRE_ALLOC)
+	qdf_list_t mem_list[WLAN_UMAC_MAX_PDEVS];
+	qdf_spinlock_t mem_list_lock;
+#endif
 };
 
 /**

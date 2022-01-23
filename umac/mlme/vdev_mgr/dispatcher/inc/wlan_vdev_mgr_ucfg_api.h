@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -213,4 +214,21 @@ void ucfg_wlan_vdev_mgr_get_trans_bssid(struct wlan_objmgr_vdev *vdev,
 void ucfg_wlan_vdev_mgr_get_tsf_adjust(struct wlan_objmgr_vdev *vdev,
 				       uint64_t *tsf_adjust);
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * ucfg_vdev_mgr_cdp_vdev_attach() - ucfg MLME API to attach CDP vdev
+ * @vdev: pointer to vdev object
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS ucfg_vdev_mgr_cdp_vdev_attach(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * vdev_mgr_cdp_vdev_detach() - ucfg MLME API to detach CDP vdev
+ * @vdev: pointer to vdev object
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS ucfg_vdev_mgr_cdp_vdev_detach(struct wlan_objmgr_vdev *vdev);
+#endif
 #endif /* __WLAN_VDEV_MLME_UCFG_H__ */

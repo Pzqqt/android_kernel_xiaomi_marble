@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1305,6 +1305,27 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * wlan_cfg80211_is_colocated_6ghz_scan_supported() - Check whether colocated
+ * 6ghz scan flag present in scan request or not
+ * @scan_flag: Flags bitmap coming from kernel
+ *
+ * Return: True if colocated 6ghz scan flag present in scan req
+ */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+static bool
+wlan_cfg80211_is_colocated_6ghz_scan_supported(uint32_t scan_flag)
+{
+	return !!(scan_flag & NL80211_SCAN_FLAG_COLOCATED_6GHZ);
+}
+#else
+static inline bool
+wlan_cfg80211_is_colocated_6ghz_scan_supported(uint32_t scan_flag)
+{
+	return false;
+}
+#endif
+
+/**
  * wlan_cfg80211_update_scan_policy_type_flags() - Set scan flags according to
  * scan request
  * @scan_req: Pointer to csr scan req
@@ -1323,6 +1344,9 @@ static void wlan_cfg80211_update_scan_policy_type_flags(
 		scan_req->scan_policy_low_span = true;
 	if (req->flags & NL80211_SCAN_FLAG_LOW_POWER)
 		scan_req->scan_policy_low_power = true;
+
+	if (wlan_cfg80211_is_colocated_6ghz_scan_supported(req->flags))
+		scan_req->scan_policy_colocated_6ghz = true;
 }
 #else
 static inline void wlan_cfg80211_update_scan_policy_type_flags(

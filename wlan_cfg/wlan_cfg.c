@@ -198,16 +198,20 @@ static const uint8_t rx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 
 #ifdef CONFIG_BERYLLIUM
 static const  uint8_t rxdma2host_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	[13] = WLAN_CFG_RXDMA2HOST_RING_MASK_0 |
-		WLAN_CFG_RXDMA2HOST_RING_MASK_1};
+	[13] = WLAN_CFG_RXDMA2HOST_RING_MASK_0};
 #else
 static const  uint8_t rxdma2host_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[5] = WLAN_CFG_RXDMA2HOST_RING_MASK_0,
 	[6] = WLAN_CFG_RXDMA2HOST_RING_MASK_1};
 #endif /* CONFIG_BERYLLIUM */
 
+#ifdef CONFIG_BERYLLIUM
+static const  uint8_t rx_mon_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+	[5] = WLAN_CFG_RX_MON_RING_MASK_0};
+#else
 static const  uint8_t rx_mon_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[1] = WLAN_CFG_RX_MON_RING_MASK_0, [2] = WLAN_CFG_RX_MON_RING_MASK_1};
+#endif
 
 static const  uint8_t host2rxdma_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {0};
 
@@ -2007,6 +2011,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 						 PKT_CAPTURE_MODE_DATA_ONLY;
 #endif
 	wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev = NUM_RXDMA_RINGS_PER_PDEV;
+	wlan_cfg_ctx->num_rxdma_status_rings_per_pdev =
+					NUM_RXDMA_RINGS_PER_PDEV;
 
 	return wlan_cfg_ctx;
 }

@@ -56,8 +56,8 @@ void hal_qca6750_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA5018
 void hal_qca5018_attach(struct hal_soc *hal);
 #endif
-#ifdef QCA_WIFI_WCN7850
-void hal_wcn7850_attach(struct hal_soc *hal);
+#ifdef QCA_WIFI_KIWI
+void hal_kiwi_attach(struct hal_soc *hal);
 #endif
 
 #ifdef ENABLE_VERBOSE_DEBUG
@@ -423,11 +423,10 @@ static void hal_target_based_configure(struct hal_soc *hal)
 			hal_qca6750_attach(hal);
 		break;
 #endif
-#ifdef QCA_WIFI_WCN7850
-	case TARGET_TYPE_WCN7850:
+#ifdef QCA_WIFI_KIWI
+	case TARGET_TYPE_KIWI:
 		hal->use_register_windowing = true;
-		hal_wcn7850_attach(hal);
-		hal->init_phase = false;
+		hal_kiwi_attach(hal);
 		break;
 #endif
 #if defined(QCA_WIFI_QCA8074) && defined(WIFI_TARGET_TYPE_3_0)

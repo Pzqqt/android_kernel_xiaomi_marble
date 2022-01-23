@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2018, 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,7 +34,7 @@
 #define QCA9377_REV1_1_VERSION          0x5020001
 #define QCA6390_V1                      0x50040000
 #define QCA6490_V1                      0x50060000
-#define WCN7850_V1			0xDEADBEEF	// TODO Define this
+#define KIWI_V1                         0xDEADBEEF	// TODO Define this
 #define WCN3990_v1                      0x40000000
 #define WCN3990_v2                      0x40010000
 #define WCN3990_v2_1                    0x40010002

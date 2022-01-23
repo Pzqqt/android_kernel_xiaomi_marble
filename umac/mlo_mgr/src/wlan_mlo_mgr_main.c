@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -451,4 +451,20 @@ QDF_STATUS wlan_mlo_mgr_vdev_destroyed_notification(struct wlan_objmgr_vdev *vde
 	status = mlo_dev_ctx_deinit(vdev);
 
 	return status;
+}
+
+QDF_STATUS wlan_mlo_mgr_update_mld_addr(struct qdf_mac_addr *old_mac,
+					struct qdf_mac_addr *new_mac)
+{
+	struct wlan_mlo_dev_context *ml_dev;
+
+	ml_dev = wlan_mlo_get_mld_ctx_by_mldaddr(old_mac);
+	if (!ml_dev) {
+		mlo_err("ML dev context not found for MLD:" QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(old_mac->bytes));
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_copy_macaddr(&ml_dev->mld_addr, new_mac);
+
+	return QDF_STATUS_SUCCESS;
 }

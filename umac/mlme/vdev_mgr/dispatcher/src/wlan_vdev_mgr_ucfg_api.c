@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -183,3 +184,39 @@ void ucfg_wlan_vdev_mgr_get_param(
 }
 
 qdf_export_symbol(ucfg_wlan_vdev_mgr_get_param);
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS ucfg_vdev_mgr_cdp_vdev_attach(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(
+							vdev,
+							WLAN_UMAC_COMP_MLME);
+
+	if (!vdev_mlme)
+		return QDF_STATUS_E_FAILURE;
+
+	return vdev_mgr_cdp_vdev_attach(vdev_mlme);
+}
+
+qdf_export_symbol(ucfg_vdev_mgr_cdp_vdev_attach);
+
+QDF_STATUS ucfg_vdev_mgr_cdp_vdev_detach(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(
+							vdev,
+							WLAN_UMAC_COMP_MLME);
+
+	if (!vdev_mlme) {
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return vdev_mgr_cdp_vdev_detach(vdev_mlme);
+}
+
+qdf_export_symbol(ucfg_vdev_mgr_cdp_vdev_detach);
+#endif

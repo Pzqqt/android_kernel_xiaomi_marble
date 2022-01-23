@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1407,6 +1407,7 @@ enum qdf_suspend_type {
  * @QDF_RX_REG_PKT_ROUTE_ERR: MSDU buf errors exceed thresh in REO err path
  * @QDF_VDEV_SM_OUT_OF_SYNC: Vdev SM is out of sync and connect req received
  * when already connected
+ * @QDF_STATS_REQ_TIMEDOUT: Stats request timedout
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1436,6 +1437,7 @@ enum qdf_hang_reason {
 	QDF_TASKLET_CREDIT_LATENCY_DETECT,
 	QDF_RX_REG_PKT_ROUTE_ERR,
 	QDF_VDEV_SM_OUT_OF_SYNC,
+	QDF_STATS_REQ_TIMEDOUT,
 };
 
 /**

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +29,7 @@
 #include "wbm2sw_completion_ring_tx.h"
 #include "wbm2sw_completion_ring_rx.h"
 
-#if defined(QCA_WIFI_WCN7850)
+#if defined(QCA_WIFI_KIWI)
 #include "msmhwioreg.h"
 #endif
 #include <reo_descriptor_threshold_reached_status.h>

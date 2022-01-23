@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,8 +72,8 @@ extern "C" {
 #endif
 
 /* Hamilton */
-#ifndef TARGET_TYPE_WCN7850
-#define TARGET_TYPE_WCN7850 31
+#ifndef TARGET_TYPE_KIWI
+#define TARGET_TYPE_KIWI 31
 #endif
 
 #ifndef TARGET_TYPE_QCN9224

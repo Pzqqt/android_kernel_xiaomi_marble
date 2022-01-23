@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -102,7 +103,7 @@
 #define QCA6750_DEVICE_ID (0x1105)
 
 /* TODO: change IDs for Hamilton */
-#define WCN7850_DEVICE_ID (0x1107)
+#define KIWI_DEVICE_ID (0x1107)
 
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)
 #define AR9887_DEVICE_ID    (0x0050)

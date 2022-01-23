@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -567,7 +568,7 @@ void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 	bool sta_opmode;
 	int i;
 	qdf_freq_t *nol_freq_list = NULL;
-	int num_nol_history_chans;
+	uint32_t num_nol_history_chans;
 
 	if (!dfs->dfs_is_stadfs_enabled)
 		return;
@@ -627,7 +628,7 @@ void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
 {
 	struct dfs_nolelem *nol;
-	uint16_t freq_list[NUM_CHANNELS_160MHZ];
+	uint16_t freq_list[MAX_20MHZ_SUBCHANS];
 	int i, nchans = 0;
 
 	nchans = dfs_get_bonding_channels_for_freq(dfs,
@@ -637,7 +638,7 @@ void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
 						   freq_list);
 
 	WLAN_DFSNOL_LOCK(dfs);
-	for (i = 0; i < nchans && i < NUM_CHANNELS_160MHZ; i++) {
+	for (i = 0; i < nchans && i < MAX_20MHZ_SUBCHANS; i++) {
 		nol = dfs->dfs_nol;
 		while (nol) {
 			if (nol->nol_freq == freq_list[i]) {

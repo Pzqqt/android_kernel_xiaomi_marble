@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +29,10 @@
 #include <wlan_mlme_dbg.h>
 #include <qdf_module.h>
 #include <wlan_vdev_mgr_tgt_if_tx_api.h>
+#include <wlan_dfs_mlme_api.h>
+#ifndef MOBILE_DFS_SUPPORT
+#include <wlan_dfs_utils_api.h>
+#endif /* MOBILE_DFS_SUPPORT */
 
 static QDF_STATUS vdev_mgr_config_ratemask_update(
 				struct vdev_mlme_obj *mlme_obj,
@@ -674,3 +679,131 @@ void wlan_util_vdev_get_param(struct wlan_objmgr_vdev *vdev,
 }
 
 qdf_export_symbol(wlan_util_vdev_get_param);
+
+#ifndef MOBILE_DFS_SUPPORT
+int wlan_util_vdev_mgr_get_cac_timeout_for_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_channel *des_chan = NULL;
+	struct wlan_channel *bss_chan = NULL;
+	bool continue_current_cac = 0;
+	int dfs_cac_timeout = 0;
+
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+	if (!des_chan)
+		return 0;
+
+	bss_chan = wlan_vdev_mlme_get_bss_chan(vdev);
+	if (!bss_chan)
+		return 0;
+
+	if (!utils_dfs_is_cac_required(wlan_vdev_get_pdev(vdev), des_chan,
+				       bss_chan, &continue_current_cac))
+		return 0;
+
+	dfs_cac_timeout = dfs_mlme_get_cac_timeout_for_freq(
+				wlan_vdev_get_pdev(vdev), des_chan->ch_freq,
+				des_chan->ch_cfreq2, des_chan->ch_flags);
+	/* Seconds to milliseconds */
+	return SECONDS_TO_MS(dfs_cac_timeout);
+}
+#else
+int wlan_util_vdev_mgr_get_cac_timeout_for_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev_mlme is null");
+		return 0;
+	}
+
+	return vdev_mlme->mgmt.ap.cac_duration_ms;
+}
+
+void wlan_util_vdev_mgr_set_cac_timeout_for_vdev(struct wlan_objmgr_vdev *vdev,
+						 uint32_t new_chan_cac_ms)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev_mlme is null");
+		return;
+	}
+
+	vdev_mlme->mgmt.ap.cac_duration_ms = new_chan_cac_ms;
+}
+#endif /* MOBILE_DFS_SUPPORT */
+
+QDF_STATUS wlan_util_vdev_mgr_get_csa_channel_switch_time(
+		struct wlan_objmgr_vdev *vdev,
+		uint32_t *chan_switch_time)
+{
+	struct vdev_mlme_obj *vdev_mlme = NULL;
+
+	*chan_switch_time = 0;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev_mlme is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Time between CSA count 1 and CSA count 0 is one beacon interval. */
+	*chan_switch_time = vdev_mlme->proto.generic.beacon_interval;
+
+	/* Vdev restart time */
+	*chan_switch_time += SECONDS_TO_MS(VDEV_RESTART_TIME);
+
+	/* Add one beacon interval time required to send beacon on the
+	 * new channel after switching to the new channel.
+	 */
+	*chan_switch_time += vdev_mlme->proto.generic.beacon_interval;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_util_vdev_mgr_compute_max_channel_switch_time(
+		struct wlan_objmgr_vdev *vdev, uint32_t *max_chan_switch_time)
+{
+	QDF_STATUS status;
+
+	status = wlan_util_vdev_mgr_get_csa_channel_switch_time(
+			vdev, max_chan_switch_time);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to get the CSA channel switch time");
+		return status;
+	}
+
+	/* Plus the CAC time */
+	*max_chan_switch_time +=
+			wlan_util_vdev_mgr_get_cac_timeout_for_vdev(vdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+uint32_t
+wlan_utils_get_vdev_remaining_channel_switch_time(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme = NULL;
+	int32_t remaining_chan_switch_time;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return 0;
+
+	if (!vdev_mlme->mgmt.ap.last_bcn_ts_ms)
+		return 0;
+
+	/* Remaining channel switch time is equal to the time when last beacon
+	 * sent on the CSA triggered vap plus max channel switch time minus
+	 * current time.
+	 */
+	remaining_chan_switch_time =
+	    ((vdev_mlme->mgmt.ap.last_bcn_ts_ms +
+	      vdev_mlme->mgmt.ap.max_chan_switch_time) -
+	     qdf_mc_timer_get_system_time());
+
+	return (remaining_chan_switch_time > 0) ?
+		remaining_chan_switch_time : 0;
+}

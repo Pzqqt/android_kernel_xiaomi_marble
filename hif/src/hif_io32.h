@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,7 +33,7 @@
 #define MAX_UNWINDOWED_ADDRESS 0x80000
 #if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6750) || \
-	defined(QCA_WIFI_QCN9224) || defined(QCA_WIFI_WCN7850)
+	defined(QCA_WIFI_QCN9224) || defined(QCA_WIFI_KIWI)
 #define WINDOW_ENABLE_BIT 0x40000000
 #else
 #define WINDOW_ENABLE_BIT 0x80000000

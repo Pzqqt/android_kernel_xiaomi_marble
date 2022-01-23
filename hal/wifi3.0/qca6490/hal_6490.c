@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -165,13 +165,18 @@ static void hal_rx_mon_hw_desc_get_mpdu_status_6490(void *hw_desc_addr,
 
 	rs->ant_signal_db = HAL_RX_GET(rx_msdu_start,
 				RX_MSDU_START_5, USER_RSSI);
-	rs->is_stbc = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, STBC);
+	if (!rs->vht_flags) {
+		rs->is_stbc = HAL_RX_GET(rx_msdu_start,
+					 RX_MSDU_START_5, STBC);
 
-	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, SGI);
-	rs->sgi = sgi_hw_to_cdp[reg_value];
+		reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, SGI);
+		rs->sgi = sgi_hw_to_cdp[reg_value];
 
-	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, RECEPTION_TYPE);
-	rs->beamformed = (reg_value == HAL_RX_RECEPTION_TYPE_MU_MIMO) ? 1 : 0;
+		reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5,
+				       RECEPTION_TYPE);
+		rs->beamformed =
+			(reg_value == HAL_RX_RECEPTION_TYPE_MU_MIMO) ? 1 : 0;
+	}
 	/* TODO: rs->beamformed should be set for SU beamforming also */
 }
 

@@ -404,6 +404,7 @@ enum wlan_mlme_cfg_id;
  * @psoc_wake_lock_init: Initialize psoc wake lock for vdev response timer
  * @psoc_wake_lock_deinit: De-Initialize psoc wake lock for vdev response timer
  * @get_hw_link_id: Get hw_link_id for pdev
+ * @vdev_send_set_mac_addr: API to send set MAC address request to FW
  */
 struct wlan_lmac_if_mlme_tx_ops {
 	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
@@ -493,6 +494,11 @@ struct wlan_lmac_if_mlme_tx_ops {
 					      uint8_t grp_id);
 	QDF_STATUS (*target_if_mlo_ready)(struct wlan_objmgr_pdev **pdev,
 					  uint8_t num_pdevs);
+#endif
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS (*vdev_send_set_mac_addr)(struct qdf_mac_addr mac_addr,
+				     struct qdf_mac_addr mld_addr,
+				     struct wlan_objmgr_vdev *vdev);
 #endif
 };
 
@@ -1994,6 +2000,10 @@ struct wlan_lmac_if_dfs_rx_ops {
  * @psoc_get_vdev_response_timer_info: function to get vdev response timer
  * structure for a specific vdev id
  * @vdev_mgr_multi_vdev_restart_resp: function to handle mvr response
+ * @vdev_mgr_set_mac_addr_response: Callback to get response for set MAC address
+ *                                  command
+ * @vdev_mgr_set_max_channel_switch_time: Set max channel switch time for the
+ * given vdev list.
  */
 struct wlan_lmac_if_mlme_rx_ops {
 	QDF_STATUS (*vdev_mgr_start_response)(
@@ -2024,6 +2034,12 @@ struct wlan_lmac_if_mlme_rx_ops {
 	struct vdev_response_timer *(*psoc_get_vdev_response_timer_info)(
 						struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id);
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	void (*vdev_mgr_set_mac_addr_response)(uint8_t vdev_id, uint8_t status);
+#endif
+	void (*vdev_mgr_set_max_channel_switch_time)
+		(struct wlan_objmgr_psoc *psoc,
+		 uint32_t *vdev_ids, uint32_t num_vdevs);
 };
 
 #ifdef WLAN_SUPPORT_GREEN_AP

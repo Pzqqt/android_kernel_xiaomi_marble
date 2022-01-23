@@ -3678,10 +3678,12 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	DP_STATS_INCC(peer, tx.stbc, 1, ts->stbc);
 	DP_STATS_INCC(peer, tx.ldpc, 1, ts->ldpc);
 	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
-	if (ts->first_msdu)
+	if (ts->first_msdu) {
+		DP_STATS_INCC(peer, tx.retries_mpdu, 1, ts->transmit_cnt > 1);
 		DP_STATS_INCC(peer, tx.mpdu_success_with_retries,
 			      qdf_do_div(ts->transmit_cnt, DP_RETRY_COUNT),
 			      ts->transmit_cnt > DP_RETRY_COUNT);
+	}
 	peer->stats.tx.last_tx_ts = qdf_system_ticks();
 }
 

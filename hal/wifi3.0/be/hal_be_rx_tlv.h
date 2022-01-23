@@ -789,7 +789,7 @@ hal_rx_msdu_packet_metadata_get_generic_be(uint8_t *buf,
 }
 
 /*
- * hal_rx_msdu_start_nss_get_7850(): API to get the NSS
+ * hal_rx_msdu_start_nss_get_kiwi(): API to get the NSS
  * Interval from rx_msdu_start
  *
  * @buf: pointer to the start of RX PKT TLV header

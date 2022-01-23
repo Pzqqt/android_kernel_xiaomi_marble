@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1121,7 +1121,8 @@ struct scan_req_params {
 		struct {
 			uint32_t scan_policy_high_accuracy:1,
 				 scan_policy_low_span:1,
-				 scan_policy_low_power:1;
+				 scan_policy_low_power:1,
+				 scan_policy_colocated_6ghz:1;
 		};
 		uint32_t scan_policy_type;
 	};

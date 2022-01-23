@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2016,2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,7 +48,7 @@ extern struct targetdef_s *QCA6018_TARGETDEF;
 extern struct targetdef_s *QCA5018_TARGETDEF;
 extern struct targetdef_s *QCN9000_TARGETDEF;
 extern struct targetdef_s *QCN6122_TARGETDEF;
-extern struct targetdef_s *WCN7850_TARGETdef;
+extern struct targetdef_s *KIWI_TARGETdef;
 extern struct targetdef_s *QCN9224_TARGETDEF;
 extern struct targetdef_s *QCA9574_TARGETDEF;
 
@@ -73,7 +74,7 @@ extern struct ce_reg_def *QCA6018_CE_TARGETDEF;
 extern struct ce_reg_def *QCA5018_CE_TARGETDEF;
 extern struct ce_reg_def *QCN9000_CE_TARGETDEF;
 extern struct ce_reg_def *QCN6122_CE_TARGETDEF;
-extern struct ce_reg_def *WCN7850_CE_TARGETdef;
+extern struct ce_reg_def *KIWI_CE_TARGETdef;
 extern struct ce_reg_def *QCN9224_CE_TARGETDEF;
 extern struct ce_reg_def *QCA9574_CE_TARGETDEF;
 

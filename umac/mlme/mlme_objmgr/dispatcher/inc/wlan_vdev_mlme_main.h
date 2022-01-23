@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -208,4 +209,18 @@ QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc);
  *         FAILURE, if cleanup fails
  */
 QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc);
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * wlan_vdev_mlme_send_set_mac_addr() - Send set MAC address command to FW
+ * @mac_addr: VDEV MAC address
+ * @mld_addr: VDEV MLD address
+ * @vdev: Pointer to object manager VDEV
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_vdev_mlme_send_set_mac_addr(struct qdf_mac_addr mac_addr,
+					    struct qdf_mac_addr mld_addr,
+					    struct wlan_objmgr_vdev *vdev);
+#endif
 #endif

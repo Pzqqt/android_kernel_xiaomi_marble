@@ -5237,7 +5237,9 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 					    &pdev->rx_mac_buf_ring[i],
 					    RXDMA_BUF);
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+	for (mac_id = 0;
+	     mac_id  < soc->wlan_cfg_ctx->num_rxdma_status_rings_per_pdev;
+	     mac_id++) {
 		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc,
 						     mac_id, pdev->pdev_id);
 
@@ -6998,6 +7000,7 @@ void dp_update_vdev_stats(struct dp_soc *soc,
 	tgtobj->tx.ldpc += srcobj->stats.tx.ldpc;
 	tgtobj->tx.pream_punct_cnt += srcobj->stats.tx.pream_punct_cnt;
 	tgtobj->tx.retries += srcobj->stats.tx.retries;
+	tgtobj->tx.retries_mpdu += srcobj->stats.tx.retries_mpdu;
 	tgtobj->tx.non_amsdu_cnt += srcobj->stats.tx.non_amsdu_cnt;
 	tgtobj->tx.amsdu_cnt += srcobj->stats.tx.amsdu_cnt;
 	tgtobj->tx.non_ampdu_cnt += srcobj->stats.tx.non_ampdu_cnt;

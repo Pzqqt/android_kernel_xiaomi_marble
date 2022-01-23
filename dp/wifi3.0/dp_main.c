@@ -4032,7 +4032,7 @@ bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap0,
 	target_type = hal_get_target_type(soc->hal_soc);
 
 	switch (target_type) {
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
 					      soc->num_reo_dest_rings -
 					      USE_2_IPA_RX_REO_RINGS, remap1,
@@ -9203,7 +9203,7 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		pdev->ch_band_lmac_id_mapping[REG_BAND_5G] = DP_MAC0_LMAC_ID;
 		pdev->ch_band_lmac_id_mapping[REG_BAND_6G] = DP_MAC0_LMAC_ID;
 		break;
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 		pdev->ch_band_lmac_id_mapping[REG_BAND_2G] = DP_MAC0_LMAC_ID;
 		pdev->ch_band_lmac_id_mapping[REG_BAND_5G] = DP_MAC0_LMAC_ID;
 		pdev->ch_band_lmac_id_mapping[REG_BAND_6G] = DP_MAC0_LMAC_ID;
@@ -14207,7 +14207,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		}
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;
 		break;
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA6290);
 		soc->ast_override_support = 1;
@@ -14227,6 +14227,8 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;
 		soc->wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev = 1;
+		/* use only MAC0 status ring */
+		soc->wlan_cfg_ctx->num_rxdma_status_rings_per_pdev = 1;
 		break;
 	case TARGET_TYPE_QCA8074:
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
@@ -14304,7 +14306,7 @@ static void dp_soc_cfg_attach(struct dp_soc *soc)
 					       REO_DST_RING_SIZE_QCA6290);
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;
 		break;
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA6290);
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;

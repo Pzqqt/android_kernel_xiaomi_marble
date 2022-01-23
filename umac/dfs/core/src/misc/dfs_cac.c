@@ -2,6 +2,7 @@
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +68,7 @@ void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
 static void dfs_clear_nol_history_for_curchan(struct wlan_dfs *dfs)
 {
 	struct dfs_channel *chan = dfs->dfs_curchan;
-	uint16_t sub_channels[NUM_CHANNELS_160MHZ];
+	uint16_t sub_channels[MAX_20MHZ_SUBCHANS];
 	uint8_t num_subchs;
 
 	num_subchs = dfs_get_bonding_channel_without_seg_info_for_freq(
@@ -397,8 +398,8 @@ dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
 				   struct dfs_channel *new_chan,
 				   struct dfs_channel *old_chan)
 {
-	uint16_t new_subchans[NUM_CHANNELS_160MHZ];
-	uint16_t old_subchans[NUM_CHANNELS_160MHZ];
+	uint16_t new_subchans[MAX_20MHZ_SUBCHANS];
+	uint16_t old_subchans[MAX_20MHZ_SUBCHANS];
 	uint8_t n_new_subchans = 0;
 	uint8_t n_old_subchans = 0;
 

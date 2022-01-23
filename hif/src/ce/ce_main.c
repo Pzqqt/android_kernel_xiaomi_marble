@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,7 +55,7 @@
 
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6290) || \
 	defined(QCA_WIFI_QCA6018) || defined(QCA_WIFI_QCA5018) || \
-	defined(QCA_WIFI_WCN7850) || defined(QCA_WIFI_QCA9574)) && \
+	defined(QCA_WIFI_KIWI) || defined(QCA_WIFI_QCA9574)) && \
 	!defined(QCA_WIFI_SUPPORT_SRNG)
 #define QCA_WIFI_SUPPORT_SRNG
 #endif
@@ -1091,8 +1092,8 @@ static struct service_to_pipe target_service_to_ce_map_qca6750[] = {
 };
 #endif
 
-#if (defined(QCA_WIFI_WCN7850))
-static struct service_to_pipe target_service_to_ce_map_wcn7850[] = {
+#if (defined(QCA_WIFI_KIWI))
+static struct service_to_pipe target_service_to_ce_map_kiwi[] = {
 	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 3, },
 	{ WMI_DATA_VO_SVC, PIPEDIR_IN, 2, },
 	{ WMI_DATA_BK_SVC, PIPEDIR_OUT, 3, },
@@ -1108,13 +1109,13 @@ static struct service_to_pipe target_service_to_ce_map_wcn7850[] = {
 	{ HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4, },
 	{ HTT_DATA_MSG_SVC, PIPEDIR_IN, 1, },
 #ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
-	{ PACKET_LOG_SVC, PIPEDIR_IN, 5, },
+	{ WMI_CONTROL_DIAG_SVC, PIPEDIR_IN, 7, },
 #endif
 	/* (Additions here) */
 	{ 0, 0, 0, },
 };
 #else
-static struct service_to_pipe target_service_to_ce_map_wcn7850[] = {
+static struct service_to_pipe target_service_to_ce_map_kiwi[] = {
 };
 #endif
 
@@ -1356,10 +1357,10 @@ static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 			*sz_tgt_svc_map_to_use =
 				sizeof(target_service_to_ce_map_qca6750);
 			break;
-		case TARGET_TYPE_WCN7850:
-			*tgt_svc_map_to_use = target_service_to_ce_map_wcn7850;
+		case TARGET_TYPE_KIWI:
+			*tgt_svc_map_to_use = target_service_to_ce_map_kiwi;
 			*sz_tgt_svc_map_to_use =
-				sizeof(target_service_to_ce_map_wcn7850);
+				sizeof(target_service_to_ce_map_kiwi);
 			break;
 		case TARGET_TYPE_QCA8074:
 			*tgt_svc_map_to_use = target_service_to_ce_map_qca8074;
@@ -1628,7 +1629,7 @@ bool ce_srng_based(struct hif_softc *scn)
 	case TARGET_TYPE_QCN9000:
 	case TARGET_TYPE_QCN6122:
 	case TARGET_TYPE_QCA5018:
-	case TARGET_TYPE_WCN7850:
+	case TARGET_TYPE_KIWI:
 	case TARGET_TYPE_QCN9224:
 	case TARGET_TYPE_QCA9574:
 		return true;
@@ -3913,12 +3914,12 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 
 		scn->ce_count = QCA_6750_CE_COUNT;
 		break;
-	case TARGET_TYPE_WCN7850:
-		hif_state->host_ce_config = host_ce_config_wlan_wcn7850;
-		hif_state->target_ce_config = target_ce_config_wlan_wcn7850;
+	case TARGET_TYPE_KIWI:
+		hif_state->host_ce_config = host_ce_config_wlan_kiwi;
+		hif_state->target_ce_config = target_ce_config_wlan_kiwi;
 		hif_state->target_ce_config_sz =
-					sizeof(target_ce_config_wlan_wcn7850);
-		scn->ce_count = WCN_7850_CE_COUNT;
+					sizeof(target_ce_config_wlan_kiwi);
+		scn->ce_count = KIWI_CE_COUNT;
 		break;
 	case TARGET_TYPE_ADRASTEA:
 		if (hif_is_attribute_set(scn, HIF_LOWDESC_CE_NO_PKTLOG_CFG)) {

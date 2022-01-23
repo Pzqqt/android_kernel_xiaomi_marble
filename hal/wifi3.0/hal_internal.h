@@ -1176,7 +1176,7 @@ void hal_qca6490_attach(struct hal_soc *hal_soc);
 void hal_qca6390_attach(struct hal_soc *hal_soc);
 void hal_qca6290_attach(struct hal_soc *hal_soc);
 void hal_qca8074_attach(struct hal_soc *hal_soc);
-void hal_wcn7850_attach(struct hal_soc *hal_soc);
+void hal_kiwi_attach(struct hal_soc *hal_soc);
 void hal_qcn9224_attach(struct hal_soc *hal_soc);
 /*
  * hal_soc_to_dp_hal_roc - API to convert hal_soc to opaque

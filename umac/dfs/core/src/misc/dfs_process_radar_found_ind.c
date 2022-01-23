@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -160,7 +161,7 @@ dfs_radar_add_channel_list_to_nol_for_freq(struct wlan_dfs *dfs,
 	uint16_t last_chan_freq = 0;
 	uint8_t num_ch = 0;
 
-	if (*num_channels > NUM_CHANNELS_320MHZ) {
+	if (*num_channels > MAX_20MHZ_SUBCHANS) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"Invalid num channels: %d", *num_channels);
 		return QDF_STATUS_E_FAILURE;
@@ -414,7 +415,7 @@ dfs_find_radar_affected_subchans_for_freq(struct wlan_dfs *dfs,
 	uint32_t flag;
 	int32_t sidx;
 	uint16_t candidate_subchan_freq;
-	uint16_t cur_subchans[NUM_CHANNELS_320MHZ];
+	uint16_t cur_subchans[MAX_20MHZ_SUBCHANS];
 	uint8_t n_cur_subchans;
 	struct dfs_channel *curchan = dfs->dfs_curchan;
 	struct freqs_offsets freq_offset;
@@ -586,13 +587,26 @@ void dfs_get_160mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
  *
  * Return: void
  */
+#ifdef WLAN_FEATURE_11BE
 static
-void dfs_get_320mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+void dfs_get_320mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list,
+				     uint8_t *nchannels)
 {
 	uint16_t chwidth = 320;
 
+	*nchannels = 16;
 	dfs_calc_bonding_freqs(center_freq, chwidth, freq_list);
 }
+#else
+static
+void dfs_get_320mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list,
+				     uint8_t *nchannels)
+{
+	*nchannels = 0;
+	dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		  "320MHz chan width for non 11be");
+}
+#endif
 
 /*
  * dfs_get_bonding_channel_without_seg_info_for_freq() - Get bonding frequency
@@ -634,9 +648,9 @@ dfs_get_bonding_channel_without_seg_info_for_freq(struct dfs_channel *chan,
 		center_freq = chan->dfs_ch_mhz_freq_seg2;
 		dfs_get_160mhz_bonding_channels(center_freq, freq_list);
 	} else if (WLAN_IS_CHAN_MODE_320(chan)) {
-		nchannels = 16;
 		center_freq = chan->dfs_ch_mhz_freq_seg2;
-		dfs_get_320mhz_bonding_channels(center_freq, freq_list);
+		dfs_get_320mhz_bonding_channels(center_freq, freq_list,
+						&nchannels);
 	}
 
 	return nchannels;
@@ -762,8 +776,8 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 		else
 			dfs_get_160mhz_bonding_channels(center_freq, freq_list);
 	} else if (WLAN_IS_CHAN_MODE_320(curchan)) {
-		nchannels = 16;
-		dfs_get_320mhz_bonding_channels(center_freq, freq_list);
+		dfs_get_320mhz_bonding_channels(center_freq, freq_list,
+						&nchannels);
 	}  else if (WLAN_IS_CHAN_MODE_80_80(curchan)) {
 		/*
 		 * If the current channel's bandwidth is 80P80MHz,
@@ -1065,8 +1079,8 @@ dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
 				   struct radar_found_info *radar_found)
 {
 	bool wait_for_csa = false;
-	uint16_t freq_list[NUM_CHANNELS_320MHZ];
-	uint16_t nol_freq_list[NUM_CHANNELS_320MHZ];
+	uint16_t freq_list[MAX_20MHZ_SUBCHANS];
+	uint16_t nol_freq_list[MAX_20MHZ_SUBCHANS];
 	uint8_t num_channels;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t freq_center;

@@ -326,6 +326,24 @@ dp_hw_cookie_conversion_init(struct dp_soc_be *be_soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+QDF_STATUS
+dp_hw_cookie_conversion_deinit(struct dp_soc_be *be_soc,
+			       struct dp_hw_cookie_conversion_t *cc_ctx)
+{
+	uint32_t ppt_index;
+	struct dp_spt_page_desc *spt_desc;
+	int i = 0;
+
+	spt_desc = cc_ctx->page_desc_base;
+	while (i < cc_ctx->total_page_num) {
+		ppt_index = spt_desc[i].ppt_index;
+		be_soc->page_desc_base[ppt_index].page_v_addr = NULL;
+		i++;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#else
 QDF_STATUS
 dp_hw_cookie_conversion_deinit(struct dp_soc_be *be_soc,
 			       struct dp_hw_cookie_conversion_t *cc_ctx)
@@ -349,6 +367,7 @@ dp_hw_cookie_conversion_deinit(struct dp_soc_be *be_soc,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 static QDF_STATUS dp_soc_detach_be(struct dp_soc *soc)
 {

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -705,3 +706,89 @@ QDF_STATUS tgt_vdev_mgr_peer_delete_all_send(
 
 	return status;
 }
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline void
+tgt_vdev_mgr_fill_mlo_params(struct cdp_vdev_info *vdev_info,
+			     struct wlan_objmgr_vdev *vdev)
+{
+	vdev_info->mld_mac_addr = wlan_vdev_mlme_get_mldaddr(vdev);
+}
+#else
+static inline void
+tgt_vdev_mgr_fill_mlo_params(struct cdp_vdev_info *vdev_info,
+			     struct wlan_objmgr_vdev *vdev)
+{
+}
+#endif
+
+QDF_STATUS tgt_vdev_mgr_cdp_vdev_attach(struct vdev_mlme_obj *mlme_obj)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_vdev *vdev;
+	ol_txrx_soc_handle soc_txrx_handle;
+	struct cdp_vdev_info vdev_info = { 0 };
+
+	vdev = mlme_obj->vdev;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("psoc object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
+	if (!soc_txrx_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev_info.vdev_mac_addr = wlan_vdev_mlme_get_macaddr(vdev);
+	vdev_info.vdev_id = wlan_vdev_get_id(vdev);
+	vdev_info.op_mode = wlan_util_vdev_get_cdp_txrx_opmode(vdev);
+	vdev_info.subtype = wlan_util_vdev_get_cdp_txrx_subtype(vdev);
+	tgt_vdev_mgr_fill_mlo_params(&vdev_info, vdev);
+	return cdp_vdev_attach(soc_txrx_handle,
+			       wlan_objmgr_pdev_get_pdev_id(pdev),
+			       &vdev_info);
+}
+
+QDF_STATUS tgt_vdev_mgr_cdp_vdev_detach(struct vdev_mlme_obj *mlme_obj)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+	ol_txrx_soc_handle soc_txrx_handle;
+
+	vdev = mlme_obj->vdev;
+	psoc = wlan_vdev_get_psoc(vdev);
+	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
+	if (soc_txrx_handle)
+		return cdp_vdev_detach(soc_txrx_handle, wlan_vdev_get_id(vdev),
+				       NULL, NULL);
+
+	return QDF_STATUS_E_INVAL;
+}
+
+QDF_STATUS tgt_vdev_mgr_send_set_mac_addr(struct qdf_mac_addr mac_addr,
+					  struct qdf_mac_addr mld_addr,
+					  struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_lmac_if_mlme_tx_ops *txops;
+	uint8_t vdev_id;
+	QDF_STATUS status;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	txops = wlan_vdev_mlme_get_lmac_txops(vdev);
+	if (!txops || !txops->vdev_send_set_mac_addr) {
+		mlme_err("VDEV_%d: No Tx Ops", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = txops->vdev_send_set_mac_addr(mac_addr, mld_addr, vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("VDEV_%d: Tx Ops Error : %d", vdev_id, status);
+
+	return status;
+}
+#endif
