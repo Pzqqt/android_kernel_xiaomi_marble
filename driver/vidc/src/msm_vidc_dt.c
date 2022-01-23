@@ -91,14 +91,6 @@ static int msm_vidc_load_u32_table(struct platform_device *pdev,
 	return rc;
 }
 
-/* A comparator to compare loads (needed later on) */
-static int cmp(const void *a, const void *b)
-{
-	/* want to sort in reverse so flip the comparison */
-	return ((struct allowed_clock_rates_table *)b)->clock_rate -
-		((struct allowed_clock_rates_table *)a)->clock_rate;
-}
-
 static void msm_vidc_free_allowed_clocks_table(struct msm_vidc_dt *dt)
 {
 	dt->allowed_clks_tbl = NULL;

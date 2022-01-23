@@ -221,4 +221,12 @@ int msm_vidc_init_dt(struct platform_device *pdev);
 int msm_vidc_read_context_bank_resources_from_dt(struct platform_device *pdev);
 void msm_vidc_deinit_dt(struct platform_device *pdev);
 
+/* A comparator to compare loads (needed later on) */
+static inline int cmp(const void *a, const void *b)
+{
+	/* want to sort in reverse so flip the comparison */
+	return ((struct allowed_clock_rates_table *)b)->clock_rate -
+		((struct allowed_clock_rates_table *)a)->clock_rate;
+}
+
 #endif // _MSM_VIDC_DT_H_
