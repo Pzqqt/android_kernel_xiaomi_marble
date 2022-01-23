@@ -470,6 +470,7 @@ static u32 msm_cvp_map_user_persist_buf(struct msm_cvp_inst *inst,
 	if (!smem)
 		goto exit;
 
+	smem->flags |= SMEM_PERSIST;
 	pbuf->smem = smem;
 	pbuf->fd = buf->fd;
 	pbuf->size = buf->size;
@@ -805,7 +806,7 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 		smem = inst->dma_cache.entries[i];
 		if (atomic_read(&smem->refcount) == 0) {
 			print_smem(CVP_MEM, "free", inst, smem);
-		} else {
+		} else if (!(smem->flags & SMEM_PERSIST)) {
 			print_smem(CVP_WARN, "in use", inst, smem);
 		}
 		msm_cvp_unmap_smem(inst, smem, "unmap cpu");
@@ -827,6 +828,8 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 				dprintk(CVP_ERR,
 				"%s: failed dsp deregistration fd=%d rc=%d",
 				__func__, cbuf->fd, rc);
+			msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
+			msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
 		} 
 		/*
 		else if (cbuf->ownership == DSP) {
@@ -843,8 +846,6 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 					__func__, rc);
 		}
 */
-		msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
-		msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
 		list_del(&cbuf->list);
 		kmem_cache_free(cvp_driver->buf_cache, cbuf);
 	}

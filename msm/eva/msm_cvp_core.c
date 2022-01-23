@@ -278,9 +278,25 @@ static void msm_cvp_cleanup_instance(struct msm_cvp_inst *inst)
 	sqf = &inst->session_queue_fence;
 	sq = &inst->session_queue;
 
-	max_retries =  inst->core->resources.msm_cvp_hw_rsp_timeout >> 1;
+	max_retries =  inst->core->resources.msm_cvp_hw_rsp_timeout >> 5;
 	msm_cvp_session_queue_stop(inst);
 
+wait_dsp:
+	mutex_lock(&inst->cvpdspbufs.lock);
+	empty = list_empty(&inst->cvpdspbufs.list);
+	if (!empty && max_retries > 0) {
+		mutex_unlock(&inst->cvpdspbufs.lock);
+		usleep_range(1000, 2000);
+		max_retries--;
+		goto wait_dsp;
+	}
+	mutex_unlock(&inst->cvpdspbufs.lock);
+
+	if (!empty)
+		dprintk(CVP_WARN, "Failed flush DSP frame retried %d\n",
+			(inst->core->resources.msm_cvp_hw_rsp_timeout >> 5)
+			- max_retries);
+	max_retries =  inst->core->resources.msm_cvp_hw_rsp_timeout >> 1;
 wait:
 	mutex_lock(&inst->frames.lock);
 	empty = list_empty(&inst->frames.list);

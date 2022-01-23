@@ -35,7 +35,8 @@ enum smem_prop {
 	SMEM_ADSP = 0x8,
 	SMEM_NON_PIXEL = 0x10,
 	SMEM_PIXEL = 0x20,
-	SMEM_CAMERA = 0x40
+	SMEM_CAMERA = 0x40,
+	SMEM_PERSIST = 0x100,
 };
 
 struct msm_cvp_list {
@@ -199,4 +200,6 @@ int msm_cvp_map_frame(struct msm_cvp_inst *inst,
 void msm_cvp_unmap_frame(struct msm_cvp_inst *inst, u64 ktid);
 int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst);
 void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst);
+int cvp_release_dsp_buffers(struct msm_cvp_inst *inst,
+			struct cvp_internal_buf *buf);
 #endif
