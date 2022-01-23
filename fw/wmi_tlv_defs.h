@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2022 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1229,6 +1229,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_spectral_fft_size_capabilities,
     WMITLV_TAG_STRUC_wmi_pdev_sscan_chan_info,
     WMITLV_TAG_STRUC_wmi_pdev_sscan_per_detector_info,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_odd_addr_read_struct,
+    WMITLV_TAG_STRUC_wmi_vdev_multiple_peer_group_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1713,6 +1715,7 @@ typedef enum {
     OP(WMI_SAWF_SVC_CLASS_CFG_CMDID) \
     OP(WMI_SAWF_SVC_CLASS_DISABLE_CMDID) \
     OP(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID) \
+    OP(WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4311,7 +4314,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_PEER_STATS_INFO_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, pdev_ids, WMITLV_SIZE_VAR)\
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)\
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, mac_addr_list, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, twt_dialog_ids, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, twt_dialog_ids, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, odd_addr_read_args, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_CTRL_PATH_STATS_CMDID);
 
 /* Host sets the current country code */
@@ -4896,6 +4900,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_DISABLE_CMDID);
 #define WMITLV_TABLE_WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, wmi_soc_tqm_reset_enable_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_TQM_RESET_ENABLE_DISABLE_CMDID);
+
+/* WMI CMD used to operate command on multiple peers */
+#define WMITLV_TABLE_WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_multiple_peer_group_cmd_fixed_param, wmi_vdev_multiple_peer_group_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, wds_macaddr, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_MULTIPLE_PEER_GROUP_CMDID);
 
 
 
@@ -6282,7 +6292,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_dfs_channel_stats_struct, ctrl_path_dfs_channel_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_awgn_stats_struct, ctrl_path_awgn_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_btcoex_stats_struct, ctrl_path_btcoex_stats, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_bmiss_stats_struct, ctrl_path_bmiss_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_bmiss_stats_struct, ctrl_path_bmiss_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_odd_addr_read_struct, ctrl_path_odd_addr_read, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_RADIO_CHAN_STATS_EVENTID(id, op, buf, len) \

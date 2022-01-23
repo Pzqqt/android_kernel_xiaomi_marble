@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2022 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -412,6 +412,14 @@ enum htt_dbg_ext_stats_type {
     HTT_DBG_EXT_PDEV_PER_STATS = 40,
 
     HTT_DBG_EXT_AST_ENTRIES = 41,
+
+    /* HTT_DBG_EXT_RX_RING_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_rx_fw_ring_stats_tlv_v
+     */
+    HTT_DBG_EXT_RX_RING_STATS = 42,
 
 
     /* keep this last */
@@ -2368,7 +2376,7 @@ typedef struct {
     A_UINT32 ax_ul_mumimo_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
     /* Represents the count for 11AX UL MU MIMO sequences with BRP Triggers */
     A_UINT32 ax_ul_mumimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
-    /* Number of 11AC DL MU MIMO schedules posted per group size */
+    /* Number of 11AC DL MU MIMO schedules posted per group size (0-3) */
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
@@ -2376,6 +2384,8 @@ typedef struct {
     A_UINT32 be_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
     /* Number of 11BE DL MU MIMO schedules posted per group size */
     A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /* Number of 11AC DL MU MIMO schedules posted per group size (4-7) */
+    A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz_ext[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
@@ -2419,7 +2429,7 @@ typedef struct {
     A_UINT32 ac_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Represents the count for 11AX DL MU MIMO sequences */
     A_UINT32 ax_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
-    /* Number of 11AC DL MU MIMO schedules posted per group size */
+    /* Number of 11AC DL MU MIMO schedules posted per group size (0-3) */
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
@@ -2427,6 +2437,8 @@ typedef struct {
     A_UINT32 be_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
     /* Number of 11BE DL MU MIMO schedules posted per group size */
     A_UINT32 be_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /* Number of 11AC DL MU MIMO schedules posted per group size (4 - 7)*/
+    A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz_ext[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
 } htt_tx_pdev_dl_mu_mimo_sch_stats_tlv;
 
 typedef struct {
@@ -3218,6 +3230,20 @@ typedef struct {
     /* datarate - Moving Average of Number of Entries */
     A_UINT32 datarate_refillringipa;
     A_UINT32 datarate_refillringhost;
+    /*
+     * refillringhost_backpress_hist and refillringipa_backpress_hist are
+     * deprecated, and will be filled with 0x0 by the target.
+     */
+    A_UINT32 refillringhost_backpress_hist[3];
+    A_UINT32 refillringipa_backpress_hist[3];
+    /* reo2sw4ringipa_backpress_hist:
+     * Number of times reo2sw4(IPA_DEST_RING) ring is back-pressured
+     * in recent time periods
+     * element 0: in last 0 to 250ms
+     * element 1: 250ms to 500ms
+     * element 2: above 500ms
+     */
+    A_UINT32 reo2sw4ringipa_backpress_hist[3];
 } htt_rx_fw_ring_stats_tlv_v;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
