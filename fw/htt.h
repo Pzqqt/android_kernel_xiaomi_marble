@@ -273,7 +273,7 @@
  */
 #define HTT_T2H_MSG_TYPE_RC_UPDATE_IND DEPRECATED_HTT_T2H_MSG_TYPE_RC_UPDATE_IND
 
-/*
+/**
  * htt_dbg_stats_type -
  * bit positions for each stats type within a stats type bitmask
  * The bitmask contains 24 bits.
@@ -579,6 +579,7 @@ typedef struct {
     };
 } htt_tlv_hdr_t;
 
+/** HTT stats TLV tag values */
 typedef enum {
     HTT_STATS_TX_PDEV_CMN_TAG                      = 0,  /* htt_tx_pdev_stats_cmn_tlv */
     HTT_STATS_TX_PDEV_UNDERRUN_TAG                 = 1,  /* htt_tx_pdev_stats_urrn_tlv_v */
@@ -727,7 +728,9 @@ typedef enum {
 
 
     HTT_STATS_MAX_TAG,
-} htt_tlv_tag_t;
+} htt_stats_tlv_tag_t;
+/* retain deprecated enum name as an alias for the current enum name */
+typedef htt_stats_tlv_tag_t htt_tlv_tag_t;
 
 #define HTT_STATS_TLV_TAG_M 0x00000fff
 #define HTT_STATS_TLV_TAG_S 0
