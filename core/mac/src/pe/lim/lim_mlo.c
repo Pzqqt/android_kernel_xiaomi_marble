@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -510,7 +510,7 @@ QDF_STATUS lim_mlo_proc_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
 	if (!assoc_req)
 		return QDF_STATUS_E_NOMEM;
 
-	assoc_req->assoc_req_buf = qdf_nbuf_clone(buf);
+	assoc_req->assoc_req_buf = qdf_nbuf_copy(buf);
 	if (!assoc_req->assoc_req_buf) {
 		pe_err("partner link assoc request buf clone failed");
 		qdf_mem_free(assoc_req);

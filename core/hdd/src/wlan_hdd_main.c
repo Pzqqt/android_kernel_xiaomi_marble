@@ -212,8 +212,10 @@
 #ifdef WLAN_FEATURE_11BE_MLO
 #include <wlan_mlo_mgr_ap.h>
 #endif
+#include "wlan_vdev_mgr_ucfg_api.h"
 #include <wlan_objmgr_psoc_obj_i.h>
 #include <wlan_objmgr_vdev_obj_i.h>
+#include "osif_vdev_mgr_util.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -1811,6 +1813,24 @@ void hdd_update_fw_tdls_11ax_capability(struct hdd_context *hdd_ctx,
 {}
 #endif
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+static inline void
+hdd_set_dynamic_macaddr_update_capability(struct hdd_context *hdd_ctx,
+					  struct wma_tgt_services *cfg)
+{
+	hdd_ctx->is_vdev_macaddr_dynamic_update_supported =
+				cfg->dynamic_vdev_macaddr_support &&
+				cfg_get(hdd_ctx->psoc,
+					CFG_DYNAMIC_MAC_ADDR_UPDATE_SUPPORTED);
+}
+#else
+static inline void
+hdd_set_dynamic_macaddr_update_capability(struct hdd_context *hdd_ctx,
+					  struct wma_tgt_services *cfg)
+{
+}
+#endif
+
 static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
@@ -1898,6 +1918,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				cfg_get(hdd_ctx->psoc,
 					CFG_THERMAL_MITIGATION_ENABLE);
 	hdd_update_fw_tdls_11ax_capability(hdd_ctx, cfg);
+	hdd_set_dynamic_macaddr_update_capability(hdd_ctx, cfg);
 }
 
 /**
@@ -5219,7 +5240,7 @@ void hdd_update_dynamic_mac(struct hdd_context *hdd_ctx,
 	hdd_exit();
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 static void
 hdd_set_mld_address(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 		    struct qdf_mac_addr *mac_addr)
@@ -5237,6 +5258,184 @@ static void
 hdd_set_mld_address(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 		    struct qdf_mac_addr *mac_addr)
 {
+}
+#endif
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+#ifdef WLAN_FEATURE_11BE_MLO
+static void hdd_update_set_mac_addr_req_ctx(struct hdd_adapter *adapter,
+					    void *req_ctx)
+{
+	adapter->set_mac_addr_req_ctx = req_ctx;
+	if (adapter->mlo_adapter_info.associate_with_ml_adapter)
+		adapter->mlo_adapter_info.ml_adapter->set_mac_addr_req_ctx =
+									req_ctx;
+}
+#else
+static void hdd_update_set_mac_addr_req_ctx(struct hdd_adapter *adapter,
+					    void *req_ctx)
+{
+	adapter->set_mac_addr_req_ctx = req_ctx;
+}
+#endif
+
+/**
+ * hdd_is_dynamic_set_mac_addr_allowed() - API to check dynamic MAC address
+ *				           update is allowed or not
+ * @adapter: Pointer to the adapter structure
+ *
+ * Return: true or false
+ */
+static bool hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter)
+{
+	if (!adapter->vdev) {
+		hdd_err("VDEV is NULL");
+		return false;
+	}
+
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+		if (!cm_is_vdev_disconnected(adapter->vdev)) {
+			hdd_err("VDEV is not in disconnected state, set mac address isn't supported");
+			return false;
+		}
+	case QDF_P2P_DEVICE_MODE:
+		return true;
+	default:
+		hdd_err("Dynamic set mac address isn't supported for opmode:%d",
+			adapter->device_mode);
+		return false;
+	}
+}
+
+/**
+ * hdd_is_dynamic_set_mac_addr_supported() - API to check dynamic MAC address
+ *				             update is supported or not
+ * @hdd_ctx: Pointer to the HDD context
+ *
+ * Return: true or false
+ */
+static inline bool
+hdd_is_dynamic_set_mac_addr_supported(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx->is_vdev_macaddr_dynamic_update_supported;
+}
+
+int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				struct qdf_mac_addr mac_addr)
+{
+	uint32_t *fw_resp_status;
+	void *cookie;
+	struct osif_request *request;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*fw_resp_status),
+		.timeout_ms = WLAN_SET_MAC_ADDR_TIMEOUT
+	};
+	int ret;
+	QDF_STATUS qdf_ret_status;
+	struct qdf_mac_addr mld_addr;
+
+	qdf_ret_status = ucfg_vdev_mgr_cdp_vdev_detach(adapter->vdev);
+	if (QDF_IS_STATUS_ERROR(qdf_ret_status)) {
+		hdd_err("Failed to detach CDP vdev. Status:%d", qdf_ret_status);
+		return qdf_status_to_os_return(qdf_ret_status);
+	}
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		ret = -ENOMEM;
+		goto status_ret;
+	}
+
+	cookie = osif_request_cookie(request);
+	hdd_update_set_mac_addr_req_ctx(adapter, cookie);
+
+	qdf_mem_copy(&mld_addr, adapter->mld_addr.bytes, sizeof(mld_addr));
+	qdf_ret_status = sme_send_set_mac_addr(mac_addr, mld_addr,
+					       adapter->vdev);
+	ret = qdf_status_to_os_return(qdf_ret_status);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
+		hdd_nofl_err("Failed to send set MAC address command. Status:%d",
+			     qdf_ret_status);
+		osif_request_put(request);
+		goto status_ret;
+	} else {
+		ret = osif_request_wait_for_response(request);
+		if (ret) {
+			hdd_err("Set MAC address response timed out");
+		} else {
+			fw_resp_status = (uint32_t *)osif_request_priv(request);
+			if (*fw_resp_status) {
+				hdd_err("Set MAC address failed in FW. Status: %d",
+					*fw_resp_status);
+				ret = -EAGAIN;
+			}
+		}
+	}
+
+	osif_request_put(request);
+
+	qdf_ret_status = sme_update_vdev_mac_addr(
+			   hdd_ctx->psoc, mac_addr, adapter->vdev,
+			   hdd_adapter_is_associated_with_ml_adapter(adapter),
+			   ret);
+
+	if (QDF_IS_STATUS_ERROR(qdf_ret_status))
+		ret = qdf_status_to_os_return(qdf_ret_status);
+
+status_ret:
+	qdf_ret_status = ucfg_vdev_mgr_cdp_vdev_attach(adapter->vdev);
+	if (QDF_IS_STATUS_ERROR(qdf_ret_status)) {
+		hdd_err("Failed to attach CDP vdev. status:%d", qdf_ret_status);
+		return qdf_status_to_os_return(qdf_ret_status);
+	}
+
+	return ret;
+}
+
+static void hdd_set_mac_addr_event_cb(uint8_t vdev_id, uint8_t status)
+{
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	struct osif_request *req;
+	uint32_t *fw_response_status;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("Invalid HDD context");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("No adapter found for VDEV ID:%d", vdev_id);
+		return;
+	}
+
+	req = osif_request_get(adapter->set_mac_addr_req_ctx);
+	if (!req) {
+		osif_err("Obsolete request for VDEV ID:%d", vdev_id);
+		return;
+	}
+
+	fw_response_status = (uint32_t *)osif_request_priv(req);
+	*fw_response_status = status;
+
+	osif_request_complete(req);
+	osif_request_put(req);
+}
+#else
+static inline bool
+hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter)
+{
+	return false;
+}
+
+static inline bool
+hdd_is_dynamic_set_mac_addr_supported(struct hdd_context *hdd_ctx)
+{
+	return false;
 }
 #endif
 
@@ -5259,18 +5458,24 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	int ret;
 	struct qdf_mac_addr mac_addr;
+	bool net_if_running = netif_running(dev);
 
 	hdd_enter_dev(dev);
-
-	if (netif_running(dev)) {
-		hdd_err("On iface up, set mac address change isn't supported");
-		return -EBUSY;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
+
+	if (net_if_running) {
+		if (hdd_is_dynamic_set_mac_addr_supported(hdd_ctx)) {
+			if (!hdd_is_dynamic_set_mac_addr_allowed(adapter))
+				return -ENOTSUPP;
+		} else {
+			hdd_err("On iface up, set mac address change isn't supported");
+			return -ENOTSUPP;
+		}
+	}
 
 	qdf_mem_copy(&mac_addr, psta_mac_addr->sa_data, sizeof(mac_addr));
 	adapter_temp = hdd_get_adapter_by_macaddr(hdd_ctx, mac_addr.bytes);
@@ -5282,7 +5487,6 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 			QDF_MAC_ADDR_REF(mac_addr.bytes));
 		return -EINVAL;
 	}
-
 	qdf_ret_status = wlan_hdd_validate_mac_address(&mac_addr);
 	if (QDF_IS_STATUS_ERROR(qdf_ret_status))
 		return -EINVAL;
@@ -5290,6 +5494,12 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	hdd_nofl_debug("Changing MAC to "
 		       QDF_MAC_ADDR_FMT " of the interface %s ",
 		       QDF_MAC_ADDR_REF(mac_addr.bytes), dev->name);
+
+	if (net_if_running && adapter->vdev) {
+		ret = hdd_update_vdev_mac_address(hdd_ctx, adapter, mac_addr);
+		if (ret)
+			return ret;
+	}
 
 	if (hdd_adapter_is_ml_adapter(adapter))
 		hdd_set_mld_address(adapter, hdd_ctx, &mac_addr);
@@ -5300,7 +5510,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 
 	hdd_exit();
-	return qdf_ret_status;
+	return ret;
 }
 
 /**
@@ -6269,7 +6479,7 @@ bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 static void
 hdd_populate_vdev_create_params(struct hdd_adapter *adapter,
 				struct wlan_vdev_create_params *vdev_params)
@@ -15177,7 +15387,7 @@ destroy_sync:
 	return status;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 static
 uint8_t *wlan_hdd_get_mlo_intf_addr(struct hdd_context *hdd_ctx,
 				    enum QDF_OPMODE interface_type)
@@ -16508,7 +16718,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 	mutex_unlock(&hdd_ctx->sap_lock);
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 /**
  * wlan_hdd_mlo_sap_reinit() - handle mlo scenario for ssr
  * @hdd_ctx: Pointer to hdd context
@@ -17011,6 +17221,23 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 
 #endif /* WLAN_CTRL_NAME */
 
+struct osif_vdev_mgr_ops osif_vdev_mgrlegacy_ops = {
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	.osif_vdev_mgr_set_mac_addr_response = hdd_set_mac_addr_event_cb
+#endif
+};
+
+static QDF_STATUS hdd_vdev_mgr_register_cb(void)
+{
+	osif_vdev_mgr_set_legacy_cb(&osif_vdev_mgrlegacy_ops);
+	return osif_vdev_mgr_register_cb();
+}
+
+static void hdd_vdev_mgr_unregister_cb(void)
+{
+	osif_vdev_mgr_reset_legacy_cb();
+}
+
 /**
  * hdd_component_cb_init() - Initialize component callbacks
  *
@@ -17022,7 +17249,17 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
  */
 static QDF_STATUS hdd_component_cb_init(void)
 {
-	return hdd_cm_register_cb();
+	QDF_STATUS status;
+
+	status = hdd_cm_register_cb();
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = hdd_vdev_mgr_register_cb();
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -17035,7 +17272,9 @@ static QDF_STATUS hdd_component_cb_init(void)
  */
 static void hdd_component_cb_deinit(void)
 {
-	return hdd_cm_unregister_cb();
+	hdd_cm_unregister_cb();
+
+	hdd_vdev_mgr_unregister_cb();
 }
 
 /**

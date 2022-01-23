@@ -821,7 +821,6 @@ struct mac_context {
 	tDot11fIEeht_cap eht_cap_2g;
 	tDot11fIEeht_cap eht_cap_5g;
 #endif
-
 #ifdef WLAN_FEATURE_CAL_FAILURE_TRIGGER
 	void (*cal_failure_event_cb)(uint8_t cal_type, uint8_t reason);
 #endif

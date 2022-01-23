@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1461,6 +1461,8 @@ QDF_STATUS wlansap_release_vdev_ref(struct sap_context *sap_ctx);
  * @sap_ctxt: sap context
  * @cac_duration_ms: pointer to cac duration
  * @dfs_region: pointer to dfs region
+ * @chan_freq: channel frequency
+ * @ch_params: pointer to ch_params
  *
  * Get cac duration and dfs region.
  *
@@ -1468,7 +1470,9 @@ QDF_STATUS wlansap_release_vdev_ref(struct sap_context *sap_ctx);
  */
 void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 				uint32_t *cac_duration_ms,
-				uint32_t *dfs_region);
+				uint32_t *dfs_region,
+				qdf_freq_t chan_freq,
+				struct ch_params *ch_params);
 
 /**
  * sap_clear_global_dfs_param() - Reset global dfs param of sap ctx

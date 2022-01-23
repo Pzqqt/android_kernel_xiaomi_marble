@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4661,6 +4661,22 @@ wma_get_tdls_ax_support(struct wmi_unified *wmi_handle,
 {}
 #endif
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+static inline void wma_get_dynamic_vdev_macaddr_support(
+		  struct wmi_unified *wmi_handle, struct wma_tgt_services *cfg)
+{
+	cfg->dynamic_vdev_macaddr_support =
+		wmi_service_enabled(
+			wmi_handle,
+			wmi_service_dynamic_update_vdev_macaddr_support);
+}
+#else
+static inline void wma_get_dynamic_vdev_macaddr_support(
+		  struct wmi_unified *wmi_handle, struct wma_tgt_services *cfg)
+{
+}
+#endif
+
 /**
  * wma_update_target_services() - update target services from wma handle
  * @wmi_handle: Unified wmi handle
@@ -4804,6 +4820,8 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 
 	wma_get_igmp_offload_enable(wmi_handle, cfg);
 	wma_get_tdls_ax_support(wmi_handle, cfg);
+
+	wma_get_dynamic_vdev_macaddr_support(wmi_handle, cfg);
 }
 
 /**
@@ -7229,7 +7247,7 @@ static void wma_set_wifi_start_packet_stats(void *wma_handle,
 		ATH_PKTLOG_RX | ATH_PKTLOG_TX |
 		ATH_PKTLOG_TEXT | ATH_PKTLOG_SW_EVENT;
 #elif defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
-      defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_WCN7850)
+      defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_KIWI)
 	log_state = ATH_PKTLOG_RCFIND | ATH_PKTLOG_RCUPDATE |
 		    ATH_PKTLOG_TX | ATH_PKTLOG_LITE_T2H |
 		    ATH_PKTLOG_SW_EVENT | ATH_PKTLOG_RX;
@@ -9045,6 +9063,8 @@ wmi_pcl_chan_weight wma_map_pcl_weights(uint32_t pcl_weight)
 	case WEIGHT_OF_GROUP2_PCL_CHANNELS:
 		return WMI_PCL_WEIGHT_HIGH;
 	case WEIGHT_OF_GROUP3_PCL_CHANNELS:
+		return WMI_PCL_WEIGHT_MEDIUM;
+	case WEIGHT_OF_GROUP4_PCL_CHANNELS:
 		return WMI_PCL_WEIGHT_MEDIUM;
 	case WEIGHT_OF_NON_PCL_CHANNELS:
 		return WMI_PCL_WEIGHT_LOW;

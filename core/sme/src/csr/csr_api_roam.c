@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -8011,24 +8012,12 @@ QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
 	return status;
 }
 
-/**
- * csr_roam_send_chan_sw_ie_request() - Request to transmit CSA IE
- * @mac_ctx:        Global MAC context
- * @bssid:          BSSID
- * @target_chan_freq: Channel frequency on which to send the IE
- * @csa_ie_reqd:    Include/Exclude CSA IE.
- * @ch_params:  operating Channel related information
- *
- * This function sends request to transmit channel switch announcement
- * IE to lower layers
- *
- * Return: success or failure
- **/
 QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac_ctx,
 					    struct qdf_mac_addr bssid,
 					    uint32_t target_chan_freq,
 					    uint8_t csa_ie_reqd,
-					    struct ch_params *ch_params)
+					    struct ch_params *ch_params,
+					    uint32_t new_cac_ms)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirDfsCsaIeRequest *msg;
@@ -8047,6 +8036,7 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac_ctx,
 	msg->ch_switch_mode = mac_ctx->sap.SapDfsInfo.sap_ch_switch_mode;
 	msg->dfs_ch_switch_disable =
 		mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch;
+	msg->new_chan_cac_ms = new_cac_ms;
 	qdf_mem_copy(msg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(&msg->ch_params, ch_params, sizeof(struct ch_params));
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +35,7 @@
 #include "sir_debug.h"
 
 #include "lim_types.h"
+#include "wlan_cm_api.h"
 
 #define SIZE_OF_NOA_DESCRIPTOR 13
 #define MAX_NOA_PERIOD_IN_MICROSECS 3000000
@@ -200,7 +202,7 @@ static inline QDF_STATUS lim_add_ft_sta_self(struct mac_context *mac,
 static inline bool lim_is_roam_synch_in_progress(struct wlan_objmgr_psoc *psoc,
 						 struct pe_session *pe_session)
 {
-	return MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, pe_session->vdev_id);
+	return wlan_cm_is_vdev_roam_sync_inprogress(pe_session->vdev);
 }
 #else
 static inline bool lim_is_roam_synch_in_progress(struct wlan_objmgr_psoc *psoc,

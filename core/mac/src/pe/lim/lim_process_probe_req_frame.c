@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -222,6 +223,31 @@ static bool lim_check11b_rates(uint8_t rate)
 	return false;
 }
 
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * lim_need_broadcast_probe_rsp: check whether need broadcast probe rsp
+ * @session: a ponter to session entry
+ * @probe_req_da: probe request dst addr
+ *
+ * Return: bool
+ */
+static bool lim_need_broadcast_probe_rsp(struct pe_session *session,
+					 tSirMacAddr probe_req_da)
+{
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(session->curr_op_freq) &&
+	    QDF_IS_ADDR_BROADCAST(probe_req_da))
+		return true;
+	else
+		return false;
+}
+#else
+static bool lim_need_broadcast_probe_rsp(struct pe_session *session,
+					 tSirMacAddr probe_req_da)
+{
+	return false;
+}
+#endif
+
 /**
  * lim_process_probe_req_frame: to process probe req frame
  * @mac_ctx: Pointer to Global MAC structure
@@ -254,6 +280,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	tpSirProbeReq probe_req = NULL;
 	tAniSSID ssid;
 	uint8_t *uuid;
+	tSirMacAddr dst_mac;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	if (LIM_IS_AP_ROLE(session)) {
@@ -351,6 +378,11 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		qdf_mem_copy(ssid.ssId, session->ssId.ssId,
 				session->ssId.length);
 
+		if (lim_need_broadcast_probe_rsp(session, mac_hdr->da))
+			qdf_set_macaddr_broadcast((struct qdf_mac_addr *)dst_mac);
+		else
+			qdf_mem_copy(dst_mac, mac_hdr->sa, ETH_ALEN);
+
 		/*
 		 * Compare received SSID with current SSID. If they match,
 		 * reply with Probe Response
@@ -363,7 +395,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 						(uint8_t *)&probe_req->ssId,
 						(uint8_t)(ssid.length + 1))) {
 				lim_send_probe_rsp_mgmt_frame(mac_ctx,
-						mac_hdr->sa, &ssid,
+						dst_mac, &ssid,
 						session,
 						probe_req->p2pIePresent);
 				goto free_and_exit;
@@ -376,7 +408,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 					(uint8_t *)&probe_req->ssId.ssId,
 					(uint8_t)(direct_ssid_len))) {
 					lim_send_probe_rsp_mgmt_frame(
-						mac_ctx, mac_hdr->sa, &ssid,
+						mac_ctx, dst_mac, &ssid,
 						session,
 						probe_req->p2pIePresent);
 					goto free_and_exit;
@@ -384,7 +416,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			} else {
 				pe_debug("Ignore ProbeReq frm with unmatch SSID received from");
 					lim_print_mac_addr(mac_ctx, mac_hdr->sa,
-						LOGD);
+							   LOGD);
 			}
 		} else {
 			/*
@@ -400,10 +432,10 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				 * send the probe resp
 				 */
 				goto free_and_exit;
-			lim_send_probe_rsp_mgmt_frame(mac_ctx, mac_hdr->sa,
-					&ssid,
-					session,
-					probe_req->p2pIePresent);
+			lim_send_probe_rsp_mgmt_frame(mac_ctx, dst_mac,
+						      &ssid,
+						      session,
+						      probe_req->p2pIePresent);
 			goto free_and_exit;
 		}
 multipleSSIDcheck:

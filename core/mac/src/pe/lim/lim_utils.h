@@ -2425,6 +2425,15 @@ QDF_STATUS lim_sap_move_to_cac_wait_state(struct pe_session *session);
 void lim_disconnect_complete(struct pe_session *session, bool del_bss);
 
 /**
+ * lim_ap_mlme_vdev_rnr_notify() - SAP is changed, notify co-located sap to
+ *                                 update RNR IE
+ * @session: PE session pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_ap_mlme_vdev_rnr_notify(struct pe_session *session);
+
+/**
  * lim_sta_mlme_vdev_stop_send() - send VDEV stop
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @data_len: data size

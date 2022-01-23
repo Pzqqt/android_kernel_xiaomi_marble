@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3304,6 +3304,11 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 		qdf_mem_copy(pAssocReq->mld_mac,
 			     ar->mlo_ie.mld_mac_addr.info.mld_mac_addr,
 			     QDF_MAC_ADDR_SIZE);
+		pe_debug("Received Assoc Req with MLO IE");
+		pe_debug("Partner link count: %d, MLD mac addr: " QDF_MAC_ADDR_FMT,
+			 ar->mlo_ie.num_sta_profile,
+			 QDF_MAC_ADDR_REF(
+				ar->mlo_ie.mld_mac_addr.info.mld_mac_addr));
 	}
 	qdf_mem_free(ar);
 	return QDF_STATUS_SUCCESS;
@@ -3791,6 +3796,9 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 	if (ar->eht_cap.present) {
 		qdf_mem_copy(&pAssocRsp->eht_cap, &ar->eht_cap,
 			     sizeof(tDot11fIEeht_cap));
+		pe_debug("Received Assoc Response with EHT Cap");
+		pe_debug("320MHz support: %d",
+			 pAssocRsp->eht_cap.support_320mhz_6ghz);
 	}
 
 	if (ar->he_6ghz_band_cap.present) {
@@ -3829,10 +3837,14 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 					ar->mlo_ie.link_id_info_present;
 		pAssocRsp->mlo_ie.mlo_ie.link_id_info.info.link_id =
 					ar->mlo_ie.link_id_info.info.link_id;
-		pe_debug("ar->mlo_ie.num_sta_profile:%d",
-			 ar->mlo_ie.num_sta_profile);
 		pAssocRsp->mlo_ie.mlo_ie.num_sta_profile =
 					ar->mlo_ie.num_sta_profile;
+		pe_debug("Received Assoc Response with MLO IE");
+		pe_debug("Partner link count: %d, Link id: %d, MLD mac addr: " QDF_MAC_ADDR_FMT,
+			 ar->mlo_ie.num_sta_profile,
+			 ar->mlo_ie.link_id_info.info.link_id,
+			 QDF_MAC_ADDR_REF(
+				ar->mlo_ie.mld_mac_addr.info.mld_mac_addr));
 	}
 
 	qdf_mem_free(ar);
@@ -7531,11 +7543,21 @@ void populate_dot11f_mlo_rnr(struct mac_context *mac_ctx,
 			continue;
 		}
 		link_session = pe_find_session_by_vdev_id(
-			mac_ctx, wlan_vdev_list[link]->vdev_objmgr.vdev_id);
+			mac_ctx, wlan_vdev_get_id(wlan_vdev_list[link]));
+		if (!link_session) {
+			pe_debug("vdev id %d pe session is not created",
+				 wlan_vdev_get_id(wlan_vdev_list[link]));
+			lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
+			continue;
+		}
 		if (!rnr_populated) {
 			populate_dot11f_rnr_tbtt_info_10(mac_ctx, session,
 							 link_session, dot11f);
-			pe_err("TD: we only populate one RNR IE for one link");
+			pe_debug("mlo vdev id %d populate vdev id %d link id %d op class %d chan num %d in RNR IE",
+				 wlan_vdev_get_id(session->vdev),
+				 wlan_vdev_get_id(wlan_vdev_list[link]),
+				 dot11f->tbtt_info.tbtt_info_10.link_id,
+				 dot11f->op_class, dot11f->channel_num);
 			rnr_populated = true;
 		}
 		lim_mlo_release_vdev_ref(wlan_vdev_list[link]);
@@ -8828,4 +8850,122 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+void populate_dot11f_rnr_tbtt_info_7(struct mac_context *mac_ctx,
+				     struct pe_session *pe_session,
+				     struct pe_session *rnr_session,
+				     tDot11fIEreduced_neighbor_report *dot11f)
+{
+	uint8_t reg_class;
+	uint8_t ch_offset;
+
+	dot11f->present = 1;
+	dot11f->tbtt_type = 0;
+	if (rnr_session->ch_width == CH_WIDTH_80MHZ) {
+		ch_offset = BW80;
+	} else {
+		switch (rnr_session->htSecondaryChannelOffset) {
+		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+			ch_offset = BW40_HIGH_PRIMARY;
+			break;
+		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+			ch_offset = BW40_LOW_PRIMARY;
+			break;
+		default:
+			ch_offset = BW20;
+			break;
+		}
+	}
+
+	reg_class = lim_op_class_from_bandwidth(mac_ctx,
+						rnr_session->curr_op_freq,
+						rnr_session->ch_width,
+						ch_offset);
+
+	dot11f->op_class = reg_class;
+	dot11f->channel_num = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						    rnr_session->curr_op_freq);
+	dot11f->tbtt_info_count = 0;
+	dot11f->tbtt_info_len = 7;
+	dot11f->tbtt_info.tbtt_info_7.tbtt_offset =
+			WLAN_RNR_TBTT_OFFSET_INVALID;
+	qdf_mem_copy(dot11f->tbtt_info.tbtt_info_7.bssid,
+		     rnr_session->self_mac_addr, sizeof(tSirMacAddr));
+}
+
+/**
+ * lim_is_6g_vdev() - loop every vdev to populate 6g vdev id
+ * @psoc: pointer to psoc
+ * @obj: vdev
+ * @args: vdev list to record 6G vdev id
+ *
+ * Return: void
+ */
+static void lim_is_6g_vdev(struct wlan_objmgr_psoc *psoc, void *obj, void *args)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)obj;
+	uint8_t *vdev_id_list = (uint8_t *)args;
+	int i;
+
+	if (!vdev || (wlan_vdev_mlme_get_opmode(vdev) != QDF_SAP_MODE))
+		return;
+	if (QDF_IS_STATUS_ERROR(wlan_vdev_chan_config_valid(vdev)))
+		return;
+	if (!wlan_reg_is_6ghz_chan_freq(wlan_get_operation_chan_freq(vdev)))
+		return;
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (vdev_id_list[i] == INVALID_VDEV_ID) {
+			vdev_id_list[i] = wlan_vdev_get_id(vdev);
+			break;
+		}
+	}
+}
+
+void populate_dot11f_6g_rnr(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tDot11fIEreduced_neighbor_report *dot11f)
+{
+	struct pe_session *co_session;
+	struct wlan_objmgr_psoc *psoc;
+	int vdev_id;
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+
+	if (!session || !mac_ctx || !dot11f || !session->vdev) {
+		pe_err("Invalid params");
+		return;
+	}
+
+	psoc = wlan_vdev_get_psoc(session->vdev);
+	if (!psoc) {
+		pe_err("Invalid psoc");
+		return;
+	}
+
+	for (vdev_id = 0; vdev_id < MAX_NUMBER_OF_CONC_CONNECTIONS; vdev_id++)
+		vdev_id_list[vdev_id] = INVALID_VDEV_ID;
+
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     lim_is_6g_vdev,
+				     vdev_id_list, 1,
+				     WLAN_LEGACY_MAC_ID);
+
+	if (vdev_id_list[0] == INVALID_VDEV_ID) {
+		pe_debug("vdev id %d no 6G vdev, no need to populate RNR IE",
+			 wlan_vdev_get_id(session->vdev));
+		return;
+	}
+
+	co_session = pe_find_session_by_vdev_id(mac_ctx,
+						vdev_id_list[0]);
+	if (!co_session) {
+		pe_err("Invalid co located session");
+		return;
+	}
+	populate_dot11f_rnr_tbtt_info_7(mac_ctx, session, co_session, dot11f);
+	pe_debug("vdev id %d populate RNR IE with 6G vdev id %d op class %d chan num %d",
+		 wlan_vdev_get_id(session->vdev),
+		 wlan_vdev_get_id(co_session->vdev),
+		 dot11f->op_class, dot11f->channel_num);
+}
 /* parser_api.c ends here. */

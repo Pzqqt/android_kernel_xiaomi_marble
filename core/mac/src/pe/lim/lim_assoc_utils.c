@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -700,11 +700,14 @@ lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 		}
 	}
 
+	sta_ds = dph_get_hash_entry(mac_ctx, sta_id,
+				    &session_entry->dph.dphHashTable);
+
 	if (delete_sta == false) {
 		lim_send_assoc_rsp_mgmt_frame(
 				mac_ctx,
 				STATUS_AP_UNABLE_TO_HANDLE_NEW_STA,
-				1, peer_addr, sub_type, 0, session_entry,
+				1, peer_addr, sub_type, sta_ds, session_entry,
 				false);
 		pe_warn("received Re/Assoc req when max associated STAs reached from");
 		lim_print_mac_addr(mac_ctx, peer_addr, LOGW);
@@ -712,9 +715,6 @@ lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 					session_entry->smeSessionId);
 		return;
 	}
-
-	sta_ds = dph_get_hash_entry(mac_ctx, sta_id,
-		   &session_entry->dph.dphHashTable);
 
 	if (!sta_ds) {
 		pe_err("No STA context, yet rejecting Association");
@@ -735,7 +735,7 @@ lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 	 * status code to requesting STA.
 	 */
 	lim_send_assoc_rsp_mgmt_frame(mac_ctx, result_code, 0, peer_addr,
-				      sub_type, 0, session_entry, false);
+				      sub_type, sta_ds, session_entry, false);
 
 	if (session_entry->parsedAssocReq[sta_ds->assocId]) {
 		lim_free_assoc_req_frm_buf(

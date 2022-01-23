@@ -1464,8 +1464,8 @@ void csr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_vdev *vdev,
 	if (!mac_ctx)
 		return;
 
-	is_mlo_sbs = policy_mgr_is_mlo_sta_sbs_link(mac_ctx->psoc, mlo_vdev_lst,
-						    &num_mlo);
+	is_mlo_sbs = policy_mgr_is_mlo_in_mode_sbs(mac_ctx->psoc, PM_STA_MODE,
+						   mlo_vdev_lst, &num_mlo);
 
 	if (num_mlo < 2) {
 		sme_debug("vdev %d AP_state %d MLO Sta links %d",

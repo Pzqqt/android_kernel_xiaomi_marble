@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1855,6 +1855,8 @@ int wma_unified_radio_tx_mem_free(void *handle)
 
 	if (!wma_handle->link_stats_results)
 		return 0;
+
+	wma_debug("free link_stats_results");
 	qdf_mutex_acquire(&wma_handle->radio_stats_lock);
 	ret = __wma_unified_radio_tx_mem_free(wma_handle);
 	qdf_mutex_release(&wma_handle->radio_stats_lock);
@@ -4251,6 +4253,73 @@ void wma_remove_bss_peer_on_failure(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	wma_remove_peer(wma, bss_peer.bytes, vdev_id, false);
+}
+
+QDF_STATUS wma_remove_bss_peer_before_join(
+	tp_wma_handle wma, uint8_t vdev_id,
+	void *cm_join_req)
+{
+	uint8_t *mac_addr;
+	struct wma_target_req *del_req;
+	QDF_STATUS qdf_status;
+	struct qdf_mac_addr bssid;
+	enum QDF_OPMODE mode;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!wma || !wma->interfaces)
+		return QDF_STATUS_E_FAILURE;
+
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		wma_err("Invalid vdev id %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev = wma->interfaces[vdev_id].vdev;
+	if (!vdev) {
+		wma_err("Invalid vdev, %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode != QDF_STA_MODE && mode != QDF_P2P_CLIENT_MODE) {
+		wma_err("unexpected mode %d vdev %d", mode, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_status = wlan_vdev_get_bss_peer_mac(vdev, &bssid);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		wma_err("Failed to get bssid for vdev_id: %d", vdev_id);
+		return qdf_status;
+	}
+	mac_addr = bssid.bytes;
+
+	qdf_status = wma_remove_peer(wma, mac_addr, vdev_id, false);
+
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		wma_err("wma_remove_peer failed vdev_id:%d", vdev_id);
+		return qdf_status;
+	}
+
+	if (cds_is_driver_recovering())
+		return QDF_STATUS_E_FAILURE;
+
+	if (wmi_service_enabled(wma->wmi_handle,
+				wmi_service_sync_delete_cmds)) {
+		wma_debug("Wait for the peer delete. vdev_id %d", vdev_id);
+		del_req = wma_fill_hold_req(wma, vdev_id,
+					    WMA_DELETE_STA_REQ,
+					    WMA_DELETE_STA_CONNECT_RSP,
+					    cm_join_req,
+					    WMA_DELETE_STA_TIMEOUT);
+		if (!del_req) {
+			wma_err("Failed to allocate request. vdev_id %d",
+				vdev_id);
+			qdf_status = QDF_STATUS_E_NOMEM;
+		} else {
+			qdf_status = QDF_STATUS_E_PENDING;
+		}
+	}
+
+	return qdf_status;
 }
 
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,

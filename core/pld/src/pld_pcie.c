@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -632,7 +633,7 @@ static struct pci_device_id pld_pcie_id_table[] = {
 	{ 0x17cb, 0x1101, PCI_ANY_ID, PCI_ANY_ID },
 #elif defined(QCA_WIFI_QCA6490)
 	{ 0x17cb, 0x1103, PCI_ANY_ID, PCI_ANY_ID },
-#elif defined(QCA_WIFI_WCN7850)
+#elif defined(QCA_WIFI_KIWI)
 	{ 0x17cb, 0x1107, PCI_ANY_ID, PCI_ANY_ID },
 #elif defined(QCN7605_SUPPORT)
 	{ 0x17cb, 0x1102, PCI_ANY_ID, PCI_ANY_ID },

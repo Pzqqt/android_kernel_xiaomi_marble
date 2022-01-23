@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -276,16 +277,31 @@ QDF_STATUS pmo_core_ns_check_offload(struct wlan_objmgr_psoc *psoc,
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 	psoc_ctx = vdev_ctx->pmo_psoc_ctx;
 
-	if (trigger == pmo_apps_suspend || trigger == pmo_apps_resume) {
+	if (trigger == pmo_apps_suspend) {
 		active_offload_cond = psoc_ctx->psoc_cfg.active_mode_offload;
 
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-		is_applied_cond = vdev_ctx->vdev_ns_req.enable &&
-			       vdev_ctx->vdev_ns_req.is_offload_applied;
+		is_applied_cond =
+			vdev_ctx->vdev_ns_req.enable == PMO_OFFLOAD_ENABLE &&
+			vdev_ctx->vdev_ns_req.is_offload_applied;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 		if (active_offload_cond && is_applied_cond) {
 			pmo_debug("active offload is enabled and offload already sent");
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+			return QDF_STATUS_E_INVAL;
+		}
+	} else if (trigger == pmo_apps_resume) {
+		active_offload_cond = psoc_ctx->psoc_cfg.active_mode_offload;
+
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		is_applied_cond =
+			vdev_ctx->vdev_ns_req.enable == PMO_OFFLOAD_DISABLE &&
+			!vdev_ctx->vdev_ns_req.is_offload_applied;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+		if (active_offload_cond && is_applied_cond) {
+			pmo_debug("active offload is enabled and offload already disabled");
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			return QDF_STATUS_E_INVAL;
 		}

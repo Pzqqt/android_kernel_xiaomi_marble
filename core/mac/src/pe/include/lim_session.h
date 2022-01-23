@@ -179,14 +179,12 @@ struct mlo_link_ie {
 /**
  * struct mlo_link_ie_info - information per link to populate mlo ie
  * @upt_bcn_mlo_ie: notify partner links to update their mlo ie of bcn temp
- * @mlo_rnr_updated: link already notified partner link to update rnr
  * @bss_param_change: bss param changed
  * @bcn_tmpl_exist: bcn template is generated or not
  * @link_ie: IEs which will be used for generating partner mlo IE
  */
 struct mlo_link_ie_info {
 	bool upt_bcn_mlo_ie;
-	bool mlo_rnr_updated;
 	bool bss_param_change;
 	bool bcn_tmpl_exist;
 	struct mlo_link_ie link_ie;

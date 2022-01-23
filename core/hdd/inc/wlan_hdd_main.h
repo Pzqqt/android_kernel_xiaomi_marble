@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1247,6 +1247,7 @@ struct hdd_context;
  *			progress, and any operation using rtnl lock inside
  *			the driver can be avoided/skipped.
  * @mon_adapter: hdd_adapter of monitor mode.
+ * @set_mac_addr_req_ctx: Set MAC address command request context
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1459,6 +1460,7 @@ struct hdd_adapter {
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	bool is_link_layer_stats_set;
+	uint8_t ll_stats_failure_count;
 #endif
 	uint8_t link_status;
 	uint8_t upgrade_udp_qos_threshold;
@@ -1569,8 +1571,11 @@ struct hdd_adapter {
 #ifdef WLAN_FEATURE_PKT_CAPTURE
 	struct hdd_adapter *mon_adapter;
 #endif
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 	struct hdd_mlo_adapter_info mlo_adapter_info;
+#endif
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	void *set_mac_addr_req_ctx;
 #endif
 };
 
@@ -2245,7 +2250,7 @@ struct hdd_context {
 	struct sar_limit_cmd_params *sar_cmd_params;
 #ifdef SAR_SAFETY_FEATURE
 	qdf_mc_timer_t sar_safety_timer;
-	qdf_mc_timer_t sar_safety_unsolicited_timer;
+	struct qdf_delayed_work sar_safety_unsolicited_work;
 	qdf_event_t sar_safety_req_resp_event;
 	qdf_atomic_t sar_safety_req_resp_event_in_progress;
 #endif
@@ -2302,13 +2307,17 @@ struct hdd_context {
 	bool dump_in_progress;
 	uint64_t bw_vote_time;
 	struct hdd_dual_sta_policy dual_sta_policy;
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 	struct hdd_mld_mac_info mld_mac_info;
 #endif
 #ifdef THERMAL_STATS_SUPPORT
 	bool is_therm_stats_in_progress;
 #endif
 	qdf_atomic_t rx_skip_qdisc_chk_conc;
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+	bool is_vdev_macaddr_dynamic_update_supported;
+#endif
 };
 
 /**
@@ -5147,6 +5156,60 @@ static inline void hdd_dp_ssr_unprotect(void)
 {
 	qdf_atomic_dec(&dp_protect_entry_count);
 }
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+/**
+ * hdd_dynamic_mac_address_set(): API to set MAC address, when interface
+ *                                is up.
+ * @hdd_context: Pointer to HDD context
+ * @adapter: Pointer to hdd_adapter
+ * @mac_addr: MAC address to set
+ *
+ * This API is used to update the current VDEV MAC address.
+ *
+ * Return: 0 for success. non zero valure for failure.
+ */
+int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				struct qdf_mac_addr mac_addr);
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
+/**
+ * hdd_update_vdev_mac_address() - Update VDEV MAC address dynamically
+ * @hdd_ctx: Pointer to HDD context
+ * @adapter: Pointer to HDD adapter
+ * @mac_addr: MAC address to be updated
+ *
+ * API to update VDEV MAC address during interface is in UP state.
+ *
+ * Return: 0 for Success. Error code for failure
+ */
+int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				struct qdf_mac_addr mac_addr);
+#else
+static inline int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
+					      struct hdd_adapter *adapter,
+					      struct qdf_mac_addr mac_addr)
+{
+	return hdd_dynamic_mac_address_set(hdd_ctx, adapter, mac_addr);
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
+#else
+static inline int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
+					      struct hdd_adapter *adapter,
+					      struct qdf_mac_addr mac_addr)
+{
+	return 0;
+}
+
+static inline int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
+					      struct hdd_adapter *adapter,
+					      struct qdf_mac_addr mac_addr)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE */
 
 #ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
 /**

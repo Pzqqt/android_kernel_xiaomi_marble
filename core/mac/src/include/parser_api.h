@@ -1595,4 +1595,31 @@ dot11f_parse_assoc_rsp_mlo_partner_info(struct pe_session *pe_session,
 {
 }
 #endif
+
+/**
+ * populate_dot11f_6g_rnr() - populate rnr with 6g bss information
+ * @mac_ctx: MAC context
+ * @session: reporting session
+ * @dot11f: pointer to tDot11fIEreduced_neighbor_report to fill
+ *
+ * Return: none
+ */
+void populate_dot11f_6g_rnr(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tDot11fIEreduced_neighbor_report *dot11f);
+
+/**
+ * populate_dot11f_rnr_tbtt_info_7() - populate rnr with tbtt_info length 7
+ * @mac_ctx: pointer to mac_context
+ * @pe_session: pe session
+ * @rnr_session: session to populate in rnr ie
+ * @dot11f: tDot11fIEreduced_neighbor_report to be filled
+ *
+ * Return: none
+ */
+void populate_dot11f_rnr_tbtt_info_7(struct mac_context *mac_ctx,
+				     struct pe_session *pe_session,
+				     struct pe_session *rnr_session,
+				     tDot11fIEreduced_neighbor_report *dot11f);
+
 #endif /* __PARSE_H__ */

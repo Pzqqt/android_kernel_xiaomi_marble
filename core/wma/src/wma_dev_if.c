@@ -576,6 +576,32 @@ error:
 	return qdf_status;
 }
 
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+QDF_STATUS wma_p2p_self_peer_remove(struct wlan_objmgr_vdev *vdev)
+{
+	struct del_vdev_params *del_self_peer_req;
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	QDF_STATUS status;
+
+	if (!wma_handle)
+		return QDF_STATUS_E_INVAL;
+
+	del_self_peer_req = qdf_mem_malloc(sizeof(*del_self_peer_req));
+	if (!del_self_peer_req)
+		return QDF_STATUS_E_NOMEM;
+
+	del_self_peer_req->vdev = vdev;
+	del_self_peer_req->vdev_id = wlan_vdev_get_id(vdev);
+	qdf_mem_copy(del_self_peer_req->self_mac_addr,
+		     wlan_vdev_mlme_get_macaddr(vdev),
+		     QDF_MAC_ADDR_SIZE);
+
+	status = wma_self_peer_remove(wma_handle, del_self_peer_req);
+
+	return status;
+}
+#endif
+
 /**
  * wma_remove_objmgr_peer() - remove objmgr peer information from host driver
  * @wma: wma handle
@@ -3226,7 +3252,12 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 	tDeleteStaParams *del_sta;
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	int status = 0;
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
+	if (!mac) {
+		wma_err("mac context is null");
+		return -EINVAL;
+	}
 	param_buf = (WMI_PEER_DELETE_RESP_EVENTID_param_tlvs *)cmd_param_info;
 	if (!param_buf) {
 		wma_err("Invalid vdev delete event buffer");
@@ -3277,7 +3308,15 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 	} else if (req_msg->type == WMA_SET_LINK_PEER_RSP ||
 		   req_msg->type == WMA_DELETE_PEER_RSP) {
 		wma_send_vdev_down_req(wma, req_msg->user_data);
+	} else if (req_msg->type == WMA_DELETE_STA_CONNECT_RSP) {
+		wma_debug("wma delete peer completed vdev %d",
+			  req_msg->vdev_id);
+		lim_cm_send_connect_rsp(mac, NULL, req_msg->user_data,
+					CM_GENERIC_FAILURE,
+					QDF_STATUS_E_FAILURE, 0, false);
+		cm_free_join_req(req_msg->user_data);
 	}
+
 	qdf_mem_free(req_msg);
 
 	return status;
@@ -3409,6 +3448,19 @@ void wma_hold_req_timer(void *data)
 				WMA_DELETE_STA_REQ,
 				QDF_PEER_DELETION_TIMEDOUT);
 		wma_send_vdev_down_req(wma, params);
+	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
+		   (tgt_req->type == WMA_DELETE_STA_CONNECT_RSP)) {
+		wma_err("wma delete peer timed out vdev %d",
+			tgt_req->vdev_id);
+
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
+			wma_trigger_recovery_assert_on_fw_timeout(
+				WMA_DELETE_STA_REQ,
+				QDF_PEER_DELETION_TIMEDOUT);
+		lim_cm_send_connect_rsp(mac, NULL, tgt_req->user_data,
+					CM_GENERIC_FAILURE,
+					QDF_STATUS_E_FAILURE, 0, false);
+		cm_free_join_req(tgt_req->user_data);
 	} else if ((tgt_req->msg_type == SIR_HAL_PDEV_SET_HW_MODE) &&
 			(tgt_req->type == WMA_PDEV_SET_HW_MODE_RESP)) {
 		struct sir_set_hw_mode_resp *params =

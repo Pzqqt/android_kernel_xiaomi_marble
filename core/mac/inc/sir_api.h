@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2367,6 +2367,7 @@ typedef struct sSirDfsCsaIeRequest {
 	uint8_t  ch_switch_beacon_cnt;
 	uint8_t  ch_switch_mode;
 	uint8_t  dfs_ch_switch_disable;
+	uint32_t new_chan_cac_ms;
 } tSirDfsCsaIeRequest, *tpSirDfsCsaIeRequest;
 
 /* Indication from lower layer indicating the completion of first beacon send
@@ -3863,6 +3864,7 @@ struct sir_nss_update_request {
  * @REASON_COLOR_CHANGE: Color change
  * @REASON_CHANNEL_SWITCH: channel switch
  * @REASON_MLO_IE_UPDATE: mlo ie update
+ * @REASON_RNR_UPDATE: SAP is changed, notify co-located SAP
  */
 enum sir_bcn_update_reason {
 	REASON_DEFAULT = 0,
@@ -3872,6 +3874,7 @@ enum sir_bcn_update_reason {
 	REASON_COLOR_CHANGE = 4,
 	REASON_CHANNEL_SWITCH = 5,
 	REASON_MLO_IE_UPDATE = 6,
+	REASON_RNR_UPDATE = 7,
 };
 
 /**

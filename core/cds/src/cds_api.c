@@ -84,6 +84,7 @@
 #include <qdf_notifier.h>
 #include <qwlan_version.h>
 #include <qdf_trace.h>
+#include <qdf_nbuf.h>
 
 /* Preprocessor Definitions and Constants */
 
@@ -813,7 +814,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 				goto err_soc_detach;
 			}
 		hdd_ctx->is_wifi3_0_target = true;
-	} else if (hdd_ctx->target_type == TARGET_TYPE_WCN7850) {
+	} else if (hdd_ctx->target_type == TARGET_TYPE_KIWI) {
 		gp_cds_context->dp_soc =
 			cdp_soc_attach(BERYLLIUM_DP,
 				       gp_cds_context->hif_context,
@@ -960,7 +961,7 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	    hdd_ctx->target_type == TARGET_TYPE_QCA6390 ||
 	    hdd_ctx->target_type == TARGET_TYPE_QCA6490 ||
 	    hdd_ctx->target_type == TARGET_TYPE_QCA6750 ||
-	    hdd_ctx->target_type == TARGET_TYPE_WCN7850) {
+	    hdd_ctx->target_type == TARGET_TYPE_KIWI) {
 		qdf_status = cdp_pdev_init(cds_get_context(QDF_MODULE_ID_SOC),
 					   gp_cds_context->htc_ctx,
 					   gp_cds_context->qdf_ctx, 0);
@@ -1451,6 +1452,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 {
 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
+
+	qdf_nbuf_stop_replenish_timer();
 
 	dp_txrx_deinit(cds_get_context(QDF_MODULE_ID_SOC));
 
@@ -2869,6 +2872,7 @@ cds_dp_get_vdev_stats(uint8_t vdev_id, struct cds_vdev_dp_stats *stats)
 
 	if (cds_get_cdp_vdev_stats(vdev_id, vdev_stats)) {
 		stats->tx_retries = vdev_stats->tx.retries;
+		stats->tx_retries_mpdu = vdev_stats->tx.retries_mpdu;
 		stats->tx_mpdu_success_with_retries =
 			vdev_stats->tx.mpdu_success_with_retries;
 		ret = true;

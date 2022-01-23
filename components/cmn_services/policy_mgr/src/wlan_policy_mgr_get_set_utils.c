@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,9 +40,8 @@
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
-#ifdef WLAN_FEATURE_11BE_MLO
 #include "wlan_mlo_mgr_sta.h"
-#endif
+#include "wlan_cm_ucfg_api.h"
 
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
@@ -3252,6 +3251,73 @@ uint32_t policy_mgr_get_mode_specific_conn_info(
 	return count;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *num_ml, uint8_t *ml_idx,
+					    uint8_t *num_non_ml,
+					    uint8_t *non_ml_idx,
+					    qdf_freq_t *freq_list,
+					    uint8_t *vdev_id_list)
+{
+	uint32_t sta_num = 0;
+	uint8_t i;
+	struct wlan_objmgr_vdev *temp_vdev;
+
+	*num_ml = 0;
+	*num_non_ml = 0;
+
+	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, freq_list,
+							 vdev_id_list,
+							 PM_STA_MODE);
+	if (!sta_num)
+		return;
+
+	for (i = 0; i < sta_num; i++) {
+		temp_vdev =
+			wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+							    vdev_id_list[i],
+							    WLAN_POLICY_MGR_ID);
+		if (!temp_vdev) {
+			policy_mgr_err("invalid vdev for id %d",
+				       vdev_id_list[i]);
+			return;
+		}
+
+		if (wlan_vdev_mlme_is_mlo_vdev(temp_vdev))
+			ml_idx[(*num_ml)++] = i;
+		else
+			non_ml_idx[(*num_non_ml)++] = i;
+
+		wlan_objmgr_vdev_release_ref(temp_vdev, WLAN_POLICY_MGR_ID);
+	}
+}
+
+#else
+
+void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *num_ml, uint8_t *ml_idx,
+					    uint8_t *num_non_ml,
+					    uint8_t *non_ml_idx,
+					    qdf_freq_t *freq_list,
+					    uint8_t *vdev_id_list)
+{
+	uint32_t sta_num = 0;
+
+	*num_ml = 0;
+	*num_non_ml = 0;
+
+	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, freq_list,
+							 vdev_id_list,
+							 PM_STA_MODE);
+	if (!sta_num)
+		return;
+
+	*num_non_ml = sta_num;
+	/* copy vdev_id_list to non_ml_idx */
+	*non_ml_idx = *vdev_id_list;
+}
+#endif
+
 bool policy_mgr_max_concurrent_connections_reached(
 		struct wlan_objmgr_psoc *psoc)
 {
@@ -3689,47 +3755,56 @@ bool policy_mgr_is_mlo_sta_present(struct wlan_objmgr_psoc *psoc)
 	return mlo_sta_present;
 }
 
-bool policy_mgr_is_mlo_sta_sbs_link(struct wlan_objmgr_psoc *psoc,
-				    uint8_t *mlo_vdev_lst,
-				    uint8_t *num_mlo)
+bool policy_mgr_is_mlo_in_mode_sbs(struct wlan_objmgr_psoc *psoc,
+				   enum policy_mgr_con_mode mode,
+				   uint8_t *mlo_vdev_lst, uint8_t *num_mlo)
 {
-	uint32_t sta_num = 0;
+	uint32_t mode_num = 0;
 	uint8_t i, mlo_idx = 0;
 	struct wlan_objmgr_vdev *temp_vdev;
 	qdf_freq_t mlo_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	bool is_sbs_link = true;
 
-	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, NULL,
-							 vdev_id_list,
-							 PM_STA_MODE);
-	if (!sta_num)
+	mode_num = policy_mgr_get_mode_specific_conn_info(psoc, NULL,
+							 vdev_id_list, mode);
+	if (!mode_num || mode_num < 2)
 		return false;
 
-	for (i = 0; i < sta_num; i++) {
+	for (i = 0; i < mode_num; i++) {
 		temp_vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 							vdev_id_list[i],
 							WLAN_POLICY_MGR_ID);
 		if (!temp_vdev) {
-			sme_err("invalid vdev for id %d", vdev_id_list[i]);
+			policy_mgr_err("invalid vdev for id %d",
+				       vdev_id_list[i]);
 			return false;
 		}
 
 		if (wlan_vdev_mlme_is_mlo_vdev(temp_vdev)) {
-			mlo_vdev_lst[mlo_idx] = vdev_id_list[i];
+			if (mlo_vdev_lst)
+				mlo_vdev_lst[mlo_idx] = vdev_id_list[i];
 			mlo_freq_list[mlo_idx] =
 				wlan_get_operation_chan_freq(temp_vdev);
 			if (wlan_reg_is_24ghz_ch_freq(mlo_freq_list[mlo_idx]))
 				is_sbs_link = false;
-
 			mlo_idx++;
 		}
 		wlan_objmgr_vdev_release_ref(temp_vdev, WLAN_POLICY_MGR_ID);
 	}
 
-	*num_mlo = mlo_idx;
+	if (num_mlo)
+		*num_mlo = mlo_idx;
 	if (mlo_idx < 2)
 		is_sbs_link = false;
+	if (is_sbs_link &&
+	    !policy_mgr_are_sbs_chan(psoc, mlo_freq_list[0],
+				     mlo_freq_list[1])) {
+		policy_mgr_debug("Freq %d and %d are not SBS, set SBS false",
+				 mlo_freq_list[0],
+				 mlo_freq_list[1]);
+		is_sbs_link = false;
+	}
 
 	return is_sbs_link;
 }
@@ -5992,12 +6067,30 @@ uint8_t policy_mgr_get_roam_enabled_sta_session_id(
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t index, count;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_vdev *vdev, *assoc_vdev;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_POLICY_MGR_ID);
+	if (!vdev) {
+		policy_mgr_err("Invalid vdev");
+		return false;
+	}
+
+	if (wlan_vdev_mlme_is_link_sta_vdev(vdev)) {
+		assoc_vdev = ucfg_mlo_get_assoc_link_vdev(vdev);
+		if (assoc_vdev && ucfg_cm_is_vdev_active(assoc_vdev)) {
+			policy_mgr_debug("replace link vdev %d with assoc vdev %d",
+					 vdev_id, wlan_vdev_get_id(assoc_vdev));
+			vdev_id = wlan_vdev_get_id(assoc_vdev);
+		}
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 
 	count = policy_mgr_mode_specific_connection_count(
 		psoc, PM_STA_MODE, list);

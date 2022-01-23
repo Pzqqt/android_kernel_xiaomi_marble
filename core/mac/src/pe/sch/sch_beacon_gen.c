@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -126,6 +127,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		qdf_mem_copy(&link_ie->link_ds, &bcn_1->DSParams,
 			     sizeof(bcn_1->DSParams));
 		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d DSParams changed, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	qdf_mem_copy(&link_ie->link_wmm_params, &bcn_2->WMMParams,
@@ -139,6 +142,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		qdf_mem_copy(&link_ie->link_edca, &bcn_2->EDCAParamSet,
 			     sizeof(bcn_2->EDCAParamSet));
 		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d EDCAParamSet changed, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_csa, &bcn_2->ChanSwitchAnn,
@@ -146,6 +151,9 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		session->mlo_link_info.upt_bcn_mlo_ie = true;
 		qdf_mem_copy(&link_ie->link_csa, &bcn_2->ChanSwitchAnn,
 			     sizeof(bcn_2->ChanSwitchAnn));
+		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d csa added, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_ecsa, &bcn_2->ext_chan_switch_ann,
@@ -153,6 +161,9 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		session->mlo_link_info.upt_bcn_mlo_ie = true;
 		qdf_mem_copy(&link_ie->link_ecsa, &bcn_2->ext_chan_switch_ann,
 			     sizeof(bcn_2->ext_chan_switch_ann));
+		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d ecsa added, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_swt_time, &bcn_2->max_chan_switch_time,
@@ -161,6 +172,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		qdf_mem_copy(&link_ie->link_swt_time,
 			     &bcn_2->max_chan_switch_time,
 			     sizeof(bcn_2->max_chan_switch_time));
+		pe_debug("vdev id %d max channel switch time added",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_quiet, &bcn_2->Quiet,
@@ -168,6 +181,9 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		session->mlo_link_info.upt_bcn_mlo_ie = true;
 		qdf_mem_copy(&link_ie->link_quiet, &bcn_2->Quiet,
 			     sizeof(bcn_2->Quiet));
+		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d quiet added, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_ht_info, &bcn_2->HTInfo,
@@ -175,6 +191,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		qdf_mem_copy(&link_ie->link_ht_info, &bcn_2->HTInfo,
 			     sizeof(bcn_2->HTInfo));
 		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d HTInfo changed, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_vht_op, &bcn_2->VHTOperation,
@@ -182,6 +200,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		qdf_mem_copy(&link_ie->link_vht_op, &bcn_2->VHTOperation,
 			     sizeof(bcn_2->VHTOperation));
 		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d VHTOperation changed, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_he_op, &bcn_2->he_op,
@@ -189,6 +209,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		qdf_mem_copy(&link_ie->link_he_op, &bcn_2->he_op,
 			     sizeof(bcn_2->he_op));
 		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d he_op changed, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	if (qdf_mem_cmp(&link_ie->link_eht_op, &bcn_2->eht_op,
@@ -196,6 +218,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 		qdf_mem_copy(&link_ie->link_eht_op, &bcn_2->eht_op,
 			     sizeof(bcn_2->eht_op));
 		session->mlo_link_info.bss_param_change = true;
+		pe_debug("vdev id %d eht_op changed, critical update",
+			 wlan_vdev_get_id(session->vdev));
 	}
 
 	/*
@@ -222,6 +246,8 @@ static void lim_update_link_info(struct mac_context *mac_ctx,
 					    SIR_MAX_BEACON_SIZE - offset,
 					    &n_bytes);
 			bcn_1->Capabilities.criticalUpdateFlag = 0;
+			mlme_set_notify_co_located_ap_update_rnr(session->vdev,
+								 true);
 		}
 	} else {
 		//save one time
@@ -784,6 +810,14 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 			populate_dot11f_mlo_rnr(
 				mac_ctx, session,
 				&bcn_2->reduced_neighbor_report);
+		} else if (!wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
+			/*
+			 * TD: If current AP is MLO, RNR IE is already populated
+			 *     More effor to populate RNR IE for
+			 *     MLO SAP + 6G legacy SAP
+			 */
+			populate_dot11f_6g_rnr(mac_ctx, session,
+					       &bcn_2->reduced_neighbor_report);
 		}
 		/*
 		 * Can be efficiently updated whenever new IE added  in Probe

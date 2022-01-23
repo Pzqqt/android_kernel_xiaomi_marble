@@ -85,11 +85,14 @@ enum cds_driver_state {
  * struce cds_vdev_dp_stats - vdev stats populated from DP
  * @tx_retries: packet number of successfully transmitted after more
  *              than one retransmission attempt
+ * @tx_retries_mpdu: mpdu number of successfully transmitted after more
+ *              than one retransmission attempt
  * @tx_mpdu_success_with_retries: Number of MPDU transmission retries done
  *				  in case of successful transmission.
  */
 struct cds_vdev_dp_stats {
 	uint32_t tx_retries;
+	uint32_t tx_retries_mpdu;
 	uint32_t tx_mpdu_success_with_retries;
 };
 

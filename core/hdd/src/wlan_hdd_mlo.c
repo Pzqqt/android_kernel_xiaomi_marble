@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +26,7 @@
 #include "wlan_hdd_mlo.h"
 #include "osif_vdev_sync.h"
 
+#if defined(CFG80211_11BE_BASIC)
 void hdd_update_mld_mac_addr(struct hdd_context *hdd_ctx,
 			     struct qdf_mac_addr hw_macaddr)
 {
@@ -324,3 +326,28 @@ struct hdd_adapter *hdd_get_ml_adater(struct hdd_context *hdd_ctx)
 
 	return NULL;
 }
+
+#ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
+int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				struct qdf_mac_addr mac_addr)
+{
+	int i, ret = 0;
+	struct hdd_mlo_adapter_info *mlo_adapter_info;
+	struct hdd_adapter *link_adapter;
+
+	mlo_adapter_info = &adapter->mlo_adapter_info;
+
+	for (i = 0; i < WLAN_MAX_MLD; i++) {
+		link_adapter = mlo_adapter_info->link_adapter[i];
+		if (!link_adapter)
+			continue;
+		ret = hdd_dynamic_mac_address_set(hdd_ctx, link_adapter,
+						  mac_addr);
+		if (ret)
+			return ret;
+	}
+	return ret;
+}
+#endif
+#endif
