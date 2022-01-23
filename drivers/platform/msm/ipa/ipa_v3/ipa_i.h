@@ -618,6 +618,7 @@ struct ipa_smmu_cb_ctx {
 	u32 va_end;
 	bool shared;
 	bool is_cache_coherent;
+	bool done;
 };
 
 /**
@@ -780,10 +781,6 @@ struct ipa3_rt_tbl {
  * @name: name of header table entry
  * @type: l2 header type
  * @is_partial: flag indicating if header table entry is partial
- * @is_hdr_proc_ctx: false - hdr entry resides in hdr table,
- * true - hdr entry resides in DDR and pointed to by proc ctx
- * @phys_base: physical address of entry in DDR when is_hdr_proc_ctx is true,
- * else 0
  * @proc_ctx: processing context header
  * @offset_entry: entry's offset
  * @cookie: cookie used for validity check
@@ -803,8 +800,6 @@ struct ipa3_hdr_entry {
 	char name[IPA_RESOURCE_NAME_MAX];
 	enum ipa_hdr_l2_type type;
 	u8 is_partial;
-	bool is_hdr_proc_ctx;
-	dma_addr_t phys_base;
 	struct ipa3_hdr_proc_ctx_entry *proc_ctx;
 	struct ipa_hdr_offset_entry *offset_entry;
 	u32 ref_cnt;
@@ -2393,6 +2388,8 @@ struct ipa3_context {
 	struct mutex act_tbl_lock;
 	int uc_act_tbl_total;
 	int uc_act_tbl_next_index;
+	int ipa_pil_load;
+
 };
 
 struct ipa3_plat_drv_res {
@@ -3622,4 +3619,10 @@ int ipa3_send_eogre_info(
 void ipa3_update_mhi_ctrl_state(u8 state, bool set);
 /* Send MHI endpoint info to modem using QMI indication message */
 int ipa_send_mhi_endp_ind_to_modem(void);
+
+/*
+ * To pass macsec mapping to the IPACM
+ */
+int ipa3_send_macsec_info(enum ipa_macsec_event event_type, struct ipa_macsec_map *map);
+
 #endif /* _IPA3_I_H_ */

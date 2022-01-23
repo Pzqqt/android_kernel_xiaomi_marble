@@ -1626,6 +1626,7 @@ static void apps_ipa_packet_receive_notify(void *priv,
 		IPAWANDBG_LOW("Rx packet was received");
 		skb->dev = IPA_NETDEV();
 		skb->protocol = htons(ETH_P_MAP);
+		skb_set_mac_header(skb, 0);
 
 		/* default traffic uses rx-0 queue. */
 		skb_record_rx_queue(skb, 0);

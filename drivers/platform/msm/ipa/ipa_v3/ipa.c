@@ -49,7 +49,7 @@
 #endif
 
 #define DRV_NAME "ipa"
-
+#define DELAY_BEFORE_FW_LOAD 500
 #define IPA_SUBSYSTEM_NAME "ipa_fws"
 #define IPA_UC_SUBSYSTEM_NAME "ipa_uc"
 
@@ -134,6 +134,7 @@ static void ipa3_free_pkt_init_ex(void);
 
 static void ipa3_load_ipa_fw(struct work_struct *work);
 static DECLARE_WORK(ipa3_fw_loading_work, ipa3_load_ipa_fw);
+static DECLARE_DELAYED_WORK(ipa3_fw_load_failure_handle, ipa3_load_ipa_fw);
 
 static void ipa_dec_clients_disable_clks_on_wq(struct work_struct *work);
 static DECLARE_DELAYED_WORK(ipa_dec_clients_disable_clks_on_wq_work,
@@ -630,27 +631,6 @@ static int ipa3_clean_mhip_dl_rule(void)
 	return 0;
 }
 
-static int ipa3_active_clients_panic_notifier(struct notifier_block *this,
-		unsigned long event, void *ptr)
-{
-	if (ipa3_ctx != NULL)
-	{
-		if (ipa3_ctx->is_device_crashed)
-			return NOTIFY_DONE;
-		ipa3_ctx->is_device_crashed = true;
-	}
-
-	ipa3_active_clients_log_print_table(active_clients_table_buf,
-			IPA3_ACTIVE_CLIENTS_TABLE_BUF_SIZE);
-	IPAERR("%s\n", active_clients_table_buf);
-
-	return NOTIFY_DONE;
-}
-
-static struct notifier_block ipa3_active_clients_panic_blk = {
-	.notifier_call  = ipa3_active_clients_panic_notifier,
-};
-
 #ifdef CONFIG_IPA_DEBUG
 static int ipa3_active_clients_log_insert(const char *string)
 {
@@ -702,9 +682,6 @@ static int ipa3_active_clients_log_init(void)
 	ipa3_ctx->ipa3_active_clients_logging.log_tail =
 			IPA3_ACTIVE_CLIENTS_LOG_BUFFER_SIZE_LINES - 1;
 	hash_init(ipa3_ctx->ipa3_active_clients_logging.htable);
-	/* 2nd ipa3_active_clients_panic_notifier */
-	atomic_notifier_chain_register(&panic_notifier_list,
-			&ipa3_active_clients_panic_blk);
 	ipa3_ctx->ipa3_active_clients_logging.log_rdy = true;
 
 	return 0;
@@ -2365,16 +2342,7 @@ static int proc_sram_info_rqst(
 	return 0;
 }
 
-static void ipa3_mac_flt_list_free_cb(void *buff, u32 len, u32 type)
-{
-	if (!buff) {
-		IPAERR("Null buffer\n");
-		return;
-	}
-	kfree(buff);
-}
-
-static void ipa3_pkt_threshold_free_cb(void *buff, u32 len, u32 type)
+static void ipa3_general_free_cb(void *buff, u32 len, u32 type)
 {
 	if (!buff) {
 		IPAERR("Null buffer\n");
@@ -2408,7 +2376,7 @@ static int ipa3_send_mac_flt_list(unsigned long usr_param)
 		((struct ipa_ioc_mac_client_list_type *)buff)->flt_state);
 
 	retval = ipa3_send_msg(&msg_meta, buff,
-		ipa3_mac_flt_list_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2472,7 +2440,7 @@ static int ipa3_send_pkt_threshold(unsigned long usr_param)
 		((struct ipa_set_pkt_threshold *)buff2)->pkt_threshold);
 
 	retval = ipa3_send_msg(&msg_meta, buff2,
-		ipa3_pkt_threshold_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2536,7 +2504,7 @@ static int ipa3_send_sw_flt_list(unsigned long usr_param)
 		((struct ipa_sw_flt_list_type *)buff)->iface_enable);
 
 	retval = ipa3_send_msg(&msg_meta, buff,
-		ipa3_mac_flt_list_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2595,7 +2563,7 @@ static int ipa3_send_ippt_sw_flt_list(unsigned long usr_param)
 		((struct ipa_ippt_sw_flt_list_type *)buff)->port_enable);
 
 	retval = ipa3_send_msg(&msg_meta, buff,
-		ipa3_mac_flt_list_free_cb);
+		ipa3_general_free_cb);
 	if (retval) {
 		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
 		retval,
@@ -2604,6 +2572,46 @@ static int ipa3_send_ippt_sw_flt_list(unsigned long usr_param)
 		return retval;
 	}
 	return 0;
+}
+
+/**
+ * ipa3_send_macsec_info() - Pass macsec mapping to the IPACM
+ * @event_type: Type of the event - UP or DOWN
+ * @map: pointer to macsec to eth mapping structure
+ *
+ * Returns: 0 on success, negative on failure
+ */
+int ipa3_send_macsec_info(enum ipa_macsec_event event_type, struct ipa_macsec_map *map)
+{
+	struct ipa_msg_meta msg_meta;
+	int res = 0;
+
+	if (!map) {
+		IPAERR("Bad arg: info is NULL\n");
+		res = -EIO;
+		goto done;
+	}
+
+	/*
+	 * Prep and send msg to ipacm
+	 */
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = event_type;
+	msg_meta.msg_len  = sizeof(struct ipa_macsec_map);
+
+	/*
+	 * Post event to ipacm
+	 */
+	res = ipa3_send_msg(&msg_meta, map, ipa3_general_free_cb);
+
+	if (res) {
+		IPAERR_RL("ipa3_send_msg failed: %d\n", res);
+		kfree(map);
+		goto done;
+	}
+
+done:
+	return res;
 }
 
 static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
@@ -2624,6 +2632,8 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	struct ipa_ioc_get_vlan_mode vlan_mode;
 	struct ipa_ioc_wigig_fst_switch fst_switch;
 	struct ipa_ioc_eogre_info eogre_info;
+	struct ipa_ioc_macsec_info macsec_info;
+	struct ipa_macsec_map *macsec_map;
 	bool send2uC, send2ipacm;
 	size_t sz;
 	int pre_entry;
@@ -4006,6 +4016,47 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			IPAERR("ipa_flt_sram_set_client_prio_high failed! retval=%d\n", retval);
 		break;
 #endif
+
+	case IPA_IOC_ADD_MACSEC_MAPPING:
+	case IPA_IOC_DEL_MACSEC_MAPPING:
+		IPADBG("Got %s\n", cmd == IPA_IOC_ADD_MACSEC_MAPPING ?
+			"IPA_IOC_ADD_MACSEC_MAPPING" : "IPA_IOC_DEL_MACSEC_MAPPING");
+		if (copy_from_user(&macsec_info, (const void __user *) arg,
+			sizeof(struct ipa_ioc_macsec_info))) {
+			IPAERR_RL("copy_from_user for ipa_ioc_macsec_info fails\n");
+			retval = -EFAULT;
+			break;
+		}
+
+		/* Validate the input */
+		if (macsec_info.ioctl_data_size != sizeof(struct ipa_macsec_map)) {
+			IPAERR_RL("data size missmatch\n");
+			retval = -EFAULT;
+			break;
+		}
+
+		macsec_map = kzalloc(sizeof(struct ipa_macsec_map), GFP_KERNEL);
+		if (!macsec_map) {
+			IPAERR("macsec_map memory allocation failed !\n");
+			retval = -ENOMEM;
+			break;
+		}
+
+		if (copy_from_user(macsec_map, (const void __user *)(macsec_info.ioctl_ptr),
+			sizeof(struct ipa_macsec_map))) {
+			IPAERR_RL("copy_from_user for ipa_macsec_map fails\n");
+			retval = -EFAULT;
+			kfree(macsec_map);
+			break;
+		}
+
+		/* Send message to the IPACM */
+		ipa3_send_macsec_info(
+			(cmd == IPA_IOC_ADD_MACSEC_MAPPING) ?
+			IPA_MACSEC_ADD_EVENT : IPA_MACSEC_DEL_EVENT,
+			macsec_map);
+		break;
+
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		return -ENOTTY;
@@ -7066,6 +7117,7 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 	{
 		if (ipa3_ctx->is_device_crashed)
 			return NOTIFY_DONE;
+		ipa3_ctx->is_device_crashed = true;
 	}
 
 	ipa3_freeze_clock_vote_and_notify_modem();
@@ -7085,6 +7137,10 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 		ipahal_print_all_regs(false);
 		ipa_wigig_save_regs();
 	}
+
+	ipa3_active_clients_log_print_table(active_clients_table_buf,
+			IPA3_ACTIVE_CLIENTS_TABLE_BUF_SIZE);
+	IPAERR("%s\n", active_clients_table_buf);
 
 	return NOTIFY_DONE;
 }
@@ -7928,11 +7984,14 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 	IPADBG("Entry\n");
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
-
+	
 	result = ipa3_attach_to_smmu();
 	if (result) {
 		IPAERR("IPA attach to smmu failed %d\n", result);
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+		queue_delayed_work(ipa3_ctx->transport_power_mgmt_wq,
+			&ipa3_fw_load_failure_handle,
+			msecs_to_jiffies(DELAY_BEFORE_FW_LOAD));
 		return;
 	}
 
@@ -7960,13 +8019,18 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 		result = ipa3_manual_load_ipa_fws();
 	}
 
-	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 
 	if (result) {
-		IPAERR("IPA FW loading process has failed result=%d\n",
-			result);
+
+		ipa3_ctx->ipa_pil_load++;
+		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+		IPADBG("IPA firmware loading deffered to a work queue\n");
+		queue_delayed_work(ipa3_ctx->transport_power_mgmt_wq,
+			&ipa3_fw_load_failure_handle,
+			msecs_to_jiffies(DELAY_BEFORE_FW_LOAD));
 		return;
 	}
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	mutex_lock(&ipa3_ctx->fw_load_data.lock);
 	ipa3_ctx->fw_load_data.state = IPA_FW_LOAD_STATE_LOADED;
 	mutex_unlock(&ipa3_ctx->fw_load_data.lock);
@@ -8035,7 +8099,7 @@ static void ipa_fw_load_sm_handle_event(enum ipa_fw_load_event ev)
 		if (ipa3_ctx->fw_load_data.state == IPA_FW_LOAD_STATE_INIT) {
 			ipa3_ctx->fw_load_data.state =
 				IPA_FW_LOAD_STATE_SMMU_DONE;
-			goto out;
+			goto sched_fw_load;
 		}
 		if (ipa3_ctx->fw_load_data.state ==
 			IPA_FW_LOAD_STATE_FWFILE_READY) {
@@ -8872,7 +8936,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	if (!ipa3_ctx->power_mgmt_wq) {
 		IPAERR("failed to create power mgmt wq\n");
 		result = -ENOMEM;
-		goto fail_init_hw;
+		goto fail_gsi_map;
 	}
 
 	ipa3_ctx->transport_power_mgmt_wq =
@@ -9209,8 +9273,6 @@ fail_flt_rule_cache:
 	destroy_workqueue(ipa3_ctx->transport_power_mgmt_wq);
 fail_create_transport_wq:
 	destroy_workqueue(ipa3_ctx->power_mgmt_wq);
-fail_init_hw:
-	gsi_unmap_base();
 fail_gsi_map:
 	if (ipa3_ctx->reg_collection_base)
 		iounmap(ipa3_ctx->reg_collection_base);
@@ -9218,6 +9280,7 @@ fail_gsi_map:
 fail_remap:
 	ipa3_disable_clks();
 	ipa3_active_clients_log_destroy();
+	gsi_unmap_base();
 fail_init_active_client:
 	if (ipa3_clk)
 		clk_put(ipa3_clk);
@@ -10266,6 +10329,7 @@ static int ipa_smmu_perph_cb_probe(struct device *dev,
 		}
 	}
 
+	cb->done = true;
 	return 0;
 }
 
@@ -10345,10 +10409,35 @@ static int ipa_smmu_uc_cb_probe(struct device *dev)
 	ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_UC] = (bypass != 0);
 
 	ipa3_ctx->uc_pdev = dev;
-
+	cb->done = true;
 	return 0;
 }
 
+static void ipa3_ap_iommu_unmap(struct ipa_smmu_cb_ctx *cb, const u32 *add_map, u32 add_map_size) {
+
+	int i, res;
+
+	/* iterate of each entry of the additional mapping array */
+	for (i = 0; i < add_map_size / sizeof(u32); i += 3) {
+		u32 iova = be32_to_cpu(add_map[i]);
+		u32 pa = be32_to_cpu(add_map[i + 1]);
+		u32 size = be32_to_cpu(add_map[i + 2]);
+		unsigned long iova_p;
+		phys_addr_t pa_p;
+		u32 size_p;
+
+		IPA_SMMU_ROUND_TO_PAGE(iova, pa, size,
+			iova_p, pa_p, size_p);
+		IPADBG_LOW("unmapping 0x%lx to 0x%pa size %d\n",
+				iova_p, &pa_p, size_p);
+
+		res = iommu_unmap(cb->iommu_domain,iova_p, size_p);
+		if(res != size_p) {
+			pr_err("iommu unmap failed for AP cb\n");
+			ipa_assert();
+		}
+	}
+}
 static int ipa_smmu_ap_cb_probe(struct device *dev)
 {
 	struct ipa_smmu_cb_ctx *cb = ipa3_get_smmu_ctx(IPA_SMMU_CB_AP);
@@ -10483,6 +10572,8 @@ static int ipa_smmu_ap_cb_probe(struct device *dev)
 		if (ret < 0 && ret != -EEXIST) {
 			IPAERR("unable to allocate smem MODEM entry\n");
 			cb->valid = false;
+			if(add_map)
+				ipa3_ap_iommu_unmap(cb, add_map, add_map_size);
 			return -EFAULT;
 		}
 		smem_addr = qcom_smem_get(SMEM_MODEM,
@@ -10491,6 +10582,8 @@ static int ipa_smmu_ap_cb_probe(struct device *dev)
 		if (IS_ERR(smem_addr)) {
 			IPAERR("unable to acquire smem MODEM entry\n");
 			cb->valid = false;
+			if(add_map)
+				ipa3_ap_iommu_unmap(cb, add_map, add_map_size);
 			return -EFAULT;
 		}
 		if (smem_size != ipa_smem_size)
@@ -10511,6 +10604,7 @@ static int ipa_smmu_ap_cb_probe(struct device *dev)
 
 	smmu_info.present[IPA_SMMU_CB_AP] = true;
 
+	cb->done = true;
 	ipa3_ctx->pdev = dev;
 	cb->next_addr = cb->va_end;
 
@@ -10563,14 +10657,21 @@ static int ipa_smmu_11ad_cb_probe(struct device *dev)
 		IPADBG("11AD using shared CB\n");
 		cb->shared = true;
 	}
-
+	cb->done = true;
 	return 0;
 }
 
 static int ipa_smmu_cb_probe(struct device *dev, enum ipa_smmu_cb_type cb_type)
 {
+	struct ipa_smmu_cb_ctx *cb = ipa3_get_smmu_ctx(cb_type);
+
+	if((cb != NULL) && (cb->done == true)) {
+		IPADBG("SMMU CB type %d already initialized\n", cb_type);
+		return 0;
+	}
 	switch (cb_type) {
 	case IPA_SMMU_CB_AP:
+		ipa3_ctx->pdev = &ipa3_ctx->master_pdev->dev;
 		return ipa_smmu_ap_cb_probe(dev);
 	case IPA_SMMU_CB_WLAN:
 	case IPA_SMMU_CB_WLAN1:
@@ -10578,6 +10679,7 @@ static int ipa_smmu_cb_probe(struct device *dev, enum ipa_smmu_cb_type cb_type)
 	case IPA_SMMU_CB_ETH1:
 		return ipa_smmu_perph_cb_probe(dev, cb_type);
 	case IPA_SMMU_CB_UC:
+		ipa3_ctx->uc_pdev = &ipa3_ctx->master_pdev->dev;
 		return ipa_smmu_uc_cb_probe(dev);
 	case IPA_SMMU_CB_11AD:
 		return ipa_smmu_11ad_cb_probe(dev);
@@ -10592,16 +10694,15 @@ static int ipa3_attach_to_smmu(void)
 	struct ipa_smmu_cb_ctx *cb;
 	int i, result;
 
-	ipa3_ctx->pdev = &ipa3_ctx->master_pdev->dev;
-	ipa3_ctx->uc_pdev = &ipa3_ctx->master_pdev->dev;
-
 	if (smmu_info.arm_smmu) {
 		IPADBG("smmu is enabled\n");
 		for (i = 0; i < IPA_SMMU_CB_MAX; i++) {
 			cb = ipa3_get_smmu_ctx(i);
 			result = ipa_smmu_cb_probe(cb->dev, i);
-			if (result)
+			if (result) {
 				IPAERR("probe failed for cb %d\n", i);
+				return result;
+			}
 		}
 	} else {
 		IPADBG("smmu is disabled\n");
@@ -10684,7 +10785,6 @@ static int ipa_smmu_update_fw_loader(void)
 			ipa3_ctx->num_smmu_cb_probed ==
 			ipa3_ctx->max_num_smmu_cb) {
 			IPADBG("All %d CBs probed\n", IPA_SMMU_CB_MAX);
-			ipa_fw_load_sm_handle_event(IPA_FW_LOAD_EVNT_SMMU_DONE);
 
 			if (ipa3_ctx->use_xbl_boot) {
 				IPAERR("Using XBL boot load for IPA FW\n");
@@ -10704,6 +10804,9 @@ static int ipa_smmu_update_fw_loader(void)
 					IPAERR("IPA post init failed %d\n", result);
 					return result;
 				}
+			} else {
+
+				ipa_fw_load_sm_handle_event(IPA_FW_LOAD_EVNT_SMMU_DONE);
 			}
 		}
 	} else {
