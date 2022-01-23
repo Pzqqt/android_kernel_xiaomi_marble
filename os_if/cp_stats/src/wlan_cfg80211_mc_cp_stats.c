@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -654,8 +655,10 @@ wlan_cfg80211_mc_infra_cp_free_twt_stats(struct infra_cp_stats_event *stats)
 static void
 wlan_cfg80211_mc_infra_cp_free_bmiss_stats(struct infra_cp_stats_event *stats)
 {
-	qdf_mem_free(stats->bmiss_infra_cp_stats);
-	qdf_mem_free(stats);
+	if (stats->bmiss_infra_cp_stats) {
+		qdf_mem_free(stats->bmiss_infra_cp_stats);
+		stats->bmiss_infra_cp_stats = NULL;
+	}
 }
 #else /* CONFIG_WLAN_BMISS */
 static void
