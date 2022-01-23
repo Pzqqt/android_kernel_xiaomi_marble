@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -601,7 +601,6 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 {
 	int i, ret = 0;
 
-	kthread_init_work(&priv->thread_priority_work, msm_drm_display_thread_priority_worker);
 	for (i = 0; i < priv->num_crtcs; i++) {
 		/* initialize display thread */
 		priv->disp_thread[i].crtc_id = priv->crtcs[i]->base.id;
@@ -611,7 +610,10 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 			kthread_run(kthread_worker_fn,
 				&priv->disp_thread[i].worker,
 				"crtc_commit:%d", priv->disp_thread[i].crtc_id);
+		kthread_init_work(&priv->thread_priority_work,
+				  msm_drm_display_thread_priority_worker);
 		kthread_queue_work(&priv->disp_thread[i].worker, &priv->thread_priority_work);
+		kthread_flush_work(&priv->thread_priority_work);
 
 		if (IS_ERR(priv->disp_thread[i].thread)) {
 			dev_err(dev, "failed to create crtc_commit kthread\n");
@@ -633,7 +635,10 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 		 * frame_pending counters beyond 2. This can lead to commit
 		 * failure at crtc commit level.
 		 */
+		kthread_init_work(&priv->thread_priority_work,
+				  msm_drm_display_thread_priority_worker);
 		kthread_queue_work(&priv->event_thread[i].worker, &priv->thread_priority_work);
+		kthread_flush_work(&priv->thread_priority_work);
 
 		if (IS_ERR(priv->event_thread[i].thread)) {
 			dev_err(dev, "failed to create crtc_event kthread\n");
@@ -668,7 +673,9 @@ static int msm_drm_display_thread_create(struct msm_drm_private *priv, struct dr
 	kthread_init_worker(&priv->pp_event_worker);
 	priv->pp_event_thread = kthread_run(kthread_worker_fn,
 			&priv->pp_event_worker, "pp_event");
+	kthread_init_work(&priv->thread_priority_work, msm_drm_display_thread_priority_worker);
 	kthread_queue_work(&priv->pp_event_worker, &priv->thread_priority_work);
+	kthread_flush_work(&priv->thread_priority_work);
 
 	if (IS_ERR(priv->pp_event_thread)) {
 		dev_err(dev, "failed to create pp_event kthread\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -2830,6 +2830,10 @@ void sde_crtc_complete_commit(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state)
 {
 	struct sde_crtc *sde_crtc;
+	struct sde_splash_display *splash_display = NULL;
+	struct sde_kms *sde_kms;
+	bool cont_splash_enabled = false;
+	int i;
 	u32 power_on = 1;
 
 	if (!crtc || !crtc->state) {
@@ -2840,7 +2844,16 @@ void sde_crtc_complete_commit(struct drm_crtc *crtc,
 	sde_crtc = to_sde_crtc(crtc);
 	SDE_EVT32_VERBOSE(DRMID(crtc));
 
-	if (crtc->state->active_changed && crtc->state->active)
+	sde_kms = _sde_crtc_get_kms(crtc);
+
+	for (i = 0; i < MAX_DSI_DISPLAYS; i++) {
+		splash_display = &sde_kms->splash_data.splash_display[i];
+		if (splash_display->cont_splash_enabled &&
+				crtc == splash_display->encoder->crtc)
+			cont_splash_enabled = true;
+	}
+
+	if ((crtc->state->active_changed || cont_splash_enabled) && crtc->state->active)
 		sde_crtc_event_notify(crtc, DRM_EVENT_CRTC_POWER, sizeof(u32), power_on);
 
 	sde_core_perf_crtc_update(crtc, 0, false);
@@ -3607,13 +3620,8 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	_sde_crtc_dest_scaler_setup(crtc);
 	sde_cp_crtc_apply_noise(crtc, old_state);
 
-	if (crtc->state->mode_changed || sde_kms->perf.catalog->uidle_cfg.dirty) {
+	if (crtc->state->mode_changed || sde_kms->perf.catalog->uidle_cfg.dirty)
 		sde_core_perf_crtc_update_uidle(crtc, true);
-	} else if (!test_bit(SDE_CRTC_DIRTY_UIDLE, &sde_crtc->revalidate_mask) &&
-			!sde_kms->perf.uidle_enabled)
-		sde_core_perf_uidle_setup_ctl(crtc, false);
-
-	test_and_clear_bit(SDE_CRTC_DIRTY_UIDLE, &sde_crtc->revalidate_mask);
 
 	/* update cached_encoder_mask if new conn is added or removed */
 	if (crtc->state->connectors_changed)
@@ -4301,7 +4309,6 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 
 	/* mark other properties which need to be dirty for next update */
 	set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, &sde_crtc->revalidate_mask);
-	set_bit(SDE_CRTC_DIRTY_UIDLE, &sde_crtc->revalidate_mask);
 	if (cstate->num_ds_enabled)
 		set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 }
@@ -4595,11 +4602,18 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	int ret, i;
 	struct sde_crtc_state *cstate;
 	struct msm_display_mode *msm_mode;
+	struct sde_kms *kms;
 
 	if (!crtc || !crtc->dev || !crtc->dev->dev_private) {
 		SDE_ERROR("invalid crtc\n");
 		return;
 	}
+	kms = _sde_crtc_get_kms(crtc);
+	if (!kms || !kms->catalog) {
+		SDE_ERROR("invalid kms handle\n");
+		return;
+	}
+
 	priv = crtc->dev->dev_private;
 	cstate = to_sde_crtc_state(crtc->state);
 
@@ -4620,7 +4634,8 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 		/* cache the encoder mask now for vblank work */
 		sde_crtc->cached_encoder_mask = crtc->state->encoder_mask;
 		/* max possible vsync_cnt(atomic_t) soft counter */
-		drm_crtc_set_max_vblank_count(crtc, INT_MAX);
+		if (kms->catalog->has_precise_vsync_ts)
+			drm_crtc_set_max_vblank_count(crtc, INT_MAX);
 		drm_crtc_vblank_on(crtc);
 	}
 
@@ -5815,7 +5830,7 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		return;
 	}
 
-	info = kzalloc(sizeof(struct sde_kms_info), GFP_KERNEL);
+	info = vzalloc(sizeof(struct sde_kms_info));
 	if (!info) {
 		SDE_ERROR("failed to allocate info memory\n");
 		return;
@@ -5919,7 +5934,7 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		msm_property_install_range(&sde_crtc->property_info, "frame_data",
 				0x0, 0, ~0, 0, CRTC_PROP_FRAME_DATA_BUF);
 
-	kfree(info);
+	vfree(info);
 }
 
 static int _sde_crtc_get_output_fence(struct drm_crtc *crtc,

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2015-2022, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_CATALOG_H
@@ -459,6 +460,7 @@ enum {
  * @SDE_DSC_HW_REV_1_1          dsc block supports dsc 1.1 only
  * @SDE_DSC_HW_REV_1_2          dsc block supports dsc 1.1 and 1.2
  * @SDE_DSC_NATIVE_422_EN,      Supports native422 and native420 encoding
+ * @SDE_DSC_REDUCED_OB_MAX,	DSC size is limited to 10k
  * @SDE_DSC_ENC,                DSC encoder sub block
  * @SDE_DSC_CTL,                DSC ctl sub block
  * @SDE_DSC_MAX
@@ -468,6 +470,7 @@ enum {
 	SDE_DSC_HW_REV_1_1,
 	SDE_DSC_HW_REV_1_2,
 	SDE_DSC_NATIVE_422_EN,
+	SDE_DSC_REDUCED_OB_MAX,
 	SDE_DSC_ENC,
 	SDE_DSC_CTL,
 	SDE_DSC_MAX
@@ -1522,6 +1525,7 @@ struct sde_perf_cfg {
  * @skip_inline_rot_thresh    Skip inline rotation threshold
  * @has_idle_pc        indicate if idle power collapse feature is supported
  * @allowed_dsc_reservation_switch  intf to which dsc reservation switch is supported
+ * @has_reduced_ob_max	indicate if DSC size is limited to 10k
  * @wakeup_with_touch  indicate early wake up display with input touch event
  * @has_hdr            HDR feature support
  * @has_hdr_plus       HDR10+ feature support
@@ -1615,6 +1619,7 @@ struct sde_mdss_cfg {
 	bool skip_inline_rot_threshold;
 	bool has_idle_pc;
 	u32 allowed_dsc_reservation_switch;
+	bool has_reduced_ob_max;
 	bool wakeup_with_touch;
 	u32 vbif_qos_nlvl;
 	u32 ts_prefill_rev;
