@@ -1,13 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/gpio.h>
@@ -360,7 +353,7 @@ int mi2s_tdm_hw_vote_req(struct msm_common_pdata *pdata, int enable)
 
 	if (enable) {
 		if (atomic_read(&pdata->lpass_audio_hw_vote_ref_cnt) == 0) {
-			ret = digital_cdc_rsc_mgr_hw_vote_enable(pdata->lpass_audio_hw_vote);
+			ret = digital_cdc_rsc_mgr_hw_vote_enable(pdata->lpass_audio_hw_vote, NULL);
 			if (ret < 0) {
 				pr_err("%s lpass audio hw vote enable failed %d\n",
 					__func__, ret);
@@ -371,7 +364,7 @@ int mi2s_tdm_hw_vote_req(struct msm_common_pdata *pdata, int enable)
 	} else {
 		atomic_dec(&pdata->lpass_audio_hw_vote_ref_cnt);
 		if (atomic_read(&pdata->lpass_audio_hw_vote_ref_cnt) == 0)
-			digital_cdc_rsc_mgr_hw_vote_disable(pdata->lpass_audio_hw_vote);
+			digital_cdc_rsc_mgr_hw_vote_disable(pdata->lpass_audio_hw_vote, NULL);
 		else if (atomic_read(&pdata->lpass_audio_hw_vote_ref_cnt) < 0)
 			atomic_set(&pdata->lpass_audio_hw_vote_ref_cnt, 0);
 	}
@@ -1031,16 +1024,20 @@ int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	pdata = devm_kzalloc(dev, sizeof(struct chmap_pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	if (!pdata) {
+		ret = -ENOMEM;
+		goto free_backend;
+	}
 
 	if ((!strncmp(backend_name, "SLIM", strlen("SLIM"))) ||
 		(!strncmp(backend_name, "CODEC_DMA", strlen("CODEC_DMA")))) {
 		ctl_len = strlen(dai_link->stream_name) + 1 +
 				strlen(mixer_ctl_name) + 1;
 		mixer_str = kzalloc(ctl_len, GFP_KERNEL);
-		if (!mixer_str)
-			return -ENOMEM;
+		if (!mixer_str) {
+			ret = -ENOMEM;
+			goto free_backend;
+		}
 
 		snprintf(mixer_str, ctl_len, "%s %s", dai_link->stream_name,
 				mixer_ctl_name);
@@ -1078,13 +1075,15 @@ int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 free_mixer_str:
-	if (backend_name) {
-		kfree(backend_name);
-		backend_name = NULL;
-	}
 	if (mixer_str) {
 		kfree(mixer_str);
 		mixer_str = NULL;
+	}
+
+free_backend:
+	if (backend_name) {
+		kfree(backend_name);
+		backend_name = NULL;
 	}
 
 	return ret;

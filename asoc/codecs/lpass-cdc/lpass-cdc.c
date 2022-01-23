@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/of_platform.h>
@@ -1368,6 +1369,7 @@ int lpass_cdc_runtime_resume(struct device *dev)
 	int ret = 0;
 
 	trace_printk("%s, enter\n", __func__);
+	dev_dbg(dev,"%s, enter\n", __func__);
 	mutex_lock(&priv->vote_lock);
 	if (priv->lpass_core_hw_vote == NULL) {
 		dev_dbg(dev, "%s: Invalid lpass core hw node\n", __func__);
@@ -1375,7 +1377,7 @@ int lpass_cdc_runtime_resume(struct device *dev)
 	}
 
 	if (priv->core_hw_vote_count == 0) {
-		ret = digital_cdc_rsc_mgr_hw_vote_enable(priv->lpass_core_hw_vote);
+		ret = digital_cdc_rsc_mgr_hw_vote_enable(priv->lpass_core_hw_vote, dev);
 		if (ret < 0) {
 			dev_err(dev, "%s:lpass core hw enable failed\n",
 				__func__);
@@ -1393,7 +1395,7 @@ audio_vote:
 	}
 
 	if (priv->core_audio_vote_count == 0) {
-		ret = digital_cdc_rsc_mgr_hw_vote_enable(priv->lpass_audio_hw_vote);
+		ret = digital_cdc_rsc_mgr_hw_vote_enable(priv->lpass_audio_hw_vote, dev);
 		if (ret < 0) {
 			dev_err(dev, "%s:lpass audio hw enable failed\n",
 				__func__);
@@ -1407,6 +1409,8 @@ audio_vote:
 done:
 	mutex_unlock(&priv->vote_lock);
 	trace_printk("%s, leave\n", __func__);
+	dev_dbg(dev,"%s, leave, hw_vote %d, audio_vote %d\n", __func__,
+			priv->core_hw_vote_count, priv->core_audio_vote_count);
 	pm_runtime_set_autosuspend_delay(priv->dev, LPASS_CDC_AUTO_SUSPEND_DELAY);
 	return 0;
 }
@@ -1417,11 +1421,12 @@ int lpass_cdc_runtime_suspend(struct device *dev)
 	struct lpass_cdc_priv *priv = dev_get_drvdata(dev->parent);
 
 	trace_printk("%s, enter\n", __func__);
+	dev_dbg(dev,"%s, enter\n", __func__);
 	mutex_lock(&priv->vote_lock);
 	if (priv->lpass_core_hw_vote != NULL) {
 		if (--priv->core_hw_vote_count == 0)
 			digital_cdc_rsc_mgr_hw_vote_disable(
-					priv->lpass_core_hw_vote);
+					priv->lpass_core_hw_vote, dev);
 		if (priv->core_hw_vote_count < 0)
 			priv->core_hw_vote_count = 0;
 	} else {
@@ -1434,7 +1439,7 @@ int lpass_cdc_runtime_suspend(struct device *dev)
 	if (priv->lpass_audio_hw_vote != NULL) {
 		if (--priv->core_audio_vote_count == 0)
 			digital_cdc_rsc_mgr_hw_vote_disable(
-					priv->lpass_audio_hw_vote);
+					priv->lpass_audio_hw_vote, dev);
 		if (priv->core_audio_vote_count < 0)
 			priv->core_audio_vote_count = 0;
 	} else {
@@ -1446,6 +1451,8 @@ int lpass_cdc_runtime_suspend(struct device *dev)
 
 	mutex_unlock(&priv->vote_lock);
 	trace_printk("%s, leave\n", __func__);
+	dev_dbg(dev,"%s, leave, hw_vote %d, audio_vote %d\n", __func__,
+		priv->core_hw_vote_count, priv->core_audio_vote_count);
 	return 0;
 }
 EXPORT_SYMBOL(lpass_cdc_runtime_suspend);
