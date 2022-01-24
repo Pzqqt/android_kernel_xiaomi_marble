@@ -6403,6 +6403,7 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
 	vdev->me_convert = txrx_ops->me_convert;
+	vdev->get_tsf_time = txrx_ops->get_tsf_time;
 
 	dp_vdev_register_rx_eapol(vdev, txrx_ops);
 

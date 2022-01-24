@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2952,6 +2952,8 @@ struct dp_vdev {
 
 	/* completion function used by this vdev*/
 	ol_txrx_completion_fp tx_comp;
+
+	ol_txrx_get_tsf_time get_tsf_time;
 
 	/* deferred vdev deletion state */
 	struct {
