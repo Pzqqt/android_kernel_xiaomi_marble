@@ -936,7 +936,8 @@ CONFIG_GTK_OFFLOAD := y
 #Set this to 1 to catch erroneous Target accesses during debug.
 CONFIG_ATH_PCIE_ACCESS_DEBUG := n
 
-#Enable IPA offload
+#Enable IPA offload for MDM platforms
+ifeq ($(CONFIG_MDM_PLATFORM), y)
 ifeq ($(CONFIG_IPA), y)
 CONFIG_IPA_OFFLOAD := y
 endif
@@ -945,6 +946,9 @@ CONFIG_IPA_OFFLOAD := y
 endif
 ifeq ($(CONFIG_IPA3), m)
 CONFIG_IPA_OFFLOAD := y
+endif
+else
+CONFIG_IPA_OFFLOAD := n
 endif
 
 #Flag to enable SMMU S1 support
