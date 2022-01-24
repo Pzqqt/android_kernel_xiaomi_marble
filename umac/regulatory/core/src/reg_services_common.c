@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -6087,11 +6087,16 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	uint8_t start_channel;
 	uint8_t end_channel;
+	int32_t txpower;
+	bool is_valid_txpower;
 	struct ch_avoid_freq_type *range;
 	enum channel_enum ch_loop;
 	enum channel_enum start_ch_idx;
 	enum channel_enum end_ch_idx;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint32_t len;
+	struct unsafe_ch_list *unsafe_ch_list;
+	bool coex_unsafe_nb_user_prefer;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
@@ -6105,13 +6110,21 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt > 0) {
-		uint32_t len;
+	unsafe_ch_list = &psoc_priv_obj->unsafe_chan_list;
+	coex_unsafe_nb_user_prefer =
+		psoc_priv_obj->coex_unsafe_chan_nb_user_prefer;
 
+	if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt > 0) {
 		len = sizeof(pdev_priv_obj->avoid_chan_ext_list.chan_freq_list);
 		pdev_priv_obj->avoid_chan_ext_list.chan_cnt = 0;
 		qdf_mem_zero(&pdev_priv_obj->avoid_chan_ext_list.chan_freq_list,
 			     len);
+	}
+
+	if (unsafe_ch_list->chan_cnt > 0) {
+		len = sizeof(unsafe_ch_list->chan_freq_list);
+		unsafe_ch_list->chan_cnt = 0;
+		qdf_mem_zero(unsafe_ch_list->chan_freq_list, len);
 	}
 
 	for (i = 0; i < psoc_priv_obj->avoid_freq_ext_list.ch_avoid_range_cnt;
@@ -6122,15 +6135,23 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 			break;
 		}
 
+		if (unsafe_ch_list->chan_cnt >= NUM_CHANNELS) {
+			reg_warn("LTE Coex unsafe channel list full");
+			break;
+		}
+
 		start_ch_idx = INVALID_CHANNEL;
 		end_ch_idx = INVALID_CHANNEL;
 		range = &psoc_priv_obj->avoid_freq_ext_list.avoid_freq_range[i];
 
 		start_channel = reg_freq_to_chan(pdev, range->start_freq);
 		end_channel = reg_freq_to_chan(pdev, range->end_freq);
-		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d",
+		txpower = range->txpower;
+		is_valid_txpower = range->is_valid_txpower;
+
+		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d txpower %d",
 			  range->start_freq, start_channel, range->end_freq,
-			  end_channel);
+			  end_channel, txpower);
 
 		/* do not process frequency bands that are not mapped to
 		 * predefined channels
@@ -6165,6 +6186,23 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 			[pdev_priv_obj->avoid_chan_ext_list.chan_cnt++] =
 			REG_CH_TO_FREQ(ch_loop);
 
+			if (coex_unsafe_nb_user_prefer) {
+				if (unsafe_ch_list->chan_cnt >=
+					NUM_CHANNELS) {
+					reg_warn("LTECoex unsafe ch list full");
+					break;
+				}
+				unsafe_ch_list->txpower[
+				unsafe_ch_list->chan_cnt] =
+					txpower;
+				unsafe_ch_list->is_valid_txpower[
+				unsafe_ch_list->chan_cnt] =
+					is_valid_txpower;
+				unsafe_ch_list->chan_freq_list[
+				unsafe_ch_list->chan_cnt++] =
+					REG_CH_TO_FREQ(ch_loop);
+			}
+
 			if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt >=
 				NUM_CHANNELS) {
 				reg_debug("avoid freq ext list full");
@@ -6183,6 +6221,14 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 			reg_is_5ghz_ch_freq(range->start_freq)) {
 			range->start_freq = range->start_freq - HALF_20MHZ_BW;
 			range->end_freq = range->end_freq + HALF_20MHZ_BW;
+		}
+
+		for (ch_loop = 0; ch_loop <
+			unsafe_ch_list->chan_cnt; ch_loop++) {
+			if (ch_loop >= NUM_CHANNELS)
+				break;
+			reg_debug("Unsafe freq %d",
+				  unsafe_ch_list->chan_freq_list[ch_loop]);
 		}
 	}
 
@@ -6259,7 +6305,14 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 			ch_avoid_event->avoid_freq_range[i].start_freq;
 		range->end_freq =
 			ch_avoid_event->avoid_freq_range[i].end_freq;
+		range->txpower =
+			ch_avoid_event->avoid_freq_range[i].txpower;
+		range->is_valid_txpower =
+			ch_avoid_event->avoid_freq_range[i].is_valid_txpower;
 	}
+
+	psoc_priv_obj->avoid_freq_ext_list.restriction_mask =
+		ch_avoid_event->restriction_mask;
 	psoc_priv_obj->avoid_freq_ext_list.ch_avoid_range_cnt =
 		ch_avoid_event->ch_avoid_range_cnt;
 
@@ -6280,6 +6333,19 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_SB_ID);
 
 	return status;
+}
+
+bool reg_check_coex_unsafe_nb_user_prefer(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return false;
+	}
+
+	return psoc_priv_obj->coex_unsafe_chan_nb_user_prefer;
 }
 #endif
 
