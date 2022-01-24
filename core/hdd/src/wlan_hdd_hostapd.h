@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,10 +61,25 @@ int hdd_softap_set_channel_change(struct net_device *dev,
 					int target_chan_freq,
 					enum phy_ch_width target_bw,
 					bool forced);
+/**
+ * hdd_stop_sap_set_tx_power() - Function to set tx power
+ * for unsafe chanel if restriction bit mask is set else stop the SAP.
+ *
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ *
+ * This function set tx power/stop the SAP interface
+ *
+ * Return:
+ *
+ */
+void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
+			       struct hdd_adapter *adapte);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * hdd_sap_restart_with_channel_switch() - SAP channel change with E/CSA
+ * @wlan_objmgr_psoc: psoc common object
  * @ap_adapter: HDD adapter
  * @target_chan_freq: Channel frequency to which switch must happen
  * @target_bw: Bandwidth of the target channel
@@ -73,10 +89,11 @@ int hdd_softap_set_channel_change(struct net_device *dev,
  *
  * Return: None
  */
-void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
-				uint32_t target_chan_freq,
-				uint32_t target_bw,
-				bool forced);
+void hdd_sap_restart_with_channel_switch(struct wlan_objmgr_psoc *psoc,
+					 struct hdd_adapter *adapter,
+					 uint32_t target_chan_freq,
+					 uint32_t target_bw,
+					 bool forced);
 /**
  * hdd_sap_restart_chan_switch_cb() - Function to restart SAP with
  * a different channel
