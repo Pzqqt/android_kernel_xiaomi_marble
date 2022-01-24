@@ -126,6 +126,7 @@
 #else
 #define MAX_SAP_NUM_CONCURRENCY_WITH_NAN 1
 #endif
+#include "../../core/src/reg_priv_objs.h"
 
 #ifndef BSS_MEMBERSHIP_SELECTOR_HT_PHY
 #define BSS_MEMBERSHIP_SELECTOR_HT_PHY  127
@@ -3328,11 +3329,136 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	return ret;
 }
 
+
+#if defined(FEATURE_WLAN_CH_AVOID) && defined(FEATURE_WLAN_CH_AVOID_EXT)
+/**
+ * wlan_hdd_get_sap_restriction_mask() - get restriction mask for sap
+ * after sap start
+ * @hdd_context: hdd context
+ *
+ * Return: Restriction mask
+ */
+static inline
+uint8_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx->coex_avoid_freq_list.restriction_mask;
+}
+
+/**
+ * wlan_hdd_fetch_sap_restriction_mask() - fetch restriction mask for sap
+ * before sap start.
+ * @hdd_context: hdd context
+ * @sap_context: sap_conext
+ *
+ * Return: None
+ */
+static inline
+void wlan_hdd_fetch_sap_restriction_mask(struct hdd_context *hdd_ctx,
+					 struct sap_context *sap_ctx)
+{
+	sap_ctx->restriction_mask =
+		hdd_ctx->coex_avoid_freq_list.restriction_mask;
+}
+#else
+static inline
+uint8_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
+{
+	return -EINVAL;
+}
+
+static inline
+void wlan_hdd_fetch_sap_restriction_mask(struct hdd_context *hdd_ctx,
+					 struct sap_context *sap_ctx)
+{
+}
+#endif
+
+void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
+			       struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev =
+		hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct qdf_mac_addr bssid;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	int32_t set_tx_power, tx_power = 0;
+	struct sap_context *sap_ctx;
+	int8_t restriction_mask;
+	int ch_loop, unsafe_chan_count;
+	struct unsafe_ch_list *unsafe_ch_list;
+	uint32_t chan_freq;
+	bool is_valid_txpower = false;
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return;
+	}
+
+	restriction_mask = wlan_hdd_get_sap_restriction_mask(hdd_ctx);
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	chan_freq = sap_ctx->chan_freq;
+	unsafe_ch_list = &psoc_priv_obj->unsafe_chan_list;
+
+	hdd_debug("Restriction_mask %d CSA reason %d ", restriction_mask,
+		  sap_ctx->csa_reason);
+
+	if (sap_ctx->csa_reason == CSA_REASON_UNSAFE_CHANNEL) {
+		if (restriction_mask == NL80211_IFTYPE_AP) {
+			schedule_work(&adapter->sap_stop_bss_work);
+		} else {
+			unsafe_chan_count = unsafe_ch_list->chan_cnt;
+			qdf_copy_macaddr(&bssid, &adapter->mac_addr);
+			set_tx_power =
+			wlan_reg_get_channel_reg_power_for_freq(pdev,
+								chan_freq);
+			for (ch_loop = 0; ch_loop < unsafe_chan_count;
+			     ch_loop++) {
+				if (unsafe_ch_list->chan_freq_list[ch_loop] ==
+				    chan_freq) {
+					tx_power =
+					unsafe_ch_list->txpower[ch_loop];
+					is_valid_txpower =
+					unsafe_ch_list->is_valid_txpower[ch_loop];
+					break;
+				}
+			}
+
+			if (is_valid_txpower)
+				set_tx_power = QDF_MIN(set_tx_power, tx_power);
+
+			if (QDF_STATUS_SUCCESS !=
+				sme_set_tx_power(hdd_ctx->mac_handle,
+						 adapter->vdev_id, bssid,
+						 adapter->device_mode,
+						 set_tx_power)) {
+				hdd_err("Setting tx power failed");
+			}
+		}
+	}
+}
+
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
-					uint32_t target_chan_freq,
-					uint32_t target_bw,
-					bool forced)
+/**
+ * hdd_sap_restart_with_channel_switch() - SAP channel change with E/CSA
+ * @wlan_objmgr_psoc: psoc common object
+ * @ap_adapter: HDD adapter
+ * @target_channel: Channel to which switch must happen
+ * @target_bw: Bandwidth of the target channel
+ * @forced: Force to switch channel, ignore SCC/MCC check
+ *
+ * Invokes the necessary API to perform channel switch for the SAP or GO
+ *
+ * Return: None
+ */
+void hdd_sap_restart_with_channel_switch(struct wlan_objmgr_psoc *psoc,
+					 struct hdd_adapter *ap_adapter,
+					 uint32_t target_chan_freq,
+					 uint32_t target_bw,
+					 bool forced)
 {
 	struct net_device *dev = ap_adapter->dev;
 	int ret;
@@ -3348,6 +3474,7 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 					    target_bw, forced);
 	if (ret) {
 		hdd_err("channel switch failed");
+		hdd_stop_sap_set_tx_power(psoc, ap_adapter);
 		return;
 	}
 }
@@ -3364,7 +3491,7 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
 		hdd_err("Adapter is NULL");
 		return;
 	}
-	hdd_sap_restart_with_channel_switch(ap_adapter,
+	hdd_sap_restart_with_channel_switch(psoc, ap_adapter,
 					    ch_freq,
 					    channel_bw, forced);
 }
@@ -3503,8 +3630,10 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 
 sap_restart:
 	if (!intf_ch_freq) {
+		hdd_debug("Unable to find safe channel, Hence stop the SAP or Set Tx power");
+		sap_context->csa_reason = csa_reason;
+		hdd_stop_sap_set_tx_power(psoc, ap_adapter);
 		wlansap_context_put(sap_context);
-		hdd_debug("interface channel is 0");
 		return QDF_STATUS_E_FAILURE;
 	} else {
 		sap_context->csa_reason = csa_reason;
@@ -5503,6 +5632,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool deliver_start_evt = true;
 	struct s_ext_cap *p_ext_cap;
 	enum reg_phymode reg_phy_mode, updated_phy_mode;
+	struct sap_context *sap_ctx;
 
 	hdd_enter();
 
@@ -6109,9 +6239,17 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	set_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 
 	qdf_event_reset(&hostapd_state->qdf_event);
-	status = wlansap_start_bss(
-		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-		sap_event_callback, config, adapter->dev);
+
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	if (!sap_ctx) {
+		ret = -EINVAL;
+		goto error;
+	}
+
+	wlan_hdd_fetch_sap_restriction_mask(hdd_ctx, sap_ctx);
+
+	status = wlansap_start_bss(sap_ctx, sap_event_callback, config,
+				   adapter->dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		mutex_unlock(&hdd_ctx->sap_lock);
 
