@@ -1681,9 +1681,9 @@ void policy_mgr_init_sbs_fw_config(struct wlan_objmgr_psoc *psoc,
 			pm_ctx->dual_mac_cfg.cur_fw_mode_config,
 			WMI_DBS_FW_MODE_CFG_ASYNC_SBS_GET(fw_config));
 
-	policy_mgr_rl_debug("fw_mode config updated from %x to %x",
-			    pm_ctx->dual_mac_cfg.prev_fw_mode_config,
-			    pm_ctx->dual_mac_cfg.cur_fw_mode_config);
+	policy_mgr_debug("fw_mode config updated from %x to %x",
+			 pm_ctx->dual_mac_cfg.prev_fw_mode_config,
+			 pm_ctx->dual_mac_cfg.cur_fw_mode_config);
 	/* Initialize the previous scan/fw mode config */
 	pm_ctx->dual_mac_cfg.prev_fw_mode_config =
 		pm_ctx->dual_mac_cfg.cur_fw_mode_config;
