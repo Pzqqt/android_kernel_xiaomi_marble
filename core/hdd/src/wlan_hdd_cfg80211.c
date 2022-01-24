@@ -8903,7 +8903,7 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	latency_level = nla_get_u16(attr);
 	switch (latency_level) {
 	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL:
-	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_MODERATE:
+	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_XR:
 	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_LOW:
 	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW:
 		/* valid values */
@@ -8916,7 +8916,7 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	wlan_hdd_set_wlm_mode(hdd_ctx, latency_level);
 
 	/* Map the latency value to the level which fw expected
-	 * 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
+	 * 0 - normal, 1 - xr, 2 - low, 3 - ultralow
 	 */
 	adapter->latency_level = latency_level - 1;
 

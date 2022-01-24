@@ -93,7 +93,7 @@
  * @defalut: 0
  *
  * 0 - normal
- * 1 - moderate
+ * 1 - xr
  * 2 - low
  * 3 - ultralow
  *
@@ -168,7 +168,7 @@
 
 /*
  * <ini>
- * wlm_latency_flags_moderate - WLM flags setting for moderate level
+ * wlm_latency_flags_xr - WLM flags setting for XR level
  *
  * @min: 0x0
  * @max: 0xffffffffffffffff
@@ -217,13 +217,13 @@
  *
  * </ini>
  */
-#define CFG_DEFAULT_MODERATE_FLAGS "0x3000100000083"
-#define CFG_LATENCY_FLAGS_MOD \
-		CFG_INI_STRING("wlm_latency_flags_moderate",\
+#define CFG_DEFAULT_XR_FLAGS "0x3000100000083"
+#define CFG_LATENCY_FLAGS_XR \
+		CFG_INI_STRING("wlm_latency_flags_xr",\
 			       0, \
 			       sizeof(CFG_MAX_LATENCY_FLAGS) - 1,\
-			       CFG_DEFAULT_MODERATE_FLAGS, \
-			       "WLM flags for moderate level")
+			       CFG_DEFAULT_XR_FLAGS, \
+			       "WLM flags for XR level")
 
 
 /*
@@ -349,7 +349,7 @@
 	CFG(CFG_LATENCY_RESET) \
 	CFG(CFG_LATENCY_LEVEL) \
 	CFG(CFG_LATENCY_FLAGS_NORMAL) \
-	CFG(CFG_LATENCY_FLAGS_MOD) \
+	CFG(CFG_LATENCY_FLAGS_XR) \
 	CFG(CFG_LATENCY_FLAGS_LOW) \
 	CFG(CFG_LATENCY_FLAGS_ULTLOW)
 

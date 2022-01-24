@@ -1231,7 +1231,7 @@ struct hdd_context;
  * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
  * @cache_sta_count: number of currently cached stations
  * @acs_complete_event: acs complete event
- * @latency_level: 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
+ * @latency_level: 0 - normal, 1 - xr, 2 - low, 3 - ultralow
  * @last_disconnect_reason: Last disconnected internal reason code
  *                          as per enum qca_disconnect_reason_codes
  * @connect_req_status: Last disconnected internal status code
