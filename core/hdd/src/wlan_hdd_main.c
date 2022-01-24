@@ -5262,7 +5262,7 @@ hdd_set_mld_address(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 #endif
 
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
-#ifdef WLAN_FEATURE_11BE_MLO
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 static void hdd_update_set_mac_addr_req_ctx(struct hdd_adapter *adapter,
 					    void *req_ctx)
 {
