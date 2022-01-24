@@ -1739,12 +1739,27 @@ bool reg_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS
 reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 			       struct ch_avoid_ind_type *ch_avoid_event);
+/**
+ * reg_check_coex_unsafe_nb_user_prefer() - get coex unsafe nb
+ * user prefer ini
+ * @psoc: pointer to psoc
+ *
+ * Return: bool
+ */
+
+bool reg_check_coex_unsafe_nb_user_prefer(struct wlan_objmgr_psoc *psoc);
 #else
 static inline QDF_STATUS
 reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 			       struct ch_avoid_ind_type *ch_avoid_event)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+bool reg_check_coex_unsafe_nb_user_prefer(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 #endif
 

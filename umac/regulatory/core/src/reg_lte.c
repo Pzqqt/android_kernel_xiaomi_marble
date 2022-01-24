@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,8 +28,8 @@
 #include "reg_services_public_struct.h"
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
-#include "reg_services_common.h"
 #include "reg_priv_objs.h"
+#include "reg_services_common.h"
 #include "reg_build_chan_list.h"
 #include "reg_callbacks.h"
 #include "reg_lte.h"
@@ -185,6 +185,12 @@ QDF_STATUS reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
 		reg_err("reg psoc private obj is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (reg_check_coex_unsafe_nb_user_prefer(psoc)) {
+		reg_err("skipping LTE Coex unsafe channel change");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (CH_AVOID_RULE_DO_NOT_RESTART ==
 	    psoc_priv_obj->restart_beaconing) {
 		reg_debug("skipping all LTE Coex unsafe channel range");
