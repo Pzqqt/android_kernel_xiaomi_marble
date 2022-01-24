@@ -6932,7 +6932,8 @@ void ipa3_suspend_handler(enum ipa_irq_type interrupt,
 			pipe_bitmask |= bmsk;
 		bmsk = bmsk << 1;
 
-		if ((i % IPA_EP_PER_REG) == (ep_per_reg - 1)) {
+		if ((i % IPA_EP_PER_REG) == (ep_per_reg - 1)
+			|| (i == ipa3_ctx->ipa_num_pipes - 1)) {
 			IPADBG("interrupt data: %u\n", suspend_data[j]);
 			res = ipa_pm_handle_suspend(pipe_bitmask, j);
 			if (res) {
