@@ -4687,6 +4687,11 @@ cleanup_wma:
 	return status;
 }
 
+QDF_STATUS sme_vdev_set_data_tx_callback(struct wlan_objmgr_vdev *vdev)
+{
+	return wma_vdev_set_data_tx_callback(vdev);
+}
+
 struct wlan_objmgr_vdev
 *sme_vdev_create(mac_handle_t mac_handle,
 		 struct wlan_vdev_create_params *vdev_params)

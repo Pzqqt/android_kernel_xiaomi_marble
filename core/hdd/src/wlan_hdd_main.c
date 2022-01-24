@@ -5395,6 +5395,7 @@ status_ret:
 		hdd_err("Failed to attach CDP vdev. status:%d", qdf_ret_status);
 		return qdf_status_to_os_return(qdf_ret_status);
 	}
+	sme_vdev_set_data_tx_callback(adapter->vdev);
 
 	return ret;
 }
