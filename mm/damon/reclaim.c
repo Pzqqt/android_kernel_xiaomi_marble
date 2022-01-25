@@ -33,9 +33,9 @@ static bool enabled __read_mostly;
  * Time threshold for cold memory regions identification in microseconds.
  *
  * If a memory region is not accessed for this or longer time, DAMON_RECLAIM
- * identifies the region as cold, and reclaims.  120 seconds by default.
+ * identifies the region as cold, and reclaims.  30 seconds by default.
  */
-static unsigned long min_age __read_mostly = 120000000;
+static unsigned long min_age __read_mostly = 30000000;
 module_param(min_age, ulong, 0600);
 
 /*
@@ -46,9 +46,9 @@ module_param(min_age, ulong, 0600);
  * used for limiting CPU consumption of DAMON_RECLAIM.  If the value is zero,
  * the limit is disabled.
  *
- * 10 ms by default.
+ * Disabled by default.
  */
-static unsigned long quota_ms __read_mostly = 10;
+static unsigned long quota_ms __read_mostly = 0;
 module_param(quota_ms, ulong, 0600);
 
 /*
@@ -59,9 +59,9 @@ module_param(quota_ms, ulong, 0600);
  * tried.  This can be used for limiting consumption of CPU and IO.  If this
  * value is zero, the limit is disabled.
  *
- * 128 MiB by default.
+ * 512 MiB by default.
  */
-static unsigned long quota_sz __read_mostly = 128 * 1024 * 1024;
+static unsigned long quota_sz __read_mostly = 512 * 1024 * 1024;
 module_param(quota_sz, ulong, 0600);
 
 /*
@@ -81,9 +81,9 @@ module_param(quota_reset_interval_ms, ulong, 0600);
  * The watermarks check time interval in microseconds.
  *
  * Minimal time to wait before checking the watermarks, when DAMON_RECLAIM is
- * enabled but inactive due to its watermarks rule.  5 seconds by default.
+ * enabled but inactive due to its watermarks rule.  20 seconds by default.
  */
-static unsigned long wmarks_interval __read_mostly = 5000000;
+static unsigned long wmarks_interval __read_mostly = 20000000;
 module_param(wmarks_interval, ulong, 0600);
 
 /*
@@ -91,9 +91,9 @@ module_param(wmarks_interval, ulong, 0600);
  *
  * If free memory of the system in bytes per thousand bytes is higher than
  * this, DAMON_RECLAIM becomes inactive, so it does nothing but periodically
- * checks the watermarks.  500 (50%) by default.
+ * checks the watermarks.  700 (70%) by default.
  */
-static unsigned long wmarks_high __read_mostly = 500;
+static unsigned long wmarks_high __read_mostly = 700;
 module_param(wmarks_high, ulong, 0600);
 
 /*
@@ -101,9 +101,9 @@ module_param(wmarks_high, ulong, 0600);
  *
  * If free memory of the system in bytes per thousand bytes is between this and
  * the low watermark, DAMON_RECLAIM becomes active, so starts the monitoring
- * and the reclaiming.  400 (40%) by default.
+ * and the reclaiming.  500 (50%) by default.
  */
-static unsigned long wmarks_mid __read_mostly = 400;
+static unsigned long wmarks_mid __read_mostly = 500;
 module_param(wmarks_mid, ulong, 0600);
 
 /*
@@ -112,18 +112,18 @@ module_param(wmarks_mid, ulong, 0600);
  * If free memory of the system in bytes per thousand bytes is lower than this,
  * DAMON_RECLAIM becomes inactive, so it does nothing but periodically checks
  * the watermarks.  In the case, the system falls back to the LRU-based page
- * granularity reclamation logic.  200 (20%) by default.
+ * granularity reclamation logic.  100 (10%) by default.
  */
-static unsigned long wmarks_low __read_mostly = 200;
+static unsigned long wmarks_low __read_mostly = 100;
 module_param(wmarks_low, ulong, 0600);
 
 /*
  * Sampling interval for the monitoring in microseconds.
  *
  * The sampling interval of DAMON for the cold memory monitoring.  Please refer
- * to the DAMON documentation for more detail.  5 ms by default.
+ * to the DAMON documentation for more detail.  20 ms by default.
  */
-static unsigned long sample_interval __read_mostly = 5000;
+static unsigned long sample_interval __read_mostly = 20000;
 module_param(sample_interval, ulong, 0600);
 
 /*
