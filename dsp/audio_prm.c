@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -100,9 +101,9 @@ static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 			(gpr_get_q6_state() == GPR_SUBSYS_LOADED)) {
 		pr_info("%s: apm ready check not done\n", __func__);
 		retry = 0;
-		while (!spf_core_is_apm_ready() || retry < MAX_RETRY_COUNT) {
+		while (!spf_core_is_apm_ready() && retry < MAX_RETRY_COUNT) {
 			msleep(APM_READY_WAIT_DURATION);
-			retry++;
+			++retry;
 		}
 		is_apm_ready_check_done = true;
 		pr_info("%s: apm ready check done\n", __func__);
