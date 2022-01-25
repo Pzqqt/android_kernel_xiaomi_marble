@@ -372,6 +372,11 @@ int ipa3_odl_pipe_open(void)
 		return 0;
 	}
 
+	if (atomic_read(&ipa3_ctx->is_ssr)) {
+		IPAERR("SSR in progress ODL pipe configuration not allowed\n");
+		return 0;
+	}
+
 	memset(&holb_cfg, 0, sizeof(holb_cfg));
 	holb_cfg.tmr_val = 0;
 	holb_cfg.en = 1;
