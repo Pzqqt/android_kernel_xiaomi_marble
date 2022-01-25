@@ -1682,6 +1682,9 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 	core->platform->data = parrot_data;
 	platform_data = &core->platform->data;
 
+	/* Check for DDR variant */
+	msm_vidc_ddr_ubwc_config(&core->platform->data, 0xe);
+
 	return rc;
 }
 
