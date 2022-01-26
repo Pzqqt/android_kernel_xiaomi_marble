@@ -4105,6 +4105,13 @@ typedef struct {
         ((_var) |= ((_val) << HTT_TX_PDEV_RATE_STATS_MAC_ID_S)); \
     } while (0)
 
+#define HTT_TX_PDEV_STATS_NUM_MCS_DROP_COUNTERS \
+    (HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS + \
+     HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + \
+     HTT_TX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS)
+
+#define HTT_TX_PDEV_STATS_NUM_PER_COUNTERS 101
+
 /*
  * Introduce new TX counters to support 320MHz support and punctured modes
  */
@@ -4262,6 +4269,46 @@ typedef struct {
 } htt_tx_pdev_rate_stats_be_tlv;
 
 typedef struct {
+    /*
+     * SAWF pdev rate stats;
+     * placed in a separate TLV to adhere to size restrictions
+     */
+    htt_tlv_hdr_t tlv_hdr;
+
+    /**
+     * Counter incremented when MCS is dropped due to the successive retries
+     * to a peer reaching the configured limit.
+     */
+    A_UINT32 rate_retry_mcs_drop_cnt;
+
+    /**
+     * histogram of MCS rate drop down, indexed by pre-drop MCS
+     */
+    A_UINT32 mcs_drop_rate[HTT_TX_PDEV_STATS_NUM_MCS_DROP_COUNTERS];
+
+    /**
+     * PPDU PER histogram - each PPDU has its PER computed,
+     * and the bin corresponding to that PER percentage is incremented.
+     */
+    A_UINT32 per_histogram_cnt[HTT_TX_PDEV_STATS_NUM_PER_COUNTERS];
+
+    /**
+     * When the service class contains delay bound rate parameters which
+     * indicate low latency and we enable latency-based RA params then
+     * the low_latency_rate_count will be incremented.
+     * This counts the number of peer-TIDs that have been categorized as
+     * low-latency.
+     */
+    A_UINT32 low_latency_rate_cnt;
+
+    /** Indicate how many times rate drop happened within SIFS burst */
+    A_UINT32 su_burst_rate_drop_cnt;
+
+    /** Indicates how many within SIFS burst failed to deliver any pkt */
+    A_UINT32 su_burst_rate_drop_fail_cnt;
+} htt_tx_pdev_rate_stats_sawf_tlv;
+
+typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
     /**
@@ -4295,6 +4342,7 @@ typedef struct {
 typedef struct {
     htt_tx_pdev_rate_stats_tlv rate_tlv;
     htt_tx_pdev_rate_stats_be_tlv rate_be_tlv;
+    htt_tx_pdev_rate_stats_sawf_tlv rate_sawf_tlv;
 } htt_tx_pdev_rate_stats_t;
 
 /* == PDEV RX RATE CTRL STATS == */
