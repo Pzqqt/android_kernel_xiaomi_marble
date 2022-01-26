@@ -16887,6 +16887,53 @@ static QDF_STATUS extract_update_mac_address_event_tlv(
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * extract_quiet_offload_event_tlv() - extract quiet offload event
+ * @wmi_handle: WMI handle
+ * @evt_buf: event buffer
+ * @mld_mac: mld mac address
+ * @link_mac: link mac address
+ * @link_id: link id
+ * @quiet_status: quiet is started or stopped
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_quiet_offload_event_tlv(
+				wmi_unified_t wmi_handle, void *evt_buf,
+				struct vdev_sta_quiet_event *quiet_event)
+{
+	WMI_QUIET_HANDLING_EVENTID_param_tlvs *param_buf;
+	wmi_quiet_event_fixed_param *event;
+
+	param_buf = (WMI_QUIET_HANDLING_EVENTID_param_tlvs *)evt_buf;
+
+	event = param_buf->fixed_param;
+
+	if (!(event->mld_mac_address_present && event->linkid_present) &&
+	    !event->link_mac_address_present) {
+		wmi_err("Invalid sta quiet offload event. present bit: mld mac %d link mac %d linkid %d",
+			event->mld_mac_address_present,
+			event->linkid_present,
+			event->link_mac_address_present);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (event->mld_mac_address_present)
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->mld_mac_address,
+					   quiet_event->mld_mac.bytes);
+	if (event->link_mac_address_present)
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->link_mac_address,
+					   quiet_event->link_mac.bytes);
+	if (event->linkid_present)
+		quiet_event->link_id = event->linkid;
+	quiet_event->quiet_status = (event->quiet_status ==
+				     WMI_QUIET_EVENT_START);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -17304,6 +17351,11 @@ struct wmi_ops tlv_ops =  {
 	.send_set_mac_address_cmd = send_set_mac_address_cmd_tlv,
 	.extract_update_mac_address_event =
 					extract_update_mac_address_event_tlv,
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+	.extract_quiet_offload_event =
+				extract_quiet_offload_event_tlv,
 #endif
 };
 
@@ -17746,6 +17798,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	event_ids[wmi_vdev_update_mac_addr_conf_eventid] =
 			WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID;
+#endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	event_ids[wmi_vdev_quiet_offload_eventid] =
+			WMI_QUIET_HANDLING_EVENTID;
 #endif
 }
 

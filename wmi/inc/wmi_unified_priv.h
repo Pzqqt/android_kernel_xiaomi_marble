@@ -2797,6 +2797,12 @@ QDF_STATUS (*extract_update_mac_address_event)(wmi_unified_t wmi_handle,
 					       void *evt_buf, uint8_t *vdev_id,
 					       uint8_t *status);
 #endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS (*extract_quiet_offload_event)(
+				wmi_unified_t wmi_handle, void *evt_buf,
+				struct vdev_sta_quiet_event *quiet_event);
+#endif
 };
 
 /* Forward declartion for psoc*/

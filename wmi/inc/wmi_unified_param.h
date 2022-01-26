@@ -4730,6 +4730,9 @@ typedef enum {
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	wmi_vdev_update_mac_addr_conf_eventid,
 #endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	wmi_vdev_quiet_offload_eventid,
+#endif
 	wmi_events_max,
 } wmi_conv_event_id;
 
