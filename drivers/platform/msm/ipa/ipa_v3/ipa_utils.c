@@ -12346,7 +12346,7 @@ int ipa3_get_prot_id(enum ipa_client_type client)
 	return prot_id;
 }
 
-void __ipa_ntn3_cons_stats_get(struct ipa_ntn3_stats_rx *stats, enum ipa_client_type client)
+void __ipa_ntn3_prod_stats_get(struct ipa_ntn3_stats_rx *stats, enum ipa_client_type client)
 {
 	int ch_id, ipa_ep_idx;
 
@@ -12371,7 +12371,7 @@ void __ipa_ntn3_cons_stats_get(struct ipa_ntn3_stats_rx *stats, enum ipa_client_
 
 }
 
-void __ipa_ntn3_prod_stats_get(struct ipa_ntn3_stats_tx *stats, enum ipa_client_type client)
+void __ipa_ntn3_cons_stats_get(struct ipa_ntn3_stats_tx *stats, enum ipa_client_type client)
 {
 	int ch_id, ipa_ep_idx;
 
@@ -12399,11 +12399,11 @@ void __ipa_ntn3_prod_stats_get(struct ipa_ntn3_stats_tx *stats, enum ipa_client_
 void ipa_eth_ntn3_get_status(struct ipa_ntn3_client_stats *s, unsigned inst_id)
 {
 	if (inst_id == 0) {
-		__ipa_ntn3_cons_stats_get(&s->rx_stats, IPA_CLIENT_ETHERNET_CONS);
-		__ipa_ntn3_prod_stats_get(&s->tx_stats, IPA_CLIENT_ETHERNET_PROD);
+		__ipa_ntn3_cons_stats_get(&s->tx_stats, IPA_CLIENT_ETHERNET_CONS);
+		__ipa_ntn3_prod_stats_get(&s->rx_stats, IPA_CLIENT_ETHERNET_PROD);
 	} else {
-		__ipa_ntn3_cons_stats_get(&s->rx_stats, IPA_CLIENT_ETHERNET2_CONS);
-		__ipa_ntn3_prod_stats_get(&s->tx_stats, IPA_CLIENT_ETHERNET2_PROD);
+		__ipa_ntn3_cons_stats_get(&s->tx_stats, IPA_CLIENT_ETHERNET2_CONS);
+		__ipa_ntn3_prod_stats_get(&s->rx_stats, IPA_CLIENT_ETHERNET2_PROD);
 	}
 
 }
