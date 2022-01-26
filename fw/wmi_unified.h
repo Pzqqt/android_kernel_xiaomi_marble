@@ -18088,6 +18088,7 @@ typedef enum event_type_e {
     WOW_DCS_INTERFERENCE_DET,             /* 32 + 11 */
     WOW_ROAM_STATS_EVENT,                 /* 32 + 12 */
     WOW_RTT_11AZ_EVENT,                   /* 32 + 13 */
+    WOW_P2P_NOA_EVENT,                    /* 32 + 14 */
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -18166,6 +18167,7 @@ typedef enum wake_reason_e {
     WOW_REASON_ROAM_STATS,
     WOW_REASON_MDNS_WAKEUP,
     WOW_REASON_RTT_11AZ,
+    WOW_REASON_P2P_NOA_UPDATE,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
