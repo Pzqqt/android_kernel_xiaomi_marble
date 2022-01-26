@@ -2004,6 +2004,8 @@ struct wlan_lmac_if_dfs_rx_ops {
  *                                  command
  * @vdev_mgr_set_max_channel_switch_time: Set max channel switch time for the
  * given vdev list.
+ * @vdev_mgr_quiet_offload: handle quiet status for given link mac addr or
+ * mld addr and link id.
  */
 struct wlan_lmac_if_mlme_rx_ops {
 	QDF_STATUS (*vdev_mgr_start_response)(
@@ -2040,6 +2042,11 @@ struct wlan_lmac_if_mlme_rx_ops {
 	void (*vdev_mgr_set_max_channel_switch_time)
 		(struct wlan_objmgr_psoc *psoc,
 		 uint32_t *vdev_ids, uint32_t num_vdevs);
+#ifdef WLAN_FEATURE_11BE_MLO
+	QDF_STATUS (*vdev_mgr_quiet_offload)(
+			struct wlan_objmgr_psoc *psoc,
+			struct vdev_sta_quiet_event *quiet_event);
+#endif
 };
 
 #ifdef WLAN_SUPPORT_GREEN_AP

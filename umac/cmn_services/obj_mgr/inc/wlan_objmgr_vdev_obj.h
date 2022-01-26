@@ -1794,4 +1794,20 @@ wlan_objmgr_vdev_trace_del_ref_list(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS wlan_vdev_get_bss_peer_mac(struct wlan_objmgr_vdev *vdev,
 				      struct qdf_mac_addr *bss_peer_mac);
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_vdev_get_bss_peer_mld_mac() - to get bss peer mld mac address
+ * @vdev: pointer to vdev
+ * @mld_mac: pointer to mld mac address
+ *
+ * This API is used to get mld mac address of peer.
+ *
+ * Context: Any context.
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS wlan_vdev_get_bss_peer_mld_mac(struct wlan_objmgr_vdev *vdev,
+					  struct qdf_mac_addr *mld_mac);
+#endif
+
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/

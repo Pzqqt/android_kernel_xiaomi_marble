@@ -168,6 +168,18 @@ struct wlan_mlo_key_mgmt {
 };
 
 /*
+ * struct mlo_sta_quiet_status - MLO sta quiet status
+ * @link_id: link id
+ * @quiet_status: true if corresponding ap in quiet status
+ * @valid_status: true if mlo_sta_quiet_status is filled
+ */
+struct mlo_sta_quiet_status {
+	uint8_t link_id;
+	bool quiet_status;
+	bool valid_status;
+};
+
+/*
  * struct wlan_mlo_sta - MLO sta additional info
  * @wlan_connect_req_links: list of vdevs selected for connection with the MLAP
  * @wlan_connected_links: list of vdevs associated with this MLO connection
@@ -188,6 +200,7 @@ struct wlan_mlo_sta {
 	qdf_mutex_t copied_conn_req_lock;
 #endif
 	struct element_info assoc_rsp;
+	struct mlo_sta_quiet_status mlo_quiet_status[WLAN_UMAC_MLO_MAX_VDEVS];
 };
 
 /*

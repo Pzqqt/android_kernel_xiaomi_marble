@@ -343,6 +343,39 @@ bool wlan_get_connected_vdev_by_bssid(struct wlan_objmgr_pdev *pdev,
 				      uint8_t *bssid, uint8_t *vdev_id);
 
 /**
+ * wlan_get_connected_vdev_from_psoc_by_bssid() - check/get any vdev
+ *                                                connected on bssid
+ * @psoc: psoc object
+ * @bssid: bssid to be checked
+ * @vdev_id: vdev id
+ *
+ * This function will loop through all the vdev in psoc and find/return the
+ * vdev which is connected to bssid provided.
+ *
+ * Return: bool
+ */
+bool wlan_get_connected_vdev_from_psoc_by_bssid(struct wlan_objmgr_psoc *psoc,
+						uint8_t *bssid,
+						uint8_t *vdev_id);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_get_connected_vdev_by_mld_addr() - check/get any vdev
+ *                                         connected on mld mac
+ * @psoc: psoc object
+ * @mld_mac: mld mac to be checked
+ * @vdev_id: vdev id
+ *
+ * This function will loop through all the vdev in psoc and find/return the
+ * first vdev which is connected to mld mac provided.
+ *
+ * Return: bool
+ */
+bool wlan_get_connected_vdev_by_mld_addr(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *mld_mac, uint8_t *vdev_id);
+#endif
+
+/**
  * wlan_util_stats_get_rssi() - API to get rssi in dbm
  * @db2dbm_enabled: If db2dbm capability is enabled
  * @bcn_snr: beacon snr

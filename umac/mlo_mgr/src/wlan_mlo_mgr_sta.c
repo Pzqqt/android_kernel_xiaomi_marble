@@ -1169,4 +1169,133 @@ void mlo_get_assoc_rsp(struct wlan_objmgr_vdev *vdev,
 
 	*assoc_rsp_frame = sta_ctx->assoc_rsp;
 }
+
+QDF_STATUS mlo_sta_save_quiet_status(struct wlan_mlo_dev_context *mlo_dev_ctx,
+				     uint8_t link_id,
+				     bool quiet_status)
+{
+	struct wlan_mlo_sta *sta_ctx;
+	int i;
+	bool find_free_buffer = false;
+	int free_idx;
+
+	if (!mlo_dev_ctx) {
+		mlo_err("invalid mlo_dev_ctx");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlo_dev_lock_acquire(mlo_dev_ctx);
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx) {
+		mlo_err("invalid sta_ctx");
+		mlo_dev_lock_release(mlo_dev_ctx);
+		return QDF_STATUS_E_INVAL;
+	}
+	for (i = 0; i < QDF_ARRAY_SIZE(sta_ctx->mlo_quiet_status); i++) {
+		if (!sta_ctx->mlo_quiet_status[i].valid_status) {
+			if (!find_free_buffer) {
+				free_idx = i;
+				find_free_buffer = true;
+			}
+		} else if (link_id == sta_ctx->mlo_quiet_status[i].link_id) {
+			sta_ctx->mlo_quiet_status[i].quiet_status =
+							quiet_status;
+			mlo_debug("mld mac " QDF_MAC_ADDR_FMT " link id %d quiet status update %d",
+				  QDF_MAC_ADDR_REF(mlo_dev_ctx->mld_addr.bytes),
+				  link_id, quiet_status);
+			mlo_dev_lock_release(mlo_dev_ctx);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	if (!find_free_buffer) {
+		mlo_err("no free buffer for link id %d to save quiet_status",
+			link_id);
+		mlo_dev_lock_release(mlo_dev_ctx);
+		return QDF_STATUS_E_INVAL;
+	}
+	sta_ctx->mlo_quiet_status[free_idx].quiet_status = quiet_status;
+	sta_ctx->mlo_quiet_status[free_idx].link_id = link_id;
+	sta_ctx->mlo_quiet_status[free_idx].valid_status = true;
+
+	mlo_debug("mld mac " QDF_MAC_ADDR_FMT " link id %d in quiet status %d",
+		  QDF_MAC_ADDR_REF(mlo_dev_ctx->mld_addr.bytes),
+		  link_id, quiet_status);
+	mlo_dev_lock_release(mlo_dev_ctx);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool mlo_is_sta_in_quiet_status(struct wlan_mlo_dev_context *mlo_dev_ctx,
+				uint8_t link_id)
+{
+	struct wlan_mlo_sta *sta_ctx;
+	int i;
+	bool quiet_status = false;
+
+	if (!mlo_dev_ctx) {
+		mlo_err("invalid mlo_dev_ctx");
+		return quiet_status;
+	}
+
+	mlo_dev_lock_acquire(mlo_dev_ctx);
+	sta_ctx = mlo_dev_ctx->sta_ctx;
+	if (!sta_ctx) {
+		mlo_err("invalid sta_ctx");
+		mlo_dev_lock_release(mlo_dev_ctx);
+		return quiet_status;
+	}
+	for (i = 0; i < QDF_ARRAY_SIZE(sta_ctx->mlo_quiet_status); i++) {
+		if (sta_ctx->mlo_quiet_status[i].valid_status &&
+		    link_id == sta_ctx->mlo_quiet_status[i].link_id) {
+			quiet_status =
+				sta_ctx->mlo_quiet_status[i].quiet_status;
+			break;
+		}
+	}
+	mlo_dev_lock_release(mlo_dev_ctx);
+
+	return quiet_status;
+}
+
+bool mlo_is_sta_inactivity_allowed_with_quiet(struct wlan_objmgr_psoc *psoc,
+					      uint8_t *vdev_id_list,
+					      uint8_t num_mlo, uint8_t *mlo_idx,
+					      uint8_t affected_links,
+					      uint8_t *affected_list)
+{
+	uint8_t i, j;
+	struct wlan_objmgr_vdev *vdev;
+	bool allowed = false;
+
+	for (i = 0; i < num_mlo; i++) {
+		for (j = 0; j < affected_links; j++) {
+			if (vdev_id_list[mlo_idx[i]] == affected_list[j])
+				break;
+		}
+		if (j != affected_links)
+			continue;
+		/* find vdev not in affected_list */
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+				psoc, vdev_id_list[mlo_idx[i]],
+				WLAN_IF_MGR_ID);
+		if (!vdev) {
+			mlo_err("invalid vdev for id %d",
+				vdev_id_list[mlo_idx[i]]);
+			continue;
+		}
+
+		/* for not affected vdev, check the vdev is in quiet or not*/
+		allowed = !mlo_is_sta_in_quiet_status(
+				vdev->mlo_dev_ctx, wlan_vdev_get_link_id(vdev));
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_IF_MGR_ID);
+		if (allowed) {
+			mlo_debug("vdev id %d link id %d is not in quiet, allow partner link to trigger inactivity",
+				  wlan_vdev_get_id(vdev),
+				  wlan_vdev_get_link_id(vdev));
+			break;
+		}
+	}
+
+	return allowed;
+}
 #endif

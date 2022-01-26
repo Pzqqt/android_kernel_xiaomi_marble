@@ -303,6 +303,27 @@ static void tgt_vdev_mgr_set_max_channel_switch_time(
 	}
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static QDF_STATUS
+tgt_vdev_mgr_quiet_offload_handler(struct wlan_objmgr_psoc *psoc,
+				   struct vdev_sta_quiet_event *quiet_event)
+{
+	return wlan_util_vdev_mgr_quiet_offload(psoc, quiet_event);
+}
+
+static inline void tgt_vdev_mgr_reg_quiet_offload(
+				struct wlan_lmac_if_mlme_rx_ops *mlme_rx_ops)
+{
+	mlme_rx_ops->vdev_mgr_quiet_offload =
+				tgt_vdev_mgr_quiet_offload_handler;
+}
+#else
+static inline void tgt_vdev_mgr_reg_quiet_offload(
+				struct wlan_lmac_if_mlme_rx_ops *mlme_rx_ops)
+{
+}
+#endif
+
 void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	struct wlan_lmac_if_mlme_rx_ops *mlme_rx_ops = &rx_ops->mops;
@@ -327,4 +348,5 @@ void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 		tgt_vdev_mgr_set_max_channel_switch_time;
 	tgt_psoc_reg_wakelock_info_rx_op(&rx_ops->mops);
 	tgt_vdev_mgr_reg_set_mac_address_response(mlme_rx_ops);
+	tgt_vdev_mgr_reg_quiet_offload(mlme_rx_ops);
 }

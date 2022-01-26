@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -177,4 +177,19 @@ struct multi_vdev_restart_resp {
 	qdf_bitmap(vdev_id_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
 };
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * struct vdev_sta_quiet_event - mlo sta quiet offload structure
+ * @mld_mac: AP mld mac address
+ * @link_mac: AP link mac address
+ * @link_id: Link id associated with AP
+ * @quiet_status: WMI_QUIET_EVENT_FLAG: quiet start or stop
+ */
+struct vdev_sta_quiet_event {
+	struct qdf_mac_addr mld_mac;
+	struct qdf_mac_addr link_mac;
+	uint8_t link_id;
+	bool quiet_status;
+};
+#endif
 #endif /* __WLAN_VDEV_MGR_TGT_IF_RX_DEFS_H__ */

@@ -168,4 +168,17 @@ int wlan_util_vdev_mgr_get_cac_timeout_for_vdev(struct wlan_objmgr_vdev *vdev);
 void wlan_util_vdev_mgr_set_cac_timeout_for_vdev(struct wlan_objmgr_vdev *vdev,
 						 uint32_t new_chan_cac_ms);
 #endif /* MOBILE_DFS_SUPPORT */
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_util_vdev_mgr_quiet_offload() - set quiet status for given link
+ * @psoc: pointer to psoc
+ * @quiet_event: pointer to struct vdev_sta_quiet_event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_util_vdev_mgr_quiet_offload(
+				struct wlan_objmgr_psoc *psoc,
+				struct vdev_sta_quiet_event *quiet_event);
+#endif /* WLAN_FEATURE_11BE_MLO */
 #endif /* __WLAN_VDEV_MGR_UTILS_API_H__ */
