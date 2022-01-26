@@ -825,6 +825,10 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 	}
 
 	bl_config = &dsi_display->panel->bl_config;
+	bl_config->bl_scale = c_conn->bl_scale > MAX_BL_SCALE_LEVEL ?
+			MAX_BL_SCALE_LEVEL : c_conn->bl_scale;
+	bl_config->bl_scale_sv = c_conn->bl_scale_sv > SV_BL_SCALE_CAP ?
+			SV_BL_SCALE_CAP : c_conn->bl_scale_sv;
 
 	if (!c_conn->allow_bl_update) {
 		c_conn->unset_bl_level = bl_config->bl_level;
@@ -833,11 +837,6 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 
 	if (c_conn->unset_bl_level)
 		bl_config->bl_level = c_conn->unset_bl_level;
-
-	bl_config->bl_scale = c_conn->bl_scale > MAX_BL_SCALE_LEVEL ?
-			MAX_BL_SCALE_LEVEL : c_conn->bl_scale;
-	bl_config->bl_scale_sv = c_conn->bl_scale_sv > SV_BL_SCALE_CAP ?
-			SV_BL_SCALE_CAP : c_conn->bl_scale_sv;
 
 	SDE_DEBUG("bl_scale = %u, bl_scale_sv = %u, bl_level = %u\n",
 		bl_config->bl_scale, bl_config->bl_scale_sv,
