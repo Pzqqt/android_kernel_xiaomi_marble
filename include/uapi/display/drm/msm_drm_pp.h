@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -572,6 +573,7 @@ struct drm_msm_ltm_buffer {
 #define SPR_INIT_PARAM_SIZE_3 16
 #define SPR_INIT_PARAM_SIZE_4 24
 #define SPR_INIT_PARAM_SIZE_5 32
+#define SPR_FLAG_BYPASS (1 << 0)
 
 /**
  * struct drm_msm_spr_init_cfg - SPR initial configuration structure
