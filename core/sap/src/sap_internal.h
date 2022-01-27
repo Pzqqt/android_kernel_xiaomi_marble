@@ -242,7 +242,7 @@ struct sap_context {
 #endif
 	qdf_freq_t candidate_freq;
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
-	uint8_t restriction_mask;
+	uint32_t restriction_mask;
 #endif
 };
 

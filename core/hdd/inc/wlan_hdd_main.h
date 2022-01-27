@@ -2062,7 +2062,7 @@ struct hdd_context {
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
 #endif /* FEATURE_WLAN_CH_AVOID */
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
-	uint8_t restriction_mask;
+	uint32_t restriction_mask;
 #endif
 
 	uint8_t max_intf_count;

@@ -3339,7 +3339,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
  * Return: Restriction mask
  */
 static inline
-uint8_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
+uint32_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
 {
 	return hdd_ctx->coex_avoid_freq_list.restriction_mask;
 }
@@ -3361,7 +3361,7 @@ void wlan_hdd_fetch_sap_restriction_mask(struct hdd_context *hdd_ctx,
 }
 #else
 static inline
-uint8_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
+uint32_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
 {
 	return -EINVAL;
 }
@@ -3384,7 +3384,7 @@ void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	int32_t set_tx_power, tx_power = 0;
 	struct sap_context *sap_ctx;
-	int8_t restriction_mask;
+	uint32_t restriction_mask;
 	int ch_loop, unsafe_chan_count;
 	struct unsafe_ch_list *unsafe_ch_list;
 	uint32_t chan_freq;
@@ -3407,7 +3407,7 @@ void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
 		  sap_ctx->csa_reason);
 
 	if (sap_ctx->csa_reason == CSA_REASON_UNSAFE_CHANNEL) {
-		if (restriction_mask == NL80211_IFTYPE_AP) {
+		if (restriction_mask & BIT(NL80211_IFTYPE_AP)) {
 			schedule_work(&adapter->sap_stop_bss_work);
 		} else {
 			unsafe_chan_count = unsafe_ch_list->chan_cnt;
