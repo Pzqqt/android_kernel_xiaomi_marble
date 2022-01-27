@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4680,9 +4680,7 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac_ctx
 						mac_ctx, sessionid,
 						event_info);
 			} else {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_ERROR, FL(
-					"session or RIC data is not present"));
+				sme_debug("session or RIC data is not present");
 			}
 		}
 #ifdef FEATURE_WLAN_ESE
