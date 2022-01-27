@@ -1559,7 +1559,7 @@ struct ch_avoid_freq_type {
 struct ch_avoid_ind_type {
 	uint32_t ch_avoid_range_cnt;
 	struct ch_avoid_freq_type avoid_freq_range[CH_AVOID_MAX_RANGE];
-	uint8_t restriction_mask;
+	uint32_t restriction_mask;
 };
 
 /**
