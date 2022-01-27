@@ -11011,7 +11011,7 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p)
 		result = ipa3_pre_init(&ipa3_res, pdev_p);
 		if (result) {
 			IPAERR("ipa3_init failed\n");
-			return result;
+			goto err_check;
 		}
 		ipa_fw_load_sm_handle_event(IPA_FW_LOAD_EVNT_SMMU_DONE);
 		goto skip_repeat_pre_init;
@@ -11021,7 +11021,7 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p)
 	result = ipa3_pre_init(&ipa3_res, pdev_p);
 	if (result) {
 		IPAERR("ipa3_init failed\n");
-		return result;
+		goto err_check;
 	}
 
 skip_repeat_pre_init:
@@ -11032,8 +11032,14 @@ skip_repeat_pre_init:
 		return result;
 	}
 
-	if (result && result != -EPROBE_DEFER)
-		IPAERR("ipa: ipa_plat_drv_probe failed\n");
+err_check:
+	if (result) {
+		if (result != -EPROBE_DEFER) {
+			IPAERR("ipa: ipa_plat_drv_probe failed\n");
+		} else {
+			gsi_unmap_base();
+		}
+	}
 
 	return result;
 }

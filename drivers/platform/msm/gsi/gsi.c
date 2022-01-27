@@ -1300,6 +1300,8 @@ EXPORT_SYMBOL(gsi_map_base);
 
 int gsi_unmap_base(void)
 {
+	gsihal_destroy();
+
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
 		return -GSI_STATUS_NODEV;
@@ -1835,7 +1837,6 @@ int gsi_deregister_device(unsigned long dev_hdl, bool force)
 		platform_msi_domain_free_irqs(gsi_ctx->dev);
 
 	devm_free_irq(gsi_ctx->dev, gsi_ctx->per.irq, gsi_ctx);
-	gsihal_destroy();
 	gsi_unmap_base();
 	memset(gsi_ctx, 0, sizeof(*gsi_ctx));
 
