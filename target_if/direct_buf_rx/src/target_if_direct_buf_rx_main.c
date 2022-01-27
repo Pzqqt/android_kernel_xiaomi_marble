@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -561,8 +561,8 @@ target_if_dbr_deinit_mem_list(struct direct_buf_rx_psoc_obj *dbr_psoc_obj)
 	for (i = 0; i < QDF_ARRAY_SIZE(dbr_psoc_obj->mem_list); i++) {
 		mem_list = &dbr_psoc_obj->mem_list[i];
 		qdf_list_for_each_del(mem_list, cur, next, node) {
-			qdf_mem_free(cur->vaddr_unaligned);
 			qdf_list_remove_node(mem_list, &cur->node);
+			qdf_mem_free(cur->vaddr_unaligned);
 		}
 
 		qdf_list_destroy(mem_list);
