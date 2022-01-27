@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -504,7 +504,7 @@ static void
 mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_mlo_dev_context *mlo_dev_ctx,
 		      struct element_info *assoc_rsp,
-		      struct mlo_partner_info ml_parnter_info)
+		      struct mlo_partner_info *ml_parnter_info)
 {
 	/* Create the secondary interface, Send keys if the last link */
 	uint8_t i, partner_idx = 0;
@@ -515,7 +515,7 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 			vdev, ssid.ssid,
 			&ssid.length);
 
-	if (!ml_parnter_info.num_partner_links) {
+	if (!ml_parnter_info->num_partner_links) {
 		mlo_err("No patner info in connect resp");
 		return;
 	}
@@ -532,12 +532,14 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 		wlan_vdev_mlme_feat_ext2_cap_set(mlo_dev_ctx->wlan_vdev_list[i],
 						 WLAN_VDEV_FEXT2_MLO_STA_LINK);
 		wlan_vdev_set_link_id(
-			mlo_dev_ctx->wlan_vdev_list[i],
-			ml_parnter_info.partner_link_info[partner_idx].link_id);
+		      mlo_dev_ctx->wlan_vdev_list[i],
+		      ml_parnter_info->partner_link_info[partner_idx].link_id);
+		ml_parnter_info->partner_link_info[partner_idx].vdev_id =
+			       wlan_vdev_get_id(mlo_dev_ctx->wlan_vdev_list[i]);
 		mlo_prepare_and_send_connect(
 				mlo_dev_ctx->wlan_vdev_list[i],
-				ml_parnter_info,
-				ml_parnter_info.partner_link_info[partner_idx],
+				*ml_parnter_info,
+				ml_parnter_info->partner_link_info[partner_idx],
 				ssid);
 		partner_idx++;
 	}
@@ -547,13 +549,13 @@ static void
 mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_mlo_dev_context *mlo_dev_ctx,
 		      struct element_info *assoc_rsp,
-		      struct mlo_partner_info ml_parnter_info)
+		      struct mlo_partner_info *ml_parnter_info)
 {
 	struct wlan_ssid ssid = {0};
 	uint8_t i = 0;
 	uint8_t j = 0;
 
-	if (!ml_parnter_info.num_partner_links) {
+	if (!ml_parnter_info->num_partner_links) {
 		mlo_err("No patner info in connect resp");
 		return;
 	}
@@ -570,19 +572,19 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 			if (qdf_test_bit(i, mlo_dev_ctx->sta_ctx->wlan_connected_links)) {
 				if (wlan_cm_is_vdev_disconnected(
 					mlo_dev_ctx->wlan_vdev_list[i])) {
-					for (j = 0; j < ml_parnter_info.num_partner_links; j++) {
+					for (j = 0; j < ml_parnter_info->num_partner_links; j++) {
 						if (mlo_dev_ctx->wlan_vdev_list[i]->vdev_mlme.mlo_link_id ==
-							ml_parnter_info.partner_link_info[j].link_id)
+							ml_parnter_info->partner_link_info[j].link_id)
 							break;
 					}
-					if (j < ml_parnter_info.num_partner_links) {
+					if (j < ml_parnter_info->num_partner_links) {
 						wlan_vdev_mlme_get_ssid(
 							vdev, ssid.ssid,
 							&ssid.length);
 						mlo_prepare_and_send_connect(
 							mlo_dev_ctx->wlan_vdev_list[i],
-							ml_parnter_info,
-							ml_parnter_info.partner_link_info[j],
+							*ml_parnter_info,
+							ml_parnter_info->partner_link_info[j],
 							ssid);
 					}
 					mlo_dev_lock_release(mlo_dev_ctx);
@@ -770,7 +772,7 @@ void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
 		}
 		mlo_send_link_connect(vdev, mlo_dev_ctx,
 				      &rsp->connect_ies.assoc_rsp,
-				      rsp->ml_parnter_info);
+				      &rsp->ml_parnter_info);
 	}
 }
 

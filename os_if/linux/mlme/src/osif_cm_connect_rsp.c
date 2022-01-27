@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -380,6 +380,24 @@ osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
 #endif
 
 #if defined(CFG80211_IFTYPE_MLO_LINK_SUPPORT) && defined(WLAN_FEATURE_11BE_MLO)
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+static struct wlan_objmgr_vdev *osif_get_partner_vdev(
+					struct wlan_objmgr_vdev *vdev,
+					struct mlo_link_info rsp_partner_info)
+{
+	return wlan_objmgr_get_vdev_by_id_from_pdev(
+						vdev->vdev_objmgr.wlan_pdev,
+						rsp_partner_info.vdev_id,
+						WLAN_MLO_MGR_ID);
+}
+#else
+static struct wlan_objmgr_vdev *osif_get_partner_vdev(
+					struct wlan_objmgr_vdev *vdev,
+					struct mlo_link_info rsp_partner_info)
+{
+	return mlo_get_vdev_by_link_id(vdev, rsp_partner_info.link_id);
+}
+#endif
 static void osif_fill_connect_resp_mlo_params(
 			struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp,
@@ -431,15 +449,16 @@ static void osif_fill_connect_resp_mlo_params(
 			if (i == rsp->ml_parnter_info.num_partner_links)
 				break;
 
-			ml_vdev = mlo_get_vdev_by_link_id(
-					ml_vdev, rsp_partner_info[i].link_id);
+			ml_vdev = osif_get_partner_vdev(vdev,
+							rsp_partner_info[i]);
 
 			if (ml_vdev) {
 				osif_priv = wlan_vdev_get_ospriv(ml_vdev);
 				wlan_objmgr_vdev_release_ref(ml_vdev,
 							     WLAN_MLO_MGR_ID);
 			} else {
-				osif_err("Partner vdev not found");
+				osif_err("Partner vdev not found with vdev_id:%d",
+					 rsp_partner_info[i].vdev_id);
 				goto end;
 			}
 		}

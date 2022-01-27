@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -360,11 +360,13 @@ struct wlan_mlo_peer_context {
  * @link_addr: link mac address
  * @link_id: link index
  * @chan_freq: Operating channel frequency
+ * @vdev_id: VDEV ID
  */
 struct mlo_link_info {
 	struct qdf_mac_addr link_addr;
 	uint8_t link_id;
 	uint16_t chan_freq;
+	uint8_t vdev_id;
 };
 
 /*
