@@ -557,7 +557,7 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	}
 
 	return os_if_nan_process_ndp_cmd(hdd_ctx->psoc, data, data_len,
-					 hdd_is_ndp_allowed(hdd_ctx));
+					 hdd_is_ndp_allowed(hdd_ctx), wdev);
 }
 
 /**

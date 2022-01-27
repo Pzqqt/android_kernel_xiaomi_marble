@@ -55,12 +55,14 @@ struct ndi_find_vdev_filter {
  * @data_len: length of data
  * @is_ndp_allowed: Indicates whether to allow NDP creation.
  *		    NDI creation is always allowed.
+ * @wdev: Wireless device structure pointer
  *
  * Return: status of operation
  */
 int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 			      const void *data, int data_len,
-			      bool is_ndp_allowed);
+			      bool is_ndp_allowed,
+			      struct wireless_dev *wdev);
 
 /**
  * os_if_nan_register_hdd_callbacks: os_if api to register hdd callbacks
