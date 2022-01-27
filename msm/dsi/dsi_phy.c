@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/of_device.h>
@@ -71,6 +72,14 @@ static const struct dsi_ver_spec_info dsi_phy_v4_3 = {
 	.timing_cfg_count = 14,
 };
 
+static const struct dsi_ver_spec_info dsi_phy_v4_3_2 = {
+	.version = DSI_PHY_VERSION_4_3_2,
+	.lane_cfg_count = 4,
+	.strength_cfg_count = 2,
+	.regulator_cfg_count = 0,
+	.timing_cfg_count = 14,
+};
+
 static const struct of_device_id msm_dsi_phy_of_match[] = {
 	{ .compatible = "qcom,dsi-phy-v3.0",
 	  .data = &dsi_phy_v3_0,},
@@ -82,6 +91,8 @@ static const struct of_device_id msm_dsi_phy_of_match[] = {
 	  .data = &dsi_phy_v4_2,},
 	{ .compatible = "qcom,dsi-phy-v4.3",
 	  .data = &dsi_phy_v4_3,},
+	{ .compatible = "qcom,dsi-phy-v4.3.2",
+	  .data = &dsi_phy_v4_3_2,},
 	{}
 };
 
