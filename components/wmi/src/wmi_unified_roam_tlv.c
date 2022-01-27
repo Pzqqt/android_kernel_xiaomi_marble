@@ -2426,6 +2426,11 @@ extract_roam_sync_frame_event_tlv(wmi_unified_t wmi_handle, void *event,
 	roam_sync_frame_ind = frame_ptr;
 	roam_sync_frame_ind->vdev_id = synch_frame_event->vdev_id;
 
+	wmi_debug("synch frame payload: LEN bcn:%d, req:%d, rsp:%d",
+		  synch_frame_event->bcn_probe_rsp_len,
+		  synch_frame_event->reassoc_req_len,
+		  synch_frame_event->reassoc_rsp_len);
+
 	if (synch_frame_event->bcn_probe_rsp_len) {
 		roam_sync_frame_ind->bcn_probe_rsp_len =
 			synch_frame_event->bcn_probe_rsp_len;

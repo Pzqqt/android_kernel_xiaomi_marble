@@ -375,13 +375,15 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct rso_config *rso_cfg;
+	struct roam_synch_frame_ind *sync_frame_ind = frame_ind;
+	struct roam_synch_frame_ind *roam_synch_frame_ind;
 	uint8_t vdev_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!frame_ind)
+	if (!sync_frame_ind)
 		return QDF_STATUS_E_NULL_VALUE;
 
-	vdev_id = frame_ind->vdev_id;
+	vdev_id = sync_frame_ind->vdev_id;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_SB_ID);
@@ -396,6 +398,8 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 		goto err;
 	}
 
+	roam_synch_frame_ind = &rso_cfg->roam_sync_frame_ind;
+
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id)) {
 		mlme_err("Ignoring this event as it is unexpected");
 		wlan_cm_free_roam_synch_frame_ind(rso_cfg);
@@ -403,8 +407,28 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 		goto err;
 	}
 
-	wlan_cm_free_roam_synch_frame_ind(rso_cfg);
-	rso_cfg->roam_sync_frame_ind = *frame_ind;
+	if (sync_frame_ind->bcn_probe_rsp_len) {
+		roam_synch_frame_ind->bcn_probe_rsp_len =
+			sync_frame_ind->bcn_probe_rsp_len;
+		roam_synch_frame_ind->is_beacon =
+			sync_frame_ind->is_beacon;
+		roam_synch_frame_ind->bcn_probe_rsp =
+			sync_frame_ind->bcn_probe_rsp;
+	}
+
+	if (sync_frame_ind->reassoc_req_len) {
+		roam_synch_frame_ind->reassoc_req_len =
+				sync_frame_ind->reassoc_req_len;
+		roam_synch_frame_ind->reassoc_req =
+			sync_frame_ind->reassoc_req;
+	}
+
+	if (sync_frame_ind->reassoc_rsp_len) {
+		roam_synch_frame_ind->reassoc_rsp_len =
+				sync_frame_ind->reassoc_rsp_len;
+		roam_synch_frame_ind->reassoc_rsp =
+			sync_frame_ind->reassoc_rsp;
+	}
 
 err:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
