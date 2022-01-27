@@ -231,12 +231,6 @@ ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE) $(CONFIG_ICNSS2_HE
 	endif
 endif
 
-ifneq ($(DEVELOPER_DISABLE_BUILD_TIMESTAMP), y)
-ifneq ($(WLAN_DISABLE_BUILD_TAG), y)
-CONFIG_BUILD_TAG := y
-endif
-endif
-
 ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
 CONFIG_MOBILE_ROUTER := y
 endif
