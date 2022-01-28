@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1053,6 +1054,7 @@ static int __iw_softap_get_three(struct net_device *dev,
 	int ret = 0; /* success */
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_tsf_op_response tsf_op_resp;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -1065,7 +1067,12 @@ static int __iw_softap_get_three(struct net_device *dev,
 
 	switch (sub_cmd) {
 	case QCSAP_GET_TSF:
-		ret = hdd_indicate_tsf(adapter, value, 3);
+		ret = hdd_indicate_tsf(adapter, &tsf_op_resp);
+		if (!ret) {
+			value[0] = tsf_op_resp.status;
+			value[1] = tsf_op_resp.time & 0xffffffff;
+			value[2] = (tsf_op_resp.time >> 32) & 0xffffffff;
+		}
 		break;
 	default:
 		hdd_err("Invalid getparam command: %d", sub_cmd);

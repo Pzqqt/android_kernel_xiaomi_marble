@@ -1226,6 +1226,8 @@ struct hdd_context;
  * @vdev_id: Unique identifier assigned to the vdev
  * @event_flags: a bitmap of hdd_adapter_flags
  * @mic_work: mic work information
+ * @enable_dynamic_tsf_sync: Enable/Disable TSF sync through NL interface
+ * @dynamic_tsf_sync_interval: TSF sync interval configure through NL interface
  * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
  * @cache_sta_count: number of currently cached stations
  * @acs_complete_event: acs complete event
@@ -1393,6 +1395,8 @@ struct hdd_adapter {
 	/* spin lock for read/write timestamps */
 	qdf_spinlock_t host_target_sync_lock;
 	qdf_mc_timer_t host_target_sync_timer;
+	bool enable_dynamic_tsf_sync;
+	uint32_t dynamic_tsf_sync_interval;
 	uint64_t cur_host_time;
 	uint64_t last_host_time;
 	uint64_t last_target_time;

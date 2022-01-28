@@ -58,6 +58,18 @@ enum hdd_tsf_capture_state {
 	TSF_CAP_STATE
 };
 
+/**
+ * struct hdd_tsf_op_response - Store TSF sync parameters if TSF sync is active
+ * @status: TSF response status defined by enum hdd_tsf_get_state
+ * @time: TSF sync Target time. Time unit is microseconds.
+ * @soc_time: TSF sync SOC time. Time unit is microseconds.
+ */
+struct hdd_tsf_op_response {
+	enum hdd_tsf_get_state status;
+	uint64_t time;
+	uint64_t soc_time;
+};
+
 #ifdef WLAN_FEATURE_TSF
 /**
  * wlan_hdd_tsf_init() - set gpio and callbacks for
@@ -99,14 +111,14 @@ int hdd_capture_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len);
  * hdd_indicate_tsf() - return tsf to uplayer
  *
  * @adapter: pointer to adapter
- * @buf: pointer to uplayer buf
- * @len : the length of buf
+ * @tsf_op_resp: pointer to struct hdd_tsf_op_response
  *
  * This function returns tsf value to uplayer.
  *
  * Return: Describe the execute result of this routine
  */
-int hdd_indicate_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len);
+int hdd_indicate_tsf(struct hdd_adapter *adapter,
+		     struct hdd_tsf_op_response *tsf_op_resp);
 
 /**
  * wlan_hdd_cfg80211_handle_tsf_cmd(): Setup TSF operations
@@ -147,8 +159,8 @@ static inline void wlan_hdd_tsf_deinit(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline int hdd_indicate_tsf(struct hdd_adapter *adapter, uint32_t *buf,
-				int len)
+static inline int hdd_indicate_tsf(struct hdd_adapter *adapter,
+				   struct hdd_tsf_op_response *tsf_op_resp)
 {
 	return -ENOTSUPP;
 }
@@ -254,6 +266,14 @@ void hdd_capture_req_timer_expired_handler(void *arg);
  */
 bool hdd_tsf_is_tsf64_tx_set(struct hdd_context *hdd);
 
+/**
+ * hdd_update_dynamic_tsf_sync - Configure TSF mode for vdev
+ * @adapter: pointer to hdd adapter
+ *
+ * This function configures TSF mode for vdev with ini parameter
+ */
+void hdd_update_dynamic_tsf_sync(struct hdd_adapter *adapter);
+
 #ifdef WLAN_FEATURE_TSF_PLUS_SOCK_TS
 /**
  * hdd_rx_timestamp() - time stamp RX netbuf
@@ -300,6 +320,11 @@ static inline
 bool hdd_tsf_is_tsf64_tx_set(struct hdd_context *hdd)
 {
 	return FALSE;
+}
+
+static inline
+void hdd_update_dynamic_tsf_sync(struct hdd_adapter *adapter)
+{
 }
 
 static inline

@@ -5091,6 +5091,7 @@ static int __iw_setnone_get_threeint(struct net_device *dev,
 	uint32_t *value = (int *)extra;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_tsf_op_response tsf_op_resp;
 
 	hdd_enter_dev(dev);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5104,7 +5105,12 @@ static int __iw_setnone_get_threeint(struct net_device *dev,
 	hdd_debug("param = %d", value[0]);
 	switch (value[0]) {
 	case WE_GET_TSF:
-		ret = hdd_indicate_tsf(adapter, value, 3);
+		ret = hdd_indicate_tsf(adapter, &tsf_op_resp);
+		if (!ret) {
+			value[0] = tsf_op_resp.status;
+			value[1] = tsf_op_resp.time & 0xffffffff;
+			value[2] = (tsf_op_resp.time >> 32) & 0xffffffff;
+		}
 		break;
 	default:
 		hdd_err("Invalid IOCTL get_value command %d", value[0]);
