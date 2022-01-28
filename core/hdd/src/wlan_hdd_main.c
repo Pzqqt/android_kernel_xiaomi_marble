@@ -12785,9 +12785,19 @@ static void hdd_psoc_idle_timeout_callback(void *priv)
 {
 	int ret;
 	struct hdd_context *hdd_ctx = priv;
+	void *hif_ctx;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (hif_ctx) {
+		/*
+		 * Trigger runtime sync resume before psoc_idle_shutdown
+		 * such that resume can happen successfully
+		 */
+		hif_pm_runtime_sync_resume(hif_ctx, RTPM_ID_SOC_IDLE_SHUTDOWN);
+	}
 
 	hdd_info("Psoc idle timeout elapsed; starting psoc shutdown");
 
