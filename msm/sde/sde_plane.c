@@ -1991,7 +1991,9 @@ static int sde_plane_prepare_fb(struct drm_plane *plane,
 		ret = msm_framebuffer_prepare(fb,
 				pstate->aspace);
 		if (ret) {
-			SDE_ERROR("failed to prepare framebuffer\n");
+			SDE_ERROR("failed to prepare framebuffer fb:%d plane:%d pipe:%d ret:%d\n",
+				 fb->base.id, plane->base.id, psde->pipe, ret);
+			SDE_EVT32(fb->base.id, plane->base.id, psde->pipe, ret, SDE_EVTLOG_ERROR);
 			return ret;
 		}
 	}
