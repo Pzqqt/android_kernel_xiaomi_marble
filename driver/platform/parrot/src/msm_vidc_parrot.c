@@ -94,6 +94,12 @@ static struct msm_platform_core_capability core_data_parrot_v0[] = {
 	{MMRM, 0},
 };
 
+static struct msm_platform_core_capability core_data_parrot_v1[] = {
+};
+
+static struct msm_platform_core_capability core_data_parrot_v2[] = {
+};
+
 static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
 	/* {cap, domain, codec,
 	 *      min, max, step_or_mask, value,
@@ -1644,6 +1650,16 @@ static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
 		HFI_PROP_MAX_NUM_REORDER_FRAMES},
 };
 
+static struct msm_platform_inst_capability instance_data_parrot_v1[] = {
+};
+
+static struct msm_platform_inst_capability instance_data_parrot_v2[] = {
+};
+
+static struct allowed_clock_rates_table clock_data_parrot[] = {
+	{133333333}, {240000000}, {335000000}, {380000000}
+};
+
 /* Default UBWC config for LPDDR5 */
 static struct msm_vidc_ubwc_config_data ubwc_config_parrot[] = {
 	UBWC_CONFIG(8, 32, 15, 0, 1, 1, 1),
@@ -1653,6 +1669,13 @@ static struct msm_vidc_ubwc_config_data ubwc_config_parrot[] = {
 static u32 bus_bw_nrt[] = {
 	8000000,
 	7000000,
+};
+
+static struct msm_vidc_efuse_data efuse_data_parrot[] = {
+	/* IRIS_DISABLE_4K_Encode - max 1080p@60 encode */
+	EFUSE_ENTRY(0x221C8118, 4, 0x8, 0x2, SKU_VERSION),
+	/* IRIS_PLL_FMAX - max 4k@30 encode */
+	EFUSE_ENTRY(0x221C8118, 4, 0x100, 0x8, SKU_VERSION),
 };
 
 static struct msm_vidc_platform_data parrot_data = {
@@ -1666,6 +1689,9 @@ static struct msm_vidc_platform_data parrot_data = {
 	.ubwc_config = ubwc_config_parrot,
 	.bus_bw_nrt = bus_bw_nrt,
 	.vpu_ver = VPU_VERSION_IRIS2_1,
+	.efuse_data = efuse_data_parrot,
+	.efuse_data_size = ARRAY_SIZE(efuse_data_parrot),
+	.sku_version = 0,
 };
 
 static int msm_vidc_init_data(struct msm_vidc_core *core)
@@ -1681,6 +1707,37 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 
 	core->platform->data = parrot_data;
 	platform_data = &core->platform->data;
+
+	/* Check for sku version */
+	rc = msm_vidc_read_efuse(core);
+	if (rc) {
+		d_vpr_e("%s: Failed to read efuse\n", __func__);
+		return rc;
+	}
+
+	if (platform_data->sku_version == SKU_VERSION_1) {
+		platform_data->core_data = core_data_parrot_v1;
+		platform_data->core_data_size =
+				ARRAY_SIZE(core_data_parrot_v1);
+		platform_data->instance_data = instance_data_parrot_v1;
+		platform_data->instance_data_size =
+				ARRAY_SIZE(instance_data_parrot_v1);
+	} else if (platform_data->sku_version == SKU_VERSION_2) {
+		platform_data->core_data = core_data_parrot_v2;
+		platform_data->core_data_size =
+				ARRAY_SIZE(core_data_parrot_v2);
+		platform_data->instance_data = instance_data_parrot_v2;
+		platform_data->instance_data_size =
+				ARRAY_SIZE(instance_data_parrot_v2);
+	}
+
+	if (platform_data->sku_version) {
+		/* Override with SKU clock data into dt */
+		core->dt->allowed_clks_tbl = clock_data_parrot;
+		core->dt->allowed_clks_tbl_size =
+				ARRAY_SIZE(clock_data_parrot);
+		msm_vidc_sort_table(core);
+	}
 
 	/* Check for DDR variant */
 	msm_vidc_ddr_ubwc_config(&core->platform->data, 0xe);
