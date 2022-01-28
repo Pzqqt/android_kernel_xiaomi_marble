@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -3949,7 +3949,6 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	struct dsi_mode_info *timing = &mode->timing;
 	struct dsi_display_mode *display_mode;
 	u32 jitter_numer, jitter_denom, prefill_lines;
-	u32 default_prefill_lines, actual_prefill_lines;
 	u32 min_threshold_us, prefill_time_us, max_transfer_us, packet_overhead;
 	u16 bpp;
 
@@ -4013,12 +4012,8 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	 * Increase the prefill_lines proportionately as recommended
 	 * 40lines for 60fps, 60 for 90fps, 120lines for 120fps, and so on.
 	 */
-	default_prefill_lines = mult_frac(MIN_PREFILL_LINES, timing->refresh_rate, 60);
-
-	actual_prefill_lines = timing->v_back_porch + timing->v_front_porch + timing->v_sync_width;
-
-	/* consider the max of default prefill lines and actual prefill lines */
-	prefill_lines = max(actual_prefill_lines, default_prefill_lines);
+	prefill_lines = mult_frac(MIN_PREFILL_LINES,
+			timing->refresh_rate, 60);
 
 	prefill_time_us = mult_frac(frame_time_us, prefill_lines,
 			(timing->v_active));
