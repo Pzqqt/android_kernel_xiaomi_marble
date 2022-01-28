@@ -571,6 +571,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
 	dp_tx_desc_set_magic(tx_desc, DP_TX_MAGIC_PATTERN_FREE);
+	tx_desc->timestamp = 0;
 	dp_tx_put_desc_flow_pool(pool, tx_desc);
 	switch (pool->status) {
 	case FLOW_POOL_ACTIVE_PAUSED:

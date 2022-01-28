@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -12034,31 +12034,44 @@ void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 
 #ifdef DP_TX_TRACKING
 
-#define DP_TX_COMP_MAX_LATENCY_MS 120000
+#define DP_TX_COMP_MAX_LATENCY_MS 30000
 /**
- * dp_tx_comp_delay() - calculate time latency for tx completion per pkt
+ * dp_tx_comp_delay_check() - calculate time latency for tx completion per pkt
  * @timestamp - tx descriptor timestamp
  *
  * Calculate time latency for tx completion per pkt and trigger self recovery
  * when the delay is more than threshold value.
  *
- * Return: None.
+ * Return: True if delay is more than threshold
  */
-static void dp_tx_comp_delay(uint64_t timestamp)
+static bool dp_tx_comp_delay_check(uint64_t timestamp)
 {
-	uint64_t time_latency;
+	uint64_t time_latency, current_time;
 
-	if (dp_tx_pkt_tracepoints_enabled())
-		time_latency = qdf_ktime_to_ms(qdf_ktime_real_get()) -
-								timestamp;
-	else
-		time_latency = qdf_system_ticks_to_msecs(qdf_system_ticks() -
-								timestamp);
+	if (!timestamp)
+		return false;
 
-	if (time_latency >= DP_TX_COMP_MAX_LATENCY_MS) {
-		dp_err_rl("tx completion not rcvd for %llu ms.", time_latency);
-		qdf_trigger_self_recovery(NULL, QDF_TX_DESC_LEAK);
+	if (dp_tx_pkt_tracepoints_enabled()) {
+		current_time = qdf_ktime_to_ms(qdf_ktime_real_get());
+		time_latency = current_time - timestamp;
+		if (time_latency >= DP_TX_COMP_MAX_LATENCY_MS) {
+			dp_err_rl("enqueued: %llu ms, current : %llu ms",
+				  timestamp, current_time);
+			return true;
+		}
+	} else {
+		current_time = qdf_system_ticks();
+		time_latency = qdf_system_ticks_to_msecs(current_time -
+							 timestamp);
+		if (time_latency >= DP_TX_COMP_MAX_LATENCY_MS) {
+			dp_err_rl("enqueued: %u ms, current : %u ms",
+				  qdf_system_ticks_to_msecs(timestamp),
+				  qdf_system_ticks_to_msecs(current_time));
+			return true;
+		}
 	}
+
+	return false;
 }
 
 /**
@@ -12101,10 +12114,17 @@ static void dp_find_missing_tx_comp(struct dp_soc *soc)
 			if (tx_desc->magic == DP_TX_MAGIC_PATTERN_FREE) {
 				continue;
 			} else if (tx_desc->magic ==
-						DP_TX_MAGIC_PATTERN_INUSE) {
-				dp_tx_comp_delay(tx_desc->timestamp);
+				   DP_TX_MAGIC_PATTERN_INUSE) {
+				if (dp_tx_comp_delay_check(
+							tx_desc->timestamp)) {
+					dp_err_rl("Tx completion not rcvd for id: %u",
+						  tx_desc->id);
+					qdf_trigger_self_recovery(NULL,
+							QDF_TX_DESC_LEAK);
+				}
 			} else {
-				dp_err("tx desc %d corrupted", tx_desc->id);
+				dp_err_rl("tx desc %u corrupted, flags: 0x%x",
+				       tx_desc->id, tx_desc->flags);
 				qdf_trigger_self_recovery(NULL,
 							  QDF_TX_DESC_LEAK);
 			}
