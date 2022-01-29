@@ -49,6 +49,7 @@
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
+#include "cdp_txrx_cmn_reg.h"
 
 /* Flag to skip CCE classify when mesh or tid override enabled */
 #define DP_TX_SKIP_CCE_CLASSIFY \
@@ -1730,18 +1731,41 @@ static void dp_tx_update_tdls_flags(struct dp_soc *soc,
 	}
 }
 
+static uint8_t dp_htt_tx_comp_get_status(struct dp_soc *soc, char *htt_desc)
+{
+	uint8_t tx_status = HTT_TX_FW2WBM_TX_STATUS_MAX;
+
+	switch (soc->arch_id) {
+	case CDP_ARCH_TYPE_LI:
+		tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_desc[0]);
+		break;
+
+	case CDP_ARCH_TYPE_BE:
+		tx_status = HTT_TX_WBM_COMPLETION_V3_TX_STATUS_GET(htt_desc[0]);
+		break;
+
+	default:
+		dp_err("Incorrect CDP_ARCH %d", soc->arch_id);
+		QDF_BUG(0);
+	}
+
+	return tx_status;
+}
+
 /**
- * dp_non_std_tx_comp_free_buff() - Free the non std tx packet buffer
+ * dp_non_std_htt_tx_comp_free_buff() - Free the non std tx packet buffer
  * @soc: dp_soc handle
  * @tx_desc: TX descriptor
  * @vdev: datapath vdev handle
  *
  * Return: None
  */
-static void dp_non_std_tx_comp_free_buff(struct dp_soc *soc,
+static void dp_non_std_htt_tx_comp_free_buff(struct dp_soc *soc,
 					 struct dp_tx_desc_s *tx_desc)
 {
-	struct hal_tx_completion_status ts = {0};
+	uint8_t tx_status = 0;
+	uint8_t htt_tx_status[HAL_TX_COMP_HTT_STATUS_LEN];
+
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, tx_desc->vdev_id,
 						     DP_MOD_ID_TDLS);
@@ -1751,12 +1775,15 @@ static void dp_non_std_tx_comp_free_buff(struct dp_soc *soc,
 		goto error;
 	}
 
-	hal_tx_comp_get_status(&tx_desc->comp, &ts, vdev->pdev->soc->hal_soc);
+	hal_tx_comp_get_htt_desc(&tx_desc->comp, htt_tx_status);
+	tx_status = dp_htt_tx_comp_get_status(soc, htt_tx_status);
+	dp_debug("vdev_id: %d tx_status: %d", tx_desc->vdev_id, tx_status);
+
 	if (vdev->tx_non_std_data_callback.func) {
 		qdf_nbuf_set_next(nbuf, NULL);
 		vdev->tx_non_std_data_callback.func(
 				vdev->tx_non_std_data_callback.ctxt,
-				nbuf, ts.status);
+				nbuf, tx_status);
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_TDLS);
 		return;
 	} else {
@@ -1800,7 +1827,7 @@ static inline void dp_tx_update_tdls_flags(struct dp_soc *soc,
 {
 }
 
-static inline void dp_non_std_tx_comp_free_buff(struct dp_soc *soc,
+static inline void dp_non_std_htt_tx_comp_free_buff(struct dp_soc *soc,
 						struct dp_tx_desc_s *tx_desc)
 {
 }
@@ -2027,7 +2054,7 @@ void dp_tx_comp_free_buf(struct dp_soc *soc, struct dp_tx_desc_s *desc)
 
 	/* If it is TDLS mgmt, don't unmap or free the frame */
 	if (desc->flags & DP_TX_DESC_FLAG_TDLS_FRAME)
-		return dp_non_std_tx_comp_free_buff(soc, desc);
+		return dp_non_std_htt_tx_comp_free_buff(soc, desc);
 
 	/* 0 : MSDU buffer, 1 : MLE */
 	if (desc->msdu_ext_desc) {
@@ -4147,13 +4174,15 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 			 "ppdu_id = %d \n"
 			 "transmit_cnt = %d \n"
 			 "tid = %d \n"
-			 "peer_id = %d\n",
+			 "peer_id = %d\n"
+			 "tx_status = %d\n",
 			 ts->ack_frame_rssi, ts->first_msdu,
 			 ts->last_msdu, ts->msdu_part_of_amsdu,
 			 ts->valid, ts->bw, ts->pkt_type, ts->stbc,
 			 ts->ldpc, ts->sgi, ts->mcs, ts->ofdma,
 			 ts->tones_in_ru, ts->tsf, ts->ppdu_id,
-			 ts->transmit_cnt, ts->tid, ts->peer_id);
+			 ts->transmit_cnt, ts->tid, ts->peer_id,
+			 ts->status);
 
 	/* Update SoC level stats */
 	DP_STATS_INCC(soc, tx.dropped_fw_removed, 1,
@@ -4518,8 +4547,12 @@ more_data:
 		if (qdf_unlikely(buffer_src ==
 					HAL_TX_COMP_RELEASE_SOURCE_FW)) {
 			uint8_t htt_tx_status[HAL_TX_COMP_HTT_STATUS_LEN];
+
 			hal_tx_comp_get_htt_desc(tx_comp_hal_desc,
 					htt_tx_status);
+			/* Collect hw completion contents */
+			hal_tx_comp_desc_sync(tx_comp_hal_desc,
+					      &tx_desc->comp, 1);
 			soc->arch_ops.dp_tx_process_htt_completion(
 							soc,
 							tx_desc,
