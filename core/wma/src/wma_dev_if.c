@@ -3457,6 +3457,10 @@ void wma_hold_req_timer(void *data)
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_DELETE_STA_REQ,
 				QDF_PEER_DELETION_TIMEDOUT);
+		if (!mac) {
+			wma_err("mac: Null Pointer Error");
+			goto timer_destroy;
+		}
 		lim_cm_send_connect_rsp(mac, NULL, tgt_req->user_data,
 					CM_GENERIC_FAILURE,
 					QDF_STATUS_E_FAILURE, 0, false);
