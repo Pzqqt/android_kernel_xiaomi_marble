@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1564,10 +1565,27 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 		txrx_ops.rx.rx_stack = NULL;
 		txrx_ops.rx.rx_flush = NULL;
 	}
+	if (adapter->hdd_ctx->config->fisa_enable &&
+	    adapter->device_mode != QDF_MONITOR_MODE) {
+		hdd_debug("FISA feature enabled");
+		hdd_rx_register_fisa_ops(&txrx_ops);
+	}
+
+	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
+
+	txrx_ops.tx.tx_comp = hdd_sta_notify_tx_comp_cb;
+	txrx_ops.tx.tx = NULL;
+
 	cdp_vdev_register(soc, adapter->vdev_id, (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
+
+	if (!txrx_ops.tx.tx) {
+		hdd_err("vdev register fail");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	adapter->tx_fn = txrx_ops.tx.tx;
-	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
+
 
 	/* Register the Station with TL...  */
 	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &txrx_desc);
