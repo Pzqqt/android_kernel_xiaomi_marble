@@ -8552,6 +8552,25 @@ static u32 get_tx_wrapper_cache_size(u32 cache_size)
 	return IPA_TX_WRAPPER_CACHE_MAX_THRESHOLD;
 }
 
+static u32 get_ipa_gen_rx_cmn_page_pool_size(u32 rx_cmn_page_pool_size)
+{
+        if (!rx_cmn_page_pool_size)
+                return IPA_GENERIC_RX_CMN_PAGE_POOL_SZ_FACTOR;
+        if (rx_cmn_page_pool_size <= IPA_GENERIC_RX_CMN_PAGE_POOL_SZ_FACTOR)
+                return rx_cmn_page_pool_size;
+        return IPA_GENERIC_RX_CMN_PAGE_POOL_SZ_FACTOR;
+}
+
+
+static u32 get_ipa_gen_rx_cmn_temp_pool_size(u32 rx_cmn_temp_pool_size)
+{
+        if (!rx_cmn_temp_pool_size)
+                return IPA_GENERIC_RX_CMN_TEMP_POOL_SZ_FACTOR;
+        if (rx_cmn_temp_pool_size <= IPA_GENERIC_RX_CMN_TEMP_POOL_SZ_FACTOR)
+                return rx_cmn_temp_pool_size;
+        return IPA_GENERIC_RX_CMN_TEMP_POOL_SZ_FACTOR;
+}
+
 /**
  * ipa3_pre_init() - Initialize the IPA Driver.
  * This part contains all initialization which doesn't require IPA HW, such
@@ -8688,6 +8707,10 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->rmnet_ll_enable = resource_p->rmnet_ll_enable;
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
 			resource_p->tx_wrapper_cache_max_size);
+	ipa3_ctx->ipa_gen_rx_cmn_page_pool_sz_factor = get_ipa_gen_rx_cmn_page_pool_size(
+                        resource_p->ipa_gen_rx_cmn_page_pool_sz_factor);
+        ipa3_ctx->ipa_gen_rx_cmn_temp_pool_sz_factor = get_ipa_gen_rx_cmn_temp_pool_size(
+                        resource_p->ipa_gen_rx_cmn_temp_pool_sz_factor);
 	ipa3_ctx->ipa_config_is_auto = resource_p->ipa_config_is_auto;
 	ipa3_ctx->ipa_mhi_proxy = resource_p->ipa_mhi_proxy;
 	ipa3_ctx->max_num_smmu_cb = resource_p->max_num_smmu_cb;
@@ -9499,6 +9522,40 @@ static void get_dts_tx_wrapper_cache_size(struct platform_device *pdev,
 		ipa_drv_res->tx_wrapper_cache_max_size);
 }
 
+
+static void get_dts_ipa_gen_rx_cmn_page_pool_sz_factor(struct platform_device *pdev,
+                struct ipa3_plat_drv_res *ipa_drv_res)
+{
+        int result;
+
+        result = of_property_read_u32 (
+                pdev->dev.of_node,
+                "qcom,ipa-gen-rx-cmn-page-pool-sz-factor",
+                &ipa_drv_res->ipa_gen_rx_cmn_page_pool_sz_factor);
+        if (result)
+                ipa_drv_res->ipa_gen_rx_cmn_page_pool_sz_factor = 0;
+
+        IPADBG("ipa_gen_rx_cmn_page_pool_sz_factor is set to %d",
+                ipa_drv_res->ipa_gen_rx_cmn_page_pool_sz_factor);
+}
+
+
+static void get_dts_ipa_gen_rx_cmn_temp_pool_sz_factor(struct platform_device *pdev,
+                struct ipa3_plat_drv_res *ipa_drv_res)
+{
+        int result;
+
+        result = of_property_read_u32 (
+                pdev->dev.of_node,
+                "qcom,ipa-gen-rx-cmn-temp-pool-sz-factor",
+                &ipa_drv_res->ipa_gen_rx_cmn_temp_pool_sz_factor);
+        if (result)
+                ipa_drv_res->ipa_gen_rx_cmn_temp_pool_sz_factor = 0;
+
+        IPADBG("ipa_gen_rx_cmn_temp_pool_sz_factor is set to %d",
+                ipa_drv_res->ipa_gen_rx_cmn_temp_pool_sz_factor);
+}
+
 static void ipa_dts_get_ulso_data(struct platform_device *pdev,
 		struct ipa3_plat_drv_res *ipa_drv_res)
 {
@@ -10219,6 +10276,10 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->ipa_wan_aggr_pkt_cnt = ipa_wan_aggr_pkt_cnt;
 
 	get_dts_tx_wrapper_cache_size(pdev, ipa_drv_res);
+
+	get_dts_ipa_gen_rx_cmn_page_pool_sz_factor(pdev, ipa_drv_res);
+
+        get_dts_ipa_gen_rx_cmn_temp_pool_sz_factor(pdev, ipa_drv_res);
 
 	ipa_dts_get_ulso_data(pdev, ipa_drv_res);
 
