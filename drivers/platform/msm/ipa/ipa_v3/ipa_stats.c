@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -40,6 +42,9 @@
 		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 				DEV_NAME_IPA_LNX_STATS " %s:%d " fmt, ## args); \
 	} while (0)
+
+#define IPA_PERIPHERAL_STATS_MDM_NUM_ENTRIES 20
+#define IPA_PERIPHERAL_STATS_MSM_NUM_ENTRIES 12
 
 static unsigned int dev_num = 1;
 static struct cdev ipa_lnx_stats_ioctl_cdev;
@@ -1882,6 +1887,322 @@ int ipa_spearhead_stats_init()
 	}
 	memset(&poll_pack_and_cred_info, 0, sizeof(poll_pack_and_cred_info));
 	IPA_STATS_ERR("IPA_LNX_STATS_IOCTL init success\n");
+
+	return 0;
+}
+
+/* Non periodic/Event based stats update */
+int ipa3_update_usb_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data) {
+	union ipa_peripheral_stats *peripheral_stats =
+		(union ipa_peripheral_stats *) ipa3_ctx->per_stats_smem_va;
+	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
+		peripheral_stats->mdm.usb_enum_value = IPA_PER_USB_ENUM_TYPE_INVALID;
+		peripheral_stats->mdm.usb_prot_enum_value = IPA_PER_USB_PROT_TYPE_INVALID;
+		peripheral_stats->mdm.usb_max_speed_val = 0;
+		peripheral_stats->mdm.usb_pipo_val = 0;
+	} else if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MSM) {
+		peripheral_stats->msm.usb_enum_value = IPA_PER_USB_ENUM_TYPE_INVALID;
+		peripheral_stats->msm.usb_prot_enum_value = IPA_PER_USB_PROT_TYPE_INVALID;
+		peripheral_stats->msm.usb_max_speed_val = 0;
+		peripheral_stats->msm.usb_pipo_val = 0;
+	}
+	return 0;
+}
+
+int ipa3_update_pcie_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data) {
+	union ipa_peripheral_stats *peripheral_stats =
+		(union ipa_peripheral_stats *) ipa3_ctx->per_stats_smem_va;
+	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
+		peripheral_stats->mdm.pcie_gen_type_val = 0;
+		peripheral_stats->mdm.pcie_width_type_val = PCIE_LINK_WIDTH_DEF;
+		peripheral_stats->mdm.pcie_max_speed_val = 0;
+		peripheral_stats->mdm.pcie_num_lpm_trans_d3 = 0;
+		peripheral_stats->mdm.pcie_num_lpm_trans_m1 = 0;
+		peripheral_stats->mdm.pcie_num_lpm_trans_m2 = 0;
+		peripheral_stats->mdm.pcie_num_lpm_trans_m0 = 0;
+	}
+	return 0;
+}
+
+int ipa3_update_wifi_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data) {
+	union ipa_peripheral_stats *peripheral_stats =
+		(union ipa_peripheral_stats *) ipa3_ctx->per_stats_smem_va;
+	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
+		peripheral_stats->mdm.wifi_enum_type_val = IPA_PER_WIFI_ENUM_TYPE_INVALID;
+		peripheral_stats->mdm.wifi_max_speed_val = 0;
+		peripheral_stats->mdm.wifi_dual_band_enabled_val = 0;
+	} else if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MSM) {
+		peripheral_stats->msm.wifi_enum_type_val = IPA_PER_WIFI_ENUM_TYPE_INVALID;
+		peripheral_stats->msm.wifi_max_speed_val = 0;
+		peripheral_stats->msm.wifi_dual_band_enabled_val = 0;
+	}
+	return 0;
+}
+
+int ipa3_update_eth_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data) {
+	union ipa_peripheral_stats *peripheral_stats =
+		(union ipa_peripheral_stats *) ipa3_ctx->per_stats_smem_va;
+	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
+		peripheral_stats->mdm.eth_client_val = 0;
+		peripheral_stats->mdm.eth_max_speed_val = 0;
+	}
+	return 0;
+}
+
+int ipa3_update_apps_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data) {
+	union ipa_peripheral_stats *peripheral_stats =
+		(union ipa_peripheral_stats *) ipa3_ctx->per_stats_smem_va;
+	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
+		peripheral_stats->mdm.periph_val = 0;
+		peripheral_stats->mdm.periph_wwan_val = 0;
+		peripheral_stats->mdm.periph_type_val = IPA_PER_TYPE_BITMASK_NONE;
+	} else if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MSM) {
+		peripheral_stats->msm.periph_val = 0;
+		peripheral_stats->msm.periph_wwan_val = 0;
+		peripheral_stats->msm.periph_type_val = IPA_PER_TYPE_BITMASK_NONE;
+	}
+	return 0;
+}
+
+/* Periodic stats update */
+int ipa3_update_client_holb_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data) {
+	union ipa_peripheral_stats *peripheral_stats =
+		(union ipa_peripheral_stats *) ipa3_ctx->per_stats_smem_va;
+	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
+		peripheral_stats->mdm.wifi_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->mdm.wifi_holb_uc_stats_num_periph_recovered = 0;
+
+		peripheral_stats->mdm.eth_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->mdm.eth_holb_uc_stats_num_periph_recovered = 0;
+
+		peripheral_stats->mdm.usb_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->mdm.usb_holb_uc_stats_num_periph_recovered = 0;
+	} else if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MSM) {
+		peripheral_stats->msm.wifi_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->msm.wifi_holb_uc_stats_num_periph_recovered = 0;
+
+		peripheral_stats->msm.usb_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->msm.usb_holb_uc_stats_num_periph_recovered = 0;
+	}
+	return 0;
+}
+
+int ipa3_update_dma_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data) {
+	union ipa_peripheral_stats *peripheral_stats =
+		(union ipa_peripheral_stats *) ipa3_ctx->per_stats_smem_va;
+	peripheral_stats->mdm.ipa_dma_bytes_val = 0;
+	return 0;
+}
+
+int ipa3_peripheral_stats_init(union ipa_peripheral_stats *peripheral_stats) {
+
+	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
+		peripheral_stats->mdm.num_entries = IPA_PERIPHERAL_STATS_MDM_NUM_ENTRIES;
+
+		/* TLV for number of peripherals connected to APROC */
+		/* value = IPA_PER_STATS_TYPE_NUM_PERS */
+		peripheral_stats->mdm.periph_id = IPA_PER_STATS_TYPE_NUM_PERS;
+		peripheral_stats->mdm.periph_len = 4;
+		peripheral_stats->mdm.periph_val = 0;
+
+		/* TLV for number of periphers from/to traffic flowing from modem */
+		/* value = IPA_PER_STATS_TYPE_NUM_PERS_WWAN */
+		peripheral_stats->mdm.periph_wwan_id = IPA_PER_STATS_TYPE_NUM_PERS_WWAN;
+		peripheral_stats->mdm.periph_wwan_len = 4;
+		peripheral_stats->mdm.periph_wwan_val = 0;
+
+		/* TLV for bitmask for active/connected peripherals */
+		/* value = IPA_PER_STATS_TYPE_ACT_PER_TYPE */
+		peripheral_stats->mdm.periph_type_id = IPA_PER_STATS_TYPE_ACT_PER_TYPE;
+		peripheral_stats->mdm.periph_type_len = 4;
+		peripheral_stats->mdm.periph_type_val = IPA_PER_TYPE_BITMASK_NONE;
+
+		/* TLV for Current gen info if PCIe interconnect is valid */
+		/* value = IPA_PER_STATS_TYPE_PCIE_GEN */
+		peripheral_stats->mdm.pcie_gen_type_id = IPA_PER_STATS_TYPE_PCIE_GEN;
+		peripheral_stats->mdm.pcie_gen_type_len = 4;
+		peripheral_stats->mdm.pcie_gen_type_val = 0;
+
+		/* TLV for Current gen info if PCIe interconnect is valid */
+		/* value = IPA_PER_STATS_TYPE_PCIE_GEN */
+		peripheral_stats->mdm.pcie_width_type_id = IPA_PER_STATS_TYPE_PCIE_WIDTH;
+		peripheral_stats->mdm.pcie_width_type_len = 4;
+		peripheral_stats->mdm.pcie_width_type_val = PCIE_LINK_WIDTH_DEF;
+
+		/* TLV for Max PCIe speed in current gen in Mbps */
+		/* value = IPA_PER_STATS_TYPE_PCIE_MAX_SPEED */
+		peripheral_stats->mdm.pcie_max_speed_id = IPA_PER_STATS_TYPE_PCIE_MAX_SPEED;
+		peripheral_stats->mdm.pcie_max_speed_len = 4;
+		peripheral_stats->mdm.pcie_max_speed_val = 0;
+
+		/* TLV for number PCIe LPM transitions */
+		/* value = IPA_PER_STATS_TYPE_PCIE_NUM_LPM */
+		peripheral_stats->mdm.pcie_num_lpm_trans_id = IPA_PER_STATS_TYPE_PCIE_NUM_LPM;
+		peripheral_stats->mdm.pcie_num_lpm_trans_len = 8;
+		peripheral_stats->mdm.pcie_num_lpm_trans_d3 = 0;
+		peripheral_stats->mdm.pcie_num_lpm_trans_m1 = 0;
+		peripheral_stats->mdm.pcie_num_lpm_trans_m2 = 0;
+		peripheral_stats->mdm.pcie_num_lpm_trans_m0 = 0;
+
+		/* TLV for USB enumeration type */
+		/* value = IPA_PER_STATS_TYPE_USB_TYPE */
+		peripheral_stats->mdm.usb_enum_id = IPA_PER_STATS_TYPE_USB_TYPE;
+		peripheral_stats->mdm.usb_enum_len = 4;
+		peripheral_stats->mdm.usb_enum_value = IPA_PER_USB_ENUM_TYPE_INVALID;
+
+		/* TLV for Current USB protocol enumeration if active */
+		/* value = IPA_PER_STATS_TYPE_USB_PROT */
+		peripheral_stats->mdm.usb_prot_enum_id = IPA_PER_STATS_TYPE_USB_PROT;
+		peripheral_stats->mdm.usb_prot_enum_len = 4;
+		peripheral_stats->mdm.usb_prot_enum_value = IPA_PER_USB_PROT_TYPE_INVALID;
+
+		/* TLV for Max USB speed in current gen in Mbps */
+		/* value = IPA_PER_STATS_TYPE_USB_MAX_SPEED */
+		peripheral_stats->mdm.usb_max_speed_id = IPA_PER_STATS_TYPE_USB_MAX_SPEED;
+		peripheral_stats->mdm.usb_max_speed_len = 4;
+		peripheral_stats->mdm.usb_max_speed_val = 0;
+
+		/* TLV for Total number of USB plug in/outs, count is only plug ins */
+		/* value = IPA_PER_STATS_TYPE_USB_PIPO */
+		peripheral_stats->mdm.usb_pipo_id = IPA_PER_STATS_TYPE_USB_PIPO;
+		peripheral_stats->mdm.usb_pipo_len = 4;
+		peripheral_stats->mdm.usb_pipo_val = 0;
+
+		/* TLV for Wifi enumeration type*/
+		/* value = IPA_PER_STATS_TYPE_WIFI_ENUM_TYPE */
+		peripheral_stats->mdm.wifi_enum_type_id = IPA_PER_STATS_TYPE_WIFI_ENUM_TYPE;
+		peripheral_stats->mdm.wifi_enum_type_len = 4;
+		peripheral_stats->mdm.wifi_enum_type_val = IPA_PER_WIFI_ENUM_TYPE_INVALID;
+
+		/* TLV for Theoritical Max WLAN speed in current gen in Mbps (pipe for 5GHz in case of dual band) */
+		/* value = IPA_PER_STATS_TYPE_WIFI_MAX_SPEED */
+		peripheral_stats->mdm.wifi_max_speed_id = IPA_PER_STATS_TYPE_WIFI_MAX_SPEED;
+		peripheral_stats->mdm.wifi_max_speed_len = 4;
+		peripheral_stats->mdm.wifi_max_speed_val = 0;
+
+		/* TLV for Theoretical Max WLAN speed on the 2.4GHz pipe, value of 0 means disabled */
+		/* value = IPA_PER_STATS_TYPE_WIFI_DUAL_BAND_EN */
+		peripheral_stats->mdm.wifi_dual_band_enabled_id = IPA_PER_STATS_TYPE_WIFI_DUAL_BAND_EN;
+		peripheral_stats->mdm.wifi_dual_band_enabled_len = 4;
+		peripheral_stats->mdm.wifi_dual_band_enabled_val = 0;
+
+		/* TLV for the type of ethernet client - Realtek/AQC */
+		/* value = IPA_PER_STATS_TYPE_ETH_CLIENT */
+		peripheral_stats->mdm.eth_client_id = IPA_PER_STATS_TYPE_ETH_CLIENT;
+		peripheral_stats->mdm.eth_client_len = 4;
+		peripheral_stats->mdm.eth_client_val = 0;
+
+		/* TLV for Max Eth link speed */
+		/* value = IPA_PER_STATS_TYPE_ETH_MAX_SPEED */
+		peripheral_stats->mdm.eth_max_speed_id = IPA_PER_STATS_TYPE_ETH_MAX_SPEED;
+		peripheral_stats->mdm.eth_max_speed_len = 4;
+		peripheral_stats->mdm.eth_max_speed_val = 0;
+
+		/* TLV for Total number of bytes txferred through IPA DMA channels over PCIe */
+		/* For cases where GSI used for QDSS direct DMA, need to extract bytes stat from GSI FW */
+		/* value = IPA_PER_STATS_TYPE_IPA_DMA_BYTES */
+		peripheral_stats->mdm.ipa_dma_bytes_id = IPA_PER_STATS_TYPE_IPA_DMA_BYTES;
+		peripheral_stats->mdm.ipa_dma_bytes_len = 4;
+		peripheral_stats->mdm.ipa_dma_bytes_val = 0;
+
+		/* TLV for number of wifi peripherals connected to APROC */
+		/* value = IPA_PER_STATS_TYPE_WIFI_HOLB_UC */
+		peripheral_stats->mdm.wifi_holb_uc_stats_id = IPA_PER_STATS_TYPE_WIFI_HOLB_UC;
+		peripheral_stats->mdm.wifi_holb_uc_stats_len = 4;
+		peripheral_stats->mdm.wifi_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->mdm.wifi_holb_uc_stats_num_periph_recovered = 0;
+
+		/* TLV for number of eth peripherals connected to APROC */
+		/* value = IPA_PER_STATS_TYPE_ETH_HOLB_UC */
+		peripheral_stats->mdm.eth_holb_uc_stats_id = IPA_PER_STATS_TYPE_ETH_HOLB_UC;
+		peripheral_stats->mdm.eth_holb_uc_stats_len = 4;
+		peripheral_stats->mdm.eth_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->mdm.eth_holb_uc_stats_num_periph_recovered = 0;
+
+		/* TLV for number of usb peripherals connected to APROC */
+		/* value = IPA_PER_STATS_TYPE_USB_HOLB_UC */
+		peripheral_stats->mdm.usb_holb_uc_stats_id = IPA_PER_STATS_TYPE_USB_HOLB_UC;
+		peripheral_stats->mdm.usb_holb_uc_stats_len = 4;
+		peripheral_stats->mdm.usb_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->mdm.usb_holb_uc_stats_num_periph_recovered = 0;
+
+	} else if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MSM) {
+		peripheral_stats->msm.num_entries = IPA_PERIPHERAL_STATS_MSM_NUM_ENTRIES;
+
+		/* TLV for number of peripherals connected to APROC */
+		/* value = IPA_PER_STATS_TYPE_NUM_PERS */
+		peripheral_stats->msm.periph_id = IPA_PER_STATS_TYPE_NUM_PERS;
+		peripheral_stats->msm.periph_len = 4;
+		peripheral_stats->msm.periph_val = 0;
+
+		/* TLV for number of periphers from/to traffic flowing from modem */
+		/* value = IPA_PER_STATS_TYPE_NUM_PERS_WWAN */
+		peripheral_stats->msm.periph_wwan_id = IPA_PER_STATS_TYPE_NUM_PERS_WWAN;
+		peripheral_stats->msm.periph_wwan_len = 4;
+		peripheral_stats->msm.periph_wwan_val = 0;
+
+		/* TLV for bitmask for active/connected peripherals */
+		/* value = IPA_PER_STATS_TYPE_ACT_PER_TYPE */
+		peripheral_stats->msm.periph_type_id = IPA_PER_STATS_TYPE_ACT_PER_TYPE;
+		peripheral_stats->msm.periph_type_len = 4;
+		peripheral_stats->msm.periph_type_val = IPA_PER_TYPE_BITMASK_NONE;
+
+		/* TLV for USB enumeration type */
+		/* value = IPA_PER_STATS_TYPE_USB_TYPE */
+		peripheral_stats->msm.usb_enum_id = IPA_PER_STATS_TYPE_USB_TYPE;
+		peripheral_stats->msm.usb_enum_len = 4;
+		peripheral_stats->msm.usb_enum_value = IPA_PER_USB_ENUM_TYPE_INVALID;
+
+		/* TLV for Current USB protocol enumeration if active */
+		/* value = IPA_PER_STATS_TYPE_USB_PROT */
+		peripheral_stats->msm.usb_prot_enum_id = IPA_PER_STATS_TYPE_USB_PROT;
+		peripheral_stats->msm.usb_prot_enum_len = 4;
+		peripheral_stats->msm.usb_prot_enum_value = IPA_PER_USB_PROT_TYPE_INVALID;
+
+		/* TLV for Max USB speed in current gen in Mbps */
+		/* value = IPA_PER_STATS_TYPE_USB_MAX_SPEED */
+		peripheral_stats->msm.usb_max_speed_id = IPA_PER_STATS_TYPE_USB_MAX_SPEED;
+		peripheral_stats->msm.usb_max_speed_len = 4;
+		peripheral_stats->msm.usb_max_speed_val = 0;
+
+		/* TLV for Total number of USB plug in/outs, count is only plug ins */
+		/* value = IPA_PER_STATS_TYPE_USB_PIPO */
+		peripheral_stats->msm.usb_pipo_id = IPA_PER_STATS_TYPE_USB_PIPO;
+		peripheral_stats->msm.usb_pipo_len = 4;
+		peripheral_stats->msm.usb_pipo_val = 0;
+
+		/* TLV for Wifi enumeration type*/
+		/* value = IPA_PER_STATS_TYPE_WIFI_ENUM_TYPE */
+		peripheral_stats->msm.wifi_enum_type_id = IPA_PER_STATS_TYPE_WIFI_ENUM_TYPE;
+		peripheral_stats->msm.wifi_enum_type_len = 4;
+		peripheral_stats->msm.wifi_enum_type_val = IPA_PER_WIFI_ENUM_TYPE_INVALID;
+
+		/* TLV for Theoritical Max WLAN speed in current gen in Mbps (pipe for 5GHz in case of dual band) */
+		/* value = IPA_PER_STATS_TYPE_WIFI_MAX_SPEED */
+		peripheral_stats->msm.wifi_max_speed_id = IPA_PER_STATS_TYPE_WIFI_MAX_SPEED;
+		peripheral_stats->msm.wifi_max_speed_len = 4;
+		peripheral_stats->msm.wifi_max_speed_val = 0;
+
+		/* TLV for Theoretical Max WLAN speed on the 2.4GHz pipe, value of 0 means disabled */
+		/* value = IPA_PER_STATS_TYPE_WIFI_DUAL_BAND_EN */
+		peripheral_stats->msm.wifi_dual_band_enabled_id = IPA_PER_STATS_TYPE_WIFI_DUAL_BAND_EN;
+		peripheral_stats->msm.wifi_dual_band_enabled_len = 4;
+		peripheral_stats->msm.wifi_dual_band_enabled_val = 0;
+
+		/* TLV for number of wifi peripherals connected to APROC */
+		/* value = IPA_PER_STATS_TYPE_WIFI_HOLB_UC */
+		peripheral_stats->msm.wifi_holb_uc_stats_id = IPA_PER_STATS_TYPE_WIFI_HOLB_UC;
+		peripheral_stats->msm.wifi_holb_uc_stats_len = 4;
+		peripheral_stats->msm.wifi_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->msm.wifi_holb_uc_stats_num_periph_recovered = 0;
+
+		/* TLV for number of usb peripherals connected to APROC */
+		/* value = IPA_PER_STATS_TYPE_USB_HOLB_UC */
+		peripheral_stats->msm.usb_holb_uc_stats_id = IPA_PER_STATS_TYPE_USB_HOLB_UC;
+		peripheral_stats->msm.usb_holb_uc_stats_len = 4;
+		peripheral_stats->msm.usb_holb_uc_stats_num_periph_bad = 0;
+		peripheral_stats->msm.usb_holb_uc_stats_num_periph_recovered = 0;
+	}
 
 	return 0;
 }
