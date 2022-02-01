@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1394,7 +1395,7 @@ bool wlan_vdev_mlme_is_mlo_vdev(struct wlan_objmgr_vdev *vdev)
 	return wlan_vdev_mlme_feat_ext2_cap_get(vdev, WLAN_VDEV_FEXT2_MLO);
 }
 
-#ifdef WLAN_MLO_MCAST
+#ifdef WLAN_MCAST_MLO
 /**
  * wlan_vdev_mlme_is_mlo_mcast_vdev() - whether it is mlo mcast vdev or not
  * @vdev: VDEV object
