@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +65,28 @@
 		"gSetRTSForSIFSBursting", \
 		0, \
 		"Set rts for sifs bursting")
+
+#ifdef WLAN_FEATURE_OFDM_SCRAMBLER_SEED
+/*
+ * <ini>
+ * gEnableUpdateScramSeed - Enable/Disable OFDM scambler seed
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_OFDM_SCRAMBLER_SEED CFG_INI_BOOL( \
+	"gEnableUpdateScramSeed", \
+	false, \
+	"Enable OFDM Scrambler Seed")
+
+#define ENABLE_OFDM_SCRAMBLER_SEED CFG(CFG_ENABLE_OFDM_SCRAMBLER_SEED)
+#else
+#define ENABLE_OFDM_SCRAMBLER_SEED
+#endif
 
 /*
  * <ini>
@@ -897,6 +920,7 @@
 	CFG(CFG_ENABLE_FW_WOW_MODULE_LOG_LEVEL) \
 	CFG(CFG_SAP_SHO_CONFIG) \
 	CFG(CFG_DISABLE_HW_ASSIST) \
-	CFG(CFG_ENABLE_PCI_GEN)
+	CFG(CFG_ENABLE_PCI_GEN) \
+	ENABLE_OFDM_SCRAMBLER_SEED
 
 #endif

@@ -7184,6 +7184,29 @@ err:
 	return -EINVAL;
 }
 
+#ifdef WLAN_FEATURE_OFDM_SCRAMBLER_SEED
+/**
+ * wlan_hdd_set_ofdm_scrambler_seed() - Set OFDM Scrambler Seed config to FW
+ * @adapter: HDD adapter
+ * @sval: value to be sent for WMI_PDEV_PARAM_EN_UPDATE_SCRAM_SEED command
+ *
+ * Return: 0 on success or errno on failure
+ */
+static inline int wlan_hdd_set_ofdm_scrambler_seed(struct hdd_adapter *adapter,
+						   int sval)
+{
+	return sme_cli_set_command(adapter->vdev_id,
+				   WMI_PDEV_PARAM_EN_UPDATE_SCRAM_SEED, sval,
+				   PDEV_CMD);
+}
+#else
+static inline int wlan_hdd_set_ofdm_scrambler_seed(struct hdd_adapter *adapter,
+						   int sval)
+{
+	return 0;
+}
+#endif
+
 /**
  * hdd_set_fw_params() - Set parameters to firmware
  * @adapter: HDD adapter
@@ -7205,6 +7228,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	uint8_t enable_tx_sch_delay, dfs_chan_ageout_time;
 	uint32_t dtim_sel_diversity, enable_secondary_rate;
 	bool sap_xlna_bypass;
+	bool enable_ofdm_scrambler_seed;
 
 	hdd_enter_dev(adapter->dev);
 
@@ -7250,6 +7274,18 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	}
 	if (ret) {
 		hdd_err("Failed to set WMI_PDEV_PARAM_TX_SCH_DELAY");
+		goto error;
+	}
+
+	ret = -1;
+	if (QDF_IS_STATUS_SUCCESS(ucfg_fwol_get_ofdm_scrambler_seed(
+				hdd_ctx->psoc, &enable_ofdm_scrambler_seed))) {
+		ret = wlan_hdd_set_ofdm_scrambler_seed(
+						adapter,
+						enable_ofdm_scrambler_seed);
+	}
+	if (ret) {
+		hdd_err("Failed to set WMI_PDEV_PARAM_EN_UPDATE_SCRAM_SEED");
 		goto error;
 	}
 
