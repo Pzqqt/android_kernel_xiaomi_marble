@@ -2088,7 +2088,8 @@ static int _sde_connector_lm_preference(struct sde_connector *sde_conn,
 		return -EINVAL;
 	}
 
-	sde_hw_mixer_set_preference(sde_kms->catalog, num_lm, disp_type);
+	sde_conn->lm_mask = sde_hw_mixer_set_preference(sde_kms->catalog,
+							num_lm, disp_type);
 
 	return ret;
 }
