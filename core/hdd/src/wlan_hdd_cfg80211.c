@@ -2861,6 +2861,10 @@ wlan_hdd_cfg80211_do_acs_policy[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1] = {
 				.len = sizeof(NLA_U8) * NUM_CHANNELS },
 	[QCA_WLAN_VENDOR_ATTR_ACS_FREQ_LIST] = { .type = NLA_BINARY,
 				.len = sizeof(NLA_U32) * NUM_CHANNELS },
+	[QCA_WLAN_VENDOR_ATTR_ACS_EHT_ENABLED] = { .type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_ACS_PUNCTURE_BITMAP] = { .type = NLA_U16 },
+	[QCA_WLAN_VENDOR_ATTR_ACS_EDMG_ENABLED] = { .type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_ACS_EDMG_CHANNEL] = { .type = NLA_U8 },
 };
 
 int hdd_start_vendor_acs(struct hdd_adapter *adapter)
@@ -3172,7 +3176,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	struct sk_buff *temp_skbuff;
 	int ret, i;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
-	bool ht_enabled, ht40_enabled, vht_enabled;
+	bool ht_enabled, ht40_enabled, vht_enabled, eht_enabled;
 	uint16_t ch_width;
 	enum qca_wlan_vendor_acs_hw_mode hw_mode;
 	enum policy_mgr_con_mode pm_mode;
@@ -3283,6 +3287,15 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		else
 			ch_width = 20;
 	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_EHT_ENABLED])
+		eht_enabled =
+			nla_get_flag(tb[QCA_WLAN_VENDOR_ATTR_ACS_EHT_ENABLED]);
+	else
+		eht_enabled = 0;
+
+	if (ch_width == 320 && !eht_enabled)
+		ch_width = 160;
 
 	/* this may be possible, when sap_force_11n_for_11ac or
 	 * go_force_11n_for_11ac is set
