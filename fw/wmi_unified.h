@@ -37324,6 +37324,7 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_multiple_peer_group_cmd_fixed_param */
     A_UINT32 vdev_id;
+    A_UINT32 pdev_id;
     /** Sub command id - Currently supported command ids are
      *  WMI_PEER_REMOVE_WDS_ENTRY_CMDID
      */
