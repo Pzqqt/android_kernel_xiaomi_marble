@@ -1584,7 +1584,6 @@ wlan_cfg80211_mc_bmiss_get_infra_cp_stats(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct infra_cp_stats_event *priv, *out;
 	struct bmiss_infra_cp_stats_event *bmiss_event;
-	struct wlan_objmgr_peer *peer;
 	struct osif_request *request;
 	struct infra_cp_stats_cmd_info info = {0};
 	static const struct osif_request_params params = {
@@ -1640,14 +1639,6 @@ wlan_cfg80211_mc_bmiss_get_infra_cp_stats(struct wlan_objmgr_vdev *vdev,
 	info.num_pdev_ids = 0;
 
 	qdf_mem_copy(&info.peer_mac_addr[0], bmiss_peer_mac, QDF_MAC_ADDR_SIZE);
-	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
-	if (!peer) {
-		osif_err("peer is null");
-		*errno = -EINVAL;
-		goto get_bmiss_stats_fail;
-	}
-	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
-
 	status = ucfg_infra_cp_stats_register_resp_cb(wlan_vdev_get_psoc(vdev),
 						      &info);
 	if (QDF_IS_STATUS_ERROR(status)) {
