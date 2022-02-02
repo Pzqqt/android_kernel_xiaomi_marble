@@ -292,19 +292,30 @@ enum {
 	NUM_SMEM_SUBSYSTEMS,
 };
 
-#define IPA_WDI_RX_RING_RES			0
-#define IPA_WDI_RX_RING_RP_RES		1
-#define IPA_WDI_RX_COMP_RING_RES	2
-#define IPA_WDI_RX_COMP_RING_WP_RES	3
-#define IPA_WDI_TX_RING_RES			4
-#define IPA_WDI_CE_RING_RES			5
-#define IPA_WDI_CE_DB_RES			6
-#define IPA_WDI_TX_DB_RES			7
-#define IPA_WDI_TX1_RING_RES		8
-#define IPA_WDI_CE1_RING_RES		9
-#define IPA_WDI_CE1_DB_RES			10
-#define IPA_WDI_TX1_DB_RES			11
-#define IPA_WDI_MAX_RES				12
+#define IPA_WDI_RX_RING_RES            0
+#define IPA_WDI_RX_RING_RP_RES         1
+#define IPA_WDI_RX_COMP_RING_RES       2
+#define IPA_WDI_RX_COMP_RING_WP_RES    3
+#define IPA_WDI_RX2_RING_RES           4
+#define IPA_WDI_RX2_RING_RP_RES        5
+#define IPA_WDI_RX2_COMP_RING_RES      6
+#define IPA_WDI_RX2_COMP_RING_WP_RES   7
+#define IPA_WDI_TX_RING_RES            8
+#define IPA_WDI_CE_RING_RES            9
+#define IPA_WDI_CE_DB_RES              10
+#define IPA_WDI_TX_DB_RES              11
+#define IPA_WDI_TX1_RING_RES           12
+#define IPA_WDI_CE1_RING_RES           13
+#define IPA_WDI_CE1_DB_RES             14
+#define IPA_WDI_TX1_DB_RES             15
+#define IPA_WDI_TX2_RING_RES           16
+#define IPA_WDI_CE2_RING_RES           17
+#define IPA_WDI_CE2_DB_RES             18
+#define IPA_WDI_TX2_DB_RES             19
+#define IPA_WDI_MAX_RES                20
+
+#define IPA_WDI3_TX2_DIR 4
+#define IPA_WDI3_RX2_DIR 5
 
 /* use QMAP header reserved bit to identify tethered traffic */
 #define IPA_QMAP_TETH_BIT (1 << 30)
