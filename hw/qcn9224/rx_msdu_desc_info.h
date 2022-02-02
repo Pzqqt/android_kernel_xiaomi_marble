@@ -32,7 +32,7 @@
 
 
 struct rx_msdu_desc_info {
-#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+#ifndef BIG_ENDIAN_HOST
              uint32_t first_msdu_in_mpdu_flag                                 :  1,  
                       last_msdu_in_mpdu_flag                                  :  1,  
                       msdu_continuation                                       :  1,  

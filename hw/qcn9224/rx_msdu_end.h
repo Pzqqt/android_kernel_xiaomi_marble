@@ -34,7 +34,7 @@
 
 
 struct rx_msdu_end {
-#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+#ifndef BIG_ENDIAN_HOST
              uint32_t rxpcu_mpdu_filter_in_category                           :  2,  
                       sw_frame_group_id                                       :  7,  
                       reserved_0                                              :  7,  
