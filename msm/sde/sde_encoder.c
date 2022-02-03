@@ -220,10 +220,11 @@ static void _sde_encoder_control_fal10_veto(struct drm_encoder *drm_enc, bool ve
 	bool clone_mode;
 	struct sde_kms *sde_kms = sde_encoder_get_kms(drm_enc);
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
-	struct sde_uidle_cfg *uidle_cfg;
 
-	if (!sde_kms->catalog || !sde_kms->hw_uidle ||
-			!sde_kms->hw_uidle->ops.uidle_fal10_override) {
+	if (sde_kms->catalog && !sde_kms->catalog->uidle_cfg.uidle_rev)
+		return;
+
+	if (!sde_kms->hw_uidle || !sde_kms->hw_uidle->ops.uidle_fal10_override) {
 		SDE_ERROR("invalid args\n");
 		return;
 	}
@@ -232,7 +233,6 @@ static void _sde_encoder_control_fal10_veto(struct drm_encoder *drm_enc, bool ve
 	 * clone mode is the only scenario where we want to enable software override
 	 * of fal10 veto.
 	 */
-	uidle_cfg = &sde_kms->catalog->uidle_cfg;
 	clone_mode = sde_encoder_in_clone_mode(drm_enc);
 	SDE_EVT32(DRMID(drm_enc), clone_mode, veto);
 
