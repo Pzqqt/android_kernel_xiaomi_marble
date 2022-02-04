@@ -1330,7 +1330,7 @@ static int _sde_rm_reserve_ctls(
 		u8 *_ctl_ids)
 {
 	struct sde_rm_hw_blk *ctls[MAX_BLOCKS];
-	struct sde_rm_hw_iter iter;
+	struct sde_rm_hw_iter iter, curr;
 	int i = 0;
 
 	if (!top->num_ctl) {
@@ -1340,6 +1340,7 @@ static int _sde_rm_reserve_ctls(
 
 	memset(&ctls, 0, sizeof(ctls));
 
+	sde_rm_init_hw_iter(&curr, rsvp->enc_id, SDE_HW_BLK_CTL);
 	sde_rm_init_hw_iter(&iter, 0, SDE_HW_BLK_CTL);
 	while (_sde_rm_get_hw_locked(rm, &iter)) {
 		const struct sde_hw_ctl *ctl = to_sde_hw_ctl(iter.blk->hw);
@@ -1371,6 +1372,12 @@ static int _sde_rm_reserve_ctls(
 			SDE_DEBUG(
 				"display pref not met. display_type: %d primary_pref: %d\n",
 				reqs->hw_res.display_type, primary_pref);
+			continue;
+		}
+
+		if (_sde_rm_get_hw_locked(rm, &curr) && (curr.blk->id != iter.blk->id)) {
+			SDE_EVT32(curr.blk->id, iter.blk->id, SDE_EVTLOG_FUNC_CASE1);
+			SDE_DEBUG("ctl in use:%d avoiding new:%d\n", curr.blk->id, iter.blk->id);
 			continue;
 		}
 
