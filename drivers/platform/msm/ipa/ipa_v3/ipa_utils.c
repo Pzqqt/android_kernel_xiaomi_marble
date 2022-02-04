@@ -9565,6 +9565,21 @@ void ipa3_tag_destroy_imm(void *user1, int user2)
 	ipahal_destroy_imm_cmd(user1);
 }
 
+void ipa3_tag_destroy_reg_read_imm(void *user1, int user2)
+{
+	struct ipahal_reg_read_imm_cmd_pyld *reg_read_cmd =
+		(struct ipahal_reg_read_imm_cmd_pyld *)user1;
+	if (reg_read_cmd->cmd.base) {
+		dma_unmap_single(ipa3_ctx->pdev,
+			reg_read_cmd->cmd.phys_base,
+			reg_read_cmd->cmd.size,
+			DMA_TO_DEVICE);
+		kfree(reg_read_cmd->cmd.base);
+	}
+	ipahal_destroy_imm_cmd(reg_read_cmd->cmd_pyld);
+	kfree(reg_read_cmd);
+}
+
 static void ipa3_tag_free_skb(void *user1, int user2)
 {
 	dev_kfree_skb_any((struct sk_buff *)user1);
@@ -9606,10 +9621,9 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 	struct ipahal_imm_cmd_register_write reg_write_coal_close;
 	struct ipahal_imm_cmd_register_read dummy_reg_read;
 	int req_num_tag_desc = REQUIRED_TAG_PROCESS_DESCRIPTORS;
-	struct ipa_mem_buffer cmd;
+	struct ipahal_reg_read_imm_cmd_pyld *reg_read_cmd = NULL;
 	u32 offset = 0;
 
-	memset(&cmd, 0, sizeof(struct ipa_mem_buffer));
 	/**
 	 * We use a descriptor for closing coalsceing endpoint
 	 * by immediate command. So, REQUIRED_TAG_PROCESS_DESCRIPTORS
@@ -9684,12 +9698,31 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 		++desc_idx;
 	}
 	if (ipa3_ctx->ulso_wa) {
-		/* dummary regsiter read IC with HPS clear*/
-		cmd.size = 4;
-		cmd.base = dma_alloc_coherent(ipa3_ctx->pdev, cmd.size,
-			&cmd.phys_base, GFP_KERNEL);
-		if (cmd.base == NULL) {
+		reg_read_cmd = kzalloc(sizeof(*reg_read_cmd), GFP_KERNEL);
+		if (!reg_read_cmd) {
+			IPAERR("no mem for register read command\n");
 			res = -ENOMEM;
+			goto fail_free_desc;
+		}
+		/* dummary regsiter read IC with HPS clear*/
+		reg_read_cmd->cmd.size = 4;
+		reg_read_cmd->cmd.base = kzalloc(reg_read_cmd->cmd.size, GFP_KERNEL);;
+		if (reg_read_cmd->cmd.base == NULL) {
+			IPAERR("no mem for register read dummy memory\n");
+			res = -ENOMEM;
+			kfree(reg_read_cmd);
+			goto fail_free_desc;
+		}
+		reg_read_cmd->cmd.phys_base =
+			dma_map_single(ipa3_ctx->pdev,
+			reg_read_cmd->cmd.base,
+			reg_read_cmd->cmd.size,
+			DMA_FROM_DEVICE);
+		if (dma_mapping_error(ipa3_ctx->pdev, reg_read_cmd->cmd.phys_base)) {
+			IPAERR("failed to do dma map for dummy memory.\n");
+			res = -ENOMEM;
+			kfree(reg_read_cmd->cmd.base);
+			kfree(reg_read_cmd);
 			goto fail_free_desc;
 		}
 		offset = ipahal_get_reg_n_ofst(IPA_STAT_QUOTA_BASE_n,
@@ -9697,18 +9730,26 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 		dummy_reg_read.skip_pipeline_clear = false;
 		dummy_reg_read.pipeline_clear_options = IPAHAL_HPS_CLEAR;
 		dummy_reg_read.offset = offset;
-		dummy_reg_read.sys_addr = cmd.phys_base;
-		cmd_pyld = ipahal_construct_imm_cmd(
+		dummy_reg_read.sys_addr = reg_read_cmd->cmd.phys_base;
+		reg_read_cmd->cmd_pyld = ipahal_construct_imm_cmd(
 			IPA_IMM_CMD_REGISTER_READ,
 			&dummy_reg_read, false);
-		if (!cmd_pyld) {
+		if (!reg_read_cmd->cmd_pyld) {
 			IPAERR("failed to construct DUMMY READ IC\n");
 			res = -ENOMEM;
+			if (reg_read_cmd->cmd.base) {
+				dma_unmap_single(ipa3_ctx->pdev,
+					reg_read_cmd->cmd.phys_base,
+					reg_read_cmd->cmd.size,
+					DMA_TO_DEVICE);
+				kfree(reg_read_cmd->cmd.base);
+			}
+			kfree(reg_read_cmd);
 			goto fail_free_desc;
 		}
-		ipa3_init_imm_cmd_desc(&tag_desc[desc_idx], cmd_pyld);
-		tag_desc[desc_idx].callback = ipa3_tag_destroy_imm;
-		tag_desc[desc_idx].user1 = cmd_pyld;
+		ipa3_init_imm_cmd_desc(&tag_desc[desc_idx], reg_read_cmd->cmd_pyld);
+		tag_desc[desc_idx].callback = ipa3_tag_destroy_reg_read_imm;
+		tag_desc[desc_idx].user1 = reg_read_cmd;
 		++desc_idx;
 	}
 
@@ -9822,21 +9863,12 @@ retry_alloc:
 		WARN_ON(1);
 		if (atomic_dec_return(&comp->cnt) == 0)
 			kfree(comp);
-		if (cmd.base) {
-			dma_free_coherent(ipa3_ctx->pdev, cmd.size,
-				cmd.base, cmd.phys_base);
-		}
 		return -ETIME;
 	}
 
 	IPADBG("TAG response arrived!\n");
 	if (atomic_dec_return(&comp->cnt) == 0)
 		kfree(comp);
-
-	if (cmd.base) {
-		dma_free_coherent(ipa3_ctx->pdev, cmd.size,
-			cmd.base, cmd.phys_base);
-	}
 
 	/*
 	 * sleep for short period to ensure IPA wrote all packets to
@@ -9864,10 +9896,6 @@ fail_free_desc:
 		if (tag_desc[i].callback)
 			tag_desc[i].callback(tag_desc[i].user1,
 				tag_desc[i].user2);
-	if (cmd.base) {
-		dma_free_coherent(ipa3_ctx->pdev, cmd.size,
-			cmd.base, cmd.phys_base);
-	}
 fail_free_tag_desc:
 	kfree(tag_desc);
 	return res;
