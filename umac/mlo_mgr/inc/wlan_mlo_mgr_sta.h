@@ -144,6 +144,28 @@ struct wlan_objmgr_vdev *
 ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev);
 
 /*
+ * wlan_mlo_get_assoc_link_vdev - API to get assoc link vdev
+ *
+ * @mlo_dev_ctx: mlo dev ctx
+ *
+ * Return: MLD assoc link vdev
+ */
+struct wlan_objmgr_vdev *
+wlan_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * mlo_update_connected_links_bmap: update connected links bitmap
+ *
+ * @mlo_dev_ctx: mlo dev context ptr
+ * @ml_partner_info: ml parnter info ptr
+ *
+ * Return: none
+ */
+void
+mlo_update_connected_links_bmap(struct wlan_mlo_dev_context *mlo_dev_ctx,
+				struct mlo_partner_info ml_parnter_info);
+
+/*
  * API to have operation on ml vdevs
  */
 typedef void (*mlo_vdev_op_handler)(struct wlan_objmgr_vdev *vdev,
@@ -439,6 +461,11 @@ ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
 
 static inline void
 mlo_update_connect_req_links(struct wlan_objmgr_vdev *vdev, uint8_t value)
+{ }
+
+static inline void
+mlo_update_connected_links_bmap(struct wlan_mlo_dev_context *mlo_dev_ctx,
+				struct mlo_partner_info ml_parnter_info)
 { }
 
 static inline bool

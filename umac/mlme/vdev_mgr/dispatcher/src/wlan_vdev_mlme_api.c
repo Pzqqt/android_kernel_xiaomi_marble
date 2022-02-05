@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -335,3 +336,51 @@ QDF_STATUS wlan_vdev_is_up_active_state(struct wlan_objmgr_vdev *vdev)
 }
 
 qdf_export_symbol(wlan_vdev_is_up_active_state);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+bool
+wlan_vdev_mlme_get_is_mlo_link(struct wlan_objmgr_psoc *psoc,
+			       uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_link = false;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return is_link;
+	}
+
+	if (wlan_vdev_mlme_is_mlo_vdev(vdev) &&
+	    wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		is_link = true;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return is_link;
+}
+
+bool
+wlan_vdev_mlme_get_is_mlo_vdev(struct wlan_objmgr_psoc *psoc,
+			       uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_mlo_vdev = false;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return is_mlo_vdev;
+	}
+
+	if (wlan_vdev_mlme_is_mlo_vdev(vdev) &&
+	    !wlan_vdev_mlme_is_mlo_link_vdev(vdev))
+		is_mlo_vdev = true;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return is_mlo_vdev;
+}
+#endif

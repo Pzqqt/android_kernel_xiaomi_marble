@@ -96,7 +96,7 @@ mlo_get_assoc_link_vdev(struct wlan_mlo_dev_context *mlo_dev_ctx)
 }
 
 struct wlan_objmgr_vdev *
-ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
+wlan_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
 
@@ -104,6 +104,12 @@ ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
 		return NULL;
 
 	return mlo_get_assoc_link_vdev(mlo_dev_ctx);
+}
+
+struct wlan_objmgr_vdev *
+ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return wlan_mlo_get_assoc_link_vdev(vdev);
 }
 
 /**
@@ -589,7 +595,7 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
-static inline void
+void
 mlo_update_connected_links_bmap(struct wlan_mlo_dev_context *mlo_dev_ctx,
 				struct mlo_partner_info ml_parnter_info)
 {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,16 +82,6 @@
 char dp_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_INT_NUM_CONTEXTS][DP_IRQ_NAME_LEN] = {};
 char ce_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_MAX_CE_COUNT][DP_IRQ_NAME_LEN] = {};
 
-#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
-static inline int hif_get_pci_slot(struct hif_softc *scn)
-{
-	/*
-	 * If WLAN_MAX_PDEVS is defined as 1, always return pci slot 0
-	 * since there is only one pci device attached.
-	 */
-	return 0;
-}
-#else
 static inline int hif_get_pci_slot(struct hif_softc *scn)
 {
 	int pci_slot = pld_get_pci_slot(scn->qdf_dev->dev);
@@ -104,7 +94,6 @@ static inline int hif_get_pci_slot(struct hif_softc *scn)
 		return pci_slot;
 	}
 }
-#endif
 
 /*
  * Top-level interrupt handler for all PCI interrupts from a Target.

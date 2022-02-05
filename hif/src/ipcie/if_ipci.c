@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -116,21 +116,14 @@ static int hif_ce_msi_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 int hif_ipci_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 	uint8_t wake_ce_id;
 
 	hif_ce_prepare_config(hif_sc);
 
-	/* initialize sleep state adjust variables */
-	hif_state->sleep_timer_init = true;
-	hif_state->keep_awake_count = 0;
-	hif_state->fake_sleep = false;
-	hif_state->sleep_ticks = 0;
-
 	status = hif_wlan_enable(hif_sc);
 	if (status) {
 		hif_err("hif_wlan_enable error = %d", status);
-		goto timer_free;
+		return status;
 	}
 
 	A_TARGET_ACCESS_LIKELY(hif_sc);
@@ -162,11 +155,6 @@ unconfig_ce:
 disable_wlan:
 	A_TARGET_ACCESS_UNLIKELY(hif_sc);
 	hif_wlan_disable(hif_sc);
-
-timer_free:
-	qdf_timer_stop(&hif_state->sleep_timer);
-	qdf_timer_free(&hif_state->sleep_timer);
-	hif_state->sleep_timer_init = false;
 
 	hif_err("Failed, status = %d", status);
 	return status;

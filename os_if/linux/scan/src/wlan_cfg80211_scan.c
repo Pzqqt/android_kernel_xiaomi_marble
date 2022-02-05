@@ -1056,6 +1056,12 @@ static void wlan_cfg80211_scan_done_callback(
 
 	if (!netdev) {
 		osif_err("net dev is NULL,Drop scan event Id: %d", scan_id);
+		/*
+		 * Free scan request in case of VENDOR_SCAN as it is
+		 * allocated in driver.
+		 */
+		if (source == VENDOR_SCAN)
+			qdf_mem_free(req);
 		goto allow_suspend;
 	}
 
@@ -1063,6 +1069,12 @@ static void wlan_cfg80211_scan_done_callback(
 	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_OSIF_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		osif_err("Failed to get vdev reference: scan Id: %d", scan_id);
+		/*
+		 * Free scan request in case of VENDOR_SCAN as it is
+		 * allocated in driver.
+		 */
+		if (source == VENDOR_SCAN)
+			qdf_mem_free(req);
 		goto allow_suspend;
 	}
 
