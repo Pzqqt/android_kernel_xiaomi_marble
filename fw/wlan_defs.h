@@ -1366,6 +1366,8 @@ typedef enum {
     MLO_SHMEM_TLV_STRUCT_MLO_GLB_LINK,
     MLO_SHMEM_TLV_STRUCT_MLO_GLB_LINK_INFO,
     MLO_SHMEM_TLV_STRUCT_MLO_GLB_H_SHMEM,
+    MLO_SHMEM_TLV_STRUCT_MLO_GLB_CHIP_CRASH_INFO,
+    MLO_SHMEM_TLV_STRUCT_MLO_GLB_PER_CHIP_CRASH_INFO,
 } MLO_SHMEM_TLV_TAG_ID;
 
 /** Helper macro for params GET/SET of mgmt_rx_reo_snapshot */
@@ -1542,6 +1544,52 @@ typedef struct {
 A_COMPILE_TIME_ASSERT(check_mlo_glb_link_info_8byte_size_quantum,
         (((sizeof(mlo_glb_link_info) % sizeof(A_UINT64) == 0x0))));
 
+typedef enum {
+    MLO_SHMEM_CRASH_PARTNER_CHIPS = 1,
+} MLO_SHMEM_CHIP_CRASH_REASON;
+
+/* glb link info structures used for scratchpad memory (crash and recovery) */
+typedef struct {
+    /* TLV tag and len; tag equals MLO_SHMEM_TLV_STRUCT_MLO_GLB_PER_CHIP_CRASH_INFO */
+    A_UINT32 tlv_header;
+    /**
+     * crash reason, takes value in enum MLO_SHMEM_CHIP_CRASH_REASON
+     */
+    A_UINT32 crash_reason;
+} mlo_glb_per_chip_crash_info;
+
+A_COMPILE_TIME_ASSERT(check_mlo_glb_per_chip_crash_info,
+        (((sizeof(mlo_glb_per_chip_crash_info) % sizeof(A_UINT64) == 0x0))));
+
+/** Helper macro for params GET/SET of mlo_glb_chip_crash_info */
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_NO_OF_CHIPS_GET(chip_info) MLO_SHMEM_GET_BITS(chip_info, 0, 2)
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_NO_OF_CHIPS_SET(chip_info, value) MLO_SHMEM_SET_BITS(chip_info, 0, 2, value)
+
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_VALID_CHIP_BMAP_GET(chip_info) MLO_SHMEM_GET_BITS(chip_info, 2, 3)
+#define MLO_SHMEM_CHIP_CRASH_INFO_PARAM_VALID_CHIP_BMAP_SET(chip_info, value) MLO_SHMEM_SET_BITS(chip_info, 2, 3, value)
+
+typedef struct {
+    /* TLV tag and len; tag equals MLO_SHMEM_TLV_STRUCT_MLO_GLB_CHIP_CRASH_INFO */
+    A_UINT32 tlv_header;
+
+    /**
+     * chip_info
+     *
+     * [1:0]:  no_of_chips
+     * [4:2]:  valid_chip_bmap
+     * [31:6]: reserved
+     */
+    A_UINT32 chip_info;
+    /*  This TLV is followed by array of mlo_glb_per_chip_crash_info:
+     *  mlo_glb_per_chip_crash_info will have mutiple instances equal to num of partner chips
+     *  received by no_of_chips
+     *  mlo_glb_per_chip_crash_info per_chip_crash_info[];
+     */
+} mlo_glb_chip_crash_info;
+
+A_COMPILE_TIME_ASSERT(check_mlo_glb_chip_crash_info,
+        (((sizeof(mlo_glb_chip_crash_info) % sizeof(A_UINT64) == 0x0))));
+
 /** Helper macro for params GET/SET of mlo_glb_h_shmem */
 #define MLO_SHMEM_GLB_H_SHMEM_PARAM_MINOR_VERSION_GET(major_minor_version) MLO_SHMEM_GET_BITS(major_minor_version, 0, 16)
 #define MLO_SHMEM_GLB_H_SHMEM_PARAM_MINOR_VERSION_SET(major_minor_version, value) MLO_SHMEM_SET_BITS(major_minor_version, 0, 16, value)
@@ -1563,6 +1611,7 @@ typedef struct {
 /*  This TLV is followed by TLVs
  *  mlo_glb_rx_reo_snapshot_info reo_snapshot;
  *  mlo_glb_link_info glb_info;
+ *  mlo_glb_chip_crash_info crash_info;
  */
 } mlo_glb_h_shmem;
 
