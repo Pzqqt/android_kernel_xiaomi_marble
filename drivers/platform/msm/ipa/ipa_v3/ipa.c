@@ -6932,7 +6932,8 @@ void ipa3_suspend_handler(enum ipa_irq_type interrupt,
 			pipe_bitmask |= bmsk;
 		bmsk = bmsk << 1;
 
-		if ((i % IPA_EP_PER_REG) == (ep_per_reg - 1)) {
+		if ((i % IPA_EP_PER_REG) == (ep_per_reg - 1)
+			|| (i == ipa3_ctx->ipa_num_pipes - 1)) {
 			IPADBG("interrupt data: %u\n", suspend_data[j]);
 			res = ipa_pm_handle_suspend(pipe_bitmask, j);
 			if (res) {
@@ -9287,7 +9288,10 @@ fail_init_active_client:
 	ipa3_clk = NULL;
 fail_bus_reg:
 	for (i = 0; i < ipa3_ctx->icc_num_paths; i++)
-		if (ipa3_ctx->ctrl->icc_path[i]) {
+		if (IS_ERR_OR_NULL(ipa3_ctx->ctrl->icc_path[i])) {
+			ipa3_ctx->ctrl->icc_path[i] = NULL;
+			break;
+		} else {
 			icc_put(ipa3_ctx->ctrl->icc_path[i]);
 			ipa3_ctx->ctrl->icc_path[i] = NULL;
 		}
@@ -9299,8 +9303,10 @@ fail_mem_ctrl:
 	kfree(ipa3_ctx->ipa_tz_unlock_reg);
 	ipa3_ctx->ipa_tz_unlock_reg = NULL;
 fail_tz_unlock_reg:
-	if (ipa3_ctx->logbuf)
+	if (ipa3_ctx->logbuf) {
 		ipc_log_context_destroy(ipa3_ctx->logbuf);
+		ipa3_ctx->logbuf = NULL;
+	}
 fail_uc_file_alloc:
 	kfree(ipa3_ctx->gsi_fw_file_name);
 	ipa3_ctx->gsi_fw_file_name = NULL;
@@ -10705,6 +10711,8 @@ static int ipa3_attach_to_smmu(void)
 			}
 		}
 	} else {
+		ipa3_ctx->pdev = &ipa3_ctx->master_pdev->dev;
+		ipa3_ctx->uc_pdev = &ipa3_ctx->master_pdev->dev;
 		IPADBG("smmu is disabled\n");
 	}
 	return 0;
@@ -10996,7 +11004,17 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p)
 				return -EOPNOTSUPP;
 			}
 		}
+		/* Below update of pre init for non smmu device, As
+		 * existing flow initialzies only for smmu
+		 * enabled node.*/
+
+		result = ipa3_pre_init(&ipa3_res, pdev_p);
+		if (result) {
+			IPAERR("ipa3_init failed\n");
+			return result;
+		}
 		ipa_fw_load_sm_handle_event(IPA_FW_LOAD_EVNT_SMMU_DONE);
+		goto skip_repeat_pre_init;
 	}
 
 	/* Proceed to real initialization */
@@ -11006,6 +11024,7 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p)
 		return result;
 	}
 
+skip_repeat_pre_init:
 	result = of_platform_populate(pdev_p->dev.of_node,
 		ipa_plat_drv_match, NULL, &pdev_p->dev);
 	if (result) {
