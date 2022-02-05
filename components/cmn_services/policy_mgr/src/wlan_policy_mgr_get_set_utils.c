@@ -1295,6 +1295,27 @@ policy_mgr_are_2_freq_in_sbs_freq_range(struct policy_mgr_psoc_priv_obj *pm_ctx,
 						   freq_1, freq_2);
 }
 
+static bool
+policy_mgr_is_cur_freq_range_sbs(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct policy_mgr_freq_range *freq_range;
+	uint8_t i;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx)
+		return false;
+
+	/* Check if any of the mac is shared */
+	for (i = 0 ; i < MAX_MAC; i++) {
+		freq_range = &pm_ctx->hw_mode.cur_mac_freq_range[i];
+		if (freq_range->low_2ghz_freq && freq_range->low_5ghz_freq)
+			return true;
+	}
+
+	return false;
+}
+
 bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 				       qdf_freq_t freq_1,
 				       qdf_freq_t  freq_2)
@@ -1303,6 +1324,7 @@ bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_freq_range *freq_range;
 	struct policy_mgr_hw_mode_params hw_mode;
 	QDF_STATUS status;
+	bool cur_range_sbs = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx)
@@ -1312,11 +1334,10 @@ bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	if (!policy_mgr_is_hw_dbs_capable(psoc))
 		return true;
 
-	policy_mgr_debug("freq_1 %d freq_2 %d", freq_1, freq_2);
+	policy_mgr_rl_debug("freq_1 %d freq_2 %d", freq_1, freq_2);
 	if (!policy_mgr_is_hw_sbs_capable(psoc)) {
 		/* If not SBS capable but DBS capable */
 		freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_DBS];
-		policy_mgr_dump_freq_range_per_mac(freq_range, MODE_DBS);
 		return policy_mgr_are_2_freq_in_freq_range(pm_ctx, freq_range,
 							   freq_1, freq_2);
 	}
@@ -1328,9 +1349,11 @@ bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
-	policy_mgr_debug("dbs_cap %d sbs_cap %d", hw_mode.dbs_cap,
-			 hw_mode.sbs_cap);
-	policy_mgr_dump_curr_freq_range(pm_ctx);
+	if (hw_mode.dbs_cap || hw_mode.sbs_cap)
+		cur_range_sbs = policy_mgr_is_cur_freq_range_sbs(psoc);
+
+	policy_mgr_rl_debug("dbs_cap %d sbs_cap %d, cur range is sbs %d",
+			    hw_mode.dbs_cap, hw_mode.sbs_cap, cur_range_sbs);
 	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
 	/* current HW is DBS OR SBS check current DBS/SBS freq range */
 	if (hw_mode.dbs_cap || hw_mode.sbs_cap)
@@ -1341,7 +1364,6 @@ bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	 * Current HW is SMM check, if they can lead to SBS or DBS without being
 	 * in same mac, return true only if Both will lead to same mac
 	 */
-	policy_mgr_dump_sbs_freq_range(pm_ctx);
 	if (!policy_mgr_are_2_freq_in_sbs_freq_range(pm_ctx, freq_1, freq_2))
 		return false;
 
@@ -1350,8 +1372,6 @@ bool policy_mgr_are_2_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	 * mac
 	 */
 	freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_DBS];
-	policy_mgr_dump_freq_range_per_mac(freq_range, MODE_DBS);
-
 	return policy_mgr_are_2_freq_in_freq_range(pm_ctx, freq_range,
 						   freq_1, freq_2);
 }
@@ -1412,6 +1432,7 @@ policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_freq_range *freq_range;
 	QDF_STATUS status;
 	struct policy_mgr_hw_mode_params hw_mode;
+	bool cur_range_sbs = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx)
@@ -1421,12 +1442,11 @@ policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	if (!policy_mgr_is_hw_dbs_capable(psoc))
 		return true;
 
-	policy_mgr_debug("freq_1 %d freq_2 %d freq_3 %d", freq_1, freq_2,
-			 freq_3);
+	policy_mgr_rl_debug("freq_1 %d freq_2 %d freq_3 %d", freq_1, freq_2,
+			    freq_3);
 	if (!policy_mgr_is_hw_sbs_capable(psoc)) {
 		/* If not SBS capable but DBS capable */
 		freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_DBS];
-		policy_mgr_dump_freq_range_per_mac(freq_range, MODE_DBS);
 		return policy_mgr_are_3_freq_in_freq_range(pm_ctx, freq_range,
 							   freq_1, freq_2,
 							   freq_3);
@@ -1438,10 +1458,11 @@ policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("policy_mgr_get_current_hw_mode failed");
 		return false;
 	}
+	if (hw_mode.dbs_cap || hw_mode.sbs_cap)
+		cur_range_sbs = policy_mgr_is_cur_freq_range_sbs(psoc);
 
-	policy_mgr_debug("dbs_cap %d sbs_cap %d", hw_mode.dbs_cap,
-			 hw_mode.sbs_cap);
-	policy_mgr_dump_curr_freq_range(pm_ctx);
+	policy_mgr_rl_debug("dbs_cap %d sbs_cap %d, cur range is sbs %d",
+			    hw_mode.dbs_cap, hw_mode.sbs_cap, cur_range_sbs);
 	freq_range = pm_ctx->hw_mode.cur_mac_freq_range;
 
 	/* current HW is DBS OR SBS check current DBS/SBS freq range */
@@ -1453,7 +1474,6 @@ policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	 * Current HW is SMM check, if they can lead to SBS or DBS without being
 	 * in same mac, return true only if both will lead to same mac
 	 */
-	policy_mgr_dump_sbs_freq_range(pm_ctx);
 	if (!policy_mgr_are_3_freq_in_sbs_freq_range(pm_ctx, freq_1, freq_2,
 						     freq_3))
 		return false;
@@ -1461,7 +1481,6 @@ policy_mgr_are_3_freq_on_same_mac(struct wlan_objmgr_psoc *psoc,
 	 * If SBS lead to same mac, check if DBS mode will also lead to same mac
 	 */
 	freq_range = pm_ctx->hw_mode.freq_range_caps[MODE_DBS];
-	policy_mgr_dump_freq_range_per_mac(freq_range, MODE_DBS);
 
 	return policy_mgr_are_3_freq_in_freq_range(pm_ctx, freq_range, freq_1,
 						   freq_2, freq_3);
@@ -1484,27 +1503,6 @@ bool policy_mgr_are_sbs_chan(struct wlan_objmgr_psoc *psoc, qdf_freq_t freq_1,
 		return false;
 
 	return !policy_mgr_are_2_freq_in_sbs_freq_range(pm_ctx, freq_1, freq_2);
-}
-
-static bool
-policy_mgr_is_cur_freq_range_sbs(struct wlan_objmgr_psoc *psoc)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	struct policy_mgr_freq_range *freq_range;
-	uint8_t i;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx)
-		return false;
-
-	/* Check if any of the mac is shared */
-	for (i = 0 ; i < MAX_MAC; i++) {
-		freq_range = &pm_ctx->hw_mode.cur_mac_freq_range[i];
-		if (freq_range->low_2ghz_freq && freq_range->low_5ghz_freq)
-			return true;
-	}
-
-	return false;
 }
 
 bool policy_mgr_is_current_hwmode_sbs(struct wlan_objmgr_psoc *psoc)
@@ -3280,6 +3278,8 @@ void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
 		if (!temp_vdev) {
 			policy_mgr_err("invalid vdev for id %d",
 				       vdev_id_list[i]);
+			*num_ml = 0;
+			*num_non_ml = 0;
 			return;
 		}
 
@@ -3317,6 +3317,66 @@ void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
 	*non_ml_idx = *vdev_id_list;
 }
 #endif
+
+bool policy_mgr_concurrent_sta_doing_dbs(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t num_ml = 0, num_non_ml = 0;
+	uint8_t ml_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t non_ml_idx[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	qdf_freq_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool doing_dbs = false, is_1st_non_ml_24ghz;
+	int i;
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc))
+		return false;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	policy_mgr_get_ml_and_non_ml_sta_count(psoc, &num_ml, ml_idx,
+					       &num_non_ml, non_ml_idx,
+					       freq_list, vdev_id_list);
+	if (num_ml + num_non_ml < 2 || !num_non_ml)
+		goto out;
+
+	/*
+	 * If more than 1 Non-ML STA is present, check whether they are
+	 * within the same band.
+	 */
+	is_1st_non_ml_24ghz =
+		wlan_reg_is_24ghz_ch_freq(freq_list[non_ml_idx[0]]);
+	for (i = 1; i < num_non_ml; i++) {
+		if (wlan_reg_is_24ghz_ch_freq(freq_list[non_ml_idx[i]]) !=
+		    is_1st_non_ml_24ghz) {
+			doing_dbs = true;
+			goto out;
+		}
+	}
+
+	if (num_non_ml >= 2)
+		goto out;
+
+	/* ML STA + Non-ML STA */
+	for (i = 0; i < num_ml; i++) {
+		if (wlan_reg_is_24ghz_ch_freq(freq_list[ml_idx[i]]) !=
+		    is_1st_non_ml_24ghz) {
+			doing_dbs = true;
+			goto out;
+		}
+	}
+
+out:
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	policy_mgr_debug("Non-ML STA count %d, ML STA count %d, doing dbs %d",
+			 num_non_ml, num_ml, doing_dbs);
+	return doing_dbs;
+}
 
 bool policy_mgr_max_concurrent_connections_reached(
 		struct wlan_objmgr_psoc *psoc)

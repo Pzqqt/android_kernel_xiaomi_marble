@@ -1285,6 +1285,9 @@ $(call add-wlan-objs,umac_ifmgr,$(UMAC_INTERFACE_MGR_OBJS))
 UMAC_MLO_MGR_CMN_DIR :=	$(WLAN_COMMON_ROOT)/umac/mlo_mgr
 MLO_MGR_TARGET_IF_DIR := $(WLAN_COMMON_ROOT)/target_if/mlo_mgr
 
+UMAC_MLO_MGR_CLD_DIR := components/umac/mlme/mlo_mgr
+UMAC_MLO_MGR_CLD_INC := -I$(WLAN_ROOT)/$(UMAC_MLO_MGR_CLD_DIR)/inc \
+
 UMAC_MLO_MGR_INC := -I$(WLAN_COMMON_INC)/umac/mlo_mgr/inc \
 		    -I$(WLAN_COMMON_INC)/target_if/mlo_mgr/inc
 
@@ -1299,7 +1302,8 @@ UMAC_MLO_MGR_OBJS := $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_main.o \
 			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_peer.o \
 			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_msgq.o \
 			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_primary_umac.o \
-			  $(MLO_MGR_TARGET_IF_DIR)/src/target_if_mlo_mgr.o
+			  $(MLO_MGR_TARGET_IF_DIR)/src/target_if_mlo_mgr.o \
+			  $(UMAC_MLO_MGR_CLD_DIR)/src/wlan_mlo_mgr_roam.o
 
 $(call add-wlan-objs,umac_mlomgr,$(UMAC_MLO_MGR_OBJS))
 endif
@@ -2889,6 +2893,7 @@ INCS +=		$(UMAC_DBR_INC)
 INCS +=		$(UMAC_CRYPTO_INC)
 INCS +=		$(UMAC_INTERFACE_MGR_INC)
 INCS +=		$(UMAC_MLO_MGR_INC)
+INCS +=		$(UMAC_MLO_MGR_CLD_INC)
 INCS +=		$(COEX_OS_IF_INC)
 INCS +=		$(COEX_TGT_INC)
 INCS +=		$(COEX_DISPATCHER_INC)

@@ -97,8 +97,10 @@ void hdd_register_wdev(struct hdd_adapter *sta_adapter,
 	/* Set the relation between adapters*/
 	link_adapter->wdev.iftype = NL80211_IFTYPE_MLO_LINK;
 
+	mutex_lock(&sta_adapter->wdev.mtx);
 	ret = cfg80211_register_mlo_link(&sta_adapter->wdev,
 					 &link_adapter->wdev);
+	mutex_unlock(&sta_adapter->wdev.mtx);
 	if (ret) {
 		hdd_err("Failed to register ml link wdev %d", ret);
 		return;

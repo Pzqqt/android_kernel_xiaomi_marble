@@ -8759,7 +8759,7 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 	count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
 							  PM_STA_MODE, NULL);
 
-	if (count != 2) {
+	if (count < 2) {
 		hdd_debug("STA + STA concurrency not present, count:%d", count);
 		return 0;
 	}
@@ -8773,9 +8773,8 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 	 */
 	if (primary_vdev_id !=  WLAN_UMAC_VDEV_ID_MAX)
 		if ((ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc) &&
-		     (policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc) ||
-		      policy_mgr_current_concurrency_is_scc(hdd_ctx->psoc))) ||
-		    (!ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc))) {
+		     !policy_mgr_concurrent_sta_doing_dbs(hdd_ctx->psoc)) ||
+		    !ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc)) {
 			hdd_err("Enable roaming on requested interface: %d",
 				adapter->vdev_id);
 			hdd_debug("Enable roaming on requested interface: %d",

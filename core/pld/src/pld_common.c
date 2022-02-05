@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1837,6 +1837,35 @@ void pld_unlock_reg_window(struct device *dev, unsigned long *flags)
 		pr_err("Invalid device type\n");
 		break;
 	}
+}
+
+/**
+ * pld_get_pci_slot() - Get PCI slot of attached device
+ * @dev: device
+ *
+ * Return: pci slot
+ */
+int pld_get_pci_slot(struct device *dev)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_get_pci_slot(dev);
+		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_IPCI:
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
 }
 
 /**

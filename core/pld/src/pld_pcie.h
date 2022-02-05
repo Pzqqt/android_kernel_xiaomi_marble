@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -347,6 +348,11 @@ static inline void pld_pcie_unlock_reg_window(struct device *dev,
 {
 }
 
+static inline int pld_pcie_get_pci_slot(struct device *dev)
+{
+	return 0;
+}
+
 static inline int pld_pcie_power_on(struct device *dev)
 {
 	return 0;
@@ -644,6 +650,18 @@ static inline void pld_pcie_unlock_reg_window(struct device *dev,
 {
 	cnss_pci_unlock_reg_window(dev, flags);
 }
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+static inline int pld_pcie_get_pci_slot(struct device *dev)
+{
+	return cnss_get_pci_slot(dev);
+}
+#else
+static inline int pld_pcie_get_pci_slot(struct device *dev)
+{
+	return 0;
+}
+#endif
 
 static inline int pld_pcie_power_on(struct device *dev)
 {

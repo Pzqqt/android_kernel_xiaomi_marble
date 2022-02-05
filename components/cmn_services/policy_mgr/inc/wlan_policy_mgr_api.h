@@ -2545,6 +2545,16 @@ bool policy_mgr_current_concurrency_is_scc(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_concurrent_sta_doing_dbs() - To check the current
+ * concurrency STA combination if it is doing DBS
+ * @psoc: PSOC object information
+ * This routine is called to check if it is doing DBS
+ *
+ * Return: True - DBS, False - Otherwise
+ */
+bool policy_mgr_concurrent_sta_doing_dbs(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_sap_p2pgo_on_dfs() - check if there is a P2PGO or SAP
  * operating in a DFS channel
  * @psoc: PSOC object information

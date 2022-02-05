@@ -3857,7 +3857,8 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
 					 sessionId);
 		cm_stop_wait_for_key_timer(mac_ctx->psoc, sessionId);
-		cm_roam_start_init_on_connect(mac_ctx->pdev, sessionId);
+		if (!wlan_vdev_mlme_get_is_mlo_vdev(mac_ctx->psoc, sessionId))
+			cm_roam_start_init_on_connect(mac_ctx->pdev, sessionId);
 	}
 	if (eSIR_SME_SUCCESS == pRsp->status_code) {
 		qdf_copy_macaddr(&roam_info->peerMac, &pRsp->peer_macaddr);

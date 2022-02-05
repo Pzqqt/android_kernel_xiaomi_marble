@@ -692,6 +692,12 @@ populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 QDF_STATUS
 sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 					tpSirMultiLink_IE mlo_ie_ptr);
+
+QDF_STATUS
+populate_dot11f_mlo_caps(struct mac_context *mac_ctx,
+			 struct pe_session *session,
+			 tDot11fIEmlo_ie *mlo_ie);
+
 #else
 static inline QDF_STATUS
 populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
@@ -704,6 +710,14 @@ populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
 static inline QDF_STATUS
 sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
 					tpSirMultiLink_IE mlo_ie_ptr)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+populate_dot11f_mlo_caps(struct mac_context *mac_ctx,
+			 struct pe_session *session,
+			 tDot11fIEmlo_ie *mlo_ie)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
