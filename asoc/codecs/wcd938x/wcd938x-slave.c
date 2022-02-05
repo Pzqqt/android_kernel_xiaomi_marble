@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -89,7 +90,7 @@ static bool is_swr_slv_reg_readable(int reg)
 	    ((reg > 0x138) && (reg < 0x205)) ||
 	    ((reg > 0x238) && (reg < 0x305)) ||
 	    ((reg > 0x338) && (reg < 0x405)) ||
-	    ((reg > 0x405) && (reg < 0xF00)) ||
+	    ((reg > 0x438) && (reg < 0xF00)) ||
 	    ((reg > 0xF05) && (reg < 0xF20)) ||
 	    ((reg > 0xF25) && (reg < 0xF30)) ||
 	    ((reg > 0xF35) && (reg < 0x2000)))
