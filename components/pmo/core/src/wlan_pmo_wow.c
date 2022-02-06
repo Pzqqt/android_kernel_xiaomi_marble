@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -419,6 +420,9 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 	pmo_set_wow_event_bitmap(WOW_DCS_INTERFERENCE_DET,
 				 wow_bitmap_size,
 				 bitmask);
+
+	pmo_set_wow_event_bitmap(WOW_RTT_11AZ_EVENT,
+				 wow_bitmap_size, bitmask);
 }
 
 void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
@@ -456,6 +460,8 @@ void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 	pmo_set_wow_event_bitmap(WOW_DCS_INTERFERENCE_DET,
 				 wow_bitmap_size,
 				 bitmask);
+	pmo_set_wow_event_bitmap(WOW_RTT_11AZ_EVENT,
+				 wow_bitmap_size, bitmask);
 }
 
 uint8_t pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc)
