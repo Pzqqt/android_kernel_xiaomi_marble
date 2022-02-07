@@ -452,6 +452,8 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 
 err_fail_sub_device_probe:
 	cvp_hfi_deinitialize(core->hfi_type, core->device);
+	if (cvp_driver->debugfs_root)
+		debugfs_remove_recursive(cvp_driver->debugfs_root);
 err_hfi_initialize:
 err_cores_exceeded:
 	cdev_del(&core->cdev);
@@ -606,7 +608,6 @@ static int __init msm_cvp_init(void)
 	if (rc) {
 		dprintk(CVP_ERR,
 			"Failed to register platform driver\n");
-		debugfs_remove_recursive(cvp_driver->debugfs_root);
 		kfree(cvp_driver);
 		cvp_driver = NULL;
 		return rc;
