@@ -12119,14 +12119,10 @@ static void dp_find_missing_tx_comp(struct dp_soc *soc)
 							tx_desc->timestamp)) {
 					dp_err_rl("Tx completion not rcvd for id: %u",
 						  tx_desc->id);
-					qdf_trigger_self_recovery(NULL,
-							QDF_TX_DESC_LEAK);
 				}
 			} else {
 				dp_err_rl("tx desc %u corrupted, flags: 0x%x",
 				       tx_desc->id, tx_desc->flags);
-				qdf_trigger_self_recovery(NULL,
-							  QDF_TX_DESC_LEAK);
 			}
 		}
 	}
