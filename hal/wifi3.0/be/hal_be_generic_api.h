@@ -886,6 +886,193 @@ hal_rx_parse_cmn_usr_info(struct hal_soc *hal_soc, uint8_t *tlv,
 }
 #endif
 
+static inline enum ieee80211_eht_ru_size
+hal_rx_mon_hal_ru_size_to_ieee80211_ru_size(struct hal_soc *hal_soc,
+					    uint32_t hal_ru_size)
+{
+	switch (hal_ru_size) {
+	case HAL_EHT_RU_26:
+		return IEEE80211_EHT_RU_26;
+	case HAL_EHT_RU_52:
+		return IEEE80211_EHT_RU_52;
+	case HAL_EHT_RU_78:
+		return IEEE80211_EHT_RU_52_26;
+	case HAL_EHT_RU_106:
+		return IEEE80211_EHT_RU_106;
+	case HAL_EHT_RU_132:
+		return IEEE80211_EHT_RU_106_26;
+	case HAL_EHT_RU_242:
+		return IEEE80211_EHT_RU_242;
+	case HAL_EHT_RU_484:
+		return IEEE80211_EHT_RU_484;
+	case HAL_EHT_RU_726:
+		return IEEE80211_EHT_RU_484_242;
+	case HAL_EHT_RU_996:
+		return IEEE80211_EHT_RU_996;
+	case HAL_EHT_RU_996x2:
+		return IEEE80211_EHT_RU_996x2;
+	case HAL_EHT_RU_996x3:
+		return IEEE80211_EHT_RU_996x3;
+	case HAL_EHT_RU_996x4:
+		return IEEE80211_EHT_RU_996x4;
+	case HAL_EHT_RU_NONE:
+		return IEEE80211_EHT_RU_INVALID;
+	case HAL_EHT_RU_996_484:
+		return IEEE80211_EHT_RU_996_484;
+	case HAL_EHT_RU_996x2_484:
+		return IEEE80211_EHT_RU_996x2_484;
+	case HAL_EHT_RU_996x3_484:
+		return IEEE80211_EHT_RU_996x3_484;
+	case HAL_EHT_RU_996_484_242:
+		return IEEE80211_EHT_RU_996_484_242;
+	default:
+		return IEEE80211_EHT_RU_INVALID;
+	}
+}
+
+#define HAL_SET_RU_PER80(ru_320mhz, ru_per80, ru_idx_per80mhz, num_80mhz) \
+	((ru_320mhz) |= ((uint64_t)(ru_per80) << \
+		       (((num_80mhz) * NUM_RU_BITS_PER80) + \
+			((ru_idx_per80mhz) * NUM_RU_BITS_PER20))))
+
+static inline uint32_t
+hal_rx_parse_receive_user_info(struct hal_soc *hal_soc, uint8_t *tlv,
+			       struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct receive_user_info *rx_usr_info = (struct receive_user_info *)tlv;
+	uint64_t ru_index_320mhz = 0;
+	uint16_t ru_index_per80mhz;
+	uint32_t ru_size = 0, num_80mhz_with_ru = 0;
+	uint32_t ru_index = HAL_EHT_RU_INVALID;
+	uint32_t rtap_ru_size = IEEE80211_EHT_RU_INVALID;
+
+	ppdu_info->rx_status.eht_known |=
+				QDF_MON_STATUS_EHT_CONTENT_CH_INDEX_KNOWN;
+	ppdu_info->rx_status.eht_data[0] |=
+				(rx_usr_info->dl_ofdma_content_channel <<
+				 QDF_MON_STATUS_EHT_CONTENT_CH_INDEX_SHIFT);
+
+	if (!(rx_usr_info->reception_type == HAL_RX_TYPE_MU_MIMO ||
+	      rx_usr_info->reception_type == HAL_RX_TYPE_MU_OFDMA ||
+	      rx_usr_info->reception_type == HAL_RX_TYPE_MU_OFMDA_MIMO))
+		return HAL_TLV_STATUS_PPDU_NOT_DONE;
+
+	/* RU allocation present only for OFDMA reception */
+	if (rx_usr_info->ru_type_80_0 != HAL_EHT_RU_NONE) {
+		ru_size += rx_usr_info->ru_type_80_0;
+		ru_index = ru_index_per80mhz = rx_usr_info->ru_start_index_80_0;
+		HAL_SET_RU_PER80(ru_index_320mhz, rx_usr_info->ru_type_80_0,
+				 ru_index_per80mhz, 0);
+		num_80mhz_with_ru++;
+	}
+
+	if (rx_usr_info->ru_type_80_1 != HAL_EHT_RU_NONE) {
+		ru_size += rx_usr_info->ru_type_80_1;
+		ru_index = ru_index_per80mhz = rx_usr_info->ru_start_index_80_1;
+		HAL_SET_RU_PER80(ru_index_320mhz, rx_usr_info->ru_type_80_1,
+				 ru_index_per80mhz, 1);
+		num_80mhz_with_ru++;
+	}
+
+	if (rx_usr_info->ru_type_80_2 != HAL_EHT_RU_NONE) {
+		ru_size += rx_usr_info->ru_type_80_2;
+		ru_index = ru_index_per80mhz = rx_usr_info->ru_start_index_80_2;
+		HAL_SET_RU_PER80(ru_index_320mhz, rx_usr_info->ru_type_80_2,
+				 ru_index_per80mhz, 2);
+		num_80mhz_with_ru++;
+	}
+
+	if (rx_usr_info->ru_type_80_3 != HAL_EHT_RU_NONE) {
+		ru_size += rx_usr_info->ru_type_80_3;
+		ru_index = ru_index_per80mhz = rx_usr_info->ru_start_index_80_3;
+		HAL_SET_RU_PER80(ru_index_320mhz, rx_usr_info->ru_type_80_3,
+				 ru_index_per80mhz, 3);
+		num_80mhz_with_ru++;
+	}
+
+	if (num_80mhz_with_ru > 1) {
+		/* Calculate the MRU index */
+		switch (ru_index_320mhz) {
+		case HAL_EHT_RU_996_484_0:
+		case HAL_EHT_RU_996x2_484_0:
+		case HAL_EHT_RU_996x3_484_0:
+			ru_index = 0;
+			break;
+		case HAL_EHT_RU_996_484_1:
+		case HAL_EHT_RU_996x2_484_1:
+		case HAL_EHT_RU_996x3_484_1:
+			ru_index = 1;
+			break;
+		case HAL_EHT_RU_996_484_2:
+		case HAL_EHT_RU_996x2_484_2:
+		case HAL_EHT_RU_996x3_484_2:
+			ru_index = 2;
+			break;
+		case HAL_EHT_RU_996_484_3:
+		case HAL_EHT_RU_996x2_484_3:
+		case HAL_EHT_RU_996x3_484_3:
+			ru_index = 3;
+			break;
+		case HAL_EHT_RU_996_484_4:
+		case HAL_EHT_RU_996x2_484_4:
+		case HAL_EHT_RU_996x3_484_4:
+			ru_index = 4;
+			break;
+		case HAL_EHT_RU_996_484_5:
+		case HAL_EHT_RU_996x2_484_5:
+		case HAL_EHT_RU_996x3_484_5:
+			ru_index = 5;
+			break;
+		case HAL_EHT_RU_996_484_6:
+		case HAL_EHT_RU_996x2_484_6:
+		case HAL_EHT_RU_996x3_484_6:
+			ru_index = 6;
+			break;
+		case HAL_EHT_RU_996_484_7:
+		case HAL_EHT_RU_996x2_484_7:
+		case HAL_EHT_RU_996x3_484_7:
+			ru_index = 7;
+			break;
+		case HAL_EHT_RU_996x2_484_8:
+			ru_index = 8;
+			break;
+		case HAL_EHT_RU_996x2_484_9:
+			ru_index = 9;
+			break;
+		case HAL_EHT_RU_996x2_484_10:
+			ru_index = 10;
+			break;
+		case HAL_EHT_RU_996x2_484_11:
+			ru_index = 11;
+			break;
+		default:
+			ru_index = HAL_EHT_RU_INVALID;
+			dp_debug("Invalid RU index");
+			qdf_assert(0);
+			break;
+		}
+		ru_size += 4;
+	}
+
+	rtap_ru_size = hal_rx_mon_hal_ru_size_to_ieee80211_ru_size(hal_soc,
+								   ru_size);
+	if (rtap_ru_size != IEEE80211_EHT_RU_INVALID) {
+		ppdu_info->rx_status.eht_known |=
+					QDF_MON_STATUS_EHT_RU_MRU_SIZE_KNOWN;
+		ppdu_info->rx_status.eht_data[1] |= (rtap_ru_size <<
+					QDF_MON_STATUS_EHT_RU_MRU_SIZE_SHIFT);
+	}
+
+	if (ru_index != HAL_EHT_RU_INVALID) {
+		ppdu_info->rx_status.eht_known |=
+					QDF_MON_STATUS_EHT_RU_MRU_INDEX_KNOWN;
+		ppdu_info->rx_status.eht_data[1] |= (ru_index <<
+					QDF_MON_STATUS_EHT_RU_MRU_INDEX_SHIFT);
+	}
+
+	return HAL_TLV_STATUS_PPDU_NOT_DONE;
+}
+
 /**
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
@@ -963,6 +1150,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 	}
 
 	case WIFIRX_PPDU_START_USER_INFO_E:
+		hal_rx_parse_receive_user_info(hal, rx_tlv, ppdu_info);
 		break;
 
 	case WIFIRX_PPDU_END_E:
