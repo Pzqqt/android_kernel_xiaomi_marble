@@ -1074,9 +1074,10 @@ vdev_start_cmd_fill_11be(wmi_vdev_start_request_cmd_fixed_param *cmd,
 			 struct vdev_start_params *req)
 {
 	cmd->eht_ops = req->eht_ops;
-	cmd->puncture_20mhz_bitmap = req->channel.puncture_pattern;
-	wmi_info("EHT ops: %x puncture_pattern %x",
-		 req->eht_ops, req->channel.puncture_pattern);
+	cmd->puncture_20mhz_bitmap = ~req->channel.puncture_bitmap;
+	wmi_info("EHT ops: %x puncture_bitmap %x wmi cmd puncture bitmap %x",
+		 req->eht_ops, req->channel.puncture_bitmap,
+		 cmd->puncture_20mhz_bitmap);
 }
 #else
 static void
