@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,6 +50,10 @@ static void qdf_trace_dp_tx_ip_packet(qdf_nbuf_t nbuf, uint8_t *trans_hdr,
 					       qdf_ntohs(udph->src_port),
 					       qdf_ntohs(udph->dst_port),
 					       latency);
+	} else if (__qdf_trace_dp_tx_comp_generic_ip_pkt_enabled()) {
+		__qdf_trace_dp_tx_comp_generic_ip_pkt(nbuf, ip_proto, ip_id,
+						      QDF_SWAP_U32(*(uint32_t *)trans_hdr),
+						      latency);
 	}
 }
 
@@ -74,6 +78,10 @@ static void qdf_trace_dp_rx_ip_packet(qdf_nbuf_t nbuf, uint8_t *trans_hdr,
 					  qdf_ntohs(udph->src_port),
 					  qdf_ntohs(udph->dst_port),
 					  latency);
+	} else if (__qdf_trace_dp_rx_generic_ip_pkt_enabled()) {
+		__qdf_trace_dp_rx_generic_ip_pkt(nbuf, ip_proto, ip_id,
+						 QDF_SWAP_U32(*(uint32_t *)trans_hdr),
+						 latency);
 	}
 }
 

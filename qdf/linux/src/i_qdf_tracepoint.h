@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -150,7 +150,74 @@ void __qdf_trace_dp_tx_comp_udp_pkt(struct sk_buff *skb, uint16_t ip_id,
 }
 
 /**
- * __qdf_trace_dp_rx_pkt_enabled() - Get the dp_rx_pkt tracepoint
+ * __qdf_trace_dp_rx_generic_ip_pkt_enabled() - Get the dp_rx_generic_ip_pkt
+ *					tracepoint enabled or disabled state
+ *
+ * Return: True if the tracepoint is enabled else false
+ */
+static inline
+bool __qdf_trace_dp_rx_generic_ip_pkt_enabled(void)
+{
+	return trace_dp_rx_generic_ip_pkt_enabled();
+}
+
+/**
+ * __qdf_trace_dp_rx_generic_ip_pkt() - Trace generic ip packet in rx direction
+ * @skb: pointer to network buffer
+ * @ip_proto: ip protocol type
+ * @ip_id: ip identification field
+ * @trans_hdr_4_bytes: transport header first 4 bytes
+ * @latency: latency
+ *
+ * Return: None
+ */
+static inline
+void __qdf_trace_dp_rx_generic_ip_pkt(struct sk_buff *skb, uint8_t ip_proto,
+				      uint16_t ip_id, uint32_t trans_hdr_4_bytes,
+				      uint64_t latency)
+{
+	trace_dp_rx_generic_ip_pkt(skb, ip_proto, ip_id,
+				   trans_hdr_4_bytes,
+				   latency);
+}
+
+/**
+ * __qdf_trace_dp_tx_comp_generic_ip_pkt_enabled() - Get the dp_tx_comp_generic_ip_pkt
+ *						tracepoint enabled or disabled state
+ *
+ * Return: True if the tracepoint is enabled else false
+ */
+static inline
+bool __qdf_trace_dp_tx_comp_generic_ip_pkt_enabled(void)
+{
+	return trace_dp_tx_comp_generic_ip_pkt_enabled();
+}
+
+/**
+ * __qdf_trace_dp_tx_comp_generic_ip_pkt() - Trace generic ip packet in
+ *					     tx direction
+ * @skb: pointer to network buffer
+ * @ip_id: ip identification field
+ * @trans_hdr_4_bytes: transport header first 4 bytes
+ * @latency: latency
+
+ *
+ * Return: None
+ */
+static inline
+void __qdf_trace_dp_tx_comp_generic_ip_pkt(struct sk_buff *skb,
+					   uint8_t ip_proto,
+					   uint16_t ip_id,
+					   uint32_t trans_hdr_4_bytes,
+					   uint64_t latency)
+{
+	trace_dp_tx_comp_generic_ip_pkt(skb, ip_proto, ip_id,
+					trans_hdr_4_bytes,
+					latency);
+}
+
+/**
+ * __qdf_trace_dp_rx_pkt_enablei() - Get the dp_rx_pkt tracepoint
  *  enabled or disabled state
  *
  * Return: True if the tracepoint is enabled else false

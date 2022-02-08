@@ -430,7 +430,8 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 		hal_tx_desc_set_hlos_tid(hal_tx_desc_cached, tid);
 
 	if (qdf_unlikely(vdev->pdev->delay_stats_flag) ||
-	    qdf_unlikely(wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx)))
+	    qdf_unlikely(wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx)) ||
+	    dp_tx_pkt_tracepoints_enabled())
 		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",

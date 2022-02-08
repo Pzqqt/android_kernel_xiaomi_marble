@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -128,6 +128,50 @@ DEFINE_EVENT(dp_trace_udp_pkt_class, dp_tx_comp_udp_pkt,
 	     TP_PROTO(struct sk_buff *skb, uint16_t ip_id, uint16_t srcport,
 		      uint16_t dstport, uint64_t tdelta),
 	     TP_ARGS(skb, ip_id, srcport, dstport, tdelta)
+);
+
+DECLARE_EVENT_CLASS(dp_trace_generic_ip_pkt_class,
+		    TP_PROTO(struct sk_buff *skb, uint8_t ip_proto,
+			     uint16_t ip_id, uint32_t trans_hdr_4_bytes,
+			     uint64_t tdelta),
+		    TP_ARGS(skb, ip_proto, ip_id,
+			    trans_hdr_4_bytes, tdelta),
+		    TP_STRUCT__entry(
+			__field(void *, skb)
+			__field(uint8_t, ip_proto)
+			__field(uint16_t, ip_id)
+			__field(uint32_t, trans_hdr_4_bytes)
+			__field(uint64_t, tdelta)
+		    ),
+		    TP_fast_assign(
+			__entry->skb = skb;
+			__entry->ip_proto = ip_proto;
+			__entry->ip_id = ip_id;
+			__entry->trans_hdr_4_bytes = trans_hdr_4_bytes;
+			__entry->tdelta = tdelta;
+		    ),
+		    TP_printk("skb=%pK ip_proto=0x%x ip_id=0x%x, transport_hdr[4]:0x%08x, latency(ms)=%llu",
+			      __entry->skb, __entry->ip_proto,
+			      __entry->ip_id,  __entry->trans_hdr_4_bytes,
+			      __entry->tdelta)
+);
+
+DEFINE_EVENT(dp_trace_generic_ip_pkt_class, dp_rx_generic_ip_pkt,
+	     TP_PROTO(struct sk_buff *skb, uint8_t ip_proto,
+		      uint16_t ip_id, uint32_t trans_hdr_4_bytes,
+		      uint64_t tdelta),
+	     TP_ARGS(skb, ip_proto, ip_id,
+		     trans_hdr_4_bytes,
+		     tdelta)
+);
+
+DEFINE_EVENT(dp_trace_generic_ip_pkt_class, dp_tx_comp_generic_ip_pkt,
+	     TP_PROTO(struct sk_buff *skb, uint8_t ip_proto,
+		      uint16_t ip_id, uint32_t trans_hdr_4_bytes,
+		      uint64_t tdelta),
+	     TP_ARGS(skb, ip_proto, ip_id,
+		     trans_hdr_4_bytes,
+		     tdelta)
 );
 
 DECLARE_EVENT_CLASS(dp_trace_pkt_class,
