@@ -30,6 +30,7 @@
 #include "cvp_hfi_io.h"
 #include "msm_cvp_dsp.h"
 #include "msm_cvp_clocks.h"
+#include "cvp_dump.h"
 
 #define FIRMWARE_SIZE			0X00A00000
 #define REG_ADDR_OFFSET_BITMASK	0x000FFFFF
@@ -2001,6 +2002,14 @@ static int iris_hfi_core_init(void *device)
 		rc = -ENOMEM;
 		goto err_core_init;
 	}
+	cvp_register_va_md_region();
+
+	// Add node for dev struct
+	add_va_node_to_list(CVP_QUEUE_DUMP, dev,
+			sizeof(struct iris_hfi_device),
+			"iris_hfi_device-dev", false);
+	add_queue_header_to_va_md_list((void*)dev);
+	add_hfi_queue_to_va_md_list((void*)dev);
 
 	rc = msm_cvp_map_ipcc_regs(&ipcc_iova);
 	if (!rc) {
@@ -2154,6 +2163,7 @@ static int iris_hfi_core_trigger_ssr(void *device,
 	int rc = 0;
 	struct iris_hfi_device *dev;
 
+	cvp_free_va_md_list();
 	if (!device) {
 		dprintk(CVP_ERR, "invalid device\n");
 		return -ENODEV;
