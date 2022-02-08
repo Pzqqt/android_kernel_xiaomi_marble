@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _IPA3_I_H_
@@ -2028,6 +2030,83 @@ struct ipa_ntn3_client_stats {
 	struct ipa_ntn3_stats_tx tx_stats;
 };
 
+/* Peripheral stats for Q6, should be in the same order, defined by Q6 */
+enum ipa_per_stats_type_e {
+	IPA_PER_STATS_TYPE_NUM_PERS,
+	IPA_PER_STATS_TYPE_NUM_PERS_WWAN,
+	IPA_PER_STATS_TYPE_ACT_PER_TYPE,
+	IPA_PER_STATS_TYPE_PCIE_GEN,
+	IPA_PER_STATS_TYPE_PCIE_WIDTH,
+	IPA_PER_STATS_TYPE_PCIE_MAX_SPEED,
+	IPA_PER_STATS_TYPE_PCIE_NUM_LPM,
+	IPA_PER_STATS_TYPE_USB_TYPE,
+	IPA_PER_STATS_TYPE_USB_PROT,
+	IPA_PER_STATS_TYPE_USB_MAX_SPEED,
+	IPA_PER_STATS_TYPE_USB_PIPO,
+	IPA_PER_STATS_TYPE_WIFI_ENUM_TYPE,
+	IPA_PER_STATS_TYPE_WIFI_MAX_SPEED,
+	IPA_PER_STATS_TYPE_WIFI_DUAL_BAND_EN,
+	IPA_PER_STATS_TYPE_ETH_CLIENT,
+	IPA_PER_STATS_TYPE_ETH_MAX_SPEED,
+	IPA_PER_STATS_TYPE_IPA_DMA_BYTES,
+	IPA_PER_STATS_TYPE_WIFI_HOLB_UC,
+	IPA_PER_STATS_TYPE_ETH_HOLB_UC,
+	IPA_PER_STATS_TYPE_USB_HOLB_UC,
+	IPA_PER_STATS_TYPE_MAX
+};
+
+enum ipa_per_type_bitmask_e {
+	IPA_PER_TYPE_BITMASK_NONE 		= 0,
+	IPA_PER_TYPE_BITMASK_PCIE_EP 	= 1,
+	IPA_PER_TYPE_BITMASK_USB 		= 2,
+	IPA_PER_TYPE_BITMASK_WIFI 		= 4,
+	IPA_PER_TYPE_BITMASK_ETH 		= 8
+};
+
+enum ipa_per_pcie_speed_type_e {
+	PCIE_LINK_SPEED_DEF  = 0, 	/** < -- Core's default speed */
+	PCIE_LINK_SPEED_GEN1 = 1,	/** < -- Gen1 Speed - 2.5GT/s */
+	PCIE_LINK_SPEED_GEN2 = 2,	/** < -- Gen2 Speed - 5.0GT/s */
+	PCIE_LINK_SPEED_GEN3 = 3,	/** < -- Gen3 Speed - 8.0GT/s */
+	PCIE_LINK_SPEED_GEN4 = 4	/** < -- Gen4 Speed - 16.0GT/s*/
+};
+
+enum ipa_per_pcie_width_type_e {
+	PCIE_LINK_WIDTH_DEF = 0,		/** < -- Link Width Default */
+	PCIE_LINK_WIDTH_X1  = 1,		/** < -- Link Width x1 */
+	PCIE_LINK_WIDTH_X2  = 2,		/** < -- Link Width x2 */
+	PCIE_LINK_WIDTH_X4  = 4,		/** < -- Link Width x4 */
+	PCIE_LINK_WIDTH_X8  = 8,		/** < -- Link Width x8 */
+	PCIE_LINK_WIDTH_X16 = 16,		/** < -- Link Width x16 */
+	PCIE_LINK_WIDTH_MAX = 32		/** < -- Link Width Max */
+};
+
+enum ipa_per_usb_prot_type_e {
+	IPA_PER_USB_PROT_TYPE_INVALID,
+	IPA_PER_USB_PROT_TYPE_RMNET,
+	IPA_PER_USB_PROT_TYPE_RNDIS,
+	IPA_PER_USB_PROT_TYPE_ECM,
+	IPA_PER_USB_PROT_TYPE_MAX
+};
+
+enum ipa_per_wifi_enum_type_e {
+	IPA_PER_WIFI_ENUM_TYPE_INVALID,
+	IPA_PER_WIFI_ENUM_TYPE_802_11_ABG,
+	IPA_PER_WIFI_ENUM_TYPE_802_11_AC,
+	IPA_PER_WIFI_ENUM_TYPE_802_11_AD,
+	IPA_PER_WIFI_ENUM_TYPE_802_11_AX,
+	IPA_PER_WIFI_ENUM_TYPE_MAX
+};
+
+enum ipa_per_usb_enum_type_e {
+	IPA_PER_USB_ENUM_TYPE_INVALID,
+	IPA_PER_USB_ENUM_TYPE_FS,
+	IPA_PER_USB_ENUM_TYPE_2_0_HS,
+	IPA_PER_USB_ENUM_TYPE_SS_GEN_1,
+	IPA_PER_USB_ENUM_TYPE_SS_GEN_2,
+	IPA_PER_USB_ENUM_TYPE_SS_GEN_2x2,
+	IPA_PER_USB_ENUM_TYPE_MAX
+};
 
 /**
  * struct ipa3_context - IPA context
@@ -2148,6 +2227,8 @@ struct ipa_ntn3_client_stats {
  * @max_num_smmu_cb: number of smmu s1 cb supported
  * @non_hash_flt_lcl_sys_switch: number of times non-hash flt table moved
  * mhi_ctrl_state: state of mhi ctrl pipes
+ * @per_stats_smem_pa: Peripheral stats physical address to be passed to Q6
+ * @per_stats_smem_va: Peripheral stats virtual address to update stats from Apps
  */
 struct ipa3_context {
 	struct ipa3_char_device_context cdev;
@@ -2389,7 +2470,8 @@ struct ipa3_context {
 	int uc_act_tbl_total;
 	int uc_act_tbl_next_index;
 	int ipa_pil_load;
-
+	phys_addr_t per_stats_smem_pa;
+	void *per_stats_smem_va;
 };
 
 struct ipa3_plat_drv_res {
@@ -3624,5 +3706,16 @@ int ipa_send_mhi_endp_ind_to_modem(void);
  * To pass macsec mapping to the IPACM
  */
 int ipa3_send_macsec_info(enum ipa_macsec_event event_type, struct ipa_macsec_map *map);
+
+/* Peripheral stats APIs */
+/* Non periodic/Event based stats update */
+int ipa3_update_usb_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data);
+int ipa3_update_pcie_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data);
+int ipa3_update_wifi_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data);
+int ipa3_update_eth_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data);
+int ipa3_update_apps_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data);
+/* Periodic stats update */
+int ipa3_update_client_holb_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data);
+int ipa3_update_dma_per_stats(enum ipa_per_stats_type_e stats_type, uint32_t data);
 
 #endif /* _IPA3_I_H_ */
