@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,4 +41,13 @@ ucfg_send_infra_cp_stats_request(struct wlan_objmgr_vdev *vdev,
 {
 	return wlan_cp_stats_send_infra_cp_req(wlan_vdev_get_psoc(vdev), req);
 }
+
+#if defined(WLAN_SUPPORT_TWT) && defined (WLAN_TWT_CONV_SUPPORTED)
+int ucfg_cp_stats_twt_get_peer_session_params(
+					struct wlan_objmgr_psoc *psoc_obj,
+					struct twt_session_stats_info *params)
+{
+	return wlan_cp_stats_twt_get_peer_session_params(psoc_obj, params);
+}
+#endif
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
