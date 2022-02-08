@@ -2848,14 +2848,18 @@ void sde_crtc_complete_commit(struct drm_crtc *crtc,
 		return;
 	}
 
+	sde_kms = _sde_crtc_get_kms(crtc);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
+		return;
+	}
+
 	sde_crtc = to_sde_crtc(crtc);
 	SDE_EVT32_VERBOSE(DRMID(crtc));
 
-	sde_kms = _sde_crtc_get_kms(crtc);
-
 	for (i = 0; i < MAX_DSI_DISPLAYS; i++) {
 		splash_display = &sde_kms->splash_data.splash_display[i];
-		if (splash_display->cont_splash_enabled &&
+		if (splash_display && splash_display->cont_splash_enabled &&
 				crtc == splash_display->encoder->crtc)
 			cont_splash_enabled = true;
 	}
