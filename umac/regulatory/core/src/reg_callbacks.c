@@ -94,6 +94,26 @@ static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 }
 
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
+static inline void
+reg_fill_freq_ext_payload(struct reg_sched_payload **payload,
+			  struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj)
+{
+		(*payload)->ch_avoid_ind =
+			!!psoc_priv_obj->ch_avoid_ext_ind;
+		qdf_mem_copy(&(*payload)->avoid_info.freq_list,
+			     &psoc_priv_obj->avoid_freq_ext_list,
+			     sizeof(psoc_priv_obj->avoid_freq_ext_list));
+
+		psoc_priv_obj->ch_avoid_ext_ind = false;
+}
+#else
+static inline void
+reg_fill_freq_ext_payload(struct reg_sched_payload **payload,
+			  struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj)
+{
+}
+#endif
+
 /**
  * reg_alloc_and_fill_payload() - Alloc and fill payload structure.
  * @psoc: Pointer to global psoc structure.
@@ -117,47 +137,21 @@ static void reg_alloc_and_fill_payload(struct wlan_objmgr_psoc *psoc,
 		(*payload)->psoc = psoc;
 		(*payload)->pdev = pdev;
 		if (reg_check_coex_unsafe_nb_user_prefer(psoc)) {
+			reg_fill_freq_ext_payload(payload, psoc_priv_obj);
+		} else {
 			(*payload)->ch_avoid_ind =
-				!!psoc_priv_obj->ch_avoid_ext_ind;
+				!!psoc_priv_obj->ch_avoid_ind;
 			qdf_mem_copy(&(*payload)->avoid_info.freq_list,
-				     &psoc_priv_obj->avoid_freq_ext_list,
-				sizeof(psoc_priv_obj->avoid_freq_ext_list));
-			psoc_priv_obj->ch_avoid_ext_ind = false;
+				     &psoc_priv_obj->avoid_freq_list,
+				     sizeof(psoc_priv_obj->avoid_freq_list));
+
+			psoc_priv_obj->ch_avoid_ind = false;
 		}
 		qdf_mem_copy(&(*payload)->avoid_info.chan_list,
 			     &psoc_priv_obj->unsafe_chan_list,
 			     sizeof(psoc_priv_obj->unsafe_chan_list));
 	}
 }
-#else
-static void reg_alloc_and_fill_payload(struct wlan_objmgr_psoc *psoc,
-				       struct wlan_objmgr_pdev *pdev,
-				       struct reg_sched_payload **payload)
-{
-	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
-
-	psoc_priv_obj = reg_get_psoc_obj(psoc);
-	if (!psoc_priv_obj) {
-		reg_err("reg psoc private obj is NULL");
-		*payload = NULL;
-		return;
-	}
-
-	*payload = qdf_mem_malloc(sizeof(**payload));
-	if (*payload) {
-		(*payload)->psoc = psoc;
-		(*payload)->pdev = pdev;
-		(*payload)->ch_avoid_ind = !!psoc_priv_obj->ch_avoid_ind;
-		qdf_mem_copy(&(*payload)->avoid_info.freq_list,
-			     &psoc_priv_obj->avoid_freq_list,
-			     sizeof(psoc_priv_obj->avoid_freq_list));
-		psoc_priv_obj->ch_avoid_ind = false;
-	}
-	qdf_mem_copy(&(*payload)->avoid_info.chan_list,
-		     &psoc_priv_obj->unsafe_chan_list,
-		     sizeof(psoc_priv_obj->unsafe_chan_list));
-}
-#endif
 
 /**
  * reg_chan_change_flush_cbk_sb() - Flush south bound channel change callbacks.
