@@ -11939,6 +11939,28 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 	return status;
 }
 
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+uint32_t wlan_hdd_get_restriction_mask(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx->restriction_mask;
+}
+
+void wlan_hdd_set_restriction_mask(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->restriction_mask =
+		hdd_ctx->coex_avoid_freq_list.restriction_mask;
+}
+#else
+uint32_t wlan_hdd_get_restriction_mask(struct hdd_context *hdd_ctx)
+{
+	return -EINVAL;
+}
+
+void wlan_hdd_set_restriction_mask(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 #if defined(FEATURE_WLAN_CH_AVOID)
 /**
  * hdd_store_sap_restart_channel() - store sap restart channel
@@ -12238,8 +12260,9 @@ int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
-bool hdd_local_unsafe_channel_updated(struct hdd_context *hdd_ctx,
-	uint16_t *local_unsafe_list, uint16_t local_unsafe_list_count)
+bool hdd_local_unsafe_channel_updated(
+	struct hdd_context *hdd_ctx, uint16_t *local_unsafe_list,
+	uint16_t local_unsafe_list_count, uint32_t restriction_mask)
 {
 	int i, j;
 
@@ -12255,7 +12278,18 @@ bool hdd_local_unsafe_channel_updated(struct hdd_context *hdd_ctx,
 		if (j >= local_unsafe_list_count)
 			break;
 	}
-	if (i >= local_unsafe_list_count) {
+
+	if (ucfg_mlme_get_coex_unsafe_chan_nb_user_prefer(hdd_ctx->psoc)) {
+		/* Return false if current channel list is same as previous
+		 * and restriction mask is not altered
+		 */
+		if (i >= local_unsafe_list_count &&
+		    (restriction_mask ==
+		     wlan_hdd_get_restriction_mask(hdd_ctx))) {
+			hdd_info("unsafe chan list same");
+			return false;
+		}
+	} else if (i >= local_unsafe_list_count) {
 		hdd_info("unsafe chan list same");
 		return false;
 	}

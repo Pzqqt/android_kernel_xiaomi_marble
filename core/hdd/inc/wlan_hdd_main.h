@@ -4057,6 +4057,8 @@ int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,
  * @hdd_ctx: hdd context pointer
  * @local_unsafe_list: unsafe chan list to be compared with hdd_ctx's list
  * @local_unsafe_list_count: channel number in local_unsafe_list
+ * @restriction_mask: restriction mask is to differentiate current channel
+ * list different from previous channel list
  *
  * The function checked the input channel is same as current unsafe chan
  * list in hdd_ctx.
@@ -4064,11 +4066,28 @@ int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,
  * Return: true if input channel list is same as the list in hdd_ctx
  */
 bool hdd_local_unsafe_channel_updated(struct hdd_context *hdd_ctx,
-	uint16_t *local_unsafe_list, uint16_t local_unsafe_list_count);
+	uint16_t *local_unsafe_list, uint16_t local_unsafe_list_count,
+	uint32_t restriction_mask);
 
 int hdd_enable_disable_ca_event(struct hdd_context *hddctx,
 				uint8_t set_value);
 void wlan_hdd_undo_acs(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_set_restriction_mask() - set restriction mask for hdd context
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: None
+ */
+void wlan_hdd_set_restriction_mask(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_get_restriction_mask() - get restriction mask from hdd context
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: restriction_mask
+ */
+uint32_t wlan_hdd_get_restriction_mask(struct hdd_context *hdd_ctx);
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 static inline int

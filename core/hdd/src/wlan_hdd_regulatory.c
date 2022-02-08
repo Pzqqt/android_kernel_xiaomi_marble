@@ -1244,6 +1244,7 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 {
 	uint16_t *local_unsafe_list;
 	uint16_t local_unsafe_list_count;
+	uint32_t restriction_mask;
 	uint8_t i;
 
 	/* Basic sanity */
@@ -1257,6 +1258,7 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 			sizeof(struct ch_avoid_ind_type));
 	mutex_unlock(&hdd_ctxt->avoid_freq_lock);
 
+	restriction_mask = wlan_hdd_get_restriction_mask(hdd_ctxt);
 	if (hdd_clone_local_unsafe_chan(hdd_ctxt,
 					&local_unsafe_list,
 					&local_unsafe_list_count) != 0) {
@@ -1270,6 +1272,8 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 					sizeof(hdd_ctxt->unsafe_channel_list));
 
 	hdd_ctxt->unsafe_channel_count = unsafe_chan_list->chan_cnt;
+
+	wlan_hdd_set_restriction_mask(hdd_ctxt);
 
 	for (i = 0; i < unsafe_chan_list->chan_cnt; i++) {
 		hdd_ctxt->unsafe_channel_list[i] =
@@ -1314,7 +1318,8 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 	}
 	if (hdd_local_unsafe_channel_updated(hdd_ctxt,
 					    local_unsafe_list,
-					    local_unsafe_list_count))
+					    local_unsafe_list_count,
+					    restriction_mask))
 		hdd_unsafe_channel_restart_sap(hdd_ctxt);
 	qdf_mem_free(local_unsafe_list);
 
