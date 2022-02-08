@@ -14,3 +14,6 @@ CONFIG_WLAN_FEATURE_11BE_MLO := y
 
 #BMISS offload max vdev config
 CONFIG_CFG_BMISS_OFFLOAD_MAX_VDEV := 4
+
+#Chip version
+CONFIG_CHIP_VERSION := 2

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,12 @@
 #define CE_COUNT_MAX 12
 #else
 #define CE_COUNT_MAX 8
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+#ifndef CHIP_VERSION
+#define CHIP_VERSION CNSS_CHIP_VER_ANY
+#endif
 #endif
 
 /**
@@ -718,6 +724,9 @@ struct cnss_wlan_driver pld_pcie_ops = {
 #endif
 #ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT
 	.suspend_mode = &pld_pcie_suspend_mode,
+#endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+	.chip_version = CHIP_VERSION,
 #endif
 };
 
