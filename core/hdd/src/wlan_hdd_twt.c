@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1841,16 +1841,22 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 	if (ret)
 		return ret;
 
-	if (!ucfg_mlme_get_twt_peer_responder_capabilities(
+	ret = hdd_twt_get_add_dialog_values(tb2, &params);
+	if (ret)
+		return ret;
+
+	if (params.flag_bcast && !ucfg_mlme_get_twt_peer_bcast_capabilities(
+					adapter->hdd_ctx->psoc,
+					&hdd_sta_ctx->conn_info.bssid)) {
+		hdd_err_rl("TWT setup reject: TWT Broadcast not supported");
+		return -EOPNOTSUPP;
+	} else if (!params.flag_bcast &&
+		   !ucfg_mlme_get_twt_peer_responder_capabilities(
 					adapter->hdd_ctx->psoc,
 					&hdd_sta_ctx->conn_info.bssid)) {
 		hdd_err_rl("TWT setup reject: TWT responder not supported");
 		return -EOPNOTSUPP;
 	}
-
-	ret = hdd_twt_get_add_dialog_values(tb2, &params);
-	if (ret)
-		return ret;
 
 	ucfg_mlme_get_twt_congestion_timeout(adapter->hdd_ctx->psoc,
 					     &congestion_timeout);
