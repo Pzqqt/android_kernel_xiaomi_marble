@@ -18157,6 +18157,16 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL;
 	wmi_service[wmi_service_csa_beacon_template] =
 			WMI_SERVICE_CSA_BEACON_TEMPLATE;
+#if defined(WIFI_POS_CONVERGED) && defined(WLAN_FEATURE_RTT_11AZ_SUPPORT)
+	wmi_service[wmi_service_rtt_11az_ntb_support] =
+			WMI_SERVICE_RTT_11AZ_NTB_SUPPORT;
+	wmi_service[wmi_service_rtt_11az_tb_support] =
+			WMI_SERVICE_RTT_11AZ_TB_SUPPORT;
+	wmi_service[wmi_service_rtt_11az_mac_sec_support] =
+			WMI_SERVICE_RTT_11AZ_MAC_SEC_SUPPORT;
+	wmi_service[wmi_service_rtt_11az_mac_phy_sec_support] =
+			WMI_SERVICE_RTT_11AZ_MAC_PHY_SEC_SUPPORT;
+#endif
 #ifdef WLAN_FEATURE_IGMP_OFFLOAD
 	wmi_service[wmi_service_igmp_offload_support] =
 			WMI_SERVICE_IGMP_OFFLOAD_SUPPORT;

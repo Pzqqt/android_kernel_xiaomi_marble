@@ -5355,6 +5355,12 @@ typedef enum {
 #ifdef WLAN_FEATURE_11BE_MLO
 	wmi_service_mlo_sta_nan_ndi_support,
 #endif
+#ifdef WIFI_POS_CONVERGED
+	wmi_service_rtt_11az_mac_phy_sec_support,
+	wmi_service_rtt_11az_mac_sec_support,
+	wmi_service_rtt_11az_ntb_support,
+	wmi_service_rtt_11az_tb_support,
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	wmi_service_roam_stats_per_candidate_frame_info,
 #endif

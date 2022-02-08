@@ -224,10 +224,20 @@
 /* MGMT Rx REO feature capability */
 #define WLAN_SOC_F_MGMT_RX_REO_CAPABLE  0x40000000
 
+/* 11AZ Secure ranging Feature flags */
+/* 11AZ Non-Trigger based ranging support */
+#define WLAN_RTT_11AZ_NTB_SUPPORT 0x80000000
+
 /*
  * Feature flags are exhausted. Add EXT feature caps below to extend
  * the feature flags
  */
+/* 11AZ Trigger based ranging support */
+#define WLAN_RTT_11AZ_TB_SUPPORT  0x00000001
+/* 11AZ Secure ranging PASN Support */
+#define WLAN_RTT_11AZ_MAC_SEC_SUPPORT    0x00000002
+/* 11AZ Secure ranging PHY Security support */
+#define WLAN_RTT_11AZ_MAC_PHY_SEC_SUPPORT 0x00000004
 
 /* Roam Frame info stats - per candidate frames support */
 #define WLAN_ROAM_STATS_FRAME_INFO_PER_CANDIDATE  0x00000008
