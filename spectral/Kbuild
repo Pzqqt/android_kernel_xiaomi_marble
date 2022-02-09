@@ -200,6 +200,7 @@ endif
 
 obj-m += qca_spectral.o
 
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/twt/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/spectral/dispatcher/inc
 
 inc_file := $(obj)/$(DEPTH)/spectral_inc_opts
