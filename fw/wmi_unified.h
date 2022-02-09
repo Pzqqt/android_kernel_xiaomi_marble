@@ -16552,7 +16552,15 @@ typedef struct {
 #define WLAN_ROAM_SCORE_BAND_5G_INDEX                   1
 #define WLAN_ROAM_SCORE_BAND_6G_INDEX                   2
 /* 3 is reserved */
-#define WLAN_ROAM_SCORE_MAX_BAND_INDEX                  4
+#define WLAN_ROAM_SCORE_MAX_BAND_NUM_INDICES            4
+#define WLAN_ROAM_SCORE_MAX_BAND_INDEX WLAN_ROAM_SCORE_MAX_BAND_NUM_INDICES
+
+#define WLAN_ROAM_SCORE_SECURITY_WPA_INDEX              0
+#define WLAN_ROAM_SCORE_SECURITY_WPA2_INDEX             1
+#define WLAN_ROAM_SCORE_SECURITY_WPA3_INDEX             2
+/* 3 is reserved */
+#define WLAN_ROAM_SCORE_SECURITY_MAX_NUM_INDICES        4
+
 #define WMI_ROAM_GET_BAND_SCORE_PERCENTAGE(value32, band_index)                 WMI_GET_BITS(value32, (8 * (band_index)), 8)
 #define WMI_ROAM_SET_BAND_SCORE_PERCENTAGE(value32, score_pcnt, band_index)     WMI_SET_BITS(value32, (8 * (band_index)), 8, score_pcnt)
 
@@ -16572,6 +16580,10 @@ typedef struct {
 #define WLAN_ROAM_SCORE_MLO_INDEX                       4
 #define WMI_ROAM_GET_MLO_SCORE_PERCENTAGE(value32, mlo_index)                 WMI_GET_BITS(value32, (8 * (mlo_index)), 8)
 #define WMI_ROAM_SET_MLO_SCORE_PERCENTAGE(value32, score_pcnt, mlo_index)     WMI_SET_BITS(value32, (8 * (mlo_index)), 8, score_pcnt)
+#define WMI_ROAM_GET_SECURITY_SCORE_PERCENTAGE(value32, security_index) \
+    WMI_GET_BITS(value32, (8 * (security_index)), 8)
+#define WMI_ROAM_SET_SECURITY_SCORE_PERCENTAGE(value32, score_pcnt, security_index) \
+    WMI_SET_BITS(value32, (8 * (security_index)), 8, score_pcnt)
 
 /**
     best_rssi_threshold: Roamable AP RSSI equal or better than this threshold, full rssi score 100. Units in dBm.
@@ -16715,6 +16727,20 @@ typedef struct {
     A_UINT32 score_pcnt15_to_12;
 } wmi_roam_cnd_oce_wan_scoring;
 
+/**
+ *  Use macro WMI_ROAM_CND_GET/SET_SECURITY_SCORE_PERCENTAGE
+ *  to get and set the value respectively.
+ *  BITS 0-7   :- It contains scoring percentage of WPA security
+ *  BITS 8-15  :- It contains scoring percentage of WPA2 security
+ *  BITS 16-23 :- It contains scoring percentage of WPA3 security
+ *  BITS 24-31 :- reserved
+ *
+ *  The value of each score must be 0-100
+ */
+typedef struct {
+    A_UINT32 score_pcnt;
+} wmi_roam_cnd_security_scoring;
+
 typedef enum {
     WMI_VENDOR_ROAM_SCORE_ALGORITHM_ID_NONE = 0, /* Legacy roam score algorithm */
     WMI_VENDOR_ROAM_SCORE_ALGORITHM_ID_RSSI_CU_BASED = 1, /* Roam score algorithm based on RSSI and CU */
@@ -16813,6 +16839,9 @@ typedef struct {
      * Value 0 should be ignored
      */
     A_UINT32 btc_etp_factor;
+    /* Scoring for security mode */
+    A_INT32 security_weightage_pcnt;
+    wmi_roam_cnd_security_scoring security_scoring;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
@@ -17091,13 +17120,15 @@ typedef struct {
     A_UINT32 vdev_id;
 
 /*
- * Following this structure is the TLV:
+ * Following this structure are the TLVs:
  *     wmi_ap_profile ap_profile; <-- AP profile info
  *     wmi_roam_cnd_scoring_param roam_cnd_scoring_param
  *     wmi_roam_score_delta_param roam_score_delta_param_list[]
  *     wmi_roam_cnd_min_rssi_param roam_cnd_min_rssi_param_list[]
  *     wmi_roam_cnd_vendor_scoring_param roam_cnd_vendor_scoring_param[]
  *     wmi_owe_ap_profile owe_ap_profile[]
+ *     A_UINT32 authmode_list[] <-- List of authmode allowed for roaming.
+ *         Refer WMI_AUTH_ for authmode values.
  */
 } wmi_roam_ap_profile_fixed_param;
 
@@ -33369,6 +33400,7 @@ typedef enum {
     WMI_ROAM_CND_OCE_AP_TX_PWR_SCORING    = 0x00000800, /* FW considers OCE AP Tx power scoring */
     WMI_ROAM_CND_OCE_AP_SUBNET_ID_SCORING = 0x00001000, /* FW considers OCE AP subnet id scoring */
     WMI_ROAM_CND_SAE_PK_AP_SCORING        = 0x00002000, /* FW considers SAE-PK enabled AP scoring */
+    WMI_ROAM_CND_SECURITY_SCORING         = 0x00004000, /* FW considers security scoring */
 } WMI_ROAM_CND_SCORING_PARAMS;
 
 typedef struct {
