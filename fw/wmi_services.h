@@ -575,6 +575,7 @@ typedef  enum  {
     WMI_SERVICE_MULTIPLE_PEER_GROUP_CMD_SUPPORT = 322, /* FW support for multiple peer group command */
     WMI_SERVICE_AFC_RESET_SUPPORT = 323, /* Indicates FW supports AFC reset */
     WMI_SERVICE_FP_PHY_ERR_FILTER_SUPPORT = 324, /* FW supports monitor ring configurations for filtering in PHY error packets */
+    WMI_IS_RADAR_FOUND_CHAN_FREQ_IS_CENTER_FREQ = 325, /* FW Supporting radar event on the actual center frequency radar was detected */
 
     WMI_MAX_EXT2_SERVICE
 
