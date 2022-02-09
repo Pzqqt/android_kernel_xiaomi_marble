@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +24,7 @@
 #include <cdp_txrx_cmn_struct.h>
 #include <cdp_txrx_peer_ops.h>
 #include <cds_sched.h>
+#include "dp_rx.h"
 
 /* Timeout in ms to wait for a DP rx thread */
 #ifdef HAL_CONFIG_SLUB_DEBUG_ON
@@ -1060,21 +1062,34 @@ QDF_STATUS dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
 	qdf_nbuf_t nbuf_list, tmp_nbuf_list;
 	uint32_t num_list_elements = 0;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	uint64_t lock_time, unlock_time;
+	qdf_nbuf_t nbuf_list_head = NULL, nbuf_list_next;
 
 	qdf_nbuf_queue_head_lock(&rx_thread->nbuf_queue);
+	lock_time = qdf_get_log_timestamp();
 	QDF_NBUF_QUEUE_WALK_SAFE(&rx_thread->nbuf_queue, nbuf_list,
 				 tmp_nbuf_list) {
 		if (QDF_NBUF_CB_RX_VDEV_ID(nbuf_list) == vdev_id) {
 			qdf_nbuf_unlink_no_lock(nbuf_list,
 						&rx_thread->nbuf_queue);
-			dp_rx_thread_adjust_nbuf_list(nbuf_list);
-			num_list_elements =
-				QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
-			rx_thread->stats.rx_flushed += num_list_elements;
-			qdf_nbuf_list_free(nbuf_list);
+			DP_RX_HEAD_APPEND(nbuf_list_head, nbuf_list);
 		}
 	}
 	qdf_nbuf_queue_head_unlock(&rx_thread->nbuf_queue);
+	unlock_time = qdf_get_log_timestamp();
+	dp_info("Lock held time: %llu us",
+			qdf_log_timestamp_to_usecs(unlock_time - lock_time));
+
+	while (nbuf_list_head) {
+		nbuf_list_next = qdf_nbuf_queue_next(nbuf_list_head);
+		qdf_nbuf_set_next(nbuf_list_head, NULL);
+		dp_rx_thread_adjust_nbuf_list(nbuf_list_head);
+		num_list_elements =
+			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list_head);
+		rx_thread->stats.rx_flushed += num_list_elements;
+		qdf_nbuf_list_free(nbuf_list_head);
+		nbuf_list_head = nbuf_list_next;
+	}
 
 	qdf_event_reset(&rx_thread->vdev_del_event);
 	qdf_set_bit(RX_VDEV_DEL_EVENT, &rx_thread->event_flag);
