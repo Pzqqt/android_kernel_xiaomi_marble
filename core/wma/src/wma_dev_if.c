@@ -2664,7 +2664,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	QDF_STATUS ret;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	u_int8_t vdev_id;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_mlme_qos *qos_aggr;
 	struct vdev_mlme_obj *vdev_mlme;
 	tp_wma_handle wma_handle;
@@ -2673,7 +2672,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_FAILURE;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle || !soc)
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
 
 	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_LEGACY_WMA_ID) !=
@@ -2889,15 +2888,32 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 			wma_err("Failed to configure active APF mode");
 	}
 
-	cdp_data_tx_cb_set(soc, vdev_id,
-			   wma_data_tx_ack_comp_hdlr,
-			   wma_handle);
+	wma_vdev_set_data_tx_callback(vdev);
 
 	return QDF_STATUS_SUCCESS;
 
 end:
 	wma_cleanup_vdev(vdev);
 	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wma_vdev_set_data_tx_callback(struct wlan_objmgr_vdev *vdev)
+{
+	u_int8_t vdev_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!vdev || !wma_handle || !soc) {
+		wma_err("null vdev, wma_handle or soc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	cdp_data_tx_cb_set(soc, vdev_id,
+			   wma_data_tx_ack_comp_hdlr,
+			   wma_handle);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 enum mlme_bcn_tx_rate_code wma_get_bcn_rate_code(uint16_t rate)

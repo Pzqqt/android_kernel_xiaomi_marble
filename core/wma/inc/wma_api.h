@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -684,6 +684,17 @@ QDF_STATUS wma_sta_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
  *         fails due to any
  */
 QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wma_vdev_set_data_tx_callback() - Set dp vdev tx callback
+ * @vdev: vdev obj
+ *
+ * This API is used to set dp dev tx callback.
+ *
+ * Return: SUCCESS on successful post vdev operations, FAILURE, if it
+ *         fails due to any
+ */
+QDF_STATUS wma_vdev_set_data_tx_callback(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wma_mon_mlme_vdev_start_continue() - VDEV start response handling
