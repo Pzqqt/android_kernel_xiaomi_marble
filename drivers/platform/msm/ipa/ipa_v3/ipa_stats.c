@@ -918,17 +918,19 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 				}
 
 				if (instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN ||
-#if IPA_ETH_API_VER >= 2
-					instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3 ||
-#endif
 					instance_ptr->eth_mode == IPA_ETH_CLIENT_EMAC)
 					tx_instance_ptr_local->tx_client =
 						IPA_CLIENT_ETHERNET_CONS;
-				else tx_instance_ptr_local->tx_client =
+				else
+					tx_instance_ptr_local->tx_client =
 						IPA_CLIENT_AQC_ETHERNET_CONS;
 #if IPA_ETH_API_VER >= 2
-				if ((instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3) && (i == 1))
-					tx_instance_ptr_local->tx_client = IPA_CLIENT_ETHERNET2_CONS;
+				/* Get the client pipe info[0] from the allocation info context only if it is NTN3 */
+				if ((instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3)) {
+						tx_instance_ptr_local->tx_client =
+							ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
+							i].pipes_client_type[0];
+				}
 #endif
 				client_type = tx_instance_ptr_local->tx_client;
 				instance_ptr->pm_bandwidth =
@@ -1015,17 +1017,19 @@ static int ipa_get_eth_inst_stats(unsigned long arg)
 				instance_ptr->eth_mode == IPA_ETH_CLIENT_EMAC)) {
 
 				if (instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN ||
-#if IPA_ETH_API_VER >= 2
-					instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3 ||
-#endif
 					instance_ptr->eth_mode == IPA_ETH_CLIENT_EMAC)
 					rx_instance_ptr_local->rx_client =
 					IPA_CLIENT_ETHERNET_PROD;
-				else rx_instance_ptr_local->rx_client =
+				else
+					rx_instance_ptr_local->rx_client =
 						IPA_CLIENT_AQC_ETHERNET_PROD;
 #if IPA_ETH_API_VER >= 2
-				if ((instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3) && (i == 1))
-					rx_instance_ptr_local->rx_client = IPA_CLIENT_ETHERNET2_PROD;
+				/* Get the client pipe info[1] from the allocation info context only if it is NTN3 */
+				if ((instance_ptr->eth_mode == IPA_ETH_CLIENT_NTN3)) {
+						rx_instance_ptr_local->rx_client =
+							ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
+							i].pipes_client_type[1];
+				}
 #endif
 				client_type = rx_instance_ptr_local->rx_client;
 				rx_instance_ptr_local->num_rx_ring_100_perc_with_pack =
@@ -1475,6 +1479,7 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 	int ipa_client_type;
 	int reg_idx;
 	int index;
+	int eth_instance_id;
 
 	if (copy_from_user(&ipa_lnx_agent_ctx, u64_to_user_ptr((u64) arg),
 		sizeof(struct ipa_lnx_stats_spearhead_ctx))) {
@@ -1556,16 +1561,18 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 			k = 0;
 			for (j = 0; (j < IPA_ETH_CLIENT_MAX) &&
 				(k < SPEARHEAD_NUM_MAX_TX_INSTANCES); j++) {
-				if (ipa_eth_client_exist(j, i)) {
-					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[i].num_pipes =
+				if (ipa_eth_client_exist(j, i) &&
+					(ipa_lnx_agent_ctx.alloc_info.num_eth_instances < 2)) {
+					eth_instance_id = ipa_lnx_agent_ctx.alloc_info.num_eth_instances;
+					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[eth_instance_id].num_pipes =
 						ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
-							i].num_pipes + 2;
+							eth_instance_id].num_pipes + 2;
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
-						i].num_tx_instances++;
+						eth_instance_id].num_tx_instances++;
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
-						i].num_rx_instances++;
+						eth_instance_id].num_rx_instances++;
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
-						i].tx_inst_client_type[k] = j;
+						eth_instance_id].tx_inst_client_type[k] = j;
 					ipa_client_type =
 						ipa_eth_get_ipa_client_type_from_eth_type(
 							j, IPA_ETH_PIPE_DIR_TX);
@@ -1577,7 +1584,7 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 						ipa_client_type = IPA_CLIENT_ETHERNET2_CONS;
 #endif
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
-						i].pipes_client_type[k*2] = ipa_client_type;
+						eth_instance_id].pipes_client_type[k*2] = ipa_client_type;
 					ipa_client_type =
 						ipa_eth_get_ipa_client_type_from_eth_type(
 							j, IPA_ETH_PIPE_DIR_RX);
@@ -1589,7 +1596,7 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 						ipa_client_type = IPA_CLIENT_ETHERNET2_PROD;
 #endif
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
-						i].pipes_client_type[(k*2) + 1] = ipa_client_type;
+						eth_instance_id].pipes_client_type[(k*2) + 1] = ipa_client_type;
 					ipa_lnx_agent_ctx.alloc_info.num_eth_instances++;
 					k++;
 				}
