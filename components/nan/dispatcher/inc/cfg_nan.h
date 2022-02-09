@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -225,7 +225,7 @@
  *
  * @Min: 1
  * @Max: 2
- * @Default: 2
+ * @Default: 1
  *
  * Related: None
  *
@@ -239,7 +239,7 @@
 			"ndi_max_support", \
 			1, \
 			2, \
-			2, \
+			1, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Max number of NDI host supports")
 
