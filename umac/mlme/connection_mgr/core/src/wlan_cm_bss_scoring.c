@@ -2328,8 +2328,6 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 	score_cfg->weight_config.sae_pk_ap_weightage =
 				cfg_get(psoc, CFG_SAE_PK_AP_WEIGHTAGE);
 
-	cm_init_mlo_score_config(psoc, score_cfg, &total_weight);
-
 	total_weight =  score_cfg->weight_config.rssi_weightage +
 			score_cfg->weight_config.ht_caps_weightage +
 			score_cfg->weight_config.vht_caps_weightage +
@@ -2344,6 +2342,8 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 			score_cfg->weight_config.oce_ap_tx_pwr_weightage +
 			score_cfg->weight_config.oce_subnet_id_weightage +
 			score_cfg->weight_config.sae_pk_ap_weightage;
+
+	cm_init_mlo_score_config(psoc, score_cfg, &total_weight);
 
 	/*
 	 * If configured weights are greater than max weight,
