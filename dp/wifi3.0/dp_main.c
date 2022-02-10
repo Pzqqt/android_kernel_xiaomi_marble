@@ -10595,6 +10595,7 @@ QDF_STATUS dp_sysfs_fill_stats(ol_txrx_soc_handle soc_hdl,
 	uint32_t host_stats = 0;
 	enum cdp_stats stats;
 	struct cdp_txrx_stats_req req;
+	uint32_t num_stats;
 	struct dp_soc *soc = NULL;
 
 	if (!soc_hdl) {
@@ -10622,6 +10623,14 @@ QDF_STATUS dp_sysfs_fill_stats(ol_txrx_soc_handle soc_hdl,
 	 */
 	if (stats > CDP_TXRX_MAX_STATS)
 		stats = stats + DP_CURR_FW_STATS_AVAIL - DP_HTT_DBG_EXT_STATS_MAX;
+
+	num_stats = QDF_ARRAY_SIZE(dp_stats_mapping_table);
+
+	if (stats >= num_stats) {
+		dp_cdp_err("%pK : Invalid stats option: %d, max num stats: %d",
+				soc, stats, num_stats);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	/* build request */
 	fw_stats = dp_stats_mapping_table[stats][STATS_FW];

@@ -197,7 +197,11 @@ void DP_PRINT_STATS(const char *fmt, ...)
 	struct dp_soc *soc = NULL;
 
 	soc_void = cds_get_context(QDF_MODULE_ID_SOC);
+	if (!soc_void)
+		return;
+
 	soc = cdp_soc_t_to_dp_soc(soc_void);
+
 	va_start(val, fmt);
 	QDF_VTRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH, (char *)fmt, val);
 	/* writing to the buffer */
