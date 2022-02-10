@@ -713,8 +713,12 @@ void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
 	struct wlan_mlo_sta *sta_ctx = NULL;
 
-	if (mlo_dev_ctx)
+	if (mlo_dev_ctx) {
 		sta_ctx = mlo_dev_ctx->sta_ctx;
+	} else {
+		mlo_debug_rl("mlo_dev_ctx is NULL");
+		return;
+	}
 
 	if (wlan_cm_is_vdev_disconnected(vdev)) {
 		if (sta_ctx) {
@@ -741,25 +745,22 @@ void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
 			return;
 		}
 
-		if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev)) {
-			if (mlo_dev_ctx->sta_ctx->assoc_rsp.ptr) {
-				qdf_mem_free(
-					mlo_dev_ctx->sta_ctx->assoc_rsp.ptr);
-				mlo_dev_ctx->sta_ctx->assoc_rsp.ptr = NULL;
+		if (!wlan_vdev_mlme_is_mlo_link_vdev(vdev) && sta_ctx) {
+			if (sta_ctx->assoc_rsp.ptr) {
+				qdf_mem_free(sta_ctx->assoc_rsp.ptr);
+				sta_ctx->assoc_rsp.ptr = NULL;
 			}
-			mlo_dev_ctx->sta_ctx->assoc_rsp.len =
-				rsp->connect_ies.assoc_rsp.len;
-			mlo_dev_ctx->sta_ctx->assoc_rsp.ptr =
+			sta_ctx->assoc_rsp.len = rsp->connect_ies.assoc_rsp.len;
+			sta_ctx->assoc_rsp.ptr =
 				qdf_mem_malloc(rsp->connect_ies.assoc_rsp.len);
-			if (!mlo_dev_ctx->sta_ctx->assoc_rsp.ptr) {
+			if (!sta_ctx->assoc_rsp.ptr) {
 				QDF_ASSERT(0);
 				return;
 			}
 			if (rsp->connect_ies.assoc_rsp.ptr)
-				qdf_mem_copy(
-					mlo_dev_ctx->sta_ctx->assoc_rsp.ptr,
-					rsp->connect_ies.assoc_rsp.ptr,
-					rsp->connect_ies.assoc_rsp.len);
+				qdf_mem_copy(sta_ctx->assoc_rsp.ptr,
+					     rsp->connect_ies.assoc_rsp.ptr,
+					     rsp->connect_ies.assoc_rsp.len);
 			/* Update connected_links_bmap for all vdev taking
 			 * part in association
 			 */
@@ -1157,10 +1158,12 @@ void mlo_get_assoc_rsp(struct wlan_objmgr_vdev *vdev,
 		       struct element_info *assoc_rsp_frame)
 {
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
-	struct wlan_mlo_sta *sta_ctx = mlo_dev_ctx->sta_ctx;
+	struct wlan_mlo_sta *sta_ctx = NULL;
 
 	if (!mlo_dev_ctx || !mlo_dev_ctx->sta_ctx)
 		return;
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
 
 	if (!sta_ctx->assoc_rsp.len || !sta_ctx->assoc_rsp.ptr) {
 		mlo_err("Assoc Resp info is empty");
