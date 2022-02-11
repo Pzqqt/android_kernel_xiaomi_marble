@@ -877,7 +877,13 @@ QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
 		       rsp->ssid.length, rsp->ssid.ssid, rsp->cm_id,
 		       rsp->reason, rsp->status_code);
 
-	osif_check_and_unlink_bss(vdev, osif_priv, rsp);
+	/**
+	 * Do not unlink the BSS if it is an ML candidate. In case of ML,
+	 * failed candidate may be used as partner link while trying the
+	 * connection on other links.
+	 */
+	if (!wlan_vdev_mlme_is_mlo_vdev(vdev))
+		osif_check_and_unlink_bss(vdev, osif_priv, rsp);
 
 	return QDF_STATUS_SUCCESS;
 }
