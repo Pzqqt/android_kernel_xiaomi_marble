@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1477,6 +1477,20 @@ populate_dot11f_eht_operation(struct mac_context *mac_ctx,
 
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
+ * populate_dot11f_auth_mlo_ie() - populate MLO IE in Auth frame
+ * @mac_ctx: Global MAC context
+ * @pe_session: PE session
+ * @mlo_ie: pointer to MLO IE struct
+ *
+ * Return: Success if MLO IE is populated in Auth frame, else Failure
+ *
+ * Populate the MLO IE in Auth frame based on the session.
+ */
+QDF_STATUS populate_dot11f_auth_mlo_ie(struct mac_context *mac_ctx,
+				       struct pe_session *pe_session,
+				       tDot11fIEmlo_ie *mlo_ie);
+
+/**
  * populate_dot11f_assoc_req_mlo_ie() - populate MLO Operation IE
  in assoc req
  * @mac_ctx: Global MAC context
@@ -1487,10 +1501,18 @@ populate_dot11f_eht_operation(struct mac_context *mac_ctx,
  */
 QDF_STATUS
 populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
-					     struct pe_session *pe_session,
-					     tDot11fAssocRequest *frm);
+				 struct pe_session *pe_session,
+				 tDot11fAssocRequest *frm);
 
 #else
+static inline
+QDF_STATUS populate_dot11f_auth_mlo_ie(struct mac_context *mac_ctx,
+				       struct pe_session *pe_session,
+				       tDot11fIEmlo_ie *mlo_ie)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
 static inline QDF_STATUS
 populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 					     struct pe_session *pe_session,

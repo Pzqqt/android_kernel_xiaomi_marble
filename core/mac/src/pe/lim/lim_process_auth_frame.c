@@ -289,6 +289,14 @@ static void lim_process_auth_open_system_algo(struct mac_context *mac_ctx,
 	auth_node->seq_num = ((mac_hdr->seqControl.seqNumHi << 4) |
 				(mac_hdr->seqControl.seqNumLo));
 	auth_node->timestamp = qdf_mc_timer_get_system_ticks();
+
+	/* Check for MLO IE in Auth request in case of MLO connection */
+	if (wlan_vdev_mlme_is_mlo_ap(pe_session->vdev) &&
+	    rx_auth_frm_body->is_mlo_ie_present) {
+		auth_node->is_mlo_ie_present = true;
+		pe_debug("MLO IE is present in auth req");
+	}
+
 	lim_add_pre_auth_node(mac_ctx, auth_node);
 	/*
 	 * Send Authenticaton frame with Success
@@ -1610,6 +1618,17 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			rx_auth_frm_body)) {
 		pe_err("Received invalid FILS auth packet");
 		goto free;
+	}
+
+	if (LIM_IS_STA_ROLE(pe_session) &&
+	    wlan_vdev_mlme_is_mlo_vdev(pe_session->vdev)) {
+		if (!rx_auth_frm_body->is_mlo_ie_present) {
+			pe_debug("MLO IE not present in auth frame from peer");
+			lim_send_deauth_mgmt_frame(
+				mac_ctx, REASON_UNSPEC_FAILURE,
+				pe_session->bssId, pe_session, false);
+			goto free;
+		}
 	}
 
 	/*

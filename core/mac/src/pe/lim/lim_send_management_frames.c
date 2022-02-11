@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2944,6 +2944,59 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static uint32_t lim_populate_auth_mlo_ie(struct mac_context *mac_ctx,
+					 struct pe_session *session,
+					 tSirMacAddr peer_addr,
+					 uint8_t *mlo_ie_buf)
+{
+	tDot11fIEmlo_ie mlo_ie;
+	uint32_t mlo_ie_len = 0;
+	struct tLimPreAuthNode *auth_node;
+
+	if (wlan_vdev_mlme_is_mlo_vdev(session->vdev)) {
+		qdf_mem_zero(&mlo_ie, sizeof(tDot11fIEmlo_ie));
+
+		pe_debug("Auth TX sys role: %d", GET_LIM_SYSTEM_ROLE(session));
+		if (LIM_IS_STA_ROLE(session)) {
+			populate_dot11f_auth_mlo_ie(mac_ctx, session, &mlo_ie);
+			dot11f_pack_ie_mlo_ie(mac_ctx, &mlo_ie, mlo_ie_buf,
+					      DOT11F_EID_MLO_IE, &mlo_ie_len);
+		} else if (LIM_IS_AP_ROLE(session)) {
+			auth_node = lim_search_pre_auth_list(mac_ctx, peer_addr);
+			if (!auth_node) {
+				pe_err("no pre-auth ctx with peer addr");
+				return 0;
+			}
+
+			/*
+			 * Populate MLO IE in Auth response frame if
+			 * is_mlo_ie_present flag is set. It is set when peer
+			 * is MLO AP
+			 */
+			if (auth_node && auth_node->is_mlo_ie_present) {
+				populate_dot11f_auth_mlo_ie(mac_ctx, session,
+							    &mlo_ie);
+				dot11f_pack_ie_mlo_ie(
+					mac_ctx, &mlo_ie, mlo_ie_buf,
+					DOT11F_EID_MLO_IE, &mlo_ie_len);
+			}
+		}
+	}
+
+	return mlo_ie_len;
+}
+#else
+static inline
+uint32_t lim_populate_auth_mlo_ie(struct mac_context *mac_ctx,
+				  struct pe_session *session,
+				  tSirMacAddr peer_addr,
+				  uint8_t *mlo_ie_buf)
+{
+	return 0;
+}
+#endif
+
 /**
  * lim_send_auth_mgmt_frame() - Send an Authentication frame
  *
@@ -2978,6 +3031,8 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	enum rateid min_rid = RATEID_DEFAULT;
 	uint16_t ch_freq_tx_frame = 0;
 	int8_t peer_rssi = 0;
+	uint8_t mlo_ie_buf[DOT11F_EID_MLO_IE];
+	uint32_t mlo_ie_len = 0;
 
 	if (!session) {
 		pe_err("Error: psession Entry is NULL");
@@ -3106,6 +3161,12 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		return;
 	} /* switch (auth_frame->authTransactionSeqNumber) */
 
+	qdf_mem_zero(&mlo_ie_buf, sizeof(mlo_ie_buf));
+
+	mlo_ie_len =  lim_populate_auth_mlo_ie(mac_ctx, session, peer_addr,
+					       mlo_ie_buf);
+	frame_len += mlo_ie_len;
+
 alloc_packet:
 	qdf_status = cds_packet_alloc((uint16_t) frame_len, (void **)&frame,
 				 (void **)&packet);
@@ -3219,6 +3280,9 @@ alloc_packet:
 			lim_add_fils_data_to_auth_frame(session, body);
 		}
 	}
+
+	if (mlo_ie_len)
+		qdf_mem_copy(body, &mlo_ie_buf, mlo_ie_len);
 
 	pe_nofl_info("Auth TX: vdev %d seq %d seq num %d status %d WEP %d to " QDF_MAC_ADDR_FMT,
 		     vdev_id, auth_frame->authTransactionSeqNumber,
