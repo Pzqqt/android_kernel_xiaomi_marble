@@ -5152,6 +5152,14 @@ enum qca_wlan_vendor_attr_rssi_monitoring {
  * QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL: Unsigned 8-bit value indicating
  * protocol used by NDP and assigned by the Internet Assigned Numbers Authority
  * as per: www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
+ * QCA_WLAN_VENDOR_ATTR_PEER_NDPE_SUPPORT: Unsigned 8-bit value indicating if
+ * NDP remote peer supports NAN NDPE. 1:support 0:not support
+ * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_ID: As per Wi-Fi Aware Specification v3.2
+ * Service Id is the first 48 bits of the SHA-256 hash of the Service Name.
+ * A lower-case representation of the Service Name shall be used to
+ * calculate the Service ID.
+ * Array of u8: length is 6 bytes
+ * This attribute is used and optional for ndp indication.
 */
 enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAM_INVALID = 0,
@@ -5184,6 +5192,8 @@ enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR = 27,
 	QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT = 28,
 	QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL = 29,
+	QCA_WLAN_VENDOR_ATTR_PEER_NDPE_SUPPORT = 30,
+	QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_ID = 31,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_AFTER_LAST,
