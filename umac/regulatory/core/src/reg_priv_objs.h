@@ -115,6 +115,10 @@ struct chan_change_cbk_entry {
  * disabled
  * @ch_avoid_ext_ind: whether need to update extended channel frequency list
  * @avoid_freq_ext_list: the extended avoid channel frequency list
+ * @coex_unsafe_chan_nb_user_prefer: Honor coex unsafe chan cmd from firmware or
+ * userspace
+ * @coex_unsafe_chan_reg_disable: To disable reg channels for received coex
+ * unsafe channels list
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
@@ -180,6 +184,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool ch_avoid_ext_ind;
 	struct ch_avoid_ind_type avoid_freq_ext_list;
 	bool coex_unsafe_chan_nb_user_prefer;
+	bool coex_unsafe_chan_reg_disable;
 #endif
 };
 

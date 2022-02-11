@@ -1591,8 +1591,10 @@ reg_modify_chan_list_for_avoid_chan_ext(struct wlan_regulatory_pdev_priv_obj
 	if (!psoc)
 		return;
 
-	if (reg_check_coex_unsafe_nb_user_prefer(psoc))
+	if (!reg_check_coex_unsafe_chan_reg_disable(psoc)) {
+		reg_debug("Don't disable reg channels for Coex unsafe channels");
 		return;
+	}
 
 	psoc_priv_obj = reg_get_psoc_obj(psoc);
 	if (!psoc_priv_obj)

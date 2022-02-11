@@ -1772,6 +1772,16 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
  */
 
 bool reg_check_coex_unsafe_nb_user_prefer(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_disable_coex_unsafe_channel() - get reg channel disable for
+ * for coex unsafe channels
+ * @psoc: pointer to psoc
+ *
+ * Return: bool
+ */
+
+bool reg_check_coex_unsafe_chan_reg_disable(struct wlan_objmgr_psoc *psoc);
 #else
 static inline QDF_STATUS
 reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
@@ -1782,6 +1792,12 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 
 static inline
 bool reg_check_coex_unsafe_nb_user_prefer(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+bool reg_check_coex_unsafe_chan_reg_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }

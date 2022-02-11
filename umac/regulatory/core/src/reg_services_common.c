@@ -6576,6 +6576,19 @@ bool reg_check_coex_unsafe_nb_user_prefer(struct wlan_objmgr_psoc *psoc)
 
 	return psoc_priv_obj->coex_unsafe_chan_nb_user_prefer;
 }
+
+bool reg_check_coex_unsafe_chan_reg_disable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return false;
+	}
+
+	return psoc_priv_obj->coex_unsafe_chan_reg_disable;
+}
 #endif
 
 #if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
