@@ -23,7 +23,11 @@
 #include <linux/slab.h>
 
 #ifdef CONFIG_PLD_IPCI_ICNSS
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#include "icnss2.h"
+#else
 #include <soc/qcom/icnss2.h>
+#endif
 #endif
 
 #include "pld_internal.h"
