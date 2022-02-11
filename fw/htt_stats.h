@@ -534,6 +534,26 @@ typedef enum {
     HTT_RX_UL_TRIGGER_STATS_UPLOAD_11BE_OFDMA,
 } htt_rx_ul_trigger_stats_upload_t;
 
+/*
+ * The htt_rx_ul_mumimo_trigger_stats_upload_t enum values are
+ * provided by the host as one of the config param elements in
+ * the HTT_H2T EXT_STATS_REQ message, for stats type ==
+ * HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS.
+ */
+typedef enum {
+    /*
+     * Upload 11ax UL MUMIMO RX Trigger stats
+     * TLV: htt_rx_pdev_ul_mumimo_trig_stats_tlv
+     */
+    HTT_RX_UL_MUMIMO_TRIGGER_STATS_UPLOAD_11AX,
+
+    /*
+     * Upload 11be UL MUMIMO RX Trigger stats
+     * TLV: htt_rx_pdev_ul_mumimo_trig_be_stats_tlv
+     */
+    HTT_RX_UL_MUMIMO_TRIGGER_STATS_UPLOAD_11BE,
+} htt_rx_ul_mumimo_trigger_stats_upload_t;
+
 #define HTT_STATS_MAX_STRING_SZ32 4
 #define HTT_STATS_MACID_INVALID 0xff
 #define HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS 10
