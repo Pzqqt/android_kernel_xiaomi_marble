@@ -2388,15 +2388,27 @@ static void mlme_init_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
 #endif
 
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
-static void mlme_init_unsafe_coex_cfg(struct wlan_objmgr_psoc *psoc,
-				      struct wlan_mlme_reg *reg)
+static void mlme_init_coex_unsafe_chan_cfg(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_mlme_reg *reg)
 {
 	reg->coex_unsafe_chan_nb_user_prefer =
 		cfg_get(psoc, CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER);
 }
+
+static void mlme_init_coex_unsafe_chan_reg_disable_cfg(
+		struct wlan_objmgr_psoc *psoc, struct wlan_mlme_reg *reg)
+{
+	reg->coex_unsafe_chan_reg_disable =
+		cfg_get(psoc, CFG_COEX_UNSAFE_CHAN_REG_DISABLE);
+}
 #else
-static void mlme_init_unsafe_coex_cfg(struct wlan_objmgr_psoc *psoc,
-				      struct wlan_mlme_reg *reg)
+static void mlme_init_coex_unsafe_chan_cfg(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_mlme_reg *reg)
+{
+}
+
+static void mlme_init_coex_unsafe_chan_reg_disable_cfg(
+		struct wlan_objmgr_psoc *psoc, struct wlan_mlme_reg *reg)
 {
 }
 #endif
@@ -2427,7 +2439,8 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT_FOR_NAN);
 
 	mlme_init_acs_avoid_freq_list(psoc, reg);
-	mlme_init_unsafe_coex_cfg(psoc, reg);
+	mlme_init_coex_unsafe_chan_cfg(psoc, reg);
+	mlme_init_coex_unsafe_chan_reg_disable_cfg(psoc, reg);
 }
 
 static void

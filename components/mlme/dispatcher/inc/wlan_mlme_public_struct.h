@@ -2451,6 +2451,8 @@ enum mlme_reg_srd_master_modes {
  * @enable_nan_on_indoor_channels: Enable nan on Indoor channels
  * @coex_unsafe_chan_nb_user_prefer: Honor coex unsafe freq event from firmware
  * or not
+ * @coex_unsafe_chan_reg_disable: To disable reg channels for received coex
+ * unsafe channels list
  */
 struct wlan_mlme_reg {
 	uint32_t self_gen_frm_pwr;
@@ -2473,6 +2475,7 @@ struct wlan_mlme_reg {
 	bool enable_nan_on_indoor_channels;
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
 	bool coex_unsafe_chan_nb_user_prefer;
+	bool coex_unsafe_chan_reg_disable;
 #endif
 };
 

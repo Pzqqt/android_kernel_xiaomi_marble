@@ -4391,9 +4391,27 @@ ucfg_mlme_cfg_get_ht_smps(struct wlan_objmgr_psoc *psoc,
  */
 bool ucfg_mlme_get_coex_unsafe_chan_nb_user_prefer(
 		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_mlme_get_coex_unsafe_chan_reg_disable() - get reg disable cap for
+ * coex unsafe channels support
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: coex_unsafe_chan_reg_disable
+ */
+bool ucfg_mlme_get_coex_unsafe_chan_reg_disable(
+		struct wlan_objmgr_psoc *psoc);
 #else
 static inline
 bool ucfg_mlme_get_coex_unsafe_chan_nb_user_prefer(
+		struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+bool ucfg_mlme_get_coex_unsafe_chan_reg_disable(
 		struct wlan_objmgr_psoc *psoc)
 {
 	return false;

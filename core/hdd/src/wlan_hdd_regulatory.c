@@ -228,9 +228,26 @@ void hdd_update_coex_unsafe_chan_nb_user_prefer(
 		ucfg_mlme_get_coex_unsafe_chan_nb_user_prefer(
 		hdd_ctx->psoc);
 }
+
+static inline
+void hdd_update_coex_unsafe_chan_reg_disable(
+		struct hdd_context *hdd_ctx,
+		struct reg_config_vars *config_vars)
+{
+	config_vars->coex_unsafe_chan_reg_disable =
+		ucfg_mlme_get_coex_unsafe_chan_reg_disable(
+		hdd_ctx->psoc);
+}
 #else
 static inline
 void hdd_update_coex_unsafe_chan_nb_user_prefer(
+		struct hdd_context *hdd_ctx,
+		struct reg_config_vars *config_vars)
+{
+}
+
+static inline
+void hdd_update_coex_unsafe_chan_reg_disable(
 		struct hdd_context *hdd_ctx,
 		struct reg_config_vars *config_vars)
 {
@@ -303,6 +320,7 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	config_vars->enable_5dot9_ghz_chan_in_master_mode =
 						enable_5dot9_ghz_chan;
 	hdd_update_coex_unsafe_chan_nb_user_prefer(hdd_ctx, config_vars);
+	hdd_update_coex_unsafe_chan_reg_disable(hdd_ctx, config_vars);
 }
 
 /**
