@@ -1868,7 +1868,6 @@ static int iris_hfi_core_init(void *device)
 		rc = -ENOMEM;
 		goto err_core_init;
 	}
-	cvp_register_va_md_region();
 
 	// Add node for dev struct
 	add_va_node_to_list(CVP_QUEUE_DUMP, dev,

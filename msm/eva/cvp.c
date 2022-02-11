@@ -27,6 +27,7 @@
 #include "msm_cvp_clocks.h"
 #include "msm_cvp_dsp.h"
 #include "msm_cvp.h"
+#include "cvp_dump.h"
 
 #define CLASS_NAME              "cvp"
 #define DRIVER_NAME             "cvp"
@@ -452,6 +453,9 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	} else {
 		dprintk(CVP_DSP, "DSP interface not enabled\n");
 	}
+
+	// Registering EVA SS with minidump
+	cvp_register_va_md_region();
 
 	return rc;
 

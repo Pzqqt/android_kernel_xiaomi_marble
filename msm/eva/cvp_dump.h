@@ -13,6 +13,7 @@
 enum cvp_dump_type {
 	CVP_QUEUE_DUMP,
 	CVP_DBG_DUMP,
+	CVP_STATIC_DUMP,
 	CVP_MAX_DUMP,
 };
 
@@ -23,14 +24,19 @@ enum cvp_dump_type {
 #include <soc/qcom/minidump.h>
 
 /*
- * wrapper for static minidump
+ * wrapper for static minidump register
 
  * @name: Dump will be collected with this name
  * @virt: Virtual address of the buffer which needs to be dumped
  * @phys: Physical address of the buffer which needs to be dumped
  * @size: Size of the buffer which needs to be dumped
 */
-int md_eva_dump(const char* name, u64 virt, u64 phys, u64 size);
+int md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size);
+
+/*
+ * wrapper for static minidump unregister
+*/
+void md_eva_static_dump_unregister(void);
 
 /*
  * Fucntion to add dump region to queue
@@ -81,18 +87,32 @@ void add_queue_header_to_va_md_list(void *device);
  * @copy: Flag to indicate if the buffer data needs to be copied
  *		to the intermidiate buffer allocated by kzmalloc.
 */
-struct eva_va_md_queue
-{
+struct eva_va_md_queue {
 	struct list_head list;
 	void *va_md_buff;
 	u32 va_md_buff_size;
 	char region_name[MAX_REGION_NAME_LEN];
 	bool copy;
 };
+
+/*
+ * Node structure for STATIC_MD Linked List
+
+ * @list: linux kernel list implementation
+ * @.md_entry: md_region to pass to minidump driver
+*/
+struct eva_static_md {
+	struct list_head list;
+	struct md_region md_entry;
+};
 #else
-static inline int md_eva_dump(const char* name, u64 virt, u64 phys, u64 size)
+static inline int md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size)
 {
 	return 0;
+}
+
+static inline void md_eva_static_dump_unregister(void)
+{
 }
 
 static inline void add_va_node_to_list(enum cvp_dump_type type, void *buff_va,
