@@ -6814,6 +6814,12 @@ typedef struct {
      * agile span center frequency2 (MHz), 0 for normal scan.
      */
     A_UINT32 spectral_scan_center_freq2;
+    /**
+     * Flag to enable re-capture of FFT sample if the previous sample has
+     * AGC gain change bit set.
+     * Re-capture will be enabled only if scan period is greater than 50us.
+     */
+    A_UINT32 recapture_sample_on_gain_change;
 } wmi_vdev_spectral_configure_cmd_fixed_param;
 
 /*
