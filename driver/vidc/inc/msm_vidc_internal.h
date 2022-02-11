@@ -700,6 +700,7 @@ struct msm_vidc_subscription_params {
 struct msm_vidc_hfi_frame_info {
 	u32                    picture_type;
 	u32                    no_output;
+	u32                    subframe_input;
 	u32                    cr;
 	u32                    cf;
 	u32                    data_corrupt;
