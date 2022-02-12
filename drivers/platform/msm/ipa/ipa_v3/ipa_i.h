@@ -3375,6 +3375,7 @@ int ipa3_uc_disable_holb_monitor(void);
 int ipa3_uc_bw_monitor(struct ipa_wdi_bw_info *info);
 int ipa3_uc_setup_event_ring(void);
 void ipa3_tag_destroy_imm(void *user1, int user2);
+void ipa3_tag_destroy_reg_read_imm(void *user1, int user2);
 const struct ipa_gsi_ep_config *ipa3_get_gsi_ep_info
 	(enum ipa_client_type client);
 void ipa3_uc_rg10_write_reg(enum ipahal_reg_name reg, u32 n, u32 val);

@@ -410,6 +410,17 @@ struct ipahal_imm_cmd_pyld {
 };
 
 
+/*
+ * struct ipahal_reg_read_imm_cmd_pyld - Reg read immediate command pyld
+ * @cmd: dummy register read memory
+ * @cmd_pyld: payload pointer to register read imm cmd
+ */
+struct ipahal_reg_read_imm_cmd_pyld {
+	struct ipa_mem_buffer cmd;
+	struct ipahal_imm_cmd_pyld *cmd_pyld;
+};
+
+
 /* Immediate command Function APIs */
 
 /*
