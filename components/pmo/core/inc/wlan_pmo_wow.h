@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -421,14 +422,17 @@ bool pmo_core_is_wow_enabled(struct pmo_psoc_priv_obj *psoc_ctx)
  * pmo_core_set_wow_nack() - Set wow nack flag
  * @psoc_ctx: Pointer to objmgr psoc handle
  * @value: true if received wow nack from else false
+ * @reason_code: WoW status reason code
  *
  * Return: None
  */
 static inline
-void pmo_core_set_wow_nack(struct pmo_psoc_priv_obj *psoc_ctx, bool value)
+void pmo_core_set_wow_nack(struct pmo_psoc_priv_obj *psoc_ctx, bool value,
+			   uint16_t reason_code)
 {
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	psoc_ctx->wow.wow_nack = value;
+	psoc_ctx->wow.reason_code = reason_code;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
 }
 
@@ -449,6 +453,25 @@ bool pmo_core_get_wow_nack(struct pmo_psoc_priv_obj *psoc_ctx)
 
 	return value;
 }
+
+/**
+ * pmo_core_get_wow_reason_code() - Get wow status reason code
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ *
+ * Return: wow status reason code
+ */
+static inline
+uint16_t pmo_core_get_wow_reason_code(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	uint16_t value;
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	value = psoc_ctx->wow.reason_code;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return value;
+}
+
 /**
  * pmo_core_update_wow_enable_cmd_sent() - update wow enable cmd sent flag
  * @psoc_ctx: Pointer to objmgr psoc handle
