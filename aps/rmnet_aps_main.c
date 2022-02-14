@@ -1,4 +1,4 @@
-/* Copyright (c) 2021. Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,6 +18,11 @@
 #include "rmnet_config.h"
 #include "rmnet_aps.h"
 #include "rmnet_aps_genl.h"
+static char*verinfo[]={"\x37\x34\x31\x35\x39\x32\x31\x63",
+"\x39\x66\x36\x36\x38\x31\x62\x34"};module_param_array(verinfo,charp,NULL,
+(0xcb7+5769-0x221c));MODULE_PARM_DESC(verinfo,
+"\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
+);
 #define DATARMNET63ff5c35c2 (0xd26+209-0xdf6)
 #define DATARMNETceae994093 (0xd1f+216-0xdf5)
 #define DATARMNET3412b803e1 (0xd18+223-0xdf4)

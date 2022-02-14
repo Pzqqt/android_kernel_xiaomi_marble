@@ -1,4 +1,4 @@
-/* Copyright (c) 2021. Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,7 +18,11 @@
 #include <linux/skbuff.h>
 #include <linux/rtnetlink.h>
 #include <net/pkt_sched.h>
-static const char*DATARMNETf1bb41174a="\x31\x2e\x30";
+static char*verinfo[]={"\x37\x34\x31\x35\x39\x32\x31\x63",
+"\x61\x65\x32\x34\x34\x61\x39\x64"};module_param_array(verinfo,charp,NULL,
+(0xcb7+5769-0x221c));MODULE_PARM_DESC(verinfo,
+"\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
+);static const char*DATARMNETf1bb41174a="\x31\x2e\x30";
 #define DATARMNETe632b2e0b0 (0xd11+230-0xdf3)
 static const u8 DATARMNET93bdeed8cb[TC_PRIO_MAX+(0xd26+209-0xdf6)]={
 (0xd18+223-0xdf4),(0xd18+223-0xdf4),(0xd18+223-0xdf4),(0xd18+223-0xdf4),
