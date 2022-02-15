@@ -1677,7 +1677,10 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len,
 {
 	wmi_buf_t wmi_buf;
 
-	if (roundup(len + sizeof(WMI_CMD_HDR), 4) > wmi_handle->max_msg_len) {
+	if (roundup(len, 4) > wmi_handle->max_msg_len) {
+		wmi_err("Invalid length %u (via %s:%u) max size: %u",
+			len, func_name, line_num,
+			wmi_handle->max_msg_len);
 		QDF_ASSERT(0);
 		return NULL;
 	}
@@ -1718,9 +1721,9 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 {
 	wmi_buf_t wmi_buf;
 
-	if (roundup(len + sizeof(WMI_CMD_HDR), 4) > wmi_handle->max_msg_len) {
-		QDF_DEBUG_PANIC("Invalid length %u (via %s:%u)",
-				len, func, line);
+	if (roundup(len, 4) > wmi_handle->max_msg_len) {
+		QDF_DEBUG_PANIC("Invalid length %u (via %s:%u) max size: %u",
+				len, func, line, wmi_handle->max_msg_len);
 		return NULL;
 	}
 
