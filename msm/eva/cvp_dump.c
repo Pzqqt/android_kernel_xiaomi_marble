@@ -33,13 +33,23 @@
 #include "cvp_dump.h"
 
 #ifdef CVP_MINIDUMP_ENABLED
-/*Declare and init the head node of the linked list
-for queue va_md dump*/
+/*
+	Declare and init the head node of the linked list
+	for queue va_md dump
+*/
 static LIST_HEAD(head_node_hfi_queue);
 
-/*Declare and init the head node of the linked list
- for debug struct va_md dump*/
+/*
+	Declare and init the head node of the linked list
+	for debug struct va_md dump
+*/
 static LIST_HEAD(head_node_dbg_struct);
+
+/*
+	Declare and init the head node of the linked list
+	for static dumps
+*/
+static LIST_HEAD(head_node_static_dump);
 
 static int eva_struct_list_notif_handler(struct notifier_block *this,
                 unsigned long event, void *ptr);
@@ -60,20 +70,32 @@ static struct notifier_block eva_hfiq_list_notif_blk = {
 struct list_head *dump_array[CVP_MAX_DUMP] = {
 	[CVP_QUEUE_DUMP] = &head_node_hfi_queue,
 	[CVP_DBG_DUMP] = &head_node_dbg_struct,
+	[CVP_STATIC_DUMP] = &head_node_static_dump,
 };
 
-int md_eva_dump(const char* name, u64 virt, u64 phys, u64 size)
+int md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size)
 {
-	struct md_region md_entry;
+	struct list_head *head_node;
+	struct eva_static_md *temp_node = NULL;
+
+	head_node = dump_array[CVP_STATIC_DUMP];
+
+	/*Creating Node*/
+	temp_node = kzalloc(sizeof(struct eva_static_md), GFP_KERNEL);
+	if (!temp_node) {
+		dprintk(CVP_ERR, "Memory allocation failed for static list node\n");
+		return 1;
+	}
+	INIT_LIST_HEAD(&temp_node->list);
 
 	if (msm_minidump_enabled()) {
 		dprintk(CVP_INFO, "Minidump is enabled!\n");
 
-		strlcpy(md_entry.name, name, sizeof(md_entry.name));
-		md_entry.virt_addr = (uintptr_t)virt;
-		md_entry.phys_addr = phys;
-		md_entry.size = size;
-		if (msm_minidump_add_region(&md_entry) < 0) {
+		strlcpy(temp_node->md_entry.name, name, sizeof(temp_node->md_entry.name));
+		temp_node->md_entry.virt_addr = (uintptr_t)virt;
+		temp_node->md_entry.phys_addr = phys;
+		temp_node->md_entry.size = size;
+		if (msm_minidump_add_region(&temp_node->md_entry) < 0) {
 			dprintk(CVP_ERR, "Failed to add \"%s\" data in \
 			Minidump\n", name);
 			return 1;
@@ -81,14 +103,35 @@ int md_eva_dump(const char* name, u64 virt, u64 phys, u64 size)
 			dprintk(CVP_INFO,
 				"add region success for \"%s\" with virt addr:\
 				0x%x, phy addr: 0x%x, size: %d",
-				md_entry.name, md_entry.virt_addr,
-				md_entry.phys_addr, md_entry.size);
+				temp_node->md_entry.name, temp_node->md_entry.virt_addr,
+				temp_node->md_entry.phys_addr, temp_node->md_entry.size);
+
+			list_add_tail(&temp_node->list, head_node);
 			return 0;
 		}
 	} else {
 		dprintk(CVP_ERR, "Minidump is NOT enabled!\n");
 		return 1;
 	}
+}
+
+void md_eva_static_dump_unregister(void)
+{
+	struct eva_static_md *cursor, *temp;
+
+	list_for_each_entry_safe(cursor, temp, &head_node_static_dump, list) {
+		if (msm_minidump_remove_region(&cursor->md_entry))
+			dprintk(CVP_ERR,
+			    "minidump remove region failed for \"%s\"\n",
+			    cursor->md_entry.name);
+		else
+			dprintk(CVP_ERR, "successfully removed static region \"%s\" \
+				from minidump driver\n", cursor->md_entry.name);
+		list_del(&cursor->list);
+		kfree(cursor);
+	}
+	if (list_empty(&head_node_static_dump))
+		dprintk(CVP_INFO, "static minidump list is empty now!\n");
 }
 
 void cvp_va_md_register(char* name, void* notf_blk_ptr)
@@ -125,11 +168,15 @@ void cvp_free_va_md_list(void)
 		list_del(&cursor->list);
 		kfree(cursor);
 	}
+	if (list_empty(&head_node_hfi_queue))
+		dprintk(CVP_INFO, "hfi queue va_md list is empty now!\n");
 
 	list_for_each_entry_safe(cursor, temp, &head_node_dbg_struct, list) {
 		list_del(&cursor->list);
 		kfree(cursor);
 	}
+	if (list_empty(&head_node_dbg_struct))
+		dprintk(CVP_INFO, "debug structure va_md list is empty now!\n");
 }
 
 void add_va_node_to_list(enum cvp_dump_type type, void *buff_va, u32 buff_size,

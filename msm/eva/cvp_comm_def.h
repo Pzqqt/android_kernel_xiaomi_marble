@@ -21,4 +21,7 @@ enum queue_state {
 	QUEUE_STOP = 2,
 	QUEUE_INVALID,
 };
+
+#define CVP_MINIDUMP_ENABLED 1
+
 #endif
