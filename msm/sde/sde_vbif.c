@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
@@ -448,10 +449,8 @@ bool sde_vbif_get_xin_status(struct sde_kms *sde_kms,
 	SDE_EVT32_VERBOSE(vbif->idx, params->xin_id);
 	status = vbif->ops.get_xin_halt_status(vbif, params->xin_id);
 	if (status) {
-		rc = !mdp->ops.get_clk_ctrl_status(mdp, params->clk_ctrl,
-				&status);
-		if (rc)
-			status = false;
+		rc = mdp->ops.get_clk_ctrl_status(mdp, params->clk_ctrl);
+		status = (rc < 0) ? false : !rc;
 	}
 	mutex_unlock(&vbif->mutex);
 
