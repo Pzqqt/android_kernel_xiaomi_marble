@@ -5728,7 +5728,6 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 
 		if (pdev) {
 			int mac_id;
-			bool dbs_enable = 0;
 			int max_mac_rings =
 				 wlan_cfg_get_num_mac_rings
 				(pdev->wlan_cfg_ctx);
@@ -5745,29 +5744,10 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 					       .hal_srng,
 					       RXDMA_BUF);
 
-			if (soc->cdp_soc.ol_ops->
-				is_hw_dbs_2x2_capable) {
-				dbs_enable = soc->cdp_soc.ol_ops->
-					is_hw_dbs_2x2_capable(
-							(void *)soc->ctrl_psoc);
-			}
-
-			if (dbs_enable) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-				QDF_TRACE_LEVEL_ERROR,
-				FL("DBS enabled max_mac_rings %d"),
-					 max_mac_rings);
-			} else {
-				max_mac_rings = 1;
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					 QDF_TRACE_LEVEL_ERROR,
-					 FL("DBS disabled, max_mac_rings %d"),
-					 max_mac_rings);
-			}
-
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					 FL("pdev_id %d max_mac_rings %d"),
-					 pdev->pdev_id, max_mac_rings);
+			/* get max_mac_rings based on DBS */
+			dp_is_hw_dbs_enable(soc, &max_mac_rings);
+			dp_err("pdev_id %d max_mac_rings %d",
+			       pdev->pdev_id, max_mac_rings);
 
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
 				int mac_for_pdev =
@@ -13306,11 +13286,14 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 				int *max_mac_rings)
 {
 	bool dbs_enable = false;
-	if (soc->cdp_soc.ol_ops->is_hw_dbs_2x2_capable)
+
+	if (soc->cdp_soc.ol_ops->is_hw_dbs_capable)
 		dbs_enable = soc->cdp_soc.ol_ops->
-		is_hw_dbs_2x2_capable((void *)soc->ctrl_psoc);
+				is_hw_dbs_capable((void *)soc->ctrl_psoc);
 
 	*max_mac_rings = (dbs_enable)?(*max_mac_rings):1;
+	dp_info("dbs_enable %d, max_mac_rings %d",
+		dbs_enable, *max_mac_rings);
 }
 
 qdf_export_symbol(dp_is_hw_dbs_enable);

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1120,7 +1120,7 @@ struct ol_if_ops {
 				 uint8_t pdev_id,
 				 uint8_t *peer_mac,
 				 uint8_t *vdev_mac, enum wlan_op_mode opmode);
-	bool (*is_hw_dbs_2x2_capable)(struct wlan_objmgr_psoc *psoc);
+	bool (*is_hw_dbs_capable)(struct wlan_objmgr_psoc *psoc);
 	int (*peer_add_wds_entry)(struct cdp_ctrl_objmgr_psoc *soc,
 				  uint8_t vdev_id,
 				  uint8_t *peer_macaddr,
