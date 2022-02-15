@@ -31683,7 +31683,8 @@ typedef struct {
 /* Definition of latency levels */
 typedef enum {
     WMI_WLM_LL_NORMAL = 0x0,
-    WMI_WLM_LL_MODERATE = 0x1,
+    /* DEPRECATED */ WMI_WLM_LL_MODERATE = 0x1,
+    WMI_WLM_LL_XR = 0x1,
     WMI_WLM_LL_LOW = 0x2,
     WMI_WLM_LL_ULTRA_LOW = 0x3,
 } WMI_WLM_LATENCY_LEVEL;
