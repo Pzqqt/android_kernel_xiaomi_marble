@@ -3031,19 +3031,20 @@ QDF_STATUS sir_convert_probe_frame2_struct(struct mac_context *mac,
  * @pframe: pointer of assoc request buffer
  * @nframe: length of assoc request buffer
  * @assoc_req: pointer to tpSirAssocReq
+ * @offset: Offset of (Re)Assoc req IEs
  *
  * Return: none
  */
 static void
 dot11f_parse_assc_req_mlo_partner_info(uint8_t *pframe, uint32_t nframe,
-				       tpSirAssocReq assoc_req)
+				       tpSirAssocReq assoc_req, uint32_t offset)
 {
 	const uint8_t *mlo_ie;
 
-	mlo_ie = wlan_get_ext_ie_ptr_from_ext_id(
-				MLO_IE_OUI_TYPE, MLO_IE_OUI_SIZE,
-				pframe + WLAN_ASSOC_REQ_IES_OFFSET,
-				nframe - WLAN_ASSOC_REQ_IES_OFFSET);
+	mlo_ie = wlan_get_ext_ie_ptr_from_ext_id(MLO_IE_OUI_TYPE,
+						 MLO_IE_OUI_SIZE,
+						 pframe + offset,
+						 nframe - offset);
 	if (!mlo_ie)
 		return;
 	util_get_bvmlie_persta_partner_info((uint8_t *)mlo_ie, mlo_ie[1] + 2,
@@ -3052,7 +3053,7 @@ dot11f_parse_assc_req_mlo_partner_info(uint8_t *pframe, uint32_t nframe,
 #else
 static void
 dot11f_parse_assc_req_mlo_partner_info(uint8_t *pframe, uint32_t nframe,
-				       tpSirAssocReq assoc_req)
+				       tpSirAssocReq assoc_req, uint32_t offset)
 {
 }
 #endif
@@ -3303,7 +3304,7 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 	}
 	if (ar->mlo_ie.present) {
 		dot11f_parse_assc_req_mlo_partner_info(pFrame, nFrame,
-						       pAssocReq);
+					pAssocReq, WLAN_ASSOC_REQ_IES_OFFSET);
 		pAssocReq->mlo_info.num_partner_links =
 					ar->mlo_ie.num_sta_profile;
 		qdf_mem_copy(pAssocReq->mld_mac,
@@ -4055,7 +4056,7 @@ sir_convert_reassoc_req_frame2_struct(struct mac_context *mac,
 	}
 	if (ar->mlo_ie.present) {
 		dot11f_parse_assc_req_mlo_partner_info(pFrame, nFrame,
-						       pAssocReq);
+					pAssocReq, WLAN_REASSOC_REQ_IES_OFFSET);
 		pAssocReq->mlo_info.num_partner_links =
 					ar->mlo_ie.num_sta_profile;
 		qdf_mem_copy(pAssocReq->mld_mac,
