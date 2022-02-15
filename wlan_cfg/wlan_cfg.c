@@ -143,8 +143,7 @@ static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 
 #ifdef TX_MULTI_TCL
 static const uint8_t multi_tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	[0] = WLAN_CFG_TX_RING_MASK_0, [4] = WLAN_CFG_TX_RING_MASK_2,
-	[5] = WLAN_CFG_TX_RING_MASK_4};
+	[0] = WLAN_CFG_TX_RING_MASK_0, [4] = WLAN_CFG_TX_RING_MASK_2};
 
 #ifdef IPA_OFFLOAD
 static inline const

@@ -4346,8 +4346,8 @@ static void dp_deinit_tx_pair_by_index(struct dp_soc *soc, int index)
 						&tcl_ring_num,
 						&wbm_ring_num);
 
-	if (tcl_ring_num == -1 || wbm_ring_num == -1) {
-		dp_err("incorrect tcl/wbm ring num for index %u", index);
+	if (tcl_ring_num == -1) {
+		dp_err("incorrect tcl ring num for index %u", index);
 		return;
 	}
 
@@ -4359,6 +4359,9 @@ static void dp_deinit_tx_pair_by_index(struct dp_soc *soc, int index)
 	dp_info("index %u tcl %u wbm %u", index, tcl_ring_num, wbm_ring_num);
 	dp_srng_deinit(soc, &soc->tcl_data_ring[index], TCL_DATA,
 		       tcl_ring_num);
+
+	if (wbm_ring_num == INVALID_WBM_RING_NUM)
+		return;
 
 	wlan_minidump_remove(soc->tx_comp_ring[index].base_vaddr_unaligned,
 			     soc->tx_comp_ring[index].alloc_size,
@@ -4394,8 +4397,8 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 						&tcl_ring_num,
 						&wbm_ring_num);
 
-	if (tcl_ring_num == -1 || wbm_ring_num == -1) {
-		dp_err("incorrect tcl/wbm ring num for index %u", index);
+	if (tcl_ring_num == -1) {
+		dp_err("incorrect tcl ring num for index %u", index);
 		goto fail1;
 	}
 
@@ -4411,20 +4414,24 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 			  WLAN_MD_DP_SRNG_TCL_DATA,
 			  "tcl_data_ring");
 
+	if (wbm_ring_num == INVALID_WBM_RING_NUM)
+		goto set_rbm;
+
 	if (dp_srng_init(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE,
 			 wbm_ring_num, 0)) {
 		dp_err("dp_srng_init failed for tx_comp_ring");
 		goto fail1;
 	}
 
-	bm_id = wlan_cfg_get_rbm_id_for_index(soc->wlan_cfg_ctx, tcl_ring_num);
-
-	soc->arch_ops.tx_implicit_rbm_set(soc, tcl_ring_num, bm_id);
 	wlan_minidump_log(soc->tx_comp_ring[index].base_vaddr_unaligned,
 			  soc->tx_comp_ring[index].alloc_size,
 			  soc->ctrl_psoc,
 			  WLAN_MD_DP_SRNG_TX_COMP,
 			  "tcl_comp_ring");
+set_rbm:
+	bm_id = wlan_cfg_get_rbm_id_for_index(soc->wlan_cfg_ctx, tcl_ring_num);
+
+	soc->arch_ops.tx_implicit_rbm_set(soc, tcl_ring_num, bm_id);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -4476,6 +4483,10 @@ static QDF_STATUS dp_alloc_tx_ring_pair_by_index(struct dp_soc *soc,
 	/* Enable cached TCL desc if NSS offload is disabled */
 	if (!wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx))
 		cached = WLAN_CFG_DST_RING_CACHED_DESC;
+
+	if (wlan_cfg_get_wbm_ring_num_for_index(soc->wlan_cfg_ctx, index) ==
+	    INVALID_WBM_RING_NUM)
+		return QDF_STATUS_SUCCESS;
 
 	if (dp_srng_alloc(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE,
 			  tx_comp_ring_size, cached)) {
@@ -11053,6 +11064,10 @@ static void dp_display_srng_info(struct cdp_soc_t *soc_hdl)
 		hal_get_sw_hptp(hal_soc, soc->tcl_data_ring[i].hal_srng,
 				&tp, &hp);
 		dp_info("TCL DATA ring[%d]: hp=0x%x, tp=0x%x", i, hp, tp);
+
+		if (wlan_cfg_get_wbm_ring_num_for_index(soc->wlan_cfg_ctx, i) ==
+		    INVALID_WBM_RING_NUM)
+			continue;
 
 		hal_get_sw_hptp(hal_soc, soc->tx_comp_ring[i].hal_srng,
 				&tp, &hp);

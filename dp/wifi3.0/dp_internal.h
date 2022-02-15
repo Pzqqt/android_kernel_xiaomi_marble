@@ -41,6 +41,8 @@
 /* Macro For NYSM value received in VHT TLV */
 #define VHT_SGI_NYSM 3
 
+#define INVALID_WBM_RING_NUM 0xFF
+
 /* struct htt_dbgfs_cfg - structure to maintain required htt data
  * @msg_word: htt msg sent to upper layer
  * @m: qdf debugfs file pointer
