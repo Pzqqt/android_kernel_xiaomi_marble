@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -101,7 +101,8 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 	state = (is_fast_roam_enabled) ?
 		WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_RSO_STOPPED;
 	status = cm_roam_state_change(pdev, vdev_id, state,
-				      REASON_SUPPLICANT_DISABLED_ROAMING);
+				      REASON_SUPPLICANT_DISABLED_ROAMING,
+				      NULL, false);
 
 	return status;
 }

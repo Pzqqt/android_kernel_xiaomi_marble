@@ -1920,6 +1920,7 @@ static struct mlme_ext_ops ext_ops = {
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	.mlme_vdev_send_set_mac_addr = vdevmgr_mlme_vdev_send_set_mac_addr,
 #endif
+	.mlme_cm_ext_rso_stop_cb = cm_send_rso_stop,
 };
 
 #ifdef WLAN_FEATURE_11BE_MLO
