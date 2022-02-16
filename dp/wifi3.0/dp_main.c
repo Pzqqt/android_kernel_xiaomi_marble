@@ -2674,7 +2674,7 @@ static void dp_interrupt_timer(void *arg)
 	}
 
 	start_time = qdf_get_log_timestamp();
-	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+	dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	while (yield == DP_TIMER_NO_YIELD) {
 		for (lmac_iter = 0; lmac_iter < max_mac_rings; lmac_iter++) {
@@ -5744,8 +5744,7 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 					       .hal_srng,
 					       RXDMA_BUF);
 
-			/* get max_mac_rings based on DBS */
-			dp_is_hw_dbs_enable(soc, &max_mac_rings);
+			dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 			dp_err("pdev_id %d max_mac_rings %d",
 			       pdev->pdev_id, max_mac_rings);
 
@@ -13289,15 +13288,8 @@ void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id)
 	return soc->pdev_list[0];
 }
 
-/*
- * dp_is_hw_dbs_enable() - Procedure to check if DBS is supported
- * @soc:		DP SoC context
- * @max_mac_rings:	No of MAC rings
- *
- * Return: None
- */
-void dp_is_hw_dbs_enable(struct dp_soc *soc,
-				int *max_mac_rings)
+void dp_update_num_mac_rings_for_dbs(struct dp_soc *soc,
+				     int *max_mac_rings)
 {
 	bool dbs_enable = false;
 
@@ -13305,12 +13297,12 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 		dbs_enable = soc->cdp_soc.ol_ops->
 				is_hw_dbs_capable((void *)soc->ctrl_psoc);
 
-	*max_mac_rings = (dbs_enable)?(*max_mac_rings):1;
+	*max_mac_rings = dbs_enable ? (*max_mac_rings) : 1;
 	dp_info("dbs_enable %d, max_mac_rings %d",
 		dbs_enable, *max_mac_rings);
 }
 
-qdf_export_symbol(dp_is_hw_dbs_enable);
+qdf_export_symbol(dp_update_num_mac_rings_for_dbs);
 
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
 /**

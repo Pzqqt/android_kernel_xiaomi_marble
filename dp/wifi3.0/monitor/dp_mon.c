@@ -775,7 +775,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	if (!mon_ops)
 		return 0;
 
-	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+	dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  FL("Max_mac_rings %d "),
@@ -1373,7 +1373,7 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 	soc = pdev->soc;
 	pdev->cfr_rcc_mode = false;
 	max_mac_rings = wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
-	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+	dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	dp_mon_debug("Max_mac_rings %d", max_mac_rings);
 	dp_mon_info("enable : %d, mode: 0x%x", enable, filter_val->mode);

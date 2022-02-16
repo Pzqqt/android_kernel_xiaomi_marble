@@ -446,7 +446,7 @@ static void dp_mon_vdev_timer(void *arg)
 		lmac_id = pdev->ch_band_lmac_id_mapping[mon_pdev->mon_chan_band];
 
 	start_time = qdf_get_log_timestamp();
-	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+	dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	while (yield == DP_TIMER_NO_YIELD) {
 		for (lmac_iter = 0; lmac_iter < max_mac_rings; lmac_iter++) {
