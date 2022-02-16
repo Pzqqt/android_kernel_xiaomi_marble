@@ -133,7 +133,7 @@ static void scm_add_rnr_channel_db(struct wlan_objmgr_psoc *psoc,
 			continue;
 		chan_freq = wlan_reg_chan_opclass_to_freq(rnr_bss->channel_number,
 							  rnr_bss->operating_class,
-							  false);
+							  true);
 		channel = scm_get_chan_meta(psoc, chan_freq);
 		if (!channel) {
 			scm_debug("Failed to get chan Meta freq %d", chan_freq);
