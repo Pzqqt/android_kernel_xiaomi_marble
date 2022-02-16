@@ -933,6 +933,8 @@ int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id, pdev_id;
 	struct twt_add_dialog_param params = {0};
 	uint32_t congestion_timeout = 0;
+	uint8_t peer_cap;
+	QDF_STATUS qdf_status;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -967,6 +969,21 @@ int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 	ret = osif_twt_parse_add_dialog_attrs(tb2, &params);
 	if (ret)
 		return ret;
+
+	qdf_status = ucfg_twt_get_peer_capabilities(psoc, &params.peer_macaddr,
+						    &peer_cap);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return -EINVAL;
+
+	if (params.flag_bcast && !(peer_cap & WLAN_TWT_CAPA_BROADCAST)) {
+		osif_err_rl("TWT setup reject: TWT Broadcast not supported");
+		return -EOPNOTSUPP;
+	}
+
+	if (!params.flag_bcast && !(peer_cap & WLAN_TWT_CAPA_RESPONDER)) {
+		osif_err_rl("TWT setup reject: TWT responder not supported");
+		return -EOPNOTSUPP;
+	}
 
 	ucfg_twt_cfg_get_congestion_timeout(psoc, &congestion_timeout);
 
