@@ -22995,6 +22995,8 @@ typedef struct {
     A_UINT32 nan_scid_len;
     /** Self NDI mac address */
     wmi_mac_addr self_ndi_mac_addr;
+    /** Number of bytes in TLV service_id */
+    A_UINT32 service_id_len;
     /**
      * TLV (tag length value) parameters follow the ndp_indication
      * structure. The TLV's are:
@@ -23002,6 +23004,8 @@ typedef struct {
      * A_UINT8 ndp_app_info[];
      * A_UINT8 nan_scid[];
      * wmi_ndp_transport_ip_param ndp_transport_ip_param;
+     * A_UINT8 service_id[service_id_len]; <- holds a single service ID of an
+     *     indeterminate number of bytes (most likely 6 bytes)
      */
 } wmi_ndp_indication_event_fixed_param_PROTOTYPE;
 
