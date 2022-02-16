@@ -891,6 +891,29 @@ static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
 }
 #endif
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
+static
+struct hdd_adapter *hdd_get_assoc_link_adapter(struct hdd_adapter *ml_adapter)
+{
+	int i;
+
+	for (i = 0; i < WLAN_MAX_MLD; i++) {
+		if (hdd_adapter_is_associated_with_ml_adapter(
+		    ml_adapter->mlo_adapter_info.link_adapter[i])) {
+			return ml_adapter->mlo_adapter_info.link_adapter[i];
+		}
+	}
+	return NULL;
+}
+
+#else
+static
+struct hdd_adapter *hdd_get_assoc_link_adapter(struct hdd_adapter *ml_adapter)
+{
+	return NULL;
+}
+#endif
+
 static void
 hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_cm_connect_resp *rsp)
@@ -909,6 +932,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint32_t phymode;
 	uint32_t time_buffer_size;
+	struct hdd_adapter *assoc_link_adapter;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -938,6 +962,13 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	hdd_cm_rec_connect_info(adapter, rsp);
 
 	hdd_cm_save_connect_info(adapter, rsp);
+	if (adapter->device_mode == QDF_STA_MODE &&
+	    hdd_adapter_is_ml_adapter(adapter)) {
+		/* Save connection info in assoc link adapter as well */
+		assoc_link_adapter = hdd_get_assoc_link_adapter(adapter);
+		if (assoc_link_adapter)
+			hdd_cm_save_connect_info(assoc_link_adapter, rsp);
+	}
 	phymode = wlan_reg_get_max_phymode(hdd_ctx->pdev, REG_PHYMODE_MAX,
 					   rsp->freq);
 	sta_ctx->reg_phymode = csr_convert_from_reg_phy_mode(phymode);
