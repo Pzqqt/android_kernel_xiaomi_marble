@@ -1067,6 +1067,10 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 		}
 	} else if (config->panel_mode == DSI_OP_CMD_MODE) {
 		/* Calculate the bit rate needed to match dsi transfer time */
+		if (host_cfg->phy_type == DSI_PHY_TYPE_CPHY) {
+			min_dsi_clk_hz *= bits_per_symbol;
+			do_div(min_dsi_clk_hz, num_of_symbols);
+		}
 		bit_rate = min_dsi_clk_hz * frame_time_us;
 		do_div(bit_rate, dsi_transfer_time_us);
 		bit_rate = bit_rate * num_of_lanes;
