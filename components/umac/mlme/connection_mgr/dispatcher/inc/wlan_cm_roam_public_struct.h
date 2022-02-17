@@ -671,6 +671,7 @@ enum roam_cfg_param {
 	IS_SINGLE_PMK,
 	LOST_LINK_RSSI,
 	ROAM_BAND,
+	HI_RSSI_SCAN_RSSI_DELTA,
 };
 
 /**

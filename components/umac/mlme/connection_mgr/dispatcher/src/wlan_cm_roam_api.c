@@ -831,6 +831,9 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 	case ROAM_BAND:
 		dst_config->uint_value = rso_cfg->roam_band_bitmask;
 		break;
+	case HI_RSSI_SCAN_RSSI_DELTA:
+		dst_config->uint_value = src_cfg->hi_rssi_scan_rssi_delta;
+		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
 		status = QDF_STATUS_E_FAILURE;
