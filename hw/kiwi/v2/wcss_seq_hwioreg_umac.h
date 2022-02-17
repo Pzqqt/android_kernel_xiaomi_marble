@@ -190,6 +190,30 @@
 #define HWIO_REO_R0_SW_COOKIE_CFG1_CMEM_LUT_BASE_ADDR_39_32_BMSK                                                 0xff
 #define HWIO_REO_R0_SW_COOKIE_CFG1_CMEM_LUT_BASE_ADDR_39_32_SHFT                                                    0
 
+#define HWIO_WBM_R0_WBM_CFG_2_ADDR(x)                                                                           ((x) + 0x90)
+#define HWIO_WBM_R0_WBM_CFG_2_PHYS(x)                                                                           ((x) + 0x90)
+#define HWIO_WBM_R0_WBM_CFG_2_OFFS                                                                              (0x90)
+#define HWIO_WBM_R0_WBM_CFG_2_RMSK                                                                                    0x4b
+#define HWIO_WBM_R0_WBM_CFG_2_POR                                                                               0x00000040
+#define HWIO_WBM_R0_WBM_CFG_2_POR_RMSK                                                                          0xffffffff
+#define HWIO_WBM_R0_WBM_CFG_2_ATTR                                                                                           0x3
+#define HWIO_WBM_R0_WBM_CFG_2_IN(x)            \
+                in_dword(HWIO_WBM_R0_WBM_CFG_2_ADDR(x))
+#define HWIO_WBM_R0_WBM_CFG_2_INM(x, m)            \
+                in_dword_masked(HWIO_WBM_R0_WBM_CFG_2_ADDR(x), m)
+#define HWIO_WBM_R0_WBM_CFG_2_OUT(x, v)            \
+                out_dword(HWIO_WBM_R0_WBM_CFG_2_ADDR(x),v)
+#define HWIO_WBM_R0_WBM_CFG_2_OUTM(x,m,v) \
+                out_dword_masked_ns(HWIO_WBM_R0_WBM_CFG_2_ADDR(x),m,v,HWIO_WBM_R0_WBM_CFG_2_IN(x))
+#define HWIO_WBM_R0_WBM_CFG_2_COOKIE_DEBUG_SEL_BMSK                                                                   0x40
+#define HWIO_WBM_R0_WBM_CFG_2_COOKIE_DEBUG_SEL_SHFT                                                                      6
+#define HWIO_WBM_R0_WBM_CFG_2_COOKIE_CONV_INDICATION_EN_BMSK                                                           0x8
+#define HWIO_WBM_R0_WBM_CFG_2_COOKIE_CONV_INDICATION_EN_SHFT                                                             3
+#define HWIO_WBM_R0_WBM_CFG_2_ERROR_PATH_COOKIE_CONV_EN_BMSK                                                           0x2
+#define HWIO_WBM_R0_WBM_CFG_2_ERROR_PATH_COOKIE_CONV_EN_SHFT                                                             1
+#define HWIO_WBM_R0_WBM_CFG_2_RELEASE_PATH_COOKIE_CONV_EN_BMSK                                                         0x1
+#define HWIO_WBM_R0_WBM_CFG_2_RELEASE_PATH_COOKIE_CONV_EN_SHFT                                                           0
+
 #define HWIO_REO_R0_REO_CMD_RING_BASE_LSB_ADDR(x)                                                          ((x) + 0x28c)
 #define HWIO_REO_R0_REO_CMD_RING_BASE_MSB_RING_SIZE_BMSK                                                     0xffff00
 #define HWIO_REO_R0_REO_CMD_RING_BASE_MSB_RING_SIZE_SHFT                                                            8
