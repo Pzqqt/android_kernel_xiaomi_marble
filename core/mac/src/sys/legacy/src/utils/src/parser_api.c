@@ -6895,7 +6895,7 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 	tDot11fIEmlo_ie *mlo_ie = &frm->mlo_ie;
 	tpSirAssocReq assoc_req;
 	tpSirAssocReq link_assoc_req;
-	const uint8_t *reported_p2p_ie = NULL;
+	const uint8_t *reported_p2p_ie;
 	uint8_t non_inher_ie_lists[255];
 	uint8_t non_inher_len;
 	uint8_t non_inher_ext_len;
@@ -7174,6 +7174,8 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 						mac_ctx,
 						link_assoc_req->addIE.addIEdata,
 						link_assoc_req->addIE.length);
+		else
+			reported_p2p_ie = NULL;
 		if ((reported_p2p_ie && frm->P2PAssocRes.present) ||
 		    (!reported_p2p_ie && !frm->P2PAssocRes.present))
 			same_ie = true;
@@ -7252,7 +7254,7 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 		 * are the same with reporting assoc resp.
 		 */
 		if (!same_ie) {
-			if (reported_p2p_ie) {
+			if (reported_p2p_ie && link_assoc_req) {
 				populate_dot11_assoc_res_p2p_ie(
 					mac_ctx,
 					&sta_p2p_assoc_res,
