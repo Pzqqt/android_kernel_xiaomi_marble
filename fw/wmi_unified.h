@@ -8131,6 +8131,12 @@ typedef enum {
     /* Param to enable/disable updating scrambler seed feature */
     WMI_PDEV_PARAM_EN_UPDATE_SCRAM_SEED,
 
+    /*
+     * Param to set the GPIO Drive Configuration value for
+     * Smart Antenna Parallel Mode
+     */
+    WMI_PDEV_PARAM_SA_PARALLEL_MODE_GPIO_DRIVE_CFG,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
