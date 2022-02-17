@@ -340,16 +340,25 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 			  ap_ctry[1], sta_ctry[0], sta_ctry[1]);
 		*ctry_code_match = false;
 
-		/**
-		 * Do not return if Wi-Fi safe mode or RF test mode is
-		 * enabled, rather STA should operate in LPI mode.
+		/*
+		 * If reg_info=0 not included, STA should operate in VLP mode.
+		 * If STA country is US, do not return if Wi-Fi safe mode
+		 * or RF test mode or relaxed connection policy is enabled,
+		 * rather STA should operate in LPI mode.
 		 * wlan_cm_get_check_6ghz_security API returns true if
 		 * neither Safe mode nor RF test mode are enabled.
+		 * wlan_cm_get_relaxed_6ghz_conn_policy API returns true if
+		 * enabled.
 		 */
-		if (wlan_reg_is_us(sta_ctry) &&
-		    wlan_cm_get_check_6ghz_security(psoc)) {
-			reg_err("US VLP not in place yet, connection not allowed");
-			return QDF_STATUS_E_NOSUPPORT;
+		if (ap_pwr_type != REG_INDOOR_AP) {
+			if (!wlan_reg_is_us(sta_ctry))
+				*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+			if (wlan_reg_is_us(sta_ctry) &&
+			    wlan_cm_get_check_6ghz_security(psoc) &&
+			    !wlan_cm_get_relaxed_6ghz_conn_policy(psoc)) {
+				reg_err("US VLP not supported, can't connect");
+				return QDF_STATUS_E_NOSUPPORT;
+			}
 		}
 
 		if (wlan_reg_is_etsi(sta_ctry) &&
