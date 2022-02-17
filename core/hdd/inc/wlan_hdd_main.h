@@ -1285,6 +1285,7 @@ enum qdisc_filter_status {
  * @delete_in_progress: Flag to indicate that the adapter delete is in
  *			progress, and any operation using rtnl lock inside
  *			the driver can be avoided/skipped.
+ * @is_virtual_iface: Indicates that netdev is called from virtual interface
  * @mon_adapter: hdd_adapter of monitor mode.
  * @set_mac_addr_req_ctx: Set MAC address command request context
  */
@@ -1613,6 +1614,7 @@ struct hdd_adapter {
 	/* Flag to indicate whether it is a pre cac adapter or not */
 	bool is_pre_cac_adapter;
 	bool delete_in_progress;
+	bool is_virtual_iface;
 #ifdef WLAN_FEATURE_BIG_DATA_STATS
 	struct big_data_stats_event big_data_stats;
 #endif
