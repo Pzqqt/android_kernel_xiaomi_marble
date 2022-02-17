@@ -955,6 +955,15 @@ static int dsi_panel_parse_pixel_format(struct dsi_host_common_cfg *host,
 		fmt = DSI_PIXEL_FORMAT_RGB666;
 		break;
 	case 30:
+		/*
+		 * The destination pixel format (host->dst_format) depends
+		 * upon the compression, and should be RGB888 if the DSC is
+		 * enable.
+		 * The DSC status information is inside the timing modes, that
+		 * is parsed during first dsi_display_get_modes() call.
+		 * The dst_format will be updated there depending upon the
+		 * DSC status.
+		 */
 		fmt = DSI_PIXEL_FORMAT_RGB101010;
 		break;
 	case 24:
