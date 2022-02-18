@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -370,10 +371,8 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	if (csum_type &&
 	    (skb_shinfo(skb)->gso_type & (SKB_GSO_UDP_L4 | SKB_GSO_TCPV4 | SKB_GSO_TCPV6)) &&
 	     skb_shinfo(skb)->gso_size) {
-		unsigned long flags;
-
-		spin_lock_irqsave(&state->agg_lock, flags);
-		rmnet_map_send_agg_skb(state, flags);
+		spin_lock_bh(&state->agg_lock);
+		rmnet_map_send_agg_skb(state);
 
 		if (rmnet_map_add_tso_header(skb, port, orig_dev))
 			return -EINVAL;
