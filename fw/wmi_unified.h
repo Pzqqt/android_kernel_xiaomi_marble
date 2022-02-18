@@ -30983,6 +30983,20 @@ typedef struct {
                                 */
 } wmi_regulatory_rule_ext_struct;
 
+#define WMI_REG_CHAN_PRIORITY_FREQ_GET(freq_info)        WMI_GET_BITS(freq_info, 0, 16)
+#define WMI_REG_CHAN_PRIORITY_FREQ_SET(freq_info, value) WMI_SET_BITS(freq_info, 0, 16, value)
+
+typedef struct {
+    A_UINT32  tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_regulatory_chan_priority_struct */
+    A_UINT32  freq_info;
+    /* freq_info:
+     * bits 15:0 = u16 Cutoff Frequency value for Prioritization (in MHz units)
+     *             The frequencies above this value will be prioritized and
+     *             the frequencies below this value will be de-prioritized.
+     * bits 31:16 = reserved for future
+     */
+} wmi_regulatory_chan_priority_struct;
+
 typedef enum {
     WMI_REG_DFS_UNINIT_REGION = 0,
     WMI_REG_DFS_FCC_REGION    = 1,
@@ -31085,10 +31099,12 @@ typedef struct {
     A_UINT32 num_6g_reg_rules_client_lpi[WMI_REG_CLIENT_MAX];
     A_UINT32 num_6g_reg_rules_client_vlp[WMI_REG_CLIENT_MAX];
 /*
- * This fixed_param TLV is followed by wmi_regulatory_rule_ext struct TLV array.
- * Within the reg rule ext TLV array, the 2G elements occur first,
- * then the 5G elements, then the 6G elements (AP SG, AP LPI, AP VLP,
- * client SP x4, client LPI x4, client vlp x4).
+ * This fixed_param TLV is followed by the following TLVs:
+ *   - wmi_regulatory_rule_ext reg_rule_array[] struct TLV array.
+ *     Within the reg rule ext TLV array, the 2G elements occur first,
+ *     then the 5G elements, then the 6G elements (AP SG, AP LPI, AP VLP,
+ *     client SP x4, client LPI x4, client vlp x4).
+ *   - wmi_regulatory_chan_priority_struct reg_chan_priority[]
  */
 } wmi_reg_chan_list_cc_event_ext_fixed_param;
 
