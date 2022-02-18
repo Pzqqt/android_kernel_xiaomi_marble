@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/of.h>
@@ -30,17 +31,6 @@
 	((MAX_BITRATE) >> 3)
 #define MAX_SLICE_MB_SIZE         \
 	(((4096 + 15) >> 4) * ((2304 + 15) >> 4))
-
-#define UBWC_CONFIG(mc, ml, hbb, bs1, bs2, bs3, bsp) \
-{	\
-	.max_channels = mc,	\
-	.mal_length = ml,	\
-	.highest_bank_bit = hbb,	\
-	.bank_swzl_level = bs1,	\
-	.bank_swz2_level = bs2, \
-	.bank_swz3_level = bs3, \
-	.bank_spreading = bsp,	\
-}
 
 #define ENC     MSM_VIDC_ENCODER
 #define DEC     MSM_VIDC_DECODER
@@ -1653,26 +1643,6 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_METADATA_MAX_NUM_REORDER_FRAMES,
 		HFI_PROP_MAX_NUM_REORDER_FRAMES},
-};
-
-/*
- * Custom conversion coefficients for resolution: 176x144 negative
- * coeffs are converted to s4.9 format
- * (e.g. -22 converted to ((1 << 13) - 22)
- * 3x3 transformation matrix coefficients in s4.9 fixed point format
- */
-static u32 vpe_csc_custom_matrix_coeff[MAX_MATRIX_COEFFS] = {
-	440, 8140, 8098, 0, 460, 52, 0, 34, 463
-};
-
-/* offset coefficients in s9 fixed point format */
-static u32 vpe_csc_custom_bias_coeff[MAX_BIAS_COEFFS] = {
-	53, 0, 4
-};
-
-/* clamping value for Y/U/V([min,max] for Y/U/V) */
-static u32 vpe_csc_custom_limit_coeff[MAX_LIMIT_COEFFS] = {
-	16, 235, 16, 240, 16, 240
 };
 
 /* Default UBWC config for LPDDR5 */

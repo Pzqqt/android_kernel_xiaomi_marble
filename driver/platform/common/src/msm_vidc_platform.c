@@ -1,15 +1,22 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/of_platform.h>
+#include <linux/io.h>
+#include <linux/sort.h>
+
 #include "msm_vidc_platform.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_v4l2.h"
 #include "msm_vidc_vb2.h"
 #include "msm_vidc_control.h"
 #include "msm_vidc_core.h"
+#include "msm_vidc_dt.h"
+#include "msm_vidc_debug.h"
+#include "msm_vidc_internal.h"
 #if defined(CONFIG_MSM_VIDC_WAIPIO)
 #include "msm_vidc_waipio.h"
 #endif
@@ -19,6 +26,26 @@
 #if defined(CONFIG_MSM_VIDC_IRIS2)
 #include "msm_vidc_iris2.h"
 #endif
+
+/*
+ * Custom conversion coefficients for resolution: 176x144 negative
+ * coeffs are converted to s4.9 format
+ * (e.g. -22 converted to ((1 << 13) - 22)
+ * 3x3 transformation matrix coefficients in s4.9 fixed point format
+ */
+u32 vpe_csc_custom_matrix_coeff[MAX_MATRIX_COEFFS] = {
+	440, 8140, 8098, 0, 460, 52, 0, 34, 463
+};
+
+/* offset coefficients in s9 fixed point format */
+u32 vpe_csc_custom_bias_coeff[MAX_BIAS_COEFFS] = {
+	53, 0, 4
+};
+
+/* clamping value for Y/U/V([min,max] for Y/U/V) */
+u32 vpe_csc_custom_limit_coeff[MAX_LIMIT_COEFFS] = {
+	16, 235, 16, 240, 16, 240
+};
 
 static struct v4l2_file_operations msm_v4l2_file_operations = {
 	.owner                          = THIS_MODULE,
@@ -317,4 +344,92 @@ int msm_vidc_init_platform(struct platform_device *pdev)
 		return rc;
 
 	return rc;
+}
+
+int msm_vidc_read_efuse(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	void __iomem *base;
+	u32 i = 0, efuse = 0, efuse_data_count = 0;
+	struct msm_vidc_efuse_data *efuse_data = NULL;
+	struct msm_vidc_platform_data *platform_data;
+
+	if (!core || !core->platform || !core->pdev) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	platform_data = &core->platform->data;
+	efuse_data = platform_data->efuse_data;
+	efuse_data_count = platform_data->efuse_data_size;
+
+	if (!efuse_data)
+		return 0;
+
+	for (i = 0; i < efuse_data_count; i++) {
+		switch (efuse_data[i].purpose) {
+		case SKU_VERSION:
+			base = devm_ioremap(&core->pdev->dev, efuse_data[i].start_address,
+					efuse_data[i].size);
+			if (!base) {
+				d_vpr_e("failed efuse: start %#x, size %d\n",
+					efuse_data[i].start_address,
+					efuse_data[i].size);
+				return -EINVAL;
+			}
+			efuse = readl_relaxed(base);
+			platform_data->sku_version =
+					(efuse & efuse_data[i].mask) >>
+					efuse_data[i].shift;
+			break;
+		default:
+			break;
+		}
+		if (platform_data->sku_version) {
+			d_vpr_h("efuse 0x%x, platform version 0x%x\n",
+				efuse, platform_data->sku_version);
+			break;
+		}
+	}
+	return rc;
+}
+
+void msm_vidc_ddr_ubwc_config(
+	struct msm_vidc_platform_data *platform_data, u32 hbb_override_val)
+{
+	uint32_t ddr_type = DDR_TYPE_LPDDR5;
+
+	if (!platform_data || !platform_data->ubwc_config) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	ddr_type = of_fdt_get_ddrtype();
+	if (ddr_type == -ENOENT)
+		d_vpr_e("Failed to get ddr type, use LPDDR5\n");
+
+	if (platform_data->ubwc_config &&
+		(ddr_type == DDR_TYPE_LPDDR4 ||
+		 ddr_type == DDR_TYPE_LPDDR4X))
+		platform_data->ubwc_config->highest_bank_bit = hbb_override_val;
+
+	d_vpr_h("DDR Type 0x%x hbb 0x%x\n",
+		ddr_type, platform_data->ubwc_config ?
+		platform_data->ubwc_config->highest_bank_bit : -1);
+}
+
+void msm_vidc_sort_table(struct msm_vidc_core *core)
+{
+	u32 i = 0;
+
+	if (!core || !core->dt || !core->dt->allowed_clks_tbl) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	sort(core->dt->allowed_clks_tbl, core->dt->allowed_clks_tbl_size,
+		sizeof(*core->dt->allowed_clks_tbl), cmp, NULL);
+	d_vpr_h("Updated allowed clock rates\n");
+	for (i = 0; i < core->dt->allowed_clks_tbl_size; i++)
+		d_vpr_h("    %d\n", core->dt->allowed_clks_tbl[i]);
 }

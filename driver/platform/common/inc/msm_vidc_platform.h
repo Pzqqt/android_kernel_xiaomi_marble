@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _MSM_VIDC_PLATFORM_H_
@@ -10,6 +11,37 @@
 
 #include "msm_vidc_internal.h"
 #include <media/v4l2-ctrls.h>
+
+struct msm_vidc_core;
+
+#define DDR_TYPE_LPDDR4 0x6
+#define DDR_TYPE_LPDDR4X 0x7
+#define DDR_TYPE_LPDDR5 0x8
+#define DDR_TYPE_LPDDR5X 0x9
+
+#define UBWC_CONFIG(mc, ml, hbb, bs1, bs2, bs3, bsp) \
+{	                                                 \
+	.max_channels = mc,                              \
+	.mal_length = ml,                                \
+	.highest_bank_bit = hbb,                         \
+	.bank_swzl_level = bs1,                          \
+	.bank_swz2_level = bs2,                          \
+	.bank_swz3_level = bs3,                          \
+	.bank_spreading = bsp,                           \
+}
+
+#define EFUSE_ENTRY(sa, s, m, sh, p) \
+{	                                 \
+	.start_address = sa,             \
+	.size = s,                       \
+	.mask = m,                       \
+	.shift = sh,                     \
+	.purpose = p                     \
+}
+
+extern u32 vpe_csc_custom_matrix_coeff[MAX_MATRIX_COEFFS];
+extern u32 vpe_csc_custom_bias_coeff[MAX_BIAS_COEFFS];
+extern u32 vpe_csc_custom_limit_coeff[MAX_LIMIT_COEFFS];
 
 struct msm_platform_core_capability {
 	enum msm_vidc_core_capability_type type;
@@ -79,5 +111,9 @@ struct msm_vidc_platform {
 
 int msm_vidc_init_platform(struct platform_device *pdev);
 int msm_vidc_deinit_platform(struct platform_device *pdev);
+int msm_vidc_read_efuse(struct msm_vidc_core *core);
+void msm_vidc_sort_table(struct msm_vidc_core *core);
+void msm_vidc_ddr_ubwc_config(
+	struct msm_vidc_platform_data *platform_data, u32 hbb_override_val);
 
 #endif // _MSM_VIDC_PLATFORM_H_
