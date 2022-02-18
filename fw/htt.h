@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -725,6 +726,7 @@ typedef enum {
     HTT_STATS_RX_PDEV_BE_UL_MIMO_USER_STATS_TAG    = 141, /* htt_rx_pdev_be_ul_mimo_user_stats_tlv */
     HTT_STATS_RX_RING_STATS_TAG                    = 142, /* htt_rx_fw_ring_stats_tlv_v */
     HTT_STATS_RX_PDEV_BE_UL_TRIG_STATS_TAG         = 143, /* htt_rx_pdev_be_ul_trigger_stats_tlv */
+    HTT_STATS_TX_PDEV_SAWF_RATE_STATS_TAG          = 144, /* htt_tx_pdev_rate_stats_sawf_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -5541,7 +5543,9 @@ enum htt_srng_ring_id {
  *                    configuration fields are valid
  *          b'27    - drop_thresh_valid (DT): flag to indicate if the
  *                    rx_drop_threshold field is valid
- *          b'28:31 - rsvd1:  reserved for future use
+ *          b'28    - rx_mon_global_en: Enable/Disable global register
+ 8                    configuration in Rx monitor module.
+ *          b'29:31 - rsvd1:  reserved for future use
  * dword1 - b'0:15  - ring_buffer_size: size of bufferes referenced by rx ring,
  *                    in byte units.
  *                    Valid only for HW_TO_SW_RING and SW_TO_HW_RING
@@ -5697,7 +5701,8 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
              pkt_swap:          1,
              rx_offsets_valid:  1,
              drop_thresh_valid: 1,
-             rsvd1:             4;
+             rx_mon_global_en:  1,
+             rsvd1:             3;
     A_UINT32 ring_buffer_size: 16,
              config_length_mgmt:3,
              config_length_ctrl:3,
@@ -5809,6 +5814,17 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_S)); \
             } while (0)
 
+#define HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN_M           0x10000000
+#define HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN_S           28
+#define HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RX_MON_GLOBAL_EN_S)); \
+            } while (0)
+
 #define HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_M           0x0000ffff
 #define HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_S           0
 #define HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_GET(_var) \
@@ -5828,7 +5844,7 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
 #define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_SET(_var, _val) \
             do { \
                 HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT, _val); \
-                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_CONFIG_LENGTH_MGMT_S)); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_MGMT_S)); \
             } while (0)
 
 #define HTT_RX_RING_SELECTION_CFG_CONFIG_LENGTH_CTRL_M         0x00380000
@@ -6699,7 +6715,9 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
  *          b'25    - pkt_swap (PS):  1 is to swap packet TLV - refer to
  *                    BUF_RING_CFG_0 defs within HW .h files,
  *                    e.g. wmac_top_reg_seq_hwioreg.h
- *          b'26:31 - rsvd1:  reserved for future use
+ *          b'26    - tx_mon_global_en: Enable/Disable global register
+ *                    configuration in Tx monitor module.
+ *          b'27:31 - rsvd1:  reserved for future use
  * dword1 - b'0:15  - ring_buffer_size: size of bufferes referenced by rx ring,
  *                    in byte units.
  *                    Valid only for HW_TO_SW_RING and SW_TO_HW_RING
@@ -6844,7 +6862,8 @@ PREPACK struct htt_tx_monitor_cfg_t {
              ring_id:                                8,
              status_swap:                            1,
              pkt_swap:                               1,
-             rsvd1:                                  6;
+             tx_mon_global_en:                       1,
+             rsvd1:                                  5;
     A_UINT32 ring_buffer_size:                      16,
              config_length_mgmt:                     3,
              config_length_ctrl:                     3,
@@ -6928,6 +6947,17 @@ PREPACK struct htt_tx_monitor_cfg_t {
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_PKT_SWAP_S)); \
             } while (0)
 
+#define HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN_M           0x04000000
+#define HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN_S           26
+#define HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN_M) >> \
+                    HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN_S)
+#define HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_MON_GLOBAL_EN_S)); \
+            } while (0)
+
 #define HTT_TX_MONITOR_CFG_RING_BUFFER_SIZE_M           0x0000ffff
 #define HTT_TX_MONITOR_CFG_RING_BUFFER_SIZE_S           0
 #define HTT_TX_MONITOR_CFG_RING_BUFFER_SIZE_GET(_var) \
@@ -7003,7 +7033,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_CTRL_S)); \
-            } while (0
+            } while (0)
 
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_M       0x00000020
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_START_DATA_S       5
@@ -7036,7 +7066,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_CTRL_S)); \
-            } while (0
+            } while (0)
 
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_M       0x00000100
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_START_DATA_S       8
@@ -7069,7 +7099,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_CTRL_S)); \
-            } while (0
+            } while (0)
 
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_M         0x00000800
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MPDU_END_DATA_S         11
@@ -7102,7 +7132,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_CTRL_S)); \
-            } while (0
+            } while (0)
 
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_M         0x00004000
 #define HTT_TX_MONITOR_CFG_FILTER_IN_TX_MSDU_END_DATA_S         14
