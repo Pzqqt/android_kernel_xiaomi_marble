@@ -5682,10 +5682,11 @@ enum htt_srng_ring_id {
  *                    phyrx_abort_request_reason enum definition.
  * dword14- b'0:15  - rx_mpdu_start_word_mask: word mask for rx mpdu start,
  *                    applicable if word mask enabled
- *        - b'16:31 - rx_mpdu_end_word_mask: word mask value for rx mpdu end,
+ *        - b'16:18 - rx_mpdu_end_word_mask: word mask value for rx mpdu end,
  *                    applicable if word mask enabled
+ *        - b'19:31 - rsvd7
  * dword15- b'0:16  - rx_msdu_end_word_mask
-            b'17:31 - rsvd5
+ *        - b'17:31 - rsvd5
  * dword17- b'0     - en_rx_tlv_pkt_offset:
  *                    0:  RX_PKT TLV logging at offset 0 for the subsequent
  *                        buffer
@@ -5738,7 +5739,8 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 phy_err_mask;
     A_UINT32 phy_err_mask_cont;
     A_UINT32 rx_mpdu_start_word_mask:16,
-             rx_mpdu_end_word_mask:  16;
+             rx_mpdu_end_word_mask:  3,
+             rsvd7:                  13;
     A_UINT32 rx_msdu_end_word_mask:  17,
              rsvd5:                  15;
     A_UINT32 en_rx_tlv_pkt_offset:   1,
@@ -6182,15 +6184,15 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
          ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)); \
        } while (0)
 
-#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M 0xFFFF0000
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M 0x00070000
 #define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_S 16
 #define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_GET(_var) \
        (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M)>> \
-        HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)
-#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_SET(_var, _val) \
+        HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_SET(_var, _val) \
        do { \
-                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK, _val);\
-         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)); \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_S)); \
        } while (0)
 
 #define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_M 0x0001FFFF
