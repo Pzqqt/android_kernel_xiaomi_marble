@@ -30,6 +30,8 @@ bool msm_cvp_dsp_disable = !true;
 bool msm_cvp_mmrm_enabled = !true;
 bool msm_cvp_dcvs_disable = !true;
 bool msm_cvp_dsp_driver_enable = true;
+int msm_cvp_minidump_enable = !1;
+
 #define MAX_DBG_BUF_SIZE 4096
 
 struct cvp_core_inst_pair {
@@ -246,6 +248,8 @@ struct dentry *msm_cvp_debugfs_init_drv(void)
 	debugfs_create_u32("fw_low_power_mode", 0644, dir,
 		&msm_cvp_fw_low_power_mode);
 	debugfs_create_u32("debug_output", 0644, dir, &msm_cvp_debug_out21);
+	debugfs_create_u32("minidump_enable", 0644, dir,
+			&msm_cvp_minidump_enable);
 	f = debugfs_create_bool("fw_coverage", 0644, dir, &msm_cvp_fw_coverage);
 	if (IS_ERR_OR_NULL(f))
 		goto failed_create_dir;

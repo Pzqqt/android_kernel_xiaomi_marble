@@ -26,6 +26,7 @@
 #include "msm_cvp_clocks.h"
 #include "msm_cvp_dsp.h"
 #include "msm_cvp.h"
+#include "cvp_dump.h"
 
 #define CLASS_NAME              "cvp"
 #define DRIVER_NAME             "cvp"
@@ -448,10 +449,15 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 		dprintk(CVP_DSP, "DSP interface not enabled\n");
 	}
 
+	// Registering EVA SS with minidump
+	cvp_register_va_md_region();
+
 	return rc;
 
 err_fail_sub_device_probe:
 	cvp_hfi_deinitialize(core->hfi_type, core->device);
+	if (cvp_driver->debugfs_root)
+		debugfs_remove_recursive(cvp_driver->debugfs_root);
 err_hfi_initialize:
 err_cores_exceeded:
 	cdev_del(&core->cdev);
@@ -606,7 +612,6 @@ static int __init msm_cvp_init(void)
 	if (rc) {
 		dprintk(CVP_ERR,
 			"Failed to register platform driver\n");
-		debugfs_remove_recursive(cvp_driver->debugfs_root);
 		kfree(cvp_driver);
 		cvp_driver = NULL;
 		return rc;

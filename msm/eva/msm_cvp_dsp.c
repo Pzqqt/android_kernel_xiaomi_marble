@@ -9,6 +9,7 @@
 #include <soc/qcom/secure_buffer.h>
 #include "msm_cvp_dsp.h"
 #include "msm_cvp_internal.h"
+#include "cvp_dump.h"
 
 struct cvp_dsp_apps gfa_cv;
 static int hlosVM[HLOS_VM_NUM] = {VMID_HLOS};
@@ -852,6 +853,8 @@ int cvp_dsp_device_init(void)
 	int rc;
 	int i;
 
+	add_va_node_to_list(CVP_DBG_DUMP, &gfa_cv, sizeof(struct cvp_dsp_apps),
+        "cvp_dsp_apps-gfa_cv", false);
 	mutex_init(&me->lock);
 	me->state = DSP_INVALID;
 	me->hyp_assigned = false;

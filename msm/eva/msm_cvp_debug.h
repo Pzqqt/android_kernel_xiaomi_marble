@@ -66,6 +66,8 @@ extern bool msm_cvp_dsp_disable;
 extern bool msm_cvp_mmrm_enabled;
 extern bool msm_cvp_dcvs_disable;
 extern bool msm_cvp_dsp_driver_enable;
+extern int msm_cvp_minidump_enable;
+
 #define dprintk(__level, __fmt, arg...)	\
 	do { \
 		if (msm_cvp_debug21 & __level) { \

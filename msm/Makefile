@@ -11,6 +11,7 @@ msm-cvp-objs := eva/cvp.o \
                 eva/msm_smem.o \
                 eva/msm_cvp_debug.o \
                 eva/msm_cvp_res_parse.o \
+                eva/cvp_dump.o \
                 eva/cvp_hfi.o \
                 eva/hfi_response_handler.o \
                 eva/hfi_packetization.o \
