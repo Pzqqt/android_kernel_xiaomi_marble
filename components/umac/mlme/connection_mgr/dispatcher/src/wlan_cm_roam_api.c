@@ -3254,7 +3254,7 @@ void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 	struct roam_stats_event *roam_event = NULL;
 
 	if (!wlan_cm_get_roam_rt_stats(psoc, ROAM_RT_STATS_ENABLE)) {
-		mlme_err("Roam events stats is disabled");
+		mlme_debug("Roam events stats is disabled");
 		return;
 	}
 
