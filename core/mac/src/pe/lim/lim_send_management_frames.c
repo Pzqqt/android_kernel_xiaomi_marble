@@ -5570,7 +5570,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	uint8_t he_frag = 0;
 	tpDphHashNode sta_ds = NULL;
 	uint16_t aid;
-	bool he_cap = false;
+	bool he_cap = false, peer_he_cap = false;
 	struct wlan_mlme_qos *qos_aggr;
 
 	vdev_id = session->vdev_id;
@@ -5587,6 +5587,8 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	frm.DialogToken.token = dialog_token;
 	frm.Status.status = status_code;
 
+	sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
+				       &session->dph.dphHashTable);
 	if ((LIM_IS_STA_ROLE(session) && qos_aggr->rx_aggregation_size == 1 &&
 	    !mac_ctx->usr_cfg_ba_buff_size) || mac_ctx->reject_addba_req) {
 		frm.Status.status = STATUS_REQUEST_DECLINED;
@@ -5596,8 +5598,6 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		frm.addba_param_set.buff_size =
 			QDF_MIN(qos_aggr->rx_aggregation_size, calc_buff_size);
 	} else {
-		sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
-					       &session->dph.dphHashTable);
 		if (sta_ds && lim_is_session_he_capable(session))
 			he_cap = lim_is_sta_he_capable(sta_ds);
 
@@ -5632,11 +5632,15 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	}
 
 	frm.addba_param_set.tid = tid;
+	if (sta_ds)
+		peer_he_cap = lim_is_sta_he_capable(sta_ds);
+
 	/* Enable RX AMSDU only in HE mode if supported */
 	if (mac_ctx->is_usr_cfg_amsdu_enabled &&
 	    ((IS_PE_SESSION_HE_MODE(session) &&
 	      WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq)) ||
-	     !WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq)))
+	     !WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq) ||
+	     (sta_ds && sta_ds->staType == STA_ENTRY_TDLS_PEER && peer_he_cap)))
 		frm.addba_param_set.amsdu_supp = amsdu_support;
 	else
 		frm.addba_param_set.amsdu_supp = 0;
