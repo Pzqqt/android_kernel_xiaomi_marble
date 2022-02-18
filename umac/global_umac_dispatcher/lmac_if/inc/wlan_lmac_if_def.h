@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -85,6 +85,9 @@ struct dbr_module_config;
 
 #ifdef WLAN_FEATURE_11BE_MLO
 #include "wlan_mlo_mgr_public_structs.h"
+#endif
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+#include "wlan_twt_public_structs.h"
 #endif
 
 #ifdef QCA_SUPPORT_CP_STATS
@@ -1290,6 +1293,75 @@ struct wlan_lmac_if_mlo_rx_ops {
 };
 #endif
 
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+/**
+ * struct wlan_lmac_if_twt_tx_ops - defines southbound tx callbacks for
+ * TWT (Target Wake Time) component
+ * @enable_req: function pointer to send TWT enable command to FW
+ * @disable_req: function pointer to send TWT disable command to FW
+ * @setup_req: function pointer to send TWT add dialog command to FW
+ * @teardown_req: function pointer to send TWT delete dialog command to FW
+ * @pause_req: function pointer to send TWT pause dialog command to FW
+ * @resume_req: function pointer to send TWT resume dialog command to FW
+ * @nudge_req: function pointer to send TWT nudge dialog command to FW
+ * @register_events: function pointer to register events from FW
+ * @deregister_events: function pointer to deregister events from FW
+ */
+struct wlan_lmac_if_twt_tx_ops {
+	QDF_STATUS (*enable_req)(struct wlan_objmgr_psoc *psoc,
+				 struct twt_enable_param *params);
+	QDF_STATUS (*disable_req)(struct wlan_objmgr_psoc *psoc,
+				 struct twt_disable_param *params);
+	QDF_STATUS (*setup_req)(struct wlan_objmgr_psoc *psoc,
+				 struct twt_add_dialog_param *params);
+	QDF_STATUS (*teardown_req)(struct wlan_objmgr_psoc *psoc,
+				 struct twt_del_dialog_param *params);
+	QDF_STATUS (*pause_req)(struct wlan_objmgr_psoc *psoc,
+				 struct twt_pause_dialog_cmd_param *params);
+	QDF_STATUS (*resume_req)(struct wlan_objmgr_psoc *psoc,
+				 struct twt_resume_dialog_cmd_param *params);
+	QDF_STATUS (*nudge_req)(struct wlan_objmgr_psoc *psoc,
+				 struct twt_nudge_dialog_cmd_param *params);
+	QDF_STATUS (*register_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*deregister_events)(struct wlan_objmgr_psoc *psoc);
+};
+
+/**
+ * struct wlan_lmac_if_twt_rx_ops - defines southbound xx callbacks for
+ * TWT (Target Wake Time) component
+ * @twt_enable_comp_cb: function pointer to process TWT enable event
+ * @twt_disable_comp_cb: function pointer to process TWT disable event
+ * @twt_setup_comp_cb: function pointer to process TWT add dialog event
+ * @twt_teardown_comp_cb: function pointer to process TWT del dialog event
+ * @twt_pause_comp_cb: function pointer to process TWT pause dialog event
+ * @twt_resume_comp_cb: function pointer to process TWT resume dialog
+ * event
+ * @twt_nudge_comp_cb: function pointer to process TWT nudge dialog event
+ * @twt_notify_comp_cb: function pointer to process TWT notify event
+ * @twt_ack_comp_cb: function pointer to process TWT ack event
+ */
+struct wlan_lmac_if_twt_rx_ops {
+	QDF_STATUS (*twt_enable_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_enable_complete_event_param *event);
+	QDF_STATUS (*twt_disable_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_disable_complete_event_param *event);
+	QDF_STATUS (*twt_setup_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_add_dialog_complete_event *event);
+	QDF_STATUS (*twt_teardown_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_del_dialog_complete_event_param *event);
+	QDF_STATUS (*twt_pause_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_pause_dialog_complete_event_param *event);
+	QDF_STATUS (*twt_resume_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_resume_dialog_complete_event_param *event);
+	QDF_STATUS (*twt_nudge_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_nudge_dialog_complete_event_param *event);
+	QDF_STATUS (*twt_notify_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_notify_event_param *event);
+	QDF_STATUS (*twt_ack_comp_cb)(struct wlan_objmgr_psoc *psoc,
+			struct twt_ack_complete_event_param *params);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -1384,6 +1456,10 @@ struct wlan_lmac_if_tx_ops {
 
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct wlan_lmac_if_mlo_tx_ops mlo_ops;
+#endif
+
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+	struct wlan_lmac_if_twt_tx_ops twt_tx_ops;
 #endif
 };
 
@@ -2130,6 +2206,9 @@ struct wlan_lmac_if_rx_ops {
 	struct wlan_lmac_if_son_rx_ops son_rx_ops;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct wlan_lmac_if_mlo_rx_ops mlo_rx_ops;
+#endif
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+	struct wlan_lmac_if_twt_rx_ops twt_rx_ops;
 #endif
 };
 

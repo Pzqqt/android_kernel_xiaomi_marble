@@ -386,6 +386,7 @@ typedef enum {
 	WLAN_MBSS_ID          = 91,
 	WLAN_MGMT_RX_REO_ID   = 92,
 	WLAN_MGMT_RX_REO_SIM_ID   = 93,
+	WLAN_TWT_ID           = 94,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
