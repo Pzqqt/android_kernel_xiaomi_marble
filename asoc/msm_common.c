@@ -601,26 +601,29 @@ static void msm_audio_add_qos_request()
 {
 	int i;
 	int cpu = 0;
+	int ret = 0;
 
 	msm_audio_req = kcalloc(num_possible_cpus(),
 			sizeof(struct dev_pm_qos_request), GFP_KERNEL);
-	if (!msm_audio_req) {
-		pr_err("%s failed to alloc mem for qos req.\n", __func__);
+	if (!msm_audio_req)
 		return;
-	}
 
 	for (i = 0; i < ARRAY_SIZE(audio_core_list); i++) {
 		if (audio_core_list[i] >= num_possible_cpus())
-			pr_err("%s incorrect cpu id: %d specified.\n", __func__, audio_core_list[i]);
+			pr_err("%s incorrect cpu id: %d specified.\n",
+					__func__, audio_core_list[i]);
 		else
 			cpumask_set_cpu(audio_core_list[i], &audio_cpu_map);
 	}
 
 	for_each_cpu(cpu, &audio_cpu_map) {
-		dev_pm_qos_add_request(get_cpu_device(cpu),
-			&msm_audio_req[cpu],
-			DEV_PM_QOS_RESUME_LATENCY,
-			PM_QOS_CPU_LATENCY_DEFAULT_VALUE);
+		ret = dev_pm_qos_add_request(get_cpu_device(cpu),
+				&msm_audio_req[cpu],
+				DEV_PM_QOS_RESUME_LATENCY,
+				PM_QOS_CPU_LATENCY_DEFAULT_VALUE);
+		if (ret < 0)
+			pr_err("%s error (%d) adding resume latency to cpu %d.\n",
+							__func__, ret, cpu);
 		pr_debug("%s set cpu affinity to core %d.\n", __func__, cpu);
 	}
 }
@@ -628,11 +631,15 @@ static void msm_audio_add_qos_request()
 static void msm_audio_remove_qos_request()
 {
 	int cpu = 0;
+	int ret = 0;
 
 	if (msm_audio_req) {
 		for_each_cpu(cpu, &audio_cpu_map) {
-			dev_pm_qos_remove_request(
-				&msm_audio_req[cpu]);
+			ret = dev_pm_qos_remove_request(
+					&msm_audio_req[cpu]);
+			if (ret < 0)
+				pr_err("%s error (%d) removing request from cpu %d.\n",
+							__func__, ret, cpu);
 			pr_debug("%s remove cpu affinity of core %d.\n", __func__, cpu);
 		}
 		kfree(msm_audio_req);

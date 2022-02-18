@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -142,6 +143,7 @@ static struct regmap_irq_chip wcd938x_regmap_irq_chip = {
 	.type_base = WCD938X_DIGITAL_INTR_LEVEL_0,
 	.ack_base = WCD938X_DIGITAL_INTR_CLEAR_0,
 	.use_ack = 1,
+	.mask_writeonly = 1,
 	.runtime_pm = false,
 	.handle_post_irq = wcd938x_handle_post_irq,
 	.irq_drv_data = NULL,
