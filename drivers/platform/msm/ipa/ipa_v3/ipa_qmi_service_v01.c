@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2019, 2021 The Linux Foundation. All rights reserved.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/ipa_qmi_service_v01.h>
@@ -1228,6 +1230,48 @@ struct qmi_elem_info ipa3_init_modem_driver_req_msg_data_v01_ei[] = {
 			struct ipa_init_modem_driver_req_msg_v01,
 			hw_filter_stats_info),
 		.ei_array	= ipa3_filter_tbl_info_type_data_v01_ei,
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x24,
+		.offset		= offsetof(
+			struct ipa_init_modem_driver_req_msg_v01,
+			smem_info_valid),
+	},
+	{
+		.data_type	= QMI_STRUCT,
+		.elem_len	= 1,
+		.elem_size	= sizeof(struct ipa_modem_mem_info_type_v01),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x24,
+		.offset		= offsetof(
+			struct ipa_init_modem_driver_req_msg_v01,
+			smem_info),
+		.ei_array	= ipa3_modem_mem_info_type_data_v01_ei,
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x25,
+		.offset		= offsetof(
+			struct ipa_init_modem_driver_req_msg_v01,
+			per_stats_smem_info_valid),
+	},
+	{
+		.data_type	= QMI_STRUCT,
+		.elem_len	= 1,
+		.elem_size	= sizeof(struct ipa_modem_mem_info_type_v01),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x25,
+		.offset		= offsetof(
+			struct ipa_init_modem_driver_req_msg_v01,
+			per_stats_smem_info),
+		.ei_array	= ipa3_modem_mem_info_type_data_v01_ei,
 	},
 	{
 		.data_type	= QMI_EOTI,

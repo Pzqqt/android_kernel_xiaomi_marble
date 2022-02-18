@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -25,6 +27,8 @@
 #define IPA_A5_SERVICE_INS_ID 1
 #define IPA_Q6_SERVICE_SVC_ID 0x31
 #define IPA_Q6_SERVICE_INS_ID 2
+
+#define IPA_PER_STATS_SMEM_SIZE (2*1024)
 
 #define QMI_SEND_STATS_REQ_TIMEOUT_MS 5000
 #define QMI_SEND_REQ_TIMEOUT_MS 60000
@@ -691,6 +695,12 @@ static int ipa3_qmi_init_modem_send_sync_msg(void)
 
 	req.hw_drop_stats_table_size_valid = true;
 	req.hw_drop_stats_table_size = IPA_MEM_PART(stats_drop_size);
+
+	if (ipa3_ctx->platform_type != IPA_PLAT_TYPE_APQ) {
+		req.per_stats_smem_info_valid = true;
+		req.per_stats_smem_info.size = IPA_PER_STATS_SMEM_SIZE;
+		req.per_stats_smem_info.block_start_addr = ipa3_ctx->per_stats_smem_pa;
+	}
 
 	if (!ipa3_uc_loaded_check()) {  /* First time boot */
 		req.is_ssr_bootup_valid = false;
