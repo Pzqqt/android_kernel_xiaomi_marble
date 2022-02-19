@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -5269,7 +5270,7 @@ static bool __reg_dmav1_valid_hfc_en_cfg(struct drm_msm_dem_cfg *dcfg,
 		return false;
 	}
 
-	h = hw_cfg->panel_height;
+	h = hw_cfg->num_ds_enabled ? hw_cfg->panel_height : hw_cfg->displayv;
 	w = hw_cfg->panel_width;
 	temp = hw_cfg->panel_width / 2;
 	if (dcfg->pentile) {

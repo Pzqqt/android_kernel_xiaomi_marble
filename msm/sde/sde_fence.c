@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 #include <linux/sync_file.h>
 #include <linux/dma-fence.h>
+#include <linux/dma-fence-array.h>
 #include "msm_drv.h"
 #include "sde_kms.h"
 #include "sde_fence.h"
 
 #define TIMELINE_VAL_LENGTH		128
 #define SPEC_FENCE_FLAG_FENCE_ARRAY	0x10
+#define SPEC_FENCE_FLAG_ARRAY_BIND	0x11
 
 void *sde_sync_get(uint64_t fd)
 {
@@ -25,11 +28,47 @@ void sde_sync_put(void *fence)
 		dma_fence_put(fence);
 }
 
+void sde_fence_dump(struct dma_fence *fence)
+{
+	char timeline_str[TIMELINE_VAL_LENGTH];
+
+	if (fence->ops->timeline_value_str)
+		fence->ops->timeline_value_str(fence, timeline_str, TIMELINE_VAL_LENGTH);
+
+	SDE_ERROR(
+		"fence drv name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x status:%d flags:0x%x\n",
+		fence->ops->get_driver_name(fence),
+		fence->ops->get_timeline_name(fence),
+		fence->seqno, timeline_str,
+		fence->ops->signaled ?
+		fence->ops->signaled(fence) : 0xffffffff,
+		dma_fence_get_status(fence), fence->flags);
+}
+
+static void sde_fence_dump_user_fds_info(struct dma_fence *base_fence)
+{
+	struct dma_fence_array *array;
+	struct dma_fence *user_fence;
+	int i;
+
+	array = container_of(base_fence, struct dma_fence_array, base);
+	if (test_bit(SPEC_FENCE_FLAG_FENCE_ARRAY, &base_fence->flags) &&
+		test_bit(SPEC_FENCE_FLAG_ARRAY_BIND, &base_fence->flags)) {
+		for (i = 0; i < array->num_fences; i++) {
+			user_fence = array->fences[i];
+			if (user_fence) {
+				dma_fence_get(user_fence);
+				sde_fence_dump(user_fence);
+				dma_fence_put(user_fence);
+			}
+		}
+	}
+}
+
 signed long sde_sync_wait(void *fnc, long timeout_ms)
 {
 	struct dma_fence *fence = fnc;
 	int rc, status = 0;
-	char timeline_str[TIMELINE_VAL_LENGTH];
 
 	if (!fence)
 		return -EINVAL;
@@ -39,10 +78,6 @@ signed long sde_sync_wait(void *fnc, long timeout_ms)
 	rc = dma_fence_wait_timeout(fence, true,
 				msecs_to_jiffies(timeout_ms));
 	if (!rc || (rc == -EINVAL) || fence->error) {
-		if (fence->ops->timeline_value_str)
-			fence->ops->timeline_value_str(fence,
-					timeline_str, TIMELINE_VAL_LENGTH);
-
 		status = dma_fence_get_status(fence);
 		if (test_bit(SPEC_FENCE_FLAG_FENCE_ARRAY, &fence->flags)) {
 			if (status == -EINVAL) {
@@ -51,23 +86,11 @@ signed long sde_sync_wait(void *fnc, long timeout_ms)
 			} else if (fence->ops->signaled && fence->ops->signaled(fence)) {
 				SDE_INFO("spec fence status:%d\n", status);
 			} else {
-				SDE_ERROR(
-					"fence driver name:%s timeline name:%s signaled:0x%x status:%d flags:0x%x rc:%d\n",
-					fence->ops->get_driver_name(fence),
-					fence->ops->get_timeline_name(fence),
-					fence->ops->signaled ?
-					fence->ops->signaled(fence) : 0xffffffff,
-					status, fence->flags, rc);
+				sde_fence_dump(fence);
+				sde_fence_dump_user_fds_info(fence);
 			}
 		} else {
-			SDE_ERROR(
-				"fence driver name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x status:%d\n",
-				fence->ops->get_driver_name(fence),
-				fence->ops->get_timeline_name(fence),
-				fence->seqno, timeline_str,
-				fence->ops->signaled ?
-				fence->ops->signaled(fence) : 0xffffffff,
-				status);
+			sde_fence_dump(fence);
 		}
 	}
 

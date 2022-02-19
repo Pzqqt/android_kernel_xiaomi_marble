@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -140,7 +140,8 @@ void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable)
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
-		if (phys && phys->hw_ctl && phys->hw_ctl->ops.uidle_enable) {
+		if (phys && phys->hw_ctl && phys->hw_ctl->ops.uidle_enable &&
+				phys->split_role != ENC_ROLE_SLAVE) {
 			if (enable)
 				SDE_EVT32(DRMID(drm_enc), enable);
 			phys->hw_ctl->ops.uidle_enable(phys->hw_ctl, enable);
@@ -213,6 +214,36 @@ ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc)
 			ktime_to_us(tvblank), ktime_to_us(cur_time), fps, SDE_EVTLOG_FUNC_CASE2);
 
 	return tvblank;
+}
+
+static void _sde_encoder_control_fal10_veto(struct drm_encoder *drm_enc, bool veto)
+{
+	bool clone_mode;
+	struct sde_kms *sde_kms = sde_encoder_get_kms(drm_enc);
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+
+	if (sde_kms->catalog && !sde_kms->catalog->uidle_cfg.uidle_rev)
+		return;
+
+	if (!sde_kms->hw_uidle || !sde_kms->hw_uidle->ops.uidle_fal10_override) {
+		SDE_ERROR("invalid args\n");
+		return;
+	}
+
+	/*
+	 * clone mode is the only scenario where we want to enable software override
+	 * of fal10 veto.
+	 */
+	clone_mode = sde_encoder_in_clone_mode(drm_enc);
+	SDE_EVT32(DRMID(drm_enc), clone_mode, veto);
+
+	if (clone_mode && veto) {
+		sde_kms->hw_uidle->ops.uidle_fal10_override(sde_kms->hw_uidle, veto);
+		sde_enc->fal10_veto_override = true;
+	} else if (sde_enc->fal10_veto_override && !veto) {
+		sde_kms->hw_uidle->ops.uidle_fal10_override(sde_kms->hw_uidle, veto);
+		sde_enc->fal10_veto_override = false;
+	}
 }
 
 static void _sde_encoder_pm_qos_add_request(struct drm_encoder *drm_enc)
@@ -2802,6 +2833,7 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 
 	memset(&sde_enc->prv_conn_roi, 0, sizeof(sde_enc->prv_conn_roi));
 	memset(&sde_enc->cur_conn_roi, 0, sizeof(sde_enc->cur_conn_roi));
+	_sde_encoder_control_fal10_veto(drm_enc, true);
 }
 
 static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
@@ -3065,6 +3097,8 @@ void sde_encoder_virt_reset(struct drm_encoder *drm_enc)
 	struct sde_kms *sde_kms = sde_encoder_get_kms(drm_enc);
 	int i = 0;
 
+	_sde_encoder_control_fal10_veto(drm_enc, false);
+
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		if (sde_enc->phys_encs[i]) {
 			sde_enc->phys_encs[i]->cont_splash_enabled = false;
@@ -3111,6 +3145,10 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
+	if (!sde_enc->cur_master) {
+		SDE_ERROR("Invalid cur_master\n");
+		return;
+	}
 	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
 	SDE_DEBUG_ENC(sde_enc, "\n");
 

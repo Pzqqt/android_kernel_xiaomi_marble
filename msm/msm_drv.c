@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -829,8 +829,12 @@ static int msm_drm_component_init(struct device *dev)
 
 	/* Bind all our sub-components: */
 	ret = msm_component_bind_all(dev, ddev);
-	if (ret)
+	if (ret == -EPROBE_DEFER) {
+		destroy_workqueue(priv->wq);
+		return ret;
+	} else if (ret) {
 		goto bind_fail;
+	}
 
 	ret = msm_init_vram(ddev);
 	if (ret)
