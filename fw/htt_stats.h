@@ -6179,6 +6179,9 @@ typedef struct {
 
     htt_tx_rate_stats_t per_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
 
+    /** 320MHz extension for PER */
+    htt_tx_rate_stats_t per_bw320;
+
 } htt_tx_rate_stats_per_tlv;
 
 /* NOTE:
