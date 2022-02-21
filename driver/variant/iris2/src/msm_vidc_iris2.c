@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "msm_vidc_iris2.h"
@@ -15,6 +16,7 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_buffer.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_platform.h"
 
 #define VIDEO_ARCH_LX 1
 
@@ -472,6 +474,9 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 				__func__, i, value);
 	}
 
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+		goto skip_aon_mvp_noc;
+
 	/* Apply partial reset on MSF interface and wait for ACK */
 	rc = __write_register(core, AON_WRAPPER_MVP_NOC_RESET_REQ, 0x3);
 	if (rc)
@@ -496,6 +501,7 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 	 * Reset both sides of 2 ahb2ahb_bridges (TZ and non-TZ)
 	 * do we need to check status register here?
 	 */
+skip_aon_mvp_noc:
 	rc = __write_register(core, CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x3);
 	if (rc)
 		return rc;
@@ -534,6 +540,9 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		return rc;
 
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+		goto skip_aon_mvp_noc;
+
 	/* set MNoC to low power, set PD_NOC_QREQ (bit 0) */
 	rc = __write_register_masked(core, AON_WRAPPER_MVP_NOC_LPI_CONTROL,
 			0x1, BIT(0));
@@ -546,6 +555,7 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_LPI_CONTROL failed\n", __func__);
 
 	/* Set Debug bridge Low power */
+skip_aon_mvp_noc:
 	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x7);
 	if (rc)
 		return rc;
@@ -618,7 +628,7 @@ static int __power_off_iris2(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	if (!core || !core->capabilities) {
+	if (!core || !core->capabilities || !core->platform) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
