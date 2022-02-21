@@ -117,6 +117,8 @@
 #define WRAPPER_TZ_BASE_OFFS	0x000C0000
 #define WRAPPER_TZ_CPU_CLOCK_CONFIG	(WRAPPER_TZ_BASE_OFFS)
 #define WRAPPER_TZ_CPU_STATUS	(WRAPPER_TZ_BASE_OFFS + 0x10)
+#define WRAPPER_TZ_CTL_AXI_CLOCK_CONFIG	(WRAPPER_TZ_BASE_OFFS + 0x14)
+#define WRAPPER_TZ_QNS4PDXFIFO_RESET	(WRAPPER_TZ_BASE_OFFS + 0x18)
 
 #define CTRL_INIT_IRIS2		CPU_CS_SCIACMD_IRIS2
 
@@ -422,17 +424,6 @@ static int __setup_ucregion_memory_map_iris2(struct msm_vidc_core *vidc_core)
 	if (rc)
 		return rc;
 
-	/* update queues vaddr for debug purpose */
-	value = (u32)((u64)core->iface_q_table.align_virtual_addr);
-	rc = __write_register(core, CPU_CS_VCICMDARG0_IRIS2, value);
-	if (rc)
-		return rc;
-
-	value = (u32)((u64)core->iface_q_table.align_virtual_addr >> 32);
-	rc = __write_register(core, CPU_CS_VCICMDARG1_IRIS2, value);
-	if (rc)
-		return rc;
-
 	if (core->sfr.align_device_addr) {
 		value = (u32)core->sfr.align_device_addr + VIDEO_ARCH_LX;
 		rc = __write_register(core, SFR_ADDR_IRIS2, value);
@@ -573,6 +564,25 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 			0xffffffff, 0x0, 200, 2000);
 	if (rc)
 		d_vpr_h("%s: debug bridge release failed\n", __func__);
+
+#if defined(CONFIG_MSM_VIDC_NEO)
+	/* Reset MVP QNS4PDXFIFO */
+	rc = __write_register(core, WRAPPER_TZ_CTL_AXI_CLOCK_CONFIG, 0x3);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, WRAPPER_TZ_QNS4PDXFIFO_RESET, 0x1);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, WRAPPER_TZ_QNS4PDXFIFO_RESET, 0x0);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, WRAPPER_TZ_CTL_AXI_CLOCK_CONFIG, 0x0);
+	if (rc)
+		return rc;
+#endif
 
 	/* Turn off MVP MVS0C core clock */
 	rc = __disable_unprepare_clock_iris2(core, "core_clk");
