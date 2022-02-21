@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -201,7 +202,7 @@ static bool sde_hw_setup_clk_force_ctrl(struct sde_hw_mdp *mdp,
 }
 
 static int sde_hw_get_clk_ctrl_status(struct sde_hw_mdp *mdp,
-		enum sde_clk_ctrl_type clk_ctrl, bool *status)
+		enum sde_clk_ctrl_type clk_ctrl)
 {
 	struct sde_hw_blk_reg_map *c;
 	u32 reg_off, bit_off;
@@ -218,8 +219,7 @@ static int sde_hw_get_clk_ctrl_status(struct sde_hw_mdp *mdp,
 	reg_off = mdp->caps->clk_status[clk_ctrl].reg_off;
 	bit_off = mdp->caps->clk_status[clk_ctrl].bit_off;
 
-	*status = SDE_REG_READ(c, reg_off) & BIT(bit_off);
-	return 0;
+	return SDE_REG_READ(c, reg_off) & BIT(bit_off);
 }
 
 static void _update_vsync_source(struct sde_hw_mdp *mdp,
