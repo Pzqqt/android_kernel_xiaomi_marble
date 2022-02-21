@@ -18,8 +18,13 @@ ifeq ($(CONFIG_ARCH_NEO), y)
 endif
 
 ifeq ($(CONFIG_ARCH_PARROT), y)
+ifeq ($(CONFIG_ARCH_QTI_VM), y)
+	include $(DISPLAY_ROOT)/config/gki_waipiodisptui.conf
+	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_waipiodisptuiconf.h
+else
 	include $(DISPLAY_ROOT)/config/gki_parrotdisp.conf
 	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_parrotdispconf.h
+endif
 endif
 
 LINUX_INC +=	-Iinclude/linux \
