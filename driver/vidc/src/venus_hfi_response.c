@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2022, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/devcoredump.h>
@@ -862,6 +862,11 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 				__func__);
 			buffer->flags &= ~HFI_BUF_FW_FLAG_READONLY;
 		}
+		if (!msm_vidc_allow_last_flag(inst)) {
+			i_vpr_e(inst, "%s: reset last flag for last flag buffer\n",
+				__func__);
+			buffer->flags &= ~HFI_BUF_FW_FLAG_LAST;
+		}
 	}
 
 	if (is_decode_session(inst)) {
@@ -1005,6 +1010,10 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
 	buf->flags = 0;
+	if (buffer->flags & HFI_BUF_FW_FLAG_LAST) {
+		if (!msm_vidc_allow_last_flag(inst))
+			buffer->flags &= ~HFI_BUF_FW_FLAG_LAST;
+	}
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 
