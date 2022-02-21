@@ -6048,3 +6048,18 @@ int msm_vidc_get_properties(struct msm_vidc_inst *inst)
 
 	return 0;
 }
+
+int msm_vidc_get_src_clk_scaling_ratio(struct msm_vidc_core *core)
+{
+	int scaling_ratio = 3;
+
+	if (!core || !core->platform) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+		scaling_ratio = 1;
+
+	return scaling_ratio;
+}

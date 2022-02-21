@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MSM_VIDC_POWER_H_
@@ -14,7 +15,6 @@
 #define COMPRESSION_RATIO_MAX 5
 
 /* TODO: Move to dtsi OR use source clock instead of branch clock.*/
-#define MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO 3
 
 enum vidc_bus_type {
 	PERF,
