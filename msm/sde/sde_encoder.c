@@ -222,7 +222,7 @@ static void _sde_encoder_control_fal10_veto(struct drm_encoder *drm_enc, bool ve
 	struct sde_kms *sde_kms = sde_encoder_get_kms(drm_enc);
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 
-	if (sde_kms->catalog && !sde_kms->catalog->uidle_cfg.uidle_rev)
+	if (sde_kms && sde_kms->catalog && !sde_kms->catalog->uidle_cfg.uidle_rev)
 		return;
 
 	if (!sde_kms->hw_uidle || !sde_kms->hw_uidle->ops.uidle_fal10_override) {
