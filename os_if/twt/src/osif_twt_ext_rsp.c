@@ -477,7 +477,28 @@ osif_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 }
 
 /**
- * osif_twt_teardown_pack_resp_nlmsg() - pack nlmsg response for teardown
+ * twt_notify_status_to_vendor_twt_status() - convert from
+ * HOST_NOTIFY_TWT_STATUS to qca_wlan_vendor_twt_notify_status
+ * @status: HOST_TWT_NOTIFY_STATUS value from firmware
+ *
+ * Return: qca_wlan_vendor_twt_status values corresponding
+ * to the firmware failure status
+ */
+static enum qca_wlan_vendor_twt_status
+twt_notify_status_to_vendor_twt_status(enum HOST_TWT_NOTIFY_STATUS status)
+{
+	switch (status) {
+	case HOST_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_SET:
+		return QCA_WLAN_VENDOR_TWT_STATUS_TWT_REQUIRED;
+	case HOST_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_CLEAR:
+		return QCA_WLAN_VENDOR_TWT_STATUS_TWT_NOT_REQUIRED;
+	default:
+		return QCA_WLAN_VENDOR_TWT_STATUS_TWT_NOT_REQUIRED;
+	}
+}
+
+/**
+ * osif_twt_notify_pack_nlmsg() - pack nlmsg response for TWT notify
  * @reply_skb: pointer to the response skb structure
  * @event: twt event buffer with firmware response
  *
@@ -485,17 +506,45 @@ osif_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
  * on failure
  */
 static QDF_STATUS
-osif_twt_notify_pack_nlmsg(struct sk_buff *reply_skb)
+osif_twt_notify_pack_nlmsg(struct sk_buff *reply_skb,
+			   struct twt_notify_event_param *event)
 {
+	int attr;
+	enum qca_wlan_vendor_twt_status vendor_status;
+	enum qca_wlan_twt_operation twt_op;
+
+	if (event->status == HOST_TWT_NOTIFY_EVENT_READY)
+		twt_op = QCA_WLAN_TWT_SETUP_READY_NOTIFY;
+	else
+		twt_op = QCA_WLAN_TWT_NOTIFY;
+
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
-		       QCA_WLAN_TWT_SETUP_READY_NOTIFY)) {
+		       twt_op)) {
 		osif_err("Failed to put TWT notify operation");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (event->status != HOST_TWT_NOTIFY_EVENT_READY) {
+		attr = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_NOTIFY_STATUS;
+		vendor_status = twt_notify_status_to_vendor_twt_status(
+								event->status);
+		if (nla_put_u8(reply_skb, attr, vendor_status)) {
+			osif_err("Failed to put notify status");
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * osif_twt_teardown_pack_resp_nlmsg() - pack nlmsg response for teardown
+ * @reply_skb: pointer to the response skb structure
+ * @event: twt event buffer with firmware response
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
 static QDF_STATUS
 osif_twt_teardown_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			     struct twt_del_dialog_complete_event_param *event)
@@ -1033,6 +1082,28 @@ fail:
 
 }
 
+/**
+ * osif_twt_get_notify_event_len() - calculates the length of twt
+ * notify nl response
+ *
+ * Return: Length of twt notify nl response
+ */
+static
+uint32_t osif_twt_get_notify_event_len(void)
+{
+	uint32_t len = 0;
+
+	len += NLMSG_HDRLEN;
+
+	/* QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_NOTIFY_STATUS */
+	len += nla_total_size(sizeof(u8));
+
+	return len;
+}
+
 QDF_STATUS
 osif_twt_notify_complete_cb(struct wlan_objmgr_psoc *psoc,
 			    struct twt_notify_event_param *event)
@@ -1065,8 +1136,8 @@ osif_twt_notify_complete_cb(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	data_len = NLA_HDRLEN;
-	data_len += nla_total_size(sizeof(u8));
+	data_len = osif_twt_get_notify_event_len();
+	data_len += NLA_HDRLEN;
 
 	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
 				wdev->wiphy, wdev, data_len,
@@ -1078,9 +1149,10 @@ osif_twt_notify_complete_cb(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	osif_debug("twt Notify vdev_id %d", event->vdev_id);
+	osif_debug("TWT: twt Notify vdev_id: %d, status: %d", event->vdev_id,
+		   event->status);
 
-	status = osif_twt_notify_pack_nlmsg(twt_vendor_event);
+	status = osif_twt_notify_pack_nlmsg(twt_vendor_event, event);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		osif_err("Failed to pack nl notify event");
 		wlan_cfg80211_vendor_free_skb(twt_vendor_event);

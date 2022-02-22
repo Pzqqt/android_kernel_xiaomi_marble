@@ -2042,7 +2042,9 @@ QDF_STATUS
 wlan_twt_notify_event_handler(struct wlan_objmgr_psoc *psoc,
 			      struct twt_notify_event_param *event)
 {
-	wlan_twt_set_wait_for_notify(psoc, event->vdev_id, false);
+	if (event->status == HOST_TWT_NOTIFY_EVENT_READY)
+		wlan_twt_set_wait_for_notify(psoc, event->vdev_id, false);
+
 	mlme_twt_osif_notify_complete_ind(psoc, event);
 
 	return QDF_STATUS_SUCCESS;
