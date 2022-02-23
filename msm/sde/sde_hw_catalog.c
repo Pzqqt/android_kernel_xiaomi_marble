@@ -3524,6 +3524,39 @@ static int sde_cache_parse_dt(struct device_node *np,
 			sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
 	llcc_slice_putd(slice);
 
+	if (!sde_cfg->eva_syscache_supported)
+		return 0;
+
+	slice = llcc_slice_getd(LLCC_EVALFT);
+	if (IS_ERR_OR_NULL(slice)) {
+		SDE_ERROR("failed to get eva left system cache %ld\n",
+			PTR_ERR(slice));
+		return -EINVAL;
+	}
+
+	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].has_sys_cache = true;
+	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_scid = llcc_get_slice_id(slice);
+	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_slice_size = llcc_get_slice_size(slice);
+	SDE_DEBUG("eva left cache scid:%d slice_size:%zu kb\n",
+		sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_scid,
+		sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_slice_size);
+	llcc_slice_putd(slice);
+
+	slice = llcc_slice_getd(LLCC_EVARGHT);
+	if (IS_ERR_OR_NULL(slice)) {
+		SDE_ERROR("failed to get eva left system cache %ld\n",
+			PTR_ERR(slice));
+		return -EINVAL;
+	}
+
+	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].has_sys_cache = true;
+	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_scid = llcc_get_slice_id(slice);
+	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_slice_size = llcc_get_slice_size(slice);
+	SDE_DEBUG("eva right cache scid:%d slice_size:%zu kb\n",
+		sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_scid,
+		sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_slice_size);
+	llcc_slice_putd(slice);
+
 	return 0;
 }
 

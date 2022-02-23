@@ -108,6 +108,17 @@ extern "C" {
 #define SDE_DRM_BLEND_OP_SKIP           5
 
 /**
+ * Sys Cache types for "syscache_type" property
+ *
+ * @SDE_SYSCACHE_LLCC_DISP:	Syscache type is default, LLCC_DISP.
+ * @SDE_SYSCACHE_LLCC_EVA_LEFT:	Syscache type is eva left, LLCC_EVALFT.
+ * @SDE_SYSCACHE_LLCC_EVA_RIGHT:Syscache type is eva right, LLCC_EVARGHT.
+ */
+#define SDE_SYSCACHE_LLCC_DISP		0
+#define SDE_SYSCACHE_LLCC_EVA_LEFT	1
+#define SDE_SYSCACHE_LLCC_EVA_RIGHT	2
+
+/**
  * Bit masks for "src_config" property
  * construct bitmask via (1UL << SDE_DRM_<flag>)
  */

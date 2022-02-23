@@ -177,6 +177,12 @@ enum {
 #define SSPP_SYS_CACHE_OP_TYPE	BIT(3)
 #define SSPP_SYS_CACHE_NO_ALLOC	BIT(4)
 
+enum sde_sys_cache_op_type {
+	SDE_SYS_CACHE_NORMAL_READ = 0,
+	SDE_SYS_CACHE_READ_INVALIDATE = 2,
+	SDE_SYS_CACHE_READ_EVICT = 3
+};
+
 /**
  * sde_sys_cache_type: Types of system cache supported
  * SDE_SYS_CACHE_DISP: Static img system cache
@@ -185,6 +191,8 @@ enum {
  */
 enum sde_sys_cache_type {
 	SDE_SYS_CACHE_DISP,
+	SDE_SYS_CACHE_EVA_LEFT,
+	SDE_SYS_CACHE_EVA_RIGHT,
 	SDE_SYS_CACHE_MAX,
 	SDE_SYS_CACHE_NONE = SDE_SYS_CACHE_MAX
 };
@@ -1559,6 +1567,7 @@ struct sde_perf_cfg {
  * @qseed_hw_version   qseed hw version of the target
  * @sc_cfg: system cache configuration
  * @syscache_supported  Flag to indicate if sys cache support is enabled
+ * @eva_syscache_supported  Flag to indicate if eva sys cache support is enabled
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
  * @sui_block_xin_mask  mask of all the xin-clients to be blocked during
@@ -1648,6 +1657,7 @@ struct sde_mdss_cfg {
 
 	struct sde_sc_cfg sc_cfg[SDE_SYS_CACHE_MAX];
 	bool syscache_supported;
+	bool eva_syscache_supported;
 
 	bool sui_misr_supported;
 	u32 sui_block_xin_mask;

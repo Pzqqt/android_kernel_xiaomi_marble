@@ -2798,9 +2798,21 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 {
 	struct sde_sc_cfg *sc_cfg = psde->catalog->sc_cfg;
 	bool prev_rd_en;
+	u32 cache_type = SDE_SYS_CACHE_DISP;
 
-	/* Only display system cache is currently supported */
-	if (!sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache)
+	switch (sde_plane_get_property(pstate, PLANE_PROP_SYS_CACHE_TYPE)) {
+	case SDE_SYSCACHE_LLCC_DISP:
+		cache_type = SDE_SYS_CACHE_DISP;
+		break;
+	case SDE_SYSCACHE_LLCC_EVA_LEFT:
+		cache_type = SDE_SYS_CACHE_EVA_LEFT;
+		break;
+	case SDE_SYSCACHE_LLCC_EVA_RIGHT:
+		cache_type = SDE_SYS_CACHE_EVA_RIGHT;
+		break;
+	}
+
+	if (!sc_cfg[cache_type].has_sys_cache)
 		return;
 
 	prev_rd_en = pstate->sc_cfg.rd_en;
@@ -2812,30 +2824,40 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 	pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
 			SSPP_SYS_CACHE_SCID;
 	pstate->sc_cfg.type = SDE_SYS_CACHE_NONE;
+	pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_NORMAL_READ;
 
 	if (pstate->static_cache_state == CACHE_STATE_FRAME_WRITE) {
 		pstate->sc_cfg.rd_en = true;
-		pstate->sc_cfg.rd_scid =
-				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid;
+		pstate->sc_cfg.rd_scid = sc_cfg[cache_type].llcc_scid;
 		pstate->sc_cfg.rd_noallocate = false;
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
 				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
-		pstate->sc_cfg.type = SDE_SYS_CACHE_DISP;
+		pstate->sc_cfg.type = cache_type;
+		if (cache_type == SDE_SYS_CACHE_EVA_LEFT ||
+			cache_type == SDE_SYS_CACHE_EVA_RIGHT) {
+			pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
+			pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
+		}
 	} else if (pstate->static_cache_state == CACHE_STATE_FRAME_READ) {
 		pstate->sc_cfg.rd_en = true;
-		pstate->sc_cfg.rd_scid =
-				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid;
+		pstate->sc_cfg.rd_scid = sc_cfg[cache_type].llcc_scid;
 		pstate->sc_cfg.rd_noallocate = true;
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
 				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
-		pstate->sc_cfg.type = SDE_SYS_CACHE_DISP;
+		pstate->sc_cfg.type = cache_type;
+		if (cache_type == SDE_SYS_CACHE_EVA_LEFT ||
+			cache_type == SDE_SYS_CACHE_EVA_RIGHT) {
+			pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
+			pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
+		}
 	}
 
 	if (!pstate->sc_cfg.rd_en && !prev_rd_en)
 		return;
 
 	SDE_EVT32(DRMID(&psde->base), pstate->sc_cfg.rd_scid,
-			pstate->sc_cfg.rd_en, pstate->sc_cfg.rd_noallocate);
+			pstate->sc_cfg.rd_en, pstate->sc_cfg.rd_noallocate,
+			pstate->sc_cfg.rd_op_type);
 
 	psde->pipe_hw->ops.setup_sys_cache(
 		psde->pipe_hw, &pstate->sc_cfg);
@@ -3810,6 +3832,12 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 		{SDE_SSPP_MULTIRECT_PARALLEL, "parallel"},
 		{SDE_SSPP_MULTIRECT_TIME_MX,  "serial"},
 	};
+
+	static const struct drm_prop_enum_list e_syscache_type[] = {
+		{SDE_SYSCACHE_LLCC_DISP, "llcc_disp"},
+		{SDE_SYSCACHE_LLCC_EVA_LEFT, "eva_left"},
+		{SDE_SYSCACHE_LLCC_EVA_RIGHT,  "eva_right"},
+	};
 	struct sde_kms_info *info;
 	struct sde_plane *psde = to_sde_plane(plane);
 	bool is_master;
@@ -3882,6 +3910,10 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	msm_property_install_enum(&psde->property_info, "src_config", 0x0, 1,
 		e_src_config, ARRAY_SIZE(e_src_config), 0,
 		PLANE_PROP_SRC_CONFIG);
+
+	msm_property_install_enum(&psde->property_info, "syscache_type", 0x0,
+		0, e_syscache_type, ARRAY_SIZE(e_syscache_type), 0,
+		PLANE_PROP_SYS_CACHE_TYPE);
 
 	if (psde->pipe_hw->ops.setup_solidfill)
 		msm_property_install_range(&psde->property_info, "color_fill",
