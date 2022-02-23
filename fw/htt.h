@@ -338,6 +338,8 @@ enum HTT_OPTION_TLV_TAGS {
     HTT_OPTION_TLV_TAG_TCL_METADATA_VER         = 0x5,
 };
 
+#define HTT_TCL_METADATA_VER_SZ 4
+
 PREPACK struct htt_option_tlv_header_t {
     A_UINT8 tag;
     A_UINT8 length;
