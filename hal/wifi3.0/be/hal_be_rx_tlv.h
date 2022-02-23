@@ -34,19 +34,10 @@ typedef struct rx_mpdu_start hal_rx_mpdu_start_t;
 typedef struct rx_msdu_end hal_rx_msdu_end_t;
 #endif
 
+#define RX_BE_PADDING0_BYTES 8
 /*
  * Each RX descriptor TLV is preceded by 1 QWORD "tag"
  */
-
-struct rx_mpdu_start_tlv {
-	uint64_t tag;
-	hal_rx_mpdu_start_t rx_mpdu_start;
-};
-
-struct rx_msdu_end_tlv {
-	uint64_t tag;
-	hal_rx_msdu_end_t rx_msdu_end;
-};
 
 struct rx_pkt_hdr_tlv {
 	uint64_t tag;					/* 8 B */
@@ -54,15 +45,43 @@ struct rx_pkt_hdr_tlv {
 	char rx_pkt_hdr[HAL_RX_BE_PKT_HDR_TLV_LEN];		/* 112 B */
 };
 
-#define RX_BE_PADDING0_BYTES 8
-#define RX_BE_PADDING1_BYTES 8
+#ifndef CONFIG_NO_TLV_TAGS
+struct rx_mpdu_start_tlv {
+	uint64_t tag;					/* 8 B */
+	hal_rx_mpdu_start_t rx_mpdu_start;
+};
+
+struct rx_msdu_end_tlv {
+	uint64_t tag;					/* 8 B */
+	hal_rx_msdu_end_t rx_msdu_end;
+};
 
 struct rx_pkt_tlvs {
 	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  120 bytes */
 	uint8_t rx_padding0[RX_BE_PADDING0_BYTES];	/*  8 bytes */
 	struct rx_mpdu_start_tlv mpdu_start_tlv;	/*  120 bytes */
-	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;		/* 128 bytes */
+#ifndef NO_RX_PKT_HDR_TLV
+	struct rx_pkt_hdr_tlv	pkt_hdr_tlv;		/* 128 bytes */
+#endif
 };
+#else
+struct rx_mpdu_start_tlv {
+	hal_rx_mpdu_start_t rx_mpdu_start;
+};
+
+struct rx_msdu_end_tlv {
+	hal_rx_msdu_end_t rx_msdu_end;
+};
+
+struct rx_pkt_tlvs {
+	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  128 bytes */
+	struct rx_mpdu_start_tlv mpdu_start_tlv;	/*  120 bytes */
+	uint8_t rx_padding0[RX_BE_PADDING0_BYTES];	/*  8 bytes */
+#ifndef NO_RX_PKT_HDR_TLV
+	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;		/* 128 bytes */
+#endif
+};
+#endif
 
 #define SIZE_OF_DATA_RX_TLV sizeof(struct rx_pkt_tlvs)
 
