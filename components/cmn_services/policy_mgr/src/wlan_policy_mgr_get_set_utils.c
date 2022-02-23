@@ -1846,7 +1846,7 @@ bool policy_mgr_find_if_hwlist_has_dbs(struct wlan_objmgr_psoc *psoc)
 static bool policy_mgr_find_if_hwlist_has_sbs(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	uint32_t param, i, found = 0;
+	uint32_t param, i;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 
@@ -1857,12 +1857,9 @@ static bool policy_mgr_find_if_hwlist_has_sbs(struct wlan_objmgr_psoc *psoc)
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
 		if (POLICY_MGR_HW_MODE_SBS_MODE_GET(param)) {
-			found = 1;
-			break;
+			return true;
 		}
 	}
-	if (found)
-		return true;
 
 	return false;
 }
