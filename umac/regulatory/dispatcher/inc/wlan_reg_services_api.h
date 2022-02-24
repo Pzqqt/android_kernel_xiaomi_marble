@@ -1387,6 +1387,18 @@ bool wlan_reg_is_disable_in_secondary_list_for_freq(
 						qdf_freq_t freq);
 
 /**
+ * wlan_reg_is_enable_in_secondary_list_for_freq() - Checks in the secondary
+ * channel list to see if chan state is enabled
+ * @pdev: pdev ptr
+ * @freq: Channel center frequency
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_enable_in_secondary_list_for_freq(
+						struct wlan_objmgr_pdev *pdev,
+						qdf_freq_t freq);
+
+/**
  * wlan_reg_is_dfs_in_secondary_list_for_freq() - hecks the channel state for
  * DFS from the secondary channel list
  * @pdev: pdev ptr
