@@ -18092,15 +18092,15 @@ PREPACK struct htt_t2h_sawf_def_queues_map_report_conf {
  * of the newly created MSDUQ and some other identifiers to uniquely identity
  * the newly created MSDUQ
  *
- * |31    27|          24|23    16|15           11|10|9 8|7     4|3    0|
- * |------------------------------+----------------------+--------------|
- * |             peer ID          |       HTT qtype      |   msg type   |
- * |--------+---------------------+---------------+--+---+-------+------|
- * |reserved|               Ast Index             |FO|WC | HLOS  | remap|
- * |        |                                     |  |   | TID   | TID  |
- * |---------------------+----------------------------------------------|
- * |    reserved1        |             tgt_opaque_id                    |
- * |---------------------+----------------------------------------------|
+ * |31    27|          24|23    16|15|14          11|10|9 8|7     4|3    0|
+ * |------------------------------+------------------------+--------------|
+ * |             peer ID          |         HTT qtype      |   msg type   |
+ * |---------------------------------+--------------+--+---+-------+------|
+ * |            reserved             |AST list index|FO|WC | HLOS  | remap|
+ * |                                 |              |  |   | TID   | TID  |
+ * |---------------------+------------------------------------------------|
+ * |    reserved1        |               tgt_opaque_id                    |
+ * |---------------------+------------------------------------------------|
  *
  * Header fields:
  *
@@ -18116,10 +18116,20 @@ PREPACK struct htt_t2h_sawf_def_queues_map_report_conf {
  *                        TCL Data Command : Beryllium
  *          b10         - flow_override (FO), as sent by host in
  *                        TCL Data Command: Beryllium
- *          b11:26      - ast_index
- *                        Dummy AST Index in case of Lithium,
- *                        Default AST Index in case of Beryllium
- *          b27:32      - reserved
+ *          b11:14      - ast_list_idx
+ *                        Array index into the list of extension AST entries
+ *                        (not the actual AST 16-bit index).
+ *                        The ast_list_idx is one-based, with the following
+ *                        range of values:
+ *                          - legacy targets supporting 16 user-defined
+ *                            MSDU queues: 1-2
+ *                          - legacy targets supporting 48 user-defined
+ *                            MSDU queues: 1-6
+ *                          - new targets: 0 (peer_id is used instead)
+ *                        Note that since ast_list_idx is one-based,
+ *                        the host will need to subtract 1 to use it as an
+ *                        index into a list of extension AST entries.
+ *          b15:31      - reserved
  *
  * dword2 - b'23:0      - tgt_opaque_id Opaque Tx flow number which is a
  *                        unique MSDUQ id in firmware
@@ -18134,8 +18144,8 @@ PREPACK struct htt_t2h_sawf_msduq_event {
              hlos_tid                : 4,
              who_classify_info_sel   : 2,
              flow_override           : 1,
-             ast_index               :16,
-             reserved                : 5;
+             ast_list_idx            : 4,
+             reserved                :17;
 
     A_UINT32 tgt_opaque_id           :24,
              reserved1               : 8;
@@ -18210,15 +18220,15 @@ PREPACK struct htt_t2h_sawf_msduq_event {
         ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_S)); \
     } while (0)
 
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_M              0x07FFF800
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S                      11
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_GET(_var) \
-    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_M) >> \
-     HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S)
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_SET(_var, _val) \
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_M              0x00007800
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_S                      11
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_SET(_var, _val) \
     do { \
-        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX, _val); \
-        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S)); \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_S)); \
     } while (0)
 
 
