@@ -1239,6 +1239,7 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 	enum phy_ch_width ch_width, concurrent_bw = 0;
 	struct mac_context *mac;
 	struct ch_params ch_params = {0};
+	uint32_t channel_bonding_mode = 0;
 
 	mac = sap_get_mac_context();
 	if (!mac) {
@@ -1254,7 +1255,14 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 		 */
 		ch_width = CH_WIDTH_20MHZ;
 	} else {
-		ch_width = wlansap_get_max_bw_by_phymode(sap_context);
+		wlan_mlme_get_channel_bonding_5ghz(mac->psoc,
+						   &channel_bonding_mode);
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq) &&
+		    (!channel_bonding_mode))
+			ch_width = CH_WIDTH_20MHZ;
+		else
+			ch_width = wlansap_get_max_bw_by_phymode(sap_context);
+
 		ch_width = wlansap_5g_original_bw_validate(
 				sap_context, chan_freq, ch_width);
 		concurrent_bw = wlan_sap_get_concurrent_bw(
@@ -1270,13 +1278,14 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 	ch_width = ch_params.ch_width;
 	if (tgt_ch_params)
 		*tgt_ch_params = ch_params;
-	sap_nofl_debug("csa freq %d bw %d (phymode %d con bw %d tgt bw %d orig %d reason %d)",
+	sap_nofl_debug("csa freq %d bw %d (phymode %d con bw %d tgt bw %d orig %d reason %d) channel bonding 5g %d",
 		       chan_freq, ch_width,
 		       sap_context->phyMode,
 		       concurrent_bw,
 		       tgt_ch_params ? tgt_ch_params->ch_width : CH_WIDTH_MAX,
 		       sap_context->ch_width_orig,
-		       sap_context->csa_reason);
+		       sap_context->csa_reason,
+		       channel_bonding_mode);
 
 	return ch_width;
 }

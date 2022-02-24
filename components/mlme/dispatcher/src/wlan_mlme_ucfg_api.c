@@ -1632,16 +1632,7 @@ QDF_STATUS
 ucfg_mlme_get_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 				   uint32_t *value)
 {
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		*value = cfg_default(CFG_CHANNEL_BONDING_MODE_5GHZ);
-		return QDF_STATUS_E_INVAL;
-	}
-	*value = mlme_obj->cfg.feature_flags.channel_bonding_mode_5ghz;
-
-	return QDF_STATUS_SUCCESS;
+	return wlan_mlme_get_channel_bonding_5ghz(psoc, value);
 }
 
 QDF_STATUS
