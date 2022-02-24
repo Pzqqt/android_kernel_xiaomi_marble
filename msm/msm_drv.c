@@ -1033,8 +1033,19 @@ static void msm_lastclose(struct drm_device *dev)
 	 * commit then ignore the last close call
 	 */
 	if (kms->funcs && kms->funcs->check_for_splash
-		&& kms->funcs->check_for_splash(kms))
-		return;
+		&& kms->funcs->check_for_splash(kms)) {
+		msm_wait_event_timeout(priv->pending_crtcs_event, !priv->pending_crtcs,
+			LASTCLOSE_TIMEOUT_MS, rc);
+		if (!rc)
+			DRM_INFO("wait for crtc mask 0x%x failed, commit anyway...\n",
+				priv->pending_crtcs);
+
+		rc = kms->funcs->trigger_null_flush(kms);
+		if (rc) {
+			DRM_ERROR("null flush commit failure during lastclose\n");
+			return;
+		}
+	}
 
 	/*
 	 * clean up vblank disable immediately as this is the last close.
@@ -1514,8 +1525,15 @@ static int msm_release(struct inode *inode, struct file *filp)
 	 * refcount > 1. This operation is not triggered from upstream
 	 * drm as msm_driver does not support DRIVER_LEGACY feature.
 	 */
-	if (drm_is_current_master(file_priv))
+	if (drm_is_current_master(file_priv)) {
+		msm_wait_event_timeout(priv->pending_crtcs_event, !priv->pending_crtcs,
+			LASTCLOSE_TIMEOUT_MS, ret);
+		if (!ret)
+			DRM_INFO("wait for crtc mask 0x%x failed, commit anyway...\n",
+				priv->pending_crtcs);
+
 		msm_preclose(dev, file_priv);
+	}
 
 	ret = drm_release(inode, filp);
 	filp->private_data = NULL;
