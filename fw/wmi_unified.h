@@ -89,6 +89,8 @@ extern "C" {
 
 #define MAX_AOA_PHASEDELTA      31  /* 62 gain values */
 
+#define MAX_20MHZ_SEGMENTS 16  /* 320 MHz / 20 MHz = 16 (20 MHz subbands) */
+
 /* The WLAN_MAX_AC macro cannot be changed without breaking
    WMI compatibility. */
 /* The maximum value of access category */
@@ -1598,6 +1600,12 @@ typedef enum {
 
     /* Event to send packet log decode information */
     WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID,
+
+    /**
+     * RSSI dB to dDm conversion params info event
+     * sent to host after channel/bw/chainmask change per pdev.
+     */
+    WMI_PDEV_RSSI_DBM_CONVERSION_PARAMS_INFO_EVENTID,
 
 
     /* VDEV specific events */
@@ -16047,6 +16055,83 @@ typedef struct {
      */
     A_UINT32 per_chain_noise_floor[WMI_MAX_CHAINS];
 } wmi_chan_info_event_fixed_param;
+
+/**
+ * The below three structures are the params used for converting RSSI
+ * from dB to dBm units.
+ */
+
+typedef struct{
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_dbm_conversion_params_info */
+    /* Current operating bandwidth as per wmi_channel_width */
+    A_UINT32 curr_bw;
+    /* Current rx chainmask */
+    A_UINT32 curr_rx_chainmask;
+    /* HW noise floor in dBm per chain, per 20MHz subband */
+    A_INT32 nf_hw_dbm[MAX_ANTENNA_EIGHT][MAX_20MHZ_SEGMENTS];
+    /* 3 Bytes of xbar_config are used for RF to BB mapping*/
+    /* Samples of xbar_config,
+     * If xbar_config is 0xFAC688(hex):
+     *     RF chains 0-7 are connected to BB chains 0-7
+     *     here,
+     *         bits 0 to 2 = 0, maps BB chain 0 for RF chain 0
+     *         bits 3 to 5 = 1, maps BB chain 1 for RF chain 1
+     *         bits 6 to 8 = 2, maps BB chain 2 for RF chain 2
+     *         bits 9 to 11 = 3, maps BB chain 3 for RF chain 3
+     *         bits 12 to 14 = 4, maps BB chain 4 for RF chain 4
+     *         bits 15 to 17 = 5, maps BB chain 5 for RF chain 5
+     *         bits 18 to 20 = 6, maps BB chain 6 for RF chain 6
+     *         bits 21 to 23 = 7, maps BB chain 7 for RF chain 7
+     *
+     * If xbar_config is 0x688FAC(hex):
+     *     RF chains 0-3 are connected to BB chains 4-7
+     *     RF chains 4-7 are connected to BB chains 0-3
+     *     here,
+     *         bits 0 to 2 = 4, maps BB chain 4 for RF chain 0
+     *         bits 3 to 5 = 5, maps BB chain 5 for RF chain 1
+     *         bits 6 to 8 = 6, maps BB chain 6 for RF chain 2
+     *         bits 9 to 11 = 7, maps BB chain 7 for RF chain 3
+     *         bits 12 to 14 = 0, maps BB chain 0 for RF chain 4
+     *         bits 15 to 17 = 1, maps BB chain 1 for RF chain 5
+     *         bits 18 to 20 = 2, maps BB chain 2 for RF chain 6
+     *         bits 21 to 23 = 3, maps BB chain 3 for RF chain 7
+     */
+    A_UINT32 xbar_config;
+    /* The below xlna_bypass params needed in old target architecture
+     * generation, not applicable for current target architecture generation.
+     * Values will be zero for current target architectures. */
+    /* Low noise amplifier bypass offset; signed integer; units are in dB */
+    A_INT32 xlna_bypass_offset;
+    /* Low noise amplifier bypass threshold; signed integer; units are in dB */
+    A_INT32 xlna_bypass_threshold;
+} wmi_rssi_dbm_conversion_params_info;
+
+typedef struct{
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_dbm_conversion_temp_offset_info */
+    /**
+     * RSSI offset based on the current temperature, signed integer,
+     * units are in dB
+     */
+    A_INT32 rssi_temp_offset;
+} wmi_rssi_dbm_conversion_temp_offset_info;
+
+/**
+ * RSSI dB to dBm conversion params event to host
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_dbm_conversion_fixed_param */
+    /* PDEV id */
+    A_UINT32 pdev_id;
+    /**
+     * Followed by these TLVs below.
+     * wmi_rssi_dbm_convresion_params_info rssi_dbm_conversion_param[0 or 1]
+     *     wmi_rssi_dbm_conversion_params_info will be sent in case of
+     *     channel, BW, rx_chainmask change.
+     * wmi_rssi_dbm_conversion_temp_offset_info rssi_temp_offset[0 or 1]
+     *     wmi_rssi_dbm_conversion_temp_offset_info will be sent when the
+     *     RSSI temp offset changes.
+     */
+} wmi_rssi_dbm_conversion_params_info_event_fixed_param;
 
 /**
  * Non wlan interference event
