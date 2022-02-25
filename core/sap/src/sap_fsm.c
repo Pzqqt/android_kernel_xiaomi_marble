@@ -59,6 +59,7 @@
 #include "wlan_policy_mgr_ucfg.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "wlan_vdev_mgr_utils_api.h"
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -3251,7 +3252,13 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_RADAR_FOUND) {
 		qdf_status = sap_fsm_handle_radar_during_cac(sap_ctx, mac_ctx);
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_END) {
-		qdf_status = sap_cac_end_notify(mac_handle, roam_info);
+		if (sap_ctx->vdev &&
+		    wlan_util_vdev_mgr_get_cac_timeout_for_vdev(sap_ctx->vdev)) {
+			qdf_status = sap_cac_end_notify(mac_handle, roam_info);
+		} else {
+			sap_debug("cac duration is zero");
+			qdf_status = QDF_STATUS_SUCCESS;
+		}
 	} else {
 		sap_err("in state %s, invalid event msg %d", "SAP_STARTING",
 			 msg);
