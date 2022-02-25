@@ -12744,6 +12744,13 @@ populate_thermal_stats(WMI_THERM_THROT_STATS_EVENTID_param_tlvs *param_buf,
 			       WMI_THERMAL_STATS_TEMP_THRESH_LEVEL_MAX :
 			       tt_stats_event->therm_throt_levels;
 
+	if (*therm_throt_levels > param_buf->num_temp_range_stats) {
+		wmi_err("therm_throt_levels:%u oob num_temp_range_stats:%u",
+			*therm_throt_levels,
+			param_buf->num_temp_range_stats);
+		return;
+	}
+
 	wmi_tt_stats = param_buf->temp_range_stats;
 	if (!wmi_tt_stats) {
 		wmi_err("wmi_tt_stats Null");
