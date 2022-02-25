@@ -7834,7 +7834,8 @@ void hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 	while (QDF_IS_STATUS_SUCCESS(hdd_get_front_adapter(
 							hdd_ctx, &adapter))) {
 		/* If MLO is enabled unregister the link wdev's */
-		if (adapter->device_mode == QDF_STA_MODE) {
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_SAP_MODE) {
 			qdf_status = hdd_wlan_unregister_mlo_interfaces(adapter,
 								     rtnl_held);
 			if (QDF_IS_STATUS_ERROR(qdf_status))
