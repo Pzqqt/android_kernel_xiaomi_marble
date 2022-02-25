@@ -2769,15 +2769,16 @@ cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
 	char *buf;
 	char time[TIME_STRING_LEN];
 
-	/* Update roam trigger info to userspace */
-	cm_roam_trigger_info_event(data, vdev_id, is_full_scan);
-
 	buf = qdf_mem_malloc(MAX_ROAM_DEBUG_BUF_SIZE);
 	if (!buf)
 		return;
 
 	cm_roam_stats_get_trigger_detail_str(data, buf, is_full_scan, vdev_id);
 	mlme_get_converted_timestamp(data->timestamp, time);
+
+	/* Update roam trigger info to userspace */
+	cm_roam_trigger_info_event(data, vdev_id, is_full_scan);
+
 	mlme_nofl_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
 	qdf_mem_free(buf);
