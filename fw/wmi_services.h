@@ -578,6 +578,7 @@ typedef  enum  {
     WMI_IS_RADAR_FOUND_CHAN_FREQ_IS_CENTER_FREQ = 325, /* FW Supporting radar event on the actual center frequency radar was detected */
     WMI_SERVICE_BIOS_SAR_SUPPORT = 326, /* FW support for SAR parameter stored in BIOS */
     WMI_SERVICE_REO_QREF_SUPPORT = 327, /* FW supports REO QREF */
+    WMI_SERVICE_DELETE_ALL_PEER_BITMAP_SUPPORT = 328, /* target supports cmd to delete all specific peer type within a vdev */
 
     WMI_MAX_EXT2_SERVICE
 
