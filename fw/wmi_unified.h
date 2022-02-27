@@ -11149,6 +11149,136 @@ typedef struct {
     A_UINT32 is_success;
 } wmi_ctrl_path_odd_addr_read_struct;
 
+/*
+ * The wmi_ctrl_path_afc_stats_struct is used to send AFC stats within
+ * the WMI_CTRL_PATH_STATS_EVENT message, in response to a
+ * WMI_REQUEST_CTRL_PATH_STATS_CMD message for the stat type
+ * WMI_REQUEST_CTRL_PATH_AFC_STAT.
+ */
+typedef struct {
+    /* TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_ctrl_path_afc_stats_struct */
+    A_UINT32 tlv_header;
+
+    A_UINT32 pdev_id;               /* pdev_id for identifying the MAC/PHY */
+
+    /* Count of new request ID everytime it is generated */
+    A_UINT32 request_id_count;
+    /* Count of total number of AFC payload received */
+    A_UINT32 response_count;
+    /* Count of total number of invalid AFC response */
+    A_UINT32 invalid_response_count;
+    /* Count of total number of AFC resets received  */
+    A_UINT32 reset_count;
+
+    /* AFC Response error counters*/
+
+    /*
+     * Count of total number of incorrect payload received due to
+     * request ID and response
+     * Increments when request ID doesn't match with response.
+     */
+    A_UINT32 id_mismatch_count;
+
+    /*
+     * Count of total number of "local_error_code" success event
+     * received as part of the AFC response payload in the below struct
+     * "afc_spectrum_inquiry_resp_bin_type"
+     */
+    A_UINT32 local_err_code_success;
+
+    /*
+     * Count of total number of "local_error_code" failure event
+     * received as part of the AFC response payload in the below struct
+     * "afc_spectrum_inquiry_resp_bin_type"
+     */
+    A_UINT32 local_err_code_failure;
+
+    /*
+     * The below fields are used to denote the count of
+     * different server response code received in "afc_serv_resp_code"
+     * received as part of "afc_spectrum_inquiry_resp_bin_type"
+     * These resp codes are as per the WFA spec
+     */
+    /* afc_serv_resp_code = version not supported */
+    A_UINT32 serv_resp_code_100;
+    /* afc_serv_resp_code = Device disallowed */
+    A_UINT32 serv_resp_code_101;
+    /* afc_serv_resp_code = Missing param */
+    A_UINT32 serv_resp_code_102;
+    /* afc_serv_resp_code = invalid value */
+    A_UINT32 serv_resp_code_103;
+    /* afc_serv_resp_code = unexpected param */
+    A_UINT32 serv_resp_code_106;
+    /* afc_serv_resp_code = unsupported spectrum */
+    A_UINT32 serv_resp_code_300;
+
+    /*
+     * AFC Compliance tracker
+     */
+    /* proxy_standalone_0
+     * This field displays the value of Request ID check disable received
+     * as part of the INI knob
+     */
+    A_UINT32 proxy_standalone_0;
+    /* proxy_standalone_1
+     * This field displays the value of Timer check disable received
+     * as part of the INI knob
+     */
+    A_UINT32 proxy_standalone_1;
+
+    /* Count of successful power events sent to host */
+    A_UINT32 power_event_counter;
+    /* Count of total force LPI power mode switch when grace count expires */
+    A_UINT32 force_LPI_counter;
+
+    /*
+     * Count of total number of successful host set
+     * TPC command received within the compliance timer
+     */
+    A_UINT32 tpc_wmi_success_count;
+
+    /*
+     * Count of total number of failed host set
+     * TPC command. This is incremented when compliance timer expires
+     */
+    A_UINT32 tpc_wmi_failure_count;
+
+    /*
+     * These counters are incremented as part of the
+     * Regulatory Compliance check done on the AFC payload
+     * received from server
+     */
+    /* Incorrect PSD value recieved in freq Obj */
+    A_UINT32 psd_failure_count;
+    /* Incorrect End freq recieved in freq Obj */
+    A_UINT32 psd_end_freq_failure_count;
+    /* Incorrect Start freq recieved in freq Obj */
+    A_UINT32 psd_start_freq_failure_count;
+    /* Incorrect EIRP received in channel obj */
+    A_UINT32 eirp_failure_count;
+    /* Incorrect centre freq channel received in channel obj */
+    A_UINT32 cfreq_failure_count;
+
+    /*
+     * AFC Current status
+     */
+    /* Current Request ID */
+    A_UINT32 request_id;
+    /* grace_timer_count
+     * This grace counter increments only after TTL expiry.
+     * Cleared to zero once valid payload is received.
+     */
+    A_UINT32 grace_timer_count;
+    /* Current TTL Time in seconds from last valid payload response */
+    A_UINT32 cur_ttl_timer;
+    /* deployment_mode
+     * 6G AP deployment mode denoting indoor or outdoor
+     * Indoor = 1, Outdoor = 2
+     */
+    A_UINT32 deployment_mode;
+} wmi_ctrl_path_afc_stats_struct;
+
 typedef struct {
     /** TLV tag and len; tag equals
     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
@@ -28951,6 +29081,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_BTCOEX_STAT       = 8,
     WMI_REQUEST_CTRL_PATH_BMISS_STAT        = 9,
     WMI_REQUEST_CTRL_PATH_ODD_ADDR_READ     = 10,
+    WMI_REQUEST_CTRL_PATH_AFC_STAT          = 11,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
@@ -30932,7 +31063,13 @@ typedef struct {
 
 typedef struct {
     A_UINT32 channel_cfi;  /* channel center frequency index */
-    A_UINT32 max_eirp_pwr; /* maximum permissible EIRP available for above CFI in dBm, value is stored in 0.01 dBm steps  */
+    /*
+     * maximum permissible EIRP available for above CFI in dBm,
+     * value is stored in 0.01 dBm steps.
+     * Note: This A_UINT32 field can receive negative EIRP value from AFC
+     * server. These negative EIRP value cases are handled internally.
+     */
+    A_UINT32 max_eirp_pwr;
 } afc_eirp_info;
 
 typedef struct {
