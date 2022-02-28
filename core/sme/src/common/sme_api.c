@@ -5472,7 +5472,7 @@ QDF_STATUS sme_set_tsf_gpio(mac_handle_t mac_handle, uint32_t pinvalue)
 
 QDF_STATUS sme_get_cfg_valid_channels(uint32_t *valid_ch_freq, uint32_t *len)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status;
 	struct mac_context *mac_ctx = sme_get_mac_context();
 	uint32_t *valid_ch_freq_list;
 	uint32_t i;
@@ -5488,12 +5488,7 @@ QDF_STATUS sme_get_cfg_valid_channels(uint32_t *valid_ch_freq, uint32_t *len)
 	if (!valid_ch_freq_list)
 		return QDF_STATUS_E_NOMEM;
 
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_get_cfg_valid_channels(mac_ctx,
-			valid_ch_freq_list, len);
-		sme_release_global_lock(&mac_ctx->sme);
-	}
+	status = csr_get_cfg_valid_channels(mac_ctx, valid_ch_freq_list, len);
 
 	for (i = 0; i < *len; i++)
 		valid_ch_freq[i] = valid_ch_freq_list[i];
@@ -8262,15 +8257,12 @@ QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint32_t chan_freq,
 			    uint32_t *regInfo1, uint32_t *regInfo2)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t i;
 	bool found = false;
 
-	status = sme_acquire_global_lock(&mac->sme);
 	*regInfo1 = 0;
 	*regInfo2 = 0;
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return status;
 
 	for (i = 0; i < CFG_VALID_CHANNEL_LIST_LEN; i++) {
 		if (mac->scan.defaultPowerTable[i].center_freq == chan_freq) {
@@ -8286,7 +8278,6 @@ QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint32_t chan_freq,
 	if (!found)
 		status = QDF_STATUS_E_FAILURE;
 
-	sme_release_global_lock(&mac->sme);
 	return status;
 }
 
