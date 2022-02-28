@@ -1614,10 +1614,14 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 								    adapter,
 								    oper_freq);
 
-			if (phy_changed || freq_changed || width_changed) {
+			if (hdd_is_vdev_in_conn_state(adapter) &&
+			    (phy_changed || freq_changed || width_changed)) {
+				hdd_debug("changed: phy %d, freq %d, width %d",
+					  phy_changed, freq_changed,
+					  width_changed);
 				wlan_hdd_cm_issue_disconnect(adapter,
-							 REASON_UNSPEC_FAILURE,
-							 false);
+							REASON_UNSPEC_FAILURE,
+							false);
 				sta_ctx->reg_phymode = csr_phy_mode;
 			}
 			break;
