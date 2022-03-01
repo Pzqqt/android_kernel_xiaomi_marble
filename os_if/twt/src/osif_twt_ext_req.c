@@ -2012,7 +2012,7 @@ osif_twt_sta_get_session_params(struct wlan_objmgr_vdev *vdev,
 		qdf_copy_macaddr(&params[0].peer_mac, &bcast_addr);
 	}
 
-	if (!ucfg_twt_is_setup_done(psoc, &params[0].peer_mac,
+	if (!ucfg_twt_is_setup_done(psoc, &peer_mac,
 				    params[0].dialog_id)) {
 		osif_debug("vdev%d: TWT session %d setup incomplete", vdev_id,
 			   params[0].dialog_id);
