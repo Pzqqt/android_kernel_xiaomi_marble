@@ -219,14 +219,24 @@ ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc)
 static void _sde_encoder_control_fal10_veto(struct drm_encoder *drm_enc, bool veto)
 {
 	bool clone_mode;
-	struct sde_kms *sde_kms = sde_encoder_get_kms(drm_enc);
-	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	struct sde_kms *sde_kms;
+	struct sde_encoder_virt *sde_enc;
 
-	if (sde_kms && sde_kms->catalog && !sde_kms->catalog->uidle_cfg.uidle_rev)
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
 		return;
+	}
+
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	sde_enc = to_sde_encoder_virt(drm_enc);
+
+	if (!sde_kms || !sde_kms->catalog) {
+		SDE_ERROR("invalid kms\n");
+		return;
+	}
 
 	if (!sde_kms->hw_uidle || !sde_kms->hw_uidle->ops.uidle_fal10_override) {
-		SDE_ERROR("invalid args\n");
+		SDE_DEBUG("uidle is not enabled\n");
 		return;
 	}
 
