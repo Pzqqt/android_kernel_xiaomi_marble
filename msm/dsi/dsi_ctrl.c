@@ -1391,6 +1391,10 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 		dsi_hw_ops.splitlink_cmd_setup(&dsi_ctrl->hw,
 				&dsi_ctrl->host_config.common_config, flags);
 
+	if (dsi_hw_ops.init_cmddma_trig_ctrl)
+		dsi_hw_ops.init_cmddma_trig_ctrl(&dsi_ctrl->hw,
+				&dsi_ctrl->host_config.common_config);
+
 	/*
 	 * Always enable DMA scheduling for video mode panel.
 	 *
