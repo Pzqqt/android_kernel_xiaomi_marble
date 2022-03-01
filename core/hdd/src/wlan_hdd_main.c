@@ -17167,9 +17167,11 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	char buf[3];
 	static const char wlan_off_str[] = "OFF";
 	static const char wlan_on_str[] = "ON";
+	static const char wlan_wait_for_ready_str[] = "WAIT_FOR_READY";
 	int ret;
 	unsigned long rc;
 	struct hdd_context *hdd_ctx;
+	bool is_wait_for_ready = false;
 
 	if (copy_from_user(buf, user_buf, 3)) {
 		pr_err("Failed to read buffer\n");
@@ -17185,7 +17187,11 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) == 0)
 		pr_info("Wifi Turning On from UI\n");
 
-	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) != 0) {
+	if (strncmp(buf, wlan_wait_for_ready_str,
+		    strlen(wlan_wait_for_ready_str)) == 0) {
+		is_wait_for_ready = true;
+		pr_info("Wifi wait for ready from UI\n");
+	} else if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) != 0) {
 		pr_err("Invalid value received from framework");
 		goto exit;
 	}
@@ -17199,6 +17205,9 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 			return ret;
 		}
 	}
+
+	if (is_wait_for_ready)
+		return count;
 
 	/*
 	 * Flush idle shutdown work for cases to synchronize the wifi on
