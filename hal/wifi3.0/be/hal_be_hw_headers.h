@@ -20,7 +20,6 @@
 #ifndef _HAL_BE_HW_INTERNAL_H_
 #define _HAL_BE_HW_INTERNAL_H_
 
-#include "hal_hw_headers.h"
 #include "wcss_seq_hwioreg_umac.h"
 #include "phyrx_location.h"
 #include "receive_rssi_info.h"

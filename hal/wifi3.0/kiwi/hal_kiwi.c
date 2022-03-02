@@ -122,6 +122,7 @@
 
 #include <hal_generic_api.h>
 #include <hal_be_generic_api.h>
+#include "hal_be_api_mon.h"
 
 #define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
 
