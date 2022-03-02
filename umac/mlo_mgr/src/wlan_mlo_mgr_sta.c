@@ -541,6 +541,7 @@ mlo_send_link_connect(struct wlan_objmgr_vdev *vdev,
 				*ml_parnter_info,
 				ml_parnter_info->partner_link_info[partner_idx],
 				ssid);
+		mlo_update_connected_links(mlo_dev_ctx->wlan_vdev_list[i], 1);
 		partner_idx++;
 	}
 }
