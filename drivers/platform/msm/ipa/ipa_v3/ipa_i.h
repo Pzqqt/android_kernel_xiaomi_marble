@@ -2799,6 +2799,8 @@ struct ipa3_mem_partition {
 
 	u32 stats_drop_ofst;
 	u32 stats_drop_size;
+	u32 q6_stats_drop_ofst;
+	u32 q6_stats_drop_size;
 };
 
 struct ipa3_controller {
