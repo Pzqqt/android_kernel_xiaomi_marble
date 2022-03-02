@@ -32253,9 +32253,17 @@ typedef enum _WMI_DISABLE_TWT_REASON_T {
     WMI_DISABLE_TWT_REASON_P2P_GO_NOA,                  /* P2P GO NOA reason */
 } WMI_DISABLE_TWT_REASON_T;
 
+/* Notification event ID to Host */
+typedef enum _WMI_TWT_NOTIFICATION_ID_T {
+    WMI_TWT_NOTIFY_EVENT_READY = 1,
+    WMI_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_SET = 2,
+    WMI_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_CLEAR = 3,
+} WMI_TWT_NOTIFICATION_ID_T;
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param */
     A_UINT32 vdev_id;      /* vdev id of TWT notify event */
+    A_UINT32 event_id;     /* refer to WMI_TWT_NOTIFICATION_ID_T */
 } wmi_twt_notify_event_fixed_param;
 
 /* from IEEE 802.11ah section 9.4.2.200 */
