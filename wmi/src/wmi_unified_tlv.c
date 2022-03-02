@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15823,7 +15823,7 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		trig->btm_trig_data.btm_mbo_assoc_retry_timeout =
 				src_data->btm_mbo_assoc_retry_timeout;
 		trig->btm_trig_data.token = src_data->btm_req_dialog_token;
-		if ((btm_idx + trig->btm_trig_data.candidate_list_count) <
+		if ((btm_idx + trig->btm_trig_data.candidate_list_count) <=
 		    param_buf->num_roam_btm_request_candidate_info)
 			extract_roam_11kv_candidate_info(
 					wmi_handle, evt_buf,
