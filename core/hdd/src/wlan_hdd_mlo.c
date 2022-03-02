@@ -130,7 +130,8 @@ void hdd_mlo_close_adapter(struct hdd_adapter *link_adapter, bool rtnl_held)
 	hdd_check_for_net_dev_ref_leak(link_adapter);
 	wlan_hdd_release_intf_addr(link_adapter->hdd_ctx,
 				   link_adapter->mac_addr.bytes);
-
+	policy_mgr_clear_concurrency_mode(link_adapter->hdd_ctx->psoc,
+					  link_adapter->device_mode);
 	link_adapter->wdev.netdev = NULL;
 
 	if (rtnl_held)
