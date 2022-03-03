@@ -261,8 +261,14 @@ mlo_cm_handle_connect_in_disconnection_state(struct wlan_objmgr_vdev *vdev,
 					     struct wlan_cm_connect_req *req)
 {
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
-	struct wlan_mlo_sta *sta_ctx = mlo_dev_ctx->sta_ctx;
+	struct wlan_mlo_sta *sta_ctx;
 
+	if (!mlo_dev_ctx) {
+		mlo_err("ML dev ctx is NULL");
+		return;
+	}
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
 	if (!sta_ctx->connect_req)
 		sta_ctx->connect_req = qdf_mem_malloc(
 					sizeof(struct wlan_cm_connect_req));
@@ -451,7 +457,14 @@ mlo_prepare_and_send_connect(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_cm_connect_req req = {0};
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
-	struct wlan_mlo_sta *sta_ctx = mlo_dev_ctx->sta_ctx;
+	struct wlan_mlo_sta *sta_ctx;
+
+	if (!mlo_dev_ctx) {
+		mlo_err("ML dev ctx is NULL");
+		return;
+	}
+
+	sta_ctx = mlo_dev_ctx->sta_ctx;
 
 	mlo_debug("Partner link connect mac:" QDF_MAC_ADDR_FMT " vdev_id:%d",
 		  QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
@@ -605,6 +618,11 @@ mlo_update_connected_links_bmap(struct wlan_mlo_dev_context *mlo_dev_ctx,
 	uint8_t i = 0;
 	uint8_t j = 0;
 
+	if (!mlo_dev_ctx) {
+		mlo_err("ML dev ctx is NULL");
+		return;
+	}
+
 	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
 		if (!mlo_dev_ctx->wlan_vdev_list[i])
 			continue;
@@ -676,6 +694,11 @@ void mlo_handle_sta_link_connect_failure(struct wlan_objmgr_vdev *vdev,
 	struct wlan_mlo_dev_context *mlo_dev_ctx = vdev->mlo_dev_ctx;
 	struct scheduler_msg msg = {0};
 	QDF_STATUS ret;
+
+	if (!mlo_dev_ctx) {
+		mlo_err("ML dev ctx is NULL");
+		return;
+	}
 
 	if (vdev != mlo_get_assoc_link_vdev(mlo_dev_ctx)) {
 		mlo_update_connected_links(vdev, 0);
@@ -1005,6 +1028,10 @@ void mlo_sta_link_handle_pending_connect(struct wlan_objmgr_vdev *vdev)
 	struct mlo_partner_info partner_info;
 	struct mlo_link_info partner_link_info;
 
+	if (!mlo_dev_ctx) {
+		mlo_err("ML dev ctx is null");
+		return;
+	}
 	sta_ctx = mlo_dev_ctx->sta_ctx;
 	ret = wlan_objmgr_vdev_try_get_ref(
 			vdev,
