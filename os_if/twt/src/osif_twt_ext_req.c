@@ -945,14 +945,6 @@ int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 	}
 
 	vdev_id = wlan_vdev_get_id(vdev);
-	ret = osif_is_twt_command_allowed(vdev, vdev_id, psoc);
-	if (ret)
-		return ret;
-
-	if (osif_twt_setup_conc_allowed(psoc, vdev_id)) {
-		osif_err_rl("TWT setup reject: SCC or MCC concurrency exists");
-		return -EAGAIN;
-	}
 
 	ret = wlan_cfg80211_nla_parse_nested(tb2,
 					 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
@@ -985,6 +977,15 @@ int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
 	if (!params.flag_bcast && !(peer_cap & WLAN_TWT_CAPA_RESPONDER)) {
 		osif_err_rl("TWT setup reject: TWT responder not supported");
 		return -EOPNOTSUPP;
+	}
+
+	ret = osif_is_twt_command_allowed(vdev, vdev_id, psoc);
+	if (ret)
+		return ret;
+
+	if (osif_twt_setup_conc_allowed(psoc, vdev_id)) {
+		osif_err_rl("TWT setup reject: SCC or MCC concurrency exists");
+		return -EAGAIN;
 	}
 
 	ucfg_twt_cfg_get_congestion_timeout(psoc, &congestion_timeout);
