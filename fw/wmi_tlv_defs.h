@@ -1252,6 +1252,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_rx_pn_request_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_rx_pn_response_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_pn_mgmt_rx_filter_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_set_multiple_pdev_vdev_param_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_set_param_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1742,6 +1744,7 @@ typedef enum {
     OP(WMI_RTT_PASN_DEAUTH_CMD) \
     OP(WMI_PEER_RX_PN_REQUEST_CMDID) \
     OP(WMI_VDEV_PN_MGMT_RX_FILTER_CMDID) \
+    OP(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4890,11 +4893,21 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_IGMP_OFFLOAD_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param, wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID);
 
-/* Multiple vdev set param cmd */
+/* Multiple vdev set param cmd:
+ * Set one parameter for multiple vdevs at once.
+ */
 #define WMITLV_TABLE_WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_multiple_vdev_set_param_cmd_fixed_param, wmi_pdev_multiple_vdev_set_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID);
+
+/* Vdev/Pdev set Param:
+ * Set multiple parameters at once for one pdev or vdev.
+ */
+#define WMITLV_TABLE_WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_set_multiple_pdev_vdev_param_cmd_fixed_param, wmi_set_multiple_pdev_vdev_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_set_param_info, param_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID);
 
 /* Configure MEC AGING TIMER */
 #define WMITLV_TABLE_WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID(id,op,buf,len) \

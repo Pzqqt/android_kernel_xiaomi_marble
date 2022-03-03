@@ -479,7 +479,7 @@ typedef enum {
     WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID,
     /* Set HALPHY CAL bitmap */
     WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID,
-    /* WMI cmd to send vdev param for multiple vdev */
+    /* WMI cmd to set a single vdev param for multiple vdevs */
     WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID,
     /* Configure MEC AGING TIMER */
     WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID,
@@ -1141,6 +1141,10 @@ typedef enum {
     WMI_GET_CHANNEL_ANI_CMDID,
     /** set OCL (One Chain Listen) mode */
     WMI_SET_OCL_CMDID,
+    /** Consolidated params for pdev/vdev:
+     * Set multiple parameters at once for one pdev or vdev.
+     */
+    WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID,
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -30995,6 +30999,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_RTT_PASN_DEAUTH_CMD);
         WMI_RETURN_STRING(WMI_VDEV_PN_MGMT_RX_FILTER_CMDID);
         WMI_RETURN_STRING(WMI_PEER_RX_PN_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -37643,6 +37648,26 @@ typedef struct {
      * A_UINT32 vdev_ids[]; <--- Array of VDEV ids.
      */
 } wmi_pdev_multiple_vdev_set_param_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_set_param_info */
+    /** ID of the parameter being set */
+    A_UINT32 param_id;
+    /** value of the parameter being set */
+    A_UINT32 param_value;
+} wmi_set_param_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_set_multiple_pdev_vdev_param_cmd_fixed_param */
+    /** Command is for vdev or pdev: 0 = pdev, 1 = vdev */
+    A_UINT32 is_vdev;
+    /** unique dev_id identifying the VDEV/PDEV */
+    A_UINT32 dev_id;
+    /*
+     * Following this structure is the TLV:
+     *     wmi_set_param_info param_info[];
+     */
+} wmi_set_multiple_pdev_vdev_param_cmd_fixed_param;
 
 typedef enum {
     WMI_MU_SNIF_DISABLE,
