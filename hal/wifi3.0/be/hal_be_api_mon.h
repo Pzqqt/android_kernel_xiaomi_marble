@@ -703,8 +703,8 @@ static inline bool hal_rx_is_non_ofdma(struct hal_soc *hal_soc,
 				ppdu_info->u_sig_info.ppdu_type_comp_mode;
 	uint32_t ul_dl = ppdu_info->u_sig_info.ul_dl;
 
-	if ((ppdu_type_comp_mode == 0 && ul_dl == 1) ||
-	    (ppdu_type_comp_mode == 0 && ul_dl == 2) ||
+	if ((ppdu_type_comp_mode == 1 && ul_dl == 0) ||
+	    (ppdu_type_comp_mode == 2 && ul_dl == 0) ||
 	    (ppdu_type_comp_mode == 1 && ul_dl == 1))
 		return true;
 
