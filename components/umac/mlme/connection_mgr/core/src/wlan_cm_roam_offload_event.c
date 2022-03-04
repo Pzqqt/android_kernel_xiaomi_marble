@@ -361,7 +361,11 @@ cm_roam_sync_event_handler(struct wlan_objmgr_psoc *psoc,
 			   uint32_t len,
 			   struct roam_offload_synch_ind *sync_ind)
 {
-	if (sync_ind && sync_ind->hw_mode_trans_present)
+	if (!sync_ind) {
+		mlme_err("invalid sync_ind");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (sync_ind->hw_mode_trans_present)
 		cm_handle_roam_sync_update_hw_mode(
 			&sync_ind->hw_mode_trans_ind);
 
