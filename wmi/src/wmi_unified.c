@@ -2703,8 +2703,11 @@ static int __wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
 	wmi_buf_t evt_buf;
 	uint32_t evt_id;
 
-	if (!wmi_handle || !buf)
+	if (!wmi_handle || !buf || !len) {
+		wmi_err_rl("%s is invalid", !wmi_handle ?
+				"wmi_buf" : !buf ? "buf" : "length");
 		return -EINVAL;
+	}
 
 	evt_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!evt_buf)
