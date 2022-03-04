@@ -1,4 +1,5 @@
 /* Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -204,6 +205,10 @@ DATARMNET58b009b16b __read_mostly=(0xd26+209-0xdf6);module_param(
 DATARMNET58b009b16b,uint,(0xdb7+6665-0x261c));MODULE_PARM_DESC(
 DATARMNET58b009b16b,
 "\x45\x6e\x61\x62\x6c\x65\x20\x44\x69\x73\x61\x62\x6c\x65\x20\x73\x74\x61\x74\x73\x20\x63\x6f\x6c\x6c\x65\x63\x74\x69\x6f\x6e"
+);unsigned long DATARMNET930a441406[DATARMNET0d61981934];module_param_array(
+DATARMNET930a441406,ulong,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
+DATARMNET930a441406,
+"\x72\x6d\x6e\x65\x74\x20\x73\x68\x73\x20\x6d\x69\x64\x20\x65\x72\x72\x6f\x72\x20\x74\x79\x70\x65"
 );unsigned long DATARMNET68d84e7b98[DATARMNETf3110711cb];module_param_array(
 DATARMNET68d84e7b98,ulong,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
 DATARMNET68d84e7b98,

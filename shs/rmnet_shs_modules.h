@@ -1,4 +1,5 @@
 /* Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -51,6 +52,7 @@ DATARMNETc6782fed88];extern unsigned int DATARMNET4ac8af832c;extern unsigned int
 int DATARMNETd75e474598[DATARMNETc6782fed88];extern unsigned int 
 DATARMNET25c61a512c;extern unsigned int DATARMNET1ad396a890;extern unsigned int 
 DATARMNET756bdd424a;extern unsigned int DATARMNET58b009b16b __read_mostly;extern
- unsigned long DATARMNET68d84e7b98[DATARMNETf3110711cb];
+ unsigned long DATARMNET68d84e7b98[DATARMNETf3110711cb];extern unsigned long 
+DATARMNET930a441406[DATARMNET0d61981934];
 #endif
 

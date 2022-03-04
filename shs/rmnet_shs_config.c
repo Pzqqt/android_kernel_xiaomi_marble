@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -26,9 +27,9 @@ static int DATARMNETe9173bbe0e(struct notifier_block*DATARMNET272c159b3c,
 unsigned long DATARMNET7f045a1e6e,void*data);static struct notifier_block 
 DATARMNET5fc54f7a13 __read_mostly={.notifier_call=DATARMNETe9173bbe0e,.priority=
 (0xd1f+216-0xdf5),};static char*DATARMNETbc8418e817[]={"\x34\x33\x61\x36\x62",
-"\x61\x32\x63\x65\x36","\x64\x31\x61\x62\x31",};module_param_array(
-DATARMNETbc8418e817,charp,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
-DATARMNETbc8418e817,
+"\x61\x32\x63\x65\x36","\x64\x31\x61\x62\x31","\x64\x38\x37\x39\x62"};
+module_param_array(DATARMNETbc8418e817,charp,NULL,(0xcb7+5769-0x221c));
+MODULE_PARM_DESC(DATARMNETbc8418e817,
 "\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x73\x68\x73\x20\x64\x72\x69\x76\x65\x72"
 );static int DATARMNET2cb9ae589c;int __init DATARMNET163e93649e(void){pr_info(
 "\x25\x73\x28\x29\x3a\x20\x53\x74\x61\x72\x74\x69\x6e\x67\x20\x72\x6d\x6e\x65\x74\x20\x53\x48\x53\x20\x6d\x6f\x64\x75\x6c\x65\x20\x25\x73\x20" "\n"
