@@ -691,10 +691,10 @@ static int ipa3_qmi_init_modem_send_sync_msg(void)
 
 	req.hw_drop_stats_base_addr_valid = true;
 	req.hw_drop_stats_base_addr =
-		IPA_MEM_PART(stats_drop_ofst) + smem_restr_bytes;
+		IPA_MEM_PART(q6_stats_drop_ofst) + smem_restr_bytes;
 
 	req.hw_drop_stats_table_size_valid = true;
-	req.hw_drop_stats_table_size = IPA_MEM_PART(stats_drop_size);
+	req.hw_drop_stats_table_size = IPA_MEM_PART(q6_stats_drop_size);
 
 	if (ipa3_ctx->platform_type != IPA_PLAT_TYPE_APQ) {
 		req.per_stats_smem_info_valid = true;
