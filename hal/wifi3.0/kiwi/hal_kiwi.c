@@ -1976,7 +1976,11 @@ struct hal_hw_srng_config hw_srng_table_kiwi[] = {
 	},
 	{ /* TCL_CMD */
 		.start_ring_id = HAL_SRNG_SW2TCL_CMD,
+#ifndef WLAN_DP_DISABLE_TCL_CMD_CRED_SRNG
 		.max_rings = 1,
+#else
+		.max_rings = 0,
+#endif
 		.entry_size = sizeof(struct tcl_gse_cmd) >> 2,
 		.lmac_ring =  FALSE,
 		.ring_dir = HAL_SRNG_SRC_RING,
