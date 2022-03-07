@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * RMNET PERF TETHER framework
  *
@@ -9,18 +10,22 @@
 #include <net/tcp.h>
 #include "rmnet_descriptor.h"
 #include "rmnet_map.h"
-MODULE_LICENSE("\x47\x50\x4c\x20\x76\x32");extern void(*
-rmnet_perf_tether_ingress_hook)(struct tcphdr*DATARMNET2e7cc88971,struct 
-rmnet_frag_descriptor*DATARMNET9d1b321642,struct iphdr*DATARMNET86f1f2cdc9);
-extern void(*rmnet_perf_tether_egress_hook)(struct sk_buff*DATARMNET543491eb0f);
-extern void(*rmnet_perf_tether_cmd_hook)(u8 DATARMNET07b1a05079,u64 
-DATARMNETcc6099cb14);struct DATARMNETf9eee4068d{u8 DATARMNETd0ef85194f;};static 
-struct DATARMNETf9eee4068d*DATARMNET8a1e9920bf;unsigned int configure_knob1 
-__read_mostly=(0xd2d+202-0xdf7);module_param(configure_knob1,uint,
-(0xdb7+6665-0x261c));unsigned int knob1 __read_mostly=(0xd2d+202-0xdf7);
-module_param(knob1,uint,(0xdb7+6665-0x261c));unsigned int configure_knob2 
-__read_mostly=(0xd2d+202-0xdf7);module_param(configure_knob2,uint,
-(0xdb7+6665-0x261c));unsigned int knob2 __read_mostly=(0xd2d+202-0xdf7);
+MODULE_LICENSE("\x47\x50\x4c\x20\x76\x32");static char*verinfo[]={
+"\x37\x34\x31\x35\x39\x32\x31\x63","\x34\x39\x61\x66\x39\x62\x64\x34"};
+module_param_array(verinfo,charp,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
+verinfo,
+"\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
+);extern void(*rmnet_perf_tether_ingress_hook)(struct tcphdr*DATARMNET2e7cc88971
+,struct rmnet_frag_descriptor*DATARMNET9d1b321642,struct iphdr*
+DATARMNET86f1f2cdc9);extern void(*rmnet_perf_tether_egress_hook)(struct sk_buff*
+DATARMNET543491eb0f);extern void(*rmnet_perf_tether_cmd_hook)(u8 
+DATARMNET07b1a05079,u64 DATARMNETcc6099cb14);struct DATARMNETf9eee4068d{u8 
+DATARMNETd0ef85194f;};static struct DATARMNETf9eee4068d*DATARMNET8a1e9920bf;
+unsigned int configure_knob1 __read_mostly=(0xd2d+202-0xdf7);module_param(
+configure_knob1,uint,(0xdb7+6665-0x261c));unsigned int knob1 __read_mostly=
+(0xd2d+202-0xdf7);module_param(knob1,uint,(0xdb7+6665-0x261c));unsigned int 
+configure_knob2 __read_mostly=(0xd2d+202-0xdf7);module_param(configure_knob2,
+uint,(0xdb7+6665-0x261c));unsigned int knob2 __read_mostly=(0xd2d+202-0xdf7);
 module_param(knob2,uint,(0xdb7+6665-0x261c));static DEFINE_SPINLOCK(
 DATARMNETcf56327171);
 #define DATARMNETd063f2edce ((0xef7+1112-0x131d))

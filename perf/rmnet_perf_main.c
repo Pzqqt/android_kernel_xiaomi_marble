@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * RMNET PERF framework
  *
@@ -10,9 +10,13 @@
 #include <linux/udp.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
-MODULE_LICENSE("\x47\x50\x4c\x20\x76\x32");extern int(*rmnet_perf_ingress_hook1)
-(struct sk_buff*DATARMNET543491eb0f);extern void(*rmnet_perf_egress_hook1)(
-struct sk_buff*DATARMNET543491eb0f);
+MODULE_LICENSE("\x47\x50\x4c\x20\x76\x32");static char*verinfo[]={
+"\x37\x34\x31\x35\x39\x32\x31\x63","\x34\x64\x65\x34\x39\x64\x62\x35",
+"\x62\x31\x63\x34\x34\x62\x34\x63"};module_param_array(verinfo,charp,NULL,
+(0xcb7+5769-0x221c));MODULE_PARM_DESC(verinfo,
+"\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
+);extern int(*rmnet_perf_ingress_hook1)(struct sk_buff*DATARMNET543491eb0f);
+extern void(*rmnet_perf_egress_hook1)(struct sk_buff*DATARMNET543491eb0f);
 #define DATARMNETf241a4b20f (0xe07+6616-0x2624)
 static inline bool DATARMNETe1ef3edea2(struct udphdr*DATARMNETa1abb4897c){return
  be16_to_cpu(DATARMNETa1abb4897c->source)==DATARMNETf241a4b20f||be16_to_cpu(

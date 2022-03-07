@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * RMNET WLAN handler framework
  *
@@ -24,6 +25,13 @@
 #include "rmnet_wlan_stats.h"
 #include "rmnet_wlan_fragment.h"
 #include "rmnet_wlan_connection.h"
+static char*verinfo[]={"\x37\x34\x31\x35\x39\x32\x31\x63",
+"\x34\x64\x32\x32\x34\x33\x36\x33","\x61\x34\x31\x63\x39\x64\x37\x62",
+"\x38\x66\x32\x66\x65\x64\x32\x66","\x63\x30\x32\x62\x61\x39\x30\x65"};
+module_param_array(verinfo,charp,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
+verinfo,
+"\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
+);
 #define DATARMNETaf49b04806 ((0xeb7+1158-0x132d))
 #define DATARMNET6b4ac8224c (const_ilog2(DATARMNETaf49b04806))
 struct DATARMNET745f724205{struct hlist_node DATARMNETe8608dd267;struct rcu_head
