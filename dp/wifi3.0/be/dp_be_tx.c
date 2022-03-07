@@ -463,7 +463,7 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 	/* Sync cached descriptor with HW */
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
 
-	coalesce = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid);
+	coalesce = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid, msdu_info);
 
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, tx_desc->length);
 	DP_STATS_INC(soc, tx.tcl_enq[ring_id], 1);

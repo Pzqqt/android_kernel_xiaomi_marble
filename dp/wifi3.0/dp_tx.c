@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1400,7 +1400,8 @@ void dp_tx_update_stats(struct dp_soc *soc,
 int
 dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
 			 struct dp_tx_desc_s *tx_desc,
-			 uint8_t tid)
+			 uint8_t tid,
+			 struct dp_tx_msdu_info_s *msdu_info)
 {
 	struct dp_swlm *swlm = &soc->swlm;
 	union swlm_data swlm_query_data;
@@ -1408,8 +1409,8 @@ dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
 	QDF_STATUS status;
 	int ret;
 
-	if (qdf_unlikely(!swlm->is_enabled))
-		return 0;
+	if (!swlm->is_enabled)
+		return msdu_info->skip_hp_update;
 
 	tcl_data.nbuf = tx_desc->nbuf;
 	tcl_data.tid = tid;
@@ -1443,6 +1444,51 @@ dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
 		dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
 }
 
+static inline void
+dp_tx_is_hp_update_required(uint32_t i, struct dp_tx_msdu_info_s *msdu_info)
+{
+	if (((i + 1) < msdu_info->num_seg))
+		msdu_info->skip_hp_update = 1;
+	else
+		msdu_info->skip_hp_update = 0;
+}
+
+static inline void
+dp_flush_tcp_hp(struct dp_soc *soc, uint8_t ring_id)
+{
+	hal_ring_handle_t hal_ring_hdl =
+		dp_tx_get_hal_ring_hdl(soc, ring_id);
+
+	if (dp_tx_hal_ring_access_start(soc, hal_ring_hdl)) {
+		dp_err("Fillmore: SRNG access start failed");
+		return;
+	}
+
+	dp_tx_ring_access_end_wrapper(soc, hal_ring_hdl, 0);
+}
+
+static inline void
+dp_tx_check_and_flush_hp(struct dp_soc *soc,
+			 QDF_STATUS status,
+			 struct dp_tx_msdu_info_s *msdu_info)
+{
+	if (QDF_IS_STATUS_ERROR(status) && !msdu_info->skip_hp_update) {
+		dp_flush_tcp_hp(soc,
+			(msdu_info->tx_queue.ring_id & DP_TX_QUEUE_MASK));
+	}
+}
+#else
+static inline void
+dp_tx_is_hp_update_required(uint32_t i, struct dp_tx_msdu_info_s *msdu_info)
+{
+}
+
+static inline void
+dp_tx_check_and_flush_hp(struct dp_soc *soc,
+			 QDF_STATUS status,
+			 struct dp_tx_msdu_info_s *msdu_info)
+{
+}
 #endif
 
 #ifdef FEATURE_RUNTIME_PM
@@ -2206,6 +2252,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
 		}
 
+		dp_tx_is_hp_update_required(i, msdu_info);
+
 		/*
 		 * For frames with multiple segments (TSO, ME), jump to next
 		 * segment.
@@ -2236,6 +2284,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		status = soc->arch_ops.tx_hw_enqueue(soc, vdev, tx_desc,
 						     htt_tcl_metadata,
 						     NULL, msdu_info);
+
+		dp_tx_check_and_flush_hp(soc, status, msdu_info);
 
 		if (status != QDF_STATUS_SUCCESS) {
 			dp_info("Tx_hw_enqueue Fail tx_desc %pK queue %d",
