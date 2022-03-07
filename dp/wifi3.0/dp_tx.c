@@ -1387,21 +1387,31 @@ void dp_vdev_peer_stats_update_protocol_cnt_tx(struct dp_vdev *vdev_hdl,
 /**
  * dp_tx_update_stats() - Update soc level tx stats
  * @soc: DP soc handle
- * @nbuf: packet being transmitted
+ * @tx_desc: TX descriptor reference
+ * @ring_id: TCL ring id
  *
  * Returns: none
  */
 void dp_tx_update_stats(struct dp_soc *soc,
-			qdf_nbuf_t nbuf)
+			struct dp_tx_desc_s *tx_desc,
+			uint8_t ring_id)
 {
-	DP_STATS_INC_PKT(soc, tx.egress, 1, qdf_nbuf_len(nbuf));
+	uint32_t stats_len = 0;
+
+	if (tx_desc->frm_type == dp_tx_frm_tso)
+		stats_len  = tx_desc->msdu_ext_desc->tso_desc->seg.total_len;
+	else
+		stats_len = qdf_nbuf_len(tx_desc->nbuf);
+
+	DP_STATS_INC_PKT(soc, tx.egress[ring_id], 1, stats_len);
 }
 
 int
 dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
 			 struct dp_tx_desc_s *tx_desc,
 			 uint8_t tid,
-			 struct dp_tx_msdu_info_s *msdu_info)
+			 struct dp_tx_msdu_info_s *msdu_info,
+			 uint8_t ring_id)
 {
 	struct dp_swlm *swlm = &soc->swlm;
 	union swlm_data swlm_query_data;
@@ -1414,21 +1424,28 @@ dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	tcl_data.nbuf = tx_desc->nbuf;
 	tcl_data.tid = tid;
+	tcl_data.ring_id = ring_id;
+	if (tx_desc->frm_type == dp_tx_frm_tso) {
+		tcl_data.pkt_len  =
+			tx_desc->msdu_ext_desc->tso_desc->seg.total_len;
+	} else {
+		tcl_data.pkt_len = qdf_nbuf_len(tx_desc->nbuf);
+	}
 	tcl_data.num_ll_connections = vdev->num_latency_critical_conn;
 	swlm_query_data.tcl_data = &tcl_data;
 
 	status = dp_swlm_tcl_pre_check(soc, &tcl_data);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		dp_swlm_tcl_reset_session_data(soc);
-		DP_STATS_INC(swlm, tcl.coalesce_fail, 1);
+		dp_swlm_tcl_reset_session_data(soc, ring_id);
+		DP_STATS_INC(swlm, tcl[ring_id].coalesce_fail, 1);
 		return 0;
 	}
 
 	ret = dp_swlm_query_policy(soc, TCL_DATA, swlm_query_data);
 	if (ret) {
-		DP_STATS_INC(swlm, tcl.coalesce_success, 1);
+		DP_STATS_INC(swlm, tcl[ring_id].coalesce_success, 1);
 	} else {
-		DP_STATS_INC(swlm, tcl.coalesce_fail, 1);
+		DP_STATS_INC(swlm, tcl[ring_id].coalesce_fail, 1);
 	}
 
 	return ret;

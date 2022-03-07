@@ -994,7 +994,7 @@ struct dp_soc_stats {
 	/* SOC level TX stats */
 	struct {
 		/* Total packets transmitted */
-		struct cdp_pkt_info egress;
+		struct cdp_pkt_info egress[MAX_TCL_DATA_RINGS];
 		/* Enqueues per tcl ring */
 		uint32_t tcl_enq[MAX_TCL_DATA_RINGS];
 		/* packets dropped on tx because of no peer */
@@ -1463,6 +1463,8 @@ struct dp_last_op_info {
  * @nbuf: TX packet
  * @tid: tid for transmitting the current packet
  * @num_ll_connections: Number of low latency connections on this vdev
+ * @ring_id: TCL ring id
+ * @pkt_len: Packet length
  *
  * This structure contains the information required by the software
  * latency manager to decide on whether to coalesce the current TCL
@@ -1472,6 +1474,8 @@ struct dp_swlm_tcl_data {
 	qdf_nbuf_t nbuf;
 	uint8_t tid;
 	uint8_t num_ll_connections;
+	uint8_t ring_id;
+	uint32_t pkt_len;
 };
 
 /**
@@ -1523,43 +1527,65 @@ struct dp_swlm_stats {
 		uint32_t tput_criteria_fail;
 		uint32_t coalesce_success;
 		uint32_t coalesce_fail;
-	} tcl;
+	} tcl[MAX_TCL_DATA_RINGS];
+};
+
+/**
+ * struct dp_swlm_tcl_params: Parameters based on TCL for different modules
+ *			      in the Software latency manager.
+ * @soc: DP soc reference
+ * @ring_id: TCL ring id
+ * @flush_timer: Timer for flushing the coalesced TCL HP writes
+ * @sampling_session_tx_bytes: Num bytes transmitted in the sampling time
+ * @bytes_flush_thresh: Bytes threshold to flush the TCL HP register write
+ * @coalesce_end_time: End timestamp for current coalescing session
+ * @bytes_coalesced: Num bytes coalesced in the current session
+ * @prev_tx_packets: Previous TX packets accounted
+ * @prev_tx_bytes: Previous TX bytes accounted
+ * @prev_rx_bytes: Previous RX bytes accounted
+ * @expire_time: expiry time for sample
+ * @tput_pass_cnt: threshold throughput pass counter
+ */
+struct dp_swlm_tcl_params {
+	struct dp_soc *soc;
+	uint32_t ring_id;
+	qdf_timer_t flush_timer;
+	uint32_t sampling_session_tx_bytes;
+	uint32_t bytes_flush_thresh;
+	uint64_t coalesce_end_time;
+	uint32_t bytes_coalesced;
+	uint32_t prev_tx_packets;
+	uint32_t prev_tx_bytes;
+	uint32_t prev_rx_bytes;
+	uint64_t expire_time;
+	uint32_t tput_pass_cnt;
 };
 
 /**
  * struct dp_swlm_params: Parameters for different modules in the
  *			  Software latency manager.
- * @tcl.flush_timer: Timer for flushing the coalesced TCL HP writes
- * @tcl.rx_traffic_thresh: Threshold for RX traffic, to begin TCL register
+ * @rx_traffic_thresh: Threshold for RX traffic, to begin TCL register
  *			   write coalescing
- * @tcl.tx_traffic_thresh: Threshold for TX traffic, to begin TCL register
+ * @tx_traffic_thresh: Threshold for TX traffic, to begin TCL register
  *			   write coalescing
- * @tcl.sampling_time: Sampling time to test the throughput threshold
- * @tcl.sampling_session_tx_bytes: Num bytes transmitted in the sampling time
- * @tcl.bytes_flush_thresh: Bytes threshold to flush the TCL HP register write
- * @tcl.time_flush_thresh: Time threshold to flush the TCL HP register write
- * @tcl.tx_thresh_multiplier: Multiplier to deduce the bytes threshold after
+ * @sampling_time: Sampling time to test the throughput threshold
+ * @time_flush_thresh: Time threshold to flush the TCL HP register write
+ * @tx_thresh_multiplier: Multiplier to deduce the bytes threshold after
  *			      which the TCL HP register is written, thereby
  *			      ending the coalescing.
- * @tcl.coalesce_end_time: End timestamp for current coalescing session
- * @tcl.bytes_coalesced: Num bytes coalesced in the current session
- * @tcl.tx_pkt_thresh: Threshold for TX packet count, to begin TCL register
+ * @tx_pkt_thresh: Threshold for TX packet count, to begin TCL register
  *		       write coalescing
+ * @tcl: TCL ring specific params
  */
+
 struct dp_swlm_params {
-	struct {
-		qdf_timer_t flush_timer;
-		uint32_t rx_traffic_thresh;
-		uint32_t tx_traffic_thresh;
-		uint32_t sampling_time;
-		uint32_t sampling_session_tx_bytes;
-		uint32_t bytes_flush_thresh;
-		uint32_t time_flush_thresh;
-		uint32_t tx_thresh_multiplier;
-		uint64_t coalesce_end_time;
-		uint32_t bytes_coalesced;
-		uint32_t tx_pkt_thresh;
-	} tcl;
+	uint32_t rx_traffic_thresh;
+	uint32_t tx_traffic_thresh;
+	uint32_t sampling_time;
+	uint32_t time_flush_thresh;
+	uint32_t tx_thresh_multiplier;
+	uint32_t tx_pkt_thresh;
+	struct dp_swlm_tcl_params tcl[MAX_TCL_DATA_RINGS];
 };
 
 /**

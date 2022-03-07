@@ -9902,7 +9902,7 @@ dp_txrx_get_soc_stats(struct cdp_soc_t *soc_hdl,
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
-	soc_stats->tx.egress = soc->stats.tx.egress;
+	soc_stats->tx.egress = soc->stats.tx.egress[0];
 	soc_stats->rx.ingress = soc->stats.rx.ingress;
 	soc_stats->rx.err_ring_pkts = soc->stats.rx.err_ring_pkts;
 	soc_stats->rx.rx_frags = soc->stats.rx.rx_frags;
