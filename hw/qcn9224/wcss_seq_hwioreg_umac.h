@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2021, Qualcomm Innovation Center, Inc. All rights reserved.
+/* Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,9 @@
 
 #ifndef __WCSS_SEQ_HWIOREG_UMAC_H__
 #define __WCSS_SEQ_HWIOREG_UMAC_H__
- 
- 
- 
+
+
+
 
 #include "seq_hwio.h"
 #include "wcss_seq_hwiobase.h"
@@ -12556,7 +12556,7 @@ out_dword_masked_ns(HWIO_REO_R0_CACHE_CTL_GXI_PRIORITY_ADDR(x),m,v,HWIO_REO_R0_C
 #define HWIO_REO_R2_REO_STATUS_RING_TP_TAIL_PTR_BMSK                                                             0xffff
 #define HWIO_REO_R2_REO_STATUS_RING_TP_TAIL_PTR_SHFT                                                                  0
 
- 
+
 #define MAC_TCL_REG_REG_BASE                                                                                (UMAC_BASE      + 0x00044000)
 #define MAC_TCL_REG_REG_BASE_SIZE                                                                           0x3000
 #define MAC_TCL_REG_REG_BASE_USED                                                                           0x205c
@@ -16028,4 +16028,192 @@ out_dword_masked_ns(HWIO_REO_R0_CACHE_CTL_GXI_PRIORITY_ADDR(x),m,v,HWIO_REO_R0_C
 #define HWIO_TCL_R2_TCL_STATUS1_RING_TP_TAIL_PTR_BMSK                                                           0xffff
 #define HWIO_TCL_R2_TCL_STATUS1_RING_TP_TAIL_PTR_SHFT                                                                0
 
-#endif 
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_ADDR(x)                                                                  ((x) + 0x28)
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_PHYS(x)                                                                  ((x) + 0x28)
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_OFFS                                                                     (0x28)
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_RMSK                                                                     0x7fffffff
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_POR                                                                      0x120c3fe8
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_POR_RMSK                                                                 0xffffffff
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_ATTR                                                                                  0x3
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_IN(x)            \
+                in_dword(HWIO_TCL_R0_CMN_CONFIG_PPE_ADDR(x))
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_INM(x, m)            \
+                in_dword_masked(HWIO_TCL_R0_CMN_CONFIG_PPE_ADDR(x), m)
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_OUT(x, v)            \
+                out_dword(HWIO_TCL_R0_CMN_CONFIG_PPE_ADDR(x),v)
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_OUTM(x,m,v) \
+                out_dword_masked_ns(HWIO_TCL_R0_CMN_CONFIG_PPE_ADDR(x),m,v,HWIO_TCL_R0_CMN_CONFIG_PPE_IN(x))
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_PPE_MAX_DATA_LENGTH_BMSK                                                 0x7ffe0000
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_PPE_MAX_DATA_LENGTH_SHFT                                                         17
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_PPE_MAX_DATA_OFFSET_BMSK                                                    0x1ffe0
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_PPE_MAX_DATA_OFFSET_SHFT                                                          5
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_L3_L4_CSUM_ERR_EXCEPTION_BMSK                                                  0x10
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_L3_L4_CSUM_ERR_EXCEPTION_SHFT                                                     4
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_DATA_BUF_ERR_EXCEPTION_BMSK                                                     0x8
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_DATA_BUF_ERR_EXCEPTION_SHFT                                                       3
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_CPU_CODE_VALID_EXCEPTION_BMSK                                                   0x4
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_CPU_CODE_VALID_EXCEPTION_SHFT                                                     2
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_FAKE_MAC_HDR_EXCEPTION_BMSK                                                     0x2
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_FAKE_MAC_HDR_EXCEPTION_SHFT                                                       1
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_DROP_PREC_ERR_EXCEPTION_BMSK                                                    0x1
+#define HWIO_TCL_R0_CMN_CONFIG_PPE_DROP_PREC_ERR_EXCEPTION_SHFT                                                      0
+
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_ADDR(x)                                                         ((x) + 0x190)
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_PHYS(x)                                                         ((x) + 0x190)
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_OFFS                                                            (0x190)
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_RMSK                                                                   0xf
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_POR                                                             0x00000002
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_POR_RMSK                                                        0xffffffff
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_ATTR                                                                         0x3
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_IN(x)            \
+	                in_dword(HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_ADDR(x))
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_INM(x, m)            \
+	                in_dword_masked(HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_ADDR(x), m)
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_OUT(x, v)            \
+	                out_dword(HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_ADDR(x),v)
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_OUTM(x,m,v) \
+	                out_dword_masked_ns(HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_ADDR(x),m,v,HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_IN(x))
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_MSB_BMSK                                                               0xf
+#define HWIO_TCL_R0_PPE_DESC_DST_INFO_VALID_MSB_SHFT                                                                 0
+
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_ADDR(base,n)                                                      ((base) + 0X194 + (0x4*(n)))
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_PHYS(base,n)                                                      ((base) + 0X194 + (0x4*(n)))
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_OFFS(n)                                                           (0X194 + (0x4*(n)))
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_RMSK                                                              0x3fffffff
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_MAXn                                                                      31
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_POR                                                               0x20000000
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_POR_RMSK                                                          0xffffffff
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_ATTR                                                                           0x3
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_INI(base,n)                \
+	                in_dword_masked(HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_ADDR(base,n), HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_RMSK)
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_INMI(base,n,mask)        \
+	                in_dword_masked(HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_ADDR(base,n), mask)
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_OUTI(base,n,val)        \
+	                out_dword(HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_ADDR(base,n),val)
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_OUTMI(base,n,mask,val) \
+	                out_dword_masked_ns(HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_ADDR(base,n),mask,val,HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_INI(base,n))
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_DROP_PREC_ENABLE_BMSK                                             0x20000000
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_DROP_PREC_ENABLE_SHFT                                                     29
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_TO_FW_BMSK                                                        0x10000000
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_TO_FW_SHFT                                                                28
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_USE_PPE_INT_PRI_FOR_TID_BMSK                                       0x8000000
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_USE_PPE_INT_PRI_FOR_TID_SHFT                                              27
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_SEARCH_INDEX_REG_NUM_BMSK                                          0x7000000
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_SEARCH_INDEX_REG_NUM_SHFT                                                 24
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_VDEV_ID_BMSK                                                        0xff0000
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_VDEV_ID_SHFT                                                              16
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_BANK_ID_BMSK                                                          0xfc00
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_BANK_ID_SHFT                                                              10
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_PMAC_ID_BMSK                                                           0x300
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_PMAC_ID_SHFT                                                               8
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_VP_NUM_BMSK                                                             0xff
+#define HWIO_TCL_R0_PPE_VP_CONFIG_TABLE_n_VP_NUM_SHFT                                                                0
+
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_ADDR(base,n)                                                  ((base) + 0X214 + (0x4*(n)))
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_PHYS(base,n)                                                  ((base) + 0X214 + (0x4*(n)))
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_OFFS(n)                                                       (0X214 + (0x4*(n)))
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_RMSK                                                            0xffffff
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_MAXn                                                                   7
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_POR                                                           0x00000000
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_POR_RMSK                                                      0xffffffff
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_ATTR                                                                       0x3
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_INI(base,n)                \
+	                in_dword_masked(HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_ADDR(base,n), HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_RMSK)
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_INMI(base,n,mask)        \
+	                in_dword_masked(HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_ADDR(base,n), mask)
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_OUTI(base,n,val)        \
+	                out_dword(HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_ADDR(base,n),val)
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_OUTMI(base,n,mask,val) \
+	                out_dword_masked_ns(HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_ADDR(base,n),mask,val,HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_INI(base,n))
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_CACHE_SET_BMSK                                                  0xf00000
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_CACHE_SET_SHFT                                                        20
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_SEARCH_INDEX_BMSK                                                0xfffff
+#define HWIO_TCL_R0_PPE_INDEX_MAPPING_TABLE_n_SEARCH_INDEX_SHFT                                                      0
+
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_ADDR(x)                                                            ((x) + 0x234)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_PHYS(x)                                                            ((x) + 0x234)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_OFFS                                                               (0x234)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_RMSK                                                               0x3fffffff
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_POR                                                                0x00000000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_POR_RMSK                                                           0xffffffff
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_ATTR                                                                            0x3
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_IN(x)            \
+	                in_dword(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_ADDR(x))
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INM(x, m)            \
+	                in_dword_masked(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_ADDR(x), m)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_OUT(x, v)            \
+	                out_dword(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_ADDR(x),v)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_OUTM(x,m,v) \
+	                out_dword_masked_ns(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_ADDR(x),m,v,HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_IN(x))
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_9_BMSK                                                     0x38000000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_9_SHFT                                                             27
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_8_BMSK                                                      0x7000000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_8_SHFT                                                             24
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_7_BMSK                                                       0xe00000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_7_SHFT                                                             21
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_6_BMSK                                                       0x1c0000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_6_SHFT                                                             18
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_5_BMSK                                                        0x38000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_5_SHFT                                                             15
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_4_BMSK                                                         0x7000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_4_SHFT                                                             12
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_3_BMSK                                                          0xe00
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_3_SHFT                                                              9
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_2_BMSK                                                          0x1c0
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_2_SHFT                                                              6
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_1_BMSK                                                           0x38
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_1_SHFT                                                              3
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_0_BMSK                                                            0x7
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP0_INT_PRI_0_SHFT                                                              0
+
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_ADDR(x)                                                            ((x) + 0x238)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_PHYS(x)                                                            ((x) + 0x238)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_OFFS                                                               (0x238)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_RMSK                                                                  0x3ffff
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_POR                                                                0x00000000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_POR_RMSK                                                           0xffffffff
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_ATTR                                                                            0x3
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_IN(x)            \
+	                in_dword(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_ADDR(x))
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INM(x, m)            \
+	                in_dword_masked(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_ADDR(x), m)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_OUT(x, v)            \
+	                out_dword(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_ADDR(x),v)
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_OUTM(x,m,v) \
+	                out_dword_masked_ns(HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_ADDR(x),m,v,HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_IN(x))
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_15_BMSK                                                       0x38000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_15_SHFT                                                            15
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_14_BMSK                                                        0x7000
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_14_SHFT                                                            12
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_13_BMSK                                                         0xe00
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_13_SHFT                                                             9
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_12_BMSK                                                         0x1c0
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_12_SHFT                                                             6
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_11_BMSK                                                          0x38
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_11_SHFT                                                             3
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_10_BMSK                                                           0x7
+#define HWIO_TCL_R0_PPE_INT_PRI_TID_MAP1_INT_PRI_10_SHFT                                                             0
+
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_ADDR(x)                                                           ((x) + 0x23c)
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_PHYS(x)                                                           ((x) + 0x23c)
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_OFFS                                                              (0x23c)
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_RMSK                                                                    0x3f
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_POR                                                               0x00000039
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_POR_RMSK                                                          0xffffffff
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_ATTR                                                                           0x3
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_IN(x)            \
+	                in_dword(HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_ADDR(x))
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_INM(x, m)            \
+	                in_dword_masked(HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_ADDR(x), m)
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_OUT(x, v)            \
+	                out_dword(HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_ADDR(x),v)
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_OUTM(x,m,v) \
+	                out_dword_masked_ns(HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_ADDR(x),m,v,HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_IN(x))
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_RED_2_BMSK                                                              0x30
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_RED_2_SHFT                                                                 4
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_YELLOW_1_BMSK                                                            0xc
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_YELLOW_1_SHFT                                                              2
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_GREEN_0_BMSK                                                             0x3
+#define HWIO_TCL_R0_PPE_DROP_PREC_MAPPING_GREEN_0_SHFT                                                               0
+
+#endif

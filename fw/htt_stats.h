@@ -534,6 +534,26 @@ typedef enum {
     HTT_RX_UL_TRIGGER_STATS_UPLOAD_11BE_OFDMA,
 } htt_rx_ul_trigger_stats_upload_t;
 
+/*
+ * The htt_rx_ul_mumimo_trigger_stats_upload_t enum values are
+ * provided by the host as one of the config param elements in
+ * the HTT_H2T EXT_STATS_REQ message, for stats type ==
+ * HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS.
+ */
+typedef enum {
+    /*
+     * Upload 11ax UL MUMIMO RX Trigger stats
+     * TLV: htt_rx_pdev_ul_mumimo_trig_stats_tlv
+     */
+    HTT_RX_UL_MUMIMO_TRIGGER_STATS_UPLOAD_11AX,
+
+    /*
+     * Upload 11be UL MUMIMO RX Trigger stats
+     * TLV: htt_rx_pdev_ul_mumimo_trig_be_stats_tlv
+     */
+    HTT_RX_UL_MUMIMO_TRIGGER_STATS_UPLOAD_11BE,
+} htt_rx_ul_mumimo_trigger_stats_upload_t;
+
 #define HTT_STATS_MAX_STRING_SZ32 4
 #define HTT_STATS_MACID_INVALID 0xff
 #define HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS 10
@@ -4129,6 +4149,40 @@ typedef enum {
 #define HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS 16 /* 0...13,-2,-1 */
 #define HTT_TX_PDEV_STATS_NUM_BE_BW_COUNTERS  5  /* 20,40,80,160,320 MHz */
 
+#define HTT_TX_PDEV_STATS_NUM_HE_SIG_B_MCS_COUNTERS 6
+#define HTT_TX_PDEV_STATS_NUM_EHT_SIG_MCS_COUNTERS 4
+
+typedef enum {
+    HTT_TX_PDEV_STATS_AX_RU_SIZE_26,
+    HTT_TX_PDEV_STATS_AX_RU_SIZE_52,
+    HTT_TX_PDEV_STATS_AX_RU_SIZE_106,
+    HTT_TX_PDEV_STATS_AX_RU_SIZE_242,
+    HTT_TX_PDEV_STATS_AX_RU_SIZE_484,
+    HTT_TX_PDEV_STATS_AX_RU_SIZE_996,
+    HTT_TX_PDEV_STATS_AX_RU_SIZE_996x2,
+    HTT_TX_PDEV_STATS_NUM_AX_RU_SIZE_COUNTERS,
+} HTT_TX_PDEV_STATS_AX_RU_SIZE;
+
+typedef enum {
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_26,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_52,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_52_26,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_106,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_106_26,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_242,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_484,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_484_242,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996_484,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996_484_242,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996x2,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996x2_484,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996x3,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996x3_484,
+    HTT_TX_PDEV_STATS_BE_RU_SIZE_996x4,
+    HTT_TX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS,
+} HTT_TX_PDEV_STATS_BE_RU_SIZE;
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -4251,6 +4305,10 @@ typedef struct {
     A_UINT32 reduced_ax_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
     /** 11AX HE DL MU OFDMA TX BW stats at reduced channel config */
     A_UINT32 reduced_ax_mu_ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    /** 11AX HE DL MU OFDMA TX RU Size stats */
+    A_UINT32 ofdma_tx_ru_size[HTT_TX_PDEV_STATS_NUM_AX_RU_SIZE_COUNTERS];
+    /** 11AX HE DL MU OFDMA HE-SIG-B MCS stats */
+    A_UINT32 ofdma_he_sig_b_mcs[HTT_TX_PDEV_STATS_NUM_HE_SIG_B_MCS_COUNTERS];
 } htt_tx_pdev_rate_stats_tlv;
 
 typedef struct {
@@ -4329,6 +4387,10 @@ typedef struct {
     A_UINT32 be_ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_BE_BW_COUNTERS];
     /** 11BE EHT DL MU OFDMA TX guard interval stats */
     A_UINT32 be_ofdma_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_BE_MCS_COUNTERS];
+    /** 11BE EHT DL MU OFDMA TX RU Size stats */
+    A_UINT32 be_ofdma_tx_ru_size[HTT_TX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS];
+    /** 11BE EHT DL MU OFDMA EHT-SIG MCS stats */
+    A_UINT32 be_ofdma_eht_sig_mcs[HTT_TX_PDEV_STATS_NUM_EHT_SIG_MCS_COUNTERS];
 } htt_tx_pdev_rate_stats_be_ofdma_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE

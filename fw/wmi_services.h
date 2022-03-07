@@ -576,6 +576,7 @@ typedef  enum  {
     WMI_SERVICE_AFC_RESET_SUPPORT = 323, /* Indicates FW supports AFC reset */
     WMI_SERVICE_FP_PHY_ERR_FILTER_SUPPORT = 324, /* FW supports monitor ring configurations for filtering in PHY error packets */
     WMI_IS_RADAR_FOUND_CHAN_FREQ_IS_CENTER_FREQ = 325, /* FW Supporting radar event on the actual center frequency radar was detected */
+    WMI_SERVICE_BIOS_SAR_SUPPORT = 326, /* FW support for SAR parameter stored in BIOS */
 
     WMI_MAX_EXT2_SERVICE
 

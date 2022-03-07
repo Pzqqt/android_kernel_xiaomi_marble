@@ -6814,6 +6814,12 @@ typedef struct {
      * agile span center frequency2 (MHz), 0 for normal scan.
      */
     A_UINT32 spectral_scan_center_freq2;
+    /**
+     * Flag to enable re-capture of FFT sample if the previous sample has
+     * AGC gain change bit set.
+     * Re-capture will be enabled only if scan period is greater than 50us.
+     */
+    A_UINT32 recapture_sample_on_gain_change;
 } wmi_vdev_spectral_configure_cmd_fixed_param;
 
 /*
@@ -9491,6 +9497,22 @@ typedef struct {
      */
 } wmi_channel_stats;
 
+/* this structure used for pass vdev id in stats events */
+typedef struct {
+    union {
+        struct {
+            A_UINT32 id      : 31, /* the vdev ID */
+                     validate: 1;  /* validate bit, the vdev ID is only valid if this bit set as 1 */
+        };
+        A_UINT32 vdev_id;
+    };
+} wmi_vdev_id_info;
+
+#define WMI_VDEV_ID_INFO_GET_VDEV_ID(vdev_id_info)             WMI_GET_BITS(vdev_id_info, 0, 31)
+#define WMI_VDEV_ID_INFO_SET_VDEV_ID(vdev_id_info, value)      WMI_SET_BITS(vdev_id_info, 0, 31, value)
+#define WMI_VDEV_ID_INFO_GET_VALIDATE(vdev_id_info)            WMI_GET_BITS(vdev_id_info, 31, 1)
+#define WMI_VDEV_ID_INFO_SET_VALIDATE(vdev_id_info, value)     WMI_SET_BITS(vdev_id_info, 31, 1, value)
+
 /*
  * Each step represents 0.5 dB.  The starting value is 0 dBm.
  * Thus the TPC levels cover 0 dBm to 31.5 dBm inclusive in 0.5 dB steps.
@@ -9551,6 +9573,8 @@ typedef struct {
     A_UINT32 power_level_offset;
     /* radio id for this tx time per power level statistics (if multiple radio supported) */
     A_UINT32 radio_id;
+    /** Indicates the vdev id of the stats for MLO stats query */
+    wmi_vdev_id_info vdev_id_info;
 /*
  * This TLV will be followed by a TLV containing a variable-length array of
  * A_UINT32 with tx time per power level data
@@ -9567,7 +9591,7 @@ typedef struct {
 
 /** Radio statistics (once started) do not stop or get reset unless wifi_clear_link_stats is invoked */
 typedef struct {
-    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stats_event_fixed_param */
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_radio_link_stats_event_fixed_param */
     /** unique id identifying the request, given in the request stats command */
     A_UINT32 request_id;
     /** Number of radios*/
@@ -9586,6 +9610,8 @@ typedef struct {
      * event having additional channels for the same radio.
      */
     A_UINT32 more_channels;
+    /** Indicates the vdev id of the stats for MLO stats query */
+    wmi_vdev_id_info vdev_id_info;
 /*
  * This TLV is followed by another TLV of array of bytes
  *   size of(struct wmi_radio_link_stats);
@@ -9664,6 +9690,8 @@ typedef struct {
     A_UINT32 peer_event_number;
     /** Indicates if there are more peers which will be sent as seperate peer_stats event */
     A_UINT32 more_data;
+    /** Indicates the vdev id of the stats for MLO stats query */
+    wmi_vdev_id_info vdev_id_info;
 
 /**
  * This TLV is followed by another TLV
@@ -9942,6 +9970,8 @@ typedef struct {
     A_UINT32 last_event;
     /** number of extended MIB stats event structures (wmi_mib_extd_stats) */
     A_UINT32 num_mib_extd_stats;
+    /** Indicates the vdev id of the stats for MLO stats query */
+    wmi_vdev_id_info vdev_id_info;
 
 /* This TLV is followed by another TLV of array of bytes
  *   A_UINT8 data[];
@@ -10403,6 +10433,8 @@ typedef struct {
     A_UINT32 rx_mcs_array_len;
     /** Array size of stats_period[] which contains several stats periods. */
     A_UINT32 stats_period_array_len;
+    /** Indicates the vdev id for MLO case */
+    wmi_vdev_id_info vdev_id_info;
 
     /**
      * This TLV is followed by TLVs below:
@@ -16552,7 +16584,15 @@ typedef struct {
 #define WLAN_ROAM_SCORE_BAND_5G_INDEX                   1
 #define WLAN_ROAM_SCORE_BAND_6G_INDEX                   2
 /* 3 is reserved */
-#define WLAN_ROAM_SCORE_MAX_BAND_INDEX                  4
+#define WLAN_ROAM_SCORE_MAX_BAND_NUM_INDICES            4
+#define WLAN_ROAM_SCORE_MAX_BAND_INDEX WLAN_ROAM_SCORE_MAX_BAND_NUM_INDICES
+
+#define WLAN_ROAM_SCORE_SECURITY_WPA_INDEX              0
+#define WLAN_ROAM_SCORE_SECURITY_WPA2_INDEX             1
+#define WLAN_ROAM_SCORE_SECURITY_WPA3_INDEX             2
+/* 3 is reserved */
+#define WLAN_ROAM_SCORE_SECURITY_MAX_NUM_INDICES        4
+
 #define WMI_ROAM_GET_BAND_SCORE_PERCENTAGE(value32, band_index)                 WMI_GET_BITS(value32, (8 * (band_index)), 8)
 #define WMI_ROAM_SET_BAND_SCORE_PERCENTAGE(value32, score_pcnt, band_index)     WMI_SET_BITS(value32, (8 * (band_index)), 8, score_pcnt)
 
@@ -16572,6 +16612,10 @@ typedef struct {
 #define WLAN_ROAM_SCORE_MLO_INDEX                       4
 #define WMI_ROAM_GET_MLO_SCORE_PERCENTAGE(value32, mlo_index)                 WMI_GET_BITS(value32, (8 * (mlo_index)), 8)
 #define WMI_ROAM_SET_MLO_SCORE_PERCENTAGE(value32, score_pcnt, mlo_index)     WMI_SET_BITS(value32, (8 * (mlo_index)), 8, score_pcnt)
+#define WMI_ROAM_GET_SECURITY_SCORE_PERCENTAGE(value32, security_index) \
+    WMI_GET_BITS(value32, (8 * (security_index)), 8)
+#define WMI_ROAM_SET_SECURITY_SCORE_PERCENTAGE(value32, score_pcnt, security_index) \
+    WMI_SET_BITS(value32, (8 * (security_index)), 8, score_pcnt)
 
 /**
     best_rssi_threshold: Roamable AP RSSI equal or better than this threshold, full rssi score 100. Units in dBm.
@@ -16715,6 +16759,20 @@ typedef struct {
     A_UINT32 score_pcnt15_to_12;
 } wmi_roam_cnd_oce_wan_scoring;
 
+/**
+ *  Use macro WMI_ROAM_CND_GET/SET_SECURITY_SCORE_PERCENTAGE
+ *  to get and set the value respectively.
+ *  BITS 0-7   :- It contains scoring percentage of WPA security
+ *  BITS 8-15  :- It contains scoring percentage of WPA2 security
+ *  BITS 16-23 :- It contains scoring percentage of WPA3 security
+ *  BITS 24-31 :- reserved
+ *
+ *  The value of each score must be 0-100
+ */
+typedef struct {
+    A_UINT32 score_pcnt;
+} wmi_roam_cnd_security_scoring;
+
 typedef enum {
     WMI_VENDOR_ROAM_SCORE_ALGORITHM_ID_NONE = 0, /* Legacy roam score algorithm */
     WMI_VENDOR_ROAM_SCORE_ALGORITHM_ID_RSSI_CU_BASED = 1, /* Roam score algorithm based on RSSI and CU */
@@ -16813,6 +16871,9 @@ typedef struct {
      * Value 0 should be ignored
      */
     A_UINT32 btc_etp_factor;
+    /* Scoring for security mode */
+    A_INT32 security_weightage_pcnt;
+    wmi_roam_cnd_security_scoring security_scoring;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
@@ -17091,13 +17152,15 @@ typedef struct {
     A_UINT32 vdev_id;
 
 /*
- * Following this structure is the TLV:
+ * Following this structure are the TLVs:
  *     wmi_ap_profile ap_profile; <-- AP profile info
  *     wmi_roam_cnd_scoring_param roam_cnd_scoring_param
  *     wmi_roam_score_delta_param roam_score_delta_param_list[]
  *     wmi_roam_cnd_min_rssi_param roam_cnd_min_rssi_param_list[]
  *     wmi_roam_cnd_vendor_scoring_param roam_cnd_vendor_scoring_param[]
  *     wmi_owe_ap_profile owe_ap_profile[]
+ *     A_UINT32 authmode_list[] <-- List of authmode allowed for roaming.
+ *         Refer WMI_AUTH_ for authmode values.
  */
 } wmi_roam_ap_profile_fixed_param;
 
@@ -22932,6 +22995,8 @@ typedef struct {
     A_UINT32 nan_scid_len;
     /** Self NDI mac address */
     wmi_mac_addr self_ndi_mac_addr;
+    /** Number of bytes in TLV service_id */
+    A_UINT32 service_id_len;
     /**
      * TLV (tag length value) parameters follow the ndp_indication
      * structure. The TLV's are:
@@ -22939,6 +23004,8 @@ typedef struct {
      * A_UINT8 ndp_app_info[];
      * A_UINT8 nan_scid[];
      * wmi_ndp_transport_ip_param ndp_transport_ip_param;
+     * A_UINT8 service_id[service_id_len]; <- holds a single service ID of an
+     *     indeterminate number of bytes (most likely 6 bytes)
      */
 } wmi_ndp_indication_event_fixed_param_PROTOTYPE;
 
@@ -23466,6 +23533,15 @@ typedef struct {
 } wmi_req_stats_ext_cmd_fixed_param;
 
 typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_partner_link_stats */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 data_length; /* length of the stats for this vdev */
+    A_UINT32 offset; /* offset of the stats from partner_link_data for this vdev */
+} wmi_partner_link_stats;
+
+typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stats1_event_fix_param */
     A_UINT32 vdev_id; /** vdev ID */
     A_UINT32 data_len; /** length in byte of data[]. */
@@ -23473,6 +23549,18 @@ typedef struct {
      * from firmware to application/service where Host drv is pass through .
      * Following this structure is the TLV:
      *     A_UINT8 data[]; <-- length in byte given by field data_len.
+     */
+    /* This structure is used to send information of partner links.
+     * Following this structure is the TLV:
+     *     wmi_partner_link_stats partner_link_stats[];
+     */
+    /* This structure is used to send REQ binary blobs of stats of partner
+     * links from firmware to application/service where Host drv is pass
+     * through.
+     * Following this structure is the TLV partner_link_stats:
+     *     A_UINT8 partner_link_stats_data[]; <-- length and offset in byte
+     *                                            units given by TLV
+     *                                            wmi_partner_link_stats.
      */
 } wmi_stats_ext_event_fixed_param;
 
@@ -27758,6 +27846,8 @@ typedef struct {
     A_UINT32 peer_ps_valid;
     /* This field indicates the time since target boot-up in MilliSeconds. */
     A_UINT32 peer_ps_timestamp;
+    /* Indicates the vdev id for MLO case */
+    wmi_vdev_id_info vdev_id_info;
 } wmi_peer_sta_ps_statechange_event_fixed_param;
 
 /* WMI_PDEV_FIPS_EVENTID */
@@ -31597,7 +31687,8 @@ typedef struct {
 /* Definition of latency levels */
 typedef enum {
     WMI_WLM_LL_NORMAL = 0x0,
-    WMI_WLM_LL_MODERATE = 0x1,
+    /* DEPRECATED */ WMI_WLM_LL_MODERATE = 0x1,
+    WMI_WLM_LL_XR = 0x1,
     WMI_WLM_LL_LOW = 0x2,
     WMI_WLM_LL_ULTRA_LOW = 0x3,
 } WMI_WLM_LATENCY_LEVEL;
@@ -33369,6 +33460,7 @@ typedef enum {
     WMI_ROAM_CND_OCE_AP_TX_PWR_SCORING    = 0x00000800, /* FW considers OCE AP Tx power scoring */
     WMI_ROAM_CND_OCE_AP_SUBNET_ID_SCORING = 0x00001000, /* FW considers OCE AP subnet id scoring */
     WMI_ROAM_CND_SAE_PK_AP_SCORING        = 0x00002000, /* FW considers SAE-PK enabled AP scoring */
+    WMI_ROAM_CND_SECURITY_SCORING         = 0x00004000, /* FW considers security scoring */
 } WMI_ROAM_CND_SCORING_PARAMS;
 
 typedef struct {

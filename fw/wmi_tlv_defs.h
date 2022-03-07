@@ -1242,6 +1242,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_rtt_pasn_deauth_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_tx_send_params_ext,
     WMITLV_TAG_STRUC_wmi_mgmt_rx_params_ext,
+    WMITLV_TAG_STRUC_wmi_partner_link_stats,
 } WMITLV_TAG_ID;
 
 /*
@@ -3044,7 +3045,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_MCAST_GROUP_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_score_delta_param, roam_score_delta_param_list, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_cnd_min_rssi_param, roam_cnd_min_rssi_param_list, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_cnd_vendor_scoring_param, roam_cnd_vendor_scoring_param, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_owe_ap_profile, owe_ap_profile, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_owe_ap_profile, owe_ap_profile, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, authmode_list, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_AP_PROFILE);
 
@@ -5765,7 +5767,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_NDP_END_RSP_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ndp_cfg, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ndp_app_info, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ndp_scid, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_ndp_transport_ip_param, wmi_ndp_transport_ip_param, ndp_transport_ip_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_ndp_transport_ip_param, wmi_ndp_transport_ip_param, ndp_transport_ip_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, service_id, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NDP_INDICATION_EVENTID);
 
 /** NDP confirm event
@@ -5835,10 +5838,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DIAG_DATA_CONTAINER_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_estimated_linkspeed_event_fixed_param, wmi_peer_estimated_linkspeed_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ESTIMATED_LINKSPEED_EVENTID);
 
-/* NAN Response/Indication Event */
 #define WMITLV_TABLE_WMI_STATS_EXT_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_stats_ext_event_fixed_param, wmi_stats_ext_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_partner_link_stats, partner_link_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, partner_link_data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_STATS_EXT_EVENTID);
 
 #define WMITLV_TABLE_WMI_OFFLOAD_PROB_RESP_TX_STATUS_EVENTID(id,op,buf,len) \
