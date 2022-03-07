@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -61,21 +62,22 @@ bool dp_tx_is_special_frame(qdf_nbuf_t nbuf, uint32_t frame_mask)
 /**
  * dp_swlm_tcl_reset_session_data() -  Reset the TCL coalescing session data
  * @soc: DP soc handle
+ * @ring_id: TCL ring id
  *
  * Returns QDF_STATUS
  */
 static inline QDF_STATUS
-dp_swlm_tcl_reset_session_data(struct dp_soc *soc)
+dp_swlm_tcl_reset_session_data(struct dp_soc *soc, uint8_t ring_id)
 {
-	struct dp_swlm *swlm = &soc->swlm;
+	struct dp_swlm_params *params = &soc->swlm.params;
 
-	swlm->params.tcl.coalesce_end_time = qdf_get_log_timestamp_usecs() +
-		     swlm->params.tcl.time_flush_thresh;
-	swlm->params.tcl.bytes_coalesced = 0;
-	swlm->params.tcl.bytes_flush_thresh =
-				swlm->params.tcl.sampling_session_tx_bytes *
-				swlm->params.tcl.tx_thresh_multiplier;
-	qdf_timer_sync_cancel(&swlm->params.tcl.flush_timer);
+	params->tcl[ring_id].coalesce_end_time = qdf_get_log_timestamp_usecs() +
+		params->time_flush_thresh;
+	params->tcl[ring_id].bytes_coalesced = 0;
+	params->tcl[ring_id].bytes_flush_thresh =
+				params->tcl[ring_id].sampling_session_tx_bytes *
+				params->tx_thresh_multiplier;
+	qdf_timer_sync_cancel(&params->tcl[ring_id].flush_timer);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -97,17 +99,17 @@ dp_swlm_tcl_pre_check(struct dp_soc *soc,
 				FRAME_MASK_IPV4_EAPOL | FRAME_MASK_IPV6_DHCP;
 
 	if (tcl_data->tid > DP_VO_TID) {
-		DP_STATS_INC(swlm, tcl.tid_fail, 1);
+		DP_STATS_INC(swlm, tcl[tcl_data->ring_id].tid_fail, 1);
 		goto fail;
 	}
 
 	if (dp_tx_is_special_frame(tcl_data->nbuf, frame_mask)) {
-		DP_STATS_INC(swlm, tcl.sp_frames, 1);
+		DP_STATS_INC(swlm, tcl[tcl_data->ring_id].sp_frames, 1);
 		goto fail;
 	}
 
 	if (tcl_data->num_ll_connections) {
-		DP_STATS_INC(swlm, tcl.ll_connection, 1);
+		DP_STATS_INC(swlm, tcl[tcl_data->ring_id].ll_connection, 1);
 		goto fail;
 	}
 

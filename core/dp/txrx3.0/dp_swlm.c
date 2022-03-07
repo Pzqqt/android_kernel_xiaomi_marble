@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +27,7 @@
  *				      and check if it passes the pre-set
  *				      threshold.
  * @soc: Datapath global soc handle
+ * @rid: TCL ring id
  *
  * This function calculates the current TX and RX throughput and checks
  * if it is above the pre-set thresholds by SWLM.
@@ -33,31 +35,31 @@
  * Returns: true, if the TX/RX throughput is passing the threshold
  *	    false, otherwise
  */
-static bool dp_swlm_is_tput_thresh_reached(struct dp_soc *soc)
+static bool dp_swlm_is_tput_thresh_reached(struct dp_soc *soc, uint8_t rid)
 {
-	struct dp_swlm *swlm = &soc->swlm;
-	static int prev_rx_bytes, prev_tx_bytes;
+	struct dp_swlm_params *params = &soc->swlm.params;
 	int rx_delta, tx_delta, tx_packet_delta;
-	static int prev_tx_packets;
 	bool result = false;
 
-	tx_delta = soc->stats.tx.egress.bytes - prev_tx_bytes;
-	prev_tx_bytes = soc->stats.tx.egress.bytes;
-	if (tx_delta > swlm->params.tcl.tx_traffic_thresh) {
-		swlm->params.tcl.sampling_session_tx_bytes = tx_delta;
+	tx_delta = soc->stats.tx.egress[rid].bytes -
+			params->tcl[rid].prev_tx_bytes;
+	params->tcl[rid].prev_tx_bytes = soc->stats.tx.egress[rid].bytes;
+	if (tx_delta > params->tx_traffic_thresh) {
+		params->tcl[rid].sampling_session_tx_bytes = tx_delta;
 		result = true;
 	}
 
-	rx_delta = soc->stats.rx.ingress.bytes - prev_rx_bytes;
-	prev_rx_bytes = soc->stats.rx.ingress.bytes;
-	if (!result && rx_delta > swlm->params.tcl.rx_traffic_thresh) {
-		swlm->params.tcl.sampling_session_tx_bytes = tx_delta;
+	rx_delta = soc->stats.rx.ingress.bytes - params->tcl[rid].prev_rx_bytes;
+	params->tcl[rid].prev_rx_bytes = soc->stats.rx.ingress.bytes;
+	if (!result && rx_delta > params->rx_traffic_thresh) {
+		params->tcl[rid].sampling_session_tx_bytes = tx_delta;
 		result = true;
 	}
 
-	tx_packet_delta = soc->stats.tx.egress.num - prev_tx_packets;
-	prev_tx_packets = soc->stats.tx.egress.num;
-	if (tx_packet_delta < swlm->params.tcl.tx_pkt_thresh)
+	tx_packet_delta = soc->stats.tx.egress[rid].num -
+		params->tcl[rid].prev_tx_packets;
+	params->tcl[rid].prev_tx_packets = soc->stats.tx.egress[rid].num;
+	if (tx_packet_delta < params->tx_pkt_thresh)
 		result = false;
 
 	return result;
@@ -85,43 +87,43 @@ dp_swlm_can_tcl_wr_coalesce(struct dp_soc *soc,
 	u64 curr_time = qdf_get_log_timestamp_usecs();
 	int tput_level_pass, coalesce = 0;
 	struct dp_swlm *swlm = &soc->swlm;
-	static int tput_pass_cnt;
-	static u64 expire_time;
+	uint8_t rid = tcl_data->ring_id;
+	struct dp_swlm_params *params = &soc->swlm.params;
 
-	if (curr_time >= expire_time) {
-		expire_time = qdf_get_log_timestamp_usecs() +
-			      swlm->params.tcl.sampling_time;
-		tput_level_pass = dp_swlm_is_tput_thresh_reached(soc);
+	if (curr_time >= params->tcl[rid].expire_time) {
+		params->tcl[rid].expire_time = qdf_get_log_timestamp_usecs() +
+			      params->sampling_time;
+		tput_level_pass = dp_swlm_is_tput_thresh_reached(soc, rid);
 		if (tput_level_pass) {
-			tput_pass_cnt++;
+			params->tcl[rid].tput_pass_cnt++;
 		} else {
-			tput_pass_cnt = 0;
-			DP_STATS_INC(swlm, tcl.tput_criteria_fail, 1);
+			params->tcl[rid].tput_pass_cnt = 0;
+			DP_STATS_INC(swlm, tcl[rid].tput_criteria_fail, 1);
 			goto coalescing_fail;
 		}
 	}
 
-	swlm->params.tcl.bytes_coalesced += qdf_nbuf_len(tcl_data->nbuf);
+	params->tcl[rid].bytes_coalesced += tcl_data->pkt_len;
 
-	if (tput_pass_cnt > DP_SWLM_TCL_TPUT_PASS_THRESH) {
+	if (params->tcl[rid].tput_pass_cnt > DP_SWLM_TCL_TPUT_PASS_THRESH) {
 		coalesce = 1;
-		if (swlm->params.tcl.bytes_coalesced >
-		    swlm->params.tcl.bytes_flush_thresh) {
+		if (params->tcl[rid].bytes_coalesced >
+		    params->tcl[rid].bytes_flush_thresh) {
 			coalesce = 0;
-			DP_STATS_INC(swlm, tcl.bytes_thresh_reached, 1);
-		} else if (curr_time > swlm->params.tcl.coalesce_end_time) {
+			DP_STATS_INC(swlm, tcl[rid].bytes_thresh_reached, 1);
+		} else if (curr_time > params->tcl[rid].coalesce_end_time) {
 			coalesce = 0;
-			DP_STATS_INC(swlm, tcl.time_thresh_reached, 1);
+			DP_STATS_INC(swlm, tcl[rid].time_thresh_reached, 1);
 		}
 	}
 
 coalescing_fail:
 	if (!coalesce) {
-		dp_swlm_tcl_reset_session_data(soc);
+		dp_swlm_tcl_reset_session_data(soc, rid);
 		return 0;
 	}
 
-	qdf_timer_mod(&swlm->params.tcl.flush_timer, 1);
+	qdf_timer_mod(&params->tcl[rid].flush_timer, 1);
 
 	return 1;
 }
@@ -129,22 +131,31 @@ coalescing_fail:
 QDF_STATUS dp_print_swlm_stats(struct dp_soc *soc)
 {
 	struct dp_swlm *swlm = &soc->swlm;
+	int i;
 
-	dp_info("TCL Coalescing stats:");
-	dp_info("Num coalesce success: %d", swlm->stats.tcl.coalesce_success);
-	dp_info("Num coalesce fail: %d", swlm->stats.tcl.coalesce_fail);
-	dp_info("Timer flush success: %d", swlm->stats.tcl.timer_flush_success);
-	dp_info("Timer flush fail: %d", swlm->stats.tcl.timer_flush_fail);
-	dp_info("Coalesce fail (TID): %d", swlm->stats.tcl.tid_fail);
-	dp_info("Coalesce fail (special frame): %d", swlm->stats.tcl.sp_frames);
-	dp_info("Coalesce fail (Low latency connection): %d",
-		swlm->stats.tcl.ll_connection);
-	dp_info("Coalesce fail (bytes thresh crossed): %d",
-		swlm->stats.tcl.bytes_thresh_reached);
-	dp_info("Coalesce fail (time thresh crossed): %d",
-		swlm->stats.tcl.time_thresh_reached);
-	dp_info("Coalesce fail (TPUT sampling fail): %d",
-		swlm->stats.tcl.tput_criteria_fail);
+	for (i = 0; i < soc->num_tcl_data_rings; i++) {
+		dp_info("TCL: %u Coalescing stats:", i);
+		dp_info("Num coalesce success: %d",
+			swlm->stats.tcl[i].coalesce_success);
+		dp_info("Num coalesce fail: %d",
+			swlm->stats.tcl[i].coalesce_fail);
+		dp_info("Timer flush success: %d",
+			swlm->stats.tcl[i].timer_flush_success);
+		dp_info("Timer flush fail: %d",
+			swlm->stats.tcl[i].timer_flush_fail);
+		dp_info("Coalesce fail (TID): %d",
+			swlm->stats.tcl[i].tid_fail);
+		dp_info("Coalesce fail (special frame): %d",
+			swlm->stats.tcl[i].sp_frames);
+		dp_info("Coalesce fail (Low latency connection): %d",
+			swlm->stats.tcl[i].ll_connection);
+		dp_info("Coalesce fail (bytes thresh crossed): %d",
+			swlm->stats.tcl[i].bytes_thresh_reached);
+		dp_info("Coalesce fail (time thresh crossed): %d",
+			swlm->stats.tcl[i].time_thresh_reached);
+		dp_info("Coalesce fail (TPUT sampling fail): %d",
+			swlm->stats.tcl[i].tput_criteria_fail);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -161,10 +172,11 @@ static struct dp_swlm_ops dp_latency_mgr_ops = {
  */
 static void dp_swlm_tcl_flush_timer(void *arg)
 {
-	struct dp_soc *soc = arg;
+	struct dp_swlm_tcl_params *tcl = arg;
+	struct dp_soc *soc = tcl->soc;
 	struct dp_swlm *swlm = &soc->swlm;
 	hal_ring_handle_t hal_ring_hdl =
-				soc->tcl_data_ring[0].hal_srng;
+				soc->tcl_data_ring[tcl->ring_id].hal_srng;
 
 	if (hal_srng_try_access_start(soc->hal_soc, hal_ring_hdl) < 0)
 		goto fail;
@@ -177,14 +189,14 @@ static void dp_swlm_tcl_flush_timer(void *arg)
 		goto fail;
 	}
 
-	DP_STATS_INC(swlm, tcl.timer_flush_success, 1);
+	DP_STATS_INC(swlm, tcl[tcl->ring_id].timer_flush_success, 1);
 	hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
 	hif_pm_runtime_put(soc->hif_handle, RTPM_ID_DW_TX_HW_ENQUEUE);
 
 	return;
 
 fail:
-	DP_STATS_INC(swlm, tcl.timer_flush_fail, 1);
+	DP_STATS_INC(swlm, tcl[tcl->ring_id].timer_flush_fail, 1);
 
 	return;
 }
@@ -199,19 +211,25 @@ fail:
 static inline QDF_STATUS dp_soc_swlm_tcl_attach(struct dp_soc *soc)
 {
 	struct dp_swlm *swlm = &soc->swlm;
+	int i;
 
-	swlm->params.tcl.rx_traffic_thresh = DP_SWLM_TCL_RX_TRAFFIC_THRESH;
-	swlm->params.tcl.tx_traffic_thresh = DP_SWLM_TCL_TX_TRAFFIC_THRESH;
-	swlm->params.tcl.sampling_time = DP_SWLM_TCL_TRAFFIC_SAMPLING_TIME;
-	swlm->params.tcl.bytes_flush_thresh = 0;
-	swlm->params.tcl.time_flush_thresh = DP_SWLM_TCL_TIME_FLUSH_THRESH;
-	swlm->params.tcl.tx_thresh_multiplier =
-					DP_SWLM_TCL_TX_THRESH_MULTIPLIER;
-	swlm->params.tcl.tx_pkt_thresh = DP_SWLM_TCL_TX_PKT_THRESH;
+	swlm->params.rx_traffic_thresh = DP_SWLM_TCL_RX_TRAFFIC_THRESH;
+	swlm->params.tx_traffic_thresh = DP_SWLM_TCL_TX_TRAFFIC_THRESH;
+	swlm->params.sampling_time = DP_SWLM_TCL_TRAFFIC_SAMPLING_TIME;
+	swlm->params.time_flush_thresh = DP_SWLM_TCL_TIME_FLUSH_THRESH;
+	swlm->params.tx_thresh_multiplier = DP_SWLM_TCL_TX_THRESH_MULTIPLIER;
+	swlm->params.tx_pkt_thresh = DP_SWLM_TCL_TX_PKT_THRESH;
 
-	qdf_timer_init(soc->osdev, &swlm->params.tcl.flush_timer,
-		       dp_swlm_tcl_flush_timer, (void *)soc,
-		       QDF_TIMER_TYPE_WAKE_APPS);
+	for (i = 0; i < soc->num_tcl_data_rings; i++) {
+		swlm->params.tcl[i].soc = soc;
+		swlm->params.tcl[i].ring_id = i;
+		swlm->params.tcl[i].bytes_flush_thresh = 0;
+		qdf_timer_init(soc->osdev,
+			       &swlm->params.tcl[i].flush_timer,
+			       dp_swlm_tcl_flush_timer,
+			       (void *)&swlm->params.tcl[i],
+			       QDF_TIMER_TYPE_WAKE_APPS);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -219,16 +237,16 @@ static inline QDF_STATUS dp_soc_swlm_tcl_attach(struct dp_soc *soc)
 /**
  * dp_soc_swlm_tcl_detach() - detach the TCL resources for the software
  *			      latency manager.
- * @soc: Datapath global soc handle
+ * @swlm: SWLM data pointer
+ * @ring_id: TCL ring id
  *
  * Returns: QDF_STATUS
  */
-static inline QDF_STATUS dp_soc_swlm_tcl_detach(struct dp_soc *soc)
+static inline QDF_STATUS dp_soc_swlm_tcl_detach(struct dp_swlm *swlm,
+						uint8_t ring_id)
 {
-	struct dp_swlm *swlm = &soc->swlm;
-
-	qdf_timer_stop(&swlm->params.tcl.flush_timer);
-	qdf_timer_free(&swlm->params.tcl.flush_timer);
+	qdf_timer_stop(&swlm->params.tcl[ring_id].flush_timer);
+	qdf_timer_free(&swlm->params.tcl[ring_id].flush_timer);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -267,12 +285,15 @@ QDF_STATUS dp_soc_swlm_detach(struct dp_soc *soc)
 {
 	struct dp_swlm *swlm = &soc->swlm;
 	QDF_STATUS ret;
+	int i;
 
 	swlm->is_enabled = false;
 
-	ret = dp_soc_swlm_tcl_detach(soc);
-	if (QDF_IS_STATUS_ERROR(ret))
-		return ret;
+	for (i = 0; i < soc->num_tcl_data_rings; i++) {
+		ret = dp_soc_swlm_tcl_detach(swlm, i);
+		if (QDF_IS_STATUS_ERROR(ret))
+			return ret;
+	}
 
 	swlm->ops = NULL;
 
