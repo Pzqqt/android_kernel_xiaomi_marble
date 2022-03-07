@@ -3756,9 +3756,9 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		/*Route and filter rules will also be clean*/
 		IPADBG("Got IPA_IOC_CLEANUP\n");
 		retval = ipa3_reset_hdr(true);
-		memset(&nat_del, 0, sizeof(nat_del));
-		nat_del.table_index = 0;
-		retval = ipa3_nat_del_cmd(&nat_del);
+		IPA_ACTIVE_CLIENTS_INC_SPECIAL("SRAM");
+		retval = ipa3_nat_cleanup_cmd();
+		IPA_ACTIVE_CLIENTS_DEC_SPECIAL("SRAM");
 		if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_APQ)
 			retval = ipa3_clean_mhip_dl_rule();
 		else
@@ -3769,6 +3769,11 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case IPA_IOC_QUERY_WLAN_CLIENT:
 		IPADBG("Got IPA_IOC_QUERY_WLAN_CLIENT\n");
 		retval = ipa3_resend_wlan_msg();
+		break;
+
+	case IPA_IOC_QUERY_CACHED_DRIVER_MSG:
+		IPADBG("Got IPA_IOC_QUERY_CACHED_DRIVER_MSG\n");
+		retval = ipa3_resend_driver_msg();
 		break;
 
 	case IPA_IOC_GSB_CONNECT:
@@ -9180,6 +9185,10 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	/* store wlan client-connect-msg-list */
 	INIT_LIST_HEAD(&ipa3_ctx->msg_wlan_client_list);
 	mutex_init(&ipa3_ctx->msg_wlan_client_lock);
+
+	/* store  ecm-connect-msg-list */
+	INIT_LIST_HEAD(&ipa3_ctx->msg_lan_list);
+	mutex_init(&ipa3_ctx->msg_lan_lock);
 
 	mutex_init(&ipa3_ctx->q6_proxy_clk_vote_mutex);
 	mutex_init(&ipa3_ctx->ipa_cne_evt_lock);
