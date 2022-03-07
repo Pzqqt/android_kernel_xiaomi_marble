@@ -493,7 +493,8 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_MLO_MGR_ID",
 					"WLAN_MBSS_ID",
 					"WLAN_MGMT_RX_REO_ID",
-					"WLAN_MGMT_RX_REO_SIM_ID"
+					"WLAN_MGMT_RX_REO_SIM_ID",
+					"WLAN_TWT_ID"
 					};
 
 	if (id >= WLAN_REF_ID_MAX)
