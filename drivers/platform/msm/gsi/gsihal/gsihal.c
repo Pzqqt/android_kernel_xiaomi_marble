@@ -66,6 +66,10 @@ bail_err_exit:
 void gsihal_destroy(void)
 {
 	GSIDBG("Entry\n");
+	if (!gsihal_ctx) {
+		GSIERR("gsihal_ctx not allocated.\n");
+		return;
+	}
 	kfree(gsihal_ctx);
 	gsihal_ctx = NULL;
 }

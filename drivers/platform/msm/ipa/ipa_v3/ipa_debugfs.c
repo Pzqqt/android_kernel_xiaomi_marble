@@ -1611,15 +1611,23 @@ static ssize_t ipa3_read_page_recycle_stats(struct file *file,
 			"COAL : Total number of packets replenished =%llu\n"
 			"COAL : Number of page recycled packets  =%llu\n"
 			"COAL : Number of tmp alloc packets  =%llu\n"
+			"COAL  : Number of times tasklet scheduled  =%llu\n"
 			"DEF  : Total number of packets replenished =%llu\n"
 			"DEF  : Number of page recycled packets =%llu\n"
-			"DEF  : Number of tmp alloc packets  =%llu\n",
+			"DEF  : Number of tmp alloc packets  =%llu\n"
+			"DEF  : Number of times tasklet scheduled  =%llu\n"
+			"COMMON  : Number of page recycled in tasklet  =%llu\n"
+			"COMMON  : Number of times free pages not found in tasklet =%llu\n",
 			ipa3_ctx->stats.page_recycle_stats[0].total_replenished,
 			ipa3_ctx->stats.page_recycle_stats[0].page_recycled,
 			ipa3_ctx->stats.page_recycle_stats[0].tmp_alloc,
+			ipa3_ctx->stats.num_sort_tasklet_sched[0],
 			ipa3_ctx->stats.page_recycle_stats[1].total_replenished,
 			ipa3_ctx->stats.page_recycle_stats[1].page_recycled,
-			ipa3_ctx->stats.page_recycle_stats[1].tmp_alloc);
+			ipa3_ctx->stats.page_recycle_stats[1].tmp_alloc,
+			ipa3_ctx->stats.num_sort_tasklet_sched[1],
+			ipa3_ctx->stats.page_recycle_cnt_in_tasklet,
+			ipa3_ctx->stats.num_of_times_wq_reschd);
 
 	cnt += nbytes;
 
@@ -3011,6 +3019,68 @@ static ssize_t ipa3_enable_ipc_low(struct file *file,
 	return count;
 }
 
+static ssize_t ipa3_read_ipa_max_napi_sort_page_thrshld(struct file *file,
+	char __user *buf, size_t count, loff_t *ppos) {
+
+	int nbytes;
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+				"page max napi without free page = %d\n",
+				ipa3_ctx->ipa_max_napi_sort_page_thrshld);
+	return simple_read_from_buffer(buf, count, ppos, dbg_buff, nbytes);
+
+}
+
+static ssize_t ipa3_write_ipa_max_napi_sort_page_thrshld(struct file *file,
+	const char __user *buf, size_t count, loff_t *ppos) {
+
+	int ret;
+	u8 ipa_max_napi_sort_page_thrshld = 0;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	ret = kstrtou8_from_user(buf, count, 0, &ipa_max_napi_sort_page_thrshld);
+	if(ret)
+		return ret;
+
+	ipa3_ctx->ipa_max_napi_sort_page_thrshld = ipa_max_napi_sort_page_thrshld;
+
+	IPADBG("napi cnt without prealloc pages = %d", ipa3_ctx->ipa_max_napi_sort_page_thrshld);
+
+	return count;
+}
+
+static ssize_t ipa3_read_page_wq_reschd_time(struct file *file,
+	char __user *buf, size_t count, loff_t *ppos) {
+
+	int nbytes;
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+				"Page WQ reschduule time = %d\n",
+				ipa3_ctx->page_wq_reschd_time);
+	return simple_read_from_buffer(buf, count, ppos, dbg_buff, nbytes);
+
+}
+
+static ssize_t ipa3_write_page_wq_reschd_time(struct file *file,
+	const char __user *buf, size_t count, loff_t *ppos) {
+
+	int ret;
+	u8 page_wq_reschd_time = 0;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	ret = kstrtou8_from_user(buf, count, 0, &page_wq_reschd_time);
+	if(ret)
+		return ret;
+
+	ipa3_ctx->page_wq_reschd_time = page_wq_reschd_time;
+
+	IPADBG("Updated page WQ reschedule time = %d", ipa3_ctx->page_wq_reschd_time);
+
+	return count;
+}
+
 static ssize_t ipa3_read_page_poll_threshold(struct file *file,
 	char __user *buf, size_t count, loff_t *ppos) {
 
@@ -3315,6 +3385,16 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 	}, {
 		"move_nat_table_to_ddr", IPA_WRITE_ONLY_MODE, NULL,{
 			.write = ipa3_write_nat_table_move,
+		}
+	}, {
+		"page_wq_reschd_time", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_page_wq_reschd_time,
+			.write = ipa3_write_page_wq_reschd_time,
+		}
+	}, {
+		"ipa_max_napi_sort_page_thrshld", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_ipa_max_napi_sort_page_thrshld,
+			.write = ipa3_write_ipa_max_napi_sort_page_thrshld,
 		}
 	},
 };

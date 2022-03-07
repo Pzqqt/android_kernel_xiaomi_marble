@@ -86,14 +86,16 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_9) {
 		gsi_evt_ring_props.intr = GSI_INTR_MSI;
 		/* 32 (for Tx) and 8 (for Rx) */
-		if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR))
+		if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR) ||
+			(dir == IPA_WDI3_TX2_DIR))
 			gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_32B;
 		else
 			gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_8B;
 	} else {
 		gsi_evt_ring_props.intr = GSI_INTR_IRQ;
 		/* 16 (for Tx) and 8 (for Rx) */
-		if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR))
+		if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR) ||
+			(dir == IPA_WDI3_TX2_DIR))
 			gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
 		else
 			gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_8B;
@@ -114,7 +116,16 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 				IPAERR("failed to get smmu mapping\n");
 				return -EFAULT;
 			}
-		} else {
+		} else if (dir == IPA_WDI3_TX2_DIR) {
+                        if (ipa_create_gsi_smmu_mapping(
+                                IPA_WDI_CE2_RING_RES,
+                                true, info->event_ring_base_pa,
+                                &info_smmu->event_ring_base, len,
+                                false, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                return -EFAULT;
+                        }
+                } else if (dir == IPA_WDI3_RX_DIR) {
 			if (ipa_create_gsi_smmu_mapping(
 				IPA_WDI_RX_COMP_RING_RES, true,
 				info->event_ring_base_pa,
@@ -123,7 +134,16 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 				IPAERR("failed to get smmu mapping\n");
 				return -EFAULT;
 			}
-		}
+		} else {
+			if (ipa_create_gsi_smmu_mapping(
+                                IPA_WDI_RX2_COMP_RING_RES, true,
+                                info->event_ring_base_pa,
+                                &info_smmu->event_ring_base, len,
+                                false, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                return -EFAULT;
+                        }
+                }
 		gsi_evt_ring_props.ring_len = len;
 		gsi_evt_ring_props.ring_base_addr = (u64)va;
 	}
@@ -148,7 +168,8 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 	/* setup channel ring */
 	memset(&gsi_channel_props, 0, sizeof(gsi_channel_props));
 	gsi_channel_props.prot = GSI_CHAN_PROT_WDI3;
-	if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR))
+	if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR) ||
+		(dir == IPA_WDI3_TX2_DIR))
 		gsi_channel_props.dir = GSI_CHAN_DIR_FROM_GSI;
 	else
 		gsi_channel_props.dir = GSI_CHAN_DIR_TO_GSI;
@@ -166,7 +187,8 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 	gsi_channel_props.evt_ring_hdl = ep->gsi_evt_ring_hdl;
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_9) {
 		/* 32 (for Tx) and 64 (for Rx) */
-		if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR))
+		if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR) ||
+			(dir == IPA_WDI3_TX2_DIR))
 			gsi_channel_props.re_size = GSI_CHAN_RE_SIZE_32B;
 		else
 			gsi_channel_props.re_size = GSI_CHAN_RE_SIZE_64B;
@@ -199,7 +221,17 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 				result = -EFAULT;
 				goto fail_get_gsi_ep_info;
 			}
-		} else {
+		} else if (dir == IPA_WDI3_TX2_DIR) {
+                        if (ipa_create_gsi_smmu_mapping(
+                                IPA_WDI_TX2_RING_RES,
+                                true, info->transfer_ring_base_pa,
+                                &info_smmu->transfer_ring_base, len,
+                                false, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                result = -EFAULT;
+                                goto fail_get_gsi_ep_info;
+                        }
+                } else if (dir == IPA_WDI3_RX_DIR) {
 			if (ipa_create_gsi_smmu_mapping(
 				IPA_WDI_RX_RING_RES, true,
 				info->transfer_ring_base_pa,
@@ -209,6 +241,16 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 				result = -EFAULT;
 				goto fail_get_gsi_ep_info;
 			}
+		} else {
+			if (ipa_create_gsi_smmu_mapping(
+                                IPA_WDI_RX2_RING_RES, true,
+                                info->transfer_ring_base_pa,
+                                &info_smmu->transfer_ring_base, len,
+                                false, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                result = -EFAULT;
+                                goto fail_get_gsi_ep_info;
+                        }
 		}
 		gsi_channel_props.ring_len = len;
 		gsi_channel_props.ring_base_addr = (u64)va;
@@ -269,7 +311,16 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 				result = -EFAULT;
 				goto fail_write_scratch;
 			}
-		} else {
+		} else if (dir == IPA_WDI3_TX2_DIR) {
+                        if (ipa_create_gsi_smmu_mapping(
+                                IPA_WDI_CE2_DB_RES,
+                                true, info_smmu->event_ring_doorbell_pa,
+                                NULL, 4, true, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                result = -EFAULT;
+                                goto fail_write_scratch;
+                        }
+                } else if (dir == IPA_WDI3_RX_DIR) {
 			if (ipa_create_gsi_smmu_mapping(
 				IPA_WDI_RX_COMP_RING_WP_RES,
 				true, info_smmu->event_ring_doorbell_pa,
@@ -278,6 +329,15 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 				result = -EFAULT;
 				goto fail_write_scratch;
 			}
+		} else {
+			if (ipa_create_gsi_smmu_mapping(
+                                IPA_WDI_RX2_COMP_RING_WP_RES,
+                                true, info_smmu->event_ring_doorbell_pa,
+                                NULL, 4, true, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                result = -EFAULT;
+                                goto fail_write_scratch;
+                        }
 		}
 		addr_low = (u32)va;
 		addr_high = (u32)((u64)va >> 32);
@@ -328,7 +388,7 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 	memset(&ch_scratch, 0, sizeof(ch_scratch));
 	ch_scratch.wdi3.update_rp_moderation_threshold =
 		UPDATE_RP_MODERATION_THRESHOLD;
-	if (dir == IPA_WDI3_RX_DIR) {
+	if ((dir == IPA_WDI3_RX_DIR) || (dir == IPA_WDI3_RX2_DIR)) {
 		if (!is_smmu_enabled)
 			ch_scratch.wdi3.rx_pkt_offset = info->pkt_offset;
 		else
@@ -380,7 +440,19 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 			ch_scratch.wdi3.wifi_rp_address_low = (u32)va;
 			ch_scratch.wdi3.wifi_rp_address_high =
 				(u32)((u64)va >> 32);
-		} else {
+		} else if (dir == IPA_WDI3_TX2_DIR) {
+                        if (ipa_create_gsi_smmu_mapping(
+                                IPA_WDI_TX2_DB_RES,
+                                true, info_smmu->transfer_ring_doorbell_pa,
+                                NULL, 4, true, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                result = -EFAULT;
+                                goto fail_write_scratch;
+                        }
+                        ch_scratch.wdi3.wifi_rp_address_low = (u32)va;
+                        ch_scratch.wdi3.wifi_rp_address_high =
+                                (u32)((u64)va >> 32);
+                } else if (dir == IPA_WDI3_RX_DIR){
 			if (ipa_create_gsi_smmu_mapping(IPA_WDI_RX_RING_RP_RES,
 				true, info_smmu->transfer_ring_doorbell_pa,
 				NULL, 4, true, &va)) {
@@ -391,6 +463,17 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 			ch_scratch.wdi3.wifi_rp_address_low = (u32)va;
 			ch_scratch.wdi3.wifi_rp_address_high =
 				(u32)((u64)va >> 32);
+		} else {
+			if (ipa_create_gsi_smmu_mapping(IPA_WDI_RX2_RING_RP_RES,
+                                true, info_smmu->transfer_ring_doorbell_pa,
+                                NULL, 4, true, &va)) {
+                                IPAERR("failed to get smmu mapping\n");
+                                result = -EFAULT;
+                                goto fail_write_scratch;
+                        }
+                        ch_scratch.wdi3.wifi_rp_address_low = (u32)va;
+                        ch_scratch.wdi3.wifi_rp_address_high =
+                                (u32)((u64)va >> 32);
 		}
 	}
 
@@ -471,6 +554,7 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 	u32 gsi_db_addr_low, gsi_db_addr_high;
 	void __iomem *db_addr;
 	u32 evt_ring_db_addr_low, evt_ring_db_addr_high, db_val = 0;
+	u8 rx_dir, tx_dir;
 
 	/* wdi3 only support over gsi */
 	if (ipa_get_wdi_version() != IPA_WDI_3) {
@@ -573,8 +657,11 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 	}
 
 	/* setup RX gsi channel */
+	rx_dir = (rx_client == IPA_CLIENT_WLAN2_PROD) ?
+			IPA_WDI3_RX_DIR : IPA_WDI3_RX2_DIR;
+
 	if (ipa3_setup_wdi3_gsi_channel(in->is_smmu_enabled,
-		&in->u_rx.rx, &in->u_rx.rx_smmu, IPA_WDI3_RX_DIR,
+		&in->u_rx.rx, &in->u_rx.rx_smmu, rx_dir,
 		ep_rx)) {
 		IPAERR("fail to setup wdi3 gsi rx channel\n");
 		result = -EFAULT;
@@ -624,8 +711,11 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 	}
 
 	/* setup TX gsi channel */
+	tx_dir = (tx_client == IPA_CLIENT_WLAN2_CONS) ?
+                        IPA_WDI3_TX_DIR : IPA_WDI3_TX2_DIR;
+
 	if (ipa3_setup_wdi3_gsi_channel(in->is_smmu_enabled,
-		&in->u_tx.tx, &in->u_tx.tx_smmu, IPA_WDI3_TX_DIR,
+		&in->u_tx.tx, &in->u_tx.tx_smmu, tx_dir,
 		ep_tx)) {
 		IPAERR("fail to setup wdi3 gsi tx channel\n");
 		result = -EFAULT;
@@ -781,6 +871,8 @@ int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 {
 	struct ipa3_ep_context *ep_tx, *ep_rx, *ep_tx1;
 	int result = 0;
+	enum ipa_client_type rx_client;
+	enum ipa_client_type tx_client;
 
 	/* wdi3 only support over gsi */
 	if (ipa_get_wdi_version() != IPA_WDI_3) {
@@ -802,7 +894,8 @@ int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 
 	ep_tx = &ipa3_ctx->ep[ipa_ep_idx_tx];
 	ep_rx = &ipa3_ctx->ep[ipa_ep_idx_rx];
-
+	rx_client = ipa3_get_client_mapping(ipa_ep_idx_rx);
+	tx_client = ipa3_get_client_mapping(ipa_ep_idx_tx);
 	IPA_ACTIVE_CLIENTS_INC_EP(ipa3_get_client_mapping(ipa_ep_idx_tx));
 	/* tear down tx1 pipe */
 	if (ipa_ep_idx_tx1 >= 0) {
@@ -844,7 +937,10 @@ int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 		IPAERR("failed to release gsi channel: %d\n", result);
 		goto exit;
 	}
-	ipa3_release_wdi3_gsi_smmu_mappings(IPA_WDI3_TX_DIR);
+	if (tx_client == IPA_CLIENT_WLAN2_CONS)
+		ipa3_release_wdi3_gsi_smmu_mappings(IPA_WDI3_TX_DIR);
+	else
+		ipa3_release_wdi3_gsi_smmu_mappings(IPA_WDI3_TX2_DIR);
 
 	memset(ep_tx, 0, sizeof(struct ipa3_ep_context));
 	IPADBG("tx client (ep: %d) disconnected\n", ipa_ep_idx_tx);
@@ -865,7 +961,10 @@ int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 		IPAERR("failed to release gsi channel: %d\n", result);
 		goto exit;
 	}
-	ipa3_release_wdi3_gsi_smmu_mappings(IPA_WDI3_RX_DIR);
+	if (rx_client == IPA_CLIENT_WLAN2_PROD)
+		ipa3_release_wdi3_gsi_smmu_mappings(IPA_WDI3_RX_DIR);
+	else
+		ipa3_release_wdi3_gsi_smmu_mappings(IPA_WDI3_RX2_DIR);
 
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5)
 		ipa3_uc_debug_stats_dealloc(IPA_HW_PROTOCOL_WDI3);

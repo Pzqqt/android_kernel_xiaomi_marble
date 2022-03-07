@@ -248,7 +248,8 @@ struct ipa_pkt_ctntx_s {
 	u64	ulso_mss                         : 16; /* Word 16 Bits 48-63 */
 	u64	maci_calculated_lsbs             : 64; /* Word 17 Bits 0-63 */
 	u64	maci_calculated_msbs             : 64; /* Word 18 Bits 0-63 */
-	u64	padding_bytes_cnt                : 16; /* Word 19 Bits 0-16 */
+	u64	padding_bytes_cnt                : 16; /* Word 19 Bits 0-15 */
+	u64	not_used8                        : 48; /* Word 19 Bits 16-63 */
 } __packed;
 
 #endif /* #if !defined(_IPA_PKT_CNTXT_H_) */

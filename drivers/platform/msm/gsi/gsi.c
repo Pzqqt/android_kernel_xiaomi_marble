@@ -1300,6 +1300,8 @@ EXPORT_SYMBOL(gsi_map_base);
 
 int gsi_unmap_base(void)
 {
+	gsihal_destroy();
+
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
 		return -GSI_STATUS_NODEV;
@@ -1835,7 +1837,6 @@ int gsi_deregister_device(unsigned long dev_hdl, bool force)
 		platform_msi_domain_free_irqs(gsi_ctx->dev);
 
 	devm_free_irq(gsi_ctx->dev, gsi_ctx->per.irq, gsi_ctx);
-	gsihal_destroy();
 	gsi_unmap_base();
 	memset(gsi_ctx, 0, sizeof(*gsi_ctx));
 
@@ -4459,17 +4460,19 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
 
+	spin_lock_irqsave(&gsi_ctx->slock, flags);
+
 	if (atomic_read(&ctx->poll_mode))
 		curr = GSI_CHAN_MODE_POLL;
 	else
 		curr = GSI_CHAN_MODE_CALLBACK;
 
 	if (mode == curr) {
-		GSIDBG("already in requested mode %u chan_hdl=%lu\n",
+		GSIERR("already in requested mode %u chan_hdl=%lu\n",
 				curr, chan_hdl);
+		spin_unlock_irqrestore(&gsi_ctx->slock, flags);
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
-	spin_lock_irqsave(&gsi_ctx->slock, flags);
 	if (curr == GSI_CHAN_MODE_CALLBACK &&
 			mode == GSI_CHAN_MODE_POLL) {
 		if (gsi_ctx->per.ver >= GSI_VER_3_0) {

@@ -1309,10 +1309,11 @@ void ipa_save_registers(void)
 		 * IPA_CTX_ID register space
 		 */
 		if (io->read == act_read) {
-			memcpy((void *)ipa_reg_save.pkt_ctntx,
-				   (const void *)
-				   (ipa3_ctx->reg_collection_base + ofst),
-				   sizeof(ipa_reg_save.pkt_ctntx));
+			for (i = 0; i < IPA_HW_PKT_CTNTX_MAX; i++) {
+				memcpy((void *)(&(ipa_reg_save.pkt_ctntx[i])),
+				   (void*)(ipa3_ctx->reg_collection_base + HWIO_IPA_CTX_ID_m_CTX_NUM_n_ADDR(i, 0)),
+					sizeof(ipa_reg_save.pkt_ctntx[0]));
+			}
 
 			for_cfg.value =
 				IPA_READ_SCALER_REG(IPA_RSRC_MNGR_DB_CFG);

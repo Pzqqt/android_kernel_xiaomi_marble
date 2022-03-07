@@ -108,6 +108,8 @@ enum {
 
 #define QMAP_HDR_LEN 8
 
+#define IPA_HOLB_TMR_DIS 0x0
+#define IPA_HOLB_TMR_EN 0x1
 /*
  * The transport descriptor size was changed to GSI_CHAN_RE_SIZE_16B, but
  * IPA users still use sps_iovec size as FIFO element size.
@@ -131,6 +133,8 @@ enum {
 
 #define NTN3_CLIENTS_NUM 2
 
+#define IPA_MAX_NAPI_SORT_PAGE_THRSHLD 3
+#define IPA_MAX_PAGE_WQ_RESCHED_TIME 2
 
 #define IPA_WDI2_OVER_GSI() (ipa3_ctx->ipa_wdi2_over_gsi \
 		&& (ipa_get_wdi_version() == IPA_WDI_2))
@@ -294,19 +298,30 @@ enum {
 	NUM_SMEM_SUBSYSTEMS,
 };
 
-#define IPA_WDI_RX_RING_RES			0
-#define IPA_WDI_RX_RING_RP_RES		1
-#define IPA_WDI_RX_COMP_RING_RES	2
-#define IPA_WDI_RX_COMP_RING_WP_RES	3
-#define IPA_WDI_TX_RING_RES			4
-#define IPA_WDI_CE_RING_RES			5
-#define IPA_WDI_CE_DB_RES			6
-#define IPA_WDI_TX_DB_RES			7
-#define IPA_WDI_TX1_RING_RES		8
-#define IPA_WDI_CE1_RING_RES		9
-#define IPA_WDI_CE1_DB_RES			10
-#define IPA_WDI_TX1_DB_RES			11
-#define IPA_WDI_MAX_RES				12
+#define IPA_WDI_RX_RING_RES            0
+#define IPA_WDI_RX_RING_RP_RES         1
+#define IPA_WDI_RX_COMP_RING_RES       2
+#define IPA_WDI_RX_COMP_RING_WP_RES    3
+#define IPA_WDI_RX2_RING_RES           4
+#define IPA_WDI_RX2_RING_RP_RES        5
+#define IPA_WDI_RX2_COMP_RING_RES      6
+#define IPA_WDI_RX2_COMP_RING_WP_RES   7
+#define IPA_WDI_TX_RING_RES            8
+#define IPA_WDI_CE_RING_RES            9
+#define IPA_WDI_CE_DB_RES              10
+#define IPA_WDI_TX_DB_RES              11
+#define IPA_WDI_TX1_RING_RES           12
+#define IPA_WDI_CE1_RING_RES           13
+#define IPA_WDI_CE1_DB_RES             14
+#define IPA_WDI_TX1_DB_RES             15
+#define IPA_WDI_TX2_RING_RES           16
+#define IPA_WDI_CE2_RING_RES           17
+#define IPA_WDI_CE2_DB_RES             18
+#define IPA_WDI_TX2_DB_RES             19
+#define IPA_WDI_MAX_RES                20
+
+#define IPA_WDI3_TX2_DIR 4
+#define IPA_WDI3_RX2_DIR 5
 
 /* use QMAP header reserved bit to identify tethered traffic */
 #define IPA_QMAP_TETH_BIT (1 << 30)
@@ -1199,6 +1214,10 @@ struct ipa3_sys_context {
 	bool ext_ioctl_v2;
 	bool common_buff_pool;
 	struct ipa3_sys_context *common_sys;
+	struct tasklet_struct tasklet_find_freepage;
+	atomic_t page_avilable;
+	struct delayed_work freepage_work;
+	u32 napi_sort_page_thrshld_cnt;
 
 	/* ordering is important - mutable fields go above */
 	struct ipa3_ep_context *ep;
@@ -1212,6 +1231,9 @@ struct ipa3_sys_context {
 	struct workqueue_struct *repl_wq;
 	struct ipa3_status_stats *status_stat;
 	u32 pm_hdl;
+	struct workqueue_struct *freepage_wq;
+	unsigned int napi_sch_cnt;
+	unsigned int napi_comp_cnt;
 	/* ordering is important - other immutable fields go below */
 };
 
@@ -1562,6 +1584,9 @@ struct ipa3_stats {
 	atomic_t num_buff_above_thresh_for_coal_pipe_notified;
 	atomic_t num_buff_below_thresh_for_def_pipe_notified;
 	atomic_t num_buff_below_thresh_for_coal_pipe_notified;
+	u64 num_sort_tasklet_sched[3];
+	u64 num_of_times_wq_reschd;
+	u64 page_recycle_cnt_in_tasklet;
 };
 
 /* offset for each stats */
@@ -2474,6 +2499,8 @@ struct ipa3_context {
 	int ipa_pil_load;
 	phys_addr_t per_stats_smem_pa;
 	void *per_stats_smem_va;
+	u32 ipa_max_napi_sort_page_thrshld;
+	u32 page_wq_reschd_time;
 };
 
 struct ipa3_plat_drv_res {
