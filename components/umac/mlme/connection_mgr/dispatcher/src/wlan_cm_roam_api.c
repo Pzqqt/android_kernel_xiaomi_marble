@@ -2780,6 +2780,7 @@ cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
 /**
  * cm_roam_stats_print_trigger_info  - Roam trigger related details
  * @data:    Pointer to the roam trigger data
+ * @scan_data: Roam scan data pointer
  * @vdev_id: Vdev ID
  *
  * Prints the vdev, roam trigger reason, time of the day at which roaming
@@ -2789,6 +2790,7 @@ cm_roam_stats_get_trigger_detail_str(struct wmi_roam_trigger_info *ptr,
  */
 static void
 cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
+				 struct wmi_roam_scan_data *scan_data,
 				 uint8_t vdev_id, bool is_full_scan)
 {
 	char *buf;
@@ -2802,7 +2804,7 @@ cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
 	mlme_get_converted_timestamp(data->timestamp, time);
 
 	/* Update roam trigger info to userspace */
-	cm_roam_trigger_info_event(data, vdev_id, is_full_scan);
+	cm_roam_trigger_info_event(data, scan_data, vdev_id, is_full_scan);
 
 	mlme_nofl_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
@@ -3177,9 +3179,9 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 				stats_info->scan[i].type;
 
 			cm_roam_stats_print_trigger_info(
-						&stats_info->trigger[i],
-						stats_info->vdev_id,
-						is_full_scan);
+					&stats_info->trigger[i],
+					&stats_info->scan[i],
+					stats_info->vdev_id, is_full_scan);
 		       status = wlan_cm_update_roam_states(psoc,
 					stats_info->vdev_id,
 					stats_info->trigger[i].trigger_reason,

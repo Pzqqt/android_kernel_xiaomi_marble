@@ -36,19 +36,21 @@
  * @scan: roam scan data
  * @vdev_id: vdev id
  *
- * Return: void
+ * Return: None
  */
 void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id);
 
 /**
  * cm_roam_trigger_info_event() - send trigger info to userspace
  * @data: roam trigger data
+ * @scan_data: Roam scan data
  * @vdev_id: vdev id
  * @is_full_scan: is full scan or partial scan
  *
- * Return: void
+ * Return: None
  */
 void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+				struct wmi_roam_scan_data *scan_data,
 				uint8_t vdev_id, bool is_full_scan);
 
 /**
@@ -79,8 +81,9 @@ cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 }
 
 static inline void
-cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data, uint8_t vdev_id,
-			   bool is_full_scan)
+cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+			   struct wmi_roam_scan_data *scan_data,
+			   uint8_t vdev_id, bool is_full_scan)
 {
 }
 

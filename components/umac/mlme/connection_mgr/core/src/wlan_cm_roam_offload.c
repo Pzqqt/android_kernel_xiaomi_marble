@@ -5049,7 +5049,7 @@ void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 
 	log_record->vdev_id = vdev_id;
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = scan->ap->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)scan->ap->timestamp * 1000;
 	log_record->log_subtype = WLAN_ROAM_SCAN_DONE;
 
 	qdf_copy_macaddr(&log_record->bssid, &ap->bssid);
@@ -5073,9 +5073,11 @@ void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 }
 
 void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+				struct wmi_roam_scan_data *scan_data,
 				uint8_t vdev_id, bool is_full_scan)
 {
 	struct wlan_log_record *log_record = NULL;
+	uint8_t i;
 
 	log_record = qdf_mem_malloc(sizeof(*log_record));
 	if (!log_record)
@@ -5084,14 +5086,39 @@ void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
 	log_record->vdev_id = vdev_id;
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
 	log_record->log_subtype = WLAN_ROAM_SCAN_START;
-
 	log_record->roam_trig.trigger_reason  = data->trigger_reason;
 	log_record->roam_trig.trigger_sub_reason = data->trigger_sub_reason;
-	log_record->roam_trig.current_rssi = (-1) * data->current_rssi;
-	log_record->roam_trig.cu_load = data->cu_trig_data.cu_load;
-	log_record->roam_trig.rssi_threshold = (-1) * data->rssi_trig_data.threshold;
+
+	log_record->roam_trig.current_rssi = 0;
+	log_record->roam_trig.cu_load = 0;
+
+	/*
+	 * Get the current AP rssi & CU load from the
+	 * wmi_roam_ap_info tlv in roam scan results
+	 */
+	if (scan_data->present) {
+		for (i = 0; i < scan_data->num_ap; i++) {
+			if (i >= MAX_ROAM_CANDIDATE_AP)
+				break;
+
+			if (scan_data->ap[i].type ==
+			    WLAN_ROAM_SCAN_CURRENT_AP) {
+				log_record->roam_trig.current_rssi =
+					(-1) * scan_data->ap[i].rssi;
+				log_record->roam_trig.cu_load =
+						scan_data->ap[i].cu_load;
+				break;
+			}
+		}
+	}
+
+	if (data->trigger_reason == ROAM_TRIGGER_REASON_PERIODIC ||
+	    data->trigger_reason == ROAM_TRIGGER_REASON_LOW_RSSI)
+		log_record->roam_trig.rssi_threshold =
+			(-1) * data->rssi_trig_data.threshold;
+
 	log_record->roam_trig.is_full_scan = is_full_scan;
-	log_record->fw_timestamp_us = data->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)data->timestamp * 1000;
 
 	wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
@@ -5107,7 +5134,7 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 		return;
 
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = ap->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)ap->timestamp * 1000;
 
 	log_record->ap.is_current_ap = (ap->type == 1);
 	if (log_record->ap.is_current_ap)
@@ -5149,7 +5176,7 @@ void cm_roam_result_info_event(struct wmi_roam_result *res,
 		log_record->roam_result.roam_fail_reason = res->fail_reason;
 	} else {
 		log_record->log_subtype = WLAN_ROAM_RESULT;
-		log_record->fw_timestamp_us = res->timestamp * 1000;
+		log_record->fw_timestamp_us = (uint64_t)res->timestamp * 1000;
 		log_record->roam_result.roam_fail_reason = res->fail_reason;
 		log_record->roam_result.is_roam_successful = (res->status == 0);
 		for (i = 0; i < scan_data->num_ap; i++) {
@@ -5450,7 +5477,7 @@ cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 
 	log_record->log_subtype = WLAN_BTM_QUERY;
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)btm_data->timestamp * 1000;
 	log_record->vdev_id = vdev_id;
 	log_record->btm_info.token = btm_data->btm_query_token;
 	log_record->btm_info.reason = btm_data->btm_query_reason;
@@ -5478,7 +5505,7 @@ cm_roam_wtc_btm_event(struct wmi_roam_trigger_info *trigger_info,
 	log_record->log_subtype = WLAN_ROAM_WTC;
 
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = trigger_info->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)trigger_info->timestamp * 1000;
 	log_record->vdev_id = vdev_id;
 	if (is_wtc) {
 		log_record->btm_info.reason = wtc_data->vsie_trigger_reason;
@@ -5520,7 +5547,8 @@ cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
 
 		log_record->log_subtype = WLAN_BTM_RESP;
 		log_record->timestamp_us = qdf_get_time_of_the_day_us();
-		log_record->fw_timestamp_us = trigger_info->timestamp * 1000;
+		log_record->fw_timestamp_us =
+			(uint64_t)trigger_info->timestamp * 1000;
 		log_record->vdev_id = vdev_id;
 
 		log_record->btm_info.token =
@@ -5561,7 +5589,7 @@ cm_roam_btm_candidate_event(struct wmi_btm_req_candidate_info *btm_data,
 
 	log_record->log_subtype = WLAN_BTM_REQ_CANDI;
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)btm_data->timestamp * 1000;
 	log_record->vdev_id = vdev_id;
 	log_record->btm_cand.preference = btm_data->preference;
 	log_record->btm_cand.bssid = btm_data->candidate_bssid;
@@ -5587,7 +5615,7 @@ cm_roam_btm_req_event(struct wmi_roam_btm_trigger_data *btm_data,
 
 	log_record->log_subtype = WLAN_BTM_REQ;
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = btm_data->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)btm_data->timestamp * 1000;
 	log_record->vdev_id = vdev_id;
 
 	log_record->btm_info.token = btm_data->token;
@@ -5624,7 +5652,7 @@ cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id)
 		return QDF_STATUS_E_NOMEM;
 
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
-	log_record->fw_timestamp_us = frame_data->timestamp * 1000;
+	log_record->fw_timestamp_us = (uint64_t)frame_data->timestamp * 1000;
 	log_record->vdev_id = vdev_id;
 
 	log_record->pkt_info.seq_num = frame_data->seq_num;
