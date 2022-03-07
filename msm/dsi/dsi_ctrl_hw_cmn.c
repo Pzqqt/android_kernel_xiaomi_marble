@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -1438,6 +1439,9 @@ void dsi_ctrl_hw_cmn_enable_error_interrupts(struct dsi_ctrl_hw *ctrl,
 		int_ctrl |= BIT(25);
 	else
 		int_ctrl &= ~BIT(25);
+
+	/* Do not clear interrupt status */
+	int_ctrl &= 0xAAEEAAFE;
 
 	if (errors & DSI_RDBK_SINGLE_ECC_ERR)
 		int_mask0 &= ~BIT(0);

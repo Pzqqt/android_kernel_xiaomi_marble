@@ -1098,6 +1098,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 	int rc = 0, cnt = 0, i = 0;
 	bool state = false, transfer = false;
 	struct dsi_panel_cmd_set *set;
+	struct sde_connector *c_conn;
 
 	if (!dsi_display || !cmd_buf) {
 		DSI_ERR("[DSI] invalid params\n");
@@ -1125,6 +1126,22 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 	if (rc || !state) {
 		DSI_ERR("[DSI] Invalid host state %d rc %d\n",
 				state, rc);
+		rc = -EPERM;
+		goto end;
+	}
+
+	c_conn = to_sde_connector(connector);
+
+	/*
+	 * Commands with DMA schedulig enabled, if triggered after the schedule line of last
+	 * frame will not get transferred as the controller won't be able to see the hsync of
+	 * the schedule line after the timing engine is disabled. Avoid command transfers from
+	 * debugfs during display power off sequence.
+	 */
+
+	if (c_conn->last_panel_power_mode == SDE_MODE_DPMS_OFF) {
+		SDE_EVT32(SDE_EVTLOG_ERROR, c_conn->last_panel_power_mode);
+		pr_warn_ratelimited("Command xfer attempted during display power off seq\n");
 		rc = -EPERM;
 		goto end;
 	}
@@ -7049,6 +7066,17 @@ int dsi_display_get_modes(struct dsi_display *display,
 			DSI_ERR("[%s] failed to get mode idx %d from panel\n",
 				   display->name, mode_idx);
 			goto error;
+		}
+
+		/*
+		 * Update the host_config.dst_format for compressed RGB101010 pixel format.
+		 */
+		if (display->panel->host_config.dst_format == DSI_PIXEL_FORMAT_RGB101010 &&
+			display_mode.timing.dsc_enabled) {
+			display->panel->host_config.dst_format = DSI_PIXEL_FORMAT_RGB888;
+			DSI_DEBUG("updated dst_format from %d to %d\n",
+				DSI_PIXEL_FORMAT_RGB101010,
+				display->panel->host_config.dst_format);
 		}
 
 		if (display->cmdline_timing == display_mode.mode_idx) {

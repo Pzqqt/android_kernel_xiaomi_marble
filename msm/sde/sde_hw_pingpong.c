@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -522,6 +523,7 @@ struct sde_hw_pingpong *sde_hw_pingpong_init(enum sde_pingpong idx,
 
 	c->idx = idx;
 	c->caps = cfg;
+	c->dcwb_idx = cfg->dcwb_id;
 	if (test_bit(SDE_PINGPONG_MERGE_3D, &cfg->features)) {
 		c->merge_3d = _sde_pp_merge_3d_init(cfg->merge_3d_id, addr, m);
 			if (IS_ERR(c->merge_3d)) {
