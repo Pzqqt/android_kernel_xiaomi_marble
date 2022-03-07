@@ -1054,13 +1054,15 @@ osif_twt_notify_complete_cb(struct wlan_objmgr_psoc *psoc,
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	if (!osif_priv) {
 		osif_err("osif_priv is null");
-		return QDF_STATUS_E_INVAL;
+		status = QDF_STATUS_E_INVAL;
+		goto end;
 	}
 
 	wdev = osif_priv->wdev;
 	if (!wdev) {
 		osif_err("wireless dev is null");
-		return QDF_STATUS_E_INVAL;
+		status = QDF_STATUS_E_INVAL;
+		goto end;
 	}
 
 	data_len = NLA_HDRLEN;
@@ -1072,7 +1074,8 @@ osif_twt_notify_complete_cb(struct wlan_objmgr_psoc *psoc,
 				GFP_KERNEL);
 	if (!twt_vendor_event) {
 		osif_err("Notify skb alloc failed");
-		return QDF_STATUS_E_INVAL;
+		status = QDF_STATUS_E_INVAL;
+		goto end;
 	}
 
 	osif_debug("twt Notify vdev_id %d", event->vdev_id);
@@ -1081,11 +1084,16 @@ osif_twt_notify_complete_cb(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		osif_err("Failed to pack nl notify event");
 		wlan_cfg80211_vendor_free_skb(twt_vendor_event);
-		return QDF_STATUS_E_INVAL;
+		status = QDF_STATUS_E_INVAL;
+		goto end;
 	}
 
 	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
-	return QDF_STATUS_SUCCESS;
+	status = QDF_STATUS_SUCCESS;
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
+	return status;
 }
 
 /**
