@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2022, The Linux Foundation. All rights reserved.
  */
 
 #include <media/v4l2_vidc_extensions.h>
@@ -57,6 +57,7 @@ static const u32 msm_vdec_subscribe_for_psc_vp9[] = {
 
 static const u32 msm_vdec_input_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
+	HFI_PROP_SUBFRAME_INPUT,
 };
 
 static const u32 msm_vdec_output_subscribe_for_properties[] = {
@@ -792,10 +793,6 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 		return rc;
 
 	rc = msm_vidc_set_session_priority(inst, PRIORITY);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_set_seq_change_at_sync_frame(inst);
 	if (rc)
 		return rc;
 
@@ -2172,10 +2169,6 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
 		msm_vidc_allow_dcvs(inst);
 		msm_vidc_power_data_reset(inst);
-
-		rc = msm_vidc_set_seq_change_at_sync_frame(inst);
-		if (rc)
-			return rc;
 
 		/* allocate and queue extra dpb buffers */
 		rc = msm_vdec_alloc_and_queue_additional_dpb_buffers(inst);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2022, The Linux Foundation. All rights reserved.
  */
 
 #include "msm_vidc_control.h"
@@ -868,14 +868,6 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 		i_vpr_e(inst, "%s: setting %s failed\n",
 			__func__, ctrl->name);
 		goto exit;
-	}
-
-	if (ctrl->id == V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST) {
-		if (ctrl->val == V4L2_MPEG_MSM_VIDC_ENABLE) {
-			rc = msm_vidc_set_seq_change_at_sync_frame(inst);
-			if (rc)
-				return rc;
-		}
 	}
 
 exit:
@@ -3780,26 +3772,6 @@ int msm_vidc_set_pipe(void *instance,
 	pipe = inst->capabilities->cap[PIPE].value;
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 			&pipe, sizeof(u32), __func__);
-	if (rc)
-		return rc;
-
-	return rc;
-}
-
-int msm_vidc_set_seq_change_at_sync_frame(void *instance)
-{
-	int rc = 0;
-	u32 payload;
-	struct msm_vidc_inst* inst = (struct msm_vidc_inst*)instance;
-
-	if (!inst || !inst->capabilities) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	payload = inst->capabilities->cap[LOWLATENCY_MODE].value;
-	rc = msm_vidc_packetize_control(inst, LOWLATENCY_MODE, HFI_PAYLOAD_U32,
-		&payload, sizeof(u32), __func__);
 	if (rc)
 		return rc;
 
