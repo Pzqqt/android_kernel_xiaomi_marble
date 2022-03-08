@@ -295,6 +295,9 @@ void cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx)
 	disconnect_req->req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	disconnect_req->req.source = CM_INTERNAL_DISCONNECT;
 
+	if (wlan_vdev_mlme_is_mlo_vdev(cm_ctx->vdev))
+		mlo_internal_disconnect_links(cm_ctx->vdev);
+
 	status = cm_add_disconnect_req_to_list(cm_ctx, disconnect_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "failed to add disconnect req",

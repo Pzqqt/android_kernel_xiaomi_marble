@@ -42,6 +42,18 @@
 #define MAX_PWR_FCC_CHAN_13 2
 #define CHAN_144_CENT_FREQ 5720
 
+static inline bool
+reg_nol_and_history_not_set(struct regulatory_channel *chan)
+{
+	return ((!chan->nol_chan) && (!chan->nol_history));
+}
+
+bool reg_is_chan_disabled_and_not_nol(struct regulatory_channel *chan)
+{
+	return (!reg_is_state_allowed(chan->state) &&
+		(chan->chan_flags & REGULATORY_CHAN_DISABLED) &&
+		reg_nol_and_history_not_set(chan));
+}
 #ifdef CONFIG_BAND_6GHZ
 static void reg_fill_psd_info(enum channel_enum chan_enum,
 			      struct cur_reg_rule *reg_rule,
@@ -1579,6 +1591,11 @@ reg_modify_chan_list_for_avoid_chan_ext(struct wlan_regulatory_pdev_priv_obj
 	if (!psoc)
 		return;
 
+	if (!reg_check_coex_unsafe_chan_reg_disable(psoc)) {
+		reg_debug("Don't disable reg channels for Coex unsafe channels");
+		return;
+	}
+
 	psoc_priv_obj = reg_get_psoc_obj(psoc);
 	if (!psoc_priv_obj)
 		return;
@@ -2576,6 +2593,22 @@ QDF_STATUS reg_process_master_chan_list_ext(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_REG_CLIENT
+const char *reg_get_power_string(enum reg_6g_ap_type power_type)
+{
+	switch (power_type) {
+	case REG_INDOOR_AP:
+		return "LP";
+	case REG_STANDARD_POWER_AP:
+		return "SP";
+	case REG_VERY_LOW_POWER_AP:
+		return "VLP";
+	default:
+		return "INVALID";
+	}
+}
+#endif
 
 QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
 					  enum reg_6g_ap_type ap_pwr_type,

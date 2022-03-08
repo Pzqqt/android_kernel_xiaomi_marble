@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -691,8 +691,387 @@ struct hal_rx_frm_type_info {
 struct hal_rx_frm_type_info {};
 #endif
 
+struct hal_mon_usig_cmn {
+	uint32_t phy_version : 3,
+		 bw : 3,
+		 ul_dl : 1,
+		 bss_color : 6,
+		 txop : 7,
+		 disregard : 5,
+		 validate_0 : 1,
+		 reserved : 6;
+};
+
+struct hal_mon_usig_tb {
+	uint32_t ppdu_type_comp_mode : 2,
+		 validate_1 : 1,
+		 spatial_reuse_1 : 4,
+		 spatial_reuse_2 : 4,
+		 disregard_1 : 5,
+		 crc : 4,
+		 tail : 6,
+		 reserved : 5,
+		 rx_integrity_check_passed : 1;
+};
+
+struct hal_mon_usig_mu {
+	uint32_t ppdu_type_comp_mode : 2,
+		 validate_1 : 1,
+		 punc_ch_info : 5,
+		 validate_2 : 1,
+		 eht_sig_mcs : 2,
+		 num_eht_sig_sym : 5,
+		 crc : 4,
+		 tail : 6,
+		 reserved : 5,
+		 rx_integrity_check_passed : 1;
+};
+
+/**
+ * union hal_mon_usig_non_cmn: Version dependent USIG fields
+ * @tb: trigger based frame USIG header
+ * @mu: MU frame USIG header
+ */
+union hal_mon_usig_non_cmn {
+	struct hal_mon_usig_tb tb;
+	struct hal_mon_usig_mu mu;
+};
+
+/**
+ * struct hal_mon_usig_hdr: U-SIG header for EHT (and subsequent) frames
+ * @usig_1: USIG common header fields
+ * @usig_2: USIG version dependent fields
+ */
+struct hal_mon_usig_hdr {
+	struct hal_mon_usig_cmn usig_1;
+	union hal_mon_usig_non_cmn usig_2;
+};
+
+#define HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_MASK	0x0000000300000000
+#define HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_LSB	32
+
+#define HAL_RX_MON_USIG_GET_PPDU_TYPE_N_COMP_MODE(usig_tlv_ptr)	\
+		((*((uint64_t *)(usig_tlv_ptr)) & \
+		 HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_MASK) >> \
+		 HAL_RX_MON_USIG_PPDU_TYPE_N_COMP_MODE_LSB)
+
+#define HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_MASK	0x8000000000000000
+#define HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_LSB	63
+
+#define HAL_RX_MON_USIG_GET_RX_INTEGRITY_CHECK_PASSED(usig_tlv_ptr)	\
+		((*((uint64_t *)(usig_tlv_ptr)) & \
+		 HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_MASK) >> \
+		 HAL_RX_MON_USIG_RX_INTEGRITY_CHECK_PASSED_LSB)
+
+/**
+ * enum hal_eht_bw: Reception bandwidth
+ * @HAL_EHT_BW_20: 20Mhz
+ * @HAL_EHT_BW_40: 40Mhz
+ * @HAL_EHT_BW_80: 80Mhz
+ * @HAL_EHT_BW_160: 160Mhz
+ * @HAL_EHT_BW_320_1: 320_1 band
+ * @HAL_EHT_BW_320_2: 320_2 band
+ */
+enum hal_eht_bw {
+	HAL_EHT_BW_20 = 0,
+	HAL_EHT_BW_40,
+	HAL_EHT_BW_80,
+	HAL_EHT_BW_160,
+	HAL_EHT_BW_320_1,
+	HAL_EHT_BW_320_2,
+};
+
+struct hal_eht_sig_mu_mimo_user_info {
+	uint32_t sta_id : 11,
+		 mcs : 4,
+		 coding : 1,
+		 spatial_coding : 6,
+		 crc : 4;
+};
+
+struct hal_eht_sig_non_mu_mimo_user_info {
+	uint32_t sta_id : 11,
+		 mcs : 4,
+		 validate : 1,
+		 nss : 4,
+		 beamformed : 1,
+		 coding : 1,
+		 crc : 4;
+};
+
+/**
+ * union hal_eht_sig_user_field: User field in EHTSIG
+ * @mu_mimo_usr: MU-MIMO user field information in EHTSIG
+ * @non_mu_mimo_usr: Non MU-MIMO user field information in EHTSIG
+ */
+union hal_eht_sig_user_field {
+	struct hal_eht_sig_mu_mimo_user_info mu_mimo_usr;
+	struct hal_eht_sig_non_mu_mimo_user_info non_mu_mimo_usr;
+};
+
+struct hal_eht_sig_ofdma_cmn_eb1 {
+	uint64_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 ldpc_extra_sym : 1,
+		 pre_fec_pad_factor : 2,
+		 pe_disambiguity : 1,
+		 disregard : 4,
+		 ru_allocation1_1 : 9,
+		 ru_allocation1_2 : 9,
+		 crc : 4;
+};
+
+struct hal_eht_sig_ofdma_cmn_eb2 {
+	uint64_t ru_allocation2_1 : 9,
+		 ru_allocation2_2 : 9,
+		 ru_allocation2_3 : 9,
+		 ru_allocation2_4 : 9,
+		 ru_allocation2_5 : 9,
+		 ru_allocation2_6 : 9,
+		 crc : 4;
+};
+
+struct hal_eht_sig_cc_usig_overflow {
+	uint32_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 ldpc_extra_sym : 1,
+		 pre_fec_pad_factor : 2,
+		 pe_disambiguity : 1,
+		 disregard : 4;
+};
+
+struct hal_eht_sig_non_ofdma_cmn_eb {
+	uint32_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 ldpc_extra_sym : 1,
+		 pre_fec_pad_factor : 2,
+		 pe_disambiguity : 1,
+		 disregard : 4,
+		 num_users : 3;
+	union hal_eht_sig_user_field user_field;
+};
+
+struct hal_eht_sig_ndp_cmn_eb {
+	uint32_t spatial_reuse : 4,
+		 gi_ltf : 2,
+		 num_ltf_sym : 3,
+		 nss : 4,
+		 beamformed : 1,
+		 disregard : 2,
+		 crc : 4;
+};
+
+/* Different allowed RU in 11BE */
+#define HAL_EHT_RU_26		0ULL
+#define HAL_EHT_RU_52		1ULL
+#define HAL_EHT_RU_78		2ULL
+#define HAL_EHT_RU_106		3ULL
+#define HAL_EHT_RU_132		4ULL
+#define HAL_EHT_RU_242		5ULL
+#define HAL_EHT_RU_484		6ULL
+#define HAL_EHT_RU_726		7ULL
+#define HAL_EHT_RU_996		8ULL
+#define HAL_EHT_RU_996x2	9ULL
+#define HAL_EHT_RU_996x3	10ULL
+#define HAL_EHT_RU_996x4	11ULL
+#define HAL_EHT_RU_NONE		15ULL
+#define HAL_EHT_RU_INVALID	31ULL
+/*
+ * MRUs spanning above 80Mhz
+ * HAL_EHT_RU_996_484 = HAL_EHT_RU_484 + HAL_EHT_RU_996 + 4 (reserved)
+ */
+#define HAL_EHT_RU_996_484	18ULL
+#define HAL_EHT_RU_996x2_484	28ULL
+#define HAL_EHT_RU_996x3_484	40ULL
+#define HAL_EHT_RU_996_484_242	23ULL
+
+/**
+ * enum ieee80211_eht_ru_size: RU type id in EHTSIG radiotap header
+ * @IEEE80211_EHT_RU_26: RU26
+ * @IEEE80211_EHT_RU_52: RU52
+ * @IEEE80211_EHT_RU_106: RU106
+ * @IEEE80211_EHT_RU_242: RU242
+ * @IEEE80211_EHT_RU_484: RU484
+ * @IEEE80211_EHT_RU_996: RU996
+ * @IEEE80211_EHT_RU_996x2: RU996x2
+ * @IEEE80211_EHT_RU_996x4: RU996x4
+ * @IEEE80211_EHT_RU_52_26: RU52+RU26
+ * @IEEE80211_EHT_RU_106_26: RU106+RU26
+ * @IEEE80211_EHT_RU_484_242: RU484+RU242
+ * @IEEE80211_EHT_RU_996_484: RU996+RU484
+ * @IEEE80211_EHT_RU_996_484_242: RU996+RU484+RU242
+ * @IEEE80211_EHT_RU_996x2_484: RU996x2 + RU484
+ * @IEEE80211_EHT_RU_996x3: RU996x3
+ * @IEEE80211_EHT_RU_996x3_484: RU996x3 + RU484
+ * @IEEE80211_EHT_RU_INVALID: Invalid/Max RU
+ */
+enum ieee80211_eht_ru_size {
+	IEEE80211_EHT_RU_26,
+	IEEE80211_EHT_RU_52,
+	IEEE80211_EHT_RU_106,
+	IEEE80211_EHT_RU_242,
+	IEEE80211_EHT_RU_484,
+	IEEE80211_EHT_RU_996,
+	IEEE80211_EHT_RU_996x2,
+	IEEE80211_EHT_RU_996x4,
+	IEEE80211_EHT_RU_52_26,
+	IEEE80211_EHT_RU_106_26,
+	IEEE80211_EHT_RU_484_242,
+	IEEE80211_EHT_RU_996_484,
+	IEEE80211_EHT_RU_996_484_242,
+	IEEE80211_EHT_RU_996x2_484,
+	IEEE80211_EHT_RU_996x3,
+	IEEE80211_EHT_RU_996x3_484,
+	IEEE80211_EHT_RU_INVALID,
+};
+
+#define NUM_RU_BITS_PER80	16
+#define NUM_RU_BITS_PER20	4
+
+/* Different per_80Mhz band in 320Mhz bandwidth */
+#define HAL_80_0	0
+#define HAL_80_1	1
+#define HAL_80_2	2
+#define HAL_80_3	3
+
+#define HAL_RU_SHIFT(num_80mhz_band, ru_index_per_80)	\
+		((NUM_RU_BITS_PER80 * (num_80mhz_band)) +	\
+		 (NUM_RU_BITS_PER20 * (ru_index_per_80)))
+
+/* MRU-996+484 */
+#define HAL_EHT_RU_996_484_0	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_0, 1)) |	\
+				 (HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_1, 0)))
+#define HAL_EHT_RU_996_484_1	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_1, 0)))
+#define HAL_EHT_RU_996_484_2	((HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 1)))
+#define HAL_EHT_RU_996_484_3	((HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 0)))
+#define HAL_EHT_RU_996_484_4	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 1)) |	\
+				 (HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996_484_5	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996_484_6	((HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_3, 1)))
+#define HAL_EHT_RU_996_484_7	((HAL_EHT_RU_996 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_3, 0)))
+
+/* MRU-996x2+484 */
+#define HAL_EHT_RU_996x2_484_0	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_0, 1)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)))
+#define HAL_EHT_RU_996x2_484_1	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)))
+#define HAL_EHT_RU_996x2_484_2	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 1)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)))
+#define HAL_EHT_RU_996x2_484_3	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)))
+#define HAL_EHT_RU_996x2_484_4	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 1)))
+#define HAL_EHT_RU_996x2_484_5	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 0)))
+#define HAL_EHT_RU_996x2_484_6	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 1)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x2_484_7	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x2_484_8	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 1)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x2_484_9	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x2_484_10	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_3, 1)))
+#define HAL_EHT_RU_996x2_484_11	((HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x2 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_3, 0)))
+
+/* MRU-996x3+484 */
+#define HAL_EHT_RU_996x3_484_0	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_0, 1)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x3_484_1	((HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x3_484_2	((HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 1)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x3_484_3	((HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x3_484_4	((HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 1)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x3_484_5	((HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_3, 0)))
+#define HAL_EHT_RU_996x3_484_6	((HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_3, 1)))
+#define HAL_EHT_RU_996x3_484_7	((HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_0, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_1, 0)) |	\
+				 (HAL_EHT_RU_996x3 << HAL_RU_SHIFT(HAL_80_2, 0)) |	\
+				 (HAL_EHT_RU_484 << HAL_RU_SHIFT(HAL_80_3, 0)))
+
+/* EHT Reception Type */
+#define HAL_RX_TYPE_MU_MIMO		1
+#define HAL_RX_TYPE_MU_OFDMA		2
+#define HAL_RX_TYPE_MU_OFMDA_MIMO	3
+
+#define HAL_RX_MON_MAX_AGGR_SIZE	128
+
+/**
+ * struct hal_rx_tlv_aggr_info - Data structure to hold
+ *		metadata for aggregatng repeated TLVs
+ * @in_progress: Flag to indicate if TLV aggregation is in progress
+ * @cur_len: Total length of currently aggregated TLV
+ * @tlv_tag: TLV tag which is currently being aggregated
+ * @buf: Buffer containing aggregated TLV data
+ */
+struct hal_rx_tlv_aggr_info {
+	uint8_t in_progress;
+	uint16_t cur_len;
+	uint32_t tlv_tag;
+	uint8_t buf[HAL_RX_MON_MAX_AGGR_SIZE];
+};
+
+/* struct hal_rx_u_sig_info - Certain fields from U-SIG header which are used
+ *		for other header field parsing.
+ * @ul_dl: UL or DL
+ * @bw: EHT BW
+ * @ppdu_type_comp_mode: PPDU TYPE
+ * @eht_sig_mcs: EHT SIG MCS
+ * @num_eht_sig_sym: Number of EHT SIG symbols
+ */
+struct hal_rx_u_sig_info {
+	uint32_t ul_dl : 1,
+		 bw : 3,
+		 ppdu_type_comp_mode : 2,
+		 eht_sig_mcs : 2,
+		 num_eht_sig_sym : 5;
+};
+
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
+	struct hal_rx_u_sig_info u_sig_info;
 	struct mon_rx_status rx_status;
 	struct mon_rx_user_status rx_user_status[HAL_MAX_UL_MU_USERS];
 	struct mon_rx_info rx_info;
@@ -730,6 +1109,10 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_cfr_info cfr_info;
 	/* per frame type counts */
 	struct hal_rx_frm_type_info frm_type_info;
+	/* TLV aggregation metadata context */
+	struct hal_rx_tlv_aggr_info tlv_aggr;
+	/* EHT SIG user info */
+	uint32_t eht_sig_user_info;
 };
 
 static inline uint32_t

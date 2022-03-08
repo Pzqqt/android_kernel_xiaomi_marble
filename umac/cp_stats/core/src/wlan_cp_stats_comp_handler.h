@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,6 +48,28 @@ QDF_STATUS wlan_cp_stats_comp_obj_config(
 		enum wlan_cp_stats_comp_id comp_id,
 		void *cmn_obj,
 		void *comp_priv_obj);
+
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+/**
+ * wlan_cp_stats_twt_get_session_evt_handler() - twt get sessions evt handler
+ * @psoc: pointer to psoc object
+ * @twt_params: twt params
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS
+wlan_cp_stats_twt_get_session_evt_handler(
+				struct wlan_objmgr_psoc *psoc,
+				struct twt_session_stats_info *twt_params);
+#else
+static inline QDF_STATUS
+wlan_cp_stats_twt_get_session_evt_handler(
+				struct wlan_objmgr_psoc *psoc,
+				struct twt_session_stats_info *twt_params)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_COMP_HANDLER_H__ */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,6 +71,27 @@ scm_update_6ghz_channel_list(struct scan_start_request *req,
  */
 bool
 scm_is_6ghz_scan_optimization_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * scm_add_all_valid_6g_channels() - Add all valid 6g channels to scan request
+ * @vdev: vdev on which scan request is issued
+ * @req: Scan start request
+ * @num_scan_ch: Total number of scan channels
+ *
+ * If colocated 6ghz scan flag present in host scan request or at least one 6G
+ * channel is present in the host scan request, then this API
+ * fills all remaining (other than channel(s) resent in host scan req) valid
+ * 6 GHz channel(s) to scan requests channel list and set the flag
+ * FLAG_SCAN_ONLY_IF_RNR_FOUND for each of those added channels.
+ * By this driver allows Firmware to scan 6G channels based on RNR IEs only.
+ *
+ * Return: None
+ */
+void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
+				   struct chan_list *chan_list,
+				   uint8_t *num_scan_ch,
+				   bool is_colocated_6ghz);
+
 #else
 static inline void
 scm_update_6ghz_channel_list(struct scan_start_request *req,
@@ -81,6 +103,13 @@ static inline bool
 scm_is_6ghz_scan_optimization_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
+}
+
+static inline void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
+						 struct chan_list *chan_list,
+						 uint8_t *num_scan_ch,
+						 bool is_colocated_6ghz)
+{
 }
 #endif
 

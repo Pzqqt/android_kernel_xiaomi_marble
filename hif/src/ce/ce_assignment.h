@@ -1357,7 +1357,7 @@ static struct CE_attr host_ce_config_wlan_qca6490[] = {
 	/* target->host WMI */
 	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  3520, 64, NULL,},
 	/* host->target WMI */
-	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 3520, 0, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ CE4_COMP_HTT_HTC, 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_QCA6490, 256, 0, NULL,},
@@ -1386,7 +1386,7 @@ static struct CE_pipe_config target_ce_config_wlan_qca6490[] = {
 	/* target->host WMI  + HTC control */
 	{ /* CE2 */ 2, PIPEDIR_IN,  32, 3520, CE_ATTR_FLAGS, 0,},
 	/* host->target WMI */
-	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 3520, CE_ATTR_FLAGS, 0,},
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
@@ -1413,9 +1413,9 @@ static struct CE_attr host_ce_config_wlan_qca6750[] = {
 	/* target->host HTT + HTC control */
 	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
 	/* target->host WMI */
-	{ /* CE2 */ CE_ATTR_FLAGS | CE_ATTR_HI_TASKLET, 0, 0,  2048, 32, NULL,},
+	{ /* CE2 */ CE_ATTR_FLAGS | CE_ATTR_HI_TASKLET, 0, 0,  3520, 32, NULL,},
 	/* host->target WMI */
-	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 3520, 0, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
@@ -1443,9 +1443,9 @@ static struct CE_pipe_config target_ce_config_wlan_qca6750[] = {
 	/* target->host HTT */
 	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host WMI  + HTC control */
-	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE2 */ 2, PIPEDIR_IN,  32, 3520, CE_ATTR_FLAGS, 0,},
 	/* host->target WMI */
-	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 3520, CE_ATTR_FLAGS, 0,},
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
@@ -1475,7 +1475,7 @@ static struct CE_attr host_ce_config_wlan_kiwi[] = {
 	/* target->host WMI */
 	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  3520, 64, NULL,},
 	/* host->target WMI */
-	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 3520, 0, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		256, 256, 0, NULL,},
@@ -1508,7 +1508,7 @@ static struct CE_pipe_config target_ce_config_wlan_kiwi[] = {
 	/* target->host WMI  + HTC control */
 	{ /* CE2 */ 2, PIPEDIR_IN,  32, 3520, CE_ATTR_FLAGS, 0,},
 	/* host->target WMI */
-	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 3520, CE_ATTR_FLAGS, 0,},
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1821,7 +1822,7 @@ void qdf_fill_wlan_connectivity_log(enum qdf_proto_type type,
 				    enum qdf_dp_tx_rx_status qdf_tx_status,
 				    uint8_t vdev_id, uint8_t *data)
 {
-	struct wlan_log_record log_buf;
+	struct wlan_log_record log_buf = {0};
 	uint8_t pkt_type;
 
 	log_buf.timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
@@ -1838,6 +1839,8 @@ void qdf_fill_wlan_connectivity_log(enum qdf_proto_type type,
 		} else if (pkt_type == EAPOL_PACKET_TYPE_KEY) {
 			log_buf.log_subtype = qdf_eapol_get_key_type(data,
 								     subtype);
+		} else {
+			return;
 		}
 	} else {
 		return;
@@ -3392,6 +3395,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_MBSS] = {"MBSS"},
 	[QDF_MODULE_ID_MON] = {"MONITOR"},
 	[QDF_MODULE_ID_AFC] = {"AFC"},
+	[QDF_MODULE_ID_TWT] = {"TWT"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 qdf_export_symbol(g_qdf_category_name);
@@ -3965,6 +3969,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_MBSS] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_MON] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_MGMT_RX_REO] = QDF_TRACE_LEVEL_ERROR,
+		[QDF_MODULE_ID_TWT] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 	};
 

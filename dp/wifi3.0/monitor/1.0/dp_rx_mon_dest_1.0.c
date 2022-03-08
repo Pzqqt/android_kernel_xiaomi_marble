@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1122,50 +1123,41 @@ dp_rx_pdev_mon_buffers_free(struct dp_pdev *pdev)
 	pdev->monitor_pdev->pdev_mon_init = 0;
 }
 
-static QDF_STATUS
-dp_rx_pdev_mon_cmn_buffers_alloc(struct dp_pdev *pdev, int mac_id)
+QDF_STATUS
+dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev)
 {
-	struct dp_soc *soc = pdev->soc;
-	uint8_t pdev_id = pdev->pdev_id;
+	int mac_id;
 	int mac_for_pdev;
-	bool delayed_replenish;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+	uint8_t pdev_id = pdev->pdev_id;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = pdev->soc->wlan_cfg_ctx;
 
-	delayed_replenish = soc_cfg_ctx->delayed_replenish_entries ? 1 : 0;
-	mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc, mac_id, pdev_id);
-	status = dp_rx_pdev_mon_status_buffers_alloc(pdev, mac_for_pdev);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		dp_err("dp_rx_pdev_mon_status_desc_pool_alloc() failed");
-		goto fail;
+	for (mac_id = 0; mac_id < soc_cfg_ctx->num_rxdma_status_rings_per_pdev;
+	     mac_id++) {
+		mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc, mac_id,
+							  pdev_id);
+		status = dp_rx_pdev_mon_status_buffers_alloc(pdev,
+							     mac_for_pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			dp_err("dp_rx_pdev_mon_status_desc_pool_alloc() failed");
+			goto mon_status_buf_fail;
+		}
 	}
 
-	status = dp_rx_pdev_mon_dest_buffers_alloc(pdev, mac_for_pdev);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto mon_stat_buf_dealloc;
+	for (mac_id = 0; mac_id < soc_cfg_ctx->num_rxdma_dst_rings_per_pdev;
+	     mac_id++) {
+		mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc, mac_id,
+							  pdev_id);
+		status = dp_rx_pdev_mon_dest_buffers_alloc(pdev, mac_for_pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			goto mon_stat_buf_dealloc;
+	}
 
 	return status;
 
 mon_stat_buf_dealloc:
 	dp_rx_pdev_mon_status_buffers_free(pdev, mac_for_pdev);
-fail:
-	return status;
-}
-
-QDF_STATUS
-dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev)
-{
-	int mac_id;
-	QDF_STATUS status;
-
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		status = dp_rx_pdev_mon_cmn_buffers_alloc(pdev, mac_id);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			dp_rx_mon_dest_err("%pK: %d failed\n",
-					   pdev->soc, mac_id);
-			return status;
-		}
-	}
+mon_status_buf_fail:
 	return status;
 }
 

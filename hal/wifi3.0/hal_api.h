@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,20 +129,7 @@ static inline void hal_reg_write_result_check(struct hal_soc *hal_soc,
 	}
 }
 
-#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
-    !defined(QCA_WIFI_KIWI)
-static inline void hal_lock_reg_access(struct hal_soc *soc,
-				       unsigned long *flags)
-{
-	qdf_spin_lock_irqsave(&soc->register_access_lock);
-}
-
-static inline void hal_unlock_reg_access(struct hal_soc *soc,
-					 unsigned long *flags)
-{
-	qdf_spin_unlock_irqrestore(&soc->register_access_lock);
-}
-#else
+#ifdef WINDOW_REG_PLD_LOCK_ENABLE
 static inline void hal_lock_reg_access(struct hal_soc *soc,
 				       unsigned long *flags)
 {
@@ -153,6 +140,18 @@ static inline void hal_unlock_reg_access(struct hal_soc *soc,
 					 unsigned long *flags)
 {
 	pld_unlock_reg_window(soc->qdf_dev->dev, flags);
+}
+#else
+static inline void hal_lock_reg_access(struct hal_soc *soc,
+				       unsigned long *flags)
+{
+	qdf_spin_lock_irqsave(&soc->register_access_lock);
+}
+
+static inline void hal_unlock_reg_access(struct hal_soc *soc,
+					 unsigned long *flags)
+{
+	qdf_spin_unlock_irqrestore(&soc->register_access_lock);
 }
 #endif
 

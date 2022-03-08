@@ -995,6 +995,14 @@ int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
 	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
 		return 0;
 
+	if ((qdf_atomic_read(&scn->dp_ep_vote_access) ==
+	     HIF_EP_VOTE_ACCESS_DISABLE) &&
+	    (qdf_atomic_read(&scn->ep_vote_access) ==
+	    HIF_EP_VOTE_ACCESS_DISABLE)) {
+		hif_info_high("EP access disabled in flight skip vote");
+		return 0;
+	}
+
 	start_time = curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	while (pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
 	       curr_time <= start_time + EP_WAKE_RESET_DELAY_TIMEOUT_MS) {

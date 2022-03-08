@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -32,6 +33,14 @@
 #include <wmi_unified_api.h>
 #include <wlan_osif_priv.h>
 #include <wlan_cp_stats_utils_api.h>
+#include <wlan_objmgr_peer_obj.h>
+#ifdef WLAN_FEATURE_MIB_STATS
+#include <wlan_cp_stats_mc_defs.h>
+#endif
+#include "cp_stats/core/src/wlan_cp_stats_defs.h"
+#include "cdp_txrx_cmn_struct.h"
+#include "cdp_txrx_ctrl.h"
+#include "cp_stats/core/src/wlan_cp_stats_comp_handler.h"
 
 #ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 
@@ -309,6 +318,156 @@ int target_if_infra_cp_stats_event_handler(ol_scn_t scn, uint8_t *data,
 }
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
+#if defined(WLAN_SUPPORT_INFRA_CTRL_PATH_STATS) && defined(WLAN_SUPPORT_TWT) && \
+	defined(WLAN_TWT_CONV_SUPPORTED)
+static int
+target_if_twt_session_params_event_handler(ol_scn_t scn,
+					   uint8_t *evt_buf,
+					   uint32_t evt_data_len)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_peer *peer_obj;
+	struct wmi_unified *wmi_hdl;
+	struct twt_session_stats_info twt_params;
+	struct twt_session_stats_event_param params = {0};
+	struct peer_cp_stats *peer_cp_stats;
+	uint32_t expected_len;
+	int i;
+	QDF_STATUS status;
+	uint32_t ev;
+	cdp_config_param_type val = {0};
+	ol_txrx_soc_handle soc_txrx_handle;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+	wmi_pdev_twt_session_stats_event_fixed_param stats_param;
+
+	TARGET_IF_ENTER();
+
+	if (!scn || !evt_buf) {
+		target_if_err("scn: 0x%pK, evt_buf: 0x%pK", scn, evt_buf);
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc object is null!");
+		return -EINVAL;
+	}
+
+	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
+	if (!soc_txrx_handle)
+		return -EINVAL;
+
+	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_hdl) {
+		target_if_err("wmi_handle is null!");
+		return -EINVAL;
+	}
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		target_if_err("No valid twt session stats rx ops");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_twt_session_stats_event(wmi_hdl, evt_buf, &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Could not extract twt session stats event");
+		return qdf_status_to_os_return(status);
+	}
+
+	if (params.num_sessions > TWT_PEER_MAX_SESSIONS) {
+		target_if_err("Number of twt sessions exceeded, num:%d max:%d",
+			      params.num_sessions, TWT_PEER_MAX_SESSIONS);
+		return -EINVAL;
+	}
+	expected_len = (sizeof(wmi_pdev_twt_session_stats_event_fixed_param) +
+			sizeof(stats_param.tlv_header) + (params.num_sessions *
+			sizeof(wmi_twt_session_stats_info)));
+
+	if (evt_data_len < expected_len) {
+		target_if_err("Got invalid len of data from FW %d expected %d",
+			      evt_data_len, expected_len);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < params.num_sessions; i++) {
+		status = wmi_extract_twt_session_stats_data(wmi_hdl, evt_buf,
+							    &params,
+							    &twt_params, i);
+
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("Unable to extract twt params for idx %d",
+				      i);
+			return -EINVAL;
+		}
+		peer_obj = wlan_objmgr_get_peer_by_mac(psoc,
+						twt_params.peer_mac.bytes,
+						WLAN_CP_STATS_ID);
+		if (!peer_obj) {
+			target_if_err("peer obj not found for "QDF_MAC_ADDR_FMT,
+				      QDF_MAC_ADDR_REF(twt_params.peer_mac.bytes));
+			continue;
+		}
+
+		ev = twt_params.event_type;
+		if (ev == HOST_TWT_SESSION_SETUP)
+			val.cdp_peer_param_in_twt = 1;
+		else if (ev == HOST_TWT_SESSION_TEARDOWN)
+			val.cdp_peer_param_in_twt = 0;
+
+		cdp_txrx_set_peer_param(soc_txrx_handle, twt_params.vdev_id,
+					twt_params.peer_mac.bytes,
+					CDP_CONFIG_IN_TWT, val);
+
+		peer_cp_stats = wlan_cp_stats_get_peer_stats_obj(peer_obj);
+		if (!peer_cp_stats) {
+			target_if_err("peer_cp_stats is null");
+			continue;
+		}
+
+		wlan_cp_stats_peer_obj_lock(peer_cp_stats);
+
+		rx_ops->cp_stats_rx_ops.twt_get_session_param_resp(psoc,
+								 &twt_params);
+
+		wlan_cp_stats_peer_obj_unlock(peer_cp_stats);
+		wlan_objmgr_peer_release_ref(peer_obj, WLAN_CP_STATS_ID);
+	}
+	return 0;
+}
+
+static QDF_STATUS
+target_if_cp_stats_register_twt_session_event(struct wmi_unified *wmi_handle)
+{
+	QDF_STATUS ret_val;
+
+	ret_val = wmi_unified_register_event_handler(wmi_handle,
+				wmi_twt_session_stats_event_id,
+				target_if_twt_session_params_event_handler,
+				WMI_RX_WORK_CTX);
+
+	return ret_val;
+}
+
+static void
+target_if_cp_stats_unregister_twt_session_event(struct wmi_unified *wmi_handle)
+{
+	wmi_unified_unregister_event_handler(wmi_handle,
+					     wmi_twt_session_stats_event_id);
+}
+#else
+static QDF_STATUS
+target_if_cp_stats_register_twt_session_event(struct wmi_unified *wmi_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+target_if_cp_stats_unregister_twt_session_event(struct wmi_unified *wmi_handle)
+{
+}
+#endif /*WLAN_SUPPORT_INFRA_CTRL_PATH_STATS && WLAN_SUPPORT_TWT && WLAN_TWT_CONV_SUPPORTED*/
+
 #ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 static QDF_STATUS
 target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
@@ -331,8 +490,16 @@ target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 			    wmi_pdev_cp_fwstats_eventid,
 			    target_if_infra_cp_stats_event_handler,
 			    WMI_RX_WORK_CTX);
-	if (QDF_IS_STATUS_ERROR(ret_val))
+	if (QDF_IS_STATUS_ERROR(ret_val)) {
 		cp_stats_err("Failed to register for pdev_cp_fwstats_event");
+		return ret_val;
+	}
+
+	ret_val = target_if_cp_stats_register_twt_session_event(wmi_handle);
+	if (QDF_IS_STATUS_ERROR(ret_val)) {
+		cp_stats_err("Failed to register twt session stats event");
+		return ret_val;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -355,6 +522,7 @@ target_if_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
 
 	wmi_unified_unregister_event_handler(wmi_handle,
 					     wmi_pdev_cp_fwstats_eventid);
+	target_if_cp_stats_unregister_twt_session_event(wmi_handle);
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -444,3 +612,4 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_cp_stats_unregister_legacy_event_handler;
 	return QDF_STATUS_SUCCESS;
 }
+

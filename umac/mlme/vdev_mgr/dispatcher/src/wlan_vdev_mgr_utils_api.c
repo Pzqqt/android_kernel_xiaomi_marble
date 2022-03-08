@@ -33,6 +33,10 @@
 #ifndef MOBILE_DFS_SUPPORT
 #include <wlan_dfs_utils_api.h>
 #endif /* MOBILE_DFS_SUPPORT */
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_utility.h>
+#include <wlan_mlo_mgr_sta.h>
+#endif
 
 static QDF_STATUS vdev_mgr_config_ratemask_update(
 				struct vdev_mlme_obj *mlme_obj,
@@ -807,3 +811,62 @@ wlan_utils_get_vdev_remaining_channel_switch_time(struct wlan_objmgr_vdev *vdev)
 	return (remaining_chan_switch_time > 0) ?
 		remaining_chan_switch_time : 0;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS wlan_util_vdev_mgr_quiet_offload(
+				struct wlan_objmgr_psoc *psoc,
+				struct vdev_sta_quiet_event *quiet_event)
+{
+	uint8_t vdev_id;
+	bool connected;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (qdf_is_macaddr_zero(&quiet_event->mld_mac) &&
+	    qdf_is_macaddr_zero(&quiet_event->link_mac)) {
+		mlme_err("mld_mac and link mac are invalid");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!qdf_is_macaddr_zero(&quiet_event->mld_mac)) {
+		connected = wlan_get_connected_vdev_by_mld_addr(
+				psoc, quiet_event->mld_mac.bytes, &vdev_id);
+		if (!connected) {
+			mlme_err("Can't find vdev with mld " QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(quiet_event->mld_mac.bytes));
+			return QDF_STATUS_E_INVAL;
+		}
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+				psoc, vdev_id, WLAN_MLME_OBJMGR_ID);
+		if (!vdev) {
+			mlme_err("Null vdev");
+			return QDF_STATUS_E_INVAL;
+		}
+		if (wlan_vdev_mlme_is_mlo_vdev(vdev))
+			mlo_sta_save_quiet_status(vdev->mlo_dev_ctx,
+						  quiet_event->link_id,
+						  quiet_event->quiet_status);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+	} else if (!qdf_is_macaddr_zero(&quiet_event->link_mac)) {
+		connected = wlan_get_connected_vdev_from_psoc_by_bssid(
+				psoc, quiet_event->link_mac.bytes, &vdev_id);
+		if (!connected) {
+			mlme_err("Can't find vdev with BSSID" QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(quiet_event->link_mac.bytes));
+			return QDF_STATUS_E_INVAL;
+		}
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+				psoc, vdev_id, WLAN_MLME_OBJMGR_ID);
+		if (!vdev) {
+			mlme_err("Null vdev");
+			return QDF_STATUS_E_INVAL;
+		}
+		if (wlan_vdev_mlme_is_mlo_vdev(vdev))
+			mlo_sta_save_quiet_status(vdev->mlo_dev_ctx,
+						  wlan_vdev_get_link_id(vdev),
+						  quiet_event->quiet_status);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_11BE_MLO */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +24,9 @@
 #include "wlan_cm_sm.h"
 #include "wlan_cm_main_api.h"
 #include "wlan_cm_roam.h"
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+#include "wlan_mlo_mgr_roam.h"
+#endif
 
 void cm_state_roaming_entry(void *ctx)
 {
@@ -448,6 +452,9 @@ bool cm_subst_roam_sync_event(void *ctx, uint16_t event,
 							     data_len, data);
 		break;
 	case WLAN_CM_SM_EV_ROAM_SYNC:
+#ifdef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+		mlo_cm_roam_sync_cb(cm_ctx->vdev, data, data_len);
+#endif
 		cm_fw_send_vdev_roam_event(cm_ctx, data_len, data);
 		break;
 	case WLAN_CM_SM_EV_ROAM_DONE:

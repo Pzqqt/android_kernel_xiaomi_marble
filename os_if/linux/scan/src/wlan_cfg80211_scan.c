@@ -52,6 +52,27 @@ const struct nla_policy cfg80211_scan_policy[
 	[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE] = {.type = NLA_U64},
 };
 
+/**
+ * wlan_cfg80211_is_colocated_6ghz_scan_supported() - Check whether colocated
+ * 6ghz scan flag present in scan request or not
+ * @scan_flag: Flags bitmap comming from kernel
+ *
+ * Return: True if colocated 6ghz scan flag present in scan req
+ */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+static bool
+wlan_cfg80211_is_colocated_6ghz_scan_supported(uint32_t scan_flag)
+{
+	return !!(scan_flag & NL80211_SCAN_FLAG_COLOCATED_6GHZ);
+}
+#else
+static inline bool
+wlan_cfg80211_is_colocated_6ghz_scan_supported(uint32_t scan_flag)
+{
+	return false;
+}
+#endif
+
 #if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 /**
@@ -430,6 +451,9 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 
 	req->networks_cnt = request->n_match_sets;
 	req->vdev_id = wlan_vdev_get_id(vdev);
+	req->vdev = vdev;
+	req->scan_policy_colocated_6ghz =
+		wlan_cfg80211_is_colocated_6ghz_scan_supported(request->flags);
 
 	if ((!req->networks_cnt) ||
 	    (req->networks_cnt > SCAN_PNO_MAX_SUPP_NETWORKS)) {
@@ -524,9 +548,15 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 		req->networks_list[i].bc_new_type = 0;    /*eBCAST_UNKNOWN */
 
 		/*Copying list of valid channel into request */
-		qdf_mem_copy(req->networks_list[i].channels, valid_ch,
-			num_chan * sizeof(uint32_t));
-		req->networks_list[i].channel_cnt = num_chan;
+		for (j = 0; j < num_chan; j++)
+			req->networks_list[i].pno_chan_list.chan[j].freq =
+								valid_ch[j];
+		req->networks_list[i].pno_chan_list.num_chan = num_chan;
+
+		if (ucfg_is_6ghz_pno_scan_optimization_supported(psoc))
+			ucfg_scan_pno_add_all_valid_6g_channels(vdev, req,
+								&num_chan);
+
 		req->networks_list[i].rssi_thresh =
 			request->match_sets[i].rssi_thold;
 	}
@@ -1315,27 +1345,6 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev,
 
 	return;
 }
-
-/**
- * wlan_cfg80211_is_colocated_6ghz_scan_supported() - Check whether colocated
- * 6ghz scan flag present in scan request or not
- * @scan_flag: Flags bitmap coming from kernel
- *
- * Return: True if colocated 6ghz scan flag present in scan req
- */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-static bool
-wlan_cfg80211_is_colocated_6ghz_scan_supported(uint32_t scan_flag)
-{
-	return !!(scan_flag & NL80211_SCAN_FLAG_COLOCATED_6GHZ);
-}
-#else
-static inline bool
-wlan_cfg80211_is_colocated_6ghz_scan_supported(uint32_t scan_flag)
-{
-	return false;
-}
-#endif
 
 /**
  * wlan_cfg80211_update_scan_policy_type_flags() - Set scan flags according to

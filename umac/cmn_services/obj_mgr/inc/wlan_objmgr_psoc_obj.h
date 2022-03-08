@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -154,6 +154,9 @@
 #define WLAN_SOC_EXT_EVENT_SUPPORTED      0x010000000
 	/* check 29th bit for p2p + p2p conc support by fw */
 #define WLAN_SOC_EXT_P2P_P2P_CONC_SUPPORT 0x20000000
+
+/* check 31st bit for per channel pno scan config flags support */
+#define WLAN_SOC_PNO_SCAN_CONFIG_PER_CHANNEL   0x40000000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */

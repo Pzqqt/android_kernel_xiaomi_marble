@@ -2674,7 +2674,7 @@ static void dp_interrupt_timer(void *arg)
 	}
 
 	start_time = qdf_get_log_timestamp();
-	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+	dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	while (yield == DP_TIMER_NO_YIELD) {
 		for (lmac_iter = 0; lmac_iter < max_mac_rings; lmac_iter++) {
@@ -4346,8 +4346,8 @@ static void dp_deinit_tx_pair_by_index(struct dp_soc *soc, int index)
 						&tcl_ring_num,
 						&wbm_ring_num);
 
-	if (tcl_ring_num == -1 || wbm_ring_num == -1) {
-		dp_err("incorrect tcl/wbm ring num for index %u", index);
+	if (tcl_ring_num == -1) {
+		dp_err("incorrect tcl ring num for index %u", index);
 		return;
 	}
 
@@ -4359,6 +4359,9 @@ static void dp_deinit_tx_pair_by_index(struct dp_soc *soc, int index)
 	dp_info("index %u tcl %u wbm %u", index, tcl_ring_num, wbm_ring_num);
 	dp_srng_deinit(soc, &soc->tcl_data_ring[index], TCL_DATA,
 		       tcl_ring_num);
+
+	if (wbm_ring_num == INVALID_WBM_RING_NUM)
+		return;
 
 	wlan_minidump_remove(soc->tx_comp_ring[index].base_vaddr_unaligned,
 			     soc->tx_comp_ring[index].alloc_size,
@@ -4394,8 +4397,8 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 						&tcl_ring_num,
 						&wbm_ring_num);
 
-	if (tcl_ring_num == -1 || wbm_ring_num == -1) {
-		dp_err("incorrect tcl/wbm ring num for index %u", index);
+	if (tcl_ring_num == -1) {
+		dp_err("incorrect tcl ring num for index %u", index);
 		goto fail1;
 	}
 
@@ -4411,20 +4414,24 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 			  WLAN_MD_DP_SRNG_TCL_DATA,
 			  "tcl_data_ring");
 
+	if (wbm_ring_num == INVALID_WBM_RING_NUM)
+		goto set_rbm;
+
 	if (dp_srng_init(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE,
 			 wbm_ring_num, 0)) {
 		dp_err("dp_srng_init failed for tx_comp_ring");
 		goto fail1;
 	}
 
-	bm_id = wlan_cfg_get_rbm_id_for_index(soc->wlan_cfg_ctx, tcl_ring_num);
-
-	soc->arch_ops.tx_implicit_rbm_set(soc, tcl_ring_num, bm_id);
 	wlan_minidump_log(soc->tx_comp_ring[index].base_vaddr_unaligned,
 			  soc->tx_comp_ring[index].alloc_size,
 			  soc->ctrl_psoc,
 			  WLAN_MD_DP_SRNG_TX_COMP,
 			  "tcl_comp_ring");
+set_rbm:
+	bm_id = wlan_cfg_get_rbm_id_for_index(soc->wlan_cfg_ctx, tcl_ring_num);
+
+	soc->arch_ops.tx_implicit_rbm_set(soc, tcl_ring_num, bm_id);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -4476,6 +4483,10 @@ static QDF_STATUS dp_alloc_tx_ring_pair_by_index(struct dp_soc *soc,
 	/* Enable cached TCL desc if NSS offload is disabled */
 	if (!wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx))
 		cached = WLAN_CFG_DST_RING_CACHED_DESC;
+
+	if (wlan_cfg_get_wbm_ring_num_for_index(soc->wlan_cfg_ctx, index) ==
+	    INVALID_WBM_RING_NUM)
+		return QDF_STATUS_SUCCESS;
 
 	if (dp_srng_alloc(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE,
 			  tx_comp_ring_size, cached)) {
@@ -5728,7 +5739,6 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 
 		if (pdev) {
 			int mac_id;
-			bool dbs_enable = 0;
 			int max_mac_rings =
 				 wlan_cfg_get_num_mac_rings
 				(pdev->wlan_cfg_ctx);
@@ -5745,29 +5755,9 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 					       .hal_srng,
 					       RXDMA_BUF);
 
-			if (soc->cdp_soc.ol_ops->
-				is_hw_dbs_2x2_capable) {
-				dbs_enable = soc->cdp_soc.ol_ops->
-					is_hw_dbs_2x2_capable(
-							(void *)soc->ctrl_psoc);
-			}
-
-			if (dbs_enable) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-				QDF_TRACE_LEVEL_ERROR,
-				FL("DBS enabled max_mac_rings %d"),
-					 max_mac_rings);
-			} else {
-				max_mac_rings = 1;
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					 QDF_TRACE_LEVEL_ERROR,
-					 FL("DBS disabled, max_mac_rings %d"),
-					 max_mac_rings);
-			}
-
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					 FL("pdev_id %d max_mac_rings %d"),
-					 pdev->pdev_id, max_mac_rings);
+			dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
+			dp_err("pdev_id %d max_mac_rings %d",
+			       pdev->pdev_id, max_mac_rings);
 
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
 				int mac_for_pdev =
@@ -6403,6 +6393,7 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
 	vdev->me_convert = txrx_ops->me_convert;
+	vdev->get_tsf_time = txrx_ops->get_tsf_time;
 
 	dp_vdev_register_rx_eapol(vdev, txrx_ops);
 
@@ -11074,6 +11065,10 @@ static void dp_display_srng_info(struct cdp_soc_t *soc_hdl)
 				&tp, &hp);
 		dp_info("TCL DATA ring[%d]: hp=0x%x, tp=0x%x", i, hp, tp);
 
+		if (wlan_cfg_get_wbm_ring_num_for_index(soc->wlan_cfg_ctx, i) ==
+		    INVALID_WBM_RING_NUM)
+			continue;
+
 		hal_get_sw_hptp(hal_soc, soc->tx_comp_ring[i].hal_srng,
 				&tp, &hp);
 		dp_info("TX comp ring[%d]: hp=0x%x, tp=0x%x", i, hp, tp);
@@ -12381,6 +12376,8 @@ dp_txrx_ext_stats_request(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	int i = 0;
+	int tcl_ring_full = 0;
 
 	if (!pdev) {
 		dp_err("pdev is null");
@@ -12389,13 +12386,26 @@ dp_txrx_ext_stats_request(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 
 	dp_aggregate_pdev_stats(pdev);
 
+	for(i = 0 ; i < MAX_TCL_DATA_RINGS; i++)
+		tcl_ring_full += soc->stats.tx.tcl_ring_full[i];
+
 	req->tx_msdu_enqueue = pdev->stats.tx_i.processed.num;
-	req->tx_msdu_overflow = pdev->stats.tx_i.dropped.ring_full;
+	req->tx_msdu_overflow = tcl_ring_full;
 	req->rx_mpdu_received = soc->ext_stats.rx_mpdu_received;
 	req->rx_mpdu_delivered = soc->ext_stats.rx_mpdu_received;
-	req->rx_mpdu_missed = soc->ext_stats.rx_mpdu_missed;
+	req->rx_mpdu_missed = pdev->stats.err.reo_error;
 	/* only count error source from RXDMA */
 	req->rx_mpdu_error = pdev->stats.err.rxdma_error;
+
+	dp_info("ext stats: tx_msdu_enq = %u, tx_msdu_overflow = %u, "
+		"tx_mpdu_recieve = %u, rx_mpdu_delivered = %u, "
+		"rx_mpdu_missed = %u, rx_mpdu_error = %u",
+		req->tx_msdu_enqueue,
+		req->tx_msdu_overflow,
+		req->rx_mpdu_received,
+		req->rx_mpdu_delivered,
+		req->rx_mpdu_missed,
+		req->rx_mpdu_error);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -12491,7 +12501,6 @@ dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 	last_rx_mpdu_received = soc->ext_stats.rx_mpdu_received;
 	last_rx_mpdu_missed = soc->ext_stats.rx_mpdu_missed;
 	soc->ext_stats.rx_mpdu_received = 0;
-	soc->ext_stats.rx_mpdu_missed = 0;
 
 	rx_stats_sent_cnt =
 		dp_peer_rxtid_stats(peer, dp_rx_hw_stats_cb, rx_hw_stats);
@@ -13294,25 +13303,21 @@ void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id)
 	return soc->pdev_list[0];
 }
 
-/*
- * dp_is_hw_dbs_enable() - Procedure to check if DBS is supported
- * @soc:		DP SoC context
- * @max_mac_rings:	No of MAC rings
- *
- * Return: None
- */
-void dp_is_hw_dbs_enable(struct dp_soc *soc,
-				int *max_mac_rings)
+void dp_update_num_mac_rings_for_dbs(struct dp_soc *soc,
+				     int *max_mac_rings)
 {
 	bool dbs_enable = false;
-	if (soc->cdp_soc.ol_ops->is_hw_dbs_2x2_capable)
-		dbs_enable = soc->cdp_soc.ol_ops->
-		is_hw_dbs_2x2_capable((void *)soc->ctrl_psoc);
 
-	*max_mac_rings = (dbs_enable)?(*max_mac_rings):1;
+	if (soc->cdp_soc.ol_ops->is_hw_dbs_capable)
+		dbs_enable = soc->cdp_soc.ol_ops->
+				is_hw_dbs_capable((void *)soc->ctrl_psoc);
+
+	*max_mac_rings = dbs_enable ? (*max_mac_rings) : 1;
+	dp_info("dbs_enable %d, max_mac_rings %d",
+		dbs_enable, *max_mac_rings);
 }
 
-qdf_export_symbol(dp_is_hw_dbs_enable);
+qdf_export_symbol(dp_update_num_mac_rings_for_dbs);
 
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
 /**

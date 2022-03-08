@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -661,207 +661,6 @@ _dp_rx_bar_frame_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 }
 
-/**
- * dp_rx_reo_err_entry_process() - Handles for REO error entry processing
- *
- * @soc: core txrx main context
- * @ring_desc: opaque pointer to the REO error ring descriptor
- * @mpdu_desc_info: pointer to mpdu level description info
- * @link_desc_va: pointer to msdu_link_desc virtual address
- * @err_code: reo erro code fetched from ring entry
- *
- * Function to handle msdus fetched from msdu link desc, currently
- * only support 2K jump, OOR error.
- *
- * Return: msdu count processed.
- */
-static uint32_t
-dp_rx_reo_err_entry_process(struct dp_soc *soc,
-			    void *ring_desc,
-			    struct hal_rx_mpdu_desc_info *mpdu_desc_info,
-			    void *link_desc_va,
-			    enum hal_reo_error_code err_code)
-{
-	uint32_t rx_bufs_used = 0;
-	struct dp_pdev *pdev;
-	int i;
-	uint8_t *rx_tlv_hdr_first;
-	uint8_t *rx_tlv_hdr_last;
-	uint32_t tid = DP_MAX_TIDS;
-	uint16_t peer_id;
-	struct dp_rx_desc *rx_desc;
-	struct rx_desc_pool *rx_desc_pool;
-	qdf_nbuf_t nbuf;
-	struct hal_buf_info buf_info;
-	struct hal_rx_msdu_list msdu_list;
-	uint16_t num_msdus;
-	struct buffer_addr_info cur_link_desc_addr_info = { 0 };
-	struct buffer_addr_info next_link_desc_addr_info = { 0 };
-	/* First field in REO Dst ring Desc is buffer_addr_info */
-	void *buf_addr_info = ring_desc;
-	qdf_nbuf_t head_nbuf = NULL;
-	qdf_nbuf_t tail_nbuf = NULL;
-	uint16_t msdu_processed = 0;
-	QDF_STATUS status;
-	bool ret;
-
-	peer_id = dp_rx_peer_metadata_peer_id_get(soc,
-					       mpdu_desc_info->peer_meta_data);
-
-more_msdu_link_desc:
-	hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
-			     &num_msdus);
-	for (i = 0; i < num_msdus; i++) {
-		rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
-						soc,
-						msdu_list.sw_cookie[i]);
-
-		qdf_assert_always(rx_desc);
-
-		/* all buffers from a MSDU link belong to same pdev */
-		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
-
-		nbuf = rx_desc->nbuf;
-		ret = dp_rx_desc_paddr_sanity_check(rx_desc,
-						    msdu_list.paddr[i]);
-		if (!ret) {
-			DP_STATS_INC(soc, rx.err.nbuf_sanity_fail, 1);
-			rx_desc->in_err_state = 1;
-			continue;
-		}
-
-		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
-		dp_ipa_rx_buf_smmu_mapping_lock(soc);
-		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
-						  rx_desc_pool->buf_size,
-						  false);
-		qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
-					     QDF_DMA_FROM_DEVICE,
-					     rx_desc_pool->buf_size);
-		rx_desc->unmapped = 1;
-		dp_ipa_rx_buf_smmu_mapping_unlock(soc);
-
-		QDF_NBUF_CB_RX_PKT_LEN(nbuf) = msdu_list.msdu_info[i].msdu_len;
-		rx_bufs_used++;
-		dp_rx_add_to_free_desc_list(&pdev->free_list_head,
-					    &pdev->free_list_tail, rx_desc);
-
-		DP_RX_LIST_APPEND(head_nbuf, tail_nbuf, nbuf);
-
-		if (qdf_unlikely(msdu_list.msdu_info[i].msdu_flags &
-				 HAL_MSDU_F_MSDU_CONTINUATION))
-			continue;
-
-		if (dp_rx_buffer_pool_refill(soc, head_nbuf,
-					     rx_desc->pool_id)) {
-			/* MSDU queued back to the pool */
-			goto process_next_msdu;
-		}
-
-		rx_tlv_hdr_first = qdf_nbuf_data(head_nbuf);
-		rx_tlv_hdr_last = qdf_nbuf_data(tail_nbuf);
-
-		if (qdf_unlikely(head_nbuf != tail_nbuf)) {
-			nbuf = dp_rx_sg_create(soc, head_nbuf);
-			qdf_nbuf_set_is_frag(nbuf, 1);
-			DP_STATS_INC(soc, rx.err.reo_err_oor_sg_count, 1);
-		}
-
-		if (soc->features.pn_in_reo_dest) {
-			status = dp_rx_err_nbuf_pn_check(soc, ring_desc, nbuf);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				DP_STATS_INC(soc, rx.err.pn_in_dest_check_fail,
-					     1);
-				qdf_nbuf_free(nbuf);
-				goto process_next_msdu;
-			}
-
-			hal_rx_tlv_populate_mpdu_desc_info(soc->hal_soc,
-							   qdf_nbuf_data(nbuf),
-							   mpdu_desc_info);
-			peer_id = dp_rx_peer_metadata_peer_id_get(soc,
-					mpdu_desc_info->peer_meta_data);
-
-			if (mpdu_desc_info->bar_frame)
-				_dp_rx_bar_frame_handle(soc, nbuf,
-							mpdu_desc_info, tid,
-							HAL_REO_ERROR_DETECTED,
-							err_code);
-		}
-
-		switch (err_code) {
-		case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
-			/*
-			 * only first msdu, mpdu start description tlv valid?
-			 * and use it for following msdu.
-			 */
-			if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
-							   rx_tlv_hdr_last))
-				tid = hal_rx_mpdu_start_tid_get(
-							soc->hal_soc,
-							rx_tlv_hdr_first);
-
-			dp_2k_jump_handle(soc, nbuf, rx_tlv_hdr_last,
-					  peer_id, tid);
-			break;
-
-		case HAL_REO_ERR_REGULAR_FRAME_OOR:
-			dp_rx_oor_handle(soc, nbuf, peer_id, rx_tlv_hdr_last);
-			break;
-		default:
-			dp_err_rl("Non-support error code %d", err_code);
-			qdf_nbuf_free(nbuf);
-		}
-
-process_next_msdu:
-		msdu_processed++;
-		head_nbuf = NULL;
-		tail_nbuf = NULL;
-	}
-
-	/*
-	 * If the msdu's are spread across multiple link-descriptors,
-	 * we cannot depend solely on the msdu_count(e.g., if msdu is
-	 * spread across multiple buffers).Hence, it is
-	 * necessary to check the next link_descriptor and release
-	 * all the msdu's that are part of it.
-	 */
-	hal_rx_get_next_msdu_link_desc_buf_addr_info(
-			link_desc_va,
-			&next_link_desc_addr_info);
-
-	if (hal_rx_is_buf_addr_info_valid(
-				&next_link_desc_addr_info)) {
-		/* Clear the next link desc info for the current link_desc */
-		hal_rx_clear_next_msdu_link_desc_buf_addr_info(link_desc_va);
-		dp_rx_link_desc_return_by_addr(
-				soc,
-				buf_addr_info,
-				HAL_BM_ACTION_PUT_IN_IDLE_LIST);
-
-		hal_rx_buffer_addr_info_get_paddr(
-				&next_link_desc_addr_info,
-				&buf_info);
-		/* buffer_addr_info is the first element of ring_desc */
-		hal_rx_buf_cookie_rbm_get(soc->hal_soc,
-					  (uint32_t *)&next_link_desc_addr_info,
-					  &buf_info);
-		link_desc_va =
-			dp_rx_cookie_2_link_desc_va(soc, &buf_info);
-		cur_link_desc_addr_info = next_link_desc_addr_info;
-		buf_addr_info = &cur_link_desc_addr_info;
-
-		goto more_msdu_link_desc;
-	}
-
-	dp_rx_link_desc_return_by_addr(soc, buf_addr_info,
-				       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
-	if (qdf_unlikely(msdu_processed != mpdu_desc_info->msdu_count))
-		DP_STATS_INC(soc, rx.err.msdu_count_mismatch, 1);
-
-	return rx_bufs_used;
-}
-
 #ifdef DP_INVALID_PEER_ASSERT
 #define DP_PDEV_INVALID_PEER_MSDU_CHECK(head, tail) \
 		do {                                \
@@ -1196,6 +995,26 @@ bool dp_rx_check_pkt_len(struct dp_soc *soc, uint32_t pkt_len)
 #endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
+/**
+ * dp_rx_err_is_pn_check_needed() - Check if the packet number check is needed
+ *				for this frame received in REO error ring.
+ * @soc: Datapath SOC handle
+ * @error: REO error detected or not
+ * @error_code: Error code in case of REO error
+ *
+ * Return: true if pn check if needed in software,
+ *	false, if pn check if not needed.
+ */
+static inline bool
+dp_rx_err_is_pn_check_needed(struct dp_soc *soc, uint8_t error,
+			     uint32_t error_code)
+{
+	return (soc->features.pn_in_reo_dest &&
+		(error == HAL_REO_ERROR_DETECTED &&
+		 (hal_rx_reo_is_2k_jump(error_code) ||
+		  hal_rx_reo_is_oor_error(error_code) ||
+		  hal_rx_reo_is_bar_oor_2k_jump(error_code))));
+}
 
 /**
  * dp_rx_null_q_desc_handle() - Function to handle NULL Queue
@@ -1465,6 +1284,224 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 drop_nbuf:
 	qdf_nbuf_free(nbuf);
 	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * dp_rx_reo_err_entry_process() - Handles for REO error entry processing
+ *
+ * @soc: core txrx main context
+ * @ring_desc: opaque pointer to the REO error ring descriptor
+ * @mpdu_desc_info: pointer to mpdu level description info
+ * @link_desc_va: pointer to msdu_link_desc virtual address
+ * @err_code: reo erro code fetched from ring entry
+ *
+ * Function to handle msdus fetched from msdu link desc, currently
+ * only support 2K jump, OOR error.
+ *
+ * Return: msdu count processed.
+ */
+static uint32_t
+dp_rx_reo_err_entry_process(struct dp_soc *soc,
+			    void *ring_desc,
+			    struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+			    void *link_desc_va,
+			    enum hal_reo_error_code err_code)
+{
+	uint32_t rx_bufs_used = 0;
+	struct dp_pdev *pdev;
+	int i;
+	uint8_t *rx_tlv_hdr_first;
+	uint8_t *rx_tlv_hdr_last;
+	uint32_t tid = DP_MAX_TIDS;
+	uint16_t peer_id;
+	struct dp_peer *peer;
+	struct dp_rx_desc *rx_desc;
+	struct rx_desc_pool *rx_desc_pool;
+	qdf_nbuf_t nbuf;
+	struct hal_buf_info buf_info;
+	struct hal_rx_msdu_list msdu_list;
+	uint16_t num_msdus;
+	struct buffer_addr_info cur_link_desc_addr_info = { 0 };
+	struct buffer_addr_info next_link_desc_addr_info = { 0 };
+	/* First field in REO Dst ring Desc is buffer_addr_info */
+	void *buf_addr_info = ring_desc;
+	qdf_nbuf_t head_nbuf = NULL;
+	qdf_nbuf_t tail_nbuf = NULL;
+	uint16_t msdu_processed = 0;
+	QDF_STATUS status;
+	bool ret, is_pn_check_needed;
+	uint8_t rx_desc_pool_id;
+
+	peer_id = dp_rx_peer_metadata_peer_id_get(soc,
+					       mpdu_desc_info->peer_meta_data);
+	is_pn_check_needed = dp_rx_err_is_pn_check_needed(soc,
+							  HAL_REO_ERROR_DETECTED,
+							  err_code);
+more_msdu_link_desc:
+	hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
+			     &num_msdus);
+	for (i = 0; i < num_msdus; i++) {
+		rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
+						soc,
+						msdu_list.sw_cookie[i]);
+
+		qdf_assert_always(rx_desc);
+
+		rx_desc_pool_id = rx_desc->pool_id;
+		/* all buffers from a MSDU link belong to same pdev */
+		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc_pool_id);
+
+		nbuf = rx_desc->nbuf;
+		ret = dp_rx_desc_paddr_sanity_check(rx_desc,
+						    msdu_list.paddr[i]);
+		if (!ret) {
+			DP_STATS_INC(soc, rx.err.nbuf_sanity_fail, 1);
+			rx_desc->in_err_state = 1;
+			continue;
+		}
+
+		rx_desc_pool = &soc->rx_desc_buf[rx_desc_pool_id];
+		dp_ipa_rx_buf_smmu_mapping_lock(soc);
+		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
+						  rx_desc_pool->buf_size,
+						  false);
+		qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
+					     QDF_DMA_FROM_DEVICE,
+					     rx_desc_pool->buf_size);
+		rx_desc->unmapped = 1;
+		dp_ipa_rx_buf_smmu_mapping_unlock(soc);
+
+		QDF_NBUF_CB_RX_PKT_LEN(nbuf) = msdu_list.msdu_info[i].msdu_len;
+		rx_bufs_used++;
+		dp_rx_add_to_free_desc_list(&pdev->free_list_head,
+					    &pdev->free_list_tail, rx_desc);
+
+		DP_RX_LIST_APPEND(head_nbuf, tail_nbuf, nbuf);
+
+		if (qdf_unlikely(msdu_list.msdu_info[i].msdu_flags &
+				 HAL_MSDU_F_MSDU_CONTINUATION))
+			continue;
+
+		if (dp_rx_buffer_pool_refill(soc, head_nbuf,
+					     rx_desc_pool_id)) {
+			/* MSDU queued back to the pool */
+			goto process_next_msdu;
+		}
+
+		rx_tlv_hdr_first = qdf_nbuf_data(head_nbuf);
+		rx_tlv_hdr_last = qdf_nbuf_data(tail_nbuf);
+
+		if (qdf_unlikely(head_nbuf != tail_nbuf)) {
+			nbuf = dp_rx_sg_create(soc, head_nbuf);
+			qdf_nbuf_set_is_frag(nbuf, 1);
+			DP_STATS_INC(soc, rx.err.reo_err_oor_sg_count, 1);
+		}
+
+		if (is_pn_check_needed) {
+			status = dp_rx_err_nbuf_pn_check(soc, ring_desc, nbuf);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				DP_STATS_INC(soc, rx.err.pn_in_dest_check_fail,
+					     1);
+				qdf_nbuf_free(nbuf);
+				goto process_next_msdu;
+			}
+
+			hal_rx_tlv_populate_mpdu_desc_info(soc->hal_soc,
+							   qdf_nbuf_data(nbuf),
+							   mpdu_desc_info);
+			peer_id = dp_rx_peer_metadata_peer_id_get(soc,
+					mpdu_desc_info->peer_meta_data);
+
+			if (mpdu_desc_info->bar_frame)
+				_dp_rx_bar_frame_handle(soc, nbuf,
+							mpdu_desc_info, tid,
+							HAL_REO_ERROR_DETECTED,
+							err_code);
+		}
+
+		switch (err_code) {
+		case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
+		case HAL_REO_ERR_2K_ERROR_HANDLING_FLAG_SET:
+		case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
+			/*
+			 * only first msdu, mpdu start description tlv valid?
+			 * and use it for following msdu.
+			 */
+			if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
+							   rx_tlv_hdr_last))
+				tid = hal_rx_mpdu_start_tid_get(
+							soc->hal_soc,
+							rx_tlv_hdr_first);
+
+			dp_2k_jump_handle(soc, nbuf, rx_tlv_hdr_last,
+					  peer_id, tid);
+			break;
+
+		case HAL_REO_ERR_REGULAR_FRAME_OOR:
+		case HAL_REO_ERR_BAR_FRAME_OOR:
+			dp_rx_oor_handle(soc, nbuf, peer_id, rx_tlv_hdr_last);
+			break;
+		case HAL_REO_ERR_QUEUE_DESC_ADDR_0:
+			peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
+			if (!peer)
+				dp_info_rl("peer is null peer_id %u", peer_id);
+			dp_rx_null_q_desc_handle(soc, nbuf, rx_tlv_hdr_last,
+						 rx_desc_pool_id, peer);
+			if (peer)
+				dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
+			break;
+		default:
+			dp_err_rl("Non-support error code %d", err_code);
+			qdf_nbuf_free(nbuf);
+		}
+
+process_next_msdu:
+		msdu_processed++;
+		head_nbuf = NULL;
+		tail_nbuf = NULL;
+	}
+
+	/*
+	 * If the msdu's are spread across multiple link-descriptors,
+	 * we cannot depend solely on the msdu_count(e.g., if msdu is
+	 * spread across multiple buffers).Hence, it is
+	 * necessary to check the next link_descriptor and release
+	 * all the msdu's that are part of it.
+	 */
+	hal_rx_get_next_msdu_link_desc_buf_addr_info(
+			link_desc_va,
+			&next_link_desc_addr_info);
+
+	if (hal_rx_is_buf_addr_info_valid(
+				&next_link_desc_addr_info)) {
+		/* Clear the next link desc info for the current link_desc */
+		hal_rx_clear_next_msdu_link_desc_buf_addr_info(link_desc_va);
+		dp_rx_link_desc_return_by_addr(
+				soc,
+				buf_addr_info,
+				HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+
+		hal_rx_buffer_addr_info_get_paddr(
+				&next_link_desc_addr_info,
+				&buf_info);
+		/* buffer_addr_info is the first element of ring_desc */
+		hal_rx_buf_cookie_rbm_get(soc->hal_soc,
+					  (uint32_t *)&next_link_desc_addr_info,
+					  &buf_info);
+		link_desc_va =
+			dp_rx_cookie_2_link_desc_va(soc, &buf_info);
+		cur_link_desc_addr_info = next_link_desc_addr_info;
+		buf_addr_info = &cur_link_desc_addr_info;
+
+		goto more_msdu_link_desc;
+	}
+
+	dp_rx_link_desc_return_by_addr(soc, buf_addr_info,
+				       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+	if (qdf_unlikely(msdu_processed != mpdu_desc_info->msdu_count))
+		DP_STATS_INC(soc, rx.err.msdu_count_mismatch, 1);
+
+	return rx_bufs_used;
 }
 
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
@@ -1763,7 +1800,6 @@ dp_rx_deliver_to_osif_stack(struct dp_soc *soc,
 }
 #endif
 
-#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /**
  * dp_rx_err_route_hdl() - Function to send EAPOL frames to stack
  *                            Free any other packet which comes in
@@ -1882,21 +1918,6 @@ drop_nbuf:
 
 	qdf_nbuf_free(nbuf);
 }
-#else
-
-static void
-dp_rx_err_route_hdl(struct dp_soc *soc, qdf_nbuf_t nbuf,
-		    struct dp_peer *peer, uint8_t *rx_tlv_hdr,
-		    enum hal_rx_wbm_error_source err_src)
-{
-	DP_STATS_INCC(soc, rx.reo2rel_route_drop, 1,
-		      err_src == HAL_RX_WBM_ERR_SRC_REO);
-	DP_STATS_INCC(soc, rx.rxdma2rel_route_drop, 1,
-		      err_src == HAL_RX_WBM_ERR_SRC_RXDMA);
-
-	qdf_nbuf_free(nbuf);
-}
-#endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
@@ -2091,27 +2112,6 @@ static int dp_rx_err_exception(struct dp_soc *soc, hal_ring_desc_t ring_desc)
 	return DP_INVALID_LMAC_ID;
 }
 #endif /* HANDLE_RX_REROUTE_ERR */
-
-/**
- * dp_rx_err_is_pn_check_needed() - Check if the packet number check is needed
- *				for this frame received in REO error ring.
- * @soc: Datapath SOC handle
- * @error: REO error detected or not
- * @error_code: Error code in case of REO error
- *
- * Return: true if pn check if needed in software,
- *	false, if pn check if not needed.
- */
-static inline bool
-dp_rx_err_is_pn_check_needed(struct dp_soc *soc, uint8_t error,
-			     uint32_t error_code)
-{
-	return (soc->features.pn_in_reo_dest &&
-		(error == HAL_REO_ERROR_DETECTED &&
-		 (hal_rx_reo_is_2k_jump(error_code) ||
-		  hal_rx_reo_is_oor_error(error_code) ||
-		  hal_rx_reo_is_bar_oor_2k_jump(error_code))));
-}
 
 uint32_t
 dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
@@ -2342,23 +2342,9 @@ process_reo_error_code:
 		case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
 		case HAL_REO_ERR_2K_ERROR_HANDLING_FLAG_SET:
 		case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
-			DP_STATS_INC(soc, rx.err.reo_error[error_code], 1);
-			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
-			if (dp_pdev)
-				DP_STATS_INC(dp_pdev, err.reo_error, 1);
-
-			count = dp_rx_reo_err_entry_process(
-					soc,
-					ring_desc,
-					&mpdu_desc_info,
-					link_desc_va,
-					HAL_REO_ERR_REGULAR_FRAME_2K_JUMP);
-
-			rx_bufs_reaped[mac_id] += count;
-			break;
-
 		case HAL_REO_ERR_REGULAR_FRAME_OOR:
 		case HAL_REO_ERR_BAR_FRAME_OOR:
+		case HAL_REO_ERR_QUEUE_DESC_ADDR_0:
 			DP_STATS_INC(soc, rx.err.reo_error[error_code], 1);
 			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 			if (dp_pdev)
@@ -2368,11 +2354,10 @@ process_reo_error_code:
 					ring_desc,
 					&mpdu_desc_info,
 					link_desc_va,
-					HAL_REO_ERR_REGULAR_FRAME_OOR);
+					error_code);
 
 			rx_bufs_reaped[mac_id] += count;
 			break;
-		case HAL_REO_ERR_QUEUE_DESC_ADDR_0:
 		case HAL_REO_ERR_QUEUE_DESC_INVALID:
 		case HAL_REO_ERR_AMPDU_IN_NON_BA:
 		case HAL_REO_ERR_NON_BA_DUPLICATE:

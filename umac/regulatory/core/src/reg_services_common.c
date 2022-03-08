@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -184,6 +184,137 @@ struct bw_bonded_array_pair bw_bonded_array_pair_map[] = {
 	{CH_WIDTH_40MHZ, bonded_chan_40mhz_list_freq,
 		QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq)},
 };
+
+#ifdef WLAN_FEATURE_11BE
+/** Binary bitmap pattern
+ * 1: Punctured 20Mhz chan 0:non-Punctured 20Mhz Chan
+ *
+ * Band: 80MHz  Puncturing Unit: 20Mhz
+ *  B0001 = 0x1  : BIT(0)
+ *  B0010 = 0x2  : BIT(1)
+ *  B0100 = 0x4  : BIT(2)
+ *  B1000 = 0x8  : BIT(3)
+ *
+ * Band: 160MHz  Puncturing Unit: 20Mhz
+ *  B0000_0001 = 0x01  : BIT(0)
+ *  B0000_0010 = 0x02  : BIT(1)
+ *  B0000_0100 = 0x04  : BIT(2)
+ *  B0000_1000 = 0x08  : BIT(3)
+ *  B0001_0000 = 0x10  : BIT(4)
+ *  B0010_0000 = 0x20  : BIT(5)
+ *  B0100_0000 = 0x40  : BIT(6)
+ *  B1000_0000 = 0x80  : BIT(7)
+ *
+ * Band: 160MHz  Puncturing Unit: 40Mhz
+ *  B0000_0011 = 0x03  : BIT(0) | BIT(1)
+ *  B0000_1100 = 0x0C  : BIT(2) | BIT(3)
+ *  B0011_0000 = 0x30  : BIT(4) | BIT(5)
+ *  B1100_0000 = 0xC0  : BIT(6) | BIT(7)
+ *
+ * Band: 320MHz  Puncturing Unit: 40Mhz
+ *  B0000_0000_0000_0011 = 0x0003  : BIT(0)  | BIT(1)
+ *  B0000_0000_0000_1100 = 0x000C  : BIT(2)  | BIT(3)
+ *  B0000_0000_0011_0000 = 0x0030  : BIT(4)  | BIT(5)
+ *  B0000_0000_1100_0000 = 0x00C0  : BIT(6)  | BIT(7)
+ *  B0000_0011_0000_0000 = 0x0300  : BIT(8)  | BIT(9)
+ *  B0000_1100_0000_0000 = 0x0C00  : BIT(10) | BIT(11)
+ *  B0011_0000_0000_0000 = 0x3000  : BIT(12) | BIT(13)
+ *  B1100_0000_0000_0000 = 0xC000  : BIT(13) | BIT(15)
+ *
+ * Band: 320MHz  Puncturing Unit: 80Mhz
+ *  B0000_0000_0000_1111 = 0x000F  : BIT(0)  | BIT(1) | BIT(2) | BIT(3)
+ *  B0000_0000_1111_0000 = 0x00F0  : BIT(4)  | BIT(5) | BIT(6) | BIT(7)
+ *  B0000_1111_0000_0000 = 0x0F00  : BIT(8)  | BIT(9) | BIT(10) | BIT(11)
+ *  B1111_0000_0000_0000 = 0xF000  : BIT(12) | BIT(13) | BIT(14) | BIT(15)
+ *
+ * Band: 320MHz  Puncturing Unit: 80Mhz+40Mhz (Right 80Mhz punctured)
+ *  B0000_0000_0011_1111 = 0x003F  : BIT(4)  | BIT(5)   [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0000_0000_1100_1111 = 0x00CF  : BIT(6)  | BIT(7)   [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0000_0011_0000_1111 = 0x030F  : BIT(8)  | BIT(9)   [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0000_1100_0000_1111 = 0x0C0F  : BIT(10) | BIT(11)  [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B0011_0000_0000_1111 = 0x300F  : BIT(12) | BIT(13)  [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *  B1100_0000_0000_1111 = 0xC00F  : BIT(14) | BIT(15)  [right 80MHz: BIT(0) | BIT(1) | BIT(2) | BIT(3)]
+ *
+ * Band: 320MHz  Puncturing Unit: 80Mhz+40Mhz (Left 80Mhz punctured)
+ *  B1111_0000_0000_0011 = 0xF003  : BIT(4)  | BIT(5)   [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0000_0000_1100 = 0xF00C  : BIT(6)  | BIT(7)   [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0000_0011_0000 = 0xF030  : BIT(8)  | BIT(9)   [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0000_1100_0000 = 0xF0C0  : BIT(10) | BIT(11)  [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_0011_0000_0000 = 0xF300  : BIT(12) | BIT(13)  [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ *  B1111_1100_0000_0000 = 0xFC00  : BIT(14) | BIT(15)  [left 80MHz: BIT(12) | BIT(13) | BIT(14) | BIT(15)]
+ */
+static const uint16_t chan_80mhz_puncture_bitmap[] = {
+	/* 20Mhz puncturing pattern */
+	0x1,
+	0x2,
+	0x4,
+	0x8
+};
+
+static const uint16_t chan_160mhz_puncture_bitmap[] = {
+	/* 20Mhz puncturing pattern */
+	0x1,
+	0x2,
+	0x4,
+	0x8,
+	0x10,
+	0x20,
+	0x40,
+	0x80,
+	/* 40Mhz puncturing pattern */
+	0x3,
+	0xc,
+	0x30,
+	0xc0
+};
+
+static const uint16_t chan_320mhz_puncture_bitmap[] = {
+	/* 40Mhz puncturing pattern */
+	0x3,
+	0xc,
+	0x30,
+	0xc0,
+	0x300,
+	0xc00,
+	0x3000,
+	0xc000,
+	/* 80Mhz puncturing pattern */
+	0xf,
+	0xf0,
+	0xf00,
+	0xf000,
+	/* 80+40Mhz puncturing pattern: Right 80MHz punctured */
+	0x3f,
+	0xcf,
+	0x30f,
+	0xc0f,
+	0x300f,
+	0xc00f,
+	/* 80+40Mhz puncturing pattern: Left 80MHz punctured */
+	0xf003,
+	0xf00c,
+	0xf030,
+	0xf0c0,
+	0xf300,
+	0xfc00
+};
+
+struct bw_puncture_bitmap_pair {
+	enum phy_ch_width chwidth;
+	const uint16_t *puncture_bitmap_arr;
+	uint16_t array_size;
+};
+
+static const
+struct bw_puncture_bitmap_pair bw_puncture_bitmap_pair_map[] = {
+	{CH_WIDTH_320MHZ, chan_320mhz_puncture_bitmap,
+		QDF_ARRAY_SIZE(chan_320mhz_puncture_bitmap)},
+	{CH_WIDTH_160MHZ, chan_160mhz_puncture_bitmap,
+		QDF_ARRAY_SIZE(chan_160mhz_puncture_bitmap)},
+	{CH_WIDTH_80MHZ, chan_80mhz_puncture_bitmap,
+		QDF_ARRAY_SIZE(chan_80mhz_puncture_bitmap)},
+};
+#endif /* WLAN_FEATURE_11BE */
 
 const struct bonded_channel_freq *
 reg_get_bonded_chan_entry(qdf_freq_t freq,
@@ -3429,11 +3560,102 @@ reg_get_5g_bonded_chan_array_for_freq(struct wlan_objmgr_pdev *pdev,
 	return chan_state;
 }
 
+#ifdef WLAN_FEATURE_11BE
+void reg_set_create_punc_bitmap(struct ch_params *ch_params,
+				bool is_create_punc_bitmap)
+{
+	ch_params->is_create_punc_bitmap = is_create_punc_bitmap;
+}
+
+bool reg_is_punc_bitmap_valid(enum phy_ch_width bw, uint16_t puncture_bitmap)
+{
+	int i, num_bws;
+	const uint16_t *bonded_puncture_bitmap = NULL;
+	uint16_t array_size = 0;
+	bool is_punc_bitmap_valid = false;
+
+	num_bws = QDF_ARRAY_SIZE(bw_puncture_bitmap_pair_map);
+	for (i = 0; i < num_bws; i++) {
+		if (bw == bw_puncture_bitmap_pair_map[i].chwidth) {
+			bonded_puncture_bitmap =
+			    bw_puncture_bitmap_pair_map[i].puncture_bitmap_arr;
+			array_size = bw_puncture_bitmap_pair_map[i].array_size;
+			break;
+		}
+	}
+
+	if (array_size && bonded_puncture_bitmap) {
+		for (i = 0; i < array_size; i++) {
+			if (puncture_bitmap == bonded_puncture_bitmap[i]) {
+				is_punc_bitmap_valid = true;
+				break;
+			}
+		}
+	}
+
+	return is_punc_bitmap_valid;
+}
+
+/**
+ * reg_update_5g_bonded_channel_state_punc() - update channel state with
+ *                                             static puncturing feature
+ * @pdev: pointer to pdev
+ * @bonded_chan_ptr: Pointer to bonded_channel_freq.
+ * @ch_params: pointer to ch_params
+ * @chan_state: chan_state to be updated
+ *
+ * Return: void
+ */
+static void reg_update_5g_bonded_channel_state_punc(
+			struct wlan_objmgr_pdev *pdev,
+			const struct bonded_channel_freq *bonded_chan_ptr,
+			struct ch_params *ch_params,
+			enum channel_state *chan_state)
+{
+	qdf_freq_t chan_cfreq;
+	enum channel_state temp_chan_state;
+	uint16_t puncture_bitmap = 0;
+	int i = 0;
+	enum channel_state update_state = CHANNEL_STATE_ENABLE;
+
+	if (!pdev || !bonded_chan_ptr || !ch_params || !chan_state ||
+	    !ch_params->is_create_punc_bitmap)
+		return;
+
+	chan_cfreq =  bonded_chan_ptr->start_freq;
+	while (chan_cfreq <= bonded_chan_ptr->end_freq) {
+		temp_chan_state = reg_get_channel_state_for_freq(pdev,
+								 chan_cfreq);
+		if (!reg_is_state_allowed(temp_chan_state))
+			puncture_bitmap |= BIT(i);
+		/* Remember of any of the sub20 channel is a DFS channel */
+		if (temp_chan_state == CHANNEL_STATE_DFS)
+			update_state = CHANNEL_STATE_DFS;
+		chan_cfreq = chan_cfreq + BW_20_MHZ;
+		i++;
+	}
+	/* Validate puncture bitmap. Update channel state. */
+	if (reg_is_punc_bitmap_valid(ch_params->ch_width, puncture_bitmap)) {
+		*chan_state = update_state;
+		ch_params->reg_punc_bitmap = puncture_bitmap;
+	}
+}
+#else
+static void reg_update_5g_bonded_channel_state_punc(
+			struct wlan_objmgr_pdev *pdev,
+			const struct bonded_channel_freq *bonded_chan_ptr,
+			struct ch_params *ch_params,
+			enum channel_state *chan_state)
+{
+}
+#endif
+
 enum channel_state
 reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					 qdf_freq_t freq,
-					 enum phy_ch_width bw)
+					 struct ch_params *ch_params)
 {
+	enum phy_ch_width bw;
 	enum channel_enum ch_indx;
 	enum channel_state chan_state;
 	struct regulatory_channel *reg_channels;
@@ -3441,6 +3663,11 @@ reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 	bool bw_enabled = false;
 	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 
+	if (!ch_params) {
+		reg_err_rl("Invalid ch_params");
+		return CHANNEL_STATE_INVALID;
+	}
+	bw = ch_params->ch_width;
 	if (bw > CH_WIDTH_80P80MHZ) {
 		reg_err_rl("bw (%d) passed is not good", bw);
 		return CHANNEL_STATE_INVALID;
@@ -3448,6 +3675,9 @@ reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	chan_state = reg_get_5g_bonded_channel_for_freq(pdev, freq, bw,
 							&bonded_chan_ptr);
+
+	reg_update_5g_bonded_channel_state_punc(pdev, bonded_chan_ptr,
+						ch_params, &chan_state);
 
 	if ((chan_state == CHANNEL_STATE_INVALID) ||
 	    (chan_state == CHANNEL_STATE_DISABLE))
@@ -3613,12 +3843,6 @@ reg_get_320_bonded_chan_array(struct wlan_objmgr_pdev *pdev,
 	return num_bonded_pairs;
 }
 
-static inline bool reg_is_state_allowed(enum channel_state chan_state)
-{
-	return !((chan_state == CHANNEL_STATE_INVALID) ||
-		 (chan_state == CHANNEL_STATE_DISABLE));
-}
-
 /**
  * reg_get_320_bonded_channel_state() - Given a bonded channel
  * pointer and freq, determine if the subchannels of the bonded pair
@@ -3628,7 +3852,7 @@ static inline bool reg_is_state_allowed(enum channel_state chan_state)
  * @freq: Frequency in MHZ.
  * @bonded_chan_ptr: Pointer to const struct bonded_channel_freq.
  * @bw: channel bandwidth
- * @out_punc_pat: Output puncturing pattern
+ * @out_punc_bitmap: Output puncturing bitmap
  *
  * Return - The channel state of the bonded pair.
  */
@@ -3645,14 +3869,14 @@ reg_get_320_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
 				 const struct bonded_channel_freq
 				 *bonded_chan_ptr,
 				 enum phy_ch_width bw,
-				 uint16_t *out_punc_pat)
+				 uint16_t *out_punc_bitmap)
 {
 	enum channel_state chan_state = CHANNEL_STATE_INVALID;
 	enum channel_state temp_chan_state;
 	uint16_t chan_cfreq;
 	uint16_t max_cont_bw, i;
 
-	*out_punc_pat = ALL_SCHANS_PUNC;
+	*out_punc_bitmap = ALL_SCHANS_PUNC;
 
 	if (!bonded_chan_ptr)
 		return chan_state;
@@ -3667,7 +3891,7 @@ reg_get_320_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
 								 chan_cfreq);
 		if (reg_is_state_allowed(temp_chan_state)) {
 			max_cont_bw += SUB_CHAN_BW;
-			*out_punc_pat &= ~BIT(i);
+			*out_punc_bitmap &= ~BIT(i);
 		}
 
 		if (temp_chan_state < chan_state)
@@ -3757,7 +3981,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 	uint8_t num_bonded_pairs, i, num_ch_params;
 	enum channel_state chan_state;
 	uint16_t array_size = QDF_ARRAY_SIZE(bonded_chan_320mhz_list_freq);
-	uint16_t out_punc_pat;
+	uint16_t out_punc_bitmap;
 	uint16_t max_reg_bw;
 	enum channel_enum chan_enum;
 	const struct bonded_channel_freq *bonded_ch_ptr[2] = {NULL, NULL};
@@ -3819,7 +4043,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 		    reg_get_320_bonded_channel_state(pdev, freq,
 						     bonded_ch_ptr[i],
 						     *in_ch_width,
-						     &out_punc_pat);
+						     &out_punc_bitmap);
 		if (chan_state == CHANNEL_STATE_ENABLE) {
 			struct ch_params *t_chan_param =
 			    &chan_list->chan_param[num_ch_params];
@@ -3831,7 +4055,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 				reg_freq_to_chan(pdev,
 						 t_chan_param->mhz_freq_seg1);
 			t_chan_param->ch_width = *in_ch_width;
-			t_chan_param->reg_punc_pattern = out_punc_pat;
+			t_chan_param->reg_punc_bitmap = out_punc_bitmap;
 
 			reg_fill_primary_160mhz_centers(pdev,
 							t_chan_param,
@@ -3874,7 +4098,7 @@ reg_fill_pre320mhz_channel(struct wlan_objmgr_pdev *pdev,
 {
 	chan_list->num_ch_params = 1;
 	chan_list->chan_param[0].ch_width = ch_width;
-	chan_list->chan_param[0].reg_punc_pattern = NO_SCHANS_PUNC;
+	chan_list->chan_param[0].reg_punc_bitmap = NO_SCHANS_PUNC;
 	reg_set_channel_params_for_freq(pdev, freq, sec_ch_2g_freq,
 					&chan_list->chan_param[0]);
 }
@@ -4070,13 +4294,18 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 				&bonded_chan_ptr);
 
 		chan_state = reg_get_5g_bonded_channel_state_for_freq(
-				pdev, freq, ch_params->ch_width);
+				pdev, freq, ch_params);
 
 		if (ch_params->ch_width == CH_WIDTH_80P80MHZ) {
+			struct ch_params temp_ch_params = {0};
+
+			temp_ch_params.ch_width = CH_WIDTH_80MHZ;
+			/* Puncturing patter is not needed for 80+80 */
+			reg_set_create_punc_bitmap(&temp_ch_params, false);
 			chan_state2 = reg_get_5g_bonded_channel_state_for_freq(
 					pdev, ch_params->mhz_freq_seg1 -
 					NEAREST_20MHZ_CHAN_FREQ_OFFSET,
-					CH_WIDTH_80MHZ);
+					&temp_ch_params);
 
 			chan_state = reg_combine_channel_states(
 					chan_state, chan_state2);
@@ -4277,7 +4506,7 @@ static void reg_copy_ch_params(struct ch_params *ch_params,
 	ch_params->mhz_freq_seg1 = chan_list.chan_param[0].mhz_freq_seg1;
 	ch_params->ch_width = chan_list.chan_param[0].ch_width;
 	ch_params->sec_ch_offset = chan_list.chan_param[0].sec_ch_offset;
-	ch_params->reg_punc_pattern = chan_list.chan_param[0].reg_punc_pattern;
+	ch_params->reg_punc_bitmap = chan_list.chan_param[0].reg_punc_bitmap;
 }
 
 void reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
@@ -6087,11 +6316,16 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	uint8_t start_channel;
 	uint8_t end_channel;
+	int32_t txpower;
+	bool is_valid_txpower;
 	struct ch_avoid_freq_type *range;
 	enum channel_enum ch_loop;
 	enum channel_enum start_ch_idx;
 	enum channel_enum end_ch_idx;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint32_t len;
+	struct unsafe_ch_list *unsafe_ch_list;
+	bool coex_unsafe_nb_user_prefer;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
@@ -6105,13 +6339,21 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt > 0) {
-		uint32_t len;
+	unsafe_ch_list = &psoc_priv_obj->unsafe_chan_list;
+	coex_unsafe_nb_user_prefer =
+		psoc_priv_obj->coex_unsafe_chan_nb_user_prefer;
 
+	if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt > 0) {
 		len = sizeof(pdev_priv_obj->avoid_chan_ext_list.chan_freq_list);
 		pdev_priv_obj->avoid_chan_ext_list.chan_cnt = 0;
 		qdf_mem_zero(&pdev_priv_obj->avoid_chan_ext_list.chan_freq_list,
 			     len);
+	}
+
+	if (unsafe_ch_list->chan_cnt > 0) {
+		len = sizeof(unsafe_ch_list->chan_freq_list);
+		unsafe_ch_list->chan_cnt = 0;
+		qdf_mem_zero(unsafe_ch_list->chan_freq_list, len);
 	}
 
 	for (i = 0; i < psoc_priv_obj->avoid_freq_ext_list.ch_avoid_range_cnt;
@@ -6122,15 +6364,23 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 			break;
 		}
 
+		if (unsafe_ch_list->chan_cnt >= NUM_CHANNELS) {
+			reg_warn("LTE Coex unsafe channel list full");
+			break;
+		}
+
 		start_ch_idx = INVALID_CHANNEL;
 		end_ch_idx = INVALID_CHANNEL;
 		range = &psoc_priv_obj->avoid_freq_ext_list.avoid_freq_range[i];
 
 		start_channel = reg_freq_to_chan(pdev, range->start_freq);
 		end_channel = reg_freq_to_chan(pdev, range->end_freq);
-		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d",
+		txpower = range->txpower;
+		is_valid_txpower = range->is_valid_txpower;
+
+		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d txpower %d",
 			  range->start_freq, start_channel, range->end_freq,
-			  end_channel);
+			  end_channel, txpower);
 
 		/* do not process frequency bands that are not mapped to
 		 * predefined channels
@@ -6165,6 +6415,23 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 			[pdev_priv_obj->avoid_chan_ext_list.chan_cnt++] =
 			REG_CH_TO_FREQ(ch_loop);
 
+			if (coex_unsafe_nb_user_prefer) {
+				if (unsafe_ch_list->chan_cnt >=
+					NUM_CHANNELS) {
+					reg_warn("LTECoex unsafe ch list full");
+					break;
+				}
+				unsafe_ch_list->txpower[
+				unsafe_ch_list->chan_cnt] =
+					txpower;
+				unsafe_ch_list->is_valid_txpower[
+				unsafe_ch_list->chan_cnt] =
+					is_valid_txpower;
+				unsafe_ch_list->chan_freq_list[
+				unsafe_ch_list->chan_cnt++] =
+					REG_CH_TO_FREQ(ch_loop);
+			}
+
 			if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt >=
 				NUM_CHANNELS) {
 				reg_debug("avoid freq ext list full");
@@ -6183,6 +6450,14 @@ reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
 			reg_is_5ghz_ch_freq(range->start_freq)) {
 			range->start_freq = range->start_freq - HALF_20MHZ_BW;
 			range->end_freq = range->end_freq + HALF_20MHZ_BW;
+		}
+
+		for (ch_loop = 0; ch_loop <
+			unsafe_ch_list->chan_cnt; ch_loop++) {
+			if (ch_loop >= NUM_CHANNELS)
+				break;
+			reg_debug("Unsafe freq %d",
+				  unsafe_ch_list->chan_freq_list[ch_loop]);
 		}
 	}
 
@@ -6259,7 +6534,14 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 			ch_avoid_event->avoid_freq_range[i].start_freq;
 		range->end_freq =
 			ch_avoid_event->avoid_freq_range[i].end_freq;
+		range->txpower =
+			ch_avoid_event->avoid_freq_range[i].txpower;
+		range->is_valid_txpower =
+			ch_avoid_event->avoid_freq_range[i].is_valid_txpower;
 	}
+
+	psoc_priv_obj->avoid_freq_ext_list.restriction_mask =
+		ch_avoid_event->restriction_mask;
 	psoc_priv_obj->avoid_freq_ext_list.ch_avoid_range_cnt =
 		ch_avoid_event->ch_avoid_range_cnt;
 
@@ -6280,6 +6562,32 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_SB_ID);
 
 	return status;
+}
+
+bool reg_check_coex_unsafe_nb_user_prefer(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return false;
+	}
+
+	return psoc_priv_obj->coex_unsafe_chan_nb_user_prefer;
+}
+
+bool reg_check_coex_unsafe_chan_reg_disable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return false;
+	}
+
+	return psoc_priv_obj->coex_unsafe_chan_reg_disable;
 }
 #endif
 
@@ -6416,4 +6724,10 @@ QDF_STATUS reg_is_chwidth_supported(struct wlan_objmgr_pdev *pdev,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool reg_is_state_allowed(enum channel_state chan_state)
+{
+	return !((chan_state == CHANNEL_STATE_INVALID) ||
+		 (chan_state == CHANNEL_STATE_DISABLE));
 }

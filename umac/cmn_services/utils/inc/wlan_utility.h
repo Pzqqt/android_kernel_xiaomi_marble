@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -51,6 +52,16 @@ struct wlan_op_mode_peer_count {
 	enum QDF_OPMODE opmode;
 	uint16_t peer_count;
 };
+
+/**
+ * wlan_construct_shortssid() - construct the short ssid with the help of
+ * shortssid table
+ * @ssid: pointer to ssid
+ * @ssid_len: ssid length
+ *
+ * return: short ssid length
+ */
+uint32_t wlan_construct_shortssid(uint8_t *ssid, uint8_t ssid_len);
 
 /**
  * wlan_chan_to_freq() - converts channel to frequency
@@ -330,6 +341,39 @@ struct wlan_channel *wlan_vdev_get_active_channel
  */
 bool wlan_get_connected_vdev_by_bssid(struct wlan_objmgr_pdev *pdev,
 				      uint8_t *bssid, uint8_t *vdev_id);
+
+/**
+ * wlan_get_connected_vdev_from_psoc_by_bssid() - check/get any vdev
+ *                                                connected on bssid
+ * @psoc: psoc object
+ * @bssid: bssid to be checked
+ * @vdev_id: vdev id
+ *
+ * This function will loop through all the vdev in psoc and find/return the
+ * vdev which is connected to bssid provided.
+ *
+ * Return: bool
+ */
+bool wlan_get_connected_vdev_from_psoc_by_bssid(struct wlan_objmgr_psoc *psoc,
+						uint8_t *bssid,
+						uint8_t *vdev_id);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_get_connected_vdev_by_mld_addr() - check/get any vdev
+ *                                         connected on mld mac
+ * @psoc: psoc object
+ * @mld_mac: mld mac to be checked
+ * @vdev_id: vdev id
+ *
+ * This function will loop through all the vdev in psoc and find/return the
+ * first vdev which is connected to mld mac provided.
+ *
+ * Return: bool
+ */
+bool wlan_get_connected_vdev_by_mld_addr(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *mld_mac, uint8_t *vdev_id);
+#endif
 
 /**
  * wlan_util_stats_get_rssi() - API to get rssi in dbm

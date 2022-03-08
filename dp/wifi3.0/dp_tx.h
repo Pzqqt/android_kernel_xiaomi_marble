@@ -232,6 +232,28 @@ QDF_STATUS dp_tx_tso_cmn_desc_pool_alloc(struct dp_soc *soc,
 QDF_STATUS dp_tx_tso_cmn_desc_pool_init(struct dp_soc *soc,
 					uint8_t num_pool,
 					uint16_t num_desc);
+void dp_tx_comp_free_buf(struct dp_soc *soc, struct dp_tx_desc_s *desc);
+void dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id);
+void dp_tx_compute_delay(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
+			 uint8_t tid, uint8_t ring_id);
+void dp_tx_comp_process_tx_status(struct dp_soc *soc,
+				  struct dp_tx_desc_s *tx_desc,
+				  struct hal_tx_completion_status *ts,
+				  struct dp_peer *peer, uint8_t ring_id);
+void dp_tx_comp_process_desc(struct dp_soc *soc,
+			     struct dp_tx_desc_s *desc,
+			     struct hal_tx_completion_status *ts,
+			     struct dp_peer *peer);
+void dp_tx_reinject_handler(struct dp_soc *soc,
+			    struct dp_vdev *vdev,
+			    struct dp_tx_desc_s *tx_desc,
+			    uint8_t *status);
+void dp_tx_inspect_handler(struct dp_soc *soc,
+			   struct dp_vdev *vdev,
+			   struct dp_tx_desc_s *tx_desc,
+			   uint8_t *status);
+void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
+				   uint8_t tx_status, bool update);
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 /**

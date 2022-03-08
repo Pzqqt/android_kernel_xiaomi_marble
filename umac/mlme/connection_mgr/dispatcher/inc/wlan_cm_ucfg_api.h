@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -187,4 +188,12 @@ const char *ucfg_cm_reason_code_to_str(enum wlan_reason_code reason)
 {
 	return wlan_cm_reason_code_to_str(reason);
 }
+
+/**
+ * ucfg_cm_get_connected_band() - Get the connected band information
+ * @vdev: vdev to get the band for connected band
+ *
+ * Return: enum band_info
+ */
+enum band_info ucfg_cm_get_connected_band(struct wlan_objmgr_vdev *vdev);
 #endif /* __WLAN_CM_UCFG_API_H */

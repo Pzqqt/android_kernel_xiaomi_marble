@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -372,6 +372,42 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+static inline
+void reg_get_coex_unsafe_chan_nb_user_prefer(
+		struct wlan_regulatory_psoc_priv_obj
+		*psoc_priv_obj,
+		 struct reg_config_vars config_vars)
+{
+	psoc_priv_obj->coex_unsafe_chan_nb_user_prefer =
+		config_vars.coex_unsafe_chan_nb_user_prefer;
+}
+
+static inline
+void reg_get_coex_unsafe_chan_reg_disable(
+		struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj,
+		struct reg_config_vars config_vars)
+{
+	psoc_priv_obj->coex_unsafe_chan_reg_disable =
+		config_vars.coex_unsafe_chan_reg_disable;
+}
+#else
+static inline
+void reg_get_coex_unsafe_chan_nb_user_prefer(
+		struct wlan_regulatory_psoc_priv_obj
+		*psoc_priv_obj,
+		struct reg_config_vars config_vars)
+{
+}
+
+static inline
+void reg_get_coex_unsafe_chan_reg_disable(
+		struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj,
+		struct reg_config_vars config_vars)
+{
 }
 #endif
 
@@ -793,6 +829,8 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 		config_vars.enable_5dot9_ghz_chan_in_master_mode;
 	psoc_priv_obj->retain_nol_across_regdmn_update =
 		config_vars.retain_nol_across_regdmn_update;
+	reg_get_coex_unsafe_chan_nb_user_prefer(psoc_priv_obj, config_vars);
+	reg_get_coex_unsafe_chan_reg_disable(psoc_priv_obj, config_vars);
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_REGULATORY_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {

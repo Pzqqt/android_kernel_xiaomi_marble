@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -775,7 +775,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	if (!mon_ops)
 		return 0;
 
-	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+	dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  FL("Max_mac_rings %d "),
@@ -1373,7 +1373,7 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 	soc = pdev->soc;
 	pdev->cfr_rcc_mode = false;
 	max_mac_rings = wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
-	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+	dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	dp_mon_debug("Max_mac_rings %d", max_mac_rings);
 	dp_mon_info("enable : %d, mode: 0x%x", enable, filter_val->mode);
@@ -2270,13 +2270,25 @@ QDF_STATUS dp_mon_pdev_init(struct dp_pdev *pdev)
 		mon_ops->rx_mon_desc_pool_init(pdev);
 
 	/* allocate buffers and replenish the monitor RxDMA ring */
-	if (mon_ops->rx_mon_buffers_alloc)
-		mon_ops->rx_mon_buffers_alloc(pdev);
+	if (mon_ops->rx_mon_buffers_alloc) {
+		if (mon_ops->rx_mon_buffers_alloc(pdev)) {
+			dp_mon_err("%pK: rx mon buffers alloc failed", pdev);
+			goto fail2;
+		}
+	}
 
 	dp_tx_ppdu_stats_attach(pdev);
 	mon_pdev->is_dp_mon_pdev_initialized = true;
 
 	return QDF_STATUS_SUCCESS;
+
+fail2:
+	if (mon_ops->rx_mon_desc_pool_deinit)
+		mon_ops->rx_mon_desc_pool_deinit(pdev);
+
+	if (mon_ops->mon_rings_deinit)
+		mon_ops->mon_rings_deinit(pdev);
+
 fail1:
 	dp_htt_ppdu_stats_detach(pdev);
 fail0:

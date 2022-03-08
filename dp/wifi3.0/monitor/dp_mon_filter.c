@@ -36,7 +36,7 @@ dp_mon_ht2_rx_ring_cfg(struct dp_soc *soc,
 	 * Overwrite the max_mac_rings for the status rings.
 	 */
 	if (srng_type == DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS)
-		dp_is_hw_dbs_enable(soc, &max_mac_rings);
+		dp_update_num_mac_rings_for_dbs(soc, &max_mac_rings);
 
 	dp_mon_filter_info("%pK: srng type %d Max_mac_rings %d ",
 			   soc, srng_type, max_mac_rings);

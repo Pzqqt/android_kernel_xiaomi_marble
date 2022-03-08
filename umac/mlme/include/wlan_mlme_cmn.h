@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <include/wlan_pdev_mlme.h>
 #include <include/wlan_vdev_mlme.h>
 #include "wlan_cm_public_struct.h"
+#include "wlan_twt_public_structs.h"
 
 /**
  * mlme_cm_ops: connection manager osif callbacks
@@ -125,6 +126,90 @@ struct mlme_vdev_mgr_ops {
 	QDF_STATUS (*mlme_vdev_mgr_set_mac_addr_response)(uint8_t vdev_id,
 							  uint8_t resp_status);
 #endif
+};
+
+/**
+ * struct mlme_twt_ops: twt component osif callbacks
+ * @mlme_twt_enable_complete_cb: TWT enable complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ * @context: context
+ *
+ * @mlme_twt_disable_complete_cb: TWT disable complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ * @context: context
+ *
+ * @mlme_twt_ack_complete_cb: TWT ack complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ * @context: context
+ *
+ * @mlme_twt_setup_complete_cb: TWT setup complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ * @renego_fail: flag to indicate if renegotiation failure case
+ *
+ * @mlme_twt_teardown_complete_cb: TWT teardown complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ *
+ * @mlme_twt_pause_complete_cb: TWT pause complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ *
+ * @mlme_twt_resume_complete_cb: TWT resume complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ *
+ * @mlme_twt_nudge_complete_cb: TWT nudge complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ *
+ * @mlme_twt_notify_complete_cb: TWT notify complete callback
+ * @psoc: psoc pointer
+ * @event: response
+ */
+struct mlme_twt_ops {
+	QDF_STATUS (*mlme_twt_enable_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_enable_complete_event_param *event,
+			void *context);
+
+	QDF_STATUS (*mlme_twt_disable_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_disable_complete_event_param *event,
+			void *context);
+
+	QDF_STATUS (*mlme_twt_ack_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_ack_complete_event_param *event,
+			void *context);
+
+	QDF_STATUS (*mlme_twt_setup_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_add_dialog_complete_event *event,
+			bool renego_fail);
+
+	QDF_STATUS (*mlme_twt_teardown_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_del_dialog_complete_event_param *event);
+
+	QDF_STATUS (*mlme_twt_pause_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_pause_dialog_complete_event_param *event);
+
+	QDF_STATUS (*mlme_twt_resume_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_resume_dialog_complete_event_param *event);
+
+	QDF_STATUS (*mlme_twt_nudge_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_nudge_dialog_complete_event_param *event);
+
+	QDF_STATUS (*mlme_twt_notify_complete_cb)(
+			struct wlan_objmgr_psoc *psoc,
+			struct twt_notify_event_param *event);
 };
 
 /**
@@ -755,6 +840,11 @@ mlme_cm_osif_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
 typedef struct mlme_cm_ops *(*osif_cm_get_global_ops_cb)(void);
 
 /**
+ * typedef osif_twt_get_global_ops_cb() - Callback to get twt global ops
+ */
+typedef struct mlme_twt_ops *(*osif_twt_get_global_ops_cb)(void);
+
+/**
  * mlme_set_osif_cm_cb() - Sets ops registration callback
  * @cm_osif_ops:  Function pointer
  *
@@ -780,6 +870,16 @@ typedef struct mlme_vdev_mgr_ops *(*osif_vdev_mgr_get_global_ops_cb)(void);
  */
 void mlme_set_osif_vdev_mgr_cb(
 		osif_vdev_mgr_get_global_ops_cb mlme_vdev_mgr_osif_ops);
+
+/**
+ * mlme_set_osif_twt_cb() - Sets twt ops registration callback
+ * @twt_osif_ops:  Function pointer
+ *
+ * API to set twt ops registration call back
+ *
+ * Return: void
+ */
+void mlme_set_osif_twt_cb(osif_twt_get_global_ops_cb twt_osif_ops);
 
 /**
  * mlme_max_chan_switch_is_set() - Get if max chan switch IE is enabled
@@ -817,4 +917,180 @@ QDF_STATUS mlme_vdev_ops_send_set_mac_address(struct qdf_mac_addr mac_addr,
 void mlme_vdev_mgr_notify_set_mac_addr_response(uint8_t vdev_id,
 						uint8_t resp_status);
 #endif
+
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
+/**
+ * mlme_twt_osif_enable_complete_ind() - enable complete resp to osif
+ * @psoc: psoc pointer
+ * @event: enable complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_enable_complete_ind(struct wlan_objmgr_psoc *psoc,
+				  struct twt_enable_complete_event_param *event,
+				  void *context);
+
+/**
+ * mlme_twt_osif_disable_complete_ind() - disable complete resp to osif
+ * @psoc: psoc pointer
+ * @event: disable complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_disable_complete_ind(struct wlan_objmgr_psoc *psoc,
+				 struct twt_disable_complete_event_param *event,
+				 void *context);
+
+/**
+ * mlme_twt_osif_ack_complete_ind() - ack complete resp to osif
+ * @psoc: psoc pointer
+ * @event: ack complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_ack_complete_ind(struct wlan_objmgr_psoc *psoc,
+			       struct twt_ack_complete_event_param *event,
+			       void *context);
+
+/**
+ * mlme_twt_osif_setup_complete_ind() - setup complete resp to osif
+ * @psoc: psoc pointer
+ * @event: setup complete response
+ * @renego_fail: flag to indicate if renegotiation failure case
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_setup_complete_ind(struct wlan_objmgr_psoc *psoc,
+				 struct twt_add_dialog_complete_event *event,
+				 bool renego_fail);
+
+/**
+ * mlme_twt_osif_teardown_complete_ind() - teardown complete resp to osif
+ * @psoc: psoc pointer
+ * @event: teardown complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_teardown_complete_ind(struct wlan_objmgr_psoc *psoc,
+			     struct twt_del_dialog_complete_event_param *event);
+
+/**
+ * mlme_twt_osif_pause_complete_ind() - pause complete resp to osif
+ * @psoc: psoc pointer
+ * @event: pause complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_pause_complete_ind(struct wlan_objmgr_psoc *psoc,
+			   struct twt_pause_dialog_complete_event_param *event);
+
+/**
+ * mlme_twt_osif_resume_complete_ind() - resume complete resp to osif
+ * @psoc: psoc pointer
+ * @event: resume complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_resume_complete_ind(struct wlan_objmgr_psoc *psoc,
+			  struct twt_resume_dialog_complete_event_param *event);
+
+/**
+ * mlme_twt_osif_nudge_complete_ind() - nudge complete resp to osif
+ * @psoc: psoc pointer
+ * @event: nudge complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_nudge_complete_ind(struct wlan_objmgr_psoc *psoc,
+			   struct twt_nudge_dialog_complete_event_param *event);
+
+/**
+ * mlme_twt_osif_notify_complete_ind() - notify complete resp to osif
+ * @psoc: psoc pointer
+ * @event: notify complete response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_osif_notify_complete_ind(struct wlan_objmgr_psoc *psoc,
+				  struct twt_notify_event_param *event);
+
+#else
+static inline QDF_STATUS
+mlme_twt_osif_enable_complete_ind(struct wlan_objmgr_psoc *psoc,
+				  struct twt_enable_complete_event_param *event,
+				  void *context)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_disable_complete_ind(struct wlan_objmgr_psoc *psoc,
+				 struct twt_disable_complete_event_param *event,
+				 void *context)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_ack_complete_ind(struct wlan_objmgr_psoc *psoc,
+			       struct twt_ack_complete_event_param *event,
+			       void *context)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_setup_complete_ind(struct wlan_objmgr_psoc *psoc,
+				 struct twt_add_dialog_complete_event *event,
+				 bool renego_fail)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_teardown_complete_ind(struct wlan_objmgr_psoc *psoc,
+			      struct twt_del_dialog_complete_event_param *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_pause_complete_ind(struct wlan_objmgr_psoc *psoc,
+			    struct twt_pause_dialog_complete_event_param *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_resume_complete_ind(struct wlan_objmgr_psoc *psoc,
+			   struct twt_resume_dialog_complete_event_param *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_nudge_complete_ind(struct wlan_objmgr_psoc *psoc,
+			    struct twt_nudge_dialog_complete_event_param *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_osif_notify_complete_ind(struct wlan_objmgr_psoc *psoc,
+				  struct twt_notify_event_param *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /* WLAN_SUPPORT_TWT && WLAN_TWT_CONV_SUPPORTED */
+
 #endif

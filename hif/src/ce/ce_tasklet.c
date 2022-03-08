@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -392,11 +392,11 @@ static void ce_tasklet(unsigned long data)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
-	if (scn->ce_latency_stats)
-		hif_record_tasklet_exec_entry_ts(scn, tasklet_entry->ce_id);
-
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
 				 HIF_CE_TASKLET_ENTRY, NULL, NULL, -1, 0);
+
+	if (scn->ce_latency_stats)
+		hif_record_tasklet_exec_entry_ts(scn, tasklet_entry->ce_id);
 
 	hif_latency_detect_tasklet_exec(scn, tasklet_entry);
 
@@ -414,9 +414,6 @@ static void ce_tasklet(unsigned long data)
 		 * Enable the interrupt only when there is no pending frames in
 		 * any of the Copy Engine pipes.
 		 */
-		hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
-				HIF_CE_TASKLET_RESCHEDULE, NULL, NULL, -1, 0);
-
 		if (test_bit(TASKLET_STATE_SCHED,
 			     &tasklet_entry->intr_tq.state)) {
 			hif_info("ce_id%d tasklet was scheduled, return",
@@ -424,6 +421,10 @@ static void ce_tasklet(unsigned long data)
 			qdf_atomic_dec(&scn->active_tasklet_cnt);
 			return;
 		}
+
+		hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
+					 HIF_CE_TASKLET_RESCHEDULE,
+					 NULL, NULL, -1, 0);
 
 		ce_tasklet_schedule(tasklet_entry);
 		hif_latency_detect_tasklet_sched(scn, tasklet_entry);

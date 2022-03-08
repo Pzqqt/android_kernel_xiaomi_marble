@@ -4604,4 +4604,18 @@ QDF_STATUS wmi_extract_update_mac_address_event(wmi_unified_t wmi_handle,
 						void *evt_buf, uint8_t *vdev_id,
 						uint8_t *status);
 #endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wmi_extract_quiet_offload_event() - Extra mlo sta quiet IE offload event
+ * @wmi_handle: WMI handle
+ * @evt_buf: event buffer
+ * @quiet_event: pointer to struct vdev_sta_quiet_event
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_quiet_offload_event(
+				struct wmi_unified *wmi_handle, void *evt_buf,
+				struct vdev_sta_quiet_event *quiet_event);
+#endif
 #endif /* _WMI_UNIFIED_API_H_ */

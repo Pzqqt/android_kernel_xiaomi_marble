@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1380,6 +1381,7 @@ static int __hif_pm_runtime_prevent_suspend(struct hif_softc *scn,
 		return 0;
 
 	ret = __hif_pm_runtime_get(dev);
+	hif_debug("request runtime PM resume, rtpm_dbgid %s", lock->name);
 
 	/**
 	 * The ret can be -EINPROGRESS, if Runtime status is RPM_RESUMING or

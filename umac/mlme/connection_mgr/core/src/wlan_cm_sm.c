@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -120,6 +120,20 @@ static bool cm_state_init_event(void *ctx, uint16_t event,
 		 * failure to the requester
 		 */
 		event_handled = false;
+		break;
+	case WLAN_CM_SM_EV_ROAM_SYNC:
+		/**
+		 * If it's a legacy to MLO roaming, bringup the link vdev to
+		 * process ROAM_SYNC indication on the link vdev.
+		 */
+		if (wlan_vdev_mlme_is_mlo_link_vdev(cm_ctx->vdev)) {
+			cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
+			cm_sm_deliver_event_sync(cm_ctx,
+						 WLAN_CM_SM_EV_ROAM_SYNC,
+						 data_len, data);
+		} else {
+			event_handled = false;
+		}
 		break;
 	default:
 		event_handled = false;

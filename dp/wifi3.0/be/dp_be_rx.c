@@ -576,7 +576,8 @@ done:
 		DP_RX_TID_SAVE(nbuf, tid);
 		if (qdf_unlikely(rx_pdev->delay_stats_flag) ||
 		    qdf_unlikely(wlan_cfg_is_peer_ext_stats_enabled(
-				 soc->wlan_cfg_ctx)))
+				 soc->wlan_cfg_ctx)) ||
+		    dp_rx_pkt_tracepoints_enabled())
 			qdf_nbuf_set_timestamp(nbuf);
 
 		enh_flag = rx_pdev->enhanced_stats_en;
