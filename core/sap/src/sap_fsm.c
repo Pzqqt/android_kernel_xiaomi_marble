@@ -977,20 +977,6 @@ static bool sap_process_liberal_scc_for_go(struct sap_context *sap_context)
 }
 #endif
 
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
-static inline
-uint8_t sap_get_restriction_mask(struct sap_context *sap_context)
-{
-	return sap_context->restriction_mask;
-}
-#else
-static inline
-uint8_t sap_get_restriction_mask(struct sap_context *sap_context)
-{
-	return -EINVAL;
-}
-#endif
-
 QDF_STATUS
 sap_validate_chan(struct sap_context *sap_context,
 		  bool pre_start_bss,
@@ -1136,14 +1122,6 @@ sap_validate_chan(struct sap_context *sap_context,
 validation_done:
 	sap_debug("for configured channel, Ch_freq = %d",
 		  sap_context->chan_freq);
-
-	if (!policy_mgr_is_safe_channel(mac_ctx->psoc,
-					sap_context->chan_freq) &&
-	   (sap_get_restriction_mask(sap_context) ==
-	    NL80211_IFTYPE_AP)) {
-		sap_warn("Abort SAP start due to unsafe channel");
-		return QDF_STATUS_E_ABORTED;
-	}
 
 	if (check_for_connection_update) {
 		/* This wait happens in the hostapd context. The event
