@@ -4809,7 +4809,7 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 	else
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
 
-	if (vdev->opmode == wlan_op_mode_sta)
+	if (vdev->opmode == wlan_op_mode_sta && !vdev->tdls_link_connected)
 		vdev->search_type = soc->sta_mode_search_policy;
 	else
 		vdev->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;

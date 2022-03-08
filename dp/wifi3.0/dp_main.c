@@ -9548,8 +9548,8 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		break;
 	}
 
-	dsoc->arch_ops.txrx_set_vdev_param(dsoc, vdev, param, val);
 	dp_tx_vdev_update_search_flags((struct dp_vdev *)vdev);
+	dsoc->arch_ops.txrx_set_vdev_param(dsoc, vdev, param, val);
 	dp_vdev_unref_delete(dsoc, vdev, DP_MOD_ID_CDP);
 
 	return QDF_STATUS_SUCCESS;
