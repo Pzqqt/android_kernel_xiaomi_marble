@@ -3385,7 +3385,7 @@ void
 lim_mlo_roam_delete_link_peer(struct pe_session *pe_session,
 			      tpDphHashNode sta_ds)
 {
-	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_peer *peer = NULL;
 	struct mac_context *mac;
 
 	mac = cds_get_context(QDF_MODULE_ID_PE);
@@ -3405,6 +3405,10 @@ lim_mlo_roam_delete_link_peer(struct pe_session *pe_session,
 	peer = wlan_objmgr_get_peer_by_mac(mac->psoc,
 					   sta_ds->staAddr,
 					   WLAN_LEGACY_MAC_ID);
+	if (!peer) {
+		mlo_err("Peer is null");
+		return;
+	}
 
 	wlan_mlo_link_peer_delete(peer);
 
