@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2320,20 +2320,6 @@ static void mlme_init_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
-static void mlme_init_unsafe_coex_cfg(struct wlan_objmgr_psoc *psoc,
-				      struct wlan_mlme_reg *reg)
-{
-	reg->coex_unsafe_chan_nb_user_prefer =
-		cfg_get(psoc, CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER);
-}
-#else
-static void mlme_init_unsafe_coex_cfg(struct wlan_objmgr_psoc *psoc,
-				      struct wlan_mlme_reg *reg)
-{
-}
-#endif
-
 static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
@@ -2360,7 +2346,6 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT_FOR_NAN);
 
 	mlme_init_acs_avoid_freq_list(psoc, reg);
-	mlme_init_unsafe_coex_cfg(psoc, reg);
 }
 
 static void

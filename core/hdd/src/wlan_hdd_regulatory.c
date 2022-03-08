@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -210,33 +210,6 @@ void hdd_reset_global_reg_params(void)
 	init_by_reg_core = false;
 }
 
-/**
- * hdd_update_coex_unsafe_chan_nb_user_prefer() - update coex unsafe
- * nb prefer framework
- * @hdd_ctx: hdd context
- * @config_vars: reg config
- *
- * Return: void
- */
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
-static inline
-void hdd_update_coex_unsafe_chan_nb_user_prefer(
-		struct hdd_context *hdd_ctx,
-		struct reg_config_vars *config_vars)
-{
-	config_vars->coex_unsafe_chan_nb_user_prefer =
-		ucfg_mlme_get_coex_unsafe_chan_nb_user_prefer(
-		hdd_ctx->psoc);
-}
-#else
-static inline
-void hdd_update_coex_unsafe_chan_nb_user_prefer(
-		struct hdd_context *hdd_ctx,
-		struct reg_config_vars *config_vars)
-{
-}
-#endif
-
 static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 				    struct reg_config_vars *config_vars)
 {
@@ -302,7 +275,6 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 						    &enable_5dot9_ghz_chan);
 	config_vars->enable_5dot9_ghz_chan_in_master_mode =
 						enable_5dot9_ghz_chan;
-	hdd_update_coex_unsafe_chan_nb_user_prefer(hdd_ctx, config_vars);
 }
 
 /**
