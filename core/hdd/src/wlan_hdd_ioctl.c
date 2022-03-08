@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -522,7 +522,13 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
  * @pdev: pdev object
  *
  * This function parses the reasoc command data passed in the format
- * REASSOC<space><bssid><space><channel/frequency>
+ * REASSOC<space><bssid><space><channel/frequency>.
+ *
+ * If reassoc MAC from user space is broadcast MAC as:
+ * "wpa_cli DRIVER FASTREASSOC ff:ff:ff:ff:ff:ff 0",
+ * user space invoked roaming candidate selection will base on firmware score
+ * algorithm, current connection will be kept if current AP has highest
+ * score. It is requirement from customer which can avoid ping-pong roaming.
  *
  * Return: 0 for success non-zero for failure
  */

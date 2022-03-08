@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -331,6 +332,23 @@ void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
 			      QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX)       \
 },
 
+/**
+ * hdd_get_twt_requestor() - Get TWT requestor config
+ * @psoc: global psoc object
+ * @val: output variable to store the value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_get_twt_requestor(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * hdd_get_twt_responder() - Get TWT responder config
+ * @psoc: global psoc object
+ * @val: output variable to store the value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_get_twt_responder(struct wlan_objmgr_psoc *psoc, bool *val);
 #else
 static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 					  struct wma_tgt_cfg *cfg)
@@ -424,6 +442,20 @@ void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
 				      struct qdf_mac_addr *mac_addr,
 				      uint8_t vdev_id)
 {
+}
+
+static inline
+QDF_STATUS hdd_get_twt_requestor(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS hdd_get_twt_responder(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 #define FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT

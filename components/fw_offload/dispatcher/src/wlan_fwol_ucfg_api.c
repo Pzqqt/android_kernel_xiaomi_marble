@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -791,6 +792,26 @@ QDF_STATUS ucfg_fwol_get_enable_tx_sch_delay(struct wlan_objmgr_psoc *psoc,
 	*enable_tx_sch_delay = fwol_obj->cfg.enable_tx_sch_delay;
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_OFDM_SCRAMBLER_SEED
+QDF_STATUS ucfg_fwol_get_ofdm_scrambler_seed(struct wlan_objmgr_psoc *psoc,
+					     bool *enable_ofdm_scrambler_seed)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		*enable_ofdm_scrambler_seed =
+				cfg_default(CFG_ENABLE_OFDM_SCRAMBLER_SEED);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_ofdm_scrambler_seed =
+				fwol_obj->cfg.enable_ofdm_scrambler_seed;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS ucfg_fwol_get_enable_secondary_rate(struct wlan_objmgr_psoc *psoc,
 					       uint32_t *enable_secondary_rate)

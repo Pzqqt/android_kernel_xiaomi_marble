@@ -25,6 +25,7 @@
 #include "wmi_unified.h"
 #include "service_ready_param.h"
 #include "target_if.h"
+#include "wma_internal.h"
 
 #if defined(WLAN_FEATURE_11BE)
 /**
@@ -496,5 +497,45 @@ void wma_set_peer_assoc_params_bw_320(struct peer_assoc_params *params,
 {
 	if (ch_width == CH_WIDTH_320MHZ)
 		params->bw_320 = 1;
+}
+
+void wma_set_eht_txbf_cfg(struct mac_context *mac, uint8_t vdev_id)
+{
+	wma_set_eht_txbf_params(
+		vdev_id, mac->mlme_cfg->eht_caps.dot11_eht_cap.su_beamformer,
+		mac->mlme_cfg->eht_caps.dot11_eht_cap.su_beamformee,
+		mac->mlme_cfg->eht_caps.dot11_eht_cap.mu_bformer_le_80mhz ||
+		mac->mlme_cfg->eht_caps.dot11_eht_cap.mu_bformer_160mhz ||
+		mac->mlme_cfg->eht_caps.dot11_eht_cap.mu_bformer_320mhz);
+}
+
+void wma_set_eht_txbf_params(uint8_t vdev_id, bool su_bfer,
+			     bool su_bfee, bool mu_bfer)
+{
+	uint32_t ehtmu_mode = 0;
+	QDF_STATUS status;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma)
+		return;
+
+	if (su_bfer)
+		WMI_VDEV_EHT_SUBFER_ENABLE(ehtmu_mode);
+	if (su_bfee) {
+		WMI_VDEV_EHT_SUBFEE_ENABLE(ehtmu_mode);
+		WMI_VDEV_EHT_MUBFEE_ENABLE(ehtmu_mode);
+	}
+	if (mu_bfer)
+		WMI_VDEV_EHT_MUBFER_ENABLE(ehtmu_mode);
+
+	WMI_VDEV_EHT_DLOFDMA_ENABLE(ehtmu_mode);
+	WMI_VDEV_EHT_ULOFDMA_ENABLE(ehtmu_mode);
+
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				    WMI_VDEV_PARAM_SET_EHT_MU_MODE, ehtmu_mode);
+	wma_debug("set EHTMU_MODE (ehtmu_mode = 0x%x)", ehtmu_mode);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_err("failed to set EHTMU_MODE(status = %d)", status);
 }
 #endif

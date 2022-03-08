@@ -1376,6 +1376,7 @@ policy_mgr_check_and_get_third_connection_pcl_table_index_for_scc(
  */
 static enum policy_mgr_two_connection_mode
 policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+			struct wlan_objmgr_psoc *psoc,
 			enum policy_mgr_two_connection_mode mcc_2g_1x1,
 			enum policy_mgr_two_connection_mode mcc_2g_2x2,
 			enum policy_mgr_two_connection_mode mcc_5g_1x1,
@@ -1385,7 +1386,10 @@ policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 
-	if (pm_conc_connection_list[0].mac == pm_conc_connection_list[1].mac) {
+	if (policy_mgr_are_2_freq_on_same_mac(psoc,
+					      pm_conc_connection_list[0].freq,
+					      pm_conc_connection_list[1].freq)
+					     ) {
 		if ((WLAN_REG_IS_24GHZ_CH_FREQ(
 		    pm_conc_connection_list[0].freq)) &&
 		    (WLAN_REG_IS_24GHZ_CH_FREQ(
@@ -1429,6 +1433,7 @@ policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
  */
 static enum policy_mgr_two_connection_mode
 policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+			struct wlan_objmgr_psoc *psoc,
 			enum policy_mgr_two_connection_mode sbs_5g_1x1,
 			enum policy_mgr_two_connection_mode sbs_5g_2x2,
 			enum policy_mgr_two_connection_mode dbs_1x1,
@@ -1436,7 +1441,10 @@ policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 
-	if (pm_conc_connection_list[0].mac != pm_conc_connection_list[1].mac) {
+	if (!policy_mgr_are_2_freq_on_same_mac(psoc,
+					       pm_conc_connection_list[0].freq,
+					       pm_conc_connection_list[1].freq)
+					      ) {
 		/* SBS */
 		if (!(WLAN_REG_IS_24GHZ_CH_FREQ(
 		    pm_conc_connection_list[0].freq)) &&
@@ -1461,7 +1469,8 @@ policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_cli_sap(void)
+policy_mgr_get_third_connection_pcl_table_index_cli_sap(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 
@@ -1475,7 +1484,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_P2P_CLI_SAP_MCC_24_1x1,
 					PM_P2P_CLI_SAP_MCC_24_2x2,
 					PM_P2P_CLI_SAP_MCC_5_1x1,
@@ -1487,7 +1496,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_P2P_CLI_SAP_SBS_5_1x1,
 					PM_P2P_CLI_SAP_SBS_5_2x2,
 					PM_P2P_CLI_SAP_DBS_1x1,
@@ -1497,7 +1506,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_sta_sap(void)
+policy_mgr_get_third_connection_pcl_table_index_sta_sap(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 
@@ -1511,7 +1521,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_STA_SAP_MCC_24_1x1,
 					PM_STA_SAP_MCC_24_2x2,
 					PM_STA_SAP_MCC_5_1x1,
@@ -1523,7 +1533,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_STA_SAP_SBS_5_1x1,
 					PM_STA_SAP_SBS_5_2x2,
 					PM_STA_SAP_DBS_1x1,
@@ -1533,7 +1543,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_sap_sap(void)
+policy_mgr_get_third_connection_pcl_table_index_sap_sap(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 
@@ -1547,7 +1558,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_SAP_SAP_MCC_24_1x1,
 					PM_SAP_SAP_MCC_24_2x2,
 					PM_SAP_SAP_MCC_5_1x1,
@@ -1559,7 +1570,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_SAP_SAP_SBS_5_1x1,
 					PM_SAP_SAP_SBS_5_2x2,
 					PM_SAP_SAP_DBS_1x1,
@@ -1569,7 +1580,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_sta_go(void)
+policy_mgr_get_third_connection_pcl_table_index_sta_go(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 
@@ -1583,7 +1595,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_STA_P2P_GO_MCC_24_1x1,
 					PM_STA_P2P_GO_MCC_24_2x2,
 					PM_STA_P2P_GO_MCC_5_1x1,
@@ -1595,7 +1607,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_STA_P2P_GO_SBS_5_1x1,
 					PM_STA_P2P_GO_SBS_5_2x2,
 					PM_STA_P2P_GO_DBS_1x1,
@@ -1605,7 +1617,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_sta_cli(void)
+policy_mgr_get_third_connection_pcl_table_index_sta_cli(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 
@@ -1619,7 +1632,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_STA_P2P_CLI_MCC_24_1x1,
 					PM_STA_P2P_CLI_MCC_24_2x2,
 					PM_STA_P2P_CLI_MCC_5_1x1,
@@ -1631,7 +1644,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_STA_P2P_CLI_SBS_5_1x1,
 					PM_STA_P2P_CLI_SBS_5_2x2,
 					PM_STA_P2P_CLI_DBS_1x1,
@@ -1641,7 +1654,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_go_cli(void)
+policy_mgr_get_third_connection_pcl_table_index_go_cli(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index;
 
@@ -1655,7 +1669,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_P2P_GO_P2P_CLI_MCC_24_1x1,
 					PM_P2P_GO_P2P_CLI_MCC_24_2x2,
 					PM_P2P_GO_P2P_CLI_MCC_5_1x1,
@@ -1667,7 +1681,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_P2P_GO_P2P_CLI_SBS_5_1x1,
 					PM_P2P_GO_P2P_CLI_SBS_5_2x2,
 					PM_P2P_GO_P2P_CLI_DBS_1x1,
@@ -1677,7 +1691,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_go_sap(void)
+policy_mgr_get_third_connection_pcl_table_index_go_sap(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index;
 
@@ -1691,7 +1706,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_P2P_GO_SAP_MCC_24_1x1,
 					PM_P2P_GO_SAP_MCC_24_2x2,
 					PM_P2P_GO_SAP_MCC_5_1x1,
@@ -1703,7 +1718,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_P2P_GO_SAP_SBS_5_1x1,
 					PM_P2P_GO_SAP_SBS_5_2x2,
 					PM_P2P_GO_SAP_DBS_1x1,
@@ -1713,7 +1728,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_sta_sta(void)
+policy_mgr_get_third_connection_pcl_table_index_sta_sta(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index;
 
@@ -1727,7 +1743,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_STA_STA_MCC_24_1x1,
 					PM_STA_STA_MCC_24_2x2,
 					PM_STA_STA_MCC_5_1x1,
@@ -1739,7 +1755,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_STA_STA_SBS_5_1x1,
 					PM_STA_STA_SBS_5_2x2,
 					PM_STA_STA_DBS_1x1,
@@ -1749,7 +1765,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_cli_cli(void)
+policy_mgr_get_third_connection_pcl_table_index_cli_cli(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index;
 
@@ -1763,7 +1780,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_P2P_CLI_P2P_CLI_MCC_24_1x1,
 					PM_P2P_CLI_P2P_CLI_MCC_24_2x2,
 					PM_P2P_CLI_P2P_CLI_MCC_5_1x1,
@@ -1775,7 +1792,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_P2P_CLI_P2P_CLI_SBS_5_1x1,
 					PM_P2P_CLI_P2P_CLI_SBS_5_2x2,
 					PM_P2P_CLI_P2P_CLI_DBS_1x1,
@@ -1785,7 +1802,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_go_go(void)
+policy_mgr_get_third_connection_pcl_table_index_go_go(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index;
 
@@ -1799,7 +1817,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_mcc(psoc,
 					PM_P2P_GO_P2P_GO_MCC_24_1x1,
 					PM_P2P_GO_P2P_GO_MCC_24_2x2,
 					PM_P2P_GO_P2P_GO_MCC_5_1x1,
@@ -1810,7 +1828,7 @@ static enum policy_mgr_two_connection_mode
 		return index;
 
 	index =
-	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(
+	policy_mgr_check_and_get_third_connection_pcl_table_index_for_dbs(psoc,
 					PM_P2P_GO_P2P_GO_SBS_5_1x1,
 					PM_P2P_GO_P2P_GO_SBS_5_2x2,
 					PM_P2P_GO_P2P_GO_DBS_1x1,
@@ -1819,7 +1837,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_nan_ndi(void)
+policy_mgr_get_third_connection_pcl_table_index_nan_ndi(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 	/* SCC */
@@ -1831,16 +1850,16 @@ static enum policy_mgr_two_connection_mode
 		else
 			index = PM_NAN_DISC_NDI_SCC_24_2x2;
 	/* MCC */
-	} else if (pm_conc_connection_list[0].mac ==
-		pm_conc_connection_list[1].mac) {
+	} else if (policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[1].freq)) {
 		/* Policy mgr only considers NAN Disc ch in 2.4GHz */
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_NAN_DISC_NDI_MCC_24_1x1;
 		else
 			index = PM_NAN_DISC_NDI_MCC_24_2x2;
 	/* DBS */
-	} else if (pm_conc_connection_list[0].mac !=
-			pm_conc_connection_list[1].mac) {
+	} else {
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_NAN_DISC_NDI_DBS_1x1;
 		else
@@ -1850,7 +1869,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_sta_nan(void)
+policy_mgr_get_third_connection_pcl_table_index_sta_nan(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 	/* SCC */
@@ -1862,16 +1882,16 @@ static enum policy_mgr_two_connection_mode
 		else
 			index = PM_STA_NAN_DISC_SCC_24_2x2;
 	/* MCC */
-	} else if (pm_conc_connection_list[0].mac ==
-		pm_conc_connection_list[1].mac) {
+	} else if (policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[1].freq)) {
 		/* Policy mgr only considers NAN Disc ch in 2.4 GHz */
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_STA_NAN_DISC_MCC_24_1x1;
 		else
 			index = PM_STA_NAN_DISC_MCC_24_2x2;
 	/* DBS */
-	} else if (pm_conc_connection_list[0].mac !=
-			pm_conc_connection_list[1].mac) {
+	} else {
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_STA_NAN_DISC_DBS_1x1;
 		else
@@ -1881,7 +1901,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index_sap_nan(void)
+policy_mgr_get_third_connection_pcl_table_index_sap_nan(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 	/* SCC */
@@ -1893,16 +1914,16 @@ static enum policy_mgr_two_connection_mode
 		else
 			index = PM_SAP_NAN_DISC_SCC_24_2x2;
 	/* MCC */
-	} else if (pm_conc_connection_list[0].mac ==
-		pm_conc_connection_list[1].mac) {
+	} else if (policy_mgr_are_2_freq_on_same_mac(psoc,
+			pm_conc_connection_list[0].freq,
+			pm_conc_connection_list[1].freq)) {
 		/* Policy mgr only considers NAN Disc ch in 2.4GHz */
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_SAP_NAN_DISC_MCC_24_1x1;
 		else
 			index = PM_SAP_NAN_DISC_MCC_24_2x2;
 	/* DBS */
-	} else if (pm_conc_connection_list[0].mac !=
-			pm_conc_connection_list[1].mac) {
+	} else {
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_SAP_NAN_DISC_DBS_1x1;
 		else
@@ -1912,8 +1933,8 @@ static enum policy_mgr_two_connection_mode
 }
 
 enum policy_mgr_two_connection_mode
-		policy_mgr_get_third_connection_pcl_table_index(
-		struct wlan_objmgr_psoc *psoc)
+policy_mgr_get_third_connection_pcl_table_index(
+					struct wlan_objmgr_psoc *psoc)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1930,74 +1951,74 @@ enum policy_mgr_two_connection_mode
 		((PM_SAP_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_cli_sap();
+		policy_mgr_get_third_connection_pcl_table_index_cli_sap(psoc);
 	else if (((PM_STA_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_SAP_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_SAP_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_STA_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_sta_sap();
+		policy_mgr_get_third_connection_pcl_table_index_sta_sap(psoc);
 	else if ((PM_SAP_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_SAP_MODE == pm_conc_connection_list[1].mode))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_sap_sap();
+		policy_mgr_get_third_connection_pcl_table_index_sap_sap(psoc);
 	else if (((PM_STA_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_P2P_GO_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_P2P_GO_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_STA_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_sta_go();
+		policy_mgr_get_third_connection_pcl_table_index_sta_go(psoc);
 	else if (((PM_STA_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_STA_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_sta_cli();
+		policy_mgr_get_third_connection_pcl_table_index_sta_cli(psoc);
 	else if (((PM_P2P_GO_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_P2P_CLIENT_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_P2P_CLIENT_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_P2P_GO_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_go_cli();
+		policy_mgr_get_third_connection_pcl_table_index_go_cli(psoc);
 	else if (((PM_SAP_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_P2P_GO_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_P2P_GO_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_SAP_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_go_sap();
+		policy_mgr_get_third_connection_pcl_table_index_go_sap(psoc);
 	else if (((PM_STA_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_STA_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_STA_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_STA_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_sta_sta();
+		policy_mgr_get_third_connection_pcl_table_index_sta_sta(psoc);
 	else if (((PM_NAN_DISC_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_STA_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_STA_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_sta_nan();
+		policy_mgr_get_third_connection_pcl_table_index_sta_nan(psoc);
 	else if (((PM_NAN_DISC_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_NDI_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_NDI_MODE == pm_conc_connection_list[0].mode) &&
 		(PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_nan_ndi();
+		policy_mgr_get_third_connection_pcl_table_index_nan_ndi(psoc);
 	else if (((PM_SAP_MODE == pm_conc_connection_list[0].mode) &&
 		  (PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)) ||
 		((PM_NAN_DISC_MODE == pm_conc_connection_list[0].mode) &&
 		 (PM_SAP_MODE == pm_conc_connection_list[1].mode)))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_sap_nan();
+		policy_mgr_get_third_connection_pcl_table_index_sap_nan(psoc);
 	else if ((pm_conc_connection_list[0].mode == PM_P2P_GO_MODE) &&
 		 (pm_conc_connection_list[1].mode == PM_P2P_GO_MODE))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_go_go();
+		policy_mgr_get_third_connection_pcl_table_index_go_go(psoc);
 
 	else if ((pm_conc_connection_list[0].mode == PM_P2P_CLIENT_MODE) &&
 		 (pm_conc_connection_list[1].mode == PM_P2P_CLIENT_MODE))
 		index =
-		policy_mgr_get_third_connection_pcl_table_index_cli_cli();
+		policy_mgr_get_third_connection_pcl_table_index_cli_cli(psoc);
 
 	policy_mgr_debug("mode0:%d mode1:%d freq0:%d freq1:%d chain:%d index:%d",
 			 pm_conc_connection_list[0].mode,
@@ -2529,7 +2550,39 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/*
+	 * If both freq leads to SBS, and sap_ch_freq is a mandatory freq,
+	 * allow it as they are not interfering.
+	 */
+	if (policy_mgr_are_sbs_chan(psoc, sap_ch_freq, *intf_ch_freq)) {
+		for (i = 0; i < pcl.pcl_len; i++) {
+			if (pcl.pcl_list[i] == sap_ch_freq) {
+				policy_mgr_debug("As both freq, %d and %d are SBS, allow sap on mandatory freq %d",
+						 sap_ch_freq, *intf_ch_freq,
+						 sap_ch_freq);
+				*intf_ch_freq = 0;
+				return QDF_STATUS_SUCCESS;
+			}
+		}
+	}
+
+	/*
+	 * If intf_ch_freq is non-2.4Ghz, First try to get a mandatory freq
+	 * which can cause SBS with intf_ch_freq. i.e if STA is in lower 5Ghz,
+	 * allow higher 5Ghz mandatory freq.
+	 */
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq)) {
+		for (i = 0; i < pcl.pcl_len; i++) {
+			if (policy_mgr_are_sbs_chan(psoc, pcl.pcl_list[i],
+						    *intf_ch_freq)) {
+				sap_new_freq = pcl.pcl_list[i];
+				goto update_freq;
+			}
+		}
+	}
+
 	sap_new_freq = pcl.pcl_list[0];
+	/* If no SBS Try get SCC freq */
 	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq) ||
 	    (WLAN_REG_IS_5GHZ_CH_FREQ(sap_ch_freq) &&
 	     WLAN_REG_IS_5GHZ_CH_FREQ(*intf_ch_freq))) {
@@ -2541,6 +2594,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
+update_freq:
 	*intf_ch_freq = sap_new_freq;
 	policy_mgr_debug("mandatory channel:%d org sap ch %d", *intf_ch_freq,
 			 sap_ch_freq);

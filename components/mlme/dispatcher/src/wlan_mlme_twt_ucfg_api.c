@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,8 @@
 #include "cfg_mlme_twt.h"
 #include "wlan_mlme_twt_ucfg_api.h"
 
-#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX)
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) && \
+	!defined(WLAN_TWT_CONV_SUPPORTED)
 QDF_STATUS
 ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
 			    bool *val)
@@ -258,6 +259,19 @@ ucfg_mlme_set_twt_nudge_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val)
 	mlme_obj->cfg.twt_cfg.is_twt_nudge_tgt_cap_enabled = val;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_mlme_get_twt_peer_bcast_capabilities(struct wlan_objmgr_psoc *psoc,
+					       struct qdf_mac_addr *peer_mac)
+{
+	uint8_t peer_cap;
+
+	peer_cap = mlme_get_twt_peer_capabilities(psoc, peer_mac);
+
+	if (peer_cap & WLAN_TWT_CAPA_BROADCAST)
+		return true;
+
+	return false;
 }
 
 bool ucfg_mlme_get_twt_peer_responder_capabilities(

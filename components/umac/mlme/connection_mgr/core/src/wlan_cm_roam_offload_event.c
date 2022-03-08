@@ -37,6 +37,7 @@
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
 #include "wlan_roam_debug.h"
+#include "wlan_mlo_mgr_roam.h"
 
 #define FW_ROAM_SYNC_TIMEOUT 7000
 
@@ -183,6 +184,13 @@ QDF_STATUS cm_add_fw_roam_cmd_to_list_n_ser(struct cnx_mgr *cm_ctx,
 		qdf_mem_free(cm_req);
 		return status;
 	}
+
+	/**
+	 * Skip adding dummy SER command for MLO link vdev. It's expected to add
+	 * only for MLO sta in case of MLO connection
+	 */
+	if (wlan_vdev_mlme_is_mlo_link_vdev(cm_ctx->vdev))
+		return status;
 
 	status = cm_add_fw_roam_dummy_ser_cb(pdev, cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -353,8 +361,12 @@ cm_roam_sync_event_handler(struct wlan_objmgr_psoc *psoc,
 			   uint32_t len,
 			   struct roam_offload_synch_ind *sync_ind)
 {
-	return cm_fw_roam_sync_req(psoc, sync_ind->roamed_vdev_id,
-				   sync_ind, sizeof(sync_ind));
+	if (sync_ind && sync_ind->hw_mode_trans_present)
+		cm_handle_roam_sync_update_hw_mode(
+			&sync_ind->hw_mode_trans_ind);
+
+	return mlo_fw_roam_sync_req(psoc, sync_ind->roamed_vdev_id,
+				    sync_ind, sizeof(sync_ind));
 }
 
 QDF_STATUS
@@ -363,13 +375,15 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct rso_config *rso_cfg;
+	struct roam_synch_frame_ind *sync_frame_ind = frame_ind;
+	struct roam_synch_frame_ind *roam_synch_frame_ind;
 	uint8_t vdev_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!frame_ind)
+	if (!sync_frame_ind)
 		return QDF_STATUS_E_NULL_VALUE;
 
-	vdev_id = frame_ind->vdev_id;
+	vdev_id = sync_frame_ind->vdev_id;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_SB_ID);
@@ -384,6 +398,8 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 		goto err;
 	}
 
+	roam_synch_frame_ind = &rso_cfg->roam_sync_frame_ind;
+
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id)) {
 		mlme_err("Ignoring this event as it is unexpected");
 		wlan_cm_free_roam_synch_frame_ind(rso_cfg);
@@ -391,8 +407,28 @@ cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
 		goto err;
 	}
 
-	wlan_cm_free_roam_synch_frame_ind(rso_cfg);
-	rso_cfg->roam_sync_frame_ind = *frame_ind;
+	if (sync_frame_ind->bcn_probe_rsp_len) {
+		roam_synch_frame_ind->bcn_probe_rsp_len =
+			sync_frame_ind->bcn_probe_rsp_len;
+		roam_synch_frame_ind->is_beacon =
+			sync_frame_ind->is_beacon;
+		roam_synch_frame_ind->bcn_probe_rsp =
+			sync_frame_ind->bcn_probe_rsp;
+	}
+
+	if (sync_frame_ind->reassoc_req_len) {
+		roam_synch_frame_ind->reassoc_req_len =
+				sync_frame_ind->reassoc_req_len;
+		roam_synch_frame_ind->reassoc_req =
+			sync_frame_ind->reassoc_req;
+	}
+
+	if (sync_frame_ind->reassoc_rsp_len) {
+		roam_synch_frame_ind->reassoc_rsp_len =
+				sync_frame_ind->reassoc_rsp_len;
+		roam_synch_frame_ind->reassoc_rsp =
+			sync_frame_ind->reassoc_rsp;
+	}
 
 err:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
@@ -408,6 +444,7 @@ QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct rso_config *rso_cfg;
 	uint16_t ie_len = 0;
+	uint8_t vdev_id;
 
 	sync_ind = (struct roam_offload_synch_ind *)event;
 
@@ -427,6 +464,7 @@ QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	vdev_id = wlan_vdev_get_id(vdev);
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (!rso_cfg)
 		return QDF_STATUS_E_NULL_VALUE;
@@ -441,14 +479,15 @@ QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 					  QDF_PROTO_TYPE_EVENT,
 					  QDF_ROAM_SYNCH));
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, sync_ind->roamed_vdev_id)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, sync_ind->roamed_vdev_id) &&
+	    !is_multi_link_roam(sync_ind)) {
 		mlme_err("Ignoring RSI since one is already in progress");
 		status = QDF_STATUS_E_FAILURE;
 		goto err;
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(cm_fw_roam_sync_start_ind(vdev,
-							     sync_ind->roam_reason))) {
+							     sync_ind))) {
 		mlme_err("LFR3: CSR Roam synch cb failed");
 		wlan_cm_free_roam_synch_frame_ind(rso_cfg);
 		goto err;
@@ -465,13 +504,14 @@ QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (QDF_IS_STATUS_ERROR(cm_roam_pe_sync_callback(sync_ind,
+							 vdev_id,
 							 ie_len))) {
 		mlme_err("LFR3: PE roam synch cb failed");
 		status = QDF_STATUS_E_BUSY;
 		goto err;
 	}
 
-	cm_roam_update_vdev(sync_ind);
+	cm_roam_update_vdev(sync_ind, vdev_id);
 	/*
 	 * update phy_mode in wma to avoid mismatch in phymode between host and
 	 * firmware. The phymode stored in peer->peer_mlme.phymode is
@@ -484,11 +524,12 @@ QDF_STATUS cm_roam_sync_event_handler_cb(struct wlan_objmgr_vdev *vdev,
 				  sync_ind->bssid.bytes,
 				  &sync_ind->chan);
 	cm_fw_roam_sync_propagation(psoc,
-				    sync_ind->roamed_vdev_id,
+				    vdev_id,
 				    sync_ind);
 
 err:
 	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_mlo_roam_abort_on_link(psoc, sync_ind);
 		cm_fw_roam_abort_req(psoc, sync_ind->roamed_vdev_id);
 		cm_roam_stop_req(psoc, sync_ind->roamed_vdev_id,
 				 REASON_ROAM_SYNCH_FAILED);

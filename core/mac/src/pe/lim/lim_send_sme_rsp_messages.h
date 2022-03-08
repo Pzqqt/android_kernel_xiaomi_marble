@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,6 +208,13 @@ void lim_send_sme_set_context_rsp(struct mac_context *mac,
 void lim_handle_delete_bss_rsp(struct mac_context *mac,
 				struct del_bss_resp *del_bss_rsp);
 
+/**
+ * lim_handle_csa_offload_msg() - Handle CSA offload message
+ * @mac_ctx:         pointer to global adapter context
+ * @msg:             Message pointer.
+ *
+ * Return: None
+ */
 void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				struct scheduler_msg *msg);
 
@@ -262,11 +270,16 @@ void
 lim_process_beacon_tx_success_ind(struct mac_context *mac, uint16_t msgType,
 				  void *event);
 
-typedef enum {
-	lim_csa_ie_present = 0x00000001,
-	lim_xcsa_ie_present = 0x00000002,
-	lim_wbw_ie_present = 0x00000004,
-	lim_cswarp_ie_present = 0x00000008,
-} lim_csa_event_ies_present_flag;
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * lim_handle_mlo_sta_csa_param() - handle mlo sta csa parameters
+ * @vdev: vdev
+ * @csa_params: csa parameters
+ *
+ * Return: None
+ */
+void lim_handle_mlo_sta_csa_param(struct wlan_objmgr_vdev *vdev,
+				  struct csa_offload_params *csa_params);
+#endif /* WLAN_FEATURE_11BE_MLO */
 
 #endif /* __LIM_SEND_SME_RSP_H */

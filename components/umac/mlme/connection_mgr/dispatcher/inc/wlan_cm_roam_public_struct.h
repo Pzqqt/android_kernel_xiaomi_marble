@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1786,6 +1786,8 @@ struct wlan_roam_update_config {
  * transitioned after candidate selection is done at fw and preauth to
  * the AP is started.
  * @WLAN_ROAM_SYNCH_IN_PROG: Roaming handoff complete
+ * @WLAN_MLO_ROAM_SYNCH_IN_PROG: MLO Roam sync is ongoing,
+ * only used for ml links.
  */
 enum roam_offload_state {
 	WLAN_ROAM_DEINIT,
@@ -1794,6 +1796,7 @@ enum roam_offload_state {
 	WLAN_ROAM_RSO_STOPPED,
 	WLAN_ROAMING_IN_PROG,
 	WLAN_ROAM_SYNCH_IN_PROG,
+	WLAN_MLO_ROAM_SYNCH_IN_PROG,
 };
 
 #define WLAN_ROAM_SCAN_CANDIDATE_AP 0
@@ -2355,12 +2358,14 @@ struct cm_hw_mode_trans_ind {
  * @link_id: link id of the link
  * @channel: wmi channel
  * @flags: link flags
+ * @link_addr: link mac addr
  */
 struct ml_setup_link_param {
 	uint32_t vdev_id;
 	uint32_t link_id;
 	wmi_channel channel;
 	uint32_t flags;
+	struct qdf_mac_addr link_addr;
 };
 
 /*
@@ -2416,6 +2421,7 @@ struct roam_offload_synch_ind {
 #endif
 	uint8_t *ric_tspec_data;
 	uint16_t aid;
+	bool hw_mode_trans_present;
 	struct cm_hw_mode_trans_ind hw_mode_trans_ind;
 	uint8_t nss;
 	struct qdf_mac_addr dst_mac;

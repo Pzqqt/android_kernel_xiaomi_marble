@@ -52,6 +52,30 @@
 #endif
 #endif
 
+#define PLD_LIMIT_LOG_FOR_SEC 6
+/**
+ * __PLD_TRACE_RATE_LIMITED() - rate limited version of PLD_TRACE
+ * @params: parameters to pass through to PLD_TRACE
+ *
+ * This API prevents logging a message more than once in PLD_LIMIT_LOG_FOR_SEC
+ * seconds. This means any subsequent calls to this API from the same location
+ * within PLD_LIMIT_LOG_FOR_SEC seconds will be dropped.
+ *
+ * Return: None
+ */
+#define __PLD_TRACE_RATE_LIMITED(params...)\
+	do {\
+		static ulong __last_ticks;\
+		ulong __ticks = jiffies;\
+		if (time_after(__ticks,\
+			       __last_ticks + (HZ * PLD_LIMIT_LOG_FOR_SEC))) {\
+			pr_err(params);\
+			__last_ticks = __ticks;\
+		} \
+	} while (0)
+
+#define pld_err_rl(params...) __PLD_TRACE_RATE_LIMITED(params)
+
 /**
  * enum pld_bus_type - bus type
  * @PLD_BUS_TYPE_NONE: invalid bus type, only return in error cases

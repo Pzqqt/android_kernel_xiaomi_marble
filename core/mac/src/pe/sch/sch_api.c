@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,6 +50,49 @@
 #ifdef WLAN_FEATURE_11BE_MLO
 #include "lim_mlo.h"
 #endif
+
+#include <target_if_vdev_mgr_tx_ops.h>
+#include <wlan_cmn_ieee80211.h>
+#include <wlan_mgmt_txrx_utils_api.h>
+
+/* Fils Dicovery Frame */
+/**
+ * struct fd_action_header - FILS Discovery Action frame header
+ * @action_header: WLAN Action frame header
+ * @fd_frame_cntl: FILS Disovery Frame Control
+ * @timestamp:     Time stamp
+ * @bcn_interval:  Beacon Interval
+ * @elem:          variable len sub element fields
+ */
+struct fd_action_header {
+	struct action_frm_hdr action_header;
+	uint16_t              fd_frame_cntl;
+	uint8_t               timestamp[WLAN_TIMESTAMP_LEN];
+	uint16_t              bcn_interval;
+	uint8_t               elem[];
+} qdf_packed;
+
+/**
+ * struct tpe_ie - Transmit Power Enevolpe IE
+ * @tpe_header:           WLAN IE Header
+ * @max_tx_pwr_count:     Maximum Transmit Power Count
+ * @max_tx_pwr_interpret: Maximum Transmit Power Interpretation
+ * @max_tx_pwr_category:  Maximum Transmit Power category
+ * @tx_pwr_info:          Transmit power Information
+ * @elem:                 variable len sub element fields
+ */
+struct tpe_ie {
+	struct ie_header tpe_header;
+	union {
+		struct {
+			uint8_t max_tx_pwr_count:3;
+			uint8_t max_tx_pwr_interpret:3;
+			uint8_t max_tx_pwr_category:2;
+		};
+		uint8_t tx_pwr_info;
+	};
+	uint8_t elem[];
+} qdf_packed;
 
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
@@ -124,6 +167,418 @@ static void lim_update_sch_mlo_partner(struct mac_context *mac,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * lim_fd_cap_channel_width320() - populate the capability field for
+ * 320 channel width in the fils discovery template
+ * @pe_session: pointer to pe session
+ * @fd_cap: pointer to fils discovery capability variable
+ *
+ * Return: void
+ */
+static void lim_fd_cap_channel_width320(struct pe_session *pe_session,
+					uint8_t *fd_cap)
+{
+	if (pe_session->ch_width == CH_WIDTH_320MHZ) {
+		*fd_cap |= (WLAN_FD_CHWIDTH_320 << WLAN_FD_CAP_BSS_CHWIDTH_S);
+	} else {
+		pe_err("channel width : %d is not supported",
+		       pe_session->ch_width);
+	}
+}
+
+/**
+ * lim_populate_fd_capability() - populate the capability field for
+ * EHT phymode in the fils discovery template
+ * @cur_phymode: current phymode
+ * @fd_cap: pointer to fils discovery capability variable
+ *
+ * Return: void
+ */
+static void lim_fd_cap_phymode_EHT(enum wlan_phymode phymode, uint8_t *fd_cap)
+{
+	switch (phymode) {
+	case WLAN_PHYMODE_11BEA_EHT20:
+	case WLAN_PHYMODE_11BEG_EHT20:
+	case WLAN_PHYMODE_11BEA_EHT40:
+	case WLAN_PHYMODE_11BEG_EHT40:
+	case WLAN_PHYMODE_11BEG_EHT40PLUS:
+	case WLAN_PHYMODE_11BEG_EHT40MINUS:
+	case WLAN_PHYMODE_11BEA_EHT80:
+	case WLAN_PHYMODE_11BEA_EHT160:
+	case WLAN_PHYMODE_11BEA_EHT320:
+		*fd_cap |= (WLAN_FD_CAP_PHY_INDEX_EHT <<
+						WLAN_FD_CAP_PHY_INDEX_S);
+		break;
+	default:
+		*fd_cap |= (WLAN_FD_CAP_PHY_INDEX_NON_HT_OFDM <<
+						WLAN_FD_CAP_PHY_INDEX_S);
+		break;
+	}
+}
+#else
+static void lim_fd_cap_channel_width320(struct pe_session *pe_session,
+					uint8_t *fd_cap)
+{
+	pe_err("channel width : %d is not supported", pe_session->ch_width);
+}
+
+static void lim_fd_cap_phymode_EHT(enum wlan_phymode phymode, uint8_t *fd_cap)
+{
+	*fd_cap |= (WLAN_FD_CAP_PHY_INDEX_NON_HT_OFDM <<
+						WLAN_FD_CAP_PHY_INDEX_S);
+}
+#endif /* WLAN_FEATURE_11BE */
+
+/**
+ * lim_populate_fd_capability() - populate the capability field in the
+ * fils discovery template
+ * @pe_session: pointer to pe session
+ * @cur_phymode: current phymode
+ * @fd_cap: pointer to fils discovery capability array
+ *
+ * Return: void
+ */
+static void lim_populate_fd_capability(struct pe_session *pe_session,
+				       enum wlan_phymode cur_phymode,
+				       uint8_t *fd_cap)
+{
+	/* Setting ESS and Privacy bits */
+	fd_cap[0] |= ((!WLAN_FD_CAP_ESS_ENABLE << WLAN_FD_CAP_ESS_S) |
+		((pe_session->privacy) << WLAN_FD_CAP_PRIVACY_S));
+
+	/* Channel Width Selection */
+	switch (pe_session->ch_width) {
+	case CH_WIDTH_20MHZ:
+		fd_cap[0] |= (WLAN_FD_CHWIDTH_20 << WLAN_FD_CAP_BSS_CHWIDTH_S);
+		break;
+	case CH_WIDTH_40MHZ:
+		fd_cap[0] |= (WLAN_FD_CHWIDTH_40 << WLAN_FD_CAP_BSS_CHWIDTH_S);
+		break;
+	case CH_WIDTH_80MHZ:
+		fd_cap[0] |= (WLAN_FD_CHWIDTH_80 << WLAN_FD_CAP_BSS_CHWIDTH_S);
+		break;
+	case CH_WIDTH_160MHZ:
+	case CH_WIDTH_80P80MHZ:
+		fd_cap[0] |= (WLAN_FD_CHWIDTH_160_80_80 <<
+						WLAN_FD_CAP_BSS_CHWIDTH_S);
+		break;
+	default:
+		lim_fd_cap_channel_width320(pe_session, &fd_cap[0]);
+		break;
+	}
+
+	/* Max Num of Spatial Steam */
+	switch (pe_session->nss) {
+	case WLAN_FD_CAP_NSS_MODE_1:
+	case WLAN_FD_CAP_NSS_MODE_2:
+		fd_cap[0] |= ((pe_session->nss - 1) << WLAN_FD_CAP_NSS_S);
+		break;
+	case WLAN_FD_CAP_NSS_MODE_3:
+	case WLAN_FD_CAP_NSS_MODE_4:
+	case WLAN_FD_CAP_NSS_MODE_5:
+	case WLAN_FD_CAP_NSS_MODE_6:
+	case WLAN_FD_CAP_NSS_MODE_7:
+	case WLAN_FD_CAP_NSS_MODE_8:
+		fd_cap[0] |= (WLAN_FD_CAP_NSS_GTE_5 << WLAN_FD_CAP_NSS_S);
+		break;
+	default:
+		pe_err("NSS value: %d is not supported", pe_session->nss);
+		break;
+	}
+
+	/* Set PHY index */
+	switch (cur_phymode) {
+	case WLAN_PHYMODE_11AXA_HE20:
+	case WLAN_PHYMODE_11AXG_HE20:
+	case WLAN_PHYMODE_11AXA_HE40:
+	case WLAN_PHYMODE_11AXG_HE40:
+	case WLAN_PHYMODE_11AXG_HE40PLUS:
+	case WLAN_PHYMODE_11AXG_HE40MINUS:
+	case WLAN_PHYMODE_11AXA_HE80:
+	case WLAN_PHYMODE_11AXA_HE160:
+	case WLAN_PHYMODE_11AXA_HE80_80:
+		fd_cap[1] |= (WLAN_FD_CAP_PHY_INDEX_HE <<
+					WLAN_FD_CAP_PHY_INDEX_S);
+		break;
+	case WLAN_PHYMODE_11AC_VHT20:
+	case WLAN_PHYMODE_11AC_VHT40:
+	case WLAN_PHYMODE_11AC_VHT80:
+	case WLAN_PHYMODE_11AC_VHT160:
+	case WLAN_PHYMODE_11AC_VHT80_80:
+		fd_cap[1] |= (WLAN_FD_CAP_PHY_INDEX_VHT <<
+					WLAN_FD_CAP_PHY_INDEX_S);
+		break;
+	case WLAN_PHYMODE_11NA_HT20:
+	case WLAN_PHYMODE_11NG_HT20:
+	case WLAN_PHYMODE_11NG_HT40PLUS:
+	case WLAN_PHYMODE_11NG_HT40MINUS:
+	case WLAN_PHYMODE_11NG_HT40:
+	case WLAN_PHYMODE_11NA_HT40:
+		fd_cap[1] |= (WLAN_FD_CAP_PHY_INDEX_HT <<
+					WLAN_FD_CAP_PHY_INDEX_S);
+		break;
+	default:
+		lim_fd_cap_phymode_EHT(cur_phymode, &fd_cap[1]);
+		break;
+	}
+
+	/* FILS Min Rate */
+	fd_cap[1] |= (WLAN_FD_CAP_MIN_RATE << WLAN_FD_CAP_MIN_RATE_S);
+}
+
+/**
+ * lim_populate_fd_tmpl_frame() - populate the fils discovery frame
+ * @mac: pointer to mac structure
+ * @frm: pointer to fils discovery frame
+ * @pe_session:pointer to pe session
+ * @frame_size: pointer to fils discovery frame size
+ *
+ * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
+ */
+static QDF_STATUS lim_populate_fd_tmpl_frame(struct mac_context *mac,
+					     struct pe_session *pe_session,
+					     uint8_t *frm, uint32_t *frame_size)
+{
+	uint16_t fd_cntl_subfield = 0;
+	struct fd_action_header *fd_header;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t fd_cap[WLAN_FD_CAP_LEN] = {0};
+	uint8_t length = 0;
+	uint8_t ssid_len = 0, ssid[WLAN_SSID_MAX_LEN + 1] = {0};
+	uint32_t shortssid;
+	uint16_t chwidth = pe_session->ch_width;
+	qdf_freq_t cur_chan_freq = pe_session->curr_op_freq;
+	struct wlan_channel *des_chan;
+	enum wlan_phymode cur_phymode;
+	uint16_t tpe_num = 0;
+	tDot11fIEtransmit_power_env tpe[WLAN_MAX_NUM_TPE_IE];
+	struct tpe_ie *tpe_ie;
+	uint8_t i, idx;
+	tSirMacMgmtHdr *mac_hdr;
+	struct qdf_mac_addr broadcast_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
+
+	pe_debug("FD TMPL freq: %d chWidth: %d", cur_chan_freq, chwidth);
+
+	vdev = pe_session->vdev;
+	if (!vdev) {
+		pe_err("VDEV is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+	if (!des_chan) {
+		pe_err("des_chan is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cur_phymode = des_chan->ch_phymode;
+
+	lim_populate_mac_header(mac, frm, SIR_MAC_MGMT_FRAME,
+				SIR_MAC_MGMT_ACTION, broadcast_mac_addr.bytes,
+				pe_session->self_mac_addr);
+	mac_hdr = (tpSirMacMgmtHdr)frm;
+	sir_copy_mac_addr(mac_hdr->bssId, pe_session->bssId);
+	frm += sizeof(*mac_hdr);
+	*frame_size = sizeof(*mac_hdr);
+
+	/* filling fd header */
+	fd_header = (struct fd_action_header *)frm;
+	fd_header->action_header.action_category = ACTION_CATEGORY_PUBLIC;
+	fd_header->action_header.action_code  = WLAN_ACTION_FILS_DISCOVERY;
+
+	/*
+	 * FILS DIscovery Frame Control Subfield - 2 byte
+	 * Enable Short SSID
+	 * When the Short SSID Indicator subfield is equal to 1,
+	 * the SSID Length subfield is equal to 3
+	 */
+	fd_cntl_subfield = WLAN_FD_SSID_LEN_PRES(WLAN_FD_FRAMECNTL_SHORTSSID_LEN);
+	fd_cntl_subfield |= WLAN_FD_FRAMECNTL_SHORTSSID;
+
+	if (wlan_reg_is_6ghz_chan_freq(cur_chan_freq)) {
+		fd_cntl_subfield |= WLAN_FD_FRAMECNTL_CAP;
+		pe_debug("FD Capability Present");
+		length = WLAN_FD_CAP_LEN;
+	}
+
+	/* For 80+80 set Channel center freq segment 1 */
+	if (IS_WLAN_PHYMODE_160MHZ(cur_phymode)) {
+		fd_cntl_subfield |= WLAN_FD_FRAMECNTL_CH_CENTERFREQ;
+		pe_debug("Center frequenceny Present");
+		length += 1;
+	}
+
+	/* Update the length field */
+	/*Indicates length from FD cap to Mobility Domain */
+	if (length)
+		fd_cntl_subfield |= WLAN_FD_FRAMECNTL_LEN_PRES;
+
+	/* FD Control - 2 bytes */
+	fd_header->fd_frame_cntl = qdf_cpu_to_le16(fd_cntl_subfield);
+
+	/* Timestamp - 8 bytes */
+	qdf_mem_zero(fd_header->timestamp, sizeof(fd_header->timestamp));
+
+	/* Beacon Interval - 2 bytes */
+	fd_header->bcn_interval =
+		qdf_cpu_to_le16(pe_session->beaconParams.beaconInterval);
+
+	*frame_size += sizeof(*fd_header);
+
+	/* Variable length data */
+	frm = &fd_header->elem[0];
+
+	/* Short SSID - 4 bytes */
+	wlan_vdev_mlme_get_ssid(vdev, ssid, &ssid_len);
+	shortssid = wlan_construct_shortssid(ssid, ssid_len);
+	*(uint32_t *)frm = qdf_cpu_to_le32(shortssid);
+	frm += 4;
+	*frame_size += 4;
+	pe_debug("Category:%02x Action:%02x  fd_cntl:%02x bcn_intvl:%02x short ssid:%02x frame_size:%02x",
+		 fd_header->action_header.action_category,
+		 fd_header->action_header.action_code, fd_cntl_subfield,
+		 fd_header->bcn_interval, shortssid, *frame_size);
+
+	/* Length - 1 byte */
+	if (length) {
+		*frm = length;
+		pe_debug("length: %d", length);
+		frm++;
+		*frame_size += length + 1;
+	}
+
+	/* FD Capabilities - 2 bytes */
+	if (WLAN_FD_IS_CAP_PRESENT(fd_cntl_subfield)) {
+		lim_populate_fd_capability(pe_session, cur_phymode, &fd_cap[0]);
+		qdf_mem_copy(frm, fd_cap, WLAN_FD_CAP_LEN);
+		frm += WLAN_FD_CAP_LEN;
+		pe_debug("fd_cap: %02x %02x", fd_cap[0], fd_cap[1]);
+	}
+
+	/* Channel Center Freq Segment 1 - 1 byte */
+	if (WLAN_FD_IS_FRAMECNTL_CH_CENTERFREQ(fd_cntl_subfield)) {
+		/* spec has seg0 and seg1 naming while we use seg1 and seg2 */
+		*frm = des_chan->ch_freq_seg1;
+		frm++;
+		pe_debug("ch_center_freq: %02x", des_chan->ch_freq_seg1);
+	}
+
+	/* Add TPE IE */
+	if ((wlan_reg_is_6ghz_chan_freq(cur_chan_freq)) ||
+	    (pe_session->vhtCapability)) {
+		populate_dot11f_tx_power_env(mac, &tpe[0], chwidth,
+					     cur_chan_freq, &tpe_num, false);
+		pe_debug("tpe_num: %02x", tpe_num);
+		if (tpe_num > WLAN_MAX_NUM_TPE_IE) {
+			pe_err("tpe_num  %d greater than max size", tpe_num);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		for (idx = 0; idx < tpe_num; idx++) {
+			/* filling tpe_header header */
+			tpe_ie = (struct tpe_ie *)frm;
+			tpe_ie->tpe_header.ie_id = WLAN_ELEMID_VHT_TX_PWR_ENVLP;
+
+			if (tpe[idx].num_tx_power > WLAN_MAX_NUM_TPE_IE) {
+				pe_err("num_tx_power %d greater than max num",
+				       tpe[idx].num_tx_power);
+				return QDF_STATUS_E_FAILURE;
+			}
+
+			/* +1 for including tx power info */
+			tpe_ie->tpe_header.ie_len  = tpe[idx].num_tx_power + 1;
+
+			if (tpe_ie->tpe_header.ie_len < WLAN_TPE_IE_MIN_LEN ||
+			    tpe_ie->tpe_header.ie_len > WLAN_TPE_IE_MAX_LEN) {
+				pe_err("tpe length %d less than min len or greater than max len",
+				       tpe_ie->tpe_header.ie_len);
+				return QDF_STATUS_E_FAILURE;
+			}
+
+			tpe_ie->max_tx_pwr_count = tpe[idx].max_tx_pwr_count;
+			tpe_ie->max_tx_pwr_interpret =
+						tpe[idx].max_tx_pwr_interpret;
+			tpe_ie->max_tx_pwr_category =
+						tpe[idx].max_tx_pwr_category;
+			pe_debug("tx_pwr_info: %02x", tpe_ie->tx_pwr_info);
+			frm = &tpe_ie->elem[0];
+
+			for (i = 0; i < tpe[idx].num_tx_power; i++) {
+				*frm = tpe[idx].tx_power[i];
+				pe_debug("tx_pwr[%d]: %02x", i, *frm);
+				frm++;
+			}
+
+			/* +2 for including element id and length */
+			*frame_size += tpe_ie->tpe_header.ie_len + 2;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * lim_send_fils_discovery_template() - send fils discovery template to
+ * target_if
+ * @mac: pointer to mac structure
+ * @pe_session:pe session
+ *
+ * return: status
+ */
+static QDF_STATUS lim_send_fils_discovery_template(struct mac_context *mac,
+						   struct pe_session *pe_session)
+{
+	struct fils_discovery_tmpl_params *fd_params;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint32_t n_bytes = sizeof(*fd_params);
+
+	fd_params = qdf_mem_malloc(n_bytes);
+
+	if (!fd_params)
+		return QDF_STATUS_E_NOMEM;
+
+	fd_params->vdev_id = pe_session->vdev_id;
+
+	fd_params->frm = qdf_mem_malloc(SIR_MAX_FD_TMPL_SIZE);
+	if (!(fd_params->frm)) {
+		qdf_mem_free(fd_params);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = lim_populate_fd_tmpl_frame(mac, pe_session, fd_params->frm,
+					    &n_bytes);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("FAIL bytes %d retcode[%X]", n_bytes, status);
+		goto memfree;
+	}
+
+	pe_debug("Fils Discovery template created successfully %d", n_bytes);
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			   fd_params->frm, n_bytes);
+
+	fd_params->tmpl_len = n_bytes;
+	fd_params->tmpl_len_aligned = roundup(fd_params->tmpl_len,
+					      sizeof(uint32_t));
+
+	/* Sending data to wmi layer via target_if */
+	status = target_if_vdev_mgr_send_fd_tmpl(pe_session->vdev,
+						 fd_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("FAIL bytes %d retcode[%X]", n_bytes, status);
+	} else {
+		pe_debug("Fils Discovery tmpl msg posted to HAL of bytes %d",
+			 n_bytes);
+	}
+
+memfree:
+	qdf_mem_free(fd_params->frm);
+	qdf_mem_free(fd_params);
+	return status;
+}
+
 QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 			       uint16_t size, struct pe_session *pe_session,
 			       enum sir_bcn_update_reason reason)
@@ -143,6 +598,11 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 		if (QDF_STATUS_SUCCESS != retCode)
 			pe_err("FAILED to send probe response template with retCode %d",
 				retCode);
+		/*Fils Discovery Template */
+		retCode = lim_send_fils_discovery_template(mac, pe_session);
+		if (QDF_STATUS_SUCCESS != retCode)
+			pe_err("FAILED to send fils discovery template retCode %d",
+			       retCode);
 	}
 
 	beaconParams = qdf_mem_malloc(sizeof(tSendbeaconParams));

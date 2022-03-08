@@ -1364,6 +1364,15 @@ cm_handle_roam_reason_invoke_roam_fail(uint8_t vdev_id,	uint32_t notif_params,
 				       struct cm_hw_mode_trans_ind *trans_ind);
 
 /**
+ * cm_handle_roam_sync_update_hw_mode() - Handler for roam sync hw mode update
+ * @trans_ind: hw_mode transition indication
+ *
+ * Return: None
+ */
+void
+cm_handle_roam_sync_update_hw_mode(struct cm_hw_mode_trans_ind *trans_ind);
+
+/**
  * cm_handle_roam_reason_deauth() - Handler for roam due to deauth from AP
  * @vdev_id: vdev id
  * @notif_params: contains roam invoke fail reason from wmi_roam_invoke_error_t
@@ -1499,6 +1508,7 @@ cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data);
 /**
  * cm_roam_update_vdev() - Update the STA and BSS
  * @sync_ind: Information needed for roam sync propagation
+ * @vdev_id: vdev id
  *
  * This function will perform all the vdev related operations with
  * respect to the self sta and the peer after roaming and completes
@@ -1506,12 +1516,14 @@ cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data);
  *
  * Return: None
  */
-void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind);
+void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind,
+			 uint8_t vdev_id);
 
 /**
  * cm_roam_pe_sync_callback() - Callback registered at pe, gets invoked when
  * ROAM SYNCH event is received from firmware
  * @sync_ind: Structure with roam synch parameters
+ * @vdev_id: vdev id
  * @len: length for bss_description
  *
  * This is a PE level callback called from CM to complete the roam synch
@@ -1522,7 +1534,7 @@ void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind);
  */
 QDF_STATUS
 cm_roam_pe_sync_callback(struct roam_offload_synch_ind *sync_ind,
-			 uint16_t len);
+			 uint8_t vdev_id, uint16_t len);
 
 /**
  * cm_update_phymode_on_roam() - Update new phymode after
@@ -1572,4 +1584,16 @@ wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
  */
 bool wlan_cm_same_band_sta_allowed(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * cm_cleanup_mlo_link() - Cleanup the MLO link
+ *
+ * @vdev: MLO link vdev
+ *
+ * This posts the event WLAN_CM_SM_EV_ROAM_LINK_DOWN to CM to cleanup the
+ * resources allocated for MLO link e.g. vdev, pe_session, etc..
+ * This gets called when MLO to non-MLO roaming happens
+ *
+ * Return: qdf_status
+ */
+QDF_STATUS cm_cleanup_mlo_link(struct wlan_objmgr_vdev *vdev);
 #endif  /* WLAN_CM_ROAM_API_H__ */

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2018, 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,7 +23,7 @@
 
 #ifndef __CFG_MLME_TWT_H
 #define __CFG_MLME_TWT_H
-
+#if defined(WLAN_SUPPORT_TWT) && !defined(WLAN_TWT_CONV_SUPPORTED)
 /*
  * <ini>
  * twt_requestor - twt requestor.
@@ -194,4 +195,5 @@
 	CFG(CFG_TWT_CONGESTION_TIMEOUT) \
 	CFG(CFG_BCAST_TWT_REQ_RESP) \
 	CFG(CFG_ENABLE_TWT_24GHZ)
+#endif
 #endif /* __CFG_MLME_TWT_H */

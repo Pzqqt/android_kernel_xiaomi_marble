@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,6 +78,7 @@
 #include "wlan_cm_roam_ucfg_api.h"
 #include <cm_utf.h>
 #include <wlan_mlo_mgr_sta.h>
+#include <wlan_mlo_mgr_main.h>
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -2073,7 +2074,7 @@ sme_sap_init_twt_context(struct wlan_objmgr_psoc *psoc,
  */
 static void
 sme_process_twt_add_renego_failure(struct mac_context *mac,
-				 struct twt_add_dialog_complete_event *add_dialog_event)
+				 struct wma_twt_add_dialog_complete_event *add_dialog_event)
 {
 	twt_add_dialog_cb callback;
 
@@ -2098,7 +2099,7 @@ sme_process_twt_add_renego_failure(struct mac_context *mac,
  */
 static void
 sme_process_twt_add_initial_nego(struct mac_context *mac,
-				 struct twt_add_dialog_complete_event *add_dialog_event)
+				 struct wma_twt_add_dialog_complete_event *add_dialog_event)
 {
 	twt_add_dialog_cb callback;
 
@@ -2141,7 +2142,7 @@ sme_process_twt_add_initial_nego(struct mac_context *mac,
  */
 static void
 sme_process_twt_add_dialog_event(struct mac_context *mac,
-				 struct twt_add_dialog_complete_event
+				 struct wma_twt_add_dialog_complete_event
 				 *add_dialog_event)
 {
 	bool is_evt_allowed;
@@ -2542,7 +2543,7 @@ void sme_twt_update_beacon_template(mac_handle_t mac_handle)
 #else
 static void
 sme_process_twt_add_dialog_event(struct mac_context *mac,
-				 struct twt_add_dialog_complete_event *add_dialog_event)
+				 struct wma_twt_add_dialog_complete_event *add_dialog_event)
 {
 }
 
@@ -4684,6 +4685,11 @@ csr_cleanup_vdev_session:
 cleanup_wma:
 	wma_cleanup_vdev(vdev);
 	return status;
+}
+
+QDF_STATUS sme_vdev_set_data_tx_callback(struct wlan_objmgr_vdev *vdev)
+{
+	return wma_vdev_set_data_tx_callback(vdev);
 }
 
 struct wlan_objmgr_vdev
@@ -15156,10 +15162,8 @@ void sme_update_score_config(mac_handle_t mac_handle, eCsrPhyMode phy_mode,
 	    phy_mode == eCSR_DOT11_MODE_11n_ONLY)
 		config.ht_cap = 1;
 
-#ifdef WLAN_FEATURE_11BE
-	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11BE))
+	if (!IS_FEATURE_11BE_SUPPORTED_BY_FW)
 		config.eht_cap = 0;
-#endif
 
 	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
 		config.he_cap = 0;
@@ -16043,8 +16047,7 @@ QDF_STATUS sme_switch_channel(mac_handle_t mac_handle,
 	if (!csa_offload_event)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_copy(csa_offload_event->bssId, bssid->bytes,
-		     QDF_MAC_ADDR_SIZE);
+	qdf_copy_macaddr(&csa_offload_event->bssid, bssid);
 	csa_offload_event->csa_chan_freq = (uint32_t)chan_freq;
 	csa_offload_event->new_ch_width = (uint8_t)chan_width;
 	csa_offload_event->channel =
@@ -16053,7 +16056,7 @@ QDF_STATUS sme_switch_channel(mac_handle_t mac_handle,
 	csa_offload_event->switch_mode = 1;
 
 	sme_debug("bssid " QDF_MAC_ADDR_FMT " freq %u width %u",
-		  QDF_MAC_ADDR_REF(csa_offload_event->bssId),
+		  QDF_MAC_ADDR_REF(csa_offload_event->bssid.bytes),
 		  csa_offload_event->csa_chan_freq,
 		  csa_offload_event->new_ch_width);
 
@@ -16192,10 +16195,19 @@ QDF_STATUS sme_update_vdev_mac_addr(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* Update VDEV MAC address */
-	if ((vdev_opmode == QDF_STA_MODE) && sme_is_11be_capable())
+	if ((vdev_opmode == QDF_STA_MODE) && sme_is_11be_capable()) {
+		if (update_sta_self_peer) {
+			qdf_ret_status = wlan_mlo_mgr_update_mld_addr(
+					    (struct qdf_mac_addr *)
+					       wlan_vdev_mlme_get_mldaddr(vdev),
+					    &mac_addr);
+			if (QDF_IS_STATUS_ERROR(qdf_ret_status))
+				return qdf_ret_status;
+		}
 		wlan_vdev_mlme_set_mldaddr(vdev, mac_addr.bytes);
-	else
+	} else {
 		wlan_vdev_mlme_set_macaddr(vdev, mac_addr.bytes);
+	}
 
 p2p_self_peer_create:
 	if (vdev_opmode == QDF_P2P_DEVICE_MODE) {

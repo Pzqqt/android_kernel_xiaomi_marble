@@ -2860,7 +2860,7 @@ static void lim_update_qos(struct mac_context *mac_ctx,
 		 session->limWmeEnabled);
 }
 
-static QDF_STATUS
+QDF_STATUS
 lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		    struct bss_description *bss_desc)
 {
@@ -3988,8 +3988,8 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 		       pe_session->vdev_id);
 		goto fail;
 	}
-	if (wlan_vdev_mlme_is_mlo_vdev(pe_session->vdev) &&
-	    !wlan_vdev_mlme_is_mlo_link_vdev(pe_session->vdev))
+
+	if (!wlan_vdev_mlme_is_mlo_link_vdev(pe_session->vdev))
 		lim_send_mlo_caps_ie(mac_ctx, pe_session,
 				     QDF_STA_MODE,
 				     pe_session->vdev_id);
@@ -4127,7 +4127,8 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 		break;
 	default:
 		/* Set reason REASON_UNSPEC_FAILURE for prop disassoc */
-		if (reason_code >= REASON_PROP_START)
+		if (reason_code >= REASON_PROP_START &&
+		    reason_code != REASON_FW_TRIGGERED_ROAM_FAILURE)
 			req->req.reason_code = REASON_UNSPEC_FAILURE;
 		lim_prepare_and_send_disassoc(mac_ctx, pe_session, req);
 	}

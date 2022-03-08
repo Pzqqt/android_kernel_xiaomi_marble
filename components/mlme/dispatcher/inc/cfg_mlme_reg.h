@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -333,7 +334,54 @@
 		1, \
 		"Retain NOL even if the regdomain changes")
 
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+/*
+ * <ini>
+ * coex_unsafe_chan_nb_user_prefer- Used to handle coex unsafe freq
+ * event
+ *
+ * @Min: 0 (Honor Firmware event)
+ * @Max: 1 (Don't honor Firmware event)
+ * Default: 0
+ *
+ * This ini is used to handle coex unsafe freq event
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER CFG_INI_BOOL( \
+		"coex_unsafe_chan_nb_user_prefer", \
+		0, \
+		"Honor coex unsafe freq event from firmware")
+/*
+ * <ini>
+ * coex_unsafe_chan_reg_disable - Used to disable reg channels
+ * for coex unsafe freq event
+ *
+ * @Min: 0 (Don't disable reg channels for coex unsafe chan event)
+ * @Max: 1 (Disable reg channels for coex unsafe chan event)
+ * Default: 0
+ *
+ * This ini is used to disable reg channels for coex unsafe chan
+ * event
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_COEX_UNSAFE_CHAN_REG_DISABLE CFG_INI_BOOL( \
+		"coex_unsafe_chan_reg_disable", \
+		0, \
+		"Disable reg channels for coex unsafe chan event")
+
+#define CFG_COEX_UNSAFE_CHAN_ALL \
+	CFG(CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER) \
+	CFG(CFG_COEX_UNSAFE_CHAN_REG_DISABLE)
+#else
+#define CFG_COEX_UNSAFE_CHAN_ALL
+#endif
+
 #define CFG_REG_ALL \
+	CFG_COEX_UNSAFE_CHAN_ALL \
 	CFG(CFG_SELF_GEN_FRM_PWR) \
 	CFG(CFG_ENABLE_PENDING_CHAN_LIST_REQ) \
 	CFG(CFG_ENABLE_11D_IN_WORLD_MODE) \

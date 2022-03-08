@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1253,6 +1253,7 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_SUPPORT_TWT
 static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_cfg_twt *twt_cfg)
 {
@@ -1264,11 +1265,41 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 	twt_cfg->is_bcast_requestor_enabled = CFG_TWT_GET_BCAST_REQ(bcast_conf);
 	twt_cfg->is_bcast_responder_enabled = CFG_TWT_GET_BCAST_RES(bcast_conf);
 }
+#else
+static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_cfg_twt *twt_cfg)
+{
+}
+#endif
 
 #ifdef WLAN_FEATURE_11BE
 static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_mlme_cfg *mlme_cfg)
 {
+	struct wlan_mlme_eht_caps *eht_caps = &mlme_cfg->eht_caps;
+
+	eht_caps->dot11_eht_cap.su_beamformer =
+			cfg_default(CFG_EHT_SU_BEAMFORMER);
+	eht_caps->dot11_eht_cap.su_beamformee =
+			cfg_default(CFG_EHT_SU_BEAMFORMEE);
+	eht_caps->dot11_eht_cap.mu_bformer_le_80mhz =
+			cfg_default(CFG_EHT_MU_BFORMER_LE_80MHZ);
+	eht_caps->dot11_eht_cap.mu_bformer_160mhz =
+			cfg_default(CFG_EHT_MU_BFORMER_160MHZ);
+	eht_caps->dot11_eht_cap.mu_bformer_320mhz =
+			cfg_default(CFG_EHT_MU_BFORMER_320MHZ);
+	eht_caps->dot11_eht_cap.bfee_ss_le_80mhz =
+			cfg_default(CFG_EHT_BFEE_SS_LE_80MHZ);
+	eht_caps->dot11_eht_cap.bfee_ss_160mhz =
+			cfg_default(CFG_EHT_BFEE_SS_160MHZ);
+	eht_caps->dot11_eht_cap.bfee_ss_320mhz =
+			cfg_default(CFG_EHT_BFEE_SS_320MHZ);
+	eht_caps->dot11_eht_cap.num_sounding_dim_le_80mhz =
+			cfg_default(CFG_EHT_NUM_SOUNDING_DIM_LE_80MHZ);
+	eht_caps->dot11_eht_cap.num_sounding_dim_160mhz =
+			cfg_default(CFG_EHT_NUM_SOUNDING_DIM_160MHZ);
+	eht_caps->dot11_eht_cap.num_sounding_dim_320mhz =
+			cfg_default(CFG_EHT_NUM_SOUNDING_DIM_320MHZ);
 }
 #else
 static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
@@ -2219,21 +2250,64 @@ mlme_init_roam_score_config(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_fe_wlm_in_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_fe_wlm *wlm_config)
 {
+	uint64_t flags = 0;
+	QDF_STATUS status;
+
 	wlm_config->latency_enable = cfg_get(psoc, CFG_LATENCY_ENABLE);
 	wlm_config->latency_reset = cfg_get(psoc, CFG_LATENCY_RESET);
 	wlm_config->latency_level = cfg_get(psoc, CFG_LATENCY_LEVEL);
-	wlm_config->latency_flags[0] = cfg_get(psoc, CFG_LATENCY_FLAGS_NORMAL);
-	wlm_config->latency_flags[1] = cfg_get(psoc, CFG_LATENCY_FLAGS_MOD);
-	wlm_config->latency_flags[2] = cfg_get(psoc, CFG_LATENCY_FLAGS_LOW);
-	wlm_config->latency_flags[3] = cfg_get(psoc, CFG_LATENCY_FLAGS_ULTLOW);
-	wlm_config->latency_host_flags[0] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_NORMAL);
-	wlm_config->latency_host_flags[1] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_MOD);
-	wlm_config->latency_host_flags[2] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_LOW);
-	wlm_config->latency_host_flags[3] =
-		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_ULTLOW);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_NORMAL),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("normal latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[0] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[0] = flags >> 32;
+	mlme_legacy_debug("normal latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[0],
+			  wlm_config->latency_host_flags[0]);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_MOD),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("moderate latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[1] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[1] = flags >> 32;
+	mlme_legacy_debug("moderate latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[1],
+			  wlm_config->latency_host_flags[1]);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_LOW),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("low latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[2] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[2] = flags >> 32;
+	mlme_legacy_debug("low latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[2],
+			  wlm_config->latency_host_flags[2]);
+
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_ULTLOW),
+				  &flags);
+	if (status != QDF_STATUS_SUCCESS) {
+		flags = 0;
+		mlme_legacy_err("ultra-low latency flags parsing failed");
+	}
+
+	wlm_config->latency_flags[3] = flags & 0xFFFFFFFF;
+	wlm_config->latency_host_flags[3] = flags >> 32;
+	mlme_legacy_debug("ultra-low latency flags 0x%x host flags 0x%x",
+			  wlm_config->latency_flags[3],
+			  wlm_config->latency_host_flags[3]);
 }
 
 /**
@@ -2320,6 +2394,32 @@ static void mlme_init_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+static void mlme_init_coex_unsafe_chan_cfg(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_mlme_reg *reg)
+{
+	reg->coex_unsafe_chan_nb_user_prefer =
+		cfg_get(psoc, CFG_COEX_UNSAFE_CHAN_NB_USER_PREFER);
+}
+
+static void mlme_init_coex_unsafe_chan_reg_disable_cfg(
+		struct wlan_objmgr_psoc *psoc, struct wlan_mlme_reg *reg)
+{
+	reg->coex_unsafe_chan_reg_disable =
+		cfg_get(psoc, CFG_COEX_UNSAFE_CHAN_REG_DISABLE);
+}
+#else
+static void mlme_init_coex_unsafe_chan_cfg(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_mlme_reg *reg)
+{
+}
+
+static void mlme_init_coex_unsafe_chan_reg_disable_cfg(
+		struct wlan_objmgr_psoc *psoc, struct wlan_mlme_reg *reg)
+{
+}
+#endif
+
 static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
@@ -2346,6 +2446,8 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT_FOR_NAN);
 
 	mlme_init_acs_avoid_freq_list(psoc, reg);
+	mlme_init_coex_unsafe_chan_cfg(psoc, reg);
+	mlme_init_coex_unsafe_chan_reg_disable_cfg(psoc, reg);
 }
 
 static void

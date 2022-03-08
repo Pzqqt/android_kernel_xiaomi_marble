@@ -1226,6 +1226,8 @@ struct hdd_context;
  * @vdev_id: Unique identifier assigned to the vdev
  * @event_flags: a bitmap of hdd_adapter_flags
  * @mic_work: mic work information
+ * @enable_dynamic_tsf_sync: Enable/Disable TSF sync through NL interface
+ * @dynamic_tsf_sync_interval: TSF sync interval configure through NL interface
  * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
  * @cache_sta_count: number of currently cached stations
  * @acs_complete_event: acs complete event
@@ -1393,6 +1395,8 @@ struct hdd_adapter {
 	/* spin lock for read/write timestamps */
 	qdf_spinlock_t host_target_sync_lock;
 	qdf_mc_timer_t host_target_sync_timer;
+	bool enable_dynamic_tsf_sync;
+	uint32_t dynamic_tsf_sync_interval;
 	uint64_t cur_host_time;
 	uint64_t last_host_time;
 	uint64_t last_target_time;
@@ -2061,6 +2065,9 @@ struct hdd_context {
 	uint16_t unsafe_channel_count;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
 #endif /* FEATURE_WLAN_CH_AVOID */
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+	uint32_t restriction_mask;
+#endif
 
 	uint8_t max_intf_count;
 #ifdef WLAN_FEATURE_LPSS
@@ -2317,6 +2324,9 @@ struct hdd_context {
 
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	bool is_vdev_macaddr_dynamic_update_supported;
+#endif
+#ifdef CONFIG_WLAN_FREQ_LIST
+	uint8_t power_type;
 #endif
 };
 
@@ -4047,6 +4057,8 @@ int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,
  * @hdd_ctx: hdd context pointer
  * @local_unsafe_list: unsafe chan list to be compared with hdd_ctx's list
  * @local_unsafe_list_count: channel number in local_unsafe_list
+ * @restriction_mask: restriction mask is to differentiate current channel
+ * list different from previous channel list
  *
  * The function checked the input channel is same as current unsafe chan
  * list in hdd_ctx.
@@ -4054,11 +4066,28 @@ int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,
  * Return: true if input channel list is same as the list in hdd_ctx
  */
 bool hdd_local_unsafe_channel_updated(struct hdd_context *hdd_ctx,
-	uint16_t *local_unsafe_list, uint16_t local_unsafe_list_count);
+	uint16_t *local_unsafe_list, uint16_t local_unsafe_list_count,
+	uint32_t restriction_mask);
 
 int hdd_enable_disable_ca_event(struct hdd_context *hddctx,
 				uint8_t set_value);
 void wlan_hdd_undo_acs(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_set_restriction_mask() - set restriction mask for hdd context
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: None
+ */
+void wlan_hdd_set_restriction_mask(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_get_restriction_mask() - get restriction mask from hdd context
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: restriction_mask
+ */
+uint32_t wlan_hdd_get_restriction_mask(struct hdd_context *hdd_ctx);
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 static inline int
@@ -5173,6 +5202,15 @@ int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter,
 				struct qdf_mac_addr mac_addr);
 
+/**
+ * hdd_is_dynamic_set_mac_addr_allowed() - API to check dynamic MAC address
+ *				           update is allowed or not
+ * @adapter: Pointer to the adapter structure
+ *
+ * Return: true or false
+ */
+bool hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter);
+
 #if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
 /**
  * hdd_update_vdev_mac_address() - Update VDEV MAC address dynamically
@@ -5209,6 +5247,13 @@ static inline int hdd_dynamic_mac_address_set(struct hdd_context *hdd_ctx,
 {
 	return 0;
 }
+
+static inline bool
+hdd_is_dynamic_set_mac_addr_allowed(struct hdd_adapter *adapter)
+{
+	return false;
+}
+
 #endif /* WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE */
 
 #ifdef FEATURE_WLAN_FULL_POWER_DOWN_SUPPORT

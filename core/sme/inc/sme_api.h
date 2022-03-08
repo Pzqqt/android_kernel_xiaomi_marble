@@ -404,6 +404,17 @@ struct wlan_objmgr_vdev *sme_vdev_create(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_vdev_post_vdev_create_setup(mac_handle_t mac_handle,
 					   struct wlan_objmgr_vdev *vdev);
+
+/**
+ * sme_vdev_set_data_tx_callback() - Set dp vdev tx callback
+ * @vdev: Object manger vdev
+ *
+ * This api will setup the dp vdev tx data callbaack.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_vdev_set_data_tx_callback(struct wlan_objmgr_vdev *vdev);
+
 /**
  * sme_vdev_delete() - Delete vdev for given id
  * @mac_handle: The handle returned by mac_open.

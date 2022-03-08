@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -567,6 +568,20 @@ static void fwol_thermal_init(struct wlan_fwol_psoc_obj *fwol_obj)
 }
 #endif
 
+#ifdef WLAN_FEATURE_OFDM_SCRAMBLER_SEED
+static inline void fwol_ofdm_scrambler_init(struct wlan_fwol_cfg *fwol_cfg,
+					    struct wlan_objmgr_psoc *psoc)
+{
+	fwol_cfg->enable_ofdm_scrambler_seed =
+				cfg_get(psoc, CFG_ENABLE_OFDM_SCRAMBLER_SEED);
+}
+#else
+static inline void fwol_ofdm_scrambler_init(struct wlan_fwol_cfg *fwol_cfg,
+					    struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -633,6 +648,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_cfg->sap_sho = cfg_get(psoc, CFG_SAP_SHO_CONFIG);
 	fwol_cfg->disable_hw_assist = cfg_get(psoc, CFG_DISABLE_HW_ASSIST);
 	fwol_thermal_init(fwol_obj);
+	fwol_ofdm_scrambler_init(fwol_cfg, psoc);
 
 	return status;
 }

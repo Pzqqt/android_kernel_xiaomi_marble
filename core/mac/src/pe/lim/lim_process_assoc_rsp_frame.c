@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -889,6 +889,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		(session_entry->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE)) ||
 		((subtype == LIM_REASSOC) &&
 		 !lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry) &&
+		 !MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(mac_ctx->psoc,
+						     session_entry->vdev_id) &&
 		((session_entry->limMlmState != eLIM_MLM_WT_REASSOC_RSP_STATE)
 		&& (session_entry->limMlmState !=
 		eLIM_MLM_WT_FT_REASSOC_RSP_STATE)
@@ -1109,8 +1111,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				&assoc_rsp->obss_scanparams);
 
 	if (lim_is_session_he_capable(session_entry))
-		mlme_set_twt_peer_capabilities(
-				mac_ctx->psoc,
+		lim_set_twt_peer_capabilities(
+				mac_ctx,
 				(struct qdf_mac_addr *)current_bssid,
 				&assoc_rsp->he_cap,
 				&assoc_rsp->he_op);

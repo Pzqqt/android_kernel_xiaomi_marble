@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,71 +19,12 @@
  * DOC: This file contains definitions for MLME TWT functionality.
  */
 
-#ifndef _WLAN_MLME_TWT_STRUCT_H_
-#define _WLAN_MLME_TWT_STRUCT_H_
+#ifndef _WLAN_MLME_TWT_PUBLIC_STRUCT_H_
+#define _WLAN_MLME_TWT_PUBLIC_STRUCT_H_
 
-#define TWT_ALL_SESSIONS_DIALOG_ID 255
-
-/**
- * enum wlan_twt_commands  - TWT commands
- * @WLAN_TWT_NONE: Indicates none of the TWT commands are active.
- * @WLAN_TWT_SETUP: TWT setup
- * @WLAN_TWT_TERMINATE: TWT terminate
- * @WLAN_TWT_SUSPEND: TWT suspend
- * @WLAN_TWT_RESUME: TWT resume
- * @WLAN_TWT_NUDGE: TWT nudge
- * @WLAN_TWT_STATISTICS: TWT statistics
- * @WLAN_TWT_CLEAR_STATISTICS: TWT clear statistics
- * @WLAN_TWT_ANY: Indicates one of the commands is in progress.
- */
-enum wlan_twt_commands {
-	WLAN_TWT_NONE             = 0,
-	WLAN_TWT_SETUP            = BIT(0),
-	WLAN_TWT_TERMINATE        = BIT(1),
-	WLAN_TWT_SUSPEND          = BIT(2),
-	WLAN_TWT_RESUME           = BIT(3),
-	WLAN_TWT_NUDGE            = BIT(4),
-	WLAN_TWT_STATISTICS       = BIT(5),
-	WLAN_TWT_CLEAR_STATISTICS = BIT(6),
-	WLAN_TWT_ANY              = 0xFF,
-};
-
-/**
- * enum wlan_twt_capabilities  - Represents the Bitmap of TWT capabilities
- * supported by device and peer.
- * @WLAN_TWT_CAPA_REQUESTOR: TWT requestor support is advertised by TWT
- * non-scheduling STA.
- * @WLAN_TWT_CAPA_RESPONDER: TWT responder support is advertised by TWT
- * AP.
- * @WLAN_TWT_CAPA_BROADCAST: This indicates support for the role of broadcast
- * TWT scheduling/receiving functionality.
- * @WLAN_TWT_CAPA_FLEXIBLE: Device supports flexible TWT schedule.
- * @WLAN_TWT_CAPA_REQUIRED: The TWT Required is advertised by AP to indicate
- * that it mandates the associated HE STAs to support TWT.
- */
-enum wlan_twt_capabilities {
-	WLAN_TWT_CAPA_REQUESTOR = BIT(0),
-	WLAN_TWT_CAPA_RESPONDER = BIT(1),
-	WLAN_TWT_CAPA_BROADCAST = BIT(2),
-	WLAN_TWT_CAPA_FLEXIBLE =  BIT(3),
-	WLAN_TWT_CAPA_REQUIRED =  BIT(4),
-};
-
-/**
- * enum wlan_twt_session_state  - TWT session state for a dialog id
- * @WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED: Session doesn't exist
- * @WLAN_TWT_SETUP_STATE_ACTIVE: TWT session is active
- * @WLAN_TWT_SETUP_STATE_SUSPEND: TWT session is suspended
- */
-enum wlan_twt_session_state {
-	WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED = 0,
-	WLAN_TWT_SETUP_STATE_ACTIVE = 1,
-	WLAN_TWT_SETUP_STATE_SUSPEND = 2,
-};
+#include <wlan_twt_public_structs.h>
 
 #ifdef WLAN_SUPPORT_TWT
-#define WLAN_MAX_TWT_SESSIONS_PER_PEER 1
-
 /**
  * struct twt_session_info  - TWT session related parameters
  * @dialog_id: TWT session dialog id
@@ -111,4 +53,4 @@ struct twt_context {
 	struct twt_session_info session_info[WLAN_MAX_TWT_SESSIONS_PER_PEER];
 };
 #endif /* WLAN_SUPPORT_TWT */
-#endif /* _WLAN_MLME_TWT_STRUCT_H_ */
+#endif /* _WLAN_MLME_TWT_PUBLIC_STRUCT_H_ */

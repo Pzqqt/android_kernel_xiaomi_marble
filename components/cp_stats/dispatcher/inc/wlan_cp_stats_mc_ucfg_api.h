@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -39,12 +40,6 @@
 
 /* Max TWT sessions supported */
 #define TWT_PSOC_MAX_SESSIONS TWT_PEER_MAX_SESSIONS
-
-/* Valid dialog_id 0 to (0xFF - 1) */
-#define TWT_MAX_DIALOG_ID (0xFF - 1)
-
-/* dialog_id used to get all peer's twt session parameters */
-#define TWT_GET_ALL_PEER_PARAMS_DIALOG_ID (0xFF)
 
 /**
  * ucfg_twt_get_peer_session_params() - Retrieves peer twt session parameters

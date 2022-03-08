@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -285,4 +286,21 @@ bool wlan_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 	return false;
 }
 #endif /* WLAN_FEATURE_NAN */
+
+#if defined(WLAN_FEATURE_NAN) && defined(WLAN_FEATURE_11BE_MLO)
+/**
+ * wlan_is_mlo_sta_nan_ndi_allowed()- Get support for MLO STA +
+ * NAN Disc + NDI concurrency
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if mlo sta + nan + ndi concurrency allowed or not.
+ */
+bool wlan_is_mlo_sta_nan_ndi_allowed(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+wlan_is_mlo_sta_nan_ndi_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
 #endif /* _WLAN_NAN_API_H_ */

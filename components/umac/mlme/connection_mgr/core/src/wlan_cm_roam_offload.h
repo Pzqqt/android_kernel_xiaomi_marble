@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -362,6 +362,24 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
  */
 void cm_update_owe_info(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp, uint8_t vdev_id);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS
+cm_handle_mlo_rso_state_change(struct wlan_objmgr_pdev *pdev,
+			       uint8_t *vdev_id,
+			       uint8_t reason,
+			       bool *is_rso_skip);
+#else
+static inline QDF_STATUS
+cm_handle_mlo_rso_state_change(struct wlan_objmgr_pdev *pdev,
+			       uint8_t *vdev_id,
+			       uint8_t reason,
+			       bool *is_rso_skip)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+#endif
 
 #if defined(WLAN_FEATURE_CONNECTIVITY_LOGGING) && \
 	defined(WLAN_FEATURE_ROAM_OFFLOAD)

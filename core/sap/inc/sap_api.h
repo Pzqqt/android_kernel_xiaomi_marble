@@ -454,6 +454,10 @@ struct sap_acs_cfg {
 	uint32_t    vht_seg0_center_ch_freq;
 	uint32_t    vht_seg1_center_ch_freq;
 	uint32_t   band;
+#ifdef WLAN_FEATURE_11BE
+	bool       is_eht_enabled;
+	uint16_t   acs_puncture_bitmap;
+#endif
 };
 
 /*
@@ -1773,6 +1777,38 @@ void sap_dump_acs_channel(struct sap_acs_cfg *acs_cfg);
  * Return: None
  */
 void sap_release_vdev_ref(struct sap_context *sap_ctx);
+
+#ifdef WLAN_FEATURE_11BE
+/**
+ * sap_acs_is_puncture_applicable() - Is static puncturing applicable according
+ *                                    to ACS configure of given sap acs config.
+ * @acs_cfg: pointer to sap_acs_cfg
+ *
+ * Return: true if static puncturing is applicable to given sap acs config.
+ */
+bool sap_acs_is_puncture_applicable(struct sap_acs_cfg *acs_cfg);
+
+/**
+ * sap_acs_set_puncture_support() - Set puncturing support according
+ *                                  to ACS configure of given sap.
+ * @sap_ctx: Pointer to SAP Context
+ * @ch_params: pointer to ch_params
+ *
+ * Return: void.
+ */
+void sap_acs_set_puncture_support(struct sap_context *sap_ctx,
+				  struct ch_params *ch_params);
+#else
+static inline bool sap_acs_is_puncture_applicable(struct sap_acs_cfg *acs_cfg)
+{
+	return false;
+}
+
+static inline void sap_acs_set_puncture_support(struct sap_context *sap_ctx,
+						struct ch_params *ch_params)
+{
+}
+#endif /* WLAN_FEATURE_11BE */
 #ifdef __cplusplus
 }
 #endif

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -115,7 +116,7 @@ QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 /**
  * cm_fw_roam_sync_start_ind() - Handle roam sync req
  * @vdev: Vdev objmgr
- * @roam_reason: Roam reason
+ * @sync_ind: Roam sync ind
  *
  * This function handles roam sync event to connection manager
  * state machine
@@ -124,7 +125,7 @@ QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
  */
 QDF_STATUS
 cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
-			  uint8_t roam_reason);
+			  struct roam_offload_synch_ind *sync_ind);
 
 /**
  * cm_fw_roam_sync_propagation() - Post roam sync propagation to CM SM

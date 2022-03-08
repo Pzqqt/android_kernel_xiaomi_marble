@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,8 @@
 #include <wlan_mlme_twt_ucfg_api.h>
 #include "wlan_roam_debug.h"
 #include <wlan_hdd_regulatory.h>
+#include <wlan_twt_ucfg_ext_api.h>
+#include <osif_twt_internal.h>
 
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
 {
@@ -1134,6 +1136,9 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 		ucfg_mlme_init_twt_context(hdd_ctx->psoc,
 					   &rsp->bssid,
 					   TWT_ALL_SESSIONS_DIALOG_ID);
+		ucfg_twt_init_context(hdd_ctx->psoc,
+				      &rsp->bssid,
+				      TWT_ALL_SESSIONS_DIALOG_ID);
 	}
 	hdd_periodic_sta_stats_start(adapter);
 	wlan_twt_concurrency_update(hdd_ctx);

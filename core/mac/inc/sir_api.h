@@ -535,6 +535,7 @@ struct roam_pmkid_req_event;
 /**
  * typedef pe_roam_synch_fn_t - PE roam synch callback routine pointer
  * @mac_ctx: Global MAC context
+ * @vdev_id: vdev id
  * @roam_sync_ind_ptr: Structure with roam synch parameters
  * @ie_len: ie length
  * @reason: Reason for calling the callback
@@ -547,6 +548,7 @@ struct roam_pmkid_req_event;
  */
 typedef QDF_STATUS
 (*pe_roam_synch_fn_t)(struct mac_context *mac_ctx,
+		      uint8_t vdev_id,
 		      struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		      uint16_t ie_len,
 		      enum sir_roam_op_code reason);
@@ -3984,29 +3986,6 @@ struct adaptive_dwelltime_params {
 	uint8_t   lpf_weight;
 	uint8_t   passive_mon_intval;
 	uint8_t   wifi_act_threshold;
-};
-
-/**
- * struct csa_offload_params - CSA offload request parameters
- * @channel: channel
- * @switch_mode: switch mode
- * @sec_chan_offset: second channel offset
- * @new_ch_width: new channel width
- * @new_ch_freq_seg1: channel center freq 1
- * @new_ch_freq_seg2: channel center freq 2
- * @ies_present_flag: IE present flag
- */
-struct csa_offload_params {
-	uint8_t channel;
-	uint32_t csa_chan_freq;
-	uint8_t switch_mode;
-	uint8_t sec_chan_offset;
-	uint8_t new_ch_width;
-	uint8_t new_op_class;
-	uint8_t new_ch_freq_seg1;
-	uint8_t new_ch_freq_seg2;
-	uint32_t ies_present_flag;
-	tSirMacAddr bssId;
 };
 
 /**

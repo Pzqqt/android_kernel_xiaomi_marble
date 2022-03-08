@@ -54,6 +54,11 @@
 #include <utils_mlo.h>
 #endif
 
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) && \
+	defined(WLAN_TWT_CONV_SUPPORTED)
+#include "wlan_twt_cfg_ext_api.h"
+#endif
+
 #define RSN_OUI_SIZE 4
 /* ////////////////////////////////////////////////////////////////////// */
 void swap_bit_field16(uint16_t in, uint16_t *out)
@@ -3026,19 +3031,20 @@ QDF_STATUS sir_convert_probe_frame2_struct(struct mac_context *mac,
  * @pframe: pointer of assoc request buffer
  * @nframe: length of assoc request buffer
  * @assoc_req: pointer to tpSirAssocReq
+ * @offset: Offset of (Re)Assoc req IEs
  *
  * Return: none
  */
 static void
 dot11f_parse_assc_req_mlo_partner_info(uint8_t *pframe, uint32_t nframe,
-				       tpSirAssocReq assoc_req)
+				       tpSirAssocReq assoc_req, uint32_t offset)
 {
 	const uint8_t *mlo_ie;
 
-	mlo_ie = wlan_get_ext_ie_ptr_from_ext_id(
-				MLO_IE_OUI_TYPE, MLO_IE_OUI_SIZE,
-				pframe + WLAN_ASSOC_REQ_IES_OFFSET,
-				nframe - WLAN_ASSOC_REQ_IES_OFFSET);
+	mlo_ie = wlan_get_ext_ie_ptr_from_ext_id(MLO_IE_OUI_TYPE,
+						 MLO_IE_OUI_SIZE,
+						 pframe + offset,
+						 nframe - offset);
 	if (!mlo_ie)
 		return;
 	util_get_bvmlie_persta_partner_info((uint8_t *)mlo_ie, mlo_ie[1] + 2,
@@ -3047,7 +3053,7 @@ dot11f_parse_assc_req_mlo_partner_info(uint8_t *pframe, uint32_t nframe,
 #else
 static void
 dot11f_parse_assc_req_mlo_partner_info(uint8_t *pframe, uint32_t nframe,
-				       tpSirAssocReq assoc_req)
+				       tpSirAssocReq assoc_req, uint32_t offset)
 {
 }
 #endif
@@ -3298,7 +3304,7 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 	}
 	if (ar->mlo_ie.present) {
 		dot11f_parse_assc_req_mlo_partner_info(pFrame, nFrame,
-						       pAssocReq);
+					pAssocReq, WLAN_ASSOC_REQ_IES_OFFSET);
 		pAssocReq->mlo_info.num_partner_links =
 					ar->mlo_ie.num_sta_profile;
 		qdf_mem_copy(pAssocReq->mld_mac,
@@ -4050,7 +4056,7 @@ sir_convert_reassoc_req_frame2_struct(struct mac_context *mac,
 	}
 	if (ar->mlo_ie.present) {
 		dot11f_parse_assc_req_mlo_partner_info(pFrame, nFrame,
-						       pAssocReq);
+					pAssocReq, WLAN_REASSOC_REQ_IES_OFFSET);
 		pAssocReq->mlo_info.num_partner_links =
 					ar->mlo_ie.num_sta_profile;
 		qdf_mem_copy(pAssocReq->mld_mac,
@@ -6602,6 +6608,40 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX)
+#ifdef WLAN_TWT_CONV_SUPPORTED
+static bool
+twt_get_requestor_flag(struct mac_context *mac)
+{
+	bool req_flag = false;
+
+	wlan_twt_cfg_get_req_flag(mac->psoc, &req_flag);
+	return req_flag;
+}
+
+static bool
+twt_get_responder_flag(struct mac_context *mac)
+{
+	bool res_flag = false;
+
+	wlan_twt_cfg_get_res_flag(mac->psoc, &res_flag);
+	return res_flag;
+}
+#else
+static bool
+twt_get_requestor_flag(struct mac_context *mac)
+{
+	return mac->mlme_cfg->twt_cfg.req_flag;
+}
+
+static bool
+twt_get_responder_flag(struct mac_context *mac)
+{
+	return mac->mlme_cfg->twt_cfg.res_flag;
+}
+#endif
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 #ifdef WLAN_SUPPORT_TWT
 static void
@@ -6617,12 +6657,12 @@ populate_dot11f_twt_he_cap(struct mac_context *mac,
 
 	he_cap->broadcast_twt = 0;
 	if (session->opmode == QDF_STA_MODE &&
-	    !(mac->mlme_cfg->twt_cfg.req_flag)) {
+	    !twt_get_requestor_flag(mac)) {
 		/* Set twt_request as 0 if any SCC/MCC concurrency exist */
 		he_cap->twt_request = 0;
 		return;
 	} else if (session->opmode == QDF_SAP_MODE &&
-		   !(mac->mlme_cfg->twt_cfg.res_flag)) {
+		   !twt_get_responder_flag(mac)) {
 		/** Set twt_responder as 0 if any SCC/MCC concurrency exist */
 		he_cap->twt_responder = 0;
 		return;
@@ -6855,12 +6895,13 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 	tDot11fIEmlo_ie *mlo_ie = &frm->mlo_ie;
 	tpSirAssocReq assoc_req;
 	tpSirAssocReq link_assoc_req;
-	const uint8_t *p2p_ie = NULL;
+	const uint8_t *reported_p2p_ie;
 	uint8_t non_inher_ie_lists[255];
 	uint8_t non_inher_len;
 	uint8_t non_inher_ext_len;
 	uint8_t non_inher_ext_ie_lists[255];
-	bool same_ie, vendor_vht_ie_pres;
+	bool same_ie, reported_vendor_vht_ie_pres;
+	bool reported_wmm_caps_pres, reported_wmm_param_pres;
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tpDphHashNode link_sta;
 	tDot11fIESuppRates supp_rates;
@@ -7004,22 +7045,6 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 				DOT11F_EID_SUPPRATES;
 		}
 
-		if ((ext_supp_rates.present && frm->ExtSuppRates.present &&
-		     qdf_mem_cmp(&ext_supp_rates, &frm->ExtSuppRates,
-				 sizeof(ext_supp_rates))) ||
-		    (ext_supp_rates.present && !frm->ExtSuppRates.present)) {
-			sta_len_consumed = 0;
-			dot11f_pack_ie_ext_supp_rates(
-				mac_ctx, &ext_supp_rates, sta_data,
-				sta_len_left,
-				&sta_len_consumed);
-			sta_data += sta_len_consumed;
-			sta_len_left -= sta_len_consumed;
-		} else if (frm->SuppRates.present && !ext_supp_rates.present) {
-			non_inher_ie_lists[non_inher_len++] =
-				DOT11F_EID_EXTSUPPRATES;
-		}
-
 		if (link_session->limQosEnabled && link_sta->lleEnabled) {
 			lle_mode = 1;
 			if ((link_ie->link_edca.present &&
@@ -7043,53 +7068,6 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 			}
 		}
 
-		if (!lle_mode && link_session->limWmeEnabled &&
-		    sta->wmeEnabled) {
-			if ((link_ie->link_wmm_params.present &&
-			     frm->WMMParams.present &&
-			     qdf_mem_cmp(&link_ie->link_wmm_params,
-					 &frm->WMMParams,
-					 sizeof(link_ie->link_wmm_params))) ||
-			    (link_ie->link_wmm_params.present &&
-			     !frm->WMMParams.present)) {
-				sta_len_consumed = 0;
-				dot11f_pack_ie_wmm_params(
-					mac_ctx,
-					&link_ie->link_wmm_params,
-					sta_data, sta_len_left,
-					&sta_len_consumed);
-				sta_data += sta_len_consumed;
-				sta_len_left -= sta_len_consumed;
-			} else if (frm->WMMParams.present &&
-				   !link_ie->link_wmm_params.present) {
-				non_inher_ie_lists[non_inher_len++] =
-					DOT11F_EID_WMMPARAMS;
-			}
-
-			if (sta->wsmEnabled) {
-				if ((link_ie->link_wmm_caps.present &&
-				     frm->WMMCaps.present &&
-				     qdf_mem_cmp(&link_ie->link_wmm_caps,
-						 &frm->WMMCaps,
-						 sizeof(frm->WMMCaps))) ||
-				    (link_ie->link_wmm_caps.present &&
-				     !frm->WMMCaps.present)) {
-					sta_len_consumed = 0;
-					dot11f_pack_ie_wmm_caps(
-						mac_ctx,
-						&link_ie->link_wmm_caps,
-						sta_data, sta_len_left,
-						&sta_len_consumed);
-					sta_data += sta_len_consumed;
-					sta_len_left -= sta_len_consumed;
-				} else if (frm->WMMCaps.present &&
-					   !link_ie->link_wmm_caps.present) {
-					non_inher_ie_lists[non_inher_len++] =
-						DOT11F_EID_WMMCAPS;
-				}
-			}
-		}
-
 		if ((link_ie->link_ht_cap.present && frm->HTCaps.present &&
 		     qdf_mem_cmp(&link_ie->link_ht_cap, &frm->HTCaps,
 				 sizeof(tDot11fIEHTCaps))) ||
@@ -7103,6 +7081,22 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 		} else if (frm->HTCaps.present &&
 			   !link_ie->link_ht_cap.present) {
 			non_inher_ie_lists[non_inher_len++] = DOT11F_EID_HTCAPS;
+		}
+
+		if ((ext_supp_rates.present && frm->ExtSuppRates.present &&
+		     qdf_mem_cmp(&ext_supp_rates, &frm->ExtSuppRates,
+				 sizeof(ext_supp_rates))) ||
+		    (ext_supp_rates.present && !frm->ExtSuppRates.present)) {
+			sta_len_consumed = 0;
+			dot11f_pack_ie_ext_supp_rates(
+				mac_ctx, &ext_supp_rates, sta_data,
+				sta_len_left,
+				&sta_len_consumed);
+			sta_data += sta_len_consumed;
+			sta_len_left -= sta_len_consumed;
+		} else if (frm->SuppRates.present && !ext_supp_rates.present) {
+			non_inher_ie_lists[non_inher_len++] =
+				DOT11F_EID_EXTSUPPRATES;
 		}
 
 		if ((link_ie->link_ht_info.present && frm->HTInfo.present &&
@@ -7172,37 +7166,39 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 			non_inher_ie_lists[non_inher_len++] =
 				DOT11F_EID_VHTOPERATION;
 		}
+		/* Check every 221 EID whether it's the same with assoc link */
 		same_ie = false;
 		// P2PAssocRes is different or not
 		if (link_assoc_req)
-			p2p_ie = limGetP2pIEPtr(
-					mac_ctx,
-					link_assoc_req->addIE.addIEdata,
-					link_assoc_req->addIE.length);
-		if ((p2p_ie && frm->P2PAssocRes.present) ||
-		    (!p2p_ie && !frm->P2PAssocRes.present))
+			reported_p2p_ie = limGetP2pIEPtr(
+						mac_ctx,
+						link_assoc_req->addIE.addIEdata,
+						link_assoc_req->addIE.length);
+		else
+			reported_p2p_ie = NULL;
+		if ((reported_p2p_ie && frm->P2PAssocRes.present) ||
+		    (!reported_p2p_ie && !frm->P2PAssocRes.present))
 			same_ie = true;
 		// vendor_vht_ie is different or not
-		vendor_vht_ie_pres =
+		reported_vendor_vht_ie_pres =
 			link_session->vhtCapability &&
 			link_session->vendor_vht_sap &&
 			link_assoc_req &&
 			link_assoc_req->vendor_vht_ie.VHTCaps.present;
 		if (same_ie && frm->vendor_vht_ie.VHTCaps.present &&
-		    vendor_vht_ie_pres) {
+		    reported_vendor_vht_ie_pres) {
 			if (qdf_mem_cmp(&link_ie->link_vht_cap,
 					&frm->vendor_vht_ie.VHTCaps,
-					sizeof(tDot11fIEVHTCaps)))
-				same_ie = false;
-			else if (qdf_mem_cmp(&link_ie->link_vht_op,
-					     &frm->vendor_vht_ie.VHTOperation,
-					     sizeof(tDot11fIEVHTOperation)))
+					sizeof(tDot11fIEVHTCaps)) ||
+			    qdf_mem_cmp(&link_ie->link_vht_op,
+					&frm->vendor_vht_ie.VHTOperation,
+					sizeof(tDot11fIEVHTOperation)))
 				same_ie = false;
 
-		} else if ((frm->vendor_vht_ie.VHTCaps.present &&
-			    !vendor_vht_ie_pres) ||
-			   (!frm->vendor_vht_ie.VHTCaps.present &&
-			    vendor_vht_ie_pres)) {
+		} else if (same_ie && ((frm->vendor_vht_ie.VHTCaps.present &&
+					!reported_vendor_vht_ie_pres) ||
+				       (!frm->vendor_vht_ie.VHTCaps.present &&
+					reported_vendor_vht_ie_pres))) {
 			same_ie = false;
 		}
 		// qcn ie is different or not
@@ -7211,10 +7207,46 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 			if (qdf_mem_cmp(&link_ie->link_qcn_ie, &frm->qcn_ie,
 					sizeof(tDot11fIEqcn_ie)))
 				same_ie = false;
-		} else if ((link_ie->link_qcn_ie.present &&
-			   !frm->qcn_ie.present) ||
-			   (!link_ie->link_qcn_ie.present &&
-			    frm->qcn_ie.present)) {
+		} else if (same_ie && ((link_ie->link_qcn_ie.present &&
+					!frm->qcn_ie.present) ||
+				       (!link_ie->link_qcn_ie.present &&
+					frm->qcn_ie.present))) {
+			same_ie = false;
+		}
+		/* wmm param and wmm caps are different or not*/
+		reported_wmm_caps_pres = false;
+		reported_wmm_param_pres = false;
+		if (!lle_mode && link_session->limWmeEnabled &&
+		    link_sta->wmeEnabled) {
+			if (link_ie->link_wmm_params.present)
+				reported_wmm_param_pres = true;
+
+			if (link_sta->wsmEnabled &&
+			    link_ie->link_wmm_caps.present)
+				reported_wmm_caps_pres = true;
+		}
+		if (same_ie && reported_wmm_param_pres &&
+		    frm->WMMParams.present) {
+			if (qdf_mem_cmp(&link_ie->link_wmm_params,
+					&frm->WMMParams,
+					sizeof(link_ie->link_wmm_params)))
+				same_ie = false;
+		} else if (same_ie && ((reported_wmm_param_pres &&
+					!frm->WMMParams.present) ||
+				       (!reported_wmm_param_pres &&
+					frm->WMMParams.present))) {
+			same_ie = false;
+		}
+		if (same_ie && reported_wmm_caps_pres &&
+		    frm->WMMCaps.present) {
+			if (qdf_mem_cmp(&link_ie->link_wmm_caps,
+					&frm->WMMCaps,
+					sizeof(link_ie->link_wmm_caps)))
+				same_ie = false;
+		} else if (same_ie && ((reported_wmm_caps_pres &&
+					!frm->WMMCaps.present) ||
+				       (!reported_wmm_caps_pres &&
+					frm->WMMCaps.present))) {
 			same_ie = false;
 		}
 		/*
@@ -7222,7 +7254,7 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 		 * are the same with reporting assoc resp.
 		 */
 		if (!same_ie) {
-			if (p2p_ie) {
+			if (reported_p2p_ie && link_assoc_req) {
 				populate_dot11_assoc_res_p2p_ie(
 					mac_ctx,
 					&sta_p2p_assoc_res,
@@ -7235,7 +7267,7 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 				sta_data += sta_len_consumed;
 				sta_len_left -= sta_len_consumed;
 			}
-			if (vendor_vht_ie_pres) {
+			if (reported_vendor_vht_ie_pres) {
 				qdf_mem_zero(&vendor_vht_ie,
 					     sizeof(vendor_vht_ie));
 				vendor_vht_ie.present = 1;
@@ -7263,17 +7295,35 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 				&sta_len_consumed);
 			sta_data += sta_len_consumed;
 			sta_len_left -= sta_len_consumed;
+			if (reported_wmm_param_pres) {
+				sta_len_consumed = 0;
+				dot11f_pack_ie_wmm_params(
+					mac_ctx,
+					&link_ie->link_wmm_params,
+					sta_data, sta_len_left,
+					&sta_len_consumed);
+				sta_data += sta_len_consumed;
+				sta_len_left -= sta_len_consumed;
+			}
+			if (reported_wmm_caps_pres) {
+				sta_len_consumed = 0;
+				dot11f_pack_ie_wmm_caps(
+					mac_ctx,
+					&link_ie->link_wmm_caps,
+					sta_data, sta_len_left,
+					&sta_len_consumed);
+				sta_data += sta_len_consumed;
+				sta_len_left -= sta_len_consumed;
+			}
 			/*
 			 * if there is no 221 IE in partner link
 			 * while there is such IE in current link
 			 * include 221 in the non inheritance IE lists
 			 */
-			if (!p2p_ie &&
+			if (!reported_p2p_ie &&
 			    !link_ie->link_qcn_ie.present &&
-			    !vendor_vht_ie_pres &&
-			    (frm->P2PAssocRes.present ||
-			     frm->vendor_vht_ie.VHTCaps.present ||
-			     frm->qcn_ie.present))
+			    !reported_vendor_vht_ie_pres &&
+			    !reported_wmm_caps_pres && !reported_wmm_param_pres)
 				non_inher_ie_lists[non_inher_len++] =
 				DOT11F_EID_QCN_IE;
 		}
@@ -7329,22 +7379,6 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 			non_inher_ext_ie_lists[non_inher_ext_len++] =
 				WLAN_EXTN_ELEMID_HE_6G_CAP;
 		}
-		if ((link_ie->link_eht_cap.present && frm->eht_cap.present &&
-		     qdf_mem_cmp(&link_ie->link_eht_cap, &frm->eht_cap,
-				 sizeof(frm->eht_cap))) ||
-		    (link_ie->link_eht_cap.present && !frm->eht_cap.present)) {
-			sta_len_consumed = 0;
-			dot11f_pack_ie_eht_cap(
-				mac_ctx, &link_ie->link_eht_cap,
-				sta_data, sta_len_left,
-				&sta_len_consumed);
-			sta_data += sta_len_consumed;
-			sta_len_left -= sta_len_consumed;
-		} else if (frm->eht_cap.present &&
-			   !link_ie->link_eht_cap.present) {
-			non_inher_ext_ie_lists[non_inher_ext_len++] =
-				WLAN_EXTN_ELEMID_EHTCAP;
-		}
 		if ((link_ie->link_eht_op.present && frm->eht_op.present &&
 		     qdf_mem_cmp(&link_ie->link_eht_op, &frm->eht_op,
 				 sizeof(tDot11fIEeht_op))) ||
@@ -7360,6 +7394,22 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 			   !link_ie->link_eht_op.present) {
 			non_inher_ext_ie_lists[non_inher_ext_len++] =
 				WLAN_EXTN_ELEMID_EHTOP;
+		}
+		if ((link_ie->link_eht_cap.present && frm->eht_cap.present &&
+		     qdf_mem_cmp(&link_ie->link_eht_cap, &frm->eht_cap,
+				 sizeof(frm->eht_cap))) ||
+		    (link_ie->link_eht_cap.present && !frm->eht_cap.present)) {
+			sta_len_consumed = 0;
+			dot11f_pack_ie_eht_cap(
+				mac_ctx, &link_ie->link_eht_cap,
+				sta_data, sta_len_left,
+				&sta_len_consumed);
+			sta_data += sta_len_consumed;
+			sta_len_left -= sta_len_consumed;
+		} else if (frm->eht_cap.present &&
+			   !link_ie->link_eht_cap.present) {
+			non_inher_ext_ie_lists[non_inher_ext_len++] =
+				WLAN_EXTN_ELEMID_EHTCAP;
 		}
 		populate_dot11f_non_inheritance(mac_ctx, &sta_non_inheritance,
 						non_inher_ie_lists,
@@ -7703,12 +7753,12 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 	if (pe_session->opmode == QDF_STA_MODE)
 		p_ext_cap->twt_requestor_support =
 			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request &&
-			mac_ctx->mlme_cfg->twt_cfg.req_flag;
+			twt_get_requestor_flag(mac_ctx);
 
 	if (pe_session->opmode == QDF_SAP_MODE)
 		p_ext_cap->twt_responder_support =
 			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_responder &&
-			mac_ctx->mlme_cfg->twt_cfg.res_flag;
+			twt_get_responder_flag(mac_ctx);
 
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
 

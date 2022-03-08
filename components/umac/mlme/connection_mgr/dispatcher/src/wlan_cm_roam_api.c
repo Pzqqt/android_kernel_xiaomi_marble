@@ -2769,15 +2769,16 @@ cm_roam_stats_print_trigger_info(struct wmi_roam_trigger_info *data,
 	char *buf;
 	char time[TIME_STRING_LEN];
 
-	/* Update roam trigger info to userspace */
-	cm_roam_trigger_info_event(data, vdev_id, is_full_scan);
-
 	buf = qdf_mem_malloc(MAX_ROAM_DEBUG_BUF_SIZE);
 	if (!buf)
 		return;
 
 	cm_roam_stats_get_trigger_detail_str(data, buf, is_full_scan, vdev_id);
 	mlme_get_converted_timestamp(data->timestamp, time);
+
+	/* Update roam trigger info to userspace */
+	cm_roam_trigger_info_event(data, vdev_id, is_full_scan);
+
 	mlme_nofl_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
 	qdf_mem_free(buf);
@@ -3309,3 +3310,22 @@ rel_ref:
 	return status;
 }
 #endif /* WLAN_FEATURE_FIPS */
+
+QDF_STATUS
+cm_cleanup_mlo_link(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS status;
+
+	/* Use internal disconnect as this is for cleanup and no need
+	 * to inform OSIF, and REASON_FW_TRIGGERED_ROAM_FAILURE will
+	 * cleanup host without informing the FW
+	 */
+	status = wlan_cm_disconnect(vdev,
+				    CM_INTERNAL_DISCONNECT,
+				    REASON_FW_TRIGGERED_ROAM_FAILURE,
+				    NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("Failed to post disconnect for link vdev");
+
+	return status;
+}

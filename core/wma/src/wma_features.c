@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1252,7 +1252,8 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	}
 
 	qdf_mem_zero(csa_offload_event, sizeof(*csa_offload_event));
-	qdf_mem_copy(csa_offload_event->bssId, &bssid, QDF_MAC_ADDR_SIZE);
+	qdf_copy_macaddr(&csa_offload_event->bssid,
+			 (struct qdf_mac_addr *)bssid);
 
 	if (csa_event->ies_present_flag & WMI_CSA_IE_PRESENT) {
 		csa_ie = (struct ieee80211_channelswitch_ie *)
@@ -1262,6 +1263,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 			wlan_reg_legacy_chan_to_freq(wma->pdev,
 						     csa_ie->newchannel);
 		csa_offload_event->switch_mode = csa_ie->switchmode;
+		csa_offload_event->ies_present_flag |= MLME_CSA_IE_PRESENT;
 	} else if (csa_event->ies_present_flag & WMI_XCSA_IE_PRESENT) {
 		xcsa_ie = (struct ieee80211_extendedchannelswitch_ie *)
 						(&csa_event->xcsa_ie[0]);
@@ -1278,6 +1280,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 				wlan_reg_legacy_chan_to_freq
 					(wma->pdev, xcsa_ie->newchannel);
 		}
+		csa_offload_event->ies_present_flag |= MLME_XCSA_IE_PRESENT;
 	} else {
 		wma_err("CSA Event error: No CSA IE present");
 		qdf_mem_free(csa_offload_event);
@@ -1290,6 +1293,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 		csa_offload_event->new_ch_width = wb_ie->new_ch_width;
 		csa_offload_event->new_ch_freq_seg1 = wb_ie->new_ch_freq_seg1;
 		csa_offload_event->new_ch_freq_seg2 = wb_ie->new_ch_freq_seg2;
+		csa_offload_event->ies_present_flag |= MLME_WBW_IE_PRESENT;
 	} else if (csa_event->ies_present_flag &
 		   WMI_CSWRAP_IE_EXTENDED_PRESENT) {
 		wb_ie = (struct ieee80211_ie_wide_bw_switch *)
@@ -1303,16 +1307,18 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 			csa_offload_event->new_ch_freq_seg2 =
 						wb_ie->new_ch_freq_seg2;
 			csa_event->ies_present_flag |= WMI_WBW_IE_PRESENT;
+			csa_offload_event->ies_present_flag |=
+				MLME_WBW_IE_PRESENT;
 		}
+		csa_offload_event->ies_present_flag |=
+			MLME_CSWRAP_IE_EXTENDED_PRESENT;
 	}
 
-	csa_offload_event->ies_present_flag = csa_event->ies_present_flag;
-
 	wma_debug("CSA: BSSID "QDF_MAC_ADDR_FMT" chan %d freq %d flag 0x%x width = %d freq1 = %d freq2 = %d op class = %d",
-		 QDF_MAC_ADDR_REF(csa_offload_event->bssId),
+		 QDF_MAC_ADDR_REF(csa_offload_event->bssid.bytes),
 		 csa_offload_event->channel,
 		 csa_offload_event->csa_chan_freq,
-		 csa_event->ies_present_flag,
+		 csa_offload_event->ies_present_flag,
 		 csa_offload_event->new_ch_width,
 		 csa_offload_event->new_ch_freq_seg1,
 		 csa_offload_event->new_ch_freq_seg2,

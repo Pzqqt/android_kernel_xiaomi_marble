@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -528,6 +528,15 @@ bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq);
  */
 bool ucfg_get_disable_6g_nan(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * ucfg_nan_is_mlo_sta_nan_ndi_allowed()- Get support for MLO STA +
+ * NAN Disc + NDI concurrency
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if mlo sta + nan + ndi concurrency allowed or not.
+ */
+bool ucfg_is_mlo_sta_nan_ndi_allowed(struct wlan_objmgr_psoc *psoc);
+
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -663,6 +672,12 @@ static inline void
 ucfg_nan_get_peer_mc_list(struct wlan_objmgr_vdev *vdev,
 			  struct qdf_mac_addr **peer_mc_addr_list)
 {
+}
+
+static inline bool
+ucfg_is_mlo_sta_nan_ndi_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */

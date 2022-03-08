@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,6 +20,7 @@
 #include "wlan_policy_mgr_i.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_policy_mgr_api.h"
+#include "wlan_nan_api.h"
 
 static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 {
@@ -34,7 +36,12 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 
 	cfg->mcc_to_scc_switch = cfg_get(psoc, CFG_MCC_TO_SCC_SWITCH);
 	cfg->sys_pref = cfg_get(psoc, CFG_CONC_SYS_PREF);
-	cfg->max_conc_cxns = cfg_get(psoc, CFG_MAX_CONC_CXNS);
+
+	if (wlan_is_mlo_sta_nan_ndi_allowed(psoc))
+		cfg->max_conc_cxns = cfg_get(psoc, CFG_MAX_CONC_CXNS) + 1;
+	else
+		cfg->max_conc_cxns = cfg_get(psoc, CFG_MAX_CONC_CXNS);
+
 	cfg->conc_rule1 = cfg_get(psoc, CFG_ENABLE_CONC_RULE1);
 	cfg->conc_rule2 = cfg_get(psoc, CFG_ENABLE_CONC_RULE2);
 	cfg->pcl_band_priority = cfg_get(psoc, CFG_PCL_BAND_PRIORITY);

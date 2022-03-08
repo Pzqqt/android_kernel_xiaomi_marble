@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -388,6 +389,28 @@ QDF_STATUS lim_init_mlm(struct mac_context *);
 void lim_cleanup_mlm(struct mac_context *);
 
 /* Management frame handling functions */
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * lim_process_beacon_mlo() - process beacon mlo IE
+ * @mac_ctx: global mac context
+ * @session: pe session
+ * @bcn_ptr: pointer to tSchBeaconStruct
+ *
+ * Return none
+ */
+void lim_process_beacon_mlo(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tSchBeaconStruct *bcn_ptr);
+#else
+static inline
+void lim_process_beacon_mlo(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tSchBeaconStruct *bcn_ptr)
+{
+}
+#endif
+
 void lim_process_beacon_frame(struct mac_context *, uint8_t *, struct pe_session *);
 void lim_process_probe_req_frame(struct mac_context *, uint8_t *, struct pe_session *);
 void lim_process_probe_rsp_frame(struct mac_context *, uint8_t *, struct pe_session *);

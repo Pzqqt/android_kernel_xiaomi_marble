@@ -5392,6 +5392,21 @@ static void wma_green_ap_register_handlers(tp_wma_handle wma_handle)
 #endif
 
 #ifdef WLAN_FEATURE_NAN
+#ifdef WLAN_FEATURE_11BE_MLO
+static void wma_update_mlo_sta_nan_ndi_target_caps(tp_wma_handle wma_handle,
+						   struct wma_tgt_cfg *tgt_cfg)
+{
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_mlo_sta_nan_ndi_support))
+		tgt_cfg->nan_caps.mlo_sta_nan_ndi_allowed = 1;
+}
+#else
+static void wma_update_mlo_sta_nan_ndi_target_caps(tp_wma_handle wma_handle,
+						   struct wma_tgt_cfg *tgt_cfg)
+{
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
+
 static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
 				       struct wma_tgt_cfg *tgt_cfg)
 {
@@ -5425,6 +5440,8 @@ static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 				wmi_service_ndi_txbf_support))
 		tgt_cfg->nan_caps.ndi_txbf_supported = 1;
+
+	wma_update_mlo_sta_nan_ndi_target_caps(wma_handle, tgt_cfg);
 }
 #else
 static void wma_update_nan_target_caps(tp_wma_handle wma_handle,

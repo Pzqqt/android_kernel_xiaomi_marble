@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2664,7 +2664,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	QDF_STATUS ret;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	u_int8_t vdev_id;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_mlme_qos *qos_aggr;
 	struct vdev_mlme_obj *vdev_mlme;
 	tp_wma_handle wma_handle;
@@ -2673,7 +2672,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_FAILURE;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle || !soc)
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
 
 	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_LEGACY_WMA_ID) !=
@@ -2804,6 +2803,9 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		wma_err("failed to set TX_STBC(status = %d)", status);
 
 	wma_set_vdev_mgmt_rate(wma_handle, vdev_id);
+	if (IS_FEATURE_11BE_SUPPORTED_BY_FW)
+		wma_set_eht_txbf_cfg(mac, vdev_id);
+
 	if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
 		wma_set_he_txbf_cfg(mac, vdev_id);
 
@@ -2889,15 +2891,32 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 			wma_err("Failed to configure active APF mode");
 	}
 
-	cdp_data_tx_cb_set(soc, vdev_id,
-			   wma_data_tx_ack_comp_hdlr,
-			   wma_handle);
+	wma_vdev_set_data_tx_callback(vdev);
 
 	return QDF_STATUS_SUCCESS;
 
 end:
 	wma_cleanup_vdev(vdev);
 	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wma_vdev_set_data_tx_callback(struct wlan_objmgr_vdev *vdev)
+{
+	u_int8_t vdev_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!vdev || !wma_handle || !soc) {
+		wma_err("null vdev, wma_handle or soc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	cdp_data_tx_cb_set(soc, vdev_id,
+			   wma_data_tx_ack_comp_hdlr,
+			   wma_handle);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 enum mlme_bcn_tx_rate_code wma_get_bcn_rate_code(uint16_t rate)
@@ -3457,6 +3476,10 @@ void wma_hold_req_timer(void *data)
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_DELETE_STA_REQ,
 				QDF_PEER_DELETION_TIMEDOUT);
+		if (!mac) {
+			wma_err("mac: Null Pointer Error");
+			goto timer_destroy;
+		}
 		lim_cm_send_connect_rsp(mac, NULL, tgt_req->user_data,
 					CM_GENERIC_FAILURE,
 					QDF_STATUS_E_FAILURE, 0, false);
@@ -5115,6 +5138,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
 	void *htc_handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
@@ -5139,7 +5163,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		wma_add_sta_req_ap_mode(wma, add_sta);
 		break;
 	case BSS_OPERATIONAL_MODE_NDI:
-		wma_add_sta_ndi_mode(wma, add_sta);
+		status = wma_add_sta_ndi_mode(wma, add_sta);
 		break;
 	}
 
@@ -5180,7 +5204,8 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	}
 
 	/* handle wow for nan with 1 or more peer in same way */
-	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
+	if (BSS_OPERATIONAL_MODE_NDI == oper_mode &&
+	    QDF_IS_STATUS_SUCCESS(status)) {
 		wma_debug("disable runtime pm and vote for link up");
 		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
 		wma_ndp_prevent_runtime_pm(wma);
@@ -5196,6 +5221,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	uint8_t vdev_id = del_sta->smesessionId;
 	bool rsp_requested = del_sta->respReqd;
 	void *htc_handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
@@ -5235,7 +5261,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 			qdf_mem_free(del_sta);
 		break;
 	case BSS_OPERATIONAL_MODE_NDI:
-		wma_delete_sta_req_ndi_mode(wma, del_sta);
+		status = wma_delete_sta_req_ndi_mode(wma, del_sta);
 		break;
 	default:
 		wma_err("Incorrect oper mode %d", oper_mode);
@@ -5278,7 +5304,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		return;
 	}
 
-	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
+	if (BSS_OPERATIONAL_MODE_NDI == oper_mode &&
+	    QDF_IS_STATUS_SUCCESS(status)) {
 		wma_debug("allow runtime pm and vote for link down");
 		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
 		wma_ndp_allow_runtime_pm(wma);

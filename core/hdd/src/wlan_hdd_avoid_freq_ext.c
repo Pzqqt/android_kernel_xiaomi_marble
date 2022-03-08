@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +35,10 @@ avoid_freq_ext_policy [QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_RANGE] = { .type = NLA_NESTED },
 	[QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_START] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_END] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_POWER_CAP_DBM] = {.type =
+								NLA_S32},
+	[QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_IFACES_BITMASK] = {.type =
+								NLA_U32},
 };
 
 /**
@@ -66,10 +71,15 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 
 	hdd_enter_dev(wdev->netdev);
 
+	if (!ucfg_mlme_get_coex_unsafe_chan_nb_user_prefer(hdd_ctx->psoc)) {
+		hdd_debug_rl("Coex unsafe chan nb user prefer is not set");
+		return -EOPNOTSUPP;
+	}
+
 	curr_mode = hdd_get_conparam();
 	if (curr_mode == QDF_GLOBAL_FTM_MODE ||
 	    curr_mode == QDF_GLOBAL_MONITOR_MODE) {
-		hdd_debug("Command not allowed in FTM/MONITOR mode");
+		hdd_debug_rl("Command not allowed in FTM/MONITOR mode");
 		return -EINVAL;
 	}
 
@@ -78,7 +88,7 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 		return ret;
 
 	if (hdd_is_connection_in_progress(NULL, NULL)) {
-		hdd_debug("Update chan list refused: conn in progress");
+		hdd_debug_rl("Update chan list refused: conn in progress");
 		ret = -EPERM;
 		goto out;
 	}
@@ -86,7 +96,7 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 	qdf_mem_zero(&avoid_freq_list, sizeof(struct ch_avoid_ind_type));
 
 	if (!data && data_len == 0) {
-		hdd_debug("Clear extended avoid frequency list");
+		hdd_debug_rl("Clear extended avoid frequency list");
 		goto process_avoid_channel_ext;
 	}
 
@@ -96,7 +106,7 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 				      data_len,
 				      avoid_freq_ext_policy);
 	if (ret) {
-		hdd_err("Invalid avoid freq ext ATTR");
+		hdd_err_rl("Invalid avoid freq ext ATTR");
 		ret = -EINVAL;
 		goto out;
 	}
@@ -104,7 +114,7 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 	id = QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_RANGE;
 
 	if (!tb[id]) {
-		hdd_err("Attr avoid frequency ext range failed");
+		hdd_err_rl("Attr avoid frequency ext range failed");
 		ret = -EINVAL;
 		goto out;
 	}
@@ -112,9 +122,15 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 	i = 0;
 	avoid_freq_list.ch_avoid_range_cnt = CH_AVOID_MAX_RANGE;
 
+	/* restriction mask */
+	sub_id = QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_IFACES_BITMASK;
+
+	if (tb[sub_id])
+		avoid_freq_list.restriction_mask = nla_get_u32(tb[sub_id]);
+
 	nla_for_each_nested(freq_ext, tb[id], rem) {
 		if (i == CH_AVOID_MAX_RANGE) {
-			hdd_warn("Ignoring excess range number");
+			hdd_warn_rl("Ignoring excess range number");
 			break;
 		}
 
@@ -122,7 +138,7 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 					    nla_data(freq_ext),
 					    nla_len(freq_ext),
 					    avoid_freq_ext_policy)) {
-			hdd_err("nla_parse failed");
+			hdd_err_rl("nla_parse failed");
 			ret = -EINVAL;
 			goto out;
 		}
@@ -145,9 +161,15 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 		}
 		avoid_freq_range->end_freq = nla_get_u32(tb2[sub_id]);
 
-		if (!wlan_reg_is_same_band_freqs(avoid_freq_range->start_freq,
-						 avoid_freq_range->end_freq)) {
-			hdd_debug("Not in same band");
+		if (!avoid_freq_range->start_freq &&
+		    !avoid_freq_range->end_freq && (i < 1)) {
+			hdd_debug_rl("Clear unsafe channel list");
+		} else if (!wlan_reg_is_same_band_freqs(
+			   avoid_freq_range->start_freq,
+			   avoid_freq_range->end_freq)) {
+			hdd_debug_rl("start freq %d end freq %d not in same band",
+				     avoid_freq_range->start_freq,
+				     avoid_freq_range->end_freq);
 			ret = -EINVAL;
 			goto out;
 		}
@@ -157,15 +179,26 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 			ret = -EINVAL;
 			goto out;
 		}
-		hdd_debug("ext avoid freq start: %u end: %u",
-			  avoid_freq_range->start_freq,
-			  avoid_freq_range->end_freq);
+
+		/* ext txpower */
+		sub_id = QCA_WLAN_VENDOR_ATTR_AVOID_FREQUENCY_POWER_CAP_DBM;
+
+		if (tb2[sub_id]) {
+			avoid_freq_range->txpower = nla_get_s32(tb2[sub_id]);
+			avoid_freq_range->is_valid_txpower = true;
+		}
+
+		hdd_debug_rl("ext avoid freq start: %u end: %u txpower %d mask %d",
+			     avoid_freq_range->start_freq,
+			     avoid_freq_range->end_freq,
+			     avoid_freq_range->txpower,
+			     avoid_freq_list.restriction_mask);
 		i++;
 	}
 
 	if (i < CH_AVOID_MAX_RANGE) {
-		hdd_warn("Number of freq range %u less than expected %u",
-			 i, CH_AVOID_MAX_RANGE);
+		hdd_warn_rl("Number of freq range %u less than expected %u",
+			    i, CH_AVOID_MAX_RANGE);
 		avoid_freq_list.ch_avoid_range_cnt = i;
 	}
 

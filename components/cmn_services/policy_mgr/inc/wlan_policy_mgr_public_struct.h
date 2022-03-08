@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -846,6 +846,26 @@ enum policy_mgr_two_connection_mode {
  * 5ghz DBS
  * @PM_NDI_NDI_5_NAN_DISC_24_DBS: Both NDI on 5ghz and NAN Disc on 2.4Ghz DBS
  * @PM_NDI_NDI_NAN_DISC_24_SMM: Both NDI, NAN Disc on 2.4ghz SMM
+ * @PM_STA_STA_5_NAN_DISC_24_DBS: Both STA on 5Ghz and NAN Disc on 2.4Ghz DBS
+ * @PM_NAN_DISC_24_STA_STA_5_DBS: NAN Disc on 2.4Ghz and both STA on 5Ghz DBS
+ * @PM_STA_STA_24_NAN_DISC_24_SMM: Both STA on 2.4Ghz and NAN Disc on 2.4Ghz SMM
+ * @PM_NAN_DISC_24_STA_STA_24_SMM: NAN Disc on 2.4Ghz and both STA on 2.4Ghz SMM
+ * @PM_STA_24_STA_5_NAN_DISC_24_SMM: First STA on 2.4Ghz and second STA on 5Ghz
+ * and NAN Disc on 2.4Ghz SMM
+ * @PM_STA_24_STA_5_NAN_DISC_24_DBS: First STA on 2.4Ghz and second STA on 5Ghz
+ * and NAN Disc on 2.4Ghz DBS
+ * @PM_STA_5_STA_24_NAN_DISC_24_SMM: First STA on 5Ghz and second STA on 2.4Ghz
+ * and NAN Disc on 2.4Ghz SMM
+ * @PM_STA_5_STA_24_NAN_DISC_24_DBS: First STA on 5Ghz and second STA on 2.4Ghz
+ * and NAN Disc on 2.4Ghz DBS
+ * @PM_NAN_DISC_24_STA_5_STA_24_SMM: NAN Disc on 2.4Ghz and first STA on 5Ghz
+ * and second STA on 2.4Ghz SMM
+ * @PM_NAN_DISC_24_STA_5_STA_24_DBS: NAN Disc on 2.4Ghz and first STA on 5Ghz
+ * and second STA on 2.4Ghz DBS
+ * @PM_NAN_DISC_24_STA_24_STA_5_SMM: NAN Disc on 2.4Ghz and first STA on 2.4Ghz
+ * and second STA on 5Ghz SMM
+ * @PM_NAN_DISC_24_STA_24_STA_5_DBS: NAN Disc on 2.4Ghz and first STA on 2.4Ghz
+ * and second STA on 5Ghz DBS
  */
 enum policy_mgr_three_connection_mode {
 	PM_STA_SAP_SCC_24_SAP_5_DBS,
@@ -862,6 +882,18 @@ enum policy_mgr_three_connection_mode {
 	PM_NAN_DISC_NDI_24_NDI_5_DBS,
 	PM_NDI_NDI_5_NAN_DISC_24_DBS,
 	PM_NDI_NDI_NAN_DISC_24_SMM,
+	PM_STA_STA_5_NAN_DISC_24_DBS,
+	PM_NAN_DISC_24_STA_STA_5_DBS,
+	PM_STA_STA_24_NAN_DISC_24_SMM,
+	PM_NAN_DISC_24_STA_STA_24_SMM,
+	PM_STA_24_STA_5_NAN_DISC_24_SMM,
+	PM_STA_24_STA_5_NAN_DISC_24_DBS,
+	PM_STA_5_STA_24_NAN_DISC_24_SMM,
+	PM_STA_5_STA_24_NAN_DISC_24_DBS,
+	PM_NAN_DISC_24_STA_5_STA_24_SMM,
+	PM_NAN_DISC_24_STA_5_STA_24_DBS,
+	PM_NAN_DISC_24_STA_24_STA_5_SMM,
+	PM_NAN_DISC_24_STA_24_STA_5_DBS,
 
 	PM_MAX_THREE_CONNECTION_MODE
 };

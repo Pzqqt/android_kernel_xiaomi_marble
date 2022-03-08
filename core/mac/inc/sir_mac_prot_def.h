@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -346,9 +347,11 @@
 #define SIR_MAC_BAD_HTC_HE_VENDOR_OUI2             "\x00\x50\xF2\x12"
 #define SIR_MAC_BAD_HTC_HE_VENDOR_OUI_LEN         4
 
-/* Maximum allowable size of a beacon and probe rsp frame */
-#define SIR_MAX_BEACON_SIZE    512
+/* Maximum allowable size of a beacon,probe rsp and fils discovery frame */
+#define SIR_MAX_BEACON_SIZE     512
 #define SIR_MAX_PROBE_RESP_SIZE 512
+#define SIR_MAX_FD_TMPL_SIZE    512
+
 
 /* / Frame control field format (2 bytes) */
 typedef struct sSirMacFrameCtl {

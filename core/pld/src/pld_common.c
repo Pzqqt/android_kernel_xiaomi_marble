@@ -330,14 +330,14 @@ int pld_register_driver(struct pld_driver_ops *ops)
 
 	ret = pld_pcie_register_driver();
 	if (ret) {
-		pr_err("Fail to register pcie driver\n");
+		pld_err_rl("Fail to register pcie driver\n");
 		goto fail_pcie;
 	}
 	pld_context->pld_driver_state |= PLD_PCIE_REGISTERED;
 
 	ret = pld_snoc_register_driver();
 	if (ret) {
-		pr_err("Fail to register snoc driver\n");
+		pld_err_rl("Fail to register snoc driver\n");
 		goto fail_snoc;
 	}
 	pld_context->pld_driver_state |= PLD_SNOC_REGISTERED;
@@ -372,7 +372,7 @@ int pld_register_driver(struct pld_driver_ops *ops)
 
 	ret = pld_ipci_register_driver();
 	if (ret) {
-		pr_err("Fail to register ipci driver\n");
+		pld_err_rl("Fail to register ipci driver\n");
 		goto fail_ipci;
 	}
 	pld_context->pld_driver_state |= PLD_IPCI_REGISTERED;

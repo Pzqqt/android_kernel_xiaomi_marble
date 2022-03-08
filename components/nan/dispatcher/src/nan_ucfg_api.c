@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1165,8 +1165,13 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	if (!sta_cnt)
 		return true;
 
-	/* Reject if STA+STA is present */
-	if (sta_cnt > 1) {
+	/* Reject STA+STA in below case
+	 * Non-ML STA: STA+STA+NDP concurrency is not supported
+	 * ML STA: As both links would be treated as separate STAs from
+	 * policy mgr perspective, don't reject here and continue with further
+	 * checks
+	 */
+	if (sta_cnt > 1 && !policy_mgr_is_mlo_sta_present(psoc)) {
 		nan_err("STA+STA+NDP concurrency is not allowed");
 		return false;
 	}
@@ -1178,6 +1183,13 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	 */
 	if (is_sap_ndp_concurrency_allowed())
 		return true;
+
+	/* ML STA + NAN + NDP concurrency is allowed only if firmware
+	 * support is present
+	 */
+	if (policy_mgr_is_mlo_sta_present(psoc) &&
+	    !wlan_is_mlo_sta_nan_ndi_allowed(psoc))
+		return false;
 
 	ndi_cnt = policy_mgr_get_mode_specific_conn_info(psoc,
 							 freq_list,
@@ -1401,4 +1413,9 @@ QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc)
 bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 {
 	return wlan_is_nan_allowed_on_freq(pdev, freq);
+}
+
+bool ucfg_is_mlo_sta_nan_ndi_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_is_mlo_sta_nan_ndi_allowed(psoc);
 }

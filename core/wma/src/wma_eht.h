@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -147,6 +148,27 @@ QDF_STATUS wma_get_eht_capabilities(struct eht_capability *eht_cap);
  */
 void wma_set_peer_assoc_params_bw_320(struct peer_assoc_params *params,
 				      enum phy_ch_width ch_width);
+
+/**
+ * wma_set_eht_txbf_cfg() - set EHT Tx beamforming mlme cfg to FW
+ * @mac: Global MAC context
+ * @vdev_id: VDEV id
+ *
+ * Return: None
+ */
+void wma_set_eht_txbf_cfg(struct mac_context *mac, uint8_t vdev_id);
+
+/**
+ * wma_set_eht_txbf_params() - set EHT Tx beamforming params to FW
+ * @vdev_id: VDEV id
+ * @su bfer: SU beamformer capability
+ * @su bfee: SU beamformee capability
+ * @mu bfer: MU beamformer capability
+ *
+ * Return: None
+ */
+void wma_set_eht_txbf_params(uint8_t vdev_id, bool su_bfer,
+			     bool su_bfee, bool mu_bfer);
 #else
 static inline void wma_eht_update_tgt_services(struct wmi_unified *wmi_handle,
 					       struct wma_tgt_services *cfg)
@@ -200,6 +222,17 @@ static inline bool wma_is_peer_eht_capable(tpAddStaParams params)
 static inline
 void wma_set_peer_assoc_params_bw_320(struct peer_assoc_params *params,
 				      enum phy_ch_width ch_width)
+{
+}
+
+static inline
+void wma_set_eht_txbf_cfg(struct mac_context *mac, uint8_t vdev_id)
+{
+}
+
+static inline
+void wma_set_eht_txbf_params(uint8_t vdev_id, bool su_bfer,
+			     bool su_bfee, bool mu_bfer)
 {
 }
 #endif
