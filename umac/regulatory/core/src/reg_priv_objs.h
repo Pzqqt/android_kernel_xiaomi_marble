@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -178,7 +178,6 @@ struct wlan_regulatory_psoc_priv_obj {
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
 	bool ch_avoid_ext_ind;
 	struct ch_avoid_ind_type avoid_freq_ext_list;
-	bool coex_unsafe_chan_nb_user_prefer;
 #endif
 };
 

@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,7 +49,7 @@
 #define MAX_STA_VDEV_CNT 4
 #define INVALID_VDEV_ID 0xFF
 #define INVALID_CHANNEL_NUM 0x0
-#define CH_AVOID_MAX_RANGE   (NUM_5GHZ_CHANNELS + NUM_24GHZ_CHANNELS)
+#define CH_AVOID_MAX_RANGE   4
 #define REG_ALPHA2_LEN 2
 #define MAX_REG_RULES 10
 #define MAX_6G_REG_RULES 5
@@ -1393,8 +1392,6 @@ enum restart_beaconing_on_ch_avoid_rule {
  * @enable_5dot9_ghz_chan_in_master_mode: 5.9 GHz channel support in
  * master mode
  * @retain_nol_across_regdmn_update: Retain the NOL list across the regdomain.
- * @coex_unsafe_chan_nb_user_prefer: Honor coex unsafe chan cmd from firmware or
- * userspace
  */
 struct reg_config_vars {
 	uint32_t enable_11d_support;
@@ -1409,9 +1406,6 @@ struct reg_config_vars {
 	bool enable_11d_in_world_mode;
 	bool enable_5dot9_ghz_chan_in_master_mode;
 	bool retain_nol_across_regdmn_update;
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
-	bool coex_unsafe_chan_nb_user_prefer;
-#endif
 };
 
 /**
@@ -1541,25 +1535,20 @@ struct cur_regdmn_info {
  * struct ch_avoid_freq_type
  * @start_freq: start freq
  * @end_freq: end freq
- * @txpower: txpower
  */
 struct ch_avoid_freq_type {
 	qdf_freq_t start_freq;
 	qdf_freq_t end_freq;
-	int32_t txpower;
-	bool is_valid_txpower;
 };
 
 /**
  * struct ch_avoid_ind_type
  * @ch_avoid_range_cnt: count
  * @avoid_freq_range: avoid freq range array
- * @restriction_mask: restriction mask to apply txpower
  */
 struct ch_avoid_ind_type {
 	uint32_t ch_avoid_range_cnt;
 	struct ch_avoid_freq_type avoid_freq_range[CH_AVOID_MAX_RANGE];
-	uint8_t restriction_mask;
 };
 
 /**
@@ -1570,8 +1559,6 @@ struct ch_avoid_ind_type {
 struct unsafe_ch_list {
 	uint16_t chan_cnt;
 	uint16_t chan_freq_list[NUM_CHANNELS];
-	int32_t txpower[NUM_CHANNELS];
-	bool is_valid_txpower[NUM_CHANNELS];
 };
 
 /**
