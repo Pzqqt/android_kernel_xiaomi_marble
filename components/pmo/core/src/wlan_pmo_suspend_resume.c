@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -340,6 +341,30 @@ static void pmo_core_set_suspend_dtim(struct wlan_objmgr_psoc *psoc)
 		if (!pmo_is_listen_interval_user_set(vdev_ctx)
 		    && !li_offload_support)
 			pmo_core_set_vdev_suspend_dtim(psoc, vdev, vdev_ctx);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	}
+}
+
+/**
+ * pmo_core_set_suspend_ps_params() - set suspend power save params
+ * @psoc: objmgr psoc handle
+ *
+ * Return: none
+ */
+static void pmo_core_set_suspend_ps_params(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_vdev *vdev;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	/* Iterate through VDEV list */
+	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+							    WLAN_PMO_ID);
+		if (!vdev)
+			continue;
+
+		vdev_ctx = pmo_vdev_get_priv(vdev);
 		pmo_configure_vdev_suspend_params(psoc, vdev, vdev_ctx);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 	}
@@ -516,6 +541,10 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc,
 	if (!is_runtime_pm)
 		pmo_core_set_suspend_dtim(psoc);
 
+	/* Config ITO to short value(50ms) when trigger FW to enter WoW mode,
+	 * and config ITO to default value(200ms) after exiting WoW mode.
+	 */
+	pmo_core_set_suspend_ps_params(psoc);
 	/*
 	 * To handle race between hif_pci_suspend and unpause/pause tx handler.
 	 * This happens when host sending WMI_WOW_ENABLE_CMDID to FW and receive
@@ -624,6 +653,30 @@ static void pmo_core_set_resume_dtim(struct wlan_objmgr_psoc *psoc)
 		if (!pmo_is_listen_interval_user_set(vdev_ctx)
 		    && !li_offload_support)
 			pmo_core_set_vdev_resume_dtim(psoc, vdev, vdev_ctx);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	}
+}
+
+/**
+ * pmo_core_set_resume_ps_params() - set resume time power save params
+ * @psoc: objmgr psoc handle
+ *
+ * Return: none
+ */
+static void pmo_core_set_resume_ps_params(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_vdev *vdev;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	/* Iterate through VDEV list */
+	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+							    WLAN_PMO_ID);
+		if (!vdev)
+			continue;
+
+		vdev_ctx = pmo_vdev_get_priv(vdev);
 		pmo_configure_vdev_resume_params(psoc, vdev, vdev_ctx);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 	}
@@ -689,6 +742,11 @@ static QDF_STATUS pmo_core_psoc_configure_resume(struct wlan_objmgr_psoc *psoc,
 	 */
 	if (!is_runtime_pm)
 		pmo_core_set_resume_dtim(psoc);
+
+	/* Config ITO to short value(50ms) when trigger FW to enter WoW mode,
+	 * and config ITO to default value(200ms) after exiting WoW mode.
+	 */
+	pmo_core_set_resume_ps_params(psoc);
 	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, false);
 	pmo_unpause_all_vdev(psoc, psoc_ctx);
 
