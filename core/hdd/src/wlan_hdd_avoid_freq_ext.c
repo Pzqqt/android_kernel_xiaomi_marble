@@ -66,11 +66,6 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 
 	hdd_enter_dev(wdev->netdev);
 
-	if (!ucfg_mlme_get_coex_unsafe_chan_nb_user_prefer(hdd_ctx->psoc)) {
-		hdd_debug("Coex unsafe chan nb user prefer is not set");
-		return -EOPNOTSUPP;
-	}
-
 	curr_mode = hdd_get_conparam();
 	if (curr_mode == QDF_GLOBAL_FTM_MODE ||
 	    curr_mode == QDF_GLOBAL_MONITOR_MODE) {
