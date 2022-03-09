@@ -400,7 +400,7 @@ QDF_STATUS
 
 QDF_STATUS
 (*extract_roam_frame_info)(wmi_unified_t wmi_handle, void *evt_buf,
-			   struct roam_frame_info *dst, uint8_t idx,
+			   struct roam_frame_stats *dst, uint8_t idx,
 			   uint8_t num_frames);
 /**
  * extract_roam_sync_event  - Extract roam sync event func ptr
