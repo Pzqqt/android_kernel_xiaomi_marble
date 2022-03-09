@@ -111,6 +111,8 @@ void hdd_twt_del_dialog_in_ps_disable(struct hdd_context *hdd_ctx,
 				      struct qdf_mac_addr *mac_addr,
 				      uint8_t vdev_id)
 {
+	return osif_twt_teardown_in_ps_disable(hdd_ctx->psoc, mac_addr,
+					       vdev_id);
 }
 
 void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,

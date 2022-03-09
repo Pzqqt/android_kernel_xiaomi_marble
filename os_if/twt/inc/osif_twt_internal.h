@@ -90,6 +90,18 @@ int osif_twt_send_responder_disable_cmd(struct wlan_objmgr_psoc *psoc,
  */
 void osif_twt_concurrency_update_handler(struct wlan_objmgr_psoc *psoc,
 					 struct wlan_objmgr_pdev *pdev);
+
+/**
+ * osif_twt_teardown_in_ps_disable() - Send TWT teardown if power save
+ * mode is disabled
+ *
+ * @psoc: pointer to global psoc structure
+ * @mac_addr: Peer MAC Address
+ * @vdev_id: vdev_id
+ */
+void osif_twt_teardown_in_ps_disable(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *mac_addr,
+				     uint8_t vdev_id);
 #else
 static inline
 int osif_twt_send_requestor_disable_cmd(struct wlan_objmgr_psoc *psoc,
@@ -115,6 +127,12 @@ int osif_twt_send_responder_enable_cmd(struct wlan_objmgr_psoc *psoc,
 static inline
 void osif_twt_concurrency_update_handler(struct wlan_objmgr_psoc *psoc,
 					 struct wlan_objmgr_pdev *pdev)
+{
+}
+static inline
+void osif_twt_teardown_in_ps_disable(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *mac_addr,
+				     uint8_t vdev_id)
 {
 }
 #endif
