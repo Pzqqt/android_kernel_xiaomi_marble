@@ -2179,11 +2179,9 @@ bool policy_mgr_is_hw_dbs_required_for_band(struct wlan_objmgr_psoc *psoc,
 		return false;
 }
 
-bool policy_mgr_is_dp_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc)
+bool policy_mgr_is_dp_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 {
-	return policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
-		policy_mgr_is_hw_dbs_required_for_band(psoc,
-						       HW_MODE_MAC_BAND_2G);
+	return policy_mgr_find_if_hwlist_has_dbs(psoc);
 }
 
 /*

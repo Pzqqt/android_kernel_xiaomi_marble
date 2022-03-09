@@ -2819,14 +2819,14 @@ bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_current_hwmode_sbs(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_is_dp_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
- * for Data Path.
+ * policy_mgr_is_dp_hw_dbs_capable() - if hardware is capable of dbs 2x2
+ * or 1X1 for Data Path (HW mode)
  * @psoc: PSOC object information
- * This API is for Data Path to get HW dbs 2x2 capable.
+ * This API is for Data Path to get HW mode support dbs.
  *
- * Return: true - DBS2x2, false - DBS1x1
+ * Return: true - DBS capable, false - not
  */
-bool policy_mgr_is_dp_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc);
+bool policy_mgr_is_dp_hw_dbs_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_is_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
