@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,17 +119,17 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
  *
  * If there are any psoc transition taking place because of SSR, then vdev
  * trans/op should be rejected and queued in the DSC queue so that it may be
- * resumed after the current trans/op is completed. return QDF_STATUS_E_AGAIN
+ * resumed after the current trans/op is completed. return QDF_STATUS_E_BUSY
  * in this case.
  *
  * If there is a psoc transition taking place becasue of psoc idle shutdown,
  * then the vdev trans/ops should be rejected and queued in the DSC queue so
  * that it may be resumed after the current trans/ops is completed. Return
- * QDF_STATUS_E_AGAIN in this case.
+ * QDF_STATUS_E_BUSY in this case.
  *
  * If there are any vdev trans/ops taking place, then the vdev trans/ops
  * should be rejected and queued in the DSC queue so that it may be resumed
- * after the current trans/ops is completed. Return QDF_STATUS_E_AGAIN in this
+ * after the current trans/ops is completed. Return QDF_STATUS_E_BUSY in this
  * case.
  *
  * Return: QDF_STATUS_SUCCESS if transition is allowed, error code if not.
@@ -151,11 +152,11 @@ static QDF_STATUS __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 		if (qdf_is_driver_unloading())
 			return QDF_STATUS_E_INVAL;
 		else
-			return QDF_STATUS_E_AGAIN;
+			return QDF_STATUS_E_BUSY;
 	}
 
 	if (__dsc_trans_active_or_queued(&vdev->trans))
-		return QDF_STATUS_E_AGAIN;
+		return QDF_STATUS_E_BUSY;
 
 	return QDF_STATUS_SUCCESS;
 }
