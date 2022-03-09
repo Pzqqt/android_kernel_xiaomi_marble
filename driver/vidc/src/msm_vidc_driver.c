@@ -2194,7 +2194,8 @@ int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp)
 
 	core = inst->core;
 	if (!core->capabilities[ENC_AUTO_FRAMERATE].value ||
-			is_image_session(inst) || msm_vidc_is_super_buffer(inst))
+			is_image_session(inst) || msm_vidc_is_super_buffer(inst) ||
+			!inst->capabilities->cap[TIME_DELTA_BASED_RC].value)
 		goto exit;
 
 	rc = msm_vidc_update_timestamp(inst, timestamp);
