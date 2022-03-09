@@ -1620,6 +1620,8 @@ extract_roam_btm_response_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 
 	src_data = &param_buf->roam_btm_response_info[idx];
+	if (!src_data->timestamp)
+		return QDF_STATUS_SUCCESS;
 
 	dst->present = true;
 	dst->btm_status = src_data->btm_status;

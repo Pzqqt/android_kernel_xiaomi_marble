@@ -5579,6 +5579,10 @@ cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
 			return QDF_STATUS_E_FAILURE;
 		}
 
+		if (btm_data->vsie_reason)
+			cm_roam_wtc_btm_event(trigger_info, btm_data,
+					      vdev_id, is_wtc);
+
 		log_record = qdf_mem_malloc(sizeof(*log_record));
 		if (!log_record)
 			return QDF_STATUS_E_NOMEM;
@@ -5599,9 +5603,6 @@ cm_roam_btm_resp_event(struct wmi_roam_trigger_info *trigger_info,
 		status = wlan_connectivity_log_enqueue(log_record);
 		qdf_mem_free(log_record);
 
-		if (btm_data->vsie_reason)
-			cm_roam_wtc_btm_event(trigger_info, btm_data,
-					      vdev_id, is_wtc);
 	}
 
 	return status;

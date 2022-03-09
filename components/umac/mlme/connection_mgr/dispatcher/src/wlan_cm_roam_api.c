@@ -3274,11 +3274,6 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 			cm_roam_btm_req_event(
 				&stats_info->trigger[0].btm_trig_data,
 				stats_info->vdev_id);
-		else if (stats_info->trigger[0].present &&
-			 stats_info->trigger[0].trigger_reason ==
-			 ROAM_TRIGGER_REASON_WTC_BTM)
-			cm_roam_btm_resp_event(&stats_info->trigger[0], NULL,
-					       stats_info->vdev_id, true);
 
 		if (stats_info->data_11kv[0].present)
 			cm_roam_stats_print_11kv_info(&stats_info->data_11kv[0],
@@ -3296,6 +3291,17 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 					&stats_info->trigger[i],
 					&stats_info->btm_rsp[0],
 					stats_info->vdev_id, 0);
+
+		/*
+		 * WTC BTM response with reason code
+		 * WTC print should be after the normal BTM
+		 * response print
+		 */
+		if (stats_info->trigger[0].present &&
+		    stats_info->trigger[0].trigger_reason ==
+		    ROAM_TRIGGER_REASON_WTC_BTM)
+			cm_roam_btm_resp_event(&stats_info->trigger[0], NULL,
+					       stats_info->vdev_id, true);
 	}
 	if (stats_info->roam_msg_info && stats_info->num_roam_msg_info &&
 	    stats_info->num_roam_msg_info - rem_tlv) {
