@@ -1743,6 +1743,7 @@ wmi_get_converted_tx_status(
 	return QDF_TX_RX_STATUS_INVALID;
 }
 
+#define WLAN_FC0_SUBTYPE_SHIFT         4
 /**
  * extract_roam_frame_info_tlv() - Extract the frame exchanges during roaming
  * info from the WMI_ROAM_STATS_EVENTID
@@ -1754,18 +1755,19 @@ wmi_get_converted_tx_status(
  */
 static QDF_STATUS
 extract_roam_frame_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
-			    struct roam_frame_info *dst, uint8_t frame_idx,
+			    struct roam_frame_stats *dst, uint8_t frame_idx,
 			    uint8_t num_frames)
 {
 	WMI_ROAM_STATS_EVENTID_param_tlvs *param_buf;
 	wmi_roam_frame_info *src_data = NULL;
+	struct roam_frame_info *dst_buf;
 	uint8_t i, subtype;
 
 	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
 
 	if (!param_buf || !param_buf->roam_frame_info ||
 	    !param_buf->num_roam_frame_info ||
-	    (frame_idx + num_frames) >= param_buf->num_roam_frame_info) {
+	    (frame_idx + num_frames) > param_buf->num_roam_frame_info) {
 		wmi_debug("Empty roam_frame_info param buf frame_idx:%d num_frames:%d",
 			  frame_idx, num_frames);
 		return QDF_STATUS_SUCCESS;
@@ -1776,31 +1778,35 @@ extract_roam_frame_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	if (num_frames > WLAN_ROAM_MAX_FRAME_INFO)
 		num_frames = WLAN_ROAM_MAX_FRAME_INFO;
 
+	dst->num_frame = num_frames;
+	dst_buf = dst->frame_info;
 	for (i = 0; i < num_frames; i++) {
-		dst->present = true;
-		dst->timestamp = src_data->timestamp;
-		dst->type = WMI_GET_BITS(src_data->frame_info, 0, 2);
+		dst_buf->timestamp = src_data->timestamp;
+		dst_buf->type = WMI_GET_BITS(src_data->frame_info, 0, 2);
 
 		subtype = WMI_GET_BITS(src_data->frame_info, 2, 4);
-		if (dst->type == WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT) {
-			dst->type = ROAM_FRAME_INFO_FRAME_TYPE_EXT;
-			dst->subtype =
+		if (dst_buf->type == WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT) {
+			dst_buf->type = ROAM_FRAME_INFO_FRAME_TYPE_EXT;
+			dst_buf->subtype =
 				wmi_get_converted_roam_eapol_subtype(subtype);
 		} else {
-			dst->subtype = subtype;
+			dst_buf->subtype = subtype << WLAN_FC0_SUBTYPE_SHIFT;
 		}
 
-		dst->is_req = WMI_GET_BITS(src_data->frame_info, 6, 1);
-		dst->seq_num = WMI_GET_BITS(src_data->frame_info, 7, 16);
-		dst->status_code = src_data->status_code;
-		if (dst->is_req)
-			dst->tx_status = wmi_get_converted_tx_status(
+		dst_buf->is_rsp = WMI_GET_BITS(src_data->frame_info, 6, 1);
+		dst_buf->is_rsp &=
+			(dst_buf->type != WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT &&
+			 dst_buf->subtype == MGMT_SUBTYPE_AUTH);
+		dst_buf->seq_num = WMI_GET_BITS(src_data->frame_info, 7, 16);
+		dst_buf->status_code = src_data->status_code;
+		if (!dst_buf->is_rsp)
+			dst_buf->tx_status = wmi_get_converted_tx_status(
 							src_data->status_code);
 
-		dst->retry_count = src_data->retry_count;
-		dst->rssi = (-1) * src_data->rssi_dbm_abs;
+		dst_buf->retry_count = src_data->retry_count;
+		dst_buf->rssi = (-1) * src_data->rssi_dbm_abs;
 
-		dst++;
+		dst_buf++;
 		src_data++;
 	}
 
@@ -2900,7 +2906,7 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	wmi_roam_stats_event_fixed_param *fixed_param;
 	struct roam_stats_event *stats_info;
 	struct roam_msg_info *roam_msg_info = NULL;
-	uint8_t vdev_id, i, num_btm = 0;
+	uint8_t vdev_id, i, num_btm = 0, num_frames = 0;
 	uint8_t num_tlv = 0, num_chan = 0, num_ap = 0, num_rpt = 0;
 	uint32_t rem_len;
 	QDF_STATUS status;
@@ -3003,6 +3009,14 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 		wmi_err_rl("Invalid roam msg info");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	rem_len -= param_buf->num_roam_msg_info * sizeof(wmi_roam_msg_info);
+	if (rem_len <
+	    param_buf->num_roam_frame_info * sizeof(wmi_roam_frame_info)) {
+		wmi_err_rl("Invalid roam frame info");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	stats_info = qdf_mem_malloc(sizeof(struct roam_stats_event));
 	if (!stats_info) {
 		status = QDF_STATUS_E_NOMEM;
@@ -3051,6 +3065,7 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 		}
 		num_chan += stats_info->scan[i].num_chan;
 		num_ap += stats_info->scan[i].num_ap;
+		num_frames = stats_info->scan[i].frame_info_count;
 
 		/* Roam result - Success/Failure status, failure reason */
 		status = wmi_unified_extract_roam_result_stats(wmi_handle,
@@ -3061,6 +3076,19 @@ extract_roam_stats_event_tlv(wmi_unified_t wmi_handle, uint8_t *evt_buf,
 				     vdev_id, i);
 			status = QDF_STATUS_E_INVAL;
 			goto err;
+		}
+
+		if (num_frames) {
+			status = wmi_unified_extract_roam_extract_frame_info(
+					wmi_handle, evt_buf,
+					&stats_info->frame_stats[i], i,
+					num_frames);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				wmi_debug_rl("Roam frame stats extract failed vdev %d at %d iteration",
+					     vdev_id, i);
+				status = QDF_STATUS_E_INVAL;
+				goto err;
+			}
 		}
 
 		/* BTM req/resp or Neighbor report/response info */

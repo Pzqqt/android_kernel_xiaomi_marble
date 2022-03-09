@@ -1894,7 +1894,7 @@ enum roam_rt_stats_type {
  * @timestamp:   Fw timestamp at which the frame was Tx/Rx'ed
  * @type:        Frame Type
  * @subtype:     Frame subtype
- * @is_req:      Frame is request frame or response frame
+ * @is_rsp:      True if frame is response frame else false
  * @seq_num:     Frame sequence number from the 802.11 header
  * @status_code: Status code from 802.11 spec, section 9.4.1.9
  * @tx_status: Frame TX status defined by enum qdf_dp_tx_rx_status
@@ -1907,7 +1907,7 @@ struct roam_frame_info {
 	uint32_t timestamp;
 	uint8_t type;
 	uint8_t subtype;
-	uint8_t is_req;
+	uint8_t is_rsp;
 	enum qdf_dp_tx_rx_status tx_status;
 	uint16_t seq_num;
 	uint16_t status_code;
@@ -2159,6 +2159,16 @@ struct roam_offload_roam_event {
 };
 
 /**
+ * struct roam_frame_stats  - Roam frame stats
+ * @num_frame: number of frames
+ * @frame_info: Roam frame info
+ */
+struct roam_frame_stats {
+	uint8_t num_frame;
+	struct roam_frame_info frame_info[WLAN_ROAM_MAX_FRAME_INFO];
+};
+
+/**
  * struct roam_stats_event - Data carried by stats event
  * @vdev_id: vdev id
  * @num_tlv: Number of roam scans triggered
@@ -2166,6 +2176,7 @@ struct roam_offload_roam_event {
  * @trigger: Roam trigger related details
  * @scan: Roam scan event details
  * @result: Roam result related info
+ * @frame_stats: Info on frame exchange during roaming
  * @data_11kv: Neighbor report/BTM request related data
  * @btm_rsp: BTM response related data
  * @roam_init_info: Roam initial related data
@@ -2179,6 +2190,7 @@ struct roam_stats_event {
 	struct wmi_roam_trigger_info trigger[MAX_ROAM_SCAN_STATS_TLV];
 	struct wmi_roam_scan_data scan[MAX_ROAM_SCAN_STATS_TLV];
 	struct wmi_roam_result result[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_frame_stats frame_stats[MAX_ROAM_SCAN_STATS_TLV];
 	struct wmi_neighbor_report_data data_11kv[MAX_ROAM_SCAN_STATS_TLV];
 	struct roam_btm_response_data btm_rsp[MAX_ROAM_SCAN_STATS_TLV];
 	struct roam_initial_data roam_init_info[MAX_ROAM_SCAN_STATS_TLV];

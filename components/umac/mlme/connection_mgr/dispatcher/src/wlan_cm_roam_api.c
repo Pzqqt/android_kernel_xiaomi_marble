@@ -359,40 +359,6 @@ wlan_cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	return cm_fw_roam_abort_req(psoc, vdev_id);
 }
 
-QDF_STATUS
-wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
-				  struct roam_btm_response_data *dst,
-				  uint8_t idx)
-{
-	if (wmi->ops->extract_roam_btm_response_stats)
-		return wmi->ops->extract_roam_btm_response_stats(wmi, evt_buf,
-								 dst, idx);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
-wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
-				       struct roam_initial_data *dst,
-				       uint8_t idx)
-{
-	if (wmi->ops->extract_roam_initial_info)
-		return wmi->ops->extract_roam_initial_info(wmi, evt_buf,
-							   dst, idx);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
-wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
-				   struct roam_msg_info *dst, uint8_t idx)
-{
-	if (wmi->ops->extract_roam_msg_info)
-		return wmi->ops->extract_roam_msg_info(wmi, evt_buf, dst, idx);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_objmgr_vdev *vdev)
 {
@@ -405,18 +371,6 @@ uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
 	band_mask = config.uint_value;
 	mlme_debug("[ROAM BAND] band mask:%d", band_mask);
 	return band_mask;
-}
-
-QDF_STATUS
-wlan_cm_roam_extract_frame_info(wmi_unified_t wmi, void *evt_buf,
-				struct roam_frame_info *dst, uint8_t idx,
-				uint8_t num_frames)
-{
-	if (wmi->ops->extract_roam_msg_info)
-		return wmi->ops->extract_roam_frame_info(wmi, evt_buf,
-							 dst, idx, num_frames);
-
-	return QDF_STATUS_E_FAILURE;
 }
 
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -3099,6 +3053,61 @@ cm_roam_stats_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 	qdf_mem_free(buf);
 }
 
+static char *
+cm_get_frame_subtype_str(enum mgmt_subtype frame_subtype)
+{
+	switch (frame_subtype) {
+	case MGMT_SUBTYPE_ASSOC_REQ:
+		return "ASSOC";
+	case MGMT_SUBTYPE_ASSOC_RESP:
+		return "ASSOC";
+	case MGMT_SUBTYPE_REASSOC_REQ:
+		return "REASSOC";
+	case MGMT_SUBTYPE_REASSOC_RESP:
+		return "REASSOC";
+	case MGMT_SUBTYPE_DISASSOC:
+		return "DISASSOC";
+	case MGMT_SUBTYPE_AUTH:
+		return "AUTH";
+	case MGMT_SUBTYPE_DEAUTH:
+		return "DEAUTH";
+	default:
+		break;
+	}
+
+	return "Invalid frm";
+}
+
+static void
+cm_roam_print_frame_info(struct roam_frame_stats *frame_data,
+			 struct wmi_roam_scan_data *scan_data, uint8_t vdev_id)
+{
+	struct roam_frame_info *frame_info;
+	char time[TIME_STRING_LEN];
+	uint8_t i;
+
+	if (!frame_data->num_frame)
+		return;
+
+	for (i = 0; i < frame_data->num_frame; i++) {
+		frame_info = &frame_data->frame_info[i];
+		qdf_mem_zero(time, TIME_STRING_LEN);
+		mlme_get_converted_timestamp(frame_info->timestamp, time);
+
+		if (frame_info->type != ROAM_FRAME_INFO_FRAME_TYPE_EXT)
+			mlme_nofl_info("%s [%s%s] VDEV[%d] status:%d seq_num:%d",
+				       time,
+				       cm_get_frame_subtype_str(frame_info->subtype),
+				       frame_info->subtype ==  MGMT_SUBTYPE_AUTH ?
+				       (frame_info->is_rsp ? " RX" : " TX") : "",
+				       vdev_id,
+				       frame_info->status_code,
+				       frame_info->seq_num);
+
+		cm_roam_mgmt_frame_event(frame_info, scan_data, vdev_id);
+	}
+}
+
 void cm_report_roam_rt_stats(struct wlan_objmgr_psoc *psoc,
 			     uint8_t vdev_id,
 			     enum roam_rt_stats_type events,
@@ -3208,6 +3217,11 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 			if (QDF_IS_STATUS_ERROR(status))
 				goto err;
 		}
+
+		if (stats_info->frame_stats[i].num_frame)
+			cm_roam_print_frame_info(&stats_info->frame_stats[i],
+						 &stats_info->scan[i],
+						 stats_info->vdev_id);
 
 		if (stats_info->data_11kv[i].present)
 			cm_roam_stats_print_11kv_info(&stats_info->data_11kv[i],
