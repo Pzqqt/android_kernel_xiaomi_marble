@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -836,8 +836,8 @@ void wlan_objmgr_print_ref_ids(qdf_atomic_t *id,
 	for (i = 0; i < WLAN_REF_ID_MAX; i++) {
 		pending_ref = qdf_atomic_read(&id[i]);
 		if (pending_ref)
-			obj_mgr_log_level(log_level, "%s -- %d",
-				string_from_dbgid(i), pending_ref);
+			obj_mgr_log_level(log_level, "%s(%d) -- %d",
+					  string_from_dbgid(i), i, pending_ref);
 	}
 
 	return;
