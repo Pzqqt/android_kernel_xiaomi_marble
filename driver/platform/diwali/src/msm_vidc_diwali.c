@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -217,7 +217,7 @@ static struct msm_platform_core_capability core_data_diwali_v2[] = {
 	{PAGEFAULT_NON_FATAL, 1},
 	{PAGETABLE_CACHING, 0},
 	{DCVS, 1},
-	{DECODE_BATCH, 0},
+	{DECODE_BATCH, 1},
 	{DECODE_BATCH_TIMEOUT, 200},
 	{STATS_TIMEOUT_MS, 2000},
 	{AV_SYNC_WINDOW_SIZE, 40},
@@ -324,9 +324,14 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 	/* (4096 * 2304) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 36864, 1, 36864},
 	/* Batch Mode Decode */
+	/* BATCH_MBPF + 2 is done for chipsets other than waipio
+	 * due to timeline constraints since msm_vidc_allow_decode_batch
+	 * has checks to allow batching for less than BATCH_MBPF.
+	 * Same applies for BATCH_FPS.
+	 */
 	/* (1920 * 1088) / 256 */
-	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 8160},
-	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 120, 1, 60},
+	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8162, 1, 8162},
+	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 61, 1, 61},
 	/* (4096 * 2304) / 256 */
 	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 36864, 1, 36864},
 	/* ((4096 * 2304) / 256) * 60 fps */
@@ -1867,9 +1872,14 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 	/* (4096 * 2304) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 36864, 1, 36864},
 	/* Batch Mode Decode */
+	/* BATCH_MBPF + 2 is done for chipsets other than waipio
+	 * due to timeline constraints since msm_vidc_allow_decode_batch
+	 * has checks to allow batching for less than BATCH_MBPF.
+	 * Same applies for BATCH_FPS.
+	 */
 	/* (1920 * 1088) / 256 */
-	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 8160},
-	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 120, 1, 60},
+	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8162, 1, 8162},
+	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 61, 1, 61},
 	/* (4096 * 2304) / 256 */
 	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 36864, 1, 36864},
 	/* ((4096 * 2304) / 256) * 60 fps */
@@ -3401,6 +3411,15 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 	{MBPF, DEC, CODECS_ALL, 36, 36864, 1, 36864},
 	/* (4096 * 2304) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 36864, 1, 36864},
+	/* Batch Mode Decode */
+	/* BATCH_MBPF + 2 is done for chipsets other than waipio
+	 * due to timeline constraints since msm_vidc_allow_decode_batch
+	 * has checks to allow batching for less than BATCH_MBPF.
+	 * Same applies for BATCH_FPS.
+	 */
+	/* (1920 * 1088) / 256 */
+	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8162, 1, 8162},
+	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 61, 1, 61},
 	/* (4096 * 2304) / 256 */
 	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 36864, 1, 36864},
 	/* ((4096 * 2304) / 256) * 30 fps */
