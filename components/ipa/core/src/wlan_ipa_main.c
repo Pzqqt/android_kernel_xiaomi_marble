@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -761,6 +761,7 @@ void ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev)
 
 void ipa_component_config_update(struct wlan_objmgr_psoc *psoc)
 {
+	struct device *dev = wlan_psoc_get_qdf_dev(psoc)->dev;
 	QDF_STATUS status;
 
 	status = ipa_config_mem_alloc();
@@ -769,8 +770,15 @@ void ipa_component_config_update(struct wlan_objmgr_psoc *psoc)
 		return;
 	}
 
-	g_ipa_config->ipa_config =
-		cfg_get(psoc, CFG_DP_IPA_OFFLOAD_CONFIG);
+	if (!pld_is_ipa_offload_disabled(dev)) {
+		g_ipa_config->ipa_config =
+			cfg_get(psoc, CFG_DP_IPA_OFFLOAD_CONFIG);
+		ipa_info("IPA ini configuration: 0x%x",
+			 g_ipa_config->ipa_config);
+	} else {
+		g_ipa_config->ipa_config = 0;
+		ipa_info("IPA disabled from platform driver");
+	}
 	g_ipa_config->desc_size =
 		cfg_get(psoc, CFG_DP_IPA_DESC_SIZE);
 	g_ipa_config->txbuf_count =
