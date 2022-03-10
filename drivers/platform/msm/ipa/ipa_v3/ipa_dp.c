@@ -1866,6 +1866,12 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 	}
 	if (ep->sys->repl_wq)
 		flush_workqueue(ep->sys->repl_wq);
+
+	if(ep->sys->common_sys) {
+		cancel_delayed_work_sync(&ep->sys->common_sys->freepage_work);
+		tasklet_kill(&ep->sys->common_sys->tasklet_find_freepage);
+	}
+
 	if (IPA_CLIENT_IS_CONS(ep->client) && !ep->sys->common_buff_pool)
 		ipa3_cleanup_rx(ep->sys);
 
