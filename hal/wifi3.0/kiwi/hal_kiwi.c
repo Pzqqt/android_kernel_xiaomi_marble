@@ -2000,7 +2000,11 @@ struct hal_hw_srng_config hw_srng_table_kiwi[] = {
 	},
 	{ /* TCL_STATUS */
 		.start_ring_id = HAL_SRNG_TCL_STATUS,
+#ifndef WLAN_DP_DISABLE_TCL_CMD_CRED_SRNG
 		.max_rings = 1,
+#else
+		.max_rings = 0,
+#endif
 		/* confirm that TLV header is needed */
 		.entry_size = sizeof(struct tcl_status_ring) >> 2,
 		.lmac_ring = FALSE,

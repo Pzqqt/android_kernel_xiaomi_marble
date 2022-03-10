@@ -14014,6 +14014,70 @@ static inline void dp_tx_init_cmd_credit_ring(struct dp_soc *soc)
 }
 #endif
 
+#ifndef WLAN_DP_DISABLE_TCL_STATUS_SRNG
+static inline QDF_STATUS dp_soc_tcl_status_srng_init(struct dp_soc *soc)
+{
+	QDF_STATUS status;
+
+	status =  dp_srng_init(soc, &soc->tcl_status_ring, TCL_STATUS, 0, 0);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	wlan_minidump_log(soc->tcl_status_ring.base_vaddr_unaligned,
+			  soc->tcl_status_ring.alloc_size,
+			  soc->ctrl_psoc,
+			  WLAN_MD_DP_SRNG_TCL_STATUS,
+			  "wbm_desc_rel_ring");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void dp_soc_tcl_status_srng_deinit(struct dp_soc *soc)
+{
+	wlan_minidump_remove(soc->tcl_status_ring.base_vaddr_unaligned,
+			     soc->tcl_status_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_TCL_STATUS,
+			     "wbm_desc_rel_ring");
+	dp_srng_deinit(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
+}
+
+static inline QDF_STATUS dp_soc_tcl_status_srng_alloc(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+	uint32_t entries;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	entries = wlan_cfg_get_dp_soc_tcl_status_ring_size(soc_cfg_ctx);
+	status = dp_srng_alloc(soc, &soc->tcl_status_ring,
+			       TCL_STATUS, entries, 0);
+
+	return status;
+}
+
+static inline void dp_soc_tcl_status_srng_free(struct dp_soc *soc)
+{
+	dp_srng_free(soc, &soc->tcl_status_ring);
+}
+#else
+static inline QDF_STATUS dp_soc_tcl_status_srng_init(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void dp_soc_tcl_status_srng_deinit(struct dp_soc *soc)
+{
+}
+
+static inline QDF_STATUS dp_soc_tcl_status_srng_alloc(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void dp_soc_tcl_status_srng_free(struct dp_soc *soc)
+{
+}
+#endif
+
 /**
  * dp_soc_srng_deinit() - de-initialize soc srng rings
  * @soc: Datapath soc handle
@@ -14045,12 +14109,7 @@ static void dp_soc_srng_deinit(struct dp_soc *soc)
 
 	/* TCL command and status rings */
 	dp_soc_tcl_cmd_cred_srng_deinit(soc);
-
-	wlan_minidump_remove(soc->tcl_status_ring.base_vaddr_unaligned,
-			     soc->tcl_status_ring.alloc_size,
-			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_TCL_STATUS,
-			     "wbm_desc_rel_ring");
-	dp_srng_deinit(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
+	dp_soc_tcl_status_srng_deinit(soc);
 
 	for (i = 0; i < soc->num_reo_dest_rings; i++) {
 		/* TODO: Get number of rings and ring sizes
@@ -14135,16 +14194,10 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 		goto fail1;
 	}
 
-	if (dp_srng_init(soc, &soc->tcl_status_ring, TCL_STATUS, 0, 0)) {
+	if (dp_soc_tcl_status_srng_init(soc)) {
 		dp_init_err("%pK: dp_srng_init failed for tcl_status_ring", soc);
 		goto fail1;
 	}
-
-	wlan_minidump_log(soc->tcl_status_ring.base_vaddr_unaligned,
-			  soc->tcl_status_ring.alloc_size,
-			  soc->ctrl_psoc,
-			  WLAN_MD_DP_SRNG_TCL_STATUS,
-			  "wbm_desc_rel_ring");
 
 	/* REO reinjection ring */
 	if (dp_srng_init(soc, &soc->reo_reinject_ring, REO_REINJECT, 0, 0)) {
@@ -14283,8 +14336,7 @@ static void dp_soc_srng_free(struct dp_soc *soc)
 	}
 
 	dp_soc_tcl_cmd_cred_srng_free(soc);
-
-	dp_srng_free(soc, &soc->tcl_status_ring);
+	dp_soc_tcl_status_srng_free(soc);
 
 	for (i = 0; i < soc->num_reo_dest_rings; i++)
 		dp_srng_free(soc, &soc->reo_dest_ring[i]);
@@ -14329,9 +14381,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 		goto fail1;
 	}
 
-	entries = wlan_cfg_get_dp_soc_tcl_status_ring_size(soc_cfg_ctx);
-	if (dp_srng_alloc(soc, &soc->tcl_status_ring, TCL_STATUS, entries,
-			  0)) {
+	if (dp_soc_tcl_status_srng_alloc(soc)) {
 		dp_init_err("%pK: dp_srng_alloc failed for tcl_status_ring", soc);
 		goto fail1;
 	}
