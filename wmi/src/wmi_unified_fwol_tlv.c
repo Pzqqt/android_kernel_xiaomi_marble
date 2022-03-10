@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -53,8 +54,8 @@ send_set_elna_bypass_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_set_elna_bypass_cmd_fixed_param));
 	cmd->vdev_id = req->vdev_id;
-	cmd->en_dis = req->en_dis;
-	wmi_mtrace(WMI_SET_ELNA_BYPASS_CMDID, req->vdev_id, req->en_dis);
+	cmd->en_dis = req->elna_mode;
+	wmi_mtrace(WMI_SET_ELNA_BYPASS_CMDID, req->vdev_id, req->elna_mode);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_SET_ELNA_BYPASS_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
@@ -130,10 +131,11 @@ extract_get_elna_bypass_resp_tlv(struct wmi_unified *wmi_handle, void *resp_buf,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wmi_debug("Get elna bypass %d from vdev %d", evt->en_dis, evt->vdev_id);
+	wmi_debug("Get elna bypass %d from vdev %d",
+		  evt->en_dis, evt->vdev_id);
 
 	resp->vdev_id = evt->vdev_id;
-	resp->en_dis = evt->en_dis;
+	resp->elna_mode = evt->en_dis;
 
 	return QDF_STATUS_SUCCESS;
 }
