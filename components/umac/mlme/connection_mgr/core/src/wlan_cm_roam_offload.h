@@ -33,12 +33,14 @@
     defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * cm_roam_scan_info_event() - send scan info to userspace
+ * @psoc: psoc common object
  * @scan: roam scan data
  * @vdev_id: vdev id
  *
  * Return: None
  */
-void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id);
+void cm_roam_scan_info_event(struct wlan_objmgr_psoc *psoc,
+			     struct wmi_roam_scan_data *scan, uint8_t vdev_id);
 
 /**
  * cm_roam_trigger_info_event() - send trigger info to userspace
@@ -80,7 +82,8 @@ void cm_roam_result_info_event(struct wlan_objmgr_psoc *psoc,
 			       uint8_t vdev_id);
 #else
 static inline void
-cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
+cm_roam_scan_info_event(struct wlan_objmgr_psoc *psoc,
+			struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 {
 }
 

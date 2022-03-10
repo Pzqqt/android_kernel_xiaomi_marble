@@ -146,7 +146,7 @@ struct wlan_roam_candidate_info {
 struct wlan_roam_scan_info {
 	uint8_t cand_ap_count;
 	uint16_t num_scanned_freq;
-	qdf_freq_t scan_freq[WLAN_MAX_LOGGING_FREQ];
+	qdf_freq_t scan_freq[NUM_CHANNELS];
 };
 
 /**

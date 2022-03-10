@@ -254,6 +254,17 @@ QDF_STATUS
 policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
 				       uint8_t *sta_sap_scc_on_dfs_chnl);
 
+/*
+ * policy_mgr_get_connected_vdev_band_mask() - to get the connected vdev band
+ * mask
+ * @vdev: pointer to vdev
+ *
+ * This API is used to get band of the frequency.
+ *
+ * Return: band mask of the frequency associated with the vdev
+ */
+uint32_t policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev);
+
 /**
  * policy_mgr_get_dfs_master_dynamic_enabled() - support dfs master or not
  * on AP interafce when STA+SAP(GO) concurrency

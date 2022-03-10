@@ -2881,6 +2881,7 @@ cm_stats_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 /**
  * cm_roam_stats_print_scan_info  - Print the roam scan details and candidate AP
  * details
+ * @psoc:      psoc common object
  * @scan:      Pointer to the received tlv after sanitization
  * @vdev_id:   Vdev ID
  * @trigger:   Roam scan trigger reason
@@ -2892,7 +2893,8 @@ cm_stats_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
  * Return: None
  */
 static void
-cm_roam_stats_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
+cm_roam_stats_print_scan_info(struct wlan_objmgr_psoc *psoc,
+			      struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 			      uint32_t trigger, uint32_t timestamp)
 {
 	uint16_t num_ch = scan->num_chan;
@@ -2902,7 +2904,7 @@ cm_roam_stats_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 	char time[TIME_STRING_LEN];
 
 	/* Update roam scan info to userspace */
-	cm_roam_scan_info_event(scan, vdev_id);
+	cm_roam_scan_info_event(psoc, scan, vdev_id);
 
 	buf = qdf_mem_malloc(ROAM_CHANNEL_BUF_SIZE);
 	if (!buf)
@@ -3206,7 +3208,8 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 
 		if (stats_info->scan[i].present &&
 		    stats_info->trigger[i].present)
-			cm_roam_stats_print_scan_info(&stats_info->scan[i],
+			cm_roam_stats_print_scan_info(psoc,
+					  &stats_info->scan[i],
 					  stats_info->vdev_id,
 					  stats_info->trigger[i].trigger_reason,
 					  stats_info->trigger[i].timestamp);
@@ -3288,7 +3291,8 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 
 		if (stats_info->scan[0].present &&
 		    stats_info->trigger[0].present)
-			cm_roam_stats_print_scan_info(&stats_info->scan[0],
+			cm_roam_stats_print_scan_info(psoc,
+					  &stats_info->scan[0],
 					  stats_info->vdev_id,
 					  stats_info->trigger[0].trigger_reason,
 					  stats_info->trigger[0].timestamp);

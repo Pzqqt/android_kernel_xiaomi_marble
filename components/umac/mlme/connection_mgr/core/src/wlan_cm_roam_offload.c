@@ -46,6 +46,9 @@
 #include "wlan_if_mgr_roam.h"
 #include "wlan_mlo_mgr_roam.h"
 #include "wlan_mlo_mgr_sta.h"
+#include "wlan_mlme_api.h"
+#include "wlan_policy_mgr_api.h"
+
 
 #ifdef WLAN_FEATURE_SAE
 #define CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) \
@@ -5079,11 +5082,36 @@ send_evt:
 
 #if defined(WLAN_FEATURE_CONNECTIVITY_LOGGING) && \
     defined(WLAN_FEATURE_ROAM_OFFLOAD)
-void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
+static
+bool wlan_is_valid_frequency(uint32_t freq, uint32_t band_capability,
+			     uint32_t band_mask)
+{
+	if ((band_capability == BIT(REG_BAND_5G) ||
+	     band_mask == BIT(REG_BAND_5G) ||
+	     band_capability == BIT(REG_BAND_6G) ||
+	     band_mask == BIT(REG_BAND_6G)) &&
+	     WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+		return false;
+
+	if ((band_capability == BIT(REG_BAND_2G) ||
+	     band_mask == BIT(REG_BAND_2G)) &&
+	     !WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+		return false;
+
+	return true;
+}
+
+void cm_roam_scan_info_event(struct wlan_objmgr_psoc *psoc,
+			     struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 {
 	int i;
 	struct wlan_log_record *log_record = NULL;
 	struct wmi_roam_candidate_info *ap = scan->ap;
+	uint32_t chan_freq[NUM_CHANNELS];
+	uint8_t count = 0, status, num_chan;
+	uint32_t band_capability = 0, band_mask = 0;
+	bool is_full_scan;
+	struct wlan_objmgr_vdev *vdev = NULL;
 
 	log_record = qdf_mem_malloc(sizeof(*log_record));
 	if (!log_record)
@@ -5104,13 +5132,47 @@ void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 	if (scan->num_ap)
 		log_record->roam_scan.cand_ap_count = scan->num_ap - 1;
 
-	if (scan->num_chan > MAX_ROAM_SCAN_CHAN)
-		scan->num_chan = MAX_ROAM_SCAN_CHAN;
 
-	log_record->roam_scan.num_scanned_freq = scan->num_chan;
-	for (i = 0; i < scan->num_chan; i++)
-		log_record->roam_scan.scan_freq[i] = scan->chan_freq[i];
+	is_full_scan = scan->type & scan->present;
 
+	if (is_full_scan) {
+		status = mlme_get_fw_scan_channels(psoc, chan_freq, &num_chan);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto out;
+
+		status = wlan_mlme_get_band_capability(psoc, &band_capability);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto out;
+
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+							WLAN_MLME_OBJMGR_ID);
+		if (!vdev)
+			goto out;
+
+		band_mask = policy_mgr_get_connected_vdev_band_mask(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+		for (i = 0; i < num_chan; i++) {
+			if (!wlan_is_valid_frequency(chan_freq[i],
+						     band_capability,
+						     band_mask))
+				continue;
+
+			log_record->roam_scan.scan_freq[count] = chan_freq[i];
+			count++;
+		}
+
+		log_record->roam_scan.num_scanned_freq = count;
+	} else {
+		if (scan->num_chan > MAX_ROAM_SCAN_CHAN)
+			scan->num_chan = MAX_ROAM_SCAN_CHAN;
+
+		log_record->roam_scan.num_scanned_freq = scan->num_chan;
+		for (i = 0; i < scan->num_chan; i++)
+			log_record->roam_scan.scan_freq[i] = scan->chan_freq[i];
+	}
+
+out:
 	wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);
 }
