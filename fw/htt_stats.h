@@ -422,6 +422,17 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_RX_RING_STATS = 42,
 
+    /* HTT_STRM_GEN_MPDUS_STATS, HTT_STRM_GEN_MPDUS_DETAILS_STATS
+     * PARAMS:
+     *   - No params
+     * RESP MSG: HTT_T2H STREAMING_STATS_IND (not EXT_STATS_CONF)
+     *   - HTT_STRM_GEN_MPDUS_STATS:
+     *     htt_stats_strm_gen_mpdus_tlv_t
+     *   - HTT_STRM_GEN_MPDUS_DETAILS_STATS:
+     *     htt_stats_strm_gen_mpdus_details_tlv_t
+     */
+    HTT_STRM_GEN_MPDUS_STATS = 43,
+    HTT_STRM_GEN_MPDUS_DETAILS_STATS = 44,
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -6796,5 +6807,66 @@ typedef struct {
     htt_t2h_soc_txrx_stats_common_tlv soc_common_stats;
     htt_t2h_vdev_txrx_stats_hw_stats_tlv vdev_hw_stats[1/*or more*/];
 } htt_vdevs_txrx_stats_t;
+
+typedef struct {
+    A_UINT32
+        success: 16,
+        fail:    16;
+} htt_stats_strm_gen_mpdus_cntr_t;
+
+typedef struct {
+    /* MSDU queue identification */
+    A_UINT32
+        peer_id:  16,
+        tid:       4, /* only TIDs 0-7 actually expected to be used */
+        htt_qtype: 4, /* refer to HTT_MSDUQ_INDEX */
+        reserved:  8;
+} htt_stats_strm_msdu_queue_id;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    htt_stats_strm_msdu_queue_id queue_id;
+    htt_stats_strm_gen_mpdus_cntr_t svc_interval;
+    htt_stats_strm_gen_mpdus_cntr_t burst_size;
+} htt_stats_strm_gen_mpdus_tlv_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    htt_stats_strm_msdu_queue_id queue_id;
+    struct {
+        A_UINT32
+            timestamp_prior_ms: 16,
+            timestamp_now_ms:   16;
+        A_UINT32
+            interval_spec_ms: 16,
+            margin_ms:        16;
+    } svc_interval;
+    struct {
+        A_UINT32
+            /* consumed_bytes_orig:
+             * Raw count (actually estimate) of how many bytes were removed
+             * from the MSDU queue by the GEN_MPDUS operation.
+             */
+            consumed_bytes_orig:  16,
+            /* consumed_bytes_final:
+             * Adjusted count of removed bytes that incorporates normalizing
+             * by the actual service interval compared to the expected
+             * service interval.
+             * This allows the burst size computation to be independent of
+             * whether the target is doing GEN_MPDUS at only the service
+             * interval, or substantially more often than the service
+             * interval.
+             *     consumed_bytes_final = consumed_bytes_orig /
+             *         (svc_interval / ref_svc_interval)
+             */
+            consumed_bytes_final: 16;
+        A_UINT32
+            remaining_bytes: 16,
+            reserved:        16;
+        A_UINT32
+            burst_size_spec: 16,
+            margin_bytes:    16;
+    } burst_size;
+} htt_stats_strm_gen_mpdus_details_tlv_t;
 
 #endif /* __HTT_STATS_H__ */
