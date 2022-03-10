@@ -4686,6 +4686,8 @@ next_desc:
 	if (head_desc)
 		dp_tx_comp_process_desc_list(soc, head_desc, ring_id);
 
+	DP_STATS_INC(soc, tx.tx_comp[ring_id], count);
+
 	/*
 	 * If we are processing in near-full condition, there are 3 scenario
 	 * 1) Ring entries has reached critical state

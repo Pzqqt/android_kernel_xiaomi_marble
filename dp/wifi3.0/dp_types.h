@@ -1019,6 +1019,8 @@ struct dp_soc_stats {
 		uint32_t tx_comp_exception;
 		/* TQM drops after/during peer delete */
 		uint64_t tqm_drop_no_peer;
+		/* Number of tx completions reaped per WBM2SW release ring */
+		uint32_t tx_comp[MAX_TCL_DATA_RINGS];
 	} tx;
 
 	/* SOC level RX stats */

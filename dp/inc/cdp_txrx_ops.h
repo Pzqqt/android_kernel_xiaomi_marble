@@ -1275,6 +1275,10 @@ struct ol_if_ops {
 				   uint8_t add_or_sub, uint8_t ac);
 #endif
 	uint32_t (*dp_get_tx_inqueue)(ol_txrx_soc_handle soc);
+	QDF_STATUS(*dp_send_unit_test_cmd)(uint32_t vdev_id,
+					   uint32_t module_id,
+					   uint32_t arg_count, uint32_t *arg);
+
 };
 
 #ifdef DP_PEER_EXTENDED_API

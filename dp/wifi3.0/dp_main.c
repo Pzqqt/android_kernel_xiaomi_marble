@@ -52,6 +52,7 @@
 #include "htt_ppdu_stats.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cfg_ucfg_api.h"
+#include <wlan_module_ids.h>
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 #include "cdp_txrx_flow_ctrl_v2.h"
@@ -12152,6 +12153,8 @@ static void dp_find_missing_tx_comp(struct dp_soc *soc)
 	uint16_t num_desc_per_page;
 	struct dp_tx_desc_s *tx_desc = NULL;
 	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
+	bool send_fw_stats_cmd = false;
+	uint8_t vdev_id;
 
 	for (i = 0; i < MAX_TXDESC_POOLS; i++) {
 		tx_desc_pool = &soc->tx_desc[i];
@@ -12180,12 +12183,29 @@ static void dp_find_missing_tx_comp(struct dp_soc *soc)
 							tx_desc->timestamp)) {
 					dp_err_rl("Tx completion not rcvd for id: %u",
 						  tx_desc->id);
+
+					if (!send_fw_stats_cmd) {
+						send_fw_stats_cmd = true;
+						vdev_id = i;
+					}
 				}
 			} else {
 				dp_err_rl("tx desc %u corrupted, flags: 0x%x",
 				       tx_desc->id, tx_desc->flags);
 			}
 		}
+	}
+
+	/*
+	 * The unit test command to dump FW stats is required only once as the
+	 * stats are dumped at pdev level and not vdev level.
+	 */
+	if (send_fw_stats_cmd && soc->cdp_soc.ol_ops->dp_send_unit_test_cmd) {
+		uint32_t fw_stats_args[2] = {533, 1};
+
+		soc->cdp_soc.ol_ops->dp_send_unit_test_cmd(vdev_id,
+							   WLAN_MODULE_TX, 2,
+							   fw_stats_args);
 	}
 }
 #else
