@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,9 +36,9 @@ int os_if_fwol_set_elna_bypass(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 
 	req.vdev_id = vdev->vdev_objmgr.vdev_id;
-	req.en_dis = nla_get_u8(attr);
-	if (req.en_dis > 1) {
-		osif_err("Invalid elna_bypass value %d", req.en_dis);
+	req.elna_mode = nla_get_u8(attr);
+	if (req.elna_mode > EXTLNA_MODE_FIRMWARE_DEFAULT) {
+		osif_err("Invalid elna_bypass value %d", req.elna_mode);
 		return -EINVAL;
 	}
 
@@ -49,7 +50,7 @@ int os_if_fwol_set_elna_bypass(struct wlan_objmgr_vdev *vdev,
 }
 
 struct osif_get_elna_bypass_priv {
-	uint8_t en_dis;
+	enum fwol_extlna_mode elna_mode;
 };
 
 /**
@@ -73,7 +74,7 @@ os_if_fwol_get_elna_bypass_callback(void *context,
 	}
 
 	priv = osif_request_priv(request);
-	priv->en_dis = response->en_dis;
+	priv->elna_mode = response->elna_mode;
 
 	osif_request_complete(request);
 	osif_request_put(request);
@@ -120,8 +121,8 @@ int os_if_fwol_get_elna_bypass(struct wlan_objmgr_vdev *vdev,
 
 	priv = osif_request_priv(request);
 	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_ELNA_BYPASS,
-		       priv->en_dis)) {
-		osif_err("put fail");
+		       priv->elna_mode)) {
+		osif_err("put fail with elna_mode:%d", priv->elna_mode);
 		ret = -EINVAL;
 	}
 
