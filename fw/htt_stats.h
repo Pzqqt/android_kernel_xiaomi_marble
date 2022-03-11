@@ -4320,6 +4320,10 @@ typedef struct {
     A_UINT32 ofdma_tx_ru_size[HTT_TX_PDEV_STATS_NUM_AX_RU_SIZE_COUNTERS];
     /** 11AX HE DL MU OFDMA HE-SIG-B MCS stats */
     A_UINT32 ofdma_he_sig_b_mcs[HTT_TX_PDEV_STATS_NUM_HE_SIG_B_MCS_COUNTERS];
+    /** 11AX HE SU data + embedded trigger PPDU success stats (stats for HETP ack success PPDU cnt) */
+    A_UINT32 ax_su_embedded_trigger_data_ppdu;
+    /** 11AX HE SU data + embedded trigger PPDU failure stats (stats for HETP ack failure PPDU cnt) */
+    A_UINT32 ax_su_embedded_trigger_data_ppdu_err;
 } htt_tx_pdev_rate_stats_tlv;
 
 typedef struct {
