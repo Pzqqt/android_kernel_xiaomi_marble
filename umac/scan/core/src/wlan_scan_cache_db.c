@@ -156,11 +156,66 @@ static void scm_add_rnr_channel_db(struct wlan_objmgr_psoc *psoc,
 				     QDF_MAC_ADDR_SIZE);
 		if (rnr_bss->short_ssid)
 			rnr_node->entry.short_ssid = rnr_bss->short_ssid;
+		if (rnr_bss->bss_params)
+			rnr_node->entry.bss_params = rnr_bss->bss_params;
 		scm_debug("Add freq %d: "QDF_MAC_ADDR_FMT" short ssid %x", chan_freq,
 			  QDF_MAC_ADDR_REF(rnr_bss->bssid.bytes),
 			  rnr_bss->short_ssid);
 		qdf_list_insert_back(&channel->rnr_list,
 				     &rnr_node->node);
+	}
+}
+
+void scm_filter_rnr_flag_pno(struct wlan_objmgr_vdev *vdev,
+			     uint32_t short_ssid,
+			     struct chan_list *pno_chan_list)
+{
+	uint8_t i;
+	uint32_t freq;
+	struct meta_rnr_channel *chan;
+	struct scan_rnr_node *rnr_node;
+	enum scan_mode_6ghz scan_mode;
+	struct wlan_scan_obj *scan_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return;
+
+	scan_obj = wlan_vdev_get_scan_obj(vdev);
+	if (!scan_obj) {
+		scm_err("scan_obj is NULL");
+		return;
+	}
+
+	scan_mode = scan_obj->scan_def.scan_mode_6g;
+	/* No Filteration required for below scan modes since
+	 * no RNR flag marked.
+	 */
+	if (scan_mode == SCAN_MODE_6G_NO_CHANNEL ||
+	    scan_mode == SCAN_MODE_6G_ALL_CHANNEL ||
+	    scan_mode == SCAN_MODE_6G_ALL_DUTY_CYCLE)
+		return;
+
+	for (i = 0; i < pno_chan_list->num_chan; i++) {
+		freq = pno_chan_list->chan[i].freq;
+
+		chan = scm_get_chan_meta(psoc, freq);
+		if (!chan || qdf_list_empty(&chan->rnr_list))
+			continue;
+
+		qdf_list_for_each(&chan->rnr_list, rnr_node, node) {
+			if (rnr_node->entry.short_ssid) {
+				if (rnr_node->entry.short_ssid == short_ssid) {
+			/* If short ssid entry present in RNR db cache, remove
+			 * FLAG_SCAN_ONLY_IF_RNR_FOUND flag from the channel.
+			 */
+					pno_chan_list->chan[i].flags &=
+						~FLAG_SCAN_ONLY_IF_RNR_FOUND;
+					break;
+				}
+			}
+		}
 	}
 }
 #endif

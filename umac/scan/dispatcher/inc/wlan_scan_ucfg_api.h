@@ -109,17 +109,21 @@ QDF_STATUS ucfg_scan_pno_start(struct wlan_objmgr_vdev *vdev,
 			       struct pno_scan_req_params *req);
 
 /**
- * ucfg_scan_pno_add_all_valid_6g_channels() - This API to update all valid 6g
- * channels to pno scan request
+ * ucfg_scan_add_flags_to_pno_chan_list() - This API to update flags for all 6g
+ * channels in pno scan request
  * @vdev: vdev pointer
  * @req: pno req params
- * @num_scan_ch: total number of channels present in pno scan request
+ * @num_chan: number of channels
+ * @short_ssid: short ssid
+ * @list_idx: index of network_list in pno request
  *
  * Return: None
  */
-void ucfg_scan_pno_add_all_valid_6g_channels(struct wlan_objmgr_vdev *vdev,
-					     struct pno_scan_req_params *req,
-					     uint8_t *num_scan_ch);
+void ucfg_scan_add_flags_to_pno_chan_list(struct wlan_objmgr_vdev *vdev,
+					  struct pno_scan_req_params *req,
+					  uint8_t *num_chan,
+					  uint32_t short_ssid,
+					  int list_idx);
 
 /**
  * ucfg_is_6ghz_pno_scan_optimization_supported() - Public API to check
