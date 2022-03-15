@@ -13173,6 +13173,7 @@ static uint16_t wmi_set_htc_tx_tag_tlv(wmi_unified_t wmi_handle,
 	case WMI_PDEV_RESUME_CMDID:
 	case WMI_HB_SET_ENABLE_CMDID:
 	case WMI_WOW_SET_ACTION_WAKE_UP_CMDID:
+	case WMI_STA_POWERSAVE_PARAM_CMDID:
 #ifdef FEATURE_WLAN_D0WOW
 	case WMI_D0_WOW_ENABLE_DISABLE_CMDID:
 #endif
