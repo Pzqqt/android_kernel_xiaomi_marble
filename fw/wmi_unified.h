@@ -11837,7 +11837,8 @@ typedef struct {
                      mlo_logical_link_index_valid:1, /* indicate if the logial link index in wmi_peer_assoc_mlo_params is valid */
                      mlo_peer_id_valid:1, /* indicate if the mlo peer id in wmi_peer_assoc_mlo_params is valid */
                      mlo_mcast_vdev:1, /* indicate this is the MLO mcast primary vdev */
-                     unused: 26;
+                     emlsr_support:1, /* indicate that eMLSR is supported */
+                     unused: 25;
         };
         A_UINT32 mlo_flags;
     };
@@ -16011,6 +16012,10 @@ typedef struct {
      * In MCL systems, mld_peer_id will be set to invalid peer id.
      */
     A_UINT32 mld_peer_id;
+    /** Link-ID of the AP to which STA is associated */
+    A_UINT32 ieee_link_id;
+    /** eMLSR transition timeout in microseconds */
+    A_UINT32 emlsr_trans_timeout_us;
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
@@ -29350,6 +29355,10 @@ typedef enum wmi_hw_mode_config_type {
     WMI_HW_MODE_DBS_OR_SBS  = 5, /* One PHY is on 5G and the other PHY can be in 2G or 5G. */
     WMI_HW_MODE_DBS_2G_5G   = 6, /* Both PHYs are active in different bands. PhyA 2G and PhyB 5G */
     WMI_HW_MODE_2G_PHYB     = 7, /* Ony PhyB 2G active */
+    WMI_HW_MODE_EMLSR       = 8, /* Both PHYs are active in listen mode in 1x1
+                                  * and Tx/Rx trigger on any PHY will switch
+                                  * from 1x1 to 2x2 on that Phy
+                                  */
 } WMI_HW_MODE_CONFIG_TYPE;
 
 /*
@@ -29366,6 +29375,8 @@ typedef enum wmi_hw_mode_config_type {
  * WMI_MLO_CAP_FLAG_STR_IN_SBS:     Support Non-STR MLO when SBS for the
  *                                  specific HW mode
  * WMI_MLO_CAP_FLAG_STR:            Support STR for the specific HW mode.
+ *
+ * WMI_MLO_CAP_FLAG_EMLSR:          Support eMLSR mode.
  */
 #define WMI_MLO_CAP_FLAG_NONE           0x00
 #define WMI_MLO_CAP_FLAG_NON_STR_IN_DBS 0x01
@@ -29373,6 +29384,7 @@ typedef enum wmi_hw_mode_config_type {
 #define WMI_MLO_CAP_FLAG_NON_STR_IN_SBS 0x04
 #define WMI_MLO_CAP_FLAG_STR_IN_SBS     0x08
 #define WMI_MLO_CAP_FLAG_STR            0x10
+#define WMI_MLO_CAP_FLAG_EMLSR          0x20
 
 /*
  * hw_mode_config_type sub-fields for chips that support 802.11BE/MLO:
