@@ -6863,6 +6863,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
 
 		peer->valid = 1;
+		peer->is_tdls_peer = false;
 		dp_local_peer_id_alloc(pdev, peer);
 
 		qdf_spinlock_create(&peer->peer_info_lock);
@@ -12970,6 +12971,7 @@ static struct cdp_peer_ops dp_ops_peer = {
 	.peer_get_peer_mac_addr = dp_peer_get_peer_mac_addr,
 	.get_peer_state = dp_get_peer_state,
 	.peer_flush_frags = dp_peer_flush_frags,
+	.set_peer_as_tdls_peer = dp_set_peer_as_tdls_peer,
 };
 #endif
 
