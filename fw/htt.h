@@ -698,10 +698,10 @@ typedef enum {
     HTT_STATS_UNAVAILABLE_ERROR_STATS_TAG          = 110, /* htt_stats_error_tlv_v */
     HTT_STATS_TX_SELFGEN_AC_SCHED_STATUS_STATS_TAG = 111, /* htt_tx_selfgen_ac_sched_status_stats_tlv */
     HTT_STATS_TX_SELFGEN_AX_SCHED_STATUS_STATS_TAG = 112, /* htt_tx_selfgen_ax_sched_status_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG            = 113, /* htt_txbf_ofdma_ndpa_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG             = 114, /* htt_txbf_ofdma_ndp_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG             = 115, /* htt_txbf_ofdma_brp_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG            = 113, /* htt_txbf_ofdma_ndpa_stats_tlv - DEPRECATED */
+    HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG             = 114, /* htt_txbf_ofdma_ndp_stats_tlv - DEPRECATED */
+    HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG             = 115, /* htt_txbf_ofdma_brp_stats_tlv - DEPRECATED */
+    HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv - DEPRECATED */
     HTT_STATS_STA_UL_OFDMA_STATS_TAG               = 117, /* htt_sta_ul_ofdma_stats_tlv */
     HTT_STATS_VDEV_RTT_RESP_STATS_TAG              = 118, /* htt_vdev_rtt_resp_stats_tlv */
     HTT_STATS_PKTLOG_AND_HTT_RING_STATS_TAG        = 119, /* htt_pktlog_and_htt_ring_stats_tlv */
@@ -732,6 +732,14 @@ typedef enum {
     HTT_STATS_TX_PDEV_SAWF_RATE_STATS_TAG          = 144, /* htt_tx_pdev_rate_stats_sawf_tlv */
     HTT_STATS_STRM_GEN_MPDUS_TAG                   = 145, /* htt_stats_strm_gen_mpdus_tlv_t */
     HTT_STATS_STRM_GEN_MPDUS_DETAILS_TAG           = 146, /* htt_stats_strm_gen_mpdus_details_tlv_t */
+    HTT_STATS_TXBF_OFDMA_AX_NDPA_STATS_TAG         = 147, /* htt_txbf_ofdma_ax_ndpa_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_AX_NDP_STATS_TAG          = 148, /* htt_txbf_ofdma_ax_ndp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_AX_BRP_STATS_TAG          = 149, /* htt_txbf_ofdma_ax_brp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_AX_STEER_STATS_TAG        = 150, /* htt_txbf_ofdma_ax_steer_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_NDPA_STATS_TAG         = 151, /* htt_txbf_ofdma_be_ndpa_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_NDP_STATS_TAG          = 152, /* htt_txbf_ofdma_be_ndp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_BRP_STATS_TAG          = 153, /* htt_txbf_ofdma_be_brp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_STEER_STATS_TAG        = 154, /* htt_txbf_ofdma_be_steer_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
