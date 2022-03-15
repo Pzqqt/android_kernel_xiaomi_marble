@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1011,6 +1011,15 @@ ucfg_pmo_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 			      struct pmo_wow_add_pattern *ptrn);
 
 /**
+ * ucfg_pmo_register_wow_default_patterns() - register default wow patterns
+ *                                            with fw
+ * @vdev: Pointer to object manager vdev
+ *
+ * Return: none
+ */
+void ucfg_pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev);
+
+/**
  * ucfg_pmo_del_wow_pattern() - Delete WoWl patterns
  * @vdev: objmgr vdev
  *
@@ -1824,6 +1833,11 @@ ucfg_pmo_del_wow_user_pattern(
 		uint8_t pattern_id)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+ucfg_pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
+{
 }
 
 QDF_STATUS

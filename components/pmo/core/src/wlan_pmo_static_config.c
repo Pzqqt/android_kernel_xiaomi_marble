@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -255,6 +255,7 @@ static QDF_STATUS pmo_configure_wow_sta(struct wlan_objmgr_vdev *vdev)
 	uint8_t mac_mask[QDF_MAC_ADDR_SIZE];
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct qdf_mac_addr *mld_addr;
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -272,6 +273,21 @@ static QDF_STATUS pmo_configure_wow_sta(struct wlan_objmgr_vdev *vdev)
 	if (ret != QDF_STATUS_SUCCESS) {
 		pmo_err("Failed to add WOW unicast pattern ret %d", ret);
 		return ret;
+	}
+
+	mld_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_mldaddr(vdev);
+	if (!qdf_is_macaddr_zero(mld_addr)) {
+		ret = pmo_tgt_send_wow_patterns_to_fw(
+			vdev,
+			pmo_get_and_increment_wow_default_ptrn(vdev_ctx),
+			(uint8_t *)mld_addr,
+			QDF_MAC_ADDR_SIZE, 0, mac_mask,
+			QDF_MAC_ADDR_SIZE, false);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			pmo_err("Failed to add WOW MLD unicast pattern ret %d",
+				ret);
+			return ret;
+		}
 	}
 
 	ret = pmo_configure_ssdp(vdev);
