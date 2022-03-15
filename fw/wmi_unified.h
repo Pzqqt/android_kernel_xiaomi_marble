@@ -1612,7 +1612,7 @@ typedef enum {
     WMI_PDEV_PKTLOG_DECODE_INFO_EVENTID,
 
     /**
-     * RSSI dB to dDm conversion params info event
+     * RSSI dB to dBm conversion params info event
      * sent to host after channel/bw/chainmask change per pdev.
      */
     WMI_PDEV_RSSI_DBM_CONVERSION_PARAMS_INFO_EVENTID,
@@ -16260,14 +16260,12 @@ typedef struct {
  * from dB to dBm units.
  */
 
-typedef struct{
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_dbm_conversion_params_info */
     /* Current operating bandwidth as per wmi_channel_width */
     A_UINT32 curr_bw;
     /* Current rx chainmask */
     A_UINT32 curr_rx_chainmask;
-    /* HW noise floor in dBm per chain, per 20MHz subband */
-    A_INT32 nf_hw_dbm[MAX_ANTENNA_EIGHT][MAX_20MHZ_SEGMENTS];
     /* 3 Bytes of xbar_config are used for RF to BB mapping*/
     /* Samples of xbar_config,
      * If xbar_config is 0xFAC688(hex):
@@ -16303,9 +16301,16 @@ typedef struct{
     A_INT32 xlna_bypass_offset;
     /* Low noise amplifier bypass threshold; signed integer; units are in dB */
     A_INT32 xlna_bypass_threshold;
+    /* nf_hw_dbm:
+     * 2D byte array of HW noise floor in dBm per chain, per 20MHz subband
+     * This array is filled in little endian format.
+     * for big-endian hosts, manual endian conversion is needed to obtain
+     * correct sequence of values.
+     */
+    A_INT8 nf_hw_dbm[MAX_ANTENNA_EIGHT][MAX_20MHZ_SEGMENTS];
 } wmi_rssi_dbm_conversion_params_info;
 
-typedef struct{
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_dbm_conversion_temp_offset_info */
     /**
      * RSSI offset based on the current temperature, signed integer,
@@ -16323,7 +16328,7 @@ typedef struct {
     A_UINT32 pdev_id;
     /**
      * Followed by these TLVs below.
-     * wmi_rssi_dbm_convresion_params_info rssi_dbm_conversion_param[0 or 1]
+     * wmi_rssi_dbm_conversion_params_info rssi_dbm_conversion_param[0 or 1]
      *     wmi_rssi_dbm_conversion_params_info will be sent in case of
      *     channel, BW, rx_chainmask change.
      * wmi_rssi_dbm_conversion_temp_offset_info rssi_temp_offset[0 or 1]
@@ -17810,10 +17815,10 @@ typedef struct
     A_UINT32 is_add_ric;      /**support add ric or delete ric*/
 } wmi_ric_request_fixed_param;
 
-/**tspec element: refer to 8.4.2.32 of 802.11 2012 spec
+/** tspec element: refer to 8.4.2.32 of 802.11 2012 spec
 * these elements are used to construct tspec field in RIC request, which allow station to require specific TS when 11r roaming
 */
-typedef struct{
+typedef struct {
     A_UINT32                         tlv_header;
     A_UINT32                         ts_info; /** bits value of TS Info field.*/
     A_UINT32                         nominal_msdu_size; /**Nominal MSDU Size field*/
@@ -22435,7 +22440,7 @@ enum wmi_host_auto_shutdown_reason {
 };
 
 /* WMI_HOST_AUTO_SHUTDOWN_EVENTID  */
-typedef struct{
+typedef struct {
     A_UINT32    tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_host_auto_shutdown_event_fixed_param  */
     A_UINT32    shutdown_reason; /* value: wmi_host_auto_shutdown_reason */
 } wmi_host_auto_shutdown_event_fixed_param;
@@ -22565,7 +22570,7 @@ typedef struct{
 
 /**  Bit map definition for basic_config_info ends   */
 
-typedef struct{
+typedef struct {
     A_UINT32 tlv_header;
     /** Basic condition defined as bit map above, bitmap is chosen to save memory.
      * Bit0  ~ Bit4: tpc offset which will be adjusted if condtion matches, the unit is 0.5dB.  bit4 indicates signed
@@ -22612,7 +22617,7 @@ typedef struct{
 #define WMI_TPC_CHAINMASK_CONFIG_DISABLE   0   /** control the off for the tpc & chainmask*/
 #define WMI_TPC_CHAINMASK_CONFIG_ENABLE    1   /** control the on for the tpc & chainmask*/
 
-typedef struct{
+typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 enable;  /** enable to set tpc & chainmask when condtions meet, 0: disabled,   1: enabled.  */
     A_UINT32 num_tpc_chainmask_configs;
@@ -24758,7 +24763,7 @@ typedef struct {
 } wmi_extscan_capabilities_event_fixed_param;
 
 /* WMI_D0_WOW_DISABLE_ACK_EVENTID  */
-typedef struct{
+typedef struct {
     A_UINT32    tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_d0_wow_disable_ack_event_fixed_param  */
     A_UINT32    reserved0; /* for future need */
 } wmi_d0_wow_disable_ack_event_fixed_param;
@@ -24964,7 +24969,7 @@ pattern returns to the MSB of X_0 and repeats. The GPIO state for each timing in
 High and the first interval of the pattern represents the time when the GPIO is Low. When a timing interval of
 Zero is reached, it is skipped and moves on to the next interval.
 */
-typedef struct{
+typedef struct {
     A_UINT32    tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_set_led_flashing_cmd_fixed_param  */
     A_UINT32    pattern_id; /* pattern identifier */
     A_UINT32    led_x0; /* led flashing parameter0 */
