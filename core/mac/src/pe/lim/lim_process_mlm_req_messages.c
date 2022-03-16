@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,6 +68,7 @@ static void lim_fill_status_code(uint8_t frame_type,
 			*proto_status_code = STATUS_AUTH_TX_FAIL;
 			break;
 		case LIM_ACK_RCD_FAILURE:
+		case LIM_ACK_NOT_RCD:
 			*proto_status_code = STATUS_AUTH_NO_ACK_RECEIVED;
 			break;
 		case LIM_ACK_RCD_SUCCESS:
@@ -82,6 +83,7 @@ static void lim_fill_status_code(uint8_t frame_type,
 			*proto_status_code = STATUS_ASSOC_TX_FAIL;
 			break;
 		case LIM_ACK_RCD_FAILURE:
+		case LIM_ACK_NOT_RCD:
 			*proto_status_code = STATUS_ASSOC_NO_ACK_RECEIVED;
 			break;
 		case LIM_ACK_RCD_SUCCESS:
