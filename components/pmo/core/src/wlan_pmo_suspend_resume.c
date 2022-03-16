@@ -363,7 +363,10 @@ static void pmo_core_set_suspend_ps_params(struct wlan_objmgr_psoc *psoc)
 							    WLAN_PMO_ID);
 		if (!vdev)
 			continue;
-
+		if (wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_UP) {
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+			continue;
+		}
 		vdev_ctx = pmo_vdev_get_priv(vdev);
 		pmo_configure_vdev_suspend_params(psoc, vdev, vdev_ctx);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
@@ -675,7 +678,10 @@ static void pmo_core_set_resume_ps_params(struct wlan_objmgr_psoc *psoc)
 							    WLAN_PMO_ID);
 		if (!vdev)
 			continue;
-
+		if (wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_UP) {
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+			continue;
+		}
 		vdev_ctx = pmo_vdev_get_priv(vdev);
 		pmo_configure_vdev_resume_params(psoc, vdev, vdev_ctx);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
