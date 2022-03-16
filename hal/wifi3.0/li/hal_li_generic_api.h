@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2131,6 +2131,17 @@ void hal_reo_setup_generic_li(struct hal_soc *soc, void *reoparams)
 	 * 7: NOT_USED.
 	 */
 	if (reo_params->rx_hash_enabled) {
+		if (reo_params->remap0)
+			HAL_REG_WRITE(soc,
+				      HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
+				      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+				      reo_params->remap0);
+
+		hal_debug("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR 0x%x",
+			  HAL_REG_READ(soc,
+				       HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
+				       SEQ_WCSS_UMAC_REO_REG_OFFSET)));
+
 		HAL_REG_WRITE(soc,
 			      HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
 			      SEQ_WCSS_UMAC_REO_REG_OFFSET),

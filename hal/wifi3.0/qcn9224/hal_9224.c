@@ -1792,6 +1792,7 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 			hal_rx_priv_info_get_from_tlv_be;
 	hal_soc->ops->hal_rx_pkt_hdr_get = hal_rx_pkt_hdr_get_be;
 	hal_soc->ops->hal_reo_setup = hal_reo_setup_9224;
+	hal_soc->ops->hal_compute_reo_remap_ix0 = NULL;
 };
 
 struct hal_hw_srng_config hw_srng_table_9224[] = {

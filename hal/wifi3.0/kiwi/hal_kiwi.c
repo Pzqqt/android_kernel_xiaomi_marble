@@ -1851,6 +1851,7 @@ static void hal_hw_txrx_ops_attach_kiwi(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_set_reo_ent_desc_reo_dest_ind =
 				hal_set_reo_ent_desc_reo_dest_ind_be;
 	hal_soc->ops->hal_get_idle_link_bm_id = hal_get_idle_link_bm_id_kiwi;
+	hal_soc->ops->hal_compute_reo_remap_ix0 = NULL;
 };
 
 struct hal_hw_srng_config hw_srng_table_kiwi[] = {

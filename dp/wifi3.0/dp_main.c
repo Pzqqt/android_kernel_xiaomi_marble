@@ -4044,6 +4044,7 @@ bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap0,
 					      soc->num_reo_dest_rings -
 					      USE_1_IPA_RX_REO_RING, remap1,
 					      remap2);
+		hal_compute_reo_remap_ix0(soc->hal_soc, remap0);
 		break;
 	}
 
@@ -4224,6 +4225,7 @@ bool dp_reo_remap_config(struct dp_soc *soc,
 		num = dp_reo_ring_selection(value, ring);
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
 					      num, remap1, remap2);
+		hal_compute_reo_remap_ix0(soc->hal_soc, remap0);
 
 		break;
 	case dp_nss_cfg_first_radio:

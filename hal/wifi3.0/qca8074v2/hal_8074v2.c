@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1394,6 +1394,7 @@ static void hal_hw_txrx_ops_attach_qca8074v2(struct hal_soc *hal_soc)
 					hal_compute_reo_remap_ix2_ix3_8074v2;
 	hal_soc->ops->hal_setup_link_idle_list =
 				hal_setup_link_idle_list_generic_li;
+	hal_soc->ops->hal_compute_reo_remap_ix0 = NULL;
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {
