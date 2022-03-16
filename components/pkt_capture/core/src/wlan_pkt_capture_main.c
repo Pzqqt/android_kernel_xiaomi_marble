@@ -1315,7 +1315,12 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
 	    PKT_CAPTURE_MGMT_FRAME_TYPE_ALL) {
 		mode |= PACKET_CAPTURE_MODE_MGMT_ONLY;
-		config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
+		vdev_priv->frame_filter.mgmt_rx_frame_filter |=
+					PKT_CAPTURE_MGMT_CONNECT_BEACON;
+		vdev_priv->frame_filter.mgmt_rx_frame_filter |=
+					PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON;
+		if (!send_bcn)
+			config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
 		config |= PACKET_CAPTURE_CONFIG_OFF_CHANNEL_BEACON_ENABLE;
 	} else {
 		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
@@ -1330,7 +1335,8 @@ QDF_STATUS pkt_capture_set_filter(struct pkt_capture_frame_filter frame_filter,
 	if (check_enable_beacon) {
 		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
 		    PKT_CAPTURE_MGMT_CONNECT_BEACON)
-			config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
+			if (!send_bcn)
+				config |= PACKET_CAPTURE_CONFIG_BEACON_ENABLE;
 
 		if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
 		    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON)

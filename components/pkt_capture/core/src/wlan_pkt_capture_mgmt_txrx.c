@@ -506,15 +506,16 @@ pkt_capture_is_beacon_forward_enable(struct wlan_objmgr_vdev *vdev,
 				 &connected_bssid))
 		my_beacon = true;
 
-	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-	    PKT_CAPTURE_MGMT_CONNECT_BEACON && !my_beacon)
-		return false;
+	if (((vdev_priv->frame_filter.mgmt_rx_frame_filter &
+	    PKT_CAPTURE_MGMT_CONNECT_BEACON) ||
+	    vdev_priv->frame_filter.connected_beacon_interval) && my_beacon)
+		return true;
 
 	if (vdev_priv->frame_filter.mgmt_rx_frame_filter &
-	    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON && my_beacon)
-		return false;
+	    PKT_CAPTURE_MGMT_CONNECT_SCAN_BEACON && !my_beacon)
+		return true;
 
-	return true;
+	return false;
 }
 
 #ifdef DP_MON_RSSI_IN_DBM
