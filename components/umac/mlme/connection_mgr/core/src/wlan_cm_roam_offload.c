@@ -5199,13 +5199,19 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 	qdf_mem_free(log_record);
 }
 
-void cm_roam_result_info_event(struct wmi_roam_result *res,
+#define WLAN_ROAM_SCAN_TYPE_PARTIAL_SCAN 0
+#define WLAN_ROAM_SCAN_TYPE_FULL_SCAN 1
+
+void cm_roam_result_info_event(struct wlan_objmgr_psoc *psoc,
+			       struct wmi_roam_trigger_info *trigger,
+			       struct wmi_roam_result *res,
 			       struct wmi_roam_scan_data *scan_data,
 			       uint8_t vdev_id)
 {
 	struct wlan_log_record *log_record = NULL;
+	struct qdf_mac_addr bssid = {0};
 	uint8_t i;
-	bool ap_found_in_roam_scan = false;
+	bool ap_found_in_roam_scan = false, bmiss_skip_full_scan = false;
 	bool roam_abort = (res->fail_reason == ROAM_FAIL_REASON_SYNC ||
 			   res->fail_reason == ROAM_FAIL_REASON_DISCONNECT ||
 			   res->fail_reason == ROAM_FAIL_REASON_HOST ||
@@ -5213,6 +5219,8 @@ void cm_roam_result_info_event(struct wmi_roam_result *res,
 					ROAM_FAIL_REASON_INTERNAL_ABORT ||
 			   res->fail_reason ==
 				ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO);
+	bool is_full_scan = (scan_data->present &&
+			     scan_data->type == WLAN_ROAM_SCAN_TYPE_FULL_SCAN);
 
 	log_record = qdf_mem_malloc(sizeof(*log_record));
 	if (!log_record)
@@ -5261,6 +5269,7 @@ void cm_roam_result_info_event(struct wmi_roam_result *res,
 			   WLAN_ROAM_SCAN_CURRENT_AP &&
 			   !log_record->roam_result.is_roam_successful) {
 			log_record->bssid = scan_data->ap[i].bssid;
+			bssid = scan_data->ap[i].bssid;
 			break;
 		}
 	}
@@ -5280,6 +5289,31 @@ void cm_roam_result_info_event(struct wmi_roam_result *res,
 
 		wlan_connectivity_log_enqueue(log_record);
 	}
+
+	/*
+	 * When roam trigger reason is Beacon Miss, 2 roam scan
+	 * stats TLV will be received with reason as BMISS.
+	 * 1. First TLV is for partial roam scan data and
+	 * 2. Second TLV is for the full scan data when there is no candidate
+	 * found in the partial scan.
+	 * When bmiss_skip_full_scan flag is disabled, prints for 1 & 2 will be
+	 * seen.
+	 * when bmiss_skip_full_scan flag is enabled, only print for 1st TLV
+	 * will be seen.
+	 *
+	 * 1. BMISS_DISCONN event should be triggered only once for BMISS roam
+	 * trigger if roam result is failure after full scan TLV is received and
+	 * bmiss_skip_full_scan is disabled.
+	 *
+	 * 2. But if bmiss_skip_full_scan is enabled, then trigger
+	 * BMISS_DISCONN event after partial scan TLV is received
+	 */
+	wlan_mlme_get_bmiss_skip_full_scan_value(psoc, &bmiss_skip_full_scan);
+	if (trigger->trigger_reason == ROAM_TRIGGER_REASON_BMISS &&
+	    !log_record->roam_result.is_roam_successful &&
+	    ((!bmiss_skip_full_scan && is_full_scan) ||
+	     (bmiss_skip_full_scan && !is_full_scan)))
+		cm_roam_beacon_loss_disconnect_event(psoc, bssid, vdev_id);
 
 	qdf_mem_free(log_record);
 }
@@ -5781,22 +5815,37 @@ cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data,
 }
 
 QDF_STATUS
-cm_roam_beacon_loss_disconnect_event(struct qdf_mac_addr bssid, int32_t rssi,
-				     uint8_t vdev_id)
+cm_roam_beacon_loss_disconnect_event(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr bssid, uint8_t vdev_id)
 {
 	struct wlan_log_record *log_record = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev = NULL;
+	uint32_t rssi;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("Vdev[%d] is null", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	log_record = qdf_mem_malloc(sizeof(*log_record));
-	if (!log_record)
+	if (!log_record) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		return QDF_STATUS_E_NOMEM;
+	}
 
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
 	log_record->ktime_us = qdf_ktime_to_us(qdf_ktime_get());
 	log_record->vdev_id = vdev_id;
 	log_record->bssid = bssid;
 	log_record->log_subtype = WLAN_DISCONN_BMISS;
+
+	rssi = mlme_get_hb_ap_rssi(vdev);
 	log_record->pkt_info.rssi = rssi;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	status = wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_free(log_record);

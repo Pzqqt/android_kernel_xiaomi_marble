@@ -2950,6 +2950,7 @@ cm_roam_stats_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 
 /**
  * cm_roam_stats_print_roam_result()  - Print roam result related info
+ * @psoc: Pointer to psoc object
  * @res:     Roam result strucure pointer
  * @vdev_id: Vdev id
  *
@@ -2958,7 +2959,9 @@ cm_roam_stats_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
  * Return: None
  */
 static void
-cm_roam_stats_print_roam_result(struct wmi_roam_result *res,
+cm_roam_stats_print_roam_result(struct wlan_objmgr_psoc *psoc,
+				struct wmi_roam_trigger_info *trigger,
+				struct wmi_roam_result *res,
 				struct wmi_roam_scan_data *scan_data,
 				uint8_t vdev_id)
 {
@@ -2966,7 +2969,7 @@ cm_roam_stats_print_roam_result(struct wmi_roam_result *res,
 	char time[TIME_STRING_LEN];
 
 	/* Update roam result info to userspace */
-	cm_roam_result_info_event(res, scan_data, vdev_id);
+	cm_roam_result_info_event(psoc, trigger, res, scan_data, vdev_id);
 
 	buf = qdf_mem_malloc(ROAM_FAILURE_BUF_SIZE);
 	if (!buf)
@@ -3209,7 +3212,9 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 					  stats_info->trigger[i].timestamp);
 
 		if (stats_info->result[i].present) {
-			cm_roam_stats_print_roam_result(&stats_info->result[i],
+			cm_roam_stats_print_roam_result(psoc,
+							&stats_info->trigger[i],
+							&stats_info->result[i],
 							&stats_info->scan[i],
 							stats_info->vdev_id);
 			status = wlan_cm_update_roam_states(psoc,
