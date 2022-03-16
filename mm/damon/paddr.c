@@ -156,7 +156,7 @@ static bool damon_pa_young(unsigned long paddr, unsigned long *page_sz)
 	need_lock = !PageAnon(page) || PageKsm(page);
 	if (need_lock && !trylock_page(page)) {
 		put_page(page);
-		return NULL;
+		return false;
 	}
 
 	rmap_walk(page, &rwc);
