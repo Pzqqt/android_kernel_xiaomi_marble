@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -540,7 +541,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 				     uint8_t vdev_id)
 {
 	QDF_STATUS status;
-	uint8_t i;
+	uint8_t i, j;
 	struct pe_session *session_ptr;
 	struct wlan_objmgr_vdev *vdev;
 
@@ -683,6 +684,9 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->ht_client_cnt = 0;
 	/* following is invalid value since seq number is 12 bit */
 	session_ptr->prev_auth_seq_num = 0xFFFF;
+
+	for (j = 0; j < QCA_WLAN_AC_ALL; j++)
+		session_ptr->gLimEdcaParams[j].user_edca_set = 0;
 
 	return &mac->lim.gpSession[i];
 
@@ -1007,6 +1011,9 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 
 	if (LIM_IS_AP_ROLE(session))
 		lim_check_and_reset_protection_params(mac_ctx);
+
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++)
+		session->gLimEdcaParams[i].user_edca_set = 0;
 
 	vdev = session->vdev;
 	session->vdev = NULL;

@@ -20755,6 +20755,7 @@ static int __wlan_hdd_set_txq_params(struct wiphy *wiphy,
 	txq_edca_params.txoplimit = params->txop;
 	txq_edca_params.aci.aci =
 			ieee_ac_to_qca_ac[params->ac];
+	txq_edca_params.user_edca_set = 1;
 
 	status = sme_update_session_txq_edca_params(mac_handle,
 						    adapter->vdev_id,
