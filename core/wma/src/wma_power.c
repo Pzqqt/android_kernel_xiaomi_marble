@@ -1193,6 +1193,14 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 		bcn->noa_ie = buf + bcn->len;
 	}
 
+	if (bcn->len + sizeof(struct p2p_ie) + new_noa_sub_ie_len >
+	    SIR_MAX_BEACON_SIZE) {
+		wma_err("exceed max beacon length, bcn->len %d, new_noa_sub_ie_len %d, p2p len %u",
+			bcn->len, new_noa_sub_ie_len,
+			(uint32_t)sizeof(struct p2p_ie));
+		return;
+	}
+
 	bcn->noa_sub_ie_len = new_noa_sub_ie_len;
 	wma_add_p2p_ie(bcn->noa_ie);
 	p2p_ie = (struct p2p_ie *)bcn->noa_ie;
