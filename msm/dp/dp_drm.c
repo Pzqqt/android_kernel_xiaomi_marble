@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <drm/drm_atomic_helper.h>
@@ -336,7 +337,7 @@ int dp_connector_set_colorspace(struct drm_connector *connector,
 
 	sde_conn = to_sde_connector(connector);
 	if (!sde_conn->drv_panel) {
-		pr_err("invalid dp panel\n");
+		DP_ERR("invalid dp panel\n");
 		return -EINVAL;
 	}
 
