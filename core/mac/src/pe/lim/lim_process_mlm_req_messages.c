@@ -454,7 +454,6 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 void lim_process_mlm_join_req(struct mac_context *mac_ctx,
 			      tLimMlmJoinReq *mlm_join_req)
 {
-	tLimMlmJoinCnf mlmjoin_cnf;
 	uint8_t sessionid;
 	struct pe_session *session;
 
@@ -463,41 +462,11 @@ void lim_process_mlm_join_req(struct mac_context *mac_ctx,
 	session = pe_find_session_by_session_id(mac_ctx, sessionid);
 	if (!session) {
 		pe_err("SessionId:%d does not exist", sessionid);
-		goto error;
-	}
-
-	if (!LIM_IS_AP_ROLE(session) &&
-	     ((session->limMlmState == eLIM_MLM_IDLE_STATE) ||
-	     (session->limMlmState == eLIM_MLM_JOINED_STATE)) &&
-	     (SIR_MAC_GET_ESS
-		(mlm_join_req->bssDescription.capabilityInfo) !=
-		SIR_MAC_GET_IBSS(mlm_join_req->bssDescription.
-			capabilityInfo))) {
-		session->pLimMlmJoinReq = mlm_join_req;
-		lim_process_mlm_post_join_suspend_link(mac_ctx, session);
 		return;
 	}
 
-	/**
-	 * Should not have received JOIN req in states other than
-	 * Idle state or on AP.
-	 * Return join confirm with invalid parameters code.
-	 */
-	pe_err("Session:%d Unexpected Join req, role %d state %X",
-		session->peSessionId, GET_LIM_SYSTEM_ROLE(session),
-		session->limMlmState);
-	lim_print_mlm_state(mac_ctx, LOGE, session->limMlmState);
-
-error:
-	qdf_mem_free(mlm_join_req);
-	if (session)
-		session->pLimMlmJoinReq = NULL;
-	mlmjoin_cnf.resultCode = eSIR_SME_PEER_CREATE_FAILED;
-	mlmjoin_cnf.sessionId = sessionid;
-	mlmjoin_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
-	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
-		(uint32_t *)&mlmjoin_cnf);
-
+	session->pLimMlmJoinReq = mlm_join_req;
+	lim_process_mlm_post_join_suspend_link(mac_ctx, session);
 }
 
 /**
