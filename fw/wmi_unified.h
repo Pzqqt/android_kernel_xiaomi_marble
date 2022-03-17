@@ -1146,6 +1146,9 @@ typedef enum {
      */
     WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID,
 
+    /* WMI cmd used to allocate HW scratch registers */
+    WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID,
+
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
     /* invoke neighbor report from FW */
@@ -2060,6 +2063,12 @@ typedef enum {
 
     /** event to report ANI level of the channels */
     WMI_GET_CHANNEL_ANI_EVENTID,
+
+    /* WMI event to available scratch registers */
+    WMI_PMM_AVAILABLE_SCRATCH_REG_EVENTID,
+
+    /* WMI event to scratch registers allocation */
+    WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID,
 
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
@@ -31018,6 +31027,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_PN_MGMT_RX_FILTER_CMDID);
         WMI_RETURN_STRING(WMI_PEER_RX_PN_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID);
+        WMI_RETURN_STRING(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -37957,11 +37967,54 @@ typedef struct {
     wmi_mac_addr peer_mac_addr;
 } wmi_rtt_pasn_deauth_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pmm_scratch_reg_info */
+    /** what the register is used for - see WFSS_PMM_SCRATCH_REG_PURPOSE enum */
+    A_UINT32 pmm_scratch_reg_purpose;
+    /** Address of scratch register */
+    A_UINT32 pmm_scratch_reg_address;
+} wmi_pmm_scratch_reg_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pmm_scratch_reg_allocation_cmd_fixed_param */
+    /** pdev_id for identifying the MAC */
+    A_UINT32 pdev_id;
+    /*
+     * Following this structure is the TLV:
+     *     wmi_pmm_scratch_reg_info scratch_reg_info[];
+     */
+} wmi_pmm_scratch_reg_allocation_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pmm_available_scratch_reg_info */
+    /** Scratch register address */
+    A_UINT32 pmm_scratch_reg_address;
+} wmi_pmm_available_scratch_reg_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pmm_available_scratch_reg_event_fixed_param */
+    /** pdev_id for identifying the MAC */
+    A_UINT32 pdev_id;
+    /*
+     * Following this structure is the TLV:
+     *     wmi_pmm_available_scratch_reg_info pmm_available_scratch_reg_info[];
+     */
+} wmi_pmm_available_scratch_reg_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pmm_scratch_reg_allocation_complete_event_fixed_param */
+    /** pdev_id for identifying the MAC */
+    A_UINT32 pdev_id;
+    /** 1 - success, 0 - failed */
+    A_UINT32 is_allocated;
+} wmi_pmm_scratch_reg_allocation_complete_event_fixed_param;
+
 
 
 /* ADD NEW DEFS HERE */
 
 
+// {
 /*****************************************************************************
  * The following structures are deprecated. DO NOT USE THEM!
  */
@@ -38023,7 +38076,7 @@ typedef struct {
 /*****************************************************************************
  * END DEPRECATED
  */
-
+// }
 /* ADD NEW DEFS ABOVE THIS DEPRECATED SECTION */
 
 
