@@ -15945,6 +15945,7 @@ typedef struct {
 #define WMI_PEER_EXT_EHT         0x00000001  /* EHT enabled */
 #define WMI_PEER_EXT_320MHZ      0x00000002  /* 320Mhz enabled */
 #define WMI_PEER_EXT_DMS_CAPABLE 0x00000004
+#define WMI_PEER_EXT_HE_CAPS_6GHZ_VALID        0x00000008  /* param he_caps_6ghz is valid or not */
 #define WMI_PEER_EXT_F_CRIT_PROTO_HINT_ENABLED 0x40000000
 
 /**
@@ -35654,25 +35655,61 @@ typedef struct {
 #define WMI_EHTCAP_PHY_MUBFMR320MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 30, 1)
 #define WMI_EHTCAP_PHY_MUBFMR320MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 30, 1, value)
 
-/* Bit 63: reserved */
+/* Bit 63: TB sounding feedback rate limit */
+#define WMI_EHTCAP_PHY_TBSUNDFBRATELIMIT_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 31, 1)
+#define WMI_EHTCAP_PHY_TBSUNDFBRATELIMIT_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 31, 1, value)
+
+/* Bit 64: Rx 1024-QAM in wider bandwidth DL OFDMA support */
+#define WMI_EHTCAP_PHY_RX1024QAMWIDERBWDLOFDMA_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[2], 0, 1)
+#define WMI_EHTCAP_PHY_RX1024QAMWIDERBWDLOFDMA_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[2], 0, 1, value)
+
+/* Bit 65: Rx 4096-QAM in wider bandwidth DL OFDMA support */
+#define WMI_EHTCAP_PHY_RX4096QAMWIDERBWDLOFDMA_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[2], 1, 1)
+#define WMI_EHTCAP_PHY_RX4096QAMWIDERBWDLOFDMA_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[2], 1, 1, value)
+
+/* Bits 66-71: reserved */
 
 /****** End of 11BE EHT PHY Capabilities Information field ******/
 
 /****** 11BE EHT MAC Capabilities Information field ******/
 
-/* Bit 0: NSEP priority access supported */
+/* Bit 0: NSEP/EPCS priority access supported: draft1.4 change the name from NSEP to EPCS
+ *        To compatible with <= draft 1.4 ver, we keep 2 define there, but same bit.
+ */
 #define WMI_EHTCAP_MAC_NSEPPRIACCESS_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 0, 1)
 #define WMI_EHTCAP_MAC_NSEPPRIACCESS_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 0, 1, value)
+#define WMI_EHTCAP_MAC_EPCSPRIACCESS_GET(eht_cap_mac) WMI_EHTCAP_MAC_NSEPPRIACCESS_GET(eht_cap_mac)
+#define WMI_EHTCAP_MAC_EPCSPRIACCESS_SET(eht_cap_mac, value) WMI_EHTCAP_MAC_NSEPPRIACCESS_SET(eht_cap_mac, value)
 
 /* Bit 1: EHT OM control support */
 #define WMI_EHTCAP_MAC_EHTOMCTRL_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 1, 1)
 #define WMI_EHTCAP_MAC_EHTOMCTRL_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 1, 1, value)
 
-/* Bit 2: triggered TXOP support */
+/* Bit 2: triggered TXOP mode 1 support
+ *        As in draft 1.4, we define mode2 and to compatible with old version, we keep 2 define there, but same bit.
+ */
 #define WMI_EHTCAP_MAC_TRIGTXOP_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 2, 1)
 #define WMI_EHTCAP_MAC_TRIGTXOP_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 2, 1, value)
+#define WMI_EHTCAP_MAC_TRIGTXOPMODE1_GET(eht_cap_mac) WMI_EHTCAP_MAC_TRIGTXOP_GET(eht_cap_mac)
+#define WMI_EHTCAP_MAC_TRIGTXOPMODE1_SET(eht_cap_mac, value) WMI_EHTCAP_MAC_TRIGTXOP_SET(eht_cap_mac, value)
 
-/* Bit 3-15: reserved */
+/* Bit 3: triggered TXOP mode 2 support */
+#define WMI_EHTCAP_MAC_TRIGTXOPMODE2_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 3, 1)
+#define WMI_EHTCAP_MAC_TRIGTXOPMODE2_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 3, 1, value)
+
+/* Bit 4: restricted TWT support */
+#define WMI_EHTCAP_MAC_RESTRICTTWT_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 4, 1)
+#define WMI_EHTCAP_MAC_RESTRICTTWT_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 4, 1, value)
+
+/* Bit 5: SCS traffic description support */
+#define WMI_EHTCAP_MAC_SCSTRAFFICDESC_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 5, 1)
+#define WMI_EHTCAP_MAC_SCSTRAFFICDESC_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 5, 1, value)
+
+/* Bit 6-7: maximum MPDU length */
+#define WMI_EHTCAP_MAC_MAXMPDULEN_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 6, 2)
+#define WMI_EHTCAP_MAC_MAXMPDULEN_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 6, 2, value)
+
+/* Bit 8-15: reserved */
 
 /****** End of 11BE EHT MAC Capabilities Information field ******/
 
