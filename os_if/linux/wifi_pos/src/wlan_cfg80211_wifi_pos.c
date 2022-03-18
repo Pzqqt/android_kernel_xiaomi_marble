@@ -34,9 +34,8 @@ wlan_wifi_pos_cfg80211_set_wiphy_ext_feature(struct wiphy *wiphy,
 {
 	if (wlan_psoc_nif_fw_ext2_cap_get(psoc,
 					  WLAN_RTT_11AZ_MAC_SEC_SUPPORT)) {
-		wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_SECURE_RTT);
 		wiphy_ext_feature_set(wiphy,
-				      NL80211_EXT_FEATURE_PROTECTION_OF_RANGING_NEGOTIATION);
+				      NL80211_EXT_FEATURE_PROT_RANGE_NEGO_AND_MEASURE);
 	}
 
 	if (wlan_psoc_nif_fw_ext2_cap_get(psoc,
