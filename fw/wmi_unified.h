@@ -14420,6 +14420,26 @@ typedef struct {
     WMI_GET_BITS(_ema_param, WMI_BEACON_TMPLT_LAST_TEMPLATE_BITPOS, 8)
 
 typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_bcn_tmpl_ml_info */
+    /** hw_link_id:
+     * Unique link id across SOCs, got as part of QMI handshake
+     */
+    A_UINT32 hw_link_id;
+    /**
+     * CU vdev map for the Critical update category-1
+     * (Inclusion of CU IES)
+     */
+    A_UINT32 cu_vdev_map_cat1_lo; /* bits 31:0 */
+    A_UINT32 cu_vdev_map_cat1_hi; /* bits 63:32 */
+    /**
+     * CU vdev map for the Critical update category-2
+     * (modification of CU IES)
+     */
+    A_UINT32 cu_vdev_map_cat2_lo; /* bits 31:0 */
+    A_UINT32 cu_vdev_map_cat2_hi; /* bits 63:32 */
+} wmi_bcn_tmpl_ml_info;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_bcn_tmpl_ml_params */
     A_UINT32 vdev_id;    /* partner vdev_id */
     A_UINT32 hw_link_id; /* hw_link_id: Unique link id across SOCs, got as part of QMI handshake */
