@@ -703,6 +703,8 @@ typedef enum {
 
     WMI_PEER_RX_PN_REQUEST_CMDID,
 
+    /* Mac addr based filtering*/
+    WMI_PEER_TX_FILTER_CMDID,
 
     /* beacon/management specific commands */
 
@@ -6528,8 +6530,22 @@ typedef struct {
     A_UINT32 bssid_idx;
 } wmi_vdev_filter_nrp_config_cmd_fixed_param; /* Filter for Neighbor Rx Packets */
 
+/* tx peer filter action - Filter Tx Packets  - add/remove filter */
+enum {
+    WMI_PEER_TX_FILTER_ACTION_ADD        = 1,
+    WMI_PEER_TX_FILTER_ACTION_REMOVE     = 2,
+};
 
-/*Command to set/unset chip in quiet mode*/
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_tx_filter_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    /* Client  MAC addr */
+    wmi_mac_addr addr;
+    /* Add/Remove monitor_sta Filter */
+    A_UINT32 action; /* WMI_PEER_TX_FILTER_ACTION enum */
+} wmi_peer_tx_filter_cmd_fixed_param; /* Filter for TX Packets */
+
+/* Command to set/unset chip in quiet mode */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_quiet_cmd_fixed_param */
     A_UINT32 pdev_id; /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */

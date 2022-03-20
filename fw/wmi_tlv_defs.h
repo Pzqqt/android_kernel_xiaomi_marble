@@ -1260,6 +1260,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pmm_available_scratch_reg_info,
     WMITLV_TAG_STRUC_wmi_pmm_scratch_reg_allocation_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_bcn_tmpl_ml_info,
+    WMITLV_TAG_STRUC_wmi_peer_tx_filter_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1752,6 +1753,7 @@ typedef enum {
     OP(WMI_VDEV_PN_MGMT_RX_FILTER_CMDID) \
     OP(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID) \
     OP(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID) \
+    OP(WMI_PEER_TX_FILTER_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4212,6 +4214,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_DSCP_TID_MAP_CMDID);
 #define WMITLV_TABLE_WMI_VDEV_FILTER_NEIGHBOR_RX_PACKETS_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_filter_nrp_config_cmd_fixed_param, wmi_vdev_filter_nrp_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_FILTER_NEIGHBOR_RX_PACKETS_CMDID);
+
+/* Configure filter for Mac addr based filtering*/
+#define WMITLV_TABLE_WMI_PEER_TX_FILTER_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tx_filter_cmd_fixed_param, wmi_peer_tx_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TX_FILTER_CMDID);
 
 /* Configure filter for PN Rx Pkt indication which pkts need to be forwarded to host */
 #define WMITLV_TABLE_WMI_VDEV_PN_MGMT_RX_FILTER_CMDID(id,op,buf,len) \
