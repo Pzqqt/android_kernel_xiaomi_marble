@@ -330,17 +330,22 @@ int hdd_update_vdev_mac_address(struct hdd_context *hdd_ctx,
 	struct hdd_mlo_adapter_info *mlo_adapter_info;
 	struct hdd_adapter *link_adapter;
 
-	mlo_adapter_info = &adapter->mlo_adapter_info;
+	if (hdd_adapter_is_ml_adapter(adapter)) {
+		mlo_adapter_info = &adapter->mlo_adapter_info;
 
-	for (i = 0; i < WLAN_MAX_MLD; i++) {
-		link_adapter = mlo_adapter_info->link_adapter[i];
-		if (!link_adapter)
-			continue;
-		ret = hdd_dynamic_mac_address_set(hdd_ctx, link_adapter,
-						  mac_addr);
-		if (ret)
-			return ret;
+		for (i = 0; i < WLAN_MAX_MLD; i++) {
+			link_adapter = mlo_adapter_info->link_adapter[i];
+			if (!link_adapter)
+				continue;
+			ret = hdd_dynamic_mac_address_set(hdd_ctx, link_adapter,
+							  mac_addr);
+			if (ret)
+				return ret;
+		}
+	} else {
+		ret = hdd_dynamic_mac_address_set(hdd_ctx, adapter, mac_addr);
 	}
+
 	return ret;
 }
 #endif
