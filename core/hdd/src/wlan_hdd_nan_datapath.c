@@ -722,6 +722,7 @@ int hdd_ndi_open(char *iface_name)
 		}
 	}
 
+	params.is_add_virtual_iface = 1;
 	adapter = hdd_open_adapter(hdd_ctx, QDF_NDI_MODE, iface_name,
 				   ndi_mac_addr, NET_NAME_UNKNOWN, true,
 				   &params);
@@ -826,6 +827,7 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	os_if_nan_set_ndi_state(vdev, NAN_DATA_NDI_DELETING_STATE);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 	/* Delete the interface */
+	adapter->is_virtual_iface = true;
 	ret = __wlan_hdd_del_virtual_intf(hdd_ctx->wiphy, &adapter->wdev);
 	if (ret)
 		hdd_err("NDI delete request failed");
@@ -927,6 +929,7 @@ void hdd_ndi_close(uint8_t vdev_id)
 		return;
 	}
 
+	adapter->is_virtual_iface = true;
 	hdd_close_ndi(adapter);
 }
 
