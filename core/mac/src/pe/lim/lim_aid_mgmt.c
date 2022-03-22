@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2016, 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,6 +135,10 @@ static void lim_free_peer_idxpool_legacy(struct pe_session *pe_session)
 
 void lim_free_peer_idxpool(struct pe_session *pe_session)
 {
+	if (!pe_session->vdev) {
+		pe_debug("vdev is null");
+		return;
+	}
 	if (!wlan_vdev_mlme_is_mlo_ap(pe_session->vdev))
 		lim_free_peer_idxpool_legacy(pe_session);
 }

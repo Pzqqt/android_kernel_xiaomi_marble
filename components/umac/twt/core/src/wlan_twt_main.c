@@ -1716,7 +1716,8 @@ wlan_twt_setup_complete_event_handler(struct wlan_objmgr_psoc *psoc,
 
 	switch (opmode) {
 	case QDF_SAP_MODE:
-		mlme_twt_osif_setup_complete_ind(psoc, event, false);
+		qdf_status = mlme_twt_osif_setup_complete_ind(psoc, event,
+							      false);
 		break;
 	case QDF_STA_MODE:
 		is_evt_allowed = wlan_twt_is_command_in_progress(
@@ -1745,18 +1746,13 @@ wlan_twt_setup_complete_event_handler(struct wlan_objmgr_psoc *psoc,
 			wlan_twt_process_add_initial_nego(psoc, event);
 		}
 
+		qdf_status = QDF_STATUS_SUCCESS;
 		break;
 	default:
 		twt_debug("TWT Setup is not supported on %s",
 			  qdf_opmode_str(opmode));
 		break;
 	}
-
-	qdf_status = wlan_twt_set_command_in_progress(psoc,
-					&event->params.peer_macaddr,
-					event->params.dialog_id, WLAN_TWT_NONE);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		return qdf_status;
 
 cleanup:
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_TWT_ID);

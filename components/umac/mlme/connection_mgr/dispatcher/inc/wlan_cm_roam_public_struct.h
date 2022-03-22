@@ -671,6 +671,7 @@ enum roam_cfg_param {
 	IS_SINGLE_PMK,
 	LOST_LINK_RSSI,
 	ROAM_BAND,
+	HI_RSSI_SCAN_RSSI_DELTA,
 };
 
 /**
@@ -1727,6 +1728,8 @@ struct wlan_roam_start_config {
  * @idle_params: idle params
  * @roam_triggers: roam triggers parameters
  * @rssi_params: roam scan rssi threshold parameters
+ * @send_rso_stop_resp: send rso stop response
+ * @start_rso_stop_timer: start rso stop timer
  */
 struct wlan_roam_stop_config {
 	uint8_t reason;
@@ -1739,6 +1742,8 @@ struct wlan_roam_stop_config {
 	struct wlan_roam_idle_params idle_params;
 	struct wlan_roam_triggers roam_triggers;
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
+	bool send_rso_stop_resp;
+	bool start_rso_stop_timer;
 };
 
 /**
@@ -1989,8 +1994,11 @@ struct roam_invoke_req {
  * @CM_ROAM_NOTIF_DISASSOC_RECV: indicate disassoc received, notif_params to be
 				 sent as reason code, notif_params1 to be sent
 				 as frame length
+ * @CM_ROAM_NOTIF_HO_FAIL: indicates that roaming scan mode is successful but
+			   caused disconnection and subsequent
+			   WMI_ROAM_REASON_HO_FAILED is event expected
  * @CM_ROAM_NOTIF_SCAN_END: indicate roam scan end, notif_params to be sent
-			      as WMI_ROAM_TRIGGER_REASON_ID
+			    as WMI_ROAM_TRIGGER_REASON_ID
  */
 enum cm_roam_notif {
 	CM_ROAM_NOTIF_INVALID = 0,
@@ -2004,7 +2012,8 @@ enum cm_roam_notif {
 	CM_ROAM_NOTIF_SCAN_START,
 	CM_ROAM_NOTIF_DEAUTH_RECV,
 	CM_ROAM_NOTIF_DISASSOC_RECV,
-	CM_ROAM_NOTIF_SCAN_END = 12,
+	CM_ROAM_NOTIF_HO_FAIL,
+	CM_ROAM_NOTIF_SCAN_END,
 };
 
 /**
@@ -2146,6 +2155,7 @@ struct roam_offload_roam_event {
 	uint32_t notif_params1;
 	struct cm_hw_mode_trans_ind *hw_mode_trans_ind;
 	uint8_t *deauth_disassoc_frame;
+	bool rso_timer_stopped;
 };
 
 /**

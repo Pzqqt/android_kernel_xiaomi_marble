@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -238,7 +239,8 @@ QDF_STATUS cm_handle_roam_start(struct wlan_objmgr_vdev *vdev,
 		cm_roam_state_change(wlan_vdev_get_pdev(vdev),
 				     wlan_vdev_get_id(vdev),
 				     WLAN_ROAM_RSO_STOPPED,
-				     REASON_OS_REQUESTED_ROAMING_NOW);
+				     REASON_OS_REQUESTED_ROAMING_NOW,
+				     NULL, false);
 	return QDF_STATUS_SUCCESS;
 }
 

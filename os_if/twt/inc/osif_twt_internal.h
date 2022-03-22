@@ -62,22 +62,24 @@ int osif_twt_send_responder_enable_cmd(struct wlan_objmgr_psoc *psoc,
  * to target
  * @psoc: pointer to global psoc structure
  * @pdev_id: pdev id
+ * @reason: disable reason code
  *
  * Return: errno
  */
 int osif_twt_send_requestor_disable_cmd(struct wlan_objmgr_psoc *psoc,
-					uint8_t pdev_id);
+					uint8_t pdev_id, uint32_t reason);
 
 /**
  * osif_twt_send_responder_disable_cmd() - Send TWT responder disable command
  * to target
  * @psoc: pointer to global psoc structure
  * @pdev_id: pdev id
+ * @reason: disable reason code
  *
  * Return: errno
  */
 int osif_twt_send_responder_disable_cmd(struct wlan_objmgr_psoc *psoc,
-					uint8_t pdev_id);
+					uint8_t pdev_id, uint32_t reason);
 
 /**
  * osif_twt_concurrency_update_handler() - Handle TWT concurrency scenario
@@ -91,7 +93,7 @@ void osif_twt_concurrency_update_handler(struct wlan_objmgr_psoc *psoc,
 #else
 static inline
 int osif_twt_send_requestor_disable_cmd(struct wlan_objmgr_psoc *psoc,
-					uint8_t pdev_id)
+					uint8_t pdev_id, uint32_t reason)
 {
 	return 0;
 }

@@ -64,6 +64,39 @@ static inline void dp_rx_tm_walk_skb_list(qdf_nbuf_t nbuf_list)
 { }
 #endif /* DP_RX_TM_DEBUG */
 
+#ifdef DP_RX_REFILL_CPU_PERF_AFFINE_MASK
+/**
+ * dp_rx_refill_thread_set_affinity - Affine Rx refill threads
+ * @refill_thread: Contains over all rx refill thread info
+ *
+ * Return: None
+ */
+static void
+dp_rx_refill_thread_set_affinity(struct dp_rx_refill_thread *refill_thread)
+{
+	unsigned int cpus;
+	char new_mask_str[10];
+	qdf_cpu_mask new_mask;
+
+	qdf_cpumask_clear(&new_mask);
+	qdf_for_each_online_cpu(cpus) {
+		if (qdf_topology_physical_package_id(cpus) ==
+		    CPU_CLUSTER_TYPE_PERF) {
+			qdf_cpumask_set_cpu(cpus, &new_mask);
+		}
+	}
+
+	qdf_thread_set_cpus_allowed_mask(refill_thread->task, &new_mask);
+
+	cpumap_print_to_pagebuf(false, new_mask_str, &new_mask);
+	dp_debug("Refill Thread CPU mask  %s", new_mask_str);
+}
+#else
+static void
+dp_rx_refill_thread_set_affinity(struct dp_rx_refill_thread *refill_thread)
+{
+}
+#endif
 /**
  * dp_rx_tm_get_soc_handle() - get soc handle from struct dp_rx_tm_handle_cmn
  * @rx_tm_handle_cmn - rx thread manager cmn handle
@@ -866,6 +899,8 @@ QDF_STATUS dp_rx_refill_thread_init(struct dp_rx_refill_thread *refill_thread)
 		       qdf_status);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	dp_rx_refill_thread_set_affinity(refill_thread);
 
 	refill_thread->state = DP_RX_REFILL_THREAD_RUNNING;
 	return QDF_STATUS_SUCCESS;

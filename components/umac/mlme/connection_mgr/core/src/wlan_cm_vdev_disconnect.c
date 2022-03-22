@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -82,8 +83,6 @@ QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 		wlan_p2p_cleanup_roc_by_vdev(vdev);
 		wlan_tdls_notify_sta_disconnect(req->vdev_id, false,
 						user_disconnect, vdev);
-		cm_roam_state_change(pdev, req->vdev_id, WLAN_ROAM_RSO_STOPPED,
-				     REASON_DRIVER_DISABLED);
 	}
 	cm_abort_connect_request_timers(vdev);
 
@@ -400,4 +399,105 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 	qdf_mem_free(ind);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static QDF_STATUS
+wlan_cm_mlo_update_disconnecting_vdev_id(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev = NULL;
+	struct wlan_objmgr_vdev *vdev_list[WLAN_UMAC_MLO_MAX_VDEVS] = {NULL};
+	uint16_t num_links = 0, i = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, *vdev_id,
+						    WLAN_MLME_SB_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d vdev not found", *vdev_id);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+		status = QDF_STATUS_SUCCESS;
+		goto done;
+	}
+
+	mlo_get_ml_vdev_list(vdev, &num_links, vdev_list);
+	if (!num_links) {
+		mlme_err("No VDEVs under vdev id: %d", *vdev_id);
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto done;
+	}
+
+	if (num_links > QDF_ARRAY_SIZE(vdev_list)) {
+		mlme_err("Invalid number of VDEVs num_links:%u", num_links);
+		status = QDF_STATUS_E_INVAL;
+		goto release_mlo_ref;
+	}
+
+	for (i = 0; i < num_links; i++) {
+		if (wlan_vdev_mlme_is_mlo_vdev(vdev_list[i]) &&
+		    wlan_cm_is_vdev_disconnecting(vdev_list[i])) {
+			/*
+			 * This is expected to match only once as per current
+			 * design.
+			 */
+			*vdev_id = wlan_vdev_get_id(vdev_list[i]);
+			break;
+		}
+	}
+
+release_mlo_ref:
+	for (i = 0; i < QDF_ARRAY_SIZE(vdev_list); i++)
+		mlo_release_vdev_ref(vdev_list[i]);
+
+done:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+
+	return status;
+}
+#else
+static QDF_STATUS
+wlan_cm_mlo_update_disconnecting_vdev_id(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
+
+QDF_STATUS
+wlan_cm_rso_stop_continue_disconnect(struct wlan_objmgr_psoc *psoc,
+				     uint8_t rso_stop_vdev_id, bool is_ho_fail)
+{
+	struct wlan_objmgr_vdev *vdev = NULL;
+	struct wlan_cm_vdev_discon_req *req;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t vdev_id = rso_stop_vdev_id;
+
+	wlan_cm_mlo_update_disconnecting_vdev_id(psoc, &vdev_id);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_SB_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d vdev not found", vdev_id);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		status = QDF_STATUS_E_NOMEM;
+		goto done;
+	}
+
+	if (!cm_get_active_disconnect_req(vdev, req)) {
+		mlme_err("vdev: %d: Active disconnect not found", vdev_id);
+		status = QDF_STATUS_E_EXISTS;
+		goto done;
+	}
+	wlan_cm_disc_cont_after_rso_stop(vdev, is_ho_fail, req);
+
+done:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+	qdf_mem_free(req);
+
+	return status;
 }

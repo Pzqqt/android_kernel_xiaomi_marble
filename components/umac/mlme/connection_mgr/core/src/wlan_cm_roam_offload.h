@@ -106,6 +106,8 @@ void cm_roam_result_info_event(struct wmi_roam_result *res,
  * @vdev_id: vdev id
  * @requested_state: roam state to be set
  * @reason: reason for changing roam state for the requested vdev id
+ * @send_resp: send rso stop response
+ * @start_timer: start timer for rso stop
  *
  * This function posts roam state change to roam state machine handling
  *
@@ -115,7 +117,7 @@ QDF_STATUS
 cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
 		     uint8_t vdev_id,
 		     enum roam_offload_state requested_state,
-		     uint8_t reason);
+		     uint8_t reason, bool *send_resp, bool start_timer);
 
 /**
  * cm_handle_sta_sta_roaming_enablement() - To handle roaming in case
@@ -169,12 +171,14 @@ QDF_STATUS cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev,
  * @psoc: psoc pointer
  * @vdev_id: vdev id
  * @reason: reason for changing roam state for the requested vdev id
+ * @send_resp: send rso stop response
+ * @start_timer: start timer for rso stop
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-		 uint8_t reason);
+		 uint8_t reason, bool *send_resp, bool start_timer);
 
 /**
  * cm_roam_fill_rssi_change_params() - Fill roam scan rssi change parameters

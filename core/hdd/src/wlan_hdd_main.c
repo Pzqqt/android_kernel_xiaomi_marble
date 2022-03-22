@@ -7834,7 +7834,8 @@ void hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 	while (QDF_IS_STATUS_SUCCESS(hdd_get_front_adapter(
 							hdd_ctx, &adapter))) {
 		/* If MLO is enabled unregister the link wdev's */
-		if (adapter->device_mode == QDF_STA_MODE) {
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_SAP_MODE) {
 			qdf_status = hdd_wlan_unregister_mlo_interfaces(adapter,
 								     rtnl_held);
 			if (QDF_IS_STATUS_ERROR(qdf_status))
@@ -8841,6 +8842,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	bool value;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_START_ALL_ADAPTERS;
+	int ret;
 
 	hdd_enter();
 
@@ -8865,6 +8867,14 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 		case QDF_NAN_DISC_MODE:
 
 			hdd_start_station_adapter(adapter);
+
+			if (adapter->device_mode == QDF_STA_MODE) {
+				ret = hdd_start_link_adapter(adapter);
+				if (ret)
+					hdd_err("[SSR] Failed to start link adapter:%d",
+						ret);
+			}
+
 			/* Open the gates for HDD to receive Wext commands */
 			adapter->is_link_up_service_needed = false;
 

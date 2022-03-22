@@ -2575,6 +2575,8 @@ wmi_convert_fw_notif_to_cm_notif(uint32_t fw_notif)
 		return CM_ROAM_NOTIF_DEAUTH_RECV;
 	case WMI_ROAM_NOTIF_DISASSOC_RECV:
 		return CM_ROAM_NOTIF_DISASSOC_RECV;
+	case WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS_WITH_HO_FAIL:
+		return CM_ROAM_NOTIF_HO_FAIL;
 	case WMI_ROAM_NOTIF_SCAN_END:
 		return CM_ROAM_NOTIF_SCAN_END;
 	default:
@@ -4026,6 +4028,23 @@ wmi_fill_rso_start_scan_tlv(struct wlan_roam_scan_offload_params *rso_req,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void
+wmi_set_rso_stop_report_status(wmi_roam_scan_mode_fixed_param *rso_fp)
+{
+	/**
+	 * Set the REPORT status flag always, so that firmware sends RSO stop
+	 * status always
+	 */
+	rso_fp->flags |= WMI_ROAM_SCAN_MODE_FLAG_REPORT_STATUS;
+}
+#else
+static void
+wmi_set_rso_stop_report_status(wmi_roam_scan_mode_fixed_param *rso_fp)
+{
+}
+#endif
+
 /**
  * send_roam_scan_offload_mode_cmd_tlv() - send roam scan mode request to fw
  * @wmi_handle: wmi handle
@@ -4095,6 +4114,8 @@ send_roam_scan_offload_mode_cmd_tlv(
 		roam_scan_mode_fp->flags |=
 				WMI_ROAM_SCAN_MODE_FLAG_REPORT_STATUS;
 		goto send_roam_scan_mode_cmd;
+	} else {
+		wmi_set_rso_stop_report_status(roam_scan_mode_fp);
 	}
 
 	/* Fill in scan parameters suitable for roaming scan */

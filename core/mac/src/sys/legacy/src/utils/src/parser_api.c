@@ -5172,6 +5172,10 @@ sir_convert_auth_frame2_struct(struct mac_context *mac,
 		qdf_mem_copy(pAuth->challengeText, auth.ChallengeText.text,
 			     auth.ChallengeText.num_text);
 	}
+
+	/* Copy MLO IE presence flag to pAuth in case of ML connection */
+	pAuth->is_mlo_ie_present = auth.mlo_ie.present;
+
 	sir_update_auth_frame2_struct_fils_conf(&auth, pAuth);
 
 	return QDF_STATUS_SUCCESS;
@@ -8596,9 +8600,35 @@ populate_dot11f_mlo_partner_sta_cap(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS populate_dot11f_auth_mlo_ie(struct mac_context *mac_ctx,
+				       struct pe_session *pe_session,
+				       tDot11fIEmlo_ie *mlo_ie)
+{
+	struct qdf_mac_addr *mld_addr;
+
+	pe_debug("Populate Auth MLO IEs");
+
+	mlo_ie->present = 1;
+	mlo_ie->mld_mac_addr_present = 1;
+	mlo_ie->type = 0;
+
+	mld_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_mldaddr(pe_session->vdev);
+	qdf_mem_copy(&mlo_ie->mld_mac_addr, mld_addr, QDF_MAC_ADDR_SIZE);
+
+	pe_debug("MLD mac addr: " QDF_MAC_ADDR_FMT, mld_addr);
+
+	mlo_ie->link_id_info_present = 0;
+	mlo_ie->bss_param_change_cnt_present = 0;
+	mlo_ie->medium_sync_delay_info_present = 0;
+	mlo_ie->eml_capab_present = 0;
+	mlo_ie->mld_capab_present = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
-					     struct pe_session *pe_session,
-					     tDot11fAssocRequest *frm)
+					    struct pe_session *pe_session,
+					    tDot11fAssocRequest *frm)
 {
 	uint8_t link;
 	uint8_t num_sta_prof = 0, total_sta_prof;

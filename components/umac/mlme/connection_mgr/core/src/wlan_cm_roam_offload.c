@@ -928,7 +928,7 @@ QDF_STATUS cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev,
 	status = cm_roam_state_change(pdev, vdev_id,
 			trigger->trigger_bitmap ? WLAN_ROAM_RSO_ENABLED :
 			WLAN_ROAM_DEINIT,
-			reason);
+			reason, NULL, false);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -2925,7 +2925,7 @@ static void cm_fill_stop_reason(struct wlan_roam_stop_config *stop_req,
 
 QDF_STATUS
 cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-		 uint8_t reason)
+		 uint8_t reason, bool *send_resp, bool start_timer)
 {
 	struct wlan_roam_stop_config *stop_req;
 	QDF_STATUS status;
@@ -2967,6 +2967,9 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_fill_stop_reason(stop_req, reason);
 	if (wlan_cm_host_roam_in_progress(psoc, vdev_id))
 		stop_req->middle_of_roaming = 1;
+	if (send_resp)
+		stop_req->send_rso_stop_resp = *send_resp;
+	stop_req->start_rso_stop_timer = start_timer;
 	/*
 	 * If roam synch propagation is in progress and an user space
 	 * disconnect is requested, then there is no need to send the
@@ -3005,6 +3008,8 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_debug("fail to send roam stop");
 	}
+	if (send_resp)
+		*send_resp = stop_req->send_rso_stop_resp;
 
 rel_vdev_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
@@ -3416,7 +3421,7 @@ QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 static QDF_STATUS
 cm_roam_switch_to_rso_stop(struct wlan_objmgr_pdev *pdev,
 			   uint8_t vdev_id,
-			   uint8_t reason)
+			   uint8_t reason, bool *send_resp, bool start_timer)
 {
 	enum roam_offload_state cur_state;
 	QDF_STATUS status;
@@ -3427,7 +3432,8 @@ cm_roam_switch_to_rso_stop(struct wlan_objmgr_pdev *pdev,
 	case WLAN_ROAM_RSO_ENABLED:
 	case WLAN_ROAMING_IN_PROG:
 	case WLAN_ROAM_SYNCH_IN_PROG:
-		status = cm_roam_stop_req(psoc, vdev_id, reason);
+		status = cm_roam_stop_req(psoc, vdev_id, reason,
+					  send_resp, start_timer);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			mlme_err("ROAM: Unable to switch to RSO STOP State");
 			return QDF_STATUS_E_FAILURE;
@@ -3478,7 +3484,7 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 	case WLAN_ROAM_RSO_ENABLED:
 	case WLAN_ROAMING_IN_PROG:
 	case WLAN_ROAM_SYNCH_IN_PROG:
-		cm_roam_switch_to_rso_stop(pdev, vdev_id, reason);
+		cm_roam_switch_to_rso_stop(pdev, vdev_id, reason, NULL, false);
 		break;
 	case WLAN_ROAM_RSO_STOPPED:
 		/*
@@ -3499,7 +3505,8 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 		if (sup_disabled_roam) {
 			mlme_err("vdev[%d]: supplicant disabled roam. clear roam scan mode",
 				 vdev_id);
-			cm_roam_switch_to_rso_stop(pdev, vdev_id, reason);
+			cm_roam_switch_to_rso_stop(pdev, vdev_id, reason,
+						   NULL, false);
 		}
 
 	case WLAN_ROAM_INIT:
@@ -3627,7 +3634,8 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 				cm_roam_state_change(pdev, temp_vdev_id,
 						     WLAN_ROAM_DEINIT,
 						     is_vdev_primary ?
-					     REASON_ROAM_SET_PRIMARY : reason);
+					     REASON_ROAM_SET_PRIMARY : reason,
+						     NULL, false);
 			} else {
 				mlme_info("CM_RSO: Roam module already initialized on vdev:[%d]",
 					  temp_vdev_id);
@@ -3824,7 +3832,8 @@ cm_roam_switch_to_rso_enable(struct wlan_objmgr_pdev *pdev,
 
 	mlme_debug("ROAM: RSO disabled by Supplicant on vdev[%d]", vdev_id);
 	return cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_STOPPED,
-				    REASON_SUPPLICANT_DISABLED_ROAMING);
+				    REASON_SUPPLICANT_DISABLED_ROAMING,
+				    NULL, false);
 }
 
 /**
@@ -4044,7 +4053,7 @@ QDF_STATUS
 cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
 		     uint8_t vdev_id,
 		     enum roam_offload_state requested_state,
-		     uint8_t reason)
+		     uint8_t reason, bool *send_resp, bool start_timer)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_vdev *vdev;
@@ -4080,7 +4089,8 @@ cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
 		status = cm_roam_switch_to_rso_enable(pdev, vdev_id, reason);
 		break;
 	case WLAN_ROAM_RSO_STOPPED:
-		status = cm_roam_switch_to_rso_stop(pdev, vdev_id, reason);
+		status = cm_roam_switch_to_rso_stop(pdev, vdev_id, reason,
+						    send_resp, start_timer);
 		break;
 	case WLAN_ROAMING_IN_PROG:
 		status = cm_roam_switch_to_roam_start(pdev, vdev_id, reason);
@@ -5658,4 +5668,30 @@ cm_roam_beacon_loss_disconnect_event(struct qdf_mac_addr bssid, int32_t rssi,
 	return status;
 }
 #endif /* WLAN_FEATURE_CONNECTIVITY_LOGGING */
+
+QDF_STATUS
+cm_send_rso_stop(struct wlan_objmgr_vdev *vdev)
+{
+	bool send_resp = true, start_timer;
+
+	if (!vdev) {
+		mlme_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	start_timer = cm_roam_offload_enabled(wlan_vdev_get_psoc(vdev));
+
+	cm_roam_state_change(wlan_vdev_get_pdev(vdev), wlan_vdev_get_id(vdev),
+			     WLAN_ROAM_RSO_STOPPED, REASON_DRIVER_DISABLED,
+			     &send_resp, start_timer);
+	/*
+	 * RSO stop resp is not supported or RSO STOP timer/req failed,
+	 * then send resp from here
+	 */
+	if (send_resp)
+		wlan_cm_rso_stop_continue_disconnect(wlan_vdev_get_psoc(vdev),
+						     wlan_vdev_get_id(vdev),
+						     false);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif  /* WLAN_FEATURE_ROAM_OFFLOAD */

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,15 @@
 #include <target_if.h>
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * target_if_cm_get_roam_rx_ops() - Get CM roam rx ops registered
+ * @psoc: pointer to psoc object
+ *
+ * Return: roam rx ops of connection mgr
+ */
+struct wlan_cm_roam_rx_ops *
+target_if_cm_get_roam_rx_ops(struct wlan_objmgr_psoc *psoc);
+
 /**
  * target_if_cm_roam_sync_event() - Target IF handler for roam sync events
  * @scn: target handle

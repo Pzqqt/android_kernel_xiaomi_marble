@@ -164,6 +164,10 @@ const struct nla_policy vendor_attr_policy[
 						.type = NLA_U8,
 						.len = sizeof(uint8_t)
 	},
+	[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_ID] = {
+						.type = NLA_U8,
+						.len = NDP_SERVICE_ID_LEN
+	},
 };
 
 /**
@@ -1288,7 +1292,9 @@ static inline uint32_t osif_ndp_get_ndp_req_ind_len(
 		data_len += nla_total_size(event->scid.scid_len);
 	if (event->ndp_info.ndp_app_info_len)
 		data_len += nla_total_size(event->ndp_info.ndp_app_info_len);
-
+	if (event->is_service_id_present)
+		data_len += nla_total_size(vendor_attr_policy[
+				QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_ID].len);
 	return data_len;
 }
 
@@ -1427,6 +1433,12 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 	if (event->is_ipv6_addr_present) {
 		if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR,
 			    QDF_IPV6_ADDR_SIZE, event->ipv6_addr))
+			goto ndp_indication_nla_failed;
+	}
+
+	if (event->is_service_id_present) {
+		if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_ID,
+			    NDP_SERVICE_ID_LEN, event->service_id))
 			goto ndp_indication_nla_failed;
 	}
 

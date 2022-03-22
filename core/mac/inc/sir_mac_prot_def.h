@@ -1263,6 +1263,7 @@ typedef struct sSirMacAuthFrameBody {
 	uint8_t wrapped_data[SIR_FILS_WRAPPED_DATA_MAX_SIZE];
 	uint8_t nonce[SIR_FILS_NONCE_LENGTH];
 #endif
+	bool is_mlo_ie_present;
 } qdf_packed tSirMacAuthFrameBody, *tpSirMacAuthFrameBody;
 
 /* / Common header for all action frames */

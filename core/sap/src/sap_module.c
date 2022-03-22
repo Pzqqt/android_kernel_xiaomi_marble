@@ -3191,7 +3191,9 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 			restart_ch_width = CH_WIDTH_40MHZ;
 		}
 	} else if (sap_band == REG_BAND_2G && (band & BIT(REG_BAND_5G)) &&
-		   sap_ctx->chan_freq_before_switch_band) {
+		   sap_ctx->chan_freq_before_switch_band &&
+		   wlan_reg_is_enable_in_secondary_list_for_freq(mac->pdev,
+				sap_ctx->chan_freq_before_switch_band)) {
 		restart_freq = sap_ctx->chan_freq_before_switch_band;
 		restart_ch_width = sap_ctx->chan_width_before_switch_band;
 		sap_debug("Restore chan freq: %d, width: %d",

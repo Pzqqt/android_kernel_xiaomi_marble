@@ -51,7 +51,7 @@ struct wlan_objmgr_vdev;
 #define NAN_PSEUDO_VDEV_ID CFG_TGT_NUM_VDEV
 
 #define NAN_SER_CMD_TIMEOUT 4000
-
+#define NDP_SERVICE_ID_LEN 6
 /**
  * enum nan_discovery_msg_type - NAN msg type
  * @NAN_GENERIC_REQ: Type for all the NAN requests other than enable/disable
@@ -713,6 +713,8 @@ struct nan_datapath_confirm_event {
  * @scid: security context identifier
  * @is_ipv6_addr_present: indicates if following ipv6 address is valid
  * @ipv6_addr: ipv6 address address used by ndp
+ * @is_service_id_present: indicates if service id is present
+ * @service_id: NDP service id
  */
 struct nan_datapath_indication_event {
 	struct wlan_objmgr_vdev *vdev;
@@ -728,6 +730,8 @@ struct nan_datapath_indication_event {
 	struct nan_datapath_scid scid;
 	bool is_ipv6_addr_present;
 	uint8_t ipv6_addr[QDF_IPV6_ADDR_SIZE];
+	bool is_service_id_present;
+	uint8_t service_id[NDP_SERVICE_ID_LEN];
 };
 
 /**

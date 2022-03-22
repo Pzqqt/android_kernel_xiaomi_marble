@@ -30,8 +30,9 @@
 #include "wlan_mlme_main.h"
 #include <../../core/src/wlan_cm_roam_i.h>
 #include "wlan_cm_roam_api.h"
+#include "target_if_cm_roam_offload.h"
 
-static inline struct wlan_cm_roam_rx_ops *
+struct wlan_cm_roam_rx_ops *
 target_if_cm_get_roam_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_ext_obj *psoc_ext_priv;
@@ -237,6 +238,14 @@ int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len)
 	}
 
 	roam_event->psoc = psoc;
+
+	/**
+	 * Stop the timer upon RSO stop status success. The timer shall continue
+	 * to run upon HO_FAIL status and would be stopped upon HO_FAILED event
+	 */
+	if (roam_event->reason == ROAM_REASON_RSO_STATUS ||
+	    roam_event->reason == ROAM_REASON_HO_FAILED)
+		target_if_stop_rso_stop_timer(roam_event);
 
 	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
 	if (!roam_rx_ops || !roam_rx_ops->roam_event_rx) {

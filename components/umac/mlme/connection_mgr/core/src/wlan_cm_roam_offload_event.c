@@ -532,7 +532,8 @@ err:
 		wlan_mlo_roam_abort_on_link(psoc, sync_ind);
 		cm_fw_roam_abort_req(psoc, sync_ind->roamed_vdev_id);
 		cm_roam_stop_req(psoc, sync_ind->roamed_vdev_id,
-				 REASON_ROAM_SYNCH_FAILED);
+				 REASON_ROAM_SYNCH_FAILED,
+				 NULL, false);
 	}
 	return status;
 }

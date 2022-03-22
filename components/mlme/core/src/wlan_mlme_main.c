@@ -2270,16 +2270,16 @@ static void mlme_init_fe_wlm_in_cfg(struct wlan_objmgr_psoc *psoc,
 			  wlm_config->latency_flags[0],
 			  wlm_config->latency_host_flags[0]);
 
-	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_MOD),
+	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_XR),
 				  &flags);
 	if (status != QDF_STATUS_SUCCESS) {
 		flags = 0;
-		mlme_legacy_err("moderate latency flags parsing failed");
+		mlme_legacy_err("xr latency flags parsing failed");
 	}
 
 	wlm_config->latency_flags[1] = flags & 0xFFFFFFFF;
 	wlm_config->latency_host_flags[1] = flags >> 32;
-	mlme_legacy_debug("moderate latency flags 0x%x host flags 0x%x",
+	mlme_legacy_debug("xr latency flags 0x%x host flags 0x%x",
 			  wlm_config->latency_flags[1],
 			  wlm_config->latency_host_flags[1]);
 

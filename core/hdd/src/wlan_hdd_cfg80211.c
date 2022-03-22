@@ -6066,6 +6066,189 @@ wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	return errno;
 }
 
+#define RATEMASK_PARAMS_TYPE_MAX 4
+#define RATEMASK_PARAMS_MAX QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_MAX
+const struct nla_policy wlan_hdd_set_ratemask_param_policy[
+			RATEMASK_PARAMS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_LIST] =
+		VENDOR_NLA_POLICY_NESTED(wlan_hdd_set_ratemask_param_policy),
+	[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_TYPE] = {.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_BITMAP] = {.type = NLA_BINARY,
+							 .len = 128},
+};
+
+/**
+ * hdd_set_ratemask_params() - parse ratemask params
+ * @hdd_ctx:        HDD context
+ * @tb:            list of attributes
+ * @vdev_id:       vdev id
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int hdd_set_ratemask_params(struct hdd_context *hdd_ctx,
+				   const void *data, int data_len,
+				   struct wlan_objmgr_vdev *vdev)
+{
+	struct nlattr *tb[RATEMASK_PARAMS_MAX + 1];
+	struct nlattr *tb2[RATEMASK_PARAMS_MAX + 1];
+	struct nlattr *curr_attr;
+	int ret, rem;
+	struct config_ratemask_params rate_params[RATEMASK_PARAMS_TYPE_MAX];
+	uint8_t ratemask_type, num_ratemask = 0, len;
+	uint32_t bitmap[RATEMASK_PARAMS_TYPE_MAX] = {0};
+
+	ret = wlan_cfg80211_nla_parse(tb,
+				      RATEMASK_PARAMS_MAX,
+				      data, data_len,
+				      wlan_hdd_set_ratemask_param_policy);
+	if (ret) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_LIST]) {
+		hdd_err("ratemask array attribute not present");
+		return -EINVAL;
+	}
+
+	memset(rate_params, 0, (RATEMASK_PARAMS_TYPE_MAX *
+				sizeof(struct config_ratemask_params)));
+
+	nla_for_each_nested(curr_attr,
+			    tb[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_LIST],
+			    rem) {
+		if (num_ratemask >= RATEMASK_PARAMS_TYPE_MAX) {
+			hdd_err("Exceeding ratemask_list_param_num value");
+			return -EINVAL;
+		}
+
+		if (wlan_cfg80211_nla_parse(
+				tb2, RATEMASK_PARAMS_MAX,
+				nla_data(curr_attr), nla_len(curr_attr),
+				wlan_hdd_set_ratemask_param_policy)) {
+			hdd_err("nla_parse failed");
+			return -EINVAL;
+		}
+
+		if (!tb2[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_TYPE]) {
+			hdd_err("type attribute not present");
+			return -EINVAL;
+		}
+
+		if (!tb2[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_BITMAP]) {
+			hdd_err("bitmap attribute not present");
+			return -EINVAL;
+		}
+
+		ratemask_type =
+		 nla_get_u8(tb2[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_TYPE]);
+		if (ratemask_type >= RATEMASK_PARAMS_TYPE_MAX) {
+			hdd_err("invalid ratemask type");
+			return -EINVAL;
+		}
+
+		len = nla_len(tb2[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_BITMAP]);
+		nla_memcpy((void *)bitmap,
+			   tb2[QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_BITMAP],
+			   len);
+
+		hdd_debug("rate_type:%d, lower32 0x%x, lower32_2 0x%x, higher32 0x%x, higher32_2 0x%x",
+			  ratemask_type, bitmap[0], bitmap[1],
+			  bitmap[2], bitmap[3]);
+
+		rate_params[num_ratemask].type = ratemask_type;
+		rate_params[num_ratemask].lower32 = bitmap[0];
+		rate_params[num_ratemask].lower32_2 = bitmap[1];
+		rate_params[num_ratemask].higher32 = bitmap[2];
+		rate_params[num_ratemask].higher32_2 = bitmap[3];
+
+		num_ratemask += 1;
+	}
+
+	ret = ucfg_set_ratemask_params(vdev, num_ratemask, rate_params);
+	if (ret)
+		hdd_err("ucfg_set_ratemask_params failed");
+	return ret;
+}
+
+/**
+ * __wlan_hdd_cfg80211_set_ratemask_config() - Ratemask parameters
+ * @wiphy:                 The wiphy structure
+ * @wdev:                  The wireless device
+ * @data:                  Data passed by framework
+ * @data_len:              Parameters to be configured passed as data
+ *
+ * The ratemask parameters are configured by the framework
+ * using this interface.
+ *
+ * Return: Return either success or failure code.
+ */
+static int
+__wlan_hdd_cfg80211_set_ratemask_config(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data, int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct wlan_objmgr_vdev *vdev;
+	int ret;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("Driver Modules are closed");
+		return -EINVAL;
+	}
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
+	if (!vdev) {
+		hdd_err("vdev not present");
+		return -EINVAL;
+	}
+
+	ret = hdd_set_ratemask_params(hdd_ctx, data, data_len, vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
+	if (ret)
+		goto fail;
+
+	return 0;
+fail:
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_set_ratemask_config() - set ratemask config
+ * @wiphy:   pointer to wireless wiphy structure.
+ * @wdev:    pointer to wireless_dev structure.
+ * @data:    Pointer to the data to be passed via vendor interface
+ * @data_len:Length of the data to be passed
+ *
+ * Return:   Return the Success or Failure code.
+ */
+static int
+wlan_hdd_cfg80211_set_ratemask_config(struct wiphy *wiphy,
+				      struct wireless_dev *wdev,
+				      const void *data,
+				      int data_len)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_set_ratemask_config(wiphy, wdev,
+							data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
 #define PWR_SAVE_FAIL_CMD_INDEX \
 	QCA_NL80211_VENDOR_SUBCMD_PWR_SAVE_FAIL_DETECTED_INDEX
 
@@ -8720,7 +8903,7 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	latency_level = nla_get_u16(attr);
 	switch (latency_level) {
 	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL:
-	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_MODERATE:
+	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_XR:
 	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_LOW:
 	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW:
 		/* valid values */
@@ -8733,7 +8916,7 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	wlan_hdd_set_wlm_mode(hdd_ctx, latency_level);
 
 	/* Map the latency value to the level which fw expected
-	 * 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
+	 * 0 - normal, 1 - xr, 2 - low, 3 - ultralow
 	 */
 	adapter->latency_level = latency_level - 1;
 
@@ -17024,6 +17207,16 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_set_ext_roam_params,
 		vendor_command_policy(wlan_hdd_set_roam_param_policy,
 				      QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX)
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_RATEMASK_CONFIG,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_ratemask_config,
+		vendor_command_policy(wlan_hdd_set_ratemask_param_policy,
+				      QCA_WLAN_VENDOR_ATTR_RATEMASK_PARAMS_MAX)
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
