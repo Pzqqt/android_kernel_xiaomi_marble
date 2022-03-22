@@ -5168,6 +5168,8 @@ static struct ipa3_mem_partition ipa_3_0_mem_part = {
 	.stats_rt_v6_size = 0x0,
 	.stats_drop_ofst = 0x2000,
 	.stats_drop_size = 0x0,
+	.q6_stats_drop_ofst = 0,
+	.q6_stats_drop_size = 0,
 };
 
 static struct ipa3_mem_partition ipa_4_1_mem_part = {
@@ -5261,6 +5263,8 @@ static struct ipa3_mem_partition ipa_4_1_mem_part = {
 	.stats_rt_v6_size		= 0x180,
 	.stats_drop_ofst		= 0x13d0,
 	.stats_drop_size		= 0x20,
+	.q6_stats_drop_ofst 	= 0,
+	.q6_stats_drop_size 	= 0,
 };
 
 static struct ipa3_mem_partition ipa_4_2_mem_part = {
@@ -5354,6 +5358,8 @@ static struct ipa3_mem_partition ipa_4_2_mem_part = {
 	.stats_rt_v6_size		= 0x0,
 	.stats_drop_ofst		= 0xbf0,
 	.stats_drop_size		= 0x0,
+	.q6_stats_drop_ofst 	= 0,
+	.q6_stats_drop_size 	= 0,
 };
 
 static struct ipa3_mem_partition ipa_4_5_mem_part = {
@@ -5450,6 +5456,8 @@ static struct ipa3_mem_partition ipa_4_5_mem_part = {
 	.uc_descriptor_ram_size	= 0x1000,
 	.pdn_config_ofst	= 0x4800,
 	.pdn_config_size	= 0x50,
+	.q6_stats_drop_ofst 	= 0,
+	.q6_stats_drop_size 	= 0,
 	.end_ofst		= 0x4850,
 };
 
@@ -5547,6 +5555,8 @@ static struct ipa3_mem_partition ipa_4_7_mem_part = {
 	.apps_v6_rt_nhash_size	= 0x0,
 	.uc_descriptor_ram_ofst	= 0x3000,
 	.uc_descriptor_ram_size	= 0x0000,
+	.q6_stats_drop_ofst 	= 0,
+	.q6_stats_drop_size 	= 0,
 	.end_ofst		= 0x3000,
 };
 
@@ -5644,6 +5654,8 @@ static struct ipa3_mem_partition ipa_4_9_mem_part = {
 	.uc_descriptor_ram_size	= 0x1000,
 	.pdn_config_ofst	= 0x4800,
 	.pdn_config_size	= 0x50,
+	.q6_stats_drop_ofst 	= 0,
+	.q6_stats_drop_size 	= 0,
 	.end_ofst		= 0x4850,
 };
 
@@ -5741,6 +5753,8 @@ static struct ipa3_mem_partition ipa_4_11_mem_part = {
         .apps_v6_rt_nhash_size  = 0x0,
         .uc_descriptor_ram_ofst = 0x3000,
         .uc_descriptor_ram_size = 0x0000,
+        .q6_stats_drop_ofst 	= 0,
+        .q6_stats_drop_size 	= 0,
         .end_ofst               = 0x3000,
 };
 
@@ -5838,7 +5852,9 @@ static struct ipa3_mem_partition ipa_5_0_mem_part = {
 	.apps_v6_rt_nhash_size = 0x0,
 	.pdn_config_ofst = 0x4ee8,
 	.pdn_config_size = 0x100,
-	.end_ofst = 0x4fe8,
+	.q6_stats_drop_ofst = 0x4fe8,
+	.q6_stats_drop_size = 0x18,
+	.end_ofst = 0x5000,
 };
 
 static struct ipa3_mem_partition ipa_5_1_mem_part = {
@@ -5935,7 +5951,9 @@ static struct ipa3_mem_partition ipa_5_1_mem_part = {
 	.apps_v6_rt_nhash_size = 0x0,
 	.pdn_config_ofst = 0x4ee8,
 	.pdn_config_size = 0x100,
-	.end_ofst = 0x4fe8,
+	.q6_stats_drop_ofst = 0x4fe8,
+	.q6_stats_drop_size = 0x18,
+	.end_ofst = 0x5000,
 };
 
 const char *ipa_clients_strings[IPA_CLIENT_MAX] = {

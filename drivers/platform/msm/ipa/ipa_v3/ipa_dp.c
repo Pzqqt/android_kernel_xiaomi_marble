@@ -1866,6 +1866,12 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 	}
 	if (ep->sys->repl_wq)
 		flush_workqueue(ep->sys->repl_wq);
+
+	if(ep->sys->common_sys) {
+		cancel_delayed_work_sync(&ep->sys->common_sys->freepage_work);
+		tasklet_kill(&ep->sys->common_sys->tasklet_find_freepage);
+	}
+
 	if (IPA_CLIENT_IS_CONS(ep->client) && !ep->sys->common_buff_pool)
 		ipa3_cleanup_rx(ep->sys);
 
@@ -2404,6 +2410,9 @@ static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
 		return NULL;
 
 	rx_pkt->page_data.page_order = sys->page_order;
+	/* For temporary allocations, avoid triggering OOM Killer. */
+	if (is_tmp_alloc)
+		flag |= __GFP_RETRY_MAYFAIL | __GFP_NOWARN;
 	/* Try a lower order page for order 3 pages in case allocation fails. */
 	rx_pkt->page_data.page = ipa3_alloc_page(flag,
 				&rx_pkt->page_data.page_order,

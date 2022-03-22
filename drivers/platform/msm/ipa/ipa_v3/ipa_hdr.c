@@ -587,13 +587,16 @@ static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user,
 
 			/* return if adding the same name */
 			if (!strcmp(entry_t->name, entry->name) && (user == true)) {
-				IPAERR("IPACM Trying to add hdr %s len=%d, duplicate entry, return old one\n",
-					entry->name, entry->hdr_len);
+				IPAERR_RL("IPACM Trying to add duplicate hdr %s\n",
+					entry_t->name);
 
 				/* return the original entry */
-				if (entry_out)
+				if (entry_out) {
+					IPAERR_RL("return old entry len=%d hdl=%d\n",
+						entry_t->hdr_len, entry_t->id);
+					hdr->hdr_hdl = entry_t->id;
 					*entry_out = entry_t;
-
+				}
 				kmem_cache_free(ipa3_ctx->hdr_cache, entry);
 				return 0;
 			}

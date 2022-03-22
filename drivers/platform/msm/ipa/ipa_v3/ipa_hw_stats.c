@@ -1855,13 +1855,6 @@ int ipa_drop_stats_init(void)
 			pipe_bitmask[reg_idx] |= mask;
 		}
 
-		if (ipa3_ctx->use_tput_est_ep) {
-			mask = ipa_hw_stats_get_ep_bit_n_idx(
-				IPA_CLIENT_TPUT_CONS,
-				&reg_idx);
-			pipe_bitmask[reg_idx] |= mask;
-
-		}
 	} else {
 		/* ADPL pipe hw stats is now taken care by IPA Q6 */
 		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
