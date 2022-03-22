@@ -358,6 +358,7 @@ static int _sde_encoder_wait_timeout(int32_t drm_id, int32_t hw_id,
 	s64 wait_time_jiffies = msecs_to_jiffies(timeout_ms);
 	ktime_t cur_ktime;
 	ktime_t exp_ktime = ktime_add_ms(ktime_get(), timeout_ms);
+	u32 curr_atomic_cnt = atomic_read(info->atomic_cnt);
 
 	do {
 		rc = wait_event_timeout(*(info->wq),
@@ -368,6 +369,14 @@ static int _sde_encoder_wait_timeout(int32_t drm_id, int32_t hw_id,
 		SDE_EVT32(drm_id, hw_id, rc, ktime_to_ms(cur_ktime),
 			timeout_ms, atomic_read(info->atomic_cnt),
 			info->count_check);
+
+		/* Make an early exit if the condition is already satisfied */
+		if ((atomic_read(info->atomic_cnt) < info->count_check) &&
+				(info->count_check < curr_atomic_cnt)) {
+			rc = true;
+			break;
+		}
+
 	/* If we timed out, counter is valid and time is less, wait again */
 	} while ((atomic_read(info->atomic_cnt) != info->count_check) &&
 			(rc == 0) &&
