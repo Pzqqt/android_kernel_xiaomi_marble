@@ -17,13 +17,13 @@ SND_SOC_DAILINK_DEFS(usb_audio_tx,
 
 SND_SOC_DAILINK_DEFS(slimbus_7_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
-	DAILINK_COMP_ARRAY(COMP_CODEC("btfmslimslv",
+	DAILINK_COMP_ARRAY(COMP_CODEC("btfmslim_slave",
 			"btfm_bt_sco_a2dp_slim_rx")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
 SND_SOC_DAILINK_DEFS(slimbus_7_tx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
-	DAILINK_COMP_ARRAY(COMP_CODEC("btfmslimslv",
+	DAILINK_COMP_ARRAY(COMP_CODEC("btfmslim_slave",
 			"btfm_bt_sco_slim_tx")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
