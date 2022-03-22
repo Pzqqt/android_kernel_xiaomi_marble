@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -298,9 +298,9 @@ pkt_capture_process_tx_data(void *soc, void *log_data, u_int16_t vdev_id,
 	status = tx_comp_status.status;
 
 	if (desc->frm_type == dp_tx_frm_tso) {
-		if (!desc->tso_desc)
+		if (!desc->msdu_ext_desc->tso_desc)
 			return;
-		tso_seg = desc->tso_desc;
+		tso_seg = desc->msdu_ext_desc->tso_desc;
 		nbuf_len = tso_seg->seg.total_len;
 	} else {
 		nbuf_len = qdf_nbuf_len(desc->nbuf);
