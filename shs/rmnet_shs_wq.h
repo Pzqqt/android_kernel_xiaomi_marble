@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -111,19 +112,20 @@ DATARMNET59a1cb0962,DATARMNET1b421b0381,DATARMNETb196f64ee0,DATARMNET7cf840e991,
 DATARMNETa5cdfd53b3,DATARMNETd7f7ade458,DATARMNET53e4a6b394,DATARMNETd1d3902361,
 DATARMNET1fc50aac59,DATARMNET213a62da0d,DATARMNETf814701a94,DATARMNET166a43f3aa,
 };extern struct DATARMNETe600c5b727 DATARMNET0997c5650d[DATARMNETc6782fed88];
-extern struct list_head DATARMNET9825511866;void DATARMNET3ae0d614d6(void);void 
-DATARMNETf7dcab9a9e(void);void DATARMNET7b6c061b06(void);void 
-DATARMNET4063c95208(void);void DATARMNETe46c480d71(void);void 
-DATARMNET039ac6d55d(void);u64 DATARMNETd406e89a85(u32 DATARMNETfaedbb66a9);void 
-DATARMNET350f55bfca(struct DATARMNET63d7680df2*node_p);int DATARMNET362c14e98b(
-u16 DATARMNETfaedbb66a9);int DATARMNETf181a18009(struct net_device*dev);int 
-DATARMNET98b2a0ce62(struct net_device*dev);u64 DATARMNETfc888b4d3e(u16 cpu);void
- DATARMNET0349051465(u16 cpu);void DATARMNET3669e7b703(u16 cpu);void 
-DATARMNET54ebea1d15(void);void DATARMNET7492293980(struct net_device*dev);void 
-DATARMNETd6ee05f1b4(struct net_device*dev);void DATARMNET0a6fb12cb2(void);int 
-DATARMNET5f72606f6f(u16 DATARMNETc790ff30fc,u16 DATARMNET208ea67e1d,u32 
-DATARMNET4da4612f1e,u32 DATARMNETa3f89581b5);int DATARMNETf85599b9d8(u32 
-DATARMNET8c11bd9466,u8 DATARMNET87636d0152);void DATARMNET6bf538fa23(void);void 
-DATARMNETaea4c85748(void);void DATARMNETcd6e26f0ad(void);
+extern struct list_head DATARMNET9825511866;extern struct workqueue_struct*
+DATARMNETf141197982;void DATARMNET3ae0d614d6(void);void DATARMNETf7dcab9a9e(void
+);void DATARMNET7b6c061b06(void);void DATARMNET4063c95208(void);void 
+DATARMNETe46c480d71(void);void DATARMNET039ac6d55d(void);u64 DATARMNETd406e89a85
+(u32 DATARMNETfaedbb66a9);void DATARMNET350f55bfca(struct DATARMNET63d7680df2*
+node_p);int DATARMNET362c14e98b(u16 DATARMNETfaedbb66a9);int DATARMNETf181a18009
+(struct net_device*dev);int DATARMNET98b2a0ce62(struct net_device*dev);u64 
+DATARMNETfc888b4d3e(u16 cpu);void DATARMNET0349051465(u16 cpu);void 
+DATARMNET3669e7b703(u16 cpu);void DATARMNET54ebea1d15(void);void 
+DATARMNET7492293980(struct net_device*dev);void DATARMNETd6ee05f1b4(struct 
+net_device*dev);void DATARMNET0a6fb12cb2(void);int DATARMNET5f72606f6f(u16 
+DATARMNETc790ff30fc,u16 DATARMNET208ea67e1d,u32 DATARMNET4da4612f1e,u32 
+DATARMNETa3f89581b5);int DATARMNETf85599b9d8(u32 DATARMNET8c11bd9466,u8 
+DATARMNET87636d0152);void DATARMNET6bf538fa23(void);void DATARMNETaea4c85748(
+void);void DATARMNETcd6e26f0ad(void);
 #endif 
 
