@@ -434,6 +434,15 @@ enum htt_dbg_ext_stats_type {
     HTT_STRM_GEN_MPDUS_STATS = 43,
     HTT_STRM_GEN_MPDUS_DETAILS_STATS = 44,
 
+    /** HTT_DBG_SOC_ERROR_STATS
+     * PARAMS:
+     *    - No Params
+     * RESP MSG:
+     *    - htt_dmac_reset_stats_tlv
+     */
+    HTT_DBG_SOC_ERROR_STATS = 45,
+
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -7163,5 +7172,25 @@ typedef struct {
             margin_bytes:    16;
     } burst_size;
 } htt_stats_strm_gen_mpdus_details_tlv_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32  reset_count;
+    /** lower portion (bits 31:0)  of reset time, in milliseconds */
+    A_UINT32  reset_time_lo_ms;
+    /** upper portion (bits 63:32) of reset time, in milliseconds */
+    A_UINT32  reset_time_hi_ms;
+    /** lower portion (bits 31:0)  of disengage time, in milliseconds */
+    A_UINT32  disengage_time_lo_ms;
+    /** upper portion (bits 63:32) of disengage time, in milliseconds */
+    A_UINT32  disengage_time_hi_ms;
+    /** lower portion (bits 31:0)  of engage time, in milliseconds */
+    A_UINT32  engage_time_lo_ms;
+    /** upper portion (bits 63:32) of engage time, in milliseconds */
+    A_UINT32  engage_time_hi_ms;
+    A_UINT32  disengage_count;
+    A_UINT32  engage_count;
+    A_UINT32  drain_dest_ring_mask;
+} htt_dmac_reset_stats_tlv;
 
 #endif /* __HTT_STATS_H__ */
