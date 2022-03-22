@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -459,6 +460,19 @@ void cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx);
  * Return: void
  */
 void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * cm_disconnect_continue_after_rso_stop() - Continue disconnect after RSO stop
+ * @vdev: Objmgr vdev
+ * @is_ho_fail: True if ho_fail happened
+ * @req: pointer to cm vdev disconnect req
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_disconnect_continue_after_rso_stop(struct wlan_objmgr_vdev *vdev,
+				      bool is_ho_fail,
+				      struct wlan_cm_vdev_discon_req *req);
 
 /*************** UTIL APIs ****************/
 
@@ -1153,5 +1167,4 @@ void cm_set_candidate_custom_sort_cb(
 				 qdf_list_t *list));
 
 #endif
-
 #endif /* __WLAN_CM_MAIN_API_H__ */

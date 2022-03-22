@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -116,11 +116,22 @@ enum wlan_mlme_cfg_id {
 };
 
 /**
+ * struct ratemask_cfg - ratemask config
+ * @index: index of ratemask parameter array
+ * @value: configuration value
+ */
+struct ratemask_cfg {
+	uint8_t index;
+	uint32_t value;
+};
+
+/**
  * struct wlan_vdev_mgr_cfg - vdev mgr configuration
  * @value: configuration value
  * @tsf: tsf adjust value
  * @trans_bssid: transmission bssid address
  * @ssid_cfg: ssid configuration
+ * @ratemask: ratemask configuration
  */
 struct wlan_vdev_mgr_cfg {
 	union {
@@ -128,6 +139,7 @@ struct wlan_vdev_mgr_cfg {
 		uint64_t tsf;
 		uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
 		struct wlan_ssid ssid_cfg;
+		struct ratemask_cfg ratemask;
 	};
 };
 

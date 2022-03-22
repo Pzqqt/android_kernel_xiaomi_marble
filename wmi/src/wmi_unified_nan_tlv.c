@@ -1,6 +1,7 @@
 
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -747,6 +748,13 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (fixed_params->service_id_len > event->num_service_id) {
+		wmi_err("FW msg service id len %d more than TLV hdr %d",
+			fixed_params->service_id_len,
+			event->num_service_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (fixed_params->ndp_cfg_len >
 		(WMI_SVC_MSG_MAX_SIZE - sizeof(*fixed_params))) {
 		wmi_err("excess wmi buffer: ndp_cfg_len %d",
@@ -769,6 +777,15 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		(WMI_SVC_MSG_MAX_SIZE - total_array_len)) {
 		wmi_err("excess wmi buffer: ndp_cfg_len %d",
 			fixed_params->nan_scid_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	total_array_len += fixed_params->nan_scid_len;
+
+	if (fixed_params->service_id_len >
+	    (WMI_SVC_MSG_MAX_SIZE - total_array_len)) {
+		wmi_err("excess wmi buffer: service_cfg_len %d",
+			fixed_params->service_id_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -837,6 +854,18 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 	}
 	wmi_debug("IPv6 addr present: %d, addr: %pI6",
 		 rsp->is_ipv6_addr_present, rsp->ipv6_addr);
+
+	rsp->is_service_id_present = false;
+	if (fixed_params->service_id_len && event->service_id) {
+		if (fixed_params->service_id_len < NDP_SERVICE_ID_LEN) {
+			wmi_err("Invalid service id length %d",
+				event->num_service_id);
+			return QDF_STATUS_E_INVAL;
+		}
+		rsp->is_service_id_present = true;
+		qdf_mem_copy(rsp->service_id, event->service_id,
+			     NDP_SERVICE_ID_LEN);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

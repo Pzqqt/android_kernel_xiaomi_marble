@@ -1412,6 +1412,7 @@ enum qdf_suspend_type {
  * @QDF_VDEV_SM_OUT_OF_SYNC: Vdev SM is out of sync and connect req received
  * when already connected
  * @QDF_STATS_REQ_TIMEDOUT: Stats request timedout
+ * @QDF_RSO_STOP_RSP_TIMEOUT: Firmware hasn't sent RSO stop response
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1443,6 +1444,7 @@ enum qdf_hang_reason {
 	QDF_VDEV_SM_OUT_OF_SYNC,
 	QDF_STATS_REQ_TIMEDOUT,
 	QDF_TX_DESC_LEAK,
+	QDF_RSO_STOP_RSP_TIMEOUT,
 };
 
 /**

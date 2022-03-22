@@ -42,6 +42,7 @@
  * STOP_RESPONSE_BIT: vdev stop response bit
  * DELETE_RESPONSE_BIT:  vdev delete response bit
  * PEER_DELETE_ALL_RESPONSE_BIT: vdev peer delete all response bit
+ * RSO_STOP_RESPONSE_BIT : RSO stop response bit
  */
 enum wlan_vdev_mgr_tgt_if_rsp_bit {
 	START_RESPONSE_BIT = 0,
@@ -49,6 +50,7 @@ enum wlan_vdev_mgr_tgt_if_rsp_bit {
 	STOP_RESPONSE_BIT = 2,
 	DELETE_RESPONSE_BIT = 3,
 	PEER_DELETE_ALL_RESPONSE_BIT = 4,
+	RSO_STOP_RESPONSE_BIT = 5,
 	RESPONSE_BIT_MAX,
 };
 
@@ -66,6 +68,7 @@ static inline char *string_from_rsp_bit(enum wlan_vdev_mgr_tgt_if_rsp_bit bit)
 					"STOP",
 					"DELETE",
 					"PEER DELETE ALL",
+					"RSO STOP",
 					"RESPONE MAX"};
 	return (char *)strings[bit];
 }
@@ -76,17 +79,20 @@ static inline char *string_from_rsp_bit(enum wlan_vdev_mgr_tgt_if_rsp_bit bit)
 #define STOP_RESPONSE_TIMER            (4000 + PMO_RESUME_TIMEOUT)
 #define DELETE_RESPONSE_TIMER          (4000 + PMO_RESUME_TIMEOUT)
 #define PEER_DELETE_ALL_RESPONSE_TIMER (6000 + PMO_RESUME_TIMEOUT)
+#define RSO_STOP_RESPONSE_TIMER        (6000 + PMO_RESUME_TIMEOUT)
 #elif defined(QCA_LOWMEM_CONFIG) || defined(QCA_512M_CONFIG) || \
 defined(QCA_WIFI_QCA5018)
 #define START_RESPONSE_TIMER           15000
 #define STOP_RESPONSE_TIMER            15000
 #define DELETE_RESPONSE_TIMER          15000
 #define PEER_DELETE_ALL_RESPONSE_TIMER 15000
+#define RSO_STOP_RESPONSE_TIMER        15000
 #else
 #define START_RESPONSE_TIMER           8000
 #define STOP_RESPONSE_TIMER            6000
 #define DELETE_RESPONSE_TIMER          4000
 #define PEER_DELETE_ALL_RESPONSE_TIMER 6000
+#define RSO_STOP_RESPONSE_TIMER        6000
 #endif
 
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE

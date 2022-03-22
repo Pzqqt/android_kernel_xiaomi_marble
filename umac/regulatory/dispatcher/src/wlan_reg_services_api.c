@@ -1032,6 +1032,13 @@ bool wlan_reg_is_disable_in_secondary_list_for_freq(
 	return reg_is_disable_in_secondary_list_for_freq(pdev, freq);
 }
 
+bool wlan_reg_is_enable_in_secondary_list_for_freq(
+						struct wlan_objmgr_pdev *pdev,
+						qdf_freq_t freq)
+{
+	return reg_is_enable_in_secondary_list_for_freq(pdev, freq);
+}
+
 bool wlan_reg_is_dfs_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
 						qdf_freq_t freq)
 {

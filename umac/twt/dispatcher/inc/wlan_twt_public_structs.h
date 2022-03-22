@@ -177,18 +177,40 @@ struct twt_enable_param {
 		 b_twt_ax_mbss_enable:1;
 };
 
+/* HOST_TWT_DISABLE_REASON - reason code of disable TWT
+ * @HOST_TWT_DISABLE_REASON_NONE: Host sends TWT disable command to firmware
+ *                              in normal case.
+ * @HOST_TWT_DISABLE_REASON_CONCURRENCY_SCC: Host sends TWT disable command
+ *                              to firmware when SCC concurrency exist.
+ * @HOST_TWT_DISABLE_REASON_CONCURRENCY_MCC: Host sends TWT disable command
+ *                              to firmware when MCC concurrency exist.
+ * @HOST_TWT_DISABLE_REASON_CHANGE_CONGESTION_TIMEOUT: Host sends TWT disable
+ *                              command to firmware to change congestion timeout
+ * @HOST_TWT_DISABLE_REASON_P2P_GO_NOA: Host sends TWT disable command to
+ *                              firmware when P2P GO NOA exist.
+ */
+enum HOST_TWT_DISABLE_REASON {
+	HOST_TWT_DISABLE_REASON_NONE,
+	HOST_TWT_DISABLE_REASON_CONCURRENCY_SCC,
+	HOST_TWT_DISABLE_REASON_CONCURRENCY_MCC,
+	HOST_TWT_DISABLE_REASON_CHANGE_CONGESTION_TIMEOUT,
+	HOST_TWT_DISABLE_REASON_P2P_GO_NOA,
+};
+
 /**
  * struct twt_disable_param:
  * @pdev_id: pdev_id for identifying the MAC.
  * @ext_conf_present: If requestor/responder extend config is present.
  * @twt_role: values from enum TWT_ROLE.
  * @twt_oper: values from enum TWT_OPERATION.
+ * @dis_reason_code: values from enum HOST_TWT_DISABLE_REASON.
  */
 struct twt_disable_param {
 	uint32_t pdev_id;
 	bool ext_conf_present;
 	enum TWT_ROLE twt_role;
 	enum TWT_OPERATION twt_oper;
+	enum HOST_TWT_DISABLE_REASON dis_reason_code;
 };
 
 /* status code of enabling TWT

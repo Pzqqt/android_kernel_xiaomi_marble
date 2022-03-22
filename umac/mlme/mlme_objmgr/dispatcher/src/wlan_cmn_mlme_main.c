@@ -356,6 +356,16 @@ QDF_STATUS mlme_cm_roam_start_ind(struct wlan_objmgr_vdev *vdev,
 	return ret;
 }
 
+QDF_STATUS mlme_cm_rso_stop_req(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_E_NOSUPPORT;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_rso_stop_cb)
+		ret = glbl_ops->mlme_cm_ext_rso_stop_cb(vdev);
+
+	return ret;
+}
+
 QDF_STATUS mlme_cm_reassoc_req(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_vdev_reassoc_req *req)
 {

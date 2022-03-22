@@ -268,8 +268,9 @@ wlan_twt_requestor_disable(struct wlan_objmgr_psoc *psoc,
 
 	req->twt_role = TWT_ROLE_REQUESTOR;
 
-	twt_debug("TWT req disable: pdev_id:%d role:%d ext:%d",
-		  req->pdev_id, req->twt_role, req->ext_conf_present);
+	twt_debug("TWT req disable: pdev_id:%d role:%d ext:%d reason_code:%d",
+		  req->pdev_id, req->twt_role, req->ext_conf_present,
+		  req->dis_reason_code);
 
 	return tgt_twt_disable_req_send(psoc, req);
 }
@@ -298,8 +299,9 @@ wlan_twt_responder_disable(struct wlan_objmgr_psoc *psoc,
 
 	req->twt_role = TWT_ROLE_RESPONDER;
 
-	twt_debug("TWT res disable: pdev_id:%d role:%d ext:%d",
-		  req->pdev_id, req->twt_role, req->ext_conf_present);
+	twt_debug("TWT res disable: pdev_id:%d role:%d ext:%d reason_code:%d",
+		  req->pdev_id, req->twt_role, req->ext_conf_present,
+		  req->dis_reason_code);
 
 	return tgt_twt_disable_req_send(psoc, req);
 }

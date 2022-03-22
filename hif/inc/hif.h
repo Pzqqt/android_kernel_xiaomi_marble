@@ -1065,6 +1065,7 @@ hif_pm_wake_irq_type hif_pm_get_wake_irq_type(struct hif_opaque_softc *hif_ctx);
  * @RTPM_ID_CE_INTR_HANDLER: operation from ce interrupt handler
  * @RTPM_ID_WAKE_INTR_HANDLER: operation from wake interrupt handler
  * @RTPM_ID_SOC_IDLE_SHUTDOWN: operation in soc idle shutdown
+ * @RTPM_ID_HIF_FORCE_WAKE: operation in hif force wake
  */
 /* New value added to the enum must also be reflected in function
  *  rtpm_string_from_dbgid()
@@ -1087,6 +1088,7 @@ typedef enum {
 	RTPM_ID_CE_INTR_HANDLER,
 	RTPM_ID_WAKE_INTR_HANDLER,
 	RTPM_ID_SOC_IDLE_SHUTDOWN,
+	RTPM_ID_HIF_FORCE_WAKE,
 
 	RTPM_ID_MAX,
 } wlan_rtpm_dbgid;

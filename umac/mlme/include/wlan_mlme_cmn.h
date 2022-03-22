@@ -258,6 +258,7 @@ struct mlme_twt_ops {
  *                                          complete
  * @mlme_cm_ext_vdev_down_req_cb:           callback to send vdev down to FW
  * @mlme_cm_ext_roam_start_ind_cb:          callback to indicate roam start
+ * @mlme_cm_ext_rso_stop_cb:                callback to send rso stop to FW
  * @mlme_cm_ext_reassoc_req_cb:             callback for reassoc request to
  *                                          VDEV/PEER SM
  * @mlme_vdev_send_set_mac_addr:            callback to send set MAC address
@@ -329,6 +330,7 @@ struct mlme_ext_ops {
 	QDF_STATUS (*mlme_cm_ext_roam_start_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_roam_req *req);
+	QDF_STATUS (*mlme_cm_ext_rso_stop_cb)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*mlme_cm_ext_reassoc_req_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_vdev_reassoc_req *req);
@@ -628,6 +630,14 @@ QDF_STATUS mlme_cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS mlme_cm_roam_start_ind(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_roam_req *req);
+
+/**
+ * mlme_cm_rso_stop_req() - Connection manager ext RSO stop request
+ * @vdev: VDEV object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_rso_stop_req(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_cm_reassoc_req() - Connection manager ext reassoc request

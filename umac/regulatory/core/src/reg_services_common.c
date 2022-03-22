@@ -4785,6 +4785,17 @@ bool reg_is_disable_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	return ch_state == CHANNEL_STATE_DISABLE;
 }
+
+bool reg_is_enable_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
+					      qdf_freq_t freq)
+{
+	enum channel_state ch_state;
+
+	ch_state = reg_get_channel_state_from_secondary_list_for_freq(pdev,
+								      freq);
+
+	return ch_state == CHANNEL_STATE_ENABLE;
+}
 #endif
 
 bool reg_is_passive_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)

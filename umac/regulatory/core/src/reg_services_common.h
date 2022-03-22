@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1092,6 +1093,17 @@ bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
  */
 bool reg_is_disable_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
 					       qdf_freq_t freq);
+
+/**
+ * reg_is_enable_in_secondary_list_for_freq() - Check if the given channel
+ * frequency is in enable state
+ * @pdev: Pointer to pdev
+ * @freq: Channel frequency
+ *
+ * Return: True if channel state is enabled, else false
+ */
+bool reg_is_enable_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
+					      qdf_freq_t freq);
 #endif
 
 /**
