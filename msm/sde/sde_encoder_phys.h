@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -398,6 +398,7 @@ struct sde_encoder_phys_cmd_te_timestamp {
  * @wr_ptr_wait_success: log wr_ptr_wait success for release fence trigger
  * @te_timestamp_list: List head for the TE timestamp list
  * @te_timestamp: Array of size MAX_TE_PROFILE_COUNT te_timestamp_list elements
+ * @frame_trigger_count: atomic counter tracking number of frame triggers per TE interval
  */
 struct sde_encoder_phys_cmd {
 	struct sde_encoder_phys base;
@@ -410,6 +411,7 @@ struct sde_encoder_phys_cmd {
 	struct list_head te_timestamp_list;
 	struct sde_encoder_phys_cmd_te_timestamp
 			te_timestamp[MAX_TE_PROFILE_COUNT];
+	atomic_t frame_trigger_count;
 };
 
 /**

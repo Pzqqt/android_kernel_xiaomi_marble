@@ -95,13 +95,20 @@ static void dsi_split_link_setup(struct dsi_ctrl_hw *ctrl,
 static void dsi_setup_trigger_controls(struct dsi_ctrl_hw *ctrl,
 				       struct dsi_host_common_cfg *cfg)
 {
-	u32 reg = 0;
+	u32 reg;
 	const u8 trigger_map[DSI_TRIGGER_MAX] = {
 		0x0, 0x2, 0x1, 0x4, 0x5, 0x6 };
 
-	reg |= (cfg->te_mode == DSI_TE_ON_EXT_PIN) ? BIT(31) : 0;
-	reg |= (trigger_map[cfg->dma_cmd_trigger] & 0x7);
+	reg = DSI_R32(ctrl, DSI_TRIG_CTRL);
+
+	if (cfg->te_mode == DSI_TE_ON_EXT_PIN)
+		reg |= BIT(31);
+	else
+		reg &= ~BIT(31);
+
+	reg &= ~(0x7 << 4);
 	reg |= (trigger_map[cfg->mdp_cmd_trigger] & 0x7) << 4;
+
 	DSI_W32(ctrl, DSI_TRIG_CTRL, reg);
 }
 
@@ -1878,4 +1885,18 @@ bool dsi_ctrl_hw_cmn_vid_engine_busy(struct dsi_ctrl_hw *ctrl)
 		return true;
 
 	return false;
+}
+
+void dsi_ctrl_hw_cmn_init_cmddma_trig_ctrl(struct dsi_ctrl_hw *ctrl,
+					   struct dsi_host_common_cfg *cfg)
+{
+	u32 reg;
+	const u8 trigger_map[DSI_TRIGGER_MAX] = {
+		0x0, 0x2, 0x1, 0x4, 0x5, 0x6 };
+
+	/* Initialize the default trigger used for Command Mode DMA path. */
+	reg = DSI_R32(ctrl, DSI_TRIG_CTRL);
+	reg &= ~(0xF);
+	reg |= (trigger_map[cfg->dma_cmd_trigger] & 0xF);
+	DSI_W32(ctrl, DSI_TRIG_CTRL, reg);
 }

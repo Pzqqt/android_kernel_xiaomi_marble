@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/iopoll.h>
 #include "dsi_ctrl_hw.h"
@@ -244,14 +245,15 @@ void dsi_ctrl_hw_22_configure_cmddma_window(struct dsi_ctrl_hw *ctrl,
 void dsi_ctrl_hw_22_reset_trigger_controls(struct dsi_ctrl_hw *ctrl,
 				       struct dsi_host_common_cfg *cfg)
 {
-	u32 reg = 0;
+	u32 reg;
 	const u8 trigger_map[DSI_TRIGGER_MAX] = {
 		0x0, 0x2, 0x1, 0x4, 0x5, 0x6 };
 
-	reg |= (cfg->te_mode == DSI_TE_ON_EXT_PIN) ? BIT(31) : 0;
-	reg |= (trigger_map[cfg->dma_cmd_trigger] & 0x7);
-	reg |= (trigger_map[cfg->mdp_cmd_trigger] & 0x7) << 4;
+	reg = DSI_R32(ctrl, DSI_TRIG_CTRL);
+	reg &= ~(0xF);
+	reg |= (trigger_map[cfg->dma_cmd_trigger] & 0xF);
 	DSI_W32(ctrl, DSI_TRIG_CTRL, reg);
+
 	DSI_W32(ctrl, DSI_DMA_SCHEDULE_CTRL2, 0x0);
 	DSI_W32(ctrl, DSI_DMA_SCHEDULE_CTRL, 0x0);
 	ctrl->reset_trig_ctrl = false;
