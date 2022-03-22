@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -11,6 +11,7 @@
 #include "sde_formats.h"
 #include "sde_dbg.h"
 #include "sde_kms.h"
+#include "sde_vbif.h"
 
 #define WB_DST_FORMAT			0x000
 #define WB_DST_OP_MODE			0x004
@@ -45,6 +46,8 @@
 #define WB_MUX				0x150
 #define WB_CROP_CTRL			0x154
 #define WB_CROP_OFFSET			0x158
+#define WB_CLK_CTRL			0x178
+#define WB_CLK_STATUS			0x17C
 #define WB_CSC_BASE			0x260
 #define WB_DST_ADDR_SW_STATUS		0x2B0
 #define WB_CDP_CNTL			0x2B4
@@ -499,6 +502,39 @@ static void sde_hw_wb_program_cwb_dither_ctrl(struct sde_hw_wb *ctx,
 	SDE_DEBUG("cwb dither enabled, dcwb_idx %u pp_id %u\n", dcwb_idx, pp_id);
 }
 
+static bool sde_hw_wb_setup_clk_force_ctrl(struct sde_hw_blk_reg_map *hw,
+		enum sde_clk_ctrl_type clk_ctrl, bool enable)
+{
+	u32 reg_val, new_val;
+
+	if (!hw || !SDE_CLK_CTRL_WB_VALID(clk_ctrl))
+		return false;
+
+	reg_val = SDE_REG_READ(hw, WB_CLK_CTRL);
+
+	if (enable)
+		new_val = reg_val | BIT(0);
+	else
+		new_val = reg_val & ~BIT(0);
+
+	SDE_REG_WRITE(hw, WB_CLK_CTRL, new_val);
+	wmb(); /* ensure write finished before progressing */
+
+	return !(reg_val & BIT(0));
+}
+
+static int sde_hw_wb_get_clk_ctrl_status(struct sde_hw_blk_reg_map *hw,
+		enum sde_clk_ctrl_type clk_ctrl)
+{
+	if (!hw)
+		return -EINVAL;
+
+	if (!SDE_CLK_CTRL_WB_VALID(clk_ctrl))
+		return -EINVAL;
+
+	return SDE_REG_READ(hw, WB_CLK_STATUS) & BIT(0);
+}
+
 static void _setup_wb_ops(struct sde_hw_wb_ops *ops,
 	unsigned long features)
 {
@@ -540,7 +576,8 @@ static struct sde_hw_blk_ops sde_hw_ops = {
 struct sde_hw_wb *sde_hw_wb_init(enum sde_wb idx,
 		void __iomem *addr,
 		struct sde_mdss_cfg *m,
-		struct sde_hw_mdp *hw_mdp)
+		struct sde_hw_mdp *hw_mdp,
+		struct sde_vbif_clk_client *clk_client)
 {
 	struct sde_hw_wb *c;
 	struct sde_wb_cfg *cfg;
@@ -572,6 +609,17 @@ struct sde_hw_wb *sde_hw_wb_init(enum sde_wb idx,
 	if (rc) {
 		SDE_ERROR("failed to init hw blk %d\n", rc);
 		goto blk_init_error;
+	}
+
+	if (m->has_vbif_clk_split) {
+		if (SDE_CLK_CTRL_WB_VALID(cfg->clk_ctrl)) {
+			clk_client->hw = &c->hw;
+			clk_client->clk_ctrl = cfg->clk_ctrl;
+			clk_client->ops.get_clk_ctrl_status = sde_hw_wb_get_clk_ctrl_status;
+			clk_client->ops.setup_clk_force_ctrl = sde_hw_wb_setup_clk_force_ctrl;
+		} else {
+			SDE_ERROR("invalid wb clk ctrl type %d\n", cfg->clk_ctrl);
+		}
 	}
 
 	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, cfg->name, c->hw.blk_off,

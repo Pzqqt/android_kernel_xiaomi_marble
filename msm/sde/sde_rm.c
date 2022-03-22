@@ -20,6 +20,7 @@
 #include "sde_hw_vdc.h"
 #include "sde_crtc.h"
 #include "sde_hw_qdss.h"
+#include "sde_vbif.h"
 
 #define RESERVED_BY_OTHER(h, r) \
 	(((h)->rsvp && ((h)->rsvp->enc_id != (r)->enc_id)) ||\
@@ -600,9 +601,12 @@ static int _sde_rm_hw_blk_create(
 		uint32_t id,
 		void *hw_catalog_info)
 {
+	int rc;
 	struct sde_rm_hw_blk *blk;
 	struct sde_hw_mdp *hw_mdp;
 	void *hw;
+	struct sde_kms *sde_kms = to_sde_kms(ddev_to_msm_kms(rm->dev));
+	struct sde_vbif_clk_client clk_client;
 
 	hw_mdp = rm->hw_mdp;
 
@@ -629,7 +633,7 @@ static int _sde_rm_hw_blk_create(
 		hw = sde_hw_intf_init(id, mmio, cat);
 		break;
 	case SDE_HW_BLK_WB:
-		hw = sde_hw_wb_init(id, mmio, cat, hw_mdp);
+		hw = sde_hw_wb_init(id, mmio, cat, hw_mdp, &clk_client);
 		break;
 	case SDE_HW_BLK_DSC:
 		hw = sde_hw_dsc_init(id, mmio, cat);
@@ -668,6 +672,15 @@ static int _sde_rm_hw_blk_create(
 	list_add_tail(&blk->list, &rm->hw_blks[type]);
 
 	_sde_rm_inc_resource_info(rm, &rm->avail_res, blk);
+
+	if (sde_kms->catalog->has_vbif_clk_split &&
+			SDE_CLK_CTRL_VALID(clk_client.clk_ctrl)) {
+		rc = sde_vbif_clk_register(sde_kms, &clk_client);
+		if (rc) {
+			SDE_ERROR("failed to register vbif client %d\n", clk_client.clk_ctrl);
+			return -EFAULT;
+		}
+	}
 
 	return 0;
 }

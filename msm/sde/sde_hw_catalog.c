@@ -2030,25 +2030,27 @@ static int _sde_sspp_setup_cmn(struct device_node *np,
 		sblk->src_blk.len = PROP_VALUE_ACCESS(props->values, SSPP_SIZE,
 				0);
 
-		for (j = 0; j < sde_cfg->mdp_count; j++) {
-			sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].reg_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_CTRL, i, 0);
-			sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].bit_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_CTRL, i, 1);
-			sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].reg_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_STATUS, i, 0);
-			sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].bit_off =
-					PROP_BITVALUE_ACCESS(props->values,
-					SSPP_CLK_STATUS, i, 1);
-		}
+		if (!sde_cfg->has_vbif_clk_split) {
+			for (j = 0; j < sde_cfg->mdp_count; j++) {
+				sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].reg_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_CTRL, i, 0);
+				sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].bit_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_CTRL, i, 1);
+				sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].reg_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_STATUS, i, 0);
+				sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].bit_off =
+						PROP_BITVALUE_ACCESS(props->values,
+						SSPP_CLK_STATUS, i, 1);
+			}
 
-		SDE_DEBUG("xin:%d ram:%d clk%d:%x/%d\n",
-			sspp->xin_id, sblk->pixel_ram_size, sspp->clk_ctrl,
-			sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].reg_off,
-			sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].bit_off);
+			SDE_DEBUG("xin:%d ram:%d clk%d:%x/%d\n",
+					sspp->xin_id, sblk->pixel_ram_size, sspp->clk_ctrl,
+					sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].reg_off,
+					sde_cfg->mdp[0].clk_ctrls[sspp->clk_ctrl].bit_off);
+		}
 	}
 
 end:
@@ -2595,31 +2597,29 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 			}
 		}
 
-		for (j = 0; j < sde_cfg->mdp_count; j++) {
-			sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].reg_off =
-				PROP_BITVALUE_ACCESS(prop_value,
-						WB_CLK_CTRL, i, 0);
-			sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].bit_off =
-				PROP_BITVALUE_ACCESS(prop_value,
-						WB_CLK_CTRL, i, 1);
-			sde_cfg->mdp[j].clk_status[wb->clk_ctrl].reg_off =
-				PROP_BITVALUE_ACCESS(prop_value,
-						WB_CLK_STATUS, i, 0);
-			sde_cfg->mdp[j].clk_status[wb->clk_ctrl].bit_off =
-				PROP_BITVALUE_ACCESS(prop_value,
-						WB_CLK_STATUS, i, 1);
+		if (!sde_cfg->has_vbif_clk_split) {
+			for (j = 0; j < sde_cfg->mdp_count; j++) {
+				sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].reg_off =
+					PROP_BITVALUE_ACCESS(prop_value,
+							WB_CLK_CTRL, i, 0);
+				sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].bit_off =
+					PROP_BITVALUE_ACCESS(prop_value,
+							WB_CLK_CTRL, i, 1);
+				sde_cfg->mdp[j].clk_status[wb->clk_ctrl].reg_off =
+					PROP_BITVALUE_ACCESS(prop_value,
+							WB_CLK_STATUS, i, 0);
+				sde_cfg->mdp[j].clk_status[wb->clk_ctrl].bit_off =
+					PROP_BITVALUE_ACCESS(prop_value,
+							WB_CLK_STATUS, i, 1);
+			}
+
+			SDE_DEBUG("wb:%d xin:%d vbif:%d clk%d:%x/%d\n", wb->id - WB_0,
+					wb->xin_id, wb->vbif_idx, wb->clk_ctrl,
+					sde_cfg->mdp[0].clk_ctrls[wb->clk_ctrl].reg_off,
+					sde_cfg->mdp[0].clk_ctrls[wb->clk_ctrl].bit_off);
 		}
 
 		wb->format_list = sde_cfg->wb_formats;
-
-		SDE_DEBUG(
-			"wb:%d xin:%d vbif:%d clk%d:%x/%d\n",
-			wb->id - WB_0,
-			wb->xin_id,
-			wb->vbif_idx,
-			wb->clk_ctrl,
-			sde_cfg->mdp[0].clk_ctrls[wb->clk_ctrl].reg_off,
-			sde_cfg->mdp[0].clk_ctrls[wb->clk_ctrl].bit_off);
 	}
 
 end:
@@ -3522,6 +3522,39 @@ static int sde_cache_parse_dt(struct device_node *np,
 	SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
 			sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid,
 			sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
+	llcc_slice_putd(slice);
+
+	if (!sde_cfg->eva_syscache_supported)
+		return 0;
+
+	slice = llcc_slice_getd(LLCC_EVALFT);
+	if (IS_ERR_OR_NULL(slice)) {
+		SDE_ERROR("failed to get eva left system cache %ld\n",
+			PTR_ERR(slice));
+		return -EINVAL;
+	}
+
+	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].has_sys_cache = true;
+	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_scid = llcc_get_slice_id(slice);
+	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_slice_size = llcc_get_slice_size(slice);
+	SDE_DEBUG("eva left cache scid:%d slice_size:%zu kb\n",
+		sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_scid,
+		sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_slice_size);
+	llcc_slice_putd(slice);
+
+	slice = llcc_slice_getd(LLCC_EVARGHT);
+	if (IS_ERR_OR_NULL(slice)) {
+		SDE_ERROR("failed to get eva left system cache %ld\n",
+			PTR_ERR(slice));
+		return -EINVAL;
+	}
+
+	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].has_sys_cache = true;
+	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_scid = llcc_get_slice_id(slice);
+	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_slice_size = llcc_get_slice_size(slice);
+	SDE_DEBUG("eva right cache scid:%d slice_size:%zu kb\n",
+		sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_scid,
+		sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_slice_size);
 	llcc_slice_putd(slice);
 
 	return 0;
@@ -5185,6 +5218,42 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_demura = true;
 		sde_cfg->demura_supported[SSPP_DMA1][0] = 0;
 		sde_cfg->demura_supported[SSPP_DMA1][1] = 1;
+	} else if (IS_NEO_TARGET(hw_rev)) {
+		sde_cfg->has_dedicated_cwb_support = true;
+		sde_cfg->has_cwb_dither = true;
+		sde_cfg->has_wb_ubwc = true;
+		sde_cfg->has_cwb_crop = true;
+		sde_cfg->has_qsync = true;
+		sde_cfg->perf.min_prefill_lines = 40;
+		sde_cfg->vbif_qos_nlvl = 8;
+		sde_cfg->ts_prefill_rev = 2;
+		sde_cfg->ctl_rev = SDE_CTL_CFG_VERSION_1_0_0;
+		sde_cfg->delay_prg_fetch_start = true;
+		sde_cfg->sui_ns_allowed = true;
+		sde_cfg->sui_misr_supported = true;
+		sde_cfg->has_sui_blendstage = true;
+		sde_cfg->has_3d_merge_reset = true;
+		sde_cfg->has_hdr = true;
+		sde_cfg->has_hdr_plus = true;
+		sde_cfg->skip_inline_rot_threshold = true;
+		set_bit(SDE_MDP_DHDR_MEMPOOL_4K, &sde_cfg->mdp[0].features);
+		sde_cfg->has_vig_p010 = true;
+		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_1;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
+		sde_cfg->dither_luma_mode_support = true;
+		sde_cfg->mdss_hw_block_size = 0x158;
+		sde_cfg->sspp_multirect_error = true;
+		sde_cfg->has_fp16 = true;
+		set_bit(SDE_MDP_PERIPH_TOP_0_REMOVED, &sde_cfg->mdp[0].features);
+		sde_cfg->has_precise_vsync_ts = true;
+		sde_cfg->has_avr_step = true;
+		sde_cfg->has_ubwc_stats = true;
+		sde_cfg->has_demura = true;
+		sde_cfg->demura_supported[SSPP_DMA1][0] = 0;
+		sde_cfg->demura_supported[SSPP_DMA1][1] = 1;
+		sde_cfg->demura_supported[SSPP_DMA3][0] = 0;
+		sde_cfg->demura_supported[SSPP_DMA3][1] = 1;
+		sde_cfg->has_vbif_clk_split = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;

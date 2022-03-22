@@ -144,6 +144,7 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_SRC_CONFIG,
 	PLANE_PROP_FB_TRANSLATION_MODE,
 	PLANE_PROP_MULTIRECT_MODE,
+	PLANE_PROP_SYS_CACHE_TYPE,
 
 	/* total # of properties */
 	PLANE_PROP_COUNT

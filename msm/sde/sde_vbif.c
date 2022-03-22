@@ -15,6 +15,121 @@
 
 #define MAX_XIN_CLIENT	16
 
+#define VBIF_CLK_CLIENT(x) sde_kms->vbif_clk_clients[x]
+#define VBIF_CLK_CLIENT_NAME(x) sde_clk_ctrl_type_s[x]
+
+int sde_vbif_clk_register(struct sde_kms *sde_kms, struct sde_vbif_clk_client *client)
+{
+	enum sde_clk_ctrl_type clk_ctrl;
+
+	if (!sde_kms || !client)
+		return -EINVAL;
+
+	clk_ctrl = client->clk_ctrl;
+	if (!SDE_CLK_CTRL_VALID(clk_ctrl)) {
+		SDE_ERROR("Invalid clock ctrl type %d", clk_ctrl);
+		return -EINVAL;
+	}
+
+	VBIF_CLK_CLIENT(clk_ctrl).hw = client->hw;
+	VBIF_CLK_CLIENT(clk_ctrl).clk_ctrl = clk_ctrl;
+	memcpy(&VBIF_CLK_CLIENT(clk_ctrl).ops, &client->ops, sizeof(struct sde_vbif_clk_ops));
+
+	SDE_DEBUG("registering hw:%pK clk_ctrl:%s\n", client->hw, VBIF_CLK_CLIENT_NAME(clk_ctrl));
+
+	return 0;
+}
+
+/**
+ * _sde_vbif_setup_clk_supported - check if VBIF setup_clk_force_ctrl API is supported
+ * @sde_kms:	Pointer to sde_kms object
+ * @clk_ctrl:	clock to be controlled
+ * @return:	true if client is supported, otherwise false
+ */
+static bool _sde_vbif_setup_clk_supported(struct sde_kms *sde_kms, enum sde_clk_ctrl_type clk_ctrl)
+{
+	bool supported = false;
+	bool has_split_vbif = sde_kms->catalog->has_vbif_clk_split;
+
+	if ((has_split_vbif && VBIF_CLK_CLIENT(clk_ctrl).ops.setup_clk_force_ctrl) ||
+			(!has_split_vbif && sde_kms->hw_mdp->ops.setup_clk_force_ctrl))
+		supported = true;
+
+	SDE_DEBUG("split_vbif:%d type:%s supported:%d\n", has_split_vbif,
+			VBIF_CLK_CLIENT_NAME(clk_ctrl), supported);
+
+	return supported;
+}
+
+/**
+ * _sde_vbif_get_clk_supported - check if VBIF get_clk_ctrl_status API is supported
+ * @sde_kms:	Pointer to sde_kms object
+ * @clk_ctrl:	clock to be controlled
+ * @return:	true if client is supported, otherwise false
+ */
+static bool _sde_vbif_get_clk_supported(struct sde_kms *sde_kms, enum sde_clk_ctrl_type clk_ctrl)
+{
+	bool supported = false;
+	bool has_split_vbif = sde_kms->catalog->has_vbif_clk_split;
+
+	if ((has_split_vbif && VBIF_CLK_CLIENT(clk_ctrl).ops.get_clk_ctrl_status) ||
+			(!has_split_vbif && sde_kms->hw_mdp->ops.get_clk_ctrl_status))
+		supported = true;
+
+	SDE_DEBUG("split_vbif:%d type:%s supported:%d\n", has_split_vbif,
+			VBIF_CLK_CLIENT_NAME(clk_ctrl), supported);
+
+	return supported;
+}
+
+/**
+ * _sde_vbif_setup_clk_force_ctrl - set clock force control
+ * @sde_kms:	Pointer to sde_kms object
+ * @clk_ctrl:	clock to be controlled
+ * @enable:	force on enable
+ * @return:	if the clock is forced-on by this function
+ */
+static int _sde_vbif_setup_clk_force_ctrl(struct sde_kms *sde_kms, enum sde_clk_ctrl_type clk_ctrl,
+		bool enable)
+{
+	int rc = 0;
+	struct sde_hw_blk_reg_map *hw = VBIF_CLK_CLIENT(clk_ctrl).hw;
+	bool has_split_vbif = sde_kms->catalog->has_vbif_clk_split;
+
+	if (has_split_vbif)
+		rc = VBIF_CLK_CLIENT(clk_ctrl).ops.setup_clk_force_ctrl(hw, clk_ctrl, enable);
+	else
+		rc = sde_kms->hw_mdp->ops.setup_clk_force_ctrl(sde_kms->hw_mdp, clk_ctrl, enable);
+
+	SDE_DEBUG("split_vbif:%d type:%s en:%d rc:%d\n", has_split_vbif,
+			VBIF_CLK_CLIENT_NAME(clk_ctrl), enable, rc);
+
+	return rc;
+}
+
+/**
+ * _sde_vbif_get_clk_ctrl_status - get clock control status
+ * @sde_kms:	Pointer to sde_kms object
+ * @clk_ctrl:	clock to be controlled
+ * @return:	clock status if success, otherwise return code
+ */
+static int _sde_vbif_get_clk_ctrl_status(struct sde_kms *sde_kms, enum sde_clk_ctrl_type clk_ctrl)
+{
+	int rc = 0;
+	struct sde_hw_blk_reg_map *hw = VBIF_CLK_CLIENT(clk_ctrl).hw;
+	bool has_split_vbif = sde_kms->catalog->has_vbif_clk_split;
+
+	if (has_split_vbif)
+		rc = VBIF_CLK_CLIENT(clk_ctrl).ops.get_clk_ctrl_status(hw, clk_ctrl);
+	else
+		rc = sde_kms->hw_mdp->ops.get_clk_ctrl_status(sde_kms->hw_mdp, clk_ctrl);
+
+	SDE_DEBUG("split_vbif:%d type:%s status:%d rc:%d\n", has_split_vbif,
+			VBIF_CLK_CLIENT_NAME(clk_ctrl), rc);
+
+	return rc;
+}
+
 /**
  * _sde_vbif_wait_for_xin_halt - wait for the xin to halt
  * @vbif:	Pointer to hardware vbif driver
@@ -99,7 +214,7 @@ int sde_vbif_halt_plane_xin(struct sde_kms *sde_kms, u32 xin_id, u32 clk_ctrl)
 	mdp = sde_kms->hw_mdp;
 	if (!vbif || !mdp || !vbif->ops.get_xin_halt_status ||
 		       !vbif->ops.set_xin_halt ||
-		       !mdp->ops.setup_clk_force_ctrl) {
+		       !_sde_vbif_setup_clk_supported(sde_kms, clk_ctrl)) {
 		SDE_ERROR("invalid vbif or mdp arguments\n");
 		return -EINVAL;
 	}
@@ -119,7 +234,7 @@ int sde_vbif_halt_plane_xin(struct sde_kms *sde_kms, u32 xin_id, u32 clk_ctrl)
 		return 0;
 	}
 
-	forced_on = mdp->ops.setup_clk_force_ctrl(mdp, clk_ctrl, true);
+	forced_on = _sde_vbif_setup_clk_force_ctrl(sde_kms, clk_ctrl, true);
 
 	/* send halt request for unused plane's xin client */
 	vbif->ops.set_xin_halt(vbif, xin_id, true);
@@ -135,7 +250,7 @@ int sde_vbif_halt_plane_xin(struct sde_kms *sde_kms, u32 xin_id, u32 clk_ctrl)
 	/* open xin client to enable transactions */
 	vbif->ops.set_xin_halt(vbif, xin_id, false);
 	if (forced_on)
-		mdp->ops.setup_clk_force_ctrl(mdp, clk_ctrl, false);
+		_sde_vbif_setup_clk_force_ctrl(sde_kms, clk_ctrl, false);
 
 	mutex_unlock(&vbif->mutex);
 
@@ -269,7 +384,7 @@ void sde_vbif_set_ot_limit(struct sde_kms *sde_kms,
 		return;
 	}
 
-	if (!mdp->ops.setup_clk_force_ctrl ||
+	if (!_sde_vbif_setup_clk_supported(sde_kms, params->clk_ctrl) ||
 			!vbif->ops.set_limit_conf ||
 			!vbif->ops.set_xin_halt)
 		return;
@@ -290,7 +405,7 @@ void sde_vbif_set_ot_limit(struct sde_kms *sde_kms,
 	trace_sde_perf_set_ot(params->num, params->xin_id, ot_lim,
 		params->vbif_idx);
 
-	forced_on = mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, true);
+	forced_on = _sde_vbif_setup_clk_force_ctrl(sde_kms, params->clk_ctrl, true);
 
 	vbif->ops.set_limit_conf(vbif, params->xin_id, params->rd, ot_lim);
 
@@ -303,7 +418,8 @@ void sde_vbif_set_ot_limit(struct sde_kms *sde_kms,
 	vbif->ops.set_xin_halt(vbif, params->xin_id, false);
 
 	if (forced_on)
-		mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, false);
+		_sde_vbif_setup_clk_force_ctrl(sde_kms, params->clk_ctrl, false);
+
 exit:
 	mutex_unlock(&vbif->mutex);
 }
@@ -377,7 +493,7 @@ bool sde_vbif_set_xin_halt(struct sde_kms *sde_kms,
 		return false;
 	}
 
-	if (!mdp->ops.setup_clk_force_ctrl ||
+	if (!_sde_vbif_setup_clk_supported(sde_kms, params->clk_ctrl) ||
 			!vbif->ops.set_xin_halt)
 		return false;
 
@@ -386,8 +502,7 @@ bool sde_vbif_set_xin_halt(struct sde_kms *sde_kms,
 	SDE_EVT32_VERBOSE(vbif->idx, params->xin_id);
 
 	if (params->enable) {
-		forced_on = mdp->ops.setup_clk_force_ctrl(mdp,
-				params->clk_ctrl, true);
+		forced_on = _sde_vbif_setup_clk_force_ctrl(sde_kms, params->clk_ctrl, true);
 
 		vbif->ops.set_xin_halt(vbif, params->xin_id, true);
 
@@ -398,8 +513,7 @@ bool sde_vbif_set_xin_halt(struct sde_kms *sde_kms,
 		vbif->ops.set_xin_halt(vbif, params->xin_id, false);
 
 		if (params->forced_on)
-			mdp->ops.setup_clk_force_ctrl(mdp,
-					params->clk_ctrl, false);
+			_sde_vbif_setup_clk_force_ctrl(sde_kms, params->clk_ctrl, false);
 	}
 
 	mutex_unlock(&vbif->mutex);
@@ -441,7 +555,7 @@ bool sde_vbif_get_xin_status(struct sde_kms *sde_kms,
 		return false;
 	}
 
-	if (!mdp->ops.get_clk_ctrl_status ||
+	if (!_sde_vbif_get_clk_supported(sde_kms, params->clk_ctrl) ||
 			!vbif->ops.get_xin_halt_status)
 		return false;
 
@@ -449,7 +563,7 @@ bool sde_vbif_get_xin_status(struct sde_kms *sde_kms,
 	SDE_EVT32_VERBOSE(vbif->idx, params->xin_id);
 	status = vbif->ops.get_xin_halt_status(vbif, params->xin_id);
 	if (status) {
-		rc = mdp->ops.get_clk_ctrl_status(mdp, params->clk_ctrl);
+		rc = _sde_vbif_get_clk_ctrl_status(sde_kms, params->clk_ctrl);
 		status = (rc < 0) ? false : !rc;
 	}
 	mutex_unlock(&vbif->mutex);
@@ -491,7 +605,7 @@ void sde_vbif_set_qos_remap(struct sde_kms *sde_kms,
 		return;
 	}
 
-	if (!vbif->ops.set_qos_remap || !mdp->ops.setup_clk_force_ctrl) {
+	if (!vbif->ops.set_qos_remap || !_sde_vbif_setup_clk_supported(sde_kms, params->clk_ctrl)) {
 		SDE_DEBUG("qos remap not supported\n");
 		return;
 	}
@@ -509,7 +623,7 @@ void sde_vbif_set_qos_remap(struct sde_kms *sde_kms,
 
 	mutex_lock(&vbif->mutex);
 
-	forced_on = mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, true);
+	forced_on = _sde_vbif_setup_clk_force_ctrl(sde_kms, params->clk_ctrl, true);
 
 	for (i = 0; i < qos_tbl->npriority_lvl; i++) {
 		SDE_DEBUG("vbif:%d xin:%d lvl:%d/%d\n",
@@ -520,7 +634,7 @@ void sde_vbif_set_qos_remap(struct sde_kms *sde_kms,
 	}
 
 	if (forced_on)
-		mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, false);
+		_sde_vbif_setup_clk_force_ctrl(sde_kms, params->clk_ctrl, false);
 
 	mutex_unlock(&vbif->mutex);
 }
