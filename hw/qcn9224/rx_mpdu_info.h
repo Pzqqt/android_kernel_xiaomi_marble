@@ -33,7 +33,7 @@
 
 
 struct rx_mpdu_info {
-#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+#ifndef BIG_ENDIAN_HOST
              struct   rxpt_classify_info                                        rxpt_classify_info_details;
              uint32_t rx_reo_queue_desc_addr_31_0                             : 32;  
              uint32_t rx_reo_queue_desc_addr_39_32                            :  8,  

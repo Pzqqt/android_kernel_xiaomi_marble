@@ -35,7 +35,7 @@
 
 
 struct rx_mpdu_start {
-#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+#ifndef BIG_ENDIAN_HOST
              struct   rx_mpdu_info                                              rx_mpdu_info_details;
 #else
              struct   rx_mpdu_info                                              rx_mpdu_info_details;

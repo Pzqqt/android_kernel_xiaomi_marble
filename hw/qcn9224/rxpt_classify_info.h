@@ -32,7 +32,7 @@
 
 
 struct rxpt_classify_info {
-#ifndef WIFI_BIT_ORDER_BIG_ENDIAN
+#ifndef BIG_ENDIAN_HOST
              uint32_t reo_destination_indication                              :  5,  
                       lmac_peer_id_msb                                        :  2,  
                       use_flow_id_toeplitz_clfy                               :  1,  

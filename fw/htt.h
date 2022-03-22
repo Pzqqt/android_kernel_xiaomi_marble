@@ -338,6 +338,8 @@ enum HTT_OPTION_TLV_TAGS {
     HTT_OPTION_TLV_TAG_TCL_METADATA_VER         = 0x5,
 };
 
+#define HTT_TCL_METADATA_VER_SZ 4
+
 PREPACK struct htt_option_tlv_header_t {
     A_UINT8 tag;
     A_UINT8 length;
@@ -5682,10 +5684,11 @@ enum htt_srng_ring_id {
  *                    phyrx_abort_request_reason enum definition.
  * dword14- b'0:15  - rx_mpdu_start_word_mask: word mask for rx mpdu start,
  *                    applicable if word mask enabled
- *        - b'16:31 - rx_mpdu_end_word_mask: word mask value for rx mpdu end,
+ *        - b'16:18 - rx_mpdu_end_word_mask: word mask value for rx mpdu end,
  *                    applicable if word mask enabled
+ *        - b'19:31 - rsvd7
  * dword15- b'0:16  - rx_msdu_end_word_mask
-            b'17:31 - rsvd5
+ *        - b'17:31 - rsvd5
  * dword17- b'0     - en_rx_tlv_pkt_offset:
  *                    0:  RX_PKT TLV logging at offset 0 for the subsequent
  *                        buffer
@@ -5738,7 +5741,8 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 phy_err_mask;
     A_UINT32 phy_err_mask_cont;
     A_UINT32 rx_mpdu_start_word_mask:16,
-             rx_mpdu_end_word_mask:  16;
+             rx_mpdu_end_word_mask:  3,
+             rsvd7:                  13;
     A_UINT32 rx_msdu_end_word_mask:  17,
              rsvd5:                  15;
     A_UINT32 en_rx_tlv_pkt_offset:   1,
@@ -6182,15 +6186,15 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
          ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)); \
        } while (0)
 
-#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M 0xFFFF0000
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M 0x00070000
 #define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_S 16
 #define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_GET(_var) \
        (((_var) & HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_M)>> \
-        HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)
-#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_SET(_var, _val) \
+        HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_SET(_var, _val) \
        do { \
-                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK, _val);\
-         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_WORD_MASK_S)); \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK, _val);\
+         ((_var) |= ((_val) <<  HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_WORD_MASK_S)); \
        } while (0)
 
 #define HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_WORD_MASK_M 0x0001FFFF
@@ -18088,15 +18092,15 @@ PREPACK struct htt_t2h_sawf_def_queues_map_report_conf {
  * of the newly created MSDUQ and some other identifiers to uniquely identity
  * the newly created MSDUQ
  *
- * |31    27|          24|23    16|15           11|10|9 8|7     4|3    0|
- * |------------------------------+----------------------+--------------|
- * |             peer ID          |       HTT qtype      |   msg type   |
- * |--------+---------------------+---------------+--+---+-------+------|
- * |reserved|               Ast Index             |FO|WC | HLOS  | remap|
- * |        |                                     |  |   | TID   | TID  |
- * |---------------------+----------------------------------------------|
- * |    reserved1        |             tgt_opaque_id                    |
- * |---------------------+----------------------------------------------|
+ * |31    27|          24|23    16|15|14          11|10|9 8|7     4|3    0|
+ * |------------------------------+------------------------+--------------|
+ * |             peer ID          |         HTT qtype      |   msg type   |
+ * |---------------------------------+--------------+--+---+-------+------|
+ * |            reserved             |AST list index|FO|WC | HLOS  | remap|
+ * |                                 |              |  |   | TID   | TID  |
+ * |---------------------+------------------------------------------------|
+ * |    reserved1        |               tgt_opaque_id                    |
+ * |---------------------+------------------------------------------------|
  *
  * Header fields:
  *
@@ -18112,10 +18116,20 @@ PREPACK struct htt_t2h_sawf_def_queues_map_report_conf {
  *                        TCL Data Command : Beryllium
  *          b10         - flow_override (FO), as sent by host in
  *                        TCL Data Command: Beryllium
- *          b11:26      - ast_index
- *                        Dummy AST Index in case of Lithium,
- *                        Default AST Index in case of Beryllium
- *          b27:32      - reserved
+ *          b11:14      - ast_list_idx
+ *                        Array index into the list of extension AST entries
+ *                        (not the actual AST 16-bit index).
+ *                        The ast_list_idx is one-based, with the following
+ *                        range of values:
+ *                          - legacy targets supporting 16 user-defined
+ *                            MSDU queues: 1-2
+ *                          - legacy targets supporting 48 user-defined
+ *                            MSDU queues: 1-6
+ *                          - new targets: 0 (peer_id is used instead)
+ *                        Note that since ast_list_idx is one-based,
+ *                        the host will need to subtract 1 to use it as an
+ *                        index into a list of extension AST entries.
+ *          b15:31      - reserved
  *
  * dword2 - b'23:0      - tgt_opaque_id Opaque Tx flow number which is a
  *                        unique MSDUQ id in firmware
@@ -18130,8 +18144,8 @@ PREPACK struct htt_t2h_sawf_msduq_event {
              hlos_tid                : 4,
              who_classify_info_sel   : 2,
              flow_override           : 1,
-             ast_index               :16,
-             reserved                : 5;
+             ast_list_idx            : 4,
+             reserved                :17;
 
     A_UINT32 tgt_opaque_id           :24,
              reserved1               : 8;
@@ -18206,15 +18220,15 @@ PREPACK struct htt_t2h_sawf_msduq_event {
         ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_FLOW_OVERRIDE_S)); \
     } while (0)
 
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_M              0x07FFF800
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S                      11
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_GET(_var) \
-    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_M) >> \
-     HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S)
-#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_SET(_var, _val) \
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_M              0x00007800
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_S                      11
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_M) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_SET(_var, _val) \
     do { \
-        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX, _val); \
-        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_INDEX_S)); \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_S)); \
     } while (0)
 
 

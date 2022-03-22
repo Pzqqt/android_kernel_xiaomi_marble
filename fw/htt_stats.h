@@ -5702,26 +5702,49 @@ typedef struct {
     A_UINT32 cv_dma_not_done_err;
     A_UINT32 cv_update_failed;
     /* cv query stats */
+    /** total times CV query happened */
     A_UINT32 cv_total_query;
+    /** total pattern based CV query */
     A_UINT32 cv_total_pattern_query;
+    /** total BW based CV query */
     A_UINT32 cv_total_bw_query;
+    /** incorrect encoding in CV flags */
     A_UINT32 cv_invalid_bw_coding;
+    /** forced sounding enabled for the peer */
     A_UINT32 cv_forced_sounding;
+    /** standalone sounding sequence on-going */
     A_UINT32 cv_standalone_sounding;
+    /** NC of available CV lower than expected */
     A_UINT32 cv_nc_mismatch;
+    /** feedback type different from expected */
     A_UINT32 cv_fb_type_mismatch;
+    /** CV BW not equal to expected BW for OFDMA */
     A_UINT32 cv_ofdma_bw_mismatch;
+    /** CV BW not greater than or equal to expected BW */
     A_UINT32 cv_bw_mismatch;
+    /** CV pattern not matching with the expected pattern */
     A_UINT32 cv_pattern_mismatch;
+    /** CV available is of different preamble type than expected. */
     A_UINT32 cv_preamble_mismatch;
+    /** NR of available CV is lower than expected. */
     A_UINT32 cv_nr_mismatch;
+    /** CV in use count has exceeded threshold and cannot be used further. */
     A_UINT32 cv_in_use_cnt_exceeded;
+    /** A valid CV has been found. */
     A_UINT32 cv_found;
+    /** No valid CV was found. */
     A_UINT32 cv_not_found;
     /** Sounding per user in 320MHz bandwidth */
     A_UINT32 sounding_320[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
     /** Counts number of soundings for all steering modes in 320MHz bandwidth */
     A_UINT32 cbf_320[HTT_TXBF_MAX_NUM_OF_MODES];
+    /* This part can be used for new counters added for CV query/upload. */
+    /** non-trigger based ranging sequence on-going */
+    A_UINT32 cv_ntbr_sounding;
+    /** CV found, but upload is in progress. */
+    A_UINT32 cv_found_upload_in_progress;
+    /** Expired CV found during query. */
+    A_UINT32 cv_expired_during_query;
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
@@ -6155,6 +6178,9 @@ typedef struct {
     htt_tx_rate_stats_t per_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
 
     htt_tx_rate_stats_t per_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+
+    /** 320MHz extension for PER */
+    htt_tx_rate_stats_t per_bw320;
 
 } htt_tx_rate_stats_per_tlv;
 
