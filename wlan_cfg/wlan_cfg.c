@@ -1457,19 +1457,26 @@ struct wlan_srng_cfg wlan_srng_default_cfg = {
 	.low_threshold = 0,
 };
 
+/* DEFAULT_CONFIG source ring configuration */
+struct wlan_srng_cfg wlan_src_srng_default_cfg = {
+	.timer_threshold = 0,
+	.batch_count_threshold = 0,
+	.low_threshold = 0,
+};
+
 void wlan_set_srng_cfg(struct wlan_srng_cfg **wlan_cfg)
 {
 	g_wlan_srng_cfg[REO_DST] = wlan_srng_reo_cfg;
 	g_wlan_srng_cfg[WBM2SW_RELEASE] = wlan_srng_wbm_release_cfg;
 	g_wlan_srng_cfg[REO_EXCEPTION] = wlan_srng_default_cfg;
-	g_wlan_srng_cfg[REO_REINJECT] = wlan_srng_default_cfg;
-	g_wlan_srng_cfg[REO_CMD] = wlan_srng_default_cfg;
+	g_wlan_srng_cfg[REO_REINJECT] = wlan_src_srng_default_cfg;
+	g_wlan_srng_cfg[REO_CMD] = wlan_src_srng_default_cfg;
 	g_wlan_srng_cfg[REO_STATUS] = wlan_srng_default_cfg;
-	g_wlan_srng_cfg[TCL_DATA] = wlan_srng_default_cfg;
-	g_wlan_srng_cfg[TCL_CMD_CREDIT] = wlan_srng_default_cfg;
+	g_wlan_srng_cfg[TCL_DATA] = wlan_src_srng_default_cfg;
+	g_wlan_srng_cfg[TCL_CMD_CREDIT] = wlan_src_srng_default_cfg;
 	g_wlan_srng_cfg[TCL_STATUS] = wlan_srng_default_cfg;
-	g_wlan_srng_cfg[WBM_IDLE_LINK] = wlan_srng_default_cfg;
-	g_wlan_srng_cfg[SW2WBM_RELEASE] = wlan_srng_default_cfg;
+	g_wlan_srng_cfg[WBM_IDLE_LINK] = wlan_src_srng_default_cfg;
+	g_wlan_srng_cfg[SW2WBM_RELEASE] = wlan_src_srng_default_cfg;
 	g_wlan_srng_cfg[RXDMA_BUF] = wlan_srng_rxdma_buf_cfg;
 	g_wlan_srng_cfg[RXDMA_DST] = wlan_srng_default_cfg;
 	g_wlan_srng_cfg[RXDMA_MONITOR_BUF] =
