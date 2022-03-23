@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,22 +58,26 @@ const struct nla_policy
 
 #ifdef FEATURE_WPSS_THERMAL_MITIGATION
 void
-hdd_thermal_fill_clientid_priority(uint8_t mon_id, uint8_t priority_apps,
-				   uint8_t priority_wpps,
+hdd_thermal_fill_clientid_priority(struct hdd_context *hdd_ctx, uint8_t mon_id,
+				   uint8_t priority_apps, uint8_t priority_wpps,
 				   struct thermal_mitigation_params *params)
 {
-	if (mon_id == THERMAL_MONITOR_APPS) {
-		params->priority  = priority_apps;
-		params->client_id = mon_id;
-		hdd_debug("Thermal client:%d priority_apps: %d", mon_id,
-			  priority_apps);
-	} else if (mon_id == THERMAL_MONITOR_WPSS) {
-		params->priority = priority_wpps;
-		params->client_id = mon_id;
-		/* currently hardcoded, can be changed based on requirement */
-		params->levelconf[0].dcoffpercent = DC_OFF_PERCENT_WPPS;
-		hdd_debug("Thermal client:%d priority_wpps: %d", mon_id,
-			  priority_wpps);
+	if (hdd_ctx->multi_client_thermal_mitigation) {
+		if (mon_id == THERMAL_MONITOR_APPS) {
+			params->priority  = priority_apps;
+			params->client_id = mon_id;
+			hdd_debug("Thermal client:%d priority_apps: %d", mon_id,
+				  priority_apps);
+		} else if (mon_id == THERMAL_MONITOR_WPSS) {
+			params->priority = priority_wpps;
+			params->client_id = mon_id;
+			/* currently hardcoded,
+			 * can be changed based on requirement.
+			 */
+			params->levelconf[0].dcoffpercent = DC_OFF_PERCENT_WPPS;
+			hdd_debug("Thermal client:%d priority_wpps: %d", mon_id,
+				  priority_wpps);
+		}
 	}
 }
 #endif
@@ -129,7 +133,8 @@ hdd_send_thermal_mitigation_val(struct hdd_context *hdd_ctx, uint32_t level,
 	therm_cfg_params.num_thermal_conf = 1;
 	therm_cfg_params.pdev_id = 0;
 
-	hdd_thermal_fill_clientid_priority(mon_id, thermal_temp.priority_apps,
+	hdd_thermal_fill_clientid_priority(hdd_ctx, mon_id,
+					   thermal_temp.priority_apps,
 					   thermal_temp.priority_wpps,
 					   &therm_cfg_params);
 

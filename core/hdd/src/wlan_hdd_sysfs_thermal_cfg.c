@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -146,7 +147,7 @@ __hdd_sysfs_thermal_cfg_store(struct hdd_context *hdd_ctx,
 	therm_cfg_params.levelconf[0].dcoffpercent = val3;
 	therm_cfg_params.levelconf[0].priority = val4;
 	therm_cfg_params.levelconf[0].tmplwm = val7;
-	hdd_thermal_fill_clientid_priority(THERMAL_MONITOR_APPS,
+	hdd_thermal_fill_clientid_priority(hdd_ctx, THERMAL_MONITOR_APPS,
 					   thermal_temp.priority_apps,
 					   thermal_temp.priority_wpps,
 					   &therm_cfg_params);
