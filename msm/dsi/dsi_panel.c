@@ -719,6 +719,28 @@ static int dsi_panel_pwm_register(struct dsi_panel *panel)
 	return 0;
 }
 
+static int dsi_panel_parse_fsc_rgb_order(struct dsi_panel *panel,
+		struct dsi_parser_utils *utils)
+{
+	int rc = 0;
+	const char *fsc_rgb_order;
+
+	fsc_rgb_order = utils->get_property(utils->data,
+		"qcom,dsi-panel-fsc-rgb-order", NULL);
+	if (fsc_rgb_order) {
+		if (DSI_IS_FSC_PANEL(fsc_rgb_order)) {
+			strlcpy(panel->fsc_rgb_order, fsc_rgb_order,
+				sizeof(panel->fsc_rgb_order));
+		} else {
+			DSI_ERR("Unrecognized fsc color order-%s\n",
+				fsc_rgb_order);
+			rc = -EINVAL;
+		}
+	}
+
+	return rc;
+}
+
 static int dsi_panel_bl_register(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -3645,6 +3667,10 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	rc = dsi_panel_parse_esd_config(panel);
 	if (rc)
 		DSI_DEBUG("failed to parse esd config, rc=%d\n", rc);
+
+	rc = dsi_panel_parse_fsc_rgb_order(panel, utils);
+	if (rc)
+		DSI_DEBUG("failed to read fsc color order, rc=%d\n", rc);
 
 	rc = dsi_panel_vreg_get(panel);
 	if (rc) {
