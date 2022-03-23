@@ -6690,6 +6690,8 @@ typedef struct {
     A_UINT32 rx_ftm_cnt;
     /** Initiator Terminate count */
     A_UINT32 initiator_terminate_cnt;
+    /** Debug count to check the Measurement request from host */
+    A_UINT32 tx_meas_req_count;
 } htt_vdev_rtt_init_stats_tlv;
 
 typedef struct {
