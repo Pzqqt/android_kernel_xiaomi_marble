@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -465,32 +465,27 @@ struct neighbor_ap_info_field {
  * enum tbtt_information_field - TBTT information field
  * @TBTT_NEIGHBOR_AP_OFFSET_ONLY: TBTT information field type
  * @TBTT_NEIGHBOR_AP_BSS_PARAM: neighbor AP and bss param
- * @TBTT_NEIGHBOR_AP_MLD_PARAM: neighbor AP and MLD param
  * @TBTT_NEIGHBOR_AP_SHORTSSID: neighbor AP and Short ssid
  * @TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM: neighbor AP, short ssid and bss param
  * @TBTT_NEIGHBOR_AP_BSSID: neighbor AP and bssid
  * @TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM: neighbor AP, bssid and bss param
  * @TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD: neighbor AP, bssid and bss
  * param and 20MHz PSD
- * @TBTT_NEIGHBOR_AP_BSSID_MLD_PARAM:  neighbor AP, bssid and MLD param
  * @TBTT_NEIGHBOR_AP_BSSSID_S_SSID: neighbor AP, bssid and short ssid
  * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM: neighbor AP, bssid, short ssid
  * and bss params
  * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD: neighbor AP, bssid,
  * short ssid, bss params and 20MHz PSD
- * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM: neighbor AP,
  * bssid, short ssid, bss params, 20MHz PSD and MLD param
  */
 enum tbtt_information_field {
 	TBTT_NEIGHBOR_AP_OFFSET_ONLY = 1,
 	TBTT_NEIGHBOR_AP_BSS_PARAM = 2,
-	TBTT_NEIGHBOR_AP_MLD_PARAM = 4,
 	TBTT_NEIGHBOR_AP_SHORTSSID = 5,
 	TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM = 6,
 	TBTT_NEIGHBOR_AP_BSSID = 7,
 	TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM = 8,
 	TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD = 9,
-	TBTT_NEIGHBOR_AP_BSSID_MLD_PARAM = 10,
 	TBTT_NEIGHBOR_AP_BSSSID_S_SSID = 11,
 	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM = 12,
 	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD = 13,

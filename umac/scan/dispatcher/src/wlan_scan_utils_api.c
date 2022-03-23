@@ -752,21 +752,6 @@ util_scan_update_rnr_mld(struct rnr_bss_info *rnr,
 		   TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM;
 
 	switch (tbtt_info_length) {
-	case TBTT_NEIGHBOR_AP_MLD_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->mld_info, &data[1],
-			     sizeof(struct rnr_mld_info));
-		mld_info_present = true;
-		break;
-	case TBTT_NEIGHBOR_AP_BSSID_MLD_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->mld_info, &data[1 + QDF_MAC_ADDR_SIZE],
-			     sizeof(struct rnr_mld_info));
-		mld_info_present = true;
-		break;
 	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
