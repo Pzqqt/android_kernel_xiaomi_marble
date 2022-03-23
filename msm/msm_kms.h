@@ -47,6 +47,8 @@
 #define MSM_MODE_FLAG_SEAMLESS_POMS_VID			(1<<6)
 /* Request to switch the panel mode to command */
 #define MSM_MODE_FLAG_SEAMLESS_POMS_CMD			(1<<7)
+/* Indicates Field sequential color mode is enabled */
+#define MSM_MODE_FLAG_FSC_MODE				(1<<8)
 
 /* As there are different display controller blocks depending on the
  * snapdragon version, the kms support is split out and the appropriate
@@ -263,6 +265,11 @@ static inline bool msm_is_mode_seamless_dyn_clk(
 {
 	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_DYN_CLK)
 		: false;
+}
+
+static inline bool msm_is_mode_fsc(const struct msm_display_mode *mode)
+{
+	return (mode->private_flags & MSM_MODE_FLAG_FSC_MODE);
 }
 
 static inline bool msm_needs_vblank_pre_modeset(

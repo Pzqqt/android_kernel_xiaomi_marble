@@ -7265,12 +7265,22 @@ int dsi_display_get_panel_vfp(void *dsi_display,
 
 	for (i = 0; i < count; i++) {
 		struct dsi_display_mode *m = &display->modes[i];
+		u32 h_display, v_display;
+		bool fsc_mode;
 
-		if (m && v_active == m->timing.v_active &&
-			h_active == m->timing.h_active &&
-			refresh_rate == m->timing.refresh_rate) {
-			rc = m->timing.v_front_porch;
-			break;
+		if (m) {
+			fsc_mode = m->timing.fsc_mode;
+
+			h_display = fsc_mode ?
+				(m->timing.h_active * 3) : m->timing.h_active;
+			v_display = fsc_mode ?
+				(m->timing.v_active / 3) : m->timing.v_active;
+
+			if (v_active == v_display && h_active == h_display &&
+				refresh_rate == m->timing.refresh_rate) {
+				rc = m->timing.v_front_porch;
+				break;
+			}
 		}
 	}
 	mutex_unlock(&display->display_lock);
@@ -7340,9 +7350,15 @@ static bool dsi_display_match_timings(const struct dsi_display_mode *mode1,
 	bool is_matching = false;
 
 	if (match_flags & DSI_MODE_MATCH_ACTIVE_TIMINGS) {
-		is_matching = mode1->timing.h_active == mode2->timing.h_active &&
+		if (mode2->timing.fsc_mode && (!mode1->timing.fsc_mode)) {
+			is_matching = (mode1->timing.h_active / 3) == mode2->timing.h_active &&
+				(mode1->timing.v_active * 3) == mode2->timing.v_active &&
+				mode1->timing.refresh_rate == mode2->timing.refresh_rate;
+		} else {
+			is_matching = mode1->timing.h_active == mode2->timing.h_active &&
 				mode1->timing.v_active == mode2->timing.v_active &&
 				mode1->timing.refresh_rate == mode2->timing.refresh_rate;
+		}
 		if (!is_matching)
 			goto end;
 	}
