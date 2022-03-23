@@ -228,6 +228,7 @@ struct cfr_header_cmn {
 	u_int8_t    chip_type;
 	u_int8_t    pltform_type;
 	u_int32_t   cfr_metadata_len;
+	u_int64_t   host_real_ts;
 } __attribute__ ((__packed__));
 
 struct csi_cfr_header {
