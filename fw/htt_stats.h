@@ -6164,6 +6164,36 @@ typedef struct {
      * Count of number of times PSR based TX transmissions were successful.
      */
     A_UINT32 num_psr_ppdu_success;
+    /**
+     * Count of number of times TX PPDU per access category were transmitted
+     * using non-SRG opportunities created.
+     */
+    A_UINT32 num_non_srg_ppdu_tried_per_ac[HTT_NUM_AC_WMM];
+    /**
+     * Count of number of times non-SRG based TX transmissions per access
+     * category were successful
+     */
+    A_UINT32 num_non_srg_ppdu_success_per_ac[HTT_NUM_AC_WMM];
+    /**
+     * Count of number of times TX PPDU per access category were transmitted
+     * using SRG opportunities created.
+     */
+    A_UINT32 num_srg_ppdu_tried_per_ac[HTT_NUM_AC_WMM];
+    /**
+     * Count of number of times SRG based TX transmissions per access
+     * category were successful
+     */
+    A_UINT32 num_srg_ppdu_success_per_ac[HTT_NUM_AC_WMM];
+    /**
+     * Count of number of times ppdu was flushed due to ongoing OBSS
+     * frame duration value lesser than minimum required frame duration.
+     */
+    A_UINT32 num_obss_min_duration_check_flush_cnt;
+    /**
+     * Count of number of times ppdu was flushed due to ppdu duration
+     * exceeding aborted OBSS frame duration
+     */
+    A_UINT32 num_sr_ppdu_abort_flush_cnt;
 } htt_pdev_obss_pd_stats_tlv;
 
 /* NOTE:
