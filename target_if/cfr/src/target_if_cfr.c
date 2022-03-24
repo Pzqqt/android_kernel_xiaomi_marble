@@ -236,6 +236,7 @@ void target_if_cfr_fill_header(struct csi_cfr_header *hdr,
 	hdr->cmn.pltform_type = CFR_PLATFORM_TYPE_ARM;
 	hdr->cmn.cfr_metadata_len = CFR_META_DATA_LEN;
 	hdr->cmn.cfr_data_version = CFR_DATA_VERSION_1;
+	hdr->cmn.host_real_ts = qdf_ktime_to_ns(qdf_ktime_real_get());
 
 	if (target_type == TARGET_TYPE_QCA8074V2) {
 		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_6;
