@@ -239,17 +239,18 @@ void target_if_cfr_fill_header(struct csi_cfr_header *hdr,
 	hdr->cmn.host_real_ts = qdf_ktime_to_ns(qdf_ktime_real_get());
 
 	if (target_type == TARGET_TYPE_QCA8074V2) {
-		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_6;
+		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_8;
 		hdr->cmn.chip_type = CFR_CAPTURE_RADIO_HKV2;
 	} else if (target_type == TARGET_TYPE_QCA9574) {
 		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_6;
 		hdr->cmn.chip_type = CFR_CAPTURE_RADIO_ALDER;
 	} else {
-		if (target_type == TARGET_TYPE_QCN9000 ||
-		    target_type == TARGET_TYPE_QCN9224 ||
-		    target_type == TARGET_TYPE_QCA6490 ||
-		    target_type == TARGET_TYPE_QCA6750 ||
-		    target_type == TARGET_TYPE_KIWI)
+		if (target_type == TARGET_TYPE_QCN9000)
+			hdr->cmn.cfr_metadata_version = CFR_META_VERSION_9;
+		else if (target_type == TARGET_TYPE_QCN9224 ||
+			 target_type == TARGET_TYPE_QCA6490 ||
+			 target_type == TARGET_TYPE_QCA6750 ||
+			 target_type == TARGET_TYPE_KIWI)
 			hdr->cmn.cfr_metadata_version = CFR_META_VERSION_7;
 		else if ((target_type == TARGET_TYPE_QCA6018) ||
 			 ((target_type == TARGET_TYPE_QCA5018) && (!is_rcc)))
