@@ -76,6 +76,8 @@ enum cfrmetaversion {
 	CFR_META_VERSION_5, /* agc gain, cfo, rx_start_ts in enh_cfr_metadata */
 	CFR_META_VERSION_6, /* mcs, gi_type in dbr_cfr_metadata */
 	CFR_META_VERSION_7, /* mcs, gi_type, sig_info in enh_cfr_metadata */
+	CFR_META_VERSION_8, /* agc gain table index in dbr_cfr_metadata */
+	CFR_META_VERSION_9, /* agc gain table index in enh_cfr_metadata */
 	CFR_META_VERSION_MAX = 0xFF,
 };
 
