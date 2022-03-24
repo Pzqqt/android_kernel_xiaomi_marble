@@ -1688,7 +1688,8 @@ fail_napi:
 fail_gen2:
 	ipa_pm_deregister(ep->sys->pm_hdl);
 fail_pm:
-	destroy_workqueue(ep->sys->freepage_wq);
+	if (ep->sys->freepage_wq)
+		destroy_workqueue(ep->sys->freepage_wq);
 fail_wq3:
 	destroy_workqueue(ep->sys->repl_wq);
 fail_wq2:
