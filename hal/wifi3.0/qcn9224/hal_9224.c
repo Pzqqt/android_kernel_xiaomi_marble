@@ -1423,6 +1423,7 @@ hal_rx_flow_setup_fse_9224(uint8_t *rx_fst, uint32_t table_offset,
 	return fse;
 }
 
+#ifndef NO_RX_PKT_HDR_TLV
 /**
  * hal_rx_dump_pkt_hdr_tlv: dump RX pkt header TLV in hex format
  * @ pkt_hdr_tlv: pointer the pkt_hdr_tlv in pkt.
@@ -1444,6 +1445,19 @@ static inline void hal_rx_dump_pkt_hdr_tlv_9224(struct rx_pkt_tlvs *pkt_tlvs,
 	hal_verbose_hex_dump(pkt_hdr_tlv->rx_pkt_hdr,
 			     sizeof(pkt_hdr_tlv->rx_pkt_hdr));
 }
+#else
+/**
+ * hal_rx_dump_pkt_hdr_tlv: dump RX pkt header TLV in hex format
+ * @ pkt_hdr_tlv: pointer the pkt_hdr_tlv in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static inline void hal_rx_dump_pkt_hdr_tlv_9224(struct rx_pkt_tlvs *pkt_tlvs,
+						uint8_t dbg_level)
+{
+}
+#endif
 
 /**
  * hal_rx_dump_pkt_tlvs_9224(): API to print RX Pkt TLVS QCN9224

@@ -1698,10 +1698,12 @@ static inline uint32_t hal_rx_mpdu_start_offset_get_generic(void)
 	return RX_PKT_TLV_OFFSET(mpdu_start_tlv);
 }
 
+#ifndef NO_RX_PKT_HDR_TLV
 static inline  uint32_t hal_rx_pkt_tlv_offset_get_generic(void)
 {
 	return RX_PKT_TLV_OFFSET(pkt_hdr_tlv);
 }
+#endif
 
 #ifdef RECEIVE_OFFLOAD
 static inline int
