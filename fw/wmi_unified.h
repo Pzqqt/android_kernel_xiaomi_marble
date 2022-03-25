@@ -9212,6 +9212,7 @@ typedef enum {
     WMI_REQUEST_PMF_BCN_PROTECT_STAT = 0x08000,
     WMI_REQUEST_VDEV_EXTD_STAT       = 0x10000,
     WMI_REQUEST_PDEV_EXTD_STAT       = 0x20000,
+    WMI_REQUEST_PDEV_TELEMETRY_STAT  = 0x40000,
 } wmi_stats_id;
 
 /*
@@ -9676,7 +9677,6 @@ typedef struct {
  * This TLV is followed by another TLV of array of bytes
  *   num_channels * size of(struct wmi_channel_stats)
  */
-
 } wmi_radio_link_stats_event_fixed_param;
 
 /* per rate statistics */
@@ -10088,6 +10088,10 @@ typedef struct {
  */
 /* If WMI_REQUEST_PDEV_EXTD_STAT is set in stats_id, then TLV
  * wmi_pdev_extd_stats wmi_pdev_extd_stats[]
+ * follows the other TLVs
+ */
+/* If WMI_REQUEST_PDEV_TELEMETRY_STAT is set in stats_id, then TLV
+ * wmi_pdev_telemetry_stats wmi_pdev_telemetry_stats[]
  * follows the other TLVs
  */
 } wmi_stats_event_fixed_param;
@@ -11506,6 +11510,18 @@ typedef struct {
      */
     A_UINT32 rx_other_11ax_msdu_cnt;
 } wmi_pdev_extd_stats;
+
+/**
+ *  pdev telemetry statistics
+ */
+typedef struct{
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_telemetry_stats */
+    A_UINT32 pdev_id;
+    /* average channel latency, units in micro seconds */
+    A_UINT32 avg_chan_lat_per_ac[WMI_AC_MAX];
+    /* estimated airtime per access category, units in percentage */
+    A_UINT32 estimated_air_time_per_ac[WMI_AC_MAX];
+} wmi_pdev_telemetry_stats;
 
 /**
  *  VDEV statistics
