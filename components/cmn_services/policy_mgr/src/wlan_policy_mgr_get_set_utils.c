@@ -2937,6 +2937,63 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
+/**
+ * policy_mgr_update_sta_scc_info_for_later_check() - function to update sta/sap
+ * scc channel frequency and later check flag.
+ * @pm_ctx: policy manager context pointer
+ * @mode: operation mode
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+static void policy_mgr_update_sta_scc_info_for_later_check(
+		struct policy_mgr_psoc_priv_obj *pm_ctx,
+		enum QDF_OPMODE mode,
+		uint8_t vdev_id)
+{
+	uint32_t conn_index = 0;
+	qdf_freq_t sta_freq = 0;
+
+	if (mode != QDF_STA_MODE && mode != QDF_P2P_CLIENT_MODE)
+		return;
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+		if (vdev_id == pm_conc_connection_list[conn_index].vdev_id) {
+			sta_freq = pm_conc_connection_list[conn_index].freq;
+			break;
+		}
+		conn_index++;
+	}
+
+	if (!sta_freq)
+		goto release_mutex;
+
+	/*
+	 * When STA disconnected, we need to move DFS SAP
+	 * to Non-DFS if g_sta_sap_scc_on_dfs_chan enabled.
+	 * The same if g_sta_sap_scc_on_lte_coex_chan enabled,
+	 * need to move SAP on unsafe channel to safe channel.
+	 * The flag will be checked by
+	 * policy_mgr_is_sap_restart_required_after_sta_disconnect.
+	 */
+	conn_index = 0;
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+		if (pm_conc_connection_list[conn_index].freq == sta_freq &&
+		    (pm_conc_connection_list[conn_index].mode == PM_SAP_MODE ||
+		    pm_conc_connection_list[conn_index].mode ==
+		    PM_P2P_GO_MODE)) {
+			pm_ctx->do_sap_unsafe_ch_check = true;
+			pm_ctx->last_disconn_sta_freq = sta_freq;
+			break;
+		}
+		conn_index++;
+	}
+
+release_mutex:
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+}
+
 QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 				enum QDF_OPMODE mode,
 				uint8_t session_id)
@@ -2962,6 +3019,9 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		return qdf_status;
 	}
 
+	policy_mgr_update_sta_scc_info_for_later_check(pm_ctx,
+						       mode,
+						       session_id);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	switch (mode) {
 	case QDF_STA_MODE:
@@ -3035,16 +3095,6 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		if (pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb)
 			pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb(mcc_mode);
 	}
-	/*
-	 * When STA disconnected, we need to move DFS SAP
-	 * to Non-DFS if g_sta_sap_scc_on_dfs_chan enabled.
-	 * The same if g_sta_sap_scc_on_lte_coex_chan enabled,
-	 * need to move SAP on unsafe channel to safe channel.
-	 * The flag will be checked by
-	 * policy_mgr_is_sap_restart_required_after_sta_disconnect.
-	 */
-	if (mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE)
-		pm_ctx->do_sap_unsafe_ch_check = true;
 
 	if (mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE ||
 	    mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE)

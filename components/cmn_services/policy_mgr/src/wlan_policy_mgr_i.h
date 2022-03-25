@@ -308,6 +308,8 @@ struct policy_mgr_cfg {
  *                        regulatory/other considerations
  * @sap_mandatory_channels_len: Length of the SAP mandatory
  *                            channel list
+ * @do_sap_unsafe_ch_check: whether need check sap unsafe channel
+ * @last_disconn_sta_freq: last disconnected sta channel freq
  * @concurrency_mode: active concurrency combination
  * @no_of_open_sessions: Number of active vdevs
  * @no_of_active_sessions: Number of active connections
@@ -351,6 +353,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint32_t sap_mandatory_channels[NUM_CHANNELS];
 	uint32_t sap_mandatory_channels_len;
 	bool do_sap_unsafe_ch_check;
+	qdf_freq_t last_disconn_sta_freq;
 	uint32_t concurrency_mode;
 	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
 	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];

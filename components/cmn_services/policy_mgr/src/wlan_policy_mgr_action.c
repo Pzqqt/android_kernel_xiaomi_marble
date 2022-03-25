@@ -1585,8 +1585,8 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 	uint8_t sta_sap_scc_on_dfs_chnl_config_value = 0;
 	uint32_t cc_count, i, go_index_start, pcl_len = 0;
-	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS * 2];
+	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS * 2];
 	enum policy_mgr_con_mode mode;
 	uint32_t pcl_channels[NUM_CHANNELS + 1];
 	uint8_t pcl_weight[NUM_CHANNELS + 1];
@@ -1635,8 +1635,9 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 			continue;
 		if (sta_sap_scc_on_dfs_chan &&
 		    (sta_sap_scc_on_dfs_chnl_config_value != 2) &&
-		    wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
-					     op_ch_freq_list[i])) {
+		     wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
+					      op_ch_freq_list[i]) &&
+		     pm_ctx->last_disconn_sta_freq == op_ch_freq_list[i]) {
 			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
 			policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sta_sap_scc_on_dfs_chnl_config_value %u, dfs sap_ch_freq %u",
@@ -1647,7 +1648,8 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		}
 
 		if (sta_sap_scc_on_lte_coex_chan &&
-		    !policy_mgr_is_safe_channel(psoc, op_ch_freq_list[i])) {
+		    !policy_mgr_is_safe_channel(psoc, op_ch_freq_list[i]) &&
+		    pm_ctx->last_disconn_sta_freq == op_ch_freq_list[i]) {
 			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
 			policy_mgr_debug("sta_sap_scc_on_lte_coex_chan %u unsafe sap_ch_freq %u",
@@ -2054,6 +2056,7 @@ void policy_mgr_check_sap_restart(struct wlan_objmgr_psoc *psoc,
 
 end:
 	pm_ctx->do_sap_unsafe_ch_check = false;
+	pm_ctx->last_disconn_sta_freq = 0;
 }
 
 static void __policy_mgr_check_sta_ap_concurrent_ch_intf(
@@ -2085,7 +2088,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(
 			work_info->go_plus_go_force_scc.ch_freq,
 			work_info->go_plus_go_force_scc.ch_width);
 		work_info->go_plus_go_force_scc.vdev_id = WLAN_UMAC_VDEV_ID_MAX;
-		return;
+		goto end;
 	}
 
 	mcc_to_scc_switch =
@@ -2141,6 +2144,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(
 
 end:
 	pm_ctx->do_sap_unsafe_ch_check = false;
+	pm_ctx->last_disconn_sta_freq = 0;
 }
 
 void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
