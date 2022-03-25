@@ -3807,6 +3807,10 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 			 pAssocRsp->eht_cap.support_320mhz_6ghz);
 	}
 
+	if (ar->eht_op.present)
+		qdf_mem_copy(&pAssocRsp->eht_op, &ar->eht_op,
+			     sizeof(tDot11fIEeht_op));
+
 	if (ar->he_6ghz_band_cap.present) {
 		pe_debug("11AX: HE Band Capability IE present");
 		qdf_mem_copy(&pAssocRsp->he_6ghz_band_cap,
