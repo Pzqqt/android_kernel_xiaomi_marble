@@ -437,14 +437,17 @@ static qdf_nbuf_t dp_rx_tm_thread_dequeue(struct dp_rx_thread *rx_thread)
  *
  * Returns: should yield or not
  */
-static inline bool dp_rx_thread_should_yield(uint32_t iter)
+static inline bool dp_rx_thread_should_yield(struct dp_rx_thread *rx_thread,
+					     uint32_t iter)
 {
-	if (iter >= DP_RX_THREAD_YIELD_PKT_CNT)
+	if (iter >= DP_RX_THREAD_YIELD_PKT_CNT ||
+	    qdf_test_bit(RX_VDEV_DEL_EVENT, &rx_thread->event_flag))
 		return true;
 	return false;
 }
 #else
-static inline bool dp_rx_thread_should_yield(uint32_t iter)
+static inline bool dp_rx_thread_should_yield(struct dp_rx_thread *rx_thread,
+					     uint32_t iter)
 {
 	return false;
 }
@@ -504,7 +507,8 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 			rx_thread->stats.nbuf_sent_to_stack +=
 							num_list_elements;
 		}
-		if (unlikely(dp_rx_thread_should_yield(iterates))) {
+		if (qdf_unlikely(dp_rx_thread_should_yield(rx_thread,
+							   iterates))) {
 			rx_thread->stats.rx_nbufq_loop_yield++;
 			break;
 		}
@@ -599,6 +603,8 @@ static int dp_rx_thread_sub_loop(struct dp_rx_thread *rx_thread, bool *shutdown)
 						  &rx_thread->event_flag)) {
 			rx_thread->stats.gro_flushes_by_vdev_del++;
 			qdf_event_set(&rx_thread->vdev_del_event);
+			if (qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue))
+				continue;
 		}
 
 		if (qdf_atomic_test_and_clear_bit(RX_SUSPEND_EVENT,
