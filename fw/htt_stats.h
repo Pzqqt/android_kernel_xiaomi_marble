@@ -3546,6 +3546,14 @@ typedef struct {
     A_UINT32 tqm_active_tids;
     A_UINT32 tqm_inactive_tids;
     A_UINT32 tqm_active_msduq_flows;
+
+    /* SAWF system delay reference timestamp updation related stats */
+    A_UINT32 total_msduq_timestamp_updates;
+    A_UINT32 total_msduq_timestamp_updates_by_get_mpdu_head_info_cmd;
+    A_UINT32 total_msduq_timestamp_updates_by_empty_to_nonempty_status;
+    A_UINT32 total_get_mpdu_head_info_cmds_by_sched_algo_la_query;
+    A_UINT32 total_get_mpdu_head_info_cmds_by_tac;
+    A_UINT32 total_gen_mpdu_cmds_by_sched_algo_la_query;
 } htt_tx_tqm_cmn_stats_tlv;
 
 typedef struct {
