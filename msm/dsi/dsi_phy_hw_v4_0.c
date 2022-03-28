@@ -274,7 +274,7 @@ static void dsi_phy_hw_cphy_enable(struct dsi_phy_hw *phy,
 		glbl_rescode_bot_ctrl = 0x3c;
 	}
 
-	if (phy->version == DSI_PHY_VERSION_4_3_2) {
+	if (phy->version >= DSI_PHY_VERSION_4_3_2) {
 		vreg_ctrl_0 = 0x45;
 		vreg_ctrl_1 = 0x41;
 	}
@@ -398,7 +398,7 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 	if (phy->version >= DSI_PHY_VERSION_4_3)
 		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3d : 0x01;
 
-	if (phy->version == DSI_PHY_VERSION_4_3_2){
+	if (phy->version >= DSI_PHY_VERSION_4_3_2) {
 		vreg_ctrl_0 = 0x44;
 		vreg_ctrl_1 = 0x19;
 	}
