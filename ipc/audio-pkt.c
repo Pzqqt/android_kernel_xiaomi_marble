@@ -1,4 +1,5 @@
 /* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -345,11 +346,6 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 		return -EINVAL;
 	}
 
-	if (count > MAX_PACKET_SIZE) {
-		AUDIO_PKT_ERR("Invalid packet size %zu\n", count);
-		return -EINVAL;
-	}
-
 	mutex_lock(&ap_priv->lock);
 	if (AUDIO_PKT_PROBED != ap_priv->status)
 	{
@@ -364,6 +360,14 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 		return PTR_ERR(kbuf);
 
 	audpkt_hdr = (struct gpr_hdr *) kbuf;
+
+	/* validate packet size */
+	if ((count > MAX_PACKET_SIZE) || (count < GPR_PKT_GET_PACKET_BYTE_SIZE(audpkt_hdr->header)))
+	{
+		ret = -EINVAL;
+		goto free_kbuf;
+	}
+
 	if (audpkt_hdr->opcode == APM_CMD_SHARED_MEM_MAP_REGIONS) {
 		ret = audpkt_chk_and_update_physical_addr((struct audio_gpr_pkt *) audpkt_hdr);
 		if (ret < 0) {
