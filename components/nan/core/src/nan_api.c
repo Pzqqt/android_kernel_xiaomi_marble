@@ -451,8 +451,12 @@ bool wlan_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 	if (wlan_reg_is_freq_indoor(pdev, freq))
 		wlan_mlme_get_indoor_support_for_nan(wlan_pdev_get_psoc(pdev),
 						     &nan_allowed);
-	/* Check for dfs only if channel is not indoor */
-	else if (wlan_reg_is_dfs_for_freq(pdev, freq))
+	/*
+	 * Check for dfs only if channel is not indoor,
+	 * Check for passive channels as well
+	 */
+	else if (wlan_reg_is_dfs_for_freq(pdev, freq) ||
+		 wlan_reg_is_passive_for_freq(pdev, freq))
 		nan_allowed = false;
 
 	return nan_allowed;
