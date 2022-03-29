@@ -4227,7 +4227,15 @@ typedef struct {
      *      when this bit is set to 1 outdoor mode is enabled
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_AFC_OUTDOOR_SUPPORT_CHECK_GET
      *      and SET macros.
-     *  Bits 31:12 - Reserved
+     *  Bit 12
+     *      This bit will be set when host host wants to enable/disable
+     *      REO QREF feature
+     *      when set to 1 - Enable the REO QREF feature
+     *      when set to 0 - Disable the REO QREF feature
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:13 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4615,6 +4623,11 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 11, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_AFC_OUTDOOR_SUPPORT_CHECK_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 11, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 12, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 12, 1, val)
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
     WMI_GET_BITS(carrier_config, 0, 1)
