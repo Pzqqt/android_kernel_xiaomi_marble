@@ -1152,7 +1152,7 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 		} else if (!RM_RQ_DCWB(reqs) && dcwb_pref) {
 			SDE_DEBUG("fail: dcwb supported dummy lm incorrectly allocated\n");
 			return false;
-		} else if (RM_RQ_DCWB(reqs) && dcwb_pref &&
+		} else if (RM_RQ_DCWB(reqs) && dcwb_pref && conn_lm_mask &&
 				((ffs(conn_lm_mask) % 2) ==  ((lm_cfg->id + 1) % 2))) {
 			SDE_DEBUG("fail: dcwb:%d trying to match lm:%d\n",
 					lm_cfg->id, ffs(conn_lm_mask));
@@ -2590,6 +2590,35 @@ static void _sde_rm_commit_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 	SDE_EVT32(rsvp->enc_id, rsvp->topology);
 }
 
+static void _sde_rm_populate_dp_lm_mask(struct sde_rm *rm,
+		struct drm_connector *conn)
+{
+	struct sde_connector *c_conn = NULL;
+	struct sde_rm_hw_blk *blk;
+
+	if (!rm || !conn) {
+		SDE_ERROR("invalid arguments\n");
+		return;
+	}
+	if (conn->connector_type != DRM_MODE_CONNECTOR_DisplayPort)
+		return;
+
+	c_conn =  to_sde_connector(conn);
+	if (!c_conn || !c_conn->encoder)
+		return;
+
+	list_for_each_entry(blk, &rm->hw_blks[SDE_HW_BLK_LM], list) {
+		if (!blk->rsvp)
+			continue;
+		if (blk->rsvp->enc_id == c_conn->encoder->base.id)
+			c_conn->lm_mask |= BIT(blk->id - 1);
+	}
+
+	SDE_DEBUG("conn lm_mask %d for conn %d enc %d\n", c_conn->lm_mask,
+			conn->base.id, c_conn->encoder->base.id);
+	SDE_EVT32(c_conn->encoder->base.id, conn->base.id, c_conn->lm_mask);
+}
+
 /* call this only after rm_mutex held */
 struct sde_rm_rsvp *_sde_rm_poll_get_rsvp_nxt_locked(struct sde_rm *rm,
 		struct drm_encoder *enc)
@@ -2756,6 +2785,7 @@ int sde_rm_reserve(
 commit_rsvp:
 	_sde_rm_release_rsvp(rm, rsvp_cur, conn_state->connector);
 	_sde_rm_commit_rsvp(rm, rsvp_nxt, conn_state);
+	_sde_rm_populate_dp_lm_mask(rm, conn_state->connector);
 
 end:
 	kfree(comp_info);
