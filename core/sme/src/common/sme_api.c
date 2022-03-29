@@ -562,6 +562,34 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 	return status;
 }
 
+static void sme_dump_peer_disconnect_timeout_info(tSmeCmd *sme_cmd)
+{
+	struct wmstatus_changecmd *wms_cmd;
+	struct qdf_mac_addr peer_macaddr = QDF_MAC_ADDR_ZERO_INIT;
+
+	if (sme_cmd->command == eSmeCommandRoam &&
+	    (sme_cmd->u.roamCmd.roamReason == eCsrForcedDisassocSta ||
+	    sme_cmd->u.roamCmd.roamReason == eCsrForcedDeauthSta)) {
+		qdf_mem_copy(peer_macaddr.bytes, sme_cmd->u.roamCmd.peerMac,
+			     QDF_MAC_ADDR_SIZE);
+	} else if (sme_cmd->command == eSmeCommandWmStatusChange) {
+		wms_cmd = &sme_cmd->u.wmStatusChangeCmd;
+		if (wms_cmd->Type == eCsrDisassociated)
+			qdf_copy_macaddr(
+				&peer_macaddr,
+				&wms_cmd->u.DisassocIndMsg.peer_macaddr);
+		else if (wms_cmd->Type == eCsrDeauthenticated)
+			qdf_copy_macaddr(
+				&peer_macaddr,
+				&wms_cmd->u.DeauthIndMsg.peer_macaddr);
+	}
+
+	if (!qdf_is_macaddr_zero(&peer_macaddr))
+		sme_err("vdev %d cmd %d timeout for peer " QDF_MAC_ADDR_FMT,
+			sme_cmd->vdev_id, sme_cmd->command,
+			QDF_MAC_ADDR_REF(peer_macaddr.bytes));
+}
+
 QDF_STATUS sme_ser_cmd_callback(struct wlan_serialization_command *cmd,
 				enum wlan_serialization_cb_reason reason)
 {
@@ -601,9 +629,11 @@ QDF_STATUS sme_ser_cmd_callback(struct wlan_serialization_command *cmd,
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
 		sme_cmd = cmd->umac_cmd;
 		if (sme_cmd && (sme_cmd->command == eSmeCommandRoam ||
-		    sme_cmd->command == eSmeCommandWmStatusChange))
+		    sme_cmd->command == eSmeCommandWmStatusChange)) {
+			sme_dump_peer_disconnect_timeout_info(sme_cmd);
 			qdf_trigger_self_recovery(mac_ctx->psoc,
 						  QDF_ACTIVE_LIST_TIMEOUT);
+		}
 		break;
 	default:
 		sme_debug("unknown reason code");
