@@ -1442,9 +1442,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		       mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
 		       sap_get_csa_reason_str(sap_ctx->csa_reason),
 		       sap_ctx->csa_reason, strict, sap_ctx->sessionId);
-	if (sap_ctx->chan_freq == target_chan_freq &&
-	    sap_ctx->ch_params.ch_width == target_bw)
-		return QDF_STATUS_E_FAULT;
 
 	state = wlan_reg_get_channel_state_for_freq(mac->pdev,
 						    target_chan_freq);
@@ -1470,6 +1467,12 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 
 	wlan_reg_set_channel_params_for_freq(mac->pdev, target_chan_freq, 0,
 					     &tmp_ch_params);
+	if (sap_ctx->chan_freq == target_chan_freq &&
+	    sap_ctx->ch_params.ch_width == tmp_ch_params.ch_width) {
+		sap_nofl_debug("target freq and bw %d not changed",
+			       tmp_ch_params.ch_width);
+		return QDF_STATUS_E_FAULT;
+	}
 	is_dfs = wlan_mlme_check_chan_param_has_dfs(
 			mac->pdev, &tmp_ch_params,
 			target_chan_freq);
