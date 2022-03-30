@@ -5232,8 +5232,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->sui_misr_supported = true;
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_3d_merge_reset = true;
-		sde_cfg->has_hdr = true;
-		sde_cfg->has_hdr_plus = true;
 		sde_cfg->skip_inline_rot_threshold = true;
 		set_bit(SDE_MDP_DHDR_MEMPOOL_4K, &sde_cfg->mdp[0].features);
 		sde_cfg->has_vig_p010 = true;
@@ -5247,11 +5245,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_precise_vsync_ts = true;
 		sde_cfg->has_avr_step = true;
 		sde_cfg->has_ubwc_stats = true;
-		sde_cfg->has_demura = true;
-		sde_cfg->demura_supported[SSPP_DMA1][0] = 0;
-		sde_cfg->demura_supported[SSPP_DMA1][1] = 1;
-		sde_cfg->demura_supported[SSPP_DMA3][0] = 0;
-		sde_cfg->demura_supported[SSPP_DMA3][1] = 1;
 		sde_cfg->has_vbif_clk_split = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
