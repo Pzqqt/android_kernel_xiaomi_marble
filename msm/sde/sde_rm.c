@@ -605,9 +605,21 @@ static int _sde_rm_hw_blk_create(
 	struct sde_rm_hw_blk *blk;
 	struct sde_hw_mdp *hw_mdp;
 	void *hw;
-	struct sde_kms *sde_kms = to_sde_kms(ddev_to_msm_kms(rm->dev));
+	struct sde_kms *sde_kms;
 	struct sde_vbif_clk_client clk_client;
 
+	if (!rm) {
+		SDE_ERROR("invalid rm\n");
+		return -EINVAL;
+	}
+
+	sde_kms = to_sde_kms(ddev_to_msm_kms(rm->dev));
+	if (!sde_kms || !sde_kms->catalog) {
+		SDE_ERROR("invalid kms\n");
+		return -EINVAL;
+	}
+
+	memset(&clk_client, 0, sizeof(clk_client));
 	hw_mdp = rm->hw_mdp;
 
 	switch (type) {
