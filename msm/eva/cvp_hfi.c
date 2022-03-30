@@ -3026,6 +3026,11 @@ static int __response_handler(struct iris_hfi_device *device)
 		} else if (info->response_type == HAL_NO_RESP) {
 			--packet_count;
 			continue;
+		} else if (info->response.cmd.status ==
+				 CVP_ERR_HW_NOT_SUPPORTED) {
+			dprintk(CVP_ERR, "Unsupported Module!\n");
+			--packet_count;
+			continue;
 		}
 
 		/* Process the packet types that we're interested in */
