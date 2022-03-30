@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _LPASS_CDC_REGISTERS_H
@@ -881,6 +882,7 @@
 #define LPASS_CDC_VA_TOP_CSR_DMIC2_CTL		(VA_START_OFFSET + 0x008C)
 #define LPASS_CDC_VA_TOP_CSR_DMIC3_CTL		(VA_START_OFFSET + 0x0090)
 #define LPASS_CDC_VA_TOP_CSR_DMIC_CFG		(VA_START_OFFSET + 0x0094)
+#define LPASS_CDC_VA_TOP_CSR_VAD_MUX		(VA_START_OFFSET + 0x0098)
 #define LPASS_CDC_VA_TOP_CSR_DEBUG_BUS		(VA_START_OFFSET + 0x009C)
 #define LPASS_CDC_VA_TOP_CSR_DEBUG_EN		(VA_START_OFFSET + 0x00A0)
 #define LPASS_CDC_VA_TOP_CSR_TX_I2S_CTL		(VA_START_OFFSET + 0x00A4)

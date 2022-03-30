@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/regmap.h>
@@ -782,6 +783,7 @@ static const struct reg_default lpass_cdc_defaults[] = {
 	{ LPASS_CDC_VA_TOP_CSR_DMIC2_CTL, 0x00},
 	{ LPASS_CDC_VA_TOP_CSR_DMIC3_CTL, 0x00},
 	{ LPASS_CDC_VA_TOP_CSR_DMIC_CFG, 0x80},
+	{ LPASS_CDC_VA_TOP_CSR_VAD_MUX, 0x00},
 	{ LPASS_CDC_VA_TOP_CSR_DEBUG_BUS, 0x00},
 	{ LPASS_CDC_VA_TOP_CSR_DEBUG_EN, 0x00},
 	{ LPASS_CDC_VA_TOP_CSR_TX_I2S_CTL, 0x0C},
