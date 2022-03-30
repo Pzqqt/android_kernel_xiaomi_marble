@@ -583,6 +583,7 @@ typedef  enum  {
     WMI_SERVICE_COMBINED_SET_PARAM_SUPPORT = 330, /* FW Supporting set param cmd combined for multiple params */
     WMI_SERVICE_PDEV_RSSI_DBM_CONV_EVENT_SUPPORT = 331, /* FW supports advertising RSSI dB to dBm conversion params to host via WMI_PDEV_RSSI_DBM_CONVERSION_PARAMS_INFO_EVENTID */
     WMI_SERVICE_PDEV_TELEMETRY_STATS_SUPPORT = 332,
+    WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT = 333, /* FW supports to send frame info for each candidate in roam stat */
 
     WMI_MAX_EXT2_SERVICE
 

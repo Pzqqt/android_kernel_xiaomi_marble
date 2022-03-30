@@ -33768,12 +33768,17 @@ typedef struct {
     /* timestamp is the absolute time w.r.t host timer which is synchronized between the host and target */
     A_UINT32 timestamp;      /* Timestamp when frame is sent or received */
     /*
-     * frame_info = frame_type | (frame_subtype << 2) | (request_or_response << 6)| (seq_num << 16)
+     * frame_info = frame_type | (frame_subtype << 2) | (request_or_response << 6) | (auth_algo_num << 7) | (seq_num << 16)
      * frame_type(2 bits), frame_subtype(4 bits) are from 802.11 spec.
-     * If frame_type is WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT, frame_subtype
-     * should be one of value in WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE.
+     *     If frame_type is WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT, frame_subtype
+     *     should be one of value in WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE.
      * request_or_response(1 bit) - Valid if frame_subtype is authentication.
      *      0 - Authentication request 1 - Authentication response
+     * auth_algo_num(4bits) : Lower 4 bits of 9.4.1.1 Authentication Algorithm
+     *     Number field
+     *     The auth_algo_num bits shall be ignored unless
+     *     WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT is set and
+     *     frame_subtype is auth frame.
      * seq_num(16 bits) - frame sequence number
      */
     A_UINT32 frame_info;
@@ -33800,6 +33805,12 @@ typedef struct {
      * sequence number) is retransmitted, in protocol level.
      */
     A_UINT32 retry_count;
+    wmi_mac_addr bssid;      /* AP MAC address */
+    /* sae_preauth_indicator
+     * 1 -> SAE auth happened in host, so auth frame history saved in host
+     * 0 -> SAE auth not happened, so firmware will send auth frame info
+     */
+    A_UINT32 sae_preauth_indicator;
 } wmi_roam_frame_info;
 
 typedef enum {
