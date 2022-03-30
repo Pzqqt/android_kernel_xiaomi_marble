@@ -420,6 +420,11 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 		DP_ERR("error getting mixer count. rc:%d\n", rc);
 		return rc;
 	}
+	/* reset dp connector lm_mask for every connection event and
+	 * this will get re-populated in resource manager based on
+	 * resolution and topology of dp display.
+	 */
+	sde_conn->lm_mask = 0;
 
 	topology->num_enc = no_enc;
 	topology->num_intf = single_intf;
