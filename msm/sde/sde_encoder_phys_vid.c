@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -48,6 +48,16 @@ static void drm_mode_to_intf_timing_params(
 		struct intf_timing_params *timing)
 {
 	const struct sde_encoder_phys *phys_enc = &vid_enc->base;
+	bool fsc_mode = false;
+	struct sde_connector_state *c_state = NULL;
+
+	if (phys_enc->connector && phys_enc->connector->state) {
+		c_state = to_sde_connector_state(phys_enc->connector->state);
+		if (!c_state) {
+			SDE_ERROR("invalid connector state\n");
+			return;
+		}
+	}
 
 	memset(timing, 0, sizeof(*timing));
 
@@ -76,9 +86,11 @@ static void drm_mode_to_intf_timing_params(
 	 * <----------------- [hv]sync_end ------->
 	 * <---------------------------- [hv]total ------------->
 	 */
+	fsc_mode = c_state ? msm_is_mode_fsc(&c_state->msm_mode) : false;
+
 	timing->poms_align_vsync = phys_enc->poms_align_vsync;
-	timing->width = mode->hdisplay;	/* active width */
-	timing->height = mode->vdisplay;	/* active height */
+	timing->width = GET_MODE_WIDTH(fsc_mode, mode);/* active width */
+	timing->height = GET_MODE_HEIGHT(fsc_mode, mode);/* active height */
 	timing->xres = timing->width;
 	timing->yres = timing->height;
 	timing->h_back_porch = mode->htotal - mode->hsync_end;

@@ -5113,13 +5113,15 @@ static int _sde_crtc_check_get_pstates(struct drm_crtc *crtc,
 		(*cnt)++;
 
 		if (CHECK_LAYER_BOUNDS(pstate->crtc_y, pstate->crtc_h,
-				mode->vdisplay) ||
+				GET_MODE_HEIGHT(cstate->in_fsc_mode, mode)) ||
 		    CHECK_LAYER_BOUNDS(pstate->crtc_x, pstate->crtc_w,
-				mode->hdisplay)) {
+				GET_MODE_WIDTH(cstate->in_fsc_mode, mode))) {
 			SDE_ERROR("invalid vertical/horizontal destination\n");
 			SDE_ERROR("y:%d h:%d vdisp:%d x:%d w:%d hdisp:%d\n",
-				pstate->crtc_y, pstate->crtc_h, mode->vdisplay,
-				pstate->crtc_x, pstate->crtc_w, mode->hdisplay);
+				pstate->crtc_y, pstate->crtc_h,
+				GET_MODE_HEIGHT(cstate->in_fsc_mode, mode),
+				pstate->crtc_x, pstate->crtc_w,
+				GET_MODE_WIDTH(cstate->in_fsc_mode, mode));
 			return -E2BIG;
 		}
 
