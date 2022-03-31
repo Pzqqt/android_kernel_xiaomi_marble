@@ -1839,7 +1839,9 @@ static void ipa_hal_save_regs_save_ipa_testbus(void)
 int ipa_reg_save_init(u32 value)
 {
 	u32 i, num_regs = ARRAY_SIZE(ipa_regs_to_save_array);
-
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	struct ipa_minidump_data *mini_dump;
+#endif
 	if (!ipa3_ctx->do_register_collection_on_crash)
 		return 0;
 
@@ -1927,7 +1929,16 @@ int ipa_reg_save_init(u32 value)
 			goto alloc_fail2;
 		}
 	}
-
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	/*Adding ipa_reg_save pointer to minidump list*/
+	mini_dump = (struct ipa_minidump_data *)kzalloc(sizeof(struct ipa_minidump_data), GFP_KERNEL);
+	if (mini_dump != NULL) {
+		strlcpy(mini_dump->data.owner, "ipa_reg_save", sizeof(mini_dump->data.owner));
+		mini_dump->data.vaddr = (unsigned long)&ipa_reg_save;
+		mini_dump->data.size = sizeof(ipa_reg_save);
+		list_add(&mini_dump->entry, &ipa3_ctx->minidump_list_head);
+	}
+#endif
 	return 0;
 
 alloc_fail2:

@@ -42,6 +42,7 @@
 #include <linux/rmnet_ipa_fd_ioctl.h>
 #include <linux/ipa_fmwk.h>
 #include "ipa_uc_holb_monitor.h"
+#include <soc/qcom/minidump.h>
 
 #define IPA_DEV_NAME_MAX_LEN 15
 #define DRV_NAME "ipa"
@@ -2141,6 +2142,13 @@ enum ipa_per_usb_enum_type_e {
 	IPA_PER_USB_ENUM_TYPE_MAX
 };
 
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+struct ipa_minidump_data {
+	struct list_head entry;
+	struct va_md_entry data;
+};
+#endif
+
 /**
  * struct ipa3_context - IPA context
  * @cdev: cdev context
@@ -2513,6 +2521,7 @@ struct ipa3_context {
 	void *per_stats_smem_va;
 	u32 ipa_max_napi_sort_page_thrshld;
 	u32 page_wq_reschd_time;
+	struct list_head minidump_list_head;
 };
 
 struct ipa3_plat_drv_res {
