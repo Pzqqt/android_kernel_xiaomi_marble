@@ -2121,7 +2121,12 @@ static inline uint64_t gsi_read_event_ring_rp_ddr(struct gsi_evt_ring_props* pro
 static inline uint64_t gsi_read_event_ring_rp_reg(struct gsi_evt_ring_props* props,
 	uint8_t id, int ee)
 {
-	return gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_4, ee, id);
+	uint64_t rp;
+
+	rp = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_4, ee, id);
+	rp |= ((uint64_t)gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_5, ee, id)) << 32;
+
+	return rp;
 }
 
 static int __gsi_pair_msi(struct gsi_evt_ctx *ctx,
