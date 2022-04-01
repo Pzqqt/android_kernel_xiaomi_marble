@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2914,7 +2914,7 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_bcn_frame *bcn;
 	struct wlan_frame_hdr *hdr;
-	uint8_t *mbssid_ie = NULL;
+	uint8_t *mbssid_ie = NULL, *extcap_ie;
 	uint32_t ie_len = 0;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct scan_mbssid_info mbssid_info = { 0 };
@@ -2926,16 +2926,24 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 		sizeof(struct wlan_frame_hdr) -
 		offsetof(struct wlan_bcn_frame, ie));
 
-	mbssid_ie = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
+	extcap_ie = util_scan_find_ie(WLAN_ELEMID_XCAPS,
 				      (uint8_t *)&bcn->ie, ie_len);
-	if (mbssid_ie) {
-		if (mbssid_ie[1] <= 0) {
-			scm_debug("MBSSID IE length is wrong %d", mbssid_ie[1]);
-			return status;
+	/* Process MBSSID when Multiple BSSID (Bit 22) is set in Ext Caps */
+	if (extcap_ie &&
+	    extcap_ie[1] >= 3 && extcap_ie[1] <= WLAN_EXTCAP_IE_MAX_LEN &&
+	    (extcap_ie[4] & 0x40)) {
+		mbssid_ie = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
+					      (uint8_t *)&bcn->ie, ie_len);
+		if (mbssid_ie) {
+			if (mbssid_ie[1] <= 0) {
+				scm_debug("MBSSID IE length is wrong %d",
+					  mbssid_ie[1]);
+				return status;
+			}
+			qdf_mem_copy(&mbssid_info.trans_bssid,
+				     hdr->i_addr3, QDF_MAC_ADDR_SIZE);
+			mbssid_info.profile_count = 1 << mbssid_ie[2];
 		}
-		qdf_mem_copy(&mbssid_info.trans_bssid,
-			     hdr->i_addr3, QDF_MAC_ADDR_SIZE);
-		mbssid_info.profile_count = 1 << mbssid_ie[2];
 	}
 
 	status = util_scan_gen_scan_entry(pdev, frame, frame_len,
