@@ -13697,7 +13697,7 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 	usr_cfg_ps_enable = mlme_get_user_ps(mac->psoc, twt_params->vdev_id);
 	if (!usr_cfg_ps_enable) {
 		sme_debug("Power save mode disable");
-		return QDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_AGAIN;
 	}
 
 	is_twt_notify_in_progress = mlme_is_twt_notify_in_progress(
