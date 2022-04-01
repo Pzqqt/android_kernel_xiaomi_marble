@@ -778,7 +778,12 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		if (strnstr(name, "p2p", 3) && mode == QDF_STA_MODE) {
 			hdd_debug("change mode to p2p device");
 			mode = QDF_P2P_DEVICE_MODE;
+		} else if (strnstr(name, "aware_data", 10) &&
+			   mode == QDF_STA_MODE) {
+			hdd_debug("add interface %s", name);
+			return hdd_add_ndi_intf(hdd_ctx, name);
 		}
+
 		device_address = wlan_hdd_get_intf_addr(hdd_ctx, mode);
 		if (!device_address)
 			return ERR_PTR(-EINVAL);

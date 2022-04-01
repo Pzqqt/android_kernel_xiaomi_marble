@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,6 +83,17 @@ void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
  * Return: 0 upon success
  */
 int hdd_ndi_start(char *iface_name, uint16_t transaction_id);
+
+/**
+ * hdd_add_ndi_intf(): Add NDI interface
+ * @hdd_ctx: Hdd context
+ * @name: NDI interface name
+ *
+ * Return: wireless dev
+ */
+struct wireless_dev *hdd_add_ndi_intf(struct hdd_context *hdd_ctx,
+				      const char *name);
+
 #else
 #define WLAN_HDD_IS_NDI(adapter)	(false)
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)
@@ -124,7 +136,7 @@ static inline int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 enum nan_datapath_state;
 struct nan_datapath_inf_create_rsp;
 
-int hdd_ndi_open(char *iface_name);
+int hdd_ndi_open(const char *iface_name, bool is_add_virtual_iface);
 int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id);
 void hdd_ndi_close(uint8_t vdev_id);
 void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,

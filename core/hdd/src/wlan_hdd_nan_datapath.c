@@ -683,7 +683,7 @@ error_init_txrx:
 	return ret_val;
 }
 
-int hdd_ndi_open(char *iface_name)
+int hdd_ndi_open(const char *iface_name, bool is_add_virtual_iface)
 {
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	struct qdf_mac_addr random_ndi_mac;
@@ -707,6 +707,10 @@ int hdd_ndi_open(char *iface_name)
 			MAX_NDI_ADAPTERS);
 		return -EINVAL;
 	}
+
+	params.is_add_virtual_iface = is_add_virtual_iface;
+
+	hdd_debug("is_add_virtual_iface %d", is_add_virtual_iface);
 
 	if (cfg_nan_get_ndi_mac_randomize(hdd_ctx->psoc)) {
 		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
@@ -793,6 +797,48 @@ err_handler:
 	return ret;
 }
 
+struct wireless_dev *hdd_add_ndi_intf(struct hdd_context *hdd_ctx,
+				      const char *name)
+{
+	int ret;
+	struct hdd_adapter *adapter;
+
+	hdd_debug("change mode to NDI");
+
+	ret = hdd_ndi_open(name, true);
+	if (ret) {
+		hdd_err("ndi_open failed");
+		return ERR_PTR(-EINVAL);
+	}
+	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, name);
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return ERR_PTR(-EINVAL);
+	}
+	return adapter->dev->ieee80211_ptr;
+}
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
+static int hdd_delete_ndi_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	return 0;
+}
+#else
+static int hdd_delete_ndi_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+	int ret;
+
+	ret = __wlan_hdd_del_virtual_intf(wiphy, wdev);
+
+	if (ret)
+		hdd_err("NDI delete request failed");
+	else
+		hdd_err("NDI delete request successfully issued");
+
+	return ret;
+}
+#endif
+
 int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 {
 	int ret;
@@ -828,11 +874,7 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 	/* Delete the interface */
 	adapter->is_virtual_iface = true;
-	ret = __wlan_hdd_del_virtual_intf(hdd_ctx->wiphy, &adapter->wdev);
-	if (ret)
-		hdd_err("NDI delete request failed");
-	else
-		hdd_err("NDI delete request successfully issued");
+	ret = hdd_delete_ndi_intf(hdd_ctx->wiphy, &adapter->wdev);
 
 	return ret;
 }
