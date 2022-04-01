@@ -597,8 +597,8 @@ void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
 
 /**
  * hdd_is_tx_allowed() - check if Tx is allowed based on current peer state
+ * @adapter: pointer to adapter structure
  * @skb: pointer to OS packet (sk_buff)
- * @vdev_id: virtual interface id
  * @peer_mac: Peer mac address
  *
  * This function gets the peer state from DP and check if it is either
@@ -608,7 +608,8 @@ void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
  *
  * Return: true if Tx is allowed and false otherwise.
  */
-static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t vdev_id,
+static inline bool hdd_is_tx_allowed(struct hdd_adapter *adapter,
+				     struct sk_buff *skb,
 				     uint8_t *peer_mac)
 {
 	enum ol_txrx_peer_state peer_state;
@@ -616,7 +617,16 @@ static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t vdev_id,
 
 	QDF_BUG(soc);
 
-	peer_state = cdp_peer_state_get(soc, vdev_id, peer_mac);
+	/**
+	 * If is_authenticated is true, then peer state is
+	 * OL_TXRX_PEER_STATE_AUTH already, skip cdp peer
+	 * API which is not efficient for T-put.
+	 */
+	if (adapter->device_mode != QDF_NDI_MODE &&
+	    hdd_is_sta_authenticated(adapter))
+		return true;
+
+	peer_state = cdp_peer_state_get(soc, adapter->vdev_id, peer_mac);
 	if (likely(OL_TXRX_PEER_STATE_AUTH == peer_state))
 		return true;
 	if (OL_TXRX_PEER_STATE_CONN == peer_state &&
@@ -941,7 +951,9 @@ void hdd_get_transmit_mac_addr(struct hdd_adapter *adapter, struct sk_buff *skb,
 			qdf_copy_macaddr(mac_addr_tx_allowed,
 					 (struct qdf_mac_addr *)skb->data);
 	} else {
-		if (hdd_cm_is_vdev_associated(adapter))
+		/* If is_authenticated is true, vdev must be associated */
+		if (qdf_likely(hdd_is_sta_authenticated(adapter)) ||
+		    hdd_cm_is_vdev_associated(adapter))
 			qdf_copy_macaddr(mac_addr_tx_allowed,
 					 &sta_ctx->conn_info.bssid);
 	}
@@ -1064,7 +1076,6 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	enum sme_qos_wmmuptype up;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool granted;
-	struct hdd_station_ctx *sta_ctx = &adapter->session.station;
 	struct qdf_mac_addr mac_addr_tx_allowed = QDF_MAC_ADDR_ZERO_INIT;
 	uint8_t pkt_type = 0;
 	bool is_arp = false;
@@ -1201,7 +1212,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	if (((adapter->psb_changed & (1 << ac)) &&
 		likely(adapter->hdd_wmm_status.ac_status[ac].
 			is_access_allowed)) ||
-		((sta_ctx->conn_info.is_authenticated == false) &&
+		(!hdd_is_sta_authenticated(adapter) &&
 		 (QDF_NBUF_CB_PACKET_TYPE_EAPOL ==
 			QDF_NBUF_CB_GET_PACKET_TYPE(skb) ||
 		  QDF_NBUF_CB_PACKET_TYPE_WAPI ==
@@ -1268,7 +1279,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 			sizeof(qdf_nbuf_data(skb)),
 			QDF_TX));
 
-	if (!hdd_is_tx_allowed(skb, adapter->vdev_id,
+	if (!hdd_is_tx_allowed(adapter, skb,
 			       mac_addr_tx_allowed.bytes)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 			  QDF_TRACE_LEVEL_INFO_HIGH,

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -225,6 +226,7 @@ QDF_STATUS wlan_hdd_cm_issue_disconnect(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_INVAL;
 	hdd_place_marker(adapter, "TRY TO DISCONNECT", NULL);
 	reset_mscs_params(adapter);
+	hdd_conn_set_authenticated(adapter, false);
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
@@ -318,6 +320,8 @@ hdd_cm_disconnect_complete_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		hdd_err("adapter is NULL for vdev %d", wlan_vdev_get_id(vdev));
 		return QDF_STATUS_E_INVAL;
 	}
+
+	hdd_conn_set_authenticated(adapter, false);
 	hdd_napi_serialize(0);
 	hdd_disable_and_flush_mc_addr_list(adapter, pmo_peer_disconnect);
 	__hdd_cm_disconnect_handler_pre_user_update(adapter);
@@ -433,6 +437,7 @@ hdd_cm_disconnect_complete_post_user_update(struct wlan_objmgr_vdev *vdev,
 		hdd_err("adapter is NULL for vdev %d", wlan_vdev_get_id(vdev));
 		return QDF_STATUS_E_INVAL;
 	}
+
 	if (adapter->device_mode == QDF_STA_MODE) {
 	/* Inform FTM TIME SYNC about the disconnection with the AP */
 		hdd_ftm_time_sync_sta_state_notify(
