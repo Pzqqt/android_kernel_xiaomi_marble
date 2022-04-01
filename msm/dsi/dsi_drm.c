@@ -32,10 +32,9 @@ static struct dsi_display_mode_priv_info default_priv_info = {
 };
 
 static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
-				struct dsi_display_mode *dsi_mode)
+		struct dsi_display_mode *dsi_mode, struct dsi_display *display)
 {
-	/* TBD: update fsc_mode dynamically */
-	bool fsc_mode = false;
+	bool fsc_mode = DSI_IS_FSC_PANEL(display->panel->fsc_rgb_order);
 
 	memset(dsi_mode, 0, sizeof(*dsi_mode));
 
@@ -386,7 +385,7 @@ static void dsi_bridge_mode_set(struct drm_bridge *bridge,
 	}
 
 	memset(&(c_bridge->dsi_mode), 0x0, sizeof(struct dsi_display_mode));
-	convert_to_dsi_mode(adjusted_mode, &(c_bridge->dsi_mode));
+	convert_to_dsi_mode(adjusted_mode, &(c_bridge->dsi_mode), display);
 	conn = sde_encoder_get_connector(bridge->dev, bridge->encoder);
 	if (!conn)
 		return;
@@ -455,7 +454,7 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 		return true;
 	}
 
-	convert_to_dsi_mode(mode, &dsi_mode);
+	convert_to_dsi_mode(mode, &dsi_mode, display);
 	msm_parse_mode_priv_info(&conn_state->msm_mode, &dsi_mode);
 	new_sub_mode.dsc_mode = sde_connector_get_property(drm_conn_state,
 				CONNECTOR_PROP_DSC_MODE);
@@ -502,7 +501,7 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 				&crtc_state->crtc->state->mode;
 		old_conn_state = to_sde_connector_state(display->drm_conn->state);
 
-		convert_to_dsi_mode(cur_mode, &cur_dsi_mode);
+		convert_to_dsi_mode(cur_mode, &cur_dsi_mode, display);
 		msm_parse_mode_priv_info(&old_conn_state->msm_mode, &cur_dsi_mode);
 
 		rc = dsi_display_validate_mode_change(c_bridge->display,
@@ -591,7 +590,7 @@ int dsi_conn_get_lm_from_mode(void *display, const struct drm_display_mode *drm_
 		return rc;
 	}
 
-	convert_to_dsi_mode(drm_mode, &dsi_mode);
+	convert_to_dsi_mode(drm_mode, &dsi_mode, dsi_display);
 
 	rc = dsi_display_find_mode(dsi_display, &dsi_mode, NULL, &panel_dsi_mode);
 	if (rc) {
@@ -617,7 +616,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	if (!drm_mode || !mode_info)
 		return -EINVAL;
 
-	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
+	convert_to_dsi_mode(drm_mode, &partial_dsi_mode, dsi_display);
 	rc = dsi_display_find_mode(dsi_display, &partial_dsi_mode, sub_mode, &dsi_mode);
 	if (rc || !dsi_mode->priv_info)
 		return -EINVAL;
@@ -913,7 +912,7 @@ void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
 		return;
 	}
 
-	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
+	convert_to_dsi_mode(drm_mode, &partial_dsi_mode, dsi_display);
 
 	mutex_lock(&dsi_display->display_lock);
 	count = dsi_display->panel->num_display_modes;
@@ -1208,14 +1207,16 @@ enum drm_mode_status dsi_conn_mode_valid(struct drm_connector *connector,
 	struct dsi_display_mode dsi_mode;
 	struct dsi_display_mode *full_dsi_mode = NULL;
 	struct sde_connector_state *conn_state;
+	struct dsi_display *dsi_display = (struct dsi_display *) display;
+
 	int rc;
 
-	if (!connector || !mode) {
+	if (!connector || !mode || !dsi_display) {
 		DSI_ERR("Invalid params\n");
 		return MODE_ERROR;
 	}
 
-	convert_to_dsi_mode(mode, &dsi_mode);
+	convert_to_dsi_mode(mode, &dsi_mode, dsi_display);
 
 	conn_state = to_sde_connector_state(connector->state);
 	if (conn_state)
@@ -1442,7 +1443,7 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 
 	list_for_each_entry(drm_mode, &connector->modes, head) {
 
-		convert_to_dsi_mode(drm_mode, &dsi_mode);
+		convert_to_dsi_mode(drm_mode, &dsi_mode, disp);
 
 		rc = dsi_display_find_mode(display, &dsi_mode, NULL, &panel_dsi_mode);
 		if (rc)
@@ -1458,7 +1459,7 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 		list_for_each_entry(cmp_drm_mode, mode_list, head) {
 			if (&cmp_drm_mode->head == &connector->modes)
 				continue;
-			convert_to_dsi_mode(cmp_drm_mode, &dsi_mode);
+			convert_to_dsi_mode(cmp_drm_mode, &dsi_mode, disp);
 
 			rc = dsi_display_find_mode(display, &dsi_mode,
 					NULL, &cmp_panel_dsi_mode);
