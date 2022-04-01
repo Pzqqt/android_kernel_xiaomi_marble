@@ -613,8 +613,10 @@ static struct sde_prop_type sde_prop[] = {
 };
 
 static struct sde_prop_type sde_perf_prop[] = {
-	{PERF_MAX_BW_LOW, "qcom,sde-max-bw-low-kbps", false, PROP_TYPE_U32},
-	{PERF_MAX_BW_HIGH, "qcom,sde-max-bw-high-kbps", false, PROP_TYPE_U32},
+	{PERF_MAX_BW_LOW, "qcom,sde-max-bw-low-kbps", false,
+			PROP_TYPE_U32_ARRAY},
+	{PERF_MAX_BW_HIGH, "qcom,sde-max-bw-high-kbps", false,
+			PROP_TYPE_U32_ARRAY},
 	{PERF_MIN_CORE_IB, "qcom,sde-min-core-ib-kbps", false, PROP_TYPE_U32},
 	{PERF_MIN_LLCC_IB, "qcom,sde-min-llcc-ib-kbps", false, PROP_TYPE_U32},
 	{PERF_MIN_DRAM_IB, "qcom,sde-min-dram-ib-kbps", false, PROP_TYPE_U32},
@@ -4241,6 +4243,16 @@ static int _sde_perf_parse_dt_validate(struct device_node *np, int *prop_count)
 	if (rc)
 		return rc;
 
+	rc = _validate_dt_entry(np, &sde_perf_prop[PERF_MAX_BW_LOW], 1,
+			&prop_count[PERF_MAX_BW_LOW], NULL);
+	if (rc)
+		return rc;
+
+	rc = _validate_dt_entry(np, &sde_perf_prop[PERF_MAX_BW_HIGH], 1,
+			&prop_count[PERF_MAX_BW_HIGH], NULL);
+	if (rc)
+		return rc;
+
 	return rc;
 }
 
@@ -4327,14 +4339,37 @@ static void _sde_perf_parse_dt_cfg_populate(struct sde_mdss_cfg *cfg,
 		struct sde_prop_value *prop_value,
 		bool *prop_exists)
 {
-	cfg->perf.max_bw_low =
-			prop_exists[PERF_MAX_BW_LOW] ?
-			PROP_VALUE_ACCESS(prop_value, PERF_MAX_BW_LOW, 0) :
-			DEFAULT_MAX_BW_LOW;
-	cfg->perf.max_bw_high =
-			prop_exists[PERF_MAX_BW_HIGH] ?
-			PROP_VALUE_ACCESS(prop_value, PERF_MAX_BW_HIGH, 0) :
-			DEFAULT_MAX_BW_HIGH;
+	int i;
+	u32 ddr_type;
+
+	if (prop_exists[PERF_MAX_BW_LOW]) {
+		for (i = 0; i < prop_count[PERF_MAX_BW_LOW]; i = i + 2) {
+			ddr_type = PROP_VALUE_ACCESS(prop_value,
+					PERF_MAX_BW_LOW, i);
+			if (!ddr_type || (of_fdt_get_ddrtype() == ddr_type))
+				cfg->perf.max_bw_low =
+					PROP_VALUE_ACCESS(prop_value,
+					PERF_MAX_BW_LOW, i + 1);
+		}
+	}
+
+	if (!cfg->perf.max_bw_low)
+		cfg->perf.max_bw_low = DEFAULT_MAX_BW_LOW;
+
+	if (prop_exists[PERF_MAX_BW_HIGH]) {
+		for (i = 0; i < prop_count[PERF_MAX_BW_HIGH]; i = i + 2) {
+			ddr_type = PROP_VALUE_ACCESS(prop_value,
+					PERF_MAX_BW_HIGH, i);
+			if (!ddr_type || (of_fdt_get_ddrtype() == ddr_type))
+				cfg->perf.max_bw_high =
+					PROP_VALUE_ACCESS(prop_value,
+					PERF_MAX_BW_HIGH, i+1);
+		}
+	}
+
+	if (!cfg->perf.max_bw_high)
+		cfg->perf.max_bw_high = DEFAULT_MAX_BW_HIGH;
+
 	cfg->perf.min_core_ib =
 			prop_exists[PERF_MIN_CORE_IB] ?
 			PROP_VALUE_ACCESS(prop_value, PERF_MIN_CORE_IB, 0) :
