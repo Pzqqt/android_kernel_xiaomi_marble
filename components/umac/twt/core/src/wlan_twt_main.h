@@ -117,6 +117,16 @@ wlan_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
 		   void *context);
 
 /**
+ * wlan_twt_ac_pdev_param_send() - pdev TWT param send
+ * @psoc: Pointer to psoc object
+ * @twt_ac: TWT access category
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_twt_ac_pdev_param_send(struct wlan_objmgr_psoc *psoc,
+				       enum twt_traffic_ac twt_ac);
+
+/**
  * wlan_twt_is_setup_in_progress() - Get if TWT setup command is in progress
  * for given dialog id
  * @psoc: Pointer to global psoc object

@@ -173,3 +173,27 @@ tgt_twt_nudge_req_send(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+QDF_STATUS
+tgt_twt_ac_pdev_param_send(struct wlan_objmgr_psoc *psoc,
+			   enum twt_traffic_ac twt_ac)
+{
+	struct wlan_lmac_if_twt_tx_ops *tx_ops;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		twt_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tx_ops = wlan_twt_get_tx_ops(psoc);
+	if (!tx_ops || !tx_ops->set_ac_param) {
+		twt_err("set_ac_param is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		return status;
+	}
+
+	status = tx_ops->set_ac_param(psoc, twt_ac, 0);
+
+	return status;
+}
+

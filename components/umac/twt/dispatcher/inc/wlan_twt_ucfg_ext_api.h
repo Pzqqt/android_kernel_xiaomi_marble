@@ -127,6 +127,17 @@ QDF_STATUS ucfg_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
 			      void *context);
 
 /**
+ * ucfg_twt_ac_pdev_param_send() - pdev TWT param send
+ * @psoc: Pointer to psoc object
+ * @twt_ac: TWT access category
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_twt_ac_pdev_param_send(struct wlan_objmgr_psoc *psoc,
+			    enum twt_traffic_ac twt_ac);
+
+/**
  * ucfg_twt_is_max_sessions_reached() - Check if the maximum number of
  * TWT sessions reached or not excluding the given dialog_id
  * @psoc: Pointer to global PSOC object

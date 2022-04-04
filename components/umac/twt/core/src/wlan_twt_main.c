@@ -22,11 +22,11 @@
 #include <wlan_utility.h>
 #include <wlan_mlme_api.h>
 #include <wlan_mlme_main.h>
-#include "wlan_twt_main.h"
 #include "twt/core/src/wlan_twt_priv.h"
 #include "twt/core/src/wlan_twt_common.h"
 #include <wlan_twt_tgt_if_ext_tx_api.h>
 #include <wlan_serialization_api.h>
+#include "wlan_twt_main.h"
 
 /**
  * wlan_twt_add_session()  - Add TWT session entry in the TWT context
@@ -1359,6 +1359,18 @@ QDF_STATUS wlan_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
 		wlan_twt_set_command_in_progress(psoc, &req->peer_macaddr,
 						 req->dialog_id, WLAN_TWT_NONE);
 	}
+
+	return status;
+}
+
+QDF_STATUS wlan_twt_ac_pdev_param_send(struct wlan_objmgr_psoc *psoc,
+				       enum twt_traffic_ac twt_ac)
+{
+	QDF_STATUS status;
+
+	status = tgt_twt_ac_pdev_param_send(psoc, twt_ac);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("failed (status=%d)", status);
 
 	return status;
 }

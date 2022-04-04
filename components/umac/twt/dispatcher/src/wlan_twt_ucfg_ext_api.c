@@ -86,6 +86,13 @@ ucfg_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
 	return wlan_twt_nudge_req(psoc, params, context);
 }
 
+QDF_STATUS
+ucfg_twt_ac_pdev_param_send(struct wlan_objmgr_psoc *psoc,
+			    enum twt_traffic_ac twt_ac)
+{
+	return wlan_twt_ac_pdev_param_send(psoc, twt_ac);
+}
+
 bool ucfg_twt_is_max_sessions_reached(struct wlan_objmgr_psoc *psoc,
 				      struct qdf_mac_addr *peer_mac,
 				      uint8_t dialog_id)
