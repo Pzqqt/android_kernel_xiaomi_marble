@@ -1240,7 +1240,7 @@ void wlan_hdd_start_connectivity_logging(struct hdd_context *hdd_ctx)
 
 	hdd_cb.wlan_connectivity_log_send_to_usr =
 			wlan_hdd_send_connectivity_log_to_user;
-	wlan_connectivity_logging_start(&hdd_cb, hdd_ctx);
+	wlan_connectivity_logging_start(hdd_ctx->psoc, &hdd_cb, hdd_ctx);
 }
 
 void wlan_hdd_connectivity_event_connecting(struct hdd_context *hdd_ctx,

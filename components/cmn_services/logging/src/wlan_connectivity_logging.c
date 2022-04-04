@@ -37,7 +37,8 @@ wlan_connectivity_logging_register_callbacks(
 	global_cl.osif_cb_context = osif_cb_context;
 }
 
-void wlan_connectivity_logging_start(struct wlan_cl_osif_cbks *osif_cbks,
+void wlan_connectivity_logging_start(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_cl_osif_cbks *osif_cbks,
 				     void *osif_cb_context)
 {
 	global_cl.head = qdf_mem_valloc(sizeof(*global_cl.head) *
@@ -47,6 +48,7 @@ void wlan_connectivity_logging_start(struct wlan_cl_osif_cbks *osif_cbks,
 		return;
 	}
 
+	global_cl.psoc = psoc;
 	global_cl.write_idx = 0;
 	global_cl.read_idx = 0;
 
@@ -69,6 +71,7 @@ void wlan_connectivity_logging_stop(void)
 
 	qdf_spin_lock_bh(&global_cl.write_ptr_lock);
 
+	global_cl.psoc = NULL;
 	global_cl.osif_cb_context = NULL;
 	global_cl.osif_cbks.wlan_connectivity_log_send_to_usr = NULL;
 
@@ -147,7 +150,9 @@ static bool wlan_logging_is_queue_empty(void)
 QDF_STATUS
 wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 {
+	struct wlan_objmgr_vdev *vdev;
 	struct wlan_log_record *write_block;
+	enum QDF_OPMODE opmode;
 
 	if (!new_record) {
 		logging_debug("NULL entry");
@@ -159,6 +164,20 @@ wlan_connectivity_log_enqueue(struct wlan_log_record *new_record)
 			      new_record->log_subtype);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(global_cl.psoc,
+						    new_record->vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+	if (!vdev) {
+		logging_debug("invalid vdev:%d", new_record->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	if (opmode != QDF_STA_MODE)
+		return QDF_STATUS_E_INVAL;
 
 	/*
 	 * This API writes to the logging buffer if the buffer is not full.

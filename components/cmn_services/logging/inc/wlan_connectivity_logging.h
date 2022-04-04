@@ -356,6 +356,7 @@ struct wlan_cl_osif_cbks {
 /**
  * struct wlan_connectivity_log_buf_data  - Master structure to hold the
  * pointers to the ring buffers.
+ * @psoc: Global psoc pointer
  * @osif_cbks: OSIF callbacks
  * @osif_cb_context: Pointer to the context to be passed to OSIF
  * callback
@@ -372,6 +373,7 @@ struct wlan_cl_osif_cbks {
  * @is_active: If the global buffer is initialized or not
  */
 struct wlan_connectivity_log_buf_data {
+	struct wlan_objmgr_psoc *psoc;
 	struct wlan_cl_osif_cbks osif_cbks;
 	void *osif_cb_context;
 	uint64_t first_record_timestamp_in_last_sec;
@@ -402,12 +404,14 @@ struct wlan_connectivity_log_buf_data {
 /**
  * wlan_connectivity_logging_start()  - Initialize the connectivity/roaming
  * logging buffer
+ * @psoc: Global psoc pointer
  * @osif_cbks: OSIF callbacks
  * @osif_cbk_context: OSIF callback context argument
  *
  * Return: None
  */
-void wlan_connectivity_logging_start(struct wlan_cl_osif_cbks *osif_cbks,
+void wlan_connectivity_logging_start(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_cl_osif_cbks *osif_cbks,
 				     void *osif_cb_context);
 
 /**
@@ -463,7 +467,8 @@ wlan_connectivity_mgmt_event(struct wlan_frame_hdr *mac_hdr,
 			     enum wlan_main_tag tag);
 #else
 static inline
-void wlan_connectivity_logging_start(struct wlan_cl_osif_cbks *osif_cbks,
+void wlan_connectivity_logging_start(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_cl_osif_cbks *osif_cbks,
 				     void *osif_cb_context)
 {}
 
