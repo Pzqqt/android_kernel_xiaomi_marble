@@ -111,6 +111,18 @@ target_if_twt_resume_req(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 target_if_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
 			struct twt_nudge_dialog_cmd_param *req);
+
+/**
+ * target_if_twt_ac_param_send() - pdev TWT param send
+ * @psoc: Pointer to psoc object
+ * @twt_ac: TWT access category
+ * @mac_id: radio context
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+target_if_twt_ac_param_send(struct wlan_objmgr_psoc *psoc,
+			    enum twt_traffic_ac twt_ac, uint8_t mac_id);
 #else
 static inline QDF_STATUS
 target_if_twt_register_ext_tx_ops(struct wlan_lmac_if_twt_tx_ops *twt_tx_ops)
@@ -165,6 +177,12 @@ target_if_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+target_if_twt_ac_param_send(struct wlan_objmgr_psoc *psoc,
+			    enum twt_traffic_ac twt_ac, uint8_t mac_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 #endif /*_TARGET_IF_EXT_TWT_H_ */
 
