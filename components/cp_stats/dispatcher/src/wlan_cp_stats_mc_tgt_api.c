@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1200,7 +1200,7 @@ QDF_STATUS tgt_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 	struct wlan_lmac_if_cp_stats_tx_ops *tx_ops;
 
 	tx_ops = target_if_cp_stats_get_tx_ops(psoc);
-	if (!tx_ops)
+	if (!tx_ops || !tx_ops->inc_wake_lock_stats)
 		return QDF_STATUS_E_NULL_VALUE;
 
 	tx_ops->inc_wake_lock_stats(reason, stats, unspecified_wake_count);
