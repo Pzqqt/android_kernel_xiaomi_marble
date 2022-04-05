@@ -463,7 +463,7 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 	/* Sync cached descriptor with HW */
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
 
-	coalesce = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid);
+	coalesce = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid, msdu_info);
 
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, tx_desc->length);
 	DP_STATS_INC(soc, tx.tcl_enq[ring_id], 1);
@@ -516,7 +516,6 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 				union hal_tx_bank_config *bank_config)
 {
 	struct dp_vdev *vdev = &be_vdev->vdev;
-	struct dp_soc *soc = vdev->pdev->soc;
 
 	bank_config->epd = 0;
 
@@ -532,8 +531,8 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 	bank_config->src_buffer_swap = 0;
 	bank_config->link_meta_swap = 0;
 
-	if ((soc->sta_mode_search_policy == HAL_TX_ADDR_INDEX_SEARCH) &&
-	     vdev->opmode == wlan_op_mode_sta) {
+	if ((vdev->search_type == HAL_TX_ADDR_INDEX_SEARCH) &&
+	    vdev->opmode == wlan_op_mode_sta) {
 		bank_config->index_lookup_enable = 1;
 		bank_config->mcast_pkt_ctrl = HAL_TX_MCAST_CTRL_MEC_NOTIFY;
 		bank_config->addrx_en = 0;

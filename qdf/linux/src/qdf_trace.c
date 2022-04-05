@@ -1826,6 +1826,7 @@ void qdf_fill_wlan_connectivity_log(enum qdf_proto_type type,
 	uint8_t pkt_type;
 
 	log_buf.timestamp_us = qdf_get_time_of_the_day_ms() * 1000;
+	log_buf.ktime_us = qdf_ktime_to_us(qdf_ktime_get());
 	log_buf.vdev_id = vdev_id;
 	if (type == QDF_PROTO_TYPE_DHCP) {
 		log_buf.log_subtype = qdf_subtype_to_wlan_main_tag(subtype);

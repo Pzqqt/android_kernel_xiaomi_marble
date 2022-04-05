@@ -1,6 +1,7 @@
 /*
  *
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -358,7 +359,7 @@ wlan_objmgr_print_ref_func_line(struct wlan_objmgr_trace_func *func_head,
 	uint32_t ref_cnt;
 	struct wlan_objmgr_line_ref_node *tmp_ln_node;
 
-	obj_mgr_debug("ID: %s", string_from_dbgid(id));
+	obj_mgr_debug("ID: %s(%d)", string_from_dbgid(id), id);
 	while (func_head) {
 		obj_mgr_debug("Func: %s", func_head->func);
 		tmp_ln_node = func_head->line_head;

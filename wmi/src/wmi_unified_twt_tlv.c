@@ -899,6 +899,19 @@ static QDF_STATUS extract_twt_resume_dialog_comp_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+static enum HOST_TWT_NOTIFY_STATUS
+wmi_get_converted_twt_notify_status(WMI_TWT_NOTIFICATION_ID_T tgt_status)
+{
+	switch (tgt_status) {
+	case WMI_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_SET:
+		return HOST_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_SET;
+	case WMI_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_CLEAR:
+		return HOST_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_CLEAR;
+	default:
+		return HOST_TWT_NOTIFY_EVENT_READY;
+	}
+}
+
 static QDF_STATUS extract_twt_notify_event_tlv(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
@@ -916,7 +929,17 @@ static QDF_STATUS extract_twt_notify_event_tlv(
 
 	ev = param_buf->fixed_param;
 
+	if (ev->event_id > WMI_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_CLEAR) {
+		wmi_debug("Incorrect TWT notify event vdev_id: %d, status: %d",
+			  ev->vdev_id, ev->event_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	params->vdev_id = ev->vdev_id;
+	params->status = wmi_get_converted_twt_notify_status(ev->event_id);
+
+	wmi_debug("Extract notify event vdev_id: %d, status: %d",
+		  params->vdev_id, params->status);
 
 	return QDF_STATUS_SUCCESS;
 }

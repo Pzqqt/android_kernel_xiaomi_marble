@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5982,10 +5982,15 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_PRINT_STATS("successfully transmitted: %u msdus (%llu bytes)",
 			       pdev->stats.tx.tx_success.num,
 			       pdev->stats.tx.tx_success.bytes);
-		for (i = 0; i < soc->num_tcl_data_rings; i++)
+		for (i = 0; i < soc->num_tcl_data_rings; i++) {
 			DP_PRINT_STATS("Enqueue to SW2TCL%u: %u", i + 1,
 				       soc->stats.tx.tcl_enq[i]);
+			DP_PRINT_STATS("TX completions reaped from ring %u: %u",
+				       i, soc->stats.tx.tx_comp[i]);
+		}
 
+		DP_PRINT_STATS("Invalid release source: %u",
+			       soc->stats.tx.invalid_release_source);
 		DP_PRINT_STATS("Dropped in host:");
 		DP_PRINT_STATS("Total packets dropped: %u,",
 			       pdev->stats.tx_i.dropped.dropped_pkt.num);

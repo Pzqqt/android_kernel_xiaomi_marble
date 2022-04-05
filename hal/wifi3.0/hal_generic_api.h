@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,7 +20,6 @@
 #define _HAL_GENERIC_API_H_
 
 #include <hal_rx.h>
-#include "hal_api_mon.h"
 
 /**
  * hal_get_radiotap_he_gi_ltf() - Convert HE ltf and GI value

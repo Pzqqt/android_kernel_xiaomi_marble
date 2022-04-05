@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,8 +24,11 @@
 #endif
 #include "wmi_unified_11be_tlv.h"
 
-size_t vdev_create_mlo_params_size(void)
+size_t vdev_create_mlo_params_size(struct vdev_create_params *param)
 {
+	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)param->mlo_mac))
+		return WMI_TLV_HDR_SIZE;
+
 	return sizeof(wmi_vdev_create_mlo_params) + WMI_TLV_HDR_SIZE;
 }
 
@@ -33,6 +36,11 @@ uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 				    struct vdev_create_params *param)
 {
 	wmi_vdev_create_mlo_params *mlo_params;
+
+	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)param->mlo_mac)) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+		return buf_ptr + WMI_TLV_HDR_SIZE;
+	}
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       sizeof(wmi_vdev_create_mlo_params));
@@ -64,10 +72,10 @@ size_t vdev_start_mlo_params_size(struct vdev_start_params *req)
 }
 
 #ifdef WLAN_MCAST_MLO
-static bool vdev_start_add_mlo_mcast_params(uint32_t mlo_flags,
+static void vdev_start_add_mlo_mcast_params(uint32_t *mlo_flags,
 					    struct vdev_start_params *req)
 {
-	WMI_MLO_FLAGS_SET_MCAST_VDEV(mlo_flags,
+	WMI_MLO_FLAGS_SET_MCAST_VDEV(*mlo_flags,
 				     req->mlo_flags.mlo_mcast_vdev);
 }
 #else
@@ -94,7 +102,8 @@ uint8_t *vdev_start_add_mlo_params(uint8_t *buf_ptr,
 	WMI_MLO_FLAGS_SET_ASSOC_LINK(mlo_params->mlo_flags.mlo_flags,
 				     req->mlo_flags.mlo_assoc_link);
 
-	vdev_start_add_mlo_mcast_params(mlo_params->mlo_flags.mlo_flags, req);
+	vdev_start_add_mlo_mcast_params(&mlo_params->mlo_flags.mlo_flags,
+					req);
 
 	return buf_ptr + sizeof(wmi_vdev_start_mlo_params);
 }

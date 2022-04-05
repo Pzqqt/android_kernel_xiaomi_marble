@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1491,7 +1491,7 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 	 * Set DEST_RING_MAPPING_4 to SW2 as default value for
 	 * DESTINATION_RING_CTRL_IX_0.
 	 */
-	ix0_map[0] = REO_REMAP_TCL;
+	ix0_map[0] = REO_REMAP_SW1;
 	ix0_map[1] = REO_REMAP_SW1;
 	ix0_map[2] = REO_REMAP_SW2;
 	ix0_map[3] = REO_REMAP_SW3;
@@ -1719,7 +1719,7 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		return QDF_STATUS_E_AGAIN;
 
 	/* Call HAL API to remap REO rings to REO2IPA ring */
-	ix_map[0] = REO_REMAP_TCL;
+	ix_map[0] = REO_REMAP_SW1;
 	ix_map[1] = REO_REMAP_SW4;
 	ix_map[2] = REO_REMAP_SW1;
 	ix_map[3] = REO_REMAP_SW4;
@@ -1778,7 +1778,7 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	if (!hif_is_target_ready(HIF_GET_SOFTC(soc->hif_handle)))
 		return QDF_STATUS_E_AGAIN;
 
-	ix0_map[0] = REO_REMAP_TCL;
+	ix0_map[0] = REO_REMAP_SW1;
 	ix0_map[1] = REO_REMAP_SW1;
 	ix0_map[2] = REO_REMAP_SW2;
 	ix0_map[3] = REO_REMAP_SW3;

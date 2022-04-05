@@ -339,6 +339,12 @@ wlan_reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
 {
 	return QDF_STATUS_E_FAILURE;
 }
+
+static inline
+const char *wlan_reg_get_power_string(enum reg_6g_ap_type power_type)
+{
+	return "INVALID";
+}
 #endif /* CONFIG_BAND_6GHZ */
 
 /**

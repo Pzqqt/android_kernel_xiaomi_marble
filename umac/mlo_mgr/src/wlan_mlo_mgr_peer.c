@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -711,6 +711,11 @@ QDF_STATUS wlan_mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 
 	/* get ML VDEV from VDEV */
 	ml_dev = vdev->mlo_dev_ctx;
+
+	if (!ml_dev) {
+		mlo_err("ML dev ctx is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 	/* Check resources of Partner VDEV */
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {

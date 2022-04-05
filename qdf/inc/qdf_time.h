@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -334,6 +335,18 @@ static inline qdf_ktime_t qdf_ktime_add_ns(qdf_ktime_t ktime, int64_t ns)
 static inline int64_t qdf_ktime_to_ms(qdf_ktime_t ktime)
 {
 	return __qdf_ktime_to_ms(ktime);
+}
+
+/**
+ * qdf_ktime_to_us - Convert the qdf_ktime_t object into microseconds
+ * @ktime: time as qdf_ktime_t object
+ *
+ * Return: qdf_ktime_t in microseconds
+ */
+
+static inline int64_t qdf_ktime_to_us(qdf_ktime_t ktime)
+{
+	return __qdf_time_ktime_to_us(ktime);
 }
 
 /**

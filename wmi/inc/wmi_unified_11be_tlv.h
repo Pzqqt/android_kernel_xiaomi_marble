@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,10 +21,10 @@
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
  *  vdev_create_mlo_params_size() - Get MLO params size in vdev create
- *
+ *  @param: ponter to vdev create request param
  *  Return: size of MLO params in vdev create
  */
-size_t vdev_create_mlo_params_size(void);
+size_t vdev_create_mlo_params_size(struct vdev_create_params *param);
 /**
  *  vdev_create_add_mlo_params() - Add MLO params in vdev create cmd
  *  @buf_ptr: pointer to vdev create buffer.
@@ -121,7 +122,7 @@ static uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 	return buf_ptr + WMI_TLV_HDR_SIZE;
 }
 
-static size_t vdev_create_mlo_params_size(void)
+static size_t vdev_create_mlo_params_size(struct vdev_create_params *param)
 {
 	return WMI_TLV_HDR_SIZE;
 }

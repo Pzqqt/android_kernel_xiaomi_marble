@@ -51,6 +51,7 @@
  * @low_band_oce_boost: Flag to assign higher alpha weightage low band oce
  * @wlm_indication_weightage: WLM indication weightage
  * @emlsr_weightage: eMLSR weightage
+ * @security_weightage: Security weightage
  */
 struct weight_cfg {
 	uint8_t rssi_weightage;
@@ -80,6 +81,7 @@ struct weight_cfg {
 	uint8_t wlm_indication_weightage;
 	uint8_t emlsr_weightage;
 #endif
+	uint8_t security_weightage;
 };
 
 /**
@@ -208,6 +210,14 @@ enum cm_nss_idx {
 };
 #endif
 
+enum cm_security_idx {
+	CM_SECURITY_WPA_INDEX,
+	CM_SECURITY_WPA2_INDEX,
+	CM_SECURITY_WPA3_INDEX,
+	CM_SECURITY_WPA_OPEN_WEP_INDEX,
+	CM_MAX_SECURITY_INDEX
+};
+
 /**
  * struct scoring_cfg - Scoring related configuration
  * @weight_cfg: weigtage config for config
@@ -223,6 +233,8 @@ enum cm_nss_idx {
  * @check_6ghz_security: check security for 6Ghz candidate
  * @key_mgmt_mask_6ghz: user configurable mask for 6ghz AKM
  * @mlsr_link_selection: MLSR link selection config
+ * @roam_tgt_score_cap: Roam score capability
+ * @security_weight_per_index: security weight per index
  */
 struct scoring_cfg {
 	struct weight_cfg weight_config;
@@ -240,6 +252,8 @@ struct scoring_cfg {
 #ifdef WLAN_FEATURE_11BE_MLO
 	uint8_t mlsr_link_selection;
 #endif
+	uint32_t roam_tgt_score_cap;
+	uint32_t security_weight_per_index;
 };
 
 /**

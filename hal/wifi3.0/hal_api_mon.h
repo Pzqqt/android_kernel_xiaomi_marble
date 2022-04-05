@@ -22,6 +22,7 @@
 
 #include "qdf_types.h"
 #include "hal_internal.h"
+#include "hal_rx.h"
 #include "hal_hw_headers.h"
 #include <target_type.h>
 
@@ -77,6 +78,8 @@
 #define HAL_TLV_STATUS_MPDU_END 6
 #define HAL_TLV_STATUS_MSDU_START 7
 #define HAL_TLV_STATUS_MSDU_END 8
+#define HAL_TLV_STATUS_MON_BUF_ADDR 9
+#define HAL_TLV_STATUS_MPDU_START 10
 
 #define HAL_MAX_UL_MU_USERS	37
 
@@ -186,6 +189,100 @@
 #define HAL_RX_FRAME_CTRL_TYPE_MGMT 0x0
 #define HAL_RX_FRAME_CTRL_TYPE_CTRL 0x1
 #define HAL_RX_FRAME_CTRL_TYPE_DATA 0x2
+
+/**
+ * hal_dl_ul_flag - flag to indicate UL/DL
+ * @dl_ul_flag_is_dl_or_tdls: DL
+ * @dl_ul_flag_is_ul: UL
+ */
+enum hal_dl_ul_flag {
+	dl_ul_flag_is_dl_or_tdls,
+	dl_ul_flag_is_ul,
+};
+
+/*
+ * hal_eht_ppdu_sig_cmn_type - PPDU type
+ * @eht_ppdu_sig_tb_or_dl_ofdma: TB/DL_OFDMA PPDU
+ * @eht_ppdu_sig_su: SU PPDU
+ * @eht_ppdu_sig_dl_mu_mimo: DL_MU_MIMO PPDU
+ */
+enum hal_eht_ppdu_sig_cmn_type {
+	eht_ppdu_sig_tb_or_dl_ofdma,
+	eht_ppdu_sig_su,
+	eht_ppdu_sig_dl_mu_mimo,
+};
+
+/*
+ * hal_mon_packet_info - packet info
+ * @sw_cookie: 64-bit SW desc virtual address
+ * @dma_length: packet DMA length
+ * @msdu_continuation: msdu continulation in next buffer
+ * @truncated: packet is truncated
+ */
+struct hal_mon_packet_info {
+	uint64_t sw_cookie;
+	uint16_t dma_length;
+	bool msdu_continuation;
+	bool truncated;
+};
+
+/*
+ * hal_rx_mon_msdu_info - msdu info
+ * @first_buffer: first buffer of msdu
+ * @last_buffer: last buffer of msdu
+ * @first_mpdu: first MPDU
+ * @mpdu_length_err: MPDU length error
+ * @fcs_err: FCS error
+ * @first_msdu: first msdu
+ * @decap_type: decap type
+ * @last_msdu: last msdu
+ * @buffer_len: buffer len
+ * @frag_len: frag len
+ * @msdu_len: msdu len
+ * @msdu_index: msdu index
+ * @user_rssi: user rssi
+ * @l3_header_padding: L3 padding header
+ * @stbc: stbc enabled
+ * @sgi: SGI value
+ * @reception_type: reception type
+ */
+struct hal_rx_mon_msdu_info {
+	uint8_t first_buffer;
+	uint8_t last_buffer;
+	uint8_t first_mpdu;
+	uint8_t mpdu_length_err;
+	uint8_t fcs_err;
+	uint8_t first_msdu;
+	uint8_t decap_type;
+	uint8_t last_msdu;
+	uint16_t buffer_len;
+	uint16_t frag_len;
+	uint16_t msdu_len;
+	uint8_t msdu_index;
+	int8_t user_rssi;
+	uint8_t l3_header_padding;
+	uint8_t stbc;
+	uint8_t sgi;
+	uint8_t reception_type;
+};
+
+/*
+ * hal_rx_mon_mpdu_info - MPDU info
+ * @decap_type: decap_type
+ * @mpdu_length_err: MPDU length error
+ * @fcs_err: FCS error
+ * @overflow_err: overflow error
+ * @decrypt_err: decrypt error
+ * @mpdu_start_received: MPDU start received
+ */
+struct hal_rx_mon_mpdu_info {
+	uint8_t decap_type;
+	bool mpdu_length_err;
+	bool fcs_err;
+	bool overflow_err;
+	bool decrypt_err;
+	bool mpdu_start_received;
+};
 
 /**
  * struct hal_rx_mon_desc_info () - HAL Rx Monitor descriptor info
@@ -491,7 +588,7 @@ enum {
  */
 struct hal_rx_ppdu_common_info {
 	uint32_t ppdu_id;
-	uint32_t ppdu_timestamp;
+	uint64_t ppdu_timestamp;
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
 	uint32_t mpdu_fcs_ok_bitmap[HAL_RX_NUM_WORDS_PER_PPDU_BITMAP];
@@ -1113,6 +1210,20 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_tlv_aggr_info tlv_aggr;
 	/* EHT SIG user info */
 	uint32_t eht_sig_user_info;
+	/*per user mpdu count */
+	uint16_t mpdu_count[HAL_MAX_UL_MU_USERS];
+	/*per user msdu count */
+	uint16_t msdu_count[HAL_MAX_UL_MU_USERS];
+	/* Placeholder to update per user last processed msdu’s info */
+	struct hal_rx_mon_msdu_info  msdu[HAL_MAX_UL_MU_USERS];
+	/* Placeholder to update per user last processed mpdu’s info */
+	struct hal_rx_mon_mpdu_info mpdu_info[HAL_MAX_UL_MU_USERS];
+	 /* placeholder to hold packet buffer info */
+	struct hal_mon_packet_info packet_info;
+	 /* per user per MPDU queue */
+	qdf_nbuf_t mpdu_q[HAL_MAX_UL_MU_USERS][HAL_RX_MAX_MPDU];
+	 /* ppdu info list element */
+	TAILQ_ENTRY(hal_rx_ppdu_info) ppdu_list_elem;
 };
 
 static inline uint32_t
