@@ -1772,7 +1772,7 @@ int __ipa3_del_rt_rule(u32 rule_hdl)
 		!strcmp(entry->tbl->name, IPA_DFLT_RT_TBL_NAME)) {
 		IPADBG("Deleting rule from default rt table idx=%u\n",
 			entry->tbl->idx);
-		if (entry->tbl->rule_cnt == 1) {
+		if (entry->tbl->rule_cnt == 1 && !ipa3_ctx->deepsleep) {
 			IPAERR_RL("Default tbl last rule cannot be deleted\n");
 			return -EINVAL;
 		}

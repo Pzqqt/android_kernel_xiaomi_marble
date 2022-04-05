@@ -5398,6 +5398,13 @@ static void ipa_dma_gsi_irq_rx_notify_cb(struct gsi_chan_xfer_notify *notify)
 	}
 }
 
+void ipa3_dealloc_common_event_ring(void)
+{
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	gsi_dealloc_evt_ring(ipa3_ctx->gsi_evt_comm_hdl);
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+}
+
 int ipa3_alloc_common_event_ring(void)
 {
 	struct gsi_evt_ring_props gsi_evt_ring_props;
