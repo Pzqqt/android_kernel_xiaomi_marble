@@ -48,6 +48,9 @@ static enum cvp_status hfi_map_err_status(u32 hfi_err)
 	case HFI_ERR_SESSION_UNSUPPORTED_STREAM:
 		cvp_err = CVP_ERR_NOT_SUPPORTED;
 		break;
+	case HFI_ERR_SESSION_UNSUPPORT_CMD:
+		cvp_err = CVP_ERR_HW_NOT_SUPPORTED;
+		break;
 	case HFI_ERR_SYS_MAX_SESSIONS_REACHED:
 		cvp_err = CVP_ERR_MAX_CLIENTS;
 		break;
