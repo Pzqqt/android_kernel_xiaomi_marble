@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,18 +24,12 @@
 #include <qdf_event.h>
 #include <qdf_threads.h>
 #include <wlan_objmgr_vdev_obj.h>
+#include "cfg_dp.h"
 
 /* Maximum number of REO rings supported (for stats tracking) */
-#ifdef CONFIG_BERYLLIUM
-#define DP_RX_TM_MAX_REO_RINGS 8
+#define DP_RX_TM_MAX_REO_RINGS WLAN_CFG_NUM_REO_DEST_RING
 /* Number of DP RX threads supported */
-#define DP_MAX_RX_THREADS 3
-#else
-#define DP_RX_TM_MAX_REO_RINGS 4
-#define DP_MAX_RX_THREADS DP_RX_TM_MAX_REO_RINGS
-#endif
-
-#define DP_REDUCED_NUM_RX_THREADS 3
+#define DP_MAX_RX_THREADS WLAN_CFG_NUM_REO_DEST_RING
 
 /*
  * struct dp_rx_tm_handle_cmn - Opaque handle for rx_threads to store

@@ -23253,6 +23253,9 @@ hdd_convert_cfgdot11mode_to_80211mode(enum csr_cfgdot11mode mode)
 		return QCA_WLAN_802_11_MODE_11AX;
 	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
 		return QCA_WLAN_802_11_MODE_11AX;
+	case eCSR_CFG_DOT11_MODE_11BE:
+	case eCSR_CFG_DOT11_MODE_11BE_ONLY:
+		return QCA_WLAN_802_11_MODE_11BE;
 	case eCSR_CFG_DOT11_MODE_ABG:
 	case eCSR_CFG_DOT11_MODE_AUTO:
 	default:

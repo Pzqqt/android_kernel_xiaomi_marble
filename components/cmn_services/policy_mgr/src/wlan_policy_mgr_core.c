@@ -1662,8 +1662,9 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
-static uint32_t
-policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev) {
+uint32_t
+policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev)
+{
 	struct wlan_channel *chan;
 	uint32_t band_mask = 0;
 	struct wlan_objmgr_vdev *ml_vdev_list[WLAN_UMAC_MLO_MAX_VDEVS] = {0};
@@ -1711,8 +1712,9 @@ next:
 	return band_mask;
 }
 #else
-static uint32_t
-policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev) {
+uint32_t
+policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev)
+{
 	struct wlan_channel *chan;
 	uint32_t band_mask = 0;
 

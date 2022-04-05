@@ -28,6 +28,7 @@
 #include <../../core/src/wlan_cm_roam_i.h>
 #include "wlan_cm_roam_api.h"
 
+#ifdef WLAN_FEATURE_11BE_MLO
 static bool
 mlo_check_connect_req_bmap(struct wlan_objmgr_vdev *vdev)
 {
@@ -114,6 +115,9 @@ mlo_update_for_legacy_roam(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
+	if (!vdev->mlo_dev_ctx)
+		goto end;
+
 	mlo_dev_ctx = vdev->mlo_dev_ctx;
 	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
 		if (!mlo_dev_ctx->wlan_vdev_list[i])
@@ -123,6 +127,7 @@ mlo_update_for_legacy_roam(struct wlan_objmgr_psoc *psoc,
 		mlo_cleanup_link(tmp_vdev, vdev);
 	}
 
+end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
 }
 
@@ -148,7 +153,31 @@ mlo_clear_link_bmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
 }
+#else
+static inline void
+mlo_clear_link_bmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{}
 
+static inline void
+mlo_update_for_legacy_roam(struct wlan_objmgr_psoc *psoc,
+			   uint8_t vdev_id)
+{}
+
+static inline void
+mlo_cleanup_link(struct wlan_objmgr_vdev *tmp_vdev,
+		 struct wlan_objmgr_vdev *vdev)
+{}
+
+static inline void
+mlo_update_for_multi_link_roam(struct wlan_objmgr_psoc *psoc,
+			       uint8_t vdev_id,
+			       uint8_t ml_link_vdev_id)
+{}
+
+static inline bool
+mlo_check_connect_req_bmap(struct wlan_objmgr_vdev *vdev)
+{}
+#endif
 QDF_STATUS mlo_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				void *event, uint32_t event_data_len)
 {
@@ -233,6 +262,10 @@ mlo_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 						    vdev_id,
 						    WLAN_MLME_SB_ID);
+
+	if (!vdev->mlo_dev_ctx)
+		goto end;
+
 	mlo_dev_ctx = vdev->mlo_dev_ctx;
 
 	for (i = 0; i < WLAN_UMAC_MLO_MAX_VDEVS; i++) {
@@ -244,6 +277,7 @@ mlo_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 				  bssid);
 	}
 
+end:
 	cm_fw_ho_fail_req(psoc, vdev_id, bssid);
 	wlan_objmgr_vdev_release_ref(vdev,
 				     WLAN_MLME_SB_ID);

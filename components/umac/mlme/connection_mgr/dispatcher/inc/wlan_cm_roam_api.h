@@ -730,47 +730,6 @@ QDF_STATUS
 wlan_cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
 
 /**
- * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
- * @wmi:       wmi handle
- * @evt_buf:   Pointer to the event buffer
- * @dst:       Pointer to destination structure to fill data
- * @idx:       TLV id
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
-				  struct roam_btm_response_data *dst,
-				  uint8_t idx);
-
-/**
- * wlan_cm_roam_extract_roam_initial_info() - Extract Roam Initial stats
- * @wmi:       wmi handle
- * @evt_buf:   Pointer to the event buffer
- * @dst:       Pointer to destination structure to fill data
- * @idx:       TLV id
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
-				       struct roam_initial_data *dst,
-				       uint8_t idx);
-
-/**
- * wlan_cm_roam_extract_roam_msg_info() - Extract Roam msg stats
- * @wmi:       wmi handle
- * @evt_buf:   Pointer to the event buffer
- * @dst:       Pointer to destination structure to fill data
- * @idx:       TLV id
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
-				   struct roam_msg_info *dst, uint8_t idx);
-
-/**
  * wlan_cm_get_roam_band_value  - Get roam band value from RSO config
  * @psoc: psoc pointer
  * @vdev: Pointer to vdev
@@ -779,21 +738,6 @@ wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
  */
 uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_objmgr_vdev *vdev);
-
-/**
- * wlan_cm_roam_extract_frame_info  - Extract the roam frame info TLV
- * @wmi: wmi handle
- * @evt_buf: Pointer to the event buffer
- * @dst: Destination buffer
- * @idx: TLV index
- * @num_frames: Number of frame info TLVs
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_extract_frame_info(wmi_unified_t wmi, void *evt_buf,
-				struct roam_frame_info *dst, uint8_t idx,
-				uint8_t num_frames);
 
 /**
  * wlan_cm_roam_activate_pcl_per_vdev() - Set the PCL command to be sent per

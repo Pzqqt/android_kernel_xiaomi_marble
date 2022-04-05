@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -98,6 +99,7 @@ wlan_connectivity_mgmt_event(struct wlan_frame_hdr *mac_hdr,
 		return;
 
 	new_rec->timestamp_us = qdf_get_time_of_the_day_us();
+	new_rec->ktime_us = qdf_ktime_to_us(qdf_ktime_get());
 	new_rec->vdev_id = vdev_id;
 	new_rec->log_subtype = tag;
 	qdf_copy_macaddr(&new_rec->bssid,

@@ -2403,7 +2403,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
 						event);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			if (QDF_IS_STATUS_SUCCESS(qdf_status))
+				hdd_fill_station_info(adapter, event);
+			else
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
@@ -2447,7 +2449,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
 						event);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			if (QDF_IS_STATUS_SUCCESS(qdf_status))
+				hdd_fill_station_info(adapter, event);
+			else
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
 					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
@@ -2486,8 +2490,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		}
 
 		sta_id = event->staId;
-		if (QDF_IS_STATUS_SUCCESS(qdf_status))
-			hdd_fill_station_info(adapter, event);
 
 		if (ucfg_ipa_is_enabled()) {
 			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
@@ -3378,7 +3380,7 @@ void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_objmgr_vdev *vdev =
 		hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
-	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct wlan_objmgr_pdev *pdev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct qdf_mac_addr bssid;
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
@@ -3390,6 +3392,9 @@ void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
 	uint32_t chan_freq;
 	bool is_valid_txpower = false;
 
+	if (!vdev)
+		return;
+	pdev = wlan_vdev_get_pdev(vdev);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	psoc_priv_obj = reg_get_psoc_obj(psoc);

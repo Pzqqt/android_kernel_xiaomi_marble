@@ -1915,7 +1915,8 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 	if (peer_type == WMI_PEER_TYPE_TDLS)
 		cdp_peer_set_peer_as_tdls(dp_soc, vdev_id, peer_addr, true);
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) ||
+	    MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
 		wma_debug("LFR3: Created peer "QDF_MAC_ADDR_FMT" vdev_id %d, peer_count %d",
 			 QDF_MAC_ADDR_REF(peer_addr), vdev_id,
 			 wma->interfaces[vdev_id].peer_count + 1);
@@ -1989,8 +1990,19 @@ static void wma_cdp_peer_setup(tp_wma_handle wma,
 	qdf_mem_zero(&peer_info, sizeof(peer_info));
 
 	peer_info.mld_peer_mac = mld_mac;
-	peer_info.is_first_link = wlan_peer_mlme_is_assoc_peer(obj_peer);
-	peer_info.is_primary_link = peer_info.is_first_link;
+	if (MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) &&
+	    wlan_vdev_mlme_get_is_mlo_link(wma->psoc, vdev_id)) {
+		peer_info.is_first_link = 1;
+		peer_info.is_primary_link = 0;
+	} else if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) &&
+		   wlan_vdev_mlme_get_is_mlo_vdev(wma->psoc, vdev_id)) {
+		peer_info.is_first_link = 0;
+		peer_info.is_primary_link = 1;
+	} else {
+		peer_info.is_first_link = wlan_peer_mlme_is_assoc_peer(obj_peer);
+		peer_info.is_primary_link = peer_info.is_first_link;
+	}
+
 	cdp_peer_setup(dp_soc, vdev_id, peer_addr, &peer_info);
 	wlan_objmgr_peer_release_ref(obj_peer, WLAN_LEGACY_WMA_ID);
 }
@@ -4645,7 +4657,9 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		}
 
 		if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc,
-						   params->smesessionId)) {
+						   params->smesessionId) ||
+		    MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(wma->psoc,
+						       params->smesessionId)) {
 			/* iface->nss = params->nss; */
 			/*In LFR2.0, the following operations are performed as
 			 * part of wma_send_peer_assoc. As we are
@@ -4839,8 +4853,11 @@ out:
 	wma_debug("vdev_id %d aid %d sta mac " QDF_MAC_ADDR_FMT " status %d",
 		  params->smesessionId, params->assocId,
 		  QDF_MAC_ADDR_REF(params->bssId), params->status);
+
 	/* Don't send a response during roam sync operation */
-	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, params->smesessionId))
+	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, params->smesessionId) &&
+	    !MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(wma->psoc,
+						params->smesessionId))
 		wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP,
 					   (void *)params, 0);
 }
@@ -5238,7 +5255,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
-		if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
+		if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) ||
+		    MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
 			wma_debug("LFR3: Del STA on vdev_id %d", vdev_id);
 			qdf_mem_free(del_sta);
 			return;
@@ -5516,7 +5534,8 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		qdf_mem_free(roam_scan_stats_req);
 	}
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) ||
+	    MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
 		roam_synch_in_progress = true;
 		wma_debug("LFR3: Setting vdev_up to FALSE for vdev:%d",
 			  vdev_id);
@@ -5568,6 +5587,10 @@ detach_peer:
 		return;
 
 out:
+	/* skip when legacy to mlo roam sync ongoing */
+	if (MLME_IS_MLO_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id))
+		return;
+
 	params = qdf_mem_malloc(sizeof(*params));
 	if (!params)
 		return;

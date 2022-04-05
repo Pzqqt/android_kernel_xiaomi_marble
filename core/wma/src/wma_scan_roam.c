@@ -2673,6 +2673,7 @@ static void wma_handle_roam_reason_bmiss(uint8_t vdev_id, uint32_t rssi)
 	 * avoid using CSR/PE structure directly
 	 */
 	wma_debug("Beacon Miss for vdevid %x", vdev_id);
+	mlme_set_hb_ap_rssi(wma_handle->interfaces[vdev_id].vdev, rssi);
 	wma_beacon_miss_handler(wma_handle, vdev_id, rssi);
 	wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_BMISS, vdev_id, NULL);
 }

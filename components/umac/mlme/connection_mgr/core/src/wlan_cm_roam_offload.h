@@ -33,22 +33,26 @@
     defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * cm_roam_scan_info_event() - send scan info to userspace
+ * @psoc: psoc common object
  * @scan: roam scan data
  * @vdev_id: vdev id
  *
- * Return: void
+ * Return: None
  */
-void cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id);
+void cm_roam_scan_info_event(struct wlan_objmgr_psoc *psoc,
+			     struct wmi_roam_scan_data *scan, uint8_t vdev_id);
 
 /**
  * cm_roam_trigger_info_event() - send trigger info to userspace
  * @data: roam trigger data
+ * @scan_data: Roam scan data
  * @vdev_id: vdev id
  * @is_full_scan: is full scan or partial scan
  *
- * Return: void
+ * Return: None
  */
 void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+				struct wmi_roam_scan_data *scan_data,
 				uint8_t vdev_id, bool is_full_scan);
 
 /**
@@ -63,24 +67,30 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 
 /**
  * cm_roam_result_info_event() - send scan results info to userspace
+ * @psoc: Pointer to PSOC object
+ * @trigger: Roam trigger data
  * @res: roam result data
  * @scan_data: Roam scan info
  * @vdev_id: vdev id
  *
  * Return: void
  */
-void cm_roam_result_info_event(struct wmi_roam_result *res,
+void cm_roam_result_info_event(struct wlan_objmgr_psoc *psoc,
+			       struct wmi_roam_trigger_info *trigger,
+			       struct wmi_roam_result *res,
 			       struct wmi_roam_scan_data *scan_data,
 			       uint8_t vdev_id);
 #else
 static inline void
-cm_roam_scan_info_event(struct wmi_roam_scan_data *scan, uint8_t vdev_id)
+cm_roam_scan_info_event(struct wlan_objmgr_psoc *psoc,
+			struct wmi_roam_scan_data *scan, uint8_t vdev_id)
 {
 }
 
 static inline void
-cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data, uint8_t vdev_id,
-			   bool is_full_scan)
+cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
+			   struct wmi_roam_scan_data *scan_data,
+			   uint8_t vdev_id, bool is_full_scan)
 {
 }
 
@@ -91,7 +101,9 @@ cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 }
 
 static inline
-void cm_roam_result_info_event(struct wmi_roam_result *res,
+void cm_roam_result_info_event(struct wlan_objmgr_psoc *psoc,
+			       struct wmi_roam_trigger_info *trigger,
+			       struct wmi_roam_result *res,
 			       struct wmi_roam_scan_data *scan_data,
 			       uint8_t vdev_id)
 {
@@ -390,12 +402,14 @@ cm_handle_mlo_rso_state_change(struct wlan_objmgr_pdev *pdev,
 /**
  * cm_roam_mgmt_frame_event() - Roam management frame event
  * @frame_data: frame_data
+ * @scan_data: Roam scan data
  * @vdev_id: vdev_id
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id);
+cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data,
+			 struct wmi_roam_scan_data *scan_data, uint8_t vdev_id);
 
 /**
  * cm_roam_btm_req_event  - Send BTM request related logging event
@@ -436,18 +450,20 @@ cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 /**
  * cm_roam_beacon_loss_disconnect_event() - Send BMISS disconnection logging
  * event
+ * @psoc: Pointer to PSOC object
  * @bssid: BSSID
- * @rssi: RSSI
  * @vdev_id: Vdev id
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-cm_roam_beacon_loss_disconnect_event(struct qdf_mac_addr bssid, int32_t rssi,
+cm_roam_beacon_loss_disconnect_event(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr bssid,
 				     uint8_t vdev_id);
 #else
 static inline QDF_STATUS
-cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data, uint8_t vdev_id)
+cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data,
+			 struct wmi_roam_scan_data *scan_data, uint8_t vdev_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -475,7 +491,8 @@ cm_roam_btm_query_event(struct wmi_neighbor_report_data *btm_data,
 }
 
 static inline QDF_STATUS
-cm_roam_beacon_loss_disconnect_event(struct qdf_mac_addr bssid, int32_t rssi,
+cm_roam_beacon_loss_disconnect_event(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr bssid,
 				     uint8_t vdev_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;

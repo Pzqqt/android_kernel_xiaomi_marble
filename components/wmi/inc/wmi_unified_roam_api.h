@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -381,6 +381,22 @@ QDF_STATUS
 wmi_extract_roam_stats_event(wmi_unified_t wmi_handle,
 			     uint8_t *event, uint32_t data_len,
 			     struct roam_stats_event **stats_info);
+
+/**
+ * wmi_unified_extract_roam_extract_frame_info() - Extract the roam frame
+ * info TLV from roam stats event
+ * @wmi:        wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @dst:        Pointer to destination structure to fill data
+ * @idx:        Index of the TLV to read
+ * @num_frames: Number of TLV to read
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_extract_frame_info(wmi_unified_t wmi, void *evt_buf,
+					    struct roam_frame_stats *dst,
+					    uint8_t idx, uint8_t num_frames);
 
 /**
  * wmi_extract_auth_offload_event  - Extract auth offload event

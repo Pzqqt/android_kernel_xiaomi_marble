@@ -445,7 +445,8 @@ struct owe_transition_mode_info {
  * @reassoc_timer: reassoc timer
  * @ctx: reassoc timer context
  * @cm_rso_lock: RSO lock
- * @rsn_cap: original rsn caps from the connect req from supplicant
+ * @orig_sec_info: original security info coming from the connect req from
+ * supplicant, without intersection of the peer capability
  * @country_code: country code from connected AP's beacon IE
  * @disable_hi_rssi: disable high rssi
  * @roam_control_enable: Flag used to cache the status of roam control
@@ -497,7 +498,7 @@ struct rso_config {
 	struct reassoc_timer_ctx ctx;
 #endif
 	qdf_mutex_t cm_rso_lock;
-	uint16_t rsn_cap;
+	struct security_info orig_sec_info;
 	uint8_t country_code[REG_ALPHA2_LEN + 1];
 	bool disable_hi_rssi;
 	bool roam_control_enable;
@@ -748,6 +749,8 @@ struct wlan_cm_roam_vendor_btm_params {
  *                   floor in dB
  * @bg_rssi_threshold: Value of rssi threshold to trigger roaming
  *                     after background scan.
+ * @num_allowed_authmode: Number of allowerd authmode
+ * @allowed_authmode: List of allowed authmode other than connected
  */
 struct ap_profile {
 	uint32_t flags;
@@ -759,6 +762,8 @@ struct ap_profile {
 	uint32_t rsn_mcastmgmtcipherset;
 	uint32_t rssi_abs_thresh;
 	uint8_t bg_rssi_threshold;
+	uint32_t num_allowed_authmode;
+	uint32_t allowed_authmode[WLAN_CRYPTO_AUTH_MAX];
 };
 
 /**
@@ -809,6 +814,14 @@ struct ap_profile {
  * @oce_wan_scoring: OCE WAN metrics percentage information
  * @eht_caps_weightage: EHT caps weightage out of total score in %
  * @mlo_weightage: MLO weightage out of total score in %
+ * @security_weightage: Security(WPA/WPA2/WPA3) weightage out of
+ * total score in %
+ * @security_index_score: Security scoring percentage information.
+ *                BITS 0-7 :- It contains scoring percentage of WPA security
+ *                BITS 8-15  :- It contains scoring percentage of WPA2 security
+ *                BITS 16-23 :- It contains scoring percentage of WPA3 security
+ *                BITS 24-31 :- reserved
+ *                The value of each index must be 0-100
  */
 struct scoring_param {
 	uint32_t disable_bitmap;
@@ -840,6 +853,8 @@ struct scoring_param {
 	uint8_t eht_caps_weightage;
 	uint8_t mlo_weightage;
 #endif
+	int32_t security_weightage;
+	uint32_t security_index_score;
 };
 
 /**
@@ -1894,7 +1909,7 @@ enum roam_rt_stats_type {
  * @timestamp:   Fw timestamp at which the frame was Tx/Rx'ed
  * @type:        Frame Type
  * @subtype:     Frame subtype
- * @is_req:      Frame is request frame or response frame
+ * @is_rsp:      True if frame is response frame else false
  * @seq_num:     Frame sequence number from the 802.11 header
  * @status_code: Status code from 802.11 spec, section 9.4.1.9
  * @tx_status: Frame TX status defined by enum qdf_dp_tx_rx_status
@@ -1907,7 +1922,7 @@ struct roam_frame_info {
 	uint32_t timestamp;
 	uint8_t type;
 	uint8_t subtype;
-	uint8_t is_req;
+	uint8_t is_rsp;
 	enum qdf_dp_tx_rx_status tx_status;
 	uint16_t seq_num;
 	uint16_t status_code;
@@ -2159,6 +2174,16 @@ struct roam_offload_roam_event {
 };
 
 /**
+ * struct roam_frame_stats  - Roam frame stats
+ * @num_frame: number of frames
+ * @frame_info: Roam frame info
+ */
+struct roam_frame_stats {
+	uint8_t num_frame;
+	struct roam_frame_info frame_info[WLAN_ROAM_MAX_FRAME_INFO];
+};
+
+/**
  * struct roam_stats_event - Data carried by stats event
  * @vdev_id: vdev id
  * @num_tlv: Number of roam scans triggered
@@ -2166,6 +2191,7 @@ struct roam_offload_roam_event {
  * @trigger: Roam trigger related details
  * @scan: Roam scan event details
  * @result: Roam result related info
+ * @frame_stats: Info on frame exchange during roaming
  * @data_11kv: Neighbor report/BTM request related data
  * @btm_rsp: BTM response related data
  * @roam_init_info: Roam initial related data
@@ -2179,6 +2205,7 @@ struct roam_stats_event {
 	struct wmi_roam_trigger_info trigger[MAX_ROAM_SCAN_STATS_TLV];
 	struct wmi_roam_scan_data scan[MAX_ROAM_SCAN_STATS_TLV];
 	struct wmi_roam_result result[MAX_ROAM_SCAN_STATS_TLV];
+	struct roam_frame_stats frame_stats[MAX_ROAM_SCAN_STATS_TLV];
 	struct wmi_neighbor_report_data data_11kv[MAX_ROAM_SCAN_STATS_TLV];
 	struct roam_btm_response_data btm_rsp[MAX_ROAM_SCAN_STATS_TLV];
 	struct roam_initial_data roam_init_info[MAX_ROAM_SCAN_STATS_TLV];

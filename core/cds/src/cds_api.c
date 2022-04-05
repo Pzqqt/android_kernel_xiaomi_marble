@@ -122,7 +122,7 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.peer_set_default_routing = target_if_peer_set_default_routing,
 	.peer_rx_reorder_queue_setup = target_if_peer_rx_reorder_queue_setup,
 	.peer_rx_reorder_queue_remove = target_if_peer_rx_reorder_queue_remove,
-	.is_hw_dbs_capable = policy_mgr_is_hw_dbs_capable,
+	.is_hw_dbs_capable = policy_mgr_is_dp_hw_dbs_capable,
 	.lro_hash_config = target_if_lro_hash_config,
 	.rx_invalid_peer = wma_rx_invalid_peer_ind,
 	.is_roam_inprogress = wma_is_roam_in_progress,
@@ -137,7 +137,8 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.dp_get_multi_pages = dp_prealloc_get_multi_pages,
 	.dp_put_multi_pages = dp_prealloc_put_multi_pages,
 #endif
-	.dp_get_tx_inqueue = dp_get_tx_inqueue
+	.dp_get_tx_inqueue = dp_get_tx_inqueue,
+	.dp_send_unit_test_cmd = wma_form_unit_test_cmd_and_send,
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 #else

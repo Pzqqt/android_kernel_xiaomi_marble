@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1261,6 +1262,7 @@ QDF_STATUS lim_sta_handle_connect_fail(join_params *param)
 	struct pe_session *session;
 	struct mac_context *mac_ctx;
 	tpDphHashNode sta_ds = NULL;
+	QDF_STATUS status;
 
 	if (!param) {
 		pe_err("param is NULL");
@@ -1310,37 +1312,14 @@ QDF_STATUS lim_sta_handle_connect_fail(join_params *param)
 	session->lim_join_req = NULL;
 
 error:
-	/*
-	 * Delete the session if JOIN failure occurred.
-	 * if the peer is not created, then there is no
-	 * need to send down the set link state which will
-	 * try to delete the peer. Instead a join response
-	 * failure should be sent to the upper layers.
-	 */
-	if (param->result_code != eSIR_SME_PEER_CREATE_FAILED) {
-		QDF_STATUS status;
+	session->prot_status_code = param->prot_status_code;
+	session->result_code = param->result_code;
 
-		session->prot_status_code = param->prot_status_code;
-		session->result_code = param->result_code;
+	status = wma_send_vdev_stop(session->smeSessionId);
+	if (QDF_IS_STATUS_ERROR(status))
+		lim_join_result_callback(mac_ctx, session->smeSessionId);
 
-		status = wma_send_vdev_stop(session->smeSessionId);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			lim_join_result_callback(mac_ctx,
-						 session->smeSessionId);
-		}
-
-		return status;
-	}
-
-
-	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP,
-				      param->result_code,
-				      param->prot_status_code,
-				      session, session->smeSessionId);
-	if (param->result_code == eSIR_SME_PEER_CREATE_FAILED)
-		pe_delete_session(mac_ctx, session);
-
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**

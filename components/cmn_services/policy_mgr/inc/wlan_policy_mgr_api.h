@@ -254,6 +254,17 @@ QDF_STATUS
 policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
 				       uint8_t *sta_sap_scc_on_dfs_chnl);
 
+/*
+ * policy_mgr_get_connected_vdev_band_mask() - to get the connected vdev band
+ * mask
+ * @vdev: pointer to vdev
+ *
+ * This API is used to get band of the frequency.
+ *
+ * Return: band mask of the frequency associated with the vdev
+ */
+uint32_t policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev);
+
 /**
  * policy_mgr_get_dfs_master_dynamic_enabled() - support dfs master or not
  * on AP interafce when STA+SAP(GO) concurrency
@@ -2819,14 +2830,14 @@ bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_current_hwmode_sbs(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_is_dp_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
- * for Data Path.
+ * policy_mgr_is_dp_hw_dbs_capable() - if hardware is capable of dbs 2x2
+ * or 1X1 for Data Path (HW mode)
  * @psoc: PSOC object information
- * This API is for Data Path to get HW dbs 2x2 capable.
+ * This API is for Data Path to get HW mode support dbs.
  *
- * Return: true - DBS2x2, false - DBS1x1
+ * Return: true - DBS capable, false - not
  */
-bool policy_mgr_is_dp_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc);
+bool policy_mgr_is_dp_hw_dbs_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_is_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
@@ -4089,6 +4100,28 @@ bool policy_mgr_is_mlo_in_mode_sbs(struct wlan_objmgr_psoc *psoc,
 				   enum policy_mgr_con_mode mode,
 				   uint8_t *mlo_vdev_lst, uint8_t *num_mlo);
 
+/*
+ * policy_mgr_handle_sap_mlo_sta_concurrency() - Handle SAP MLO STA concurrency
+ *                                             such as:
+ *       1) If MLO STA is present with both links in 5/6 Ghz then SAP comes up
+ *          on 2.4 Ghz, then Disable one of the links
+ *       2) If MLO STA is present with both links in 5/6 Ghz and SAP, which was
+ *          present on 2.4 ghz, stops then renable both the as one of the links
+ *          were disabled because of sap on 2.4 ghz.
+ *
+ * @vdev: vdev mlme object
+ * @is_ap_up: bool to represent sap state
+ *
+ * Return: Void
+ */
+void policy_mgr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_psoc *psoc,
+					       struct wlan_objmgr_vdev *vdev,
+					       bool is_ap_up);
+
+void policy_mgr_handle_ml_sta_link_concurrency(struct wlan_objmgr_psoc *psoc,
+					       struct wlan_objmgr_vdev *vdev,
+					       bool is_connect);
+
 #else
 
 static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
@@ -4115,6 +4148,20 @@ bool policy_mgr_is_mlo_in_mode_sbs(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *mlo_vdev_lst, uint8_t *num_mlo)
 {
 	return false;
+}
+
+static inline
+void policy_mgr_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_psoc *psoc,
+					       struct wlan_objmgr_vdev *vdev,
+					       bool is_ap_up)
+{
+}
+
+static inline
+void policy_mgr_handle_ml_sta_link_concurrency(struct wlan_objmgr_psoc *psoc,
+					       struct wlan_objmgr_vdev *vdev,
+					       bool is_connect)
+{
 }
 #endif
 

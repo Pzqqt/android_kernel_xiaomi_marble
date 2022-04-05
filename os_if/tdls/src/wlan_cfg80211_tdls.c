@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -678,6 +679,11 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 	}
 
 	tdls_priv = osif_priv->osif_tdls;
+
+	if (!completion_done(&tdls_priv->tdls_user_cmd_comp)) {
+		osif_err("TDLS user cmd still in progress, reject this one");
+		return -EBUSY;
+	}
 
 	wlan_cfg80211_update_tdls_peers_rssi(vdev);
 

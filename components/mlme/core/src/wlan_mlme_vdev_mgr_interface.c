@@ -448,7 +448,14 @@ static inline void
 wlan_handle_sap_mlo_sta_concurrency(struct wlan_objmgr_vdev *vdev,
 				    bool is_ap_up)
 {
-	csr_handle_sap_mlo_sta_concurrency(vdev, is_ap_up);
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc) {
+		mlme_legacy_debug("psoc Null");
+		return;
+	}
+
+	policy_mgr_handle_sap_mlo_sta_concurrency(psoc, vdev, is_ap_up);
 }
 #else
 static inline void

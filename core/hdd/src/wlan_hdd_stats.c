@@ -7054,8 +7054,9 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 		return -EPERM;
 	}
 
-	if (!adapter->hdd_ctx->is_therm_cmd_supp) {
-		hdd_err("WMI_SERVICE_THERM_THROT or gThermalMitigationEnable is disable");
+	if (!wlan_psoc_nif_fw_ext_cap_get(adapter->hdd_ctx->psoc,
+					  WLAN_SOC_CEXT_TT_SUPPORT)) {
+		hdd_err("WMI_SERVICE_THERM_THROT service from FW is disable");
 		return -EINVAL;
 	}
 

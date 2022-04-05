@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -146,7 +146,7 @@ struct wlan_roam_candidate_info {
 struct wlan_roam_scan_info {
 	uint8_t cand_ap_count;
 	uint16_t num_scanned_freq;
-	qdf_freq_t scan_freq[WLAN_MAX_LOGGING_FREQ];
+	qdf_freq_t scan_freq[NUM_CHANNELS];
 };
 
 /**
@@ -307,6 +307,7 @@ struct wlan_connect_info {
  * buffer
  * @timestamp_us: Timestamp(time of the day) in microseconds
  * @fw_timestamp_us: timestamp at which roam scan was triggered
+ * @ktime_us: kernel timestamp (time of the day) in microseconds
  * @vdev_id: VDEV id
  * @log_subtype: Tag of the log
  * @bssid: AP bssid
@@ -323,6 +324,7 @@ struct wlan_connect_info {
 struct wlan_log_record {
 	uint64_t timestamp_us;
 	uint64_t fw_timestamp_us;
+	uint64_t ktime_us;
 	uint8_t vdev_id;
 	uint32_t log_subtype;
 	struct qdf_mac_addr bssid;
