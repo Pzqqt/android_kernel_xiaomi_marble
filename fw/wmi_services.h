@@ -579,6 +579,9 @@ typedef  enum  {
     WMI_SERVICE_BIOS_SAR_SUPPORT = 326, /* FW support for SAR parameter stored in BIOS */
     WMI_SERVICE_REO_QREF_SUPPORT = 327, /* FW supports REO QREF */
     WMI_SERVICE_DELETE_ALL_PEER_BITMAP_SUPPORT = 328, /* target supports cmd to delete all specific peer type within a vdev */
+    WMI_SERVICE_PN_REPLAY_CHECK_SUPPORT = 329, /* FW support to check RX mgmt frames has invalid PN in packets */
+    WMI_SERVICE_COMBINED_SET_PARAM_SUPPORT = 330, /* FW Supporting set param cmd combined for multiple params */
+    WMI_SERVICE_PDEV_RSSI_DBM_CONV_EVENT_SUPPORT = 331, /* FW supports advertising RSSI dB to dBm conversion params to host via WMI_PDEV_RSSI_DBM_CONVERSION_PARAMS_INFO_EVENTID */
 
     WMI_MAX_EXT2_SERVICE
 

@@ -229,9 +229,10 @@
  * 3.102 Add HTT_H2T_MSG_TYPE_MSI_SETUP def.
  * 3.103 Add HTT_T2H_SAWF_MSDUQ_INFO_IND defs.
  * 3.104 Add mgmt/ctrl/data specs in rx ring cfg.
+ * 3.105 Add HTT_H2T STREAMING_STATS_REQ + HTT_T2H STREAMING_STATS_IND defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 104
+#define HTT_CURRENT_VERSION_MINOR 105
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -697,10 +698,10 @@ typedef enum {
     HTT_STATS_UNAVAILABLE_ERROR_STATS_TAG          = 110, /* htt_stats_error_tlv_v */
     HTT_STATS_TX_SELFGEN_AC_SCHED_STATUS_STATS_TAG = 111, /* htt_tx_selfgen_ac_sched_status_stats_tlv */
     HTT_STATS_TX_SELFGEN_AX_SCHED_STATUS_STATS_TAG = 112, /* htt_tx_selfgen_ax_sched_status_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG            = 113, /* htt_txbf_ofdma_ndpa_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG             = 114, /* htt_txbf_ofdma_ndp_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG             = 115, /* htt_txbf_ofdma_brp_stats_tlv */
-    HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG            = 113, /* htt_txbf_ofdma_ndpa_stats_tlv - DEPRECATED */
+    HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG             = 114, /* htt_txbf_ofdma_ndp_stats_tlv - DEPRECATED */
+    HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG             = 115, /* htt_txbf_ofdma_brp_stats_tlv - DEPRECATED */
+    HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv - DEPRECATED */
     HTT_STATS_STA_UL_OFDMA_STATS_TAG               = 117, /* htt_sta_ul_ofdma_stats_tlv */
     HTT_STATS_VDEV_RTT_RESP_STATS_TAG              = 118, /* htt_vdev_rtt_resp_stats_tlv */
     HTT_STATS_PKTLOG_AND_HTT_RING_STATS_TAG        = 119, /* htt_pktlog_and_htt_ring_stats_tlv */
@@ -729,6 +730,17 @@ typedef enum {
     HTT_STATS_RX_RING_STATS_TAG                    = 142, /* htt_rx_fw_ring_stats_tlv_v */
     HTT_STATS_RX_PDEV_BE_UL_TRIG_STATS_TAG         = 143, /* htt_rx_pdev_be_ul_trigger_stats_tlv */
     HTT_STATS_TX_PDEV_SAWF_RATE_STATS_TAG          = 144, /* htt_tx_pdev_rate_stats_sawf_tlv */
+    HTT_STATS_STRM_GEN_MPDUS_TAG                   = 145, /* htt_stats_strm_gen_mpdus_tlv_t */
+    HTT_STATS_STRM_GEN_MPDUS_DETAILS_TAG           = 146, /* htt_stats_strm_gen_mpdus_details_tlv_t */
+    HTT_STATS_TXBF_OFDMA_AX_NDPA_STATS_TAG         = 147, /* htt_txbf_ofdma_ax_ndpa_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_AX_NDP_STATS_TAG          = 148, /* htt_txbf_ofdma_ax_ndp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_AX_BRP_STATS_TAG          = 149, /* htt_txbf_ofdma_ax_brp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_AX_STEER_STATS_TAG        = 150, /* htt_txbf_ofdma_ax_steer_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_NDPA_STATS_TAG         = 151, /* htt_txbf_ofdma_be_ndpa_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_NDP_STATS_TAG          = 152, /* htt_txbf_ofdma_be_ndp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_BRP_STATS_TAG          = 153, /* htt_txbf_ofdma_be_brp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BE_STEER_STATS_TAG        = 154, /* htt_txbf_ofdma_be_steer_stats_tlv */
+    HTT_STATS_DMAC_RESET_STATS_TAG                 = 155, /* htt_dmac_reset_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -796,6 +808,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_SAWF_DEF_QUEUES_UNMAP_REQ      = 0x1d,
     HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ = 0x1e,
     HTT_H2T_MSG_TYPE_MSI_SETUP             = 0x1f,
+    HTT_H2T_MSG_TYPE_STREAMING_STATS_REQ   = 0x20,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -7789,7 +7802,7 @@ PREPACK struct htt_tx_monitor_cfg_t {
 
 
 /**
- * @brief host -> target FW extended statistics retrieve
+ * @brief host -> target FW extended statistics request
  *
  * MSG_TYPE => HTT_H2T_MSG_TYPE_EXT_STATS_REQ
  *
@@ -7904,6 +7917,95 @@ PREPACK struct htt_tx_monitor_cfg_t {
     do {                                                         \
         HTT_CHECK_SET_VAL(HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM, _val);  \
         ((_var) |= ((_val) << HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_S)); \
+    } while (0)
+
+/**
+ * @brief host -> target FW streaming statistics request
+ *
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_STREAMING_STATS_REQ
+ *
+ * @details
+ * The following field definitions describe the format of the HTT host
+ * to target message that requests the target to start or stop producing
+ * ongoing stats of the specified type.
+ *
+ * |31|30         |23          16|15           8|7            0|
+ * |-----------------------------------------------------------|
+ * |EN| reserved  | stats type   |    reserved  |   msg type   |
+ * |-----------------------------------------------------------|
+ * |                   config param [0]                        |
+ * |-----------------------------------------------------------|
+ * |                   config param [1]                        |
+ * |-----------------------------------------------------------|
+ * |                   config param [2]                        |
+ * |-----------------------------------------------------------|
+ * |                   config param [3]                        |
+ * |-----------------------------------------------------------|
+ * Where:
+ *   - EN is an enable/disable flag
+ * Header fields:
+ *   - MSG_TYPE
+ *     Bits 7:0
+ *     Purpose: identifies this is a streaming stats upload request message
+ *     Value: 0x20 (HTT_H2T_MSG_TYPE_STREAMING_STATS_REQ)
+ *   - STATS_TYPE
+ *     Bits 23:16
+ *     Purpose: identifies which FW statistics to upload
+ *     Value: Defined by htt_dbg_ext_stats_type (see htt_stats.h)
+ *            Only the htt_dbg_ext_stats_type values identified as streaming
+ *            stats are valid to specify in this STEAMING_STATS_REQ message.
+ *   - ENABLE
+ *     Bit 31
+ *     Purpose: enable/disable the target's ongoing stats of the specified type
+ *     Value:
+ *         0 - disable ongoing production of the specified stats type
+ *         1 - enable  ongoing production of the specified stats type
+ *   - CONFIG_PARAM [0]
+ *     Bits 31:0
+ *     Purpose: give an opaque configuration value to the specified stats type
+ *     Value: stats-type specific configuration value
+ *            Refer to htt_stats.h for interpretation for each stats sub_type
+ *   - CONFIG_PARAM [1]
+ *     Bits 31:0
+ *     Purpose: give an opaque configuration value to the specified stats type
+ *     Value: stats-type specific configuration value
+ *            Refer to htt_stats.h for interpretation for each stats sub_type
+ *   - CONFIG_PARAM [2]
+ *     Bits 31:0
+ *     Purpose: give an opaque configuration value to the specified stats type
+ *     Value: stats-type specific configuration value
+ *            Refer to htt_stats.h for interpretation for each stats sub_type
+ *   - CONFIG_PARAM [3]
+ *     Bits 31:0
+ *     Purpose: give an opaque configuration value to the specified stats type
+ *     Value: stats-type specific configuration value
+ *            Refer to htt_stats.h for interpretation for each stats sub_type
+ */
+
+#define HTT_H2T_STREAMING_STATS_REQ_MSG_SZ         20 /* bytes */
+
+#define HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE_M   0x00ff0000
+#define HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE_S   16
+
+#define HTT_H2T_STREAMING_STATS_REQ_ENABLE_M       0x80000000
+#define HTT_H2T_STREAMING_STATS_REQ_ENABLE_S       31
+
+#define HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE_GET(_var) \
+    (((_var) & HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE_M) >>  \
+     HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE_S)
+#define HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE, _val); \
+        ((_var) |= ((_val) << HTT_H2T_STREAMING_STATS_REQ_STATS_TYPE_S)); \
+    } while (0)
+
+#define HTT_H2T_STREAMING_STATS_REQ_ENABLE_GET(_var) \
+    (((_var) & HTT_H2T_STREAMING_STATS_REQ_ENABLE_M) >>  \
+     HTT_H2T_STREAMING_STATS_REQ_ENABLE_S)
+#define HTT_H2T_STREAMING_STATS_REQ_ENABLE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_STREAMING_STATS_REQ_ENABLE, _val); \
+        ((_var) |= ((_val) << HTT_H2T_STREAMING_STATS_REQ_ENABLE_S)); \
     } while (0)
 
 /**
@@ -9532,8 +9634,11 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_MLO_RX_PEER_UNMAP             = 0x2a,
     HTT_T2H_MSG_TYPE_PEER_MAP_V3                   = 0x2b,
     HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND = 0x2c,
-    HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF        = 0x2d,
-    HTT_T2H_SAWF_MSDUQ_INFO_IND                    = 0x2e,
+    HTT_T2H_MSG_TYPE_SAWF_DEF_QUEUES_MAP_REPORT_CONF = 0x2d,
+        HTT_T2H_SAWF_DEF_QUEUES_MAP_REPORT_CONF    = 0x2d, /* alias */
+    HTT_T2H_MSG_TYPE_SAWF_MSDUQ_INFO_IND           = 0x2e,
+        HTT_T2H_SAWF_MSDUQ_INFO_IND                = 0x2e, /* alias */
+    HTT_T2H_MSG_TYPE_STREAMING_STATS_IND           = 0x2f,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -15919,6 +16024,40 @@ typedef struct {
     (((word) & HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_M) >> \
     HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_S)
 
+
+/**
+ * @brief target -> host streaming statistics upload
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_STREAMING_STATS_IND
+ *
+ * @details
+ * The following field definitions describe the format of the HTT target
+ * to host streaming stats upload indication message.
+ * The host can use a STREAMING_STATS_REQ message to enable the target to
+ * produce an ongoing series of STREAMING_STATS_IND messages, and can also
+ * use the STREAMING_STATS_REQ message to halt the target's production of
+ * STREAMING_STATS_IND messages.
+ * The STREAMING_STATS_IND message contains a payload of TLVs containing
+ * the stats enabled by the host's STREAMING_STATS_REQ message.
+ *
+ * |31                                           8|7             0|
+ * |--------------------------------------------------------------|
+ * |                   reserved                   |    msg type   |
+ * |--------------------------------------------------------------|
+ * |                   type-specific stats info                   |
+ * |                      (see htt_stats.h)                       |
+ * |--------------------------------------------------------------|
+ * Header fields:
+ *  - MSG_TYPE
+ *    Bits 7:0
+ *    Purpose: Identifies this as a streaming statistics upload indication
+ *             message.
+ *    Value: 0x2f (HTT_T2H_MSG_TYPE_STREAMING_STATS_IND)
+ */
+
+#define HTT_T2H_STREAMING_STATS_IND_HDR_SIZE 4
+
+
 typedef enum {
     HTT_PEER_TYPE_DEFAULT = 0,    /* Generic/Non-BSS/Self Peer */
     HTT_PEER_TYPE_BSS = 1,        /* Peer is BSS Peer entry */
@@ -18229,6 +18368,17 @@ PREPACK struct htt_t2h_sawf_msduq_event {
     do { \
         HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX, _val); \
         ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_AST_LIST_IDX_S)); \
+    } while (0)
+
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_M              0x00FFFFFF
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_S                       0
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_GET(_var) \
+    (((_var) & HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID) >> \
+     HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_S)
+#define HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID, _val); \
+        ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_S)); \
     } while (0)
 
 
