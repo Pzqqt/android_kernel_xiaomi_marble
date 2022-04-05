@@ -2319,7 +2319,7 @@ struct hal_hw_srng_config hw_srng_table_6750[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-#ifdef TX_MULTI_TCL
+#if defined(TX_MULTI_TCL) || defined(CONFIG_PLD_IPCIE_FW_SIM)
 		.max_rings = 5,
 #else
 		.max_rings = 4,
