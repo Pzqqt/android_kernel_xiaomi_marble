@@ -68,6 +68,7 @@ qca_wlan_vendor_twt_add_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = 
 							.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_PERSISTENCE] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF] = {.type = NLA_U64 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_ANNOUNCE_TIMEOUT] = {.type = NLA_U32 },
 };
 
 static const struct nla_policy
@@ -335,6 +336,12 @@ osif_twt_parse_add_dialog_attrs(struct nlattr **tb,
 	else
 		params->wake_time_tsf = 0;
 
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_ANNOUNCE_TIMEOUT;
+	if (tb[cmd_id])
+		params->announce_timeout_us = nla_get_u32(tb[cmd_id]);
+	else
+		params->announce_timeout_us = 0;
+
 	osif_debug("twt: dialog_id %d, vdev %d, wake intvl_us %d, min %d, max %d, mantis %d",
 		  params->dialog_id, params->vdev_id, params->wake_intvl_us,
 		  params->min_wake_intvl_us, params->max_wake_intvl_us,
@@ -352,7 +359,8 @@ osif_twt_parse_add_dialog_attrs(struct nlattr **tb,
 	osif_debug("twt: peer mac_addr "
 		  QDF_MAC_ADDR_FMT,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr.bytes));
-
+	osif_debug("twt: announce timeout(in us) %u",
+		   params->announce_timeout_us);
 	return 0;
 }
 
