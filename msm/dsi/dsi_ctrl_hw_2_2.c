@@ -250,7 +250,8 @@ void dsi_ctrl_hw_22_reset_trigger_controls(struct dsi_ctrl_hw *ctrl,
 		0x0, 0x2, 0x1, 0x4, 0x5, 0x6 };
 
 	reg = DSI_R32(ctrl, DSI_TRIG_CTRL);
-	reg &= ~(0xF);
+	reg &= ~BIT(16); /* Reset DMA_TRG_MUX */
+	reg &= ~(0xF); /* Reset DMA_TRIGGER_SEL */
 	reg |= (trigger_map[cfg->dma_cmd_trigger] & 0xF);
 	DSI_W32(ctrl, DSI_TRIG_CTRL, reg);
 

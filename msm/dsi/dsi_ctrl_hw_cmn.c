@@ -1896,7 +1896,8 @@ void dsi_ctrl_hw_cmn_init_cmddma_trig_ctrl(struct dsi_ctrl_hw *ctrl,
 
 	/* Initialize the default trigger used for Command Mode DMA path. */
 	reg = DSI_R32(ctrl, DSI_TRIG_CTRL);
-	reg &= ~(0xF);
+	reg &= ~BIT(16); /* Reset DMA_TRG_MUX */
+	reg &= ~(0xF); /* Reset DMA_TRIGGER_SEL */
 	reg |= (trigger_map[cfg->dma_cmd_trigger] & 0xF);
 	DSI_W32(ctrl, DSI_TRIG_CTRL, reg);
 }

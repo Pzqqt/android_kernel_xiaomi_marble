@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -327,7 +328,7 @@ static int _sde_core_perf_activate_llcc(struct sde_kms *kms,
 	struct drm_device *drm_dev;
 	struct device *dev;
 	struct platform_device *pdev;
-	u32 llcc_id[SDE_SYS_CACHE_MAX] = {LLCC_DISP};
+	u32 llcc_id[SDE_SYS_CACHE_MAX] = {LLCC_DISP, LLCC_EVALFT, LLCC_EVARGHT};
 	int rc = 0;
 
 	if (!kms || !kms->dev || !kms->dev->dev) {

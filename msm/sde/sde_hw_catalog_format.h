@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2019, 2021 The Linux Foundation. All rights reserved.
  */
 
@@ -62,12 +63,16 @@
 
 static const struct sde_format_extended plane_formats[] = {
 	RGB_FMTS,
+	{DRM_FORMAT_C8, DRM_FORMAT_MOD_QCOM_FSC_TILE},
+	{DRM_FORMAT_C8, DRM_FORMAT_MOD_QCOM_FSC_TILE | DRM_FORMAT_MOD_QCOM_COMPRESSED},
 	RGB_10BIT_FMTS,
 	{0, 0},
 };
 
 static const struct sde_format_extended plane_formats_vig[] = {
 	RGB_FMTS,
+	{DRM_FORMAT_C8, DRM_FORMAT_MOD_QCOM_FSC_TILE},
+	{DRM_FORMAT_C8, DRM_FORMAT_MOD_QCOM_FSC_TILE | DRM_FORMAT_MOD_QCOM_COMPRESSED},
 
 	{DRM_FORMAT_NV12, 0},
 	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_COMPRESSED},

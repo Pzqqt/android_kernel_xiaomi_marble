@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -50,7 +51,7 @@ struct dp_hpd *dp_hpd_get(struct device *dev, struct dp_parser *parser,
 	if (aux_bridge && (aux_bridge->flag & DP_AUX_BRIDGE_HPD)) {
 		dp_hpd = dp_bridge_hpd_get(dev, cb, aux_bridge);
 		if (IS_ERR(dp_hpd)) {
-			pr_err("failed to get bridge hpd\n");
+			DP_ERR("failed to get bridge hpd\n");
 			return dp_hpd;
 		}
 		dp_hpd->type = DP_HPD_BRIDGE;

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -13,6 +14,7 @@
 #include "sde_hw_blk.h"
 #include "sde_formats.h"
 #include "sde_color_processing.h"
+#include "sde_hw_vbif.h"
 
 struct sde_hw_pipe;
 
@@ -722,10 +724,11 @@ static inline struct sde_hw_pipe *to_sde_hw_pipe(struct sde_hw_blk *hw)
  * @addr: Mapped register io address of MDP
  * @catalog : Pointer to mdss catalog data
  * @is_virtual_pipe: is this pipe virtual pipe
+ * @client: Pointer to VBIF clock client info
  */
 struct sde_hw_pipe *sde_hw_sspp_init(enum sde_sspp idx,
 		void __iomem *addr, struct sde_mdss_cfg *catalog,
-		bool is_virtual_pipe);
+		bool is_virtual_pipe, struct sde_vbif_clk_client *client);
 
 /**
  * sde_hw_sspp_destroy(): Destroys SSPP driver context

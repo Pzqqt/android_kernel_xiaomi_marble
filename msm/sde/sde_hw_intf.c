@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/iopoll.h>
@@ -302,10 +302,11 @@ static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 	data_width = p->width;
 
 	if (p->compression_en) {
-		data_width = DIV_ROUND_UP(p->dce_bytes_per_line, 3);
-
 		if (p->wide_bus_en)
-			data_width >>= 1;
+			data_width = DIV_ROUND_UP(p->dce_bytes_per_line, 6);
+		else
+			data_width = DIV_ROUND_UP(p->dce_bytes_per_line, 3);
+
 	} else if (!dp_intf && p->wide_bus_en) {
 		data_width = p->width >> 1;
 	} else {
