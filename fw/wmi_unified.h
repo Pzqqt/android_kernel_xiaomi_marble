@@ -31662,10 +31662,14 @@ typedef enum {
      *    with expiry event.
      * 3. If AFC server is not responding to FW in specified time, FW will
      *    indicate host to switch to LPI.
+     * 4. In SP mode, if AFC server is not responding to FW in
+     *    specified time then FW will indicate host to stop TX since
+     *    there are no lower power mode available.
      */
     WMI_AFC_EXPIRY_EVENT_START         = 1,
     WMI_AFC_EXPIRY_EVENT_RENEW         = 2,
     WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LPI = 3,
+    WMI_AFC_EXPIRY_EVENT_STOP_TX       = 4,
 } WMI_AFC_EXPIRY_EVENT_SUBTYPE;
 
 typedef enum {
