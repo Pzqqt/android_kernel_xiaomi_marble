@@ -8059,6 +8059,26 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef DP_RX_UDP_OVER_PEER_ROAM
+static QDF_STATUS dp_update_roaming_peer_wifi3(struct cdp_soc_t *soc_hdl,
+					       uint8_t vdev_id,
+					       uint8_t *peer_mac,
+					       uint32_t auth_status)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev->roaming_peer_status = auth_status;
+	qdf_mem_copy(vdev->roaming_peer_mac.raw, peer_mac,
+		     QDF_MAC_ADDR_SIZE);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /*
  * dp_get_vdev_mac_addr_wifi3() – Detach txrx peer
  * @soc_hdl: Datapath soc handle
@@ -11953,6 +11973,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_ast_delete_by_pdev =
 		dp_peer_ast_entry_del_by_pdev,
 	.txrx_peer_delete = dp_peer_delete_wifi3,
+#ifdef DP_RX_UDP_OVER_PEER_ROAM
+	.txrx_update_roaming_peer = dp_update_roaming_peer_wifi3,
+#endif
 	.txrx_vdev_register = dp_vdev_register_wifi3,
 	.txrx_soc_detach = dp_soc_detach_wifi3,
 	.txrx_soc_deinit = dp_soc_deinit_wifi3,
