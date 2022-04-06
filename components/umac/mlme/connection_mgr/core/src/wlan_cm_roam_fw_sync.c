@@ -952,7 +952,11 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 		roam_synch_data->hw_mode_trans_ind.vdev_mac_map,
 		0, NULL, psoc);
 
-	cm_check_and_set_sae_single_pmk_cap(psoc, vdev_id);
+	if (roam_synch_data->pmk_len)
+		cm_check_and_set_sae_single_pmk_cap(psoc, vdev_id,
+						    roam_synch_data->pmk,
+						    roam_synch_data->pmk_len);
+
 	cm_csr_send_set_ie(cm_ctx->vdev);
 
 	if (ucfg_pkt_capture_get_pktcap_mode(psoc))
