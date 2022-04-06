@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1055,6 +1056,16 @@ wlan_crypto_selective_clear_sae_single_pmk_entries(
 void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
 					    struct qdf_mac_addr *bssid,
 					    bool single_pmk_capable_bss);
+
+/**
+ * wlan_crypto_set_sae_single_pmk_bss_cap - Set the peer SAE sinlge pmk info
+ * @vdev: Vdev
+ * @roam_sync_pmksa: pmk info for roamed AP
+ */
+void
+wlan_crypto_set_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_crypto_pmksa *roam_sync_pmksa);
+
 #else
 static inline void
 wlan_crypto_selective_clear_sae_single_pmk_entries(
@@ -1066,6 +1077,12 @@ static inline
 void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
 					    struct qdf_mac_addr *bssid,
 					    bool single_pmk_capable_bss)
+{
+}
+
+static inline void
+wlan_crypto_set_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_crypto_pmksa *roam_sync_pmksa)
 {
 }
 #endif

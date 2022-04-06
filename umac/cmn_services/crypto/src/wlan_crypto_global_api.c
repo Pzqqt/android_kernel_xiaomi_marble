@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4585,6 +4586,43 @@ void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
 					single_pmk_capable_bss;
 	}
 }
+
+void
+wlan_crypto_set_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_crypto_pmksa *roam_sync_pmksa)
+{
+	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	int i;
+
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return;
+	}
+
+	crypto_params = &crypto_priv->crypto_params;
+
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i])
+			continue;
+		if (qdf_is_macaddr_equal(&roam_sync_pmksa->bssid,
+					 &crypto_params->pmksa[i]->bssid) &&
+		    roam_sync_pmksa->single_pmk_supported &&
+		    roam_sync_pmksa->pmk_len) {
+			crypto_params->pmksa[i]->single_pmk_supported =
+					roam_sync_pmksa->single_pmk_supported;
+			crypto_params->pmksa[i]->pmk_len =
+						roam_sync_pmksa->pmk_len;
+			qdf_mem_copy(crypto_params->pmksa[i]->pmk,
+				     roam_sync_pmksa->pmk,
+				     roam_sync_pmksa->pmk_len);
+		}
+	}
+}
+
 #endif
 
 void wlan_crypto_reset_vdev_params(struct wlan_objmgr_vdev *vdev)
