@@ -5819,7 +5819,7 @@ static int msm_gsi_probe(struct platform_device *pdev)
 	}
 
 	gsi_ctx->ipc_logbuf = ipc_log_context_create(GSI_IPC_LOG_PAGES,
-		"gsi", 0);
+		"gsi", MINIDUMP_MASK);
 	if (gsi_ctx->ipc_logbuf == NULL)
 		GSIERR("failed to create IPC log, continue...\n");
 

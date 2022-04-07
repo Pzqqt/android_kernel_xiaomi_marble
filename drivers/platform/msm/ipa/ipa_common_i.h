@@ -185,6 +185,7 @@ do {\
 #define STR_RNDIS_IFACE "rndis"
 #define STR_ECM_IFACE "ecm"
 
+#define MINIDUMP_MASK 0x10000
 /**
  * qmap_hdr -
  * @next_hdr: 1 - there is a qmap extension header, 0 - opposite

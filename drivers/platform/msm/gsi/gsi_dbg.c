@@ -573,7 +573,7 @@ static ssize_t gsi_enable_ipc_low(struct file *file,
 		if (!gsi_ipc_logbuf_low) {
 			gsi_ipc_logbuf_low =
 				ipc_log_context_create(GSI_IPC_LOG_PAGES,
-					"gsi_low", 0);
+					"gsi_low", MINIDUMP_MASK);
 			if (gsi_ipc_logbuf_low == NULL)
 				TERR("failed to get ipc_logbuf_low\n");
 		}
