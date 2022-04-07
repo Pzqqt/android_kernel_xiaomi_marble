@@ -18135,6 +18135,14 @@ typedef struct {
     /* discarded tx msdus byte cnt coz of time to live expiry */
     A_UINT32 tx_msdu_ttl_expire_drop_byte_cnt_lo;
     A_UINT32 tx_msdu_ttl_expire_drop_byte_cnt_hi;
+
+    /* TQM bypass frame cnt */
+    A_UINT32 tqm_bypass_frame_cnt_lo;
+    A_UINT32 tqm_bypass_frame_cnt_hi;
+
+    /* TQM bypass byte cnt */
+    A_UINT32 tqm_bypass_byte_cnt_lo;
+    A_UINT32 tqm_bypass_byte_cnt_hi;
 } htt_t2h_vdev_txrx_stats_hw_stats_tlv;
 
 /*
