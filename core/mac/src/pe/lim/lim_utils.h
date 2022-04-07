@@ -265,12 +265,14 @@ lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
 
 /**
  * lim_update_sta_mlo_info() - update sta mlo information
+ * @pe_session: session entry
  * @add_sta_params: pointer to tpAddStaParams
  * @sta_ds: pointer tpDphHashNode
  *
  * Return: Void
  */
-void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+void lim_update_sta_mlo_info(struct pe_session *pe_session,
+			     tpAddStaParams add_sta_params,
 			     tpDphHashNode sta_ds);
 
 void lim_set_mlo_caps(struct mac_context *mac, struct pe_session *session,
@@ -294,7 +296,8 @@ lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
 {
 }
 
-static inline void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+static inline void lim_update_sta_mlo_info(struct pe_session *session,
+					   tpAddStaParams add_sta_params,
 					   tpDphHashNode sta_ds)
 {
 }
