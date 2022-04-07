@@ -11564,10 +11564,24 @@ typedef struct {
 typedef struct{
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_telemetry_stats */
     A_UINT32 pdev_id;
-    /* average channel latency, units in micro seconds */
+    /*
+     * Average channel latency per AC, units in micro seconds.
+     * avg_chan_lat_per_ac[0] : AC_VO
+     * avg_chan_lat_per_ac[1] : AC_VI
+     * avg_chan_lat_per_ac[2] : AC_BE
+     * avg_chan_lat_per_ac[3] : AC_BK
+     */
     A_UINT32 avg_chan_lat_per_ac[WMI_AC_MAX];
-    /* estimated airtime per access category, units in percentage */
-    A_UINT32 estimated_air_time_per_ac[WMI_AC_MAX];
+    /*
+     * Percentage of air time available for each AC, units in percentage.
+     * BIT[0-7]   : AC_BE
+     * BIT[8-15]  : AC_BK
+     * BIT[16-23] : AC_VI
+     * BIT[24-31] : AC_VO
+     * Please refer WMI_ESP_ESTIMATE_GET_* and WMI_ESP_ESTIMATE_SET_* macros
+     * to retrieve values for each access category in estimated_air_time_per_ac.
+     */
+    A_UINT32 estimated_air_time_per_ac;
 } wmi_pdev_telemetry_stats;
 
 /**
