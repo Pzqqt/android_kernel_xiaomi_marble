@@ -95,9 +95,109 @@ static struct msm_platform_core_capability core_data_parrot_v0[] = {
 };
 
 static struct msm_platform_core_capability core_data_parrot_v1[] = {
+	/* {type, value} */
+	{ENC_CODECS, H264|HEVC|HEIC},
+	{DEC_CODECS, H264|HEVC|VP9|HEIC},
+	{MAX_SESSION_COUNT, 16},
+	{MAX_NUM_720P_SESSIONS, 16},
+	{MAX_NUM_1080P_SESSIONS, 8},
+	{MAX_NUM_4K_SESSIONS, 4},
+	{MAX_SECURE_SESSION_COUNT, 3},
+	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
+	{MAX_MBPF, 110592}, /* ((4096x2304)/256) x 3 */
+	/* max_load 4096x2304@30fps */
+	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
+	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
+	/* TODO (VN) : review required for HQ and B_FRAME and ALL INTRA */
+	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
+	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
+	{MAX_MBPF_B_FRAME, 8160},/* ((1920x1088)/256) */
+	{MAX_MBPS_B_FRAME, 489600}, /* ((1920x1088)/256) MBs@60fps */
+	{MAX_MBPS_ALL_INTRA, 489600}, /* ((1920x1088)/256)@60fps */
+	{MAX_ENH_LAYER_COUNT, 5},
+	{NUM_VPP_PIPE, 1},
+	{SW_PC, 1},
+	{FW_UNLOAD, 0},
+	{HW_RESPONSE_TIMEOUT, HW_RESPONSE_TIMEOUT_VALUE}, /* 1000 ms */
+	{SW_PC_DELAY,         SW_PC_DELAY_VALUE        }, /* 1500 ms (>HW_RESPONSE_TIMEOUT)*/
+	{FW_UNLOAD_DELAY,     FW_UNLOAD_DELAY_VALUE    }, /* 3000 ms (>SW_PC_DELAY)*/
+	// TODO: review below entries, and if required rename as PREFETCH
+	{PREFIX_BUF_COUNT_PIX, 18},
+	/* Calculated by VIDEO_RAW_BUFFER_SIZE for 4096x2160 UBWC */
+	{PREFIX_BUF_SIZE_PIX, 13434880},
+	{PREFIX_BUF_COUNT_NON_PIX, 1},
+	{PREFIX_BUF_SIZE_NON_PIX, 209715200},
+		/*
+		 * Internal buffer size is calculated for secure decode session
+		 * of resolution 4k (4096x2160)
+		 * Internal buf size = calculate_scratch_size() +
+		 *	calculate_scratch1_size() + calculate_persist1_size()
+		 * Take maximum between VP9 10bit, HEVC 10bit, AVC secure
+		 * decoder sessions
+		 */
+	{PAGEFAULT_NON_FATAL, 1},
+	{PAGETABLE_CACHING, 0},
+	{DCVS, 1},
+	{DECODE_BATCH, 1},
+	{DECODE_BATCH_TIMEOUT, 200},
+	{STATS_TIMEOUT_MS, 2000},
+	{AV_SYNC_WINDOW_SIZE, 40},
+	{NON_FATAL_FAULTS, 1},
+	{ENC_AUTO_FRAMERATE, 0},
+	{MMRM, 0},
 };
 
 static struct msm_platform_core_capability core_data_parrot_v2[] = {
+	/* {type, value} */
+	{ENC_CODECS, H264|HEVC|HEIC},
+	{DEC_CODECS, H264|HEVC|VP9|HEIC},
+	{MAX_SESSION_COUNT, 16},
+	{MAX_NUM_720P_SESSIONS, 16},
+	{MAX_NUM_1080P_SESSIONS, 8},
+	{MAX_NUM_4K_SESSIONS, 4},
+	{MAX_SECURE_SESSION_COUNT, 3},
+	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
+	{MAX_MBPF, 110592}, /* ((4096x2304)/256) x 3 */
+	/* max_load 4096x2304@30fps */
+	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
+	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
+	/* TODO (VN) : review required for HQ and B_FRAME and ALL INTRA */
+	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
+	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
+	{MAX_MBPF_B_FRAME, 8160},/* ((1920x1088)/256) */
+	{MAX_MBPS_B_FRAME, 489600}, /* ((1920x1088)/256) MBs@60fps */
+	{MAX_MBPS_ALL_INTRA, 489600}, /* ((1920x1088)/256)@60fps */
+	{MAX_ENH_LAYER_COUNT, 5},
+	{NUM_VPP_PIPE, 1},
+	{SW_PC, 1},
+	{FW_UNLOAD, 0},
+	{HW_RESPONSE_TIMEOUT, HW_RESPONSE_TIMEOUT_VALUE}, /* 1000 ms */
+	{SW_PC_DELAY,         SW_PC_DELAY_VALUE        }, /* 1500 ms (>HW_RESPONSE_TIMEOUT)*/
+	{FW_UNLOAD_DELAY,     FW_UNLOAD_DELAY_VALUE    }, /* 3000 ms (>SW_PC_DELAY)*/
+	// TODO: review below entries, and if required rename as PREFETCH
+	{PREFIX_BUF_COUNT_PIX, 18},
+	/* Calculated by VIDEO_RAW_BUFFER_SIZE for 4096x2160 UBWC */
+	{PREFIX_BUF_SIZE_PIX, 13434880},
+	{PREFIX_BUF_COUNT_NON_PIX, 1},
+	{PREFIX_BUF_SIZE_NON_PIX, 209715200},
+		/*
+		 * Internal buffer size is calculated for secure decode session
+		 * of resolution 4k (4096x2160)
+		 * Internal buf size = calculate_scratch_size() +
+		 *	calculate_scratch1_size() + calculate_persist1_size()
+		 * Take maximum between VP9 10bit, HEVC 10bit, AVC secure
+		 * decoder sessions
+		 */
+	{PAGEFAULT_NON_FATAL, 1},
+	{PAGETABLE_CACHING, 0},
+	{DCVS, 1},
+	{DECODE_BATCH, 1},
+	{DECODE_BATCH_TIMEOUT, 200},
+	{STATS_TIMEOUT_MS, 2000},
+	{AV_SYNC_WINDOW_SIZE, 40},
+	{NON_FATAL_FAULTS, 1},
+	{ENC_AUTO_FRAMERATE, 0},
+	{MMRM, 0},
 };
 
 static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
