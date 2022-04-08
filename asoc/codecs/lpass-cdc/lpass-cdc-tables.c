@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -543,6 +544,7 @@ u8 lpass_cdc_va_reg_access[LPASS_CDC_VA_MACRO_MAX] = {
 	[LPASS_CDC_REG(LPASS_CDC_VA_TOP_CSR_DMIC2_CTL)] = RD_WR_REG,
 	[LPASS_CDC_REG(LPASS_CDC_VA_TOP_CSR_DMIC3_CTL)] = RD_WR_REG,
 	[LPASS_CDC_REG(LPASS_CDC_VA_TOP_CSR_DMIC_CFG)] = RD_WR_REG,
+	[LPASS_CDC_REG(LPASS_CDC_VA_TOP_CSR_VAD_MUX)] = RD_WR_REG,
 	[LPASS_CDC_REG(LPASS_CDC_VA_TOP_CSR_DEBUG_BUS)] = RD_WR_REG,
 	[LPASS_CDC_REG(LPASS_CDC_VA_TOP_CSR_DEBUG_EN)] = RD_WR_REG,
 	[LPASS_CDC_REG(LPASS_CDC_VA_TOP_CSR_TX_I2S_CTL)] = RD_WR_REG,
