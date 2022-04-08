@@ -7184,12 +7184,21 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 	/* Make sure IPA clock voted when collecting the reg dump */
 	IPA_ACTIVE_CLIENTS_PREP_SPECIAL(log_info, "PANIC_VOTE");
 	res = ipa3_inc_client_enable_clks_no_block(&log_info);
-	if (res) {
+	if (!ipa3_active_clks_status()) {
 		IPAERR("IPA clk off not saving the IPA registers\n");
 	} else {
+		/*make sure clock won't disable in middle of save reg*/
+		if (res) {
+			IPADBG("IPA resume in progress increment clinet cnt\n");
+			atomic_inc(&ipa3_ctx->ipa3_active_clients.cnt);
+		}
 		ipa_save_registers();
 		ipahal_print_all_regs(false);
 		ipa_wigig_save_regs();
+		if (res) {
+			IPADBG("IPA resume in progress decrement clinet cnt\n");
+			atomic_dec(&ipa3_ctx->ipa3_active_clients.cnt);
+		}
 	}
 
 	ipa3_active_clients_log_print_table(active_clients_table_buf,
