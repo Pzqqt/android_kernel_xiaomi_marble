@@ -3886,17 +3886,13 @@ static inline void dp_tx_notify_completion(struct dp_soc *soc,
 
 	qdf_assert(tx_desc);
 
-	dp_tx_flow_pool_lock(soc, tx_desc);
-
 	if (!vdev ||
 	    !vdev->osif_vdev) {
-		dp_tx_flow_pool_unlock(soc, tx_desc);
 		return;
 	}
 
 	osif_dev = vdev->osif_vdev;
 	tx_compl_cbk = vdev->tx_comp;
-	dp_tx_flow_pool_unlock(soc, tx_desc);
 
 	if (status == HAL_TX_TQM_RR_FRAME_ACKED)
 		flag |= BIT(QDF_TX_RX_STATUS_OK);
