@@ -1621,6 +1621,8 @@ struct sde_perf_cfg {
  *                         during secure-ui session
  * @sui_supported_blendstage  secure-ui supported blendstage
  * @has_sui_blendstage  flag to indicate secure-ui has a blendstage restriction
+ * @ddr_count           number of ddr types supported
+ * @ddr_list_index      Index of supported ddr type
  * @has_cursor    indicates if hardware cursor is supported
  * @has_vig_p010  indicates if vig pipe supports p010 format
  * @has_fp16      indicates if FP16 format is supported on SSPP pipes
@@ -1710,6 +1712,9 @@ struct sde_mdss_cfg {
 	u32 sui_ns_allowed;
 	u32 sui_supported_blendstage;
 	bool has_sui_blendstage;
+
+	u32 ddr_count;
+	u32 ddr_list_index;
 
 	bool has_hdr;
 	bool has_hdr_plus;
