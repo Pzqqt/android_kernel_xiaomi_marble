@@ -2818,6 +2818,16 @@ typedef enum {
 #define WMI_SET_PROJECT_ID(hw_bd_info, val)     ((hw_bd_info)[PROJECT_ID]     = (val))
 #define WMI_SET_BOARD_DATA_REV(hw_bd_info, val) ((hw_bd_info)[BOARD_DATA_REV] = (val))
 
+/*
+ * Enum to indicate which Tx power capability is provided in which element of
+ * hw_tx_power_signed
+ */
+typedef enum {
+    WMI_HW_MIN_TX_POWER_SIGNED = 0,
+    WMI_HW_MAX_TX_POWER_SIGNED = 1,
+    WMI_HW_TX_POWER_CAPS_MAX,
+} wmi_hw_tx_power_caps;
+
 /**
  * The following struct holds optional payload for
  * wmi_service_ready_event_fixed_param,e.g., 11ac pass some of the
@@ -3261,6 +3271,7 @@ typedef struct {
      *     WMI_SCAN_RADIO_CAPABILITIES_EXT2   wmi_scan_radio_caps[];
      *     wmi_htt_msdu_idx_to_htt_msdu_qtype htt_msdu_idx_to_qtype_map[];
      *     wmi_dbs_or_sbs_cap_ext             dbs_or_sbs_cap_ext;
+     *     A_INT32 hw_tx_power_signed[WMI_HW_TX_POWER_CAPS_MAX];
      */
 } wmi_service_ready_ext2_event_fixed_param;
 
