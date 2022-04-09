@@ -5760,6 +5760,41 @@ typedef struct {
     A_UINT8 prev_pn[WMI_MAX_PN_LEN];
 } wmi_frame_pn_params;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_ml_info */
+    /**
+     * CU vdev map to initmate about the on-going Critical update
+     * per-link contains 16 VAPs at max.
+     */
+
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  0   |   1
+     */
+    A_UINT32 cu_vdev_map_1;
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  2   |   3
+     */
+    A_UINT32 cu_vdev_map_2;
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  4   |   5
+     */
+    A_UINT32 cu_vdev_map_3;
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  6   |   7
+     */
+    A_UINT32 cu_vdev_map_4; /* bits 63:32 */
+    /**
+     * This is followed by byte array that contains BPCC value per MLO VAP.
+     * There will be 16 byte entries for each link corresponding to VAP-ID.
+     * So number of byte entries will be (num of max links supported by AP * 16)
+     * Note: num of max links supported = 8
+     */
+} wmi_mgmt_ml_info;
+
 typedef enum {
     PKT_CAPTURE_MODE_DISABLE = 0,
     PKT_CAPTURE_MODE_MGMT_ONLY,
