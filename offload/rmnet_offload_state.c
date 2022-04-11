@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -12,6 +13,7 @@
 
 #include <linux/module.h>
 #include <linux/netdevice.h>
+#include <linux/rcupdate.h>
 #include "rmnet_map.h"
 #include "rmnet_private.h"
 #include "qmi_rmnet.h"
@@ -29,13 +31,13 @@ DATARMNETc2832b8f85)rmnet_map_dl_ind_deregister(DATARMNETf0d9de7e2f,&
 DATARMNET87b015f76f->DATARMNET8633ae8f1e);}static void DATARMNET345f805b34(void)
 {LIST_HEAD(DATARMNET6f9bfa17e6);if(!DATARMNETe05748b000)return;
 DATARMNETac9c8c14b1();DATARMNETba38823a2f();DATARMNET560e127137();
-DATARMNETae70636c90(&DATARMNET6f9bfa17e6);DATARMNETb98b78b8e3();kfree(
-DATARMNETe05748b000);DATARMNETe05748b000=NULL;}static int DATARMNETd68e3594a7(
-void){struct rmnet_port*DATARMNETf0d9de7e2f=DATARMNETe05748b000->
-DATARMNET403589239f;struct qmi_rmnet_ps_ind*DATARMNETbc78d7fd3c;struct 
-DATARMNET74bb35b8f2*DATARMNET87b015f76f;struct rmnet_map_dl_ind*
-DATARMNET8633ae8f1e;int DATARMNETb14e52a504=DATARMNET0529bb9c4e;
-DATARMNETbc78d7fd3c=&DATARMNETe05748b000->DATARMNET341393eda2;
+synchronize_rcu();DATARMNETae70636c90(&DATARMNET6f9bfa17e6);DATARMNETb98b78b8e3(
+);kfree(DATARMNETe05748b000);DATARMNETe05748b000=NULL;}static int 
+DATARMNETd68e3594a7(void){struct rmnet_port*DATARMNETf0d9de7e2f=
+DATARMNETe05748b000->DATARMNET403589239f;struct qmi_rmnet_ps_ind*
+DATARMNETbc78d7fd3c;struct DATARMNET74bb35b8f2*DATARMNET87b015f76f;struct 
+rmnet_map_dl_ind*DATARMNET8633ae8f1e;int DATARMNETb14e52a504=DATARMNET0529bb9c4e
+;DATARMNETbc78d7fd3c=&DATARMNETe05748b000->DATARMNET341393eda2;
 DATARMNETbc78d7fd3c->ps_on_handler=DATARMNET9292bebdd3;DATARMNETbc78d7fd3c->
 ps_off_handler=DATARMNETb7e47d7254;if(qmi_rmnet_ps_ind_register(
 DATARMNETf0d9de7e2f,DATARMNETbc78d7fd3c)){DATARMNETb14e52a504=
