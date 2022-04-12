@@ -1222,6 +1222,8 @@ static void ipa3_tasklet_find_freepage(unsigned long data)
 
 	sys = (struct ipa3_sys_context *)data;
 
+	if(sys->page_recycle_repl == NULL)
+		return;
 	INIT_LIST_HEAD(&temp_head);
 	spin_lock_bh(&sys->common_sys->spinlock);
 	list_for_each_entry_safe(rx_pkt, tmp,
