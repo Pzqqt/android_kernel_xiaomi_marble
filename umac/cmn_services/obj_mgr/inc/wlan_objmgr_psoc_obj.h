@@ -229,6 +229,9 @@
  * the feature flags
  */
 
+/* Roam Frame info stats - per candidate frames support */
+#define WLAN_ROAM_STATS_FRAME_INFO_PER_CANDIDATE  0x00000008
+
 /* PSOC op flags */
 
 	/* Invalid VHT cap */
