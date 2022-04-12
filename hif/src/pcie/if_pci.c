@@ -3049,8 +3049,8 @@ void hif_pci_irq_set_affinity_hint(struct hif_exec_context *hif_ext_group,
 							      new_cpu_mask[i]),
 					  hif_ext_group->os_irq[i]);
 		} else {
-			qdf_err("Offline CPU: Set affinity fails for IRQ: %d",
-				hif_ext_group->os_irq[i]);
+			qdf_debug("Offline CPU: Set affinity fails for IRQ: %d",
+				  hif_ext_group->os_irq[i]);
 		}
 	}
 }
