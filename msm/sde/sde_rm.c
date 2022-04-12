@@ -1120,6 +1120,12 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 	*ds = NULL;
 	*pp = NULL;
 
+	if (lm_cfg->features & BIT(SDE_MIXER_IS_VIRTUAL)) {
+		SDE_DEBUG("lm %d hw block is removed and it is a virtual mixer",
+				lm_cfg->id);
+		return false;
+	}
+
 	lm_primary_pref = lm_cfg->features & BIT(SDE_DISP_PRIMARY_PREF);
 	lm_secondary_pref = lm_cfg->features & BIT(SDE_DISP_SECONDARY_PREF);
 	cwb_pref = lm_cfg->features & BIT(SDE_DISP_CWB_PREF);
