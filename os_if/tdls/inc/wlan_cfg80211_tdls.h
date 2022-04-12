@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -51,6 +52,7 @@
  * @mgmt_tx_completion_status: Tdls mgmt frames TX completion status code
  * @tdls_user_cmd_len: tdls user command written buffer length
  * @tdls_antenna_switch_status: return status after antenna switch
+ * @tdls_user_cmd_in_progress: tdls user command progress status.
  */
 struct osif_tdls_vdev {
 	struct completion tdls_add_peer_comp;
@@ -64,6 +66,7 @@ struct osif_tdls_vdev {
 	uint32_t mgmt_tx_completion_status;
 	uint32_t tdls_user_cmd_len;
 	int tdls_antenna_switch_status;
+	bool tdls_user_cmd_in_progress;
 };
 
 /**

@@ -680,11 +680,29 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 
 	tdls_priv = osif_priv->osif_tdls;
 
-	if (!completion_done(&tdls_priv->tdls_user_cmd_comp)) {
+	/*
+	 * We shouldn't use completion_done here for checking for completion
+	 * as this will always return false, as tdls_user_cmd_comp.done will
+	 * remain in init state always. So, the very first command will also
+	 * not work.
+	 * In general completion_done is used to check if there are multiple
+	 * threads waiting on the complete event that's why it will return true
+	 * only when tdls_user_cmd_comp.done is set with complete()
+	 * In general completion_done will return true only when
+	 * tdls_user_cmd_comp.done is set that will happen in complete().
+	 * Also, if there is already a thread waiting for wait_for_completion,
+	 * this function will
+	 * return true only after the wait timer is over or condition is
+	 * met as wait_for_completion will hold out the hold lock and will
+	 * will prevent completion_done from returning.
+	 * Better to use a flag to determine command condition.
+	 */
+	if (tdls_priv->tdls_user_cmd_in_progress) {
 		osif_err("TDLS user cmd still in progress, reject this one");
 		return -EBUSY;
 	}
 
+	tdls_priv->tdls_user_cmd_in_progress = true;
 	wlan_cfg80211_update_tdls_peers_rssi(vdev);
 
 	reinit_completion(&tdls_priv->tdls_user_cmd_comp);
@@ -714,6 +732,7 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 	len = tdls_priv->tdls_user_cmd_len;
 
 error_get_tdls_peers:
+	tdls_priv->tdls_user_cmd_in_progress = false;
 	return len;
 }
 
