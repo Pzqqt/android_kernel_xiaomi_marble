@@ -5861,9 +5861,11 @@ cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data,
 	log_record->timestamp_us = qdf_get_time_of_the_day_us();
 	log_record->ktime_us = qdf_ktime_to_us(qdf_ktime_get());
 	log_record->fw_timestamp_us = (uint64_t)frame_data->timestamp * 1000;
+	log_record->bssid = frame_data->bssid;
 	log_record->vdev_id = vdev_id;
 
 	log_record->pkt_info.seq_num = frame_data->seq_num;
+	log_record->pkt_info.auth_algo = frame_data->auth_algo;
 	log_record->pkt_info.rssi = (-1) * frame_data->rssi;
 	log_record->pkt_info.tx_status = frame_data->tx_status;
 	log_record->pkt_info.frame_status_code = frame_data->status_code;
@@ -5877,6 +5879,11 @@ cm_roam_mgmt_frame_event(struct roam_frame_info *frame_data,
 				log_record->pkt_info.rssi =
 					(-1) * scan_data->ap[i].rssi;
 				log_record->bssid = scan_data->ap[i].bssid;
+				break;
+			} else if (qdf_is_macaddr_equal(&log_record->bssid,
+							&scan_data->ap[i].bssid)) {
+				log_record->pkt_info.rssi =
+					(-1) * scan_data->ap[i].rssi;
 				break;
 			}
 		}

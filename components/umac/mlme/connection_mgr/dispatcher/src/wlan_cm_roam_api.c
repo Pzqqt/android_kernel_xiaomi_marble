@@ -34,7 +34,7 @@
 #include "wlan_blm_api.h"
 #include <../../core/src/wlan_cm_roam_i.h>
 #include "wlan_reg_ucfg_api.h"
-
+#include "wlan_connectivity_logging.h"
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
@@ -3085,6 +3085,7 @@ cm_get_frame_subtype_str(enum mgmt_subtype frame_subtype)
 	return "Invalid frm";
 }
 
+#define WLAN_SAE_AUTH_ALGO 3
 static void
 cm_roam_print_frame_info(struct roam_frame_stats *frame_data,
 			 struct wmi_roam_scan_data *scan_data, uint8_t vdev_id)
@@ -3098,6 +3099,14 @@ cm_roam_print_frame_info(struct roam_frame_stats *frame_data,
 
 	for (i = 0; i < frame_data->num_frame; i++) {
 		frame_info = &frame_data->frame_info[i];
+		if (frame_info->auth_algo == WLAN_SAE_AUTH_ALGO &&
+		    wlan_is_log_record_present_for_bssid(&frame_info->bssid,
+							 vdev_id)) {
+			wlan_print_cached_sae_auth_logs(&frame_info->bssid,
+							vdev_id);
+			continue;
+		}
+
 		qdf_mem_zero(time, TIME_STRING_LEN);
 		mlme_get_converted_timestamp(frame_info->timestamp, time);
 
@@ -3324,6 +3333,7 @@ cm_roam_stats_event_handler(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
+	wlan_clear_sae_auth_logs_cache(stats_info->vdev_id);
 err:
 	if (stats_info->roam_msg_info)
 		qdf_mem_free(stats_info->roam_msg_info);

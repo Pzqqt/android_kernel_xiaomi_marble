@@ -31,6 +31,8 @@
 #include "wlan_cm_public_struct.h"
 #include "wmi_unified.h"
 
+#define WLAN_ROAM_MAX_CACHED_AUTH_FRAMES            8
+
 #define ROAM_SCAN_OFFLOAD_START                     1
 #define ROAM_SCAN_OFFLOAD_STOP                      2
 #define ROAM_SCAN_OFFLOAD_RESTART                   3
@@ -1906,12 +1908,16 @@ enum roam_rt_stats_type {
  * struct roam_frame_info  - Structure to hold the mgmt frame/eapol frame
  * related info exchanged during roaming.
  * @present:     Flag to indicate if roam frame info TLV is present
+ * @bssid:       BSSID of the candidate AP or roamed AP to which the
+ * frame exchange happened
  * @timestamp:   Fw timestamp at which the frame was Tx/Rx'ed
  * @type:        Frame Type
  * @subtype:     Frame subtype
  * @is_rsp:      True if frame is response frame else false
  * @seq_num:     Frame sequence number from the 802.11 header
  * @status_code: Status code from 802.11 spec, section 9.4.1.9
+ * @auth_algo: Authentication algorithm as defined in 802.11 spec,
+ * 9.4.1.1 Authentication Algorithm Number field
  * @tx_status: Frame TX status defined by enum qdf_dp_tx_rx_status
  * applicable only for tx frames
  * @rssi: Frame rssi
@@ -1919,12 +1925,14 @@ enum roam_rt_stats_type {
  */
 struct roam_frame_info {
 	bool present;
+	struct qdf_mac_addr bssid;
 	uint32_t timestamp;
 	uint8_t type;
 	uint8_t subtype;
 	uint8_t is_rsp;
 	enum qdf_dp_tx_rx_status tx_status;
 	uint16_t seq_num;
+	uint8_t auth_algo;
 	uint16_t status_code;
 	int32_t rssi;
 	uint16_t retry_count;

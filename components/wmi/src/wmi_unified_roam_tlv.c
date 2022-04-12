@@ -1745,7 +1745,13 @@ wmi_get_converted_tx_status(
 	return QDF_TX_RX_STATUS_INVALID;
 }
 
-#define WLAN_FC0_SUBTYPE_SHIFT         4
+#define WLAN_FC0_SUBTYPE_SHIFT              4
+#define WLAN_FRAME_INFO_TYPE_OFFSET         0
+#define WLAN_FRAME_INFO_SUBTYPE_OFFSET      2
+#define WLAN_FRAME_INFO_RESP_OFFSET         6
+#define WLAN_FRAME_INFO_AUTH_ALG_OFFSET     7
+#define WLAN_FRAME_INFO_SEQ_NUM_OFFSET      16
+
 /**
  * extract_roam_frame_info_tlv() - Extract the frame exchanges during roaming
  * info from the WMI_ROAM_STATS_EVENTID
@@ -1784,9 +1790,13 @@ extract_roam_frame_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	dst_buf = dst->frame_info;
 	for (i = 0; i < num_frames; i++) {
 		dst_buf->timestamp = src_data->timestamp;
-		dst_buf->type = WMI_GET_BITS(src_data->frame_info, 0, 2);
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_data->bssid,
+					   dst_buf->bssid.bytes);
+		dst_buf->type = WMI_GET_BITS(src_data->frame_info,
+					     WLAN_FRAME_INFO_TYPE_OFFSET, 2);
 
-		subtype = WMI_GET_BITS(src_data->frame_info, 2, 4);
+		subtype = WMI_GET_BITS(src_data->frame_info,
+				       WLAN_FRAME_INFO_SUBTYPE_OFFSET, 4);
 		if (dst_buf->type == WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT) {
 			dst_buf->type = ROAM_FRAME_INFO_FRAME_TYPE_EXT;
 			dst_buf->subtype =
@@ -1795,12 +1805,23 @@ extract_roam_frame_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 			dst_buf->subtype = subtype << WLAN_FC0_SUBTYPE_SHIFT;
 		}
 
-		dst_buf->is_rsp = WMI_GET_BITS(src_data->frame_info, 6, 1);
+		dst_buf->is_rsp = WMI_GET_BITS(src_data->frame_info,
+					       WLAN_FRAME_INFO_RESP_OFFSET, 1);
 		dst_buf->is_rsp &=
 			(dst_buf->type != WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT &&
 			 dst_buf->subtype == MGMT_SUBTYPE_AUTH);
-		dst_buf->seq_num = WMI_GET_BITS(src_data->frame_info, 7, 16);
+
+		dst_buf->seq_num = WMI_GET_BITS(src_data->frame_info,
+						WLAN_FRAME_INFO_SEQ_NUM_OFFSET,
+						16);
 		dst_buf->status_code = src_data->status_code;
+		if (dst_buf->type != WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT &&
+		    dst_buf->subtype == MGMT_SUBTYPE_AUTH)
+			dst_buf->auth_algo =
+				WMI_GET_BITS(src_data->frame_info,
+					     WLAN_FRAME_INFO_AUTH_ALG_OFFSET,
+					     4);
+
 		if (!dst_buf->is_rsp)
 			dst_buf->tx_status = wmi_get_converted_tx_status(
 							src_data->status_code);
