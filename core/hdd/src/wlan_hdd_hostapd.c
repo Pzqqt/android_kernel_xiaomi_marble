@@ -6398,7 +6398,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	int ret;
 	mac_handle_t mac_handle;
 
-	hdd_enter();
+	hdd_enter_dev(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	/*
@@ -6440,7 +6440,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	 * call during SSR case. Adapter gets cleaned up as part of SSR.
 	 */
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
-	hdd_debug("Device_mode %s(%d)",
+	hdd_debug("Event flags 0x%lx(%s) Device_mode %s(%d)",
+		  adapter->event_flags, (adapter->dev)->name,
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	/*
