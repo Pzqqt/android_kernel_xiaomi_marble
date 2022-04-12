@@ -8689,6 +8689,11 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 
 	/* find out number of links from bcn or prb rsp */
 	total_sta_prof = 1;
+	if (wlan_mlme_is_sta_single_mlo_conn(
+				wlan_vdev_get_psoc(pe_session->vdev))) {
+		pe_debug("Single link mlo connection is enabled for mlo sta");
+		total_sta_prof = 0;
+	}
 	partner_info = &pe_session->lim_join_req->partner_info;
 
 	mlo_dev_ctx = pe_session->vdev->mlo_dev_ctx;

@@ -1602,6 +1602,7 @@ enum station_keepalive_method {
  * @allow_tpc_from_ap:              Support for AP power constraint
  * @usr_disabled_roaming:           User config for roaming disable
  * @usr_scan_probe_unicast_ra:      User config unicast probe req in scan
+ * @single_link_mlo_conn:           Single link mlo connection is configured
  */
 struct wlan_mlme_sta_cfg {
 	uint32_t sta_keep_alive_period;
@@ -1627,6 +1628,9 @@ struct wlan_mlme_sta_cfg {
 	bool usr_scan_probe_unicast_ra;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type event_payload;
+#endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool single_link_mlo_conn;
 #endif
 };
 
