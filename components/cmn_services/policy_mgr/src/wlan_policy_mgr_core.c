@@ -1638,7 +1638,7 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 			 dual_sta_roam_enabled, sta_concurrency_is_dbs,
 			 clear_pcl);
 
-	if (dual_sta_roam_enabled && sta_concurrency_is_dbs) {
+	if (dual_sta_roam_enabled) {
 		if (clear_pcl) {
 			/*
 			 * Here the PCL level should be at vdev level already
@@ -1651,7 +1651,7 @@ void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
 			wlan_cm_roam_activate_pcl_per_vdev(psoc,
 							   roam_enabled_vdev_id,
 							   false);
-		} else {
+		} else if (sta_concurrency_is_dbs) {
 			wlan_cm_roam_activate_pcl_per_vdev(psoc,
 							   roam_enabled_vdev_id,
 							   true);
