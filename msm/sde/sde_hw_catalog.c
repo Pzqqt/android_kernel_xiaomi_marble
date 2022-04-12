@@ -1953,7 +1953,8 @@ static void sde_sspp_set_features(struct sde_mdss_cfg *sde_cfg,
 
 		if (props->exists[SSPP_MAX_PER_PIPE_BW])
 			sblk->max_per_pipe_bw = PROP_VALUE_ACCESS(props->values,
-					SSPP_MAX_PER_PIPE_BW, i);
+					SSPP_MAX_PER_PIPE_BW,
+					sde_cfg->ddr_list_index * sde_cfg->sspp_count + i);
 		else
 			sblk->max_per_pipe_bw = DEFAULT_MAX_PER_PIPE_BW;
 
