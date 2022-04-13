@@ -1945,71 +1945,41 @@ void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 
 #ifndef HIF_CE_DEBUG_DATA_DYNAMIC_BUF
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
-struct hif_ce_desc_event *hif_ce_desc_history[CE_COUNT_MAX];
 
-/* define this variable for crashscope parse */
+/* define below variables for crashscope parse */
+struct hif_ce_desc_event *hif_ce_desc_history[CE_COUNT_MAX];
 uint32_t hif_ce_history_max = HIF_CE_HISTORY_MAX;
 
 /**
- * hif_ce_debug_only_enable_ce2_ce3() - if only enable ce2/ce3 debug
- * This is different config for perf/debug buid version.
  * for debug build, it will enable ce history for all ce, but for
  * perf build(if CONFIG_SLUB_DEBUG_ON is N), it only enable for
  * ce2(wmi event) & ce3(wmi cmd) history.
- *
- * Return: true if only enable ce2/ce3 debug, otherwise false.
  */
 #if defined(CONFIG_SLUB_DEBUG_ON)
-static inline bool hif_ce_debug_only_enable_ce2_ce3(void)
-{
-	return false;
-}
+#define CE_DESC_HISTORY_BUFF_CNT  CE_COUNT_MAX
+#define IS_CE_DEBUG_ONLY_FOR_CE2_CE3  FALSE
 #else
-static inline bool hif_ce_debug_only_enable_ce2_ce3(void)
-{
-	return true;
-}
+#define CE_DESC_HISTORY_BUFF_CNT  2
+#define IS_CE_DEBUG_ONLY_FOR_CE2_CE3  TRUE
 #endif
+struct hif_ce_desc_event
+	hif_ce_desc_history_buff[CE_DESC_HISTORY_BUFF_CNT][HIF_CE_HISTORY_MAX];
 
-QDF_STATUS hif_ce_debug_history_prealloc_deinit(void)
+static struct hif_ce_desc_event *
+	hif_ce_debug_history_buf_get(unsigned int ce_id)
 {
-	int ce_id;
-
-	for (ce_id = 0; ce_id < CE_COUNT_MAX; ce_id++) {
-		if (hif_ce_desc_history[ce_id]) {
-			qdf_mem_free(hif_ce_desc_history[ce_id]);
-			hif_ce_desc_history[ce_id] = NULL;
-		}
-	}
-	hif_debug("ce debug memory freed");
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS hif_ce_debug_history_prealloc_init(void)
-{
-	int ce_id;
-
-	hif_debug("alloc ce debug memory, only_ce2/ce3 %d",
-		  hif_ce_debug_only_enable_ce2_ce3());
-	for (ce_id = 0; ce_id < CE_COUNT_MAX; ce_id++) {
-		if (hif_ce_debug_only_enable_ce2_ce3() &&
-		    ce_id != CE_ID_2 &&
-		    ce_id != CE_ID_3) {
-			hif_ce_desc_history[ce_id] = NULL;
-			continue;
-		}
-
+	hif_debug("get ce debug buffer ce_id %u, only_ce2/ce3=%d",
+		  ce_id, IS_CE_DEBUG_ONLY_FOR_CE2_CE3);
+	if (IS_CE_DEBUG_ONLY_FOR_CE2_CE3 &&
+	    (ce_id == CE_ID_2 || ce_id == CE_ID_3)) {
 		hif_ce_desc_history[ce_id] =
-			qdf_mem_malloc(HIF_CE_HISTORY_MAX *
-				       sizeof(struct hif_ce_desc_event));
-		if (!hif_ce_desc_history[ce_id]) {
-			hif_ce_debug_history_prealloc_deinit();
-			return QDF_STATUS_E_NOMEM;
-		}
+			hif_ce_desc_history_buff[ce_id - CE_ID_2];
+	} else {
+		hif_ce_desc_history[ce_id] =
+			hif_ce_desc_history_buff[ce_id];
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return hif_ce_desc_history[ce_id];
 }
 
 /**
@@ -2026,7 +1996,8 @@ alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id,
 	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (hif_ce_debug_only_enable_ce2_ce3() &&
+	/* For perf build, return directly for non ce2/ce3 */
+	if (IS_CE_DEBUG_ONLY_FOR_CE2_CE3 &&
 	    ce_id != CE_ID_2 &&
 	    ce_id != CE_ID_3) {
 		ce_hist->enable[ce_id] = false;
@@ -2034,11 +2005,7 @@ alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (!hif_ce_desc_history[ce_id]) {
-		hif_err("prealloc memory failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-	ce_hist->hist_ev[ce_id] = hif_ce_desc_history[ce_id];
+	ce_hist->hist_ev[ce_id] = hif_ce_debug_history_buf_get(ce_id);
 	ce_hist->enable[ce_id] = true;
 
 	if (src_nentries) {
