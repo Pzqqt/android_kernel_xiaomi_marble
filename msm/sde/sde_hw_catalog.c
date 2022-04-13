@@ -208,6 +208,7 @@ enum sde_prop {
 	DIM_LAYER,
 	SMART_DMA_REV,
 	IDLE_PC,
+	DDR_TYPE,
 	WAKEUP_WITH_TOUCH,
 	DEST_SCALER,
 	SMART_PANEL_ALIGN_MODE,
@@ -594,6 +595,7 @@ static struct sde_prop_type sde_prop[] = {
 	{DIM_LAYER, "qcom,sde-has-dim-layer", false, PROP_TYPE_BOOL},
 	{SMART_DMA_REV, "qcom,sde-smart-dma-rev", false, PROP_TYPE_STRING},
 	{IDLE_PC, "qcom,sde-has-idle-pc", false, PROP_TYPE_BOOL},
+	{DDR_TYPE, "qcom,sde-ddr-type", false, PROP_TYPE_U32_ARRAY},
 	{WAKEUP_WITH_TOUCH, "qcom,sde-wakeup-with-touch", false,
 			PROP_TYPE_BOOL},
 	{DEST_SCALER, "qcom,sde-has-dest-scaler", false, PROP_TYPE_BOOL},
@@ -3642,10 +3644,14 @@ static int _sde_vbif_populate_qos_parsing(struct sde_mdss_cfg *sde_cfg,
 	int i, j;
 	int prop_index = VBIF_QOS_RT_REMAP;
 
+	if (WARN_ON(!sde_cfg->ddr_count))
+		return -EINVAL;
+
 	for (i = VBIF_RT_CLIENT;
 			((i < VBIF_MAX_CLIENT) && (prop_index < VBIF_PROP_MAX));
 				i++, prop_index++) {
-		vbif->qos_tbl[i].npriority_lvl = prop_count[prop_index];
+		vbif->qos_tbl[i].npriority_lvl =
+				(prop_count[prop_index] / sde_cfg->ddr_count);
 		SDE_DEBUG("qos_tbl[%d].npriority_lvl=%u\n",
 				i, vbif->qos_tbl[i].npriority_lvl);
 
@@ -3664,7 +3670,9 @@ static int _sde_vbif_populate_qos_parsing(struct sde_mdss_cfg *sde_cfg,
 
 		for (j = 0; j < vbif->qos_tbl[i].npriority_lvl; j++) {
 			vbif->qos_tbl[i].priority_lvl[j] =
-				PROP_VALUE_ACCESS(prop_value, prop_index, j);
+				PROP_VALUE_ACCESS(prop_value, prop_index,
+				vbif->qos_tbl[i].npriority_lvl
+				* sde_cfg->ddr_list_index + j);
 			SDE_DEBUG("client:%d, prop:%d, lvl[%d]=%u\n",
 					i, prop_index, j,
 					vbif->qos_tbl[i].priority_lvl[j]);
@@ -3967,6 +3975,19 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	cfg->max_mixer_blendstages = props->exists[MIXER_BLEND] ?
 			PROP_VALUE_ACCESS(props->values, MIXER_BLEND, 0) :
 			DEFAULT_SDE_MIXER_BLENDSTAGES;
+
+	/* set default value of ddr_count as one */
+	cfg->ddr_count = 1;
+	if (props->exists[DDR_TYPE]) {
+		cfg->ddr_count = props->counts[DDR_TYPE];
+		for (i = 0; i < cfg->ddr_count; i++) {
+			ddr_type = PROP_VALUE_ACCESS(props->values, DDR_TYPE, i);
+			if (ddr_type == of_fdt_get_ddrtype()) {
+				cfg->ddr_list_index = i;
+				break;
+			}
+		}
+	}
 
 	cfg->ubwc_version = props->exists[UBWC_VERSION] ?
 			SDE_HW_UBWC_VER(PROP_VALUE_ACCESS(props->values,
