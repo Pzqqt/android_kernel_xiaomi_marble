@@ -2,6 +2,7 @@ ifneq ($(TARGET_BOARD_AUTO),true)
 ifneq ($(TARGET_BOARD_PLATFORM),qssi)
 
 RMNET_SCH_DLKM_PLATFORMS_LIST := taro
+RMNET_SCH_DLKM_PLATFORMS_LIST += parrot
 
 ifeq ($(call is-board-platform-in-list, $(RMNET_SCH_DLKM_PLATFORMS_LIST)),true)
 LOCAL_PATH := $(call my-dir)
