@@ -15,6 +15,7 @@
 #include <linux/usb/phy.h>
 #include <linux/jiffies.h>
 #include <linux/pm_qos.h>
+#include <linux/ipc_logging.h>
 
 #include "sde_connector.h"
 
@@ -34,6 +35,7 @@
 #include "dp_pll.h"
 #include "sde_dbg.h"
 
+#define DRM_DP_IPC_NUM_PAGES 10
 #define DP_MST_DEBUG(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
 
 #define dp_display_state_show(x) { \
@@ -2919,7 +2921,7 @@ static int dp_display_validate_topology(struct dp_display_private *dp,
 		return -EPERM;
 	}
 
-	DP_DEBUG("mode %sx%d is valid, supported DP topology lm:%d dsc:%d 3dmux:%d\n",
+	DP_DEBUG_V("mode %sx%d is valid, supported DP topology lm:%d dsc:%d 3dmux:%d\n",
 				mode->name, fps, num_lm, num_dsc, num_3dmux);
 
 	return 0;
@@ -2979,7 +2981,8 @@ static enum drm_mode_status dp_display_validate_mode(
 	mode_status = MODE_OK;
 end:
 	mutex_unlock(&dp->session_lock);
-	DP_DEBUG("[%s] mode is %s\n", mode->name,
+
+	DP_DEBUG_V("[%s] mode is %s\n", mode->name,
 			(mode_status == MODE_OK) ? "valid" : "invalid");
 
 	return mode_status;
@@ -3002,11 +3005,11 @@ static int dp_display_get_available_dp_resources(struct dp_display *dp_display,
 	max_dp_avail_res->num_dsc = min(avail_res->num_dsc,
 			dp_display->max_dsc_count);
 
-	DP_DEBUG("max_lm:%d, avail_lm:%d, dp_avail_lm:%d\n",
+	DP_DEBUG_V("max_lm:%d, avail_lm:%d, dp_avail_lm:%d\n",
 			dp_display->max_mixer_count, avail_res->num_lm,
 			max_dp_avail_res->num_lm);
 
-	DP_DEBUG("max_dsc:%d, avail_dsc:%d, dp_avail_dsc:%d\n",
+	DP_DEBUG_V("max_dsc:%d, avail_dsc:%d, dp_avail_dsc:%d\n",
 			dp_display->max_dsc_count, avail_res->num_dsc,
 			max_dp_avail_res->num_dsc);
 
@@ -3062,6 +3065,9 @@ static void dp_display_convert_to_dp_mode(struct dp_display *dp_display,
 	free_dsc_blks = dp_display->max_dsc_count -
 				dp->tot_dsc_blks_in_use +
 				dp_panel->dsc_blks_in_use;
+	DP_DEBUG_V("Before: in_use:%d, max:%d, free:%d\n",
+				dp->tot_dsc_blks_in_use,
+				dp_display->max_dsc_count, free_dsc_blks);
 
 	rc = msm_get_dsc_count(dp->priv, drm_mode->hdisplay,
 			&required_dsc_blks);
@@ -3074,7 +3080,7 @@ static void dp_display_convert_to_dp_mode(struct dp_display *dp_display,
 		dp_mode->capabilities |= DP_PANEL_CAPS_DSC;
 
 	if (dp_mode->capabilities & DP_PANEL_CAPS_DSC)
-		DP_DEBUG("in_use:%d, max:%d, free:%d, req:%d, caps:0x%x\n",
+		DP_DEBUG_V("After: in_use:%d, max:%d, free:%d, req:%d, caps:0x%x\n",
 				dp->tot_dsc_blks_in_use,
 				dp_display->max_dsc_count,
 				free_dsc_blks, required_dsc_blks,
@@ -3594,6 +3600,10 @@ static int dp_display_probe(struct platform_device *pdev)
 
 	g_dp_display = &dp->dp_display;
 
+	g_dp_display->dp_ipc_log = ipc_log_context_create(DRM_DP_IPC_NUM_PAGES, "drm_dp", 0);
+	if (!g_dp_display->dp_ipc_log)
+		DP_WARN("Error in creating ipc_log_context\n");
+
 	g_dp_display->enable        = dp_display_enable;
 	g_dp_display->post_enable   = dp_display_post_enable;
 	g_dp_display->pre_disable   = dp_display_pre_disable;
@@ -3705,6 +3715,11 @@ static int dp_display_remove(struct platform_device *pdev)
 	platform_set_drvdata(pdev, NULL);
 	devm_kfree(&pdev->dev, dp);
 
+	if (g_dp_display->dp_ipc_log) {
+		ipc_log_context_destroy(g_dp_display->dp_ipc_log);
+		g_dp_display->dp_ipc_log = NULL;
+	}
+
 	return 0;
 }
 
@@ -3764,6 +3779,13 @@ static void dp_pm_complete(struct device *dev)
 	dp_display_state_remove(DP_STATE_SUSPENDED);
 	mutex_unlock(&dp->session_lock);
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
+}
+
+void *get_ipc_log_context(void)
+{
+	if (g_dp_display && g_dp_display->dp_ipc_log)
+		return g_dp_display->dp_ipc_log;
+	return NULL;
 }
 
 static const struct dev_pm_ops dp_pm_ops = {
