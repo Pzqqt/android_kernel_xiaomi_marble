@@ -5354,6 +5354,7 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 				       uint8_t dcm,
 				       enum txrate_gi guard_interval)
 {
+	os_rate->nss = nss;
 	if (rate_flags & TX_RATE_LEGACY) {
 		os_rate->legacy = legacy_rate;
 		hdd_debug("Reporting legacy rate %d", os_rate->legacy);
@@ -5363,7 +5364,6 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 	/* assume basic BW. anything else will override this later */
 	hdd_set_rate_bw(os_rate, HDD_RATE_BW_20);
 	os_rate->mcs = mcs_index;
-	os_rate->nss = nss;
 
 	wlan_hdd_fill_os_he_rateflags(os_rate, rate_flags, dcm, guard_interval);
 
