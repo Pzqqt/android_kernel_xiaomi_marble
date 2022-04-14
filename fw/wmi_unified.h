@@ -33933,7 +33933,7 @@ typedef struct {
      *     should be one of value in WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE.
      * request_or_response(1 bit) - Valid if frame_subtype is authentication.
      *      0 - Authentication request 1 - Authentication response
-     * auth_algo_num(4bits) : Lower 4 bits of 9.4.1.1 Authentication Algorithm
+     * auth_algo_num(5bits) : Lower 5 bits of 9.4.1.1 Authentication Algorithm
      *     Number field
      *     The auth_algo_num bits shall be ignored unless
      *     WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT is set and
@@ -33965,11 +33965,6 @@ typedef struct {
      */
     A_UINT32 retry_count;
     wmi_mac_addr bssid;      /* AP MAC address */
-    /* sae_preauth_indicator
-     * 1 -> SAE auth happened in host, so auth frame history saved in host
-     * 0 -> SAE auth not happened, so firmware will send auth frame info
-     */
-    A_UINT32 sae_preauth_indicator;
 } wmi_roam_frame_info;
 
 typedef enum {
