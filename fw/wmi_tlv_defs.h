@@ -1264,6 +1264,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_tx_filter_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_telemetry_stats,
     WMITLV_TAG_STRUC_wmi_mgmt_ml_info,
+    WMITLV_TAG_STRUC_wmi_vdev_latency_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -2042,6 +2043,7 @@ typedef enum {
     OP(WMI_PEER_RX_PN_RESPONSE_EVENTID) \
     OP(WMI_PMM_AVAILABLE_SCRATCH_REG_EVENTID) \
     OP(WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID) \
+    OP(WMI_VDEV_LATENCY_LEVEL_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6680,6 +6682,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_TPC_STATS_EVENTID);
 #define WMITLV_TABLE_WMI_VDEV_BCN_LATENCY_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_bcn_latency_fixed_param, wmi_vdev_bcn_latency_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_BCN_LATENCY_EVENTID);
+
+/* Latency Level Event */
+#define WMITLV_TABLE_WMI_VDEV_LATENCY_LEVEL_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_latency_event_fixed_param, wmi_vdev_latency_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_LATENCY_LEVEL_EVENTID);
 
 /* TWT Stats session event */
 #define WMITLV_TABLE_WMI_TWT_SESSION_STATS_EVENTID(id,op,buf,len) \

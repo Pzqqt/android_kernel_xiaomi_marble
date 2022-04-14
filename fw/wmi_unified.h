@@ -1695,6 +1695,8 @@ typedef enum {
     WMI_VDEV_SMART_MONITOR_EVENTID,
     /** Send status of vdev mac address update request to host */
     WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID,
+    /** event to report latency level honored by FW */
+    WMI_VDEV_LATENCY_LEVEL_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -13972,6 +13974,35 @@ typedef enum {
      * bit 31:3 Reserved
      */
     WMI_VDEV_PARAM_11AZ_SECURITY_CONFIG,    /* 0xAB */
+
+    /*
+     * Latency Level Flags
+     */
+    WMI_VDEV_PARAM_NORMAL_LATENCY_FLAGS_CONFIGURATION,    /* 0xAC */
+    WMI_VDEV_PARAM_XR_LATENCY_FLAGS_CONFIGURATION,        /* 0xAD */
+    WMI_VDEV_PARAM_LOW_LATENCY_FLAGS_CONFIGURATION,       /* 0xAE */
+    WMI_VDEV_PARAM_ULTRA_LOW_LATENCY_FLAGS_CONFIGURATION, /* 0xAF */
+
+    /*
+     * Latency level UL/DL
+     * 0-15 bits: UL
+     * 16-31 bits: DL
+     */
+    WMI_VDEV_PARAM_NORMAL_LATENCY_UL_DL_CONFIGURATION,    /* 0xB0 */
+    WMI_VDEV_PARAM_XR_LATENCY_UL_DL_CONFIGURATION,        /* 0xB1 */
+    WMI_VDEV_PARAM_LOW_LATENCY_UL_DL_CONFIGURATION,       /* 0xB2 */
+    WMI_VDEV_PARAM_ULTRA_LOW_LATENCY_UL_DL_CONFIGURATION, /* 0xB3 */
+    /*
+     * Ini to
+     * Configure default latency level for all clients
+     */
+    WMI_VDEV_PARAM_DEFAULT_LATENCY_LEVEL_CONFIGURATION,   /* 0xB4 */
+
+    /*
+     * Ini to
+     * Configure multi client Low latency Feature
+     */
+    WMI_VDEV_PARAM_MULTI_CLIENT_LL_FEATURE_CONFIGURATION, /* 0xB5 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -32290,6 +32321,14 @@ typedef enum {
     WMI_WLM_LL_ULTRA_LOW = 0x3,
 } WMI_WLM_LATENCY_LEVEL;
 
+typedef struct {
+    A_UINT32 tlv_header; /* WMITLV_TAG_STRUC_wmi_vdev_latency_event_fixed_param */
+    /** The latency level for specified vdev_id */
+    A_UINT32 vdev_id;
+    /** latency level enum WMI_WLM_LATENCY_LEVEL honored by FW */
+    A_UINT32 latency_level;
+} wmi_vdev_latency_event_fixed_param;
+
 /*
 * Lay out of flags in wmi_wlm_config_cmd_fixed_param
 *
@@ -32402,31 +32441,53 @@ typedef enum {
 #define WLM_FLAGS_SCAN_SET_SPLIT_PAS_CH_ENABLE(flag, val) WMI_SET_BITS(flag, 21, 1, val)
 #define WLM_FLAGS_SCAN_IS_ADAPT_SCAN_ENABLED(flag)        WMI_GET_BITS(flag, 22, 1)
 #define WLM_FLAGS_SCAN_SET_ADAPT_SCAN_ENABLE(flag, val)   WMI_SET_BITS(flag, 22, 1, val)
+#define WLM_FLAGS_SET_FORCE_DEFAULT_LATENCY(flag, val)    WMI_SET_BITS(flag, 0, 1, val)
+#define WLM_FLAGS_GET_FORCE_DEFAULT_LATENCY(flag)         WMI_GET_BITS(flag, 0, 1)
+
+#define WLM_MAX_HOST_CLIENTS 5
 
 typedef struct {
-    /** TLV tag and len; tag equals
-    * WMI_WLM_CONFIG_CMD_fixed_param */
+    /** TLV tag and len; tag equals WMI_WLM_CONFIG_CMD_fixed_param */
     A_UINT32 tlv_header;
     /* VDEV identifier */
     A_UINT32 vdev_id;
-    /* Refer to WMI_WLM_LATENCY_LEVEL
-    * Once latency change detected, WLM will notify modules e.g. STAPS or SCAN/ROAM,
-    * who subscribed this event. And subscribers, like SCAN, may disable/cutoff offchan
-    * operation to support lower latency of WLAN.
-    */
+    /*
+     * Refer to WMI_WLM_LATENCY_LEVEL
+     * Once latency change detected, WLM will notify modules e.g. STAPS or SCAN/ROAM,
+     * who subscribed this event. And subscribers, like SCAN, may disable/cutoff offchan
+     * operation to support lower latency of WLAN.
+     */
     A_UINT32 latency_level;
-    /* represent uplink latency in ms
-    * This parameter will be used by STAPS module to decide timing parameters, like
-    * ITO or SPEC wakeup interval. For SCAN/ROAM, it may used to calculate offchan
-    * durations.
-    */
+    /*
+     * represent uplink latency in ms
+     * This parameter will be used by STAPS module to decide timing parameters, like
+     * ITO or SPEC wakeup interval. For SCAN/ROAM, it may used to calculate offchan
+     * durations.
+     * For host and FW with multi client LL feature enabled, this field is obsolete.
+     */
     A_UINT32 ul_latency;
-    /* represent downlink latency in ms
-    * Similar usage as ul_latency
-    */
+    /*
+     * represent downlink latency in ms
+     * Similar usage as ul_latency
+     * For host and FW with multi client LL feature enabled, this field is obsolete.
+     */
     A_UINT32 dl_latency;
-    /* flags for each client of WLM, refer to WLM_FLAGS_ definitions above */
+    /*
+     * flags for each client of WLM, refer to WLM_FLAGS_ definitions above.
+     * For host and FW with multi client LL feature enabled, this field is obsolete.
+     */
     A_UINT32 flags;
+    /*
+     * bit 0 used as force reset:
+     * to override the latency level as default
+     * for all the wlm clients
+     */
+    A_UINT32 flags_ext;
+    /*
+     * clients of WLM Arbiter
+     * WLM_MAX_HOST_CLIENTS 5
+     */
+    A_UINT32 client_id_bitmask;
 } wmi_wlm_config_cmd_fixed_param;
 
 /* Broadcast TWT enable/disable for both REQUESTER and RESPONDER */

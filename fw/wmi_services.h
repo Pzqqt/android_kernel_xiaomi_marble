@@ -585,6 +585,7 @@ typedef  enum  {
     WMI_SERVICE_PDEV_TELEMETRY_STATS_SUPPORT = 332,
     WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT = 333, /* FW supports to send frame info for each candidate in roam stat */
     WMI_SERVICE_HW_TX_POWER_CAPS_SIGNED_SUPPORT = 334, /* Indicates FW supports updating of Tx power capabilities as signed value */
+    WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT = 335, /* FW supports set param cmd combined for multiple params */
 
     WMI_MAX_EXT2_SERVICE
 
