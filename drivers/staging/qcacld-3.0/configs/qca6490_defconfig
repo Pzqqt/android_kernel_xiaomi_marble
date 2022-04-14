@@ -1,3 +1,4 @@
+CONFIG_CNSS_QCA6490 := y
 DEVNAME := qca6490
 
 include $(WLAN_ROOT)/configs/default_defconfig
