@@ -11470,6 +11470,7 @@ static int __ipa3_stop_gsi_channel(u32 clnt_hdl)
 {
 	struct ipa_mem_buffer mem;
 	int res = 0;
+	int result = 0;
 	int i;
 	struct ipa3_ep_context *ep;
 	enum ipa_client_type client_type;
@@ -11565,10 +11566,10 @@ static int __ipa3_stop_gsi_channel(u32 clnt_hdl)
 		if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0) {
 			IPADBG("Inject a DMA_TASK with 1B packet to IPA\n");
 			/* Send a 1B packet DMA_TASK to IPA and try again */
-			res = ipa3_inject_dma_task_for_gsi();
-			if (res) {
+			result = ipa3_inject_dma_task_for_gsi();
+			if (result) {
 				IPAERR("Failed to inject DMA TASk for GSI\n");
-				return res;
+				return result;
 			}
 		}
 		/* sleep for short period to flush IPA */
