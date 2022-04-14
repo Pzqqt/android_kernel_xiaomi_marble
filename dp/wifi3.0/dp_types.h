@@ -91,7 +91,7 @@
 #define DP_PDEV_MAX_VDEVS 17
 #endif
 
-#define MAX_TXDESC_POOLS 4
+#define MAX_TXDESC_POOLS 6
 #define MAX_RXDESC_POOLS 4
 
 #define EXCEPTION_DEST_RING_ID 0
