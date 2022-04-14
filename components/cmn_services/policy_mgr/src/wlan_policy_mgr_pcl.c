@@ -2703,6 +2703,27 @@ uint32_t policy_mgr_mode_specific_get_channel(
 	return freq;
 }
 
+/**
+ * policy_mgr_get_connection_count_with_ch_freq() - Get number of active
+ * connections on the channel frequecy
+ * @ch_freq: channel frequency
+ *
+ * Return: number of active connection on the specific frequency
+ */
+static uint32_t policy_mgr_get_connection_count_with_ch_freq(uint32_t ch_freq)
+{
+	uint32_t i;
+	uint32_t count = 0;
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (pm_conc_connection_list[i].in_use &&
+		    ch_freq == pm_conc_connection_list[i].freq)
+			count++;
+	}
+
+	return count;
+}
+
 uint32_t policy_mgr_get_alternate_channel_for_sap(
 	struct wlan_objmgr_psoc *psoc, uint8_t sap_vdev_id,
 	uint32_t sap_ch_freq)
@@ -2715,13 +2736,16 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint8_t i;
+	enum policy_mgr_con_mode con_mode;
+	bool is_6ghz_cap;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return 0;
 	}
-
+	con_mode = policy_mgr_con_mode_by_vdev_id(psoc, sap_vdev_id);
+	is_6ghz_cap = policy_mgr_get_ap_6ghz_capable(psoc, sap_vdev_id, NULL);
 	/*
 	 * Store the connection's parameter and temporarily delete it
 	 * from the concurrency table. This way the get pcl can be used as a
@@ -2731,20 +2755,39 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, sap_vdev_id,
 						      &info, &num_cxn_del);
-
 	if (QDF_STATUS_SUCCESS == policy_mgr_get_pcl(
-	    psoc, PM_SAP_MODE, pcl_channels, &pcl_len,
+	    psoc, con_mode, pcl_channels, &pcl_len,
 	    pcl_weight, QDF_ARRAY_SIZE(pcl_weight))) {
 		for (i = 0; i < pcl_len; i++) {
+			/*
+			 * The API is expected to select the channel on the
+			 * other band which is not same as sap's home and
+			 * concurrent interference channel, so skip the sap
+			 * home channel in PCL.
+			 */
 			if (pcl_channels[i] == sap_ch_freq)
 				continue;
-			ch_freq = pcl_channels[i];
-			break;
+			if (!is_6ghz_cap &&
+			    WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[i]))
+				continue;
+			if (policy_mgr_are_2_freq_on_same_mac(psoc,
+							      sap_ch_freq,
+							      pcl_channels[i]))
+				continue;
+			if (policy_mgr_get_connection_count_with_ch_freq(
+							pcl_channels[i])) {
+				ch_freq = pcl_channels[i];
+				break;
+			} else if (!ch_freq) {
+				ch_freq = pcl_channels[i];
+			}
 		}
 	}
+
 	/* Restore the connection entry */
 	if (num_cxn_del > 0)
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return ch_freq;

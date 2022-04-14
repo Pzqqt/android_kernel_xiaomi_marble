@@ -6333,12 +6333,6 @@ bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc,
 		return is_scc;
 	}
 
-	if (!policy_mgr_mode_specific_connection_count(
-		psoc, PM_STA_MODE, NULL)) {
-		policy_mgr_debug("There is no STA+SAP conc");
-		return is_scc;
-	}
-
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 		conn_index++) {
