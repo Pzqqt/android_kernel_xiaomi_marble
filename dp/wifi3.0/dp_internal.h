@@ -1240,6 +1240,13 @@ void dp_update_vdev_stats(struct dp_soc *soc,
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_reason1); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_reason2); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_reason3); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_queue_disable); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_no_match); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.drop_threshold); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.drop_link_desc_na); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.invalid_drop); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.mcast_vdev_drop); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.invalid_rr); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.age_out); \
 								\
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.mic_err); \

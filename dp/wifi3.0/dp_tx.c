@@ -3656,20 +3656,120 @@ void dp_tx_compute_delay(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
 
 #ifdef DISABLE_DP_STATS
 static
-inline void dp_update_no_ack_stats(qdf_nbuf_t nbuf, struct dp_peer *peer)
+inline void dp_update_no_ack_stats(qdf_nbuf_t nbuf, struct dp_peer *peer,
+				   struct hal_tx_completion_status *ts)
 {
 }
 #else
 static
-inline void dp_update_no_ack_stats(qdf_nbuf_t nbuf, struct dp_peer *peer)
+inline void dp_update_no_ack_stats(qdf_nbuf_t nbuf, struct dp_peer *peer,
+				   struct hal_tx_completion_status *ts)
 {
 	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
 
 	DPTRACE(qdf_dp_track_noack_check(nbuf, &subtype));
 	if (subtype != QDF_PROTO_INVALID)
 		DP_STATS_INC(peer, tx.no_ack_count[subtype], 1);
+
+	switch (ts->status) {
+	case HAL_TX_TQM_RR_REM_CMD_AGED:
+		DP_STATS_INC(peer, tx.dropped.age_out, 1);
+		break;
+	case HAL_TX_TQM_RR_REM_CMD_REM:
+		DP_STATS_INC_PKT(peer, tx.dropped.fw_rem, 1,
+				 qdf_nbuf_len(nbuf));
+		break;
+	case HAL_TX_TQM_RR_REM_CMD_NOTX:
+		DP_STATS_INC(peer, tx.dropped.fw_rem_tx, 1);
+		break;
+	case HAL_TX_TQM_RR_FW_REASON1:
+		DP_STATS_INC(peer, tx.dropped.fw_reason1, 1);
+		break;
+	case HAL_TX_TQM_RR_FW_REASON2:
+		DP_STATS_INC(peer, tx.dropped.fw_reason2, 1);
+		break;
+	case HAL_TX_TQM_RR_FW_REASON3:
+		DP_STATS_INC(peer, tx.dropped.fw_reason3, 1);
+		break;
+	case HAL_TX_TQM_RR_REM_CMD_DISABLE_QUEUE:
+		DP_STATS_INC(peer, tx.dropped.fw_rem_queue_disable, 1);
+		break;
+	case HAL_TX_TQM_RR_REM_CMD_TILL_NONMATCHING:
+		DP_STATS_INC(peer, tx.dropped.fw_rem_no_match, 1);
+		break;
+	case HAL_TX_TQM_RR_DROP_THRESHOLD:
+		DP_STATS_INC(peer, tx.dropped.drop_threshold, 1);
+		break;
+	case HAL_TX_TQM_RR_LINK_DESC_UNAVAILABLE:
+		DP_STATS_INC(peer, tx.dropped.drop_link_desc_na, 1);
+		break;
+	case HAL_TX_TQM_RR_DROP_OR_INVALID_MSDU:
+		DP_STATS_INC(peer, tx.dropped.invalid_drop, 1);
+		break;
+	case HAL_TX_TQM_RR_MULTICAST_DROP:
+		DP_STATS_INC(peer, tx.dropped.mcast_vdev_drop, 1);
+		break;
+	default:
+		DP_STATS_INC(peer, tx.dropped.invalid_rr, 1);
+		break;
+	}
+
+	/*
+	 * tx_failed is ideally supposed to be updated from HTT ppdu completion
+	 * stats. But in IPQ807X/IPQ6018 chipsets owing to hw limitation there
+	 * are no completions for failed cases. Hence updating tx_failed from
+	 * data path. Please note that if tx_failed is fixed to be from ppdu,
+	 * then this has to be removed
+	 */
+	DP_STATS_INC(peer, tx.tx_failed, 1);
 }
 #endif
+
+static inline void
+dp_tx_update_acked_rate_stats(struct dp_peer *peer,
+			      struct hal_tx_completion_status *ts)
+{
+	uint8_t mcs, pkt_type;
+
+	mcs = ts->mcs;
+	pkt_type = ts->pkt_type;
+
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
+		      ((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_A)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+		      ((mcs < (MAX_MCS_11A)) && (pkt_type == DOT11_A)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
+		      ((mcs >= MAX_MCS_11B) && (pkt_type == DOT11_B)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+		      ((mcs < MAX_MCS_11B) && (pkt_type == DOT11_B)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
+		      ((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_N)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+		      ((mcs < MAX_MCS_11A) && (pkt_type == DOT11_N)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
+		      ((mcs >= MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+		      ((mcs < MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
+		      ((mcs >= (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+		      ((mcs < (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
+
+	DP_STATS_INC(peer, tx.sgi_count[ts->sgi], 1);
+	DP_STATS_INC(peer, tx.bw[ts->bw], 1);
+	DP_STATS_UPD(peer, tx.last_ack_rssi, ts->ack_frame_rssi);
+	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ts->tid)], 1);
+	DP_STATS_INCC(peer, tx.stbc, 1, ts->stbc);
+	DP_STATS_INCC(peer, tx.ldpc, 1, ts->ldpc);
+	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
+	if (ts->first_msdu) {
+		DP_STATS_INCC(peer, tx.retries_mpdu, 1, ts->transmit_cnt > 1);
+		DP_STATS_INCC(peer, tx.mpdu_success_with_retries,
+			      qdf_do_div(ts->transmit_cnt, DP_RETRY_COUNT),
+			      ts->transmit_cnt > DP_RETRY_COUNT);
+	}
+	peer->stats.tx.last_tx_ts = qdf_system_ticks();
+}
 
 /**
  * dp_tx_update_peer_stats() - Update peer stats from Tx completion indications
@@ -3689,7 +3789,6 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = NULL;
-	uint8_t mcs, pkt_type;
 	uint8_t tid = ts->tid;
 	uint32_t length;
 	struct cdp_tid_tx_stats *tid_stats;
@@ -3703,9 +3802,6 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	tid_stats = &pdev->stats.tid_stats.tid_tx_stats[ring_id][tid];
 	soc = pdev->soc;
 
-	mcs = ts->mcs;
-	pkt_type = ts->pkt_type;
-
 	if (ts->release_src != HAL_TX_COMP_RELEASE_SOURCE_TQM) {
 		dp_err("Release source is not from TQM");
 		return;
@@ -3714,102 +3810,34 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	length = qdf_nbuf_len(tx_desc->nbuf);
 	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
 
-	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
-		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
-
 	if (qdf_unlikely(pdev->delay_stats_flag) ||
 	    qdf_unlikely(dp_is_vdev_tx_delay_stats_enabled(peer->vdev)))
 		dp_tx_compute_delay(peer->vdev, tx_desc, tid, ring_id);
-
-	DP_STATS_INCC_PKT(peer, tx.dropped.fw_rem, 1, length,
-			  (ts->status == HAL_TX_TQM_RR_REM_CMD_REM));
-
-	DP_STATS_INCC(peer, tx.dropped.fw_rem_notx, 1,
-		     (ts->status == HAL_TX_TQM_RR_REM_CMD_NOTX));
-
-	DP_STATS_INCC(peer, tx.dropped.fw_rem_tx, 1,
-		     (ts->status == HAL_TX_TQM_RR_REM_CMD_TX));
-
-	DP_STATS_INCC(peer, tx.dropped.fw_reason1, 1,
-		     (ts->status == HAL_TX_TQM_RR_FW_REASON1));
-
-	DP_STATS_INCC(peer, tx.dropped.fw_reason2, 1,
-		     (ts->status == HAL_TX_TQM_RR_FW_REASON2));
-
-	DP_STATS_INCC(peer, tx.dropped.fw_reason3, 1,
-		     (ts->status == HAL_TX_TQM_RR_FW_REASON3));
-
-	/*
-	 * tx_failed is ideally supposed to be updated from HTT ppdu completion
-	 * stats. But in IPQ807X/IPQ6018 chipsets owing to hw limitation there
-	 * are no completions for failed cases. Hence updating tx_failed from
-	 * data path. Please note that if tx_failed is fixed to be from ppdu,
-	 * then this has to be removed
-	 */
-	peer->stats.tx.tx_failed = peer->stats.tx.dropped.fw_rem.num +
-				peer->stats.tx.dropped.fw_rem_notx +
-				peer->stats.tx.dropped.fw_rem_tx +
-				peer->stats.tx.dropped.age_out +
-				peer->stats.tx.dropped.fw_reason1 +
-				peer->stats.tx.dropped.fw_reason2 +
-				peer->stats.tx.dropped.fw_reason3;
 
 	if (ts->status < CDP_MAX_TX_TQM_STATUS) {
 		tid_stats->tqm_status_cnt[ts->status]++;
 	}
 
-	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
-		dp_update_no_ack_stats(tx_desc->nbuf, peer);
-		return;
+	if (qdf_likely(ts->status == HAL_TX_TQM_RR_FRAME_ACKED)) {
+		DP_STATS_INCC(peer, tx.retry_count, 1,
+			      ts->transmit_cnt > 1);
+		DP_STATS_INCC(peer, tx.multiple_retry_count, 1,
+			      ts->transmit_cnt > 2);
+		DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
+		DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
+		DP_STATS_INCC(peer, tx.non_amsdu_cnt, 1,
+			      !ts->msdu_part_of_amsdu);
+
+		/*
+		 * Following Rate Statistics are updated from HTT PPDU events
+		 * from FW. Return from here if HTT PPDU events are enabled.
+		 */
+		if (soc->process_tx_status)
+			dp_tx_update_acked_rate_stats(peer, ts);
+
+	} else {
+		dp_update_no_ack_stats(tx_desc->nbuf, peer, ts);
 	}
-
-	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
-
-	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
-	DP_STATS_INCC(peer, tx.non_amsdu_cnt, 1, !ts->msdu_part_of_amsdu);
-
-	/*
-	 * Following Rate Statistics are updated from HTT PPDU events from FW.
-	 * Return from here if HTT PPDU events are enabled.
-	 */
-	if (!(soc->process_tx_status))
-		return;
-
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
-			((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_A)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
-			((mcs < (MAX_MCS_11A)) && (pkt_type == DOT11_A)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
-			((mcs >= MAX_MCS_11B) && (pkt_type == DOT11_B)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
-			((mcs < MAX_MCS_11B) && (pkt_type == DOT11_B)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
-			((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_N)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
-			((mcs < MAX_MCS_11A) && (pkt_type == DOT11_N)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
-			((mcs >= MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
-			((mcs < MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
-			((mcs >= (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
-			((mcs < (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
-
-	DP_STATS_INC(peer, tx.sgi_count[ts->sgi], 1);
-	DP_STATS_INC(peer, tx.bw[ts->bw], 1);
-	DP_STATS_UPD(peer, tx.last_ack_rssi, ts->ack_frame_rssi);
-	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ts->tid)], 1);
-	DP_STATS_INCC(peer, tx.stbc, 1, ts->stbc);
-	DP_STATS_INCC(peer, tx.ldpc, 1, ts->ldpc);
-	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
-	if (ts->first_msdu) {
-		DP_STATS_INCC(peer, tx.retries_mpdu, 1, ts->transmit_cnt > 1);
-		DP_STATS_INCC(peer, tx.mpdu_success_with_retries,
-			      qdf_do_div(ts->transmit_cnt, DP_RETRY_COUNT),
-			      ts->transmit_cnt > DP_RETRY_COUNT);
-	}
-	peer->stats.tx.last_tx_ts = qdf_system_ticks();
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -4309,7 +4337,7 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 	if (qdf_unlikely(peer->bss_peer && vdev->opmode == wlan_op_mode_ap)) {
 		if (ts->status != HAL_TX_TQM_RR_REM_CMD_REM) {
 			DP_STATS_INC_PKT(peer, tx.mcast, 1, length);
-
+			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
 			if ((peer->vdev->tx_encap_type ==
 				htt_cmn_pkt_type_ethernet) &&
 				QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
@@ -4317,8 +4345,8 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 			}
 		}
 	} else {
-		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
 		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
+			DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
 			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
 			if (qdf_unlikely(peer->in_twt)) {
 				DP_STATS_INC_PKT(peer,
