@@ -1005,6 +1005,42 @@ mlme_clear_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
 QDF_STATUS mlme_get_cfg_wlm_level(struct wlan_objmgr_psoc *psoc,
 				  uint8_t *level);
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * wlan_mlme_get_wlm_multi_client_ll_caps() - Get the wlm multi client latency
+ * level capability flag
+ * @psoc: pointer to psoc object
+ *
+ * Return: True is multi client ll cap present
+ */
+bool wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * mlme_get_cfg_multi_client_ll_ini_support() - Get the ini value of wlm multi
+ * client latency level feature
+ * @psoc: pointer to psoc object
+ * @multi_client_ll_support: parameter that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+mlme_get_cfg_multi_client_ll_ini_support(struct wlan_objmgr_psoc *psoc,
+					 bool *multi_client_ll_support);
+#else
+static inline bool
+wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline QDF_STATUS
+mlme_get_cfg_multi_client_ll_ini_support(struct wlan_objmgr_psoc *psoc,
+					 bool *multi_client_ll_support)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * mlme_get_cfg_wlm_reset() - Get the WLM reset flag
  * @psoc: pointer to psoc object

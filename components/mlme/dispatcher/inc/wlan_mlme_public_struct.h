@@ -2379,6 +2379,7 @@ struct wlan_mlme_btm {
  * @latency_level: WLM latency level
  * @latency_flags: WLM latency flags setting
  * @latency_host_flags: WLM latency host flags setting
+ * @multi_client_ll_support: To check whether host support multi client feature
  */
 struct wlan_mlme_fe_wlm {
 	bool latency_enable;
@@ -2386,6 +2387,9 @@ struct wlan_mlme_fe_wlm {
 	uint8_t latency_level;
 	uint32_t latency_flags[MLME_NUM_WLM_LATENCY_LEVEL];
 	uint32_t latency_host_flags[MLME_NUM_WLM_LATENCY_LEVEL];
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	bool multi_client_ll_support;
+#endif
 };
 
 /**

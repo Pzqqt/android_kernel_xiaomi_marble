@@ -424,6 +424,9 @@ CONFIG_ADAPTIVE_11R := y
 #Flag to enable sae single pmk feature
 CONFIG_SAE_SINGLE_PMK := y
 
+#Flag to enable/disable multi client low latency feature support
+CONFIG_MULTI_CLIENT_LL_SUPPORT := y
+
 #Flag to enable mscs feature
 CONFIG_FEATURE_MSCS := y
 

@@ -952,6 +952,21 @@ ucfg_mlme_set_fast_roam_in_concurrency_enabled(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+bool ucfg_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_get_wlm_multi_client_ll_caps(psoc);
+}
+
+QDF_STATUS
+ucfg_mlme_cfg_get_multi_client_ll_ini_support(struct wlan_objmgr_psoc *psoc,
+					      bool *multi_client_ll_support)
+{
+	return mlme_get_cfg_multi_client_ll_ini_support(psoc,
+						multi_client_ll_support);
+}
+#endif
+
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS
 ucfg_mlme_is_ese_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
