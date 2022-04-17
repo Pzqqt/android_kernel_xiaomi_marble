@@ -241,6 +241,8 @@
 
 /* Roam Frame info stats - per candidate frames support */
 #define WLAN_ROAM_STATS_FRAME_INFO_PER_CANDIDATE  0x00000008
+/* multi client feature flags support */
+#define WLAN_SOC_WLM_MULTI_CLIENT_LL_SUPPORT      0x00000010
 
 /* PSOC op flags */
 

@@ -18268,6 +18268,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_roam_stats_per_candidate_frame_info] =
 		WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT;
 #endif
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	wmi_service[wmi_service_configure_multi_client_ll_support] =
+				WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT;
+#endif
 }
 
 /**
