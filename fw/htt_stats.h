@@ -1038,6 +1038,27 @@ typedef struct {
     A_UINT32 phy_warm_reset_reason_tx_hwsch_reset_war;
     A_UINT32 phy_warm_reset_reason_hwsch_wdog_or_cca_wdog_war;
     A_UINT32 fw_rx_rings_reset;
+    /**
+     * Num of iterations rx leak prevention successfully done.
+     */
+    A_UINT32 rx_dest_drain_rx_descs_leak_prevention_done;
+    /**
+     * Num of rx descs successfully saved by rx leak prevention.
+     */
+    A_UINT32 rx_dest_drain_rx_descs_saved_cnt;
+    /*
+     * Stats to debug reason Rx leak prevention
+     * was not required to be kicked in.
+     */
+    A_UINT32 rx_dest_drain_rxdma2reo_leak_detected;
+    A_UINT32 rx_dest_drain_rxdma2fw_leak_detected;
+    A_UINT32 rx_dest_drain_rxdma2wbm_leak_detected;
+    A_UINT32 rx_dest_drain_rxdma1_2sw_leak_detected;
+    A_UINT32 rx_dest_drain_rx_drain_ok_mac_idle;
+    A_UINT32 rx_dest_drain_ok_mac_not_idle;
+    A_UINT32 rx_dest_drain_prerequisite_invld;
+    A_UINT32 rx_dest_drain_skip_for_non_lmac_reset;
+    A_UINT32 rx_dest_drain_hw_fifo_not_empty_post_drain_wait;
 } htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
