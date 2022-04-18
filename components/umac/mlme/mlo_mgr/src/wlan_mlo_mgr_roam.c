@@ -268,6 +268,11 @@ mlo_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 						    vdev_id,
 						    WLAN_MLME_SB_ID);
 
+	if (!vdev) {
+		mlo_err("vdev is null");
+		return;
+	}
+
 	if (!vdev->mlo_dev_ctx)
 		goto end;
 
