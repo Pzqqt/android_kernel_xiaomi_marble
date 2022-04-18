@@ -6190,7 +6190,6 @@ struct net_device_stats *hdd_get_stats(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
-	hdd_enter_dev(dev);
 	return &adapter->stats;
 }
 
