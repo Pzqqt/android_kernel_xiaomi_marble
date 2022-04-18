@@ -5617,6 +5617,8 @@ typedef struct {
      * [31:16]: mgmt_pkt_ctr, Sequence number of the last fw consumed mgmt frame
      */
     A_UINT32 mgmt_pkt_ctr_info;
+    A_UINT32 rx_ppdu_duration_us; /* receive duration in us */
+    A_UINT32 mpdu_end_timestamp; /* mpdu end timestamp in us (based on HWMLO timer) */
 } wmi_mgmt_rx_fw_consumed_hdr;
 
 /** Helper macro for param GET/SET of mgmt_rx_reo_params */
@@ -5646,6 +5648,8 @@ typedef struct {
      */
 
     A_UINT32 mgmt_pkt_ctr_link_info;
+    A_UINT32 rx_ppdu_duration_us; /* receive duration in us */
+    A_UINT32 mpdu_end_timestamp; /* mpdu end timestamp in us (based on HWMLO timer) */
 } wmi_mgmt_rx_reo_params;
 
 /** Helper macro for param GET/SET */
