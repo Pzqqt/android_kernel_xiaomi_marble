@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "msm_vidc_iris2.h"
@@ -15,6 +16,7 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_buffer.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_platform.h"
 
 #define VIDEO_ARCH_LX 1
 
@@ -117,6 +119,8 @@
 #define WRAPPER_TZ_BASE_OFFS	0x000C0000
 #define WRAPPER_TZ_CPU_CLOCK_CONFIG	(WRAPPER_TZ_BASE_OFFS)
 #define WRAPPER_TZ_CPU_STATUS	(WRAPPER_TZ_BASE_OFFS + 0x10)
+#define WRAPPER_TZ_CTL_AXI_CLOCK_CONFIG	(WRAPPER_TZ_BASE_OFFS + 0x14)
+#define WRAPPER_TZ_QNS4PDXFIFO_RESET	(WRAPPER_TZ_BASE_OFFS + 0x18)
 
 #define CTRL_INIT_IRIS2		CPU_CS_SCIACMD_IRIS2
 
@@ -210,7 +214,7 @@ static int __disable_unprepare_clock_iris2(struct msm_vidc_core *core,
 static int __prepare_enable_clock_iris2(struct msm_vidc_core *core,
 		const char *clk_name)
 {
-	int rc = 0;
+	int rc = 0, src_clk_scale_ratio = 1;
 	struct clock_info *cl;
 	bool found;
 	u64 rate = 0;
@@ -241,7 +245,8 @@ static int __prepare_enable_clock_iris2(struct msm_vidc_core *core,
 			 * attempts to multiply again. So divide scaling ratio before calling
 			 * __set_clk_rate.
 			 */
-			rate = rate / MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
+			src_clk_scale_ratio = msm_vidc_get_src_clk_scaling_ratio(core);
+			rate = rate / src_clk_scale_ratio;
 			__set_clk_rate(core, cl, rate);
 		}
 
@@ -422,17 +427,6 @@ static int __setup_ucregion_memory_map_iris2(struct msm_vidc_core *vidc_core)
 	if (rc)
 		return rc;
 
-	/* update queues vaddr for debug purpose */
-	value = (u32)((u64)core->iface_q_table.align_virtual_addr);
-	rc = __write_register(core, CPU_CS_VCICMDARG0_IRIS2, value);
-	if (rc)
-		return rc;
-
-	value = (u32)((u64)core->iface_q_table.align_virtual_addr >> 32);
-	rc = __write_register(core, CPU_CS_VCICMDARG1_IRIS2, value);
-	if (rc)
-		return rc;
-
 	if (core->sfr.align_device_addr) {
 		value = (u32)core->sfr.align_device_addr + VIDEO_ARCH_LX;
 		rc = __write_register(core, SFR_ADDR_IRIS2, value);
@@ -481,6 +475,9 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 				__func__, i, value);
 	}
 
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+		goto skip_aon_mvp_noc;
+
 	/* Apply partial reset on MSF interface and wait for ACK */
 	rc = __write_register(core, AON_WRAPPER_MVP_NOC_RESET_REQ, 0x3);
 	if (rc)
@@ -505,6 +502,7 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 	 * Reset both sides of 2 ahb2ahb_bridges (TZ and non-TZ)
 	 * do we need to check status register here?
 	 */
+skip_aon_mvp_noc:
 	rc = __write_register(core, CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x3);
 	if (rc)
 		return rc;
@@ -543,6 +541,9 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		return rc;
 
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+		goto skip_aon_mvp_noc;
+
 	/* set MNoC to low power, set PD_NOC_QREQ (bit 0) */
 	rc = __write_register_masked(core, AON_WRAPPER_MVP_NOC_LPI_CONTROL,
 			0x1, BIT(0));
@@ -555,6 +556,7 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_LPI_CONTROL failed\n", __func__);
 
 	/* Set Debug bridge Low power */
+skip_aon_mvp_noc:
 	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x7);
 	if (rc)
 		return rc;
@@ -573,6 +575,25 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 			0xffffffff, 0x0, 200, 2000);
 	if (rc)
 		d_vpr_h("%s: debug bridge release failed\n", __func__);
+
+#if defined(CONFIG_MSM_VIDC_NEO)
+	/* Reset MVP QNS4PDXFIFO */
+	rc = __write_register(core, WRAPPER_TZ_CTL_AXI_CLOCK_CONFIG, 0x3);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, WRAPPER_TZ_QNS4PDXFIFO_RESET, 0x1);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, WRAPPER_TZ_QNS4PDXFIFO_RESET, 0x0);
+	if (rc)
+		return rc;
+
+	rc = __write_register(core, WRAPPER_TZ_CTL_AXI_CLOCK_CONFIG, 0x0);
+	if (rc)
+		return rc;
+#endif
 
 	/* Turn off MVP MVS0C core clock */
 	rc = __disable_unprepare_clock_iris2(core, "core_clk");
@@ -608,7 +629,7 @@ static int __power_off_iris2(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	if (!core || !core->capabilities) {
+	if (!core || !core->capabilities || !core->platform) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}

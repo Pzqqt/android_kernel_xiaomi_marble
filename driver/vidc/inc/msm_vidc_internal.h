@@ -820,7 +820,7 @@ struct msm_vidc_buffers {
 
 struct msm_vidc_sort {
 	struct list_head       list;
-	u64                    val;
+	s64                    val;
 };
 
 struct msm_vidc_timestamp {

@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/of.h>
-
-#include "msm_vidc_waipio.h"
 #include "msm_vidc_platform.h"
+#include "msm_vidc_parrot.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_internal.h"
-#include "msm_vidc_core.h"
 #include "msm_vidc_control.h"
 #include "hfi_property.h"
+#include "msm_vidc_dt.h"
 
 #define DEFAULT_VIDEO_CONCEAL_COLOR_BLACK 0x8020010
+#define MINIMUM_FPS             1
+#define MAXIMUM_DEC_FPS         480
+#define MAXIMUM_ENC_FPS         240
 #define MAX_LTR_FRAME_COUNT     2
 #define MAX_BASE_LAYER_PRIORITY_ID 63
-#define MAX_BITRATE             220000000
+#define MIN_CHROMA_QP_OFFSET    -12
+#define MAX_CHROMA_QP_OFFSET    0
+#define MAX_BITRATE             100000000
 #define DEFAULT_BITRATE         20000000
-#define MINIMUM_FPS             1
-#define MAXIMUM_FPS             960
 #define MIN_QP_10BIT            -12
 #define MIN_QP_8BIT             0
 #define MAX_QP                  51
@@ -39,9 +40,8 @@
 #define VP9     MSM_VIDC_VP9
 #define HEIC    MSM_VIDC_HEIC
 #define CODECS_ALL     (H264 | HEVC | VP9 | HEIC)
-#define MAXIMUM_OVERRIDE_VP9_FPS 120
 
-static struct msm_platform_core_capability core_data_waipio[] = {
+static struct msm_platform_core_capability core_data_parrot_v0[] = {
 	/* {type, value} */
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
@@ -49,23 +49,20 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{MAX_NUM_720P_SESSIONS, 16},
 	{MAX_NUM_1080P_SESSIONS, 8},
 	{MAX_NUM_4K_SESSIONS, 4},
-	{MAX_NUM_8K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
-	{MAX_RT_MBPF, 173056},	/* (8192x4320)/256 + (4096x2176)/256*/
-	{MAX_MBPF, 276480}, /* ((8192x4320)/256) * 2 */
-	{MAX_MBPS, 7833600},	/* max_load
-					 * 7680x4320@60fps or 3840x2176@240fps
-					 * which is greater than 4096x2176@120fps,
-					 * 8192x4320@48fps
-					 */
+	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
+	{MAX_MBPF, 110592}, /* ((4096x2304)/256) x 3 */
+	/* Concurrency: UHD@30 decode + 1080p@30 encode */
+	{MAX_MBPS, 2088960}, /* max_load 4096x2176@60fps */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
+	/* TODO (AM) : review required for HQ and B_FRAME and ALL INTRA */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
-	{MAX_MBPS_HQ, 489600}, /* ((1920x1088)/256)@60fps */
-	{MAX_MBPF_B_FRAME, 32640}, /* 3840x2176/256 */
-	{MAX_MBPS_B_FRAME, 1958400}, /* 3840x2176/256 MBs@60fps */
-	{MAX_MBPS_ALL_INTRA, 1958400}, /* 3840x2176/256 MBs@60fps */
+	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
+	{MAX_MBPF_B_FRAME, 8160},/* ((1920x1088)/256) */
+	{MAX_MBPS_B_FRAME, 489600}, /* ((1920x1088)/256) MBs@60fps */
+	{MAX_MBPS_ALL_INTRA, 489600}, /* ((1920x1088)/256)@60fps */
 	{MAX_ENH_LAYER_COUNT, 5},
-	{NUM_VPP_PIPE, 4},
+	{NUM_VPP_PIPE, 1},
 	{SW_PC, 1},
 	{FW_UNLOAD, 0},
 	{HW_RESPONSE_TIMEOUT, HW_RESPONSE_TIMEOUT_VALUE}, /* 1000 ms */
@@ -73,9 +70,11 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{FW_UNLOAD_DELAY,     FW_UNLOAD_DELAY_VALUE    }, /* 3000 ms (>SW_PC_DELAY)*/
 	// TODO: review below entries, and if required rename as PREFETCH
 	{PREFIX_BUF_COUNT_PIX, 18},
-	{PREFIX_BUF_SIZE_PIX, 13434880}, /* Calculated by VIDEO_RAW_BUFFER_SIZE for 4096x2160 UBWC */
+	/* Calculated by VIDEO_RAW_BUFFER_SIZE for 4096x2160 UBWC */
+	{PREFIX_BUF_SIZE_PIX, 13434880},
 	{PREFIX_BUF_COUNT_NON_PIX, 1},
-	{PREFIX_BUF_SIZE_NON_PIX, 209715200}, /*
+	{PREFIX_BUF_SIZE_NON_PIX, 209715200},
+		/*
 		 * Internal buffer size is calculated for secure decode session
 		 * of resolution 4k (4096x2160)
 		 * Internal buf size = calculate_scratch_size() +
@@ -91,11 +90,17 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{STATS_TIMEOUT_MS, 2000},
 	{AV_SYNC_WINDOW_SIZE, 40},
 	{NON_FATAL_FAULTS, 1},
-	{ENC_AUTO_FRAMERATE, 1},
-	{MMRM, 1},
+	{ENC_AUTO_FRAMERATE, 0},
+	{MMRM, 0},
 };
 
-static struct msm_platform_inst_capability instance_data_waipio[] = {
+static struct msm_platform_core_capability core_data_parrot_v1[] = {
+};
+
+static struct msm_platform_core_capability core_data_parrot_v2[] = {
+};
+
+static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
 	/* {cap, domain, codec,
 	 *      min, max, step_or_mask, value,
 	 *      v4l2_id,
@@ -106,21 +111,19 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	 *      adjust, set}
 	 */
 
-	{FRAME_WIDTH, DEC, CODECS_ALL, 96, 8192, 1, 1920},
-	{FRAME_WIDTH, DEC, VP9, 96, 4096, 1, 1920},
-	{FRAME_WIDTH, ENC, CODECS_ALL, 128, 8192, 1, 1920},
+	{FRAME_WIDTH, DEC, CODECS_ALL, 96, 4096, 1, 1920},
+	{FRAME_WIDTH, ENC, CODECS_ALL, 128, 4096, 1, 1920},
 	{LOSSLESS_FRAME_WIDTH, ENC, H264|HEVC, 128, 4096, 1, 1920},
 	{SECURE_FRAME_WIDTH, DEC, H264|HEVC|VP9, 96, 4096, 1, 1920},
 	{SECURE_FRAME_WIDTH, ENC, H264|HEVC, 128, 4096, 1, 1920},
-	{FRAME_HEIGHT, DEC, CODECS_ALL, 96, 8192, 1, 1080},
-	{FRAME_HEIGHT, DEC, VP9, 96, 4096, 1, 1080},
-	{FRAME_HEIGHT, ENC, CODECS_ALL, 128, 8192, 1, 1080},
+	{FRAME_HEIGHT, DEC, CODECS_ALL, 96, 4096, 1, 1080},
+	{FRAME_HEIGHT, ENC, CODECS_ALL, 128, 4096, 1, 1080},
 	{LOSSLESS_FRAME_HEIGHT, ENC, H264|HEVC, 128, 4096, 1, 1080},
 	{SECURE_FRAME_HEIGHT, DEC, H264|HEVC|VP9, 96, 4096, 1, 1080},
 	{SECURE_FRAME_HEIGHT, ENC, H264|HEVC, 128, 4096, 1, 1080},
 	{PIX_FMTS, ENC, H264,
-		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_NV12C,
+		MSM_VIDC_FMT_NV21,
 		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C,
 		/* Since CTSEncodeDecode test cannot handle BT 709LR,
 		 * disabled HW RGBA encoding.
@@ -132,10 +135,9 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		{META_ROI_INFO}},
 	{PIX_FMTS, ENC, HEVC,
-		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_TP10C,
-		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
-		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C,
+		MSM_VIDC_FMT_NV12C,
+		MSM_VIDC_FMT_NV21,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C,
 		/* Since CTSEncodeDecode test cannot handle BT 709LR,
 		 * disabled HW RGBA encoding.
 		 * | MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
@@ -145,16 +147,16 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_ROOT,
 		{0},
 		{/* Do not change order of META_ROI_INFO, MIN_QUALITY, BLUR_TYPES
-		 * Since parent -> children relationship for these cap_ids is
-		 * as follows:
-		 * META_ROI_INFO -> MIN_QUALITY -> BLUR_TYPES
-		 */
+		  * Since parent -> children relationship for these cap_ids is
+		  * as follows:
+		  * META_ROI_INFO -> MIN_QUALITY -> BLUR_TYPES
+		  */
 		PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, P_FRAME_QP,
 			B_FRAME_QP, META_ROI_INFO, MIN_QUALITY, BLUR_TYPES}},
 
 	{PIX_FMTS, DEC, HEVC|HEIC,
-		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_TP10C,
+		MSM_VIDC_FMT_NV12C,
+		MSM_VIDC_FMT_P010,
 		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
 		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C,
 		MSM_VIDC_FMT_NV12C,
@@ -164,14 +166,14 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{PROFILE}},
 
 	{PIX_FMTS, DEC, H264,
-		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_NV12C,
+		MSM_VIDC_FMT_NV21,
 		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C,
 		MSM_VIDC_FMT_NV12C},
 
 	{PIX_FMTS, DEC, VP9,
-		MSM_VIDC_FMT_NV12,
-		MSM_VIDC_FMT_TP10C,
+		MSM_VIDC_FMT_NV12C,
+		MSM_VIDC_FMT_P010,
 		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
 		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C,
 		MSM_VIDC_FMT_NV12C},
@@ -184,30 +186,29 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
-	/* (8192 * 4320) / 256 */
-	{MBPF, ENC, CODECS_ALL, 64, 138240, 1, 138240},
-	{MBPF, DEC, CODECS_ALL, 36, 138240, 1, 138240},
 	/* (4096 * 2304) / 256 */
-	{MBPF, DEC, VP9, 36, 36864, 1, 36864},
+	{MBPF, ENC, CODECS_ALL, 64, 36864, 1, 36864},
+	/* (4096 * 2304) / 256 */
+	{MBPF, DEC, CODECS_ALL, 36, 36864, 1, 36864},
 	/* (4096 * 2304) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 36864, 1, 36864},
+	/* TODO (AM) : Review Required for batch spec*/
 	/* Batch Mode Decode */
-	/* TODO: update with new values based on updated voltage corner */
-	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 34816, 1, 34816},
+	/* (1920 * 1088) / 256 */
+	{BATCH_MBPF, DEC, H264|HEVC|VP9, 64, 8160, 1, 8160},
+	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 120, 1, 60},
 	/* (4096 * 2304) / 256 */
-	{BATCH_FPS, DEC, H264|HEVC|VP9, 1, 120, 1, 120},
 	{SECURE_MBPF, ENC|DEC, H264|HEVC|VP9, 64, 36864, 1, 36864},
-	/* ((1920 * 1088) / 256) * 480 fps */
-	{MBPS, ENC, CODECS_ALL, 64, 3916800, 1, 3916800},
-	/* ((1920 * 1088) / 256) * 960 fps */
-	{MBPS, DEC, CODECS_ALL, 64, 7833600, 1, 7833600},
-	/* ((4096 * 2304) / 256) * 120 */
-	{MBPS, DEC, VP9, 36, 4423680, 1, 4423680},
-	/* ((4096 * 2304) / 256) * 60 fps */
-	{POWER_SAVE_MBPS, ENC, CODECS_ALL, 0, 2211840, 1, 2211840},
+	/* ((4096 * 2304) / 256) * 30 fps */
+	{MBPS, ENC, CODECS_ALL, 64, 1105920, 1, 1105920},
+	/* ((4096 * 2176) / 256) * 60 fps */
+	{MBPS, DEC, CODECS_ALL, 36, 2088960, 1, 2088960},
+	/* ((1920 * 1088) / 256) * 30 fps */
+	/* TODO (AM) : review required for power save mbps */
+	{POWER_SAVE_MBPS, ENC, CODECS_ALL, 0, 244800, 1, 244800},
 
 	{FRAME_RATE, ENC, CODECS_ALL,
-		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
+		(MINIMUM_FPS << 16), (MAXIMUM_ENC_FPS << 16),
 		1, (DEFAULT_FPS << 16),
 		0,
 		HFI_PROP_FRAME_RATE,
@@ -216,23 +217,28 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		NULL, msm_vidc_set_q16},
 
 	{FRAME_RATE, DEC, CODECS_ALL,
-		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
+		(MINIMUM_FPS << 16), (MAXIMUM_DEC_FPS << 16),
 		1, (DEFAULT_FPS << 16)},
 
 	{FRAME_RATE, DEC, VP9,
 		(MINIMUM_FPS << 16), (MAXIMUM_VP9_FPS << 16),
 		1, (DEFAULT_FPS << 16)},
 
-	{OPERATING_RATE, ENC|DEC, CODECS_ALL,
-		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
+	{OPERATING_RATE, ENC, CODECS_ALL,
+		(MINIMUM_FPS << 16), (MAXIMUM_ENC_FPS << 16),
+		1, (DEFAULT_FPS << 16)},
+
+	{OPERATING_RATE, DEC, CODECS_ALL,
+		(MINIMUM_FPS << 16), (MAXIMUM_DEC_FPS << 16),
 		1, (DEFAULT_FPS << 16)},
 
 	{OPERATING_RATE, DEC, VP9,
-		(MINIMUM_FPS << 16), (MAXIMUM_OVERRIDE_VP9_FPS << 16),
+		(MINIMUM_FPS << 16), (MAXIMUM_VP9_FPS << 16),
 		1, (DEFAULT_FPS << 16)},
 
 	{SCALE_FACTOR, ENC, H264|HEVC, 1, 8, 1, 8},
 
+	/* TODO (AM): review requied for VSP/VPP cycle */
 	{MB_CYCLES_VSP, ENC, CODECS_ALL, 25, 25, 1, 25},
 	{MB_CYCLES_VSP, DEC, CODECS_ALL, 25, 25, 1, 25},
 	{MB_CYCLES_VSP, DEC, VP9, 60, 60, 1, 60},
@@ -252,11 +258,6 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		{0},
 		NULL, msm_vidc_set_u32},
-
-	{TS_REORDER, DEC, H264|HEVC,
-		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
-		1, V4L2_MPEG_MSM_VIDC_DISABLE,
-		V4L2_CID_MPEG_VIDC_TS_REORDER},
 
 	{HFLIP, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -291,6 +292,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		NULL, msm_vidc_set_rotation},
 
+	/* TODO (AM) : review required for SUPER FRAME */
 	{SUPER_FRAME, ENC, H264|HEVC,
 		0, 32, 1, 0,
 		V4L2_CID_MPEG_VIDC_SUPERFRAME,
@@ -380,8 +382,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, ENH_LAYER_COUNT, BIT_RATE,
-			META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
-			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
+			CONTENT_ADAPTIVE_CODING, BITRATE_BOOST, MIN_QUALITY,
+			VBV_DELAY, PEAK_BITRATE, SLICE_MODE, META_ROI_INFO,
 			BLUR_TYPES, LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
@@ -398,9 +400,10 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, CONSTANT_QUALITY, ENH_LAYER_COUNT,
-			BIT_RATE, META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
-			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
-			BLUR_TYPES, LOWLATENCY_MODE},
+			CONTENT_ADAPTIVE_CODING, BIT_RATE,
+			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY,
+			PEAK_BITRATE, SLICE_MODE, META_ROI_INFO, BLUR_TYPES,
+			LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{LOSSLESS, ENC, HEVC,
@@ -518,7 +521,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST,
 		HFI_PROP_SEQ_CHANGE_AT_SYNC_FRAME,
-		CAP_FLAG_INPUT_PORT},
+		CAP_FLAG_INPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED},
 
 	{LTR_COUNT, ENC, H264|HEVC,
 		0, 2, 1, 0,
@@ -592,6 +595,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		msm_vidc_adjust_cac,
 		msm_vidc_set_vbr_related_properties},
 
+	/* TODO (AM): review requied for bitrate boost margin */
 	{BITRATE_BOOST, ENC, H264|HEVC,
 		0, MAX_BITRATE_BOOST, 25, MAX_BITRATE_BOOST,
 		V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST,
@@ -1004,13 +1008,25 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{ENTROPY_MODE},
 		NULL, msm_vidc_set_u32_enum},
 
-	{PROFILE, ENC|DEC, HEVC|HEIC,
+	{PROFILE, DEC, HEVC|HEIC,
 		V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN,
-		V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE,
+		V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10,
 		BIT(V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE),
+		BIT(V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10),
+		V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN,
+		V4L2_CID_MPEG_VIDEO_HEVC_PROFILE,
+		HFI_PROP_PROFILE,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
+		{PIX_FMTS},
+		{0},
+		msm_vidc_adjust_profile, msm_vidc_set_u32_enum},
+
+	{PROFILE, ENC, HEVC|HEIC,
+		V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN,
+		V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE,
+		BIT(V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN) |
+		BIT(V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE),
 		V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN,
 		V4L2_CID_MPEG_VIDEO_HEVC_PROFILE,
 		HFI_PROP_PROFILE,
@@ -1034,7 +1050,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{LEVEL, DEC, VP9,
 		V4L2_MPEG_VIDEO_VP9_LEVEL_1_0,
-		V4L2_MPEG_VIDEO_VP9_LEVEL_6_0,
+		V4L2_MPEG_VIDEO_VP9_LEVEL_5_1,
 		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_1_0) |
 		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_1_1) |
 		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_2_0) |
@@ -1044,10 +1060,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_4_0) |
 		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_4_1) |
 		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_5_0) |
-		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_5_1) |
-		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_5_2) |
-		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_6_0),
-		V4L2_MPEG_VIDEO_VP9_LEVEL_6_0,
+		BIT(V4L2_MPEG_VIDEO_VP9_LEVEL_5_1),
+		V4L2_MPEG_VIDEO_VP9_LEVEL_5_1,
 		V4L2_CID_MPEG_VIDEO_VP9_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
@@ -1057,7 +1071,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{LEVEL, DEC, H264,
 		V4L2_MPEG_VIDEO_H264_LEVEL_1_0,
-		V4L2_MPEG_VIDEO_H264_LEVEL_6_2,
+		V4L2_MPEG_VIDEO_H264_LEVEL_5_2,
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1B) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_1) |
@@ -1074,10 +1088,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_2) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_1) |
-		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_2) |
-		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_6_0) |
-		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_6_1),
-		V4L2_MPEG_VIDEO_H264_LEVEL_6_1,
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_2),
+		V4L2_MPEG_VIDEO_H264_LEVEL_5_2,
 		V4L2_CID_MPEG_VIDEO_H264_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
@@ -1087,7 +1099,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{LEVEL, ENC, H264,
 		V4L2_MPEG_VIDEO_H264_LEVEL_1_0,
-		V4L2_MPEG_VIDEO_H264_LEVEL_6_0,
+		V4L2_MPEG_VIDEO_H264_LEVEL_5_2,
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1B) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_1_1) |
@@ -1104,9 +1116,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_4_2) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_0) |
 		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_1) |
-		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_2) |
-		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_6_0),
-		V4L2_MPEG_VIDEO_H264_LEVEL_5_0,
+		BIT(V4L2_MPEG_VIDEO_H264_LEVEL_5_2),
+		V4L2_MPEG_VIDEO_H264_LEVEL_5_2,
 		V4L2_CID_MPEG_VIDEO_H264_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
@@ -1116,7 +1127,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{LEVEL, DEC, HEVC|HEIC,
 		V4L2_MPEG_VIDEO_HEVC_LEVEL_1,
-		V4L2_MPEG_VIDEO_HEVC_LEVEL_6_2,
+		V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1,
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2_1) |
@@ -1125,11 +1136,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_2) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_6) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_6_1),
-		V4L2_MPEG_VIDEO_HEVC_LEVEL_6_1,
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1),
+		V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1,
 		V4L2_CID_MPEG_VIDEO_HEVC_LEVEL,
 		HFI_PROP_LEVEL,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
@@ -1139,7 +1147,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{LEVEL, ENC, HEVC|HEIC,
 		V4L2_MPEG_VIDEO_HEVC_LEVEL_1,
-		V4L2_MPEG_VIDEO_HEVC_LEVEL_6,
+		V4L2_MPEG_VIDEO_HEVC_LEVEL_5,
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_2_1) |
@@ -1147,10 +1155,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_3_1) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4) |
 		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_4_1) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_1) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5_2) |
-		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_6),
+		BIT(V4L2_MPEG_VIDEO_HEVC_LEVEL_5),
 		V4L2_MPEG_VIDEO_HEVC_LEVEL_5,
 		V4L2_CID_MPEG_VIDEO_HEVC_LEVEL,
 		HFI_PROP_LEVEL,
@@ -1320,8 +1325,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{PIPE, DEC|ENC, CODECS_ALL,
 		MSM_VIDC_PIPE_1,
-		MSM_VIDC_PIPE_4, 1,
-		MSM_VIDC_PIPE_4,
+		MSM_VIDC_PIPE_1, 1,
+		MSM_VIDC_PIPE_1,
 		0,
 		HFI_PROP_PIPE,
 		CAP_FLAG_ROOT,
@@ -1546,10 +1551,10 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{FRAME_HEIGHT, ENC, HEIC, 128, 16384, 1, 16384},
 	{MIN_BUFFERS_INPUT, ENC|DEC, HEIC, 0, 64, 1, 1,
 		V4L2_CID_MIN_BUFFERS_FOR_OUTPUT},
-	{MBPF, DEC, HEIC, 64, 262144,  1, 262144 }, /* ((8192x8192)/256) */
-	{MBPF, ENC, HEIC, 36, 1048576, 1, 1048576}, /* ((16384x16384)/256) */
-	{MBPS, DEC, HEIC, 64, 262144,  1, 262144 }, /* ((8192x8192)/256)@1fps */
-	{MBPS, ENC, HEIC, 36, 1048576, 1, 1048576}, /* ((16384x16384)/256)@1fps */
+	{MBPF, DEC, HEIC, 36, 65536, 1, 65536 },    /* ((4096x4096)/256) */
+	{MBPF, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256) */
+	{MBPS, DEC, HEIC, 36, 65536, 1, 65536 },    /* ((4096x4096)/256)@1fps */
+	{MBPS, ENC, HEIC, 64, 1048576, 1, 1048576}, /* ((16384x16384)/256)@1fps */
 	{BITRATE_MODE, ENC, HEIC,
 		V4L2_MPEG_VIDEO_BITRATE_MODE_CQ,
 		V4L2_MPEG_VIDEO_BITRATE_MODE_CQ,
@@ -1622,7 +1627,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		NULL, msm_vidc_set_u32_enum},
 	{FRAME_RATE, ENC, HEIC,
-		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
+		(MINIMUM_FPS << 16), (MAXIMUM_DEC_FPS << 16),
 		1, (MINIMUM_FPS << 16),
 		0,
 		HFI_PROP_FRAME_RATE,
@@ -1645,46 +1650,102 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_MAX_NUM_REORDER_FRAMES},
 };
 
+static struct msm_platform_inst_capability instance_data_parrot_v1[] = {
+};
+
+static struct msm_platform_inst_capability instance_data_parrot_v2[] = {
+};
+
+static struct allowed_clock_rates_table clock_data_parrot[] = {
+	{133333333}, {240000000}, {335000000}, {380000000}
+};
+
 /* Default UBWC config for LPDDR5 */
-static struct msm_vidc_ubwc_config_data ubwc_config_waipio[] = {
-	UBWC_CONFIG(8, 32, 16, 0, 1, 1, 1),
+static struct msm_vidc_ubwc_config_data ubwc_config_parrot[] = {
+	UBWC_CONFIG(8, 32, 15, 0, 1, 1, 1),
 };
 
 /* Default bus bandwidth for non_real time session based on priority */
 static u32 bus_bw_nrt[] = {
-	15000000,
-	11000000,
+	8000000,
+	7000000,
 };
 
-static struct msm_vidc_platform_data waipio_data = {
-	.core_data = core_data_waipio,
-	.core_data_size = ARRAY_SIZE(core_data_waipio),
-	.instance_data = instance_data_waipio,
-	.instance_data_size = ARRAY_SIZE(instance_data_waipio),
+static struct msm_vidc_efuse_data efuse_data_parrot[] = {
+	/* IRIS_DISABLE_4K_Encode - max 1080p@60 encode */
+	EFUSE_ENTRY(0x221C8118, 4, 0x8, 0x2, SKU_VERSION),
+	/* IRIS_PLL_FMAX - max 4k@30 encode */
+	EFUSE_ENTRY(0x221C8118, 4, 0x100, 0x8, SKU_VERSION),
+};
+
+static struct msm_vidc_platform_data parrot_data = {
+	.core_data = core_data_parrot_v0,
+	.core_data_size = ARRAY_SIZE(core_data_parrot_v0),
+	.instance_data = instance_data_parrot_v0,
+	.instance_data_size = ARRAY_SIZE(instance_data_parrot_v0),
 	.csc_data.vpe_csc_custom_bias_coeff = vpe_csc_custom_bias_coeff,
 	.csc_data.vpe_csc_custom_matrix_coeff = vpe_csc_custom_matrix_coeff,
 	.csc_data.vpe_csc_custom_limit_coeff = vpe_csc_custom_limit_coeff,
-	.ubwc_config = ubwc_config_waipio,
+	.ubwc_config = ubwc_config_parrot,
 	.bus_bw_nrt = bus_bw_nrt,
-	.vpu_ver = VPU_VERSION_IRIS2,
+	.vpu_ver = VPU_VERSION_IRIS2_1,
+	.efuse_data = efuse_data_parrot,
+	.efuse_data_size = ARRAY_SIZE(efuse_data_parrot),
+	.sku_version = 0,
 };
 
 static int msm_vidc_init_data(struct msm_vidc_core *core)
 {
 	int rc = 0;
+	struct msm_vidc_platform_data *platform_data = NULL;
 
-	if (!core || !core->platform) {
+	if (!core || !core->platform || !core->dt) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	d_vpr_h("%s: initialize waipio data\n", __func__);
+	d_vpr_h("%s: initialize parrot data\n", __func__);
 
-	core->platform->data = waipio_data;
+	core->platform->data = parrot_data;
+	platform_data = &core->platform->data;
+
+	/* Check for sku version */
+	rc = msm_vidc_read_efuse(core);
+	if (rc) {
+		d_vpr_e("%s: Failed to read efuse\n", __func__);
+		return rc;
+	}
+
+	if (platform_data->sku_version == SKU_VERSION_1) {
+		platform_data->core_data = core_data_parrot_v1;
+		platform_data->core_data_size =
+				ARRAY_SIZE(core_data_parrot_v1);
+		platform_data->instance_data = instance_data_parrot_v1;
+		platform_data->instance_data_size =
+				ARRAY_SIZE(instance_data_parrot_v1);
+	} else if (platform_data->sku_version == SKU_VERSION_2) {
+		platform_data->core_data = core_data_parrot_v2;
+		platform_data->core_data_size =
+				ARRAY_SIZE(core_data_parrot_v2);
+		platform_data->instance_data = instance_data_parrot_v2;
+		platform_data->instance_data_size =
+				ARRAY_SIZE(instance_data_parrot_v2);
+	}
+
+	if (platform_data->sku_version) {
+		/* Override with SKU clock data into dt */
+		core->dt->allowed_clks_tbl = clock_data_parrot;
+		core->dt->allowed_clks_tbl_size =
+				ARRAY_SIZE(clock_data_parrot);
+		msm_vidc_sort_table(core);
+	}
+
+	/* Check for DDR variant */
+	msm_vidc_ddr_ubwc_config(&core->platform->data, 0xe);
 
 	return rc;
 }
 
-int msm_vidc_init_platform_waipio(struct msm_vidc_core *core, struct device *dev)
+int msm_vidc_init_platform_parrot(struct msm_vidc_core *core, struct device *dev)
 {
 	int rc = 0;
 
@@ -1695,7 +1756,7 @@ int msm_vidc_init_platform_waipio(struct msm_vidc_core *core, struct device *dev
 	return 0;
 }
 
-int msm_vidc_deinit_platform_waipio(struct msm_vidc_core *core, struct device *dev)
+int msm_vidc_deinit_platform_parrot(struct msm_vidc_core *core, struct device *dev)
 {
 	/* do nothing */
 	return 0;
