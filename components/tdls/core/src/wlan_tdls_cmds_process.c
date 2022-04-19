@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -843,6 +844,11 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 		goto free_req;
 	}
 	vdev = req->vdev;
+	if (!tdls_check_is_tdls_allowed(vdev)) {
+		tdls_err("TDLS not allowed, reject add station for vdev: %d",
+			 wlan_vdev_get_id(vdev));
+		goto error;
+	}
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
 		tdls_err("can't get psoc");
