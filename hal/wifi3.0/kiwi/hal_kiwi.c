@@ -1743,6 +1743,8 @@ static void hal_hw_txrx_ops_attach_kiwi(struct hal_soc *hal_soc)
 					hal_rx_msdu_flow_idx_timeout_be;
 	hal_soc->ops->hal_rx_msdu_fse_metadata_get =
 					hal_rx_msdu_fse_metadata_get_be;
+	hal_soc->ops->hal_rx_msdu_cce_match_get =
+					hal_rx_msdu_cce_match_get_be;
 	hal_soc->ops->hal_rx_msdu_cce_metadata_get =
 					hal_rx_msdu_cce_metadata_get_be;
 	hal_soc->ops->hal_rx_msdu_get_flow_params =
@@ -1976,7 +1978,11 @@ struct hal_hw_srng_config hw_srng_table_kiwi[] = {
 	},
 	{ /* TCL_CMD */
 		.start_ring_id = HAL_SRNG_SW2TCL_CMD,
+#ifndef WLAN_DP_DISABLE_TCL_CMD_CRED_SRNG
 		.max_rings = 1,
+#else
+		.max_rings = 0,
+#endif
 		.entry_size = sizeof(struct tcl_gse_cmd) >> 2,
 		.lmac_ring =  FALSE,
 		.ring_dir = HAL_SRNG_SRC_RING,
@@ -1996,7 +2002,11 @@ struct hal_hw_srng_config hw_srng_table_kiwi[] = {
 	},
 	{ /* TCL_STATUS */
 		.start_ring_id = HAL_SRNG_TCL_STATUS,
+#ifndef WLAN_DP_DISABLE_TCL_CMD_CRED_SRNG
 		.max_rings = 1,
+#else
+		.max_rings = 0,
+#endif
 		/* confirm that TLV header is needed */
 		.entry_size = sizeof(struct tcl_status_ring) >> 2,
 		.lmac_ring = FALSE,

@@ -535,11 +535,21 @@ static bool scm_is_security_match(struct scan_filter *filter,
 static bool scm_ignore_ssid_check_for_owe(struct scan_filter *filter,
 					  struct scan_cache_entry *db_entry)
 {
-	if (util_scan_entry_is_hidden_ap(db_entry) &&
+	bool is_hidden;
+
+	is_hidden = util_scan_entry_is_hidden_ap(db_entry);
+	if (is_hidden &&
 	    QDF_HAS_PARAM(filter->key_mgmt, WLAN_CRYPTO_KEY_MGMT_OWE) &&
 	    util_is_bssid_match(&filter->bssid_hint, &db_entry->bssid))
 		return true;
 
+	/* Dump only for hidden SSID as non-hidden are anyway rejected */
+	if (is_hidden)
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore hidden AP as key_mgmt 0x%x is not OWE or bssid hint: "
+			  QDF_MAC_ADDR_FMT " does not match",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  filter->key_mgmt,
+			  QDF_MAC_ADDR_REF(filter->bssid_hint.bytes));
 	return false;
 }
 
@@ -610,25 +620,16 @@ static bool scm_check_dot11mode(struct scan_cache_entry *db_entry,
 	case ALLOW_ALL:
 		break;
 	case ALLOW_11N_ONLY:
-		if (!util_scan_entry_htcap(db_entry)) {
-			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as dot11mode(HT only) didn't match",
-				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
+		if (!util_scan_entry_htcap(db_entry))
 			return false;
-		}
 		break;
 	case ALLOW_11AC_ONLY:
-		if (!util_scan_entry_vhtcap(db_entry)) {
-			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as dot11mode(VHT only) didn't match",
-				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
+		if (!util_scan_entry_vhtcap(db_entry))
 			return false;
-		}
 		break;
 	case ALLOW_11AX_ONLY:
-		if (!util_scan_entry_hecap(db_entry)) {
-			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as dot11mode(HE only) didn't match",
-				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
+		if (!util_scan_entry_hecap(db_entry))
 			return false;
-		}
 		break;
 	default:
 		scm_debug("Invalid dot11mode filter passed %d",
@@ -652,17 +653,6 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (!def_param)
 		return false;
 
-	if (filter->dot11mode && !scm_check_dot11mode(db_entry, filter))
-		return false;
-
-	if (filter->ignore_6ghz_channel &&
-	    WLAN_REG_IS_6GHZ_CHAN_FREQ(db_entry->channel.chan_freq))
-		return false;
-
-	if (filter->age_threshold && filter->age_threshold <
-					util_scan_entry_age(db_entry))
-		return false;
-
 	if (db_entry->ssid.length) {
 		for (i = 0; i < filter->num_of_ssid; i++) {
 			if (util_is_ssid_match(&filter->ssid_list[i],
@@ -684,29 +674,73 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 		return false;
 
 	match = false;
-	/* TO do Fill p2p MAC*/
 	for (i = 0; i < filter->num_of_bssid; i++) {
 		if (util_is_bssid_match(&filter->bssid_list[i],
 		   &db_entry->bssid)) {
 			match = true;
 			break;
 		}
-		/* TODO match p2p mac */
 	}
-	if (!match && filter->num_of_bssid)
+
+	if (!match && filter->num_of_bssid) {
+		/*
+		 * Do not print if ssid is not present in filter to avoid
+		 * excessive prints
+		 */
+		if (filter->num_of_ssid)
+			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as BSSID not in list (no. of BSSID in list %d)",
+				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+				  filter->num_of_bssid);
 		return false;
+	}
+
+	if (filter->age_threshold &&
+	    filter->age_threshold < util_scan_entry_age(db_entry)) {
+		/*
+		 * Do not print if bssid/ssid is not present in filter to avoid
+		 * excessive prints
+		 */
+		if (filter->num_of_bssid || filter->num_of_ssid)
+			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as age %lu ms is greater than threshold %lu ms",
+				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+				  util_scan_entry_age(db_entry),
+				  filter->age_threshold);
+		return false;
+	}
+
+	if (filter->dot11mode && !scm_check_dot11mode(db_entry, filter)) {
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore as dot11mode %d didn't match phymode %d",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  filter->dot11mode, db_entry->phy_mode);
+		return false;
+	}
+
+	if (filter->ignore_6ghz_channel &&
+	    WLAN_REG_IS_6GHZ_CHAN_FREQ(db_entry->channel.chan_freq)) {
+		/*
+		 * Do not print if bssid/ssid is not present in filter to avoid
+		 * excessive prints
+		 */
+		if (filter->num_of_bssid || filter->num_of_ssid)
+			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as its on 6Ghz freq %d",
+				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+				  db_entry->channel.chan_freq);
+
+		return false;
+	}
 
 	pdev = wlan_objmgr_get_pdev_by_id(psoc, db_entry->pdev_id,
 					  WLAN_SCAN_ID);
 	if (!pdev) {
-		scm_err("Invalid pdev");
+		scm_err(QDF_MAC_ADDR_FMT ": Ignore as pdev not found",
+			QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (filter->ignore_nol_chan &&
 	    utils_dfs_is_freq_in_nol(pdev, db_entry->channel.chan_freq)) {
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
-		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as chan in NOL list",
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore as chan in NOL list",
 			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
@@ -729,7 +763,7 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 		 * provided to get AP's in specific frequencies)
 		 */
 		if (filter->num_of_bssid || filter->num_of_ssid)
-			scm_debug(QDF_MAC_ADDR_FMT" : Ignore as AP's freq %d is not in freq list",
+			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as AP's freq %d is not in freq list",
 				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
 				  db_entry->channel.chan_freq);
 		return false;
@@ -740,7 +774,7 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	if (!filter->ignore_auth_enc_type && !filter->match_security_func &&
 	    !scm_is_security_match(filter, db_entry, security)) {
-		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as security profile didn't match",
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore as security profile didn't match",
 			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
@@ -748,7 +782,7 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->match_security_func &&
 	    !filter->match_security_func(filter->match_security_func_arg,
 					 db_entry)) {
-		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as custom security match failed",
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore as custom security match failed",
 			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
@@ -756,13 +790,13 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->ccx_validate_bss &&
 	    !filter->ccx_validate_bss(filter->ccx_validate_bss_arg,
 				      db_entry, 0)) {
-		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as CCX validateion failed",
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore as CCX validateion failed",
 			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (!util_is_bss_type_match(filter->bss_type, db_entry->cap_info)) {
-		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as bss type didn't match cap_info %x bss_type %d",
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore as bss type didn't match cap_info %x bss_type %d",
 			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
 			  db_entry->cap_info.value, filter->bss_type);
 		return false;
@@ -770,14 +804,14 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	/* Match realm */
 	if (!scm_is_fils_config_match(filter, db_entry)) {
-		scm_debug(QDF_MAC_ADDR_FMT" :Ignore as fils config didn't match",
+		scm_debug(QDF_MAC_ADDR_FMT ":Ignore as fils config didn't match",
 			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (!util_mdie_match(filter->mobility_domain,
 	   (struct rsn_mdie *)db_entry->ie_list.mdie)) {
-		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as mdie didn't match",
+		scm_debug(QDF_MAC_ADDR_FMT ": Ignore as mdie didn't match",
 			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}

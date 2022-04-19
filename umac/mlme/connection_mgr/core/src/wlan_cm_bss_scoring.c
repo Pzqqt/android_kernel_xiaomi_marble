@@ -2109,8 +2109,10 @@ bool wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
 	if (!config->check_6ghz_security) {
 		if (!config->key_mgmt_mask_6ghz)
 			return true;
-		/* Check if AKM is allowed as per user 6Ghz allowed AKM mask */
-		if ((config->key_mgmt_mask_6ghz & key_mgmt) != key_mgmt) {
+		/*
+		 * Check if any AKM is allowed as per user 6Ghz allowed AKM mask
+		 */
+		if (!(config->key_mgmt_mask_6ghz & key_mgmt)) {
 			mlme_debug("user configured mask %x didnt match AKM %x",
 				   config->key_mgmt_mask_6ghz , key_mgmt);
 			return false;
@@ -2119,9 +2121,12 @@ bool wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
 		return true;
 	}
 
-	/* Check if the AKM is allowed as per the 6Ghz allowed AKM mask */
-	if ((key_mgmt & ALLOWED_KEYMGMT_6G_MASK) != key_mgmt)
+	/* Check if any AKM is allowed as per the 6Ghz allowed AKM mask */
+	if (!(key_mgmt & ALLOWED_KEYMGMT_6G_MASK)) {
+		mlme_debug("AKM 0x%x didn't match with allowed 6ghz AKM 0x%x",
+			   key_mgmt, ALLOWED_KEYMGMT_6G_MASK);
 		return false;
+	}
 
 	/* if check_6ghz_security is set validate all checks for 6Ghz */
 	if (!(rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)) {
