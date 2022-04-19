@@ -141,6 +141,7 @@ struct sae_auth_retry {
  * @twt_ctx: TWT context
  * @allow_kickout: True if the peer can be kicked out. Peer can't be kicked
  *                 out if it is being steered
+ * @nss: Peer NSS
  */
 struct peer_mlme_priv_obj {
 	uint8_t last_pn_valid;
@@ -155,6 +156,7 @@ struct peer_mlme_priv_obj {
 #ifdef WLAN_FEATURE_SON
 	bool allow_kickout;
 #endif
+	uint8_t nss;
 };
 
 /**

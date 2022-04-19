@@ -4412,7 +4412,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		  QDF_MAC_ADDR_REF(add_sta->staMac), state);
 	cdp_peer_state_update(soc, add_sta->staMac, state);
 
-	add_sta->nss    = iface->nss;
+	add_sta->nss    = wma_objmgr_get_peer_mlme_nss(wma, add_sta->staMac);
 	add_sta->status = QDF_STATUS_SUCCESS;
 send_rsp:
 	/* Do not send add stat resp when peer assoc cnf is enabled */
