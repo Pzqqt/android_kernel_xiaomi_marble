@@ -10690,6 +10690,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->high_bus_bw_request) {
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
 		tput_level = TPUT_LEVEL_VERY_HIGH;
+	} else if (total_pkts > hdd_ctx->config->bus_bw_super_high_threshold) {
+		next_vote_level = PLD_BUS_WIDTH_MAX;
+		tput_level = TPUT_LEVEL_SUPER_HIGH;
 	} else if (total_pkts > hdd_ctx->config->bus_bw_ultra_high_threshold) {
 		next_vote_level = PLD_BUS_WIDTH_ULTRA_HIGH;
 		tput_level = TPUT_LEVEL_ULTRA_HIGH;
@@ -10717,7 +10720,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	 */
 	if (!ucfg_ipa_is_fw_wdi_activated(hdd_ctx->pdev) &&
 	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
-	    (total_pkts > hdd_ctx->config->bus_bw_dbs_threshold)) {
+	    (total_pkts > hdd_ctx->config->bus_bw_dbs_threshold) &&
+	    (tput_level < TPUT_LEVEL_SUPER_HIGH)) {
 		next_vote_level = PLD_BUS_WIDTH_ULTRA_HIGH;
 		tput_level = TPUT_LEVEL_ULTRA_HIGH;
 	}

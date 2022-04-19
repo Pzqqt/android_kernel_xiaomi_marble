@@ -3261,7 +3261,7 @@ const char *pld_bus_width_type_to_str(enum pld_bus_width_type level)
 		return "LOW_LAT";
 	default:
 		if (level > PLD_BUS_WIDTH_ULTRA_HIGH)
-			return "ULTRA_HIGH+";
+			return "SUPER_HIGH";
 		else
 			return "INVAL";
 	}
