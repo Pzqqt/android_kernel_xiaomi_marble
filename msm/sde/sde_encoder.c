@@ -2443,7 +2443,7 @@ static void _sde_encoder_virt_populate_hw_res(struct drm_encoder *drm_enc)
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
 		sde_enc->hw_dsc[i] = NULL;
 		if (!sde_rm_get_hw(&sde_kms->rm, &dsc_iter))
-			break;
+			continue;
 		sde_enc->hw_dsc[i] = (struct sde_hw_dsc *) dsc_iter.hw;
 	}
 
@@ -2451,7 +2451,7 @@ static void _sde_encoder_virt_populate_hw_res(struct drm_encoder *drm_enc)
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
 		sde_enc->hw_vdc[i] = NULL;
 		if (!sde_rm_get_hw(&sde_kms->rm, &vdc_iter))
-			break;
+			continue;
 		sde_enc->hw_vdc[i] = (struct sde_hw_vdc *) vdc_iter.hw;
 	}
 
