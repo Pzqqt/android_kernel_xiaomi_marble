@@ -5061,6 +5061,18 @@ typedef enum {
 	wmi_vdev_param_set_eht_range_ext,
 	wmi_vdev_param_set_non_data_eht_range_ext,
 #endif
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	wmi_vdev_param_set_normal_latency_flags_config,
+	wmi_vdev_param_set_xr_latency_flags_config,
+	wmi_vdev_param_set_low_latency_flags_config,
+	wmi_vdev_param_set_ultra_low_latency_flags_config,
+	wmi_vdev_param_set_normal_latency_ul_dl_config,
+	wmi_vdev_param_set_xr_latency_ul_dl_config,
+	wmi_vdev_param_set_low_latency_ul_dl_config,
+	wmi_vdev_param_set_ultra_low_latency_ul_dl_config,
+	wmi_vdev_param_set_default_ll_config,
+	wmi_vdev_param_set_multi_client_ll_feature_config,
+#endif
 } wmi_conv_vdev_param_id;
 
 /**
