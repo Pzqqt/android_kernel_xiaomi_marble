@@ -1460,6 +1460,8 @@ typedef enum {
     WMI_MLO_READY_CMDID,
     /** WMI cmd used for tearing down a hw_link part of MLO */
     WMI_MLO_TEARDOWN_CMDID,
+    /** WMI cmd used to setup Tid to Link Mapping for a MLO Peer */
+    WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID,
 
     /** WMI commands specific to Service Aware WiFi (SAWF) */
     /** configure or reconfigure the parameters for a service class */
@@ -16223,6 +16225,31 @@ typedef struct {
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_tid_to_link_map */
+    A_UINT32 tlv_header;
+
+    /**
+     * A_UINT32
+     *     WMI_TID_TO_LINK_MAP_TID_NUM_GET / WMI_TID_TO_LINK_MAP_TID_NUM_SET
+     *     tid_num:5,
+     *
+     *     WMI_TID_TO_LINK_MAP_DIR_GET / WMI_TID_TO_LINK_MAP_DIR_SET
+     *     dir:2,                 // 0 - DL, 1 - UL, 2 - BiDi
+     *
+     *     WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_GET /
+     *         WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_SET
+     *     default_link_mapping:1, // If this is set to 1, ignore
+     *                             // link_mapping_mask for the specific tid
+     *
+     *     WMI_TID_TO_LINK_MAP_LINK_MASK_GET / WMI_TID_TO_LINK_MAP_LINK_MASK_SET
+     *     link_mapping_mask:16,
+     *
+     *     rsvd:8;
+     */
+    A_UINT32 tid_to_link_map_info;
+} wmi_peer_assoc_tid_to_link_map;
+
+typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param */
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
@@ -16363,6 +16390,7 @@ typedef struct {
  *         For non-MLO peers the array length should be 0.
  *     wmi_eht_rate_set_peer_eht_rates; <-- EHT capabilities of the peer
  *     wmi_peer_assoc_mlo_partner_link_params link_info[] <-- partner link info
+ *     wmi_peer_assoc_tid_to_link_map[] <-- tid to link_map info
  */
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
@@ -31318,6 +31346,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_RX_PN_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID);
         WMI_RETURN_STRING(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -37964,6 +37993,64 @@ typedef struct {
     /** Return status. 0 for success, non-zero otherwise */
     A_UINT32 status;
 } wmi_mlo_teardown_complete_fixed_param;
+
+#define WMI_TID_TO_LINK_MAP_TID_NUM_GET(_var)               WMI_GET_BITS(_var, 0, 5)
+#define WMI_TID_TO_LINK_MAP_TID_NUM_SET(_var, _val)         WMI_SET_BITS(_var, 0, 5, _val)
+
+#define WMI_TID_TO_LINK_MAP_DIR_GET(_var)                   WMI_GET_BITS(_var, 5, 2)
+#define WMI_TID_TO_LINK_MAP_DIR_SET(_var, _val)             WMI_SET_BITS(_var, 5, 2, _val)
+
+#define WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_GET(_var)       WMI_GET_BITS(_var, 7, 1)
+#define WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_SET(_var, _val) WMI_SET_BITS(_var, 7, 1, _val)
+
+#define WMI_TID_TO_LINK_MAP_LINK_MASK_GET(_var)             WMI_GET_BITS(_var, 8, 16)
+#define WMI_TID_TO_LINK_MAP_LINK_MASK_SET(_var, _val)       WMI_SET_BITS(_var, 8, 16, _val)
+
+enum {
+    WMI_TID_TO_LINK_MAP_DIR_DL,
+    WMI_TID_TO_LINK_MAP_DIR_UL,
+    WMI_TID_TO_LINK_MAP_DIR_BIDI,
+};
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tid_to_link_map */
+    A_UINT32 tlv_header;
+
+    /**
+     * A_UINT32
+     *     WMI_TID_TO_LINK_MAP_TID_NUM_GET / WMI_TID_TO_LINK_MAP_TID_NUM_SET
+     *     tid_num:5,
+     *
+     *     WMI_TID_TO_LINK_MAP_DIR_GET / WMI_TID_TO_LINK_MAP_DIR_SET
+     *     dir:2,                 // 0 - DL, 1 - UL, 2 - BiDi
+     *
+     *     WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_GET /
+     *         WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_SET
+     *     default_link_mapping:1, // If this is set to 1, ignore
+     *                             // link_mapping_mask for the specific tid
+     *
+     *     WMI_TID_TO_LINK_MAP_LINK_MASK_GET / WMI_TID_TO_LINK_MAP_LINK_MASK_SET
+     *     link_mapping_mask:16,
+     *
+     *     rsvd:8;
+     */
+    A_UINT32 tid_to_link_map_info;
+} wmi_tid_to_link_map;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+
+    /** MLO Peer's current link MAC address */
+    wmi_mac_addr link_macaddr;
+
+    /**
+     * Following this structure is the TLV:
+     * struct wmi_tid_to_link_map tid_to_link_map[];
+     */
+} wmi_peer_tid_to_link_map_fixed_param;
 
 #define WMI_IGMP_OFFLOAD_SUPPORT_DISABLE_BITMASK    0x0
 #define WMI_IGMP_V1_OFFLOAD_SUPPORT_BITMASK         0x1

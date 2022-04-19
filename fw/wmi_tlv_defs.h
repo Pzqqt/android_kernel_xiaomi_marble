@@ -1265,6 +1265,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_telemetry_stats,
     WMITLV_TAG_STRUC_wmi_mgmt_ml_info,
     WMITLV_TAG_STRUC_wmi_vdev_latency_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_tid_to_link_map,
+    WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_assoc_tid_to_link_map,
 } WMITLV_TAG_ID;
 
 /*
@@ -1758,6 +1761,7 @@ typedef enum {
     OP(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID) \
     OP(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID) \
     OP(WMI_PEER_TX_FILTER_CMDID) \
+    OP(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2530,7 +2534,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_he_rate_set, peer_he_rates, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_mlo_params, mlo_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_eht_rate_set, peer_eht_rates, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_mlo_partner_link_params, partner_link_params, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_mlo_partner_link_params, partner_link_params, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_tid_to_link_map, peer_tid_to_link_map, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ASSOC_CMDID);
 
@@ -4903,6 +4908,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_READY_CMDID);
 #define WMITLV_TABLE_WMI_MLO_TEARDOWN_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_teardown_fixed_param, wmi_mlo_teardown_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_TEARDOWN_CMDID);
+
+/** WMI cmd used to setup Tid to Link Mapping for a MLO Peer */
+#define WMITLV_TABLE_WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param, wmi_peer_tid_to_link_map_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tid_to_link_map, tid_to_link_map, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID);
 
 /* Mcast ipv4 address filter list cmd */
 #define WMITLV_TABLE_WMI_VDEV_IGMP_OFFLOAD_CMDID(id,op,buf,len) \
