@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1360,6 +1360,14 @@ struct dhcp_server {
  *   OUI data Len: 00
  *   Info Mask : 01 - only OUI present in Info mask
  *
+ * OUI 3: 000ce7
+ *   OUI data Len: 00
+ *   Info Mask : 01 - only OUI present in Info mask
+ *
+ * OUI 4: 00e0fc
+ *   OUI data Len: 00
+ *   Info Mask : 01 - only OUI present in Info mask
+ *
  * Refer to gEnableActionOUI for more detail about the format.
  *
  * Related: gEnableActionOUI
@@ -1374,7 +1382,7 @@ struct dhcp_server {
 	"gActionOUIDisableTWT", \
 	0, \
 	ACTION_OUI_MAX_STR_LEN, \
-	"001018 00 01 000986 00 01", \
+	"001018 00 01 000986 00 01 000ce7 00 01 00e0fc 00 01", \
 	"Used to specify action OUIs to control TWT configuration")
 
 /* End of action oui inis */
