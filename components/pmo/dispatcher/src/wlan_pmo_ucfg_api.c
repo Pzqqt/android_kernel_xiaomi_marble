@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -483,6 +483,11 @@ ucfg_pmo_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 			      struct pmo_wow_add_pattern *ptrn)
 {
 	return pmo_core_add_wow_user_pattern(vdev, ptrn);
+}
+
+void ucfg_pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
+{
+	pmo_register_wow_default_patterns(vdev);
 }
 
 QDF_STATUS

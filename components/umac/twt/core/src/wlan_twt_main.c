@@ -1129,7 +1129,7 @@ QDF_STATUS wlan_twt_setup_req(struct wlan_objmgr_psoc *psoc,
 
 	if (!mlme_get_user_ps(psoc, req->vdev_id)) {
 		twt_warn("Power save mode disable");
-		return QDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_AGAIN;
 	}
 
 	notify_in_progress = wlan_is_twt_notify_in_progress(psoc, req->vdev_id);

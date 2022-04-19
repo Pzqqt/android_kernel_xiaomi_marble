@@ -1694,6 +1694,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	uint32_t hal_aggr_count;
 	uint8_t napi_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
 	uint32_t fse_metadata;
+	bool cce_match;
 
 	dump_tlvs(hal_soc_hdl, rx_tlv_hdr, QDF_TRACE_LEVEL_INFO_HIGH);
 	dp_fisa_debug("nbuf: %pK nbuf->next:%pK nbuf->data:%pK len %d data_len %d",
@@ -1707,8 +1708,9 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	if (qdf_unlikely(fisa_flow->napi_id != napi_id)) {
 		fse_metadata =
 			hal_rx_msdu_fse_metadata_get(hal_soc_hdl, rx_tlv_hdr);
-		if (fisa_hdl->del_flow_count &&
-		    fse_metadata != fisa_flow->metadata) {
+		cce_match = hal_rx_msdu_cce_match_get(hal_soc_hdl, rx_tlv_hdr);
+		if (cce_match || (fisa_hdl->del_flow_count &&
+		    fse_metadata != fisa_flow->metadata)) {
 			dp_rx_fisa_release_ft_lock(fisa_hdl, napi_id);
 			return FISA_AGGR_NOT_ELIGIBLE;
 		}

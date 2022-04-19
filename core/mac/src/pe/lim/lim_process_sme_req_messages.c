@@ -5547,10 +5547,11 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 
 	if (!lim_is_sme_disassoc_cnf_valid(mac, &smeDisassocCnf, pe_session)) {
 		pe_err("received invalid SME_DISASSOC_CNF message");
-		status = lim_prepare_disconnect_done_ind(mac, &msg,
-						pe_session->smeSessionId,
-						eSIR_SME_INVALID_PARAMETERS,
-						&smeDisassocCnf.bssid.bytes[0]);
+		status = lim_prepare_disconnect_done_ind(
+					mac, &msg,
+					pe_session->smeSessionId,
+					eSIR_SME_INVALID_PARAMETERS,
+					&smeDisassocCnf.peer_macaddr.bytes[0]);
 		if (QDF_IS_STATUS_SUCCESS(status))
 			lim_send_sme_disassoc_deauth_ntf(mac,
 							 QDF_STATUS_SUCCESS,
@@ -5584,10 +5585,11 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 				pe_session->limSmeState);
 			lim_print_sme_state(mac, LOGE,
 					    pe_session->limSmeState);
-			status = lim_prepare_disconnect_done_ind(mac, &msg,
-						pe_session->smeSessionId,
-						eSIR_SME_INVALID_STATE,
-						&smeDisassocCnf.bssid.bytes[0]);
+			status = lim_prepare_disconnect_done_ind(
+					mac, &msg,
+					pe_session->smeSessionId,
+					eSIR_SME_INVALID_STATE,
+					&smeDisassocCnf.peer_macaddr.bytes[0]);
 			if (QDF_IS_STATUS_SUCCESS(status))
 				lim_send_sme_disassoc_deauth_ntf(mac,
 							QDF_STATUS_SUCCESS,
@@ -5602,10 +5604,11 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 	default:                /* eLIM_UNKNOWN_ROLE */
 		pe_err("received unexpected SME_DISASSOC_CNF role %d",
 			GET_LIM_SYSTEM_ROLE(pe_session));
-		status = lim_prepare_disconnect_done_ind(mac, &msg,
-						pe_session->smeSessionId,
-						eSIR_SME_INVALID_STATE,
-						&smeDisassocCnf.bssid.bytes[0]);
+		status = lim_prepare_disconnect_done_ind(
+					mac, &msg,
+					pe_session->smeSessionId,
+					eSIR_SME_INVALID_STATE,
+					&smeDisassocCnf.peer_macaddr.bytes[0]);
 		if (QDF_IS_STATUS_SUCCESS(status))
 			lim_send_sme_disassoc_deauth_ntf(mac,
 							 QDF_STATUS_SUCCESS,
@@ -5623,10 +5626,11 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 			pe_err("DISASSOC_CNF for a STA with no context, addr= "
 				QDF_MAC_ADDR_FMT,
 				QDF_MAC_ADDR_REF(smeDisassocCnf.peer_macaddr.bytes));
-			status = lim_prepare_disconnect_done_ind(mac, &msg,
-						pe_session->smeSessionId,
-						eSIR_SME_INVALID_PARAMETERS,
-						&smeDisassocCnf.bssid.bytes[0]);
+			status = lim_prepare_disconnect_done_ind(
+					mac, &msg,
+					pe_session->smeSessionId,
+					eSIR_SME_INVALID_PARAMETERS,
+					&smeDisassocCnf.peer_macaddr.bytes[0]);
 			if (QDF_IS_STATUS_SUCCESS(status))
 				lim_send_sme_disassoc_deauth_ntf(mac,
 							QDF_STATUS_SUCCESS,
@@ -5892,6 +5896,51 @@ void lim_send_stop_bss_failure_resp(struct mac_context *mac_ctx,
 			 eSIR_SME_STOP_BSS_FAILURE, session->smeSessionId);
 }
 
+static void lim_flush_all_peer_from_serialization_queue(
+				struct mac_context *mac_ctx,
+				struct pe_session *session)
+{
+	struct wlan_serialization_queued_cmd_info cmd = {0};
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = session->vdev;
+	if (!vdev) {
+		pe_err("vdev is null");
+		return;
+	}
+
+	pe_debug("vdev id is %d for disconnect/deauth cmd", session->vdev_id);
+
+	/* Flush any pending NB peer deauth command */
+	cmd.vdev = vdev;
+	cmd.cmd_type = WLAN_SER_CMD_FORCE_DEAUTH_STA;
+	cmd.req_type = WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE;
+	cmd.requestor = WLAN_UMAC_COMP_MLME;
+	cmd.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
+
+	wlan_serialization_cancel_request(&cmd);
+
+	/* Flush any pending NB peer disassoc command */
+	qdf_mem_zero(&cmd, sizeof(cmd));
+	cmd.vdev = vdev;
+	cmd.cmd_type = WLAN_SER_CMD_FORCE_DISASSOC_STA;
+	cmd.req_type = WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE;
+	cmd.requestor = WLAN_UMAC_COMP_MLME;
+	cmd.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
+
+	wlan_serialization_cancel_request(&cmd);
+
+	/* Flush any pending SB peer deauth/disconnect command */
+	qdf_mem_zero(&cmd, sizeof(cmd));
+	cmd.vdev = vdev;
+	cmd.cmd_type = WLAN_SER_CMD_WM_STATUS_CHANGE;
+	cmd.req_type = WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE;
+	cmd.requestor = WLAN_UMAC_COMP_MLME;
+	cmd.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
+
+	wlan_serialization_cancel_request(&cmd);
+}
+
 void lim_delete_all_peers(struct pe_session *session)
 {
 	uint8_t i = 0;
@@ -5933,6 +5982,17 @@ void lim_delete_all_peers(struct pe_session *session)
 			QDF_ASSERT(0);
 		}
 	}
+
+	/**
+	 * Scenario: CSA happens and south bound disconnection got queued
+	 * in serialization parallelly.
+	 * As part of CSA, remove all peer from serialization, so that when
+	 * south bound disconnection becomes active, it should not lead to a
+	 * race where the peer is trying to connect and the driver is trying
+	 * to disconnect the same peer, leading to an active command timeout
+	 */
+	lim_flush_all_peer_from_serialization_queue(mac_ctx, session);
+
 	lim_disconnect_complete(session, false);
 	if (mac_ctx->del_peers_ind_cb)
 		mac_ctx->del_peers_ind_cb(mac_ctx->psoc, session->vdev_id);

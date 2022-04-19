@@ -5400,6 +5400,10 @@ status_ret:
 	}
 	sme_vdev_set_data_tx_callback(adapter->vdev);
 
+	/* Update FW WoW pattern with new MAC address */
+	ucfg_pmo_del_wow_pattern(adapter->vdev);
+	ucfg_pmo_register_wow_default_patterns(adapter->vdev);
+
 	return ret;
 }
 
