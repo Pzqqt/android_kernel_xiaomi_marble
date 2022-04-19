@@ -55,6 +55,13 @@
 /* below this fps limit, timeouts are adjusted based on fps */
 #define DEFAULT_TIMEOUT_FPS_THRESHOLD            24
 
+#define NUM_FSC_FIELDS 3
+#define PLANAR_RGB_PACKING 3
+#define GET_MODE_WIDTH(fsc_mode, mode) \
+	(fsc_mode ? mode->hdisplay / PLANAR_RGB_PACKING : mode->hdisplay)
+#define GET_MODE_HEIGHT(fsc_mode, mode) \
+	(fsc_mode ? mode->vdisplay * NUM_FSC_FIELDS : mode->vdisplay)
+
 /**
  * Encoder functions and data types
  * @intfs:	Interfaces this encoder is using, INTF_MODE_NONE if unused

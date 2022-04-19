@@ -580,7 +580,8 @@ static inline int sde_crtc_get_mixer_width(struct sde_crtc *sde_crtc,
 	if (cstate->num_ds_enabled)
 		mixer_width = cstate->ds_cfg[0].lm_width;
 	else
-		mixer_width = mode->hdisplay / sde_crtc->num_mixers;
+		mixer_width = GET_MODE_WIDTH(cstate->in_fsc_mode, mode) /
+				sde_crtc->num_mixers;
 
 	return mixer_width;
 }
@@ -596,8 +597,8 @@ static inline int sde_crtc_get_mixer_height(struct sde_crtc *sde_crtc,
 	if (!sde_crtc || !cstate || !mode)
 		return 0;
 
-	return (cstate->num_ds_enabled ?
-			cstate->ds_cfg[0].lm_height : mode->vdisplay);
+	return (cstate->num_ds_enabled ? cstate->ds_cfg[0].lm_height :
+			GET_MODE_HEIGHT(cstate->in_fsc_mode, mode));
 }
 
 /**

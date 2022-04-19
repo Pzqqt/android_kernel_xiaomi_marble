@@ -27,6 +27,11 @@ else
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_ANORAK), y)
+	include $(DISPLAY_ROOT)/config/gki_anorakdisp.conf
+	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_anorakdispconf.h
+endif
+
 LINUX_INC +=	-Iinclude/linux \
 		-Iinclude/linux/drm
 

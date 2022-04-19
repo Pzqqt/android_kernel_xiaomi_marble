@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
@@ -135,8 +136,8 @@ static ssize_t tp_show(struct device *dev, struct device_attribute *attr,
 
 		ret += sizeof(struct HDCP_V2V1_MSG_TOPOLOGY);
 
-		/* clear the flag once data is read back to user space*/
-		hdcp->tp_msgid = -1;
+		/* reset the flag once the data is written back to user space */
+		hdcp->tp_msgid = DOWN_REQUEST_TOPOLOGY;
 		break;
 	default:
 		ret = -EINVAL;
@@ -289,6 +290,8 @@ static int msm_hdcp_probe(struct platform_device *pdev)
 	ret = sysfs_create_group(&hdcp->device->kobj, &msm_hdcp_fs_attr_group);
 	if (ret)
 		pr_err("unable to register msm_hdcp sysfs nodes\n");
+
+	hdcp->tp_msgid = DOWN_REQUEST_TOPOLOGY;
 
 	return 0;
 error_cdev_add:

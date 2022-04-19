@@ -50,6 +50,7 @@
  * @DSI_CTRL_VERSION_2_4:     DSI host v2.4 controller
  * @DSI_CTRL_VERSION_2_5:     DSI host v2.5 controller
  * @DSI_CTRL_VERSION_2_6:     DSI host v2.6 controller
+ * @DSI_CTRL_VERSION_2_7:     DSI host v2.7 controller
  * @DSI_CTRL_VERSION_MAX:     max version
  */
 enum dsi_ctrl_version {
@@ -59,6 +60,7 @@ enum dsi_ctrl_version {
 	DSI_CTRL_VERSION_2_4,
 	DSI_CTRL_VERSION_2_5,
 	DSI_CTRL_VERSION_2_6,
+	DSI_CTRL_VERSION_2_7,
 	DSI_CTRL_VERSION_MAX
 };
 

@@ -358,7 +358,7 @@ void sde_vbif_set_ot_limit(struct sde_kms *sde_kms,
 	u32 ot_lim;
 	int ret, i;
 
-	if (!sde_kms) {
+	if (!sde_kms || !params || params->clk_ctrl >= SDE_CLK_CTRL_MAX) {
 		SDE_ERROR("invalid arguments\n");
 		return;
 	}
@@ -467,7 +467,7 @@ bool sde_vbif_set_xin_halt(struct sde_kms *sde_kms,
 	bool forced_on = false;
 	int ret, i;
 
-	if (!sde_kms || !params) {
+	if (!sde_kms || !params || params->clk_ctrl >= SDE_CLK_CTRL_MAX) {
 		SDE_ERROR("invalid arguments\n");
 		return false;
 	}
@@ -580,7 +580,7 @@ void sde_vbif_set_qos_remap(struct sde_kms *sde_kms,
 	const struct sde_vbif_qos_tbl *qos_tbl;
 	int i;
 
-	if (!sde_kms || !params || !sde_kms->hw_mdp) {
+	if (!sde_kms || !params || !sde_kms->hw_mdp || params->clk_ctrl >= SDE_CLK_CTRL_MAX) {
 		SDE_ERROR("invalid arguments\n");
 		return;
 	}
