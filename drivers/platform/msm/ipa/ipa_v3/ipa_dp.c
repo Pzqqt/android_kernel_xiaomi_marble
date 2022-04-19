@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -410,20 +411,22 @@ static void ipa3_send_nop_desc(struct work_struct *work)
 		return;
 	}
 	list_add_tail(&tx_pkt->link, &sys->head_desc_list);
-	sys->len++;
-	sys->nop_pending = false;
 
 	memset(&nop_xfer, 0, sizeof(nop_xfer));
 	nop_xfer.type = GSI_XFER_ELEM_NOP;
 	nop_xfer.flags = GSI_XFER_FLAG_EOT;
 	nop_xfer.xfer_user_data = tx_pkt;
 	if (gsi_queue_xfer(sys->ep->gsi_chan_hdl, 1, &nop_xfer, true)) {
+		list_del(&tx_pkt->link);
+		kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
 		spin_unlock_bh(&sys->spinlock);
 		IPAERR("gsi_queue_xfer for ch:%lu failed\n",
 			sys->ep->gsi_chan_hdl);
 		queue_work(sys->wq, &sys->work);
 		return;
 	}
+	sys->len++;
+	sys->nop_pending = false;
 	spin_unlock_bh(&sys->spinlock);
 
 	/* make sure TAG process is sent before clocks are gated */
@@ -1688,7 +1691,8 @@ fail_napi:
 fail_gen2:
 	ipa_pm_deregister(ep->sys->pm_hdl);
 fail_pm:
-	destroy_workqueue(ep->sys->freepage_wq);
+	if (ep->sys->freepage_wq)
+		destroy_workqueue(ep->sys->freepage_wq);
 fail_wq3:
 	destroy_workqueue(ep->sys->repl_wq);
 fail_wq2:
@@ -2661,6 +2665,11 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 								 0 : curr_wq;
 		}
 		rx_pkt->sys = sys;
+
+		trace_ipa3_replenish_rx_page_recycle(
+			stats_i,
+			rx_pkt->page_data.page,
+			rx_pkt->page_data.is_tmp_alloc);
 
 		dma_sync_single_for_device(ipa3_ctx->pdev,
 			rx_pkt->page_data.dma_addr,
@@ -4312,6 +4321,10 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 				rx_page.page, 0,
 				size,
 				PAGE_SIZE << rx_page.page_order);
+
+			trace_handle_page_completion(rx_page.page,
+				rx_skb, notify->bytes_xfered,
+				rx_page.is_tmp_alloc, sys->ep->client);
 		}
 	} else {
 		return NULL;
@@ -4379,6 +4392,10 @@ static void ipa3_rx_napi_chain(struct ipa3_sys_context *sys,
 					skb_shinfo(prev_skb)->frag_list =
 						rx_skb;
 
+				trace_ipa3_rx_napi_chain(first_skb,
+							 prev_skb,
+							 rx_skb);
+
 				prev_skb = rx_skb;
 			}
 		}
@@ -4426,6 +4443,11 @@ static void ipa3_rx_napi_chain(struct ipa3_sys_context *sys,
 							= rx_skb;
 
 					prev_skb = rx_skb;
+
+					trace_ipa3_rx_napi_chain(first_skb,
+								 prev_skb,
+								 rx_skb);
+
 				}
 			}
 			if (prev_skb) {
@@ -5375,6 +5397,13 @@ static void ipa_dma_gsi_irq_rx_notify_cb(struct gsi_chan_xfer_notify *notify)
 	default:
 		IPAERR("received unexpected event id %d\n", notify->evt_id);
 	}
+}
+
+void ipa3_dealloc_common_event_ring(void)
+{
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	gsi_dealloc_evt_ring(ipa3_ctx->gsi_evt_comm_hdl);
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 }
 
 int ipa3_alloc_common_event_ring(void)

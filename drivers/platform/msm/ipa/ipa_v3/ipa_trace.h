@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #undef TRACE_SYSTEM
@@ -295,6 +296,89 @@ TRACE_EVENT(
 	),
 
 	TP_printk("client=%lu", __entry->client)
+);
+
+TRACE_EVENT(
+	ipa3_replenish_rx_page_recycle,
+
+	TP_PROTO(u32 i, struct page *p, bool is_tmp_alloc),
+
+	TP_ARGS(i, p, is_tmp_alloc),
+
+	TP_STRUCT__entry(
+		__field(u32, i)
+		__field(struct page *,	p)
+		__field(bool,		is_tmp_alloc)
+		__field(unsigned long,	pfn)
+	),
+
+	TP_fast_assign(
+		__entry->i = i;
+		__entry->p = p;
+		__entry->is_tmp_alloc = is_tmp_alloc;
+		__entry->pfn = page_to_pfn(p);
+	),
+
+	TP_printk("wan_cons type=%u: page=0x%pK pfn=0x%lx tmp=%s",
+		__entry->i, __entry->p, __entry->pfn,
+		__entry->is_tmp_alloc ? "true" : "false")
+);
+
+TRACE_EVENT(
+	handle_page_completion,
+
+	TP_PROTO(struct page *p, struct sk_buff *skb, u16 len,
+		 bool is_tmp_alloc, enum ipa_client_type client),
+
+	TP_ARGS(p, skb, len, is_tmp_alloc, client),
+
+	TP_STRUCT__entry(
+		__field(struct page *,		p)
+		__field(struct sk_buff *,	skb)
+		__field(u16,			len)
+		__field(bool,			is_tmp_alloc)
+		__field(unsigned long,		pfn)
+		__field(enum ipa_client_type,	client)
+	),
+
+	TP_fast_assign(
+		__entry->p = p;
+		__entry->skb = skb;
+		__entry->len = len;
+		__entry->is_tmp_alloc = is_tmp_alloc;
+		__entry->pfn = page_to_pfn(p);
+		__entry->client = client;
+	),
+
+	TP_printk("%s: page=0x%pK pfn=0x%lx skb=0x%pK len=%u tmp=%s",
+		(__entry->client == IPA_CLIENT_APPS_WAN_CONS) ? "WAN_CONS"
+							      : "WAN_COAL_CONS",
+		__entry->p, __entry->pfn, __entry->skb, __entry->len,
+		__entry->is_tmp_alloc ? "true" : "false")
+);
+
+TRACE_EVENT(
+	ipa3_rx_napi_chain,
+
+	TP_PROTO(struct sk_buff *first_skb, struct sk_buff *prev_skb,
+		 struct sk_buff *rx_skb),
+
+	TP_ARGS(first_skb, prev_skb, rx_skb),
+
+	TP_STRUCT__entry(
+		__field(struct sk_buff *,	first_skb)
+		__field(struct sk_buff *,	prev_skb)
+		__field(struct sk_buff *,	rx_skb)
+	),
+
+	TP_fast_assign(
+		__entry->first_skb = first_skb;
+		__entry->prev_skb = prev_skb;
+		__entry->rx_skb = rx_skb;
+	),
+
+	TP_printk("first_skb=0x%pK prev_skb=0x%pK rx_skb=0x%pK",
+		__entry->first_skb, __entry->prev_skb, __entry->rx_skb)
 );
 
 #endif /* _IPA_TRACE_H */

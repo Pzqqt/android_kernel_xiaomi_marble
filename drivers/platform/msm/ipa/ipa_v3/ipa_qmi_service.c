@@ -552,16 +552,22 @@ static int ipa3_qmi_send_req_wait(struct qmi_handle *client_handle,
 	struct qmi_txn txn;
 	int ret;
 
-	if (!client_handle)
+	mutex_lock(&ipa3_qmi_lock);
+
+	if (!client_handle) {
+
+		mutex_unlock(&ipa3_qmi_lock);
 		return -EINVAL;
+	}
+
 	ret = qmi_txn_init(client_handle, &txn, resp_desc->ei_array, resp);
 
 	if (ret < 0) {
 		IPAWANERR("QMI txn init failed, ret= %d\n", ret);
+		mutex_unlock(&ipa3_qmi_lock);
 		return ret;
 	}
 
-	mutex_lock(&ipa3_qmi_lock);
 	ret = qmi_send_request(client_handle,
 		&ipa3_qmi_ctx->server_sq,
 		&txn,
@@ -570,19 +576,16 @@ static int ipa3_qmi_send_req_wait(struct qmi_handle *client_handle,
 		req_desc->ei_array,
 		req);
 
-	if (unlikely(!ipa_q6_clnt)) {
-		mutex_unlock(&ipa3_qmi_lock);
-		return -EINVAL;
-	}
 
-	mutex_unlock(&ipa3_qmi_lock);
 
 	if (ret < 0) {
 		qmi_txn_cancel(&txn);
+		mutex_unlock(&ipa3_qmi_lock);
 		return ret;
 	}
-	ret = qmi_txn_wait(&txn, msecs_to_jiffies(timeout_ms));
 
+	ret = qmi_txn_wait(&txn, msecs_to_jiffies(timeout_ms));
+	mutex_unlock(&ipa3_qmi_lock);
 	return ret;
 }
 
