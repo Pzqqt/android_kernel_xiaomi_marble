@@ -1251,7 +1251,7 @@ void lim_send_mscs_req_action_frame(struct mac_context *mac,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + payload),
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, frame, lim_mscs_req_tx_complete_cnf,
-			   NULL, HAL_USE_PEER_STA_REQUESTED_MASK,
+			   HAL_USE_PEER_STA_REQUESTED_MASK,
 			   pe_session->vdev_id, false, 0, RATEID_DEFAULT, 0);
 	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		mlme_set_is_mscs_req_sent(pe_session->vdev, true);
@@ -1776,7 +1776,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, frame,
-				lim_assoc_rsp_tx_complete, NULL, tx_flag,
+				lim_assoc_rsp_tx_complete, tx_flag,
 				sme_session, false, 0, RATEID_DEFAULT, 0);
 	else
 		qdf_status = wma_tx_frame(
@@ -1941,6 +1941,83 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 
 } /* End lim_send_delts_req_action_frame. */
 
+#define SAE_AUTH_SEQ_NUM_OFFSET         2
+#define SAE_AUTH_STATUS_CODE_OFFSET     4
+#define SAE_AUTH_MESSAGE_TYPE_OFFSET    6
+#define SAE_FRAME_LENGTH \
+	(sizeof(struct wlan_frame_hdr) + SAE_AUTH_MESSAGE_TYPE_OFFSET)
+
+/**
+ * wlan_send_tx_complete_event() - Fill mgmt params
+ *
+ * @context: Pointer to mac context
+ * @buf: skb buffer
+ * @params: Pointer to wmi_mgmt_params
+ * @tx_complete: Sent status
+ * @tag: wlan main tag
+ *
+ * Function is used to send connectivity log event for mgmt ack status
+ *
+ * Return None
+ */
+
+static void wlan_send_tx_complete_event(struct mac_context *mac, qdf_nbuf_t buf,
+					struct wmi_mgmt_params *params,
+					uint8_t tx_complete,
+					enum wlan_main_tag tag)
+{
+	struct pe_session *pe_session = NULL;
+	struct wlan_frame_hdr *mac_hdr;
+	enum qdf_dp_tx_rx_status qdf_tx_complete;
+	uint8_t *frm_body;
+	uint16_t reason_code = 0;
+
+	pe_session = pe_find_session_by_vdev_id(mac, params->vdev_id);
+	if (pe_session && pe_session->opmode == QDF_STA_MODE) {
+		if (qdf_nbuf_len(buf) < sizeof(struct wlan_frame_hdr) + 2)
+			return;
+
+		mac_hdr = (struct wlan_frame_hdr *)qdf_nbuf_data(buf);
+		frm_body = (uint8_t *)mac_hdr + sizeof(struct wlan_frame_hdr);
+
+		if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
+			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
+		else if (tx_complete  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
+			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
+		else
+			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
+
+		if (tag == WLAN_AUTH_REQ) {
+			uint16_t algo = 0, type = 0, seq = 0, status = 0;
+
+			if (qdf_nbuf_len(buf) < SAE_FRAME_LENGTH)
+				return;
+
+			algo = *(uint16_t *)frm_body;
+			seq = *(uint16_t *)(frm_body + SAE_AUTH_SEQ_NUM_OFFSET);
+			status =
+			*(uint16_t *)(frm_body + SAE_AUTH_STATUS_CODE_OFFSET);
+
+			if (algo == eSIR_AUTH_TYPE_SAE)
+				type = seq;
+
+			wlan_connectivity_mgmt_event(
+					mac_hdr, params->vdev_id, status,
+					qdf_tx_complete, mac->lim.bss_rssi,
+					algo, type, seq, WLAN_AUTH_REQ);
+			return;
+		}
+
+		if (tag == WLAN_DEAUTH_TX || tag == WLAN_DISASSOC_TX)
+			reason_code = pe_session->deauth_disassoc_rc;
+
+		wlan_connectivity_mgmt_event(
+					mac_hdr, params->vdev_id, reason_code,
+					qdf_tx_complete, mac->lim.bss_rssi,
+					0, 0, 0, tag);
+	}
+}
+
 /**
  * lim_assoc_tx_complete_cnf()- Confirmation for assoc sent over the air
  * @context: pointer to global mac
@@ -1959,28 +2036,14 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 	uint16_t assoc_ack_status;
 	uint16_t reason_code;
 	struct mac_context *mac_ctx = (struct mac_context *)context;
-	struct mgmt_frame_data *data;
-	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
 	pe_nofl_rl_info("Assoc req TX: %s (%d)",
 			(tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
 			"success" : "fail", tx_complete);
 
-	if (params) {
-		data = params;
-
-		if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
-			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
-		else if (tx_complete  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
-			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
-		else
-			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
-
-		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, qdf_tx_complete,
-					     data->rssi, 0, 0, 0,
-					     WLAN_ASSOC_REQ);
-	}
+	if (params)
+		wlan_send_tx_complete_event(context, buf, params, tx_complete,
+					    WLAN_ASSOC_REQ);
 
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
 		assoc_ack_status = ACKED;
@@ -2101,7 +2164,6 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 {
 	int ret;
 	tDot11fAssocRequest *frm;
-	struct mgmt_frame_data mgmt_data, *mgmt_frame_info = NULL;
 	uint16_t caps;
 	uint8_t *frame, *rsnx_ie = NULL;
 	QDF_STATUS sir_status;
@@ -2733,24 +2795,14 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			      pe_session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
 				      pe_session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
-
 	peer_rssi = mac_ctx->lim.bss_rssi;
-
-	if (pe_session->opmode == QDF_STA_MODE) {
-		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)mac_hdr;
-		mgmt_data.vdev_id = pe_session->vdev_id;
-		mgmt_data.status_code = STATUS_SUCCESS;
-		mgmt_data.frame_subtype = MGMT_SUBTYPE_ASSOC_REQ;
-		mgmt_data.rssi = peer_rssi;
-		mgmt_frame_info = &mgmt_data;
-	}
 
 	qdf_status =
 		wma_tx_frameWithTxComplete(mac_ctx, packet,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + payload),
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, frame, lim_assoc_tx_complete_cnf,
-			   mgmt_frame_info, tx_flag, vdev_id, false, 0,
+			   tx_flag, vdev_id, false, 0,
 			   min_rid, peer_rssi);
 	MTRACE(qdf_trace
 		       (QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
@@ -2888,28 +2940,13 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 					   void *params)
 {
 	struct mac_context *mac_ctx = (struct mac_context *)context;
-	struct mgmt_frame_data *data;
 	uint16_t auth_ack_status;
 	uint16_t reason_code;
 	bool sae_auth_acked;
-	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
-	if (params) {
-		data = params;
-
-		if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
-			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
-		else if (tx_complete  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
-			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
-		else
-			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
-
-		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, qdf_tx_complete,
-					     data->rssi, data->auth_algo,
-					     data->auth_type, data->auth_seq,
-					     WLAN_AUTH_REQ);
-	}
+	if (params)
+		wlan_send_tx_complete_event(context, buf, params, tx_complete,
+					    WLAN_AUTH_REQ);
 
 	pe_nofl_rl_info("Auth TX: %s (%d)",
 			(tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
@@ -3022,7 +3059,6 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t *frame, *body;
 	uint32_t frame_len = 0, body_len = 0;
 	tpSirMacMgmtHdr mac_hdr;
-	struct mgmt_frame_data mgmt_data, *auth_frame_info = NULL;
 	void *packet;
 	QDF_STATUS qdf_status, status;
 	uint8_t tx_flag = 0;
@@ -3314,18 +3350,6 @@ alloc_packet:
 	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
 				      session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 
-	if (session->opmode == QDF_STA_MODE) {
-		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)mac_hdr;
-		mgmt_data.vdev_id = session->vdev_id;
-		mgmt_data.status_code = auth_frame->authStatusCode;
-		mgmt_data.rssi = peer_rssi;
-		mgmt_data.frame_subtype = MGMT_SUBTYPE_AUTH;
-		mgmt_data.auth_algo = auth_frame->authAlgoNumber;
-		mgmt_data.auth_seq = MGMT_SUBTYPE_AUTH;
-
-		auth_frame_info = &mgmt_data;
-	}
-
 	if (session->ftPEContext.pFTPreAuthReq)
 		ch_freq_tx_frame = session->ftPEContext.
 				pFTPreAuthReq->pre_auth_channel_freq;
@@ -3334,7 +3358,7 @@ alloc_packet:
 				 (uint16_t)frame_len,
 				 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 				 7, lim_tx_complete, frame,
-				 lim_auth_tx_complete_cnf, auth_frame_info,
+				 lim_auth_tx_complete_cnf,
 				 tx_flag, vdev_id, false,
 				 ch_freq_tx_frame, min_rid, peer_rssi);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
@@ -3584,24 +3608,10 @@ static QDF_STATUS lim_disassoc_tx_complete_cnf_handler(void *context,
 	struct mac_context *max_ctx = (struct mac_context *)context;
 	QDF_STATUS status_code;
 	struct scheduler_msg msg = {0};
-	struct mgmt_frame_data *data;
-	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
-	if (params) {
-		data = params;
-
-		if (tx_success == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
-			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
-		else if (tx_success  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
-			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
-		else
-			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
-
-		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, qdf_tx_complete,
-					     data->rssi, 0, 0, 0,
-					     WLAN_DISASSOC_TX);
-	}
+	if (params)
+		wlan_send_tx_complete_event(context, buf, params, tx_success,
+					    WLAN_DISASSOC_TX);
 
 	pe_debug("tx_success: %d", tx_success);
 
@@ -3639,24 +3649,10 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
 	struct scheduler_msg msg = {0};
 	tLimMlmDeauthReq *deauth_req;
 	struct pe_session *session = NULL;
-	struct mgmt_frame_data *data;
-	enum qdf_dp_tx_rx_status qdf_tx_complete;
 
-	if (params) {
-		data = params;
-
-		if (tx_success == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
-			qdf_tx_complete = QDF_TX_RX_STATUS_OK;
-		else if (tx_success  == WMI_MGMT_TX_COMP_TYPE_DISCARD)
-			qdf_tx_complete = QDF_TX_RX_STATUS_FW_DISCARD;
-		else
-			qdf_tx_complete = QDF_TX_RX_STATUS_NO_ACK;
-
-		wlan_connectivity_mgmt_event(&data->mac_hdr, data->vdev_id,
-					     data->status_code, qdf_tx_complete,
-					     data->rssi, 0, 0, 0,
-					     WLAN_DEAUTH_TX);
-	}
+	if (params)
+		wlan_send_tx_complete_event(context, buf, params, tx_success,
+					    WLAN_DEAUTH_TX);
 
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 
@@ -3739,7 +3735,6 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 			     struct pe_session *pe_session, bool waitForAck)
 {
 	tDot11fDisassociation frm;
-	struct mgmt_frame_data mgmt_data, *mgmt_frame_info = NULL;
 	uint8_t *pFrame;
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
@@ -3850,6 +3845,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 
 	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
+	pe_session->deauth_disassoc_rc = nReason;
 	if (waitForAck) {
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 pe_session->peSessionId,
@@ -3858,15 +3854,6 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 					      pe_session, QDF_STATUS_SUCCESS,
 					      QDF_STATUS_SUCCESS);
 
-		if (pe_session->opmode == QDF_STA_MODE) {
-			mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)pMacHdr;
-			mgmt_data.vdev_id = pe_session->vdev_id;
-			mgmt_data.status_code = nReason;
-			mgmt_data.frame_subtype = MGMT_SUBTYPE_DISASSOC;
-			mgmt_data.rssi = mac->lim.bss_rssi;
-			mgmt_frame_info = &mgmt_data;
-		}
-
 		/* Queue Disassociation frame in high priority WQ */
 		/* get the duration from the request */
 		qdf_status =
@@ -3874,7 +3861,6 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
 					 pFrame, lim_disassoc_tx_complete_cnf_handler,
-					 mgmt_frame_info,
 					 txFlag, smeSessionId, false, 0,
 					 RATEID_DEFAULT, 0);
 		MTRACE(qdf_trace
@@ -3954,8 +3940,6 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 			   struct pe_session *pe_session, bool waitForAck)
 {
 	tDot11fDeAuth frm;
-	struct mgmt_frame_data mgmt_data;
-	void *mgmt_frame_info = NULL;
 	uint8_t *pFrame;
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
@@ -4081,6 +4065,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 				      &pe_session->dph.dphHashTable);
 #endif
 
+	pe_session->deauth_disassoc_rc = nReason;
 	if (waitForAck) {
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 pe_session->peSessionId,
@@ -4098,22 +4083,12 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 					 peer, QDF_MAC_ADDR_SIZE);
 		}
 
-		if (pe_session->opmode == QDF_STA_MODE) {
-			mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)pMacHdr;
-			mgmt_data.vdev_id = pe_session->vdev_id;
-			mgmt_data.status_code = nReason;
-			mgmt_data.rssi = mac->lim.bss_rssi;
-			mgmt_data.frame_subtype = MGMT_SUBTYPE_DEAUTH;
-			mgmt_frame_info = &mgmt_data;
-		}
-
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
 			wma_tx_frameWithTxComplete(mac, pPacket, (uint16_t) nBytes,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
 					 pFrame, lim_deauth_tx_complete_cnf_handler,
-					 mgmt_frame_info,
 					 txFlag, smeSessionId, false, 0,
 					 RATEID_DEFAULT, 0);
 		MTRACE(qdf_trace
@@ -4837,7 +4812,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 			(uint16_t)num_bytes,
 			TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 			7, lim_tx_complete, frame,
-			lim_oper_chan_change_confirm_tx_complete_cnf, NULL,
+			lim_oper_chan_change_confirm_tx_complete_cnf,
 			tx_flag, vdev_id, false, 0, RATEID_DEFAULT, 0);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
@@ -5803,7 +5778,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 						ANI_TXDIR_TODS, 7,
 						NULL, frame_ptr,
 						lim_addba_rsp_tx_complete_cnf,
-						NULL, tx_flag, vdev_id,
+						tx_flag, vdev_id,
 						false, 0, RATEID_DEFAULT, 0);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 			 session->peSessionId, qdf_status));
@@ -5964,7 +5939,7 @@ QDF_STATUS lim_send_delba_action_frame(struct mac_context *mac_ctx,
 						ANI_TXDIR_TODS, 7,
 						NULL, frame_ptr,
 						lim_delba_tx_complete_cnf,
-						NULL, tx_flag, vdev_id,
+						tx_flag, vdev_id,
 						false, 0, RATEID_DEFAULT, 0);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		pe_err("delba wma_tx_frame FAILED! Status [%d]", qdf_status);
@@ -5995,13 +5970,11 @@ error_delba:
 static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 			      uint32_t msg_len, void *packet, uint8_t *frame)
 {
-	struct mgmt_frame_data mgmt_data, *mgmt_frame_info = NULL;
 	tpSirMacFrameCtl fc = (tpSirMacFrameCtl)frame;
 	QDF_STATUS qdf_status;
 	struct pe_session *session;
 	uint16_t auth_ack_status;
 	enum rateid min_rid = RATEID_DEFAULT;
-	uint16_t sae_auth_seq = 0;
 
 	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
@@ -6016,36 +5989,11 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
 
 	min_rid = lim_get_min_session_txrate(session);
 
-	if (fc->subType == SIR_MAC_MGMT_AUTH &&
-	    session->opmode == QDF_STA_MODE &&
-	    msg_len >= (sizeof(struct wlan_frame_hdr) +
-			MAC_AUTH_FRAME_STATUS_CODE_OFFSET + 2)) {
-		mgmt_data.mac_hdr = *(struct wlan_frame_hdr *)frame;
-		mgmt_data.vdev_id = vdev_id;
-		mgmt_data.status_code =
-			*(uint16_t *)(frame + sizeof(struct wlan_frame_hdr) +
-				      MAC_AUTH_FRAME_STATUS_CODE_OFFSET);
-		mgmt_data.rssi = mac_ctx->lim.bss_rssi;
-		mgmt_data.frame_subtype = MGMT_SUBTYPE_AUTH;
-		mgmt_data.auth_algo = *(uint16_t *)(frame +
-					  sizeof(tSirMacMgmtHdr));
-		if (mgmt_data.auth_algo == eSIR_AUTH_TYPE_SAE) {
-			sae_auth_seq =
-			    *(uint16_t *)(frame +
-					  sizeof(struct wlan_frame_hdr) +
-					  SAE_AUTH_SEQ_NUM_OFFSET);
-			mgmt_data.auth_seq = sae_auth_seq;
-			mgmt_data.auth_type = sae_auth_seq;
-		}
-		mgmt_frame_info = &mgmt_data;
-	}
-
 	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
 					 (uint16_t)msg_len,
 					 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 					 7, lim_tx_complete, frame,
 					 lim_auth_tx_complete_cnf,
-					 mgmt_frame_info,
 					 0, vdev_id, false, 0, min_rid, 0);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		session->peSessionId, qdf_status));

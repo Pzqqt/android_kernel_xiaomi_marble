@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -665,7 +665,6 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 					TID_AC_VI,
 					lim_tx_complete, pFrame,
 					lim_mgmt_tdls_tx_complete,
-					NULL,
 					HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME |
 					HAL_USE_PEER_STA_REQUESTED_MASK,
 					smeSessionId, false, 0,
@@ -1405,7 +1404,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 					      ANI_TXDIR_IBSS,
 					      0,
 					      lim_tx_complete, pFrame,
-					      lim_mgmt_tdls_tx_complete, NULL,
+					      lim_mgmt_tdls_tx_complete,
 					      HAL_USE_SELF_STA_REQUESTED_MASK,
 					      smeSessionId, false, 0,
 					      RATEID_DEFAULT, 0);
@@ -1489,7 +1488,7 @@ wma_tx_frame_with_tx_complete_send(struct mac_context *mac, void *pPacket,
 					  ANI_TXDIR_TODS,
 					  tid,
 					  lim_tx_complete, pFrame,
-					  lim_mgmt_tdls_tx_complete, NULL,
+					  lim_mgmt_tdls_tx_complete,
 					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME
 					  | HAL_USE_PEER_STA_REQUESTED_MASK,
 					  smeSessionId, flag, 0,
@@ -1510,7 +1509,7 @@ wma_tx_frame_with_tx_complete_send(struct mac_context *mac, void *pPacket,
 					  ANI_TXDIR_TODS,
 					  tid,
 					  lim_tx_complete, pFrame,
-					  lim_mgmt_tdls_tx_complete, NULL,
+					  lim_mgmt_tdls_tx_complete,
 					  HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME
 					  | HAL_USE_PEER_STA_REQUESTED_MASK,
 					  smeSessionId, false, 0,

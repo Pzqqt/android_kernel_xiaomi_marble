@@ -813,8 +813,6 @@ struct wma_wlm_stats_data {
  *   set this and wait will timeout, and code will poll the pending tx
  *   descriptors number to be zero.
  * @umac_ota_ack_cb: Ack Complete Callback registered by umac
- * @is_mgmt_data_valid: Is management frame data valid
- * @mgmt_data: Management frame related data
  * @umac_data_ota_ack_cb: ack complete callback
  * @last_umac_data_ota_timestamp: timestamp when OTA of last umac data
  *   was done
@@ -938,8 +936,6 @@ typedef struct {
 	qdf_event_t tx_frm_download_comp_event;
 	qdf_event_t tx_queue_empty_event;
 	wma_tx_ota_comp_callback umac_data_ota_ack_cb;
-	bool is_mgmt_data_valid;
-	struct mgmt_frame_data mgmt_data;
 	unsigned long last_umac_data_ota_timestamp;
 	qdf_nbuf_t last_umac_data_nbuf;
 	wma_tgt_cfg_cb tgt_cfg_update_cb;
