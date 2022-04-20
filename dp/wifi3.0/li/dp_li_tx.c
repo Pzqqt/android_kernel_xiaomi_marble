@@ -177,6 +177,9 @@ void dp_tx_process_htt_completion_li(struct dp_soc *soc,
 		ts.tsf = htt_desc[3];
 		ts.first_msdu = 1;
 		ts.last_msdu = 1;
+		ts.status = (tx_status == HTT_TX_FW2WBM_TX_STATUS_OK ?
+			     HAL_TX_TQM_RR_FRAME_ACKED :
+			     HAL_TX_TQM_RR_REM_CMD_REM);
 		tid = ts.tid;
 		if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
 			tid = CDP_MAX_DATA_TIDS - 1;
