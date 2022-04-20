@@ -1066,7 +1066,8 @@ int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 		 * lead to issues if NDI has to be started in a
 		 * 2GHz channel and if the target is not operating in DBS mode.
 		 */
-		if (!ucfg_is_nan_disc_active(psoc)) {
+		if ((ucfg_is_nan_conc_control_supported(psoc)) &&
+		    (!ucfg_is_nan_disc_active(psoc))) {
 			osif_err("NDI creation is not allowed when NAN discovery is not running");
 			return -EOPNOTSUPP;
 		}
