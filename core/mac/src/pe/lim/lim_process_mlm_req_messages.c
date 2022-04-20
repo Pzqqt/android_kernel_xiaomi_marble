@@ -1688,8 +1688,7 @@ static void lim_handle_sae_auth_timeout(struct mac_context *mac_ctx,
 	}
 
 	if (!sae_retry->sae_auth_max_retry) {
-		if (MLME_IS_ROAMING_IN_PROG(mac_ctx->psoc,
-					    session_entry->vdev_id)) {
+		if (!wlan_cm_is_vdev_connecting(session_entry->vdev)) {
 			mac_hdr = (tpSirMacMgmtHdr)sae_retry->sae_auth.ptr;
 			lim_send_pre_auth_failure(session_entry->vdev_id,
 						  mac_hdr->bssId);
