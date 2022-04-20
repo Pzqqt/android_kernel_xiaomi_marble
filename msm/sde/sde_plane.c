@@ -1803,7 +1803,8 @@ int sde_plane_validate_multirect_v2(struct sde_multirect_plane_states *plane)
 				drm_state[i]->crtc_y, drm_state[i]->crtc_w,
 				drm_state[i]->crtc_h, !q16_data);
 
-		if (src[i].w != dst[i].w || src[i].h != dst[i].h) {
+		if (!SDE_FORMAT_IS_FSC(fmt[i]) &&
+				(src[i].w != dst[i].w || src[i].h != dst[i].h)) {
 			SDE_ERROR_PLANE(sde_plane[i],
 				"scaling is not supported in multirect mode\n");
 			return -EINVAL;
