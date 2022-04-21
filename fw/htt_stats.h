@@ -4986,13 +4986,15 @@ typedef struct {
      */
     A_UINT32 rx_ulofdma_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
 
-    /*
-     * NOTE - this TLV is already large enough that it causes the HTT message
-     * carrying it to be nearly at the message size limit that applies to
-     * many targets/hosts.
-     * No further fields should be added to this TLV without very careful
-     * review to ensure the size increase is acceptable.
-     */
+    /* Stats for MCS 12/13 */
+    A_UINT32 rx_mcs_ext[HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
+/*
+ * NOTE - this TLV is already large enough that it causes the HTT message
+ * carrying it to be nearly at the message size limit that applies to
+ * many targets/hosts.
+ * No further fields should be added to this TLV without very careful
+ * review to ensure the size increase is acceptable.
+ */
 } htt_rx_pdev_rate_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE
