@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifdef CONFIG_DEBUG_FS
@@ -101,6 +102,7 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_IPPT_SW_FLT_EVENT),
 	__stringify(IPA_MACSEC_ADD_EVENT),
 	__stringify(IPA_MACSEC_DEL_EVENT),
+	__stringify(IPA_DONE_RESTORE_EVENT),
 };
 
 const char *ipa3_hdr_l2_type_name[] = {

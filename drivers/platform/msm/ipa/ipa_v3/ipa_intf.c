@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/fs.h>
@@ -396,7 +397,7 @@ static int wlan_msg_process(struct ipa_msg_meta *meta, void *buff)
 
 	if (!buff)
 		return -EINVAL;
-	if (meta->msg_type == WLAN_CLIENT_CONNECT_EX) {
+	if (WLAN_IPA_CONNECT_EVENT(meta->msg_type)) {
 		/* debug print */
 		event_ex_cur_con = buff;
 		for (cnt = 0; cnt < event_ex_cur_con->num_of_attribs; cnt++) {
@@ -441,7 +442,7 @@ static int wlan_msg_process(struct ipa_msg_meta *meta, void *buff)
 	}
 
 	/* remove the cache */
-	if (meta->msg_type == WLAN_CLIENT_DISCONNECT) {
+	if (WLAN_IPA_DISCONNECT_EVENT(meta->msg_type)) {
 		/* debug print */
 		event_ex_cur_discon = buff;
 		IPADBG("Mac %pM, msg %d\n",
@@ -479,6 +480,84 @@ static int wlan_msg_process(struct ipa_msg_meta *meta, void *buff)
 		}
 		mutex_unlock(&ipa3_ctx->msg_wlan_client_lock);
 	}
+	return 0;
+}
+
+static int lan_msg_process(struct ipa_msg_meta *meta, void *buff)
+{
+	struct ipa3_push_msg *msg_dup = NULL;
+	struct ipa_ecm_msg *ecm_msg_con = NULL;
+	struct ipa_ecm_msg *ecm_event_list = NULL;
+	struct ipa_ecm_msg *ecm_msg_discon = NULL;
+	struct ipa3_push_msg *entry;
+	struct ipa3_push_msg *next;
+	void *data_dup = NULL;
+	int iface_index = 0;
+
+	if (!buff)
+		return -EINVAL;
+
+	if (meta->msg_type == ECM_CONNECT) {
+		/*debug print */
+		ecm_msg_con = buff;
+		IPADBG("ifindex: %d\n", ecm_msg_con->ifindex);
+		IPADBG("interface name: %s\n", ecm_msg_con->name);
+
+		mutex_lock(&ipa3_ctx->msg_lan_lock);
+		if (meta->msg_len > 0 && buff) {
+
+			msg_dup = kzalloc(sizeof(*msg_dup), GFP_KERNEL);
+			if (msg_dup == NULL) {
+				mutex_unlock(&ipa3_ctx->msg_lan_lock);
+				return -ENOMEM;
+			}
+
+			msg_dup->meta = *meta;
+			data_dup = kmalloc(meta->msg_len, GFP_KERNEL);
+			if (data_dup == NULL) {
+				kfree(msg_dup);
+				mutex_unlock(&ipa3_ctx->msg_lan_lock);
+				return -ENOMEM;
+			}
+			memcpy(data_dup, buff, meta->msg_len);
+			msg_dup->buff = data_dup;
+			msg_dup->callback = ipa3_send_msg_free;
+		} else {
+			IPAERR("msg_len %d\n", meta->msg_len);
+			mutex_unlock(&ipa3_ctx->msg_lan_lock);
+			return -EINVAL;
+		}
+		list_add_tail(&msg_dup->link, &ipa3_ctx->msg_lan_list);
+		mutex_unlock(&ipa3_ctx->msg_lan_lock);
+	}
+
+	/* remove the cache */
+	if (meta->msg_type == ECM_DISCONNECT) {
+		/* debug print */
+		ecm_msg_discon = buff;
+		iface_index = ecm_msg_discon->ifindex;
+
+		IPADBG("ifindex: %d\n", ecm_msg_discon->ifindex);
+		IPADBG("interface name: %s\n", ecm_msg_discon->name);
+
+		mutex_lock(&ipa3_ctx->msg_lan_lock);
+		list_for_each_entry_safe(entry, next,
+			&ipa3_ctx->msg_lan_list, link) {
+			ecm_event_list = entry->buff;
+
+			/* compare to delete one*/
+			if (iface_index == ecm_event_list->ifindex) {
+				IPADBG("Delete event for iface index: %d\n",
+				iface_index);
+				list_del(&entry->link);
+				kfree(entry);
+			}
+		}
+
+		mutex_unlock(&ipa3_ctx->msg_lan_lock);
+
+	}
+
 	return 0;
 }
 
@@ -536,6 +615,9 @@ int ipa3_send_msg(struct ipa_msg_meta *meta, void *buff,
 	if (wlan_msg_process(meta, buff))
 		IPAERR_RL("wlan_msg_process failed\n");
 
+	if (lan_msg_process(meta, buff))
+		IPAERR_RL("lan_msg_process failed\n");
+
 	/* unlock only after process */
 	mutex_unlock(&ipa3_ctx->msg_lock);
 	IPA_STATS_INC_CNT(ipa3_ctx->stats.msg_w[meta->msg_type]);
@@ -550,7 +632,8 @@ int ipa3_send_msg(struct ipa_msg_meta *meta, void *buff,
 /**
  * ipa3_resend_wlan_msg() - Resend cached "message" to IPACM
  *
- * resend wlan client connect events to user-space
+ * resend wlan client connect/AP_CONNECT/STA_CONNECT events to 
+ * user-space
  *
  * Returns:	0 on success, negative on failure
  *
@@ -603,6 +686,114 @@ int ipa3_resend_wlan_msg(void)
 	}
 	mutex_unlock(&ipa3_ctx->msg_wlan_client_lock);
 	return 0;
+}
+
+/**
+ * ipa3_resend_lan_msg() - Resend cached "message" to IPACM
+ *
+ * resend ecm connect/disconnect events to user-space
+ *
+ * Returns:     0 on success, negative on failure
+ *
+ * Note:        Should not be called from atomic context
+ */
+
+int ipa3_resend_lan_msg(void)
+{
+	struct ipa3_push_msg *entry = NULL;
+	struct ipa3_push_msg *next = NULL;
+	struct ipa_ecm_msg *ecm_msg = NULL;
+	struct ipa3_push_msg *msg = NULL;
+	void *data = NULL;
+
+	IPADBG("\n");
+	mutex_lock(&ipa3_ctx->msg_lan_lock);
+	list_for_each_entry_safe(entry, next, &ipa3_ctx->msg_lan_list, link) {
+		ecm_msg = entry->buff;
+
+		IPADBG("ifindex: %d\n", ecm_msg->ifindex);
+		IPADBG("interface name: %s\n", ecm_msg->name);
+
+		msg = kzalloc(sizeof(*msg), GFP_KERNEL);
+		if (msg == NULL) {
+			mutex_unlock(&ipa3_ctx->msg_lan_lock);
+			return -ENOMEM;
+		}
+		msg->meta = entry->meta;
+		data = kzalloc(entry->meta.msg_len, GFP_KERNEL);
+		if (data == NULL) {
+			kfree(msg);
+			mutex_unlock(&ipa3_ctx->msg_lan_lock);
+			return -ENOMEM;
+		}
+		memcpy(data, entry->buff, entry->meta.msg_len);
+		msg->buff = data;
+		msg->callback = ipa3_send_msg_free;
+		mutex_lock(&ipa3_ctx->msg_lock);
+		list_add_tail(&msg->link, &ipa3_ctx->msg_list);
+		mutex_unlock(&ipa3_ctx->msg_lock);
+		wake_up(&ipa3_ctx->msg_waitq);
+	}
+	mutex_unlock(&ipa3_ctx->msg_lan_lock);
+
+	return 0;
+}
+
+/*
+ * ipa3_send_done_restore_msg() - Resend done_restore_msg to IPACM
+ *
+ * Returns:     0 on success, negative on failure
+ *
+ * Note:        Should not be called from atomic context
+ *
+ */
+
+static int ipa3_send_done_restore_msg(void)
+{
+	struct ipa3_push_msg *msg = NULL;
+
+	IPADBG("\n");
+
+	msg = kzalloc(sizeof(*msg), GFP_KERNEL);
+	if (msg == NULL)
+		return -ENOMEM;
+	msg->meta.msg_type = IPA_DONE_RESTORE_EVENT;
+	msg->buff = NULL;
+	msg->callback = ipa3_send_msg_free;
+
+	mutex_lock(&ipa3_ctx->msg_lock);
+	list_add_tail(&msg->link, &ipa3_ctx->msg_list);
+	mutex_unlock(&ipa3_ctx->msg_lock);
+	wake_up(&ipa3_ctx->msg_waitq);
+
+	return 0;
+}
+
+/*
+ * ipa3_resend_driver_msg() - Resend done_restore_msg to IPACM
+ *
+ * Returns:     0 on success, negative on failure
+ *
+ */
+
+int ipa3_resend_driver_msg(void)
+{
+	int retval = 0;
+	IPADBG("resend wlan msg\n");
+	retval = ipa3_resend_wlan_msg();
+	if (retval)
+		goto fail;
+
+	IPADBG("resend lan msg\n");
+	retval = ipa3_resend_lan_msg();
+	if (retval)
+		goto fail;
+
+	IPADBG("send IPA_DONE_RESTORE_EVENT\n");
+	retval = ipa3_send_done_restore_msg();
+
+fail:
+	return retval;
 }
 
 /**
