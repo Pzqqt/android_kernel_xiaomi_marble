@@ -1786,7 +1786,7 @@ int cancel_response_work(struct msm_vidc_inst *inst)
 
 int cancel_response_work_sync(struct msm_vidc_inst *inst)
 {
-	if (!inst) {
+	if (!inst || !inst->response_workq) {
 		d_vpr_e("%s: Invalid arguments\n", __func__);
 		return -EINVAL;
 	}
