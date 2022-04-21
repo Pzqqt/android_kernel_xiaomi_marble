@@ -32,6 +32,7 @@
 #define GSI_NO_EVT_ERINDEX 255
 #define GSI_ISR_CACHE_MAX 20
 #define MAX_CHANNELS_SHARING_EVENT_RING 2
+#define MINIDUMP_MASK 0x10000
 
 #define GSI_IPC_LOGGING(buf, fmt, args...) \
 	do { \
