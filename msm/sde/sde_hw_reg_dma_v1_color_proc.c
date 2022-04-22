@@ -2184,8 +2184,7 @@ static int reg_dma_sspp_check(struct sde_hw_pipe *ctx, void *cfg,
 	if (IS_ERR_OR_NULL(dma_ops))
 		return -EINVAL;
 
-	if (!hw_cfg->ctl || ctx->idx > SSPP_DMA3 || ctx->idx <= SSPP_NONE ||
-		feature >= REG_DMA_FEATURES_MAX) {
+	if (!hw_cfg->ctl || !SDE_SSPP_VALID(ctx->idx) || feature >= REG_DMA_FEATURES_MAX) {
 		DRM_ERROR("invalid ctl %pK sspp idx %d feature %d\n",
 			hw_cfg->ctl, ctx->idx, feature);
 		return -EINVAL;

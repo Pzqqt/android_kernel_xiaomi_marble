@@ -417,9 +417,9 @@ void sde_hw_set_sspp_sid(struct sde_hw_sid *sid, u32 pipe, u32 vm)
 	if (!sid)
 		return;
 
-	if ((pipe >= SSPP_VIG0) && (pipe <= SSPP_VIG3))
+	if (SDE_SSPP_VALID_VIG(pipe))
 		offset = MDP_SID_VIG0 + ((pipe - SSPP_VIG0) * 4);
-	else if ((pipe >= SSPP_DMA0) && (pipe <= SSPP_DMA3))
+	else if (SDE_SSPP_VALID_DMA(pipe))
 		offset = MDP_SID_DMA0 + ((pipe - SSPP_DMA0) * 4);
 	else
 		return;

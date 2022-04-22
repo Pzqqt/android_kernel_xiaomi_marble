@@ -2128,6 +2128,9 @@ static int sde_ctl_parse_dt(struct device_node *np,
 		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
 				SDE_HW_MAJOR(SDE_HW_VER_700))
 			set_bit(SDE_CTL_UNIFIED_DSPP_FLUSH, &ctl->features);
+		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
+				SDE_HW_MAJOR(SDE_HW_VER_910))
+			set_bit(SDE_CTL_DMA4_DMA5, &ctl->features);
 	}
 
 	sde_put_dt_props(props);
