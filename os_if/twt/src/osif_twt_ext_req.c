@@ -408,7 +408,7 @@ int osif_fill_peer_macaddr(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_TWT_ID);
 	if (!peer) {
 		osif_err("peer is null");
-		return -EINVAL;
+		return -EAGAIN;
 	}
 	wlan_peer_obj_lock(peer);
 	qdf_mem_copy(mac_addr, wlan_peer_get_macaddr(peer), QDF_MAC_ADDR_SIZE);
