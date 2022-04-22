@@ -348,7 +348,8 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->wma_hold_req_queue,
 						      &node2)) {
 		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
-		wma_err("unable to get msg node from request queue");
+		wma_debug("unable to get msg node from request queue for vdev_id %d type %d",
+			  vdev_id, msg_type);
 		return NULL;
 	}
 
@@ -365,7 +366,7 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 		if (QDF_STATUS_SUCCESS != status) {
 			qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 			wma_debug("Failed to remove request. vdev_id %d type %d",
-				 vdev_id, msg_type);
+				  vdev_id, msg_type);
 			return NULL;
 		}
 		break;
@@ -375,13 +376,13 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 
 	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 	if (!found) {
-		wma_err("target request not found for vdev_id %d type %d",
-			 vdev_id, msg_type);
+		wma_debug("target request not found for vdev_id %d type %d",
+			  vdev_id, msg_type);
 		return NULL;
 	}
 
 	wma_debug("target request found for vdev id: %d type %d",
-		 vdev_id, msg_type);
+		  vdev_id, msg_type);
 
 	return req_msg;
 }
@@ -5348,7 +5349,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			htc_vote_link_up(htc_handle, HTC_LINK_VOTE_SAP_USER_ID);
 			wmi_info("sap d0 wow");
 		} else {
-			wmi_info("sap d3 wow");
+			wmi_debug("sap d3 wow");
 			wma_sap_d3_wow_client_connect(wma);
 		}
 		wma_sap_prevent_runtime_pm(wma);
@@ -5450,7 +5451,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 					   HTC_LINK_VOTE_SAP_USER_ID);
 			wmi_info("sap d0 wow");
 		} else {
-			wmi_info("sap d3 wow");
+			wmi_debug("sap d3 wow");
 			wma_sap_d3_wow_client_disconnect(wma);
 		}
 		wma_sap_allow_runtime_pm(wma);

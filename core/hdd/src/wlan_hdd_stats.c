@@ -4686,11 +4686,11 @@ static void hdd_fill_sinfo_rate_info(struct station_info *sinfo,
 		}
 	}
 
-	hdd_info("flag %x mcs %d legacy %d nss %d",
-		 rate_info->flags,
-		 rate_info->mcs,
-		 rate_info->legacy,
-		 rate_info->nss);
+	hdd_debug("flag %x mcs %d legacy %d nss %d",
+		  rate_info->flags,
+		  rate_info->mcs,
+		  rate_info->legacy,
+		  rate_info->nss);
 
 	if (is_tx)
 		sinfo->filled |= HDD_INFO_TX_BITRATE;
@@ -4785,7 +4785,7 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
 				       &link_speed_rssi_low,
 				       &link_speed_rssi_report);
 
-	hdd_info("reportMaxLinkSpeed %d", link_speed_rssi_report);
+	hdd_debug("reportMaxLinkSpeed %d", link_speed_rssi_report);
 
 	/* convert to 100kbps expected in rate table */
 	tx_rate = stats->tx_rate.rate / 100;
@@ -5001,20 +5001,20 @@ static void wlan_hdd_fill_station_info(struct wlan_objmgr_psoc *psoc,
 	sinfo->assoc_req_ies_len = stainfo->assoc_req_ies.len;
 
 	/* dump sta info*/
-	hdd_info("dump stainfo");
-	hdd_info("con_time %d inact_time %d tx_pkts %d rx_pkts %d",
-		 sinfo->connected_time, sinfo->inactive_time,
-		 sinfo->tx_packets, sinfo->rx_packets);
-	hdd_info("failed %d retries %d tx_bytes %lld rx_bytes %lld",
-		 sinfo->tx_failed, sinfo->tx_retries,
-		 sinfo->tx_bytes, sinfo->rx_bytes);
-	hdd_info("rssi %d tx mcs %d legacy %d nss %d flags %x",
-		 sinfo->signal, sinfo->txrate.mcs,
-		 sinfo->txrate.legacy, sinfo->txrate.nss,
-		 sinfo->txrate.flags);
-	hdd_info("rx mcs %d legacy %d nss %d flags %x",
-		 sinfo->rxrate.mcs, sinfo->rxrate.legacy,
-		 sinfo->rxrate.nss, sinfo->rxrate.flags);
+	hdd_debug("dump stainfo");
+	hdd_debug("con_time %d inact_time %d tx_pkts %d rx_pkts %d",
+		  sinfo->connected_time, sinfo->inactive_time,
+		  sinfo->tx_packets, sinfo->rx_packets);
+	hdd_debug("failed %d retries %d tx_bytes %lld rx_bytes %lld",
+		  sinfo->tx_failed, sinfo->tx_retries,
+		  sinfo->tx_bytes, sinfo->rx_bytes);
+	hdd_debug("rssi %d tx mcs %d legacy %d nss %d flags %x",
+		  sinfo->signal, sinfo->txrate.mcs,
+		  sinfo->txrate.legacy, sinfo->txrate.nss,
+		  sinfo->txrate.flags);
+	hdd_debug("rx mcs %d legacy %d nss %d flags %x",
+		  sinfo->rxrate.mcs, sinfo->rxrate.legacy,
+		  sinfo->rxrate.nss, sinfo->rxrate.flags);
 }
 
 /**
@@ -5124,7 +5124,7 @@ static uint8_t hdd_get_rate_flags(uint32_t rate,
 	else if (mode == SIR_SME_PHY_MODE_VHT)
 		flags = hdd_get_rate_flags_vht(rate, nss, mcs);
 	else
-		hdd_err("invalid mode param %d", mode);
+		hdd_debug("invalid mode param %d", mode);
 
 	return flags;
 }
