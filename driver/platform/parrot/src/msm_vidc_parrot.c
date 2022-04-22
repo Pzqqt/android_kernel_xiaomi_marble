@@ -60,7 +60,6 @@ static struct msm_platform_core_capability core_data_parrot_v0[] = {
 	/* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_MBPS, 2088960}, /* max_load 4096x2176@60fps */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
-	/* TODO (AM) : review required for HQ and B_FRAME and ALL INTRA */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
 	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
 	{MAX_MBPF_B_FRAME, 8160},/* ((1920x1088)/256) */
@@ -113,7 +112,6 @@ static struct msm_platform_core_capability core_data_parrot_v1[] = {
 	/* max_load 4096x2304@30fps */
 	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
-	/* TODO (VN) : review required for HQ and B_FRAME and ALL INTRA */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
 	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
 	{MAX_MBPF_B_FRAME, 8160},/* ((1920x1088)/256) */
@@ -166,7 +164,6 @@ static struct msm_platform_core_capability core_data_parrot_v2[] = {
 	/* max_load 4096x2304@30fps */
 	{MAX_MBPS, 1224000}, /* Concurrency: UHD@30 decode + 1080p@30 encode */
 	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
-	/* TODO (VN) : review required for HQ and B_FRAME and ALL INTRA */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
 	{MAX_MBPS_HQ, 244800}, /* ((1920x1088)/256)@30fps */
 	{MAX_MBPF_B_FRAME, 8160},/* ((1920x1088)/256) */
@@ -489,8 +486,8 @@ static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, ENH_LAYER_COUNT, BIT_RATE,
-			CONTENT_ADAPTIVE_CODING, BITRATE_BOOST, MIN_QUALITY,
-			VBV_DELAY, PEAK_BITRATE, SLICE_MODE, META_ROI_INFO,
+			META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
+			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
 			BLUR_TYPES, LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
@@ -507,10 +504,9 @@ static struct msm_platform_inst_capability instance_data_parrot_v0[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, CONSTANT_QUALITY, ENH_LAYER_COUNT,
-			CONTENT_ADAPTIVE_CODING, BIT_RATE,
-			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY,
-			PEAK_BITRATE, SLICE_MODE, META_ROI_INFO, BLUR_TYPES,
-			LOWLATENCY_MODE},
+			BIT_RATE, META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
+			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
+			BLUR_TYPES, LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{LOSSLESS, ENC, HEVC,
@@ -2041,8 +2037,8 @@ static struct msm_platform_inst_capability instance_data_parrot_v1[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, ENH_LAYER_COUNT, BIT_RATE,
-			CONTENT_ADAPTIVE_CODING, BITRATE_BOOST, MIN_QUALITY,
-			VBV_DELAY, PEAK_BITRATE, SLICE_MODE, META_ROI_INFO,
+			META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
+			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
 			BLUR_TYPES, LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
@@ -2059,10 +2055,9 @@ static struct msm_platform_inst_capability instance_data_parrot_v1[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, CONSTANT_QUALITY, ENH_LAYER_COUNT,
-			CONTENT_ADAPTIVE_CODING, BIT_RATE,
-			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY,
-			PEAK_BITRATE, SLICE_MODE, META_ROI_INFO, BLUR_TYPES,
-			LOWLATENCY_MODE},
+			BIT_RATE, META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
+			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
+			BLUR_TYPES, LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{LOSSLESS, ENC, HEVC,
@@ -3593,8 +3588,8 @@ static struct msm_platform_inst_capability instance_data_parrot_v2[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, ENH_LAYER_COUNT, BIT_RATE,
-			CONTENT_ADAPTIVE_CODING, BITRATE_BOOST, MIN_QUALITY,
-			VBV_DELAY, PEAK_BITRATE, SLICE_MODE, META_ROI_INFO,
+			META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
+			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
 			BLUR_TYPES, LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
@@ -3611,10 +3606,9 @@ static struct msm_platform_inst_capability instance_data_parrot_v2[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			P_FRAME_QP, B_FRAME_QP, CONSTANT_QUALITY, ENH_LAYER_COUNT,
-			CONTENT_ADAPTIVE_CODING, BIT_RATE,
-			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY,
-			PEAK_BITRATE, SLICE_MODE, META_ROI_INFO, BLUR_TYPES,
-			LOWLATENCY_MODE},
+			BIT_RATE, META_ROI_INFO, MIN_QUALITY, BITRATE_BOOST, VBV_DELAY,
+			PEAK_BITRATE, SLICE_MODE, CONTENT_ADAPTIVE_CODING,
+			BLUR_TYPES, LOWLATENCY_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{LOSSLESS, ENC, HEVC,
