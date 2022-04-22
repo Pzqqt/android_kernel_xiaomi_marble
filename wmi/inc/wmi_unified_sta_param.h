@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,11 +93,18 @@ struct wmi_gtx_config {
  *  bit 11: Disable sys sleep if setting
  *  bit 12-31: Reserve for future useage
  * @vdev_id: vdev id
+ * @force_reset: bit 0 used as force reset to override the latency level as
+ * default for all the wlm clients
+ * @client_id_bitmask: clients of WLM Arbiter
  */
 struct wlm_latency_level_param {
 	uint16_t wlm_latency_level;
 	uint32_t wlm_latency_flags;
 	uint16_t vdev_id;
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	uint32_t force_reset;
+	uint32_t client_id_bitmask;
+#endif
 };
 
 #define WMI_2_4_GHZ_MAX_FREQ  3000

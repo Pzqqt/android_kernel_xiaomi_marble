@@ -647,6 +647,18 @@ struct oem_data {
 };
 #endif
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * struct latency_level_data - latency data received in the event from the FW
+ * @vdev_id: The latency level for specified vdev_id
+ * @latency_level: latency level honoured by FW
+ */
+struct latency_level_data {
+	uint8_t vdev_id;
+	uint32_t latency_level;
+};
+#endif
+
 /**
  * enum nss_chains_band_info - Band info for dynamic nss, chains change feature
  * @NSS_CHAINS_BAND_2GHZ: 2.4Ghz band
@@ -4733,6 +4745,9 @@ typedef enum {
 #endif
 #ifdef WLAN_FEATURE_11BE_MLO
 	wmi_vdev_quiet_offload_eventid,
+#endif
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	wmi_vdev_latency_event_id,
 #endif
 	wmi_events_max,
 } wmi_conv_event_id;
