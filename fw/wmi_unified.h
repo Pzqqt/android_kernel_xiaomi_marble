@@ -3454,6 +3454,9 @@ typedef struct {
      */
     A_UINT32 num_of_linkview_peers;
 
+    /* Total number of "real" max_active_vdevs that FW supports. */
+    A_UINT32 num_max_active_vdevs;
+
 /*
  * This fixed_param TLV is followed by these additional TLVs:
  * mac_addr_list[num_extra_mac_addr];
@@ -4335,6 +4338,12 @@ typedef struct {
      * LinkView peer in the target.
      */
     A_UINT32 num_of_linkview_msduqs_per_tid;
+
+    /**
+     * @brief num_max_active_vdevs -
+     * number of max active virtual devices (VAPs) to support
+     */
+    A_UINT32 num_max_active_vdevs;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -11994,7 +12003,8 @@ typedef struct {
                      mlo_peer_id_valid:1, /* indicate if the mlo peer id in wmi_peer_assoc_mlo_params is valid */
                      mlo_mcast_vdev:1, /* indicate this is the MLO mcast primary vdev */
                      emlsr_support:1, /* indicate that eMLSR is supported */
-                     unused: 25;
+                     mlo_force_link_inactive:1, /* indicate this link is forced inactive */
+                     unused: 24;
         };
         A_UINT32 mlo_flags;
     };
@@ -14009,6 +14019,14 @@ typedef enum {
      * Configure multi client Low latency Feature
      */
     WMI_VDEV_PARAM_MULTI_CLIENT_LL_FEATURE_CONFIGURATION, /* 0xB5 */
+
+    /*
+     * traffic config for per vdev
+     * bit 0: low latency vdev
+     * bit 1: high tput vdev
+     * bit 31:2 Reserved
+     */
+    WMI_VDEV_PARAM_VDEV_TRAFFIC_CONFIG,                   /* 0xB6 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
