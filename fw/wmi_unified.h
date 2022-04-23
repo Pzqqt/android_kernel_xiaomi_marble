@@ -11462,6 +11462,10 @@ typedef struct {
      * Indoor = 1, Outdoor = 2
      */
     A_UINT32 deployment_mode;
+    /*
+     * Proxy mode AFC-Response payload clear count
+     */
+    A_UINT32 payload_clear_count;
 } wmi_ctrl_path_afc_stats_struct;
 
 typedef struct {
@@ -31422,6 +31426,7 @@ typedef enum {
      */
     WMI_AFC_CMD_SERV_RESP_READY = 1,
     WMI_AFC_CMD_RESET = 2, /* Added cmd type to handle AFC reset */
+    WMI_AFC_CMD_CLEAR_PAYLOAD = 3, /* Added cmd type to clear AFC response payload in proxy mode */
 } WMI_AFC_CMD_TYPE;
 
 /** Host indicating AFC info availability to FW */
