@@ -219,6 +219,10 @@
 #include "osif_twt_util.h"
 #include "wlan_twt_ucfg_ext_api.h"
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+#define WLAM_WLM_HOST_DRIVER_PORT_ID 0xFFFFFF
+#endif
+
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
 #else
@@ -6108,6 +6112,36 @@ static void hdd_set_pktcapture_ops(struct net_device *dev)
 }
 #endif
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * hdd_set_multi_client_ll_support() - set multi client ll support flag in
+ * allocated station hdd adapter
+ * @@adapter: pointer to hdd adapter
+ *
+ * Return: none
+ */
+static void hdd_set_multi_client_ll_support(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	bool multi_client_ll_ini_support, multi_client_ll_caps;
+
+	ucfg_mlme_cfg_get_multi_client_ll_ini_support(hdd_ctx->psoc,
+						&multi_client_ll_ini_support);
+	multi_client_ll_caps =
+		ucfg_mlme_get_wlm_multi_client_ll_caps(hdd_ctx->psoc);
+
+	hdd_debug("[MULTI_CLIENT] fw caps: %d, ini: %d", multi_client_ll_caps,
+		  multi_client_ll_ini_support);
+	if (multi_client_ll_caps && multi_client_ll_ini_support)
+		adapter->multi_client_ll_support = true;
+}
+#else
+static inline void
+hdd_set_multi_client_ll_support(struct hdd_adapter *adapter)
+{
+}
+#endif
+
 /**
  * hdd_alloc_station_adapter() - allocate the station hdd adapter
  * @hdd_ctx: global hdd context
@@ -6207,6 +6241,7 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 			QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL;
 	}
 	adapter->latency_level = latency_level;
+	hdd_set_multi_client_ll_support(adapter);
 
 	/* set dev's parent to underlying device */
 	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
@@ -13294,6 +13329,62 @@ err_out:
 	return ERR_PTR(ret);
 }
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * wlan_hdd_init_multi_client_info_table()- Initialize the multi client info
+ * table
+ * @adapter: hdd adapter
+ *
+ * Return: none
+ */
+static void
+wlan_hdd_init_multi_client_info_table(struct hdd_adapter *adapter)
+{
+	uint8_t i;
+
+	for (i = 0; i < WLM_MAX_HOST_CLIENT; i++) {
+		adapter->client_info[i].client_id = i;
+		adapter->client_info[i].port_id = 0;
+		adapter->client_info[i].in_use = false;
+	}
+}
+
+void wlan_hdd_deinit_multi_client_info_table(struct hdd_adapter *adapter)
+{
+	uint8_t i;
+
+	hdd_debug("[MULTI_LL] deinitializing the client info table");
+	/* de-initialize the table for host driver client */
+	for (i = 0; i < WLM_MAX_HOST_CLIENT; i++) {
+		if (adapter->client_info[i].in_use) {
+			adapter->client_info[i].port_id = 0;
+			adapter->client_info[i].client_id = i;
+			adapter->client_info[i].in_use = false;
+		}
+	}
+}
+
+/**
+ * wlan_hdd_get_host_driver_port_id()- get host driver port id
+ * @port_id: argument to be filled
+ *
+ * Return: none
+ */
+static void wlan_hdd_get_host_driver_port_id(uint32_t *port_id)
+{
+	*port_id = WLAM_WLM_HOST_DRIVER_PORT_ID;
+}
+
+#else
+static inline void
+wlan_hdd_init_multi_client_info_table(struct hdd_adapter *adapter)
+{
+}
+
+static inline void wlan_hdd_get_host_driver_port_id(uint32_t *port_id)
+{
+}
+#endif
 /**
  * hdd_start_station_adapter()- Start the Station Adapter
  * @adapter: HDD adapter
@@ -13308,6 +13399,7 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 	bool reset;
+	uint32_t port_id;
 
 	hdd_enter_dev(adapter->dev);
 	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
@@ -13342,12 +13434,25 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 		reset = false;
 	}
 
+	if (hdd_get_multi_client_ll_support(adapter))
+		wlan_hdd_init_multi_client_info_table(adapter);
+
 	if (!reset) {
-		status = sme_set_wlm_latency_level(hdd_ctx->mac_handle,
-						   adapter->vdev_id,
-						   adapter->latency_level);
-		if (QDF_IS_STATUS_ERROR(status))
-			hdd_warn("set wlm mode failed, %u", status);
+		if (hdd_get_multi_client_ll_support(adapter)) {
+			wlan_hdd_get_host_driver_port_id(&port_id);
+			status = wlan_hdd_set_wlm_client_latency_level(adapter,
+					port_id, adapter->latency_level);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_warn("Fail to set latency level:%u",
+					status);
+		} else {
+			status = sme_set_wlm_latency_level(hdd_ctx->mac_handle,
+							adapter->vdev_id,
+							adapter->latency_level,
+							0, false);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_warn("set wlm mode failed, %u", status);
+		}
 	}
 	hdd_debug("wlm initial mode %u", adapter->latency_level);
 
@@ -16123,6 +16228,9 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	sme_roam_events_register_callback(mac_handle,
 					wlan_hdd_cfg80211_roam_events_callback);
 
+	sme_multi_client_ll_rsp_register_callback(mac_handle,
+					hdd_latency_level_event_handler_cb);
+
 	sme_set_rssi_threshold_breached_cb(mac_handle,
 					   hdd_rssi_threshold_breached);
 
@@ -16234,6 +16342,7 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	hdd_thermal_unregister_callbacks(hdd_ctx);
 	sme_deregister_oem_data_rsp_callback(mac_handle);
 	sme_roam_events_deregister_callback(mac_handle);
+	sme_multi_client_ll_rsp_deregister_callback(mac_handle);
 
 	hdd_exit();
 }
@@ -17104,6 +17213,7 @@ static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 	int ret;
 	QDF_STATUS qdf_status;
 	uint8_t latency_level;
+	bool reset;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
@@ -17121,6 +17231,14 @@ static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 			       QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL;
 		else
 			adapter->latency_level = latency_level;
+		qdf_status = ucfg_mlme_cfg_get_wlm_reset(hdd_ctx->psoc, &reset);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			hdd_err("could not get the wlm reset flag");
+			reset = false;
+		}
+
+		if (hdd_get_multi_client_ll_support(adapter) && !reset)
+			wlan_hdd_deinit_multi_client_info_table(adapter);
 
 		adapter->upgrade_udp_qos_threshold = QCA_WLAN_AC_BK;
 		hdd_debug("UDP packets qos reset to: %d",

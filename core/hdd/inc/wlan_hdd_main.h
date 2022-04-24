@@ -1219,6 +1219,23 @@ struct rcpi_info {
 
 struct hdd_context;
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/* Max host clients which can request the FW arbiter with the latency level */
+#define WLM_MAX_HOST_CLIENT 5
+
+/**
+ * struct wlm_multi_client_info_table - To store multi client id information
+ * @client_id: host id for a client
+ * @port_id: client id coming from upper layer
+ * @in_use: set true for a client when host receives vendor cmd for that client
+ */
+struct wlm_multi_client_info_table {
+	uint32_t client_id;
+	uint32_t port_id;
+	bool in_use;
+};
+#endif
+
 /**
  * struct hdd_adapter - hdd vdev/net_device context
  * @vdev: object manager vdev context
@@ -1232,6 +1249,12 @@ struct hdd_context;
  * @cache_sta_count: number of currently cached stations
  * @acs_complete_event: acs complete event
  * @latency_level: 0 - normal, 1 - xr, 2 - low, 3 - ultralow
+ * @multi_client_ll_support: to check multi client ll support in driver
+ * @client_info: To store multi client id information
+ * @multi_ll_response_cookie: cookie for multi client ll command
+ * @multi_ll_req_in_progress: to check multi client ll request in progress
+ * @multi_ll_resp_expected: to decide whether host will wait for multi client
+ * event or not
  * @last_disconnect_reason: Last disconnected internal reason code
  *                          as per enum qca_disconnect_reason_codes
  * @connect_req_status: Last disconnected internal status code
@@ -1519,6 +1542,13 @@ struct hdd_adapter {
 	uint32_t mon_chan_freq;
 	uint32_t mon_bandwidth;
 	uint16_t latency_level;
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	bool multi_client_ll_support;
+	struct wlm_multi_client_info_table client_info[WLM_MAX_HOST_CLIENT];
+	void *multi_ll_response_cookie;
+	bool multi_ll_req_in_progress;
+	bool multi_ll_resp_expected;
+#endif
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 	bool monitor_mode_vdev_up_in_progress;
 #endif
@@ -3973,6 +4003,20 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter);
 int hdd_start_ap_adapter(struct hdd_adapter *adapter);
 int hdd_configure_cds(struct hdd_context *hdd_ctx);
 int hdd_set_fw_params(struct hdd_adapter *adapter);
+
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * wlan_hdd_deinit_multi_client_info_table() - to deinit multi client info table
+ * @adapter: hdd vdev/net_device context
+ *
+ * Return: none
+ */
+void wlan_hdd_deinit_multi_client_info_table(struct hdd_adapter *adapter);
+#else
+static inline void
+wlan_hdd_deinit_multi_client_info_table(struct hdd_adapter *adapter)
+{}
+#endif
 
 /**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules

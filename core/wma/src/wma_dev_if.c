@@ -5884,7 +5884,7 @@ QDF_STATUS wma_set_wlm_latency_level(void *wma_ptr,
 	QDF_STATUS ret;
 	tp_wma_handle wma = (tp_wma_handle)wma_ptr;
 
-	wma_debug("set latency level %d, flags flag 0x%x",
+	wma_debug("set latency level %d, fw wlm_latency_flags 0x%x",
 		 latency_params->wlm_latency_level,
 		 latency_params->wlm_latency_flags);
 

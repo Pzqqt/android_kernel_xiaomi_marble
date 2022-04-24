@@ -1728,6 +1728,19 @@ int wma_cold_boot_cal_event_handler(void *wma_ctx, uint8_t *event_buff,
 int wma_oem_event_handler(void *wma_ctx, uint8_t *event_buff, uint32_t len);
 #endif
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * wma_latency_level_event_handler() - latency level event handler
+ * @wma_ctx: wma handle
+ * @event_buff: event data
+ * @len: length of event buffer
+ *
+ * Return: Success or Failure status
+ */
+int wma_latency_level_event_handler(void *wma_ctx, uint8_t *event_buff,
+				    uint32_t len);
+#endif
+
 /**
  * wma_get_ani_level_evt_handler - event handler to fetch ani level
  * @handle: the wma handle

@@ -504,6 +504,13 @@ struct sme_context {
 			 uint8_t vdev_id);
 	uint8_t oem_data_vdev_id;
 #endif
+
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	void (*latency_level_event_handler_cb)
+			(const struct latency_level_data *event_data,
+			 uint8_t vdev_id);
+#endif
+
 	sme_get_raom_scan_ch_callback roam_scan_ch_callback;
 	void *roam_scan_ch_get_context;
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
