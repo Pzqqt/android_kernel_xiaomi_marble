@@ -634,11 +634,13 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			  FL("CAC timer is running, probe response dropped"));
 		return;
 	}
+	if (wlan_vdev_is_up(pe_session->vdev) != QDF_STATUS_SUCCESS)
+		return;
+
 	vdev_id = pe_session->vdev_id;
 	frm = qdf_mem_malloc(sizeof(tDot11fProbeResponse));
 	if (!frm)
 		return;
-
 	/*
 	 * Fill out 'frm', after which we'll just hand the struct off to
 	 * 'dot11f_pack_probe_response'.
