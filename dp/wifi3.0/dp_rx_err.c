@@ -3021,19 +3021,21 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						continue;
 					}
 
-					rx_desc_pool = &soc->
-						rx_desc_buf[rx_desc->pool_id];
-					dp_ipa_rx_buf_smmu_mapping_lock(soc);
-					dp_ipa_handle_rx_buf_smmu_mapping(
-							soc, msdu,
-							rx_desc_pool->buf_size,
-							false);
-					qdf_nbuf_unmap_nbytes_single(
-						soc->osdev, msdu,
-						QDF_DMA_FROM_DEVICE,
-						rx_desc_pool->buf_size);
-					rx_desc->unmapped = 1;
-					dp_ipa_rx_buf_smmu_mapping_unlock(soc);
+					if (rx_desc->unmapped == 0) {
+						rx_desc_pool =
+							&soc->rx_desc_buf[rx_desc->pool_id];
+						dp_ipa_rx_buf_smmu_mapping_lock(soc);
+						dp_ipa_handle_rx_buf_smmu_mapping(
+								soc, msdu,
+								rx_desc_pool->buf_size,
+								false);
+						qdf_nbuf_unmap_nbytes_single(
+								soc->osdev, msdu,
+								QDF_DMA_FROM_DEVICE,
+								rx_desc_pool->buf_size);
+						rx_desc->unmapped = 1;
+						dp_ipa_rx_buf_smmu_mapping_unlock(soc);
+					}
 
 					dp_rx_err_debug("%pK: msdu_nbuf=%pK ",
 							soc, msdu);
