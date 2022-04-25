@@ -2421,6 +2421,9 @@ unsigned long gsihal_get_inst_ram_size(void)
 	case GSI_VER_3_0:
 		maxn = GSI_V3_0_GSI_INST_RAM_n_MAXn;
 		break;
+        case GSI_VER_5_2:
+                maxn = GSI_V5_2_GSI_INST_RAM_n_MAXn;
+                break;
 	case GSI_VER_ERR:
 	case GSI_VER_MAX:
 	default:
