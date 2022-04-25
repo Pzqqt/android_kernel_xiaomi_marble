@@ -1511,6 +1511,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	tpDphHashNode sta_ds;
 	uint16_t aid, buff_size;
 	bool he_cap = false;
+	bool eht_cap = false;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -1539,10 +1540,14 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 				       &session->dph.dphHashTable);
 	if (sta_ds && lim_is_session_he_capable(session))
 		he_cap = lim_is_sta_he_capable(sta_ds);
+	if (sta_ds && lim_is_session_eht_capable(session))
+		eht_cap = lim_is_sta_eht_capable(sta_ds);
 	if (sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER)
 		he_cap = lim_is_session_he_capable(session);
 
-	if (he_cap)
+	if (eht_cap)
+		buff_size = MAX_EHT_BA_BUFF_SIZE;
+	else if (he_cap)
 		buff_size = MAX_BA_BUFF_SIZE;
 	else
 		buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
