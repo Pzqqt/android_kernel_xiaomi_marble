@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <cstring> // for memcpy
+#include <linux/msm_ipa.h>
 #include "hton.h" // for htonl
 #include "InterfaceAbstraction.h"
 #include "Constants.h"
@@ -85,6 +86,8 @@ public:
 		HEADER_HANDLE_ID_ETH2,
 		HEADER_HANDLE_ID_WLAN_802_3,
 		HEADER_HANDLE_ID_VLAN_802_1Q,
+		HEADER_HANDLE_ID_EoGRE_V4,
+		HEADER_HANDLE_ID_EoGRE_V6,
 		HEADER_HANDLE_ID_MAX
 	};
 
@@ -100,6 +103,8 @@ public:
 		PROC_CTX_HANDLE_ID_ETH2_2_802_1Q,
 		PROC_CTX_HANDLE_ID_802_1Q_2_ETH2,
 		PROC_CTX_HANDLE_ID_ETH2_ETH2_2_ETH2_EX,
+		PROC_CTX_HANDLE_ID_EoGRE_HDR_ADD,
+		PROC_CTX_HANDLE_ID_EoGRE_HDR_REMOVE,
 		PROC_CTX_HANDLE_ID_MAX
 	};
 
@@ -121,6 +126,12 @@ public:
 	// [WLAN][802.3] header
 	static const Byte WLAN_802_3_HDR[WLAN_802_3_HDR_SIZE];
 
+	// EoGRE V4 header
+	static const Byte EoGRE_V4_HDR[EoGRE_V4_HDR_LEN];
+
+	// EoGRE V6 header
+	static const Byte EoGRE_V6_HDR[EoGRE_V6_HDR_LEN];
+
 	static Filtering m_filtering;
 	static RoutingDriverWrapper m_routing;
 	static HeaderInsertion m_headerInsertion;
@@ -135,6 +146,8 @@ public:
 
 	// proc_ctx handle ID
 	ProcCtxHandleId m_procCtxHandleId;
+
+	HeaderHandleId m_headerHandleId;
 
 	// routing table handle
 	uint32_t m_routingTableHdl;
@@ -179,6 +192,8 @@ public:
 
 	enum ipa_ip_type m_IpaIPType;
 
+	union ipa_ip_params m_ip_addrs;
+
 	IpaHdrProcCtxTestFixture();
 
 	virtual bool Setup();
@@ -196,12 +211,31 @@ public:
 	virtual bool LoadPackets(enum ipa_ip_type ip) = 0;
 
 	virtual bool ReceivePacketsAndCompare();
+	virtual bool ReceivePacketsAndCompare(
+		Byte*  receivedBuffer,
+		size_t receivedBufferSize );
 
 	// Create 1 IPv4 bypass routing entry and commits it
 	virtual bool CreateIPv4BypassRoutingTable (
 		const char *name,
 		uint32_t hdrHdl,
 		uint32_t procCtxHdl);
+
+	// Add routing rule
+	virtual bool AddRoutingRule(
+		const char*          name,
+		uint32_t             hdrHdl,
+		uint32_t             procCtxHdl,
+		ipa_ip_type          iptype,
+		union ipa_ip_params  ip_addrs,
+		enum ipa_client_type dst );
+
+	// Add filtering rule
+	virtual bool AddFilteringRule(
+		ipa_ip_type          iptype,
+		union ipa_ip_params  ip_addrs,
+		enum ipa_client_type src,
+		uint32_t             rt_tbl_hdl );
 
 	virtual bool GenerateExpectedPackets() = 0;
 

@@ -79,8 +79,44 @@ const Byte IpaHdrProcCtxTestFixture::WLAN_802_3_HDR[WLAN_802_3_HDR_SIZE] =
 	0x00, 0x00
 };
 
+const Byte IpaHdrProcCtxTestFixture::EoGRE_V4_HDR[EoGRE_V4_HDR_LEN] =
+{
+	// IP V4 header
+	0x45, 0x00, 0x00, 0x53, /* 0x00, 0x53 is the total length...who fills this */
+	0x00, 0x00, 0x40, 0x00,
+	0x40, 0x2f, 0x00, 0x00, // 0x2f Protocol (Generic Routing Encapsulation)
+	0x00, 0x00, 0x00, 0x00, // src address here
+	0x00, 0x00, 0x00, 0x00, // dest address here
+
+	// GRE gretap header
+	0x00, 0x00, 0x65, 0x58
+};
+
+const Byte IpaHdrProcCtxTestFixture::EoGRE_V6_HDR[EoGRE_V6_HDR_LEN] =
+{
+	// IP V6 header
+	0x60, 0x00, 0x00, 0x00,
+	0x00, 0x47, 0x2f, 0x01, // 0x2f Protocol (Generic Routing Encapsulation)
+	0x00, 0x00, 0x00, 0x00, // src address here
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, // dest address here
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00,
+
+	// options header
+	0x2f, 0x00, 0x04, 0x01,
+	0x04, 0x01, 0x01, 0x00,
+
+	// GRE gretap header
+	0x00, 0x00, 0x65, 0x58
+};
+
 IpaHdrProcCtxTestFixture::IpaHdrProcCtxTestFixture():
 	m_procCtxHandleId(PROC_CTX_HANDLE_ID_MAX),
+	m_headerHandleId(HEADER_HANDLE_ID_MAX),
 	m_pCurrentProducer(NULL),
 	m_pCurrentConsumer(NULL),
 	m_sendSize1 (m_BUFF_MAX_SIZE),
@@ -93,8 +129,11 @@ IpaHdrProcCtxTestFixture::IpaHdrProcCtxTestFixture():
 	memset(m_sendBuffer1, 0, sizeof(m_sendBuffer1));
 	memset(m_sendBuffer2, 0, sizeof(m_sendBuffer2));
 	memset(m_expectedBuffer1, 0, sizeof(m_expectedBuffer1));
+	memset(&m_ip_addrs, 0, sizeof(m_ip_addrs));
 	m_testSuiteName.push_back("HdrProcCtx");
 }
+
+#define stringit(x) #x
 
 bool IpaHdrProcCtxTestFixture::Setup()
 {
@@ -102,17 +141,25 @@ bool IpaHdrProcCtxTestFixture::Setup()
 
 	// init producers
 	m_rndisEth2Producer.Open(INTERFACE0_TO_IPA_DATA_PATH,
-		INTERFACE0_FROM_IPA_DATA_PATH);
+		INTERFACE0_FROM_IPA_DATA_PATH,
+		stringit(m_rndisEth2Producer));
+
 	m_wlanEth2producer.Open(INTERFACE4_TO_IPA_DATA_PATH,
-		INTERFACE4_FROM_IPA_DATA_PATH);
+		INTERFACE4_FROM_IPA_DATA_PATH,
+		stringit(m_wlanEth2producer));
+
 	m_eth2Producer.Open(INTERFACE5_TO_IPA_DATA_PATH,
-		INTERFACE5_FROM_IPA_DATA_PATH);
+		INTERFACE5_FROM_IPA_DATA_PATH,
+		stringit(m_eth2Producer));
 
 	// init consumers
 	m_defaultConsumer.Open(INTERFACE1_TO_IPA_DATA_PATH,
-		INTERFACE1_FROM_IPA_DATA_PATH);
+		INTERFACE1_FROM_IPA_DATA_PATH,
+		stringit(m_defaultConsumer));
+
 	m_rndisEth2Consumer.Open(INTERFACE2_TO_IPA_DATA_PATH,
-		INTERFACE2_FROM_IPA_DATA_PATH);
+		INTERFACE2_FROM_IPA_DATA_PATH,
+		stringit(m_rndisEth2Consumer));
 
 	if (!m_headerInsertion.DeviceNodeIsOpened())
 	{
@@ -163,27 +210,29 @@ void IpaHdrProcCtxTestFixture::AddAllHeaders()
 void IpaHdrProcCtxTestFixture::AddHeader(HeaderHandleId handleId)
 {
 	static const int NUM_OF_HEADERS = 1;
-	struct ipa_ioc_add_hdr *hdrTable = NULL;
-	struct ipa_hdr_add *hdr = NULL;
+
+	uint32_t length =
+		sizeof(struct ipa_ioc_add_hdr) +
+		(NUM_OF_HEADERS * sizeof(struct ipa_hdr_add));
+
+	uint8_t buf[length];
+
+	struct ipa_ioc_add_hdr *hdrTable =
+		(struct ipa_ioc_add_hdr *) buf;
+
+	struct ipa_hdr_add *hdr;
+
+	memset(buf, 0, sizeof(buf));
 
 	// init hdr table
-	hdrTable = (struct ipa_ioc_add_hdr *) calloc(1,
-		sizeof(struct ipa_ioc_add_hdr)
-		+ NUM_OF_HEADERS * sizeof(struct ipa_hdr_add));
-	if (!hdrTable)
-	{
-		LOG_MSG_ERROR(
-			"calloc failed to allocate pHeaderDescriptor");
-		return;
-	}
-	hdrTable->commit = true;
+	hdrTable->commit   = true;
 	hdrTable->num_hdrs = NUM_OF_HEADERS;
 
 	// init the hdr common fields
-	hdr = &hdrTable->hdr[0];
-	hdr->hdr_hdl = -1; //Return Value
+	hdr             = &hdrTable->hdr[0];
 	hdr->is_partial = false;
-	hdr->status = -1; // Return Parameter
+	hdr->hdr_hdl    = -1; // Return Value
+	hdr->status     = -1; // Return Parameter
 
 	// init hdr specific fields
 	switch (handleId)
@@ -227,11 +276,34 @@ void IpaHdrProcCtxTestFixture::AddHeader(HeaderHandleId handleId)
 		return;
 
 		break;
+
 	case HEADER_HANDLE_ID_VLAN_802_1Q:
 		strlcpy(hdr->name, "VLAN_8021Q", sizeof(hdr->name));
 		memcpy(hdr->hdr, ETH2_8021Q_HDR, ETH8021Q_HEADER_LEN);
 		hdr->type = IPA_HDR_L2_802_1Q;
 		hdr->hdr_len = ETH8021Q_HEADER_LEN;
+		break;
+
+	case HEADER_HANDLE_ID_EoGRE_V4:
+		strlcpy(hdr->name,
+				"EoGRE in v4",
+				sizeof(hdr->name));
+		memcpy(hdr->hdr,
+			   EoGRE_V4_HDR,
+			   EoGRE_V4_HDR_LEN);
+		hdr->hdr_len = EoGRE_V4_HDR_LEN;
+		hdr->type    = IPA_HDR_L2_802_1Q;
+		break;
+
+	case HEADER_HANDLE_ID_EoGRE_V6:
+		strlcpy(hdr->name,
+				"EoGRE in v6",
+				sizeof(hdr->name));
+		memcpy(hdr->hdr,
+			   EoGRE_V6_HDR,
+			   EoGRE_V6_HDR_LEN);
+		hdr->hdr_len = EoGRE_V6_HDR_LEN;
+		hdr->type    = IPA_HDR_L2_802_1Q;
 		break;
 
 	default:
@@ -262,27 +334,28 @@ void IpaHdrProcCtxTestFixture::AddAllProcCtx()
 void IpaHdrProcCtxTestFixture::AddProcCtx(ProcCtxHandleId handleId)
 {
 	static const int NUM_OF_PROC_CTX = 1;
-	struct ipa_ioc_add_hdr_proc_ctx *procCtxTable = NULL;
-	struct ipa_hdr_proc_ctx_add *procCtx = NULL;
+
+	uint32_t length =
+		sizeof(struct ipa_ioc_add_hdr_proc_ctx) +
+		(NUM_OF_PROC_CTX * sizeof(struct ipa_hdr_proc_ctx_add));
+
+	uint8_t buf[length];
+
+	struct ipa_ioc_add_hdr_proc_ctx *procCtxTable =
+		(struct ipa_ioc_add_hdr_proc_ctx *) buf;
+
+	struct ipa_hdr_proc_ctx_add *procCtx;
+
+	memset(buf, 0, sizeof(buf));
 
 	// init proc ctx table
-	procCtxTable = (struct ipa_ioc_add_hdr_proc_ctx *)calloc(1,
-		sizeof(struct ipa_ioc_add_hdr_proc_ctx)
-		+ NUM_OF_PROC_CTX *
-		sizeof(struct ipa_hdr_proc_ctx_add));
-	if (!procCtxTable)
-	{
-		LOG_MSG_ERROR("calloc failed to allocate procCtxTable");
-		return;
-	}
-
-	procCtxTable->commit = true;
+	procCtxTable->commit        = true;
 	procCtxTable->num_proc_ctxs = NUM_OF_PROC_CTX;
 
 	// init proc_ctx common fields
-	procCtx = &procCtxTable->proc_ctx[0];
+	procCtx               = &procCtxTable->proc_ctx[0];
 	procCtx->proc_ctx_hdl = -1; // return value
-	procCtx->status = -1; // Return parameter
+	procCtx->status       = -1; // Return parameter
 
 	// init proc_ctx specific fields
 	switch (handleId)
@@ -350,7 +423,22 @@ void IpaHdrProcCtxTestFixture::AddProcCtx(ProcCtxHandleId handleId)
 		procCtx->generic_params.input_ethhdr_negative_offset = 14;
 		procCtx->generic_params.output_ethhdr_negative_offset = 14;
 		break;
-
+	case PROC_CTX_HANDLE_ID_EoGRE_HDR_ADD:
+		procCtx->type = IPA_HDR_PROC_EoGRE_HEADER_ADD;
+		procCtx->hdr_hdl = m_headerHandles[m_headerHandleId];
+		procCtx->eogre_params.hdr_add_param.eth_hdr_retained = 1;
+		procCtx->eogre_params.hdr_add_param.output_ip_version =
+			(m_headerHandleId == HEADER_HANDLE_ID_EoGRE_V4) ? 0 : 1;
+		procCtx->eogre_params.hdr_add_param.second_pass = 0; // use 1 in ipacm
+		break;
+	case PROC_CTX_HANDLE_ID_EoGRE_HDR_REMOVE:
+		procCtx->type = IPA_HDR_PROC_EoGRE_HEADER_REMOVE;
+		procCtx->hdr_hdl = m_headerHandles[m_headerHandleId];
+		procCtx->eogre_params.hdr_remove_param.hdr_len_remove =
+			(m_headerHandleId == HEADER_HANDLE_ID_EoGRE_V4) ?
+			EoGRE_V4_HDR_LEN :
+			EoGRE_V6_HDR_LEN;
+		break;
 	default:
 		LOG_MSG_ERROR("proc ctx handleId %d not supported.", handleId);
 		return;
@@ -393,25 +481,29 @@ void IpaHdrProcCtxTestFixture::AddRtBypassRule(uint32_t hdrHdl, uint32_t procCtx
 
 void IpaHdrProcCtxTestFixture::AddFltBypassRule()
 {
-	IPAFilteringTable FilterTable0;
+	IPAFilteringTable       FilterTable0;
 	struct ipa_flt_rule_add flt_rule_entry;
 
-	FilterTable0.Init(IPA_IP_v4,m_currProducerClient,false,1);
+	FilterTable0.Init(IPA_IP_v4, m_currProducerClient, false, 1);
+
 	printf("FilterTable*.Init Completed Successfully..\n");
 
-	// Configuring Filtering Rule No.0
-	FilterTable0.GeneratePresetRule(1,flt_rule_entry);
-	flt_rule_entry.at_rear = true;
-	flt_rule_entry.flt_rule_hdl=-1; // return Value
-	flt_rule_entry.status = -1; // return value
-	flt_rule_entry.rule.action=IPA_PASS_TO_ROUTING;
-	flt_rule_entry.rule.rt_tbl_hdl=m_routingTableHdl;
-	flt_rule_entry.rule.attrib.attrib_mask = IPA_FLT_DST_ADDR;
+	/*
+	 * Configuring Filtering Rule No.0
+	 */
+	FilterTable0.GeneratePresetRule(1, flt_rule_entry);
+
+	flt_rule_entry.at_rear                        = true;
+	flt_rule_entry.flt_rule_hdl                   = -1; // return Value
+	flt_rule_entry.status                         = -1; // return value
+	flt_rule_entry.rule.action                    = IPA_PASS_TO_ROUTING;
+	flt_rule_entry.rule.rt_tbl_hdl                = m_routingTableHdl;
+	flt_rule_entry.rule.attrib.attrib_mask        = IPA_FLT_DST_ADDR;
 	flt_rule_entry.rule.attrib.u.v4.dst_addr_mask = 0x00000000; // Mask - Bypass rule
-	flt_rule_entry.rule.attrib.u.v4.dst_addr = 0x12345678; // Filter is irrelevant.
-	if (((uint8_t)-1 == FilterTable0.AddRuleToTable(flt_rule_entry)) ||
-		!m_filtering.AddFilteringRule(
-		FilterTable0.GetFilteringTable()))
+	flt_rule_entry.rule.attrib.u.v4.dst_addr      = 0x12345678; // Filter is irrelevant.
+
+	if ( (FilterTable0.AddRuleToTable(flt_rule_entry) == (uint8_t) -1) ||
+		 m_filtering.AddFilteringRule(FilterTable0.GetFilteringTable()) == false )
 	{
 		LOG_MSG_ERROR(
 			"%s::m_filtering.AddFilteringRule() failed",
@@ -469,6 +561,29 @@ bool IpaHdrProcCtxTestFixture::ReceivePacketsAndCompare()
 	return isSuccess;
 }
 
+bool IpaHdrProcCtxTestFixture::ReceivePacketsAndCompare(
+	Byte*  receivedBuffer,
+	size_t receivedBufferSize )
+{
+	bool isSuccess = true;
+
+	// Compare results
+	if ( ! CompareResultVsGolden(
+			 m_expectedBuffer1,
+			 m_expectedBufferSize1,
+			 receivedBuffer,
+			 receivedBufferSize))
+	{
+		printf("Comparison of Buffer Failed!\n");
+		isSuccess = false;
+	}
+
+	print_buffer(m_expectedBuffer1, m_expectedBufferSize1, "Expected buffer");
+	print_buffer(receivedBuffer,    receivedBufferSize,    "Received buffer");
+
+	return isSuccess;
+}
+
 // Create 1 IPv4 bypass routing entry and commits it
 bool IpaHdrProcCtxTestFixture::CreateIPv4BypassRoutingTable (
 	const char *name,
@@ -490,7 +605,7 @@ bool IpaHdrProcCtxTestFixture::CreateIPv4BypassRoutingTable (
 	rt_table = (struct ipa_ioc_add_rt_rule *)
 		calloc(1, sizeof(struct ipa_ioc_add_rt_rule) +
 		1*sizeof(struct ipa_rt_rule_add));
-	if(!rt_table) {
+	if (!rt_table) {
 		LOG_MSG_ERROR("calloc failed to allocate rt_table\n");
 		return false;
 	}
@@ -519,6 +634,163 @@ bool IpaHdrProcCtxTestFixture::CreateIPv4BypassRoutingTable (
 
 	Free (rt_table);
 	printf("Leaving %s, %s()\n",__FUNCTION__, __FILE__);
+	return true;
+}
+
+bool IpaHdrProcCtxTestFixture::AddRoutingRule(
+	const char*          name,
+	uint32_t             hdrHdl,
+	uint32_t             procCtxHdl,
+	ipa_ip_type          iptype,
+	union ipa_ip_params  ip_addrs,
+	enum ipa_client_type dst )
+{
+	static const int NUM_RT_RULE = 1;
+
+	struct ipa_rt_rule_add rt_rule_entry;
+
+	uint8_t buf[
+		sizeof(struct ipa_ioc_add_rt_rule) +
+		(NUM_RT_RULE * sizeof(struct ipa_rt_rule_add)) ];
+
+	struct ipa_ioc_add_rt_rule* rt_table =
+		(struct ipa_ioc_add_rt_rule*) buf;
+
+	memset(buf, 0, sizeof(buf));
+
+	printf("Entering %s, %s()\n",__FUNCTION__, __FILE__);
+
+	/*
+	 * Only one or the other can and has to be set, hence...
+	 */
+	if ((hdrHdl == 0 && procCtxHdl == 0) ||
+		(hdrHdl != 0 && procCtxHdl != 0))
+	{
+		LOG_MSG_ERROR("Error: hdrHdl = %u, procCtxHdl = %u\n");
+		return false;
+	}
+
+	strlcpy(rt_table->rt_tbl_name, name, sizeof(rt_table->rt_tbl_name));
+
+	rt_table->num_rules = NUM_RT_RULE;
+	rt_table->ip        = iptype;
+	rt_table->commit    = true;
+
+	/*
+	 * Add first rule
+	 */
+	memset(&rt_rule_entry, 0, sizeof(rt_rule_entry));
+
+	rt_rule_entry.at_rear                 = 0;
+
+	rt_rule_entry.rule.dst                = dst;
+	rt_rule_entry.rule.hdr_hdl            = hdrHdl;
+	rt_rule_entry.rule.hdr_proc_ctx_hdl   = procCtxHdl;
+	rt_rule_entry.rule.attrib.attrib_mask = IPA_FLT_DST_ADDR;
+	rt_rule_entry.rule.hashable           = 1;
+	rt_rule_entry.rule.retain_hdr         = 1;
+
+	if ( iptype == IPA_IP_v4 )
+	{
+		memcpy(
+			&rt_rule_entry.rule.attrib.u.v4,
+			&ip_addrs.v4,
+			sizeof(rt_rule_entry.rule.attrib.u.v4));
+	}
+	else
+	{
+		memcpy(
+			&rt_rule_entry.rule.attrib.u.v6,
+			&ip_addrs.v6,
+			sizeof(rt_rule_entry.rule.attrib.u.v6));
+	}
+
+	memcpy(
+		&(rt_table->rules[0]),
+		&rt_rule_entry,
+		sizeof(struct ipa_rt_rule_add));
+
+	if ( m_routing.AddRoutingRule(rt_table) == false )
+	{
+		printf("Routing rule addition(rt_table) failed!\n");
+		return false;
+	}
+
+	printf("Leaving %s, %s()\n",__FUNCTION__, __FILE__);
+
+	return true;
+}
+
+bool IpaHdrProcCtxTestFixture::AddFilteringRule(
+	ipa_ip_type          iptype,
+	union ipa_ip_params  ip_addrs,
+	enum ipa_client_type src,
+	uint32_t             rt_tbl_hdl )
+{
+	static const int NUM_FLT_RULE = 1;
+
+	struct ipa_flt_rule_add flt_rule_entry;
+
+	uint8_t buf[
+		sizeof(struct ipa_ioc_add_flt_rule) +
+		(NUM_FLT_RULE * sizeof(struct ipa_flt_rule_add)) ];
+
+	struct ipa_ioc_add_flt_rule* flt_rule =
+		(struct ipa_ioc_add_flt_rule*) buf;
+
+	memset(buf, 0, sizeof(buf));
+
+	printf("Entering %s, %s()\n",__FUNCTION__, __FILE__);
+
+	flt_rule->commit    = 1;
+	flt_rule->ep        = src;
+	flt_rule->global    = false;
+	flt_rule->ip        = iptype;
+	flt_rule->num_rules = NUM_FLT_RULE;
+
+	/*
+	 * Add first rule
+	 */
+	memset(&flt_rule_entry, 0, sizeof(flt_rule_entry));
+
+	flt_rule_entry.at_rear                  = true; // FIXME FINDME correct?
+	flt_rule_entry.flt_rule_hdl             = -1;
+	flt_rule_entry.status                   = -1;
+
+	flt_rule_entry.rule.retain_hdr          = 1; // FIXME FINDME correct?
+	flt_rule_entry.rule.to_uc               = 1; // FIXME FINDME correct?
+	flt_rule_entry.rule.action              = IPA_PASS_TO_ROUTING;
+	flt_rule_entry.rule.rt_tbl_hdl          = rt_tbl_hdl;
+	flt_rule_entry.rule.attrib.attrib_mask |= IPA_FLT_DST_ADDR;
+
+	if ( iptype == IPA_IP_v4 )
+	{
+		memcpy(
+			&flt_rule_entry.rule.attrib.u.v4,
+			&ip_addrs.v4,
+			sizeof(flt_rule_entry.rule.attrib.u.v4));
+	}
+	else
+	{
+		memcpy(
+			&flt_rule_entry.rule.attrib.u.v6,
+			&ip_addrs.v6,
+			sizeof(flt_rule_entry.rule.attrib.u.v6));
+	}
+
+	memcpy(
+		&(flt_rule->rules[0]),
+		&flt_rule_entry,
+		sizeof(struct ipa_flt_rule_add));
+
+	if ( m_filtering.AddFilteringRule(flt_rule) == false )
+	{
+		printf("Error Adding Filtering rule, aborting...\n");
+		return false;
+	}
+
+	printf("Leaving %s, %s()\n",__FUNCTION__, __FILE__);
+
 	return true;
 }
 

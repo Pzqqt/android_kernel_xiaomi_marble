@@ -43,7 +43,10 @@ class InterfaceAbstraction
 
 public:
 	~InterfaceAbstraction();
-	bool Open(const char *toIPAPath, const char *fromIPAPath);
+	bool Open(
+		const char *toIPAPath,
+		const char *fromIPAPath,
+		const char* name = NULL );
 	void Close();
 	long SendData(unsigned char *buffer, size_t size);
 	int ReceiveData(unsigned char *buf, size_t size);

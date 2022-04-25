@@ -35,6 +35,7 @@
 #include <string>
 #include <linux/if_ether.h>
 #include <linux/msm_ipa.h>
+#include <arpa/inet.h>
 #include "TestBase.h"
 #include "Constants.h"
 #include "RoutingDriverWrapper.h"
@@ -91,6 +92,13 @@ using namespace std;
 	(x < IPA_CLIENT_MAX && (x & 0x1) == 0)
 #define IPA_CLIENT_IS_CONS(x) \
 	(x < IPA_CLIENT_MAX && (x & 0x1) == 1)
+
+// IP V4 header length (20 bytes) plus GRE header length (4 bytes)
+#define EoGRE_V4_HDR_LEN (20 + 4)
+
+// IP V6 header length (40 bytes) plus options header length (8 bytes)
+// plus GRE header length (4 bytes)
+#define EoGRE_V6_HDR_LEN (40 + 8 + 4)
 
 enum msgType {
 	ERROR = 0,
@@ -806,5 +814,345 @@ struct ipa3_hw_pkt_status_hw_v5_0 {
 	uint64_t ucp : 1;
 };
 
+static inline uint8_t* Addr_AsStr(
+	void*       addr,
+	uint32_t    addr_len,
+	void*       buf_ptr,
+	uint32_t    buf_size )
+{
+	uint8_t* addr_ptr = (uint8_t*) addr;
+
+	if ( addr_ptr && addr_len && buf_ptr && (addr_len*3) <= buf_size )
+	{
+		uint32_t i, len = 0;
+
+		for ( i = 0; i < addr_len; i++ )
+		{
+			len += snprintf(
+				(char*) buf_ptr + len,
+				buf_size - len,
+				(i == 0) ? "%02X" : ":%02X",
+				addr_ptr[i]);
+		}
+	}
+
+	return (uint8_t*) buf_ptr;
+}
+
+/*
+ * Ethernet frame printing support...
+ *
+ * Ethernet constituent parts and header definition...
+ */
+struct Vlan_Tag_s
+{
+	uint16_t vid : 12;
+	uint16_t dei :  1;
+	uint16_t pcp :  3;
+} __attribute__((packed));
+
+typedef Vlan_Tag_s Vlan_Tag_t;
+
+struct Eth_Hdr_s
+{
+	uint8_t  src_addr[6];
+	uint8_t  dst_addr[6];
+	uint16_t ethtype1;
+	uint16_t vlan;
+	uint16_t ethtype2;
+} __attribute__((packed));
+
+typedef Eth_Hdr_s Eth_Hdr_t;
+
+static inline uint8_t* Eth_Hdr_AsStr(
+	void*       data_ptr,
+	void*       buf_ptr,
+	uint32_t    buf_size )
+{
+	Eth_Hdr_t* hdr_ptr = (Eth_Hdr_t*) data_ptr;
+
+	if ( hdr_ptr && buf_ptr && buf_size )
+	{
+		uint16_t e1;
+
+		uint8_t addr1[64];
+		uint8_t addr2[64];
+
+		Addr_AsStr(hdr_ptr->src_addr, sizeof(hdr_ptr->src_addr), addr1, sizeof(addr1));
+		Addr_AsStr(hdr_ptr->dst_addr, sizeof(hdr_ptr->dst_addr), addr2, sizeof(addr2));
+
+		e1 = ntohs(hdr_ptr->ethtype1);
+
+		if ( e1 == 0x8100 ) /* 802 1Q ie. vlan */
+		{
+			uint16_t v = ntohs(hdr_ptr->vlan);
+
+			uint16_t e2 = ntohs(hdr_ptr->ethtype2);
+
+			Vlan_Tag_t* vt = (Vlan_Tag_t*) &v;
+
+			snprintf(
+				(char*) buf_ptr,
+				buf_size,
+				"src_addr: %s "
+				"dst_addr: %s "
+				"vlan ethtype: 0x%04X "
+				"pcp: 0x%02X "
+				"dei: 0x%02X "
+				"vlan: 0x%04X "
+				"ethtype: 0x%04X",
+				addr1,
+				addr2,
+				e1,
+				vt->pcp,
+				vt->dei,
+				vt->vid,
+				e2);
+		}
+		else
+		{
+			snprintf(
+				(char*) buf_ptr,
+				buf_size,
+				"src_addr: %s "
+				"dst_addr: %s "
+				"ethtype: 0x%04X",
+				addr1,
+				addr2,
+				e1);
+		}
+	}
+
+	return (uint8_t*) buf_ptr;
+}
+
+#define mask(bits) \
+	( ((bits) == 32) ? 0xffffffff : ((1 << (bits)) - 1) )
+
+#define pull(word, bits, shift) \
+	( (ntohl((word)) >> (shift)) & mask(bits) )
+
+#define push(val, word, bits, shift) \
+	( (word) |= (htonl(((val) & mask(bits)) << (shift))) )
+
+/*
+ * IPv4 frame printing support...
+ *
+ * IPv4 constituent parts and header definition...
+ *
+ * For field value getting
+ */
+#define getv4_vers(hdr) \
+	pull(hdr->w[0], 4, 28)
+
+#define getv4_ihl(hdr) \
+	pull(hdr->w[0], 4, 24)
+
+#define getv4_dscp(hdr) \
+	pull(hdr->w[0], 6, 18)
+
+#define getv4_ecn(hdr) \
+	pull(hdr->w[0], 2, 16)
+
+#define getv4_tot_len(hdr) \
+	pull(hdr->w[0], 16, 0)
+
+#define getv4_id(hdr) \
+	pull(hdr->w[1], 16, 16)
+
+#define getv4_flags(hdr) \
+	pull(hdr->w[1], 3, 13)
+
+#define getv4_frag_off(hdr) \
+	pull(hdr->w[1], 13, 0)
+
+#define getv4_ttl(hdr) \
+	pull(hdr->w[2], 8, 24)
+
+#define getv4_protocol(hdr) \
+	pull(hdr->w[2], 8, 16)
+
+#define getv4_cksum(hdr) \
+	pull(hdr->w[2], 16, 0)
+
+/*
+ * For field value setting
+ */
+#define setv4_dscp(hdr, val) \
+	push(val, hdr->w[0], 6, 18)
+
+#define setv4_cksum(hdr, val) \
+	push(val, hdr->w[2], 16, 0)
+
+typedef struct
+{
+	uint32_t w[3];
+	uint32_t src_ip;
+	uint32_t dst_ip;
+	uint8_t  payload[0];
+} IPv4_Hdr_t;
+
+static inline uint8_t* IPv4_Hdr_AsStr(
+	void*       data_ptr,
+	void*       buf_ptr,
+	uint32_t    buf_size )
+{
+	IPv4_Hdr_t* hdr_ptr = (IPv4_Hdr_t*) data_ptr;
+
+	if ( hdr_ptr && buf_ptr && buf_size )
+	{
+		snprintf(
+			(char*) buf_ptr,
+			buf_size,
+			"vers: 0x%02X "
+			"ihl: 0x%02X "
+			"dscp: 0x%02X "
+			"ecn: 0x%02X "
+			"tot_len: 0x%04X "
+			"id: 0x%04X "
+			"flags: 0x%02X "
+			"frag_off: 0x%04X "
+			"ttl: 0x%02X "
+			"protocol: 0x%02X "
+			"cksum: 0x%04X "
+			"src_ip: 0x%08X "
+			"dst_ip: 0x%08X",
+			getv4_vers(hdr_ptr),
+			getv4_ihl(hdr_ptr),
+			getv4_dscp(hdr_ptr),
+			getv4_ecn(hdr_ptr),
+			getv4_tot_len(hdr_ptr),
+			getv4_id(hdr_ptr),
+			getv4_flags(hdr_ptr),
+			getv4_frag_off(hdr_ptr),
+			getv4_ttl(hdr_ptr),
+			getv4_protocol(hdr_ptr),
+			getv4_cksum(hdr_ptr),
+			hdr_ptr->src_ip,
+			hdr_ptr->dst_ip);
+	}
+
+	return (uint8_t*) buf_ptr;
+}
+
+/*
+ * IPv6 frame printing support...
+ *
+ * IPv6 constituent parts and header definition...
+ *
+ *
+ * For field value getting
+ */
+#define getv6_vers(hdr) \
+	pull(hdr->w[0], 4, 28)
+
+#define getv6_trafClass(hdr) \
+	pull(hdr->w[0], 8, 20)
+
+#define getv6_flowLab(hdr) \
+	pull(hdr->w[0], 20, 0)
+
+#define getv6_payLen(hdr) \
+	pull(hdr->w[1], 16, 16)
+
+#define getv6_nxtHdr(hdr) \
+	pull(hdr->w[1], 8, 8)
+
+#define getv6_hopLim(hdr) \
+	pull(hdr->w[1], 8, 0)
+
+/*
+ * For field value setting
+ */
+#define setv6_vers(hdr, val) \
+	push(val, hdr->w[0], 4, 28)
+
+#define setv6_trafClass(hdr, val) \
+	push(val, hdr->w[0], 8, 20)
+
+#define setv6_dscp(hdr, val) \
+	setv6_trafClass(hdr, val<<2)
+
+#define setv6_flowLab(hdr, val) \
+	push(val, hdr->w[0], 20, 0)
+
+#define setv6_payLen(hdr, val) \
+	push(val, hdr->w[1], 16, 16)
+
+#define setv6_nxtHdr(hdr, val) \
+	push(val, hdr->w[1], 8, 8)
+
+#define setv6_hopLim(hdr, val) \
+	push(val, hdr->w[1], 8, 0)
+
+struct IPv6_Hdr_s
+{
+	uint32_t w[2];
+	uint8_t  saddr[16];
+	uint8_t  daddr[16];
+	uint8_t  payload[0];
+} __attribute__((packed));
+
+typedef struct IPv6_Hdr_s IPv6_Hdr_t;
+
+static inline uint8_t* IPv6_Hdr_AsStr(
+	void*       data_ptr,
+	void*       buf_ptr,
+	uint32_t    buf_size )
+{
+	IPv6_Hdr_t* hdr_ptr = (IPv6_Hdr_t*) data_ptr;
+
+	if ( hdr_ptr && buf_ptr && buf_size )
+	{
+		uint8_t addr1[64];
+		uint8_t addr2[64];
+
+		Addr_AsStr(hdr_ptr->saddr, sizeof(hdr_ptr->saddr), addr1, sizeof(addr1));
+		Addr_AsStr(hdr_ptr->daddr, sizeof(hdr_ptr->daddr), addr2, sizeof(addr2));
+
+		snprintf(
+			(char*) buf_ptr,
+			buf_size,
+			"vers: 0x%02X "
+			"traffic_class: 0x%02X "
+			"flow_label: 0x%06X "
+			"payload_len: 0x%04X "
+			"next_hdr: 0x%02X "
+			"hop_limit: 0x%02X "
+			"src_ip: %s "
+			"dst_ip: %s",
+			getv6_vers(hdr_ptr),
+			getv6_trafClass(hdr_ptr),
+			getv6_flowLab(hdr_ptr),
+			getv6_payLen(hdr_ptr),
+			getv6_nxtHdr(hdr_ptr),
+			getv6_hopLim(hdr_ptr),
+			addr1,
+			addr2);
+	}
+
+	return (uint8_t*) buf_ptr;
+}
+
+union ipa_ip_params
+{
+	struct {
+		uint8_t tos;
+		uint8_t protocol;
+		uint32_t src_addr;
+		uint32_t src_addr_mask;
+		uint32_t dst_addr;
+		uint32_t dst_addr_mask;
+	} v4;
+	struct {
+		uint8_t tc;
+		uint32_t flow_label;
+		uint8_t next_hdr;
+		uint32_t src_addr[4];
+		uint32_t src_addr_mask[4];
+		uint32_t dst_addr[4];
+		uint32_t dst_addr_mask[4];
+	} v6;
+};
 
 #endif

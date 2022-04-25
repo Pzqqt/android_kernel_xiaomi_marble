@@ -33,6 +33,8 @@
 #include <stdint.h>
 #include "linux/msm_ipa.h"
 
+#include <TestsUtils.h>
+
 class Filtering
 {
 public:
@@ -44,6 +46,10 @@ public:
 	bool Commit(enum ipa_ip_type ip);
 	bool Reset(enum ipa_ip_type ip);
 	bool DeviceNodeIsOpened();
+	bool AddEoGREMap(
+		enum ipa_ip_type     iptype,
+		union ipa_ip_params& ipaddrs );
+	bool ClrEoGREMap(void);
 
 private:
 	static const char *DEVICE_NAME;

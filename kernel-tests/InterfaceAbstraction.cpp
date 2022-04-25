@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 #include <iostream>
 #include "InterfaceAbstraction.h"
 
@@ -38,60 +39,93 @@
 using std::cout;
 using std::endl;
 
-bool InterfaceAbstraction::Open(const char * toIPAPath, const char * fromIPAPath)
+bool InterfaceAbstraction::Open(
+	const char* toIPAPath,
+	const char* fromIPAPath,
+	const char* name )
 {
-	int tries_cnt = MAX_OPEN_RETRY;
-	if (NULL == toIPAPath && NULL == fromIPAPath)
+	char buf[256];
+	int  cnt;
+
+	if ( ! toIPAPath && ! fromIPAPath )
 	{
 		printf("InterfaceAbstraction constructor got 2 null arguments.\n");
 		exit(0);
 	}
 
-	if (NULL != toIPAPath) {
-		while (tries_cnt > 0) {
-			printf("trying to open %s %d/%d\n", toIPAPath, MAX_OPEN_RETRY - tries_cnt, MAX_OPEN_RETRY);
-			// Sleep for 5 msec
-			usleep(5000);
-			m_toIPADescriptor = open(toIPAPath, O_WRONLY);
-			if (-1 != m_toIPADescriptor) {
-				printf("Success!\n");
+	snprintf(
+		buf, sizeof(buf),
+		(name) ? "for interface object %s" : "",
+		name);
+
+	if ( toIPAPath ) {
+
+		printf(
+			"Will try %u attempts to open device \"%s\" for writing.\n",
+			MAX_OPEN_RETRY,
+			toIPAPath);
+
+		for ( cnt = 1; cnt <= MAX_OPEN_RETRY; cnt++ ) {
+
+			if ( (m_toIPADescriptor = open(toIPAPath, O_WRONLY)) != -1 ) {
+				printf(
+					"Succeeded opening %s on attempt %d\n",
+					toIPAPath, cnt);
 				break;
 			}
-			tries_cnt--;
+
+			// Sleep for 5 msec
+			usleep(5000);
 		}
-		printf("open retries_cnt=%d\n", MAX_OPEN_RETRY - tries_cnt);
-		if (-1 == m_toIPADescriptor) {
-			printf("InterfaceAbstraction failed while opening %s.\n", toIPAPath);
+
+		if ( m_toIPADescriptor == -1 ) {
+			printf(
+				"Failed opening %s after %d attempts\n",
+				toIPAPath, cnt);
 			exit(0);
 		}
+
 		m_toChannelName = toIPAPath;
-		printf("%s device node opened, fd = %d.\n", toIPAPath, m_toIPADescriptor);
+
+		printf(
+			"Device \"%s\" opened for writing. Generated fd(%d) %s\n",
+			toIPAPath, m_toIPADescriptor, buf);
 	}
-	tries_cnt = MAX_OPEN_RETRY;
-	if (NULL != fromIPAPath) {
-		while (tries_cnt > 0) {
-			printf("trying to open %s %d/%d\n", fromIPAPath, MAX_OPEN_RETRY - tries_cnt, MAX_OPEN_RETRY);
-			// Sleep for 5 msec
-			usleep(5000);
-			m_fromIPADescriptor = open(fromIPAPath, O_RDONLY);
-			if (-1 != m_fromIPADescriptor) {
-				printf("Success!\n");
+
+	if ( fromIPAPath ) {
+
+		printf(
+			"Will try %u attempts to open device \"%s\" for reading.\n",
+			MAX_OPEN_RETRY,
+			fromIPAPath);
+
+		for ( cnt = 1; cnt <= MAX_OPEN_RETRY; cnt++ ) {
+
+			if ( (m_fromIPADescriptor = open(fromIPAPath, O_RDONLY)) != -1 ) {
+				printf("Open success on attempt %d\n", cnt);
 				break;
 			}
-			tries_cnt--;
+
+			// Sleep for 5 msec
+			usleep(5000);
 		}
-		printf("open retries_cnt=%d\n", MAX_OPEN_RETRY - tries_cnt);
-		if (-1 == m_fromIPADescriptor)
-		{
-			printf("InterfaceAbstraction failed on opening %s.\n", fromIPAPath);
+
+		if ( m_fromIPADescriptor == -1 ) {
+			printf(
+				"Failed opening %s after %d attempts\n",
+				fromIPAPath, cnt);
 			exit(0);
 		}
+
 		m_fromChannelName = fromIPAPath;
-		printf("%s device node opened, fd = %d.\n", fromIPAPath, m_fromIPADescriptor);
+
+		printf(
+			"Device \"%s\" opened for reading. Generated fd(%d) %s\n",
+			fromIPAPath, m_fromIPADescriptor, buf);
 	}
 
 	return true;
-}/*Ctor*/
+}
 
 void InterfaceAbstraction::Close()
 {
@@ -103,7 +137,7 @@ long InterfaceAbstraction::SendData(unsigned char *buf, size_t size)
 {
 	long bytesWritten = 0;
 
-	printf("Trying to write %zu bytes to %d.\n", size, m_toIPADescriptor);
+	printf("Trying to write %zu bytes to fd(%d)\n", size, m_toIPADescriptor);
 
 	bytesWritten = write(m_toIPADescriptor, buf, size);
 	if (-1 == bytesWritten)
@@ -135,7 +169,7 @@ int InterfaceAbstraction::ReceiveData(unsigned char *buf, size_t size)
 
 	do
 	{
-		printf("Trying to read %zu bytes from %d.\n", size, m_fromIPADescriptor);
+		printf("Trying to read %zu bytes from fd(%d)\n", size, m_fromIPADescriptor);
 
 		bytesRead = read(m_fromIPADescriptor, (void*)buf, size);
 		printf("Read %zu bytes.\n", bytesRead);
