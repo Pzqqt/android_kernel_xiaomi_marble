@@ -2254,6 +2254,7 @@ struct cdp_soc_stats {
  * @map_err: Mapping failure
  * @x86_fail: x86 failures
  * @low_thresh_intrs: low threshold interrupts
+ * @free_list: RX descriptors moving back to free list
  * @rx_raw_pkts: Rx Raw Packets
  * @mesh_mem_alloc: Mesh Rx Stats Alloc fail
  * @tso_desc_cnt: TSO descriptors
@@ -2302,6 +2303,7 @@ struct cdp_pdev_stats {
 		uint32_t map_err;
 		uint32_t x86_fail;
 		uint32_t low_thresh_intrs;
+		int32_t free_list;
 	} replenish;
 
 	uint32_t rx_raw_pkts;

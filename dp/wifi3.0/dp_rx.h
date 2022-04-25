@@ -1383,6 +1383,7 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 }
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 
+#define CRITICAL_BUFFER_THRESHOLD	64
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
