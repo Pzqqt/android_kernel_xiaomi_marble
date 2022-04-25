@@ -3133,6 +3133,7 @@ void sde_encoder_virt_reset(struct drm_encoder *drm_enc)
 		if (sde_enc->phys_encs[i]) {
 			sde_enc->phys_encs[i]->cont_splash_enabled = false;
 			sde_enc->phys_encs[i]->connector = NULL;
+			sde_enc->phys_encs[i]->hw_ctl = NULL;
 		}
 		atomic_set(&sde_enc->frame_done_cnt[i], 0);
 	}
