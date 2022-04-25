@@ -6016,6 +6016,7 @@ typedef enum {
     HTT_TX_AC_SOUNDING_MODE = 0,
     HTT_TX_AX_SOUNDING_MODE = 1,
     HTT_TX_BE_SOUNDING_MODE = 2,
+    HTT_TX_CMN_SOUNDING_MODE = 3,
 } htt_stats_sounding_tx_mode;
 
 typedef struct {
@@ -6537,6 +6538,19 @@ typedef struct {
     A_UINT32 mpdus_failed;
 } htt_tx_rate_stats_t;
 
+typedef enum {
+    HTT_RC_MODE_SU_OL,
+    HTT_RC_MODE_SU_BF,
+    HTT_RC_MODE_MU1_INTF,
+    HTT_RC_MODE_MU2_INTF,
+    HTT_Rc_MODE_MU3_INTF,
+    HTT_RC_MODE_MU4_INTF,
+    HTT_RC_MODE_MU5_INTF,
+    HTT_RC_MODE_MU6_INTF,
+    HTT_RC_MODE_MU7_INTF,
+    HTT_RC_MODE_2D_COUNT,
+} HTT_RC_MODE;
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -6558,6 +6572,7 @@ typedef struct {
     /** 320MHz extension for PER */
     htt_tx_rate_stats_t per_bw320;
 
+    A_UINT32 probe_cnt_per_rcmode[HTT_RC_MODE_2D_COUNT];
 } htt_tx_rate_stats_per_tlv;
 
 /* NOTE:
