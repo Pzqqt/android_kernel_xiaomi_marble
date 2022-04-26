@@ -360,6 +360,11 @@ int __ipa_commit_hdr_v3_0(void)
 		ipa3_ctx->hdr_sys_mem = hdr_mem[HDR_TBL_SYS];
 	}
 
+	else {
+		dma_free_coherent(ipa3_ctx->pdev, hdr_mem[HDR_TBL_SYS].size,
+		hdr_mem[HDR_TBL_SYS].base,hdr_mem[HDR_TBL_SYS].phys_base);
+        }
+
 	if (ipa3_ctx->hdr_proc_ctx_tbl_lcl) {
 		dma_free_coherent(ipa3_ctx->pdev, ctx_mem.size, ctx_mem.base,
 			ctx_mem.phys_base);
@@ -371,6 +376,10 @@ int __ipa_commit_hdr_v3_0(void)
 					ipa3_ctx->hdr_proc_ctx_mem.base,
 					ipa3_ctx->hdr_proc_ctx_mem.phys_base);
 			ipa3_ctx->hdr_proc_ctx_mem = ctx_mem;
+		}
+		else {
+			dma_free_coherent(ipa3_ctx->pdev, ctx_mem.size,
+			ctx_mem.base,ctx_mem.phys_base);
 		}
 	}
 	goto end;
