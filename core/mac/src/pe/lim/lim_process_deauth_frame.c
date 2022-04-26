@@ -343,7 +343,7 @@ static void lim_process_sae_auth_msg(struct mac_context *mac_ctx,
 
 	sae_msg->vdev_id = pe_session->vdev_id;
 	sae_msg->sae_status = IEEE80211_STATUS_UNSPECIFIED;
-	sae_msg->result_code = eSIR_SME_DEAUTH_WHILE_JOIN;
+	sae_msg->result_code = eSIR_SME_AUTH_REFUSED;
 	qdf_mem_copy(sae_msg->peer_mac_addr, addr, QDF_MAC_ADDR_SIZE);
 	lim_process_sae_msg(mac_ctx, sae_msg);
 
