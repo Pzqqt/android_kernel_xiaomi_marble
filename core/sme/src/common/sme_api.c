@@ -11657,14 +11657,24 @@ sme_update_session_txq_edca_params(mac_handle_t mac_handle,
 	QDF_STATUS status;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct sir_update_session_txq_edca_param *msg;
+	struct pe_session *pe_session;
+
+	pe_session = pe_find_session_by_vdev_id(mac_ctx, session_id);
+	if (!pe_session) {
+		pe_warn("Session does not exist for given session_id %d",
+			session_id);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_ERROR(status))
 		return QDF_STATUS_E_AGAIN;
 
 	msg = qdf_mem_malloc(sizeof(*msg));
-	if (!msg)
+	if (!msg) {
+		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_NOMEM;
+	}
 
 	msg->message_type = eWNI_SME_UPDATE_SESSION_EDCA_TXQ_PARAMS;
 	msg->vdev_id = session_id;
@@ -11677,6 +11687,8 @@ sme_update_session_txq_edca_params(mac_handle_t mac_handle,
 	sme_release_global_lock(&mac_ctx->sme);
 	if (status != QDF_STATUS_SUCCESS)
 		return QDF_STATUS_E_IO;
+
+	pe_session->user_edca_set = 1;
 
 	return QDF_STATUS_SUCCESS;
 }

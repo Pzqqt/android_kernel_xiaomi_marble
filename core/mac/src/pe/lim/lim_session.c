@@ -541,7 +541,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 				     uint8_t vdev_id)
 {
 	QDF_STATUS status;
-	uint8_t i, j;
+	uint8_t i;
 	struct pe_session *session_ptr;
 	struct wlan_objmgr_vdev *vdev;
 
@@ -685,8 +685,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	/* following is invalid value since seq number is 12 bit */
 	session_ptr->prev_auth_seq_num = 0xFFFF;
 
-	for (j = 0; j < QCA_WLAN_AC_ALL; j++)
-		session_ptr->gLimEdcaParams[j].user_edca_set = 0;
+	session_ptr->user_edca_set = 0;
 
 	return &mac->lim.gpSession[i];
 
@@ -1012,8 +1011,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	if (LIM_IS_AP_ROLE(session))
 		lim_check_and_reset_protection_params(mac_ctx);
 
-	for (i = 0; i < QCA_WLAN_AC_ALL; i++)
-		session->gLimEdcaParams[i].user_edca_set = 0;
+	session->user_edca_set = 0;
 
 	vdev = session->vdev;
 	session->vdev = NULL;

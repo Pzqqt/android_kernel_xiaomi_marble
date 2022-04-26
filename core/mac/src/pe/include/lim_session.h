@@ -659,6 +659,7 @@ struct pe_session {
 	struct mlo_partner_info ml_partner_info;
 #endif
 #endif /* WLAN_FEATURE_11BE */
+	uint8_t user_edca_set;
 };
 
 /*-------------------------------------------------------------------------

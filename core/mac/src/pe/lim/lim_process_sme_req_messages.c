@@ -6807,8 +6807,6 @@ lim_process_sme_update_session_edca_txq_params(struct mac_context *mac_ctx,
 			msg->txq_edca_params.aci.aifsn;
 	pe_session->gLimEdcaParams[ac].txoplimit =
 			msg->txq_edca_params.txoplimit;
-	pe_session->gLimEdcaParams[ac].user_edca_set =
-			msg->txq_edca_params.user_edca_set;
 
 	lim_send_edca_params(mac_ctx,
 			     pe_session->gLimEdcaParams,
