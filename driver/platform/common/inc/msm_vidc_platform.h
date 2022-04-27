@@ -93,7 +93,8 @@ struct msm_vidc_ubwc_config_data {
 
 enum vpu_version {
 	VPU_VERSION_IRIS2 = 1,
-	VPU_VERSION_IRIS2_1,
+	VPU_VERSION_IRIS2_2PIPE,
+	VPU_VERSION_IRIS2_1PIPE,
 };
 
 struct msm_vidc_platform_data {

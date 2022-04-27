@@ -477,7 +477,7 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 				__func__, i, value);
 	}
 
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE)
 		goto skip_aon_mvp_noc;
 
 	/* Apply partial reset on MSF interface and wait for ACK */
@@ -527,7 +527,7 @@ disable_power:
 		d_vpr_e("%s: disable regulator vcodec failed\n", __func__);
 		rc = 0;
 	}
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1) {
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE) {
 		rc = __disable_unprepare_clock_iris2(core, "video_mvs0_axi_clk");
 		if (rc) {
 			d_vpr_e("%s: disable unprepare video_mvs0_axi_clk failed\n", __func__);
@@ -550,7 +550,7 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		return rc;
 
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE)
 		goto skip_aon_mvp_noc;
 
 	/* set MNoC to low power, set PD_NOC_QREQ (bit 0) */
@@ -564,6 +564,9 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_LPI_CONTROL failed\n", __func__);
 
+	if (core->platform->data.vpu_ver != VPU_VERSION_IRIS2)
+		goto skip_cpu_noc;
+
 	/* Set Iris CPU NoC to Low power */
 	rc = __write_register_masked(core, WRAPPER_IRIS_CPU_NOC_LPI_CONTROL,
 			0x1, BIT(0));
@@ -576,6 +579,7 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		d_vpr_h("%s: WRAPPER_IRIS_CPU_NOC_LPI_CONTROL failed\n", __func__);
 
 	/* Set Debug bridge Low power */
+skip_cpu_noc:
 skip_aon_mvp_noc:
 	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x7);
 	if (rc)
@@ -616,7 +620,7 @@ skip_aon_mvp_noc:
 #endif
 
 	/* Disable VIDEO_CC_VENUS_AHB_CLK clock */
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1) {
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE) {
 		rc = __disable_unprepare_clock_iris2(core, "iface_clk");
 		if (rc) {
 			d_vpr_e("%s: disable unprepare iface_clk failed\n", __func__);
@@ -712,7 +716,7 @@ static int __power_on_iris2_controller(struct msm_vidc_core *core)
 	if (rc)
 		goto fail_clk_controller;
 
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1) {
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE) {
 		rc = __prepare_enable_clock_iris2(core, "iface_clk");
 		if (rc)
 			goto fail_iface_clk;
@@ -739,7 +743,7 @@ static int __power_on_iris2_hardware(struct msm_vidc_core *core)
 	if (rc)
 		goto fail_regulator;
 
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1) {
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE) {
 		rc = __prepare_enable_clock_iris2(core, "video_mvs0_axi_clk");
 		if (rc)
 			goto fail_clk_axi;
@@ -752,7 +756,7 @@ static int __power_on_iris2_hardware(struct msm_vidc_core *core)
 	return 0;
 
 fail_clk_controller:
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE)
 		__disable_unprepare_clock_iris2(core, "video_mvs0_axi_clk");
 fail_clk_axi:
 	__disable_regulator_iris2(core, "vcodec");
