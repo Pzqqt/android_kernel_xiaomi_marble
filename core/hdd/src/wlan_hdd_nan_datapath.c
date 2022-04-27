@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -106,6 +106,7 @@ static int hdd_close_ndi(struct hdd_adapter *adapter)
 	if (errno)
 		hdd_err("failed to destroy vdev: %d", errno);
 
+	adapter->is_virtual_iface = true;
 	/* We are good to close the adapter */
 	hdd_close_adapter(hdd_ctx, adapter, true);
 
