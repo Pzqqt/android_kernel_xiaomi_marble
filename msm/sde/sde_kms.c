@@ -3889,10 +3889,17 @@ static int sde_kms_pm_suspend(struct device *dev)
 	/* disable hot-plug polling */
 	drm_kms_helper_poll_disable(ddev);
 
-	/* if a display stuck in CS trigger a null commit to complete handoff */
+	/* if any built-in display is stuck in CS, skip PM suspend entry to
+	 * avoid driver SW state changes. With speculative fence enabled, HAL depends
+	 * on power_on notification for the first commit to exit the Wait completion
+	 * instead of retire fence signal.
+	 */
 	drm_for_each_encoder(enc, ddev) {
-		if (sde_encoder_in_cont_splash(enc) && enc->crtc)
-			_sde_kms_null_commit(ddev, enc);
+		if (sde_encoder_in_cont_splash(enc) && enc->crtc) {
+			SDE_DEBUG("skip PM suspend, splash is enabled on enc:%d\n", DRMID(enc));
+			SDE_EVT32(DRMID(enc), SDE_EVTLOG_FUNC_EXIT);
+			return -EINVAL;
+		}
 	}
 
 	/* acquire modeset lock(s) */
@@ -4016,6 +4023,7 @@ static int sde_kms_pm_resume(struct device *dev)
 {
 	struct drm_device *ddev;
 	struct sde_kms *sde_kms;
+	struct drm_encoder *enc;
 	struct drm_modeset_acquire_ctx ctx;
 	int ret, i;
 
@@ -4029,6 +4037,14 @@ static int sde_kms_pm_resume(struct device *dev)
 	sde_kms = to_sde_kms(ddev_to_msm_kms(ddev));
 
 	SDE_EVT32(sde_kms->suspend_state != NULL);
+	/* if a display is in cont splash early exit */
+	drm_for_each_encoder(enc, ddev) {
+		if (sde_encoder_in_cont_splash(enc) && enc->crtc) {
+			SDE_DEBUG("skip PM resume entry splash is enabled on enc:%d\n", DRMID(enc));
+			SDE_EVT32(DRMID(enc), SDE_EVTLOG_FUNC_EXIT);
+			return -EINVAL;
+		}
+	}
 
 	drm_mode_config_reset(ddev);
 
