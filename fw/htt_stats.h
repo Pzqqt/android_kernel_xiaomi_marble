@@ -7011,6 +7011,36 @@ typedef enum {
     HTT_STATS_NO_RESET_SCAN_BACK_TO_SAME_HOME_CHANNEL_CHANGE = 0x00800000, /* No reset, scan to home channel change */
 } HTT_STATS_RESET_CAUSE;
 
+typedef enum {
+    HTT_CHANNEL_RATE_FULL,
+    HTT_CHANNEL_RATE_HALF,
+    HTT_CHANNEL_RATE_QUARTER,
+
+    HTT_CHANNEL_RATE_COUNT
+} HTT_CHANNEL_RATE;
+
+typedef enum {
+    HTT_PHY_BW_IDX_20MHz    = 0,
+    HTT_PHY_BW_IDX_40MHz    = 1,
+    HTT_PHY_BW_IDX_80MHz    = 2,
+    HTT_PHY_BW_IDX_80Plus80 = 3,
+    HTT_PHY_BW_IDX_160MHz   = 4,
+    HTT_PHY_BW_IDX_10MHz    = 5,
+    HTT_PHY_BW_IDX_5MHz     = 6,
+    HTT_PHY_BW_IDX_165MHz   = 7,
+
+} HTT_PHY_BW_IDX;
+
+typedef enum {
+    HTT_WHAL_CONFIG_NONE                = 0x00000000,
+    HTT_WHAL_CONFIG_NF_WAR              = 0x00000001,
+    HTT_WHAL_CONFIG_CAL_WAR             = 0x00000002,
+    HTT_WHAL_CONFIG_DO_NF_CAL           = 0x00000004,
+    HTT_WHAL_CONFIG_SET_WAIT_FOR_NF_CAL = 0x00000008,
+    HTT_WHAL_CONFIG_FORCED_TX_PWR       = 0x00000010,
+    HTT_WHAL_CONFIG_FORCED_GAIN_IDX     = 0x00000020,
+    HTT_WHAL_CONFIG_FORCED_PER_CHAIN    = 0x00000040,
+} HTT_WHAL_CONFIG;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -7167,6 +7197,34 @@ typedef struct {
      */
     A_UINT32 rxdesense_thresh_sw;
     A_UINT32 rxdesense_thresh_hw;
+    /** Current PHY Bandwidth -
+     * values are specified by the HTT_PHY_BW_IDX enum type
+     */
+    A_UINT32 phy_bw_code;
+    /** Current channel operating rate -
+     * values are specified by the HTT_CHANNEL_RATE enum type
+     */
+    A_UINT32 phy_rate_mode;
+    /** current channel operating band
+     * 0 - 5G; 1 - 2G; 2 -6G
+     */
+    A_UINT32 phy_band_code;
+    /** microcode processor virtual phy base address -
+     * provided only for debug
+     */
+    A_UINT32 phy_vreg_base;
+    /** microcode processor virtual phy base ext address -
+     * provided only for debug
+     */
+    A_UINT32 phy_vreg_base_ext;
+    /** HW LUT table configuration for home/scan channel -
+     * provided only for debug
+     */
+    A_UINT32 cur_table_index;
+    /** SW configuration flag for PHY reset and Calibrations -
+     * values are specified by the HTT_WHAL_CONFIG enum type
+     */
+    A_UINT32 whal_config_flag;
 } htt_phy_reset_stats_tlv;
 
 typedef struct {
@@ -7186,7 +7244,53 @@ typedef struct {
 
     /** phyoff count during rfmode switch */
     A_UINT32 rf_mode_switch_phy_off_cnt;
+
+    /** Temperature based recalibration count */
+    A_UINT32 temperature_recal_cnt;
 } htt_phy_reset_counters_tlv;
+
+/* Considering 320 MHz maximum 16 power levels */
+#define HTT_MAX_CH_PWR_INFO_SIZE    16
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /** current pdev_id */
+    A_UINT32 pdev_id;
+
+    /** Tranmsit power control scaling related configurations */
+    A_UINT32 tx_power_scale;
+    A_UINT32 tx_power_scale_db;
+
+    /** Minimum negative tx power supported by the target */
+    A_INT32 min_negative_tx_power;
+
+    /** current configured CTL domain */
+    A_UINT32 reg_ctl_domain;
+
+    /** Regulatory power information for the current channel */
+    A_INT32 max_reg_allowed_power[HTT_STATS_MAX_CHAINS];
+    A_INT32 max_reg_allowed_power_6g[HTT_STATS_MAX_CHAINS];
+    /** channel max regulatory power in 0.5dB */
+    A_UINT32 twice_max_rd_power;
+
+    /** current channel and home channel's maximum possible tx power */
+    A_INT32 max_tx_power;
+    A_INT32 home_max_tx_power;
+
+    /** channel's Power Spectral Density  */
+    A_UINT32 psd_power;
+    /** channel's EIRP power */
+    A_UINT32 eirp_power;
+    /** 6G channel power mode
+     * 0-LPI, 1-SP, 2-VLPI and 3-SP_CLIENT power mode
+     */
+    A_UINT32 power_type_6ghz;
+
+    /** sub-band channels and corresponding Tx-power */
+    A_UINT32 sub_band_cfreq[HTT_MAX_CH_PWR_INFO_SIZE];
+    A_UINT32 sub_band_txpower[HTT_MAX_CH_PWR_INFO_SIZE];
+} htt_phy_tpc_stats_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -7197,6 +7301,7 @@ typedef struct {
     htt_phy_stats_tlv phy_stats;
     htt_phy_reset_counters_tlv phy_reset_counters;
     htt_phy_reset_stats_tlv phy_reset_stats;
+    htt_phy_tpc_stats_tlv phy_tpc_stats;
 } htt_phy_counters_and_phy_stats_t;
 
 /* NOTE:
