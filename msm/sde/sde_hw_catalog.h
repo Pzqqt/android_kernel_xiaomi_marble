@@ -516,6 +516,7 @@ enum {
  *                              blocks
  * @SDE_CTL_UIDLE               CTL supports uidle
  * @SDE_CTL_UNIFIED_DSPP_FLUSH  CTL supports only one flush bit for DSPP
+ * @SDE_CTL_DMA4_DMA5		CTL supports DMA4 & DMA5 pipes
  * @SDE_CTL_MAX
  */
 enum {
@@ -525,6 +526,7 @@ enum {
 	SDE_CTL_ACTIVE_CFG,
 	SDE_CTL_UIDLE,
 	SDE_CTL_UNIFIED_DSPP_FLUSH,
+	SDE_CTL_DMA4_DMA5,
 	SDE_CTL_MAX
 };
 

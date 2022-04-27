@@ -1803,7 +1803,8 @@ int sde_plane_validate_multirect_v2(struct sde_multirect_plane_states *plane)
 				drm_state[i]->crtc_y, drm_state[i]->crtc_w,
 				drm_state[i]->crtc_h, !q16_data);
 
-		if (src[i].w != dst[i].w || src[i].h != dst[i].h) {
+		if (!SDE_FORMAT_IS_FSC(fmt[i]) &&
+				(src[i].w != dst[i].w || src[i].h != dst[i].h)) {
 			SDE_ERROR_PLANE(sde_plane[i],
 				"scaling is not supported in multirect mode\n");
 			return -EINVAL;
@@ -3751,11 +3752,11 @@ static void _sde_plane_setup_capabilities_blob(struct sde_plane *psde,
 	sde_kms_info_add_keyint(info, "max_per_pipe_bw_high",
 			psde->pipe_sblk->max_per_pipe_bw_high * 1000LL);
 
-	if (psde->pipe <= SSPP_VIG3 && psde->pipe >= SSPP_VIG0)
+	if (SDE_SSPP_VALID_VIG(psde->pipe))
 		pipe_id = psde->pipe -  SSPP_VIG0;
-	else if (psde->pipe <= SSPP_RGB3 && psde->pipe >= SSPP_RGB0)
+	else if (SDE_SSPP_VALID_RGB(psde->pipe))
 		pipe_id = psde->pipe -  SSPP_RGB0;
-	else if (psde->pipe <= SSPP_DMA3 && psde->pipe >= SSPP_DMA0)
+	else if (SDE_SSPP_VALID_DMA(psde->pipe))
 		pipe_id = psde->pipe -  SSPP_DMA0;
 	else
 		pipe_id = -1;
