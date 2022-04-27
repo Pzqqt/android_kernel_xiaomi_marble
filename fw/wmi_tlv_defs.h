@@ -1268,6 +1268,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_tid_to_link_map,
     WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_assoc_tid_to_link_map,
+    WMITLV_TAG_STRUC_wmi_peer_delete_mlo_params,
 } WMITLV_TAG_ID;
 
 /*
@@ -2073,7 +2074,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CREATE_CMDID);
 
 /* Peer delete Cmd */
 #define WMITLV_TABLE_WMI_PEER_DELETE_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_delete_cmd_fixed_param, wmi_peer_delete_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_delete_cmd_fixed_param, wmi_peer_delete_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_delete_mlo_params, mlo_params, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_DELETE_CMDID);
 
