@@ -1305,6 +1305,7 @@ static struct msm_vidc_platform_data neo_data = {
 	.csc_data.vpe_csc_custom_limit_coeff = vpe_csc_custom_limit_coeff,
 	.ubwc_config = ubwc_config_neo,
 	.bus_bw_nrt = bus_bw_nrt,
+	.vpu_ver = VPU_VERSION_IRIS2,
 };
 
 static int msm_vidc_init_data(struct msm_vidc_core *core)

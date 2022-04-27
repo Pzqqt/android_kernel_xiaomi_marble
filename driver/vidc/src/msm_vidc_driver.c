@@ -6045,7 +6045,7 @@ int msm_vidc_get_src_clk_scaling_ratio(struct msm_vidc_core *core)
 		return -EINVAL;
 	}
 
-	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1)
+	if (core->platform->data.vpu_ver == VPU_VERSION_IRIS2_1PIPE)
 		scaling_ratio = 1;
 
 	return scaling_ratio;
