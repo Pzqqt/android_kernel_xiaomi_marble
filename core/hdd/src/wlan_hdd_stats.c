@@ -5704,7 +5704,8 @@ void hdd_wlan_fill_per_chain_rssi_stats(struct station_info *sinfo,
 }
 #endif
 
-#if defined(CFG80211_RX_FCS_ERROR_REPORTING_SUPPORT)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)) || \
+	defined(CFG80211_RX_FCS_ERROR_REPORTING_SUPPORT)
 static void hdd_fill_fcs_and_mpdu_count(struct hdd_adapter *adapter,
 					struct station_info *sinfo)
 {
