@@ -4653,6 +4653,8 @@ typedef struct {
     A_UINT32 ax_su_embedded_trigger_data_ppdu;
     /** 11AX HE SU data + embedded trigger PPDU failure stats (stats for HETP ack failure PPDU cnt) */
     A_UINT32 ax_su_embedded_trigger_data_ppdu_err;
+    /** sta side trigger stats */
+    A_UINT32 trigger_type_11be[HTT_TX_PDEV_STATS_NUM_11BE_TRIGGER_TYPES];
 } htt_tx_pdev_rate_stats_tlv;
 
 typedef struct {
@@ -5209,6 +5211,22 @@ typedef struct {
     A_UINT32 rx_ulofdma_non_data_nusers;
     A_UINT32 rx_ulofdma_data_nusers;
 } htt_rx_pdev_ul_ofdma_user_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 user_index;
+    /** PPDU level */
+    A_UINT32 be_rx_ulofdma_non_data_ppdu;
+    /** PPDU level */
+    A_UINT32 be_rx_ulofdma_data_ppdu;
+    /** MPDU level */
+    A_UINT32 be_rx_ulofdma_mpdu_ok;
+    /** MPDU level */
+    A_UINT32 be_rx_ulofdma_mpdu_fail;
+    A_UINT32 be_rx_ulofdma_non_data_nusers;
+    A_UINT32 be_rx_ulofdma_data_nusers;
+} htt_rx_pdev_be_ul_ofdma_user_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;

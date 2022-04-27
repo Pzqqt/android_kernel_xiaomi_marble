@@ -741,6 +741,7 @@ typedef enum {
     HTT_STATS_TXBF_OFDMA_BE_BRP_STATS_TAG          = 153, /* htt_txbf_ofdma_be_brp_stats_tlv */
     HTT_STATS_TXBF_OFDMA_BE_STEER_STATS_TAG        = 154, /* htt_txbf_ofdma_be_steer_stats_tlv */
     HTT_STATS_DMAC_RESET_STATS_TAG                 = 155, /* htt_dmac_reset_stats_tlv */
+    HTT_STATS_RX_PDEV_BE_UL_OFDMA_USER_STATS_TAG   = 156, /* htt_rx_pdev_be_ul_ofdma_user_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
