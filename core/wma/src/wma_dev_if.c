@@ -2692,7 +2692,7 @@ static QDF_STATUS wma_set_vdev_latency_level_param(tp_wma_handle wma_handle,
 			mac->mlme_cfg->wlm_config.multi_client_ll_support;
 	multi_client_ll_caps =
 			wlan_mlme_get_wlm_multi_client_ll_caps(mac->psoc);
-	wma_debug("[MULTI_CLIENT] INI support: %d, fw capability:%d",
+	wma_debug("INI support: %d, fw capability:%d",
 		  multi_client_ll_ini_support, multi_client_ll_caps);
 	/*
 	 * Multi-Client arbiter functionality is enabled only if both INI is

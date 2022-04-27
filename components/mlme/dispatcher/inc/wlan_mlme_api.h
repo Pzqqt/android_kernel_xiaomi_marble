@@ -261,6 +261,23 @@ QDF_STATUS wlan_mlme_set_ht_mpdu_density(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *band_capability);
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * wlan_mlme_get_wlm_multi_client_ll_caps() - Get the wlm multi client latency
+ * level capability flag
+ * @psoc: pointer to psoc object
+ *
+ * Return: True is multi client ll cap present
+ */
+bool wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
 /**
  * wlan_mlme_set_band_capability() - Set the Band capability config
  * @psoc: pointer to psoc object

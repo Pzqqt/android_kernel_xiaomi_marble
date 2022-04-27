@@ -378,8 +378,7 @@ static void hdd_cm_set_default_wlm_mode(struct hdd_adapter *adapter)
 
 	if (hdd_get_multi_client_ll_support(adapter)) {
 		client_id_bitmap = wlan_hdd_get_client_id_bitmap(adapter);
-		hdd_debug("[MULTI_CLIENT] client_id_bitmap: 0x%x",
-			  client_id_bitmap);
+		hdd_debug("client_id_bitmap: 0x%x", client_id_bitmap);
 		status = wlan_hdd_set_wlm_latency_level(adapter, def_level,
 							client_id_bitmap, true);
 		wlan_hdd_deinit_multi_client_info_table(adapter);

@@ -6132,7 +6132,7 @@ static void hdd_set_multi_client_ll_support(struct hdd_adapter *adapter)
 	multi_client_ll_caps =
 		ucfg_mlme_get_wlm_multi_client_ll_caps(hdd_ctx->psoc);
 
-	hdd_debug("[MULTI_CLIENT] fw caps: %d, ini: %d", multi_client_ll_caps,
+	hdd_debug("fw caps: %d, ini: %d", multi_client_ll_caps,
 		  multi_client_ll_ini_support);
 	if (multi_client_ll_caps && multi_client_ll_ini_support)
 		adapter->multi_client_ll_support = true;
@@ -13378,7 +13378,7 @@ void wlan_hdd_deinit_multi_client_info_table(struct hdd_adapter *adapter)
 {
 	uint8_t i;
 
-	hdd_debug("[MULTI_LL] deinitializing the client info table");
+	hdd_debug("deinitializing the client info table");
 	/* de-initialize the table for host driver client */
 	for (i = 0; i < WLM_MAX_HOST_CLIENT; i++) {
 		if (adapter->client_info[i].in_use) {

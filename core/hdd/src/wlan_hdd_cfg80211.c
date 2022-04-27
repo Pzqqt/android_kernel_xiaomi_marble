@@ -9090,8 +9090,7 @@ QDF_STATUS wlan_hdd_set_wlm_latency_level(struct hdd_adapter *adapter,
 		goto err;
 	}
 
-	hdd_debug("[MULTI_CLIENT] latency received from FW:%d",
-		  priv->latency_level);
+	hdd_debug("latency level received from FW:%d", priv->latency_level);
 	adapter->latency_level = priv->latency_level;
 err:
 	if (request)

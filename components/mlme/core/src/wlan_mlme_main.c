@@ -2279,13 +2279,6 @@ mlme_get_cfg_multi_client_ll_ini_support(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
-
-bool wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
-{
-	return wlan_psoc_nif_fw_ext2_cap_get(psoc,
-					WLAN_SOC_WLM_MULTI_CLIENT_LL_SUPPORT);
-}
-
 #else
 static inline void
 mlme_init_wlm_multi_client_ll_support(struct wlan_objmgr_psoc *psoc,

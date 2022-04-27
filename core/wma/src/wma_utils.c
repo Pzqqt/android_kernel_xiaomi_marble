@@ -4890,7 +4890,7 @@ int wma_latency_level_event_handler(void *wma_ctx, uint8_t *event_buff,
 
 	event_data.vdev_id = event->vdev_id;
 	event_data.latency_level = event->latency_level;
-	wma_debug("[MULTI_CLIENT]received event latency level :%d, vdev_id:%d",
+	wma_debug("received event latency level :%d, vdev_id:%d",
 		  event->latency_level, event->vdev_id);
 	pmac->sme.latency_level_event_handler_cb(&event_data,
 						     event->vdev_id);
