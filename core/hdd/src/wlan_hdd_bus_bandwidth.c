@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,6 +57,10 @@ static bus_bw_table_type bus_bw_table_default = {
 				       BUS_BW_LEVEL_2, BUS_BW_LEVEL_3,
 				       BUS_BW_LEVEL_4, BUS_BW_LEVEL_6,
 				       BUS_BW_LEVEL_7, BUS_BW_LEVEL_8},
+	[QCA_WLAN_802_11_MODE_11BE] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_1,
+				       BUS_BW_LEVEL_2, BUS_BW_LEVEL_3,
+				       BUS_BW_LEVEL_4, BUS_BW_LEVEL_6,
+				       BUS_BW_LEVEL_7, BUS_BW_LEVEL_8},
 };
 
 /**
@@ -88,7 +92,11 @@ static bus_bw_table_type bus_bw_table_low_latency = {
 	[QCA_WLAN_802_11_MODE_11AX] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
 				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
 				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
-				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8}
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8},
+	[QCA_WLAN_802_11_MODE_11BE] = {BUS_BW_LEVEL_NONE, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8,
+				       BUS_BW_LEVEL_8, BUS_BW_LEVEL_8},
 };
 
 /**
@@ -144,6 +152,11 @@ bbm_get_bus_bw_level_vote(struct hdd_adapter *adapter,
 	struct bbm_context *bbm_ctx = adapter->hdd_ctx->bbm_ctx;
 	bus_bw_table_type *lkp_table = bbm_ctx->curr_bus_bw_lookup_table;
 
+	if (tput_level >= TPUT_LEVEL_MAX) {
+		hdd_err("invalid tput level %d", tput_level);
+		return  BUS_BW_LEVEL_NONE;
+	}
+
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
@@ -154,7 +167,8 @@ bbm_get_bus_bw_level_vote(struct hdd_adapter *adapter,
 		dot11_mode = hdd_convert_cfgdot11mode_to_80211mode(sta_ctx->
 							   conn_info.dot11mode);
 		if (dot11_mode >= QCA_WLAN_802_11_MODE_INVALID) {
-			hdd_err("invalid STA/P2P-CLI dot11 mode");
+			hdd_err("invalid STA/P2P-CLI dot11 mode %d",
+				dot11_mode);
 			break;
 		}
 

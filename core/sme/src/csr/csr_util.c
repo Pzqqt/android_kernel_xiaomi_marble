@@ -1418,6 +1418,7 @@ enum csr_cfgdot11mode csr_phy_mode_to_dot11mode(enum wlan_phymode phy_mode)
 	case WLAN_PHYMODE_11BEA_EHT80:
 	case WLAN_PHYMODE_11BEG_EHT80:
 	case WLAN_PHYMODE_11BEA_EHT160:
+	case WLAN_PHYMODE_11BEA_EHT320:
 		return eCSR_CFG_DOT11_MODE_11BE;
 #endif
 	default:
