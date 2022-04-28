@@ -4025,7 +4025,8 @@ wmi_fill_rso_start_scan_tlv(struct wlan_roam_scan_offload_params *rso_req,
 	src_scan_params = &rso_req->rso_scan_params;
 	scan_tlv->scan_ctrl_flags = WMI_SCAN_ADD_CCK_RATES |
 				    WMI_SCAN_ADD_OFDM_RATES |
-				    WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
+				    WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ |
+				    WMI_SCAN_FILTER_PROBE_REQ;
 	if (rso_req->is_rso_stop) {
 		scan_tlv->dwell_time_active =
 			ROAM_SCAN_DWELL_TIME_ACTIVE_DEFAULT;
