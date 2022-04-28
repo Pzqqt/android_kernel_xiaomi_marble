@@ -10679,6 +10679,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	cpumask_t pm_qos_cpu_mask_tx, pm_qos_cpu_mask_rx, pm_qos_cpu_mask;
 	bool is_rx_pm_qos_high;
 	bool is_tx_pm_qos_high;
+	bool pmqos_on_low_tput = false;
 	enum tput_level tput_level;
 	struct bbm_params param = {0};
 	bool legacy_client = false;
@@ -10833,6 +10834,13 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			is_rx_pm_qos_high = false;
 			is_tx_pm_qos_high = false;
 			cpumask_clear(&pm_qos_cpu_mask);
+			if (next_vote_level == PLD_BUS_WIDTH_LOW &&
+			    rx_packets > tx_packets &&
+			    !legacy_client) {
+				pmqos_on_low_tput = true;
+				hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask,
+							   false);
+			}
 		} else {
 			cpumask_clear(&pm_qos_cpu_mask);
 
@@ -10852,7 +10860,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	}
 
 	if (vote_level_change || tx_level_change || rx_level_change) {
-		hdd_debug("tx:%llu[%llu(off)+%llu(no-off)] rx:%llu[%llu(off)+%llu(no-off)] next_level(vote %u rx %u tx %u rtpm %d) pm_qos(rx:%u,%*pb tx:%u,%*pb)",
+		hdd_debug("tx:%llu[%llu(off)+%llu(no-off)] rx:%llu[%llu(off)+%llu(no-off)] next_level(vote %u rx %u tx %u rtpm %d) pm_qos(rx:%u,%*pb tx:%u,%*pb on_low_tput:%u)",
 			  tx_packets,
 			  hdd_ctx->prev_tx_offload_pkts,
 			  hdd_ctx->prev_no_tx_offload_pkts,
@@ -10864,7 +10872,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			  is_rx_pm_qos_high,
 			  cpumask_pr_args(&pm_qos_cpu_mask_rx),
 			  is_tx_pm_qos_high,
-			  cpumask_pr_args(&pm_qos_cpu_mask_tx));
+			  cpumask_pr_args(&pm_qos_cpu_mask_tx),
+			  pmqos_on_low_tput);
 
 		if (hdd_ctx->hdd_txrx_hist) {
 			hdd_ctx->hdd_txrx_hist[index].next_tx_level =
