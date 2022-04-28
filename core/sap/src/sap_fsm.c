@@ -2692,7 +2692,7 @@ static QDF_STATUS sap_validate_dfs_nol(struct sap_context *sap_ctx,
 	 * has leakage to the channels in NOL
 	 */
 
-	if (wlan_vdev_mlme_is_mlo_ap(sap_ctx->vdev)) {
+	if (sap_phymode_is_eht(sap_ctx->phyMode)) {
 		ch_state =
 			wlan_reg_get_channel_state_from_secondary_list_for_freq(
 						mac_ctx->pdev, sap_freq);
