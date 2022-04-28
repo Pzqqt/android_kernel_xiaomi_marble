@@ -1512,6 +1512,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	uint16_t aid, buff_size;
 	bool he_cap = false;
 	bool eht_cap = false;
+	uint8_t extd_buff_size = 0;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -1555,15 +1556,22 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	if (mac_ctx->usr_cfg_ba_buff_size)
 		buff_size = mac_ctx->usr_cfg_ba_buff_size;
 
+	if (addba_req->addba_extn_element.present)
+		/* addba_extn_element should be updated per 11be spec */
+		extd_buff_size = addba_req->addba_extn_element.reserved >> 2;
+
 	if (addba_req->addba_param_set.buff_size)
 		buff_size = QDF_MIN(buff_size,
 				    addba_req->addba_param_set.buff_size);
+	else if (extd_buff_size)
+		/* limit the buff size */
+		buff_size = QDF_MIN(buff_size, MAX_EHT_BA_BUFF_SIZE);
 
-	pe_debug("token %d tid %d timeout %d buff_size in frame %d buf_size calculated %d ssn %d",
+	pe_debug("token %d tid %d timeout %d buff_size in frame %d buf_size calculated %d ssn %d, extd buff size %d",
 		 addba_req->DialogToken.token, addba_req->addba_param_set.tid,
 		 addba_req->ba_timeout.timeout,
 		 addba_req->addba_param_set.buff_size, buff_size,
-		 addba_req->ba_start_seq_ctrl.ssn);
+		 addba_req->ba_start_seq_ctrl.ssn, extd_buff_size);
 
 	qdf_status = cdp_addba_requestprocess(
 					soc, mac_hdr->sa,
