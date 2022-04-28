@@ -7495,6 +7495,9 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	struct idr *idr;
 	bool reg = false;
 	enum ipa_ip_type ip;
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	struct ipa_minidump_data *mini_dump;
+#endif
 
 	if (ipa3_ctx == NULL) {
 		IPADBG("IPA driver haven't initialized\n");
@@ -7859,7 +7862,16 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		IPADBG("Fail to init spearhead ipa lnx module");
 
 	pr_info("IPA driver initialization was successful.\n");
-
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	/*Adding ipa3_ctx pointer to minidump list*/
+	mini_dump = (struct ipa_minidump_data *)kzalloc(sizeof(struct ipa_minidump_data), GFP_KERNEL);
+	if (mini_dump != NULL) {
+		strlcpy(mini_dump->data.owner, "ipa3_ctx", sizeof(mini_dump->data.owner));
+		mini_dump->data.vaddr = (unsigned long)(ipa3_ctx);
+		mini_dump->data.size = sizeof(struct ipa3_context);
+		list_add(&mini_dump->entry, &ipa3_ctx->minidump_list_head);
+	}
+#endif
 	return 0;
 
 fail_teth_bridge_driver_init:
@@ -8664,6 +8676,26 @@ static u32 get_ipa_gen_rx_cmn_temp_pool_size(u32 rx_cmn_temp_pool_size)
         return IPA_GENERIC_RX_CMN_TEMP_POOL_SZ_FACTOR;
 }
 
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+static int qcom_va_md_ipa_notif_handler(struct notifier_block *this,
+					unsigned long event, void *ptr)
+{
+	struct ipa_minidump_data *testptr;
+	struct ipa_minidump_data *ptr_next;
+
+	list_for_each_entry_safe(testptr, ptr_next, &ipa3_ctx->minidump_list_head, entry) {
+		qcom_va_md_add_region(&testptr->data);
+	}
+
+	return NOTIFY_OK;
+}
+
+static struct notifier_block qcom_va_md_ipa_notif_blk = {
+	.notifier_call = qcom_va_md_ipa_notif_handler,
+	.priority = INT_MAX,
+};
+#endif
+
 /**
  * ipa3_pre_init() - Initialize the IPA Driver.
  * This part contains all initialization which doesn't require IPA HW, such
@@ -9042,6 +9074,8 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		}
 	}
 
+	INIT_LIST_HEAD(&ipa3_ctx->minidump_list_head);
+
 	/*
 	 * Setup access for register collection/dump on crash
 	 */
@@ -9353,6 +9387,14 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->is_modem_up = false;
 	ipa3_ctx->mhi_ctrl_state = IPA_MHI_CTRL_NOT_SETUP;
 
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	result = qcom_va_md_register("ipa_mini", &qcom_va_md_ipa_notif_blk);
+
+	if(result)
+		IPAERR("ipa mini qcom_va_md_register failed = %d\n", result);
+	else
+		IPADBG("ipa mini qcom_va_md_register success\n");
+#endif
 	return 0;
 
 fail_rmnet_ll_init:

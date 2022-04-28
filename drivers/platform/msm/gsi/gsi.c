@@ -25,6 +25,7 @@
 #include <linux/wait.h>
 #include <linux/delay.h>
 #include <linux/version.h>
+#include <soc/qcom/minidump.h>
 
 #define CREATE_TRACE_POINTS
 #include "gsi_trace.h"
@@ -5832,6 +5833,25 @@ int gsi_get_fw_version(struct gsi_fw_version *ver)
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+static int qcom_va_md_gsi_notif_handler(struct notifier_block *this,
+				unsigned long event, void *ptr)
+{
+	struct va_md_entry entry;
+
+	strlcpy(entry.owner, "gsi_mini", sizeof(entry.owner));
+	entry.vaddr = (unsigned long)gsi_ctx;
+	entry.size = sizeof(struct gsi_ctx);
+	qcom_va_md_add_region(&entry);
+	return NOTIFY_OK;
+}
+
+static struct notifier_block qcom_va_md_gsi_notif_blk = {
+        .notifier_call = qcom_va_md_gsi_notif_handler,
+        .priority = INT_MAX,
+};
+#endif
+
 static int msm_gsi_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
@@ -5863,6 +5883,15 @@ static int msm_gsi_probe(struct platform_device *pdev)
 	gsi_ctx->dev = dev;
 	init_completion(&gsi_ctx->gen_ee_cmd_compl);
 	gsi_debugfs_init();
+
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	result = qcom_va_md_register("gsi_mini", &qcom_va_md_gsi_notif_blk);
+
+	if(result)
+		GSIERR("gsi mini qcom_va_md_register failed = %d\n", result);
+	else
+		GSIDBG("gsi mini qcom_va_md_register success\n");
+#endif
 
 	return 0;
 }
