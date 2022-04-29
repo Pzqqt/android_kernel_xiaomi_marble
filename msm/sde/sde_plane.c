@@ -2808,11 +2808,11 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 	case SDE_SYSCACHE_LLCC_DISP:
 		cache_type = SDE_SYS_CACHE_DISP;
 		break;
-	case SDE_SYSCACHE_LLCC_EVA_LEFT:
-		cache_type = SDE_SYS_CACHE_EVA_LEFT;
+	case SDE_SYSCACHE_LLCC_DISP_LEFT:
+		cache_type = SDE_SYS_CACHE_DISP_LEFT;
 		break;
-	case SDE_SYSCACHE_LLCC_EVA_RIGHT:
-		cache_type = SDE_SYS_CACHE_EVA_RIGHT;
+	case SDE_SYSCACHE_LLCC_DISP_RIGHT:
+		cache_type = SDE_SYS_CACHE_DISP_RIGHT;
 		break;
 	}
 
@@ -2837,11 +2837,6 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
 				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
 		pstate->sc_cfg.type = cache_type;
-		if (cache_type == SDE_SYS_CACHE_EVA_LEFT ||
-			cache_type == SDE_SYS_CACHE_EVA_RIGHT) {
-			pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
-			pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
-		}
 	} else if (pstate->static_cache_state == CACHE_STATE_FRAME_READ) {
 		pstate->sc_cfg.rd_en = true;
 		pstate->sc_cfg.rd_scid = sc_cfg[cache_type].llcc_scid;
@@ -2849,11 +2844,26 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
 				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
 		pstate->sc_cfg.type = cache_type;
-		if (cache_type == SDE_SYS_CACHE_EVA_LEFT ||
-			cache_type == SDE_SYS_CACHE_EVA_RIGHT) {
-			pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
-			pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
-		}
+	}
+
+	if (cache_type == SDE_SYS_CACHE_DISP_LEFT) {
+		pstate->sc_cfg.rd_en = true;
+		pstate->sc_cfg.rd_scid = sc_cfg[SDE_SYS_CACHE_DISP_LEFT].llcc_scid;
+		pstate->sc_cfg.rd_noallocate = true;
+		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG | SSPP_SYS_CACHE_SCID |
+					SSPP_SYS_CACHE_NO_ALLOC;
+		pstate->sc_cfg.type = cache_type;
+		pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
+		pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
+	} else if (cache_type == SDE_SYS_CACHE_DISP_RIGHT) {
+		pstate->sc_cfg.rd_en = true;
+		pstate->sc_cfg.rd_scid = sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].llcc_scid;
+		pstate->sc_cfg.rd_noallocate = true;
+		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG | SSPP_SYS_CACHE_SCID |
+					SSPP_SYS_CACHE_NO_ALLOC;
+		pstate->sc_cfg.type = cache_type;
+		pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
+		pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
 	}
 
 	if (!pstate->sc_cfg.rd_en && !prev_rd_en)
@@ -3839,8 +3849,8 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 
 	static const struct drm_prop_enum_list e_syscache_type[] = {
 		{SDE_SYSCACHE_LLCC_DISP, "llcc_disp"},
-		{SDE_SYSCACHE_LLCC_EVA_LEFT, "eva_left"},
-		{SDE_SYSCACHE_LLCC_EVA_RIGHT,  "eva_right"},
+		{SDE_SYSCACHE_LLCC_DISP_LEFT, "disp_left"},
+		{SDE_SYSCACHE_LLCC_DISP_RIGHT,  "disp_right"},
 	};
 	struct sde_kms_info *info;
 	struct sde_plane *psde = to_sde_plane(plane);

@@ -1934,7 +1934,9 @@ static void sde_sspp_set_features(struct sde_mdss_cfg *sde_cfg,
 		if (sde_cfg->uidle_cfg.uidle_rev)
 			set_bit(SDE_PERF_SSPP_UIDLE, &sspp->perf_features);
 
-		if (sde_cfg->sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache)
+		if (sde_cfg->sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache ||
+			sde_cfg->sc_cfg[SDE_SYS_CACHE_DISP_LEFT].has_sys_cache ||
+			sde_cfg->sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].has_sys_cache)
 			set_bit(SDE_PERF_SSPP_SYS_CACHE, &sspp->perf_features);
 
 		if (sde_cfg->sspp_multirect_error)
@@ -3509,6 +3511,7 @@ static int sde_cache_parse_dt(struct device_node *np,
 	struct llcc_slice_desc *slice;
 	struct sde_sc_cfg *sc_cfg = sde_cfg->sc_cfg;
 	struct device_node *llcc_node;
+	bool llcc_disp_lr_enabled = false;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
@@ -3524,52 +3527,53 @@ static int sde_cache_parse_dt(struct device_node *np,
 		return 0;
 	}
 
-	slice = llcc_slice_getd(LLCC_DISP);
-	if (IS_ERR_OR_NULL(slice)) {
-		SDE_ERROR("failed to get system cache %ld\n", PTR_ERR(slice));
-		return -EINVAL;
-	}
+	llcc_disp_lr_enabled = test_bit(SDE_MDP_LLCC_DISP_LR, &sde_cfg->mdp[0].features);
 
-	sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache = true;
-	sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid = llcc_get_slice_id(slice);
-	sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size = llcc_get_slice_size(slice);
-	SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
+	if (!llcc_disp_lr_enabled) {
+		slice = llcc_slice_getd(LLCC_DISP);
+		if (IS_ERR_OR_NULL(slice)) {
+			SDE_ERROR("failed to get system cache %ld\n", PTR_ERR(slice));
+			return -EINVAL;
+		}
+
+		sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache = true;
+		sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid = llcc_get_slice_id(slice);
+		sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size = llcc_get_slice_size(slice);
+		SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
 			sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid,
 			sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
-	llcc_slice_putd(slice);
+		llcc_slice_putd(slice);
+	} else {
+		slice = llcc_slice_getd(LLCC_DISLFT);
+		if (IS_ERR_OR_NULL(slice)) {
+			SDE_ERROR("failed to get disp left system cache %ld\n",
+				PTR_ERR(slice));
+			return -EINVAL;
+		}
 
-	if (!sde_cfg->eva_syscache_supported)
-		return 0;
+		sc_cfg[SDE_SYS_CACHE_DISP_LEFT].has_sys_cache = true;
+		sc_cfg[SDE_SYS_CACHE_DISP_LEFT].llcc_scid = llcc_get_slice_id(slice);
+		sc_cfg[SDE_SYS_CACHE_DISP_LEFT].llcc_slice_size = llcc_get_slice_size(slice);
+		SDE_DEBUG("disp left cache scid:%d slice_size:%zu kb\n",
+			sc_cfg[SDE_SYS_CACHE_DISP_LEFT].llcc_scid,
+			sc_cfg[SDE_SYS_CACHE_DISP_LEFT].llcc_slice_size);
+		llcc_slice_putd(slice);
 
-	slice = llcc_slice_getd(LLCC_EVALFT);
-	if (IS_ERR_OR_NULL(slice)) {
-		SDE_ERROR("failed to get eva left system cache %ld\n",
-			PTR_ERR(slice));
-		return -EINVAL;
+		slice = llcc_slice_getd(LLCC_DISRGHT);
+		if (IS_ERR_OR_NULL(slice)) {
+			SDE_ERROR("failed to get disp right system cache %ld\n",
+				PTR_ERR(slice));
+			return -EINVAL;
+		}
+
+		sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].has_sys_cache = true;
+		sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].llcc_scid = llcc_get_slice_id(slice);
+		sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].llcc_slice_size = llcc_get_slice_size(slice);
+		SDE_DEBUG("disp right cache scid:%d slice_size:%zu kb\n",
+			sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].llcc_scid,
+			sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].llcc_slice_size);
+		llcc_slice_putd(slice);
 	}
-
-	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].has_sys_cache = true;
-	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_scid = llcc_get_slice_id(slice);
-	sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_slice_size = llcc_get_slice_size(slice);
-	SDE_DEBUG("eva left cache scid:%d slice_size:%zu kb\n",
-		sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_scid,
-		sc_cfg[SDE_SYS_CACHE_EVA_LEFT].llcc_slice_size);
-	llcc_slice_putd(slice);
-
-	slice = llcc_slice_getd(LLCC_EVARGHT);
-	if (IS_ERR_OR_NULL(slice)) {
-		SDE_ERROR("failed to get eva left system cache %ld\n",
-			PTR_ERR(slice));
-		return -EINVAL;
-	}
-
-	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].has_sys_cache = true;
-	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_scid = llcc_get_slice_id(slice);
-	sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_slice_size = llcc_get_slice_size(slice);
-	SDE_DEBUG("eva right cache scid:%d slice_size:%zu kb\n",
-		sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_scid,
-		sc_cfg[SDE_SYS_CACHE_EVA_RIGHT].llcc_slice_size);
-	llcc_slice_putd(slice);
 
 	return 0;
 }
@@ -5352,6 +5356,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_avr_step = true;
 		sde_cfg->has_ubwc_stats = true;
 		sde_cfg->has_vbif_clk_split = true;
+		sde_cfg->syscache_supported = true;
+		set_bit(SDE_MDP_LLCC_DISP_LR, &sde_cfg->mdp[0].features);
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;
