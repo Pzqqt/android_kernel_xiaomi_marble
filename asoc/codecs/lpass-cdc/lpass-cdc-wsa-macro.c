@@ -2175,7 +2175,7 @@ static int lpass_cdc_wsa_macro_rx_mux_put(struct snd_kcontrol *kcontrol,
 			dev_err(wsa_dev, "%s: AIF reset already\n", __func__);
 			return 0;
 		}
-		if (aif_rst >= LPASS_CDC_WSA_MACRO_RX_MAX) {
+		if (aif_rst >= LPASS_CDC_WSA_MACRO_MAX_DAIS) {
 			dev_err(wsa_dev, "%s: Invalid AIF reset\n", __func__);
 			return 0;
 		}
