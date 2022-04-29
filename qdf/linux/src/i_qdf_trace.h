@@ -564,7 +564,7 @@ __qdf_minidump_remove(void *start_addr, const size_t size,
 	md_entry.phys_addr = virt_to_phys(start_addr);
 	md_entry.size = size;
 	msm_minidump_remove_region(&md_entry);
-	minidump_table[qdf_get_name_idx(name)] = NULL;
+	minidump_table[index] = NULL;
 }
 #else
 static inline void
