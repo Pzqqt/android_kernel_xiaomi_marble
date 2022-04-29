@@ -2437,6 +2437,25 @@ cm_roam_pmkid_request_handler(struct roam_pmkid_req_event *data)
 
 	return status;
 }
+
+bool wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
+				      uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool ret;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+
+	if (!vdev)
+		return false;
+
+	ret = cm_is_vdev_roam_sync_inprogress(vdev);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return ret;
+}
 #else
 static void
 cm_handle_roam_offload_events(struct roam_offload_roam_event *roam_event)

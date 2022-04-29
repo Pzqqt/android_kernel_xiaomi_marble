@@ -1066,6 +1066,16 @@ QDF_STATUS
 cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
 				struct roam_scan_candidate_frame *candidate);
 
+/** wlan_cm_is_roam_sync_in_progress() - Check if the vdev is in roam sync
+ * substate
+ *
+ * @psoc: psoc pointer
+ * @vdev_id: vdev_id
+ *
+ * Return: bool
+ */
+bool wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
+				      uint8_t vdev_id);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1231,6 +1241,13 @@ cm_roam_candidate_event_handler(struct wlan_objmgr_psoc *psoc,
 				struct roam_scan_candidate_frame *candidate)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool
+wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id)
+{
+	return false;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
