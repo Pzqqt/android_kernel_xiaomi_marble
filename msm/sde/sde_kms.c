@@ -3789,10 +3789,17 @@ static int sde_kms_trigger_null_flush(struct msm_kms *kms)
 
 	sde_kms = to_sde_kms(kms);
 
-	if (!sde_kms->splash_data.num_splash_displays ||
-		sde_kms->dsi_display_count == sde_kms->splash_data.num_splash_displays)
-		return rc;
+	/* If splash handoff is done, early return*/
+	if (!sde_kms->splash_data.num_splash_displays)
+		return 0;
 
+	/* If all builtin-displays are having cont splash enabled, ignore lastclose*/
+	if (sde_kms->dsi_display_count == sde_kms->splash_data.num_splash_displays)
+		return -EINVAL;
+
+	/* Trigger NULL flush if built-in secondary/primary is stuck in splash
+	 * while the  primary/secondary is running respectively before lastclose.
+	 */
 	for (i = 0; i < MAX_DSI_DISPLAYS; i++) {
 		splash_display = &sde_kms->splash_data.splash_display[i];
 
@@ -3805,10 +3812,12 @@ static int sde_kms_trigger_null_flush(struct msm_kms *kms)
 
 			if (!rc && crtc)
 				sde_kms_cancel_delayed_work(crtc);
+			if (rc)
+				DRM_ERROR("null flush commit failure during lastclose\n");
 		}
 	}
 
-	return rc;
+	return 0;
 }
 
 static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,

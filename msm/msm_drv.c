@@ -1060,10 +1060,8 @@ static void msm_lastclose(struct drm_device *dev)
 				priv->pending_crtcs);
 
 		rc = kms->funcs->trigger_null_flush(kms);
-		if (rc) {
-			DRM_ERROR("null flush commit failure during lastclose\n");
+		if (rc)
 			return;
-		}
 	}
 
 	/*
