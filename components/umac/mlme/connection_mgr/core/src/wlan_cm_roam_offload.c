@@ -2964,6 +2964,8 @@ static void cm_fill_stop_reason(struct wlan_roam_stop_config *stop_req,
 		stop_req->reason = REASON_DISCONNECTED;
 	else if (reason == REASON_OS_REQUESTED_ROAMING_NOW)
 		stop_req->reason = REASON_OS_REQUESTED_ROAMING_NOW;
+	else if (reason == REASON_ROAM_SET_PRIMARY)
+		stop_req->reason = REASON_ROAM_SET_PRIMARY;
 	else
 		stop_req->reason = REASON_SME_ISSUED;
 }
