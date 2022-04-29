@@ -1178,7 +1178,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	struct mac_context *mac_ctx;
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev = NULL;
-	uint8_t i;
+	uint8_t i, j;
 	uint32_t *freq_list = NULL;
 	uint8_t num_of_channels = 0;
 	mac_handle_t mac_handle;
@@ -1270,10 +1270,13 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 		req->scan_req.scan_req_id = sap_context->req_id;
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 		req->scan_req.scan_f_bcast_probe = true;
-
-		req->scan_req.chan_list.num_chan = num_of_channels;
-		for (i = 0; i < num_of_channels; i++)
-			req->scan_req.chan_list.chan[i].freq = freq_list[i];
+		for (i = 0, j = 0; i < num_of_channels; i++) {
+			if (wlan_reg_is_6ghz_chan_freq(freq_list[i]) &&
+			    !wlan_reg_is_6ghz_psc_chan_freq(freq_list[i]))
+				continue;
+			req->scan_req.chan_list.chan[j++].freq = freq_list[i];
+		}
+		req->scan_req.chan_list.num_chan = j;
 		sap_context->freq_list = freq_list;
 		sap_context->num_of_channel = num_of_channels;
 		/* Set requestType to Full scan */
