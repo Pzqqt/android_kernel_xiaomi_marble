@@ -1269,6 +1269,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_assoc_tid_to_link_map,
     WMITLV_TAG_STRUC_wmi_peer_delete_mlo_params,
+    WMITLV_TAG_STRUC_wmi_roam_enable_vendor_control_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_get_vendor_control_param_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_get_vendor_control_param_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1763,6 +1766,8 @@ typedef enum {
     OP(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID) \
     OP(WMI_PEER_TX_FILTER_CMDID) \
     OP(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID) \
+    OP(WMI_ROAM_ENABLE_VENDOR_CONTROL_CMDID) \
+    OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2049,6 +2054,7 @@ typedef enum {
     OP(WMI_PMM_AVAILABLE_SCRATCH_REG_EVENTID) \
     OP(WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID) \
     OP(WMI_VDEV_LATENCY_LEVEL_EVENTID) \
+    OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4985,6 +4991,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_MU_SNIF_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_set_param_cmd_fixed_param, wmi_roam_set_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SET_PARAM_CMDID);
 
+/* Roam enable vendor control Cmd */
+#define WMITLV_TABLE_WMI_ROAM_ENABLE_VENDOR_CONTROL_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_enable_vendor_control_cmd_fixed_param, wmi_roam_enable_vendor_control_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_ENABLE_VENDOR_CONTROL_CMDID);
+
+/* Roam Get vendor control Param Cmd */
+#define WMITLV_TABLE_WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_get_vendor_control_param_cmd_fixed_param, wmi_roam_get_vendor_control_param_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID);
+
 #define WMITLV_TABLE_WMI_SAWF_SVC_CLASS_CFG_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sawf_svc_class_cfg_cmd_fixed_param, wmi_sawf_svc_class_cfg_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SAWF_SVC_CLASS_CFG_CMDID);
@@ -5371,6 +5387,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_FRAME_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_frame_event_fixed_param, wmi_roam_frame_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, frame, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_FRAME_EVENTID);
+
+/* Get Roam Vendor Control Param Event */
+#define WMITLV_TABLE_WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_get_vendor_control_param_event_fixed_param, wmi_roam_get_vendor_control_param_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID);
 
 /* WOW Wakeup Host Event */
 /* NOTE: Make sure wow_bitmap_info can be zero or one elements only */

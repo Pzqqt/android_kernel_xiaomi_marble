@@ -587,6 +587,7 @@ typedef  enum  {
     WMI_SERVICE_HW_TX_POWER_CAPS_SIGNED_SUPPORT = 334, /* Indicates FW supports updating of Tx power capabilities as signed value */
     WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT = 335, /* FW supports set param cmd combined for multiple params */
     WMI_SERVICE_AFC_PAYLOAD_CLEAR_SUPPORT = 336, /* FW supports clearing the AFC response payload in proxy mode */
+    WMI_SERVICE_FW_INI_PARSE_SUPPORT = 337, /* FW supports parsing ini configuration file */
 
     WMI_MAX_EXT2_SERVICE
 
