@@ -6303,7 +6303,7 @@ bool policy_mgr_get_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc,
 bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
 					    uint32_t ch_freq)
 {
-	uint32_t sta_sap_scc_on_dfs_chan;
+	uint32_t sta_sap_scc_on_dfs_chan, sta_sap_scc_allowed_on_indoor_chan;
 	uint32_t sap_count;
 	enum channel_state state;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -6316,6 +6316,9 @@ bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
 
 	sta_sap_scc_on_dfs_chan =
 			policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+	sta_sap_scc_allowed_on_indoor_chan =
+			policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
+
 	sap_count = policy_mgr_mode_specific_connection_count(psoc,
 							      PM_SAP_MODE,
 							      NULL);
@@ -6325,7 +6328,10 @@ bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
 			 sta_sap_scc_on_dfs_chan, sap_count, ch_freq, state);
 
 	if ((state == CHANNEL_STATE_ENABLE) || (sap_count == 0) ||
-	    ((state == CHANNEL_STATE_DFS) && sta_sap_scc_on_dfs_chan)) {
+	    (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq) &&
+	     sta_sap_scc_on_dfs_chan) ||
+	    (sta_sap_scc_allowed_on_indoor_chan &&
+	     wlan_reg_is_freq_indoor(pm_ctx->pdev, ch_freq))) {
 		policy_mgr_debug("Valid channel for channel switch");
 		return true;
 	}
@@ -6514,7 +6520,7 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 	bool sap_on_dfs = false;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	struct policy_mgr_conc_connection_info *connection;
-	bool sta_sap_scc_on_dfs_chan;
+	bool sta_sap_scc_on_dfs_chan, sta_sap_scc_allowed_on_indoor_ch;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -6545,6 +6551,9 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
 
+	sta_sap_scc_allowed_on_indoor_ch =
+		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
+
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
 		is_sta_p2p_cli =
 			connection[i].in_use &&
@@ -6563,6 +6572,58 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 		    !sta_sap_scc_on_dfs_chan && sap_on_dfs) {
 			restart_required = true;
 			break;
+		}
+
+		if (connection[i].freq == freq &&
+		    !sta_sap_scc_allowed_on_indoor_ch &&
+		    wlan_reg_is_freq_indoor(pm_ctx->pdev, connection[i].freq)) {
+			restart_required = true;
+			break;
+		}
+
+		/*
+		 * Existing connection:
+		 * 1. "STA in DFS ch and SoftAP in 2.4 GHz channel, and then
+		 * STA moves to 5 GHz non-DFS channel
+		 *
+		 * 2. "STA in indoor channel and sta_sap_scc_on_indoor_ch
+		 * ini is false & SAP has moved to 2.4 GHz channel"
+		 * STA moves back to 5 GHZ non indoor/non DFS channel
+		 *
+		 * Now SAP has to move to STA 5 GHz channel if SAP
+		 * was started on 5 GHz channel initialy.
+		 */
+		if (connection[i].freq != freq &&
+		    WLAN_REG_IS_24GHZ_CH_FREQ(freq) &&
+		    WLAN_REG_IS_5GHZ_CH_FREQ(connection[i].freq) &&
+		    !wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
+					      connection[i].freq) &&
+		    WLAN_REG_IS_5GHZ_CH_FREQ(pm_ctx->user_config_sap_ch_freq)) {
+			restart_required = true;
+
+			if (wlan_reg_is_freq_indoor(pm_ctx->pdev,
+						    connection[i].freq) &&
+			    !sta_sap_scc_allowed_on_indoor_ch)
+				restart_required = false;
+			break;
+		}
+
+		/*
+		 * SAP has to move away from indoor only channel
+		 * when STA moves out of indoor only channel and
+		 * SAP standalone support on indoor only
+		 * channel ini is disabled
+		 **/
+		if (connection[i].freq != freq &&
+		    WLAN_REG_IS_24GHZ_CH_FREQ(connection[i].freq) &&
+		    WLAN_REG_IS_5GHZ_CH_FREQ(freq) &&
+		    wlan_reg_is_freq_indoor(pm_ctx->pdev, freq) &&
+		    !policy_mgr_sap_allowed_on_indoor_freq(pm_ctx->psoc,
+							   pm_ctx->pdev,
+							   freq)) {
+			policy_mgr_debug("SAP in indoor freq: sta:%d sap:%d",
+					 connection[i].freq, freq);
+			restart_required = true;
 		}
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);

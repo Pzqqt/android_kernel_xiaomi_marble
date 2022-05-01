@@ -858,7 +858,7 @@ policy_mgr_modify_pcl_based_on_indoor(struct wlan_objmgr_psoc *psoc,
 	uint32_t pcl_list[NUM_CHANNELS];
 	uint8_t weight_list[NUM_CHANNELS];
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	bool include_indoor_channel;
+	bool include_indoor_channel, sta_sap_scc_on_indoor_channel_allowed;
 	QDF_STATUS status;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -879,8 +879,19 @@ policy_mgr_modify_pcl_based_on_indoor(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
+	/*
+	 * If STA SAP scc is allowed on indoor channels, and if STA/P2P
+	 * client is present on 5 GHz channel, include indoor channels
+	 */
+	sta_sap_scc_on_indoor_channel_allowed =
+		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
+	if (!include_indoor_channel && sta_sap_scc_on_indoor_channel_allowed &&
+	    (policy_mgr_is_special_mode_active_5g(psoc, PM_P2P_CLIENT_MODE) ||
+	     policy_mgr_is_special_mode_active_5g(psoc, PM_STA_MODE)))
+		include_indoor_channel = true;
+
 	if (include_indoor_channel) {
-		policy_mgr_debug("No more operation on indoor channel");
+		policy_mgr_debug("Indoor channels allowed. PCL not modifed for indoor channels");
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2501,10 +2512,17 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 				     uint32_t sap_ch_freq,
 				     uint32_t *intf_ch_freq)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
 	uint32_t i;
 	uint32_t sap_new_freq;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	qdf_mem_zero(&pcl, sizeof(pcl));
 
@@ -2582,6 +2600,15 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	sap_new_freq = pcl.pcl_list[0];
+	for (i = 0; i < pcl.pcl_len; i++) {
+		if (pcl.pcl_list[i] ==  pm_ctx->user_config_sap_ch_freq) {
+			sap_new_freq = pcl.pcl_list[i];
+			policy_mgr_debug("Prefer starting SAP on user configured channel:%d",
+					 sap_ch_freq);
+			goto update_freq;
+		}
+	}
+
 	/* If no SBS Try get SCC freq */
 	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq) ||
 	    (WLAN_REG_IS_5GHZ_CH_FREQ(sap_ch_freq) &&
@@ -2596,7 +2623,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 
 update_freq:
 	*intf_ch_freq = sap_new_freq;
-	policy_mgr_debug("mandatory channel:%d org sap ch %d", *intf_ch_freq,
+	policy_mgr_debug("Mandatory channel:%d org sap ch %d", *intf_ch_freq,
 			 sap_ch_freq);
 
 	return QDF_STATUS_SUCCESS;

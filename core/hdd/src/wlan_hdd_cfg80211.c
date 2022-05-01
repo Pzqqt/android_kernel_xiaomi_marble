@@ -6332,11 +6332,14 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			 *  with SAP on DFS, there cannot be conurrency on
 			 *  single radio. But then we can have multiple
 			 *  radios !!
+			 *
+			 *  Indoor channels are also marked DFS, therefore
+			 *  check if the channel has REGULATORY_CHAN_RADAR
+			 *  channel flag to identify if the channel is DFS
 			 */
-			if (CHANNEL_STATE_DFS ==
-			    wlan_reg_get_channel_state_from_secondary_list_for_freq(
-				hdd_ctx->pdev,
-				ap_ctx->operating_chan_freq)) {
+			if (wlan_reg_is_dfs_for_freq(
+						hdd_ctx->pdev,
+						ap_ctx->operating_chan_freq)) {
 				hdd_err("SAP running on DFS channel");
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
@@ -6352,13 +6355,16 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			/*
 			 *  if STA is already connected on DFS channel,
-			 *  do not disable scan on dfs channels
+			 *  do not disable scan on dfs channels.
+			 *
+			 *  Indoor channels are also marked DFS, therefore
+			 *  check if the channel has REGULATORY_CHAN_RADAR
+			 *  channel flag to identify if the channel is DFS
 			 */
 			if (hdd_cm_is_vdev_associated(adapter) &&
-			    (CHANNEL_STATE_DFS ==
-			     wlan_reg_get_channel_state_for_freq(
-				hdd_ctx->pdev,
-				sta_ctx->conn_info.chan_freq))) {
+			    wlan_reg_is_dfs_for_freq(
+				    hdd_ctx->pdev,
+				    sta_ctx->conn_info.chan_freq)) {
 				hdd_err("client connected on DFS channel");
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)

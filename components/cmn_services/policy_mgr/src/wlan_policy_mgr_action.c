@@ -1581,6 +1581,8 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
 	bool sta_sap_scc_on_lte_coex_chan =
 		policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc);
+	bool sta_sap_scc_on_indoor_channel =
+		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 	uint8_t sta_sap_scc_on_dfs_chnl_config_value = 0;
 	uint32_t cc_count, i, go_index_start, pcl_len = 0;
 	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
@@ -1601,7 +1603,9 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	}
 	if (!pm_ctx->do_sap_unsafe_ch_check)
 		return false;
-	if (!sta_sap_scc_on_dfs_chan && !sta_sap_scc_on_lte_coex_chan)
+
+	if (!sta_sap_scc_on_dfs_chan && !sta_sap_scc_on_lte_coex_chan &&
+	    !sta_sap_scc_on_indoor_channel)
 		return false;
 
 	policy_mgr_get_sta_sap_scc_on_dfs_chnl(psoc, &sta_sap_scc_on_dfs_chnl_config_value);
@@ -1641,6 +1645,7 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 					 curr_sap_freq);
 			break;
 		}
+
 		if (sta_sap_scc_on_lte_coex_chan &&
 		    !policy_mgr_is_safe_channel(psoc, op_ch_freq_list[i])) {
 			sap_vdev_id = vdev_id[i];
@@ -1650,14 +1655,28 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 					 curr_sap_freq);
 			break;
 		}
+
+		if (sta_sap_scc_on_indoor_channel &&
+		    wlan_reg_is_freq_indoor(pm_ctx->pdev, op_ch_freq_list[i]) &&
+		    pm_ctx->last_disconn_sta_freq == op_ch_freq_list[i]) {
+			sap_vdev_id = vdev_id[i];
+			curr_sap_freq = op_ch_freq_list[i];
+			policy_mgr_debug("indoor sap_ch_freq %u",
+					 curr_sap_freq);
+			break;
+		}
 	}
 
-	if (!curr_sap_freq)
+	if (!curr_sap_freq) {
+		policy_mgr_debug("SAP restart is not required");
 		return false;
+	}
+
 	mode = i >= go_index_start ? PM_P2P_GO_MODE : PM_SAP_MODE;
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, sap_vdev_id,
 						      &info, &num_cxn_del);
+
 	/* Add the user config ch as first condidate */
 	pcl_channels[0] = pm_ctx->user_config_sap_ch_freq;
 	pcl_weight[0] = 0;
@@ -2140,7 +2159,7 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 						uint32_t sta_ch_freq)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	bool sta_sap_scc_on_dfs_chan;
+	bool sta_sap_scc_on_dfs_chan, sta_sap_scc_on_indoor_channel;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2156,10 +2175,22 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 				 sta_ch_freq);
 		return true;
 	}
+
+	sta_sap_scc_on_indoor_channel =
+		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
+	if (wlan_reg_is_freq_indoor(pm_ctx->pdev, sta_ch_freq) &&
+	    sta_sap_scc_on_indoor_channel) {
+		policy_mgr_debug("STA, SAP SCC is allowed on indoor chan %u",
+				 sta_ch_freq);
+		return true;
+	}
+
 	if ((wlan_reg_is_dfs_for_freq(pm_ctx->pdev, sta_ch_freq) &&
 	     !sta_sap_scc_on_dfs_chan) ||
 	    wlan_reg_is_passive_or_disable_for_freq(
 	    pm_ctx->pdev, sta_ch_freq) ||
+	    (wlan_reg_is_freq_indoor(pm_ctx->pdev, sta_ch_freq) &&
+	    !sta_sap_scc_on_indoor_channel) ||
 	    !policy_mgr_is_safe_channel(psoc, sta_ch_freq)) {
 		if (policy_mgr_is_hw_dbs_capable(psoc))
 			return true;
@@ -2221,7 +2252,7 @@ policy_mgr_valid_sap_conc_channel_check(struct wlan_objmgr_psoc *psoc,
 	uint32_t ch_freq = *con_ch_freq;
 	bool find_alternate = false;
 	enum phy_ch_width old_ch_width;
-	bool sta_sap_scc_on_dfs_chan;
+	bool sta_sap_scc_on_dfs_chan, sta_sap_scc_on_indoor_channel;
 	bool is_dfs;
 	bool is_6ghz_cap;
 	bool is_sta_sap_scc;
@@ -2258,10 +2289,13 @@ policy_mgr_valid_sap_conc_channel_check(struct wlan_objmgr_psoc *psoc,
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
 
+	sta_sap_scc_on_indoor_channel =
+		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 	old_ch_width = ch_params->ch_width;
 	if (pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params)
 		pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params(
 			psoc, sap_vdev_id, ch_freq, ch_params);
+
 	is_dfs = wlan_mlme_check_chan_param_has_dfs(
 			pm_ctx->pdev, ch_params, ch_freq);
 	is_6ghz_cap = policy_mgr_get_ap_6ghz_capable(psoc, sap_vdev_id, NULL);
@@ -2300,9 +2334,11 @@ policy_mgr_valid_sap_conc_channel_check(struct wlan_objmgr_psoc *psoc,
 		policymgr_nofl_debug("sap not capable on SRD con ch_freq %d",
 				     ch_freq);
 	} else if (!policy_mgr_sap_allowed_on_indoor_freq(psoc, pm_ctx->pdev,
-							  ch_freq)) {
-		policymgr_nofl_debug("sap not capable on indoor con ch_freq %d",
-				     ch_freq);
+							  ch_freq) &&
+		   !(is_sta_sap_scc && sta_sap_scc_on_indoor_channel &&
+		     wlan_reg_is_freq_indoor(pm_ctx->pdev, ch_freq))) {
+		policymgr_nofl_debug("sap not capable on indoor con ch_freq %d is_sta_sap_scc:%d",
+				     ch_freq, is_sta_sap_scc);
 		find_alternate = true;
 	}
 

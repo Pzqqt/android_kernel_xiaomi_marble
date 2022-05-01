@@ -4883,13 +4883,14 @@ void pe_set_resume_channel(struct mac_context *mac, uint16_t channel,
 bool lim_isconnected_on_dfs_freq(struct mac_context *mac_ctx,
 				 qdf_freq_t oper_freq)
 {
-	if (CHANNEL_STATE_DFS ==
-	    wlan_reg_get_channel_state_for_freq(mac_ctx->pdev,
-						oper_freq)) {
+	/* Indoor channels are also marked DFS, therefore
+	 * check if the channel has REGULATORY_CHAN_RADAR
+	 * channel flag to identify if the channel is DFS
+	 */
+	if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, oper_freq))
 		return true;
-	} else {
+	else
 		return false;
-	}
 }
 
 void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)

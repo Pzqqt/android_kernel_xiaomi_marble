@@ -3728,7 +3728,7 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 	uint8_t num_cxn_del = 0;
 	bool same_band_present = false;
 	bool sbs_mlo_present = false;
-	bool allow_6ghz = true;
+	bool allow_6ghz = true, sta_sap_scc_on_indoor_channel_allowed;
 	uint8_t sta_count;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -3771,6 +3771,25 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 	 * set *intf_ch_freq = 0, to bring sap on sap_ch_freq.
 	 */
 	if (!same_band_present) {
+		/*
+		 * STA + SAP where doing SCC on 5 GHz indoor channel.
+		 * STA moved/roamed to 2.4 GHz. Move SAP to initially
+		 * started channel
+		 */
+		sta_sap_scc_on_indoor_channel_allowed =
+			policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
+		if (wlan_reg_is_freq_indoor(pm_ctx->pdev, sap_ch_freq) &&
+		    WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq) &&
+		    sta_sap_scc_on_indoor_channel_allowed) {
+			status = policy_mgr_get_sap_mandatory_channel(
+							psoc, sap_ch_freq,
+							intf_ch_freq);
+			if (QDF_IS_STATUS_SUCCESS(status))
+				return;
+
+			policy_mgr_err("No mandatory channels");
+		}
+
 		if (policy_mgr_is_current_hwmode_sbs(psoc) || sbs_mlo_present)
 			goto sbs_check;
 		/*
@@ -3804,7 +3823,6 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 		status = policy_mgr_get_sap_mandatory_channel(psoc,
 							      sap_ch_freq,
 							      intf_ch_freq);
-
 		if (QDF_IS_STATUS_SUCCESS(status))
 			return;
 
@@ -4393,7 +4411,9 @@ void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("mand list overflow (%u)", ch_freq);
 		return;
 	}
+
 	policy_mgr_debug("Ch freq: %u", ch_freq);
+
 	pm_ctx->sap_mandatory_channels[pm_ctx->sap_mandatory_channels_len++]
 		= ch_freq;
 }

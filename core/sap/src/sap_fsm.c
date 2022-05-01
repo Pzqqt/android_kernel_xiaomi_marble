@@ -508,10 +508,11 @@ is_wlansap_cac_required_for_chan(struct mac_context *mac_ctx,
 				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	} else {
-		if (wlan_reg_get_channel_state_for_freq(
-						mac_ctx->pdev,
-						chan_freq) ==
-		    CHANNEL_STATE_DFS)
+		/* Indoor channels are also marked DFS, therefore
+		 * check if the channel has REGULATORY_CHAN_RADAR
+		 * channel flag to identify if the channel is DFS
+		 */
+		if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, chan_freq))
 			is_ch_dfs = true;
 	}
 	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))
@@ -3212,10 +3213,12 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 					CHANNEL_STATE_DFS)
 				is_dfs = true;
 		} else {
-			if (wlan_reg_get_channel_state_for_freq(
-							mac_ctx->pdev,
-							sap_chan_freq) ==
-			    CHANNEL_STATE_DFS)
+			/* Indoor channels are also marked DFS, therefore
+			 * check if the channel has REGULATORY_CHAN_RADAR
+			 * channel flag to identify if the channel is DFS
+			 */
+			if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+						     sap_chan_freq))
 				is_dfs = true;
 		}
 		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ctx->chan_freq))
