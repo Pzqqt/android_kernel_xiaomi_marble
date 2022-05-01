@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -241,6 +241,8 @@ extern enum policy_mgr_conc_next_action
  * @is_force_1x1_enable: Is 1x1 forced for connection
  * @sta_sap_scc_on_dfs_chnl: STA-SAP SCC on DFS channel
  * @sta_sap_scc_on_lte_coex_chnl: STA-SAP SCC on LTE Co-ex channel
+ * @sta_sap_scc_on_indoor_channel: Allow STA-SAP scc on indoor only
+ * channels
  * @nan_sap_scc_on_lte_coex_chnl: NAN-SAP SCC on LTE Co-ex channel
  * @sap_mandatory_chnl_enable: To enable/disable SAP mandatory channels
  * @mark_indoor_chnl_disable: Mark indoor channel as disable or enable
@@ -265,6 +267,7 @@ struct policy_mgr_cfg {
 	enum force_1x1_type is_force_1x1_enable;
 	uint8_t sta_sap_scc_on_dfs_chnl;
 	uint8_t sta_sap_scc_on_lte_coex_chnl;
+	bool sta_sap_scc_on_indoor_channel;
 	uint8_t nan_sap_scc_on_lte_coex_chnl;
 	uint8_t sap_mandatory_chnl_enable;
 	uint8_t mark_indoor_chnl_disable;

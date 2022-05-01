@@ -254,6 +254,16 @@ QDF_STATUS
 policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
 				       uint8_t *sta_sap_scc_on_dfs_chnl);
 
+/**
+ * policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl() - Get if STA-SAP scc is
+ * allowed on indoor channel
+ * @psoc: Global psoc pointer
+ *
+ * Return: true if STA-SAP SCC on indoor channel is allowed
+ */
+bool policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(
+				struct wlan_objmgr_psoc *psoc);
+
 /*
  * policy_mgr_get_connected_vdev_band_mask() - to get the connected vdev band
  * mask
