@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -53,6 +54,8 @@ enum htt_ppdu_stats_tlv_tag {
     HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_1024_TLV,/* htt_ppdu_stats_user_compltn_ba_bitmap_1024_tlv */
     HTT_PPDU_STATS_RX_MGMTCTRL_PAYLOAD_TLV,       /* htt_ppdu_stats_rx_mgmtctrl_payload_tlv */
     HTT_PPDU_STATS_FOR_SMU_TLV,                   /* htt_ppdu_stats_for_smu_tlv */
+    HTT_PPDU_STATS_MLO_TX_RESP_TLV,               /* htt_ppdu_stats_mlo_tx_resp_tlv */
+    HTT_PPDU_STATS_MLO_TX_NOTIFICATION_TLV,       /* htt_ppdu_stats_mlo_tx_notification_tlv */
 
     /* New TLV's are added above to this line */
     HTT_PPDU_STATS_MAX_TAG,
@@ -2843,5 +2846,118 @@ typedef struct {
     /* The number of elements in the ba_bitmap array depends on win_size. */
     A_UINT32 ba_bitmap[1];
 } htt_ppdu_stats_for_smu_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /*
+     * BIT [  2 :   0]   :- response_reason
+     * BIT [  6 :   3]   :- mlo_change_t1_cts2self
+     * BIT [ 10 :   7]   :- mlo_change_t1_ppdu
+     * BIT [ 14 :  11]   :- mlo_change_t2_response
+     * BIT [ 18 :  15]   :- mlo_change_t3_r2r
+     * BIT [ 19 :  19]   :- partner_link_info_valid
+     * BIT [ 22 :  20]   :- partner_link_id
+     * BIT [ 27 :  23]   :- partner_link_cmd_ring_id
+     * BIT [ 28 :  28]   :- dot11ax_trigger_frame_embedded
+     * BIT [ 31 :  29]   :- reserved_0a
+     */
+    A_UINT32 response_reason                                         :  3,
+             mlo_change_t1_cts2self                                  :  4,
+             mlo_change_t1_ppdu                                      :  4,
+             mlo_change_t2_response                                  :  4,
+             mlo_change_t3_r2r                                       :  4,
+             partner_link_info_valid                                 :  1,
+             partner_link_id                                         :  3,
+             partner_link_cmd_ring_id                                :  5,
+             dot11ax_trigger_frame_embedded                          :  1,
+             reserved_0a                                             :  3;
+    /*
+     * BIT [ 15 :   0]   :- partner_link_schedule_id
+     * BIT [ 31 :  16]   :- tx_rx_overlap_duration (microsecond units)
+     */
+    A_UINT32 partner_link_schedule_id                                : 16,
+             tx_rx_overlap_duration_us                               : 16;
+    /*
+     * BIT [ 15 :   0]   :- cts2self_duration (microsecond units)
+     * BIT [ 31 :  16]   :- ppdu_duration (microsecond units)
+     */
+    A_UINT32 cts2self_duration_us                                    : 16,
+             ppdu_duration_us                                        : 16;
+    /*
+     * BIT [ 15 :   0]   :- response_duration (microsecond units)
+     * BIT [ 31 :  16]   :- response_to_response_duration (microsecond units)
+     */
+    A_UINT32 response_duration_us                                    : 16,
+             response_to_response_duration_us                        : 16;
+    /*
+     * BIT [ 15 :   0]   :- self_link_schedule_id
+     * BIT [ 31 :  16]   :- hls_branch_debug_code
+     */
+    A_UINT32 self_link_schedule_id                                   : 16,
+             hls_branch_debug_code                                   : 16;
+    /*
+     * BIT [ 31 :   0]   :- hls_decision_debug_info
+     */
+    A_UINT32 hls_decision_debug_info                                 : 32;
+} htt_ppdu_stats_mlo_tx_resp_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /*
+     * BIT [  2 :   0]   :- notification_reason
+     * BIT [  3 :   3]   :- ml_decision
+     * BIT [  4 :   4]   :- cts2self_padding
+     * BIT [  5 :   5]   :- initiated_by_truncated_backoff
+     * BIT [  8 :   6]   :- transmit_start_reason
+     * BIT [ 14 :   9]   :- num_users
+     * BIT [ 24 :  15]   :- nstr_mlo_sta_id
+     * BIT [ 25 :  25]   :- block_self_ml_sync
+     * BIT [ 26 :  26]   :- block_partner_ml_sync
+     * BIT [ 27 :  27]   :- nstr_mlo_sta_id_valid
+     * BIT [ 31 :  28]   :- reserved_0a
+     */
+    A_UINT32 notification_reason                                     :  3,
+             ml_decision                                             :  1,
+             cts2self_padding                                        :  1,
+             initiated_by_truncated_backoff                          :  1,
+             transmit_start_reason                                   :  3,
+             num_users                                               :  6,
+             nstr_mlo_sta_id                                         : 10,
+             block_self_ml_sync                                      :  1,
+             block_partner_ml_sync                                   :  1,
+             nstr_mlo_sta_id_valid                                   :  1,
+             reserved_0a                                             :  4;
+    /*
+     * BIT [ 15 :   0]   :- pdg_ppdu_duration_adjust_value (microsecond units)
+     * BIT [ 31 :  16]   :- mlo_ppdu_duration_adjust_value (microsecond units)
+     */
+    A_UINT32 pdg_ppdu_duration_adjust_value_us                       : 16,
+             mlo_ppdu_duration_adjust_value_us                       : 16;
+    /*
+     * BIT [ 15 :   0]   :- response_duration (microsecond units)
+     * BIT [ 31 :  16]   :- response_to_response_duration (microsecond units)
+     */
+    A_UINT32 response_duration_us                                    : 16,
+             response_to_response_duration_us                        : 16;
+    /*
+     * BIT [ 15 :   0]   :- schedule_id
+     * BIT [ 20 :  16]   :- cmd_ring_id
+     * BIT [ 31 :  21]   :- reserved_1a
+     */
+    A_UINT32 schedule_id                                             : 16,
+             cmd_ring_id                                             :  5,
+             reserved_1a                                             : 11;
+    /*
+     * BIT [ 31 :  0]   :- mlo_reference_timestamp (microsecond units)
+     */
+    A_UINT32 mlo_reference_timestamp_us                              : 32;
+    /*
+     * BIT [ 15 :   0]   :- cts2self_duration (microsecond units)
+     * BIT [ 31 :  16]   :- ppdu_duration (microsecond units)
+     */
+    A_UINT32 cts2self_duration_us                                    : 16,
+             ppdu_duration_us                                        : 16;
+} htt_ppdu_stats_mlo_tx_notification_tlv;
+
 
 #endif //__HTT_PPDU_STATS_H__
