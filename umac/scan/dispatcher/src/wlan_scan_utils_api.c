@@ -2427,6 +2427,16 @@ static int util_handle_rnr_ie_for_mbssid(const uint8_t *rnr,
 }
 #endif
 
+static size_t util_oui_header_len(uint8_t *ie)
+{
+	/* Cisco Vendor Specific IEs doesn't have subtype in
+	 * their VSIE header, therefore skip subtype
+	 */
+	if (ie[0] == 0x00 && ie[1] == 0x40 && ie[2] == 0x96)
+		return OUI_LEN - 1;
+	return OUI_LEN;
+}
+
 static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 				uint8_t *subelement,
 				size_t subie_len, uint8_t *new_ie,
@@ -2523,16 +2533,18 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 		} else {
 			/* ie in transmitting ie also in subelement,
 			 * copy from subelement and flag the ie in subelement
-			 * as copied (by setting eid field to 0xff). For
-			 * vendor ie, compare OUI + type + subType to
-			 * determine if they are the same ie.
+			 * as copied (by setting eid field to 0xff).
+			 * To determine if the vendor ies are same:
+			 * 1. For Cisco OUI, compare only OUI + type
+			 * 2. For other OUI, compare OUI + type + subType
 			 */
 			tmp_rem_len = subie_len - (tmp - sub_copy);
 			if (tmp_old[0] == WLAN_ELEMID_VENDOR &&
 			    tmp_rem_len >= MIN_VENDOR_TAG_LEN) {
 				if (!qdf_mem_cmp(tmp_old + PAYLOAD_START_POS,
 						 tmp + PAYLOAD_START_POS,
-						 OUI_LEN)) {
+						 util_oui_header_len(tmp +
+								     PAYLOAD_START_POS))) {
 					/* same vendor ie, copy from
 					 * subelement
 					 */
