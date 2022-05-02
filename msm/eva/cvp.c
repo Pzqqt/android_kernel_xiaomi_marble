@@ -390,13 +390,6 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	cvp_driver->num_cores++;
 	mutex_unlock(&cvp_driver->lock);
 
-	rc = sysfs_create_group(&core->dev->kobj, &msm_cvp_core_attr_group);
-	if (rc) {
-		dprintk(CVP_ERR,
-				"Failed to create attributes\n");
-		goto err_cores_exceeded;
-	}
-
 	core->device = cvp_hfi_initialize(core->hfi_type, core->id,
 				&core->resources, &cvp_handle_cmd_response);
 	if (IS_ERR_OR_NULL(core->device)) {
@@ -447,6 +440,13 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 			dprintk(CVP_WARN, "Failed to initialize DSP driver\n");
 	} else {
 		dprintk(CVP_DSP, "DSP interface not enabled\n");
+	}
+
+	rc = sysfs_create_group(&core->dev->kobj, &msm_cvp_core_attr_group);
+	if (rc) {
+		dprintk(CVP_ERR,
+				"Failed to create attributes\n");
+		goto err_cores_exceeded;
 	}
 
 	// Registering EVA SS with minidump
