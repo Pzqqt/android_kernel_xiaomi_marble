@@ -20,6 +20,7 @@ rmnet_core-y := \
 	rmnet_genl.o \
 	rmnet_map_command.o \
 	rmnet_map_data.o \
+	rmnet_module.o \
 	rmnet_vnd.o
 
 rmnet_core-y += \
