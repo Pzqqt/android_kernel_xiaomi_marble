@@ -11938,6 +11938,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.delba_process = dp_delba_process_wifi3,
 	.set_addba_response = dp_set_addba_response,
 	.flush_cache_rx_queue = NULL,
+	.tid_update_ba_win_size = dp_rx_tid_update_ba_win_size,
 	/* TODO: get API's for dscp-tid need to be added*/
 	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,

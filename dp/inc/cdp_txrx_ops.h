@@ -435,6 +435,10 @@ struct cdp_cmn_ops {
 	int (*delba_process)(struct cdp_soc_t *cdp_soc, uint8_t *peer_mac,
 			     uint16_t vdev_id, int tid, uint16_t reasoncode);
 
+	QDF_STATUS (*tid_update_ba_win_size)(ol_txrx_soc_handle soc,
+					     uint8_t *peer_mac,
+					     uint16_t vdev_id, uint8_t tid,
+					     uint16_t buffersize);
 	/**
 	 * delba_tx_completion() - Indicate delba tx status
 	 * @cdp_soc: soc handle

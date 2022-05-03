@@ -4123,6 +4123,35 @@ static void dp_check_ba_buffersize(struct dp_peer *peer,
 	}
 }
 
+QDF_STATUS dp_rx_tid_update_ba_win_size(struct cdp_soc_t *cdp_soc,
+					uint8_t *peer_mac, uint16_t vdev_id,
+					uint8_t tid, uint16_t buffersize)
+{
+	struct dp_rx_tid *rx_tid = NULL;
+	struct dp_peer *peer;
+
+	peer = dp_peer_get_tgt_peer_hash_find((struct dp_soc *)cdp_soc,
+					      peer_mac, 0, vdev_id,
+					      DP_MOD_ID_CDP);
+	if (!peer) {
+		dp_peer_debug("%pK: Peer is NULL!\n", cdp_soc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	rx_tid = &peer->rx_tid[tid];
+
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	rx_tid->ba_win_size = buffersize;
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
+
+	dp_info("peer "QDF_MAC_ADDR_FMT", tid %d, update BA win size to %d",
+		QDF_MAC_ADDR_REF(peer->mac_addr.raw), tid, buffersize);
+
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #define DP_RX_BA_SESSION_DISABLE  1
 
 /*

@@ -1508,6 +1508,21 @@ QDF_STATUS dp_set_addba_response(struct cdp_soc_t *cdp_soc,
 int dp_delba_process_wifi3(struct cdp_soc_t *cdp_soc, uint8_t *peer_mac,
 			   uint16_t vdev_id, int tid,
 			   uint16_t reasoncode);
+
+/**
+ * dp_rx_tid_update_ba_win_size() - Update the DP tid BA window size
+ * @soc: soc handle
+ * @peer_mac: mac address of peer handle
+ * @vdev_id: id of vdev handle
+ * @tid: tid
+ * @buffersize: BA window size
+ *
+ * Return: success/failure of tid update
+ */
+QDF_STATUS dp_rx_tid_update_ba_win_size(struct cdp_soc_t *cdp_soc,
+					uint8_t *peer_mac, uint16_t vdev_id,
+					uint8_t tid, uint16_t buffersize);
+
 /*
  * dp_delba_tx_completion_wifi3() -  Handle delba tx completion
  *
