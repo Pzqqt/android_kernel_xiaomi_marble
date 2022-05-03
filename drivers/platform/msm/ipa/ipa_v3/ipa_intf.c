@@ -411,6 +411,9 @@ static int wlan_msg_process(struct ipa_msg_meta *meta, void *buff)
 				event_ex_cur_con->attribs[cnt].u.mac_addr[4],
 				event_ex_cur_con->attribs[cnt].u.mac_addr[5],
 				meta->msg_type);
+			} else if (event_ex_cur_con->attribs[cnt].attrib_type ==
+				WLAN_HDR_ATTRIB_TA_PEER_ID) {
+				IPADBG("TA_PEER_ID: %d\n", event_ex_cur_con->attribs[cnt].u.ta_peer_id);
 			}
 		}
 

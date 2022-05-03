@@ -16,6 +16,7 @@
 #include <net/ipv6.h>
 #include <asm/page.h>
 #include <linux/mutex.h>
+#include <linux/ipa_wdi3.h>
 #include "gsi.h"
 #include "ipa_i.h"
 #include "ipa_trace.h"
@@ -4043,6 +4044,82 @@ static void ipa3_free_skb_rx(struct sk_buff *skb)
 	dev_kfree_skb_any(skb);
 }
 
+static void ipa3_wdi_extact_ast_info(struct sk_buff *skb, u32 metadata,
+	u8 ucp, struct ipa_ast_info_type *ast_info)
+{
+	u8 *buff = (u8 *)skb->data;
+	u16 cb_value = 0;
+
+/*
+ * RX TLV headers.
+ * <28 bytes of rx_msdu_end_tlv> + <16 bytes of attn_tlv> +
+ * <48 bytes of rx_msdu_start tlv>.
+ */
+
+/* Incremental offset for sa_vlid bit. */
+#define IPA_WDI_AST_SA_VALID_INC_OFFST 2
+#define IPA_WDI_AST_SA_VALID_MSK 0x80
+
+	buff += IPA_WDI_AST_SA_VALID_INC_OFFST;
+
+	ast_info->sa_valid = *buff & IPA_WDI_AST_SA_VALID_MSK;
+
+/* Incremental offset for sa_idx bit. */
+#define IPA_WDI_AST_SA_IDX_INC_OFFST 2
+
+	buff += IPA_WDI_AST_SA_IDX_INC_OFFST;
+
+	ast_info->sa_idx = *((u16 *)buff);
+
+/* Incremental offset for sa_peer_id. */
+#define IPA_WDI_AST_SA_PEER_ID_INC_OFFST 14
+
+	buff += IPA_WDI_AST_SA_PEER_ID_INC_OFFST;
+
+	ast_info->sa_peer_id = *((u16 *)buff);
+
+/* Incremental offset for mac_addr4_valid bit. */
+#define IPA_WDI_AST_MAC_ADDR4_VALID_VALID_INC_OFFST 74
+#define IPA_WDI_AST_MAC_ADDR4_VALID_MSK 0x20
+
+	buff += IPA_WDI_AST_MAC_ADDR4_VALID_VALID_INC_OFFST;
+
+	ast_info->mac_addr_ad4_valid =
+		*((u32 *)buff) & IPA_WDI_AST_MAC_ADDR4_VALID_MSK;
+
+/* New Metadata format  when AST update is required.
+ * -------------------------------------------------------------------------
+ * | 3byte   | 2byte       | 2 bits | 1 bit      | 1 bit      | 12 bits    |
+ * | vap_id  | qmap mux id | rsvd   | da_is_mcbc | first_msdu | ta_peer_id |
+ * -------------------------------------------------------------------------
+ */
+
+#define IPA_WDI_AST_TA_PEER_ID_MSK 0xFFF
+	ast_info->ta_peer_id = metadata & IPA_WDI_AST_TA_PEER_ID_MSK;
+
+#define IPA_WDI_AST_FIRST_MSDU_MSK 0x1000
+	ast_info->first_msdu_in_mpdu_flag = metadata & IPA_WDI_AST_FIRST_MSDU_MSK;
+
+	skb_pull(skb, IPA_WDI_RX_TLV_SIZE);
+
+/* Update CB with previous metadata format. */
+/* Old Metadata Format
+ *  ------------------------------------------
+ *  |	3     |   2     |	 1        |  0   |
+ *  | fw_desc | vdev_id | qmap mux id | Resv |
+ *  ------------------------------------------
+ */
+#define IPA_WDI_FW_DESC_MSK 0x2000
+	cb_value = ((metadata & IPA_WDI_FW_DESC_MSK) << 9) |
+		(metadata >> 24);
+
+	*(u16 *)skb->cb = cb_value;
+	*(u8 *)(skb->cb + 4) = ucp;
+
+	/* Provide SKB info after pulling RX TLVs. */
+	ast_info->skb = skb;
+}
+
 void ipa3_lan_rx_cb(void *priv, enum ipa_dp_evt_type evt, unsigned long data)
 {
 	struct sk_buff *rx_skb = (struct sk_buff *)data;
@@ -4054,6 +4131,8 @@ void ipa3_lan_rx_cb(void *priv, enum ipa_dp_evt_type evt, unsigned long data)
 	void (*client_notify)(void *client_priv, enum ipa_dp_evt_type evt,
 		       unsigned long data);
 	void *client_priv;
+	struct ipa_ast_info_type ast_info;
+	void (*ast_notify)(void *client_priv, unsigned long data);
 
 	ipahal_pkt_status_parse_thin(rx_skb->data, &status);
 	src_pipe = status.endp_src_idx;
@@ -4072,18 +4151,35 @@ void ipa3_lan_rx_cb(void *priv, enum ipa_dp_evt_type evt, unsigned long data)
 	else
 		skb_pull(rx_skb, ipahal_pkt_status_get_size());
 
-	/* Metadata Info
-	 *  ------------------------------------------
-	 *  |   3     |   2     |    1        |  0   |
-	 *  | fw_desc | vdev_id | qmap mux id | Resv |
-	 *  ------------------------------------------
-	 */
-	*(u16 *)rx_skb->cb = ((metadata >> 16) & 0xFFFF);
-	*(u8 *)(rx_skb->cb + 4) = ucp;
-	IPADBG_LOW("meta_data: 0x%x cb: 0x%x\n",
-			metadata, *(u32 *)rx_skb->cb);
-	IPADBG_LOW("ucp: %d\n", *(u8 *)(rx_skb->cb + 4));
-
+	if (ep->ast_update) {
+		ipa3_wdi_extact_ast_info(rx_skb, ntohl(metadata), ucp, &ast_info);
+		/* Check if AST call back needs to be called. */
+		/* If sa_valid is 0, learning scenario, cb is called. */
+		/* if sa_peer_id != ta_peer_id, roaming scenario, cb is called. */
+		if (!ast_info.sa_valid ||
+			(ast_info.sa_peer_id != ast_info.ta_peer_id)) {
+			spin_lock(&ipa3_ctx->disconnect_lock);
+			if (likely((!atomic_read(&ep->disconnect_in_progress)) &&
+						ep->valid && ep->ast_notify)) {
+				ast_notify = ep->ast_notify;
+				client_priv = ep->priv;
+				spin_unlock(&ipa3_ctx->disconnect_lock);
+				ast_notify(client_priv, (unsigned long)&ast_info);
+			}
+		}
+	} else {
+		/* Metadata Info
+		 *  ------------------------------------------
+		 *  |   3     |   2     |    1        |  0   |
+		 *  | fw_desc | vdev_id | qmap mux id | Resv |
+		 *  ------------------------------------------
+		 */
+		*(u16 *)rx_skb->cb = ((metadata >> 16) & 0xFFFF);
+		*(u8 *)(rx_skb->cb + 4) = ucp;
+		IPADBG_LOW("meta_data: 0x%x cb: 0x%x\n",
+				metadata, *(u32 *)rx_skb->cb);
+		IPADBG_LOW("ucp: %d\n", *(u8 *)(rx_skb->cb + 4));
+	}
 	spin_lock(&ipa3_ctx->disconnect_lock);
 	if (likely((!atomic_read(&ep->disconnect_in_progress)) &&
 				ep->valid && ep->client_notify)) {
