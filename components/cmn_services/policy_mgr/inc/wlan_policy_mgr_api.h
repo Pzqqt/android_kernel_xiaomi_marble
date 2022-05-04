@@ -4233,4 +4233,17 @@ void policy_mgr_set_dbs_cap_ut(struct wlan_objmgr_psoc *psoc, uint32_t dbs);
 static inline void
 policy_mgr_set_dbs_cap_ut(struct wlan_objmgr_psoc *psoc, uint32_t dbs) {}
 #endif
+
+/**
+ * policy_mgr_get_connected_roaming_vdev_band_mask() - get connected vdev
+ * band mask
+ * @psoc: PSOC object
+ * @vdev_id: Vdev id
+ *
+ * Return: reg wifi band mask
+ */
+uint32_t
+policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id);
+
 #endif /* __WLAN_POLICY_MGR_API_H */

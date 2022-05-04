@@ -5170,9 +5170,9 @@ void cm_roam_scan_info_event(struct wlan_objmgr_psoc *psoc,
 		if (!vdev)
 			goto out;
 
-		band_mask = policy_mgr_get_connected_vdev_band_mask(vdev);
+		band_mask =
+		policy_mgr_get_connected_roaming_vdev_band_mask(psoc, vdev_id);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
-
 		for (i = 0; i < num_chan; i++) {
 			if (!wlan_is_valid_frequency(chan_freq[i],
 						     band_capability,
@@ -5344,13 +5344,12 @@ void cm_roam_result_info_event(struct wlan_objmgr_psoc *psoc,
 		if (i >= MAX_ROAM_CANDIDATE_AP)
 			break;
 
-		if (scan_data->ap[i].type == WLAN_ROAM_SCAN_ROAMED_AP &&
-		    log_record->roam_result.is_roam_successful) {
+		if (res->status == 0 &&
+		    scan_data->ap[i].type == WLAN_ROAM_SCAN_ROAMED_AP) {
 			log_record->bssid = scan_data->ap[i].bssid;
 			break;
 		} else if (scan_data->ap[i].type ==
-			   WLAN_ROAM_SCAN_CURRENT_AP &&
-			   !log_record->roam_result.is_roam_successful) {
+			   WLAN_ROAM_SCAN_CURRENT_AP) {
 			log_record->bssid = scan_data->ap[i].bssid;
 			bssid = scan_data->ap[i].bssid;
 			break;

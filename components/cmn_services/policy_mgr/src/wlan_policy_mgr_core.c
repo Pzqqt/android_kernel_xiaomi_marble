@@ -1742,7 +1742,7 @@ policy_mgr_get_connected_vdev_band_mask(struct wlan_objmgr_vdev *vdev)
  *
  * Return: reg wifi band mask
  */
-static uint32_t
+uint32_t
 policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id)
 {
