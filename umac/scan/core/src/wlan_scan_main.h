@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -346,6 +347,8 @@ struct extscan_def_config {
  * @adaptive_dwell_time_mode_nc: adaptive dwell mode without connection
  * @honour_nl_scan_policy_flags: honour nl80211 scan policy flags
  * @extscan_adaptive_dwell_mode: Adaptive dwell mode during ext scan
+ * @skip_6g_and_indoor_freq: skip 6Ghz and 5Gh indoor freq channel for
+ * STA scan if hw is non-DBS and SAP is present
  * @scan_f_passive: passively scan all channels including active channels
  * @scan_f_bcast_probe: add wild card ssid prbreq even if ssid_list is specified
  * @scan_f_cck_rates: add cck rates to rates/xrates ie in prb req
@@ -437,6 +440,7 @@ struct scan_default_params {
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode_nc;
 	bool honour_nl_scan_policy_flags;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
+	bool skip_6g_and_indoor_freq;
 	union {
 		struct {
 			uint32_t scan_f_passive:1,

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -402,4 +403,13 @@ void
 wlan_scan_unregister_requester(struct wlan_objmgr_psoc *psoc,
 			       wlan_scan_requester requester);
 
+/**
+ * wlan_scan_cfg_skip_6g_and_indoor_freq() - API to get 6g and indoor freq
+ * scan ini val
+ * @psoc: psoc object
+ *
+ * Return: skip 6g and indoor freq scan or not
+ */
+bool wlan_scan_cfg_skip_6g_and_indoor_freq(
+			struct wlan_objmgr_psoc *psoc);
 #endif
