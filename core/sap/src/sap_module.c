@@ -3179,8 +3179,15 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 	sta_sap_scc_on_indoor_channel =
 		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(mac->psoc);
 	sap_band = wlan_reg_freq_to_band(sap_ctx->chan_freq);
-	sap_debug("SAP/Go current band: %d, pdev band capability: %d",
-		  sap_band, band);
+
+	sap_debug("SAP/Go current band: %d, pdev band capability: %d, cur freq %d (is valid %d), prev freq %d (is valid %d)",
+		  sap_band, band, sap_ctx->chan_freq,
+		  wlan_reg_is_enable_in_secondary_list_for_freq(mac->pdev,
+							sap_ctx->chan_freq),
+		  sap_ctx->chan_freq_before_switch_band,
+		  wlan_reg_is_enable_in_secondary_list_for_freq(mac->pdev,
+					sap_ctx->chan_freq_before_switch_band));
+
 	if (sap_band == REG_BAND_5G && band == BIT(REG_BAND_2G)) {
 		sap_ctx->chan_freq_before_switch_band = sap_ctx->chan_freq;
 		sap_ctx->chan_width_before_switch_band =
