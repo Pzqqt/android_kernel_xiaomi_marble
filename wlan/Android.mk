@@ -4,6 +4,7 @@ ifneq ($(TARGET_BOARD_PLATFORM),qssi)
 RMNET_WLAN_DLKM_PLATFORMS_LIST := lahaina
 RMNET_WLAN_DLKM_PLATFORMS_LIST += holi
 RMNET_WLAN_DLKM_PLATFORMS_LIST += taro
+RMNET_WLAN_DLKM_PLATFORMS_LIST += parrot
 
 ifeq ($(call is-board-platform-in-list, $(RMNET_WLAN_DLKM_PLATFORMS_LIST)),true)
 LOCAL_PATH := $(call my-dir)
