@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -18,6 +19,8 @@
 	(0x70 + (((lm) - LM_0) * 0x004))
 #define CTL_LAYER_EXT3(lm)             \
 	(0xA0 + (((lm) - LM_0) * 0x004))
+#define CTL_LAYER_EXT4(lm)             \
+	(0xB8 + (((lm) - LM_0) * 0x004))
 #define CTL_TOP                       0x014
 #define CTL_FLUSH                     0x018
 #define CTL_START                     0x01C
@@ -54,7 +57,7 @@
 #define CTL_FLUSH_MASK_ROT              BIT(27)
 #define CTL_FLUSH_MASK_CTL              BIT(17)
 
-#define CTL_NUM_EXT			4
+#define CTL_NUM_EXT			5
 #define CTL_SSPP_MAX_RECTS		2
 
 #define SDE_REG_RESET_TIMEOUT_US        2000
@@ -73,7 +76,7 @@
  * List of SSPP bits in CTL_FLUSH
  */
 static const u32 sspp_tbl[SSPP_MAX] = { SDE_NONE, 0, 1, 2, 18, 3, 4, 5,
-	19, 11, 12, 24, 25, SDE_NONE, SDE_NONE};
+	19, 11, 12, 24, 25, 13, 14, SDE_NONE, SDE_NONE};
 
 /**
  * List of layer mixer bits in CTL_FLUSH
@@ -123,7 +126,7 @@ static const u32 intf_tbl[INTF_MAX] = {SDE_NONE, 31, 30, 29, 28};
  */
 static const u32 fetch_tbl[SSPP_MAX] = {CTL_INVALID_BIT, 16, 17, 18, 19,
 	CTL_INVALID_BIT, CTL_INVALID_BIT, CTL_INVALID_BIT, CTL_INVALID_BIT, 0,
-	1, 2, 3, CTL_INVALID_BIT, CTL_INVALID_BIT};
+	1, 2, 3, 4, 5, CTL_INVALID_BIT, CTL_INVALID_BIT};
 
 /**
  * list of WB bits in CTL_WB_FLUSH
@@ -218,6 +221,8 @@ sspp_reg_cfg_tbl[SSPP_MAX][CTL_SSPP_MAX_RECTS] = {
 	/* SSPP_DMA1 */{ {0, 21, 3, BIT(18)}, {2, 12, 4, 0} },
 	/* SSPP_DMA2 */{ {2, 0, 4, 0}, {2, 16, 4, 0} },
 	/* SSPP_DMA3 */{ {2, 4, 4, 0}, {2, 20, 4, 0} },
+	/* SSPP_DMA4 */{ {4, 0, 4, 0}, {4, 8, 4, 0} },
+	/* SSPP_DMA5 */{ {4, 4, 4, 0}, {4, 12, 4, 0} },
 	/* SSPP_CURSOR0 */{ {1, 20, 4, 0}, {0, 0, 0, 0} },
 	/* SSPP_CURSOR1 */{ {1, 26, 4, 0}, {0, 0, 0, 0} }
 };
@@ -846,6 +851,8 @@ static void sde_hw_ctl_clear_all_blendstages(struct sde_hw_ctl *ctx)
 		SDE_REG_WRITE(c, CTL_LAYER_EXT(mixer_id), 0);
 		SDE_REG_WRITE(c, CTL_LAYER_EXT2(mixer_id), 0);
 		SDE_REG_WRITE(c, CTL_LAYER_EXT3(mixer_id), 0);
+		if (ctx->caps->features & BIT(SDE_CTL_DMA4_DMA5))
+			SDE_REG_WRITE(c, CTL_LAYER_EXT4(mixer_id), 0);
 	}
 	SDE_REG_WRITE(c, CTL_FETCH_PIPE_ACTIVE, 0);
 }
@@ -894,6 +901,7 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 	struct sde_hw_blk_reg_map *c;
 	u32 cfg[CTL_NUM_EXT] = { 0 };
 	int stages;
+	bool null_commit;
 
 	if (!ctx)
 		return;
@@ -907,15 +915,16 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 	if (stage_cfg)
 		_sde_hw_ctl_get_mixer_cfg(ctx, stage_cfg, stages, cfg);
 
-	if (!disable_border &&
-			((!cfg[0] && !cfg[1] && !cfg[2] && !cfg[3]) ||
-			(stage_cfg && !stage_cfg->stage[0][0])))
+	null_commit = (!cfg[0] && !cfg[1] && !cfg[2] && !cfg[3] && !cfg[4]);
+	if (!disable_border && (null_commit || (stage_cfg && !stage_cfg->stage[0][0])))
 		cfg[0] |= CTL_MIXER_BORDER_OUT;
 
 	SDE_REG_WRITE(c, CTL_LAYER(lm), cfg[0]);
 	SDE_REG_WRITE(c, CTL_LAYER_EXT(lm), cfg[1]);
 	SDE_REG_WRITE(c, CTL_LAYER_EXT2(lm), cfg[2]);
 	SDE_REG_WRITE(c, CTL_LAYER_EXT3(lm), cfg[3]);
+	if (ctx->caps->features & BIT(SDE_CTL_DMA4_DMA5))
+		SDE_REG_WRITE(c, CTL_LAYER_EXT4(lm), cfg[4]);
 }
 
 static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
@@ -937,6 +946,8 @@ static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
 	mixercfg[1] = SDE_REG_READ(c, CTL_LAYER_EXT(lm));
 	mixercfg[2] = SDE_REG_READ(c, CTL_LAYER_EXT2(lm));
 	mixercfg[3] = SDE_REG_READ(c, CTL_LAYER_EXT3(lm));
+	if (ctx->caps->features & BIT(SDE_CTL_DMA4_DMA5))
+		mixercfg[4] = SDE_REG_READ(c, CTL_LAYER_EXT4(lm));
 
 	if (mixercfg[0] & CTL_MIXER_BORDER_OUT)
 		info->bordercolor = true;

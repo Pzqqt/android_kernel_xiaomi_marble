@@ -45,6 +45,8 @@
 /* max mixer blend stages */
 #define DEFAULT_SDE_MIXER_BLENDSTAGES 7
 
+/* dummy block base address */
+#define DUMMY_SDE_BLOCK_BASE 0x0f0f
 /*
  * max bank bit for macro tile and ubwc format.
  * this value is left shifted and written to register
@@ -208,6 +210,7 @@ enum sde_prop {
 	DIM_LAYER,
 	SMART_DMA_REV,
 	IDLE_PC,
+	DDR_TYPE,
 	WAKEUP_WITH_TOUCH,
 	DEST_SCALER,
 	SMART_PANEL_ALIGN_MODE,
@@ -594,6 +597,7 @@ static struct sde_prop_type sde_prop[] = {
 	{DIM_LAYER, "qcom,sde-has-dim-layer", false, PROP_TYPE_BOOL},
 	{SMART_DMA_REV, "qcom,sde-smart-dma-rev", false, PROP_TYPE_STRING},
 	{IDLE_PC, "qcom,sde-has-idle-pc", false, PROP_TYPE_BOOL},
+	{DDR_TYPE, "qcom,sde-ddr-type", false, PROP_TYPE_U32_ARRAY},
 	{WAKEUP_WITH_TOUCH, "qcom,sde-wakeup-with-touch", false,
 			PROP_TYPE_BOOL},
 	{DEST_SCALER, "qcom,sde-has-dest-scaler", false, PROP_TYPE_BOOL},
@@ -1951,7 +1955,8 @@ static void sde_sspp_set_features(struct sde_mdss_cfg *sde_cfg,
 
 		if (props->exists[SSPP_MAX_PER_PIPE_BW])
 			sblk->max_per_pipe_bw = PROP_VALUE_ACCESS(props->values,
-					SSPP_MAX_PER_PIPE_BW, i);
+					SSPP_MAX_PER_PIPE_BW,
+					sde_cfg->ddr_list_index * sde_cfg->sspp_count + i);
 		else
 			sblk->max_per_pipe_bw = DEFAULT_MAX_PER_PIPE_BW;
 
@@ -2128,6 +2133,9 @@ static int sde_ctl_parse_dt(struct device_node *np,
 		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
 				SDE_HW_MAJOR(SDE_HW_VER_700))
 			set_bit(SDE_CTL_UNIFIED_DSPP_FLUSH, &ctl->features);
+		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
+				SDE_HW_MAJOR(SDE_HW_VER_910))
+			set_bit(SDE_CTL_DMA4_DMA5, &ctl->features);
 	}
 
 	sde_put_dt_props(props);
@@ -2257,7 +2265,6 @@ static int sde_mixer_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_c
 		const char *disp_pref = NULL;
 		const char *cwb_pref = NULL;
 		const char *dcwb_pref = NULL;
-		u32 dummy_mixer_base = 0x0f0f;
 
 		mixer_base = PROP_VALUE_ACCESS(props->values, MIXER_OFF, i);
 		if (!mixer_base)
@@ -2311,15 +2318,20 @@ static int sde_mixer_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_c
 		if (cwb_pref && !strcmp(cwb_pref, "cwb"))
 			set_bit(SDE_DISP_CWB_PREF, &mixer->features);
 
+		if (BIT(mixer->id - LM_0) & sde_cfg->virtual_mixers_mask)
+			set_bit(SDE_MIXER_IS_VIRTUAL, &mixer->features);
+
 		of_property_read_string_index(np,
 			mixer_prop[MIXER_DCWB].prop_name, i, &dcwb_pref);
-		if (dcwb_pref && !strcmp(dcwb_pref, "dcwb")) {
+		if (dcwb_pref && !strcmp(dcwb_pref, "dcwb"))
 			set_bit(SDE_DISP_DCWB_PREF, &mixer->features);
-			if (mixer->base == dummy_mixer_base) {
-				mixer->base = 0x0;
-				mixer->len = 0;
-				mixer->dummy_mixer = true;
-			}
+
+		if ((mixer->features & BIT(SDE_MIXER_IS_VIRTUAL) ||
+				mixer->features & BIT(SDE_DISP_DCWB_PREF)) &&
+				(mixer->base == DUMMY_SDE_BLOCK_BASE)) {
+			mixer->base = 0x0;
+			mixer->len = 0;
+			mixer->dummy_mixer = true;
 		}
 
 		mixer->pingpong = pp_count > 0 ? pp_idx + PINGPONG_0
@@ -3642,10 +3654,14 @@ static int _sde_vbif_populate_qos_parsing(struct sde_mdss_cfg *sde_cfg,
 	int i, j;
 	int prop_index = VBIF_QOS_RT_REMAP;
 
+	if (WARN_ON(!sde_cfg->ddr_count))
+		return -EINVAL;
+
 	for (i = VBIF_RT_CLIENT;
 			((i < VBIF_MAX_CLIENT) && (prop_index < VBIF_PROP_MAX));
 				i++, prop_index++) {
-		vbif->qos_tbl[i].npriority_lvl = prop_count[prop_index];
+		vbif->qos_tbl[i].npriority_lvl =
+				(prop_count[prop_index] / sde_cfg->ddr_count);
 		SDE_DEBUG("qos_tbl[%d].npriority_lvl=%u\n",
 				i, vbif->qos_tbl[i].npriority_lvl);
 
@@ -3664,7 +3680,9 @@ static int _sde_vbif_populate_qos_parsing(struct sde_mdss_cfg *sde_cfg,
 
 		for (j = 0; j < vbif->qos_tbl[i].npriority_lvl; j++) {
 			vbif->qos_tbl[i].priority_lvl[j] =
-				PROP_VALUE_ACCESS(prop_value, prop_index, j);
+				PROP_VALUE_ACCESS(prop_value, prop_index,
+				vbif->qos_tbl[i].npriority_lvl
+				* sde_cfg->ddr_list_index + j);
 			SDE_DEBUG("client:%d, prop:%d, lvl[%d]=%u\n",
 					i, prop_index, j,
 					vbif->qos_tbl[i].priority_lvl[j]);
@@ -3926,6 +3944,13 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 			pp->merge_3d_id = PROP_VALUE_ACCESS(prop_value,
 					PP_MERGE_3D_ID, i) + 1;
 		}
+
+		if (pp->base == DUMMY_SDE_BLOCK_BASE) {
+			pp->base = 0x0;
+			pp->len = 0;
+			sblk->dither.base = 0x0;
+			sblk->dither.len = 0;
+		}
 	}
 
 end:
@@ -3967,6 +3992,19 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	cfg->max_mixer_blendstages = props->exists[MIXER_BLEND] ?
 			PROP_VALUE_ACCESS(props->values, MIXER_BLEND, 0) :
 			DEFAULT_SDE_MIXER_BLENDSTAGES;
+
+	/* set default value of ddr_count as one */
+	cfg->ddr_count = 1;
+	if (props->exists[DDR_TYPE]) {
+		cfg->ddr_count = props->counts[DDR_TYPE];
+		for (i = 0; i < cfg->ddr_count; i++) {
+			ddr_type = PROP_VALUE_ACCESS(props->values, DDR_TYPE, i);
+			if (ddr_type == of_fdt_get_ddrtype()) {
+				cfg->ddr_list_index = i;
+				break;
+			}
+		}
+	}
 
 	cfg->ubwc_version = props->exists[UBWC_VERSION] ?
 			SDE_HW_UBWC_VER(PROP_VALUE_ACCESS(props->values,
@@ -4619,6 +4657,11 @@ static int sde_parse_merge_3d_dt(struct device_node *np,
 		snprintf(merge_3d->name, SDE_HW_BLK_NAME_LEN, "merge_3d_%u",
 				merge_3d->id -  MERGE_3D_0);
 		merge_3d->len = PROP_VALUE_ACCESS(prop_value, HW_LEN, 0);
+
+		if (merge_3d->base == DUMMY_SDE_BLOCK_BASE) {
+			merge_3d->base = 0x0;
+			merge_3d->len = 0;
+		}
 	}
 
 end:
@@ -5253,6 +5296,33 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_demura = true;
 		sde_cfg->demura_supported[SSPP_DMA1][0] = 0;
 		sde_cfg->demura_supported[SSPP_DMA1][1] = 1;
+	} else if (IS_PARROT_TARGET(hw_rev)) {
+		sde_cfg->has_dedicated_cwb_support = true;
+		sde_cfg->has_cwb_dither = true;
+		sde_cfg->has_cwb_crop = true;
+		sde_cfg->has_qsync = true;
+		sde_cfg->perf.min_prefill_lines = 40;
+		sde_cfg->has_reduced_ob_max = true;
+		sde_cfg->vbif_qos_nlvl = 8;
+		sde_cfg->ts_prefill_rev = 2;
+		sde_cfg->ctl_rev = SDE_CTL_CFG_VERSION_1_0_0;
+		sde_cfg->delay_prg_fetch_start = true;
+		sde_cfg->sui_ns_allowed = true;
+		sde_cfg->sui_misr_supported = true;
+		sde_cfg->has_sui_blendstage = true;
+		sde_cfg->has_3d_merge_reset = true;
+		sde_cfg->skip_inline_rot_threshold = true;
+		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_1;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
+		sde_cfg->dither_luma_mode_support = true;
+		sde_cfg->mdss_hw_block_size = 0x158;
+		sde_cfg->sspp_multirect_error = true;
+		set_bit(SDE_MDP_PERIPH_TOP_0_REMOVED, &sde_cfg->mdp[0].features);
+		sde_cfg->has_precise_vsync_ts = true;
+		sde_cfg->has_avr_step = true;
+		sde_cfg->has_trusted_vm_support = true;
+		sde_cfg->has_ubwc_stats = true;
+		sde_cfg->virtual_mixers_mask = 0x2;
 	} else if (IS_NEO_TARGET(hw_rev)) {
 		sde_cfg->has_dedicated_cwb_support = true;
 		sde_cfg->has_cwb_dither = true;
