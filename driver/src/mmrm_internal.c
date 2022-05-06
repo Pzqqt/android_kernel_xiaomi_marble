@@ -20,6 +20,17 @@ static struct mmrm_common_data waipio_common_data[] = {
 	},
 };
 
+static struct mmrm_common_data neo_common_data[] = {
+	{
+		.key = "qcom,mmrm_clk_threshold",
+		.value = 4500,
+	},
+	{
+		.key = "qcom,mmrm_clk_mgr_scheme",
+		.value = CLK_MGR_SCHEME_SW,
+	},
+};
+
 /*throttle client list is as per fdd & resource availability*/
 
 static struct mmrm_throttle_clients_data waipio_throttle_clients_data[] = {
@@ -45,6 +56,9 @@ static struct mmrm_throttle_clients_data waipio_throttle_clients_data[] = {
 	},
 };
 
+/* no clients to throttle */
+static struct mmrm_throttle_clients_data neo_throttle_clients_data[] = {};
+
 static struct mmrm_platform_data waipio_data = {
 	.common_data = waipio_common_data,
 	.common_data_length = ARRAY_SIZE(waipio_common_data),
@@ -52,10 +66,21 @@ static struct mmrm_platform_data waipio_data = {
 	.throttle_clk_clients_data_length = ARRAY_SIZE(waipio_throttle_clients_data),
 };
 
+static struct mmrm_platform_data neo_data = {
+	.common_data = neo_common_data,
+	.common_data_length = ARRAY_SIZE(neo_common_data),
+	.throttle_clk_clients_data = neo_throttle_clients_data,
+	.throttle_clk_clients_data_length = ARRAY_SIZE(neo_throttle_clients_data),
+};
+
 static const struct of_device_id mmrm_dt_match[] = {
 	{
 		.compatible = "qcom,waipio-mmrm",
 		.data = &waipio_data,
+	},
+	{
+		.compatible = "qcom,neo-mmrm",
+		.data = &neo_data,
 	},
 	{},
 };
