@@ -1694,6 +1694,28 @@ void hal_compute_reo_remap_ix0_6490(uint32_t *remap0)
 			HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
 }
 
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+/**
+ * hal_get_first_wow_wakeup_packet_6490(): Function to retrieve
+ *					   rx_msdu_end_1_reserved_1a
+ *
+ * reserved_1a is used by target to tag the first packet that wakes up host from
+ * WoW
+ *
+ * @buf: Network buffer
+ *
+ * Returns: 1 to indicate it is first packet received that wakes up host from
+ *	    WoW. Otherwise 0
+ */
+static uint8_t hal_get_first_wow_wakeup_packet_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_MSDU_END_RESERVED_1A_GET(msdu_end);
+}
+#endif
+
 static void hal_hw_txrx_ops_attach_qca6490(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -1881,6 +1903,10 @@ static void hal_hw_txrx_ops_attach_qca6490(struct hal_soc *hal_soc)
 				hal_setup_link_idle_list_generic_li;
 	hal_soc->ops->hal_compute_reo_remap_ix0 =
 					hal_compute_reo_remap_ix0_6490;
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+	hal_soc->ops->hal_get_first_wow_wakeup_packet =
+		hal_get_first_wow_wakeup_packet_6490;
+#endif
 };
 
 struct hal_hw_srng_config hw_srng_table_6490[] = {

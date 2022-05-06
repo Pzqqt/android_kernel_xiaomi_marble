@@ -1847,6 +1847,27 @@ void hal_compute_reo_remap_ix0_6750(uint32_t *remap0)
 			HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
 }
 
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+/**
+ * hal_get_first_wow_wakeup_packet_6750(): Function to retrieve
+ *					   rx_msdu_end_1_reserved_1a
+ *
+ * reserved_1a is used by target to tag the first packet that wakes up host from
+ * WoW
+ *
+ * @buf: Network buffer
+ *
+ * Dummy function for QCA6750
+ *
+ * Returns: 1 to indicate it is first packet received that wakes up host from
+ *	    WoW. Otherwise 0
+ */
+static inline uint8_t hal_get_first_wow_wakeup_packet_6750(uint8_t *buf)
+{
+	return 0;
+}
+#endif
+
 static void hal_hw_txrx_ops_attach_qca6750(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -2040,6 +2061,10 @@ static void hal_hw_txrx_ops_attach_qca6750(struct hal_soc *hal_soc)
 				hal_setup_link_idle_list_generic_li;
 	hal_soc->ops->hal_compute_reo_remap_ix0 =
 				hal_compute_reo_remap_ix0_6750;
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+	hal_soc->ops->hal_get_first_wow_wakeup_packet =
+		hal_get_first_wow_wakeup_packet_6750;
+#endif
 };
 
 struct hal_hw_srng_config hw_srng_table_6750[] = {
@@ -2319,7 +2344,7 @@ struct hal_hw_srng_config hw_srng_table_6750[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-#ifdef TX_MULTI_TCL
+#if defined(TX_MULTI_TCL) || defined(CONFIG_PLD_IPCIE_FW_SIM)
 		.max_rings = 5,
 #else
 		.max_rings = 4,

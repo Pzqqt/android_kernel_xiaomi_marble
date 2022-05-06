@@ -257,13 +257,17 @@ void dp_tx_process_htt_completion_be(struct dp_soc *soc,
 		ts.tsf = htt_desc[4];
 		ts.first_msdu = 1;
 		ts.last_msdu = 1;
+		ts.status = (tx_status == HTT_TX_FW2WBM_TX_STATUS_OK ?
+			     HAL_TX_TQM_RR_FRAME_ACKED :
+			     HAL_TX_TQM_RR_REM_CMD_REM);
 		tid = ts.tid;
 		if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
 			tid = CDP_MAX_DATA_TIDS - 1;
 
 		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[ring_id][tid];
 
-		if (qdf_unlikely(pdev->delay_stats_flag))
+		if (qdf_unlikely(pdev->delay_stats_flag) ||
+		    qdf_unlikely(dp_is_vdev_tx_delay_stats_enabled(vdev)))
 			dp_tx_compute_delay(vdev, tx_desc, tid, ring_id);
 		if (tx_status < CDP_MAX_TX_HTT_STATUS)
 			tid_stats->htt_status_cnt[tx_status]++;
@@ -429,10 +433,7 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (tid != HTT_TX_EXT_TID_INVALID)
 		hal_tx_desc_set_hlos_tid(hal_tx_desc_cached, tid);
 
-	if (qdf_unlikely(vdev->pdev->delay_stats_flag) ||
-	    qdf_unlikely(wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx)) ||
-	    dp_tx_pkt_tracepoints_enabled())
-		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
+	dp_tx_desc_set_ktimestamp(vdev, tx_desc);
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
 			 tx_desc->length,

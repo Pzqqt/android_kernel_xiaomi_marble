@@ -1,7 +1,6 @@
-
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -77,6 +76,8 @@ enum cfrmetaversion {
 	CFR_META_VERSION_5, /* agc gain, cfo, rx_start_ts in enh_cfr_metadata */
 	CFR_META_VERSION_6, /* mcs, gi_type in dbr_cfr_metadata */
 	CFR_META_VERSION_7, /* mcs, gi_type, sig_info in enh_cfr_metadata */
+	CFR_META_VERSION_8, /* agc gain table index in dbr_cfr_metadata */
+	CFR_META_VERSION_9, /* agc gain table index in enh_cfr_metadata */
 	CFR_META_VERSION_MAX = 0xFF,
 };
 
@@ -145,24 +146,6 @@ enum cfr_capture_type {
 	CFR_TYPE_METHOD_AUTO = 0xff,
 	CFR_TYPE_METHOD_MAX,
 };
-
-/* ensure to add new members at the end of the structure only */
-struct legacy_cfr_metadata {
-	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
-	u_int8_t    status;
-	u_int8_t    capture_bw;
-	u_int8_t    channel_bw;
-	u_int8_t    phy_mode;
-	u_int16_t   prim20_chan;
-	u_int16_t   center_freq1;
-	u_int16_t   center_freq2;
-	u_int8_t    capture_mode;
-	u_int8_t    capture_type;
-	u_int8_t    sts_count;
-	u_int8_t    num_rx_chain;
-	u_int32_t   timestamp;
-	u_int32_t   length;
-} __attribute__ ((__packed__));
 
 #define HOST_MAX_CHAINS 8
 
@@ -247,12 +230,12 @@ struct cfr_header_cmn {
 	u_int8_t    chip_type;
 	u_int8_t    pltform_type;
 	u_int32_t   cfr_metadata_len;
+	u_int64_t   host_real_ts;
 } __attribute__ ((__packed__));
 
 struct csi_cfr_header {
 	struct cfr_header_cmn cmn;
 	union {
-		struct legacy_cfr_metadata meta_legacy;
 		struct dbr_cfr_metadata meta_dbr;
 #ifdef WLAN_ENH_CFR_ENABLE
 		struct enh_cfr_metadata meta_enh;

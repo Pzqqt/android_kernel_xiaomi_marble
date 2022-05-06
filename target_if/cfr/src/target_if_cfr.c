@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -236,29 +236,21 @@ void target_if_cfr_fill_header(struct csi_cfr_header *hdr,
 	hdr->cmn.pltform_type = CFR_PLATFORM_TYPE_ARM;
 	hdr->cmn.cfr_metadata_len = CFR_META_DATA_LEN;
 	hdr->cmn.cfr_data_version = CFR_DATA_VERSION_1;
+	hdr->cmn.host_real_ts = qdf_ktime_to_ns(qdf_ktime_real_get());
 
-	if (is_wifi_2_0) {
-		hdr->cmn.cfr_metadata_version  = CFR_META_VERSION_1;
-		if (target_type == TARGET_TYPE_IPQ4019)
-			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_DAKOTA;
-		else if (target_type == TARGET_TYPE_QCA9888)
-			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_BESRA;
-		else if (target_type == TARGET_TYPE_QCA9984)
-			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_CASCADE;
-		else
-			hdr->cmn.chip_type = CFR_CAPTURE_RADIO_NONE;
-	} else if (target_type == TARGET_TYPE_QCA8074V2) {
-		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_6;
+	if (target_type == TARGET_TYPE_QCA8074V2) {
+		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_8;
 		hdr->cmn.chip_type = CFR_CAPTURE_RADIO_HKV2;
 	} else if (target_type == TARGET_TYPE_QCA9574) {
 		hdr->cmn.cfr_metadata_version = CFR_META_VERSION_6;
 		hdr->cmn.chip_type = CFR_CAPTURE_RADIO_ALDER;
 	} else {
-		if (target_type == TARGET_TYPE_QCN9000 ||
-		    target_type == TARGET_TYPE_QCN9224 ||
-		    target_type == TARGET_TYPE_QCA6490 ||
-		    target_type == TARGET_TYPE_QCA6750 ||
-		    target_type == TARGET_TYPE_KIWI)
+		if (target_type == TARGET_TYPE_QCN9000)
+			hdr->cmn.cfr_metadata_version = CFR_META_VERSION_9;
+		else if (target_type == TARGET_TYPE_QCN9224 ||
+			 target_type == TARGET_TYPE_QCA6490 ||
+			 target_type == TARGET_TYPE_QCA6750 ||
+			 target_type == TARGET_TYPE_KIWI)
 			hdr->cmn.cfr_metadata_version = CFR_META_VERSION_7;
 		else if ((target_type == TARGET_TYPE_QCA6018) ||
 			 ((target_type == TARGET_TYPE_QCA5018) && (!is_rcc)))
@@ -454,13 +446,6 @@ target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 	    (target_type == TARGET_TYPE_QCA9574)) {
 		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
 		return cfr_dbr_init_pdev(psoc, pdev);
-	} else if ((target_type == TARGET_TYPE_IPQ4019) ||
-		   (target_type == TARGET_TYPE_QCA9984) ||
-		   (target_type == TARGET_TYPE_QCA9888)) {
-
-		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
-
-		return cfr_wifi2_0_init_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000) ||
 		   (target_type == TARGET_TYPE_QCN6122) ||
@@ -487,11 +472,6 @@ target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	if ((target_type == TARGET_TYPE_QCA8074V2) ||
 	    (target_type == TARGET_TYPE_QCA9574)) {
 		return cfr_dbr_deinit_pdev(psoc, pdev);
-	} else if ((target_type == TARGET_TYPE_IPQ4019) ||
-		   (target_type == TARGET_TYPE_QCA9984) ||
-		   (target_type == TARGET_TYPE_QCA9888)) {
-
-		return cfr_wifi2_0_deinit_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000) ||
 		   (target_type == TARGET_TYPE_QCN6122) ||

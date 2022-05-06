@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -198,40 +199,4 @@ void target_if_cfr_fill_header(struct csi_cfr_header *hdr,
 			       bool is_wifi_2_0,
 			       uint32_t target_type,
 			       bool is_rcc);
-#ifdef WIFI_TARGET_TYPE_2_0
-/**
- * cfr_wifi2_0_init_pdev() - Function to init legacy pdev
- * @psoc: pointer to psoc object
- * @pdev: pointer to pdev object
- *
- * Return: success/failure status of init
- */
-QDF_STATUS cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
-				 struct wlan_objmgr_pdev *pdev);
-
-/**
- * cfr_wifi2_0_deinit_pdev() - Function to deinit legacy pdev
- * @psoc: pointer to psoc object
- * @pdev: pointer to pdev object
- *
- * Return: success/failure status of deinit
- */
-QDF_STATUS cfr_wifi2_0_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-				   struct wlan_objmgr_pdev *pdev);
-
-#else
-#ifndef CFR_USE_FIXED_FOLDER
-static QDF_STATUS cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
-					struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS cfr_wifi2_0_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-					  struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-#endif
 #endif

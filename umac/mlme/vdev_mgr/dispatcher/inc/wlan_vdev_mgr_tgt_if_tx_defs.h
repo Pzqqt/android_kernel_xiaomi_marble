@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -325,7 +325,7 @@ struct fils_discovery_tmpl_params {
  * @maxreqpower: Max regulatory power
  * @antennamac: Max antenna
  * @reg_class_id: Regulatory class id.
- * @puncture_pattern: 11be static puncture pattern
+ * @puncture_bitmap: 11be static puncture bitmap
  */
 struct mlme_channel_param {
 	uint8_t chan_id;
@@ -349,7 +349,7 @@ struct mlme_channel_param {
 	uint8_t  antennamax;
 	uint8_t  reg_class_id;
 #ifdef WLAN_FEATURE_11BE
-	uint16_t puncture_pattern;
+	uint16_t puncture_bitmap;
 #endif
 };
 

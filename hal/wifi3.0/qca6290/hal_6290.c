@@ -1048,6 +1048,24 @@ void hal_compute_reo_remap_ix2_ix3_6290(uint32_t *ring, uint32_t num_rings,
 	}
 }
 
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+/**
+ * hal_get_first_wow_wakeup_packet_6290(): Function to get if the buffer
+ * is the first one that wakes up host from WoW.
+ *
+ * @buf: network buffer
+ *
+ * Dummy function for QCA6290
+ *
+ * Returns: 1 to indicate it is first packet received that wakes up host from
+ *	    WoW. Otherwise 0
+ */
+static inline uint8_t hal_get_first_wow_wakeup_packet_6290(uint8_t *buf)
+{
+	return 0;
+}
+#endif
+
 static void hal_hw_txrx_ops_attach_6290(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -1216,6 +1234,10 @@ static void hal_hw_txrx_ops_attach_6290(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_setup_link_idle_list =
 				hal_setup_link_idle_list_generic_li;
 	hal_soc->ops->hal_compute_reo_remap_ix0 = NULL;
+#ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
+	hal_soc->ops->hal_get_first_wow_wakeup_packet =
+		hal_get_first_wow_wakeup_packet_6290;
+#endif
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

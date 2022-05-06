@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1232,15 +1232,16 @@ struct cdp_tx_stats {
 	struct protocol_trace_count protocol_trace_cnt[CDP_TRACE_MAX];
 #endif
 	struct cdp_pkt_info tx_success;
+	uint32_t multiple_retry_count;
 	uint32_t nawds_mcast_drop;
 	uint32_t tx_failed;
 	uint32_t ofdma;
+	uint32_t non_amsdu_cnt;
+	uint32_t amsdu_cnt;
 	uint32_t stbc;
 	uint32_t ldpc;
 	uint32_t retries;
 	uint32_t retries_mpdu;
-	uint32_t non_amsdu_cnt;
-	uint32_t amsdu_cnt;
 	uint32_t tx_rate;
 	uint32_t last_tx_rate;
 	uint32_t last_tx_rate_mcs;
@@ -1277,6 +1278,13 @@ struct cdp_tx_stats {
 		uint32_t fw_reason1;
 		uint32_t fw_reason2;
 		uint32_t fw_reason3;
+		uint32_t fw_rem_queue_disable;
+		uint32_t fw_rem_no_match;
+		uint32_t drop_threshold;
+		uint32_t drop_link_desc_na;
+		uint32_t invalid_drop;
+		uint32_t mcast_vdev_drop;
+		uint32_t invalid_rr;
 	} dropped;
 
 
@@ -1302,7 +1310,6 @@ struct cdp_tx_stats {
 	uint32_t non_ampdu_cnt;
 	uint32_t failed_retry_count;
 	uint32_t retry_count;
-	uint32_t multiple_retry_count;
 	uint32_t last_tx_rate_used;
 
 	struct cdp_tx_pkt_info transmit_type[MAX_TRANSMIT_TYPES];
@@ -1314,6 +1321,7 @@ struct cdp_tx_stats {
 	uint32_t num_ppdu_cookie_valid;
 	uint32_t no_ack_count[QDF_PROTO_SUBTYPE_MAX];
 	struct cdp_pkt_info tx_success_twt;
+	unsigned long last_tx_ts;
 
 	uint32_t nss_info:4,
 		 mcs_info:4,
@@ -1322,7 +1330,6 @@ struct cdp_tx_stats {
 		 preamble_info:4;
 	/* mpdu retry count in case of successful transmission */
 	uint32_t mpdu_success_with_retries;
-	unsigned long last_tx_ts;
 };
 
 /* struct cdp_rx_stats - rx Level Stats
@@ -1618,6 +1625,7 @@ struct cdp_rx_ingress_stats {
  * @tx: cdp tx stats
  * @rx: cdp rx stats
  * @tso_stats: tso stats
+ * @tid_tx_stats: tid tx stats
  */
 struct cdp_vdev_stats {
 	struct cdp_tx_ingress_stats tx_i;
@@ -1625,6 +1633,10 @@ struct cdp_vdev_stats {
 	struct cdp_tx_stats tx;
 	struct cdp_rx_stats rx;
 	struct cdp_tso_stats tso_stats;
+#ifdef HW_TX_DELAY_STATS_ENABLE
+	struct cdp_tid_tx_stats tid_tx_stats[CDP_MAX_TX_COMP_RINGS]
+					    [CDP_MAX_DATA_TIDS];
+#endif
 };
 
 /* struct cdp_peer_stats - peer stats structure

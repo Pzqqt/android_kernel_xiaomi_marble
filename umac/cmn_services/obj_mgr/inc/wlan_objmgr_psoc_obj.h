@@ -224,6 +224,14 @@
 /* MGMT Rx REO feature capability */
 #define WLAN_SOC_F_MGMT_RX_REO_CAPABLE  0x40000000
 
+/*
+ * Feature flags are exhausted. Add EXT feature caps below to extend
+ * the feature flags
+ */
+
+/* Roam Frame info stats - per candidate frames support */
+#define WLAN_ROAM_STATS_FRAME_INFO_PER_CANDIDATE  0x00000008
+
 /* PSOC op flags */
 
 	/* Invalid VHT cap */
@@ -283,6 +291,7 @@ struct wlan_objmgr_psoc_user_config {
  * @phy_type:        OL/DA type
  * @soc_fw_caps:     FW capabilities
  * @soc_fw_ext_caps: FW ext capabilities
+ * @soc_fw_ext2_caps: FW ext2 capabilities
  * @soc_feature_caps:Feature capabilities
  * @soc_op_flags:    Flags to set/reset during operation
  * @soc_hw_macaddr[]:HW MAC address
@@ -293,6 +302,7 @@ struct wlan_objmgr_psoc_nif {
 	WLAN_DEV_TYPE phy_type;
 	uint32_t soc_fw_caps;
 	uint32_t soc_fw_ext_caps;
+	uint32_t soc_fw_ext2_caps;
 	uint32_t soc_feature_caps;
 	uint32_t soc_op_flags;
 	uint8_t soc_hw_macaddr[QDF_MAC_ADDR_SIZE];
@@ -1308,6 +1318,52 @@ static inline uint8_t wlan_psoc_nif_fw_ext_cap_get(
 		struct wlan_objmgr_psoc *psoc, uint32_t ext_cap)
 {
 	return (psoc->soc_nif.soc_fw_ext_caps & ext_cap) ? 1 : 0;
+}
+
+/**
+ * wlan_psoc_nif_fw_ext2_cap_set() - set fw ext2 caps
+ * @psoc: PSOC object
+ * @ext2_cap: capability flag to be set
+ *
+ * API to set fw ext caps in psoc
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_fw_ext2_cap_set(struct wlan_objmgr_psoc *psoc,
+						 uint32_t ext2_cap)
+{
+	psoc->soc_nif.soc_fw_ext2_caps |= ext2_cap;
+}
+
+/**
+ * wlan_psoc_nif_fw_ext2_cap_clear() - clear fw ext2 caps
+ * @psoc: PSOC object
+ * @ext2_cap: capability flag to be cleared
+ *
+ * API to clear fw ext caps in psoc
+ *
+ * Return: void
+ */
+static inline void
+wlan_psoc_nif_fw_ext2_cap_clear(struct wlan_objmgr_psoc *psoc,
+				uint32_t ext2_cap)
+{
+	psoc->soc_nif.soc_fw_ext2_caps &= ~ext2_cap;
+}
+
+/**
+ * wlan_psoc_nif_fw_ext2_cap_get() - get fw caps
+ * @psoc: PSOC object
+ * @ext2_cap: capability flag to be checked
+ *
+ * API to know, whether particular fw caps flag is set in psoc
+ *
+ * Return: 1 (for set) or 0 (for not set)
+ */
+static inline uint8_t
+wlan_psoc_nif_fw_ext2_cap_get(struct wlan_objmgr_psoc *psoc, uint32_t ext2_cap)
+{
+	return (psoc->soc_nif.soc_fw_ext2_caps & ext2_cap) ? 1 : 0;
 }
 
 /**

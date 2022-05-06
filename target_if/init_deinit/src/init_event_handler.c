@@ -66,6 +66,23 @@ init_deinit_update_p2p_p2p_conc_support(struct wmi_unified *wmi_handle,
 {}
 #endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void
+init_deinit_update_roam_stats_cap(struct wmi_unified *wmi_handle,
+				  struct wlan_objmgr_psoc *psoc)
+{
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_roam_stats_per_candidate_frame_info))
+		wlan_psoc_nif_fw_ext2_cap_set(
+			psoc, WLAN_ROAM_STATS_FRAME_INFO_PER_CANDIDATE);
+}
+#else
+static inline void
+init_deinit_update_roam_stats_cap(struct wmi_unified *wmi_handle,
+				  struct wlan_objmgr_psoc *psoc)
+{}
+#endif
+
 static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 							uint8_t *event,
 							uint32_t data_len)
@@ -218,6 +235,8 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	if (wmi_service_enabled(wmi_handle, wmi_service_csa_beacon_template))
 		wlan_psoc_nif_fw_ext_cap_set(psoc,
 					     WLAN_SOC_CEXT_CSA_TX_OFFLOAD);
+
+	init_deinit_update_roam_stats_cap(wmi_handle, psoc);
 
 	/* override derived value, if it exceeds max peer count */
 	if ((wlan_psoc_get_max_peer_count(psoc) >

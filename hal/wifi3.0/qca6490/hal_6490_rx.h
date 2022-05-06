@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -423,6 +423,12 @@ RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_DETAILS_RESERVED_0A_OFFSET))
 		RX_MSDU_END_18_CUMULATIVE_IP_LENGTH_OFFSET)),	\
 		RX_MSDU_END_18_CUMULATIVE_IP_LENGTH_MASK,	\
 		RX_MSDU_END_18_CUMULATIVE_IP_LENGTH_LSB))
+
+#define HAL_RX_MSDU_END_RESERVED_1A_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_1_RESERVED_1A_OFFSET)),	\
+		RX_MSDU_END_1_RESERVED_1A_MASK,	\
+		RX_MSDU_END_1_RESERVED_1A_LSB))
 
 #if defined(QCA_WIFI_QCA6490) && defined(WLAN_CFR_ENABLE) && \
 	defined(WLAN_ENH_CFR_ENABLE)
