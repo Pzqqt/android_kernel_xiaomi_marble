@@ -275,9 +275,9 @@ static void rmnet_dellink(struct net_device *dev, struct list_head *head)
 	ep = rmnet_get_endpoint(port, mux_id);
 	if (ep) {
 		hlist_del_init_rcu(&ep->hlnode);
+		synchronize_rcu();
 		rmnet_unregister_bridge(dev, port);
 		rmnet_vnd_dellink(mux_id, port, ep);
-		synchronize_rcu();
 		kfree(ep);
 	}
 

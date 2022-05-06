@@ -1,4 +1,4 @@
-ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO)))
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO) $(CONFIG_ARCH_PARROT)))
 ccflags-y	+= -DRMNET_LA_PLATFORM
 endif
 
@@ -31,7 +31,7 @@ rmnet_core-y += \
 	rmnet_qmap.o \
 	rmnet_ll_qmap.o
 
-ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO)))
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO) $(CONFIG_ARCH_PARROT)))
 obj-m += rmnet_ctl.o
 rmnet_ctl-y := \
 	rmnet_ctl_client.o \
