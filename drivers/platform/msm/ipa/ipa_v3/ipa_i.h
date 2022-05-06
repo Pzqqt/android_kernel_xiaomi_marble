@@ -42,6 +42,7 @@
 #include <linux/rmnet_ipa_fd_ioctl.h>
 #include <linux/ipa_fmwk.h>
 #include "ipa_uc_holb_monitor.h"
+#include <soc/qcom/minidump.h>
 
 #define IPA_DEV_NAME_MAX_LEN 15
 #define DRV_NAME "ipa"
@@ -138,6 +139,15 @@ enum {
 
 #define IPA_WDI2_OVER_GSI() (ipa3_ctx->ipa_wdi2_over_gsi \
 		&& (ipa_get_wdi_version() == IPA_WDI_2))
+
+#define WLAN_IPA_CONNECT_EVENT(m) (m == WLAN_STA_CONNECT || \
+	m == WLAN_AP_CONNECT || \
+	m == WLAN_CLIENT_CONNECT_EX || \
+	m == WLAN_CLIENT_CONNECT)
+
+#define WLAN_IPA_DISCONNECT_EVENT(m) (m == WLAN_STA_DISCONNECT || \
+	m == WLAN_AP_DISCONNECT || \
+	m == WLAN_CLIENT_DISCONNECT)
 
 #define IPADBG(fmt, args...) \
 	do { \
@@ -2141,6 +2151,13 @@ enum ipa_per_usb_enum_type_e {
 	IPA_PER_USB_ENUM_TYPE_MAX
 };
 
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+struct ipa_minidump_data {
+	struct list_head entry;
+	struct va_md_entry data;
+};
+#endif
+
 /**
  * struct ipa3_context - IPA context
  * @cdev: cdev context
@@ -2331,6 +2348,8 @@ struct ipa3_context {
 	struct mutex msg_lock;
 	struct list_head msg_wlan_client_list;
 	struct mutex msg_wlan_client_lock;
+	struct list_head msg_lan_list;
+	struct mutex msg_lan_lock;
 	wait_queue_head_t msg_waitq;
 	enum ipa_hw_type ipa_hw_type;
 	u8 hw_type_index;
@@ -2513,6 +2532,7 @@ struct ipa3_context {
 	void *per_stats_smem_va;
 	u32 ipa_max_napi_sort_page_thrshld;
 	u32 page_wq_reschd_time;
+	struct list_head minidump_list_head;
 };
 
 struct ipa3_plat_drv_res {
@@ -3023,6 +3043,7 @@ int ipa3_allocate_nat_table(
 	struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
 int ipa3_allocate_ipv6ct_table(
 	struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
+int ipa3_nat_cleanup_cmd(void);
 int ipa3_nat_get_sram_info(struct ipa_nat_in_sram_info *info_ptr);
 int ipa3_app_clk_vote(enum ipa_app_clock_vote_type vote_type);
 
@@ -3032,6 +3053,8 @@ int ipa3_app_clk_vote(enum ipa_app_clock_vote_type vote_type);
 int ipa3_send_msg(struct ipa_msg_meta *meta, void *buff,
 		  ipa_msg_free_fn callback);
 int ipa3_resend_wlan_msg(void);
+int ipa3_resend_lan_msg(void);
+int ipa3_resend_driver_msg(void);
 int ipa3_register_pull_msg(struct ipa_msg_meta *meta, ipa_msg_pull_fn callback);
 int ipa3_deregister_pull_msg(struct ipa_msg_meta *meta);
 

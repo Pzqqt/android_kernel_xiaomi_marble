@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifdef CONFIG_DEBUG_FS
@@ -101,6 +102,7 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_IPPT_SW_FLT_EVENT),
 	__stringify(IPA_MACSEC_ADD_EVENT),
 	__stringify(IPA_MACSEC_DEL_EVENT),
+	__stringify(IPA_DONE_RESTORE_EVENT),
 };
 
 const char *ipa3_hdr_l2_type_name[] = {
@@ -3008,7 +3010,7 @@ static ssize_t ipa3_enable_ipc_low(struct file *file,
 		if (!ipa_ipc_low_buff) {
 			ipa_ipc_low_buff =
 				ipc_log_context_create(IPA_IPC_LOG_PAGES,
-					"ipa_low", 0);
+					"ipa_low", MINIDUMP_MASK);
 		}
 			if (ipa_ipc_low_buff == NULL)
 				IPADBG("failed to get logbuf_low\n");

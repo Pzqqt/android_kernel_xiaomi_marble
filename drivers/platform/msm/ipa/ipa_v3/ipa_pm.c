@@ -612,6 +612,9 @@ int ipa_pm_init(struct ipa_pm_init_params *params)
 {
 	int i, j;
 	struct clk_scaling_db *clk_scaling;
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	struct ipa_minidump_data *mini_dump;
+#endif
 
 	if (params == NULL) {
 		IPA_PM_ERR("Invalid Params\n");
@@ -691,6 +694,17 @@ int ipa_pm_init(struct ipa_pm_init_params *params)
 
 	}
 	IPA_PM_DBG("initialization success");
+
+#if IS_ENABLED(CONFIG_QCOM_VA_MINIDUMP)
+	/*Adding ipa3_ctx pointer to minidump list*/
+	mini_dump = (struct ipa_minidump_data *)kzalloc(sizeof(struct ipa_minidump_data), GFP_KERNEL);
+	if (mini_dump != NULL) {
+		strlcpy(mini_dump->data.owner, "ipa_pm_ctx", sizeof(mini_dump->data.owner));
+		mini_dump->data.vaddr = (unsigned long)(ipa_pm_ctx);
+		mini_dump->data.size = sizeof(*ipa_pm_ctx);
+		list_add(&mini_dump->entry, &ipa3_ctx->minidump_list_head);
+	}
+#endif
 
 	return 0;
 }
