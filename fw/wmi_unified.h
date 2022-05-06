@@ -6600,6 +6600,16 @@ typedef struct {
      * 1 - HT
      * 2 - VHT
      * 3 - HE
+     * 4 - EHT
+     *
+     * Rate Bit mask format:
+     *     <MCS in NSS MAX> ..
+     *     <MCS MAX, … 2, 1, 0 : NSS2>
+     *     <MCS MAX, .., 2, 1, 0 : NSS1>
+     * EHT Rate Bit Mask format:
+     *     <MCS in NSS MAX> ..
+     *     <MCS MAX, … 2, 1, 0, -1, -2 : NSS2>
+     *     <MCS MAX, .., 2, 1, 0, -1(DCM), -2(EHT Dup) : NSS1>
      */
     A_UINT32 type;
 
@@ -16134,8 +16144,15 @@ typedef struct {
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_eht_rate_set */
-    A_UINT32 rx_mcs_set;
-    A_UINT32 tx_mcs_set;
+    /*
+     * B0-B3   indicates max NSS that supports mcs 0-7
+     * B4-B7   indicates max NSS that supports mcs 8-9
+     * B8-B11  indicates max NSS that supports mcs 10-11
+     * B12-B15 indicates max NSS that supports mcs 12-13
+     * B16-B31 reserved
+     */
+    A_UINT32 rx_mcs_set; /* Rx max NSS set */
+    A_UINT32 tx_mcs_set; /* Tx max NSS set */
 } wmi_eht_rate_set;
 
 /*
@@ -16428,7 +16445,7 @@ typedef struct {
  *     wmi_peer_assoc_mlo_params  mlo_params[0,1]; <-- MLO parameters opt. TLV
  *         Only present for MLO peers.
  *         For non-MLO peers the array length should be 0.
- *     wmi_eht_rate_set_peer_eht_rates; <-- EHT capabilities of the peer
+ *     wmi_eht_rate_set peer_eht_rates; <-- EHT capabilities of the peer
  *     wmi_peer_assoc_mlo_partner_link_params link_info[] <-- partner link info
  *     wmi_peer_assoc_tid_to_link_map[] <-- tid to link_map info
  */
