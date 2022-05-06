@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1575,8 +1575,8 @@ struct wlan_roam_offload_scan_rssi_params {
 	int max_drop_rssi_5g;
 	uint32_t good_rssi_threshold;
 	bool early_stop_scan_enable;
-	uint32_t roam_earlystop_thres_min;
-	uint32_t roam_earlystop_thres_max;
+	int32_t roam_earlystop_thres_min;
+	int32_t roam_earlystop_thres_max;
 	int dense_rssi_thresh_offset;
 	int dense_min_aps_cnt;
 	int initial_dense_status;
