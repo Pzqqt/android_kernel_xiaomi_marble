@@ -5812,8 +5812,7 @@ static int msm_vidc_check_resolution_supported(struct msm_vidc_inst *inst)
 static int msm_vidc_check_max_sessions(struct msm_vidc_inst *inst)
 {
 	u32 width = 0, height = 0;
-	u32 num_720p_sessions = 0, num_1080p_sessions = 0;
-	u32 num_4k_sessions = 0, num_8k_sessions = 0;
+	u32 num_1080p_sessions = 0, num_4k_sessions = 0, num_8k_sessions = 0;
 	struct msm_vidc_inst *i;
 	struct msm_vidc_core *core;
 
@@ -5860,16 +5859,11 @@ static int msm_vidc_check_max_sessions(struct msm_vidc_inst *inst)
 			num_8k_sessions += 1;
 			num_4k_sessions += 2;
 			num_1080p_sessions += 4;
-			num_720p_sessions += 8;
 		} else if (res_is_greater_than(width, height, 1920 + (1920 >> 1), 1088 + (1088 >> 1))) {
 			num_4k_sessions += 1;
 			num_1080p_sessions += 2;
-			num_720p_sessions += 4;
 		} else if (res_is_greater_than(width, height, 1280 + (1280 >> 1), 736 + (736 >> 1))) {
 			num_1080p_sessions += 1;
-			num_720p_sessions += 2;
-		} else {
-			num_720p_sessions += 1;
 		}
 	}
 	core_unlock(core, __func__);
@@ -5892,13 +5886,6 @@ static int msm_vidc_check_max_sessions(struct msm_vidc_inst *inst)
 		i_vpr_e(inst, "%s: total 1080p sessions %d, exceeded max limit %d\n",
 			__func__, num_1080p_sessions,
 			core->capabilities[MAX_NUM_1080P_SESSIONS].value);
-		return -ENOMEM;
-	}
-
-	if (num_720p_sessions > core->capabilities[MAX_NUM_720P_SESSIONS].value) {
-		i_vpr_e(inst, "%s: total sessions(<=720p) %d, exceeded max limit %d\n",
-			__func__, num_720p_sessions,
-			core->capabilities[MAX_NUM_720P_SESSIONS].value);
 		return -ENOMEM;
 	}
 
