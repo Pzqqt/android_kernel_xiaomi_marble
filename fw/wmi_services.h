@@ -583,6 +583,10 @@ typedef  enum  {
     WMI_SERVICE_COMBINED_SET_PARAM_SUPPORT = 330, /* FW Supporting set param cmd combined for multiple params */
     WMI_SERVICE_PDEV_RSSI_DBM_CONV_EVENT_SUPPORT = 331, /* FW supports advertising RSSI dB to dBm conversion params to host via WMI_PDEV_RSSI_DBM_CONVERSION_PARAMS_INFO_EVENTID */
     WMI_SERVICE_PDEV_TELEMETRY_STATS_SUPPORT = 332,
+    WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT = 333, /* FW supports to send frame info for each candidate in roam stat */
+    WMI_SERVICE_HW_TX_POWER_CAPS_SIGNED_SUPPORT = 334, /* Indicates FW supports updating of Tx power capabilities as signed value */
+    WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT = 335, /* FW supports set param cmd combined for multiple params */
+    WMI_SERVICE_AFC_PAYLOAD_CLEAR_SUPPORT = 336, /* FW supports clearing the AFC response payload in proxy mode */
 
     WMI_MAX_EXT2_SERVICE
 

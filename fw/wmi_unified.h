@@ -1460,6 +1460,8 @@ typedef enum {
     WMI_MLO_READY_CMDID,
     /** WMI cmd used for tearing down a hw_link part of MLO */
     WMI_MLO_TEARDOWN_CMDID,
+    /** WMI cmd used to setup Tid to Link Mapping for a MLO Peer */
+    WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID,
 
     /** WMI commands specific to Service Aware WiFi (SAWF) */
     /** configure or reconfigure the parameters for a service class */
@@ -1695,6 +1697,8 @@ typedef enum {
     WMI_VDEV_SMART_MONITOR_EVENTID,
     /** Send status of vdev mac address update request to host */
     WMI_VDEV_UPDATE_MAC_ADDR_CONF_EVENTID,
+    /** event to report latency level honored by FW */
+    WMI_VDEV_LATENCY_LEVEL_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -2818,6 +2822,16 @@ typedef enum {
 #define WMI_SET_PROJECT_ID(hw_bd_info, val)     ((hw_bd_info)[PROJECT_ID]     = (val))
 #define WMI_SET_BOARD_DATA_REV(hw_bd_info, val) ((hw_bd_info)[BOARD_DATA_REV] = (val))
 
+/*
+ * Enum to indicate which Tx power capability is provided in which element of
+ * hw_tx_power_signed
+ */
+typedef enum {
+    WMI_HW_MIN_TX_POWER_SIGNED = 0,
+    WMI_HW_MAX_TX_POWER_SIGNED = 1,
+    WMI_HW_TX_POWER_CAPS_MAX,
+} wmi_hw_tx_power_caps;
+
 /**
  * The following struct holds optional payload for
  * wmi_service_ready_event_fixed_param,e.g., 11ac pass some of the
@@ -3261,6 +3275,7 @@ typedef struct {
      *     WMI_SCAN_RADIO_CAPABILITIES_EXT2   wmi_scan_radio_caps[];
      *     wmi_htt_msdu_idx_to_htt_msdu_qtype htt_msdu_idx_to_qtype_map[];
      *     wmi_dbs_or_sbs_cap_ext             dbs_or_sbs_cap_ext;
+     *     A_INT32 hw_tx_power_signed[WMI_HW_TX_POWER_CAPS_MAX];
      */
 } wmi_service_ready_ext2_event_fixed_param;
 
@@ -3438,6 +3453,9 @@ typedef struct {
      * the target's resources availability.
      */
     A_UINT32 num_of_linkview_peers;
+
+    /* Total number of "real" max_active_vdevs that FW supports. */
+    A_UINT32 num_max_active_vdevs;
 
 /*
  * This fixed_param TLV is followed by these additional TLVs:
@@ -4227,7 +4245,15 @@ typedef struct {
      *      when this bit is set to 1 outdoor mode is enabled
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_AFC_OUTDOOR_SUPPORT_CHECK_GET
      *      and SET macros.
-     *  Bits 31:12 - Reserved
+     *  Bit 12
+     *      This bit will be set when host host wants to enable/disable
+     *      REO QREF feature
+     *      when set to 1 - Enable the REO QREF feature
+     *      when set to 0 - Disable the REO QREF feature
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:13 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4312,6 +4338,12 @@ typedef struct {
      * LinkView peer in the target.
      */
     A_UINT32 num_of_linkview_msduqs_per_tid;
+
+    /**
+     * @brief num_max_active_vdevs -
+     * number of max active virtual devices (VAPs) to support
+     */
+    A_UINT32 num_max_active_vdevs;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -4615,6 +4647,11 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 11, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_AFC_OUTDOOR_SUPPORT_CHECK_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 11, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 12, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 12, 1, val)
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
     WMI_GET_BITS(carrier_config, 0, 1)
@@ -5591,6 +5628,8 @@ typedef struct {
      * [31:16]: mgmt_pkt_ctr, Sequence number of the last fw consumed mgmt frame
      */
     A_UINT32 mgmt_pkt_ctr_info;
+    A_UINT32 rx_ppdu_duration_us; /* receive duration in us */
+    A_UINT32 mpdu_end_timestamp; /* mpdu end timestamp in us (based on HWMLO timer) */
 } wmi_mgmt_rx_fw_consumed_hdr;
 
 /** Helper macro for param GET/SET of mgmt_rx_reo_params */
@@ -5620,6 +5659,8 @@ typedef struct {
      */
 
     A_UINT32 mgmt_pkt_ctr_link_info;
+    A_UINT32 rx_ppdu_duration_us; /* receive duration in us */
+    A_UINT32 mpdu_end_timestamp; /* mpdu end timestamp in us (based on HWMLO timer) */
 } wmi_mgmt_rx_reo_params;
 
 /** Helper macro for param GET/SET */
@@ -5746,6 +5787,41 @@ typedef struct {
     A_UINT8 cur_pn[WMI_MAX_PN_LEN];
     A_UINT8 prev_pn[WMI_MAX_PN_LEN];
 } wmi_frame_pn_params;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_ml_info */
+    /**
+     * CU vdev map to initmate about the on-going Critical update
+     * per-link contains 16 VAPs at max.
+     */
+
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  0   |   1
+     */
+    A_UINT32 cu_vdev_map_1;
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  2   |   3
+     */
+    A_UINT32 cu_vdev_map_2;
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  4   |   5
+     */
+    A_UINT32 cu_vdev_map_3;
+    /*
+     *  bits    : 0-15 | 16-31
+     *  link-id :  6   |   7
+     */
+    A_UINT32 cu_vdev_map_4; /* bits 63:32 */
+    /**
+     * This is followed by byte array that contains BPCC value per MLO VAP.
+     * There will be 16 byte entries for each link corresponding to VAP-ID.
+     * So number of byte entries will be (num of max links supported by AP * 16)
+     * Note: num of max links supported = 8
+     */
+} wmi_mgmt_ml_info;
 
 typedef enum {
     PKT_CAPTURE_MODE_DISABLE = 0,
@@ -11386,6 +11462,10 @@ typedef struct {
      * Indoor = 1, Outdoor = 2
      */
     A_UINT32 deployment_mode;
+    /*
+     * Proxy mode AFC-Response payload clear count
+     */
+    A_UINT32 payload_clear_count;
 } wmi_ctrl_path_afc_stats_struct;
 
 typedef struct {
@@ -11551,10 +11631,24 @@ typedef struct {
 typedef struct{
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_telemetry_stats */
     A_UINT32 pdev_id;
-    /* average channel latency, units in micro seconds */
+    /*
+     * Average channel latency per AC, units in micro seconds.
+     * avg_chan_lat_per_ac[0] : AC_VO
+     * avg_chan_lat_per_ac[1] : AC_VI
+     * avg_chan_lat_per_ac[2] : AC_BE
+     * avg_chan_lat_per_ac[3] : AC_BK
+     */
     A_UINT32 avg_chan_lat_per_ac[WMI_AC_MAX];
-    /* estimated airtime per access category, units in percentage */
-    A_UINT32 estimated_air_time_per_ac[WMI_AC_MAX];
+    /*
+     * Percentage of air time available for each AC, units in percentage.
+     * BIT[0-7]   : AC_BE
+     * BIT[8-15]  : AC_BK
+     * BIT[16-23] : AC_VI
+     * BIT[24-31] : AC_VO
+     * Please refer WMI_ESP_ESTIMATE_GET_* and WMI_ESP_ESTIMATE_SET_* macros
+     * to retrieve values for each access category in estimated_air_time_per_ac.
+     */
+    A_UINT32 estimated_air_time_per_ac;
 } wmi_pdev_telemetry_stats;
 
 /**
@@ -11913,7 +12007,8 @@ typedef struct {
                      mlo_peer_id_valid:1, /* indicate if the mlo peer id in wmi_peer_assoc_mlo_params is valid */
                      mlo_mcast_vdev:1, /* indicate this is the MLO mcast primary vdev */
                      emlsr_support:1, /* indicate that eMLSR is supported */
-                     unused: 25;
+                     mlo_force_link_inactive:1, /* indicate this link is forced inactive */
+                     unused: 24;
         };
         A_UINT32 mlo_flags;
     };
@@ -13899,6 +13994,43 @@ typedef enum {
      * bit 31:3 Reserved
      */
     WMI_VDEV_PARAM_11AZ_SECURITY_CONFIG,    /* 0xAB */
+
+    /*
+     * Latency Level Flags
+     */
+    WMI_VDEV_PARAM_NORMAL_LATENCY_FLAGS_CONFIGURATION,    /* 0xAC */
+    WMI_VDEV_PARAM_XR_LATENCY_FLAGS_CONFIGURATION,        /* 0xAD */
+    WMI_VDEV_PARAM_LOW_LATENCY_FLAGS_CONFIGURATION,       /* 0xAE */
+    WMI_VDEV_PARAM_ULTRA_LOW_LATENCY_FLAGS_CONFIGURATION, /* 0xAF */
+
+    /*
+     * Latency level UL/DL
+     * 0-15 bits: UL
+     * 16-31 bits: DL
+     */
+    WMI_VDEV_PARAM_NORMAL_LATENCY_UL_DL_CONFIGURATION,    /* 0xB0 */
+    WMI_VDEV_PARAM_XR_LATENCY_UL_DL_CONFIGURATION,        /* 0xB1 */
+    WMI_VDEV_PARAM_LOW_LATENCY_UL_DL_CONFIGURATION,       /* 0xB2 */
+    WMI_VDEV_PARAM_ULTRA_LOW_LATENCY_UL_DL_CONFIGURATION, /* 0xB3 */
+    /*
+     * Ini to
+     * Configure default latency level for all clients
+     */
+    WMI_VDEV_PARAM_DEFAULT_LATENCY_LEVEL_CONFIGURATION,   /* 0xB4 */
+
+    /*
+     * Ini to
+     * Configure multi client Low latency Feature
+     */
+    WMI_VDEV_PARAM_MULTI_CLIENT_LL_FEATURE_CONFIGURATION, /* 0xB5 */
+
+    /*
+     * traffic config for per vdev
+     * bit 0: low latency vdev
+     * bit 1: high tput vdev
+     * bit 31:2 Reserved
+     */
+    WMI_VDEV_PARAM_VDEV_TRAFFIC_CONFIG,                   /* 0xB6 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -16115,6 +16247,31 @@ typedef struct {
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_tid_to_link_map */
+    A_UINT32 tlv_header;
+
+    /**
+     * A_UINT32
+     *     WMI_TID_TO_LINK_MAP_TID_NUM_GET / WMI_TID_TO_LINK_MAP_TID_NUM_SET
+     *     tid_num:5,
+     *
+     *     WMI_TID_TO_LINK_MAP_DIR_GET / WMI_TID_TO_LINK_MAP_DIR_SET
+     *     dir:2,                 // 0 - DL, 1 - UL, 2 - BiDi
+     *
+     *     WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_GET /
+     *         WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_SET
+     *     default_link_mapping:1, // If this is set to 1, ignore
+     *                             // link_mapping_mask for the specific tid
+     *
+     *     WMI_TID_TO_LINK_MAP_LINK_MASK_GET / WMI_TID_TO_LINK_MAP_LINK_MASK_SET
+     *     link_mapping_mask:16,
+     *
+     *     rsvd:8;
+     */
+    A_UINT32 tid_to_link_map_info;
+} wmi_peer_assoc_tid_to_link_map;
+
+typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param */
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
@@ -16255,6 +16412,7 @@ typedef struct {
  *         For non-MLO peers the array length should be 0.
  *     wmi_eht_rate_set_peer_eht_rates; <-- EHT capabilities of the peer
  *     wmi_peer_assoc_mlo_partner_link_params link_info[] <-- partner link info
+ *     wmi_peer_assoc_tid_to_link_map[] <-- tid to link_map info
  */
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
@@ -27674,6 +27832,101 @@ typedef enum {
      *  A_UINT8     agcEnergyDetThr6GVLP thrCcaExt40dB_ETSI_MKK_CHN
      *  A_UINT8     agcEnergyDetThr6GVLP.thrCcaExt80dB_ETSI_MKK_CHN
      */
+
+    BIOS_PARAM_TAS_CONFIG_TYPE,
+    /*
+     *  BIOS_PARAM_TAS_CONFIG_TYPE Structure has 108 bytes. Please Note these fields of A_UINT32 or A_INT32.
+     *  explicit endianness corrections will need to be done by any big-endian host when the little-endian target is paired with a big-endian host.
+     *  PowerLimitIndicator points out which region(FCC OR ICNIRP) power limit value should be used.
+     *  A bit of PowerLimitIndicator maps a country. bit value 0: ICNIRP 1: FCC
+     *
+     *  A_UINT8       Version
+     *  A_UINT8       TASIsPairWith3rdPartyWwan
+     *  A_UINT8       SARAntennaGroupingExt[6]  (6 Bytes)
+     *  A_UINT32      TASPeakModeIndicator[8]  (32 Bytes)
+     *  A_UINT32      TAS_FCC_ICNIRP_Indicator[8] (32 Bytes)
+     *  A_UINT32      PowerLimitIndicator[8] (32 Bytes)
+     *  A_INT32       TASLogReducedLimit (4 Bytes)
+     */
+
+    BIOS_PARAM_TAS_DATA_TYPE,
+    /*
+     *  BIOS_PARAM_TAS_DATA_TYPE Structure has 69 bytes as below, power limit value unit is 0.25 dBm.
+     *  If Enable flag is 0, FW will not use power limit value of bios.
+     *
+     *  A_UINT8 Version
+     *  A_UINT8 Enable Flag
+     *  A_UINT8 Power Table Index
+     *  ====================FCC POWER LIMIT VALUE======================
+     *  A_INT8  FCC 2Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  FCC 2Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  FCC 2Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  ====================ICNIRP POWER LIMIT VALUE======================
+     *  A_INT8  ICNIRP 2Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  ICNIRP 2Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  ICNIRP 2Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     */
+
     BIOS_PARAM_TYPE_MAX,
 } bios_param_type_e;
 
@@ -31115,6 +31368,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_RX_PN_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_SET_MULTIPLE_PDEV_VDEV_PARAM_CMDID);
         WMI_RETURN_STRING(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -31172,6 +31426,7 @@ typedef enum {
      */
     WMI_AFC_CMD_SERV_RESP_READY = 1,
     WMI_AFC_CMD_RESET = 2, /* Added cmd type to handle AFC reset */
+    WMI_AFC_CMD_CLEAR_PAYLOAD = 3, /* Added cmd type to clear AFC response payload in proxy mode */
 } WMI_AFC_CMD_TYPE;
 
 /** Host indicating AFC info availability to FW */
@@ -31554,10 +31809,14 @@ typedef enum {
      *    with expiry event.
      * 3. If AFC server is not responding to FW in specified time, FW will
      *    indicate host to switch to LPI.
+     * 4. In SP mode, if AFC server is not responding to FW in
+     *    specified time then FW will indicate host to stop TX since
+     *    there are no lower power mode available.
      */
     WMI_AFC_EXPIRY_EVENT_START         = 1,
     WMI_AFC_EXPIRY_EVENT_RENEW         = 2,
     WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LPI = 3,
+    WMI_AFC_EXPIRY_EVENT_STOP_TX       = 4,
 } WMI_AFC_EXPIRY_EVENT_SUBTYPE;
 
 typedef enum {
@@ -32118,6 +32377,14 @@ typedef enum {
     WMI_WLM_LL_ULTRA_LOW = 0x3,
 } WMI_WLM_LATENCY_LEVEL;
 
+typedef struct {
+    A_UINT32 tlv_header; /* WMITLV_TAG_STRUC_wmi_vdev_latency_event_fixed_param */
+    /** The latency level for specified vdev_id */
+    A_UINT32 vdev_id;
+    /** latency level enum WMI_WLM_LATENCY_LEVEL honored by FW */
+    A_UINT32 latency_level;
+} wmi_vdev_latency_event_fixed_param;
+
 /*
 * Lay out of flags in wmi_wlm_config_cmd_fixed_param
 *
@@ -32230,31 +32497,53 @@ typedef enum {
 #define WLM_FLAGS_SCAN_SET_SPLIT_PAS_CH_ENABLE(flag, val) WMI_SET_BITS(flag, 21, 1, val)
 #define WLM_FLAGS_SCAN_IS_ADAPT_SCAN_ENABLED(flag)        WMI_GET_BITS(flag, 22, 1)
 #define WLM_FLAGS_SCAN_SET_ADAPT_SCAN_ENABLE(flag, val)   WMI_SET_BITS(flag, 22, 1, val)
+#define WLM_FLAGS_SET_FORCE_DEFAULT_LATENCY(flag, val)    WMI_SET_BITS(flag, 0, 1, val)
+#define WLM_FLAGS_GET_FORCE_DEFAULT_LATENCY(flag)         WMI_GET_BITS(flag, 0, 1)
+
+#define WLM_MAX_HOST_CLIENTS 5
 
 typedef struct {
-    /** TLV tag and len; tag equals
-    * WMI_WLM_CONFIG_CMD_fixed_param */
+    /** TLV tag and len; tag equals WMI_WLM_CONFIG_CMD_fixed_param */
     A_UINT32 tlv_header;
     /* VDEV identifier */
     A_UINT32 vdev_id;
-    /* Refer to WMI_WLM_LATENCY_LEVEL
-    * Once latency change detected, WLM will notify modules e.g. STAPS or SCAN/ROAM,
-    * who subscribed this event. And subscribers, like SCAN, may disable/cutoff offchan
-    * operation to support lower latency of WLAN.
-    */
+    /*
+     * Refer to WMI_WLM_LATENCY_LEVEL
+     * Once latency change detected, WLM will notify modules e.g. STAPS or SCAN/ROAM,
+     * who subscribed this event. And subscribers, like SCAN, may disable/cutoff offchan
+     * operation to support lower latency of WLAN.
+     */
     A_UINT32 latency_level;
-    /* represent uplink latency in ms
-    * This parameter will be used by STAPS module to decide timing parameters, like
-    * ITO or SPEC wakeup interval. For SCAN/ROAM, it may used to calculate offchan
-    * durations.
-    */
+    /*
+     * represent uplink latency in ms
+     * This parameter will be used by STAPS module to decide timing parameters, like
+     * ITO or SPEC wakeup interval. For SCAN/ROAM, it may used to calculate offchan
+     * durations.
+     * For host and FW with multi client LL feature enabled, this field is obsolete.
+     */
     A_UINT32 ul_latency;
-    /* represent downlink latency in ms
-    * Similar usage as ul_latency
-    */
+    /*
+     * represent downlink latency in ms
+     * Similar usage as ul_latency
+     * For host and FW with multi client LL feature enabled, this field is obsolete.
+     */
     A_UINT32 dl_latency;
-    /* flags for each client of WLM, refer to WLM_FLAGS_ definitions above */
+    /*
+     * flags for each client of WLM, refer to WLM_FLAGS_ definitions above.
+     * For host and FW with multi client LL feature enabled, this field is obsolete.
+     */
     A_UINT32 flags;
+    /*
+     * bit 0 used as force reset:
+     * to override the latency level as default
+     * for all the wlm clients
+     */
+    A_UINT32 flags_ext;
+    /*
+     * clients of WLM Arbiter
+     * WLM_MAX_HOST_CLIENTS 5
+     */
+    A_UINT32 client_id_bitmask;
 } wmi_wlm_config_cmd_fixed_param;
 
 /* Broadcast TWT enable/disable for both REQUESTER and RESPONDER */
@@ -33755,12 +34044,17 @@ typedef struct {
     /* timestamp is the absolute time w.r.t host timer which is synchronized between the host and target */
     A_UINT32 timestamp;      /* Timestamp when frame is sent or received */
     /*
-     * frame_info = frame_type | (frame_subtype << 2) | (request_or_response << 6)| (seq_num << 16)
+     * frame_info = frame_type | (frame_subtype << 2) | (request_or_response << 6) | (auth_algo_num << 7) | (seq_num << 16)
      * frame_type(2 bits), frame_subtype(4 bits) are from 802.11 spec.
-     * If frame_type is WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT, frame_subtype
-     * should be one of value in WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE.
+     *     If frame_type is WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT, frame_subtype
+     *     should be one of value in WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE.
      * request_or_response(1 bit) - Valid if frame_subtype is authentication.
      *      0 - Authentication request 1 - Authentication response
+     * auth_algo_num(5bits) : Lower 5 bits of 9.4.1.1 Authentication Algorithm
+     *     Number field
+     *     The auth_algo_num bits shall be ignored unless
+     *     WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT is set and
+     *     frame_subtype is auth frame.
      * seq_num(16 bits) - frame sequence number
      */
     A_UINT32 frame_info;
@@ -33787,6 +34081,7 @@ typedef struct {
      * sequence number) is retransmitted, in protocol level.
      */
     A_UINT32 retry_count;
+    wmi_mac_addr bssid;      /* AP MAC address */
 } wmi_roam_frame_info;
 
 typedef enum {
@@ -37721,6 +38016,64 @@ typedef struct {
     /** Return status. 0 for success, non-zero otherwise */
     A_UINT32 status;
 } wmi_mlo_teardown_complete_fixed_param;
+
+#define WMI_TID_TO_LINK_MAP_TID_NUM_GET(_var)               WMI_GET_BITS(_var, 0, 5)
+#define WMI_TID_TO_LINK_MAP_TID_NUM_SET(_var, _val)         WMI_SET_BITS(_var, 0, 5, _val)
+
+#define WMI_TID_TO_LINK_MAP_DIR_GET(_var)                   WMI_GET_BITS(_var, 5, 2)
+#define WMI_TID_TO_LINK_MAP_DIR_SET(_var, _val)             WMI_SET_BITS(_var, 5, 2, _val)
+
+#define WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_GET(_var)       WMI_GET_BITS(_var, 7, 1)
+#define WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_SET(_var, _val) WMI_SET_BITS(_var, 7, 1, _val)
+
+#define WMI_TID_TO_LINK_MAP_LINK_MASK_GET(_var)             WMI_GET_BITS(_var, 8, 16)
+#define WMI_TID_TO_LINK_MAP_LINK_MASK_SET(_var, _val)       WMI_SET_BITS(_var, 8, 16, _val)
+
+enum {
+    WMI_TID_TO_LINK_MAP_DIR_DL,
+    WMI_TID_TO_LINK_MAP_DIR_UL,
+    WMI_TID_TO_LINK_MAP_DIR_BIDI,
+};
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tid_to_link_map */
+    A_UINT32 tlv_header;
+
+    /**
+     * A_UINT32
+     *     WMI_TID_TO_LINK_MAP_TID_NUM_GET / WMI_TID_TO_LINK_MAP_TID_NUM_SET
+     *     tid_num:5,
+     *
+     *     WMI_TID_TO_LINK_MAP_DIR_GET / WMI_TID_TO_LINK_MAP_DIR_SET
+     *     dir:2,                 // 0 - DL, 1 - UL, 2 - BiDi
+     *
+     *     WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_GET /
+     *         WMI_TID_TO_LINK_MAP_DEFAULT_MAPPING_SET
+     *     default_link_mapping:1, // If this is set to 1, ignore
+     *                             // link_mapping_mask for the specific tid
+     *
+     *     WMI_TID_TO_LINK_MAP_LINK_MASK_GET / WMI_TID_TO_LINK_MAP_LINK_MASK_SET
+     *     link_mapping_mask:16,
+     *
+     *     rsvd:8;
+     */
+    A_UINT32 tid_to_link_map_info;
+} wmi_tid_to_link_map;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_tid_to_link_map_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+
+    /** MLO Peer's current link MAC address */
+    wmi_mac_addr link_macaddr;
+
+    /**
+     * Following this structure is the TLV:
+     * struct wmi_tid_to_link_map tid_to_link_map[];
+     */
+} wmi_peer_tid_to_link_map_fixed_param;
 
 #define WMI_IGMP_OFFLOAD_SUPPORT_DISABLE_BITMASK    0x0
 #define WMI_IGMP_V1_OFFLOAD_SUPPORT_BITMASK         0x1

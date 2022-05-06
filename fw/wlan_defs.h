@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.*
+ * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1313,7 +1314,7 @@ typedef enum {
 
 /** MGMT RX REO Changes */
 /* Macros for having versioning info for compatibility check between host and firmware */
-#define MLO_SHMEM_MAJOR_VERSION 1
+#define MLO_SHMEM_MAJOR_VERSION 2
 #define MLO_SHMEM_MINOR_VERSION 1
 
 /** Helper Macros for tlv header of the given tlv buffer */
@@ -1357,6 +1358,36 @@ typedef enum {
         (_var) |= (((_val) & ((1 << (_num_bits)) - 1)) << (_index)); \
     } while (0)
 
+/**
+ * Enum which defines different versions of management Rx reorder snapshots.
+ */
+typedef enum {
+    /**
+     * DWORD Lower:
+     * [15:0]  : Management packet counter
+     * [30:16] : Redundant global time stamp = Global time stamp[14:0]
+     * [31]    : Valid
+     *
+     * DWORD Upper:
+     * [31:0]  : Global time stamp
+     *
+     */
+    MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY = 0,
+
+    /**
+     * DWORD Lower:
+     * [14:0]  : Global time stamp[14:0]
+     * [30:15] : Management packet counter
+     * [31]    : Valid
+     *
+     * DWORD Upper:
+     * [14:0]  : Redundant management packet counter = Management packet
+     *           counter[14:0]
+     * [31:15] : Global time stamp[31:15]
+     */
+    MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY = 1,
+} MGMT_RX_REO_SNAPSHOT_VERSION;
+
 /** Definition of the GLB_H_SHMEM arena tlv structures */
 
 typedef enum {
@@ -1399,6 +1430,152 @@ typedef enum {
 
 #define MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_GET_ADRESS(mgmt_rx_reo_snapshot) \
     (&mgmt_rx_reo_snapshot->mgmt_rx_reo_snapshot_low)
+
+/**
+ * Helper macros/functions for params GET/SET of different hw version
+ * of the mgmt_rx_reo_snapshot
+ */
+
+static INLINE A_UINT8
+MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_VALID_GET(
+    A_UINT32 mgmt_rx_reo_snapshot_low, A_UINT8 snapshot_ver)
+{
+    if ((snapshot_ver != MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY) &&
+        (snapshot_ver != MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY))
+    {
+        A_ASSERT(0);
+    }
+
+    return MLO_SHMEM_GET_BITS(mgmt_rx_reo_snapshot_low, 31, 1);
+}
+
+static INLINE void
+MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_VALID_SET(
+    A_UINT32 *mgmt_rx_reo_snapshot_low, A_UINT8 value, A_UINT8 snapshot_ver)
+{
+    if ((snapshot_ver != MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY) &&
+        (snapshot_ver != MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY)) {
+        A_ASSERT(0);
+    }
+
+    MLO_SHMEM_SET_BITS(*mgmt_rx_reo_snapshot_low, 31, 1, value);
+}
+
+static INLINE A_UINT16
+MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_MGMT_PKT_CTR_GET(
+    A_UINT32 mgmt_rx_reo_snapshot_low, A_UINT8 snapshot_ver)
+{
+    if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY) {
+        return MLO_SHMEM_GET_BITS(mgmt_rx_reo_snapshot_low, 0, 16);
+    } else if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY){
+        return MLO_SHMEM_GET_BITS(mgmt_rx_reo_snapshot_low, 15, 16);
+    } else {
+        A_ASSERT(0);
+        return 0;
+    }
+}
+
+static INLINE void
+MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_MGMT_PKT_CTR_SET(
+    A_UINT32 *mgmt_rx_reo_snapshot_low, A_UINT16 value, A_UINT8 snapshot_ver)
+{
+    if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY) {
+        MLO_SHMEM_SET_BITS(*mgmt_rx_reo_snapshot_low, 0, 16, value);
+    } else if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY){
+        MLO_SHMEM_SET_BITS(*mgmt_rx_reo_snapshot_low, 15, 16, value);
+    } else {
+        A_ASSERT(0);
+    }
+}
+
+#define MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_MGMT_PKT_CTR_REDUNDANT_GET( \
+    mgmt_rx_reo_snapshot_high) \
+    MLO_SHMEM_GET_BITS(mgmt_rx_reo_snapshot_high, 0, 15)
+#define MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_MGMT_PKT_CTR_REDUNDANT_SET( \
+    mgmt_rx_reo_snapshot_high, value) \
+    MLO_SHMEM_SET_BITS(mgmt_rx_reo_snapshot_high, 0, 15, value)
+
+#define MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_GLOBAL_TIMESTAMP_REDUNDANT_GET( \
+    mgmt_rx_reo_snapshot_low) \
+    MLO_SHMEM_GET_BITS(mgmt_rx_reo_snapshot_low, 16, 15)
+#define MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_GLOBAL_TIMESTAMP_REDUNDANT_SET( \
+    mgmt_rx_reo_snapshot_low, value) \
+    MLO_SHMEM_SET_BITS(mgmt_rx_reo_snapshot_low, 16, 15, value)
+
+static INLINE A_UINT32
+MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_GLOBAL_TIMESTAMP_GET(
+    A_UINT32 mgmt_rx_reo_snapshot_low,
+    A_UINT32 mgmt_rx_reo_snapshot_high,
+    A_UINT8 snapshot_ver)
+{
+    if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY) {
+        return mgmt_rx_reo_snapshot_high;
+    } else if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY){
+        return
+            ((MLO_SHMEM_GET_BITS(mgmt_rx_reo_snapshot_high, 15, 17) << 15) |
+             MLO_SHMEM_GET_BITS(mgmt_rx_reo_snapshot_low, 0, 15));
+    } else {
+        A_ASSERT(0);
+        return 0;
+    }
+}
+
+static INLINE void
+MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_GLOBAL_TIMESTAMP_SET(
+    A_UINT32 *mgmt_rx_reo_snapshot_low,
+    A_UINT32 *mgmt_rx_reo_snapshot_high,
+    A_UINT32 value,
+    A_UINT8 snapshot_ver)
+{
+    if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY) {
+        *mgmt_rx_reo_snapshot_high = value;
+    } else if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY){
+        MLO_SHMEM_SET_BITS(
+            *mgmt_rx_reo_snapshot_high, 15, 17, ((value) >> 15));
+        MLO_SHMEM_SET_BITS(
+            *mgmt_rx_reo_snapshot_low, 0, 15, ((value) & 0x7fff));
+    } else {
+        A_ASSERT(0);
+    }
+}
+
+static INLINE A_BOOL
+MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_CHECK_CONSISTENCY(
+    A_UINT32 mgmt_rx_reo_snapshot_low,
+    A_UINT32 mgmt_rx_reo_snapshot_high,
+    A_UINT8 snapshot_ver)
+{
+    if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_TIMESTAMP_REDUNDANCY) {
+        A_UINT32 global_timestamp;
+        A_UINT32 global_timestamp_redundant;
+
+        global_timestamp = MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_GLOBAL_TIMESTAMP_GET(
+            mgmt_rx_reo_snapshot_low, mgmt_rx_reo_snapshot_high, snapshot_ver);
+        global_timestamp_redundant =
+            MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_GLOBAL_TIMESTAMP_REDUNDANT_GET(
+                mgmt_rx_reo_snapshot_low);
+
+        return
+            (MLO_SHMEM_GET_BITS(global_timestamp, 0, 15) ==
+             MLO_SHMEM_GET_BITS(global_timestamp_redundant, 0, 15));
+    } else if (snapshot_ver == MGMT_RX_REO_SNAPSHOT_VERSION_PKT_CTR_REDUNDANCY){
+        A_UINT16 mgmt_pkt_ctr;
+        A_UINT16 mgmt_pkt_ctr_redundant;
+
+        mgmt_pkt_ctr = MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_MGMT_PKT_CTR_GET(
+            mgmt_rx_reo_snapshot_low, snapshot_ver);
+        mgmt_pkt_ctr_redundant =
+            MLO_SHMEM_MGMT_RX_REO_SNAPSHOT_MGMT_PKT_CTR_REDUNDANT_GET(
+                mgmt_rx_reo_snapshot_high);
+
+        return
+            (MLO_SHMEM_GET_BITS(mgmt_pkt_ctr, 0, 15) ==
+             MLO_SHMEM_GET_BITS(mgmt_pkt_ctr_redundant, 0, 15));
+    } else {
+        A_ASSERT(0);
+        return 0;
+    }
+}
 
 /* REO snapshot structure */
 typedef struct {
@@ -1452,6 +1629,15 @@ A_COMPILE_TIME_ASSERT(verify_mlo_glb_rx_reo_per_link_snapshot_fw_consumed_offset
 #define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_VALID_LINK_BMAP_GET(link_info) MLO_SHMEM_GET_BITS(link_info, 4, 16)
 #define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_VALID_LINK_BMAP_SET(link_info, value) MLO_SHMEM_SET_BITS(link_info, 4, 16, value)
 
+#define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_HW_FWD_SNAPSHOT_VER_GET(snapshot_ver_info) MLO_SHMEM_GET_BITS(snapshot_ver_info, 0, 3)
+#define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_HW_FWD_SNAPSHOT_VER_SET(snapshot_ver_info, value) MLO_SHMEM_SET_BITS(snapshot_ver_info, 0, 3, value)
+
+#define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_FW_FWD_SNAPSHOT_VER_GET(snapshot_ver_info) MLO_SHMEM_GET_BITS(snapshot_ver_info, 3, 3)
+#define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_FW_FWD_SNAPSHOT_VER_SET(snapshot_ver_info, value) MLO_SHMEM_SET_BITS(snapshot_ver_info, 3, 3, value)
+
+#define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_FW_CONSUMED_SNAPSHOT_VER_GET(snapshot_ver_info) MLO_SHMEM_GET_BITS(snapshot_ver_info, 6, 3)
+#define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_FW_CONSUMED_SNAPSHOT_VER_SET(snapshot_ver_info, value) MLO_SHMEM_SET_BITS(snapshot_ver_info, 6, 3, value)
+
 /* Definition of the complete REO snapshot info */
 typedef struct {
     /* TLV tag and len; tag equals MLO_SHMEM_TLV_STRUCT_MLO_GLB_RX_REO_SNAPSHOT_INFO */
@@ -1465,6 +1651,18 @@ typedef struct {
      * [31:20]: reserved
      */
     A_UINT32 link_info;
+
+    /**
+     * snapshot_ver_info
+     *
+     * [2:0]:  hw_forwarded snapshot version
+     * [5:3]:  fw_forwarded snapshot version
+     * [8:6]:  fw_consumed snapshot version
+     * [31:9]: reserved
+     */
+    A_UINT32 snapshot_ver_info;
+    A_UINT32 reserved_alignment_padding;
+
 /*  This TLV is followed by array of mlo_glb_rx_reo_per_link_snapshot_info:
  *  mlo_glb_rx_reo_per_link_snapshot_info will have multiple instances
  *  equal to num of hw links received by no_of_link

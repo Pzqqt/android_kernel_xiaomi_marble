@@ -1038,6 +1038,27 @@ typedef struct {
     A_UINT32 phy_warm_reset_reason_tx_hwsch_reset_war;
     A_UINT32 phy_warm_reset_reason_hwsch_wdog_or_cca_wdog_war;
     A_UINT32 fw_rx_rings_reset;
+    /**
+     * Num of iterations rx leak prevention successfully done.
+     */
+    A_UINT32 rx_dest_drain_rx_descs_leak_prevention_done;
+    /**
+     * Num of rx descs successfully saved by rx leak prevention.
+     */
+    A_UINT32 rx_dest_drain_rx_descs_saved_cnt;
+    /*
+     * Stats to debug reason Rx leak prevention
+     * was not required to be kicked in.
+     */
+    A_UINT32 rx_dest_drain_rxdma2reo_leak_detected;
+    A_UINT32 rx_dest_drain_rxdma2fw_leak_detected;
+    A_UINT32 rx_dest_drain_rxdma2wbm_leak_detected;
+    A_UINT32 rx_dest_drain_rxdma1_2sw_leak_detected;
+    A_UINT32 rx_dest_drain_rx_drain_ok_mac_idle;
+    A_UINT32 rx_dest_drain_ok_mac_not_idle;
+    A_UINT32 rx_dest_drain_prerequisite_invld;
+    A_UINT32 rx_dest_drain_skip_for_non_lmac_reset;
+    A_UINT32 rx_dest_drain_hw_fifo_not_empty_post_drain_wait;
 } htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
@@ -4965,13 +4986,15 @@ typedef struct {
      */
     A_UINT32 rx_ulofdma_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
 
-    /*
-     * NOTE - this TLV is already large enough that it causes the HTT message
-     * carrying it to be nearly at the message size limit that applies to
-     * many targets/hosts.
-     * No further fields should be added to this TLV without very careful
-     * review to ensure the size increase is acceptable.
-     */
+    /* Stats for MCS 12/13 */
+    A_UINT32 rx_mcs_ext[HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
+/*
+ * NOTE - this TLV is already large enough that it causes the HTT message
+ * carrying it to be nearly at the message size limit that applies to
+ * many targets/hosts.
+ * No further fields should be added to this TLV without very careful
+ * review to ensure the size increase is acceptable.
+ */
 } htt_rx_pdev_rate_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE
@@ -5993,6 +6016,7 @@ typedef enum {
     HTT_TX_AC_SOUNDING_MODE = 0,
     HTT_TX_AX_SOUNDING_MODE = 1,
     HTT_TX_BE_SOUNDING_MODE = 2,
+    HTT_TX_CMN_SOUNDING_MODE = 3,
 } htt_stats_sounding_tx_mode;
 
 typedef struct {
@@ -6514,6 +6538,19 @@ typedef struct {
     A_UINT32 mpdus_failed;
 } htt_tx_rate_stats_t;
 
+typedef enum {
+    HTT_RC_MODE_SU_OL,
+    HTT_RC_MODE_SU_BF,
+    HTT_RC_MODE_MU1_INTF,
+    HTT_RC_MODE_MU2_INTF,
+    HTT_Rc_MODE_MU3_INTF,
+    HTT_RC_MODE_MU4_INTF,
+    HTT_RC_MODE_MU5_INTF,
+    HTT_RC_MODE_MU6_INTF,
+    HTT_RC_MODE_MU7_INTF,
+    HTT_RC_MODE_2D_COUNT,
+} HTT_RC_MODE;
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -6535,6 +6572,7 @@ typedef struct {
     /** 320MHz extension for PER */
     htt_tx_rate_stats_t per_bw320;
 
+    A_UINT32 probe_cnt_per_rcmode[HTT_RC_MODE_2D_COUNT];
 } htt_tx_rate_stats_per_tlv;
 
 /* NOTE:
