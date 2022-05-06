@@ -4715,11 +4715,12 @@ cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
 }
 
 void cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
-					 uint8_t vdev_id)
+					 uint8_t vdev_id, uint8_t *psk_pmk,
+					 uint8_t pmk_len)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct mlme_pmk_info *pmk_info;
-	struct wlan_crypto_pmksa *pmkid_cache;
+	struct wlan_crypto_pmksa *pmkid_cache, *roam_sync_pmksa;
 	int32_t keymgmt;
 	bool lookup_success;
 	QDF_STATUS status;
@@ -4754,7 +4755,25 @@ void cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
 		if (!src_cfg.bool_value)
 			goto end;
 
-		wlan_crypto_set_sae_single_pmk_bss_cap(vdev, &bssid, true);
+		roam_sync_pmksa = qdf_mem_malloc(sizeof(*roam_sync_pmksa));
+		if (roam_sync_pmksa) {
+			qdf_copy_macaddr(&roam_sync_pmksa->bssid, &bssid);
+			roam_sync_pmksa->single_pmk_supported = true;
+			roam_sync_pmksa->pmk_len = pmk_len;
+			qdf_mem_copy(roam_sync_pmksa->pmk, psk_pmk,
+				     roam_sync_pmksa->pmk_len);
+			mlme_debug("SPMK received for " QDF_MAC_ADDR_FMT "pmk_len:%d",
+				QDF_MAC_ADDR_REF(roam_sync_pmksa->bssid.bytes),
+				roam_sync_pmksa->pmk_len);
+			/* update single pmk info for roamed ap to pmk table */
+			wlan_crypto_set_sae_single_pmk_info(vdev,
+							    roam_sync_pmksa);
+
+			qdf_mem_zero(roam_sync_pmksa, sizeof(*roam_sync_pmksa));
+			qdf_mem_free(roam_sync_pmksa);
+		} else {
+			goto end;
+		}
 
 		pmkid_cache = qdf_mem_malloc(sizeof(*pmkid_cache));
 		if (!pmkid_cache)

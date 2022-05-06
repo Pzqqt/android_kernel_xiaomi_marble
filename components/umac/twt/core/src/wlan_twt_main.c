@@ -50,7 +50,8 @@ wlan_twt_add_session(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -91,7 +92,8 @@ wlan_twt_set_command_in_progress(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -131,7 +133,8 @@ wlan_twt_init_context(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -378,7 +381,8 @@ wlan_twt_sap_peer_is_cmd_in_progress(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return false;
 	}
 
@@ -815,7 +819,8 @@ bool wlan_twt_is_setup_done(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return false;
 	}
 
@@ -856,7 +861,8 @@ bool wlan_twt_is_max_sessions_reached(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return true;
 	}
 
@@ -899,7 +905,8 @@ bool wlan_twt_is_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return false;
 	}
 
@@ -956,7 +963,8 @@ wlan_twt_set_ack_context(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1011,7 +1019,8 @@ wlan_twt_get_ack_context(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		goto err;
 	}
 
@@ -1061,7 +1070,8 @@ bool wlan_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return false;
 	}
 
@@ -1515,7 +1525,8 @@ wlan_twt_set_setup_done(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return;
 	}
 
@@ -1564,7 +1575,8 @@ wlan_twt_set_session_state(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
 					   WLAN_TWT_ID);
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return;
 	}
 
@@ -1602,7 +1614,8 @@ wlan_twt_get_session_state(struct wlan_objmgr_psoc *psoc,
 					   WLAN_TWT_ID);
 
 	if (!peer) {
-		twt_err("Peer object not found");
+		twt_err("Peer object not found "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
 	}
 

@@ -1537,6 +1537,20 @@ mlme_init_product_details_cfg(struct wlan_mlme_product_details_cfg
 		      sizeof(product_details->model_number));
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void mlme_init_sta_mlo_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_mlme_sta_cfg *sta)
+{
+	sta->single_link_mlo_conn =
+		cfg_default(CFG_SINGLE_LINK_MLO_CONN);
+}
+#else
+static void mlme_init_sta_mlo_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_mlme_sta_cfg *sta)
+{
+}
+#endif
+
 static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_sta_cfg *sta)
 {
@@ -1576,6 +1590,7 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 	sta->allow_tpc_from_ap = cfg_get(psoc, CFG_TX_POWER_CTRL);
 	sta->sta_keepalive_method =
 		cfg_get(psoc, CFG_STA_KEEPALIVE_METHOD);
+	mlme_init_sta_mlo_cfg(psoc, sta);
 }
 
 static void mlme_init_stats_cfg(struct wlan_objmgr_psoc *psoc,

@@ -398,14 +398,12 @@ static QDF_STATUS lim_populate_fd_tmpl_frame(struct mac_context *mac,
 
 	if (wlan_reg_is_6ghz_chan_freq(cur_chan_freq)) {
 		fd_cntl_subfield |= WLAN_FD_FRAMECNTL_CAP;
-		pe_debug("FD Capability Present");
 		length = WLAN_FD_CAP_LEN;
 	}
 
 	/* For 80+80 set Channel center freq segment 1 */
 	if (IS_WLAN_PHYMODE_160MHZ(cur_phymode)) {
 		fd_cntl_subfield |= WLAN_FD_FRAMECNTL_CH_CENTERFREQ;
-		pe_debug("Center frequenceny Present");
 		length += 1;
 	}
 
@@ -435,10 +433,6 @@ static QDF_STATUS lim_populate_fd_tmpl_frame(struct mac_context *mac,
 	*(uint32_t *)frm = qdf_cpu_to_le32(shortssid);
 	frm += 4;
 	*frame_size += 4;
-	pe_debug("Category:%02x Action:%02x  fd_cntl:%02x bcn_intvl:%02x short ssid:%02x frame_size:%02x",
-		 fd_header->action_header.action_category,
-		 fd_header->action_header.action_code, fd_cntl_subfield,
-		 fd_header->bcn_interval, shortssid, *frame_size);
 
 	/* Length - 1 byte */
 	if (length) {
@@ -453,7 +447,6 @@ static QDF_STATUS lim_populate_fd_tmpl_frame(struct mac_context *mac,
 		lim_populate_fd_capability(pe_session, cur_phymode, &fd_cap[0]);
 		qdf_mem_copy(frm, fd_cap, WLAN_FD_CAP_LEN);
 		frm += WLAN_FD_CAP_LEN;
-		pe_debug("fd_cap: %02x %02x", fd_cap[0], fd_cap[1]);
 	}
 
 	/* Channel Center Freq Segment 1 - 1 byte */
@@ -461,7 +454,6 @@ static QDF_STATUS lim_populate_fd_tmpl_frame(struct mac_context *mac,
 		/* spec has seg0 and seg1 naming while we use seg1 and seg2 */
 		*frm = des_chan->ch_freq_seg1;
 		frm++;
-		pe_debug("ch_center_freq: %02x", des_chan->ch_freq_seg1);
 	}
 
 	/* Add TPE IE */
@@ -469,7 +461,6 @@ static QDF_STATUS lim_populate_fd_tmpl_frame(struct mac_context *mac,
 	    (pe_session->vhtCapability)) {
 		populate_dot11f_tx_power_env(mac, &tpe[0], chwidth,
 					     cur_chan_freq, &tpe_num, false);
-		pe_debug("tpe_num: %02x", tpe_num);
 		if (tpe_num > WLAN_MAX_NUM_TPE_IE) {
 			pe_err("tpe_num  %d greater than max size", tpe_num);
 			return QDF_STATUS_E_FAILURE;
@@ -501,12 +492,10 @@ static QDF_STATUS lim_populate_fd_tmpl_frame(struct mac_context *mac,
 						tpe[idx].max_tx_pwr_interpret;
 			tpe_ie->max_tx_pwr_category =
 						tpe[idx].max_tx_pwr_category;
-			pe_debug("tx_pwr_info: %02x", tpe_ie->tx_pwr_info);
 			frm = &tpe_ie->elem[0];
 
 			for (i = 0; i < tpe[idx].num_tx_power; i++) {
 				*frm = tpe[idx].tx_power[i];
-				pe_debug("tx_pwr[%d]: %02x", i, *frm);
 				frm++;
 			}
 
@@ -556,7 +545,7 @@ static QDF_STATUS lim_send_fils_discovery_template(struct mac_context *mac,
 
 	pe_debug("Fils Discovery template created successfully %d", n_bytes);
 
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   fd_params->frm, n_bytes);
 
 	fd_params->tmpl_len = n_bytes;

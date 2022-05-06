@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -507,6 +508,34 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"Max modulated dtim")
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/*
+ * <cfg>
+ * single_link_mlo_conn - Set single link mlo connection for sta
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This cfg is used to enable single link mlo connection
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </cfg>
+ */
+#define CFG_SINGLE_LINK_MLO_CONN CFG_BOOL( \
+			"single_link_mlo_conn", \
+			0, \
+			"Enable single link mlo connection")
+
+#define CFG_SINGLE_LINK_MLO_CONN_CFG CFG(CFG_SINGLE_LINK_MLO_CONN)
+#else
+#define CFG_SINGLE_LINK_MLO_CONN_CFG
+#endif
+
 #define CFG_STA_ALL \
 	CFG(CFG_INFRA_STA_KEEP_ALIVE_PERIOD) \
 	CFG(CFG_STA_BSS_MAX_IDLE_PERIOD) \
@@ -526,6 +555,7 @@
 	CFG(CFG_STA_KEEPALIVE_METHOD) \
 	CFG(CFG_WT_CNF_TIMEOUT) \
 	CFG(CFG_CURRENT_RSSI) \
-	CFG(CFG_TX_POWER_CTRL)
+	CFG(CFG_TX_POWER_CTRL) \
+	CFG_SINGLE_LINK_MLO_CONN_CFG
 
 #endif /* CFG_MLME_STA_H__ */

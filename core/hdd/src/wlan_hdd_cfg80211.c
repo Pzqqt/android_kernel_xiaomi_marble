@@ -19600,11 +19600,20 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 }
 
 #ifdef CFG80211_KEY_INSTALL_SUPPORT_ON_WDEV
+#ifdef CFG80211_SET_KEY_WITH_SRC_MAC
+static int wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
+				     struct wireless_dev *wdev,
+				     u8 key_index, bool pairwise,
+				     const u8 *src_addr,
+				     const u8 *mac_addr,
+				     struct key_params *params)
+#else
 static int wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 				     struct wireless_dev *wdev,
 				     u8 key_index, bool pairwise,
 				     const u8 *mac_addr,
 				     struct key_params *params)
+#endif
 {
 	int errno = -EINVAL;
 	struct osif_vdev_sync *vdev_sync;
@@ -19627,11 +19636,20 @@ static int wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	return errno;
 }
 #else
+#ifdef CFG80211_SET_KEY_WITH_SRC_MAC
+static int wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
+				     struct net_device *ndev,
+				     u8 key_index, bool pairwise,
+				     const u8 *src_addr,
+				     const u8 *mac_addr,
+				     struct key_params *params)
+#else
 static int wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 				     struct net_device *ndev,
 				     u8 key_index, bool pairwise,
 				     const u8 *mac_addr,
 				     struct key_params *params)
+#endif
 {
 	int errno;
 	struct osif_vdev_sync *vdev_sync;

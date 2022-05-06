@@ -1689,6 +1689,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 					true);
 
 	if (sta && lim_is_sta_eht_capable(sta) &&
+	    lim_is_mlo_conn(pe_session, sta) &&
 	    lim_is_session_eht_capable(pe_session) &&
 	    wlan_vdev_mlme_is_mlo_ap(pe_session->vdev)) {
 		pe_debug("Populate mlo IEs");

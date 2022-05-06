@@ -778,6 +778,7 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 		return status;
 	}
 
+	status = QDF_STATUS_SUCCESS;
 	for (link = 0; link < mlo_info->num_partner_links; link++) {
 		link_id = mlo_info->partner_link_info[link].link_id;
 		link_addr = &mlo_info->partner_link_info[link].link_addr;
@@ -846,7 +847,6 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 				lk_session->parsedAssocReq[sta->assocId]);
 		qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
 		lk_session->parsedAssocReq[sta->assocId] = NULL;
-		status = QDF_STATUS_SUCCESS;
 		lim_mlo_release_vdev_ref(lk_session->vdev);
 	}
 

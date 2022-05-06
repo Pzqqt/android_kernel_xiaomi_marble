@@ -8688,6 +8688,11 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 		return -EINVAL;
 	}
 
+	if (adapter->device_mode != QDF_MONITOR_MODE) {
+		hdd_err_rl("Not supported, adapter is not in monitor mode");
+		return -EINVAL;
+	}
+
 	/* Verify the BW before accepting this request */
 	ch_width = bandwidth;
 

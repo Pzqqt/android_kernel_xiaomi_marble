@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -265,12 +265,14 @@ lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
 
 /**
  * lim_update_sta_mlo_info() - update sta mlo information
+ * @pe_session: session entry
  * @add_sta_params: pointer to tpAddStaParams
  * @sta_ds: pointer tpDphHashNode
  *
  * Return: Void
  */
-void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+void lim_update_sta_mlo_info(struct pe_session *pe_session,
+			     tpAddStaParams add_sta_params,
 			     tpDphHashNode sta_ds);
 
 void lim_set_mlo_caps(struct mac_context *mac, struct pe_session *session,
@@ -294,7 +296,8 @@ lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
 {
 }
 
-static inline void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+static inline void lim_update_sta_mlo_info(struct pe_session *session,
+					   tpAddStaParams add_sta_params,
 					   tpDphHashNode sta_ds)
 {
 }
@@ -2765,4 +2768,19 @@ void lim_process_tpe_ie_from_beacon(struct mac_context *mac,
  * Return: void
  */
 void lim_send_conc_params_update(void);
+
+#ifdef WLAN_FEATURE_SAE
+/**
+ * lim_process_sae_msg() - Process SAE message
+ * @mac: Global MAC pointer
+ * @body: Buffer pointer
+ *
+ * Return: None
+ */
+void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *body);
+#else
+static inline void lim_process_sae_msg(struct mac_context *mac, void *body);
+{}
+#endif
+
 #endif /* __LIM_UTILS_H */

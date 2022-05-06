@@ -3807,6 +3807,10 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 			 pAssocRsp->eht_cap.support_320mhz_6ghz);
 	}
 
+	if (ar->eht_op.present)
+		qdf_mem_copy(&pAssocRsp->eht_op, &ar->eht_op,
+			     sizeof(tDot11fIEeht_op));
+
 	if (ar->he_6ghz_band_cap.present) {
 		pe_debug("11AX: HE Band Capability IE present");
 		qdf_mem_copy(&pAssocRsp->he_6ghz_band_cap,
@@ -8685,6 +8689,11 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 
 	/* find out number of links from bcn or prb rsp */
 	total_sta_prof = 1;
+	if (wlan_mlme_is_sta_single_mlo_conn(
+				wlan_vdev_get_psoc(pe_session->vdev))) {
+		pe_debug("Single link mlo connection is enabled for mlo sta");
+		total_sta_prof = 0;
+	}
 	partner_info = &pe_session->lim_join_req->partner_info;
 
 	mlo_dev_ctx = pe_session->vdev->mlo_dev_ctx;

@@ -5636,9 +5636,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool bval = false;
 	bool enable_dfs_scan = true;
 	bool deliver_start_evt = true;
-	struct s_ext_cap *p_ext_cap;
+	struct s_ext_cap p_ext_cap = {0};
 	enum reg_phymode reg_phy_mode, updated_phy_mode;
 	struct sap_context *sap_ctx;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_enter();
 
@@ -5647,6 +5648,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		return ret;
 
 	if (policy_mgr_is_sta_mon_concurrency(hdd_ctx->psoc))
+		return -EINVAL;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_HDD_ID_OBJ_MGR);
+	if (!vdev)
 		return -EINVAL;
 
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
@@ -5659,12 +5664,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	if (deliver_start_evt) {
 		status = ucfg_if_mgr_deliver_event(
-					adapter->vdev,
-					WLAN_IF_MGR_EV_AP_START_BSS,
+					vdev, WLAN_IF_MGR_EV_AP_START_BSS,
 					NULL);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("start bss failed!!");
-			return -EINVAL;
+			ret = -EINVAL;
+			goto deliver_start_err;
 		}
 	}
 	/*
@@ -5778,14 +5783,17 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (ie) {
 			bool target_bigtk_support = false;
 
-			p_ext_cap = (struct s_ext_cap *)(&ie[2]);
-			hdd_err("beacon protection %d",
-				p_ext_cap->beacon_protection_enable);
+			memcpy(&p_ext_cap, &ie[2], (ie[1] > sizeof(p_ext_cap)) ?
+			       sizeof(p_ext_cap) : ie[1]);
+
+			hdd_debug("beacon protection %d",
+				  p_ext_cap.beacon_protection_enable);
+
 			ucfg_mlme_get_bigtk_support(hdd_ctx->psoc,
 						    &target_bigtk_support);
 			if (target_bigtk_support &&
-			    p_ext_cap->beacon_protection_enable)
-				mlme_set_bigtk_support(adapter->vdev, true);
+			    p_ext_cap.beacon_protection_enable)
+				mlme_set_bigtk_support(vdev, true);
 		}
 
 		/* Overwrite second AP's channel with first only when:
@@ -6156,6 +6164,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	config->ch_params.ch_width = config->ch_width_orig;
+	if (wlan_vdev_mlme_is_mlo_ap(vdev))
+		wlan_reg_set_create_punc_bitmap(&config->ch_params, true);
 	if ((config->ch_params.ch_width == CH_WIDTH_80P80MHZ) &&
 	    ucfg_mlme_get_restricted_80p80_bw_supp(hdd_ctx->psoc)) {
 		if (!((config->ch_params.center_freq_seg0 == 138 &&
@@ -6219,8 +6229,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
 				config->chan_freq, HW_MODE_20_MHZ,
-				policy_mgr_get_conc_ext_flags(adapter->vdev,
-							      false))) {
+				policy_mgr_get_conc_ext_flags(vdev, false))) {
 			mutex_unlock(&hdd_ctx->sap_lock);
 
 			hdd_err("This concurrency combination is not allowed");
@@ -6304,12 +6313,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	wlan_hdd_dhcp_offload_enable(hdd_ctx, adapter);
-	ucfg_p2p_status_start_bss(adapter->vdev);
+	ucfg_p2p_status_start_bss(vdev);
 
 	/* Check and restart SAP if it is on unsafe channel */
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
 
-	ucfg_ftm_time_sync_update_bss_state(adapter->vdev,
+	ucfg_ftm_time_sync_update_bss_state(vdev,
 					    FTM_TIME_SYNC_BSS_STARTED);
 
 	hdd_set_connection_in_progress(false);
@@ -6332,7 +6341,7 @@ free:
 	wlan_twt_concurrency_update(hdd_ctx);
 	if (deliver_start_evt) {
 		status = ucfg_if_mgr_deliver_event(
-					adapter->vdev,
+					vdev,
 					WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE,
 					NULL);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -6341,6 +6350,9 @@ free:
 		}
 	}
 	qdf_mem_free(sme_config);
+deliver_start_err:
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_HDD_ID_OBJ_MGR);
+
 	return ret;
 }
 
@@ -6389,7 +6401,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	int ret;
 	mac_handle_t mac_handle;
 
-	hdd_enter();
+	hdd_enter_dev(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	/*
@@ -6431,7 +6443,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	 * call during SSR case. Adapter gets cleaned up as part of SSR.
 	 */
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
-	hdd_debug("Device_mode %s(%d)",
+	hdd_debug("Event flags 0x%lx(%s) Device_mode %s(%d)",
+		  adapter->event_flags, (adapter->dev)->name,
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	/*

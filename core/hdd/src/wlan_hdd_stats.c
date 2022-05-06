@@ -1645,6 +1645,7 @@ void hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	int status;
 	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *sta_ctx;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
@@ -1663,6 +1664,14 @@ void hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
 
 	adapter->rssi_on_disconnect = lost_link_info->rssi;
 	hdd_debug("rssi on disconnect %d", adapter->rssi_on_disconnect);
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("invalid sta context");
+		return;
+	}
+
+	sta_ctx->cache_conn_info.signal = lost_link_info->rssi;
 }
 
 const struct nla_policy qca_wlan_vendor_ll_set_policy[
@@ -5345,6 +5354,7 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 				       uint8_t dcm,
 				       enum txrate_gi guard_interval)
 {
+	os_rate->nss = nss;
 	if (rate_flags & TX_RATE_LEGACY) {
 		os_rate->legacy = legacy_rate;
 		hdd_debug("Reporting legacy rate %d", os_rate->legacy);
@@ -5354,7 +5364,6 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 	/* assume basic BW. anything else will override this later */
 	hdd_set_rate_bw(os_rate, HDD_RATE_BW_20);
 	os_rate->mcs = mcs_index;
-	os_rate->nss = nss;
 
 	wlan_hdd_fill_os_he_rateflags(os_rate, rate_flags, dcm, guard_interval);
 
@@ -7224,6 +7233,7 @@ static void hdd_lost_link_cp_stats_info_cb(void *stats_ev)
 	struct hdd_adapter *adapter;
 	struct stats_event *ev = stats_ev;
 	uint8_t i;
+	struct hdd_station_ctx *sta_ctx;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -7241,6 +7251,11 @@ static void hdd_lost_link_cp_stats_info_cb(void *stats_ev)
 		hdd_debug("rssi %d for " QDF_MAC_ADDR_FMT,
 			  adapter->rssi_on_disconnect,
 			  QDF_MAC_ADDR_REF(adapter->mac_addr.bytes));
+
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if (sta_ctx)
+			sta_ctx->cache_conn_info.signal =
+					ev->vdev_summary_stats[i].stats.rssi;
 	}
 }
 

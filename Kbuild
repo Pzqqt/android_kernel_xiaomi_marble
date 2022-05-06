@@ -507,6 +507,10 @@ ifeq ($(CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_connectivity_logging.o
 endif
 
+ifeq ($(CONFIG_DP_HW_TX_DELAY_STATS_ENABLE), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dp_tx_delay_stats.o
+endif
+
 $(call add-wlan-objs,hdd,$(HDD_OBJS))
 
 ###### OSIF_SYNC ########
@@ -4311,6 +4315,10 @@ cppflags-$(CONFIG_DP_TX_TRACKING) += -DDP_TX_TRACKING
 
 ifdef CONFIG_CHIP_VERSION
 ccflags-y += -DCHIP_VERSION=$(CONFIG_CHIP_VERSION)
+endif
+
+ifeq ($(CONFIG_DP_HW_TX_DELAY_STATS_ENABLE), y)
+cppflags-y += -DHW_TX_DELAY_STATS_ENABLE
 endif
 
 KBUILD_CPPFLAGS += $(cppflags-y)

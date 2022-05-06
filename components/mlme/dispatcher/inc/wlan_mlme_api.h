@@ -3313,6 +3313,27 @@ wlan_mlme_is_data_stall_recovery_fw_supported(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
 				 tDot11fIEeht_cap *eht_cap);
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_mlme_is_sta_single_mlo_conn() - Is single mlo connection for sta
+ *                                      set or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if single mlo connection for sta is set
+ */
+bool wlan_mlme_is_sta_single_mlo_conn(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_set_sta_single_mlo_conn() - Set single mlo connection for sta
+ * @psoc: pointer to psoc object
+ * @value: value to set
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_sta_single_mlo_conn(struct wlan_objmgr_psoc *psoc,
+					     bool value);
+#endif
+
 /**
  * wlan_mlme_set_ba_2k_jump_iot_ap() - Set a flag if ba 2k jump IOT AP is found
  * @vdev: vdev pointer

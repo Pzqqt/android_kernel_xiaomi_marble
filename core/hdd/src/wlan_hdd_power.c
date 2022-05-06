@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1791,7 +1791,9 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 					   NET_DEV_HOLD_SSR_RESTART_SAP) {
 		if (adapter->device_mode == QDF_SAP_MODE) {
 			if (test_bit(SOFTAP_INIT_DONE, &adapter->event_flags)) {
-				hdd_debug("Restart prev SAP session");
+				hdd_debug(
+				"Restart prev SAP session, event_flags 0x%lx(%s)",
+				adapter->event_flags, (adapter->dev)->name);
 				wlan_hdd_start_sap(adapter, true);
 			}
 		}

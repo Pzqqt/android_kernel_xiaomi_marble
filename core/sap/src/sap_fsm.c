@@ -2673,6 +2673,8 @@ static QDF_STATUS sap_validate_dfs_nol(struct sap_context *sap_ctx,
 	bool b_leak_chan = false;
 	uint16_t temp_freq;
 	uint16_t sap_freq;
+	enum channel_state ch_state;
+	bool is_chan_nol = false;
 
 	sap_freq = sap_ctx->chan_freq;
 	temp_freq = sap_freq;
@@ -2689,9 +2691,24 @@ static QDF_STATUS sap_validate_dfs_nol(struct sap_context *sap_ctx,
 	 * check if channel is in DFS_NOL or if the channel
 	 * has leakage to the channels in NOL
 	 */
-	if (sap_dfs_is_channel_in_nol_list(sap_ctx, sap_ctx->chan_freq,
-					   PHY_CHANNEL_BONDING_STATE_MAX) ||
-	    b_leak_chan) {
+
+	if (wlan_vdev_mlme_is_mlo_ap(sap_ctx->vdev)) {
+		ch_state =
+			wlan_reg_get_channel_state_from_secondary_list_for_freq(
+						mac_ctx->pdev, sap_freq);
+		if (CHANNEL_STATE_ENABLE != ch_state &&
+		    CHANNEL_STATE_DFS != ch_state) {
+			sap_err_rl("Invalid sap freq = %d, ch state=%d",
+				   sap_freq, ch_state);
+			is_chan_nol = true;
+		}
+	} else {
+		is_chan_nol = sap_dfs_is_channel_in_nol_list(
+					sap_ctx, sap_ctx->chan_freq,
+					PHY_CHANNEL_BONDING_STATE_MAX);
+	}
+
+	if (is_chan_nol || b_leak_chan) {
 		qdf_freq_t chan_freq;
 
 		/* find a new available channel */

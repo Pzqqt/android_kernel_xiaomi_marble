@@ -7430,7 +7430,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		therm_cfg_params.levelconf[0].dcoffpercent = apps_args[2];
 		therm_cfg_params.levelconf[0].priority = apps_args[3];
 		therm_cfg_params.levelconf[0].tmplwm = apps_args[6];
-		hdd_thermal_fill_clientid_priority(THERMAL_MONITOR_APPS,
+		hdd_thermal_fill_clientid_priority(hdd_ctx,
+						   THERMAL_MONITOR_APPS,
 						   thermal_temp.priority_apps,
 						   thermal_temp.priority_wpps,
 						   &therm_cfg_params);

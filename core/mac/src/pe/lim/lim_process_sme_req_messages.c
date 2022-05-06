@@ -1080,8 +1080,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		/* Initialize 11h Enable Flag */
 		session->lim11hEnable = 0;
-		if ((CHAN_HOP_ALL_BANDS_ENABLE ||
-		     REG_BAND_5G == session->limRFBand)) {
+		if (CHAN_HOP_ALL_BANDS_ENABLE ||
+		    (session->limRFBand != REG_BAND_2G)) {
 			session->lim11hEnable =
 				mac_ctx->mlme_cfg->gen.enabled_11h;
 
@@ -3168,7 +3168,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	session->limRFBand = lim_get_rf_band(session->curr_op_freq);
 
 	/* Initialize 11h Enable Flag */
-	if (session->limRFBand == REG_BAND_5G)
+	if (session->limRFBand != REG_BAND_2G)
 		session->lim11hEnable =
 			mac_ctx->mlme_cfg->gen.enabled_11h;
 	else
@@ -8226,7 +8226,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 
 	/* Initialize 11h Enable Flag */
 	if (CHAN_HOP_ALL_BANDS_ENABLE ||
-	    session_entry->limRFBand == REG_BAND_5G)
+	    session_entry->limRFBand != REG_BAND_2G)
 		session_entry->lim11hEnable =
 			mac_ctx->mlme_cfg->gen.enabled_11h;
 	else

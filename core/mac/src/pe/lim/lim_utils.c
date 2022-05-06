@@ -8064,15 +8064,16 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 #endif
 
 #ifdef WLAN_FEATURE_11BE_MLO
-void lim_update_sta_mlo_info(tpAddStaParams add_sta_params,
+void lim_update_sta_mlo_info(struct pe_session *session,
+			     tpAddStaParams add_sta_params,
 			     tpDphHashNode sta_ds)
 {
-	if (add_sta_params->eht_capable) {
+	if (lim_is_mlo_conn(session, sta_ds)) {
 		WLAN_ADDR_COPY(add_sta_params->mld_mac_addr, sta_ds->mld_addr);
 		add_sta_params->is_assoc_peer = lim_is_mlo_recv_assoc(sta_ds);
 	}
-	pe_debug("eht_capable: %d mld mac " QDF_MAC_ADDR_FMT " assoc peer %d",
-		 add_sta_params->eht_capable,
+	pe_debug("is mlo connection: %d mld mac " QDF_MAC_ADDR_FMT " assoc peer %d",
+		 lim_is_mlo_conn(session, sta_ds),
 		 QDF_MAC_ADDR_REF(add_sta_params->mld_mac_addr),
 		 add_sta_params->is_assoc_peer);
 }

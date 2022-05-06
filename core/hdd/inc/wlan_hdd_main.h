@@ -1590,6 +1590,22 @@ struct hdd_adapter {
 				(&(adapter)->session.ap.hostapd_state)
 #define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->session.ap.sap_context)
 
+/**
+ * hdd_is_sta_authenticated() - check if given adapter's STA
+ *				session authenticated
+ * @adapter: adapter pointer
+ *
+ * Return: STA session is_authenticated flag value
+ */
+static inline
+uint8_t hdd_is_sta_authenticated(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	return sta_ctx->conn_info.is_authenticated;
+}
+
 #ifdef WLAN_FEATURE_NAN
 #define WLAN_HDD_IS_NDP_ENABLED(hdd_ctx) ((hdd_ctx)->nan_datapath_enabled)
 #else
