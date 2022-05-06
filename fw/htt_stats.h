@@ -6057,15 +6057,25 @@ typedef struct {
     A_UINT32 sounding[HTT_TX_NUM_OF_SOUNDING_STATS_WORDS];
 
     /* cv upload handler stats */
+    /** total times CV nc mismatched */
     A_UINT32 cv_nc_mismatch_err;
+    /** total times CV has FCS error */
     A_UINT32 cv_fcs_err;
+    /** total times CV has invalid NSS index */
     A_UINT32 cv_frag_idx_mismatch;
+    /** total times CV has invalid SW peer ID */
     A_UINT32 cv_invalid_peer_id;
+    /** total times CV rejected because TXBF is not setup in peer */
     A_UINT32 cv_no_txbf_setup;
+    /** total times CV expired while in updating state */
     A_UINT32 cv_expiry_in_update;
+    /** total times Pkt b/w exceeding the cbf_bw */
     A_UINT32 cv_pkt_bw_exceed;
+    /** total times CV DMA not completed */
     A_UINT32 cv_dma_not_done_err;
+    /** total times CV update to peer failed */
     A_UINT32 cv_update_failed;
+
     /* cv query stats */
     /** total times CV query happened */
     A_UINT32 cv_total_query;
@@ -6110,6 +6120,16 @@ typedef struct {
     A_UINT32 cv_found_upload_in_progress;
     /** Expired CV found during query. */
     A_UINT32 cv_expired_during_query;
+    /** total times CV dma timeout happened */
+    A_UINT32 cv_dma_timeout_error;
+    /** total times CV bufs uploaded for IBF case */
+    A_UINT32 cv_buf_ibf_uploads;
+    /** total times CV bufs uploaded for EBF case */
+    A_UINT32 cv_buf_ebf_uploads;
+    /** total times CV bufs received from IPC ring */
+    A_UINT32 cv_buf_received;
+    /** total times CV bufs fed back to the IPC ring */
+    A_UINT32 cv_buf_fed_back;
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
