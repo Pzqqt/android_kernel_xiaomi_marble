@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -788,6 +789,9 @@ check_for_vendor_ap_mac(struct action_oui_extension *extension,
 	uint8_t i;
 	uint8_t mac_mask = 0x80;
 	uint8_t *mac_addr = attr->mac_addr;
+
+	if (!attr->mac_addr)
+		return false;
 
 	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++) {
 		if ((*extension->mac_mask & mac_mask) &&
