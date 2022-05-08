@@ -1272,6 +1272,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_enable_vendor_control_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_get_vendor_control_param_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_get_vendor_control_param_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_request_halphy_ctrl_path_stats_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_halphy_ctrl_path_stats_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1768,6 +1770,7 @@ typedef enum {
     OP(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID) \
     OP(WMI_ROAM_ENABLE_VENDOR_CONTROL_CMDID) \
     OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID) \
+    OP(WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2055,6 +2058,7 @@ typedef enum {
     OP(WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID) \
     OP(WMI_VDEV_LATENCY_LEVEL_EVENTID) \
     OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID) \
+    OP(WMI_HALPHY_CTRL_PATH_STATS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4405,6 +4409,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_PEER_STATS_INFO_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, odd_addr_read_args, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_CTRL_PATH_STATS_CMDID);
 
+/* Request Halphy Stats through Ctrl Path */
+#define WMITLV_TABLE_WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_halphy_ctrl_path_stats_cmd_fixed_param, wmi_request_halphy_ctrl_path_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, pdev_ids, WMITLV_SIZE_VAR)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, mac_addr_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID);
+
 /* Host sets the current country code */
 #define WMITLV_TABLE_WMI_SET_CURRENT_COUNTRY_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_set_current_country_cmd_fixed_param, wmi_set_current_country_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -6451,6 +6463,23 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_odd_addr_read_struct, ctrl_path_odd_addr_read, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_afc_stats_struct,  ctrl_path_afc_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
+
+/*
+ * Update HALPHY Control Path stats event
+ * Below definition shows TLV packing of HALPHY ctrl path event
+ * Special Patch code is needed on host side to have compatible
+ * HOST Endianness
+ */
+#define WMITLV_TABLE_WMI_HALPHY_CTRL_PATH_STATS_EVENTID(id, op, buf, len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_halphy_ctrl_path_stats_event_fixed_param, wmi_halphy_ctrl_path_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tpc_configs, tpc_configs, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_max_reg_power_allowed, regulatory_power, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_INT16, A_INT16, reg_buf, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tpc_rates_array, tpc_rates, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_INT16, A_UINT16, rates_buf, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tpc_ctl_pwr_table, ctl_power, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_INT8, ctl_buf, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_HALPHY_CTRL_PATH_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_RADIO_CHAN_STATS_EVENTID(id, op, buf, len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_radio_chan_stats_event_fixed_param, wmi_radio_chan_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \

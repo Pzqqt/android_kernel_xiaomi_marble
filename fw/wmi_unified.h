@@ -1020,6 +1020,9 @@ typedef enum {
     /** request for thermal stats */
     WMI_REQUEST_THERMAL_STATS_CMDID,
 
+    /** request for HALPHY stats through ctrl path */
+    WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID,
+
 
     /** ARP OFFLOAD REQUEST*/
     WMI_SET_ARP_NS_OFFLOAD_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_ARP_NS_OFL),
@@ -1948,6 +1951,11 @@ typedef enum {
     /** This event is used to respond to WMI_REQUEST_CTRL_PATH_STATS_CMDID
      *  and report stats info to host */
     WMI_CTRL_PATH_STATS_EVENTID,
+
+    /** This event is used to respond to
+     * WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID and report stats info to host
+     */
+    WMI_HALPHY_CTRL_PATH_STATS_EVENTID,
 
 
     /* NLO specific events */
@@ -11510,6 +11518,25 @@ typedef struct {
      *      This TLV array contains zero or more vdev_extd_stats instances.
      */
 } wmi_ctrl_path_stats_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_halphy_ctrl_path_stats_event_fixed_param
+     */
+    A_UINT32 tlv_header;
+
+    /** Process id requested */
+    A_UINT32 request_id;
+
+    /* end_of_event - single event or Multiple Event */
+    A_UINT32 end_of_event;
+
+    /*
+     * event_count - If Multiple Events are send, this is to identify
+     * particular event out of Multiple Events that are send to host
+     */
+    A_UINT32 event_count;
+} wmi_halphy_ctrl_path_stats_event_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -29531,6 +29558,11 @@ typedef enum {
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
+    /* bit 0 is currently unused / reserved */
+    WMI_HALPHY_CTRL_PATH_PDEV_TX_STAT = 1,
+} wmi_halphy_ctrl_path_stats_id;
+
+typedef enum {
     /*
      * The following stats actions are mutually exclusive.
      * A single stats request message can only specify one action.
@@ -29540,6 +29572,13 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_STAT_START = 3,
     WMI_REQUEST_CTRL_PATH_STAT_STOP  = 4,
 } wmi_ctrl_path_stats_action;
+
+typedef enum {
+    WMI_HALPHY_CTRL_PATH_SU_STATS = 0,
+    WMI_HALPHY_CTRL_PATH_SUTXBF_STATS,
+    WMI_HALPHY_CTRL_PATH_MU_STATS,
+    WMI_HALPHY_CTRL_PATH_MUTXBF_STATS,
+} wmi_halphy_ctrl_path_subid;
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -29570,6 +29609,44 @@ typedef struct {
      *      in the array.
      */
 } wmi_request_ctrl_path_stats_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_request_halphy_ctrl_path_stats_cmd_fixed_param */
+    A_UINT32 tlv_header;
+
+    /** Bitmask showing which of stats IDs 0-31 have been requested.
+     *  These stats ids are defined in enum wmi_halphy_ctrl_path_stats_id.
+     */
+    A_UINT32 stats_id_mask;
+    /** process id requested */
+    A_UINT32 request_id;
+    /** action
+     *  get/reset based on stats id
+     *  defined as a part of wmi_ctrl_path_stats_action
+     **/
+    A_UINT32 action; /* refer to wmi_ctrl_path_stats_action */
+
+    /** Request Halphy subid stats
+     * According to the requested stats_id_mask this halphy_subid varies
+     * For stats_id = 1, the possible values could be enum
+     * wmi_halphy_ctrl_path_halphyid
+     */
+    A_UINT32 halphy_subid;
+
+    /** The below TLV arrays optionally follow this fixed_param TLV structure:
+     *  1.  A_UINT32 pdev_ids[];
+     *      If this array is present and non-zero length, stats should only
+     *      be provided from the pdevs identified in the array.
+     *  2.  A_UINT32 vdev_ids[];
+     *      If this array is present and non-zero length, stats should only
+     *      be provided from the vdevs identified in the array.
+     *  3.  wmi_mac_addr peer_macaddr[];
+     *      If this array is present and non-zero length, stats should only
+     *      be provided from the peers with the MAC addresses specified
+     *      in the array.
+     */
+} wmi_request_halphy_ctrl_path_stats_cmd_fixed_param;
 
 typedef enum {
     WMI_REQUEST_ONE_RADIO_CHAN_STATS = 0x01, /* request stats of one specified channel */
@@ -31412,6 +31489,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_ENABLE_VENDOR_CONTROL_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID);
+        WMI_RETURN_STRING(WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
