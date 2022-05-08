@@ -6603,13 +6603,13 @@ typedef struct {
      * 4 - EHT
      *
      * Rate Bit mask format:
-     *     <MCS in NSS MAX> ..
-     *     <MCS MAX, … 2, 1, 0 : NSS2>
-     *     <MCS MAX, .., 2, 1, 0 : NSS1>
+     *     <MCS in NSS MAX> ...
+     *     <MCS MAX, ..., 2, 1, 0 : NSS2>
+     *     <MCS MAX, ..., 2, 1, 0 : NSS1>
      * EHT Rate Bit Mask format:
-     *     <MCS in NSS MAX> ..
-     *     <MCS MAX, … 2, 1, 0, -1, -2 : NSS2>
-     *     <MCS MAX, .., 2, 1, 0, -1(DCM), -2(EHT Dup) : NSS1>
+     *     <MCS in NSS MAX> ...
+     *     <MCS MAX, ... 2, 1, 0, -1, -2 : NSS2>
+     *     <MCS MAX, ..., 2, 1, 0, -1(DCM), -2(EHT Dup) : NSS1>
      */
     A_UINT32 type;
 
@@ -26421,6 +26421,12 @@ typedef struct {
     A_UINT32 wlan_global_tsf_low;
     /* high 32 bits of wlan global tsf */
     A_UINT32 wlan_global_tsf_high;
+    /* low 32 bits of tqm timer */
+    A_UINT32 tqm_timer_low;
+    /* high 32 bits of tqm timer */
+    A_UINT32 tqm_timer_high;
+    /* use tqm timer flag */
+    A_UINT32 use_tqm_timer;
 } wmi_vdev_tsf_report_event_fixed_param;
 
 /* ie_id values:
