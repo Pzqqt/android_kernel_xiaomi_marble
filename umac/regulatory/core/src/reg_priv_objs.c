@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -124,6 +125,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	reg_set_5dot9_ghz_chan_in_master_mode(soc_reg_obj);
 	soc_reg_obj->retain_nol_across_regdmn_update = false;
 	soc_reg_obj->is_ext_tpc_supported = false;
+	soc_reg_obj->sta_sap_scc_on_indoor_channel = true;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)
 		soc_reg_obj->vdev_ids_11d[i] = INVALID_VDEV_ID;
@@ -339,6 +341,8 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	reg_cap_ptr = psoc_priv_obj->reg_cap;
 	pdev_priv_obj->force_ssc_disable_indoor_channel =
 		psoc_priv_obj->force_ssc_disable_indoor_channel;
+	pdev_priv_obj->sta_sap_scc_on_indoor_channel =
+		psoc_priv_obj->sta_sap_scc_on_indoor_channel;
 
 	for (cnt = 0; cnt < PSOC_MAX_PHY_REG_CAP; cnt++) {
 		if (!reg_cap_ptr) {

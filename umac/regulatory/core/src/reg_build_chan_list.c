@@ -343,12 +343,12 @@ static void reg_modify_chan_list_for_indoor_channels(
 			     chan_list[chan_enum].chan_flags)) {
 				chan_list[chan_enum].state =
 					CHANNEL_STATE_DFS;
-				chan_list[chan_enum].chan_flags |=
-					REGULATORY_CHAN_NO_IR;
+				if (!pdev_priv_obj->sta_sap_scc_on_indoor_channel)
+					chan_list[chan_enum].chan_flags |=
+							REGULATORY_CHAN_NO_IR;
 			}
 		}
 	}
-
 	if (pdev_priv_obj->force_ssc_disable_indoor_channel &&
 	    pdev_priv_obj->sap_state) {
 		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {

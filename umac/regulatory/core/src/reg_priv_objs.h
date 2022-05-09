@@ -119,6 +119,7 @@ struct chan_change_cbk_entry {
  * userspace
  * @coex_unsafe_chan_reg_disable: To disable reg channels for received coex
  * unsafe channels list
+ * @sta_sap_scc_on_indoor_channel: Value of sap+sta scc on indoor support
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
@@ -186,6 +187,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool coex_unsafe_chan_nb_user_prefer;
 	bool coex_unsafe_chan_reg_disable;
 #endif
+	bool sta_sap_scc_on_indoor_channel;
 };
 
 /**
@@ -226,6 +228,7 @@ struct wlan_regulatory_psoc_priv_obj {
  * sent by the target
  * @is_reg_noaction_on_afc_pwr_evt: indicates whether regulatory needs to
  * take action when AFC Power event is received
+ * @sta_sap_scc_on_indoor_channel: Value of sap+sta scc on indoor support
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
@@ -297,6 +300,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	struct reg_fw_afc_power_event *power_info;
 	bool is_reg_noaction_on_afc_pwr_evt;
 #endif
+	bool sta_sap_scc_on_indoor_channel;
 };
 
 /**
