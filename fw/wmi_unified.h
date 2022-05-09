@@ -706,6 +706,10 @@ typedef enum {
     /* Mac addr based filtering*/
     WMI_PEER_TX_FILTER_CMDID,
 
+    /** flush specific  tid queues of a peer */
+    WMI_PEER_FLUSH_POLICY_CMDID,
+
+
     /* beacon/management specific commands */
 
     /** transmit beacon by reference . used for transmitting beacon on low latency interface like pcie */
@@ -31490,6 +31494,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_ENABLE_VENDOR_CONTROL_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_FLUSH_POLICY_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -38646,6 +38651,30 @@ typedef struct {
     /** 1 - success, 0 - failed */
     A_UINT32 is_allocated;
 } wmi_pmm_scratch_reg_allocation_complete_event_fixed_param;
+
+typedef enum {
+    WMI_NO_FLUSH,
+    WMI_TWT_FLUSH,
+
+    /* Add new flush policies above */
+    WMI_MAX_FLUSH_POLICY
+} wmi_peer_flush_policy;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_flush_policy_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    /** peer MAC address */
+    wmi_mac_addr peer_macaddr;
+    /** The tids to flush */
+    A_UINT32 peer_tid_bitmap;
+    /* wmi_peer_flush_policy */
+    A_UINT32 flush_policy;
+    /* n_TWT_SPs_to_expire:
+     * Expire / drop packets whose age is greater than this specified number
+     * of TWT service periods.
+     */
+    A_UINT32 n_TWT_SPs_to_expire;
+} wmi_peer_flush_policy_cmd_fixed_param;
 
 
 

@@ -1274,6 +1274,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_get_vendor_control_param_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_request_halphy_ctrl_path_stats_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_halphy_ctrl_path_stats_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_flush_policy_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1771,6 +1772,7 @@ typedef enum {
     OP(WMI_ROAM_ENABLE_VENDOR_CONTROL_CMDID) \
     OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID) \
     OP(WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID) \
+    OP(WMI_PEER_FLUSH_POLICY_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5048,6 +5050,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RTT_PASN_DEAUTH_CMD);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pmm_scratch_reg_allocation_cmd_fixed_param, wmi_pmm_scratch_reg_allocation_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pmm_scratch_reg_info, scratch_reg_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID);
+
+/* Peer flush Policy Cmd */
+#define WMITLV_TABLE_WMI_PEER_FLUSH_POLICY_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_flush_policy_cmd_fixed_param, wmi_peer_flush_policy_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_FLUSH_POLICY_CMDID);
 
 
 
