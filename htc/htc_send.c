@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -130,6 +131,10 @@ static void send_packet_completion(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
 	HTC_ENDPOINT *pEndpoint = &target->endpoint[pPacket->Endpoint];
 	HTC_EP_SEND_PKT_COMPLETE EpTxComplete;
+
+	if ((pPacket->PktInfo.AsTx.Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) &&
+	    (!IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)))
+		target->nbuf_nfc_unmap_count++;
 
 	restore_tx_packet(target, pPacket);
 
@@ -1933,7 +1938,9 @@ static inline QDF_STATUS __htc_send_pkt(HTC_HANDLE HTCHandle,
 		status = qdf_nbuf_map(target->osdev,
 				      GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
 				      QDF_DMA_TO_DEVICE);
-		if (status != QDF_STATUS_SUCCESS) {
+		if (status == QDF_STATUS_SUCCESS) {
+			target->nbuf_nfc_map_count++;
+		} else {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("%s: nbuf map failed, endpoint %pK, seq_no. %d\n",
 					 __func__, pEndpoint, pEndpoint->SeqNo));
