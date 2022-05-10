@@ -202,6 +202,14 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 	bottom_offset = (inst->fmts[INPUT_PORT].fmt.pix_mp.height -
 		inst->crop.height);
 
+	if (inst->psc_or_last_flag_discarded) {
+		left_offset = 1;
+		top_offset = 1;
+		right_offset = 1;
+		bottom_offset = 1;
+		i_vpr_e(inst, "%s: set invalid crop offsets to receive ipsc\n", __func__);
+	}
+
 	payload[0] = left_offset << 16 | top_offset;
 	payload[1] = right_offset << 16 | bottom_offset;
 	i_vpr_h(inst, "%s: left_offset: %d top_offset: %d "
@@ -1443,6 +1451,32 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 		inst->ipsc_properties_set = true;
 	}
 
+	/**
+	 * we need to start fw output port if ipsc / opsc / last flag discarded by driver
+	 * also set invalid crop for fw to raise another ipsc after streamon
+	 */
+	if (inst->psc_or_last_flag_discarded) {
+		i_vpr_e(inst, "%s: psc or last flag discarded adjustments\n", __func__);
+		rc = msm_vdec_subscribe_input_port_settings_change(inst, INPUT_PORT);
+		if (rc)
+			return rc;
+
+		memcpy(&inst->subcr_params[OUTPUT_PORT],
+				&inst->subcr_params[INPUT_PORT],
+				sizeof(inst->subcr_params[OUTPUT_PORT]));
+		rc = msm_vdec_subscribe_output_port_settings_change(inst, OUTPUT_PORT);
+		if (rc)
+			return rc;
+
+		/* resume output only if port is enabled */
+		if (inst->vb2q[OUTPUT_PORT].streaming) {
+			rc = msm_vdec_session_resume(inst, OUTPUT_PORT);
+			if (rc)
+				return rc;
+		}
+		inst->psc_or_last_flag_discarded = false;
+	}
+
 	rc = msm_vdec_subscribe_property(inst, INPUT_PORT);
 	if (rc)
 		return rc;
@@ -1515,7 +1549,7 @@ int msm_vdec_streamoff_output(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *inst,
+int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;

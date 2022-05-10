@@ -139,6 +139,7 @@ struct msm_vidc_inst {
 	bool                               once_per_session_set;
 	bool                               ipsc_properties_set;
 	bool                               opsc_properties_set;
+	bool                               psc_or_last_flag_discarded;
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
 	struct debug_buf_count             debug_count;

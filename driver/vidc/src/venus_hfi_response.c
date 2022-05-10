@@ -864,6 +864,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 			buffer->flags &= ~HFI_BUF_FW_FLAG_READONLY;
 		}
 		if (!msm_vidc_allow_last_flag(inst)) {
+			inst->psc_or_last_flag_discarded = true;
 			i_vpr_e(inst, "%s: reset last flag for last flag buffer\n",
 				__func__);
 			buffer->flags &= ~HFI_BUF_FW_FLAG_LAST;
@@ -1012,8 +1013,12 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
 	buf->flags = 0;
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST) {
-		if (!msm_vidc_allow_last_flag(inst))
+		if (!msm_vidc_allow_last_flag(inst)) {
+			inst->psc_or_last_flag_discarded = true;
+			i_vpr_e(inst, "%s: reset last flag for last flag metadata buffer\n",
+				__func__);
 			buffer->flags &= ~HFI_BUF_FW_FLAG_LAST;
+		}
 	}
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
@@ -1701,6 +1706,9 @@ void handle_session_response_work_handler(struct work_struct *work)
 			} else if (allow == MSM_VIDC_DISCARD) {
 				/* if ipsc is discarded then override the psc properties again */
 				inst->ipsc_properties_set = false;
+				inst->psc_or_last_flag_discarded = true;
+				i_vpr_e(inst, "%s: ipsc discarded. state %s\n",
+					__func__, state_name(inst->state));
 				/* discard current entry processing */
 				break;
 			} else if (allow == MSM_VIDC_ALLOW) {
@@ -1728,6 +1736,10 @@ void handle_session_response_work_handler(struct work_struct *work)
 				rc = msm_vidc_state_change_last_flag(inst);
 				if (rc)
 					msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+			} else {
+				i_vpr_e(inst, "%s: last flag discarded. state %s\n",
+					__func__, state_name(inst->state));
+				inst->psc_or_last_flag_discarded = true;
 			}
 			break;
 		default:
