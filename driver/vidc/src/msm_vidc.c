@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -838,6 +839,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	inst->request = false;
 	inst->ipsc_properties_set = false;
 	inst->opsc_properties_set = false;
+	inst->psc_or_last_flag_discarded = false;
 	inst->has_bframe = false;
 	inst->auto_framerate = DEFAULT_FPS << 16;
 	kref_init(&inst->kref);
