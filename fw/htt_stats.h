@@ -6567,6 +6567,7 @@ typedef struct {
 typedef enum {
     HTT_STATS_RC_MODE_DLSU     = 0,
     HTT_STATS_RC_MODE_DLMUMIMO = 1,
+    HTT_STATS_RC_MODE_DLOFDMA  = 2,
 } htt_stats_rc_mode;
 
 typedef struct {
@@ -6588,6 +6589,12 @@ typedef enum {
     HTT_RC_MODE_MU7_INTF,
     HTT_RC_MODE_2D_COUNT,
 } HTT_RC_MODE;
+
+typedef enum {
+    HTT_STATS_RU_TYPE_INVALID             = 0,
+    HTT_STATS_RU_TYPE_SINGLE_RU_ONLY      = 1,
+    HTT_STATS_RU_TYPE_SINGLE_AND_MULTI_RU = 2,
+} htt_stats_ru_type;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -6611,6 +6618,9 @@ typedef struct {
     htt_tx_rate_stats_t per_bw320;
 
     A_UINT32 probe_cnt_per_rcmode[HTT_RC_MODE_2D_COUNT];
+
+    htt_stats_ru_type ru_type; /* refer to htt_stats_ru_type */
+    htt_tx_rate_stats_t per_ru[HTT_TX_PDEV_STATS_NUM_BE_RU_SIZE_COUNTERS];
 } htt_tx_rate_stats_per_tlv;
 
 /* NOTE:
