@@ -18923,6 +18923,10 @@ typedef enum wake_reason_e {
     WOW_REASON_MDNS_WAKEUP,
     WOW_REASON_RTT_11AZ,
     WOW_REASON_P2P_NOA_UPDATE,
+    /* When Host configured timer elapsed for delayed wakeup */
+    WOW_REASON_DELAYED_WAKEUP_HOST_CFG_TIMER_ELAPSED,
+    /* Data store list is full, so Host wakeup should be triggered */
+    WOW_REASON_DELAYED_WAKEUP_DATA_STORE_LIST_FULL,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
