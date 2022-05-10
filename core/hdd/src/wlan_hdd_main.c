@@ -19399,6 +19399,10 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 			hdd_put_sta_info_ref(
 				&adapter->sta_info_list, &sta_info, true,
 				STA_INFO_CONNECTION_IN_PROGRESS_ITERATOR);
+			if (tmp)
+				hdd_put_sta_info_ref(
+				    &adapter->sta_info_list, &tmp, true,
+				    STA_INFO_CONNECTION_IN_PROGRESS_ITERATOR);
 
 			return QDF_STATUS_E_ABORTED;
 		}
