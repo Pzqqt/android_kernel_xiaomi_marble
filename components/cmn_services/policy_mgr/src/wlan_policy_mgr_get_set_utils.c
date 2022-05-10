@@ -3276,7 +3276,6 @@ uint32_t policy_mgr_get_mode_specific_conn_info(
 	return count;
 }
 
-#ifdef WLAN_FEATURE_11BE_MLO
 void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
 					    uint8_t *num_ml, uint8_t *ml_idx,
 					    uint8_t *num_non_ml,
@@ -3318,32 +3317,6 @@ void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
 		wlan_objmgr_vdev_release_ref(temp_vdev, WLAN_POLICY_MGR_ID);
 	}
 }
-
-#else
-
-void policy_mgr_get_ml_and_non_ml_sta_count(struct wlan_objmgr_psoc *psoc,
-					    uint8_t *num_ml, uint8_t *ml_idx,
-					    uint8_t *num_non_ml,
-					    uint8_t *non_ml_idx,
-					    qdf_freq_t *freq_list,
-					    uint8_t *vdev_id_list)
-{
-	uint32_t sta_num = 0;
-
-	*num_ml = 0;
-	*num_non_ml = 0;
-
-	sta_num = policy_mgr_get_mode_specific_conn_info(psoc, freq_list,
-							 vdev_id_list,
-							 PM_STA_MODE);
-	if (!sta_num)
-		return;
-
-	*num_non_ml = sta_num;
-	/* copy vdev_id_list to non_ml_idx */
-	*non_ml_idx = *vdev_id_list;
-}
-#endif
 
 bool policy_mgr_concurrent_sta_doing_dbs(struct wlan_objmgr_psoc *psoc)
 {
