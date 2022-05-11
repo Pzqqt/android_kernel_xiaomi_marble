@@ -3222,6 +3222,59 @@ static void wlan_hdd_acs_set_eht_enabled(struct sap_config *sap_config,
 }
 #endif /* WLAN_FEATURE_11BE */
 
+static uint16_t wlan_hdd_update_bw_from_mlme(struct hdd_context *hdd_ctx,
+					     struct sap_config *sap_config)
+{
+	uint16_t ch_width, temp_ch_width = 0;
+	QDF_STATUS status;
+	uint8_t hw_mode = HW_MODE_DBS;
+	struct wma_caps_per_phy caps_per_phy = {0};
+
+	ch_width = sap_config->acs_cfg.ch_width;
+
+	if (ch_width > CH_WIDTH_80P80MHZ)
+		return ch_width;
+
+	/* 2.4ghz is already handled for acs */
+	if (sap_config->acs_cfg.end_ch_freq <=
+	    WLAN_REG_CH_TO_FREQ(CHAN_ENUM_2484))
+		return ch_width;
+
+	if (!policy_mgr_is_dbs_enable(hdd_ctx->psoc))
+		hw_mode = HW_MODE_DBS_NONE;
+
+	status = wma_get_caps_for_phyidx_hwmode(&caps_per_phy, hw_mode,
+						CDS_BAND_5GHZ);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return ch_width;
+
+	switch (ch_width) {
+	case CH_WIDTH_80P80MHZ:
+		if (!(caps_per_phy.vht_5g & WMI_VHT_CAP_CH_WIDTH_80P80_160MHZ))
+		{
+			if (caps_per_phy.vht_5g & WMI_VHT_CAP_CH_WIDTH_160MHZ)
+				temp_ch_width = CH_WIDTH_160MHZ;
+			else
+				temp_ch_width = CH_WIDTH_80MHZ;
+		}
+		break;
+	case CH_WIDTH_160MHZ:
+		if (!((caps_per_phy.vht_5g & WMI_VHT_CAP_CH_WIDTH_80P80_160MHZ)
+		      || (caps_per_phy.vht_5g & WMI_VHT_CAP_CH_WIDTH_160MHZ)))
+				temp_ch_width = CH_WIDTH_80MHZ;
+		break;
+	default:
+		break;
+	}
+
+	if (!temp_ch_width)
+		return ch_width;
+
+	hdd_debug("ch_width updated from %d to %d vht_5g: %x", ch_width,
+		  temp_ch_width, caps_per_phy.vht_5g);
+	return temp_ch_width;
+}
+
 /**
  * __wlan_hdd_cfg80211_do_acs(): CFG80211 handler function for DO_ACS Vendor CMD
  * @wiphy:  Linux wiphy struct pointer
@@ -3559,6 +3612,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			  sap_config->acs_cfg.ch_width,
 			  channel_bonding_mode_2g);
 	}
+
+	sap_config->acs_cfg.ch_width = wlan_hdd_update_bw_from_mlme(hdd_ctx,
+								    sap_config);
 
 	hdd_nofl_debug("ACS Config country %s ch_width %d hw_mode %d ACS_BW: %d HT: %d VHT: %d EHT: %d START_CH: %d END_CH: %d band %d",
 		       hdd_ctx->reg.alpha2, ch_width,
