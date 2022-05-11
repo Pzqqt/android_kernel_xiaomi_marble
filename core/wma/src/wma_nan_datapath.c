@@ -35,7 +35,7 @@
 #include "cdp_txrx_misc.h"
 #include <cdp_txrx_handle.h>
 
-QDF_STATUS wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
+void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	enum ol_txrx_peer_state state = OL_TXRX_PEER_STATE_CONN;
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
@@ -98,9 +98,10 @@ QDF_STATUS wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 send_rsp:
 	wma_debug("Sending add sta rsp to umac (mac:"QDF_MAC_ADDR_FMT", status:%d)",
 		  QDF_MAC_ADDR_REF(add_sta->staMac), add_sta->status);
+
 	wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
 
-	return add_sta->status;
+	return;
 }
 
 QDF_STATUS wma_delete_sta_req_ndi_mode(tp_wma_handle wma,

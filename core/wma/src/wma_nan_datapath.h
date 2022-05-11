@@ -53,9 +53,9 @@ static inline uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
  * @add_sta: Parameters of ADD_STA command
  *
  * Sends CREATE_PEER command to firmware
- * Return: QDF_STATUS
+ * Return: none
  */
-QDF_STATUS wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta);
+void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta);
 
 /**
  * wma_update_hdd_cfg_ndp() - Update target device NAN datapath capability
