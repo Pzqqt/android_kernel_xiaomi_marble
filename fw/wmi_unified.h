@@ -33977,6 +33977,9 @@ typedef struct {
     A_UINT32 btm_req_dialog_token;
 } wmi_roam_trigger_reason;
 
+#define WMI_GET_BTCONNECT_STATUS(flags)      WMI_GET_BITS(flags, 0, 1)
+#define WMI_SET_BTCONNECT_STATUS(flags, val) WMI_SET_BITS(flags, 0, 1, val)
+
 typedef struct {
     A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_info_tlv_param */
     /* roam_scan_type:
@@ -33997,6 +34000,12 @@ typedef struct {
      * This timestamp indicates the time when roam scan finished.
      */
     A_UINT32 scan_complete_timestamp;   /* milli second units */
+    /*
+     * Flags capturing factors involved during roam scan:
+     * Bit 0    : Bluetooth connect status, 0(not connected) or 1(connected).
+     * Bit 1-31 : reserved for future use.
+     */
+    A_UINT32 flags;
 } wmi_roam_scan_info;
 
 typedef struct {
@@ -34169,6 +34178,9 @@ typedef struct {
     A_UINT32 channel;    /* Channel frequency in MHz */
 } wmi_roam_neighbor_report_channel_info;
 
+#define WMI_GET_ASSOC_ID(frame_info_ext)      WMI_GET_BITS(frame_info_ext, 0, 16)
+#define WMI_SET_ASSOC_ID(frame_info_ext, val) WMI_SET_BITS(frame_info_ext, 0, 16, val)
+
 typedef struct {
     A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_frame_info_tlv_param */
     /* timestamp is the absolute time w.r.t host timer which is synchronized between the host and target */
@@ -34212,6 +34224,13 @@ typedef struct {
      */
     A_UINT32 retry_count;
     wmi_mac_addr bssid;      /* AP MAC address */
+    /*
+     * frame_info_ext captures below fields:
+     * Bit 0-15  : (re)assoc id of (re)association response frame,
+     *             section 9.4.1.8 AID field.
+     * Bit 16~31 : reserved for future use.
+     */
+    A_UINT32 frame_info_ext;
 } wmi_roam_frame_info;
 
 typedef enum {
