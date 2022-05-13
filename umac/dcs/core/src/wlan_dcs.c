@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -131,7 +132,7 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
 	dcs_tx_ops = target_if_dcs_get_tx_ops(psoc);
 
 	if (dcs_tx_ops && dcs_tx_ops->dcs_cmd_send) {
-		dcs_info("dcs_enable: %u, pdev_id: %u", dcs_enable, pdev_id);
+		dcs_debug("dcs_enable: %u, pdev_id: %u", dcs_enable, pdev_id);
 		return dcs_tx_ops->dcs_cmd_send(psoc,
 						pdev_id,
 						is_host_pdev_id,

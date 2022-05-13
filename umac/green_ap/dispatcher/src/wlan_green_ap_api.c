@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -414,7 +415,7 @@ QDF_STATUS wlan_green_ap_del_sta(struct wlan_objmgr_pdev *pdev)
 	qdf_spin_lock_bh(&green_ap_ctx->lock);
 	if (wlan_is_egap_enabled(green_ap_ctx)) {
 		qdf_spin_unlock_bh(&green_ap_ctx->lock);
-		green_ap_info("enhanced green ap support is enabled");
+		green_ap_debug("enhanced green ap support is enabled");
 		return QDF_STATUS_SUCCESS;
 	}
 	qdf_spin_unlock_bh(&green_ap_ctx->lock);
