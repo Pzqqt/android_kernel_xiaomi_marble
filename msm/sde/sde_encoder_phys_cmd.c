@@ -171,6 +171,37 @@ static void _sde_encoder_phys_cmd_update_intf_cfg(
 	}
 }
 
+static void sde_encoder_override_tearcheck_rd_ptr(struct sde_encoder_phys *phys_enc)
+{
+	struct sde_hw_intf *hw_intf;
+	struct drm_display_mode *mode;
+	struct sde_encoder_phys_cmd *cmd_enc;
+	struct sde_hw_pp_vsync_info info[MAX_CHANNELS_PER_ENC] = {{0}};
+	u32 adjusted_tear_rd_ptr_line_cnt;
+
+	if (!phys_enc || !phys_enc->hw_intf)
+		return;
+
+	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
+	hw_intf = phys_enc->hw_intf;
+	mode = &phys_enc->cached_mode;
+
+	/* Configure TE rd_ptr_val to the end of qsync Start Window.
+	 * This ensures next frame trigger_start does not get latched in the current
+	 * vsync window.
+	 */
+	adjusted_tear_rd_ptr_line_cnt = mode->vdisplay + cmd_enc->qsync_threshold_lines + 1;
+
+	if (hw_intf && hw_intf->ops.override_tear_rd_ptr_val)
+		hw_intf->ops.override_tear_rd_ptr_val(hw_intf, adjusted_tear_rd_ptr_line_cnt);
+
+	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
+	SDE_EVT32_VERBOSE(phys_enc->hw_intf->idx - INTF_0, mode->vdisplay,
+		cmd_enc->qsync_threshold_lines, info[0].rd_ptr_line_count,
+		info[0].rd_ptr_frame_count, info[0].wr_ptr_line_count,
+		info[1].rd_ptr_line_count, info[1].rd_ptr_frame_count, info[1].wr_ptr_line_count);
+}
+
 static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
@@ -244,7 +275,6 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	struct sde_hw_pp_vsync_info info[MAX_CHANNELS_PER_ENC] = {{0}};
 	struct sde_encoder_phys_cmd_te_timestamp *te_timestamp;
 	unsigned long lock_flags;
-	struct drm_display_mode *mode;
 
 	if (!phys_enc || !phys_enc->hw_pp || !phys_enc->hw_intf)
 		return;
@@ -269,15 +299,10 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent),
 		info[0].pp_idx, info[0].intf_idx,
-		info[0].wr_ptr_line_count, info[0].intf_frame_count,
+		info[0].wr_ptr_line_count, info[0].intf_frame_count, info[0].rd_ptr_line_count,
 		info[1].pp_idx, info[1].intf_idx,
-		info[1].wr_ptr_line_count, info[1].intf_frame_count,
+		info[1].wr_ptr_line_count, info[1].intf_frame_count, info[1].rd_ptr_line_count,
 		scheduler_status);
-
-	mode = &phys_enc->cached_mode;
-	if (!mode || info[0].wr_ptr_line_count == mode->vdisplay ||
-			!info[0].wr_ptr_line_count)
-		atomic_add_unless(&cmd_enc->frame_trigger_count, -1, 0);
 
 	if (phys_enc->parent_ops.handle_vblank_virt)
 		phys_enc->parent_ops.handle_vblank_virt(phys_enc->parent,
@@ -292,7 +317,7 @@ static void sde_encoder_phys_cmd_wr_ptr_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
 	struct sde_hw_ctl *ctl;
-	u32 event = 0;
+	u32 event = 0, qsync_mode = 0;
 	struct sde_hw_pp_vsync_info info[MAX_CHANNELS_PER_ENC] = {{0}};
 	struct sde_encoder_phys_cmd *cmd_enc;
 
@@ -302,8 +327,7 @@ static void sde_encoder_phys_cmd_wr_ptr_irq(void *arg, int irq_idx)
 	SDE_ATRACE_BEGIN("wr_ptr_irq");
 	ctl = phys_enc->hw_ctl;
 	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
-
-	atomic_inc(&cmd_enc->frame_trigger_count);
+	qsync_mode = sde_connector_get_qsync_mode(phys_enc->connector);
 
 	if (atomic_add_unless(&phys_enc->pending_retire_fence_cnt, -1, 0)) {
 		event = SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE;
@@ -319,7 +343,10 @@ static void sde_encoder_phys_cmd_wr_ptr_irq(void *arg, int irq_idx)
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent),
 		ctl->idx - CTL_0, event,
 		info[0].pp_idx, info[0].intf_idx, info[0].wr_ptr_line_count,
-		info[1].pp_idx, info[1].intf_idx, info[1].wr_ptr_line_count);
+		info[1].pp_idx, info[1].intf_idx, info[1].wr_ptr_line_count, qsync_mode);
+
+	if (qsync_mode)
+		sde_encoder_override_tearcheck_rd_ptr(phys_enc);
 
 	/* Signal any waiting wr_ptr start interrupt */
 	wake_up_all(&phys_enc->pending_kickoff_wq);
@@ -1041,6 +1068,7 @@ static void sde_encoder_phys_cmd_tearcheck_config(
 	tc_cfg.start_pos = mode->vdisplay;
 	tc_cfg.rd_ptr_irq = mode->vdisplay + 1;
 	tc_cfg.wr_ptr_irq = 1;
+	cmd_enc->qsync_threshold_lines = tc_cfg.sync_threshold_start;
 
 	SDE_DEBUG_CMDENC(cmd_enc,
 	  "tc %d intf %d vsync_clk_speed_hz %u vtotal %u vrefresh %u\n",
@@ -1367,6 +1395,7 @@ static int sde_encoder_phys_cmd_prepare_for_kickoff(
 	if (sde_connector_is_qsync_updated(phys_enc->connector)) {
 		tc_cfg.sync_threshold_start = _get_tearcheck_threshold(
 				phys_enc);
+		cmd_enc->qsync_threshold_lines = tc_cfg.sync_threshold_start;
 		if (phys_enc->has_intf_te &&
 				phys_enc->hw_intf->ops.update_tearcheck)
 			phys_enc->hw_intf->ops.update_tearcheck(
@@ -1853,33 +1882,9 @@ static void sde_encoder_phys_cmd_trigger_start(
 	struct sde_encoder_phys_cmd *cmd_enc =
 			to_sde_encoder_phys_cmd(phys_enc);
 	u32 frame_cnt;
-	struct drm_connector *conn;
-	int threshold_lines, curr_rd_ptr_line_count;
-	struct sde_hw_pp_vsync_info info[MAX_CHANNELS_PER_ENC] = {{0}};
-	struct drm_display_mode *mode;
 
 	if (!phys_enc)
 		return;
-
-	conn = phys_enc->connector;
-	mode = &phys_enc->cached_mode;
-	if (mode && sde_connector_get_qsync_mode(conn)) {
-		threshold_lines = _get_tearcheck_threshold(phys_enc);
-		sde_encoder_helper_get_pp_line_count(phys_enc->parent, info);
-		curr_rd_ptr_line_count = info[0].rd_ptr_line_count;
-
-		/*
-		 * Vsync wait is required only if both the below conditions satisfy
-		 * - current rd_ptr linecount is within the start threshold window
-		 * - frame trigger already happened in this TE interval
-		 */
-		if ((curr_rd_ptr_line_count < mode->vdisplay + threshold_lines) &&
-			atomic_read(&cmd_enc->frame_trigger_count)) {
-			SDE_EVT32(curr_rd_ptr_line_count, mode->vdisplay + threshold_lines,
-				atomic_read(&cmd_enc->frame_trigger_count), 0xebad);
-			sde_encoder_phys_cmd_wait_for_vblank(phys_enc);
-		}
-	}
 
 	/* we don't issue CTL_START when using autorefresh */
 	frame_cnt = _sde_encoder_phys_cmd_get_autorefresh_property(phys_enc);
