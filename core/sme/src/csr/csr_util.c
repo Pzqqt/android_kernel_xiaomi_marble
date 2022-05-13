@@ -1236,6 +1236,11 @@ QDF_STATUS csr_set_modify_profile_fields(struct mac_context *mac,
 {
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
+	if (!pSession) {
+		sme_err("Session_id invalid %d", sessionId);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	qdf_mem_copy(&pSession->modifyProfileFields,
 		     pModifyProfileFields, sizeof(tCsrRoamModifyProfileFields));
 
