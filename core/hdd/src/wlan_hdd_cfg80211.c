@@ -9037,7 +9037,7 @@ QDF_STATUS wlan_hdd_set_wlm_latency_level(struct hdd_adapter *adapter,
 
 	ret = osif_request_wait_for_response(request);
 	if (ret) {
-		hdd_err("Timedout while retrieving oem get data");
+		hdd_err("SME timed out while retrieving latency level");
 		status = qdf_status_from_os_return(ret);
 		goto err;
 	}
