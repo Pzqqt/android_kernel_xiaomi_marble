@@ -2983,7 +2983,6 @@ static void policy_mgr_update_sta_scc_info_for_later_check(
 		    (pm_conc_connection_list[conn_index].mode == PM_SAP_MODE ||
 		    pm_conc_connection_list[conn_index].mode ==
 		    PM_P2P_GO_MODE)) {
-			pm_ctx->do_sap_unsafe_ch_check = true;
 			pm_ctx->last_disconn_sta_freq = sta_freq;
 			break;
 		}

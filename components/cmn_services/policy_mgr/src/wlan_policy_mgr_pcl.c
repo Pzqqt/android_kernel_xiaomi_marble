@@ -2457,6 +2457,34 @@ bool policy_mgr_is_sap_mandatory_channel_set(struct wlan_objmgr_psoc *psoc)
 		return false;
 }
 
+static inline
+uint32_t policy_mgr_is_sta_on_indoor_channel(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t conn_index;
+	uint32_t freq = INVALID_CHANNEL_ID;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return freq;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		if (pm_conc_connection_list[conn_index].mode == PM_STA_MODE &&
+		    wlan_reg_is_freq_indoor(pm_ctx->pdev,
+				pm_conc_connection_list[conn_index].freq) &&
+				pm_conc_connection_list[conn_index].in_use) {
+			freq = pm_conc_connection_list[conn_index].freq;
+			break;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return freq;
+}
+
 QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 		struct wlan_objmgr_psoc *psoc, uint32_t *pcl_list_org,
 		uint8_t *weight_list_org, uint32_t *pcl_len_org)
@@ -2464,6 +2492,9 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 	uint32_t i, j, pcl_len = 0;
 	bool found;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t indoor_sta_freq = INVALID_CHANNEL_ID;
+	bool scc_on_indoor =
+		 policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2480,9 +2511,13 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+
 	for (i = 0; i < pm_ctx->sap_mandatory_channels_len; i++)
 		policy_mgr_debug("fav chan:%d",
 			pm_ctx->sap_mandatory_channels[i]);
+
+	if (scc_on_indoor)
+		indoor_sta_freq = policy_mgr_is_sta_on_indoor_channel(psoc);
 
 	for (i = 0; i < *pcl_len_org; i++) {
 		found = false;
@@ -2492,7 +2527,9 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 		}
 		for (j = 0; j < pm_ctx->sap_mandatory_channels_len; j++) {
 			if (pcl_list_org[i] ==
-			    pm_ctx->sap_mandatory_channels[j]) {
+			    pm_ctx->sap_mandatory_channels[j] ||
+			    (scc_on_indoor &&
+			     pcl_list_org[i] == indoor_sta_freq)) {
 				found = true;
 				break;
 			}
@@ -2517,6 +2554,8 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_pcl_list pcl;
 	uint32_t i;
 	uint32_t sap_new_freq;
+	bool sta_sap_scc_on_indoor_channel =
+		 policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2601,6 +2640,19 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 
 	sap_new_freq = pcl.pcl_list[0];
 	for (i = 0; i < pcl.pcl_len; i++) {
+		/* When sta_sap_scc_on_indoor_channel is enabled,
+		 * and if pcl contains SCC channel, then STA must
+		 * exist on the concurrent session. Therefore, choose
+		 * Indoor channel to restart SAP in SCC.
+		 */
+		if (wlan_reg_is_freq_indoor(pm_ctx->pdev, pcl.pcl_list[i]) &&
+		    sta_sap_scc_on_indoor_channel) {
+			sap_new_freq = pcl.pcl_list[i];
+			policy_mgr_debug("Choose Indoor channel from PCL list %d sap_new_freq %d",
+					 *intf_ch_freq, sap_new_freq);
+			goto update_freq;
+		}
+
 		if (pcl.pcl_list[i] ==  pm_ctx->user_config_sap_ch_freq) {
 			sap_new_freq = pcl.pcl_list[i];
 			policy_mgr_debug("Prefer starting SAP on user configured channel:%d",

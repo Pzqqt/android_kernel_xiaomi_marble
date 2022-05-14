@@ -1593,6 +1593,7 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	struct policy_mgr_conc_connection_info info = {0};
 	uint8_t num_cxn_del = 0;
 	QDF_STATUS status;
+	uint32_t sta_gc_present = 0;
 
 	if (intf_ch_freq)
 		*intf_ch_freq = 0;
@@ -1601,12 +1602,6 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		policy_mgr_err("Invalid pm context");
 		return false;
 	}
-	if (!pm_ctx->do_sap_unsafe_ch_check)
-		return false;
-
-	if (!sta_sap_scc_on_dfs_chan && !sta_sap_scc_on_lte_coex_chan &&
-	    !sta_sap_scc_on_indoor_channel)
-		return false;
 
 	policy_mgr_get_sta_sap_scc_on_dfs_chnl(psoc, &sta_sap_scc_on_dfs_chnl_config_value);
 
@@ -1624,15 +1619,25 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 					psoc, &op_ch_freq_list[cc_count],
 					&vdev_id[cc_count], PM_P2P_GO_MODE);
 
+	sta_gc_present =
+		policy_mgr_mode_specific_connection_count(psoc,
+							  PM_STA_MODE, NULL) +
+		policy_mgr_mode_specific_connection_count(psoc,
+							  PM_P2P_CLIENT_MODE,
+							  NULL);
+
+
 	for (i = 0 ; i < cc_count; i++) {
 		if (sap_vdev_id != INVALID_VDEV_ID &&
 		    sap_vdev_id != vdev_id[i])
 			continue;
+
 		if (policy_mgr_is_any_mode_active_on_band_along_with_session(
 				psoc,  vdev_id[i],
 				WLAN_REG_IS_24GHZ_CH_FREQ(op_ch_freq_list[i]) ?
 				POLICY_MGR_BAND_24 : POLICY_MGR_BAND_5))
 			continue;
+
 		if (sta_sap_scc_on_dfs_chan &&
 		    (sta_sap_scc_on_dfs_chnl_config_value != 2) &&
 		     wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
@@ -1657,13 +1662,29 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 					 curr_sap_freq);
 			break;
 		}
-
+		/* When STA+SAP SCC is allowed on indoor channel,
+		 * Restart the SAP when :
+		 * 1. The user configured SAP frequency is not
+		 * the same as current freq. (or)
+		 * 2. The frequency is not allowed in the indoor
+		 * channel.
+		 */
 		if (sta_sap_scc_on_indoor_channel &&
 		    wlan_reg_is_freq_indoor(pm_ctx->pdev, op_ch_freq_list[i]) &&
 		    pm_ctx->last_disconn_sta_freq == op_ch_freq_list[i]) {
 			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
 			policy_mgr_debug("indoor sap_ch_freq %u",
+					 curr_sap_freq);
+			break;
+		}
+
+		if (!sta_gc_present &&
+		    WLAN_REG_IS_24GHZ_CH_FREQ(op_ch_freq_list[i]) &&
+		    WLAN_REG_IS_5GHZ_CH_FREQ(pm_ctx->user_config_sap_ch_freq)) {
+			sap_vdev_id = vdev_id[i];
+			curr_sap_freq = op_ch_freq_list[i];
+			policy_mgr_debug("Indoor sap_ch_freq %u",
 					 curr_sap_freq);
 			break;
 		}
@@ -1679,6 +1700,7 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, sap_vdev_id,
 						      &info, &num_cxn_del);
 
+
 	/* Add the user config ch as first condidate */
 	pcl_channels[0] = pm_ctx->user_config_sap_ch_freq;
 	pcl_weight[0] = 0;
@@ -1689,18 +1711,35 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		pcl_len++;
 	else
 		pcl_len = 1;
+
+
 	for (i = 0; i < pcl_len; i++) {
 		if (pcl_channels[i] == curr_sap_freq)
 			continue;
-		if (!wlan_reg_is_same_band_freqs(
-				curr_sap_freq, pcl_channels[i]))
-			continue;
+
 		if (!policy_mgr_is_safe_channel(psoc, pcl_channels[i]) ||
 		    wlan_reg_is_dfs_for_freq(pm_ctx->pdev, pcl_channels[i]))
 			continue;
+
+		/* SAP moved to 2G, due to STA on DFS or Indoor where
+		 * concurrency is not allowed, now that there is no
+		 * STA/GC in 5G band, move 2.g SAP to 5G band if SAP
+		 * was initially started on 5G band.
+		 * Checking again here as pcl_channels[0] could be
+		 * on indoor which is not removed in policy_mgr_get_pcl
+		 */
+		if (!sta_gc_present &&
+		    !policy_mgr_sap_allowed_on_indoor_freq(pm_ctx->psoc,
+							   pm_ctx->pdev,
+							   pcl_channels[i])) {
+			policy_mgr_debug("Do not allow SAP on indoor frequency, STA is absent");
+			continue;
+		}
+
 		new_sap_freq = pcl_channels[i];
 		break;
 	}
+
 	/* Restore the connection entry */
 	if (num_cxn_del > 0)
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
@@ -2055,7 +2094,6 @@ void policy_mgr_check_sap_restart(struct wlan_objmgr_psoc *psoc,
 				 vdev_id, ch_freq);
 
 end:
-	pm_ctx->do_sap_unsafe_ch_check = false;
 	pm_ctx->last_disconn_sta_freq = 0;
 }
 
@@ -2143,7 +2181,6 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(
 		}
 
 end:
-	pm_ctx->do_sap_unsafe_ch_check = false;
 	pm_ctx->last_disconn_sta_freq = 0;
 }
 

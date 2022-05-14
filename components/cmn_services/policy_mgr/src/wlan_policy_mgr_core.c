@@ -3774,13 +3774,20 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 		/*
 		 * STA + SAP where doing SCC on 5 GHz indoor channel.
 		 * STA moved/roamed to 2.4 GHz. Move SAP to initially
-		 * started channel
+		 * started channel.
+		 *
+		 * STA+SAP where STA is moved/roamed to 5GHz indoor
+		 * and SAP is on 2.4GHz due to previous concurrency.
+		 * Move SAP to STA channel on SCC.
 		 */
 		sta_sap_scc_on_indoor_channel_allowed =
 			policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
-		if (wlan_reg_is_freq_indoor(pm_ctx->pdev, sap_ch_freq) &&
-		    WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq) &&
-		    sta_sap_scc_on_indoor_channel_allowed) {
+
+		if (sta_sap_scc_on_indoor_channel_allowed &&
+		    ((wlan_reg_is_freq_indoor(pm_ctx->pdev, sap_ch_freq) &&
+		    WLAN_REG_IS_24GHZ_CH_FREQ(*intf_ch_freq)) ||
+		    (wlan_reg_is_freq_indoor(pm_ctx->pdev, *intf_ch_freq) &&
+		     WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq)))) {
 			status = policy_mgr_get_sap_mandatory_channel(
 							psoc, sap_ch_freq,
 							intf_ch_freq);
@@ -3788,6 +3795,17 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 				return;
 
 			policy_mgr_err("No mandatory channels");
+		}
+
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq) &&
+		    !WLAN_REG_IS_24GHZ_CH_FREQ(pm_ctx->user_config_sap_ch_freq) &&
+		    (wlan_reg_get_channel_state_for_freq(pm_ctx->pdev,
+							 *intf_ch_freq) == CHANNEL_STATE_ENABLE)) {
+			status = policy_mgr_get_sap_mandatory_channel(
+							psoc, sap_ch_freq,
+							intf_ch_freq);
+			if (QDF_IS_STATUS_SUCCESS(status))
+				return;
 		}
 
 		if (policy_mgr_is_current_hwmode_sbs(psoc) || sbs_mlo_present)
