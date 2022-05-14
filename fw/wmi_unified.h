@@ -36286,7 +36286,11 @@ typedef struct {
 #define WMI_EHTCAP_MAC_MAXMPDULEN_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 6, 2)
 #define WMI_EHTCAP_MAC_MAXMPDULEN_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 6, 2, value)
 
-/* Bit 8-15: reserved */
+/* Bit 8: Maximum A-MPDU Length Exponent Extension */
+#define WMI_EHTCAP_MAC_MAXAMPDULEN_EXP_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 8, 1)
+#define WMI_EHTCAP_MAC_MAXAMPDULEN_EXP_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 8, 1, value)
+
+/* Bit 9-15: reserved */
 
 /****** End of 11BE EHT MAC Capabilities Information field ******/
 
