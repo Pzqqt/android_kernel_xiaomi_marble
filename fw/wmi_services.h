@@ -588,6 +588,7 @@ typedef  enum  {
     WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT = 335, /* FW supports set param cmd combined for multiple params */
     WMI_SERVICE_AFC_PAYLOAD_CLEAR_SUPPORT = 336, /* FW supports clearing the AFC response payload in proxy mode */
     WMI_SERVICE_FW_INI_PARSE_SUPPORT = 337, /* FW supports parsing ini configuration file */
+    WMI_SERVICE_TDLS_6GHZ_SUPPORT = 338, /* FW supports 6GHz TDLS both on base channel and offchannel */
 
     WMI_MAX_EXT2_SERVICE
 
