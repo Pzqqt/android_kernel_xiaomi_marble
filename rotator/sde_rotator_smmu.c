@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -35,6 +36,9 @@ struct sde_smmu_domain {
 static inline bool sde_smmu_is_valid_domain_type(
 		struct sde_rot_data_type *mdata, int domain_type)
 {
+	if (domain_type >= SDE_IOMMU_MAX_DOMAIN)
+		return false;
+
 	return true;
 }
 
@@ -69,8 +73,7 @@ struct sde_smmu_client *sde_smmu_get_cb(u32 domain)
 	if (!sde_smmu_is_valid_domain_type(mdata, domain))
 		return NULL;
 
-	return (domain >= SDE_IOMMU_MAX_DOMAIN) ? NULL :
-			&mdata->sde_smmu[domain];
+	return &mdata->sde_smmu[domain];
 }
 
 static int sde_smmu_util_parse_dt_clock(struct platform_device *pdev,
