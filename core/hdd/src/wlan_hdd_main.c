@@ -17488,6 +17488,36 @@ static void hdd_inform_wifi_off(void)
 	osif_psoc_sync_op_stop(psoc_sync);
 }
 
+#if defined CFG80211_USER_HINT_CELL_BASE_SELF_MANAGED || \
+                    (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+static void hdd_inform_wifi_on(void)
+{
+	int ret;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct osif_psoc_sync *psoc_sync;
+
+	hdd_nofl_debug("inform regdomain for wifi on");
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return;
+	if (!wlan_hdd_validate_modules_state(hdd_ctx))
+		return;
+	if (!hdd_ctx->wiphy)
+		return;
+	ret = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
+	if (ret)
+		return;
+	if (hdd_ctx->wiphy->registered)
+		hdd_send_wiphy_regd_sync_event(hdd_ctx);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+}
+#else
+static void hdd_inform_wifi_on(void)
+{
+}
+#endif
+
 static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 						const char __user *user_buf,
 						size_t count,
@@ -17501,6 +17531,7 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	unsigned long rc;
 	struct hdd_context *hdd_ctx;
 	bool is_wait_for_ready = false;
+	bool turning_on = false;
 
 	if (copy_from_user(buf, user_buf, 3)) {
 		pr_err("Failed to read buffer\n");
@@ -17508,13 +17539,15 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	}
 
 	if (strncmp(buf, wlan_off_str, strlen(wlan_off_str)) == 0) {
-		pr_info("Wifi turning off from UI\n");
+		hdd_info("Wifi turning off from UI\n");
 		hdd_inform_wifi_off();
 		goto exit;
 	}
 
-	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) == 0)
-		pr_info("Wifi Turning On from UI\n");
+	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) == 0) {
+		hdd_info("Wifi Turning On from UI\n");
+		turning_on = true;
+	}
 
 	if (strncmp(buf, wlan_wait_for_ready_str,
 		    strlen(wlan_wait_for_ready_str)) == 0) {
@@ -17545,8 +17578,10 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (hdd_ctx)
 		hdd_psoc_idle_timer_stop(hdd_ctx);
-
 exit:
+	if (turning_on)
+		hdd_inform_wifi_on();
+
 	return count;
 }
 
