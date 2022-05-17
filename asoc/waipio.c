@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -55,7 +56,7 @@
 
 #define WCN_CDC_SLIM_RX_CH_MAX 2
 #define WCN_CDC_SLIM_TX_CH_MAX 2
-#define WCN_CDC_SLIM_TX_CH_MAX_LITO 3
+#define WCN_CDC_SLIM_TX_CH_MAX_FM 3
 
 /* Number of WSAs */
 #define MONO_SPEAKER    1
@@ -386,7 +387,7 @@ static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
 	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX]  = {159, 160};
 	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-    int ret = 0;
+	int ret = 0;
 
 	ret = snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
 					   tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
@@ -394,7 +395,23 @@ static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 		return ret;
 
 	msm_common_dai_link_init(rtd);
-    return ret;
+	return ret;
+}
+
+static int msm_wcn_init_btfm(struct snd_soc_pcm_runtime *rtd)
+{
+	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
+	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX_FM]  = {159, 160, 161};
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	int ret = 0;
+
+	ret = snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
+					   tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
+	if (ret)
+		return ret;
+
+	msm_common_dai_link_init(rtd);
+	return ret;
 }
 
 static struct snd_info_entry *msm_snd_info_create_subdir(struct module *mod,
@@ -514,6 +531,42 @@ static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
 		.ops = &msm_common_be_ops,
 		.ignore_suspend = 1,
 		SND_SOC_DAILINK_REG(slimbus_7_tx),
+	},
+};
+
+static struct snd_soc_dai_link msm_wcn_btfm_be_dai_links[] = {
+	{
+		.name = LPASS_BE_SLIMBUS_7_RX,
+		.stream_name = LPASS_BE_SLIMBUS_7_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.init = &msm_wcn_init_btfm,
+		.ops = &msm_common_be_ops,
+		/* dai link has playback support */
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(slimbus_7_rx),
+	},
+	{
+		.name = LPASS_BE_SLIMBUS_7_TX,
+		.stream_name = LPASS_BE_SLIMBUS_7_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(slimbus_7_tx),
+	},
+	{
+		.name = LPASS_BE_SLIMBUS_8_TX,
+		.stream_name = LPASS_BE_SLIMBUS_8_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(slimbus_8_tx),
 	},
 };
 
@@ -1083,6 +1136,7 @@ static struct snd_soc_dai_link msm_waipio_dai_links[
 			ARRAY_SIZE(ext_disp_be_dai_link) +
 			ARRAY_SIZE(msm_common_be_dai_links) +
 			ARRAY_SIZE(msm_wcn_be_dai_links) +
+			ARRAY_SIZE(msm_wcn_btfm_be_dai_links) +
 			ARRAY_SIZE(msm_mi2s_dai_links) +
 			ARRAY_SIZE(msm_tdm_dai_links)];
 
@@ -1385,6 +1439,16 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev, int w
 			       msm_wcn_be_dai_links,
 			       sizeof(msm_wcn_be_dai_links));
 			total_links += ARRAY_SIZE(msm_wcn_be_dai_links);
+		}
+
+		rc = of_property_read_u32(dev->of_node, "qcom,wcn-btfm", &val);
+		if (!rc && val) {
+			dev_dbg(dev, "%s(): WCN BT FM support present\n",
+				__func__);
+			memcpy(msm_waipio_dai_links + total_links,
+			       msm_wcn_btfm_be_dai_links,
+			       sizeof(msm_wcn_btfm_be_dai_links));
+			total_links += ARRAY_SIZE(msm_wcn_btfm_be_dai_links);
 		}
 
 		dailink = msm_waipio_dai_links;

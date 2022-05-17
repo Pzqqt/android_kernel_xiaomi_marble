@@ -1,4 +1,5 @@
 /* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -62,6 +63,7 @@
 #define LPASS_BE_SLIMBUS_6_TX "SLIM-DEV1-TX-6"
 #define LPASS_BE_SLIMBUS_7_RX "SLIM-DEV1-RX-7"
 #define LPASS_BE_SLIMBUS_7_TX "SLIM-DEV1-TX-7"
+#define LPASS_BE_SLIMBUS_8_TX "SLIM-DEV1-TX-8"
 
 #define LPASS_BE_PRI_TDM_RX_0 "TDM-LPAIF-RX-PRIMARY"
 #define LPASS_BE_PRI_TDM_TX_0 "TDM-LPAIF-TX-PRIMARY"
