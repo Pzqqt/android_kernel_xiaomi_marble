@@ -336,10 +336,20 @@ enum {
 #define IPA_WDI_CE2_RING_RES           17
 #define IPA_WDI_CE2_DB_RES             18
 #define IPA_WDI_TX2_DB_RES             19
-#define IPA_WDI_MAX_RES                20
+#define IPA_WDI_RX3_RING_RES           20
+#define IPA_WDI_RX3_RING_RP_RES        21
+#define IPA_WDI_RX3_COMP_RING_RES      22
+#define IPA_WDI_RX3_COMP_RING_WP_RES   23
+#define IPA_WDI_RX4_RING_RES           24
+#define IPA_WDI_RX4_RING_RP_RES        25
+#define IPA_WDI_RX4_COMP_RING_RES      26
+#define IPA_WDI_RX4_COMP_RING_WP_RES   27
+#define IPA_WDI_MAX_RES                28
 
 #define IPA_WDI3_TX2_DIR 4
 #define IPA_WDI3_RX2_DIR 5
+#define IPA_WDI3_RX3_DIR 6
+#define IPA_WDI3_RX4_DIR 7
 
 /* use QMAP header reserved bit to identify tethered traffic */
 #define IPA_QMAP_TETH_BIT (1 << 30)
