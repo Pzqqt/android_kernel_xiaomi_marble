@@ -2988,6 +2988,38 @@ static void wlan_hdd_trim_acs_channel_list(uint32_t *pcl, uint8_t pcl_count,
 	*org_ch_list_count = ch_list_count;
 }
 
+/* wlan_hdd_dump_freq_list() - Dump the ACS master frequency list
+ *
+ * @freq_list: Frequency list
+ * @num_freq: num of frequencies in list
+ *
+ * Dump the ACS master frequency list.
+ */
+static inline
+void wlan_hdd_dump_freq_list(uint32_t *freq_list, uint8_t num_freq)
+{
+	uint32_t buf_len = 0;
+	uint32_t i = 0, j = 0;
+	uint8_t *master_chlist;
+
+	if (num_freq >= NUM_CHANNELS)
+		return;
+
+	buf_len = NUM_CHANNELS * 4;
+	master_chlist = qdf_mem_malloc(buf_len);
+
+	if (!master_chlist)
+		return;
+
+	for (i = 0; i < num_freq && j < buf_len; i++) {
+		j += qdf_scnprintf(master_chlist + j, buf_len - j,
+				   "%d ", freq_list[i]);
+	}
+
+	hdd_debug("Master channel list: %s", master_chlist);
+	qdf_mem_free(master_chlist);
+}
+
 /**
  * wlan_hdd_handle_zero_acs_list() - Handle worst case of acs channel
  * trimmed to zero
@@ -3034,12 +3066,19 @@ static void wlan_hdd_handle_zero_acs_list(struct hdd_context *hdd_ctx,
 	if (!sta_count && !force_sap_allowed)
 		return;
 
+	wlan_hdd_dump_freq_list(org_freq_list, org_ch_list_count);
+
 	for (i = 0; i < org_ch_list_count; i++) {
-		if (!wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
-					      org_freq_list[i])) {
-			acs_chan_default = org_freq_list[i];
-			break;
-		}
+		if (wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
+					     org_freq_list[i]))
+			continue;
+
+		if (wlan_reg_is_6ghz_chan_freq(org_freq_list[i]) &&
+		    !wlan_reg_is_6ghz_psc_chan_freq(org_freq_list[i]))
+			continue;
+
+		acs_chan_default = org_freq_list[i];
+		break;
 	}
 	if (!acs_chan_default)
 		acs_chan_default = org_freq_list[0];
