@@ -2715,7 +2715,7 @@ static int __wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
 
 	qdf_mem_copy(qdf_nbuf_data(evt_buf), buf, len);
 	evt_id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
-	wmi_debug("Received WMI_EVT_ID: %d over qmi", evt_id);
+	wmi_debug("Received WMI_EVT_ID: 0x%x over qmi", evt_id);
 	wmi_process_control_rx(wmi_handle, evt_buf);
 
 	return 0;
