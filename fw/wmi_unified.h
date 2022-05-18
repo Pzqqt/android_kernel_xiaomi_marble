@@ -34425,6 +34425,11 @@ typedef enum {
      *  Bit : 2-31  - reserved
      */
     WMI_ROAM_PARAM_ROAM_EVENTS_CONFIG = 0x1,
+    /*
+     * Bit : 0 if unset, POOR_LINKSPEED
+     * Bit : 0 if set, GOOD_LINKSPEED
+     */
+    WMI_ROAM_PARAM_LINKSPEED_STATE = 0x2,
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
 
