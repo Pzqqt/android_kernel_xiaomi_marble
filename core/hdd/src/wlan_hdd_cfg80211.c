@@ -3077,6 +3077,9 @@ static void wlan_hdd_handle_zero_acs_list(struct hdd_context *hdd_ctx,
 		    !wlan_reg_is_6ghz_psc_chan_freq(org_freq_list[i]))
 			continue;
 
+		if (!policy_mgr_is_safe_channel(hdd_ctx->psoc,
+						org_freq_list[i]))
+			continue;
 		acs_chan_default = org_freq_list[i];
 		break;
 	}
