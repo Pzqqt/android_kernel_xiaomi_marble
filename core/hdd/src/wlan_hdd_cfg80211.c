@@ -10741,6 +10741,7 @@ static int hdd_test_config_6ghz_security_test_mode(struct hdd_context *hdd_ctx,
 
 	cfg_val = nla_get_u8(attr);
 	hdd_debug("safe mode setting %d", cfg_val);
+	wlan_mlme_set_safe_mode_enable(hdd_ctx->psoc, cfg_val);
 	if (cfg_val) {
 		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
 		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,

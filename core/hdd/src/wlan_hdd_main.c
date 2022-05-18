@@ -14796,10 +14796,11 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 		hdd_err("Get rf test mode failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!rf_test_mode) {
-		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
+
+	if (rf_test_mode) {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
 		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
-					       ALLOWED_KEYMGMT_6G_MASK);
+					       DEFAULT_KEYMGMT_6G_MASK);
 	}
 	hdd_thermal_stats_cmd_init(hdd_ctx);
 	sme_set_cal_failure_event_cb(hdd_ctx->mac_handle,
