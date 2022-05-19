@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/iommu.h>
 #include <linux/dma-iommu.h>
 #include <linux/of.h>
 #include <linux/sort.h>
+#include <linux/of_address.h>
 
 #include "msm_vidc_debug.h"
 #include "msm_vidc_dt.h"
@@ -857,6 +859,12 @@ static int msm_vidc_populate_context_bank(struct device *dev,
 	cb->is_secure = of_property_read_bool(np, "qcom,secure-context-bank");
 	d_vpr_h("context bank %s: secure = %d\n",
 			cb->name, cb->is_secure);
+
+	if (!cb->is_secure && !core->is_non_coherent && !of_dma_is_coherent(np)) {
+		core->is_non_coherent = true;
+		d_vpr_h("%s: %s hardware based coherency %s\n", __func__,
+				cb->name, core->is_non_coherent ? "disabled" : "enabled");
+	}
 
 	d_vpr_h("context bank %s address start %x size %x\n",
 		cb->name, cb->addr_range.start,

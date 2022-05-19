@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _MSM_VIDC_MEMORY_H_
@@ -24,6 +25,12 @@ enum msm_memory_pool_type {
 	MSM_MEM_POOL_TIMESTAMP,
 	MSM_MEM_POOL_DMABUF,
 	MSM_MEM_POOL_MAX,
+};
+
+enum msm_memory_cache_type {
+	MSM_MEM_CACHE_CLEAN = 0,
+	MSM_MEM_CACHE_INVALIDATE,
+	MSM_MEM_CACHE_CLEAN_INVALIDATE,
 };
 
 struct msm_memory_alloc_header {
@@ -59,5 +66,8 @@ void msm_memory_pools_deinit(struct msm_vidc_inst *inst);
 void *msm_memory_alloc(struct msm_vidc_inst *inst,
 	enum msm_memory_pool_type type);
 void msm_memory_free(struct msm_vidc_inst *inst, void *vidc_buf);
+int msm_memory_cache_operations(struct msm_vidc_inst *inst,
+	struct dma_buf *dbuf, enum msm_memory_cache_type cache_type,
+	u32 offset, u32 size);
 
 #endif // _MSM_VIDC_MEMORY_H_

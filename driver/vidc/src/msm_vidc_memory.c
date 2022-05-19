@@ -347,7 +347,10 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 			return -EINVAL;
 		}
 	} else {
-		heap_name = "qcom,system";
+		if (core->is_non_coherent && mem->type == MSM_VIDC_BUF_QUEUE)
+			heap_name = "qcom,system-uncached";
+		else
+			heap_name = "qcom,system";
 	}
 
 	heap = dma_heap_find(heap_name);
@@ -622,13 +625,23 @@ int msm_memory_pools_init(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-/*
+
 int msm_memory_cache_operations(struct msm_vidc_inst *inst,
-	struct dma_buf *dbuf, enum smem_cache_ops cache_op,
-	unsigned long offset, unsigned long size, u32 sid)
+	struct dma_buf *dbuf, enum msm_memory_cache_type cache_type,
+	u32 offset, u32 size)
 {
+	struct msm_vidc_core *core;
 	int rc = 0;
-	unsigned long flags = 0;
+
+	if (!inst || !dbuf) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	/* skip cache ops for "dma-coherent" enabled chipsets */
+	if (!core->is_non_coherent)
+		return 0;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid parameters\n", __func__);
@@ -640,18 +653,9 @@ int msm_memory_cache_operations(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	rc = dma_buf_get_flags(dbuf, &flags);
-	if (rc) {
-		i_vpr_e(inst, "%s: dma_buf_get_flags failed, err %d\n",
-			__func__, rc);
-		return rc;
-	} else if (!(flags & ION_FLAG_CACHED)) {
-		return rc;
-	}
-
-	switch (cache_op) {
-	case SMEM_CACHE_CLEAN:
-	case SMEM_CACHE_CLEAN_INVALIDATE:
+	switch (cache_type) {
+	case MSM_MEM_CACHE_CLEAN:
+	case MSM_MEM_CACHE_CLEAN_INVALIDATE:
 		rc = dma_buf_begin_cpu_access_partial(dbuf, DMA_TO_DEVICE,
 				offset, size);
 		if (rc)
@@ -659,7 +663,7 @@ int msm_memory_cache_operations(struct msm_vidc_inst *inst,
 		rc = dma_buf_end_cpu_access_partial(dbuf, DMA_TO_DEVICE,
 				offset, size);
 		break;
-	case SMEM_CACHE_INVALIDATE:
+	case MSM_MEM_CACHE_INVALIDATE:
 		rc = dma_buf_begin_cpu_access_partial(dbuf, DMA_TO_DEVICE,
 				offset, size);
 		if (rc)
@@ -669,7 +673,7 @@ int msm_memory_cache_operations(struct msm_vidc_inst *inst,
 		break;
 	default:
 		i_vpr_e(inst, "%s: cache (%d) operation not supported\n",
-			__func__, cache_op);
+			__func__, cache_type);
 		rc = -EINVAL;
 		break;
 	}
@@ -677,6 +681,7 @@ int msm_memory_cache_operations(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+/*
 int msm_smem_memory_prefetch(struct msm_vidc_inst *inst)
 {
 	int i, rc = 0;

@@ -1178,6 +1178,151 @@ bool res_is_less_than_or_equal_to(u32 width, u32 height,
 		return false;
 }
 
+int msm_vidc_qbuf_cache_operation(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf)
+{
+	int rc = 0;
+	enum msm_memory_cache_type cache_type;
+	struct msm_vidc_core *core;
+	u32 offset, data_size;
+
+	if (!inst || !buf) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	/* skip cache ops for "dma-coherent" enabled chipsets */
+	if (!core->is_non_coherent)
+		return 0;
+
+	if (is_decode_session(inst)) {
+		switch (buf->type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			cache_type = MSM_MEM_CACHE_CLEAN_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = buf->data_size;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			cache_type = MSM_MEM_CACHE_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = buf->buffer_size - buf->data_offset;
+			break;
+		case MSM_VIDC_BUF_OUTPUT_META:
+			cache_type = MSM_MEM_CACHE_CLEAN_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = buf->buffer_size - buf->data_offset;
+			break;
+		default:
+			i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
+				__func__, buf->type);
+			return -EINVAL;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (buf->type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			cache_type = MSM_MEM_CACHE_CLEAN_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = buf->data_size;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			cache_type = MSM_MEM_CACHE_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = inst->max_filled_len;
+			break;
+		case MSM_VIDC_BUF_OUTPUT_META:
+			cache_type = MSM_MEM_CACHE_CLEAN_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = buf->buffer_size - buf->data_offset;
+			break;
+		default:
+			i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
+				__func__, buf->type);
+			return -EINVAL;
+		}
+	} else {
+		i_vpr_e(inst, "%s: invalid session type %d\n", __func__, inst->domain);
+		return -EINVAL;
+	}
+
+	rc = msm_memory_cache_operations(inst, buf->dmabuf, cache_type, offset, data_size);
+	if (rc)
+		print_vidc_buffer(VIDC_ERR, "err ", "qbuf cache ops failed", inst, buf);
+
+	return rc;
+}
+
+int msm_vidc_dqbuf_cache_operation(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf)
+{
+	int rc = 0;
+	enum msm_memory_cache_type cache_type = MSM_MEM_CACHE_INVALIDATE;
+	struct msm_vidc_core *core;
+	u32 offset, data_size;
+	bool skip = false;
+
+	if (!inst || !buf) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	/* skip cache ops for "dma-coherent" enabled chipsets */
+	if (!core->is_non_coherent)
+		return 0;
+
+	if (is_decode_session(inst)) {
+		switch (buf->type) {
+		case MSM_VIDC_BUF_INPUT:
+			skip = true;
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			cache_type = MSM_MEM_CACHE_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = buf->data_size;
+			break;
+		default:
+			i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
+				__func__, buf->type);
+			return -EINVAL;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (buf->type) {
+		case MSM_VIDC_BUF_INPUT:
+			skip = true;
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			cache_type = MSM_MEM_CACHE_INVALIDATE;
+			offset = buf->data_offset;
+			data_size = buf->data_size;
+			break;
+		default:
+			i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
+				__func__, buf->type);
+			return -EINVAL;
+		}
+	} else {
+		i_vpr_e(inst, "%s: invalid session type %d\n", __func__, inst->domain);
+		return -EINVAL;
+	}
+
+	/* skip caching for input buffer done(both encode & decode session) */
+	if (skip)
+		return 0;
+
+	rc = msm_memory_cache_operations(inst, buf->dmabuf, cache_type, offset, data_size);
+	if (rc)
+		print_vidc_buffer(VIDC_ERR, "err ", "dqbuf cache ops failed", inst, buf);
+
+	return rc;
+}
+
 int msm_vidc_change_core_state(struct msm_vidc_core *core,
 	enum msm_vidc_core_state request_state, const char *func)
 {
@@ -3170,6 +3315,18 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 	if (!meta && is_meta_enabled(inst, buf->type)) {
 		print_vidc_buffer(VIDC_ERR, "err ", "missing meta for", inst, buf);
 		return -EINVAL;
+	}
+
+	/* perform cache operation on buf */
+	rc = msm_vidc_qbuf_cache_operation(inst, buf);
+	if (rc)
+		return rc;
+
+	if (meta) {
+		/* perform cache operation on meta buf */
+		rc = msm_vidc_qbuf_cache_operation(inst, meta);
+		if (rc)
+			return rc;
 	}
 
 	if (msm_vidc_is_super_buffer(inst) && is_input_buffer(buf->type))
