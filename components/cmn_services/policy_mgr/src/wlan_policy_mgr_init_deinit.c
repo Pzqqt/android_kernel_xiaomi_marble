@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -792,8 +792,8 @@ QDF_STATUS policy_mgr_register_dp_cb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pm_ctx->dp_cbacks.hdd_rx_handle_concurrency =
-		dp_cbacks->hdd_rx_handle_concurrency;
+	pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency =
+		dp_cbacks->hdd_disable_rx_ol_in_concurrency;
 	pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb =
 		dp_cbacks->hdd_set_rx_mode_rps_cb;
 	pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb =

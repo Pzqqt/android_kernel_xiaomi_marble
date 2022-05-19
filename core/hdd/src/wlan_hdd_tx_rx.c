@@ -1751,8 +1751,10 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 	gro_result_t gro_ret;
 	uint32_t rx_aggregation;
 	uint8_t rx_ctx_id = QDF_NBUF_CB_RX_CTX_ID(skb);
+	int32_t gro_disallowed;
 
 	rx_aggregation = qdf_atomic_read(&hdd_ctx->dp_agg_param.rx_aggregation);
+	gro_disallowed = qdf_atomic_read(&adapter->gro_disallowed);
 
 	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
 
@@ -1760,7 +1762,7 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 	gro_ret = napi_gro_receive(napi_to_use, skb);
 
 	if (hdd_get_current_throughput_level(hdd_ctx) == PLD_BUS_WIDTH_IDLE ||
-	    !rx_aggregation || adapter->gro_disallowed[rx_ctx_id]) {
+	    !rx_aggregation || gro_disallowed) {
 		if (HDD_IS_EXTRA_GRO_FLUSH_NECESSARY(gro_ret)) {
 			adapter->hdd_stats.tx_rx_stats.
 					rx_gro_low_tput_flush++;
@@ -1769,7 +1771,7 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 		}
 		if (!rx_aggregation)
 			hdd_ctx->dp_agg_param.gro_force_flush[rx_ctx_id] = 1;
-		if (adapter->gro_disallowed[rx_ctx_id])
+		if (gro_disallowed)
 			adapter->gro_flushed[rx_ctx_id] = 1;
 	}
 	local_bh_enable();
@@ -2067,30 +2069,14 @@ int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-void hdd_rx_handle_concurrency(bool is_concurrency)
+void hdd_disable_rx_ol_in_concurrency(bool disable)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx)
 		return;
 
-	if (hdd_ctx->is_wifi3_0_target) {
-		/*
-		 * Donot disable rx offload on concurrency for lithium and
-		 * beryllium based targets
-		 */
-		if (is_concurrency)
-			qdf_atomic_set(&hdd_ctx->rx_skip_qdisc_chk_conc, 1);
-		else
-			qdf_atomic_set(&hdd_ctx->rx_skip_qdisc_chk_conc, 0);
-
-		return;
-	}
-
-	if (!hdd_ctx->ol_enable)
-		return;
-
-	if (is_concurrency) {
+	if (disable) {
 		if (HDD_MSM_CFG(hdd_ctx->config->enable_tcp_delack)) {
 			struct wlan_rx_tp_data rx_tp_data;
 
@@ -2126,7 +2112,7 @@ int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 	return -EPERM;
 }
 
-void hdd_rx_handle_concurrency(bool is_concurrency)
+void hdd_disable_rx_ol_in_concurrency(bool disable)
 {
 }
 
@@ -2231,6 +2217,7 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 }
 #else
 
+#ifdef WLAN_FEATURE_DYNAMIC_RX_AGGREGATION
 #if defined(WLAN_SUPPORT_RX_FISA)
 /**
  * hdd_set_fisa_disallowed_for_vdev() - Set fisa disallowed bit for a vdev
@@ -2257,106 +2244,6 @@ void hdd_set_fisa_disallowed_for_vdev(ol_txrx_soc_handle soc, uint8_t vdev_id,
 }
 #endif
 
-#ifdef WLAN_FEATURE_DYNAMIC_RX_AGGREGATION
-/**
- * hdd_is_chain_list_non_empty_for_clsact_qdisc() - Check if chain_list in
- *  ingress block is non-empty for a clsact qdisc.
- * @qdisc: pointer to clsact qdisc
- *
- * Return: true if chain_list is not empty else false
- */
-static bool
-hdd_is_chain_list_non_empty_for_clsact_qdisc(struct Qdisc *qdisc)
-{
-	const struct Qdisc_class_ops *cops;
-	struct tcf_block *ingress_block;
-
-	cops = qdisc->ops->cl_ops;
-	if (qdf_unlikely(!cops || !cops->tcf_block))
-		return false;
-
-	ingress_block = cops->tcf_block(qdisc, TC_H_MIN_INGRESS, NULL);
-	if (qdf_unlikely(!ingress_block))
-		return false;
-
-	if (list_empty(&ingress_block->chain_list))
-		return false;
-	else
-		return true;
-}
-
-/**
- * hdd_rx_check_qdisc_for_adapter() - Check if any ingress qdisc is configured
- *  for given adapter
- * @adapter: pointer to HDD adapter context
- * @rx_ctx_id: Rx context id
- *
- * The function checks if ingress qdisc is registered for a given
- * net device.
- *
- * Return: None
- */
-static void
-hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter, uint8_t rx_ctx_id)
-{
-	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct netdev_queue *ingress_q;
-	struct Qdisc *ingress_qdisc;
-
-	if (qdf_unlikely(!soc))
-		return;
-
-	/*
-	 * Restrict the qdisc based dynamic GRO enable/disable to
-	 * standalone STA mode only. Reset the configuration for
-	 * any other device mode or concurrency.
-	 */
-	if (adapter->device_mode != QDF_STA_MODE ||
-	    (qdf_atomic_read(&adapter->hdd_ctx->rx_skip_qdisc_chk_conc)))
-		goto reset_wl;
-
-	if (!adapter->dev->ingress_queue)
-		goto reset_wl;
-
-	rcu_read_lock();
-
-	ingress_q = rcu_dereference(adapter->dev->ingress_queue);
-	if (qdf_unlikely(!ingress_q))
-		goto reset;
-
-	ingress_qdisc = rcu_dereference(ingress_q->qdisc);
-	if (qdf_unlikely(!ingress_qdisc))
-		goto reset;
-
-	if (!(qdf_str_eq(ingress_qdisc->ops->id, "ingress") ||
-	      (qdf_str_eq(ingress_qdisc->ops->id, "clsact") &&
-	       hdd_is_chain_list_non_empty_for_clsact_qdisc(ingress_qdisc))))
-		goto reset;
-
-	rcu_read_unlock();
-
-	if (qdf_likely(adapter->gro_disallowed[rx_ctx_id]))
-		return;
-
-	hdd_debug("ingress qdisc/filter configured disable GRO");
-	adapter->gro_disallowed[rx_ctx_id] = 1;
-	hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id, rx_ctx_id, 1);
-
-	return;
-
-reset:
-	rcu_read_unlock();
-
-reset_wl:
-	if (qdf_unlikely(adapter->gro_disallowed[rx_ctx_id])) {
-		hdd_debug("ingress qdisc/filter removed enable GRO");
-		hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id,
-						 rx_ctx_id, 0);
-		adapter->gro_disallowed[rx_ctx_id] = 0;
-		adapter->gro_flushed[rx_ctx_id] = 0;
-	}
-}
-
 QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 				   struct sk_buff *skb)
 {
@@ -2365,14 +2252,24 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 	int netif_status;
 	bool skb_receive_offload_ok = false;
 	uint8_t rx_ctx_id = QDF_NBUF_CB_RX_CTX_ID(skb);
-
-	if (!hdd_ctx->dp_agg_param.force_gro_enable)
-		/* rx_ctx_id is already verified for out-of-range */
-		hdd_rx_check_qdisc_for_adapter(adapter, rx_ctx_id);
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (QDF_NBUF_CB_RX_TCP_PROTO(skb) &&
 	    !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
 		skb_receive_offload_ok = true;
+
+	if (qdf_atomic_read(&adapter->gro_disallowed) == 0 &&
+	    adapter->gro_flushed[rx_ctx_id] != 0) {
+		if (qdf_likely(soc))
+			hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id,
+							 rx_ctx_id, 0);
+		adapter->gro_flushed[rx_ctx_id] = 0;
+	} else if (qdf_atomic_read(&adapter->gro_disallowed) &&
+		   adapter->gro_flushed[rx_ctx_id] == 0) {
+		if (qdf_likely(soc))
+			hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id,
+							 rx_ctx_id, 1);
+	}
 
 	if (skb_receive_offload_ok && hdd_ctx->receive_offload_cb &&
 	    !hdd_ctx->dp_agg_param.gro_force_flush[rx_ctx_id] &&
