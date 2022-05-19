@@ -232,9 +232,10 @@
  * 3.105 Add HTT_H2T STREAMING_STATS_REQ + HTT_T2H STREAMING_STATS_IND defs.
  * 3.106 Add HTT_T2H_PPDU_ID_FMT_IND def.
  * 3.107 Add traffic_end_indication bitfield in htt_tx_msdu_desc_ext2_t.
+ * 3.108 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 107
+#define HTT_CURRENT_VERSION_MINOR 108
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -813,6 +814,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ = 0x1e,
     HTT_H2T_MSG_TYPE_MSI_SETUP             = 0x1f,
     HTT_H2T_MSG_TYPE_STREAMING_STATS_REQ   = 0x20,
+    HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP = 0x21,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -9191,7 +9193,10 @@ PREPACK struct htt_h2t_host_paddr_size_entry_t {
     A_UINT32 physical_address_hi;
 } POSTPACK;
 
-#define HTT_H2T_HOST_PADDR_SIZE_ENTRY_SIZE  (sizeof(struct htt_h2t_host_paddr_size_entry_t))
+#define HTT_H2T_HOST_PADDR_SIZE_ENTRY_SIZE \
+    (sizeof(struct htt_h2t_host_paddr_size_entry_t))
+#define HTT_H2T_HOST_PADDR_SIZE_ENTRY_DWORDS \
+    (HTT_H2T_HOST_PADDR_SIZE_ENTRY_SIZE >> 2)
 
 #define HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_M 0x0000FF00
 #define HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_S 8
@@ -9605,6 +9610,237 @@ PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
         ((word1) |= ((_val) << HTT_H2T_SAWF_DEF_QUEUES_MAP_REPORT_REQ_EXISTING_TIDS_ONLY_S)); \
     } while (0)
 
+/**
+ * @brief Format of shared memory between Host and Target
+ *        for UMAC hang recovery feature messaging.
+ * @details
+ *  This is shared memory between Host and Target allocated
+ *  and used in chips where UMAC hang recovery feature is supported.
+ *  If target sets a bit in t2h_msg (provided it's valid bit offset)
+ *  then host interprets it as a new message from target.
+ *  Host clears that particular read bit in t2h_msg after each read
+ *  operation. It is vice versa for h2t_msg. At any given point
+ *  of time there is expected to be only one bit set
+ *  either in t2h_msg or h2t_msg (referring to valid bit offset).
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:31  - magic_num: Magic number for the shared memory region
+ *                    added for debuggability purpose.
+ * dword1 - b'0     - do_pre_reset
+ *          b'1     - do_post_reset_start
+ *          b'2     - do_post_reset_complete
+ *          b'3:31  - rsvd_t2h
+ * dword2 - b'0     - pre_reset_done
+ *          b'1     - post_reset_start_done
+ *          b'2     - post_reset_complete_done
+ *          b'3:31  - rsvd_h2t
+ */
+PREPACK typedef struct {
+    /** Magic number added for debuggability. */
+    A_UINT32 magic_num;
+    union {
+        /*
+         * BIT [0]        :- T2H msg to do pre-reset
+         * BIT [1]        :- T2H msg to do post-reset start
+         * BIT [2]        :- T2H msg to do post-reset complete
+         * BIT [31 : 3]   :- reserved
+         */
+        A_UINT32 t2h_msg;
+        struct {
+            A_UINT32 do_pre_reset             :      1, /* BIT [0]      */
+                     do_post_reset_start      :      1, /* BIT [1]      */
+                     do_post_reset_complete   :      1, /* BIT [2]      */
+                     rsvd_t2h                 :     29; /* BIT [31 : 3] */
+        };
+    };
+
+    union {
+        /*
+         * BIT [0]        :- H2T msg to send pre-reset done
+         * BIT [1]        :- H2T msg to send post-reset start done
+         * BIT [2]        :- H2T msg to send post-reset complete done
+         * BIT [31 : 3]   :- reserved
+         */
+        A_UINT32 h2t_msg;
+        struct {
+            A_UINT32 pre_reset_done           :      1, /* BIT [0]      */
+                     post_reset_start_done    :      1, /* BIT [1]      */
+                     post_reset_complete_done :      1, /* BIT [2]      */
+                     rsvd_h2t                 :     29; /* BIT [31 : 3] */
+        };
+    };
+} POSTPACK htt_umac_hang_recovery_msg_shmem_t;
+
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_BYTES \
+    (sizeof(htt_umac_hang_recovery_msg_shmem_t))
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DWORDS \
+    (HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_BYTES >> 2)
+
+/* dword1 - b'0 - do_pre_reset */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET_M 0x00000001
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET_S 0
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET_GET(word1) \
+    (((word1) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET_SET(word1, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET, _val); \
+        ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_PRE_RESET_S));\
+    } while (0)
+
+/* dword1 - b'1 - do_post_reset_start */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START_M 0x00000002
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START_S 1
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START_GET(word1) \
+    (((word1) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START_SET(word1, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START, _val); \
+        ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_START_S));\
+    } while (0)
+
+/* dword1 - b'2 - do_post_reset_complete */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_M 0x00000004
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_S 2
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_GET(word1) \
+    (((word1) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_SET(word1, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE, _val); \
+        ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_S));\
+    } while (0)
+
+/* dword2 - b'0 - pre_reset_done */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_M 0x00000001
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_S 0
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_GET(word2) \
+    (((word2) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_SET(word2, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE, _val); \
+        ((word2) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_S));\
+    } while (0)
+
+/* dword2 - b'1 - post_reset_start_done */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE_M 0x00000002
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE_S 1
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE_GET(word2) \
+    (((word2) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE_SET(word2, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE, _val); \
+        ((word2) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_START_DONE_S));\
+    } while (0)
+
+/* dword2 - b'2 - post_reset_complete_done */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_M 0x00000004
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_S 2
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_GET(word2) \
+    (((word2) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_SET(word2, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE, _val); \
+        ((word2) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_S));\
+    } while (0)
+
+/**
+ * @brief HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP message
+ *
+ * @details
+ *  The HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP message is sent
+ *  by the host to provide prerequisite info to target for the UMAC hang
+ *  recovery feature.
+ *  The info sent in this H2T message are T2H message method, H2T message
+ *  method, T2H MSI interrupt number and physical start address, size of
+ *  the shared memory (refers to the shared memory dedicated for messaging
+ *  between host and target when the DUT is in UMAC hang recovery mode).
+ *  This H2T message is expected to be only sent if the WMI service bit
+ *  WMI_SERVICE_UMAC_HANG_RECOVERY_SUPPORT was firstly indicated by the target.
+ *
+ * |31                           16|15          12|11           8|7          0|
+ * |-------------------------------+--------------+--------------+------------|
+ * |            reserved           |h2t msg method|t2h msg method|  msg_type  |
+ * |--------------------------------------------------------------------------|
+ * |                           t2h msi interrupt number                       |
+ * |--------------------------------------------------------------------------|
+ * |                           shared memory area size                        |
+ * |--------------------------------------------------------------------------|
+ * |                     shared memory area physical address low              |
+ * |--------------------------------------------------------------------------|
+ * |                     shared memory area physical address high             |
+ * |--------------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type (= HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SETUP)
+ *          b'8:11  - t2h_msg_method: indicates method to be used for
+ *                    T2H communication in UMAC hang recovery mode.
+ *                    Value zero indicates MSI interrupt (default method).
+ *                    Refer to htt_umac_hang_recovery_msg_method enum.
+ *          b'12:15 - h2t_msg_method: indicates method to be used for
+ *                    H2T communication in UMAC hang recovery mode.
+ *                    Value zero indicates polling by target for this h2t msg
+ *                    during UMAC hang recovery mode.
+ *                    Refer to htt_umac_hang_recovery_msg_method enum.
+ *          b'16:31 - reserved.
+ * dword1 - b'0:31  - t2h_msi_data: MSI data to be used for
+ *                    T2H communication in UMAC hang recovery mode.
+ * dword2 - b'0:31  - size: size of shared memory dedicated for messaging
+ *                    only when in UMAC hang recovery mode.
+ *                    This refers to size in bytes.
+ * dword3 - b'0:31  - physical_address_lo: lower 32 bit physical address
+ *                    of the shared memory dedicated for messaging only when
+ *                    in UMAC hang recovery mode.
+ * dword4 - b'0:31  - physical_address_hi: higher 32 bit physical address
+ *                    of the shared memory dedicated for messaging only when
+ *                    in UMAC hang recovery mode.
+ */
+
+/* t2h_msg_method and h2t_msg_method */
+enum htt_umac_hang_recovery_msg_method {
+    htt_umac_hang_recovery_msg_t2h_msi_and_h2t_polling = 0,
+};
+
+PREPACK typedef struct {
+    A_UINT32 msg_type       : 8,
+             t2h_msg_method : 4,
+             h2t_msg_method : 4,
+             reserved       : 16;
+    A_UINT32 t2h_msi_data;
+    /* size bytes and physical address of shared memory. */
+    struct htt_h2t_host_paddr_size_entry_t msg_shared_mem;
+} POSTPACK htt_h2t_umac_hang_recovery_prerequisite_setup_t;
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_BYTES \
+    (sizeof(htt_h2t_umac_hang_recovery_prerequisite_setup_t))
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_DWORDS \
+    (HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_BYTES >> 2)
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD_M 0x00000F00
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD_S 8
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD_GET(word0) \
+    (((word0) & HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD_M) >> \
+     HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD_S)
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD_SET(word0, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD, _val); \
+        ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_T2H_MSG_METHOD_S));\
+    } while (0)
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_M 0x0000F000
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_S 12
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_GET(word0) \
+    (((word0) & HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_M) >> \
+     HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_S)
+#define HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_SET(word0, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD, _val); \
+        ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_S));\
+    } while (0)
 
 
 /*=== target -> host messages ===============================================*/
