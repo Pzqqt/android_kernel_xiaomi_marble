@@ -400,8 +400,15 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 	 * enabled.
 	 */
 	if (ap_pwr_type != REG_INDOOR_AP) {
-		if (wlan_reg_ctry_support_vlp(sta_ctry))
+		if (wlan_reg_ctry_support_vlp(sta_ctry) &&
+		    wlan_reg_ctry_support_vlp(ap_ctry)) {
+			reg_debug("STA ctry doesn't match with AP ctry, switch to VLP");
 			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+		} else {
+			reg_debug("AP or STA doesn't support VLP");
+			*pwr_type_6g = REG_INDOOR_AP;
+		}
+
 		if (!wlan_reg_ctry_support_vlp(sta_ctry) &&
 		    wlan_cm_get_check_6ghz_security(psoc) &&
 		    !wlan_cm_get_relaxed_6ghz_conn_policy(psoc)) {
@@ -410,16 +417,8 @@ reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
-	if (wlan_reg_ctry_support_vlp(sta_ctry) &&
-	    wlan_reg_ctry_support_vlp(ap_ctry) &&
-	    ap_pwr_type == REG_INDOOR_AP) {
-		reg_debug("STA ctry doesn't match with AP ctry, switch to VLP");
-		*pwr_type_6g = REG_VERY_LOW_POWER_AP;
-	}
-
-	if (!wlan_reg_ctry_support_vlp(ap_ctry) &&
-	    ap_pwr_type == REG_INDOOR_AP) {
-		reg_debug("VLP not supported by AP, allow STA IN LPI");
+	if (ap_pwr_type == REG_INDOOR_AP) {
+		reg_debug("Indoor AP, allow STA IN LPI");
 		*pwr_type_6g = REG_INDOOR_AP;
 	}
 
