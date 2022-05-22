@@ -2944,12 +2944,15 @@ static uint32_t policy_mgr_get_connection_count_with_ch_freq(uint32_t ch_freq)
 
 uint32_t policy_mgr_get_alternate_channel_for_sap(
 	struct wlan_objmgr_psoc *psoc, uint8_t sap_vdev_id,
-	uint32_t sap_ch_freq)
+	uint32_t sap_ch_freq,
+	enum reg_wifi_band pref_band)
 {
 	uint32_t pcl_channels[NUM_CHANNELS];
 	uint8_t pcl_weight[NUM_CHANNELS];
 	uint32_t ch_freq = 0;
 	uint32_t pcl_len = 0;
+	uint32_t first_valid_5g_freq = 0;
+	uint32_t first_valid_6g_freq = 0;
 	struct policy_mgr_conc_connection_info info;
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -2999,6 +3002,18 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 			} else if (!ch_freq) {
 				ch_freq = pcl_channels[i];
 			}
+			if (!first_valid_5g_freq &&
+			    wlan_reg_is_5ghz_ch_freq(pcl_channels[i])) {
+				first_valid_5g_freq = pcl_channels[i];
+				if (pref_band == REG_BAND_5G)
+					break;
+			}
+			if (!first_valid_6g_freq &&
+			    wlan_reg_is_6ghz_chan_freq(pcl_channels[i])) {
+				first_valid_6g_freq = pcl_channels[i];
+				if (pref_band == REG_BAND_6G)
+					break;
+			}
 		}
 	}
 
@@ -3007,6 +3022,16 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
 
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	if (pref_band == REG_BAND_6G) {
+		if (first_valid_6g_freq)
+			ch_freq = first_valid_6g_freq;
+		else if (first_valid_5g_freq)
+			ch_freq = first_valid_5g_freq;
+	} else if (pref_band == REG_BAND_5G) {
+		if (first_valid_5g_freq)
+			ch_freq = first_valid_5g_freq;
+	}
 
 	return ch_freq;
 }

@@ -3424,6 +3424,7 @@ bool policy_mgr_sap_allowed_on_indoor_freq(struct wlan_objmgr_psoc *psoc,
  * @psoc: PSOC object information
  * @sap_vdev_id: sap vdev id.
  * @sap_ch_freq: sap channel frequency.
+ * @pref_band: Preferred band on channel is required
  *
  * This function returns an alternate channel for SAP to move to
  *
@@ -3431,7 +3432,8 @@ bool policy_mgr_sap_allowed_on_indoor_freq(struct wlan_objmgr_psoc *psoc,
  */
 uint32_t policy_mgr_get_alternate_channel_for_sap(
 	struct wlan_objmgr_psoc *psoc, uint8_t sap_vdev_id,
-	uint32_t sap_ch_freq);
+	uint32_t sap_ch_freq,
+	enum reg_wifi_band pref_band);
 
 /**
  * policy_mgr_con_mode_by_vdev_id() - Get policy mgr con mode from vdev id

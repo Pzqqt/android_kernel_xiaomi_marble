@@ -2386,7 +2386,8 @@ policy_mgr_valid_sap_conc_channel_check(struct wlan_objmgr_psoc *psoc,
 	if (find_alternate) {
 		if (policy_mgr_is_hw_dbs_capable(psoc)) {
 			ch_freq = policy_mgr_get_alternate_channel_for_sap(
-						psoc, sap_vdev_id, sap_ch_freq);
+						psoc, sap_vdev_id, sap_ch_freq,
+						REG_BAND_UNKNOWN);
 			policymgr_nofl_debug("selected alternate ch %d",
 					     ch_freq);
 			if (!ch_freq) {

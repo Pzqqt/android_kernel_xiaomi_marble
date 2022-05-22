@@ -3205,14 +3205,35 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 			restart_ch_width = CH_WIDTH_40MHZ;
 		}
 	} else if (sap_band == REG_BAND_2G && (band & BIT(REG_BAND_5G)) &&
-		   sap_ctx->chan_freq_before_switch_band &&
-		   wlan_reg_is_enable_in_secondary_list_for_freq(mac->pdev,
+		   sap_ctx->chan_freq_before_switch_band) {
+		if (wlan_reg_is_enable_in_secondary_list_for_freq(
+				mac->pdev,
 				sap_ctx->chan_freq_before_switch_band)) {
-		restart_freq = sap_ctx->chan_freq_before_switch_band;
-		restart_ch_width = sap_ctx->chan_width_before_switch_band;
-		sap_debug("Restore chan freq: %d, width: %d",
-			  restart_freq, restart_ch_width);
-		*csa_reason = CSA_REASON_BAND_RESTRICTED;
+			restart_freq = sap_ctx->chan_freq_before_switch_band;
+			restart_ch_width = sap_ctx->chan_width_before_switch_band;
+			sap_debug("Restore chan freq: %d, width: %d",
+				  restart_freq, restart_ch_width);
+			*csa_reason = CSA_REASON_BAND_RESTRICTED;
+		} else {
+			enum reg_wifi_band pref_band;
+
+			pref_band = wlan_reg_freq_to_band(
+					sap_ctx->chan_freq_before_switch_band);
+			restart_freq =
+				policy_mgr_get_alternate_channel_for_sap(
+							mac->psoc,
+							sap_ctx->sessionId,
+							sap_ctx->chan_freq,
+							pref_band);
+			if (restart_freq) {
+				sap_debug("restart SAP on freq %d", restart_freq);
+				*csa_reason = CSA_REASON_BAND_RESTRICTED;
+			} else {
+				sap_debug("Did not get valid freq for band %d remain on same channel",
+					  pref_band);
+				return 0;
+			}
+		}
 	} else if (wlan_reg_is_disable_for_freq(mac->pdev,
 						sap_ctx->chan_freq) &&
 		   !utils_dfs_is_freq_in_nol(mac->pdev, sap_ctx->chan_freq)) {
