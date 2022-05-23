@@ -1835,6 +1835,7 @@ int ipa_drop_stats_init(void)
 {
 	u32 reg_idx;
 	u32 mask, pipe_bitmask[IPA_EP_ARR_SIZE] = {0};
+	int client_type;
 
 	mask = ipa_hw_stats_get_ep_bit_n_idx(
 		IPA_CLIENT_USB_CONS,
@@ -1850,8 +1851,11 @@ int ipa_drop_stats_init(void)
 
 	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
 		if (ipa3_ctx->ipa_wdi3_2g_holb_timeout) {
+			client_type = ipa3_ctx->is_dual_pine_config ?
+					IPA_CLIENT_WLAN4_CONS :
+					IPA_CLIENT_WLAN2_CONS1;
 			mask = ipa_hw_stats_get_ep_bit_n_idx(
-				IPA_CLIENT_WLAN2_CONS1,
+				client_type,
 				&reg_idx);
 			pipe_bitmask[reg_idx] |= mask;
 		}
@@ -2656,7 +2660,8 @@ static ssize_t ipa_debugfs_print_drop_stats(struct file *file,
 			nbytes += scnprintf(dbg_buff + nbytes,
 				IPA_MAX_MSG_LEN - nbytes,
 				"IPA_CLIENT_WLAN2_HIGHSPEED_CONS:\n");
-		} else if(i == IPA_CLIENT_WLAN2_CONS1) {
+		} else if(i == IPA_CLIENT_WLAN2_CONS1 ||
+				i == IPA_CLIENT_WLAN4_CONS) {
 			nbytes += scnprintf(dbg_buff + nbytes,
 				IPA_MAX_MSG_LEN - nbytes,
 				" IPA_CLIENT_WLAN2_LOWSPEED_CONS:\n");
