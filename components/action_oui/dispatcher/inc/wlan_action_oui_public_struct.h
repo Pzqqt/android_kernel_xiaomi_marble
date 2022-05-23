@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,6 +92,7 @@
  * @ACTION_OUI_FORCE_MAX_NSS: Force Max NSS connection with few IOT APs
  * @ACTION_OUI_DISABLE_AGGRESSIVE_EDCA: disable aggressive EDCA with the ap
  * @ACTION_OUI_DISABLE_TWT: disable TWT with the ap
+ * @ACTION_OUI_DISABLE_MU_EDCA: host don't config MU EDCA with the ap
  * @ACTION_OUI_HOST_ONLY: host only action id start - placeholder.
  * New Firmware related "ACTION" needs to be added before this placeholder.
  * @ACTION_OUI_HOST_RECONN: reconnect to the same BSSID when wait for
@@ -108,6 +110,7 @@ enum action_oui_id {
 	ACTION_OUI_FORCE_MAX_NSS = 7,
 	ACTION_OUI_DISABLE_AGGRESSIVE_EDCA = 8,
 	ACTION_OUI_DISABLE_TWT = 9,
+	ACTION_OUI_DISABLE_MU_EDCA = 10,
 	ACTION_OUI_HOST_ONLY,
 	ACTION_OUI_HOST_RECONN = ACTION_OUI_HOST_ONLY,
 	ACTION_OUI_MAXIMUM_ID

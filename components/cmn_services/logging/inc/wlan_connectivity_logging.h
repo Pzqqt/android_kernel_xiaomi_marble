@@ -24,9 +24,8 @@
 #ifndef _WLAN_CONNECTIVITY_LOGGING_H_
 #define _WLAN_CONNECTIVITY_LOGGING_H_
 
-#include <wlan_cm_api.h>
-#include "wlan_cm_roam_api.h"
 #include "wlan_logging_sock_svc.h"
+#include "wlan_cm_roam_public_struct.h"
 
 #define WLAN_MAX_LOGGING_FREQ 90
 
@@ -399,6 +398,56 @@ struct wlan_connectivity_log_buf_data {
 #define logging_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_QDF, ## params)
 #define logging_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_QDF, ## params)
 #define logging_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_QDF, ## params)
+
+#if defined(WLAN_FEATURE_CONNECTIVITY_LOGGING) && \
+		defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * wlan_print_cached_sae_auth_logs() - Enqueue SAE authentication frame logs
+ * @bssid:  BSSID
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_print_cached_sae_auth_logs(struct qdf_mac_addr *bssid,
+					   uint8_t vdev_id);
+
+/**
+ * wlan_is_log_record_present_for_bssid() - Check if there is existing log
+ * record for the given bssid
+ * @bssid: BSSID
+ * @vdev_id: vdev id
+ *
+ * Return: true if record is present else false
+ */
+bool wlan_is_log_record_present_for_bssid(struct qdf_mac_addr *bssid,
+					  uint8_t vdev_id);
+
+/**
+ * wlan_clear_sae_auth_logs_cache() - Clear the cached auth related logs
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void wlan_clear_sae_auth_logs_cache(uint8_t vdev_id);
+#else
+static inline
+QDF_STATUS wlan_print_cached_sae_auth_logs(struct qdf_mac_addr *bssid,
+					   uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+bool wlan_is_log_record_present_for_bssid(struct qdf_mac_addr *bssid,
+					  uint8_t vdev_id)
+{
+	return false;
+}
+
+static inline
+void wlan_clear_sae_auth_logs_cache(uint8_t vdev_id)
+{}
+#endif
 
 #ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
 /**

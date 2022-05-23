@@ -22,11 +22,11 @@
 #include <wlan_utility.h>
 #include <wlan_mlme_api.h>
 #include <wlan_mlme_main.h>
-#include "wlan_twt_main.h"
 #include "twt/core/src/wlan_twt_priv.h"
 #include "twt/core/src/wlan_twt_common.h"
 #include <wlan_twt_tgt_if_ext_tx_api.h>
 #include <wlan_serialization_api.h>
+#include "wlan_twt_main.h"
 
 /**
  * wlan_twt_add_session()  - Add TWT session entry in the TWT context
@@ -237,6 +237,55 @@ wlan_twt_set_wait_for_notify(struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 	twt_debug("twt_wait_for_notify: %d", is_set);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
 	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+wlan_twt_update_peer_twt_required_bit(struct wlan_objmgr_psoc *psoc,
+				      struct twt_notify_event_param *event)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr peer_mac;
+	uint8_t peer_cap = 0;
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, event->vdev_id,
+						    WLAN_TWT_ID);
+
+	if (!vdev) {
+		twt_err("vdev object not found");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_vdev_get_bss_peer_mac(vdev, &peer_mac);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("Failed to get bssid");
+		goto exit;
+	}
+
+	status = wlan_twt_get_peer_capabilities(psoc, &peer_mac, &peer_cap);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("twt failed to get peer capabilities");
+		goto exit;
+	}
+
+	if ((peer_cap & WLAN_TWT_CAPA_REQUIRED) &&
+	    event->status == HOST_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_CLEAR) {
+		/* set TWT required bit as 0 */
+		peer_cap &= ~WLAN_TWT_CAPA_REQUIRED;
+	} else if (!(peer_cap & WLAN_TWT_CAPA_REQUIRED) &&
+		   event->status == HOST_TWT_NOTIFY_EVENT_AP_TWT_REQ_BIT_SET) {
+		/* set TWT required bit as 1 */
+		peer_cap |= WLAN_TWT_CAPA_REQUIRED;
+	}
+
+	status = wlan_twt_set_peer_capabilities(psoc, &peer_mac, peer_cap);
+	twt_debug("Update Peer TWT capabilities: %d", peer_cap);
+
+exit:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
+
+	return status;
 }
 
 /**
@@ -1363,6 +1412,18 @@ QDF_STATUS wlan_twt_nudge_req(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+QDF_STATUS wlan_twt_ac_pdev_param_send(struct wlan_objmgr_psoc *psoc,
+				       enum twt_traffic_ac twt_ac)
+{
+	QDF_STATUS status;
+
+	status = tgt_twt_ac_pdev_param_send(psoc, twt_ac);
+	if (QDF_IS_STATUS_ERROR(status))
+		twt_err("failed (status=%d)", status);
+
+	return status;
+}
+
 /**
  * wlan_twt_sap_teardown_req() - sap TWT teardown request
  * @psoc: Pointer to psoc object
@@ -2055,8 +2116,18 @@ QDF_STATUS
 wlan_twt_notify_event_handler(struct wlan_objmgr_psoc *psoc,
 			      struct twt_notify_event_param *event)
 {
+	QDF_STATUS status;
+
 	if (event->status == HOST_TWT_NOTIFY_EVENT_READY)
-		wlan_twt_set_wait_for_notify(psoc, event->vdev_id, false);
+		status = wlan_twt_set_wait_for_notify(psoc, event->vdev_id,
+						      false);
+	else
+		status = wlan_twt_update_peer_twt_required_bit(psoc, event);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("failed to get status");
+		return status;
+	}
 
 	mlme_twt_osif_notify_complete_ind(psoc, event);
 

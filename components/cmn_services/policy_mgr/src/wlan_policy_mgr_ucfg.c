@@ -64,6 +64,15 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_STA_SAP_SCC_ON_DFS_CHAN);
 
 	/*
+	 * Override concurrency sta+sap indoor flag to true if global indoor
+	 * flag is true
+	 */
+	cfg->sta_sap_scc_on_indoor_channel =
+		cfg_get(psoc, CFG_STA_SAP_SCC_ON_INDOOR_CHAN);
+	if (cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT))
+		cfg->sta_sap_scc_on_indoor_channel = true;
+
+	/*
 	 * Force set sta_sap_scc_on_dfs_chnl on Non-DBS HW so that standalone
 	 * SAP is not allowed on DFS channel on non-DBS HW, Also, force SCC in
 	 * case of STA+SAP
@@ -249,4 +258,11 @@ ucfg_policy_mgr_get_indoor_chnl_marking(struct wlan_objmgr_psoc *psoc,
 					uint8_t *indoor_chnl_marking)
 {
 	return policy_mgr_get_indoor_chnl_marking(psoc, indoor_chnl_marking);
+}
+
+bool
+ucfg_policy_mgr_get_sta_sap_scc_on_indoor_chnl(struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc) ?
+								true : false;
 }

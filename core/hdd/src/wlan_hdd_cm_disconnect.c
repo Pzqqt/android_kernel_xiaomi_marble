@@ -357,8 +357,7 @@ static void hdd_cm_set_default_wlm_mode(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool reset;
 	uint8_t def_level;
-	mac_handle_t mac_handle;
-	uint16_t vdev_id;
+	uint32_t client_id_bitmap;
 
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx is NULL");
@@ -377,15 +376,25 @@ static void hdd_cm_set_default_wlm_mode(struct hdd_adapter *adapter)
 	if (QDF_IS_STATUS_ERROR(status))
 		def_level = QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL;
 
-	mac_handle = hdd_ctx->mac_handle;
-	vdev_id = adapter->vdev_id;
-
-	status = sme_set_wlm_latency_level(mac_handle, vdev_id, def_level);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_debug("reset wlm mode %x on disconnection", def_level);
-		adapter->latency_level = def_level;
+	if (hdd_get_multi_client_ll_support(adapter)) {
+		client_id_bitmap = wlan_hdd_get_client_id_bitmap(adapter);
+		hdd_debug("[MULTI_CLIENT] client_id_bitmap: 0x%x",
+			  client_id_bitmap);
+		status = wlan_hdd_set_wlm_latency_level(adapter, def_level,
+							client_id_bitmap, true);
+		wlan_hdd_deinit_multi_client_info_table(adapter);
 	} else {
-		hdd_err("reset wlm mode failed: %d", status);
+		status =
+			sme_set_wlm_latency_level(hdd_ctx->mac_handle,
+						  adapter->vdev_id, def_level,
+						  0, false);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_debug("reset wlm mode %x on disconnection",
+				  def_level);
+			adapter->latency_level = def_level;
+		} else {
+			hdd_err("reset wlm mode failed: %d", status);
+		}
 	}
 }
 

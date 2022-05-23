@@ -287,6 +287,9 @@ QDF_STATUS dp_soc_swlm_detach(struct dp_soc *soc)
 	QDF_STATUS ret;
 	int i;
 
+	if (!swlm->is_enabled)
+		return QDF_STATUS_SUCCESS;
+
 	swlm->is_enabled = false;
 
 	for (i = 0; i < soc->num_tcl_data_rings; i++) {

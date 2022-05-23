@@ -1780,6 +1780,14 @@ void sap_release_vdev_ref(struct sap_context *sap_ctx);
 
 #ifdef WLAN_FEATURE_11BE
 /**
+ * sap_phymode_is_eht() - Is sap phymode EHT
+ * @phymode: phy mode
+ *
+ * Return: true if phy mode is EHT
+ */
+bool sap_phymode_is_eht(eCsrPhyMode phymode);
+
+/**
  * sap_acs_is_puncture_applicable() - Is static puncturing applicable according
  *                                    to ACS configure of given sap acs config.
  * @acs_cfg: pointer to sap_acs_cfg
@@ -1799,6 +1807,11 @@ bool sap_acs_is_puncture_applicable(struct sap_acs_cfg *acs_cfg);
 void sap_acs_set_puncture_support(struct sap_context *sap_ctx,
 				  struct ch_params *ch_params);
 #else
+static inline bool sap_phymode_is_eht(eCsrPhyMode phymode)
+{
+	return false;
+}
+
 static inline bool sap_acs_is_puncture_applicable(struct sap_acs_cfg *acs_cfg)
 {
 	return false;

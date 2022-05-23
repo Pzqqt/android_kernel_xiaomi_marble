@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -425,6 +426,34 @@ CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 2, 2, CFG_VALUE_OR_DEFAULT, \
 
 /*
  * <ini>
+ * sta_sap_scc_on_indoor_chan - Allow STA+SAP SCC on indoor channel
+ * when STA is connected on indoor channel.
+ * @Min: false
+ * @Max: true
+ * @Default: true
+ *
+ * This ini is used to allow STA+SAP SCC on indoor channel
+ * 0 - Disallow STA+SAP SCC on Indoor only channel
+ * 1 - Allow STA+SAP SCC on DFS channel. SAP will move to indoor channel
+ * once STA is connected on indoor only channel.
+ * When gindoor_channel_support=1, this ini will not be considered and
+ * SAP can come up on indoor channel.
+ *
+ * Related: gindoor_channel_support.
+ *
+ * Supported Feature: Non-DBS, DBS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_STA_SAP_SCC_ON_INDOOR_CHAN CFG_INI_BOOL(\
+			"sta_sap_scc_on_indoor_chan", \
+			true, \
+			"Allow STA+SAP SCC on indoor channel")
+
+/*
+ * <ini>
  * gForce1x1Exception - force 1x1 when connecting to certain peer
  * @Min: 0
  * @Max: 2
@@ -616,6 +645,7 @@ CFG_INI_UINT("g_pcl_band_priority", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
 		CFG(CFG_DUAL_MAC_FEATURE_DISABLE)\
 		CFG(CFG_ENABLE_SBS)\
 		CFG(CFG_STA_SAP_SCC_ON_DFS_CHAN)\
+		CFG(CFG_STA_SAP_SCC_ON_INDOOR_CHAN)\
 		CFG(CFG_FORCE_1X1_FEATURE)\
 		CFG(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST)\
 		CFG(CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN)\

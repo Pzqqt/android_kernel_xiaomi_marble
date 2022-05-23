@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1227,6 +1227,57 @@ WMI_HOST_WLAN_PHY_MODE wma_host_to_fw_phymode(enum wlan_phymode host_phymode)
 	}
 }
 
+void wma_objmgr_set_peer_mlme_nss(tp_wma_handle wma, uint8_t *mac_addr,
+				  uint8_t nss)
+{
+	uint8_t pdev_id;
+	struct wlan_objmgr_peer *peer;
+	struct peer_mlme_priv_obj *peer_priv;
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(wma->pdev);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
+				    WLAN_LEGACY_WMA_ID);
+	if (!peer)
+		return;
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+		return;
+	}
+
+	peer_priv->nss = nss;
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+}
+
+uint8_t wma_objmgr_get_peer_mlme_nss(tp_wma_handle wma, uint8_t *mac_addr)
+{
+	uint8_t pdev_id;
+	struct wlan_objmgr_peer *peer;
+	struct peer_mlme_priv_obj *peer_priv;
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
+	uint8_t nss;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(wma->pdev);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
+				    WLAN_LEGACY_WMA_ID);
+	if (!peer)
+		return 0;
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+		return 0;
+	}
+
+	nss = peer_priv->nss;
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+	return nss;
+}
+
 void wma_objmgr_set_peer_mlme_phymode(tp_wma_handle wma, uint8_t *mac_addr,
 				      enum wlan_phymode phymode)
 {
@@ -1682,6 +1733,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	wma_populate_peer_eht_cap(cmd, params);
 	if (!wma_is_vdev_in_ap_mode(wma, params->smesessionId))
 		intr->nss = cmd->peer_nss;
+	wma_objmgr_set_peer_mlme_nss(wma, cmd->peer_mac, cmd->peer_nss);
 
 	/* Till conversion is not done in WMI we need to fill fw phy mode */
 	cmd->peer_phymode = wma_host_to_fw_phymode(phymode);
@@ -2644,11 +2696,10 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 					  uint32_t desc_id, uint32_t status)
 {
 	struct wlan_objmgr_pdev *pdev;
-	void *frame_data;
 	qdf_nbuf_t buf = NULL;
 	QDF_STATUS ret;
-#if !defined(REMOVE_PKT_LOG)
 	uint8_t vdev_id = 0;
+#if !defined(REMOVE_PKT_LOG)
 	ol_txrx_pktdump_cb packetdump_cb;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	enum tx_status pktdump_status;
@@ -2673,9 +2724,10 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	if (buf)
 		wma_mgmt_unmap_buf(wma_handle, buf);
 
-#if !defined(REMOVE_PKT_LOG)
 	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
 	mgmt_params.vdev_id = vdev_id;
+
+#if !defined(REMOVE_PKT_LOG)
 	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
 	pktdump_status = wma_mgmt_pktdump_status_map(status);
 	if (packetdump_cb)
@@ -2683,13 +2735,8 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 			      buf, pktdump_status, TX_MGMT_PKT);
 #endif
 
-	if (wma_handle->is_mgmt_data_valid)
-		frame_data = &wma_handle->mgmt_data;
-	else
-		frame_data = &mgmt_params;
-
 	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status,
-					      frame_data);
+					      &mgmt_params);
 
 	if (ret != QDF_STATUS_SUCCESS) {
 		wma_err("Failed to process mgmt tx completion");

@@ -99,7 +99,7 @@ static void lim_process_sae_msg_sta(struct mac_context *mac,
 						    session);
 		else
 			lim_restore_from_auth_state(mac, sae_msg->result_code,
-						    STATUS_UNSPECIFIED_FAILURE,
+						    sae_msg->sae_status,
 						    session);
 		break;
 	default:

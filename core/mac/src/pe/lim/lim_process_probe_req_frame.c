@@ -529,6 +529,13 @@ lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 		session = pe_find_session_by_session_id(mac_ctx, i);
 		if (!session)
 			continue;
+
+		if (!LIM_IS_AP_ROLE(session))
+			continue;
+
+		if (wlan_vdev_is_up(session->vdev) != QDF_STATUS_SUCCESS)
+			continue;
+
 		chan = wlan_vdev_get_active_channel(session->vdev);
 		/**
 		 * For GO present on 5G/6G/2G band channel and if probe req
@@ -541,12 +548,10 @@ lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 			continue;
 		}
 
-		if (LIM_IS_AP_ROLE(session))
-			lim_indicate_probe_req_to_hdd(mac_ctx,
-					buf_descr, session);
-		if (LIM_IS_AP_ROLE(session))
-			lim_process_probe_req_frame(mac_ctx,
-					buf_descr, session);
+		lim_indicate_probe_req_to_hdd(mac_ctx,
+					      buf_descr, session);
+		lim_process_probe_req_frame(mac_ctx,
+					    buf_descr, session);
 	}
 }
 

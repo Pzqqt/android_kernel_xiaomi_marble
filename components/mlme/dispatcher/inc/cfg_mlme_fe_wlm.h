@@ -106,6 +106,29 @@
 				       CFG_VALUE_OR_DEFAULT, \
 				       "WLM latency level")
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/*
+ * <ini>
+ * wlm_multi_client_ll - Ini to configure multi client latency feature
+ *
+ * @min: 0
+ * @max: 1
+ * @default: 0
+ *
+ * 0 - disable
+ * 1 - enable
+ *
+ * </ini>
+ */
+#define CFG_WLM_MULTI_CLIENT_LL_SUPPORT CFG_INI_BOOL("wlm_multi_client_ll", \
+						  0, \
+						  "wlm multi client ll feature")
+
+#define WLM_MULTI_CLIENT_LL_CFG CFG(CFG_WLM_MULTI_CLIENT_LL_SUPPORT)
+#else
+#define WLM_MULTI_CLIENT_LL_CFG
+#endif
+
 /*
  * <ini>
  * wlm_latency_flags_normal - WLM flags setting for normal level
@@ -348,6 +371,7 @@
 	CFG(CFG_LATENCY_ENABLE) \
 	CFG(CFG_LATENCY_RESET) \
 	CFG(CFG_LATENCY_LEVEL) \
+	WLM_MULTI_CLIENT_LL_CFG \
 	CFG(CFG_LATENCY_FLAGS_NORMAL) \
 	CFG(CFG_LATENCY_FLAGS_XR) \
 	CFG(CFG_LATENCY_FLAGS_LOW) \

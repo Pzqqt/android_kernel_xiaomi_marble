@@ -839,6 +839,9 @@ void hdd_copy_ht_operation(struct hdd_station_ctx *hdd_sta_ctx,
 		hdd_ht_ops->operation_mode |=
 			IEEE80211_HT_OP_MODE_NON_HT_STA_PRSNT;
 
+	if (ht_ops->chan_center_freq_seg2)
+		hdd_ht_ops->operation_mode |=
+			(ht_ops->chan_center_freq_seg2 << IEEE80211_HT_OP_MODE_CCFS2_SHIFT);
 	/* stbc_param */
 	temp_ht_ops = ht_ops->basicSTBCMCS &
 			HT_STBC_PARAM_MCS;
@@ -998,7 +1001,7 @@ void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 
 bool hdd_is_roam_sync_in_progress(struct hdd_context *hdd_ctx, uint8_t vdev_id)
 {
-	return MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, vdev_id);
+	return wlan_cm_is_roam_sync_in_progress(hdd_ctx->psoc, vdev_id);
 }
 
 void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)

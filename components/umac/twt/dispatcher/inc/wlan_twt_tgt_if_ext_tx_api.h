@@ -78,4 +78,14 @@ QDF_STATUS
 tgt_twt_nudge_req_send(struct wlan_objmgr_psoc *psoc,
 		       struct twt_nudge_dialog_cmd_param *req);
 
+/**
+ * tgt_twt_ac_pdev_param_send() - pdev TWT param send
+ * @psoc: Pointer to psoc object
+ * @twt_ac: TWT access category
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+tgt_twt_ac_pdev_param_send(struct wlan_objmgr_psoc *psoc,
+			   enum twt_traffic_ac twt_ac);
 #endif

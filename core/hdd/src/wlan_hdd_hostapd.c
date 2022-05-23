@@ -2020,13 +2020,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		wlansap_get_dfs_cac_state(mac_handle, &cac_state);
 
 		/* DFS requirement: DO NOT transmit during CAC. */
-		if (CHANNEL_STATE_DFS !=
-		    wlan_reg_get_channel_state_from_secondary_list_for_freq(
-			hdd_ctx->pdev, ap_ctx->operating_chan_freq) ||
-			ignoreCAC ||
-			(hdd_ctx->dev_dfs_cac_status ==
-			DFS_CAC_ALREADY_DONE) ||
-			(eSAP_DFS_SKIP_CAC == cac_state))
+
+		/* Indoor channels are also marked DFS, therefore
+		 * check if the channel has REGULATORY_CHAN_RADAR
+		 * channel flag to identify if the channel is DFS
+		 */
+		if (!wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
+					      ap_ctx->operating_chan_freq) ||
+		    ignoreCAC ||
+		    hdd_ctx->dev_dfs_cac_status == DFS_CAC_ALREADY_DONE ||
+		    eSAP_DFS_SKIP_CAC == cac_state)
 			ap_ctx->dfs_cac_block_tx = false;
 		else
 			ap_ctx->dfs_cac_block_tx = true;
@@ -2905,10 +2908,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		policy_mgr_set_chan_switch_complete_evt(hdd_ctx->psoc);
 		wlan_hdd_enable_roaming(adapter,
 					RSO_SAP_CHANNEL_CHANGE);
-		if (CHANNEL_STATE_DFS !=
-		    wlan_reg_get_channel_state_from_secondary_list_for_freq(
-						hdd_ctx->pdev,
-						ap_ctx->operating_chan_freq))
+
+		/* Indoor channels are also marked DFS, therefore
+		 * check if the channel has REGULATORY_CHAN_RADAR
+		 * channel flag to identify if the channel is DFS
+		 */
+		if (!wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
+					      ap_ctx->operating_chan_freq))
 			ap_ctx->dfs_cac_block_tx = false;
 
 		/* Check any other sap need restart */
@@ -6164,7 +6170,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	config->ch_params.ch_width = config->ch_width_orig;
-	if (wlan_vdev_mlme_is_mlo_ap(vdev))
+	if (sap_phymode_is_eht(config->SapHw_mode))
 		wlan_reg_set_create_punc_bitmap(&config->ch_params, true);
 	if ((config->ch_params.ch_width == CH_WIDTH_80P80MHZ) &&
 	    ucfg_mlme_get_restricted_80p80_bw_supp(hdd_ctx->psoc)) {

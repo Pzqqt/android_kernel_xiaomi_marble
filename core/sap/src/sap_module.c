@@ -3152,6 +3152,7 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 	uint8_t vdev_id;
 	enum reg_wifi_band sap_band;
 	enum band_info band;
+	bool sta_sap_scc_on_indoor_channel;
 
 	if (!sap_ctx) {
 		sap_err("sap_ctx NULL parameter");
@@ -3174,6 +3175,9 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 		sap_err("Failed to get current band config");
 		return 0;
 	}
+
+	sta_sap_scc_on_indoor_channel =
+		policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(mac->psoc);
 	sap_band = wlan_reg_freq_to_band(sap_ctx->chan_freq);
 	sap_debug("SAP/Go current band: %d, pdev band capability: %d",
 		  sap_band, band);
@@ -3209,7 +3213,7 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 		*csa_reason = CSA_REASON_CHAN_DISABLED;
 		return wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
 	} else if (wlan_reg_is_passive_for_freq(mac->pdev,
-						sap_ctx->chan_freq)) {
+						sap_ctx->chan_freq))  {
 		sap_ctx->chan_freq_before_switch_band = sap_ctx->chan_freq;
 		sap_ctx->chan_width_before_switch_band =
 			sap_ctx->ch_params.ch_width;
@@ -3454,6 +3458,12 @@ void wlansap_set_acs_ch_freq(struct sap_context *sap_context,
 #endif
 
 #ifdef WLAN_FEATURE_11BE
+bool sap_phymode_is_eht(eCsrPhyMode phymode)
+{
+	return CSR_IS_DOT11_PHY_MODE_11BE(phymode) ||
+	       CSR_IS_DOT11_PHY_MODE_11BE_ONLY(phymode);
+}
+
 bool sap_acs_is_puncture_applicable(struct sap_acs_cfg *acs_cfg)
 {
 	bool is_eht_bw_80 = false;

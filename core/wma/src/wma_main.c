@@ -2851,6 +2851,20 @@ static void wma_register_wlm_stats_events(tp_wma_handle wma_handle)
 }
 #endif /* FEATURE_WLM_STATS */
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+static void wma_register_wlm_latency_level_event(tp_wma_handle wma_handle)
+{
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+				   wmi_vdev_latency_event_id,
+				   wma_latency_level_event_handler,
+				   WMA_RX_WORK_CTX);
+}
+#else
+static void wma_register_wlm_latency_level_event(tp_wma_handle wma_handle)
+{
+}
+#endif
+
 struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
 {
 	tp_wma_handle wma_handle;
@@ -3510,6 +3524,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_register_apf_events(wma_handle);
 	wma_register_md_events(wma_handle);
 	wma_register_wlm_stats_events(wma_handle);
+	wma_register_wlm_latency_level_event(wma_handle);
 	wma_register_mws_coex_events(wma_handle);
 	wma_trace_init();
 	return QDF_STATUS_SUCCESS;

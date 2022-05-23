@@ -2255,6 +2255,45 @@ mlme_init_roam_score_config(struct wlan_objmgr_psoc *psoc,
 
 }
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+static void
+mlme_init_wlm_multi_client_ll_support(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_mlme_fe_wlm *wlm_config)
+{
+	wlm_config->multi_client_ll_support =
+			cfg_get(psoc, CFG_WLM_MULTI_CLIENT_LL_SUPPORT);
+}
+
+QDF_STATUS
+mlme_get_cfg_multi_client_ll_ini_support(struct wlan_objmgr_psoc *psoc,
+					 bool *multi_client_ll_support)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*multi_client_ll_support =
+			mlme_obj->cfg.wlm_config.multi_client_ll_support;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_psoc_nif_fw_ext2_cap_get(psoc,
+					WLAN_SOC_WLM_MULTI_CLIENT_LL_SUPPORT);
+}
+
+#else
+static inline void
+mlme_init_wlm_multi_client_ll_support(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_mlme_fe_wlm *wlm_config)
+{
+}
+#endif
+
 /**
  * mlme_init_fe_wlm_in_cfg() - Populate WLM INI in MLME cfg
  * @psoc: pointer to the psoc object
@@ -2271,6 +2310,7 @@ static void mlme_init_fe_wlm_in_cfg(struct wlan_objmgr_psoc *psoc,
 	wlm_config->latency_enable = cfg_get(psoc, CFG_LATENCY_ENABLE);
 	wlm_config->latency_reset = cfg_get(psoc, CFG_LATENCY_RESET);
 	wlm_config->latency_level = cfg_get(psoc, CFG_LATENCY_LEVEL);
+	mlme_init_wlm_multi_client_ll_support(psoc, wlm_config);
 
 	status = qdf_uint64_parse(cfg_get(psoc, CFG_LATENCY_FLAGS_NORMAL),
 				  &flags);

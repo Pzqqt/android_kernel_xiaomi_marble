@@ -260,6 +260,9 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 		ret = osif_twt_clear_session_traffic_stats(vdev,
 							   twt_param_attr);
 		break;
+	case QCA_WLAN_TWT_SET_PARAM:
+		ret = osif_twt_set_param(vdev, twt_param_attr);
+		break;
 	default:
 		hdd_err("Invalid TWT Operation");
 		ret = -EINVAL;

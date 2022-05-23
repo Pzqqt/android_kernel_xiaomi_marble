@@ -424,6 +424,9 @@ CONFIG_ADAPTIVE_11R := y
 #Flag to enable sae single pmk feature
 CONFIG_SAE_SINGLE_PMK := y
 
+#Flag to enable/disable multi client low latency feature support
+CONFIG_MULTI_CLIENT_LL_SUPPORT := y
+
 #Flag to enable mscs feature
 CONFIG_FEATURE_MSCS := y
 
@@ -1378,9 +1381,7 @@ CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 #Enable 6 GHz Band
 CONFIG_BAND_6GHZ := y
-ifneq ($(CONFIG_IPCIE_FW_SIM), y)
 CONFIG_RX_FISA := y
-endif
 CONFIG_MORE_TX_DESC := y
 	ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 		CONFIG_DP_FT_LOCK_HISTORY := y

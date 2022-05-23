@@ -4960,10 +4960,14 @@ wlan_mlme_check_chan_param_has_dfs(struct wlan_objmgr_pdev *pdev,
 			pdev,
 			ch_params->mhz_freq_seg1) == CHANNEL_STATE_DFS)
 			is_dfs = true;
-	} else if (wlan_reg_get_channel_state_for_freq(
-			pdev, chan_freq) == CHANNEL_STATE_DFS) {
+	} else if (wlan_reg_is_dfs_for_freq(pdev, chan_freq)) {
+		/*Indoor channels are also marked DFS, therefore
+		 * check if the channel has REGULATORY_CHAN_RADAR
+		 * channel flag to identify if the channel is DFS
+		 */
 		is_dfs = true;
 	}
+
 	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq) ||
 	    WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
 		is_dfs = false;

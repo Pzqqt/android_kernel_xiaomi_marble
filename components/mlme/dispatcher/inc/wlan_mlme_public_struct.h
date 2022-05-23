@@ -2379,6 +2379,7 @@ struct wlan_mlme_btm {
  * @latency_level: WLM latency level
  * @latency_flags: WLM latency flags setting
  * @latency_host_flags: WLM latency host flags setting
+ * @multi_client_ll_support: To check whether host support multi client feature
  */
 struct wlan_mlme_fe_wlm {
 	bool latency_enable;
@@ -2386,6 +2387,9 @@ struct wlan_mlme_fe_wlm {
 	uint8_t latency_level;
 	uint32_t latency_flags[MLME_NUM_WLM_LATENCY_LEVEL];
 	uint32_t latency_host_flags[MLME_NUM_WLM_LATENCY_LEVEL];
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	bool multi_client_ll_support;
+#endif
 };
 
 /**
@@ -2675,31 +2679,4 @@ struct wlan_change_bi {
 	uint8_t session_id;
 };
 
-/**
- * struct mgmt_frame_data  - Management frame related info
- * @mac_hdr: 802.11 Frame MAC header
- * @status_code: Frame status code values as defined in
- * IEEE 802.11 - 2020 standard Table 9-41
- * @vdev_id: Vdev id
- * @frame_subtype: Frame subtype as defined in IEEE 802.11 - 2020
- * standard section 9.2.4.1.3
- * @auth_algo: Authentication algorithm number field as defined in
- * IEEE 802.11 - 2020 standard section 9.4.1.1
- * @auth_type: indicates SAE authentication frame type. Possible values are:
- * 1 - SAE commit frame
- * 2 - SAE confirm frame
- * @auth_seq: Authentication frame transaction sequence number as defined in
- * IEEE 802.11 - 2020 standard section 9.4.1.2
- * @rssi: RSSI in dBm
- */
-struct mgmt_frame_data {
-	struct wlan_frame_hdr mac_hdr;
-	uint16_t status_code;
-	uint8_t vdev_id;
-	uint8_t frame_subtype;
-	uint8_t auth_algo;
-	uint8_t auth_type;
-	uint8_t auth_seq;
-	int16_t rssi;
-};
 #endif

@@ -242,6 +242,42 @@ QDF_STATUS ucfg_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_get_band_capability(psoc, band_capability);
 }
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * ucfg_mlme_get_wlm_multi_client_ll_caps() - Get multi client latency level
+ * capability of FW
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if multi client feature supported
+ */
+bool ucfg_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_mlme_cfg_get_multi_client_ll_ini_support() - Get multi client latency
+ * level ini support value
+ * @psoc: pointer to psoc object
+ * @multi_client_ll_support: parameter that needs to be filled
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_cfg_get_multi_client_ll_ini_support(struct wlan_objmgr_psoc *psoc,
+					      bool *multi_client_ll_support);
+#else
+static inline
+bool ucfg_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_cfg_get_multi_client_ll_ini_support(struct wlan_objmgr_psoc *psoc,
+					      bool *multi_client_ll_support)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * ucfg_mlme_set_band_capability() - Set the Band capability config
  * @psoc: pointer to psoc object

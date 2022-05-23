@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -350,13 +351,18 @@ void sch_qos_update_local(struct mac_context *mac, struct pe_session *pe_session
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 	QDF_STATUS status;
 
-	status = sch_get_params(mac, params, true /*local */);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("sch_get_params(local) failed");
-		return;
+	pe_debug("user_edca_set : %u", pe_session->user_edca_set);
+	/* If user preferred EDCA setting present, use it, do not default */
+	if (pe_session->user_edca_set == 0) {
+		status = sch_get_params(mac, params, true /*local */);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pe_err("sch_get_params(local) failed");
+			return;
+		}
+
+		set_sch_edca_params(mac, params, pe_session);
 	}
 
-	set_sch_edca_params(mac, params, pe_session);
 	lim_set_active_edca_params(mac, pe_session->gLimEdcaParams, pe_session);
 
 	/* For AP, the bssID is stored in LIM Global context. */

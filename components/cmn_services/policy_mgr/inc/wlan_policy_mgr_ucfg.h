@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -309,4 +310,18 @@ QDF_STATUS ucfg_policy_mgr_get_sap_mandt_chnl(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_policy_mgr_get_indoor_chnl_marking(struct wlan_objmgr_psoc *psoc,
 					uint8_t *indoor_chnl_marking);
+
+/**
+ * ucfg_policy_mgr_get_sta_sap_scc_on_indoor_chnl() - to get if
+ * sta sap scc on indoor channel is allowed
+ * @psoc: pointer to psoc
+ * @sap_scc_on_indoor: value to be filled
+ *
+ * This API is used to get the value of  sta+sap scc on indoor channel
+ *
+ * Return: TRUE or FALSE
+ */
+
+bool
+ucfg_policy_mgr_get_sta_sap_scc_on_indoor_chnl(struct wlan_objmgr_psoc *psoc);
 #endif //__WLAN_POLICY_MGR_UCFG
