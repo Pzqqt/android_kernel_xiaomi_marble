@@ -230,9 +230,11 @@
  * 3.103 Add HTT_T2H_SAWF_MSDUQ_INFO_IND defs.
  * 3.104 Add mgmt/ctrl/data specs in rx ring cfg.
  * 3.105 Add HTT_H2T STREAMING_STATS_REQ + HTT_T2H STREAMING_STATS_IND defs.
+ * 3.106 Add HTT_T2H_PPDU_ID_FMT_IND def.
+ * 3.107 Add traffic_end_indication bitfield in htt_tx_msdu_desc_ext2_t.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 105
+#define HTT_CURRENT_VERSION_MINOR 107
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -741,6 +743,8 @@ typedef enum {
     HTT_STATS_TXBF_OFDMA_BE_BRP_STATS_TAG          = 153, /* htt_txbf_ofdma_be_brp_stats_tlv */
     HTT_STATS_TXBF_OFDMA_BE_STEER_STATS_TAG        = 154, /* htt_txbf_ofdma_be_steer_stats_tlv */
     HTT_STATS_DMAC_RESET_STATS_TAG                 = 155, /* htt_dmac_reset_stats_tlv */
+    HTT_STATS_RX_PDEV_BE_UL_OFDMA_USER_STATS_TAG   = 156, /* htt_rx_pdev_be_ul_ofdma_user_stats_tlv */
+    HTT_STATS_PHY_TPC_STATS_TAG                    = 157, /* htt_phy_tpc_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -1971,7 +1975,8 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
          * with valid information.
          */
         is_host_opaque_valid :  1,
-        rsvd0                : 29;
+        traffic_end_indication: 1,
+        rsvd0                : 28;
 
     /* DWORD 6 : Host opaque cookie for special frames */
     A_UINT32 host_opaque_cookie  : 16, /* see is_host_opaque_valid */
@@ -9661,6 +9666,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_SAWF_MSDUQ_INFO_IND           = 0x2e,
         HTT_T2H_SAWF_MSDUQ_INFO_IND                = 0x2e, /* alias */
     HTT_T2H_MSG_TYPE_STREAMING_STATS_IND           = 0x2f,
+    HTT_T2H_PPDU_ID_FMT_IND                        = 0x30,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -18410,6 +18416,284 @@ PREPACK struct htt_t2h_sawf_msduq_event {
         HTT_CHECK_SET_VAL(HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID, _val); \
         ((_var) |= ((_val) << HTT_T2H_SAWF_MSDUQ_INFO_HTT_TGT_OPAQUE_ID_S)); \
     } while (0)
+
+
+/**
+ * @brief target -> PPDU id format indication
+ *
+ * MSG_TYPE => HTT_T2H_PPDU_ID_FMT_IND
+ *
+ * @details
+ * The following field definitions describe the format of the HTT target
+ * to host PPDU ID format indication message.
+ * hwsch_cmd_id :- A number per ring, increases by one with each HWSCH command.
+ * ring_id :- HWSCH ring id in which this PPDU was enqueued.
+ * seq_idx :- Sequence control index of this PPDU.
+ * link_id :- HW link ID of the link in which the PPDU was enqueued.
+ * seq_cmd_type:- WHAL_TXSEND_FTYPE (SU Data, MU Data, SGEN frames etc.)
+ * tqm_cmd:-
+ *
+ * |31 27|26      22|21      17|    16   |15 11|10   8|7 6|5        1|    0    |
+ * |--------------------------------------------------+------------------------|
+ * |               rsvd0                              |          msg type      |
+ * |-----+----------+----------+---------+-----+----------+----------+---------|
+ * |rsvd2|ring_id OF|ring_id NB|ring_id V|rsvd1|cmd_id OF |cmd_id NB |cmd_id V |
+ * |-----+----------+----------+---------+-----+----------+----------+---------|
+ * |rsvd4|link_id OF|link_id NB|link_id V|rsvd3|seq_idx OF|seq_idx NB|seq_idx V|
+ * |-----+----------+----------+---------+-----+----------+----------+---------|
+ * |rsvd6|tqm_cmd OF|tqm_cmd NB|tqm_cmd V|rsvd5|seq_cmd OF|seq_cmd NB|seq_cmd V|
+ * |-----+----------+----------+---------+-----+----------+----------+---------|
+ * |rsvd8|  crc OF  |  crc NB  |  crc V  |rsvd7|mac_id OF |mac_id NB |mac_id V |
+ * |-----+----------+----------+---------+-----+----------+----------+---------|
+ * Where: OF = bit offset, NB = number of bits, V = valid
+ *  The message is interpreted as follows:
+ *
+ *  dword0 - b'7:0   - msg_type: This will be set to
+ *                     HTT_T2H_PPDU_ID_FMT_IND
+ *                     value: 0x30
+ *
+ *  dword0 - b'31:8  - reserved
+ *
+ *  dword1 - b'0:0   - field to indicate whether hwsch_cmd_id is valid or not
+ *
+ *  dword1 - b'5:1   - number of bits in hwsch_cmd_id
+ *
+ *  dword1 - b'10:6  - offset of hwsch_cmd_id (in number of bits)
+ *
+ *  dword1 - b'15:11 - reserved for future use
+ *
+ *  dword1 - b'16:16 - field to indicate whether ring_id is valid or not
+ *
+ *  dword1 - b'21:17 - number of bits in ring_id
+ *
+ *  dword1 - b'26:22 - offset of ring_id (in number of bits)
+ *
+ *  dword1 - b'31:27 - reserved for future use
+ *
+ *  dword2 - b'0:0   - field to indicate whether sequence index is valid or not
+ *
+ *  dword2 - b'5:1   - number of bits in sequence index
+ *
+ *  dword2 - b'10:6  - offset of sequence index (in number of bits)
+ *
+ *  dword2 - b'15:11 - reserved for future use
+ *
+ *  dword2 - b'16:16 - field to indicate whether link_id is valid or not
+ *
+ *  dword2 - b'21:17 - number of bits in link_id
+ *
+ *  dword2 - b'26:22 - offset of link_id (in number of bits)
+ *
+ *  dword2 - b'31:27 - reserved for future use
+ *
+ *  dword3 - b'0:0   - field to indicate whether seq_cmd_type is valid or not
+ *
+ *  dword3 - b'5:1   - number of bits in seq_cmd_type
+ *
+ *  dword3 - b'10:6  - offset of seq_cmd_type (in number of bits)
+ *
+ *  dword3 - b'15:11 - reserved for future use
+ *
+ *  dword3 - b'16:16 - field to indicate whether tqm_cmd is valid or not
+ *
+ *  dword3 - b'21:17 - number of bits in tqm_cmd
+ *
+ *  dword3 - b'26:22 - offset of tqm_cmd (in number of bits)
+ *
+ *  dword3 - b'31:27 - reserved for future use
+ *
+ *  dword4 - b'0:0   - field to indicate whether mac_id is valid or not
+ *
+ *  dword4 - b'5:1   - number of bits in mac_id
+ *
+ *  dword4 - b'10:6  - offset of mac_id (in number of bits)
+ *
+ *  dword4 - b'15:11 - reserved for future use
+ *
+ *  dword4 - b'16:16 - field to indicate whether crc is valid or not
+ *
+ *  dword4 - b'21:17 - number of bits in crc
+ *
+ *  dword4 - b'26:22 - offset of crc (in number of bits)
+ *
+ *  dword4 - b'31:27 - reserved for future use
+ *
+ */
+
+#define HTT_PPDU_ID_FMT_IND_VALID_BITS15_0_M   0x00000001
+#define HTT_PPDU_ID_FMT_IND_VALID_BITS15_0_S   0
+
+#define HTT_PPDU_ID_FMT_IND_BITS_BITS15_0_M    0x0000003E
+#define HTT_PPDU_ID_FMT_IND_BITS_BITS15_0_S    1
+
+#define HTT_PPDU_ID_FMT_IND_OFFSET_BITS15_0_M  0x000007C0
+#define HTT_PPDU_ID_FMT_IND_OFFSET_BITS15_0_S  6
+
+#define HTT_PPDU_ID_FMT_IND_VALID_BITS31_16_M  0x00010000
+#define HTT_PPDU_ID_FMT_IND_VALID_BITS31_16_S  16
+
+#define HTT_PPDU_ID_FMT_IND_BITS_BITS31_16_M   0x003E0000
+#define HTT_PPDU_ID_FMT_IND_BITS_BITS31_16_S   17
+
+#define HTT_PPDU_ID_FMT_IND_OFFSET_BITS31_16_M 0x07C00000
+#define HTT_PPDU_ID_FMT_IND_OFFSET_BITS31_16_S 22
+
+
+/* macros for accessing lower 16 bits in dword */
+#define HTT_PPDU_ID_FMT_IND_VALID_SET_BITS15_0(word, value)           \
+    do {                                                                   \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_FMT_IND_VALID_BITS15_0, value); \
+        (word) |= (value)  << HTT_PPDU_ID_FMT_IND_VALID_BITS15_0_S;   \
+    } while (0)
+#define HTT_PPDU_ID_FMT_IND_VALID_GET_BITS15_0(word) \
+    (((word) & HTT_PPDU_ID_FMT_IND_VALID_BITS15_0_M) >> HTT_PPDU_ID_FMT_IND_VALID_BITS15_0_S)
+
+#define HTT_PPDU_ID_FMT_IND_BITS_SET_BITS15_0(word, value)           \
+    do {                                                                   \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_FMT_IND_BITS_BITS15_0, value); \
+        (word) |= (value)  << HTT_PPDU_ID_FMT_IND_BITS_BITS15_0_S;   \
+    } while (0)
+#define HTT_PPDU_ID_FMT_IND_BITS_GET_BITS15_0(word) \
+    (((word) & HTT_PPDU_ID_FMT_IND_BITS_BITS15_0_M) >> HTT_PPDU_ID_FMT_IND_BITS_BITS15_0_S)
+
+#define HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS15_0(word, value)           \
+    do {                                                                   \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_FMT_IND_OFFSET_BITS15_0, value); \
+        (word) |= (value)  << HTT_PPDU_ID_FMT_IND_OFFSET_BITS15_0_S;   \
+    } while (0)
+#define HTT_PPDU_ID_FMT_IND_OFFSET_GET_BITS15_0(word) \
+    (((word) & HTT_PPDU_ID_FMT_IND_OFFSET_BITS15_0_M) >> HTT_PPDU_ID_FMT_IND_OFFSET_BITS15_0_S)
+
+/* macros for accessing upper 16 bits in dword */
+#define HTT_PPDU_ID_FMT_IND_VALID_SET_BITS31_16(word, value)           \
+    do {                                                                   \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_FMT_IND_VALID_BITS31_16, value); \
+        (word) |= (value)  << HTT_PPDU_ID_FMT_IND_VALID_BITS31_16_S;   \
+    } while (0)
+#define HTT_PPDU_ID_FMT_IND_VALID_GET_BITS31_16(word) \
+    (((word) & HTT_PPDU_ID_FMT_IND_VALID_BITS31_16_M) >> HTT_PPDU_ID_FMT_IND_VALID_BITS31_16_S)
+
+#define HTT_PPDU_ID_FMT_IND_BITS_SET_BITS31_16(word, value)           \
+    do {                                                                   \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_FMT_IND_BITS_BITS31_16, value); \
+        (word) |= (value)  << HTT_PPDU_ID_FMT_IND_BITS_BITS31_16_S;   \
+    } while (0)
+#define HTT_PPDU_ID_FMT_IND_BITS_GET_BITS31_16(word) \
+    (((word) & HTT_PPDU_ID_FMT_IND_BITS_BITS31_16_M) >> HTT_PPDU_ID_FMT_IND_BITS_BITS31_16_S)
+
+#define HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS31_16(word, value)           \
+    do {                                                                   \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_FMT_IND_OFFSET_BITS31_16, value); \
+        (word) |= (value)  << HTT_PPDU_ID_FMT_IND_OFFSET_BITS31_16_S;   \
+    } while (0)
+#define HTT_PPDU_ID_FMT_IND_OFFSET_GET_BITS31_16(word) \
+    (((word) & HTT_PPDU_ID_FMT_IND_OFFSET_BITS31_16_M) >> HTT_PPDU_ID_FMT_IND_OFFSET_BITS31_16_S)
+
+
+#define HTT_PPDU_ID_FMT_IND_HWSCH_CMD_ID_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_HWSCH_CMD_ID_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_HWSCH_CMD_ID_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS15_0
+
+#define HTT_PPDU_ID_FMT_IND_RING_ID_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_RING_ID_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_RING_ID_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS31_16
+
+#define HTT_PPDU_ID_FMT_IND_SEQ_IDX_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_SEQ_IDX_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_SEQ_IDX_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS15_0
+
+#define HTT_PPDU_ID_FMT_IND_LINK_ID_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_LINK_ID_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_LINK_ID_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS31_16
+
+#define HTT_PPDU_ID_FMT_IND_SEQ_CMD_TYPE_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_SEQ_CMD_TYPE_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_SEQ_CMD_TYPE_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS15_0
+
+#define HTT_PPDU_ID_FMT_IND_TQM_CMD_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_TQM_CMD_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_TQM_CMD_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS31_16
+
+#define HTT_PPDU_ID_FMT_IND_MAC_ID_TYPE_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_MAC_ID_TYPE_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS15_0
+#define HTT_PPDU_ID_FMT_IND_MAC_ID_TYPE_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS15_0
+
+#define HTT_PPDU_ID_FMT_IND_CRC_VALID_SET \
+    HTT_PPDU_ID_FMT_IND_VALID_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_CRC_BITS_SET \
+    HTT_PPDU_ID_FMT_IND_BITS_SET_BITS31_16
+#define HTT_PPDU_ID_FMT_IND_CRC_OFFSET_SET \
+    HTT_PPDU_ID_FMT_IND_OFFSET_SET_BITS31_16
+
+
+/* offsets in number dwords */
+#define HTT_PPDU_ID_FMT_IND_HWSCH_CMD_ID_OFFSET   1
+#define HTT_PPDU_ID_FMT_IND_RING_ID_OFFSET        1
+#define HTT_PPDU_ID_FMT_IND_SEQ_IDX_OFFSET        2
+#define HTT_PPDU_ID_FMT_IND_LINK_ID_OFFSET        2
+#define HTT_PPDU_ID_FMT_IND_SEQ_CMD_TYPE_OFFSET   3
+#define HTT_PPDU_ID_FMT_IND_TQM_CMD_OFFSET        3
+#define HTT_PPDU_ID_FMT_IND_MAC_ID_OFFSET         4
+#define HTT_PPDU_ID_FMT_IND_CRC_OFFSET            4
+
+
+typedef struct {
+    A_UINT32 msg_type:            8, /* bits 7:0   */
+             rsvd0:               24;/* bits 31:8  */
+    A_UINT32 hwsch_cmd_id_valid:  1, /* bits 0:0   */
+             hwsch_cmd_id_bits:   5, /* bits 5:1   */
+             hwsch_cmd_id_offset: 5, /* bits 10:6  */
+             rsvd1:               5, /* bits 15:11 */
+             ring_id_valid:       1, /* bits 16:16 */
+             ring_id_bits:        5, /* bits 21:17 */
+             ring_id_offset:      5, /* bits 26:22 */
+             rsvd2:               5; /* bits 31:27 */
+    A_UINT32 seq_idx_valid:       1, /* bits 0:0   */
+             seq_idx_bits:        5, /* bits 5:1   */
+             seq_idx_offset:      5, /* bits 10:6  */
+             rsvd3:               5, /* bits 15:11 */
+             link_id_valid:       1, /* bits 16:16 */
+             link_id_bits:        5, /* bits 21:17 */
+             link_id_offset:      5, /* bits 26:22 */
+             rsvd4:               5; /* bits 31:27 */
+    A_UINT32 seq_cmd_type_valid:  1, /* bits 0:0   */
+             seq_cmd_type_bits:   5, /* bits 5:1   */
+             seq_cmd_type_offset: 5, /* bits 10:6  */
+             rsvd5:               5, /* bits 15:11 */
+             tqm_cmd_valid:       1, /* bits 16:16 */
+             tqm_cmd_bits:        5, /* bits 21:17 */
+             tqm_cmd_offset:      5, /* bits 26:12 */
+             rsvd6:               5; /* bits 31:27 */
+    A_UINT32 mac_id_valid:        1, /* bits 0:0   */
+             mac_id_bits:         5, /* bits 5:1   */
+             mac_id_offset:       5, /* bits 10:6  */
+             rsvd8:               5, /* bits 15:11 */
+             crc_valid:           1, /* bits 16:16 */
+             crc_bits:            5, /* bits 21:17 */
+             crc_offset:          5, /* bits 26:12 */
+             rsvd9:               5; /* bits 31:27 */
+} htt_t2h_ppdu_id_fmt_ind_t;
 
 
 #endif
