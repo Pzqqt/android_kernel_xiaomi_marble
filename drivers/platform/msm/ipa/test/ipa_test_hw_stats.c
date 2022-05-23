@@ -950,7 +950,8 @@ static int ipa_test_hw_stats_set_uc_event_ring(void *priv)
 	IPA_UT_INFO("========set uc event ring ========\n");
 
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5 &&
-		ipa3_ctx->ipa_hw_type != IPA_HW_v4_11) {
+		ipa3_ctx->ipa_hw_type != IPA_HW_v4_11 &&
+		ipa3_ctx->ipa_hw_type != IPA_HW_v5_2) {
 		if (ipa3_ctx->uc_ctx.uc_loaded &&
 			!ipa3_ctx->uc_ctx.uc_event_ring_valid) {
 			if (ipa3_uc_setup_event_ring()) {
