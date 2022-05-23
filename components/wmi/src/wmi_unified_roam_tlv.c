@@ -1807,10 +1807,6 @@ extract_roam_frame_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 		dst_buf->is_rsp = WMI_GET_BITS(src_data->frame_info,
 					       WLAN_FRAME_INFO_RESP_OFFSET, 1);
-		dst_buf->is_rsp &=
-			(dst_buf->type != WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT &&
-			 dst_buf->subtype == MGMT_SUBTYPE_AUTH);
-
 		dst_buf->seq_num = WMI_GET_BITS(src_data->frame_info,
 						WLAN_FRAME_INFO_SEQ_NUM_OFFSET,
 						16);
