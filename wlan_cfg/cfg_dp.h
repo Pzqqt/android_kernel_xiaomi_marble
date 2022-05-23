@@ -1013,8 +1013,9 @@
 			false, "Disable intrs BSS Rx packets")
 
 #define CFG_DP_ENABLE_DATA_STALL_DETECTION \
-		CFG_INI_BOOL("gEnableDataStallDetection", \
-		true, "Enable/Disable Data stall detection")
+		CFG_INI_UINT("gEnableDataStallDetection", \
+		0, 0xFFFFFFFF, 0x1, \
+		CFG_VALUE_OR_DEFAULT, "Enable/Disable Data stall detection")
 
 #define CFG_DP_RX_SW_DESC_WEIGHT \
 		CFG_INI_UINT("dp_rx_sw_desc_weight", \

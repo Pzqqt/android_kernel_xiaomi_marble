@@ -793,6 +793,8 @@ static void reg_change_pdev_for_config(struct wlan_objmgr_psoc *psoc,
 	pdev_priv_obj->force_ssc_disable_indoor_channel =
 		psoc_priv_obj->force_ssc_disable_indoor_channel;
 	pdev_priv_obj->band_capability = psoc_priv_obj->band_capability;
+	pdev_priv_obj->sta_sap_scc_on_indoor_channel =
+		psoc_priv_obj->sta_sap_scc_on_indoor_channel;
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
@@ -831,6 +833,8 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 		config_vars.retain_nol_across_regdmn_update;
 	reg_get_coex_unsafe_chan_nb_user_prefer(psoc_priv_obj, config_vars);
 	reg_get_coex_unsafe_chan_reg_disable(psoc_priv_obj, config_vars);
+	psoc_priv_obj->sta_sap_scc_on_indoor_channel =
+		config_vars.sta_sap_scc_on_indoor_channel;
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_REGULATORY_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2600,6 +2600,7 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 		       uint8_t is_wds)
 {
 	struct dp_peer *peer = NULL;
+	struct dp_vdev *vdev = NULL;
 	enum cdp_txrx_ast_entry_type type = CDP_TXRX_AST_TYPE_STATIC;
 	QDF_STATUS err = QDF_STATUS_SUCCESS;
 
@@ -2639,17 +2640,21 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 					   hw_peer_id, vdev_id);
 
 		if (peer) {
-			if (wlan_op_mode_sta == peer->vdev->opmode &&
-			    qdf_mem_cmp(peer->mac_addr.raw,
-					peer->vdev->mac_addr.raw,
-					QDF_MAC_ADDR_SIZE) != 0) {
-				dp_peer_info("%pK: STA vdev bss_peer!!!!", soc);
-				peer->bss_peer = 1;
-			}
+			vdev = peer->vdev;
+			/* Only check for STA Vdev and peer is not for TDLS */
+			if (wlan_op_mode_sta == vdev->opmode &&
+			    !peer->is_tdls_peer) {
+				if (qdf_mem_cmp(peer->mac_addr.raw,
+						vdev->mac_addr.raw,
+						QDF_MAC_ADDR_SIZE) != 0) {
+					dp_info("%pK: STA vdev bss_peer", soc);
+					peer->bss_peer = 1;
+				}
 
-			if (peer->vdev->opmode == wlan_op_mode_sta) {
-				peer->vdev->bss_ast_hash = ast_hash;
-				peer->vdev->bss_ast_idx = hw_peer_id;
+				dp_info("bss ast_hash 0x%x, ast_index 0x%x",
+					ast_hash, hw_peer_id);
+				vdev->bss_ast_hash = ast_hash;
+				vdev->bss_ast_idx = hw_peer_id;
 			}
 
 			/* Add ast entry incase self ast entry is
@@ -4118,6 +4123,35 @@ static void dp_check_ba_buffersize(struct dp_peer *peer,
 	}
 }
 
+QDF_STATUS dp_rx_tid_update_ba_win_size(struct cdp_soc_t *cdp_soc,
+					uint8_t *peer_mac, uint16_t vdev_id,
+					uint8_t tid, uint16_t buffersize)
+{
+	struct dp_rx_tid *rx_tid = NULL;
+	struct dp_peer *peer;
+
+	peer = dp_peer_get_tgt_peer_hash_find((struct dp_soc *)cdp_soc,
+					      peer_mac, 0, vdev_id,
+					      DP_MOD_ID_CDP);
+	if (!peer) {
+		dp_peer_debug("%pK: Peer is NULL!\n", cdp_soc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	rx_tid = &peer->rx_tid[tid];
+
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	rx_tid->ba_win_size = buffersize;
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
+
+	dp_info("peer "QDF_MAC_ADDR_FMT", tid %d, update BA win size to %d",
+		QDF_MAC_ADDR_REF(peer->mac_addr.raw), tid, buffersize);
+
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #define DP_RX_BA_SESSION_DISABLE  1
 
 /*
@@ -5110,6 +5144,27 @@ bool dp_find_peer_exist(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	}
 
 	return false;
+}
+
+void dp_set_peer_as_tdls_peer(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			      uint8_t *peer_mac, bool val)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_peer *peer = NULL;
+
+	peer = dp_peer_find_hash_find(soc, peer_mac, 0, vdev_id,
+				      DP_MOD_ID_CDP);
+	if (!peer) {
+		dp_err("Failed to find peer for:" QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(peer_mac));
+		return;
+	}
+
+	dp_info("Set tdls flag %d for peer:" QDF_MAC_ADDR_FMT,
+		val, QDF_MAC_ADDR_REF(peer_mac));
+	peer->is_tdls_peer = val;
+
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 }
 #endif
 

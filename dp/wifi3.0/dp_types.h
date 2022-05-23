@@ -91,7 +91,7 @@
 #define DP_PDEV_MAX_VDEVS 17
 #endif
 
-#define MAX_TXDESC_POOLS 4
+#define MAX_TXDESC_POOLS 6
 #define MAX_RXDESC_POOLS 4
 
 #define EXCEPTION_DEST_RING_ID 0
@@ -3379,7 +3379,8 @@ struct dp_peer {
 		in_twt:1, /* in TWT session */
 		delete_in_progress:1, /* Indicate kickout sent */
 		sta_self_peer:1, /* Indicate STA self peer */
-		hw_txrx_stats_en:1; /*Indicate HW offload vdev stats */
+		hw_txrx_stats_en:1, /*Indicate HW offload vdev stats */
+		is_tdls_peer:1; /* Indicate TDLS peer */
 
 #ifdef WLAN_FEATURE_11BE_MLO
 	uint8_t first_link:1, /* first link peer for MLO */

@@ -1401,6 +1401,7 @@ enum restart_beaconing_on_ch_avoid_rule {
  * userspace
  * @coex_unsafe_chan_reg_disable: To disable reg channels for received coex
  * unsafe channels list
+ * @sta_sap_scc_on_indoor_channel: Value of sap+sta scc on indoor support
  */
 struct reg_config_vars {
 	uint32_t enable_11d_support;
@@ -1419,6 +1420,7 @@ struct reg_config_vars {
 	bool coex_unsafe_chan_nb_user_prefer;
 	bool coex_unsafe_chan_reg_disable;
 #endif
+	bool sta_sap_scc_on_indoor_channel;
 };
 
 /**

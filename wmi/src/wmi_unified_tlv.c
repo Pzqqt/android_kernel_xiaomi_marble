@@ -537,6 +537,28 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_enable_disable_rtt_initiator_role] =
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_ROLE,
 	[wmi_vdev_param_mcast_steer] = WMI_VDEV_PARAM_MCAST_STEERING,
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	[wmi_vdev_param_set_normal_latency_flags_config] =
+			WMI_VDEV_PARAM_NORMAL_LATENCY_FLAGS_CONFIGURATION,
+	[wmi_vdev_param_set_xr_latency_flags_config] =
+			WMI_VDEV_PARAM_XR_LATENCY_FLAGS_CONFIGURATION,
+	[wmi_vdev_param_set_low_latency_flags_config] =
+			WMI_VDEV_PARAM_LOW_LATENCY_FLAGS_CONFIGURATION,
+	[wmi_vdev_param_set_ultra_low_latency_flags_config] =
+			WMI_VDEV_PARAM_ULTRA_LOW_LATENCY_FLAGS_CONFIGURATION,
+	[wmi_vdev_param_set_normal_latency_ul_dl_config] =
+			WMI_VDEV_PARAM_NORMAL_LATENCY_UL_DL_CONFIGURATION,
+	[wmi_vdev_param_set_xr_latency_ul_dl_config] =
+			WMI_VDEV_PARAM_XR_LATENCY_UL_DL_CONFIGURATION,
+	[wmi_vdev_param_set_low_latency_ul_dl_config] =
+			WMI_VDEV_PARAM_LOW_LATENCY_UL_DL_CONFIGURATION,
+	[wmi_vdev_param_set_ultra_low_latency_ul_dl_config] =
+			WMI_VDEV_PARAM_ULTRA_LOW_LATENCY_UL_DL_CONFIGURATION,
+	[wmi_vdev_param_set_default_ll_config] =
+			WMI_VDEV_PARAM_DEFAULT_LATENCY_LEVEL_CONFIGURATION,
+	[wmi_vdev_param_set_multi_client_ll_feature_config] =
+			WMI_VDEV_PARAM_MULTI_CLIENT_LL_FEATURE_CONFIGURATION,
+#endif
 };
 #endif
 
@@ -17805,6 +17827,9 @@ event_ids[wmi_roam_scan_chan_list_id] =
 	event_ids[wmi_vdev_quiet_offload_eventid] =
 			WMI_QUIET_HANDLING_EVENTID;
 #endif
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	event_ids[wmi_vdev_latency_event_id] = WMI_VDEV_LATENCY_LEVEL_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -18157,6 +18182,16 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL;
 	wmi_service[wmi_service_csa_beacon_template] =
 			WMI_SERVICE_CSA_BEACON_TEMPLATE;
+#if defined(WIFI_POS_CONVERGED) && defined(WLAN_FEATURE_RTT_11AZ_SUPPORT)
+	wmi_service[wmi_service_rtt_11az_ntb_support] =
+			WMI_SERVICE_RTT_11AZ_NTB_SUPPORT;
+	wmi_service[wmi_service_rtt_11az_tb_support] =
+			WMI_SERVICE_RTT_11AZ_TB_SUPPORT;
+	wmi_service[wmi_service_rtt_11az_mac_sec_support] =
+			WMI_SERVICE_RTT_11AZ_MAC_SEC_SUPPORT;
+	wmi_service[wmi_service_rtt_11az_mac_phy_sec_support] =
+			WMI_SERVICE_RTT_11AZ_MAC_PHY_SEC_SUPPORT;
+#endif
 #ifdef WLAN_FEATURE_IGMP_OFFLOAD
 	wmi_service[wmi_service_igmp_offload_support] =
 			WMI_SERVICE_IGMP_OFFLOAD_SUPPORT;
@@ -18257,6 +18292,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	wmi_service[wmi_service_roam_stats_per_candidate_frame_info] =
 		WMI_SERVICE_ROAM_STAT_PER_CANDIDATE_FRAME_INFO_SUPPORT;
+#endif
+#ifdef MULTI_CLIENT_LL_SUPPORT
+	wmi_service[wmi_service_configure_multi_client_ll_support] =
+				WMI_SERVICE_MULTI_CLIENT_LL_SUPPORT;
 #endif
 }
 

@@ -3791,7 +3791,6 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 		value = hif_read32_mb(
 				scn, scn->mem +
 				PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG);
-		hif_info("pcie scratch reg read value = %x", value);
 		if (value == HIF_POLL_UMAC_WAKE)
 			break;
 		qdf_mdelay(FORCE_WAKE_DELAY_MS);
@@ -3799,7 +3798,8 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	} while (timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS);
 
 	if (value != HIF_POLL_UMAC_WAKE) {
-		hif_err("failed force wake handshake mechanism");
+		hif_err("force wake handshake failed, reg value = 0x%x",
+			value);
 		HIF_STATS_INC(pci_scn, soc_force_wake_failure, 1);
 		return -ETIMEDOUT;
 	}

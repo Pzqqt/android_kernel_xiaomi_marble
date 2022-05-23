@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -326,7 +326,7 @@ struct txrx_pdev_cfg_param_t {
 	bool tso_enable;
 	bool lro_enable;
 	bool sg_enable;
-	bool enable_data_stall_detection;
+	uint32_t enable_data_stall_detection;
 	bool enable_flow_steering;
 	bool disable_intra_bss_fwd;
 

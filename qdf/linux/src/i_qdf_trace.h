@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -485,13 +486,50 @@ __qdf_minidump_remove(void *addr, size_t size, const char *name)
 	minidump_remove_segments((const uintptr_t)addr);
 }
 #elif defined(WLAN_QCOM_MINIDUMP)
+#define MAX_WLAN_MINIDUMP_ENTRIES 4
+
+enum minidump_log_type {
+	MD_HTC_CREDIT = 0,
+	MD_WLAN_LOGS,
+	MD_WMI_TX_CMP,
+	MD_HAL_SOC,
+};
+
+static const char *minidump_table[MAX_WLAN_MINIDUMP_ENTRIES];
+
+static int qdf_get_name_idx(const char *name)
+{
+	int i;
+	static const char * const wlan_str[] = {
+		[MD_HTC_CREDIT] = "htc_credit",
+		[MD_WLAN_LOGS] = "wlan_logs",
+		[MD_WMI_TX_CMP] = "wmi_tx_cmp",
+		[MD_HAL_SOC] = "hal_soc"
+	};
+
+	for (i = 0; i < ARRAY_SIZE(wlan_str); i++) {
+		if (strncmp(name, wlan_str[i], strlen(wlan_str[i])) == 0)
+			return i;
+	}
+
+	return -EINVAL;
+}
+
 static inline void
 __qdf_minidump_log(void *start_addr, const size_t size,
 		   const char *name)
 {
 	struct md_region md_entry;
-	int ret;
+	int ret, index;
 
+	index  = qdf_get_name_idx(name);
+	if (index < 0) {
+		QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_QDF,
+				      "%s: invalid entry %s\n",
+				      __func__, name);
+		QDF_DEBUG_PANIC("Unknown minidump entry");
+		return;
+	}
 	snprintf(md_entry.name, sizeof(md_entry.name), name);
 	md_entry.virt_addr = (uintptr_t)start_addr;
 	md_entry.phys_addr = virt_to_phys(start_addr);
@@ -501,6 +539,9 @@ __qdf_minidump_log(void *start_addr, const size_t size,
 		QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_QDF,
 				      "%s: failed to log %pK (%s)\n",
 				      __func__, start_addr, name);
+		minidump_table[index] = NULL;
+	} else {
+		minidump_table[index] = name;
 	}
 }
 
@@ -509,12 +550,21 @@ __qdf_minidump_remove(void *start_addr, const size_t size,
 		      const char *name)
 {
 	struct md_region md_entry;
+	int index;
 
+	index = qdf_get_name_idx(name);
+	if (index < 0 || !minidump_table[index]) {
+		QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_QDF,
+				      "%s: entry was not added",
+				      __func__);
+		return;
+	}
 	snprintf(md_entry.name, sizeof(md_entry.name), name);
 	md_entry.virt_addr = (uintptr_t)start_addr;
 	md_entry.phys_addr = virt_to_phys(start_addr);
 	md_entry.size = size;
 	msm_minidump_remove_region(&md_entry);
+	minidump_table[index] = NULL;
 }
 #else
 static inline void

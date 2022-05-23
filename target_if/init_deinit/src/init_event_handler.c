@@ -66,6 +66,36 @@ init_deinit_update_p2p_p2p_conc_support(struct wmi_unified *wmi_handle,
 {}
 #endif
 
+#ifdef WIFI_POS_CONVERGED
+static inline void
+init_deinit_update_wifi_pos_caps(struct wmi_unified *wmi_handle,
+				 struct wlan_objmgr_psoc *psoc)
+{
+	if (wmi_service_enabled(wmi_handle, wmi_service_rtt_11az_ntb_support))
+		wlan_psoc_nif_fw_ext_cap_set(psoc,
+					     WLAN_RTT_11AZ_NTB_SUPPORT);
+
+	if (wmi_service_enabled(wmi_handle, wmi_service_rtt_11az_tb_support))
+		wlan_psoc_nif_fw_ext2_cap_set(psoc,
+					      WLAN_RTT_11AZ_TB_SUPPORT);
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_rtt_11az_mac_sec_support))
+		wlan_psoc_nif_fw_ext2_cap_set(psoc,
+					      WLAN_RTT_11AZ_MAC_SEC_SUPPORT);
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_rtt_11az_mac_phy_sec_support))
+		wlan_psoc_nif_fw_ext2_cap_set(psoc,
+					      WLAN_RTT_11AZ_MAC_PHY_SEC_SUPPORT);
+}
+#else
+static inline void
+init_deinit_update_wifi_pos_caps(struct wmi_unified *wmi_handle,
+				 struct wlan_objmgr_psoc *psoc)
+{}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void
 init_deinit_update_roam_stats_cap(struct wmi_unified *wmi_handle,
@@ -80,6 +110,31 @@ init_deinit_update_roam_stats_cap(struct wmi_unified *wmi_handle,
 static inline void
 init_deinit_update_roam_stats_cap(struct wmi_unified *wmi_handle,
 				  struct wlan_objmgr_psoc *psoc)
+{}
+#endif
+
+#ifdef MULTI_CLIENT_LL_SUPPORT
+/**
+ * init_deinit_update_multi_client_ll_caps() - Update multi client service
+ * capability bit
+ * @wmi_handle: wmi hanle
+ * @psoc: psoc commom object
+ *
+ * Return: none
+ */
+static void
+init_deinit_update_multi_client_ll_caps(struct wmi_unified *wmi_handle,
+					struct wlan_objmgr_psoc *psoc)
+{
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_configure_multi_client_ll_support))
+		wlan_psoc_nif_fw_ext2_cap_set(psoc,
+					WLAN_SOC_WLM_MULTI_CLIENT_LL_SUPPORT);
+}
+#else
+static inline void
+init_deinit_update_multi_client_ll_caps(struct wmi_unified *wmi_handle,
+					struct wlan_objmgr_psoc *psoc)
 {}
 #endif
 
@@ -238,6 +293,8 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	init_deinit_update_roam_stats_cap(wmi_handle, psoc);
 
+	init_deinit_update_wifi_pos_caps(wmi_handle, psoc);
+
 	/* override derived value, if it exceeds max peer count */
 	if ((wlan_psoc_get_max_peer_count(psoc) >
 		tgt_hdl->info.wlan_res_cfg.num_active_peers) &&
@@ -286,6 +343,8 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	if (wmi_service_enabled(wmi_handle, wmi_service_fse_cmem_alloc_support))
 		cdp_soc_set_param(wlan_psoc_get_dp_handle(psoc),
 				  DP_SOC_PARAM_CMEM_FSE_SUPPORT, 1);
+
+	init_deinit_update_multi_client_ll_caps(wmi_handle, psoc);
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
 		target_if_debug("Wait for EXT message");

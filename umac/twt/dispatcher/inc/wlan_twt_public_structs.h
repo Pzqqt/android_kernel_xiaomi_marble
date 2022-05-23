@@ -994,5 +994,14 @@ enum HOST_TWT_CMD_FOR_ACK_EVENT {
 	HOST_TWT_UNKNOWN_CMDID,
 };
 
+/* access categories */
+enum twt_traffic_ac {
+	TWT_AC_VO  = 0,
+	TWT_AC_VI  = 1,
+	TWT_AC_BE  = 2,
+	TWT_AC_BK  = 3,
+	TWT_AC_MAX = 4,
+};
+
 #endif /* _WLAN_TWT_PUBLIC_STRUCTS_H_ */
 
