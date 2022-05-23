@@ -1050,6 +1050,18 @@ int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 		holb_cfg.tmr_val = ipa3_ctx->ipa_wdi3_2g_holb_timeout;
 		IPADBG("Configuring HOLB TO on tx1 return = %d\n",
 			ipa3_cfg_ep_holb(ipa_ep_idx_tx1, &holb_cfg));
+	} else if (ipa3_ctx->is_dual_pine_config) {
+		/* dual pine case, 5g/2g will use its own tx pipe instead of tx1 */
+		memset(&holb_cfg, 0, sizeof(holb_cfg));
+		holb_cfg.en = IPA_HOLB_TMR_EN;
+		if (ep_tx->client == IPA_CLIENT_WLAN4_CONS) {
+			holb_cfg.tmr_val = ipa3_ctx->ipa_wdi3_2g_holb_timeout;
+		} else {
+			holb_cfg.tmr_val = ipa3_ctx->ipa_wdi3_5g_holb_timeout;
+		}
+		result = ipa3_cfg_ep_holb(ipa_ep_idx_tx, &holb_cfg);
+		IPADBG("Configured HOLB for clnt=%d, timer=%d, return = %d\n",
+				ipa_ep_idx_tx, holb_cfg.tmr_val, result);
 	}
 
 	/* start gsi tx channel */
