@@ -1959,9 +1959,9 @@ wlan_hdd_set_station_stats_request_pending(struct hdd_adapter *adapter)
 	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
 	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_OSIF_STATS_ID);
 	if (!peer) {
-		osif_err("peer is null hence get_ll_stats is not supported");
+		osif_err("peer is null");
 		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
-		return QDF_STATUS_E_BADMSG;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	adapter->hdd_stats.is_ll_stats_req_in_progress = true;
@@ -2063,9 +2063,6 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	status = wlan_hdd_set_station_stats_request_pending(adapter);
 	if (status == QDF_STATUS_E_ALREADY)
 		return qdf_status_to_os_return(status);
-
-	if (status == QDF_STATUS_E_BADMSG)
-		return QDF_STATUS_SUCCESS;
 
 	/*
 	 * FW can send radio stats with multiple events and for the first event
