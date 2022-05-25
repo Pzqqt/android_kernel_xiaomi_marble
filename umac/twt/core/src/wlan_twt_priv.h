@@ -71,9 +71,15 @@ struct twt_psoc_priv_obj {
 /**
  * struct twt_vdev_priv_obj -
  * @twt_wait_for_notify: wait for notify
+ * @dialog_id: TWT dialog id
+ * @peer_macaddr: Peer mac address
+ * @next_action: next action of TWT worker queue
  */
 struct twt_vdev_priv_obj {
 	bool twt_wait_for_notify;
+	uint32_t dialog_id;
+	struct qdf_mac_addr peer_macaddr;
+	enum HOST_TWT_NEXT_WORK_ACTION next_action;
 };
 
 /**

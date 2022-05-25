@@ -23,6 +23,7 @@
 #include "wlan_twt_priv.h"
 #include "wlan_twt_objmgr_handler.h"
 #include "wlan_objmgr_peer_obj.h"
+#include "include/wlan_mlme_cmn.h"
 
 QDF_STATUS
 wlan_twt_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
@@ -101,6 +102,14 @@ wlan_twt_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 	}
 
 	twt_debug("twt vdev priv obj attach successful");
+
+	status = mlme_twt_vdev_create_notification(vdev);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("vdev create notification failed");
+		return status;
+	}
+
 	return status;
 }
 
@@ -109,6 +118,12 @@ wlan_twt_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 {
 	QDF_STATUS status;
 	struct twt_vdev_priv_obj *twt_vdev_obj;
+
+	status = mlme_twt_vdev_destroy_notification(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		twt_err("vdev destroy notification failed");
+		return status;
+	}
 
 	twt_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 							    WLAN_UMAC_COMP_TWT);
