@@ -722,7 +722,8 @@
 #define WLAN_CFG_GRO_ENABLE_MAX 3
 #define WLAN_CFG_GRO_ENABLE_DEFAULT 0
 #define DP_GRO_ENABLE_BIT_SET     BIT(0)
-#define DP_FORCE_USE_GRO_BIT_SET  BIT(1)
+#define DP_TC_BASED_DYNAMIC_GRO   BIT(1)
+
 /*
  * <ini>
  * CFG_DP_GRO - Enable the GRO feature standalonely
@@ -732,9 +733,9 @@
  *
  * This ini entry is used to enable/disable GRO feature standalonely.
  * Value 0: Disable GRO feature
- * Value 1: Enable Dynamic GRO feature, TC rule can control GRO
- *          behavior of STA mode
- * Value 3: Enable GRO feature forcibly
+ * Value 1: Enable GRO feature always
+ * Value 3: Enable GRO dynamic feature where TC rule can control GRO
+ *          behavior
  *
  * Usage: External
  *
@@ -746,6 +747,17 @@
 		WLAN_CFG_GRO_ENABLE_MAX, \
 		WLAN_CFG_GRO_ENABLE_DEFAULT, \
 		CFG_VALUE_OR_DEFAULT, "DP GRO Enable")
+
+#define WLAN_CFG_TC_INGRESS_PRIO_MIN 0
+#define WLAN_CFG_TC_INGRESS_PRIO_MAX 0xFFFF
+#define WLAN_CFG_TC_INGRESS_PRIO_DEFAULT 0
+
+#define CFG_DP_TC_INGRESS_PRIO \
+		CFG_INI_UINT("tc_ingress_prio", \
+		WLAN_CFG_TC_INGRESS_PRIO_MIN, \
+		WLAN_CFG_TC_INGRESS_PRIO_MAX, \
+		WLAN_CFG_TC_INGRESS_PRIO_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, "DP tc ingress prio")
 
 #define CFG_DP_OL_TX_CSUM \
 	CFG_INI_BOOL("dp_offload_tx_csum_support", false, \
@@ -1543,6 +1555,7 @@
 		CFG(CFG_DP_LRO) \
 		CFG(CFG_DP_SG) \
 		CFG(CFG_DP_GRO) \
+		CFG(CFG_DP_TC_INGRESS_PRIO) \
 		CFG(CFG_DP_OL_TX_CSUM) \
 		CFG(CFG_DP_OL_RX_CSUM) \
 		CFG(CFG_DP_RAWMODE) \

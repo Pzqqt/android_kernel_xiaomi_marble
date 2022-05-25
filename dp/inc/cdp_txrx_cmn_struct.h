@@ -2517,7 +2517,8 @@ struct cdp_monitor_filter {
  * @cfg_dp_tso_enable: get TSO enable config
  * @cfg_dp_lro_enable: get LRO enable config
  * @cfg_dp_gro_enable: get GRO enable config
- * @cfg_dp_force_gro_enable: get Force GRO enable config
+ * @cfg_dp_tc_based_dyn_gro_enable: get TC based dynamic gro enable config
+ * @cfg_dp_tc_ingress_prio: priority value to be checked for tc filters
  * @cfg_dp_tx_flow_start_queue_offset: get DP TX flow start queue offset
  * @cfg_dp_tx_flow_stop_queue_threshold: get DP TX flow stop queue threshold
  * @cfg_dp_ipa_uc_tx_buf_size: get IPA TX buf size config
@@ -2540,7 +2541,8 @@ enum cdp_dp_cfg {
 	cfg_dp_tso_enable,
 	cfg_dp_lro_enable,
 	cfg_dp_gro_enable,
-	cfg_dp_force_gro_enable,
+	cfg_dp_tc_based_dyn_gro_enable,
+	cfg_dp_tc_ingress_prio,
 	cfg_dp_sg_enable,
 	cfg_dp_tx_flow_start_queue_offset,
 	cfg_dp_tx_flow_stop_queue_threshold,
