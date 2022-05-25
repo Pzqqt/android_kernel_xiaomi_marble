@@ -621,6 +621,20 @@ static inline void policy_mgr_check_concurrent_intf_and_restart_sap(
 #endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
 
 /**
+ * policy_mgr_get_conc_vdev_on_same_mac() - Function to get concurrent
+ *                                          vdev on same mac
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @mac_id: mac id
+ *
+ * This function is used to get the conncurrent vdev on same mac
+ *
+ * Return: vdev id of the concurrent interface running on same mac
+ *
+ */
+uint32_t policy_mgr_get_conc_vdev_on_same_mac(struct wlan_objmgr_psoc *psoc,
+					      uint32_t vdev_id, uint8_t mac_id);
+/**
  * policy_mgr_is_mcc_in_24G() - Function to check for MCC in 2.4GHz
  * @psoc: PSOC object information
  *
