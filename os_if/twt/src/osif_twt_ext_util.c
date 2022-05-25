@@ -22,6 +22,7 @@
 #include <osif_twt_rsp.h>
 #include <osif_twt_ext_rsp.h>
 #include <wlan_twt_ucfg_ext_api.h>
+#include <osif_twt_ext_req.h>
 
 static struct mlme_twt_ops twt_ops = {
 	.mlme_twt_enable_complete_cb = osif_twt_enable_complete_cb,
@@ -33,6 +34,8 @@ static struct mlme_twt_ops twt_ops = {
 	.mlme_twt_nudge_complete_cb = osif_twt_nudge_complete_cb,
 	.mlme_twt_notify_complete_cb = osif_twt_notify_complete_cb,
 	.mlme_twt_ack_complete_cb = osif_twt_ack_complete_cb,
+	.mlme_twt_vdev_create_cb = osif_twt_create_work,
+	.mlme_twt_vdev_destroy_cb = osif_twt_destroy_work,
 };
 
 /**

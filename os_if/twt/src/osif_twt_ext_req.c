@@ -34,6 +34,7 @@
 #include "wlan_cp_stats_mc_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_cp_stats_ucfg_api.h"
+#include "osif_vdev_sync.h"
 
 #define TWT_ACK_COMPLETE_TIMEOUT 1000
 
@@ -1068,11 +1069,11 @@ void
 osif_twt_handle_renego_failure(struct wlan_objmgr_psoc *psoc,
 		       struct twt_add_dialog_complete_event *event)
 {
-	struct twt_del_dialog_param params = {0};
 	uint8_t pdev_id;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t vdev_id;
+	uint32_t twt_next_action = 0;
 
 	if (!event)
 		return;
@@ -1098,15 +1099,9 @@ osif_twt_handle_renego_failure(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	qdf_copy_macaddr(&params.peer_macaddr, &event->params.peer_macaddr);
-	params.vdev_id = vdev_id;
-	params.dialog_id = event->params.dialog_id;
-
-	osif_debug("renego: twt_terminate: vdev_id:%d dialog_id:%d peer mac_addr "
-		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
-		  QDF_MAC_ADDR_REF(params.peer_macaddr.bytes));
-
-	osif_send_sta_twt_teardown_req(vdev, psoc, &params);
+	twt_next_action = HOST_TWT_SEND_DELETE_CMD;
+	ucfg_twt_set_work_params(vdev, &event->params, twt_next_action);
+	qdf_sched_work(0, &vdev->twt_work);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TWT_ID);
 
@@ -2363,4 +2358,76 @@ int osif_twt_set_param(struct wlan_objmgr_vdev *vdev,
 	}
 
 	return ret;
+}
+
+void __osif_twt_work_handler(struct wlan_objmgr_vdev *vdev)
+{
+	struct twt_del_dialog_param params = {0};
+	struct twt_work_params twt_work_params = {0};
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id;
+	uint32_t next_action;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("psoc is null");
+		return;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	ucfg_twt_get_work_params(vdev, &twt_work_params, &next_action);
+
+	if (next_action != HOST_TWT_SEND_DELETE_CMD) {
+		osif_debug("Do not send STA teardown req as TWT renegotiation work is not scheduled");
+		return;
+	}
+
+	qdf_copy_macaddr(&params.peer_macaddr, &twt_work_params.peer_macaddr);
+	params.dialog_id = twt_work_params.dialog_id;
+	params.vdev_id = vdev_id;
+
+	osif_send_sta_twt_teardown_req(vdev, psoc, &params);
+}
+
+void osif_twt_work_handler(void *data)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)data;
+	struct net_device *net_dev;
+	struct osif_vdev_sync *vdev_sync;
+	struct vdev_osif_priv *priv;
+	int errno;
+
+	if (!vdev) {
+		osif_err("vdev is null");
+		return;
+	}
+
+	priv = wlan_vdev_get_ospriv(vdev);
+	if (!priv || !priv->wdev || !priv->wdev->netdev)
+		return;
+
+	net_dev = priv->wdev->netdev;
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return;
+
+	__osif_twt_work_handler(vdev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+}
+
+QDF_STATUS osif_twt_create_work(struct wlan_objmgr_vdev *vdev)
+{
+	qdf_create_work(0, &vdev->twt_work,
+			osif_twt_work_handler, vdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS osif_twt_destroy_work(struct wlan_objmgr_vdev *vdev)
+{
+	qdf_flush_work(&vdev->twt_work);
+	qdf_destroy_work(NULL, &vdev->twt_work);
+
+	return QDF_STATUS_SUCCESS;
 }

@@ -221,6 +221,37 @@ int osif_twt_clear_session_traffic_stats(struct wlan_objmgr_vdev *vdev,
 int osif_twt_set_param(struct wlan_objmgr_vdev *vdev,
 		       struct nlattr *twt_param_attr);
 
+/**
+ * __osif_twt_work_handler() - TWT work handler
+ * @vdev: vdev pointer
+ *
+ * Return: None
+ */
+void __osif_twt_work_handler(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * osif_twt_work_handler() - TWT work wrapper function
+ * @data: data pointer
+ *
+ * Return: None
+ */
+void osif_twt_work_handler(void *data);
+
+/**
+ * osif_twt_create_work() - TWT create work
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_twt_create_work(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * osif_twt_destroy_work() - TWT destroy work
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_twt_destroy_work(struct wlan_objmgr_vdev *vdev);
 #else
 static inline
 int osif_twt_setup_req(struct wlan_objmgr_vdev *vdev,
@@ -298,6 +329,27 @@ int osif_twt_set_param(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 
+static inline
+void __osif_twt_work_handler(struct wlan_objmgr_vdev *vdev)
+{
+}
+
+static inline
+void osif_twt_work_handler(void *data)
+{
+}
+
+static inline
+ODF_STATUS osif_twt_create_work(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline
+ODF_STATUS osif_twt_destroy_work(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 #endif /* _OSIF_TWT_EXT_REQ_H_ */
 

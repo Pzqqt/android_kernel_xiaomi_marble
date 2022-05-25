@@ -2147,3 +2147,46 @@ QDF_STATUS wlan_twt_update_beacon_template(void)
 
 	return status;
 }
+
+void wlan_twt_set_work_params(
+			struct wlan_objmgr_vdev *vdev,
+			struct twt_add_dialog_complete_event_param *params,
+			uint32_t twt_next_action)
+{
+	struct twt_vdev_priv_obj *twt_vdev_priv;
+
+	twt_vdev_priv = wlan_objmgr_vdev_get_comp_private_obj(
+					vdev, WLAN_UMAC_COMP_TWT);
+
+	if (!twt_vdev_priv) {
+		twt_err("twt vdev private obj is null");
+		return;
+	}
+
+	qdf_copy_macaddr(&twt_vdev_priv->peer_macaddr, &params->peer_macaddr);
+	twt_vdev_priv->dialog_id = params->dialog_id;
+	twt_vdev_priv->next_action = twt_next_action;
+
+	twt_debug("renego: twt_terminate: dialog_id:%d next_action:%d peer mac_addr  "
+		   QDF_MAC_ADDR_FMT, twt_vdev_priv->dialog_id,
+		   twt_vdev_priv->next_action,
+		   QDF_MAC_ADDR_REF(twt_vdev_priv->peer_macaddr.bytes));
+}
+
+void wlan_twt_get_work_params(struct wlan_objmgr_vdev *vdev,
+			      struct twt_work_params *params,
+			      uint32_t *next_action)
+{
+	struct twt_vdev_priv_obj *twt_vdev_priv;
+
+	twt_vdev_priv = wlan_objmgr_vdev_get_comp_private_obj(
+					vdev, WLAN_UMAC_COMP_TWT);
+	if (!twt_vdev_priv) {
+		twt_err("twt vdev private obj is null");
+		return;
+	}
+
+	qdf_copy_macaddr(&params->peer_macaddr, &twt_vdev_priv->peer_macaddr);
+	params->dialog_id = twt_vdev_priv->dialog_id;
+	*next_action = twt_vdev_priv->next_action;
+}
