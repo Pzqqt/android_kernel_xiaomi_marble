@@ -960,6 +960,29 @@ typedef enum {
     /* Set which action category should wake the host from suspend */
     WMI_WOW_SET_ACTION_WAKE_UP_CMDID,
 
+    /*
+     * Set a pattern to match broadcast CoAP packet in WoW mode.
+     * If match and verify pass, cache the packet and then reply
+     * a unicast response in local with pre-configured packet.
+     */
+    WMI_WOW_COAP_ADD_PATTERN_CMDID,
+
+    /* Delete a pattern match broadcast CoAP packet */
+    WMI_WOW_COAP_DEL_PATTERN_CMDID,
+
+    /*
+     * Add a CoAP keepalive pattern to send a CoAP broadcast packet
+     * when configured timeout occured.
+     */
+    WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMDID,
+
+    /* Delete a CoAP keepalive pattern */
+    WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID,
+
+    /* Host read the cached CoAP packets after resume */
+    WMI_WOW_COAP_GET_BUF_INFO_CMDID,
+
+
     /* RTT measurement related cmd */
     /** request to make an RTT measurement */
     WMI_RTT_MEASREQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_RTT),
@@ -1886,8 +1909,9 @@ typedef enum {
     WMI_WOW_WAKEUP_HOST_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_WOW),
     WMI_D0_WOW_DISABLE_ACK_EVENTID,
     WMI_WOW_INITIAL_WAKEUP_EVENTID,
+    WMI_WOW_COAP_BUF_INFO_EVENTID,
 
-    /*RTT related event ID*/
+    /* RTT related event ID */
     /** RTT measurement report */
     WMI_RTT_MEASUREMENT_REPORT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_RTT),
     /** TSF measurement report */
@@ -19230,6 +19254,88 @@ typedef struct {
      */
 } WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_PATTERN_CMD_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 pattern_id;
+    A_UINT32 cache_timeout; /* the cached packet expire timeout in ms */
+    A_UINT32 dest_udp_port; /* dest UDP port to match recived CoAP messsage */
+    A_UINT32 verify_offset; /* UDP payload offset to verify */
+    A_UINT32 verify_len;    /* UDP payload length to verofy*/
+    A_UINT32 coapmsg_len;   /* CoAP reply message length */
+/* The below TLV (tag length value) parameters follow this fixed_param TLV:
+ *     A_UINT8 verify_string[];  verify content,
+ *         length identified by verify_len;
+ *     A_UINT8 coapmsg[];        CoAP reply message,
+ *         length identified by coapmsg_len;
+ */
+} WMI_WOW_COAP_ADD_PATTERN_CMD_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_DEL_PATTERN_CMD_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 pattern_id;
+} WMI_WOW_COAP_DEL_PATTERN_CMD_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMD_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 pattern_id;
+    A_UINT32 ipv4_addr;       /* vdev IPv4 address */
+    A_UINT32 remote_udp_port; /* remote UDP port to send keepalive broadcast CoAP message */
+    A_UINT32 timeout;         /* the period to send keepalive message in ms */
+    A_UINT32 coapmsg_len;     /* keeplive CoAP message length */
+/* The below TLV (tag length value) parameters follow this fixed_param TLV:
+ *     A_UINT8 coapmsg[];  CoAP keepalive message,
+ *          length specifed by coapmsg_len field
+ */
+} WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMD_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMD_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 pattern_id;
+} WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMD_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 pattern_id;
+} WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_hdr; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_coap_tuple */
+    A_UINT64 tsf;     /* host and firmware sync tsf */
+    A_UINT32 src_ip;
+    A_UINT32 payload_len;
+} wmi_coap_tuple;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_BUF_INFO_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 pattern_id;
+    /** more_data will be set depending on the number of tuples need transmit */
+    A_UINT32 more_tuples;
+
+/* The below TLV (tag length value) parameters follow this fixed_param TLV:
+ *     wmi_coap_tuple coap_tuple[]; <-- Array of coap_tuple.
+ *     A_UINT32 payloads[] <-- the cached received CoAP messages.
+ *         The number of message payloads combined into the payloads[]
+ *         array matches the number of coap tuples.
+ *         The length of each message payload is specified by the
+ *         "payload_len" field in the corresponding coap_tuple.
+ *         The subsequent message payload starts at the next 4-byte aligned
+ *         position within payloads[].
+ *         For example, if there are 3 coap_tuples, with
+ *             coap_tuples[0].payload_len = 12
+ *             coap_tuples[1].payload_len = 23
+ *             coap_tuples[2].payload_len = 34
+ *         then msg 0 payload will be stored in payloads[0] - payloads[11]
+ *         message  1 payload will be stored in payloads[12] - payloads[34]
+ *         message  2 payload will be stored in payloads[36] - payloads[69]
+ */
+} WMI_WOW_COAP_BUF_INFO_EVENT_fixed_param;
+
 typedef struct wow_event_info_s {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WOW_EVENT_INFO_fixed_param  */
     A_UINT32 vdev_id;
@@ -31505,6 +31611,11 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_FLUSH_POLICY_CMDID);
+        WMI_RETURN_STRING(WMI_WOW_COAP_ADD_PATTERN_CMDID);
+        WMI_RETURN_STRING(WMI_WOW_COAP_DEL_PATTERN_CMDID);
+        WMI_RETURN_STRING(WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMDID);
+        WMI_RETURN_STRING(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID);
+        WMI_RETURN_STRING(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
