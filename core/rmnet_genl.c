@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * RMNET Data Generic Netlink
  *
- */
+*/
 
 #include "rmnet_genl.h"
 #include <net/sock.h>
@@ -159,7 +160,7 @@ void rmnet_boost_for_pid(pid_t pid, int boost_enable,
 				continue;
 
 			/* PID Match found */
-			rm_err("CORE_BOOST: enable boost for pid %d for %d ms",
+			rm_err("CORE_BOOST: enable boost for pid %d for %llu ms",
 			       pid, boost_period);
 			node_p->sched_boost_enable = boost_enable;
 			node_p->sched_boost_period_ms = boost_period;
@@ -349,7 +350,7 @@ int rmnet_core_genl_pid_boost_req_hdlr(struct sk_buff *skb_2,
 	u16 boost_pid_cnt = RMNET_CORE_GENL_MAX_PIDS;
 	u16 i = 0;
 
-	rm_err("%s", "CORE_GNL: %s", __func__);
+	rm_err("CORE_GNL: %s", __func__);
 
 	if (!info) {
 		rm_err("%s", "CORE_GNL: error - info is null");

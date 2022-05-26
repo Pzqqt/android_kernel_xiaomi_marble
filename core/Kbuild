@@ -6,6 +6,10 @@ ifeq ($(CONFIG_ARCH_SDXNIGHTJAR), y)
 ccflags-y	+= -DRMNET_TRACE_INCLUDE_LE
 endif
 
+ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+ccflags-y       += -Wframe-larger-than=2048
+endif
+
 obj-m += rmnet_core.o
 
 #core sources
