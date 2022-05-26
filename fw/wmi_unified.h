@@ -14216,6 +14216,13 @@ typedef enum {
          */
         WMI_VDEV_PARAM_MCAST_STEERING,                        /* 0x800E */
 
+        /*
+         * 0 - XPAN disabled
+         * 1 - XPAN Lossless audio profile
+         * 2 - XPAN Gaming profile
+         */
+        WMI_VDEV_PARAM_XPAN_PROFILE,                          /* 0x800F */
+
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
