@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -63,9 +63,11 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 	struct fw_scan_channels *freq_list;
 	struct wlan_objmgr_vdev *vdev;
 	struct wmi_pcl_chan_weights *weights;
+	struct wlan_objmgr_pdev *pdev;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t band_capability;
 	uint16_t i;
+	bool is_channel_allowed;
 
 	/*
 	 * If vdev_id is WLAN_UMAC_VDEV_ID_MAX, then PDEV pcl command
@@ -85,6 +87,13 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 						    WLAN_MLME_SB_ID);
 	if (!vdev) {
 		mlme_err("vdev object is NULL");
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("pdev object is NULL");
 		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
@@ -135,6 +144,13 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 		if ((band_capability == BIT(REG_BAND_2G) ||
 		     pcl_req->band_mask == BIT(REG_BAND_2G)) &&
 		    !WLAN_REG_IS_24GHZ_CH_FREQ(weights->saved_chan_list[i]))
+			weights->weighed_valid_list[i] =
+				WEIGHT_OF_DISALLOWED_CHANNELS;
+
+		is_channel_allowed =
+			policy_mgr_is_sta_chan_valid_for_connect_and_roam(
+					pdev, weights->saved_chan_list[i]);
+		if (!is_channel_allowed)
 			weights->weighed_valid_list[i] =
 				WEIGHT_OF_DISALLOWED_CHANNELS;
 	}
