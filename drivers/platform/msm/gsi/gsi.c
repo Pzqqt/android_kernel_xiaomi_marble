@@ -1405,6 +1405,7 @@ static int __gsi_request_msi_irq(unsigned long msi)
 
 static int __gsi_allocate_msis(void)
 {
+#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
 	int result = 0;
 	struct msi_desc *desc = NULL;
 	size_t size = 0;
@@ -1454,6 +1455,9 @@ err_free_msis:
 	memset(gsi_ctx->msi.allocated, 0, size);
 
 	return result;
+#else
+	return GSI_STATUS_SUCCESS;
+#endif
 }
 
 int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
@@ -1749,7 +1753,9 @@ err_free_msis:
 	if (gsi_ctx->msi.num) {
 		size_t size =
 			sizeof(unsigned long) * BITS_TO_LONGS(gsi_ctx->msi.num);
+#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
 		platform_msi_domain_free_irqs(gsi_ctx->dev);
+#endif
 		memset(gsi_ctx->msi.allocated, 0, size);
 	}
 
@@ -1856,8 +1862,10 @@ int gsi_deregister_device(unsigned long dev_hdl, bool force)
 	__gsi_config_glob_irq(gsi_ctx->per.ee, ~0, 0);
 	__gsi_config_gen_irq(gsi_ctx->per.ee, ~0, 0);
 
+#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
 	if (gsi_ctx->msi.num)
 		platform_msi_domain_free_irqs(gsi_ctx->dev);
+#endif
 
 	devm_free_irq(gsi_ctx->dev, gsi_ctx->per.irq, gsi_ctx);
 	gsi_unmap_base();
