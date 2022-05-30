@@ -241,36 +241,6 @@ ap_beacon_process(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 
 /* -------------------------------------------------------------------- */
 
-/**
- * get_operating_channel_width() - Get operating channel width
- * @stads - station entry.
- *
- * This function returns the operating channel width based on
- * the supported channel width entry.
- *
- * Return: tSirMacHTChannelWidth on success
- */
-static tSirMacHTChannelWidth get_operating_channel_width(tpDphHashNode stads)
-{
-	tSirMacHTChannelWidth ch_width = eHT_CHANNEL_WIDTH_20MHZ;
-
-	if (stads->vhtSupportedChannelWidthSet ==
-			WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
-		ch_width = eHT_CHANNEL_WIDTH_160MHZ;
-	else if (stads->vhtSupportedChannelWidthSet ==
-			WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ)
-		ch_width = eHT_CHANNEL_WIDTH_160MHZ;
-	else if (stads->vhtSupportedChannelWidthSet ==
-			WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ)
-		ch_width = eHT_CHANNEL_WIDTH_80MHZ;
-	else if (stads->htSupportedChannelWidthSet)
-		ch_width = eHT_CHANNEL_WIDTH_40MHZ;
-	else
-		ch_width = eHT_CHANNEL_WIDTH_20MHZ;
-
-	return ch_width;
-}
-
 /*
  * sch_bcn_process_sta() - Process the received beacon frame for sta
  * @mac_ctx:        mac_ctx
@@ -415,35 +385,6 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 	return true;
 }
 
-/**
- * update_nss() - Function to update NSS
- * @mac_ctx: pointer to Global Mac structure
- * @sta_ds: pointer to tpDphHashNode
- * @beacon: pointer to tpSchBeaconStruct
- * @session_entry: pointer to struct pe_session *
- * @mgmt_hdr: pointer to tpSirMacMgmtHdr
- *
- * function to update NSS
- *
- * Return: none
- */
-static void update_nss(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
-		       tpSchBeaconStruct beacon, struct pe_session *session_entry,
-		       tpSirMacMgmtHdr mgmt_hdr)
-{
-	if (sta_ds->vhtSupportedRxNss != (beacon->OperatingMode.rxNSS + 1)) {
-		if (session_entry->nss_forced_1x1) {
-			pe_debug("Not Updating NSS for special AP");
-			return;
-		}
-		sta_ds->vhtSupportedRxNss =
-			beacon->OperatingMode.rxNSS + 1;
-		lim_set_nss_change(mac_ctx, session_entry,
-			sta_ds->vhtSupportedRxNss,
-			mgmt_hdr->sa);
-	}
-}
-
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 static void
 sch_bcn_update_he_ies(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
@@ -499,7 +440,7 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 	bool skip_opmode_update = false;
 	uint8_t oper_mode;
 	uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
-	uint8_t ch_width = 0;
+	uint8_t ch_width = 0, ch_bw;
 
 	/*
 	 * Ignore opmode change during channel change The opmode will be updated
@@ -511,72 +452,10 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 	}
 
 	if (session->vhtCapability && bcn->OperatingMode.present) {
-		update_nss(mac_ctx, sta_ds, bcn, session, mac_hdr);
-		oper_mode = get_operating_channel_width(sta_ds);
-		if ((oper_mode == eHT_CHANNEL_WIDTH_80MHZ) &&
-		    (bcn->OperatingMode.chanWidth > eHT_CHANNEL_WIDTH_80MHZ))
-			skip_opmode_update = true;
-
-		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
-			/*
-			 * if channel bonding is disabled from INI do not
-			 * update the chan width
-			 */
-			pe_debug_rl("CB disabled skip bw update: old[%d] new[%d]",
-				    oper_mode,
-				    bcn->OperatingMode.chanWidth);
-			return;
-		}
-
-		if (!skip_opmode_update &&
-			((oper_mode != bcn->OperatingMode.chanWidth) ||
-			(sta_ds->vhtSupportedRxNss !=
-			(bcn->OperatingMode.rxNSS + 1)))) {
-			pe_debug("received OpMode Chanwidth %d",
-				 bcn->OperatingMode.chanWidth);
-			pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
-			       mac_hdr->sa[0], mac_hdr->sa[1],
-			       mac_hdr->sa[2], mac_hdr->sa[3],
-			       mac_hdr->sa[4], mac_hdr->sa[5]);
-
-			if ((bcn->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_160MHZ) &&
-				(fw_vht_ch_wd > eHT_CHANNEL_WIDTH_80MHZ)) {
-				pe_debug("Updating the CH Width to 160MHz");
-				sta_ds->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
-				sta_ds->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_40MHZ;
-				ch_width = eHT_CHANNEL_WIDTH_160MHZ;
-			} else if (bcn->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_80MHZ) {
-				pe_debug("Updating the CH Width to 80MHz");
-				sta_ds->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
-				sta_ds->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_40MHZ;
-				ch_width = eHT_CHANNEL_WIDTH_80MHZ;
-			} else if (bcn->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_40MHZ) {
-				pe_debug("Updating the CH Width to 40MHz");
-				sta_ds->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-				sta_ds->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_40MHZ;
-				ch_width = eHT_CHANNEL_WIDTH_40MHZ;
-			} else if (bcn->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_20MHZ) {
-				pe_debug("Updating the CH Width to 20MHz");
-				sta_ds->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-				sta_ds->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_20MHZ;
-				ch_width = eHT_CHANNEL_WIDTH_20MHZ;
-			}
-			lim_check_vht_op_mode_change(mac_ctx, session,
-				ch_width, mac_hdr->sa);
-			update_nss(mac_ctx, sta_ds, bcn, session, mac_hdr);
-		}
+		lim_update_nss(mac_ctx, sta_ds, bcn->OperatingMode.rxNSS,
+			       session);
+		lim_update_channel_width(mac_ctx, sta_ds, session,
+				     bcn->OperatingMode.chanWidth, &ch_bw);
 		return;
 	}
 

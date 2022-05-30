@@ -473,6 +473,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEVHTOperation VHTOperation;
 	tDot11fIEExtCap ExtCap;
+	tDot11fIEOperatingMode oper_mode_ntf;
 	struct qos_map_set QosMapSet;
 	tDot11fIETimeoutInterval TimeoutInterval;
 	tDot11fIERRMEnabledCap rrm_caps;

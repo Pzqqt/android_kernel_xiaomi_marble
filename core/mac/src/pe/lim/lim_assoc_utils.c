@@ -3474,30 +3474,30 @@ void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
  * lim_update_vht_oper_assoc_resp : Update VHT Operations in assoc response.
  * @mac_ctx Pointer to Global MAC structure
  * @pAddBssParams: parameters required for add bss params.
+ * @vht_caps: VHT CAP IE to update.
  * @vht_oper: VHT Operations to update.
+ * @ht_info: HT Info IE to update.
  * @pe_session : session entry.
  *
  * Return : void
  */
 static void lim_update_vht_oper_assoc_resp(struct mac_context *mac_ctx,
 		struct bss_params *pAddBssParams,
-		tDot11fIEVHTOperation *vht_oper, struct pe_session *pe_session)
+		tDot11fIEVHTCaps *vht_caps, tDot11fIEVHTOperation *vht_oper,
+		tDot11fIEHTInfo *ht_info, struct pe_session *pe_session)
 {
-	int16_t ccfs0 = vht_oper->chan_center_freq_seg0;
-	int16_t ccfs1 = vht_oper->chan_center_freq_seg1;
-	int16_t offset = abs((ccfs0 -  ccfs1));
 	uint8_t ch_width;
 
 	ch_width = pAddBssParams->ch_width;
-	if (vht_oper->chanWidth && pe_session->ch_width) {
-		ch_width = CH_WIDTH_80MHZ;
-		if (ccfs1 && offset == 8)
-			ch_width = CH_WIDTH_160MHZ;
-		else if (ccfs1 && offset > 16)
-			ch_width = CH_WIDTH_80P80MHZ;
-	}
+
+	if (vht_oper->chanWidth == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ &&
+	    pe_session->ch_width)
+		ch_width =
+			lim_get_vht_ch_width(vht_caps, vht_oper, ht_info) + 1;
+
 	if (ch_width > pe_session->ch_width)
 		ch_width = pe_session->ch_width;
+
 	pAddBssParams->ch_width = ch_width;
 	pAddBssParams->staContext.ch_width = ch_width;
 }
@@ -3593,11 +3593,34 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			lim_get_ht_capability(mac,
 					      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
 					      pe_session);
+
 		lim_sta_add_bss_update_ht_parameter(bssDescription->chan_freq,
 						    &pAssocRsp->HTCaps,
 						    &pAssocRsp->HTInfo,
 						    chan_width_support,
 						    pAddBssParams);
+		/**
+		 * in limExtractApCapability function intersection of FW
+		 * advertised channel width and AP advertised channel
+		 * width has been taken into account for calculating
+		 * pe_session->ch_width
+		 */
+
+		if (chan_width_support &&
+		    ((pAssocRsp->HTCaps.present &&
+		      pAssocRsp->HTCaps.supportedChannelWidthSet) ||
+		    (pBeaconStruct->HTCaps.present &&
+		     pBeaconStruct->HTCaps.supportedChannelWidthSet))) {
+			pAddBssParams->ch_width =
+						pe_session->ch_width;
+			pAddBssParams->staContext.ch_width =
+						pe_session->ch_width;
+		} else {
+			pAddBssParams->ch_width = CH_WIDTH_20MHZ;
+			pAddBssParams->staContext.ch_width = CH_WIDTH_20MHZ;
+			if (!vht_cap_info->enable_txbf_20mhz)
+				pAddBssParams->staContext.vhtTxBFCapable = 0;
+		}
 	}
 
 	if (pe_session->vhtCapability && (pAssocRsp->VHTCaps.present)) {
@@ -3617,7 +3640,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	if (pAddBssParams->vhtCapable) {
 		if (vht_oper)
 			lim_update_vht_oper_assoc_resp(mac, pAddBssParams,
-					vht_oper, pe_session);
+						       vht_caps, vht_oper,
+						       &pAssocRsp->HTInfo,
+						       pe_session);
 		if (vht_caps)
 			lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					vht_caps, pe_session);
@@ -3751,26 +3776,6 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 						  pAddBssParams,
 						  pBeaconStruct,
 						  pAssocRsp);
-		}
-
-		/*
-		 * in limExtractApCapability function intersection of FW
-		 * advertised channel width and AP advertised channel
-		 * width has been taken into account for calculating
-		 * pe_session->ch_width
-		 */
-		if (chan_width_support &&
-		    ((pAssocRsp->HTCaps.supportedChannelWidthSet) ||
-		    (pBeaconStruct->HTCaps.supportedChannelWidthSet))) {
-			pAddBssParams->ch_width =
-					pe_session->ch_width;
-			pAddBssParams->staContext.ch_width =
-					pe_session->ch_width;
-		} else {
-			pAddBssParams->ch_width = CH_WIDTH_20MHZ;
-			sta_context->ch_width =	CH_WIDTH_20MHZ;
-			if (!vht_cap_info->enable_txbf_20mhz)
-				sta_context->vhtTxBFCapable = 0;
 		}
 
 		pAddBssParams->staContext.mimoPS =

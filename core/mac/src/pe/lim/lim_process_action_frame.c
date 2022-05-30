@@ -244,10 +244,7 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 	uint32_t status;
 	tpDphHashNode sta_ptr;
 	uint16_t aid;
-	uint8_t oper_mode;
-	uint8_t cb_mode;
 	uint8_t ch_bw = 0;
-	uint8_t skip_opmode_update = false;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -287,91 +284,17 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 		goto end;
 	}
 
-	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
-		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
-	else
-		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;
-	/*
-	 * Do not update the channel bonding mode if channel bonding
-	 * mode is disabled in INI.
-	 */
-	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
-		pe_debug("channel bonding disabled");
-		goto update_nss;
-	}
+	lim_update_nss(mac_ctx, sta_ptr,
+		       operating_mode_frm->OperatingMode.rxNSS,
+		       session);
 
-	if (sta_ptr->htSupportedChannelWidthSet) {
-		if (WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ <
-				sta_ptr->vhtSupportedChannelWidthSet)
-			oper_mode = eHT_CHANNEL_WIDTH_160MHZ;
-		else
-			oper_mode = sta_ptr->vhtSupportedChannelWidthSet + 1;
-	} else {
-		oper_mode = eHT_CHANNEL_WIDTH_20MHZ;
-	}
-
-	if ((oper_mode == eHT_CHANNEL_WIDTH_80MHZ) &&
-			(operating_mode_frm->OperatingMode.chanWidth >
-				eHT_CHANNEL_WIDTH_80MHZ))
-		skip_opmode_update = true;
-
-	if (!skip_opmode_update && (oper_mode !=
-		operating_mode_frm->OperatingMode.chanWidth)) {
-		uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
-
-		pe_debug("received Chanwidth: %d",
-			 operating_mode_frm->OperatingMode.chanWidth);
-
-		pe_debug(" MAC: %0x:%0x:%0x:%0x:%0x:%0x",
-			mac_hdr->sa[0], mac_hdr->sa[1], mac_hdr->sa[2],
-			mac_hdr->sa[3], mac_hdr->sa[4], mac_hdr->sa[5]);
-
-		if (operating_mode_frm->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_160MHZ
-				&& (fw_vht_ch_wd >= eHT_CHANNEL_WIDTH_160MHZ)) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_160MHZ;
-		} else if (operating_mode_frm->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_80MHZ) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_80MHZ;
-		} else if (operating_mode_frm->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_40MHZ) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_40MHZ;
-		} else if (operating_mode_frm->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_20MHZ) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_20MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_20MHZ;
-		}
-		lim_check_vht_op_mode_change(mac_ctx, session, ch_bw,
-					     mac_hdr->sa);
-	}
-
-update_nss:
-	if (sta_ptr->vhtSupportedRxNss !=
-			(operating_mode_frm->OperatingMode.rxNSS + 1)) {
-		sta_ptr->vhtSupportedRxNss =
-			operating_mode_frm->OperatingMode.rxNSS + 1;
-		lim_set_nss_change(mac_ctx, session, sta_ptr->vhtSupportedRxNss,
-			mac_hdr->sa);
-	}
-	wlan_son_deliver_opmode(session->vdev,
-				ch_bw,
-				sta_ptr->vhtSupportedRxNss,
-				mac_hdr->sa);
+	if (lim_update_channel_width(mac_ctx, sta_ptr, session,
+				 operating_mode_frm->OperatingMode.chanWidth,
+				 &ch_bw))
+		wlan_son_deliver_opmode(session->vdev,
+					ch_bw,
+					sta_ptr->vhtSupportedRxNss,
+					mac_hdr->sa);
 
 end:
 	qdf_mem_free(operating_mode_frm);
