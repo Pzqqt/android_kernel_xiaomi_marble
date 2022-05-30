@@ -12756,6 +12756,72 @@ static void dp_mark_first_wakeup_packet(struct cdp_soc_t *soc_hdl,
 }
 #endif
 
+#ifdef CONNECTIVITY_PKTLOG
+/**
+ * dp_register_packetdump_callback() - registers
+ *  tx data packet, tx mgmt. packet and rx data packet
+ *  dump callback handler.
+ *
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ * @dp_tx_packetdump_cb: tx packetdump cb
+ * @dp_rx_packetdump_cb: rx packetdump cb
+ *
+ * This function is used to register tx data pkt, tx mgmt.
+ * pkt and rx data pkt dump callback
+ *
+ * Return: None
+ *
+ */
+static inline
+void dp_register_packetdump_callback(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				     ol_txrx_pktdump_cb dp_tx_packetdump_cb,
+				     ol_txrx_pktdump_cb dp_rx_packetdump_cb)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL!");
+		return;
+	}
+
+	pdev->dp_tx_packetdump_cb = dp_tx_packetdump_cb;
+	pdev->dp_rx_packetdump_cb = dp_rx_packetdump_cb;
+}
+
+/**
+ * dp_deregister_packetdump_callback() - deregidters
+ *  tx data packet, tx mgmt. packet and rx data packet
+ *  dump callback handler
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ *
+ * This function is used to deregidter tx data pkt.,
+ * tx mgmt. pkt and rx data pkt. dump callback
+ *
+ * Return: None
+ *
+ */
+static inline
+void dp_deregister_packetdump_callback(struct cdp_soc_t *soc_hdl,
+				       uint8_t pdev_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL!");
+		return;
+	}
+
+	pdev->dp_tx_packetdump_cb = NULL;
+	pdev->dp_rx_packetdump_cb = NULL;
+}
+#endif
+
 #ifdef DP_PEER_EXTENDED_API
 static struct cdp_misc_ops dp_ops_misc = {
 #ifdef FEATURE_WLAN_TDLS
@@ -12788,6 +12854,10 @@ static struct cdp_misc_ops dp_ops_misc = {
 	.get_tx_rings_grp_bitmap = dp_get_tx_rings_grp_bitmap,
 #ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
 	.mark_first_wakeup_packet = dp_mark_first_wakeup_packet,
+#endif
+#ifdef CONNECTIVITY_PKTLOG
+	.register_pktdump_cb = dp_register_packetdump_callback,
+	.unregister_pktdump_cb = dp_deregister_packetdump_callback,
 #endif
 };
 #endif

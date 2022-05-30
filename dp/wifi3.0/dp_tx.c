@@ -4370,6 +4370,7 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 
 	dp_tx_update_peer_stats(tx_desc, ts, peer, ring_id);
 	dp_tx_update_peer_ext_stats(peer, tx_desc, ts->tid, ring_id);
+	dp_tx_send_pktlog(soc, vdev->pdev, nbuf, dp_status);
 
 #ifdef QCA_SUPPORT_RDK_STATS
 	if (soc->rdkstats_enabled)
