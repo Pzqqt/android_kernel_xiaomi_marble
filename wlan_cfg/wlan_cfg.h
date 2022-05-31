@@ -247,6 +247,8 @@ struct wlan_srng_cfg {
  * @vdev_stats_hw_offload_config: HW vdev stats config
  * @vdev_stats_hw_offload_timer: HW vdev stats timer duration
  * @num_rxdma_status_rings_per_pdev: Num RXDMA status rings
+ * @mpdu_retry_threshold_1: MPDU retry threshold 1 to increment tx bad count
+ * @mpdu_retry_threshold_1: MPDU retry threshold 2 to increment tx bad count
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -406,6 +408,8 @@ struct wlan_cfg_dp_soc_ctxt {
 #endif
 	uint8_t num_rxdma_dst_rings_per_pdev;
 	uint8_t num_rxdma_status_rings_per_pdev;
+	uint8_t mpdu_retry_threshold_1;
+	uint8_t mpdu_retry_threshold_2;
 };
 
 /**
