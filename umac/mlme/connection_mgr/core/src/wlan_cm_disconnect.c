@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -382,11 +382,21 @@ QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	struct cm_req *cm_req;
 	QDF_STATUS status = QDF_STATUS_E_NOSUPPORT;
 
-	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
-	if (!cm_req)
-		return QDF_STATUS_E_INVAL;
-
 	cm_ctx->active_cm_id = *cm_id;
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req) {
+		/*
+		 * Remove the command from serialization active queue, if
+		 * disconnect req was not found, to avoid active cmd timeout.
+		 * This can happen if a thread tried to flush the pending
+		 * disconnect request and while doing so, it removed the
+		 * CM pending request, but before it tried to remove pending
+		 * command from serialization, the command becomes active in
+		 * another thread.
+		 */
+		cm_remove_cmd_from_serialization(cm_ctx, *cm_id);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) == QDF_STA_MODE)
 		status = mlme_cm_rso_stop_req(cm_ctx->vdev);

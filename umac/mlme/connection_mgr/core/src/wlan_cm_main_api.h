@@ -724,6 +724,18 @@ bool cm_is_cm_id_current_candidate_single_pmk(struct cnx_mgr *cm_ctx,
 #endif
 
 /**
+ * cm_remove_cmd_from_serialization() - Remove requests matching cm id
+ * from serialization.
+ * @cm_ctx: connection manager context
+ * @cm_id: cmd id to remove from serialization
+ *
+ * Context: Can be called from any context.
+ *
+ * Return: void
+ */
+void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
  * cm_flush_pending_request() - Flush all pending requests matching flush prefix
  * @cm_ctx: connection manager context
  * @prefix: prefix for the type of command to flush
