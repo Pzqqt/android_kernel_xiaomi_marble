@@ -233,9 +233,10 @@
  * 3.106 Add HTT_T2H_PPDU_ID_FMT_IND def.
  * 3.107 Add traffic_end_indication bitfield in htt_tx_msdu_desc_ext2_t.
  * 3.108 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP def.
+ * 3.109 Add HTT_T2H RX_ADDBA_EXTN,RX_DELBA_EXTN defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 108
+#define HTT_CURRENT_VERSION_MINOR 109
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -9904,6 +9905,8 @@ enum htt_t2h_msg_type {
         HTT_T2H_SAWF_MSDUQ_INFO_IND                = 0x2e, /* alias */
     HTT_T2H_MSG_TYPE_STREAMING_STATS_IND           = 0x2f,
     HTT_T2H_PPDU_ID_FMT_IND                        = 0x30,
+    HTT_T2H_MSG_TYPE_RX_ADDBA_EXTN                 = 0x31,
+    HTT_T2H_MSG_TYPE_RX_DELBA_EXTN                 = 0x32,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -13400,6 +13403,156 @@ typedef enum {
     (((word) & HTT_RX_DELBA_WIN_SIZE_M) >> HTT_RX_DELBA_WIN_SIZE_S)
 
 #define HTT_RX_DELBA_BYTES 4
+
+
+/**
+ * @brief target -> host rx ADDBA / DELBA message definitions
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_RX_ADDBA_EXTN
+ *
+ * @details
+ * The following diagram shows the format of the rx ADDBA extn message sent
+ * from the target to the host:
+ *
+ * |31                      20|19  16|15   13|12      8|7               0|
+ * |---------------------------------------------------------------------|
+ * |          peer ID         |  TID |     reserved    |     msg type    |
+ * |---------------------------------------------------------------------|
+ * |           reserved                      |      window size          |
+ * |---------------------------------------------------------------------|
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_RX_DELBA_EXTN
+ *
+ * The following diagram shows the format of the rx DELBA message sent
+ * from the target to the host:
+ *
+ * |31                      20|19  16|15   13|12   10|9 8|7             0|
+ * |---------------------------------------------------------------------|
+ * |          peer ID         |  TID |   reserved    | IR|   msg type    |
+ * |---------------------------------------------------------------------|
+ * |                     reserved            |      window size          |
+ * |---------------------------------------------------------------------|
+ *
+ * The following field definitions describe the format of the rx ADDBA
+ * and DELBA messages sent from the target to the host.
+ *   - MSG_TYPE
+ *     Bits 7:0
+ *     Purpose: identifies this as an rx ADDBA or DELBA message
+ *     Value: ADDBA -> 0x31 (HTT_T2H_MSG_TYPE_RX_ADDBA_EXTN),
+ *            DELBA -> 0x32 (HTT_T2H_MSG_TYPE_RX_DELBA_EXTN)
+ *   - IR (initiator / recipient)
+ *     Bits 9:8 (DELBA only)
+ *     Purpose: specify whether the DELBA handshake was initiated by the
+ *         local STA/AP, or by the peer STA/AP
+ *     Value:
+ *         0 - unspecified
+ *         1 - initiator (a.k.a. originator)
+ *         2 - recipient (a.k.a. responder)
+ *         3 - unused / reserved
+ *     Value:
+ *         block ack window length specified by the received ADDBA/DELBA
+ *         management message.
+ *   - TID
+ *     Bits 19:16
+ *     Purpose: Specifies which traffic identifier the ADDBA / DELBA is for.
+ *     Value:
+ *         TID specified by the received ADDBA or DELBA management message.
+ *   - PEER_ID
+ *     Bits 31:20
+ *     Purpose: Identifies which peer sent the ADDBA / DELBA.
+ *     Value:
+ *         ID (hash value) used by the host for fast, direct lookup of
+ *         host SW peer info, including rx reorder states.
+ *  == DWORD 1
+ *   - WIN_SIZE
+ *     Bits 12:0 for ADDBA, bits 12:0 for DELBA
+ *     Purpose: Specifies the length of the block ack window (max = 8191).
+ */
+
+#define HTT_RX_ADDBA_EXTN_TID_M       0xf0000
+#define HTT_RX_ADDBA_EXTN_TID_S       16
+#define HTT_RX_ADDBA_EXTN_PEER_ID_M   0xfff00000
+#define HTT_RX_ADDBA_EXTN_PEER_ID_S   20
+
+/*--- Dword 0 ---*/
+#define HTT_RX_ADDBA_EXTN_TID_SET(word, value)                     \
+    do {                                                    \
+        HTT_CHECK_SET_VAL(HTT_RX_ADDBA_EXTN_TID, value);    \
+        (word) |= (value)  << HTT_RX_ADDBA_EXTN_TID_S;      \
+    } while (0)
+#define HTT_RX_ADDBA_EXTN_TID_GET(word)                             \
+    (((word) & HTT_RX_ADDBA_EXTN_TID_M) >> HTT_RX_ADDBA_EXTN_TID_S)
+
+#define HTT_RX_ADDBA_EXTN_PEER_ID_SET(word, value)                   \
+    do {                                                     \
+        HTT_CHECK_SET_VAL(HTT_RX_ADDBA_EXTN_PEER_ID, value); \
+        (word) |= (value)  << HTT_RX_ADDBA_EXTN_PEER_ID_S;   \
+    } while (0)
+#define HTT_RX_ADDBA_EXTN_PEER_ID_GET(word) \
+    (((word) & HTT_RX_ADDBA_EXTN_PEER_ID_M) >> HTT_RX_ADDBA_EXTN_PEER_ID_S)
+
+/*--- Dword 1 ---*/
+#define HTT_RX_ADDBA_EXTN_WIN_SIZE_M  0x1fff
+#define HTT_RX_ADDBA_EXTN_WIN_SIZE_S  0
+
+#define HTT_RX_ADDBA_EXTN_WIN_SIZE_SET(word, value)           \
+    do {                                                      \
+        HTT_CHECK_SET_VAL(HTT_RX_ADDBA_EXTN_WIN_SIZE, value); \
+        (word) |= (value)  << HTT_RX_ADDBA_EXTN_WIN_SIZE_S;   \
+    } while (0)
+
+#define HTT_RX_ADDBA_EXTN_WIN_SIZE_GET(word) \
+    (((word) & HTT_RX_ADDBA_WIN_SIZE_M) >> HTT_RX_ADDBA_WIN_SIZE_S)
+
+#define HTT_RX_ADDBA_EXTN_BYTES 8
+
+
+#define HTT_RX_DELBA_EXTN_INITIATOR_M   0x00000300
+#define HTT_RX_DELBA_EXTN_INITIATOR_S   8
+#define HTT_RX_DELBA_EXTN_TID_M         0xf0000
+#define HTT_RX_DELBA_EXTN_TID_S         16
+#define HTT_RX_DELBA_EXTN_PEER_ID_M     0xfff00000
+#define HTT_RX_DELBA_EXTN_PEER_ID_S     20
+
+/*--- Dword 0 ---*/
+#define HTT_RX_DELBA_INITIATOR_SET(word, value)                    \
+    do {                                                       \
+        HTT_CHECK_SET_VAL(HTT_RX_DELBA_INITIATOR, value);      \
+        (word) |= (value)  << HTT_RX_DELBA_INITIATOR_S;        \
+    } while (0)
+#define HTT_RX_DELBA_INITIATOR_GET(word) \
+    (((word) & HTT_RX_DELBA_INITIATOR_M) >> HTT_RX_DELBA_INITIATOR_S)
+
+#define HTT_RX_DELBA_EXTN_TID_SET(word, value)                       \
+    do {                                                  \
+        HTT_CHECK_SET_VAL(HTT_RX_DELBA_EXTN_TID, value);  \
+        (word) |= (value)  << HTT_RX_DELBA_EXTN_TID_S;    \
+    } while (0)
+#define HTT_RX_DELBA_EXTN_TID_GET(word) \
+    (((word) & HTT_RX_DELBA_EXTN_TID_M) >> HTT_RX_DELBA_EXTN_TID_S)
+
+#define HTT_RX_DELBA_EXTN_PEER_ID_SET(word, value)                        \
+    do {                                                      \
+        HTT_CHECK_SET_VAL(HTT_RX_DELBA_EXTN_PEER_ID, value);  \
+        (word) |= (value)  << HTT_RX_DELBA_EXTN_PEER_ID_S;    \
+    } while (0)
+#define HTT_RX_DELBA_EXTN_PEER_ID_GET(word) \
+    (((word) & HTT_RX_DELBA_EXTN_PEER_ID_M) >> HTT_RX_DELBA_EXTN_PEER_ID_S)
+
+/*--- Dword 1 ---*/
+#define HTT_RX_DELBA_EXTN_WIN_SIZE_M    0x1fff
+#define HTT_RX_DELBA_EXTN_WIN_SIZE_S    0
+
+#define HTT_RX_DELBA_EXTN_WIN_SIZE_SET(word, value)                     \
+    do {                                                            \
+        HTT_CHECK_SET_VAL(HTT_RX_DELBA_EXTN_WIN_SIZE, value);       \
+        (word) |= (value)  << HTT_RX_DELBA_EXTN_WIN_SIZE_S;         \
+    } while (0)
+#define HTT_RX_DELBA_EXTN_WIN_SIZE_GET(word) \
+    (((word) & HTT_RX_DELBA_EXTN_WIN_SIZE_M) >> HTT_RX_DELBA_EXTN_WIN_SIZE_S)
+
+#define HTT_RX_DELBA_EXTN_BYTES 8
+
 
 /**
  * @brief tx queue group information element definition
