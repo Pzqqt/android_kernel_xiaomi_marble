@@ -441,8 +441,8 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 	uint8_t oper_mode;
 	uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
 	uint8_t ch_width = 0, ch_bw;
-	tDot11fIEVHTCaps *vht_caps;
-	tDot11fIEVHTOperation *vht_op;
+	tDot11fIEVHTCaps *vht_caps = NULL;
+	tDot11fIEVHTOperation *vht_op = NULL;
 	uint8_t bcn_vht_chwidth = 0;
 
 	/*
@@ -470,7 +470,7 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 		vht_op = &bcn->vendor_vht_ie.VHTOperation;
 	}
 
-	if (!(session->vhtCapability && vht_op->present))
+	if (!(session->vhtCapability && (vht_op && vht_op->present)))
 		return;
 
 	bcn_vht_chwidth = lim_get_vht_ch_width(&bcn->VHTCaps,
