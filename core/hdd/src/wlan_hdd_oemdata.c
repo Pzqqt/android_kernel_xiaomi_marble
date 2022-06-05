@@ -1256,6 +1256,11 @@ __wlan_hdd_cfg80211_oem_data_handler(struct wiphy *wiphy,
 		.dealloc = wlan_hdd_free_oem_data,
 	};
 
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
