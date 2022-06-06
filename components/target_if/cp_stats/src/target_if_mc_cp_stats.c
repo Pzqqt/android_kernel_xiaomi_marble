@@ -696,11 +696,17 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 		bcn_snr = vdev_stats->vdev_snr.bcn_snr;
 		dat_snr = vdev_stats->vdev_snr.dat_snr;
 		ev->vdev_summary_stats[i].vdev_id = vdev_stats->vdev_id;
-
-		cp_stats_debug("vdev %d SNR bcn: %d data: %d",
-			       ev->vdev_summary_stats[i].vdev_id, bcn_snr,
-			       dat_snr);
-
+		/*bcn_snr parameter can come as RSSi/SNR from the FW depending
+		  on whether FW supports the RSSI reporting or not */
+		if (!db2dbm_enabled) {
+			cp_stats_debug("vdev %d SNR bcn: %d data: %d",
+					ev->vdev_summary_stats[i].vdev_id,
+					bcn_snr, dat_snr);
+		} else {
+			cp_stats_debug("vdev %d RSSI bcn: %d data: %d",
+					ev->vdev_summary_stats[i].vdev_id,
+					bcn_snr, dat_snr);
+		}
 		for (j = 0; j < 4; j++) {
 			ev->vdev_summary_stats[i].stats.tx_frm_cnt[j] =
 					vdev_stats->tx_frm_cnt[j];
