@@ -721,7 +721,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			status =
 				policy_mgr_get_sap_mandatory_channel(
 					mac_ctx->psoc, sap_ch_freq,
-					&intf_ch_freq);
+					&intf_ch_freq, vdev_id);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
 		}

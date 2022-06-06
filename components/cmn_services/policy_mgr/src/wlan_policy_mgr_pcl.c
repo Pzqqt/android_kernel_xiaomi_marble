@@ -2686,13 +2686,15 @@ update_pcl:
 QDF_STATUS
 policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 				     uint32_t sap_ch_freq,
-				     uint32_t *intf_ch_freq)
+				     uint32_t *intf_ch_freq,
+				     uint8_t vdev_id)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
 	uint32_t i;
 	uint32_t sap_new_freq;
+	qdf_freq_t user_config_freq = 0;
 	bool sta_sap_scc_on_indoor_channel =
 		 policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 
@@ -2778,6 +2780,8 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	sap_new_freq = pcl.pcl_list[0];
+	user_config_freq = policy_mgr_get_user_config_sap_freq(psoc, vdev_id);
+
 	for (i = 0; i < pcl.pcl_len; i++) {
 		/* When sta_sap_scc_on_indoor_channel is enabled,
 		 * and if pcl contains SCC channel, then STA must
@@ -2792,7 +2796,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 			goto update_freq;
 		}
 
-		if (pcl.pcl_list[i] ==  pm_ctx->user_config_sap_ch_freq) {
+		if (user_config_freq && (pcl.pcl_list[i] == user_config_freq)) {
 			sap_new_freq = pcl.pcl_list[i];
 			policy_mgr_debug("Prefer starting SAP on user configured channel:%d",
 					 sap_ch_freq);

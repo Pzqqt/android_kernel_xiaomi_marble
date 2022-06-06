@@ -1008,8 +1008,10 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 
 	session->access_policy_vendor_ie = NULL;
 
-	if (LIM_IS_AP_ROLE(session))
+	if (LIM_IS_AP_ROLE(session)) {
 		lim_check_and_reset_protection_params(mac_ctx);
+		wlan_set_sap_user_config_freq(session->vdev, 0);
+	}
 
 	session->user_edca_set = 0;
 
