@@ -1331,6 +1331,7 @@ dp_rx_reo_err_entry_process(struct dp_soc *soc,
 	QDF_STATUS status;
 	bool ret, is_pn_check_needed;
 	uint8_t rx_desc_pool_id;
+	hal_ring_handle_t hal_ring_hdl = soc->reo_exception_ring.hal_srng;
 
 	peer_id = dp_rx_peer_metadata_peer_id_get(soc,
 					       mpdu_desc_info->peer_meta_data);
@@ -1346,12 +1347,26 @@ more_msdu_link_desc:
 						msdu_list.sw_cookie[i]);
 
 		qdf_assert_always(rx_desc);
-
-		rx_desc_pool_id = rx_desc->pool_id;
-		/* all buffers from a MSDU link belong to same pdev */
-		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc_pool_id);
-
 		nbuf = rx_desc->nbuf;
+
+		/*
+		 * this is a unlikely scenario where the host is reaping
+		 * a descriptor which it already reaped just a while ago
+		 * but is yet to replenish it back to HW.
+		 * In this case host will dump the last 128 descriptors
+		 * including the software descriptor rx_desc and assert.
+		 */
+		if (qdf_unlikely(!rx_desc->in_use) ||
+		    qdf_unlikely(!nbuf)) {
+			DP_STATS_INC(soc, rx.err.hal_reo_dest_dup, 1);
+			dp_info_rl("Reaping rx_desc not in use!");
+			dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
+						   ring_desc, rx_desc);
+			/* ignore duplicate RX desc and continue to process */
+			/* Pop out the descriptor */
+			continue;
+		}
+
 		ret = dp_rx_desc_paddr_sanity_check(rx_desc,
 						    msdu_list.paddr[i]);
 		if (!ret) {
@@ -1359,6 +1374,10 @@ more_msdu_link_desc:
 			rx_desc->in_err_state = 1;
 			continue;
 		}
+
+		rx_desc_pool_id = rx_desc->pool_id;
+		/* all buffers from a MSDU link belong to same pdev */
+		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc_pool_id);
 
 		rx_desc_pool = &soc->rx_desc_buf[rx_desc_pool_id];
 		dp_ipa_rx_buf_smmu_mapping_lock(soc);
