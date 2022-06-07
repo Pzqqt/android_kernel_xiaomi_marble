@@ -3173,11 +3173,12 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
-static inline uint32_t
+static inline void
 dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			hal_rxdma_desc_t rxdma_dst_ring_desc,
 			union dp_rx_desc_list_elem_t **head,
-			union dp_rx_desc_list_elem_t **tail)
+			union dp_rx_desc_list_elem_t **tail,
+			uint32_t *rx_bufs_used)
 {
 	void *rx_msdu_link_desc;
 	qdf_nbuf_t msdu;
@@ -3185,7 +3186,7 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct hal_rx_msdu_list msdu_list;
 	uint16_t num_msdus;
 	struct hal_buf_info buf_info;
-	uint32_t rx_bufs_used = 0, msdu_cnt, i;
+	uint32_t msdu_cnt, i;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	struct rx_desc_pool *rx_desc_pool;
 	struct dp_rx_desc *rx_desc;
@@ -3252,7 +3253,7 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				dp_rx_buffer_pool_nbuf_free(soc, msdu,
 							    rx_desc->pool_id);
-				rx_bufs_used++;
+				rx_bufs_used[rx_desc->pool_id]++;
 				dp_rx_add_to_free_desc_list(head,
 							    tail, rx_desc);
 			}
@@ -3272,8 +3273,6 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					rx_link_buf_info,
 				       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
 	} while (buf_info.paddr);
-
-	return rx_bufs_used;
 }
 
 /*
@@ -3303,10 +3302,11 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 	struct hal_buf_info buf_info = {0};
 	struct dp_rx_desc *rx_desc = NULL;
 	struct rx_desc_pool *rx_desc_pool;
-	uint32_t rx_bufs_reaped = 0;
+	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = {0};
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	uint8_t pool_id;
+	uint8_t mac_id;
 
 	hal_rx_reo_buf_paddr_get(soc->hal_soc, hal_desc, &buf_info);
 
@@ -3345,25 +3345,27 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 						    &tail,
 						    rx_desc);
 
-			rx_bufs_reaped++;
+			rx_bufs_reaped[rx_desc->pool_id]++;
 		}
 	} else if (buf_type == HAL_WBM_RELEASE_RING_2_DESC_TYPE) {
-		rx_bufs_reaped = dp_wbm_int_err_mpdu_pop(soc, pool_id,
-							 hal_desc,
-							 &head, &tail);
+		dp_wbm_int_err_mpdu_pop(soc, pool_id, hal_desc,
+					&head, &tail, rx_bufs_reaped);
 	}
 
-	if (rx_bufs_reaped) {
+	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		struct rx_desc_pool *rx_desc_pool;
 		struct dp_srng *dp_rxdma_srng;
 
-		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
-		dp_rxdma_srng = &soc->rx_refill_buf_ring[pool_id];
-		rx_desc_pool = &soc->rx_desc_buf[pool_id];
+		if (!rx_bufs_reaped[mac_id])
+			continue;
 
-		dp_rx_buffers_replenish(soc, pool_id, dp_rxdma_srng,
+		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
+		dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
+		rx_desc_pool = &soc->rx_desc_buf[mac_id];
+
+		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
 					rx_desc_pool,
-					rx_bufs_reaped,
+					rx_bufs_reaped[mac_id],
 					&head, &tail);
 	}
 }
