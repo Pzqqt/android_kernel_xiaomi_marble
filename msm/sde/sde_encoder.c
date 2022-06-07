@@ -2963,6 +2963,10 @@ void sde_encoder_virt_restore(struct drm_encoder *drm_enc)
 		sde_enc->cur_master->ops.restore(sde_enc->cur_master);
 
 	_sde_encoder_virt_enable_helper(drm_enc);
+
+	if (sde_enc->cur_master->ops.reset_tearcheck_rd_ptr)
+		sde_enc->cur_master->ops.reset_tearcheck_rd_ptr(sde_enc->cur_master);
+
 	sde_encoder_control_te(drm_enc, true);
 }
 
