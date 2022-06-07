@@ -31,8 +31,10 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <cstring>
 
 #include "Filtering.h"
+#include "Constants.h"
 
 const char* Filtering::DEVICE_NAME = "/dev/ipa";
 
@@ -93,6 +95,71 @@ bool Filtering::DeleteFilteringRule(struct ipa_ioc_del_flt_rule *ruleTable)
 	}
 
 	printf("%s(), Deleted Filtering rule in table %p\n", __FUNCTION__, ruleTable);
+	return true;
+}
+
+bool Filtering::AddEoGREMap(
+	enum ipa_ip_type     iptype,
+	union ipa_ip_params& ipaddrs )
+{
+	struct ipa_ioc_eogre_info einfo;
+
+	int retval = 0;
+
+	memset(&einfo, 0, sizeof(einfo));
+
+	einfo.ipgre_info.iptype = iptype;
+
+	if ( einfo.ipgre_info.iptype == IPA_IP_v4  )
+	{
+		einfo.ipgre_info.ipv4_src = ipaddrs.v4.src_addr;
+		einfo.ipgre_info.ipv4_dst = ipaddrs.v4.dst_addr;
+	}
+	else
+	{
+		memcpy(
+			&einfo.ipgre_info.ipv6_src,
+			&ipaddrs.v6.src_addr,
+			sizeof(einfo.ipgre_info.ipv6_src));
+		memcpy(
+			&einfo.ipgre_info.ipv6_dst,
+			&ipaddrs.v6.dst_addr,
+			sizeof(einfo.ipgre_info.ipv6_dst));
+	}
+
+	/*
+	 * VLAN_ID_VAL and PCP_VAL match what's embedded in
+	 * Eth2IPv4Packet802_1Q_tag in TestsUtils.cpp
+	 */
+	einfo.map_info.vlan[0]          = VLAN_ID_VAL;
+	einfo.map_info.dscp[0][PCP_VAL] = DSCP_VAL;
+	einfo.map_info.num_vlan         = 1;
+
+	retval = ioctl(fd, IPA_IOC_ADD_EoGRE_MAPPING, &einfo);
+
+	if (retval) {
+		printf("%s(), Failed adding eogre mapping data\n", __FUNCTION__);
+		return false;
+	}
+
+	printf("%s(), Success adding eogre mapping data\n", __FUNCTION__);
+
+	return true;
+}
+
+bool Filtering::ClrEoGREMap()
+{
+	int retval = 0;
+
+	retval = ioctl(fd, IPA_IOC_DEL_EoGRE_MAPPING, 0);
+
+	if (retval) {
+		printf("%s(), Failed clearing eogre mapping data\n", __FUNCTION__);
+		return false;
+	}
+
+	printf("%s(), Success clearing eogre mapping data\n", __FUNCTION__);
+
 	return true;
 }
 

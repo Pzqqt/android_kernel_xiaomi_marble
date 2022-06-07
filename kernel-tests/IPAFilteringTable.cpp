@@ -35,7 +35,12 @@ IPAFilteringTable::IPAFilteringTable () : // C'tor
 			m_pFilteringTable(NULL),
 				nextRuleIndex(0) {}
 
-bool IPAFilteringTable::Init(ipa_ip_type ipFamily, ipa_client_type pipeNo, uint8_t isGlobal, uint8_t numOfRulesInTable, uint8_t commit)
+bool IPAFilteringTable::Init(
+	ipa_ip_type     ipFamily,
+	ipa_client_type pipeNo,
+	uint8_t         isGlobal,
+	uint8_t         numOfRulesInTable,
+	uint8_t         commit)
 {
 	if (NULL != m_pFilteringTable) {
 		char message[256] = {0};
@@ -64,10 +69,10 @@ bool IPAFilteringTable::Init(ipa_ip_type ipFamily, ipa_client_type pipeNo, uint8
 		return false;
 	}
 
-	m_pFilteringTable->commit = commit;
-	m_pFilteringTable->ep = pipeNo;
-	m_pFilteringTable->global = isGlobal;
-	m_pFilteringTable->ip = ipFamily;
+	m_pFilteringTable->commit    = commit;
+	m_pFilteringTable->ep        = pipeNo;
+	m_pFilteringTable->global    = isGlobal;
+	m_pFilteringTable->ip        = ipFamily;
 	m_pFilteringTable->num_rules = (uint8_t)(numOfRulesInTable);
 
 	return true;

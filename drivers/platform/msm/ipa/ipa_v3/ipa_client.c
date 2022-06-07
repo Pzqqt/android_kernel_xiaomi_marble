@@ -25,7 +25,7 @@
 #define IPA_POLL_FOR_EMPTINESS_SLEEP_USEC 20
 #define IPA_CHANNEL_STOP_IN_PROC_TO_MSEC 5
 #define IPA_CHANNEL_STOP_IN_PROC_SLEEP_USEC 200
-
+#define IPA_MAX_HOLB_TMR_VAL (4294967296 - 1)
 /* xfer_rsc_idx should be 7 bits */
 #define IPA_XFER_RSC_IDX_MAX 127
 
@@ -75,6 +75,10 @@ int ipa3_enable_data_path(u32 clnt_hdl)
 				 ep->client == IPA_CLIENT_USB_CONS)) {
 			holb_cfg.en = IPA_HOLB_TMR_EN;
 			holb_cfg.tmr_val = IPA_HOLB_TMR_VAL_4_5;
+		} else if (ipa3_ctx->ipa_hw_type == IPA_HW_v3_0 &&
+				ep->client == IPA_CLIENT_USB_CONS) {
+			holb_cfg.en = IPA_HOLB_TMR_EN;
+			holb_cfg.tmr_val = IPA_MAX_HOLB_TMR_VAL;
 		} else if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_1 &&
 			ipa3_ctx->platform_type == IPA_PLAT_TYPE_APQ &&
 			ep->client == IPA_CLIENT_USB_CONS) {

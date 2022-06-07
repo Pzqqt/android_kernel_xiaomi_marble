@@ -60,8 +60,17 @@ endif
 endif
 
 ifeq ($(CONFIG_ARCH_SCUBA), y)
-LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/sa410mdataipa.h
-include $(srctree)/techpack/dataipa/config/sa410mdataipa_QGKI.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/auto_dataipa.h
+include $(srctree)/techpack/dataipa/config/auto_dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
+ifeq ($(CONFIG_ARCH_SA515M), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/auto_dataipa.h
+include $(srctree)/techpack/dataipa/config/auto_dataipa_QGKI.conf
 ifneq ($(CONFIG_LOCALVERSION), "-perf")
 include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h

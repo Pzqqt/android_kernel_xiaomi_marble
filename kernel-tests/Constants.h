@@ -33,6 +33,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define VLAN_ID_VAL 3
+#define PCP_VAL     1
+#define DSCP_VAL    8
+
 #define PRE_PHASE_ZERO_TEST_CONFIGURATION 0
 /*----------------------------------------------------------------------
  *Configuration 1 (see configure_system_1 )

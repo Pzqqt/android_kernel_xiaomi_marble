@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#include <string.h>
+
 #define DFLT_NAT_MEM_TYPE "HYBRID"
 
 using namespace std;
@@ -57,6 +59,38 @@ public:
 		const char* mem_type = DFLT_NAT_MEM_TYPE)
 	{
 		m_mem_type = mem_type;
+	}
+
+	void print_buffer(
+		void *data,
+		size_t size,
+		const char* preamble) {
+
+		uint8_t bytes_in_line = 16;
+		uint i, j, num_lines;
+		char str[1024];
+
+		num_lines = size / bytes_in_line;
+		if (size % bytes_in_line > 0)
+			num_lines++;
+
+		printf(
+			"%s [buffer@(0x%p) with size=(%zu)]:\n",
+			(preamble) ? preamble : "Printing",
+			data,
+			size);
+
+		for (i = 0 ; i < num_lines; i++) {
+			str[0] = '\0';
+			for (j = 0; (j < bytes_in_line) && ((i * bytes_in_line + j) < size); j++) {
+				snprintf(
+					str         + strlen(str),
+					sizeof(str) - strlen(str),
+					"%02x ",
+					((unsigned char*)data)[i * bytes_in_line + j]);
+			}
+			printf("%s\n", str);
+		}
 	}
 
 	const char* m_mem_type;
