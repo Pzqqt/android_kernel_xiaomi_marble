@@ -628,6 +628,54 @@ dp_rx_cookie_reset_invalid_bit(hal_ring_desc_t ring_desc)
 
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
+#ifdef RX_DESC_MULTI_PAGE_ALLOC
+/**
+ * dp_rx_is_sw_cookie_valid() - check whether SW cookie valid
+ * @soc: dp soc ref
+ * @cookie: Rx buf SW cookie value
+ *
+ * Return: true if cookie is valid else false
+ */
+static inline bool dp_rx_is_sw_cookie_valid(struct dp_soc *soc,
+					    uint32_t cookie)
+{
+	uint8_t pool_id = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_POOL_ID(cookie);
+	uint16_t page_id = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_PAGE_ID(cookie);
+	uint8_t offset = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_OFFSET(cookie);
+	struct rx_desc_pool *rx_desc_pool;
+
+	if (qdf_unlikely(pool_id >= MAX_PDEV_CNT))
+		goto fail;
+
+	rx_desc_pool = &soc->rx_desc_buf[pool_id];
+
+	if (page_id >= rx_desc_pool->desc_pages.num_pages ||
+	    offset >= rx_desc_pool->desc_pages.num_element_per_page)
+		goto fail;
+
+	return true;
+
+fail:
+	DP_STATS_INC(soc, rx.err.invalid_cookie, 1);
+	return false;
+}
+#else
+/**
+ * dp_rx_is_sw_cookie_valid() - check whether SW cookie valid
+ * @soc: dp soc ref
+ * @cookie: Rx buf SW cookie value
+ *
+ * Return: true if cookie is valid else false
+ * checked while fetching Rx descriptor, so no need to check here
+ * Return: true if cookie is valid else false
+ */
+static inline bool dp_rx_is_sw_cookie_valid(struct dp_soc *soc,
+					    uint32_t cookie)
+{
+	return true;
+}
+#endif
+
 QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool);
 QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 				 uint32_t pool_size,
