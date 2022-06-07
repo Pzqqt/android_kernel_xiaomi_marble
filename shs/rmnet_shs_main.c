@@ -38,11 +38,12 @@
 #include <linux/cpumask.h>
 #include <linux/icmp.h>
 #include <linux/inet.h>
-static char*verinfo[]={"\x35\x65\x31\x64\x38\x37\x39\x62",
-"\x37\x34\x31\x35\x39\x32\x31\x63","\x31\x35\x33\x64\x31\x61\x62\x31",
-"\x34\x66\x64\x35\x39\x63\x66\x35","\x38\x61\x64\x37\x64\x32\x62\x65",
-"\x63\x30\x32\x62\x61\x39\x30\x65"};module_param_array(verinfo,charp,NULL,
-(0xcb7+5769-0x221c));MODULE_PARM_DESC(verinfo,
+static char*verinfo[]={"\x30\x36\x61\x33\x66\x33\x34\x62",
+"\x35\x65\x31\x64\x38\x37\x39\x62","\x37\x34\x31\x35\x39\x32\x31\x63",
+"\x31\x35\x33\x64\x31\x61\x62\x31","\x34\x66\x64\x35\x39\x63\x66\x35",
+"\x38\x61\x64\x37\x64\x32\x62\x65","\x63\x30\x32\x62\x61\x39\x30\x65"};
+module_param_array(verinfo,charp,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
+verinfo,
 "\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
 );
 #define DATARMNET2f67183a86 2000000
@@ -860,8 +861,9 @@ DATARMNET3764d083f0,ht_flags);return(0xd2d+202-0xdf7);}else DATARMNET495dab3d72(
 skb,node_p,DATARMNET0bf01e7c6f);break;}if(is_match_found)break;if(
 DATARMNET0bf01e7c6f->map_mask){DATARMNETcfb5dc7296=DATARMNET362c14e98b(
 DATARMNETecc0627c70.map_mask&DATARMNET9273f84bf1&~DATARMNETecc0627c70.
-DATARMNETba3f7a11ef);}else{DATARMNETcfb5dc7296=DATARMNET217fe38119(
-(0xd2d+202-0xdf7),skb->dev);}if(DATARMNETcfb5dc7296<(0xd2d+202-0xdf7)){
+DATARMNETba3f7a11ef);}else{DATARMNETcfb5dc7296=DATARMNET762cfa52fe(
+DATARMNETecc0627c70.map_mask&DATARMNET9273f84bf1&~DATARMNETecc0627c70.
+DATARMNETba3f7a11ef);}if(DATARMNETcfb5dc7296<(0xd2d+202-0xdf7)){
 DATARMNET68d84e7b98[DATARMNETa1f9420686]++;break;}if(DATARMNETecc0627c70.
 DATARMNET64bb8a8f57>DATARMNETbfe31ef643){DATARMNET68d84e7b98[DATARMNETe6e77f9f03
 ]++;break;}node_p=kzalloc(sizeof(*node_p),GFP_ATOMIC);if(!node_p){
