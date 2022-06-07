@@ -821,6 +821,10 @@ int msm_channel_map_get(struct snd_kcontrol *kcontrol,
 			chmap = tx_ch;
 			ch_cnt = tx_ch_cnt;
 		}
+		if (ch_cnt > 2) {
+			pr_err("%s: Incorrect channel count: %d\n", ch_cnt);
+			return -EINVAL;
+		}
 		len = sizeof(uint32_t) * (ch_cnt + 1);
 		chmap_data = kzalloc(len, GFP_KERNEL);
 		if (!chmap_data)

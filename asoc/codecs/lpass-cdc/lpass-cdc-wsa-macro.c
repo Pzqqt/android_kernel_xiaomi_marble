@@ -1263,6 +1263,12 @@ static int lpass_cdc_wsa_macro_config_compander(struct snd_soc_component *compon
 	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
 
+	if (comp >= LPASS_CDC_WSA_MACRO_COMP_MAX) {
+		dev_err(component->dev, "%s: Invalid compander value: %d\n",
+					__func__, comp);
+		return -EINVAL;
+	}
+
 	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
 		__func__, event, comp + 1, wsa_priv->comp_enabled[comp]);
 
@@ -2175,7 +2181,7 @@ static int lpass_cdc_wsa_macro_rx_mux_put(struct snd_kcontrol *kcontrol,
 			dev_err(wsa_dev, "%s: AIF reset already\n", __func__);
 			return 0;
 		}
-		if (aif_rst >= LPASS_CDC_WSA_MACRO_RX_MAX) {
+		if (aif_rst >= LPASS_CDC_WSA_MACRO_MAX_DAIS) {
 			dev_err(wsa_dev, "%s: Invalid AIF reset\n", __func__);
 			return 0;
 		}
