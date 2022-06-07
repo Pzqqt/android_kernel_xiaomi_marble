@@ -3035,6 +3035,8 @@ int dsi_ctrl_host_timing_update(struct dsi_ctrl *dsi_ctrl)
 		return -EINVAL;
 	}
 
+	mutex_lock(&dsi_ctrl->ctrl_lock);
+
 	if (dsi_ctrl->hw.ops.host_setup)
 		dsi_ctrl->hw.ops.host_setup(&dsi_ctrl->hw,
 				&dsi_ctrl->host_config.common_config);
@@ -3052,9 +3054,11 @@ int dsi_ctrl_host_timing_update(struct dsi_ctrl *dsi_ctrl)
 				0x0, NULL);
 	} else {
 		DSI_CTRL_ERR(dsi_ctrl, "invalid panel mode for resolution switch\n");
+		mutex_unlock(&dsi_ctrl->ctrl_lock);
 		return -EINVAL;
 	}
 
+	mutex_unlock(&dsi_ctrl->ctrl_lock);
 	return 0;
 }
 

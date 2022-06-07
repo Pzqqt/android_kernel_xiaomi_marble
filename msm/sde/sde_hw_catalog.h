@@ -198,8 +198,8 @@ enum sde_sys_cache_op_type {
  */
 enum sde_sys_cache_type {
 	SDE_SYS_CACHE_DISP,
-	SDE_SYS_CACHE_EVA_LEFT,
-	SDE_SYS_CACHE_EVA_RIGHT,
+	SDE_SYS_CACHE_DISP_LEFT,
+	SDE_SYS_CACHE_DISP_RIGHT,
 	SDE_SYS_CACHE_MAX,
 	SDE_SYS_CACHE_NONE = SDE_SYS_CACHE_MAX
 };
@@ -243,6 +243,7 @@ struct sde_intr_irq_offsets {
  * @SDE_MDP_WD_TIMER      WD timer support
  * @SDE_MDP_DHDR_MEMPOOL   Dynamic HDR Metadata mempool present
  * @SDE_MDP_DHDR_MEMPOOL_4K Dynamic HDR mempool is 4k aligned
+ * @SDE_MDP_LLCC_DISP_LR   Separate SCID for left and right display
  * @SDE_MDP_PERIPH_TOP_REMOVED Indicates if periph top0 block is removed
  * @SDE_MDP_MAX            Maximum value
 
@@ -258,6 +259,7 @@ enum {
 	SDE_MDP_DHDR_MEMPOOL,
 	SDE_MDP_DHDR_MEMPOOL_4K,
 	SDE_MDP_PERIPH_TOP_0_REMOVED,
+	SDE_MDP_LLCC_DISP_LR,
 	SDE_MDP_MAX
 };
 
@@ -1619,7 +1621,6 @@ struct sde_perf_cfg {
  * @qseed_hw_version   qseed hw version of the target
  * @sc_cfg: system cache configuration
  * @syscache_supported  Flag to indicate if sys cache support is enabled
- * @eva_syscache_supported  Flag to indicate if eva sys cache support is enabled
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
  * @sui_block_xin_mask  mask of all the xin-clients to be blocked during
@@ -1712,7 +1713,6 @@ struct sde_mdss_cfg {
 
 	struct sde_sc_cfg sc_cfg[SDE_SYS_CACHE_MAX];
 	bool syscache_supported;
-	bool eva_syscache_supported;
 
 	bool sui_misr_supported;
 	u32 sui_block_xin_mask;
