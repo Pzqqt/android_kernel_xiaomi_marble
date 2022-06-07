@@ -331,6 +331,11 @@ static int __os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
+	if (cb_obj.ndi_set_mode(iface_name)) {
+		osif_err("NDI set mode fails");
+		return -EINVAL;
+	}
+
 	ret = os_if_nan_ndi_open(psoc, iface_name);
 	if (ret)
 		return ret;
