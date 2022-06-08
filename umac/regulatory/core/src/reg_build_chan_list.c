@@ -343,7 +343,10 @@ static void reg_modify_chan_list_for_indoor_channels(
 			     chan_list[chan_enum].chan_flags)) {
 				chan_list[chan_enum].state =
 					CHANNEL_STATE_DFS;
-				if (!pdev_priv_obj->sta_sap_scc_on_indoor_channel)
+				if (!(pdev_priv_obj->
+				      sta_sap_scc_on_indoor_channel &&
+				      reg_is_5ghz_ch_freq(
+					    chan_list[chan_enum].center_freq)))
 					chan_list[chan_enum].chan_flags |=
 							REGULATORY_CHAN_NO_IR;
 			}
