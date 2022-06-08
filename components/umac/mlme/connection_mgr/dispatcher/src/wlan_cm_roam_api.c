@@ -2608,7 +2608,7 @@ cm_roam_event_handler(struct roam_offload_roam_event *roam_event)
 		if (roam_event->rso_timer_stopped)
 			wlan_cm_rso_stop_continue_disconnect(roam_event->psoc,
 						roam_event->vdev_id, true);
-		/* fallthrough */
+		fallthrough;
 	case ROAM_REASON_INVALID:
 		cm_handle_roam_offload_events(roam_event);
 		break;
