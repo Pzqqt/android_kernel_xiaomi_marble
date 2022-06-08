@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +26,7 @@
 
 #include "wlan_cm_roam.h"
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * cm_state_roaming_entry() - Entry API for roaming state for
  * connection mgr
@@ -60,6 +62,17 @@ void cm_state_roaming_exit(void *ctx);
  */
 bool cm_state_roaming_event(void *ctx, uint16_t event, uint16_t data_len,
 			    void *data);
+#else
+static inline void cm_state_roaming_entry(void *ctx) {}
+
+static inline void cm_state_roaming_exit(void *ctx) {}
+
+static inline bool cm_state_roaming_event(void *ctx, uint16_t event,
+					  uint16_t data_len, void *data)
+{
+	return true;
+}
+#endif
 
 #if defined(WLAN_FEATURE_HOST_ROAM)
 /**
