@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -136,21 +136,25 @@ dp_tx_flow_ctrl_reset_subqueues(struct dp_soc *soc,
 		soc->pause_cb(pool->flow_pool_id,
 			      WLAN_NETIF_PRIORITY_QUEUE_ON,
 			      WLAN_DATA_FLOW_CTRL_PRI);
+		fallthrough;
 
 	case FLOW_POOL_VO_PAUSED:
 		soc->pause_cb(pool->flow_pool_id,
 			      WLAN_NETIF_VO_QUEUE_ON,
 			      WLAN_DATA_FLOW_CTRL_VO);
+		fallthrough;
 
 	case FLOW_POOL_VI_PAUSED:
 		soc->pause_cb(pool->flow_pool_id,
 			      WLAN_NETIF_VI_QUEUE_ON,
 			      WLAN_DATA_FLOW_CTRL_VI);
+		fallthrough;
 
 	case FLOW_POOL_BE_BK_PAUSED:
 		soc->pause_cb(pool->flow_pool_id,
 			      WLAN_NETIF_BE_BK_QUEUE_ON,
 			      WLAN_DATA_FLOW_CTRL_BE_BK);
+		fallthrough;
 	default:
 		break;
 	}

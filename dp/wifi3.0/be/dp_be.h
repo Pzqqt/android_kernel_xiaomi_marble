@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -563,7 +563,7 @@ _dp_srng_test_and_update_nf_params(struct dp_soc *soc,
 		switch (near_full_level) {
 		case DP_SRNG_THRESH_CRITICAL:
 			/* Currently not doing anything special here */
-			/* fall through */
+			fallthrough;
 		case DP_SRNG_THRESH_NEAR_FULL:
 			ring_near_full = 1;
 			*max_reap_limit *= DP_SRNG_PER_LOOP_NF_REAP_MULTIPLIER;
