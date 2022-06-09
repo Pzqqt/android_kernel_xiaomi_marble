@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4247,7 +4247,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 				bytes = 0;
 				/* TO DO: specify how many bytes are present */
 				/* TO DO: add copying to the requestor's buf */
-				/* fallthrough */
+				fallthrough;
 			case HTT_DBG_STATS_RX_REMOTE_RING_BUFFER_INFO:
 				bytes = sizeof(struct
 						rx_remote_buffer_mgmt_stats);
