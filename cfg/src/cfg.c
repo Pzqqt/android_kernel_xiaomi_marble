@@ -131,7 +131,7 @@ cfg_int_item_handler(struct cfg_value_store *store,
 	default:
 		QDF_DEBUG_PANIC("Unknown fallback method %d for cfg item '%s'",
 				meta->fallback, meta->name);
-		/* fall through */
+		fallthrough;
 	case CFG_VALUE_OR_DEFAULT:
 		/* store already contains default */
 		break;
@@ -185,7 +185,7 @@ cfg_uint_item_handler(struct cfg_value_store *store,
 	default:
 		QDF_DEBUG_PANIC("Unknown fallback method %d for cfg item '%s'",
 				meta->fallback, meta->name);
-		/* fall through */
+		fallthrough;
 	case CFG_VALUE_OR_DEFAULT:
 		/* store already contains default */
 		break;
