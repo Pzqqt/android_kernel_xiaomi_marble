@@ -1930,18 +1930,14 @@ lim_handle_11a_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 	switch (bss_dot11_mode) {
 	case MLME_DOT11_MODE_11B:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
 		/* Self 11A and BSS 11B/G cannot connect */
 		pe_err("Self dot11mode 11A, bss dot11mode %d not compatible",
 		       bss_dot11_mode);
 		return QDF_STATUS_E_INVAL;
 	case MLME_DOT11_MODE_11A:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11N:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
 	case MLME_DOT11_MODE_11BE:
 		*intersected_mode = MLME_DOT11_MODE_11A;
@@ -1967,13 +1963,9 @@ lim_handle_11b_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 	switch (bss_dot11_mode) {
 	case MLME_DOT11_MODE_11N:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11B:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
 	case MLME_DOT11_MODE_11BE:
 		/* Self 11B and BSS 11A cannot connect */
@@ -2004,11 +1996,8 @@ lim_handle_11g_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 	switch (bss_dot11_mode) {
 	case MLME_DOT11_MODE_11N:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
 	case MLME_DOT11_MODE_11BE:
 		/* Self 11B and BSS 11A cannot connect */
@@ -2240,18 +2229,14 @@ lim_handle_11g_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 	switch (bss_dot11_mode) {
 	case MLME_DOT11_MODE_11N:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
 	case MLME_DOT11_MODE_11BE:
 		/* Self 11B and BSS 11A cannot connect */
 		*intersected_mode = MLME_DOT11_MODE_11G;
 		break;
 	case MLME_DOT11_MODE_11B:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11A:
 		pe_err("Self dot11mode 11G only, bss dot11mode %d not compatible",
 		       bss_dot11_mode);
@@ -2281,7 +2266,6 @@ lim_handle_11n_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		*intersected_mode = MLME_DOT11_MODE_11N;
 		break;
 	case MLME_DOT11_MODE_11AC:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
 	case MLME_DOT11_MODE_11BE:
 		if (ie_struct->HTCaps.present) {
@@ -2291,9 +2275,7 @@ lim_handle_11n_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		pe_err("Self dot11mode is 11N ONLY peer is not HT capable");
 		return QDF_STATUS_E_INVAL;
 	case MLME_DOT11_MODE_11G:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11B:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11A:
 		pe_err("Self dot11mode 11N only, bss dot11mode %d not compatible",
 		       bss_dot11_mode);
@@ -2337,11 +2319,8 @@ lim_handle_11ac_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		pe_err("Self dot11mode is 11AC ONLY peer is not VHT capable");
 		return QDF_STATUS_E_INVAL;
 	case MLME_DOT11_MODE_11N:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11B:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11A:
 		pe_err("Self dot11mode 11AC only, bss dot11mode %d not compatible",
 		       bss_dot11_mode);
@@ -2368,15 +2347,11 @@ lim_handle_11ax_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 			*intersected_mode = MLME_DOT11_MODE_11AX;
 			break;
 		}
-		/* fallthrough */
+		fallthrough;
 	case MLME_DOT11_MODE_11N:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11B:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11A:
 		pe_err("Self dot11mode 11AX only, bss dot11mode %d not compatible",
 		       bss_dot11_mode);
@@ -2398,15 +2373,10 @@ lim_handle_11be_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 		*intersected_mode = MLME_DOT11_MODE_11BE;
 		break;
 	case MLME_DOT11_MODE_11N:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11AX:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11G:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11B:
-		/* fallthrough */
 	case MLME_DOT11_MODE_11A:
 		pe_err("Self dot11mode 11BE only, bss dot11mode %d not compatible",
 		       bss_dot11_mode);
@@ -4147,7 +4117,7 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 	case REASON_OPER_CHANNEL_DISABLED_INDOOR:
 		/* Set reason REASON_DEAUTH_NETWORK_LEAVING for prop deauth */
 		req->req.reason_code = REASON_DEAUTH_NETWORK_LEAVING;
-		/* fallthrough */
+		fallthrough;
 	case REASON_PREV_AUTH_NOT_VALID:
 	case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
 		lim_prepare_and_send_deauth(mac_ctx, pe_session, req);
@@ -5510,7 +5480,6 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 		break;
 
 	case eLIM_AP_ROLE:
-		/* Fall through */
 		break;
 
 	default:
@@ -5656,7 +5625,6 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 		break;
 
 	case eLIM_AP_ROLE:
-		/* Fall through */
 		break;
 	default:                /* eLIM_UNKNOWN_ROLE */
 		pe_err("received unexpected SME_DISASSOC_CNF role %d",
@@ -5796,7 +5764,7 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 		case eLIM_SME_LINK_EST_STATE:
 			/* Delete all TDLS peers connected before leaving BSS */
 			lim_delete_tdls_peers(mac_ctx, session_entry);
-		/* fallthrough */
+			fallthrough;
 		case eLIM_SME_WT_ASSOC_STATE:
 		case eLIM_SME_JOIN_FAILURE_STATE:
 		case eLIM_SME_IDLE_STATE:
