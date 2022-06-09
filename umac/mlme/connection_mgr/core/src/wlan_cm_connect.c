@@ -1366,7 +1366,7 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 		if (cm_roam_offload_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)))
 			cm_flush_pending_request(cm_ctx, ROAM_REQ_PREFIX,
 						 false);
-		/* fallthrough */
+		fallthrough;
 	case WLAN_CM_S_CONNECTED:
 	case WLAN_CM_SS_JOIN_ACTIVE:
 		/*
@@ -1389,7 +1389,7 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 		/* In the scan state abort the ongoing scan */
 		cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev),
 				    cm_ctx->vdev);
-		/* fallthrough */
+		fallthrough;
 	case WLAN_CM_SS_JOIN_PENDING:
 		/*
 		 * In case of scan or join pending there could be 2 scenarios:-
