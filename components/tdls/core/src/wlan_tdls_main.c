@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -623,7 +624,7 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	case TDLS_CMD_SESSION_DECREMENT:
 		tdls_process_decrement_active_session(msg->bodyptr);
 		/* take decision on connection tracker */
-		/* fallthrough */
+		fallthrough;
 	case TDLS_CMD_SESSION_INCREMENT:
 		tdls_process_policy_mgr_notification(msg->bodyptr);
 		break;
