@@ -747,6 +747,7 @@ typedef enum {
     HTT_STATS_DMAC_RESET_STATS_TAG                 = 155, /* htt_dmac_reset_stats_tlv */
     HTT_STATS_RX_PDEV_BE_UL_OFDMA_USER_STATS_TAG   = 156, /* htt_rx_pdev_be_ul_ofdma_user_stats_tlv */
     HTT_STATS_PHY_TPC_STATS_TAG                    = 157, /* htt_phy_tpc_stats_tlv */
+    HTT_STATS_PDEV_PUNCTURE_STATS_TAG              = 158, /* htt_pdev_puncture_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,

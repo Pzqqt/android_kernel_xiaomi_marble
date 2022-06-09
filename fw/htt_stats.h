@@ -442,6 +442,15 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_SOC_ERROR_STATS = 45,
 
+    /** HTT_DBG_PDEV_PUNCTURE_STATS
+     * PARAMS:
+     *    - param 0: enum from htt_tx_pdev_puncture_stats_upload_t, indicating
+     *      the stats to upload
+     * RESP MSG:
+     *    - one or more htt_pdev_puncture_stats_tlv, depending on param 0
+     */
+    HTT_DBG_PDEV_PUNCTURE_STATS = 46,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -592,6 +601,21 @@ typedef enum {
      */
     HTT_UPLOAD_BE_TXBF_OFDMA_STATS,
 } htt_tx_pdev_txbf_ofdma_stats_upload_t;
+
+/* htt_tx_pdev_puncture_stats_upload_t
+ * Enumerations for specifying which stats to upload in response to
+ * HTT_DBG_PDEV_PUNCTURE_STATS.
+ */
+typedef enum {
+    /* upload puncture stats for all supported modes, both TX and RX */
+    HTT_UPLOAD_PUNCTURE_STATS_ALL,
+
+    /* upload puncture stats for all supported TX modes */
+    HTT_UPLOAD_PUNCTURE_STATS_TX,
+
+    /* upload puncture stats for all supported RX modes */
+    HTT_UPLOAD_PUNCTURE_STATS_RX,
+} htt_tx_pdev_puncture_stats_upload_t;
 
 #define HTT_STATS_MAX_STRING_SZ32 4
 #define HTT_STATS_MACID_INVALID 0xff
@@ -1450,6 +1474,19 @@ typedef struct {
         intra_bss      : 1,
         reserved       : 16;
 } htt_ast_entry_tlv;
+
+typedef enum {
+    HTT_STATS_DIRECTION_TX,
+    HTT_STATS_DIRECTION_RX,
+} HTT_STATS_DIRECTION;
+
+typedef enum {
+    HTT_STATS_PPDU_TYPE_MODE_SU,
+    HTT_STATS_PPDU_TYPE_DL_MU_MIMO,
+    HTT_STATS_PPDU_TYPE_UL_MU_MIMO,
+    HTT_STATS_PPDU_TYPE_DL_MU_OFDMA,
+    HTT_STATS_PPDU_TYPE_UL_MU_OFDMA,
+} HTT_STATS_PPDU_TYPE;
 
 typedef enum {
     HTT_STATS_PREAM_OFDM,
@@ -7425,5 +7462,93 @@ typedef struct {
     A_UINT32  engage_count;
     A_UINT32  drain_dest_ring_mask;
 } htt_dmac_reset_stats_tlv;
+
+
+/* Support up to 640 MHz mode for future expansion */
+#define HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT 32
+
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_M 0x000000ff
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_S 0
+
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_GET(_var) \
+    (((_var) & HTT_PDEV_PUNCTURE_STATS_MAC_ID_M) >> \
+     HTT_PDEV_PUNCTURE_STATS_MAC_ID_S)
+
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PDEV_PUNCTURE_STATS_MAC_ID, _val); \
+        ((_var) |= ((_val) << HTT_PDEV_PUNCTURE_STATS_MAC_ID_S)); \
+    } while (0)
+
+/*
+ * TLV used to provide puncturing related stats for TX/RX and each PPDU type.
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /**
+     * BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    union {
+        struct {
+            A_UINT32 mac_id:    8,
+                     reserved: 24;
+        };
+        A_UINT32 mac_id__word;
+    };
+
+    /*
+     * Stats direction (TX/RX). Enum value from HTT_STATS_DIRECTION.
+     */
+    A_UINT32 direction;
+
+    /*
+     * Preamble type. Enum value from HTT_STATS_PREAM_TYPE.
+     *
+     * Note that for although OFDM rates don't technically support
+     * "puncturing", this TLV can be used to indicate the 20 MHz sub-bands
+     * utilized for OFDM legacy duplicate packets, which are also used during
+     * puncturing sequences.
+     */
+    A_UINT32 preamble;
+
+    /*
+     * Stats PPDU type. Enum value from HTT_STATS_PPDU_TYPE.
+     */
+    A_UINT32 ppdu_type;
+
+    /*
+     * Indicates the number of valid elements in the
+     * "num_subbands_used_cnt" array, and must be <=
+     * HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT.
+     *
+     * Also indicates how many bits in the last_used_pattern_mask may be
+     * non-zero.
+     */
+    A_UINT32 subband_count;
+
+    /*
+     * The last used transmit 20 MHz subband mask. Bit 0 represents the lowest
+     * 20 MHz subband mask, bit 1 the second lowest, and so on.
+     *
+     * All 32 bits are valid and will be used for expansion to higher BW modes.
+     */
+    A_UINT32 last_used_pattern_mask;
+
+
+    /*
+     * Number of array elements with valid values is equal to "subband_count".
+     * If subband_count is < HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT, the
+     * remaining elements will be implicitly set to 0x0.
+     *
+     * The array index is the number of 20 MHz subbands utilized during TX/RX,
+     * and the counter value at that index is the number of times that subband
+     * count was used.
+     *
+     * The count is incremented once for each OTA PPDU transmitted / received.
+     */
+    A_UINT32 num_subbands_used_cnt[HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT];
+} htt_pdev_puncture_stats_tlv;
 
 #endif /* __HTT_STATS_H__ */
