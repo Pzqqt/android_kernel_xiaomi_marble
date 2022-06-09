@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -8011,7 +8011,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 			break;
 		case WLAN_OFFLOAD_ARP_AND_BC_FILTER_ENABLE:
 			hdd_debug("   BC Filtering enable");
-			/* fallthrough */
+			fallthrough;
 		case WLAN_OFFLOAD_ENABLE:
 			hdd_debug("   ARP offload enable");
 			hdd_debug("   IP address: %pI4",
