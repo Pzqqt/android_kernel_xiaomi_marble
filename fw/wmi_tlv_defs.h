@@ -1282,6 +1282,7 @@ typedef enum {
     WMITLV_TAG_STRUC_WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param,
     WMITLV_TAG_STRUC_WMI_WOW_COAP_BUF_INFO_EVENT_fixed_param,
     WMITLV_TAG_STRUC_wmi_coap_tuple,
+    WMITLV_TAG_STRUC_wmi_iface_powersave_stats,
 } WMITLV_TAG_ID;
 
 /*
@@ -5712,7 +5713,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_iface_link_stats_event_fixed_param, wmi_iface_link_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_iface_link_stats, iface_link_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_wmm_ac_stats, ac, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_iface_offload_stats, iface_offload_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_iface_offload_stats, iface_offload_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_iface_powersave_stats, iface_powersave_stats, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_IFACE_LINK_STATS_EVENTID);
 

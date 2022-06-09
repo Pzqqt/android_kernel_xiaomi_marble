@@ -10048,6 +10048,14 @@ typedef struct {
    A_UINT32 fwd_count;
 } wmi_iface_offload_stats;
 
+typedef struct {
+   A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_iface_powersave_stats */
+   /** Total TIM beacon event that wlan ps received **/
+   A_UINT32 tot_tim_bcn;
+   /** Total error TIM beacon found by wlan ps including no rx in TIM wakeup and TIM event in active state **/
+   A_UINT32 tot_err_tim_bcn;
+} wmi_iface_powersave_stats;
+
 /** Interface statistics (once started) reset and start afresh after each connection */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_iface_link_stats_event_fixed_param */
@@ -10062,6 +10070,7 @@ typedef struct {
  *   wmi_iface_link_stats iface_link_stats;
  *   num_ac * size of(struct wmi_wmm_ac_stats)
  *   wmi_iface_offload_stats iface_offload_stats[num_offload_stats]
+ *   wmi_iface_powersave_stats iface_powersave_stats[]
  */
 } wmi_iface_link_stats_event_fixed_param;
 
