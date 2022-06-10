@@ -18081,6 +18081,23 @@ typedef struct {
     A_UINT32 notif_params1;
 } wmi_roam_event_fixed_param;
 
+#define WMI_ROAM_BSS_INFO_FLAG_IS_MLD 0
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_bss_info_param */
+    /*
+     * bit0: WMI_ROAM_BSS_INFO_FLAG_IS_MLD
+     */
+    A_UINT32 flags;
+    /*
+     * mld score if WMI_ROAM_BSS_INFO_FLAG_IS_MLD set, otherwise link score
+     */
+    A_UINT32 score;
+    /*
+     *  mld address if WMI_ROAM_BSS_INFO_FLAG_IS_MLD set, otherwise link address
+     */
+    wmi_mac_addr mac_addr;
+} wmi_roam_bss_info_param;
 
 /* roam_reason: bits 0-3 */
 #define WMI_ROAM_REASON_INVALID   0x0 /** invalid reason. Do not interpret reason field */
@@ -24228,6 +24245,9 @@ typedef struct {
     A_UINT32 vdev_id;
     /* Exact frame length without considering 4 byte alignement */
     A_UINT32 frame_length;
+    A_INT32  rssi; /* Units in dBm */
+    /* The frequency on which to transmit. */
+    A_UINT32 primary_channel_freq; /* MHz units */
     /**
      * TLV (tag length value) parameters follows roam_frame_event
      * The TLV's are:
