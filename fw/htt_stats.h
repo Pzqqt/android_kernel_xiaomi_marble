@@ -3297,6 +3297,17 @@ typedef enum {
     HTT_SCHED_TID_FALLBACK_TO_PREV_DECISION,    /* Fall back to previous decision                                                                */
     HTT_SCHED_TID_SKIP_PEER_ALREADY_IN_TXQ,     /* skip tid, peer is already available in the txq                                                */
     HTT_SCHED_TID_SKIP_DELAY_UL_SCHED,          /* skip tid delay UL schedule                                                                    */
+    HTT_SCHED_TID_SKIP_PWR_SAVE_STATE_OFF,      /* Limit UL scheduling to primary link if not in power save state                                */
+    HTT_SCHED_TID_SKIP_TWT_SUSPEND,             /* Skip UL trigger for certain cases ex TWT suspend                                              */
+    HTT_SCHED_TID_SKIP_DISABLE_160MHZ_OFDMA,    /* Skip ul tid if peer supports 160MHZ                                                           */
+    HTT_SCHED_TID_SKIP_ULMU_DISABLE_FROM_OMI,   /* Skip ul tid if sta send omi to indicate to disable UL mu data                                 */
+    HTT_SCHED_TID_SKIP_UL_MAX_SCHED_CMD_EXCEEDED,/* skip ul tid if max sched cmd is exceeded                                                     */
+    HTT_SCHED_TID_SKIP_UL_SMALL_QDEPTH,         /* Skip ul tid for small qdepth                                                                  */
+    HTT_SCHED_TID_SKIP_UL_TWT_PAUSED,           /* Skip ul tid if twt txq is paused                                                              */
+    HTT_SCHED_TID_SKIP_PEER_UL_RX_NOT_ACTIVE,   /* Skip ul tid if peer ul rx is not active                                                       */
+    HTT_SCHED_TID_SKIP_NO_FORCE_TRIGGER,        /* Skip ul tid if there is no force triggers                                                     */
+    HTT_SCHED_TID_SKIP_SMART_BASIC_TRIGGER,     /* Skip ul tid if smart basic trigger doesnot have enough data                                   */
+
 
     HTT_SCHED_INELIGIBILITY_MAX,
 } htt_sched_txq_sched_ineligibility_tlv_enum;
