@@ -36443,7 +36443,15 @@ typedef struct {
 #define WMI_EHTCAP_MAC_MAXAMPDULEN_EXP_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 8, 1)
 #define WMI_EHTCAP_MAC_MAXAMPDULEN_EXP_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 8, 1, value)
 
-/* Bit 9-15: reserved */
+/* Bit 9: EHT TRS support */
+#define WMI_EHTCAP_MAC_TRS_SUPPORT_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 9, 1)
+#define WMI_EHTCAP_MAC_TRS_SUPPORT_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 9, 1, value)
+
+/* Bit 10: TXOP return support in txop sharing mode 2 */
+#define WMI_EHTCAP_MAC_TXOP_RETURN_SUPP_IN_SHARINGMODE2_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 10, 1)
+#define WMI_EHTCAP_MAC_TXOP_RETURN_SUPP_IN_SHARINGMODE2_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 10, 1, value)
+
+/* Bit 11-15: reserved */
 
 /****** End of 11BE EHT MAC Capabilities Information field ******/
 
