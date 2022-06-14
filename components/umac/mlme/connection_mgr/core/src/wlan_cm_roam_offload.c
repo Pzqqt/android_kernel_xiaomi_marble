@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4215,17 +4215,28 @@ cm_handle_mlo_rso_state_change(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_vdev *assoc_vdev = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, *vdev_id,
 						    WLAN_MLME_NB_ID);
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 
-	if (wlan_vdev_mlme_get_is_mlo_vdev(wlan_pdev_get_psoc(pdev),
-					   *vdev_id)) {
-		if ((reason == REASON_DISCONNECTED ||
-		     reason == REASON_DRIVER_DISABLED) &&
-		    (cm_is_vdev_disconnecting(vdev))) {
+	if (wlan_vdev_mlme_get_is_mlo_vdev(psoc, *vdev_id) &&
+	    (reason == REASON_DISCONNECTED ||
+	     reason == REASON_DRIVER_DISABLED) &&
+	    cm_is_vdev_disconnecting(vdev)) {
+		/*
+		 * Processing disconnect on assoc vdev but roaming is still
+		 * enabled. It's either due to single ML usecase or failed to
+		 * connect to second link.
+		 */
+		if (!wlan_vdev_mlme_get_is_mlo_link(psoc, *vdev_id) &&
+		    wlan_is_roaming_enabled(pdev, *vdev_id)) {
+			mlme_debug("MLO ROAM: Process RSO stop on assoc vdev : %d",
+				   *vdev_id);
+			*is_rso_skip = false;
+		} else {
 			mlme_debug("MLO ROAM: skip RSO cmd on assoc vdev %d",
 				   *vdev_id);
 			*is_rso_skip = true;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1677,4 +1677,6 @@ bool wlan_cm_same_band_sta_allowed(struct wlan_objmgr_psoc *psoc);
  * Return: qdf_status
  */
 QDF_STATUS cm_cleanup_mlo_link(struct wlan_objmgr_vdev *vdev);
+
+bool wlan_is_roaming_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 #endif  /* WLAN_CM_ROAM_API_H__ */
