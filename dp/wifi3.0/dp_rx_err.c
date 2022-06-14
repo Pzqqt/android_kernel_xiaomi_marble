@@ -3188,6 +3188,7 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t rx_bufs_used = 0, msdu_cnt, i;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	struct rx_desc_pool *rx_desc_pool;
+	struct dp_rx_desc *rx_desc;
 
 	msdu = 0;
 
@@ -3210,14 +3211,30 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
 			for (i = 0; i < num_msdus; i++) {
-				struct dp_rx_desc *rx_desc =
-					soc->arch_ops.dp_rx_desc_cookie_2_va(
+				if (!dp_rx_is_sw_cookie_valid(soc, msdu_list.sw_cookie[i])) {
+					dp_rx_err_info_rl("Invalid MSDU info cookie: 0x%x",
+							  msdu_list.sw_cookie[i]);
+					continue;
+				}
+
+				rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
 							soc,
 							msdu_list.sw_cookie[i]);
 				qdf_assert_always(rx_desc);
 				rx_desc_pool =
 					&soc->rx_desc_buf[rx_desc->pool_id];
 				msdu = rx_desc->nbuf;
+
+				/*
+				 * this is a unlikely scenario where the host is reaping
+				 * a descriptor which it already reaped just a while ago
+				 * but is yet to replenish it back to HW.
+				 */
+				if (qdf_unlikely(!rx_desc->in_use) ||
+				    qdf_unlikely(!msdu)) {
+					dp_rx_err_info_rl("Reaping rx_desc not in use!");
+					continue;
+				}
 
 				dp_ipa_rx_buf_smmu_mapping_lock(soc);
 				dp_ipa_handle_rx_buf_smmu_mapping(
