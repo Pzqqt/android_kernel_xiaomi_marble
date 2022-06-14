@@ -78,6 +78,7 @@ int audio_notifier_register(char *client_name, int domain,
  *		Error: -#
  */
 int audio_notifier_deregister(char *client_name);
+bool audio_notifier_probe_status(void);
 
 #else
 
@@ -92,6 +93,10 @@ static inline int audio_notifier_deregister(char *client_name)
 	return 0;
 }
 
+static inline bool audio_notifier_probe_status(void)
+{
+	return 0;
+}
 #endif /* CONFIG_MSM_QDSP6_NOTIFIER */
 
 #endif
