@@ -1239,7 +1239,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 		}
 
 		sap_get_freq_list(sap_context, &freq_list, &num_of_channels);
-		if (!num_of_channels) {
+		if (!num_of_channels || !freq_list) {
 			sap_err("No freq sutiable for SAP in current list, SAP failed");
 			return QDF_STATUS_E_FAILURE;
 		}
