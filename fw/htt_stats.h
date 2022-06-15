@@ -1442,6 +1442,22 @@ typedef struct {
     A_UINT32 remove_mpdus_max_retries;
 } htt_peer_stats_cmn_tlv;
 
+#define HTT_PEER_DETAILS_ML_PEER_OFFSET_BYTES 32
+#define HTT_PEER_DETAILS_ML_PEER_OFFSET_DWORD 8
+#define HTT_PEER_DETAILS_ML_PEER_ID_VALID_M   0x00000001
+#define HTT_PEER_DETAILS_ML_PEER_ID_VALID_S   0
+#define HTT_PEER_DETAILS_ML_PEER_ID_M         0x00001ffe
+#define HTT_PEER_DETAILS_ML_PEER_ID_S         1
+
+#define HTT_PEER_DETAILS_SET(word, httsym, val)  \
+    do {                                         \
+        HTT_CHECK_SET_VAL(HTT_PEER_DETAILS_ ## httsym, val);          \
+            (word) |= ((val) << HTT_PEER_DETAILS_ ## httsym ## _S);         \
+    } while(0)
+
+#define HTT_PEER_DETAILS_GET(word, httsym) \
+    (((word) & HTT_PEER_DETAILS_ ## httsym ## _M) >> HTT_PEER_DETAILS_ ## httsym ## _S)
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** This enum type of HTT_PEER_TYPE */
@@ -1456,6 +1472,10 @@ typedef struct {
     htt_mac_addr mac_addr;
     A_UINT32     peer_flags;
     A_UINT32     qpeer_flags;
+    /* Dword 8 */
+    A_UINT32     ml_peer_id_valid  : 1,   /* [0:0] */
+                 ml_peer_id        : 12,  /* [12:1] */
+                 rsvd              : 19;  /* [31:13] */
 } htt_peer_details_tlv;
 
 typedef struct {
