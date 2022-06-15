@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,7 +27,12 @@
 #ifndef _WLAN_HDD_DEBUGFS_LLSTAT_H
 #define _WLAN_HDD_DEBUGFS_LLSTAT_H
 
-#define DEBUGFS_LLSTATS_BUF_SIZE 12288
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)
+#define DEBUGFS_LLSTATS_BUF_SIZE 32768
+#else
+#define DEBUGFS_LLSTATS_BUF_SIZE 16384
+#endif
+
 #define DEBUGFS_LLSTATS_REQID   4294967295UL
 #define DEBUGFS_LLSTATS_REQMASK 0x7
 
