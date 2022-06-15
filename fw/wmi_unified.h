@@ -1305,6 +1305,8 @@ typedef enum {
     WMI_COEX_GET_ANTENNA_ISOLATION_CMDID,
     WMI_SAR_LIMITS_CMDID,
     WMI_SAR_GET_LIMITS_CMDID,
+    /** Dedicated BT Antenna Mode (DBAM) command */
+    WMI_COEX_DBAM_CMDID,
 
     /**
      *  OBSS scan offload enable/disable commands
@@ -2171,6 +2173,8 @@ typedef enum {
     /* Coex Event */
     WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_COEX),
     WMI_SAR_GET_LIMITS_EVENTID,
+    /** Dedicated BT Antenna Mode (DBAM) complete event */
+    WMI_COEX_DBAM_COMPLETE_EVENTID,
 
     /* LPI Event */
     WMI_LPI_RESULT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_LPI),
@@ -29545,6 +29549,18 @@ typedef struct {
     A_UINT32 config_arg6;
 } WMI_COEX_CONFIG_CMD_fixed_param;
 
+typedef enum wmi_coex_dbam_mode_type {
+    WMI_COEX_DBAM_DISABLE = 0,
+    WMI_COEX_DBAM_ENABLE = 1,
+    WMI_COEX_DBAM_FORCED = 2,
+} WMI_COEX_DBAM_MODE_TYPE;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 dbam_mode; /* wmi_coex_dbam_mode_type enum */
+} wmi_coex_dbam_cmd_fixed_param;
+
 /**
  * This command is sent from WLAN host driver to firmware to
  * request firmware to enable/disable channel avoidance report
@@ -31655,6 +31671,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMDID);
         WMI_RETURN_STRING(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID);
         WMI_RETURN_STRING(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
+        WMI_RETURN_STRING(WMI_COEX_DBAM_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -32309,6 +32326,23 @@ typedef struct {
              isolation_chain2:8, /* [23:16], isolation value for chain 2 */
              isolation_chain3:8; /* [31:24], isolation value for chain 3 */
 } wmi_coex_report_isolation_event_fixed_param;
+
+typedef enum {
+    WMI_COEX_DBAM_COMP_SUCCESS          = 0, /* success, mode is applied */
+    WMI_COEX_DBAM_COMP_ONGOING          = 1, /* success, mode is applied */
+    WMI_COEX_DBAM_COMP_DELAYED          = 2, /* DBAM is delayed and TDD is selected temporarily */
+    WMI_COEX_DBAM_COMP_NOT_SUPPORT      = 3, /* DBAM is not supported */
+    WMI_COEX_DBAM_COMP_TEST_MODE        = 4, /* ignore due to test mode */
+    WMI_COEX_DBAM_COMP_INVALID_PARAM    = 5, /* invalid parameter is received */
+    WMI_COEX_DBAM_COMP_FAIL             = 6, /* command failed */
+} wmi_coex_dbam_comp_status;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_coex_dbam_complete_event_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 comp_status;    /* wmi_coex_dbam_comp_status */
+} wmi_coex_dbam_complete_event_fixed_param;
 
 typedef enum {
     WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT  = 1,

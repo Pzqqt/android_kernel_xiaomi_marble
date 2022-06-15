@@ -1285,6 +1285,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_iface_powersave_stats,
     WMITLV_TAG_STRUC_wmi_roam_bss_info_param,
     WMITLV_TAG_STRUC_wmi_vendor_control_param,
+    WMITLV_TAG_STRUC_wmi_coex_dbam_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_coex_dbam_complete_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1788,6 +1790,7 @@ typedef enum {
     OP(WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMDID) \
     OP(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID) \
     OP(WMI_WOW_COAP_GET_BUF_INFO_CMDID) \
+    OP(WMI_COEX_DBAM_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2077,6 +2080,7 @@ typedef enum {
     OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID) \
     OP(WMI_HALPHY_CTRL_PATH_STATS_EVENTID) \
     OP(WMI_WOW_COAP_BUF_INFO_EVENTID) \
+    OP(WMI_COEX_DBAM_COMPLETE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5109,6 +5113,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param, WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
 
+/* coex dbam cmd */
+#define WMITLV_TABLE_WMI_COEX_DBAM_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_dbam_cmd_fixed_param, wmi_coex_dbam_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_COEX_DBAM_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6917,6 +6926,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_coap_tuple, coap_tuple, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, payloads, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_BUF_INFO_EVENTID);
+
+/* coex dbam cmd complete event */
+#define WMITLV_TABLE_WMI_COEX_DBAM_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_dbam_complete_event_fixed_param, wmi_coex_dbam_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_COEX_DBAM_COMPLETE_EVENTID);
 
 
 
