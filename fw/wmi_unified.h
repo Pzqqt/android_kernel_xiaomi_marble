@@ -18991,6 +18991,8 @@ typedef enum wake_reason_e {
     WOW_REASON_DELAYED_WAKEUP_HOST_CFG_TIMER_ELAPSED,
     /* Data store list is full, so Host wakeup should be triggered */
     WOW_REASON_DELAYED_WAKEUP_DATA_STORE_LIST_FULL,
+    /* Sched PM FW initiated termination event */
+    WOW_REASON_SCHED_PM_TERMINATED,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
