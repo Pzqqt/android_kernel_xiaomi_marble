@@ -9125,12 +9125,18 @@ QDF_STATUS wlan_hdd_set_wlm_latency_level(struct hdd_adapter *adapter,
 		.dealloc = NULL,
 	};
 
+	/* ignore unless in STA mode */
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_debug_rl("WLM offload is supported in STA mode only");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	adapter->multi_ll_resp_expected = true;
 
 	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
-		return 0;
+		return QDF_STATUS_E_FAILURE;
 	}
 	adapter->multi_ll_response_cookie = osif_request_cookie(request);
 	adapter->multi_ll_req_in_progress = true;
