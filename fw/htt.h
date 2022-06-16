@@ -5180,6 +5180,7 @@ enum htt_srng_ring_id {
     HTT_RX_MON_HOST2MON_BUF_RING,   /* Status buffers and Packet buffers are provided by host */
     HTT_RX_MON_MON2HOST_DEST_RING, /* Used by monitor to fill status buffers and provide to host */
     HTT_LPASS_TO_FW_RXBUF_RING,    /* new LPASS to FW refill ring to recycle rx buffers */
+    HTT_HOST3_TO_FW_RXBUF_RING,    /* used by host for EasyMesh feature */
     /* Add Other SRING which can't be directly configured by host software above this line */
 };
 

@@ -32543,6 +32543,7 @@ typedef enum {
     WMI_PDEV_ROUTING_TYPE_IPV4,
     WMI_PDEV_ROUTING_TYPE_IPV6,
     WMI_PDEV_ROUTING_TYPE_EAP,
+    WMI_PDEV_ROUTING_TYPE_VLAN,
 } wmi_pdev_pkt_routing_type;
 
 typedef enum {
