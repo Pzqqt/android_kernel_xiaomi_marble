@@ -1153,8 +1153,9 @@ static int sde_encoder_phys_vid_poll_for_active_region(struct sde_encoder_phys *
 	vid_enc = to_sde_encoder_phys_vid(phys_enc);
 	timing = &vid_enc->timing_params;
 
-	/* if programmable fetch is not enabled return early */
-	if (!programmable_fetch_get_num_lines(vid_enc, timing))
+	/* if programmable fetch is not enabled return early or if it is not a DSI interface*/
+	if (!programmable_fetch_get_num_lines(vid_enc, timing) ||
+			phys_enc->hw_intf->cap->type != INTF_DSI)
 		return 0;
 
 	poll_time_us = DIV_ROUND_UP(1000000, timing->vrefresh) / MAX_POLL_CNT;
