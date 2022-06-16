@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -102,7 +103,7 @@ static inline void wlan_set_console_log_levels(uint32_t console_log_levels) {}
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && \
-	defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
+	defined(CONNECTIVITY_PKTLOG)
 /**
  * wlan_deregister_txrx_packetdump() - tx/rx packet dump
  *  deregistration
@@ -150,7 +151,7 @@ static inline void wlan_report_log_completion(uint32_t is_fatal,
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && \
-	defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
+	defined(CONNECTIVITY_PKTLOG)
 void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data);
 #else
 static inline

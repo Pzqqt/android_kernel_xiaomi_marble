@@ -53,17 +53,15 @@
 #endif
 
 #if defined(FEATURE_FW_LOG_PARSING) || defined(FEATURE_WLAN_DIAG_SUPPORT) || \
-	defined(FEATURE_PKTLOG)
+	defined(CONNECTIVITY_PKTLOG)
 #include <cds_api.h>
 #include "ani_global.h"
 #endif
 
-#ifdef FEATURE_PKTLOG
-#ifndef REMOVE_PKT_LOG
+#ifdef CONNECTIVITY_PKTLOG
 #include "wma.h"
 #include "pktlog_ac.h"
 #include <cdp_txrx_misc.h>
-#endif
 #endif
 
 #define MAX_NUM_PKT_LOG 32
@@ -82,7 +80,7 @@
 #define MAX_SKBMSG_LENGTH 4096
 
 #define WLAN_LOG_BUFFER_SIZE 2048
-#if defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
+#ifdef CONNECTIVITY_PKTLOG
 /**
  * Buffer to accommodate -
  * pktlog buffer (2048 bytes)
@@ -103,7 +101,7 @@
 	 (PKT_DUMP_HDR_SIZE) + (EXTRA_PADDING))
 #else
 #define MAX_PKTSTATS_LENGTH WLAN_LOG_BUFFER_SIZE
-#endif /* FEATURE_PKTLOG */
+#endif /* CONNECTIVITY_PKTLOG */
 
 #define MAX_PKTSTATS_BUFF   16
 #define HOST_LOG_DRIVER_MSG              0x001
@@ -483,7 +481,7 @@ static int nl_srv_bcast_host_logs(struct sk_buff *skb)
 }
 #endif
 
-#ifndef REMOVE_PKT_LOG
+#ifdef CONNECTIVITY_PKTLOG
 /**
  * pkt_stats_fill_headers() - This function adds headers to skb
  * @skb: skb to which headers need to be added
@@ -1352,8 +1350,7 @@ void wlan_flush_host_logs_for_fatal(void)
 	wake_up_interruptible(&gwlan_logging.wait_queue);
 }
 
-#ifdef FEATURE_PKTLOG
-#ifndef REMOVE_PKT_LOG
+#ifdef CONNECTIVITY_PKTLOG
 
 static uint8_t gtx_count;
 static uint8_t grx_count;
@@ -1588,9 +1585,7 @@ static void send_packetdump(ol_txrx_soc_handle soc,
 	if (wlan_op_mode_sta != cdp_get_opmode(soc, vdev_id))
 		return;
 
-#if defined(HELIUMPLUS)
 	pktlog_hdr.flags |= PKTLOG_HDR_SIZE_16;
-#endif
 
 	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
 	pktlog_hdr.size = sizeof(pd_hdr) + netbuf->len;
@@ -1623,9 +1618,7 @@ static void send_packetdump_monitor(uint8_t type)
 	struct ath_pktlog_hdr pktlog_hdr = {0};
 	struct packet_dump pd_hdr = {0};
 
-#if defined(HELIUMPLUS)
 	pktlog_hdr.flags |= PKTLOG_HDR_SIZE_16;
-#endif
 
 	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
 	pktlog_hdr.size = sizeof(pd_hdr);
@@ -1772,6 +1765,5 @@ void wlan_register_txrx_packetdump(uint8_t pdev_id)
 
 	csr_packetdump_timer_start();
 }
-#endif /* REMOVE_PKT_LOG */
-#endif /* FEATURE_PKTLOG */
+#endif /* CONNECTIVITY_PKTLOG */
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
