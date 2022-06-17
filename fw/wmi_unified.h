@@ -16361,6 +16361,10 @@ typedef struct {
     A_UINT32 ieee_link_id;
     /** eMLSR transition timeout in microseconds */
     A_UINT32 emlsr_trans_timeout_us;
+    /** eMLSR transition delay in microseconds */
+    A_UINT32 emlsr_trans_delay_us;
+    /** eMLSR padding delay in microseconds */
+    A_UINT32 emlsr_padding_delay_us;
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
@@ -30146,6 +30150,45 @@ typedef enum wmi_hw_mode_config_type {
 #define WMI_NSS_RATIO_INFO_GET(dword) \
     WMI_GET_BITS(dword, WMI_NSS_RATIO_INFO_BITPOS, 4)
 
+/*
+ * 11BE EML Capability Set and Get macros
+ */
+#define WMI_SUPPORT_EMLSR_GET(eml_capability) WMI_GET_BITS(eml_capability, 0, 1)
+#define WMI_SUPPORT_EMLSR_SET(eml_capability, value) WMI_SET_BITS(eml_capability, 0, 1, value)
+
+#define WMI_EMLSR_PADDING_DELAY_GET(eml_capability) WMI_GET_BITS(eml_capability, 1, 3)
+#define WMI_EMLSR_PADDING_DELAY_SET(eml_capability, value) WMI_SET_BITS(eml_capability, 1, 3, value)
+
+#define WMI_EMLSR_TRANSITION_DELAY_GET(eml_capability) WMI_GET_BITS(eml_capability, 4, 3)
+#define WMI_EMLSR_TRANSITION_DELAY_SET(eml_capability, value) WMI_SET_BITS(eml_capability, 4, 3, value)
+
+#define WMI_SUPPORT_EMLMR_GET(eml_capability) WMI_GET_BITS(eml_capability, 7, 1)
+#define WMI_SUPPORT_EMLMR_SET(eml_capability, value) WMI_SET_BITS(eml_capability, 7, 1, value)
+
+#define WMI_EMLMR_DELAY_GET(eml_capability) WMI_GET_BITS(eml_capability, 8, 3)
+#define WMI_EMLMR_DELAY_SET(eml_capability, value) WMI_SET_BITS(eml_capability, 8, 3, value)
+
+#define WMI_TRANSITION_TIMEOUT_GET(eml_capability) WMI_GET_BITS(eml_capability, 11, 4)
+#define WMI_TRANSITION_TIMEOUT_SET(eml_capability, value) WMI_SET_BITS(eml_capability, 11, 4, value)
+
+/*
+ * 11BE MLD Capability Set and Get macros
+ */
+#define WMI_MAX_NUM_SIMULTANEOUS_LINKS_GET(mld_capability) WMI_GET_BITS(mld_capability, 0, 4)
+#define WMI_MAX_NUM_SIMULTANEOUS_LINKS_SET(mld_capability, value) WMI_SET_BITS(mld_capability, 0, 4, value)
+
+#define WMI_SUPPORT_SRS_GET(mld_capability) WMI_GET_BITS(mld_capability, 4, 1)
+#define WMI_SUPPORT_SRS_SET(mld_capability, value) WMI_SET_BITS(mld_capability, 4, 1, value)
+
+#define WMI_TID_TO_LINK_NEGOTIATION_GET(mld_capability) WMI_GET_BITS(mld_capability, 5, 2)
+#define WMI_TID_TO_LINK_NEGOTIATION_SET(mld_capability, value) WMI_SET_BITS(mld_capability, 5, 2, value)
+
+#define WMI_FREQ_SEPERATION_STR_GET(mld_capability) WMI_GET_BITS(mld_capability, 7, 5)
+#define WMI_FREQ_SEPERATION_STR_SET(mld_capability, value) WMI_SET_BITS(mld_capability, 7, 5, value)
+
+#define WMI_SUPPORT_AAR_GET(mld_capability) WMI_GET_BITS(mld_capability, 12, 1)
+#define WMI_SUPPORT_AAR_SET(mld_capability, value) WMI_SET_BITS(mld_capability, 12, 1, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES */
     /* hw_mode_id - identify a particular set of HW characteristics, as specified
@@ -30395,11 +30438,32 @@ typedef struct {
      */
     A_UINT32 eht_supp_mcs_ext_2G[WMI_MAX_EHT_SUPP_MCS_2G_SIZE];
     A_UINT32 eht_supp_mcs_ext_5G[WMI_MAX_EHT_SUPP_MCS_5G_SIZE];
-    /**************************************************************************
-     * Currently pls do not add any new param after EHT
-     * as still under development.
-     * We can add new param before it.
-     **************************************************************************/
+    union {
+        struct {
+            A_UINT32 emlsr_support:1,
+                     emlsr_padding_delay:3,
+                     emlsr_transition_delay:3,
+                     emlmr_support:1,
+                     emlmr_delay:3,
+                     transition_timeout:4,
+                     reserved: 17;
+        };
+        A_UINT32 eml_capability;
+    };
+    union {
+        struct {
+            A_UINT32 max_num_simultaneous_links:4,
+                     srs_support:1,
+                     tid_to_link_negotiation_support:2, /* Set to 0 if TID-to-link mapping is not supported by the MLD.
+                                                         * Set to 1 if MLD supports the mapping of each TID to the same or different link set.
+                                                         * Set to 2 if MLD only supports the mapping of all TIDs to the same link set.
+                                                         * Value  3 is reserved */
+                     freq_separation_str:5,
+                     aar_support:1,
+                     reserved2: 19;
+        };
+        A_UINT32 mld_capability;
+    };
 } WMI_MAC_PHY_CAPABILITIES_EXT;
 
 typedef struct {
