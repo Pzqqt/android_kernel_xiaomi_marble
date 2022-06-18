@@ -14123,6 +14123,11 @@ typedef enum {
      */
     WMI_VDEV_PARAM_VDEV_TRAFFIC_CONFIG,                   /* 0xB6 */
 
+    /* Final bmiss time for Non WOW mode in sec */
+    WMI_VDEV_PARAM_FINAL_BMISS_TIME_SEC,                  /* 0xB7 */
+    /* Final bmiss time for WOW mode in sec */
+    WMI_VDEV_PARAM_FINAL_BMISS_TIME_WOW_SEC,              /* 0xB8 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
