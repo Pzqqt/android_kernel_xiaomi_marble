@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1484,33 +1485,76 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 }
 
 /**
- * driver_hal_status_map() - maps driver to hal
- * status
- * @status: status to be mapped
+ * qdf_hal_tx_status_map() - map Tx completion status with
+ * packet dump Tx status
+ * @status: Tx completion status
  *
- * This function is used to map driver to hal status
- *
- * Return: None
- *
+ * Return: packet dump tx_status enum
  */
-static void driver_hal_status_map(uint8_t *status)
+static inline enum tx_pkt_fate
+qdf_hal_tx_status_map(enum qdf_dp_tx_rx_status status)
 {
-	switch (*status) {
-	case tx_status_ok:
-		*status = TX_PKT_FATE_ACKED;
-		break;
-	case tx_status_discard:
-		*status = TX_PKT_FATE_DRV_DROP_OTHER;
-		break;
-	case tx_status_no_ack:
-		*status = TX_PKT_FATE_SENT;
-		break;
-	case tx_status_download_fail:
-		*status = TX_PKT_FATE_FW_QUEUED;
-		break;
+	switch (status) {
+	case QDF_TX_RX_STATUS_OK:
+		return TX_PKT_FATE_ACKED;
+	case QDF_TX_RX_STATUS_FW_DISCARD:
+		return TX_PKT_FATE_FW_DROP_OTHER;
+	case QDF_TX_RX_STATUS_NO_ACK:
+		return TX_PKT_FATE_SENT;
+	case QDF_TX_RX_STATUS_DROP:
+		return TX_PKT_FATE_DRV_DROP_OTHER;
+	case QDF_TX_RX_STATUS_DOWNLOAD_SUCC:
+		return TX_PKT_FATE_DRV_QUEUED;
 	default:
-		*status = TX_PKT_FATE_DRV_DROP_OTHER;
-		break;
+		return TX_PKT_FATE_DRV_DROP_OTHER;
+	}
+}
+
+/**
+ * qdf_hal_rx_status_map() - map Rx status with
+ * packet dump Rx status
+ * @status: Rx status
+ *
+ * Return: packet dump rx_status enum
+ */
+static inline enum rx_pkt_fate
+qdf_hal_rx_status_map(enum qdf_dp_tx_rx_status status)
+{
+	switch (status) {
+	case QDF_TX_RX_STATUS_OK:
+		return RX_PKT_FATE_SUCCESS;
+	case QDF_TX_RX_STATUS_FW_DISCARD:
+		return RX_PKT_FATE_FW_DROP_OTHER;
+	case QDF_TX_RX_STATUS_DROP:
+		return RX_PKT_FATE_DRV_DROP_OTHER;
+	case QDF_TX_RX_STATUS_DOWNLOAD_SUCC:
+		return RX_PKT_FATE_DRV_QUEUED;
+	default:
+		return RX_PKT_FATE_DRV_DROP_OTHER;
+	}
+}
+
+/**
+ * qdf_hal_pkt_type_map() - map qdf packet type with
+ * packet dump packet type
+ * @type: packet type
+ *
+ * Return: Packet dump packet type
+ */
+static inline enum pkt_type
+qdf_hal_pkt_type_map(enum qdf_pkt_type type)
+{
+	switch (type) {
+	case QDF_TX_MGMT_PKT:
+		return TX_MGMT_PKT;
+	case QDF_TX_DATA_PKT:
+		return TX_DATA_PKT;
+	case QDF_RX_MGMT_PKT:
+		return RX_MGMT_PKT;
+	case QDF_RX_DATA_PKT:
+		return RX_DATA_PKT;
+	default:
+		return INVALID_PKT;
 	}
 }
 
@@ -1657,9 +1701,12 @@ static bool check_txrx_packetdump_count(uint8_t pdev_id)
 static void tx_packetdump_cb(ol_txrx_soc_handle soc,
 			     uint8_t pdev_id, uint8_t vdev_id,
 			     qdf_nbuf_t netbuf,
-			     uint8_t status, uint8_t type)
+			     enum qdf_dp_tx_rx_status status,
+			     enum qdf_pkt_type type)
 {
 	bool temp;
+	enum tx_pkt_fate tx_status = qdf_hal_tx_status_map(status);
+	enum pkt_type pkt_type = qdf_hal_pkt_type_map(type);
 
 	if (!soc)
 		return;
@@ -1668,8 +1715,7 @@ static void tx_packetdump_cb(ol_txrx_soc_handle soc,
 	if (temp)
 		return;
 
-	driver_hal_status_map(&status);
-	send_packetdump(soc, vdev_id, netbuf, status, type);
+	send_packetdump(soc, vdev_id, netbuf, tx_status, pkt_type);
 }
 
 
@@ -1691,9 +1737,12 @@ static void tx_packetdump_cb(ol_txrx_soc_handle soc,
 static void rx_packetdump_cb(ol_txrx_soc_handle soc,
 			     uint8_t pdev_id, uint8_t vdev_id,
 			     qdf_nbuf_t netbuf,
-			     uint8_t status, uint8_t type)
+			     enum qdf_dp_tx_rx_status status,
+			     enum qdf_pkt_type type)
 {
 	bool temp;
+	enum rx_pkt_fate rx_status = qdf_hal_rx_status_map(status);
+	enum pkt_type pkt_type = qdf_hal_pkt_type_map(type);
 
 	if (!soc)
 		return;
@@ -1702,7 +1751,7 @@ static void rx_packetdump_cb(ol_txrx_soc_handle soc,
 	if (temp)
 		return;
 
-	send_packetdump(soc, vdev_id, netbuf, status, type);
+	send_packetdump(soc, vdev_id, netbuf, rx_status, pkt_type);
 }
 
 void wlan_register_txrx_packetdump(uint8_t pdev_id)
