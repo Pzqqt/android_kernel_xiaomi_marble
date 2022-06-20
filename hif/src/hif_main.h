@@ -184,6 +184,20 @@ struct hif_latency_detect {
  * for defined here
  */
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
+
+#define HIF_CE_MAX_LATEST_HIST 2
+
+struct latest_evt_history {
+	uint64_t irq_entry_ts;
+	uint64_t bh_entry_ts;
+	uint64_t bh_resched_ts;
+	uint64_t bh_exit_ts;
+	uint64_t bh_work_ts;
+	int cpu_id;
+	uint32_t ring_hp;
+	uint32_t ring_tp;
+};
+
 struct ce_desc_hist {
 	qdf_atomic_t history_index[CE_COUNT_MAX];
 	bool enable[CE_COUNT_MAX];
@@ -192,7 +206,13 @@ struct ce_desc_hist {
 	uint32_t hist_index;
 	uint32_t hist_id;
 	void *hist_ev[CE_COUNT_MAX];
+	struct latest_evt_history latest_evt[HIF_CE_MAX_LATEST_HIST];
 };
+
+void hif_record_latest_evt(struct ce_desc_hist *ce_hist,
+			   uint8_t type,
+			   int ce_id, uint64_t time,
+			   uint32_t hp, uint32_t tp);
 #endif /*defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)*/
 
 /**
