@@ -935,6 +935,18 @@ void dsi_display_toggle_error_interrupt_status(struct dsi_display * display, boo
 		ctrl = &display->ctrl[i];
 		if (!ctrl->ctrl)
 			continue;
+
+		/*
+		 * Make sure not to toggle error status and error interrupts
+		 * while a command transfer is going on.
+		 */
+
+		if (ctrl->ctrl->post_tx_queued) {
+			flush_workqueue(display->post_cmd_tx_workq);
+			cancel_work_sync(&ctrl->ctrl->post_cmd_tx_work);
+			ctrl->ctrl->post_tx_queued = false;
+		}
+
 		dsi_ctrl_toggle_error_interrupt_status(ctrl->ctrl, enable);
 	}
 }
