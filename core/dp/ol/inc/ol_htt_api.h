@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2014-2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -396,7 +397,7 @@ void htt_mark_first_wakeup_packet(htt_pdev_handle pdev, uint8_t value);
 
 typedef void (*tp_rx_pkt_dump_cb)(qdf_nbuf_t msdu, uint8_t peer_id,
 			uint8_t status);
-#ifdef REMOVE_PKT_LOG
+#ifndef CONNECTIVITY_PKTLOG
 static inline
 void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
 				       tp_rx_pkt_dump_cb ol_rx_pkt_dump_call)
