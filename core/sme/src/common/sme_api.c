@@ -235,8 +235,9 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		    param->status == SET_HW_MODE_STATUS_ALREADY)
 			status = QDF_STATUS_SUCCESS;
 
-		wlan_cm_hw_mode_change_resp(mac->pdev, session_id, request_id,
-					    status);
+		wlan_cm_handle_hw_mode_change_resp(mac->pdev, session_id,
+						   request_id,
+						   status);
 	}
 
 end:
