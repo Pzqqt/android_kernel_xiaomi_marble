@@ -5274,10 +5274,13 @@ void cm_roam_trigger_info_event(struct wmi_roam_trigger_info *data,
 	qdf_mem_free(log_record);
 }
 
+#define ETP_MAX_VALUE 10000000
+
 void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 				  uint8_t cand_ap_idx)
 {
 	struct wlan_log_record *log_record = NULL;
+	uint32_t etp;
 
 	log_record = qdf_mem_malloc(sizeof(*log_record));
 	if (!log_record)
@@ -5297,7 +5300,13 @@ void cm_roam_candidate_info_event(struct wmi_roam_candidate_info *ap,
 	log_record->ap.rssi  = (-1) * ap->rssi;
 	log_record->ap.cu_load = ap->cu_load;
 	log_record->ap.total_score = ap->total_score;
-	log_record->ap.etp = ap->etp;
+	etp = ap->etp * 1000;
+
+	if (etp > ETP_MAX_VALUE)
+		log_record->ap.etp = ETP_MAX_VALUE;
+	else
+		log_record->ap.etp = etp;
+
 	log_record->ap.idx = cand_ap_idx;
 	log_record->ap.freq = ap->freq;
 
