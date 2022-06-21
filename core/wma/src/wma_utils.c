@@ -1738,7 +1738,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 
 	link_stats_results->paramId = WMI_LINK_STATS_ALL_PEER;
 	link_stats_results->rspId = fixed_param->request_id;
-	link_stats_results->ifaceId = 0;
+	link_stats_results->ifaceId = fixed_param->vdev_id_info.vdev_id;
 	link_stats_results->num_peers = fixed_param->num_peers;
 	link_stats_results->peer_event_number = fixed_param->peer_event_number;
 	link_stats_results->moreResultToFollow = fixed_param->more_data;
@@ -2311,7 +2311,7 @@ __wma_unified_link_radio_stats_event_handler(tp_wma_handle wma_handle,
 link_radio_stats_cb:
 	link_stats_results->paramId = WMI_LINK_STATS_RADIO;
 	link_stats_results->rspId = fixed_param->request_id;
-	link_stats_results->ifaceId = 0;
+	link_stats_results->ifaceId = fixed_param->vdev_id_info.vdev_id;
 	link_stats_results->peer_event_number = 0;
 
 	/*
