@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved
  */
 
 #include <linux/slab.h>
@@ -68,6 +69,7 @@ int ipa_rm_peers_list_create(int max_peers,
 
 list_alloc_fail:
 	kfree(*peers_list);
+	*peers_list = NULL;
 bail:
 	return result;
 }
