@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -155,6 +155,8 @@ struct hdd_config {
 	uint32_t rx_hp_oos_update_limit;
 	uint64_t rx_softirq_max_yield_duration_ns;
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
+	/* bandwidth threshold for super high bandwidth */
+	uint32_t bus_bw_super_high_threshold;
 	/* bandwidth threshold for ultra high bandwidth */
 	uint32_t bus_bw_ultra_high_threshold;
 	/* bandwidth threshold for very high bandwidth */

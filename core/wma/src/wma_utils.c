@@ -4853,11 +4853,23 @@ int wma_latency_level_event_handler(void *wma_ctx, uint8_t *event_buff,
 		(struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 	wmi_vdev_latency_event_fixed_param *event;
 	struct latency_level_data event_data;
+	bool multi_client_ll_support, multi_client_ll_caps;
 
 	if (!pmac) {
 		wma_err("NULL mac handle");
 		return -EINVAL;
 	}
+
+	multi_client_ll_support =
+		pmac->mlme_cfg->wlm_config.multi_client_ll_support;
+	multi_client_ll_caps =
+		wlan_mlme_get_wlm_multi_client_ll_caps(pmac->psoc);
+
+	wma_debug("multi client ll INI:%d, caps:%d", multi_client_ll_support,
+		  multi_client_ll_caps);
+
+	if ((!multi_client_ll_support) || (!multi_client_ll_caps))
+		return -EINVAL;
 
 	if (!pmac->sme.latency_level_event_handler_cb) {
 		wma_err("latency level data handler cb is not registered");
@@ -4878,7 +4890,7 @@ int wma_latency_level_event_handler(void *wma_ctx, uint8_t *event_buff,
 
 	event_data.vdev_id = event->vdev_id;
 	event_data.latency_level = event->latency_level;
-	wma_debug("[MULTI_CLIENT]received event latency level :%d, vdev_id:%d",
+	wma_debug("received event latency level :%d, vdev_id:%d",
 		  event->latency_level, event->vdev_id);
 	pmac->sme.latency_level_event_handler_cb(&event_data,
 						     event->vdev_id);

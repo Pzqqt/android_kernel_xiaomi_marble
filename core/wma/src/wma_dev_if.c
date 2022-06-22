@@ -348,7 +348,8 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->wma_hold_req_queue,
 						      &node2)) {
 		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
-		wma_err("unable to get msg node from request queue");
+		wma_debug("unable to get msg node from request queue for vdev_id %d type %d",
+			  vdev_id, msg_type);
 		return NULL;
 	}
 
@@ -365,7 +366,7 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 		if (QDF_STATUS_SUCCESS != status) {
 			qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 			wma_debug("Failed to remove request. vdev_id %d type %d",
-				 vdev_id, msg_type);
+				  vdev_id, msg_type);
 			return NULL;
 		}
 		break;
@@ -375,13 +376,13 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 
 	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 	if (!found) {
-		wma_err("target request not found for vdev_id %d type %d",
-			 vdev_id, msg_type);
+		wma_debug("target request not found for vdev_id %d type %d",
+			  vdev_id, msg_type);
 		return NULL;
 	}
 
 	wma_debug("target request found for vdev id: %d type %d",
-		 vdev_id, msg_type);
+		  vdev_id, msg_type);
 
 	return req_msg;
 }
@@ -2691,7 +2692,7 @@ static QDF_STATUS wma_set_vdev_latency_level_param(tp_wma_handle wma_handle,
 			mac->mlme_cfg->wlm_config.multi_client_ll_support;
 	multi_client_ll_caps =
 			wlan_mlme_get_wlm_multi_client_ll_caps(mac->psoc);
-	wma_debug("[MULTI_CLIENT] INI support: %d, fw capability:%d",
+	wma_debug("INI support: %d, fw capability:%d",
 		  multi_client_ll_ini_support, multi_client_ll_caps);
 	/*
 	 * Multi-Client arbiter functionality is enabled only if both INI is
@@ -5310,6 +5311,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
 	void *htc_handle;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t vdev_id = add_sta->smesessionId;
 
 	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
@@ -5317,13 +5319,13 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		return;
 	}
 
-	wma_debug("Vdev %d BSSID "QDF_MAC_ADDR_FMT, add_sta->smesessionId,
+	wma_debug("Vdev %d BSSID "QDF_MAC_ADDR_FMT, vdev_id,
 		  QDF_MAC_ADDR_REF(add_sta->bssId));
 
-	if (wma_is_vdev_in_ap_mode(wma, add_sta->smesessionId))
+	if (wma_is_vdev_in_ap_mode(wma, vdev_id))
 		oper_mode = BSS_OPERATIONAL_MODE_AP;
 
-	if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces, add_sta->smesessionId))
+	if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces, vdev_id))
 		oper_mode = BSS_OPERATIONAL_MODE_NDI;
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
@@ -5334,12 +5336,17 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		wma_add_sta_req_ap_mode(wma, add_sta);
 		break;
 	case BSS_OPERATIONAL_MODE_NDI:
-		status = wma_add_sta_ndi_mode(wma, add_sta);
+		wma_add_sta_ndi_mode(wma, add_sta);
 		break;
 	}
 
+	/*
+	 * not use add_sta after this to avoid use after free
+	 * as it maybe freed.
+	 */
+
 	/* handle wow for sap with 1 or more peer in same way */
-	if (wma_is_vdev_in_sap_mode(wma, add_sta->smesessionId)) {
+	if (wma_is_vdev_in_sap_mode(wma, vdev_id)) {
 		bool is_bus_suspend_allowed_in_sap_mode =
 			(wlan_pmo_get_sap_mode_bus_suspend(wma->psoc) &&
 				wmi_service_enabled(wma->wmi_handle,
@@ -5348,7 +5355,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			htc_vote_link_up(htc_handle, HTC_LINK_VOTE_SAP_USER_ID);
 			wmi_info("sap d0 wow");
 		} else {
-			wmi_info("sap d3 wow");
+			wmi_debug("sap d3 wow");
 			wma_sap_d3_wow_client_connect(wma);
 		}
 		wma_sap_prevent_runtime_pm(wma);
@@ -5357,7 +5364,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	}
 
 	/* handle wow for p2pgo with 1 or more peer in same way */
-	if (wma_is_vdev_in_go_mode(wma, add_sta->smesessionId)) {
+	if (wma_is_vdev_in_go_mode(wma, vdev_id)) {
 		bool is_bus_suspend_allowed_in_go_mode =
 			(wlan_pmo_get_go_mode_bus_suspend(wma->psoc) &&
 				wmi_service_enabled(wma->wmi_handle,
@@ -5450,7 +5457,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 					   HTC_LINK_VOTE_SAP_USER_ID);
 			wmi_info("sap d0 wow");
 		} else {
-			wmi_info("sap d3 wow");
+			wmi_debug("sap d3 wow");
 			wma_sap_d3_wow_client_disconnect(wma);
 		}
 		wma_sap_allow_runtime_pm(wma);

@@ -873,6 +873,38 @@ static void lim_tdls_set_he_chan_width(tDot11fIEhe_cap *heCap,
 	}
 }
 
+static void lim_tdls_populate_ppe_caps(struct mac_context *mac,
+				       struct pe_session *session,
+				       tDot11fIEhe_cap *he_cap)
+{
+	uint8_t *ppet;
+
+	/*
+	 * No Need to populate if ppet is not present
+	 */
+	if (!he_cap->ppet_present)
+		return;
+
+	if (!wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
+		ppet = mac->mlme_cfg->he_caps.he_ppet_5g;
+	else
+		ppet = mac->mlme_cfg->he_caps.he_ppet_2g;
+
+	he_cap->ppet.ppe_threshold.num_ppe_th = lim_truncate_ppet(ppet,
+							      MLME_HE_PPET_LEN);
+
+	/*
+	 * If num_ppe_th calculated above is zero and ppet_present is set then
+	 * atleast one byte should be sent with zero data otherwise framework
+	 * will fail add_sta on the peer end.
+	 */
+	if (he_cap->ppet.ppe_threshold.num_ppe_th)
+		qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th, ppet,
+			     MLME_HE_PPET_LEN);
+	else
+		he_cap->ppet.ppe_threshold.num_ppe_th = 1;
+}
+
 static void populate_dot11f_set_tdls_he_cap(struct mac_context *mac,
 					    uint32_t selfDot11Mode,
 					    tDot11fIEhe_cap *heCap,
@@ -882,6 +914,7 @@ static void populate_dot11f_set_tdls_he_cap(struct mac_context *mac,
 	if (IS_DOT11_MODE_HE(selfDot11Mode)) {
 		populate_dot11f_he_caps(mac, NULL, heCap);
 		lim_tdls_set_he_chan_width(heCap, session);
+		lim_tdls_populate_ppe_caps(mac, session, heCap);
 		lim_log_he_cap(mac, heCap);
 		lim_populate_tdls_setup_6g_cap(mac, hecap_6g, session);
 	} else {

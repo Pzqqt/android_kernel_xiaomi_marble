@@ -4179,6 +4179,7 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  QosMapSet;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
+    OPTIE  OperatingMode;
     OPTIE  fils_session;
     OPTIE  fils_public_key;
     OPTIE  fils_key_confirmation;
@@ -4280,6 +4281,7 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  bss_max_idle_period;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
+    OPTIE  OperatingMode;
     OPTIE  he_cap;
     OPTIE  he_op;
     OPTIE  bss_color_change;

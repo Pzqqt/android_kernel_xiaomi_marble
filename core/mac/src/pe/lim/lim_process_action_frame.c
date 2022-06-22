@@ -244,10 +244,7 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 	uint32_t status;
 	tpDphHashNode sta_ptr;
 	uint16_t aid;
-	uint8_t oper_mode;
-	uint8_t cb_mode;
 	uint8_t ch_bw = 0;
-	uint8_t skip_opmode_update = false;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -287,91 +284,17 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 		goto end;
 	}
 
-	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
-		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
-	else
-		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;
-	/*
-	 * Do not update the channel bonding mode if channel bonding
-	 * mode is disabled in INI.
-	 */
-	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
-		pe_debug("channel bonding disabled");
-		goto update_nss;
-	}
+	lim_update_nss(mac_ctx, sta_ptr,
+		       operating_mode_frm->OperatingMode.rxNSS,
+		       session);
 
-	if (sta_ptr->htSupportedChannelWidthSet) {
-		if (WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ <
-				sta_ptr->vhtSupportedChannelWidthSet)
-			oper_mode = eHT_CHANNEL_WIDTH_160MHZ;
-		else
-			oper_mode = sta_ptr->vhtSupportedChannelWidthSet + 1;
-	} else {
-		oper_mode = eHT_CHANNEL_WIDTH_20MHZ;
-	}
-
-	if ((oper_mode == eHT_CHANNEL_WIDTH_80MHZ) &&
-			(operating_mode_frm->OperatingMode.chanWidth >
-				eHT_CHANNEL_WIDTH_80MHZ))
-		skip_opmode_update = true;
-
-	if (!skip_opmode_update && (oper_mode !=
-		operating_mode_frm->OperatingMode.chanWidth)) {
-		uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
-
-		pe_debug("received Chanwidth: %d",
-			 operating_mode_frm->OperatingMode.chanWidth);
-
-		pe_debug(" MAC: %0x:%0x:%0x:%0x:%0x:%0x",
-			mac_hdr->sa[0], mac_hdr->sa[1], mac_hdr->sa[2],
-			mac_hdr->sa[3], mac_hdr->sa[4], mac_hdr->sa[5]);
-
-		if (operating_mode_frm->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_160MHZ
-				&& (fw_vht_ch_wd >= eHT_CHANNEL_WIDTH_160MHZ)) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_160MHZ;
-		} else if (operating_mode_frm->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_80MHZ) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_80MHZ;
-		} else if (operating_mode_frm->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_40MHZ) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_40MHZ;
-		} else if (operating_mode_frm->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_20MHZ) {
-			sta_ptr->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-			sta_ptr->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_20MHZ;
-			ch_bw = eHT_CHANNEL_WIDTH_20MHZ;
-		}
-		lim_check_vht_op_mode_change(mac_ctx, session, ch_bw,
-					     mac_hdr->sa);
-	}
-
-update_nss:
-	if (sta_ptr->vhtSupportedRxNss !=
-			(operating_mode_frm->OperatingMode.rxNSS + 1)) {
-		sta_ptr->vhtSupportedRxNss =
-			operating_mode_frm->OperatingMode.rxNSS + 1;
-		lim_set_nss_change(mac_ctx, session, sta_ptr->vhtSupportedRxNss,
-			mac_hdr->sa);
-	}
-	wlan_son_deliver_opmode(session->vdev,
-				ch_bw,
-				sta_ptr->vhtSupportedRxNss,
-				mac_hdr->sa);
+	if (lim_update_channel_width(mac_ctx, sta_ptr, session,
+				 operating_mode_frm->OperatingMode.chanWidth,
+				 &ch_bw))
+		wlan_son_deliver_opmode(session->vdev,
+					ch_bw,
+					sta_ptr->vhtSupportedRxNss,
+					mac_hdr->sa);
 
 end:
 	qdf_mem_free(operating_mode_frm);
@@ -1511,6 +1434,8 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	tpDphHashNode sta_ds;
 	uint16_t aid, buff_size;
 	bool he_cap = false;
+	bool eht_cap = false;
+	uint8_t extd_buff_size = 0;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -1539,10 +1464,14 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 				       &session->dph.dphHashTable);
 	if (sta_ds && lim_is_session_he_capable(session))
 		he_cap = lim_is_sta_he_capable(sta_ds);
+	if (sta_ds && lim_is_session_eht_capable(session))
+		eht_cap = lim_is_sta_eht_capable(sta_ds);
 	if (sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER)
 		he_cap = lim_is_session_he_capable(session);
 
-	if (he_cap)
+	if (eht_cap)
+		buff_size = MAX_EHT_BA_BUFF_SIZE;
+	else if (he_cap)
 		buff_size = MAX_BA_BUFF_SIZE;
 	else
 		buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
@@ -1550,15 +1479,22 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	if (mac_ctx->usr_cfg_ba_buff_size)
 		buff_size = mac_ctx->usr_cfg_ba_buff_size;
 
+	if (addba_req->addba_extn_element.present)
+		/* addba_extn_element should be updated per 11be spec */
+		extd_buff_size = addba_req->addba_extn_element.reserved >> 2;
+
 	if (addba_req->addba_param_set.buff_size)
 		buff_size = QDF_MIN(buff_size,
 				    addba_req->addba_param_set.buff_size);
+	else if (extd_buff_size)
+		/* limit the buff size */
+		buff_size = QDF_MIN(buff_size, MAX_EHT_BA_BUFF_SIZE);
 
-	pe_debug("token %d tid %d timeout %d buff_size in frame %d buf_size calculated %d ssn %d",
+	pe_debug("token %d tid %d timeout %d buff_size in frame %d buf_size calculated %d ssn %d, extd buff size %d",
 		 addba_req->DialogToken.token, addba_req->addba_param_set.tid,
 		 addba_req->ba_timeout.timeout,
 		 addba_req->addba_param_set.buff_size, buff_size,
-		 addba_req->ba_start_seq_ctrl.ssn);
+		 addba_req->ba_start_seq_ctrl.ssn, extd_buff_size);
 
 	qdf_status = cdp_addba_requestprocess(
 					soc, mac_hdr->sa,

@@ -7537,20 +7537,12 @@ QDF_STATUS sme_multi_client_ll_rsp_register_callback(mac_handle_t mac_handle,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	bool multi_client_ll_support, multi_client_ll_caps;
 
-	multi_client_ll_support =
-		mac->mlme_cfg->wlm_config.multi_client_ll_support;
-	multi_client_ll_caps =
-		wlan_mlme_get_wlm_multi_client_ll_caps(mac->psoc);
-
-	if (multi_client_ll_support  && multi_client_ll_caps) {
-		status = sme_acquire_global_lock(&mac->sme);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			mac->sme.latency_level_event_handler_cb =
-					latency_level_event_handler_cb;
-			sme_release_global_lock(&mac->sme);
-		}
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.latency_level_event_handler_cb =
+				latency_level_event_handler_cb;
+		sme_release_global_lock(&mac->sme);
 	}
 
 	return status;

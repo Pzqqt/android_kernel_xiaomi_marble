@@ -5607,12 +5607,14 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	uint8_t tx_flag = 0;
 	uint8_t vdev_id = 0;
 	uint16_t buff_size, status_code, batimeout;
+	uint16_t frm_buff_size = 0;
 	uint8_t dialog_token;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t he_frag = 0;
 	tpDphHashNode sta_ds = NULL;
 	uint16_t aid;
 	bool he_cap = false, peer_he_cap = false;
+	bool eht_cap = false;
 	struct wlan_mlme_qos *qos_aggr;
 
 	vdev_id = session->vdev_id;
@@ -5631,49 +5633,72 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
 				       &session->dph.dphHashTable);
+	if (sta_ds && lim_is_session_he_capable(session))
+		he_cap = lim_is_sta_he_capable(sta_ds);
+
+	if (sta_ds && lim_is_session_eht_capable(session))
+		eht_cap = lim_is_sta_eht_capable(sta_ds);
+
 	if ((LIM_IS_STA_ROLE(session) && qos_aggr->rx_aggregation_size == 1 &&
 	    !mac_ctx->usr_cfg_ba_buff_size) || mac_ctx->reject_addba_req) {
 		frm.Status.status = STATUS_REQUEST_DECLINED;
 		pe_err("refused addba req for rx_aggregation_size: %d mac_ctx->reject_addba_req: %d",
 		       qos_aggr->rx_aggregation_size, mac_ctx->reject_addba_req);
 	} else if (LIM_IS_STA_ROLE(session) && !mac_ctx->usr_cfg_ba_buff_size) {
-		frm.addba_param_set.buff_size =
+		frm_buff_size =
 			QDF_MIN(qos_aggr->rx_aggregation_size, calc_buff_size);
-	} else {
-		if (sta_ds && lim_is_session_he_capable(session))
-			he_cap = lim_is_sta_he_capable(sta_ds);
+		pe_debug("rx_aggregation_size %d, calc_buff_size %d",
+			 qos_aggr->rx_aggregation_size, calc_buff_size);
 
+		if (eht_cap) {
+			if (frm_buff_size > MAX_EHT_BA_BUFF_SIZE)
+				frm_buff_size = MAX_EHT_BA_BUFF_SIZE;
+		} else {
+			if (frm_buff_size > MAX_BA_BUFF_SIZE)
+				frm_buff_size = MAX_BA_BUFF_SIZE;
+		}
+	} else {
 		if (sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER)
-			frm.addba_param_set.buff_size = calc_buff_size;
+			frm_buff_size = calc_buff_size;
+		else if (eht_cap)
+			frm_buff_size = MAX_EHT_BA_BUFF_SIZE;
 		else if (he_cap)
-			frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
+			frm_buff_size = MAX_BA_BUFF_SIZE;
 		else
-			frm.addba_param_set.buff_size =
-					SIR_MAC_BA_DEFAULT_BUFF_SIZE;
+			frm_buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
 
 		if (mac_ctx->usr_cfg_ba_buff_size)
-			frm.addba_param_set.buff_size =
-					mac_ctx->usr_cfg_ba_buff_size;
+			frm_buff_size = mac_ctx->usr_cfg_ba_buff_size;
 
-		if (frm.addba_param_set.buff_size > MAX_BA_BUFF_SIZE)
-			frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
+		if (eht_cap) {
+			if (frm_buff_size > MAX_EHT_BA_BUFF_SIZE)
+				frm_buff_size = MAX_EHT_BA_BUFF_SIZE;
+		} else {
+			if (frm_buff_size > MAX_BA_BUFF_SIZE)
+				frm_buff_size = MAX_BA_BUFF_SIZE;
+		}
 
-		if (frm.addba_param_set.buff_size > SIR_MAC_BA_DEFAULT_BUFF_SIZE) {
+		if (frm_buff_size > SIR_MAC_BA_DEFAULT_BUFF_SIZE) {
 			if (session->active_ba_64_session) {
-				frm.addba_param_set.buff_size =
-					SIR_MAC_BA_DEFAULT_BUFF_SIZE;
+				frm_buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
 			}
 		} else if (!session->active_ba_64_session) {
 			session->active_ba_64_session = true;
 		}
-		if (buff_size && (frm.addba_param_set.buff_size > buff_size)) {
+		if (buff_size && frm_buff_size > buff_size) {
 			pe_debug("buff size: %d larger than peer's capability: %d",
-				 frm.addba_param_set.buff_size, buff_size);
-			frm.addba_param_set.buff_size = buff_size;
+				 frm_buff_size, buff_size);
+			frm_buff_size = buff_size;
 		}
 	}
 
+	/* In case where AP advertizes BA window size which is different
+	 * than our max supported BA window size.
+	 */
+	cdp_tid_update_ba_win_size(soc, peer_mac, vdev_id, tid, frm_buff_size);
+
 	frm.addba_param_set.tid = tid;
+	frm.addba_param_set.buff_size = frm_buff_size % MAX_EHT_BA_BUFF_SIZE;
 	if (sta_ds)
 		peer_he_cap = lim_is_sta_he_capable(sta_ds);
 
@@ -5692,6 +5717,9 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	if (addba_extn_present) {
 		frm.addba_extn_element.present = 1;
 		frm.addba_extn_element.no_fragmentation = 1;
+		/* addba_extn_element should be updated per 11be spec */
+		frm.addba_extn_element.reserved =
+				(frm_buff_size / MAX_EHT_BA_BUFF_SIZE) << 2;
 		if (lim_is_session_he_capable(session)) {
 			he_frag = lim_get_session_he_frag_cap(session);
 			if (he_frag != 0) {
@@ -5709,11 +5737,12 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		 tid, frm.DialogToken.token, frm.Status.status,
 		 frm.addba_param_set.buff_size,
 		 frm.addba_param_set.amsdu_supp);
-	pe_debug("addba_extn %d he_capable %d no_frag %d he_frag %d",
-		addba_extn_present,
-		lim_is_session_he_capable(session),
-		frm.addba_extn_element.no_fragmentation,
-		frm.addba_extn_element.he_frag_operation);
+	pe_debug("addba_extn %d he_capable %d no_frag %d he_frag %d, exted buff size %d",
+		 addba_extn_present,
+		 lim_is_session_he_capable(session),
+		 frm.addba_extn_element.no_fragmentation,
+		 frm.addba_extn_element.he_frag_operation,
+		 frm.addba_extn_element.reserved >> 2);
 
 	status = dot11f_get_packed_addba_rsp_size(mac_ctx, &frm, &payload_size);
 	if (DOT11F_FAILED(status)) {

@@ -5966,8 +5966,8 @@ static int drv_cmd_invalid(struct hdd_adapter *adapter,
 		   TRACE_CODE_HDD_UNSUPPORTED_IOCTL,
 		   adapter->vdev_id, 0);
 
-	hdd_warn("%s: Unsupported driver command \"%s\"",
-		 adapter->dev->name, command);
+	hdd_debug("%s: Unsupported driver command \"%s\"",
+		  adapter->dev->name, command);
 
 	return -ENOTSUPP;
 }

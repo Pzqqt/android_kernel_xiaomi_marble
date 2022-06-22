@@ -3943,6 +3943,7 @@ static void hdd_check_for_objmgr_peer_leaks(struct wlan_objmgr_psoc *psoc)
 
 	/* get module id which cause the leak and release ref */
 	wlan_objmgr_for_each_psoc_vdev(psoc, vdev_id, vdev) {
+		wlan_vdev_obj_lock(vdev);
 		wlan_objmgr_for_each_vdev_peer(vdev, peer) {
 			qdf_atomic_t *ref_id_dbg;
 			int ref_id;
@@ -3952,6 +3953,7 @@ static void hdd_check_for_objmgr_peer_leaks(struct wlan_objmgr_psoc *psoc)
 			wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs)
 				wlan_objmgr_peer_release_ref(peer, ref_id);
 		}
+		wlan_vdev_obj_unlock(vdev);
 	}
 }
 
@@ -6130,7 +6132,7 @@ static void hdd_set_multi_client_ll_support(struct hdd_adapter *adapter)
 	multi_client_ll_caps =
 		ucfg_mlme_get_wlm_multi_client_ll_caps(hdd_ctx->psoc);
 
-	hdd_debug("[MULTI_CLIENT] fw caps: %d, ini: %d", multi_client_ll_caps,
+	hdd_debug("fw caps: %d, ini: %d", multi_client_ll_caps,
 		  multi_client_ll_ini_support);
 	if (multi_client_ll_caps && multi_client_ll_ini_support)
 		adapter->multi_client_ll_support = true;
@@ -10677,6 +10679,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	cpumask_t pm_qos_cpu_mask_tx, pm_qos_cpu_mask_rx, pm_qos_cpu_mask;
 	bool is_rx_pm_qos_high;
 	bool is_tx_pm_qos_high;
+	bool pmqos_on_low_tput = false;
 	enum tput_level tput_level;
 	struct bbm_params param = {0};
 	bool legacy_client = false;
@@ -10690,6 +10693,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->high_bus_bw_request) {
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
 		tput_level = TPUT_LEVEL_VERY_HIGH;
+	} else if (total_pkts > hdd_ctx->config->bus_bw_super_high_threshold) {
+		next_vote_level = PLD_BUS_WIDTH_MAX;
+		tput_level = TPUT_LEVEL_SUPER_HIGH;
 	} else if (total_pkts > hdd_ctx->config->bus_bw_ultra_high_threshold) {
 		next_vote_level = PLD_BUS_WIDTH_ULTRA_HIGH;
 		tput_level = TPUT_LEVEL_ULTRA_HIGH;
@@ -10717,7 +10723,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	 */
 	if (!ucfg_ipa_is_fw_wdi_activated(hdd_ctx->pdev) &&
 	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
-	    (total_pkts > hdd_ctx->config->bus_bw_dbs_threshold)) {
+	    (total_pkts > hdd_ctx->config->bus_bw_dbs_threshold) &&
+	    (tput_level < TPUT_LEVEL_SUPER_HIGH)) {
 		next_vote_level = PLD_BUS_WIDTH_ULTRA_HIGH;
 		tput_level = TPUT_LEVEL_ULTRA_HIGH;
 	}
@@ -10827,6 +10834,13 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			is_rx_pm_qos_high = false;
 			is_tx_pm_qos_high = false;
 			cpumask_clear(&pm_qos_cpu_mask);
+			if (next_vote_level == PLD_BUS_WIDTH_LOW &&
+			    rx_packets > tx_packets &&
+			    !legacy_client) {
+				pmqos_on_low_tput = true;
+				hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask,
+							   false);
+			}
 		} else {
 			cpumask_clear(&pm_qos_cpu_mask);
 
@@ -10846,7 +10860,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	}
 
 	if (vote_level_change || tx_level_change || rx_level_change) {
-		hdd_debug("tx:%llu[%llu(off)+%llu(no-off)] rx:%llu[%llu(off)+%llu(no-off)] next_level(vote %u rx %u tx %u rtpm %d) pm_qos(rx:%u,%*pb tx:%u,%*pb)",
+		hdd_debug("tx:%llu[%llu(off)+%llu(no-off)] rx:%llu[%llu(off)+%llu(no-off)] next_level(vote %u rx %u tx %u rtpm %d) pm_qos(rx:%u,%*pb tx:%u,%*pb on_low_tput:%u)",
 			  tx_packets,
 			  hdd_ctx->prev_tx_offload_pkts,
 			  hdd_ctx->prev_no_tx_offload_pkts,
@@ -10858,20 +10872,27 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			  is_rx_pm_qos_high,
 			  cpumask_pr_args(&pm_qos_cpu_mask_rx),
 			  is_tx_pm_qos_high,
-			  cpumask_pr_args(&pm_qos_cpu_mask_tx));
+			  cpumask_pr_args(&pm_qos_cpu_mask_tx),
+			  pmqos_on_low_tput);
 
-		hdd_ctx->hdd_txrx_hist[index].next_tx_level = next_tx_level;
-		hdd_ctx->hdd_txrx_hist[index].next_rx_level = next_rx_level;
-		hdd_ctx->hdd_txrx_hist[index].is_rx_pm_qos_high =
-							is_rx_pm_qos_high;
-		hdd_ctx->hdd_txrx_hist[index].is_tx_pm_qos_high =
-							is_tx_pm_qos_high;
-		hdd_ctx->hdd_txrx_hist[index].next_vote_level = next_vote_level;
-		hdd_ctx->hdd_txrx_hist[index].interval_rx = rx_packets;
-		hdd_ctx->hdd_txrx_hist[index].interval_tx = tx_packets;
-		hdd_ctx->hdd_txrx_hist[index].qtime = qdf_get_log_timestamp();
-		hdd_ctx->hdd_txrx_hist_idx++;
-		hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
+		if (hdd_ctx->hdd_txrx_hist) {
+			hdd_ctx->hdd_txrx_hist[index].next_tx_level =
+				next_tx_level;
+			hdd_ctx->hdd_txrx_hist[index].next_rx_level =
+				next_rx_level;
+			hdd_ctx->hdd_txrx_hist[index].is_rx_pm_qos_high =
+				is_rx_pm_qos_high;
+			hdd_ctx->hdd_txrx_hist[index].is_tx_pm_qos_high =
+				is_tx_pm_qos_high;
+			hdd_ctx->hdd_txrx_hist[index].next_vote_level =
+				next_vote_level;
+			hdd_ctx->hdd_txrx_hist[index].interval_rx = rx_packets;
+			hdd_ctx->hdd_txrx_hist[index].interval_tx = tx_packets;
+			hdd_ctx->hdd_txrx_hist[index].qtime =
+				qdf_get_log_timestamp();
+			hdd_ctx->hdd_txrx_hist_idx++;
+			hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
+		}
 	}
 
 	/* Roaming is a high priority job but gets processed in scheduler
@@ -13357,7 +13378,7 @@ void wlan_hdd_deinit_multi_client_info_table(struct hdd_adapter *adapter)
 {
 	uint8_t i;
 
-	hdd_debug("[MULTI_LL] deinitializing the client info table");
+	hdd_debug("deinitializing the client info table");
 	/* de-initialize the table for host driver client */
 	for (i = 0; i < WLM_MAX_HOST_CLIENT; i++) {
 		if (adapter->client_info[i].in_use) {
@@ -14784,10 +14805,11 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 		hdd_err("Get rf test mode failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!rf_test_mode) {
-		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
+
+	if (rf_test_mode) {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
 		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
-					       ALLOWED_KEYMGMT_6G_MASK);
+					       DEFAULT_KEYMGMT_6G_MASK);
 	}
 	hdd_thermal_stats_cmd_init(hdd_ctx);
 	sme_set_cal_failure_event_cb(hdd_ctx->mac_handle,

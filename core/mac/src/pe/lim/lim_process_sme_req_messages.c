@@ -5156,6 +5156,8 @@ void lim_calculate_tpc(struct mac_context *mac,
 	struct vdev_mlme_obj *mlme_obj;
 	uint8_t tpe_power;
 	bool skip_tpe = false;
+	bool rf_test_mode = false;
+	bool safe_mode_enable = false;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
@@ -5185,13 +5187,25 @@ void lim_calculate_tpc(struct mac_context *mac,
 		/* Power mode calculation for 6G*/
 		ap_power_type_6g = session->ap_power_type;
 		if (LIM_IS_STA_ROLE(session)) {
-			if (!session->lim_join_req) {
-				if (!ctry_code_match)
-					ap_power_type_6g = ap_pwr_type;
+			wlan_mlme_get_safe_mode_enable(mac->psoc,
+						       &safe_mode_enable);
+			wlan_mlme_is_rf_test_mode_enabled(mac->psoc,
+							  &rf_test_mode);
+			/*
+			 * set LPI power if safe mode is enabled OR RF test
+			 * mode is enabled.
+			 */
+			if (rf_test_mode || safe_mode_enable) {
+				ap_power_type_6g = REG_INDOOR_AP;
 			} else {
-				if (!session->same_ctry_code)
-					ap_power_type_6g =
+				if (!session->lim_join_req) {
+					if (!ctry_code_match)
+						ap_power_type_6g = ap_pwr_type;
+				} else {
+					if (!session->same_ctry_code)
+						ap_power_type_6g =
 						session->ap_power_type_6g;
+				}
 			}
 		}
 	}

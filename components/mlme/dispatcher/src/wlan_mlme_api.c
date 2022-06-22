@@ -205,6 +205,14 @@ QDF_STATUS wlan_mlme_set_ht_mpdu_density(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef MULTI_CLIENT_LL_SUPPORT
+bool wlan_mlme_get_wlm_multi_client_ll_caps(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_psoc_nif_fw_ext2_cap_get(psoc,
+					WLAN_SOC_WLM_MULTI_CLIENT_LL_SUPPORT);
+}
+#endif
+
 QDF_STATUS wlan_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *band_capability)
 {
@@ -3037,8 +3045,10 @@ wlan_mlme_is_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
+	if (!mlme_obj) {
+		*value = false;
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	*value = mlme_obj->cfg.gen.enabled_rf_test_mode;
 
@@ -5476,3 +5486,47 @@ wlan_mlme_update_ratemask_params(struct wlan_objmgr_vdev *vdev,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+void wlan_mlme_get_safe_mode_enable(struct wlan_objmgr_psoc *psoc,
+				    bool *safe_mode_enable)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("invalid mlme obj");
+		*safe_mode_enable = false;
+		return;
+	}
+
+	*safe_mode_enable = mlme_obj->cfg.gen.safe_mode_enable;
+}
+
+void wlan_mlme_set_safe_mode_enable(struct wlan_objmgr_psoc *psoc,
+		bool safe_mode_enable)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("invalid mlme obj");
+		return;
+	}
+
+	mlme_obj->cfg.gen.safe_mode_enable = safe_mode_enable;
+}
+
+uint32_t wlan_mlme_get_6g_ap_power_type(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *mlme_obj;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+
+	if (!mlme_obj) {
+		mlme_legacy_err("vdev component object is NULL");
+		return REG_MAX_AP_TYPE;
+	}
+
+	return mlme_obj->reg_tpc_obj.power_type_6g;
+}
+

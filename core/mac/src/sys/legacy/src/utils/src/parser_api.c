@@ -3751,6 +3751,10 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 			ext_cap->fine_time_meas_responder);
 	}
 
+	if (ar->OperatingMode.present) {
+		qdf_mem_copy(&pAssocRsp->oper_mode_ntf, &ar->OperatingMode,
+			     sizeof(tDot11fIEOperatingMode));
+	}
 	if (ar->QosMapSet.present) {
 		pAssocRsp->QosMapSet.present = 1;
 		convert_qos_mapset_frame(mac, &pAssocRsp->QosMapSet,
