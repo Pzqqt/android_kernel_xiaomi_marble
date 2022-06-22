@@ -813,6 +813,10 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_6GHZ_SCAN_MODE_DUTY_CYCLE);
 	scan_obj->allow_bss_with_incomplete_ie =
 		cfg_get(psoc, CFG_SCAN_ALLOW_BSS_WITH_CORRUPTED_IE);
+
+	scan_obj->scan_def.skip_6g_and_indoor_freq =
+		cfg_get(psoc, CFG_SKIP_6GHZ_AND_INDOOR_FREQ_SCAN);
+
 	/* init scan id seed */
 	qdf_atomic_init(&scan_obj->scan_ids);
 

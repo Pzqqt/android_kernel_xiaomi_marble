@@ -1983,10 +1983,10 @@ static QDF_STATUS send_wow_enable_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->pause_iface_config = WOW_IFACE_PAUSE_DISABLED;
 	cmd->flags = param->flags;
 
-	wmi_info("suspend type: %s flag is 0x%x",
-		 cmd->pause_iface_config == WOW_IFACE_PAUSE_ENABLED ?
-		 "WOW_IFACE_PAUSE_ENABLED" : "WOW_IFACE_PAUSE_DISABLED",
-		 cmd->flags);
+	wmi_debug("suspend type: %s flag is 0x%x",
+		  cmd->pause_iface_config == WOW_IFACE_PAUSE_ENABLED ?
+		  "WOW_IFACE_PAUSE_ENABLED" : "WOW_IFACE_PAUSE_DISABLED",
+		  cmd->flags);
 
 	wmi_mtrace(WMI_WOW_ENABLE_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -16026,6 +16026,85 @@ extract_roam_scan_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 }
 
 /**
+ * wlan_roam_fail_reason_code() - Convert FW enum to Host enum
+ * @wmi_roam_fail_reason: roam fail enum
+ *
+ * Return: Roaming failure reason codes
+ */
+static enum wlan_roam_failure_reason_code
+wlan_roam_fail_reason_code(uint16_t wmi_roam_fail_reason)
+{
+	switch (wmi_roam_fail_reason) {
+	case WMI_ROAM_FAIL_REASON_NO_SCAN_START:
+		return ROAM_FAIL_REASON_NO_SCAN_START;
+	case WMI_ROAM_FAIL_REASON_NO_AP_FOUND:
+		return ROAM_FAIL_REASON_NO_AP_FOUND;
+	case WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND:
+		return ROAM_FAIL_REASON_NO_CAND_AP_FOUND;
+	case WMI_ROAM_FAIL_REASON_HOST:
+		return ROAM_FAIL_REASON_HOST;
+	case WMI_ROAM_FAIL_REASON_AUTH_SEND:
+		return ROAM_FAIL_REASON_AUTH_SEND;
+	case WMI_ROAM_FAIL_REASON_AUTH_RECV:
+		return ROAM_FAIL_REASON_AUTH_RECV;
+	case WMI_ROAM_FAIL_REASON_NO_AUTH_RESP:
+		return ROAM_FAIL_REASON_NO_AUTH_RESP;
+	case WMI_ROAM_FAIL_REASON_REASSOC_SEND:
+		return ROAM_FAIL_REASON_REASSOC_SEND;
+	case WMI_ROAM_FAIL_REASON_REASSOC_RECV:
+		return ROAM_FAIL_REASON_REASSOC_RECV;
+	case WMI_ROAM_FAIL_REASON_NO_REASSOC_RESP:
+		return ROAM_FAIL_REASON_NO_REASSOC_RESP;
+	case WMI_ROAM_FAIL_REASON_EAPOL_TIMEOUT:
+		return ROAM_FAIL_REASON_EAPOL_TIMEOUT;
+	case WMI_ROAM_FAIL_REASON_MLME:
+		return ROAM_FAIL_REASON_MLME;
+	case WMI_ROAM_FAIL_REASON_INTERNAL_ABORT:
+		return ROAM_FAIL_REASON_INTERNAL_ABORT;
+	case WMI_ROAM_FAIL_REASON_SCAN_START:
+		return ROAM_FAIL_REASON_SCAN_START;
+	case WMI_ROAM_FAIL_REASON_AUTH_NO_ACK:
+		return ROAM_FAIL_REASON_AUTH_NO_ACK;
+	case WMI_ROAM_FAIL_REASON_AUTH_INTERNAL_DROP:
+		return ROAM_FAIL_REASON_AUTH_INTERNAL_DROP;
+	case WMI_ROAM_FAIL_REASON_REASSOC_NO_ACK:
+		return ROAM_FAIL_REASON_REASSOC_NO_ACK;
+	case WMI_ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP:
+		return ROAM_FAIL_REASON_REASSOC_INTERNAL_DROP;
+	case WMI_ROAM_FAIL_REASON_EAPOL_M2_SEND:
+		return ROAM_FAIL_REASON_EAPOL_M2_SEND;
+	case WMI_ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP:
+		return ROAM_FAIL_REASON_EAPOL_M2_INTERNAL_DROP;
+	case WMI_ROAM_FAIL_REASON_EAPOL_M2_NO_ACK:
+		return ROAM_FAIL_REASON_EAPOL_M2_NO_ACK;
+	case WMI_ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT:
+		return ROAM_FAIL_REASON_EAPOL_M3_TIMEOUT;
+	case WMI_ROAM_FAIL_REASON_EAPOL_M4_SEND:
+		return ROAM_FAIL_REASON_EAPOL_M4_SEND;
+	case WMI_ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP:
+		return ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP;
+	case WMI_ROAM_FAIL_REASON_EAPOL_M4_NO_ACK:
+		return ROAM_FAIL_REASON_EAPOL_M4_NO_ACK;
+	case WMI_ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS:
+		return ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS;
+	case WMI_ROAM_FAIL_REASON_DISCONNECT:
+		return ROAM_FAIL_REASON_DISCONNECT;
+	case WMI_ROAM_FAIL_REASON_SYNC:
+		return ROAM_FAIL_REASON_SYNC;
+	case WMI_ROAM_FAIL_REASON_SAE_INVALID_PMKID:
+		return ROAM_FAIL_REASON_SAE_INVALID_PMKID;
+	case WMI_ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT:
+		return ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT;
+	case WMI_ROAM_FAIL_REASON_SAE_PREAUTH_FAIL:
+		return ROAM_FAIL_REASON_SAE_PREAUTH_FAIL;
+	case WMI_ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO:
+		return ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO;
+	default:
+		return ROAM_FAIL_REASON_UNKNOWN;
+	}
+}
+
+/**
  * extract_roam_scan_stats_tlv() - Extract the Roam trigger stats
  * from the WMI_ROAM_STATS_EVENTID
  * @wmi_handle: wmi handle
@@ -16050,7 +16129,8 @@ extract_roam_result_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	dst->present = true;
 	dst->status = src_data->roam_status;
 	dst->timestamp = src_data->timestamp;
-	dst->fail_reason = src_data->roam_fail_reason;
+	dst->fail_reason =
+	wlan_roam_fail_reason_code(src_data->roam_fail_reason);
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_data->bssid, dst->fail_bssid.bytes);
 
 	return QDF_STATUS_SUCCESS;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1413,6 +1414,26 @@ enum scan_mode_6ghz {
 			false, \
 			"scan allow bss with corrupted ie")
 
+/*
+ * <ini>
+ * skip_6g_and_indoor_freq_scan - Skip scan on 6Ghz and indoor channel
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to skip 6Ghz and 5Gh indoor freq for STA scan if hw is
+ * non-DBS and SAP is present
+ *
+ * Related: scan
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+#define CFG_SKIP_6GHZ_AND_INDOOR_FREQ_SCAN CFG_INI_BOOL( \
+			"skip_6g_and_indoor_freq_scan", \
+			false, \
+			"skip sta scan on 6Ghz and 5Ghz indoor channel")
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_DROP_BCN_ON_INVALID_FREQ) \
@@ -1450,6 +1471,7 @@ enum scan_mode_6ghz {
 	CFG(CFG_6GHZ_SCAN_MODE) \
 	CFG(CFG_6GHZ_SCAN_MODE_DUTY_CYCLE) \
 	CFG(CFG_SCAN_ALLOW_BSS_WITH_CORRUPTED_IE) \
+	CFG(CFG_SKIP_6GHZ_AND_INDOOR_FREQ_SCAN) \
 	CFG_SCAN_PNO
 
 #endif /* __CONFIG_SCAN_H */

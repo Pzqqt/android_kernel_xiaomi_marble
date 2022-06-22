@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -295,7 +295,7 @@ wlan_cfr_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 	}
 
 	if (wlan_cfr_is_feature_disabled(pdev)) {
-		cfr_info("cfr is disabled");
+		cfr_debug("cfr is disabled");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 

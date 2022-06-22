@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -839,7 +839,7 @@ void hif_latency_detect_timer_start(struct hif_opaque_softc *hif_ctx)
 	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
 		return;
 
-	hif_info_rl("start timer");
+	hif_debug_rl("start timer");
 	if (scn->latency_detect.is_timer_started) {
 		hif_info("timer has been started");
 		return;
@@ -857,7 +857,7 @@ void hif_latency_detect_timer_stop(struct hif_opaque_softc *hif_ctx)
 	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
 		return;
 
-	hif_info_rl("stop timer");
+	hif_debug_rl("stop timer");
 
 	qdf_timer_sync_cancel(&scn->latency_detect.detect_latency_timer);
 	scn->latency_detect.is_timer_started = false;

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -803,6 +803,65 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
+ *scm_update_5g_chlist() - Modify channel list to skip 5Ghz channel
+ * @req: scan request
+ *
+ * Return: None
+ */
+static inline void scm_update_5g_chlist(struct scan_start_request *req)
+{
+	uint32_t i;
+	uint32_t num_scan_channels = 0;
+	qdf_freq_t freq;
+
+	for (i = 0; i < req->scan_req.chan_list.num_chan; i++) {
+		freq = req->scan_req.chan_list.chan[i].freq;
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(freq))
+			continue;
+
+		req->scan_req.chan_list.chan[num_scan_channels++] =
+				req->scan_req.chan_list.chan[i];
+	}
+	if (num_scan_channels < req->scan_req.chan_list.num_chan)
+		scm_debug("5g chan skipped (%d, %d)",
+			  req->scan_req.chan_list.num_chan, num_scan_channels);
+	req->scan_req.chan_list.num_chan = num_scan_channels;
+}
+
+/**
+ * scm_filter_6g_and_indoor_freq() - Modify channel list to skip 6Ghz and 5Ghz
+ * indoor channel if hw mode is non dbs and SAP is present
+ * @pdev: pointer to pdev
+ * @req: scan request
+ *
+ * Return: None
+ */
+static void scm_filter_6g_and_indoor_freq(struct wlan_objmgr_pdev *pdev,
+					  struct scan_start_request *req)
+{
+	uint32_t i;
+	uint32_t num_scan_channels;
+	qdf_freq_t freq;
+
+	num_scan_channels = 0;
+	for (i = 0; i < req->scan_req.chan_list.num_chan; i++) {
+		freq = req->scan_req.chan_list.chan[i].freq;
+		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(freq))
+			continue;
+
+		if (wlan_reg_is_freq_indoor(pdev, freq))
+			continue;
+
+		req->scan_req.chan_list.chan[num_scan_channels++] =
+				req->scan_req.chan_list.chan[i];
+	}
+	if (num_scan_channels < req->scan_req.chan_list.num_chan)
+		scm_debug("6g and indoor channel chan skipped (%d, %d)",
+			  req->scan_req.chan_list.num_chan, num_scan_channels);
+	req->scan_req.chan_list.num_chan = num_scan_channels;
+}
+
+/**
  * scm_scan_chlist_concurrency_modify() - modify chan list to skip 5G if
  *    required
  * @vdev: vdev object
@@ -816,31 +875,38 @@ static inline void scm_scan_chlist_concurrency_modify(
 	struct wlan_objmgr_vdev *vdev, struct scan_start_request *req)
 {
 	struct wlan_objmgr_psoc *psoc;
-	uint32_t i;
-	uint32_t num_scan_channels;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_scan_obj *scan_obj;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc)
 		return;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return;
+
 	/* do this only for STA and P2P-CLI mode */
 	if (!(wlan_vdev_mlme_get_opmode(req->vdev) == QDF_STA_MODE) &&
 	    !(wlan_vdev_mlme_get_opmode(req->vdev) == QDF_P2P_CLIENT_MODE))
 		return;
-	if (!policy_mgr_scan_trim_5g_chnls_for_dfs_ap(psoc))
-		return;
-	num_scan_channels = 0;
-	for (i = 0; i < req->scan_req.chan_list.num_chan; i++) {
-		if (WLAN_REG_IS_5GHZ_CH_FREQ(
-			req->scan_req.chan_list.chan[i].freq)) {
-			continue;
-		}
-		req->scan_req.chan_list.chan[num_scan_channels++] =
-			req->scan_req.chan_list.chan[i];
-	}
-	if (num_scan_channels < req->scan_req.chan_list.num_chan)
-		scm_debug("5g chan skipped (%d, %d)",
-			  req->scan_req.chan_list.num_chan, num_scan_channels);
-	req->scan_req.chan_list.num_chan = num_scan_channels;
+	if (policy_mgr_scan_trim_5g_chnls_for_dfs_ap(psoc))
+		scm_update_5g_chlist(req);
+
+	/*
+	 * Do not allow STA to scan on 6Ghz or indoor channel for non dbs
+	 * hardware if SAP and skip_6g_and_indoor_freq_scan ini are present
+	 */
+	if (scan_obj->scan_def.skip_6g_and_indoor_freq &&
+	    !policy_mgr_is_hw_dbs_capable(psoc) &&
+	    (wlan_vdev_mlme_get_opmode(req->vdev) == QDF_STA_MODE) &&
+	    policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL))
+		scm_filter_6g_and_indoor_freq(pdev, req);
+
 }
 #else
 static inline
