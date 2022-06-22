@@ -8868,6 +8868,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->uc_act_tbl_valid = false;
 	ipa3_ctx->uc_act_tbl_total = 0;
 	ipa3_ctx->uc_act_tbl_next_index = 0;
+	ipa3_ctx->is_dual_pine_config = resource_p->is_dual_pine_config;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -9796,6 +9797,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->rmnet_ctl_enable = 0;
 	ipa_drv_res->rmnet_ll_enable = 0;
 	ipa_drv_res->ulso_wa = false;
+	ipa_drv_res->is_dual_pine_config = false;
 
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
@@ -10444,6 +10446,13 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	else
 		IPADBG(": found ipa_drv_res->max_num_smmu_cb = %d\n",
 			ipa_drv_res->max_num_smmu_cb);
+
+	ipa_drv_res->is_dual_pine_config =
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,use-dual-pine-config");
+	IPADBG(": Use dual pine config = %s\n",
+		ipa_drv_res->is_dual_pine_config
+		? "True" : "False");
 
 	return 0;
 }

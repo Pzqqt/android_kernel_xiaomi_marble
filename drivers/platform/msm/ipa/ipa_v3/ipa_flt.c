@@ -582,13 +582,17 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 		IPADBG("SRAM partition is too small, move one non-hash table in DDR. "
 			"IP:%d alloc_params.total_sz_lcl_nhash_tbls = %u\n",
 			ip, alloc_params.total_sz_lcl_nhash_tbls);
+		IPADBG("Filter table size = %d\n", lcl_tbl->tbl->sz[IPA_RULE_NON_HASHABLE]);
+		if(!lcl_tbl->tbl->in_sys[IPA_RULE_NON_HASHABLE] &&
+			lcl_tbl->tbl->sz[IPA_RULE_NON_HASHABLE]) {
+			/* Move lowest priority Eth client to DDR */
+			lcl_tbl->tbl->force_sys[IPA_RULE_NON_HASHABLE] = true;
 
-		/* Move lowest priority Eth client to DDR */
-		lcl_tbl->tbl->force_sys[IPA_RULE_NON_HASHABLE] = true;
+			alloc_params.num_lcl_nhash_tbls--;
+			alloc_params.total_sz_lcl_nhash_tbls -= lcl_tbl->tbl->sz[IPA_RULE_NON_HASHABLE];
+			alloc_params.total_sz_lcl_nhash_tbls += tbl_hdr_width;
+		}
 
-		alloc_params.num_lcl_nhash_tbls--;
-		alloc_params.total_sz_lcl_nhash_tbls -= lcl_tbl->tbl->sz[IPA_RULE_NON_HASHABLE];
-		alloc_params.total_sz_lcl_nhash_tbls += tbl_hdr_width;
 	}
 
 	if (ipa_generate_flt_hw_tbl_img(ip, &alloc_params)) {
