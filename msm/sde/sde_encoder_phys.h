@@ -400,7 +400,7 @@ struct sde_encoder_phys_cmd_te_timestamp {
  * @wr_ptr_wait_success: log wr_ptr_wait success for release fence trigger
  * @te_timestamp_list: List head for the TE timestamp list
  * @te_timestamp: Array of size MAX_TE_PROFILE_COUNT te_timestamp_list elements
- * @frame_trigger_count: atomic counter tracking number of frame triggers per TE interval
+ * @qsync_threshold_lines: tearcheck threshold lines calculated based on qsync_min_fps
  */
 struct sde_encoder_phys_cmd {
 	struct sde_encoder_phys base;
@@ -413,7 +413,7 @@ struct sde_encoder_phys_cmd {
 	struct list_head te_timestamp_list;
 	struct sde_encoder_phys_cmd_te_timestamp
 			te_timestamp[MAX_TE_PROFILE_COUNT];
-	atomic_t frame_trigger_count;
+	u32 qsync_threshold_lines;
 };
 
 /**
