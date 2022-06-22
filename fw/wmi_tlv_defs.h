@@ -1275,6 +1275,13 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_request_halphy_ctrl_path_stats_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_halphy_ctrl_path_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_flush_policy_cmd_fixed_param,
+    WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_PATTERN_CMD_fixed_param,
+    WMITLV_TAG_STRUC_WMI_WOW_COAP_DEL_PATTERN_CMD_fixed_param,
+    WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMD_fixed_param,
+    WMITLV_TAG_STRUC_WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMD_fixed_param,
+    WMITLV_TAG_STRUC_WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param,
+    WMITLV_TAG_STRUC_WMI_WOW_COAP_BUF_INFO_EVENT_fixed_param,
+    WMITLV_TAG_STRUC_wmi_coap_tuple,
 } WMITLV_TAG_ID;
 
 /*
@@ -1773,6 +1780,11 @@ typedef enum {
     OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_CMDID) \
     OP(WMI_REQUEST_HALPHY_CTRL_PATH_STATS_CMDID) \
     OP(WMI_PEER_FLUSH_POLICY_CMDID) \
+    OP(WMI_WOW_COAP_ADD_PATTERN_CMDID) \
+    OP(WMI_WOW_COAP_DEL_PATTERN_CMDID) \
+    OP(WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMDID) \
+    OP(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID) \
+    OP(WMI_WOW_COAP_GET_BUF_INFO_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2061,6 +2073,7 @@ typedef enum {
     OP(WMI_VDEV_LATENCY_LEVEL_EVENTID) \
     OP(WMI_ROAM_GET_VENDOR_CONTROL_PARAM_EVENTID) \
     OP(WMI_HALPHY_CTRL_PATH_STATS_EVENTID) \
+    OP(WMI_WOW_COAP_BUF_INFO_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5056,6 +5069,43 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_flush_policy_cmd_fixed_param, wmi_peer_flush_policy_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_FLUSH_POLICY_CMDID);
 
+/** COAP Add Pattern Cmd
+ * TLV (tag length value ) parameters follow the coap_add_pattern
+ * structure. The TLV's are:
+ * A_UINT8 verify_string[];
+ * A_UINT8 coapmsg[];
+ */
+#define WMITLV_TABLE_WMI_WOW_COAP_ADD_PATTERN_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_PATTERN_CMD_fixed_param, WMI_WOW_COAP_ADD_PATTERN_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, verify_string, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, coapmsg, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_ADD_PATTERN_CMDID);
+
+/* COAP Del Pattern Cmd */
+#define WMITLV_TABLE_WMI_WOW_COAP_DEL_PATTERN_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_WOW_COAP_DEL_PATTERN_CMD_fixed_param, WMI_WOW_COAP_DEL_PATTERN_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_DEL_PATTERN_CMDID);
+
+/** COAP Add Keepalive Pattern Cmd
+ * TLV (tag length value ) parameters follow the coap_add_keepalive_pattern
+ * structure. The TLV's are:
+ * A_UINT8 coapmsg[];
+ */
+#define WMITLV_TABLE_WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMD_fixed_param, WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, coapmsg, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMDID);
+
+/* COAP Del Keepalive Pattern Cmd */
+#define WMITLV_TABLE_WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMD_fixed_param, WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID);
+
+/* COAP Get Buffer Info Cmd */
+#define WMITLV_TABLE_WMI_WOW_COAP_GET_BUF_INFO_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param, WMI_WOW_COAP_GET_BUF_INFO_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6854,6 +6904,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PMM_AVAILABLE_SCRATCH_REG_EVENTID);
 #define WMITLV_TABLE_WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pmm_scratch_reg_allocation_complete_event_fixed_param, wmi_pmm_scratch_reg_allocation_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID);
+
+/* COAP buffer info event */
+#define WMITLV_TABLE_WMI_WOW_COAP_BUF_INFO_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_WOW_COAP_BUF_INFO_EVENT_fixed_param, WMI_WOW_COAP_BUF_INFO_EVENT_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_coap_tuple, coap_tuple, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, payloads, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_BUF_INFO_EVENTID);
+
 
 
 #ifdef __cplusplus
