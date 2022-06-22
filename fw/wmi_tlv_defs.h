@@ -1287,6 +1287,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vendor_control_param,
     WMITLV_TAG_STRUC_wmi_coex_dbam_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_coex_dbam_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_is_my_mgmt_frame,
 } WMITLV_TAG_ID;
 
 /*
@@ -5384,7 +5385,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STA_KICKOUT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mgmt_rx_params_ext, mgmt_rx_params_ext, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_frame_pn_params, pn_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mgmt_ml_info, ml_info, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bpcc_bufp, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bpcc_bufp, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_is_my_mgmt_frame, my_frame, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_EVENTID);
 
 /* Management Rx FW Consumed Event */

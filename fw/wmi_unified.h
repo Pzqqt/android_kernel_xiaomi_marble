@@ -5842,6 +5842,12 @@ typedef struct {
 } wmi_frame_pn_params;
 
 typedef struct {
+    A_UINT32 tlv_header; /* TLV tag (WMITLV_TAG_STRUC_wmi_is_my_frame) */
+    A_UINT32 mgmt_frm_sub_type; /* to indicate which sub-type of MGMT frame */
+    A_UINT32 is_my_frame; /* to indicate frame is sent to this BSSID */
+} wmi_is_my_mgmt_frame;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_ml_info */
     /**
      * CU vdev map to initmate about the on-going Critical update
