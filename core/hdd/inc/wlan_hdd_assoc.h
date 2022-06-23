@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -539,4 +540,12 @@ wlan_hdd_ft_set_key_delay(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
+/**
+ * hdd_convert_ch_width_to_cdp_peer_bw() - Convert ch_width to DP format
+ * @ch_width: ch_width
+ *
+ * Return: cdp_peer_bw enumeration
+ */
+enum cdp_peer_bw
+hdd_convert_ch_width_to_cdp_peer_bw(enum phy_ch_width ch_width);
 #endif

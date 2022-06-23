@@ -1230,6 +1230,8 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	struct ol_txrx_desc_type txrx_desc = {0};
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	enum phy_ch_width ch_width;
+	enum wlan_phymode phymode;
 
 	/* Get the Station ID from the one saved during the association */
 	if (!QDF_IS_ADDR_BROADCAST(bssid->bytes))
@@ -1288,6 +1290,16 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	}
 
 	adapter->tx_fn = txrx_ops.tx.tx;
+
+	if (adapter->device_mode == QDF_NDI_MODE) {
+		phymode = ucfg_mlme_get_vdev_phy_mode(adapter->hdd_ctx->psoc,
+						      adapter->vdev_id);
+		ch_width = ucfg_mlme_get_ch_width_from_phymode(phymode);
+	} else {
+		ch_width = ucfg_mlme_get_peer_ch_width(adapter->hdd_ctx->psoc,
+						txrx_desc.peer_addr.bytes);
+	}
+	txrx_desc.bw = hdd_convert_ch_width_to_cdp_peer_bw(ch_width);
 	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed Status: %d [0x%08X]",
@@ -1546,6 +1558,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	struct ol_txrx_desc_type txrx_desc = { 0 };
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	enum phy_ch_width ch_width;
 
 	/*
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
@@ -1590,7 +1603,9 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 
 	adapter->tx_fn = txrx_ops.tx.tx;
 
-
+	ch_width = ucfg_mlme_get_peer_ch_width(adapter->hdd_ctx->psoc,
+					       txrx_desc.peer_addr.bytes);
+	txrx_desc.bw = hdd_convert_ch_width_to_cdp_peer_bw(ch_width);
 	/* Register the Station with TL...  */
 	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -2392,6 +2407,35 @@ hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4])
 		cipher_type = eCSR_ENCRYPT_TYPE_FAILED;
 
 	return cipher_type;
+}
+
+enum cdp_peer_bw
+hdd_convert_ch_width_to_cdp_peer_bw(enum phy_ch_width ch_width)
+{
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		return CDP_20_MHZ;
+	case CH_WIDTH_40MHZ:
+		return CDP_40_MHZ;
+	case CH_WIDTH_80MHZ:
+		return CDP_80_MHZ;
+	case CH_WIDTH_160MHZ:
+		return CDP_160_MHZ;
+	case CH_WIDTH_80P80MHZ:
+		return CDP_80P80_MHZ;
+	case CH_WIDTH_5MHZ:
+		return CDP_5_MHZ;
+	case CH_WIDTH_10MHZ:
+		return CDP_10_MHZ;
+#ifdef WLAN_FEATURE_11BE
+	case CH_WIDTH_320MHZ:
+		return CDP_320_MHZ;
+#endif
+	default:
+		return CDP_BW_INVALID;
+	}
+
+	return CDP_BW_INVALID;
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
