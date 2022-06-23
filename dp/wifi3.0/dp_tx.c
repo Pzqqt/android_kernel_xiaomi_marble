@@ -3729,7 +3729,8 @@ static inline void
 dp_tx_update_acked_rate_stats(struct dp_peer *peer,
 			      struct hal_tx_completion_status *ts)
 {
-	uint8_t mcs, pkt_type, retry_threshold;
+	uint8_t mcs, pkt_type;
+	uint8_t retry_threshold = peer->mpdu_retry_threshold;
 
 	mcs = ts->mcs;
 	pkt_type = ts->pkt_type;
@@ -3764,16 +3765,6 @@ dp_tx_update_acked_rate_stats(struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
 	if (ts->first_msdu) {
 		DP_STATS_INCC(peer, tx.retries_mpdu, 1, ts->transmit_cnt > 1);
-		switch (ts->bw) {
-		case 0: /* 20Mhz */
-		case 1: /* 40Mhz */
-		case 2: /* 80Mhz */
-			retry_threshold = peer->mpdu_retry_threshold_1;
-			break;
-		default: /* 160Mhz */
-			retry_threshold = peer->mpdu_retry_threshold_2;
-			break;
-		}
 		if (retry_threshold)
 			DP_STATS_INCC(peer, tx.mpdu_success_with_retries,
 				      qdf_do_div(ts->transmit_cnt,

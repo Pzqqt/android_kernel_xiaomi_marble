@@ -7009,12 +7009,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		}
 	}
 
-	/* Initialize MPDU success count with retry update thresholds */
-	peer->mpdu_retry_threshold_1 =
-		soc->wlan_cfg_ctx->mpdu_retry_threshold_1;
-	peer->mpdu_retry_threshold_2 =
-		soc->wlan_cfg_ctx->mpdu_retry_threshold_2;
-
 	/*
 	 * Allocate peer extended stats context. Fall through in
 	 * case of failure as its not an implicit requirement to have
