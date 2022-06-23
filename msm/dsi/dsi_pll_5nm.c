@@ -1148,7 +1148,7 @@ static int dsi_pll_calc_cphy_pclk_div(struct dsi_pll_resource *pll)
 	return pclk_div;
 }
 
-static int dsi_pll_5nm_set_pclk_div(struct dsi_pll_resource *pll, bool commit)
+static int dsi_pll_5nm_set_pclk_div(struct dsi_pll_resource *pll)
 {
 
 	int dsi_clk = 0, pclk_div = 0;
@@ -1176,10 +1176,8 @@ static int dsi_pll_5nm_set_pclk_div(struct dsi_pll_resource *pll, bool commit)
 	DSI_PLL_DBG(pll, "pclk rate: %llu, dsi_clk: %d, pclk_div: %d\n",
 			pll->pclk_rate, dsi_clk, pclk_div);
 
-	if (commit) {
-		dsi_pll_set_dsi_clk(pll, dsi_clk);
-		dsi_pll_set_pclk_div(pll, pclk_div);
-	}
+	dsi_pll_set_dsi_clk(pll, dsi_clk);
+	dsi_pll_set_pclk_div(pll, pclk_div);
 
 	return 0;
 
@@ -1563,7 +1561,7 @@ int dsi_pll_5nm_configure(void *pll, bool commit)
 	rc = dsi_pll_5nm_set_byteclk_div(rsc, commit);
 
 	if (commit) {
-		rc = dsi_pll_5nm_set_pclk_div(rsc, commit);
+		rc = dsi_pll_5nm_set_pclk_div(rsc);
 		rc = dsi_pll_5nm_vco_set_rate(rsc);
 	} else {
 		rc = dsi_pll_5nm_dynamic_clk_vco_set_rate(rsc);
