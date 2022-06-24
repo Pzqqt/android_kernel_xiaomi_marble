@@ -3552,8 +3552,11 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 		if (sup_disabled_roam) {
 			mlme_err("vdev[%d]: supplicant disabled roam. clear roam scan mode",
 				 vdev_id);
-			cm_roam_switch_to_rso_stop(pdev, vdev_id, reason,
-						   NULL, false);
+			status = cm_roam_stop_req(psoc, vdev_id,
+						  REASON_DISCONNECTED,
+						  NULL, false);
+			if (QDF_IS_STATUS_ERROR(status))
+				mlme_err("ROAM: Unable to clear roam scan mode");
 		}
 
 	case WLAN_ROAM_INIT:
