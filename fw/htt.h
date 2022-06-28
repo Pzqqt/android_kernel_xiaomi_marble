@@ -748,6 +748,9 @@ typedef enum {
     HTT_STATS_RX_PDEV_BE_UL_OFDMA_USER_STATS_TAG   = 156, /* htt_rx_pdev_be_ul_ofdma_user_stats_tlv */
     HTT_STATS_PHY_TPC_STATS_TAG                    = 157, /* htt_phy_tpc_stats_tlv */
     HTT_STATS_PDEV_PUNCTURE_STATS_TAG              = 158, /* htt_pdev_puncture_stats_tlv */
+    HTT_STATS_ML_PEER_DETAILS_TAG                  = 159, /* htt_ml_peer_details_tlv */
+    HTT_STATS_ML_PEER_EXT_DETAILS_TAG              = 160, /* htt_ml_peer_ext_details_tlv */
+    HTT_STATS_ML_LINK_INFO_DETAILS_TAG             = 161, /* htt_ml_link_info_tlv */
 
 
     HTT_STATS_MAX_TAG,
