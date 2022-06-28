@@ -333,6 +333,8 @@ static int msm_vidc_remove(struct platform_device* pdev)
 
 	msm_vidc_core_deinit(core, true);
 
+	venus_hfi_interface_queues_deinit(core);
+
 	msm_vidc_unregister_video_device(core, MSM_VIDC_ENCODER);
 	msm_vidc_unregister_video_device(core, MSM_VIDC_DECODER);
 	//device_remove_file(&core->vdev[MSM_VIDC_ENCODER].vdev.dev,

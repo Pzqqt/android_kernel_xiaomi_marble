@@ -2206,7 +2206,7 @@ static void __set_queue_hdr_defaults(struct hfi_queue_header *q_hdr)
 	q_hdr->qhdr_write_idx = 0x0;
 }
 
-static void __interface_queues_deinit(struct msm_vidc_core *core)
+void venus_hfi_interface_queues_deinit(struct msm_vidc_core *core)
 {
 	int i;
 
@@ -2230,7 +2230,7 @@ static void __interface_queues_deinit(struct msm_vidc_core *core)
 	core->sfr.align_device_addr = 0;
 }
 
-static int __interface_queues_init(struct msm_vidc_core *core)
+int venus_hfi_interface_queues_init(struct msm_vidc_core *core)
 {
 	int rc = 0;
 	struct hfi_queue_table_header *q_tbl_hdr;
@@ -2242,6 +2242,11 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	u32 i;
 
 	d_vpr_h("%s()\n", __func__);
+
+	if (core->iface_q_table.align_virtual_addr) {
+		d_vpr_h("%s: queues already allocated\n", __func__);
+		return 0;
+	}
 
 	memset(&alloc, 0, sizeof(alloc));
 	alloc.type       = MSM_VIDC_BUF_QUEUE;
@@ -2344,10 +2349,6 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	core->sfr.mem_size = ALIGNED_SFR_SIZE;
 	/* write sfr buffer size in first word */
 	*((u32 *)core->sfr.align_virtual_addr) = core->sfr.mem_size;
-
-	rc = call_venus_op(core, setup_ucregion_memmap, core);
-	if (rc)
-		return rc;
 
 	return 0;
 fail_alloc_queue:
@@ -2504,7 +2505,15 @@ int __load_fw(struct msm_vidc_core *core)
 	__hand_off_regulators(core);
 	trace_msm_v4l2_vidc_fw_load("END");
 
+	/* configure interface_queues memory to firmware */
+	rc = call_venus_op(core, setup_ucregion_memmap, core);
+	if (rc) {
+		d_vpr_e("%s: failed to setup ucregion\n");
+		goto fail_setup_ucregion;
+	}
+
 	return rc;
+fail_setup_ucregion:
 fail_protect_mem:
 	if (core->dt->fw_cookie)
 		qcom_scm_pas_shutdown(core->dt->fw_cookie);
@@ -2703,11 +2712,11 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	if (rc)
 		return rc;
 
-	rc = __load_fw(core);
+	rc = venus_hfi_interface_queues_init(core);
 	if (rc)
 		goto error;
 
-	rc = __interface_queues_init(core);
+	rc = __load_fw(core);
 	if (rc)
 		goto error;
 
@@ -2775,7 +2784,6 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core, bool force)
 	 */
 	if (msm_vidc_fw_dump)
 		fw_coredump(core);
-	__interface_queues_deinit(core);
 
 	return 0;
 }
