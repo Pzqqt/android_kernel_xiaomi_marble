@@ -2988,15 +2988,16 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 			/*
 			 * The API is expected to select the channel on the
 			 * other band which is not same as sap's home and
-			 * concurrent interference channel, so skip the sap
-			 * home channel in PCL.
+			 * concurrent interference channel(if present), so skip
+			 * the sap home channel in PCL.
 			 */
 			if (pcl_channels[i] == sap_ch_freq)
 				continue;
 			if (!is_6ghz_cap &&
 			    WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[i]))
 				continue;
-			if (policy_mgr_are_2_freq_on_same_mac(psoc,
+			if (policy_mgr_get_connection_count(psoc) &&
+			    policy_mgr_are_2_freq_on_same_mac(psoc,
 							      sap_ch_freq,
 							      pcl_channels[i]))
 				continue;
