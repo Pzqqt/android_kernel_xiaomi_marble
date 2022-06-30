@@ -1696,8 +1696,9 @@ static int msm_vidc_discard_pending_opsc(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(resp_work, dummy,
 				&inst->response_works, list) {
 		if (resp_work->type == RESP_WORK_OUTPUT_PSC) {
-			i_vpr_h(inst,
+			i_vpr_e(inst,
 				"%s: discard pending output psc\n", __func__);
+			inst->psc_or_last_flag_discarded = true;
 			list_del(&resp_work->list);
 			kfree(resp_work->data);
 			kfree(resp_work);
@@ -1723,11 +1724,12 @@ static int msm_vidc_discard_pending_ipsc(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(resp_work, dummy,
 			&inst->response_works, list) {
 		if (resp_work->type == RESP_WORK_INPUT_PSC) {
-			i_vpr_h(inst,
+			i_vpr_e(inst,
 				"%s: discard pending input psc\n", __func__);
 
 			/* override the psc properties again if ipsc discarded */
 			inst->ipsc_properties_set = false;
+			inst->psc_or_last_flag_discarded = true;
 
 			list_del(&resp_work->list);
 			kfree(resp_work->data);
