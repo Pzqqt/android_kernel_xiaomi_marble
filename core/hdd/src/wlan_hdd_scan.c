@@ -831,6 +831,20 @@ static void hdd_process_vendor_acs_response(struct hdd_adapter *adapter)
 
 #if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+
+#ifdef CFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT
+static inline bool
+wlan_util_get_connected_status(struct wireless_dev *wdev)
+{
+	return wdev->connected;
+}
+#else
+static inline bool
+wlan_util_get_connected_status(struct wireless_dev *wdev)
+{
+	return !!wdev->current_bss;
+}
+#endif
 /**
  * wlan_hdd_vendor_scan_random_attr() - check and fill scan randomization attrs
  * @wiphy: Pointer to wiphy
@@ -856,7 +870,7 @@ static int wlan_hdd_vendor_scan_random_attr(struct wiphy *wiphy,
 		return 0;
 
 	if (!(wiphy->features & NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR) ||
-	    (wdev->current_bss)) {
+	    (wlan_util_get_connected_status(wdev))) {
 		hdd_err("SCAN RANDOMIZATION not supported");
 		return -EOPNOTSUPP;
 	}
