@@ -594,6 +594,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 				  buf_len + RESERVE_BYTES, 4),
 				  RESERVE_BYTES, 4, false);
 	if (!nbuf) {
+		pkt_capture_vdev_put_ref(vdev);
 		qdf_nbuf_free(wbuf);
 		return QDF_STATUS_E_FAILURE;
 	}
