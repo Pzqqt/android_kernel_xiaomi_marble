@@ -147,6 +147,7 @@ struct hdd_conn_flag {
  * @ch_width: channel width of operating channel
  * @max_tx_bitrate: Max tx bitrate supported by the AP
  * to which currently sta is connected.
+ * @prev_ap_bcn_ie: ap beacon IE information to which sta is currently connected
  */
 struct hdd_connection_info {
 	eConnectionState conn_state;
@@ -186,6 +187,7 @@ struct hdd_connection_info {
 	char connect_time[HDD_TIME_STRING_LEN];
 	enum phy_ch_width ch_width;
 	struct rate_info max_tx_bitrate;
+	struct element_info prev_ap_bcn_ie;
 };
 
 /* Forward declarations */

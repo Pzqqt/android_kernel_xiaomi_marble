@@ -15992,53 +15992,6 @@ QDF_STATUS sme_get_ani_level(mac_handle_t mac_handle, uint32_t *freqs,
 }
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
 
-QDF_STATUS sme_get_prev_connected_bss_ies(mac_handle_t mac_handle,
-					  uint8_t vdev_id,
-					  uint8_t **ies, uint32_t *ie_len)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t len;
-	uint8_t *beacon_ie;
-	struct rso_config *rso_cfg;
-	struct wlan_objmgr_vdev *vdev;
-	struct element_info *bcn_ie;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev)
-		return QDF_STATUS_E_INVAL;
-
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg) {
-		status = QDF_STATUS_E_INVAL;
-		goto end;
-	}
-
-	bcn_ie = &rso_cfg->prev_ap_bcn_ie;
-
-	if (!bcn_ie->len) {
-		sme_debug("No IEs to return");
-		status = QDF_STATUS_E_INVAL;
-		goto end;
-	}
-
-	len = bcn_ie->len;
-	beacon_ie = qdf_mem_malloc(len);
-	if (!beacon_ie) {
-		status = QDF_STATUS_E_NOMEM;
-		goto end;
-	}
-	qdf_mem_copy(beacon_ie, bcn_ie->ptr, len);
-
-	*ie_len = len;
-	*ies = beacon_ie;
-end:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
-	return status;
-}
-
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 
 QDF_STATUS sme_set_monitor_mode_cb(mac_handle_t mac_handle,
