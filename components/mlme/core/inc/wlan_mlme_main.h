@@ -201,6 +201,7 @@ struct wlan_mlme_roaming_config {
  * @roam_sm: Structure containing roaming state related details
  * @roam_config: Roaming configurations structure
  * @sae_single_pmk: Details for sae roaming using single pmk
+ * @set_pmk_pending: RSO update status of PMK from set_key
  */
 struct wlan_mlme_roam {
 	struct wlan_mlme_roam_state_info roam_sm;
@@ -208,6 +209,7 @@ struct wlan_mlme_roam {
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 	struct wlan_mlme_sae_single_pmk sae_single_pmk;
 #endif
+	bool set_pmk_pending;
 };
 
 #ifdef WLAN_FEATURE_MSCS
@@ -1154,4 +1156,44 @@ wlan_get_sap_user_config_freq(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS
 wlan_set_sap_user_config_freq(struct wlan_objmgr_vdev *vdev,
 			      qdf_freq_t freq);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wlan_mlme_defer_pmk_set_in_roaming() - Set the set_key pending status
+ *
+ * @psoc: pointer to psoc
+ * @vdev_id: vdev id
+ * @set_pmk_pending: set_key pending status
+ *
+ * Return: None
+ */
+void
+wlan_mlme_defer_pmk_set_in_roaming(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id, bool set_pmk_pending);
+
+/**
+ * wlan_mlme_is_pmk_set_deferred() - Get the set_key pending status
+ *
+ * @psoc: pointer to psoc
+ * @vdev_id: vdev id
+ *
+ * Return : set_key pending status
+ */
+bool
+wlan_mlme_is_pmk_set_deferred(struct wlan_objmgr_psoc *psoc,
+			      uint8_t vdev_id);
+#else
+static inline void
+wlan_mlme_defer_pmk_set_in_roaming(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id, bool set_pmk_pending)
+{
+}
+
+static inline bool
+wlan_mlme_is_pmk_set_deferred(struct wlan_objmgr_psoc *psoc,
+			      uint8_t vdev_id)
+{
+	return false;
+}
+#endif
 #endif

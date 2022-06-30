@@ -3044,6 +3044,8 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		goto rel_vdev_ref;
 	}
 
+	wlan_mlme_defer_pmk_set_in_roaming(psoc, vdev_id, false);
+
 	cm_roam_scan_filter(psoc, pdev, vdev_id, ROAM_SCAN_OFFLOAD_STOP,
 			    reason, &stop_req->scan_filter_params);
 	cm_roam_scan_offload_fill_rso_configs(psoc, vdev, rso_cfg,
@@ -3869,6 +3871,19 @@ cm_roam_switch_to_rso_enable(struct wlan_objmgr_pdev *pdev,
 		return status;
 	}
 	mlme_set_roam_state(psoc, vdev_id, WLAN_ROAM_RSO_ENABLED);
+
+	/* If the set_key for the connected bssid was received during Roam sync
+	 * in progress, then the RSO update to the FW will be rejected. The RSO
+	 * start which might be in progress during set_key could send stale pmk
+	 * to the FW. Therefore, once RSO is enabled, send the RSO update with
+	 * the PMK received from the __wlan_hdd_cfg80211_keymgmt_set_key.
+	 */
+	if (wlan_mlme_is_pmk_set_deferred(psoc, vdev_id)) {
+		cm_roam_send_rso_cmd(psoc, vdev_id,
+				     ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				     REASON_ROAM_PSK_PMK_CHANGED);
+		wlan_mlme_defer_pmk_set_in_roaming(psoc, vdev_id, false);
+	}
 
 	/*
 	 * If supplicant disabled roaming, driver does not send
