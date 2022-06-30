@@ -302,6 +302,11 @@ u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 	u32 width, height;
 	struct v4l2_format *f;
 
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return 0;
+	}
+
 	f = &inst->fmts[OUTPUT_PORT];
 	/*
 	 * Encoder output size calculation: 32 Align width/height
@@ -318,7 +323,8 @@ u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 	frame_size = (width * height * 3);
 
 	/* Image session: 2 x yuv size */
-	if (is_image_session(inst))
+	if (is_image_session(inst) ||
+		inst->capabilities->cap[BITRATE_MODE].value == V4L2_MPEG_VIDEO_BITRATE_MODE_CQ)
 		goto skip_calc;
 
 	if (mbs_per_frame <= NUM_MBS_360P)
