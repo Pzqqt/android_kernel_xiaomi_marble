@@ -1027,6 +1027,83 @@ int lpass_cdc_register_wake_irq(struct snd_soc_component *component,
 }
 EXPORT_SYMBOL(lpass_cdc_register_wake_irq);
 
+#ifdef CONFIG_SOUND_CONTROL
+struct snd_soc_component *sound_control_codec_ptr;
+
+static ssize_t headphone_gain_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d %d\n",
+		snd_soc_component_read(sound_control_codec_ptr, LPASS_CDC_RX_RX0_RX_VOL_CTL),
+		snd_soc_component_read(sound_control_codec_ptr, LPASS_CDC_RX_RX1_RX_VOL_CTL)
+	);
+}
+
+static ssize_t headphone_gain_store(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf, size_t count)
+{
+
+	int input_l, input_r;
+
+	sscanf(buf, "%d %d", &input_l, &input_r);
+
+	if (input_l < -40 || input_l > 20)
+		input_l = 0;
+
+	if (input_r < -40 || input_r > 20)
+		input_r = 0;
+
+	snd_soc_component_write(sound_control_codec_ptr, LPASS_CDC_RX_RX0_RX_VOL_CTL, input_l);
+	snd_soc_component_write(sound_control_codec_ptr, LPASS_CDC_RX_RX1_RX_VOL_CTL, input_r);
+
+	return count;
+}
+
+static struct kobj_attribute headphone_gain_attribute =
+	__ATTR(headphone_gain, 0664,
+		headphone_gain_show,
+		headphone_gain_store);
+
+static ssize_t mic_gain_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+		snd_soc_component_read(sound_control_codec_ptr, LPASS_CDC_TX0_TX_VOL_CTL));
+}
+
+static ssize_t mic_gain_store(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int input;
+
+	sscanf(buf, "%d", &input);
+
+	if (input < -10 || input > 20)
+		input = 0;
+
+	snd_soc_component_write(sound_control_codec_ptr, LPASS_CDC_TX0_TX_VOL_CTL, input);
+
+	return count;
+}
+
+static struct kobj_attribute mic_gain_attribute =
+	__ATTR(mic_gain, 0664,
+		mic_gain_show,
+		mic_gain_store);
+
+static struct attribute *sound_control_attrs[] = {
+		&headphone_gain_attribute.attr,
+		&mic_gain_attribute.attr,
+		NULL,
+};
+
+static struct attribute_group sound_control_attr_group = {
+		.attrs = sound_control_attrs,
+};
+
+static struct kobject *sound_control_kobj;
+#endif
+
 /**
  * lpass_cdc_tx_mclk_enable - Enable/Disable TX Macro mclk
  *
@@ -1102,6 +1179,10 @@ static int lpass_cdc_soc_codec_probe(struct snd_soc_component *component)
 	int macro_idx, ret = 0;
 	u8 core_id_0 = 0, core_id_1 = 0;
 
+#ifdef CONFIG_SOUND_CONTROL
+	sound_control_codec_ptr = component;
+#endif
+
 	snd_soc_component_init_regmap(component, priv->regmap);
 
 	if (!priv->version) {
@@ -1144,6 +1225,19 @@ static int lpass_cdc_soc_codec_probe(struct snd_soc_component *component)
 			}
 		}
 	}
+
+#ifdef CONFIG_SOUND_CONTROL
+	sound_control_kobj = kobject_create_and_add("sound_control", kernel_kobj);
+	if (sound_control_kobj == NULL) {
+		pr_warn("%s kobject create failed!\n", __func__);
+	}
+
+	ret = sysfs_create_group(sound_control_kobj, &sound_control_attr_group);
+        if (ret) {
+		pr_warn("%s sysfs file create failed!\n", __func__);
+	}
+#endif
+
 	priv->component = component;
 
 	ret = snd_event_client_register(priv->dev, &lpass_cdc_ssr_ops, priv);
