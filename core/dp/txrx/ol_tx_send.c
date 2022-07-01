@@ -965,15 +965,15 @@ htt_qdf_status_map(enum htt_tx_status status)
 	case HTT_TX_COMPL_IND_STAT_OK:
 		return QDF_TX_RX_STATUS_OK;
 	case HTT_TX_COMPL_IND_STAT_DISCARD:
-		return RX_PKT_FATE_FW_DROP_OTHER;
+		return QDF_TX_RX_STATUS_FW_DISCARD;
 	case HTT_TX_COMPL_IND_STAT_NO_ACK:
 		return QDF_TX_RX_STATUS_NO_ACK;
 	case HTT_TX_COMPL_IND_STAT_DROP:
-		return RX_PKT_FATE_DRV_DROP_OTHER;
+		return QDF_TX_RX_STATUS_DROP;
 	case HTT_HOST_ONLY_STATUS_CODE_START:
-		return RX_PKT_FATE_DRV_DROP_OTHER;
+		return QDF_TX_RX_STATUS_DROP;
 	default:
-		return RX_PKT_FATE_DRV_DROP_OTHER;
+		return QDF_TX_RX_STATUS_DROP;
 	}
 }
 
