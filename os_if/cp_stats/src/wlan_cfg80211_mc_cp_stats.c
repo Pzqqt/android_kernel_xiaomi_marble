@@ -548,7 +548,7 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 {
 	struct stats_event *priv;
 	struct osif_request *request;
-	uint32_t summary_size, rssi_size, peer_adv_size;
+	uint32_t summary_size, rssi_size, peer_adv_size = 0;
 
 	request = osif_request_get(cookie);
 	if (!request) {
@@ -557,9 +557,17 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	}
 
 	priv = osif_request_priv(request);
+
+	if (!ev->vdev_summary_stats || !ev->vdev_chain_rssi) {
+		osif_debug("Invalid stats");
+		goto station_stats_cb_fail;
+	}
+
 	summary_size = sizeof(*ev->vdev_summary_stats) * ev->num_summary_stats;
 	rssi_size = sizeof(*ev->vdev_chain_rssi) * ev->num_chain_rssi_stats;
-	peer_adv_size = sizeof(*ev->peer_adv_stats) * ev->num_peer_adv_stats;
+	if (ev->peer_adv_stats && ev->num_peer_adv_stats)
+		peer_adv_size =
+			sizeof(*ev->peer_adv_stats) * ev->num_peer_adv_stats;
 
 	if (summary_size == 0 || rssi_size == 0) {
 		osif_err("Invalid stats, summary %d rssi %d",
@@ -1346,6 +1354,11 @@ static void get_station_adv_stats_cb(struct stats_event *ev, void *cookie)
 	}
 
 	priv = osif_request_priv(request);
+	if (!ev->peer_adv_stats || ev->num_peer_adv_stats == 0) {
+		osif_debug("Invalid stats");
+		goto station_adv_stats_cb_fail;
+	}
+
 	peer_adv_size = sizeof(*ev->peer_adv_stats) * ev->num_peer_adv_stats;
 
 	if (peer_adv_size) {
@@ -1452,6 +1465,11 @@ wlan_cfg80211_mc_cp_stats_get_peer_stats(struct wlan_objmgr_vdev *vdev,
 	*errno = osif_request_wait_for_response(request);
 	if (*errno) {
 		osif_err("wait failed or timed out ret: %d", *errno);
+		goto get_peer_stats_fail;
+	}
+
+	if (!priv->peer_adv_stats || priv->num_peer_adv_stats == 0) {
+		osif_debug("Invalid stats");
 		goto get_peer_stats_fail;
 	}
 

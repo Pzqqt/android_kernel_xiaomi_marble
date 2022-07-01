@@ -1918,6 +1918,12 @@ static void cache_station_stats_cb(struct stats_event *ev, void *cookie)
 	uint8_t vdev_id = adapter->vdev_id;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_DISPLAY_TXRX_STATS;
 
+	if (!ev->vdev_summary_stats || !ev->vdev_chain_rssi ||
+	    !ev->peer_adv_stats) {
+		hdd_debug("Invalid stats");
+		return;
+	}
+
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
 					   dbgid) {
 		if (adapter->vdev_id != vdev_id) {
