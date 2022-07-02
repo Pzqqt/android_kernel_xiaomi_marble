@@ -334,6 +334,8 @@ QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 		ptr->added = 0;
 		ptr->is_disassoc_deauth_in_progress = 0;
 		ptr->sta_deletion_in_progress = false;
+		ptr->ocv_enabled = 0;
+		ptr->last_ocv_done_freq = 0;
 		ptr->next = 0;
 	} else {
 		pe_err("Entry not present STA addr: "QDF_MAC_ADDR_FMT,
