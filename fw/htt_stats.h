@@ -635,6 +635,8 @@ typedef enum {
 #define HTT_TX_HWQ_MAX_CMD_RESULT_STATS 13
 #define HTT_TX_HWQ_MAX_CMD_STALL_STATS 5
 #define HTT_TX_HWQ_MAX_FES_RESULT_STATS 10
+#define HTT_PDEV_STATS_PPDU_DUR_HIST_BINS 16
+#define HTT_PDEV_STATS_PPDU_DUR_HIST_INTERVAL_US 250
 
 typedef enum {
     HTT_STATS_TX_PDEV_NO_DATA_UNDERRUN = 0,
@@ -4844,6 +4846,12 @@ typedef struct {
     A_UINT32 be_ofdma_eht_sig_mcs[HTT_TX_PDEV_STATS_NUM_EHT_SIG_MCS_COUNTERS];
 } htt_tx_pdev_rate_stats_be_ofdma_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /** Tx PPDU duration histogram **/
+    A_UINT32 tx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
+} htt_tx_pdev_ppdu_dur_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
  * TLV_TAGS:
  *      - HTT_STATS_TX_PDEV_RATE_STATS_TAG
@@ -4856,6 +4864,7 @@ typedef struct {
     htt_tx_pdev_rate_stats_tlv rate_tlv;
     htt_tx_pdev_rate_stats_be_tlv rate_be_tlv;
     htt_tx_pdev_rate_stats_sawf_tlv rate_sawf_tlv;
+    htt_tx_pdev_ppdu_dur_stats_tlv tx_ppdu_dur_tlv;
 } htt_tx_pdev_rate_stats_t;
 
 /* == PDEV RX RATE CTRL STATS == */
@@ -5104,6 +5113,12 @@ typedef struct {
  */
 } htt_rx_pdev_rate_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /** Tx PPDU duration histogram **/
+    A_UINT32 rx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
+} htt_rx_pdev_ppdu_dur_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE
  * TLV_TAGS:
  *      - HTT_STATS_RX_PDEV_RATE_STATS_TAG
@@ -5114,6 +5129,7 @@ typedef struct {
  */
 typedef struct {
     htt_rx_pdev_rate_stats_tlv rate_tlv;
+    htt_rx_pdev_ppdu_dur_stats_tlv rx_ppdu_dur_tlv;
 } htt_rx_pdev_rate_stats_t;
 
 typedef struct {
