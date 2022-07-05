@@ -53,7 +53,11 @@
 #endif
 
 /* vendor controls start */
-#define V4L2_CID_MPEG_VIDC_BASE                 (V4L2_CTRL_CLASS_MPEG | 0x2000)
+#ifdef V4L2_CTRL_CLASS_CODEC
+#define V4L2_CID_MPEG_VIDC_BASE (V4L2_CTRL_CLASS_CODEC | 0x2000)
+#else
+#define V4L2_CID_MPEG_VIDC_BASE (V4L2_CTRL_CLASS_MPEG | 0x2000)
+#endif
 
 #define V4L2_MPEG_MSM_VIDC_DISABLE 0
 #define V4L2_MPEG_MSM_VIDC_ENABLE 1
