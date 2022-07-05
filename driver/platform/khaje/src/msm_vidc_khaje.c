@@ -12,6 +12,7 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_control.h"
 #include "hfi_property.h"
+#include "msm_vidc_driver.h"
 
 #define DEFAULT_VIDEO_CONCEAL_COLOR_BLACK 0x8020010
 #define MAX_LTR_FRAME_COUNT     2
@@ -1477,7 +1478,72 @@ static struct msm_platform_inst_capability instance_data_khaje[] = {
 		V4L2_CID_MPEG_VIDC_METADATA_MAX_NUM_REORDER_FRAMES,
 		HFI_PROP_MAX_NUM_REORDER_FRAMES},
 };
+static u32 msm_vidc_get_buffer_region_khaje(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type buffer_type, const char *func)
+{
+	u32 region = MSM_VIDC_NON_SECURE;
 
+	if (!is_secure_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_ARP:
+			region = MSM_VIDC_SECURE_NONPIXEL;
+		break;
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_DPB:
+		case MSM_VIDC_BUF_VPSS:
+		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_OUTPUT_META:
+		case MSM_VIDC_BUF_BIN:
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+		case MSM_VIDC_BUF_PERSIST:
+			region = MSM_VIDC_NON_SECURE;
+			break;
+		default:
+			i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
+				func, buffer_type);
+		}
+	} else {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+			if (is_encode_session(inst))
+				region = MSM_VIDC_SECURE_PIXEL;
+			else
+				region = MSM_VIDC_SECURE_BITSTREAM;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			if (is_encode_session(inst))
+				region = MSM_VIDC_SECURE_BITSTREAM;
+			else
+				region = MSM_VIDC_SECURE_PIXEL;
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			region = MSM_VIDC_NON_SECURE;
+			break;
+		case MSM_VIDC_BUF_DPB:
+		case MSM_VIDC_BUF_VPSS:
+			region = MSM_VIDC_SECURE_PIXEL;
+			break;
+		case MSM_VIDC_BUF_BIN:
+			region = MSM_VIDC_SECURE_BITSTREAM;
+			break;
+		case MSM_VIDC_BUF_ARP:
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+		case MSM_VIDC_BUF_PERSIST:
+			region = MSM_VIDC_SECURE_NONPIXEL;
+			break;
+		default:
+			i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
+				func, buffer_type);
+		}
+	}
+	return region;
+}
 static const struct msm_vidc_platform_data khaje_data = {
 	.core_data = core_data_khaje,
 	.core_data_size = ARRAY_SIZE(core_data_khaje),
@@ -1488,7 +1554,9 @@ static const struct msm_vidc_platform_data khaje_data = {
 	.csc_data.vpe_csc_custom_limit_coeff = vpe_csc_custom_limit_coeff,
 	.ubwc_config = NULL,
 };
-
+static struct msm_vidc_platform_ops khaje_platform_ops = {
+	.buffer_region = msm_vidc_get_buffer_region_khaje,
+};
 static int msm_vidc_init_data(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -1500,6 +1568,7 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 	d_vpr_h("%s: initialize khaje data\n", __func__);
 
 	core->platform->data = khaje_data;
+	core->platform_ops = &khaje_platform_ops;
 
 	return rc;
 }

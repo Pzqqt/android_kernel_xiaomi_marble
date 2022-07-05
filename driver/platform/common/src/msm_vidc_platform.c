@@ -17,6 +17,7 @@
 #include "msm_vidc_dt.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_internal.h"
+#include "msm_vidc_driver.h"
 #if defined(CONFIG_MSM_VIDC_WAIPIO)
 #include "msm_vidc_waipio.h"
 #endif
@@ -163,6 +164,10 @@ static struct vb2_mem_ops msm_vb2_mem_ops = {
 	.unmap_dmabuf                   = msm_vb2_unmap_dmabuf,
 };
 
+static struct msm_vidc_platform_ops msm_platform_ops = {
+	.buffer_region                  = msm_vidc_get_buffer_region,
+};
+
 static int msm_vidc_init_ops(struct msm_vidc_core *core)
 {
 	if (!core) {
@@ -177,6 +182,7 @@ static int msm_vidc_init_ops(struct msm_vidc_core *core)
 	core->v4l2_ctrl_ops = &msm_v4l2_ctrl_ops;
 	core->vb2_ops = &msm_vb2_ops;
 	core->vb2_mem_ops = &msm_vb2_mem_ops;
+	core->platform_ops = &msm_platform_ops;
 
 	return 0;
 }

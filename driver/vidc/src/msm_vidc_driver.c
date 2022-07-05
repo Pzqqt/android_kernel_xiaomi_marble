@@ -2612,13 +2612,15 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 	struct msm_vidc_mappings *mappings;
+	struct msm_vidc_core *core;
 	struct msm_vidc_map *map;
 	bool found = false;
 
-	if (!inst || !buf) {
+	if (!inst || !buf || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	core = inst->core;
 
 	mappings = msm_vidc_get_mappings(inst, buf->type, __func__);
 	if (!mappings)
@@ -2646,7 +2648,8 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 		map->dmabuf = msm_vidc_memory_get_dmabuf(inst, buf->fd);
 		if (!map->dmabuf)
 			return -EINVAL;
-		map->region = msm_vidc_get_buffer_region(inst, buf->type, __func__);
+		map->region = call_platform_op(core, buffer_region, inst,
+			buf->type, __func__);
 		/* delayed unmap feature needed for decoder output buffers */
 		if (is_decode_session(inst) && is_output_buffer(buf->type)) {
 			rc = msm_vidc_get_delayed_unmap(inst, map);
@@ -3375,11 +3378,14 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer;
 	struct msm_vidc_alloc *alloc;
 	struct msm_vidc_map *map;
+	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	core = inst->core;
+
 	if (!is_internal_buffer(buffer_type)) {
 		i_vpr_e(inst, "%s: type %s is not internal\n",
 			__func__, buf_name(buffer_type));
@@ -3417,8 +3423,8 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	}
 	INIT_LIST_HEAD(&alloc->list);
 	alloc->type = buffer_type;
-	alloc->region = msm_vidc_get_buffer_region(inst,
-		buffer_type, __func__);
+	alloc->region = call_platform_op(core, buffer_region,
+		inst, buffer_type, __func__);
 	alloc->size = buffer->buffer_size;
 	alloc->secure = is_secure_region(alloc->region);
 	rc = msm_vidc_memory_alloc(inst->core, alloc);

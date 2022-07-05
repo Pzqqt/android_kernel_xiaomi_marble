@@ -16,6 +16,10 @@ struct msm_vidc_inst;
 	(((c) && (c)->session_ops && (c)->session_ops->op) ? \
 	((c)->session_ops->op(__VA_ARGS__)) : 0)
 
+#define call_platform_op(c, op, ...)			\
+	(((c) && (c)->platform_ops && (c)->platform_ops->op) ? \
+	((c)->platform_ops->op(__VA_ARGS__)) : 0)
+
 struct msm_vidc_session_ops {
 	u64 (*calc_freq)(struct msm_vidc_inst *inst, u32 data_size);
 	int (*calc_bw)(struct msm_vidc_inst *inst,

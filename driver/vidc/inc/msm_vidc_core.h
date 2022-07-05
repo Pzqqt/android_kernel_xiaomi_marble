@@ -11,6 +11,8 @@
 #include "msm_vidc_internal.h"
 
 struct msm_vidc_core;
+struct msm_vidc_inst;
+enum msm_vidc_buffer_type;
 
 #define call_venus_op(d, op, ...)			\
 	(((d) && (d)->venus_ops && (d)->venus_ops->op) ? \
@@ -61,6 +63,11 @@ enum msm_vidc_core_state {
 	MSM_VIDC_CORE_INIT         = 2,
 };
 
+struct msm_vidc_platform_ops {
+	u32 (*buffer_region)(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type, const char *func);
+};
+
 struct msm_vidc_core {
 	struct platform_device                *pdev;
 	struct msm_video_device                vdev[2];
@@ -74,6 +81,7 @@ struct msm_vidc_core {
 	struct mutex                           lock;
 	struct msm_vidc_dt                    *dt;
 	struct msm_vidc_platform              *platform;
+	struct msm_vidc_platform_ops          *platform_ops;
 	u8 __iomem                            *register_base_addr;
 	u32                                    intr_status;
 	u32                                    spur_count;
