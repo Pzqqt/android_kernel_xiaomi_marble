@@ -593,6 +593,7 @@ typedef  enum  {
     WMI_SERVICE_UMAC_HANG_RECOVERY_SUPPORT = 340, /* FW supports recovering system from UMAC hang condition */
     WMI_SERVICE_COAP_OFFLOAD_SUPPORT = 341, /* FW supports CoAP (the Constrained Application Protocol) offload */
     WMI_SERVICE_TDLS_WIDEBAND_SUPPORT = 342, /* FW supports Wideband TDLS */
+    WMI_SERVICE_FEATURE_SET_EVENT_SUPPORT = 343, /* FW supports sending of supported feature set event during init time */
 
     WMI_MAX_EXT2_SERVICE
 

@@ -135,6 +135,36 @@ extern "C" {
         (var) |= (WMI_GET_BITS(val, msb_index, msb_num_bits) << lsb_num_bits); \
     } while(0)
 
+/*
+ * Below GET/SET BITS_FROM_ARRAY_LEN32_BYTES macros can be used when
+ * reading/writting bits which are spread across array_len32 entries.
+ * These can be used to GET/SET maximum of 32 bits only,
+ * also array_len32 length should be limited to maximum of 32.
+ */
+#define WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(var, _arrayp, _index, _num_bits) \
+    do { \
+        if ((((_index % 32) + _num_bits) / 32) != 0) { \
+            A_UINT8 i; \
+            for (i = 0; i < _num_bits; i++) { \
+                (var) |= (WMI_GET_BITS(_arrayp[(_index+i) / 32], ((_index+i) % 32), 1) << i); \
+            } \
+        } else { \
+            (var) = WMI_GET_BITS(_arrayp[_index / 32], (_index % 32), _num_bits); \
+        } \
+    } while(0)
+
+#define WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(_arrayp, _index, _num_bits, val) \
+    do { \
+        if ((((_index % 32) + _num_bits) / 32) != 0) { \
+            A_UINT8 i; \
+            for (i = 0; i < _num_bits; i++) { \
+                WMI_SET_BITS(_arrayp[(_index+i) / 32], ((_index+i) % 32), 1, (val >> i)); \
+            } \
+        } else { \
+            WMI_SET_BITS(_arrayp[_index / 32], (_index % 32), _num_bits, val); \
+        } \
+    } while(0)
+
 /**
  * A packed array is an array where each entry in the array is less than
  * or equal to 16 bits, and the entries are stuffed into an A_UINT32 array.
@@ -4747,8 +4777,299 @@ typedef struct {
  *         fill hw_mode_config's fields with 0x0.
  *     wmi_pdev_band_to_mac                 band_to_mac[];
  *     wmi_htt_msdu_idx_to_htt_msdu_qtype   htt_msdu_idx_to_qtype_map[];
+ *     A_UINT32 feature_set_bitmap[];   <-- Host supported feature info,
+ *                                          array length is equal to
+ *                                          WMI_FEATURE_SET_BITMAP_ARRAY_LEN32.
  */
 } wmi_init_cmd_fixed_param;
+
+typedef enum {
+    WMI_WIFI_STANDARD_4     = 0,
+    WMI_WIFI_STANDARD_5     = 1,
+    WMI_WIFI_STANDARD_6     = 2,
+    WMI_WIFI_STANDARD_6E    = 3,
+    WMI_WIFI_STANDARD_7     = 4,
+} WMI_WIFI_STANDARD;
+
+typedef enum {
+    WMI_HOST_DBS        = 1, /* When 2.4G + 5G & 2.4G + 6G if 6G is supported */
+    WMI_HOST_DBS_SBS    = 2, /* When 2.4G + 5G, 2.4G + 6G, 5G + 6G & 5G + 5G is supported */
+} WMI_BAND_CONCURRENCY;
+
+typedef enum {
+    WMI_VENDOR1_REQ1_VERSION_3_00   = 0,
+    WMI_VENDOR1_REQ1_VERSION_3_01   = 1,
+    WMI_VENDOR1_REQ1_VERSION_3_20   = 2,
+} WMI_VENDOR1_REQ1_VERSION;
+
+typedef enum {
+    WMI_VENDOR1_REQ2_VERSION_3_00   = 0,
+    WMI_VENDOR1_REQ2_VERSION_3_01   = 1,
+    WMI_VENDOR1_REQ2_VERSION_3_20   = 2,
+} WMI_VENDOR1_REQ2_VERSION;
+
+/* HW features supported info */
+/* enum WMI_WIFI_STANDARD are possible values for WiFi standard bitfield */
+#define WMI_GET_WIFI_STANDARD(feature_bitmap)                   \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 0, 4)
+#define WMI_SET_WIFI_STANDARD(feature_bitmap, val)              \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 0, 4, val)
+/* enum WMI_BAND_CONCURRENCY are possible values for band concurrency support bitfield */
+#define WMI_GET_BAND_CONCURRENCY_SUPPORT(feature_bitmap)        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 4, 3)
+#define WMI_SET_BAND_CONCURRENCY_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 4, 3, val)
+
+/* PNO feature supported info */
+#define WMI_GET_PNO_SCAN_IN_UNASSOC_STATE(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 7, 1)
+#define WMI_SET_PNO_SCAN_IN_UNASSOC_STATE(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 7, 1, val)
+#define WMI_GET_PNO_SCAN_IN_ASSOC_STATE(feature_bitmap)                 \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 8, 1)
+#define WMI_SET_PNO_SCAN_IN_ASSOC_STATE(feature_bitmap, val)            \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 8, 1, val)
+
+/* TWT feature supported info */
+#define WMI_GET_TWT_FEATURE_SUPPORT(feature_bitmap)                \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 9, 1)
+#define WMI_SET_TWT_FEATURE_SUPPORT(feature_bitmap, val)           \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 9, 1, val)
+#define WMI_GET_TWT_REQUESTOR(feature_bitmap)                      \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 10, 1)
+#define WMI_SET_TWT_REQUESTER(feature_bitmap, val)                 \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 10, 1, val)
+#define WMI_GET_TWT_BROADCAST(feature_bitmap)                      \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 11, 1)
+#define WMI_SET_TWT_BROADCAST(feature_bitmap, val)                 \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 11, 1, val)
+#define WMI_GET_TWT_FLEXIBLE(feature_bitmap)                       \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 12, 1)
+#define WMI_SET_TWT_FLEXIBLE(feature_bitmap, val)                  \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 12, 1, val)
+
+/* WIFI optimizer feature supported info */
+#define WMI_GET_WIFI_OPT_FEATURE_SUPPORT(feature_bitmap)                   \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 13, 1)
+#define WMI_SET_WIFI_OPT_FEATURE_SUPPORT(feature_bitmap, val)              \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 13, 1, val)
+
+/* RFC8325 feature supported info */
+#define WMI_GET_RFC8325_FEATURE_SUPPORT(feature_bitmap)                     \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 14, 1)
+#define WMI_SET_RFC8325_FEATURE_SUPPORT(feature_bitmap, val)                \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 14, 1, val)
+
+/* MHS feature supported info */
+#define WMI_GET_MHS_5G_SUPPORT(feature_bitmap)                          \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 15, 1)
+#define WMI_SET_MHS_5G_SUPPORT(feature_bitmap, val)                     \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 15, 1, val)
+#define WMI_GET_MHS_6G_SUPPORT(feature_bitmap)                          \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 16, 1)
+#define WMI_SET_MHS_6G_SUPPORT(feature_bitmap, val)                     \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 16, 1, val)
+#define WMI_GET_MHS_MAX_CLIENTS_SUPPORT(feature_bitmap)                 \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 17, 8)
+#define WMI_SET_MHS_MAX_CLIENTS_SUPPORT(feature_bitmap, val)            \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 17, 8, val)
+#define WMI_GET_MHS_SET_COUNTRY_CODE_HAL_SUPPORT(feature_bitmap)        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 25, 1)
+#define WMI_SET_MHS_SET_COUNTRY_CODE_HAL_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 25, 1, val)
+#define WMI_GET_MHS_GETVALID_CHANNELS_SUPPORT(feature_bitmap)           \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 26, 1)
+#define WMI_SET_MHS_GETVALID_CHANNELS_SUPPORT(feature_bitmap, val)      \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 26, 1, val)
+/* enum WMI_WIFI_STANDARD are possible values for MHS DOT11 mode support bitfield */
+#define WMI_GET_MHS_DOT11_MODE_SUPPORT(feature_bitmap)                  \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 27, 4)
+#define WMI_SET_MHS_DOT11_MODE_SUPPORT(feature_bitmap, val)             \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 27, 4, val)
+#define WMI_GET_MHS_WPA3_SUPPORT(feature_bitmap)                        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 31, 1)
+#define WMI_SET_MHS_WPA3_SUPPORT(feature_bitmap, val)                   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 31, 1, val)
+
+/* Vendor requirement1 supported verison info */
+/* enum's WMI_VENDORxx_REQxx_VERSION are the possible vaues for below bitfield*/
+#define WMI_GET_VENDOR_REQ_1_VERSION(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 32, 8)
+#define WMI_SET_VENDOR_REQ_1_VERSION(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 32, 8, val)
+
+/* Roaming feature supported info */
+#define WMI_GET_ROAMING_HIGH_CU_ROAM_TRIGGER(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 40, 1)
+#define WMI_SET_ROAMING_HIGH_CU_ROAM_TRIGGER(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 40, 1, val)
+#define WMI_GET_ROAMING_EMERGENCY_TRIGGER(feature_bitmap)                  \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 41, 1)
+#define WMI_SET_ROAMING_EMERGENCY_TRIGGER(feature_bitmap, val)             \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 41, 1, val)
+#define WMI_GET_ROAMING_BTM_TRIGGER(feature_bitmap)                        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 42, 1)
+#define WMI_SET_ROAMING_BTM_TRIGGER(feature_bitmap, val)                   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 42, 1, val)
+#define WMI_GET_ROAMING_IDLE_TRIGGER(feature_bitmap)                       \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 43, 1)
+#define WMI_SET_ROAMING_IDLE_TRIGGER(feature_bitmap, val)                  \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 43, 1, val)
+#define WMI_GET_ROAMING_WTC_TRIGGER(feature_bitmap)                        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 44, 1)
+#define WMI_SET_ROAMING_WTC_TRIGGER(feature_bitmap, val)                   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 44, 1, val)
+#define WMI_GET_ROAMING_BTCOEX_TRIGGER(feature_bitmap)                     \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 45, 1)
+#define WMI_SET_ROAMING_BTCOEX_TRIGGER(feature_bitmap, val)                \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 45, 1, val)
+#define WMI_GET_ROAMING_BTW_WPA_WPA2(feature_bitmap)                       \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 46, 1)
+#define WMI_SET_ROAMING_BTW_WPA_WPA2(feature_bitmap, val)                  \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 46, 1, val)
+#define WMI_GET_ROAMING_MANAGE_CHAN_LIST_API(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 47, 1)
+#define WMI_SET_ROAMING_MANAGE_CHAN_LIST_API(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 47, 1, val)
+#define WMI_GET_ROAMING_ADAPTIVE_11R(feature_bitmap)                       \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 48, 1)
+#define WMI_SET_ROAMING_ADAPTIVE_11R(feature_bitmap, val)                  \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 48, 1, val)
+#define WMI_GET_ROAMING_CTRL_API_GET_SET(feature_bitmap)                   \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 49, 1)
+#define WMI_SET_ROAMING_CTRL_API_GET_SET(feature_bitmap, val)              \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 49, 1, val)
+#define WMI_GET_ROAMING_CTRL_API_REASSOC(feature_bitmap)                   \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 50, 1)
+#define WMI_SET_ROAMING_CTRL_API_REASSOC(feature_bitmap, val)              \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 50, 1, val)
+#define WMI_GET_ROAMING_CTRL_GET_CU(feature_bitmap)                        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 51, 1)
+#define WMI_SET_ROAMING_CTRL_GET_CU(feature_bitmap, val)                   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 51, 1, val)
+
+/* Vendor requirement2 supported verison info */
+/* enum's WMI_VENDORxx_REQxx_VERSION are the possible vaues for below bitfield*/
+#define WMI_GET_VENDOR_REQ_2_VERSION(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 52, 8)
+#define WMI_SET_VENDOR_REQ_2_VERSION(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 52, 8, val)
+
+#define WMI_GET_ASSURANCE_DISCONNECT_REASON_API(feature_bitmap)            \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 60, 1)
+#define WMI_SET_ASSURANCE_DISCONNECT_REASON_API(feature_bitmap, val)       \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 60, 1, val)
+
+/* Frame pcap logging */
+#define WMI_GET_FRAME_PCAP_LOG_MGMT(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 61, 1)
+#define WMI_SET_FRAME_PCAP_LOG_MGMT(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 61, 1, val)
+#define WMI_GET_FRAME_PCAP_LOG_CTRL(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 62, 1)
+#define WMI_SET_FRAME_PCAP_LOG_CTRL(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 62, 1, val)
+#define WMI_GET_FRAME_PCAP_LOG_DATA(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 63, 1)
+#define WMI_SET_FRAME_PCAP_LOG_DATA(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 63, 1, val)
+
+/* Security features supported info */
+#define WMI_GET_SECURITY_WPA3_SAE_H2E(feature_bitmap)                     \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 64, 1)
+#define WMI_SET_SECURITY_WPA3_SAE_H2E(feature_bitmap, val)                \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 64, 1, val)
+#define WMI_GET_SECURITY_WPA3_SAE_FT(feature_bitmap)                      \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 65, 1)
+#define WMI_SET_SECURITY_WPA3_SAE_FT(feature_bitmap, val)                 \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 65, 1, val)
+#define WMI_GET_SECURITY_WPA3_ENTERP_SUITEB(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 66, 1)
+#define WMI_SET_SECURITY_WPA3_ENTERP_SUITEB(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 66, 1, val)
+#define WMI_GET_SECURITY_WPA3_ENTERP_SUITEB_192bit(feature_bitmap)        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 67, 1)
+#define WMI_SET_SECURITY_WPA3_ENTERP_SUITEB_192bit(feature_bitmap, val)   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 67, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA256(feature_bitmap)                      \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 68, 1)
+#define WMI_SET_SECURITY_FILS_SHA256(feature_bitmap, val)                 \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 68, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA384(feature_bitmap)                      \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 69, 1)
+#define WMI_SET_SECURITY_FILS_SHA384(feature_bitmap, val)                 \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 69, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA256_FT(feature_bitmap)                   \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 70, 1)
+#define WMI_SET_SECURITY_FILS_SHA256_FT(feature_bitmap, val)              \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 70, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA384_FT(feature_bitmap)                   \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 71, 1)
+#define WMI_SET_SECURITY_FILS_SHA384_FT(feature_bitmap, val)              \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 71, 1, val)
+#define WMI_GET_SECURITY_ENCHANCED_OPEN(feature_bitmap)                   \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 72, 1)
+#define WMI_SET_SECURITY_ENCHANCED_OPEN(feature_bitmap, val)              \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 72, 1, val)
+
+/* Peer protocol features supported info */
+#define WMI_GET_NAN_SUPPORT(feature_bitmap)                 \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 73, 1)
+#define WMI_SET_NAN_SUPPORT(feature_bitmap, val)            \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 73, 1, val)
+#define WMI_GET_TDLS_SUPPORT(feature_bitmap)                \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 74, 1)
+#define WMI_SET_TDLS_SUPPORT(feature_bitmap, val)           \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 74, 1, val)
+#define WMI_GET_P2P6E_SUPPORT(feature_bitmap)               \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 75, 1)
+#define WMI_SET_P2P6E_SUPPORT(feature_bitmap, val)          \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 75, 1, val)
+#define WMI_GET_TDLS_OFFCHAN_SUPPORT(feature_bitmap)        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 76, 1)
+#define WMI_SET_TDLS_OFFCHAN_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 76, 1, val)
+#define WMI_GET_TDLS_CAP_ENHANCE(feature_bitmap)            \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 77, 1)
+#define WMI_SET_TDLS_CAP_ENHANCE(feature_bitmap, val)       \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 77, 1, val)
+#define WMI_GET_MAX_TDLS_PEERS_SUPPORT(feature_bitmap)      \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 78, 4)
+#define WMI_SET_MAX_TDLS_PEERS_SUPPORT(feature_bitmap, val) \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 78, 4, val)
+#define WMI_GET_STA_DUAL_P2P_SUPPORT(feature_bitmap)        \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 82, 1)
+#define WMI_SET_STA_DUAL_P2P_SUPPORT(feature_bitmap, val)   \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 82, 1, val)
+
+/* Big data feature supported info */
+#define WMI_GET_PEER_BIGDATA_GETBSSINFO_API_SUPPORT(feature_bitmap)                 \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 83, 1)
+#define WMI_SET_PEER_BIGDATA_GETBSSINFO_API_SUPPORT(feature_bitmap, val)            \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 83, 1, val)
+#define WMI_GET_PEER_BIGDATA_GETASSOCREJECTINFO_API_SUPPORT(feature_bitmap)         \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 84, 1)
+#define WMI_SET_PEER_BIGDATA_GETASSOCREJECTINFO_API_SUPPORT(feature_bitmap, val)    \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 84, 1, val)
+#define WMI_GET_PEER_BIGDATA_GETSTAINFO_API_SUPPORT(feature_bitmap)                 \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 85, 1)
+#define WMI_SET_PEER_BIGDATA_GETSTAINFO_API_SUPPORT(feature_bitmap, val)            \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 85, 1, val)
+
+/* Feature set requirement supported version info */
+#define WMI_GET_FEATURE_SET_VERSION(feature_bitmap)                 \
+        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 86, 16)
+#define WMI_SET_FEATURE_SET_VERSION(feature_bitmap, val)                 \
+        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 86, 16, val)
+
+/*
+ * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
+ * This value may change over time.
+ * It is not directly used in any WMI message definition.
+ * It is provided simply as a convenience for the feature_set_bitmap sender to
+ * know how many 32-bit words to allocate for the bitmap.
+ */
+#define WMI_FEATURE_SET_BITMAP_ARRAY_LEN32 4
 
 /**
  * TLV for channel list
@@ -37645,6 +37966,7 @@ typedef struct {
 /* Following this structure is the TLV:
  *      A_UINT8 data[]; <-- length in byte given by field data_len.
  * This data array contains OEM data, the payload begins with a field to tell the HOST regarding the kind of the OEM data.
+ *      A_UINT8 file_name[]; <-- Name of the file to which HOST needs to write this OEM specifc data.
  */
 } wmi_oem_data_event_fixed_param;
 
