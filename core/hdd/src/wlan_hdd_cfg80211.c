@@ -585,7 +585,7 @@ static const struct ieee80211_txrx_stypes
 static const struct ieee80211_iface_limit
 	wlan_hdd_sta_iface_limit[] = {
 	{
-		.max = 3,       /* p2p0 is a STA as well */
+		.max = 2,
 		.types = BIT(NL80211_IFTYPE_STATION),
 	},
 };
@@ -594,7 +594,7 @@ static const struct ieee80211_iface_limit
 static const struct ieee80211_iface_limit
 	wlan_hdd_ap_iface_limit[] = {
 	{
-		.max = (QDF_MAX_NO_OF_SAP_MODE + SAP_MAX_OBSS_STA_CNT),
+		.max = (QDF_MAX_NO_OF_SAP_MODE),
 		.types = BIT(NL80211_IFTYPE_AP),
 	},
 };
@@ -612,13 +612,11 @@ static const struct ieee80211_iface_limit
 	},
 };
 
+/* STA + AP combination */
 static const struct ieee80211_iface_limit
 	wlan_hdd_sta_ap_iface_limit[] = {
 	{
-		/* We need 1 extra STA interface for OBSS scan when SAP starts
-		 * with HT40 in STA+SAP concurrency mode
-		 */
-		.max = (1 + SAP_MAX_OBSS_STA_CNT),
+		.max = 1,
 		.types = BIT(NL80211_IFTYPE_STATION),
 	},
 	{
@@ -627,12 +625,11 @@ static const struct ieee80211_iface_limit
 	},
 };
 
-/* STA + P2P combination */
+/* STA + P2P + P2P combination */
 static const struct ieee80211_iface_limit
 	wlan_hdd_sta_p2p_iface_limit[] = {
 	{
-		/* One reserved for dedicated P2PDEV usage */
-		.max = 2,
+		.max = 1,
 		.types = BIT(NL80211_IFTYPE_STATION)
 	},
 	{
@@ -644,32 +641,26 @@ static const struct ieee80211_iface_limit
 	},
 };
 
-/* STA + AP + P2PGO combination */
+/* STA + AP + P2P combination */
 static const struct ieee80211_iface_limit
-wlan_hdd_sta_ap_p2pgo_iface_limit[] = {
-	/* Support for AP+P2PGO interfaces */
+wlan_hdd_sta_ap_p2p_iface_limit[] = {
 	{
-	   .max = 2,
+	   .max = 1,
 	   .types = BIT(NL80211_IFTYPE_STATION)
 	},
 	{
 	   .max = 1,
-	   .types = BIT(NL80211_IFTYPE_P2P_GO)
+	   .types = BIT(NL80211_IFTYPE_P2P_GO) | BIT(NL80211_IFTYPE_P2P_CLIENT)
 	},
 	{
 	   .max = 1,
 	   .types = BIT(NL80211_IFTYPE_AP)
-	}
+	},
 };
 
 /* SAP + P2P combination */
 static const struct ieee80211_iface_limit
 wlan_hdd_sap_p2p_iface_limit[] = {
-	{
-	   /* 1 dedicated for p2p0 which is a STA type */
-	   .max = 1,
-	   .types = BIT(NL80211_IFTYPE_STATION)
-	},
 	{
 	   /* The p2p interface in SAP+P2P can be GO/CLI.
 	    * The p2p connection can be formed on p2p0 or p2p-p2p0-x.
@@ -688,11 +679,6 @@ wlan_hdd_sap_p2p_iface_limit[] = {
 static const struct ieee80211_iface_limit
 wlan_hdd_p2p_p2p_iface_limit[] = {
 	{
-	   /* 1 dedicated for p2p0 which is a STA type */
-	   .max = 1,
-	   .types = BIT(NL80211_IFTYPE_STATION)
-	},
-	{
 	   /* The p2p interface in P2P+P2P can be GO/CLI.
 	    * For P2P+P2P, the new interfaces are formed on p2p-p2p0-x.
 	    */
@@ -709,20 +695,50 @@ static const struct ieee80211_iface_limit
 	},
 };
 
+/* STA + NAN disc combination */
+static const struct ieee80211_iface_limit
+	wlan_hdd_sta_nan_iface_limit[] = {
+	{
+		/* STA */
+		.max = 1,
+		.types = BIT(NL80211_IFTYPE_STATION)
+	},
+	{
+		/* NAN */
+		.max = 1,
+		.types = BIT(NL80211_IFTYPE_NAN),
+	},
+};
+
+/* SAP + NAN disc combination */
+static const struct ieee80211_iface_limit
+	wlan_hdd_sap_nan_iface_limit[] = {
+	{
+		/* SAP */
+		.max = 1,
+		.types = BIT(NL80211_IFTYPE_AP)
+	},
+	{
+		/* NAN */
+		.max = 1,
+		.types = BIT(NL80211_IFTYPE_NAN),
+	},
+};
+
 static struct ieee80211_iface_combination
 	wlan_hdd_iface_combination[] = {
 	/* STA */
 	{
 		.limits = wlan_hdd_sta_iface_limit,
 		.num_different_channels = 2,
-		.max_interfaces = 3,
+		.max_interfaces = 2,
 		.n_limits = ARRAY_SIZE(wlan_hdd_sta_iface_limit),
 	},
 	/* AP */
 	{
 		.limits = wlan_hdd_ap_iface_limit,
 		.num_different_channels = 2,
-		.max_interfaces = (SAP_MAX_OBSS_STA_CNT + QDF_MAX_NO_OF_SAP_MODE),
+		.max_interfaces = (QDF_MAX_NO_OF_SAP_MODE),
 		.n_limits = ARRAY_SIZE(wlan_hdd_ap_iface_limit),
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)) || \
 	defined(CFG80211_BEACON_INTERVAL_BACKPORT)
@@ -740,7 +756,7 @@ static struct ieee80211_iface_combination
 	{
 		.limits = wlan_hdd_sta_ap_iface_limit,
 		.num_different_channels = 2,
-		.max_interfaces = (1 + SAP_MAX_OBSS_STA_CNT + QDF_MAX_NO_OF_SAP_MODE),
+		.max_interfaces = (1 + QDF_MAX_NO_OF_SAP_MODE),
 		.n_limits = ARRAY_SIZE(wlan_hdd_sta_ap_iface_limit),
 		.beacon_int_infra_match = true,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)) || \
@@ -748,33 +764,31 @@ static struct ieee80211_iface_combination
 		.beacon_int_min_gcd = 1,
 #endif
 	},
-	/* STA + P2P */
+	/* STA + P2P + P2P */
 	{
 		.limits = wlan_hdd_sta_p2p_iface_limit,
 		.num_different_channels = 2,
-		/* one interface reserved for P2PDEV dedicated usage */
-		.max_interfaces = 4,
+		.max_interfaces = 3,
 		.n_limits = ARRAY_SIZE(wlan_hdd_sta_p2p_iface_limit),
 		.beacon_int_infra_match = true,
 	},
-	/* STA + P2P GO + SAP */
+	/* STA + P2P + SAP */
 	{
-		.limits = wlan_hdd_sta_ap_p2pgo_iface_limit,
+		.limits = wlan_hdd_sta_ap_p2p_iface_limit,
 		/* we can allow 3 channels for three different persona
 		 * but due to firmware limitation, allow max 2 concrnt channels.
 		 */
 		.num_different_channels = 2,
-		/* one interface reserved for P2PDEV dedicated usage */
-		.max_interfaces = 4,
-		.n_limits = ARRAY_SIZE(wlan_hdd_sta_ap_p2pgo_iface_limit),
+		.max_interfaces = 3,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sta_ap_p2p_iface_limit),
 		.beacon_int_infra_match = true,
 	},
 	/* SAP + P2P */
 	{
 		.limits = wlan_hdd_sap_p2p_iface_limit,
 		.num_different_channels = 2,
-		/* 1-p2p0 + 1-SAP + 1-P2P (on p2p0 or p2p-p2p0-x) */
-		.max_interfaces = 3,
+		/* 1-SAP + 1-P2P */
+		.max_interfaces = 2,
 		.n_limits = ARRAY_SIZE(wlan_hdd_sap_p2p_iface_limit),
 		.beacon_int_infra_match = true,
 	},
@@ -782,8 +796,8 @@ static struct ieee80211_iface_combination
 	{
 		.limits = wlan_hdd_p2p_p2p_iface_limit,
 		.num_different_channels = 2,
-		/* 1-p2p0 + 2-P2P (on p2p-p2p0-x) */
-		.max_interfaces = 3,
+		/* 2-P2P */
+		.max_interfaces = 2,
 		.n_limits = ARRAY_SIZE(wlan_hdd_p2p_p2p_iface_limit),
 		.beacon_int_infra_match = true,
 	},
@@ -793,6 +807,21 @@ static struct ieee80211_iface_combination
 		.max_interfaces = 3,
 		.num_different_channels = 2,
 		.n_limits = ARRAY_SIZE(wlan_hdd_mon_iface_limit),
+	},
+	/* NAN + STA */
+	{
+		.limits = wlan_hdd_sta_nan_iface_limit,
+		.max_interfaces = 2,
+		.num_different_channels = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sta_nan_iface_limit),
+	},
+	/* NAN + SAP */
+	{
+		.limits = wlan_hdd_sap_nan_iface_limit,
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.n_limits = ARRAY_SIZE(wlan_hdd_sap_nan_iface_limit),
+		.beacon_int_infra_match = true,
 	},
 };
 
