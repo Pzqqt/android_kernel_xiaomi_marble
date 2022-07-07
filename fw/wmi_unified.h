@@ -6923,10 +6923,10 @@ typedef struct {
     A_UINT32 pdev_id;
     /** reg domain code */
     A_UINT32 reg_domain;
-    A_UINT32 reg_domain_2G;
-    A_UINT32 reg_domain_5G;
-    A_UINT32 conformance_test_limit_2G;
-    A_UINT32 conformance_test_limit_5G;
+    A_UINT32 reg_domain_2G; /* fulfil 2G domain ID */
+    A_UINT32 reg_domain_5G; /* fulfil 5G domain ID */
+    A_UINT32 conformance_test_limit_2G; /* 2G whole band CTL index */
+    A_UINT32 conformance_test_limit_5G; /* 5G whole band CTL index */
     A_UINT32 dfs_domain;
 
     /**
@@ -6957,6 +6957,28 @@ typedef struct {
     A_UINT32 conformance_test_limit_6G_subband_UNII6;
     A_UINT32 conformance_test_limit_6G_subband_UNII7;
     A_UINT32 conformance_test_limit_6G_subband_UNII8;
+
+    /**
+     * In 6G sub-band CTL, fulfil 6G domain id and whole band CTL index firstly.
+     * Unlike 5G sub-band CTL index fields, role ap and role client have
+     * different indices.
+     * Each role has 3 sub-band indices due to different power_mode type.
+     * Below 3 represent for power_mode types: 0-LPI, 1-SP, 2-VLP
+     * Below 2 represent for client_max: 0-default, 1-subordinate
+     */
+
+    A_UINT32 reg_domain_6G;  /* fulfil 6G domain id */
+    A_UINT32 conformance_test_limit_6G; /* 6G whole band CTL index */
+
+    A_UINT32 conformance_test_limit_6G_subband_UNII5_ap[3];
+    A_UINT32 conformance_test_limit_6G_subband_UNII6_ap[3];
+    A_UINT32 conformance_test_limit_6G_subband_UNII7_ap[3];
+    A_UINT32 conformance_test_limit_6G_subband_UNII8_ap[3];
+
+    A_UINT32 conformance_test_limit_6G_subband_UNII5_client[3][2];
+    A_UINT32 conformance_test_limit_6G_subband_UNII6_client[3][2];
+    A_UINT32 conformance_test_limit_6G_subband_UNII7_client[3][2];
+    A_UINT32 conformance_test_limit_6G_subband_UNII8_client[3][2];
 } wmi_pdev_set_regdomain_cmd_fixed_param;
 
 typedef struct {
