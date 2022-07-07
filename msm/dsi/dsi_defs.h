@@ -655,7 +655,7 @@ struct dsi_display_mode_priv_info {
 	struct msm_ratio pclk_scale;
 	struct msm_roi_caps roi_caps;
 	bool widebus_support;
-	u32 allowed_mode_switch;
+	u64 allowed_mode_switch;
 	bool disable_rsc_solver;
 };
 
