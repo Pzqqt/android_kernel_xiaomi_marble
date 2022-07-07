@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <media/v4l2_vidc_extensions.h>
@@ -31,6 +32,7 @@ static const u32 msm_venc_output_set_prop[] = {
 	HFI_PROP_CROP_OFFSETS,
 	HFI_PROP_BUFFER_HOST_MAX_COUNT,
 	HFI_PROP_CSC,
+	HFI_PROP_DISABLE_VUI_TIMING_INFO,
 };
 
 static const u32 msm_venc_input_subscribe_for_properties[] = {
@@ -421,6 +423,32 @@ static int msm_venc_set_csc(struct msm_vidc_inst* inst,
 	return 0;
 }
 
+static int msm_venc_set_disable_vui_timing_info(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 enable = 0;
+
+	if (port != OUTPUT_PORT) {
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	enable = inst->capabilities->cap[DISABLE_VUI_TIMING_INFO].value;
+	i_vpr_h(inst, "%s: DISABLE_VUI_TIMING_INFO: %u\n", __func__, enable);
+	rc = venus_hfi_session_property(inst,
+		HFI_PROP_DISABLE_VUI_TIMING_INFO,
+		HFI_HOST_FLAGS_NONE,
+		get_hfi_port(inst, port),
+		HFI_PAYLOAD_U32,
+		&enable,
+		sizeof(u32));
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
 static int msm_venc_set_quality_mode(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -495,6 +523,7 @@ static int msm_venc_set_output_properties(struct msm_vidc_inst *inst)
 		{HFI_PROP_CROP_OFFSETS,               msm_venc_set_crop_offsets            },
 		{HFI_PROP_BUFFER_HOST_MAX_COUNT,      msm_venc_set_host_max_buf_count      },
 		{HFI_PROP_CSC,                        msm_venc_set_csc                     },
+		{HFI_PROP_DISABLE_VUI_TIMING_INFO,    msm_venc_set_disable_vui_timing_info },
 	};
 
 	if (!inst) {

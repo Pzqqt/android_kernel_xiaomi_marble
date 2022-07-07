@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _MSM_VIDC_INTERNAL_H_
@@ -363,6 +364,7 @@ enum msm_vidc_inst_capability_type {
 	SLICE_INTERFACE,
 	HEADER_MODE,
 	PREPEND_SPSPPS_TO_IDR,
+	DISABLE_VUI_TIMING_INFO,
 	META_SEQ_HDR_NAL,
 	WITHOUT_STARTCODE,
 	NAL_LENGTH_FIELD,
