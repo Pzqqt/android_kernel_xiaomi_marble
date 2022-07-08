@@ -3805,11 +3805,18 @@ uint32_t hdd_get_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 		return 0;
 	}
 
-	if (!keymgmt || (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_NONE |
-		       1 << WLAN_CRYPTO_KEY_MGMT_SAE |
-		       1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B |
-		       1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192 |
-		       1 << WLAN_CRYPTO_KEY_MGMT_OWE))) {
+	/*
+	 * 6 GHz SAP is allowed in open mode only if the
+	 * check_6ghz_security ini is disabled.
+	 */
+	if (!cfg_get(psoc, CFG_CHECK_6GHZ_SECURITY) &&
+	    (!keymgmt || (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_NONE))))
+		capable |= CONN_6GHZ_FLAG_SECURITY_ALLOWED;
+
+	if ((keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE |
+			1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B |
+			1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192 |
+			1 << WLAN_CRYPTO_KEY_MGMT_OWE))) {
 		capable |= CONN_6GHZ_FLAG_SECURITY_ALLOWED;
 	}
 	capable |= CONN_6GHZ_FLAG_VALID;

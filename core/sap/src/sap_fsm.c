@@ -2813,6 +2813,9 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 		qdf_status = sap_validate_dfs_nol(sap_ctx, mac_ctx);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			return qdf_status;
+	} else if (!policy_mgr_get_ap_6ghz_capable(mac_ctx->psoc,
+						   sap_ctx->sessionId, NULL)) {
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*
