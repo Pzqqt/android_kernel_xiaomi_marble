@@ -1,5 +1,5 @@
 /* Copyright (c) 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -76,7 +76,7 @@ static void rmnet_ll_ipa_rx(void *arg, void *rx_data)
 	}
 
 	if (unlikely(arg != (void *)(uintptr_t)(IPA_RMNET_LL_RECEIVE))) {
-		pr_err("%s: invalid arg %u\n", __func__, (uintptr_t)arg);
+		pr_err("%s: invalid arg %lu\n", __func__, (uintptr_t)arg);
 		return;
 	}
 
