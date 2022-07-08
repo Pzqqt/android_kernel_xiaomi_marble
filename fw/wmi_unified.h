@@ -19656,12 +19656,52 @@ typedef struct {
      */
 } WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param;
 
+typedef union {
+    /* the bytes within these IP addresses are arranged in network byte order */
+    A_UINT8 ipv4_addr[4];
+    A_UINT8 ipv6_addr[16];
+} WMI_IP_ADDR;
+
+#define WMI_COAP_IPTV6_BIT_POS                    0
+#define WMI_COAP_ADDR_TYPE_BIT_POS                1
+
+#define WMI_COAP_IPV6_SET(param, value) \
+    WMI_SET_BITS(param, WMI_COAP_IPTV6_BIT_POS, 1, value)
+
+#define WMI_COAP_IPV6_GET(param)     \
+    WMI_GET_BITS(param, WMI_COAP_IPTV6_BIT_POS, 1)
+
+#define WMI_COAP_ADDR_TYPE_SET(param, value) \
+    WMI_SET_BITS(param, WMI_COAP_ADDR_TYPE_BIT_POS, 1, value)
+
+#define WMI_COAP_ADDR_TYPE_GET(param)     \
+    WMI_GET_BITS(param, WMI_COAP_ADDR_TYPE_BIT_POS, 1)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_PATTERN_CMD_fixed_param */
     A_UINT32 vdev_id;
     A_UINT32 pattern_id;
-    A_UINT32 cache_timeout; /* the cached packet expire timeout in ms */
-    A_UINT32 dest_udp_port; /* dest UDP port to match recived CoAP messsage */
+
+    /* pattern_type:
+     * Indicates the type of pattern to be enabled
+     * Bit 0:    Indicate pattern IP ADDR is IPV6 or IPV4
+     * Bit 1:    Indicate pattern ADDR TYPE is BC or UC/MC
+     * Bits 31:2 Reserved for future use
+     *
+     * Refer to WMI_COAP_IPV6_SET,GET and WMI_COAP_ADDR_TYPE_SET,GET macros
+     */
+    A_UINT32 pattern_type;
+
+    A_UINT32 timeout; /* the cached packet expire timeout in ms */
+
+    /* the dst ip address(uc/mc/bc), dst port to match CoAP message */
+    WMI_IP_ADDR match_udp_ip; /* network byte order */
+    A_UINT32 match_udp_port;
+
+    /* DUT ip address and port for CoAP replay message */
+    WMI_IP_ADDR udp_local_ip; /* network byte order */
+    A_UINT32 udp_local_port;
+
     A_UINT32 verify_offset; /* UDP payload offset to verify */
     A_UINT32 verify_len;    /* UDP payload length to verofy*/
     A_UINT32 coapmsg_len;   /* CoAP reply message length */
@@ -19683,9 +19723,24 @@ typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_WOW_COAP_ADD_KEEPALIVE_PATTERN_CMD_fixed_param */
     A_UINT32 vdev_id;
     A_UINT32 pattern_id;
-    A_UINT32 ipv4_addr;       /* vdev IPv4 address */
-    A_UINT32 remote_udp_port; /* remote UDP port to send keepalive broadcast CoAP message */
-    A_UINT32 timeout;         /* the period to send keepalive message in ms */
+
+    /* pattern_type:
+     * Indicates the type of pattern to be enabled
+     * Bit 0:    Indicate pattern IP ADDR is IPV6 or IPV4
+     * Bit 1:    Indicate pattern ADDR TYPE is BC or UC/MC
+     * Bits 31:2 Reserved for future use
+     *
+     * Refer to WMI_COAP_IPV6_SET,GET and WMI_COAP_ADDR_TYPE_SET,GET macros
+     */
+    A_UINT32 pattern_type;
+
+    /* ip address and port for CoAP send keepalive message */
+    WMI_IP_ADDR udp_local_ip; /* network byte order */
+    A_UINT32 udp_local_port;
+    WMI_IP_ADDR udp_remote_ip; /* network byte order */
+    A_UINT32 udp_remote_port;
+
+    A_UINT32 timeout;         /* the periorid to send keepalive message in ms */
     A_UINT32 coapmsg_len;     /* keeplive CoAP message length */
 /* The below TLV (tag length value) parameters follow this fixed_param TLV:
  *     A_UINT8 coapmsg[];  CoAP keepalive message,
@@ -19708,7 +19763,15 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_hdr; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_coap_tuple */
     A_UINT64 tsf;     /* host and firmware sync tsf */
-    A_UINT32 src_ip;
+    /* flag:
+     * Indicates the type of ip address
+     * Bit 0:    Indicate ip address is IPV6 or IPV4
+     * Bits 31:1 Reserved for future use
+     *
+     * Refer to WMI_COAP_IPV6_SET,GET macros
+     */
+    A_UINT32 flag;
+    WMI_IP_ADDR src_ip; /* network byte order */
     A_UINT32 payload_len;
 } wmi_coap_tuple;
 
