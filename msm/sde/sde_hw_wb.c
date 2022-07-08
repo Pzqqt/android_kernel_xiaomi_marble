@@ -276,9 +276,8 @@ static void sde_hw_wb_crop(struct sde_hw_wb *ctx, struct sde_hw_wb_cfg *wb, bool
 	struct sde_hw_blk_reg_map *c = &ctx->hw;
 	u32 crop_xy;
 
-	crop_xy = (wb->crop.y << 16) | wb->crop.x;
-
 	if (crop) {
+		crop_xy = (wb->crop.y << 16) | wb->crop.x;
 		SDE_REG_WRITE(c, WB_CROP_CTRL, 0x1);
 		SDE_REG_WRITE(c, WB_CROP_OFFSET, crop_xy);
 	} else {
