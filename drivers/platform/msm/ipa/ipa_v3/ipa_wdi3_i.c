@@ -1050,6 +1050,18 @@ int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 		holb_cfg.tmr_val = ipa3_ctx->ipa_wdi3_2g_holb_timeout;
 		IPADBG("Configuring HOLB TO on tx1 return = %d\n",
 			ipa3_cfg_ep_holb(ipa_ep_idx_tx1, &holb_cfg));
+	} else if (ipa3_ctx->is_dual_pine_config) {
+		/* dual pine case, 5g/2g will use its own tx pipe instead of tx1 */
+		memset(&holb_cfg, 0, sizeof(holb_cfg));
+		holb_cfg.en = IPA_HOLB_TMR_EN;
+		if (ep_tx->client == IPA_CLIENT_WLAN4_CONS) {
+			holb_cfg.tmr_val = ipa3_ctx->ipa_wdi3_2g_holb_timeout;
+		} else {
+			holb_cfg.tmr_val = ipa3_ctx->ipa_wdi3_5g_holb_timeout;
+		}
+		result = ipa3_cfg_ep_holb(ipa_ep_idx_tx, &holb_cfg);
+		IPADBG("Configured HOLB for clnt=%d, timer=%d, return = %d\n",
+				ipa_ep_idx_tx, holb_cfg.tmr_val, result);
 	}
 
 	/* start gsi tx channel */
@@ -1083,14 +1095,17 @@ int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 	}
 	/* start uC gsi dbg stats monitor */
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5 && ipa3_ctx->ipa_hw_type != IPA_HW_v5_2) {
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[0].ch_id
-			= ep_rx->gsi_chan_hdl;
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[0].dir
-			= DIR_PRODUCER;
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[1].ch_id
-			= ep_tx->gsi_chan_hdl;
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[1].dir
-			= DIR_CONSUMER;
+		if (ep_tx->client == IPA_CLIENT_WLAN2_CONS &&
+			ep_rx->client == IPA_CLIENT_WLAN2_PROD) {
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[0].ch_id = ep_rx->gsi_chan_hdl;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[0].dir = DIR_PRODUCER;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[1].ch_id = ep_tx->gsi_chan_hdl;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[1].dir = DIR_CONSUMER;
+		}
 		if (ipa_ep_idx_tx1 >= 0) {
 			ipa3_ctx->gsi_info[
 				IPA_HW_PROTOCOL_WDI3].ch_id_info[2].ch_id
@@ -1098,6 +1113,18 @@ int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 			ipa3_ctx->gsi_info[
 				IPA_HW_PROTOCOL_WDI3].ch_id_info[2].dir
 				= DIR_CONSUMER;
+		}
+		else if (ep_tx->client == IPA_CLIENT_WLAN4_CONS &&
+			ep_rx->client == IPA_CLIENT_WLAN3_PROD) {
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[3].ch_id = ep_rx->gsi_chan_hdl;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[3].dir = DIR_PRODUCER;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[2].ch_id = ep_tx->gsi_chan_hdl;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info
+				[2].dir = DIR_CONSUMER;
+
 		}
 		ipa3_uc_debug_stats_alloc(
 			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3]);
@@ -1130,6 +1157,8 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 	u32 source_pipe_bitmask = 0;
 	u32 source_pipe_reg_idx = 0;
 	bool disable_force_clear = false;
+	u16 rx_client = 0;
+	u16 tx_client = 0;
 	struct ipahal_ep_cfg_ctrl_scnd ep_ctrl_scnd = { 0 };
 
 	/* wdi3 only support over gsi */
@@ -1140,6 +1169,8 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 	}
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	tx_client = ipa3_get_client_mapping(ipa_ep_idx_tx);
+	rx_client = ipa3_get_client_mapping(ipa_ep_idx_rx);
 
 	/* disable tx data path */
 	result = ipa3_disable_data_path(ipa_ep_idx_tx);
@@ -1228,14 +1259,19 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 	}
 	/* stop uC gsi dbg stats monitor */
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5 && ipa3_ctx->ipa_hw_type != IPA_HW_v5_2) {
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[0].ch_id
-			= 0xff;
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[0].dir
-			= DIR_PRODUCER;
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[1].ch_id
-			= 0xff;
-		ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[1].dir
-			= DIR_CONSUMER;
+		if (tx_client == IPA_CLIENT_WLAN2_CONS &&
+			rx_client == IPA_CLIENT_WLAN2_PROD) {
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[0].ch_id
+				= 0xff;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[0].dir
+				= DIR_PRODUCER;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[1].ch_id
+				= 0xff;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[1].dir
+				= DIR_CONSUMER;
+			ipa3_uc_debug_stats_alloc(
+				ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3]);
+		}
 		if (ipa_ep_idx_tx1 >= 0) {
 			ipa3_ctx->gsi_info[
 				IPA_HW_PROTOCOL_WDI3].ch_id_info[2].ch_id
@@ -1244,8 +1280,19 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 				IPA_HW_PROTOCOL_WDI3].ch_id_info[2].dir
 				= DIR_CONSUMER;
 		}
-		ipa3_uc_debug_stats_alloc(
-			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3]);
+		else if (tx_client == IPA_CLIENT_WLAN4_CONS &&
+			rx_client == IPA_CLIENT_WLAN3_PROD) {
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[3].ch_id
+				= 0xff;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[3].dir
+				= DIR_PRODUCER;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[2].ch_id
+				= 0xff;
+			ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3].ch_id_info[2].dir
+				= DIR_CONSUMER;
+			ipa3_uc_debug_stats_alloc(
+				ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI3]);
+		}
 	}
 	if (disable_force_clear)
 		ipa3_disable_force_clear(ipa_ep_idx_rx);
