@@ -1897,9 +1897,10 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	gro_bit_set = cfg_get(psoc, CFG_DP_GRO);
 	if (gro_bit_set & DP_GRO_ENABLE_BIT_SET) {
 		wlan_cfg_ctx->gro_enabled = true;
-		if (gro_bit_set & DP_FORCE_USE_GRO_BIT_SET)
-			wlan_cfg_ctx->force_gro_enabled = true;
+		if (gro_bit_set & DP_TC_BASED_DYNAMIC_GRO)
+			wlan_cfg_ctx->tc_based_dynamic_gro = true;
 	}
+	wlan_cfg_ctx->tc_ingress_prio = cfg_get(psoc, CFG_DP_TC_INGRESS_PRIO);
 	wlan_cfg_ctx->ol_tx_csum_enabled = cfg_get(psoc, CFG_DP_OL_TX_CSUM);
 	wlan_cfg_ctx->ol_rx_csum_enabled = cfg_get(psoc, CFG_DP_OL_RX_CSUM);
 	wlan_cfg_ctx->rawmode_enabled = cfg_get(psoc, CFG_DP_RAWMODE);
@@ -2019,6 +2020,10 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_cfg_ctx->num_rxdma_dst_rings_per_pdev = NUM_RXDMA_RINGS_PER_PDEV;
 	wlan_cfg_ctx->num_rxdma_status_rings_per_pdev =
 					NUM_RXDMA_RINGS_PER_PDEV;
+	wlan_cfg_ctx->mpdu_retry_threshold_1 =
+			cfg_get(psoc, CFG_DP_MPDU_RETRY_THRESHOLD_1);
+	wlan_cfg_ctx->mpdu_retry_threshold_2 =
+			cfg_get(psoc, CFG_DP_MPDU_RETRY_THRESHOLD_2);
 
 	return wlan_cfg_ctx;
 }

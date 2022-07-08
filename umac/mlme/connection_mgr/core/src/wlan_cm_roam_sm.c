@@ -28,6 +28,7 @@
 #include "wlan_mlo_mgr_roam.h"
 #endif
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void cm_state_roaming_entry(void *ctx)
 {
 	struct cnx_mgr *cm_ctx = ctx;
@@ -166,6 +167,7 @@ static bool cm_handle_connect_disconnect_in_roam(struct cnx_mgr *cm_ctx,
 
 	return true;
 }
+#endif
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 void cm_subst_preauth_entry(void *ctx)

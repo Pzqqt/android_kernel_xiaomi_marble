@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -45,6 +45,7 @@ static void cm_fill_roam_vdev_crypto_params(struct cnx_mgr *cm_ctx,
 }
 #endif /* CONN_MGR_ADV_FEATURE */
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 					 struct cm_connect_req *connect_req,
 					 struct cm_req **roam_req)
@@ -55,6 +56,10 @@ QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 	struct wlan_ssid ssid;
 	struct cm_req *cm_req, *req_ptr;
 	qdf_freq_t freq = 0;
+
+	/* Handle only if roam is enabled */
+	if (!cm_is_roam_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)))
+		return QDF_STATUS_E_NOSUPPORT;
 
 	cm_req = qdf_container_of(connect_req, struct cm_req, connect_req);
 	req = &connect_req->req;
@@ -137,6 +142,58 @@ QDF_STATUS cm_add_roam_req_to_list(struct cnx_mgr *cm_ctx,
 	return status;
 }
 
+QDF_STATUS
+cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
+				      wlan_cm_id cm_id,
+				      struct wlan_cm_connect_resp *resp)
+{
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req;
+	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
+	struct wlan_cm_roam_req *req;
+
+	if (prefix != ROAM_REQ_PREFIX)
+		return QDF_STATUS_E_INVAL;
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+
+		if (cm_req->cm_id == cm_id) {
+			req = &cm_req->roam_req.req;
+			resp->freq = req->chan_freq;
+			wlan_vdev_mlme_get_ssid(cm_ctx->vdev, resp->ssid.ssid,
+						&resp->ssid.length);
+
+			if (!qdf_is_macaddr_zero(&req->bssid))
+				qdf_copy_macaddr(&resp->bssid, &req->bssid);
+
+			cm_req_lock_release(cm_ctx);
+			return QDF_STATUS_SUCCESS;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+	cm_req_lock_release(cm_ctx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+bool cm_is_roam_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	if (cm_roam_offload_enabled(psoc) || cm_is_host_roam_enabled())
+		return true;
+
+	mlme_rl_debug("All roam mode (offload %d, host %d) are disabled",
+		      cm_roam_offload_enabled(psoc), cm_is_host_roam_enabled());
+
+	return false;
+}
+#endif
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 bool cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_vdev_reassoc_req *req)
@@ -179,46 +236,6 @@ bool cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 #endif
-QDF_STATUS
-cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
-				      wlan_cm_id cm_id,
-				      struct wlan_cm_connect_resp *resp)
-{
-	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
-	struct cm_req *cm_req;
-	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
-	struct wlan_cm_roam_req *req;
-
-	if (prefix != ROAM_REQ_PREFIX)
-		return QDF_STATUS_E_INVAL;
-
-	cm_req_lock_acquire(cm_ctx);
-	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
-	while (cur_node) {
-		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
-		cm_req = qdf_container_of(cur_node, struct cm_req, node);
-
-		if (cm_req->cm_id == cm_id) {
-			req = &cm_req->roam_req.req;
-			resp->freq = req->chan_freq;
-			wlan_vdev_mlme_get_ssid(cm_ctx->vdev, resp->ssid.ssid,
-						&resp->ssid.length);
-
-			if (!qdf_is_macaddr_zero(&req->bssid))
-				qdf_copy_macaddr(&resp->bssid, &req->bssid);
-
-			cm_req_lock_release(cm_ctx);
-			return QDF_STATUS_SUCCESS;
-		}
-
-		cur_node = next_node;
-		next_node = NULL;
-	}
-	cm_req_lock_release(cm_ctx);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 struct cm_roam_req *cm_get_first_roam_command(struct wlan_objmgr_vdev *vdev)
 {

@@ -7009,6 +7009,12 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		}
 	}
 
+	/* Initialize MPDU success count with retry update thresholds */
+	peer->mpdu_retry_threshold_1 =
+		soc->wlan_cfg_ctx->mpdu_retry_threshold_1;
+	peer->mpdu_retry_threshold_2 =
+		soc->wlan_cfg_ctx->mpdu_retry_threshold_2;
+
 	/*
 	 * Allocate peer extended stats context. Fall through in
 	 * case of failure as its not an implicit requirement to have
@@ -11646,8 +11652,11 @@ static uint32_t dp_get_cfg(struct cdp_soc_t *soc, enum cdp_dp_cfg cfg)
 	case cfg_dp_gro_enable:
 		value = dpsoc->wlan_cfg_ctx->gro_enabled;
 		break;
-	case cfg_dp_force_gro_enable:
-		value = dpsoc->wlan_cfg_ctx->force_gro_enabled;
+	case cfg_dp_tc_based_dyn_gro_enable:
+		value = dpsoc->wlan_cfg_ctx->tc_based_dynamic_gro;
+		break;
+	case cfg_dp_tc_ingress_prio:
+		value = dpsoc->wlan_cfg_ctx->tc_ingress_prio;
 		break;
 	case cfg_dp_sg_enable:
 		value = dpsoc->wlan_cfg_ctx->sg_enabled;

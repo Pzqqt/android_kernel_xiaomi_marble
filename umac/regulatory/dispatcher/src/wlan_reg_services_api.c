@@ -637,6 +637,11 @@ bool wlan_reg_is_etsi(uint8_t *country)
 	return reg_is_etsi_alpha2(country);
 }
 
+bool wlan_reg_ctry_support_vlp(uint8_t *country)
+{
+	return reg_ctry_support_vlp(country);
+}
+
 void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					    void *cbk, void *arg)
 {

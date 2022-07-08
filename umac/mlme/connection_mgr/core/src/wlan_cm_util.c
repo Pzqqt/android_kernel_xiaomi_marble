@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -526,8 +527,7 @@ cm_handle_disconnect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 	cm_notify_disconnect_complete(cm_ctx, &resp);
 }
 
-static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
-					     wlan_cm_id cm_id)
+void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
 	struct wlan_serialization_queued_cmd_info cmd_info;
 	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);

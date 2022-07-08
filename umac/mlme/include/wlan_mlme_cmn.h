@@ -210,6 +210,12 @@ struct mlme_twt_ops {
 	QDF_STATUS (*mlme_twt_notify_complete_cb)(
 			struct wlan_objmgr_psoc *psoc,
 			struct twt_notify_event_param *event);
+
+	QDF_STATUS (*mlme_twt_vdev_create_cb)(
+			struct wlan_objmgr_vdev *vdev);
+
+	QDF_STATUS (*mlme_twt_vdev_destroy_cb)(
+			struct wlan_objmgr_vdev *vdev);
 };
 
 /**
@@ -1033,6 +1039,23 @@ QDF_STATUS
 mlme_twt_osif_notify_complete_ind(struct wlan_objmgr_psoc *psoc,
 				  struct twt_notify_event_param *event);
 
+/**
+ * mlme_twt_vdev_create_notification() - vdev create notification to osif
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_vdev_create_notification(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_twt_vdev_destroy_notification() - vdev destroy notification to osif
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_twt_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev);
 #else
 static inline QDF_STATUS
 mlme_twt_osif_enable_complete_ind(struct wlan_objmgr_psoc *psoc,
@@ -1097,6 +1120,18 @@ mlme_twt_osif_nudge_complete_ind(struct wlan_objmgr_psoc *psoc,
 static inline QDF_STATUS
 mlme_twt_osif_notify_complete_ind(struct wlan_objmgr_psoc *psoc,
 				  struct twt_notify_event_param *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_vdev_create_notification(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+mlme_twt_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }

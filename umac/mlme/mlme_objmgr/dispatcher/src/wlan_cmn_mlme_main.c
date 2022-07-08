@@ -775,5 +775,27 @@ mlme_twt_osif_notify_complete_ind(struct wlan_objmgr_psoc *psoc,
 	return ret;
 }
 
+QDF_STATUS
+mlme_twt_vdev_create_notification(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_twt_ops && glbl_twt_ops->mlme_twt_vdev_create_cb)
+		ret = glbl_twt_ops->mlme_twt_vdev_create_cb(vdev);
+
+	return ret;
+}
+
+QDF_STATUS
+mlme_twt_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_twt_ops && glbl_twt_ops->mlme_twt_vdev_destroy_cb)
+		ret = glbl_twt_ops->mlme_twt_vdev_destroy_cb(vdev);
+
+	return ret;
+}
+
 #endif
 

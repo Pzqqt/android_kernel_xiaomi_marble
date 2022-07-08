@@ -378,6 +378,7 @@ struct wlan_objmgr_vdev_objmgr {
  * @obj_state:      VDEV object state
  * @vdev_lock:      VDEV lock
  * @mlo_dev_ctx:    MLO device context
+ * @twt_work:	    TWT work
  */
 struct wlan_objmgr_vdev {
 	qdf_list_node_t vdev_node;
@@ -390,6 +391,9 @@ struct wlan_objmgr_vdev {
 	qdf_spinlock_t vdev_lock;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct wlan_mlo_dev_context *mlo_dev_ctx;
+#endif
+#ifdef WLAN_SUPPORT_TWT
+	qdf_work_t twt_work;
 #endif
 };
 

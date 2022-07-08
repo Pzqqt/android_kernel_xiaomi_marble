@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +28,16 @@
 #include "wlan_cm_sm.h"
 
 #ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * cm_is_host_roam_enabled() - Check if WLAN_FEATURE_HOST_ROAM is enabled
+ *
+ * Return: Return true if WLAN_FEATURE_HOST_ROAM is enabled
+ */
+static inline bool cm_is_host_roam_enabled(void)
+{
+	return true;
+}
+
 /**
  * cm_roam_bss_peer_create_rsp() - handle bss peer create response for roam
  * @vdev: vdev
@@ -288,6 +299,11 @@ QDF_STATUS cm_handle_reassoc_timer(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
 #endif /* WLAN_FEATURE_PREAUTH_ENABLE */
 #else /* WLAN_FEATURE_HOST_ROAM */
 
+static inline bool cm_is_host_roam_enabled(void)
+{
+	return false;
+}
+
 #ifdef WLAN_POLICY_MGR_ENABLE
 static inline
 void cm_reassoc_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev,
@@ -317,6 +333,7 @@ QDF_STATUS cm_roam_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 }
 #endif /* WLAN_FEATURE_HOST_ROAM */
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * cm_check_and_prepare_roam_req() - Initiate roam request
  * @cm_ctx: connection manager context
@@ -364,6 +381,45 @@ QDF_STATUS
 cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 				      wlan_cm_id cm_id,
 				      struct wlan_cm_connect_resp *resp);
+
+/**
+ * cm_is_roam_enabled() - Check if host roam or roam offload is enabled.
+ * @psoc: psoc context
+ *
+ * Return: true if any of the roaming mode is enabled
+ */
+bool cm_is_roam_enabled(struct wlan_objmgr_psoc *psoc);
+#else
+static inline QDF_STATUS
+cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
+			      struct cm_connect_req *connect_req,
+			      struct cm_req **roam_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline void cm_free_roam_req_mem(struct cm_roam_req *roam_req) {}
+
+static inline QDF_STATUS
+cm_add_roam_req_to_list(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
+				      wlan_cm_id cm_id,
+				      struct wlan_cm_connect_resp *resp)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline bool cm_is_roam_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	mlme_rl_debug("Roaming is disabled");
+	return false;
+}
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**

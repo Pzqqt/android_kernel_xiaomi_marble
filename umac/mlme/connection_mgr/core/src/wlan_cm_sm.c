@@ -229,6 +229,7 @@ static void cm_state_connected_exit(void *ctx)
 {
 }
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static
 bool cm_handle_fw_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
@@ -284,14 +285,49 @@ bool cm_handle_fw_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
 
 	return event_handled;
 }
-#else
+#else /* WLAN_FEATURE_ROAM_OFFLOAD */
 static inline
 bool cm_handle_fw_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
 				       uint16_t data_len, void *data)
 {
 	return false;
 }
-#endif
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+static bool
+cm_handle_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
+			       uint16_t data_len, void *data)
+{
+	bool event_handled = true;
+
+	/* Handle roam event only if roam is enabled */
+	if (!cm_is_roam_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)))
+		return false;
+
+	switch (event) {
+	case WLAN_CM_SM_EV_ROAM_REQ:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
+		cm_sm_deliver_event_sync(cm_ctx,
+					 WLAN_CM_SM_EV_ROAM_REQ,
+					 data_len, data);
+		break;
+	default:
+		event_handled =
+			cm_handle_fw_roam_connected_event(cm_ctx, event,
+							  data_len, data);
+		break;
+	}
+
+	return event_handled;
+}
+#else /* WLAN_FEATURE_HOST_ROAM || WLAN_FEATURE_ROAM_OFFLOAD */
+static inline
+bool cm_handle_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
+				    uint16_t data_len, void *data)
+{
+	return false;
+}
+#endif /* WLAN_FEATURE_HOST_ROAM || WLAN_FEATURE_ROAM_OFFLOAD */
 
 /**
  * cm_state_connected_event() - Connected State event handler for
@@ -311,12 +347,6 @@ static bool cm_state_connected_event(void *ctx, uint16_t event,
 	struct cm_req *roam_cm_req;
 
 	switch (event) {
-	case WLAN_CM_SM_EV_ROAM_REQ:
-		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
-		cm_sm_deliver_event_sync(cm_ctx,
-					 WLAN_CM_SM_EV_ROAM_REQ,
-					 data_len, data);
-		break;
 	case WLAN_CM_SM_EV_CONNECT_REQ:
 		status = cm_check_and_prepare_roam_req(cm_ctx, data,
 						       &roam_cm_req);
@@ -360,8 +390,8 @@ static bool cm_state_connected_event(void *ctx, uint16_t event,
 		break;
 	default:
 		event_handled =
-			cm_handle_fw_roam_connected_event(cm_ctx, event,
-							  data_len, data);
+			cm_handle_roam_connected_event(cm_ctx, event,
+						       data_len, data);
 		break;
 	}
 	return event_handled;

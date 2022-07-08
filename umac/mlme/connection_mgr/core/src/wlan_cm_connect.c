@@ -1728,11 +1728,22 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	QDF_STATUS status;
 	struct wlan_cm_connect_req *req;
 
-	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
-	if (!cm_req)
-		return QDF_STATUS_E_INVAL;
-
 	cm_ctx->active_cm_id = *cm_id;
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req) {
+		/*
+		 * Remove the command from serialization active queue, if
+		 * connect req was not found, to avoid active cmd timeout.
+		 * This can happen if a thread tried to flush the pending
+		 * connect request and while doing so, it removed the
+		 * CM pending request, but before it tried to remove pending
+		 * command from serialization, the command becomes active in
+		 * another thread.
+		 */
+		cm_remove_cmd_from_serialization(cm_ctx, *cm_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	cm_req->connect_req.connect_active_time =
 				qdf_mc_timer_get_system_time();
 	req = &cm_req->connect_req.req;
