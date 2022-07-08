@@ -1647,6 +1647,10 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "ROAM_STATS";
 	case WOW_REASON_RTT_11AZ:
 		return "WOW_REASON_RTT_11AZ";
+	case WOW_REASON_DELAYED_WAKEUP_HOST_CFG_TIMER_ELAPSED:
+		return "DELAYED_WAKEUP_TIMER_ELAPSED";
+	case WOW_REASON_DELAYED_WAKEUP_DATA_STORE_LIST_FULL:
+		return "DELAYED_WAKEUP_DATA_STORE_LIST_FULL";
 	default:
 		return "unknown";
 	}
@@ -2597,6 +2601,8 @@ static int wma_wake_event_packet(
 	case WOW_REASON_RA_MATCH:
 	case WOW_REASON_RECV_MAGIC_PATTERN:
 	case WOW_REASON_PACKET_FILTER_MATCH:
+	case WOW_REASON_DELAYED_WAKEUP_HOST_CFG_TIMER_ELAPSED:
+	case WOW_REASON_DELAYED_WAKEUP_DATA_STORE_LIST_FULL:
 		wma_info("Wake event packet:");
 		qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 				   packet, packet_len);

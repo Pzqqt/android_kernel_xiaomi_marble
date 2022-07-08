@@ -270,6 +270,30 @@ bool ucfg_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     enum wlan_twt_commands cmd,
 				     enum wlan_twt_commands *pactive_cmd);
 
+/**
+ * ucfg_twt_set_work_params() - Set TWT work params
+ * @vdev: Vdev pointer
+ * @params: TWT params
+ * @twt_next_action: Set TWT next action to do before work schedule
+ *
+ * Return: None
+ */
+void ucfg_twt_set_work_params(
+		struct wlan_objmgr_vdev *vdev,
+		struct twt_add_dialog_complete_event_param *params,
+		uint32_t twt_next_action);
+
+/**
+ * ucfg_twt_get_work_params() - Get TWT work params
+ * @vdev: vdev pointer
+ * @params: TWT work params
+ * @next_action: Get TWT next action to do after work scheduled
+ *
+ * Return: None
+ */
+void ucfg_twt_get_work_params(struct wlan_objmgr_vdev *vdev,
+			      struct twt_work_params *params,
+			      uint32_t *next_action);
 #else
 static inline
 QDF_STATUS ucfg_twt_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -358,6 +382,22 @@ ucfg_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				enum wlan_twt_commands *pactive_cmd)
 {
 	return false;
+}
+
+static inline void
+ucfg_twt_set_work_params(
+		struct wlan_objmgr_vdev *vdev,
+		struct twt_add_dialog_complete_event_param *params,
+		uint32_t twt_next_action)
+{
+}
+
+static inline void
+ucfg_twt_get_work_params(
+		struct wlan_objmgr_vdev *vdev,
+		struct twt_work_params *params,
+		uint32_t *next_action)
+{
 }
 #endif
 #endif

@@ -2594,7 +2594,12 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 	uint32_t i, j, pcl_len = 0;
 	bool found;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	uint32_t indoor_sta_freq = INVALID_CHANNEL_ID;
+	qdf_freq_t dfs_sta_freq = INVALID_CHANNEL_ID;
+	qdf_freq_t indoor_sta_freq = INVALID_CHANNEL_ID;
+	qdf_freq_t sta_5GHz_freq = INVALID_CHANNEL_ID;
+	enum hw_mode_bandwidth sta_ch_width;
+	uint8_t sta_vdev_id = 0, scc_on_dfs_channel = 0;
+	bool sta_sap_scc_on_5ghz_channel;
 	bool scc_on_indoor =
 		 policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 
@@ -2616,10 +2621,19 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 
 	for (i = 0; i < pm_ctx->sap_mandatory_channels_len; i++)
 		policy_mgr_debug("fav chan:%d",
-			pm_ctx->sap_mandatory_channels[i]);
+				 pm_ctx->sap_mandatory_channels[i]);
 
 	if (scc_on_indoor)
 		indoor_sta_freq = policy_mgr_is_sta_on_indoor_channel(psoc);
+
+	policy_mgr_get_sta_sap_scc_on_dfs_chnl(psoc, &scc_on_dfs_channel);
+	if (scc_on_dfs_channel)
+		policy_mgr_is_sta_present_on_dfs_channel(psoc,
+							 &sta_vdev_id,
+							 &dfs_sta_freq,
+							 &sta_ch_width);
+	sta_sap_scc_on_5ghz_channel =
+		policy_mgr_is_connected_sta_5g(psoc, &sta_5GHz_freq);
 
 	for (i = 0; i < *pcl_len_org; i++) {
 		found = false;
@@ -2627,15 +2641,38 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 			policy_mgr_debug("index is exceeding NUM_CHANNELS");
 			break;
 		}
+
+		if (scc_on_indoor && policy_mgr_is_force_scc(psoc) &&
+		    pcl_list_org[i] == indoor_sta_freq) {
+			policy_mgr_debug("indoor chan:%d", pcl_list_org[i]);
+			found = true;
+			goto update_pcl;
+		}
+
+		if (scc_on_dfs_channel && policy_mgr_is_force_scc(psoc) &&
+		    pcl_list_org[i] == dfs_sta_freq) {
+			policy_mgr_debug("dfs chan:%d", pcl_list_org[i]);
+			found = true;
+			goto update_pcl;
+		}
+
+		if (sta_sap_scc_on_5ghz_channel &&
+		    policy_mgr_is_force_scc(psoc) &&
+		    pcl_list_org[i] == sta_5GHz_freq) {
+			policy_mgr_debug("scc chan:%d", pcl_list_org[i]);
+			found = true;
+			goto update_pcl;
+		}
+
 		for (j = 0; j < pm_ctx->sap_mandatory_channels_len; j++) {
 			if (pcl_list_org[i] ==
-			    pm_ctx->sap_mandatory_channels[j] ||
-			    (scc_on_indoor &&
-			     pcl_list_org[i] == indoor_sta_freq)) {
+			    pm_ctx->sap_mandatory_channels[j]) {
 				found = true;
 				break;
 			}
 		}
+
+update_pcl:
 		if (found && (pcl_len < NUM_CHANNELS)) {
 			pcl_list_org[pcl_len] = pcl_list_org[i];
 			weight_list_org[pcl_len++] = weight_list_org[i];
@@ -2907,12 +2944,15 @@ static uint32_t policy_mgr_get_connection_count_with_ch_freq(uint32_t ch_freq)
 
 uint32_t policy_mgr_get_alternate_channel_for_sap(
 	struct wlan_objmgr_psoc *psoc, uint8_t sap_vdev_id,
-	uint32_t sap_ch_freq)
+	uint32_t sap_ch_freq,
+	enum reg_wifi_band pref_band)
 {
 	uint32_t pcl_channels[NUM_CHANNELS];
 	uint8_t pcl_weight[NUM_CHANNELS];
 	uint32_t ch_freq = 0;
 	uint32_t pcl_len = 0;
+	uint32_t first_valid_5g_freq = 0;
+	uint32_t first_valid_6g_freq = 0;
 	struct policy_mgr_conc_connection_info info;
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -2962,6 +3002,18 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 			} else if (!ch_freq) {
 				ch_freq = pcl_channels[i];
 			}
+			if (!first_valid_5g_freq &&
+			    wlan_reg_is_5ghz_ch_freq(pcl_channels[i])) {
+				first_valid_5g_freq = pcl_channels[i];
+				if (pref_band == REG_BAND_5G)
+					break;
+			}
+			if (!first_valid_6g_freq &&
+			    wlan_reg_is_6ghz_chan_freq(pcl_channels[i])) {
+				first_valid_6g_freq = pcl_channels[i];
+				if (pref_band == REG_BAND_6G)
+					break;
+			}
 		}
 	}
 
@@ -2970,6 +3022,16 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
 
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	if (pref_band == REG_BAND_6G) {
+		if (first_valid_6g_freq)
+			ch_freq = first_valid_6g_freq;
+		else if (first_valid_5g_freq)
+			ch_freq = first_valid_5g_freq;
+	} else if (pref_band == REG_BAND_5G) {
+		if (first_valid_5g_freq)
+			ch_freq = first_valid_5g_freq;
+	}
 
 	return ch_freq;
 }

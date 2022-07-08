@@ -1236,6 +1236,20 @@ struct wlm_multi_client_info_table {
 };
 #endif
 
+#ifdef WLAN_FEATURE_DYNAMIC_RX_AGGREGATION
+/**
+ * enum qdisc_filter_status - QDISC filter status
+ * @QDISC_FILTER_RTNL_LOCK_FAIL: rtnl lock acquire failed
+ * @QDISC_FILTER_PRIO_MATCH: qdisc filter with priority match
+ * @QDISC_FILTER_PRIO_MISMATCH: no filter match with configured priority
+ */
+enum qdisc_filter_status {
+	QDISC_FILTER_RTNL_LOCK_FAIL,
+	QDISC_FILTER_PRIO_MATCH,
+	QDISC_FILTER_PRIO_MISMATCH,
+};
+#endif
+
 /**
  * struct hdd_adapter - hdd vdev/net_device context
  * @vdev: object manager vdev context
@@ -1585,7 +1599,7 @@ struct hdd_adapter {
 	void *cookie;
 	bool response_expected;
 #endif
-	uint8_t gro_disallowed[DP_MAX_RX_THREADS];
+	qdf_atomic_t gro_disallowed;
 	uint8_t gro_flushed[DP_MAX_RX_THREADS];
 	bool handle_feature_update;
 	/* Indicate if TSO and checksum offload features are enabled or not */
@@ -1981,7 +1995,8 @@ struct hdd_rtpm_tput_policy_context {
  * @country_change_work: work for updating vdev when country changes
  * @rx_aggregation: rx aggregation enable or disable state
  * @gro_force_flush: gro force flushed indication flag
- * @force_gro_enable: force GRO enable or disable flag
+ * @tc_based_dyn_gro: TC based dynamic GRO enable/disable flag
+ * @tc_ingress_prio: TC ingress priority
  * @current_pcie_gen_speed: current pcie gen speed
  * @pm_qos_req: pm_qos request for all cpu cores
  * @qos_cpu_mask: voted cpu core mask
@@ -1994,7 +2009,6 @@ struct hdd_rtpm_tput_policy_context {
  * @twt_en_dis_work: work to send twt enable/disable cmd on MCC/SCC concurrency
  * @dump_in_progress: Stores value of dump in progress
  * @hdd_dual_sta_policy: Concurrent STA policy configuration
- * @rx_skip_qdisc_chk_conc: flag to skip ingress qdisc check in concurrency
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2332,7 +2346,8 @@ struct hdd_context {
 	struct {
 		qdf_atomic_t rx_aggregation;
 		uint8_t gro_force_flush[DP_MAX_RX_THREADS];
-		bool force_gro_enable;
+		bool tc_based_dyn_gro;
+		uint32_t tc_ingress_prio;
 	} dp_agg_param;
 	int current_pcie_gen_speed;
 	qdf_workqueue_t *adapter_ops_wq;
@@ -2366,8 +2381,6 @@ struct hdd_context {
 #ifdef THERMAL_STATS_SUPPORT
 	bool is_therm_stats_in_progress;
 #endif
-	qdf_atomic_t rx_skip_qdisc_chk_conc;
-
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	bool is_vdev_macaddr_dynamic_update_supported;
 #endif

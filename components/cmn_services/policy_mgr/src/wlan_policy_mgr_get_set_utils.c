@@ -2915,8 +2915,8 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	    (policy_mgr_mode_specific_connection_count(psoc,
 						       PM_NDI_MODE,
 						       NULL) > 0)) {
-		if (pm_ctx->dp_cbacks.hdd_rx_handle_concurrency)
-			pm_ctx->dp_cbacks.hdd_rx_handle_concurrency(true);
+		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency)
+			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(true);
 	};
 
 	/* Enable RPS if SAP interface has come up */
@@ -3071,8 +3071,8 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	     (policy_mgr_mode_specific_connection_count(psoc,
 							PM_NDI_MODE,
 							NULL) == 0))) {
-		if (pm_ctx->dp_cbacks.hdd_rx_handle_concurrency)
-			pm_ctx->dp_cbacks.hdd_rx_handle_concurrency(false);
+		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency)
+			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(false);
 	};
 
 	/* Disable RPS if SAP interface has come up */
@@ -6078,6 +6078,35 @@ bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc)
 				WLAN_REG_MAX_24GHZ_CHAN_FREQ &&
 		    pm_conc_connection_list[conn_index].in_use)
 			ret = true;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return ret;
+}
+
+bool
+policy_mgr_is_connected_sta_5g(struct wlan_objmgr_psoc *psoc, qdf_freq_t *freq)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t conn_index;
+	bool ret = false;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return ret;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		*freq = pm_conc_connection_list[conn_index].freq;
+		if (pm_conc_connection_list[conn_index].mode == PM_STA_MODE &&
+		    WLAN_REG_IS_5GHZ_CH_FREQ(*freq) &&
+		    pm_conc_connection_list[conn_index].in_use) {
+			ret = true;
+			break;
+		}
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 

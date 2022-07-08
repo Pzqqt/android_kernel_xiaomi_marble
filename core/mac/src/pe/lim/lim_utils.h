@@ -2828,4 +2828,29 @@ bool lim_update_channel_width(struct mac_context *mac_ctx,
 uint8_t lim_get_vht_ch_width(tDot11fIEVHTCaps *vht_cap,
 			     tDot11fIEVHTOperation *vht_op,
 			     tDot11fIEHTInfo *ht_info);
+/**
+ * lim_is_self_and_peer_ocv_capable() - check whether OCV capable
+ * @mac:        pointer to mac data
+ * @pe_session: pointer to pe session
+.* @peer:       peer mac address
+ *
+ * Return: true if both self and peer ocv capable
+ */
+bool
+lim_is_self_and_peer_ocv_capable(struct mac_context *mac,
+				 uint8_t *peer,
+				 struct pe_session *pe_session);
+
+/**
+ * lim_fill_oci_params() - fill oci parameters
+ * @mac:        pointer to mac data
+ * @session: pointer to pe session
+.* @oci:       pointer of tDot11fIEoci
+ *
+ * Return: void
+ */
+void
+lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
+		    tDot11fIEoci *oci);
+
 #endif /* __LIM_UTILS_H */

@@ -2443,12 +2443,20 @@ bool wlan_cm_is_roam_sync_in_progress(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_objmgr_vdev *vdev;
 	bool ret;
+	enum QDF_OPMODE opmode;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_CM_ID);
 
 	if (!vdev)
 		return false;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+
+	if (opmode != QDF_STA_MODE) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return false;
+	}
 
 	ret = cm_is_vdev_roam_sync_inprogress(vdev);
 

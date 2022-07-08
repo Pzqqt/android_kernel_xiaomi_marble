@@ -227,13 +227,12 @@ QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter_context,
 int hdd_rx_ol_init(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_rx_handle_concurrency() - Handle concurrency related operations
- *  for rx
- * @is_concurrency: true if there are concurrenct connections else false
+ * hdd_disable_rx_ol_in_concurrency() - Disable Rx offload due to concurrency
+ * @disable: true/false to disable/enable the Rx offload
  *
  * Return: none
  */
-void hdd_rx_handle_concurrency(bool is_concurrency);
+void hdd_disable_rx_ol_in_concurrency(bool disable);
 
 /**
  * hdd_disable_rx_ol_for_low_tput() - Disable Rx offload in low TPUT scenario

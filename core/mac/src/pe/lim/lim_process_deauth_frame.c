@@ -117,9 +117,9 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		pe_err("rx frame doesn't have valid a1 address, drop it");
 		return;
 	}
+
 	/* PMF: If this session is a PMF session, then ensure that this frame was protected */
-	if (pe_session->limRmfEnabled &&
-	    pe_session->is_key_installed &&
+	if (is_mgmt_protected(pe_session->vdev_id, (const uint8_t *)pHdr->sa) &&
 	    (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
 		DPU_FEEDBACK_UNPROTECTED_ERROR)) {
 		pe_debug("received an unprotected deauth from AP");

@@ -999,10 +999,13 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 
 	cds_debug("CDS successfully Opened");
 
-	if (cdp_cfg_get(gp_cds_context->dp_soc, cfg_dp_force_gro_enable))
-		hdd_ctx->dp_agg_param.force_gro_enable = true;
+	if (cdp_cfg_get(gp_cds_context->dp_soc, cfg_dp_tc_based_dyn_gro_enable))
+		hdd_ctx->dp_agg_param.tc_based_dyn_gro = true;
 	else
-		hdd_ctx->dp_agg_param.force_gro_enable = false;
+		hdd_ctx->dp_agg_param.tc_based_dyn_gro = false;
+
+	hdd_ctx->dp_agg_param.tc_ingress_prio =
+		    cdp_cfg_get(gp_cds_context->dp_soc, cfg_dp_tc_ingress_prio);
 
 	return 0;
 

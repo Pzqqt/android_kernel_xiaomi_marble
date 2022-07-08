@@ -441,6 +441,9 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 	uint8_t oper_mode;
 	uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
 	uint8_t ch_width = 0, ch_bw;
+	tDot11fIEVHTCaps *vht_caps = NULL;
+	tDot11fIEVHTOperation *vht_op = NULL;
+	uint8_t bcn_vht_chwidth = 0;
 
 	/*
 	 * Ignore opmode change during channel change The opmode will be updated
@@ -459,12 +462,24 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 		return;
 	}
 
-	if (!(session->vhtCapability && bcn->VHTOperation.present))
+	if (bcn->VHTCaps.present) {
+		vht_caps = &bcn->VHTCaps;
+		vht_op = &bcn->VHTOperation;
+	} else if (bcn->vendor_vht_ie.VHTCaps.present) {
+		vht_caps = &bcn->vendor_vht_ie.VHTCaps;
+		vht_op = &bcn->vendor_vht_ie.VHTOperation;
+	}
+
+	if (!(session->vhtCapability && (vht_op && vht_op->present)))
 		return;
+
+	bcn_vht_chwidth = lim_get_vht_ch_width(&bcn->VHTCaps,
+					       &bcn->VHTOperation,
+					       &bcn->HTInfo);
 
 	oper_mode = sta_ds->vhtSupportedChannelWidthSet;
 	if ((oper_mode == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) &&
-	    (oper_mode < bcn->VHTOperation.chanWidth))
+	    (oper_mode < bcn_vht_chwidth))
 		skip_opmode_update = true;
 
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
@@ -479,24 +494,23 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 	}
 
 	if (!skip_opmode_update &&
-	    (oper_mode != bcn->VHTOperation.chanWidth)) {
-		pe_debug("received VHTOP CHWidth %d",
-			 bcn->VHTOperation.chanWidth);
+	    (oper_mode != bcn_vht_chwidth)) {
+		pe_debug("received VHTOP CHWidth %d", bcn_vht_chwidth);
 		pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
 		       mac_hdr->sa[0], mac_hdr->sa[1],
 		       mac_hdr->sa[2], mac_hdr->sa[3],
 		       mac_hdr->sa[4], mac_hdr->sa[5]);
 
-		if ((bcn->VHTOperation.chanWidth >=
+		if ((bcn_vht_chwidth >=
 			WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) &&
 			(fw_vht_ch_wd > eHT_CHANNEL_WIDTH_80MHZ)) {
 			pe_debug("Updating the CH Width to 160MHz");
 			sta_ds->vhtSupportedChannelWidthSet =
-				bcn->VHTOperation.chanWidth;
+						bcn_vht_chwidth;
 			sta_ds->htSupportedChannelWidthSet =
 				eHT_CHANNEL_WIDTH_40MHZ;
 			ch_width = eHT_CHANNEL_WIDTH_160MHZ;
-		} else if (bcn->VHTOperation.chanWidth >=
+		} else if (bcn_vht_chwidth >=
 			WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
 			pe_debug("Updating the CH Width to 80MHz");
 			sta_ds->vhtSupportedChannelWidthSet =
@@ -504,7 +518,7 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 			sta_ds->htSupportedChannelWidthSet =
 				eHT_CHANNEL_WIDTH_40MHZ;
 			ch_width = eHT_CHANNEL_WIDTH_80MHZ;
-		} else if (bcn->VHTOperation.chanWidth ==
+		} else if (bcn_vht_chwidth ==
 			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ) {
 			sta_ds->vhtSupportedChannelWidthSet =
 				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;

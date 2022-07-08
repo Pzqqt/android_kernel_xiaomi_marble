@@ -1038,7 +1038,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 		if (hdd_ctx->ol_enable &&
 		    !NAN_CONCURRENCY_SUPPORTED(hdd_ctx->psoc)) {
 			hdd_debug("Disable LRO/GRO in NDI Mode");
-			hdd_rx_handle_concurrency(true);
+			hdd_disable_rx_ol_in_concurrency(true);
 		}
 
 		hdd_bus_bw_compute_prev_txrx_stats(adapter);
@@ -1089,7 +1089,7 @@ void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
 						PM_STA_MODE,
 						NULL) == 1)))) {
 		hdd_debug("Enable LRO/GRO");
-		hdd_rx_handle_concurrency(false);
+		hdd_disable_rx_ol_in_concurrency(false);
 	}
 }
 

@@ -1749,15 +1749,14 @@ struct policy_mgr_cdp_cbacks {
 /**
  * struct policy_mgr_dp_cbacks - CDP Callbacks to be invoked
  * from policy manager
- * @hdd_rx_handle_concurrency: Callback to handle concurrency related
- *  operations for rx
+ * @hdd_disable_rx_ol_in_concurrency: Callback to disable LRO/GRO offloads
  * @hdd_set_rx_mode_rps_cb: Callback to set RPS
  * @hdd_ipa_set_mcc_mode_cb: Callback to set mcc mode for ipa module
  * @hdd_v2_flow_pool_map: Callback to create vdev flow pool
  * @hdd_v2_flow_pool_unmap: Callback to delete vdev flow pool
  */
 struct policy_mgr_dp_cbacks {
-	void (*hdd_rx_handle_concurrency)(bool);
+	void (*hdd_disable_rx_ol_in_concurrency)(bool);
 	void (*hdd_set_rx_mode_rps_cb)(bool);
 	void (*hdd_ipa_set_mcc_mode_cb)(bool);
 	void (*hdd_v2_flow_pool_map)(int);
@@ -3424,6 +3423,7 @@ bool policy_mgr_sap_allowed_on_indoor_freq(struct wlan_objmgr_psoc *psoc,
  * @psoc: PSOC object information
  * @sap_vdev_id: sap vdev id.
  * @sap_ch_freq: sap channel frequency.
+ * @pref_band: Preferred band on channel is required
  *
  * This function returns an alternate channel for SAP to move to
  *
@@ -3431,7 +3431,8 @@ bool policy_mgr_sap_allowed_on_indoor_freq(struct wlan_objmgr_psoc *psoc,
  */
 uint32_t policy_mgr_get_alternate_channel_for_sap(
 	struct wlan_objmgr_psoc *psoc, uint8_t sap_vdev_id,
-	uint32_t sap_ch_freq);
+	uint32_t sap_ch_freq,
+	enum reg_wifi_band pref_band);
 
 /**
  * policy_mgr_con_mode_by_vdev_id() - Get policy mgr con mode from vdev id
@@ -3613,6 +3614,16 @@ bool policy_mgr_is_special_mode_active_5g(struct wlan_objmgr_psoc *psoc,
  * Return: true if sta is connected in 2g else false
  */
 bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_is_connected_sta_5g() - check if sta connected in 5 GHz
+ * @psoc: pointer to soc
+ * @freq: Pointer to the frequency on which sta is connected
+ *
+ * Return: true if sta is connected in 5 GHz else false
+ */
+bool policy_mgr_is_connected_sta_5g(struct wlan_objmgr_psoc *psoc,
+				    qdf_freq_t *freq);
 
 /**
  * policy_mgr_scan_trim_5g_chnls_for_dfs_ap() - check if sta scan should skip

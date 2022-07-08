@@ -5266,7 +5266,7 @@ returnAfterError:
 	return status_code;
 }
 
-static bool
+bool
 lim_is_self_and_peer_ocv_capable(struct mac_context *mac,
 				 uint8_t *peer,
 				 struct pe_session *pe_session)
@@ -5288,7 +5288,7 @@ lim_is_self_and_peer_ocv_capable(struct mac_context *mac,
 	return false;
 }
 
-static void
+void
 lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
 		    tDot11fIEoci *oci)
 {

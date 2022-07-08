@@ -287,3 +287,28 @@ bool wlan_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     uint8_t dialog_id,
 				     enum wlan_twt_commands cmd,
 				     enum wlan_twt_commands *pactive_cmd);
+
+/**
+ * wlan_twt_set_work_params() - Set TWT work params
+ * @vdev: vdev pointer
+ * @params: TWT add dialog params
+ * @twt_next_action: Set next action to do before work scheduled
+ *
+ * Return: None
+ */
+void wlan_twt_set_work_params(
+			struct wlan_objmgr_vdev *vdev,
+			struct twt_add_dialog_complete_event_param *params,
+			uint32_t twt_next_action);
+
+/**
+ * wlan_twt_get_work_params() - Get TWT work params
+ * @vdev: vdev pointer
+ * @params: pointer to TWT work params
+ * @next_action: Get next action to do after work scheduled
+ *
+ * Return: None
+ */
+void wlan_twt_get_work_params(struct wlan_objmgr_vdev *vdev,
+			      struct twt_work_params *params,
+			      uint32_t *next_action);
