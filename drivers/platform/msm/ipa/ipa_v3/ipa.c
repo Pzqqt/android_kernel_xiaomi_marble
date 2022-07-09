@@ -2655,6 +2655,49 @@ done:
 	return res;
 }
 
+#ifdef IPA_IOCTL_SET_EXT_ROUTER_MODE
+/**
+ * ipa3_send_ext_router_info() - Pass ext_router_info to the IPACM
+ * @info: pointer to the ext router info
+ *
+ * Returns: 0 on success, negative on failure
+ */
+int ipa3_send_ext_router_info(struct ipa_ioc_ext_router_info *info)
+{
+	struct ipa_msg_meta msg_meta;
+	int res = 0;
+
+	if (!info) {
+		IPAERR("Bad arg: info is NULL\n");
+		res = -EIO;
+		goto done;
+	}
+
+	/*
+	 * Prep and send msg to ipacm
+	 */
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = IPA_SET_EXT_ROUTER_MODE_EVENT;
+	msg_meta.msg_len  = sizeof(struct ipa_ioc_ext_router_info);
+
+	IPADBG("Setting IPA to Ext Router mode %d\n", info->mode);
+
+	/*
+	 * Post event to ipacm
+	 */
+	res = ipa3_send_msg(&msg_meta, info, ipa3_general_free_cb);
+
+	if (res) {
+		IPAERR_RL("ipa3_send_msg failed: %d\n", res);
+		kfree(info);
+		goto done;
+	}
+
+done:
+	return res;
+}
+#endif
+
 static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	int retval = 0;
@@ -2675,6 +2718,9 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	struct ipa_ioc_eogre_info eogre_info;
 	struct ipa_ioc_macsec_info macsec_info;
 	struct ipa_macsec_map *macsec_map;
+#ifdef IPA_IOCTL_SET_EXT_ROUTER_MODE
+	struct ipa_ioc_ext_router_info *ext_router_info;
+#endif
 	bool send2uC, send2ipacm;
 	size_t sz;
 	int pre_entry;
@@ -4102,6 +4148,32 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			IPA_MACSEC_ADD_EVENT : IPA_MACSEC_DEL_EVENT,
 			macsec_map);
 		break;
+
+#ifdef IPA_IOCTL_SET_EXT_ROUTER_MODE
+	case IPA_IOC_SET_EXT_ROUTER_MODE:
+		IPADBG("Got IPA_IOC_SET_EXT_ROUTER_MODE\n");
+
+		ext_router_info = kzalloc(sizeof(struct ipa_ioc_ext_router_info), GFP_KERNEL);
+		if (!ext_router_info) {
+			IPAERR("ext_router_info memory allocation failed !\n");
+			retval = -ENOMEM;
+			break;
+		}
+
+		if (copy_from_user(ext_router_info, (const void __user *) arg,
+				sizeof(struct ipa_ioc_ext_router_info))) {
+			IPAERR_RL("copy_from_user fails\n");
+			retval = -EFAULT;
+			kfree(ext_router_info);
+			break;
+		}
+
+		if (ipa3_send_ext_router_info(ext_router_info)) {
+			IPAERR("failed to send ext_router_info!\n");
+			retval = -EFAULT;
+		}
+		break;
+#endif
 
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
