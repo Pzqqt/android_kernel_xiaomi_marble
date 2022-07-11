@@ -2589,7 +2589,10 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 			set_bit(SDE_WB_HAS_DCWB, &wb->features);
 			if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 				set_bit(SDE_WB_DCWB_CTRL, &wb->features);
-			if (major_version >= SDE_HW_MAJOR(SDE_HW_VER_810)) {
+			if (major_version >= SDE_HW_MAJOR(SDE_HW_VER_910)) {
+				sde_cfg->cwb_blk_off = 0x67200;
+				sde_cfg->cwb_blk_stride = 0x400;
+			} else if (major_version >= SDE_HW_MAJOR(SDE_HW_VER_810)) {
 				sde_cfg->cwb_blk_off = 0x66A00;
 				sde_cfg->cwb_blk_stride = 0x400;
 			} else {
@@ -5328,7 +5331,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_ubwc_stats = true;
 		sde_cfg->virtual_mixers_mask = 0x2;
 	} else if (IS_NEO_TARGET(hw_rev)) {
-		sde_cfg->has_dedicated_cwb_support = true;
 		sde_cfg->has_cwb_dither = true;
 		sde_cfg->has_wb_ubwc = true;
 		sde_cfg->has_cwb_crop = true;
