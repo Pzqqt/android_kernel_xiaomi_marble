@@ -1017,6 +1017,11 @@ QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_li(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (!dp_rx_is_sw_cookie_valid(soc, buf_info.sw_cookie)) {
+		dp_rx_err("invalid sw_cookie 0x%x", buf_info.sw_cookie);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	*r_rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, buf_info.sw_cookie);
 
 	return QDF_STATUS_SUCCESS;
