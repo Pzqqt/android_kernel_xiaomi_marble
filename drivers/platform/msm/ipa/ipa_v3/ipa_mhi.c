@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -53,8 +55,8 @@
 #define IPA_MHI_FUNC_EXIT() \
 	IPA_MHI_DBG("EXIT\n")
 
-#define IPA_MHI_MAX_UL_CHANNELS 2
-#define IPA_MHI_MAX_DL_CHANNELS 3
+#define IPA_MHI_MAX_UL_CHANNELS 2 //2 out channels
+#define IPA_MHI_MAX_DL_CHANNELS 4 //3 in channels + QDSS
 
 #define IPA_CLIENT_IS_MHI_LOW_LAT(client) \
 	((client) == IPA_CLIENT_MHI_LOW_LAT_PROD || \
@@ -202,6 +204,9 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 	union __packed gsi_channel_scratch ch_scratch;
 	union __packed gsi_channel_scratch ch_scratch1;
 	struct ipa3_ep_context *ep;
+#ifdef IPA_CLIENT_MHI_COAL_CONS
+	struct ipa3_ep_context *ep_def;
+#endif
 	const struct ipa_gsi_ep_config *ep_cfg;
 	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
 	bool burst_mode_enabled = false;
@@ -218,69 +223,90 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 		return -EPERM;
 	}
 
-	/* allocate event ring only for the first time pipe is connected */
-	if (params->state == IPA_HW_MHI_CHANNEL_STATE_INVALID) {
-		memset(&ev_props, 0, sizeof(ev_props));
-		ev_props.intf = GSI_EVT_CHTYPE_MHI_EV;
-		ev_props.intr = GSI_INTR_MSI;
-		ev_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
-		ev_props.ring_len = params->ev_ctx_host->rlen;
-		ev_props.ring_base_addr = IPA_MHI_HOST_ADDR_COND(
-				params->ev_ctx_host->rbase);
-		ev_props.int_modt = params->ev_ctx_host->intmodt *
-				IPA_SLEEP_CLK_RATE_KHZ;
-		ev_props.int_modc = params->ev_ctx_host->intmodc;
-		ev_props.intvec = ((msi->data & ~msi->mask) |
-				(params->ev_ctx_host->msivec & msi->mask));
-		ev_props.msi_addr = IPA_MHI_HOST_ADDR_COND(
-				(((u64)msi->addr_hi << 32) | msi->addr_low));
-		ev_props.rp_update_addr = IPA_MHI_HOST_ADDR_COND(
-				params->event_context_addr +
-				offsetof(struct ipa_mhi_ev_ctx, rp));
-		ev_props.exclusive = true;
-		ev_props.err_cb = params->ev_err_cb;
-		ev_props.user_data = params->channel;
-		ev_props.evchid_valid = true;
-		ev_props.evchid = params->evchid;
-		IPA_MHI_DBG("allocating event ring ep:%u evchid:%u\n",
-			ipa_ep_idx, ev_props.evchid);
-		res = gsi_alloc_evt_ring(&ev_props, ipa3_ctx->gsi_dev_hdl,
-			&ep->gsi_evt_ring_hdl);
-		if (res) {
-			IPA_MHI_ERR("gsi_alloc_evt_ring failed %d\n", res);
-			goto fail_alloc_evt;
-		}
-		IPA_MHI_DBG("client %d, caching event ring hdl %lu\n",
-				client,
-				ep->gsi_evt_ring_hdl);
-		*params->cached_gsi_evt_ring_hdl =
-			ep->gsi_evt_ring_hdl;
-
+#ifdef IPA_CLIENT_MHI_COAL_CONS
+	/* share default pipe event ring for MHI coal pipe */
+	if(client == IPA_CLIENT_MHI_COAL_CONS) {
+		ep_def = &ipa3_ctx->ep[ipa3_get_ep_mapping(IPA_CLIENT_MHI_CONS)];
+		ep->gsi_evt_ring_hdl = ep_def->gsi_evt_ring_hdl;
+		*params->cached_gsi_evt_ring_hdl = ep->gsi_evt_ring_hdl;
 	} else {
-		IPA_MHI_DBG("event ring already exists: evt_ring_hdl=%lu\n",
-			*params->cached_gsi_evt_ring_hdl);
-		ep->gsi_evt_ring_hdl = *params->cached_gsi_evt_ring_hdl;
-	}
+#endif
+		/* allocate event ring only for the first time pipe is connected */
+		if (params->state == IPA_HW_MHI_CHANNEL_STATE_INVALID) {
+			memset(&ev_props, 0, sizeof(ev_props));
+			ev_props.intf = GSI_EVT_CHTYPE_MHI_EV;
+			ev_props.intr = GSI_INTR_MSI;
+			ev_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
+			ev_props.ring_len = params->ev_ctx_host->rlen;
+			ev_props.ring_base_addr = IPA_MHI_HOST_ADDR_COND(
+					params->ev_ctx_host->rbase);
+			ev_props.int_modt = params->ev_ctx_host->intmodt *
+					IPA_SLEEP_CLK_RATE_KHZ;
+			ev_props.int_modc = params->ev_ctx_host->intmodc;
+			ev_props.intvec = ((msi->data & ~msi->mask) |
+					(params->ev_ctx_host->msivec & msi->mask));
+			ev_props.msi_addr = IPA_MHI_HOST_ADDR_COND(
+					(((u64)msi->addr_hi << 32) | msi->addr_low));
+			ev_props.rp_update_addr = IPA_MHI_HOST_ADDR_COND(
+					params->event_context_addr +
+					offsetof(struct ipa_mhi_ev_ctx, rp));
+			if(client == IPA_CLIENT_MHI_CONS) {
+				ev_props.exclusive = false;
+			}
+			else {
+				ev_props.exclusive = true;
+			}
+			ev_props.err_cb = params->ev_err_cb;
+			ev_props.user_data = params->channel;
+			ev_props.evchid_valid = true;
+			ev_props.evchid = params->evchid;
+			IPA_MHI_DBG("allocating event ring ep:%u evchid:%u\n",
+				ipa_ep_idx, ev_props.evchid);
+			res = gsi_alloc_evt_ring(&ev_props, ipa3_ctx->gsi_dev_hdl,
+				&ep->gsi_evt_ring_hdl);
+			if (res) {
+				IPA_MHI_ERR("gsi_alloc_evt_ring failed %d\n", res);
+				goto fail_alloc_evt;
+			}
+			IPA_MHI_DBG("client %d, caching event ring hdl %lu\n",
+					client,
+					ep->gsi_evt_ring_hdl);
+			*params->cached_gsi_evt_ring_hdl =
+				ep->gsi_evt_ring_hdl;
 
-	/**
-	 * compare host evt ring wp with base ptr condition was added to check
-	 * whether MHI driver ring db or not, but in wrap around case wp and
-	 * base ptr can be same so removing it.
-	 * if evt-ring has no credit, gsi will crash.
-	 */
+		} else {
+			IPA_MHI_DBG("event ring already exists: evt_ring_hdl=%lu\n",
+				*params->cached_gsi_evt_ring_hdl);
+			ep->gsi_evt_ring_hdl = *params->cached_gsi_evt_ring_hdl;
+		}
 
-	IPA_MHI_DBG("Ring event db: evt_ring_hdl=%lu host_wp=0x%llx\n",
-		ep->gsi_evt_ring_hdl, params->ev_ctx_host->wp);
-	res = gsi_ring_evt_ring_db(ep->gsi_evt_ring_hdl,
-		params->ev_ctx_host->wp);
-	if (res) {
-		IPA_MHI_ERR("fail to ring evt ring db %d. hdl=%lu wp=0x%llx\n",
-			res, ep->gsi_evt_ring_hdl, params->ev_ctx_host->wp);
-		goto fail_alloc_ch;
+		/**
+		 * compare host evt ring wp with base ptr condition was added to check
+		 * whether MHI driver ring db or not, but in wrap around case wp and
+		 * base ptr can be same so removing it.
+		 * if evt-ring has no credit, gsi will crash.
+		 */
+
+		IPA_MHI_DBG("Ring event db: evt_ring_hdl=%lu host_wp=0x%llx\n",
+			ep->gsi_evt_ring_hdl, params->ev_ctx_host->wp);
+		res = gsi_ring_evt_ring_db(ep->gsi_evt_ring_hdl,
+			params->ev_ctx_host->wp);
+		if (res) {
+			IPA_MHI_ERR("fail to ring evt ring db %d. hdl=%lu wp=0x%llx\n",
+				res, ep->gsi_evt_ring_hdl, params->ev_ctx_host->wp);
+			goto fail_alloc_ch;
+		}
+#ifdef IPA_CLIENT_MHI_COAL_CONS
 	}
+#endif
 
 	memset(&ch_props, 0, sizeof(ch_props));
-	ch_props.prot = GSI_CHAN_PROT_MHI;
+#ifdef IPA_CLIENT_MHI_COAL_CONS
+	if(client == IPA_CLIENT_MHI_COAL_CONS)
+		ch_props.prot = GSI_CHAN_PROT_MHIC;
+	else
+#endif
+		ch_props.prot = GSI_CHAN_PROT_MHI;
 	ch_props.dir = IPA_CLIENT_IS_PROD(client) ?
 		GSI_CHAN_DIR_TO_GSI : GSI_CHAN_DIR_FROM_GSI;
 	ch_props.ch_id = ep_cfg->ipa_gsi_chan_num;
@@ -357,9 +383,17 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 			(ch_scratch.mhi.mhi_host_wp_addr & 0x1FF00000000ll) >>
 			32;
 		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 &&
-			client == IPA_CLIENT_MHI_CONS) {
+			client == IPA_CLIENT_MHI_CONS)
+		{
 			gsi_update_almst_empty_thrshold(ep->gsi_chan_hdl,
 				ch_scratch.mhi.polling_configuration);
+#ifdef IPA_CLIENT_MHI_COAL_CONS
+		} else if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 &&
+			client == IPA_CLIENT_MHI_COAL_CONS)
+		{
+			gsi_update_almst_empty_thrshold(ep->gsi_chan_hdl,
+				ch_scratch.mhi.polling_configuration);
+#endif
 		} else {
 			ch_scratch1.mhi_v2.polling_configuration =
 				ch_scratch.mhi.polling_configuration;
@@ -803,6 +837,13 @@ int ipa3_mhi_destroy_channel(enum ipa_client_type client)
 	int res;
 	int ipa_ep_idx;
 	struct ipa3_ep_context *ep;
+
+#ifdef IPA_CLIENT_MHI_COAL_CONS
+	if (client == IPA_CLIENT_MHI_COAL_CONS){
+		IPA_MHI_DBG("Def pipe will hdl the evt ring cleanup for coal pipe\n");
+		return 0;
+	}
+#endif
 
 	ipa_ep_idx = ipa3_get_ep_mapping(client);
 	if (ipa_ep_idx < 0) {

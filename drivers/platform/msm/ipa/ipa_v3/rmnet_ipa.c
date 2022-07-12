@@ -5654,7 +5654,7 @@ void ipa3_q6_handshake_complete(bool ssr_bootup)
 
 	ipa3_set_modem_up(true);
 	if (ipa3_ctx->ipa_config_is_mhi)
-		ipa_send_mhi_endp_ind_to_modem();
+		ipa_send_mhi_ctrl_endp_ind_to_modem();
 }
 
 static inline bool rmnet_ipa3_check_any_client_inited
