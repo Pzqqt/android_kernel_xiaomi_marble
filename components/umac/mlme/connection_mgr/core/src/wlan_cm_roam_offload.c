@@ -5367,17 +5367,16 @@ void cm_roam_result_info_event(struct wlan_objmgr_psoc *psoc,
 		if (i >= MAX_ROAM_CANDIDATE_AP)
 			break;
 
-		if (res->status == 0 &&
-		    scan_data->ap[i].type == WLAN_ROAM_SCAN_ROAMED_AP) {
-			log_record->bssid = scan_data->ap[i].bssid;
-			break;
-		} else if (scan_data->ap[i].type ==
+		if (scan_data->ap[i].type ==
 			   WLAN_ROAM_SCAN_CURRENT_AP) {
 			log_record->bssid = scan_data->ap[i].bssid;
 			bssid = scan_data->ap[i].bssid;
 			break;
 		}
 	}
+
+	if (!qdf_is_macaddr_zero(&res->fail_bssid))
+		log_record->bssid = res->fail_bssid;
 
 	wlan_connectivity_log_enqueue(log_record);
 	qdf_mem_zero(log_record, sizeof(*log_record));
