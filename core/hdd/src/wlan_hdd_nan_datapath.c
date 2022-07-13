@@ -844,6 +844,19 @@ err_handler:
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
 static int hdd_delete_ndi_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
+	struct net_device *dev = wdev->netdev;
+	struct hdd_context *hdd_ctx = (struct hdd_context *)wiphy_priv(wiphy);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+
+	hdd_enter_dev(dev);
+
+	wlan_hdd_release_intf_addr(hdd_ctx,
+				   adapter->mac_addr.bytes);
+	hdd_stop_adapter(hdd_ctx, adapter);
+	hdd_deinit_adapter(hdd_ctx, adapter, true);
+
+	hdd_exit();
+
 	return 0;
 }
 #else
