@@ -77,6 +77,15 @@ LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_KHAJE), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa.h
+include $(srctree)/techpack/dataipa/config/dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
 ifneq (,$(filter $(CONFIG_IPA3) $(CONFIG_GSI),y m))
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi/gsihal
