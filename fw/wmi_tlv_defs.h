@@ -1288,6 +1288,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_coex_dbam_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_coex_dbam_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_is_my_mgmt_frame,
+    WMITLV_TAG_STRUC_wmi_health_mon_init_done_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -2082,6 +2083,7 @@ typedef enum {
     OP(WMI_HALPHY_CTRL_PATH_STATS_EVENTID) \
     OP(WMI_WOW_COAP_BUF_INFO_EVENTID) \
     OP(WMI_COEX_DBAM_COMPLETE_EVENTID) \
+    OP(WMI_HEALTH_MON_INIT_DONE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6935,6 +6937,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_BUF_INFO_EVENTID);
 #define WMITLV_TABLE_WMI_COEX_DBAM_COMPLETE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_dbam_complete_event_fixed_param, wmi_coex_dbam_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_COEX_DBAM_COMPLETE_EVENTID);
+
+#define WMITLV_TABLE_WMI_HEALTH_MON_INIT_DONE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_health_mon_init_done_fixed_param, wmi_health_mon_init_done_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_HEALTH_MON_INIT_DONE_EVENTID);
 
 
 

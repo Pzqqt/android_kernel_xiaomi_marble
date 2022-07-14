@@ -2150,6 +2150,10 @@ typedef enum {
     /* WMI event to scratch registers allocation */
     WMI_PMM_SCRATCH_REG_ALLOCATION_COMPLETE_EVENTID,
 
+    /* WMI event to indicate Helath Monitor Infra init done */
+    WMI_HEALTH_MON_INIT_DONE_EVENTID,
+
+
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
     /** upload H_CV info WMI event
@@ -39411,6 +39415,15 @@ typedef struct {
      */
     A_UINT32 n_TWT_SPs_to_expire;
 } wmi_peer_flush_policy_cmd_fixed_param;
+
+/* health monitor infra Def */
+typedef struct {
+    /** TLV tag and len */
+    A_UINT32 tlv_header;
+    A_UINT32 ring_buf_paddr_low;
+    A_UINT32 ring_buf_paddr_high;
+    A_UINT32 initial_upload_period_ms;
+} wmi_health_mon_init_done_fixed_param;
 
 
 
