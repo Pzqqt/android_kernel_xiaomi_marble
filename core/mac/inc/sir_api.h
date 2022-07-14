@@ -127,6 +127,10 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define SIR_KEK_KEY_LEN 16
 #define SIR_KEK_KEY_LEN_FILS 64
 
+#define SIR_FILS_HLP_OUI_TYPE  "\x5"
+#define SIR_FILS_HLP_OUI_LEN   1
+#define SIR_FILS_HLP_IE_LEN    2048
+
 #define SIR_REPLAY_CTR_LEN 8
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define SIR_UAPSD_BITOFFSET_ACVO     0

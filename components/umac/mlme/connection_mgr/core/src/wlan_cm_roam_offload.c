@@ -4580,7 +4580,8 @@ out:
 	return status;
 }
 
-void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			    struct wlan_crypto_pmksa *pmk_cache)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wlan_objmgr_vdev *vdev;
@@ -4613,8 +4614,12 @@ void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	 */
 	wlan_vdev_get_bss_peer_mac(vdev, &pmksa.bssid);
 	wlan_vdev_mlme_get_ssid(vdev, pmksa.ssid, &pmksa.ssid_len);
-	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
-				   MOBILITY_DOMAIN, &src_cfg);
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, MOBILITY_DOMAIN, &src_cfg);
+
+	if (pmk_cache)
+		qdf_mem_copy(pmksa.cache_id, pmk_cache->cache_id,
+			     WLAN_CACHE_ID_LEN);
+
 	if (src_cfg.bool_value) {
 		pmksa.mdid.mdie_present = 1;
 		pmksa.mdid.mobility_domain = src_cfg.uint_value;

@@ -5773,7 +5773,7 @@ QDF_STATUS csr_set_pmk_cache_ft(struct mac_context *mac, uint8_t vdev_id,
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384) ||
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384)) {
 		sme_debug("Auth type: %x update the MDID in cache", akm);
-		cm_update_pmk_cache_ft(mac->psoc, vdev_id);
+		cm_update_pmk_cache_ft(mac->psoc, vdev_id, pmk_cache);
 	} else {
 		struct cm_roam_values_copy src_cfg;
 		struct scan_filter *scan_filter;
@@ -5809,7 +5809,7 @@ QDF_STATUS csr_set_pmk_cache_ft(struct mac_context *mac, uint8_t vdev_id,
 				 (mdie->mobility_domain[1] << 8));
 			wlan_cm_roam_cfg_set_value(mac->psoc, vdev_id,
 						   MOBILITY_DOMAIN, &src_cfg);
-			cm_update_pmk_cache_ft(mac->psoc, vdev_id);
+			cm_update_pmk_cache_ft(mac->psoc, vdev_id, pmk_cache);
 		}
 err:
 		if (list)

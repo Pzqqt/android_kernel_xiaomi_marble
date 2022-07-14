@@ -283,10 +283,12 @@ QDF_STATUS cm_roam_control_restore_default_config(struct wlan_objmgr_pdev *pdev,
  * cm_update_pmk_cache_ft - API to update MDID in PMKSA cache entry
  * @psoc: psoc pointer
  * @vdev_id: dvev ID
+ * @pmk_cache: pmksa from the userspace
  *
  * Return: None
  */
-void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			    struct wlan_crypto_pmksa *pmk_cache);
 
 /**
  * cm_lookup_pmkid_using_bssid() - lookup pmkid using bssid

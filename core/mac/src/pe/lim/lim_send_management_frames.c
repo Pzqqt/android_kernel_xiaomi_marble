@@ -2187,15 +2187,16 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	uint32_t ie_offset = 0;
 	uint8_t *p_ext_cap = NULL;
 	tDot11fIEExtCap bcn_ext_cap;
-	uint8_t *bcn_ie = NULL;
+	uint8_t *bcn_ie = NULL, *fils_hlp_ie = NULL;
 	uint32_t bcn_ie_len = 0;
 	uint32_t aes_block_size_len = 0;
 	enum rateid min_rid = RATEID_DEFAULT;
 	uint8_t *mbo_ie = NULL, *adaptive_11r_ie = NULL, *vendor_ies = NULL;
 	uint8_t mbo_ie_len = 0, adaptive_11r_ie_len = 0, rsnx_ie_len = 0;
 	uint8_t mscs_ext_ie_len = 0;
-	bool bss_mfp_capable;
+	bool bss_mfp_capable, frag_ie_present = false;
 	int8_t peer_rssi = 0;
+	uint16_t fils_hlp_ie_len = 0;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -2537,6 +2538,43 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (lim_is_fils_connection(pe_session)) {
 		populate_dot11f_fils_params(mac_ctx, frm, pe_session);
 		aes_block_size_len = AES_BLOCK_SIZE;
+		if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_FRAGMENT,
+					     add_ie, add_ie_len))
+			frag_ie_present = true;
+	}
+
+	/* Strip and append HLP container IE only if it is fragmented */
+	if (frag_ie_present &&
+	    wlan_get_ext_ie_ptr_from_ext_id(SIR_FILS_HLP_OUI_TYPE,
+					    SIR_FILS_HLP_OUI_LEN, add_ie,
+					    add_ie_len)) {
+		fils_hlp_ie = qdf_mem_malloc(SIR_FILS_HLP_IE_LEN);
+		if (!fils_hlp_ie)
+			goto end;
+
+		qdf_status =
+			lim_strip_ie(mac_ctx, add_ie, &add_ie_len,
+				     WLAN_ELEMID_EXTN_ELEM, ONE_BYTE,
+				     SIR_FILS_HLP_OUI_TYPE,
+				     SIR_FILS_HLP_OUI_LEN, fils_hlp_ie,
+				     SIR_FILS_HLP_IE_LEN - 2);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			pe_err("Failed to strip FILS HLP container IE");
+			goto end;
+		}
+		fils_hlp_ie_len = fils_hlp_ie[1] + 2;
+
+		current_len = add_ie_len;
+		qdf_status =
+			lim_strip_ie(mac_ctx, add_ie, &add_ie_len,
+				     WLAN_ELEMID_FRAGMENT, ONE_BYTE,
+				     NULL, 0, &fils_hlp_ie[fils_hlp_ie_len],
+				     SIR_FILS_HLP_IE_LEN - fils_hlp_ie_len - 2);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			pe_err("Failed to strip fragment IE of HLP container IE");
+			goto end;
+		}
+		fils_hlp_ie_len += current_len - add_ie_len;
 	}
 
 	/* RSNX IE for SAE PWE derivation based on H2E */
@@ -2677,7 +2715,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + aes_block_size_len +
 		rsnx_ie_len + mbo_ie_len + adaptive_11r_ie_len +
-		mscs_ext_ie_len + vendor_ie_len;
+		mscs_ext_ie_len + vendor_ie_len + fils_hlp_ie_len;
 
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				(void **)&packet);
@@ -2715,6 +2753,12 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		goto end;
 	} else if (DOT11F_WARNED(status)) {
 		pe_warn("Assoc request pack warning (0x%08x)", status);
+	}
+
+	if (fils_hlp_ie && fils_hlp_ie_len) {
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+			     fils_hlp_ie, fils_hlp_ie_len);
+		payload = payload + fils_hlp_ie_len;
 	}
 
 	if (rsnx_ie && rsnx_ie_len) {
@@ -2820,6 +2864,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 end:
+	qdf_mem_free(fils_hlp_ie);
 	qdf_mem_free(rsnx_ie);
 	qdf_mem_free(vendor_ies);
 	qdf_mem_free(mbo_ie);

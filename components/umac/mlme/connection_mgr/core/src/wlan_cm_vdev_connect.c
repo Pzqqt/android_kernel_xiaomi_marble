@@ -1368,7 +1368,7 @@ static void cm_process_connect_complete(struct wlan_objmgr_psoc *psoc,
 	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE)) {
 		mlme_debug("Update the MDID in PMK cache for FT-SAE case");
-		cm_update_pmk_cache_ft(psoc, vdev_id);
+		cm_update_pmk_cache_ft(psoc, vdev_id, NULL);
 	}
 
 	cm_update_owe_info(vdev, rsp, vdev_id);
