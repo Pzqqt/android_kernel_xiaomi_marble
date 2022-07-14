@@ -72,6 +72,14 @@ static u8 const dp_pre_emp_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
 	{0x03, 0xFF, 0xFF, 0xFF}  /* pe3, 9.5 db */
 };
 
+/* Using Kailua PHY HPG settings based on HW team recommendations */
+static u8 const dp_pre_emp_hbr_rbr_v600[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
+	{0x00, 0x0D, 0x14, 0x1A}, /* pe0, 0 db */
+	{0x00, 0x0E, 0x15, 0xFF}, /* pe1, 3.5 db */
+	{0x00, 0x0E, 0xFF, 0xFF}, /* pe2, 6.0 db */
+	{0x02, 0xFF, 0xFF, 0xFF}  /* pe3, 9.5 db */
+};
+
 static u8 const dp_swing_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
 	{0x08, 0x0F, 0x16, 0x1F}, /* sw0, 0.4v */
 	{0x11, 0x1E, 0x1F, 0xFF}, /* sw1, 0.6v */
@@ -268,7 +276,7 @@ static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
 	struct dp_catalog_private_v420 *catalog;
 	struct dp_io_data *io_data;
 	u8 value0, value1;
-	u32 version;
+	u32 version, phy_version;
 
 	if (!ctrl || !((v_level < MAX_VOLTAGE_LEVELS)
 		&& (p_level < MAX_PRE_EMP_LEVELS))) {
@@ -283,7 +291,7 @@ static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
 	io_data = catalog->io->dp_ahb;
 	version = dp_read(DP_HW_VERSION);
 	DP_DEBUG("version: 0x%x\n", version);
-
+	phy_version = dp_catalog_get_dp_phy_version(catalog->dpc);
 	/*
 	 * For DP controller versions >= 1.2.3
 	 */
@@ -291,6 +299,9 @@ static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
 		if (high) {
 			value0 = dp_swing_hbr2_hbr3[v_level][p_level];
 			value1 = dp_pre_emp_hbr2_hbr3[v_level][p_level];
+		} else if (phy_version >= 0x60000000) {
+			value0 = dp_swing_hbr_rbr[v_level][p_level];
+			value1 = dp_pre_emp_hbr_rbr_v600[v_level][p_level];
 		} else {
 			value0 = dp_swing_hbr_rbr[v_level][p_level];
 			value1 = dp_pre_emp_hbr_rbr[v_level][p_level];
