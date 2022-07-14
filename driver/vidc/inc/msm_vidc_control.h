@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _MSM_VIDC_CONTROL_H_
@@ -114,5 +115,7 @@ int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id, u32 *value);
 int msm_vidc_update_cap_value(struct msm_vidc_inst *inst, u32 cap,
 	s32 adjusted_val, const char *func);
+int msm_vidc_set_vui_timing_info(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
 
 #endif

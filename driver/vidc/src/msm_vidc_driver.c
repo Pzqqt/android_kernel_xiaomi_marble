@@ -89,7 +89,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{SLICE_INTERFACE,                "SLICE_INTERFACE"            },
 	{HEADER_MODE,                    "HEADER_MODE"                },
 	{PREPEND_SPSPPS_TO_IDR,          "PREPEND_SPSPPS_TO_IDR"      },
-	{DISABLE_VUI_TIMING_INFO,        "DISABLE_VUI_TIMING_INFO"    },
+	{VUI_TIMING_INFO,                "VUI_TIMING_INFO"            },
 	{META_SEQ_HDR_NAL,               "META_SEQ_HDR_NAL"           },
 	{WITHOUT_STARTCODE,              "WITHOUT_STARTCODE"          },
 	{NAL_LENGTH_FIELD,               "NAL_LENGTH_FIELD"           },
