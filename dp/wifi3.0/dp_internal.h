@@ -3066,6 +3066,65 @@ void dp_rx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
 			      nbuf, status, QDF_RX_DATA_PKT);
 	}
 }
+
+/*
+ * dp_rx_err_send_pktlog() - send rx error packet log
+ * @soc: soc handle
+ * @pdev: pdev handle
+ * @mpdu_desc_info: MPDU descriptor info
+ * @nbuf: nbuf
+ * @status: status of rx packet
+ * @set_pktlen: weither to set packet length
+ *
+ * This API should only be called when we have not removed
+ * Rx TLV from head, and head is pointing to rx_tlv
+ *
+ * This function is used to send rx packet from erro path
+ * for logging for which rx packet tlv is not removed.
+ *
+ * Return: None
+ *
+ */
+static inline
+void dp_rx_err_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
+			   struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+			   qdf_nbuf_t nbuf, enum qdf_dp_tx_rx_status status,
+			   bool set_pktlen)
+{
+	ol_txrx_pktdump_cb packetdump_cb = pdev->dp_rx_packetdump_cb;
+	qdf_size_t skip_size;
+	uint16_t msdu_len, nbuf_len;
+	uint8_t *rx_tlv_hdr;
+	struct hal_rx_msdu_metadata msdu_metadata;
+
+	if (qdf_unlikely(packetdump_cb)) {
+		rx_tlv_hdr = qdf_nbuf_data(nbuf);
+		nbuf_len = hal_rx_msdu_start_msdu_len_get(soc->hal_soc,
+							  rx_tlv_hdr);
+		hal_rx_msdu_metadata_get(soc->hal_soc, rx_tlv_hdr,
+					 &msdu_metadata);
+
+		if (mpdu_desc_info->bar_frame ||
+		    (mpdu_desc_info->mpdu_flags & HAL_MPDU_F_FRAGMENT))
+			skip_size = soc->rx_pkt_tlv_size;
+		else
+			skip_size = soc->rx_pkt_tlv_size +
+					msdu_metadata.l3_hdr_pad;
+
+		if (set_pktlen) {
+			msdu_len = nbuf_len + skip_size;
+			qdf_nbuf_set_pktlen(nbuf, qdf_min(msdu_len,
+					    (uint16_t)RX_DATA_BUFFER_SIZE));
+		}
+
+		qdf_nbuf_pull_head(nbuf, skip_size);
+		packetdump_cb((ol_txrx_soc_handle)soc, pdev->pdev_id,
+			      QDF_NBUF_CB_RX_VDEV_ID(nbuf),
+			      nbuf, status, QDF_RX_DATA_PKT);
+		qdf_nbuf_push_head(nbuf, skip_size);
+	}
+}
+
 #else
 static inline
 void dp_tx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
@@ -3077,6 +3136,14 @@ void dp_tx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
 static inline
 void dp_rx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
 		       qdf_nbuf_t nbuf, enum qdf_dp_tx_rx_status status)
+{
+}
+
+static inline
+void dp_rx_err_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
+			   struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+			   qdf_nbuf_t nbuf, enum qdf_dp_tx_rx_status status,
+			   bool set_pktlen)
 {
 }
 #endif

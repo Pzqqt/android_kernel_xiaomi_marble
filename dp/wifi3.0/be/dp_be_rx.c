@@ -585,8 +585,6 @@ done:
 		tid_stats =
 		&rx_pdev->stats.tid_stats.tid_rx_stats[reo_ring_num][tid];
 
-		dp_rx_send_pktlog(soc, rx_pdev, nbuf, QDF_TX_RX_STATUS_OK);
-
 		/*
 		 * Check if DMA completed -- msdu_done is the last bit
 		 * to be written
@@ -674,6 +672,8 @@ done:
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
 			dp_rx_skip_tlvs(soc, nbuf, msdu_metadata.l3_hdr_pad);
 		}
+
+		dp_rx_send_pktlog(soc, rx_pdev, nbuf, QDF_TX_RX_STATUS_OK);
 
 		/*
 		 * process frame for mulitpass phrase processing
