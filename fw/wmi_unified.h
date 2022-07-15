@@ -35040,6 +35040,21 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_mlo_config_cmd_fixed_param */
     wmi_mac_addr partner_link_addr; /* Assigned link address which can be used as self link addr when vdev is not created */
+
+    A_UINT32 vdev_id;
+
+    /*
+     * Configure max number of link mlo connection supports.
+     * Invalid value or 0 will use max supported value by fw.
+     */
+    A_UINT32 support_link_num;
+
+    /*
+     * Bit 0: 2G band support if 1
+     * Bit 1: 5G band support if 1
+     * Bit 2: 6G band support if 1
+     */
+    A_UINT32 support_link_band; /* Configure the band bitmap of mlo connection supports. */
 } wmi_roam_mlo_config_cmd_fixed_param;
 
 typedef struct {
