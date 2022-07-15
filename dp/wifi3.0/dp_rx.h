@@ -459,7 +459,7 @@ struct dp_rx_desc *dp_get_rx_desc_from_cookie(struct dp_soc *soc,
 	struct rx_desc_pool *rx_desc_pool;
 	union dp_rx_desc_list_elem_t *rx_desc_elem;
 
-	if (qdf_unlikely(pool_id >= MAX_RXDESC_POOLS))
+	if (qdf_unlikely(pool_id >= MAX_PDEV_CNT))
 		return NULL;
 
 	rx_desc_pool = &pool[pool_id];
