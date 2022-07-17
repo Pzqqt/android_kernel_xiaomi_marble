@@ -542,6 +542,20 @@ static int joycon_send_subcmd(struct joycon_ctlr *ctlr,
 	return ret;
 }
 
+/* Supply nibbles for flash and on. Ones correspond to active */
+static int joycon_set_player_leds(struct joycon_ctlr *ctlr, u8 flash, u8 on)
+{
+	struct joycon_subcmd_request *req;
+	u8 buffer[sizeof(*req) + 1] = { 0 };
+
+	req = (struct joycon_subcmd_request *)buffer;
+	req->subcmd_id = JC_SUBCMD_SET_PLAYER_LIGHTS;
+	req->data[0] = (flash << 4) | on;
+
+	hid_dbg(ctlr->hdev, "setting player leds\n");
+	return joycon_send_subcmd(ctlr, req, 1, HZ/4);
+}
+
 static const u16 DFLT_STICK_CAL_CEN = 2000;
 static const u16 DFLT_STICK_CAL_MAX = 3500;
 static const u16 DFLT_STICK_CAL_MIN = 500;
@@ -1072,6 +1086,7 @@ static DEFINE_MUTEX(joycon_input_num_mutex);
 static int joycon_input_create(struct joycon_ctlr *ctlr)
 {
 	struct hid_device *hdev;
+	static int input_num = 1;
 	const char *name;
 	int ret;
 	int i;
@@ -1175,6 +1190,17 @@ static int joycon_input_create(struct joycon_ctlr *ctlr)
 	ret = input_register_device(ctlr->input);
 	if (ret)
 		return ret;
+
+	/* Set the default controller player leds based on controller number */
+	mutex_lock(&joycon_input_num_mutex);
+	mutex_lock(&ctlr->output_mutex);
+	ret = joycon_set_player_leds(ctlr, 0, 0xF >> (4 - input_num));
+	if (ret)
+		hid_warn(ctlr->hdev, "Failed to set leds; ret=%d\n", ret);
+	mutex_unlock(&ctlr->output_mutex);
+	if (++input_num > 4)
+		input_num = 1;
+	mutex_unlock(&joycon_input_num_mutex);
 
 	return 0;
 }
