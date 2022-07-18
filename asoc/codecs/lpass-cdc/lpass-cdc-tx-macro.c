@@ -128,6 +128,7 @@ struct lpass_cdc_tx_macro_priv {
 	int tx_mclk_users;
 	bool dapm_mclk_enable;
 	struct mutex mclk_lock;
+	struct mutex wlock;
 	struct snd_soc_component *component;
 	struct hpf_work tx_hpf_work[NUM_DECIMATORS];
 	struct tx_mute_work tx_mute_dwork[NUM_DECIMATORS];
@@ -146,7 +147,31 @@ struct lpass_cdc_tx_macro_priv {
 	bool hs_slow_insert_complete;
 	int pcm_rate[NUM_DECIMATORS];
 	bool swr_dmic_enable;
+	int wlock_holders;
 };
+
+static int lpass_cdc_tx_macro_wake_enable(struct lpass_cdc_tx_macro_priv *tx_priv,
+					bool wake_enable)
+{
+	int ret = 0;
+
+	mutex_lock(&tx_priv->wlock);
+	if (wake_enable) {
+		if (tx_priv->wlock_holders++ == 0) {
+			dev_dbg(tx_priv->dev, "%s: pm wake\n", __func__);
+			pm_stay_awake(tx_priv->dev);
+		}
+	} else {
+		if (--tx_priv->wlock_holders == 0) {
+			dev_dbg(tx_priv->dev, "%s: pm release\n", __func__);
+			pm_relax(tx_priv->dev);
+		}
+		if (tx_priv->wlock_holders < 0)
+			tx_priv->wlock_holders = 0;
+	}
+	mutex_unlock(&tx_priv->wlock);
+	return ret;
+}
 
 static bool lpass_cdc_tx_macro_get_data(struct snd_soc_component *component,
 			      struct device **tx_dev,
@@ -430,6 +455,7 @@ static void lpass_cdc_tx_macro_tx_hpf_corner_freq_callback(struct work_struct *w
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x02, 0x00);
 	}
+	lpass_cdc_tx_macro_wake_enable(tx_priv, 0);
 }
 
 static void lpass_cdc_tx_macro_mute_update_callback(struct work_struct *work)
@@ -453,6 +479,7 @@ static void lpass_cdc_tx_macro_mute_update_callback(struct work_struct *work)
 	snd_soc_component_update_bits(component, tx_vol_ctl_reg, 0x10, 0x00);
 	dev_dbg(tx_priv->dev, "%s: decimator %u unmute\n",
 		__func__, decimator);
+	lpass_cdc_tx_macro_wake_enable(tx_priv, 0);
 }
 
 static int lpass_cdc_tx_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
@@ -940,12 +967,14 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		if (tx_unmute_delay < unmute_delay)
 			tx_unmute_delay = unmute_delay;
+		lpass_cdc_tx_macro_wake_enable(tx_priv, 1);
 		/* schedule work queue to Remove Mute */
 		queue_delayed_work(system_freezable_wq,
 				   &tx_priv->tx_mute_dwork[decimator].dwork,
 				   msecs_to_jiffies(tx_unmute_delay));
 		if (tx_priv->tx_hpf_work[decimator].hpf_cut_off_freq !=
 							CF_MIN_3DB_150HZ) {
+			lpass_cdc_tx_macro_wake_enable(tx_priv, 1);
 			queue_delayed_work(system_freezable_wq,
 				&tx_priv->tx_hpf_work[decimator].dwork,
 				msecs_to_jiffies(hpf_delay));
@@ -1010,8 +1039,10 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 						0x03, 0x01);
 			}
 		}
+		lpass_cdc_tx_macro_wake_enable(tx_priv, 0);
 		cancel_delayed_work_sync(
 				&tx_priv->tx_mute_dwork[decimator].dwork);
+		lpass_cdc_tx_macro_wake_enable(tx_priv, 0);
 
 		if (snd_soc_component_read(component, adc_mux_reg)
 						& SWR_MIC)
@@ -2042,6 +2073,7 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 	}
 	tx_priv->tx_io_base = tx_io_base;
 	tx_priv->swr_dmic_enable = false;
+	tx_priv->wlock_holders = 0;
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {
@@ -2056,6 +2088,7 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 	}
 
 	mutex_init(&tx_priv->mclk_lock);
+	mutex_init(&tx_priv->wlock);
 	lpass_cdc_tx_macro_init_ops(&ops, tx_io_base);
 	ops.clk_id_req = TX_CORE_CLK;
 	ops.default_clk_id = TX_CORE_CLK;
@@ -2074,6 +2107,7 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 	return 0;
 err_reg_macro:
 	mutex_destroy(&tx_priv->mclk_lock);
+	mutex_destroy(&tx_priv->wlock);
 	return ret;
 }
 
@@ -2089,6 +2123,7 @@ static int lpass_cdc_tx_macro_remove(struct platform_device *pdev)
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	mutex_destroy(&tx_priv->mclk_lock);
+	mutex_destroy(&tx_priv->wlock);
 	lpass_cdc_unregister_macro(&pdev->dev, TX_MACRO);
 	return 0;
 }
