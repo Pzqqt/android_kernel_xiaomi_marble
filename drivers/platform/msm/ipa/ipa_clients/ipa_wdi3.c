@@ -70,6 +70,7 @@ struct ipa_wdi_context {
 #ifdef IPA_WAN_MSG_IPv6_ADDR_GW_LEN
 	ipa_wdi_meter_notifier_cb wdi_notify;
 #endif
+	bool ast_update;
 };
 
 static struct ipa_wdi_context *ipa_wdi_ctx_list[IPA_WDI_INST_MAX];
@@ -231,6 +232,7 @@ static int ipa_wdi_init_per_inst_internal(struct ipa_wdi_init_in_params *in,
 
 	ipa_wdi_ctx_list[hdl]->inst_id = in->inst_id;
 	ipa_wdi_ctx_list[hdl]->wdi_version = in->wdi_version;
+	ipa_wdi_ctx_list[hdl]->ast_update = in->ast_update;
 	uc_ready_params.notify = in->notify;
 	uc_ready_params.priv = in->priv;
 
@@ -538,7 +540,8 @@ static int ipa_wdi_conn_pipes_per_inst_internal(struct ipa_wdi_conn_in_params *i
 	}
 	IPA_WDI_DBG("PM handle Registered\n");
 	if (ipa_wdi_ctx_list[in->hdl]->wdi_version == IPA_WDI_3) {
-		if (ipa3_conn_wdi3_pipes(in, out, ipa_wdi_ctx_list[in->hdl]->wdi_notify)) {
+		if (ipa3_conn_wdi3_pipes(in, out, ipa_wdi_ctx_list[in->hdl]->wdi_notify,
+			ipa_wdi_ctx_list[in->hdl]->ast_update)) {
 			IPA_WDI_ERR("fail to setup wdi pipes\n");
 			ret = -EFAULT;
 			goto fail_connect_pipe;

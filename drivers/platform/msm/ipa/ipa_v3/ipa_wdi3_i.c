@@ -65,7 +65,8 @@ static void ipa3_wdi3_gsi_chan_err_cb(struct gsi_chan_err_notify *notify)
 static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 	struct ipa_wdi_pipe_setup_info *info,
 	struct ipa_wdi_pipe_setup_info_smmu *info_smmu, u8 dir,
-	struct ipa3_ep_context *ep)
+	struct ipa3_ep_context *ep,
+	bool ast_update)
 {
 	struct gsi_evt_ring_props gsi_evt_ring_props;
 	struct gsi_chan_props gsi_channel_props;
@@ -82,7 +83,8 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 	}
 	/* setup event ring */
 	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));
-	gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_WDI3_EV;
+	gsi_evt_ring_props.intf = (ast_update) ? GSI_EVT_CHTYPE_WDI3M_EV :
+		GSI_EVT_CHTYPE_WDI3_EV;
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_9) {
 		gsi_evt_ring_props.intr = GSI_INTR_MSI;
 		/* 32 (for Tx) and 8 (for Rx) */
@@ -167,7 +169,8 @@ static int ipa3_setup_wdi3_gsi_channel(u8 is_smmu_enabled,
 
 	/* setup channel ring */
 	memset(&gsi_channel_props, 0, sizeof(gsi_channel_props));
-	gsi_channel_props.prot = GSI_CHAN_PROT_WDI3;
+	gsi_channel_props.prot = (ast_update) ? GSI_CHAN_PROT_WDI3M :
+		GSI_CHAN_PROT_WDI3;
 	if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR) ||
 		(dir == IPA_WDI3_TX2_DIR))
 		gsi_channel_props.dir = GSI_CHAN_DIR_FROM_GSI;
@@ -539,7 +542,8 @@ fail_smmu_mapping:
 
 int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 	struct ipa_wdi_conn_out_params *out,
-	ipa_wdi_meter_notifier_cb wdi_notify)
+	ipa_wdi_meter_notifier_cb wdi_notify,
+	bool ast_update)
 {
 	enum ipa_client_type rx_client;
 	enum ipa_client_type tx_client;
@@ -641,6 +645,8 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 		return -EFAULT;
 	}
 	ep_rx->client_notify = in->notify;
+	ep_rx->ast_update = ast_update;
+	ep_rx->ast_notify = in->ast_notify;
 	ep_rx->priv = in->priv;
 
 	if (in->is_smmu_enabled == false)
@@ -662,7 +668,7 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 
 	if (ipa3_setup_wdi3_gsi_channel(in->is_smmu_enabled,
 		&in->u_rx.rx, &in->u_rx.rx_smmu, rx_dir,
-		ep_rx)) {
+		ep_rx, ast_update)) {
 		IPAERR("fail to setup wdi3 gsi rx channel\n");
 		result = -EFAULT;
 		goto fail;
@@ -716,7 +722,7 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 
 	if (ipa3_setup_wdi3_gsi_channel(in->is_smmu_enabled,
 		&in->u_tx.tx, &in->u_tx.tx_smmu, tx_dir,
-		ep_tx)) {
+		ep_tx, ast_update)) {
 		IPAERR("fail to setup wdi3 gsi tx channel\n");
 		result = -EFAULT;
 		goto fail;
@@ -817,7 +823,7 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 		/* setup TX1 gsi channel */
 		if (ipa3_setup_wdi3_gsi_channel(in->is_smmu_enabled,
 			&in->u_tx1.tx, &in->u_tx1.tx_smmu, IPA_WDI3_TX1_DIR,
-			ep_tx1)) {
+			ep_tx1, ast_update)) {
 			IPAERR("fail to setup wdi3 gsi tx1 channel\n");
 			result = -EFAULT;
 			goto fail;

@@ -19,6 +19,7 @@
 
 #define RX_METADATA_SIZE 4
 #define PACKET_HEADER_SIZE 220
+#define PACKET_HEADER_SIZE_M 384
 #define ETH_PACKET_SIZE 4
 #define PACKET_CONTENT 0x12345678
 
@@ -58,9 +59,13 @@ struct ipa_test_wdi3_context {
 	dma_addr_t tx_uc_db_pa;
 	dma_addr_t tx1_uc_db_pa;
 	dma_addr_t rx_uc_db_pa;
+	struct completion xfer_done;
+	u32 num_packets;
+	u32 pkt_idx;
 };
 
 static struct ipa_test_wdi3_context *test_wdi3_ctx;
+static struct ipa_test_wdi3_context *test_wdi3m_ctx;
 
 struct buffer_addr_info {
 	u32 buffer_addr_low;
@@ -104,6 +109,119 @@ struct tx_event_ring_ele {
 	u32 ring_id : 8;
 	u32 looping_count : 4;
 } __packed;
+
+struct rx_attention_tlv {
+     u8 rsvd[16];
+};
+
+struct rx_tlv_from_ipa{
+	u32 tcp_udp_chksum 				 : 16, //[15:0]
+			 sa_idx_timeout 				 :	1, //[16]
+			 da_idx_timeout 				 :	1, //[17]
+			 msdu_limit_error				 :	1, //[18]
+			 flow_idx_timeout				 :	1, //[19]
+			 flow_idx_invalid				 :	1, //[20]
+			 wifi_parser_error				 :	1, //[21]
+			 amsdu_parser_error 			 :	1, //[22]
+			 sa_is_valid					 :	1, //[23]
+			 da_is_valid					 :	1, //[24]
+			 da_is_mcbc 					 :	1, //[25]
+			 l3_header_padding				 :	2, //[27:26]
+			 first_msdu 					 :	1, //[28]
+			 last_msdu						 :	1, //[29]
+			 reserved_10a					 :	2; //[31:30]
+	u32 sa_idx 						 : 16, //[15:0]
+			 da_idx_or_sw_peer_id			 : 16; //[31:16]
+	u32 msdu_drop						 :	1, //[0]
+			 reo_destination_indication 	 :	5, //[5:1]
+			 flow_idx						 : 20, //[25:6]
+			 reserved_12a					 :	6; //[31:26]
+	u32 fse_metadata					 : 32; //[31:0]
+	u32 cce_metadata					 : 16, //[15:0]
+			 sa_sw_peer_id					 : 16; //[31:16]
+	u32 aggregation_count				 :	8, //[7:0]
+			 flow_aggregation_continuation	 :	1, //[8]
+			 fisa_timeout					 :	1, //[9]
+			 reserved_15a					 : 22; //[31:10]
+	u32 cumulative_l4_checksum 		 : 16, //[15:0]
+			 cumulative_ip_length			 : 16; //[31:16]
+	struct rx_attention_tlv attn;
+	u32 rsvd[44];
+	u32 MAC_ADDR_AD4_VALID;
+}__packed;
+
+struct rx_msdu_end {
+	u8 rsvd[40];
+	u32 tcp_udp_chksum 				 : 16, //[15:0]
+			 sa_idx_timeout 				 :	1, //[16]
+			 da_idx_timeout 				 :	1, //[17]
+			 msdu_limit_error				 :	1, //[18]
+			 flow_idx_timeout				 :	1, //[19]
+			 flow_idx_invalid				 :	1, //[20]
+			 wifi_parser_error				 :	1, //[21]
+			 amsdu_parser_error 			 :	1, //[22]
+			 sa_is_valid					 :	1, //[23]
+			 da_is_valid					 :	1, //[24]
+			 da_is_mcbc 					 :	1, //[25]
+			 l3_header_padding				 :	2, //[27:26]
+			 first_msdu 					 :	1, //[28]
+			 last_msdu						 :	1, //[29]
+			 reserved_10a					 :	2; //[31:30]
+	u32 sa_idx 						 : 16, //[15:0]
+			 da_idx_or_sw_peer_id			 : 16; //[31:16]
+	u32 msdu_drop						 :	1, //[0]
+			 reo_destination_indication 	 :	5, //[5:1]
+			 flow_idx						 : 20, //[25:6]
+			 reserved_12a					 :	6; //[31:26]
+	u32 fse_metadata					 : 32; //[31:0]
+	u32 cce_metadata					 : 16, //[15:0]
+			 sa_sw_peer_id					 : 16; //[31:16]
+	u32 aggregation_count				 :	8, //[7:0]
+			 flow_aggregation_continuation	 :	1, //[8]
+			 fisa_timeout					 :	1, //[9]
+			 reserved_15a					 : 22; //[31:10]
+	u32 cumulative_l4_checksum 		 : 16, //[15:0]
+			 cumulative_ip_length			 : 16; //[31:16]
+}__packed;
+
+struct rx_mpdu_start {
+	u8 rsvd[44];
+	u32 MAC_ADDR_AD4_VALID;
+	u8 rsvd1[44];
+}__packed;
+
+struct rx_msdu_end_tlv {
+    u32 tag;
+    struct rx_msdu_end rx_msdu_end;
+};
+
+struct rx_mpdu_start_tlv {
+    u32 tag;
+    struct rx_mpdu_start rx_mpdu_start;
+};
+
+struct rx_msdu_start_tlv {
+    u8 rsvd[44];
+};
+
+struct rx_mpdu_end_tlv {
+    u8 rsvd[28];
+};
+
+struct rx_pkt_hdr_tlv {
+    u32 tag;                           /* 4 B */
+    u32 phy_ppdu_id;                   /* 4 B */
+    char rx_pkt_hdr[120];    /* 120 B */
+};
+
+struct rx_pkt_tlvs {
+    struct rx_msdu_end_tlv   msdu_end_tlv;
+    struct rx_attention_tlv  attn_tlv;
+    struct rx_mpdu_start_tlv mpdu_start_tlv;
+    struct rx_msdu_start_tlv msdu_start_tlv;
+    struct rx_mpdu_end_tlv   mpdu_end_tlv;
+    struct rx_pkt_hdr_tlv    pkt_hdr_tlv;
+};
 
 struct rx_mpdu_desc_info {
 	u32 msdu_count : 8;
@@ -493,6 +611,7 @@ static int ipa_test_wdi3_suite_setup(void **priv)
 	IPA_UT_DBG("Start WDI3 Setup\n");
 
 	/* init ipa wdi ctx */
+	memset(&in, 0, sizeof(in));
 	in.wdi_notify = NULL;
 	in.notify = NULL;
 	in.priv = NULL;
@@ -2402,6 +2521,908 @@ static int ipa_wdi3_test_multi_transfer3_2g_5g(void *priv)
 	return 0;
 }
 
+static void ast_notify_cb(void *priv, unsigned long data)
+{
+	struct ipa_ast_info_type *ast_info = (struct ipa_ast_info_type *)data;
+
+	if (ast_info == NULL)
+	{
+		IPA_UT_ERR("Invalid AST info.\n");
+		return;
+	}
+
+	IPA_UT_DBG("-----Print AST info----\n");
+	IPA_UT_DBG("mac_addr_ad4_valid = %d, sa_valid = %d, first_msdu_in_mpdu_flag=%d, sa_idx=%d, sa_peer_id=%d, ta_peer_id=%d\n",
+		ast_info->mac_addr_ad4_valid, ast_info->sa_valid, ast_info->first_msdu_in_mpdu_flag, ast_info->sa_idx, ast_info->sa_peer_id,
+		ast_info->ta_peer_id);
+	IPA_UT_DBG("-----Print AST info Done----\n");
+	return;
+}
+
+
+/**
+ * ipa_wdi3m_ipa_packet_receive_notify() - Rx notify
+ *
+ * @priv: driver context
+ * @evt: event type
+ * @data: data provided with event
+ *
+ * IPA will pass a packet to the Linux network stack with skb->data
+ */
+static void ipa_wdi3m_ipa_packet_receive_notify(void *priv,
+		enum ipa_dp_evt_type evt,
+		unsigned long data)
+{
+	u32 *packet_recv = NULL;
+
+	if (evt == IPA_RECEIVE) {
+		struct sk_buff *skb = (struct sk_buff *)data;
+		IPA_UT_DBG("SKB received, free it.\n");
+		packet_recv = (u32 *)skb->data;
+		IPA_UT_DBG("packet_recv addr: %pK\n", packet_recv);
+		if (*packet_recv != multi_pkt_array[test_wdi3m_ctx->pkt_idx]) {
+			IPA_UT_ERR("recv packet doesn't match.\n");
+			IPA_UT_ERR("packet: %d packet_recv: %d\n", PACKET_CONTENT,
+				*packet_recv);
+		} else {
+			if (test_wdi3m_ctx->num_packets == 1)
+				complete(&test_wdi3m_ctx->xfer_done);
+		}
+		test_wdi3m_ctx->pkt_idx++;
+		test_wdi3m_ctx->num_packets--;
+		dev_kfree_skb_any(skb);
+	}
+}
+
+static int ipa_wdi3m_send_multi_packet(void)
+{
+	void __iomem *rx_uc_db;
+	u32 *tx_event_ring_db, *rx_transfer_ring_db, *rx_event_ring_db;
+	u32 orig_tx_event_ring_db;
+	u32 orig_rx_event_ring_db;
+	u32 *packet;
+	struct rx_transfer_ring_ele *rx_transfer;
+	struct rx_event_ring_ele *rx_event;
+	struct buffer_addr_info rx_buf;
+	int loop_cnt, i, num_words;
+	int idx;
+	struct rx_pkt_tlvs *pkt_tlvs = NULL;
+	int completed;
+
+	/* populate packet content */
+	/* Init completion event. */
+	init_completion(&test_wdi3m_ctx->xfer_done);
+	num_words = sizeof(struct rx_transfer_ring_ele) / 4;
+	test_wdi3m_ctx->num_packets = NUM_MULTI_PKT;
+	test_wdi3m_ctx->pkt_idx = 0;
+	rx_uc_db = ioremap(test_wdi3m_ctx->rx_uc_db_pa, DB_REGISTER_SIZE);
+	for (i = 0; i < NUM_MULTI_PKT; i++) {
+		idx = rx_uc_db_local / num_words;
+		/* Populate TLV content. */
+		pkt_tlvs = (struct rx_pkt_tlvs *)test_wdi3m_ctx->rx_bufs[rx_bf_idx].base;
+		pkt_tlvs->msdu_end_tlv.rx_msdu_end.sa_is_valid = (i%2 == 0) ? 1 : 0;
+		pkt_tlvs->msdu_end_tlv.rx_msdu_end.sa_idx = 10+i;
+		pkt_tlvs->msdu_end_tlv.rx_msdu_end.sa_sw_peer_id = 25+i;
+		pkt_tlvs->mpdu_start_tlv.rx_mpdu_start.MAC_ADDR_AD4_VALID = (i%2 == 1) ? (1 << 5) : 0;
+		/* populate packet content */
+		packet = (u32 *)test_wdi3m_ctx->rx_bufs[rx_bf_idx].base
+			+ PACKET_HEADER_SIZE_M / 4;
+		*packet = multi_pkt_array[i];
+		IPA_UT_DBG("rx_db_local: %u rx_bf_idx: %d\n",
+			rx_uc_db_local, rx_bf_idx);
+		rx_bf_idx = (rx_bf_idx  + 1) % NUM_RX_BUFS;
+		/* update rx_transfer_ring_ele */
+		rx_transfer = (struct rx_transfer_ring_ele *)
+			test_wdi3m_ctx->rx_transfer_ring_addr.base + idx;
+		ipa_test_wdi3_advance_uc_db(&rx_uc_db_local, 1,
+			sizeof(struct rx_transfer_ring_ele)/4,
+			test_wdi3m_ctx->rx_transfer_ring_addr.size);
+		rx_transfer->rx_msdu_desc_info_details.msdu_length =
+			ETH_PACKET_SIZE + PACKET_HEADER_SIZE_M;
+		rx_transfer->rx_mpdu_desc_info_details.peer_meta_data = 100+i;
+		rx_transfer->rx_msdu_desc_info_details.first_msdu_in_mpdu_flag = (i%2 == 0) ? 1 : 0;
+		rx_buf.buffer_addr_low =
+		rx_transfer->buf_or_link_desc_addr_info.buffer_addr_low;
+		rx_buf.buffer_addr_high =
+		rx_transfer->buf_or_link_desc_addr_info.buffer_addr_high;
+	}
+
+	tx_event_ring_db = (u32 *)test_wdi3m_ctx->tx_event_ring_db.base;
+	orig_tx_event_ring_db = *tx_event_ring_db;
+	IPA_UT_DBG("original tx event ring db: %u\n", orig_tx_event_ring_db);
+
+	rx_event_ring_db = (u32 *)test_wdi3m_ctx->rx_event_ring_db.base;
+	orig_rx_event_ring_db = *rx_event_ring_db;
+	IPA_UT_DBG("original rx event ring db: %u\n", orig_rx_event_ring_db);
+
+	rx_transfer_ring_db = (u32 *)test_wdi3m_ctx->rx_transfer_ring_db.base;
+	IPA_UT_DBG("original rx transfer ring db: %u\n", *rx_transfer_ring_db);
+
+	/* ring uc db */
+	iowrite32(rx_uc_db_local, rx_uc_db);
+	IPA_UT_DBG("rx db local: %u\n", rx_uc_db_local);
+
+	loop_cnt = 0;
+	while (*rx_transfer_ring_db != rx_uc_db_local ||
+		orig_rx_event_ring_db == *rx_event_ring_db) {
+		loop_cnt++;
+		IPA_UT_DBG("loop count: %d tx\n", loop_cnt);
+		IPA_UT_DBG("rx_transfer_ring_db: %u rx db local: %u\n",
+			*rx_transfer_ring_db, rx_uc_db_local);
+		IPA_UT_DBG("orig_rx_event_ring_db: %u rx_event_ring_db %u\n",
+			orig_rx_event_ring_db, *rx_event_ring_db);
+		if (loop_cnt == 1000) {
+			IPA_UT_ERR("transfer timeout!\n");
+			BUG();
+			return -EFAULT;
+		}
+		usleep_range(1000, 1001);
+	}
+
+	IPA_UT_DBG("rx_transfer_ring_db: %u\n", *rx_transfer_ring_db);
+	IPA_UT_DBG("tx_event_ring_db: %u\n", *tx_event_ring_db);
+	num_words = sizeof(struct rx_event_ring_ele)/4;
+	rx_event = (struct rx_event_ring_ele *)
+		test_wdi3m_ctx->rx_event_ring_addr.base +
+		(*rx_event_ring_db/num_words - 1 + NUM_RX_ER_ELE) %
+		NUM_RX_ER_ELE;
+	IPA_UT_DBG("rx_event va: %pK\n", rx_event);
+
+	IPA_UT_DBG("rx event low: %u rx event high: %u\n",
+		rx_event->buf_or_link_desc_addr_info.buffer_addr_low,
+		rx_event->buf_or_link_desc_addr_info.buffer_addr_high);
+	IPA_UT_DBG("rx buf low: %u rx buf high: %u\n",
+		rx_buf.buffer_addr_low, rx_buf.buffer_addr_high);
+
+	if (rx_event->buf_or_link_desc_addr_info.buffer_addr_low !=
+		rx_buf.buffer_addr_low ||
+		rx_event->buf_or_link_desc_addr_info.buffer_addr_high !=
+		rx_buf.buffer_addr_high) {
+		IPA_UT_ERR("rx event ring buf addr doesn't match.\n");
+		return -EFAULT;
+	}
+
+	completed = wait_for_completion_timeout(
+		&test_wdi3m_ctx->xfer_done, msecs_to_jiffies(1000));
+	if (!completed) {
+		IPA_UT_DBG("timeout waiting for packet\n");
+		return -EFAULT;
+	}
+
+	IPA_UT_INFO("recv packet matches.\n");
+
+	return 0;
+}
+
+
+static int ipa_wdi3m_send_one_packet(void)
+{
+	void __iomem *rx_uc_db;
+	u32 *tx_event_ring_db, *rx_transfer_ring_db, *rx_event_ring_db;
+	u32 orig_tx_event_ring_db;
+	u32 orig_rx_event_ring_db;
+	u32 orig_tx_trans_ring_db;
+	u32 *packet;
+	struct rx_transfer_ring_ele *rx_transfer;
+	struct rx_event_ring_ele *rx_event;
+	struct buffer_addr_info rx_buf;
+	struct rx_pkt_tlvs *pkt_tlvs = NULL;
+	int loop_cnt, num_words;
+	int idx;
+	int completed;
+
+	/* Init completion event. */
+	init_completion(&test_wdi3m_ctx->xfer_done);
+	test_wdi3m_ctx->num_packets = 1;
+	test_wdi3m_ctx->pkt_idx = 0;
+	rx_uc_db = ioremap(test_wdi3m_ctx->rx_uc_db_pa, DB_REGISTER_SIZE);
+	num_words = sizeof(struct rx_transfer_ring_ele) / 4;
+	idx = rx_uc_db_local / num_words;
+	/* Populate TLV content. */
+	pkt_tlvs = (struct rx_pkt_tlvs *)test_wdi3m_ctx->rx_bufs[rx_bf_idx].base;
+	pkt_tlvs->msdu_end_tlv.rx_msdu_end.sa_is_valid = 1;
+	pkt_tlvs->msdu_end_tlv.rx_msdu_end.sa_idx = 10;
+	pkt_tlvs->msdu_end_tlv.rx_msdu_end.sa_sw_peer_id = 25;
+	pkt_tlvs->mpdu_start_tlv.rx_mpdu_start.MAC_ADDR_AD4_VALID = 1 << 5;
+	/* populate packet content */
+	packet = (u32 *)test_wdi3m_ctx->rx_bufs[rx_bf_idx].base +
+		PACKET_HEADER_SIZE_M/4;
+	*packet = PACKET_CONTENT;
+	IPA_UT_DBG("local rx uc db: %u, rx buffer index %d\n",
+		rx_uc_db_local, rx_bf_idx);
+	rx_bf_idx = (rx_bf_idx  + 1) % NUM_RX_BUFS;
+	/* update rx_transfer_ring_ele */
+	rx_transfer = (struct rx_transfer_ring_ele *)
+		(test_wdi3m_ctx->rx_transfer_ring_addr.base) +
+		idx;
+
+	ipa_test_wdi3_advance_uc_db(&rx_uc_db_local, 1,
+		sizeof(struct rx_transfer_ring_ele)/4,
+		test_wdi3m_ctx->rx_transfer_ring_addr.size);
+	rx_transfer->rx_msdu_desc_info_details.msdu_length =
+		ETH_PACKET_SIZE + PACKET_HEADER_SIZE_M;
+	rx_transfer->rx_mpdu_desc_info_details.peer_meta_data = 100;
+	rx_transfer->rx_msdu_desc_info_details.first_msdu_in_mpdu_flag = 1;
+
+	rx_buf.buffer_addr_low =
+		rx_transfer->buf_or_link_desc_addr_info.buffer_addr_low;
+	rx_buf.buffer_addr_high =
+		rx_transfer->buf_or_link_desc_addr_info.buffer_addr_high;
+
+	tx_event_ring_db = (u32 *)test_wdi3m_ctx->tx_event_ring_db.base;
+	orig_tx_event_ring_db = *tx_event_ring_db;
+	IPA_UT_DBG("original tx event ring db: %u\n",
+		orig_tx_event_ring_db);
+
+	rx_event_ring_db = (u32 *)test_wdi3m_ctx->rx_event_ring_db.base;
+	orig_rx_event_ring_db = *rx_event_ring_db;
+	IPA_UT_DBG("original rx event ring db: %u\n",
+		orig_rx_event_ring_db);
+
+	rx_transfer_ring_db
+		= (u32 *)test_wdi3m_ctx->rx_transfer_ring_db.base;
+	orig_tx_trans_ring_db = *rx_transfer_ring_db;
+	IPA_UT_DBG("original rx transfer ring db: %u\n",
+		*rx_transfer_ring_db);
+
+	/* ring uc db */
+	iowrite32(rx_uc_db_local, rx_uc_db);
+	IPA_UT_DBG("rx db local: %u\n", rx_uc_db_local);
+
+	loop_cnt = 0;
+	while (*rx_event_ring_db == orig_rx_event_ring_db) {
+		loop_cnt++;
+		IPA_UT_DBG("loop count: %d tx\n", loop_cnt);
+		IPA_UT_DBG("rx_transfer_ring_db: %u rx db local: %u\n",
+			*rx_transfer_ring_db, rx_uc_db_local);
+		IPA_UT_DBG("orig_rx_event_ring_db: %u rx_event_ring_db %u\n",
+			orig_rx_event_ring_db, *rx_event_ring_db);
+		if (loop_cnt == 1000) {
+			IPA_UT_ERR("transfer timeout!\n");
+			gsi_wdi3_dump_register(1);
+			gsi_wdi3_dump_register(9);
+			BUG();
+			return -EFAULT;
+		}
+		usleep_range(1000, 1001);
+	}
+	IPA_UT_DBG("rx_transfer_ring_db: %u\n", *rx_transfer_ring_db);
+	IPA_UT_DBG("tx_event_ring_db: %u\n", *tx_event_ring_db);
+	num_words = sizeof(struct rx_event_ring_ele)/4;
+	rx_event = (struct rx_event_ring_ele *)
+		(test_wdi3m_ctx->rx_event_ring_addr.base) +
+		(*rx_event_ring_db/num_words - 1 + NUM_RX_ER_ELE) %
+		NUM_RX_ER_ELE;
+	IPA_UT_DBG("rx_event offset: %u\n",
+		(*rx_event_ring_db/num_words - 1 + NUM_RX_ER_ELE) %
+		NUM_RX_ER_ELE);
+	IPA_UT_DBG("rx_event va: %pK\n", rx_event);
+	IPA_UT_DBG("rx event low: %u rx event high: %u\n",
+		rx_event->buf_or_link_desc_addr_info.buffer_addr_low,
+		rx_event->buf_or_link_desc_addr_info.buffer_addr_high);
+	IPA_UT_DBG("rx buf low: %u rx buf high: %u\n",
+		rx_buf.buffer_addr_low, rx_buf.buffer_addr_high);
+	if (rx_event->buf_or_link_desc_addr_info.buffer_addr_low !=
+		rx_buf.buffer_addr_low ||
+		rx_event->buf_or_link_desc_addr_info.buffer_addr_high !=
+		rx_buf.buffer_addr_high) {
+		IPA_UT_ERR("rx event ring buf addr doesn't match.\n");
+		BUG();
+		return -EFAULT;
+	}
+
+	completed = wait_for_completion_timeout(
+		&test_wdi3m_ctx->xfer_done, msecs_to_jiffies(10));
+	if (!completed) {
+		IPA_UT_DBG("timeout waiting for packet\n");
+		return -EFAULT;
+	}
+
+	IPA_UT_INFO("recv packet matches!! Recycling the buffer ...\n");
+	return 0;
+}
+
+
+static int ipa_wdi3m_setup_pipes(void)
+{
+	struct ipa_wdi_conn_in_params *in_param;
+	struct ipa_wdi_conn_out_params *out_param;
+	struct tx_transfer_ring_ele *tx_transfer, *tx_transfer_base;
+	struct rx_transfer_ring_ele *rx_transfer;
+	void __iomem *rx_uc_db;
+	void __iomem *tx_uc_db;
+	int i, index;
+
+	if (!test_wdi3m_ctx) {
+		IPA_UT_ERR("context is empty.\n");
+		return -EFAULT;
+	}
+
+	in_param = kzalloc(sizeof(struct ipa_wdi_conn_in_params),
+		GFP_KERNEL);
+	if (!in_param) {
+		IPA_UT_ERR("failed to allocate in_param\n");
+		return -ENOMEM;
+	}
+
+	out_param = kzalloc(sizeof(struct ipa_wdi_conn_out_params),
+		GFP_KERNEL);
+	if (!out_param) {
+		IPA_UT_ERR("failed to allocate out_param\n");
+		kfree(in_param);
+		return -ENOMEM;
+	}
+
+	memset(in_param, 0, sizeof(struct ipa_wdi_conn_in_params));
+	memset(out_param, 0, sizeof(struct ipa_wdi_conn_out_params));
+
+	/* setup tx parameters */
+	in_param->is_tx1_used = false;
+	in_param->is_smmu_enabled = false;
+	in_param->u_tx.tx.client = IPA_CLIENT_WLAN2_CONS;
+	in_param->u_tx.tx.transfer_ring_base_pa =
+		test_wdi3m_ctx->tx_transfer_ring_addr.phys_base;
+	in_param->u_tx.tx.transfer_ring_size =
+		test_wdi3m_ctx->tx_transfer_ring_addr.size;
+	in_param->u_tx.tx.transfer_ring_doorbell_pa =
+		test_wdi3m_ctx->tx_transfer_ring_db.phys_base;
+
+	in_param->notify = ipa_wdi3m_ipa_packet_receive_notify;
+	in_param->ast_notify = ast_notify_cb;
+	in_param->u_tx.tx.event_ring_base_pa =
+		test_wdi3m_ctx->tx_event_ring_addr.phys_base;
+	in_param->u_tx.tx.event_ring_size =
+		test_wdi3m_ctx->tx_event_ring_addr.size;
+	in_param->u_tx.tx.event_ring_doorbell_pa =
+		test_wdi3m_ctx->tx_event_ring_db.phys_base;
+	IPA_UT_DBG("tx_event_ring_db.phys_base %llu\n",
+		test_wdi3m_ctx->tx_event_ring_db.phys_base);
+	IPA_UT_DBG("tx_event_ring_db.base %pK\n",
+		test_wdi3m_ctx->tx_event_ring_db.base);
+	IPA_UT_DBG("tx_event_ring.phys_base %llu\n",
+		test_wdi3m_ctx->tx_event_ring_addr.phys_base);
+	IPA_UT_DBG("tx_event_ring.base %pK\n",
+		test_wdi3m_ctx->tx_event_ring_addr.base);
+
+	in_param->u_tx.tx.num_pkt_buffers = NUM_TX_BUFS;
+
+	/* setup rx parameters */
+	in_param->u_rx.rx.client = IPA_CLIENT_WLAN2_PROD;
+	in_param->u_rx.rx.transfer_ring_base_pa =
+		test_wdi3m_ctx->rx_transfer_ring_addr.phys_base;
+	in_param->u_rx.rx.transfer_ring_size =
+		test_wdi3m_ctx->rx_transfer_ring_addr.size;
+	in_param->u_rx.rx.transfer_ring_doorbell_pa =
+		test_wdi3m_ctx->rx_transfer_ring_db.phys_base;
+	in_param->u_rx.rx.pkt_offset = PACKET_HEADER_SIZE_M;
+
+
+	in_param->u_rx.rx.event_ring_base_pa =
+		test_wdi3m_ctx->rx_event_ring_addr.phys_base;
+	in_param->u_rx.rx.event_ring_size =
+		test_wdi3m_ctx->rx_event_ring_addr.size;
+	in_param->u_rx.rx.event_ring_doorbell_pa =
+		test_wdi3m_ctx->rx_event_ring_db.phys_base;
+
+	IPA_UT_DBG("rx_event_ring_db.phys_base %llu\n",
+		in_param->u_rx.rx.event_ring_doorbell_pa);
+	IPA_UT_DBG("rx_event_ring_db.base %pK\n",
+		test_wdi3m_ctx->rx_event_ring_addr.base);
+
+	in_param->u_rx.rx.num_pkt_buffers = NUM_RX_BUFS;
+	if (ipa_wdi_conn_pipes(in_param, out_param)) {
+		IPA_UT_ERR("fail to conn wdi3 pipes.\n");
+		kfree(in_param);
+		kfree(out_param);
+		return -EFAULT;
+	}
+	if (ipa_wdi_enable_pipes()) {
+		IPA_UT_ERR("fail to enable wdi3 pipes.\n");
+		ipa_wdi_disconn_pipes();
+		kfree(in_param);
+		kfree(out_param);
+		return -EFAULT;
+	}
+	test_wdi3m_ctx->tx_uc_db_pa = out_param->tx_uc_db_pa;
+	test_wdi3m_ctx->rx_uc_db_pa = out_param->rx_uc_db_pa;
+	IPA_UT_DBG("tx_uc_db_pa %llu, rx_uc_db_pa %llu.\n",
+		test_wdi3m_ctx->tx_uc_db_pa, test_wdi3m_ctx->rx_uc_db_pa);
+
+	rx_uc_db = ioremap(test_wdi3m_ctx->rx_uc_db_pa, DB_REGISTER_SIZE);
+	tx_uc_db = ioremap(test_wdi3m_ctx->tx_uc_db_pa, DB_REGISTER_SIZE);
+
+	/* setup db registers */
+	*(u32 *)test_wdi3m_ctx->rx_transfer_ring_db.base = rx_uc_db_local;
+	*(u32 *)test_wdi3m_ctx->rx_event_ring_db.base = 0;
+
+	*(u32 *)test_wdi3m_ctx->tx_transfer_ring_db.base = tx_uc_db_local;
+	*(u32 *)test_wdi3m_ctx->tx_event_ring_db.base = 0;
+
+	rx_transfer = (struct rx_transfer_ring_ele *)
+		test_wdi3m_ctx->rx_transfer_ring_addr.base;
+	for (i = 0; i < NUM_TX_BUFS; i++) {
+		rx_transfer->buf_or_link_desc_addr_info.buffer_addr_low =
+			(u64)test_wdi3m_ctx->rx_bufs[i].phys_base & 0xFFFFFFFF;
+		rx_transfer->buf_or_link_desc_addr_info.buffer_addr_high =
+			((u64)test_wdi3m_ctx->rx_bufs[i].phys_base >> 32)
+			& 0xFFFFFFFF;
+		rx_transfer++;
+	}
+
+	tx_transfer_base = (struct tx_transfer_ring_ele *)
+		test_wdi3m_ctx->tx_transfer_ring_addr.base;
+	index = tx_uc_db_local;
+	for (i = 0; i < NUM_TX_BUFS; i++) {
+		tx_transfer = tx_transfer_base + index;
+		tx_transfer->buf_or_link_desc_addr_info.buffer_addr_low =
+			(u64)test_wdi3m_ctx->tx_bufs[i].phys_base & 0xFFFFFFFF;
+		tx_transfer->buf_or_link_desc_addr_info.buffer_addr_high =
+			((u64)test_wdi3m_ctx->tx_bufs[i].phys_base >> 32)
+			& 0xFFFFFFFF;
+		index = (index + 1) % NUM_TX_TR_ELE;
+	}
+	ipa_test_wdi3_advance_uc_db(&tx_uc_db_local, NUM_TX_BUFS,
+		sizeof(struct tx_transfer_ring_ele)/4,
+		test_wdi3m_ctx->tx_transfer_ring_addr.size);
+	iowrite32(tx_uc_db_local, tx_uc_db);
+	kfree(in_param);
+	kfree(out_param);
+	return 0;
+}
+
+
+static int ipa_wdi3m_test_reg_intf(bool is_tx1_used)
+{
+	struct ipa_wdi_reg_intf_in_params in;
+	char netdev_name[IPA_RESOURCE_NAME_MAX] = {0};
+	u8 hdr_content = 1;
+
+	memset(&in, 0, sizeof(in));
+	if (is_tx1_used)
+		snprintf(netdev_name, sizeof(netdev_name), "wdi3_test_2g");
+	else
+		snprintf(netdev_name, sizeof(netdev_name), "wdi3_test");
+	in.netdev_name = netdev_name;
+	in.is_meta_data_valid = 0;
+	in.hdr_info[0].hdr = &hdr_content;
+	in.hdr_info[0].hdr_len = 1;
+	in.hdr_info[0].dst_mac_addr_offset = 0;
+	in.hdr_info[0].hdr_type = IPA_HDR_L2_ETHERNET_II_AST;
+	in.hdr_info[1].hdr = &hdr_content;
+	in.hdr_info[1].hdr_len = 1;
+	in.hdr_info[1].dst_mac_addr_offset = 0;
+	in.hdr_info[1].hdr_type = IPA_HDR_L2_ETHERNET_II_AST;
+
+	return ipa_wdi_reg_intf(&in);
+}
+
+static int ipa_wdi3m_test_multi_transfer(void *priv)
+{
+	bool is_tx1_used = false;
+
+	if (ipa_wdi3m_test_reg_intf(is_tx1_used)) {
+		IPA_UT_ERR("fail to register intf.\n");
+		return -EFAULT;
+	}
+
+	if (ipa_wdi3m_setup_pipes()) {
+		IPA_UT_ERR("fail to setup wdi3 pipes.\n");
+		return -EFAULT;
+	}
+
+	if (ipa_wdi3m_send_multi_packet()) {
+		IPA_UT_ERR("fail to transfer packet.\n");
+		ipa_wdi3_teardown_pipes();
+		return -EFAULT;
+	}
+
+	if (ipa_wdi3_teardown_pipes()) {
+		IPA_UT_ERR("fail to tear down pipes.\n");
+		return -EFAULT;
+	}
+
+	IPA_UT_INFO("pipes were torn down!\n");
+
+	if (ipa_wdi3_test_dereg_intf(is_tx1_used)) {
+		IPA_UT_ERR("fail to deregister interface.\n");
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
+
+static int ipa_wdi3m_test_single_transfer(void *priv)
+{
+	bool is_tx1_used = false;
+
+	if (ipa_wdi3m_test_reg_intf(is_tx1_used)) {
+		IPA_UT_ERR("fail to register intf.\n");
+		return -EFAULT;
+	}
+
+	if (ipa_wdi3m_setup_pipes()) {
+		IPA_UT_ERR("fail to setup wdi3 pipes.\n");
+		return -EFAULT;
+	}
+
+	if (ipa_wdi3m_send_one_packet()) {
+		IPA_UT_ERR("fail to transfer packet.\n");
+		ipa_wdi3_teardown_pipes();
+		return -EFAULT;
+	}
+
+	if (ipa_wdi3_teardown_pipes()) {
+		IPA_UT_ERR("fail to tear down pipes.\n");
+		return -EFAULT;
+	}
+
+	IPA_UT_INFO("pipes were torn down!\n");
+
+	if (ipa_wdi3_test_dereg_intf(is_tx1_used)) {
+		IPA_UT_ERR("fail to deregister interface.\n");
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
+static int ipa_test_wdi3m_alloc_mmio(void)
+{
+	int ret = 0, i, j;
+	int num_tx_alloc_bufs, num_rx_alloc_bufs;
+	int num_tx1_alloc_bufs;
+	u32 size;
+
+	if (!test_wdi3m_ctx) {
+		IPA_UT_ERR("test_wdi3m_ctx is not initialized.\n");
+		return -EFAULT;
+	}
+
+	/* allocate tx transfer ring memory */
+	size = NUM_TX_TR_ELE * sizeof(struct tx_transfer_ring_ele);
+	test_wdi3m_ctx->tx_transfer_ring_addr.size = size;
+	test_wdi3m_ctx->tx_transfer_ring_addr.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, size,
+			&test_wdi3m_ctx->tx_transfer_ring_addr.phys_base,
+			GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx_transfer_ring_addr.phys_base) {
+		IPA_UT_ERR("fail to alloc memory.\n");
+		return -ENOMEM;
+	}
+
+	/* allocate tx event ring memory */
+	size = NUM_TX_ER_ELE * sizeof(struct tx_event_ring_ele);
+	test_wdi3m_ctx->tx_event_ring_addr.size = size;
+	test_wdi3m_ctx->tx_event_ring_addr.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, size,
+			&test_wdi3m_ctx->tx_event_ring_addr.phys_base,
+			GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx_event_ring_addr.phys_base) {
+		IPA_UT_ERR("fail to alloc memory.\n");
+		ret = -ENOMEM;
+		goto fail_tx_event_ring;
+	}
+
+	/* allocate tx1 transfer ring memory */
+	size = NUM_TX_TR_ELE * sizeof(struct tx_transfer_ring_ele);
+	test_wdi3m_ctx->tx1_transfer_ring_addr.size = size;
+	test_wdi3m_ctx->tx1_transfer_ring_addr.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, size,
+			&test_wdi3m_ctx->tx1_transfer_ring_addr.phys_base,
+			GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx1_transfer_ring_addr.phys_base) {
+		IPA_UT_ERR("fail to alloc memory for tx1.\n");
+		goto fail_tx1_transfer_ring;
+	}
+
+	/* allocate tx1 event ring memory */
+	size = NUM_TX_ER_ELE * sizeof(struct tx_event_ring_ele);
+	test_wdi3m_ctx->tx1_event_ring_addr.size = size;
+	test_wdi3m_ctx->tx1_event_ring_addr.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, size,
+			&test_wdi3m_ctx->tx1_event_ring_addr.phys_base,
+			GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx1_event_ring_addr.phys_base) {
+		IPA_UT_ERR("fail to alloc memory for tx1\n");
+		ret = -ENOMEM;
+		goto fail_tx1_event_ring;
+	}
+
+	/* allocate rx transfer ring memory */
+	size = NUM_RX_TR_ELE * sizeof(struct rx_transfer_ring_ele);
+	test_wdi3m_ctx->rx_transfer_ring_addr.size = size;
+	test_wdi3m_ctx->rx_transfer_ring_addr.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, size,
+			&test_wdi3m_ctx->rx_transfer_ring_addr.phys_base,
+			GFP_KERNEL);
+	if (!test_wdi3m_ctx->rx_transfer_ring_addr.phys_base) {
+		IPA_UT_ERR("fail to alloc memory.\n");
+		ret = -ENOMEM;
+		goto fail_rx_transfer_ring;
+	}
+
+	/* allocate rx event ring memory */
+	size = NUM_RX_ER_ELE * sizeof(struct rx_event_ring_ele);
+	test_wdi3m_ctx->rx_event_ring_addr.size = size;
+	test_wdi3m_ctx->rx_event_ring_addr.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, size,
+			&test_wdi3m_ctx->rx_event_ring_addr.phys_base,
+			GFP_KERNEL);
+	if (!test_wdi3m_ctx->rx_event_ring_addr.phys_base) {
+		IPA_UT_ERR("fail to alloc memory.\n");
+		ret = -ENOMEM;
+		goto fail_rx_event_ring;
+	}
+
+	/* allocate tx buffers */
+	num_tx_alloc_bufs = NUM_TX_BUFS;
+	for (i = 0; i < NUM_TX_BUFS; i++) {
+		size = ETH_PACKET_SIZE; //2kB buffer size;
+		test_wdi3m_ctx->tx_bufs[i].size = size;
+		test_wdi3m_ctx->tx_bufs[i].base =
+			dma_alloc_coherent(ipa3_ctx->pdev, size,
+				&test_wdi3m_ctx->tx_bufs[i].phys_base,
+				GFP_KERNEL);
+		if (!test_wdi3m_ctx->tx_bufs[i].phys_base) {
+			IPA_UT_ERR("fail to alloc buffers for tx.\n");
+			num_tx_alloc_bufs = i-1;
+			ret = -ENOMEM;
+			goto fail_tx_bufs;
+		}
+	}
+
+	/* allocate tx1 buffers */
+	num_tx1_alloc_bufs = NUM_TX_BUFS;
+	for (i = 0; i < NUM_TX_BUFS; i++) {
+		size = ETH_PACKET_SIZE; //2kB buffer size;
+		test_wdi3m_ctx->tx1_bufs[i].size = size;
+		test_wdi3m_ctx->tx1_bufs[i].base =
+			dma_alloc_coherent(ipa3_ctx->pdev, size,
+				&test_wdi3m_ctx->tx1_bufs[i].phys_base,
+				GFP_KERNEL);
+		if (!test_wdi3m_ctx->tx1_bufs[i].phys_base) {
+			IPA_UT_ERR("fail to alloc buffers for tx1\n");
+			num_tx1_alloc_bufs = i-1;
+			ret = -ENOMEM;
+			goto fail_tx1_bufs;
+		}
+	}
+
+	/* allocate rx buffers */
+	num_rx_alloc_bufs = NUM_RX_BUFS;
+	for (i = 0; i < NUM_RX_BUFS; i++) {
+		size = ETH_PACKET_SIZE + PACKET_HEADER_SIZE_M; //2kB buffer size;
+		test_wdi3m_ctx->rx_bufs[i].size = size;
+		test_wdi3m_ctx->rx_bufs[i].base =
+			dma_alloc_coherent(ipa3_ctx->pdev, size,
+				&test_wdi3m_ctx->rx_bufs[i].phys_base,
+				GFP_KERNEL);
+		if (!test_wdi3m_ctx->rx_bufs[i].phys_base) {
+			IPA_UT_ERR("fail to alloc memory.\n");
+			num_rx_alloc_bufs = i-1;
+			ret = -ENOMEM;
+			goto fail_rx_bufs;
+		}
+	}
+
+	/* allocate tx transfer ring db */
+	test_wdi3m_ctx->tx_transfer_ring_db.size = DB_REGISTER_SIZE;
+	test_wdi3m_ctx->tx_transfer_ring_db.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, DB_REGISTER_SIZE,
+		&test_wdi3m_ctx->tx_transfer_ring_db.phys_base, GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx_transfer_ring_db.base) {
+		IPA_UT_ERR("fail to alloc memory\n");
+		ret = -ENOMEM;
+		goto fail_tx_transfer_ring_db;
+	}
+
+	/* allocate tx event ring db */
+	test_wdi3m_ctx->tx_event_ring_db.size = DB_REGISTER_SIZE;
+	test_wdi3m_ctx->tx_event_ring_db.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, DB_REGISTER_SIZE,
+		&test_wdi3m_ctx->tx_event_ring_db.phys_base, GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx_event_ring_db.base) {
+		IPA_UT_ERR("fail to alloc memory\n");
+		ret = -ENOMEM;
+		goto fail_tx_event_ring_db;
+	}
+
+	/* allocate tx1 transfer ring db */
+	test_wdi3m_ctx->tx1_transfer_ring_db.size = DB_REGISTER_SIZE;
+	test_wdi3m_ctx->tx1_transfer_ring_db.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, DB_REGISTER_SIZE,
+		&test_wdi3m_ctx->tx1_transfer_ring_db.phys_base, GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx1_transfer_ring_db.base) {
+		IPA_UT_ERR("fail to alloc tx1 transfer ring\n");
+		ret = -ENOMEM;
+		goto fail_tx1_transfer_ring_db;
+	}
+
+	/* allocate tx1 event ring db */
+	test_wdi3m_ctx->tx1_event_ring_db.size = DB_REGISTER_SIZE;
+	test_wdi3m_ctx->tx1_event_ring_db.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, DB_REGISTER_SIZE,
+		&test_wdi3m_ctx->tx1_event_ring_db.phys_base, GFP_KERNEL);
+	if (!test_wdi3m_ctx->tx1_event_ring_db.base) {
+		IPA_UT_ERR("fail to alloc tx1 event ring\n");
+		ret = -ENOMEM;
+		goto fail_tx1_event_ring_db;
+	}
+
+	/* allocate rx transfer ring db */
+	test_wdi3m_ctx->rx_transfer_ring_db.size = DB_REGISTER_SIZE;
+	test_wdi3m_ctx->rx_transfer_ring_db.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, DB_REGISTER_SIZE,
+		&test_wdi3m_ctx->rx_transfer_ring_db.phys_base, GFP_KERNEL);
+	if (!test_wdi3m_ctx->rx_transfer_ring_db.base) {
+		IPA_UT_ERR("fail to alloc memory\n");
+		ret = -ENOMEM;
+		goto fail_rx_transfer_ring_db;
+	}
+
+	/* allocate rx event ring db */
+	test_wdi3m_ctx->rx_event_ring_db.size = DB_REGISTER_SIZE;
+	test_wdi3m_ctx->rx_event_ring_db.base =
+		dma_alloc_coherent(ipa3_ctx->pdev, DB_REGISTER_SIZE,
+		&test_wdi3m_ctx->rx_event_ring_db.phys_base, GFP_KERNEL);
+	if (!test_wdi3m_ctx->rx_event_ring_db.base) {
+		IPA_UT_ERR("fail to alloc memory\n");
+		ret = -ENOMEM;
+		goto fail_rx_event_ring_db;
+	}
+
+	return ret;
+
+fail_rx_event_ring_db:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_transfer_ring_db);
+
+fail_rx_transfer_ring_db:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_event_ring_db);
+
+fail_tx1_event_ring_db:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_event_ring_db);
+
+fail_tx_event_ring_db:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_transfer_ring_db);
+
+fail_tx1_transfer_ring_db:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_transfer_ring_db);
+fail_tx_transfer_ring_db:
+fail_rx_bufs:
+	for (j = 0; j <= num_rx_alloc_bufs; j++)
+		ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_bufs[j]);
+
+fail_tx1_bufs:
+	for (j = 0; j <= num_tx1_alloc_bufs; j++)
+		ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_bufs[j]);
+
+fail_tx_bufs:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_event_ring_addr);
+
+	for (j = 0; j <= num_tx_alloc_bufs; j++)
+		ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_bufs[j]);
+
+fail_rx_event_ring:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_transfer_ring_addr);
+
+fail_rx_transfer_ring:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_event_ring_addr);
+
+fail_tx1_event_ring:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_transfer_ring_addr);
+
+fail_tx1_transfer_ring:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_event_ring_addr);
+
+fail_tx_event_ring:
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_transfer_ring_addr);
+	return ret;
+}
+
+static int ipa_test_wdi3m_free_mmio(void)
+{
+	int i;
+
+	if (!test_wdi3m_ctx) {
+		IPA_UT_ERR("test_wdi3m_ctx is not initialized.\n");
+		return -EFAULT;
+	}
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_event_ring_db);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_transfer_ring_db);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_event_ring_db);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_transfer_ring_db);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_event_ring_db);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_transfer_ring_db);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_event_ring_addr);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_transfer_ring_addr);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_event_ring_addr);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_transfer_ring_addr);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_event_ring_addr);
+
+	ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_transfer_ring_addr);
+
+	for (i = 0; i < NUM_RX_BUFS; i++)
+		ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->rx_bufs[i]);
+
+	for (i = 0; i < NUM_TX_BUFS; i++)
+		ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx_bufs[i]);
+
+	for (i = 0; i < NUM_TX_BUFS; i++)
+		ipa_test_wdi3_free_dma_buff(&test_wdi3m_ctx->tx1_bufs[i]);
+
+	return 0;
+}
+
+static int ipa_test_wdi3m_suite_setup(void **priv)
+{
+	int ret = 0;
+	struct ipa_wdi_init_in_params in;
+	struct ipa_wdi_init_out_params out;
+
+	IPA_UT_DBG("Start WDI3 Setup\n");
+
+	/* init ipa wdi ctx */
+	memset(&in, 0, sizeof(in));
+	in.wdi_notify = NULL;
+	in.notify = NULL;
+	in.priv = NULL;
+	in.ast_update = true;
+	in.wdi_version = IPA_WDI_3;
+	ipa_wdi_init(&in, &out);
+
+
+	if (!ipa3_ctx) {
+		IPA_UT_ERR("No IPA ctx\n");
+		return -EINVAL;
+	}
+
+	test_wdi3m_ctx = kzalloc(sizeof(struct ipa_test_wdi3_context),
+		GFP_KERNEL);
+	if (!test_wdi3m_ctx) {
+		IPA_UT_ERR("failed to allocate ctx\n");
+		return -ENOMEM;
+	}
+
+	ret = ipa_test_wdi3m_alloc_mmio();
+	if (ret) {
+		IPA_UT_ERR("failed to alloc mmio\n");
+		goto fail_alloc_mmio;
+	}
+
+	*priv = test_wdi3m_ctx;
+	return 0;
+
+fail_alloc_mmio:
+	kfree(test_wdi3m_ctx);
+	test_wdi3m_ctx = NULL;
+	return ret;
+}
+
+static int ipa_test_wdi3m_suite_teardown(void *priv)
+{
+	if (!test_wdi3m_ctx)
+		return  0;
+
+	ipa_test_wdi3m_free_mmio();
+	kfree(test_wdi3m_ctx);
+	test_wdi3m_ctx = NULL;
+
+	return 0;
+}
+
+
 /* Suite definition block */
 IPA_UT_DEFINE_SUITE_START(wdi3, "WDI3 tests",
 	ipa_test_wdi3_suite_setup, ipa_test_wdi3_suite_teardown)
@@ -2447,4 +3468,17 @@ IPA_UT_DEFINE_SUITE_START(wdi3, "WDI3 tests",
 		true, IPA_HW_v4_5, IPA_HW_MAX)
 } IPA_UT_DEFINE_SUITE_END(wdi3);
 
+/* Suite definition block */
+IPA_UT_DEFINE_SUITE_START(wdi3m, "WDI3 Easy Mesh tests",
+	ipa_test_wdi3m_suite_setup, ipa_test_wdi3m_suite_teardown)
+{
+	IPA_UT_ADD_TEST(single_transfer_with_mesh,
+		"single data transfer with mesh",
+		ipa_wdi3m_test_single_transfer,
+		true, IPA_HW_v5_0, IPA_HW_MAX),
 
+	IPA_UT_ADD_TEST(multi_transfer_with_mesh,
+		"multiple data transfer with easy mesh",
+		ipa_wdi3m_test_multi_transfer,
+		true, IPA_HW_v5_0, IPA_HW_MAX),
+} IPA_UT_DEFINE_SUITE_END(wdi3m);
