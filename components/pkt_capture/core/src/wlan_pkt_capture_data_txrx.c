@@ -33,6 +33,7 @@
 #include "dp_internal.h"
 #include "cds_utils.h"
 #include "htt_ppdu_stats.h"
+#include <cdp_txrx_ctrl.h>
 #endif
 
 #define RESERVE_BYTES (100)
@@ -262,16 +263,15 @@ pkt_capture_update_tx_status(
 			struct mon_rx_status *tx_status,
 			struct pkt_capture_tx_hdr_elem_t *pktcapture_hdr)
 {
-	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct pkt_capture_vdev_priv *vdev_priv;
 	struct wlan_objmgr_vdev *vdev = context;
 	htt_ppdu_stats_for_smu_tlv *smu;
 	struct wlan_objmgr_psoc *psoc;
 	struct pkt_capture_ppdu_stats_q_node *q_node;
 	qdf_list_node_t *node;
-	uint32_t conn_count;
-	uint8_t vdev_id;
-	int i;
+	cdp_config_param_type val;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -279,17 +279,18 @@ pkt_capture_update_tx_status(
 		return;
 	}
 
-	vdev_id = wlan_vdev_get_id(vdev);
-
-	/* Update the connected channel info from policy manager */
-	conn_count = policy_mgr_get_connection_info(psoc, info);
-	for (i = 0; i < conn_count; i++) {
-		if (info[i].vdev_id == vdev_id) {
-			tx_status->chan_freq = info[0].ch_freq;
-			tx_status->chan_num = info[0].channel;
-			break;
-		}
+	if (!pdev) {
+		pkt_capture_err("pdev is NULL");
+		return;
 	}
+
+	if (!cdp_txrx_get_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				     CDP_MONITOR_CHANNEL, &val))
+		tx_status->chan_num = val.cdp_pdev_param_monitor_chan;
+
+	if (!cdp_txrx_get_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				     CDP_MONITOR_FREQUENCY, &val))
+		tx_status->chan_freq = val.cdp_pdev_param_mon_freq;
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (qdf_unlikely(!vdev_priv))
