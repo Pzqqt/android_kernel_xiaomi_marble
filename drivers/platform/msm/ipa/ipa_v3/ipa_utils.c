@@ -13334,6 +13334,7 @@ int ipa_send_mhi_coal_endp_ind_to_modem(void) {
 	ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
 	return ipa3_qmi_send_endp_desc_indication(&req);
 }
+EXPORT_SYMBOL(ipa_send_mhi_coal_endp_ind_to_modem);
 #endif
 
 void ipa3_update_mhi_ctrl_state(u8 state, bool set)
