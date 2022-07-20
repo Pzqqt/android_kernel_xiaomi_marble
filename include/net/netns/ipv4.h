@@ -185,6 +185,11 @@ struct netns_ipv4 {
 	atomic_t tfo_active_disable_times;
 	unsigned long tfo_active_disable_stamp;
 	int sysctl_tcp_reflect_tos;
+	int sysctl_tcp_plb_enabled;
+	int sysctl_tcp_plb_cong_thresh;
+	int sysctl_tcp_plb_idle_rehash_rounds;
+	int sysctl_tcp_plb_rehash_rounds;
+	int sysctl_tcp_plb_suspend_rto_sec;
 
 	int sysctl_udp_wmem_min;
 	int sysctl_udp_rmem_min;
