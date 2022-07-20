@@ -1663,6 +1663,11 @@ void hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
 		return;
 	}
 
+	if (lost_link_info->rssi == 0) {
+		hdd_debug_rl("Invalid rssi on disconnect sent by FW");
+		return;
+	}
+
 	adapter->rssi_on_disconnect = lost_link_info->rssi;
 	hdd_debug("rssi on disconnect %d", adapter->rssi_on_disconnect);
 
@@ -7240,6 +7245,7 @@ static void hdd_lost_link_cp_stats_info_cb(void *stats_ev)
 	struct hdd_adapter *adapter;
 	struct stats_event *ev = stats_ev;
 	uint8_t i;
+	int8_t rssi;
 	struct hdd_station_ctx *sta_ctx;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
@@ -7253,16 +7259,20 @@ static void hdd_lost_link_cp_stats_info_cb(void *stats_ev)
 			hdd_debug("invalid adapter");
 			continue;
 		}
-		adapter->rssi_on_disconnect =
-					ev->vdev_summary_stats[i].stats.rssi;
+
+		rssi = ev->vdev_summary_stats[i].stats.rssi;
+		if (rssi == 0) {
+			hdd_debug_rl("Invalid RSSI value sent by FW");
+			return;
+		}
+		adapter->rssi_on_disconnect = rssi;
 		hdd_debug("rssi %d for " QDF_MAC_ADDR_FMT,
 			  adapter->rssi_on_disconnect,
 			  QDF_MAC_ADDR_REF(adapter->mac_addr.bytes));
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if (sta_ctx)
-			sta_ctx->cache_conn_info.signal =
-					ev->vdev_summary_stats[i].stats.rssi;
+			sta_ctx->cache_conn_info.signal = rssi;
 	}
 }
 
