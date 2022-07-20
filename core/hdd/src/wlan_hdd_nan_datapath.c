@@ -676,7 +676,7 @@ error_wmm_init:
 	hdd_deinit_tx_rx(adapter);
 
 error_init_txrx:
-	hdd_unregister_wext(wlan_dev);
+	hdd_wext_unregister(wlan_dev, true);
 
 	QDF_BUG(!hdd_vdev_destroy(adapter));
 
