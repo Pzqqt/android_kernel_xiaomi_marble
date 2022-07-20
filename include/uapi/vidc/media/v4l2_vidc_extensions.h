@@ -147,7 +147,7 @@ enum v4l2_mpeg_vidc_blur_types {
 /* Decoder Timestamp Reorder control */
 #define V4L2_CID_MPEG_VIDC_TS_REORDER           (V4L2_CID_MPEG_VIDC_BASE + 0x31)
 /* Encoder Disable VUI Timing Info */
-#define V4L2_CID_MPEG_VIDEO_DISABLE_VUI_TIMING_INFO                           \
+#define V4L2_CID_MPEG_VIDC_VUI_TIMING_INFO                                   \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x32)
 
 /* Deprecate below controls once availble in gki and gsi bionic header */
