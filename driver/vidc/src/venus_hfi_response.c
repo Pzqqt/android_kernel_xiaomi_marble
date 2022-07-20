@@ -371,6 +371,9 @@ static int handle_session_error(struct msm_vidc_inst *inst,
 	case HFI_ERROR_FATAL:
 		error = "fatal error";
 		break;
+	case HFI_ERROR_STREAM_UNSUPPORTED:
+		error = "stream unsupported";
+		break;
 	default:
 		error = "unknown";
 		break;

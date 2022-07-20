@@ -512,6 +512,8 @@ enum hfi_nal_length_field_type {
 
 #define HFI_ERROR_BUFFER_NOT_SET                                0x04000006
 
+#define HFI_ERROR_STREAM_UNSUPPORTED                            0x04000008
+
 #define HFI_SESSION_ERROR_END                                   0x04FFFFFF
 
 #define HFI_SYSTEM_ERROR_BEGIN                                  0x05000000
