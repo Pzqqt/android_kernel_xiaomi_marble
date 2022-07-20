@@ -857,6 +857,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 			i_vpr_e(inst, "%s: reset data size to zero for last flag buffer\n",
 				__func__);
 			buffer->data_size = 0;
+			buf->data_size = 0;
 		}
 		if (buffer->flags & HFI_BUF_FW_FLAG_READONLY) {
 			i_vpr_e(inst, "%s: reset RO flag for last flag buffer\n",
