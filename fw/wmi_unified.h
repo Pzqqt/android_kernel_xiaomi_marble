@@ -14600,6 +14600,12 @@ typedef enum {
          */
         WMI_VDEV_PARAM_XPAN_PROFILE,                          /* 0x800F */
 
+        /*
+         * for valid vdev id
+         * for vdev offload stats
+         */
+        WMI_VDEV_PARAM_VDEVID_UPDATE,                         /* 0x8010 */
+
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
