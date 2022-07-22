@@ -354,6 +354,10 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 		return -ENETRESET;
 	}
 	mutex_unlock(&ap_priv->lock);
+	if (count < sizeof(struct gpr_hdr)) {
+		AUDIO_PKT_ERR("Invalid count %zu\n",count);
+		return  -EINVAL;
+	}
 
 	kbuf = memdup_user(buf, count);
 	if (IS_ERR(kbuf))
@@ -369,10 +373,15 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 	}
 
 	if (audpkt_hdr->opcode == APM_CMD_SHARED_MEM_MAP_REGIONS) {
+		if (count < sizeof(struct audio_gpr_pkt )) {
+			AUDIO_PKT_ERR("Invalid count %zu\n",count);
+			ret = -EINVAL;
+			goto free_kbuf;
+		}
 		ret = audpkt_chk_and_update_physical_addr((struct audio_gpr_pkt *) audpkt_hdr);
 		if (ret < 0) {
 			AUDIO_PKT_ERR("Update Physical Address Failed -%d\n", ret);
-		        return ret;
+			goto free_kbuf;
 		}
 	}
 
@@ -380,11 +389,15 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 		ret = -ERESTARTSYS;
 		goto free_kbuf;
 	}
+	if (count < sizeof(struct gpr_pkt )) {
+		AUDIO_PKT_ERR("Invalid count %zu\n",count);
+		ret = -EINVAL;
+		mutex_unlock(&audpkt_dev->lock);
+		goto free_kbuf;
+	}
 	ret = gpr_send_pkt(ap_priv->adev,(struct gpr_pkt *) kbuf);
 	if (ret < 0) {
 		AUDIO_PKT_ERR("APR Send Packet Failed ret -%d\n", ret);
-		mutex_unlock(&audpkt_dev->lock);
-		return ret;
 	}
 	mutex_unlock(&audpkt_dev->lock);
 
