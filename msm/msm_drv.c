@@ -2200,8 +2200,8 @@ static void msm_pdev_shutdown(struct platform_device *pdev)
 	}
 
 	priv = ddev->dev_private;
-	if (!priv) {
-		DRM_ERROR("invalid msm drm private node\n");
+	if (!priv || !priv->registered) {
+		DRM_ERROR("invalid msm drm private node or drm dev not registered\n");
 		return;
 	}
 

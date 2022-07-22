@@ -1046,6 +1046,24 @@ u32 dsi_ctrl_hw_cmn_get_cmd_read_data(struct dsi_ctrl_hw *ctrl,
 		return 0;
 	}
 
+	/*
+	 * Large read_cnt value can lead to negative repeated_bytes value
+	 * and array out of bounds access of read buffer.
+	 * Avoid this by resetting read_cnt to expected value when panel
+	 * sends more bytes than expected.
+	 */
+	if (rx_byte == 4 && read_cnt > 4) {
+		DSI_CTRL_HW_INFO(ctrl,
+			"Expected %u bytes for short read but received %u bytes\n",
+			rx_byte, read_cnt);
+		read_cnt = rx_byte;
+	} else if (rx_byte == 16 && read_cnt > (pkt_size + 6)) {
+		DSI_CTRL_HW_INFO(ctrl,
+			"Expected %u bytes for long read but received %u bytes\n",
+			pkt_size + 6, read_cnt);
+		read_cnt = pkt_size + 6;
+	}
+
 	if (read_cnt > 16) {
 		int bytes_shifted, data_lost = 0, rem_header = 0;
 

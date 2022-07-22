@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  */
 
@@ -246,7 +247,7 @@ static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 	if (mode_3d && disable_merge_3d && hw_pp->ops.reset_3d_mode) {
 		SDE_DEBUG("disabling 3d mux \n");
 		hw_pp->ops.reset_3d_mode(hw_pp);
-	} else if (mode_3d && disable_merge_3d && hw_pp->ops.setup_3d_mode) {
+	} else if (mode_3d && !disable_merge_3d && hw_pp->ops.setup_3d_mode) {
 		SDE_DEBUG("enabling 3d mux \n");
 		hw_pp->ops.setup_3d_mode(hw_pp, mode_3d);
 	}
@@ -317,7 +318,7 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 		struct msm_display_dsc_info *dsc,
 		unsigned long affected_displays, int index,
 		const struct sde_rect *roi, int dsc_common_mode,
-		bool merge_3d, bool disable_merge_3d, bool mode_3d,
+		bool merge_3d, bool disable_merge_3d, enum sde_3d_blend_mode mode_3d,
 		bool dsc_4hsmerge, bool half_panel_partial_update,
 		int ich_res)
 {
@@ -335,7 +336,7 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 	 * bound to the pp which is driving the update, else in
 	 * 3d_merge dsc should be bound to left side of the pipe
 	 */
-	if (merge_3d || half_panel_partial_update)
+	if (half_panel_partial_update)
 		hw_pp = (active) ? sde_enc->hw_pp[0] : sde_enc->hw_pp[1];
 	else
 		hw_pp = sde_enc->hw_pp[index];
@@ -438,7 +439,7 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 			!(enc_master->hw_intf->cfg.split_link_en)) ?
 			true : false;
 	disable_merge_3d = (merge_3d && dsc->half_panel_pu) ?
-			false : true;
+			true : false;
 	dsc_4hsmerge = (dsc_merge && num_dsc == 4 && num_intf == 1) ?
 			true : false;
 
