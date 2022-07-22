@@ -182,6 +182,11 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
 
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_INTEROP_ISSUES_AP_ID);
 	if (!vdev) {
 		osif_err("Invalid vdev");

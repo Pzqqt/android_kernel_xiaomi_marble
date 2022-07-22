@@ -3437,8 +3437,9 @@ static void wmi_fill_roam_offload_11r_params(
 
 	src_11r_params = &roam_req->rso_11r_info;
 
-	if (akm == WMI_AUTH_FT_RSNA_FILS_SHA256 ||
-	    akm == WMI_AUTH_FT_RSNA_FILS_SHA384) {
+	if ((akm == WMI_AUTH_FT_RSNA_FILS_SHA256 ||
+	     akm == WMI_AUTH_FT_RSNA_FILS_SHA384) &&
+	    roam_req->fils_roam_config.fils_ft_len) {
 		psk_msk = roam_req->fils_roam_config.fils_ft;
 		len = roam_req->fils_roam_config.fils_ft_len;
 	} else {

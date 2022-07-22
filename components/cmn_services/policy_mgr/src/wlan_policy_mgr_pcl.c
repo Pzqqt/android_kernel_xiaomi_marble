@@ -39,6 +39,7 @@
 #endif
 #include "wlan_cm_ucfg_api.h"
 #include "wlan_cm_roam_api.h"
+#include "wlan_scan_api.h"
 
 /**
  * first_connection_pcl_table - table which provides PCL for the
@@ -2686,13 +2687,15 @@ update_pcl:
 QDF_STATUS
 policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 				     uint32_t sap_ch_freq,
-				     uint32_t *intf_ch_freq)
+				     uint32_t *intf_ch_freq,
+				     uint8_t vdev_id)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
 	uint32_t i;
 	uint32_t sap_new_freq;
+	qdf_freq_t user_config_freq = 0;
 	bool sta_sap_scc_on_indoor_channel =
 		 policy_mgr_get_sta_sap_scc_allowed_on_indoor_chnl(psoc);
 
@@ -2778,6 +2781,8 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	sap_new_freq = pcl.pcl_list[0];
+	user_config_freq = policy_mgr_get_user_config_sap_freq(psoc, vdev_id);
+
 	for (i = 0; i < pcl.pcl_len; i++) {
 		/* When sta_sap_scc_on_indoor_channel is enabled,
 		 * and if pcl contains SCC channel, then STA must
@@ -2792,7 +2797,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 			goto update_freq;
 		}
 
-		if (pcl.pcl_list[i] ==  pm_ctx->user_config_sap_ch_freq) {
+		if (user_config_freq && (pcl.pcl_list[i] == user_config_freq)) {
 			sap_new_freq = pcl.pcl_list[i];
 			policy_mgr_debug("Prefer starting SAP on user configured channel:%d",
 					 sap_ch_freq);
@@ -2983,15 +2988,16 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 			/*
 			 * The API is expected to select the channel on the
 			 * other band which is not same as sap's home and
-			 * concurrent interference channel, so skip the sap
-			 * home channel in PCL.
+			 * concurrent interference channel(if present), so skip
+			 * the sap home channel in PCL.
 			 */
 			if (pcl_channels[i] == sap_ch_freq)
 				continue;
 			if (!is_6ghz_cap &&
 			    WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[i]))
 				continue;
-			if (policy_mgr_are_2_freq_on_same_mac(psoc,
+			if (policy_mgr_get_connection_count(psoc) &&
+			    policy_mgr_are_2_freq_on_same_mac(psoc,
 							      sap_ch_freq,
 							      pcl_channels[i]))
 				continue;
@@ -3181,4 +3187,35 @@ bool policy_mgr_is_3rd_conn_on_same_band_allowed(struct wlan_objmgr_psoc *psoc,
 		break;
 	}
 	return ret;
+}
+
+bool policy_mgr_is_sta_chan_valid_for_connect_and_roam(
+				struct wlan_objmgr_pdev *pdev,
+				qdf_freq_t freq)
+{
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t sap_count;
+	bool skip_6g_and_indoor_freq;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return true;
+
+	skip_6g_and_indoor_freq =
+		wlan_scan_cfg_skip_6g_and_indoor_freq(psoc);
+	sap_count =
+		policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE,
+							  NULL);
+	/*
+	 * Do not allow STA to connect/roam on 6Ghz or indoor channel for
+	 * non-dbs hardware if SAP is present and skip_6g_and_indoor_freq_scan
+	 * ini is enabled
+	 */
+	if (skip_6g_and_indoor_freq && sap_count &&
+	    !policy_mgr_is_hw_dbs_capable(psoc) &&
+	    (WLAN_REG_IS_6GHZ_CHAN_FREQ(freq) ||
+	     wlan_reg_is_freq_indoor(pdev, freq)))
+		return false;
+
+	return true;
 }

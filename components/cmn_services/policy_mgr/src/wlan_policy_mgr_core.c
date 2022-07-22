@@ -1933,18 +1933,8 @@ void pm_dbs_opportunistic_timer_handler(void *data)
 				reason, POLICY_MGR_DEF_REQ_ID);
 }
 
-/**
- * policy_mgr_get_connection_for_vdev_id() - provides the
- * perticular connection with the requested vdev id
- * @vdev_id: vdev id of the connection
- *
- * This function provides the specific connection with the
- * requested vdev id
- *
- * Return: index in the connection table
- */
-static uint32_t policy_mgr_get_connection_for_vdev_id(
-		struct wlan_objmgr_psoc *psoc, uint32_t vdev_id)
+uint32_t policy_mgr_get_connection_for_vdev_id(struct wlan_objmgr_psoc *psoc,
+					       uint32_t vdev_id)
 {
 	uint32_t conn_index = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -3730,6 +3720,7 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 	bool sbs_mlo_present = false;
 	bool allow_6ghz = true, sta_sap_scc_on_indoor_channel_allowed;
 	uint8_t sta_count;
+	qdf_freq_t user_config_freq;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -3790,20 +3781,24 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 		     WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq)))) {
 			status = policy_mgr_get_sap_mandatory_channel(
 							psoc, sap_ch_freq,
-							intf_ch_freq);
+							intf_ch_freq, vdev_id);
 			if (QDF_IS_STATUS_SUCCESS(status))
 				return;
 
 			policy_mgr_err("No mandatory channels");
 		}
 
+		user_config_freq =
+			policy_mgr_get_user_config_sap_freq(psoc, vdev_id);
+
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq) &&
-		    !WLAN_REG_IS_24GHZ_CH_FREQ(pm_ctx->user_config_sap_ch_freq) &&
+		    user_config_freq &&
+		    !WLAN_REG_IS_24GHZ_CH_FREQ(user_config_freq) &&
 		    (wlan_reg_get_channel_state_for_freq(pm_ctx->pdev,
 							 *intf_ch_freq) == CHANNEL_STATE_ENABLE)) {
 			status = policy_mgr_get_sap_mandatory_channel(
 							psoc, sap_ch_freq,
-							intf_ch_freq);
+							intf_ch_freq, vdev_id);
 			if (QDF_IS_STATUS_SUCCESS(status))
 				return;
 		}
@@ -3840,7 +3835,8 @@ void policy_mgr_check_scc_sbs_channel(struct wlan_objmgr_psoc *psoc,
 		/* Same band with Fav channel if STA is present */
 		status = policy_mgr_get_sap_mandatory_channel(psoc,
 							      sap_ch_freq,
-							      intf_ch_freq);
+							      intf_ch_freq,
+							      vdev_id);
 		if (QDF_IS_STATUS_SUCCESS(status))
 			return;
 

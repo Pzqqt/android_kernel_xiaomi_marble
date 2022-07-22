@@ -6599,6 +6599,7 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	struct policy_mgr_conc_connection_info *connection;
 	bool sta_sap_scc_on_dfs_chan, sta_sap_scc_allowed_on_indoor_ch;
+	qdf_freq_t user_config_freq;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -6675,15 +6676,18 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 		 * Now SAP has to move to STA 5 GHz channel if SAP
 		 * was started on 5 GHz channel initialy.
 		 */
+		user_config_freq =
+			policy_mgr_get_user_config_sap_freq(psoc, vdev_id);
+
 		if (connection[i].freq != freq &&
 		    WLAN_REG_IS_24GHZ_CH_FREQ(freq) &&
 		    WLAN_REG_IS_5GHZ_CH_FREQ(connection[i].freq) &&
 		    !wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
 					      connection[i].freq) &&
-		    WLAN_REG_IS_5GHZ_CH_FREQ(pm_ctx->user_config_sap_ch_freq)) {
+		    WLAN_REG_IS_5GHZ_CH_FREQ(user_config_freq)) {
 			policy_mgr_debug("Move SAP from:%d to STA ch:%d  (sap start freq:%d)",
 					 freq, connection[i].freq,
-					 pm_ctx->user_config_sap_ch_freq);
+					 user_config_freq);
 			restart_required = true;
 
 			if (wlan_reg_is_freq_indoor(pm_ctx->pdev,

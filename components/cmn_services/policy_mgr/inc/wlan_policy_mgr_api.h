@@ -2206,6 +2206,7 @@ QDF_STATUS policy_mgr_get_nss_for_vdev(struct wlan_objmgr_psoc *psoc,
  * @psoc: PSOC object information
  * @sap_ch_freq: sap current frequency in MHz
  * @intf_ch_freq: input/out interference channel frequency to sap
+ * @sap_vdev_id: SAP vdev id
  *
  * Gets the mandatory channel for SAP operation
  *
@@ -2214,7 +2215,8 @@ QDF_STATUS policy_mgr_get_nss_for_vdev(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 				     uint32_t sap_ch_freq,
-				     uint32_t *intf_ch_freq);
+				     uint32_t *intf_ch_freq,
+				     uint8_t sap_vdev_id);
 
 /**
  * policy_mgr_set_sap_mandatory_channels() - Set the mandatory channel for SAP
@@ -3756,14 +3758,15 @@ bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
 					    uint32_t ch_freq);
 
 /**
- * policy_mgr_update_user_config_sap_chan() - Update user configured channel
- * @psoc: poniter to psoc
- * @ch_freq: channel frequency to be upated
+ * policy_mgr_get_user_config_sap_freq() - Get the user configured channel
  *
- * Return: void
- **/
-void policy_mgr_update_user_config_sap_chan(struct wlan_objmgr_psoc *psoc,
-					    uint32_t ch_freq);
+ * @psoc: pointer to psoc
+ * @vdev_id: vdev id
+ *
+ * Return: user configured frequency
+ */
+qdf_freq_t policy_mgr_get_user_config_sap_freq(struct wlan_objmgr_psoc *psoc,
+					       uint8_t vdev_id);
 
 /**
  * policy_mgr_nan_sap_post_enable_conc_check() - Do concurrency operations
@@ -4257,4 +4260,15 @@ uint32_t
 policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id);
 
+/**
+ * policy_mgr_is_sta_chan_valid_for_connect_and_roam  - Check if given
+ * channel is valid for STA connection/roam pcl channels
+ * @pdev: pdev
+ * @freq: frequency
+ *
+ * Return: true if channel is valid else false
+ */
+bool policy_mgr_is_sta_chan_valid_for_connect_and_roam(
+					struct wlan_objmgr_pdev *pdev,
+					qdf_freq_t freq);
 #endif /* __WLAN_POLICY_MGR_API_H */

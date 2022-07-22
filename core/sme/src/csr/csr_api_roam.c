@@ -1013,7 +1013,7 @@ void csr_set_global_cfgs(struct mac_context *mac)
 }
 
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && \
-	defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
+	defined(CONNECTIVITY_PKTLOG)
 /**
  * csr_packetdump_timer_handler() - packet dump timer
  * handler
@@ -5699,6 +5699,7 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac,
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct qdf_mac_addr connected_bssid = {0};
+	QDF_STATUS status;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
 						    WLAN_LEGACY_SME_ID);
@@ -5729,9 +5730,13 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	wlan_cm_set_psk_pmk(mac->pdev, vdev_id, pmksa->pmk, pmksa->pmk_len);
-	if (update_to_fw)
-		wlan_roam_update_cfg(mac->psoc, vdev_id,
-				     REASON_ROAM_PSK_PMK_CHANGED);
+	if (update_to_fw) {
+		status = wlan_roam_update_cfg(mac->psoc, vdev_id,
+					      REASON_ROAM_PSK_PMK_CHANGED);
+		if (status == QDF_STATUS_E_INVAL)
+			wlan_mlme_defer_pmk_set_in_roaming(mac->psoc, vdev_id,
+							   true);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

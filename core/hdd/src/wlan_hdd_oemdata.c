@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1167,8 +1168,10 @@ void hdd_oem_event_handler_cb(const struct oem_data *oem_event_data,
 		oem_data = osif_request_priv(request);
 		oem_data->data_len = oem_event_data->data_len;
 		oem_data->data = qdf_mem_malloc(oem_data->data_len);
-		if (!oem_data->data)
+		if (!oem_data->data) {
+			osif_request_put(request);
 			return;
+		}
 
 		qdf_mem_copy(oem_data->data, oem_event_data->data,
 			     oem_data->data_len);
@@ -1252,6 +1255,11 @@ __wlan_hdd_cfg80211_oem_data_handler(struct wiphy *wiphy,
 		.timeout_ms = WLAN_WAIT_TIME_GET_OEM_DATA,
 		.dealloc = wlan_hdd_free_oem_data,
 	};
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)

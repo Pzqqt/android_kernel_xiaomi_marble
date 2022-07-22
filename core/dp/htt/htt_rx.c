@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -377,7 +378,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 }
 #endif /* IPA_OFFLOAD */
 
-#ifndef REMOVE_PKT_LOG
+#ifdef CONNECTIVITY_PKTLOG
 /**
  * htt_register_rx_pkt_dump_callback() - registers callback to
  *   get rx pkt status and call callback to do rx packet dump

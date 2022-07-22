@@ -45,7 +45,7 @@
 
 #include "cds_utils.h"
 #include "wlan_blm_api.h"
-#if !defined(REMOVE_PKT_LOG)
+#if defined(CONNECTIVITY_PKTLOG) || !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
 #else
 #include "pktlog_ac_fmt.h"
@@ -83,7 +83,7 @@
 #include <../../core/src/vdev_mgr_ops.h>
 #include "wlan_pkt_capture_ucfg_api.h"
 
-#if !defined(REMOVE_PKT_LOG)
+#if defined(CONNECTIVITY_PKTLOG) || !defined(REMOVE_PKT_LOG)
 #include <wlan_logging_sock_svc.h>
 #endif
 #include "wlan_cm_roam_api.h"
@@ -2653,34 +2653,101 @@ static inline void wma_mgmt_unmap_buf(tp_wma_handle wma_handle, qdf_nbuf_t buf)
 }
 #endif
 
-#if !defined(REMOVE_PKT_LOG)
+#if defined(CONNECTIVITY_PKTLOG) || !defined(REMOVE_PKT_LOG)
 /**
- * wma_mgmt_pktdump_status_map() - map MGMT Tx completion status with
+ * wma_mgmt_qdf_status_map() - map MGMT Tx completion status with
  * packet dump Tx status
  * @status: MGMT Tx completion status
  *
  * Return: packet dump tx_status enum
  */
-static inline enum tx_status
-wma_mgmt_pktdump_status_map(WMI_MGMT_TX_COMP_STATUS_TYPE status)
+static inline enum qdf_dp_tx_rx_status
+wma_mgmt_qdf_status_map(WMI_MGMT_TX_COMP_STATUS_TYPE status)
 {
-	enum tx_status pktdump_status;
+	enum qdf_dp_tx_rx_status pktdump_status;
 
 	switch (status) {
 	case WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK:
-		pktdump_status = tx_status_ok;
+		pktdump_status = QDF_TX_RX_STATUS_OK;
 		break;
 	case WMI_MGMT_TX_COMP_TYPE_DISCARD:
-		pktdump_status = tx_status_discard;
+		pktdump_status = QDF_TX_RX_STATUS_DROP;
 		break;
 	case WMI_MGMT_TX_COMP_TYPE_COMPLETE_NO_ACK:
-		pktdump_status = tx_status_no_ack;
+		pktdump_status = QDF_TX_RX_STATUS_NO_ACK;
 		break;
 	default:
-		pktdump_status = tx_status_discard;
+		pktdump_status = QDF_TX_RX_STATUS_DROP;
 		break;
 	}
 	return pktdump_status;
+}
+
+/**
+ * wma_mgmt_pktdump_tx_handler() - calls tx cb if CONNECTIVITY_PKTLOG
+ * feature is enabled
+ * @wma_handle: wma handle
+ * @buf: nbuf
+ * @vdev_id : vdev id
+ * @status : status
+ *
+ * Return: none
+ */
+static inline void wma_mgmt_pktdump_tx_handler(tp_wma_handle wma_handle,
+					       qdf_nbuf_t buf, uint8_t vdev_id,
+					       uint32_t status)
+{
+	ol_txrx_pktdump_cb packetdump_cb;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	enum qdf_dp_tx_rx_status pktdump_status;
+
+	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
+	pktdump_status = wma_mgmt_qdf_status_map(status);
+	if (packetdump_cb)
+		packetdump_cb(soc, WMI_PDEV_ID_SOC, vdev_id,
+			      buf, pktdump_status, QDF_TX_MGMT_PKT);
+}
+
+/**
+ * wma_mgmt_pktdump_rx_handler() - calls rx cb if CONNECTIVITY_PKTLOG
+ * feature is enabled
+ * @mgmt_rx_params: mgmt rx params
+ * @rx_pkt: cds packet
+ * @wma_handle: wma handle
+ * mgt_type: management type
+ * mgt_subtype: management subtype
+ *
+ * Return: none
+ */
+static inline void wma_mgmt_pktdump_rx_handler(
+			struct mgmt_rx_event_params *mgmt_rx_params,
+			cds_pkt_t *rx_pkt, tp_wma_handle wma_handle,
+			uint8_t mgt_type, uint8_t mgt_subtype)
+{
+	ol_txrx_pktdump_cb packetdump_cb;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	packetdump_cb = wma_handle->wma_mgmt_rx_packetdump_cb;
+	if ((mgt_type == IEEE80211_FC0_TYPE_MGT &&
+	     mgt_subtype != MGMT_SUBTYPE_BEACON) &&
+	     packetdump_cb)
+		packetdump_cb(soc, mgmt_rx_params->pdev_id,
+			      rx_pkt->pkt_meta.session_id, rx_pkt->pkt_buf,
+			      QDF_TX_RX_STATUS_OK, QDF_RX_MGMT_PKT);
+}
+
+#else
+static inline void wma_mgmt_pktdump_tx_handler(tp_wma_handle wma_handle,
+					       qdf_nbuf_t buf, uint8_t vdev_id,
+					       uint32_t status)
+{
+}
+
+static inline void wma_mgmt_pktdump_rx_handler(
+			struct mgmt_rx_event_params *mgmt_rx_params,
+			cds_pkt_t *rx_pkt, tp_wma_handle wma_handle,
+			uint8_t mgt_type, uint8_t mgt_subtype)
+{
 }
 #endif
 
@@ -2699,11 +2766,6 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	qdf_nbuf_t buf = NULL;
 	QDF_STATUS ret;
 	uint8_t vdev_id = 0;
-#if !defined(REMOVE_PKT_LOG)
-	ol_txrx_pktdump_cb packetdump_cb;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	enum tx_status pktdump_status;
-#endif
 	struct wmi_mgmt_params mgmt_params = {};
 
 	if (wma_validate_handle(wma_handle))
@@ -2727,14 +2789,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
 	mgmt_params.vdev_id = vdev_id;
 
-#if !defined(REMOVE_PKT_LOG)
-	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
-	pktdump_status = wma_mgmt_pktdump_status_map(status);
-	if (packetdump_cb)
-		packetdump_cb(soc, WMI_PDEV_ID_SOC, vdev_id,
-			      buf, pktdump_status, TX_MGMT_PKT);
-#endif
-
+	wma_mgmt_pktdump_tx_handler(wma_handle, buf, vdev_id, status);
 	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status,
 					      &mgmt_params);
 
@@ -3501,10 +3556,6 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	int status;
 	tp_wma_handle wma_handle = (tp_wma_handle)
 				cds_get_context(QDF_MODULE_ID_WMA);
-#if !defined(REMOVE_PKT_LOG)
-	ol_txrx_pktdump_cb packetdump_cb;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-#endif
 	static uint8_t limit_prints_invalid_len = RATE_LIMIT - 1;
 	static uint8_t limit_prints_load_unload = RATE_LIMIT - 1;
 	static uint8_t limit_prints_recovery = RATE_LIMIT - 1;
@@ -3677,16 +3728,9 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		cds_pkt_return_packet(rx_pkt);
 		return -EINVAL;
 	}
+	wma_mgmt_pktdump_rx_handler(mgmt_rx_params, rx_pkt,
+				    wma_handle, mgt_type, mgt_subtype);
 
-#if !defined(REMOVE_PKT_LOG)
-	packetdump_cb = wma_handle->wma_mgmt_rx_packetdump_cb;
-	if ((mgt_type == IEEE80211_FC0_TYPE_MGT &&
-		mgt_subtype != MGMT_SUBTYPE_BEACON) &&
-		packetdump_cb)
-		packetdump_cb(soc, mgmt_rx_params->pdev_id,
-			      rx_pkt->pkt_meta.session_id, rx_pkt->pkt_buf,
-			      QDF_STATUS_SUCCESS, RX_MGMT_PKT);
-#endif
 	return 0;
 }
 

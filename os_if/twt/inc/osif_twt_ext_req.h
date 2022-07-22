@@ -338,18 +338,6 @@ static inline
 void osif_twt_work_handler(void *data)
 {
 }
-
-static inline
-ODF_STATUS osif_twt_create_work(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
-static inline
-ODF_STATUS osif_twt_destroy_work(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_E_FAILURE;
-}
 #endif
 #endif /* _OSIF_TWT_EXT_REQ_H_ */
 

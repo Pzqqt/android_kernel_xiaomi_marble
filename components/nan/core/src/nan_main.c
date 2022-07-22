@@ -465,7 +465,9 @@ ndi_remove_and_update_primary_connection(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_check_n_start_opportunistic_timer(psoc);
 	}
 
-	wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
+	if (peer)
+		wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
+
 	return QDF_STATUS_SUCCESS;
 }
 

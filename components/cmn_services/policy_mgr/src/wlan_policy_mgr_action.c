@@ -1486,17 +1486,23 @@ policy_mgr_con_mode_by_vdev_id(struct wlan_objmgr_psoc *psoc,
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void policy_mgr_update_user_config_sap_chan(
-			struct wlan_objmgr_psoc *psoc, uint32_t ch_freq)
+qdf_freq_t
+policy_mgr_get_user_config_sap_freq(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id)
 {
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_vdev *vdev;
+	qdf_freq_t freq;
 
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid pm context and failed to update the user config sap channel");
-		return;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_POLICY_MGR_ID);
+	if (!vdev) {
+		policy_mgr_err("vdev is NULL");
+		return 0;
 	}
-	pm_ctx->user_config_sap_ch_freq = ch_freq;
+	freq = wlan_get_sap_user_config_freq(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+
+	return freq;
 }
 
 /**
@@ -1594,6 +1600,7 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	uint8_t num_cxn_del = 0;
 	QDF_STATUS status;
 	uint32_t sta_gc_present = 0;
+	qdf_freq_t user_config_freq = 0;
 
 	if (intf_ch_freq)
 		*intf_ch_freq = 0;
@@ -1626,11 +1633,14 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 							  PM_P2P_CLIENT_MODE,
 							  NULL);
 
-
 	for (i = 0 ; i < cc_count; i++) {
 		if (sap_vdev_id != INVALID_VDEV_ID &&
 		    sap_vdev_id != vdev_id[i])
 			continue;
+
+		sap_vdev_id = vdev_id[i];
+		user_config_freq =
+			policy_mgr_get_user_config_sap_freq(psoc, sap_vdev_id);
 
 		if (policy_mgr_is_any_mode_active_on_band_along_with_session(
 				psoc,  vdev_id[i],
@@ -1643,7 +1653,6 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		     wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
 					      op_ch_freq_list[i]) &&
 		     pm_ctx->last_disconn_sta_freq == op_ch_freq_list[i]) {
-			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
 			policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sta_sap_scc_on_dfs_chnl_config_value %u, dfs sap_ch_freq %u",
 					 sta_sap_scc_on_dfs_chan,
@@ -1655,7 +1664,6 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		if (sta_sap_scc_on_lte_coex_chan &&
 		    !policy_mgr_is_safe_channel(psoc, op_ch_freq_list[i]) &&
 		    pm_ctx->last_disconn_sta_freq == op_ch_freq_list[i]) {
-			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
 			policy_mgr_debug("sta_sap_scc_on_lte_coex_chan %u unsafe sap_ch_freq %u",
 					 sta_sap_scc_on_lte_coex_chan,
@@ -1672,20 +1680,18 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		if (sta_sap_scc_on_indoor_channel &&
 		    wlan_reg_is_freq_indoor(pm_ctx->pdev, op_ch_freq_list[i]) &&
 		    pm_ctx->last_disconn_sta_freq == op_ch_freq_list[i]) {
-			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
 			policy_mgr_debug("indoor sap_ch_freq %u",
 					 curr_sap_freq);
 			break;
 		}
 
-		if (!sta_gc_present &&
+		if (!sta_gc_present && user_config_freq &&
 		    WLAN_REG_IS_24GHZ_CH_FREQ(op_ch_freq_list[i]) &&
-		    WLAN_REG_IS_5GHZ_CH_FREQ(pm_ctx->user_config_sap_ch_freq)) {
-			sap_vdev_id = vdev_id[i];
+		    WLAN_REG_IS_5GHZ_CH_FREQ(user_config_freq)) {
 			curr_sap_freq = op_ch_freq_list[i];
-			policy_mgr_debug("Indoor sap_ch_freq %u",
-					 curr_sap_freq);
+			policy_mgr_debug("Move sap to user configured freq: %d",
+					 user_config_freq);
 			break;
 		}
 	}
@@ -1700,9 +1706,8 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, sap_vdev_id,
 						      &info, &num_cxn_del);
 
-
 	/* Add the user config ch as first condidate */
-	pcl_channels[0] = pm_ctx->user_config_sap_ch_freq;
+	pcl_channels[0] = user_config_freq;
 	pcl_weight[0] = 0;
 	status = policy_mgr_get_pcl(psoc, mode, &pcl_channels[1], &pcl_len,
 				    &pcl_weight[1],
@@ -2032,7 +2037,9 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
 	sap_freq = policy_mgr_get_nondfs_preferred_channel(psoc, PM_SAP_MODE,
 							   false);
 	policy_mgr_debug("User/ACS orig Freq: %d New SAP Freq: %d",
-			 pm_ctx->user_config_sap_ch_freq, sap_freq);
+			 policy_mgr_get_user_config_sap_freq(
+						psoc, sap_info->vdev_id),
+			 sap_freq);
 	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
 	    pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress()) {
 		policy_mgr_debug("wait as channel switch is already in progress");
