@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,17 +53,15 @@
 #endif
 
 #if defined(FEATURE_FW_LOG_PARSING) || defined(FEATURE_WLAN_DIAG_SUPPORT) || \
-	defined(FEATURE_PKTLOG)
+	defined(CONNECTIVITY_PKTLOG)
 #include <cds_api.h>
 #include "ani_global.h"
 #endif
 
-#ifdef FEATURE_PKTLOG
-#ifndef REMOVE_PKT_LOG
+#ifdef CONNECTIVITY_PKTLOG
 #include "wma.h"
 #include "pktlog_ac.h"
 #include <cdp_txrx_misc.h>
-#endif
 #endif
 
 #define MAX_NUM_PKT_LOG 32
@@ -81,7 +80,7 @@
 #define MAX_SKBMSG_LENGTH 4096
 
 #define WLAN_LOG_BUFFER_SIZE 2048
-#if defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
+#ifdef CONNECTIVITY_PKTLOG
 /**
  * Buffer to accommodate -
  * pktlog buffer (2048 bytes)
@@ -102,7 +101,7 @@
 	 (PKT_DUMP_HDR_SIZE) + (EXTRA_PADDING))
 #else
 #define MAX_PKTSTATS_LENGTH WLAN_LOG_BUFFER_SIZE
-#endif /* FEATURE_PKTLOG */
+#endif /* CONNECTIVITY_PKTLOG */
 
 #define MAX_PKTSTATS_BUFF   16
 #define HOST_LOG_DRIVER_MSG              0x001
@@ -482,7 +481,7 @@ static int nl_srv_bcast_host_logs(struct sk_buff *skb)
 }
 #endif
 
-#ifndef REMOVE_PKT_LOG
+#ifdef CONNECTIVITY_PKTLOG
 /**
  * pkt_stats_fill_headers() - This function adds headers to skb
  * @skb: skb to which headers need to be added
@@ -1351,8 +1350,7 @@ void wlan_flush_host_logs_for_fatal(void)
 	wake_up_interruptible(&gwlan_logging.wait_queue);
 }
 
-#ifdef FEATURE_PKTLOG
-#ifndef REMOVE_PKT_LOG
+#ifdef CONNECTIVITY_PKTLOG
 
 static uint8_t gtx_count;
 static uint8_t grx_count;
@@ -1484,33 +1482,76 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 }
 
 /**
- * driver_hal_status_map() - maps driver to hal
- * status
- * @status: status to be mapped
+ * qdf_hal_tx_status_map() - map Tx completion status with
+ * packet dump Tx status
+ * @status: Tx completion status
  *
- * This function is used to map driver to hal status
- *
- * Return: None
- *
+ * Return: packet dump tx_status enum
  */
-static void driver_hal_status_map(uint8_t *status)
+static inline enum tx_pkt_fate
+qdf_hal_tx_status_map(enum qdf_dp_tx_rx_status status)
 {
-	switch (*status) {
-	case tx_status_ok:
-		*status = TX_PKT_FATE_ACKED;
-		break;
-	case tx_status_discard:
-		*status = TX_PKT_FATE_DRV_DROP_OTHER;
-		break;
-	case tx_status_no_ack:
-		*status = TX_PKT_FATE_SENT;
-		break;
-	case tx_status_download_fail:
-		*status = TX_PKT_FATE_FW_QUEUED;
-		break;
+	switch (status) {
+	case QDF_TX_RX_STATUS_OK:
+		return TX_PKT_FATE_ACKED;
+	case QDF_TX_RX_STATUS_FW_DISCARD:
+		return TX_PKT_FATE_FW_DROP_OTHER;
+	case QDF_TX_RX_STATUS_NO_ACK:
+		return TX_PKT_FATE_SENT;
+	case QDF_TX_RX_STATUS_DROP:
+		return TX_PKT_FATE_DRV_DROP_OTHER;
+	case QDF_TX_RX_STATUS_DOWNLOAD_SUCC:
+		return TX_PKT_FATE_DRV_QUEUED;
 	default:
-		*status = TX_PKT_FATE_DRV_DROP_OTHER;
-		break;
+		return TX_PKT_FATE_DRV_DROP_OTHER;
+	}
+}
+
+/**
+ * qdf_hal_rx_status_map() - map Rx status with
+ * packet dump Rx status
+ * @status: Rx status
+ *
+ * Return: packet dump rx_status enum
+ */
+static inline enum rx_pkt_fate
+qdf_hal_rx_status_map(enum qdf_dp_tx_rx_status status)
+{
+	switch (status) {
+	case QDF_TX_RX_STATUS_OK:
+		return RX_PKT_FATE_SUCCESS;
+	case QDF_TX_RX_STATUS_FW_DISCARD:
+		return RX_PKT_FATE_FW_DROP_OTHER;
+	case QDF_TX_RX_STATUS_DROP:
+		return RX_PKT_FATE_DRV_DROP_OTHER;
+	case QDF_TX_RX_STATUS_DOWNLOAD_SUCC:
+		return RX_PKT_FATE_DRV_QUEUED;
+	default:
+		return RX_PKT_FATE_DRV_DROP_OTHER;
+	}
+}
+
+/**
+ * qdf_hal_pkt_type_map() - map qdf packet type with
+ * packet dump packet type
+ * @type: packet type
+ *
+ * Return: Packet dump packet type
+ */
+static inline enum pkt_type
+qdf_hal_pkt_type_map(enum qdf_pkt_type type)
+{
+	switch (type) {
+	case QDF_TX_MGMT_PKT:
+		return TX_MGMT_PKT;
+	case QDF_TX_DATA_PKT:
+		return TX_DATA_PKT;
+	case QDF_RX_MGMT_PKT:
+		return RX_MGMT_PKT;
+	case QDF_RX_DATA_PKT:
+		return RX_DATA_PKT;
+	default:
+		return INVALID_PKT;
 	}
 }
 
@@ -1544,9 +1585,7 @@ static void send_packetdump(ol_txrx_soc_handle soc,
 	if (wlan_op_mode_sta != cdp_get_opmode(soc, vdev_id))
 		return;
 
-#if defined(HELIUMPLUS)
 	pktlog_hdr.flags |= PKTLOG_HDR_SIZE_16;
-#endif
 
 	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
 	pktlog_hdr.size = sizeof(pd_hdr) + netbuf->len;
@@ -1579,9 +1618,7 @@ static void send_packetdump_monitor(uint8_t type)
 	struct ath_pktlog_hdr pktlog_hdr = {0};
 	struct packet_dump pd_hdr = {0};
 
-#if defined(HELIUMPLUS)
 	pktlog_hdr.flags |= PKTLOG_HDR_SIZE_16;
-#endif
 
 	pktlog_hdr.log_type = PKTLOG_TYPE_PKT_DUMP;
 	pktlog_hdr.size = sizeof(pd_hdr);
@@ -1657,9 +1694,12 @@ static bool check_txrx_packetdump_count(uint8_t pdev_id)
 static void tx_packetdump_cb(ol_txrx_soc_handle soc,
 			     uint8_t pdev_id, uint8_t vdev_id,
 			     qdf_nbuf_t netbuf,
-			     uint8_t status, uint8_t type)
+			     enum qdf_dp_tx_rx_status status,
+			     enum qdf_pkt_type type)
 {
 	bool temp;
+	enum tx_pkt_fate tx_status = qdf_hal_tx_status_map(status);
+	enum pkt_type pkt_type = qdf_hal_pkt_type_map(type);
 
 	if (!soc)
 		return;
@@ -1668,8 +1708,7 @@ static void tx_packetdump_cb(ol_txrx_soc_handle soc,
 	if (temp)
 		return;
 
-	driver_hal_status_map(&status);
-	send_packetdump(soc, vdev_id, netbuf, status, type);
+	send_packetdump(soc, vdev_id, netbuf, tx_status, pkt_type);
 }
 
 
@@ -1691,9 +1730,12 @@ static void tx_packetdump_cb(ol_txrx_soc_handle soc,
 static void rx_packetdump_cb(ol_txrx_soc_handle soc,
 			     uint8_t pdev_id, uint8_t vdev_id,
 			     qdf_nbuf_t netbuf,
-			     uint8_t status, uint8_t type)
+			     enum qdf_dp_tx_rx_status status,
+			     enum qdf_pkt_type type)
 {
 	bool temp;
+	enum rx_pkt_fate rx_status = qdf_hal_rx_status_map(status);
+	enum pkt_type pkt_type = qdf_hal_pkt_type_map(type);
 
 	if (!soc)
 		return;
@@ -1702,7 +1744,7 @@ static void rx_packetdump_cb(ol_txrx_soc_handle soc,
 	if (temp)
 		return;
 
-	send_packetdump(soc, vdev_id, netbuf, status, type);
+	send_packetdump(soc, vdev_id, netbuf, rx_status, pkt_type);
 }
 
 void wlan_register_txrx_packetdump(uint8_t pdev_id)
@@ -1723,6 +1765,5 @@ void wlan_register_txrx_packetdump(uint8_t pdev_id)
 
 	csr_packetdump_timer_start();
 }
-#endif /* REMOVE_PKT_LOG */
-#endif /* FEATURE_PKTLOG */
+#endif /* CONNECTIVITY_PKTLOG */
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */

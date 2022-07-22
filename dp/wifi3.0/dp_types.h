@@ -2843,6 +2843,11 @@ struct dp_pdev {
 #ifdef WLAN_FEATURE_MARK_FIRST_WAKEUP_PACKET
 	uint8_t is_first_wakeup_packet;
 #endif
+#ifdef CONNECTIVITY_PKTLOG
+	/* packetdump callback functions */
+	ol_txrx_pktdump_cb dp_tx_packetdump_cb;
+	ol_txrx_pktdump_cb dp_rx_packetdump_cb;
+#endif
 };
 
 struct dp_peer;
@@ -3483,9 +3488,12 @@ struct dp_peer {
 	uint8_t num_links;
 	DP_MUTEX_TYPE link_peers_info_lock;
 #endif
+#ifdef DP_PEER_EXTENDED_API
+	/* BW of peer connection */
+	enum cdp_peer_bw bw;
 	/* MPDU retry threshold to increment tx bad count */
-	uint8_t mpdu_retry_threshold_1;
-	uint8_t mpdu_retry_threshold_2;
+	uint8_t mpdu_retry_threshold;
+#endif
 };
 
 /*

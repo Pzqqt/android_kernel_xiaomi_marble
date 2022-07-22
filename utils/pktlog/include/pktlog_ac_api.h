@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012-2014, 2016-2018, 2020 The Linux Foundation.
  * All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,7 +25,7 @@
 
 #ifndef _PKTLOG_AC_API_
 #define _PKTLOG_AC_API_
-#ifndef REMOVE_PKT_LOG
+#if defined(CONNECTIVITY_PKTLOG) || !defined(REMOVE_PKT_LOG)
 
 /**
  * @typedef ol_pktlog_dev_handle

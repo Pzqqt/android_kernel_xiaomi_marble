@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -472,6 +472,19 @@ struct scan_cache_node *scm_get_conn_node(struct scan_dbs *scan_db)
 	return NULL;
 }
 
+static bool
+scm_bss_is_nontx_of_conn_bss(struct scan_cache_node *conn_node,
+			     struct scan_cache_node *cur_node)
+{
+	if (cur_node->entry->mbssid_info.profile_num &&
+	    !memcmp(conn_node->entry->mbssid_info.trans_bssid,
+		    cur_node->entry->mbssid_info.trans_bssid,
+		    QDF_MAC_ADDR_SIZE))
+		return true;
+
+	return false;
+}
+
 void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 	struct scan_dbs *scan_db)
 {
@@ -496,10 +509,9 @@ void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 			    /* OR cur_node is not part of the MBSSID of the
 			     * connected node
 			     */
-			    memcmp(conn_node->entry->mbssid_info.trans_bssid,
-				   cur_node->entry->mbssid_info.trans_bssid,
-				   QDF_MAC_ADDR_SIZE)
-			   ) {
+			    (!scm_bss_is_connected(cur_node->entry) &&
+			     !scm_bss_is_nontx_of_conn_bss(conn_node,
+							  cur_node))) {
 				scm_check_and_age_out(scan_db, cur_node,
 					def_param->scan_cache_aging_time);
 			}

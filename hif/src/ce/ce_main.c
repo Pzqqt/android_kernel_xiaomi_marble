@@ -3707,7 +3707,7 @@ static void hif_update_rri_over_ddr_config(struct hif_softc *scn,
  */
 int hif_wlan_enable(struct hif_softc *scn)
 {
-	struct pld_wlan_enable_cfg cfg;
+	struct pld_wlan_enable_cfg cfg = { 0 };
 	enum pld_driver_mode mode;
 	uint32_t con_mode = hif_get_conparam(scn);
 

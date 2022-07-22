@@ -375,6 +375,9 @@ more_msdu_link_desc:
 		if (hal_rx_encryption_info_valid(soc->hal_soc, rx_tlv_hdr))
 			hal_rx_print_pn(soc->hal_soc, rx_tlv_hdr);
 
+		dp_rx_send_pktlog(soc, pdev, rx_desc->nbuf,
+				  QDF_TX_RX_STATUS_DROP);
+
 		/* Just free the buffers */
 		dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf, *mac_id);
 
@@ -806,6 +809,7 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 
 	_dp_rx_bar_frame_handle(soc, nbuf, mpdu_desc_info, tid, err_status,
 				err_code);
+	dp_rx_send_pktlog(soc, pdev, nbuf, QDF_TX_RX_STATUS_DROP);
 	dp_rx_link_desc_return(soc, ring_desc,
 			       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
 	dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf,
@@ -1379,6 +1383,7 @@ more_msdu_link_desc:
 		/* all buffers from a MSDU link belong to same pdev */
 		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc_pool_id);
 
+		dp_rx_send_pktlog(soc, pdev, nbuf, QDF_TX_RX_STATUS_OK);
 		rx_desc_pool = &soc->rx_desc_buf[rx_desc_pool_id];
 		dp_ipa_rx_buf_smmu_mapping_lock(soc);
 		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
@@ -2239,8 +2244,18 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 
 		hal_rx_reo_buf_paddr_get(soc->hal_soc, ring_desc, &hbi);
 		link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &hbi);
+		num_msdus = 0;
 		hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
 				     &num_msdus);
+		if (!num_msdus ||
+		    !dp_rx_is_sw_cookie_valid(soc, msdu_list.sw_cookie[0])) {
+			dp_rx_err_info_rl("Invalid MSDU info num_msdus %u cookie: 0x%x",
+					  num_msdus, msdu_list.sw_cookie[0]);
+			dp_rx_link_desc_return(soc, ring_desc,
+					       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+			goto next_entry;
+		}
+
 		dp_rx_err_ring_record_entry(soc, msdu_list.paddr[0],
 					    msdu_list.sw_cookie[0],
 					    msdu_list.rbm[0]);
@@ -3163,11 +3178,12 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
-static inline uint32_t
+static inline void
 dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			hal_rxdma_desc_t rxdma_dst_ring_desc,
 			union dp_rx_desc_list_elem_t **head,
-			union dp_rx_desc_list_elem_t **tail)
+			union dp_rx_desc_list_elem_t **tail,
+			uint32_t *rx_bufs_used)
 {
 	void *rx_msdu_link_desc;
 	qdf_nbuf_t msdu;
@@ -3175,9 +3191,10 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct hal_rx_msdu_list msdu_list;
 	uint16_t num_msdus;
 	struct hal_buf_info buf_info;
-	uint32_t rx_bufs_used = 0, msdu_cnt, i;
+	uint32_t msdu_cnt, i;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	struct rx_desc_pool *rx_desc_pool;
+	struct dp_rx_desc *rx_desc;
 
 	msdu = 0;
 
@@ -3200,14 +3217,30 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
 			for (i = 0; i < num_msdus; i++) {
-				struct dp_rx_desc *rx_desc =
-					soc->arch_ops.dp_rx_desc_cookie_2_va(
+				if (!dp_rx_is_sw_cookie_valid(soc, msdu_list.sw_cookie[i])) {
+					dp_rx_err_info_rl("Invalid MSDU info cookie: 0x%x",
+							  msdu_list.sw_cookie[i]);
+					continue;
+				}
+
+				rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
 							soc,
 							msdu_list.sw_cookie[i]);
 				qdf_assert_always(rx_desc);
 				rx_desc_pool =
 					&soc->rx_desc_buf[rx_desc->pool_id];
 				msdu = rx_desc->nbuf;
+
+				/*
+				 * this is a unlikely scenario where the host is reaping
+				 * a descriptor which it already reaped just a while ago
+				 * but is yet to replenish it back to HW.
+				 */
+				if (qdf_unlikely(!rx_desc->in_use) ||
+				    qdf_unlikely(!msdu)) {
+					dp_rx_err_info_rl("Reaping rx_desc not in use!");
+					continue;
+				}
 
 				dp_ipa_rx_buf_smmu_mapping_lock(soc);
 				dp_ipa_handle_rx_buf_smmu_mapping(
@@ -3225,7 +3258,7 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				dp_rx_buffer_pool_nbuf_free(soc, msdu,
 							    rx_desc->pool_id);
-				rx_bufs_used++;
+				rx_bufs_used[rx_desc->pool_id]++;
 				dp_rx_add_to_free_desc_list(head,
 							    tail, rx_desc);
 			}
@@ -3245,8 +3278,6 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					rx_link_buf_info,
 				       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
 	} while (buf_info.paddr);
-
-	return rx_bufs_used;
 }
 
 /*
@@ -3276,10 +3307,11 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 	struct hal_buf_info buf_info = {0};
 	struct dp_rx_desc *rx_desc = NULL;
 	struct rx_desc_pool *rx_desc_pool;
-	uint32_t rx_bufs_reaped = 0;
+	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = {0};
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	uint8_t pool_id;
+	uint8_t mac_id;
 
 	hal_rx_reo_buf_paddr_get(soc->hal_soc, hal_desc, &buf_info);
 
@@ -3318,25 +3350,27 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 						    &tail,
 						    rx_desc);
 
-			rx_bufs_reaped++;
+			rx_bufs_reaped[rx_desc->pool_id]++;
 		}
 	} else if (buf_type == HAL_WBM_RELEASE_RING_2_DESC_TYPE) {
-		rx_bufs_reaped = dp_wbm_int_err_mpdu_pop(soc, pool_id,
-							 hal_desc,
-							 &head, &tail);
+		dp_wbm_int_err_mpdu_pop(soc, pool_id, hal_desc,
+					&head, &tail, rx_bufs_reaped);
 	}
 
-	if (rx_bufs_reaped) {
+	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		struct rx_desc_pool *rx_desc_pool;
 		struct dp_srng *dp_rxdma_srng;
 
-		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
-		dp_rxdma_srng = &soc->rx_refill_buf_ring[pool_id];
-		rx_desc_pool = &soc->rx_desc_buf[pool_id];
+		if (!rx_bufs_reaped[mac_id])
+			continue;
 
-		dp_rx_buffers_replenish(soc, pool_id, dp_rxdma_srng,
+		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
+		dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
+		rx_desc_pool = &soc->rx_desc_buf[mac_id];
+
+		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
 					rx_desc_pool,
-					rx_bufs_reaped,
+					rx_bufs_reaped[mac_id],
 					&head, &tail);
 	}
 }

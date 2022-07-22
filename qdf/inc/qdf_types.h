@@ -1526,6 +1526,22 @@ enum qdf_dp_tx_rx_status {
 };
 
 /**
+ * enum qdf_pkt_type - TX/RX packet type
+ * @QDF_TX_MGMT_PKT: Tx Management Packet
+ * @QDF_TX_DATA_PKT: Tx data Packet
+ * @QDF_RX_MGMT_PKT: Rx Management Packet
+ * @QDF_RX_DATA_PKT: Rx data Packet
+ * @QDF_INVALID_PKT: Invalid Packet type
+ */
+enum qdf_pkt_type {
+	QDF_TX_MGMT_PKT,
+	QDF_TX_DATA_PKT,
+	QDF_RX_MGMT_PKT,
+	QDF_RX_DATA_PKT,
+	QDF_INVALID_PKT
+};
+
+/**
  * enum qdf_dp_a_status - A_STATUS
  * @QDF_A_STATUS_ERROR: Generic error return
  * @QDF_A_STATUS_OK: success

@@ -3012,4 +3012,68 @@ static inline void dp_pdev_clear_tx_delay_stats(struct dp_soc *soc)
 {
 }
 #endif
+
+#ifdef CONNECTIVITY_PKTLOG
+/*
+ * dp_tx_send_pktlog() - send tx packet log
+ * @soc: soc handle
+ * @pdev: pdev handle
+ * @nbuf: nbuf
+ * @status: status of tx packet
+ *
+ * This function is used to send tx packet for logging
+ *
+ * Return: None
+ *
+ */
+static inline
+void dp_tx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
+		       qdf_nbuf_t nbuf, enum qdf_dp_tx_rx_status status)
+{
+	ol_txrx_pktdump_cb packetdump_cb = pdev->dp_tx_packetdump_cb;
+
+	if (qdf_unlikely(packetdump_cb)) {
+		packetdump_cb((ol_txrx_soc_handle)soc, pdev->pdev_id,
+			      QDF_NBUF_CB_TX_VDEV_CTX(nbuf),
+			      nbuf, status, QDF_TX_DATA_PKT);
+	}
+}
+
+/*
+ * dp_rx_send_pktlog() - send rx packet log
+ * @soc: soc handle
+ * @pdev: pdev handle
+ * @nbuf: nbuf
+ * @status: status of rx packet
+ *
+ * This function is used to send rx packet for logging
+ *
+ * Return: None
+ *
+ */
+static inline
+void dp_rx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
+		       qdf_nbuf_t nbuf, enum qdf_dp_tx_rx_status status)
+{
+	ol_txrx_pktdump_cb packetdump_cb = pdev->dp_rx_packetdump_cb;
+
+	if (qdf_unlikely(packetdump_cb)) {
+		packetdump_cb((ol_txrx_soc_handle)soc, pdev->pdev_id,
+			      QDF_NBUF_CB_RX_VDEV_ID(nbuf),
+			      nbuf, status, QDF_RX_DATA_PKT);
+	}
+}
+#else
+static inline
+void dp_tx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
+		       qdf_nbuf_t nbuf, enum qdf_dp_tx_rx_status status)
+{
+}
+
+static inline
+void dp_rx_send_pktlog(struct dp_soc *soc, struct dp_pdev *pdev,
+		       qdf_nbuf_t nbuf, enum qdf_dp_tx_rx_status status)
+{
+}
+#endif
 #endif /* #ifndef _DP_INTERNAL_H_ */

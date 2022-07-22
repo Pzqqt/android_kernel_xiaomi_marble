@@ -994,8 +994,8 @@ typedef void (*ol_txrx_pktdump_cb)(ol_txrx_soc_handle soc,
 				   uint8_t pdev_id,
 				   uint8_t vdev_id,
 				   qdf_nbuf_t netbuf,
-				   uint8_t status,
-				   uint8_t type);
+				   enum qdf_dp_tx_rx_status status,
+				   enum qdf_pkt_type type);
 
 /**
  * ol_txrx_get_tsf_time - callback to get tsf time
