@@ -1824,7 +1824,7 @@ static int handle_session_response(struct msm_vidc_core *core,
 
 	inst = get_inst(core, hdr->session_id);
 	if (!inst) {
-		d_vpr_e("%s: Invalid params\n", __func__);
+		d_vpr_e("%s: Invalid inst\n", __func__);
 		return -EINVAL;
 	}
 
