@@ -7341,6 +7341,8 @@ typedef struct {
 enum wmi_spectral_scan_mode {
     WMI_SPECTRAL_SCAN_NORMAL_MODE,
     WMI_SPECTRAL_SCAN_AGILE_MODE,
+
+    WMI_SPECTRAL_SCAN_MAX_MODE /* keep this last */
 };
 
 /*
