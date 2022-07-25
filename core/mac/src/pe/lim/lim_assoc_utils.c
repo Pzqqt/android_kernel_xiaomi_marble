@@ -709,8 +709,8 @@ lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 				STATUS_AP_UNABLE_TO_HANDLE_NEW_STA,
 				1, peer_addr, sub_type, sta_ds, session_entry,
 				false);
-		pe_warn("received Re/Assoc req when max associated STAs reached from");
-		lim_print_mac_addr(mac_ctx, peer_addr, LOGW);
+		pe_debug("Received Re/Assoc req when max associated STAs reached from " QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(peer_addr));
 		lim_send_sme_max_assoc_exceeded_ntf(mac_ctx, peer_addr,
 					session_entry->smeSessionId);
 		return;

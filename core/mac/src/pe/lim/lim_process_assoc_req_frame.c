@@ -1221,8 +1221,8 @@ static bool lim_process_assoc_req_no_sta_ctx(struct mac_context *mac_ctx,
 		 * Maximum number of STAs that AP can handle reached.
 		 * Send Association response to peer MAC entity
 		 */
-		pe_err("Max Sta count reached : %d",
-				mac_ctx->lim.maxStation);
+		pe_info_rl("Max Sta count reached : %d",
+			   mac_ctx->lim.maxStation);
 		lim_reject_association(mac_ctx, sa, sub_type, false,
 				       (tAniAuthType)0, 0, false,
 				       STATUS_UNSPECIFIED_FAILURE,
