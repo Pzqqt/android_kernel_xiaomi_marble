@@ -6202,6 +6202,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.tx.tx_invalid_peer.num);
 		DP_PRINT_STATS("Tx desc freed in non-completion path: %u",
 			       pdev->soc->stats.tx.tx_comp_exception);
+		DP_PRINT_STATS("Tx desc force freed: %u",
+			       pdev->soc->stats.tx.tx_comp_force_freed);
 
 		DP_PRINT_STATS("Tx packets sent per interrupt:");
 		DP_PRINT_STATS("Single Packet: %u",
