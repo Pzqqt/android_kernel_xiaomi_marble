@@ -70,6 +70,7 @@ struct msm_asoc_mach_data {
 	struct device_node *dmic01_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic23_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic45_gpio_p; /* used by pinctrl API */
+	struct device_node *dmic67_gpio_p; /* used by pinctrl API */
 	struct pinctrl *usbc_en2_gpio_p; /* used by pinctrl API */
 	bool is_afe_config_done;
 	struct device_node *fsa_handle;
@@ -88,6 +89,7 @@ static struct snd_soc_card snd_soc_card_waipio_msm;
 static int dmic_0_1_gpio_cnt;
 static int dmic_2_3_gpio_cnt;
 static int dmic_4_5_gpio_cnt;
+static int dmic_6_7_gpio_cnt;
 
 static void *def_wcd_mbhc_cal(void);
 
@@ -324,6 +326,11 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 		dmic_gpio_cnt = &dmic_4_5_gpio_cnt;
 		dmic_gpio = pdata->dmic45_gpio_p;
 		break;
+	case 6:
+	case 7:
+		dmic_gpio_cnt = &dmic_6_7_gpio_cnt;
+		dmic_gpio = pdata->dmic67_gpio_p;
+		break;
 	default:
 		dev_err(component->dev, "%s: Invalid DMIC Selection\n",
 			__func__);
@@ -378,8 +385,8 @@ static const struct snd_soc_dapm_widget msm_int_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("Digital Mic3", msm_dmic_event),
 	SND_SOC_DAPM_MIC("Digital Mic4", msm_dmic_event),
 	SND_SOC_DAPM_MIC("Digital Mic5", msm_dmic_event),
-	SND_SOC_DAPM_MIC("Digital Mic6", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic7", NULL),
+	SND_SOC_DAPM_MIC("Digital Mic6", msm_dmic_event),
+	SND_SOC_DAPM_MIC("Digital Mic7", msm_dmic_event),
 };
 
 static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
@@ -1961,12 +1968,17 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	pdata->dmic45_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,cdc-dmic45-gpios",
 					       0);
+	pdata->dmic67_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,cdc-dmic67-gpios",
+					       0);
 	if (pdata->dmic01_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic01_gpio_p, false);
 	if (pdata->dmic23_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic23_gpio_p, false);
 	if (pdata->dmic45_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic45_gpio_p, false);
+	if (pdata->dmic67_gpio_p)
+		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic67_gpio_p, false);
 
 	msm_common_snd_init(pdev, card);
 
