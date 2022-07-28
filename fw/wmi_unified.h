@@ -3203,6 +3203,36 @@ typedef struct {
 #define WMI_TARGET_CAP_FLAGS_RX_PEER_METADATA_VERSION_SET(target_cap_flags, value) \
         WMI_SET_BITS(target_cap_flags, 0, 2, value)
 
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_2GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 2, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_2GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 2, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_2GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 3, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_2GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 3, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_5GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 4, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_5GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 4, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_5GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 5, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_5GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 5, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_6GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 6, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_6GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 6, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_6GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 7, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_6GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 7, 1, value)
+
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
  */
@@ -3306,7 +3336,13 @@ typedef struct {
      *    1-> MLO support
      *    2,3-> reserved
      *    Refer to WMI_TARGET_CAP_FLAGS_PEER_METADATA_VERSION macros.
-     * Bits 31:2 - Reserved
+     * Bit 2 - UL MUMIMO Rx support on 2.4GHz (AP Mode)
+     * Bit 3 - UL MUMIMO Tx support on 2.4GHz (STA Mode)
+     * Bit 4 - UL MUMIMO Rx support on 5GHz (AP Mode)
+     * Bit 5 - UL MUMIMO Tx support on 5GHz (STA Mode)
+     * Bit 6 - UL MUMIMO Rx support on 6GHz (AP Mode)
+     * Bit 7 - UL MUMIMO Tx support on 6GHz (STA Mode)
+     * Bits 31:8 - Reserved
      */
     A_UINT32 target_cap_flags;
 
