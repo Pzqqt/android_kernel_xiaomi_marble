@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -221,6 +222,7 @@ enum block_ack_actioncode {
 
 /**
  * enum pub_actioncode - public action frames
+ * Reference IEEE Std 802.11-2020 Table 9-364—Public Action field values
  * @PUB_ACTION_2040_BSS_COEXISTENCE:  public 20-40 bss coex action frame
  * @PUB_ACTION_EXT_CHANNEL_SWITCH_ID: public ext channel switch id action frame
  * @PUB_ACTION_VENDOR_SPECIFIC: vendor specific public action frame
@@ -229,6 +231,8 @@ enum block_ack_actioncode {
  * @PUB_ACTION_GAS_COMEBACK_REQUEST: GAS comeback request action frame
  * @PUB_ACTION_GAS_COMEBACK_RESPONSE: GAS comeback respose action frame
  * @PUB_ACTION_TDLS_DISCRESP: tdls discovery response public action frame
+ * @PUB_ACTION_FTM_REQUEST: FTM request action frame
+ * @PUB_ACTION_FTM_RESPONSE: FTM respose action frame
  */
 enum pub_actioncode {
 	PUB_ACTION_2040_BSS_COEXISTENCE = 0,
@@ -239,6 +243,8 @@ enum pub_actioncode {
 	PUB_ACTION_GAS_COMEBACK_REQUEST = 12,
 	PUB_ACTION_GAS_COMEBACK_RESPONSE = 13,
 	PUB_ACTION_TDLS_DISCRESP = 14,
+	PUB_ACTION_FTM_REQUEST = 32,
+	PUB_ACTION_FTM_RESPONSE = 33,
 };
 
 /**
@@ -634,6 +640,8 @@ struct action_frm_hdr {
  * @MGMT_ACTION_TWT_SETUP: TWT setup frame
  * @MGMT_ACTION_TWT_TEARDOWN: TWT teardown frame
  * @MGMT_ACTION_TWT_INFORMATION: TWT information frame
+ * @MGMT_ACTION_FTM_REQUEST: FTM request frame
+ * @MGMT_ACTION_FTM_RESPONSE: FTM response frame
  * @MGMT_MAX_FRAME_TYPE:         max. mgmt frame types
  */
 enum mgmt_frame_type {
@@ -763,6 +771,8 @@ enum mgmt_frame_type {
 	MGMT_ACTION_TWT_SETUP,
 	MGMT_ACTION_TWT_TEARDOWN,
 	MGMT_ACTION_TWT_INFORMATION,
+	MGMT_ACTION_FTM_REQUEST,
+	MGMT_ACTION_FTM_RESPONSE,
 	MGMT_MAX_FRAME_TYPE,
 };
 
