@@ -1810,11 +1810,30 @@ static inline uint32_t hal_rx_tlv_get_is_decrypted_be(uint8_t *buf)
 	return is_decrypt;
 }
 
-//TODO -  Currently going with NO-PKT-HDR, need to add pkt hdr tlv and check
+#ifdef NO_RX_PKT_HDR_TLV
+/**
+ * hal_rx_pkt_hdr_get_be(): API to get 80211 header
+ * @buf: start of rx_pkt_tlv
+ *
+ * If NO_RX_PKT_HDR_TLV is enabled, then this API assume caller gives a raw
+ * data, get 80211 header from packet data directly.
+ * If NO_RX_PKT_HDR_TLV is disabled, then get it from rx_pkt_hdr_tlv in
+ * rx_pkt_tlvs.
+ *
+ * Return: pointer to start of 80211 header
+ */
 static inline uint8_t *hal_rx_pkt_hdr_get_be(uint8_t *buf)
 {
 	return buf + RX_PKT_TLVS_LEN;
 }
+#else
+static inline uint8_t *hal_rx_pkt_hdr_get_be(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	return pkt_tlvs->pkt_hdr_tlv.rx_pkt_hdr;
+}
+#endif
 
 /**
  * hal_rx_priv_info_set_in_tlv_be(): Save the private info to
