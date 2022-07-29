@@ -5573,6 +5573,10 @@ typedef enum {
  */
 #define WMI_SCAN_FLAG_EXT_SPECTRAL_CFREQ_PLUS_10MHZ_IN_SUPP_CH_LIST 0x00002000
 
+/* Include MLO IE in Probe req */
+#define WMI_SCAN_FLAG_EXT_INCL_MLIE_PRB_REQ           0x00004000
+
+
 /**
  * new 6 GHz flags per chan (short ssid or bssid) in struct
  * wmi_hint_freq_short_ssid or wmi_hint_freq_bssid
