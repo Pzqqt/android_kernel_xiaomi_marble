@@ -14954,6 +14954,8 @@ typedef struct {
      * max_allowed_tx_power = 0 dBm means value is not specified.
      */
     A_INT32 max_allowed_tx_power;
+    /** unique id to identify mac's TSF register */
+    A_UINT32 mac_tsf_id;
 } wmi_vdev_start_response_event_fixed_param;
 
 typedef struct {
@@ -24678,6 +24680,8 @@ typedef struct {
      * max_allowed_tx_power = 0 dBm means value is not specified.
      */
     A_INT32 max_allowed_tx_power;
+    /** unique id to identify mac's TSF register */
+    A_UINT32 mac_tsf_id;
     /**
      * TLV (tag length value) parameters follows roam_synch_event
      * The TLV's are:
