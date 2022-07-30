@@ -463,6 +463,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_ML_PEERS_INFO = 47,
 
+    /* HTT_DBG_ODD_MANDATORY_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_odd_mandatory_pdev_stats_tlv
+     */
+    HTT_DBG_ODD_MANDATORY_STATS = 48,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -883,6 +891,7 @@ typedef struct {
     A_UINT32      phy_errs[1]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
 } htt_tx_pdev_stats_phy_err_tlv_v;
 
+#define HTT_TX_PDEV_SIFS_BURST_HIST_STATS 10
 #define HTT_TX_PDEV_STATS_SIFS_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
@@ -8123,6 +8132,108 @@ typedef struct _htt_ml_peer_stats {
     htt_ml_peer_ext_details_tlv     ml_peer_ext_details;
     htt_ml_link_info_tlv            ml_link_info[];
 } htt_ml_peer_stats_t;
+
+/*
+ * ODD Mandatory Stats are grouped together from all the exisitng different
+ * stats, to form a set of stats that will be used by the ODD application to
+ * post the stats to the cloud instead of polling for the individual stats.
+ * This is done to avoid non-mandatory stats to be polled as the data will not
+ * be required in the recipes derivation.
+ * Rather than the host simply printing the ODD stats, the ODD application
+ * will take the buffer and map it to the odd_mandatory_stats data structure.
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 hw_queued;
+    A_UINT32 hw_reaped;
+    A_UINT32 hw_paused;
+    A_UINT32 hw_filt;
+    A_UINT32 seq_posted;
+    A_UINT32 seq_completed;
+    A_UINT32 underrun;
+    A_UINT32 hw_flush;
+    A_UINT32 next_seq_posted_dsr;
+    A_UINT32 seq_posted_isr;
+    A_UINT32 mpdu_cnt_fcs_ok;
+    A_UINT32 mpdu_cnt_fcs_err;
+    A_UINT32 msdu_count_tqm;
+    A_UINT32 mpdu_count_tqm;
+    A_UINT32 mpdus_ack_failed;
+    A_UINT32 num_data_ppdus_tried_ota;
+    A_UINT32 ppdu_ok;
+    A_UINT32 num_total_ppdus_tried_ota;
+    A_UINT32 thermal_suspend_cnt;
+    A_UINT32 dfs_suspend_cnt;
+    A_UINT32 tx_abort_suspend_cnt;
+    A_UINT32 suspended_txq_mask;
+    A_UINT32 last_suspend_reason;
+    A_UINT32 seq_failed_queueing;
+    A_UINT32 seq_restarted;
+    A_UINT32 seq_txop_repost_stop;
+    A_UINT32 next_seq_cancel;
+    A_UINT32 seq_min_msdu_repost_stop;
+    A_UINT32 total_phy_err_cnt;
+    A_UINT32 ppdu_recvd;
+    A_UINT32 tcp_msdu_cnt;
+    A_UINT32 tcp_ack_msdu_cnt;
+    A_UINT32 udp_msdu_cnt;
+    A_UINT32 fw_tx_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
+    A_UINT32 fw_rx_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
+    A_UINT32 fw_ring_mpdu_err[HTT_RX_STATS_RXDMA_MAX_ERR];
+    A_UINT32 urrn_stats[HTT_TX_PDEV_MAX_URRN_STATS];
+    A_UINT32 sifs_status[HTT_TX_PDEV_MAX_SIFS_BURST_STATS];
+    A_UINT32 sifs_hist_status[HTT_TX_PDEV_SIFS_BURST_HIST_STATS];
+    A_UINT32 rx_suspend_cnt;
+    A_UINT32 rx_suspend_fail_cnt;
+    A_UINT32 rx_resume_cnt;
+    A_UINT32 rx_resume_fail_cnt;
+    A_UINT32 hwq_beacon_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_voice_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_video_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_best_effort_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_beacon_mpdu_tried_cnt;
+    A_UINT32 hwq_voice_mpdu_tried_cnt;
+    A_UINT32 hwq_video_mpdu_tried_cnt;
+    A_UINT32 hwq_best_effort_mpdu_tried_cnt;
+    A_UINT32 hwq_beacon_mpdu_queued_cnt;
+    A_UINT32 hwq_voice_mpdu_queued_cnt;
+    A_UINT32 hwq_video_mpdu_queued_cnt;
+    A_UINT32 hwq_best_effort_mpdu_queued_cnt;
+    A_UINT32 hwq_beacon_mpdu_ack_fail_cnt;
+    A_UINT32 hwq_voice_mpdu_ack_fail_cnt;
+    A_UINT32 hwq_video_mpdu_ack_fail_cnt;
+    A_UINT32 hwq_best_effort_mpdu_ack_fail_cnt;
+    A_UINT32 pdev_resets;
+    A_UINT32 phy_warm_reset;
+    A_UINT32 hwsch_reset_count;
+    A_UINT32 phy_warm_reset_ucode_trig;
+    A_UINT32 mac_cold_reset;
+    A_UINT32 mac_warm_reset;
+    A_UINT32 mac_warm_reset_restore_cal;
+    A_UINT32 phy_warm_reset_m3_ssr;
+    A_UINT32 fw_rx_rings_reset;
+    A_UINT32 tx_flush;
+    A_UINT32 hwsch_dev_reset_war;
+    A_UINT32 mac_cold_reset_restore_cal;
+    A_UINT32 mac_only_reset;
+    A_UINT32 mac_sfm_reset;
+    A_UINT32 tx_ldpc; /* Number of tx PPDUs with LDPC coding */
+    A_UINT32 rx_ldpc; /* Number of rx PPDUs with LDPC coding */
+    A_UINT32 gen_mpdu_end_reason[HTT_TX_TQM_MAX_GEN_MPDU_END_REASON];
+    A_UINT32 list_mpdu_end_reason[HTT_TX_TQM_MAX_LIST_MPDU_END_REASON];
+    A_UINT32 tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 half_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 quarter_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 tx_su_punctured_mode[HTT_TX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
+    A_UINT32 rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 rx_nss[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 rx_bw[HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 rx_stbc[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 rts_cnt;
+    A_UINT32 rts_success;
+} htt_odd_mandatory_pdev_stats_tlv;
 
 
 #endif /* __HTT_STATS_H__ */
