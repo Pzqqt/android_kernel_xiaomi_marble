@@ -142,6 +142,7 @@ static void scm_update_rnr_info(struct wlan_objmgr_psoc *psoc,
 	struct scan_rnr_node *rnr_node;
 	struct chan_list *chan_list;
 	QDF_STATUS status;
+	bool hint = false;
 
 	if (!req)
 		return;
@@ -163,19 +164,29 @@ static void scm_update_rnr_info(struct wlan_objmgr_psoc *psoc,
 			    req->scan_req.num_hint_bssid <
 			    WLAN_SCAN_MAX_HINT_BSSID) {
 				qdf_mem_copy(&req->scan_req.hint_bssid[
-							num_bssid++].bssid,
+							num_bssid].bssid,
 					     &rnr_node->entry.bssid,
 					     QDF_MAC_ADDR_SIZE);
+				req->scan_req.hint_bssid[
+					num_bssid++].freq_flags = freq << 16;
 				req->scan_req.num_hint_bssid++;
-				total_count--;
-			} else if (rnr_node->entry.short_ssid &&
-				   req->scan_req.num_hint_s_ssid <
+				hint = true;
+			}
+			if (rnr_node->entry.short_ssid &&
+			    req->scan_req.num_hint_s_ssid <
 				   WLAN_SCAN_MAX_HINT_S_SSID) {
 				req->scan_req.hint_s_ssid[
-					num_ssid++].short_ssid =
+					num_ssid].short_ssid =
 						rnr_node->entry.short_ssid;
+				req->scan_req.hint_s_ssid[
+					num_ssid++].freq_flags = freq << 16;
 				req->scan_req.num_hint_s_ssid++;
+				hint = true;
+			}
+
+			if (hint) {
 				total_count--;
+				hint = false;
 			}
 			status = qdf_list_peek_next(&chan->rnr_list, cur_node,
 						    &next_node);
