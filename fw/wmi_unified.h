@@ -2017,6 +2017,9 @@ typedef enum {
      */
     WMI_HALPHY_CTRL_PATH_STATS_EVENTID,
 
+    /** FW IPA link stats Event */
+    WMI_IPA_LINK_STATS_EVENTID,
+
 
     /* NLO specific events */
     /** NLO match event after the first match */
@@ -9825,6 +9828,7 @@ typedef struct {
 #define WMI_LINK_STATS_IFACE         0x00000002
 #define WMI_LINK_STATS_ALL_PEER      0x00000004
 #define WMI_LINK_STATS_PER_PEER      0x00000008
+#define WMI_LINK_STATS_IPA           0x00000010
 
 
 /* wifi clear statistics bitmap  */
@@ -10456,6 +10460,69 @@ typedef struct {
    /** Total error TIM beacon found by wlan ps including no rx in TIM wakeup and TIM event in active state **/
    A_UINT32 tot_err_tim_bcn;
 } wmi_iface_powersave_stats;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ipa_link_stats */
+
+    /** IPA tx channel 0 buffer hp/tp */
+    A_UINT32 wbm2sw_ring_ch0_hp;
+    A_UINT32 wbm2sw_ring_ch0_tp;
+    /** IPA tx channel 1 buffer hp/tp */
+    A_UINT32 wbm2sw_ring_ch1_hp;
+    A_UINT32 wbm2sw_ring_ch1_tp;
+
+    /** IPA rx channel 0 buffer hp/tp */
+    A_UINT32 reo2sw_ring_ch0_hp;
+    A_UINT32 reo2sw_ring_ch0_tp;
+    /** IPA rx channel 1 buffer hp/tp */
+    A_UINT32 reo2sw_ring_ch1_hp;
+    A_UINT32 reo2sw_ring_ch1_tp;
+
+    /** IPA rx channel 0 ring full counter */
+    A_UINT32 reo2sw_ch0_producer_full_cnt;
+    /** IPA rx channel 1 ring full counter */
+    A_UINT32 reo2sw_ch1_producer_full_cnt;
+
+    /** IPA rx path drop feature enable */
+    A_UINT32 ipa_drop_enabled;
+    /** Counter for IPA rx path switch to drop-enabled state */
+    A_UINT32 ipa_switch_to_drop_cnt;
+    /** Counter for IPA rx path switch from drop-enabled state to normal state */
+    A_UINT32 ipa_switch_from_drop_cnt;
+} wmi_ipa_link_stats;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ipa_per_mac_stats */
+
+    /** TCL total enqueued packet number */
+    A_UINT32 tcl_enqueue_packets;
+    /** TCL total discarded packet number during enqueue */
+    A_UINT32 tcl_enqueue_discard;
+
+    /** Total tx duration time, usec */
+    A_UINT32 total_ppdu_duration_us;
+
+    /** IPA rx no resource debug counter */
+    A_UINT32 wmac_no_resource_drop_ppdu_cnt_ix0;
+    A_UINT32 wmac_no_resource_drop_ppdu_cnt_ix1;
+    A_UINT32 wmac_no_resource_drop_mpdu_cnt_ix0;
+    A_UINT32 wmac_no_resource_drop_mpdu_cnt_ix1;
+    A_UINT32 wmac_rxdma2reo_producer_full_cnt;
+} wmi_ipa_per_mac_stats;
+
+/** IPA statistics (once started) reset and start afresh after each connection */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ipa_link_stats_event_fixed_param */
+    /** unique id identifying the request, given in the request stats command */
+    A_UINT32 request_id;
+    /** number of MACs */
+    A_UINT32 num_macs;
+/*
+ * This TLV is followed by other TLVs:
+ *   wmi_ipa_link_stats ipa_link_stats;
+ *   wmi_ipa_per_mac_stats ipa_per_mac_stats[num_macs];
+ */
+} wmi_ipa_link_stats_event_fixed_param;
 
 /** Interface statistics (once started) reset and start afresh after each connection */
 typedef struct {
