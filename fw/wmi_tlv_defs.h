@@ -1292,6 +1292,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ipa_link_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_ipa_link_stats,
     WMITLV_TAG_STRUC_wmi_ipa_per_mac_stats,
+    WMITLV_TAG_STRUC_wmi_pdev_featureset_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1796,6 +1797,7 @@ typedef enum {
     OP(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID) \
     OP(WMI_WOW_COAP_GET_BUF_INFO_CMDID) \
     OP(WMI_COEX_DBAM_CMDID) \
+    OP(WMI_PDEV_FEATURESET_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2100,8 +2102,7 @@ typedef enum {
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wlan_host_memory_chunk, host_mem_chunks, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param, wmi_pdev_set_hw_mode_cmd_fixed_param, hw_mode, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_band_to_mac, band_to_mac, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_htt_msdu_idx_to_htt_msdu_qtype, htt_msdu_idx_to_qtype_map, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, feature_set_bitmap, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_htt_msdu_idx_to_htt_msdu_qtype, htt_msdu_idx_to_qtype_map, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_INIT_CMDID);
 
@@ -4230,8 +4231,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FIPS_EXTEND_CMDID);
 
 /* FIPS mode set cmd */
 #define WMITLV_TABLE_WMI_PDEV_FIPS_MODE_SET_CMDID(id,op,buf,len) \
-     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param, wmi_pdev_fips_mode_set_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_fips_mode_set_cmd_fixed_param, wmi_pdev_fips_mode_set_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
  WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FIPS_MODE_SET_CMDID);
+
+/* Featureset cmd */
+#define WMITLV_TABLE_WMI_PDEV_FEATURESET_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_featureset_cmd_fixed_param, wmi_pdev_featureset_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, feature_set_bitmap, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FEATURESET_CMDID);
 
 /* get CCK ANI level */
 #define WMITLV_TABLE_WMI_PDEV_GET_ANI_CCK_CONFIG_CMDID(id,op,buf,len) \
