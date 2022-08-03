@@ -1585,6 +1585,19 @@ typedef enum {
  */
 #define HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS 4
 #define HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS 4
+
+/* HTT_RX  STATS_NUM_BW_EXT_2_COUNTERS:
+ * bw index 8  (bw ext_2 index 0): rssi_ext160_0_chainX
+ * bw index 9  (bw ext_2 index 1): rssi_ext160_1_chainX
+ * bw index 10 (bw ext_2 index 2): rssi_ext160_2_chainX
+ * bw index 11 (bw ext_2 index 3): rssi_ext160_3_chainX
+ * bw index 12 (bw ext_2 index 4): rssi_ext160_4_chainX
+ * bw index 13 (bw ext_2 index 5): rssi_ext160_5_chainX
+ * bw index 14 (bw ext_2 index 6): rssi_ext160_6_chainX
+ * bw index 15 (bw ext_2 index 7): rssi_ext160_7_chainX
+ */
+#define HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS 8
+
 #define HTT_TX_PEER_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_TX_PEER_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
 #define HTT_TX_PEER_STATS_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
@@ -5182,6 +5195,8 @@ typedef struct {
     A_UINT32 rx_gi_ext_2[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
     A_UINT32 rx_su_punctured_mode[HTT_RX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
     A_UINT32 reduced_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT8  rssi_chain_ext_2[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS]; /* units = dB above noise floor */
+    A_INT8   rx_per_chain_rssi_ext_2_in_dbm[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS];
 } htt_rx_pdev_rate_ext_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT
