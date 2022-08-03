@@ -6969,19 +6969,56 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
      defined(WLAN_FEATURE_11AX)
-void hdd_cleanup_conn_info(struct hdd_adapter *adapter)
+/**
+ * hdd_cleanup_he_operation_info() - cleanup he operation info
+ * @adapter: Adapter structure
+ *
+ * This function destroys he operation information
+ *
+ * Return: none
+ */
+static void hdd_cleanup_he_operation_info(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 					WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct element_info *bcn_ie;
 
-	if (!hdd_sta_ctx)
+	if (!hdd_sta_ctx) {
+		hdd_err("sta ctx in NULL");
 		return;
+	}
+	hdd_debug("cleanup he operation info");
 
 	if (hdd_sta_ctx->cache_conn_info.he_operation) {
 		qdf_mem_free(hdd_sta_ctx->cache_conn_info.he_operation);
 		hdd_sta_ctx->cache_conn_info.he_operation = NULL;
 	}
+}
+#else
+static inline void hdd_cleanup_he_operation_info(struct hdd_adapter *adapter)
+{
+}
+#endif
+
+/**
+ * hdd_cleanup_prev_ap_bcn_ie() - cleanup previous ap beacon ie
+ * @adapter: Adapter structure
+ *
+ * This function destroys previous ap beacon information
+ *
+ * Return: none
+ */
+static void hdd_cleanup_prev_ap_bcn_ie(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *hdd_sta_ctx =
+					WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct element_info *bcn_ie;
+
+	if (!hdd_sta_ctx) {
+		hdd_err("sta ctx in NULL");
+		return;
+	}
+	hdd_debug("cleanup previous ap bcn ie");
+
 	bcn_ie = &hdd_sta_ctx->conn_info.prev_ap_bcn_ie;
 
 	if (bcn_ie->ptr) {
@@ -6991,7 +7028,21 @@ void hdd_cleanup_conn_info(struct hdd_adapter *adapter)
 	}
 }
 
-void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
+void hdd_cleanup_conn_info(struct hdd_adapter *adapter)
+{
+	hdd_cleanup_he_operation_info(adapter);
+	hdd_cleanup_prev_ap_bcn_ie(adapter);
+}
+
+/**
+ * hdd_sta_destroy_ctx_all() - cleanup all station contexts
+ * @hdd_ctx: Global HDD context
+ *
+ * This function destroys all the station contexts
+ *
+ * Return: none
+ */
+static void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 
@@ -7003,7 +7054,6 @@ void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
 					  NET_DEV_HOLD_STA_DESTROY_CTX_ALL);
 	}
 }
-#endif
 
 static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter,
