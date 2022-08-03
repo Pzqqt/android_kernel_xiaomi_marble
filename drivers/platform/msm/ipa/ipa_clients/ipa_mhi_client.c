@@ -1510,7 +1510,8 @@ static int ipa_mhi_suspend_channels(struct ipa_mhi_channel_ctx *channels,
 	int res;
 
 	IPA_MHI_FUNC_ENTRY();
-	for (i = 0; i < max_channels; i++) {
+	/* have to suspend channel backwards for coalescing channel */
+	for (i = max_channels - 1; i <= 0; i--) {
 		if (!channels[i].valid)
 			continue;
 		if (channels[i].state !=
@@ -2075,7 +2076,8 @@ static int  ipa_mhi_destroy_channels(struct ipa_mhi_channel_ctx *channels,
 	int i, res;
 	u32 clnt_hdl;
 
-	for (i = 0; i < num_of_channels; i++) {
+	/* have to destroy backward for coalescing channels */
+	for (i = num_of_channels - 1; i >= 0; i--) {
 		channel = &channels[i];
 		if (!channel->valid)
 			continue;
