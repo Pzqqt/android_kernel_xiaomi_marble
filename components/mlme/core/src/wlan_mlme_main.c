@@ -459,6 +459,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->monitor_mode_concurrency =
 		cfg_get(psoc, CFG_MONITOR_MODE_CONCURRENCY);
 	gen->tx_retry_multiplier = cfg_get(psoc, CFG_TX_RETRY_MULTIPLIER);
+	gen->enable_he_mcs0_for_6ghz_mgmt =
+		cfg_get(psoc, CFG_ENABLE_HE_MCS0_MGMT_6GHZ);
 	mlme_init_wds_config_cfg(psoc, gen);
 	mlme_init_mgmt_hw_tx_retry_count_cfg(psoc, gen);
 }

@@ -320,6 +320,7 @@ static qdf_wake_lock_t wlan_wake_lock;
 #define WOW_MAX_FILTERS_PER_LIST 4
 #define WOW_MIN_PATTERN_SIZE 6
 #define WOW_MAX_PATTERN_SIZE 64
+#define MGMT_DEFAULT_DATA_RATE_6GHZ 0x400 /* This maps to 8.6Mbps data rate */
 
 #define IS_IDLE_STOP (!cds_is_driver_unloading() && \
 		      !cds_is_driver_recovering() && !cds_is_driver_loading())
@@ -14613,6 +14614,7 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	int ret;
 	uint8_t val = 0;
 	uint8_t max_retry = 0;
+	bool enable_he_mcs0_for_6ghz_mgmt = false;
 	uint32_t tx_retry_multiplier;
 	QDF_STATUS status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -14662,6 +14664,20 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	if (0 != ret) {
 		hdd_err("WMI_PDEV_PARAM_MGMT_RETRY_LIMIT failed %d", ret);
 		goto out;
+	}
+
+	wlan_mlme_get_mgmt_6ghz_rate_support(hdd_ctx->psoc,
+					     &enable_he_mcs0_for_6ghz_mgmt);
+	if (enable_he_mcs0_for_6ghz_mgmt) {
+		hdd_debug("HE rates for 6GHz mgmt frames are supported");
+		ret = sme_cli_set_command(0, WMI_PDEV_PARAM_DEFAULT_6GHZ_RATE,
+					  MGMT_DEFAULT_DATA_RATE_6GHZ,
+					  PDEV_CMD);
+		if (0 != ret) {
+			hdd_err("WMI_PDEV_PARAM_DEFAULT_6GHZ_RATE failed %d",
+				ret);
+			goto out;
+		}
 	}
 
 	wlan_mlme_get_tx_retry_multiplier(hdd_ctx->psoc,

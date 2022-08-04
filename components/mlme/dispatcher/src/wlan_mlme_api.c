@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4348,6 +4348,25 @@ wlan_mlme_get_mgmt_max_retry(struct wlan_objmgr_psoc *psoc,
 	}
 
 	*max_retry = mlme_obj->cfg.gen.mgmt_retry_max;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_mgmt_6ghz_rate_support(struct wlan_objmgr_psoc *psoc,
+				     bool *enable_he_mcs0_for_6ghz_mgmt)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*enable_he_mcs0_for_6ghz_mgmt =
+			cfg_default(CFG_ENABLE_HE_MCS0_MGMT_6GHZ);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_he_mcs0_for_6ghz_mgmt =
+		mlme_obj->cfg.gen.enable_he_mcs0_for_6ghz_mgmt;
 	return QDF_STATUS_SUCCESS;
 }
 
