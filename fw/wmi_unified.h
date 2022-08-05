@@ -12053,6 +12053,9 @@ typedef struct {
      * particular event out of Multiple Events that are send to host
      */
     A_UINT32 event_count;
+
+    /** Pdev id requested */
+    A_UINT32 pdev_id;
 } wmi_halphy_ctrl_path_stats_event_fixed_param;
 
 typedef struct {
