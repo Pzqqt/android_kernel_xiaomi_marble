@@ -797,6 +797,26 @@ static int lpass_cdc_wsa_macro_get_channel_map(struct snd_soc_dai *dai,
 	return 0;
 }
 
+static void lpass_cdc_wsa_unmute_interpolator(struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	uint16_t j = 0, reg = 0, mix_reg = 0;
+
+	switch (dai->id) {
+	case LPASS_CDC_WSA_MACRO_AIF1_PB:
+	case LPASS_CDC_WSA_MACRO_AIF_MIX1_PB:
+		for (j = 0; j < NUM_INTERPOLATORS; ++j) {
+			reg = LPASS_CDC_WSA_RX0_RX_PATH_CTL +
+				(j * LPASS_CDC_WSA_MACRO_RX_PATH_OFFSET);
+			mix_reg = LPASS_CDC_WSA_RX0_RX_PATH_MIX_CTL +
+				(j * LPASS_CDC_WSA_MACRO_RX_PATH_OFFSET);
+
+			snd_soc_component_update_bits(component, reg, 0x10, 0x00);
+			snd_soc_component_update_bits(component, mix_reg, 0x10, 0x00);
+		}
+	}
+}
+
 static int lpass_cdc_wsa_macro_mute_stream(struct snd_soc_dai *dai, int mute, int stream)
 {
 	struct snd_soc_component *component = dai->component;
@@ -843,6 +863,7 @@ static int lpass_cdc_wsa_macro_mute_stream(struct snd_soc_dai *dai, int mute, in
 		}
 	}
 	lpass_cdc_wsa_pa_on(wsa_dev, adie_lb);
+	lpass_cdc_wsa_unmute_interpolator(dai);
 		break;
 	default:
 		break;
@@ -1623,20 +1644,15 @@ static int lpass_cdc_wsa_macro_spk_boost_event(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 				snd_soc_dapm_to_component(w->dapm);
 	u16 boost_path_ctl, boost_path_cfg1;
-	u16 reg, reg_mix;
 
 	dev_dbg(component->dev, "%s %s %d\n", __func__, w->name, event);
 
 	if (!strcmp(w->name, "WSA_RX INT0 CHAIN")) {
 		boost_path_ctl = LPASS_CDC_WSA_BOOST0_BOOST_PATH_CTL;
 		boost_path_cfg1 = LPASS_CDC_WSA_RX0_RX_PATH_CFG1;
-		reg = LPASS_CDC_WSA_RX0_RX_PATH_CTL;
-		reg_mix = LPASS_CDC_WSA_RX0_RX_PATH_MIX_CTL;
 	} else if (!strcmp(w->name, "WSA_RX INT1 CHAIN")) {
 		boost_path_ctl = LPASS_CDC_WSA_BOOST1_BOOST_PATH_CTL;
 		boost_path_cfg1 = LPASS_CDC_WSA_RX1_RX_PATH_CFG1;
-		reg = LPASS_CDC_WSA_RX1_RX_PATH_CTL;
-		reg_mix = LPASS_CDC_WSA_RX1_RX_PATH_MIX_CTL;
 	} else {
 		dev_err(component->dev, "%s: unknown widget: %s\n",
 			__func__, w->name);
@@ -1649,12 +1665,8 @@ static int lpass_cdc_wsa_macro_spk_boost_event(struct snd_soc_dapm_widget *w,
 						0x01, 0x01);
 		snd_soc_component_update_bits(component, boost_path_ctl,
 						0x10, 0x10);
-		if ((snd_soc_component_read(component, reg_mix)) & 0x10)
-			snd_soc_component_update_bits(component, reg_mix,
-						0x10, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		snd_soc_component_update_bits(component, reg, 0x10, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, boost_path_ctl,
