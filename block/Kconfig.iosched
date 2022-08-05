@@ -50,6 +50,23 @@ config BFQ_CGROUP_DEBUG
 	Enable some debugging help. Currently it exports additional stat
 	files in a cgroup which can be useful for debugging.
 
+
+config MQ_IOSCHED_SSG
+	tristate "SamSung Generic I/O scheduler"
+	default n
+	help
+	  SamSung Generic IO scheduler.
+
+config MQ_IOSCHED_SSG_CGROUP
+	tristate "Control Group for SamSung Generic I/O scheduler"
+	default n
+	depends on BLK_CGROUP
+	depends on MQ_IOSCHED_SSG
+	help
+	  Control Group for SamSung Generic IO scheduler.
+
+
+
 endmenu
 
 endif
