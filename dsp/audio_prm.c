@@ -432,6 +432,12 @@ static int audio_prm_probe(struct gpr_device *adev)
 {
 	int ret = 0;
 
+	if (!audio_notifier_probe_status()) {
+		pr_err("%s: Audio notify probe not completed, defer audio prm probe\n",
+				__func__);
+		return -EPROBE_DEFER;
+	}
+
 	ret = audio_notifier_register("audio_prm", AUDIO_NOTIFIER_ADSP_DOMAIN,
 				      &service_nb);
 	if (ret < 0) {

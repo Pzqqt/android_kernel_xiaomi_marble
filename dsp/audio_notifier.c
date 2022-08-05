@@ -30,6 +30,7 @@ static struct platform_device *adsp_private;
 
 struct adsp_notify_private {
 	struct rproc *rproc_h;
+	bool notifier_probe_complete;
 };
 
 /*
@@ -320,8 +321,12 @@ static int audio_notifier_reg_client(struct client_data *client_data)
 	/* Search through services to find a valid one to register client on. */
 	for (; service >= 0; service--) {
 		/* If a service is not initialized, wait for it to come up. */
-		if (service_data[service][domain].state == UNINIT_SERVICE)
+		if (service_data[service][domain].state == UNINIT_SERVICE) {
+			pr_err_ratelimited("%s: failed in client registration to PDR\n",
+				 __func__);
+			ret = -EINVAL;
 			goto done;
+		}
 		/* Skip unsupported service and domain combinations. */
 		if (service_data[service][domain].state < 0)
 			continue;
@@ -451,7 +456,7 @@ static int audio_notifier_service_cb(unsigned long opcode,
 	data.service = service;
 	data.domain = domain;
 
-	pr_debug("%s: service %s, opcode 0x%lx\n",
+	pr_info("%s: service %s, opcode 0x%lx\n",
 		__func__, service_data[service][domain].name, notifier_opcode);
 
 	mutex_lock(&notifier_mutex);
@@ -601,6 +606,29 @@ static int audio_notifier_late_init(void)
 	return 0;
 }
 
+bool audio_notifier_probe_status(void)
+{
+	struct adsp_notify_private *priv = NULL;
+	struct platform_device *pdev = NULL;
+
+	if (!adsp_private)
+		goto exit;
+
+	pdev = adsp_private;
+	priv = platform_get_drvdata(pdev);
+	if (!priv) {
+		dev_err(&pdev->dev," %s: Private data get failed\n", __func__);
+		goto exit;
+	}
+	if (priv->notifier_probe_complete) {
+		dev_dbg(&pdev->dev, "%s: audio notify probe successfully completed\n",
+			__func__);
+		return true;
+	}
+exit:
+	return false;
+}
+EXPORT_SYMBOL(audio_notifier_probe_status);
 
 static int audio_notify_probe(struct platform_device *pdev)
 {
@@ -616,6 +644,7 @@ static int audio_notify_probe(struct platform_device *pdev)
 		ret = -ENOMEM;
 		return ret;
 	}
+	priv->notifier_probe_complete = false;
 	platform_set_drvdata(pdev, priv);
 	prop = of_find_property(pdev->dev.of_node, "qcom,rproc-handle", &size);
 	if (!prop) {
@@ -638,6 +667,8 @@ static int audio_notify_probe(struct platform_device *pdev)
 	audio_notifier_init_service(AUDIO_NOTIFIER_PDR_SERVICE);
 	/* Do not return error since PDR enablement is not critical */
 	audio_notifier_late_init();
+
+	priv->notifier_probe_complete = true;
 
 	return 0;
 }

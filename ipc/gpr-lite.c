@@ -490,6 +490,13 @@ static int gpr_probe(struct rpmsg_device *rpdev)
 {
 	struct device *dev = &rpdev->dev;
 	int ret;
+
+	if (!audio_notifier_probe_status()) {
+		pr_err("%s: Audio notify probe not completed, defer audio gpr probe\n",
+			__func__);
+		return -EPROBE_DEFER;
+	}
+
 	gpr_priv = devm_kzalloc(dev, sizeof(*gpr_priv), GFP_KERNEL);
 	if (!gpr_priv)
 		return -ENOMEM;
