@@ -348,7 +348,7 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_TX_RATE_TXBF   = 31,
 
-    /* HTT_DBG_EXT_STATS_TXBF_OFDMA
+    /** HTT_DBG_EXT_STATS_TXBF_OFDMA
      */
     HTT_DBG_EXT_STATS_TXBF_OFDMA          = 32,
 
@@ -422,7 +422,7 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_RX_RING_STATS = 42,
 
-    /* HTT_STRM_GEN_MPDUS_STATS, HTT_STRM_GEN_MPDUS_DETAILS_STATS
+    /** HTT_STRM_GEN_MPDUS_STATS, HTT_STRM_GEN_MPDUS_DETAILS_STATS
      * PARAMS:
      *   - No params
      * RESP MSG: HTT_T2H STREAMING_STATS_IND (not EXT_STATS_CONF)
@@ -451,7 +451,7 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_PDEV_PUNCTURE_STATS = 46,
 
-    /* HTT_DBG_EXT_STATS_ML_PEERS_INFO
+    /** HTT_DBG_EXT_STATS_ML_PEERS_INFO
      * PARAMS:
      *    - param 0:
      *      Bit 0 -> HTT_ML_PEER_DETAILS_TLV always enabled by default
@@ -463,13 +463,21 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_ML_PEERS_INFO = 47,
 
-    /* HTT_DBG_ODD_MANDATORY_STATS
+    /** HTT_DBG_ODD_MANDATORY_STATS
      * params:
      *          None
      * Response MSG:
      *          htt_odd_mandatory_pdev_stats_tlv
      */
     HTT_DBG_ODD_MANDATORY_STATS = 48,
+
+    /** HTT_DBG_PDEV_SCHED_ALGO_STATS
+     * PARAMS:
+     *      - No Params
+     * RESP MSG:
+     *   - htt_pdev_sched_algo_ofdma_stats_tlv
+     */
+    HTT_DBG_PDEV_SCHED_ALGO_STATS = 49,
 
 
     /* keep this last */
@@ -8249,6 +8257,49 @@ typedef struct {
     A_UINT32 rts_cnt;
     A_UINT32 rts_success;
 } htt_odd_mandatory_pdev_stats_tlv;
+
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_M 0x000000ff
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S 0
+
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_GET(_var) \
+    (((_var) & HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_M) >> \
+     HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S)
+
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID, _val); \
+        ((_var) |= ((_val) << HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /**
+     * BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    union {
+        struct {
+            A_UINT32 mac_id:    8,
+                     reserved: 24;
+        };
+        A_UINT32 mac_id__word;
+    };
+
+    /** Num of instances where rate based DL OFDMA status = ENABLED */
+    A_UINT32 rate_based_dlofdma_enabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where rate based DL OFDMA status = DISABLED */
+    A_UINT32 rate_based_dlofdma_disabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where rate based DL OFDMA status = PROBING */
+    A_UINT32 rate_based_dlofdma_probing_count[HTT_NUM_AC_WMM];
+    /** Num of instances where rate based DL OFDMA status = MONITORING */
+    A_UINT32 rate_based_dlofdma_monitoring_count[HTT_NUM_AC_WMM];
+    /** Num of instances where avg. channel access latency based DL OFDMA status = ENABLED */
+    A_UINT32 chan_acc_lat_based_dlofdma_enabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where avg. channel access latency based DL OFDMA status = DISABLED */
+    A_UINT32 chan_acc_lat_based_dlofdma_disabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where avg. channel access latency based DL OFDMA status = MONITORING */
+    A_UINT32 chan_acc_lat_based_dlofdma_monitoring_count[HTT_NUM_AC_WMM];
+} htt_pdev_sched_algo_ofdma_stats_tlv;
 
 
 #endif /* __HTT_STATS_H__ */
