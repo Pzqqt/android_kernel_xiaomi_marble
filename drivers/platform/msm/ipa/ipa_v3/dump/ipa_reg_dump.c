@@ -1075,15 +1075,25 @@ static void out_dword(
  */
 void ipa_save_gsi_ver(void)
 {
+	u32 gsi_fw_ver = 0;
+
 	if (!ipa3_ctx->do_register_collection_on_crash)
 		return;
 
 	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
-		ipa_reg_save.gsi.fw_ver =
+		gsi_fw_ver =
 		IPA_READ_1xVECTOR_REG(IPA_GSI_TOP_GSI_INST_RAM_n, 0);
 	if (ipa3_ctx->ipa_hw_type == IPA_HW_v5_0)
-		ipa_reg_save.gsi.fw_ver =
+		gsi_fw_ver =
 		IPA_READ_1xVECTOR_REG(IPA_GSI_TOP_GSI_INST_RAM_n, 64);
+
+	ipa_reg_save.gsi.fw_ver.raw_version = gsi_fw_ver;
+	ipa_reg_save.gsi.fw_ver.hw_version = (gsi_fw_ver & GSI_INST_RAM_FW_VER_HW_MASK) >>
+					GSI_INST_RAM_FW_VER_HW_SHIFT;
+	ipa_reg_save.gsi.fw_ver.flavor = (gsi_fw_ver & GSI_INST_RAM_FW_VER_FLAVOR_MASK) >>
+					GSI_INST_RAM_FW_VER_FLAVOR_SHIFT;
+	ipa_reg_save.gsi.fw_ver.fw_version = (gsi_fw_ver & GSI_INST_RAM_FW_VER_FW_MASK) >>
+					GSI_INST_RAM_FW_VER_FW_SHIFT;
 }
 
 /*

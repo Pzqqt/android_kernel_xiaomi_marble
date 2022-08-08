@@ -34,6 +34,15 @@
 #define MAX_CHANNELS_SHARING_EVENT_RING 2
 #define MINIDUMP_MASK 0x10000
 
+#define GSI_INST_RAM_FW_VER_OFFSET                      (0)
+#define GSI_INST_RAM_FW_VER_GSI_3_0_OFFSET      (64)
+#define GSI_INST_RAM_FW_VER_HW_MASK                     (0xFC00)
+#define GSI_INST_RAM_FW_VER_HW_SHIFT            (10)
+#define GSI_INST_RAM_FW_VER_FLAVOR_MASK         (0x380)
+#define GSI_INST_RAM_FW_VER_FLAVOR_SHIFT        (7)
+#define GSI_INST_RAM_FW_VER_FW_MASK                     (0x7f)
+#define GSI_INST_RAM_FW_VER_FW_SHIFT            (0)
+
 #define GSI_IPC_LOGGING(buf, fmt, args...) \
 	do { \
 		if (buf) \
