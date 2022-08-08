@@ -1826,6 +1826,12 @@ QDF_STATUS tdls_process_setup_peer(struct tdls_oper_request *req)
 		goto freereq;
 	}
 
+	if (!tdls_check_is_tdls_allowed(vdev)) {
+		tdls_err("TDLS not allowed, Reject setup peer");
+		status = QDF_STATUS_E_INVAL;
+		goto error;
+	}
+
 	qdf_mem_zero(&peer_req, sizeof(peer_req));
 	peer_req.vdev = vdev;
 	qdf_mem_copy(peer_req.peer_addr, req->peer_addr, QDF_MAC_ADDR_SIZE);
