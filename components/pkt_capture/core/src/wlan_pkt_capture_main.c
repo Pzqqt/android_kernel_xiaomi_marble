@@ -823,6 +823,7 @@ QDF_STATUS pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev)
 		  &vdev_priv->mon_ctx->mon_event_flag);
 	set_bit(PKT_CAPTURE_RX_POST_EVENT,
 		&vdev_priv->mon_ctx->mon_event_flag);
+	reinit_completion(&vdev_priv->mon_ctx->mon_register_event);
 	wake_up_interruptible(&vdev_priv->mon_ctx->mon_wait_queue);
 
 	/*
