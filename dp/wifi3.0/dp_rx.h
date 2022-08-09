@@ -470,6 +470,28 @@ struct dp_rx_desc *dp_get_rx_desc_from_cookie(struct dp_soc *soc,
 	return &rx_desc_elem->rx_desc;
 }
 
+static inline
+struct dp_rx_desc *dp_get_rx_mon_status_desc_from_cookie(struct dp_soc *soc,
+							 struct rx_desc_pool *pool,
+							 uint32_t cookie)
+{
+	uint8_t pool_id = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_POOL_ID(cookie);
+	uint16_t page_id = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_PAGE_ID(cookie);
+	uint8_t offset = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_OFFSET(cookie);
+	struct rx_desc_pool *rx_desc_pool;
+	union dp_rx_desc_list_elem_t *rx_desc_elem;
+
+	if (qdf_unlikely(pool_id >= NUM_RXDMA_RINGS_PER_PDEV))
+		return NULL;
+
+	rx_desc_pool = &pool[pool_id];
+	rx_desc_elem = (union dp_rx_desc_list_elem_t *)
+		(rx_desc_pool->desc_pages.cacheable_pages[page_id] +
+		rx_desc_pool->elem_size * offset);
+
+	return &rx_desc_elem->rx_desc;
+}
+
 /**
  * dp_rx_cookie_2_va_rxdma_buf() - Converts cookie to a virtual address of
  *			 the Rx descriptor on Rx DMA source ring buffer
@@ -512,7 +534,9 @@ static inline
 struct dp_rx_desc *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc,
 						uint32_t cookie)
 {
-	return dp_get_rx_desc_from_cookie(soc, &soc->rx_desc_status[0], cookie);
+	return dp_get_rx_mon_status_desc_from_cookie(soc,
+						     &soc->rx_desc_status[0],
+						     cookie);
 }
 #else
 
