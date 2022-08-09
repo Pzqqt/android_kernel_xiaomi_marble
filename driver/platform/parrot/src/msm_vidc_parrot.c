@@ -53,7 +53,7 @@ static struct msm_platform_core_capability core_data_parrot_v0[] = {
 	{MAX_SESSION_COUNT, 16},
 	{MAX_NUM_720P_SESSIONS, 16},
 	{MAX_NUM_1080P_SESSIONS, 8},
-	{MAX_NUM_4K_SESSIONS, 4},
+	{MAX_NUM_4K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
 	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
 	{MAX_MBPF, 104448}, /* ((4096x2176)/256) x 3 */
@@ -105,7 +105,7 @@ static struct msm_platform_core_capability core_data_parrot_v1[] = {
 	{MAX_SESSION_COUNT, 16},
 	{MAX_NUM_720P_SESSIONS, 16},
 	{MAX_NUM_1080P_SESSIONS, 8},
-	{MAX_NUM_4K_SESSIONS, 4},
+	{MAX_NUM_4K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
 	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
 	{MAX_MBPF, 104448}, /* ((4096x2176)/256) x 3 */
@@ -157,7 +157,7 @@ static struct msm_platform_core_capability core_data_parrot_v2[] = {
 	{MAX_SESSION_COUNT, 16},
 	{MAX_NUM_720P_SESSIONS, 16},
 	{MAX_NUM_1080P_SESSIONS, 8},
-	{MAX_NUM_4K_SESSIONS, 4},
+	{MAX_NUM_4K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
 	{MAX_RT_MBPF, 97920}, /* ((3840x2176)/256) x 3 */
 	{MAX_MBPF, 104448}, /* ((4096x2176)/256) x 3 */
