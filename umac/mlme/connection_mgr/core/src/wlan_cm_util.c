@@ -46,16 +46,18 @@ static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 
 wlan_cm_id cm_get_cm_id(struct cnx_mgr *cm_ctx, enum wlan_cm_source source)
 {
-	wlan_cm_id cmd_id;
+	wlan_cm_id cm_id;
 	uint32_t prefix;
+	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 
 	prefix = cm_get_prefix_for_cm_id(source);
 
-	cmd_id = qdf_atomic_inc_return(&cm_ctx->global_cmd_id);
-	cmd_id = (cmd_id & CM_ID_MASK);
-	cmd_id = (cmd_id | prefix);
+	cm_id = qdf_atomic_inc_return(&cm_ctx->global_cmd_id);
+	cm_id = (cm_id & CM_ID_MASK);
+	cm_id = CM_ID_SET_VDEV_ID(cm_id, vdev_id);
+	cm_id = (cm_id | prefix);
 
-	return cmd_id;
+	return cm_id;
 }
 
 struct cnx_mgr *cm_get_cm_ctx_fl(struct wlan_objmgr_vdev *vdev,
