@@ -604,7 +604,8 @@ void ipa3_ntn_uc_dereg_rdyCB(void);
 
 int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 	struct ipa_wdi_conn_out_params *out,
-	ipa_wdi_meter_notifier_cb wdi_notify);
+	ipa_wdi_meter_notifier_cb wdi_notify,
+	bool ast_update);
 
 int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 	int ipa_ep_idx_tx1);

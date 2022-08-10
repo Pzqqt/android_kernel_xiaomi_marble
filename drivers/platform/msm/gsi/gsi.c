@@ -2743,9 +2743,11 @@ static void gsi_program_chan_ctx(struct gsi_chan_props *props, unsigned int ee,
 		break;
 	case GSI_CHAN_PROT_AQC:
 	case GSI_CHAN_PROT_11AD:
+	case GSI_CHAN_PROT_MHIC:
 	case GSI_CHAN_PROT_RTK:
 	case GSI_CHAN_PROT_QDSS:
 	case GSI_CHAN_PROT_NTN:
+	case GSI_CHAN_PROT_WDI3M:
 		ch_k_cntxt_0.chtype_protocol_msb = 1;
 		break;
 	default:
@@ -2994,8 +2996,7 @@ int gsi_alloc_channel(struct gsi_chan_props *props, unsigned long dev_hdl,
 			atomic_inc(&ctx->evtr->chan_ref_cnt);
 			if (ctx->evtr->props.exclusive) {
 				if (atomic_read(&ctx->evtr->chan_ref_cnt) == 1)
-					ctx->evtr->chan
-					[ctx->evtr->num_of_chan_allocated++] = ctx;
+					ctx->evtr->chan[ctx->evtr->num_of_chan_allocated++] = ctx;
 			}
 			else {
 				ctx->evtr->chan[ctx->evtr->num_of_chan_allocated++]
@@ -3016,9 +3017,12 @@ int gsi_alloc_channel(struct gsi_chan_props *props, unsigned long dev_hdl,
 	ctx->stats.dp.last_timestamp = jiffies_to_msecs(jiffies);
 	atomic_inc(&gsi_ctx->num_chan);
 
-	if (props->prot == GSI_CHAN_PROT_GCI) {
+	if (props->prot == GSI_CHAN_PROT_GCI ||
+		props->prot ==  GSI_CHAN_PROT_MHIC) {
 		gsi_ctx->coal_info.ch_id = props->ch_id;
 		gsi_ctx->coal_info.evchid = props->evt_ring_hdl;
+		GSIDBG("GSI coal ch = %d, ev id %d\n",
+			props->ch_id, props->evt_ring_hdl);
 	}
 
 	return GSI_STATUS_SUCCESS;

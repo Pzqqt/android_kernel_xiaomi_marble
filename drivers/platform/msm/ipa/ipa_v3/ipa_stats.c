@@ -298,7 +298,7 @@ static int ipa_get_generic_stats(unsigned long arg)
 
 	/* HOLB Monitor stats */
 	holb_mon_stats_ptr = (struct holb_monitor_stats *)(
-		&generic_stats->holb_stats.holb_disc_stats[0] +
+		(uint64_t)&generic_stats->holb_stats.holb_disc_stats[0] +
 		(ipa_lnx_agent_ctx.alloc_info.num_holb_drop_stats_clients *
 		sizeof(struct holb_discard_stats)));
 	for (i = 0; i < generic_stats->holb_stats.num_holb_mon_clients; i++) {

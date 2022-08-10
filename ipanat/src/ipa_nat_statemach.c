@@ -2585,7 +2585,7 @@ int ipa_nati_statemach(
 
 	bool vote = false;
 
-	int ret;
+	int ret, ret_mtx;
 
 	IPADBG("In\n");
 
@@ -2628,7 +2628,8 @@ int ipa_nati_statemach(
 	}
 
 unlock:
-	ret = give_mutex();
+	ret_mtx = give_mutex();
+	ret = (ret) ? ret : ret_mtx;
 
 bail:
 	IPADBG("Out\n");
