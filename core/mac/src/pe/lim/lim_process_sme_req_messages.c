@@ -4964,7 +4964,8 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 
 		ch_params.ch_width = CH_WIDTH_20MHZ;
 
-		for (i = 0; i < single_tpe.max_tx_pwr_count + 1; i++) {
+		for (i = 0; i < single_tpe.max_tx_pwr_count + 1 &&
+		     (ch_params.ch_width != CH_WIDTH_INVALID); i++) {
 			wlan_reg_set_channel_params_for_freq(mac->pdev,
 							     curr_op_freq, 0,
 							     &ch_params);
@@ -4976,8 +4977,9 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 			vdev_mlme->reg_tpc_obj.frequency[i] =
 							ch_params.mhz_freq_seg0;
 			vdev_mlme->reg_tpc_obj.tpe[i] = single_tpe.tx_power[i];
-			ch_params.ch_width =
-				get_next_higher_bw[ch_params.ch_width];
+			if (ch_params.ch_width != CH_WIDTH_INVALID)
+				ch_params.ch_width =
+					get_next_higher_bw[ch_params.ch_width];
 		}
 	}
 

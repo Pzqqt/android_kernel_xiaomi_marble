@@ -6973,6 +6973,7 @@ void hdd_cleanup_conn_info(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 					WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct element_info *bcn_ie;
 
 	if (!hdd_sta_ctx)
 		return;
@@ -6980,6 +6981,13 @@ void hdd_cleanup_conn_info(struct hdd_adapter *adapter)
 	if (hdd_sta_ctx->cache_conn_info.he_operation) {
 		qdf_mem_free(hdd_sta_ctx->cache_conn_info.he_operation);
 		hdd_sta_ctx->cache_conn_info.he_operation = NULL;
+	}
+	bcn_ie = &hdd_sta_ctx->conn_info.prev_ap_bcn_ie;
+
+	if (bcn_ie->ptr) {
+		qdf_mem_free(bcn_ie->ptr);
+		bcn_ie->ptr = NULL;
+		bcn_ie->len = 0;
 	}
 }
 
@@ -13363,6 +13371,9 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	qdf_str_lcopy(config->action_oui_str[ACTION_OUI_DISABLE_MU_EDCA],
 		      cfg_get(psoc,
 			      CFG_ACTION_OUI_DISABLE_MU_EDCA),
+		      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[ACTION_OUI_EXTEND_WOW_ITO],
+		      cfg_get(psoc, CFG_ACTION_OUI_EXTEND_WOW_ITO),
 		      ACTION_OUI_MAX_STR_LEN);
 	qdf_str_lcopy(config->action_oui_str[ACTION_OUI_DISABLE_TWT],
 		      cfg_get(psoc, CFG_ACTION_OUI_DISABLE_TWT),

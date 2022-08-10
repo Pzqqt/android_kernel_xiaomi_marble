@@ -3966,9 +3966,9 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 		    reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM) {
 			sme_debug("Continue connect/reassoc on vdev %d request_id %x reason %d",
 				  vdev_id, request_id, reason);
-			wlan_cm_hw_mode_change_resp(pm_ctx->pdev, vdev_id,
-						    request_id,
-						    QDF_STATUS_SUCCESS);
+			wlan_connect_hw_mode_change_resp(pm_ctx->pdev, vdev_id,
+							 request_id,
+							 QDF_STATUS_SUCCESS);
 		}
 		policy_mgr_debug("No action needed right now");
 		ret = policy_mgr_set_opportunistic_update(psoc);

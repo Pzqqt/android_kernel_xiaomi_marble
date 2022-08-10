@@ -1221,8 +1221,8 @@ static bool lim_process_assoc_req_no_sta_ctx(struct mac_context *mac_ctx,
 		 * Maximum number of STAs that AP can handle reached.
 		 * Send Association response to peer MAC entity
 		 */
-		pe_err("Max Sta count reached : %d",
-				mac_ctx->lim.maxStation);
+		pe_info_rl("Max Sta count reached : %d",
+			   mac_ctx->lim.maxStation);
 		lim_reject_association(mac_ctx, sa, sub_type, false,
 				       (tAniAuthType)0, 0, false,
 				       STATUS_UNSPECIFIED_FAILURE,
@@ -1879,6 +1879,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tSirMacAddr sa,
 	if (sta_ds->rmfEnabled) {
 		sta_ds->ocv_enabled = lim_is_ocv_enable_in_assoc_req(mac_ctx,
 								     assoc_req);
+		if (sta_ds->ocv_enabled)
+			sta_ds->last_ocv_done_freq = session->curr_op_freq;
 		/* Try to delete it before, creating.*/
 		lim_delete_pmf_query_timer(sta_ds);
 		if (tx_timer_create(mac_ctx, &sta_ds->pmfSaQueryTimer,

@@ -107,6 +107,20 @@ struct cm_vdev_disconnect_rsp {
 	struct wlan_objmgr_psoc *psoc;
 };
 
+/*
+ * struct cm_vdev_hw_mode_rsp - hw mode change from vdev mgr to CM
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cm_id: connection ID which gave the hw mode change request
+ * @status: status of the HW mode change.
+ */
+struct cm_vdev_hw_mode_rsp {
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t vdev_id;
+	wlan_cm_id cm_id;
+	QDF_STATUS status;
+};
+
 /**
  * struct cm_vdev_join_rsp - connect rsp from vdev mgr to connection mgr
  * @psoc: psoc object
@@ -691,6 +705,22 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg);
  */
 void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp);
 
+/**
+ * wlan_cm_handle_hw_mode_change_resp() Process hw_mode_change_resp
+ * @pdev: pdev pointer
+ * @vdev_id: vdev_id
+ * @cm_id: connection manager id
+ * @status: status
+ *
+ * This API is to break the context and avoid calling CM API to take CM lock
+ * while holding SME lock.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_handle_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id,
+				   wlan_cm_id cm_id, QDF_STATUS status);
 /**
  * wlan_cm_rso_stop_continue_disconnect() - Continue disconnect after RSO stop
  * @psoc: psoc object

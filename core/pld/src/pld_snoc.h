@@ -20,6 +20,15 @@
 #ifndef __PLD_SNOC_H__
 #define __PLD_SNOC_H__
 
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#ifdef CONFIG_PLD_SNOC_ICNSS
+#ifdef CONFIG_PLD_SNOC_ICNSS2
+#include "icnss2.h"
+#else
+#include "icnss.h"
+#endif
+#endif
+#else
 #ifdef CONFIG_PLD_SNOC_ICNSS
 #ifdef CONFIG_PLD_SNOC_ICNSS2
 #include <soc/qcom/icnss2.h>
@@ -27,6 +36,8 @@
 #include <soc/qcom/icnss.h>
 #endif
 #endif
+#endif
+
 #include "pld_internal.h"
 
 #ifndef CONFIG_PLD_SNOC_ICNSS

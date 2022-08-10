@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1304,6 +1304,8 @@ static QDF_STATUS lim_generate_fils_pmkr1_name(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	buf = fils_info->rsn_ie + fils_info->rsn_ie_len;
+
 	if (fils_info->group_mgmt_cipher_present) {
 		/*
 		 * If 802.11w is enabled, group management cipher
@@ -1315,28 +1317,19 @@ static QDF_STATUS lim_generate_fils_pmkr1_name(struct mac_context *mac_ctx,
 		 * suite.
 		 */
 
-		buf = fils_info->rsn_ie + fils_info->rsn_ie_len - 4;
+		buf -= 4;
 		fils_info->rsn_ie[1] -= 4; /* strip the grp mgmt cipher len */
 		qdf_mem_copy(gp_mgmt_cipher_suite, buf, 4);
-
-		if (dot11f_ie_rsn.pmkid_count) {
-			buf -= dot11f_ie_rsn.pmkid_count * PMKID_LEN;
-			fils_info->rsn_ie[1] -=
-				dot11f_ie_rsn.pmkid_count * PMKID_LEN;
-		}
-
-		fils_info->rsn_ie[1] -= 2;
-		buf -= 2; /* skip past the pmkid count */
-		/* Clear the buffer occupied by PMKID and GRP mgmt cipher */
-		qdf_mem_zero(buf,
-			     (dot11f_ie_rsn.pmkid_count * PMKID_LEN) + 2 + 4);
-	} else {
-		buf = fils_info->rsn_ie + fils_info->rsn_ie_len;
 	}
 
-	pe_debug("FT-FILS: Construct IM assoc RSN IE: current RSN len:%d gp_mgmt_cipher_present:%d",
-		 fils_info->rsn_ie_len,
-		 fils_info->group_mgmt_cipher_present);
+	if (dot11f_ie_rsn.pmkid_count || fils_info->group_mgmt_cipher_present) {
+		/* Skip past PMKID and PMKID count */
+		buf -= (dot11f_ie_rsn.pmkid_count * PMKID_LEN) + 2;
+		fils_info->rsn_ie[1] -=
+				(dot11f_ie_rsn.pmkid_count * PMKID_LEN) + 2;
+		/* Clear the buffer occupied by PMKID */
+		qdf_mem_zero(buf, (dot11f_ie_rsn.pmkid_count * PMKID_LEN) + 2);
+	}
 
 	/*
 	 * Add PMKID count as 1. PMKID count field is 2 bytes long.

@@ -847,6 +847,10 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 	status = qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
 					       PMO_TARGET_SUSPEND_TIMEOUT);
 	if (QDF_IS_STATUS_ERROR(status)) {
+		if (hif_ctx) {
+			hif_display_ctrl_traffic_pipes_state(hif_ctx);
+			hif_display_latest_desc_hist(hif_ctx);
+		}
 		pmo_err("Failed to receive WoW Enable Ack from FW");
 		pmo_err("Credits:%d; Pending_Cmds: %d",
 			pmo_tgt_psoc_get_host_credits(psoc),

@@ -763,6 +763,44 @@ static void hdd_cm_connect_failure(struct wlan_objmgr_vdev *vdev,
 	}
 }
 
+/**
+ * hdd_cm_update_prev_ap_ie() - Update the connected AP IEs
+ * @hdd_sta_ctx: Station context.
+ * @rsp: Connect response
+ *
+ * This API updates the connected ap beacon IEs to station context connection
+ * info.
+ *
+ * Return: None
+ */
+static void hdd_cm_update_prev_ap_ie(struct hdd_station_ctx *hdd_sta_ctx,
+				     struct wlan_cm_connect_resp *rsp)
+{
+	struct element_info *bcn_probe_rsp = &rsp->connect_ies.bcn_probe_rsp;
+	struct element_info *bcn_ie;
+	uint32_t len;
+
+	bcn_ie = &hdd_sta_ctx->conn_info.prev_ap_bcn_ie;
+	if (bcn_ie->ptr) {
+		qdf_mem_free(bcn_ie->ptr);
+		bcn_ie->ptr = NULL;
+		bcn_ie->len = 0;
+	}
+
+	if (bcn_probe_rsp->ptr &&
+	    bcn_probe_rsp->len > sizeof(struct wlan_frame_hdr)) {
+		len = bcn_probe_rsp->len - sizeof(struct wlan_frame_hdr);
+		bcn_ie->ptr = qdf_mem_malloc(len);
+		if (!bcn_ie->ptr) {
+			bcn_ie->len = 0;
+			return;
+		}
+		qdf_mem_copy(bcn_ie->ptr, bcn_probe_rsp->ptr +
+			     sizeof(struct wlan_frame_hdr), len);
+		bcn_ie->len = len;
+	}
+}
+
 static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 				 struct wlan_cm_connect_resp *rsp)
 {
@@ -840,6 +878,7 @@ static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 			     sizeof(hdd_sta_ctx->cache_conn_info));
 
 		hdd_copy_he_operation(hdd_sta_ctx, &assoc_resp->he_op);
+		hdd_cm_update_prev_ap_ie(hdd_sta_ctx, rsp);
 	}
 
 	qdf_mem_free(assoc_resp);

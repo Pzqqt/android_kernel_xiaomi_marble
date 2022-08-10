@@ -1279,6 +1279,8 @@ static void __lim_process_sa_query_request_action_frame(struct mac_context *mac,
 	uint8_t *p_body;
 	uint32_t frame_len;
 	uint8_t transId[2];
+	tpDphHashNode sta_ds;
+	uint16_t aid;
 
 	/* Prima  --- Below Macro not available in prima
 	   pHdr = SIR_MAC_BD_TO_MPDUHEADER(pBd);
@@ -1310,11 +1312,33 @@ static void __lim_process_sa_query_request_action_frame(struct mac_context *mac,
 	   Transaction ID : 2 bytes */
 	qdf_mem_copy(&transId[0], &p_body[2], 2);
 
+	sta_ds = dph_lookup_hash_entry(mac, mac_header->sa, &aid,
+				       &pe_session->dph.dphHashTable);
+
 	if (!lim_check_oci_match(mac, pe_session,
 				 p_body + SA_QUERY_IE_OFFSET,
 				 mac_header->sa,
-				 frame_len - SA_QUERY_IE_OFFSET))
+				 frame_len - SA_QUERY_IE_OFFSET)) {
+		/*
+		 * In case of channel switch, last ocv frequency will be
+		 * different from current frquency.
+		 * If there is channel switch and OCI is inavlid in sa_query,
+		 * deauth STA on new channel.
+		 */
+		if (sta_ds && sta_ds->ocv_enabled &&
+		    sta_ds->last_ocv_done_freq != pe_session->curr_op_freq)
+			lim_send_deauth_mgmt_frame(mac, REASON_OCI_MISMATCH,
+						   mac_header->sa, pe_session,
+						   false);
 		return;
+	}
+
+	/*
+	 * Update the last ocv done freq when OCI is valid.
+	 * To support above algo, if it is moved to the current freq.
+	 */
+	if (sta_ds && sta_ds->ocv_enabled)
+		sta_ds->last_ocv_done_freq = pe_session->curr_op_freq;
 
 	/* Send 11w SA query response action frame */
 	if (lim_send_sa_query_response_frame(mac,
@@ -1608,7 +1632,7 @@ static void lim_process_delba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   body_ptr, frame_len);
 
 	delba_req = qdf_mem_malloc(sizeof(*delba_req));
@@ -1632,7 +1656,7 @@ static void lim_process_delba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			delba_req->delba_param_set.tid, delba_req->Reason.code);
 
 	if (QDF_STATUS_SUCCESS != qdf_status)
-		pe_err("Failed to process delba request");
+		pe_err_rl("Failed to process delba request");
 
 error:
 	qdf_mem_free(delba_req);

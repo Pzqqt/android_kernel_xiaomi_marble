@@ -2956,7 +2956,8 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 	uint8_t pcl_weight[NUM_CHANNELS];
 	uint32_t ch_freq = 0;
 	uint32_t pcl_len = 0;
-	uint32_t first_valid_5g_freq = 0;
+	uint32_t first_valid_dfs_5g_freq = 0;
+	uint32_t first_valid_non_dfs_5g_freq = 0;
 	uint32_t first_valid_6g_freq = 0;
 	struct policy_mgr_conc_connection_info info;
 	uint8_t num_cxn_del = 0;
@@ -2988,16 +2989,15 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 			/*
 			 * The API is expected to select the channel on the
 			 * other band which is not same as sap's home and
-			 * concurrent interference channel(if present), so skip
-			 * the sap home channel in PCL.
+			 * concurrent interference channel, so skip the sap
+			 * home channel in PCL.
 			 */
 			if (pcl_channels[i] == sap_ch_freq)
 				continue;
 			if (!is_6ghz_cap &&
 			    WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[i]))
 				continue;
-			if (policy_mgr_get_connection_count(psoc) &&
-			    policy_mgr_are_2_freq_on_same_mac(psoc,
+			if (policy_mgr_are_2_freq_on_same_mac(psoc,
 							      sap_ch_freq,
 							      pcl_channels[i]))
 				continue;
@@ -3008,11 +3008,17 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 			} else if (!ch_freq) {
 				ch_freq = pcl_channels[i];
 			}
-			if (!first_valid_5g_freq &&
+			if (!first_valid_non_dfs_5g_freq &&
 			    wlan_reg_is_5ghz_ch_freq(pcl_channels[i])) {
-				first_valid_5g_freq = pcl_channels[i];
-				if (pref_band == REG_BAND_5G)
-					break;
+				if (!wlan_reg_is_dfs_in_secondary_list_for_freq(
+					pm_ctx->pdev,
+					pcl_channels[i])) {
+					first_valid_non_dfs_5g_freq = pcl_channels[i];
+					if (pref_band == REG_BAND_5G)
+						break;
+					} else if (!first_valid_dfs_5g_freq) {
+						first_valid_dfs_5g_freq = pcl_channels[i];
+					}
 			}
 			if (!first_valid_6g_freq &&
 			    wlan_reg_is_6ghz_chan_freq(pcl_channels[i])) {
@@ -3028,15 +3034,18 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
 
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
 	if (pref_band == REG_BAND_6G) {
 		if (first_valid_6g_freq)
 			ch_freq = first_valid_6g_freq;
-		else if (first_valid_5g_freq)
-			ch_freq = first_valid_5g_freq;
+		else if (first_valid_non_dfs_5g_freq)
+			ch_freq = first_valid_non_dfs_5g_freq;
+		else if (first_valid_dfs_5g_freq)
+			ch_freq = first_valid_dfs_5g_freq;
 	} else if (pref_band == REG_BAND_5G) {
-		if (first_valid_5g_freq)
-			ch_freq = first_valid_5g_freq;
+		if (first_valid_non_dfs_5g_freq)
+			ch_freq = first_valid_non_dfs_5g_freq;
+		else if (first_valid_dfs_5g_freq)
+			ch_freq = first_valid_dfs_5g_freq;
 	}
 
 	return ch_freq;

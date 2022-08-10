@@ -1104,10 +1104,8 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 	sta =
 		dph_lookup_hash_entry(mac, peerMacAddr, &tmpAid,
 				      &pe_session->dph.dphHashTable);
-	if (!sta) {
-		pe_err("sta is NULL");
+	if (!sta)
 		return;
-	}
 	lim_get_rf_band_new(mac, &rfBand, pe_session);
 	/* if we are in 5 GHZ band */
 	if (REG_BAND_5G == rfBand) {

@@ -31,6 +31,7 @@
 #include "wlan_utility.h"
 #include "wlan_policy_mgr_ucfg.h"
 #include "wlan_vdev_mgr_utils_api.h"
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 /* quota in milliseconds */
 #define MCC_DUTY_CYCLE 70
@@ -5528,6 +5529,14 @@ uint32_t wlan_mlme_get_6g_ap_power_type(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return mlme_obj->reg_tpc_obj.power_type_6g;
+}
+
+QDF_STATUS wlan_connect_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev,
+					    uint8_t vdev_id,
+					    wlan_cm_id cm_id, QDF_STATUS status)
+{
+	return wlan_cm_handle_hw_mode_change_resp(pdev, vdev_id, cm_id,
+						  status);
 }
 
 #ifdef WLAN_FEATURE_11BE

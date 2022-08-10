@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -728,6 +728,35 @@ static uint32_t hdd_get_he_op_len(struct hdd_station_ctx *hdd_sta_ctx)
 }
 #endif
 
+static uint32_t hdd_get_prev_connected_bss_ies_len(
+					struct hdd_station_ctx *hdd_sta_ctx)
+{
+	return hdd_sta_ctx->conn_info.prev_ap_bcn_ie.len;
+}
+
+static uint32_t hdd_add_prev_connected_bss_ies(
+					struct sk_buff *skb,
+					struct hdd_station_ctx *hdd_sta_ctx)
+{
+	struct element_info *bcn_ie = &hdd_sta_ctx->conn_info.prev_ap_bcn_ie;
+
+	if (bcn_ie->len) {
+		if (nla_put(skb, BEACON_IES, bcn_ie->len, bcn_ie->ptr)) {
+			hdd_err("Failed to put beacon IEs: bytes left: %d, ie_len: %u ",
+				skb_tailroom(skb), bcn_ie->len);
+			return -EINVAL;
+		}
+
+		hdd_nofl_debug("Beacon IEs len: %u", bcn_ie->len);
+
+		qdf_mem_free(bcn_ie->ptr);
+		bcn_ie->ptr = NULL;
+		bcn_ie->len = 0;
+	}
+
+	return 0;
+}
+
 /**
  * hdd_get_station_info() - send BSS information to supplicant
  * @hdd_ctx: pointer to hdd context
@@ -739,10 +768,9 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter)
 {
 	struct sk_buff *skb = NULL;
-	uint8_t *tmp_hs20 = NULL, *ies = NULL;
-	uint32_t nl_buf_len, ie_len = 0, hdd_he_op_len = 0;
+	uint8_t *tmp_hs20 = NULL;
+	uint32_t nl_buf_len, hdd_he_op_len = 0;
 	struct hdd_station_ctx *hdd_sta_ctx;
-	QDF_STATUS status;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -780,11 +808,7 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 	if (hdd_sta_ctx->cache_conn_info.conn_flag.vht_op_present)
 		nl_buf_len += sizeof(hdd_sta_ctx->
 						cache_conn_info.vht_operation);
-	status = sme_get_prev_connected_bss_ies(hdd_ctx->mac_handle,
-						adapter->vdev_id,
-						&ies, &ie_len);
-	if (QDF_IS_STATUS_SUCCESS(status))
-		nl_buf_len += ie_len;
+	nl_buf_len += hdd_get_prev_connected_bss_ies_len(hdd_sta_ctx);
 
 	hdd_he_op_len = hdd_get_he_op_len(hdd_sta_ctx);
 	nl_buf_len += hdd_he_op_len;
@@ -868,16 +892,9 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 		goto fail;
 	}
 
-	if (ie_len) {
-		if (nla_put(skb, BEACON_IES, ie_len, ies)) {
-			hdd_err("Failed to put beacon IEs: bytes left: %d, ie_len: %u total buf_len: %u",
-				skb_tailroom(skb), ie_len, nl_buf_len);
-			goto fail;
-		}
-
-		hdd_nofl_debug("Beacon IEs len: %u", ie_len);
-
-		qdf_mem_free(ies);
+	if (hdd_add_prev_connected_bss_ies(skb, hdd_sta_ctx)) {
+		hdd_err("put fail total buf_len: %u", nl_buf_len);
+		goto fail;
 	}
 
 	hdd_nofl_debug(
@@ -899,7 +916,6 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 fail:
 	if (skb)
 		kfree_skb(skb);
-	qdf_mem_free(ies);
 	return -EINVAL;
 }
 
