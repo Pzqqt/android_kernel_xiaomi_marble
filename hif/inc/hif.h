@@ -527,6 +527,14 @@ static inline void hif_event_history_deinit(struct hif_opaque_softc *hif_ctx,
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 
+void hif_display_ctrl_traffic_pipes_state(struct hif_opaque_softc *hif_ctx);
+
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
+void hif_display_latest_desc_hist(struct hif_opaque_softc *hif_ctx);
+#else
+static inline void hif_display_latest_desc_hist(struct hif_opaque_softc *hif_ctx) {}
+#endif
+
 /**
  * enum HIF_DEVICE_POWER_CHANGE_TYPE: Device Power change type
  *

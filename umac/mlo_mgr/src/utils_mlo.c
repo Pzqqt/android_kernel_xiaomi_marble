@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -720,6 +720,13 @@ QDF_STATUS util_validate_reportingsta_ie(const uint8_t *reportingsta_ie,
 	    (reportingsta_ie_size < (IDEXT_POS + 1))) {
 		mlo_err_rl("Total length %zu of element for reporting STA is smaller than minimum required to access element ID extension %u",
 			   reportingsta_ie_size, IDEXT_POS + 1);
+		return QDF_STATUS_E_PROTO;
+	}
+
+	if ((reportingsta_ie[ID_POS] == WLAN_ELEMID_VENDOR) &&
+	    (reportingsta_ie_size < (PAYLOAD_START_POS + OUI_LEN))) {
+		mlo_err_rl("Total length %zu of element for reporting STA is smaller than minimum required to access vendor EID %u",
+			   reportingsta_ie_size, PAYLOAD_START_POS + OUI_LEN);
 		return QDF_STATUS_E_PROTO;
 	}
 

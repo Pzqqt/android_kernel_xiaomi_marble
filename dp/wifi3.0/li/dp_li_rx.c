@@ -671,8 +671,6 @@ done:
 		tid_stats =
 		&rx_pdev->stats.tid_stats.tid_rx_stats[reo_ring_num][tid];
 
-		dp_rx_send_pktlog(soc, rx_pdev, nbuf, QDF_TX_RX_STATUS_OK);
-
 		/*
 		 * Check if DMA completed -- msdu_done is the last bit
 		 * to be written
@@ -767,6 +765,8 @@ done:
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
 			dp_rx_skip_tlvs(soc, nbuf, msdu_metadata.l3_hdr_pad);
 		}
+
+		dp_rx_send_pktlog(soc, rx_pdev, nbuf, QDF_TX_RX_STATUS_OK);
 
 		/*
 		 * process frame for mulitpass phrase processing
@@ -1014,6 +1014,11 @@ QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_li(
 		/* Call appropriate handler */
 		DP_STATS_INC(soc, rx.err.invalid_rbm, 1);
 		dp_rx_err("%pK: Invalid RBM %d", soc, buf_info.rbm);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!dp_rx_is_sw_cookie_valid(soc, buf_info.sw_cookie)) {
+		dp_rx_err("invalid sw_cookie 0x%x", buf_info.sw_cookie);
 		return QDF_STATUS_E_INVAL;
 	}
 

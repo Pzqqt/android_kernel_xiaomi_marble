@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,6 +168,68 @@ void hif_ce_desc_record_rx_paddr(struct hif_softc *scn,
 }
 #endif /* HIF_RECORD_RX_PADDR */
 
+void hif_display_latest_desc_hist(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct ce_desc_hist *ce_hist;
+	struct latest_evt_history *evt;
+	int i;
+
+	if (!scn)
+		return;
+
+	ce_hist = &scn->hif_ce_desc_hist;
+
+	for (i = 0; i < HIF_CE_MAX_LATEST_HIST; i++) {
+		if (!ce_hist->enable[i + HIF_CE_MAX_LATEST_HIST])
+			continue;
+
+		evt = &ce_hist->latest_evt[i];
+		hif_info_high("CE_id:%d cpu_id:%d irq_entry:0x%llx tasklet_entry:0x%llx tasklet_resched:0x%llx tasklet_exit:0x%llx ce_work:0x%llx hp:%x tp:%x",
+			      (i + HIF_CE_MAX_LATEST_HIST), evt->cpu_id,
+			      evt->irq_entry_ts, evt->bh_entry_ts,
+			      evt->bh_resched_ts, evt->bh_exit_ts,
+			      evt->bh_work_ts, evt->ring_hp, evt->ring_tp);
+	}
+}
+
+void hif_record_latest_evt(struct ce_desc_hist *ce_hist,
+			   uint8_t type,
+			   int ce_id, uint64_t time,
+			   uint32_t hp, uint32_t tp)
+{
+	struct latest_evt_history *latest_evt;
+
+	if (ce_id != 2 && ce_id != 3)
+		return;
+
+	latest_evt = &ce_hist->latest_evt[ce_id - HIF_CE_MAX_LATEST_HIST];
+
+	switch (type) {
+	case HIF_IRQ_EVENT:
+		latest_evt->irq_entry_ts = time;
+		latest_evt->cpu_id = qdf_get_cpu();
+		return;
+	case HIF_CE_TASKLET_ENTRY:
+		latest_evt->bh_entry_ts = time;
+		return;
+	case HIF_CE_TASKLET_RESCHEDULE:
+		latest_evt->bh_resched_ts = time;
+		return;
+	case HIF_CE_TASKLET_EXIT:
+		latest_evt->bh_exit_ts = time;
+		return;
+	case HIF_TX_DESC_COMPLETION:
+	case HIF_CE_DEST_STATUS_RING_REAP:
+		latest_evt->bh_work_ts = time;
+		latest_evt->ring_hp = hp;
+		latest_evt->ring_tp = tp;
+		return;
+	default:
+		return;
+	}
+}
+
 /**
  * hif_record_ce_desc_event() - record ce descriptor events
  * @scn: hif_softc
@@ -227,6 +289,8 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 
 	if (ce_hist->data_enable[ce_id])
 		hif_ce_desc_data_record(event, len);
+
+	hif_record_latest_evt(ce_hist, type, ce_id, event->time, 0, 0);
 }
 qdf_export_symbol(hif_record_ce_desc_event);
 

@@ -375,9 +375,9 @@ more_msdu_link_desc:
 		if (hal_rx_encryption_info_valid(soc->hal_soc, rx_tlv_hdr))
 			hal_rx_print_pn(soc->hal_soc, rx_tlv_hdr);
 
-		dp_rx_send_pktlog(soc, pdev, rx_desc->nbuf,
-				  QDF_TX_RX_STATUS_DROP);
-
+		dp_rx_err_send_pktlog(soc, pdev, mpdu_desc_info,
+				      rx_desc->nbuf,
+				      QDF_TX_RX_STATUS_DROP, true);
 		/* Just free the buffers */
 		dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf, *mac_id);
 
@@ -809,7 +809,8 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 
 	_dp_rx_bar_frame_handle(soc, nbuf, mpdu_desc_info, tid, err_status,
 				err_code);
-	dp_rx_send_pktlog(soc, pdev, nbuf, QDF_TX_RX_STATUS_DROP);
+	dp_rx_err_send_pktlog(soc, pdev, mpdu_desc_info, nbuf,
+			      QDF_TX_RX_STATUS_DROP, true);
 	dp_rx_link_desc_return(soc, ring_desc,
 			       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
 	dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf,
@@ -1383,7 +1384,6 @@ more_msdu_link_desc:
 		/* all buffers from a MSDU link belong to same pdev */
 		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc_pool_id);
 
-		dp_rx_send_pktlog(soc, pdev, nbuf, QDF_TX_RX_STATUS_OK);
 		rx_desc_pool = &soc->rx_desc_buf[rx_desc_pool_id];
 		dp_ipa_rx_buf_smmu_mapping_lock(soc);
 		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,

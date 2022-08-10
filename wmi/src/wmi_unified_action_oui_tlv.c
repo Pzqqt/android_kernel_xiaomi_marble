@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,6 +55,10 @@ bool wmi_get_action_oui_id(enum action_oui_id action_id,
 
 	case ACTION_OUI_DISABLE_TWT:
 		*id = WMI_VENDOR_OUI_ACTION_DISABLE_FW_TRIGGERED_TWT;
+		return true;
+
+	case ACTION_OUI_EXTEND_WOW_ITO:
+		*id = WMI_VENDOR_OUI_ACTION_EXTEND_WOW_ITO;
 		return true;
 
 	default:
