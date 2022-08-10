@@ -2689,7 +2689,7 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 	if (ret)
 		return ret;
 
-	if (SDE_FORMAT_IS_FSC(fmt) && (width % 3 != 0)) {
+	if (SDE_FORMAT_IS_FSC(fmt) && (state->src_w % 3 != 0)) {
 		SDE_ERROR_PLANE(psde,
 				"fsc width must be multiple of 3, width %d\n",
 				width);

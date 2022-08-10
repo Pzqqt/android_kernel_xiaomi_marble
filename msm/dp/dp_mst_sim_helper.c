@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -44,7 +45,9 @@
 #include "dp_debug.h"
 
 #define DP_MST_DEBUG(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
-#define DP_MST_INFO(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
+#define DP_MST_INFO(fmt, ...) DP_INFO(fmt, ##__VA_ARGS__)
+#define DP_MST_DEBUG_V(fmt, ...) DP_DEBUG_V(fmt, ##__VA_ARGS__)
+#define DP_MST_INFO_V(fmt, ...) DP_INFO_V(fmt, ##__VA_ARGS__)
 
 #define DDC_SEGMENT_ADDR 0x30
 
@@ -103,7 +106,7 @@ static void dp_sideband_hex_dump(const char *name,
 		hex_dump_to_buffer(buffer + i, linelen, rowsize, 1,
 			linebuf, sizeof(linebuf), false);
 
-		DP_MST_DEBUG("%s%s\n", prefix, linebuf);
+		DP_MST_DEBUG_V("%s%s\n", prefix, linebuf);
 	}
 }
 #else

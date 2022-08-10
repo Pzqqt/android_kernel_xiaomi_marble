@@ -30,7 +30,7 @@
 #define DSI_CMD_PPS_SIZE 135
 
 #define DSI_CMD_PPS_HDR_SIZE 7
-#define DSI_MODE_MAX 32
+#define DSI_MODE_MAX 64
 
 #define DSI_IS_FSC_PANEL(fsc_rgb_order) \
 		(((!strcmp(fsc_rgb_order, "fsc_rgb")) || \
