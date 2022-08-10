@@ -442,6 +442,27 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_SOC_ERROR_STATS = 45,
 
+    /** HTT_DBG_PDEV_PUNCTURE_STATS
+     * PARAMS:
+     *    - param 0: enum from htt_tx_pdev_puncture_stats_upload_t, indicating
+     *      the stats to upload
+     * RESP MSG:
+     *    - one or more htt_pdev_puncture_stats_tlv, depending on param 0
+     */
+    HTT_DBG_PDEV_PUNCTURE_STATS = 46,
+
+    /* HTT_DBG_EXT_STATS_ML_PEERS_INFO
+     * PARAMS:
+     *    - param 0:
+     *      Bit 0 -> HTT_ML_PEER_DETAILS_TLV always enabled by default
+     *      Bit 1 -> HTT_ML_PEER_EXT_DETAILS_TLV will be uploaded when
+     *               this bit is set
+     *      Bit 2 -> HTT_ML_LINK_INFO_TLV will be uploaded when this bit is set
+     *  RESP MSG:
+     *    - htt_ml_peer_stats_t
+     */
+    HTT_DBG_EXT_STATS_ML_PEERS_INFO = 47,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -593,12 +614,29 @@ typedef enum {
     HTT_UPLOAD_BE_TXBF_OFDMA_STATS,
 } htt_tx_pdev_txbf_ofdma_stats_upload_t;
 
+/* htt_tx_pdev_puncture_stats_upload_t
+ * Enumerations for specifying which stats to upload in response to
+ * HTT_DBG_PDEV_PUNCTURE_STATS.
+ */
+typedef enum {
+    /* upload puncture stats for all supported modes, both TX and RX */
+    HTT_UPLOAD_PUNCTURE_STATS_ALL,
+
+    /* upload puncture stats for all supported TX modes */
+    HTT_UPLOAD_PUNCTURE_STATS_TX,
+
+    /* upload puncture stats for all supported RX modes */
+    HTT_UPLOAD_PUNCTURE_STATS_RX,
+} htt_tx_pdev_puncture_stats_upload_t;
+
 #define HTT_STATS_MAX_STRING_SZ32 4
 #define HTT_STATS_MACID_INVALID 0xff
 #define HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS 10
 #define HTT_TX_HWQ_MAX_CMD_RESULT_STATS 13
 #define HTT_TX_HWQ_MAX_CMD_STALL_STATS 5
 #define HTT_TX_HWQ_MAX_FES_RESULT_STATS 10
+#define HTT_PDEV_STATS_PPDU_DUR_HIST_BINS 16
+#define HTT_PDEV_STATS_PPDU_DUR_HIST_INTERVAL_US 250
 
 typedef enum {
     HTT_STATS_TX_PDEV_NO_DATA_UNDERRUN = 0,
@@ -1318,6 +1356,20 @@ typedef struct _htt_tx_tid_stats_v1_tlv {
      * BIT [31 : 16]   :- reserved
      */
     A_UINT32 sendn_frms_allowed;
+    /*
+     * tid_ext_flags, tid_ext2_flags, and tid_flush_reason are opaque fields
+     * that cannot be interpreted by the host.
+     * They are only for off-line debug.
+     */
+    A_UINT32 tid_ext_flags;
+    A_UINT32 tid_ext2_flags;
+    A_UINT32 tid_flush_reason;
+    A_UINT32 mlo_flush_tqm_status_pending_low;
+    A_UINT32 mlo_flush_tqm_status_pending_high;
+    A_UINT32 mlo_flush_partner_info_low;
+    A_UINT32 mlo_flush_partner_info_high;
+    A_UINT32 mlo_flush_initator_info_low;
+    A_UINT32 mlo_flush_initator_info_high;
 } htt_tx_tid_stats_v1_tlv;
 
 #define HTT_RX_TID_STATS_SW_PEER_ID_M 0x0000ffff
@@ -1418,6 +1470,24 @@ typedef struct {
     A_UINT32 remove_mpdus_max_retries;
 } htt_peer_stats_cmn_tlv;
 
+#define HTT_PEER_DETAILS_ML_PEER_OFFSET_BYTES 32
+#define HTT_PEER_DETAILS_ML_PEER_OFFSET_DWORD 8
+#define HTT_PEER_DETAILS_ML_PEER_ID_VALID_M   0x00000001
+#define HTT_PEER_DETAILS_ML_PEER_ID_VALID_S   0
+#define HTT_PEER_DETAILS_ML_PEER_ID_M         0x00001ffe
+#define HTT_PEER_DETAILS_ML_PEER_ID_S         1
+#define HTT_PEER_DETAILS_LINK_IDX_M           0x001fe000
+#define HTT_PEER_DETAILS_LINK_IDX_S           13
+
+#define HTT_PEER_DETAILS_SET(word, httsym, val)  \
+    do {                                         \
+        HTT_CHECK_SET_VAL(HTT_PEER_DETAILS_ ## httsym, val);          \
+            (word) |= ((val) << HTT_PEER_DETAILS_ ## httsym ## _S);         \
+    } while(0)
+
+#define HTT_PEER_DETAILS_GET(word, httsym) \
+    (((word) & HTT_PEER_DETAILS_ ## httsym ## _M) >> HTT_PEER_DETAILS_ ## httsym ## _S)
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** This enum type of HTT_PEER_TYPE */
@@ -1432,6 +1502,11 @@ typedef struct {
     htt_mac_addr mac_addr;
     A_UINT32     peer_flags;
     A_UINT32     qpeer_flags;
+    /* Dword 8 */
+    A_UINT32     ml_peer_id_valid  : 1,   /* [0:0] */
+                 ml_peer_id        : 12,  /* [12:1] */
+                 link_idx          : 8,   /* [20:13] */
+                 rsvd              : 11;  /* [31:21] */
 } htt_peer_details_tlv;
 
 typedef struct {
@@ -1450,6 +1525,19 @@ typedef struct {
         intra_bss      : 1,
         reserved       : 16;
 } htt_ast_entry_tlv;
+
+typedef enum {
+    HTT_STATS_DIRECTION_TX,
+    HTT_STATS_DIRECTION_RX,
+} HTT_STATS_DIRECTION;
+
+typedef enum {
+    HTT_STATS_PPDU_TYPE_MODE_SU,
+    HTT_STATS_PPDU_TYPE_DL_MU_MIMO,
+    HTT_STATS_PPDU_TYPE_UL_MU_MIMO,
+    HTT_STATS_PPDU_TYPE_DL_MU_OFDMA,
+    HTT_STATS_PPDU_TYPE_UL_MU_OFDMA,
+} HTT_STATS_PPDU_TYPE;
 
 typedef enum {
     HTT_STATS_PREAM_OFDM,
@@ -2151,6 +2239,14 @@ typedef struct {
     A_UINT32 su_sw_rts_flushed;
     /** CTS (RTS response) received in different BW */
     A_UINT32 su_sw_rts_rcvd_cts_diff_bw;
+    /** 11AX HE MU Combined Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 combined_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Combined Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 combined_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Standalone Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 standalone_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Standalone Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 standalone_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
@@ -2714,6 +2810,13 @@ typedef struct {
      * 11AX HE UL-MUMIMO Trigger frame for users 0 - 7 completed with error(s)
      */
     A_UINT32 ax_ul_mumimo_trigger_err[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+
+    /** 11AX HE MU OFDMA Basic Trigger frame completed with partial user response */
+    A_UINT32 ax_basic_trigger_partial_resp;
+    /** 11AX HE MU BSRP Trigger frame completed with partial user response */
+    A_UINT32 ax_bsr_trigger_partial_resp;
+    /** 11AX HE MU BAR Trigger frame completed with partial user response */
+    A_UINT32 ax_mu_bar_trigger_partial_resp;
 } htt_tx_selfgen_ax_err_stats_tlv;
 
 typedef struct {
@@ -2757,6 +2860,13 @@ typedef struct {
      * 11BE EHT UL-MUMIMO Trigger frame for users 0 - 7 completed with error(s)
      */
     A_UINT32 be_ul_mumimo_trigger_err[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+
+    /** 11BE EHT MU OFDMA Basic Trigger frame completed with partial user response */
+    A_UINT32 be_basic_trigger_partial_resp;
+    /** 11BE EHT MU BSRP Trigger frame completed with partial user response */
+    A_UINT32 be_bsr_trigger_partial_resp;
+    /** 11BE EHT MU BAR Trigger frame completed with partial user response */
+    A_UINT32 be_mu_bar_trigger_partial_resp;
 } htt_tx_selfgen_be_err_stats_tlv;
 
 /*
@@ -3260,6 +3370,17 @@ typedef enum {
     HTT_SCHED_TID_FALLBACK_TO_PREV_DECISION,    /* Fall back to previous decision                                                                */
     HTT_SCHED_TID_SKIP_PEER_ALREADY_IN_TXQ,     /* skip tid, peer is already available in the txq                                                */
     HTT_SCHED_TID_SKIP_DELAY_UL_SCHED,          /* skip tid delay UL schedule                                                                    */
+    HTT_SCHED_TID_SKIP_PWR_SAVE_STATE_OFF,      /* Limit UL scheduling to primary link if not in power save state                                */
+    HTT_SCHED_TID_SKIP_TWT_SUSPEND,             /* Skip UL trigger for certain cases ex TWT suspend                                              */
+    HTT_SCHED_TID_SKIP_DISABLE_160MHZ_OFDMA,    /* Skip ul tid if peer supports 160MHZ                                                           */
+    HTT_SCHED_TID_SKIP_ULMU_DISABLE_FROM_OMI,   /* Skip ul tid if sta send omi to indicate to disable UL mu data                                 */
+    HTT_SCHED_TID_SKIP_UL_MAX_SCHED_CMD_EXCEEDED,/* skip ul tid if max sched cmd is exceeded                                                     */
+    HTT_SCHED_TID_SKIP_UL_SMALL_QDEPTH,         /* Skip ul tid for small qdepth                                                                  */
+    HTT_SCHED_TID_SKIP_UL_TWT_PAUSED,           /* Skip ul tid if twt txq is paused                                                              */
+    HTT_SCHED_TID_SKIP_PEER_UL_RX_NOT_ACTIVE,   /* Skip ul tid if peer ul rx is not active                                                       */
+    HTT_SCHED_TID_SKIP_NO_FORCE_TRIGGER,        /* Skip ul tid if there is no force triggers                                                     */
+    HTT_SCHED_TID_SKIP_SMART_BASIC_TRIGGER,     /* Skip ul tid if smart basic trigger doesnot have enough data                                   */
+
 
     HTT_SCHED_INELIGIBILITY_MAX,
 } htt_sched_txq_sched_ineligibility_tlv_enum;
@@ -4739,6 +4860,12 @@ typedef struct {
     A_UINT32 be_ofdma_eht_sig_mcs[HTT_TX_PDEV_STATS_NUM_EHT_SIG_MCS_COUNTERS];
 } htt_tx_pdev_rate_stats_be_ofdma_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /** Tx PPDU duration histogram **/
+    A_UINT32 tx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
+} htt_tx_pdev_ppdu_dur_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
  * TLV_TAGS:
  *      - HTT_STATS_TX_PDEV_RATE_STATS_TAG
@@ -4751,6 +4878,7 @@ typedef struct {
     htt_tx_pdev_rate_stats_tlv rate_tlv;
     htt_tx_pdev_rate_stats_be_tlv rate_be_tlv;
     htt_tx_pdev_rate_stats_sawf_tlv rate_sawf_tlv;
+    htt_tx_pdev_ppdu_dur_stats_tlv tx_ppdu_dur_tlv;
 } htt_tx_pdev_rate_stats_t;
 
 /* == PDEV RX RATE CTRL STATS == */
@@ -4999,6 +5127,12 @@ typedef struct {
  */
 } htt_rx_pdev_rate_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /** Tx PPDU duration histogram **/
+    A_UINT32 rx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
+} htt_rx_pdev_ppdu_dur_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE
  * TLV_TAGS:
  *      - HTT_STATS_RX_PDEV_RATE_STATS_TAG
@@ -5009,6 +5143,7 @@ typedef struct {
  */
 typedef struct {
     htt_rx_pdev_rate_stats_tlv rate_tlv;
+    htt_rx_pdev_ppdu_dur_stats_tlv rx_ppdu_dur_tlv;
 } htt_rx_pdev_rate_stats_t;
 
 typedef struct {
@@ -5118,6 +5253,12 @@ typedef struct {
      */
     A_UINT32 uplink_sta_power_headroom[HTT_RX_UL_MAX_UPLINK_RSSI_TRACK];
     A_UINT32 reduced_ul_ofdma_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+
+    /*
+     * Number of HE UL OFDMA per-user responses containing only a QoS null in
+     * response to basic trigger. Typically a data response is expected.
+     */
+    A_UINT32 ul_ofdma_basic_trigger_rx_qos_null_only;
 } htt_rx_pdev_ul_trigger_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
@@ -5183,6 +5324,12 @@ typedef struct {
      * Trig power headroom for STA AID in same idx - UNIT(dB)
      */
     A_UINT32 be_uplink_sta_power_headroom[HTT_RX_UL_MAX_UPLINK_RSSI_TRACK];
+
+    /*
+     * Number of EHT UL OFDMA per-user responses containing only a QoS null in
+     * response to basic trigger. Typically a data response is expected.
+     */
+    A_UINT32 be_ul_ofdma_basic_trigger_rx_qos_null_only;
 } htt_rx_pdev_be_ul_trigger_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
@@ -5306,6 +5453,12 @@ typedef struct {
     /** Average pilot EVM measued for RX UL TB PPDU */
     A_INT8 rx_ulmumimo_pilot_evm_dB_mean[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
     A_UINT32 reduced_ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+
+    /*
+     * Number of HE UL MU-MIMO per-user responses containing only a QoS null in
+     * response to basic trigger. Typically a data response is expected.
+     */
+    A_UINT32 ul_mumimo_basic_trigger_rx_qos_null_only;
 } htt_rx_pdev_ul_mumimo_trig_stats_tlv;
 
 typedef struct {
@@ -5353,6 +5506,12 @@ typedef struct {
     A_INT8 be_rx_ulmumimo_pilot_evm_dB_mean[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
     /** Number of times UL MUMIMO TB PPDUs received in a punctured mode */
     A_UINT32 rx_ul_mumimo_punctured_mode[HTT_RX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
+
+    /*
+     * Number of EHT UL MU-MIMO per-user responses containing only a QoS null
+     * in response to basic trigger. Typically a data response is expected.
+     */
+    A_UINT32 be_ul_mumimo_basic_trigger_rx_qos_null_only;
 } htt_rx_pdev_ul_mumimo_trig_be_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS
@@ -7425,5 +7584,545 @@ typedef struct {
     A_UINT32  engage_count;
     A_UINT32  drain_dest_ring_mask;
 } htt_dmac_reset_stats_tlv;
+
+
+/* Support up to 640 MHz mode for future expansion */
+#define HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT 32
+
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_M 0x000000ff
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_S 0
+
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_GET(_var) \
+    (((_var) & HTT_PDEV_PUNCTURE_STATS_MAC_ID_M) >> \
+     HTT_PDEV_PUNCTURE_STATS_MAC_ID_S)
+
+#define HTT_PDEV_PUNCTURE_STATS_MAC_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PDEV_PUNCTURE_STATS_MAC_ID, _val); \
+        ((_var) |= ((_val) << HTT_PDEV_PUNCTURE_STATS_MAC_ID_S)); \
+    } while (0)
+
+/*
+ * TLV used to provide puncturing related stats for TX/RX and each PPDU type.
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /**
+     * BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    union {
+        struct {
+            A_UINT32 mac_id:    8,
+                     reserved: 24;
+        };
+        A_UINT32 mac_id__word;
+    };
+
+    /*
+     * Stats direction (TX/RX). Enum value from HTT_STATS_DIRECTION.
+     */
+    A_UINT32 direction;
+
+    /*
+     * Preamble type. Enum value from HTT_STATS_PREAM_TYPE.
+     *
+     * Note that for although OFDM rates don't technically support
+     * "puncturing", this TLV can be used to indicate the 20 MHz sub-bands
+     * utilized for OFDM legacy duplicate packets, which are also used during
+     * puncturing sequences.
+     */
+    A_UINT32 preamble;
+
+    /*
+     * Stats PPDU type. Enum value from HTT_STATS_PPDU_TYPE.
+     */
+    A_UINT32 ppdu_type;
+
+    /*
+     * Indicates the number of valid elements in the
+     * "num_subbands_used_cnt" array, and must be <=
+     * HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT.
+     *
+     * Also indicates how many bits in the last_used_pattern_mask may be
+     * non-zero.
+     */
+    A_UINT32 subband_count;
+
+    /*
+     * The last used transmit 20 MHz subband mask. Bit 0 represents the lowest
+     * 20 MHz subband mask, bit 1 the second lowest, and so on.
+     *
+     * All 32 bits are valid and will be used for expansion to higher BW modes.
+     */
+    A_UINT32 last_used_pattern_mask;
+
+
+    /*
+     * Number of array elements with valid values is equal to "subband_count".
+     * If subband_count is < HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT, the
+     * remaining elements will be implicitly set to 0x0.
+     *
+     * The array index is the number of 20 MHz subbands utilized during TX/RX,
+     * and the counter value at that index is the number of times that subband
+     * count was used.
+     *
+     * The count is incremented once for each OTA PPDU transmitted / received.
+     */
+    A_UINT32 num_subbands_used_cnt[HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT];
+} htt_pdev_puncture_stats_tlv;
+
+#define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_M          0x0000003F
+#define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_S          0
+#define HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_M       0x00000FC0
+#define HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_S       6
+#define HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_M                 0x0FFFF000
+#define HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_S                 12
+
+#define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_GET(_var) \
+    (((_var) & HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_M) >> \
+     HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_S)
+
+#define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD, _val); \
+        ((_var) &= ~(HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_GET(_var) \
+    (((_var) & HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_M) >> \
+     HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_S)
+
+#define HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD, _val); \
+        ((_var) &= ~(HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_GET(_var) \
+    (((_var) & HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_M) >> \
+     HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_S)
+
+#define HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX, _val); \
+        ((_var) &= ~(HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_EXT_DETAILS_MLD_AST_INDEX_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    union {
+        struct {
+            A_UINT32 peer_assoc_ipc_recvd    : 6,
+                     sched_peer_delete_recvd : 6,
+                     mld_ast_index           : 16,
+                     reserved                : 4;
+        };
+        A_UINT32 msg_dword_1;
+    };
+} htt_ml_peer_ext_details_tlv;
+
+#define HTT_ML_LINK_INFO_VALID_M                0x00000001
+#define HTT_ML_LINK_INFO_VALID_S                0
+#define HTT_ML_LINK_INFO_ACTIVE_M               0x00000002
+#define HTT_ML_LINK_INFO_ACTIVE_S               1
+#define HTT_ML_LINK_INFO_PRIMARY_M              0x00000004
+#define HTT_ML_LINK_INFO_PRIMARY_S              2
+#define HTT_ML_LINK_INFO_ASSOC_LINK_M           0x00000008
+#define HTT_ML_LINK_INFO_ASSOC_LINK_S           3
+#define HTT_ML_LINK_INFO_CHIP_ID_M              0x00000070
+#define HTT_ML_LINK_INFO_CHIP_ID_S              4
+#define HTT_ML_LINK_INFO_IEEE_LINK_ID_M         0x00007F80
+#define HTT_ML_LINK_INFO_IEEE_LINK_ID_S         7
+#define HTT_ML_LINK_INFO_HW_LINK_ID_M           0x00038000
+#define HTT_ML_LINK_INFO_HW_LINK_ID_S           15
+#define HTT_ML_LINK_INFO_LOGICAL_LINK_ID_M      0x000C0000
+#define HTT_ML_LINK_INFO_LOGICAL_LINK_ID_S      18
+#define HTT_ML_LINK_INFO_MASTER_LINK_M          0x00100000
+#define HTT_ML_LINK_INFO_MASTER_LINK_S          20
+#define HTT_ML_LINK_INFO_ANCHOR_LINK_M          0x00200000
+#define HTT_ML_LINK_INFO_ANCHOR_LINK_S          21
+#define HTT_ML_LINK_INFO_INITIALIZED_M          0x00400000
+#define HTT_ML_LINK_INFO_INITIALIZED_S          22
+
+#define HTT_ML_LINK_INFO_SW_PEER_ID_M           0x0000ffff
+#define HTT_ML_LINK_INFO_SW_PEER_ID_S           0
+#define HTT_ML_LINK_INFO_VDEV_ID_M              0x00ff0000
+#define HTT_ML_LINK_INFO_VDEV_ID_S              16
+
+#define HTT_ML_LINK_INFO_VALID_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_VALID_M) >> \
+     HTT_ML_LINK_INFO_VALID_S)
+
+#define HTT_ML_LINK_INFO_VALID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_VALID, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_VALID_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_VALID_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_ACTIVE_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_ACTIVE_M) >> \
+     HTT_ML_LINK_INFO_ACTIVE_S)
+
+#define HTT_ML_LINK_INFO_ACTIVE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_ACTIVE, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_ACTIVE_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_ACTIVE_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_PRIMARY_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_PRIMARY_M) >> \
+     HTT_ML_LINK_INFO_PRIMARY_S)
+
+#define HTT_ML_LINK_INFO_PRIMARY_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_PRIMARY, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_PRIMARY_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_PRIMARY_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_ASSOC_LINK_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_ASSOC_LINK_M) >> \
+     HTT_ML_LINK_INFO_ASSOC_LINK_S)
+
+#define HTT_ML_LINK_INFO_ASSOC_LINK_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_ASSOC_LINK, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_ASSOC_LINK_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_ASSOC_LINK_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_CHIP_ID_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_CHIP_ID_M) >> \
+     HTT_ML_LINK_INFO_CHIP_ID_S)
+
+#define HTT_ML_LINK_INFO_CHIP_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_CHIP_ID, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_CHIP_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_CHIP_ID_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_IEEE_LINK_ID_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_IEEE_LINK_ID_M) >> \
+     HTT_ML_LINK_INFO_IEEE_LINK_ID_S)
+
+#define HTT_ML_LINK_INFO_IEEE_LINK_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_IEEE_LINK_ID, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_IEEE_LINK_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_IEEE_LINK_ID_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_HW_LINK_ID_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_HW_LINK_ID_M) >> \
+     HTT_ML_LINK_INFO_HW_LINK_ID_S)
+
+#define HTT_ML_LINK_INFO_HW_LINK_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_HW_LINK_ID, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_HW_LINK_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_HW_LINK_ID_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_LOGICAL_LINK_ID_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_LOGICAL_LINK_ID_M) >> \
+     HTT_ML_LINK_INFO_LOGICAL_LINK_ID_S)
+
+#define HTT_ML_LINK_INFO_LOGICAL_LINK_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_LOGICAL_LINK_ID, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_LOGICAL_LINK_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_LOGICAL_LINK_ID_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_MASTER_LINK_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_MASTER_LINK_M) >> \
+     HTT_ML_LINK_INFO_MASTER_LINK_S)
+
+#define HTT_ML_LINK_INFO_MASTER_LINK_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_MASTER_LINK, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_MASTER_LINK_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_MASTER_LINK_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_ANCHOR_LINK_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_ANCHOR_LINK_M) >> \
+     HTT_ML_LINK_INFO_ANCHOR_LINK_S)
+
+#define HTT_ML_LINK_INFO_ANCHOR_LINK_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_ANCHOR_LINK, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_ANCHOR_LINK_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_ANCHOR_LINK_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_INITIALIZED_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_INITIALIZED_M) >> \
+     HTT_ML_LINK_INFO_INITIALIZED_S)
+
+#define HTT_ML_LINK_INFO_INITIALIZED_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_INITIALIZED, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_INITIALIZED_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_INITIALIZED_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_SW_PEER_ID_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_SW_PEER_ID_M) >> \
+     HTT_ML_LINK_INFO_SW_PEER_ID_S)
+
+#define HTT_ML_LINK_INFO_SW_PEER_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_SW_PEER_ID, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_SW_PEER_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_SW_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_ML_LINK_INFO_VDEV_ID_GET(_var) \
+    (((_var) & HTT_ML_LINK_INFO_VDEV_ID_M) >> \
+     HTT_ML_LINK_INFO_VDEV_ID_S)
+
+#define HTT_ML_LINK_INFO_VDEV_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_LINK_INFO_VDEV_ID, _val); \
+        ((_var) &= ~(HTT_ML_LINK_INFO_VDEV_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_LINK_INFO_VDEV_ID_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    union {
+        struct {
+            A_UINT32 valid           : 1,
+                     active          : 1,
+                     primary         : 1,
+                     assoc_link      : 1,
+                     chip_id         : 3,
+                     ieee_link_id    : 8,
+                     hw_link_id      : 3,
+                     logical_link_id : 2,
+                     master_link     : 1,
+                     anchor_link     : 1,
+                     initialized     : 1,
+                     reserved        : 9;
+        };
+        A_UINT32 msg_dword_1;
+    };
+
+    union {
+        struct {
+            A_UINT32 sw_peer_id      : 16,
+                     vdev_id         : 8,
+                     reserved1       : 8;
+        };
+        A_UINT32 msg_dword_2;
+    };
+
+    A_UINT32 primary_tid_mask;
+} htt_ml_link_info_tlv;
+
+#define HTT_ML_PEER_DETAILS_NUM_LINKS_M                     0x00000003
+#define HTT_ML_PEER_DETAILS_NUM_LINKS_S                     0
+#define HTT_ML_PEER_DETAILS_ML_PEER_ID_M                    0x00003FFC
+#define HTT_ML_PEER_DETAILS_ML_PEER_ID_S                    2
+#define HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_M              0x0001C000
+#define HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_S              14
+#define HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_M               0x00060000
+#define HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_S               17
+#define HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_M               0x00380000
+#define HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_S               19
+#define HTT_ML_PEER_DETAILS_NON_STR_M                       0x00400000
+#define HTT_ML_PEER_DETAILS_NON_STR_S                       22
+#define HTT_ML_PEER_DETAILS_EMLSR_M                         0x00800000
+#define HTT_ML_PEER_DETAILS_EMLSR_S                         23
+#define HTT_ML_PEER_DETAILS_IS_STA_KO_M                     0x01000000
+#define HTT_ML_PEER_DETAILS_IS_STA_KO_S                     24
+#define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_M               0x06000000
+#define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_S               25
+#define HTT_ML_PEER_DETAILS_ALLOCATED_M                     0x08000000
+#define HTT_ML_PEER_DETAILS_ALLOCATED_S                     27
+
+#define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_M    0x000000ff
+#define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_S    0
+
+#define HTT_ML_PEER_DETAILS_NUM_LINKS_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_NUM_LINKS_M) >> \
+     HTT_ML_PEER_DETAILS_NUM_LINKS_S)
+
+#define HTT_ML_PEER_DETAILS_NUM_LINKS_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_NUM_LINKS, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_NUM_LINKS_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_NUM_LINKS_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_ML_PEER_ID_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_ML_PEER_ID_M) >> \
+     HTT_ML_PEER_DETAILS_ML_PEER_ID_S)
+
+#define HTT_ML_PEER_DETAILS_ML_PEER_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_ML_PEER_ID, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_ML_PEER_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_ML_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_M) >> \
+     HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_S)
+
+#define HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_PRIMARY_LINK_IDX_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_M) >> \
+     HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_S)
+
+#define HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_PRIMARY_CHIP_ID_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_M) >> \
+     HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_S)
+
+#define HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_LINK_INIT_COUNT, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_LINK_INIT_COUNT_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_NON_STR_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_NON_STR_M) >> \
+     HTT_ML_PEER_DETAILS_NON_STR_S)
+
+#define HTT_ML_PEER_DETAILS_NON_STR_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_NON_STR, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_NON_STR_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_NON_STR_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_EMLSR_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_EMLSR_M) >> \
+     HTT_ML_PEER_DETAILS_EMLSR_S)
+
+#define HTT_ML_PEER_DETAILS_EMLSR_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_EMLSR, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_EMLSR_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_EMLSR_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_IS_STA_KO_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_IS_STA_KO_M) >> \
+     HTT_ML_PEER_DETAILS_IS_STA_KO_S)
+
+#define HTT_ML_PEER_DETAILS_IS_STA_KO_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_IS_STA_KO, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_IS_STA_KO_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_IS_STA_KO_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_M) >> \
+     HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_S)
+
+#define HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_NUM_LOCAL_LINKS_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_ALLOCATED_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_ALLOCATED_M) >> \
+     HTT_ML_PEER_DETAILS_ALLOCATED_S)
+
+#define HTT_ML_PEER_DETAILS_ALLOCATED_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_ALLOCATED, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_ALLOCATED_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_ALLOCATED_S)); \
+    } while (0)
+
+#define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_GET(_var) \
+    (((_var) & HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_M) >> \
+     HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_S)
+
+#define HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP, _val); \
+        ((_var) &= ~(HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_M)); \
+        ((_var) |= ((_val) << HTT_ML_PEER_DETAILS_PARTICIPATING_CHIPS_BITMAP_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    htt_mac_addr  remote_mld_mac_addr;
+    union {
+        struct {
+            A_UINT32 num_links         : 2,
+                     ml_peer_id        : 12,
+                     primary_link_idx  : 3,
+                     primary_chip_id   : 2,
+                     link_init_count   : 3,
+                     non_str           : 1,
+                     emlsr             : 1,
+                     is_sta_ko         : 1,
+                     num_local_links   : 2,
+                     allocated         : 1,
+                     reserved          : 4;
+        };
+        A_UINT32 msg_dword_1;
+    };
+
+    union {
+        struct {
+            A_UINT32  participating_chips_bitmap : 8,
+                     reserved1                  : 24;
+        };
+        A_UINT32 msg_dword_2;
+    };
+    /*
+     * ml_peer_flags is an opaque field that cannot be interpreted by
+     * the host; it is only for off-line debug.
+     */
+    A_UINT32  ml_peer_flags;
+} htt_ml_peer_details_tlv;
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_ML_PEERS_INFO
+ * TLV_TAGS:
+ *   - HTT_STATS_ML_PEER_DETAILS_TAG
+ *   - HTT_STATS_ML_LINK_INFO_DETAILS_TAG
+ *   - HTT_STATS_ML_PEER_EXT_DETAILS_TAG (multiple)
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct _htt_ml_peer_stats {
+    htt_ml_peer_details_tlv         ml_peer_details;
+    htt_ml_peer_ext_details_tlv     ml_peer_ext_details;
+    htt_ml_link_info_tlv            ml_link_info[];
+} htt_ml_peer_stats_t;
+
 
 #endif /* __HTT_STATS_H__ */
