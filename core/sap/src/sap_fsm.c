@@ -979,20 +979,6 @@ static bool sap_process_liberal_scc_for_go(struct sap_context *sap_context)
 }
 #endif
 
-#ifdef FEATURE_WLAN_CH_AVOID_EXT
-static inline
-uint32_t sap_get_restriction_mask(struct sap_context *sap_context)
-{
-	return sap_context->restriction_mask;
-}
-#else
-static inline
-uint32_t sap_get_restriction_mask(struct sap_context *sap_context)
-{
-	return -EINVAL;
-}
-#endif
-
 QDF_STATUS
 sap_validate_chan(struct sap_context *sap_context,
 		  bool pre_start_bss,
@@ -1140,8 +1126,7 @@ validation_done:
 		  sap_context->chan_freq);
 
 	if (!policy_mgr_is_safe_channel(mac_ctx->psoc,
-					sap_context->chan_freq) &&
-	   (sap_get_restriction_mask(sap_context) & BIT(NL80211_IFTYPE_AP))) {
+					sap_context->chan_freq)) {
 		sap_warn("Abort SAP start due to unsafe channel");
 		return QDF_STATUS_E_ABORTED;
 	}

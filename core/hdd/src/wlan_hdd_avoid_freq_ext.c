@@ -128,6 +128,9 @@ __wlan_hdd_cfg80211_avoid_freq_ext(struct wiphy *wiphy,
 	if (tb[sub_id])
 		avoid_freq_list.restriction_mask = nla_get_u32(tb[sub_id]);
 
+	if (avoid_freq_list.restriction_mask & BIT(NL80211_IFTYPE_AP))
+		avoid_freq_list.restriction_mask = (1 << QDF_SAP_MODE);
+
 	nla_for_each_nested(freq_ext, tb[id], rem) {
 		if (i == CH_AVOID_MAX_RANGE) {
 			hdd_warn_rl("Ignoring excess range number");

@@ -3360,32 +3360,11 @@ uint32_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
 	return hdd_ctx->coex_avoid_freq_list.restriction_mask;
 }
 
-/**
- * wlan_hdd_fetch_sap_restriction_mask() - fetch restriction mask for sap
- * before sap start.
- * @hdd_context: hdd context
- * @sap_context: sap_conext
- *
- * Return: None
- */
-static inline
-void wlan_hdd_fetch_sap_restriction_mask(struct hdd_context *hdd_ctx,
-					 struct sap_context *sap_ctx)
-{
-	sap_ctx->restriction_mask =
-		hdd_ctx->coex_avoid_freq_list.restriction_mask;
-}
 #else
 static inline
 uint32_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
 {
 	return -EINVAL;
-}
-
-static inline
-void wlan_hdd_fetch_sap_restriction_mask(struct hdd_context *hdd_ctx,
-					 struct sap_context *sap_ctx)
-{
 }
 #endif
 
@@ -3426,7 +3405,7 @@ void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
 		  sap_ctx->csa_reason);
 
 	if (sap_ctx->csa_reason == CSA_REASON_UNSAFE_CHANNEL) {
-		if (restriction_mask & BIT(NL80211_IFTYPE_AP)) {
+		if (restriction_mask & BIT(QDF_SAP_MODE)) {
 			schedule_work(&adapter->sap_stop_bss_work);
 		} else {
 			unsafe_chan_count = unsafe_ch_list->chan_cnt;
@@ -6282,8 +6261,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto error;
 	}
-
-	wlan_hdd_fetch_sap_restriction_mask(hdd_ctx, sap_ctx);
 
 	status = wlansap_start_bss(sap_ctx, sap_event_callback, config,
 				   adapter->dev);
