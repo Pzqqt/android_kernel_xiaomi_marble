@@ -2236,11 +2236,49 @@ void venus_hfi_interface_queues_deinit(struct msm_vidc_core *core)
 	core->sfr.align_device_addr = 0;
 }
 
+static int venus_hfi_reset_queue_header(struct msm_vidc_core *core)
+{
+	struct msm_vidc_iface_q_info *iface_q;
+	struct hfi_queue_header *q_hdr;
+	int i, rc = 0;
+
+	if (!core) {
+		d_vpr_e("%s: invalid param\n", __func__);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < VIDC_IFACEQ_NUMQ; i++) {
+		iface_q = &core->iface_queues[i];
+		__set_queue_hdr_defaults(iface_q->q_hdr);
+	}
+
+	iface_q = &core->iface_queues[VIDC_IFACEQ_CMDQ_IDX];
+	q_hdr = iface_q->q_hdr;
+	q_hdr->qhdr_start_addr = iface_q->q_array.align_device_addr;
+	q_hdr->qhdr_type |= HFI_Q_ID_HOST_TO_CTRL_CMD_Q;
+
+	iface_q = &core->iface_queues[VIDC_IFACEQ_MSGQ_IDX];
+	q_hdr = iface_q->q_hdr;
+	q_hdr->qhdr_start_addr = iface_q->q_array.align_device_addr;
+	q_hdr->qhdr_type |= HFI_Q_ID_CTRL_TO_HOST_MSG_Q;
+
+	iface_q = &core->iface_queues[VIDC_IFACEQ_DBGQ_IDX];
+	q_hdr = iface_q->q_hdr;
+	q_hdr->qhdr_start_addr = iface_q->q_array.align_device_addr;
+	q_hdr->qhdr_type |= HFI_Q_ID_CTRL_TO_HOST_DEBUG_Q;
+	/*
+	 * Set receive request to zero on debug queue as there is no
+	 * need of interrupt from video hardware for debug messages
+	 */
+	q_hdr->qhdr_rx_req = 0;
+
+	return rc;
+}
+
 int venus_hfi_interface_queues_init(struct msm_vidc_core *core)
 {
 	int rc = 0;
 	struct hfi_queue_table_header *q_tbl_hdr;
-	struct hfi_queue_header *q_hdr;
 	struct msm_vidc_iface_q_info *iface_q;
 	struct msm_vidc_alloc alloc;
 	struct msm_vidc_map map;
@@ -2251,6 +2289,7 @@ int venus_hfi_interface_queues_init(struct msm_vidc_core *core)
 
 	if (core->iface_q_table.align_virtual_addr) {
 		d_vpr_h("%s: queues already allocated\n", __func__);
+		venus_hfi_reset_queue_header(core);
 		return 0;
 	}
 
@@ -2291,7 +2330,6 @@ int venus_hfi_interface_queues_init(struct msm_vidc_core *core)
 		offset += iface_q->q_array.mem_size;
 		iface_q->q_hdr = VIDC_IFACEQ_GET_QHDR_START_ADDR(
 				core->iface_q_table.align_virtual_addr, i);
-		__set_queue_hdr_defaults(iface_q->q_hdr);
 	}
 
 	q_tbl_hdr = (struct hfi_queue_table_header *)
@@ -2305,25 +2343,12 @@ int venus_hfi_interface_queues_init(struct msm_vidc_core *core)
 	q_tbl_hdr->qtbl_num_q = VIDC_IFACEQ_NUMQ;
 	q_tbl_hdr->qtbl_num_active_q = VIDC_IFACEQ_NUMQ;
 
-	iface_q = &core->iface_queues[VIDC_IFACEQ_CMDQ_IDX];
-	q_hdr = iface_q->q_hdr;
-	q_hdr->qhdr_start_addr = iface_q->q_array.align_device_addr;
-	q_hdr->qhdr_type |= HFI_Q_ID_HOST_TO_CTRL_CMD_Q;
-
-	iface_q = &core->iface_queues[VIDC_IFACEQ_MSGQ_IDX];
-	q_hdr = iface_q->q_hdr;
-	q_hdr->qhdr_start_addr = iface_q->q_array.align_device_addr;
-	q_hdr->qhdr_type |= HFI_Q_ID_CTRL_TO_HOST_MSG_Q;
-
-	iface_q = &core->iface_queues[VIDC_IFACEQ_DBGQ_IDX];
-	q_hdr = iface_q->q_hdr;
-	q_hdr->qhdr_start_addr = iface_q->q_array.align_device_addr;
-	q_hdr->qhdr_type |= HFI_Q_ID_CTRL_TO_HOST_DEBUG_Q;
-	/*
-	 * Set receive request to zero on debug queue as there is no
-	 * need of interrupt from video hardware for debug messages
-	 */
-	q_hdr->qhdr_rx_req = 0;
+	/* reset hfi queue header fields */
+	rc = venus_hfi_reset_queue_header(core);
+	if (rc) {
+		d_vpr_e("%s: init queue header failed\n", __func__);
+		goto fail_alloc_queue;
+	}
 
 	/* sfr buffer */
 	memset(&alloc, 0, sizeof(alloc));
