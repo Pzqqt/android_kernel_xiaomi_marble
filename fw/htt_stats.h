@@ -479,6 +479,21 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_PDEV_SCHED_ALGO_STATS = 49,
 
+    /** HTT_DBG_ODD_MANDATORY_MUMIMO_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_odd_mandatory_mumimo_pdev_stats_tlv
+     */
+    HTT_DBG_ODD_MANDATORY_MUMIMO_STATS = 50,
+    /** HTT_DBG_ODD_MANDATORY_MUOFDMA_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_odd_mandatory_muofdma_pdev_stats_tlv
+     */
+    HTT_DBG_ODD_MANDATORY_MUOFDMA_STATS = 51,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -8257,6 +8272,43 @@ typedef struct {
     A_UINT32 rts_cnt;
     A_UINT32 rts_success;
 } htt_odd_mandatory_pdev_stats_tlv;
+
+typedef struct _htt_odd_mandatory_mumimo_pdev_stats_tlv {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 ac_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ax_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ac_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ax_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ac_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ax_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_mumimo_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_mumimo_rx_nss[HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+    A_UINT32 ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 rx_ulmumimo_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulmumimo_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulmumimo_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+} htt_odd_mandatory_mumimo_pdev_stats_tlv;
+
+typedef struct _htt_odd_mandatory_muofdma_pdev_stats_tlv {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 mu_ofdma_seq_posted;
+    A_UINT32 ul_mu_ofdma_seq_posted;
+    A_UINT32 ofdma_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 ofdma_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ofdma_tx_ldpc;
+    A_UINT32 ul_ofdma_rx_ldpc;
+    A_UINT32 ul_ofdma_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 ul_ofdma_rx_nss[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ul_ofdma_rx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 rx_ulofdma_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulofdma_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulofdma_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 ax_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 be_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ofdma_tx_ru_size[HTT_TX_PDEV_STATS_NUM_AX_RU_SIZE_COUNTERS];
+} htt_odd_mandatory_muofdma_pdev_stats_tlv;
+
 
 #define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_M 0x000000ff
 #define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S 0
