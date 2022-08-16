@@ -37902,7 +37902,7 @@ typedef struct {
 #define WMI_CFR_GROUP_DATA_SUBTYPE_VALID_BIT_POS      8
 
 /* The bits in this mask mapped to WMI_PEER_CFR_CAPTURE_BW enum */
-#define WMI_CFR_GROUP_BW_MASK_NUM_BITS                5
+#define WMI_CFR_GROUP_BW_MASK_NUM_BITS                6
 #define WMI_CFR_GROUP_BW_BIT_POS                      0
 
 /* The bits in this mask correspond to the values as below
