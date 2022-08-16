@@ -5042,6 +5042,7 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 		single_tpe = tpe_ies[non_psd_index];
 		vdev_mlme->reg_tpc_obj.eirp_power =
 			single_tpe.tx_power[single_tpe.max_tx_pwr_count];
+		vdev_mlme->reg_tpc_obj.is_psd_power = false;
 	}
 }
 
@@ -5195,7 +5196,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 		skip_tpe = wlan_mlme_skip_tpe(mac->psoc);
 	} else {
 		is_6ghz_freq = true;
-		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
 		/* Power mode calculation for 6G*/
 		ap_power_type_6g = session->ap_power_type;
 		if (LIM_IS_STA_ROLE(session)) {
@@ -5225,6 +5225,7 @@ void lim_calculate_tpc(struct mac_context *mac,
 	if (mlme_obj->reg_tpc_obj.num_pwr_levels) {
 		is_tpe_present = true;
 		num_pwr_levels = mlme_obj->reg_tpc_obj.num_pwr_levels;
+		is_psd_power = mlme_obj->reg_tpc_obj.is_psd_power;
 	} else {
 		num_pwr_levels = lim_get_num_pwr_levels(is_psd_power,
 							session->ch_width);
@@ -5237,10 +5238,16 @@ void lim_calculate_tpc(struct mac_context *mac,
 		i++) {
 		if (is_tpe_present) {
 			if (is_6ghz_freq) {
-				wlan_reg_get_client_power_for_connecting_ap(
-				mac->pdev, ap_power_type_6g,
-				mlme_obj->reg_tpc_obj.frequency[i],
-				&is_psd_power, &reg_max, &psd_power);
+				if (is_psd_power) {
+					wlan_reg_get_client_power_for_connecting_ap(
+					mac->pdev, ap_power_type_6g,
+					mlme_obj->reg_tpc_obj.frequency[i],
+					is_psd_power, &reg_max, &psd_power);
+				} else {
+					wlan_reg_get_client_power_for_connecting_ap(
+					mac->pdev, ap_power_type_6g, oper_freq,
+					is_psd_power, &reg_max, &psd_power);
+				}
 			}
 		} else {
 			/* center frequency calculation */
@@ -5261,10 +5268,9 @@ void lim_calculate_tpc(struct mac_context *mac,
 					wlan_reg_get_client_power_for_connecting_ap
 					(mac->pdev, ap_power_type_6g,
 					 mlme_obj->reg_tpc_obj.frequency[i],
-					 &is_psd_power, &reg_max, &psd_power);
+					 is_psd_power, &reg_max, &psd_power);
 				} else {
-					ap_power_type_6g =
-						wlan_reg_get_cur_6g_ap_pwr_type(
+					wlan_reg_get_cur_6g_ap_pwr_type(
 							mac->pdev,
 							&ap_power_type_6g);
 					wlan_reg_get_6g_chan_ap_power(
@@ -5320,7 +5326,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 	}
 
 	mlme_obj->reg_tpc_obj.num_pwr_levels = num_pwr_levels;
-	mlme_obj->reg_tpc_obj.is_psd_power = is_psd_power;
 	mlme_obj->reg_tpc_obj.eirp_power = reg_max;
 	mlme_obj->reg_tpc_obj.power_type_6g = ap_power_type_6g;
 
