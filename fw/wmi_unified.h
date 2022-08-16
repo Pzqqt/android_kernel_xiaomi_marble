@@ -35271,19 +35271,53 @@ typedef struct {
 
 /** the definition of different ROAM parameters */
 typedef enum {
-    /*  roam param to configure below roam events
-     *  Bit : 0 disabled - do not send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
-     *  Bit : 0 enabled  - send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
-     *  Bit : 1 disabled - do not send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
-     *  Bit : 1 enabled  - send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
-     *  Bit : 2-31  - reserved
+    /*
+     * roam param to configure below roam events
+     * Bit : 0 disabled - do not send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
+     * Bit : 0 enabled  - send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
+     * Bit : 1 disabled - do not send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
+     * Bit : 1 enabled  - send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
+     * Bit : 2-31  - reserved
      */
-    WMI_ROAM_PARAM_ROAM_EVENTS_CONFIG = 0x1,
+    WMI_ROAM_PARAM_ROAM_EVENTS_CONFIG = 1,
+
     /*
      * Bit : 0 if unset, POOR_LINKSPEED
      * Bit : 0 if set, GOOD_LINKSPEED
      */
-    WMI_ROAM_PARAM_LINKSPEED_STATE = 0x2,
+    WMI_ROAM_PARAM_LINKSPEED_STATE = 2,
+
+    /*
+     * roam param to configure roam scan params for DFS jitter reduction
+     * Bit : 0 enabled   - DFS channel jitter reduction is enabled.
+     * Bit : 0 disabled  - DFS channel jitter reduction is disabled.
+     *
+     * Bit : 1-7         - To indicate the passive-to-active conversion timeout
+     *                     with range 40 to 70 in ms, default value is 50ms.
+     *                     If an invalid (out of range) value is provided, the
+     *                     default value will be used.
+     * Bit : 8-13        - To indicate the DFS RSSI threshold for current AP
+     *                     with range 0 to 58, default value is 0 dB
+     *                     (DFS rssi threshold = -70 dBm + 0 dB = -70 dBm).
+     *                     The specified value (in dB) is added to the -70 dBm
+     *                     baseline value to get the RSSI threshold in dBm.
+     *                     If an invalid (out of range) value is provided, the
+     *                     default value will be used.
+     * Bit : 14-19       - To indicate the DFS RSSI threshold for candidate AP
+     *                     with range 0 to 58, default value is 0 dB
+     *                     (DFS rssi threshold = -70 - 0 = -70 dBm).
+     *                     The specified value (in dB) is added to the -70 dBm
+     *                     baseline value to get the RSSI threshold in dBm.
+     *                     If an invalid (out of range) value is provided, the
+     *                     default value will be used.
+     * Bit : 20 disabled - To indicate DFS roam scan policy is AGILE
+     * Bit : 20 enabled  - To indicate DFS roam scan policy is Legacy
+     *
+     * Bit : 21-31 are reserved
+     */
+    WMI_ROAM_PARAM_ROAM_SCAN_DFS_CONFIG_BITMAP = 3,
+
+
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
 
