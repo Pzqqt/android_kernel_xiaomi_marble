@@ -39122,6 +39122,7 @@ typedef struct {
 
 typedef enum wmi_mlo_tear_down_reason_code_type {
     WMI_MLO_TEARDOWN_SSR_REASON,
+    WMI_MLO_TEARDOWN_HOST_INITIATED_REASON,
 } WMI_MLO_TEARDOWN_REASON_TYPE;
 
 typedef struct {
