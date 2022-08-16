@@ -395,14 +395,13 @@ static int ipa3_smmu_map_uc_ntn_pipes(struct ipa_ntn_setup_info *params,
 				IPAERR("Fail to map 0x%llx\n", iova);
 		} else {
 			result = iommu_unmap(smmu_domain, iova_p, size_p);
-			if (result != params->data_buff_size)
+			if (result != size_p) {
 				IPAERR("Fail to unmap 0x%llx\n", iova);
-		}
-		if (result) {
-			if (params->smmu_enabled)
-				goto fail_map_data_buff_smmu_enabled;
-			else
-				goto fail_map_data_buff_smmu_disabled;
+				if (params->smmu_enabled)
+					goto fail_map_data_buff_smmu_enabled;
+				else
+					goto fail_map_data_buff_smmu_disabled;
+			}
 		}
 	}
 	return 0;
