@@ -1,0 +1,19 @@
+menu "Techpack Drivers"
+
+source "techpack/datarmnet/core/Kconfig"
+
+source "techpack/datarmnet-ext/aps/Kconfig"
+
+source "techpack/datarmnet-ext/offload/Kconfig"
+
+source "techpack/datarmnet-ext/perf/Kconfig"
+
+source "techpack/datarmnet-ext/perf_tether/Kconfig"
+
+source "techpack/datarmnet-ext/sch/Kconfig"
+
+source "techpack/datarmnet-ext/shs/Kconfig"
+
+source "techpack/datarmnet-ext/wlan/Kconfig"
+
+endmenu
