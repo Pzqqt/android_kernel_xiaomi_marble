@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
+VIDEO_ROOT := $(srctree)/techpack/video
+
 ifneq ($(CONFIG_ARCH_MONACO), y)
 KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM=1
 endif
