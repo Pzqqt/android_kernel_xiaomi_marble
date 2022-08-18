@@ -2,10 +2,10 @@
 # RMNET_PERF driver
 #
 
-menuconfig RMNET_PERF
+config RMNET_PERF
     tristate "Rmnet perf support"
     default m
     depends on RMNET_CORE
     depends on RMNET_SHS
-    ---help---
+    help
         Performance support for the RmNet driver
