@@ -31,12 +31,11 @@ endif
 
 #MSM - Vendor SI
 ifeq ($(CONFIG_ARCH_WAIPIO), y)
-DATAIPADRVTOP = $(srctree)/../../vendor/qcom/opensource/dataipa/drivers/platform/msm
-LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_vendor.h
-include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_GKI.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_vendor.h
+include $(srctree)/techpack/dataipa/config/dataipa_GKI.conf
 ifeq ($(CONFIG_LOCALVERSION), "-gki-consolidate")
-include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.conf
-LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.h
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
 endif
 endif
 

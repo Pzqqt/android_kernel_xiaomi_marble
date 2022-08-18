@@ -13,14 +13,7 @@
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM dfc
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
-#ifdef RMNET_LA_PLATFORM
-#define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
-#elif RMNET_TRACE_INCLUDE_LE
-#define TRACE_INCLUDE_PATH ../../../../../../../datarmnet/core
-#else
-#define TRACE_INCLUDE_PATH ../../../../../../../src/datarmnet/core
-#endif
+#define TRACE_INCLUDE_PATH ../../techpack/datarmnet/core
 #define TRACE_INCLUDE_FILE dfc
 
 #if !defined(_TRACE_DFC_H) || defined(TRACE_HEADER_MULTI_READ)

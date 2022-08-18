@@ -1,3 +1,5 @@
+CVP_ROOT := $(srctree)/techpack/cvp
+
 LINUXINCLUDE    += -I$(CVP_ROOT)/include \
                    -I$(CVP_ROOT)/include/uapi \
 				   -I$(CVP_ROOT)/include/uapi/eva

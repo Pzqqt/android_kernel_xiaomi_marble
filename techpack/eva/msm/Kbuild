@@ -1,3 +1,5 @@
+EVA_ROOT := $(srctree)/techpack/eva
+
 LINUXINCLUDE    += -I$(EVA_ROOT)/include \
                    -I$(EVA_ROOT)/include/uapi \
 				   -I$(EVA_ROOT)/include/uapi/eva
