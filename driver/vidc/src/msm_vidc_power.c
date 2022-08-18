@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "msm_vidc_power.h"
@@ -143,6 +144,10 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 	mutex_lock(&core->lock);
 	curr_time_ns = ktime_get_ns();
 	list_for_each_entry(temp, &core->instances, list) {
+		/* skip for session where no input is there to process */
+		if (!temp->max_input_data_size)
+			continue;
+
 		/* skip inactive session bus bandwidth */
 		if (!is_active_session(temp->last_qbuf_time_ns, curr_time_ns)) {
 			temp->active = false;
@@ -325,6 +330,10 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	freq = 0;
 	curr_time_ns = ktime_get_ns();
 	list_for_each_entry(temp, &core->instances, list) {
+		/* skip for session where no input is there to process */
+		if (!temp->max_input_data_size)
+			continue;
+
 		/* skip inactive session clock rate */
 		if (!is_active_session(temp->last_qbuf_time_ns, curr_time_ns)) {
 			temp->active = false;
@@ -501,7 +510,10 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 
 	list_for_each_entry(vbuf, &inst->buffers.input.list, list)
 		data_size = max(data_size, vbuf->data_size);
+
+	mutex_lock(&core->lock);
 	inst->max_input_data_size = data_size;
+	mutex_unlock(&core->lock);
 
 	/* no pending inputs - skip scale power */
 	if (!inst->max_input_data_size)
