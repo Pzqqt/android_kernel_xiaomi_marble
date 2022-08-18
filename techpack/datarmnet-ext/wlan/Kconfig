@@ -2,8 +2,8 @@
 # RMNET_WLAN driver
 #
 
-menuconfig RMNET_WLAN
+config RMNET_WLAN
     tristate "Rmnet WLAN support"
     default m
-    ---help---
+    help
         WLAN processing module for RmNet driver
