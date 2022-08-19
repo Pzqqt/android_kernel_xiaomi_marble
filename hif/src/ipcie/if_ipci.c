@@ -792,11 +792,15 @@ static void hif_ipci_get_soc_info_pld(struct hif_ipci_softc *sc,
 				      struct device *dev)
 {
 	struct pld_soc_info info;
+	struct hif_softc *scn = HIF_GET_SOFTC(sc);
 
 	pld_get_soc_info(dev, &info);
 	sc->mem = info.v_addr;
 	sc->ce_sc.ol_sc.mem    = info.v_addr;
 	sc->ce_sc.ol_sc.mem_pa = info.p_addr;
+
+	scn->target_info.target_version = info.soc_id;
+	scn->target_info.target_revision = 0;
 }
 
 /**
