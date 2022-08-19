@@ -362,8 +362,33 @@ static const struct qwlan_hw qwlan_hw_list[] = {
 	},
 	{
 		.id = KIWI_V1,
-		.subid = 0xE,
+		.subid = 0,
 		.name = "KIWI_V1",
+	},
+	{
+		.id = KIWI_V2,
+		.subid = 0,
+		.name = "KIWI_V2",
+	},
+	{
+		.id = WCN6750_V1,
+		.subid = 0,
+		.name = "WCN6750_V1",
+	},
+	{
+		.id = QCA6490_v2_1,
+		.subid = 0,
+		.name = "QCA6490",
+	},
+	{
+		.id = QCA6490_v2,
+		.subid = 0,
+		.name = "QCA6490",
+	},
+	{
+		.id = WCN3990_v2_2,
+		.subid = 0,
+		.name = "WCN3990_v2_2",
 	}
 };
 
@@ -376,6 +401,10 @@ static const struct qwlan_hw qwlan_hw_list[] = {
 static const char *hif_get_hw_name(struct hif_target_info *info)
 {
 	int i;
+
+	hif_debug("target version = %d, target revision = %d",
+		  info->target_version,
+		  info->target_revision);
 
 	if (info->hw_name)
 		return info->hw_name;
