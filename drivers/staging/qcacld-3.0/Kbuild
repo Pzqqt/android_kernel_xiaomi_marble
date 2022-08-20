@@ -4412,9 +4412,10 @@ else
 endif
 
 # Android wifi state control interface
-ifneq ($(WLAN_CTRL_NAME),)
-ccflags-y += -DWLAN_CTRL_NAME=\"$(WLAN_CTRL_NAME)\"
+ifeq ($(WLAN_CTRL_NAME),)
+	WLAN_CTRL_NAME=wlan
 endif
+ccflags-y += -DWLAN_CTRL_NAME=\"$(WLAN_CTRL_NAME)\"
 
 # inject some build related information
 ifeq ($(CONFIG_BUILD_TAG), y)
