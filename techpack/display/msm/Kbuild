@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
+DISPLAY_ROOT=$(srctree)/techpack/display
+
 ifeq ($(CONFIG_ARCH_WAIPIO), y)
 ifeq ($(CONFIG_ARCH_QTI_VM), y)
 	include $(DISPLAY_ROOT)/config/gki_waipiodisptui.conf
@@ -97,7 +99,7 @@ CDEFINES += -DMULTI_IF_NAME=\"$(CHIP_NAME)\"
 endif
 
 ######### CONFIG_DRM_MSM ########
-obj-m += msm_drm.o
+obj-$(CONFIG_DRM_MSM) += msm_drm.o
 
 msm_drm-$(CONFIG_HDCP_QSEECOM) := ../hdcp/msm_hdcp.o
 
