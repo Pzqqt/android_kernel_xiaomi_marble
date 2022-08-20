@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-CONFIG_BUILD_VENDORSI := true
-
 # auto-detect subdirs
 ifneq ($(CONFIG_BUILD_VENDORSI), true)
 ifneq ($(CONFIG_ARCH_QTI_VM), y)
