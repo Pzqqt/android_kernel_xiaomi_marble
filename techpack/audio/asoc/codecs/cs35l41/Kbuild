@@ -13,7 +13,7 @@ ifeq ($(KERNEL_BUILD), 1)
 	AUDIO_ROOT := $(AUDIO_BLD_DIR)/techpack/audio
 endif
 
-ifeq ($(KERNEL_BUILD), 0)
+ifeq (0, 0)
 	ifeq ($(CONFIG_ARCH_KONA), y)
 		include $(AUDIO_ROOT)/config/konaauto.conf
 		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h

@@ -13,7 +13,7 @@ ifeq ($(KERNEL_BUILD), 1)
 	AUDIO_ROOT := $(AUDIO_BLD_DIR)/techpack/audio
 endif
 
-ifeq ($(KERNEL_BUILD), 0)
+ifeq (0, 0)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
 
@@ -103,7 +103,7 @@ ifeq ($(call cc-option-yn, -Wheader-guard),y)
 EXTRA_CFLAGS += -Wheader-guard
 endif
 
-ifeq ($(KERNEL_BUILD), 0)
+ifeq (0, 0)
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/ipc/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/Module.symvers
