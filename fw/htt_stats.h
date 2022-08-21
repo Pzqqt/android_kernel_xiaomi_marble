@@ -1555,7 +1555,9 @@ typedef struct {
         mesh_sta       : 1,
         mec            : 1,
         intra_bss      : 1,
-        reserved       : 16;
+        chip_id        : 2,
+        ml_peer_id     : 13,
+        reserved       : 1;
 } htt_ast_entry_tlv;
 
 typedef enum {
