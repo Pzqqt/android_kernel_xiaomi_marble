@@ -2538,8 +2538,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (lim_is_fils_connection(pe_session)) {
 		populate_dot11f_fils_params(mac_ctx, frm, pe_session);
 		aes_block_size_len = AES_BLOCK_SIZE;
-		if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_FRAGMENT,
-					     add_ie, add_ie_len))
+		if (add_ie && wlan_get_ie_ptr_from_eid(WLAN_ELEMID_FRAGMENT,
+						       add_ie, add_ie_len))
 			frag_ie_present = true;
 	}
 
@@ -2578,7 +2578,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 	/* RSNX IE for SAE PWE derivation based on H2E */
-	if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE, add_ie, add_ie_len)) {
+	if (add_ie &&
+	    wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE, add_ie, add_ie_len)) {
 		rsnx_ie = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
 		if (!rsnx_ie)
 			goto end;
