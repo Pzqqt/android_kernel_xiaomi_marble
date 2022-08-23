@@ -482,6 +482,7 @@ struct wlan_roam_sync_info {
  * @is_osen_connection: if its osen connection
  * @is_reassoc: if response is for reassoc/roam
  * @is_ft: is FT reassoc
+ * @is_assoc: if response is for assoc
  * @cm_id: Connect manager id
  * @bssid: BSSID of the ap
  * @ssid: SSID of the connection
@@ -500,7 +501,8 @@ struct wlan_cm_connect_resp {
 	uint8_t is_wps_connection:1,
 		is_osen_connection:1,
 		is_reassoc:1,
-		is_ft:1;
+		is_ft:1,
+		is_assoc:1;
 	wlan_cm_id cm_id;
 	struct qdf_mac_addr bssid;
 	struct wlan_ssid ssid;
