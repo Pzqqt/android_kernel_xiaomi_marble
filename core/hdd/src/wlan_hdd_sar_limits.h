@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -178,7 +179,22 @@ int wlan_hdd_cfg80211_set_sar_power_limits(struct wiphy *wiphy,
 					   struct wireless_dev *wdev,
 					   const void *data,
 					   int data_len);
+/**
+ * wlan_hdd_cfg80211_get_sar_capability() - Get SAR capability
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Wrapper function of __wlan_hdd_get_sar_capability()
+ *
+ * Return: 0 on success, negative errno on failure
+ */
 
+int wlan_hdd_cfg80211_get_sar_capability(struct wiphy *wiphy,
+					 struct wireless_dev *wdev,
+					 const void *data,
+					 int data_len);
 /**
  * hdd_store_sar_config() - Store SAR config in HDD context
  * @hdd_ctx: The HDD context
@@ -225,6 +241,14 @@ wlan_hdd_sar_limits_policy[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1];
 	.doit = wlan_hdd_cfg80211_set_sar_power_limits,                 \
 	vendor_command_policy(wlan_hdd_sar_limits_policy,               \
 			      QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX)      \
+},                                                                      \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd =  QCA_NL80211_VENDOR_SUBCMD_GET_SAR_CAPABILITY,   \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,                          \
+	.doit = wlan_hdd_cfg80211_get_sar_capability,                   \
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                   \
 },
 #else /* FEATURE_SAR_LIMITS */
 #define FEATURE_SAR_LIMITS_VENDOR_COMMANDS
