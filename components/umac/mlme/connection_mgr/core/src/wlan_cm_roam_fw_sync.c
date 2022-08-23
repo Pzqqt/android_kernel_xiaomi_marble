@@ -332,7 +332,7 @@ cm_populate_connect_ies(struct roam_offload_synch_ind *roam_synch_data,
 		qdf_mem_copy(connect_ies->assoc_req.ptr, reassoc_req_ptr,
 			     connect_ies->assoc_req.len);
 	}
-	rsp->connect_rsp.is_ft = roam_synch_data->is_ft_im_roam;
+	rsp->connect_rsp.is_assoc = roam_synch_data->is_assoc;
 
 	cm_fill_fils_ie(connect_ies, roam_synch_data);
 
