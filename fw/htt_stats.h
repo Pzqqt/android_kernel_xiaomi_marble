@@ -494,6 +494,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_ODD_MANDATORY_MUOFDMA_STATS = 51,
 
+    /** HTT_DBG_EXT_PHY_PROF_CAL_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_latency_prof_cal_stats_tlv
+     */
+    HTT_DBG_EXT_PHY_PROF_CAL_STATS = 52,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -7722,6 +7730,73 @@ typedef struct {
      */
     A_UINT32 num_subbands_used_cnt[HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT];
 } htt_pdev_puncture_stats_tlv;
+
+enum {
+    HTT_STATS_CAL_PROF_COLD_BOOT = 0,
+    HTT_STATS_CAL_PROF_FULL_CHAN_SWITCH = 1,
+    HTT_STATS_CAL_PROF_SCAN_CHAN_SWITCH = 2,
+    HTT_STATS_CAL_PROF_DPD_SPLIT_CAL = 3,
+
+    HTT_STATS_MAX_PROF_CAL = 4,
+};
+
+#define HTT_STATS_MAX_CAL_IDX_CNT 8
+typedef struct {
+
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT8 latency_prof_name[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_PROF_STATS_NAME_LEN];
+
+    /** To verify whether prof cal is enabled or not */
+    A_UINT32 enable;
+
+    /** current pdev_id */
+    A_UINT32 pdev_id;
+
+    /** The cnt is incremented when each time the calindex takes place */
+    A_UINT32 cnt[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Minimum time taken to complete the calibration - in us */
+    A_UINT32 min[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Maximum time taken to complete the calibration -in us */
+    A_UINT32 max[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Time taken by the cal for its final time execution - in us */
+    A_UINT32 last[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Total time taken - in us */
+    A_UINT32 tot[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** hist_intvl - by default will be set to 2000 us */
+    A_UINT32 hist_intvl[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /**
+     * If last is less than hist_intvl, then hist[0]++,
+     * If last is less than hist_intvl << 1, then hist[1]++,
+     * otherwise hist[2]++.
+     */
+    A_UINT32 hist[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT][HTT_INTERRUPTS_LATENCY_PROFILE_MAX_HIST];
+
+    /** Pf_last will log the current no of page faults */
+    A_UINT32 pf_last[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Sum of all page faults happened */
+    A_UINT32 pf_tot[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** If pf_last > pf_max then pf_max = pf_last */
+    A_UINT32 pf_max[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /**
+     * For each cal profile, only certain no of cal indices were invoked,
+     * this member will store what all the indices got invoked per each
+     * cal profile
+     */
+    A_UINT32 enabledCalIdx[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** No of indices invoked per each cal profile */
+    A_UINT32 CalCnt[HTT_STATS_MAX_PROF_CAL];
+} htt_latency_prof_cal_stats_tlv;
 
 #define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_M          0x0000003F
 #define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_S          0
