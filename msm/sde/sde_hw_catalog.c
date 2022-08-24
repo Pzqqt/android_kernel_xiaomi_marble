@@ -3514,7 +3514,6 @@ static int sde_cache_parse_dt(struct device_node *np,
 	struct llcc_slice_desc *slice;
 	struct sde_sc_cfg *sc_cfg = sde_cfg->sc_cfg;
 	struct device_node *llcc_node;
-	bool llcc_disp_lr_enabled = false;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
@@ -3530,23 +3529,21 @@ static int sde_cache_parse_dt(struct device_node *np,
 		return 0;
 	}
 
-	llcc_disp_lr_enabled = test_bit(SDE_MDP_LLCC_DISP_LR, &sde_cfg->mdp[0].features);
+	slice = llcc_slice_getd(LLCC_DISP);
+	if (IS_ERR_OR_NULL(slice)) {
+		SDE_ERROR("failed to get system cache %ld\n", PTR_ERR(slice));
+		return -EINVAL;
+	}
 
-	if (!llcc_disp_lr_enabled) {
-		slice = llcc_slice_getd(LLCC_DISP);
-		if (IS_ERR_OR_NULL(slice)) {
-			SDE_ERROR("failed to get system cache %ld\n", PTR_ERR(slice));
-			return -EINVAL;
-		}
+	sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache = true;
+	sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid = llcc_get_slice_id(slice);
+	sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size = llcc_get_slice_size(slice);
+	SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
+		sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid,
+		sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
+	llcc_slice_putd(slice);
 
-		sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache = true;
-		sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid = llcc_get_slice_id(slice);
-		sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size = llcc_get_slice_size(slice);
-		SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
-			sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid,
-			sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
-		llcc_slice_putd(slice);
-	} else {
+	if (test_bit(SDE_MDP_LLCC_DISP_LR, &sde_cfg->mdp[0].features)) {
 		slice = llcc_slice_getd(LLCC_DISLFT);
 		if (IS_ERR_OR_NULL(slice)) {
 			SDE_ERROR("failed to get disp left system cache %ld\n",

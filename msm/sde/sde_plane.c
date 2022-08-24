@@ -2846,24 +2846,18 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 		pstate->sc_cfg.type = cache_type;
 	}
 
-	if (cache_type == SDE_SYS_CACHE_DISP_LEFT) {
+	if (test_bit(SDE_MDP_LLCC_DISP_LR, &psde->catalog->mdp[0].features)) {
 		pstate->sc_cfg.rd_en = true;
-		pstate->sc_cfg.rd_scid = sc_cfg[SDE_SYS_CACHE_DISP_LEFT].llcc_scid;
 		pstate->sc_cfg.rd_noallocate = true;
+		pstate->sc_cfg.type = cache_type;
+		pstate->sc_cfg.rd_scid = sc_cfg[cache_type].llcc_scid;
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG | SSPP_SYS_CACHE_SCID |
 					SSPP_SYS_CACHE_NO_ALLOC;
-		pstate->sc_cfg.type = cache_type;
-		pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
-		pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
-	} else if (cache_type == SDE_SYS_CACHE_DISP_RIGHT) {
-		pstate->sc_cfg.rd_en = true;
-		pstate->sc_cfg.rd_scid = sc_cfg[SDE_SYS_CACHE_DISP_RIGHT].llcc_scid;
-		pstate->sc_cfg.rd_noallocate = true;
-		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG | SSPP_SYS_CACHE_SCID |
-					SSPP_SYS_CACHE_NO_ALLOC;
-		pstate->sc_cfg.type = cache_type;
-		pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
-		pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
+		if (cache_type == SDE_SYS_CACHE_DISP_LEFT ||
+			cache_type == SDE_SYS_CACHE_DISP_RIGHT) {
+			pstate->sc_cfg.rd_op_type = SDE_SYS_CACHE_READ_INVALIDATE;
+			pstate->sc_cfg.flags |= SSPP_SYS_CACHE_OP_TYPE;
+		}
 	}
 
 	if (!pstate->sc_cfg.rd_en && !prev_rd_en)
