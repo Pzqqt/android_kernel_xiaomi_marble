@@ -148,6 +148,8 @@ struct wmi_ext_dbg_msg {
 };
 #endif /*WMI_EXT_DBG */
 
+#ifdef WLAN_DEBUG
+
 #define wmi_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_WMI, ## params)
 #define wmi_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_WMI, ## params)
 #define wmi_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_WMI, ## params)
@@ -170,6 +172,28 @@ struct wmi_ext_dbg_msg {
 #define wmi_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_WMI, params)
 #define wmi_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_WMI, params)
 #define wmi_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_WMI, params)
+
+#else
+
+#define wmi_alert(params...) ((void)0)
+#define wmi_err(params...) ((void)0)
+#define wmi_warn(params...) ((void)0)
+#define wmi_info(params...) ((void)0)
+#define wmi_debug(params...) ((void)0)
+
+#define wmi_nofl_alert(params...) ((void)0)
+#define wmi_nofl_err(params...) ((void)0)
+#define wmi_nofl_warn(params...) ((void)0)
+#define wmi_nofl_info(params...) ((void)0)
+#define wmi_nofl_debug(params...) ((void)0)
+
+#define wmi_alert_rl(params...) ((void)0)
+#define wmi_err_rl(params...) ((void)0)
+#define wmi_warn_rl(params...) ((void)0)
+#define wmi_info_rl(params...) ((void)0)
+#define wmi_debug_rl(params...) ((void)0)
+
+#endif
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 /* wmi entry size */
