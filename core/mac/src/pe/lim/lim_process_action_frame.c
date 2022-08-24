@@ -1157,8 +1157,12 @@ __lim_process_link_measurement_req(struct mac_context *mac, uint8_t *pRxPacketIn
 		pe_debug("There were warnings while unpacking a Link Measure request (0x%08x, %d bytes):",
 			nStatus, frameLen);
 	}
-	/* Call rrm function to handle the request. */
 
+	if (pe_session->sta_follows_sap_power) {
+		pe_debug("STA power has changed, reject the link measurement request");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/* Call rrm function to handle the request. */
 	return rrm_process_link_measurement_request(mac, pRxPacketInfo, &frm,
 					     pe_session);
 

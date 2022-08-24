@@ -955,6 +955,7 @@ policy_mgr_modify_sap_pcl_for_6G_channels(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	qdf_freq_t sta_gc_freq = 0;
 	uint32_t ap_pwr_type_6g = 0;
+	bool indoor_ch_support = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -991,23 +992,33 @@ policy_mgr_modify_sap_pcl_for_6G_channels(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* If STA is present in 6GHz, STA+SAP SCC is allowed
-	 * only on PSC channels in VLP mode. Therefore, remove
-	 * all other 6GHz channels from the PCL list.
+	/* If STA is present in 6GHz PSC, STA+SAP SCC is allowed
+	 * only for the following combinations:
 	 *
-	 * VLP STA in PSC + SAP     - Allowed
-	 * VLP STA in non-PSC + SAP - Not allowed
-	 * non-VLP STA + SAP        - Not allowed
+	 * VLP STA + SAP - Allowed with VLP Power
+	 * LPI STA + SAP - Allowed with VLP power if channel supports VLP.
+	 * LPI STA + SAP - Allowed with LPI power if gindoor_channel_support=1
 	 */
 	ap_pwr_type_6g = wlan_mlme_get_6g_ap_power_type(vdev);
 	policy_mgr_debug("STA power type : %d", ap_pwr_type_6g);
+
+	ucfg_mlme_get_indoor_channel_support(psoc, &indoor_ch_support);
+
 	for (i = 0; i < *pcl_len_org; i++) {
 		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_list_org[i])) {
-			if (ap_pwr_type_6g != REG_VERY_LOW_POWER_AP)
+			if (!WLAN_REG_IS_6GHZ_PSC_CHAN_FREQ(pcl_list_org[i]))
 				continue;
-			else if (!WLAN_REG_IS_6GHZ_PSC_CHAN_FREQ(pcl_list_org[i]))
+			if (ap_pwr_type_6g == REG_VERY_LOW_POWER_AP)
+				goto add_freq;
+			else if (ap_pwr_type_6g == REG_INDOOR_AP &&
+				 (!wlan_reg_is_freq_indoor(pm_ctx->pdev,
+							   pcl_list_org[i]) ||
+				  indoor_ch_support))
+				goto add_freq;
+			else
 				continue;
 		}
+add_freq:
 		pcl_list[pcl_len] = pcl_list_org[i];
 		weight_list[pcl_len++] = weight_list_org[i];
 	}
@@ -2809,6 +2820,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		 * Indoor channel to restart SAP in SCC.
 		 */
 		if (wlan_reg_is_freq_indoor(pm_ctx->pdev, pcl.pcl_list[i]) &&
+		    !WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl.pcl_list[i]) &&
 		    sta_sap_scc_on_indoor_channel) {
 			sap_new_freq = pcl.pcl_list[i];
 			policy_mgr_debug("Choose Indoor channel from PCL list %d sap_new_freq %d",

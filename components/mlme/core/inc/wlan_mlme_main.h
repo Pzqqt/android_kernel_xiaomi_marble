@@ -385,9 +385,14 @@ struct wait_for_key_timer {
  * struct mlme_ap_config - VDEV MLME legacy private SAP
  * related configurations
  * @user_config_sap_ch_freq : Frequency from userspace to start SAP
+ * @update_required_scc_sta_power: Change the 6 GHz power type of the
+ * concurrent STA
  */
 struct mlme_ap_config {
 	qdf_freq_t user_config_sap_ch_freq;
+#ifdef CONFIG_BAND_6GHZ
+	bool update_required_scc_sta_power;
+#endif
 };
 
 /**
@@ -1157,6 +1162,42 @@ QDF_STATUS
 wlan_set_sap_user_config_freq(struct wlan_objmgr_vdev *vdev,
 			      qdf_freq_t freq);
 
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * wlan_get_tpc_update_required_for_sta() - Get the tpc update required config
+ * to identify whether the tpc power has changed for concurrent STA interface
+ *
+ * @vdev: pointer to SAP vdev
+ *
+ * Return: Change scc power config
+ */
+bool
+wlan_get_tpc_update_required_for_sta(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_set_tpc_update_required_for_sta() - Set the tpc update required config
+ * for the concurrent STA interface
+ *
+ * @vdev:   pointer to SAP vdev
+ * @value:  change scc power config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_set_tpc_update_required_for_sta(struct wlan_objmgr_vdev *vdev, bool value);
+#else
+static inline bool
+wlan_get_tpc_update_required_for_sta(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline QDF_STATUS
+wlan_set_tpc_update_required_for_sta(struct wlan_objmgr_vdev *vdev, bool value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_mlme_defer_pmk_set_in_roaming() - Set the set_key pending status

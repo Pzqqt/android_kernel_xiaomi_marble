@@ -4884,6 +4884,11 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 	if (!vdev_mlme)
 		return;
 
+	if (session->sta_follows_sap_power) {
+		pe_debug_rl("STA operates in 6 GHz power of SAP, do not update STA power");
+		return;
+	}
+
 	vdev_mlme->reg_tpc_obj.num_pwr_levels = 0;
 	*has_tpe_updated = false;
 
@@ -5164,6 +5169,11 @@ void lim_calculate_tpc(struct mac_context *mac,
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");
+		return;
+	}
+
+	if (session->sta_follows_sap_power) {
+		pe_debug_rl("STA operates in 6 GHz power of SAP, do not update STA power");
 		return;
 	}
 
@@ -8261,6 +8271,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 			sizeof(session_entry->extRateSet));
 
 	lim_change_channel(mac_ctx, session_entry);
+	lim_check_conc_power_for_csa(mac_ctx, session_entry);
 }
 
 /******************************************************************************

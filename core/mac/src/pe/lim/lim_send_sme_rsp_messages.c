@@ -63,7 +63,8 @@ void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 {
 	struct scheduler_msg msg = {0};
 	tSirSmeRsp *sme_rsp;
-
+	struct pe_session *sta_session;
+	struct pe_session *sap_session;
 	pe_debug("Sending message: %s with reasonCode: %s",
 		lim_msg_str(msg_type), lim_result_code_str(result_code));
 
@@ -80,6 +81,30 @@ void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	msg.bodyptr = sme_rsp;
 	msg.bodyval = 0;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG, vdev_id, msg.type));
+
+	if (msg_type == eWNI_SME_STOP_BSS_RSP && !result_code) {
+		sap_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+		if (!sap_session) {
+			pe_err("Session Does not exist for given session id");
+			return;
+		}
+		/*
+		 * STA LPI + SAP VLP is supported. For this STA should operate
+		 * in VLP power level of the SAP.
+		 *
+		 * For the STA, if the TPC is changed to VLP, then restore the
+		 * original power for the STA when SAP disconnects.
+		 */
+		if (wlan_get_tpc_update_required_for_sta(sap_session->vdev)) {
+			sta_session = lim_get_concurrent_session(mac_ctx,
+								 vdev_id,
+								 sap_session->opmode);
+			if (sta_session &&
+			    sta_session->curr_op_freq == sap_session->curr_op_freq)
+				lim_update_tx_power(mac_ctx, sap_session,
+						    sta_session, true);
+		}
+	}
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	switch (msg_type) {

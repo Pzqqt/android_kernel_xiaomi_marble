@@ -650,6 +650,7 @@ struct pe_session {
 	bool same_ctry_code;  /* If AP Country IE has same country code as */
 	/* STA programmed country */
 	uint8_t ap_power_type_6g;  /* AP power type for 6G (LPI, SP, or VLP) */
+	bool sta_follows_sap_power;
 #ifdef WLAN_FEATURE_11BE
 	bool eht_capable;
 	tDot11fIEeht_cap eht_config;

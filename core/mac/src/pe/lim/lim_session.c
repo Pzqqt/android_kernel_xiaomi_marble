@@ -846,6 +846,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 
 	lim_reset_bcn_probe_filter(mac_ctx, session);
 	lim_sae_auth_cleanup_retry(mac_ctx, session->vdev_id);
+	lim_cleanup_power_change(mac_ctx, session);
 
 	/* Restore default failure timeout */
 	if (session->defaultAuthFailureTimeout) {
