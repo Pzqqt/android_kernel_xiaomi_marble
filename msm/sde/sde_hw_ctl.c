@@ -934,7 +934,7 @@ static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
 	u32 count = 0;
 	u32 mask = 0;
 	bool staged;
-	u32 mixercfg[CTL_NUM_EXT];
+	u32 mixercfg[CTL_NUM_EXT] = { 0 };
 	struct sde_hw_blk_reg_map *c;
 	const struct ctl_sspp_stage_reg_map *sspp_cfg;
 
