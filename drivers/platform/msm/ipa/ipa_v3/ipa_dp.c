@@ -4167,6 +4167,9 @@ void ipa3_lan_rx_cb(void *priv, enum ipa_dp_evt_type evt, unsigned long data)
 				ast_notify(client_priv, (unsigned long)&ast_info);
 			}
 		}
+		IPADBG_LOW("ast update meta_data: 0x%x cb: 0x%x for client 0x%x\n",
+				metadata, *(u32 *)rx_skb->cb, ep->client);
+		IPADBG_LOW("ast update ucp: %d for client 0x%x\n", *(u8 *)(rx_skb->cb + 4), ep->client);
 	} else {
 		/* Metadata Info
 		 *  ------------------------------------------

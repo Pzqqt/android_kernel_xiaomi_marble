@@ -3017,8 +3017,7 @@ int gsi_alloc_channel(struct gsi_chan_props *props, unsigned long dev_hdl,
 	ctx->stats.dp.last_timestamp = jiffies_to_msecs(jiffies);
 	atomic_inc(&gsi_ctx->num_chan);
 
-	if (props->prot == GSI_CHAN_PROT_GCI ||
-		props->prot ==  GSI_CHAN_PROT_MHIC) {
+	if (props->prot == GSI_CHAN_PROT_GCI) {
 		gsi_ctx->coal_info.ch_id = props->ch_id;
 		gsi_ctx->coal_info.evchid = props->evt_ring_hdl;
 		GSIDBG("GSI coal ch = %d, ev id %d\n",

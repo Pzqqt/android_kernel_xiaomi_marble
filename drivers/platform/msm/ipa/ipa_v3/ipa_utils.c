@@ -4144,6 +4144,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 7 , 17, 8 , 16, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3},
 			IPA_TX_INSTANCE_NA },
+	[IPA_5_0][IPA_CLIENT_WLAN2_PROD1] = {
+			true,   IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 7 , 17, 8 , 16, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3},
+			IPA_TX_INSTANCE_NA },
 	[IPA_5_0][IPA_CLIENT_ETHERNET_PROD] = {
 			true,   IPA_v5_0_GROUP_UL,
 			true,
@@ -4269,6 +4276,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_DPS_HPS_SEQ_TYPE_DMA_ONLY,
 			QMB_MASTER_SELECT_DDR,
 			{ 7, 17, 8, 16, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0},
+			IPA_TX_INSTANCE_NA },
+	[IPA_5_0][IPA_CLIENT_WLAN3_PROD1] = {
+			true,   IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 11 , 27, 13 , 20, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3},
 			IPA_TX_INSTANCE_NA },
 
 	[IPA_5_0][IPA_CLIENT_APPS_LAN_CONS] = {
@@ -6105,7 +6119,7 @@ static struct ipa3_mem_partition ipa_5_0_mem_part = {
 	.modem_hdr_proc_ctx_size = 0xb20,
 	.apps_hdr_proc_ctx_ofst = 0x2660,
 	.apps_hdr_proc_ctx_size = 0x200,
-	.apps_hdr_proc_ctx_size_ddr = 0x0,
+	.apps_hdr_proc_ctx_size_ddr = 0x2000,
 	.stats_quota_q6_ofst = 0x2868,
 	.stats_quota_q6_size = 0x60,
 	.stats_quota_ap_ofst = 0x28C8,
@@ -7028,7 +7042,13 @@ void _ipa_sram_settings_read_v3_0(void)
 	ipa3_ctx->smem_restricted_bytes *= 8;
 	ipa3_ctx->smem_sz *= 8;
 	ipa3_ctx->smem_reqd_sz = IPA_MEM_PART(end_ofst);
-	ipa3_ctx->hdr_proc_ctx_tbl_lcl = true;
+
+	if (ipa3_ctx->is_dual_pine_config) {
+		ipa3_ctx->hdr_proc_ctx_tbl_lcl = false;
+	}
+	else {
+		ipa3_ctx->hdr_proc_ctx_tbl_lcl = true;
+	}
 
 	/*
 	 * when proc ctx table is located in internal memory,
