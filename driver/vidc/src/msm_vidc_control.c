@@ -3778,3 +3778,33 @@ int msm_vidc_set_pipe(void *instance,
 
 	return rc;
 }
+
+int msm_vidc_set_vui_timing_info(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/*
+	 * hfi is HFI_PROP_DISABLE_VUI_TIMING_INFO and v4l2 cap is
+	 * V4L2_CID_MPEG_VIDC_VUI_TIMING_INFO and hence reverse
+	 * the hfi_value from cap_id value.
+	 */
+	if (inst->capabilities->cap[cap_id].value == V4L2_MPEG_MSM_VIDC_ENABLE)
+		hfi_value = 0;
+	else
+		hfi_value = 1;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
+
+	return rc;
+}

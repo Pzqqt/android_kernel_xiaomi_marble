@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <media/v4l2_vidc_extensions.h>
@@ -1021,6 +1022,10 @@ int msm_venc_streamon_output(struct msm_vidc_inst *inst)
 		goto error;
 
 	rc = msm_venc_set_internal_properties(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_vidc_set_vui_timing_info(inst, VUI_TIMING_INFO);
 	if (rc)
 		goto error;
 

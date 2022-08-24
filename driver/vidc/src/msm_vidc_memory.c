@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -377,12 +378,23 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 
 	if (mem->map_kernel) {
 		dma_buf_begin_cpu_access(mem->dmabuf, DMA_BIDIRECTIONAL);
+
+#if (KERNEL_VERSION(5, 15, 0) > LINUX_VERSION_CODE)
 		mem->kvaddr = dma_buf_vmap(mem->dmabuf);
 		if (!mem->kvaddr) {
 			d_vpr_e("%s: kernel map failed\n", __func__);
 			rc = -EIO;
 			goto error;
 		}
+#else
+		rc = dma_buf_vmap(mem->dmabuf, &mem->dmabuf_map);
+		if (rc) {
+			d_vpr_e("%s: kernel map failed\n", __func__);
+			rc = -EIO;
+			goto error;
+		}
+		mem->kvaddr = mem->dmabuf_map.vaddr;
+#endif
 	}
 
 	d_vpr_h(
@@ -417,7 +429,11 @@ int msm_vidc_memory_free(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 		buf_name(mem->type), mem->secure, mem->region);
 
 	if (mem->kvaddr) {
+#if (KERNEL_VERSION(5, 15, 0) > LINUX_VERSION_CODE)
 		dma_buf_vunmap(mem->dmabuf, mem->kvaddr);
+#else
+		dma_buf_vunmap(mem->dmabuf, &mem->dmabuf_map);
+#endif
 		mem->kvaddr = NULL;
 		dma_buf_end_cpu_access(mem->dmabuf, DMA_BIDIRECTIONAL);
 	}

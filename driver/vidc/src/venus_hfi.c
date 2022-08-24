@@ -10,7 +10,10 @@
 #include <linux/irqreturn.h>
 #include <linux/reset.h>
 #include <linux/interconnect.h>
+#include <linux/version.h>
+#if (KERNEL_VERSION(5, 15, 0) > LINUX_VERSION_CODE)
 #include <soc/qcom/subsystem_restart.h>
+#endif
 #include <linux/of_address.h>
 #include <linux/firmware.h>
 #include <linux/qcom_scm.h>
