@@ -38,9 +38,7 @@
 #include <wlan_cp_stats_utils_api.h>
 #include <wlan_cp_stats_ext_type.h>
 #include <wlan_cp_stats_public_structs.h>
-#ifdef WLAN_FEATURE_MIB_STATS
 #include <wlan_cp_stats_mc_defs.h>
-#endif
 
 /* noise floor */
 #define CP_STATS_TGT_NOISE_FLOOR_DBM (-96)

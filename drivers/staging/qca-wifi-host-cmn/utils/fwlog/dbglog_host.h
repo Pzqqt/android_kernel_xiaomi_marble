@@ -80,7 +80,8 @@ extern "C" {
 #ifdef FEATURE_FW_LOG_PARSING
 /*
  * set the dbglog parser type
- */int
+ */
+int
 dbglog_parser_type_init(wmi_unified_t wmi_handle, int type);
 
 /** dbglog_int - Registers a WMI event handle for WMI_DBGMSG_EVENT

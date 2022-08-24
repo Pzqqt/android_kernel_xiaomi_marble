@@ -50,10 +50,10 @@ static inline void mac_trace(struct mac_context *mac_ctx, uint16_t code,
 	qdf_trace(QDF_MODULE_ID_PE, code, session, data);
 }
 
-#ifdef TRACE_RECORD
-
 #define eLOG_NODROP_MISSED_BEACON_SCENARIO 0
 #define eLOG_PROC_DEAUTH_FRAME_SCENARIO 1
+
+#ifdef TRACE_RECORD
 
 uint8_t *mac_trace_get_lim_msg_string(uint16_t limMsg);
 uint8_t *mac_trace_get_sme_msg_string(uint16_t smeMsg);
