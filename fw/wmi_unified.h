@@ -4366,7 +4366,15 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_GET
      *      and _SET macros.
-     *  Bits 31:13 - Reserved
+     *  Bit 13
+     *      This bit will be set when host host wants to enable/disable
+     *      bang radar 320M support feature
+     *      when set to 1 - Enable the bang radar 320M support
+     *      when set to 0 - Disable the bang radar 320M support
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:14 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4771,6 +4779,12 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 12, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 12, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 13, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 13, 1, val)
+
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
     WMI_GET_BITS(carrier_config, 0, 1)
