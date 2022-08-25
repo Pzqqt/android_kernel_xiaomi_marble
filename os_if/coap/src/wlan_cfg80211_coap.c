@@ -382,14 +382,12 @@ wlan_cfg80211_coap_cache_get_cbk(void *context, struct coap_buf_info *info)
 		return;
 
 	priv_info = osif_request_priv(request);
-	if (info->req_id != priv_info->req_id)
-		return;
+	if (info->req_id == priv_info->req_id) {
+		qdf_list_join(&priv_info->info_list, &info->info_list);
+		if (!info->more_info)
+			osif_request_complete(request);
+	}
 
-	qdf_list_join(&priv_info->info_list, &info->info_list);
-	if (info->more_info)
-		return;
-
-	osif_request_complete(request);
 	osif_request_put(request);
 }
 
