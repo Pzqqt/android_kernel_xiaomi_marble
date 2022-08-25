@@ -212,6 +212,7 @@ send_coap_add_keepalive_pattern_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(cmd->udp_local_ip.ipv4_addr, &param->src_ip_v4,
 		     sizeof(param->src_ip_v4));
 	cmd->udp_local_port = param->src_udp_port;
+	cmd->timeout = param->timeout;
 	cmd->coapmsg_len = param->coapmsg_len;
 
 	buf_ptr += sizeof(*cmd);
