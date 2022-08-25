@@ -922,6 +922,20 @@ typedef struct {
     A_UINT32      phy_errs[1]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
 } htt_tx_pdev_stats_phy_err_tlv_v;
 
+/*
+ * Each array in the below struct has 16 elements, to cover the 16 possible
+ * values for the CW and AIFS parameters.  Each element within the array
+ * stores the counter indicating how many transmissions have occurred with
+ * that particular value for the MU EDCA parameter in question.
+ */
+#define HTT_STATS_MUEDCA_VALUE_MAX 16
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 aifs[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
+    A_UINT32 cw_min[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
+    A_UINT32 cw_max[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
+} htt_tx_pdev_muedca_params_stats_tlv_v;
+
 #define HTT_TX_PDEV_SIFS_BURST_HIST_STATS 10
 #define HTT_TX_PDEV_STATS_SIFS_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
