@@ -614,6 +614,9 @@ typedef enum {
 
     WMI_VDEV_PN_MGMT_RX_FILTER_CMDID,
 
+    /** Enable SR prohibit feature for TIDs of vdev */
+    WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID,
+
     /* peer specific commands */
 
     /** create a peer */
@@ -32483,6 +32486,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
         WMI_RETURN_STRING(WMI_COEX_DBAM_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_FEATURESET_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -39850,6 +39854,13 @@ typedef struct
     /** Contention Window maximum. Range: 1 - 10 */
     A_UINT32 cwmax;
 } wmi_qos_params_t;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 tidmap; /* Bitmap specifying the TIDs for which prohibit would be set/unset */
+    A_UINT32 prohibit_enable; /* 0 for Disable, 1 for Enable */
+} wmi_vdev_param_enable_sr_prohibit_fixed_param;
 
 typedef struct
 {
