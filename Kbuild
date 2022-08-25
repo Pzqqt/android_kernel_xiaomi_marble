@@ -26,6 +26,12 @@ LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/parrot_video.h \
                    -I$(VIDEO_ROOT)/driver/platform/parrot/inc
 endif
 
+ifeq ($(CONFIG_ARCH_KHAJE), y)
+include $(VIDEO_ROOT)/config/khaje_video.conf
+LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/khaje_video.h \
+                   -I$(VIDEO_ROOT)/driver/platform/khaje/inc
+endif
+
 LINUXINCLUDE    += -I$(VIDEO_ROOT)/driver/vidc/inc \
                    -I$(VIDEO_ROOT)/driver/platform/common/inc \
                    -I$(VIDEO_ROOT)/include/uapi/vidc
@@ -51,6 +57,10 @@ ifeq ($(CONFIG_MSM_VIDC_PARROT), y)
 msm_video-objs += driver/platform/parrot/src/msm_vidc_parrot.o
 endif
 
+ifeq ($(CONFIG_MSM_VIDC_KHAJE), y)
+msm_video-objs += driver/platform/khaje/src/msm_vidc_khaje.o
+endif
+
 ifeq ($(CONFIG_MSM_VIDC_IRIS2), y)
 LINUXINCLUDE   += -I$(VIDEO_ROOT)/driver/variant/iris2/inc
 msm_video-objs += driver/variant/iris2/src/msm_vidc_buffer_iris2.o \
@@ -65,6 +75,13 @@ LINUXINCLUDE   += -I$(VIDEO_ROOT)/driver/variant/iris2/inc
 msm_video-objs += driver/variant/iris2/src/msm_vidc_buffer_iris2.o \
                   driver/variant/iris2/src/msm_vidc_power_iris2.o \
                   driver/variant/iris2/src/msm_vidc_iris2.o
+endif
+
+ifeq ($(CONFIG_MSM_VIDC_AR50LT), y)
+LINUXINCLUDE    += -I$(VIDEO_ROOT)/driver/variant/ar50lt/inc
+msm_video-objs += driver/variant/ar50lt/src/msm_vidc_buffer_ar50lt.o \
+                  driver/variant/ar50lt/src/msm_vidc_power_ar50lt.o \
+                  driver/variant/ar50lt/src/msm_vidc_ar50lt.o
 endif
 
 msm_video-objs += driver/vidc/src/msm_vidc_v4l2.o \

@@ -17,11 +17,15 @@
 #include "msm_vidc_dt.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_internal.h"
+#include "msm_vidc_driver.h"
 #if defined(CONFIG_MSM_VIDC_WAIPIO)
 #include "msm_vidc_waipio.h"
 #endif
 #if defined(CONFIG_MSM_VIDC_DIWALI)
 #include "msm_vidc_diwali.h"
+#endif
+#if defined(CONFIG_MSM_VIDC_KHAJE)
+#include "msm_vidc_khaje.h"
 #endif
 #if defined(CONFIG_MSM_VIDC_PARROT)
 #include "msm_vidc_parrot.h"
@@ -32,7 +36,9 @@
 #if defined(CONFIG_MSM_VIDC_IRIS2) || defined(CONFIG_MSM_VIDC_IRIS3)
 #include "msm_vidc_iris2.h"
 #endif
-
+#if defined(CONFIG_MSM_VIDC_AR50LT)
+#include "msm_vidc_ar50lt.h"
+#endif
 /*
  * Custom conversion coefficients for resolution: 176x144 negative
  * coeffs are converted to s4.9 format
@@ -158,6 +164,10 @@ static struct vb2_mem_ops msm_vb2_mem_ops = {
 	.unmap_dmabuf                   = msm_vb2_unmap_dmabuf,
 };
 
+static struct msm_vidc_platform_ops msm_platform_ops = {
+	.buffer_region                  = msm_vidc_get_buffer_region,
+};
+
 static int msm_vidc_init_ops(struct msm_vidc_core *core)
 {
 	if (!core) {
@@ -172,6 +182,7 @@ static int msm_vidc_init_ops(struct msm_vidc_core *core)
 	core->v4l2_ctrl_ops = &msm_v4l2_ctrl_ops;
 	core->vb2_ops = &msm_vb2_ops;
 	core->vb2_mem_ops = &msm_vb2_mem_ops;
+	core->platform_ops = &msm_platform_ops;
 
 	return 0;
 }
@@ -203,6 +214,15 @@ static int msm_vidc_deinit_platform_variant(struct msm_vidc_core *core, struct d
 		if (rc)
 			d_vpr_e("%s: failed msm-vidc-diwali with %d\n",
 					__func__, rc);
+		return rc;
+	}
+#endif
+
+#if defined(CONFIG_MSM_VIDC_KHAJE)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-khaje")) {
+		rc = msm_vidc_deinit_platform_khaje(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed with %d\n", __func__, rc);
 		return rc;
 	}
 #endif
@@ -279,6 +299,15 @@ static int msm_vidc_init_platform_variant(struct msm_vidc_core *core, struct dev
 	}
 #endif
 
+#if defined(CONFIG_MSM_VIDC_KHAJE)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-khaje")) {
+		rc = msm_vidc_init_platform_khaje(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed with %d\n", __func__, rc);
+		return rc;
+	}
+#endif
+
 	return rc;
 }
 
@@ -310,7 +339,14 @@ static int msm_vidc_deinit_vpu(struct msm_vidc_core *core, struct device *dev)
 				__func__, rc);
 	}
 #endif
-
+#if defined(CONFIG_MSM_VIDC_AR50LT)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-ar50lt")) {
+		rc = msm_vidc_deinit_ar50lt(core);
+		if (rc)
+			d_vpr_e("%s: failed with %d\n", __func__, rc);
+		return rc;
+	}
+#endif
 	return rc;
 }
 
@@ -340,7 +376,14 @@ static int msm_vidc_init_vpu(struct msm_vidc_core *core, struct device *dev)
 				__func__, rc);
 	}
 #endif
-
+#if defined(CONFIG_MSM_VIDC_AR50LT)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-ar50lt")) {
+		rc = msm_vidc_init_ar50lt(core);
+		if (rc)
+			d_vpr_e("%s: failed with %d\n", __func__, rc);
+		return rc;
+	}
+#endif
 	return rc;
 }
 
