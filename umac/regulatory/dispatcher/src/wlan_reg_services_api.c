@@ -1135,6 +1135,12 @@ void wlan_reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(wlan_reg_set_channel_params_for_freq);
 
+const struct bonded_channel_freq *
+wlan_reg_get_bonded_chan_entry(qdf_freq_t freq, enum phy_ch_width chwidth)
+{
+	return reg_get_bonded_chan_entry(freq, chwidth);
+}
+
 #ifdef WLAN_FEATURE_11BE
 void wlan_reg_fill_channel_list(struct wlan_objmgr_pdev *pdev,
 				qdf_freq_t freq,

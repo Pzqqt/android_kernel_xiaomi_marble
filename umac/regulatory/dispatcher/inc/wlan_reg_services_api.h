@@ -1337,6 +1337,17 @@ uint8_t wlan_reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 						qdf_freq_t freq);
 
 /**
+ * wlan_reg_get_bonded_chan_entry() - Fetch the bonded channel pointer given a
+ * frequency and channel width.
+ * @freq: Input frequency in MHz.
+ * @chwidth: Input channel width of enum phy_ch_width.
+ *
+ * Return: A valid bonded channel pointer if found, else NULL.
+ */
+const struct bonded_channel_freq *
+wlan_reg_get_bonded_chan_entry(qdf_freq_t freq, enum phy_ch_width chwidth);
+
+/**
  * wlan_reg_update_nol_ch_for_freq () - set nol channel
  * @pdev: pdev ptr
  * @chan_freq_list: channel list to be returned
