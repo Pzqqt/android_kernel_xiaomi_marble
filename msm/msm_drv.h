@@ -138,6 +138,7 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_FP16_IGC,
 	PLANE_PROP_FP16_UNMULT,
 	PLANE_PROP_UBWC_STATS_ROI,
+	PLANE_PROP_BG_ALPHA,
 
 	/* enum/bitmask properties */
 	PLANE_PROP_BLEND_OP,
