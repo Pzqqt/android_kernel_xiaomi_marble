@@ -274,6 +274,9 @@ struct hdd_config {
 #endif
 	int icmp_req_to_fw_mark_interval;
 	bool read_mac_addr_from_mac_file;
+#ifdef FEATURE_RUNTIME_PM
+	uint16_t cpu_cxpc_threshold;
+#endif
 };
 
 /**
