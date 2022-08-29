@@ -27237,13 +27237,30 @@ typedef struct {
      * This field should be ignored unless the tsf_id_valid flag is set.
      */
     A_UINT32 tsf_id;
+    /*
+     * The mac_id and tsf_id fields should be ignored unless the
+     * tsf_id_valid flag is set.
+     */
     A_UINT32 tsf_id_valid;
     /*
      * mac_id: MAC identifier
-     * This field should be ignored unless the mac_id_valid flag is set.
+     * This field should be ignored unless the tsf_id_valid flag is set.
      */
     A_UINT32 mac_id;
-    A_UINT32 mac_id_valid;
+    /*
+     * The original mac_id_valid field that was originally used to specify
+     * whether the mac_id field is valid has been repurposed to instead
+     * specify whether this message is a TSF report or a UL delay report.
+     */
+    union {
+        A_UINT32 mac_id_valid; /* original name */
+        /* ul_delay_or_tsf_report:
+         * New name for the field, reflecting its new purpose.
+         * ul_delay_or_tsf_report = 1 -> UL delay
+         * ul_delay_or_tsf_report = 0 -> TSF report
+         */
+        A_UINT32 ul_delay_or_tsf_report;
+    };
     /* low 32 bits of wlan global tsf */
     A_UINT32 wlan_global_tsf_low;
     /* high 32 bits of wlan global tsf */
