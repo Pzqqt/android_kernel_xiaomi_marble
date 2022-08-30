@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018 - 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "ipa_i.h"
@@ -1396,13 +1397,16 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 	int ipa_ep_idx_tx1, int ipa_ep_idx_rx1)
 {
 	int result = 0;
-	struct ipa3_ep_context *ep;
+	struct ipa3_ep_context *ep, *ep1;
 	u32 source_pipe_bitmask = 0;
 	u32 source_pipe_reg_idx = 0;
+	u32 source_pipe_bitmask1 = 0;
+	u32 source_pipe_reg_idx1 = 0;
 	bool disable_force_clear = false;
 	u16 rx_client = 0;
 	u16 tx_client = 0;
 	struct ipahal_ep_cfg_ctrl_scnd ep_ctrl_scnd = { 0 };
+	struct ipa_enable_force_clear_datapath_req_msg_v01 req;
 
 	/* wdi3 only support over gsi */
 	if (ipa_get_wdi_version() != IPA_WDI_3) {
@@ -1460,12 +1464,35 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 	 * as IPA uC will fail to suspend the pipe otherwise.
 	 */
 	ep = &ipa3_ctx->ep[ipa_ep_idx_rx];
+	if (ipa_ep_idx_rx1 >= 0)
+		ep1 = &ipa3_ctx->ep[ipa_ep_idx_rx1];
+
 	if (IPA_CLIENT_IS_PROD(ep->client)) {
 		source_pipe_bitmask = ipahal_get_ep_bit(ipa_ep_idx_rx);
 		source_pipe_reg_idx = ipahal_get_ep_reg_idx(ipa_ep_idx_rx);
-		result = ipa3_enable_force_clear(ipa_ep_idx_rx,
-				false, source_pipe_bitmask,
-					source_pipe_reg_idx);
+
+		if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_APQ) {
+			IPADBG("APQ platform - ignore force clear\n");
+			result = 0;
+		}
+		else {
+			memset(&req, 0, sizeof(req));
+			req.request_id = ipa_ep_idx_rx;
+			if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
+				WARN_ON(source_pipe_reg_idx);
+				req.source_pipe_bitmask = source_pipe_bitmask;
+			} else {
+				req.source_pipe_bitmask_ext_valid = 1;
+				req.source_pipe_bitmask_ext[source_pipe_reg_idx] =
+					source_pipe_bitmask;
+				if (ipa_ep_idx_rx1 >= 0 && IPA_CLIENT_IS_PROD(ep1->client)) {
+					source_pipe_bitmask1 = ipahal_get_ep_bit(ipa_ep_idx_rx1);
+					source_pipe_reg_idx1 = ipahal_get_ep_reg_idx(ipa_ep_idx_rx1);
+					req.source_pipe_bitmask_ext[source_pipe_reg_idx1] |= source_pipe_bitmask1;
+				}
+			}
+			result = ipa3_qmi_enable_force_clear_datapath_send(&req);
+		}
 		if (result) {
 			/*
 			 * assuming here modem SSR, AP can remove
@@ -1483,29 +1510,14 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 						ipa_ep_idx_rx,
 						&ep_ctrl_scnd);
 			}
-		} else {
-			disable_force_clear = true;
-		}
-	}
 
-	if (ipa_ep_idx_rx1 >= 0) {
-		ep = &ipa3_ctx->ep[ipa_ep_idx_rx1];
-		if (IPA_CLIENT_IS_PROD(ep->client)) {
-			source_pipe_bitmask = ipahal_get_ep_bit(ipa_ep_idx_rx1);
-			source_pipe_reg_idx = ipahal_get_ep_reg_idx(ipa_ep_idx_rx1);
-			result = ipa3_enable_force_clear(ipa_ep_idx_rx1,
-					false, source_pipe_bitmask,
-					source_pipe_reg_idx);
-			if (result) {
-				/*
-				 * assuming here modem SSR, AP can remove
-				 * the delay in this case
-				 */
+			/* Repeat the steps for rx1 pipe */
+			if (ipa_ep_idx_rx1 >= 0 && IPA_CLIENT_IS_PROD(ep1->client)) {
 				IPAERR("failed to force clear %d\n", result);
 				IPAERR("remove delay from SCND reg\n");
 				if (ipa3_ctx->ipa_endp_delay_wa_v2) {
 					ipa3_remove_secondary_flow_ctrl(
-							ep->gsi_chan_hdl);
+							ep1->gsi_chan_hdl);
 				} else {
 					ep_ctrl_scnd.endp_delay = false;
 					ipahal_write_reg_n_fields(
@@ -1513,9 +1525,9 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 							ipa_ep_idx_rx1,
 							&ep_ctrl_scnd);
 				}
-			} else {
-				disable_force_clear = true;
 			}
+		} else {
+			disable_force_clear = true;
 		}
 	}
 
