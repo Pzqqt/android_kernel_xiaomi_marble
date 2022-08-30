@@ -4280,8 +4280,21 @@ typedef struct {
      *      0  -> disable SAWF based scheduling
      *      1  -> enable SAWF based scheduling
      *      Refer to WMI_RSRC_CFG_FLAGS2_SAWF_CONFIG_ENABLE_GET/SET macros.
+     * Bit 14 - notify_frame_support
+     *      Flag to enable notify_frame_support from host.
+     *      0  -> disable notify_frame_support feature
+     *      1  -> enable_notify_frame_support feature
+     *      Refer to WMI_RSRC_CFG_FLAGS2_NOTIFY_FRAME_CONFIG_ENABLE_GET/SET
+     *      macros.
+     * Bit 15 - disable_wds_mec_intrabss
+     *      Flag to disable wds learning, MEC, intrabss offload.
+     *      By default, it is enabled.
+     *      0  -> enable wds_mec_intrabss offload
+     *      1  -> disable wds_mec_intrabss offload
+     *      Refer to WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_GET /
+     *      SET macros.
      *
-     *  Bits 31:14 - Reserved
+     *  Bits 31:16 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4719,6 +4732,11 @@ typedef struct {
     WMI_GET_BITS(flags2, 14, 1)
 #define WMI_RSRC_CFG_FLAGS2_NOTIFY_FRAME_CONFIG_ENABLE_SET(flags2, value) \
     WMI_SET_BITS(flags2, 14, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_GET(flags2) \
+    WMI_GET_BITS(flags2, 15, 1)
+#define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 15, 1, value)
 
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
