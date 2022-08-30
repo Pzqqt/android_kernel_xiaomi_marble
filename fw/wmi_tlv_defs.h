@@ -1295,6 +1295,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_featureset_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_regulatory_fcc_rule_struct,
     WMITLV_TAG_STRUC_wmi_vdev_param_enable_sr_prohibit_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_sched_tidq_susp_info_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -2094,6 +2095,7 @@ typedef enum {
     OP(WMI_COEX_DBAM_COMPLETE_EVENTID) \
     OP(WMI_HEALTH_MON_INIT_DONE_EVENTID) \
     OP(WMI_IPA_LINK_STATS_EVENTID) \
+    OP(WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6762,6 +6764,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_RAP_INFO_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_rap_info_event_fixed_param, wmi_pdev_rap_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_RAP_INFO_EVENTID);
+
+/* sched tiqd suspended info event */
+#define WMITLV_TABLE_WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_sched_tidq_susp_info_event_fixed_param, wmi_pdev_sched_tidq_susp_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID);
 
 /* Offload TX mgmt frames */
 #define WMITLV_TABLE_WMI_VDEV_MGMT_OFFLOAD_EVENTID(id,op,buf,len) \

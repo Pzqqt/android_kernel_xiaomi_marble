@@ -1686,6 +1686,9 @@ typedef enum {
      */
     WMI_PDEV_RSSI_DBM_CONVERSION_PARAMS_INFO_EVENTID,
 
+    /* Event to indicate Schedule tid queue suspended info */
+    WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID,
+
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -37683,6 +37686,13 @@ typedef struct {
     A_UINT32 type; /** type of the rogue ap, see WMI_ROGUE_AP_TYPE */
     wmi_mac_addr bssid; /** bssid of the rogue ap */
 } wmi_pdev_rap_info_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sched_tidq_susp_info_event_fixed_param */
+    A_UINT32 pdev_id; /** pdev id */
+    A_UINT32 tid_num; /** tid_num that is suspended */
+    A_UINT32 suspended_time_ms; /** time for which tid has been suspended in ms */
+} wmi_pdev_sched_tidq_susp_info_event_fixed_param;
 
 /*
  * WMI API for Firmware to indicate iface combinations which Firmware
