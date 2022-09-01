@@ -597,6 +597,7 @@ typedef  enum  {
     WMI_SERVICE_HALPHY_CTRL_PATH_STATS = 344, /* HALPHY STATS through control path */
     WMI_SERVICE_PEER_CHWIDTH_PUNCTURE_BITMAP_SUPPORT = 345, /* FW supports puncture bitmap change with channel width switch */
     WMI_SERVICE_BANG_RADAR_320_SUPPORT = 346, /* Host to send frequency offset for bang radar in extended field for 320M support */
+    WMI_SERVICE_XGAP_SUPPORT = 347, /* FW support for XGAP */
 
 
     WMI_MAX_EXT2_SERVICE
