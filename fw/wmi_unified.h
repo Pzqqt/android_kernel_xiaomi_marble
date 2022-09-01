@@ -11354,6 +11354,28 @@ typedef struct {
      * values).
      */
     A_INT32 peer_rssi_per_chain[WMI_MAX_CHAINS];
+    /* show how many elements in the tx_rate_counts array belong to this peer */
+    A_UINT32 num_tx_rate_counts;
+    /* show how many elements in the rx_rate_counts array belong to this peer */
+    A_UINT32 num_rx_rate_counts;
+    /* This TLV array is followed by other TLVs:
+     *   A_UINT32 tx_rate_counts[sum(num_tx_rate_counts)];
+     *       The above num_tx_rate_counts field shows which elements
+     *       within the tx_rate_counts array belong to a given peer.
+     *       Elements tx_rate_counts[0] to tx_rate_counts[N0-1] belong to
+     *       peer 0, where N0 = peer_stats_info[0].num_tx_rate_counts.
+     *       Elements tx_rate_counts[N0] to tx_rate_counts[N0+N1-1] belong to
+     *       peer 1, where N1 = peer_stats_info[1].num_tx_rate_counts.
+     *       etc.
+     *   A_UINT32 rx_rate_counts[sum(num_rx_rate_counts)];
+     *       The above num_rx_rate_counts field shows which elements
+     *       within the rx_rate_counts array belong to a given peer.
+     *       Elements rx_rate_counts[0] to rx_rate_counts[N0-1] belong to
+     *       peer 0, where N0 = peer_stats_info[0].num_rx_rate_counts.
+     *       Elements rx_rate_counts[N0] to rx_rate_counts[N0+N1-1] belong to
+     *       peer 1, where N1 = peer_stats_info[1].num_rx_rate_counts.
+     *       etc.
+     */
 } wmi_peer_stats_info;
 
 typedef struct {
