@@ -598,6 +598,7 @@ typedef  enum  {
     WMI_SERVICE_PEER_CHWIDTH_PUNCTURE_BITMAP_SUPPORT = 345, /* FW supports puncture bitmap change with channel width switch */
     WMI_SERVICE_BANG_RADAR_320_SUPPORT = 346, /* Host to send frequency offset for bang radar in extended field for 320M support */
     WMI_SERVICE_XGAP_SUPPORT = 347, /* FW support for XGAP */
+    WMI_SERVICE_OBSS_PER_PACKET_SR_SUPPORT = 348, /* Spatial Reuse support for per PPDU setting */
 
 
     WMI_MAX_EXT2_SERVICE
