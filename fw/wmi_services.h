@@ -633,15 +633,15 @@ typedef  enum  {
  */
 #define WMI_SERVICE_ENABLE(pwmi_svc_bmap,svc_id) \
     ( (pwmi_svc_bmap)[(svc_id)/(sizeof(A_UINT32))] |= \
-         (1 << ((svc_id)%(sizeof(A_UINT32)))) )
+         ((A_UINT32) 1 << ((svc_id)%(sizeof(A_UINT32)))) )
 
 #define WMI_SERVICE_DISABLE(pwmi_svc_bmap,svc_id) \
     ( (pwmi_svc_bmap)[(svc_id)/(sizeof(A_UINT32))] &=  \
-      ( ~(1 << ((svc_id)%(sizeof(A_UINT32)))) ) )
+      ( ~((A_UINT32) 1 << ((svc_id)%(sizeof(A_UINT32)))) ) )
 
 #define WMI_SERVICE_IS_ENABLED(pwmi_svc_bmap,svc_id) \
     ( ((pwmi_svc_bmap)[(svc_id)/(sizeof(A_UINT32))] &  \
-       (1 << ((svc_id)%(sizeof(A_UINT32)))) ) != 0)
+       ((A_UINT32) 1 << ((svc_id)%(sizeof(A_UINT32)))) ) != 0)
 
 
 #define WMI_SERVICE_EXT_ENABLE(pwmi_svc_bmap, pwmi_svc_ext_bmap, svc_id) \
@@ -651,7 +651,7 @@ typedef  enum  {
         } else { \
             int word = ((svc_id) - WMI_MAX_SERVICE) / 32; \
             int bit = (svc_id) & 0x1f; /* svc_id mod 32 */ \
-            (pwmi_svc_ext_bmap)[word] |= (1 << bit); \
+            (pwmi_svc_ext_bmap)[word] |= ((A_UINT32) 1 << bit); \
         } \
     } while (0)
 
@@ -662,7 +662,7 @@ typedef  enum  {
         } else { \
             int word = ((svc_id) - WMI_MAX_SERVICE) / 32; \
             int bit = (svc_id) & 0x1f; /* svc_id mod 32 */ \
-            (pwmi_svc_ext_bmap)[word] &= ~(1 << bit); \
+            (pwmi_svc_ext_bmap)[word] &= ~((A_UINT32) 1 << bit); \
         } \
     } while (0)
 
@@ -686,7 +686,7 @@ typedef  enum  {
         } else { \
             int word = ((svc_id) - WMI_MAX_EXT_SERVICE) / 32; \
             int bit = (svc_id) & 0x1f; /* svc_id mod 32 */ \
-            (pwmi_svc_ext2_bmap)[word] |= (1 << bit); \
+            (pwmi_svc_ext2_bmap)[word] |= ((A_UINT32) 1 << bit); \
         } \
     } while (0)
 
@@ -700,7 +700,7 @@ typedef  enum  {
         } else { \
             int word = ((svc_id) - WMI_MAX_EXT_SERVICE) / 32; \
             int bit = (svc_id) & 0x1f; /* svc_id mod 32 */ \
-            (pwmi_svc_ext2_bmap)[word] &= ~(1 << bit); \
+            (pwmi_svc_ext2_bmap)[word] &= ~((A_UINT32) 1 << bit); \
         } \
     } while (0)
 
