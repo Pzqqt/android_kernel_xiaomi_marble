@@ -21,7 +21,6 @@ static u32 msm_vidc_decoder_bin_size_ar50lt(struct msm_vidc_inst *inst)
 	u32 size = 0;
 	u32 width, height, num_vpp_pipes;
 	struct v4l2_format *f;
-	bool is_interlaced;
 	u32 vpp_delay;
 
 	if (!inst || !inst->core || !inst->capabilities) {
@@ -39,24 +38,19 @@ static u32 msm_vidc_decoder_bin_size_ar50lt(struct msm_vidc_inst *inst)
 		vpp_delay = inst->decode_vpp_delay.size;
 	else
 		vpp_delay = DEFAULT_BSE_VPP_DELAY;
-	if (inst->capabilities->cap[CODED_FRAMES].value ==
-			CODED_FRAMES_PROGRESSIVE)
-		is_interlaced = false;
-	else
-		is_interlaced = true;
 	f = &inst->fmts[INPUT_PORT];
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_BIN_H264D(size, width, height,
-			is_interlaced, vpp_delay, num_vpp_pipes);
+			vpp_delay, num_vpp_pipes);
 	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_BIN_H265D(size, width, height,
-			0, vpp_delay, num_vpp_pipes);
+			vpp_delay, num_vpp_pipes);
 	else if (inst->codec == MSM_VIDC_VP9)
 		HFI_BUFFER_BIN_VP9D(size, width, height,
-			0, num_vpp_pipes);
+			num_vpp_pipes);
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
@@ -201,9 +195,8 @@ static u32 msm_vidc_decoder_persist_size_ar50lt(struct msm_vidc_inst *inst)
 
 static u32 msm_vidc_decoder_dpb_size_ar50lt(struct msm_vidc_inst *inst)
 {
-	u32 size = 0, ybufsize = 0, uvbufsize = 0;
-	u32 stride = 0, buf_height = 0;
-	u32 color_fmt;
+	u32 size = 0;
+	u32 color_fmt, v4l2_fmt;
 	u32 width, height;
 	struct v4l2_format *f;
 
@@ -221,11 +214,15 @@ static u32 msm_vidc_decoder_dpb_size_ar50lt(struct msm_vidc_inst *inst)
 	height = f->fmt.pix_mp.height;
 
 	if (color_fmt == MSM_VIDC_FMT_NV12) {
-		HFI_NV12_IL_CALC_BUF_SIZE(size, ybufsize,
-			 HFI_NV12_IL_CALC_Y_STRIDE(stride, width, 256),
-		HFI_NV12_IL_CALC_Y_BUFHEIGHT(buf_height, height, 64),
-		uvbufsize, HFI_NV12_IL_CALC_UV_STRIDE(stride, width, 256),
-		HFI_NV12_IL_CALC_UV_BUFHEIGHT(buf_height, height, 64));
+		v4l2_fmt = V4L2_PIX_FMT_VIDC_NV12C;
+		HFI_NV12_UBWC_IL_CALC_BUF_SIZE_V2(size, width, height,
+			VIDEO_Y_STRIDE_BYTES(v4l2_fmt, width), VIDEO_Y_SCANLINES(v4l2_fmt, height),
+			VIDEO_UV_STRIDE_BYTES(v4l2_fmt, width), VIDEO_UV_SCANLINES(v4l2_fmt,
+				height),
+			VIDEO_Y_META_STRIDE(v4l2_fmt, width), VIDEO_Y_META_SCANLINES(v4l2_fmt,
+				height),
+			VIDEO_UV_META_STRIDE(v4l2_fmt, width), VIDEO_UV_META_SCANLINES(v4l2_fmt,
+				height));
 	}
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
@@ -575,7 +572,6 @@ int msm_buffer_min_count_ar50lt(struct msm_vidc_inst *inst,
 	case MSM_VIDC_BUF_LINE:
 	case MSM_VIDC_BUF_PERSIST:
 	case MSM_VIDC_BUF_ARP:
-	case MSM_VIDC_BUF_VPSS:
 		count = msm_vidc_internal_buffer_count(inst, buffer_type);
 		break;
 	case MSM_VIDC_BUF_DPB:
