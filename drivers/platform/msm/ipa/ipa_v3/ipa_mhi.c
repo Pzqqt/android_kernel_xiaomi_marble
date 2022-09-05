@@ -226,9 +226,11 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 #ifdef IPA_CLIENT_MHI_COAL_CONS
 	/* share default pipe event ring for MHI coal pipe */
 	if(client == IPA_CLIENT_MHI_COAL_CONS) {
-		ep_def = &ipa3_ctx->ep[ipa3_get_ep_mapping(IPA_CLIENT_MHI_CONS)];
-		ep->gsi_evt_ring_hdl = ep_def->gsi_evt_ring_hdl;
-		*params->cached_gsi_evt_ring_hdl = ep->gsi_evt_ring_hdl;
+		if(ipa3_get_ep_mapping(IPA_CLIENT_MHI_CONS) != IPA_EP_NOT_ALLOCATED ){
+			ep_def = &ipa3_ctx->ep[ipa3_get_ep_mapping(IPA_CLIENT_MHI_CONS)];
+			ep->gsi_evt_ring_hdl = ep_def->gsi_evt_ring_hdl;
+			*params->cached_gsi_evt_ring_hdl = ep->gsi_evt_ring_hdl;
+		}
 	} else {
 #endif
 		/* allocate event ring only for the first time pipe is connected */
