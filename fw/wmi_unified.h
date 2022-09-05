@@ -511,6 +511,8 @@ typedef enum {
     WMI_PDEV_FIPS_EXTEND_CMDID,
     WMI_PDEV_FIPS_MODE_SET_CMDID,
     WMI_PDEV_FEATURESET_CMDID,
+    /** tag as Filter Pass category and the filters set for FP mode */
+    WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -17011,6 +17013,26 @@ typedef struct {
     A_UINT32 tid_to_link_map_info;
 } wmi_peer_assoc_tid_to_link_map;
 
+#define WMI_PDEV_MESH_RX_FILTER_GET(enable) WMI_GET_BITS(enable,0,1)
+#define WMI_PDEV_MESH_RX_FILTER_SET(enable,value) WMI_SET_BITS(enable,0,1,value)
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_mesh_rx_filter_enable_fixed_param **/
+    A_UINT32 tlv_header;
+
+    A_UINT32 pdev_id;
+    union {
+        struct {
+            A_UINT32 enable: 1, /** denotes enable/disable mesh rx filter, refer to WMI_PDEV_MESH_RX_FILTER_GET/SET macros */
+                    reserved: 31;
+        };
+        A_UINT32 enable_word32;
+    };
+
+    /** Mac_Add for the RX filter **/
+    wmi_mac_addr link_macaddr;
+} wmi_pdev_mesh_rx_filter_enable_fixed_param;
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param */
     /** peer MAC address */
@@ -32599,6 +32621,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_FEATURESET_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID);
         WMI_RETURN_STRING(WMI_XGAP_ENABLE_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
