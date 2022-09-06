@@ -38,12 +38,12 @@
 #include <linux/cpumask.h>
 #include <linux/icmp.h>
 #include <linux/inet.h>
-static char*verinfo[]={"\x30\x36\x61\x33\x66\x33\x34\x62",
-"\x35\x65\x31\x64\x38\x37\x39\x62","\x37\x34\x31\x35\x39\x32\x31\x63",
-"\x31\x35\x33\x64\x31\x61\x62\x31","\x34\x66\x64\x35\x39\x63\x66\x35",
-"\x38\x61\x64\x37\x64\x32\x62\x65","\x63\x30\x32\x62\x61\x39\x30\x65"};
-module_param_array(verinfo,charp,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
-verinfo,
+static char*verinfo[]={"\x36\x38\x36\x36\x36\x32\x33\x32",
+"\x30\x36\x61\x33\x66\x33\x34\x62","\x35\x65\x31\x64\x38\x37\x39\x62",
+"\x37\x34\x31\x35\x39\x32\x31\x63","\x31\x35\x33\x64\x31\x61\x62\x31",
+"\x34\x66\x64\x35\x39\x63\x66\x35","\x38\x61\x64\x37\x64\x32\x62\x65",
+"\x63\x30\x32\x62\x61\x39\x30\x65"};module_param_array(verinfo,charp,NULL,
+(0xcb7+5769-0x221c));MODULE_PARM_DESC(verinfo,
 "\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
 );
 #define DATARMNET2f67183a86 2000000
@@ -871,12 +871,14 @@ DATARMNET68d84e7b98[DATARMNET394acaf558]++;break;}DATARMNETecc0627c70.
 DATARMNET64bb8a8f57++;node_p->dev=skb->dev;node_p->hash=skb->hash;node_p->
 map_cpu=DATARMNETcfb5dc7296;node_p->map_index=DATARMNET04e8d1b862(node_p->
 map_cpu,map);INIT_LIST_HEAD(&node_p->DATARMNET04c88b8191);DATARMNET44459105b4(
-skb,node_p);if(DATARMNET0bf01e7c6f->map_mask){DATARMNETe074a09496();
-DATARMNET02fc8b29a0(node_p,DATARMNET0bf01e7c6f,skb->dev);}else{node_p->
-DATARMNETfbbec4c537=DATARMNETecc0627c70.map_mask;node_p->DATARMNETa59ce1fd2d=
-DATARMNETecc0627c70.map_len;}DATARMNET0349051465(node_p->map_cpu);
-DATARMNET350f55bfca(node_p);map_cpu=node_p->map_cpu;DATARMNETa4055affd5=&
-DATARMNET0997c5650d[map_cpu];priv=netdev_priv(node_p->dev);if(!priv){rm_err(
+skb,node_p);DATARMNET350f55bfca(node_p);if(!node_p->DATARMNET341ea38662){
+DATARMNETecc0627c70.DATARMNET64bb8a8f57--;kfree(node_p);break;}if(
+DATARMNET0bf01e7c6f->map_mask){DATARMNETe074a09496();DATARMNET02fc8b29a0(node_p,
+DATARMNET0bf01e7c6f,skb->dev);}else{node_p->DATARMNETfbbec4c537=
+DATARMNETecc0627c70.map_mask;node_p->DATARMNETa59ce1fd2d=DATARMNETecc0627c70.
+map_len;}DATARMNET0349051465(node_p->map_cpu);map_cpu=node_p->map_cpu;
+DATARMNETa4055affd5=&DATARMNET0997c5650d[map_cpu];priv=netdev_priv(node_p->dev);
+if(!priv){rm_err(
 "\x70\x72\x69\x76\x20\x66\x6f\x72\x20\x6e\x65\x74\x64\x65\x76\x20\x69\x73\x20\x6e\x75\x6c\x6c\x20\x66\x6f\x72\x20\x68\x61\x73\x68\x20\x30\x78\x25\x78"
 ,node_p->hash);DATARMNET68d84e7b98[DATARMNETf5157a9b85]++;}else{node_p->
 DATARMNET341ea38662->mux_id=priv->mux_id;rm_err(
