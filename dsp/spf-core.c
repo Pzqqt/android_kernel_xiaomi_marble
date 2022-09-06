@@ -25,6 +25,7 @@
 
 #define APM_STATE_READY_TIMEOUT_MS    10000
 #define Q6_READY_TIMEOUT_MS 1000
+#define Q6_CLOSE_ALL_TIMEOUT_MS 5000
 #define APM_CMD_GET_SPF_STATE 0x01001021
 #define APM_CMD_CLOSE_ALL 0x01001013
 #define APM_CMD_RSP_GET_SPF_STATE 0x02001007
@@ -238,8 +239,20 @@ void spf_core_apm_close_all(void)
 		goto done;
 	}
 
+
+	/* While graph_open is processing by the SPF, apps receives
+	 * userspace(agm/pal) crash which will triggers spf_close_all
+	 * cmd from msm common drivers and immediately calls
+	 * msm_audio_ion_crash_handler() which will un-maps the memory. But
+	 * here SPF is still in processing the graph_open, recieved spf_close_all
+	 * cmd is queued in SPF. Due to un-mapping is done immediately in HLOS
+	 * will resulting in SMMU fault.
+	 * To avoid such scenarios, increased the spf_close_all cmd timeout,
+	 * because the AGM timeout for the graph_open is 4sec, so increase the timeout
+	 * for spf_close_all cmd response until graph open completes or timed out.
+	*/
 	rc = wait_event_timeout(core->wait, (core->resp_received),
-				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
+				msecs_to_jiffies(Q6_CLOSE_ALL_TIMEOUT_MS));
 	dev_info(spf_core_priv->dev, "%s: wait event unblocked \n", __func__);
 	if (rc > 0 && core->resp_received) {
 		if (core->status != 0)
