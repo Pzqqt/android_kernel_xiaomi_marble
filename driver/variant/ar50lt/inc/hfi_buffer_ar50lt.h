@@ -482,7 +482,9 @@ typedef u32 HFI_BOOL;
 #define SIZE_MP2D_LB_FE_TOP_DATA(frame_width, frame_height) \
 	((HFI_ALIGN(frame_width, 16) + 8) * 10 * 2)
 #define SIZE_VP9D_LB_FE_TOP_DATA(frame_width, frame_height) \
-	((HFI_ALIGN(HFI_ALIGN(frame_width, 8), 64) + 8) * 10 * 2)
+	HFI_ALIGN((HFI_ALIGN(HFI_ALIGN(frame_width, 8), 64) + 8) * 10, VENUS_DMA_ALIGNMENT) +\
+	HFI_ALIGN((HFI_ALIGN(HFI_ALIGN(frame_width, 8), 64) + 8) * 5, VENUS_DMA_ALIGNMENT) + \
+	HFI_ALIGN((HFI_ALIGN(HFI_ALIGN(frame_width, 8), 64) + 8) * 5, VENUS_DMA_ALIGNMENT)
 #define SIZE_MP2D_LB_PE_TOP_DATA(frame_width, frame_height) \
 	((HFI_ALIGN(frame_width, 16) >> 4) * 64)
 #define SIZE_VP9D_LB_PE_TOP_DATA(frame_width, frame_height) \
@@ -789,7 +791,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 			bitbin_size = HFI_ALIGN(bitbin_size, \
 				VENUS_DMA_ALIGNMENT); \
 		} \
-		if ((lcu_size == 16) || (num_vpp_pipes > 1)) { \
+		else if ((lcu_size == 16) || (num_vpp_pipes > 1)) { \
 			total_bitbin_buffers = 1; \
 			bitbin_size = bitstream_size; \
 		} \
