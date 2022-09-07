@@ -2137,17 +2137,24 @@ static int msm_drm_component_dependency_check(struct device *dev)
 		if (!node)
 			break;
 
-		if (of_node_name_eq(node,"qcom,sde_rscc") &&
-				of_device_is_available(node) &&
-				of_node_check_flag(node, OF_POPULATED)) {
-			struct platform_device *pdev =
-					of_find_device_by_node(node);
-			if (!platform_get_drvdata(pdev)) {
-				dev_err(dev,
-					"qcom,sde_rscc not probed yet\n");
-				return -EPROBE_DEFER;
+		if (of_node_name_eq(node, "qcom,sde_rscc")) {
+			if (of_device_is_available(node) &&
+					of_node_check_flag(node, OF_POPULATED)) {
+				struct platform_device *pdev =
+						of_find_device_by_node(node);
+				if (!platform_get_drvdata(pdev)) {
+					dev_err(dev,
+						"qcom,sde_rscc not probed yet\n");
+					return -EPROBE_DEFER;
+				} else {
+					return 0;
+				}
 			} else {
-				return 0;
+				dev_err(dev,
+					"of_device_is_available: %d of_node_check_flag: %d\n",
+						of_device_is_available(node),
+						of_node_check_flag(node, OF_POPULATED));
+				return -EPROBE_DEFER;
 			}
 		}
 	}
