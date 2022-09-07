@@ -2053,6 +2053,7 @@ struct hdd_context {
 	bool is_ol_rx_thread_suspended;
 #endif
 
+	bool hdd_wlan_suspend_in_progress;
 	bool hdd_wlan_suspended;
 	bool suspended;
 	/* flag to start pktlog after SSR/PDR if previously enabled */

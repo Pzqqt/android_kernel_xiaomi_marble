@@ -7708,6 +7708,8 @@ populate_dot11f_mlo_caps(struct mac_context *mac_ctx,
 	mlo_ie->medium_sync_delay_info_present = 0;
 	mlo_ie->eml_capab_present = 0;
 	mlo_ie->mld_capab_present = 1;
+	mlo_ie->reserved = 0;
+	mlo_ie->reserved_1 = 0;
 
 	return QDF_STATUS_SUCCESS;
 }

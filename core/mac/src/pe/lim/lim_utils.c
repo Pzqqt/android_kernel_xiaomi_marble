@@ -8136,11 +8136,11 @@ QDF_STATUS lim_send_mlo_caps_ie(struct mac_context *mac_ctx,
 
 	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_MLO_IE,
 				CDS_BAND_2GHZ, &mlo_caps[2],
-				mlo_cap_total_len);
+				EHT_CAP_OUI_LEN + QDF_MAC_ADDR_SIZE);
 
 	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_MLO_IE,
 				CDS_BAND_5GHZ, &mlo_caps[2],
-				mlo_cap_total_len);
+				EHT_CAP_OUI_LEN + QDF_MAC_ADDR_SIZE);
 
 	if (QDF_IS_STATUS_SUCCESS(status_2g) &&
 	    QDF_IS_STATUS_SUCCESS(status_5g)) {

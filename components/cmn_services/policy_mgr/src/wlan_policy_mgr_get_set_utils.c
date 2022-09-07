@@ -6625,6 +6625,7 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 	}
 	if (i == MAX_NUMBER_OF_CONC_CONNECTIONS) {
 		policy_mgr_err("Invalid vdev id: %d", vdev_id);
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		return false;
 	}
 	sta_sap_scc_on_dfs_chan =

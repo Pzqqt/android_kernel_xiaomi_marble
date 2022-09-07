@@ -431,6 +431,21 @@ policy_mgr_update_valid_ch_freq_list(struct policy_mgr_psoc_priv_obj *pm_ctx,
 	pm_ctx->valid_ch_freq_list_count = j;
 }
 
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+void
+policy_mgr_set_freq_restriction_mask(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				     struct ch_avoid_ind_type *freq_list)
+{
+	pm_ctx->restriction_mask = freq_list->restriction_mask;
+}
+
+uint32_t
+policy_mgr_get_freq_restriction_mask(struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	return pm_ctx->restriction_mask;
+}
+#endif
+
 void
 policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_objmgr_pdev *pdev,
@@ -440,6 +455,7 @@ policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t i;
+	struct ch_avoid_ind_type *freq_list;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -463,6 +479,9 @@ policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 	pm_ctx->unsafe_channel_count = avoid_freq_ind->chan_list.chan_cnt >=
 			NUM_CHANNELS ?
 			NUM_CHANNELS : avoid_freq_ind->chan_list.chan_cnt;
+
+	freq_list = &avoid_freq_ind->freq_list;
+	policy_mgr_set_freq_restriction_mask(pm_ctx, freq_list);
 
 	for (i = 0; i < pm_ctx->unsafe_channel_count; i++)
 		pm_ctx->unsafe_channel_list[i] =

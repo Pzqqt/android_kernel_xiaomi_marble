@@ -998,7 +998,7 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 	hdd_debug("notify: chan:%d width:%d freq1:%d freq2:%d",
 		  chandef.chan->center_freq, chandef.width,
 		  chandef.center_freq1, chandef.center_freq2);
-	cfg80211_ch_switch_notify(dev, &chandef);
+	wlan_cfg80211_ch_switch_notify(dev, &chandef, 0);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3360,32 +3360,11 @@ uint32_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
 	return hdd_ctx->coex_avoid_freq_list.restriction_mask;
 }
 
-/**
- * wlan_hdd_fetch_sap_restriction_mask() - fetch restriction mask for sap
- * before sap start.
- * @hdd_context: hdd context
- * @sap_context: sap_conext
- *
- * Return: None
- */
-static inline
-void wlan_hdd_fetch_sap_restriction_mask(struct hdd_context *hdd_ctx,
-					 struct sap_context *sap_ctx)
-{
-	sap_ctx->restriction_mask =
-		hdd_ctx->coex_avoid_freq_list.restriction_mask;
-}
 #else
 static inline
 uint32_t wlan_hdd_get_sap_restriction_mask(struct hdd_context *hdd_ctx)
 {
 	return -EINVAL;
-}
-
-static inline
-void wlan_hdd_fetch_sap_restriction_mask(struct hdd_context *hdd_ctx,
-					 struct sap_context *sap_ctx)
-{
 }
 #endif
 
@@ -3426,7 +3405,7 @@ void hdd_stop_sap_set_tx_power(struct wlan_objmgr_psoc *psoc,
 		  sap_ctx->csa_reason);
 
 	if (sap_ctx->csa_reason == CSA_REASON_UNSAFE_CHANNEL) {
-		if (restriction_mask & BIT(NL80211_IFTYPE_AP)) {
+		if (restriction_mask & BIT(QDF_SAP_MODE)) {
 			schedule_work(&adapter->sap_stop_bss_work);
 		} else {
 			unsafe_chan_count = unsafe_ch_list->chan_cnt;
@@ -6283,8 +6262,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto error;
 	}
 
-	wlan_hdd_fetch_sap_restriction_mask(hdd_ctx, sap_ctx);
-
 	status = wlansap_start_bss(sap_ctx, sap_event_callback, config,
 				   adapter->dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -6597,15 +6574,12 @@ exit:
 	return 0;
 }
 
-/**
- * wlan_hdd_cfg80211_stop_ap() - stop sap
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to netdev
- *
- * Return: zero for success non-zero for failure
- */
-int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
-				struct net_device *dev)
+#ifdef CFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT
+int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy, struct net_device *dev,
+			      unsigned int link_id)
+#else
+int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy, struct net_device *dev)
+#endif
 {
 	int errno;
 	struct osif_vdev_sync *vdev_sync;
@@ -6916,6 +6890,31 @@ wlan_hdd_update_twt_responder(struct hdd_context *hdd_ctx,
 {}
 #endif
 
+#ifdef CFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT
+static inline uint32_t
+wlan_util_get_centre_freq(struct wireless_dev *wdev, unsigned int link_id)
+{
+	return wdev->links[link_id].ap.chandef.chan->center_freq;
+}
+
+static inline struct cfg80211_chan_def
+wlan_util_get_chan_def(struct wireless_dev *wdev, unsigned int link_id)
+{
+	return wdev->links[link_id].ap.chandef;
+}
+#else
+static inline struct cfg80211_chan_def
+wlan_util_get_chan_def(struct wireless_dev *wdev, unsigned int link_id)
+{
+	return wdev->chandef;
+}
+
+static inline uint32_t
+wlan_util_get_centre_freq(struct wireless_dev *wdev, unsigned int link_id)
+{
+	return wdev->chandef.chan->center_freq;
+}
+#endif
 /**
  * __wlan_hdd_cfg80211_start_ap() - start soft ap mode
  * @wiphy: Pointer to wiphy structure
@@ -7233,9 +7232,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			goto err_start_bss;
 		}
 
-		if (wdev->chandef.chan->center_freq !=
+		if (wlan_util_get_centre_freq(wdev, 0) !=
 				params->chandef.chan->center_freq)
-			params->chandef = wdev->chandef;
+			params->chandef = wlan_util_get_chan_def(wdev, 0);
 		/*
 		 * If Do_Not_Break_Stream enabled send avoid channel list
 		 * to application.

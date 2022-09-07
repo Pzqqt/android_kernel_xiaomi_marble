@@ -213,7 +213,7 @@ void mlo_cm_roam_sync_cb(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct roam_offload_synch_ind *sync_ind;
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_objmgr_vdev *link_vdev;
+	struct wlan_objmgr_vdev *link_vdev = NULL;
 	uint8_t i;
 	uint8_t vdev_id;
 
@@ -231,6 +231,11 @@ void mlo_cm_roam_sync_cb(struct wlan_objmgr_vdev *vdev,
 		link_vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 								 sync_ind->ml_link[i].vdev_id,
 								 WLAN_MLME_SB_ID);
+
+		if (!link_vdev) {
+			mlo_err("Link vdev is null");
+			return;
+		}
 
 		if (mlo_check_connect_req_bmap(link_vdev)) {
 			mlo_update_connect_req_links(link_vdev, false);
@@ -262,6 +267,11 @@ mlo_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 						    vdev_id,
 						    WLAN_MLME_SB_ID);
+
+	if (!vdev) {
+		mlo_err("vdev is null");
+		return;
+	}
 
 	if (!vdev->mlo_dev_ctx)
 		goto end;

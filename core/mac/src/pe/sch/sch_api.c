@@ -887,9 +887,10 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 int sch_gen_timing_advert_frame(struct mac_context *mac_ctx, tSirMacAddr self_addr,
 	uint8_t **buf, uint32_t *timestamp_offset, uint32_t *time_value_offset)
 {
-	tDot11fTimingAdvertisementFrame frame = {0};
+	tDot11fTimingAdvertisementFrame frame = {};
 	uint32_t payload_size, buf_size;
-	int status;
+	QDF_STATUS status;
+	uint32_t ret;
 	struct qdf_mac_addr wildcard_bssid = {
 		{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
 	};
@@ -901,13 +902,13 @@ int sch_gen_timing_advert_frame(struct mac_context *mac_ctx, tSirMacAddr self_ad
 		return qdf_status_to_os_return(status);
 	}
 
-	status = dot11f_get_packed_timing_advertisement_frame_size(mac_ctx,
+	ret = dot11f_get_packed_timing_advertisement_frame_size(mac_ctx,
 		&frame, &payload_size);
-	if (DOT11F_FAILED(status)) {
-		pe_err("Error getting packed frame size %x", status);
+	if (DOT11F_FAILED(ret)) {
+		pe_err("Error getting packed frame size %x", ret);
 		return -EINVAL;
 	}
-	if (DOT11F_WARNED(status))
+	if (DOT11F_WARNED(ret))
 		pe_warn("Warning getting packed frame size");
 
 	buf_size = sizeof(tSirMacMgmtHdr) + payload_size;
@@ -916,15 +917,15 @@ int sch_gen_timing_advert_frame(struct mac_context *mac_ctx, tSirMacAddr self_ad
 		return -ENOMEM;
 
 	payload_size = 0;
-	status = dot11f_pack_timing_advertisement_frame(mac_ctx, &frame,
+	ret = dot11f_pack_timing_advertisement_frame(mac_ctx, &frame,
 		*buf + sizeof(tSirMacMgmtHdr), buf_size -
 		sizeof(tSirMacMgmtHdr), &payload_size);
 	pe_debug("TA payload size2 = %d", payload_size);
-	if (DOT11F_FAILED(status)) {
-		pe_err("Error packing frame %x", status);
+	if (DOT11F_FAILED(ret)) {
+		pe_err("Error packing frame %x", ret);
 		goto fail;
 	}
-	if (DOT11F_WARNED(status))
+	if (DOT11F_WARNED(ret))
 		pe_warn("Warning packing frame");
 
 	lim_populate_mac_header(mac_ctx, *buf, SIR_MAC_MGMT_FRAME,

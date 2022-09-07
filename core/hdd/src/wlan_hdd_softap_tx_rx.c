@@ -613,7 +613,8 @@ QDF_STATUS hdd_softap_validate_driver_state(struct hdd_adapter *adapter)
 		return QDF_STATUS_E_ABORTED;
 	}
 
-	if (qdf_unlikely(adapter->hdd_ctx->hdd_wlan_suspended)) {
+	if (qdf_unlikely(adapter->hdd_ctx->hdd_wlan_suspended ||
+			 adapter->hdd_ctx->hdd_wlan_suspend_in_progress)) {
 		hdd_err_rl("Device is system suspended, drop pkt");
 		return QDF_STATUS_E_ABORTED;
 	}
