@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,12 @@ mld_get_best_primary_umac_w_rssi(struct wlan_mlo_peer_context *ml_peer,
 	struct wlan_objmgr_peer *assoc_peer;
 
 	assoc_peer = wlan_mlo_peer_get_assoc_peer(ml_peer);
+	if (!assoc_peer) {
+		mlo_err("Assoc peer of ML Peer " QDF_MAC_ADDR_FMT " is invalid",
+			QDF_MAC_ADDR_REF(ml_peer->peer_mld_addr.bytes));
+		QDF_BUG(0);
+		return;
+	}
 	ml_peer->primary_umac_psoc_id = wlan_peer_get_psoc_id(assoc_peer);
 }
 

@@ -303,6 +303,9 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	union dp_rx_desc_list_elem_t *next;
 	QDF_STATUS ret;
 	void *rxdma_srng;
+	union dp_rx_desc_list_elem_t *desc_list_append = NULL;
+	union dp_rx_desc_list_elem_t *tail_append = NULL;
+	union dp_rx_desc_list_elem_t *temp_list = NULL;
 
 	rxdma_srng = dp_rxdma_srng->hal_srng;
 
@@ -336,6 +339,28 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	} else if (num_entries_avail < num_req_buffers) {
 		num_desc_to_free = num_req_buffers - num_entries_avail;
 		num_req_buffers = num_entries_avail;
+	} else if ((*desc_list) &&
+		   dp_rxdma_srng->num_entries - num_entries_avail <
+		   CRITICAL_BUFFER_THRESHOLD) {
+		/* Append some free descriptors to tail */
+		num_alloc_desc =
+			dp_rx_get_free_desc_list(dp_soc, mac_id,
+						 rx_desc_pool,
+						 CRITICAL_BUFFER_THRESHOLD,
+						 &desc_list_append,
+						 &tail_append);
+
+		if (num_alloc_desc) {
+			temp_list = *desc_list;
+			*desc_list = desc_list_append;
+			tail_append->next = temp_list;
+			num_req_buffers += num_alloc_desc;
+
+			DP_STATS_DEC(dp_pdev,
+				     replenish.free_list,
+				     num_alloc_desc);
+		} else
+			dp_err_rl("%pK:  no free rx_descs in freelist", dp_soc);
 	}
 
 	if (qdf_unlikely(!num_req_buffers)) {
@@ -439,6 +464,7 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	 * Therefore set replenish.pkts.bytes as 0.
 	 */
 	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, count, 0);
+	DP_STATS_INC(dp_pdev, replenish.free_list, num_req_buffers - count);
 
 free_descs:
 	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);

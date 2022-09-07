@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -277,9 +277,15 @@ QDF_STATUS wlan_mlo_peer_free_aid(
 			}
 		}
 	} else {
-		vdev_aid_mgr = ml_aid_mgr->aid_mgr[link_ix];
-		if (vdev_aid_mgr)
-			qdf_clear_bit(assoc_id_ix, vdev_aid_mgr->aid_bitmap);
+		if ((link_ix != 0xff) && (link_ix < WLAN_UMAC_MLO_MAX_VDEVS)) {
+			vdev_aid_mgr = ml_aid_mgr->aid_mgr[link_ix];
+			if (vdev_aid_mgr)
+				qdf_clear_bit(assoc_id_ix,
+					      vdev_aid_mgr->aid_bitmap);
+		} else {
+			mlo_err("AID free failed, link ix(%d) is invalid for assoc_id %d",
+				link_ix, assoc_id);
+		}
 	}
 
 	ml_aid_lock_release(mlo_mgr_ctx);

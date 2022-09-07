@@ -942,7 +942,7 @@ qdf_export_symbol(hal_reo_ix_remap_value_get_be);
 
 uint8_t hal_reo_ring_remap_value_get_be(uint8_t rx_ring_id)
 {
-	if (rx_ring_id > HAL_MAX_REO2SW_RINGS)
+	if (rx_ring_id >= HAL_MAX_REO2SW_RINGS)
 		return REO_REMAP_RELEASE;
 
 	return reo_dest_ring_remap[rx_ring_id];

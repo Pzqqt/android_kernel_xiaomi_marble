@@ -54,7 +54,7 @@ uint8_t *util_find_extn_eid(uint8_t eid, uint8_t extn_eid,
 	if (!frame)
 		return NULL;
 
-	while (len >= MIN_IE_LEN && len >= frame[TAG_LEN_POS] + MIN_IE_LEN) {
+	while (len > MIN_IE_LEN && len >= frame[TAG_LEN_POS] + MIN_IE_LEN) {
 		if ((frame[ID_POS] == eid) &&
 		    (frame[ELEM_ID_EXTN_POS] == extn_eid))
 			return frame;

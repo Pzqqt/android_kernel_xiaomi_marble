@@ -197,7 +197,11 @@ void DP_PRINT_STATS(const char *fmt, ...)
 	struct dp_soc *soc = NULL;
 
 	soc_void = cds_get_context(QDF_MODULE_ID_SOC);
+	if (!soc_void)
+		return;
+
 	soc = cdp_soc_t_to_dp_soc(soc_void);
+
 	va_start(val, fmt);
 	QDF_VTRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH, (char *)fmt, val);
 	/* writing to the buffer */
@@ -6202,6 +6206,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.tx.tx_invalid_peer.num);
 		DP_PRINT_STATS("Tx desc freed in non-completion path: %u",
 			       pdev->soc->stats.tx.tx_comp_exception);
+		DP_PRINT_STATS("Tx desc force freed: %u",
+			       pdev->soc->stats.tx.tx_comp_force_freed);
 
 		DP_PRINT_STATS("Tx packets sent per interrupt:");
 		DP_PRINT_STATS("Single Packet: %u",

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -63,6 +64,22 @@ static inline void osif_update_fils_hlp_data(struct net_device *dev,
  */
 #if defined CFG80211_ROAMED_API_UNIFIED || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+
+#ifdef CFG80211_SINGLE_NETDEV_MULTI_LINK_SUPPORT
+static
+void osif_copy_roamed_info(struct cfg80211_roam_info *info,
+			   struct cfg80211_bss *bss)
+{
+	info->links[0].bss = bss;
+}
+#else
+static
+void osif_copy_roamed_info(struct cfg80211_roam_info *info,
+			   struct cfg80211_bss *bss)
+{
+	info->bss = bss;
+}
+#endif
 static void osif_roamed_ind(struct net_device *dev, struct cfg80211_bss *bss,
 			    const uint8_t *req_ie,
 			    size_t req_ie_len, const uint8_t *resp_ie,
@@ -70,7 +87,7 @@ static void osif_roamed_ind(struct net_device *dev, struct cfg80211_bss *bss,
 {
 	struct cfg80211_roam_info info = {0};
 
-	info.bss = bss;
+	osif_copy_roamed_info(&info, bss);
 	info.req_ie = req_ie;
 	info.req_ie_len = req_ie_len;
 	info.resp_ie = resp_ie;

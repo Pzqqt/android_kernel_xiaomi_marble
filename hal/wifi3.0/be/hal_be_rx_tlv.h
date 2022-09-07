@@ -34,19 +34,10 @@ typedef struct rx_mpdu_start hal_rx_mpdu_start_t;
 typedef struct rx_msdu_end hal_rx_msdu_end_t;
 #endif
 
+#define RX_BE_PADDING0_BYTES 8
 /*
  * Each RX descriptor TLV is preceded by 1 QWORD "tag"
  */
-
-struct rx_mpdu_start_tlv {
-	uint64_t tag;
-	hal_rx_mpdu_start_t rx_mpdu_start;
-};
-
-struct rx_msdu_end_tlv {
-	uint64_t tag;
-	hal_rx_msdu_end_t rx_msdu_end;
-};
 
 struct rx_pkt_hdr_tlv {
 	uint64_t tag;					/* 8 B */
@@ -54,15 +45,43 @@ struct rx_pkt_hdr_tlv {
 	char rx_pkt_hdr[HAL_RX_BE_PKT_HDR_TLV_LEN];		/* 112 B */
 };
 
-#define RX_BE_PADDING0_BYTES 8
-#define RX_BE_PADDING1_BYTES 8
+#ifndef CONFIG_NO_TLV_TAGS
+struct rx_mpdu_start_tlv {
+	uint64_t tag;					/* 8 B */
+	hal_rx_mpdu_start_t rx_mpdu_start;
+};
+
+struct rx_msdu_end_tlv {
+	uint64_t tag;					/* 8 B */
+	hal_rx_msdu_end_t rx_msdu_end;
+};
 
 struct rx_pkt_tlvs {
 	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  120 bytes */
 	uint8_t rx_padding0[RX_BE_PADDING0_BYTES];	/*  8 bytes */
 	struct rx_mpdu_start_tlv mpdu_start_tlv;	/*  120 bytes */
-	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;		/* 128 bytes */
+#ifndef NO_RX_PKT_HDR_TLV
+	struct rx_pkt_hdr_tlv	pkt_hdr_tlv;		/* 128 bytes */
+#endif
 };
+#else
+struct rx_mpdu_start_tlv {
+	hal_rx_mpdu_start_t rx_mpdu_start;
+};
+
+struct rx_msdu_end_tlv {
+	hal_rx_msdu_end_t rx_msdu_end;
+};
+
+struct rx_pkt_tlvs {
+	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  128 bytes */
+	struct rx_mpdu_start_tlv mpdu_start_tlv;	/*  120 bytes */
+	uint8_t rx_padding0[RX_BE_PADDING0_BYTES];	/*  8 bytes */
+#ifndef NO_RX_PKT_HDR_TLV
+	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;		/* 128 bytes */
+#endif
+};
+#endif
 
 #define SIZE_OF_DATA_RX_TLV sizeof(struct rx_pkt_tlvs)
 
@@ -1679,10 +1698,12 @@ static inline uint32_t hal_rx_mpdu_start_offset_get_generic(void)
 	return RX_PKT_TLV_OFFSET(mpdu_start_tlv);
 }
 
+#ifndef NO_RX_PKT_HDR_TLV
 static inline  uint32_t hal_rx_pkt_tlv_offset_get_generic(void)
 {
 	return RX_PKT_TLV_OFFSET(pkt_hdr_tlv);
 }
+#endif
 
 #ifdef RECEIVE_OFFLOAD
 static inline int
@@ -1789,11 +1810,30 @@ static inline uint32_t hal_rx_tlv_get_is_decrypted_be(uint8_t *buf)
 	return is_decrypt;
 }
 
-//TODO -  Currently going with NO-PKT-HDR, need to add pkt hdr tlv and check
+#ifdef NO_RX_PKT_HDR_TLV
+/**
+ * hal_rx_pkt_hdr_get_be(): API to get 80211 header
+ * @buf: start of rx_pkt_tlv
+ *
+ * If NO_RX_PKT_HDR_TLV is enabled, then this API assume caller gives a raw
+ * data, get 80211 header from packet data directly.
+ * If NO_RX_PKT_HDR_TLV is disabled, then get it from rx_pkt_hdr_tlv in
+ * rx_pkt_tlvs.
+ *
+ * Return: pointer to start of 80211 header
+ */
 static inline uint8_t *hal_rx_pkt_hdr_get_be(uint8_t *buf)
 {
 	return buf + RX_PKT_TLVS_LEN;
 }
+#else
+static inline uint8_t *hal_rx_pkt_hdr_get_be(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	return pkt_tlvs->pkt_hdr_tlv.rx_pkt_hdr;
+}
+#endif
 
 /**
  * hal_rx_priv_info_set_in_tlv_be(): Save the private info to

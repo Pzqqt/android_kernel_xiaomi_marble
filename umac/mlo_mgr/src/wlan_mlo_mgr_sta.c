@@ -863,9 +863,9 @@ QDF_STATUS mlo_disconnect(struct wlan_objmgr_vdev *vdev,
 		copied_conn_req_lock_release(sta_ctx);
 	}
 
-	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+	if (mlo_dev_ctx && wlan_vdev_mlme_is_mlo_vdev(vdev)) {
 		mlo_dev_lock_acquire(mlo_dev_ctx);
-		if (sta_ctx->connect_req) {
+		if (sta_ctx && sta_ctx->connect_req) {
 			mlo_free_connect_ies(sta_ctx->connect_req);
 			qdf_mem_free(sta_ctx->connect_req);
 			sta_ctx->connect_req = NULL;
@@ -905,8 +905,8 @@ QDF_STATUS mlo_sync_disconnect(struct wlan_objmgr_vdev *vdev,
 		copied_conn_req_lock_release(sta_ctx);
 	}
 
-	if (wlan_vdev_mlme_is_mlo_vdev(vdev)) {
-		if (sta_ctx->connect_req) {
+	if (mlo_dev_ctx && wlan_vdev_mlme_is_mlo_vdev(vdev)) {
+		if (sta_ctx && sta_ctx->connect_req) {
 			mlo_free_connect_ies(sta_ctx->connect_req);
 			qdf_mem_free(sta_ctx->connect_req);
 			sta_ctx->connect_req = NULL;
