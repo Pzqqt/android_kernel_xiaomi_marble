@@ -348,7 +348,7 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_TX_RATE_TXBF   = 31,
 
-    /* HTT_DBG_EXT_STATS_TXBF_OFDMA
+    /** HTT_DBG_EXT_STATS_TXBF_OFDMA
      */
     HTT_DBG_EXT_STATS_TXBF_OFDMA          = 32,
 
@@ -422,7 +422,7 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_RX_RING_STATS = 42,
 
-    /* HTT_STRM_GEN_MPDUS_STATS, HTT_STRM_GEN_MPDUS_DETAILS_STATS
+    /** HTT_STRM_GEN_MPDUS_STATS, HTT_STRM_GEN_MPDUS_DETAILS_STATS
      * PARAMS:
      *   - No params
      * RESP MSG: HTT_T2H STREAMING_STATS_IND (not EXT_STATS_CONF)
@@ -451,7 +451,7 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_PDEV_PUNCTURE_STATS = 46,
 
-    /* HTT_DBG_EXT_STATS_ML_PEERS_INFO
+    /** HTT_DBG_EXT_STATS_ML_PEERS_INFO
      * PARAMS:
      *    - param 0:
      *      Bit 0 -> HTT_ML_PEER_DETAILS_TLV always enabled by default
@@ -462,6 +462,37 @@ enum htt_dbg_ext_stats_type {
      *    - htt_ml_peer_stats_t
      */
     HTT_DBG_EXT_STATS_ML_PEERS_INFO = 47,
+
+    /** HTT_DBG_ODD_MANDATORY_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_odd_mandatory_pdev_stats_tlv
+     */
+    HTT_DBG_ODD_MANDATORY_STATS = 48,
+
+    /** HTT_DBG_PDEV_SCHED_ALGO_STATS
+     * PARAMS:
+     *      - No Params
+     * RESP MSG:
+     *   - htt_pdev_sched_algo_ofdma_stats_tlv
+     */
+    HTT_DBG_PDEV_SCHED_ALGO_STATS = 49,
+
+    /** HTT_DBG_ODD_MANDATORY_MUMIMO_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_odd_mandatory_mumimo_pdev_stats_tlv
+     */
+    HTT_DBG_ODD_MANDATORY_MUMIMO_STATS = 50,
+    /** HTT_DBG_ODD_MANDATORY_MUOFDMA_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_odd_mandatory_muofdma_pdev_stats_tlv
+     */
+    HTT_DBG_ODD_MANDATORY_MUOFDMA_STATS = 51,
 
 
     /* keep this last */
@@ -883,6 +914,7 @@ typedef struct {
     A_UINT32      phy_errs[1]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
 } htt_tx_pdev_stats_phy_err_tlv_v;
 
+#define HTT_TX_PDEV_SIFS_BURST_HIST_STATS 10
 #define HTT_TX_PDEV_STATS_SIFS_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
@@ -1576,6 +1608,19 @@ typedef enum {
  */
 #define HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS 4
 #define HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS 4
+
+/* HTT_RX  STATS_NUM_BW_EXT_2_COUNTERS:
+ * bw index 8  (bw ext_2 index 0): rssi_ext160_0_chainX
+ * bw index 9  (bw ext_2 index 1): rssi_ext160_1_chainX
+ * bw index 10 (bw ext_2 index 2): rssi_ext160_2_chainX
+ * bw index 11 (bw ext_2 index 3): rssi_ext160_3_chainX
+ * bw index 12 (bw ext_2 index 4): rssi_ext160_4_chainX
+ * bw index 13 (bw ext_2 index 5): rssi_ext160_5_chainX
+ * bw index 14 (bw ext_2 index 6): rssi_ext160_6_chainX
+ * bw index 15 (bw ext_2 index 7): rssi_ext160_7_chainX
+ */
+#define HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS 8
+
 #define HTT_TX_PEER_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_TX_PEER_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
 #define HTT_TX_PEER_STATS_NUM_REDUCED_CHAN_TYPES 2 /* 0 - Half, 1 - Quarter */
@@ -3578,7 +3623,7 @@ typedef struct {
 
 /* == TQM STATS == */
 
-#define HTT_TX_TQM_MAX_GEN_MPDU_END_REASON 16
+#define HTT_TX_TQM_MAX_GEN_MPDU_END_REASON 17
 #define HTT_TX_TQM_MAX_LIST_MPDU_END_REASON 16
 #define HTT_TX_TQM_MAX_LIST_MPDU_CNT_HISTOGRAM_BINS 16
 
@@ -5173,6 +5218,8 @@ typedef struct {
     A_UINT32 rx_gi_ext_2[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
     A_UINT32 rx_su_punctured_mode[HTT_RX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
     A_UINT32 reduced_rx_bw[HTT_RX_PDEV_STATS_NUM_REDUCED_CHAN_TYPES][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT8  rssi_chain_ext_2[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS]; /* units = dB above noise floor */
+    A_INT8   rx_per_chain_rssi_ext_2_in_dbm[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_2_COUNTERS];
 } htt_rx_pdev_rate_ext_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT
@@ -6729,6 +6776,7 @@ typedef enum {
     HTT_STATS_RC_MODE_DLSU     = 0,
     HTT_STATS_RC_MODE_DLMUMIMO = 1,
     HTT_STATS_RC_MODE_DLOFDMA  = 2,
+    HTT_STATS_RC_MODE_ULMUMIMO = 3,
 } htt_stats_rc_mode;
 
 typedef struct {
@@ -8123,6 +8171,188 @@ typedef struct _htt_ml_peer_stats {
     htt_ml_peer_ext_details_tlv     ml_peer_ext_details;
     htt_ml_link_info_tlv            ml_link_info[];
 } htt_ml_peer_stats_t;
+
+/*
+ * ODD Mandatory Stats are grouped together from all the exisitng different
+ * stats, to form a set of stats that will be used by the ODD application to
+ * post the stats to the cloud instead of polling for the individual stats.
+ * This is done to avoid non-mandatory stats to be polled as the data will not
+ * be required in the recipes derivation.
+ * Rather than the host simply printing the ODD stats, the ODD application
+ * will take the buffer and map it to the odd_mandatory_stats data structure.
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 hw_queued;
+    A_UINT32 hw_reaped;
+    A_UINT32 hw_paused;
+    A_UINT32 hw_filt;
+    A_UINT32 seq_posted;
+    A_UINT32 seq_completed;
+    A_UINT32 underrun;
+    A_UINT32 hw_flush;
+    A_UINT32 next_seq_posted_dsr;
+    A_UINT32 seq_posted_isr;
+    A_UINT32 mpdu_cnt_fcs_ok;
+    A_UINT32 mpdu_cnt_fcs_err;
+    A_UINT32 msdu_count_tqm;
+    A_UINT32 mpdu_count_tqm;
+    A_UINT32 mpdus_ack_failed;
+    A_UINT32 num_data_ppdus_tried_ota;
+    A_UINT32 ppdu_ok;
+    A_UINT32 num_total_ppdus_tried_ota;
+    A_UINT32 thermal_suspend_cnt;
+    A_UINT32 dfs_suspend_cnt;
+    A_UINT32 tx_abort_suspend_cnt;
+    A_UINT32 suspended_txq_mask;
+    A_UINT32 last_suspend_reason;
+    A_UINT32 seq_failed_queueing;
+    A_UINT32 seq_restarted;
+    A_UINT32 seq_txop_repost_stop;
+    A_UINT32 next_seq_cancel;
+    A_UINT32 seq_min_msdu_repost_stop;
+    A_UINT32 total_phy_err_cnt;
+    A_UINT32 ppdu_recvd;
+    A_UINT32 tcp_msdu_cnt;
+    A_UINT32 tcp_ack_msdu_cnt;
+    A_UINT32 udp_msdu_cnt;
+    A_UINT32 fw_tx_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
+    A_UINT32 fw_rx_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
+    A_UINT32 fw_ring_mpdu_err[HTT_RX_STATS_RXDMA_MAX_ERR];
+    A_UINT32 urrn_stats[HTT_TX_PDEV_MAX_URRN_STATS];
+    A_UINT32 sifs_status[HTT_TX_PDEV_MAX_SIFS_BURST_STATS];
+    A_UINT32 sifs_hist_status[HTT_TX_PDEV_SIFS_BURST_HIST_STATS];
+    A_UINT32 rx_suspend_cnt;
+    A_UINT32 rx_suspend_fail_cnt;
+    A_UINT32 rx_resume_cnt;
+    A_UINT32 rx_resume_fail_cnt;
+    A_UINT32 hwq_beacon_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_voice_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_video_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_best_effort_cmd_result[HTT_TX_HWQ_MAX_CMD_RESULT_STATS];
+    A_UINT32 hwq_beacon_mpdu_tried_cnt;
+    A_UINT32 hwq_voice_mpdu_tried_cnt;
+    A_UINT32 hwq_video_mpdu_tried_cnt;
+    A_UINT32 hwq_best_effort_mpdu_tried_cnt;
+    A_UINT32 hwq_beacon_mpdu_queued_cnt;
+    A_UINT32 hwq_voice_mpdu_queued_cnt;
+    A_UINT32 hwq_video_mpdu_queued_cnt;
+    A_UINT32 hwq_best_effort_mpdu_queued_cnt;
+    A_UINT32 hwq_beacon_mpdu_ack_fail_cnt;
+    A_UINT32 hwq_voice_mpdu_ack_fail_cnt;
+    A_UINT32 hwq_video_mpdu_ack_fail_cnt;
+    A_UINT32 hwq_best_effort_mpdu_ack_fail_cnt;
+    A_UINT32 pdev_resets;
+    A_UINT32 phy_warm_reset;
+    A_UINT32 hwsch_reset_count;
+    A_UINT32 phy_warm_reset_ucode_trig;
+    A_UINT32 mac_cold_reset;
+    A_UINT32 mac_warm_reset;
+    A_UINT32 mac_warm_reset_restore_cal;
+    A_UINT32 phy_warm_reset_m3_ssr;
+    A_UINT32 fw_rx_rings_reset;
+    A_UINT32 tx_flush;
+    A_UINT32 hwsch_dev_reset_war;
+    A_UINT32 mac_cold_reset_restore_cal;
+    A_UINT32 mac_only_reset;
+    A_UINT32 mac_sfm_reset;
+    A_UINT32 tx_ldpc; /* Number of tx PPDUs with LDPC coding */
+    A_UINT32 rx_ldpc; /* Number of rx PPDUs with LDPC coding */
+    A_UINT32 gen_mpdu_end_reason[HTT_TX_TQM_MAX_GEN_MPDU_END_REASON];
+    A_UINT32 list_mpdu_end_reason[HTT_TX_TQM_MAX_LIST_MPDU_END_REASON];
+    A_UINT32 tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 half_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 quarter_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 tx_su_punctured_mode[HTT_TX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
+    A_UINT32 rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 rx_nss[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 rx_bw[HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 rx_stbc[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 rts_cnt;
+    A_UINT32 rts_success;
+} htt_odd_mandatory_pdev_stats_tlv;
+
+typedef struct _htt_odd_mandatory_mumimo_pdev_stats_tlv {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 ac_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ax_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ac_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ax_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ac_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ax_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_mumimo_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_mumimo_rx_nss[HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+    A_UINT32 ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 rx_ulmumimo_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulmumimo_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulmumimo_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+} htt_odd_mandatory_mumimo_pdev_stats_tlv;
+
+typedef struct _htt_odd_mandatory_muofdma_pdev_stats_tlv {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 mu_ofdma_seq_posted;
+    A_UINT32 ul_mu_ofdma_seq_posted;
+    A_UINT32 ofdma_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_TX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 ofdma_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ofdma_tx_ldpc;
+    A_UINT32 ul_ofdma_rx_ldpc;
+    A_UINT32 ul_ofdma_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS + HTT_RX_PDEV_STATS_NUM_EXTRA2_MCS_COUNTERS];
+    A_UINT32 ul_ofdma_rx_nss[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ul_ofdma_rx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 rx_ulofdma_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulofdma_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulofdma_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 ax_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 be_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ofdma_tx_ru_size[HTT_TX_PDEV_STATS_NUM_AX_RU_SIZE_COUNTERS];
+} htt_odd_mandatory_muofdma_pdev_stats_tlv;
+
+
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_M 0x000000ff
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S 0
+
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_GET(_var) \
+    (((_var) & HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_M) >> \
+     HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S)
+
+#define HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID, _val); \
+        ((_var) |= ((_val) << HTT_PDEV_SCHED_ALGO_OFDMA_STATS_MAC_ID_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /**
+     * BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    union {
+        struct {
+            A_UINT32 mac_id:    8,
+                     reserved: 24;
+        };
+        A_UINT32 mac_id__word;
+    };
+
+    /** Num of instances where rate based DL OFDMA status = ENABLED */
+    A_UINT32 rate_based_dlofdma_enabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where rate based DL OFDMA status = DISABLED */
+    A_UINT32 rate_based_dlofdma_disabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where rate based DL OFDMA status = PROBING */
+    A_UINT32 rate_based_dlofdma_probing_count[HTT_NUM_AC_WMM];
+    /** Num of instances where rate based DL OFDMA status = MONITORING */
+    A_UINT32 rate_based_dlofdma_monitoring_count[HTT_NUM_AC_WMM];
+    /** Num of instances where avg. channel access latency based DL OFDMA status = ENABLED */
+    A_UINT32 chan_acc_lat_based_dlofdma_enabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where avg. channel access latency based DL OFDMA status = DISABLED */
+    A_UINT32 chan_acc_lat_based_dlofdma_disabled_count[HTT_NUM_AC_WMM];
+    /** Num of instances where avg. channel access latency based DL OFDMA status = MONITORING */
+    A_UINT32 chan_acc_lat_based_dlofdma_monitoring_count[HTT_NUM_AC_WMM];
+} htt_pdev_sched_algo_ofdma_stats_tlv;
 
 
 #endif /* __HTT_STATS_H__ */

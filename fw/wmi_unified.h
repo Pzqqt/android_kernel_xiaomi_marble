@@ -136,32 +136,24 @@ extern "C" {
     } while(0)
 
 /*
- * Below GET/SET BITS_FROM_ARRAY_LEN32_BYTES macros can be used when
+ * Below GET/SET BITS_ARRAY_LEN32_BYTES macros can be used when
  * reading/writting bits which are spread across array_len32 entries.
  * These can be used to GET/SET maximum of 32 bits only,
  * also array_len32 length should be limited to maximum of 32.
  */
-#define WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(var, _arrayp, _index, _num_bits) \
+#define WMI_GET_BITS_ARRAY_LEN32_BYTES(var, _arrayp, _index, _num_bits) \
     do { \
-        if ((((_index % 32) + _num_bits) / 32) != 0) { \
-            A_UINT8 i; \
-            for (i = 0; i < _num_bits; i++) { \
-                (var) |= (WMI_GET_BITS(_arrayp[(_index+i) / 32], ((_index+i) % 32), 1) << i); \
-            } \
-        } else { \
-            (var) = WMI_GET_BITS(_arrayp[_index / 32], (_index % 32), _num_bits); \
+        A_UINT8 i; \
+        for (i = 0; i < _num_bits; i++) { \
+            (var) |= (WMI_GET_BITS(_arrayp[(_index+i) / 32], ((_index+i) % 32), 1) << i); \
         } \
     } while(0)
 
-#define WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(_arrayp, _index, _num_bits, val) \
+#define WMI_SET_BITS_ARRAY_LEN32_BYTES(_arrayp, _index, _num_bits, val) \
     do { \
-        if ((((_index % 32) + _num_bits) / 32) != 0) { \
-            A_UINT8 i; \
-            for (i = 0; i < _num_bits; i++) { \
-                WMI_SET_BITS(_arrayp[(_index+i) / 32], ((_index+i) % 32), 1, (val >> i)); \
-            } \
-        } else { \
-            WMI_SET_BITS(_arrayp[_index / 32], (_index % 32), _num_bits, val); \
+        A_UINT8 i; \
+        for (i = 0; i < _num_bits; i++) { \
+            WMI_SET_BITS(_arrayp[(_index+i) / 32], ((_index+i) % 32), 1, (val >> i)); \
         } \
     } while(0)
 
@@ -517,6 +509,7 @@ typedef enum {
     WMI_PDEV_SET_BIOS_INTERFACE_CMDID,
     WMI_PDEV_FIPS_EXTEND_CMDID,
     WMI_PDEV_FIPS_MODE_SET_CMDID,
+    WMI_PDEV_FEATURESET_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -2017,6 +2010,9 @@ typedef enum {
      */
     WMI_HALPHY_CTRL_PATH_STATS_EVENTID,
 
+    /** FW IPA link stats Event */
+    WMI_IPA_LINK_STATS_EVENTID,
+
 
     /* NLO specific events */
     /** NLO match event after the first match */
@@ -3203,6 +3199,36 @@ typedef struct {
 #define WMI_TARGET_CAP_FLAGS_RX_PEER_METADATA_VERSION_SET(target_cap_flags, value) \
         WMI_SET_BITS(target_cap_flags, 0, 2, value)
 
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_2GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 2, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_2GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 2, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_2GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 3, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_2GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 3, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_5GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 4, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_5GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 4, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_5GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 5, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_5GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 5, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_6GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 6, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_RX_SUPPORT_6GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 6, 1, value)
+
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_6GHZ_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 7, 1)
+#define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_6GHZ_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 7, 1, value)
+
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
  */
@@ -3306,7 +3332,13 @@ typedef struct {
      *    1-> MLO support
      *    2,3-> reserved
      *    Refer to WMI_TARGET_CAP_FLAGS_PEER_METADATA_VERSION macros.
-     * Bits 31:2 - Reserved
+     * Bit 2 - UL MUMIMO Rx support on 2.4GHz (AP Mode)
+     * Bit 3 - UL MUMIMO Tx support on 2.4GHz (STA Mode)
+     * Bit 4 - UL MUMIMO Rx support on 5GHz (AP Mode)
+     * Bit 5 - UL MUMIMO Tx support on 5GHz (STA Mode)
+     * Bit 6 - UL MUMIMO Rx support on 6GHz (AP Mode)
+     * Bit 7 - UL MUMIMO Tx support on 6GHz (STA Mode)
+     * Bits 31:8 - Reserved
      */
     A_UINT32 target_cap_flags;
 
@@ -4781,9 +4813,6 @@ typedef struct {
  *         fill hw_mode_config's fields with 0x0.
  *     wmi_pdev_band_to_mac                 band_to_mac[];
  *     wmi_htt_msdu_idx_to_htt_msdu_qtype   htt_msdu_idx_to_qtype_map[];
- *     A_UINT32 feature_set_bitmap[];   <-- Host supported feature info,
- *                                          array length is equal to
- *                                          WMI_FEATURE_SET_BITMAP_ARRAY_LEN32.
  */
 } wmi_init_cmd_fixed_param;
 
@@ -4801,6 +4830,11 @@ typedef enum {
 } WMI_BAND_CONCURRENCY;
 
 typedef enum {
+    WMI_SISO        = 1, /* When 1x1 is supported */
+    WMI_MIMO_2X2    = 2, /* When 2x2 MIMO is supported */
+} WMI_NUM_ANTENNAS;
+
+typedef enum {
     WMI_VENDOR1_REQ1_VERSION_3_00   = 0,
     WMI_VENDOR1_REQ1_VERSION_3_01   = 1,
     WMI_VENDOR1_REQ1_VERSION_3_20   = 2,
@@ -4814,257 +4848,266 @@ typedef enum {
 
 /* HW features supported info */
 /* enum WMI_WIFI_STANDARD are possible values for WiFi standard bitfield */
-#define WMI_GET_WIFI_STANDARD(feature_bitmap)                   \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 0, 4)
+#define WMI_GET_WIFI_STANDARD(var, feature_bitmap)              \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 0, 4)
 #define WMI_SET_WIFI_STANDARD(feature_bitmap, val)              \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 0, 4, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 0, 4, val)
 /* enum WMI_BAND_CONCURRENCY are possible values for band concurrency support bitfield */
-#define WMI_GET_BAND_CONCURRENCY_SUPPORT(feature_bitmap)        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 4, 3)
+#define WMI_GET_BAND_CONCURRENCY_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 4, 3)
 #define WMI_SET_BAND_CONCURRENCY_SUPPORT(feature_bitmap, val)   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 4, 3, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 4, 3, val)
 
 /* PNO feature supported info */
-#define WMI_GET_PNO_SCAN_IN_UNASSOC_STATE(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 7, 1)
+#define WMI_GET_PNO_SCAN_IN_UNASSOC_STATE(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 7, 1)
 #define WMI_SET_PNO_SCAN_IN_UNASSOC_STATE(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 7, 1, val)
-#define WMI_GET_PNO_SCAN_IN_ASSOC_STATE(feature_bitmap)                 \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 8, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 7, 1, val)
+#define WMI_GET_PNO_SCAN_IN_ASSOC_STATE(var, feature_bitmap)            \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 8, 1)
 #define WMI_SET_PNO_SCAN_IN_ASSOC_STATE(feature_bitmap, val)            \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 8, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 8, 1, val)
 
 /* TWT feature supported info */
-#define WMI_GET_TWT_FEATURE_SUPPORT(feature_bitmap)                \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 9, 1)
+#define WMI_GET_TWT_FEATURE_SUPPORT(var, feature_bitmap)           \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 9, 1)
 #define WMI_SET_TWT_FEATURE_SUPPORT(feature_bitmap, val)           \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 9, 1, val)
-#define WMI_GET_TWT_REQUESTOR(feature_bitmap)                      \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 10, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 9, 1, val)
+#define WMI_GET_TWT_REQUESTOR(var, feature_bitmap)                 \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 10, 1)
 #define WMI_SET_TWT_REQUESTER(feature_bitmap, val)                 \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 10, 1, val)
-#define WMI_GET_TWT_BROADCAST(feature_bitmap)                      \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 11, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 10, 1, val)
+#define WMI_GET_TWT_BROADCAST(var, feature_bitmap)                 \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 11, 1)
 #define WMI_SET_TWT_BROADCAST(feature_bitmap, val)                 \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 11, 1, val)
-#define WMI_GET_TWT_FLEXIBLE(feature_bitmap)                       \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 12, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 11, 1, val)
+#define WMI_GET_TWT_FLEXIBLE(var, feature_bitmap)                  \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 12, 1)
 #define WMI_SET_TWT_FLEXIBLE(feature_bitmap, val)                  \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 12, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 12, 1, val)
 
 /* WIFI optimizer feature supported info */
-#define WMI_GET_WIFI_OPT_FEATURE_SUPPORT(feature_bitmap)                   \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 13, 1)
-#define WMI_SET_WIFI_OPT_FEATURE_SUPPORT(feature_bitmap, val)              \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 13, 1, val)
+#define WMI_GET_WIFI_OPT_FEATURE_SUPPORT(var, feature_bitmap)                   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 13, 1)
+#define WMI_SET_WIFI_OPT_FEATURE_SUPPORT(feature_bitmap, val)         \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 13, 1, val)
 
 /* RFC8325 feature supported info */
-#define WMI_GET_RFC8325_FEATURE_SUPPORT(feature_bitmap)                     \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 14, 1)
+#define WMI_GET_RFC8325_FEATURE_SUPPORT(var, feature_bitmap)                \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 14, 1)
 #define WMI_SET_RFC8325_FEATURE_SUPPORT(feature_bitmap, val)                \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 14, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 14, 1, val)
 
 /* MHS feature supported info */
-#define WMI_GET_MHS_5G_SUPPORT(feature_bitmap)                          \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 15, 1)
+#define WMI_GET_MHS_5G_SUPPORT(var, feature_bitmap)                     \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 15, 1)
 #define WMI_SET_MHS_5G_SUPPORT(feature_bitmap, val)                     \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 15, 1, val)
-#define WMI_GET_MHS_6G_SUPPORT(feature_bitmap)                          \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 16, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 15, 1, val)
+#define WMI_GET_MHS_6G_SUPPORT(var, feature_bitmap)                     \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 16, 1)
 #define WMI_SET_MHS_6G_SUPPORT(feature_bitmap, val)                     \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 16, 1, val)
-#define WMI_GET_MHS_MAX_CLIENTS_SUPPORT(feature_bitmap)                 \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 17, 8)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 16, 1, val)
+#define WMI_GET_MHS_MAX_CLIENTS_SUPPORT(var, feature_bitmap)            \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 17, 8)
 #define WMI_SET_MHS_MAX_CLIENTS_SUPPORT(feature_bitmap, val)            \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 17, 8, val)
-#define WMI_GET_MHS_SET_COUNTRY_CODE_HAL_SUPPORT(feature_bitmap)        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 25, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 17, 8, val)
+#define WMI_GET_MHS_SET_COUNTRY_CODE_HAL_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 25, 1)
 #define WMI_SET_MHS_SET_COUNTRY_CODE_HAL_SUPPORT(feature_bitmap, val)   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 25, 1, val)
-#define WMI_GET_MHS_GETVALID_CHANNELS_SUPPORT(feature_bitmap)           \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 26, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 25, 1, val)
+#define WMI_GET_MHS_GETVALID_CHANNELS_SUPPORT(var, feature_bitmap)      \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 26, 1)
 #define WMI_SET_MHS_GETVALID_CHANNELS_SUPPORT(feature_bitmap, val)      \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 26, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 26, 1, val)
 /* enum WMI_WIFI_STANDARD are possible values for MHS DOT11 mode support bitfield */
-#define WMI_GET_MHS_DOT11_MODE_SUPPORT(feature_bitmap)                  \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 27, 4)
+#define WMI_GET_MHS_DOT11_MODE_SUPPORT(var, feature_bitmap)             \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 27, 4)
 #define WMI_SET_MHS_DOT11_MODE_SUPPORT(feature_bitmap, val)             \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 27, 4, val)
-#define WMI_GET_MHS_WPA3_SUPPORT(feature_bitmap)                        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 31, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 27, 4, val)
+#define WMI_GET_MHS_WPA3_SUPPORT(var, feature_bitmap)                   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 31, 1)
 #define WMI_SET_MHS_WPA3_SUPPORT(feature_bitmap, val)                   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 31, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 31, 1, val)
 
 /* Vendor requirement1 supported verison info */
 /* enum's WMI_VENDORxx_REQxx_VERSION are the possible vaues for below bitfield*/
-#define WMI_GET_VENDOR_REQ_1_VERSION(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 32, 8)
+#define WMI_GET_VENDOR_REQ_1_VERSION(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 32, 8)
 #define WMI_SET_VENDOR_REQ_1_VERSION(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 32, 8, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 32, 8, val)
 
 /* Roaming feature supported info */
-#define WMI_GET_ROAMING_HIGH_CU_ROAM_TRIGGER(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 40, 1)
+#define WMI_GET_ROAMING_HIGH_CU_ROAM_TRIGGER(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 40, 1)
 #define WMI_SET_ROAMING_HIGH_CU_ROAM_TRIGGER(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 40, 1, val)
-#define WMI_GET_ROAMING_EMERGENCY_TRIGGER(feature_bitmap)                  \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 41, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 40, 1, val)
+#define WMI_GET_ROAMING_EMERGENCY_TRIGGER(var, feature_bitmap)             \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 41, 1)
 #define WMI_SET_ROAMING_EMERGENCY_TRIGGER(feature_bitmap, val)             \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 41, 1, val)
-#define WMI_GET_ROAMING_BTM_TRIGGER(feature_bitmap)                        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 42, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 41, 1, val)
+#define WMI_GET_ROAMING_BTM_TRIGGER(var, feature_bitmap)                   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 42, 1)
 #define WMI_SET_ROAMING_BTM_TRIGGER(feature_bitmap, val)                   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 42, 1, val)
-#define WMI_GET_ROAMING_IDLE_TRIGGER(feature_bitmap)                       \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 43, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 42, 1, val)
+#define WMI_GET_ROAMING_IDLE_TRIGGER(var, feature_bitmap)                  \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 43, 1)
 #define WMI_SET_ROAMING_IDLE_TRIGGER(feature_bitmap, val)                  \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 43, 1, val)
-#define WMI_GET_ROAMING_WTC_TRIGGER(feature_bitmap)                        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 44, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 43, 1, val)
+#define WMI_GET_ROAMING_WTC_TRIGGER(var, feature_bitmap)                   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 44, 1)
 #define WMI_SET_ROAMING_WTC_TRIGGER(feature_bitmap, val)                   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 44, 1, val)
-#define WMI_GET_ROAMING_BTCOEX_TRIGGER(feature_bitmap)                     \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 45, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 44, 1, val)
+#define WMI_GET_ROAMING_BTCOEX_TRIGGER(var, feature_bitmap)                \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 45, 1)
 #define WMI_SET_ROAMING_BTCOEX_TRIGGER(feature_bitmap, val)                \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 45, 1, val)
-#define WMI_GET_ROAMING_BTW_WPA_WPA2(feature_bitmap)                       \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 46, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 45, 1, val)
+#define WMI_GET_ROAMING_BTW_WPA_WPA2(var, feature_bitmap)                  \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 46, 1)
 #define WMI_SET_ROAMING_BTW_WPA_WPA2(feature_bitmap, val)                  \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 46, 1, val)
-#define WMI_GET_ROAMING_MANAGE_CHAN_LIST_API(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 47, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 46, 1, val)
+#define WMI_GET_ROAMING_MANAGE_CHAN_LIST_API(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 47, 1)
 #define WMI_SET_ROAMING_MANAGE_CHAN_LIST_API(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 47, 1, val)
-#define WMI_GET_ROAMING_ADAPTIVE_11R(feature_bitmap)                       \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 48, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 47, 1, val)
+#define WMI_GET_ROAMING_ADAPTIVE_11R(var, feature_bitmap)                  \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 48, 1)
 #define WMI_SET_ROAMING_ADAPTIVE_11R(feature_bitmap, val)                  \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 48, 1, val)
-#define WMI_GET_ROAMING_CTRL_API_GET_SET(feature_bitmap)                   \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 49, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 48, 1, val)
+#define WMI_GET_ROAMING_CTRL_API_GET_SET(var, feature_bitmap)              \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 49, 1)
 #define WMI_SET_ROAMING_CTRL_API_GET_SET(feature_bitmap, val)              \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 49, 1, val)
-#define WMI_GET_ROAMING_CTRL_API_REASSOC(feature_bitmap)                   \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 50, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 49, 1, val)
+#define WMI_GET_ROAMING_CTRL_API_REASSOC(var, feature_bitmap)              \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 50, 1)
 #define WMI_SET_ROAMING_CTRL_API_REASSOC(feature_bitmap, val)              \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 50, 1, val)
-#define WMI_GET_ROAMING_CTRL_GET_CU(feature_bitmap)                        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 51, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 50, 1, val)
+#define WMI_GET_ROAMING_CTRL_GET_CU(var, feature_bitmap)                   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 51, 1)
 #define WMI_SET_ROAMING_CTRL_GET_CU(feature_bitmap, val)                   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 51, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 51, 1, val)
 
 /* Vendor requirement2 supported verison info */
 /* enum's WMI_VENDORxx_REQxx_VERSION are the possible vaues for below bitfield*/
-#define WMI_GET_VENDOR_REQ_2_VERSION(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 52, 8)
+#define WMI_GET_VENDOR_REQ_2_VERSION(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 52, 8)
 #define WMI_SET_VENDOR_REQ_2_VERSION(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 52, 8, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 52, 8, val)
 
-#define WMI_GET_ASSURANCE_DISCONNECT_REASON_API(feature_bitmap)            \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 60, 1)
+#define WMI_GET_ASSURANCE_DISCONNECT_REASON_API(var, feature_bitmap)       \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 60, 1)
 #define WMI_SET_ASSURANCE_DISCONNECT_REASON_API(feature_bitmap, val)       \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 60, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 60, 1, val)
 
 /* Frame pcap logging */
-#define WMI_GET_FRAME_PCAP_LOG_MGMT(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 61, 1)
+#define WMI_GET_FRAME_PCAP_LOG_MGMT(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 61, 1)
 #define WMI_SET_FRAME_PCAP_LOG_MGMT(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 61, 1, val)
-#define WMI_GET_FRAME_PCAP_LOG_CTRL(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 62, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 61, 1, val)
+#define WMI_GET_FRAME_PCAP_LOG_CTRL(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 62, 1)
 #define WMI_SET_FRAME_PCAP_LOG_CTRL(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 62, 1, val)
-#define WMI_GET_FRAME_PCAP_LOG_DATA(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 63, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 62, 1, val)
+#define WMI_GET_FRAME_PCAP_LOG_DATA(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 63, 1)
 #define WMI_SET_FRAME_PCAP_LOG_DATA(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 63, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 63, 1, val)
 
 /* Security features supported info */
-#define WMI_GET_SECURITY_WPA3_SAE_H2E(feature_bitmap)                     \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 64, 1)
+#define WMI_GET_SECURITY_WPA3_SAE_H2E(var, feature_bitmap)                \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 64, 1)
 #define WMI_SET_SECURITY_WPA3_SAE_H2E(feature_bitmap, val)                \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 64, 1, val)
-#define WMI_GET_SECURITY_WPA3_SAE_FT(feature_bitmap)                      \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 65, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 64, 1, val)
+#define WMI_GET_SECURITY_WPA3_SAE_FT(var, feature_bitmap)                 \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 65, 1)
 #define WMI_SET_SECURITY_WPA3_SAE_FT(feature_bitmap, val)                 \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 65, 1, val)
-#define WMI_GET_SECURITY_WPA3_ENTERP_SUITEB(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 66, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 65, 1, val)
+#define WMI_GET_SECURITY_WPA3_ENTERP_SUITEB(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 66, 1)
 #define WMI_SET_SECURITY_WPA3_ENTERP_SUITEB(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 66, 1, val)
-#define WMI_GET_SECURITY_WPA3_ENTERP_SUITEB_192bit(feature_bitmap)        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 67, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 66, 1, val)
+#define WMI_GET_SECURITY_WPA3_ENTERP_SUITEB_192bit(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 67, 1)
 #define WMI_SET_SECURITY_WPA3_ENTERP_SUITEB_192bit(feature_bitmap, val)   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 67, 1, val)
-#define WMI_GET_SECURITY_FILS_SHA256(feature_bitmap)                      \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 68, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 67, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA256(var, feature_bitmap)                 \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 68, 1)
 #define WMI_SET_SECURITY_FILS_SHA256(feature_bitmap, val)                 \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 68, 1, val)
-#define WMI_GET_SECURITY_FILS_SHA384(feature_bitmap)                      \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 69, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 68, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA384(var, feature_bitmap)                 \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 69, 1)
 #define WMI_SET_SECURITY_FILS_SHA384(feature_bitmap, val)                 \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 69, 1, val)
-#define WMI_GET_SECURITY_FILS_SHA256_FT(feature_bitmap)                   \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 70, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 69, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA256_FT(var, feature_bitmap)              \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 70, 1)
 #define WMI_SET_SECURITY_FILS_SHA256_FT(feature_bitmap, val)              \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 70, 1, val)
-#define WMI_GET_SECURITY_FILS_SHA384_FT(feature_bitmap)                   \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 71, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 70, 1, val)
+#define WMI_GET_SECURITY_FILS_SHA384_FT(var, feature_bitmap)              \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 71, 1)
 #define WMI_SET_SECURITY_FILS_SHA384_FT(feature_bitmap, val)              \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 71, 1, val)
-#define WMI_GET_SECURITY_ENCHANCED_OPEN(feature_bitmap)                   \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 72, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 71, 1, val)
+#define WMI_GET_SECURITY_ENCHANCED_OPEN(var, feature_bitmap)              \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 72, 1)
 #define WMI_SET_SECURITY_ENCHANCED_OPEN(feature_bitmap, val)              \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 72, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 72, 1, val)
 
 /* Peer protocol features supported info */
-#define WMI_GET_NAN_SUPPORT(feature_bitmap)                 \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 73, 1)
+#define WMI_GET_NAN_SUPPORT(var, feature_bitmap)            \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 73, 1)
 #define WMI_SET_NAN_SUPPORT(feature_bitmap, val)            \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 73, 1, val)
-#define WMI_GET_TDLS_SUPPORT(feature_bitmap)                \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 74, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 73, 1, val)
+#define WMI_GET_TDLS_SUPPORT(var, feature_bitmap)           \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 74, 1)
 #define WMI_SET_TDLS_SUPPORT(feature_bitmap, val)           \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 74, 1, val)
-#define WMI_GET_P2P6E_SUPPORT(feature_bitmap)               \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 75, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 74, 1, val)
+#define WMI_GET_P2P6E_SUPPORT(var, feature_bitmap)          \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 75, 1)
 #define WMI_SET_P2P6E_SUPPORT(feature_bitmap, val)          \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 75, 1, val)
-#define WMI_GET_TDLS_OFFCHAN_SUPPORT(feature_bitmap)        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 76, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 75, 1, val)
+#define WMI_GET_TDLS_OFFCHAN_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 76, 1)
 #define WMI_SET_TDLS_OFFCHAN_SUPPORT(feature_bitmap, val)   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 76, 1, val)
-#define WMI_GET_TDLS_CAP_ENHANCE(feature_bitmap)            \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 77, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 76, 1, val)
+#define WMI_GET_TDLS_CAP_ENHANCE(var, feature_bitmap)       \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 77, 1)
 #define WMI_SET_TDLS_CAP_ENHANCE(feature_bitmap, val)       \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 77, 1, val)
-#define WMI_GET_MAX_TDLS_PEERS_SUPPORT(feature_bitmap)      \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 78, 4)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 77, 1, val)
+#define WMI_GET_MAX_TDLS_PEERS_SUPPORT(var, feature_bitmap) \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 78, 4)
 #define WMI_SET_MAX_TDLS_PEERS_SUPPORT(feature_bitmap, val) \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 78, 4, val)
-#define WMI_GET_STA_DUAL_P2P_SUPPORT(feature_bitmap)        \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 82, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 78, 4, val)
+#define WMI_GET_STA_DUAL_P2P_SUPPORT(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 82, 1)
 #define WMI_SET_STA_DUAL_P2P_SUPPORT(feature_bitmap, val)   \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 82, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 82, 1, val)
 
 /* Big data feature supported info */
-#define WMI_GET_PEER_BIGDATA_GETBSSINFO_API_SUPPORT(feature_bitmap)                 \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 83, 1)
+#define WMI_GET_PEER_BIGDATA_GETBSSINFO_API_SUPPORT(var, feature_bitmap)            \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 83, 1)
 #define WMI_SET_PEER_BIGDATA_GETBSSINFO_API_SUPPORT(feature_bitmap, val)            \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 83, 1, val)
-#define WMI_GET_PEER_BIGDATA_GETASSOCREJECTINFO_API_SUPPORT(feature_bitmap)         \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 84, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 83, 1, val)
+#define WMI_GET_PEER_BIGDATA_GETASSOCREJECTINFO_API_SUPPORT(var, feature_bitmap)    \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 84, 1)
 #define WMI_SET_PEER_BIGDATA_GETASSOCREJECTINFO_API_SUPPORT(feature_bitmap, val)    \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 84, 1, val)
-#define WMI_GET_PEER_BIGDATA_GETSTAINFO_API_SUPPORT(feature_bitmap)                 \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 85, 1)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 84, 1, val)
+#define WMI_GET_PEER_BIGDATA_GETSTAINFO_API_SUPPORT(var, feature_bitmap)            \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 85, 1)
 #define WMI_SET_PEER_BIGDATA_GETSTAINFO_API_SUPPORT(feature_bitmap, val)            \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 85, 1, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 85, 1, val)
 
 /* Feature set requirement supported version info */
-#define WMI_GET_FEATURE_SET_VERSION(feature_bitmap)                 \
-        WMI_GET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 86, 16)
+#define WMI_GET_FEATURE_SET_VERSION(var, feature_bitmap)                 \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 86, 16)
 #define WMI_SET_FEATURE_SET_VERSION(feature_bitmap, val)                 \
-        WMI_SET_BITS_FROM_ARRAY_LEN32_BYTES(feature_bitmap, 86, 16, val)
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 86, 16, val)
+
+/*
+ * enum WMI_NUM_ANTENNAS are possible values for number of antennas supported bitfield.
+ * Bitfield value 0 means invalid, 1 means SISO, 2 means MIMO, and values 3+ are reserved.
+ */
+#define WMI_GET_NUM_ANTENNAS(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 102, 4)
+#define WMI_SET_NUM_ANTENNAS(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 102, 4, val)
 
 /*
  * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
@@ -5536,6 +5579,10 @@ typedef enum {
  * sent by Host when checking against support channel list in FW
  */
 #define WMI_SCAN_FLAG_EXT_SPECTRAL_CFREQ_PLUS_10MHZ_IN_SUPP_CH_LIST 0x00002000
+
+/* Include MLO IE in Probe req */
+#define WMI_SCAN_FLAG_EXT_INCL_MLIE_PRB_REQ           0x00004000
+
 
 /**
  * new 6 GHz flags per chan (short ssid or bssid) in struct
@@ -7058,8 +7105,10 @@ typedef struct {
 
 /* tx peer filter action - Filter Tx Packets  - add/remove filter */
 enum {
-    WMI_PEER_TX_FILTER_ACTION_ADD        = 1,
-    WMI_PEER_TX_FILTER_ACTION_REMOVE     = 2,
+    WMI_PEER_TX_FILTER_ACTION_ADD                           = 1,
+    WMI_PEER_TX_FILTER_ACTION_REMOVE                        = 2,
+    WMI_PEER_TX_FILTER_ACTION_ADD_AND_ENABLE_FILTERING      = 3,
+    WMI_PEER_TX_FILTER_ACTION_REMOVE_AND_CLEAR_FILTERING    = 4,
 };
 
 typedef struct {
@@ -7341,6 +7390,8 @@ typedef struct {
 enum wmi_spectral_scan_mode {
     WMI_SPECTRAL_SCAN_NORMAL_MODE,
     WMI_SPECTRAL_SCAN_AGILE_MODE,
+
+    WMI_SPECTRAL_SCAN_MAX_MODE /* keep this last */
 };
 
 /*
@@ -8903,6 +8954,15 @@ typedef enum {
     WMI_TPC_STATS_EVENT_SEND_REG_RATE_CTL = 0x00000007, /* REG | RATE | CTL */
 } WMI_PDEV_TPC_STATS_PARAMS;
 
+typedef enum {
+    WMI_HALPHY_TPC_STATS_SUPPORT_160 = 0,
+    WMI_HALPHY_TPC_STATS_SUPPORT_320,
+    WMI_HALPHY_TPC_STATS_SUPPORT_AX,
+    WMI_HALPHY_TPC_STATS_SUPPORT_AX_EXTRA_MCS,
+    WMI_HALPHY_TPC_STATS_SUPPORT_BE,
+    WMI_HALPHY_TPC_STATS_SUPPORT_BE_PUNC,
+} WMI_HALPHY_TPC_STATS_SUPPORT_BITF; /* support bit fields */
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_get_tpc_stats_cmd_fixed_param */
     /** pdev_id for identifying the MAC
@@ -8945,6 +9005,12 @@ typedef struct {
     A_UINT32 numTxChain; /* The total number of active chains */
     A_UINT32 ctl; /* See CONFORMANCE_TEST_LIMITS enumeration */
     A_UINT32 flags; /* See WMI_TPC_CONFIG_EVENT_FLAG */
+
+    /* support_bits:
+     * Tells info about BE, HE, HE_EXTRA_MCS, 160, 320, 11BE PUNC.
+     * Refer to enum WMI_HALPHY_TPC_STATS_SUPPORT_BITF.
+     */
+    A_UINT32 support_bits;
 } wmi_tpc_configs;
 
 typedef struct {
@@ -9781,6 +9847,7 @@ typedef struct {
 #define WMI_LINK_STATS_IFACE         0x00000002
 #define WMI_LINK_STATS_ALL_PEER      0x00000004
 #define WMI_LINK_STATS_PER_PEER      0x00000008
+#define WMI_LINK_STATS_IPA           0x00000010
 
 
 /* wifi clear statistics bitmap  */
@@ -10412,6 +10479,69 @@ typedef struct {
    /** Total error TIM beacon found by wlan ps including no rx in TIM wakeup and TIM event in active state **/
    A_UINT32 tot_err_tim_bcn;
 } wmi_iface_powersave_stats;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ipa_link_stats */
+
+    /** IPA tx channel 0 buffer hp/tp */
+    A_UINT32 wbm2sw_ring_ch0_hp;
+    A_UINT32 wbm2sw_ring_ch0_tp;
+    /** IPA tx channel 1 buffer hp/tp */
+    A_UINT32 wbm2sw_ring_ch1_hp;
+    A_UINT32 wbm2sw_ring_ch1_tp;
+
+    /** IPA rx channel 0 buffer hp/tp */
+    A_UINT32 reo2sw_ring_ch0_hp;
+    A_UINT32 reo2sw_ring_ch0_tp;
+    /** IPA rx channel 1 buffer hp/tp */
+    A_UINT32 reo2sw_ring_ch1_hp;
+    A_UINT32 reo2sw_ring_ch1_tp;
+
+    /** IPA rx channel 0 ring full counter */
+    A_UINT32 reo2sw_ch0_producer_full_cnt;
+    /** IPA rx channel 1 ring full counter */
+    A_UINT32 reo2sw_ch1_producer_full_cnt;
+
+    /** IPA rx path drop feature enable */
+    A_UINT32 ipa_drop_enabled;
+    /** Counter for IPA rx path switch to drop-enabled state */
+    A_UINT32 ipa_switch_to_drop_cnt;
+    /** Counter for IPA rx path switch from drop-enabled state to normal state */
+    A_UINT32 ipa_switch_from_drop_cnt;
+} wmi_ipa_link_stats;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ipa_per_mac_stats */
+
+    /** TCL total enqueued packet number */
+    A_UINT32 tcl_enqueue_packets;
+    /** TCL total discarded packet number during enqueue */
+    A_UINT32 tcl_enqueue_discard;
+
+    /** Total tx duration time, usec */
+    A_UINT32 total_ppdu_duration_us;
+
+    /** IPA rx no resource debug counter */
+    A_UINT32 wmac_no_resource_drop_ppdu_cnt_ix0;
+    A_UINT32 wmac_no_resource_drop_ppdu_cnt_ix1;
+    A_UINT32 wmac_no_resource_drop_mpdu_cnt_ix0;
+    A_UINT32 wmac_no_resource_drop_mpdu_cnt_ix1;
+    A_UINT32 wmac_rxdma2reo_producer_full_cnt;
+} wmi_ipa_per_mac_stats;
+
+/** IPA statistics (once started) reset and start afresh after each connection */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ipa_link_stats_event_fixed_param */
+    /** unique id identifying the request, given in the request stats command */
+    A_UINT32 request_id;
+    /** number of MACs */
+    A_UINT32 num_macs;
+/*
+ * This TLV is followed by other TLVs:
+ *   wmi_ipa_link_stats ipa_link_stats;
+ *   wmi_ipa_per_mac_stats ipa_per_mac_stats[num_macs];
+ */
+} wmi_ipa_link_stats_event_fixed_param;
 
 /** Interface statistics (once started) reset and start afresh after each connection */
 typedef struct {
@@ -11938,6 +12068,9 @@ typedef struct {
      * particular event out of Multiple Events that are send to host
      */
     A_UINT32 event_count;
+
+    /** Pdev id requested */
+    A_UINT32 pdev_id;
 } wmi_halphy_ctrl_path_stats_event_fixed_param;
 
 typedef struct {
@@ -14600,6 +14733,12 @@ typedef enum {
          */
         WMI_VDEV_PARAM_XPAN_PROFILE,                          /* 0x800F */
 
+        /*
+         * for valid vdev id
+         * for vdev offload stats
+         */
+        WMI_VDEV_PARAM_VDEV_STATS_ID_UPDATE,                 /* 0x8010 */
+
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
@@ -14906,6 +15045,8 @@ typedef struct {
      * max_allowed_tx_power = 0 dBm means value is not specified.
      */
     A_INT32 max_allowed_tx_power;
+    /** unique id to identify mac's TSF register */
+    A_UINT32 mac_tsf_id;
 } wmi_vdev_start_response_event_fixed_param;
 
 typedef struct {
@@ -16433,6 +16574,13 @@ typedef struct {
 #define WMI_PEER_MIMO_PS_STATIC                        0x1
 #define WMI_PEER_MIMO_PS_DYNAMIC                       0x2
 
+/*
+ * Each bit indicates one 20 MHz subchannel is punctured or not.
+ * A bit in the bitmap is set to 1 to indicate that the corresponding 20 MHz
+ * subchannel is not punctured and is set to 0 to indicate that it is punctured.
+ */
+#define WMI_PEER_PUNCTURE_20MHZ_BITMAP                 0x26
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
     /** unique id identifying the VDEV, generated by the caller */
@@ -16728,6 +16876,12 @@ typedef struct {
     A_UINT32 emlsr_trans_delay_us;
     /** eMLSR padding delay in microseconds */
     A_UINT32 emlsr_padding_delay_us;
+    /** Medium Synchronization Duration in microseconds */
+    A_UINT32 msd_dur_us;
+    /** Medium Synchronization OFDM ED Threshold */
+    A_UINT32 msd_ofdm_ed_thr;
+    /** Medium Synchronization Max Num of TXOPs */
+    A_UINT32 msd_max_num_txops;
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
@@ -24624,6 +24778,8 @@ typedef struct {
      * max_allowed_tx_power = 0 dBm means value is not specified.
      */
     A_INT32 max_allowed_tx_power;
+    /** unique id to identify mac's TSF register */
+    A_UINT32 mac_tsf_id;
     /**
      * TLV (tag length value) parameters follows roam_synch_event
      * The TLV's are:
@@ -28214,6 +28370,17 @@ typedef struct {
      A_UINT32 pdev_id;
      A_UINT32 fips_mode_set;        /*FIPS_MODE_ENABLE -Enable, FIPS_MODE_DISABLE -disable  */
 } wmi_pdev_fips_mode_set_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_featureset_cmd_fixed_param */
+
+/*
+ * Following this structure are the TLVs:
+ *     A_UINT32 feature_set_bitmap[];   <-- Host supported feature info,
+ *                                          array length is equal to
+ *                                          WMI_FEATURE_SET_BITMAP_ARRAY_LEN32.
+ */
+} wmi_pdev_featureset_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_smart_ant_enable_cmd_fixed_param */
@@ -32165,6 +32332,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_WOW_COAP_DEL_KEEPALIVE_PATTERN_CMDID);
         WMI_RETURN_STRING(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
         WMI_RETURN_STRING(WMI_COEX_DBAM_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_FEATURESET_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -32451,6 +32619,21 @@ typedef struct {
      */
 } wmi_regulatory_chan_priority_struct;
 
+#define WMI_REG_FCC_RULE_CHAN_FREQ_GET(freq_info)           WMI_GET_BITS(freq_info, 0, 16)
+#define WMI_REG_FCC_RULE_CHAN_FREQ_SET(freq_info, value)    WMI_SET_BITS(freq_info, 0, 16, value)
+#define WMI_REG_FCC_RULE_FCC_TX_POWER_GET(freq_info)        WMI_GET_BITS(freq_info, 16, 8)
+#define WMI_REG_FCC_RULE_FCC_TX_POWER_SET(freq_info, value) WMI_SET_BITS(freq_info, 16, 8, value)
+
+typedef struct {
+    A_UINT32  tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_regulatory_fcc_rule_struct */
+    A_UINT32  freq_info;
+    /* freq_info:
+     * bits 15:0  = u16 channel frequency (in MHz units)
+     * bits 23:16 = u8 FCC_Tx_power (dBm units)
+     * bits 31:24 = u8 reserved for future
+     */
+} wmi_regulatory_fcc_rule_struct;
+
 typedef enum {
     WMI_REG_DFS_UNINIT_REGION = 0,
     WMI_REG_DFS_FCC_REGION    = 1,
@@ -32559,6 +32742,7 @@ typedef struct {
  *     then the 5G elements, then the 6G elements (AP SG, AP LPI, AP VLP,
  *     client SP x4, client LPI x4, client vlp x4).
  *   - wmi_regulatory_chan_priority_struct reg_chan_priority[]
+ *   - wmi_regulatory_fcc_rule_struct reg_fcc_rule[]
  */
 } wmi_reg_chan_list_cc_event_ext_fixed_param;
 
@@ -33821,6 +34005,7 @@ typedef struct {
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 suspend_duration_ms;  /* this long time after TWT paused the 1st SP will start (millisecond) */
     A_UINT32 next_twt_size; /* Next TWT subfield Size, refer to IEEE 802.11ax section "9.4.1.60 TWT Information field" */
+    A_UINT32 sp_start_offset; /* Next TWT service period will be offset by this time (microsecond) */
 } wmi_twt_nudge_dialog_cmd_fixed_param;
 
 /* status code of nudging TWT dialog */
@@ -35125,19 +35310,53 @@ typedef struct {
 
 /** the definition of different ROAM parameters */
 typedef enum {
-    /*  roam param to configure below roam events
-     *  Bit : 0 disabled - do not send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
-     *  Bit : 0 enabled  - send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
-     *  Bit : 1 disabled - do not send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
-     *  Bit : 1 enabled  - send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
-     *  Bit : 2-31  - reserved
+    /*
+     * roam param to configure below roam events
+     * Bit : 0 disabled - do not send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
+     * Bit : 0 enabled  - send WMI_ROAM_NOTIF_SCAN_END in WMI_ROAM_EVENTID
+     * Bit : 1 disabled - do not send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
+     * Bit : 1 enabled  - send 1) WMI_ROAM_STATS_EVENTID 2) WMI_ROAM_NOTIF_SCAN_START and WMI_ROAM_NOTIF_SCAN_END notifs in WMI_ROAM_EVENTID in suspend mode
+     * Bit : 2-31  - reserved
      */
-    WMI_ROAM_PARAM_ROAM_EVENTS_CONFIG = 0x1,
+    WMI_ROAM_PARAM_ROAM_EVENTS_CONFIG = 1,
+
     /*
      * Bit : 0 if unset, POOR_LINKSPEED
      * Bit : 0 if set, GOOD_LINKSPEED
      */
-    WMI_ROAM_PARAM_LINKSPEED_STATE = 0x2,
+    WMI_ROAM_PARAM_LINKSPEED_STATE = 2,
+
+    /*
+     * roam param to configure roam scan params for DFS jitter reduction
+     * Bit : 0 enabled   - DFS channel jitter reduction is enabled.
+     * Bit : 0 disabled  - DFS channel jitter reduction is disabled.
+     *
+     * Bit : 1-7         - To indicate the passive-to-active conversion timeout
+     *                     with range 40 to 70 in ms, default value is 50ms.
+     *                     If an invalid (out of range) value is provided, the
+     *                     default value will be used.
+     * Bit : 8-13        - To indicate the DFS RSSI threshold for current AP
+     *                     with range 0 to 58, default value is 0 dB
+     *                     (DFS rssi threshold = -70 dBm + 0 dB = -70 dBm).
+     *                     The specified value (in dB) is added to the -70 dBm
+     *                     baseline value to get the RSSI threshold in dBm.
+     *                     If an invalid (out of range) value is provided, the
+     *                     default value will be used.
+     * Bit : 14-19       - To indicate the DFS RSSI threshold for candidate AP
+     *                     with range 0 to 58, default value is 0 dB
+     *                     (DFS rssi threshold = -70 - 0 = -70 dBm).
+     *                     The specified value (in dB) is added to the -70 dBm
+     *                     baseline value to get the RSSI threshold in dBm.
+     *                     If an invalid (out of range) value is provided, the
+     *                     default value will be used.
+     * Bit : 20 disabled - To indicate DFS roam scan policy is AGILE
+     * Bit : 20 enabled  - To indicate DFS roam scan policy is Legacy
+     *
+     * Bit : 21-31 are reserved
+     */
+    WMI_ROAM_PARAM_ROAM_SCAN_DFS_CONFIG_BITMAP = 3,
+
+
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
 
@@ -37699,7 +37918,7 @@ typedef struct {
 #define WMI_CFR_GROUP_DATA_SUBTYPE_VALID_BIT_POS      8
 
 /* The bits in this mask mapped to WMI_PEER_CFR_CAPTURE_BW enum */
-#define WMI_CFR_GROUP_BW_MASK_NUM_BITS                5
+#define WMI_CFR_GROUP_BW_MASK_NUM_BITS                6
 #define WMI_CFR_GROUP_BW_BIT_POS                      0
 
 /* The bits in this mask correspond to the values as below
@@ -38919,6 +39138,7 @@ typedef struct {
 
 typedef enum wmi_mlo_tear_down_reason_code_type {
     WMI_MLO_TEARDOWN_SSR_REASON,
+    WMI_MLO_TEARDOWN_HOST_INITIATED_REASON,
 } WMI_MLO_TEARDOWN_REASON_TYPE;
 
 typedef struct {
