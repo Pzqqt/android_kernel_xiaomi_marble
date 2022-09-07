@@ -904,6 +904,9 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		inst->power.fw_cr = inst->hfi_frame_info.cr;
 	}
 
+	if (is_encode_session(inst) && inst->max_filled_len > buf->data_size)
+		inst->max_filled_len = buf->data_size;
+
 	if (!is_image_session(inst) && is_decode_session(inst) && buf->data_size)
 		msm_vidc_update_timestamp(inst, buf->timestamp);
 
@@ -1062,6 +1065,10 @@ static int handle_dequeue_buffers(struct msm_vidc_inst *inst)
 						"vb2 done already", inst, buf);
 				} else {
 					buf->attr |= MSM_VIDC_ATTR_BUFFER_DONE;
+					rc = msm_vidc_dqbuf_cache_operation(inst, buf);
+					if (rc)
+						return rc;
+
 					msm_vidc_vb2_buffer_done(inst, buf);
 				}
 				msm_vidc_put_driver_buf(inst, buf);
