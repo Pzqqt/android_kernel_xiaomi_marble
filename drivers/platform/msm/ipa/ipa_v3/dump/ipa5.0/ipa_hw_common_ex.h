@@ -445,7 +445,7 @@ enum ipa_hw_irq_srcs_e {
 /*
  * Total number of channel contexts that need to be saved for APPS
  */
-#define IPA_HW_REG_SAVE_GSI_NUM_CH_CNTXT_A7          20
+#define IPA_HW_REG_SAVE_GSI_NUM_CH_CNTXT_A7          27
 
 /*
  * Total number of channel contexts that need to be saved for UC

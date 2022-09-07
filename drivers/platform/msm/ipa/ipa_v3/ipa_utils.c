@@ -999,6 +999,8 @@ static const struct ipa_qmb_outstanding ipa3_qmb_outstanding
 	[IPA_4_7][IPA_QMB_INSTANCE_DDR]	        = {13, 12, 120},
 	[IPA_4_9][IPA_QMB_INSTANCE_DDR]	        = {16, 8, 120},
 	[IPA_4_11][IPA_QMB_INSTANCE_DDR] = {13, 12, 120},
+	[IPA_5_0][IPA_QMB_INSTANCE_DDR]		= {12, 12, 0},
+	[IPA_5_0][IPA_QMB_INSTANCE_PCIE]	= {0, 0, 0},
 	[IPA_5_2][IPA_QMB_INSTANCE_DDR] = {13, 13, 0},
 };
 
