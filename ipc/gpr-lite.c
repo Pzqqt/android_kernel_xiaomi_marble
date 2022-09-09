@@ -111,12 +111,12 @@ int gpr_send_pkt(struct gpr_device *adev, struct gpr_pkt *pkt)
 
 	if ((adev->domain_id == GPR_DOMAIN_ADSP) &&
 	    (gpr_get_q6_state() != GPR_SUBSYS_LOADED)) {
-		dev_err(gpr->dev,"%s: domain_id[%d], Still Dsp is not Up\n",
+		dev_err_ratelimited(gpr->dev,"%s: domain_id[%d], Still Dsp is not Up\n",
 			__func__, adev->domain_id);
 		return -ENETRESET;
 		} else if ((adev->domain_id == GPR_DOMAIN_MODEM) &&
 		   (gpr_get_modem_state() == GPR_SUBSYS_DOWN)) {
-		dev_err(gpr->dev, "%s: domain_id[%d], Still Modem is not Up\n",
+		dev_err_ratelimited(gpr->dev, "%s: domain_id[%d], Still Modem is not Up\n",
 			__func__, adev->domain_id );
 		return -ENETRESET;
 	}
