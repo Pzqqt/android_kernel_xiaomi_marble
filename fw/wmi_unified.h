@@ -34944,6 +34944,11 @@ typedef struct {
     A_UINT32 vdev_id;
     /* AP BSSID for which host needs to start pre-authentication */
     wmi_mac_addr candidate_ap_bssid;
+    /*
+     * Transmit address for which host needs to start pre-authentication
+     * in MLO case.  In non MLO cases, transmit_addr will be filled with 0x0.
+     */
+    wmi_mac_addr transmit_addr;
 } wmi_roam_preauth_start_event_fixed_param;
 
 typedef struct {
