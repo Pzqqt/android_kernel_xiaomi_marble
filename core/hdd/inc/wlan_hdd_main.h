@@ -1982,6 +1982,8 @@ struct hdd_rtpm_tput_policy_context {
 };
 #endif
 
+#define MAX_TGT_HW_NAME_LEN 32
+
 /**
  * struct hdd_context - hdd shared driver and psoc/device context
  * @psoc: object manager psoc context
@@ -2122,7 +2124,7 @@ struct hdd_context {
 	/* defining the chip/rom revision */
 	uint32_t target_hw_revision;
 	/* chip/rom name */
-	char *target_hw_name;
+	char target_hw_name[MAX_TGT_HW_NAME_LEN];
 	struct regulatory reg;
 #ifdef FEATURE_WLAN_CH_AVOID
 	uint16_t unsafe_channel_count;
