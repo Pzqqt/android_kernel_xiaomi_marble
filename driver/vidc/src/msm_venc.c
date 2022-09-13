@@ -407,6 +407,11 @@ static int msm_venc_set_csc(struct msm_vidc_inst* inst,
 	msm_vidc_update_cap_value(inst, CSC,
 		msm_venc_csc_required(inst) ? 1 : 0, __func__);
 
+	if (!inst->capabilities->cap[CSC].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_CSC is not supported\n", __func__);
+		return 0;
+	}
+
 	csc = inst->capabilities->cap[CSC].value;
 	i_vpr_h(inst, "%s: csc: %u\n", __func__, csc);
 	rc = venus_hfi_session_property(inst,
