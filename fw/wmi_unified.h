@@ -4872,6 +4872,7 @@ typedef enum {
 } WMI_WIFI_STANDARD;
 
 typedef enum {
+    WMI_HOST_NONE       = 0, /* No concurrency mode supported */
     WMI_HOST_DBS        = 1, /* When 2.4G + 5G & 2.4G + 6G if 6G is supported */
     WMI_HOST_DBS_SBS    = 2, /* When 2.4G + 5G, 2.4G + 6G, 5G + 6G & 5G + 5G is supported */
 } WMI_BAND_CONCURRENCY;
@@ -4892,6 +4893,12 @@ typedef enum {
     WMI_VENDOR1_REQ2_VERSION_3_01   = 1,
     WMI_VENDOR1_REQ2_VERSION_3_20   = 2,
 } WMI_VENDOR1_REQ2_VERSION;
+
+typedef enum {
+    WMI_HOST_BAND_CAP_2GHZ = 0x01,
+    WMI_HOST_BAND_CAP_5GHZ = 0x02,
+    WMI_HOST_BAND_CAP_6GHZ = 0x04,
+} WMI_HOST_BAND_CAP;
 
 /* HW features supported info */
 /* enum WMI_WIFI_STANDARD are possible values for WiFi standard bitfield */
@@ -5155,6 +5162,12 @@ typedef enum {
         WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 102, 4)
 #define WMI_SET_NUM_ANTENNAS(feature_bitmap, val)   \
         WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 102, 4, val)
+
+/* enum WMI_HOST_BAND_CAP are possible values for below bitfield */
+#define WMI_GET_HOST_BAND_CAP(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 106, 6)
+#define WMI_SET_HOST_BAND_CAP(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 106, 6, val)
 
 /*
  * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
