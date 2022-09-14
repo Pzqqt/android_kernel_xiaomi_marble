@@ -6783,8 +6783,13 @@ static void ipa_dec_clients_disable_clks_on_wq(struct work_struct *work)
 
 static void ipa_inc_clients_enable_clks_on_wq(struct work_struct *work)
 {
+	int type;
 	ipa3_enable_clks();
 	IPAERR("unexpected clk access, clock on IPA to save reg");
+	type = gsi_pending_irq_type();
+	if (type) {
+		IPAERR("unexpected gsi irq type: %d\n", type);
+        }
 	ipa_assert();
 }
 
