@@ -1739,9 +1739,10 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	}
 
 	if (capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE &&
+		is_ubwc_supported_platform(inst) &&
 		!is_ubwc_colorformat(capability->cap[PIX_FMTS].value)) {
 		i_vpr_e(inst,
-			"%s: interlace with non-ubwc color format is unsupported\n",
+			"%s: interlace with non-ubwc color format is unsupported for ubwc supported platforms\n",
 			__func__);
 		return -EINVAL;
 	}
@@ -2185,9 +2186,10 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 
 		if (capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE &&
+			is_ubwc_supported_platform(inst) &&
 			!is_ubwc_colorformat(capability->cap[PIX_FMTS].value)) {
 			i_vpr_e(inst,
-				"%s: interlace with non-ubwc color format is unsupported\n",
+				"%s: interlace with non-ubwc color format is unsupported for ubwc supported platforms\n",
 				__func__);
 			return -EINVAL;
 		}
@@ -2679,6 +2681,7 @@ static int msm_vdec_check_colorformat_supported(struct msm_vidc_inst* inst,
 		supported = false;
 	if (inst->capabilities->cap[CODED_FRAMES].value ==
 		CODED_FRAMES_INTERLACE &&
+		is_ubwc_supported_platform(inst) &&
 		!is_ubwc_colorformat(colorformat))
 		supported = false;
 

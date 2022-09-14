@@ -1178,6 +1178,25 @@ bool res_is_less_than_or_equal_to(u32 width, u32 height,
 		return false;
 }
 
+bool is_ubwc_supported_platform(struct msm_vidc_inst *inst)
+{
+	u32 formats = inst->capabilities->cap[PIX_FMTS].step_or_mask;
+	enum msm_vidc_colorformat_type colorformat;
+	u32 i = 0;
+
+	for (i = 0; i <= 31; i++) {
+		if (formats & BIT(i)) {
+			colorformat = formats & BIT(i);
+			if (colorformat == MSM_VIDC_FMT_NV12C ||
+				colorformat == MSM_VIDC_FMT_TP10C ||
+				colorformat == MSM_VIDC_FMT_RGBA8888C) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 int msm_vidc_qbuf_cache_operation(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf)
 {
