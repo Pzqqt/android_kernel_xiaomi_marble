@@ -6502,8 +6502,10 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		hdd_err("vdev %d: timed out waiting for delete", vdev_id);
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 		sme_cleanup_session(hdd_ctx->mac_handle, vdev_id);
-		qdf_trigger_self_recovery(hdd_ctx->psoc,
-					  QDF_VDEV_DELETE_RESPONSE_TIMED_OUT);
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+			       WLAN_LOG_INDICATOR_HOST_DRIVER,
+			       WLAN_LOG_REASON_VDEV_DELETE_RSP_TIMED_OUT,
+			       true, true);
 	}
 
 	hdd_nofl_debug("vdev %d destroyed successfully", vdev_id);
