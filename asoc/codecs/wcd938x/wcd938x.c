@@ -42,7 +42,7 @@
 #define ADC_MODE_VAL_ULP1     0x09
 #define ADC_MODE_VAL_ULP2     0x0B
 
-#define NUM_ATTEMPTS 5
+#define NUM_ATTEMPTS 20
 
 #define DAPM_MICBIAS1_STANDALONE "MIC BIAS1 Standalone"
 #define DAPM_MICBIAS2_STANDALONE "MIC BIAS2 Standalone"
@@ -2137,8 +2137,8 @@ static int wcd938x_get_logical_addr(struct swr_device *swr_dev)
 	int num_retry = NUM_ATTEMPTS;
 
 	do {
-		/* retry after 1ms */
-		usleep_range(1000, 1010);
+		/* retry after 4ms */
+		usleep_range(4000, 4010);
 		ret = swr_get_logical_dev_num(swr_dev, swr_dev->addr, &devnum);
 	} while (ret && --num_retry);
 
