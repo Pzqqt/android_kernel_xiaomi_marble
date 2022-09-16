@@ -30,6 +30,9 @@
 #if defined(CONFIG_MSM_VIDC_PARROT)
 #include "msm_vidc_parrot.h"
 #endif
+#if defined(CONFIG_MSM_VIDC_RAVELIN)
+#include "msm_vidc_ravelin.h"
+#endif
 #if defined(CONFIG_MSM_VIDC_NEO)
 #include "msm_vidc_neo.h"
 #endif
@@ -245,6 +248,15 @@ static int msm_vidc_deinit_platform_variant(struct msm_vidc_core *core, struct d
 		return rc;
 	}
 #endif
+#if defined(CONFIG_MSM_VIDC_RAVELIN)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-ravelin")) {
+		rc = msm_vidc_deinit_platform_ravelin(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed msm-vidc-ravelin with %d\n",
+				__func__, rc);
+		return rc;
+	}
+#endif
 
 	return rc;
 }
@@ -284,6 +296,15 @@ static int msm_vidc_init_platform_variant(struct msm_vidc_core *core, struct dev
 		rc = msm_vidc_init_platform_parrot(core, dev);
 		if (rc)
 			d_vpr_e("%s: failed msm-vidc-parrot with %d\n",
+				__func__, rc);
+		return rc;
+	}
+#endif
+#if defined(CONFIG_MSM_VIDC_RAVELIN)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-ravelin")) {
+		rc = msm_vidc_init_platform_ravelin(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed msm-vidc-ravelin with %d\n",
 				__func__, rc);
 		return rc;
 	}

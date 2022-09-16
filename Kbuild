@@ -32,6 +32,12 @@ LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/khaje_video.h \
                    -I$(VIDEO_ROOT)/driver/platform/khaje/inc
 endif
 
+ifeq ($(CONFIG_ARCH_RAVELIN), y)
+include $(VIDEO_ROOT)/config/ravelin_video.conf
+LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/ravelin_video.h \
+                   -I$(VIDEO_ROOT)/driver/platform/ravelin/inc
+endif
+
 LINUXINCLUDE    += -I$(VIDEO_ROOT)/driver/vidc/inc \
                    -I$(VIDEO_ROOT)/driver/platform/common/inc \
                    -I$(VIDEO_ROOT)/include/uapi/vidc
@@ -59,6 +65,10 @@ endif
 
 ifeq ($(CONFIG_MSM_VIDC_KHAJE), y)
 msm_video-objs += driver/platform/khaje/src/msm_vidc_khaje.o
+endif
+
+ifeq ($(CONFIG_MSM_VIDC_RAVELIN), y)
+msm_video-objs += driver/platform/ravelin/src/msm_vidc_ravelin.o
 endif
 
 ifeq ($(CONFIG_MSM_VIDC_IRIS2), y)
