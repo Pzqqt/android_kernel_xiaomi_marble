@@ -716,7 +716,9 @@ int ipa_set_perf_profile_internal(struct ipa_perf_profile *profile)
 	}
 
 	if (profile->client != IPA_CLIENT_ETHERNET_PROD &&
-		profile->client != IPA_CLIENT_ETHERNET_CONS) {
+		profile->client != IPA_CLIENT_ETHERNET2_PROD &&
+		profile->client != IPA_CLIENT_ETHERNET_CONS &&
+		profile->client != IPA_CLIENT_ETHERNET2_CONS) {
 		IPA_UC_OFFLOAD_ERR("not supported\n");
 		return -EINVAL;
 	}
