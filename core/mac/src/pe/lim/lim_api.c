@@ -2516,11 +2516,14 @@ lim_check_ft_initial_im_association(struct roam_offload_synch_ind *roam_synch,
 	hdr = (tpSirMacMgmtHdr) assoc_req_ptr;
 
 	if (hdr->fc.type == SIR_MAC_MGMT_FRAME &&
-	    hdr->fc.subType == SIR_MAC_MGMT_ASSOC_REQ &&
-	    session_entry->is11Rconnection) {
-		pe_debug("Frame subtype: %d and connection is %d",
-			 hdr->fc.subType, session_entry->is11Rconnection);
-		roam_synch->is_ft_im_roam = true;
+	    hdr->fc.subType == SIR_MAC_MGMT_ASSOC_REQ) {
+		roam_synch->is_assoc = true;
+		if (session_entry->is11Rconnection) {
+			pe_debug("Frame subtype: %d and connection is %d",
+				 hdr->fc.subType,
+				 session_entry->is11Rconnection);
+			roam_synch->is_ft_im_roam = true;
+		}
 	}
 }
 
