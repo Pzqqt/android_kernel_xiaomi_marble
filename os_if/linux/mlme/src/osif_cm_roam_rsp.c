@@ -418,7 +418,7 @@ void osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
 				    rsp->ssid.length);
 	if (!bss)
 		osif_warn("not able to find bss");
-	if (rsp->is_ft)
+	if (rsp->is_assoc)
 		osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
 					      &req_len, &req_ie);
 	else
