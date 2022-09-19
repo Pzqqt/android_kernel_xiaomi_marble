@@ -759,7 +759,7 @@ static int lpass_cdc_va_macro_core_vote(void *handle, bool enable)
 		return -EINVAL;
 	}
 	if (!va_priv->pre_dev_up && enable) {
-		pr_err("%s: adsp is not up\n", __func__);
+		pr_err_ratelimited("%s: adsp is not up\n", __func__);
 		return -EINVAL;
 	}
 
