@@ -4872,6 +4872,7 @@ typedef enum {
 } WMI_WIFI_STANDARD;
 
 typedef enum {
+    WMI_HOST_NONE       = 0, /* No concurrency mode supported */
     WMI_HOST_DBS        = 1, /* When 2.4G + 5G & 2.4G + 6G if 6G is supported */
     WMI_HOST_DBS_SBS    = 2, /* When 2.4G + 5G, 2.4G + 6G, 5G + 6G & 5G + 5G is supported */
 } WMI_BAND_CONCURRENCY;
@@ -4892,6 +4893,12 @@ typedef enum {
     WMI_VENDOR1_REQ2_VERSION_3_01   = 1,
     WMI_VENDOR1_REQ2_VERSION_3_20   = 2,
 } WMI_VENDOR1_REQ2_VERSION;
+
+typedef enum {
+    WMI_HOST_BAND_CAP_2GHZ = 0x01,
+    WMI_HOST_BAND_CAP_5GHZ = 0x02,
+    WMI_HOST_BAND_CAP_6GHZ = 0x04,
+} WMI_HOST_BAND_CAP;
 
 /* HW features supported info */
 /* enum WMI_WIFI_STANDARD are possible values for WiFi standard bitfield */
@@ -5155,6 +5162,12 @@ typedef enum {
         WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 102, 4)
 #define WMI_SET_NUM_ANTENNAS(feature_bitmap, val)   \
         WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 102, 4, val)
+
+/* enum WMI_HOST_BAND_CAP are possible values for below bitfield */
+#define WMI_GET_HOST_BAND_CAP(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 106, 6)
+#define WMI_SET_HOST_BAND_CAP(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 106, 6, val)
 
 /*
  * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
@@ -33403,6 +33416,31 @@ typedef struct {
 #define WMI_MULTIPLE_VDEV_RESTART_FLAG_GET_PHYMODE(phymode) WMI_GET_BITS(phymode, 0, 6)
 #define WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_PHYMODE(phymode, val) WMI_SET_BITS(phymode, 0, 6, val)
 
+/** Indicates that VDEV ID is in bit-map format
+ *  If this flag is set, FW will determine the vdev IDs from the positions
+ *  of the bits that are set, and use these vdev IDs for vdev restart.
+ *
+ *  This flag should not be set from host unless FW has set the service bit
+ *  WMI_SERVICE_MULTIPLE_VDEV_RESTART_BITMAP_SUPPORT to indicate it supports
+ *  this interpretation of the vdev IDs as a bitmap.
+ *
+ *  If this flag is set then below is the way it will be parsed
+ *  vdev_ids[0] = 53 (0011 0101) -> indicates vdev 0,2,4,5 is set
+ *  vdev_ids[1] = 53 (0000 0101) -> indicates vdev 32,34 is set
+ *  similar to this the value can be extended in feature for more vdev's
+ *
+ *  If flag is not se then default parsing will be as below
+ *  vdev_ids[0] = 0
+ *  vdev_ids[1] = 2
+ *  vdev_ids[2] = 4
+ *  .
+ *  .
+ *  vdev_ids[5] = 34
+ */
+#define WMI_MULTIPLE_VDEV_RESTART_FLAG_BITMAP_SUPPORT(flag)  WMI_GET_BITS(flag, 2, 1)
+#define WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_BITMAP_SUPPORT(flag,val)  WMI_SET_BITS(flag, 2, 1, val)
+
+
 /* This command is used whenever host wants to restart multiple
  * VDEVs using single command and the VDEV that are restarted will
  * need to have same properties they had before restart except for the
@@ -33433,7 +33471,22 @@ typedef struct {
     A_UINT32 puncture_20mhz_bitmap; /* each bit indicates one 20 MHz BW punctured */
 
     /* The TLVs follows this structure:
-     * A_UINT32 vdev_ids[]; <--- Array of VDEV ids.
+     * A_UINT32 vdev_ids[]; <--- Array of vdev IDs, or bitmap of vdev IDs
+     *     In flags if WMI_MULTIPLE_VDEV_RESTART_FLAG_BITMAP_SUPPORT is set
+     *     FW will interpret the vdev_ids values as a bitmap, and will use the
+     *     position of all the bits set within the bitmap to determine the
+     *     vdev IDs to use for vdev restart.
+     *     If this flag is set then below is the way it will be parsed
+     *         vdev_ids[0] = 53 (0011 0101) -> indicates vdev 0,2,4,5 is set
+     *         vdev_ids[1] = 53 (0000 0101) -> indicates vdev 32,34 is set
+     *         The array can be extended in feature for more vdevs.
+     *     If this flag is not se then default parsing will be as below
+     *         vdev_ids[0] = 0
+     *         vdev_ids[1] = 2
+     *         vdev_ids[2] = 4
+     *         .
+     *         .
+     *         vdev_ids[5] = 34
      * wmi_channel chan; <------ WMI channel
      * A_UINT32 phymode_list[]; <-- Array of Phymode list, with
      *    each phymode value stored in bits 5:0 of the A_UINT32.
@@ -34944,6 +34997,11 @@ typedef struct {
     A_UINT32 vdev_id;
     /* AP BSSID for which host needs to start pre-authentication */
     wmi_mac_addr candidate_ap_bssid;
+    /*
+     * Transmit address for which host needs to start pre-authentication
+     * in MLO case.  In non MLO cases, transmit_addr will be filled with 0x0.
+     */
+    wmi_mac_addr transmit_addr;
 } wmi_roam_preauth_start_event_fixed_param;
 
 typedef struct {
