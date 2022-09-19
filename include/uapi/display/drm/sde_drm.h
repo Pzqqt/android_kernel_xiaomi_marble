@@ -119,6 +119,14 @@ extern "C" {
 #define SDE_SYSCACHE_LLCC_DISP_RIGHT	2
 
 /**
+ * buffer modes for "buffer_mode" plane property
+ * @SDE_INDEPENDENT_BUFFER_MODE:Plane buffers are independent.
+ * @SDE_SINGLE_BUFFER_MODE:	All planes are on same buffer, same input fence.
+ */
+#define SDE_INDEPENDENT_BUFFER_MODE	0
+#define SDE_SINGLE_BUFFER_MODE		1
+
+/**
  * Bit masks for "src_config" property
  * construct bitmask via (1UL << SDE_DRM_<flag>)
  */
