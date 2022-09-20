@@ -21230,6 +21230,12 @@ typedef enum
     /* Extend ITO under WOW mode if vendor OUI is received in beacon */
     WMI_VENDOR_OUI_ACTION_EXTEND_WOW_ITO = 8,
 
+    /*
+     * Turn on station 80211BE feature if AP's vendor OUI is in the list
+     * for specific customer
+     */
+    WMI_VENDOR_OUI_ACTION_ALLOW_11BE = 9,
+
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
 } wmi_vendor_oui_action_id;
