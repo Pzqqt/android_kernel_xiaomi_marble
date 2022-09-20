@@ -1548,7 +1548,8 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 				 RTPM_ID_DW_TX_HW_ENQUEUE, true);
 	switch (ret) {
 	case 0:
-		if (hif_system_pm_state_check(soc->hif_handle)) {
+		if (hif_system_pm_state_check(soc->hif_handle) ||
+					qdf_unlikely(soc->is_tx_pause)) {
 			dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 			hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
 			hal_srng_inc_flush_cnt(hal_ring_hdl);
@@ -1596,7 +1597,8 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 			      hal_ring_handle_t hal_ring_hdl,
 			      int coalesce)
 {
-	if (hif_system_pm_state_check(soc->hif_handle)) {
+	if (hif_system_pm_state_check(soc->hif_handle) ||
+					qdf_unlikely(soc->is_tx_pause)) {
 		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
 		hal_srng_inc_flush_cnt(hal_ring_hdl);

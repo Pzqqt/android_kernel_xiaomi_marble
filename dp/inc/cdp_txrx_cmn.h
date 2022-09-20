@@ -1987,6 +1987,29 @@ cdp_txrx_set_pdev_status_down(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_set_tx_pause() - Pause or resume tx path
+ * @soc_hdl: Datapath soc handle
+ * @flag: set or clear is_tx_pause
+ *
+ * Return: None.
+ */
+static inline
+void cdp_set_tx_pause(ol_txrx_soc_handle soc, bool flag)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance:");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+				!soc->ops->cmn_drv_ops->set_tx_pause)
+		return;
+
+	soc->ops->cmn_drv_ops->set_tx_pause(soc, flag);
+}
+
+/**
  * cdp_tx_send() - enqueue frame for transmission
  * @soc: soc opaque handle
  * @vdev_id: id of VAP device
