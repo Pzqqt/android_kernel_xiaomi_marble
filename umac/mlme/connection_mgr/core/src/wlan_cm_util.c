@@ -170,7 +170,7 @@ QDF_STATUS cm_set_key(struct cnx_mgr *cm_ctx, bool unicast,
 	cipher = wlan_crypto_get_cipher(cm_ctx->vdev, unicast, key_idx);
 	if (IS_WEP_CIPHER(cipher)) {
 		wep_key_idx = wlan_crypto_get_default_key_idx(cm_ctx->vdev,
-							      !unicast);
+							      false);
 		crypto_key = wlan_crypto_get_key(cm_ctx->vdev, wep_key_idx);
 		qdf_mem_copy(crypto_key->macaddr, bssid->bytes,
 			     QDF_MAC_ADDR_SIZE);
