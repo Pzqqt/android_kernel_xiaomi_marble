@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,7 +20,7 @@
 #ifndef __UTILSAPI_H
 #define __UTILSAPI_H
 
-#include <stdarg.h>
+#include "qdf_types.h"
 #include <sir_common.h>
 #include "ani_global.h"
 #include "sys_wrapper.h"
