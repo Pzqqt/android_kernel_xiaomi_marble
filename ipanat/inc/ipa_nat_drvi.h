@@ -287,9 +287,10 @@ int ipa_nati_add_ipv4_tbl(
 
 int ipa_nati_del_ipv4_table(uint32_t tbl_hdl);
 
-int ipa_nati_query_timestamp(uint32_t  tbl_hdl,
+int ipa_nati_query_timestamp_redirect(uint32_t  tbl_hdl,
 				uint32_t  rule_hdl,
-				uint32_t  *time_stamp);
+				uint32_t  *time_stamp,
+				uint32_t  *redirect);
 
 int ipa_nati_modify_pdn(struct ipa_ioc_nat_pdn_entry *entry);
 
@@ -384,10 +385,11 @@ int ipa_NATI_ipv4_tbl_stats(
 	ipa_nati_tbl_stats* nat_stats_ptr,
 	ipa_nati_tbl_stats* idx_stats_ptr );
 
-int ipa_NATI_query_timestamp(
+int ipa_NATI_query_timestamp_redirect(
 	uint32_t  tbl_hdl,
 	uint32_t  rule_hdl,
-	uint32_t* time_stamp);
+	uint32_t* time_stamp,
+	uint32_t* redirect);
 
 int ipa_NATI_add_ipv4_rule(
 	uint32_t                 tbl_hdl,
