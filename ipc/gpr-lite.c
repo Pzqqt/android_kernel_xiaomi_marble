@@ -109,6 +109,12 @@ int gpr_send_pkt(struct gpr_device *adev, struct gpr_pkt *pkt)
 
 	gpr = dev_get_drvdata(adev->dev.parent);
 
+	if (!gpr) {
+		pr_err_ratelimited("%s: Failed to get gpr dev pointer : gpr[%pK] \n",
+			__func__, gpr);
+		return -EINVAL;
+	}
+
 	if ((adev->domain_id == GPR_DOMAIN_ADSP) &&
 	    (gpr_get_q6_state() != GPR_SUBSYS_LOADED)) {
 		dev_err_ratelimited(gpr->dev,"%s: domain_id[%d], Still Dsp is not Up\n",
