@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +42,7 @@
 #include <linux/ctype.h>
 #include "epping_main.h"
 #include "epping_internal.h"
+#include "qdf_net_if.h"
 
 static int epping_start_adapter(epping_adapter_t *adapter);
 static void epping_stop_adapter(epping_adapter_t *adapter);
@@ -220,7 +222,8 @@ static int epping_set_mac_address(struct net_device *dev, void *addr)
 	struct sockaddr *psta_mac_addr = addr;
 	qdf_mem_copy(&adapter->macAddressCurrent,
 		     psta_mac_addr->sa_data, ETH_ALEN);
-	qdf_mem_copy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
+	qdf_net_update_net_device_dev_addr(dev, psta_mac_addr->sa_data,
+					   ETH_ALEN);
 	return 0;
 }
 
@@ -379,7 +382,9 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 	adapter->dev = dev;
 	adapter->pEpping_ctx = pEpping_ctx;
 	adapter->device_mode = device_mode;    /* station, SAP, etc */
-	qdf_mem_copy(dev->dev_addr, (void *)macAddr, sizeof(tSirMacAddr));
+	qdf_net_update_net_device_dev_addr(dev,
+					   (void *)macAddr,
+					   sizeof(tSirMacAddr));
 	qdf_mem_copy(adapter->macAddressCurrent.bytes,
 		     macAddr, sizeof(tSirMacAddr));
 	qdf_spinlock_create(&adapter->data_lock);

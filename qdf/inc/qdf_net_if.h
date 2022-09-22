@@ -72,7 +72,22 @@ qdf_net_if_get_dev_by_name(char *nif_name);
  */
 QDF_STATUS
 qdf_net_if_release_dev(struct qdf_net_if *nif);
-#else
+
+/**
+ * qdf_net_update_net_device_dev_addr() - update net_device dev_addr
+ * @ndev: net_device
+ * @src_addr: source mac address
+ * @len: length
+ *
+ * This function updates dev_addr in net_device
+ *
+ * Return: void
+ */
+void
+qdf_net_update_net_device_dev_addr(struct net_device *ndev,
+				   const void *src_addr,
+				   size_t len);
+#else /* ENHANCED_OS_ABSTRACTION */
 static inline QDF_STATUS
 qdf_net_if_create_dummy_if(struct qdf_net_if *nif)
 {
@@ -90,7 +105,25 @@ qdf_net_if_release_dev(struct qdf_net_if *nif)
 {
 	return __qdf_net_if_release_dev(nif);
 }
-#endif
+
+/**
+ * qdf_net_update_net_device_dev_addr() - update net_device dev_addr
+ * @ndev: net_device
+ * @src_addr: source mac address
+ * @len: length
+ *
+ * This function updates dev_addr in net_device
+ *
+ * Return: void
+ */
+static inline void
+qdf_net_update_net_device_dev_addr(struct net_device *ndev,
+				   const void *src_addr,
+				   size_t len)
+{
+	__qdf_net_update_net_device_dev_addr(ndev, src_addr, len);
+}
+#endif /* ENHANCED_OS_ABSTRACTION */
 
 /**
  * qdf_net_if_get_devname() - Retrieve netdevice name
