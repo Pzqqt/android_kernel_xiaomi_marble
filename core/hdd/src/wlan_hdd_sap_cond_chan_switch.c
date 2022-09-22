@@ -257,7 +257,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	if (pre_cac_adapter) {
 		/* Flush existing pre_cac work */
 		if (hdd_ctx->sap_pre_cac_work.fn)
-			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
+			qdf_flush_work(&hdd_ctx->sap_pre_cac_work);
 	} else {
 		if (policy_mgr_get_connection_count(hdd_ctx->psoc) > 1) {
 			hdd_err("pre cac not allowed in concurrency");
