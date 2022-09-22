@@ -41,6 +41,7 @@
 #include "cfg_nan_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "qdf_util.h"
+#include "qdf_net_if.h"
 #include <cdp_txrx_misc.h>
 #include "wlan_fwol_ucfg_api.h"
 
@@ -745,7 +746,8 @@ int hdd_ndi_set_mode(const char *iface_name)
 		hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr,
 				       (struct qdf_mac_addr *)ndi_mac_addr);
 		qdf_mem_copy(&adapter->mac_addr, ndi_mac_addr, ETH_ALEN);
-		qdf_mem_copy(adapter->dev->dev_addr, ndi_mac_addr, ETH_ALEN);
+		qdf_net_update_net_device_dev_addr(adapter->dev,
+						   ndi_mac_addr, ETH_ALEN);
 	}
 
 	adapter->device_mode = QDF_NDI_MODE;
