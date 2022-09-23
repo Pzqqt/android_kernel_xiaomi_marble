@@ -1470,6 +1470,42 @@ success:
 	return 0;
 }
 
+static int ipa_get_page_recycle_stats(unsigned long arg)
+{
+	struct ipa_lnx_pipe_page_recycling_stats *page_recycle_stats;
+	int alloc_size;
+
+	alloc_size = sizeof(struct ipa_lnx_pipe_page_recycling_stats);
+
+	page_recycle_stats = (struct ipa_lnx_pipe_page_recycling_stats *) memdup_user((
+		const void __user *)arg, alloc_size);
+	if (IS_ERR(page_recycle_stats)) {
+		IPA_STATS_ERR("copy from user failed");
+		return -ENOMEM;
+	}
+
+	mutex_lock(&ipa3_ctx->recycle_stats_collection_lock);
+	memcpy(page_recycle_stats, &ipa3_ctx->recycle_stats,
+		sizeof(struct ipa_lnx_pipe_page_recycling_stats));
+
+	/* Clear all the data and valid bits */
+	memset(&ipa3_ctx->recycle_stats, 0,
+		sizeof(struct ipa_lnx_pipe_page_recycling_stats));
+
+	mutex_unlock(&ipa3_ctx->recycle_stats_collection_lock);
+
+	if(copy_to_user((void __user *)arg,
+		(u8 *)page_recycle_stats,
+		alloc_size)) {
+		IPA_STATS_ERR("copy to user failed");
+		kfree(page_recycle_stats);
+		return -EFAULT;
+	}
+
+	kfree(page_recycle_stats);
+	return 0;
+}
+
 static int ipa_stats_get_alloc_info(unsigned long arg)
 {
 	int i = 0;
@@ -1663,40 +1699,44 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 #if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
 		if (!ipa3_ctx->mhip_ctx.dbg_stats.uc_dbg_stats_mmio) {
 			ipa_lnx_agent_ctx.alloc_info.num_mhip_instances = 0;
-			goto success;
+		} else {
+			if (ipa_usb_is_teth_prot_connected(IPA_USB_RNDIS))
+				ipa_lnx_agent_ctx.usb_teth_prot[0] = IPA_USB_RNDIS;
+			else if(ipa_usb_is_teth_prot_connected(IPA_USB_RMNET))
+				ipa_lnx_agent_ctx.usb_teth_prot[0] = IPA_USB_RMNET;
+			else ipa_lnx_agent_ctx.usb_teth_prot[0] = IPA_USB_MAX_TETH_PROT_SIZE;
+			ipa_lnx_agent_ctx.alloc_info.num_mhip_instances = 1;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].num_pipes = 4;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].num_tx_instances = 2;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].num_rx_instances = 2;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[0] =
+				IPA_CLIENT_MHI_PRIME_TETH_CONS;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[1] =
+				IPA_CLIENT_MHI_PRIME_TETH_PROD;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[2] =
+				IPA_CLIENT_MHI_PRIME_RMNET_CONS;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[3] =
+				IPA_CLIENT_MHI_PRIME_RMNET_PROD;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].tx_inst_client_type[0]
+				= IPA_CLIENT_MHI_PRIME_TETH_CONS;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].tx_inst_client_type[1]
+				= IPA_CLIENT_MHI_PRIME_RMNET_CONS;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].rx_inst_client_type[0]
+				= IPA_CLIENT_MHI_PRIME_TETH_PROD;
+			ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].rx_inst_client_type[1]
+				= IPA_CLIENT_MHI_PRIME_RMNET_PROD;
 		}
-		if (ipa_usb_is_teth_prot_connected(IPA_USB_RNDIS))
-			ipa_lnx_agent_ctx.usb_teth_prot[0] = IPA_USB_RNDIS;
-		else if(ipa_usb_is_teth_prot_connected(IPA_USB_RMNET))
-			ipa_lnx_agent_ctx.usb_teth_prot[0] = IPA_USB_RMNET;
-		else ipa_lnx_agent_ctx.usb_teth_prot[0] = IPA_USB_MAX_TETH_PROT_SIZE;
-		ipa_lnx_agent_ctx.alloc_info.num_mhip_instances = 1;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].num_pipes = 4;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].num_tx_instances = 2;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].num_rx_instances = 2;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[0] =
-			IPA_CLIENT_MHI_PRIME_TETH_CONS;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[1] =
-			IPA_CLIENT_MHI_PRIME_TETH_PROD;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[2] =
-			IPA_CLIENT_MHI_PRIME_RMNET_CONS;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].pipes_client_type[3] =
-			IPA_CLIENT_MHI_PRIME_RMNET_PROD;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].tx_inst_client_type[0]
-			= IPA_CLIENT_MHI_PRIME_TETH_CONS;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].tx_inst_client_type[1]
-			= IPA_CLIENT_MHI_PRIME_RMNET_CONS;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].rx_inst_client_type[0]
-			= IPA_CLIENT_MHI_PRIME_TETH_PROD;
-		ipa_lnx_agent_ctx.alloc_info.mhip_inst_info[0].rx_inst_client_type[1]
-			= IPA_CLIENT_MHI_PRIME_RMNET_PROD;
 #else
 		/* MHI Prime is not enabled */
 		ipa_lnx_agent_ctx.alloc_info.num_mhip_instances = 0;
 #endif
 	}
 
-success:
+	/* For Page recycling stats for default, coal and Low lat pipes */
+	if (ipa_lnx_agent_ctx.log_type_mask & SPRHD_IPA_LOG_TYPE_RECYCLE_STATS)
+		ipa_lnx_agent_ctx.alloc_info.num_page_rec_interval =
+			IPA_LNX_PIPE_PAGE_RECYCLING_INTERVAL_COUNT;
+
 	if(copy_to_user((u8 *)arg,
 		&ipa_lnx_agent_ctx,
 		sizeof(struct ipa_lnx_stats_spearhead_ctx))) {
@@ -1814,6 +1854,13 @@ static long ipa_lnx_stats_ioctl(struct file *filp,
 				break;
 			}
 #endif
+		}
+		if (consolidated_stats->log_type_mask & SPRHD_IPA_LOG_TYPE_RECYCLE_STATS) {
+			retval = ipa_get_page_recycle_stats((unsigned long) consolidated_stats->recycle_stats);
+			if (retval) {
+				IPA_STATS_ERR("ipa get page recycle stats fail\n");
+				break;
+			}
 		}
 		break;
 	default:
