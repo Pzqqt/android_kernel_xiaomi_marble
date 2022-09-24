@@ -1828,16 +1828,36 @@ static struct msm_platform_inst_capability instance_data_tofino[] = {
 		{0}, {0},
 		NULL, msm_vidc_set_q16},
 
+	/* WA to play-back HSR@480 recorded clip in Ukee
+	 * The I/P super-frame consecutive buffer time-stamp difference in Ukee is 16.621 ms so
+	 * FPS = (1000 / 16.621) * 8(batch size)
+	 * FPS = 481.318
+	 *
+	 * Due to this time-stamp issue video is encoded @482 FPS, even if client is
+	 * configured at 480 FPS. So limit max supported FPS value as 482 instead of 480.
+	 */
 	{FRAME_RATE, DEC, CODECS_ALL,
-		(1 << 16), (480 << 16),
+		(1 << 16), (482 << 16),
 		1, (30 << 16)},
 
 	{FRAME_RATE, DEC, VP9,
 		(MINIMUM_FPS << 16), (MAXIMUM_VP9_FPS << 16),
 		1, (DEFAULT_FPS << 16)},
 
-	{OPERATING_RATE, ENC|DEC, CODECS_ALL,
+	{OPERATING_RATE, ENC, CODECS_ALL,
 		(1 << 16), (480 << 16),
+		1, (30 << 16)},
+
+	/* WA to play-back HSR@480 recorded clip in Ukee
+	 * The I/P super-frame consecutive buffer time-stamp difference in Ukee is 16.621 ms so
+	 * FPS = (1000 / 16.621) * 8(batch size)
+	 * FPS = 481.318
+	 *
+	 * Due to this time-stamp issue video is encoded @482 FPS, even if client is
+	 * configured at 480 FPS. So limit max supported FPS value as 482 instead of 480.
+	 */
+	{OPERATING_RATE, DEC, CODECS_ALL,
+		(1 << 16), (482 << 16),
 		1, (30 << 16)},
 
 	{OPERATING_RATE, DEC, VP9,
