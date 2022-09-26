@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -675,7 +675,6 @@ static int dp_rx_thread_loop(void *arg)
 	dp_info("exiting (%s) id %d pid %d", qdf_get_current_comm(),
 		rx_thread->id, qdf_get_current_pid());
 	qdf_event_set(&rx_thread->shutdown_event);
-	qdf_exit_thread(QDF_STATUS_SUCCESS);
 
 	return 0;
 }
@@ -753,7 +752,6 @@ static int dp_rx_refill_thread_loop(void *arg)
 	dp_info("exiting (%s) pid %d", qdf_get_current_comm(),
 		qdf_get_current_pid());
 	qdf_event_set(&rx_thread->shutdown_event);
-	qdf_exit_thread(QDF_STATUS_SUCCESS);
 
 	return 0;
 }
