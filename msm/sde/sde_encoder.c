@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -5471,24 +5471,15 @@ int sde_encoder_wait_for_event(struct drm_encoder *drm_enc,
 	return ret;
 }
 
-void sde_encoder_helper_get_jitter_bounds_ns(struct drm_encoder *drm_enc,
-		u64 *l_bound, u64 *u_bound)
+void sde_encoder_helper_get_jitter_bounds_ns(u32 frame_rate,
+		u32 jitter_num, u32 jitter_denom,
+		ktime_t *l_bound, ktime_t *u_bound)
 {
-	struct sde_encoder_virt *sde_enc;
-	u64 jitter_ns, frametime_ns;
-	struct msm_mode_info *info;
+	ktime_t jitter_ns, frametime_ns;
 
-	if (!drm_enc) {
-		SDE_ERROR("invalid encoder\n");
-		return;
-	}
-
-	sde_enc = to_sde_encoder_virt(drm_enc);
-	info = &sde_enc->mode_info;
-
-	frametime_ns = (1 * 1000000000) / info->frame_rate;
-	jitter_ns =  info->jitter_numer * frametime_ns;
-	do_div(jitter_ns, info->jitter_denom * 100);
+	frametime_ns = (1 * 1000000000) / frame_rate;
+	jitter_ns =  jitter_num * frametime_ns;
+	do_div(jitter_ns, jitter_denom * 100);
 
 	*l_bound = frametime_ns - jitter_ns;
 	*u_bound = frametime_ns + jitter_ns;
