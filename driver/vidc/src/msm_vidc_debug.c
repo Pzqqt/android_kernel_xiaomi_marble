@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #define CREATE_TRACE_POINTS
 #include "msm_vidc_debug.h"
@@ -165,19 +166,19 @@ static ssize_t core_info_read(struct file* file, char __user* buf,
 	size_t count, loff_t* ppos)
 {
 	struct msm_vidc_core *core = file->private_data;
-	char* dbuf, * cur, * end;
+	char *cur, *end, *dbuf = NULL;
 	ssize_t len = 0;
+	int rc = 0;
 
 	if (!core || !core->dt) {
 		d_vpr_e("%s: invalid params %pK\n", __func__, core);
 		return 0;
 	}
 
-	dbuf = kzalloc(MAX_DBG_BUF_SIZE, GFP_KERNEL);
-	if (!dbuf) {
-		d_vpr_e("%s: Allocation failed!\n", __func__);
-		return -ENOMEM;
-	}
+	rc = msm_vidc_vmem_alloc(MAX_DBG_BUF_SIZE, (void **)&dbuf, __func__);
+	if (rc)
+		return rc;
+
 	cur = dbuf;
 	end = cur + MAX_DBG_BUF_SIZE;
 
@@ -194,7 +195,7 @@ static ssize_t core_info_read(struct file* file, char __user* buf,
 	len = simple_read_from_buffer(buf, count, ppos,
 		dbuf, cur - dbuf);
 
-	kfree(dbuf);
+	msm_vidc_vmem_free((void **)&dbuf);
 	return len;
 }
 
@@ -432,10 +433,11 @@ static ssize_t inst_info_read(struct file *file, char __user *buf,
 	struct core_inst_pair *idata = file->private_data;
 	struct msm_vidc_core *core;
 	struct msm_vidc_inst *inst;
-	char *dbuf, *cur, *end;
+	char *cur, *end, *dbuf = NULL;
 	int i, j;
 	ssize_t len = 0;
 	struct v4l2_format *f;
+	int rc = 0;
 
 	if (!idata || !idata->core || !idata->inst ||
 		!idata->inst->capabilities) {
@@ -452,9 +454,8 @@ static ssize_t inst_info_read(struct file *file, char __user *buf,
 		return 0;
 	}
 
-	dbuf = kzalloc(MAX_DBG_BUF_SIZE, GFP_KERNEL);
-	if (!dbuf) {
-		i_vpr_e(inst, "%s: Allocation failed!\n", __func__);
+	rc = msm_vidc_vmem_alloc(MAX_DBG_BUF_SIZE, (void **)&dbuf, __func__);
+	if (rc) {
 		len = -ENOMEM;
 		goto failed_alloc;
 	}
@@ -510,7 +511,7 @@ static ssize_t inst_info_read(struct file *file, char __user *buf,
 	len = simple_read_from_buffer(buf, count, ppos,
 		dbuf, cur - dbuf);
 
-	kfree(dbuf);
+	msm_vidc_vmem_free((void **)&dbuf);
 failed_alloc:
 	put_inst(inst);
 	return len;
@@ -535,6 +536,7 @@ struct dentry *msm_vidc_debugfs_init_inst(void *instance, struct dentry *parent)
 	char debugfs_name[MAX_DEBUGFS_NAME];
 	struct core_inst_pair *idata = NULL;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	int rc = 0;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -542,11 +544,9 @@ struct dentry *msm_vidc_debugfs_init_inst(void *instance, struct dentry *parent)
 	}
 	snprintf(debugfs_name, MAX_DEBUGFS_NAME, "inst_%d", inst->session_id);
 
-	idata = kzalloc(sizeof(struct core_inst_pair), GFP_KERNEL);
-	if (!idata) {
-		i_vpr_e(inst, "%s: Allocation failed!\n", __func__);
+	rc = msm_vidc_vmem_alloc(sizeof(struct core_inst_pair), (void **)&idata, __func__);
+	if (rc)
 		goto exit;
-	}
 
 	idata->core = inst->core;
 	idata->inst = inst;
@@ -576,7 +576,7 @@ failed_create_file:
 	debugfs_remove_recursive(dir);
 	dir = NULL;
 failed_create_dir:
-	kfree(idata);
+	msm_vidc_vmem_free((void **)&idata);
 exit:
 	return dir;
 }
@@ -593,7 +593,7 @@ void msm_vidc_debugfs_deinit_inst(void *instance)
 	if (dentry->d_inode) {
 		i_vpr_l(inst, "%s: Destroy %pK\n",
 			__func__, dentry->d_inode->i_private);
-		kfree(dentry->d_inode->i_private);
+		msm_vidc_vmem_free(&dentry->d_inode->i_private);
 		dentry->d_inode->i_private = NULL;
 	}
 	debugfs_remove_recursive(dentry);

@@ -804,7 +804,7 @@ EXPORT_SYMBOL(msm_vidc_dqevent);
 void *msm_vidc_open(void *vidc_core, u32 session_type)
 {
 	int rc = 0;
-	struct msm_vidc_inst *inst;
+	struct msm_vidc_inst *inst = NULL;
 	struct msm_vidc_core *core;
 	int i = 0;
 
@@ -826,11 +826,10 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	if (rc)
 		return NULL;
 
-	inst = kzalloc(sizeof(*inst), GFP_KERNEL);
-	if (!inst) {
-		d_vpr_e("%s: failed to allocate inst memory\n", __func__);
+	rc = msm_vidc_vmem_alloc(sizeof(*inst), (void **)&inst, "inst memory");
+	if (rc)
 		return NULL;
-	}
+
 	inst->core = core;
 	inst->domain = session_type;
 	inst->session_id = hash32_ptr(inst);
@@ -850,7 +849,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	rc = msm_memory_pools_init(inst);
 	if (rc) {
 		i_vpr_e(inst, "%s: failed to init pool buffers\n", __func__);
-		kfree(inst);
+		msm_vidc_vmem_free((void **)&inst);
 		return NULL;
 	}
 	INIT_LIST_HEAD(&inst->response_works);
@@ -907,12 +906,10 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_DELAYED_WORK(&inst->stats_work, msm_vidc_stats_handler);
 	INIT_WORK(&inst->stability_work, msm_vidc_stability_handler);
 
-	inst->capabilities = kzalloc(sizeof(struct msm_vidc_inst_capability), GFP_KERNEL);
-	if (!inst->capabilities) {
-		i_vpr_e(inst,
-			"%s: inst capability allocation failed\n", __func__);
+	rc = msm_vidc_vmem_alloc(sizeof(struct msm_vidc_inst_capability),
+		(void **)&inst->capabilities, "inst capability");
+	if (rc)
 		goto error;
-	}
 
 	if (is_decode_session(inst))
 		rc = msm_vdec_inst_init(inst);

@@ -1107,6 +1107,7 @@ static void __flush_debug_queue(struct msm_vidc_core *core,
 	struct hfi_debug_header *pkt;
 	bool local_packet = false;
 	enum vidc_msg_prio log_level = msm_vidc_debug;
+	int rc = 0;
 
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1114,13 +1115,11 @@ static void __flush_debug_queue(struct msm_vidc_core *core,
 	}
 
 	if (!packet || !packet_size) {
-		packet = kzalloc(VIDC_IFACEQ_VAR_HUGE_PKT_SIZE, GFP_KERNEL);
-		if (!packet) {
-			d_vpr_e("%s: fail to allocate\n", __func__);
+		rc = msm_vidc_vmem_alloc(VIDC_IFACEQ_VAR_HUGE_PKT_SIZE, (void **)&packet, __func__);
+		if (rc)
 			return;
-		}
-		packet_size = VIDC_IFACEQ_VAR_HUGE_PKT_SIZE;
 
+		packet_size = VIDC_IFACEQ_VAR_HUGE_PKT_SIZE;
 		local_packet = true;
 
 		/*
@@ -1157,7 +1156,7 @@ static void __flush_debug_queue(struct msm_vidc_core *core,
 	}
 
 	if (local_packet)
-		kfree(packet);
+		msm_vidc_vmem_free((void **)&packet);
 }
 
 static int __sys_set_debug(struct msm_vidc_core *core, u32 debug)
