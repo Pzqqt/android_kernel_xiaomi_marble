@@ -1616,6 +1616,7 @@ static const struct msm_vidc_platform_data ravelin_data = {
 	.csc_data.vpe_csc_custom_limit_coeff = vpe_csc_custom_limit_coeff,
 	.ubwc_config = NULL,
 	.bus_bw_nrt = bus_bw_nrt,
+	.vpu_ver = VENUS_VERSION_AR50LT_V2,
 };
 static struct msm_vidc_platform_ops ravelin_platform_ops = {
 	.buffer_region = msm_vidc_get_buffer_region_ravelin,
