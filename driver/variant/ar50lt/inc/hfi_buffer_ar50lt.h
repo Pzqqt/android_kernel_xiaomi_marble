@@ -303,6 +303,10 @@ typedef u32 HFI_BOOL;
 			HFI_ALIGN(SIZE_H264D_LB_PE_TOP_DATA(frame_width, \
 			frame_height), VENUS_DMA_ALIGNMENT) + \
 			HFI_ALIGN(SIZE_H264D_LB_VSP_TOP(frame_width, \
+			frame_height), VENUS_DMA_ALIGNMENT) + \
+			HFI_ALIGN(SIZE_H264D_LB_RECON_DMA_METADATA_WR \
+			(frame_width, frame_height), VENUS_DMA_ALIGNMENT) * 2 + \
+			HFI_ALIGN(SIZE_H264D_QP(frame_width, \
 			frame_height), VENUS_DMA_ALIGNMENT); \
 		_size = HFI_ALIGN(_size, VENUS_DMA_ALIGNMENT); \
 		if (is_opb) { \
@@ -477,6 +481,11 @@ typedef u32 HFI_BOOL;
 			frame_height), VENUS_DMA_ALIGNMENT) +        \
 			HFI_ALIGN(SIZE_H265D_LB_VSP_LEFT(frame_width, \
 			frame_height), VENUS_DMA_ALIGNMENT) * num_vpp_pipes; \
+			HFI_ALIGN(SIZE_H265D_LB_RECON_DMA_METADATA_WR\
+			(frame_width, frame_height), \
+			VENUS_DMA_ALIGNMENT) * 4 +  \
+			HFI_ALIGN(SIZE_H265D_QP(frame_width, frame_height),\
+			VENUS_DMA_ALIGNMENT);           \
 		if (is_opb) {  \
 			SIZE_VPSS_LB(vpss_lb_size, frame_width, frame_height,\
 						 num_vpp_pipes); \
