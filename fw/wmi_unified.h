@@ -17834,6 +17834,9 @@ enum {
     WMI_AUTH_WPA3_SAE,
     WMI_AUTH_WPA3_OWE,
     WMI_AUTH_PASN,
+    WMI_AUTH_RSNA_8021X_SHA384,
+    WMI_AUTH_WPA3_SAE_SHA384,
+    WMI_AUTH_FT_RSNA_SAE_SHA384,
 };
 
 typedef enum {
@@ -21054,6 +21057,17 @@ typedef struct {
     A_UINT8 KEK[GTK_OFFLOAD_KEK_BYTES]; /* key encryption key */
     A_UINT8 KCK[GTK_OFFLOAD_KCK_BYTES]; /* key confirmation key */
     A_UINT8 replay_counter[GTK_REPLAY_COUNTER_BYTES]; /* replay counter for re-key */
+
+    /*
+     * Following structure will be appended when fils:
+     *     wmi_gtk_offload_fils_tlv_param wmi_fils_gtk_info;
+     * Following structure will be appended to the above KEK[] when kek length
+     * is larger than GTK_OFFLOAD_KEK_BYTES:
+     *     A_UINT8 kek_ext[];
+     * Following structure will be appended to the above KCK[] when kck length
+     * is larger than GTK_OFFLOAD_KCK_BYTES:
+     *     A_UINT8 kck_ext[];
+     */
 } WMI_GTK_OFFLOAD_CMD_fixed_param;
 
 typedef struct {
