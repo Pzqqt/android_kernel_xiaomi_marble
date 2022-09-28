@@ -4670,6 +4670,7 @@ void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 	struct cm_roam_values_copy src_config;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	uint32_t roam_trigger_bitmap;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc)
@@ -4680,6 +4681,20 @@ void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 		return;
 
 	if (mlme_obj->cfg.lfr.roam_scan_offload_enabled) {
+		/*
+		 * When vendor handoff is enabled and disconnection is received,
+		 * then restore the roam trigger bitmap from the ini
+		 * configuration
+		 */
+		wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_CONFIG_ENABLE,
+					   &src_config);
+		if (src_config.bool_value) {
+			roam_trigger_bitmap =
+					wlan_mlme_get_roaming_triggers(psoc);
+			mlme_set_roam_trigger_bitmap(psoc, vdev_id,
+						     roam_trigger_bitmap);
+		}
+
 		src_config.bool_value = 0;
 		wlan_cm_roam_cfg_set_value(psoc, vdev_id, ROAM_CONFIG_ENABLE,
 					   &src_config);
