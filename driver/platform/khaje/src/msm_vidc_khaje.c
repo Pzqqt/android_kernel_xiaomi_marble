@@ -219,7 +219,7 @@ static struct msm_platform_inst_capability instance_data_khaje[] = {
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_TS_REORDER},
 
-	{HFLIP, ENC, CODECS_ALL,
+	{HFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -231,7 +231,7 @@ static struct msm_platform_inst_capability instance_data_khaje[] = {
 		{0},
 		NULL, NULL},
 
-	{VFLIP, ENC, CODECS_ALL,
+	{VFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -243,7 +243,7 @@ static struct msm_platform_inst_capability instance_data_khaje[] = {
 		{0},
 		NULL, NULL},
 
-	{ROTATION, ENC, CODECS_ALL,
+	{ROTATION, ENC, HEVC|H264,
 		0, 0, 1, 0,
 		V4L2_CID_ROTATE,
 		0,
@@ -429,15 +429,6 @@ static struct msm_platform_inst_capability instance_data_khaje[] = {
 		{ALL_INTRA},
 		NULL, NULL},
 
-	{BLUR_TYPES, ENC, CODECS_ALL,
-		VIDC_BLUR_NONE, VIDC_BLUR_NONE, 1, VIDC_BLUR_NONE,
-		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
-		0,
-		CAP_FLAG_OUTPUT_PORT,
-		{PIX_FMTS, BITRATE_MODE, CONTENT_ADAPTIVE_CODING},
-		{BLUR_RESOLUTION},
-		NULL, NULL},
-
 	{BLUR_TYPES, ENC, H264|HEVC,
 		VIDC_BLUR_NONE, VIDC_BLUR_NONE, 1, VIDC_BLUR_NONE,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
@@ -447,7 +438,7 @@ static struct msm_platform_inst_capability instance_data_khaje[] = {
 		{BLUR_RESOLUTION},
 		NULL, NULL},
 
-	{BLUR_RESOLUTION, ENC, CODECS_ALL,
+	{BLUR_RESOLUTION, ENC, H264|HEVC,
 		0, 0, 1, 0,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION,
 		0,

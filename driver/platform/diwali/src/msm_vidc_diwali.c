@@ -368,7 +368,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_TS_REORDER},
 
-	{HFLIP, ENC, CODECS_ALL,
+	{HFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -380,7 +380,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		{0},
 		NULL, msm_vidc_set_flip},
 
-	{VFLIP, ENC, CODECS_ALL,
+	{VFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -392,7 +392,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		{0},
 		NULL, msm_vidc_set_flip},
 
-	{ROTATION, ENC, CODECS_ALL,
+	{ROTATION, ENC, HEVC|H264,
 		0, 270, 90, 0,
 		V4L2_CID_ROTATE,
 		HFI_PROP_ROTATION,
@@ -568,15 +568,6 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		{ALL_INTRA},
 		msm_vidc_adjust_b_frame, msm_vidc_set_u32},
 
-	{BLUR_TYPES, ENC, CODECS_ALL,
-		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_ADAPTIVE,
-		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
-		HFI_PROP_BLUR_TYPES,
-		CAP_FLAG_OUTPUT_PORT,
-		{PIX_FMTS, BITRATE_MODE, CONTENT_ADAPTIVE_CODING},
-		{BLUR_RESOLUTION},
-		msm_vidc_adjust_blur_type, msm_vidc_set_u32_enum},
-
 	{BLUR_TYPES, ENC, H264|HEVC,
 		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_ADAPTIVE,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
@@ -586,7 +577,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		{BLUR_RESOLUTION},
 		msm_vidc_adjust_blur_type, msm_vidc_set_u32_enum},
 
-	{BLUR_RESOLUTION, ENC, CODECS_ALL,
+	{BLUR_RESOLUTION, ENC, H264|HEVC,
 		0, S32_MAX, 1, 0,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION,
 		HFI_PROP_BLUR_RESOLUTION,
@@ -1909,7 +1900,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		{0},
 		NULL, msm_vidc_set_u32},
 
-	{HFLIP, ENC, CODECS_ALL,
+	{HFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -1921,7 +1912,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		{0},
 		NULL, msm_vidc_set_flip},
 
-	{VFLIP, ENC, CODECS_ALL,
+	{VFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -1933,7 +1924,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		{0},
 		NULL, msm_vidc_set_flip},
 
-	{ROTATION, ENC, CODECS_ALL,
+	{ROTATION, ENC, HEVC|H264,
 		0, 270, 90, 0,
 		V4L2_CID_ROTATE,
 		HFI_PROP_ROTATION,
@@ -2109,15 +2100,6 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		{ALL_INTRA},
 		msm_vidc_adjust_b_frame, msm_vidc_set_u32},
 
-	{BLUR_TYPES, ENC, CODECS_ALL,
-		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_ADAPTIVE,
-		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
-		HFI_PROP_BLUR_TYPES,
-		CAP_FLAG_OUTPUT_PORT,
-		{PIX_FMTS, BITRATE_MODE, CONTENT_ADAPTIVE_CODING},
-		{BLUR_RESOLUTION},
-		msm_vidc_adjust_blur_type, msm_vidc_set_u32_enum},
-
 	{BLUR_TYPES, ENC, H264|HEVC,
 		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_ADAPTIVE,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
@@ -2127,7 +2109,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		{BLUR_RESOLUTION},
 		msm_vidc_adjust_blur_type, msm_vidc_set_u32_enum},
 
-	{BLUR_RESOLUTION, ENC, CODECS_ALL,
+	{BLUR_RESOLUTION, ENC, H264|HEVC,
 		0, S32_MAX, 1, 0,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION,
 		HFI_PROP_BLUR_RESOLUTION,
@@ -3449,7 +3431,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		{0},
 		NULL, msm_vidc_set_u32},
 
-	{HFLIP, ENC, CODECS_ALL,
+	{HFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -3461,7 +3443,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		{0},
 		NULL, msm_vidc_set_flip},
 
-	{VFLIP, ENC, CODECS_ALL,
+	{VFLIP, ENC, HEVC|H264,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -3473,7 +3455,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		{0},
 		NULL, msm_vidc_set_flip},
 
-	{ROTATION, ENC, CODECS_ALL,
+	{ROTATION, ENC, HEVC|H264,
 		0, 270, 90, 0,
 		V4L2_CID_ROTATE,
 		HFI_PROP_ROTATION,
@@ -3649,15 +3631,6 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		{ALL_INTRA},
 		msm_vidc_adjust_b_frame, msm_vidc_set_u32},
 
-	{BLUR_TYPES, ENC, CODECS_ALL,
-		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_ADAPTIVE,
-		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
-		HFI_PROP_BLUR_TYPES,
-		CAP_FLAG_OUTPUT_PORT,
-		{PIX_FMTS, BITRATE_MODE, CONTENT_ADAPTIVE_CODING},
-		{BLUR_RESOLUTION},
-		msm_vidc_adjust_blur_type, msm_vidc_set_u32_enum},
-
 	{BLUR_TYPES, ENC, H264|HEVC,
 		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_ADAPTIVE,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
@@ -3667,7 +3640,7 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		{BLUR_RESOLUTION},
 		msm_vidc_adjust_blur_type, msm_vidc_set_u32_enum},
 
-	{BLUR_RESOLUTION, ENC, CODECS_ALL,
+	{BLUR_RESOLUTION, ENC, H264|HEVC,
 		0, S32_MAX, 1, 0,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION,
 		HFI_PROP_BLUR_RESOLUTION,
