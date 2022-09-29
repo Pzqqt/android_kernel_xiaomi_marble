@@ -346,11 +346,10 @@ static int msm_vidc_load_bus_table(struct msm_vidc_core *core)
 	buses->count = num_buses;
 	d_vpr_h("Found %d bus interconnects\n", num_buses);
 
-	bus_ranges = kzalloc(2 * num_buses * sizeof(*bus_ranges), GFP_KERNEL);
-	if (!bus_ranges) {
-		d_vpr_e("No memory to read bus ranges\n");
-		return -ENOMEM;
-	}
+	rc = msm_vidc_vmem_alloc(2 * num_buses * sizeof(*bus_ranges),
+			(void **)&bus_ranges, " for bus ranges");
+	if (rc)
+		return rc;
 
 	rc = of_property_read_u32_array(pdev->dev.of_node,
 				"qcom,bus-range-kbps", bus_ranges,
@@ -387,7 +386,7 @@ static int msm_vidc_load_bus_table(struct msm_vidc_core *core)
 	}
 
 exit:
-	kfree(bus_ranges);
+	msm_vidc_vmem_free((void **)&bus_ranges);
 	return rc;
 }
 
@@ -943,12 +942,13 @@ void msm_vidc_deinit_dt(struct platform_device *pdev)
 	msm_vidc_free_qdss_addr_table(core->dt);
 	msm_vidc_free_bus_table(core->dt);
 	msm_vidc_free_buffer_usage_table(core->dt);
+	msm_vidc_vmem_free((void **)&core->dt);
 }
 
 int msm_vidc_init_dt(struct platform_device *pdev)
 {
 	int rc = 0;
-	struct msm_vidc_dt *dt;
+	struct msm_vidc_dt *dt = NULL;
 	struct msm_vidc_core *core;
 
 	if (!pdev) {
@@ -963,9 +963,9 @@ int msm_vidc_init_dt(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	dt = kzalloc(sizeof(struct msm_vidc_dt), GFP_KERNEL);
-	if (!dt)
-		return -ENOMEM;
+	rc = msm_vidc_vmem_alloc(sizeof(struct msm_vidc_dt), (void **)&dt, __func__);
+	if (rc)
+		return rc;
 
 	core->dt = dt;
 	dt->core = core;

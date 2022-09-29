@@ -314,6 +314,32 @@ exit:
 	return rc;
 }
 
+int msm_vidc_vmem_alloc(unsigned long size, void **mem, const char *msg)
+{
+	int rc = 0;
+
+	if (*mem) {
+		d_vpr_e("%s: error: double alloc\n", msg);
+		rc = -EINVAL;
+	}
+
+	*mem = vzalloc(size);
+	if (!*mem) {
+		d_vpr_e("allocation failed for %s\n", msg);
+		rc = -ENOMEM;
+	}
+
+	return rc;
+}
+
+void msm_vidc_vmem_free(void **addr)
+{
+	if (addr && *addr) {
+		vfree(*addr);
+		*addr = NULL;
+	}
+}
+
 int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 {
 	int rc = 0;
@@ -451,8 +477,9 @@ int msm_vidc_memory_free(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 
 void *msm_memory_alloc(struct msm_vidc_inst *inst, enum msm_memory_pool_type type)
 {
-	struct msm_memory_alloc_header *hdr;
+	struct msm_memory_alloc_header *hdr = NULL;
 	struct msm_memory_pool *pool;
+	int rc = 0;
 
 	if (!inst || type < 0 || type >= MSM_MEM_POOL_MAX) {
 		d_vpr_e("%s: Invalid params\n", __func__);
@@ -478,11 +505,11 @@ void *msm_memory_alloc(struct msm_vidc_inst *inst, enum msm_memory_pool_type typ
 		return hdr->buf;
 	}
 
-	hdr = kzalloc(pool->size + sizeof(struct msm_memory_alloc_header), GFP_KERNEL);
-	if (!hdr) {
-		i_vpr_e(inst, "%s: buffer allocation failed\n", __func__);
+	rc = msm_vidc_vmem_alloc(pool->size + sizeof(struct msm_memory_alloc_header),
+			(void **)&hdr, __func__);
+	if (rc)
 		return NULL;
-	}
+
 	INIT_LIST_HEAD(&hdr->list);
 	hdr->type = type;
 	hdr->busy = true;
@@ -552,14 +579,14 @@ static void msm_vidc_destroy_pool_buffers(struct msm_vidc_inst *inst,
 	/* destroy all free buffers */
 	list_for_each_entry_safe(hdr, dummy, &pool->free_pool, list) {
 		list_del(&hdr->list);
-		kfree(hdr);
+		msm_vidc_vmem_free((void **)&hdr);
 		fcount++;
 	}
 
 	/* destroy all busy buffers */
 	list_for_each_entry_safe(hdr, dummy, &pool->busy_pool, list) {
 		list_del(&hdr->list);
-		kfree(hdr);
+		msm_vidc_vmem_free((void **)&hdr);
 		bcount++;
 	}
 

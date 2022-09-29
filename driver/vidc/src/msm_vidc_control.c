@@ -230,6 +230,7 @@ static int msm_vidc_add_capid_to_list(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id,
 	enum msm_vidc_ctrl_list_type type)
 {
+	int rc = 0;
 	struct msm_vidc_inst_cap_entry *entry = NULL, *curr_node = NULL;
 
 	/* skip adding if cap_id already present in list */
@@ -244,11 +245,10 @@ static int msm_vidc_add_capid_to_list(struct msm_vidc_inst *inst,
 		}
 	}
 
-	entry = kzalloc(sizeof(*entry), GFP_ATOMIC);
-	if (!entry) {
-		i_vpr_e(inst, "%s: alloc failed\n", __func__);
-		return -ENOMEM;
-	}
+	rc = msm_vidc_vmem_alloc(sizeof(*entry), (void **)&entry, __func__);
+	if (rc)
+		return rc;
+
 	entry->cap_id = cap_id;
 	if (type & CHILD_LIST)
 		list_add_tail(&entry->list, &inst->children.list);
@@ -491,7 +491,7 @@ int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst)
 	i_vpr_h(inst, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
 	v4l2_ctrl_handler_free(&inst->ctrl_handler);
 	memset(&inst->ctrl_handler, 0, sizeof(struct v4l2_ctrl_handler));
-	kfree(inst->ctrls);
+	msm_vidc_vmem_free((void **)&inst->ctrls);
 	inst->ctrls = NULL;
 
 	return 0;
@@ -527,12 +527,10 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			__func__);
 		return -EINVAL;
 	}
-	inst->ctrls = kcalloc(num_ctrls,
-		sizeof(struct v4l2_ctrl *), GFP_KERNEL);
-	if (!inst->ctrls) {
-		i_vpr_e(inst, "%s: failed to allocate ctrl\n", __func__);
-		return -ENOMEM;
-	}
+	rc = msm_vidc_vmem_alloc(num_ctrls * sizeof(struct v4l2_ctrl *),
+			(void **)&inst->ctrls, __func__);
+	if (rc)
+		return rc;
 
 	rc = v4l2_ctrl_handler_init(&inst->ctrl_handler, num_ctrls);
 	if (rc) {
@@ -856,7 +854,7 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 		if (rc)
 			goto exit;
 		list_del(&curr_node->list);
-		kfree(curr_node);
+		msm_vidc_vmem_free((void **)&curr_node);
 	}
 
 	/* dynamic controls with request will be set along with qbuf */
@@ -2432,7 +2430,7 @@ int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst)
 		if (rc)
 			goto exit;
 		list_del(&curr_node->list);
-		kfree(curr_node);
+		msm_vidc_vmem_free((void **)&curr_node);
 	}
 
 exit:
@@ -3568,7 +3566,7 @@ int msm_vidc_set_v4l2_properties(struct msm_vidc_inst *inst)
 			goto exit;
 
 		list_del(&curr_node->list);
-		kfree(curr_node);
+		msm_vidc_vmem_free((void **)&curr_node);
 	}
 
 exit:
