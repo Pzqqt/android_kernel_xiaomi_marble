@@ -3311,10 +3311,6 @@ static struct msm_vidc_efuse_data efuse_data_tofino[] = {
 	EFUSE_ENTRY(0x221C8118, 4, 0x800, 0xB, SKU_VERSION),
 };
 
-static struct allowed_clock_rates_table clock_data_tofino[] = {
-	{239999999}, {338000000}
-};
-
 static struct msm_vidc_platform_data waipio_data = {
 	.core_data = core_data_waipio,
 	.core_data_size = ARRAY_SIZE(core_data_waipio),
@@ -3365,12 +3361,6 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 
 		/* override the max allowed bus votes data */
 		platform_data->bus_bw_nrt = bus_bw_nrt_tofino;
-
-		/* Override with SKU clock data into dt */
-		core->dt->allowed_clks_tbl = clock_data_tofino;
-		core->dt->allowed_clks_tbl_size =
-			ARRAY_SIZE(clock_data_tofino);
-		msm_vidc_sort_table(core);
 	}
 
 	return rc;
