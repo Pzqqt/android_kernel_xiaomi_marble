@@ -901,7 +901,8 @@ typedef struct {
     /** Num of times su bf sequences are denylisted */
     A_UINT32 num_su_txbf_denylisted;
     /** pdev uptime in microseconds **/
-    A_UINT32 pdev_up_time_us;
+    A_UINT32 pdev_up_time_us_low;
+    A_UINT32 pdev_up_time_us_high;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -4944,8 +4945,12 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Tx PPDU duration histogram **/
     A_UINT32 tx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
-    A_UINT32 tx_success_time_us;
-    A_UINT32 tx_fail_time_us;
+    A_UINT32 tx_success_time_us_low;
+    A_UINT32 tx_success_time_us_high;
+    A_UINT32 tx_fail_time_us_low;
+    A_UINT32 tx_fail_time_us_high;
+    A_UINT32 pdev_up_time_us_low;
+    A_UINT32 pdev_up_time_us_high;
 } htt_tx_pdev_ppdu_dur_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
