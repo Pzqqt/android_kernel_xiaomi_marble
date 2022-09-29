@@ -51,8 +51,8 @@ static struct msm_platform_core_capability core_data_khaje[] = {
 	{MAX_NUM_4K_SESSIONS, 0},
 	{MAX_NUM_8K_SESSIONS, 0},
 	{MAX_SECURE_SESSION_COUNT, 3},
-	{MAX_RT_MBPF, 8160}, /* ((1920x1088)/256) */
-	{MAX_MBPF, 8160}, /* ((1920x1088)/256) */
+	{MAX_RT_MBPF, 16320}, /* ((1920x1088)/256)*2 */
+	{MAX_MBPF, 32640}, /* ((1920x1088)/256)*4 */
 	{MAX_MBPS, 489600}, /* ((1088x1920)/256)@60fps */
 	{MAX_IMAGE_MBPF, 262144}, /* ((8192x8192)/256) */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
