@@ -619,7 +619,7 @@ typedef u32 HFI_BOOL;
 		HFI_U32 _size_yuv = HFI_ALIGN(frame_width, \
 		BUFFER_ALIGNMENT_16_BYTES) *\
 		HFI_ALIGN(frame_height, BUFFER_ALIGNMENT_16_BYTES) * 3 / 2;  \
-		HFI_ALIGN(_size_yuv, VENUS_DMA_ALIGNMENT); \
+		_size_yuv = HFI_ALIGN(_size_yuv, VENUS_DMA_ALIGNMENT); \
 		_size = HFI_ALIGN(((((MAX(_size_yuv, VPX_DECODER_FRAME_BIN_BUFFER_SIZE)) * \
 		6)/5) / num_vpp_pipes), VENUS_DMA_ALIGNMENT) + \
 		HFI_ALIGN(((MAX(_size_yuv, VPX_DECODER_FRAME_BIN_BUFFER_SIZE) * 4) \
