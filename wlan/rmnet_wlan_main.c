@@ -25,14 +25,14 @@
 #include "rmnet_wlan_stats.h"
 #include "rmnet_wlan_fragment.h"
 #include "rmnet_wlan_connection.h"
-static char*verinfo[]={"\x62\x31\x62\x63\x64\x66\x66\x61",
-"\x61\x33\x33\x33\x36\x37\x61\x31","\x64\x35\x39\x30\x61\x33\x33\x63",
-"\x33\x35\x36\x63\x34\x39\x31\x63","\x34\x33\x62\x62\x38\x34\x39\x39",
-"\x32\x66\x33\x36\x30\x30\x31\x34","\x37\x34\x31\x35\x39\x32\x31\x63",
-"\x34\x64\x32\x32\x34\x33\x36\x33","\x61\x34\x31\x63\x39\x64\x37\x62",
-"\x38\x66\x32\x66\x65\x64\x32\x66","\x63\x30\x32\x62\x61\x39\x30\x65"};
-module_param_array(verinfo,charp,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
-verinfo,
+static char*verinfo[]={"\x30\x65\x33\x34\x62\x31\x39\x31",
+"\x62\x31\x62\x63\x64\x66\x66\x61","\x61\x33\x33\x33\x36\x37\x61\x31",
+"\x64\x35\x39\x30\x61\x33\x33\x63","\x33\x35\x36\x63\x34\x39\x31\x63",
+"\x34\x33\x62\x62\x38\x34\x39\x39","\x32\x66\x33\x36\x30\x30\x31\x34",
+"\x37\x34\x31\x35\x39\x32\x31\x63","\x34\x64\x32\x32\x34\x33\x36\x33",
+"\x61\x34\x31\x63\x39\x64\x37\x62","\x38\x66\x32\x66\x65\x64\x32\x66",
+"\x63\x30\x32\x62\x61\x39\x30\x65"};module_param_array(verinfo,charp,NULL,
+(0xcb7+5769-0x221c));MODULE_PARM_DESC(verinfo,
 "\x56\x65\x72\x73\x69\x6f\x6e\x20\x6f\x66\x20\x74\x68\x65\x20\x64\x72\x69\x76\x65\x72"
 );
 #define DATARMNETaf49b04806 ((0xeb7+1158-0x132d))
@@ -283,7 +283,11 @@ DATARMNET611d08d671,sizeof(*DATARMNET568b3d4b19),&DATARMNET3f4e206745);if(!
 DATARMNET568b3d4b19){DATARMNET5ca94dbc3c(DATARMNETf1f7e2c408);goto 
 DATARMNETbf4095f79e;}DATARMNET3396919a68.DATARMNET906b2ee561=DATARMNET568b3d4b19
 ->spi;}else{goto DATARMNETbf4095f79e;}if(DATARMNET4eafcdee07(&
-DATARMNET3396919a68))goto DATARMNET1e5291b369;goto DATARMNETbf4095f79e;
+DATARMNET3396919a68))goto DATARMNET1e5291b369;if(DATARMNET543491eb0f->mark==
+131074){struct net_device*DATARMNET39542b437e=dev_get_by_name_rcu(&init_net,
+"\x64\x75\x6d\x6d\x79\x30");if(DATARMNET39542b437e){DATARMNET543491eb0f->dev=
+DATARMNET39542b437e;DATARMNET543491eb0f->mark=(0xd2d+202-0xdf7);}else{
+DATARMNET5ca94dbc3c(DATARMNET5c603ca4b0);}}goto DATARMNETbf4095f79e;
 DATARMNET1e5291b369:if(!DATARMNET4899053671(DATARMNET543491eb0f,
 DATARMNET2d4b4cfc9e))DATARMNET1dec89a127=RX_HANDLER_CONSUMED;DATARMNETbf4095f79e
 :rcu_read_unlock();return DATARMNET1dec89a127;}static int DATARMNET0ed065ddb7(
