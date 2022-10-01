@@ -33118,10 +33118,13 @@ typedef enum {
      *    specified time then FW will indicate host to stop TX since
      *    there are no lower power mode available.
      */
-    WMI_AFC_EXPIRY_EVENT_START         = 1,
-    WMI_AFC_EXPIRY_EVENT_RENEW         = 2,
-    WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LPI = 3,
-    WMI_AFC_EXPIRY_EVENT_STOP_TX       = 4,
+    WMI_AFC_EXPIRY_EVENT_START                    = 1,
+    WMI_AFC_EXPIRY_EVENT_RENEW                    = 2,
+    WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LOW_POWER_MODE = 3,
+        /* retain the deprecated old name as an alias for the new name */
+        WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LPI =
+            WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LOW_POWER_MODE,
+    WMI_AFC_EXPIRY_EVENT_STOP_TX                  = 4,
 } WMI_AFC_EXPIRY_EVENT_SUBTYPE;
 
 typedef enum {
@@ -38680,9 +38683,17 @@ typedef struct {
  */
 } wmi_cfr_capture_filter_cmd_fixed_param;
 
+enum wmi_oem_data_evt_cause {
+    WMI_OEM_DATA_EVT_CAUSE_UNSPECIFIED = 0,
+    WMI_OEM_DATA_EVT_CAUSE_CMD_REQ = 1,
+    WMI_OEM_DATA_EVT_CAUSE_ASYNC = 2,
+};
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_data_event_fixed_param */
     A_UINT32 data_len; /** length in byte of data[]. */
+    /* Event Cause reason from enum wmi_oem_data_evt_cause */
+    A_UINT32 event_cause;
 /* Following this structure is the TLV:
  *      A_UINT8 data[]; <-- length in byte given by field data_len.
  * This data array contains OEM data, the payload begins with a field to tell the HOST regarding the kind of the OEM data.
