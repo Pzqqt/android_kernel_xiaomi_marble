@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -975,7 +976,7 @@ qdf_export_symbol(wlan_objmgr_get_vdev_by_id_from_pdev_no_state);
 
 #ifdef WLAN_OBJMGR_REF_ID_TRACE
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_debug(
-		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		struct wlan_objmgr_pdev *pdev, const uint8_t *macaddr,
 		wlan_objmgr_ref_dbgid dbg_id,
 		const char *fnc, int ln)
 {
@@ -1013,7 +1014,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_debug(
 }
 #else
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
-		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		struct wlan_objmgr_pdev *pdev, const uint8_t *macaddr,
 		wlan_objmgr_ref_dbgid dbg_id)
 {
 	struct wlan_objmgr_vdev *vdev;
@@ -1052,7 +1053,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
 #ifdef WLAN_OBJMGR_REF_ID_TRACE
 struct wlan_objmgr_vdev
 	*wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state_debug(
-		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		struct wlan_objmgr_pdev *pdev, const uint8_t *macaddr,
 		wlan_objmgr_ref_dbgid dbg_id,
 		const char *func, int line)
 {
@@ -1089,7 +1090,7 @@ struct wlan_objmgr_vdev
 }
 #else
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state(
-		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		struct wlan_objmgr_pdev *pdev, const uint8_t *macaddr,
 		wlan_objmgr_ref_dbgid dbg_id)
 {
 	struct wlan_objmgr_vdev *vdev;
