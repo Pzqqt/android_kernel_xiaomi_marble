@@ -7095,6 +7095,11 @@ void sde_crtc_static_img_control(struct drm_crtc *crtc,
 		return;
 	}
 
+	if (test_bit(SDE_MDP_LLCC_DISP_LR, &sde_kms->catalog->mdp[0].features)) {
+		SDE_DEBUG("Cache mode is directly programmed without state machine\n");
+		return;
+	}
+
 	sde_crtc = to_sde_crtc(crtc);
 	if (sde_crtc->cache_state == state)
 		return;
