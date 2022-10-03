@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +31,6 @@
 #include <qdf_status.h>
 #include <qdf_trace.h>
 
-typedef struct tasklet_struct __qdf_bh_t;
 typedef struct workqueue_struct __qdf_workqueue_t;
 
 /**
@@ -45,9 +45,41 @@ typedef struct {
 	void *arg;
 } __qdf_work_t;
 
-extern void __qdf_defer_func(struct work_struct *work);
+/**
+ * __qdf_bh_t - wrapper around the real task func
+ * @bh: Instance of the bottom half
+ * @fn: function pointer to the handler
+ * @arg: pointer to argument
+ */
+typedef struct {
+	struct tasklet_struct bh;
+	qdf_defer_fn_t fn;
+	void *arg;
+} __qdf_bh_t;
 
-typedef void (*__qdf_bh_fn_t)(unsigned long arg);
+/**
+ * __qdf_defer_func() - Linux-specific defer work handler
+ * @work: Pointer to defer work
+ *
+ * This function services all Linux-specific deferred work
+ * and dispatches them to the correct handler using the
+ * abstracted functional interface.
+ *
+ * Return: none
+ */
+void __qdf_defer_func(struct work_struct *work);
+
+/**
+ * __qdf_bh_func() - bottom half handler
+ * @arg: Pointer to bottom half abstraction
+ *
+ * This function services all Linux-specific bottom halfs
+ * and dispatches them to the correct handler using the
+ * abstracted functional interface.
+ *
+ * Return: none
+ */
+void __qdf_bh_func(unsigned long arg);
 
 /**
  * __qdf_init_work - Initialize a work/task queue, This runs in non-interrupt
@@ -184,24 +216,25 @@ static inline void __qdf_destroy_workqueue(__qdf_workqueue_t *wqueue)
  * @bh: pointer to bottom
  * @func: deferred function to run at bottom half interrupt context.
  * @arg: argument for the deferred function
+ *
  * Return: none
  */
-static inline QDF_STATUS
-__qdf_init_bh(struct tasklet_struct *bh, qdf_defer_fn_t func, void *arg)
+static inline void __qdf_init_bh(__qdf_bh_t *bh, qdf_defer_fn_t func, void *arg)
 {
-	tasklet_init(bh, (__qdf_bh_fn_t) func, (unsigned long)arg);
-	return QDF_STATUS_SUCCESS;
+	bh->fn = func;
+	bh->arg = arg;
+	tasklet_init(&bh->bh, __qdf_bh_func, (unsigned long)bh);
 }
 
 /**
  * __qdf_sched_bh - schedule a bottom half (DPC)
  * @bh: pointer to bottom
+ *
  * Return: none
  */
-static inline QDF_STATUS __qdf_sched_bh(struct tasklet_struct *bh)
+static inline void __qdf_sched_bh(__qdf_bh_t *bh)
 {
-	tasklet_schedule(bh);
-	return QDF_STATUS_SUCCESS;
+	tasklet_schedule(&bh->bh);
 }
 
 /**
@@ -220,12 +253,12 @@ static inline QDF_STATUS __qdf_disable_work(__qdf_work_t *work)
 /**
  * __qdf_disable_bh - destroy the bh (synchronous)
  * @bh: pointer to bottom
+ *
  * Return: none
  */
-static inline QDF_STATUS __qdf_disable_bh(struct tasklet_struct *bh)
+static inline void __qdf_disable_bh(__qdf_bh_t *bh)
 {
-	tasklet_kill(bh);
-	return QDF_STATUS_SUCCESS;
+	tasklet_kill(&bh->bh);
 }
 
 #endif /*_I_QDF_DEFER_H*/
