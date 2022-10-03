@@ -955,6 +955,7 @@ policy_mgr_modify_sap_pcl_for_6G_channels(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	qdf_freq_t sta_gc_freq = 0;
 	uint32_t ap_pwr_type_6g = 0;
+	bool indoor_ch_support = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -991,23 +992,33 @@ policy_mgr_modify_sap_pcl_for_6G_channels(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* If STA is present in 6GHz, STA+SAP SCC is allowed
-	 * only on PSC channels in VLP mode. Therefore, remove
-	 * all other 6GHz channels from the PCL list.
+	/* If STA is present in 6GHz PSC, STA+SAP SCC is allowed
+	 * only for the following combinations:
 	 *
-	 * VLP STA in PSC + SAP     - Allowed
-	 * VLP STA in non-PSC + SAP - Not allowed
-	 * non-VLP STA + SAP        - Not allowed
+	 * VLP STA + SAP - Allowed with VLP Power
+	 * LPI STA + SAP - Allowed with VLP power if channel supports VLP.
+	 * LPI STA + SAP - Allowed with LPI power if gindoor_channel_support=1
 	 */
 	ap_pwr_type_6g = wlan_mlme_get_6g_ap_power_type(vdev);
 	policy_mgr_debug("STA power type : %d", ap_pwr_type_6g);
+
+	ucfg_mlme_get_indoor_channel_support(psoc, &indoor_ch_support);
+
 	for (i = 0; i < *pcl_len_org; i++) {
 		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_list_org[i])) {
-			if (ap_pwr_type_6g != REG_VERY_LOW_POWER_AP)
+			if (!WLAN_REG_IS_6GHZ_PSC_CHAN_FREQ(pcl_list_org[i]))
 				continue;
-			else if (!WLAN_REG_IS_6GHZ_PSC_CHAN_FREQ(pcl_list_org[i]))
+			if (ap_pwr_type_6g == REG_VERY_LOW_POWER_AP)
+				goto add_freq;
+			else if (ap_pwr_type_6g == REG_INDOOR_AP &&
+				 (!wlan_reg_is_freq_indoor(pm_ctx->pdev,
+							   pcl_list_org[i]) ||
+				  indoor_ch_support))
+				goto add_freq;
+			else
 				continue;
 		}
+add_freq:
 		pcl_list[pcl_len] = pcl_list_org[i];
 		weight_list[pcl_len++] = weight_list_org[i];
 	}
@@ -1028,12 +1039,16 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 			uint32_t *len)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool mandatory_modified_pcl = false;
 	bool nol_modified_pcl = false;
 	bool dfs_modified_pcl = false;
 	bool indoor_modified_pcl = false;
+	bool passive_modified_pcl = false;
 	bool modified_final_pcl = false;
 	bool srd_chan_enabled;
+
+	pm_ctx = policy_mgr_get_context(psoc);
 
 	if (policy_mgr_is_sap_mandatory_channel_set(psoc)) {
 		status = policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
@@ -1082,6 +1097,15 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 	}
 	indoor_modified_pcl = true;
 
+	status = policy_mgr_filter_passive_ch(pm_ctx->pdev,
+					      pcl_channels, len);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to filter passive channels");
+		return INVALID_CHANNEL_ID;
+	}
+	passive_modified_pcl = true;
+
 	status = policy_mgr_modify_sap_pcl_for_6G_channels(psoc,
 							   pcl_channels,
 							   pcl_weight, len);
@@ -1091,11 +1115,12 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 	}
 
 	modified_final_pcl = true;
-	policy_mgr_debug(" %d %d %d %d %d",
+	policy_mgr_debug("%d %d %d %d %d %d",
 			 mandatory_modified_pcl,
 			 nol_modified_pcl,
 			 dfs_modified_pcl,
 			 indoor_modified_pcl,
+			 passive_modified_pcl,
 			 modified_final_pcl);
 
 	return QDF_STATUS_SUCCESS;
@@ -2809,6 +2834,7 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		 * Indoor channel to restart SAP in SCC.
 		 */
 		if (wlan_reg_is_freq_indoor(pm_ctx->pdev, pcl.pcl_list[i]) &&
+		    !WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl.pcl_list[i]) &&
 		    sta_sap_scc_on_indoor_channel) {
 			sap_new_freq = pcl.pcl_list[i];
 			policy_mgr_debug("Choose Indoor channel from PCL list %d sap_new_freq %d",
@@ -3008,15 +3034,16 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 			/*
 			 * The API is expected to select the channel on the
 			 * other band which is not same as sap's home and
-			 * concurrent interference channel, so skip the sap
-			 * home channel in PCL.
+			 * concurrent interference channel (if present),
+			 * so skip the sap home channel in PCL.
 			 */
 			if (pcl_channels[i] == sap_ch_freq)
 				continue;
 			if (!is_6ghz_cap &&
 			    WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[i]))
 				continue;
-			if (policy_mgr_are_2_freq_on_same_mac(psoc,
+			if (policy_mgr_get_connection_count(psoc) &&
+			    policy_mgr_are_2_freq_on_same_mac(psoc,
 							      sap_ch_freq,
 							      pcl_channels[i]))
 				continue;

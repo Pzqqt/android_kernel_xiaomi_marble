@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,12 +31,14 @@
  * @only_wdev_register:  Register only the wdev not the netdev
  * @associate_with_ml_adapter: Vdev points to the same netdev adapter
  * @is_ml_adapter: is a ml adapter with associated netdev
+ * @is_add_virtual_iface: is netdev create request from add virtual interface
  */
 struct hdd_adapter_create_param {
 	uint32_t only_wdev_register:1,
 		 associate_with_ml_adapter:1,
 		 is_ml_adapter:1,
-		 unused:29;
+		 is_add_virtual_iface:1,
+		 unused:28;
 };
 
 #if defined(WLAN_FEATURE_11BE_MLO) && defined(CFG80211_11BE_BASIC)

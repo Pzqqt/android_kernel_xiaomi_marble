@@ -2828,6 +2828,7 @@ bool lim_update_channel_width(struct mac_context *mac_ctx,
 uint8_t lim_get_vht_ch_width(tDot11fIEVHTCaps *vht_cap,
 			     tDot11fIEVHTOperation *vht_op,
 			     tDot11fIEHTInfo *ht_info);
+
 /**
  * lim_is_self_and_peer_ocv_capable() - check whether OCV capable
  * @mac:        pointer to mac data
@@ -2853,4 +2854,85 @@ void
 lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
 		    tDot11fIEoci *oci);
 
+/**
+ * lim_update_tx_power() - Function to update the TX power for
+ * the STA interface based on the SAP concurrency
+ *
+ * @mac_ctx: Pointer to Global mac structure
+ * @sap_session: Session pointer of the SAP
+ * @sta_session: Session pointer of the STA
+ * @restore_sta_power: Flag to update the new Tx power for STA
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+lim_update_tx_power(struct mac_context *mac_ctx, struct pe_session *sap_session,
+		    struct pe_session *sta_session, bool restore_sta_power);
+
+/**
+ * lim_skip_tpc_update_for_sta() - Function to check if the TPC set power
+ * needs to be skipped for STA.
+ *
+ * @mac_ctx: Pointer to Global mac structure
+ * @sta_session: Session pointer of the STA.
+ * @sap_session: Session pointer of the SAP
+ *
+ * Return: skip tpc for sta
+ */
+bool
+lim_skip_tpc_update_for_sta(struct mac_context *mac,
+			    struct pe_session *sta_session,
+			    struct pe_session *sap_session);
+
+/**
+ * lim_get_concurrent_session() - Function to get the concurrent session pointer
+ *
+ * @mac_ctx: Pointer to Global mac structure
+ * @vdev_id: vdev id
+ * @opmode: opmode of the interface
+ *
+ * Return: pe_session
+ */
+struct pe_session *
+lim_get_concurrent_session(struct mac_context *mac_ctx, uint8_t vdev_id,
+			   enum QDF_OPMODE opmode);
+
+/**
+ * lim_check_conc_power_for_csa() - Function to change the TX power
+ * of STA when channel switch happens in SAP
+ *
+ * @mac_ctx: Pointer to Global mac structure.
+ * @session: Session pointer of the SAP.
+ *
+ * Return: None
+ */
+void
+lim_check_conc_power_for_csa(struct mac_context *mac_ctx,
+			     struct pe_session *session);
+
+/**
+ * lim_cleanup_power_change() - Function to reset the change_scc_power
+ * flag in concurrent SAP vdev
+ *
+ * @mac_ctx: Pointer to Global mac structure.
+ * @session: Session pointer of the interface
+ */
+void
+lim_cleanup_power_change(struct mac_context *mac_ctx,
+			 struct pe_session *session);
+
+/**
+ * lim_is_power_change_required_for_sta() - Function to check if the 6 GHz
+ * STA power level has to be changed
+ *
+ * @mac_ctx: Pointer to Global mac structure.
+ * @sta_session: Session pointer of STA.
+ * @sap_session: Session pointer of SAP.
+ *
+ * Return: restart required for sta
+ */
+bool
+lim_is_power_change_required_for_sta(struct mac_context *mac_ctx,
+				     struct pe_session *sta_session,
+				     struct pe_session *sap_session);
 #endif /* __LIM_UTILS_H */

@@ -6264,7 +6264,32 @@ free_net_dev:
 	return NULL;
 }
 
-static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_held)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
+static int
+hdd_register_netdevice(struct hdd_adapter *adapter, struct net_device *dev,
+		       struct hdd_adapter_create_param *params)
+{
+	int ret;
+
+	if (params->is_add_virtual_iface)
+		ret = wlan_cfg80211_register_netdevice(dev);
+	else
+		ret = register_netdevice(dev);
+
+	return ret;
+}
+#else
+static int
+hdd_register_netdevice(struct hdd_adapter *adapter, struct net_device *dev,
+		       struct hdd_adapter_create_param *params)
+{
+	return register_netdevice(dev);
+}
+#endif
+
+static QDF_STATUS
+hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_held,
+		       struct hdd_adapter_create_param *params)
 {
 	struct net_device *dev = adapter->dev;
 	int ret;
@@ -6283,7 +6308,7 @@ static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_
 			}
 		}
 
-		ret = register_netdevice(dev);
+		ret = hdd_register_netdevice(adapter, dev, params);
 		if (ret) {
 			hdd_err("register_netdevice(%s) failed, err = 0x%x",
 				dev->name, ret);
@@ -7055,6 +7080,25 @@ static void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
 	}
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
+static void
+hdd_unregister_netdevice(struct hdd_adapter *adapter, struct net_device *dev)
+{
+	if (adapter->is_virtual_iface) {
+		wlan_cfg80211_unregister_netdevice(dev);
+		adapter->is_virtual_iface = false;
+	} else {
+		unregister_netdevice(dev);
+	}
+}
+#else
+static void
+hdd_unregister_netdevice(struct hdd_adapter *adapter, struct net_device *dev)
+{
+	unregister_netdevice(dev);
+}
+#endif
+
 static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter,
 				bool rtnl_held)
@@ -7093,7 +7137,7 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 
 	if (test_bit(NET_DEVICE_REGISTERED, &adapter->event_flags)) {
 		if (rtnl_held)
-			unregister_netdevice(dev);
+			hdd_unregister_netdevice(adapter, dev);
 		else
 			unregister_netdev(dev);
 		/*
@@ -7728,7 +7772,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 			break;
 		}
 
-		status = hdd_register_interface(adapter, rtnl_held);
+		status = hdd_register_interface(adapter, rtnl_held, params);
 		if (QDF_STATUS_SUCCESS != status)
 			goto err_free_netdev;
 
@@ -7764,7 +7808,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 			NL80211_IFTYPE_P2P_GO;
 		adapter->device_mode = session_type;
 
-		status = hdd_register_interface(adapter, rtnl_held);
+		status = hdd_register_interface(adapter, rtnl_held, params);
 		if (QDF_STATUS_SUCCESS != status)
 			goto err_free_netdev;
 
@@ -7805,7 +7849,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 
 		adapter->wdev.iftype = NL80211_IFTYPE_STATION;
 		adapter->device_mode = session_type;
-		status = hdd_register_interface(adapter, rtnl_held);
+		status = hdd_register_interface(adapter, rtnl_held, params);
 		if (QDF_STATUS_SUCCESS != status)
 			goto err_free_netdev;
 
@@ -13334,6 +13378,26 @@ static void hdd_sar_cfg_update(struct hdd_config *config,
 }
 #endif
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * hdd_init_cpu_cxpc_threshold_cfg() - Initialize cpu cxpc threshold cfg
+ * @config: Pointer to HDD config
+ * @psoc: psoc pointer
+ *
+ * Return: None
+ */
+static void hdd_init_cpu_cxpc_threshold_cfg(struct hdd_config *config,
+					    struct wlan_objmgr_psoc *psoc)
+{
+	config->cpu_cxpc_threshold = cfg_get(psoc, CFG_CPU_CXPC_THRESHOLD);
+}
+#else
+static void hdd_init_cpu_cxpc_threshold_cfg(struct hdd_config *config,
+					    struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 /**
  * hdd_cfg_params_init() - Initialize hdd params in hdd_config strucuture
  * @hdd_ctx - Pointer to HDD context
@@ -13417,10 +13481,6 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 					  [ACTION_OUI_DISABLE_AGGRESSIVE_EDCA],
 		      cfg_get(psoc,
 			      CFG_ACTION_OUI_DISABLE_AGGRESSIVE_EDCA),
-			      ACTION_OUI_MAX_STR_LEN);
-	qdf_str_lcopy(config->action_oui_str[ACTION_OUI_DISABLE_MU_EDCA],
-		      cfg_get(psoc,
-			      CFG_ACTION_OUI_DISABLE_MU_EDCA),
 		      ACTION_OUI_MAX_STR_LEN);
 	qdf_str_lcopy(config->action_oui_str[ACTION_OUI_EXTEND_WOW_ITO],
 		      cfg_get(psoc, CFG_ACTION_OUI_EXTEND_WOW_ITO),
@@ -13453,6 +13513,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_club_ll_stats_in_get_sta_cfg_update(config, psoc);
 	config->read_mac_addr_from_mac_file =
 			cfg_get(psoc, CFG_READ_MAC_ADDR_FROM_MAC_FILE);
+	hdd_init_cpu_cxpc_threshold_cfg(config, psoc);
 }
 
 #ifdef CONNECTION_ROAMING_CFG

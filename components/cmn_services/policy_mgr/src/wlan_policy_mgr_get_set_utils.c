@@ -4825,6 +4825,35 @@ static bool policy_mgr_is_three_connection_mcc(void)
 		 WLAN_REG_MAX_24GHZ_CHAN_FREQ)) ? true : false;
 }
 
+uint32_t policy_mgr_get_conc_vdev_on_same_mac(struct wlan_objmgr_psoc *psoc,
+					      uint32_t vdev_id, uint8_t mac_id)
+{
+	uint32_t id = WLAN_INVALID_VDEV_ID;
+	uint32_t conn_index;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return id;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		if ((pm_conc_connection_list[conn_index].in_use) &&
+		    (pm_conc_connection_list[conn_index].vdev_id != vdev_id) &&
+		    (pm_conc_connection_list[conn_index].mac == mac_id)) {
+			id = pm_conc_connection_list[conn_index].vdev_id;
+			break;
+		}
+	}
+
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return id;
+}
+
 bool policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
 {
 	uint32_t num_connections = 0;

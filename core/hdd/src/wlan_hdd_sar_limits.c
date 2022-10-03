@@ -306,6 +306,120 @@ cleanup:
 	return ret;
 }
 
+/**
+ * hdd_to_nl_sar_version - Map SAR version enum from hdd to nl
+ * @cur_sar_version - Current SAR version stored in hdd_ctx
+ *
+ * This function is used to map SAR version enum stored in hdd_ctx to
+ * nl
+ *
+ * Return - NL SAR version
+ */
+static u32 hdd_to_nl_sar_version(enum sar_version hdd_sar_version)
+{
+	switch (hdd_sar_version) {
+	case (SAR_VERSION_1):
+		return QCA_WLAN_VENDOR_SAR_VERSION_1;
+	case (SAR_VERSION_2):
+		return QCA_WLAN_VENDOR_SAR_VERSION_2;
+	default:
+		return QCA_WLAN_VENDOR_SAR_VERSION_INVALID;
+	}
+}
+
+/**
+ * hdd_sar_fill_capability_response - Fill SAR capability
+ * @skb - Pointer to socket buffer
+ * @hdd_ctx - pointer to hdd context
+ *
+ * This function fills SAR Capability in the socket buffer
+ *
+ * Return - 0 on success, negative errno on failure
+ */
+static int hdd_sar_fill_capability_response(struct sk_buff *skb,
+					    struct hdd_context *hdd_ctx)
+{
+	int errno = 0;
+	u32 attr;
+	u32 value;
+
+	attr = QCA_WLAN_VENDOR_ATTR_SAR_CAPABILITY_VERSION;
+	value = hdd_to_nl_sar_version(hdd_ctx->sar_version);
+	errno = nla_put_u32(skb, attr, value);
+
+	return errno;
+}
+
+/**
+ * hdd_sar_send_capability_response - Send SAR capability response
+ * @wiphy: Pointer to wireless phy
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * This function sends SAR capability.
+ */
+static int hdd_sar_send_capability_response(struct wiphy *wiphy,
+					    struct hdd_context *hdd_ctx)
+{
+	uint32_t len;
+	struct sk_buff *skb;
+	int errno;
+
+	len = NLMSG_HDRLEN;
+
+	/* QCA_WLAN_VENDOR_ATTR_SAR_CAPABILITY_VERSION */
+	len += NLA_HDRLEN + sizeof(u32);
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len);
+	if (!skb) {
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	errno = hdd_sar_fill_capability_response(skb, hdd_ctx);
+	if (errno) {
+		kfree_skb(skb);
+		return errno;
+	}
+
+	return cfg80211_vendor_cmd_reply(skb);
+}
+
+/**
+ * __wlan_hdd_get_sar_capability - Get SAR Capabilities
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * This function is used to retrieve SAR Version .
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+
+static int __wlan_hdd_get_sar_capability(struct wiphy *wiphy,
+					 struct wireless_dev *wdev,
+					 const void *data,
+					 int data_len)
+{
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	int ret;
+
+	hdd_enter();
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
+	    hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE) {
+		hdd_err("Command not allowed in FTM/MONITOR mode");
+		return -EPERM;
+	}
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	ret = hdd_sar_send_capability_response(wiphy, hdd_ctx);
+
+	return ret;
+}
+
 #define SAR_LIMITS_SAR_ENABLE QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE
 #define SAR_LIMITS_NUM_SPECS QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS
 #define SAR_LIMITS_SPEC QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC
@@ -818,6 +932,37 @@ int wlan_hdd_cfg80211_get_sar_power_limits(struct wiphy *wiphy,
 		return errno;
 
 	errno = __wlan_hdd_get_sar_power_limits(wiphy, wdev, data, data_len);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
+}
+
+/**
+ * wlan_hdd_cfg80211_get_sar_capability() - Get SAR capability
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Wrapper function of __wlan_hdd_get_sar_capability()
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+
+int wlan_hdd_cfg80211_get_sar_capability(struct wiphy *wiphy,
+					 struct wireless_dev *wdev,
+					 const void *data,
+					 int data_len)
+{
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_get_sar_capability(wiphy, wdev, data, data_len);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 

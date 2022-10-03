@@ -1187,10 +1187,10 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
  * CPU can enter CXPC mode.
  * The vote value is in microseconds.
  */
-#define HDD_CPU_CXPC_THRESHOLD (10000)
-static bool wlan_hdd_is_cpu_cxpc_allowed(unsigned long vote)
+static bool wlan_hdd_is_cpu_cxpc_allowed(struct hdd_context *hdd_ctx,
+					 unsigned long vote)
 {
-	if (vote >= HDD_CPU_CXPC_THRESHOLD)
+	if (vote >= hdd_ctx->config->cpu_cxpc_threshold)
 		return true;
 	else
 		return false;
@@ -1222,11 +1222,11 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 
 	if (!hdd_ctx->runtime_pm_prevented &&
 	    is_any_sta_connected &&
-	    !wlan_hdd_is_cpu_cxpc_allowed(curr_val)) {
+	    !wlan_hdd_is_cpu_cxpc_allowed(hdd_ctx, curr_val)) {
 		hif_pm_runtime_get_noresume(hif_ctx, RTPM_ID_QOS_NOTIFY);
 		hdd_ctx->runtime_pm_prevented = true;
 	} else if (hdd_ctx->runtime_pm_prevented &&
-		   wlan_hdd_is_cpu_cxpc_allowed(curr_val)) {
+		   wlan_hdd_is_cpu_cxpc_allowed(hdd_ctx, curr_val)) {
 		hif_pm_runtime_put(hif_ctx, RTPM_ID_QOS_NOTIFY);
 		hdd_ctx->runtime_pm_prevented = false;
 	}
@@ -1256,7 +1256,7 @@ bool wlan_hdd_is_cpu_pm_qos_in_progress(struct hdd_context *hdd_ctx)
 	curr_val_ns = cpuidle_governor_latency_req(max_cpu_num);
 	curr_val_us = curr_val_ns / NSEC_PER_USEC;
 	hdd_debug("PM QoS current value: %lld", curr_val_us);
-	if (!wlan_hdd_is_cpu_cxpc_allowed(curr_val_us))
+	if (!wlan_hdd_is_cpu_cxpc_allowed(hdd_ctx, curr_val_us))
 		return true;
 	else
 		return false;

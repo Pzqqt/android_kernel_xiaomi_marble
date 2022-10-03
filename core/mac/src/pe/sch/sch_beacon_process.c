@@ -663,7 +663,13 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 			return;
 	}
 
-	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
+	/*
+	 * STA LPI + SAP VLP is supported. For this STA should operate in VLP
+	 * power level of the SAP.
+	 * If STA is operating in VLP power of SAP, do not update STA power.
+	 */
+	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc) &&
+	    !session->sta_follows_sap_power) {
 		tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
 		lim_parse_tpe_ie(mac_ctx, session, bcn->transmit_power_env,
@@ -697,7 +703,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 						      session->vdev_id,
 						      &mlme_obj->reg_tpc_obj);
 			}
-	} else {
+	} else if (!session->sta_follows_sap_power) {
 		/* Obtain the Max Tx power for the current regulatory  */
 		regMax = wlan_reg_get_channel_reg_power_for_freq(
 					mac_ctx->pdev, session->curr_op_freq);
