@@ -95,6 +95,7 @@ enum vpu_version {
 	VPU_VERSION_IRIS2 = 1,
 	VPU_VERSION_IRIS2_2PIPE,
 	VPU_VERSION_IRIS2_1PIPE,
+	VENUS_VERSION_AR50LT_V1,
 };
 
 struct msm_vidc_platform_data {
