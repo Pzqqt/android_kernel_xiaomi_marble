@@ -116,11 +116,11 @@ extern "C" {
             } while (0)
 
 #define WMI_GET_BITS(_val,_index,_num_bits)                         \
-    (((_val) >> (_index)) & ((1 << (_num_bits)) - 1))
+    (((_val) >> (_index)) & (((A_UINT32) 1 << (_num_bits)) - 1))
 
-#define WMI_SET_BITS(_var,_index,_num_bits,_val) do {               \
-    (_var) &= ~(((1 << (_num_bits)) - 1) << (_index));              \
-    (_var) |= (((_val) & ((1 << (_num_bits)) - 1)) << (_index));    \
+#define WMI_SET_BITS(_var,_index,_num_bits,_val) do {                       \
+    (_var) &= ~((((A_UINT32) 1 << (_num_bits)) - 1) << (_index));           \
+    (_var) |= (((_val) & (((A_UINT32) 1 << (_num_bits)) - 1)) << (_index)); \
     } while (0)
 
 #define WMI_APPEND_TWO_SET_BITS(var, lsb_index, lsb_num_bits, msb_index, msb_num_bits, val) \
@@ -180,7 +180,7 @@ static INLINE A_UINT32 wmi_packed_arr_get_bits(A_UINT32 *arr,
     A_UINT32 index_in_uint = (entry_index - num_entries_in_prev_uints);
     A_UINT32 start_bit_in_uint = (index_in_uint * bits_per_entry);
     return (arr[uint_index] >> start_bit_in_uint) &
-            ((1 << bits_per_entry) - 1);
+            (((A_UINT32) 1 << bits_per_entry) - 1);
 }
 
 static INLINE void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
@@ -192,9 +192,10 @@ static INLINE void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
     A_UINT32 index_in_uint = (entry_index - num_entries_in_prev_uints);
     A_UINT32 start_bit_in_uint = (index_in_uint * bits_per_entry);
 
-    arr[uint_index] &= ~(((1 << bits_per_entry) - 1) << start_bit_in_uint);
+    arr[uint_index] &=
+        ~((((A_UINT32) 1 << bits_per_entry) - 1) << start_bit_in_uint);
     arr[uint_index] |=
-        ((val & ((1 << bits_per_entry) - 1)) << start_bit_in_uint);
+        ((val & (((A_UINT32) 1 << bits_per_entry) - 1)) << start_bit_in_uint);
 }
 
 /** 2 word representation of MAC addr */
@@ -218,10 +219,10 @@ typedef struct _wmi_mac_addr {
 /** macro to convert MAC address from char array to WMI word format */
 #define WMI_CHAR_ARRAY_TO_MAC_ADDR(c_macaddr,pwmi_mac_addr)  do { \
     (pwmi_mac_addr)->mac_addr31to0 = \
-       (((c_macaddr)[0] <<  0) | \
-        ((c_macaddr)[1] <<  8) | \
-        ((c_macaddr)[2] << 16) | \
-        ((c_macaddr)[3] << 24)); \
+       (((A_UINT32)(c_macaddr)[0] <<  0) | \
+        ((A_UINT32)(c_macaddr)[1] <<  8) | \
+        ((A_UINT32)(c_macaddr)[2] << 16) | \
+        ((A_UINT32)(c_macaddr)[3] << 24)); \
     (pwmi_mac_addr)->mac_addr47to32 = ((c_macaddr)[4] | ((c_macaddr)[5] << 8));\
    } while (0)
 
@@ -510,6 +511,8 @@ typedef enum {
     WMI_PDEV_FIPS_EXTEND_CMDID,
     WMI_PDEV_FIPS_MODE_SET_CMDID,
     WMI_PDEV_FEATURESET_CMDID,
+    /** tag as Filter Pass category and the filters set for FP mode */
+    WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -613,6 +616,9 @@ typedef enum {
     WMI_VDEV_SET_LTF_KEY_SEED_CMDID,
 
     WMI_VDEV_PN_MGMT_RX_FILTER_CMDID,
+
+    /** Enable SR prohibit feature for TIDs of vdev */
+    WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID,
 
     /* peer specific commands */
 
@@ -1208,6 +1214,9 @@ typedef enum {
     /* WMI cmd used to allocate HW scratch registers */
     WMI_PMM_SCRATCH_REG_ALLOCATION_CMDID,
 
+    /* WMI cmd used to start/stop XGAP (XPAN Green AP) */
+    WMI_XGAP_ENABLE_CMDID,
+
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
     /* invoke neighbor report from FW */
@@ -1683,6 +1692,9 @@ typedef enum {
      */
     WMI_PDEV_RSSI_DBM_CONVERSION_PARAMS_INFO_EVENTID,
 
+    /* Event to indicate Schedule tid queue suspended info */
+    WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID,
+
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -2149,6 +2161,9 @@ typedef enum {
     /* WMI event to indicate Helath Monitor Infra init done */
     WMI_HEALTH_MON_INIT_DONE_EVENTID,
 
+    /* WMI XGAP enable command response event ID */
+    WMI_XGAP_ENABLE_COMPLETE_EVENTID,
+
 
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
@@ -2384,11 +2399,11 @@ typedef enum {
 #define WMI_CHAN_FLAG_ALLOW_EHT   21 /* EHT (11be) is allowed on this channel */
 
 #define WMI_SET_CHANNEL_FLAG(pwmi_channel,flag) do { \
-        (pwmi_channel)->info |=  (1 << flag);      \
+        (pwmi_channel)->info |=  ((A_UINT32) 1 << flag);      \
      } while (0)
 
 #define WMI_GET_CHANNEL_FLAG(pwmi_channel,flag)   \
-        (((pwmi_channel)->info & (1 << flag)) >> flag)
+        (((pwmi_channel)->info & ((A_UINT32) 1 << flag)) >> flag)
 
 #define WMI_SET_CHANNEL_MIN_POWER(pwmi_channel,val) do { \
      (pwmi_channel)->reg_info_1 &= 0xffffff00;           \
@@ -2773,11 +2788,11 @@ enum {
 #define WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_BITPOS  (28)
 #define WMI_DBS_CONC_SCAN_CFG_SYNC_DBS_SCAN_BITPOS   (27)
 
-#define WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_MASK         (0x1 << WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_BITPOS)
-#define WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_MASK       (0x1 << WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_BITPOS)
-#define WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_MASK   (0x1 << WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_BITPOS)
-#define WMI_DBS_CONC_SCAN_CFG_ASYC_DBS_SCAN_MASK    (0x1 << WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_BITPOS)
-#define WMI_DBS_CONC_SCAN_CFG_SYNC_DBS_SCAN_MASK    (0x1 << WMI_DBS_CONC_SCAN_CFG_SYNC_DBS_SCAN_BITPOS)
+#define WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_MASK         ((A_UINT32) 0x1 << WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_BITPOS)
+#define WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_MASK       ((A_UINT32) 0x1 << WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_BITPOS)
+#define WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_MASK   ((A_UINT32) 0x1 << WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_BITPOS)
+#define WMI_DBS_CONC_SCAN_CFG_ASYC_DBS_SCAN_MASK    ((A_UINT32) 0x1 << WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_BITPOS)
+#define WMI_DBS_CONC_SCAN_CFG_SYNC_DBS_SCAN_MASK    ((A_UINT32) 0x1 << WMI_DBS_CONC_SCAN_CFG_SYNC_DBS_SCAN_BITPOS)
 
 #define WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_SET(scan_cfg, value) \
     WMI_SET_BITS(scan_cfg, WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_BITPOS, 1, value)
@@ -2808,12 +2823,12 @@ enum {
 #define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_BITPOS (27)
 #define WMI_DBS_FW_MODE_CFG_ASYNC_SBS_BITPOS            (26)
 
-#define WMI_DBS_FW_MODE_CFG_DBS_MASK                    (0x1 << WMI_DBS_FW_MODE_CFG_DBS_BITPOS)
-#define WMI_DBS_FW_MODE_CFG_AGILE_DFS_MASK              (0x1 << WMI_DBS_FW_MODE_CFG_AGILE_DFS_BITPOS)
-#define WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_DFS_MASK        (0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_BITPOS)
-#define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_MASK   (0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_BITPOS)
-#define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_MASK   (0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_BITPOS)
-#define WMI_DBS_FW_MODE_CFG_ASYNC_SBS_MASK              (0x1 << WMI_DBS_FW_MODE_CFG_ASYNC_SBS_BITPOS)
+#define WMI_DBS_FW_MODE_CFG_DBS_MASK                    ((A_UINT32) 0x1 << WMI_DBS_FW_MODE_CFG_DBS_BITPOS)
+#define WMI_DBS_FW_MODE_CFG_AGILE_DFS_MASK              ((A_UINT32) 0x1 << WMI_DBS_FW_MODE_CFG_AGILE_DFS_BITPOS)
+#define WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_DFS_MASK        ((A_UINT32) 0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_BITPOS)
+#define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_MASK   ((A_UINT32) 0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_BITPOS)
+#define WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_MASK   ((A_UINT32) 0x1 << WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_BITPOS)
+#define WMI_DBS_FW_MODE_CFG_ASYNC_SBS_MASK              ((A_UINT32) 0x1 << WMI_DBS_FW_MODE_CFG_ASYNC_SBS_BITPOS)
 
 #define WMI_DBS_FW_MODE_CFG_DBS_SET(fw_mode, value) \
     WMI_SET_BITS(fw_mode, WMI_DBS_FW_MODE_CFG_DBS_BITPOS, 1, value)
@@ -4274,8 +4289,21 @@ typedef struct {
      *      0  -> disable SAWF based scheduling
      *      1  -> enable SAWF based scheduling
      *      Refer to WMI_RSRC_CFG_FLAGS2_SAWF_CONFIG_ENABLE_GET/SET macros.
+     * Bit 14 - notify_frame_support
+     *      Flag to enable notify_frame_support from host.
+     *      0  -> disable notify_frame_support feature
+     *      1  -> enable_notify_frame_support feature
+     *      Refer to WMI_RSRC_CFG_FLAGS2_NOTIFY_FRAME_CONFIG_ENABLE_GET/SET
+     *      macros.
+     * Bit 15 - disable_wds_mec_intrabss
+     *      Flag to disable wds learning, MEC, intrabss offload.
+     *      By default, it is enabled.
+     *      0  -> enable wds_mec_intrabss offload
+     *      1  -> disable wds_mec_intrabss offload
+     *      Refer to WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_GET /
+     *      SET macros.
      *
-     *  Bits 31:14 - Reserved
+     *  Bits 31:16 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4366,7 +4394,15 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_GET
      *      and _SET macros.
-     *  Bits 31:13 - Reserved
+     *  Bit 13
+     *      This bit will be set when host host wants to enable/disable
+     *      bang radar 320M support feature
+     *      when set to 1 - Enable the bang radar 320M support
+     *      when set to 0 - Disable the bang radar 320M support
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:14 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4706,6 +4742,11 @@ typedef struct {
 #define WMI_RSRC_CFG_FLAGS2_NOTIFY_FRAME_CONFIG_ENABLE_SET(flags2, value) \
     WMI_SET_BITS(flags2, 14, 1, value)
 
+#define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_GET(flags2) \
+    WMI_GET_BITS(flags2, 15, 1)
+#define WMI_RSRC_CFG_FLAGS2_DISABLE_WDS_MEC_INTRABSS_OFFLOAD_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 15, 1, value)
+
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
@@ -4772,6 +4813,12 @@ typedef struct {
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REO_QREF_FEATURE_SUPPORT_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 12, 1, val)
 
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 13, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_BANG_RADAR_320M_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 13, 1, val)
+
+
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
     WMI_GET_BITS(carrier_config, 0, 1)
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_SET(carrier_config, val) \
@@ -4825,6 +4872,7 @@ typedef enum {
 } WMI_WIFI_STANDARD;
 
 typedef enum {
+    WMI_HOST_NONE       = 0, /* No concurrency mode supported */
     WMI_HOST_DBS        = 1, /* When 2.4G + 5G & 2.4G + 6G if 6G is supported */
     WMI_HOST_DBS_SBS    = 2, /* When 2.4G + 5G, 2.4G + 6G, 5G + 6G & 5G + 5G is supported */
 } WMI_BAND_CONCURRENCY;
@@ -4845,6 +4893,12 @@ typedef enum {
     WMI_VENDOR1_REQ2_VERSION_3_01   = 1,
     WMI_VENDOR1_REQ2_VERSION_3_20   = 2,
 } WMI_VENDOR1_REQ2_VERSION;
+
+typedef enum {
+    WMI_HOST_BAND_CAP_2GHZ = 0x01,
+    WMI_HOST_BAND_CAP_5GHZ = 0x02,
+    WMI_HOST_BAND_CAP_6GHZ = 0x04,
+} WMI_HOST_BAND_CAP;
 
 /* HW features supported info */
 /* enum WMI_WIFI_STANDARD are possible values for WiFi standard bitfield */
@@ -5108,6 +5162,12 @@ typedef enum {
         WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 102, 4)
 #define WMI_SET_NUM_ANTENNAS(feature_bitmap, val)   \
         WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 102, 4, val)
+
+/* enum WMI_HOST_BAND_CAP are possible values for below bitfield */
+#define WMI_GET_HOST_BAND_CAP(var, feature_bitmap)   \
+        WMI_GET_BITS_ARRAY_LEN32_BYTES(var, feature_bitmap, 106, 6)
+#define WMI_SET_HOST_BAND_CAP(feature_bitmap, val)   \
+        WMI_SET_BITS_ARRAY_LEN32_BYTES(feature_bitmap, 106, 6, val)
 
 /*
  * Specify how many A_UINT32 words are needed to hold the feature bitmap flags.
@@ -8765,6 +8825,13 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SA_PARALLEL_MODE_GPIO_DRIVE_CFG,
 
+    /*
+     * Param to disable LPI antenna optimizations
+     * In 6G LPI mode, additional antenna optimizations are done to
+     * improve range. Param is provided to disable the added
+     * optimizations.
+     */
+    WMI_PDEV_PARAM_DISABLE_LPI_ANT_OPTIMIZATION,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -11303,6 +11370,28 @@ typedef struct {
      * values).
      */
     A_INT32 peer_rssi_per_chain[WMI_MAX_CHAINS];
+    /* show how many elements in the tx_rate_counts array belong to this peer */
+    A_UINT32 num_tx_rate_counts;
+    /* show how many elements in the rx_rate_counts array belong to this peer */
+    A_UINT32 num_rx_rate_counts;
+    /* This TLV array is followed by other TLVs:
+     *   A_UINT32 tx_rate_counts[sum(num_tx_rate_counts)];
+     *       The above num_tx_rate_counts field shows which elements
+     *       within the tx_rate_counts array belong to a given peer.
+     *       Elements tx_rate_counts[0] to tx_rate_counts[N0-1] belong to
+     *       peer 0, where N0 = peer_stats_info[0].num_tx_rate_counts.
+     *       Elements tx_rate_counts[N0] to tx_rate_counts[N0+N1-1] belong to
+     *       peer 1, where N1 = peer_stats_info[1].num_tx_rate_counts.
+     *       etc.
+     *   A_UINT32 rx_rate_counts[sum(num_rx_rate_counts)];
+     *       The above num_rx_rate_counts field shows which elements
+     *       within the rx_rate_counts array belong to a given peer.
+     *       Elements rx_rate_counts[0] to rx_rate_counts[N0-1] belong to
+     *       peer 0, where N0 = peer_stats_info[0].num_rx_rate_counts.
+     *       Elements rx_rate_counts[N0] to rx_rate_counts[N0+N1-1] belong to
+     *       peer 1, where N1 = peer_stats_info[1].num_rx_rate_counts.
+     *       etc.
+     */
 } wmi_peer_stats_info;
 
 typedef struct {
@@ -14619,6 +14708,15 @@ typedef enum {
     /* Final bmiss time for WOW mode in sec */
     WMI_VDEV_PARAM_FINAL_BMISS_TIME_WOW_SEC,              /* 0xB8 */
 
+    /*
+     * Param to disable LPI antenna optimizations at Vdev level.
+     * In 6G LPI mode, additional antenna optimizations are done to
+     * improve range. Param is provided to disable the added
+     * optimizations.
+     */
+    WMI_VDEV_PARAM_DISABLE_LPI_ANT_OPTIMIZATION,          /* 0xB9 */
+
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -15047,6 +15145,8 @@ typedef struct {
     A_INT32 max_allowed_tx_power;
     /** unique id to identify mac's TSF register */
     A_UINT32 mac_tsf_id;
+    /** ignore mac_tsf_id unless mac_tsf_id_valid is set */
+    A_UINT32 mac_tsf_id_valid;
 } wmi_vdev_start_response_event_fixed_param;
 
 typedef struct {
@@ -16444,8 +16544,12 @@ typedef struct {
  * by the target).
  */
 #define WMI_PEER_PARAM_FIXED_RATE                       0xF
-/** Whitelist peer TIDs */
-#define WMI_PEER_SET_MU_WHITELIST                       0x10
+
+/** Allowlist peer TIDs */
+#define WMI_PEER_SET_MU_ALLOWLIST                       0x10
+/* retain definition of deprecated prior name, for backwards compatibility */
+#define WMI_PEER_SET_MU_WHITELIST WMI_PEER_SET_MU_ALLOWLIST
+
 /** Set peer max tx rate (MCS) in adaptive rate ctrl */
 #define WMI_PEER_SET_MAX_TX_RATE                        0x11
 /** Set peer minimal tx rate (MCS) in adaptive rate ctrl */
@@ -16580,6 +16684,19 @@ typedef struct {
  * subchannel is not punctured and is set to 0 to indicate that it is punctured.
  */
 #define WMI_PEER_PUNCTURE_20MHZ_BITMAP                 0x26
+
+#define WMI_PEER_CHWIDTH_PUNCTURE_BITMAP_GET_CHWIDTH(value32)          WMI_GET_BITS(value32, 0x0, 8)
+#define WMI_PEER_CHWIDTH_PUNCTURE_BITMAP_GET_PUNCTURE_BMAP(value32)    WMI_GET_BITS(value32, 0x8, 16)
+/* peer channel bandwidth and puncture_bitmap
+ * BIT 0-7  -  Peer channel width
+ *             This bitfield holds a wmi_channel_width enum value.
+ * BIT 8-23 -  Peer Puncture bitmap where each bit indicates whether
+ *             a 20 MHz BW is punctured.
+ *             The variable should be read from left, LSb (bit 8) will
+ *             represent the lowest-frequency 20 MHz portion.
+ *             Bit value: 0 - 20 MHz channel is punctured, 1 - not punctured
+ */
+#define WMI_PEER_CHWIDTH_PUNCTURE_20MHZ_BITMAP         0x27
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
@@ -16908,6 +17025,26 @@ typedef struct {
      */
     A_UINT32 tid_to_link_map_info;
 } wmi_peer_assoc_tid_to_link_map;
+
+#define WMI_PDEV_MESH_RX_FILTER_GET(enable) WMI_GET_BITS(enable,0,1)
+#define WMI_PDEV_MESH_RX_FILTER_SET(enable,value) WMI_SET_BITS(enable,0,1,value)
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_mesh_rx_filter_enable_fixed_param **/
+    A_UINT32 tlv_header;
+
+    A_UINT32 pdev_id;
+    union {
+        struct {
+            A_UINT32 enable: 1, /** denotes enable/disable mesh rx filter, refer to WMI_PDEV_MESH_RX_FILTER_GET/SET macros */
+                    reserved: 31;
+        };
+        A_UINT32 enable_word32;
+    };
+
+    /** Mac_Add for the RX filter **/
+    wmi_mac_addr link_macaddr;
+} wmi_pdev_mesh_rx_filter_enable_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param */
@@ -19433,6 +19570,7 @@ typedef enum event_type_e {
     WOW_ROAM_STATS_EVENT,                 /* 32 + 12 */
     WOW_RTT_11AZ_EVENT,                   /* 32 + 13 */
     WOW_P2P_NOA_EVENT,                    /* 32 + 14 */
+    WOW_XGAP_EVENT,                       /* 32 + 15 */
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -19518,6 +19656,8 @@ typedef enum wake_reason_e {
     WOW_REASON_DELAYED_WAKEUP_DATA_STORE_LIST_FULL,
     /* Sched PM FW initiated termination event */
     WOW_REASON_SCHED_PM_TERMINATED,
+    /* XGAP entry/exit response */
+    WOW_REASON_XGAP,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
@@ -19559,6 +19699,8 @@ enum {
      * setDtimInSuspendMode
      */
     WMI_WOW_FLAG_FORCED_DTIM_ON_SYS_SUSPEND = 0x00000080,
+    /* Flag to force DPD lock. */
+    WMI_WOW_FLAG_FORCED_DPD_LOCK            = 0x00000100,
 };
 
 typedef struct {
@@ -24780,6 +24922,8 @@ typedef struct {
     A_INT32 max_allowed_tx_power;
     /** unique id to identify mac's TSF register */
     A_UINT32 mac_tsf_id;
+    /** ignore mac_tsf_id unless mac_tsf_id_valid is set */
+    A_UINT32 mac_tsf_id_valid;
     /**
      * TLV (tag length value) parameters follows roam_synch_event
      * The TLV's are:
@@ -27189,13 +27333,30 @@ typedef struct {
      * This field should be ignored unless the tsf_id_valid flag is set.
      */
     A_UINT32 tsf_id;
+    /*
+     * The mac_id and tsf_id fields should be ignored unless the
+     * tsf_id_valid flag is set.
+     */
     A_UINT32 tsf_id_valid;
     /*
      * mac_id: MAC identifier
-     * This field should be ignored unless the mac_id_valid flag is set.
+     * This field should be ignored unless the tsf_id_valid flag is set.
      */
     A_UINT32 mac_id;
-    A_UINT32 mac_id_valid;
+    /*
+     * The original mac_id_valid field that was originally used to specify
+     * whether the mac_id field is valid has been repurposed to instead
+     * specify whether this message is a TSF report or a UL delay report.
+     */
+    union {
+        A_UINT32 mac_id_valid; /* original name */
+        /* ul_delay_or_tsf_report:
+         * New name for the field, reflecting its new purpose.
+         * ul_delay_or_tsf_report = 1 -> UL delay
+         * ul_delay_or_tsf_report = 0 -> TSF report
+         */
+        A_UINT32 ul_delay_or_tsf_report;
+    };
     /* low 32 bits of wlan global tsf */
     A_UINT32 wlan_global_tsf_low;
     /* high 32 bits of wlan global tsf */
@@ -28677,7 +28838,8 @@ typedef enum {
      *  A_UINT32      TASPeakModeIndicator[8]  (32 Bytes)
      *  A_UINT32      TAS_FCC_ICNIRP_Indicator[8] (32 Bytes)
      *  A_UINT32      PowerLimitIndicator[8] (32 Bytes)
-     *  A_INT32       TASLogReducedLimit (4 Bytes)
+     *  A_UINT8       reserveMarginDb (1 Bytes)
+     *  A_UINT8       reserved[3] (3 Bytes)
      */
 
     BIOS_PARAM_TAS_DATA_TYPE,
@@ -28757,6 +28919,128 @@ typedef enum {
      *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
      *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
      */
+
+    BIOS_PARAM_TYPE_BANDEDGE_CTL_POWER,
+     /*
+      *  BIOS_PARAM_TYPE_BANDEDGE_CTL_POWER Structure has 100 bytes as below, CTL limit power unit is 0.25 dBm.
+      *  If Enable flag is 0, FW will not use power limit value of bios.
+      *
+      *  A_UINT8 version
+      *  A_UINT8 enableFlag  (always 1)
+      *  A_UINT8 reserved[2]  for 4 byte alignment,
+
+      *  ====================2G CTL POWER LIMIT ======================
+      *  A_INT8 2G 20M Channel Center Freq 2412 CTL Limit Power SU
+      *  A_INT8 2G 20M Channel Center Freq 2412 CTL Limit Power OFDMA
+      *  A_INT8 2G 20M Channel Center Freq 2417 CTL Limit Power SU
+      *  A_INT8 2G 20M Channel Center Freq 2417 CTL Limit Power OFDMA
+      *  A_INT8 2G 20M Channel Center Freq 2462 CTL Limit Power SU
+      *  A_INT8 2G 20M Channel Center Freq 2462 CTL Limit Power OFDMA
+      *  A_INT8 2G 20M Channel Center Freq 2467 CTL Limit Power SU
+      *  A_INT8 2G 20M Channel Center Freq 2467 CTL Limit Power OFDMA
+      *  A_INT8 2G 20M Channel Center Freq 2472 CTL Limit Power SU
+      *  A_INT8 2G 20M Channel Center Freq 2472 CTL Limit Power OFDMA
+
+      *  A_INT8 2G 40M Channel Center Freq 2422 CTL Limit Power SU
+      *  A_INT8 2G 40M Channel Center Freq 2422 CTL Limit Power OFDMA
+      *  A_INT8 2G 40M Channel Center Freq 2427 CTL Limit Power SU
+      *  A_INT8 2G 40M Channel Center Freq 2427 CTL Limit Power OFDMA
+      *  A_INT8 2G 40M Channel Center Freq 2452 CTL Limit Power SU
+      *  A_INT8 2G 40M Channel Center Freq 2452 CTL Limit Power OFDMA
+      *  A_INT8 2G 40M Channel Center Freq 2457 CTL Limit Power SU
+      *  A_INT8 2G 40M Channel Center Freq 2457 CTL Limit Power OFDMA
+      *  A_INT8 2G 40M Channel Center Freq 2462 CTL Limit Power SU
+      *  A_INT8 2G 40M Channel Center Freq 2462 CTL Limit Power OFDMA
+
+      *  ====================5G CTL POWER LIMIT ======================
+      *  A_INT8 5G 20M Channel Center Freq 5180 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5180 CTL Limit Power OFDMA
+      *  A_INT8 5G 20M Channel Center Freq 5320 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5320 CTL Limit Power OFDMA
+      *  A_INT8 5G 20M Channel Center Freq 5500 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5500 CTL Limit Power OFDMA
+      *  A_INT8 5G 20M Channel Center Freq 5700 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5700 CTL Limit Power OFDMA
+      *  A_INT8 5G 20M Channel Center Freq 5745 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5745 CTL Limit Power OFDMA
+      *  A_INT8 5G 20M Channel Center Freq 5825 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5825 CTL Limit Power OFDMA
+      *  A_INT8 5G 20M Channel Center Freq 5845 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5845 CTL Limit Power OFDMA
+      *  A_INT8 5G 20M Channel Center Freq 5885 CTL Limit Power SU
+      *  A_INT8 5G 20M Channel Center Freq 5885 CTL Limit Power OFDMA
+
+      *  A_INT8 5G 40M Channel Center Freq 5190 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5190 CTL Limit Power OFDMA
+      *  A_INT8 5G 40M Channel Center Freq 5310 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5310 CTL Limit Power OFDMA
+      *  A_INT8 5G 40M Channel Center Freq 5510 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5510 CTL Limit Power OFDMA
+      *  A_INT8 5G 40M Channel Center Freq 5670 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5670 CTL Limit Power OFDMA
+      *  A_INT8 5G 40M Channel Center Freq 5755 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5755 CTL Limit Power OFDMA
+      *  A_INT8 5G 40M Channel Center Freq 5795 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5795 CTL Limit Power OFDMA
+      *  A_INT8 5G 40M Channel Center Freq 5835 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5835 CTL Limit Power OFDMA
+      *  A_INT8 5G 40M Channel Center Freq 5875 CTL Limit Power SU
+      *  A_INT8 5G 40M Channel Center Freq 5875 CTL Limit Power OFDMA
+
+      *  A_INT8 5G 80M Channel Center Freq 5210 CTL Limit Power SU
+      *  A_INT8 5G 80M Channel Center Freq 5210 CTL Limit Power OFDMA
+      *  A_INT8 5G 80M Channel Center Freq 5290 CTL Limit Power SU
+      *  A_INT8 5G 80M Channel Center Freq 5290 CTL Limit Power OFDMA
+      *  A_INT8 5G 80M Channel Center Freq 5530 CTL Limit Power SU
+      *  A_INT8 5G 80M Channel Center Freq 5530 CTL Limit Power OFDMA
+      *  A_INT8 5G 80M Channel Center Freq 5610 CTL Limit Power SU
+      *  A_INT8 5G 80M Channel Center Freq 5610 CTL Limit Power OFDMA
+      *  A_INT8 5G 80M Channel Center Freq 5775 CTL Limit Power SU
+      *  A_INT8 5G 80M Channel Center Freq 5775 CTL Limit Power OFDMA
+      *  A_INT8 5G 80M Channel Center Freq 5855 CTL Limit Power SU
+      *  A_INT8 5G 80M Channel Center Freq 5855 CTL Limit Power OFDMA
+
+      *  A_INT8 5G 160M Channel Center Freq 5250 CTL Limit Power SU
+      *  A_INT8 5G 160M Channel Center Freq 5250 CTL Limit Power OFDMA
+      *  A_INT8 5G 160M Channel Center Freq 5570 CTL Limit Power SU
+      *  A_INT8 5G 160M Channel Center Freq 5570 CTL Limit Power OFDMA
+      *  A_INT8 5G 160M Channel Center Freq 5815 CTL Limit Power SU
+      *  A_INT8 5G 160M Channel Center Freq 5815 CTL Limit Power OFDMA
+
+      *  A_INT8 5G 320M Channel Center Freq 5650 CTL Limit Power SU (5650 Punctured 1111_1111_1111_0000)
+      *  A_INT8 5G 320M Channel Center Freq 5650 CTL Limit Power OFDMA (5650 Punctured 1111_1111_1111_0000)
+
+      *  ====================6G CTL POWER LIMIT ======================
+      *  A_INT8 6G 20M Channel Center Freq 5935 CTL Limit Power SU
+      *  A_INT8 6G 20M Channel Center Freq 5935 CTL Limit Power OFDMA
+      *  A_INT8 6G 20M Channel Center Freq 5955 CTL Limit Power SU
+      *  A_INT8 6G 20M Channel Center Freq 5955 CTL Limit Power OFDMA
+      *  A_INT8 6G 20M Channel Center Freq 6415 CTL Limit Power SU
+      *  A_INT8 6G 20M Channel Center Freq 6415 CTL Limit Power OFDMA
+      *  A_INT8 6G 20M Channel Center Freq 7115 CTL Limit Power SU
+      *  A_INT8 6G 20M Channel Center Freq 7115 CTL Limit Power OFDMA
+
+      *  A_INT8 6G 40M Channel Center Freq 5965 CTL Limit Power SU
+      *  A_INT8 6G 40M Channel Center Freq 5965 CTL Limit Power OFDMA
+      *  A_INT8 6G 40M Channel Center Freq 6405 CTL Limit Power SU
+      *  A_INT8 6G 40M Channel Center Freq 6405 CTL Limit Power OFDMA
+
+      *  A_INT8 6G 80M Channel Center Freq 5985 CTL Limit Power SU
+      *  A_INT8 6G 80M Channel Center Freq 5985 CTL Limit Power OFDMA
+      *  A_INT8 6G 80M Channel Center Freq 6385 CTL Limit Power SU
+      *  A_INT8 6G 80M Channel Center Freq 6385 CTL Limit Power OFDMA
+
+      *  A_INT8 6G 160M Channel Center Freq 6025 CTL Limit Power SU
+      *  A_INT8 6G 160M Channel Center Freq 6025 CTL Limit Power OFDMA
+      *  A_INT8 6G 160M Channel Center Freq 6345 CTL Limit Power SU
+      *  A_INT8 6G 160M Channel Center Freq 6345 CTL Limit Power OFDMA
+
+      *  A_INT8 6G 320M Channel Center Freq 6105 CTL Limit Power SU
+      *  A_INT8 6G 320M Channel Center Freq 6105 CTL Limit Power OFDMA
+      *  A_INT8 6G 320M Channel Center Freq 6265 CTL Limit Power SU
+      *  A_INT8 6G 320M Channel Center Freq 6265 CTL Limit Power OFDMA
+      */
+
 
     BIOS_PARAM_TYPE_MAX,
 } bios_param_type_e;
@@ -29468,6 +29752,21 @@ typedef struct {
     /** VDEV identifier */
     A_UINT32 vdev_id;
 } wmi_vdev_get_bcn_recv_stats_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_xgap_enable_cmd_fixed_param */
+    A_UINT32 beacon_interval; /* in TU */
+    A_UINT32 sap_lp_flag;     /* bit 0 : set/unset for enter/exit XGAP */
+    A_UINT32 dialog_token;
+    A_UINT32 duration;        /* in us : sap LP enter/exit duration, 0 for permanent exit */
+} wmi_xgap_enable_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_xgap_enable_complete_event_fixed_param */
+    A_UINT32 dialog_token;
+    A_UINT32 next_tsf_low32;
+    A_UINT32 next_tsf_high32;
+} wmi_xgap_enable_complete_event_fixed_param;
 
 /*
  * wmi mws-coex command IDs
@@ -32333,6 +32632,9 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
         WMI_RETURN_STRING(WMI_COEX_DBAM_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_FEATURESET_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID);
+        WMI_RETURN_STRING(WMI_XGAP_ENABLE_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -32681,7 +32983,10 @@ typedef struct {
     A_UINT32 max_bw_5g;   /* BW in MHz */
     A_UINT32 num_2g_reg_rules;
     A_UINT32 num_5g_reg_rules;
-/* followed by wmi_regulatory_rule_struct TLV array. First 2G and then 5G */
+/*
+ * followed by wmi_regulatory_rule_struct TLV array. First 2G and then 5G
+ * - wmi_regulatory_fcc_rule_struct reg_fcc_rule[]
+ */
 } wmi_reg_chan_list_cc_event_fixed_param;
 
 typedef enum {
@@ -33111,6 +33416,31 @@ typedef struct {
 #define WMI_MULTIPLE_VDEV_RESTART_FLAG_GET_PHYMODE(phymode) WMI_GET_BITS(phymode, 0, 6)
 #define WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_PHYMODE(phymode, val) WMI_SET_BITS(phymode, 0, 6, val)
 
+/** Indicates that VDEV ID is in bit-map format
+ *  If this flag is set, FW will determine the vdev IDs from the positions
+ *  of the bits that are set, and use these vdev IDs for vdev restart.
+ *
+ *  This flag should not be set from host unless FW has set the service bit
+ *  WMI_SERVICE_MULTIPLE_VDEV_RESTART_BITMAP_SUPPORT to indicate it supports
+ *  this interpretation of the vdev IDs as a bitmap.
+ *
+ *  If this flag is set then below is the way it will be parsed
+ *  vdev_ids[0] = 53 (0011 0101) -> indicates vdev 0,2,4,5 is set
+ *  vdev_ids[1] = 53 (0000 0101) -> indicates vdev 32,34 is set
+ *  similar to this the value can be extended in feature for more vdev's
+ *
+ *  If flag is not se then default parsing will be as below
+ *  vdev_ids[0] = 0
+ *  vdev_ids[1] = 2
+ *  vdev_ids[2] = 4
+ *  .
+ *  .
+ *  vdev_ids[5] = 34
+ */
+#define WMI_MULTIPLE_VDEV_RESTART_FLAG_BITMAP_SUPPORT(flag)  WMI_GET_BITS(flag, 2, 1)
+#define WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_BITMAP_SUPPORT(flag,val)  WMI_SET_BITS(flag, 2, 1, val)
+
+
 /* This command is used whenever host wants to restart multiple
  * VDEVs using single command and the VDEV that are restarted will
  * need to have same properties they had before restart except for the
@@ -33141,7 +33471,22 @@ typedef struct {
     A_UINT32 puncture_20mhz_bitmap; /* each bit indicates one 20 MHz BW punctured */
 
     /* The TLVs follows this structure:
-     * A_UINT32 vdev_ids[]; <--- Array of VDEV ids.
+     * A_UINT32 vdev_ids[]; <--- Array of vdev IDs, or bitmap of vdev IDs
+     *     In flags if WMI_MULTIPLE_VDEV_RESTART_FLAG_BITMAP_SUPPORT is set
+     *     FW will interpret the vdev_ids values as a bitmap, and will use the
+     *     position of all the bits set within the bitmap to determine the
+     *     vdev IDs to use for vdev restart.
+     *     If this flag is set then below is the way it will be parsed
+     *         vdev_ids[0] = 53 (0011 0101) -> indicates vdev 0,2,4,5 is set
+     *         vdev_ids[1] = 53 (0000 0101) -> indicates vdev 32,34 is set
+     *         The array can be extended in feature for more vdevs.
+     *     If this flag is not se then default parsing will be as below
+     *         vdev_ids[0] = 0
+     *         vdev_ids[1] = 2
+     *         vdev_ids[2] = 4
+     *         .
+     *         .
+     *         vdev_ids[5] = 34
      * wmi_channel chan; <------ WMI channel
      * A_UINT32 phymode_list[]; <-- Array of Phymode list, with
      *    each phymode value stored in bits 5:0 of the A_UINT32.
@@ -34005,7 +34350,7 @@ typedef struct {
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 suspend_duration_ms;  /* this long time after TWT paused the 1st SP will start (millisecond) */
     A_UINT32 next_twt_size; /* Next TWT subfield Size, refer to IEEE 802.11ax section "9.4.1.60 TWT Information field" */
-    A_UINT32 sp_start_offset; /* Next TWT service period will be offset by this time (microsecond) */
+    A_INT32 sp_start_offset; /* Next TWT service period will be offset by this time (microsecond) */
 } wmi_twt_nudge_dialog_cmd_fixed_param;
 
 /* status code of nudging TWT dialog */
@@ -34652,6 +34997,11 @@ typedef struct {
     A_UINT32 vdev_id;
     /* AP BSSID for which host needs to start pre-authentication */
     wmi_mac_addr candidate_ap_bssid;
+    /*
+     * Transmit address for which host needs to start pre-authentication
+     * in MLO case.  In non MLO cases, transmit_addr will be filled with 0x0.
+     */
+    wmi_mac_addr transmit_addr;
 } wmi_roam_preauth_start_event_fixed_param;
 
 typedef struct {
@@ -35871,10 +36221,25 @@ typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUCT_wmi_chan_width_peer_list */
     wmi_mac_addr peer_macaddr;
     A_UINT32 chan_width; /* wmi_channel_width */
+    A_UINT32 puncture_20mhz_bitmap; /* per peer wmi puncture_bitmap,
+                                     * each bit indicates one 20 MHz BW
+                                     * punctured.
+                                     * This variable should be read from left,
+                                     * LSb will point to the lowest-frequency
+                                     * 20 MHz frequency slice.
+                                     * bit value:
+                                     *     0 - 20 MHz BW is punctured
+                                     *     1 - not punctured
+                                     */
 } wmi_chan_width_peer_list;
 
 #define WMI_PEER_CHAN_WIDTH_SWITCH_SET_VALID_VDEV_ID(comp) WMI_SET_BITS(comp, 31,1, 1)
 #define WMI_PEER_CHAN_WIDTH_SWITCH_GET_VALID_VDEV_ID(comp) WMI_GET_BITS(comp, 31, 1)
+
+#define WMI_PEER_CHAN_WIDTH_SWITCH_SET_VALID_PUNCTURE_BITMAP(comp) WMI_SET_BITS(comp, 30, 1, 1)
+#define WMI_PEER_CHAN_WIDTH_SWITCH_GET_VALID_PUNCTURE_BITMAP(comp) WMI_GET_BITS(comp, 30, 1)
+
+/* bits 29:8 currently unused */
 
 #define WMI_PEER_CHAN_WIDTH_SWITCH_SET_VDEV_ID(comp, value) WMI_SET_BITS(comp, 0, 8, value)
 #define WMI_PEER_CHAN_WIDTH_SWITCH_GET_VDEV_ID(comp) WMI_GET_BITS(comp, 0, 8)
@@ -35884,7 +36249,8 @@ typedef struct {
     A_UINT32 num_peers;
     /* vdev_var:
      * The MSb (bit 31) indicates that the vdev_id is valid.
-     * The LSB is used to infer the actual vdev_id.
+     * Bit 30 indicates that the puncture bitmap is valid.
+     * The LSB (bits 0-7) is used to infer the actual vdev_id.
      * The other bits can be used for future enhancements.
      */
     A_UINT32 vdev_var;
@@ -37475,6 +37841,13 @@ typedef struct {
     A_UINT32 type; /** type of the rogue ap, see WMI_ROGUE_AP_TYPE */
     wmi_mac_addr bssid; /** bssid of the rogue ap */
 } wmi_pdev_rap_info_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sched_tidq_susp_info_event_fixed_param */
+    A_UINT32 pdev_id; /** pdev id */
+    A_UINT32 tid_num; /** tid_num that is suspended */
+    A_UINT32 suspended_time_ms; /** time for which tid has been suspended in ms */
+} wmi_pdev_sched_tidq_susp_info_event_fixed_param;
 
 /*
  * WMI API for Firmware to indicate iface combinations which Firmware
@@ -39684,6 +40057,13 @@ typedef struct
     /** Contention Window maximum. Range: 1 - 10 */
     A_UINT32 cwmax;
 } wmi_qos_params_t;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 tidmap; /* Bitmap specifying the TIDs for which prohibit would be set/unset */
+    A_UINT32 prohibit_enable; /* 0 for Disable, 1 for Enable */
+} wmi_vdev_param_enable_sr_prohibit_fixed_param;
 
 typedef struct
 {

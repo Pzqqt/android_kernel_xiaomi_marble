@@ -494,6 +494,22 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_ODD_MANDATORY_MUOFDMA_STATS = 51,
 
+    /** HTT_DBG_EXT_PHY_PROF_CAL_STATS
+     * params:
+     *          None
+     * Response MSG:
+     *          htt_latency_prof_cal_stats_tlv
+     */
+    HTT_DBG_EXT_PHY_PROF_CAL_STATS = 52,
+
+    /** HTT_DBG_EXT_STATS_PDEV_BW_MGR
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_pdev_bw_mgr_stats_t
+     */
+    HTT_DBG_EXT_STATS_PDEV_BW_MGR = 53,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -884,6 +900,8 @@ typedef struct {
     A_UINT32 num_dyn_mimo_ps_dlmumimo_sequences;
     /** Num of times su bf sequences are denylisted */
     A_UINT32 num_su_txbf_denylisted;
+    /** pdev uptime in microseconds **/
+    A_UINT32 pdev_up_time_us;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -913,6 +931,20 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32      phy_errs[1]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
 } htt_tx_pdev_stats_phy_err_tlv_v;
+
+/*
+ * Each array in the below struct has 16 elements, to cover the 16 possible
+ * values for the CW and AIFS parameters.  Each element within the array
+ * stores the counter indicating how many transmissions have occurred with
+ * that particular value for the MU EDCA parameter in question.
+ */
+#define HTT_STATS_MUEDCA_VALUE_MAX 16
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 aifs[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
+    A_UINT32 cw_min[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
+    A_UINT32 cw_max[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
+} htt_tx_pdev_muedca_params_stats_tlv_v;
 
 #define HTT_TX_PDEV_SIFS_BURST_HIST_STATS 10
 #define HTT_TX_PDEV_STATS_SIFS_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -1555,7 +1587,9 @@ typedef struct {
         mesh_sta       : 1,
         mec            : 1,
         intra_bss      : 1,
-        reserved       : 16;
+        chip_id        : 2,
+        ml_peer_id     : 13,
+        reserved       : 1;
 } htt_ast_entry_tlv;
 
 typedef enum {
@@ -1665,6 +1699,7 @@ typedef struct _htt_tx_peer_rate_stats_tlv {
     A_UINT32 tx_stbc_ext[HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 tx_gi_ext[HTT_TX_PEER_STATS_NUM_GI_COUNTERS][HTT_TX_PEER_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 reduced_tx_bw[HTT_TX_PEER_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_PEER_STATS_NUM_BW_COUNTERS];
+    A_UINT32 tx_bw_320mhz;
 } htt_tx_peer_rate_stats_tlv;
 
 #define HTT_RX_PEER_STATS_NUM_MCS_COUNTERS 12 /* 0-11 */
@@ -4909,6 +4944,8 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Tx PPDU duration histogram **/
     A_UINT32 tx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
+    A_UINT32 tx_success_time_us;
+    A_UINT32 tx_fail_time_us;
 } htt_tx_pdev_ppdu_dur_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
@@ -6338,6 +6375,14 @@ typedef struct {
     A_UINT32 cv_buf_received;
     /** total times CV bufs fed back to the IPC ring */
     A_UINT32 cv_buf_fed_back;
+    /* Total times CV query happened for IBF case */
+    A_UINT32 cv_total_query_ibf;
+    /* A valid CV has been found for IBF case */
+    A_UINT32 cv_found_ibf;
+    /* A valid CV has not been found for IBF case */
+    A_UINT32 cv_not_found_ibf;
+    /* Expired CV found during query for IBF case */
+    A_UINT32 cv_expired_during_query_ibf;
 } htt_tx_sounding_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
@@ -7721,6 +7766,73 @@ typedef struct {
     A_UINT32 num_subbands_used_cnt[HTT_PUNCTURE_STATS_MAX_SUBBAND_COUNT];
 } htt_pdev_puncture_stats_tlv;
 
+enum {
+    HTT_STATS_CAL_PROF_COLD_BOOT = 0,
+    HTT_STATS_CAL_PROF_FULL_CHAN_SWITCH = 1,
+    HTT_STATS_CAL_PROF_SCAN_CHAN_SWITCH = 2,
+    HTT_STATS_CAL_PROF_DPD_SPLIT_CAL = 3,
+
+    HTT_STATS_MAX_PROF_CAL = 4,
+};
+
+#define HTT_STATS_MAX_CAL_IDX_CNT 8
+typedef struct {
+
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT8 latency_prof_name[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_PROF_STATS_NAME_LEN];
+
+    /** To verify whether prof cal is enabled or not */
+    A_UINT32 enable;
+
+    /** current pdev_id */
+    A_UINT32 pdev_id;
+
+    /** The cnt is incremented when each time the calindex takes place */
+    A_UINT32 cnt[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Minimum time taken to complete the calibration - in us */
+    A_UINT32 min[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Maximum time taken to complete the calibration -in us */
+    A_UINT32 max[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Time taken by the cal for its final time execution - in us */
+    A_UINT32 last[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Total time taken - in us */
+    A_UINT32 tot[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** hist_intvl - by default will be set to 2000 us */
+    A_UINT32 hist_intvl[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /**
+     * If last is less than hist_intvl, then hist[0]++,
+     * If last is less than hist_intvl << 1, then hist[1]++,
+     * otherwise hist[2]++.
+     */
+    A_UINT32 hist[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT][HTT_INTERRUPTS_LATENCY_PROFILE_MAX_HIST];
+
+    /** Pf_last will log the current no of page faults */
+    A_UINT32 pf_last[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** Sum of all page faults happened */
+    A_UINT32 pf_tot[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** If pf_last > pf_max then pf_max = pf_last */
+    A_UINT32 pf_max[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /**
+     * For each cal profile, only certain no of cal indices were invoked,
+     * this member will store what all the indices got invoked per each
+     * cal profile
+     */
+    A_UINT32 enabledCalIdx[HTT_STATS_MAX_PROF_CAL][HTT_STATS_MAX_CAL_IDX_CNT];
+
+    /** No of indices invoked per each cal profile */
+    A_UINT32 CalCnt[HTT_STATS_MAX_PROF_CAL];
+} htt_latency_prof_cal_stats_tlv;
+
 #define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_M          0x0000003F
 #define HTT_ML_PEER_EXT_DETAILS_PEER_ASSOC_IPC_RECVD_S          0
 #define HTT_ML_PEER_EXT_DETAILS_SCHED_PEER_DELETE_RECVD_M       0x00000FC0
@@ -8352,7 +8464,155 @@ typedef struct {
     A_UINT32 chan_acc_lat_based_dlofdma_disabled_count[HTT_NUM_AC_WMM];
     /** Num of instances where avg. channel access latency based DL OFDMA status = MONITORING */
     A_UINT32 chan_acc_lat_based_dlofdma_monitoring_count[HTT_NUM_AC_WMM];
+    /** Num of instances where dl ofdma is disabled due to ru allocation failure */
+    A_UINT32 downgrade_to_dl_su_ru_alloc_fail[HTT_NUM_AC_WMM];
+    /** Num of instances where dl ofdma is disabled because we have only one user in candidate list */
+    A_UINT32 candidate_list_single_user_disable_ofdma[HTT_NUM_AC_WMM];
+    /** Num of instances where ul is chosen over dl based on qos weight not specific to OFDMA */
+    A_UINT32 dl_cand_list_dropped_high_ul_qos_weight[HTT_NUM_AC_WMM];
+    /** Num of instances where dl ofdma is disabled due to pipelining */
+    A_UINT32 ax_dlofdma_disabled_due_to_pipelining[HTT_NUM_AC_WMM];
+    /** Num of instances where dl ofdma is disabled as the tid is su only eligible */
+    A_UINT32 dlofdma_disabled_su_only_eligible[HTT_NUM_AC_WMM];
+    /** Num of instances where dl ofdma is disabled because there are no mpdus tried consecutively */
+    A_UINT32 dlofdma_disabled_consec_no_mpdus_tried[HTT_NUM_AC_WMM];
+    /** Num of instances where dl ofdma is disabled because there are consecutive mpdu failure */
+    A_UINT32 dlofdma_disabled_consec_no_mpdus_success[HTT_NUM_AC_WMM];
 } htt_pdev_sched_algo_ofdma_stats_tlv;
+
+/*======= Bandwidth Manager stats ====================*/
+
+#define HTT_BW_MGR_STATS_MAC_ID_M               0x000000ff
+#define HTT_BW_MGR_STATS_MAC_ID_S               0
+
+#define HTT_BW_MGR_STATS_PRI20_IDX_M            0x0000ff00
+#define HTT_BW_MGR_STATS_PRI20_IDX_S            8
+
+#define HTT_BW_MGR_STATS_PRI20_FREQ_M           0xffff0000
+#define HTT_BW_MGR_STATS_PRI20_FREQ_S           16
+
+#define HTT_BW_MGR_STATS_CENTER_FREQ1_M         0x0000ffff
+#define HTT_BW_MGR_STATS_CENTER_FREQ1_S         0
+
+#define HTT_BW_MGR_STATS_CENTER_FREQ2_M         0xffff0000
+#define HTT_BW_MGR_STATS_CENTER_FREQ2_S         16
+
+#define HTT_BW_MGR_STATS_CHAN_PHY_MODE_M        0x000000ff
+#define HTT_BW_MGR_STATS_CHAN_PHY_MODE_S        0
+
+#define HTT_BW_MGR_STATS_STATIC_PATTERN_M       0x00ffff00
+#define HTT_BW_MGR_STATS_STATIC_PATTERN_S       8
+
+#define HTT_BW_MGR_STATS_MAC_ID_GET(_var) \
+    (((_var) & HTT_BW_MGR_STATS_MAC_ID_M) >> \
+     HTT_BW_MGR_STATS_MAC_ID_S)
+
+#define HTT_BW_MGR_STATS_MAC_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_BW_MGR_STATS_MAC_ID, _val); \
+        ((_var) |= ((_val) << HTT_BW_MGR_STATS_MAC_ID_S)); \
+    } while (0)
+
+
+#define HTT_BW_MGR_STATS_PRI20_IDX_GET(_var) \
+    (((_var) & HTT_BW_MGR_STATS_PRI20_IDX_M) >> \
+     HTT_BW_MGR_STATS_PRI20_IDX_S)
+
+#define HTT_BW_MGR_STATS_PRI20_IDX_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_BW_MGR_STATS_PRI20_IDX, _val); \
+        ((_var) |= ((_val) << HTT_BW_MGR_STATS_PRI20_IDX_S)); \
+    } while (0)
+
+
+#define HTT_BW_MGR_STATS_PRI20_FREQ_GET(_var) \
+    (((_var) & HTT_BW_MGR_STATS_PRI20_FREQ_M) >> \
+     HTT_BW_MGR_STATS_PRI20_FREQ_S)
+
+#define HTT_BW_MGR_STATS_PRI20_FREQ_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_BW_MGR_STATS_PRI20_FREQ, _val); \
+        ((_var) |= ((_val) << HTT_BW_MGR_STATS_PRI20_FREQ_S)); \
+    } while (0)
+
+
+#define HTT_BW_MGR_STATS_CENTER_FREQ1_GET(_var) \
+    (((_var) & HTT_BW_MGR_STATS_CENTER_FREQ1_M) >> \
+     HTT_BW_MGR_STATS_CENTER_FREQ1_S)
+
+#define HTT_BW_MGR_STATS_CENTER_FREQ1_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_BW_MGR_STATS_CENTER_FREQ1, _val); \
+        ((_var) |= ((_val) << HTT_BW_MGR_STATS_CENTER_FREQ1_S)); \
+    } while (0)
+
+
+#define HTT_BW_MGR_STATS_CENTER_FREQ2_GET(_var) \
+    (((_var) & HTT_BW_MGR_STATS_CENTER_FREQ2_M) >> \
+     HTT_BW_MGR_STATS_CENTER_FREQ2_S)
+
+#define HTT_BW_MGR_STATS_CENTER_FREQ2_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_BW_MGR_STATS_CENTER_FREQ2, _val); \
+        ((_var) |= ((_val) << HTT_BW_MGR_STATS_CENTER_FREQ2_S)); \
+    } while (0)
+
+
+#define HTT_BW_MGR_STATS_CHAN_PHY_MODE_GET(_var) \
+    (((_var) & HTT_BW_MGR_STATS_CHAN_PHY_MODE_M) >> \
+     HTT_BW_MGR_STATS_CHAN_PHY_MODE_S)
+
+#define HTT_BW_MGR_STATS_CHAN_PHY_MODE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_BW_MGR_STATS_CHAN_PHY_MODE, _val); \
+        ((_var) |= ((_val) << HTT_BW_MGR_STATS_CHAN_PHY_MODE_S)); \
+    } while (0)
+
+
+#define HTT_BW_MGR_STATS_STATIC_PATTERN_GET(_var) \
+    (((_var) & HTT_BW_MGR_STATS_STATIC_PATTERN_M) >> \
+     HTT_BW_MGR_STATS_STATIC_PATTERN_S)
+
+#define HTT_BW_MGR_STATS_STATIC_PATTERN_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_BW_MGR_STATS_STATIC_PATTERN, _val); \
+        ((_var) |= ((_val) << HTT_BW_MGR_STATS_STATIC_PATTERN_S)); \
+    } while (0)
+
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* BIT [ 7  :  0]  :- mac_id
+     * BIT [ 15 :  8]  :- pri20_index
+     * BIT [ 31 : 16]  :- pri20_freq in Mhz
+     */
+    A_UINT32 mac_id__pri20_idx__freq;
+
+    /* BIT [ 15 :  0]  :- centre_freq1
+     * BIT [ 31 : 16]  :- centre_freq2
+     */
+    A_UINT32 centre_freq1__freq2;
+
+    /* BIT [ 7 :  0]  :- channel_phy_mode
+     * BIT [ 23 : 8]  :- static_pattern
+     */
+    A_UINT32 phy_mode__static_pattern;
+
+} htt_pdev_bw_mgr_stats_tlv;
+
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_BW_MGR
+ * TLV_TAGS:
+ *      - HTT_STATS_PDEV_BW_MGR_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_pdev_bw_mgr_stats_tlv bw_mgr_tlv;
+} htt_pdev_bw_mgr_stats_t;
 
 
 #endif /* __HTT_STATS_H__ */

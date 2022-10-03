@@ -1294,6 +1294,11 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ipa_per_mac_stats,
     WMITLV_TAG_STRUC_wmi_pdev_featureset_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_regulatory_fcc_rule_struct,
+    WMITLV_TAG_STRUC_wmi_vdev_param_enable_sr_prohibit_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_sched_tidq_susp_info_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_xgap_enable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_xgap_enable_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_mesh_rx_filter_enable_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1800,6 +1805,9 @@ typedef enum {
     OP(WMI_COEX_DBAM_CMDID) \
     OP(WMI_PDEV_FEATURESET_CMDID) \
     OP(WMI_ROAM_MLO_CONFIG_CMDID) \
+    OP(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID) \
+    OP(WMI_XGAP_ENABLE_CMDID) \
+    OP(WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2092,6 +2100,8 @@ typedef enum {
     OP(WMI_COEX_DBAM_COMPLETE_EVENTID) \
     OP(WMI_HEALTH_MON_INIT_DONE_EVENTID) \
     OP(WMI_IPA_LINK_STATS_EVENTID) \
+    OP(WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID) \
+    OP(WMI_XGAP_ENABLE_COMPLETE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4496,6 +4506,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_hw_data_filter_cmd_fixed_param, wmi_hw_data_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_HW_DATA_FILTER_CMDID);
 
+#define WMITLV_TABLE_WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_mesh_rx_filter_enable_fixed_param, wmi_pdev_mesh_rx_filter_enable_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID);
+
 /* Multiple vdev restart request cmd */
 #define WMITLV_TABLE_WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param, wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -5135,6 +5149,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
 #define WMITLV_TABLE_WMI_COEX_DBAM_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_dbam_cmd_fixed_param, wmi_coex_dbam_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_COEX_DBAM_CMDID);
+
+/* VDEV SR prohibit cmd */
+#define WMITLV_TABLE_WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_param_enable_sr_prohibit_fixed_param, wmi_vdev_param_enable_sr_prohibit_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID);
+
+/* xGAP enable cmd */
+#define WMITLV_TABLE_WMI_XGAP_ENABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_xgap_enable_cmd_fixed_param, wmi_xgap_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_XGAP_ENABLE_CMDID);
 
 
 
@@ -6273,7 +6297,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_11D_NEW_COUNTRY_EVENTID);
 /* Regulatory channel list of current country code */
 #define WMITLV_TABLE_WMI_REG_CHAN_LIST_CC_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_fixed_param, wmi_reg_chan_list_cc_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_rule_struct, reg_rule_array, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_rule_struct, reg_rule_array, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_regulatory_fcc_rule_struct, reg_fcc_rule, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_REG_CHAN_LIST_CC_EVENTID);
 
 /* Ext regulatory channel list of current country code */
@@ -6546,7 +6571,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID);
 
 #define WMITLV_TABLE_WMI_PEER_STATS_INFO_EVENTID(id, op, buf, len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_stats_info_event_fixed_param, wmi_peer_stats_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_stats_info, peer_stats_info, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_stats_info, peer_stats_info, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tx_rate_counts, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rx_rate_counts, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
 
 /* Update Control Path stats event */
@@ -6754,6 +6781,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_RAP_INFO_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_rap_info_event_fixed_param, wmi_pdev_rap_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_RAP_INFO_EVENTID);
+
+/* sched tiqd suspended info event */
+#define WMITLV_TABLE_WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_sched_tidq_susp_info_event_fixed_param, wmi_pdev_sched_tidq_susp_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID);
 
 /* Offload TX mgmt frames */
 #define WMITLV_TABLE_WMI_VDEV_MGMT_OFFLOAD_EVENTID(id,op,buf,len) \
@@ -6964,6 +6996,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_COEX_DBAM_COMPLETE_EVENTID);
 #define WMITLV_TABLE_WMI_HEALTH_MON_INIT_DONE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_health_mon_init_done_fixed_param, wmi_health_mon_init_done_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_HEALTH_MON_INIT_DONE_EVENTID);
+
+/* xGAP enable cmd complete event */
+#define WMITLV_TABLE_WMI_XGAP_ENABLE_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_xgap_enable_complete_event_fixed_param, wmi_xgap_enable_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_XGAP_ENABLE_COMPLETE_EVENTID);
 
 
 
