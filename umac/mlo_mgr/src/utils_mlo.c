@@ -314,6 +314,11 @@ uint8_t *util_get_successorfrag(uint8_t *currie, uint8_t *frame, qdf_size_t len)
 
 	nextie = currie + currie[TAG_LEN_POS] + MIN_IE_LEN;
 
+	/* Check whether there is sufficient space in the frame for the next IE
+	 */
+	if ((nextie + MIN_IE_LEN + nextie[TAG_LEN_POS]) > (frame + len))
+		return NULL;
+
 	if (nextie[ID_POS] != WLAN_ELEMID_FRAGMENT)
 		return NULL;
 
