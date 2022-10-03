@@ -251,6 +251,12 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 
 	inst->subcr_params[port].bit_depth = bitdepth;
 	msm_vidc_update_cap_value(inst, BIT_DEPTH, bitdepth, __func__);
+
+	if (!inst->capabilities->cap[BIT_DEPTH].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_LUMA_CHROMA_BIT_DEPTH is not supported\n", __func__);
+		return 0;
+	}
+
 	i_vpr_h(inst, "%s: bit depth: %#x", __func__, bitdepth);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
@@ -310,6 +316,12 @@ static int msm_vdec_set_coded_frames(struct msm_vidc_inst *inst,
 			CODED_FRAMES_PROGRESSIVE)
 		coded_frames = HFI_BITMASK_FRAME_MBS_ONLY_FLAG;
 	inst->subcr_params[port].coded_frames = coded_frames;
+
+	if (!inst->capabilities->cap[CODED_FRAMES].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_CODED_FRAMES is not supported\n", __func__);
+		return 0;
+	}
+
 	i_vpr_h(inst, "%s: coded frames: %d", __func__, coded_frames);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_CODED_FRAMES,
@@ -465,6 +477,12 @@ static int msm_vdec_set_profile(struct msm_vidc_inst *inst,
 	profile = inst->capabilities->cap[PROFILE].value;
 	inst->subcr_params[port].profile = profile;
 	i_vpr_h(inst, "%s: profile: %d", __func__, profile);
+
+	if (!inst->capabilities->cap[PROFILE].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_PROFILE is not supported\n", __func__);
+		return 0;
+	}
+
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_PROFILE,
 			HFI_HOST_FLAGS_NONE,
@@ -494,6 +512,12 @@ static int msm_vdec_set_level(struct msm_vidc_inst *inst,
 	level = inst->capabilities->cap[LEVEL].value;
 	inst->subcr_params[port].level = level;
 	i_vpr_h(inst, "%s: level: %d", __func__, level);
+
+	if (!inst->capabilities->cap[LEVEL].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_LEVEL is not supported\n", __func__);
+		return 0;
+	}
+
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_LEVEL,
 			HFI_HOST_FLAGS_NONE,
@@ -523,6 +547,12 @@ static int msm_vdec_set_tier(struct msm_vidc_inst *inst,
 	tier = inst->capabilities->cap[HEVC_TIER].value;
 	inst->subcr_params[port].tier = tier;
 	i_vpr_h(inst, "%s: tier: %d", __func__, tier);
+
+	if (!inst->capabilities->cap[HEVC_TIER].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_TIER is not supported\n", __func__);
+		return 0;
+	}
+
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_TIER,
 			HFI_HOST_FLAGS_NONE,
@@ -581,6 +611,12 @@ static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 		!inst->capabilities->cap[DISPLAY_DELAY].value))
 		output_order = 1;
 
+	if (!inst->capabilities->cap[DISPLAY_DELAY_ENABLE].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_DECODE_ORDER_OUTPUT is not supported\n",
+			__func__);
+		return 0;
+	}
+
 	i_vpr_h(inst, "%s: output order: %d", __func__, output_order);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_DECODE_ORDER_OUTPUT,
@@ -606,6 +642,12 @@ static int msm_vdec_set_rap_frame(struct msm_vidc_inst *inst,
 	if (port != INPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
+	}
+
+	if (!inst->capabilities->cap[RAP_FRAME].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_DEC_START_FROM_RAP_FRAME is not supported\n",
+			__func__);
+		return 0;
 	}
 
 	rap_frame = inst->capabilities->cap[RAP_FRAME].value;
@@ -636,6 +678,12 @@ static int msm_vdec_set_thumbnail_mode(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
+	if (!inst->capabilities->cap[THUMBNAIL_MODE].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_THUMBNAIL_MODE is not supported\n",
+			__func__);
+		return 0;
+	}
+
 	thumbnail_mode = inst->capabilities->cap[THUMBNAIL_MODE].value;
 	i_vpr_h(inst, "%s: thumbnail mode: %d", __func__, thumbnail_mode);
 	rc = venus_hfi_session_property(inst,
@@ -662,6 +710,12 @@ static int msm_vdec_set_conceal_color_8bit(struct msm_vidc_inst *inst,
 	if (port != INPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
+	}
+
+	if (!inst->capabilities->cap[CONCEAL_COLOR_8BIT].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_CONCEAL_COLOR_8BIT is not supported\n",
+			__func__);
+		return 0;
 	}
 
 	conceal_color_8bit = inst->capabilities->cap[CONCEAL_COLOR_8BIT].value;
@@ -691,6 +745,12 @@ static int msm_vdec_set_conceal_color_10bit(struct msm_vidc_inst *inst,
 	if (port != INPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
+	}
+
+	if (!inst->capabilities->cap[CONCEAL_COLOR_10BIT].hfi_id) {
+		i_vpr_h(inst, "%s: HFI_PROP_CONCEAL_COLOR_10BIT is not supported\n",
+			__func__);
+		return 0;
 	}
 
 	conceal_color_10bit = inst->capabilities->cap[CONCEAL_COLOR_10BIT].value;
@@ -1739,9 +1799,10 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	}
 
 	if (capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE &&
+		is_ubwc_supported_platform(inst) &&
 		!is_ubwc_colorformat(capability->cap[PIX_FMTS].value)) {
 		i_vpr_e(inst,
-			"%s: interlace with non-ubwc color format is unsupported\n",
+			"%s: interlace with non-ubwc color format is unsupported for ubwc supported platforms\n",
 			__func__);
 		return -EINVAL;
 	}
@@ -2185,9 +2246,10 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 
 		if (capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE &&
+			is_ubwc_supported_platform(inst) &&
 			!is_ubwc_colorformat(capability->cap[PIX_FMTS].value)) {
 			i_vpr_e(inst,
-				"%s: interlace with non-ubwc color format is unsupported\n",
+				"%s: interlace with non-ubwc color format is unsupported for ubwc supported platforms\n",
 				__func__);
 			return -EINVAL;
 		}
@@ -2679,6 +2741,7 @@ static int msm_vdec_check_colorformat_supported(struct msm_vidc_inst* inst,
 		supported = false;
 	if (inst->capabilities->cap[CODED_FRAMES].value ==
 		CODED_FRAMES_INTERLACE &&
+		is_ubwc_supported_platform(inst) &&
 		!is_ubwc_colorformat(colorformat))
 		supported = false;
 
