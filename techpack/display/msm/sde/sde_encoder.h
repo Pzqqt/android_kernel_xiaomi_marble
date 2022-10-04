@@ -193,6 +193,7 @@ enum sde_enc_rc_states {
  *				encoder due to autorefresh concurrency.
  * @fps_switch_high_to_low:	boolean to note direction of fps switch
  * @update_clocks_on_complete_commit:	boolean to force update clocks
+ * @vsync_event_wq              Queue to wait for the vsync event complete
  */
 struct sde_encoder_virt {
 	struct drm_encoder base;
@@ -264,6 +265,7 @@ struct sde_encoder_virt {
 	bool update_clocks_on_complete_commit;
 	bool prepare_kickoff;
 	bool ready_kickoff;
+	wait_queue_head_t vsync_event_wq;
 };
 
 #define to_sde_encoder_virt(x) container_of(x, struct sde_encoder_virt, base)
