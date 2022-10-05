@@ -26,9 +26,9 @@
 #include "../../core/src/wlan_cm_roam_offload.h"
 #include "wlan_reg_ucfg_api.h"
 
-bool ucfg_is_roaming_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+bool ucfg_is_rso_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
-	return wlan_is_roaming_enabled(pdev, vdev_id);
+	return wlan_is_rso_enabled(pdev, vdev_id);
 }
 
 QDF_STATUS

@@ -3550,7 +3550,7 @@ cm_cleanup_mlo_link(struct wlan_objmgr_vdev *vdev)
 	return status;
 }
 
-bool wlan_is_roaming_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+bool wlan_is_rso_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	enum roam_offload_state cur_state;
@@ -3558,8 +3558,19 @@ bool wlan_is_roaming_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	cur_state = mlme_get_roam_state(psoc, vdev_id);
 	if (cur_state == WLAN_ROAM_RSO_ENABLED ||
 	    cur_state == WLAN_ROAMING_IN_PROG ||
-	    cur_state == WLAN_ROAM_SYNCH_IN_PROG)
+	    cur_state == WLAN_ROAM_SYNCH_IN_PROG ||
+	    cur_state == WLAN_MLO_ROAM_SYNCH_IN_PROG)
 		return true;
 
 	return false;
+}
+
+bool wlan_is_roaming_enabled(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	if (mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAM_DEINIT)
+		return false;
+
+	return true;
 }
