@@ -1356,6 +1356,7 @@ static int handle_dpb_list_property(struct msm_vidc_inst *inst,
 			"%s: dpb list payload size %d exceeds expected max size %d\n",
 			__func__, payload_size, MAX_DPB_LIST_PAYLOAD_SIZE);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		return -EINVAL;
 	}
 	memcpy(inst->dpb_list_payload, payload_start, payload_size);
 
