@@ -1068,7 +1068,7 @@ static int ipa_wdi_cleanup_per_inst_internal(ipa_wdi_hdl_t hdl)
  */
 static int ipa_wdi_dereg_intf_per_inst_internal(const char *netdev_name,ipa_wdi_hdl_t hdl)
 {
-	int len, ret = 0;
+	int len, num_hdrs, ret = 0;
 	struct ipa_ioc_del_hdr *hdr = NULL;
 	struct ipa_wdi_intf_info *entry;
 	struct ipa_wdi_intf_info *next;
@@ -1100,8 +1100,9 @@ static int ipa_wdi_dereg_intf_per_inst_internal(const char *netdev_name,ipa_wdi_
 	list_for_each_entry_safe(entry, next, &ipa_wdi_ctx_list[hdl]->head_intf_list,
 		link)
 		if (strcmp(entry->netdev_name, netdev_name) == 0) {
+			num_hdrs = ipa_wdi_ctx_list[hdl]->is_rx1_used ? 4 : 2;
 			len = sizeof(struct ipa_ioc_del_hdr) +
-				2 * sizeof(struct ipa_hdr_del);
+				num_hdrs * sizeof(struct ipa_hdr_del);
 			hdr = kzalloc(len, GFP_KERNEL);
 			if (hdr == NULL) {
 				IPA_WDI_ERR("fail to alloc %d bytes\n", len);
@@ -1110,11 +1111,18 @@ static int ipa_wdi_dereg_intf_per_inst_internal(const char *netdev_name,ipa_wdi_
 			}
 
 			hdr->commit = 1;
-			hdr->num_hdls = 2;
+			hdr->num_hdls = num_hdrs;
 			hdr->hdl[0].hdl = entry->partial_hdr_hdl[0];
 			hdr->hdl[1].hdl = entry->partial_hdr_hdl[1];
 			IPA_WDI_DBG("IPv4 hdr hdl: %d IPv6 hdr hdl: %d\n",
 				hdr->hdl[0].hdl, hdr->hdl[1].hdl);
+
+			if (num_hdrs == 4) {
+				hdr->hdl[2].hdl = entry->partial_hdr_hdl[2];
+				hdr->hdl[3].hdl = entry->partial_hdr_hdl[3];
+				IPA_WDI_DBG("IPv4 vlan hdr hdl: %d IPv6 vlan hdr hdl: %d\n",
+				hdr->hdl[2].hdl, hdr->hdl[3].hdl);
+			}
 
 			if (ipa3_del_hdr(hdr)) {
 				IPA_WDI_ERR("fail to delete partial header\n");
