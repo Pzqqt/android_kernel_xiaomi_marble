@@ -314,6 +314,7 @@ typedef enum {
     WMI_GRP_MLO,            /* 0x48 MLO(Multiple Link Operation) management */
     WMI_GRP_SAWF,           /* 0x49 SAWF (Service Aware WiFi) */
     WMI_GRP_QUIET_OFL,      /* 0x4a Quiet offloads */
+    WMI_GRP_ODD,            /* 0x4b ODD */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1537,6 +1538,9 @@ typedef enum {
     /** disable a service class */
     WMI_SAWF_SVC_CLASS_DISABLE_CMDID,
 
+    /* WMI commands specific to ODD */
+    WMI_ODD_LIVEDUMP_REQUEST_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_ODD),
+
 } WMI_CMD_ID;
 
 typedef enum {
@@ -2330,6 +2334,9 @@ typedef enum {
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
+
+    /* ODD events */
+    WMI_ODD_LIVEDUMP_RESPONSE_EVENTID = WMI_CMD_GRP_START_ID(WMI_GRP_ODD),
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -40075,6 +40082,45 @@ typedef struct {
     A_UINT32 ring_buf_paddr_high;
     A_UINT32 initial_upload_period_ms;
 } wmi_health_mon_init_done_fixed_param;
+
+/** ODD **/
+
+/* Livedump Data structures */
+#define WMI_ODD_LIVEDUMP_RESP_SET_STATUS(status, val) \
+    WMI_SET_BITS(status, 0, 4, val)
+#define WMI_ODD_LIVEDUMP_RESP_GET_STATUS(status) \
+    WMI_GET_BITS(status, 0, 4)
+
+typedef enum {
+    ODD_LIVEDUMP_STATUS_SUCCESS = 0,
+    ODD_LIVEDUMP_STATUS_FAILURE,
+    ODD_MAX_LIVEDUMP_STATUS,
+} odd_livedump_resp_status;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 odd_livedump_request_id;
+    /* Following this structure is the TLV:
+     *    A_UINT32 odd_livedump_id_list[]; <-- array livedump_id list
+     */
+} wmi_livedump_request_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /* odd_livedump_request_id:
+     * this echoes the request id that was sent in the wmi_livedump_cmd_param
+     */
+    A_UINT32 odd_livedump_request_id;
+    /*
+     * 4 LSB's to indicate status of the odd_livedump_request_id processed
+     * by the FW, the other 28bits to kept for future enhancements.
+     * The status will be defined in the enum odd_livedump_resp_status
+     * 0 - SUCCESS
+     * 1 - FAILURE
+     * Refer to the WMI_ODD_LIVEDUMP_RESP_SET,_GET_STATUS macros.
+     */
+    A_UINT32 status;
+} wmi_livedump_response_event_fixed_param;
 
 
 

@@ -1300,6 +1300,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_xgap_enable_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_mesh_rx_filter_enable_fixed_param,
     WMITLV_TAG_STRUC_wmi_wfa_config_ofdma,
+    WMITLV_TAG_STRUC_wmi_livedump_request_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_livedump_response_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1809,6 +1811,7 @@ typedef enum {
     OP(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID) \
     OP(WMI_XGAP_ENABLE_CMDID) \
     OP(WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID) \
+    OP(WMI_ODD_LIVEDUMP_REQUEST_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2103,6 +2106,7 @@ typedef enum {
     OP(WMI_IPA_LINK_STATS_EVENTID) \
     OP(WMI_PDEV_SCHED_TIDQ_SUSP_INFO_EVENTID) \
     OP(WMI_XGAP_ENABLE_COMPLETE_EVENTID) \
+    OP(WMI_ODD_LIVEDUMP_RESPONSE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5164,6 +5168,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_xgap_enable_cmd_fixed_param, wmi_xgap_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_XGAP_ENABLE_CMDID);
 
+#define WMITLV_TABLE_WMI_ODD_LIVEDUMP_REQUEST_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_livedump_request_cmd_fixed_param, wmi_livedump_request_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, odd_livedump_id_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ODD_LIVEDUMP_REQUEST_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -7005,6 +7014,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HEALTH_MON_INIT_DONE_EVENTID);
 #define WMITLV_TABLE_WMI_XGAP_ENABLE_COMPLETE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_xgap_enable_complete_event_fixed_param, wmi_xgap_enable_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_XGAP_ENABLE_COMPLETE_EVENTID);
+
+/* ODD Livedump */
+#define  WMITLV_TABLE_WMI_ODD_LIVEDUMP_RESPONSE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_livedump_response_event_fixed_param, wmi_livedump_response_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ODD_LIVEDUMP_RESPONSE_EVENTID);
+
 
 
 
