@@ -406,6 +406,9 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 		ch_scratch1.mhi_v2.polling_mode = ch_scratch.mhi.polling_mode;
 		ch_scratch1.mhi_v2.oob_mod_threshold =
 			ch_scratch.mhi.oob_mod_threshold;
+		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 &&
+			client == IPA_CLIENT_MHI_COAL_CONS)
+			ch_scratch1.mhi_v2.min_available_elements = GSI_VEID_MAX;
 		res = gsi_write_channel_scratch(ep->gsi_chan_hdl, ch_scratch1);
 	} else {
 		res = gsi_write_channel_scratch(ep->gsi_chan_hdl, ch_scratch);

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef GSI_H
@@ -660,20 +661,23 @@ struct __packed gsi_mhi_channel_scratch {
  * @oob_mod_threshold:   Defines OOB moderation threshold. Units are in 8
  *                       ring elements.
  *                       should not ring DBs until notified of DB mode/OOB mode
+ * @min_available_elements: Minimum number of available credits used for MHIC
+ * 						 channels. No of coalescing context+1.
  */
 struct __packed gsi_mhi_channel_scratch_v2 {
-    uint32_t mhi_host_wp_addr_lo;
+    uint32_t mhi_host_wp_addr_lo; /* scratch 1 = 32 bits */
     uint32_t mhi_host_wp_addr_hi : 9;
     uint32_t polling_configuration : 5;
-    uint32_t rsvd1 : 18;
+    uint32_t rsvd1 : 18; /* end of scratch 2 */
     uint32_t rsvd2 : 1;
     uint32_t assert_bit40 : 1;
     uint32_t resvd3 : 5;
     uint32_t burst_mode_enabled : 1;
     uint32_t polling_mode : 1;
     uint32_t oob_mod_threshold : 5;
-    uint32_t resvd4 : 18; /* Not configured by AP */
-    uint32_t resvd5; /* Not configured by AP */
+    uint32_t min_available_elements : 4;
+    uint32_t resvd4 : 14; /* end of scratch 3 */
+    uint32_t resvd5; /* Scratch 4 Not configured by AP */
 };
 
 /**
