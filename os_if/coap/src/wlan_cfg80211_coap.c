@@ -188,6 +188,8 @@ wlan_cfg80211_coap_offload_reply_enable(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
+	params.pattern_id = req_id;
+	params.vdev_id = wlan_vdev_get_id(vdev);
 	params.src_ip_v4 = nla_get_u32(attr);
 
 	attr = tb[COAP_ATTR(REPLY_FILTER)];
