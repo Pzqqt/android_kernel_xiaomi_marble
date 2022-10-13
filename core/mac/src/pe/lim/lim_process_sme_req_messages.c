@@ -3521,7 +3521,7 @@ lim_get_rsn_akm(uint32_t akm)
 		return ANI_AKM_TYPE_NONE;
 }
 
-static enum ani_akm_type
+enum ani_akm_type
 lim_get_connected_akm(struct pe_session *session, int32_t ucast_cipher,
 		      int32_t auth_mode, int32_t akm)
 {
@@ -3875,6 +3875,15 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 				   req->assoc_ie.ptr, req->assoc_ie.len);
 	lim_fill_crypto_params(mac_ctx, session, req);
 
+	/* Reset the SPMK global cache for non-SAE connection */
+	if (session->connected_akm != ANI_AKM_TYPE_SAE) {
+		wlan_mlme_set_sae_single_pmk_bss_cap(mac_ctx->psoc,
+						     session->vdev_id,
+						     false);
+		wlan_mlme_clear_sae_single_pmk_info(session->vdev,
+						    NULL);
+	}
+
 	pe_debug("After stripping Assoc IE len: %d", req->assoc_ie.len);
 	if (req->assoc_ie.len)
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -3977,7 +3986,7 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto fail;
 
-	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d WPS %d OSEN %d fils %d",
+	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d WPS %d OSEN %d fils %d akm %d",
 		 pe_session->curr_op_freq, pe_session->ch_width,
 		 pe_session->ch_center_freq_seg0,
 		 pe_session->ch_center_freq_seg1,
@@ -3992,7 +4001,8 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 		 pe_session->isCiscoVendorAP,
 		 pe_session->wps_registration,
 		 pe_session->isOSENConnection,
-		 lim_is_fils_connection(pe_session));
+		 lim_is_fils_connection(pe_session),
+		 pe_session->connected_akm);
 
 	status = lim_send_connect_req_to_mlm(pe_session);
 	if (QDF_IS_STATUS_ERROR(status)) {
