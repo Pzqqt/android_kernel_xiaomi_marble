@@ -1202,6 +1202,15 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 	dp->dp_display.max_pclk_khz = min(dp->parser->max_pclk_khz,
 					dp->debug->max_pclk_khz);
 
+	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch && !dp->parser->gpio_aux_switch
+			&& dp->aux_switch_node) {
+		rc = dp->aux->aux_switch(dp->aux, true, dp->hpd->orientation);
+		if (rc) {
+			mutex_unlock(&dp->session_lock);
+			return rc;
+		}
+	}
+
 	/*
 	 * If dp video session is not restored from a previous session teardown
 	 * by userspace, ensure the host_init is executed, in such a scenario,
