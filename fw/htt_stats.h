@@ -901,7 +901,8 @@ typedef struct {
     /** Num of times su bf sequences are denylisted */
     A_UINT32 num_su_txbf_denylisted;
     /** pdev uptime in microseconds **/
-    A_UINT32 pdev_up_time_us;
+    A_UINT32 pdev_up_time_us_low;
+    A_UINT32 pdev_up_time_us_high;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -945,6 +946,18 @@ typedef struct {
     A_UINT32 cw_min[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
     A_UINT32 cw_max[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
 } htt_tx_pdev_muedca_params_stats_tlv_v;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 ul_mumimo_less_aggressive[HTT_NUM_AC_WMM];
+    A_UINT32 ul_mumimo_medium_aggressive[HTT_NUM_AC_WMM];
+    A_UINT32 ul_mumimo_highly_aggressive[HTT_NUM_AC_WMM];
+    A_UINT32 ul_mumimo_default_relaxed[HTT_NUM_AC_WMM];
+    A_UINT32 ul_muofdma_less_aggressive[HTT_NUM_AC_WMM];
+    A_UINT32 ul_muofdma_medium_aggressive[HTT_NUM_AC_WMM];
+    A_UINT32 ul_muofdma_highly_aggressive[HTT_NUM_AC_WMM];
+    A_UINT32 ul_muofdma_default_relaxed[HTT_NUM_AC_WMM];
+} htt_tx_pdev_ap_edca_params_stats_tlv_v;
 
 #define HTT_TX_PDEV_SIFS_BURST_HIST_STATS 10
 #define HTT_TX_PDEV_STATS_SIFS_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -4944,8 +4957,12 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /** Tx PPDU duration histogram **/
     A_UINT32 tx_ppdu_dur_hist[HTT_PDEV_STATS_PPDU_DUR_HIST_BINS];
-    A_UINT32 tx_success_time_us;
-    A_UINT32 tx_fail_time_us;
+    A_UINT32 tx_success_time_us_low;
+    A_UINT32 tx_success_time_us_high;
+    A_UINT32 tx_fail_time_us_low;
+    A_UINT32 tx_fail_time_us_high;
+    A_UINT32 pdev_up_time_us_low;
+    A_UINT32 pdev_up_time_us_high;
 } htt_tx_pdev_ppdu_dur_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
@@ -6815,6 +6832,15 @@ typedef struct {
     A_UINT32 reduced_tx_su_ibf_bw[HTT_TX_TXBF_RATE_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
     /** Open loop TX BW stats */
     A_UINT32 reduced_tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_REDUCED_CHAN_TYPES][HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    /** Txbf flag reason stats */
+    A_UINT32 txbf_flag_set_mu_mode;
+    A_UINT32 txbf_flag_set_final_status;
+    A_UINT32 txbf_flag_not_set_verified_txbf_mode;
+    A_UINT32 txbf_flag_not_set_disable_p2p_access;
+    A_UINT32 txbf_flag_not_set_max_nss_reached_in_he160;
+    A_UINT32 txbf_flag_not_set_disable_ul_dl_ofdma;
+    A_UINT32 txbf_flag_not_set_mcs_threshold_value;
+    A_UINT32 txbf_flag_not_set_final_status;
 } htt_tx_pdev_txbf_rate_stats_tlv;
 
 typedef enum {

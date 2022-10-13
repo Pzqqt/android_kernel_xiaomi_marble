@@ -314,6 +314,7 @@ typedef enum {
     WMI_GRP_MLO,            /* 0x48 MLO(Multiple Link Operation) management */
     WMI_GRP_SAWF,           /* 0x49 SAWF (Service Aware WiFi) */
     WMI_GRP_QUIET_OFL,      /* 0x4a Quiet offloads */
+    WMI_GRP_ODD,            /* 0x4b ODD */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1537,6 +1538,9 @@ typedef enum {
     /** disable a service class */
     WMI_SAWF_SVC_CLASS_DISABLE_CMDID,
 
+    /* WMI commands specific to ODD */
+    WMI_ODD_LIVEDUMP_REQUEST_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_ODD),
+
 } WMI_CMD_ID;
 
 typedef enum {
@@ -2330,6 +2334,9 @@ typedef enum {
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
+
+    /* ODD events */
+    WMI_ODD_LIVEDUMP_RESPONSE_EVENTID = WMI_CMD_GRP_START_ID(WMI_GRP_ODD),
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -17834,6 +17841,9 @@ enum {
     WMI_AUTH_WPA3_SAE,
     WMI_AUTH_WPA3_OWE,
     WMI_AUTH_PASN,
+    WMI_AUTH_RSNA_8021X_SHA384,
+    WMI_AUTH_WPA3_SAE_SHA384,
+    WMI_AUTH_FT_RSNA_SAE_SHA384,
 };
 
 typedef enum {
@@ -21054,6 +21064,17 @@ typedef struct {
     A_UINT8 KEK[GTK_OFFLOAD_KEK_BYTES]; /* key encryption key */
     A_UINT8 KCK[GTK_OFFLOAD_KCK_BYTES]; /* key confirmation key */
     A_UINT8 replay_counter[GTK_REPLAY_COUNTER_BYTES]; /* replay counter for re-key */
+
+    /*
+     * Following structure will be appended when fils:
+     *     wmi_gtk_offload_fils_tlv_param wmi_fils_gtk_info;
+     * Following structure will be appended to the above KEK[] when kek length
+     * is larger than GTK_OFFLOAD_KEK_BYTES:
+     *     A_UINT8 kek_ext[];
+     * Following structure will be appended to the above KCK[] when kck length
+     * is larger than GTK_OFFLOAD_KCK_BYTES:
+     *     A_UINT8 kck_ext[];
+     */
 } WMI_GTK_OFFLOAD_CMD_fixed_param;
 
 typedef struct {
@@ -21229,6 +21250,12 @@ typedef enum
 
     /* Extend ITO under WOW mode if vendor OUI is received in beacon */
     WMI_VENDOR_OUI_ACTION_EXTEND_WOW_ITO = 8,
+
+    /*
+     * Turn on station 80211BE feature if AP's vendor OUI is in the list
+     * for specific customer
+     */
+    WMI_VENDOR_OUI_ACTION_ALLOW_11BE = 9,
 
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
@@ -33098,10 +33125,13 @@ typedef enum {
      *    specified time then FW will indicate host to stop TX since
      *    there are no lower power mode available.
      */
-    WMI_AFC_EXPIRY_EVENT_START         = 1,
-    WMI_AFC_EXPIRY_EVENT_RENEW         = 2,
-    WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LPI = 3,
-    WMI_AFC_EXPIRY_EVENT_STOP_TX       = 4,
+    WMI_AFC_EXPIRY_EVENT_START                    = 1,
+    WMI_AFC_EXPIRY_EVENT_RENEW                    = 2,
+    WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LOW_POWER_MODE = 3,
+        /* retain the deprecated old name as an alias for the new name */
+        WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LPI =
+            WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LOW_POWER_MODE,
+    WMI_AFC_EXPIRY_EVENT_STOP_TX                  = 4,
 } WMI_AFC_EXPIRY_EVENT_SUBTYPE;
 
 typedef enum {
@@ -38660,9 +38690,17 @@ typedef struct {
  */
 } wmi_cfr_capture_filter_cmd_fixed_param;
 
+enum wmi_oem_data_evt_cause {
+    WMI_OEM_DATA_EVT_CAUSE_UNSPECIFIED = 0,
+    WMI_OEM_DATA_EVT_CAUSE_CMD_REQ = 1,
+    WMI_OEM_DATA_EVT_CAUSE_ASYNC = 2,
+};
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_data_event_fixed_param */
     A_UINT32 data_len; /** length in byte of data[]. */
+    /* Event Cause reason from enum wmi_oem_data_evt_cause */
+    A_UINT32 event_cause;
 /* Following this structure is the TLV:
  *      A_UINT8 data[]; <-- length in byte given by field data_len.
  * This data array contains OEM data, the payload begins with a field to tell the HOST regarding the kind of the OEM data.
@@ -39222,6 +39260,17 @@ typedef struct {
 } wmi_wfa_config_saquery;
 
 typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wfa_config_ofdma */
+    A_UINT32 tlv_header;
+    /* force_he_trigger_to_eht_sta
+     *   Possible values from host are:
+     *   0  default behavior
+     *   1  instead of sending EHT triggers to EHT stations, send HE triggers
+     */
+    A_UINT32 force_he_trigger_to_eht_sta;
+} wmi_wfa_config_ofdma;
+
+typedef struct {
     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wfa_config_cmd_fixed_param */
     A_UINT32 tlv_header;
     /** VDEV identifier */
@@ -39231,6 +39280,7 @@ typedef struct {
      * wmi_wfa_config_csa     wfa_config_csa[];     (0 or 1 elements)
      * wmi_wfa_config_ocv     wfa_config_ocv[];     (0 or 1 elements)
      * wmi_wfa_config_saquery wfa_config_saquery[]; (0 or 1 elements)
+     * wmi_wfa_config_ofdma   wfa_config_ofdma[];   (0 or 1 elements)
      */
 } wmi_wfa_config_cmd_fixed_param;
 
@@ -40032,6 +40082,45 @@ typedef struct {
     A_UINT32 ring_buf_paddr_high;
     A_UINT32 initial_upload_period_ms;
 } wmi_health_mon_init_done_fixed_param;
+
+/** ODD **/
+
+/* Livedump Data structures */
+#define WMI_ODD_LIVEDUMP_RESP_SET_STATUS(status, val) \
+    WMI_SET_BITS(status, 0, 4, val)
+#define WMI_ODD_LIVEDUMP_RESP_GET_STATUS(status) \
+    WMI_GET_BITS(status, 0, 4)
+
+typedef enum {
+    ODD_LIVEDUMP_STATUS_SUCCESS = 0,
+    ODD_LIVEDUMP_STATUS_FAILURE,
+    ODD_MAX_LIVEDUMP_STATUS,
+} odd_livedump_resp_status;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 odd_livedump_request_id;
+    /* Following this structure is the TLV:
+     *    A_UINT32 odd_livedump_id_list[]; <-- array livedump_id list
+     */
+} wmi_livedump_request_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /* odd_livedump_request_id:
+     * this echoes the request id that was sent in the wmi_livedump_cmd_param
+     */
+    A_UINT32 odd_livedump_request_id;
+    /*
+     * 4 LSB's to indicate status of the odd_livedump_request_id processed
+     * by the FW, the other 28bits to kept for future enhancements.
+     * The status will be defined in the enum odd_livedump_resp_status
+     * 0 - SUCCESS
+     * 1 - FAILURE
+     * Refer to the WMI_ODD_LIVEDUMP_RESP_SET,_GET_STATUS macros.
+     */
+    A_UINT32 status;
+} wmi_livedump_response_event_fixed_param;
 
 
 

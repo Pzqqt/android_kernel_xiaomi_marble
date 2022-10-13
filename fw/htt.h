@@ -234,9 +234,10 @@
  * 3.107 Add traffic_end_indication bitfield in htt_tx_msdu_desc_ext2_t.
  * 3.108 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP def.
  * 3.109 Add HTT_T2H RX_ADDBA_EXTN,RX_DELBA_EXTN defs.
+ * 3.110 Add more word_mask fields in htt_tx_monitor_cfg_t.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 109
+#define HTT_CURRENT_VERSION_MINOR 110
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -760,6 +761,7 @@ typedef enum {
     HTT_STATS_LATENCY_PROF_CAL_STATS_TAG           = 168, /* htt_latency_prof_cal_stats_tlv */
     HTT_STATS_TX_PDEV_MUEDCA_PARAMS_STATS_TAG      = 169, /* htt_tx_pdev_muedca_params_stats_tlv_v */
     HTT_STATS_PDEV_BW_MGR_STATS_TAG                = 170, /* htt_pdev_bw_mgr_stats_tlv */
+    HTT_STATS_TX_PDEV_AP_EDCA_PARAMS_STATS_TAG     = 171, /* htt_tx_pdev_ap_edca_params_stats_tlv_v */
 
 
     HTT_STATS_MAX_TAG,
@@ -6961,6 +6963,13 @@ PREPACK struct htt_tx_monitor_cfg_t {
              dma_mpdu_ctrl:                          1,
              dma_mpdu_data:                          1,
              rsvd4:                                 10;
+    A_UINT32 tx_queue_ext_v2_word_mask:             12,
+             tx_peer_entry_v2_word_mask:            12,
+             rsvd5:                                 10;
+    A_UINT32 fes_status_end_word_mask:              16,
+             response_end_status_word_mask:         16;
+    A_UINT32 fes_status_prot_word_mask:             11,
+             rsvd6:                                 21;
 } POSTPACK;
 
 #define HTT_TX_MONITOR_CFG_SZ    (sizeof(struct htt_tx_monitor_cfg_t))
@@ -7337,6 +7346,61 @@ PREPACK struct htt_tx_monitor_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_DMA_MPDU_DATA, _val); \
                 ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_DMA_MPDU_DATA_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK_M          0x00000fff
+#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK_S          0
+#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK_M) >> \
+                    HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK_S)
+#define HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_QUEUE_EXT_V2_WORD_MASK_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK_M         0x00fff000
+#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK_S         12
+#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK_M) >> \
+                    HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK_S)
+#define HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_TX_PEER_ENTRY_V2_WORD_MASK_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK_M           0x0000ffff
+#define HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK_S           0
+#define HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK_M) >> \
+                    HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK_S)
+#define HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FES_STATUS_END_WORD_MASK_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK_M      0xffff0000
+#define HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK_S      16
+#define HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK_M) >> \
+                    HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK_S)
+#define HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_RESPONSE_END_STATUS_WORD_MASK_S)); \
+            } while (0)
+
+#define HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK_M          0x000007ff
+#define HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK_S          0
+#define HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK_GET(_var) \
+            (((_var) & HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK_M) >> \
+                    HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK_S)
+#define HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK, _val); \
+                ((_var) |= ((_val) << HTT_TX_MONITOR_CFG_FES_STATUS_PROT_WORD_MASK_S)); \
             } while (0)
 
 /*
