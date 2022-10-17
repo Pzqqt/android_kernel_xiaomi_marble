@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -562,9 +563,11 @@ wlan_ser_cancel_non_scan_cmd(
 			qdf_container_of(nnode,
 					 struct wlan_serialization_command_list,
 					 pdev_node);
-		if (cmd && !wlan_serialization_match_cmd_id_type(
-							nnode, cmd,
-							WLAN_SER_PDEV_NODE)) {
+		if (cmd &&
+		    !(wlan_serialization_match_cmd_id_type(nnode, cmd,
+							  WLAN_SER_PDEV_NODE) &&
+		      wlan_serialization_match_cmd_vdev(nnode, cmd->vdev,
+							WLAN_SER_PDEV_NODE))) {
 			pnode = nnode;
 			continue;
 		}

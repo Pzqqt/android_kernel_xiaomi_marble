@@ -2307,6 +2307,7 @@ struct dp_soc {
 	qdf_atomic_t ref_count;
 
 	unsigned long vdev_stats_id_map;
+	bool is_tx_pause;
 };
 
 #ifdef IPA_OFFLOAD

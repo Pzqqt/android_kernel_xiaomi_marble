@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -201,7 +202,10 @@ static void wlan_crypto_free_key(struct wlan_crypto_comp_priv *crypto_priv)
 			crypto_priv->bigtk_key[i] = NULL;
 		}
 	}
-
+	/* Reset All key index as well */
+	crypto_priv->def_tx_keyid = 0;
+	crypto_priv->def_igtk_tx_keyid = 0;
+	crypto_priv->def_bigtk_tx_keyid = 0;
 }
 
 #ifdef CRYPTO_SET_KEY_CONVERGED

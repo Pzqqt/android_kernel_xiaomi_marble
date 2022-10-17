@@ -952,6 +952,38 @@ static inline void hal_delayed_reg_write_deinit(struct hal_soc *hal)
 #endif
 
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#ifdef HAL_RECORD_SUSPEND_WRITE
+static struct hal_suspend_write_history
+		g_hal_suspend_write_history[HAL_SUSPEND_WRITE_HISTORY_MAX];
+
+static
+void hal_event_suspend_record(uint8_t ring_id, uint32_t value, uint32_t count)
+{
+	uint32_t index = qdf_atomic_read(g_hal_suspend_write_history.index) &
+					(HAL_SUSPEND_WRITE_HISTORY_MAX - 1);
+	struct hal_suspend_write_record *cur_event =
+					&hal_suspend_write_event.record[index];
+
+	cur_event->ts = qdf_get_log_timestamp();
+	cur_event->ring_id = ring_id;
+	cur_event->value = value;
+	cur_event->direct_wcount = count;
+	qdf_atomic_inc(g_hal_suspend_write_history.index);
+}
+
+static inline
+void hal_record_suspend_write(uint8_t ring_id, uint32_t value, uint32_t count)
+{
+	if (hif_rtpm_get_state() >= HIF_RTPM_STATE_SUSPENDING)
+		hal_event_suspend_record(ring_id, value, count);
+}
+#else
+static inline
+void hal_record_suspend_write(uint8_t ring_id, uint32_t value, uint32_t count)
+{
+}
+#endif
+
 #ifdef QCA_WIFI_QCA6750
 void hal_delayed_reg_write(struct hal_soc *hal_soc,
 			   struct hal_srng *srng,
@@ -1008,6 +1040,8 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 	} else {
 		hal_reg_write_enqueue(hal_soc, srng, addr, value);
 	}
+
+	hal_record_suspend_write(srng->ring_id, value, srng->wstats.direct);
 }
 #endif
 #endif
