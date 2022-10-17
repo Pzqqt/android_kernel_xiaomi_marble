@@ -1759,8 +1759,8 @@ void handle_session_response_work_handler(struct work_struct *work)
 			break;
 		}
 		list_del(&resp_work->list);
-		kfree(resp_work->data);
-		kfree(resp_work);
+		msm_vidc_vmem_free((void **)&resp_work->data);
+		msm_vidc_vmem_free((void **)&resp_work);
 	}
 	inst_unlock(inst, __func__);
 
@@ -1770,16 +1770,16 @@ void handle_session_response_work_handler(struct work_struct *work)
 static int queue_response_work(struct msm_vidc_inst *inst,
 	enum response_work_type type, void *hdr, u32 hdr_size)
 {
-	struct response_work *work;
+	struct response_work *work = NULL;
+	int rc = 0;
 
-	work = kzalloc(sizeof(struct response_work), GFP_KERNEL);
-	if (!work)
+	rc = msm_vidc_vmem_alloc(sizeof(struct response_work), (void **)&work, __func__);
+	if (rc)
 		return -ENOMEM;
 	INIT_LIST_HEAD(&work->list);
 	work->type = type;
 	work->data_size = hdr_size;
-	work->data = kzalloc(hdr_size, GFP_KERNEL);
-	if (!work->data)
+	if (msm_vidc_vmem_alloc(hdr_size, (void **)&work->data, "Work data"))
 		return -ENOMEM;
 	memcpy(work->data, hdr, hdr_size);
 	list_add_tail(&work->list, &inst->response_works);
@@ -1800,8 +1800,8 @@ int cancel_response_work(struct msm_vidc_inst *inst)
 
 	list_for_each_entry_safe(work, dummy_work, &inst->response_works, list) {
 		list_del(&work->list);
-		kfree(work->data);
-		kfree(work);
+		msm_vidc_vmem_free((void **)&work->data);
+		msm_vidc_vmem_free((void **)&work);
 	}
 
 	return 0;

@@ -16,6 +16,7 @@
 #include "msm_vidc_dt.h"
 #include "msm_vidc_platform.h"
 #include "msm_vidc_core.h"
+#include "msm_vidc_memory.h"
 #include "venus_hfi.h"
 
 #define BASE_DEVICE_NUMBER 32
@@ -231,8 +232,8 @@ static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
 	mutex_destroy(&core->lock);
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
-	kfree(core->response_packet);
-	kfree(core->packet);
+	msm_vidc_vmem_free((void **)&core->response_packet);
+	msm_vidc_vmem_free((void **)&core->packet);
 	core->response_packet = NULL;
 	core->packet = NULL;
 
@@ -275,20 +276,15 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	}
 
 	core->packet_size = 4096;
-	core->packet = kzalloc(core->packet_size, GFP_KERNEL);
-	if (!core->packet) {
-		d_vpr_e("%s(): core packet allocation failed\n", __func__);
-		rc = -ENOMEM;
+	rc = msm_vidc_vmem_alloc(core->packet_size,
+			(void **)&core->packet, "core packet");
+	if (rc)
 		goto exit;
-	}
 
-	core->response_packet = kzalloc(core->packet_size, GFP_KERNEL);
-	if (!core->response_packet) {
-		d_vpr_e("%s(): core response packet allocation failed\n",
-			__func__);
-		rc = -ENOMEM;
+	rc = msm_vidc_vmem_alloc(core->packet_size,
+			(void **)&core->response_packet, "core response packet");
+	if (rc)
 		goto exit;
-	}
 
 	mutex_init(&core->lock);
 	init_completion(&core->init_done);
@@ -301,8 +297,8 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 
 	return 0;
 exit:
-	kfree(core->response_packet);
-	kfree(core->packet);
+	msm_vidc_vmem_free((void **)&core->response_packet);
+	msm_vidc_vmem_free((void **)&core->packet);
 	core->response_packet = NULL;
 	core->packet = NULL;
 	if (core->batch_workq)
@@ -354,7 +350,7 @@ static int msm_vidc_remove(struct platform_device* pdev)
 
 	dev_set_drvdata(&pdev->dev, NULL);
 	debugfs_remove_recursive(core->debugfs_parent);
-	kfree(core);
+	msm_vidc_vmem_free((void **)&core);
 	g_core = NULL;
 
 	return 0;
@@ -363,14 +359,14 @@ static int msm_vidc_remove(struct platform_device* pdev)
 static int msm_vidc_probe_video_device(struct platform_device *pdev)
 {
 	int rc = 0;
-	struct msm_vidc_core *core;
+	struct msm_vidc_core *core = NULL;
 	int nr = BASE_DEVICE_NUMBER;
 
 	d_vpr_h("%s()\n", __func__);
 
-	core = kzalloc(sizeof(*core), GFP_KERNEL);
-	if (!core)
-		return -ENOMEM;
+	rc = msm_vidc_vmem_alloc(sizeof(*core), (void **)&core, __func__);
+	if (rc)
+		return rc;
 	g_core = core;
 
 	core->debugfs_parent = msm_vidc_debugfs_init_drv();
@@ -493,7 +489,7 @@ init_dt_failed:
 init_core_failed:
 	dev_set_drvdata(&pdev->dev, NULL);
 	debugfs_remove_recursive(core->debugfs_parent);
-	kfree(core);
+	msm_vidc_vmem_free((void **)&core);
 	g_core = NULL;
 
 	return rc;

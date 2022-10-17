@@ -408,14 +408,14 @@ int msm_vidc_deinit_platform(struct platform_device *pdev)
 	msm_vidc_deinit_vpu(core, &pdev->dev);
 	msm_vidc_deinit_platform_variant(core, &pdev->dev);
 
-	kfree(core->platform);
+	msm_vidc_vmem_free((void **)&core->platform);
 	return 0;
 }
 
 int msm_vidc_init_platform(struct platform_device *pdev)
 {
 	int rc = 0;
-	struct msm_vidc_platform *platform;
+	struct msm_vidc_platform *platform = NULL;
 	struct msm_vidc_core *core;
 
 	if (!pdev) {
@@ -432,9 +432,10 @@ int msm_vidc_init_platform(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	platform = kzalloc(sizeof(struct msm_vidc_platform), GFP_KERNEL);
-	if (!platform)
-		return -ENOMEM;
+	rc = msm_vidc_vmem_alloc(sizeof(struct msm_vidc_platform),
+			(void **)&platform, __func__);
+	if (rc)
+		return rc;
 
 	core->platform = platform;
 	platform->core = core;

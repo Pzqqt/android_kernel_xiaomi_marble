@@ -69,5 +69,6 @@ void msm_memory_free(struct msm_vidc_inst *inst, void *vidc_buf);
 int msm_memory_cache_operations(struct msm_vidc_inst *inst,
 	struct dma_buf *dbuf, enum msm_memory_cache_type cache_type,
 	u32 offset, u32 size);
-
+int msm_vidc_vmem_alloc(unsigned long size, void **mem, const char *msg);
+void msm_vidc_vmem_free(void **addr);
 #endif // _MSM_VIDC_MEMORY_H_
