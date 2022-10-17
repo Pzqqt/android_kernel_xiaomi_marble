@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _DP_DRM_H_
@@ -138,6 +139,18 @@ void dp_connector_post_open(struct drm_connector *connector, void *display);
  * @max_mixer_count: max available mixers for dp display
  * @max_dsc_count: max available dsc for dp display
  */
+
+/**
+ * dp_conn_set_info_blob - callback to perform info blob initialization
+ * @connector: Pointer to drm connector structure
+ * @info: Pointer to sde connector info structure
+ * @display: Pointer to private display handle
+ * @mode_info: Pointer to mode info structure
+ * Returns: Zero on success
+ */
+int dp_connnector_set_info_blob(struct drm_connector *connector,
+		void *info, void *display, struct msm_mode_info *mode_info);
+
 int dp_drm_bridge_init(void *display, struct drm_encoder *encoder,
 	u32 max_mixer_count, u32 max_dsc_count);
 
@@ -234,6 +247,12 @@ static inline int dp_connector_get_info(struct drm_connector *connector,
 static inline void dp_connector_post_open(struct drm_connector *connector,
 		void *display)
 {
+}
+
+static inline int dp_connnector_set_info_blob(struct drm_connector *connector,
+			void *info, void *display, struct msm_mode_info *mode_info)
+{
+	return 0;
 }
 
 static inline int dp_drm_bridge_init(void *display, struct drm_encoder *encoder,
