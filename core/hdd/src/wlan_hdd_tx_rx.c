@@ -1105,7 +1105,8 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	hdd_ctx = adapter->hdd_ctx;
 
-	if (!hdd_ctx || hdd_ctx->hdd_wlan_suspended) {
+	if (qdf_unlikely(!hdd_ctx || hdd_ctx->hdd_wlan_suspended ||
+			 hdd_ctx->hdd_wlan_suspend_in_progress)) {
 		hdd_err_rl("Device is system suspended, drop pkt");
 		goto drop_pkt;
 	}
