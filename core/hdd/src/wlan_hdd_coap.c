@@ -57,6 +57,9 @@ __wlan_hdd_cfg80211_coap_offload(struct wiphy *wiphy,
 	if (errno != 0)
 		return errno;
 
+	if (adapter->device_mode != QDF_STA_MODE)
+		return -ENOTSUPP;
+
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_COAP_ID);
 	if (!vdev)
 		return -EINVAL;
