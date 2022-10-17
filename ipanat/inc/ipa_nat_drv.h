@@ -178,11 +178,28 @@ int ipa_nat_del_ipv4_rule(uint32_t table_handle,
  * To retrieve the timestamp that lastly the
  * nat rule was accessed
  *
- * Returns:	0  On Success, negative on failure
+ * Returns:     0  On Success, negative on failure
  */
 int ipa_nat_query_timestamp(uint32_t  table_handle,
+			uint32_t  rule_handle,
+			uint32_t  *time_stamp);
+
+/**
+ * ipa_nat_query_timestamp_redirect() - to query timestamp and redirect flag
+ * @table_handle: [in] handle of ipv4 nat table
+ * @rule_handle: [in] ipv4 nat rule handle
+ * @time_stamp: [out] time stamp of rule
+ * @redirect: [out] redirect flag of rule
+ *
+ * To retrieve the timestamp that lastly the
+ * nat rule was accessed and the redirect flag
+ *
+ * Returns:	0  On Success, negative on failure
+ */
+int ipa_nat_query_timestamp_redirect(uint32_t  table_handle,
 				uint32_t  rule_handle,
-				uint32_t  *time_stamp);
+				uint32_t  *time_stamp,
+				uint32_t  *redirect);
 
 
 /**

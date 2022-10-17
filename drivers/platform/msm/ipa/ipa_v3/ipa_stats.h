@@ -56,6 +56,9 @@
 
 #define SPEARHEAD_NUM_MAX_INSTANCES 2
 
+#define IPA_LNX_PIPE_PAGE_RECYCLING_INTERVAL_COUNT 5
+#define IPA_LNX_PIPE_PAGE_RECYCLING_INTERVAL_TIME 10 /* In milli second */
+
 /**
  * This is used to indicate which set of logs is enabled from IPA
  * These bitmapped macros are copied from
@@ -67,6 +70,7 @@
 #define SPRHD_IPA_LOG_TYPE_ETH_STATS       0x00008
 #define SPRHD_IPA_LOG_TYPE_USB_STATS       0x00010
 #define SPRHD_IPA_LOG_TYPE_MHIP_STATS      0x00020
+#define SPRHD_IPA_LOG_TYPE_RECYCLE_STATS   0x00040
 
 
 /**
@@ -340,7 +344,6 @@ struct ipa_lnx_mhip_inst_stats {
 };
 #define IPA_LNX_MHIP_INST_STATS_STRUCT_LEN_INT (8 + 248)
 
-
 struct ipa_lnx_consolidated_stats {
 	uint64_t log_type_mask;
 	struct ipa_lnx_generic_stats *generic_stats;
@@ -349,8 +352,42 @@ struct ipa_lnx_consolidated_stats {
 	struct ipa_lnx_eth_inst_stats *eth_stats;
 	struct ipa_lnx_usb_inst_stats *usb_stats;
 	struct ipa_lnx_mhip_inst_stats *mhip_stats;
+	struct ipa_lnx_pipe_page_recycling_stats *recycle_stats;
 };
 #define IPA_LNX_CONSOLIDATED_STATS_STRUCT_LEN_INT (8 + 48)
+
+enum rx_channel_type {
+	RX_WAN_COALESCING,
+	RX_WAN_DEFAULT,
+	RX_WAN_LOW_LAT_DATA,
+	RX_CHANNEL_MAX,
+};
+
+struct ipa_lnx_recycling_stats {
+	uint64_t total_cumulative;
+	uint64_t recycle_cumulative;
+	uint64_t temp_cumulative;
+	uint64_t total_diff;
+	uint64_t recycle_diff;
+	uint64_t temp_diff;
+	uint64_t valid;
+};
+
+/**
+ * The consolidated stats will be in the 0th index.
+ * Diff. between each interval values will be in
+ * indices 1 to (IPA_LNX_PIPE_PAGE_RECYCLING_INTERVAL_COUNT - 1)
+ * @new_set: Indicates if this is the new set of data or previous data.
+ * @interval_time_ms: Interval time in millisecond
+ */
+struct ipa_lnx_pipe_page_recycling_stats {
+	uint32_t interval_time_in_ms;
+	uint32_t default_coal_stats_index;
+	uint32_t low_lat_stats_index;
+	uint32_t sequence_id;
+	uint64_t reserved;
+	struct ipa_lnx_recycling_stats rx_channel[RX_CHANNEL_MAX][IPA_LNX_PIPE_PAGE_RECYCLING_INTERVAL_COUNT];
+};
 
 /* Explain below structures */
 struct ipa_lnx_each_inst_alloc_info {
@@ -372,7 +409,7 @@ struct ipa_lnx_stats_alloc_info {
 	uint32_t num_eth_instances;
 	uint32_t num_usb_instances;
 	uint32_t num_mhip_instances;
-	uint32_t reserved;
+	uint32_t num_page_rec_interval;
 	struct ipa_lnx_each_inst_alloc_info wlan_inst_info[SPEARHEAD_NUM_MAX_INSTANCES];
 	struct ipa_lnx_each_inst_alloc_info eth_inst_info[SPEARHEAD_NUM_MAX_INSTANCES];
 	struct ipa_lnx_each_inst_alloc_info usb_inst_info[SPEARHEAD_NUM_MAX_INSTANCES];

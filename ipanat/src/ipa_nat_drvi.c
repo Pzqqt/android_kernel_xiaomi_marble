@@ -1552,10 +1552,11 @@ bail:
 	return ret;
 }
 
-int ipa_NATI_query_timestamp(
+int ipa_NATI_query_timestamp_redirect(
 	uint32_t  tbl_hdl,
 	uint32_t  rule_hdl,
-	uint32_t* time_stamp )
+	uint32_t* time_stamp,
+	uint32_t* redirect)
 {
 	enum ipa3_nat_mem_in            nmi;
 	struct ipa_nat_cache*           nat_cache_ptr;
@@ -1611,6 +1612,7 @@ int ipa_NATI_query_timestamp(
 		   prep_nat_rule_4print(rule_ptr, buf, sizeof(buf)));
 
 	*time_stamp = rule_ptr->time_stamp;
+	*redirect = rule_ptr->redirect;
 
 unlock:
 	if (pthread_mutex_unlock(&nat_mutex)) {
