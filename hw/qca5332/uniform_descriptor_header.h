@@ -14,14 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
- 
- 
- 
- 
- 
- 
- 
-
 
 #ifndef _UNIFORM_DESCRIPTOR_HEADER_H_
 #define _UNIFORM_DESCRIPTOR_HEADER_H_
@@ -35,9 +27,11 @@ struct uniform_descriptor_header {
 #ifndef WIFI_BIT_ORDER_BIG_ENDIAN
              uint32_t owner                                                   :  4, // [3:0]
                       buffer_type                                             :  4, // [7:4]
-                      reserved_0a                                             : 24; // [31:8]
+                      tx_mpdu_queue_number                                    : 20, // [27:8]
+                      reserved_0a                                             :  4; // [31:28]
 #else
-             uint32_t reserved_0a                                             : 24, // [31:8]
+             uint32_t reserved_0a                                             :  4, // [31:28]
+                      tx_mpdu_queue_number                                    : 20, // [27:8]
                       buffer_type                                             :  4, // [7:4]
                       owner                                                   :  4; // [3:0]
 #endif
@@ -106,15 +100,39 @@ struct uniform_descriptor_header {
 #define UNIFORM_DESCRIPTOR_HEADER_BUFFER_TYPE_MASK                                  0x000000f0
 
 
+/* Description		TX_MPDU_QUEUE_NUMBER
+
+			Consumer: TQM/Debug
+			Producer: SW (in 'TX_MPDU_QUEUE_HEAD')/TQM (elsewhere)
+			
+			Field only valid if Buffer_type is any of Transmit_MPDU_*_descriptor
+			
+			
+			Indicates the MPDU queue ID to which this MPDU descriptor
+			 belongs
+			Used for tracking and debugging
+			
+			Hamilton and Waikiki used bits [19:0] of word 1 of 'TX_MPDU_LINK,' 
+			word 16 of 'TX_MPDU_QUEUE_HEAD' and word 1 of 'TX_MPDU_QUEUE_EXT' 
+			for this.
+			 <legal all>
+*/
+
+#define UNIFORM_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_OFFSET                       0x00000000
+#define UNIFORM_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_LSB                          8
+#define UNIFORM_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_MSB                          27
+#define UNIFORM_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_MASK                         0x0fffff00
+
+
 /* Description		RESERVED_0A
 
 			<legal 0>
 */
 
 #define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_OFFSET                                0x00000000
-#define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_LSB                                   8
+#define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_LSB                                   28
 #define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_MSB                                   31
-#define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_MASK                                  0xffffff00
+#define UNIFORM_DESCRIPTOR_HEADER_RESERVED_0A_MASK                                  0xf0000000
 
 
 

@@ -14,14 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
- 
- 
- 
- 
- 
- 
- 
-
 
 #ifndef _RX_REO_QUEUE_EXT_H_
 #define _RX_REO_QUEUE_EXT_H_
@@ -144,15 +136,39 @@ struct rx_reo_queue_ext {
 #define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_BUFFER_TYPE_MASK                         0x000000f0
 
 
+/* Description		TX_MPDU_QUEUE_NUMBER
+
+			Consumer: TQM/Debug
+			Producer: SW (in 'TX_MPDU_QUEUE_HEAD')/TQM (elsewhere)
+			
+			Field only valid if Buffer_type is any of Transmit_MPDU_*_descriptor
+			
+			
+			Indicates the MPDU queue ID to which this MPDU descriptor
+			 belongs
+			Used for tracking and debugging
+			
+			Hamilton and Waikiki used bits [19:0] of word 1 of 'TX_MPDU_LINK,' 
+			word 16 of 'TX_MPDU_QUEUE_HEAD' and word 1 of 'TX_MPDU_QUEUE_EXT' 
+			for this.
+			 <legal all>
+*/
+
+#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_OFFSET              0x00000000
+#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_LSB                 8
+#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_MSB                 27
+#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_TX_MPDU_QUEUE_NUMBER_MASK                0x0fffff00
+
+
 /* Description		RESERVED_0A
 
 			<legal 0>
 */
 
 #define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_RESERVED_0A_OFFSET                       0x00000000
-#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_RESERVED_0A_LSB                          8
+#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_RESERVED_0A_LSB                          28
 #define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_RESERVED_0A_MSB                          31
-#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_RESERVED_0A_MASK                         0xffffff00
+#define RX_REO_QUEUE_EXT_DESCRIPTOR_HEADER_RESERVED_0A_MASK                         0xf0000000
 
 
 /* Description		RESERVED_1A
