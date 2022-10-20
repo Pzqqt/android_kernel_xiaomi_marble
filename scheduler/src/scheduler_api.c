@@ -23,6 +23,11 @@
 #include <qdf_module.h>
 #include <qdf_platform.h>
 
+struct sched_qdf_mc_timer_cb_wrapper {
+	qdf_mc_timer_callback_t timer_callback;
+	void *data;
+};
+
 QDF_STATUS scheduler_disable(void)
 {
 	struct scheduler_ctx *sched_ctx;
@@ -455,10 +460,68 @@ QDF_STATUS scheduler_os_if_mq_handler(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
+struct sched_qdf_mc_timer_cb_wrapper *scheduler_qdf_mc_timer_init(
+		qdf_mc_timer_callback_t timer_callback,
+		void *data)
+{
+	struct sched_qdf_mc_timer_cb_wrapper *wrapper_ptr;
+
+	wrapper_ptr = qdf_mem_malloc(sizeof(*wrapper_ptr));
+	if (!wrapper_ptr)
+		return NULL;
+
+	wrapper_ptr->timer_callback = timer_callback;
+	wrapper_ptr->data = data;
+	return wrapper_ptr;
+}
+
+void *scheduler_qdf_mc_timer_deinit_return_data_ptr(
+		struct sched_qdf_mc_timer_cb_wrapper *wrapper_ptr)
+{
+	void *data_ptr;
+
+	if (!wrapper_ptr) {
+		sched_err("pointer to wrapper ptr is NULL");
+		return NULL;
+	}
+
+	data_ptr = wrapper_ptr->data;
+	qdf_mem_free(wrapper_ptr);
+	return data_ptr;
+}
+
+QDF_STATUS scheduler_qdf_mc_timer_callback_t_wrapper(struct scheduler_msg *msg)
+{
+	struct sched_qdf_mc_timer_cb_wrapper *mc_timer_wrapper;
+	qdf_mc_timer_callback_t timer_cb;
+
+	mc_timer_wrapper = msg->bodyptr;
+	if (!mc_timer_wrapper) {
+		sched_err("NULL mc_timer_wrapper from msg body");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	timer_cb = mc_timer_wrapper->timer_callback;
+
+	QDF_BUG(timer_cb);
+	if (!timer_cb)
+		goto sched_qdf_mc_timer_err;
+
+	timer_cb(mc_timer_wrapper->data);
+
+	qdf_mem_free(mc_timer_wrapper);
+	return QDF_STATUS_SUCCESS;
+
+sched_qdf_mc_timer_err:
+	sched_err("failed to get timer cb is NULL");
+	qdf_mem_free(mc_timer_wrapper);
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg)
 {
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
-	qdf_mc_timer_callback_t timer_callback;
+	scheduler_msg_process_fn_t sched_mc_timer_callback;
 
 	QDF_BUG(msg);
 	if (!msg)
@@ -472,17 +535,12 @@ QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg)
 	if (msg->reserved != SYS_MSG_COOKIE || msg->type != SYS_MSG_ID_MC_TIMER)
 		return sched_ctx->legacy_sys_handler(msg);
 
-	/* scheduler_msg_process_fn_t and qdf_mc_timer_callback_t have
-	 * different parameters and return type
-	 */
-	timer_callback = (qdf_mc_timer_callback_t)msg->callback;
-	QDF_BUG(timer_callback);
-	if (!timer_callback)
+	sched_mc_timer_callback = msg->callback;
+	QDF_BUG(sched_mc_timer_callback);
+	if (!sched_mc_timer_callback)
 		return QDF_STATUS_E_FAILURE;
 
-	timer_callback(msg->bodyptr);
-
-	return QDF_STATUS_SUCCESS;
+	return sched_mc_timer_callback(msg);
 }
 
 QDF_STATUS scheduler_mlme_mq_handler(struct scheduler_msg *msg)
@@ -588,8 +646,9 @@ QDF_STATUS scheduler_deregister_sys_legacy_handler(void)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS scheduler_msg_flush_noop(struct scheduler_msg *msg)
+static QDF_STATUS scheduler_msg_flush_mc(struct scheduler_msg *msg)
 {
+	scheduler_qdf_mc_timer_deinit_return_data_ptr(msg->bodyptr);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -597,7 +656,7 @@ void scheduler_mc_timer_callback(qdf_mc_timer_t *timer)
 {
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
-
+	struct sched_qdf_mc_timer_cb_wrapper *mc_timer_wrapper;
 	qdf_mc_timer_callback_t callback = NULL;
 	void *user_data = NULL;
 	QDF_TIMER_TYPE type = QDF_TIMER_TYPE_SW;
@@ -660,21 +719,27 @@ void scheduler_mc_timer_callback(qdf_mc_timer_t *timer)
 	if (!callback)
 		return;
 
+	mc_timer_wrapper = scheduler_qdf_mc_timer_init(callback, user_data);
+	if (!mc_timer_wrapper) {
+		sched_err("failed to allocate sched_qdf_mc_timer_cb_wrapper");
+		return;
+	}
+
 	/* serialize to scheduler controller thread */
 	msg.type = SYS_MSG_ID_MC_TIMER;
 	msg.reserved = SYS_MSG_COOKIE;
-	msg.callback = (scheduler_msg_process_fn_t)callback;
-	msg.bodyptr = user_data;
+	msg.callback = scheduler_qdf_mc_timer_callback_t_wrapper;
+	msg.bodyptr = mc_timer_wrapper;
 	msg.bodyval = 0;
-
-	/* bodyptr points to user data, do not free it during msg flush */
-	msg.flush_callback = scheduler_msg_flush_noop;
+	msg.flush_callback = scheduler_msg_flush_mc;
 
 	status = scheduler_post_message(QDF_MODULE_ID_SCHEDULER,
 					QDF_MODULE_ID_SCHEDULER,
 					QDF_MODULE_ID_SYS, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sched_err("Could not enqueue timer to timer queue");
+		qdf_mem_free(mc_timer_wrapper);
+	}
 }
 
 QDF_STATUS scheduler_get_queue_size(QDF_MODULE_ID qid, uint32_t *size)
