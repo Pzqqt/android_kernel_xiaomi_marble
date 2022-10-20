@@ -45,6 +45,16 @@
 #define QCA6490_v2                      0x400c0200
 #define WCN3990_v2_2                    0x400f0000
 #define WCN6750_V1                      0x40140110
+#define WCN3990_TALOS                   0x40670000
+#define WCN3990_MOOREA                  0x40090000
+#define WCN3990_SAIPAN                  0x400B0000
+#define WCN3990_RENNELL                 0x400C0000
+#define WCN3990_BITRA                   0x400D0000
+#define WCN3990_DIVAR                   0x40690000
+#define WCN3990_ATHERTON                0x40680000
+#define WCN3990_STRAIT                  0x400E0000
+#define WCN3990_NETRANI                 0x400F0000
+#define WCN3990_CLARENCE                0x406A0000
 
 struct qwlan_hw {
 	u32 id;
