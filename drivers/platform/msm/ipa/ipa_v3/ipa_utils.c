@@ -13127,17 +13127,17 @@ bool ipa3_is_modem_up(void)
 {
 	bool is_up;
 
-	mutex_lock(&ipa3_ctx->lock);
+	mutex_lock(&ipa3_ctx->ssr_lock);
 	is_up = ipa3_ctx->is_modem_up;
-	mutex_unlock(&ipa3_ctx->lock);
+	mutex_unlock(&ipa3_ctx->ssr_lock);
 	return is_up;
 }
 
 void ipa3_set_modem_up(bool is_up)
 {
-	mutex_lock(&ipa3_ctx->lock);
+	mutex_lock(&ipa3_ctx->ssr_lock);
 	ipa3_ctx->is_modem_up = is_up;
-	mutex_unlock(&ipa3_ctx->lock);
+	mutex_unlock(&ipa3_ctx->ssr_lock);
 }
 
 /**
