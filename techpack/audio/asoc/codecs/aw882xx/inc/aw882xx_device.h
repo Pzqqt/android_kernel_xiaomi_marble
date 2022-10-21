@@ -10,6 +10,11 @@
 #define AW_NAME_MAX		(50)
 #define ALGO_VERSION_MAX	(80)
 
+#define AW_GET_MIN_VALUE(value1, value2) \
+	((value1) > (value2) ? (value2) : (value1))
+
+#define AW_GET_MAX_VALUE(value1, value2)  \
+	((value1) > (value2) ? (value1) : (value2))
 
 enum {
 	AW_1000_US = 1000,
@@ -18,6 +23,8 @@ enum {
 	AW_4000_US = 4000,
 	AW_5000_US = 5000,
 	AW_10000_US = 10000,
+	AW_32000_US = 32000,
+	AW_70000_US = 70000,
 	AW_100000_US = 100000,
 };
 
@@ -38,6 +45,10 @@ enum {
 	AW_DEV_CH_PRI_R = 1,
 	AW_DEV_CH_SEC_L = 2,
 	AW_DEV_CH_SEC_R = 3,
+	AW_DEV_CH_TERT_L = 4,
+	AW_DEV_CH_TERT_R = 5,
+	AW_DEV_CH_QUAT_L = 6,
+	AW_DEV_CH_QUAT_R = 7,
 	AW_DEV_CH_MAX,
 };
 
@@ -72,8 +83,8 @@ struct aw_device_ops {
 	int (*aw_i2c_write)(struct aw_device *aw_dev, unsigned char reg_addr, unsigned int reg_data);
 	int (*aw_i2c_read)(struct aw_device *aw_dev, unsigned char reg_addr, unsigned int *reg_data);
 	int (*aw_i2c_write_bits)(struct aw_device *aw_dev, unsigned char reg_addr, unsigned int mask, unsigned int reg_data);
-	int (*aw_set_volume)(struct aw_device *aw_dev, unsigned int value);
-	int (*aw_get_volume)(struct aw_device *aw_dev, unsigned int *value);
+	int (*aw_set_hw_volume)(struct aw_device *aw_dev, unsigned int value);
+	int (*aw_get_hw_volume)(struct aw_device *aw_dev, unsigned int *value);
 	unsigned int (*aw_reg_val_to_db)(unsigned int value);
 	bool (*aw_check_wr_access)(int reg);
 	bool (*aw_check_rd_access)(int reg);
@@ -209,6 +220,8 @@ struct aw_volume_desc {
 	unsigned int shift;
 	int init_volume;
 	int mute_volume;
+	int ctl_volume;
+	int monitor_volume;
 };
 
 struct aw_voltage_desc {
@@ -230,7 +243,6 @@ struct aw_ipeak_desc {
 
 struct aw_spin_ch {
 	uint16_t rx_val;
-	uint16_t tx_val;
 };
 
 struct aw_reg_ch {
@@ -244,7 +256,6 @@ struct aw_spin_desc {
 	int aw_spin_kcontrol_st;
 	struct aw_spin_ch spin_table[AW_SPIN_MAX];
 	struct aw_reg_ch rx_desc;
-	struct aw_reg_ch tx_desc;
 };
 
 struct aw_efcheck_desc {
@@ -255,7 +266,6 @@ struct aw_efcheck_desc {
 };
 
 struct aw_device {
-	int index;
 	int status;
 	unsigned int chip_id;
 	unsigned int monitor_start;
@@ -316,10 +326,6 @@ int aw882xx_device_irq_reinit(struct aw_device *aw_dev);
 struct mutex *aw882xx_dev_get_ext_dsp_prof_wr_lock(void);
 char *aw882xx_dev_get_ext_dsp_prof_write(void);
 
-
-/*profile*/
-int aw882xx_dev_prof_update(struct aw_device *aw_dev, bool force);
-
 /*re*/
 int aw882xx_dev_get_cali_re(struct aw_device *aw_dev, int32_t *cali_re);
 int aw882xx_dev_init_cali_re(struct aw_device *aw_dev);
@@ -345,6 +351,10 @@ int aw882xx_dev_set_copp_module_en(bool enable);
 int aw882xx_device_probe(struct aw_device *aw_dev);
 int aw882xx_device_remove(struct aw_device *aw_dev);
 int aw882xx_dev_get_list_head(struct list_head **head);
+
+int aw882xx_dev_set_volume(struct aw_device *aw_dev, unsigned int set_vol);
+int aw882xx_dev_get_volume(struct aw_device *aw_dev, unsigned int *get_vol);
+void aw882xx_dev_mute(struct aw_device *aw_dev, bool mute);
 
 #endif
 

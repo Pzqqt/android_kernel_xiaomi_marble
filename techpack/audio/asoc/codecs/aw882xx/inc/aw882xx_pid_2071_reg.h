@@ -2024,7 +2024,7 @@ const unsigned char aw_pid_2071_reg_access[AW_PID_2071_REG_MAX] = {
 
 #define AW_PID_2071_VCAL_FACTOR			(1<<13)
 
-#define AW_PID_2071_ICALK_SHIFT			(5)
+#define AW_PID_2071_ICALK_SHIFT			(10)
 #define AW_PID_2071_ICALKL_SHIFT		(10)
 #define AW_PID_2071_HIGH_MASK			(0x03E0)
 #define AW_PID_2071_LOW_MASK			(0x001F)

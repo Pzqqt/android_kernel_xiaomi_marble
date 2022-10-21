@@ -850,7 +850,7 @@ static int aw_dev_parse_dev_default_type(struct aw_device *aw_dev,
 	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
-		if ((aw_dev->index == cfg_dde[i].dev_index) &&
+		if ((aw_dev->channel == cfg_dde[i].dev_index) &&
 			(cfg_dde[i].type == AW_DEV_DEFAULT_TYPE_ID)) {
 			if (cfg_dde[i].data_type != ACF_SEC_TYPE_MONITOR)  {
 				ret = aw_dev_parse_data_by_sec_type(aw_dev, prof_hdr, &cfg_dde[i],
@@ -890,7 +890,7 @@ static int aw_dev_parse_skt_type(struct aw_device *aw_dev,
 	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
-		if ((aw_dev->index == cfg_dde[i].dev_index) &&
+		if ((aw_dev->channel == cfg_dde[i].dev_index) &&
 			(cfg_dde[i].type == AW_SKT_TYPE_ID)) {
 			if (cfg_dde[i].data_type == ACF_SEC_TYPE_DSP) {
 				ret = aw_dev_parse_raw_dsp(aw_dev,
@@ -1011,7 +1011,7 @@ static int aw_dev_parse_get_scene_count_v1_0_0_0(struct aw_device *aw_dev,
 			if (((cfg_dde[i].data_type == ACF_SEC_TYPE_REG) ||
 				(cfg_dde[i].data_type == ACF_SEC_TYPE_HDR_REG)) &&
 					(cfg_dde[i].type == AW_DEV_DEFAULT_TYPE_ID) &&
-					(aw_dev->index == cfg_dde[i].dev_index) &&
+					(aw_dev->channel == cfg_dde[i].dev_index) &&
 					(aw_dev->chip_id == cfg_dde[i].chip_id)) {
 				(*count)++;
 				(*is_default) = 1;
@@ -1149,7 +1149,7 @@ static int aw_dev_parse_dev_default_type_v_1_0_0_0(struct aw_device *aw_dev,
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((cfg_dde[i].type == AW_DEV_DEFAULT_TYPE_ID) &&
-			(aw_dev->index == cfg_dde[i].dev_index) &&
+			(aw_dev->channel == cfg_dde[i].dev_index) &&
 			(aw_dev->chip_id == cfg_dde[i].chip_id)) {
 				ret = aw_dev_parse_drv_type_v_1_0_0_0(aw_dev,
 						prof_hdr, &cfg_dde[i], &cur_scene_id);
@@ -1208,7 +1208,7 @@ static int aw_dev_parse_skt_type_v_1_0_0_0(struct aw_device *aw_dev,
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((cfg_dde[i].type == AW_SKT_TYPE_ID) &&
 			(cfg_dde[i].data_type == ACF_SEC_TYPE_DSP) &&
-			(aw_dev->index == cfg_dde[i].dev_index) &&
+			(aw_dev->channel == cfg_dde[i].dev_index) &&
 			(aw_dev->chip_id == cfg_dde[i].chip_id)) {
 			ret = aw_dev_parse_get_scene_id_v_1_0_0_0(aw_dev, cfg_dde[i].dev_profile_str, &scene_id);
 			if (ret < 0) {

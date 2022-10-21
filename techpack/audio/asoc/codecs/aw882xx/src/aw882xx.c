@@ -37,7 +37,7 @@
 #include "aw882xx_bin_parse.h"
 #include "aw882xx_spin.h"
 
-#define AW882XX_DRIVER_VERSION "v1.11.0"
+#define AW882XX_DRIVER_VERSION "v1.13.0"
 #define AW882XX_I2C_NAME "aw882xx_smartpa"
 
 #define AW_READ_CHIPID_RETRIES		5	/* 5 times */
@@ -181,8 +181,8 @@ int aw882xx_i2c_write(struct aw882xx *aw882xx,
 					cnt, ret);
 		} else {
 			if (g_print_dbg)
-				aw_dev_info(aw882xx->dev, "reg_addr: 0x%04x, reg_data :0x%04x",
-						(uint16_t)reg_addr, (uint16_t)reg_data);
+				aw_dev_info(aw882xx->dev, "reg_addr: 0x%02x, reg_data :0x%04x",
+						(uint8_t)reg_addr, (uint16_t)reg_data);
 			break;
 		}
 		cnt++;
@@ -206,8 +206,8 @@ int aw882xx_i2c_read(struct aw882xx *aw882xx,
 		} else {
 			*reg_data = (buf[0]<<8) | (buf[1]<<0);
 			if (g_print_dbg)
-				aw_dev_info(aw882xx->dev, "reg_addr: 0x%04x, reg_data :0x%04x",
-						(uint16_t)reg_addr, (uint16_t)(*reg_data));
+				aw_dev_info(aw882xx->dev, "reg_addr: 0x%02x, reg_data :0x%04x",
+						(uint8_t)reg_addr, (uint16_t)(*reg_data));
 			break;
 		}
 		cnt++;
@@ -279,20 +279,6 @@ static int aw882xx_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	aw_dev_info(codec->dev, "fmt=0x%x", fmt);
 
-	/* Supported mode: regular I2S, slave, or PDM */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) !=
-			SND_SOC_DAIFMT_CBS_CFS) {
-			aw_dev_err(codec->dev, "invalid codec master mode");
-			return -EINVAL;
-		}
-		break;
-	default:
-		aw_dev_err(codec->dev, "unsupported DAI format %d",
-				fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
-	}
 	return 0;
 }
 
@@ -318,12 +304,12 @@ static int aw882xx_hw_params(struct snd_pcm_substream *substream,
 		aw_componet_codec_ops.codec_get_drvdata(codec);
 
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-		aw_dev_dbg(aw882xx->dev, "stream capture requested rate: %d, sample size: %d",
+		aw_dev_info(aw882xx->dev, "stream capture requested rate: %d, sample size: %d",
 				params_rate(params), params_width(params));
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		aw_dev_dbg(aw882xx->dev, "stream playback requested rate: %d, sample size: %d",
+		aw_dev_info(aw882xx->dev, "stream playback requested rate: %d, sample size: %d",
 				params_rate(params), params_width(params));
 	}
 
@@ -421,7 +407,7 @@ static int aw882xx_mute(struct snd_soc_dai *dai, int mute, int stream)
 		aw882xx_start_pa(aw882xx);
 		/*queue_delayed_work(aw882xx->work_queue,
 				&aw882xx->start_work, 0);*/
-		if (aw882xx->index == 0) {
+		if (aw882xx->aw_pa->channel == 0) {
 			ret = aw882xx_spin_set_record_val(aw882xx->aw_pa);
 			if (ret)
 				aw_dev_err(aw882xx->dev, "set spin error, ret=%d", ret);
@@ -446,6 +432,7 @@ static const struct snd_soc_dai_ops aw882xx_dai_ops = {
  * snd_soc_codec_driver | snd_soc_component_driver|
  *
  *****************************************************/
+
 static int aw882xx_profile_info(struct snd_kcontrol *kcontrol,
 			 struct snd_ctl_elem_info *uinfo)
 {
@@ -529,8 +516,10 @@ static int aw882xx_profile_set(struct snd_kcontrol *kcontrol,
 	mutex_lock(&aw882xx->lock);
 	aw882xx_dev_set_profile_index(aw882xx->aw_pa, ucontrol->value.integer.value[0]);
 	/*pstream = 0 no pcm just set status*/
-	if (aw882xx->pstream && aw882xx->allow_pw)
-		aw882xx_dev_prof_update(aw882xx->aw_pa, aw882xx->phase_sync);
+	if (aw882xx->pstream && aw882xx->allow_pw) {
+		aw882xx_device_stop(aw882xx->aw_pa);
+		aw882xx_start_pa(aw882xx);
+	}
 	mutex_unlock(&aw882xx->lock);
 	aw_dev_info(codec->dev, "prof id %d", (int)ucontrol->value.integer.value[0]);
 	return 0;
@@ -673,12 +662,76 @@ static int aw882xx_monitor_set(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int aw882xx_volume_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
+	aw_snd_soc_codec_t *codec =
+		aw_componet_codec_ops.kcontrol_codec(kcontrol);
+	struct aw882xx *aw882xx =
+		aw_componet_codec_ops.codec_get_drvdata(codec);
+	struct aw_volume_desc *vol_desc = &aw882xx->aw_pa->volume_desc;
+
+	/* set kcontrol info */
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = vol_desc->mute_volume;
+
+	return 0;
+}
+
+static int aw882xx_volume_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	aw_snd_soc_codec_t *codec =
+		aw_componet_codec_ops.kcontrol_codec(kcontrol);
+	struct aw882xx *aw882xx =
+		aw_componet_codec_ops.codec_get_drvdata(codec);
+	struct aw_volume_desc *vol_desc = &aw882xx->aw_pa->volume_desc;
+
+	ucontrol->value.integer.value[0] = vol_desc->ctl_volume;
+
+	aw_dev_info(aw882xx->dev, "ucontrol->value.integer.value[0]=%d",
+					vol_desc->ctl_volume);
+
+	return 0;
+}
+
+static int aw882xx_volume_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int value = 0;
+	int compared_vol = 0;
+	aw_snd_soc_codec_t *codec =
+		aw_componet_codec_ops.kcontrol_codec(kcontrol);
+	struct aw882xx *aw882xx =
+		aw_componet_codec_ops.codec_get_drvdata(codec);
+	struct aw_volume_desc *vol_desc = &aw882xx->aw_pa->volume_desc;
+
+	value = ucontrol->value.integer.value[0];
+	if ((value > vol_desc->mute_volume) || (value < 0)) {
+		aw_dev_err(aw882xx->dev, "value over range\n");
+		return -EINVAL;
+	}
+
+	aw_dev_info(aw882xx->dev, "ucontrol->value.integer.value[0]=%d", value);
+
+	vol_desc->ctl_volume = value;
+	compared_vol = AW_GET_MAX_VALUE(vol_desc->ctl_volume,
+						vol_desc->monitor_volume);
+
+	aw882xx_dev_set_volume(aw882xx->aw_pa, compared_vol);
+
+	return 0;
+}
+
 static int aw882xx_dynamic_create_controls(struct aw882xx *aw882xx)
 {
 	struct snd_kcontrol_new *aw882xx_dev_control = NULL;
 	char *kctl_name = NULL;
 
-	aw882xx_dev_control = devm_kzalloc(aw882xx->codec->dev, sizeof(struct snd_kcontrol_new) * 3, GFP_KERNEL);
+	aw882xx_dev_control = devm_kzalloc(aw882xx->codec->dev,
+				sizeof(struct snd_kcontrol_new) * AW_KCTL_NUM, GFP_KERNEL);
 	if (aw882xx_dev_control == NULL) {
 		aw_dev_err(aw882xx->codec->dev, "kcontrol malloc failed!");
 		aw882xx->widget_pos = 7;
@@ -691,13 +744,13 @@ static int aw882xx_dynamic_create_controls(struct aw882xx *aw882xx)
 		return -ENOMEM;
 	}
 
-	snprintf(kctl_name, AW_NAME_BUF_MAX, "aw_dev_%d_prof", aw882xx->index);
+	snprintf(kctl_name, AW_NAME_BUF_MAX, "aw_dev_%d_prof", aw882xx->aw_pa->channel);
 
-	aw882xx_dev_control[0].name = kctl_name;
-	aw882xx_dev_control[0].iface = SNDRV_CTL_ELEM_IFACE_MIXER;
-	aw882xx_dev_control[0].info = aw882xx_profile_info;
-	aw882xx_dev_control[0].get = aw882xx_profile_get;
-	aw882xx_dev_control[0].put = aw882xx_profile_set;
+	aw882xx_dev_control[KCTL_TYPE_PROFILE].name = kctl_name;
+	aw882xx_dev_control[KCTL_TYPE_PROFILE].iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	aw882xx_dev_control[KCTL_TYPE_PROFILE].info = aw882xx_profile_info;
+	aw882xx_dev_control[KCTL_TYPE_PROFILE].get = aw882xx_profile_get;
+	aw882xx_dev_control[KCTL_TYPE_PROFILE].put = aw882xx_profile_set;
 
 	kctl_name = devm_kzalloc(aw882xx->codec->dev, AW_NAME_BUF_MAX, GFP_KERNEL);
 	if (!kctl_name) {
@@ -705,13 +758,13 @@ static int aw882xx_dynamic_create_controls(struct aw882xx *aw882xx)
 		return -ENOMEM;
 	}
 
-	snprintf(kctl_name, AW_NAME_BUF_MAX, "aw_dev_%d_switch", aw882xx->index);
+	snprintf(kctl_name, AW_NAME_BUF_MAX, "aw_dev_%d_switch", aw882xx->aw_pa->channel);
 
-	aw882xx_dev_control[1].name = kctl_name;
-	aw882xx_dev_control[1].iface = SNDRV_CTL_ELEM_IFACE_MIXER;
-	aw882xx_dev_control[1].info = aw882xx_switch_info;
-	aw882xx_dev_control[1].get = aw882xx_switch_get;
-	aw882xx_dev_control[1].put = aw882xx_switch_set;
+	aw882xx_dev_control[KCTL_TYPE_SWITCH].name = kctl_name;
+	aw882xx_dev_control[KCTL_TYPE_SWITCH].iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	aw882xx_dev_control[KCTL_TYPE_SWITCH].info = aw882xx_switch_info;
+	aw882xx_dev_control[KCTL_TYPE_SWITCH].get = aw882xx_switch_get;
+	aw882xx_dev_control[KCTL_TYPE_SWITCH].put = aw882xx_switch_set;
 
 	kctl_name = devm_kzalloc(aw882xx->codec->dev, AW_NAME_BUF_MAX, GFP_KERNEL);
 	if (!kctl_name) {
@@ -719,18 +772,33 @@ static int aw882xx_dynamic_create_controls(struct aw882xx *aw882xx)
 		return -ENOMEM;
 	}
 
-	snprintf(kctl_name, AW_NAME_BUF_MAX, "aw_dev_%d_monitor", aw882xx->index);
+	snprintf(kctl_name, AW_NAME_BUF_MAX, "aw_dev_%d_monitor", aw882xx->aw_pa->channel);
 
-	aw882xx_dev_control[2].name = kctl_name;
-	aw882xx_dev_control[2].iface = SNDRV_CTL_ELEM_IFACE_MIXER;
-	aw882xx_dev_control[2].info = aw882xx_monitor_info;
-	aw882xx_dev_control[2].get = aw882xx_monitor_get;
-	aw882xx_dev_control[2].put = aw882xx_monitor_set;
+	aw882xx_dev_control[KCTL_TYPE_MONITOR].name = kctl_name;
+	aw882xx_dev_control[KCTL_TYPE_MONITOR].iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	aw882xx_dev_control[KCTL_TYPE_MONITOR].info = aw882xx_monitor_info;
+	aw882xx_dev_control[KCTL_TYPE_MONITOR].get = aw882xx_monitor_get;
+	aw882xx_dev_control[KCTL_TYPE_MONITOR].put = aw882xx_monitor_set;
+
+
+	kctl_name = devm_kzalloc(aw882xx->codec->dev, AW_NAME_BUF_MAX, GFP_KERNEL);
+	if (!kctl_name) {
+		aw882xx->widget_pos = 11;
+		return -ENOMEM;
+	}
+
+	snprintf(kctl_name, AW_NAME_BUF_MAX, "aw_dev_%d_volume", aw882xx->aw_pa->channel);
+
+	aw882xx_dev_control[KCTL_TYPE_VOLUME].name = kctl_name;
+	aw882xx_dev_control[KCTL_TYPE_VOLUME].iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	aw882xx_dev_control[KCTL_TYPE_VOLUME].info = aw882xx_volume_info;
+	aw882xx_dev_control[KCTL_TYPE_VOLUME].get = aw882xx_volume_get;
+	aw882xx_dev_control[KCTL_TYPE_VOLUME].put = aw882xx_volume_put;
 
 	aw_componet_codec_ops.add_codec_controls(aw882xx->codec,
-						aw882xx_dev_control, 3);
+						aw882xx_dev_control, AW_KCTL_NUM);
 
-	aw882xx->widget_pos = 11;
+	aw882xx->widget_pos = 12;
 	return 0;
 }
 
@@ -1301,22 +1369,38 @@ static void aw882xx_add_codec_controls(struct aw882xx *aw882xx)
 				aw882xx_spin_control, ARRAY_SIZE(aw882xx_spin_control));
 }
 
-#ifdef AW_MTK_PLATFORM_WITH_DSP
-static int aw882xx_name_append_suffix(struct aw882xx *aw882xx, const char **name)
+static int aw882xx_append_i2c_suffix(char *format,
+		const char **name, struct aw882xx *aw882xx)
 {
-	char buf[50];
+	char buf[64];
 	int i2cbus = aw882xx->i2c->adapter->nr;
 	int i2caddr = aw882xx->i2c->addr;
 
-	snprintf(buf, 50, "%s-%x-%x", *name, i2cbus, i2caddr);
+	snprintf(buf, sizeof(buf), format, *name, i2cbus, i2caddr);
 	(*name) = aw882xx_devm_kstrdup(aw882xx->dev, buf);
 	if (!(*name))
 		return -ENOMEM;
 
-	aw_dev_info(aw882xx->dev, "name is %s", (*name));
+	aw_dev_info(aw882xx->dev, "change name is %s", (*name));
 	return 0;
 }
 
+static int aw882xx_append_channel_suffix(char *format,
+		const char **name, struct aw882xx *aw882xx)
+{
+	char buf[64];
+	int channel = aw882xx->aw_pa->channel;
+
+	snprintf(buf, sizeof(buf), format, *name, channel);
+	(*name) = aw882xx_devm_kstrdup(aw882xx->dev, buf);
+	if (!(*name))
+		return -ENOMEM;
+
+	aw_dev_info(aw882xx->dev, "change name is %s", (*name));
+	return 0;
+}
+
+#ifdef AW_MTK_PLATFORM_WITH_DSP
 static const struct snd_soc_dapm_widget aw882xx_dapm_widgets[] = {
 	/* playback */
 	SND_SOC_DAPM_AIF_IN("AIF_RX", "Speaker_Playback", 0, SND_SOC_NOPM, 0, 0),
@@ -1365,21 +1449,44 @@ static void aw882xx_add_widgets(struct aw882xx *aw882xx)
 			sizeof(struct snd_soc_dapm_widget) * ARRAY_SIZE(aw882xx_dapm_widgets));
 
 	for (i = 0; i < ARRAY_SIZE(aw882xx_dapm_widgets); i++) {
-		if (aw_widgets[i].name) {
-			ret = aw882xx_name_append_suffix(aw882xx, &aw_widgets[i].name);
-			if (ret) {
-				aw_dev_err(aw882xx->dev, "append widget name suffix failed!");
-				return;
+		if(aw882xx->rename_flag ==  AW_RENAME_ENABLE) {
+			if (aw_widgets[i].name) {
+				ret = aw882xx_append_channel_suffix("%s_%d",
+					&aw_widgets[i].name, aw882xx);
+				if (ret) {
+					aw_dev_err(aw882xx->dev, "append widget name channel suffix failed!");
+					return;
+				}
+			}
+
+			if (aw_widgets[i].sname) {
+				ret = aw882xx_append_channel_suffix("%s_%d",
+					&aw_widgets[i].sname, aw882xx);
+				if (ret) {
+					aw_dev_err(aw882xx->dev, "append widget sname channel suffix failed!");
+					return;
+				}
+			}
+		}else {
+			if (aw_widgets[i].name) {
+				ret = aw882xx_append_i2c_suffix("%s_%d_%x",
+					&aw_widgets[i].name, aw882xx);
+				if (ret) {
+					aw_dev_err(aw882xx->dev, "append widget name i2c suffix failed!");
+					return;
+				}
+			}
+
+			if (aw_widgets[i].sname) {
+				ret = aw882xx_append_i2c_suffix("%s_%d_%x",
+					&aw_widgets[i].sname, aw882xx);
+				if (ret) {
+					aw_dev_err(aw882xx->dev, "append widget sname i2c suffix failed!");
+					return;
+				}
 			}
 		}
 
-		if (aw_widgets[i].sname) {
-			ret = aw882xx_name_append_suffix(aw882xx, &aw_widgets[i].sname);
-			if (ret) {
-				aw_dev_err(aw882xx->dev, "append widget sname suffix failed!");
-				return;
-			}
-		}
 	}
 
 	snd_soc_dapm_new_controls(dapm, aw_widgets, ARRAY_SIZE(aw882xx_dapm_widgets));
@@ -1396,21 +1503,44 @@ static void aw882xx_add_widgets(struct aw882xx *aw882xx)
 		sizeof(struct snd_soc_dapm_route) * ARRAY_SIZE(aw882xx_audio_map));
 
 	for (i = 0; i < ARRAY_SIZE(aw882xx_audio_map); i++) {
-		if (aw_route[i].sink) {
-			ret = aw882xx_name_append_suffix(aw882xx, &aw_route[i].sink);
-			if (ret < 0) {
-				aw_dev_err(aw882xx->dev, "append sink name suffix failed!");
-				return;
+		if(aw882xx->rename_flag ==  AW_RENAME_ENABLE) {
+			if (aw_route[i].sink) {
+				ret = aw882xx_append_channel_suffix("%s_%d",
+					&aw_route[i].sink, aw882xx);
+				if (ret < 0) {
+					aw_dev_err(aw882xx->dev, "append sink channel suffix failed!");
+					return;
+				}
+			}
+
+			if (aw_route[i].source) {
+				ret = aw882xx_append_channel_suffix("%s_%d",
+					&aw_route[i].source, aw882xx);
+				if (ret < 0) {
+					aw_dev_err(aw882xx->dev, "append source channel suffix failed!");
+					return;
+				}
+			}
+		}else {
+			if (aw_route[i].sink) {
+				ret = aw882xx_append_i2c_suffix("%s_%d_%x",
+					&aw_route[i].sink, aw882xx);
+				if (ret < 0) {
+					aw_dev_err(aw882xx->dev, "append sink i2c suffix failed!");
+					return;
+				}
+			}
+
+			if (aw_route[i].source) {
+				ret = aw882xx_append_i2c_suffix("%s_%d_%x",
+					&aw_route[i].source, aw882xx);
+				if (ret < 0) {
+					aw_dev_err(aw882xx->dev, "append source i2c suffix failed!");
+					return;
+				}
 			}
 		}
 
-		if (aw_route[i].source) {
-			ret = aw882xx_name_append_suffix(aw882xx, &aw_route[i].source);
-			if (ret < 0) {
-				aw_dev_err(aw882xx->dev, "append source name suffix failed!");
-				return;
-			}
-		}
 	}
 	snd_soc_dapm_add_routes(dapm, aw_route, ARRAY_SIZE(aw882xx_audio_map));
 #endif
@@ -1450,9 +1580,8 @@ static int aw882xx_codec_probe(aw_snd_soc_codec_t *aw_codec)
 	aw882xx->spksw_level = 0;
 #endif
 
-	if (aw882xx->index == 0)
+	if (aw882xx->aw_pa->channel == 0)
 		aw882xx_add_codec_controls(aw882xx);
-
 
 	aw882xx_add_widgets(aw882xx);
 
@@ -1493,26 +1622,43 @@ static int aw882xx_dai_drv_append_suffix(struct aw882xx *aw882xx,
 				struct snd_soc_dai_driver *dai_drv,
 				int num_dai)
 {
-	char buf[50];
+	int ret;
 	int i;
-	int i2cbus = aw882xx->i2c->adapter->nr;
-	int addr = aw882xx->i2c->addr;
 
 	if ((dai_drv != NULL) && (num_dai > 0))
 		for (i = 0; i < num_dai; i++) {
-			snprintf(buf, 50, "%s-%x-%x", dai_drv[i].name, i2cbus,
-				addr);
-			dai_drv[i].name = aw882xx_devm_kstrdup(aw882xx->dev, buf);
+			if(aw882xx->rename_flag ==  AW_RENAME_ENABLE) {
+				ret = aw882xx_append_channel_suffix("%s-%d",
+						&dai_drv->name, aw882xx);
+				if (ret < 0)
+					return ret;
+				ret = aw882xx_append_channel_suffix("%s_%d",
+						&dai_drv->playback.stream_name, aw882xx);
+				if (ret < 0)
+					return ret;
+				ret = aw882xx_append_channel_suffix("%s_%d",
+						&dai_drv->capture.stream_name, aw882xx);
+				if (ret < 0)
+					return ret;
+				dev_set_name(aw882xx->dev, "%s_%d",
+					"aw882xx_smartpa", aw882xx->aw_pa->channel);
+				aw_dev_info(aw882xx->dev, "change dev_name:%s",
+					dev_name(aw882xx->dev));
+			}else {
+				ret = aw882xx_append_i2c_suffix("%s-%d-%x",
+						&dai_drv->name, aw882xx);
+				if (ret < 0)
+					return ret;
+				ret = aw882xx_append_i2c_suffix("%s_%d_%x",
+						&dai_drv->playback.stream_name, aw882xx);
+				if (ret < 0)
+					return ret;
+				ret = aw882xx_append_i2c_suffix("%s_%d_%x",
+						&dai_drv->capture.stream_name, aw882xx);
+				if (ret < 0)
+					return ret;
+			}
 
-			snprintf(buf, 50, "%s-%x-%x",
-						dai_drv[i].playback.stream_name,
-						i2cbus, addr);
-			dai_drv[i].playback.stream_name = aw882xx_devm_kstrdup(aw882xx->dev, buf);
-
-			snprintf(buf, 50, "%s-%x-%x",
-						dai_drv[i].capture.stream_name,
-						i2cbus, addr);
-			dai_drv[i].capture.stream_name = aw882xx_devm_kstrdup(aw882xx->dev, buf);
 			aw_dev_info(aw882xx->dev, "dai name [%s]", dai_drv[i].name);
 			aw_dev_info(aw882xx->dev, "pstream_name name [%s]", dai_drv[i].playback.stream_name);
 			aw_dev_info(aw882xx->dev, "cstream_name name [%s]", dai_drv[i].capture.stream_name);
@@ -1520,7 +1666,6 @@ static int aw882xx_dai_drv_append_suffix(struct aw882xx *aw882xx,
 
 	return 0;
 }
-
 
 static struct snd_soc_dai_driver aw882xx_dai[] = {
 	{
@@ -1584,6 +1729,14 @@ int aw_componet_codec_register(struct aw882xx *aw882xx)
 		aw_dev_err(aw882xx->dev, "failed to register aw882xx: %d", ret);
 		return -EINVAL;
 	}
+
+	if(aw882xx->rename_flag == AW_RENAME_ENABLE) {
+		dev_set_name(aw882xx->dev, "%d-00%x",
+			aw882xx->i2c->adapter->nr, aw882xx->i2c->addr);
+		aw_dev_info(aw882xx->dev, "reset dev_name:%s",
+			dev_name(aw882xx->dev));
+	}
+
 	return 0;
 }
 /*****************************************************
@@ -1690,6 +1843,23 @@ static int aw882xx_gpio_request(struct aw882xx *aw882xx)
 	return 0;
 }
 
+static void aw882xx_parse_rename_flag_dt(struct aw882xx *aw882xx)
+{
+	int ret;
+	uint32_t rename_enable = 0;
+	struct device_node *np = aw882xx->dev->of_node;
+
+	ret = of_property_read_u32(np, "rename-flag", &rename_enable);
+	if (ret) {
+		aw_dev_info(aw882xx->dev, "read rename flag failed, default rename off!");
+	} else {
+		aw_dev_info(aw882xx->dev, "rename-flag = %d", rename_enable);
+	}
+
+	aw882xx->rename_flag = rename_enable;
+
+}
+
 static int aw882xx_parse_dt(struct device *dev, struct aw882xx *aw882xx,
 		struct device_node *np)
 {
@@ -1724,6 +1894,8 @@ static int aw882xx_parse_dt(struct device *dev, struct aw882xx *aw882xx,
 	}
 
 	aw882xx->phase_sync = sync_enable;
+
+	aw882xx_parse_rename_flag_dt(aw882xx);
 
 	return 0;
 }
@@ -2468,7 +2640,7 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
 	}
 
 	/*aw pa init*/
-	ret = aw882xx_init(aw882xx, g_aw882xx_dev_cnt);
+	ret = aw882xx_init(aw882xx);
 	if (ret)
 		return ret;
 
@@ -2501,7 +2673,6 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
 	aw882xx->i2c_packet.reg_addr = 0xff;
 	aw882xx->i2c_packet.reg_data = NULL;
 
-	aw882xx->index = aw882xx->aw_pa->index;
 	/*add device to total list*/
 	mutex_lock(&g_aw882xx_lock);
 	g_aw882xx_dev_cnt++;
