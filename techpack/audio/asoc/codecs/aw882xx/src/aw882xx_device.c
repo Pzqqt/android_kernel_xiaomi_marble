@@ -213,14 +213,15 @@ static int aw_dev_reg_fw_update(struct aw_device *aw_dev)
 	int i = 0;
 	unsigned int reg_addr = 0;
 	unsigned int reg_val = 0;
-	unsigned int read_val;
-	unsigned int init_volume = 0;
+	unsigned int read_val = 0;
+	unsigned int read_vol = 0;
 	unsigned int efcheck_val = 0;
 	struct aw_int_desc *int_desc = &aw_dev->int_desc;
 	struct aw_profctrl_desc *profctrl_desc = &aw_dev->profctrl_desc;
 	struct aw_bstctrl_desc *bstctrl_desc = &aw_dev->bstctrl_desc;
 	struct aw_work_mode *work_mode = &aw_dev->work_mode;
 	struct aw_cali_desc *cali_desc = &aw_dev->cali_desc;
+	struct aw_volume_desc *vol_desc = &aw_dev->volume_desc;
 	struct aw_sec_data_desc *reg_data;
 	int16_t *data;
 	int data_len;
@@ -311,11 +312,29 @@ static int aw_dev_reg_fw_update(struct aw_device *aw_dev)
 			reg_val |= read_val;
 		}
 
+		/*enable uls hmute*/
+		if (reg_addr == aw_dev->uls_hmute_desc.reg) {
+			reg_val &= aw_dev->uls_hmute_desc.mask;
+			reg_val |= aw_dev->uls_hmute_desc.enable;
+		}
+
 		if ((cali_desc->mode == AW_CALI_MODE_NONE) &&
 				(reg_addr == aw_dev->txen_desc.reg)) {
 			aw_dev->txen_desc.reserve_val = reg_val & (~aw_dev->txen_desc.mask);
 			aw_dev_info(aw_dev->dev, "reserve_val = 0x%04x",
 						aw_dev->txen_desc.reserve_val);
+		}
+
+		if (reg_addr == aw_dev->txen_desc.reg) {
+			reg_val &= aw_dev->txen_desc.mask;
+			reg_val |= aw_dev->txen_desc.disable;
+		}
+
+		if (reg_addr == aw_dev->volume_desc.reg) {
+			read_vol = (reg_val & (~aw_dev->volume_desc.mask)) >>
+				aw_dev->volume_desc.shift;
+			aw_dev->volume_desc.init_volume =
+				aw_dev->ops.aw_reg_val_to_db(read_vol);
 		}
 
 		if (reg_addr == aw_dev->vcalb_desc.vcalb_reg)
@@ -337,15 +356,51 @@ static int aw_dev_reg_fw_update(struct aw_device *aw_dev)
 		return ret;
 	}
 
-	aw_dev->ops.aw_get_volume(aw_dev, &init_volume);
-	aw_dev->volume_desc.init_volume = init_volume;
+	if (aw_dev->cur_prof != aw_dev->set_prof)
+		/*clear control volume when PA change profile*/
+		vol_desc->ctl_volume = 0;
+
 
 	/*keep min volume*/
-	aw_dev->ops.aw_set_volume(aw_dev, aw_dev->volume_desc.mute_volume);
+	aw882xx_dev_set_volume(aw_dev, vol_desc->mute_volume);
 
 	aw_dev_info(aw_dev->dev, "load %s done", prof_name);
 
 	return ret;
+}
+
+int aw882xx_dev_set_volume(struct aw_device *aw_dev, unsigned int set_vol)
+{
+	int ret = -1;
+	unsigned int hw_vol = 0;
+	struct aw_volume_desc *vol_desc = &aw_dev->volume_desc;
+
+	hw_vol = set_vol + vol_desc->init_volume;
+
+	ret = aw_dev->ops.aw_set_hw_volume(aw_dev, hw_vol);
+	if (ret < 0) {
+		aw_dev_err(aw_dev->dev, "set volume failed");
+		return ret;
+	}
+
+	return 0;
+}
+
+int aw882xx_dev_get_volume(struct aw_device *aw_dev, unsigned int *get_vol)
+{
+	int ret = -1;
+	unsigned int hw_vol = 0;
+	struct aw_volume_desc *vol_desc = &aw_dev->volume_desc;
+
+	ret = aw_dev->ops.aw_get_hw_volume(aw_dev, &hw_vol);
+	if (ret < 0) {
+		aw_dev_err(aw_dev->dev, "read volume failed");
+		return ret;
+	}
+
+	*get_vol = hw_vol - vol_desc->init_volume;
+
+	return 0;
 }
 
 static void aw_dev_fade_in(struct aw_device *aw_dev)
@@ -353,40 +408,42 @@ static void aw_dev_fade_in(struct aw_device *aw_dev)
 	int i = 0;
 	int fade_step = aw_dev->vol_step;
 	struct aw_volume_desc *desc = &aw_dev->volume_desc;
+	int fade_in_vol = desc->ctl_volume;
 
 	if (fade_step == 0 || g_fade_in_time == 0) {
-		aw_dev->ops.aw_set_volume(aw_dev, desc->init_volume);
+		aw882xx_dev_set_volume(aw_dev, fade_in_vol);
 		return;
 	}
+
 	/*volume up*/
-	for (i = desc->mute_volume; i >= desc->init_volume; i -= fade_step) {
-		aw_dev->ops.aw_set_volume(aw_dev, i);
+	for (i = desc->mute_volume; i >= fade_in_vol; i -= fade_step) {
+		aw882xx_dev_set_volume(aw_dev, i);
 		usleep_range(g_fade_in_time, g_fade_in_time + 10);
 	}
-	if (i != desc->init_volume)
-		aw_dev->ops.aw_set_volume(aw_dev, desc->init_volume);
+
+	if (i != fade_in_vol)
+		aw882xx_dev_set_volume(aw_dev, fade_in_vol);
+
 }
 
 static void aw_dev_fade_out(struct aw_device *aw_dev)
 {
 	int i = 0;
-	unsigned start_volume = 0;
 	int fade_step = aw_dev->vol_step;
 	struct aw_volume_desc *desc = &aw_dev->volume_desc;
 
 	if (fade_step == 0 || g_fade_out_time == 0) {
-		aw_dev->ops.aw_set_volume(aw_dev, desc->mute_volume);
+		aw882xx_dev_set_volume(aw_dev, desc->mute_volume);
 		return;
 	}
 
-	aw_dev->ops.aw_get_volume(aw_dev, &start_volume);
-	i = start_volume;
-	for (i = start_volume; i <= desc->mute_volume; i += fade_step) {
-		aw_dev->ops.aw_set_volume(aw_dev, i);
+	for (i = desc->ctl_volume; i <= desc->mute_volume; i += fade_step) {
+		aw882xx_dev_set_volume(aw_dev, i);
 		usleep_range(g_fade_out_time, g_fade_out_time + 10);
 	}
+
 	if (i != desc->mute_volume) {
-		aw_dev->ops.aw_set_volume(aw_dev, desc->mute_volume);
+		aw882xx_dev_set_volume(aw_dev, desc->mute_volume);
 		usleep_range(g_fade_out_time, g_fade_out_time + 10);
 	}
 }
@@ -427,14 +484,14 @@ static void aw_dev_amppd(struct aw_device *aw_dev, bool amppd)
 	aw_dev_dbg(aw_dev->dev, "done");
 }
 
-static void aw_dev_mute(struct aw_device *aw_dev, bool mute)
+void aw882xx_dev_mute(struct aw_device *aw_dev, bool mute)
 {
 	struct aw_mute_desc *mute_desc = &aw_dev->mute_desc;
 
 	aw_dev_dbg(aw_dev->dev, "enter, mute: %d, cali_result: %d",
 				mute, aw_dev->cali_desc.cali_result);
 
-	if (mute || (aw_dev->cali_desc.cali_result == CALI_RESULT_ERROR)) {
+	if (mute) {
 		aw_dev_fade_out(aw_dev);
 		aw_dev->ops.aw_i2c_write_bits(aw_dev, mute_desc->reg,
 				mute_desc->mask,
@@ -799,34 +856,6 @@ static void aw_dev_cali_re_update(struct aw_device *aw_dev)
 	}
 }
 
-int aw882xx_dev_prof_update(struct aw_device *aw_dev, bool force)
-{
-	int ret;
-
-	/*if power on need off -- load -- on*/
-	if (aw_dev->status == AW_DEV_PW_ON) {
-		aw882xx_device_stop(aw_dev);
-
-		ret = aw882xx_dev_reg_update(aw_dev, force);
-		if (ret) {
-			aw_dev_err(aw_dev->dev, "fw update failed ");
-			return ret;
-		}
-
-		ret = aw882xx_device_start(aw_dev);
-		if (ret) {
-			aw_dev_err(aw_dev->dev, "start failed ");
-			return ret;
-		}
-	} else {
-		/*if pa off , only update set_prof value*/
-		aw_dev_info(aw_dev->dev, "set prof[%d] done !", aw_dev->set_prof);
-	}
-
-	aw_dev_info(aw_dev->dev, "update done !");
-	return 0;
-}
-
 static void aw_dev_boost_type_set(struct aw_device *aw_dev)
 {
 	struct aw_profctrl_desc *profctrl_desc = &aw_dev->profctrl_desc;
@@ -962,7 +991,10 @@ int aw882xx_device_start(struct aw_device *aw_dev)
 
 	if (!aw_dev->mute_st) {
 		/*close mute*/
-		aw_dev_mute(aw_dev, false);
+		if (aw882xx_cali_check_result(&aw_dev->cali_desc))
+			aw882xx_dev_mute(aw_dev, false);
+		else
+			aw882xx_dev_mute(aw_dev, true);
 	}
 
 	/*clear inturrupt*/
@@ -1000,7 +1032,7 @@ int aw882xx_device_stop(struct aw_device *aw_dev)
 	aw_dev_uls_hmute(aw_dev, true);
 
 	/*set mute*/
-	aw_dev_mute(aw_dev, true);
+	aw882xx_dev_mute(aw_dev, true);
 
 	/*close tx feedback*/
 	aw_dev_i2s_enable(aw_dev, false);
@@ -1033,30 +1065,61 @@ int aw882xx_dev_set_copp_module_en(bool enable)
 	return aw882xx_dsp_set_copp_module_en(enable);
 }
 
-static void aw_device_parse_sound_channel_dt(struct aw_device *aw_dev)
+static int aw_device_parse_sound_channel_dt(struct aw_device *aw_dev)
 {
-	int ret;
-	uint32_t channel_value;
+	int ret = 0;
+	uint32_t channel_value = 0;
+	struct list_head *dev_list = NULL;
+	struct list_head *pos = NULL;
+	struct aw_device *local_dev = NULL;
 
-	aw_dev->channel = AW_DEV_CH_PRI_L;
 	ret = of_property_read_u32(aw_dev->dev->of_node, "sound-channel", &channel_value);
 	if (ret < 0) {
+		channel_value = AW_DEV_CH_PRI_L;
 		aw_dev_info(aw_dev->dev, "read sound-channel failed,use default");
-		return;
 	}
 
-	aw_dev_dbg(aw_dev->dev, "read sound-channel value is : %d", channel_value);
+	aw_dev_info(aw_dev->dev, "read sound-channel value is : %d", channel_value);
 	if (channel_value >= AW_DEV_CH_MAX) {
 		channel_value = AW_DEV_CH_PRI_L;
 	}
+	/* when dev_num > 0, get dev list to compare*/
+	if (aw_dev->ops.aw_get_dev_num() > 0) {
+		ret = aw882xx_dev_get_list_head(&dev_list);
+		if (ret) {
+			aw_dev_err(aw_dev->dev, "get dev list failed");
+			return ret;
+		}
+
+		list_for_each(pos, dev_list) {
+			local_dev = container_of(pos, struct aw_device, list_node);
+			if (local_dev->channel == channel_value) {
+				aw_dev_err(local_dev->dev, "sound-channel:%d already exists",
+					channel_value);
+				return -EINVAL;
+			}
+		}
+	}
+
 	aw_dev->channel = channel_value;
+
+	return 0;
+
 }
 
-static void aw_device_parse_dt(struct aw_device *aw_dev)
+static int aw_device_parse_dt(struct aw_device *aw_dev)
 {
-	aw_device_parse_sound_channel_dt(aw_dev);
+	int ret = 0;
+
+	ret = aw_device_parse_sound_channel_dt(aw_dev);
+	if (ret) {
+		aw_dev_err(aw_dev->dev, "parse sound-channel failed!");
+		return ret;
+	}
 	aw882xx_device_parse_topo_id_dt(aw_dev);
 	aw882xx_device_parse_port_id_dt(aw_dev);
+
+	return ret;
 }
 
 int aw882xx_dev_get_list_head(struct list_head **head)
@@ -1071,10 +1134,14 @@ int aw882xx_dev_get_list_head(struct list_head **head)
 
 int aw882xx_device_probe(struct aw_device *aw_dev)
 {
-	int ret;
+	int ret = 0;
+
 	INIT_LIST_HEAD(&aw_dev->list_node);
 
-	aw_device_parse_dt(aw_dev);
+	ret = aw_device_parse_dt(aw_dev);
+	if (ret)
+		return ret;
+
 	ret = aw882xx_cali_init(&aw_dev->cali_desc);
 	if (ret)
 		return ret;

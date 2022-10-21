@@ -19,7 +19,6 @@
 static DEFINE_MUTEX(g_aw_dsp_msg_lock);
 static DEFINE_MUTEX(g_aw_dsp_lock);
 
-
 #define AW_MSG_ID_ENABLE_CALI		(0x00000001)
 #define AW_MSG_ID_ENABLE_HMUTE		(0x00000002)
 #define AW_MSG_ID_F0_Q			(0x00000003)
@@ -29,10 +28,8 @@ static DEFINE_MUTEX(g_aw_dsp_lock);
 #define AW_MSG_ID_AUDIO_MIX 		(0x0000000B)
 #define AW_MSG_ID_VERSION_NEW		(0x00000012)
 
-
 /*dsp params id*/
 #define AW_MSG_ID_RX_SET_ENABLE		(0x10013D11)
-#define AW_MSG_ID_PARAMS		(0x10013D12)
 #define AW_MSG_ID_TX_SET_ENABLE		(0x10013D13)
 #define AW_MSG_ID_VMAX_L		(0X10013D17)
 #define AW_MSG_ID_VMAX_R		(0X10013D18)
@@ -49,7 +46,13 @@ static DEFINE_MUTEX(g_aw_dsp_lock);
 
 #define AFE_MSG_ID_MSG_0	(0X10013D2A)
 #define AFE_MSG_ID_MSG_1	(0X10013D2B)
+#define AFE_MSG_ID_MSG_2	(0X10013D36)
+#define AFE_MSG_ID_MSG_3	(0X10013D33)
+
+#define AW_MSG_ID_PARAMS		(0x10013D12)
 #define AW_MSG_ID_PARAMS_1		(0x10013D2D)
+#define AW_MSG_ID_PARAMS_2		(0x10013D32)
+#define AW_MSG_ID_PARAMS_3		(0x10013D35)
 
 #define AW_MSG_ID_SPIN		(0x10013D2E)
 
@@ -61,12 +64,16 @@ static int g_rx_port_id = AW_RX_DEFAULT_PORT_ID;
 enum {
 	MSG_PARAM_ID_0 = 0,
 	MSG_PARAM_ID_1,
+	MSG_PARAM_ID_2,
+	MSG_PARAM_ID_3,
 	MSG_PARAM_ID_MAX,
 };
 
 static uint32_t afe_param_msg_id[MSG_PARAM_ID_MAX] = {
 	AFE_MSG_ID_MSG_0,
 	AFE_MSG_ID_MSG_1,
+	AFE_MSG_ID_MSG_2,
+	AFE_MSG_ID_MSG_3,
 };
 
 /***************dsp communicate**************/
@@ -183,6 +190,18 @@ static int aw_get_msg_num(int dev_ch, int *msg_num)
 		break;
 	case AW_DEV_CH_SEC_R:
 		*msg_num = MSG_PARAM_ID_1;
+		break;
+	case AW_DEV_CH_TERT_L:
+		*msg_num = MSG_PARAM_ID_2;
+		break;
+	case AW_DEV_CH_TERT_R:
+		*msg_num = MSG_PARAM_ID_2;
+		break;
+	case AW_DEV_CH_QUAT_L:
+		*msg_num = MSG_PARAM_ID_3;
+		break;
+	case AW_DEV_CH_QUAT_R:
+		*msg_num = MSG_PARAM_ID_3;
 		break;
 	default:
 		aw_pr_err("can not find msg num, channel %d ", dev_ch);
@@ -670,10 +689,14 @@ int aw882xx_dsp_read_r0(struct aw_device *aw_dev, int32_t *r0)
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_REAL_DATA_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_REAL_DATA_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -704,10 +727,14 @@ int aw882xx_dsp_read_cali_data(struct aw_device *aw_dev, char *data, unsigned in
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_REAL_DATA_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_REAL_DATA_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -793,10 +820,14 @@ int aw882xx_dsp_read_f0(struct aw_device *aw_dev, int32_t *f0)
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_F0_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_F0_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -812,11 +843,10 @@ int aw882xx_dsp_read_f0(struct aw_device *aw_dev, int32_t *f0)
 	return 0;
 }
 
-int aw882xx_dsp_cali_en(struct aw_device *aw_dev, bool is_enable)
+int aw882xx_dsp_cali_en(struct aw_device *aw_dev, int32_t cali_msg_data)
 {
 	int ret;
 	int msg_num;
-	int32_t enable = is_enable;
 
 	ret = aw_get_msg_num(aw_dev->channel, &msg_num);
 	if (ret < 0) {
@@ -824,12 +854,12 @@ int aw882xx_dsp_cali_en(struct aw_device *aw_dev, bool is_enable)
 		return ret;
 	}
 
-	ret = aw_write_msg_to_dsp(msg_num, AW_MSG_ID_ENABLE_CALI, (char *)&enable, sizeof(int32_t));
+	ret = aw_write_msg_to_dsp(msg_num, AW_MSG_ID_ENABLE_CALI, (char *)&cali_msg_data, sizeof(int32_t));
 	if (ret) {
 		aw_dev_err(aw_dev->dev, "write cali en failed");
 		return ret;
 	}
-	aw_dev_dbg(aw_dev->dev, "write cali_en[%d]", is_enable);
+	aw_dev_dbg(aw_dev->dev, "write cali_en[%d]", cali_msg_data);
 	return 0;
 }
 
@@ -868,15 +898,20 @@ int aw882xx_dsp_read_cali_re(struct aw_device *aw_dev, int32_t *cali_re)
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_RE_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_RE_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
 		return -EINVAL;
 	}
+
 
 	ret = aw_read_msg_from_dsp(msg_num, msg_id, (char *)&read_re, sizeof(int32_t));
 	if (ret) {
@@ -902,10 +937,14 @@ int aw882xx_dsp_write_cali_re(struct aw_device *aw_dev, int32_t cali_re)
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_RE_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_RE_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -933,10 +972,18 @@ int aw882xx_dsp_write_params(struct aw_device *aw_dev, char *data, unsigned int 
 		return ret;
 	}
 
-	if (msg_num == MSG_PARAM_ID_0)
+	if (msg_num == MSG_PARAM_ID_0) {
 		msg_id = AW_MSG_ID_PARAMS;
-	else
+	} else if (msg_num == MSG_PARAM_ID_1) {
 		msg_id = AW_MSG_ID_PARAMS_1;
+	} else if (msg_num == MSG_PARAM_ID_2) {
+		msg_id = AW_MSG_ID_PARAMS_2;
+	} else if (msg_num == MSG_PARAM_ID_3) {
+		msg_id = AW_MSG_ID_PARAMS_3;
+	} else {
+		aw_dev_err(aw_dev->dev, "unsupport msg num");
+		return ret;
+	}
 
 	ret = aw_write_data_to_dsp(msg_id, data, data_len);
 	if (ret) {
@@ -960,10 +1007,14 @@ int aw882xx_dsp_read_vmax(struct aw_device *aw_dev, char *data, unsigned int dat
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_VMAX_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_VMAX_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -992,10 +1043,14 @@ int aw882xx_dsp_write_vmax(struct aw_device *aw_dev, char *data, unsigned int da
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_VMAX_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_VMAX_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -1025,10 +1080,14 @@ int aw882xx_dsp_noise_en(struct aw_device *aw_dev, bool is_noise)
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_NOISE_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_NOISE_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -1057,10 +1116,14 @@ int aw882xx_dsp_read_cali_cfg(struct aw_device *aw_dev, char *data, unsigned int
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_CALI_CFG_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_CALI_CFG_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");
@@ -1089,10 +1152,14 @@ int aw882xx_dsp_write_cali_cfg(struct aw_device *aw_dev, char *data, unsigned in
 	}
 
 	if (aw_dev->channel == AW_DEV_CH_PRI_L ||
-			aw_dev->channel == AW_DEV_CH_SEC_L) {
+			aw_dev->channel == AW_DEV_CH_SEC_L ||
+				aw_dev->channel == AW_DEV_CH_TERT_L ||
+					aw_dev->channel == AW_DEV_CH_QUAT_L) {
 		msg_id = AW_MSG_ID_CALI_CFG_L;
 	} else if (aw_dev->channel == AW_DEV_CH_PRI_R ||
-			aw_dev->channel == AW_DEV_CH_SEC_R) {
+			aw_dev->channel == AW_DEV_CH_SEC_R ||
+				aw_dev->channel == AW_DEV_CH_TERT_R ||
+					aw_dev->channel == AW_DEV_CH_QUAT_R) {
 		msg_id = AW_MSG_ID_CALI_CFG_R;
 	} else {
 		aw_dev_err(aw_dev->dev, "unsupport dev channel");

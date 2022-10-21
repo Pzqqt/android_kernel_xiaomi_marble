@@ -51,7 +51,7 @@ int aw882xx_dsp_read_st(struct aw_device *aw_dev, int32_t *r0, int32_t *te);
 int aw882xx_dsp_read_te(struct aw_device *aw_dev, int32_t *te);
 int aw882xx_dsp_get_dc_status(struct aw_device *aw_dev);
 int aw882xx_dsp_hmute_en(struct aw_device *aw_dev, bool is_hmute);
-int aw882xx_dsp_cali_en(struct aw_device *aw_dev, bool is_enable);
+int aw882xx_dsp_cali_en(struct aw_device *aw_dev, int32_t cali_msg_data);
 int aw882xx_dsp_read_f0(struct aw_device *aw_dev, int32_t *f0);
 int aw882xx_dsp_read_f0_q(struct aw_device *aw_dev, int32_t *f0, int32_t *q);
 int aw882xx_dsp_read_cali_data(struct aw_device *aw_dev, char *data, unsigned int data_len);
