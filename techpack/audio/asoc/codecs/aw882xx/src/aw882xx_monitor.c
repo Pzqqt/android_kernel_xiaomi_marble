@@ -364,38 +364,19 @@ static void aw_monitor_set_ipeak(struct aw_device *aw_dev,
 
 static void aw_monitor_set_gain(struct aw_device *aw_dev, uint16_t gain)
 {
-	int ret;
+	int compared_vol = 0;
 	struct aw_monitor_cfg *monitor_cfg = &aw_dev->monitor_desc.monitor_cfg;
-	unsigned int read_volume;
-	unsigned int set_volume;
+	struct aw_volume_desc *vol_desc = &aw_dev->volume_desc;
 
 	if (gain == GAIN_NONE || (!monitor_cfg->gain_switch))
 		return;
 
-	ret = aw_dev->ops.aw_get_volume(aw_dev, &read_volume);
-	if (ret < 0) {
-		aw_dev_err(aw_dev->dev, "read volume failed");
-		return;
-	}
+	vol_desc->monitor_volume = aw_dev->ops.aw_reg_val_to_db(gain);
 
-	gain = aw_dev->ops.aw_reg_val_to_db(gain);
+	compared_vol = AW_GET_MAX_VALUE(vol_desc->ctl_volume,
+		vol_desc->monitor_volume);
 
-	/*add offset*/
-	set_volume = gain + aw_dev->volume_desc.init_volume;
-
-	if (read_volume == set_volume) {
-		aw_dev_dbg(aw_dev->dev, "gain = 0x%x, no change", read_volume);
-		return;
-	}
-
-	ret = aw_dev->ops.aw_set_volume(aw_dev, set_volume);
-	if (ret < 0) {
-		aw_dev_err(aw_dev->dev, "set gain failed");
-		return;
-	}
-	aw_dev_info(aw_dev->dev, "set reg val = 0x%x, gain = 0x%x",
-				set_volume, gain);
-
+	aw882xx_dev_set_volume(aw_dev, compared_vol);
 }
 
 static void aw_monitor_set_vmax(struct aw_device *aw_dev,
@@ -542,11 +523,10 @@ int aw882xx_monitor_stop(struct aw_monitor_desc *monitor_desc)
 			struct aw_device, monitor_desc);
 
 	aw_dev_dbg(aw_dev->dev, "enter");
-	if (delayed_work_pending(&monitor_desc->delay_work))
-		cancel_delayed_work_sync(&monitor_desc->delay_work);
+	aw_dev->volume_desc.monitor_volume = 0;
+	cancel_delayed_work_sync(&monitor_desc->delay_work);
 
 	return 0;
-
 }
 
 /*****************************************************
