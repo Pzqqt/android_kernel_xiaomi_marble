@@ -21384,6 +21384,14 @@ QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
 		if (!sta_info->is_deauth_in_progress) {
 			hdd_debug("Delete STA with MAC:" QDF_MAC_ADDR_FMT,
 				  QDF_MAC_ADDR_REF(sta_info->sta_mac.bytes));
+
+			if (QDF_IS_ADDR_BROADCAST(sta_info->sta_mac.bytes)) {
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						&sta_info, true,
+						STA_INFO_SOFTAP_DEAUTH_ALL_STA);
+				continue;
+			}
+
 			qdf_mem_copy(param->peerMacAddr.bytes,
 				     sta_info->sta_mac.bytes,
 				     QDF_MAC_ADDR_SIZE);
