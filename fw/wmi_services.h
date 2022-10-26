@@ -65,10 +65,10 @@ typedef  enum  {
     WMI_SERVICE_GPIO=25,                    /* GPIO service */
     WMI_SERVICE_STA_DTIM_PS_MODULATED_DTIM=26, /* Modulated DTIM support */
     WMI_STA_UAPSD_BASIC_AUTO_TRIG=27,       /* Basic version of station UAPSD AC Trigger Generation Method with
-                                             * variable tigger periods (service, delay, and suspend intervals) */
+                                             * variable trigger periods (service, delay, and suspend intervals) */
     WMI_STA_UAPSD_VAR_AUTO_TRIG=28,         /* Station UAPSD AC Trigger Generation Method with variable
                                              * trigger periods (service, delay, and suspend intervals) */
-    WMI_SERVICE_STA_KEEP_ALIVE=29,          /* Serivce to support the STA KEEP ALIVE mechanism */
+    WMI_SERVICE_STA_KEEP_ALIVE=29,          /* Service to support the STA KEEP ALIVE mechanism */
     WMI_SERVICE_TX_ENCAP=30,                /* Packet type for TX encapsulation */
     WMI_SERVICE_AP_PS_DETECT_OUT_OF_SYNC=31, /* detect out-of-sync sleeping stations */
     WMI_SERVICE_EARLY_RX=32,                /* adaptive early-rx feature */
@@ -523,8 +523,8 @@ typedef  enum  {
     WMI_SERVICE_WAPI_CONCURRENCY_SUPPORTED = 277, /* Indicates FW support for WAPI concurrency */
     WMI_SERVICE_SAP_CONNECTED_D3WOW = 278,  /* Indicates FW support for D3WoW for SAP connected case */
     WMI_SERVICE_GO_CONNECTED_D3WOW = 279,   /* Indicates FW support for D3WoW for P2P GO connected case */
-    WMI_SERVICE_EXT_TPC_REG_SUPPORT = 280, /* Support for new 6G TPC power limits */
-    WMI_SERVICE_REG_CC_EXT_EVENT_SUPPORT = 281, /* Support for Extended REG_CC Event with additional params for 6G */
+    WMI_SERVICE_EXT_TPC_REG_SUPPORT = 280, /* Support for new 6 GHz TPC power limits */
+    WMI_SERVICE_REG_CC_EXT_EVENT_SUPPORT = 281, /* Support for Extended REG_CC Event with additional params for 6 GHz */
     WMI_SERVICE_NDI_TXBF_SUPPORT = 282, /* Indicates FW support for Tx beamforming with NDI VDEV */
     WMI_SERVICE_ENABLE_LOWER_6G_EDGE_CH_SUPP = 283, /* Indicates FW support for enabling lower 6 GHz edge channel 5935 */
     WMI_SERVICE_DISABLE_UPPER_6G_EDGE_CH_SUPP = 284, /* Indicates FW support for disabling upper 6 GHz edge channel 7115 */
@@ -602,7 +602,7 @@ typedef  enum  {
     WMI_SERVICE_MULTIPLE_VDEV_RESTART_BITMAP_SUPPORT = 349, /* Extended Multiple VDEV Restart with Bitmap Support */
     WMI_SERVICE_WMI_SERVICE_WPA3_SHA384_ROAM_SUPPORT = 350, /* Indicates FW supports WPA3 SHA384 roaming */
     WMI_SERVICE_ODD_LIVEDUMP_SUPPORT = 351, /* Support for ODD Livedump from the FW */
-    WMI_SERVICE_EIRP_PREFERRED_SUPPORT = 352, /* Support for OOBE feature where only EIRP powers will be sent in 6G TPC WMI */
+    WMI_SERVICE_EIRP_PREFERRED_SUPPORT = 352, /* Support for OOBE feature where only EIRP powers will be sent in 6 GHz TPC WMI */
 
 
     WMI_MAX_EXT2_SERVICE

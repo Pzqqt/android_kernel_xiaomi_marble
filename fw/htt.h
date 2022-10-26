@@ -421,7 +421,7 @@ PREPACK struct htt_option_tlv_ll_bus_addr_size_t {
  * downloads over the host --> target bus are as slow as or slower than
  * the transmissions over the WLAN PHY.  For cases where the bus is faster
  * than the WLAN PHY, the target will transmit relatively large A-MPDUs,
- * and consquently will send one TX_COMPL_IND message that covers several
+ * and consequently will send one TX_COMPL_IND message that covers several
  * tx frames.  For cases where the WLAN PHY is faster than the bus,
  * the target will end up transmitting very short A-MPDUs, and consequently
  * sending many TX_COMPL_IND messages, which each cover a very small number
@@ -464,7 +464,7 @@ PREPACK struct htt_option_tlv_hl_suppress_tx_compl_ind_t {
  * The MAX_TX_QUEUE_GROUPS TLV can be sent from the target to the host as
  * a suffix to the VERSION_CONF message.  If the host has specified in the
  * VER_REQ message a limit on the number of tx queue groups the host can
- * supprt, the target shall limit its specification of the maximum tx groups
+ * support, the target shall limit its specification of the maximum tx groups
  * to be no larger than this host-specified limit.
  *
  * If the target does not provide a MAX_TX_QUEUE_GROUPS TLV, then the host
@@ -1135,7 +1135,7 @@ PREPACK struct htt_tx_msdu_desc ## _paddr_bits_ ## _t                          \
         A_UINT16 chanfreq;                                                     \
                                                                                \
         /* Reason reserved is commented is increasing the htt structure size   \
-         * leads to some wierd issues. Contact Raj/Kyeyoon for more info       \
+         * leads to some weird issues.                                         \
          * A_UINT32 reserved_dword3_bits0_31;                                  \
          */                                                                    \
 } POSTPACK
@@ -2720,7 +2720,7 @@ typedef enum {
 /**
  * @brief HTT TX WBM Completion from firmware to host
  * @details
- *  This structure is passed from firmware to host overlayed on wbm_release_ring
+ *  This structure is passed from firmware to host overlaid on wbm_release_ring
  *  DWORD 3 and 4 for software based completions (Exception frames and
  *  TQM bypass frames)
  *  For software based completions, wbm_release_ring->release_source_module will
@@ -2813,7 +2813,7 @@ PREPACK struct htt_tx_wbm_completion {
  * @details
  *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
  *  (WBM) offload HW.
- *  This structure is passed from firmware to host overlayed on wbm_release_ring
+ *  This structure is passed from firmware to host overlaid on wbm_release_ring
  *  For software based completions, release_source_module will
  *  be set to WIFIRELEASE_SOURCE_FW_E. Host SW is expected to inspect using
  *  struct wbm_release_ring and then switch to this after looking at
@@ -2892,7 +2892,7 @@ PREPACK struct htt_tx_wbm_completion_v2 {
  * @details
  *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
  *  (WBM) offload HW.
- *  This structure is passed from firmware to host overlayed on wbm_release_ring
+ *  This structure is passed from firmware to host overlaid on wbm_release_ring
  *  For software based completions, release_source_module will
  *  be set to WIFIRELEASE_SOURCE_FW_E. Host SW is expected to inspect using
  *  struct wbm_release_ring and then switch to this after looking at
@@ -2979,7 +2979,7 @@ typedef enum {
  * @details
  *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
  *  (WBM) offload HW.
- *  This structure is passed from firmware to host overlayed on wbm_release_ring.
+ *  This structure is passed from firmware to host overlaid on wbm_release_ring.
  *  used only if tx_status is HTT_TX_FW2WBM_TX_STATUS_OK or HTT_TX_FW2WBM_TX_STATUS_DROP
  *  or HTT_TX_FW2WBM_TX_STATUS_TTL
  */
@@ -3110,7 +3110,7 @@ PREPACK struct htt_tx_wbm_transmit_status {
  * @details
  *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
  *  (WBM) offload HW.
- *  This structure is passed from firmware to host overlayed on wbm_release_ring.
+ *  This structure is passed from firmware to host overlaid on wbm_release_ring.
  *  used only if tx_status is HTT_TX_FW2WBM_TX_STATUS_REINJECT.
  */
 PREPACK struct htt_tx_wbm_reinject_status {
@@ -3127,7 +3127,7 @@ PREPACK struct htt_tx_wbm_reinject_status {
  * @details
  *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
  *  (WBM) offload HW.
- *  This structure is passed from firmware to host overlayed on wbm_release_ring.
+ *  This structure is passed from firmware to host overlaid on wbm_release_ring.
  *  used only if tx_status is HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY.
  *  FW sends SA addresses to host for all multicast/broadcast packets received on
  *  STA side.
@@ -5134,7 +5134,7 @@ enum htt_msi_setup_type {
  *                     3'b010: 4 usec
  *                     3'b011: 8 usec (default)
  *                     3'b100: 16 usec
- *                     Others: Reserverd
+ *                     Others: Reserved
  *           b'19    - response_required:
  *                     Host needs HTT_T2H_MSG_TYPE_SRING_SETUP_DONE as response
  *           b'20    - ipa_drop_flag:
@@ -8317,7 +8317,7 @@ enum htt_ip_da_sa_prefix {
  *          b'9     - DISABLE_TA_CHECK: 1- Disable TA check for MPDU Sequence
  *                    num jump
  *          b'10    - DISABLE_QOS_CHECK: 1- Disable checking if qos/nonqos
- *            data type switch has happend for MPDU Sequence num jump
+ *            data type switch has happened for MPDU Sequence num jump
  *          b'11    - DISABLE_RAW_CHECK: 1- Disable checking for raw packet type
  *            for MPDU Sequence num jump
  *          b'12    - DISABLE_DECRYPT_ERR_CHECK: 1- Disable fisa cache commands
@@ -12112,7 +12112,7 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
  * In certain generations of chips, the peer map message also contains
  * a HW peer ID.  This HW peer ID is used during rx --> tx frame forwarding
  * to identify which peer the frame needs to be forwarded to (i.e. the
- * peer assocated with the Destination MAC Address within the packet),
+ * peer associated with the Destination MAC Address within the packet),
  * and particularly which vdev needs to transmit the frame (for cases
  * of inter-vdev rx --> tx forwarding). The HW peer id here is the same
  * meaning as AST_INDEX_0.
@@ -12255,7 +12255,7 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
  *
  * The peer map v2 message also contains a HW peer ID.  This HW peer ID
  * is used during rx --> tx frame forwarding to identify which peer the
- * frame needs to be forwarded to (i.e. the peer assocated with the
+ * frame needs to be forwarded to (i.e. the peer associated with the
  * Destination MAC Address within the packet), and particularly which vdev
  * needs to transmit the frame (for cases of inter-vdev rx --> tx forwarding).
  * This DA-based peer ID that is provided for certain rx frames
@@ -13891,7 +13891,7 @@ PREPACK struct htt_txq_group {
  *   Purpose: Indicate whether data ACK RSSI is appended for each MSDU in
  *            TX_COMP_IND message.  The order of the per-MSDU ACK RSSI report
  *            matches the order of the MSDU IDs.  Although the ACK RSSI is the
- *            same for all MSDUs witin a single PPDU, the RSSI is duplicated
+ *            same for all MSDUs within a single PPDU, the RSSI is duplicated
  *            for each MSDU, for convenience.
  *            The ACK RSSI values are valid when status is COMPLETE_OK (and
  *            this append2 bit is set).
@@ -14526,7 +14526,7 @@ typedef struct {
  *     Purpose: indicate how many 32-bit integers follow the message header
  *   - NUM_CHARS
  *     Bits 31:16
- *     Purpose: indicate how many 8-bit charaters follow the series of integers
+ *     Purpose: indicate how many 8-bit characters follow the series of integers
  */
 #define HTT_RX_TEST_NUM_INTS_M   0xff00
 #define HTT_RX_TEST_NUM_INTS_S   8
@@ -14729,7 +14729,7 @@ struct rx_reorder_stats {
     A_UINT32 rxdesc_bmc_msdus_inv_peer;
     /* Number of MSDUs dropped due to no first MSDU flag */
     A_UINT32 rxdesc_no_1st_msdu;
-    /* Number of MSDUs droped due to ring overflow */
+    /* Number of MSDUs dropped due to ring overflow */
     A_UINT32 msdu_drop_ring_ov;
     /* Number of MSDUs dropped due to FC mismatch */
     A_UINT32 msdu_drop_fc_mismatch;
@@ -16678,7 +16678,7 @@ typedef enum {
  *
  *  b'0:15  - flow pool ID: Existing flow pool ID
  *
- *  b'16:31 - flow pool new size: new pool size for exisiting flow pool ID
+ *  b'16:31 - flow pool new size: new pool size for existing flow pool ID
  *
  */
 
@@ -17307,7 +17307,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
  *  subsequent period (100 ms) as long as the backpressure remains unabated.
  *  This message indicates the ring id along with current head and tail index
  *  locations (i.e. write and read indices).
- *  The backpressure time indicates the time in ms for which continous
+ *  The backpressure time indicates the time in ms for which continuous
  *  backpressure has been observed in the ring.
  *
  *  The message format is as follows:
@@ -17326,11 +17326,12 @@ PREPACK struct htt_cfr_dump_compl_ind {
  *                               (HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND)
  *           b'8:15  - pdev_id:  0 indicates msg is for UMAC ring.
  *                               1, 2, 3 indicates pdev_id 0,1,2 and
-                                 the msg is for LMAC ring.
+ *                               the msg is for LMAC ring.
  *           b'16:23 - ring_type: Refer to enum htt_backpressure_ring_type.
  *           b'24:31 - ring_id:  Refer enum htt_backpressure_umac_ring_id/
  *                               htt_backpressure_lmac_ring_id. This represents
- *                               the ring id for which continous backpressure is seen
+ *                               the ring id for which continuous backpressure
+ *                               is seen
  *
  *  dword1 - b'0:15  - head_idx: This indicates the current head index of
  *                               the ring indicated by the ring_id
@@ -17338,7 +17339,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
  *  dword1 - b'16:31 - tail_idx: This indicates the current tail index of
  *                               the ring indicated by the ring id
  *
- *  dword2 - b'0:31  - backpressure_time_ms: Indicates how long continous
+ *  dword2 - b'0:31  - backpressure_time_ms: Indicates how long continuous
  *                               backpressure has been seen in the ring
  *                               indicated by the ring_id.
  *                               Units = milliseconds
@@ -17846,7 +17847,7 @@ enum HTT_UL_OFDMA_TRIG_TYPE {
  *     Bits 31:16
  *     Purpose: indicates the secondary channel center frequency,
  *              only for 11acvht 80plus80 mode
- *     Value:  secondary channel center frequeny, in MHz units, if applicable
+ *     Value:  secondary channel center frequency, in MHz units, if applicable
  *
  * checksum field
  *   - CHECK_SUM

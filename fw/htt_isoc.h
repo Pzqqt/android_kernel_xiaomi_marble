@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -237,7 +238,7 @@ enum {
  *   - RMF_ENABLED (R)
  *     Bit 6
  *     Purpose: specify whether the peer in question has enable robust
- *         management frames, to encrypt certain managment frames
+ *         management frames, to encrypt certain management frames
  *     Value: HTT_ISOC_RMF enum
  *     Value: HTT_ISOC_NON_QOS or HTT_ISOC_QOS
  *   - VDEV_ID
