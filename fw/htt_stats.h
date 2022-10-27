@@ -1602,7 +1602,11 @@ typedef struct {
         intra_bss      : 1,
         chip_id        : 2,
         ml_peer_id     : 13,
-        reserved       : 1;
+        on_chip        : 1;
+    A_UINT32
+        tx_monitor_override_sta : 1,
+        rx_monitor_override_sta : 1,
+        reserved1               : 30;
 } htt_ast_entry_tlv;
 
 typedef enum {
