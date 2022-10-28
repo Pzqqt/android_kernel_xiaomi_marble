@@ -35776,6 +35776,16 @@ typedef enum {
      */
     WMI_ROAM_PARAM_ROAM_SCAN_DFS_CONFIG_BITMAP = 3,
 
+    /*
+     * roam param to configure HO_DELAY_RX value at runtime
+     * The configured value of ho_delay_rx will be in milliseconds
+     * Maximum value which user can configure using this Param ID is 1000 msec.
+     *
+     * If any value beyond this Maximum value is provided by user, FW will
+     * configure the ho_delay_rx value to Maximum allowed value i.e. 1000 msec.
+     */
+    WMI_ROAM_PARAM_ROAM_HO_DELAY_RUNTIME_CONFIG = 4,
+
 
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
