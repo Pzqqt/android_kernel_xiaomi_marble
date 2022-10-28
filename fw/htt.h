@@ -235,9 +235,10 @@
  * 3.108 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP def.
  * 3.109 Add HTT_T2H RX_ADDBA_EXTN,RX_DELBA_EXTN defs.
  * 3.110 Add more word_mask fields in htt_tx_monitor_cfg_t.
+ * 3.111 Add RXPCU filter enable flag in RX_RING_SELECTION_CFG msg.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 110
+#define HTT_CURRENT_VERSION_MINOR 111
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -5535,38 +5536,43 @@ enum htt_srng_ring_id {
  *
  *    The message would appear as follows:
  *
- *    |31 28|27|26|25|24|23            16|15  | 11| 10|9 8|7             0|
- *    |-----+--+--+--+--+----------------+----+---+---+---+---------------|
- *    |rsvd1|DT|OV|PS|SS|     ring_id    |     pdev_id    |    msg_type   |
- *    |-------------------------------------------------------------------|
- *    |              rsvd2               |           ring_buffer_size     |
- *    |-------------------------------------------------------------------|
- *    |                        packet_type_enable_flags_0                 |
- *    |-------------------------------------------------------------------|
- *    |                        packet_type_enable_flags_1                 |
- *    |-------------------------------------------------------------------|
- *    |                        packet_type_enable_flags_2                 |
- *    |-------------------------------------------------------------------|
- *    |                        packet_type_enable_flags_3                 |
- *    |-------------------------------------------------------------------|
- *    |                         tlv_filter_in_flags                       |
- *    |-------------------------------------------------------------------|
- *    |         rx_header_offset         |       rx_packet_offset         |
- *    |-------------------------------------------------------------------|
- *    |       rx_mpdu_start_offset       |      rx_mpdu_end_offset        |
- *    |-------------------------------------------------------------------|
- *    |       rx_msdu_start_offset       |      rx_msdu_end_offset        |
- *    |-------------------------------------------------------------------|
- *    |              rsvd3               |      rx_attention_offset       |
- *    |-------------------------------------------------------------------|
- *    |              rsvd4                    | mo| fp| rx_drop_threshold |
- *    |                                       |ndp|ndp|                   |
- *    |-------------------------------------------------------------------|
+ *    |31 28|27|26|25|24|23|22|21 19|18 16|15  | 11| 10|9 8|7             0|
+ *    |-----+--+--+--+--+-----------------+----+---+---+---+---------------|
+ *    |rsvd1|DT|OV|PS|SS|      ring_id    |     pdev_id    |    msg_type   |
+ *    |-----------------------+-----+-----+--------------------------------|
+ *    |rsvd2|RX|RXHDL|   CLD  | CLC | CLM |           ring_buffer_size     |
+ *    |--------------------------------------------------------------------|
+ *    |                         packet_type_enable_flags_0                 |
+ *    |--------------------------------------------------------------------|
+ *    |                         packet_type_enable_flags_1                 |
+ *    |--------------------------------------------------------------------|
+ *    |                         packet_type_enable_flags_2                 |
+ *    |--------------------------------------------------------------------|
+ *    |                         packet_type_enable_flags_3                 |
+ *    |--------------------------------------------------------------------|
+ *    |                          tlv_filter_in_flags                       |
+ *    |-----------------------------------+--------------------------------|
+ *    |          rx_header_offset         |       rx_packet_offset         |
+ *    |-----------------------------------+--------------------------------|
+ *    |        rx_mpdu_start_offset       |      rx_mpdu_end_offset        |
+ *    |-----------------------------------+--------------------------------|
+ *    |        rx_msdu_start_offset       |      rx_msdu_end_offset        |
+ *    |-----------------------------------+--------------------------------|
+ *    |               rsvd3               |      rx_attention_offset       |
+ *    |--------------------------------------------------------------------|
+ *    |               rsvd4                    | mo| fp| rx_drop_threshold |
+ *    |                                        |ndp|ndp|                   |
+ *    |--------------------------------------------------------------------|
  * Where:
  *     PS = pkt_swap
  *     SS = status_swap
  *     OV = rx_offsets_valid
  *     DT = drop_thresh_valid
+ *     CLM = config_length_mgmt
+ *     CLC = config_length_ctrl
+ *     CLD = config_length_data
+ *     RXHDL = rx_hdr_len
+ *     RX = rxpcu_filter_enable_flag
  * The message is interpreted as follows:
  * dword0 - b'0:7   - msg_type: This will be set to
  *                    0xc (HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG)
@@ -5620,7 +5626,15 @@ enum htt_srng_ring_id {
  *                    10 - 128bytes
  *                    11 - 256bytes
  *                    default - 128 bytes
- *          b'27:31 - rsvd2: Reserved for future use
+ *          b'27    - rxpcu_filter_enable_flag
+ *                    For Scan Radio Host CPU utilization is very high.
+ *                    In order to reduce CPU utilization we need to filter out
+ *                    certain configured MAC frames.
+ *                    To filter out configured MAC address frames, RxPCU should
+ *                    be zero which means allow all frames for MD at RxOLE
+ *                    host wil fiter out frames.
+ *                    RxPCU (Filter IN) -> RxOLE (Filter In/Filter Out)
+ *          b'28:31 - rsvd2: Reserved for future use
  * dword2 - b'0:31  - packet_type_enable_flags_0:
  *                    Enable MGMT packet from 0b0000 to 0b1001
  *                    bits from low to high: FP, MD, MO - 3 bits
@@ -5759,7 +5773,8 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
              config_length_ctrl:3,
              config_length_data:3,
              rx_hdr_len:        2,
-             rsvd2:             5;
+             rxpcu_filter_enable_flag:1,
+             rsvd2:             4;
     A_UINT32 packet_type_enable_flags_0;
     A_UINT32 packet_type_enable_flags_1;
     A_UINT32 packet_type_enable_flags_2;
@@ -5932,6 +5947,17 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
                 HTT_CHECK_SET_VAL( HTT_RX_RING_SELECTION_CFG_RX_HDR_LEN, _val); \
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RX_HDR_LEN_S));\
             } while(0)
+
+#define HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_M               0x08000000
+#define HTT_RX_RING_SELECTION_CFG_RXPXU_FILTER_S               27
+#define HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_GET(_var) \
+    (((_var) & HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_M) >> \
+        HTT_RX_RING_SELECTION_CFG_RXPXU_FILTER_S)
+#define HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL( HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER, _val); \
+        ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RXPXU_FILTER_S));\
+    } while(0)
 
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG_0_M     0xffffffff
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG_0_S     0
