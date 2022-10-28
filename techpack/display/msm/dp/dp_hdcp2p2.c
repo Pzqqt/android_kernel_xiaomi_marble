@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -871,7 +872,7 @@ static int dp_hdcp2p2_main(void *data)
 	enum hdcp_transport_wakeup_cmd cmd;
 
 	while (1) {
-		wait_event(ctrl->wait_q,
+		wait_event_idle(ctrl->wait_q,
 			!kfifo_is_empty(&ctrl->cmd_q) ||
 			kthread_should_stop() ||
 			kthread_should_park());
