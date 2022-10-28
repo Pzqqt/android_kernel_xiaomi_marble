@@ -2673,6 +2673,18 @@ typedef struct {
 } htt_txbf_ofdma_ax_steer_stats_tlv;
 
 typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* 11AX HE OFDMA MPDUs tried in rbo steering */
+    A_UINT32 ax_ofdma_rbo_steer_mpdus_tried;
+    /* 11AX HE OFDMA MPDUs failed in rbo steering */
+    A_UINT32 ax_ofdma_rbo_steer_mpdus_failed;
+    /* 11AX HE OFDMA MPDUs tried in sifs steering */
+    A_UINT32 ax_ofdma_sifs_steer_mpdus_tried;
+    /* 11AX HE OFDMA MPDUs failed in sifs steering */
+    A_UINT32 ax_ofdma_sifs_steer_mpdus_failed;
+} htt_txbf_ofdma_ax_steer_mpdu_stats_tlv;
+
+typedef struct {
     /** 11BE EHT OFDMA NDPA frame queued to the HW */
     A_UINT32 be_ofdma_ndpa_queued;
     /** 11BE EHT OFDMA NDPA frame sent over the air */
@@ -2806,16 +2818,30 @@ typedef struct {
     htt_txbf_ofdma_be_steer_stats_elem_t be_steer[1]; /* variable length */
 } htt_txbf_ofdma_be_steer_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* 11BE EHT OFDMA MPDUs tried in rbo steering */
+    A_UINT32 be_ofdma_rbo_steer_mpdus_tried;
+    /* 11BE EHT OFDMA MPDUs failed in rbo steering */
+    A_UINT32 be_ofdma_rbo_steer_mpdus_failed;
+    /* 11BE EHT OFDMA MPDUs tried in sifs steering */
+    A_UINT32 be_ofdma_sifs_steer_mpdus_tried;
+    /* 11BE EHT OFDMA MPDUs failed in sifs steering */
+    A_UINT32 be_ofdma_sifs_steer_mpdus_failed;
+} htt_txbf_ofdma_be_steer_mpdu_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TXBF_OFDMA
  * TLV_TAGS:
  *      - HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG
  *      - HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG
  *      - HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG
  *      - HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG
+ *      - HTT_STATS_TXBF_OFDMA_AX_STEER_MPDU_STATS_TAG
  *      - HTT_STATS_TXBF_OFDMA_BE_NDPA_STATS_TAG
  *      - HTT_STATS_TXBF_OFDMA_BE_NDP_STATS_TAG
  *      - HTT_STATS_TXBF_OFDMA_BE_BRP_STATS_TAG
  *      - HTT_STATS_TXBF_OFDMA_BE_STEER_STATS_TAG
+ *      - HTT_STATS_TXBF_OFDMA_BE_STEER_MPDU_STATS_TAG
  */
 
 typedef struct {

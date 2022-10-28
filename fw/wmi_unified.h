@@ -2336,7 +2336,7 @@ typedef enum {
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
 
     /* ODD events */
-    WMI_ODD_LIVEDUMP_RESPONSE_EVENTID = WMI_CMD_GRP_START_ID(WMI_GRP_ODD),
+    WMI_ODD_LIVEDUMP_RESPONSE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_ODD),
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -3282,6 +3282,20 @@ typedef enum {
     WMI_AFC_FEATURE_6G_DEPLOYMENT_OUTDOOR_ONLY = 2,
 } WMI_AFC_FEATURE_6G_DEPLOYMENT_TYPE;
 
+typedef enum {
+    WMI_BDF_VERSION_OK = 0,
+
+    /* WMI_BDF_VERSION_TOO_OLD:
+     * BDF version is older than the oldest version supported by FW.
+     */
+    WMI_BDF_VERSION_TOO_OLD = 1,
+
+    /* WMI_BDF_VERSION_TOO_NEW:
+     * BDF version is newer than the newest version supported by FW.
+     */
+    WMI_BDF_VERSION_TOO_NEW = 2,
+} wmi_hw_bd_status_type;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param.*/
 
@@ -3400,6 +3414,11 @@ typedef struct {
      * refer to WMI_AFC_FEATURE_6G_DEPLOYMENT_TYPE enum
      */
     A_UINT32 afc_deployment_type;
+
+    /*
+     * Board data check report. Please see wmi_hw_bd_status_type enum values.
+     */
+    A_UINT32 hw_bd_status;
 
     /* Followed by next TLVs:
      *     WMI_DMA_RING_CAPABILITIES          dma_ring_caps[];
@@ -15479,6 +15498,26 @@ typedef struct {
 
 #define WMI_BEACON_PROTECTION_EN_GET(param) \
     WMI_GET_BITS(param, WMI_BEACON_PROTECTION_BIT_POS, 1)
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_prb_resp_tmpl_ml_info */
+    /** hw_link_id:
+     * Unique link id across SOCs, got as part of QMI handshake
+     */
+    A_UINT32 hw_link_id;
+    /**
+     * CU vdev map for the Critical update category-1
+     * (Inclusion of CU IES)
+     */
+    A_UINT32 cu_vdev_map_cat1_lo; /* bits 31:0 */
+    A_UINT32 cu_vdev_map_cat1_hi; /* bits 63:32 */
+    /**
+     * CU vdev map for the Critical update category-2
+     * (modification of CU IES)
+     */
+    A_UINT32 cu_vdev_map_cat2_lo; /* bits 31:0 */
+    A_UINT32 cu_vdev_map_cat2_hi; /* bits 63:32 */
+} wmi_prb_resp_tmpl_ml_info;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_prb_tmpl_cmd_fixed_param */
