@@ -236,9 +236,10 @@
  * 3.109 Add HTT_T2H RX_ADDBA_EXTN,RX_DELBA_EXTN defs.
  * 3.110 Add more word_mask fields in htt_tx_monitor_cfg_t.
  * 3.111 Add RXPCU filter enable flag in RX_RING_SELECTION_CFG msg.
+ * 3.112 Add logical_link_id field in rx_peer_metadata_v1.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 111
+#define HTT_CURRENT_VERSION_MINOR 112
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -18225,16 +18226,16 @@ PREPACK struct htt_rx_peer_metadata_v0 {
  *
  * The following diagram shows the format of the RX PEER METADATA V1 format.
  *
- * |31 29|28   26|25   24|23        16|15 14|   13  |12                   0|
- * |-----------------------------------------------------------------------|
- * |Rsvd2|CHIP ID|LMAC ID|  VDEV ID   |Rsvd1|ML PEER| SW PEER ID/ML PEER ID|
- * |-----------------------------------------------------------------------|
+ * |31 29|28   26|25   24|23   16|15           14|   13  |12                  0|
+ * |---------------------------------------------------------------------------|
+ * |Rsvd2|CHIP ID|LMAC ID|VDEV ID|logical_link_id|ML PEER|SW PEER ID/ML PEER ID|
+ * |---------------------------------------------------------------------------|
  */
 PREPACK struct htt_rx_peer_metadata_v1 {
     A_UINT32
         peer_id:         13,
         ml_peer_valid:   1,
-        reserved1:       2,
+        logical_link_id: 2,
         vdev_id:         8,
         lmac_id:         2,
         chip_id:         3,
@@ -18267,6 +18268,17 @@ PREPACK struct htt_rx_peer_metadata_v1 {
 #define HTT_RX_PEER_META_DATA_V1_VDEV_ID_M    0x00ff0000
 #define HTT_RX_PEER_META_DATA_V1_VDEV_ID_GET(_var) \
     (((_var) & HTT_RX_PEER_META_DATA_V1_VDEV_ID_M) >> HTT_RX_PEER_META_DATA_V1_VDEV_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID_S    14
+#define HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID_M    0x0000c000
+#define HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID_M) >> HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_LOGICAL_LINK_ID_S)); \
+    } while (0)
 
 #define HTT_RX_PEER_META_DATA_V1_VDEV_ID_SET(_var, _val) \
     do {                                             \
