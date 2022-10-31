@@ -1589,6 +1589,11 @@ static ssize_t ipa3_read_odlstats(struct file *file, char __user *ubuf,
 	int nbytes;
 	int cnt = 0;
 
+	if (!ipa3_odl_ctx) {
+                IPADBG("ODL stats not supported\n");
+                return 0;
+	}
+
 	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
 			"ODL received pkt =%u\n"
 			"ODL processed pkt to DIAG=%u\n"
