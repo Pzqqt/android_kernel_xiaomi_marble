@@ -4267,9 +4267,13 @@ int ipahal_rt_generate_empty_img(u32 tbls_num, u32 hash_hdr_size,
 		IPAHAL_ERR("fail to alloc DMA buff of size %d\n", mem->size);
 		return -ENOMEM;
 	}
-	/* fetch empty tbl from SRAM */
-	addr = obj->create_tbl_addr(false,
-		IPA_EMPTY_SRAM_OFFSET);
+	/* fetch empty tbl from SRAM except IPA4.0 */
+	if (ipahal_ctx->hw_type == IPA_HW_v4_0)
+		addr = obj->create_tbl_addr(true,
+			ipahal_ctx->empty_fltrt_tbl.phys_base);
+	else
+		addr = obj->create_tbl_addr(false,
+			IPA_EMPTY_SRAM_OFFSET);
 	for (i = 0; i < tbls_num; i++)
 		obj->write_val_to_hdr(addr,
 			mem->base + i * obj->tbl_hdr_width);
@@ -4356,9 +4360,13 @@ int ipahal_flt_generate_empty_img(u32 tbls_num, u32 hash_hdr_size,
 		obj->write_val_to_hdr(flt_bitmap, mem->base);
 	}
 
-	/* fetch empty tbl from SRAM */
-	addr = obj->create_tbl_addr(false,
-		IPA_EMPTY_SRAM_OFFSET);
+	/* fetch empty tbl from SRAM except IPA4.0 */
+	if (ipahal_ctx->hw_type == IPA_HW_v4_0)
+		addr = obj->create_tbl_addr(true,
+			ipahal_ctx->empty_fltrt_tbl.phys_base);
+	else
+		addr = obj->create_tbl_addr(false,
+			IPA_EMPTY_SRAM_OFFSET);
 
 	if (ep_bitmap) {
 		for (i = 1; i <= tbls_num; i++)
@@ -4423,8 +4431,12 @@ alloc:
 		}
 	}
 
-	addr = obj->create_tbl_addr(false,
-		IPA_EMPTY_SRAM_OFFSET);
+	if (ipahal_ctx->hw_type == IPA_HW_v4_0)
+		addr = obj->create_tbl_addr(true,
+			ipahal_ctx->empty_fltrt_tbl.phys_base);
+	else
+		addr = obj->create_tbl_addr(false,
+			IPA_EMPTY_SRAM_OFFSET);
 	for (i = 0; i < params->tbls_num; i++) {
 		obj->write_val_to_hdr(addr,
 			params->nhash_hdr.base + i * obj->tbl_hdr_width);
