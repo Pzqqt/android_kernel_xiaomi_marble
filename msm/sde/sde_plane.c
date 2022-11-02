@@ -627,9 +627,6 @@ int sde_plane_wait_input_fence(struct drm_plane *plane, uint32_t wait_ms)
 				SDE_ERROR_PLANE(psde, "%ums timeout on %08X fd %lld\n",
 						wait_ms, prefix, sde_plane_get_property(pstate,
 						PLANE_PROP_INPUT_FENCE));
-				if (sde_plane_get_property(pstate, PLANE_PROP_BUFFER_MODE) !=
-						SDE_SINGLE_BUFFER_MODE)
-					psde->is_error = true;
 				sde_kms_timeline_status(plane->dev);
 				ret = -ETIMEDOUT;
 				break;
@@ -651,7 +648,6 @@ int sde_plane_wait_input_fence(struct drm_plane *plane, uint32_t wait_ms)
 				SDE_INFO("plane%d spec fd signaled on bind failure fd %lld\n",
 					plane->base.id,
 					sde_plane_get_property(pstate, PLANE_PROP_INPUT_FENCE));
-				psde->is_error = true;
 				ret = 0;
 				break;
 			default:
