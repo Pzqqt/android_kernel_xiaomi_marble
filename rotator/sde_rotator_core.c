@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
@@ -3138,7 +3139,9 @@ int sde_rotator_core_init(struct sde_rot_mgr **pmgr,
 		IS_SDE_MAJOR_SAME(mdata->mdss_version,
 			SDE_MDP_HW_REV_500) ||
 		IS_SDE_MAJOR_SAME(mdata->mdss_version,
-			SDE_MDP_HW_REV_600)) {
+			SDE_MDP_HW_REV_600) ||
+		IS_SDE_MAJOR_SAME(mdata->mdss_version,
+			SDE_MDP_HW_REV_860)) {
 		mgr->ops_hw_init = sde_rotator_r3_init;
 		mgr->min_rot_clk = ROT_MIN_ROT_CLK;
 
@@ -3151,8 +3154,8 @@ int sde_rotator_core_init(struct sde_rot_mgr **pmgr,
 			SDE_MDP_HW_REV_500))
 			mgr->max_rot_clk = ROT_R3_MAX_ROT_CLK;
 
-		if (!IS_SDE_MAJOR_SAME(mdata->mdss_version,
-					SDE_MDP_HW_REV_600) &&
+		if (!(IS_SDE_MAJOR_SAME(mdata->mdss_version, SDE_MDP_HW_REV_600) ||
+			IS_SDE_MAJOR_SAME(mdata->mdss_version, SDE_MDP_HW_REV_860)) &&
 				!sde_rotator_get_clk(mgr,
 					SDE_ROTATOR_CLK_MDSS_AXI)) {
 			SDEROT_ERR("unable to get mdss_axi_clk\n");
