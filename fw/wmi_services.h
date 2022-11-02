@@ -603,6 +603,7 @@ typedef  enum  {
     WMI_SERVICE_WMI_SERVICE_WPA3_SHA384_ROAM_SUPPORT = 350, /* Indicates FW supports WPA3 SHA384 roaming */
     WMI_SERVICE_ODD_LIVEDUMP_SUPPORT = 351, /* Support for ODD Livedump from the FW */
     WMI_SERVICE_EIRP_PREFERRED_SUPPORT = 352, /* Support for OOBE feature where only EIRP powers will be sent in 6 GHz TPC WMI */
+    WMI_SERVICE_RTT_TX_RX_CHAIN_IDX_SUPPORT = 353, /* FW Supports configuring Tx and Rx Chainmask in intiator and Responder */
 
 
     WMI_MAX_EXT2_SERVICE
