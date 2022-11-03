@@ -323,6 +323,7 @@ mlme_peer_object_destroyed_notification(struct wlan_objmgr_peer *peer,
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_legacy_err("unable to detach peer_priv obj to peer obj");
 
+	mlme_free_peer_assoc_rsp_ie(peer_priv);
 	qdf_mem_free(peer_priv);
 
 	return status;
@@ -3039,6 +3040,54 @@ struct element_info *mlme_get_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return &mlme_priv->disconnect_info.peer_discon_ies;
+}
+
+void mlme_free_peer_assoc_rsp_ie(struct peer_mlme_priv_obj *peer_priv)
+{
+	if (!peer_priv) {
+		mlme_legacy_debug("peer priv is NULL");
+		return;
+	}
+
+	if (peer_priv->assoc_rsp.ptr) {
+		qdf_mem_free(peer_priv->assoc_rsp.ptr);
+		peer_priv->assoc_rsp.ptr = NULL;
+		peer_priv->assoc_rsp.len = 0;
+	}
+}
+
+void mlme_set_peer_assoc_rsp_ie(struct wlan_objmgr_psoc *psoc,
+				uint8_t *peer_addr, struct element_info *ie)
+{
+	struct wlan_objmgr_peer *peer;
+	struct peer_mlme_priv_obj *peer_priv;
+
+	if (!ie || !ie->len || !ie->ptr || !peer_addr) {
+		mlme_legacy_debug("Assoc IE is NULL");
+		return;
+	}
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_addr, WLAN_LEGACY_MAC_ID);
+	if (!peer)
+		return;
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+
+	if (!peer_priv)
+		goto end;
+
+	/* Free existing assoc_rsp */
+	mlme_free_peer_assoc_rsp_ie(peer_priv);
+
+	peer_priv->assoc_rsp.ptr = qdf_mem_malloc(ie->len);
+	if (!peer_priv->assoc_rsp.ptr)
+		goto end;
+
+	qdf_mem_copy(peer_priv->assoc_rsp.ptr, ie->ptr, ie->len);
+	peer_priv->assoc_rsp.len = ie->len;
+end:
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
 }
 
 void mlme_set_follow_ap_edca_flag(struct wlan_objmgr_vdev *vdev, bool flag)
