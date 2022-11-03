@@ -147,6 +147,7 @@ enum htt_dbg_ext_stats_type {
      *           5 bit htt_rx_tid_stats_tlv
      *           6 bit htt_msdu_flow_stats_tlv
      *           7 bit htt_peer_sched_stats_tlv
+     *           8 bit htt_peer_ax_ofdma_stats_tlv
      *   - config_param2: [Bit31 : Bit0] mac_addr31to0
      *   - config_param3: [Bit15 : Bit0] mac_addr47to32
      *                    [Bit 16] If this bit is set, reset per peer stats
@@ -1804,16 +1805,17 @@ typedef enum {
 } htt_peer_stats_req_mode_t;
 
 typedef enum {
-    HTT_PEER_STATS_CMN_TLV     = 0,
-    HTT_PEER_DETAILS_TLV       = 1,
-    HTT_TX_PEER_RATE_STATS_TLV = 2,
-    HTT_RX_PEER_RATE_STATS_TLV = 3,
-    HTT_TX_TID_STATS_TLV       = 4,
-    HTT_RX_TID_STATS_TLV       = 5,
-    HTT_MSDU_FLOW_STATS_TLV    = 6,
-    HTT_PEER_SCHED_STATS_TLV   = 7,
+    HTT_PEER_STATS_CMN_TLV      = 0,
+    HTT_PEER_DETAILS_TLV        = 1,
+    HTT_TX_PEER_RATE_STATS_TLV  = 2,
+    HTT_RX_PEER_RATE_STATS_TLV  = 3,
+    HTT_TX_TID_STATS_TLV        = 4,
+    HTT_RX_TID_STATS_TLV        = 5,
+    HTT_MSDU_FLOW_STATS_TLV     = 6,
+    HTT_PEER_SCHED_STATS_TLV    = 7,
+    HTT_PEER_AX_OFDMA_STATS_TLV = 8,
 
-    HTT_PEER_STATS_MAX_TLV     = 31,
+    HTT_PEER_STATS_MAX_TLV      = 31,
 } htt_peer_stats_tlv_enum;
 
 typedef struct {
@@ -1831,6 +1833,28 @@ typedef struct {
     A_UINT32 peer_rx_active_dur_us_high;
     A_UINT32 peer_curr_rate_kbps;
 } htt_peer_sched_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 peer_id;
+    A_UINT32 ax_basic_trig_count;
+    A_UINT32 ax_basic_trig_err;
+    A_UINT32 ax_bsr_trig_count;
+    A_UINT32 ax_bsr_trig_err;
+    A_UINT32 ax_mu_bar_trig_count;
+    A_UINT32 ax_mu_bar_trig_err;
+    A_UINT32 ax_basic_trig_with_per;
+    A_UINT32 ax_bsr_trig_with_per;
+    A_UINT32 ax_mu_bar_trig_with_per;
+    /* is_airtime_large_for_dl_ofdma, is_airtime_large_for_ul_ofdma
+     * These fields contain 2 counters each.  The first element in each
+     * array counts how many times the airtime is short enough to use
+     * OFDMA, and the second element in each array counts how many times the
+     * airtime is too large to select OFDMA for the PPDUs involving the peer.
+     */
+    A_UINT32 is_airtime_large_for_dl_ofdma[2];
+    A_UINT32 is_airtime_large_for_ul_ofdma[2];
+} htt_peer_ax_ofdma_stats_tlv;
 
 /* config_param0 */
 
@@ -1902,6 +1926,7 @@ typedef struct {
  *   - HTT_STATS_PEER_MSDU_FLOWQ_TAG (multiple)
  *   - HTT_STATS_TX_TID_DETAILS_V1_TAG (multiple)
  *   - HTT_STATS_PEER_SCHED_STATS_TAG
+ *   - HTT_STATS_PEER_AX_OFDMA_STATS_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -1919,6 +1944,7 @@ typedef struct _htt_peer_stats {
     htt_msdu_flow_stats_tlv    msdu_flowq[1];
     htt_tx_tid_stats_v1_tlv    tx_tid_stats_v1[1];
     htt_peer_sched_stats_tlv   peer_sched_stats;
+    htt_peer_ax_ofdma_stats_tlv ax_ofdma_stats;
 } htt_peer_stats_t;
 
 /* =========== ACTIVE PEER LIST ========== */
