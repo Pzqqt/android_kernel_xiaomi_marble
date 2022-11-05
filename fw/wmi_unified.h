@@ -14271,13 +14271,11 @@ typedef enum {
     /** specify the setting that are valid for auto rate transmissions.
      * bits 7:0 (LTF): When bitmask is set, then corresponding LTF value is
      *                 used for auto rate.
-     *     BIT0   = 1 (WMI_HE_LTF_1X)
-     *     BIT1   = 1 (WMI_HE_LTF_2X)
-     *     BIT2   = 1 (WMI_HE_LTF_4X)
-     *     BIT3   = 1 (WMI_EHT_LTF_1X)
-     *     BIT4   = 1 (WMI_EHT_LTF_2X)
-     *     BIT5   = 1 (WMI_EHT_LTF_4X)
-     *     BIT6-7 = Reserved bits.
+     *     BIT0   = 1 (WMI_HE_LTF_1X or WMI_EHT_LTF_1X depending on
+     *                 current rate’s preamble type HE or EHT)
+     *     BIT1   = 1 (WMI_HE_LTF_2X or WMI_EHT_LTF_2X)
+     *     BIT2   = 1 (WMI_HE_LTF_4X or WMI_EHT_LTF_4X)
+     *     BIT3-7 = Reserved bits.
      * bits 15:8 (SGI): When bitmask is set, then corresponding SGI value is
      *                 used for auto rate.
      *     BIT8     = 1 (400 NS)
@@ -14863,6 +14861,15 @@ typedef enum {
          * for vdev offload stats
          */
         WMI_VDEV_PARAM_VDEV_STATS_ID_UPDATE,                 /* 0x8010 */
+
+        /*
+         * Enable or disable Extra LTF capability in Auto rate and
+         * Fixed rate EHT data packet transmissions.
+         * Even when this vdev param is enabled, Extra LTF may not be
+         * enabled for all rates in auto rate mode based on other conditions.
+         * valid values: 0 - Disable Extra LTF, 1- Enable Extra LTF.
+         */
+        WMI_VDEV_PARAM_EXTRA_EHT_LTF,                  /* 0x8011 */
 
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
