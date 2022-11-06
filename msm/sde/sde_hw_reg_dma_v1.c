@@ -699,6 +699,13 @@ static int write_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 		SDE_EVT32(val);
 	}
 
+	if (cfg->last_command) {
+		/* ensure all packets are queued in packet queue before
+		 * queuing last command descriptor (last command)
+		 */
+		wmb();
+	}
+
 	if (cfg->dma_type == REG_DMA_TYPE_DB) {
 		SDE_REG_WRITE(&hw, reg_dma_ctl_queue_off[cfg->ctl->idx],
 				cfg->dma_buf->iova);
@@ -712,6 +719,9 @@ static int write_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 	}
 
 	if (cfg->last_command) {
+		/* ensure last command is queued before lut dma trigger */
+		wmb();
+
 		mask = ctl_trigger_done_mask[cfg->ctl->idx][cfg->queue_select];
 		SDE_REG_WRITE(&hw, reg_dma_intr_clear_offset, mask);
 		/* DB LUTDMA use SW trigger while SB LUTDMA uses DSPP_SB
