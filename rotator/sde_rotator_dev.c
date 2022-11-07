@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s:%d: " fmt, __func__, __LINE__
@@ -3477,13 +3478,13 @@ static int sde_rotator_probe(struct platform_device *pdev)
 	vdev->release = video_device_release;
 	vdev->v4l2_dev = &rot_dev->v4l2_dev;
 	vdev->vfl_dir = VFL_DIR_M2M;
-	vdev->vfl_type = VFL_TYPE_GRABBER;
+	vdev->vfl_type = VFL_TYPE_VIDEO;
 	vdev->device_caps = V4L2_CAP_STREAMING | V4L2_CAP_VIDEO_M2M |
 		V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_CAPTURE;
 
 	strlcpy(vdev->name, SDE_ROTATOR_DRV_NAME, sizeof(vdev->name));
 
-	ret = video_register_device(vdev, VFL_TYPE_GRABBER,
+	ret = video_register_device(vdev, VFL_TYPE_VIDEO,
 			SDE_ROTATOR_BASE_DEVICE_NUMBER);
 	if (ret < 0) {
 		SDEDEV_ERR(&pdev->dev, "fail register video device %d\n",
