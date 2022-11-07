@@ -34,7 +34,7 @@ u64 msm_vidc_calc_freq_ar50lt(struct msm_vidc_inst *inst, u32 data_size)
 	//dcvs = &inst->clk_data;
 
 	mbpf = msm_vidc_get_mbs_per_frame(inst);
-	fps = inst->capabilities->cap[FRAME_RATE].max;
+	fps = msm_vidc_get_fps(inst);
 	mbs_per_second = mbpf * fps;
 
 	/*
@@ -60,7 +60,7 @@ u64 msm_vidc_calc_freq_ar50lt(struct msm_vidc_inst *inst, u32 data_size)
 		/* 10 / 7 is overhead factor */
 		vsp_cycles += (inst->capabilities->cap[BIT_RATE].value * 10) / 7;
 	} else if (inst->domain == MSM_VIDC_DECODER) {
-		vpp_cycles = mbs_per_second * inst->capabilities->cap[MB_CYCLES_FW_VPP].value;
+		vpp_cycles = mbs_per_second * inst->capabilities->cap[MB_CYCLES_VPP].value;
 		/* 21 / 20 is minimum overhead factor */
 		vpp_cycles += max(vpp_cycles / 20, fw_vpp_cycles);
 

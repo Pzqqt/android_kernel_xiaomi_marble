@@ -807,19 +807,12 @@ int msm_vidc_decide_work_mode_ar50lt(struct msm_vidc_inst  *inst)
 
 	if (is_decode_session(inst)) {
 		work_mode = MSM_VIDC_STAGE_2;
-		switch (inp_f->fmt.pix_mp.pixelformat) {
-		case V4L2_PIX_FMT_MPEG2:
+		height = inp_f->fmt.pix_mp.height;
+		width = inp_f->fmt.pix_mp.width;
+		res_ok = res_is_less_than_or_equal_to(width, height, 1280, 720);
+		if (inst->capabilities->cap[LOWLATENCY_MODE].value ||
+				res_ok) {
 			work_mode = MSM_VIDC_STAGE_1;
-			break;
-		case V4L2_PIX_FMT_H264:
-		case V4L2_PIX_FMT_HEVC:
-			height = inp_f->fmt.pix_mp.height;
-			width = inp_f->fmt.pix_mp.width;
-			res_ok = res_is_less_than(width, height, 1280, 720);
-			if (inst->capabilities->cap[LOWLATENCY_MODE].value ||
-					res_ok) {
-				work_mode = MSM_VIDC_STAGE_1;
-			}
 		}
 	} else if (is_encode_session(inst)) {
 		work_mode = MSM_VIDC_STAGE_1;
