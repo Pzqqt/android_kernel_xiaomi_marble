@@ -21,7 +21,7 @@
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/regulator/consumer.h>
-#include <media/msm_media_info.h>
+#include <media/mmm_color_fmt.h>
 #include <linux/videodev2.h>
 #include <linux/ion.h>
 
@@ -349,13 +349,13 @@ int sde_mdp_get_plane_sizes(struct sde_mdp_format_params *fmt, u32 w, u32 h,
 
 			switch (fmt->format) {
 			case SDE_PIX_FMT_Y_CBCR_H2V2_VENUS:
-				cf = COLOR_FMT_NV12;
+				cf = MMM_COLOR_FMT_NV12;
 				break;
 			case SDE_PIX_FMT_Y_CRCB_H2V2_VENUS:
-				cf = COLOR_FMT_NV21;
+				cf = MMM_COLOR_FMT_NV21;
 				break;
 			case SDE_PIX_FMT_Y_CBCR_H2V2_P010_VENUS:
-				cf = COLOR_FMT_P010;
+				cf = MMM_COLOR_FMT_P010;
 				break;
 			default:
 				SDEROT_ERR("unknown color format %d\n",
@@ -364,11 +364,11 @@ int sde_mdp_get_plane_sizes(struct sde_mdp_format_params *fmt, u32 w, u32 h,
 			}
 
 			ps->num_planes = 2;
-			ps->ystride[0] = VENUS_Y_STRIDE(cf, w);
-			ps->ystride[1] = VENUS_UV_STRIDE(cf, w);
-			ps->plane_size[0] = VENUS_Y_SCANLINES(cf, h) *
+			ps->ystride[0] = MMM_COLOR_FMT_Y_STRIDE(cf, w);
+			ps->ystride[1] = MMM_COLOR_FMT_UV_STRIDE(cf, w);
+			ps->plane_size[0] = MMM_COLOR_FMT_Y_SCANLINES(cf, h) *
 				ps->ystride[0];
-			ps->plane_size[1] = VENUS_UV_SCANLINES(cf, h) *
+			ps->plane_size[1] = MMM_COLOR_FMT_UV_SCANLINES(cf, h) *
 				ps->ystride[1];
 		} else if (fmt->format == SDE_PIX_FMT_Y_CBCR_H2V2_P010) {
 			/*
