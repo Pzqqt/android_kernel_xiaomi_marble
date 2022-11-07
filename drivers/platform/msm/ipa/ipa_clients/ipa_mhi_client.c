@@ -1408,7 +1408,7 @@ static int ipa_mhi_connect_pipe_internal(struct ipa_mhi_connect_params *in, u32 
 		mutex_lock(&ipa3_ctx->lock);
 		ipa3_ctx->is_mhi_coal_set = true;
 		mutex_unlock(&ipa3_ctx->lock);
-		ipa_send_mhi_coal_endp_ind_to_modem();
+		ipa_send_mhi_coal_endp_ind_to_modem(true);
 	}
 #endif
 

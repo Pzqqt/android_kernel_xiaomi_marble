@@ -2557,6 +2557,7 @@ struct ipa3_context {
 	struct ipa3_page_recycle_stats prev_default_recycle_stats;
 	struct ipa3_page_recycle_stats prev_low_lat_data_recycle_stats;
 	struct mutex recycle_stats_collection_lock;
+	struct mutex ssr_lock;
 };
 
 struct ipa3_plat_drv_res {
@@ -3798,7 +3799,7 @@ void ipa3_update_mhi_ctrl_state(u8 state, bool set);
 int ipa_send_mhi_ctrl_endp_ind_to_modem(void);
 #ifdef IPA_CLIENT_MHI_COAL_CONS
 /* Send coal MHI endpoint info to modem using QMI indication message */
-int ipa_send_mhi_coal_endp_ind_to_modem(void);
+int ipa_send_mhi_coal_endp_ind_to_modem(bool check_if_modem_is_up);
 #endif
 
 /*

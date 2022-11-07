@@ -13127,17 +13127,17 @@ bool ipa3_is_modem_up(void)
 {
 	bool is_up;
 
-	mutex_lock(&ipa3_ctx->lock);
+	mutex_lock(&ipa3_ctx->ssr_lock);
 	is_up = ipa3_ctx->is_modem_up;
-	mutex_unlock(&ipa3_ctx->lock);
+	mutex_unlock(&ipa3_ctx->ssr_lock);
 	return is_up;
 }
 
 void ipa3_set_modem_up(bool is_up)
 {
-	mutex_lock(&ipa3_ctx->lock);
+	mutex_lock(&ipa3_ctx->ssr_lock);
 	ipa3_ctx->is_modem_up = is_up;
-	mutex_unlock(&ipa3_ctx->lock);
+	mutex_unlock(&ipa3_ctx->ssr_lock);
 }
 
 /**
@@ -13422,17 +13422,25 @@ int ipa_send_mhi_ctrl_endp_ind_to_modem(void)
 }
 
 #ifdef IPA_CLIENT_MHI_COAL_CONS
-int ipa_send_mhi_coal_endp_ind_to_modem(void) {
+int ipa_send_mhi_coal_endp_ind_to_modem(bool check_if_modem_is_up) {
 	struct ipa_endp_desc_indication_msg_v01 req;
 	struct ipa_ep_id_type_v01 *ep_info;
 	int ipa_mhi_coal_ep_idx =
 		ipa3_get_ep_mapping(IPA_CLIENT_MHI_COAL_CONS);
 
 	mutex_lock(&ipa3_ctx->mhi_lock);
-	/* only modem up and coal pipe is ready, then send QMI*/
-	if (!ipa3_ctx->is_modem_up || !ipa3_ctx->is_mhi_coal_set) {
-		IPADBG("modem or coal not ready, is_modem_up = %d, mhi_coal_set =%d\n",
-			ipa3_ctx->is_modem_up, ipa3_ctx->is_mhi_coal_set);
+
+	/* check if modem is up if needed. Todo: change to check indication mask*/
+	if (check_if_modem_is_up && !ipa3_ctx->is_modem_up) {
+		IPADBG("modem not ready, is_modem_up = %d\n", ipa3_ctx->is_modem_up);
+		mutex_unlock(&ipa3_ctx->mhi_lock);
+		return 0;
+	}
+
+	/* check if coal pipe is ready, then send QMI*/
+	if (!ipa3_ctx->is_mhi_coal_set) {
+		IPADBG("coal pipe not ready, mhi_coal_set =%d\n",
+			ipa3_ctx->is_mhi_coal_set);
 		mutex_unlock(&ipa3_ctx->mhi_lock);
 		return 0;
 	}
