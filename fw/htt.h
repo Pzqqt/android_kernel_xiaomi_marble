@@ -5951,14 +5951,14 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
             } while(0)
 
 #define HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_M               0x08000000
-#define HTT_RX_RING_SELECTION_CFG_RXPXU_FILTER_S               27
+#define HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_S               27
 #define HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_GET(_var) \
     (((_var) & HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_M) >> \
-        HTT_RX_RING_SELECTION_CFG_RXPXU_FILTER_S)
+        HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_S)
 #define HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_SET(_var, _val) \
     do { \
         HTT_CHECK_SET_VAL( HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER, _val); \
-        ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RXPXU_FILTER_S));\
+        ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RXPCU_FILTER_S));\
     } while(0)
 
 #define HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_FLAG_0_M     0xffffffff
