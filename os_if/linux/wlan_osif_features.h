@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -100,5 +100,26 @@
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 74)) || \
 	(defined IEEE80211_EHT_OPER_INFO_PRESENT))
 #define CFG80211_TX_CONTROL_PORT_LINK_SUPPORT 1
+#endif
+
+/*
+ * WLAN_MLD_AP_STA_CONNECT_SUPPORT
+ * Used to indicate Linux Kernel supports ML connection on SAP.
+ */
+#if (defined(__ANDROID_COMMON_KERNEL__) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)) && \
+	(defined CFG80211_MLD_AP_STA_CONNECT_SUPPORT))
+#define WLAN_MLD_AP_STA_CONNECT_SUPPORT 1
+#endif
+
+/*
+ * WLAN_MLD_AP_OWE_INFO_SUPPORT
+ * Used to indicate Linux Kernel supports ML OWE connection
+ * on SAP
+ */
+#if (defined(__ANDROID_COMMON_KERNEL__) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)) && \
+	(defined CFG80211_MLD_AP_OWE_INFO_SUPPORT))
+#define WLAN_MLD_AP_OWE_INFO_SUPPORT 1
 #endif
 #endif
