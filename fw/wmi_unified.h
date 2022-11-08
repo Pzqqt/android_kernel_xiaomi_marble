@@ -35271,6 +35271,12 @@ typedef struct {
     };
     /* btm_req_dialog_token: dialog token number in BTM request frame */
     A_UINT32 btm_req_dialog_token;
+    /* data rssi in dBm when abort to roam scan */
+    A_UINT32 data_rssi;
+    /* data rssi threshold in dBm */
+    A_UINT32 data_rssi_threshold;
+    /* rx linkspeed status, 0:good linkspeed, 1:bad */
+    A_UINT32 rx_linkspeed_status;
 } wmi_roam_trigger_reason;
 
 #define WMI_GET_BTCONNECT_STATUS(flags)      WMI_GET_BITS(flags, 0, 1)
@@ -35307,6 +35313,11 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_channel_info_tlv_param */
     A_UINT32 channel;    /* Channel frequency in MHz */
+    A_UINT32 ch_dwell_type; /* indicates channel dwell type:
+                             * 0 -> unspecified
+                             * 1 -> active
+                             * 2 -> passive
+                             */
 } wmi_roam_scan_channel_info;
 
 typedef struct {
@@ -35388,6 +35399,14 @@ typedef enum {
     WMI_ROAM_FAIL_REASON_UNKNOWN = 255,
 } WMI_ROAM_FAIL_REASON_ID;
 
+typedef enum {
+    WMI_ROAM_ABORT_UNSPECIFIED = 0,            /* Target did not specify detailed reason for roam scan being aborted */
+    WMI_ROAM_ABORT_LOWRSSI_DATA_RSSI_HIGH = 1, /* Roam scan is not started due to high data RSSI during low-RSSI roaming */
+    WMI_ROAM_ABORT_LOWRSSI_LINK_SPEED_GOOD,    /* Roam scan is not started due to good link speed during low-RSSI roaming */
+    WMI_ROAM_ABORT_BG_DATA_RSSI_HIGH,          /* Roam scan is not started due to high data RSSI during background roaming */
+    WMI_ROAM_ABORT_BG_RSSI_ABOVE_THRESHOLD,    /* Roam scan is not started due to high beacon RSSI during background roaming */
+} WMI_ROAM_FAIL_SUB_REASON_ID;
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_result_tlv_param */
     /*
@@ -35399,6 +35418,7 @@ typedef struct {
     A_UINT32 roam_status;   /* 0 - Roaming is success, 1 - Roaming is failed */
     A_UINT32 roam_fail_reason; /* from WMI_ROAM_FAIL_REASON_ID */
     wmi_mac_addr bssid; /* bssid corresponds to roam_fail_reason */
+    A_UINT32 roam_abort_reason; /* Detail reason for roam scan not start, from WMI_ROAM_FAIL_SUB_REASON_ID */
 } wmi_roam_result;
 
 typedef struct {
