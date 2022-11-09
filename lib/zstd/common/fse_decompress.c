@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
 /* ******************************************************************
  * FSE : Finite State Entropy decoder
  * Copyright (c) Yann Collet, Facebook, Inc.
@@ -24,6 +25,7 @@
 #include "error_private.h"
 #define ZSTD_DEPS_NEED_MALLOC
 #include "zstd_deps.h"
+#include "bits.h"       /* ZSTD_highbit32 */
 
 
 /* **************************************************************
@@ -127,10 +129,10 @@ static size_t FSE_buildDTable_internal(FSE_DTable* dt, const short* normalizedCo
             }
         }
         /* Now we spread those positions across the table.
-         * The benefit of doing it in two stages is that we avoid the the
+         * The benefit of doing it in two stages is that we avoid the
          * variable size inner loop, which caused lots of branch misses.
          * Now we can run through all the positions without any branch misses.
-         * We unroll the loop twice, since that is what emperically worked best.
+         * We unroll the loop twice, since that is what empirically worked best.
          */
         {
             size_t position = 0;
@@ -166,7 +168,7 @@ static size_t FSE_buildDTable_internal(FSE_DTable* dt, const short* normalizedCo
         for (u=0; u<tableSize; u++) {
             FSE_FUNCTION_TYPE const symbol = (FSE_FUNCTION_TYPE)(tableDecode[u].symbol);
             U32 const nextState = symbolNext[symbol]++;
-            tableDecode[u].nbBits = (BYTE) (tableLog - BIT_highbit32(nextState) );
+            tableDecode[u].nbBits = (BYTE) (tableLog - ZSTD_highbit32(nextState) );
             tableDecode[u].newState = (U16) ( (nextState << tableDecode[u].nbBits) - tableSize);
     }   }
 
@@ -342,7 +344,8 @@ FORCE_INLINE_TEMPLATE size_t FSE_decompress_wksp_body(
     }
 
     if (FSE_DECOMPRESS_WKSP_SIZE(tableLog, maxSymbolValue) > wkspSize) return ERROR(tableLog_tooLarge);
-    workSpace = wksp->dtable + FSE_DTABLE_SIZE_U32(tableLog);
+    assert(sizeof(*wksp) + FSE_DTABLE_SIZE(tableLog) <= wkspSize);
+    workSpace = (BYTE*)workSpace + sizeof(*wksp) + FSE_DTABLE_SIZE(tableLog);
     wkspSize -= sizeof(*wksp) + FSE_DTABLE_SIZE(tableLog);
 
     CHECK_F( FSE_buildDTable_internal(wksp->dtable, wksp->ncount, maxSymbolValue, tableLog, workSpace, wkspSize) );
@@ -365,7 +368,7 @@ static size_t FSE_decompress_wksp_body_default(void* dst, size_t dstCapacity, co
 }
 
 #if DYNAMIC_BMI2
-TARGET_ATTRIBUTE("bmi2") static size_t FSE_decompress_wksp_body_bmi2(void* dst, size_t dstCapacity, const void* cSrc, size_t cSrcSize, unsigned maxLog, void* workSpace, size_t wkspSize)
+BMI2_TARGET_ATTRIBUTE static size_t FSE_decompress_wksp_body_bmi2(void* dst, size_t dstCapacity, const void* cSrc, size_t cSrcSize, unsigned maxLog, void* workSpace, size_t wkspSize)
 {
     return FSE_decompress_wksp_body(dst, dstCapacity, cSrc, cSrcSize, maxLog, workSpace, wkspSize, 1);
 }

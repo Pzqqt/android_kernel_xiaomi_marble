@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 /* ******************************************************************
  * bitstream
  * Part of FSE library
@@ -27,6 +28,7 @@
 #include "compiler.h"       /* UNLIKELY() */
 #include "debug.h"          /* assert(), DEBUGLOG(), RAWLOG() */
 #include "error_private.h"  /* error codes and messages */
+#include "bits.h"           /* ZSTD_highbit32 */
 
 
 /*=========================================
@@ -122,33 +124,6 @@ MEM_STATIC void BIT_flushBitsFast(BIT_CStream_t* bitC);
 MEM_STATIC size_t BIT_readBitsFast(BIT_DStream_t* bitD, unsigned nbBits);
 /* faster, but works only if nbBits >= 1 */
 
-
-
-/*-**************************************************************
-*  Internal functions
-****************************************************************/
-MEM_STATIC unsigned BIT_highbit32 (U32 val)
-{
-    assert(val != 0);
-    {
-#   if (__GNUC__ >= 3)   /* Use GCC Intrinsic */
-        return __builtin_clz (val) ^ 31;
-#   else   /* Software version */
-        static const unsigned DeBruijnClz[32] = { 0,  9,  1, 10, 13, 21,  2, 29,
-                                                 11, 14, 16, 18, 22, 25,  3, 30,
-                                                  8, 12, 20, 28, 15, 17, 24,  7,
-                                                 19, 27, 23,  6, 26,  5,  4, 31 };
-        U32 v = val;
-        v |= v >> 1;
-        v |= v >> 2;
-        v |= v >> 4;
-        v |= v >> 8;
-        v |= v >> 16;
-        return DeBruijnClz[ (U32) (v * 0x07C4ACDDU) >> 27];
-#   endif
-    }
-}
-
 /*=====    Local Constants   =====*/
 static const unsigned BIT_mask[] = {
     0,          1,         3,         7,         0xF,       0x1F,
@@ -178,6 +153,12 @@ MEM_STATIC size_t BIT_initCStream(BIT_CStream_t* bitC,
     return 0;
 }
 
+MEM_STATIC FORCE_INLINE_ATTR size_t BIT_getLowerBits(size_t bitContainer, U32 const nbBits)
+{
+    assert(nbBits < BIT_MASK_SIZE);
+    return bitContainer & BIT_mask[nbBits];
+}
+
 /*! BIT_addBits() :
  *  can add up to 31 bits into `bitC`.
  *  Note : does not check for register overflow ! */
@@ -187,7 +168,7 @@ MEM_STATIC void BIT_addBits(BIT_CStream_t* bitC,
     DEBUG_STATIC_ASSERT(BIT_MASK_SIZE == 32);
     assert(nbBits < BIT_MASK_SIZE);
     assert(nbBits + bitC->bitPos < sizeof(bitC->bitContainer) * 8);
-    bitC->bitContainer |= (value & BIT_mask[nbBits]) << bitC->bitPos;
+    bitC->bitContainer |= BIT_getLowerBits(value, nbBits) << bitC->bitPos;
     bitC->bitPos += nbBits;
 }
 
@@ -266,7 +247,7 @@ MEM_STATIC size_t BIT_initDStream(BIT_DStream_t* bitD, const void* srcBuffer, si
         bitD->ptr   = (const char*)srcBuffer + srcSize - sizeof(bitD->bitContainer);
         bitD->bitContainer = MEM_readLEST(bitD->ptr);
         { BYTE const lastByte = ((const BYTE*)srcBuffer)[srcSize-1];
-          bitD->bitsConsumed = lastByte ? 8 - BIT_highbit32(lastByte) : 0;  /* ensures bitsConsumed is always set */
+          bitD->bitsConsumed = lastByte ? 8 - ZSTD_highbit32(lastByte) : 0;  /* ensures bitsConsumed is always set */
           if (lastByte == 0) return ERROR(GENERIC); /* endMark not present */ }
     } else {
         bitD->ptr   = bitD->start;
@@ -294,7 +275,7 @@ MEM_STATIC size_t BIT_initDStream(BIT_DStream_t* bitD, const void* srcBuffer, si
         default: break;
         }
         {   BYTE const lastByte = ((const BYTE*)srcBuffer)[srcSize-1];
-            bitD->bitsConsumed = lastByte ? 8 - BIT_highbit32(lastByte) : 0;
+            bitD->bitsConsumed = lastByte ? 8 - ZSTD_highbit32(lastByte) : 0;
             if (lastByte == 0) return ERROR(corruption_detected);  /* endMark not present */
         }
         bitD->bitsConsumed += (U32)(sizeof(bitD->bitContainer) - srcSize)*8;
@@ -313,13 +294,16 @@ MEM_STATIC FORCE_INLINE_ATTR size_t BIT_getMiddleBits(size_t bitContainer, U32 c
     U32 const regMask = sizeof(bitContainer)*8 - 1;
     /* if start > regMask, bitstream is corrupted, and result is undefined */
     assert(nbBits < BIT_MASK_SIZE);
+    /* x86 transform & ((1 << nbBits) - 1) to bzhi instruction, it is better
+     * than accessing memory. When bmi2 instruction is not present, we consider
+     * such cpus old (pre-Haswell, 2013) and their performance is not of that
+     * importance.
+     */
+#if defined(__x86_64__) || defined(_M_X86)
+    return (bitContainer >> (start & regMask)) & ((((U64)1) << nbBits) - 1);
+#else
     return (bitContainer >> (start & regMask)) & BIT_mask[nbBits];
-}
-
-MEM_STATIC FORCE_INLINE_ATTR size_t BIT_getLowerBits(size_t bitContainer, U32 const nbBits)
-{
-    assert(nbBits < BIT_MASK_SIZE);
-    return bitContainer & BIT_mask[nbBits];
+#endif
 }
 
 /*! BIT_lookBits() :
@@ -368,7 +352,7 @@ MEM_STATIC FORCE_INLINE_ATTR size_t BIT_readBits(BIT_DStream_t* bitD, unsigned n
 }
 
 /*! BIT_readBitsFast() :
- *  unsafe version; only works only if nbBits >= 1 */
+ *  unsafe version; only works if nbBits >= 1 */
 MEM_STATIC size_t BIT_readBitsFast(BIT_DStream_t* bitD, unsigned nbBits)
 {
     size_t const value = BIT_lookBitsFast(bitD, nbBits);
