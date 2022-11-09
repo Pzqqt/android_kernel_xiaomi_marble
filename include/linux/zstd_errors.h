@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 /*
  * Copyright (c) Yann Collet, Facebook, Inc.
  * All rights reserved.
@@ -51,6 +52,7 @@ typedef enum {
   ZSTD_error_tableLog_tooLarge       = 44,
   ZSTD_error_maxSymbolValue_tooLarge = 46,
   ZSTD_error_maxSymbolValue_tooSmall = 48,
+  ZSTD_error_stabilityCondition_notRespected = 50,
   ZSTD_error_stage_wrong       = 60,
   ZSTD_error_init_missing      = 62,
   ZSTD_error_memory_allocation = 64,

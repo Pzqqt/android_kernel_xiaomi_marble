@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause
 /*
  * Copyright (c) Yann Collet, Facebook, Inc.
  * All rights reserved.
@@ -27,7 +28,7 @@ const char* ERR_getErrorString(ERR_enum code)
     case PREFIX(version_unsupported): return "Version not supported";
     case PREFIX(frameParameter_unsupported): return "Unsupported frame parameter";
     case PREFIX(frameParameter_windowTooLarge): return "Frame requires too much memory for decoding";
-    case PREFIX(corruption_detected): return "Corrupted block detected";
+    case PREFIX(corruption_detected): return "Data corruption detected";
     case PREFIX(checksum_wrong): return "Restored data doesn't match checksum";
     case PREFIX(parameter_unsupported): return "Unsupported parameter";
     case PREFIX(parameter_outOfBound): return "Parameter is out of bound";
@@ -38,6 +39,7 @@ const char* ERR_getErrorString(ERR_enum code)
     case PREFIX(tableLog_tooLarge): return "tableLog requires too much memory : unsupported";
     case PREFIX(maxSymbolValue_tooLarge): return "Unsupported max Symbol Value : too large";
     case PREFIX(maxSymbolValue_tooSmall): return "Specified maxSymbolValue is too small";
+    case PREFIX(stabilityCondition_notRespected): return "pledged buffer stability condition is not respected";
     case PREFIX(dictionary_corrupted): return "Dictionary is corrupted";
     case PREFIX(dictionary_wrong): return "Dictionary mismatch";
     case PREFIX(dictionaryCreation_failed): return "Cannot create Dictionary from provided samples";
