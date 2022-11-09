@@ -27,6 +27,16 @@ else
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_RAVELIN), y)
+ifeq ($(CONFIG_ARCH_QTI_VM), y)
+	include $(DISPLAY_ROOT)/config/gki_waipiodisptui.conf
+	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_waipiodisptuiconf.h
+else
+	include $(DISPLAY_ROOT)/config/gki_ravelindisp.conf
+	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_ravelindispconf.h
+endif
+endif
+
 ifeq ($(CONFIG_ARCH_ANORAK), y)
 	include $(DISPLAY_ROOT)/config/gki_anorakdisp.conf
 	LINUX_INC +=	-include $(DISPLAY_ROOT)/config/gki_anorakdispconf.h
