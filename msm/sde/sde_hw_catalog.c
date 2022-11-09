@@ -5327,6 +5327,28 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_trusted_vm_support = true;
 		sde_cfg->has_ubwc_stats = true;
 		sde_cfg->virtual_mixers_mask = 0x2;
+	} else if (IS_RAVELIN_TARGET(hw_rev)) {
+		sde_cfg->has_qsync = true;
+		sde_cfg->perf.min_prefill_lines = 40;
+		sde_cfg->has_reduced_ob_max = true;
+		sde_cfg->vbif_qos_nlvl = 8;
+		sde_cfg->ts_prefill_rev = 2;
+		sde_cfg->ctl_rev = SDE_CTL_CFG_VERSION_1_0_0;
+		sde_cfg->delay_prg_fetch_start = true;
+		sde_cfg->sui_ns_allowed = true;
+		sde_cfg->sui_misr_supported = true;
+		sde_cfg->has_sui_blendstage = true;
+		sde_cfg->skip_inline_rot_threshold = true;
+		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_1;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
+		sde_cfg->dither_luma_mode_support = true;
+		sde_cfg->mdss_hw_block_size = 0x158;
+		sde_cfg->sspp_multirect_error = true;
+		set_bit(SDE_MDP_PERIPH_TOP_0_REMOVED, &sde_cfg->mdp[0].features);
+		sde_cfg->has_precise_vsync_ts = true;
+		sde_cfg->has_avr_step = true;
+		sde_cfg->has_trusted_vm_support = true;
+		sde_cfg->has_ubwc_stats = true;
 	} else if (IS_NEO_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_dither = true;
 		sde_cfg->has_wb_ubwc = true;
