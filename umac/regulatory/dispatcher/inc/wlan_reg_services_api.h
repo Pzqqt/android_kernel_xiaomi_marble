@@ -1688,6 +1688,36 @@ wlan_reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
  *	BAND_5G if 5G is enabled but 2G isn't
  */
 enum band_info wlan_reg_band_bitmap_to_band_info(uint32_t band_bitmap);
+
+/**
+ * wlan_reg_modify_indoor_concurrency() - Update the indoor concurrency list
+ * in regulatory pdev context
+ *
+ * @pdev: pointer to pdev
+ * @vdev_id: vdev id
+ * @freq: frequency
+ * @width: channel width
+ * @add: add or delete entry
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_reg_modify_indoor_concurrency(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id, uint32_t freq,
+				   enum phy_ch_width width, bool add);
+
+/**
+ * wlan_reg_recompute_current_chan_list() - Recompute the current channel list
+ * based on the regulatory change
+ *
+ * @psoc: pointer to psoc
+ * @pdev: pointer to pdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_reg_recompute_current_chan_list(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_objmgr_pdev *pdev);
 #endif
 
 #if defined(CONFIG_BAND_6GHZ)
