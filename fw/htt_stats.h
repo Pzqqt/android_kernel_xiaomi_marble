@@ -941,12 +941,23 @@ typedef struct {
  * that particular value for the MU EDCA parameter in question.
  */
 #define HTT_STATS_MUEDCA_VALUE_MAX 16
-typedef struct {
+typedef struct { /* DEPRECATED */
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32 aifs[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
     A_UINT32 cw_min[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
     A_UINT32 cw_max[HTT_NUM_AC_WMM][HTT_STATS_MUEDCA_VALUE_MAX];
 } htt_tx_pdev_muedca_params_stats_tlv_v;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 relaxed_mu_edca[HTT_NUM_AC_WMM];
+    A_UINT32 mumimo_aggressive_mu_edca[HTT_NUM_AC_WMM];
+    A_UINT32 mumimo_relaxed_mu_edca[HTT_NUM_AC_WMM];
+    A_UINT32 muofdma_aggressive_mu_edca[HTT_NUM_AC_WMM];
+    A_UINT32 muofdma_relaxed_mu_edca[HTT_NUM_AC_WMM];
+    A_UINT32 latency_mu_edca[HTT_NUM_AC_WMM];
+    A_UINT32 psd_boost_mu_edca[HTT_NUM_AC_WMM];
+} htt_tx_pdev_mu_edca_params_stats_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
