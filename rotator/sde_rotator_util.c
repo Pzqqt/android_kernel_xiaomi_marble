@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/*
+/* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2012, 2015-2019, 2021, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -928,7 +928,7 @@ static int sde_mdp_map_buffer(struct sde_mdp_img_data *data, bool rotator,
 		data->srcp_table = sgt;
 
 		data->len = 0;
-		for_each_sg(sgt->sgl, sg, sgt->nents, i) {
+		for_each_sgtable_sg(sgt, sg, i) {
 			data->len += sg->length;
 		}
 
