@@ -560,8 +560,8 @@ static int ipa3_qmi_send_req_wait(struct qmi_handle *client_handle,
 
 	mutex_lock(&ipa3_qmi_lock);
 
-	if (client_handle != ipa_q6_clnt) {
-		IPADBG("Q6 QMI clinet pointer already freed\n");
+	if (!client_handle || client_handle != ipa_q6_clnt ) {
+		IPADBG("Q6 QMI client pointer already freed\n");
 		mutex_unlock(&ipa3_qmi_lock);
 		return -EINVAL;
 	}
