@@ -35840,6 +35840,28 @@ typedef enum {
      */
     WMI_ROAM_PARAM_ROAM_HO_DELAY_RUNTIME_CONFIG = 4,
 
+    /*
+     * Roam param to enable/disable full scan channel optimization
+     * As per current implementation of roam scan, if there are no APs found
+     * during partial scan, immediately a full scan will be initiated as a
+     * fallback. This includes all channels that were already scanned as part
+     * of partial scan.
+     * This flag controls the optimization, to exclude all channels, which are
+     * already scanned as part of partial scan.
+     */
+    WMI_ROAM_PARAM_ROAM_CONTROL_FULL_SCAN_CHANNEL_OPTIMIZATION = 5,
+
+    /*
+     * Roam param to enable/disable scanning of 6GHz psc channels
+     * As per current implementation, Wi-Fi STA scans on all 6GHz PSC channels
+     * as part of full scan during a roam scan irrespective of whether APs are
+     * present in 6GHz or not.
+     * This flag controls the optimization to do the scan in 6GHz PSC channels
+     * only if channel map or newly received RNR indicates 6GHz APs during
+     * current 2.4GHz or 5GHz scanning of Roam Full scan.
+     */
+    WMI_ROAM_PARAM_ROAM_CONTROL_FULL_SCAN_6GHZ_PSC_ONLY_WITH_RNR = 6,
+
 
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
