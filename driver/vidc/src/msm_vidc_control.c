@@ -2131,7 +2131,7 @@ int msm_vidc_adjust_bitrate_boost(void *instance, struct v4l2_ctrl *ctrl)
 	}
 
 	if (min_quality) {
-		adjusted_value = MAX_BITRATE_BOOST;
+		adjusted_value = capability->cap[BITRATE_BOOST].max;
 		goto adjust;
 	}
 

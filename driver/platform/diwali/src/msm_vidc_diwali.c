@@ -31,6 +31,7 @@
 #define MAX_QP                  51
 #define DEFAULT_QP              20
 #define MAX_CONSTANT_QUALITY    100
+#define MAX_BITRATE_BOOST       25
 #define MIN_SLICE_BYTE_SIZE     512
 #define MAX_SLICE_BYTE_SIZE       \
 	((MAX_BITRATE) >> 3)
@@ -694,7 +695,8 @@ static struct msm_platform_inst_capability instance_data_diwali_v0[] = {
 		msm_vidc_set_vbr_related_properties},
 
 	{BITRATE_BOOST, ENC, H264|HEVC,
-		0, MAX_BITRATE_BOOST, 25, MAX_BITRATE_BOOST,
+		0, MAX_BITRATE_BOOST,
+		MAX_BITRATE_BOOST, MAX_BITRATE_BOOST,
 		V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST,
 		HFI_PROP_BITRATE_BOOST,
 		CAP_FLAG_OUTPUT_PORT,
@@ -2226,7 +2228,8 @@ static struct msm_platform_inst_capability instance_data_diwali_v1[] = {
 		msm_vidc_set_vbr_related_properties},
 
 	{BITRATE_BOOST, ENC, H264|HEVC,
-		0, MAX_BITRATE_BOOST, 25, MAX_BITRATE_BOOST,
+		0, MAX_BITRATE_BOOST,
+		MAX_BITRATE_BOOST, MAX_BITRATE_BOOST,
 		V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST,
 		HFI_PROP_BITRATE_BOOST,
 		CAP_FLAG_OUTPUT_PORT,
@@ -3757,7 +3760,8 @@ static struct msm_platform_inst_capability instance_data_diwali_v2[] = {
 		msm_vidc_set_vbr_related_properties},
 
 	{BITRATE_BOOST, ENC, H264|HEVC,
-		0, MAX_BITRATE_BOOST, 25, MAX_BITRATE_BOOST,
+		0, MAX_BITRATE_BOOST,
+		MAX_BITRATE_BOOST, MAX_BITRATE_BOOST,
 		V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST,
 		HFI_PROP_BITRATE_BOOST,
 		CAP_FLAG_OUTPUT_PORT,
