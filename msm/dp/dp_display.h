@@ -105,6 +105,10 @@ struct dp_display {
 	int (*get_available_dp_resources)(struct dp_display *dp_display,
 			const struct msm_resource_caps_info *avail_res,
 			struct msm_resource_caps_info *max_dp_avail_res);
+	int (*get_display_type)(struct dp_display *dp_display,
+			const char **display_type);
+	int (*mst_get_fixed_topology_display_type)(struct dp_display *dp_display,
+			u32 strm_id, const char **display_type);
 };
 
 void *get_ipc_log_context(void);
