@@ -1291,6 +1291,7 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 	u32 full_range = 0;
 	u32 colour_description_present_flag = 0;
 	u32 video_signal_type_present_flag = 0;
+	u32 bit_depth;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1375,10 +1376,18 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 	msm_vidc_update_cap_value(inst, LEVEL, subsc_params.level, __func__);
 	msm_vidc_update_cap_value(inst, HEVC_TIER, subsc_params.tier, __func__);
 	msm_vidc_update_cap_value(inst, POC, subsc_params.pic_order_cnt, __func__);
-	if (subsc_params.bit_depth == BIT_DEPTH_8)
-		msm_vidc_update_cap_value(inst, BIT_DEPTH, BIT_DEPTH_8, __func__);
-	else
-		msm_vidc_update_cap_value(inst, BIT_DEPTH, BIT_DEPTH_10, __func__);
+
+	bit_depth = (subsc_params.bit_depth == BIT_DEPTH_8) ?
+		BIT_DEPTH_8 : BIT_DEPTH_10;
+
+	if (bit_depth < inst->capabilities->cap[BIT_DEPTH].min ||
+		bit_depth > inst->capabilities->cap[BIT_DEPTH].max) {
+		i_vpr_e(inst, "%s: invalid bit_depth %d\n",
+			__func__, bit_depth);
+		return -EINVAL;
+	}
+	msm_vidc_update_cap_value(inst, BIT_DEPTH, bit_depth, __func__);
+
 	if (subsc_params.coded_frames & HFI_BITMASK_FRAME_MBS_ONLY_FLAG)
 		msm_vidc_update_cap_value(inst, CODED_FRAMES, CODED_FRAMES_PROGRESSIVE, __func__);
 	else
