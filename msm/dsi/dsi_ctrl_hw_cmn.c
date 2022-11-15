@@ -1195,11 +1195,12 @@ void dsi_ctrl_hw_cmn_clear_interrupt_status(struct dsi_ctrl_hw *ctrl, u32 ints)
 		reg |= BIT(30);
 
 	/*
-	 * Do not clear error status.
-	 * It will be cleared as part of
-	 * error handler function.
+	 * Do not clear error status. It will be cleared as part of error handler function.
+	 * Do not clear dynamic refresh done status. It will be cleared as part of
+	 * wait4dynamic_refresh_done() function.
 	 */
-	reg &= ~BIT(24);
+	reg &= ~(BIT(24) | BIT(28));
+
 	DSI_W32(ctrl, DSI_INT_CTRL, reg);
 
 	DSI_CTRL_HW_DBG(ctrl, "Clear interrupts, ints = 0x%x, INT_CTRL=0x%x\n",
