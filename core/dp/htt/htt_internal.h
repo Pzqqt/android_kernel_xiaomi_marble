@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -971,6 +972,10 @@ void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 
 #ifndef HTT_RX_RING_SIZE_MAX
 #define HTT_RX_RING_SIZE_MAX 2048       /* ~20 ms @ 1 Gbps of 1500B MSDUs */
+#endif
+
+#ifndef HTT_RX_RING_SIZE_1x1
+#define HTT_RX_RING_SIZE_1x1 1024      /* ~20 ms @ 400 Mbps of 1500B MSDUs */
 #endif
 
 #ifndef HTT_RX_AVG_FRM_BYTES
