@@ -6374,10 +6374,10 @@ static struct ipa3_mem_partition ipa_4_5_mem_part = {
 	.uc_descriptor_ram_ofst	= 0x3800,
 	.uc_descriptor_ram_size	= 0x1000,
 	.pdn_config_ofst	= 0x4800,
-	.pdn_config_size	= 0x50,
+	.pdn_config_size	= 0x100,
 	.q6_stats_drop_ofst 	= 0,
 	.q6_stats_drop_size 	= 0,
-	.end_ofst		= 0x4850,
+	.end_ofst		= 0x4900,
 };
 
 static struct ipa3_mem_partition ipa_4_7_mem_part = {
