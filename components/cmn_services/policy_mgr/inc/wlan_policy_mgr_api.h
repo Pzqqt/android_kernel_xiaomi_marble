@@ -2561,6 +2561,17 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 		struct wlan_objmgr_psoc *context);
 
 /**
+ * policy_mgr_will_freq_lead_to_mcc() - Check if the given freq can lead to
+ * MCC scenario with existing connection
+ * @psoc: psoc pointer
+ * @freq: freq to check with existing connections
+ *
+ * Return: true or false
+ */
+bool policy_mgr_will_freq_lead_to_mcc(struct wlan_objmgr_psoc *psoc,
+				      qdf_freq_t freq);
+
+/**
  * policy_mgr_current_concurrency_is_scc() - To check the current
  * concurrency combination if it is doing SCC
  * @psoc: PSOC object information

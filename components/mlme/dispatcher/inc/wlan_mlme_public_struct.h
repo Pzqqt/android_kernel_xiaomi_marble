@@ -2249,6 +2249,7 @@ struct wlan_mlme_power {
 /*
  * struct wlan_mlme_timeout - mlme timeout related config items
  * @join_failure_timeout: join failure timeout (can be changed in connect req)
+ * @probe_req_retry_timeout: Probe req retry timeout during join time
  * @join_failure_timeout_ori: original value of above join timeout
  * @auth_failure_timeout: authenticate failure timeout
  * @auth_rsp_timeout: authenticate response timeout
@@ -2265,6 +2266,7 @@ struct wlan_mlme_power {
  */
 struct wlan_mlme_timeout {
 	uint32_t join_failure_timeout;
+	uint32_t probe_req_retry_timeout;
 	uint32_t join_failure_timeout_ori;
 	uint32_t auth_failure_timeout;
 	uint32_t auth_rsp_timeout;

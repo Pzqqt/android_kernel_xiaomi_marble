@@ -34,6 +34,9 @@
 #include "wlan_connectivity_logging.h"
 
 #define MAC_MAX_ADD_IE_LENGTH       2048
+/* Join probe request Retry  timer default (200)ms */
+#define JOIN_PROBE_REQ_TIMER_MS              200
+#define MAX_JOIN_PROBE_REQ                   5
 
 /*
  * Following time is used to program WOW_TIMER_PATTERN to FW so that FW will

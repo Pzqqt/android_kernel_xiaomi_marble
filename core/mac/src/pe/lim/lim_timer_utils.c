@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,8 +40,6 @@
 #define LIM_QUIET_BSS_TIMER_TICK                 100
 /* Lim KeepAlive timer default (3000)ms */
 #define LIM_KEEPALIVE_TIMER_MS                   3000
-/* Lim JoinProbeRequest Retry  timer default (200)ms */
-#define LIM_JOIN_PROBE_REQ_TIMER_MS              200
 /* Lim Periodic Auth Retry timer default 60 ms */
 #define LIM_AUTH_RETRY_TIMER_MS   60
 
@@ -67,13 +66,15 @@ static bool lim_create_non_ap_timers(struct mac_context *mac)
 		pe_err("could not create Join failure timer");
 		return false;
 	}
+	cfgValue = SYS_MS_TO_TICKS(
+			mac->mlme_cfg->timeouts.probe_req_retry_timeout);
 	/* Send unicast probe req frame every 200 ms */
 	if (tx_timer_create(mac,
 			    &mac->lim.lim_timers.gLimPeriodicJoinProbeReqTimer,
 			    "Periodic Join Probe Request Timer",
 			    lim_timer_handler,
 			    SIR_LIM_PERIODIC_JOIN_PROBE_REQ_TIMEOUT,
-			    SYS_MS_TO_TICKS(LIM_JOIN_PROBE_REQ_TIMER_MS), 0,
+			    cfgValue, 0,
 			    TX_NO_ACTIVATE) != TX_SUCCESS) {
 		pe_err("could not create Periodic Join Probe Request tmr");
 		return false;
@@ -543,8 +544,8 @@ void lim_deactivate_and_change_timer(struct mac_context *mac, uint32_t timerId)
 			/* Could not deactivate periodic join req Times. */
 			pe_err("Unable to deactivate periodic join request timer");
 		}
-
-		val = SYS_MS_TO_TICKS(LIM_JOIN_PROBE_REQ_TIMER_MS);
+		val = SYS_MS_TO_TICKS(
+			mac->mlme_cfg->timeouts.probe_req_retry_timeout);
 		if (tx_timer_change
 			    (&mac->lim.lim_timers.gLimPeriodicJoinProbeReqTimer,
 			     val, 0) != TX_SUCCESS) {
