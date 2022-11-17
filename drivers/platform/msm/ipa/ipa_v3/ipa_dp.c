@@ -3112,12 +3112,21 @@ static void ipa3_first_replenish_rx_cache(struct ipa3_sys_context *sys)
 	int rx_len_cached = 0;
 	struct gsi_xfer_elem gsi_xfer_elem_array[IPA_REPL_XFER_MAX];
 	gfp_t flag = GFP_NOWAIT | __GFP_NOWARN;
+	struct device *dev;
 
 	rx_len_cached = sys->len;
 
 	/* start replenish only when buffers go lower than the threshold */
 	if (sys->rx_pool_sz - sys->len < IPA_REPL_XFER_THRESH)
 		return;
+
+	dev = ipa3_ctx->pdev;
+	if (IPA_CLIENT_IS_WLAN_CONS(sys->ep->client))
+			dev = ipa3_get_wlan_device();
+	if (dev == NULL) {
+			IPAERR("Unable to get device information");
+			return;
+	}
 
 	while (rx_len_cached < sys->rx_pool_sz) {
 		rx_pkt = kmem_cache_zalloc(ipa3_ctx->rx_pkt_wrapper_cache,
@@ -3136,10 +3145,10 @@ static void ipa3_first_replenish_rx_cache(struct ipa3_sys_context *sys)
 			goto fail_skb_alloc;
 		}
 		ptr = skb_put(rx_pkt->data.skb, sys->rx_buff_sz);
-		rx_pkt->data.dma_addr = dma_map_single(ipa3_ctx->pdev, ptr,
+		rx_pkt->data.dma_addr = dma_map_single(dev, ptr,
 						     sys->rx_buff_sz,
 						     DMA_FROM_DEVICE);
-		if (dma_mapping_error(ipa3_ctx->pdev, rx_pkt->data.dma_addr)) {
+		if (dma_mapping_error(dev, rx_pkt->data.dma_addr)) {
 			IPAERR("dma_map_single failure %pK for %pK\n",
 			       (void *)rx_pkt->data.dma_addr, ptr);
 			goto fail_dma_mapping;
