@@ -824,11 +824,11 @@ typedef enum {
     /* Roaming specific commands */
     /** set roam scan mode */
     WMI_ROAM_SCAN_MODE = WMI_CMD_GRP_START_ID(WMI_GRP_ROAM),
-    /** set roam scan rssi threshold below which roam scan is enabled  */
+    /** set roam scan RSSI threshold below which roam scan is enabled  */
     WMI_ROAM_SCAN_RSSI_THRESHOLD,
     /** set roam scan period for periodic roam scan mode  */
     WMI_ROAM_SCAN_PERIOD,
-    /** set roam scan trigger rssi change threshold   */
+    /** set roam scan trigger RSSI change threshold   */
     WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD,
     /** set roam AP profile   */
     WMI_ROAM_AP_PROFILE,
@@ -1099,7 +1099,7 @@ typedef enum {
     /** Passpoint list config  */
     WMI_PASSPOINT_LIST_CONFIG_CMDID,
 
-    /** configure supprssing parameters for MAWC */
+    /** configure suppressing parameters for MAWC */
     WMI_NLO_CONFIGURE_MAWC_CMDID,
 
     /* GTK offload Specific WMI commands*/
@@ -1175,7 +1175,7 @@ typedef enum {
     WMI_SET_ANTENNA_DIVERSITY_CMDID,
     /** Set OCB Sched Request, deprecated */
     WMI_OCB_SET_SCHED_CMDID,
-    /** Set rssi monitoring config command */
+    /** Set RSSI monitoring config command */
     WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID,
     /** Enable/disable Large Receive Offload processing; provide cfg params */
     WMI_LRO_CONFIG_CMDID,
@@ -1345,7 +1345,7 @@ typedef enum {
      *  OBSS scan offload enable/disable commands
      *  OBSS scan enable CMD will send to FW after VDEV UP, if these conditions are true:
      *  1.  WMI_SERVICE_OBSS_SCAN is reported by FW in service ready,
-     *  2.  STA connect to a 2.4Ghz ht20/ht40 AP,
+     *  2.  STA connect to a 2.4 GHz ht20/ht40 AP,
      *  3.  AP enable 20/40 coexistence (OBSS_IE-74 can be found in beacon or association response)
      *  If OBSS parameters from beacon changed, also use enable CMD to update parameters.
      *  OBSS scan disable CMD will send to FW if have enabled when tearing down connection.
@@ -1781,7 +1781,7 @@ typedef enum {
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
     WMI_PEER_STA_KICKOUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PEER),
 
-    /** Peer Info Event with data_rate, rssi, tx_fail_cnt etc */
+    /** Peer Info Event with data_rate, RSSI, tx_fail_cnt etc */
     WMI_PEER_INFO_EVENTID,
 
     /** Event indicating that TX fail count reaching threshold */
@@ -1809,7 +1809,7 @@ typedef enum {
     WMI_PEER_RATECODE_LIST_EVENTID,
     WMI_WDS_PEER_EVENTID,
     WMI_PEER_STA_PS_STATECHG_EVENTID,
-    /** Peer Ant Div Info Event with rssi per chain, etc */
+    /** Peer Ant Div Info Event with RSSI per chain, etc */
     WMI_PEER_ANTDIV_INFO_EVENTID,
 
     /*
@@ -3387,12 +3387,12 @@ typedef struct {
      *    1-> MLO support
      *    2,3-> reserved
      *    Refer to WMI_TARGET_CAP_FLAGS_PEER_METADATA_VERSION macros.
-     * Bit 2 - UL MUMIMO Rx support on 2.4GHz (AP Mode)
-     * Bit 3 - UL MUMIMO Tx support on 2.4GHz (STA Mode)
-     * Bit 4 - UL MUMIMO Rx support on 5GHz (AP Mode)
-     * Bit 5 - UL MUMIMO Tx support on 5GHz (STA Mode)
-     * Bit 6 - UL MUMIMO Rx support on 6GHz (AP Mode)
-     * Bit 7 - UL MUMIMO Tx support on 6GHz (STA Mode)
+     * Bit 2 - UL MUMIMO Rx support on 2.4 GHz (AP Mode)
+     * Bit 3 - UL MUMIMO Tx support on 2.4 GHz (STA Mode)
+     * Bit 4 - UL MUMIMO Rx support on 5 GHz (AP Mode)
+     * Bit 5 - UL MUMIMO Tx support on 5 GHz (STA Mode)
+     * Bit 6 - UL MUMIMO Rx support on 6 GHz (AP Mode)
+     * Bit 7 - UL MUMIMO Tx support on 6 GHz (STA Mode)
      * Bits 31:8 - Reserved
      */
     A_UINT32 target_cap_flags;
@@ -3852,7 +3852,7 @@ typedef struct {
     /**
      * @brief num_tdls_conn_table_entries - Number of peers tracked by tdls vdev
      * @details
-     *      Each TDLS enabled vdev can track outgoing transmits/rssi/rates to/of
+     *      Each TDLS enabled vdev can track outgoing transmits/RSSI/rates to/of
      *      peers in a connection tracking table for possible TDLS link creation
      *      or deletion. This controls the number of tracked peers per vdev.
      */
@@ -5397,7 +5397,7 @@ typedef struct {
 #define WMI_SET_FREQ_IN_HINT_FREQ_BSSID(freq, pwmi_hint_freq_bssid_addr) (((pwmi_hint_freq_bssid_addr)->freq_flags) |= ((freq) << 16))
 #define WMI_SET_FLAGS_IN_HINT_FREQ_BSSID(flags, pwmi_hint_freq_bssid_addr) (((pwmi_hint_freq_bssid_addr)->freq_flags) |= (flags))
 
-/** other macro for 6GHZ, TU(time unit), 20TU normally it is 20ms */
+/** other macro for 6 GHZ, TU (time unit), 20TU normally it is 20ms */
 #define MAX_NUM_20TU_EACH_CH      6
 #define MAX_NUM_S_SSID_EACH_20TU  1
 #define MAX_NUM_BSSID_EACH_20TU   3
@@ -5659,13 +5659,13 @@ typedef enum {
 /* Indicate client hint req is high priority than fw rnr or FILS disc */
 #define WMI_SCAN_FLAG_EXT_6GHZ_CLIENT_HIGH_PRIORITY   0x00000080
 
-/* Force all 6ghz scan channels to active channel */
+/* Force all 6 GHz scan channels to active channel */
 #define WMI_SCAN_FLAG_EXT_6GHZ_FORCE_CHAN_ACTIVE      0x00000100
 
 /* Force broadcast address in RA even though specified bssid */
 #define WMI_SCAN_FLAG_EXT_FORCE_BRCAST_RA             0x00000200
 
-/* Extend 6ghz channel measure time */
+/* Extend 6 GHz channel measure time */
 #define WMI_SCAN_FLAG_EXT_6GHZ_EXTEND_MEASURE_TIME    0x00000400
 
 /**
@@ -5921,7 +5921,7 @@ typedef struct {
 
 typedef struct {
     A_UINT32 time_offset;                   /* positive offset in secs from the time 11k offload command has been received, 0xFFFFFFFF if offset is not valid */
-    A_UINT32 low_rssi_offset;               /* positive offset in dB from current low rssi roaming trigger to send neighbor req, 0xFFFFFFFF if offset is not valid */
+    A_UINT32 low_rssi_offset;               /* positive offset in dB from current low RSSI roaming trigger to send neighbor req, 0xFFFFFFFF if offset is not valid */
     A_UINT32 bmiss_count_trigger;           /* value 1 is to send neighbor report at 1st BMISS, 0xFFFFFFFF if input is not valid */
     A_UINT32 per_threshold_offset;          /* percentage offset from the current per_threshold, 0xFFFFFFFF if input is not valid */
     A_UINT32 neighbor_report_cache_timeout; /* cache timeout in secs after which neighbor cache is not valid in FW, 0xFFFFFFFF if input is not valid */
@@ -6236,7 +6236,7 @@ typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_rx_hdr */
     /** channel on which this frame is received (channel number) */
     A_UINT32 channel;
-    /** snr information used to cal rssi */
+    /** snr information used to cal RSSI */
     A_UINT32 snr;
     /** Rate kbps */
     A_UINT32 rate;
@@ -6372,7 +6372,7 @@ typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_hdr */
     /* channel frequency in MHz */
     A_UINT32 chan_freq;
-    /** snr information used to cal rssi in dB */
+    /** snr information used to cal RSSI in dB */
     A_UINT32 snr;
     /** Rate kbps */
     A_UINT32 rate_kbps;
@@ -6541,7 +6541,7 @@ typedef struct {
     A_UINT32 rssi_chain6;
     A_UINT32 rssi_chain7;
     /**
-     * Last calibrated NF value for chain 4 through 7 in dbm
+     * Last calibrated NF value for chain 4 through 7 in dBm
      *
      * nf_list_3:
      * + [15:0] - chain 4
@@ -8682,6 +8682,8 @@ typedef enum {
      * -----------------
      *  0  | Enable/Disable mBSSID trigger support for basic triggers.
      *  1  | Enable/Disable mBSSID trigger support for BSR triggers.
+     *  2  | Enable/Disable mBSSID trigger support for MU RTS.
+     *  3  | Enable/Disable mBSSID trigger support for UL MUMIMO triggers.
      */
     WMI_PDEV_PARAM_ENABLE_MBSSID_CTRL_FRAME,
 
@@ -8978,6 +8980,10 @@ typedef enum {
 #define WMI_PDEV_RATE_MAX_NSS_PROBE_INTERVAL_GET(value) WMI_GET_BITS(value, 16, 16)
 #define WMI_PDEV_RATE_MAX_NSS_PROBE_INTERVAL_SET(_value, value) WMI_SET_BITS(_value, 16, 16, value)
 
+#define WMI_MBSSID_CTRL_FRAME_BASIC_TRIGGER ((A_UINT32) 1 << 0)
+#define WMI_MBSSID_CTRL_FRAME_BSR_TRIGGER ((A_UINT32) 1 << 1)
+#define WMI_MBSSID_CTRL_FRAME_MU_RTS_TRIGGER ((A_UINT32) 1 << 2)
+#define WMI_MBSSID_CTRL_FRAME_UL_MU_MIMO_TRIGGER ((A_UINT32) 1 << 3)
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param */
@@ -10364,7 +10370,7 @@ typedef struct {
     A_UINT32 more_radio_events;
     /*
      * For the event WMI_RADIO_LINK_STATS_EVENTID = 0x16004,
-     * FW may not be able to send all the channels (2Ghz, 5Ghz & 6Ghz)
+     * FW may not be able to send all the channels (2 GHz, 5 GHz & 6 GHz)
      * together in one event message, due to buffer size limitations.
      * To avoid this limitation, FW will send multiple events to HOST
      * depending upon the number of channels.
@@ -12379,18 +12385,18 @@ typedef struct {
     /** unique id identifying the VDEV, generated by the caller */
     A_UINT32 vdev_id;
     wmi_snr_info vdev_snr;
-    A_UINT32 tx_frm_cnt[WLAN_MAX_AC];/* Total number of packets(per AC) that were successfully transmitted(with and without retries, including multi-cast, broadcast) */
-    A_UINT32 rx_frm_cnt;/* Total number of packets that were successfully received (after appropriate filter rules including multi-cast, broadcast)*/
-    A_UINT32 multiple_retry_cnt[WLAN_MAX_AC];/*The number of MSDU packets and MMPDU frames per AC
-     that the 802.11 station successfully transmitted after more than one retransmission attempt*/
-    A_UINT32 fail_cnt[WLAN_MAX_AC]; /*Total number packets(per AC) failed to transmit */
-    A_UINT32 rts_fail_cnt;/*Total number of RTS/CTS sequence failures for transmission of a packet*/
-    A_UINT32 rts_succ_cnt;/*Total number of RTS/CTS sequence success for transmission of a packet*/
-    A_UINT32 rx_err_cnt;/*The receive error count. HAL will provide the RxP FCS error global */
-    A_UINT32 rx_discard_cnt;/* The sum of the receive error count and dropped-receive-buffer error count. (FCS error)*/
-    A_UINT32 ack_fail_cnt;/*Total number packets failed transmit because of no ACK from the remote entity*/
-    A_UINT32 tx_rate_history[MAX_TX_RATE_VALUES];/*History of last ten transmit rate, in units of 500 kbit/sec*/
-    A_UINT32 bcn_rssi_history[MAX_RSSI_VALUES];/*History of last ten Beacon rssi of the connected Bss*/
+    A_UINT32 tx_frm_cnt[WLAN_MAX_AC]; /* Total number of packets(per AC) that were successfully transmitted(with and without retries, including multi-cast, broadcast) */
+    A_UINT32 rx_frm_cnt; /* Total number of packets that were successfully received (after appropriate filter rules including multi-cast, broadcast) */
+    A_UINT32 multiple_retry_cnt[WLAN_MAX_AC]; /* The number of MSDU packets and MMPDU frames per AC
+     that the 802.11 station successfully transmitted after more than one retransmission attempt */
+    A_UINT32 fail_cnt[WLAN_MAX_AC]; /* Total number packets(per AC) failed to transmit */
+    A_UINT32 rts_fail_cnt; /* Total number of RTS/CTS sequence failures for transmission of a packet */
+    A_UINT32 rts_succ_cnt; /* Total number of RTS/CTS sequence success for transmission of a packet */
+    A_UINT32 rx_err_cnt; /* The receive error count. HAL will provide the RxP FCS error global */
+    A_UINT32 rx_discard_cnt; /* The sum of the receive error count and dropped-receive-buffer error count. (FCS error) */
+    A_UINT32 ack_fail_cnt; /* Total number packets failed transmit because of no ACK from the remote entity */
+    A_UINT32 tx_rate_history[MAX_TX_RATE_VALUES];/*History of last ten transmit rate, in units of 500 kbit/sec */
+    A_UINT32 bcn_rssi_history[MAX_RSSI_VALUES];/*History of last ten Beacon RSSI of the connected Bss */
 } wmi_vdev_stats;
 
 /*
@@ -12427,7 +12433,7 @@ typedef struct {
 typedef struct {
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
-    /** rssi */
+    /** RSSI */
     A_UINT32 peer_rssi;
     /** last tx data rate used for peer */
     A_UINT32 peer_tx_rate;
@@ -13742,7 +13748,7 @@ typedef enum {
 #define WMI_VDEV_OCE_ESP_FEATURE_BITMAP                                0x20
 #define WMI_VDEV_OCE_REASSOC_REJECT_FEATURE_BITMAP                     0x40
 
-/** 6GHZ params **/
+/** 6 GHZ params **/
 /* Control to enable/disable beacon tx in non-HT duplicate */
 #define WMI_VDEV_6GHZ_BITMAP_NON_HT_DUPLICATE_BEACON                    0x1
 /* Control to enable/disable broadcast probe response tx in non-HT duplicate */
@@ -14538,7 +14544,7 @@ typedef enum {
     WMI_VDEV_PARAM_ENABLE_MCAST_RC,            /* 0x98 */
 
     /*
-     * Params related to 6GHz operation
+     * Params related to 6 GHz operation
      * The parameter value is formed from WMI_VDEV_6GHZ_BITMAP flags.
      */
     WMI_VDEV_PARAM_6GHZ_PARAMS,                /* 0x99 */
@@ -17211,7 +17217,8 @@ typedef struct {
     A_UINT32 min_data_rate;
 
     /** HE 6 GHz Band Capabilities of the peer.
-     * (Defined in 9.4.2.261 HE 6GHz Band Capabilities element in 802.11ax_D5.0)
+     * (Defined in 9.4.2.261 HE 6 GHz Band Capabilities element in
+     * 802.11ax_D5.0.)
      * valid when WMI_PEER_HE is set and WMI_PEER_VHT/HT are not set.
      */
     A_UINT32 peer_he_caps_6ghz;
@@ -17465,9 +17472,9 @@ typedef struct _wlan_dcs_im_tgt_stats {
     /** current running TSF from the TSF-1 */
     A_UINT32 reg_tsf32;
 
-    /** Known last frame rssi, in case of multiple stations, if
+    /** Known last frame RSSI, in case of multiple stations, if
      *  and at different ranges, this would not guarantee that
-     *  this is the least rssi.
+     *  this is the least RSSI.
      */
     A_UINT32 last_ack_rssi;
 
@@ -17630,10 +17637,10 @@ typedef struct {
 
 /**
  * WMI_ROAM_SCAN_MODE: Set Roam Scan mode
- *   the roam scan mode is one of the periodic, rssi change, both, none.
+ *   the roam scan mode is one of the periodic, RSSI change, both, none.
  *   None        : Disable Roam scan. No Roam scan at all.
  *   Periodic    : Scan periodically with a configurable period.
- *   Rssi change : Scan when ever rssi to current AP changes by the threshold value
+ *   Rssi change : Scan when ever RSSI to current AP changes by the threshold value
  *                 set by WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD command.
  *   Both        : Both of the above (scan when either period expires or rss to current AP changes by X amount)
  *
@@ -17675,25 +17682,25 @@ typedef struct {
 #define WMI_ROAM_SCAN_STOP_CMD 0x1
 
 /**
- * WMI_ROAM_SCAN_RSSI_THRESHOLD : set scan rssi threshold
- *  scan rssi threshold is the rssi threshold below which the FW will start running Roam scans.
+ * WMI_ROAM_SCAN_RSSI_THRESHOLD : set scan RSSI threshold
+ *  scan RSSI threshold is the RSSI threshold below which the FW will start running Roam scans.
  * Applicable when WMI_ROAM_SCAN_MODE is not set to none.
  */
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_rssi_threshold_fixed_param */
     /** unique id identifying the VDEV, generated by the caller */
     A_UINT32 vdev_id;
-    /** roam scan rssi threshold */
+    /** roam scan RSSI threshold */
     A_UINT32 roam_scan_rssi_thresh;
     /** When using Hw generated beacon RSSI interrupts */
     A_UINT32 roam_rssi_thresh_diff;
     /** 5G scan max count */
     A_UINT32 hirssi_scan_max_count;
-    /** 5G scan rssi change threshold value */
+    /** 5G scan RSSI change threshold value */
     A_UINT32 hirssi_scan_delta;
     /** 5G scan upper bound */
     A_UINT32 hirssi_upper_bound;
-    /** roam scan rssi threshold for 5G band.
+    /** roam scan RSSI threshold for 5G band.
      *  offset from roam_scan_rssi_thres, in dB units
      */
     A_INT32 rssi_thresh_offset_5g;
@@ -17813,7 +17820,7 @@ typedef struct {
     A_UINT32 penalty_factor_5g; /** factor by which 5GHz RSSI is penalized */
     A_UINT32 max_boost_5g; /** maximum boost that can be applied to a 5GHz RSSI */
     A_UINT32 max_penalty_5g; /** maximum penalty that can be applied to a 5GHz RSSI */
-    A_UINT32 good_rssi_threshold; /**  RSSI below which roam is kicked in by background scan, although rssi is still good */
+    A_UINT32 good_rssi_threshold; /**  RSSI below which roam is kicked in by background scan, although RSSI is still good */
 } wmi_roam_scan_extended_threshold_param;
 
 /**
@@ -17839,16 +17846,16 @@ typedef struct {
 } wmi_roam_scan_period_fixed_param;
 
 /**
- * WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD : rssi delta to trigger the roam scan.
+ * WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD : RSSI delta to trigger the roam scan.
  *   Rssi change threshold used when mode is Rssi change (or) Both.
- *   The FW will run the roam scan when ever the rssi changes (up or down) by the value set by this parameter.
- *   Note scan is triggered based on the rssi threshold condition set by WMI_ROAM_SCAN_RSSI_THRESHOLD
+ *   The FW will run the roam scan when ever the RSSI changes (up or down) by the value set by this parameter.
+ *   Note scan is triggered based on the RSSI threshold condition set by WMI_ROAM_SCAN_RSSI_THRESHOLD
  */
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_rssi_change_threshold_fixed_param */
     /** unique id identifying the VDEV, generated by the caller */
     A_UINT32 vdev_id;
-    /** roam scan rssi change threshold value */
+    /** roam scan RSSI change threshold value */
     A_UINT32 roam_scan_rssi_change_thresh;
     /** When using Hw generated beacon RSSI interrupts */
     A_UINT32 bcn_rssi_weight;
@@ -18026,14 +18033,14 @@ typedef struct {
     WMI_SET_BITS(value32, (8 * (security_index)), 8, score_pcnt)
 
 /**
-    best_rssi_threshold: Roamable AP RSSI equal or better than this threshold, full rssi score 100. Units in dBm.
+    best_rssi_threshold: Roamable AP RSSI equal or better than this threshold, full RSSI score 100. Units in dBm.
     good_rssi_threshold: Below this threshold, scoring linear percentage between rssi_good_pcnt and 100. Units in dBm.
-    bad_rssi_threshold:  Between good and bad rssi threshold, scoring linear percentage between rssi_bad_pcnt and rssi_good_pcnt. Units in dBm.
-    good_rssi_pcnt: Used to assigned scoring percentage of each slot between best to good rssi threshold. Units in percentage.
-    bad_rssi_pcnt: Used to assigned scoring percentage of each slot between good to bad rssi threshold. Units in percentage.
+    bad_rssi_threshold:  Between good and bad RSSI threshold, scoring linear percentage between rssi_bad_pcnt and rssi_good_pcnt. Units in dBm.
+    good_rssi_pcnt: Used to assigned scoring percentage of each slot between best to good RSSI threshold. Units in percentage.
+    bad_rssi_pcnt: Used to assigned scoring percentage of each slot between good to bad RSSI threshold. Units in percentage.
     good_bucket_size : bucket size of slot in good zone.  Units in dB.
     bad_bucket_size : bucket size of slot in bad zone. Units in dB.
-    rssi_pref_5g_rssi_thresh: Below rssi threshold, 5G AP have given preference of band percentage. Units in dBm.
+    rssi_pref_5g_rssi_thresh: Below RSSI threshold, 5G AP have given preference of band percentage. Units in dBm.
 */
 /**
     The graph below explains how RSSI scoring percentage is calculated
@@ -18064,7 +18071,7 @@ t     |               |___o (x1,y1) (x1 = good_rssi, y1 = good_rssi_pcnt)
    40 |                               o------------
       |                             (x2,y2) (x2 = bad_rssi, y2 = bad_rssi_pcnt)
       +------o------------o-----------o------------->
-            -50         -70          -80          rssi dBm
+            -50         -70          -80          RSSI dBm
 
 | excellent  |  good      | bad       | poor
 | zone       |  zone      | zone      | zone
@@ -18233,7 +18240,7 @@ typedef struct {
     /* Vendor specific roam score algorithm ID from WMI_VENDOR_ROAM_SCORE_ALGORITHM_ID enum */
     A_UINT32 vendor_roam_score_algorithm_id;
     /*
-     * During CU and low rssi based roam triggers, consider AP as
+     * During CU and low RSSI based roam triggers, consider AP as
      * roam candidate only if its roam score is better than connected AP score
      * by at least candidate_min_roam_score_delta.
      */
@@ -18303,10 +18310,10 @@ typedef struct {
     /* Roam trigger reason ID from WMI_ROAM_TRIGGER_REASON_ID */
     A_UINT32 roam_trigger_reason;
     /*
-     * Consider AP as roam candidate only if AP rssi is better than
+     * Consider AP as roam candidate only if AP RSSI is better than
      * candidate_min_rssi
      */
-    A_UINT32 candidate_min_rssi; /* units = dbm */
+    A_UINT32 candidate_min_rssi; /* units = dBm */
 } wmi_roam_cnd_min_rssi_param;
 
 /** To match an open AP, the rs_authmode should be set to WMI_AUTH_NONE
@@ -18320,8 +18327,8 @@ typedef struct {
     /** flags as defined above */
     A_UINT32 flags;
     /**
-     * rssi threshold value in dB: the value of the candidate AP should
-     * higher by this threshold than the rssi of the currently associated AP.
+     * RSSI threshold value in dB: the value of the candidate AP should
+     * higher by this threshold than the RSSI of the currently associated AP.
      */
     A_UINT32 rssi_threshold;
     /**
@@ -18349,7 +18356,7 @@ typedef struct {
     A_UINT32 rssi_abs_thresh;
     /**
      * bg_rssi_threshold value in dB: For background scan the value of
-     * the candidate AP should be higher by this threshold than the rssi
+     * the candidate AP should be higher by this threshold than the RSSI
      * of the currently associated AP.
      */
     A_UINT32 bg_rssi_threshold;
@@ -18369,7 +18376,7 @@ typedef struct {
      *  Refer WLAN_ROAM_SCORE_MAX_BAND_INDEX for possible band_idx values.
      */
     A_UINT32 band_idx;
-    /** Below rssi/cu factor_value & factor_score param values are configured by vendor */
+    /** Below RSSI/CU factor_value & factor_score param values are configured by vendor */
     A_UINT32 rssi_factor_value1;
     A_UINT32 rssi_factor_value2;
     A_UINT32 rssi_factor_value3;
@@ -18390,7 +18397,7 @@ typedef struct {
  * A 'strong' candidate is
  * 1) Is eligible candidate
  *    (all conditions are met in existing candidate selection).
- * 2) Its rssi is better than earlystop threshold.
+ * 2) Its RSSI is better than earlystop threshold.
  *    Earlystop threshold will be relaxed as each channel is scanned.
  */
 typedef struct {
@@ -18404,7 +18411,7 @@ typedef struct {
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_dense_thres_param */
     A_UINT32 tlv_header;
-    /** rssi threshold offset under trffic and dense env */
+    /** RSSI threshold offset under trffic and dense env */
     A_UINT32 roam_dense_rssi_thres_offset;
     /** minimum number of APs to determine dense env */
     A_UINT32 roam_dense_min_aps;
@@ -18423,11 +18430,11 @@ typedef struct {
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_bg_scan_roaming_param */
     A_UINT32 tlv_header;
-    /** rssi threshold in dBm below which roaming will be triggered during background scan(non-roam scan). 0 will disable this threshold */
+    /** RSSI threshold in dBm below which roaming will be triggered during background scan(non-roam scan). 0 will disable this threshold */
     A_UINT32 roam_bg_scan_bad_rssi_thresh;
     /** bitmap for which scan client will enable/disable background roaming. bit position is mapped to the enum WMI_SCAN_CLIENT_ID. 1 = enable, 0 = disable */
     A_UINT32 roam_bg_scan_client_bitmap;
-    /** roam scan rssi threshold for 2G band.
+    /** roam scan RSSI threshold for 2 GHz band.
      *  offset from roam_bg_scan_bad_rssi_thresh, in dB units
      */
     A_INT32 bad_rssi_thresh_offset_2g;
@@ -18754,7 +18761,7 @@ typedef struct {
     wmi_mac_addr bssid;
     /** How much time in milliseconds to keep AP in blacklist */
     A_UINT32 timeout;
-    /** rssi (dBm units) when put in blacklist */
+    /** RSSI (dBm units) when put in blacklist */
     A_INT32 rssi;
     /* Blacklist reason from WMI_BLACKLIST_REASON_ID */
     A_UINT32 reason;
@@ -18808,7 +18815,7 @@ typedef struct {
     A_UINT32 vdev_id;
     /** reason for roam event */
     A_UINT32 reason;
-    /** associated AP's rssi calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI*/
+    /** associated AP's RSSI calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI */
     A_UINT32 rssi;
     /** roam notification */
     A_UINT32 notif;
@@ -18848,7 +18855,7 @@ typedef struct {
 #define WMI_ROAM_REASON_INVALID   0x0 /** invalid reason. Do not interpret reason field */
 #define WMI_ROAM_REASON_BETTER_AP 0x1 /** found a better AP */
 #define WMI_ROAM_REASON_BMISS     0x2 /** beacon miss detected */
-#define WMI_ROAM_REASON_LOW_RSSI  0x3 /** connected AP's low rssi condition detected */
+#define WMI_ROAM_REASON_LOW_RSSI  0x3 /** connected AP's low RSSI condition detected */
 #define WMI_ROAM_REASON_SUITABLE_AP 0x4 /** found another AP that matches
                                           SSID and Security profile in
                                           WMI_ROAM_AP_PROFILE, found during scan
@@ -19195,10 +19202,10 @@ typedef struct {
     A_UINT32 trigger_reason; /** Roam trigger reason from WMI_ROAM_TRIGGER_REASON_ID */
     A_UINT32 enable;         /** 0 - Disable, non-zero - enable */
     A_UINT32 scan_mode;      /** Scan mode from WMI_ROAM_TRIGGER_SCAN_MODE */
-    /** consider roam trigger if connected AP rssi is worse than trigger_rssi_threshold */
-    A_INT32 trigger_rssi_threshold;      /* Units in dbm*/
+    /** consider roam trigger if connected AP RSSI is worse than trigger_rssi_threshold */
+    A_INT32 trigger_rssi_threshold;      /* Units in dBm */
     /*
-     * Consider 2.4GHz AP as roam candidate only if AP rssi is better than
+     * Consider 2.4GHz AP as roam candidate only if AP RSSI is better than
      * cand_ap_min_rssi_threshold
      * If valid (non-zero) cand_ap_min_rssi_threshold_5g and
      * cand_ap_min_rssi_threshold_6g values are provided,
@@ -19206,7 +19213,7 @@ typedef struct {
      * But if cand_ap_min_rssi_threshold_5g and cand_ap_min_rssi_threshold_6g
      * are zeros, then cand_ap_min_rssi_threshold should be applied to all APs.
      */
-    A_INT32 cand_ap_min_rssi_threshold; /* Units in dbm */
+    A_INT32 cand_ap_min_rssi_threshold; /* Units in dBm */
     /* Roam score delta in %.
      * Consider AP as roam candidate only if AP score is at least
      * roam_score_delta % better than connected AP score.
@@ -19220,15 +19227,15 @@ typedef struct {
        Valid values are 0 - 255 */
     A_UINT32 reason_code;
     /*
-     * Consider 5GHz AP as roam candidate only if AP rssi is better than
+     * Consider 5GHz AP as roam candidate only if AP RSSI is better than
      * cand_ap_min_rssi_threshold_5g
      */
-    A_INT32 cand_ap_min_rssi_threshold_5g; /* Units in dbm */
+    A_INT32 cand_ap_min_rssi_threshold_5g; /* Units in dBm */
     /*
-     * Consider 6GHz AP as roam candidate only if AP rssi is better than
+     * Consider 6 GHz AP as roam candidate only if AP RSSI is better than
      * cand_ap_min_rssi_threshold_6g
      */
-    A_INT32 cand_ap_min_rssi_threshold_6g; /* Units in dbm */
+    A_INT32 cand_ap_min_rssi_threshold_6g; /* Units in dBm */
 } wmi_configure_roam_trigger_parameters;
 
 /**
@@ -20828,11 +20835,11 @@ typedef struct connected_nlo_bss_band_rssi_pref_t {
 
 typedef struct connected_nlo_rssi_params_t {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_connected_nlo_rssi_params */
-    /* Relative rssi threshold (in dB) by which new BSS should have better rssi than
+    /* Relative RSSI threshold (in dB) by which new BSS should have better RSSI than
      * the current connected BSS.
      */
     A_INT32  relative_rssi;
-    /* The amount of rssi preference (in dB) that can be given to a 5G BSS over 2.4G BSS. */
+    /* The amount of RSSI preference (in dB) that can be given to a 5G BSS over 2.4G BSS. */
     A_INT32  relative_rssi_5g_pref;
 } connected_nlo_rssi_params;
 
@@ -20961,7 +20968,7 @@ typedef struct {
     wmi_ssid ssid;
     wmi_mac_addr    bssid;  /* bssid of the network */
     A_UINT32 channel_mhz;   /* channel frequency in MHz */
-    A_UINT32 rssi;          /* rssi value */
+    A_UINT32 rssi;          /* RSSI value */
     A_UINT32 rtt;           /* timestamp in nanoseconds*/
     A_UINT32 rtt_sd;        /* standard deviation in rtt */
     A_UINT32 beacon_period; /* beacon advertised in the beacon */
@@ -22748,7 +22755,7 @@ typedef struct
 #define LPI_IE_BITMAP_FLAGS                  0x00200000     /* reserved as a bitmap to indicate more scan information; one such use being to indicate if the on-going scan is interrupted or not */
 #define LPI_IE_BITMAP_CACHING_REQD           0x00400000     /* extscan will use this field to indicate if this frame info needs to be cached in LOWI LP or not */
 #define LPI_IE_BITMAP_REPORT_CONTEXT_HUB     0x00800000     /* extscan will use this field to indicate to LOWI LP whether to report result to context hub or not. */
-#define LPI_IE_BITMAP_CHRE_RADIO_CHAIN       0x01000000     /* include radio chain and rssi per chain information if this bit is set - for CHRE */
+#define LPI_IE_BITMAP_CHRE_RADIO_CHAIN       0x01000000     /* include radio chain and RSSI per chain information if this bit is set - for CHRE */
 
 /* 0x02000000, 0x04000000, and 0x08000000 are unused / available */
 
@@ -23044,7 +23051,7 @@ typedef struct {
     wmi_mac_addr peer_mac_address;
     /** data_rate of the peer */
     A_UINT32 data_rate;
-    /** rssi of the peer */
+    /** RSSI of the peer */
     A_UINT32 rssi;
     /** tx fail count */
     A_UINT32 tx_fail_cnt;
@@ -23102,7 +23109,7 @@ typedef struct {
     A_UINT32 tlv_header;
     /** mac addr of the peer */
     wmi_mac_addr peer_mac_address;
-    /** per chain rssi of the peer, for up to 8 chains.
+    /** per chain RSSI of the peer, for up to 8 chains.
      * Each chain's entry reports the RSSI for different bandwidths:
      * bits 7:0   -> primary 20 MHz
      * bits 15:8  -> secondary 20 MHz of  40 MHz channel (if applicable)
@@ -25003,7 +25010,7 @@ typedef struct {
      *           since 4 bits are not enough.
      */
     A_UINT32 roam_reason;
-    /** associated AP's rssi calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI. not valid if roam_reason is BMISS */
+    /** associated AP's RSSI calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI. not valid if roam_reason is BMISS */
     A_UINT32 rssi;
     /** MAC address of roamed AP */
     wmi_mac_addr bssid;     /* BSSID */
@@ -25608,7 +25615,7 @@ typedef struct {
     A_UINT32    table_id;
     /** operation mode: start/stop */
     A_UINT32    mode; /* wmi_extscan_operation_mode */
-    /** number of rssi samples to store */
+    /** number of RSSI samples to store */
     A_UINT32    max_rssi_samples;
     /** number of samples to use to calculate RSSI average */
     A_UINT32    rssi_averaging_samples;
@@ -25880,9 +25887,9 @@ typedef struct {
     A_UINT32        flags;
     /** RTT in ns */
     A_UINT32        rtt;
-    /** rtt standard deviation */
+    /** RTT standard deviation */
     A_UINT32        rtt_sd;
-    /** rssi information */
+    /** RSSI information */
     A_UINT32        number_rssi_samples;
     /** IE length */
     A_UINT32        ie_length; /* length of IE data */
@@ -28951,73 +28958,73 @@ typedef enum {
      *  A_UINT8 Enable Flag
      *  A_UINT8 Power Table Index
      *  ====================FCC POWER LIMIT VALUE======================
-     *  A_INT8  FCC 2Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm)
-     *  A_INT8  FCC 2Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm)
-     *  A_INT8  FCC 2Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm)
-     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
-     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
-     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
-     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
-     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
-     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
-     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
-     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
-     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
-     *  A_INT8  FCC 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
-     *  A_INT8  FCC 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
-     *  A_INT8  FCC 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
-     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
-     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
-     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
-     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
-     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
-     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
-     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
-     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
-     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
-     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
-     *  A_INT8  FCC 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  FCC 2 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  FCC 2 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  FCC 2 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  FCC 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  FCC 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  FCC 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  FCC 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  FCC 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  FCC 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  FCC 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  FCC 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  FCC 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  FCC 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  FCC 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  FCC 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  FCC 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  FCC 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  FCC 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  FCC 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  FCC 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  FCC 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  FCC 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  FCC 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  FCC 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  FCC 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  FCC 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
      *  ====================ICNIRP POWER LIMIT VALUE======================
-     *  A_INT8  ICNIRP 2Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm)
-     *  A_INT8  ICNIRP 2Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm)
-     *  A_INT8  ICNIRP 2Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
-     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
-     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
-     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
-     *  A_INT8  ICNIRP 5Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
-     *  A_INT8  ICNIRP 5Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
-     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
-     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
-     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
-     *  A_INT8  ICNIRP 6Ghz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 2 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  ICNIRP 2 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  ICNIRP 2 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  ICNIRP 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-1, Ch32 ~ Ch48)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  ICNIRP 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-2, Ch50 ~ Ch144)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  ICNIRP 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-3, Ch149 ~ Ch161)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  ICNIRP 5 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  ICNIRP 5 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-4, Ch163 ~ Ch177)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  ICNIRP 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch1, Ch2 ~ Ch41)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  ICNIRP 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-5) (Ch45 ~ Ch93)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  ICNIRP 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-6) (Ch97~ Ch113)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-7) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain0) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz SISO (Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
+     *  A_INT8  ICNIRP 6 GHz MIMO (Chain0 + Chain1) Power Limit Value(unit: 0.25dBm) (UNII-8) (Ch117~Ch149)
      */
 
     BIOS_PARAM_TYPE_BANDEDGE_CTL_POWER,
@@ -30393,7 +30400,7 @@ typedef enum wmi_coex_config_type {
     WMI_COEX_CONFIG_INQUIRY_STA_TDM     =  9, /* config interval (ms units) (arg1 BT, arg2 WLAN) for STA + INQUIRY */
     WMI_COEX_CONFIG_INQUIRY_SAP_TDM     = 10, /* config interval (ms units) (arg1 BT, arg2 WLAN) for SAP + INQUIRY */
     WMI_COEX_CONFIG_INQUIRY_P2P_STA_TDM = 11, /* config interval (ms units) (arg1 BT, arg2 WLAN) for P2P + STA + INQUIRY */
-    WMI_COEX_CONFIG_TX_POWER            = 12, /* config wlan total tx power when bt coex (arg1 is wlan_tx_power_limit, in 0.5dbm units) */
+    WMI_COEX_CONFIG_TX_POWER            = 12, /* config wlan total tx power when bt coex (arg1 is wlan_tx_power_limit, in 0.5 dBm units) */
     WMI_COEX_CONFIG_PTA_CONFIG          = 13, /* config  whether enable PTA and GPIO number (arg1 is pta_enable, arg2 is GPIO number used as /BT_ACTIVE/BT_PRIORITY/WLAN_DENY,8 bit for each) */
     WMI_COEX_CONFIG_AP_TDM              = 14, /* config interval (arg1 duty cycle in ms, arg2 WLAN duration in ms) for AP */
     WMI_COEX_CONFIG_WLAN_SCAN_PRIORITY  = 15, /* config to set WLAN priority during Off Channel Scan */
@@ -30430,8 +30437,8 @@ typedef enum wmi_coex_config_type {
                                                * arg2 - 0 => Equal isolation b/w BT and each WLAN chain (default)
                                                *        1 => Different isolation b/w BT and each WLAN chain
                                                */
-    WMI_COEX_CONFIG_BT_LOW_RSSI_THRESHOLD = 26,/*config BT low rssi threshold (dbm units)*/
-    WMI_COEX_CONFIG_BT_INTERFERENCE_LEVEL = 27,/*config bt interference level (dbm units)
+    WMI_COEX_CONFIG_BT_LOW_RSSI_THRESHOLD = 26, /* config BT low RSSI threshold (dBm units) */
+    WMI_COEX_CONFIG_BT_INTERFERENCE_LEVEL = 27, /* config BT interference level (dBm units)
                                                  arg1 low - lower limit
                                                  arg2 low - upper limit
                                                  arg3 medium - lower limit
@@ -31691,7 +31698,7 @@ typedef struct {
 
 /*
  * This TLV used for Scan Radio RDP
- * We have an RDP which supports Multiband-Frequency (2Ghz, 5Ghz and 6Ghz)
+ * We have an RDP which supports Multiband-Frequency (2 GHz, 5 GHz and 6 GHz)
  * on a single radio.
  * The AP acts as a special VAP. There will not be WMI_VDEV_UP_CMD.
  * This radio is used only for scanning purpose and to send few MGMT frames.
@@ -32158,12 +32165,12 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         /* Roaming specific  commands */
         /* set roam scan mode */
         WMI_RETURN_STRING(WMI_ROAM_SCAN_MODE);
-        /* set roam scan rssi threshold below which roam
+        /* set roam scan RSSI threshold below which roam
          * scan is enabled  */
         WMI_RETURN_STRING(WMI_ROAM_SCAN_RSSI_THRESHOLD);
         /* set roam scan period for periodic roam scan mode  */
         WMI_RETURN_STRING(WMI_ROAM_SCAN_PERIOD);
-        /* set roam scan trigger rssi change threshold   */
+        /* set roam scan trigger RSSI change threshold   */
         WMI_RETURN_STRING(WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD);
         /* set roam AP profile   */
         WMI_RETURN_STRING(WMI_ROAM_AP_PROFILE);
@@ -34892,8 +34899,8 @@ typedef struct {
     A_UINT32 trigger_id; /* id from WMI_ROAM_TRIGGER_REASON_ID */
     /* interpretation of trigger value is as follows, for different trigger IDs
      * ID = PER -> value = PER percentage
-     * ID = LOW_RSSI -> value = rssi in dB wrt noise floor,
-     * ID = HIGH_RSSI -> value = rssi in dB wrt to noise floor,
+     * ID = LOW_RSSI -> value = RSSI in dB wrt noise floor,
+     * ID = HIGH_RSSI -> value = RSSI in dB wrt to noise floor,
      * ID = DENSE -> value = specification if it is tx or rx traffic threshold,
      *      (see WMI_[RX,TX]_TRAFFIC_ABOVE_THRESHOLD)
      * ID = PERIODIC -> value = periodicity in ms
@@ -34919,23 +34926,23 @@ typedef struct {
     /** BSS load threshold after which roam scan should trigger */
     A_UINT32 bss_load_threshold;
     /** rssi_2g_threshold
-     * If connected AP is in 2.4Ghz, then consider bss load roam triggered
-     * only if load % > bss_load_threshold && connected AP rssi is worse
+     * If connected AP is in 2.4 GHz, then consider bss load roam triggered
+     * only if load % > bss_load_threshold && connected AP RSSI is worse
      * than rssi_2g_threshold.
      */
-    A_INT32 rssi_2g_threshold; /* units = dbm */
+    A_INT32 rssi_2g_threshold; /* units = dBm */
     /** rssi_5g_threshold
-     * If connected AP is in 5Ghz, then consider bss load roam triggered
-     * only if load % > bss_load_threshold && connected AP rssi is worse
+     * If connected AP is in 5 GHz, then consider bss load roam triggered
+     * only if load % > bss_load_threshold && connected AP RSSI is worse
      * than rssi_5g_threshold.
      */
-    A_INT32 rssi_5g_threshold; /* units = dbm */
+    A_INT32 rssi_5g_threshold; /* units = dBm */
     /** rssi_6g_threshold
-     * If connected AP is in 6Ghz, then consider bss load roam triggered
-     * only if load % > bss_load_threshold && connected AP rssi is worse
+     * If connected AP is in 6 GHz, then consider bss load roam triggered
+     * only if load % > bss_load_threshold && connected AP RSSI is worse
      * than rssi_6g_threshold. If rssi_6g_threshold is 0, it should be ignored.
      */
-    A_INT32 rssi_6g_threshold; /* units = dbm */
+    A_INT32 rssi_6g_threshold; /* units = dBm */
 } wmi_roam_bss_load_config_cmd_fixed_param;
 
 /** Deauth roam trigger parameters */
@@ -34950,11 +34957,11 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_idle_config_cmd_fixed_param */
     A_UINT32 vdev_id;
-    /* 1-Enable, 0-Disable */
+    /* 1: Enable, 0: Disable */
     A_UINT32 enable;
-    /* Connected AP band. 0 - Any Band, 1 - 2.4Ghz Band, 2 - 5Ghz Band */
+    /* Connected AP band. 0: Any Band, 1: 2.4 GHz Band, 2: 5 GHz Band */
     A_UINT32 band;
-    /* Trigger Idle roaming only if rssi change of connected AP is within rssi_delta during idle time */
+    /* Trigger Idle roaming only if RSSI change of connected AP is within rssi_delta during idle time */
     A_UINT32 rssi_delta; /* units = dB */
     /* Trigger idle roam only if connected RSSI is better than min_rssi */
     A_INT32 min_rssi; /* units = dBm */
@@ -34966,8 +34973,8 @@ typedef struct {
      * 2. No TX/RX data for more than idle_time configured
      *    or TX/RX data packets count is less than data_packet_count
      *    during idle_time
-     * 3. Connected AP rssi change is not more than rssi_delta
-     * 4. Connected AP rssi is better than min_rssi.
+     * 3. Connected AP RSSI change is not more than rssi_delta
+     * 4. Connected AP RSSI is better than min_rssi.
      *    The purpose of this trigger for idle scan is to issue the scan
      *    even if (moreover, particularly if) the connection to the
      *    existing AP is still good, to keep the STA from getting locked
@@ -35155,7 +35162,7 @@ typedef struct {
      *       For example, if num_of_roam_candidates = [2, 3] then channel will
      *       have 5 elements, with the first 2 elements from the first scan,
      *       and the last 3 elements from the second scan.
-     *   A_UINT32 rssi[]; rssi in dB w.r.t. noise floor of candidates
+     *   A_UINT32 rssi[]; RSSI in dB w.r.t. noise floor of candidates
      *       in each roam scan.
      *       The num_of_roam_candidates[] elements specify how many elements
      *       there are within rssi[] for each scan.
@@ -35173,7 +35180,7 @@ typedef enum {
         WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER,
     WMI_ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER,       /* Roam scan triggered due to BTM Disassoc Imminent timeout */
     WMI_ROAM_TRIGGER_SUB_REASON_FULL_SCAN,          /* Roam scan triggered due to partial scan failure */
-    WMI_ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC,  /* Roam scan triggered due to Low rssi periodic timer */
+    WMI_ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC,  /* Roam scan triggered due to Low RSSI periodic timer */
     WMI_ROAM_TRIGGER_SUB_REASON_CU_PERIODIC,        /* Roam scan triggered due to CU periodic timer */
     /* PERIODIC_TIMER_AFTER_INACTIVITY:
      * Roam scan triggered due to periodic timer after device in
@@ -35231,7 +35238,7 @@ typedef struct {
      * if multiple scans are triggered for a single roam trigger.
      */
     A_UINT32 trigger_sub_reason;
-    A_UINT32 current_rssi;   /* Connected AP rssi in dBm */
+    A_UINT32 current_rssi;   /* Connected AP RSSI in dBm */
     /* roam_rssi_threshold:
      * RSSI threshold value in dBm for low RSSI roam trigger.
      */
@@ -35298,9 +35305,9 @@ typedef struct {
     };
     /* btm_req_dialog_token: dialog token number in BTM request frame */
     A_UINT32 btm_req_dialog_token;
-    /* data rssi in dBm when abort to roam scan */
+    /* data RSSI in dBm when abort to roam scan */
     A_UINT32 data_rssi;
-    /* data rssi threshold in dBm */
+    /* data RSSI threshold in dBm */
     A_UINT32 data_rssi_threshold;
     /* rx linkspeed status, 0:good linkspeed, 1:bad */
     A_UINT32 rx_linkspeed_status;
@@ -35359,14 +35366,14 @@ typedef struct {
     A_UINT32 candidate_type; /* 0 - Candidate AP, 1 - Connected AP */
     wmi_mac_addr bssid;      /* AP MAC address */
     A_UINT32 channel;        /* AP channel frequency in MHz */
-    A_UINT32 rssi;           /* AP current rssi in dBm */
+    A_UINT32 rssi;           /* AP current RSSI in dBm */
     A_UINT32 cu_load;        /* AP current cu load percentage (0-100) */
     /*
      * The score fields below don't have a pre-determined range,
      * but use the sense that a higher score indicates a better
      * roam candidate.
      */
-    A_UINT32 rssi_score;     /* AP current rssi score */
+    A_UINT32 rssi_score;     /* AP current RSSI score */
     A_UINT32 cu_score;       /* AP current cu score */
     A_UINT32 total_score;    /* AP total score */
     A_UINT32 etp;            /* AP Estimated Throughput (ETP) value in mbps */
@@ -35556,7 +35563,7 @@ typedef struct {
      * rssi_dbm_abs
      * Last known RSSI of the current BSSID at the moment when the frame
      * was sent and received.
-     * This rssi value is valid for deauth / disassoc frame only.
+     * This RSSI value is valid for deauth / disassoc frame only.
      * The rssi_dbm_abs value is the absolute value of the RSSI in dBm units.
      * For example, if the RSSI is -40 dBm, rssi_dbm_abs will be 40.
      */
@@ -35811,14 +35818,14 @@ typedef enum {
      *                     default value will be used.
      * Bit : 8-13        - To indicate the DFS RSSI threshold for current AP
      *                     with range 0 to 58, default value is 0 dB
-     *                     (DFS rssi threshold = -70 dBm + 0 dB = -70 dBm).
+     *                     (DFS RSSI threshold = -70 dBm + 0 dB = -70 dBm).
      *                     The specified value (in dB) is added to the -70 dBm
      *                     baseline value to get the RSSI threshold in dBm.
      *                     If an invalid (out of range) value is provided, the
      *                     default value will be used.
      * Bit : 14-19       - To indicate the DFS RSSI threshold for candidate AP
      *                     with range 0 to 58, default value is 0 dB
-     *                     (DFS rssi threshold = -70 - 0 = -70 dBm).
+     *                     (DFS RSSI threshold = -70 - 0 = -70 dBm).
      *                     The specified value (in dB) is added to the -70 dBm
      *                     baseline value to get the RSSI threshold in dBm.
      *                     If an invalid (out of range) value is provided, the
@@ -35852,13 +35859,13 @@ typedef enum {
     WMI_ROAM_PARAM_ROAM_CONTROL_FULL_SCAN_CHANNEL_OPTIMIZATION = 5,
 
     /*
-     * Roam param to enable/disable scanning of 6GHz psc channels
-     * As per current implementation, Wi-Fi STA scans on all 6GHz PSC channels
+     * Roam param to enable/disable scanning of 6 GHz PSC channels
+     * As per current implementation, Wi-Fi STA scans on all 6 GHz PSC channels
      * as part of full scan during a roam scan irrespective of whether APs are
-     * present in 6GHz or not.
-     * This flag controls the optimization to do the scan in 6GHz PSC channels
-     * only if channel map or newly received RNR indicates 6GHz APs during
-     * current 2.4GHz or 5GHz scanning of Roam Full scan.
+     * present in 6 GHz or not.
+     * This flag controls the optimization to do the scan in 6 GHz PSC channels
+     * only if channel map or newly received RNR indicates 6 GHz APs during
+     * current 2.4 GHz or 5 GHz scanning of Roam Full scan.
      */
     WMI_ROAM_PARAM_ROAM_CONTROL_FULL_SCAN_6GHZ_PSC_ONLY_WITH_RNR = 6,
 
@@ -36346,7 +36353,7 @@ typedef struct {
 
 /*
  * Below structure is related to WMI CMD that configures the default
- * minimum (OBSS_MIN) and maximum (OBSS_MAX) Other BSS levels (RSSI in dbm)
+ * minimum (OBSS_MIN) and maximum (OBSS_MAX) Other BSS levels (RSSI in dBm)
  * for VDEV of a give type (STA or AP). These thresholds are configured
  * within the Host and passed down to the FW. FW will use these
  * default OBSS_MIN and OBSS_MAX values during roaming if the assoc response
@@ -37530,7 +37537,7 @@ typedef struct {
 
 /* Bit 0: reserved */
 
-/* Bit 1: support for 320Mhz in 6ghz */
+/* Bit 1: support for 320Mhz in 6 GHz */
 #define WMI_EHTCAP_PHY_320MHZIN6GHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 1, 1)
 #define WMI_EHTCAP_PHY_320MHZIN6GHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 1, 1, value)
 
@@ -37654,7 +37661,7 @@ typedef struct {
 #define WMI_EHTCAP_PHY_SUPMCS15_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 19, 4)
 #define WMI_EHTCAP_PHY_SUPMCS15_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 19, 4, value)
 
-/* Bit 55: support of EHT DUP in 6ghz */
+/* Bit 55: support of EHT DUP in 6 GHz */
 #define WMI_EHTCAP_PHY_EHTDUPIN6GHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 23, 1)
 #define WMI_EHTCAP_PHY_EHTDUPIN6GHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 23, 1, value)
 
