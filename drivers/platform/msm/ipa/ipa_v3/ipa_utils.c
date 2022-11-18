@@ -9740,8 +9740,9 @@ int ipa3_write_qmap_id(struct ipa_ioc_write_qmapid *param_in)
 			   param_in->client == IPA_CLIENT_WLAN2_PROD ||
 				param_in->client == IPA_CLIENT_WLAN3_PROD) {
 		ipa3_ctx->ep[ipa_ep_idx].cfg.meta = meta;
-		if (param_in->client == IPA_CLIENT_WLAN2_PROD ||
-			param_in->client == IPA_CLIENT_WLAN3_PROD)
+		if (ipa_get_wdi_version() == IPA_WDI_3 &&
+			(param_in->client == IPA_CLIENT_WLAN2_PROD ||
+			param_in->client == IPA_CLIENT_WLAN3_PROD))
 				result = ipa3_write_qmapid_wdi3_gsi_pipe(
 					ipa_ep_idx, meta.qmap_id);
 		else
