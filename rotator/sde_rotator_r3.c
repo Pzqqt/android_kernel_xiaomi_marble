@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1235,7 +1236,7 @@ static void sde_hw_rotator_map_vaddr(struct sde_dbg_buf *dbgbuf,
 static void sde_hw_rotator_unmap_vaddr(struct sde_dbg_buf *dbgbuf)
 {
 	if (dbgbuf->vaddr) {
-		dma_buf_kunmap(dbgbuf->dmabuf, 0, dbgbuf->vaddr);
+		dma_buf_vunmap(dbgbuf->dmabuf, dbgbuf->vaddr);
 		dma_buf_end_cpu_access(dbgbuf->dmabuf, DMA_FROM_DEVICE);
 	}
 

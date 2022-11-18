@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/*
+/* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
@@ -15,9 +15,9 @@
 #define MMSS_MDSS_HW_INTR_STATUS_ROT		BIT(2)
 
 /* SDE_ROT_ROTTOP:
- * OFFSET=0x0A8800
+ * OFFSET=0x0A9000
  */
-#define SDE_ROT_ROTTOP_OFFSET                   0xA8800
+#define SDE_ROT_ROTTOP_OFFSET                   0x0A9000
 #define ROTTOP_HW_VERSION                       (SDE_ROT_ROTTOP_OFFSET+0x00)
 #define ROTTOP_CLK_CTRL                         (SDE_ROT_ROTTOP_OFFSET+0x10)
 #define ROTTOP_CLK_STATUS                       (SDE_ROT_ROTTOP_OFFSET+0x14)
@@ -52,9 +52,9 @@
 #define ROTTOP_OP_MODE_ROT_OUT_MASK             (0x3 << 4)
 
 /* SDE_ROT_SSPP:
- * OFFSET=0x0A8900
+ * OFFSET=0x0A9100
  */
-#define SDE_ROT_SSPP_OFFSET                     0xA8900
+#define SDE_ROT_SSPP_OFFSET                     0x0A9100
 #define ROT_SSPP_SRC_SIZE                       (SDE_ROT_SSPP_OFFSET+0x00)
 #define ROT_SSPP_SRC_IMG_SIZE                   (SDE_ROT_SSPP_OFFSET+0x04)
 #define ROT_SSPP_SRC_XY                         (SDE_ROT_SSPP_OFFSET+0x08)
@@ -142,9 +142,9 @@
 
 
 /* SDE_ROT_WB:
- * OFFSET=0x0A8B00
+ * OFFSET=0x0A9300
  */
-#define SDE_ROT_WB_OFFSET                       0xA8B00
+#define SDE_ROT_WB_OFFSET                       0x0A9300
 #define ROT_WB_DST_FORMAT                       (SDE_ROT_WB_OFFSET+0x000)
 #define ROT_WB_DST_OP_MODE                      (SDE_ROT_WB_OFFSET+0x004)
 #define ROT_WB_DST_PACK_PATTERN                 (SDE_ROT_WB_OFFSET+0x008)
@@ -201,16 +201,16 @@
 
 
 /* SDE_ROT_REGDMA_RAM:
- * OFFSET=0x0A8E00
+ * OFFSET=0x0A9600
  */
-#define SDE_ROT_REGDMA_RAM_OFFSET              0xA8E00
+#define SDE_ROT_REGDMA_RAM_OFFSET              0x0A9600
 #define REGDMA_RAM_REGDMA_CMD_RAM              (SDE_ROT_REGDMA_RAM_OFFSET+0x00)
 
 
 /* SDE_ROT_REGDMA_CSR:
- * OFFSET=0x0AAE00
+ * OFFSET=0x0AB600
  */
-#define SDE_ROT_REGDMA_OFFSET                    0xAAE00
+#define SDE_ROT_REGDMA_OFFSET                    0x0AB600
 #define REGDMA_CSR_REGDMA_VERSION                (SDE_ROT_REGDMA_OFFSET+0x00)
 #define REGDMA_CSR_REGDMA_OP_MODE                (SDE_ROT_REGDMA_OFFSET+0x04)
 #define REGDMA_CSR_REGDMA_QUEUE_0_SUBMIT         (SDE_ROT_REGDMA_OFFSET+0x10)

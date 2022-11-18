@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -907,11 +908,7 @@ static int sde_rotator_core_create_debugfs(
 
 	debugfs_create_u32("ppc_denom", 0600, debugfs_root, &mgr->pixel_per_clk.denom);
 
-	if (!debugfs_create_u64("enable_bw_vote", 0644,
-			debugfs_root, &mgr->enable_bw_vote)) {
-		SDEROT_WARN("failed to create enable_bw_vote\n");
-		return -EINVAL;
-	}
+	debugfs_create_u64("enable_bw_vote", 0644, debugfs_root, &mgr->enable_bw_vote);
 
 	if (mgr->ops_hw_create_debugfs) {
 		ret = mgr->ops_hw_create_debugfs(mgr, debugfs_root);
