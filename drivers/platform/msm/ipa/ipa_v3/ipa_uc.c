@@ -2003,9 +2003,15 @@ int ipa3_add_dscp_vlan_pcp_map(
 		return -EINVAL;
 	}
 
-	IPADBG("map add attempt. num_vlan: %u\n", map->num_vlan);
-
 	mem.size = sizeof(struct IpaDscpVlanPcpMap_t);
+
+#ifdef IPA_FLT_EXT_MPLS_GRE_GENERAL
+	IPADBG(
+		"Attempting to send map (num_vlan=%u num_s_vlan=%u) of size %u to uC.\n",
+		map->num_vlan,
+		map->num_s_vlan,
+		mem.size);
+#endif
 
 	mem.base = dma_alloc_coherent(
 		ipa3_ctx->uc_pdev, mem.size,

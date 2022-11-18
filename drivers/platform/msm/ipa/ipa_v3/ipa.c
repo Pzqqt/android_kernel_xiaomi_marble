@@ -4059,6 +4059,12 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+		if (retval == -EIO)
+		{
+			IPADBG("no work needs to be done but return success to caller");
+			retval = 0;
+			break;
+		}
 
 		ipa3_ctx->eogre_enabled = (retval == 0);
 
@@ -4089,6 +4095,12 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		memset(&eogre_info, 0, sizeof(eogre_info));
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+		if (retval == -EIO)
+		{
+			IPADBG("no work needs to be done but return success to caller");
+			retval = 0;
+			break;
+		}
 
 		if (retval == 0 && send2uC == true) {
 			/*

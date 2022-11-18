@@ -18,6 +18,12 @@
 #include "ipahal_hw_stats.h"
 #include "ipa_rm_i.h"
 #include "gsi.h"
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+#include <linux/if_ether.h>
+#include <stddef.h>
 
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.
@@ -14311,3 +14317,139 @@ error:
 	mutex_unlock(&ipa3_ctx->act_tbl_lock);
 	return res;
 }
+
+#ifdef IPA_FLT_EXT_MPLS_GRE_GENERAL
+/*
+ * *** IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT ***
+ *
+ * NOTE WELL:
+ *
+ * The three dimensions below line up with the enums:
+ *
+ *             enum ipa_data_flow_type
+ *             enum ipa_ip_type
+ *             enum ipa_exception_type
+ *
+ * respectively.  When additions and/or subtractions are made to the
+ * enum values, please make sure to re-align the array below to
+ * reflect the new ordering
+ *
+ * *** IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT ***
+ */
+static ipa_fld_wid_off_t mpls_v4_outer[FLOW_MAX][IPA_IP_MAX][FIELD_MAX] = {
+	/* FLOW_UPLINK */
+	{
+		/* IPA_IP_v4 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_UL_OETH_I4_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_UL_OETH_I4_ETHER_TYPE_OFFSET },
+		},
+		/* IPA_IP_v6 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_UL_OETH_I6_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_UL_OETH_I6_ETHER_TYPE_OFFSET },
+		},
+	},
+	/* FLOW_DOWNLINK */
+	{
+		/* IPA_IP_v4 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_DL_O4_I4_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O4_I4_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O4_I4_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O4_I4_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O4_I4_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_DL_O4_I4_ETHER_TYPE_OFFSET },
+		},
+		/* IPA_IP_v6 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_DL_O4_I6_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O4_I6_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O4_I6_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O4_I6_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O4_I6_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_DL_O4_I6_ETHER_TYPE_OFFSET },
+		},
+	},
+};
+
+/*
+ * *** IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT ***
+ *
+ * NOTE WELL:
+ *
+ * The three dimensions below line up with the enums:
+ *
+ *             enum ipa_data_flow_type
+ *             enum ipa_ip_type
+ *             enum ipa_exception_type
+ *
+ * respectively.  When additions and/or subtractions are made to the
+ * enum values, please make sure to re-align the array below to
+ * reflect the new ordering
+ *
+ * *** IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT !!! IMPORTANT ***
+ */
+static ipa_fld_wid_off_t mpls_v6_outer[FLOW_MAX][IPA_IP_MAX][FIELD_MAX] = {
+	/* FLOW_UPLINK */
+	{
+		/* IPA_IP_v4 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_UL_OETH_I4_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I4_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_UL_OETH_I4_ETHER_TYPE_OFFSET },
+		},
+		/* IPA_IP_v6 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_UL_OETH_I6_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_UL_OETH_I6_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_UL_OETH_I6_ETHER_TYPE_OFFSET },
+		},
+	},
+	/* FLOW_DOWNLINK */
+	{
+		/* IPA_IP_v4 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_DL_O6_I4_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O6_I4_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O6_I4_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O6_I4_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O6_I4_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_DL_O6_I4_ETHER_TYPE_OFFSET },
+		},
+		/* IPA_IP_v6 */
+		{
+			/* FIELD_IP_PROTOCOL */ { ONE_BYTE, MPLS_DL_O6_I6_IP_PROTOCOL_OFFSET },
+			/* FIELD_TCP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O6_I6_TCP_SRC_PORT_OFFSET },
+			/* FIELD_TCP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O6_I6_TCP_DST_PORT_OFFSET },
+			/* FIELD_UDP_SRC_PORT*/ { TWO_BYTE, MPLS_DL_O6_I6_UDP_SRC_PORT_OFFSET },
+			/* FIELD_UDP_DST_PORT*/ { TWO_BYTE, MPLS_DL_O6_I6_UDP_DST_PORT_OFFSET },
+			/* FIELD_ETHER_TYPE  */ { TWO_BYTE, MPLS_DL_O6_I6_ETHER_TYPE_OFFSET },
+		},
+	},
+};
+
+ipa_fld_wid_off_t* get_mpls_v4_outer(enum ipa_data_flow_type flow, enum ipa_ip_type ip, enum ipa_exception_type ex)
+{
+	return &(mpls_v4_outer[flow][ip][ex]);
+}
+
+ipa_fld_wid_off_t* get_mpls_v6_outer(enum ipa_data_flow_type flow, enum ipa_ip_type ip, enum ipa_exception_type ex)
+{
+	return &(mpls_v6_outer[flow][ip][ex]);
+}
+#endif
