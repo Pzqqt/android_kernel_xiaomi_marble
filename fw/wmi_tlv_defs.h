@@ -1307,6 +1307,18 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_link_removal_tbtt_update,
     WMITLV_TAG_STRUC_wmi_mlo_link_removal_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_link_removal_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_reason_cmm_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_rssi_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_bss_load_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_deauth_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_btm_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_bmiss_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_dense_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_force_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_kickout_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_per_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_periodic_tlv_param,
+    WMITLV_TAG_STRUC_wmi_roam_trigger_hi_rssi_tlv_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -4604,7 +4616,19 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WLM_CONFIG_CMDID);
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_initial_info, roam_initial_info, WMITLV_SIZE_VAR) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_btm_response_info, roam_btm_response_info, WMITLV_SIZE_VAR) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_msg_info, roam_msg_info, WMITLV_SIZE_VAR) \
-  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_btm_request_candidate_info, roam_btm_request_candidate_info, WMITLV_SIZE_VAR)
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_btm_request_candidate_info, roam_btm_request_candidate_info, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_reason_cmm, roam_trigger_reason_cmm, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_rssi, roam_trigger_rssi, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_bss_load, roam_trigger_bss_load, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_deauth, roam_trigger_deauth, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_btm, roam_trigger_btm, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_bmiss, roam_trigger_bmiss, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_dense, roam_trigger_dense, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_force, roam_trigger_force, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_kickout, roam_trigger_kickout, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_per, roam_trigger_per, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_periodic, roam_trigger_periodic, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_trigger_hi_rssi, roam_trigger_hi_rssi, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_STATS_EVENTID);
 
 /* Motion detection cmd */

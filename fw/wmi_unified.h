@@ -35647,6 +35647,143 @@ typedef struct {
 } wmi_roam_stats_event_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_reason_cmm_tlv_param */
+    /*
+     * timestamp is the absolute time w.r.t host timer which is synchronized
+     * between the host and target.
+     * This timestamp indicates the time when roam trigger happened.
+     */
+    A_UINT32 timestamp;      /* Timestamp in milli seconds */
+    /* trigger_reason:
+     * Roam trigger reason from WMI_ROAM_TRIGGER_REASON_ID
+     */
+    A_UINT32 trigger_reason;
+    /* trigger_sub_reason:
+     * Reason for each roam scan from WMI_ROAM_TRIGGER_SUB_REASON_ID,
+     * if multiple scans are triggered for a single roam trigger.
+     */
+    A_UINT32 trigger_sub_reason;
+    A_UINT32 current_rssi;   /* Connected AP RSSI in dBm */
+} wmi_roam_trigger_reason_cmm;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_rssi_tlv_param */
+    /* roam_rssi_threshold:
+     * RSSI threshold value in dBm for low RSSI roam trigger.
+     */
+    A_UINT32 roam_rssi_threshold;
+    /* data RSSI in dBm */
+    A_UINT32 data_rssi;
+    /* data RSSI threshold in dBm */
+    A_UINT32 data_rssi_threshold;
+    /* rx linkspeed status, 0:good linkspeed, 1:bad */
+    A_UINT32 rx_linkspeed_status;
+} wmi_roam_trigger_rssi;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_bss_load_tlv_param */
+    A_UINT32 cu_load;        /* Connected AP CU load percentage (0-100) */
+} wmi_roam_trigger_bss_load;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_deauth_tlv_param */
+    /* deauth_type:
+     * 1 -> De-authentication
+     * 2 -> Disassociation
+     */
+    A_UINT32 deauth_type;
+    /* deauth_reason:
+     * De-authentication or disassociation reason.
+     * De-authentication / disassociation Values are enumerated in the
+     * 802.11 spec.
+     */
+    A_UINT32 deauth_reason;
+} wmi_roam_trigger_deauth;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_btm_tlv_param */
+    /* btm_request_mode:
+     * Mode Values are enumerated in the 802.11 spec.
+     */
+    A_UINT32 btm_request_mode;
+    A_UINT32 disassoc_imminent_timer;  /* in Milli seconds */
+    /* validity_internal:
+     * Preferred candidate list validity interval in Milli seconds.
+     */
+    A_UINT32 validity_internal;
+    /* candidate_list_count:
+     * Number of preferred candidates from BTM request.
+     */
+    A_UINT32 candidate_list_count;
+    /* btm_response_status_code:
+     * Response status Values are enumerated in the 802.11 spec.
+     */
+    A_UINT32 btm_response_status_code;
+
+    /* BTM BSS termination timeout value in milli seconds */
+    A_UINT32 btm_bss_termination_timeout;
+    /* BTM MBO assoc retry timeout value in milli seconds */
+    A_UINT32 btm_mbo_assoc_retry_timeout;
+
+    /* btm_req_dialog_token: dialog token number in BTM request frame */
+    A_UINT32 btm_req_dialog_token;
+} wmi_roam_trigger_btm;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_bmiss_tlv_param */
+    /* B[0-6]: final bmiss cnt.
+     * B[7-23]: consecutive bmiss cnt
+     * B[24]: isQosNullSuccess: 0: success, 1:fail
+     */
+    A_UINT32 bmiss_status;
+} wmi_roam_trigger_bmiss;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_dense_tlv_param */
+    /* RX Throughput in bytes per second in dense env */
+    A_UINT32 rx_tput;
+    /* TX Throughput in bytes per second in dense env */
+    A_UINT32 tx_tput;
+    /* dense_status: b[0-7]: roamable AP count info in dense env */
+    A_UINT32 dense_status;
+} wmi_roam_trigger_dense;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_force_tlv_param */
+    A_UINT32 invoke_reason; /* from wlan_roam_invoke_reason */
+} wmi_roam_trigger_force;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_kickout_tlv_param */
+    /* consecutive tx failure threshold */
+    A_UINT32 kickout_th;
+    A_UINT32 kickout_reason; /* from PEER_KICKOUT_REASON */
+} wmi_roam_trigger_kickout;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_per_tlv_param */
+    /*  For PER roam,
+     *  If the number of PPDUs with PHY rate < low_rate_thresh exceeds
+     *  N * tx/rx_rate_thresh_percnt / 100, roaming will be triggered.
+     *  b[0-7]:  tx_rate_thresh_percnt
+     *  b[16-23]:rx_rate_thresh_percnt
+     */
+    A_UINT32 rate_thresh_percnt;
+} wmi_roam_trigger_per;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_periodic_tlv_param */
+    /*  roam scan periodic :   units = milliseconds*/
+    A_UINT32 periodic_timer_ms;
+} wmi_roam_trigger_periodic;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_hi_rssi_tlv_param */
+    /*  roam High RSSI threshold */
+    A_UINT32 hi_rssi_threshold;
+} wmi_roam_trigger_hi_rssi;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_get_scan_channel_list_cmd_fixed_param */
     A_UINT32 vdev_id;
 } wmi_roam_get_scan_channel_list_cmd_fixed_param;
