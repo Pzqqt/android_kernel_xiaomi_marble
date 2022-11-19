@@ -36006,6 +36006,13 @@ typedef enum {
      */
     WMI_ROAM_PARAM_ROAM_CONTROL_FULL_SCAN_6GHZ_PSC_ONLY_WITH_RNR = 6,
 
+    /*
+     * Flag to tell whether MCC is disallowed or not in sta + sta currrent case.
+     * If flag is unset, then no limitation for channels which sta can roam to.
+     * If flag is set, then the channels which one of STA roam to cause MCC with other STA, it will be disallowed.
+     */
+     WMI_ROAM_PARAM_ROAM_MCC_DISALLOW = 7,
+
 
     /*=== END ROAM_PARAM_PROTOTYPE SECTION ===*/
 } WMI_ROAM_PARAM;
