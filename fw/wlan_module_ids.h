@@ -150,6 +150,7 @@ typedef enum {
   WLAN_MODULE_SCHED_ALGO_MLO,           /* 0x6e */
   WLAN_MODULE_SCHED_ALGO_SAWF,          /* 0x6f */
   WLAN_MODULE_BAR,                      /* 0x70 */
+  WLAN_MODULE_SMART_TX,                 /* 0x71 */
 
 
   WLAN_MODULE_ID_MAX,
