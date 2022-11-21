@@ -704,6 +704,9 @@ static inline int sde_hw_ctl_trigger_flush_v1(struct sde_hw_ctl *ctx)
 
 	SDE_REG_WRITE(&ctx->hw, CTL_FLUSH, ctx->flush.pending_flush_mask);
 
+	/* ensure all register writes are written without re-ordering*/
+	wmb();
+
 	return 0;
 }
 
