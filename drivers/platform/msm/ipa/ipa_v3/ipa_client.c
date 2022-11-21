@@ -2140,14 +2140,39 @@ int ipa3_get_rtk_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 {
 	int i;
 	u64 low, high;
-
+	struct IpaHwRingStats_t *ring = NULL;
+	struct ipa3_uc_dbg_stats *ctx_stats = NULL;
 	if (!ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio)
 		return -EINVAL;
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+
+	ctx_stats = &ipa3_ctx->rtk_ctx.dbg_stats;
 	for (i = 0; i < MAX_RTK_CHANNELS; i++) {
-		ipa3_get_gsi_ring_stats(&stats->u.rtk[i].commStats,
-			&ipa3_ctx->rtk_ctx.dbg_stats, i);
+
+		ring = &stats->u.rtk[i].commStats;
+
+		ring->ringEmpty = ioread32(
+			ctx_stats->uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
+			IPA3_UC_DEBUG_STATS_RINGEMPTY_OFF);
+
+		ring->ringUsageHigh = ioread32(
+			ctx_stats->uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
+			IPA3_UC_DEBUG_STATS_RINGUSAGEHIGH_OFF);
+
+		ring->ringUsageLow = ioread32(
+			ctx_stats->uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
+			IPA3_UC_DEBUG_STATS_RINGUSAGELOW_OFF);
+
+		ring->RingUtilCount = ioread32(
+			ctx_stats->uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
+			IPA3_UC_DEBUG_STATS_RINGUTILCOUNT_OFF);
+
+
 		stats->u.rtk[i].trCount = ioread32(
 			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio
 			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
