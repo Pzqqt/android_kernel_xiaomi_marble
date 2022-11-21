@@ -1533,6 +1533,8 @@ typedef enum {
     WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID,
     /** WMI cmd for dynamically deleting a link from a MLD VAP */
     WMI_MLO_LINK_REMOVAL_CMDID,
+    /** WMI cmd used to setup Tid to Link Mapping for a MLO VAP */
+    WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID,
 
     /** WMI commands specific to Service Aware WiFi (SAWF) */
     /** configure or reconfigure the parameters for a service class */
@@ -2335,6 +2337,8 @@ typedef enum {
     WMI_MLO_TEARDOWN_COMPLETE_EVENTID,
     /* Response event for Link Removal Cmd */
     WMI_MLO_LINK_REMOVAL_EVENTID,
+    /* Response event for WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID */
+    WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID,
 
     /* WMI event specific to Quiet handling */
     WMI_QUIET_HANDLING_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_QUIET_OFL),
@@ -6359,6 +6363,28 @@ typedef struct {
      * Note: num of max links supported = 8
      */
 } wmi_mgmt_ml_info;
+
+#define WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_VDEV_ID_GET(_var)       WMI_GET_BITS(_var, 0, 8)
+#define WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_VDEV_ID_SET(_var, _val) WMI_SET_BITS(_var, 0, 8, _val)
+
+#define WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_EXP_DUR_GET(_var)       WMI_GET_BITS(_var, 8, 24)
+#define WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_EXP_DUR_SET(_var, _val) WMI_SET_BITS(_var, 8, 24, _val)
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_bcast_t2lm_info */
+    /*
+     * Vdev_id for MLO vap
+     * WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_VDEV_ID_GET /
+     * WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_VDEV_ID_SET
+     * vdev_id :8
+     *
+     * Duration time for MLO Vap
+     * WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_VDEV_ID_GET /
+     * WMI_MLO_BROADCAST_TID_TO_LINK_MAP_INFO_VDEV_ID_SET
+     * expected_duration :24
+     */
+    A_UINT32 vdev_id_expec_dur;
+} wmi_mlo_bcast_t2lm_info;
 
 typedef enum {
     PKT_CAPTURE_MODE_DISABLE = 0,
@@ -32743,6 +32769,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_XGAP_ENABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID);
         WMI_RETURN_STRING(WMI_MLO_LINK_REMOVAL_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -39916,6 +39943,350 @@ typedef struct {
      * struct wmi_tid_to_link_map tid_to_link_map[];
      */
 } wmi_peer_tid_to_link_map_fixed_param;
+
+typedef struct{
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+    /** vdev_id for identifying the MLO Vap */
+    A_UINT32 vdev_id;
+    /** disabled link bits */
+    A_UINT32 disabled_link_bitmap;
+    /**
+     * Following this structure is the TLV:
+     * struct wmi_mlo_ap_vdev_tid_to_link_map_ie_info[];
+     */
+} wmi_mlo_ap_vdev_tid_to_link_map_cmd_fixed_param;
+
+typedef enum {
+    /* Mapping Switch TSF */
+    WMI_MAP_SWITCH_TIMER_TSF,
+    /* Mapping Switch Timer Expired */
+    WMI_MAP_SWITCH_TIMER_EXPIRED,
+    /* Expected Duration Expired */
+    WMI_EXPECTED_DUR_EXPIRED,
+} WMI_MLO_TID_TO_LINK_MAP_STATUS;
+
+typedef struct{
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param */
+    A_UINT32 tlv_header;
+    /* vdev_id of AP MLO vap */
+    A_UINT32 vdev_id;
+    /* containts mapping status of WMI_MLO_TID_TO_LINK_MAP_STATUS */
+    A_UINT32 status_type;
+    /* Mapping switch time of current TSF value */
+    A_UINT32 mapping_switch_tsf;
+} wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param;
+
+/* CTRL Field  bit-5-7 reserved */
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DIR_GET(_var)                WMI_GET_BITS(_var, 0, 2)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DIR_SET(_var, _val)          WMI_SET_BITS(_var, 0, 2, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DEF_LINK_GET(_var)           WMI_GET_BITS(_var, 2, 1)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DEF_LINK_SET(_var, _val)     WMI_SET_BITS(_var, 2, 1, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_SWT_TIME_GET(_var)           WMI_GET_BITS(_var, 3, 1)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_SWT_TIME_SET(_var, _val)     WMI_SET_BITS(_var, 3, 1, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DUR_TIME_GET(_var)           WMI_GET_BITS(_var, 4, 1)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DUR_TIME_SET(_var, _val)     WMI_SET_BITS(_var, 4, 1, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_GET(_var)       WMI_GET_BITS(_var, 8, 8)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_SET(_var, _val) WMI_SET_BITS(_var, 8, 8, _val)
+
+/* IEEE Link ID 15 bits on each link id 1 bit is reserved */
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_0_GET(_var)          WMI_GET_BITS(_var, 0, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_0_SET(_var, _val)    WMI_SET_BITS(_var, 0, 15, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_1_GET(_var)          WMI_GET_BITS(_var, 16, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_1_SET(_var, _val)    WMI_SET_BITS(_var, 16, 15, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_2_GET(_var)          WMI_GET_BITS(_var, 0, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_2_SET(_var, _val)    WMI_SET_BITS(_var, 0, 15, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_3_GET(_var)          WMI_GET_BITS(_var, 16, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_3_SET(_var, _val)    WMI_SET_BITS(_var, 16, 15, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_4_GET(_var)          WMI_GET_BITS(_var, 0, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_4_SET(_var, _val)    WMI_SET_BITS(_var, 0, 15, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_5_GET(_var)          WMI_GET_BITS(_var, 16, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_5_SET(_var, _val)    WMI_SET_BITS(_var, 16, 15, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_6_GET(_var)          WMI_GET_BITS(_var, 0, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_6_SET(_var, _val)    WMI_SET_BITS(_var, 0, 15, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_7_GET(_var)          WMI_GET_BITS(_var, 16, 15)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_7_SET(_var, _val)    WMI_SET_BITS(_var, 16, 15, _val)
+
+/* HW Link ID each hw link with 16-bit */
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_0_GET(_var)            WMI_GET_BITS(_var, 0, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_0_SET(_var, _val)      WMI_SET_BITS(_var, 0, 16, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_1_GET(_var)            WMI_GET_BITS(_var, 16, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_1_SET(_var, _val)      WMI_SET_BITS(_var, 16, 16, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_2_GET(_var)            WMI_GET_BITS(_var, 0, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_2_SET(_var, _val)      WMI_SET_BITS(_var, 0, 16, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_3_GET(_var)            WMI_GET_BITS(_var, 16, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_3_SET(_var, _val)      WMI_SET_BITS(_var, 16, 16, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_4_GET(_var)            WMI_GET_BITS(_var, 0, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_4_SET(_var, _val)      WMI_SET_BITS(_var, 0, 16, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_5_GET(_var)            WMI_GET_BITS(_var, 16, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_5_SET(_var, _val)      WMI_SET_BITS(_var, 16, 16, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_6_GET(_var)            WMI_GET_BITS(_var, 0, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_6_SET(_var, _val)      WMI_SET_BITS(_var, 0, 16, _val)
+
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_7_GET(_var)            WMI_GET_BITS(_var, 16, 16)
+#define WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_7_SET(_var, _val)      WMI_SET_BITS(_var, 16, 16, _val)
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tid_to_link_map */
+    A_UINT32 tlv_header;
+    /*
+     * A_UINT32
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DIR_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DIR_SET
+     *      direction: 2       // 0 - DL, 1 - UL, 2 - BiDi
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DEF_LINK_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DEF_LINK_SET
+     *      default_link_mapping:1 // 1 - Default Link Mapping Present
+     *                             // 0 - Default Link Mapping not present
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_SWT_TIME_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_SWT_TIME_SET
+     *      mapping_switch_time_present:1 // 1 - Mapping Switch Time
+     *                                    //     Field Present
+     *                                    // 0 - Mapping Switch Time
+     *                                    //     Field not Present
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DUR_TIME_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_DUR_TIME_SET
+     *      expected_duration_present:1  // 1 - Expected Duration Field Present
+     *                                   // 0 - Expected Duration Field
+     *                                   //     not Present
+     *
+     *      reserved:3
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_CTRL_LINK_MAP_PRE_SET
+     *      link_mapping_presence_indicator:8 // Link mapping presence indicator
+     *
+     *      reserved2:16 // upper 16 bits are unused
+     */
+    A_UINT32 tid_to_link_map_ctrl;
+
+    /*
+     * Mapping Switch time represents TSF time for the New TID_TO_LINK Mapping
+     * will be established
+     * 16 bit of TSF time ( from bits 10 to 25)
+     *
+     * Default to Non-Default: One TID_TO_LINK Mapping IE
+     * (wmi_mlo_ap_vdev_tid_to_link_map_ie_info)
+     * Mapping switch time present for New Non-Default Mapping
+     *
+     * Non-Default to Non-Default: Two TID_TO_LINK Mapping IE
+     * (wmi_mlo_ap_vdev_tid_to_link_map_ie_info)
+     * Mapping switch time not present for 1st TID_TO_LINK Mapping
+     * (Current Non-Default Mapping) value would be zero
+     * Mapping switch time present for 2nd TID_TO_LINK Mapping
+     * (New Non-Default Mapping)
+     *
+     * Non_Default to Default: One TID_TO_LINK Mapping IE
+     * (wmi_mlo_ap_vdev_tid_to_link_map_ie_info)
+     * Mapping switch time not present value would be zero
+     */
+    A_UINT32 map_switch_time;
+    /*
+     * Expected duration would be either duration/remaining duration of Mapping
+     *
+     * Default to Non-Default: One TID_TO_LINK Mapping IE
+     * (wmi_mlo_ap_vdev_tid_to_link_map_ie_info)
+     * Expected duration represents duration of New Non-Default Mapping
+     * will be effective
+     *
+     * Non-Default to Non-Default: Two TID_TO_LINK Mapping IE
+     * (wmi_mlo_ap_vdev_tid_to_link_map_ie_info)
+     * Expected duration represents remaing duration of 1st TID_TO_LINK
+     * Mapping (Current Non-Default Mapping)
+     * Expected duration represents duration of the 2nd TID_TO_LINK
+     * Mapping (New Non-Default Mapping ) will be effective
+     *
+     * Non_Default to Default: One TID_TO_LINK Mapping IE
+     * (wmi_mlo_ap_vdev_tid_to_link_map_ie_info)
+     * Expected duration represents remaing duration of Current Non-Default
+     * Mapping
+     */
+    A_UINT32 expected_duration;
+
+    /*
+     * for default_link_mapping ieee_tid_0_1_link_map value would be zero
+     * which means IE should not include this param
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_0_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_0_SET
+     *      tid_0_link_id:15 // TID_0 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_1_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_1_SET
+     *      tid_1_link_id:15 // TID_1 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     */
+    A_UINT32 ieee_tid_0_1_link_map;
+    /*
+     *  for default_link_mapping ieee_tid_2_3_link_map value would be zero
+     *  which means IE should not include this param
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_2_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_2_SET
+     *      tid_2_link_id:15 // TID_2 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_3_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_3_SET
+     *      tid_3_link_id:15 // TID_3 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     */
+    A_UINT32 ieee_tid_2_3_link_map;
+    /*
+     * for default_link_mapping ieee_tid_4_5_link_map value would be zero
+     * which means IE should not include this param
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_4_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_4_SET
+     *      tid_4_link_id:15 // TID_4 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_5_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_5_SET
+     *      tid_5_link_id:15 // TID_5 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     */
+    A_UINT32 ieee_tid_4_5_link_map;
+    /*
+     * for default_link_mapping ieee_tid_6_7_link_map value would be zero
+     * which means IE should not include this param
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_6_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_6_SET
+     *      tid_6_link_id:15 // TID_6 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_7_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_IEEE_LINK_ID_7_SET
+     *      tid_7_link_id:15 // TID_7 Link IDs (0 to 14)
+     *                       // Non-Zero value represents links mapped
+     *                       // to this TID.
+     *                       // Zero value represents links are not mapped
+     *                       // to this TID.
+     *
+     *      reserved:1
+     */
+    A_UINT32 ieee_tid_6_7_link_map;
+
+    /*
+     * hw_link_map will be used by the FW to pause or unpause the TIDs
+     * in all the associated MLD STAs in the corresponsing MLD VAP
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_0_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_0_SET
+     *      hw_tid_0_link_map:16
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_1_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_1_SET
+     *      hw_tid_1_link_map:16
+     */
+    A_UINT32 hw_tid_0_1_link_map;
+    /*
+     * hw_link_map will be used by the FW to pause or unpause the TIDs
+     * in all the associated MLD STAs in the corresponsing MLD VAP
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_2_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_2_SET
+     *      hw_tid_2_link_map:16
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_3_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_3_SET
+     *      hw_tid_3_link_map:16
+     */
+    A_UINT32 hw_tid_2_3_link_map;
+    /*
+     * hw_link_map will be used by the FW to pause or unpause the TIDs
+     * in all the associated MLD STAs in the corresponsing MLD VAP
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_4_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_4_SET
+     *      hw_tid_4_link_map:16
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_5_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_5_SET
+     *      hw_tid_5_link_map:16
+     */
+    A_UINT32 hw_tid_4_5_link_map;
+    /*
+     * hw_link_map will be used by the FW to pause or unpause the TIDs
+     * in all the associated MLD STAs in the corresponsing MLD VAP
+     * A_UINT32
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_6_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_6_SET
+     *      hw_tid_6_link_map:16
+     *
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_7_GET /
+     *      WMI_MLO_VDEV_TID_TO_LINK_MAP_HW_LINK_ID_7_SET
+     *      hw_tid_7_link_map:16
+     */
+    A_UINT32 hw_tid_6_7_link_map;
+} wmi_mlo_ap_vdev_tid_to_link_map_ie_info;
 
 #define WMI_IGMP_OFFLOAD_SUPPORT_DISABLE_BITMASK    0x0
 #define WMI_IGMP_V1_OFFLOAD_SUPPORT_BITMASK         0x1

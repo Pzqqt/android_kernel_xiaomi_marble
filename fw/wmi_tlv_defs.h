@@ -1319,6 +1319,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_trigger_per_tlv_param,
     WMITLV_TAG_STRUC_wmi_roam_trigger_periodic_tlv_param,
     WMITLV_TAG_STRUC_wmi_roam_trigger_hi_rssi_tlv_param,
+    WMITLV_TAG_STRUC_wmi_mlo_bcast_t2lm_info,
+    WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_ie_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1830,6 +1834,7 @@ typedef enum {
     OP(WMI_PDEV_MESH_RX_FILTER_ENABLE_CMDID) \
     OP(WMI_ODD_LIVEDUMP_REQUEST_CMDID) \
     OP(WMI_MLO_LINK_REMOVAL_CMDID) \
+    OP(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2126,6 +2131,7 @@ typedef enum {
     OP(WMI_XGAP_ENABLE_COMPLETE_EVENTID) \
     OP(WMI_ODD_LIVEDUMP_RESPONSE_EVENTID) \
     OP(WMI_MLO_LINK_REMOVAL_EVENTID) \
+    OP(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5029,6 +5035,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_TEARDOWN_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tid_to_link_map, tid_to_link_map, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_PEER_TID_TO_LINK_MAP_CMDID);
 
+/** WMI cmd used to setup Tid to Link Mapping for a vdev */
+#define WMITLV_TABLE_WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_cmd_fixed_param, wmi_mlo_ap_vdev_tid_to_link_map_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_ap_vdev_tid_to_link_map_ie_info, mlo_vdev_tid_to_link_map_ie_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID);
+
 /* Mcast ipv4 address filter list cmd */
 #define WMITLV_TABLE_WMI_VDEV_IGMP_OFFLOAD_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_igmp_offload_fixed_param, wmi_igmp_offload_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -5473,7 +5485,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STA_KICKOUT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mgmt_ml_info, ml_info, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bpcc_bufp, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_is_my_mgmt_frame, my_frame, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_removal_tbtt_count, link_removal_tbtt_count, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_link_removal_tbtt_count, link_removal_tbtt_count, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mlo_bcast_t2lm_info, mlo_bcast_t2lm_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_EVENTID);
 
 /* Management Rx FW Consumed Event */
@@ -7063,6 +7076,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_REMOVAL_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_link_removal_tbtt_update, wmi_mlo_link_removal_tbtt_update, tbtt_update, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_REMOVAL_EVENTID);
 
+/* WMI MLO T2LM Vdev event */
+#define WMITLV_TABLE_WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param, wmi_mlo_ap_vdev_tid_to_link_map_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID);
 
 
 
