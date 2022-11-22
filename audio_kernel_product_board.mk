@@ -18,6 +18,7 @@ PRODUCT_PACKAGES += $(KERNEL_MODULES_OUT)/q6_notifier_dlkm.ko\
 	$(KERNEL_MODULES_OUT)/wcd9xxx_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/swr_haptics_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/stub_dlkm.ko \
+	$(KERNEL_MODULES_OUT)/wsa881x_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/machine_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/lpass_cdc_wsa2_macro_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/lpass_cdc_wsa_macro_dlkm.ko \
