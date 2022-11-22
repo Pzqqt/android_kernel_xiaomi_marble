@@ -801,10 +801,21 @@ struct iommu_domain *ipa3_get_eth1_smmu_domain(void)
 	return ipa3_get_smmu_domain_by_type(IPA_SMMU_CB_ETH1);
 }
 
-
 struct iommu_domain *ipa3_get_11ad_smmu_domain(void)
 {
 	return ipa3_get_smmu_domain_by_type(IPA_SMMU_CB_11AD);
+}
+
+struct device *ipa3_get_wlan_device(void)
+{
+	if (ipa3_ctx->ipa_hw_type == IPA_HW_v4_5 &&
+		ipa_get_wdi_version() == IPA_WDI_1) {
+		if (smmu_cb[IPA_SMMU_CB_WLAN].valid)
+			return smmu_cb[IPA_SMMU_CB_WLAN].dev;
+		IPAERR("CB not valid\n");
+		return NULL;
+	}
+	return ipa3_ctx->pdev;
 }
 
 struct device *ipa3_get_dma_dev(void)
@@ -812,6 +823,7 @@ struct device *ipa3_get_dma_dev(void)
 	return ipa3_ctx->pdev;
 }
 EXPORT_SYMBOL(ipa3_get_dma_dev);
+
 
 /**
  * ipa3_get_smmu_ctx()- Return smmu context for the given cb_type

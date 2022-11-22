@@ -3416,6 +3416,26 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			{ 31, 31, 8, 8, IPA_EE_AP }, IPA_TX_INSTANCE_NA },
 
 	/* IPA_4_5_AUTO */
+	/* wdi.1.0 - wlan_4_cons will be used as second mcc pipe
+	 * and wlan_3_cons will be used as HW pipe*/
+	[IPA_4_5_AUTO][IPA_CLIENT_WLAN4_CONS]          = {
+			true, IPA_v4_5_GROUP_UL_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{27, 8, 8, 14, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3} },
+	[IPA_4_5_AUTO][IPA_CLIENT_WLAN3_CONS]          = {
+			true, IPA_v4_5_GROUP_UL_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{13, 3, 9, 9, IPA_EE_UC, GSI_SMART_PRE_FETCH, 4} },
+        [IPA_4_5_AUTO][IPA_CLIENT_WLAN3_PROD]           = {
+                        true, IPA_v4_5_GROUP_UL_DL,
+                        true,
+                        IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+                        QMB_MASTER_SELECT_DDR,
+                        {0, 2, 8, 16, IPA_EE_UC, GSI_SMART_PRE_FETCH, 3} },
 	[IPA_4_5_AUTO][IPA_CLIENT_WLAN2_PROD]          = {
 			true, IPA_v4_5_GROUP_UL_DL,
 			true,
@@ -9743,8 +9763,8 @@ int ipa3_write_qmap_id(struct ipa_ioc_write_qmapid *param_in)
 		param_in->client == IPA_CLIENT_RTK_ETHERNET_PROD) {
 		result = ipa3_cfg_ep_metadata(ipa_ep_idx, &meta);
 	} else if (param_in->client == IPA_CLIENT_WLAN1_PROD ||
-			   param_in->client == IPA_CLIENT_WLAN2_PROD ||
-				param_in->client == IPA_CLIENT_WLAN3_PROD) {
+			param_in->client == IPA_CLIENT_WLAN2_PROD ||
+			param_in->client == IPA_CLIENT_WLAN3_PROD) {
 		ipa3_ctx->ep[ipa_ep_idx].cfg.meta = meta;
 		if (ipa_get_wdi_version() == IPA_WDI_3 &&
 			(param_in->client == IPA_CLIENT_WLAN2_PROD ||
