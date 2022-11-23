@@ -342,6 +342,8 @@ void sde_mdp_halt_vbif_xin(struct sde_mdp_vbif_halt_params *params);
 int sde_mdp_init_vbif(void);
 const struct sde_rot_bus_data *sde_get_rot_reg_bus_value(u32 usecase_ndx);
 
+int sde_mdp_parse_dt_prop_len(struct platform_device *pdev, char *prop_name);
+
 #define SDE_VBIF_WRITE(mdata, offset, value) \
 		(sde_reg_w(&mdata->vbif_nrt_io, offset, value, 0))
 #define SDE_VBIF_READ(mdata, offset) \
