@@ -3259,6 +3259,11 @@ typedef struct {
 #define WMI_TARGET_CAP_UL_MU_MIMO_TX_SUPPORT_6GHZ_SET(target_cap_flags, value) \
     WMI_SET_BITS(target_cap_flags, 7, 1, value)
 
+#define WMI_TARGET_CAP_MAX_ML_BSS_NUM_GET(target_cap_flags) \
+    WMI_GET_BITS(target_cap_flags, 8, 3)
+#define WMI_TARGET_CAP_MAX_ML_BSS_NUM_SET(target_cap_flags, value) \
+    WMI_SET_BITS(target_cap_flags, 8, 3, value)
+
 /*
  * wmi_htt_msdu_idx_to_htt_msdu_qtype GET/SET APIs
  */
@@ -3397,7 +3402,8 @@ typedef struct {
      * Bit 5 - UL MUMIMO Tx support on 5 GHz (STA Mode)
      * Bit 6 - UL MUMIMO Rx support on 6 GHz (AP Mode)
      * Bit 7 - UL MUMIMO Tx support on 6 GHz (STA Mode)
-     * Bits 31:8 - Reserved
+     * Bits 10:8 - max ML BSS number supported, range [0-7]
+     * Bits 31:11 - Reserved
      */
     A_UINT32 target_cap_flags;
 
