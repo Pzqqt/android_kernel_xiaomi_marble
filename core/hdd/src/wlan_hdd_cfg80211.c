@@ -7079,8 +7079,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX + 1];
-	tSirVersionString driver_version;
-	tSirVersionString firmware_version;
+	uint8_t *firmware_version = NULL;
 	int status;
 	struct sk_buff *reply_skb;
 	uint32_t skb_len = 0, count = 0;
@@ -7108,9 +7107,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 
 	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION]) {
 		hdd_debug("Rcvd req for Driver version");
-		strlcpy(driver_version, QWLAN_VERSIONSTR,
-			sizeof(driver_version));
-		skb_len += strlen(driver_version) + 1;
+		skb_len += strlen(QWLAN_VERSIONSTR) + 1;
 		count++;
 	}
 
@@ -7119,16 +7116,20 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 		if (!pld_get_soc_info(hdd_ctx->parent_dev, &info))
 			stt_flag = true;
 
-		snprintf(firmware_version, sizeof(firmware_version),
-			"FW:%d.%d.%d.%d.%d.%d HW:%s STT:%s",
-			hdd_ctx->fw_version_info.major_spid,
-			hdd_ctx->fw_version_info.minor_spid,
-			hdd_ctx->fw_version_info.siid,
-			hdd_ctx->fw_version_info.rel_id,
-			hdd_ctx->fw_version_info.crmid,
-			hdd_ctx->fw_version_info.sub_id,
-			hdd_ctx->target_hw_name,
-			(stt_flag ? info.fw_build_id : " "));
+		firmware_version = qdf_mem_malloc(SIR_VERSION_STRING_LEN);
+		if (!firmware_version)
+			return -ENOMEM;
+
+		snprintf(firmware_version, SIR_VERSION_STRING_LEN,
+			 "FW:%d.%d.%d.%d.%d.%d HW:%s STT:%s",
+			 hdd_ctx->fw_version_info.major_spid,
+			 hdd_ctx->fw_version_info.minor_spid,
+			 hdd_ctx->fw_version_info.siid,
+			 hdd_ctx->fw_version_info.rel_id,
+			 hdd_ctx->fw_version_info.crmid,
+			 hdd_ctx->fw_version_info.sub_id,
+			 hdd_ctx->target_hw_name,
+			 (stt_flag ? info.fw_build_id : " "));
 		skb_len += strlen(firmware_version) + 1;
 		count++;
 	}
@@ -7141,6 +7142,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 
 	if (count == 0) {
 		hdd_err("unknown attribute in get_wifi_info request");
+		qdf_mem_free(firmware_version);
 		return -EINVAL;
 	}
 
@@ -7149,13 +7151,14 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 
 	if (!reply_skb) {
 		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		qdf_mem_free(firmware_version);
 		return -ENOMEM;
 	}
 
 	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION]) {
 		if (nla_put_string(reply_skb,
 			    QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION,
-			    driver_version))
+			    QWLAN_VERSIONSTR))
 			goto error_nla_fail;
 	}
 
@@ -7173,10 +7176,12 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 			goto error_nla_fail;
 	}
 
+	qdf_mem_free(firmware_version);
 	return cfg80211_vendor_cmd_reply(reply_skb);
 
 error_nla_fail:
 	hdd_err("nla put fail");
+	qdf_mem_free(firmware_version);
 	kfree_skb(reply_skb);
 	return -EINVAL;
 }
