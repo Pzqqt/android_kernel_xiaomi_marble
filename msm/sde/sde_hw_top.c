@@ -335,6 +335,9 @@ void sde_hw_reset_ubwc(struct sde_hw_mdp *mdp, struct sde_mdss_cfg *m)
 		if (IS_UBWC_30_SUPPORTED(ubwc_enc_version)) {
 			ver = 1;
 			mode = 0;
+		} else if (IS_UBWC_20_SUPPORTED(ubwc_enc_version)) {
+			ver = 0;
+			mode = 0;
 		}
 
 		SDE_REG_WRITE(&c, UBWC_STATIC, reg);
