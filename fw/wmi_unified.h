@@ -1468,6 +1468,7 @@ typedef enum {
     WMI_TWT_BTWT_INVITE_STA_CMDID,
     WMI_TWT_BTWT_REMOVE_STA_CMDID,
     WMI_TWT_NUDGE_DIALOG_CMDID,
+    WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID, /* XPAN TWT */
 
     /** WMI commands related to motion detection **/
     WMI_MOTION_DET_CONFIG_PARAM_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MOTION_DET),
@@ -9935,6 +9936,33 @@ typedef struct {
  *     wmi_wmm_params wmm_params_ac_vo;
  */
 } wmi_pdev_set_wmm_params_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pifs_params */
+    /* The unit of this offset is PIFS slot time */
+    A_UINT32 sap_pifs_offset;
+    A_UINT32 leb_pifs_offset;
+    A_UINT32 reb_pifs_offset;
+} wmi_pifs_params;
+
+typedef enum {
+    WMI_EDCA_PARAM_TYPE_AGGRESSIVE = 0,
+    WMI_EDCA_PARAM_TYPE_PIFS = 1,
+} WMI_EDCA_PARAM_TYPE;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_twt_edca_params_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 type; /* contains a WMI_EDCA_PARAM_TYPE value */
+    /*
+     * This TLV is (optionally) followed by other TLVs as below:
+     * wmi_wmm_params wmm_params[0/1];
+     *     present if type is WMI_EDCA_PARAM_TYPE_AGGRESSIVE
+     * wmi_pifs_params pifs_params[0/1];
+     *     present if type is WMI_EDCA_PARAM_TYPE_PIFS
+     */
+} wmi_vdev_set_twt_edca_params_cmd_fixed_param;
 
 typedef enum {
     WMI_REQUEST_PEER_STAT            = 0x00001,
@@ -32806,6 +32834,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_11D_SCAN_STOP_CMDID);
         WMI_RETURN_STRING(WMI_VENDOR_VDEV_CMDID);
         WMI_RETURN_STRING(WMI_VENDOR_PEER_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID); /* XPAN TWT */
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
