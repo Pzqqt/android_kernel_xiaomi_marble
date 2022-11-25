@@ -10,18 +10,13 @@ ccflags-y += -I$(srctree)/drivers/media/platform/msm/synx/
 # to follow up with mmrm team if techpack users need to define this for long term?
 KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM
 
-# ported from Android.mk
-$(info within KBUILD file KBUILD_EXTRA_SYMBOLS = $(KBUILD_EXTRA_SYMBOLS))
-
 ifeq ($(CONFIG_ARCH_WAIPIO), y)
-$(info within KBUILD file CONFIG_ARCH_WAIPIO = $(CONFIG_ARCH_WAIPIO))
 # include $(EVA_ROOT)/config/waipio.mk
 KBUILD_CPPFLAGS += -DCONFIG_EVA_WAIPIO=1
 ccflags-y += -DCONFIG_EVA_WAIPIO=1
 endif
 
 ifeq ($(CONFIG_ARCH_KALAMA), y)
-$(info within KBUILD file CONFIG_ARCH_KALAMA = $(CONFIG_ARCH_KALAMA))
 # include $(EVA_ROOT)/config/waipio.mk
 KBUILD_CPPFLAGS += -DCONFIG_EVA_KALAMA=1
 ccflags-y += -DCONFIG_EVA_KALAMA=1

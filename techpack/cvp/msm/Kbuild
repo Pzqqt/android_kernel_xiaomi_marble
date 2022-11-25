@@ -13,9 +13,6 @@ ccflags-y += -I$(srctree)/techpack/eva/msm/eva/ \
 # to follow up with mmrm team if techpack users need to define this for long term?
 KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM
 
-# ported from Android.mk
-$(info within KBUILD file KBUILD_EXTRA_SYMBOLS = $(KBUILD_EXTRA_SYMBOLS))
-
 msm-cvp-objs := eva/cvp.o \
         eva/msm_cvp_ioctl.o \
         eva/msm_cvp_platform.o \
