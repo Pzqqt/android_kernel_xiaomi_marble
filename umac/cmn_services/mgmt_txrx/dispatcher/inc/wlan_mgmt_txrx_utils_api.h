@@ -121,7 +121,7 @@ enum mgmt_subtype {
  * @ACTION_CATEGORY_SIG: S1G Action frame
  * @ACTION_CATEGORY_FLOW_CONTROL: Flow Control Action frame
  * @ACTION_CATEGORY_CONTROL_RSP_MCS_NEGO: Control Response MCS Negotiation frame
- * @ACTION_CATEGORY_FIL: FILS Action frame
+ * @ACTION_CATEGORY_FILS: FILS Action frame
  * @ACTION_CATEGORY_CDMG: CDMG Action frame
  * @ACTION_CATEGORY_CMMG: CMMG Action frame
  * @ACTION_CATEGORY_GLK: GLK Action frame
@@ -232,7 +232,8 @@ enum block_ack_actioncode {
  * @PUB_ACTION_GAS_COMEBACK_RESPONSE: GAS comeback respose action frame
  * @PUB_ACTION_TDLS_DISCRESP: tdls discovery response public action frame
  * @PUB_ACTION_FTM_REQUEST: FTM request action frame
- * @PUB_ACTION_FTM_RESPONSE: FTM respose action frame
+ * @PUB_ACTION_FTM_RESPONSE: FTM response action frame
+ * @PUB_ACTION_FILS_DISCOVERY: FILS Discovery action frame
  */
 enum pub_actioncode {
 	PUB_ACTION_2040_BSS_COEXISTENCE = 0,
@@ -245,6 +246,7 @@ enum pub_actioncode {
 	PUB_ACTION_TDLS_DISCRESP = 14,
 	PUB_ACTION_FTM_REQUEST = 32,
 	PUB_ACTION_FTM_RESPONSE = 33,
+	PUB_ACTION_FILS_DISCOVERY = 34,
 };
 
 /**
@@ -372,6 +374,7 @@ enum wnm_actioncode {
  * @TDLS_PEER_PSM_RESPONSE: tdls peer psm response frame
  * @TDLS_PEER_TRAFFIC_RESPONSE: tdls peer traffic response frame
  * @TDLS_DISCOVERY_REQUEST: tdls discovery request frame
+ * @TDLS_DISCOVERY_RESPONSE: tdls discovery response frame
  */
 enum tdls_actioncode {
 	TDLS_SETUP_REQUEST = 0,
@@ -497,6 +500,7 @@ enum vht_actioncode {
 /**
  * enum twt_actioncode - twt action frames
  * @TWT_SETUP: twt set up action frame
+ * @TWT_TEARDOWN: twt teardown action frame
  * @TWT_INFORMATION: twt information action frame
  */
 enum twt_actioncode {
@@ -558,6 +562,10 @@ struct action_frm_hdr {
  * @MGMT_ACTION_RRM_LINK_MEASUREMENT_RPT: rrm link meas. report action frame
  * @MGMT_ACTION_RRM_NEIGHBOR_REQ: rrm neighbor request action frame
  * @MGMT_ACTION_RRM_NEIGHBOR_RPT: rrm neighbor response action frame
+ * @MGMT_ACTION_FT_REQUEST: ft request action frame
+ * @MGMT_ACTION_FT_RESPONSE: ft response action frame
+ * @MGMT_ACTION_FT_CONFIRM: ft confirm action frame
+ * @MGMT_ACTION_FT_ACK: ft ack action frame
  * @MGMT_ACTION_HT_NOTIFY_CHANWIDTH: notify channel width action frame
  * @MGMT_ACTION_HT_SMPS:            spatial multiplexing power save action frame
  * @MGMT_ACTION_HT_PSMP:            psmp action frame
@@ -624,7 +632,7 @@ struct action_frm_hdr {
  * @MGMT_ACTION_GAS_COMEBACK_REQUEST: GAS Comeback request action frame
  * @MGMT_ACTION_GAS_COMEBACK_RESPONSE: GAS Comeback response action frame
  * @MGMT_ACTION_FST_SETUP_REQ: FST setup request frame
- * @MGMT_ACTION_FST_SETUP_RSPA: FST setup response frame
+ * @MGMT_ACTION_FST_SETUP_RSP: FST setup response frame
  * @MGMT_ACTION_FST_TEAR_DOWN: FST qos teardown frame
  * @MGMT_ACTION_FST_ACK_REQ: FST ack frame for request
  * @MGMT_ACTION_FST_ACK_RSP: FST ack frame for response
@@ -642,6 +650,7 @@ struct action_frm_hdr {
  * @MGMT_ACTION_TWT_INFORMATION: TWT information frame
  * @MGMT_ACTION_FTM_REQUEST: FTM request frame
  * @MGMT_ACTION_FTM_RESPONSE: FTM response frame
+ * @MGMT_ACTION_FILS_DISCOVERY: FILS Discovery frame
  * @MGMT_MAX_FRAME_TYPE:         max. mgmt frame types
  */
 enum mgmt_frame_type {
@@ -773,6 +782,7 @@ enum mgmt_frame_type {
 	MGMT_ACTION_TWT_INFORMATION,
 	MGMT_ACTION_FTM_REQUEST,
 	MGMT_ACTION_FTM_RESPONSE,
+	MGMT_ACTION_FILS_DISCOVERY,
 	MGMT_MAX_FRAME_TYPE,
 };
 
@@ -785,7 +795,7 @@ enum mgmt_frame_type {
  * @chan_freq: channel frequency on which this frame is received
  * @channel: channel on which this frame is received
  * @snr: snr information used to call rssi
- * @rssi_ctl[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA]: RSSI of PRI 20MHz for each chain
+ * @rssi_ctl: RSSI of PRI 20MHz for each chain
  * @rate: Rate kbps
  * @phy_mode: rx phy mode
  * @buf_len: length of the frame
@@ -798,6 +808,7 @@ enum mgmt_frame_type {
  *         scan source for a scan result mgmt frame
  * @rssi: combined RSSI, i.e. the sum of the snr + noise floor (dBm units)
  * @tsf_delta: tsf delta
+ * @tsf_l32: tsf value
  * @pdev_id: pdev id
  * @rx_params: pointer to other rx params
  *             (win specific, will be removed in phase 4)
