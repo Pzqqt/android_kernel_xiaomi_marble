@@ -201,13 +201,6 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 }
 #endif /* NDP_SAP_CONCURRENCY_ENABLE */
 
-static void hdd_swap_frequencies(uint32_t *a, uint32_t *b)
-{
-	*b ^= *a;
-	*a ^= *b;
-	*b ^= *a;
-}
-
 /**
  * hdd_ndi_config_ch_list() - Configure the channel list for NDI start
  * @hdd_ctx: hdd context
@@ -233,8 +226,12 @@ hdd_ndi_config_ch_list(struct hdd_context *hdd_ctx,
 		       tCsrChannelInfo *ch_info)
 {
 	struct regulatory_channel *cur_chan_list;
-	int i = 0, swap_index = 0;
-	QDF_STATUS status;
+	int i;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	static const qdf_freq_t valid_freq[] = {NAN_SOCIAL_FREQ_5GHZ_UPPER_BAND,
+						NAN_SOCIAL_FREQ_5GHZ_LOWER_BAND,
+						NAN_SOCIAL_FREQ_2_4GHZ};
+	enum channel_state state;
 
 	ch_info->numOfChannels = 0;
 	cur_chan_list = qdf_mem_malloc(sizeof(*cur_chan_list) *
@@ -245,14 +242,26 @@ hdd_ndi_config_ch_list(struct hdd_context *hdd_ctx,
 	status = ucfg_reg_get_current_chan_list(hdd_ctx->pdev, cur_chan_list);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err_rl("Failed to get the current channel list");
-		qdf_mem_free(cur_chan_list);
-		return QDF_STATUS_E_IO;
+		status = QDF_STATUS_E_IO;
+		goto end;
 	}
 
 	ch_info->freq_list = qdf_mem_malloc(sizeof(uint32_t) * NUM_CHANNELS);
 	if (!ch_info->freq_list) {
-		qdf_mem_free(cur_chan_list);
-		return QDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
+		goto end;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(valid_freq); i++) {
+		state = wlan_reg_get_channel_state_for_freq(hdd_ctx->pdev,
+							    valid_freq[i]);
+		if (state != CHANNEL_STATE_DISABLE &&
+		    state != CHANNEL_STATE_INVALID) {
+			ch_info->freq_list[0] =  valid_freq[i];
+			ch_info->numOfChannels = 1;
+			status = QDF_STATUS_SUCCESS;
+			goto end;
+		}
 	}
 
 	for (i = 0; i < NUM_CHANNELS; i++) {
@@ -274,51 +283,19 @@ hdd_ndi_config_ch_list(struct hdd_context *hdd_ctx,
 		if (wlan_reg_is_6ghz_chan_freq(cur_chan_list[i].center_freq))
 			continue;
 
-		ch_info->freq_list[ch_info->numOfChannels++] =
-					cur_chan_list[i].center_freq;
+		ch_info->freq_list[0] = cur_chan_list[i].center_freq;
+		ch_info->numOfChannels = 1;
+		status = QDF_STATUS_SUCCESS;
+		goto end;
 	}
 
 	if (!ch_info->numOfChannels) {
 		status = QDF_STATUS_E_NULL_VALUE;
 		qdf_mem_free(ch_info->freq_list);
-		goto end;
-	}
-
-	/**
-	 * Keep the valid channels in list in below order,
-	 * 149, 44, 6, rest of the channels
-	 */
-	for (i = ch_info->numOfChannels - 1; i >= 0; i--) {
-		if (ch_info->freq_list[i] != NAN_SOCIAL_FREQ_5GHZ_UPPER_BAND)
-			continue;
-		hdd_swap_frequencies(&ch_info->freq_list[i],
-				     &ch_info->freq_list[swap_index]);
-		swap_index++;
-		break;
-	}
-
-	for (i = ch_info->numOfChannels - 1; i >= 0; i--) {
-		if (ch_info->freq_list[i] != NAN_SOCIAL_FREQ_5GHZ_LOWER_BAND)
-			continue;
-
-		hdd_swap_frequencies(&ch_info->freq_list[i],
-				     &ch_info->freq_list[swap_index]);
-		swap_index++;
-		break;
-	}
-
-	for (i = ch_info->numOfChannels - 1; i >= 0; i--) {
-		if (ch_info->freq_list[i] != NAN_SOCIAL_FREQ_2_4GHZ)
-			continue;
-
-		hdd_swap_frequencies(&ch_info->freq_list[i],
-				     &ch_info->freq_list[swap_index]);
-		break;
 	}
 
 end:
 	qdf_mem_free(cur_chan_list);
-
 	return status;
 }
 
