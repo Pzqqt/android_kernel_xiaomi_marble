@@ -193,6 +193,7 @@ struct spi_geni_master {
 	int num_tx_eot;
 	int num_rx_eot;
 	int num_xfers;
+	atomic_t is_irq_enable;
 	void *ipc;
 	bool gsi_mode; /* GSI Mode */
 	bool shared_ee; /* Dual EE use case */
@@ -219,6 +220,7 @@ static void spi_slv_setup(struct spi_geni_master *mas);
 static void spi_master_setup(struct spi_geni_master *mas);
 static void geni_spi_dma_unprepare(struct spi_master *spi,
 					struct spi_transfer *xfer);
+static void spi_geni_irq_enable(struct spi_geni_master *mas, bool irq_flag);
 
 static ssize_t spi_slave_state_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -2356,6 +2358,8 @@ static int spi_geni_probe(struct platform_device *pdev)
 		}
 	}
 
+	atomic_set(&geni_mas->is_irq_enable, 0);
+
 	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
 	if (ret) {
 		ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
@@ -2497,10 +2501,10 @@ static int spi_geni_runtime_suspend(struct device *dev)
 	struct spi_master *spi = get_spi_master(dev);
 	struct spi_geni_master *geni_mas = spi_master_get_devdata(spi);
 
-	disable_irq(geni_mas->irq);
 	if (geni_mas->is_le_vm)
 		return spi_geni_levm_suspend_proc(geni_mas, spi);
 
+	spi_geni_irq_enable(geni_mas, false);
 	SPI_LOG_DBG(geni_mas->ipc, false, geni_mas->dev, "%s:\n", __func__);
 
 	if (geni_mas->gsi_mode) {
@@ -2599,7 +2603,7 @@ exit_rt_resume:
 	if (geni_mas->gsi_mode)
 		ret = spi_geni_gpi_pause_resume(geni_mas, false);
 
-	enable_irq(geni_mas->irq);
+	spi_geni_irq_enable(geni_mas, true);
 	return ret;
 }
 
@@ -2657,6 +2661,41 @@ static int spi_geni_suspend(struct device *dev)
 	return 0;
 }
 #endif
+
+/**
+ * spi_geni_irq_enable() - Enable or Disable irq.
+ * @mas: Pointer to spi_geni_master structure.
+ * @irq_flag: irq flag which indicates irq enable
+ *            or disable
+ *            irq_flag - false - irq disable
+ *            irq_flag - true  - irq enable.
+ *
+ * This function is used to enable or disable irq.
+ * Based on irq_flag the enabling or disabling of
+ * irq will be done. Enable if irq_flag is true,
+ * disable if irq_flag is false.
+ * Return: None.
+ */
+static void spi_geni_irq_enable(struct spi_geni_master *mas, bool irq_flag)
+{
+	if (irq_flag) {
+		if (!(atomic_read(&mas->is_irq_enable))) {
+			enable_irq(mas->irq);
+			atomic_set(&mas->is_irq_enable, 1);
+		} else {
+			GENI_SE_DBG(mas->ipc, true, mas->dev,
+				    "%s: irq already enabled\n", __func__);
+		}
+	} else {
+		if (atomic_read(&mas->is_irq_enable)) {
+			disable_irq(mas->irq);
+			atomic_set(&mas->is_irq_enable, 0);
+		} else {
+			GENI_SE_DBG(mas->ipc, true, mas->dev,
+				    "%s: irq already disabled\n", __func__);
+		}
+	}
+}
 
 static const struct dev_pm_ops spi_geni_pm_ops = {
 	SET_RUNTIME_PM_OPS(spi_geni_runtime_suspend,
