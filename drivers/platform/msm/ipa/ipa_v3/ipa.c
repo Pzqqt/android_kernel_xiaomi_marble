@@ -8379,10 +8379,15 @@ static ssize_t ipa3_write(struct file *file, const char __user *buf,
 	/* Check MHI configuration on MDM devices */
 	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
 
+		/* todo in future: change vlan_mode_iface from bool to enum
+		 * and support double vlan for all ifaces
+		 */
+		if (strnstr(dbg_buff, "double-vlan", strlen(dbg_buff)))
+			ipa3_ctx->is_eth_double_vlan_mode = true;
+
 		if (strnstr(dbg_buff, "vlan", strlen(dbg_buff))) {
 			if (strnstr(dbg_buff, STR_ETH_IFACE, strlen(dbg_buff)))
-				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_EMAC] =
-				true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_EMAC] = true;
 #if IPA_ETH_API_VER >= 2
 			/* In Dual NIC mode we get "vlan: eth [eth0|eth1] [eth0|eth1]?" while device name is
 			   "eth0" in legacy so, we set it to false to diffrentiate Dual NIC from legacy */
@@ -8396,11 +8401,9 @@ static ssize_t ipa3_write(struct file *file, const char __user *buf,
 			}
 #endif
 			if (strnstr(dbg_buff, STR_RNDIS_IFACE, strlen(dbg_buff)))
-				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_RNDIS] =
-				true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_RNDIS] = true;
 			if (strnstr(dbg_buff, STR_ECM_IFACE, strlen(dbg_buff)))
-				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_ECM] =
-				true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_ECM] = true;
 
 			/*
 			 * when vlan mode is passed to our dev we expect

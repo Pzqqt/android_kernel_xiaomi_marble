@@ -995,6 +995,9 @@ int ipa3_eth_connect(
 	ep->cfg.nat.nat_en = IPA_CLIENT_IS_PROD(client_type) ?
 		IPA_SRC_NAT : IPA_BYPASS_NAT;
 	ep->cfg.hdr.hdr_len = vlan_mode ? VLAN_ETH_HLEN : ETH_HLEN;
+	/* add support for double-vlan eth pdu */
+	if (vlan_mode && ipa3_ctx->is_eth_double_vlan_mode)
+		ep->cfg.hdr.hdr_len = VLAN_ETH_HLEN + VLAN_HLEN; /* 22 if double vlan */
 	ep->cfg.mode.mode = IPA_BASIC;
 	if (IPA_CLIENT_IS_CONS(client_type)) {
 		ep->cfg.aggr.aggr_en = IPA_ENABLE_AGGR;
