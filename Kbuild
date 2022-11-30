@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
+ifneq ($(CONFIG_ARCH_MONACO), y)
 KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM=1
+endif
 
 ifeq ($(CONFIG_ARCH_WAIPIO), y)
 include $(VIDEO_ROOT)/config/waipio_video.conf
