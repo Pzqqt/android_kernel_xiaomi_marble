@@ -1325,6 +1325,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_ap_vdev_tid_to_link_map_ie_info,
     WMITLV_TAG_STRUC_wmi_vdev_set_twt_edca_params_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pifs_params,
+    WMITLV_TAG_STRUC_wmi_tas_power_history_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_tas_power_history_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1838,6 +1840,7 @@ typedef enum {
     OP(WMI_MLO_LINK_REMOVAL_CMDID) \
     OP(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID) \
     OP(WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID) \
+    OP(WMI_TAS_POWER_HISTORY_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2135,6 +2138,7 @@ typedef enum {
     OP(WMI_ODD_LIVEDUMP_RESPONSE_EVENTID) \
     OP(WMI_MLO_LINK_REMOVAL_EVENTID) \
     OP(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_EVENTID) \
+    OP(WMI_TAS_POWER_HISTORY_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5213,6 +5217,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_GET_BUF_INFO_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_dbam_cmd_fixed_param, wmi_coex_dbam_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_COEX_DBAM_CMDID);
 
+/* coex TAS power history cmd */
+#define WMITLV_TABLE_WMI_TAS_POWER_HISTORY_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tas_power_history_cmd_fixed_param, wmi_tas_power_history_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TAS_POWER_HISTORY_CMDID);
+
 /* VDEV SR prohibit cmd */
 #define WMITLV_TABLE_WMI_VDEV_PARAM_ENABLE_SR_PROHIBIT_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_param_enable_sr_prohibit_fixed_param, wmi_vdev_param_enable_sr_prohibit_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -7062,6 +7071,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WOW_COAP_BUF_INFO_EVENTID);
 #define WMITLV_TABLE_WMI_COEX_DBAM_COMPLETE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_dbam_complete_event_fixed_param, wmi_coex_dbam_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_COEX_DBAM_COMPLETE_EVENTID);
+
+/* coex TAS power history cmd complete event */
+#define WMITLV_TABLE_WMI_TAS_POWER_HISTORY_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tas_power_history_event_fixed_param, wmi_tas_power_history_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TAS_POWER_HISTORY_EVENTID);
 
 #define WMITLV_TABLE_WMI_HEALTH_MON_INIT_DONE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_health_mon_init_done_fixed_param, wmi_health_mon_init_done_fixed_param, fixed_param, WMITLV_SIZE_FIX)
