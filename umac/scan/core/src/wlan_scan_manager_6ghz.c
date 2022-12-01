@@ -280,21 +280,12 @@ void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
 	uint8_t i, j;
 	enum channel_enum freq_idx;
 	struct regulatory_channel *cur_chan_list;
-	bool is_6g_ch_present = false, found;
+	bool found;
 	QDF_STATUS status;
 	uint8_t temp_num_chan = 0;
 
-	for (i = 0; i < chan_list->num_chan; i++) {
-		if (wlan_reg_is_6ghz_chan_freq(chan_list->chan[i].freq)) {
-			scm_debug("At least one 6G chan present in scan req:%d",
-				  chan_list->chan[i].freq);
-			is_6g_ch_present = true;
-			break;
-		}
-	}
-
-	if (!is_6g_ch_present && !is_colocated_6ghz_scan_enabled) {
-		scm_debug("Neither 6G chan present nor flag set in scan req");
+	if (!is_colocated_6ghz_scan_enabled) {
+		scm_debug("flag is not set in scan req");
 		return;
 	}
 
@@ -340,18 +331,6 @@ void scm_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
 		  chan_list->num_chan);
 	*num_scan_ch = chan_list->num_chan;
 	qdf_mem_free(cur_chan_list);
-}
-
-static void scm_scan_add_all_valid_6g_channels(struct wlan_objmgr_pdev *pdev,
-					       struct scan_start_request *req,
-					       uint8_t *num_scan_ch)
-{
-	bool is_colocated_6ghz_scan_enabled =
-		req->scan_req.scan_policy_colocated_6ghz;
-
-	scm_add_all_valid_6g_channels(pdev, &req->scan_req.chan_list,
-				      num_scan_ch,
-				      is_colocated_6ghz_scan_enabled);
 }
 
 static void
@@ -455,6 +434,85 @@ scm_is_6ghz_scan_optimization_supported(struct wlan_objmgr_psoc *psoc)
 					    WLAN_SOC_CEXT_SCAN_PER_CH_CONFIG);
 }
 
+void scm_add_channel_flags(struct wlan_objmgr_vdev *vdev,
+			   struct chan_list *chan_list,
+			   uint8_t *num_chan,
+			   bool is_colocated_6ghz_scan_enabled,
+			   bool is_pno_scan)
+{
+	struct wlan_scan_obj *scan_obj;
+	enum scan_mode_6ghz scan_mode;
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t num_scan_chan = *num_chan;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return;
+	scan_obj = wlan_vdev_get_scan_obj(vdev);
+	if (!scan_obj) {
+		scm_err("scan_obj is NULL");
+		return;
+	}
+
+	scan_mode = scan_obj->scan_def.scan_mode_6g;
+
+	switch (scan_mode) {
+	case SCAN_MODE_6G_RNR_ONLY:
+		/*
+		 * When the ini is set to SCAN_MODE_6G_RNR_ONLY
+		 * always set RNR flag for all(PSC and non-PSC) channels.
+		 */
+		scm_set_rnr_flag_all_6g_ch(&chan_list->chan[0], num_scan_chan);
+		break;
+	case SCAN_MODE_6G_PSC_CHANNEL:
+		/*
+		 * When the ini is set to SCAN_MODE_6G_PSC_CHANNEL,
+		 * always set RNR flag for non-PSC channels.
+		 */
+		scm_set_rnr_flag_non_psc_6g_ch(&chan_list->chan[0],
+					       num_scan_chan);
+		break;
+	case SCAN_MODE_6G_PSC_DUTY_CYCLE:
+	case SCAN_MODE_6G_ALL_DUTY_CYCLE:
+		if (!is_pno_scan && !scm_is_duty_cycle_scan(scan_obj))
+			scm_set_rnr_flag_all_6g_ch(&chan_list->chan[0],
+						   num_scan_chan);
+		else if (scan_mode == SCAN_MODE_6G_PSC_DUTY_CYCLE) {
+			if (is_pno_scan)
+				scm_debug("Duty cycle scan not supported in pno");
+			scm_set_rnr_flag_non_psc_6g_ch(&chan_list->chan[0],
+						       num_scan_chan);
+		}
+		fallthrough;
+		/* Even when the scan mode is SCAN_MODE_6G_PSC_DUTY_CYCLE or
+		 * SCAN_MODE_6G_ALL_DUTY_CYCLE, it is better to add other 6 GHz
+		 * channels to the channel list and set the bit
+		 * FLAG_SCAN_ONLY_IF_RNR_FOUND for these new channels.
+		 * This can help to find the APs which have co-located APs in
+		 * given 2 GHz/5 GHz channels.
+		 * Let it fallthrough as this is already addressed through the
+		 * scan mode SCAN_MODE_6G_ALL_CHANNEL.
+		 */
+	case SCAN_MODE_6G_ALL_CHANNEL:
+		/*
+		 * When the ini is set to SCAN_MODE_6G_ALL_CHANNEL,
+		 * Host fills all remaining (other than channel(s) present in
+		 * host scan req) valid 6 GHz channel(s) to scan requests and
+		 * set the flag FLAG_SCAN_ONLY_IF_RNR_FOUND for each remaining
+		 * channels.
+		 */
+		scm_add_all_valid_6g_channels(pdev, chan_list, num_chan,
+					      is_colocated_6ghz_scan_enabled);
+		break;
+	default:
+		/*
+		 * Don't set the RNR flag for SCAN_MODE_6G_NO_CHANNEL/
+		 * SCAN_MODE_6G_RNR_ONLY
+		 */
+		break;
+	}
+}
+
 void
 scm_update_6ghz_channel_list(struct scan_start_request *req,
 			     struct wlan_scan_obj *scan_obj)
@@ -503,48 +561,8 @@ scm_update_6ghz_channel_list(struct scan_start_request *req,
 	    scm_is_scan_type_exempted_from_optimization(req))
 		goto end;
 
-	switch (scan_mode) {
-	case SCAN_MODE_6G_RNR_ONLY:
-		/*
-		 * When the ini is set to SCAN_MODE_6G_RNR_ONLY,
-		 * always set RNR flag for all(PSC and non-PSC) channels.
-		 */
-		scm_set_rnr_flag_all_6g_ch(&chan_list->chan[0], num_scan_ch);
-		break;
-	case SCAN_MODE_6G_PSC_CHANNEL:
-		/*
-		 * When the ini is set to SCAN_MODE_6G_PSC_CHANNEL,
-		 * always set RNR flag for non-PSC channels.
-		 */
-		scm_set_rnr_flag_non_psc_6g_ch(&chan_list->chan[0],
-					       num_scan_ch);
-		break;
-	case SCAN_MODE_6G_PSC_DUTY_CYCLE:
-	case SCAN_MODE_6G_ALL_DUTY_CYCLE:
-		if (!scm_is_duty_cycle_scan(scan_obj))
-			scm_set_rnr_flag_all_6g_ch(&chan_list->chan[0],
-						   num_scan_ch);
-		else if (scan_mode == SCAN_MODE_6G_PSC_DUTY_CYCLE)
-			scm_set_rnr_flag_non_psc_6g_ch(&chan_list->chan[0],
-						       num_scan_ch);
-		break;
-	case SCAN_MODE_6G_ALL_CHANNEL:
-		/*
-		 * When the ini is set to SCAN_MODE_6G_ALL_CHANNEL,
-		 * Host fills all remaining (other than channel(s) present in
-		 * host scan req) valid 6 GHz channel(s) to scan requests and
-		 * set the flag FLAG_SCAN_ONLY_IF_RNR_FOUND for each remaining
-		 * channels.
-		 */
-		scm_scan_add_all_valid_6g_channels(pdev, req, &num_scan_ch);
-		break;
-	default:
-		/*
-		 * Don't set the RNR flag for SCAN_MODE_6G_NO_CHANNEL/
-		 * SCAN_MODE_6G_RNR_ONLY
-		 */
-		break;
-	}
+	scm_add_channel_flags(vdev, chan_list, &num_scan_ch,
+			      req->scan_req.scan_policy_colocated_6ghz, false);
 
 end:
 	chan_list->num_chan = num_scan_ch;

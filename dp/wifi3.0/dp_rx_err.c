@@ -807,6 +807,12 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 					rx_tlv_hdr);
 	pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
 
+	if (!pdev) {
+		dp_rx_err_debug("%pK: pdev is null for pool_id = %d",
+				soc, rx_desc->pool_id);
+		return;
+	}
+
 	_dp_rx_bar_frame_handle(soc, nbuf, mpdu_desc_info, tid, err_status,
 				err_code);
 	dp_rx_err_send_pktlog(soc, pdev, mpdu_desc_info, nbuf,

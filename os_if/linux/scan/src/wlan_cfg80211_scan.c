@@ -529,36 +529,42 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 
 	/* Filling per profile  params */
 	for (i = 0; i < req->networks_cnt; i++) {
-		req->networks_list[i].ssid.length =
-			request->match_sets[i].ssid.ssid_len;
+		struct cfg80211_match_set *user_req = &request->match_sets[i];
+		struct pno_nw_type *tgt_req = &req->networks_list[i];
 
-		if ((!req->networks_list[i].ssid.length) ||
-		    (req->networks_list[i].ssid.length > WLAN_SSID_MAX_LEN)) {
+		tgt_req->ssid.length = user_req->ssid.ssid_len;
+
+		if (!tgt_req->ssid.length ||
+		    tgt_req->ssid.length > WLAN_SSID_MAX_LEN) {
 			osif_err(" SSID Len %d is not correct for network %d",
-				 req->networks_list[i].ssid.length, i);
+				 tgt_req->ssid.length, i);
 			ret = -EINVAL;
 			goto error;
 		}
 
-		qdf_mem_copy(req->networks_list[i].ssid.ssid,
-			request->match_sets[i].ssid.ssid,
-			req->networks_list[i].ssid.length);
-		req->networks_list[i].authentication = 0;   /*eAUTH_TYPE_ANY */
-		req->networks_list[i].encryption = 0;       /*eED_ANY */
-		req->networks_list[i].bc_new_type = 0;    /*eBCAST_UNKNOWN */
+		qdf_mem_copy(tgt_req->ssid.ssid, user_req->ssid.ssid,
+			     tgt_req->ssid.length);
+		tgt_req->authentication = 0;   /*eAUTH_TYPE_ANY */
+		tgt_req->encryption = 0;       /*eED_ANY */
+		tgt_req->bc_new_type = 0;    /*eBCAST_UNKNOWN */
+
 
 		/*Copying list of valid channel into request */
 		for (j = 0; j < num_chan; j++)
-			req->networks_list[i].pno_chan_list.chan[j].freq =
-								valid_ch[j];
-		req->networks_list[i].pno_chan_list.num_chan = num_chan;
+			tgt_req->pno_chan_list.chan[j].freq = valid_ch[j];
+		tgt_req->pno_chan_list.num_chan = num_chan;
 
-		if (ucfg_is_6ghz_pno_scan_optimization_supported(psoc))
-			ucfg_scan_pno_add_all_valid_6g_channels(vdev, req,
-								&num_chan);
+		if (ucfg_is_6ghz_pno_scan_optimization_supported(psoc)) {
+			uint32_t short_ssid =
+				wlan_construct_shortssid(tgt_req->ssid.ssid,
+							 tgt_req->ssid.length);
 
-		req->networks_list[i].rssi_thresh =
-			request->match_sets[i].rssi_thold;
+			ucfg_scan_add_flags_to_pno_chan_list(vdev, req,
+							     &num_chan,
+							     short_ssid, i);
+		}
+
+		tgt_req->rssi_thresh = user_req->rssi_thold;
 	}
 
 	/* set scan to passive if no SSIDs are specified in the request */

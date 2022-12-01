@@ -403,4 +403,10 @@ enum __qdf_net_wireless_evcode {
 #error "Compiling with an unknown compiler!!"
 #endif
 
+#ifndef fallthrough
+
+#define fallthrough do {} while (0) /* fallthrough */
+
+#endif
+
 #endif /* __I_QDF_TYPES_H */

@@ -12192,7 +12192,7 @@ void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 
 #ifdef DP_TX_TRACKING
 
-#define DP_TX_COMP_MAX_LATENCY_MS 30000
+#define DP_TX_COMP_MAX_LATENCY_MS 60000
 /**
  * dp_tx_comp_delay_check() - calculate time latency for tx completion per pkt
  * @timestamp - tx descriptor timestamp
@@ -12279,11 +12279,13 @@ static void dp_find_missing_tx_comp(struct dp_soc *soc)
 						  tx_desc->id);
 					if (tx_desc->vdev_id == DP_INVALID_VDEV_ID) {
 						tx_desc->flags |= DP_TX_DESC_FLAG_FLUSH;
-						dp_tx_comp_free_buf(soc, tx_desc);
+						dp_err_rl("Freed tx_desc %u",
+							  tx_desc->id);
+						dp_tx_comp_free_buf(soc,
+								    tx_desc);
 						dp_tx_desc_release(tx_desc, i);
 						DP_STATS_INC(soc,
 							     tx.tx_comp_force_freed, 1);
-						dp_err_rl("Tx completion force freed");
 					}
 				}
 			} else {
