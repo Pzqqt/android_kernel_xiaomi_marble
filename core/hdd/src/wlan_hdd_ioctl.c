@@ -4512,16 +4512,11 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 	case MIRACAST_CONN_OPT_ENABLED:
 	case MIRACAST_CONN_OPT_DISABLED:
 		{
-			bool is_imps_enabled = true;
-
-			ucfg_mlme_is_imps_enabled(hdd_ctx->psoc,
-						  &is_imps_enabled);
-			if (!is_imps_enabled)
-				return 0;
-			hdd_set_idle_ps_config(
-				hdd_ctx,
-				filter_type ==
-				MIRACAST_CONN_OPT_ENABLED ? false : true);
+			wma_cli_set_command(
+				adapter->vdev_id,
+				WMI_PDEV_PARAM_POWER_COLLAPSE_ENABLE,
+				(filter_type == MIRACAST_CONN_OPT_ENABLED ?
+				 0 : 1), PDEV_CMD);
 			return 0;
 		}
 	default:
