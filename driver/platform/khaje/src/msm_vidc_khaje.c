@@ -285,10 +285,10 @@ static struct msm_platform_inst_capability instance_data_khaje[] = {
 		V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_VUI_TIMING_INFO,
-		0,
+		HFI_PROP_DISABLE_VUI_TIMING_INFO,
 		CAP_FLAG_OUTPUT_PORT,
 		{0}, {0},
-		NULL, NULL},
+		NULL, msm_vidc_set_vui_timing_info},
 
 	{META_SEQ_HDR_NAL, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
