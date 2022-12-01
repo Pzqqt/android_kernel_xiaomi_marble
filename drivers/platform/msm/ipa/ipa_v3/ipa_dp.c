@@ -98,6 +98,8 @@
 
 #define IPA_QMAP_ID_BYTE 0
 
+#define IPA_MEM_ALLOC_RETRY 5
+
 static int ipa3_tx_switch_to_intr_mode(struct ipa3_sys_context *sys);
 static int ipa3_rx_switch_to_intr_mode(struct ipa3_sys_context *sys);
 static struct sk_buff *ipa3_get_skb_ipa_rx(unsigned int len, gfp_t flags);
@@ -5809,6 +5811,33 @@ fail_setup_event_ring:
 	return result;
 }
 
+static void *ipa3_ring_alloc(struct device *dev, size_t size,
+	dma_addr_t *dma_handle, gfp_t gfp)
+{
+	void *va_addr;
+	int retry_cnt = 0;
+
+alloc:
+	va_addr = dma_alloc_coherent(dev, size, dma_handle, gfp);
+	if (!va_addr) {
+		if (retry_cnt < IPA_MEM_ALLOC_RETRY) {
+			IPADBG("Fail to dma alloc retry cnt = %d\n",
+				retry_cnt);
+			retry_cnt++;
+			goto alloc;
+		}
+
+		if (gfp == GFP_ATOMIC) {
+			gfp = GFP_KERNEL;
+			goto alloc;
+		}
+		IPAERR("fail to dma alloc %u bytes\n", size);
+		ipa_assert();
+	}
+
+	return va_addr;
+}
+
 static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 	u32 ring_size, gfp_t mem_flag)
 {
@@ -5829,13 +5858,8 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
 	gsi_evt_ring_props.ring_len = ring_size;
 	gsi_evt_ring_props.ring_base_vaddr =
-		dma_alloc_coherent(ipa3_ctx->pdev, gsi_evt_ring_props.ring_len,
+		ipa3_ring_alloc(ipa3_ctx->pdev, gsi_evt_ring_props.ring_len,
 		&evt_dma_addr, mem_flag);
-	if (!gsi_evt_ring_props.ring_base_vaddr) {
-		IPAERR("fail to dma alloc %u bytes\n",
-			gsi_evt_ring_props.ring_len);
-		return -ENOMEM;
-	}
 	gsi_evt_ring_props.ring_base_addr = evt_dma_addr;
 
 	/* copy mem info */
@@ -5962,14 +5986,8 @@ static int ipa_gsi_setup_transfer_ring(struct ipa3_ep_context *ep,
 	gsi_channel_props.ring_len = ring_size;
 
 	gsi_channel_props.ring_base_vaddr =
-		dma_alloc_coherent(ipa3_ctx->pdev, gsi_channel_props.ring_len,
+		ipa3_ring_alloc(ipa3_ctx->pdev, gsi_channel_props.ring_len,
 			&dma_addr, mem_flag);
-	if (!gsi_channel_props.ring_base_vaddr) {
-		IPAERR("fail to dma alloc %u bytes\n",
-			gsi_channel_props.ring_len);
-		result = -ENOMEM;
-		goto fail_alloc_channel_ring;
-	}
 	gsi_channel_props.ring_base_addr = dma_addr;
 
 	/* copy mem info */
@@ -6052,7 +6070,6 @@ fail_alloc_channel:
 	dma_free_coherent(ipa3_ctx->pdev, ep->gsi_mem_info.chan_ring_len,
 			ep->gsi_mem_info.chan_ring_base_vaddr,
 			ep->gsi_mem_info.chan_ring_base_addr);
-fail_alloc_channel_ring:
 fail_get_gsi_ep_info:
 	if (ep->gsi_evt_ring_hdl != ~0) {
 		gsi_dealloc_evt_ring(ep->gsi_evt_ring_hdl);
