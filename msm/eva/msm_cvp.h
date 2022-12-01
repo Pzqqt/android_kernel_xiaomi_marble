@@ -22,7 +22,7 @@ static inline bool is_buf_param_valid(u32 buf_num, u32 offset)
 	if (buf_num > max_buf_num)
 		return false;
 
-	if ((offset + buf_num * sizeof(struct cvp_buf_type)) >
+	if ((offset * sizeof(u32) + buf_num * sizeof(struct cvp_buf_type)) >
 			sizeof(struct eva_kmd_hfi_packet))
 		return false;
 
