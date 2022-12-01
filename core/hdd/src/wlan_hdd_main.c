@@ -20251,6 +20251,8 @@ wlan_hdd_add_monitor_check(struct hdd_context *hdd_ctx,
 						PACKET_CAPTURE_MODE_DISABLE)
 		wlan_hdd_del_p2p_interface(hdd_ctx);
 
+	params.is_add_virtual_iface = 1;
+
 	mon_adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, name,
 				       wlan_hdd_get_intf_addr(
 				       hdd_ctx,

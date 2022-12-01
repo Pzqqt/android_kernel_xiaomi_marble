@@ -983,6 +983,8 @@ int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 		info->dev_mem_info[i].start = cnss_info.dev_mem_info[i].start;
 		info->dev_mem_info[i].size = cnss_info.dev_mem_info[i].size;
 	}
+	strlcpy(info->fw_build_id, cnss_info.fw_build_id,
+		sizeof(info->fw_build_id));
 
 	return 0;
 }

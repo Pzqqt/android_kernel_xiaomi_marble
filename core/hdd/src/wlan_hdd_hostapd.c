@@ -5108,6 +5108,12 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	bool go_11ac_override = 0;
 	bool sap_11ac_override = 0;
 
+	/*
+	 * No need to override for Go/Sap on 6 GHz band
+	 */
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_cfg->chan_freq))
+		return 0;
+
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
 					     &sap_force_11n_for_11ac);
 	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,

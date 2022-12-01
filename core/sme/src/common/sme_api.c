@@ -9840,9 +9840,7 @@ void sme_radio_tx_mem_free(void)
 QDF_STATUS sme_ll_stats_clear_req(mac_handle_t mac_handle,
 				  tSirLLStatsClearReq *pclearStatsReq)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
 	tSirLLStatsClearReq *clear_stats_req;
 
@@ -9866,32 +9864,21 @@ QDF_STATUS sme_ll_stats_clear_req(mac_handle_t mac_handle,
 
 	*clear_stats_req = *pclearStatsReq;
 
-	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&mac->sme)) {
-		/* Serialize the req through MC thread */
-		message.bodyptr = clear_stats_req;
-		message.type = WMA_LINK_LAYER_STATS_CLEAR_REQ;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: not able to post WMA_LL_STATS_CLEAR_REQ",
-				  __func__);
-			qdf_mem_free(clear_stats_req);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: sme_acquire_global_lock error", __func__);
+	/* Serialize the req through MC thread */
+	message.bodyptr = clear_stats_req;
+	message.type = WMA_LINK_LAYER_STATS_CLEAR_REQ;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, message.type));
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_WMA,
+					    &message);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		sme_err("not able to post WMA_LL_STATS_CLEAR_REQ");
 		qdf_mem_free(clear_stats_req);
-		status = QDF_STATUS_E_FAILURE;
 	}
 
-	return status;
+	return qdf_status;
 }
 
 /*
@@ -9905,9 +9892,7 @@ QDF_STATUS sme_ll_stats_clear_req(mac_handle_t mac_handle,
 QDF_STATUS sme_ll_stats_set_req(mac_handle_t mac_handle, tSirLLStatsSetReq
 				*psetStatsReq)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
 	tSirLLStatsSetReq *set_stats_req;
 
@@ -9924,39 +9909,28 @@ QDF_STATUS sme_ll_stats_set_req(mac_handle_t mac_handle, tSirLLStatsSetReq
 
 	*set_stats_req = *psetStatsReq;
 
-	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&mac->sme)) {
-		/* Serialize the req through MC thread */
-		message.bodyptr = set_stats_req;
-		message.type = WMA_LINK_LAYER_STATS_SET_REQ;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: not able to post WMA_LL_STATS_SET_REQ",
-				  __func__);
-			qdf_mem_free(set_stats_req);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: sme_acquire_global_lock error", __func__);
+	/* Serialize the req through MC thread */
+	message.bodyptr = set_stats_req;
+	message.type = WMA_LINK_LAYER_STATS_SET_REQ;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, message.type));
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_WMA,
+					    &message);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		sme_err("not able to post WMA_LL_STATS_SET_REQ");
 		qdf_mem_free(set_stats_req);
-		status = QDF_STATUS_E_FAILURE;
 	}
 
-	return status;
+	return qdf_status;
 }
 
 QDF_STATUS sme_ll_stats_get_req(mac_handle_t mac_handle,
 				tSirLLStatsGetReq *get_stats_req,
 				void *context)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
 	tSirLLStatsGetReq *ll_stats_get_req;
@@ -9968,22 +9942,16 @@ QDF_STATUS sme_ll_stats_get_req(mac_handle_t mac_handle,
 	*ll_stats_get_req = *get_stats_req;
 
 	mac->sme.ll_stats_context = context;
-	if (sme_acquire_global_lock(&mac->sme) == QDF_STATUS_SUCCESS) {
-		/* Serialize the req through MC thread */
-		message.bodyptr = ll_stats_get_req;
-		message.type = WMA_LINK_LAYER_STATS_GET_REQ;
-		qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-			  NO_SESSION, message.type);
-		status = scheduler_post_message(QDF_MODULE_ID_SME,
-						QDF_MODULE_ID_WMA,
-						QDF_MODULE_ID_WMA, &message);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("Not able to post WMA_LL_STATS_GET_REQ");
-			qdf_mem_free(ll_stats_get_req);
-		}
-		sme_release_global_lock(&mac->sme);
-	} else {
-		sme_err("sme_acquire_global_lock error");
+	/* Serialize the req through MC thread */
+	message.bodyptr = ll_stats_get_req;
+	message.type = WMA_LINK_LAYER_STATS_GET_REQ;
+	qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+		  NO_SESSION, message.type);
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &message);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Not able to post WMA_LL_STATS_GET_REQ");
 		qdf_mem_free(ll_stats_get_req);
 	}
 
@@ -10077,7 +10045,6 @@ QDF_STATUS sme_ll_stats_set_thresh(mac_handle_t mac_handle,
 				   struct sir_ll_ext_stats_threshold *threshold)
 {
 	QDF_STATUS status;
-	struct mac_context *mac;
 	struct scheduler_msg message = {0};
 	struct sir_ll_ext_stats_threshold *thresh;
 
@@ -10092,7 +10059,6 @@ QDF_STATUS sme_ll_stats_set_thresh(mac_handle_t mac_handle,
 			  FL("mac_handle is not valid"));
 		return QDF_STATUS_E_INVAL;
 	}
-	mac = MAC_CONTEXT(mac_handle);
 
 	thresh = qdf_mem_malloc(sizeof(*thresh));
 	if (!thresh)
@@ -10100,28 +10066,19 @@ QDF_STATUS sme_ll_stats_set_thresh(mac_handle_t mac_handle,
 
 	*thresh = *threshold;
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		/* Serialize the req through MC thread */
-		message.bodyptr = thresh;
-		message.type    = WDA_LINK_LAYER_STATS_SET_THRESHOLD;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		status = scheduler_post_message(QDF_MODULE_ID_SME,
-						QDF_MODULE_ID_WMA,
-						QDF_MODULE_ID_WMA, &message);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: not able to post WDA_LL_STATS_GET_REQ",
-				  __func__);
-			qdf_mem_free(thresh);
-		}
-		sme_release_global_lock(&mac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("sme_acquire_global_lock error"));
+	/* Serialize the req through MC thread */
+	message.bodyptr = thresh;
+	message.type    = WDA_LINK_LAYER_STATS_SET_THRESHOLD;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, message.type));
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &message);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("not able to post WDA_LL_STATS_GET_REQ");
 		qdf_mem_free(thresh);
 	}
+
 	return status;
 }
 

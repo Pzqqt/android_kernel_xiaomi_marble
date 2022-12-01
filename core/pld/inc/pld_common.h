@@ -399,6 +399,7 @@ struct pld_dev_mem_info {
 };
 
 #define PLD_MAX_TIMESTAMP_LEN 32
+#define PLD_WLFW_MAX_BUILD_ID_LEN 128
 #define PLD_MAX_DEV_MEM_NUM 4
 
 /**
@@ -427,6 +428,7 @@ struct pld_soc_info {
 	char fw_build_timestamp[PLD_MAX_TIMESTAMP_LEN + 1];
 	struct pld_device_version device_version;
 	struct pld_dev_mem_info dev_mem_info[PLD_MAX_DEV_MEM_NUM];
+	char fw_build_id[PLD_WLFW_MAX_BUILD_ID_LEN + 1];
 };
 
 /**
