@@ -32,7 +32,7 @@
 	(SDE_GET_MAJOR_MINOR(rev1) == SDE_GET_MAJOR_MINOR(rev2))
 
 #define SDE_MDP_REV(major, minor, step) \
-	((((major) & 0x000F) << 28) | \
+	((u32)(((major) & 0x000F) << 28) | \
 	 (((minor) & 0x0FFF) << 16) | \
 	  ((step)  & 0xFFFF))
 

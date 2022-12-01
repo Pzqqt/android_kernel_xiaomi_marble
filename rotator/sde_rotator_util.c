@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+/*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2012, 2015-2019, 2021, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -20,7 +21,7 @@
 #include <linux/io.h>
 #include <linux/iopoll.h>
 #include <linux/regulator/consumer.h>
-#include <media/msm_media_info.h>
+#include <media/mmm_color_fmt.h>
 #include <linux/videodev2.h>
 #include <linux/ion.h>
 
@@ -348,13 +349,13 @@ int sde_mdp_get_plane_sizes(struct sde_mdp_format_params *fmt, u32 w, u32 h,
 
 			switch (fmt->format) {
 			case SDE_PIX_FMT_Y_CBCR_H2V2_VENUS:
-				cf = COLOR_FMT_NV12;
+				cf = MMM_COLOR_FMT_NV12;
 				break;
 			case SDE_PIX_FMT_Y_CRCB_H2V2_VENUS:
-				cf = COLOR_FMT_NV21;
+				cf = MMM_COLOR_FMT_NV21;
 				break;
 			case SDE_PIX_FMT_Y_CBCR_H2V2_P010_VENUS:
-				cf = COLOR_FMT_P010;
+				cf = MMM_COLOR_FMT_P010;
 				break;
 			default:
 				SDEROT_ERR("unknown color format %d\n",
@@ -363,11 +364,11 @@ int sde_mdp_get_plane_sizes(struct sde_mdp_format_params *fmt, u32 w, u32 h,
 			}
 
 			ps->num_planes = 2;
-			ps->ystride[0] = VENUS_Y_STRIDE(cf, w);
-			ps->ystride[1] = VENUS_UV_STRIDE(cf, w);
-			ps->plane_size[0] = VENUS_Y_SCANLINES(cf, h) *
+			ps->ystride[0] = MMM_COLOR_FMT_Y_STRIDE(cf, w);
+			ps->ystride[1] = MMM_COLOR_FMT_UV_STRIDE(cf, w);
+			ps->plane_size[0] = MMM_COLOR_FMT_Y_SCANLINES(cf, h) *
 				ps->ystride[0];
-			ps->plane_size[1] = VENUS_UV_SCANLINES(cf, h) *
+			ps->plane_size[1] = MMM_COLOR_FMT_UV_SCANLINES(cf, h) *
 				ps->ystride[1];
 		} else if (fmt->format == SDE_PIX_FMT_Y_CBCR_H2V2_P010) {
 			/*
@@ -1182,18 +1183,6 @@ static void sde_rot_dmabuf_unmap(struct dma_buf_attachment *attach,
 	kfree(sgt);
 }
 
-static void *sde_rot_dmabuf_no_map(struct dma_buf *buf, unsigned long n)
-{
-	SDEROT_WARN("NOT SUPPORTING dmabuf map\n");
-	return NULL;
-}
-
-static void sde_rot_dmabuf_no_unmap(struct dma_buf *buf, unsigned long n,
-		void *addr)
-{
-	SDEROT_WARN("NOT SUPPORTING dmabuf unmap\n");
-}
-
 static void sde_rot_dmabuf_release(struct dma_buf *buf)
 {
 	SDEROT_DBG("Release dmabuf:%pK\n", buf);
@@ -1210,8 +1199,6 @@ static const struct dma_buf_ops sde_rot_dmabuf_ops = {
 	.map_dma_buf	= sde_rot_dmabuf_map_tiny,
 	.unmap_dma_buf	= sde_rot_dmabuf_unmap,
 	.release	= sde_rot_dmabuf_release,
-	.map		= sde_rot_dmabuf_no_map,
-	.unmap		= sde_rot_dmabuf_no_unmap,
 	.mmap		= sde_rot_dmabuf_no_mmap,
 };
 

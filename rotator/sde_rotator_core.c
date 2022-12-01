@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
@@ -1051,6 +1052,20 @@ static void sde_rotator_put_hw_resource(struct sde_rot_queue *queue,
 			entry->item.session_id, entry->item.sequence_id);
 }
 
+static void rotator_thread_priority_worker(struct kthread_work *work)
+{
+	int ret = 0;
+	struct sched_param param = { 0 };
+	struct task_struct *task = current->group_leader;
+
+	param.sched_priority = 5;
+	ret = sched_setscheduler(task, SCHED_FIFO, &param);
+	if (ret)
+		SDEROT_ERR(
+			"pid:%d name:%s priority update failed %d\n",
+			current->tgid, task->comm, ret);
+}
+
 /*
  * caller will need to call sde_rotator_deinit_queue when
  * the function returns error
@@ -1059,8 +1074,6 @@ static int sde_rotator_init_queue(struct sde_rot_mgr *mgr)
 {
 	int i, size, ret = 0;
 	char name[32];
-	struct sched_param param = { .sched_priority = 5 };
-
 	size = sizeof(struct sde_rot_queue) * mgr->queue_count;
 	mgr->commitq = devm_kzalloc(mgr->device, size, GFP_KERNEL);
 	if (!mgr->commitq)
@@ -1073,21 +1086,16 @@ static int sde_rotator_init_queue(struct sde_rot_mgr *mgr)
 		kthread_init_worker(&mgr->commitq[i].rot_kw);
 		mgr->commitq[i].rot_thread = kthread_run(kthread_worker_fn,
 				&mgr->commitq[i].rot_kw, name);
+		kthread_init_work(&mgr->thread_priority_work,
+				rotator_thread_priority_worker);
+		kthread_queue_work(&mgr->commitq[i].rot_kw,
+				&mgr->thread_priority_work);
+		kthread_flush_work(&mgr->thread_priority_work);
 		if (IS_ERR(mgr->commitq[i].rot_thread)) {
 			ret = -EPERM;
 			mgr->commitq[i].rot_thread = NULL;
 			break;
 		}
-
-		ret = sched_setscheduler(mgr->commitq[i].rot_thread,
-			SCHED_FIFO, &param);
-		if (ret) {
-			SDEROT_ERR(
-				"failed to set kthread priority for commitq %d\n",
-				ret);
-			break;
-		}
-
 		/* timeline not used */
 		mgr->commitq[i].timeline = NULL;
 	}
@@ -1104,21 +1112,16 @@ static int sde_rotator_init_queue(struct sde_rot_mgr *mgr)
 		kthread_init_worker(&mgr->doneq[i].rot_kw);
 		mgr->doneq[i].rot_thread = kthread_run(kthread_worker_fn,
 				&mgr->doneq[i].rot_kw, name);
+		kthread_init_work(&mgr->thread_priority_work,
+				rotator_thread_priority_worker);
+		kthread_queue_work(&mgr->commitq[i].rot_kw,
+				&mgr->thread_priority_work);
+		kthread_flush_work(&mgr->thread_priority_work);
 		if (IS_ERR(mgr->doneq[i].rot_thread)) {
 			ret = -EPERM;
 			mgr->doneq[i].rot_thread = NULL;
 			break;
 		}
-
-		ret = sched_setscheduler(mgr->doneq[i].rot_thread,
-			SCHED_FIFO, &param);
-		if (ret) {
-			SDEROT_ERR(
-				"failed to set kthread priority for doneq %d\n",
-				ret);
-			break;
-		}
-
 		/* timeline not used */
 		mgr->doneq[i].timeline = NULL;
 	}
@@ -3138,7 +3141,9 @@ int sde_rotator_core_init(struct sde_rot_mgr **pmgr,
 		IS_SDE_MAJOR_SAME(mdata->mdss_version,
 			SDE_MDP_HW_REV_500) ||
 		IS_SDE_MAJOR_SAME(mdata->mdss_version,
-			SDE_MDP_HW_REV_600)) {
+			SDE_MDP_HW_REV_600) ||
+		IS_SDE_MAJOR_SAME(mdata->mdss_version,
+			SDE_MDP_HW_REV_860)) {
 		mgr->ops_hw_init = sde_rotator_r3_init;
 		mgr->min_rot_clk = ROT_MIN_ROT_CLK;
 
@@ -3151,8 +3156,8 @@ int sde_rotator_core_init(struct sde_rot_mgr **pmgr,
 			SDE_MDP_HW_REV_500))
 			mgr->max_rot_clk = ROT_R3_MAX_ROT_CLK;
 
-		if (!IS_SDE_MAJOR_SAME(mdata->mdss_version,
-					SDE_MDP_HW_REV_600) &&
+		if (!(IS_SDE_MAJOR_SAME(mdata->mdss_version, SDE_MDP_HW_REV_600) ||
+			IS_SDE_MAJOR_SAME(mdata->mdss_version, SDE_MDP_HW_REV_860)) &&
 				!sde_rotator_get_clk(mgr,
 					SDE_ROTATOR_CLK_MDSS_AXI)) {
 			SDEROT_ERR("unable to get mdss_axi_clk\n");
