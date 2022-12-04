@@ -1865,6 +1865,9 @@ typedef struct {
      */
     A_UINT32 is_airtime_large_for_dl_ofdma[2];
     A_UINT32 is_airtime_large_for_ul_ofdma[2];
+    /* Last updated value of DL and UL queue depths for each peer per AC */
+    A_UINT32 last_updated_dl_qdepth[HTT_NUM_AC_WMM];
+    A_UINT32 last_updated_ul_qdepth[HTT_NUM_AC_WMM];
 } htt_peer_ax_ofdma_stats_tlv;
 
 /* config_param0 */
