@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2022, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/dma-buf.h>
@@ -380,6 +380,11 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 	}
 
 	heap = dma_heap_find(heap_name);
+	if (!heap) {
+		d_vpr_e("%s: No heap named %s\n", __func__, heap_name);
+		rc = -ENOMEM;
+		goto error;
+	}
 	mem->dmabuf = dma_heap_buffer_alloc(heap, size, 0, 0);
 	if (IS_ERR_OR_NULL(mem->dmabuf)) {
 		d_vpr_e("%s: dma heap %s alloc failed\n", __func__, heap_name);
