@@ -393,6 +393,9 @@ send_mlo_link_set_active_cmd_tlv(wmi_unified_t wmi_handle,
 	case WMI_MLO_LINK_NO_FORCE:
 		num_vdev_bitmap = param->num_vdev_bitmap;
 		break;
+	default:
+		wmi_err("Invalid force reason: %d", force_mode);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	len = sizeof(*cmd) +
