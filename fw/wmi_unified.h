@@ -35368,6 +35368,8 @@ typedef struct {
     A_UINT32 preauth_status;
     /* AP BSSID for which pre-authentication is completed */
     wmi_mac_addr candidate_ap_bssid;
+    /* AKM suite type (as defined in the IEEE 802.11 spec) */
+    A_UINT32 akm_suite_type;
     /**
      * This fixed_param TLV is followed by the below TLVs:
      *
@@ -40817,10 +40819,10 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_multiple_peer_group_cmd_fixed_param */
     A_UINT32 vdev_id;
     A_UINT32 pdev_id;
-    /** Sub command id - Currently supported command ids are
-     *  WMI_PEER_REMOVE_WDS_ENTRY_CMDID
+    /** Sub command id - populated with a WMI_CMD_ID value.
+     * Currently supported command ids are WMI_PEER_REMOVE_WDS_ENTRY_CMDID.
      */
-    WMI_CMD_ID sub_cmd_id;
+    A_UINT32  sub_cmd_id;
     /* The TLVs follows this structure:
      * wmi_mac_addr wds_macaddr[]; <--- Array of wds mac addresses.
      */
