@@ -31,6 +31,7 @@
 #include "wsa881x-temp-sensor.h"
 #include "asoc/bolero-slave-internal.h"
 #include <asoc/msm-cdc-supply.h>
+#include <linux/qti-regmap-debugfs.h>
 
 #define WSA881X_NUM_RETRY	5
 
@@ -351,8 +352,8 @@ int wsa881x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 
 	wsa881x = snd_soc_component_get_drvdata(component);
 	card = component->card;
-	snprintf(name, sizeof(name), "%s.%x", "wsa881x",
-		 (u32)wsa881x->swr_slave->addr);
+	snprintf(name, sizeof(name), "%s.%lx", "wsa881x",
+		wsa881x->swr_slave->addr);
 
 	wsa881x->entry = snd_info_create_module_entry(codec_root->module,
 						(const char *)name,
@@ -760,6 +761,22 @@ static int wsa881x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wsa_get_temp(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wsa881x_priv *wsa881x = snd_soc_component_get_drvdata(component);
+	int temp = 0;
+
+	wsa881x_get_temp(wsa881x->tz_pdata.tz_dev, &temp);
+	dev_err(component->dev, " temp = %d\n", temp);
+
+	ucontrol->value.integer.value[0] = temp;
+
+	return 0;
+}
+
 static int wsa881x_get_boost(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -848,6 +865,9 @@ static int wsa881x_get_boost_level(struct snd_kcontrol *kcontrol,
 static const struct snd_kcontrol_new wsa881x_snd_controls[] = {
 	SOC_SINGLE_EXT("COMP Switch", SND_SOC_NOPM, 0, 1, 0,
 		wsa881x_get_compander, wsa881x_set_compander),
+
+	SOC_SINGLE_EXT("WSA Temp", SND_SOC_NOPM, 0, UINT_MAX, 0,
+		wsa_get_temp, NULL),
 
 	SOC_SINGLE_EXT("BOOST Switch", SND_SOC_NOPM, 0, 1, 0,
 		wsa881x_get_boost, wsa881x_set_boost),
@@ -1597,6 +1617,8 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 			__func__, ret);
 		goto dev_err;
 	}
+
+	devm_regmap_qti_debugfs_register(&pdev->dev, wsa881x->regmap);
 
 	wsa881x->driver = devm_kzalloc(&pdev->dev,
 						sizeof(struct snd_soc_component_driver), GFP_KERNEL);
