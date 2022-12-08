@@ -238,9 +238,10 @@
  * 3.111 Add RXPCU filter enable flag in RX_RING_SELECTION_CFG msg.
  * 3.112 Add logical_link_id field in rx_peer_metadata_v1.
  * 3.113 Add add rx msdu,mpdu,ppdu fields in rx_ring_selection_cfg_t
+ * 3.114 Add HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 113
+#define HTT_CURRENT_VERSION_MINOR 114
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -838,6 +839,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_MSI_SETUP             = 0x1f,
     HTT_H2T_MSG_TYPE_STREAMING_STATS_REQ   = 0x20,
     HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP = 0x21,
+    HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET = 0x22,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -9883,6 +9885,9 @@ PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
  * @details
  *  This is shared memory between Host and Target allocated
  *  and used in chips where UMAC hang recovery feature is supported.
+ *  This shared memory is allocated per SOC level by Host since each
+ *  SOC's target Q6FW needs to communicate independently to the Host
+ *  through its own shared memory.
  *  If target sets a bit in t2h_msg (provided it's valid bit offset)
  *  then host interprets it as a new message from target.
  *  Host clears that particular read bit in t2h_msg after each read
@@ -9896,11 +9901,13 @@ PREPACK struct htt_h2t_sawf_def_queues_map_report_req {
  * dword1 - b'0     - do_pre_reset
  *          b'1     - do_post_reset_start
  *          b'2     - do_post_reset_complete
- *          b'3:31  - rsvd_t2h
+ *          b'3     - initiate_umac_recovery
+ *          b'4:31  - rsvd_t2h
  * dword2 - b'0     - pre_reset_done
  *          b'1     - post_reset_start_done
  *          b'2     - post_reset_complete_done
- *          b'3:31  - rsvd_h2t
+ *          b'3     - start_pre_reset
+ *          b'4:31  - rsvd_h2t
  */
 PREPACK typedef struct {
     /** Magic number added for debuggability. */
@@ -9910,14 +9917,18 @@ PREPACK typedef struct {
          * BIT [0]        :- T2H msg to do pre-reset
          * BIT [1]        :- T2H msg to do post-reset start
          * BIT [2]        :- T2H msg to do post-reset complete
-         * BIT [31 : 3]   :- reserved
+         * BIT [3]        :- T2H msg to initiate UMAC recovery sequence.
+         *                   This is needed to synchronize UMAC recovery
+         *                   across all SOCs.
+         * BIT [31 : 4]   :- reserved
          */
         A_UINT32 t2h_msg;
         struct {
             A_UINT32 do_pre_reset             :      1, /* BIT [0]      */
                      do_post_reset_start      :      1, /* BIT [1]      */
                      do_post_reset_complete   :      1, /* BIT [2]      */
-                     rsvd_t2h                 :     29; /* BIT [31 : 3] */
+                     initiate_umac_recovery   :      1, /* BIT [3]      */
+                     rsvd_t2h                 :     28; /* BIT [31 : 4] */
         };
     };
 
@@ -9926,14 +9937,19 @@ PREPACK typedef struct {
          * BIT [0]        :- H2T msg to send pre-reset done
          * BIT [1]        :- H2T msg to send post-reset start done
          * BIT [2]        :- H2T msg to send post-reset complete done
-         * BIT [31 : 3]   :- reserved
+         * BIT [3]        :- H2T msg to start pre-reset.
+         *                   This is expected only after T2H
+         *                   initiate_umac_recovery was received by Host
+         *                   from one of the SOCs.
+         * BIT [31 : 4]   :- reserved
          */
         A_UINT32 h2t_msg;
         struct {
             A_UINT32 pre_reset_done           :      1, /* BIT [0]      */
                      post_reset_start_done    :      1, /* BIT [1]      */
                      post_reset_complete_done :      1, /* BIT [2]      */
-                     rsvd_h2t                 :     29; /* BIT [31 : 3] */
+                     start_pre_reset          :      1, /* BIT [3]      */
+                     rsvd_h2t                 :     28; /* BIT [31 : 4] */
         };
     };
 } POSTPACK htt_umac_hang_recovery_msg_shmem_t;
@@ -9979,6 +9995,18 @@ PREPACK typedef struct {
         ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_DO_POST_RESET_COMPLETE_S));\
     } while (0)
 
+/* dword1 - b'3 - initiate_umac_recovery */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_M 0x00000008
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_S 3
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_GET(word1) \
+	    (((word1) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_SET(word1, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY, _val); \
+        ((word1) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_INITIATE_UMAC_RECOVERY_S));\
+    } while (0)
+
 /* dword2 - b'0 - pre_reset_done */
 #define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_M 0x00000001
 #define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_PRE_RESET_DONE_S 0
@@ -10015,6 +10043,18 @@ PREPACK typedef struct {
         ((word2) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_POST_RESET_COMPLETE_DONE_S));\
     } while (0)
 
+/* dword2 - b'3 - start_pre_reset */
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_M 0x00000008
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_S 3
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_GET(word2) \
+    (((word2) & HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_M) >> \
+     HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_S)
+#define HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_SET(word2, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET, _val); \
+        ((word2) |= ((_val) << HTT_UMAC_HANG_RECOVERY_MSG_SHMEM_START_PRE_RESET_S));\
+    } while (0)
+
 /**
  * @brief HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP message
  *
@@ -10043,7 +10083,8 @@ PREPACK typedef struct {
  * |--------------------------------------------------------------------------|
  *
  * The message is interpreted as follows:
- * dword0 - b'0:7   - msg_type (= HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SETUP)
+ * dword0 - b'0:7   - msg_type
+ *                    (HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP)
  *          b'8:11  - t2h_msg_method: indicates method to be used for
  *                    T2H communication in UMAC hang recovery mode.
  *                    Value zero indicates MSI interrupt (default method).
@@ -10107,6 +10148,65 @@ PREPACK typedef struct {
     do { \
         HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD, _val); \
         ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP_H2T_MSG_METHOD_S));\
+    } while (0)
+
+/**
+ * @brief HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET message
+ *
+ * @details
+ *  The HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET is a SOC level
+ *  HTT message sent by the host to indicate that the target needs to start the
+ *  UMAC hang recovery feature from the point of pre-reset routine.
+ *  The purpose of this H2T message is to have host synchronize and trigger
+ *  UMAC recovery across all targets.
+ *  The info sent in this H2T message is the flag to indicate whether the
+ *  target needs to execute UMAC-recovery in context of the Initiator or
+ *  Non-Initiator.
+ *  This H2T message is expected to be sent as response to the
+ *  initiate_umac_recovery indication from the Initiator target attached to
+ *  this same host.
+ *  This H2T message is expected to be only sent if the WMI service bit
+ *  WMI_SERVICE_UMAC_HANG_RECOVERY_SUPPORT was firstly indicated by the target
+ *  and HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_PREREQUISITE_SETUP was sent
+ *  beforehand.
+ *
+ * |31                                       9|8|7            0|
+ * |-----------------------------------------------------------|
+ * |                 reserved                 |I|   msg_type   |
+ * |-----------------------------------------------------------|
+ * Where:
+ *     I = is_initiator
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type
+ *                    (HTT_H2T_MSG_TYPE_UMAC_HANG_RECOVERY_SOC_START_PRE_RESET)
+ *          b'8     - is_initiator: indicates whether the target needs to
+ *                    execute the UMAC-recovery in context of the Initiator or
+ *                    Non-Initiator.
+ *                    The value zero indicates this target is Non-Initiator.
+ *          b'9:31  - reserved.
+ */
+
+PREPACK typedef struct {
+    A_UINT32 msg_type       : 8,
+             is_initiator   : 1,
+             reserved       : 23;
+} POSTPACK htt_h2t_umac_hang_recovery_start_pre_reset_t;
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_BYTES \
+    (sizeof(htt_h2t_umac_hang_recovery_start_pre_reset_t))
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_DWORDS \
+    (HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_BYTES >> 2)
+
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_M 0x00000100
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S 8
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_GET(word0) \
+    (((word0) & HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_M) >> \
+     HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S)
+#define HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_SET(word0, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR, _val); \
+        ((word0) |= ((_val) << HTT_H2T_UMAC_HANG_RECOVERY_START_PRE_RESET_IS_INITIATOR_S));\
     } while (0)
 
 
