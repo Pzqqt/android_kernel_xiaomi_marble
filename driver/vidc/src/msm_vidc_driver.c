@@ -6004,7 +6004,7 @@ static int msm_vidc_check_max_sessions(struct msm_vidc_inst *inst)
 	core_lock(core, __func__);
 	list_for_each_entry(i, &core->instances, list) {
 		/* skip image sessions count */
-		if (is_image_session(inst))
+		if (is_image_session(i))
 			continue;
 
 		if (is_decode_session(i)) {
