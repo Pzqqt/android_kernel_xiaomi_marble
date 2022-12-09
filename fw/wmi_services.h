@@ -605,6 +605,7 @@ typedef  enum  {
     WMI_SERVICE_EIRP_PREFERRED_SUPPORT = 352, /* Support for OOBE feature where only EIRP powers will be sent in 6 GHz TPC WMI */
     WMI_SERVICE_RTT_TX_RX_CHAIN_IDX_SUPPORT = 353, /* FW Supports configuring Tx and Rx Chainmask in intiator and Responder */
     WMI_SERVICE_RESTRICTED_TWT = 354, /* Support for R-TWT feature */
+    WMI_SERVICE_SLO_SUPPORTED = 355, /* Support for Single Link 11BE */
 
 
     WMI_MAX_EXT2_SERVICE
