@@ -8923,6 +8923,14 @@ typedef enum {
      * optimizations.
      */
     WMI_PDEV_PARAM_DISABLE_LPI_ANT_OPTIMIZATION,
+
+    /*
+     * Param to configure exclusive RSID range for 11az TB ranging.
+     * RSID's are subset of total AID space and must not be used
+     * for any other purpose by Host. FW uses these IDs for trigger
+     * based ranging.
+     */
+    WMI_PDEV_PARAM_RTT_11AZ_RSID_RANGE,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)

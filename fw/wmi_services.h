@@ -563,7 +563,7 @@ typedef  enum  {
     WMI_SERVICE_DYNAMIC_VDEV_MAC_ADDR_UPDATE_SUPPORT = 310, /* FW supports dynamic vdev mac address updating */
     WMI_SERVICE_SAWF_LEVEL0 = 311, /* FW supports WMI_SAWF_SVC_CLASS CFG_CMD + DISABLE_CMD msgs */
     WMI_SERVICE_RTT_11AZ_NTB_SUPPORT = 312, /* FW support for 11AZ non trigger based ranging */
-    WMI_SERVICE_RTT_11AZ_TB_SUPPORT = 313, /* FW support for 11AZ trigger based ranging */
+    WMI_SERVICE_RTT_11AZ_TB_SUPPORT = 313, /* FW support for 11AZ trigger based ranging ISTA role */
     WMI_SERVICE_RTT_11AZ_MAC_SEC_SUPPORT = 314, /* FW support for 11AZ secure FTM */
     WMI_SERVICE_RTT_11AZ_MAC_PHY_SEC_SUPPORT = 315, /* FW support for 11AZ secure LTF + FTM */
     WMI_SERVICE_SPECTRAL_SESSION_INFO_SUPPORT = 316, /* Information corresponding to each Spectral scan session will be sent by the FW before the reports corresponding to that session are sent */
@@ -606,6 +606,7 @@ typedef  enum  {
     WMI_SERVICE_RTT_TX_RX_CHAIN_IDX_SUPPORT = 353, /* FW Supports configuring Tx and Rx Chainmask in intiator and Responder */
     WMI_SERVICE_RESTRICTED_TWT = 354, /* Support for R-TWT feature */
     WMI_SERVICE_SLO_SUPPORTED = 355, /* Support for Single Link 11BE */
+    WMI_SERVICE_RTT_11AZ_TB_RSTA_SUPPORT = 356, /* FW support for 11AZ trigger based ranging Responder (RSTA) role */
 
 
     WMI_MAX_EXT2_SERVICE
