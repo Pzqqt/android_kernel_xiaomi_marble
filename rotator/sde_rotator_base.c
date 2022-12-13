@@ -536,8 +536,8 @@ static int sde_mdp_parse_dt_handler(struct platform_device *pdev,
 	return 0;
 }
 
-static int sde_mdp_parse_dt_prop_len(struct platform_device *pdev,
-				      char *prop_name)
+int sde_mdp_parse_dt_prop_len(struct platform_device *pdev,
+		char *prop_name)
 {
 	int len = 0;
 
