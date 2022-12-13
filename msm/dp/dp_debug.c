@@ -1676,8 +1676,10 @@ static void dp_debug_set_sim_mode(struct dp_debug_private *debug, bool sim)
 		display = sde_conn->display;
 		if (display->base_connector == (*debug->connector)) {
 			panel = sde_conn->drv_panel;
-			panel->mode_override = false;
-			panel->mst_hide = false;
+			if (panel) {
+				panel->mode_override = false;
+				panel->mst_hide = false;
+			}
 		}
 	}
 	drm_connector_list_iter_end(&conn_iter);
