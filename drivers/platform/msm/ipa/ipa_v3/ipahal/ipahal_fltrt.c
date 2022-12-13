@@ -2902,6 +2902,129 @@ static int ipa_flt_generate_eq_ip4(enum ipa_ip_type ip,
 		eq_atrb->ipv4_frag_eq_present = 1;
 	}
 
+#ifdef IPA_FLT_EXT_MPLS_GRE_GENERAL
+	if ( attrib->ext_attrib_mask & IPA_FLT_EXT_MPLS_GRE_GENERAL ) {
+		ipa_fld_wid_off_t* fwo;
+		int32_t            offset, oo, rmndr;
+		uint32_t           row, mask, cmp_wid, shift, value;
+
+		value = attrib->fld_val_eq.value;
+
+		fwo = get_mpls_v4_outer(attrib->fld_val_eq.flow, attrib->fld_val_eq.inner_iptype, attrib->fld_val_eq.field);
+
+		cmp_wid = fwo->width;
+		offset  = fwo->offset;
+		rmndr   = abs(offset) % sizeof(uint32_t);
+
+		IPAHAL_DBG(
+			"wid=(%u) raw offset=(%d) rmndr=(%d)\n",
+			cmp_wid,
+			offset,
+			rmndr);
+
+		/*
+		 * The offset and shift (for mask and value) calculations
+		 * below are necessary because the IPA wants offsets to be on
+		 * 4 byte (ie. 32-bit word) boundaries.  Values are found in
+		 * the 32-bit word by the position of the mask/value bits post
+		 * shift.
+		 *
+		 * Example:
+		 *
+		 *    +----+----+----+----+
+		 *    |    |    |    |    |
+		 *    +----+----+----+----+
+		 *      b0   b1   b2   b3
+		 *
+		 *   If we're looking for a single byte value at b3, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0x000000FF value would be 0x000000XX
+		 *        where XX is the byte value you're looking for.
+		 *
+		 *   If we're looking for a single byte value at b2, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0x0000FF00 value would be 0x0000XX00
+		 *        where XX is the byte value you're looking for.
+		 *
+		 *   If we're looking for a single byte value at b1, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0x00FF0000 value would be 0x00XX0000
+		 *        where XX is the byte value you're looking for.
+		 *
+		 *   If we're looking for a single byte value at b0, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0xFF000000 value would be 0xXX000000
+		 *        where XX is the byte value you're looking for.
+		 */
+		oo = offset;
+
+		if ( rmndr ) {
+			if ( offset < 0 ) {
+				offset = offset - (sizeof(uint32_t) - rmndr);
+			} else {
+				offset -= rmndr;
+			}
+		}
+
+		if ( offset < 0 ) {
+			rmndr = abs(offset) - abs(oo);
+		} else {
+			rmndr = oo - offset;
+		}
+
+		IPAHAL_DBG(
+			"oo=(%d) rmndr=(%d) offset=(%d)\n",
+			oo,
+			rmndr,
+			offset);
+
+		shift = ((sizeof(uint32_t) - rmndr) - cmp_wid) * 8;
+
+		switch ( cmp_wid )
+		{
+		case ONE_BYTE:
+			mask = 0x000000FF;
+			break;
+		case TWO_BYTE:
+			mask = 0x0000FFFF;
+			break;
+		default:  /* FOUR_BYTE */
+			mask  = 0xFFFFFFFF;
+			shift = 0;
+			break;
+		}
+
+		mask  = (mask  << shift);
+		value = (value << shift);
+
+		IPAHAL_DBG(
+			"outerIP=(v4) flow=(%s) innerIP=(%s) field=(%s) value=(%08X) wid=(%u) adj offset=(%d) mask=(%08X) val=(%08X)\n",
+			flow_type_as_str(attrib->fld_val_eq.flow),
+			ipa_ip_type_as_str(attrib->fld_val_eq.inner_iptype),
+			exception_type_as_str(attrib->fld_val_eq.field),
+			attrib->fld_val_eq.value,
+			cmp_wid,
+			offset,
+			mask,
+			value);
+
+		if (IPA_IS_RAN_OUT_OF_EQ(ipa3_0_ihl_ofst_meq32, ihl_ofst_meq32)) {
+			IPAHAL_ERR("ran out of ihl_meq32 eq\n");
+			return -EPERM;
+		}
+		*en_rule |= IPA_GET_RULE_EQ_BIT_PTRN(
+			ipa3_0_ihl_ofst_meq32[ihl_ofst_meq32]);
+		eq_atrb->ihl_offset_meq_32[ihl_ofst_meq32].offset = offset;
+		eq_atrb->ihl_offset_meq_32[ihl_ofst_meq32].mask   = mask;
+		eq_atrb->ihl_offset_meq_32[ihl_ofst_meq32].value  = value;
+		ihl_ofst_meq32++;
+	}
+#endif
+
 	if (attrib->attrib_mask & IPA_FLT_TOS && !tos_done) {
 		IPAHAL_ERR("could not find equation for tos\n");
 		return -EPERM;
@@ -3370,6 +3493,129 @@ static int ipa_flt_generate_eq_ip6(enum ipa_ip_type ip,
 			IPA_IS_FRAG);
 		eq_atrb->ipv4_frag_eq_present = 1;
 	}
+
+#ifdef IPA_FLT_EXT_MPLS_GRE_GENERAL
+	if ( attrib->ext_attrib_mask & IPA_FLT_EXT_MPLS_GRE_GENERAL ) {
+		ipa_fld_wid_off_t* fwo;
+		int32_t            offset, oo, rmndr;
+		uint32_t           row, mask, cmp_wid, shift, value;
+
+		value = attrib->fld_val_eq.value;
+
+		fwo = get_mpls_v6_outer(attrib->fld_val_eq.flow, attrib->fld_val_eq.inner_iptype, attrib->fld_val_eq.field);
+
+		cmp_wid = fwo->width;
+		offset  = fwo->offset;
+		rmndr   = abs(offset) % sizeof(uint32_t);
+
+		IPAHAL_DBG(
+			"wid=(%u) raw offset=(%d) rmndr=(%d)\n",
+			cmp_wid,
+			offset,
+			rmndr);
+
+		/*
+		 * The offset and shift (for mask and value) calculations
+		 * below are necessary because the IPA wants offsets to be on
+		 * 4 byte (ie. 32-bit word) boundaries.  Values are found in
+		 * the 32-bit word by the position of the mask/value bits post
+		 * shift.
+		 *
+		 * Example:
+		 *
+		 *    +----+----+----+----+
+		 *    |    |    |    |    |
+		 *    +----+----+----+----+
+		 *      b0   b1   b2   b3
+		 *
+		 *   If we're looking for a single byte value at b3, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0x000000FF value would be 0x000000XX
+		 *        where XX is the byte value you're looking for.
+		 *
+		 *   If we're looking for a single byte value at b2, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0x0000FF00 value would be 0x0000XX00
+		 *        where XX is the byte value you're looking for.
+		 *
+		 *   If we're looking for a single byte value at b1, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0x00FF0000 value would be 0x00XX0000
+		 *        where XX is the byte value you're looking for.
+		 *
+		 *   If we're looking for a single byte value at b0, then:
+		 *
+		 *     1) The offset we pass to the IPA would b0's location of 0
+		 *     2) Mask would be 0xFF000000 value would be 0xXX000000
+		 *        where XX is the byte value you're looking for.
+		 */
+		oo = offset;
+
+		if ( rmndr ) {
+			if ( offset < 0 ) {
+				offset = offset - (sizeof(uint32_t) - rmndr);
+			} else {
+				offset -= rmndr;
+			}
+		}
+
+		if ( offset < 0 ) {
+			rmndr = abs(offset) - abs(oo);
+		} else {
+			rmndr = oo - offset;
+		}
+
+		IPAHAL_DBG(
+			"oo=(%d) rmndr=(%d) offset=(%d)\n",
+			oo,
+			rmndr,
+			offset);
+
+		shift = ((sizeof(uint32_t) - rmndr) - cmp_wid) * 8;
+
+		switch ( cmp_wid )
+		{
+		case ONE_BYTE:
+			mask = 0x000000FF;
+			break;
+		case TWO_BYTE:
+			mask = 0x0000FFFF;
+			break;
+		default:  /* FOUR_BYTE */
+			mask  = 0xFFFFFFFF;
+			shift = 0;
+			break;
+		}
+
+		mask  = (mask  << shift);
+		value = (value << shift);
+
+		IPAHAL_DBG(
+			"outerIP=(v6) flow=(%s) innerIP=(%s) field=(%s) value=(%08X) wid=(%u) adj offset=(%d) mask=(%08X) val=(%08X)\n",
+			flow_type_as_str(attrib->fld_val_eq.flow),
+			ipa_ip_type_as_str(attrib->fld_val_eq.inner_iptype),
+			exception_type_as_str(attrib->fld_val_eq.field),
+			attrib->fld_val_eq.value,
+			cmp_wid,
+			offset,
+			mask,
+			value);
+
+		if (IPA_IS_RAN_OUT_OF_EQ(ipa3_0_ihl_ofst_meq32, ihl_ofst_meq32)) {
+			IPAHAL_ERR("ran out of ihl_meq32 eq\n");
+			return -EPERM;
+		}
+		*en_rule |= IPA_GET_RULE_EQ_BIT_PTRN(
+			ipa3_0_ihl_ofst_meq32[ihl_ofst_meq32]);
+		eq_atrb->ihl_offset_meq_32[ihl_ofst_meq32].offset = offset;
+		eq_atrb->ihl_offset_meq_32[ihl_ofst_meq32].mask   = mask;
+		eq_atrb->ihl_offset_meq_32[ihl_ofst_meq32].value  = value;
+		ihl_ofst_meq32++;
+	}
+#endif
 
 	eq_atrb->rule_eq_bitmap = *en_rule;
 	eq_atrb->num_offset_meq_32 = ofst_meq32;

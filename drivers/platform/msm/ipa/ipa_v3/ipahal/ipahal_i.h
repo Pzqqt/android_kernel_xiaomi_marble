@@ -910,6 +910,8 @@ union ipa_pkt_status_hw_v5_0 {
 #define IPA_HDR_UCP_SET_DSCP               16
 #define IPA_HDR_UCP_EoGRE_HEADER_ADD       17
 #define IPA_HDR_UCP_EoGRE_HEADER_REMOVE    18
+#define IPA_HDR_UCP_MPLSoGRE_HEADER_ADD    19
+#define IPA_HDR_UCP_MPLSoGRE_HEADER_REMOVE 20
 
 /* Processing context TLV type */
 #define IPA_PROC_CTX_TLV_TYPE_END 0

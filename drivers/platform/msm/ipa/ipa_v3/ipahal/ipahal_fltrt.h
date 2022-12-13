@@ -318,5 +318,214 @@ int ipahal_flt_parse_hw_rule(u8 *rule_addr,
  */
 u32 ipa_fltrt_get_aligned_lcl_bdy_size(u32 num_lcl_tbls, u32 total_sz_lcl_tbls);
 
+#ifdef IPA_FLT_EXT_MPLS_GRE_GENERAL
+/*
+ * *****************************************************************************
+ * MLPS OVER GRE EQUATION GENERATION CONSTANTS
+ * *****************************************************************************
+ */
+#define ETH_HDR_LEN            (sizeof(struct ethhdr))
+#define ETH_HDR_W_TAGS_LEN     (sizeof(struct ethhdr) + S_C_TAG_LEN)
+#define ETH_TYPE_LEN           (ETH_TLEN)
+#define MAC_ADDR_LEN           (ETH_ALEN)
+#define MAC_ADDRS_LEN          (MAC_ADDR_LEN*2)
+#define VLAN_TAG_LEN           (sizeof(uint32_t))
+#define S_C_TAG_LEN            (VLAN_TAG_LEN * 2)
 
+#define GRE_HDR_LEN            (sizeof(uint32_t))
+#define MPLS_HDR_LEN           (sizeof(uint32_t))
+
+#define V4_HDR_LEN             (sizeof(struct iphdr))
+#define V6_HDR_LEN             (sizeof(struct ipv6hdr))
+#define V6_EXT_HDR_LEN         (sizeof(uint32_t)*2)
+
+#define ONE_BYTE               (sizeof(uint8_t))
+#define TWO_BYTE               (sizeof(uint16_t))
+#define FOUR_BYTE              (sizeof(uint32_t))
+
+#define OFFSET_TO_V4_PROTO     offsetof(struct iphdr,   protocol)
+#define OFFSET_TO_V6_PROTO     offsetof(struct ipv6hdr, nexthdr)
+
+#define OFFSET_TO_TCP_SRC_PORT offsetof(struct tcphdr,  source)
+#define OFFSET_TO_TCP_DST_PORT offsetof(struct tcphdr,  dest)
+#define OFFSET_TO_UDP_SRC_PORT offsetof(struct udphdr,  source)
+#define OFFSET_TO_UDP_DST_PORT offsetof(struct udphdr,  dest)
+#define OFFSET_TO_ETHER_TYPE   offsetof(struct ethhdr,  h_proto)
+
+/*
+ * The following are the outer and inner packet types combinations
+ * we'll see for either uplink (UL below) or downlink (DL below) data
+ * flows:
+ *
+ *   out 4/in 4 (O4_I4 below)
+ *   out 6/in 6 (O6_I6 below)
+ *
+ *   out 4/in 6 (O4_I6 below)
+ *   out 6/in 4 (O6_I4 below)
+ *
+ *   out eth/in 4 (OETH_I4 below)
+ *   out eth/in 6 (OETH_I6 below)
+ *
+ * To follow are:
+ *
+ *    DOWNLINK PACKET OFFSET CONSTANTS
+ */
+
+/*
+ * out 4/in 4 -> O4_I4
+ */
+#define MPLS_DL_O4_I4_OFFSET_TO_ETH \
+    (GRE_HDR_LEN + MPLS_HDR_LEN)
+
+#define MPLS_DL_O4_I4_OFFSET_TO_V4_HDR \
+    (MPLS_DL_O4_I4_OFFSET_TO_ETH + ETH_HDR_LEN)
+
+#define MPLS_DL_O4_I4_IP_PROTOCOL_OFFSET \
+    (MPLS_DL_O4_I4_OFFSET_TO_V4_HDR + OFFSET_TO_V4_PROTO)
+#define MPLS_DL_O4_I4_TCP_SRC_PORT_OFFSET \
+    (MPLS_DL_O4_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_TCP_SRC_PORT)
+#define MPLS_DL_O4_I4_TCP_DST_PORT_OFFSET \
+    (MPLS_DL_O4_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_TCP_DST_PORT)
+#define MPLS_DL_O4_I4_UDP_SRC_PORT_OFFSET \
+    (MPLS_DL_O4_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_UDP_SRC_PORT)
+#define MPLS_DL_O4_I4_UDP_DST_PORT_OFFSET \
+    (MPLS_DL_O4_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_UDP_DST_PORT)
+
+#define MPLS_DL_O4_I4_ETHER_TYPE_OFFSET \
+    (MPLS_DL_O4_I4_OFFSET_TO_ETH + OFFSET_TO_ETHER_TYPE)
+
+/*
+ * out 6/in 6 -> O6_I6
+ */
+#define MPLS_DL_O6_I6_OFFSET_TO_ETH \
+    (V6_EXT_HDR_LEN + GRE_HDR_LEN + MPLS_HDR_LEN)
+
+#define MPLS_DL_O6_I6_OFFSET_TO_V6_HDR \
+    (MPLS_DL_O6_I6_OFFSET_TO_ETH + ETH_HDR_LEN)
+
+#define MPLS_DL_O6_I6_IP_PROTOCOL_OFFSET \
+    (MPLS_DL_O6_I6_OFFSET_TO_V6_HDR + OFFSET_TO_V6_PROTO)
+#define MPLS_DL_O6_I6_TCP_SRC_PORT_OFFSET \
+    (MPLS_DL_O6_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_TCP_SRC_PORT)
+#define MPLS_DL_O6_I6_TCP_DST_PORT_OFFSET \
+    (MPLS_DL_O6_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_TCP_DST_PORT)
+#define MPLS_DL_O6_I6_UDP_SRC_PORT_OFFSET \
+    (MPLS_DL_O6_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_UDP_SRC_PORT)
+#define MPLS_DL_O6_I6_UDP_DST_PORT_OFFSET \
+    (MPLS_DL_O6_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_UDP_DST_PORT)
+
+#define MPLS_DL_O6_I6_ETHER_TYPE_OFFSET \
+    (MPLS_DL_O6_I6_OFFSET_TO_ETH + OFFSET_TO_ETHER_TYPE)
+
+/*
+ * out 4/in 6 -> O4_I6
+ */
+#define MPLS_DL_O4_I6_OFFSET_TO_ETH \
+    (GRE_HDR_LEN + MPLS_HDR_LEN)
+
+#define MPLS_DL_O4_I6_OFFSET_TO_V6_HDR \
+    (MPLS_DL_O4_I6_OFFSET_TO_ETH + ETH_HDR_LEN)
+
+#define MPLS_DL_O4_I6_IP_PROTOCOL_OFFSET \
+    (MPLS_DL_O4_I6_OFFSET_TO_V6_HDR + OFFSET_TO_V6_PROTO)
+#define MPLS_DL_O4_I6_TCP_SRC_PORT_OFFSET \
+    (MPLS_DL_O4_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_TCP_SRC_PORT)
+#define MPLS_DL_O4_I6_TCP_DST_PORT_OFFSET \
+    (MPLS_DL_O4_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_TCP_DST_PORT)
+#define MPLS_DL_O4_I6_UDP_SRC_PORT_OFFSET \
+    (MPLS_DL_O4_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_UDP_SRC_PORT)
+#define MPLS_DL_O4_I6_UDP_DST_PORT_OFFSET \
+    (MPLS_DL_O4_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_UDP_DST_PORT)
+
+#define MPLS_DL_O4_I6_ETHER_TYPE_OFFSET \
+    (MPLS_DL_O4_I6_OFFSET_TO_ETH + OFFSET_TO_ETHER_TYPE)
+
+/*
+ * out 6/in 4 -> O6_I4
+ */
+#define MPLS_DL_O6_I4_OFFSET_TO_ETH \
+    (V6_EXT_HDR_LEN + GRE_HDR_LEN + MPLS_HDR_LEN)
+
+#define MPLS_DL_O6_I4_OFFSET_TO_V4_HDR \
+    (MPLS_DL_O6_I4_OFFSET_TO_ETH + ETH_HDR_LEN)
+
+#define MPLS_DL_O6_I4_IP_PROTOCOL_OFFSET \
+    (MPLS_DL_O6_I4_OFFSET_TO_V4_HDR + OFFSET_TO_V4_PROTO)
+#define MPLS_DL_O6_I4_TCP_SRC_PORT_OFFSET \
+    (MPLS_DL_O6_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_TCP_SRC_PORT)
+#define MPLS_DL_O6_I4_TCP_DST_PORT_OFFSET \
+    (MPLS_DL_O6_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_TCP_DST_PORT)
+#define MPLS_DL_O6_I4_UDP_SRC_PORT_OFFSET \
+    (MPLS_DL_O6_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_UDP_SRC_PORT)
+#define MPLS_DL_O6_I4_UDP_DST_PORT_OFFSET \
+    (MPLS_DL_O6_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_UDP_DST_PORT)
+
+#define MPLS_DL_O6_I4_ETHER_TYPE_OFFSET \
+    (MPLS_DL_O6_I4_OFFSET_TO_ETH + OFFSET_TO_ETHER_TYPE)
+
+/*
+ * UPLINK PACKET OFFSET CONSTANTS
+ */
+
+/*
+ * out eth/in 4 -> OETH_I4
+ */
+#define MPLS_UL_OETH_I4_OFFSET_TO_ETH \
+    (-(V4_HDR_LEN + ETH_HDR_W_TAGS_LEN))
+
+#define MPLS_UL_OETH_I4_OFFSET_TO_V4_HDR \
+    (-V4_HDR_LEN)
+
+#define MPLS_UL_OETH_I4_IP_PROTOCOL_OFFSET \
+    (MPLS_UL_OETH_I4_OFFSET_TO_V4_HDR + OFFSET_TO_V4_PROTO)
+#define MPLS_UL_OETH_I4_TCP_SRC_PORT_OFFSET \
+    (MPLS_UL_OETH_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_TCP_SRC_PORT)
+#define MPLS_UL_OETH_I4_TCP_DST_PORT_OFFSET \
+    (MPLS_UL_OETH_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_TCP_DST_PORT)
+#define MPLS_UL_OETH_I4_UDP_SRC_PORT_OFFSET \
+    (MPLS_UL_OETH_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_UDP_SRC_PORT)
+#define MPLS_UL_OETH_I4_UDP_DST_PORT_OFFSET \
+    (MPLS_UL_OETH_I4_OFFSET_TO_V4_HDR + V4_HDR_LEN + OFFSET_TO_UDP_DST_PORT)
+
+#define MPLS_UL_OETH_I4_ETHER_TYPE_OFFSET \
+    (MPLS_UL_OETH_I4_OFFSET_TO_ETH + OFFSET_TO_ETHER_TYPE + S_C_TAG_LEN)
+
+/*
+ * out eth/in 6 -> OETH_I6
+ */
+#define MPLS_UL_OETH_I6_OFFSET_TO_ETH \
+    (-(V6_HDR_LEN + ETH_HDR_W_TAGS_LEN))
+
+#define MPLS_UL_OETH_I6_OFFSET_TO_V6_HDR \
+    (-V6_HDR_LEN)
+
+#define MPLS_UL_OETH_I6_IP_PROTOCOL_OFFSET \
+    (MPLS_UL_OETH_I6_OFFSET_TO_V6_HDR + OFFSET_TO_V6_PROTO)
+#define MPLS_UL_OETH_I6_TCP_SRC_PORT_OFFSET \
+    (MPLS_UL_OETH_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_TCP_SRC_PORT)
+#define MPLS_UL_OETH_I6_TCP_DST_PORT_OFFSET \
+    (MPLS_UL_OETH_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_TCP_DST_PORT)
+#define MPLS_UL_OETH_I6_UDP_SRC_PORT_OFFSET \
+    (MPLS_UL_OETH_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_UDP_SRC_PORT)
+#define MPLS_UL_OETH_I6_UDP_DST_PORT_OFFSET \
+    (MPLS_UL_OETH_I6_OFFSET_TO_V6_HDR + V6_HDR_LEN + OFFSET_TO_UDP_DST_PORT)
+
+#define MPLS_UL_OETH_I6_ETHER_TYPE_OFFSET \
+    (MPLS_UL_OETH_I6_OFFSET_TO_ETH + OFFSET_TO_ETHER_TYPE + S_C_TAG_LEN)
+
+/*
+ * The following structure definition is used to define width and
+ * offset tables. These tables are used for mpls over gre equation
+ * generation.
+ */
+typedef struct {
+    uint8_t width;
+    int8_t  offset;
+} ipa_fld_wid_off_t;
+
+ipa_fld_wid_off_t* get_mpls_v4_outer(enum ipa_data_flow_type, enum ipa_ip_type, enum ipa_exception_type);
+
+ipa_fld_wid_off_t* get_mpls_v6_outer(enum ipa_data_flow_type, enum ipa_ip_type, enum ipa_exception_type);
+
+#endif /* IPA_FLT_EXT_MPLS_GRE_GENERAL */
 #endif /* _IPAHAL_FLTRT_H_ */

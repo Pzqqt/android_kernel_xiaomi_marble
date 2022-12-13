@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -762,8 +763,6 @@ static void ipa_gsb_tx_dp_notify(void *priv, enum ipa_dp_evt_type evt,
 
 	/* fetch iface handle from header */
 	mux_hdr = (struct ipa_gsb_mux_hdr *)skb->data;
-	/* change to host order */
-	*(u32 *)mux_hdr = ntohl(*(u32 *)mux_hdr);
 	hdl = mux_hdr->iface_hdl;
 	if ((hdl < 0) || (hdl >= MAX_SUPPORTED_IFACE) ||
 		!ipa_gsb_ctx->iface[hdl]) {
@@ -1215,9 +1214,9 @@ static int ipa_bridge_tx_dp_internal(u32 hdl, struct sk_buff *skb,
 	/* add 4 byte header for mux */
 	mux_hdr = (struct ipa_gsb_mux_hdr *)skb_push(skb,
 		sizeof(struct ipa_gsb_mux_hdr));
+	memset(mux_hdr, 0, sizeof(struct ipa_gsb_mux_hdr));
 	mux_hdr->iface_hdl = (u8)hdl;
-	/* change to network order */
-	*(u32 *)mux_hdr = htonl(*(u32 *)mux_hdr);
+	mux_hdr->qmap_id = (u8)ipa3_ctx->ep[ipa_gsb_ctx->prod_hdl].cfg.meta.qmap_id;
 
 	ret = ipa_tx_dp(IPA_CLIENT_ODU_PROD, skb, metadata);
 	if (ret) {

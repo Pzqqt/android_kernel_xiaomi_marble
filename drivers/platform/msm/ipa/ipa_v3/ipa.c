@@ -801,10 +801,21 @@ struct iommu_domain *ipa3_get_eth1_smmu_domain(void)
 	return ipa3_get_smmu_domain_by_type(IPA_SMMU_CB_ETH1);
 }
 
-
 struct iommu_domain *ipa3_get_11ad_smmu_domain(void)
 {
 	return ipa3_get_smmu_domain_by_type(IPA_SMMU_CB_11AD);
+}
+
+struct device *ipa3_get_wlan_device(void)
+{
+	if (ipa3_ctx->ipa_hw_type == IPA_HW_v4_5 &&
+		ipa_get_wdi_version() == IPA_WDI_1) {
+		if (smmu_cb[IPA_SMMU_CB_WLAN].valid)
+			return smmu_cb[IPA_SMMU_CB_WLAN].dev;
+		IPAERR("CB not valid\n");
+		return NULL;
+	}
+	return ipa3_ctx->pdev;
 }
 
 struct device *ipa3_get_dma_dev(void)
@@ -812,6 +823,7 @@ struct device *ipa3_get_dma_dev(void)
 	return ipa3_ctx->pdev;
 }
 EXPORT_SYMBOL(ipa3_get_dma_dev);
+
 
 /**
  * ipa3_get_smmu_ctx()- Return smmu context for the given cb_type
@@ -4059,6 +4071,12 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+		if (retval == -EIO)
+		{
+			IPADBG("no work needs to be done but return success to caller");
+			retval = 0;
+			break;
+		}
 
 		ipa3_ctx->eogre_enabled = (retval == 0);
 
@@ -4089,6 +4107,12 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		memset(&eogre_info, 0, sizeof(eogre_info));
 
 		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+		if (retval == -EIO)
+		{
+			IPADBG("no work needs to be done but return success to caller");
+			retval = 0;
+			break;
+		}
 
 		if (retval == 0 && send2uC == true) {
 			/*
@@ -4792,20 +4816,20 @@ static int ipa3_q6_clean_q6_rt_tbls(enum ipa_ip_type ip,
 		modem_rt_index_hi = IPA_MEM_PART(v4_modem_rt_index_hi);
 		if (rlt == IPA_RULE_HASHABLE) {
 			lcl_addr_mem_part = IPA_MEM_PART(v4_rt_hash_ofst);
-			lcl_hdr_sz =  IPA_MEM_PART(v4_flt_hash_size);
+			lcl_hdr_sz =  IPA_MEM_PART(v4_rt_hash_size);
 		} else {
 			lcl_addr_mem_part = IPA_MEM_PART(v4_rt_nhash_ofst);
-			lcl_hdr_sz = IPA_MEM_PART(v4_flt_nhash_size);
+			lcl_hdr_sz = IPA_MEM_PART(v4_rt_nhash_size);
 		}
 	} else {
 		modem_rt_index_lo = IPA_MEM_PART(v6_modem_rt_index_lo);
 		modem_rt_index_hi = IPA_MEM_PART(v6_modem_rt_index_hi);
 		if (rlt == IPA_RULE_HASHABLE) {
 			lcl_addr_mem_part = IPA_MEM_PART(v6_rt_hash_ofst);
-			lcl_hdr_sz =  IPA_MEM_PART(v6_flt_hash_size);
+			lcl_hdr_sz =  IPA_MEM_PART(v6_rt_hash_size);
 		} else {
 			lcl_addr_mem_part = IPA_MEM_PART(v6_rt_nhash_ofst);
-			lcl_hdr_sz = IPA_MEM_PART(v6_flt_nhash_size);
+			lcl_hdr_sz = IPA_MEM_PART(v6_rt_nhash_size);
 		}
 	}
 
@@ -4813,7 +4837,7 @@ static int ipa3_q6_clean_q6_rt_tbls(enum ipa_ip_type ip,
 		modem_rt_index_hi - modem_rt_index_lo + 1,
 		lcl_hdr_sz, lcl_hdr_sz, &mem, true);
 	if (retval) {
-		IPAERR("fail generate empty rt img\n");
+		IPAERR("fail generate empty rt img, size %d\n", lcl_hdr_sz);
 		return -ENOMEM;
 	}
 
@@ -8355,10 +8379,15 @@ static ssize_t ipa3_write(struct file *file, const char __user *buf,
 	/* Check MHI configuration on MDM devices */
 	if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_MDM) {
 
+		/* todo in future: change vlan_mode_iface from bool to enum
+		 * and support double vlan for all ifaces
+		 */
+		if (strnstr(dbg_buff, "double-vlan", strlen(dbg_buff)))
+			ipa3_ctx->is_eth_double_vlan_mode = true;
+
 		if (strnstr(dbg_buff, "vlan", strlen(dbg_buff))) {
 			if (strnstr(dbg_buff, STR_ETH_IFACE, strlen(dbg_buff)))
-				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_EMAC] =
-				true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_EMAC] = true;
 #if IPA_ETH_API_VER >= 2
 			/* In Dual NIC mode we get "vlan: eth [eth0|eth1] [eth0|eth1]?" while device name is
 			   "eth0" in legacy so, we set it to false to diffrentiate Dual NIC from legacy */
@@ -8372,11 +8401,9 @@ static ssize_t ipa3_write(struct file *file, const char __user *buf,
 			}
 #endif
 			if (strnstr(dbg_buff, STR_RNDIS_IFACE, strlen(dbg_buff)))
-				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_RNDIS] =
-				true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_RNDIS] = true;
 			if (strnstr(dbg_buff, STR_ECM_IFACE, strlen(dbg_buff)))
-				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_ECM] =
-				true;
+				ipa3_ctx->vlan_mode_iface[IPA_VLAN_IF_ECM] = true;
 
 			/*
 			 * when vlan mode is passed to our dev we expect
