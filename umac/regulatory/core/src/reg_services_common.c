@@ -5108,6 +5108,72 @@ enum band_info reg_band_bitmap_to_band_info(uint32_t band_bitmap)
 	else
 		return BAND_UNKNOWN;
 }
+
+QDF_STATUS
+reg_add_indoor_concurrency(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			   uint32_t freq, enum phy_ch_width width)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct indoor_concurrency_list *list;
+	const struct bonded_channel_freq *range = NULL;
+	uint8_t i = 0;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (width > CH_WIDTH_20MHZ)
+		range = wlan_reg_get_bonded_chan_entry(freq, width);
+
+	list = &pdev_priv_obj->indoor_list[0];
+	for (i = 0; i < MAX_INDOOR_LIST_SIZE; i++, list++) {
+		if (list->freq == 0 && list->vdev_id == INVALID_VDEV_ID) {
+			list->freq = freq;
+			list->vdev_id = vdev_id;
+			list->chan_range = range;
+			reg_debug("Added freq %d vdev %d width %d at idx %d",
+				  freq, vdev_id, width, i);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	reg_err("Unable to add indoor concurrency for vdev %d freq %d width %d",
+		vdev_id, freq, width);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+reg_remove_indoor_concurrency(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			      uint32_t freq)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct indoor_concurrency_list *list;
+	uint8_t i = 0;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	list = &pdev_priv_obj->indoor_list[0];
+	for (i = 0; i < MAX_INDOOR_LIST_SIZE; i++, list++) {
+		if (list->freq == freq ||
+		    (vdev_id != INVALID_VDEV_ID && list->vdev_id == vdev_id)) {
+			reg_debug("Removed freq %d from idx %d", list->freq, i);
+			list->freq = 0;
+			list->vdev_id = INVALID_VDEV_ID;
+			list->chan_range = NULL;
+			return QDF_STATUS_SUCCESS;
+		}
+		continue;
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+
 #endif
 
 #if defined(CONFIG_BAND_6GHZ)

@@ -1337,6 +1337,17 @@ uint8_t wlan_reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 						qdf_freq_t freq);
 
 /**
+ * wlan_reg_get_bonded_chan_entry() - Fetch the bonded channel pointer given a
+ * frequency and channel width.
+ * @freq: Input frequency in MHz.
+ * @chwidth: Input channel width of enum phy_ch_width.
+ *
+ * Return: A valid bonded channel pointer if found, else NULL.
+ */
+const struct bonded_channel_freq *
+wlan_reg_get_bonded_chan_entry(qdf_freq_t freq, enum phy_ch_width chwidth);
+
+/**
  * wlan_reg_update_nol_ch_for_freq () - set nol channel
  * @pdev: pdev ptr
  * @chan_freq_list: channel list to be returned
@@ -1688,6 +1699,36 @@ wlan_reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
  *	BAND_5G if 5G is enabled but 2G isn't
  */
 enum band_info wlan_reg_band_bitmap_to_band_info(uint32_t band_bitmap);
+
+/**
+ * wlan_reg_modify_indoor_concurrency() - Update the indoor concurrency list
+ * in regulatory pdev context
+ *
+ * @pdev: pointer to pdev
+ * @vdev_id: vdev id
+ * @freq: frequency
+ * @width: channel width
+ * @add: add or delete entry
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_reg_modify_indoor_concurrency(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id, uint32_t freq,
+				   enum phy_ch_width width, bool add);
+
+/**
+ * wlan_reg_recompute_current_chan_list() - Recompute the current channel list
+ * based on the regulatory change
+ *
+ * @psoc: pointer to psoc
+ * @pdev: pointer to pdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_reg_recompute_current_chan_list(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_objmgr_pdev *pdev);
 #endif
 
 #if defined(CONFIG_BAND_6GHZ)

@@ -4105,7 +4105,19 @@ enum qca_wlan_vendor_attr_nd_offload {
  *	synchronous (in vendor command reply) to the request. Each TWT
  *	operation is specifically mentioned (against its respective)
  *	documentation) to support either of these or both modes.
- *
+ * @QCA_WLAN_VENDOR_FEATURE_USE_ADD_DEL_VIRTUAL_INTF_FOR_NDI: Flag indicates
+ * 	that the driver requires add/del virtual interface path using the
+ *	generic nl80211 commands for NDP interface create/delete and to
+ *	register/unregister the netdev instead of creating/deleting the NDP
+ *	interface using the vendor commands
+ *	QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_CREATE and
+ *	QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE. With the latest kernel
+ * 	(5.12 version onward), interface creation/deletion is not allowed using
+ * 	vendor commands as it leads to a deadlock while acquiring the RTNL_LOCK
+ * 	during the register/unregister of netdev. Create and delete NDP
+ * 	interface using NL80211_CMD_NEW_INTERFACE and NL80211_CMD_DEL_INTERFACE
+ * 	commands respectively if the driver advertises this capability set.
+
  * @NUM_QCA_WLAN_VENDOR_FEATURES: Number of assigned feature bits
  */
 enum qca_wlan_vendor_features {
@@ -4124,6 +4136,7 @@ enum qca_wlan_vendor_features {
 	QCA_WLAN_VENDOR_FEATURE_ADAPTIVE_11R = 12,
 	QCA_WLAN_VENDOR_FEATURE_CONCURRENT_BAND_SESSIONS = 13,
 	QCA_WLAN_VENDOR_FEATURE_TWT_ASYNC_SUPPORT = 14,
+	QCA_WLAN_VENDOR_FEATURE_USE_ADD_DEL_VIRTUAL_INTF_FOR_NDI = 15,
 
 	NUM_QCA_WLAN_VENDOR_FEATURES /* keep last */
 };
@@ -5215,9 +5228,23 @@ enum qca_wlan_vendor_attr_ndp_params {
  * enum qca_wlan_ndp_sub_cmd - NDP sub comands types for
  * QCA_NL80211_VENDOR_SUBCMD_NDP.
  * @QCA_WLAN_VENDOR_ATTR_NDP_INVALID: invalid value
- * @QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_CREATE: create a ndi
- * @QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE: delete a ndi
- * @QCA_WLAN_VENDOR_ATTR_NDP_INITIATOR_REQUEST: initiate a ndp session
+ * @QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_CREATE: Command to create a NAN
+ * data path interface.
+ * This command was initially designed to both create and start a NAN
+ * data path interface. However, changes to Linux 5.12 no longer allow
+ * interface creation via vendor commands. When the driver advertises
+ * QCA_WLAN_VENDOR_FEATURE_USE_ADD_DEL_VIRTUAL_INTF_FOR_NDI
+ * userspace must explicitly first create the interface using
+ * NL80211_CMD_NEW_INTERFACE before subsequently invoking this command
+ * to start the interface.
+ * @QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE: command to delete a NAN
+ * data path interface.
+ * This command was initially designed to both stop and delete a NAN
+ * data path interface. However, changes to Linux 5.12 no longer allow
+ * interface deletion via vendor commands. When the driver advertises
+ * QCA_WLAN_VENDOR_FEATURE_USE_ADD_DEL_VIRTUAL_INTF_FOR_NDI
+ * userspace must explicitly delete the interface using
+ * NL80211_CMD_DEL_INTERFACE after calling this command.
  * @QCA_WLAN_VENDOR_ATTR_NDP_INITIATOR_RESPONSE: response for above
  * @QCA_WLAN_VENDOR_ATTR_NDP_RESPONDER_REQUEST: respond to ndp session
  * @QCA_WLAN_VENDOR_ATTR_NDP_RESPONDER_RESPONSE: response for above
