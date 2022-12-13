@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -301,7 +301,7 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 	struct device_node *dmic_gpio;
 	char  *wname;
 
-	wname = strpbrk(w->name, "012345");
+	wname = strpbrk(w->name, "01234567");
 	if (!wname) {
 		dev_err(component->dev, "%s: widget not found\n", __func__);
 		return -EINVAL;
