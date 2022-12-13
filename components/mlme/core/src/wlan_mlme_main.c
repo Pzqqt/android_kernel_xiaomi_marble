@@ -684,6 +684,7 @@ static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
 	timeouts->join_failure_timeout =
 			cfg_get(psoc, CFG_JOIN_FAILURE_TIMEOUT);
 	timeouts->join_failure_timeout_ori = timeouts->join_failure_timeout;
+	timeouts->probe_req_retry_timeout = JOIN_PROBE_REQ_TIMER_MS;
 	timeouts->auth_failure_timeout =
 			cfg_get(psoc, CFG_AUTH_FAILURE_TIMEOUT);
 	timeouts->auth_rsp_timeout =

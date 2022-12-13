@@ -2882,7 +2882,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param =
 				&ps_global_info->ps_params[session->vdev_id];
-	uint32_t join_timeout;
+	uint32_t timeout;
 	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
 	enum reg_6g_ap_type power_type_6g;
 	bool ctry_code_match;
@@ -2967,14 +2967,27 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	 * Join timeout: if we find a BeaconInterval in the BssDescription,
 	 * then set the Join Timeout to be 10 x the BeaconInterval.
 	 */
-	join_timeout = mac_ctx->mlme_cfg->timeouts.join_failure_timeout_ori;
+	timeout = mac_ctx->mlme_cfg->timeouts.join_failure_timeout_ori;
 	if (bss_desc->beaconInterval)
-		join_timeout = QDF_MAX(10 * bss_desc->beaconInterval,
-				       join_timeout);
+		timeout = QDF_MAX(10 * bss_desc->beaconInterval, timeout);
 
 	mac_ctx->mlme_cfg->timeouts.join_failure_timeout =
-		QDF_MIN(join_timeout,
+		QDF_MIN(timeout,
 			mac_ctx->mlme_cfg->timeouts.join_failure_timeout_ori);
+	/*
+	 * Calculate probe request retry timeout,
+	 * Change probe req retry to MAX_JOIN_PROBE_REQ if sta freq
+	 * can cause MCC
+	 */
+	timeout = JOIN_PROBE_REQ_TIMER_MS;
+	if (policy_mgr_will_freq_lead_to_mcc(mac_ctx->psoc,
+					     bss_desc->chan_freq)) {
+		 /* Send MAX_JOIN_PROBE_REQ probe req during join timeout */
+		timeout = mac_ctx->mlme_cfg->timeouts.join_failure_timeout/
+							MAX_JOIN_PROBE_REQ;
+		timeout = QDF_MAX(JOIN_PROBE_REQ_TIMER_MS, timeout);
+	}
+	mac_ctx->mlme_cfg->timeouts.probe_req_retry_timeout = timeout;
 
 	lim_join_req_update_ht_vht_caps(mac_ctx, session, bss_desc,
 					ie_struct);

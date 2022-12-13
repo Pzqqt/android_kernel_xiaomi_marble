@@ -4313,6 +4313,24 @@ static void wlan_hdd_cfg80211_set_feature(uint8_t *feature_flags,
 }
 
 /**
+ * wlan_hdd_set_ndi_feature() - Set NDI related features
+ * @feature_flags: pointer to the byte array of features.
+ *
+ * Return: None
+ **/
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
+static void wlan_hdd_set_ndi_feature(uint8_t *feature_flags)
+{
+	wlan_hdd_cfg80211_set_feature(feature_flags,
+		QCA_WLAN_VENDOR_FEATURE_USE_ADD_DEL_VIRTUAL_INTF_FOR_NDI);
+}
+#else
+static inline void wlan_hdd_set_ndi_feature(uint8_t *feature_flags)
+{
+}
+#endif
+
+/**
  * __wlan_hdd_cfg80211_get_features() - Get the Driver Supported features
  * @wiphy: pointer to wireless wiphy structure.
  * @wdev: pointer to wireless_dev structure.
@@ -4425,6 +4443,8 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	if (wlan_hdd_thermal_config_support())
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 					QCA_WLAN_VENDOR_FEATURE_THERMAL_CONFIG);
+
+	wlan_hdd_set_ndi_feature(feature_flags);
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(feature_flags) +
 			NLMSG_HDRLEN);

@@ -270,6 +270,34 @@ static const uint8_t *os_if_ndi_get_if_name(struct wlan_objmgr_vdev *vdev)
 	return osif_priv->wdev->netdev->name;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
+static int os_if_nan_ndi_open(struct wlan_objmgr_psoc *psoc,
+			      const char *iface_name)
+{
+	return 0;
+}
+#else
+static int os_if_nan_ndi_open(struct wlan_objmgr_psoc *psoc,
+			      const char *iface_name)
+{
+	QDF_STATUS status;
+	struct nan_callbacks cb_obj;
+	int ret;
+
+	status = ucfg_nan_get_callbacks(psoc, &cb_obj);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Couldn't get callback object");
+		return -EINVAL;
+	}
+
+	ret = cb_obj.ndi_open(iface_name, false);
+	if (ret)
+		osif_err("ndi_open failed");
+
+	return ret;
+}
+#endif
+
 static int __os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 					  char *iface_name,
 					  struct nlattr **tb)
@@ -299,15 +327,18 @@ static int __os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 
 	status = ucfg_nan_get_callbacks(psoc, &cb_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		osif_err("Couldn't get ballback object");
+		osif_err("Couldn't get callback object");
 		return -EINVAL;
 	}
 
-	ret = cb_obj.ndi_open(iface_name);
-	if (ret) {
-		osif_err("ndi_open failed");
-		return ret;
+	if (cb_obj.ndi_set_mode(iface_name)) {
+		osif_err("NDI set mode fails");
+		return -EINVAL;
 	}
+
+	ret = os_if_nan_ndi_open(psoc, iface_name);
+	if (ret)
+		return ret;
 
 	return cb_obj.ndi_start(iface_name, transaction_id);
 }
@@ -319,23 +350,6 @@ osif_nla_str(struct nlattr **tb, size_t attr_id, char **out_str)
 		return -EINVAL;
 
 	*out_str = nla_data(tb[attr_id]);
-
-	return 0;
-}
-
-static int
-osif_device_from_psoc(struct wlan_objmgr_psoc *psoc, struct device **out_dev)
-{
-	qdf_device_t qdf_dev;
-
-	if (!psoc)
-		return -EINVAL;
-
-	qdf_dev = wlan_psoc_get_qdf_dev(psoc);
-	if (!qdf_dev || !qdf_dev->dev)
-		return -EINVAL;
-
-	*out_dev = qdf_dev->dev;
 
 	return 0;
 }
@@ -381,14 +395,67 @@ static int osif_net_dev_from_ifname(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
 static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
-					struct nlattr **tb)
+					struct nlattr **tb,
+					struct wireless_dev *wdev)
+{
+	struct osif_vdev_sync *vdev_sync;
+	char *ifname;
+	int errno;
+
+	osif_debug("enter");
+
+	errno = osif_nla_str(tb, QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR, &ifname);
+	if (errno)
+		goto err;
+
+	errno = osif_vdev_sync_trans_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		goto err;
+
+	errno = __os_if_nan_process_ndi_create(psoc, ifname, tb);
+	if (errno) {
+		osif_vdev_sync_trans_stop(vdev_sync);
+		goto err;
+	}
+
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return 0;
+err:
+	return errno;
+}
+#else
+
+static int
+osif_device_from_psoc(struct wlan_objmgr_psoc *psoc, struct device **out_dev)
+{
+	qdf_device_t qdf_dev;
+
+	if (!psoc)
+		return -EINVAL;
+
+	qdf_dev = wlan_psoc_get_qdf_dev(psoc);
+	if (!qdf_dev || !qdf_dev->dev)
+		return -EINVAL;
+
+	*out_dev = qdf_dev->dev;
+
+	return 0;
+}
+
+static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
+					struct nlattr **tb,
+					struct wireless_dev *wdev)
 {
 	struct device *dev;
 	struct net_device *net_dev;
 	struct osif_vdev_sync *vdev_sync;
 	char *ifname;
 	int errno;
+
+	osif_debug("enter");
 
 	errno = osif_nla_str(tb, QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR, &ifname);
 	if (errno)
@@ -421,6 +488,7 @@ destroy_sync:
 
 	return errno;
 }
+#endif
 
 static int __os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 					  char *iface_name,
@@ -468,6 +536,7 @@ static int __os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 	return cb_obj.ndi_delete(vdev_id, iface_name, transaction_id);
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0))
 static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 					struct nlattr **tb)
 {
@@ -475,6 +544,44 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 	struct osif_vdev_sync *vdev_sync;
 	char *ifname;
 	int errno;
+
+	osif_debug("enter");
+
+	errno = osif_nla_str(tb, QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR, &ifname);
+	if (errno)
+		return errno;
+
+	errno = osif_net_dev_from_ifname(psoc, ifname, &net_dev);
+	if (errno)
+		return errno;
+
+	errno = osif_vdev_sync_trans_start_wait(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __os_if_nan_process_ndi_delete(psoc, ifname, tb);
+	if (errno)
+		goto reregister;
+
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return 0;
+
+reregister:
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return errno;
+}
+#else
+static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
+					struct nlattr **tb)
+{
+	struct net_device *net_dev;
+	struct osif_vdev_sync *vdev_sync;
+	char *ifname;
+	int errno;
+
+	osif_debug("enter");
 
 	errno = osif_nla_str(tb, QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR, &ifname);
 	if (errno)
@@ -506,6 +613,7 @@ reregister:
 
 	return errno;
 }
+#endif
 
 /**
  * os_if_nan_parse_security_params() - parse vendor attributes for security
@@ -1071,7 +1179,7 @@ int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 			osif_err("NDI creation is not allowed when NAN discovery is not running");
 			return -EOPNOTSUPP;
 		}
-		return os_if_nan_process_ndi_create(psoc, tb);
+		return os_if_nan_process_ndi_create(psoc, tb, wdev);
 	case QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE:
 		return os_if_nan_process_ndi_delete(psoc, tb);
 	case QCA_WLAN_VENDOR_ATTR_NDP_INITIATOR_REQUEST:
