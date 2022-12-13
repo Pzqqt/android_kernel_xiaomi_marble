@@ -141,6 +141,17 @@ typedef enum {
   WLAN_MODULE_XGAP,                     /* 0x66 */
   WLAN_MODULE_MLO_OWNERSHIP_UPDATE,     /* 0x67 */
 
+  WLAN_MODULE_SCHED_ALGO_TXBF,          /* 0x68 */
+  WLAN_MODULE_SCHED_ALGO_DL_MU_MIMO,    /* 0x69 */
+  WLAN_MODULE_SCHED_ALGO_UL_MU_MIMO,    /* 0x6a */
+  WLAN_MODULE_SCHED_ALGO_DL_MU_OFDMA,   /* 0x6b */
+  WLAN_MODULE_SCHED_ALGO_UL_MU_OFDMA,   /* 0x6c */
+  WLAN_MODULE_SCHED_ALGO_SU,            /* 0x6d */
+  WLAN_MODULE_SCHED_ALGO_MLO,           /* 0x6e */
+  WLAN_MODULE_SCHED_ALGO_SAWF,          /* 0x6f */
+  WLAN_MODULE_BAR,                      /* 0x70 */
+  WLAN_MODULE_SMART_TX,                 /* 0x71 */
+
 
   WLAN_MODULE_ID_MAX,
   WLAN_MODULE_ID_INVALID = WLAN_MODULE_ID_MAX,

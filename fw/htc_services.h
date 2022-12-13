@@ -39,6 +39,7 @@ typedef enum {
     CFG_NV_SERVICE_GROUP     = 4,
     WDI_IPA_SERVICE_GROUP    = 5,
     PACKET_LOG_SERVICE_GROUP = 6,
+    LPASS_SERVICE_GROUP      = 7,
 
     HTC_TEST_GROUP           = 254,
     HTC_SERVICE_GROUP_LAST   = 255
@@ -97,6 +98,8 @@ typedef enum {
 #define WDI_IPA_TX_SVC MAKE_SERVICE_ID(WDI_IPA_SERVICE_GROUP,0)
 
 #define PACKET_LOG_SVC MAKE_SERVICE_ID(PACKET_LOG_SERVICE_GROUP,0)
+
+#define LPASS_DATA_MSG_SVC MAKE_SERVICE_ID(LPASS_SERVICE_GROUP,0)
 
 /*
  * Directions for interconnect pipe configuration.
