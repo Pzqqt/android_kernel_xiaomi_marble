@@ -25,6 +25,7 @@
 #define MAX_QP                  51
 #define DEFAULT_QP              20
 #define MAX_CONSTANT_QUALITY    100
+#define MAX_BITRATE_BOOST       25
 #define MIN_SLICE_BYTE_SIZE     512
 #define MAX_SLICE_BYTE_SIZE       \
 	((MAX_BITRATE) >> 3)
@@ -44,15 +45,15 @@ static struct msm_platform_core_capability core_data_neo[] = {
 	/* {type, value} */
 	{ENC_CODECS, H264|HEVC|HEIC},
 	{DEC_CODECS, H264|HEVC|VP9|HEIC},
-	{MAX_SESSION_COUNT, 16},
-	{MAX_NUM_720P_SESSIONS, 16},
+	{MAX_SESSION_COUNT, 8},
+	{MAX_NUM_720P_SESSIONS, 8},
 	{MAX_NUM_1080P_SESSIONS, 8},
 	{MAX_NUM_4K_SESSIONS, 2},
 	{MAX_SECURE_SESSION_COUNT, 3},
 	{MAX_RT_MBPF, 65280},	/* ((3840x2176)/256) * 2 */
 	{MAX_MBPF, 65280}, /* ((3840x2176)/256) * 2 */
 	{MAX_MBPS, 1958400},	/* max_load 3840x2176@60fps */
-	{MAX_IMAGE_MBPF, 1048576},  /* (16384x16384)/256 */
+	{MAX_IMAGE_MBPF, 262144},  /* (8192x8192)/256 */
 	{MAX_MBPF_HQ, 8160}, /* ((1920x1088)/256) */
 	{MAX_MBPS_HQ, 489600}, /* ((1920x1088)/256)@60fps */
 	{MAX_MBPF_B_FRAME, 32640}, /* 3840x2176/256 */
@@ -587,7 +588,8 @@ static struct msm_platform_inst_capability instance_data_neo[] = {
 		msm_vidc_set_vbr_related_properties},
 
 	{BITRATE_BOOST, ENC, H264|HEVC,
-		0, MAX_BITRATE_BOOST, 25, MAX_BITRATE_BOOST,
+		0, MAX_BITRATE_BOOST,
+		MAX_BITRATE_BOOST, MAX_BITRATE_BOOST,
 		V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST,
 		HFI_PROP_BITRATE_BOOST,
 		CAP_FLAG_OUTPUT_PORT,

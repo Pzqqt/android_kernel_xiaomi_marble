@@ -27,8 +27,14 @@
 #if defined(CONFIG_MSM_VIDC_KHAJE)
 #include "msm_vidc_khaje.h"
 #endif
+#if defined(CONFIG_MSM_VIDC_MONACO)
+#include "msm_vidc_monaco.h"
+#endif
 #if defined(CONFIG_MSM_VIDC_PARROT)
 #include "msm_vidc_parrot.h"
+#endif
+#if defined(CONFIG_MSM_VIDC_RAVELIN)
+#include "msm_vidc_ravelin.h"
 #endif
 #if defined(CONFIG_MSM_VIDC_NEO)
 #include "msm_vidc_neo.h"
@@ -227,6 +233,15 @@ static int msm_vidc_deinit_platform_variant(struct msm_vidc_core *core, struct d
 	}
 #endif
 
+#if defined(CONFIG_MSM_VIDC_MONACO)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-monaco")) {
+		rc = msm_vidc_deinit_platform_monaco(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed with %d\n", __func__, rc);
+		return rc;
+	}
+#endif
+
 #if defined(CONFIG_MSM_VIDC_NEO)
 	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-neo")) {
 		rc = msm_vidc_deinit_platform_neo(core, dev);
@@ -241,6 +256,15 @@ static int msm_vidc_deinit_platform_variant(struct msm_vidc_core *core, struct d
 		rc = msm_vidc_deinit_platform_parrot(core, dev);
 		if (rc)
 			d_vpr_e("%s: failed msm-vidc-parrot with %d\n",
+				__func__, rc);
+		return rc;
+	}
+#endif
+#if defined(CONFIG_MSM_VIDC_RAVELIN)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-ravelin")) {
+		rc = msm_vidc_deinit_platform_ravelin(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed msm-vidc-ravelin with %d\n",
 				__func__, rc);
 		return rc;
 	}
@@ -288,6 +312,15 @@ static int msm_vidc_init_platform_variant(struct msm_vidc_core *core, struct dev
 		return rc;
 	}
 #endif
+#if defined(CONFIG_MSM_VIDC_RAVELIN)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-ravelin")) {
+		rc = msm_vidc_init_platform_ravelin(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed msm-vidc-ravelin with %d\n",
+				__func__, rc);
+		return rc;
+	}
+#endif
 
 #if defined(CONFIG_MSM_VIDC_NEO)
 	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-neo")) {
@@ -302,6 +335,15 @@ static int msm_vidc_init_platform_variant(struct msm_vidc_core *core, struct dev
 #if defined(CONFIG_MSM_VIDC_KHAJE)
 	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-khaje")) {
 		rc = msm_vidc_init_platform_khaje(core, dev);
+		if (rc)
+			d_vpr_e("%s: failed with %d\n", __func__, rc);
+		return rc;
+	}
+#endif
+
+#if defined(CONFIG_MSM_VIDC_MONACO)
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-monaco")) {
+		rc = msm_vidc_init_platform_monaco(core, dev);
 		if (rc)
 			d_vpr_e("%s: failed with %d\n", __func__, rc);
 		return rc;

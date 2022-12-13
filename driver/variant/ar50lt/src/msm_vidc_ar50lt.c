@@ -490,9 +490,11 @@ static int __power_on_ar50lt_controller(struct msm_vidc_core *core)
 	if (rc)
 		goto fail_clk_controller;
 
-	rc = __prepare_enable_clock_ar50lt(core, "iface_clk");
-	if (rc)
-		goto fail_clk_ahb;
+	if (core->platform->data.vpu_ver != VENUS_VERSION_AR50LT_V2) {
+		rc = __prepare_enable_clock_ar50lt(core, "iface_clk");
+		if (rc)
+			goto fail_clk_ahb;
+	}
 
 	rc = __prepare_enable_clock_ar50lt(core, "bus_clk");
 	if (rc)
@@ -501,7 +503,8 @@ static int __power_on_ar50lt_controller(struct msm_vidc_core *core)
 	return 0;
 
 fail_clk_axi:
-	__disable_unprepare_clock_ar50lt(core, "iface_clk");
+	if (core->platform->data.vpu_ver != VENUS_VERSION_AR50LT_V2)
+		__disable_unprepare_clock_ar50lt(core, "iface_clk");
 fail_clk_ahb:
 	__disable_unprepare_clock_ar50lt(core, "core_clk");
 fail_clk_controller:
@@ -583,10 +586,12 @@ static int __power_off_ar50lt_controller(struct msm_vidc_core *core)
 		rc = 0;
 	}
 
-	rc = __disable_unprepare_clock_ar50lt(core, "iface_clk");
-	if (rc) {
-		d_vpr_e("%s: disable unprepare iface_clk failed\n", __func__);
-		rc = 0;
+	if (core->platform->data.vpu_ver != VENUS_VERSION_AR50LT_V2) {
+		rc = __disable_unprepare_clock_ar50lt(core, "iface_clk");
+		if (rc) {
+			d_vpr_e("%s: disable unprepare iface_clk failed\n", __func__);
+			rc = 0;
+		}
 	}
 
 	rc = __disable_unprepare_clock_ar50lt(core, "bus_clk");
