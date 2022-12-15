@@ -904,6 +904,16 @@ static inline bool sde_crtc_state_in_clone_mode(struct drm_encoder *encoder,
 	return false;
 }
 
+static inline bool _is_crtc_intf_mode_wb(struct drm_crtc *crtc)
+{
+	enum sde_intf_mode intf_mode = sde_crtc_get_intf_mode(crtc, crtc->state);
+
+	if ((intf_mode != INTF_MODE_WB_BLOCK) && (intf_mode != INTF_MODE_WB_LINE))
+		return false;
+
+	return true;
+}
+
 /**
  * sde_crtc_get_secure_transition - determines the operations to be
  * performed before transitioning to secure state
