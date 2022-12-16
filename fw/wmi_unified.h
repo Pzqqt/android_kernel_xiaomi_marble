@@ -35774,6 +35774,13 @@ typedef struct {
     A_UINT32 roam_abort_reason; /* Detail reason for roam scan not start, from WMI_ROAM_FAIL_SUB_REASON_ID */
 } wmi_roam_result;
 
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_REQUEST_TOKEN_GET(detail)         WMI_GET_BITS(detail, 0, 8)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_REQUEST_TOKEN_SET(detail,val)     WMI_SET_BITS(detail, 0, 8, val)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_RESPONSE_TOKEN_GET(detail)        WMI_GET_BITS(detail, 8, 8)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_RESPONSE_TOKEN_SET(detail,val)    WMI_SET_BITS(detail, 8, 8, val)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_NUM_OF_NRIE_GET(detail)           WMI_GET_BITS(detail, 16, 8)
+#define WMI_ROAM_NEIGHBOR_REPORT_INFO_NUM_OF_NRIE_SET(detail,val)       WMI_SET_BITS(detail, 16, 8, val)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_neighbor_report_info_tlv_param */
     /* request_type:
@@ -35799,6 +35806,15 @@ typedef struct {
      * of the 802.11v spec.
      */
     A_UINT32 btm_query_reason_code;
+    /* neighbor_report_detail:
+     * [7:0]     : neighbor report request token
+     * [15:8]    : neighbor report response token
+     * [23:16]   : the number of neighbor report elements in response frame
+     * [31:24]   : reserved
+     * Refer to the above WMI_ROAM_NEIGHBOR_REPORT_INFO_*_GET,_SET macros for
+     * reading and writing these bitfields.
+     */
+    A_UINT32 neighbor_report_detail;
 } wmi_roam_neighbor_report_info;
 
 typedef struct {
