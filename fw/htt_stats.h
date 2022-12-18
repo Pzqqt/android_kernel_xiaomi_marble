@@ -8604,8 +8604,13 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    A_UINT32 pdev_id;
-    A_UINT32 tx_vap_id;
+    /** mac_id__word:
+     * BIT [ 7 :  0]   :- mac_id
+     *                    Use the HTT_STATS_CMN_MAC_ID_GET,_SET macros to
+     *                    read/write this bitfield.
+     * BIT [31 :  8]   :- reserved
+     */
+    A_UINT32 mac_id__word;
     A_UINT32 basic_trigger_across_bss;
     A_UINT32 basic_trigger_within_bss;
     A_UINT32 bsr_trigger_across_bss;
