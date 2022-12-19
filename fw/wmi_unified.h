@@ -21572,6 +21572,12 @@ typedef enum
      */
     WMI_VENDOR_OUI_ACTION_ALLOW_11BE = 9,
 
+    /*
+     * Turn off FW's dynamic qos null tx rate if specific vendor OUI
+     * received in beacon.
+     */
+    WMI_VENDOR_OUI_ACTION_DISABLE_DYNAMIC_QOS_NULL_TX_RATE = 10,
+
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
 } wmi_vendor_oui_action_id;
