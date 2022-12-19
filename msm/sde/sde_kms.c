@@ -1365,6 +1365,9 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 		sde_crtc_reset_sw_state(crtc);
 	}
 
+	/* Flush pp_event thread queue for any pending events */
+	kthread_flush_worker(&priv->pp_event_worker);
+
 	/*
 	 * Flush event thread queue for any pending events as vblank work
 	 * might get scheduled from drm_crtc_vblank_off
