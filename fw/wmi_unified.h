@@ -10643,10 +10643,10 @@ typedef struct {
     /** time slice duty cycle percentage of this interface */
     A_UINT32 time_slice_duty_cycle;
     /**
-     * noise floor value report to host
+     * Current home channel noise floor value report to host
      * Units are dBm, values 0x0000ffff and 0x0 are invalid.
      */
-    A_INT32 nf_cal_val_per_freq;
+    A_INT32 nf_cal_val;
 } wmi_iface_link_stats;
 
 typedef enum {
