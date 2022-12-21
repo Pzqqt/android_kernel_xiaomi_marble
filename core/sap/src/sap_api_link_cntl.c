@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -137,6 +137,7 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 		wlan_sap_get_concurrent_bw(mac_ctx->pdev, mac_ctx->psoc,
 					   sap_ctx->acs_cfg->pri_ch_freq,
 					   ch_params.ch_width);
+	sap_debug("new_ch_width:%d", new_ch_width);
 	ch_params.ch_width = new_ch_width;
 
 	wlan_reg_set_channel_params_for_freq(
