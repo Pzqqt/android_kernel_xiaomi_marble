@@ -2152,6 +2152,11 @@ int ipa3_get_rtk_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 
 		ring = &stats->u.rtk[i].commStats;
 
+		ring->ringFull = ioread32(
+			ctx_stats->uc_dbg_stats_mmio
+			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
+			IPA3_UC_DEBUG_STATS_RINGFULL_OFF);
+
 		ring->ringEmpty = ioread32(
 			ctx_stats->uc_dbg_stats_mmio
 			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
