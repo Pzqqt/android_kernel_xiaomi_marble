@@ -607,6 +607,7 @@ typedef  enum  {
     WMI_SERVICE_RESTRICTED_TWT = 354, /* Support for R-TWT feature */
     WMI_SERVICE_SLO_SUPPORTED = 355, /* Support for Single Link 11BE */
     WMI_SERVICE_RTT_11AZ_TB_RSTA_SUPPORT = 356, /* FW support for 11AZ trigger based ranging Responder (RSTA) role */
+    WMI_SERVICE_SUPPORT_11D_FOR_HOST_SCAN = 357,
 
 
     WMI_MAX_EXT2_SERVICE
