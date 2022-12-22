@@ -1339,6 +1339,10 @@ static int wsa881x_probe(struct snd_soc_component *component)
 
 	if (!wsa881x)
 		return -EINVAL;
+
+	if (!component->name_prefix)
+		return -EINVAL;
+
 	snd_soc_component_init_regmap(component, wsa881x->regmap);
 
 	dev = wsa881x->swr_slave;
