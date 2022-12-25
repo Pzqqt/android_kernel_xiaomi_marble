@@ -1330,6 +1330,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ctrl_path_pmlo_stats_struct,
     WMITLV_TAG_STRUC_wmi_ctrl_path_cfr_stats_struct,
     WMITLV_TAG_STRUC_WMI_COEX_FIX_CHANNEL_CAPABILITIES,
+    WMITLV_TAG_STRUC_wmi_peer_sched_mode_disable_fixed_param,
+    WMITLV_TAG_STRUC_wmi_per_peer_sched_mode_disable,
 } WMITLV_TAG_ID;
 
 /*
@@ -1844,6 +1846,7 @@ typedef enum {
     OP(WMI_MLO_AP_VDEV_TID_TO_LINK_MAP_CMDID) \
     OP(WMI_VDEV_SET_TWT_EDCA_PARAMS_CMDID) \
     OP(WMI_TAS_POWER_HISTORY_CMDID) \
+    OP(WMI_PEER_SCHED_MODE_DISABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5239,6 +5242,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_XGAP_ENABLE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_livedump_request_cmd_fixed_param, wmi_livedump_request_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, odd_livedump_id_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ODD_LIVEDUMP_REQUEST_CMDID);
+
+#define WMITLV_TABLE_WMI_PEER_SCHED_MODE_DISABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_sched_mode_disable_fixed_param, wmi_peer_sched_mode_disable_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_per_peer_sched_mode_disable, peer_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_SCHED_MODE_DISABLE_CMDID);
 
 
 
