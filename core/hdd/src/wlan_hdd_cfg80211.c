@@ -24360,29 +24360,16 @@ static int _wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 	return errno;
 }
 
-#if defined(CFG80211_CTRL_FRAME_SRC_ADDR_TA_ADDR)
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0) || \
+	defined(CFG80211_TX_CONTROL_PORT_LINK_SUPPORT))
 static int wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 					     struct net_device *dev,
 					     const u8 *buf,
-					     size_t len, const u8 *src,
-					     const u8 *dest, __be16 proto,
-					     bool unencrypted, u64 *cookie)
-#else
-static int wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
-					     struct net_device *dev,
-					     const u8 *buf,
-					     size_t len, const u8 *src,
-					     const u8 *dest, __be16 proto,
-					     bool unencrypted)
-#endif
-{
-	return _wlan_hdd_cfg80211_tx_control_port(wiphy, dev, buf, len, src,
-						  dest, proto, unencrypted);
-}
-
-#else
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0))
+					     size_t len,
+					     const u8 *dest, const __be16 proto,
+					     bool unencrypted, int link_id,
+					     u64 *cookie)
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0))
 static int wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 					     struct net_device *dev,
 					     const u8 *buf, size_t len,
@@ -24402,7 +24389,6 @@ static int wlan_hdd_cfg80211_tx_control_port(struct wiphy *wiphy,
 						  adapter->mac_addr.bytes,
 						  dest, proto, unencrypted);
 }
-#endif
 
 #if defined(CFG80211_CTRL_FRAME_SRC_ADDR_TA_ADDR)
 bool wlan_hdd_cfg80211_rx_control_port(struct net_device *dev,
