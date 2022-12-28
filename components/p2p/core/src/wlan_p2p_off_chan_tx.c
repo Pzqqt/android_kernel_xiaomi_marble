@@ -3074,6 +3074,7 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 	bool is_vdev_connected = false;
+	qdf_freq_t curr_op_freq;
 
 	status = p2p_tx_context_check_valid(tx_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -3136,9 +3137,13 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 	if (mode == QDF_STA_MODE)
 		is_vdev_connected = wlan_cm_is_vdev_connected(vdev);
 
+	curr_op_freq = wlan_get_operation_chan_freq(vdev);
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 
-	if (!tx_ctx->off_chan || !tx_ctx->chan_freq) {
+	if (!tx_ctx->off_chan || !tx_ctx->chan_freq ||
+	    (curr_op_freq && curr_op_freq == tx_ctx->chan_freq &&
+	     !tx_ctx->duration)) {
 		if (!tx_ctx->chan_freq)
 			p2p_check_and_update_channel(tx_ctx);
 		if (!tx_ctx->chan_freq && mode == QDF_STA_MODE &&
