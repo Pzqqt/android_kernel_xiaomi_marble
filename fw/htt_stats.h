@@ -7361,6 +7361,11 @@ typedef struct {
 #define HTT_MAX_RX_PKT_CRC_PASS_CNT 8
 #define HTT_MAX_PER_BLK_ERR_CNT 20
 #define HTT_MAX_RX_OTA_ERR_CNT 14
+#define HTT_MAX_RX_PKT_CNT_EXT 4
+#define HTT_MAX_RX_PKT_CRC_PASS_CNT_EXT 4
+#define HTT_MAX_RX_PKT_MU_CNT 14
+#define HTT_MAX_TX_PKT_CNT 10
+#define HTT_MAX_PHY_TX_ABORT_CNT 10
 
 typedef enum {
     HTT_STATS_CHANNEL_HALF_RATE          = 0x0001,   /* Half rate */
@@ -7501,6 +7506,38 @@ typedef struct {
      * [9-13]=RSVD
      */
     A_UINT32 rx_ota_err_cnt[HTT_MAX_RX_OTA_ERR_CNT];
+    /** rx_pkt_cnt_ext -
+     * Received EOP (end-of-packet) count per packet type for BE;
+     * [0] = EHT; [1] = WUR; [2] = AZ; [3]=RVSD
+     */
+    A_UINT32 rx_pkt_cnt_ext[HTT_MAX_RX_PKT_CNT_EXT];
+    /** rx_pkt_crc_pass_cnt_ext -
+     * Received EOP (end-of-packet) count per packet type for BE;
+     * [0] = EHT; [1] = WUR; [2] = AZ; [3]=RVSD
+     */
+    A_UINT32 rx_pkt_crc_pass_cnt_ext[HTT_MAX_RX_PKT_CRC_PASS_CNT_EXT];
+    /** rx_pkt_mu_cnt -
+     * RX MU MIMO+OFDMA packet count per packet type for BE;
+     * [0] = 11ax OFDMA; [1] = 11ax OFDMA+MUMIMO; [2] = 11be OFDMA;
+     * [3] = 11be OFDMA+MUMIMO; [4] = 11ax MIMO; [5] = 11be MIMO;
+     * [6] = 11ax OFDMA; [7] = 11ax OFDMA+MUMIMO; [8] = 11be OFDMA;
+     * [9] = 11be OFDMA+MUMIMO; [10] = 11ax MIMO; [11] = 11be MIMO;
+     * [12-13]=RSVD
+     */
+    A_UINT32 rx_pkt_mu_cnt[HTT_MAX_RX_PKT_MU_CNT];
+    /** tx_pkt_cnt -
+     * num of transfered packet count per packet type;
+     * [0] = 11a; [1] = 11b; [2] = 11n; [3] = 11ac; [4] = 11ax; [5] = GF;
+     * [6]= EHT; [7] = WUR; [8] = AZ; [9]=RSVD; [6-8] = Applicable only for BE
+     */
+    A_UINT32 tx_pkt_cnt[HTT_MAX_TX_PKT_CNT];
+    /** phy_tx_abort_cnt -
+     * phy tx abort after each tlv;
+     * [0] = PRE-PHY desc tlv; [1] = PHY desc tlv; [2] = LSIGA tlv;
+     * [3] = LSIGB tlv; [4] = Per User tlv; [5] = HESIGB tlv;
+     * [6] = Service tlv; [7] = Tx Packet End tlv; [8-9]=RSVD;
+     */
+    A_UINT32 phy_tx_abort_cnt[HTT_MAX_PHY_TX_ABORT_CNT];
 } htt_phy_counters_tlv;
 
 typedef struct {
