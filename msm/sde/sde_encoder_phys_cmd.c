@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -1165,22 +1165,6 @@ skip_flush:
 	return;
 }
 
-static void sde_encoder_phys_cmd_reset_tear_init_line_val(struct sde_encoder_phys *phys_enc)
-{
-	u32 tear_init_val;
-	struct sde_hw_intf *hw_intf;
-
-	if (!phys_enc->hw_intf || !phys_enc->cached_mode.vdisplay)
-		return;
-
-	hw_intf = phys_enc->hw_intf;
-	tear_init_val = phys_enc->cached_mode.vdisplay + DEFAULT_TEARCHECK_SYNC_THRESH_START + 1;
-
-	/* this reset will be needed to avoid any spurious rd_ptr_irq from tearcheck block*/
-	if (hw_intf->ops.reset_tear_init_line_val)
-		hw_intf->ops.reset_tear_init_line_val(hw_intf, tear_init_val);
-}
-
 static void sde_encoder_phys_cmd_enable(struct sde_encoder_phys *phys_enc)
 {
 	struct sde_encoder_phys_cmd *cmd_enc =
@@ -1201,7 +1185,6 @@ static void sde_encoder_phys_cmd_enable(struct sde_encoder_phys *phys_enc)
 
 	sde_encoder_phys_cmd_enable_helper(phys_enc);
 	phys_enc->enable_state = SDE_ENC_ENABLED;
-	sde_encoder_phys_cmd_reset_tear_init_line_val(phys_enc);
 }
 
 static bool sde_encoder_phys_cmd_is_autorefresh_enabled(
@@ -1986,7 +1969,6 @@ static void sde_encoder_phys_cmd_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->collect_misr = sde_encoder_helper_collect_misr;
 	ops->add_to_minidump = sde_encoder_phys_cmd_add_enc_to_minidump;
 	ops->disable_autorefresh = _sde_encoder_phys_disable_autorefresh;
-	ops->reset_tearcheck_rd_ptr = sde_encoder_phys_cmd_reset_tear_init_line_val;
 }
 
 static inline bool sde_encoder_phys_cmd_intf_te_supported(

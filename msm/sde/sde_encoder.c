@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -2967,10 +2967,6 @@ void sde_encoder_virt_restore(struct drm_encoder *drm_enc)
 		sde_enc->cur_master->ops.restore(sde_enc->cur_master);
 
 	_sde_encoder_virt_enable_helper(drm_enc);
-
-	if (sde_enc->cur_master->ops.reset_tearcheck_rd_ptr)
-		sde_enc->cur_master->ops.reset_tearcheck_rd_ptr(sde_enc->cur_master);
-
 	sde_encoder_control_te(drm_enc, true);
 }
 

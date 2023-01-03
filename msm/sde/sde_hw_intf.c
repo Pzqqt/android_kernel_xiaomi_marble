@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/iopoll.h>
@@ -832,19 +832,6 @@ static void sde_hw_intf_override_tear_rd_ptr_val(struct sde_hw_intf *intf,
 	wmb();
 }
 
-static void sde_hw_intf_reset_tear_init_line_val(struct sde_hw_intf *intf,
-		u32 init_val)
-{
-	struct sde_hw_blk_reg_map *c;
-
-	if (!intf || !init_val)
-		return;
-
-	c = &intf->hw;
-
-	SDE_REG_WRITE(c, INTF_TEAR_SYNC_WRCOUNT, (init_val & 0xFFFF));
-}
-
 static void sde_hw_intf_vsync_sel(struct sde_hw_intf *intf,
 		u32 vsync_source)
 {
@@ -945,7 +932,6 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 			sde_hw_intf_v1_check_and_reset_tearcheck;
 		ops->override_tear_rd_ptr_val =
 			sde_hw_intf_override_tear_rd_ptr_val;
-		ops->reset_tear_init_line_val = sde_hw_intf_reset_tear_init_line_val;
 	}
 
 	if (cap & BIT(SDE_INTF_RESET_COUNTER))
