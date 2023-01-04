@@ -2255,6 +2255,28 @@ wlan_mlme_is_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
 QDF_STATUS
 wlan_mlme_set_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool value);
 
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * wlan_mlme_is_standard_6ghz_conn_policy_enabled() - Get the 6 GHz standard
+ *                                                    connection policy flag
+ * @psoc: psoc context
+ * @value: Enable/Disable value ptr.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_is_standard_6ghz_conn_policy_enabled(struct wlan_objmgr_psoc *psoc,
+					       bool *value);
+#else
+static inline QDF_STATUS
+wlan_mlme_is_standard_6ghz_conn_policy_enabled(struct wlan_objmgr_psoc *psoc,
+					       bool *value)
+{
+	*value = false;
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wlan_mlme_get_sta_miracast_mcc_rest_time() - Get STA/MIRACAST MCC rest time
  *

@@ -1341,6 +1341,7 @@ enum mlme_cfg_frame_type {
  * @dual_sta_policy_cfg: Dual STA policies configuration
  * @tx_retry_multiplier: TX xretry extension parameter
  * @mgmt_hw_tx_retry_count: MGMT HW tx retry count for frames
+ * @std_6ghz_conn_policy: 6GHz standard connection policy
  * @safe_mode_enable: safe mode to bypass some strict 6 GHz checks for
  * connection, bypass strict power levels
  */
@@ -1391,6 +1392,9 @@ struct wlan_mlme_generic {
 	struct dual_sta_policy dual_sta_policy;
 	uint32_t tx_retry_multiplier;
 	uint8_t mgmt_hw_tx_retry_count[CFG_FRAME_TYPE_MAX];
+#ifdef CONFIG_BAND_6GHZ
+	bool std_6ghz_conn_policy;
+#endif
 	bool safe_mode_enable;
 };
 
