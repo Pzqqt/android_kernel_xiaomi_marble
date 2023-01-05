@@ -1407,8 +1407,12 @@ static int wcd937x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 			/* Enable BCS for Headset mic */
 			if (w->shift == 1 && !(snd_soc_component_read(component,
 				WCD937X_TX_NEW_TX_CH2_SEL) & 0x80)) {
-				wcd937x_tx_connect_port(component, MBHC, true);
-				set_bit(AMIC2_BCS_ENABLE, &wcd937x->status_mask);
+				if (!wcd937x->bcs_dis) {
+					wcd937x_tx_connect_port(
+							component, MBHC, true);
+					set_bit(AMIC2_BCS_ENABLE,
+							&wcd937x->status_mask);
+				}
 			}
 			wcd937x_tx_connect_port(component, ADC1 + (w->shift), true);
 		} else {
@@ -2211,6 +2215,29 @@ static int wcd937x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wcd937x_bcs_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
+
+	ucontrol->value.integer.value[0] = wcd937x->bcs_dis;
+	return 0;
+}
+
+static int wcd937x_bcs_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+		snd_soc_kcontrol_component(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
+
+	wcd937x->bcs_dis = ucontrol->value.integer.value[0];
+	dev_dbg(component->dev, "%s: BCS Disable %d\n", __func__, wcd937x->bcs_dis);
+	return 0;
+}
+
 static const char * const wcd937x_tx_ch_pwr_level_text[] = {
 	"L0", "L1", "L2", "L3",
 };
@@ -2242,6 +2269,8 @@ static const struct snd_kcontrol_new wcd937x_snd_controls[] = {
 		wcd937x_get_compander, wcd937x_set_compander),
 	SOC_SINGLE_EXT("HPHR_COMP Switch", SND_SOC_NOPM, 1, 1, 0,
 		wcd937x_get_compander, wcd937x_set_compander),
+	SOC_SINGLE_EXT("ADC2_BCS Disable", SND_SOC_NOPM, 0, 1, 0,
+		wcd937x_bcs_get, wcd937x_bcs_put),
 
 	SOC_SINGLE_TLV("HPHL Volume", WCD937X_HPH_L_EN, 0, 20, 1, line_gain),
 	SOC_SINGLE_TLV("HPHR Volume", WCD937X_HPH_R_EN, 0, 20, 1, line_gain),
