@@ -2192,7 +2192,11 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 		goto end;
 	}
 
-	if (is_vid_mode) {
+	/**
+	 * Avoid power collapse entry for writeback crtc since HAL does not repopulate
+	 * crtc, plane properties like luts for idlepc exit commit.
+	 */
+	if (is_vid_mode || _is_crtc_intf_mode_wb(crtc)) {
 		sde_encoder_irq_control(drm_enc, false);
 		_sde_encoder_pm_qos_remove_request(drm_enc);
 	} else {
