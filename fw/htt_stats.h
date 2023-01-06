@@ -1865,6 +1865,9 @@ typedef struct {
      */
     A_UINT32 is_airtime_large_for_dl_ofdma[2];
     A_UINT32 is_airtime_large_for_ul_ofdma[2];
+    /* Last updated value of DL and UL queue depths for each peer per AC */
+    A_UINT32 last_updated_dl_qdepth[HTT_NUM_AC_WMM];
+    A_UINT32 last_updated_ul_qdepth[HTT_NUM_AC_WMM];
 } htt_peer_ax_ofdma_stats_tlv;
 
 /* config_param0 */
@@ -2373,6 +2376,7 @@ typedef struct {
     A_UINT32 su_sw_rts_flushed;
     /** CTS (RTS response) received in different BW */
     A_UINT32 su_sw_rts_rcvd_cts_diff_bw;
+/* START DEPRECATED FIELDS */
     /** 11AX HE MU Combined Freq. BSRP Trigger frame sent over the air */
     A_UINT32 combined_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
     /** 11AX HE MU Combined Freq. BSRP Trigger completed with error(s) */
@@ -2381,6 +2385,7 @@ typedef struct {
     A_UINT32 standalone_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
     /** 11AX HE MU Standalone Freq. BSRP Trigger completed with error(s) */
     A_UINT32 standalone_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
+/* END DEPRECATED FIELDS */
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
@@ -2464,6 +2469,14 @@ typedef struct {
      * successfully sent over the air
      */
     A_UINT32 ax_ul_mumimo_trigger[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    /** 11AX HE MU Combined Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 combined_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Combined Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 combined_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Standalone Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 standalone_ax_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11AX HE MU Standalone Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 standalone_ax_bsr_trigger_err[HTT_NUM_AC_WMM];
 } htt_tx_selfgen_ax_stats_tlv;
 
 typedef struct {
@@ -2503,6 +2516,14 @@ typedef struct {
      * successfully sent over the air
      */
     A_UINT32 be_ul_mumimo_trigger[HTT_TX_PDEV_STATS_NUM_BE_MUMIMO_USER_STATS];
+    /** 11BE EHT MU Combined Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 combined_be_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU Combined Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 combined_be_bsr_trigger_err[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU Standalone Freq. BSRP Trigger frame sent over the air */
+    A_UINT32 standalone_be_bsr_trigger_tried[HTT_NUM_AC_WMM];
+    /** 11BE EHT MU Standalone Freq. BSRP Trigger completed with error(s) */
+    A_UINT32 standalone_be_bsr_trigger_err[HTT_NUM_AC_WMM];
 } htt_tx_selfgen_be_stats_tlv;
 
 typedef struct { /* DEPRECATED */
